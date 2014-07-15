@@ -135,7 +135,7 @@ static Location piece_get(Editor *ed, size_t pos) {
 	Location loc = {};
 	// TODO: handle position at end of file: pos+1 
 	size_t cur = 0;
-	for (Piece *p = ed->begin.next; p->next; p = p->next) {
+	for (Piece *p = &ed->begin; p->next; p = p->next) {
 		if (cur <= pos && pos <= cur + p->len) {
 			loc.piece = p;
 			loc.off = pos - cur;
@@ -166,29 +166,58 @@ static Change *change_alloc(Editor *ed) {
 	return c;
 }
 
-void editor_insert(Editor *ed, size_t pos, char *text) {
+static Piece* editor_insert_empty(Editor *ed, char *content, size_t len) {
+	Piece *p;
+	if (ed->size != 0 || !(p = piece_alloc()))
+		return NULL;
+	piece_init(&ed->begin, NULL, p, NULL, 0);
+	piece_init(p, &ed->begin, &ed->end, content, len);
+	piece_init(&ed->end, p, NULL, NULL, 0);
+	ed->size = len;
+	return p;
+}
+
+bool editor_insert(Editor *ed, size_t pos, char *text) {
+	Change *c = change_alloc(ed);
+	if (!c)
+		return false;
+	/* special case for an empty document */
+	if (ed->size == 0) {
+		Piece *p = editor_insert_empty(ed, text, strlen(text) /* TODO */);
+		span_init(&c->new, p, p);
+		span_init(&c->old, NULL, NULL);
+		return true;
+	}
 	Location loc = piece_get(ed, pos);
 	Piece *p = loc.piece;
 	size_t off = loc.off;
-	Change *c = change_alloc(ed);
-	/* insert into middle of an existing piece, therfore split the old
-	 * piece. that is we have 3 new pieces one containing the content
-	 * before the insertion point then one holding the newly inserted 
-	 * text and one holding the content after the insertion point.
-	 */
-	Piece *before = piece_alloc();
-	Piece *new = piece_alloc();
-	Piece *after = piece_alloc();
+	if (off == p->len) {
+		/* insert between two existing pieces */
+		Piece *new = piece_alloc();
+		piece_init(new, p, p->next, text, strlen(text) /* TODO */);
+		span_init(&c->new, new, new);
+		span_init(&c->old, NULL, NULL);
+	} else {
+		/* insert into middle of an existing piece, therfore split the old
+		 * piece. that is we have 3 new pieces one containing the content
+		 * before the insertion point then one holding the newly inserted 
+		 * text and one holding the content after the insertion point.
+		 */
+		Piece *before = piece_alloc();
+		Piece *new = piece_alloc();
+		Piece *after = piece_alloc();
 
-	// TODO: check index calculation
-	piece_init(before, p->prev, new, p->content, off);
-	piece_init(new, before, after, text /* TODO */, strlen(text) /* TODO */);
-	piece_init(after, new, p->next, p->content + off, p->len - off);
+		// TODO: check index calculation
+		piece_init(before, p->prev, new, p->content, off);
+		piece_init(new, before, after, text /* TODO */, strlen(text) /* TODO */);
+		piece_init(after, new, p->next, p->content + off, p->len - off);
 
-	span_init(&c->new, before, after);
-	span_init(&c->old, p, p);
-
+		span_init(&c->new, before, after);
+		span_init(&c->old, p, p);
+	}
+	
 	span_swap(ed, &c->old, &c->new);
+	return true;
 }
 
 bool editor_undo(Editor *ed) {
@@ -231,16 +260,19 @@ int editor_save(Editor *ed, const char *filename) {
 	int fd = open(tmpname, O_CREAT|O_RDWR|O_TRUNC, S_IRUSR|S_IWUSR);
 	if (fd == -1)
 		return -1;
-	ftruncate(fd, ed->size);
-	void *buf = mmap(NULL, ed->size, PROT_WRITE, MAP_SHARED, fd, 0);
-	if (buf == MAP_FAILED)
+	if (ftruncate(fd, ed->size) == -1)
 		goto err;
+	if (ed->size > 0) {
+		void *buf = mmap(NULL, ed->size, PROT_WRITE, MAP_SHARED, fd, 0);
+		if (buf == MAP_FAILED)
+			goto err;
 
-	void *cur = buf;
-	editor_iterate(ed, &cur, 0, copy_content);
+		void *cur = buf;
+		editor_iterate(ed, &cur, 0, copy_content);
 
-	if (munmap(buf, ed->size) == -1)
-		goto err;
+		if (munmap(buf, ed->size) == -1)
+			goto err;
+	}
 	if (close(fd) == -1)
 		return -1;
 	return rename(tmpname, filename);
@@ -271,11 +303,7 @@ Editor *editor_load(const char *filename) {
 		ed->buf.content = mmap(NULL, ed->info.st_size, PROT_READ, MAP_SHARED, ed->fd, 0);
 		if (ed->buf.content == MAP_FAILED)
 			goto out;
-		Piece *p = piece_alloc();
-		piece_init(&ed->begin, NULL, p, NULL, 0);
-		piece_init(p, &ed->begin, &ed->end, ed->buf.content, ed->buf.len);
-		piece_init(&ed->end, p, NULL, NULL, 0);
-		ed->size = ed->buf.len;
+		editor_insert_empty(ed, ed->buf.content, ed->buf.len);
 	}
 	return ed;
 out:
@@ -286,9 +314,10 @@ out:
 }
 
 static void print_piece(Piece *p) {
-	fprintf(stderr, "index: %d\tnext: %d\tprev: %d\n", p->index,
+	fprintf(stderr, "index: %d\tnext: %d\tprev: %d\t len: %d\t content: %p\n", p->index,
 		p->next ? p->next->index : -1, 
-		p->prev ? p->prev->index : -1);
+		p->prev ? p->prev->index : -1,
+		p->len, p->content);
 	fflush(stderr);
 	write(1, p->content, p->len);
 	write(1, "\n", 1);
@@ -303,9 +332,20 @@ void editor_debug(Editor *ed) {
 void editor_iterate(Editor *ed, void *data, size_t pos, iterator_callback_t callback) {
 	Location loc = piece_get(ed, pos);
 	Piece *p = loc.piece;
-	Iterate cont = callback(data, pos, p ? p->content : NULL, p ? p->len - loc.off : 0);
-	if (p)
-		pos += p->len - loc.off;
-	while (p && (cont = callback(data, pos, p->content, p->len)) == CONTINUE)
+	if (!p)
+		return;
+	size_t len = p->len - loc.off;
+	char *content = p->content + loc.off;
+	while (p && callback(data, pos, content, len) == CONTINUE) {
+		pos += len;
 		p = p->next;
+		if (!p)
+			return;
+		content = p->content;
+		len = p->len;
+	}
+}
+
+void editor_snapshot(Editor *ed) {
+	ed->current_action = NULL;
 }
