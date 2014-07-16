@@ -11,7 +11,7 @@ typedef Iterate (*iterator_callback_t)(void *, size_t pos, const char *content, 
 
 
 bool editor_insert(Editor*, size_t pos, char *c);
-void editor_delete(Editor*, size_t start, size_t end);
+bool editor_delete(Editor*, size_t pos, size_t len);
 bool editor_undo(Editor*);
 bool editor_redo(Editor*);
 void editor_snapshot(Editor*);

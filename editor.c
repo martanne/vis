@@ -46,7 +46,7 @@ struct Change {
 typedef struct Action Action;
 struct Action {
 	Change *change;
-	Action *next; //, *prev;
+	Action *next;
 	time_t timestamp;
 };
 
@@ -344,6 +344,74 @@ void editor_iterate(Editor *ed, void *data, size_t pos, iterator_callback_t call
 		content = p->content;
 		len = p->len;
 	}
+}
+
+bool editor_delete(Editor *ed, size_t pos, size_t len) {
+	if (len == 0)
+		return true;
+	if (pos + len > ed->size)
+		return false;
+	Location loc = piece_get(ed, pos);
+	Piece *p = loc.piece;
+	size_t off = loc.off;
+	size_t cur; // how much has already been deleted
+	bool midway_start = false, midway_end = false;
+	Change *c = change_alloc(ed);
+	if (!c)
+		return false;
+	Piece *before, *after; // unmodified pieces before / after deletion point
+	Piece *start, *end; // span which is removed
+	if (off == p->len) {
+		/* deletion starts at a piece boundry */
+		cur = 0;
+		before = p;
+		start = p->next;
+	} else {
+		/* deletion starts midway through a piece */
+		midway_start = true;
+		cur = p->len - off;
+		start = p;
+		before = piece_alloc();
+	}
+	/* skip all pieces which fall into deletion range */
+	while (cur < len) {
+		p = p->next;
+		cur += p->len;
+	}
+
+	if (cur == len) {
+		/* deletion stops at a piece boundry */
+		end = p;
+		after = p->next;
+	} else { // cur > len
+		/* deletion stops midway through a piece */
+		midway_end = true;
+		end = p;
+		after = piece_alloc();
+		piece_init(after, before, p->next, p->content + p->len - (cur - len), cur - len);
+	}
+
+	if (midway_start) {
+		/* we finally now which piece follows our newly allocated before piece */
+		piece_init(before, start->prev, after, start->content, off);
+	}
+
+	Piece *new_start = NULL, *new_end = NULL;
+	if (midway_start) {
+		new_start = before;
+		if (!midway_end)
+			new_end = before;
+	}
+	if (midway_end) {
+		if (!midway_start)
+			new_start = after;
+		new_end = after;
+	}
+
+	span_init(&c->new, new_start, new_end);
+	span_init(&c->old, start, end);
+	span_swap(ed, &c->old, &c->new);
+	return true;
 }
 
 void editor_snapshot(Editor *ed) {
