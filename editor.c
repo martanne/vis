@@ -414,6 +414,14 @@ bool editor_delete(Editor *ed, size_t pos, size_t len) {
 	return true;
 }
 
+bool editor_replace(Editor *ed, size_t pos, char *c) {
+	// TODO argument validation: pos etc.
+	size_t len = strlen(c);
+	editor_delete(ed, pos, len);
+	editor_insert(ed, pos, c);
+	return true;
+}
+
 void editor_snapshot(Editor *ed) {
 	ed->current_action = NULL;
 }

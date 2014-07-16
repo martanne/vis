@@ -9,8 +9,8 @@ typedef enum {
 
 typedef Iterate (*iterator_callback_t)(void *, size_t pos, const char *content, size_t len);
 
-
 bool editor_insert(Editor*, size_t pos, char *c);
+bool editor_replace(Editor*, size_t pos, char *c);
 bool editor_delete(Editor*, size_t pos, size_t len);
 bool editor_undo(Editor*);
 bool editor_redo(Editor*);
