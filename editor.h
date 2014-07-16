@@ -19,6 +19,7 @@ int editor_save(Editor*, const char *file);
 Editor *editor_load(const char *file);
 char *editor_get(Editor*, size_t pos, size_t len);
 void editor_iterate(Editor *ed, void *, size_t pos, iterator_callback_t);
+void editor_free(Editor *ed);
 
 
 // TMP

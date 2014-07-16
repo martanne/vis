@@ -12,14 +12,20 @@
 
 #include "editor.h"
 
-typedef struct {
-	size_t len, pos;
+#define MAX(a, b)  ((a) < (b) ? (b) : (a))
+
+#define BUFFER_SIZE (1 << 20)
+
+typedef struct Buffer Buffer;
+struct Buffer {
+	size_t size, pos;
 	char *content;
-} Buffer;
+	Buffer *next;
+};
 
 typedef struct Piece Piece;
 struct Piece {
-	Piece *prev, *next;
+	Piece *prev, *next, *global_next;
 	char *content;
 	size_t len;
 	// size_t line_count;
@@ -59,7 +65,59 @@ struct Editor {
 	struct stat info;
 	int fd;
 	const char *filename;
+	Buffer *buffers;
+	Piece *pieces;
+	int piece_count;
 };
+
+/* prototypes */
+static void change_free(Change *c); 
+
+
+static Buffer *buffer_alloc(Editor *ed, size_t size) {
+	Buffer *buf = calloc(1, sizeof(Buffer));
+	if (!buf)
+		return NULL;
+	if (BUFFER_SIZE > size)
+		size = BUFFER_SIZE;
+	if (!(buf->content = malloc(size))) {
+		free(buf);
+		return NULL;
+	}
+	buf->size = size;
+	buf->next = ed->buffers;
+	ed->buffers = buf;
+	return buf;
+}
+
+static void buffer_free(Buffer *buf) {
+	if (!buf)
+		return;
+	free(buf->content);
+	free(buf);
+}
+
+static char *buffer_store(Editor *ed, char *content, size_t len) {
+	Buffer *buf = ed->buffers;
+	if (!buf) {
+		if (!(buf = buffer_alloc(ed, len)))
+			return NULL;
+	}
+	size_t n = buf->size - buf->pos;
+	if (n < len) {
+		/* not engough space in this buffer, allocate a new one.
+		 * this waste some space we could also split the piece
+		 * inorder to fill the buffer
+		 */
+		if (!(buf = buffer_alloc(ed, len)))
+			return NULL;
+	} else {
+		n = len;
+	}
+	char *dest = memcpy(buf->content + buf->pos, content, len);
+	buf->pos += len;
+	return dest;
+}
 
 static void span_init(Span *span, Piece *start, Piece *end) {
 	size_t len = 0;
@@ -77,11 +135,13 @@ static void span_swap(Editor *ed, Span *old, Span *new) {
 	/* TODO use a balanced search tree to keep the pieces
 		instead of a doubly linked list.
 	 */
-	if (!old || old->len == 0) {
+	if (old->len == 0 && new->len == 0) {
+		return;
+	} else if (old->len == 0) {
 		/* insert new span */
 		new->start->prev->next = new->start;
 		new->end->next->prev = new->end;
-	} else if (!new || new->len == 0) {
+	} else if (new->len == 0) {
 		/* delete old span */
 		old->start->prev->next = old->end->next;
 		old->end->next->prev = old->start->prev;
@@ -115,13 +175,28 @@ static Action *action_alloc(Editor *ed) {
 	return a;
 }
 
-static Piece *piece_alloc() {
-	static int piece_count = 3;
+static void action_free(Action *a) {
+	if (!a)
+		return;
+	for (Change *next, *c = a->change; c; c = next) {
+		next = c->next;
+		change_free(c);
+	}
+	free(a);
+}
+
+static Piece *piece_alloc(Editor *ed) {
 	Piece *p = malloc(sizeof(Piece));
 	if (!p)
 		return NULL;
-	p->index = piece_count++;
+	p->index = ++ed->piece_count;
+	p->global_next = ed->pieces;
+	ed->pieces = p;
 	return p;
+}
+
+static void piece_free(Piece *p) {
+	free(p);
 }
 
 static void piece_init(Piece *p, Piece *prev, Piece *next, char *content, size_t len) {
@@ -147,11 +222,6 @@ static Location piece_get(Editor *ed, size_t pos) {
 	return loc;
 }
 
-static void change_add(Action *a, Change *c) {
-	c->next = a->change;
-	a->change = c;
-}
-
 static Change *change_alloc(Editor *ed) {
 	Action *a = ed->current_action;
 	if (!a) {
@@ -162,13 +232,18 @@ static Change *change_alloc(Editor *ed) {
 	Change *c = calloc(1, sizeof(Change));
 	if (!c)
 		return NULL;
-	change_add(a, c);
+	c->next = a->change;
+	a->change = c;
 	return c;
 }
 
+static void change_free(Change *c) {
+	free(c);
+}
+
 static Piece* editor_insert_empty(Editor *ed, char *content, size_t len) {
-	Piece *p;
-	if (ed->size != 0 || !(p = piece_alloc()))
+	Piece *p = piece_alloc(ed);
+	if (!p)
 		return NULL;
 	piece_init(&ed->begin, NULL, p, NULL, 0);
 	piece_init(p, &ed->begin, &ed->end, content, len);
@@ -181,9 +256,14 @@ bool editor_insert(Editor *ed, size_t pos, char *text) {
 	Change *c = change_alloc(ed);
 	if (!c)
 		return false;
+	size_t len = strlen(text); // TODO
+	if (!(text = buffer_store(ed, text, len)))
+		return false;
 	/* special case for an empty document */
 	if (ed->size == 0) {
-		Piece *p = editor_insert_empty(ed, text, strlen(text) /* TODO */);
+		Piece *p = editor_insert_empty(ed, text, len);
+		if (!p)
+			return false;
 		span_init(&c->new, p, p);
 		span_init(&c->old, NULL, NULL);
 		return true;
@@ -193,8 +273,10 @@ bool editor_insert(Editor *ed, size_t pos, char *text) {
 	size_t off = loc.off;
 	if (off == p->len) {
 		/* insert between two existing pieces */
-		Piece *new = piece_alloc();
-		piece_init(new, p, p->next, text, strlen(text) /* TODO */);
+		Piece *new = piece_alloc(ed);
+		if (!new)
+			return false;
+		piece_init(new, p, p->next, text, len);
 		span_init(&c->new, new, new);
 		span_init(&c->old, NULL, NULL);
 	} else {
@@ -203,13 +285,15 @@ bool editor_insert(Editor *ed, size_t pos, char *text) {
 		 * before the insertion point then one holding the newly inserted 
 		 * text and one holding the content after the insertion point.
 		 */
-		Piece *before = piece_alloc();
-		Piece *new = piece_alloc();
-		Piece *after = piece_alloc();
+		Piece *before = piece_alloc(ed);
+		Piece *new = piece_alloc(ed);
+		Piece *after = piece_alloc(ed);
+		if (!before || !new || !after)
+			return false;
 
 		// TODO: check index calculation
 		piece_init(before, p->prev, new, p->content, off);
-		piece_init(new, before, after, text /* TODO */, strlen(text) /* TODO */);
+		piece_init(new, before, after, text, len);
 		piece_init(after, new, p->next, p->content + off, p->len - off);
 
 		span_init(&c->new, before, after);
@@ -287,6 +371,7 @@ Editor *editor_load(const char *filename) {
 		return NULL;
 	ed->begin.index = 1;
 	ed->end.index = 2;
+	ed->piece_count = 2;
 	piece_init(&ed->begin, NULL, &ed->end, NULL, 0);
 	piece_init(&ed->end, &ed->begin, NULL, NULL, 0);
 	if (filename) {
@@ -299,17 +384,18 @@ Editor *editor_load(const char *filename) {
 		if (!S_ISREG(ed->info.st_mode))
 			goto out;
 		// XXX: use lseek(fd, 0, SEEK_END); instead?
-		ed->buf.len = ed->info.st_size;
+		ed->buf.size = ed->info.st_size;
 		ed->buf.content = mmap(NULL, ed->info.st_size, PROT_READ, MAP_SHARED, ed->fd, 0);
 		if (ed->buf.content == MAP_FAILED)
 			goto out;
-		editor_insert_empty(ed, ed->buf.content, ed->buf.len);
+		if (!editor_insert_empty(ed, ed->buf.content, ed->buf.size))
+			goto out;
 	}
 	return ed;
 out:
 	if (ed->fd > 2)
 		close(ed->fd);
-	free(ed);
+	editor_free(ed);
 	return NULL;
 }
 
@@ -371,7 +457,7 @@ bool editor_delete(Editor *ed, size_t pos, size_t len) {
 		midway_start = true;
 		cur = p->len - off;
 		start = p;
-		before = piece_alloc();
+		before = piece_alloc(ed);
 	}
 	/* skip all pieces which fall into deletion range */
 	while (cur < len) {
@@ -387,7 +473,7 @@ bool editor_delete(Editor *ed, size_t pos, size_t len) {
 		/* deletion stops midway through a piece */
 		midway_end = true;
 		end = p;
-		after = piece_alloc();
+		after = piece_alloc(ed);
 		piece_init(after, before, p->next, p->content + p->len - (cur - len), cur - len);
 	}
 
@@ -425,3 +511,30 @@ bool editor_replace(Editor *ed, size_t pos, char *c) {
 void editor_snapshot(Editor *ed) {
 	ed->current_action = NULL;
 }
+
+void editor_free(Editor *ed) {
+	if (!ed)
+		return;
+
+	Action *a;
+	while ((a = action_pop(&ed->undo)))
+		action_free(a);
+	while ((a = action_pop(&ed->redo)))
+		action_free(a);
+
+	for (Piece *next, *p = ed->pieces; p; p = next) {
+		next = p->global_next;
+		piece_free(p);
+	}
+
+	for (Buffer *next, *buf = ed->buffers; buf; buf = next) {
+		next = buf->next;
+		buffer_free(buf);
+	}
+
+	if (ed->buf.content)
+		munmap(ed->buf.content, ed->buf.size);
+
+	free(ed);
+}
+
