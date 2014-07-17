@@ -49,11 +49,11 @@ typedef struct {
 	size_t off;
 } Location;
 
-/* A Span holds a certain range of pieces. Changes to the document are allways 
+/* A Span holds a certain range of pieces. Changes to the document are allways
  * performed by swapping out an existing span with a new one.
- */ 
+ */
 typedef struct {
-	Piece *start, *end;     /* start/end of the span */ 
+	Piece *start, *end;     /* start/end of the span */
 	size_t len;             /* the sum of the lenghts of the pieces which form this span */
 	// size_t line_count;
 } Span;
@@ -78,12 +78,12 @@ struct Action {
 
 /* The main struct holding all information of a given file */
 struct Editor {
-	Buffer buf;             /* original mmap(2)-ed file content at the time of load operation */ 
+	Buffer buf;             /* original mmap(2)-ed file content at the time of load operation */
 	Buffer *buffers;        /* all buffers which have been allocated to hold insertion data */
 	Piece *pieces;		/* all pieces which have been allocated, used to free them */
 	int piece_count;	/* number of pieces allocated, only used for debuging purposes */
 	Piece begin, end;       /* sentinel nodes which always exists but don't hold any data */
-	Action *redo, *undo;    /* two stacks holding all actions performed to the file */ 
+	Action *redo, *undo;    /* two stacks holding all actions performed to the file */
 	Action *current_action; /* action holding all file changes until a snapshot is performed */
 	size_t size;            /* current file content size in bytes */
 	const char *filename;   /* filename of which data was loaded */
@@ -189,7 +189,7 @@ static void span_swap(Editor *ed, Span *old, Span *new) {
 
 static void action_push(Action **stack, Action *action) {
 	action->next = *stack;
-	*stack = action; 
+	*stack = action;
 }
 
 static Action *action_pop(Action **stack) {
@@ -256,7 +256,7 @@ static void piece_init(Piece *p, Piece *prev, Piece *next, char *content, size_t
 
 static Location piece_get(Editor *ed, size_t pos) {
 	Location loc = {};
-	// TODO: handle position at end of file: pos+1 
+	// TODO: handle position at end of file: pos+1
 	size_t cur = 0;
 	for (Piece *p = &ed->begin; p->next; p = p->next) {
 		if (cur <= pos && pos <= cur + p->len) {
@@ -334,7 +334,7 @@ bool editor_insert(Editor *ed, size_t pos, char *text) {
 	} else {
 		/* insert into middle of an existing piece, therfore split the old
 		 * piece. that is we have 3 new pieces one containing the content
-		 * before the insertion point then one holding the newly inserted 
+		 * before the insertion point then one holding the newly inserted
 		 * text and one holding the content after the insertion point.
 		 */
 		Piece *before = piece_alloc(ed);
@@ -351,7 +351,7 @@ bool editor_insert(Editor *ed, size_t pos, char *text) {
 		span_init(&c->new, before, after);
 		span_init(&c->old, p, p);
 	}
-	
+
 	span_swap(ed, &c->old, &c->new);
 	return true;
 }
@@ -364,7 +364,7 @@ bool editor_undo(Editor *ed) {
 		span_swap(ed, &c->new, &c->old);
 	}
 
-	action_push(&ed->redo, a);	
+	action_push(&ed->redo, a);
 	return true;
 }
 
@@ -453,7 +453,7 @@ out:
 
 static void print_piece(Piece *p) {
 	fprintf(stderr, "index: %d\tnext: %d\tprev: %d\t len: %d\t content: %p\n", p->index,
-		p->next ? p->next->index : -1, 
+		p->next ? p->next->index : -1,
 		p->prev ? p->prev->index : -1,
 		p->len, p->content);
 	fflush(stderr);
