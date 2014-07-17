@@ -85,6 +85,7 @@ struct Editor {
 	Piece begin, end;       /* sentinel nodes which always exists but don't hold any data */
 	Action *redo, *undo;    /* two stacks holding all actions performed to the file */
 	Action *current_action; /* action holding all file changes until a snapshot is performed */
+	Action *saved_action;   /* the last action at the time of the save operation */
 	size_t size;            /* current file content size in bytes */
 	const char *filename;   /* filename of which data was loaded */
 	struct stat info;	/* stat as proped on load time */
@@ -411,7 +412,10 @@ int editor_save(Editor *ed, const char *filename) {
 	}
 	if (close(fd) == -1)
 		return -1;
-	return rename(tmpname, filename);
+	if (rename(tmpname, filename) == -1)
+		return -1;
+	ed->saved_action = ed->undo;
+	editor_snapshot(ed);
 err:
 	close(fd);
 	return -1;
@@ -591,6 +595,5 @@ void editor_free(Editor *ed) {
 }
 
 bool editor_modified(Editor *ed) {
-	// TODO: not correct after save
-	return ed->undo != NULL;
+	return ed->saved_action != ed->undo;
 }
