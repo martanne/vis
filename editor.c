@@ -71,8 +71,20 @@ struct Editor {
 };
 
 /* prototypes */
-static void change_free(Change *c); 
-
+static Buffer *buffer_alloc(Editor *ed, size_t size);
+static void buffer_free(Buffer *buf);
+static char *buffer_store(Editor *ed, char *content, size_t len);
+static Piece *piece_alloc(Editor *ed);
+static void piece_free(Piece *p);
+static void piece_init(Piece *p, Piece *prev, Piece *next, char *content, size_t len);
+static void span_init(Span *span, Piece *start, Piece *end);
+static void span_swap(Editor *ed, Span *old, Span *new);
+static Change *change_alloc(Editor *ed);
+static void change_free(Change *c);
+static Action *action_alloc(Editor *ed);
+static void action_free(Action *a);
+static void action_push(Action **stack, Action *action);
+static Action *action_pop(Action **stack);
 
 static Buffer *buffer_alloc(Editor *ed, size_t size) {
 	Buffer *buf = calloc(1, sizeof(Buffer));
@@ -328,11 +340,11 @@ bool editor_redo(Editor *ed) {
 	return true;
 }
 
-Iterate copy_content(void *data, size_t pos, const char *content, size_t len) {
+bool copy_content(void *data, size_t pos, const char *content, size_t len) {
 	char **p = (char **)data;
 	memcpy(*p, content, len);
 	*p += len;
-	return CONTINUE;
+	return true;
 }
 
 int editor_save(Editor *ed, const char *filename) {
@@ -422,7 +434,7 @@ void editor_iterate(Editor *ed, void *data, size_t pos, iterator_callback_t call
 		return;
 	size_t len = p->len - loc.off;
 	char *content = p->content + loc.off;
-	while (p && callback(data, pos, content, len) == CONTINUE) {
+	while (p && callback(data, pos, content, len)) {
 		pos += len;
 		p = p->next;
 		if (!p)

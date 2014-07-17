@@ -2,12 +2,7 @@
 
 typedef struct Editor Editor;
 
-typedef enum {
-	CONTINUE,
-	BREAK,
-} Iterate;
-
-typedef Iterate (*iterator_callback_t)(void *, size_t pos, const char *content, size_t len);
+typedef bool (*iterator_callback_t)(void *, size_t pos, const char *content, size_t len);
 
 bool editor_insert(Editor*, size_t pos, char *c);
 bool editor_replace(Editor*, size_t pos, char *c);
