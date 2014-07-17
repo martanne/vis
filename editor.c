@@ -305,6 +305,34 @@ static Piece* editor_insert_empty(Editor *ed, char *content, size_t len) {
 	return p;
 }
 
+/* When inserting new data there are 2 cases to consider.
+ *
+ *  - in the first the insertion point falls into the middle of an exisiting
+ *    piece which is replaced by three new pieces:
+ *
+ *      /-+ --> +---------------+ --> +-\
+ *      | |     | existing text |     | |
+ *      \-+ <-- +---------------+ <-- +-/
+ *                         ^
+ *                         Insertion point for "demo "
+ *
+ *      /-+ --> +---------+ --> +-----+ --> +-----+ --> +-\
+ *      | |     | existing|     |demo |     |text |     | |
+ *      \-+ <-- +---------+ <-- +-----+ <-- +-----+ <-- +-/
+ *
+ *  - the second case deals with an insertion point at a piece boundry:
+ *
+ *      /-+ --> +---------------+ --> +-\
+ *      | |     | existing text |     | |
+ *      \-+ <-- +---------------+ <-- +-/
+ *            ^
+ *            Insertion point for "short"
+ *
+ *      /-+ --> +-----+ --> +---------------+ --> +-\
+ *      | |     |short|     | existing text |     | |
+ *      \-+ <-- +-----+ <-- +---------------+ <-- +-/
+ */
+
 bool editor_insert(Editor *ed, size_t pos, char *text) {
 	Change *c = change_alloc(ed);
 	if (!c)
