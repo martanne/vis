@@ -4,11 +4,11 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
+#include <fcntl.h>
+#include <errno.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/mman.h>
-#include <fcntl.h>
-#include <errno.h>
 
 #include "editor.h"
 
@@ -16,22 +16,32 @@
 
 #define BUFFER_SIZE (1 << 20)
 
+/* Buffer holding the file content, either readonly mmap(2)-ed from the original
+ * file or heap allocated to store the modifications.
+ */
 typedef struct Buffer Buffer;
 struct Buffer {
-	size_t size, pos;
-	char *content;
-	Buffer *next;
+	size_t size;            /* maximal capacity */
+	size_t pos;             /* current insertion position */
+	char *content;          /* actual data */
+	Buffer *next;           /* next junk */
 };
 
+/* A piece holds a reference (but doesn't itself store) a certain amount of data.
+ * All active pieces chained together form the whole content of the document.
+ * At the beginning there exists only one piece, spanning the whole document.
+ * Upon insertion/delition new pieces will be created to represent the changes.
+ * Generally pieces are never destroyed, but kept around to peform undo/redo operations.
+ */
 typedef struct Piece Piece;
 struct Piece {
-	Editor *editor;
-	Piece *prev, *next;
-	Piece *global_prev, *global_next;
-	char *content;
-	size_t len;
+	Editor *editor;                   /* editor to which this piece belongs */
+	Piece *prev, *next;               /* pointers to the logical predecessor/successor */
+	Piece *global_prev, *global_next; /* double linked list in order of allocation, used to free individual pieces */
+	char *content;                    /* pointer into a Buffer holding the data */
+	size_t len;                       /* the lenght in number of bytes starting from content */
 	// size_t line_count;
-	int index;
+	int index;                        /* unique index identifiying the piece */
 };
 
 typedef struct {
@@ -39,37 +49,46 @@ typedef struct {
 	size_t off;
 } Location;
 
+/* A Span holds a certain range of pieces. Changes to the document are allways 
+ * performed by swapping out an existing span with a new one.
+ */ 
 typedef struct {
-	Piece *start, *end;
-	size_t len;
+	Piece *start, *end;     /* start/end of the span */ 
+	size_t len;             /* the sum of the lenghts of the pieces which form this span */
 	// size_t line_count;
 } Span;
 
+/* A Change keeps all needed information to redo/undo an insertion/deletion. */
 typedef struct Change Change;
 struct Change {
-	Span old, new;
+	Span old;               /* all pieces which are being modified/swapped out by the change */
+	Span new;               /* all pieces which are introduced/swapped in by the change */
 	Change *next;
 };
 
+/* An Action is a list of Changes which are used to undo/redo all modifications
+ * since the last snapshot operation. Actions are kept in an undo and a redo stack.
+ */
 typedef struct Action Action;
 struct Action {
-	Change *change;
-	Action *next;
-	time_t timestamp;
+	Change *change;         /* the most recent change */
+	Action *next;           /* next action in the undo/redo stack */
+	time_t time;            /* when the first change of this action was performed */
 };
 
+/* The main struct holding all information of a given file */
 struct Editor {
-	Buffer buf;
-	Piece begin, end;
-	Action *redo, *undo, *current_action;
-	size_t size;
-	bool modified;
-	struct stat info;
-	int fd;
-	const char *filename;
-	Buffer *buffers;
-	Piece *pieces;
-	int piece_count;
+	Buffer buf;             /* original mmap(2)-ed file content at the time of load operation */ 
+	Buffer *buffers;        /* all buffers which have been allocated to hold insertion data */
+	Piece *pieces;		/* all pieces which have been allocated, used to free them */
+	int piece_count;	/* number of pieces allocated, only used for debuging purposes */
+	Piece begin, end;       /* sentinel nodes which always exists but don't hold any data */
+	Action *redo, *undo;    /* two stacks holding all actions performed to the file */ 
+	Action *current_action; /* action holding all file changes until a snapshot is performed */
+	size_t size;            /* current file content size in bytes */
+	const char *filename;   /* filename of which data was loaded */
+	struct stat info;	/* stat as proped on load time */
+	int fd;                 /* the file descriptor of the original mmap-ed data */
 };
 
 /* prototypes */
@@ -184,6 +203,7 @@ static Action *action_alloc(Editor *ed) {
 	Action *old, *new = calloc(1, sizeof(Action));
 	if (!new)
 		return NULL;
+	new->time = time(NULL);
 	/* throw a away all old redo operations, since we are about to perform a new one */
 	while ((old = action_pop(&ed->redo)))
 		action_free(old);
@@ -570,3 +590,7 @@ void editor_free(Editor *ed) {
 	free(ed);
 }
 
+bool editor_modified(Editor *ed) {
+	// TODO: not correct after save
+	return ed->undo != NULL;
+}
