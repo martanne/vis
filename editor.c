@@ -25,7 +25,9 @@ struct Buffer {
 
 typedef struct Piece Piece;
 struct Piece {
-	Piece *prev, *next, *global_next;
+	Editor *editor;
+	Piece *prev, *next;
+	Piece *global_prev, *global_next;
 	char *content;
 	size_t len;
 	// size_t line_count;
@@ -179,12 +181,15 @@ static Action *action_pop(Action **stack) {
 }
 
 static Action *action_alloc(Editor *ed) {
-	Action *a = calloc(1, sizeof(Action));
-	if (!a)
+	Action *old, *new = calloc(1, sizeof(Action));
+	if (!new)
 		return NULL;
-	ed->current_action = a;
-	action_push(&ed->undo, a);
-	return a;
+	/* throw a away all old redo operations, since we are about to perform a new one */
+	while ((old = action_pop(&ed->redo)))
+		action_free(old);
+	ed->current_action = new;
+	action_push(&ed->undo, new);
+	return new;
 }
 
 static void action_free(Action *a) {
@@ -198,16 +203,27 @@ static void action_free(Action *a) {
 }
 
 static Piece *piece_alloc(Editor *ed) {
-	Piece *p = malloc(sizeof(Piece));
+	Piece *p = calloc(1, sizeof(Piece));
 	if (!p)
 		return NULL;
+	p->editor = ed;
 	p->index = ++ed->piece_count;
 	p->global_next = ed->pieces;
+	if (ed->pieces)
+		ed->pieces->global_prev = p;
 	ed->pieces = p;
 	return p;
 }
 
 static void piece_free(Piece *p) {
+	if (!p)
+		return;
+	if (p->global_prev)
+		p->global_prev->global_next = p->global_next;
+	if (p->global_next)
+		p->global_next->global_prev = p->global_prev;
+	if (p->editor->pieces == p)
+		p->editor->pieces = p->global_next;
 	free(p);
 }
 
@@ -250,6 +266,10 @@ static Change *change_alloc(Editor *ed) {
 }
 
 static void change_free(Change *c) {
+	/* only free the new part of the span, the old one is still in use */
+	piece_free(c->new.start);
+	if (c->new.start != c->new.end)
+		piece_free(c->new.end);
 	free(c);
 }
 
