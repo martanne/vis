@@ -255,6 +255,7 @@ static void piece_init(Piece *p, Piece *prev, Piece *next, char *content, size_t
 	p->len = len;
 }
 
+/* returns the piece holding the text at byte offset pos */
 static Location piece_get(Editor *ed, size_t pos) {
 	Location loc = {};
 	// TODO: handle position at end of file: pos+1
@@ -516,6 +517,20 @@ void editor_iterate(Editor *ed, void *data, size_t pos, iterator_callback_t call
 	}
 }
 
+/* A delete operation can either start/stop midway through a piece or at
+ * a boundry. In the former case a new piece is created to represent the
+ * remaining text before/after the modification point.
+ *
+ *      /-+ --> +---------+ --> +-----+ --> +-----+ --> +-\
+ *      | |     | existing|     |demo |     |text |     | |
+ *      \-+ <-- +---------+ <-- +-----+ <-- +-----+ <-- +-/
+ *                   ^                         ^
+ *                   |------ delete range -----|
+ *
+ *      /-+ --> +----+ --> +--+ --> +-\
+ *      | |     | exi|     |t |     | |
+ *      \-+ <-- +----+ <-- +--+ <-- +-/
+ */
 bool editor_delete(Editor *ed, size_t pos, size_t len) {
 	if (len == 0)
 		return true;
@@ -562,7 +577,7 @@ bool editor_delete(Editor *ed, size_t pos, size_t len) {
 	}
 
 	if (midway_start) {
-		/* we finally now which piece follows our newly allocated before piece */
+		/* we finally know which piece follows our newly allocated before piece */
 		piece_init(before, start->prev, after, start->content, off);
 	}
 
