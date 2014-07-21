@@ -272,6 +272,24 @@ static Location piece_get(Editor *ed, size_t pos) {
 	return loc;
 }
 
+static Location piece_get_public(Editor *ed, size_t pos) {
+	Location loc = {};
+	// TODO: handle position at end of file: pos+1
+	size_t cur = 0;
+	for (Piece *p = ed->begin.next; p->next; p = p->next) {
+		if (cur <= pos && pos <= cur + p->len) {
+			loc.piece = p;
+			loc.off = pos - cur;
+			return loc;
+		}
+		cur += p->len;
+	}
+
+	return loc;
+}
+
+
+
 static Change *change_alloc(Editor *ed) {
 	Action *a = ed->current_action;
 	if (!a) {
@@ -639,4 +657,37 @@ void editor_free(Editor *ed) {
 
 bool editor_modified(Editor *ed) {
 	return ed->saved_action != ed->undo;
+}
+
+Iterator editor_iterator_get(Editor *ed, size_t pos) {
+	Location loc = piece_get_public(ed, pos);
+	Piece *p = loc.piece;
+	return (Iterator){
+		.piece = p,
+		.text = p ? p->content + loc.off : NULL,
+		.len = p ? p->len - loc.off : 0,
+	};
+}
+
+void editor_iterator_next(Iterator *it) {
+	Piece *p = it->piece ? it->piece->next : NULL;
+	*it = (Iterator){
+		.piece = p,
+		.text = p ? p->content : NULL,
+		.len = p ? p->len : 0,
+	};
+}
+
+void editor_iterator_prev(Iterator *it) {
+	Piece *p = it->piece ? it->piece->prev : NULL;
+	*it = (Iterator){
+		.piece = p,
+		.text = p ? p->content : NULL,
+		.len = p ? p->len : 0,
+	};
+}
+
+bool editor_iterator_valid(const Iterator *it) {
+	/* filter out sentinel nodes */
+	return it->piece && it->piece->editor;
 }
