@@ -376,7 +376,6 @@ static void piece_init(Piece *p, Piece *prev, Piece *next, char *content, size_t
  * if pos is zero, then the begin sentinel piece is returned. */
 static Location piece_get(Editor *ed, size_t pos) {
 	Location loc = {};
-	// TODO: handle position at end of file: pos+1
 	size_t cur = 0;
 	for (Piece *p = &ed->begin; p->next; p = p->next) {
 		if (cur <= pos && pos <= cur + p->len) {
@@ -480,7 +479,6 @@ bool editor_insert(Editor *ed, size_t pos, char *text) {
 		Piece *after = piece_alloc(ed);
 		if (!before || !new || !after)
 			return false;
-		// TODO: check index calculation
 		piece_init(before, p->prev, new, p->content, off);
 		piece_init(new, before, after, text, len);
 		piece_init(after, new, p->next, p->content + off, p->len - off);
@@ -520,13 +518,6 @@ bool editor_redo(Editor *ed) {
 	return true;
 }
 
-bool copy_content(void *data, size_t pos, const char *content, size_t len) {
-	char **p = (char **)data;
-	memcpy(*p, content, len);
-	*p += len;
-	return true;
-}
-
 /* save current content to given filename. the data is first saved to
  * a file called `.filename.tmp` and then atomically moved to its final
  * (possibly alredy existing) destination using rename(2).
@@ -548,7 +539,12 @@ int editor_save(Editor *ed, const char *filename) {
 			goto err;
 
 		void *cur = buf;
-		editor_iterate(ed, &cur, 0, copy_content);
+		for (Iterator it = editor_iterator_get(ed, 0);
+		     editor_iterator_valid(&it);
+		     editor_iterator_next(&it)) {
+			memcpy(cur, it.text, it.len);
+			cur += it.len;
+		}
 
 		if (munmap(buf, ed->size) == -1)
 			goto err;
@@ -559,6 +555,7 @@ int editor_save(Editor *ed, const char *filename) {
 		return -1;
 	ed->saved_action = ed->undo;
 	editor_snapshot(ed);
+	return 0;
 err:
 	close(fd);
 	return -1;
