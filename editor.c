@@ -416,17 +416,6 @@ static void change_free(Change *c) {
 	free(c);
 }
 
-static Piece* editor_insert_empty(Editor *ed, char *content, size_t len) {
-	Piece *p = piece_alloc(ed);
-	if (!p)
-		return NULL;
-	piece_init(&ed->begin, NULL, p, NULL, 0);
-	piece_init(p, &ed->begin, &ed->end, content, len);
-	piece_init(&ed->end, p, NULL, NULL, 0);
-	ed->size = len;
-	return p;
-}
-
 /* When inserting new data there are 2 cases to consider.
  *
  *  - in the first the insertion point falls into the middle of an exisiting
@@ -470,15 +459,6 @@ bool editor_insert(Editor *ed, size_t pos, char *text) {
 
 	if (!(text = buffer_store(ed, text, len)))
 		return false;
-	/* special case for an empty document */
-	if (ed->size == 0) {
-		Piece *p = editor_insert_empty(ed, text, len);
-		if (!p)
-			return false;
-		span_init(&c->new, p, p);
-		span_init(&c->old, NULL, NULL);
-		return true;
-	}
 
 	Piece *new = NULL;
 
@@ -610,8 +590,14 @@ Editor *editor_load(const char *filename) {
 		ed->buf.content = mmap(NULL, ed->info.st_size, PROT_READ, MAP_SHARED, ed->fd, 0);
 		if (ed->buf.content == MAP_FAILED)
 			goto out;
-		if (!editor_insert_empty(ed, ed->buf.content, ed->buf.size))
+
+		Piece *p = piece_alloc(ed);
+		if (!p)
 			goto out;
+		piece_init(&ed->begin, NULL, p, NULL, 0);
+		piece_init(p, &ed->begin, &ed->end, ed->buf.content, ed->buf.size);
+		piece_init(&ed->end, p, NULL, NULL, 0);
+		ed->size = ed->buf.size;
 	}
 	return ed;
 out:
