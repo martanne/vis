@@ -38,7 +38,7 @@ struct Piece {
 	Editor *editor;                   /* editor to which this piece belongs */
 	Piece *prev, *next;               /* pointers to the logical predecessor/successor */
 	Piece *global_prev, *global_next; /* double linked list in order of allocation, used to free individual pieces */
-	char *content;                    /* pointer into a Buffer holding the data */
+	const char *content;              /* pointer into a Buffer holding the data */
 	size_t len;                       /* the lenght in number of bytes starting from content */
 	// size_t line_count;
 	int index;                        /* unique index identifiying the piece */
@@ -97,19 +97,19 @@ struct Editor {
 static Buffer *buffer_alloc(Editor *ed, size_t size);
 static void buffer_free(Buffer *buf);
 static bool buffer_capacity(Buffer *buf, size_t len);
-static char *buffer_append(Buffer *buf, char *content, size_t len);
-static bool buffer_insert(Buffer *buf, size_t pos, char *content, size_t len);
+static const char *buffer_append(Buffer *buf, const char *data, size_t len);
+static bool buffer_insert(Buffer *buf, size_t pos, const char *data, size_t len);
 static bool buffer_delete(Buffer *buf, size_t pos, size_t len);
-static char *buffer_store(Editor *ed, char *content, size_t len);
+static const char *buffer_store(Editor *ed, const char *data, size_t len);
 /* cache layer */
 static void cache_piece(Editor *ed, Piece *p);
 static bool cache_contains(Editor *ed, Piece *p);
-static bool cache_insert(Editor *ed, Piece *p, size_t off, char *text, size_t len);
+static bool cache_insert(Editor *ed, Piece *p, size_t off, const char *text, size_t len);
 static bool cache_delete(Editor *ed, Piece *p, size_t off, size_t len);
 /* piece management */
 static Piece *piece_alloc(Editor *ed);
 static void piece_free(Piece *p);
-static void piece_init(Piece *p, Piece *prev, Piece *next, char *content, size_t len);
+static void piece_init(Piece *p, Piece *prev, Piece *next, const char *data, size_t len);
 static Location piece_get(Editor *ed, size_t pos);
 /* span management */
 static void span_init(Span *span, Piece *start, Piece *end);
@@ -153,7 +153,7 @@ static bool buffer_capacity(Buffer *buf, size_t len) {
 }
 
 /* append data to buffer, assumes there is enough space available */
-static char *buffer_append(Buffer *buf, char *content, size_t len) {
+static const char *buffer_append(Buffer *buf, const char *content, size_t len) {
 	char *dest = memcpy(buf->content + buf->len, content, len);
 	buf->len += len;
 	return dest;
@@ -161,7 +161,7 @@ static char *buffer_append(Buffer *buf, char *content, size_t len) {
 
 /* stores the given data in a buffer, allocates a new one if necessary. returns
  * a pointer to the storage location or NULL if allocation failed. */
-static char *buffer_store(Editor *ed, char *content, size_t len) {
+static const char *buffer_store(Editor *ed, const char *content, size_t len) {
 	Buffer *buf = ed->buffers;
 	if ((!buf || !buffer_capacity(buf, len)) && !(buf = buffer_alloc(ed, len)))
 		return NULL;
@@ -170,7 +170,7 @@ static char *buffer_store(Editor *ed, char *content, size_t len) {
 
 /* insert data into buffer at an arbitrary position, this should only be used with
  * data of the most recently created piece. */
-static bool buffer_insert(Buffer *buf, size_t pos, char *content, size_t len) {
+static bool buffer_insert(Buffer *buf, size_t pos, const char *content, size_t len) {
 	if (pos > buf->len || !buffer_capacity(buf, len))
 		return false;
 	if (buf->len == pos)
@@ -228,7 +228,7 @@ static bool cache_contains(Editor *ed, Piece *p) {
 /* try to insert a junk of data at a given piece offset. the insertion is only
  * performed if the piece is the most recenetly changed one. the legnth of the
  * piece, the span containing it and the whole text is adjusted accordingly */
-static bool cache_insert(Editor *ed, Piece *p, size_t off, char *text, size_t len) {
+static bool cache_insert(Editor *ed, Piece *p, size_t off, const char *text, size_t len) {
 	if (!cache_contains(ed, p))
 		return false;
 	Buffer *buf = ed->buffers;
@@ -365,7 +365,7 @@ static void piece_free(Piece *p) {
 	free(p);
 }
 
-static void piece_init(Piece *p, Piece *prev, Piece *next, char *content, size_t len) {
+static void piece_init(Piece *p, Piece *prev, Piece *next, const char *content, size_t len) {
 	p->prev = prev;
 	p->next = next;
 	p->content = content;
@@ -441,21 +441,18 @@ static void change_free(Change *c) {
  *      | |     |short|     | existing text |     | |
  *      \-+ <-- +-----+ <-- +---------------+ <-- +-/
  */
-
-bool editor_insert(Editor *ed, size_t pos, char *text) {
-	size_t len = strlen(text); // TODO
-
+bool editor_insert_raw(Editor *ed, size_t pos, const char *data, size_t len) {
 	Location loc = piece_get(ed, pos);
 	Piece *p = loc.piece;
 	size_t off = loc.off;
-	if (cache_insert(ed, p, off, text, len))
+	if (cache_insert(ed, p, off, data, len))
 		return true;
 
 	Change *c = change_alloc(ed);
 	if (!c)
 		return false;
 
-	if (!(text = buffer_store(ed, text, len)))
+	if (!(data = buffer_store(ed, data, len)))
 		return false;
 
 	Piece *new = NULL;
@@ -465,7 +462,7 @@ bool editor_insert(Editor *ed, size_t pos, char *text) {
 		 * remove, just add a new piece holding the extra text */
 		if (!(new = piece_alloc(ed)))
 			return false;
-		piece_init(new, p, p->next, text, len);
+		piece_init(new, p, p->next, data, len);
 		span_init(&c->new, new, new);
 		span_init(&c->old, NULL, NULL);
 	} else {
@@ -480,7 +477,7 @@ bool editor_insert(Editor *ed, size_t pos, char *text) {
 		if (!before || !new || !after)
 			return false;
 		piece_init(before, p->prev, new, p->content, off);
-		piece_init(new, before, after, text, len);
+		piece_init(new, before, after, data, len);
 		piece_init(after, new, p->next, p->content + off, p->len - off);
 
 		span_init(&c->new, before, after);
@@ -490,6 +487,10 @@ bool editor_insert(Editor *ed, size_t pos, char *text) {
 	cache_piece(ed, new);
 	span_swap(ed, &c->old, &c->new);
 	return true;
+}
+
+bool editor_insert(Editor *ed, size_t pos, const char *data) {
+	return editor_insert_raw(ed, pos, data, strlen(data));
 }
 
 /* undo all changes of the last action, return whether changes existed */
@@ -625,7 +626,7 @@ void editor_iterate(Editor *ed, void *data, size_t pos, iterator_callback_t call
 	if (!p)
 		return;
 	size_t len = p->len - loc.off;
-	char *content = p->content + loc.off;
+	const char *content = p->content + loc.off;
 	while (p && callback(data, pos, content, len)) {
 		pos += len;
 		p = p->next;
@@ -720,12 +721,15 @@ bool editor_delete(Editor *ed, size_t pos, size_t len) {
 	return true;
 }
 
-bool editor_replace(Editor *ed, size_t pos, char *c) {
+bool editor_replace_raw(Editor *ed, size_t pos, const char *data, size_t len) {
 	// TODO argument validation: pos etc.
-	size_t len = strlen(c);
 	editor_delete(ed, pos, len);
-	editor_insert(ed, pos, c);
+	editor_insert(ed, pos, data);
 	return true;
+}
+
+bool editor_replace(Editor *ed, size_t pos, const char *data) {
+	return editor_replace_raw(ed, pos, data, strlen(data));
 }
 
 /* preserve the current text content such that it can be restored by

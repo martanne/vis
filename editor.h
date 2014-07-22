@@ -12,9 +12,11 @@ typedef struct {
 typedef bool (*iterator_callback_t)(void *, size_t pos, const char *content, size_t len);
 
 Editor *editor_load(const char *file);
-bool editor_insert(Editor*, size_t pos, char *c);
+bool editor_insert(Editor*, size_t pos, const char *data);
+bool editor_insert_raw(Editor*, size_t pos, const char *data, size_t len);
 bool editor_delete(Editor*, size_t pos, size_t len);
-bool editor_replace(Editor*, size_t pos, char *c);
+bool editor_replace(Editor*, size_t pos, const char *data);
+bool editor_replace_raw(Editor*, size_t pos, const char *data, size_t len);
 void editor_snapshot(Editor*);
 bool editor_undo(Editor*);
 bool editor_redo(Editor*);
