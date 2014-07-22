@@ -93,17 +93,31 @@ struct Editor {
 	int fd;                 /* the file descriptor of the original mmap-ed data */
 };
 
-/* prototypes */
+/* buffer management */
 static Buffer *buffer_alloc(Editor *ed, size_t size);
 static void buffer_free(Buffer *buf);
+static bool buffer_capacity(Buffer *buf, size_t len);
+static char *buffer_append(Buffer *buf, char *content, size_t len);
+static bool buffer_insert(Buffer *buf, size_t pos, char *content, size_t len);
+static bool buffer_delete(Buffer *buf, size_t pos, size_t len);
 static char *buffer_store(Editor *ed, char *content, size_t len);
+/* cache layer */
+static void cache_piece(Editor *ed, Piece *p);
+static bool cache_contains(Editor *ed, Piece *p);
+static bool cache_insert(Editor *ed, Piece *p, size_t off, char *text, size_t len);
+static bool cache_delete(Editor *ed, Piece *p, size_t off, size_t len);
+/* piece management */
 static Piece *piece_alloc(Editor *ed);
 static void piece_free(Piece *p);
 static void piece_init(Piece *p, Piece *prev, Piece *next, char *content, size_t len);
+static Location piece_get(Editor *ed, size_t pos);
+/* span management */
 static void span_init(Span *span, Piece *start, Piece *end);
 static void span_swap(Editor *ed, Span *old, Span *new);
+/* change management */
 static Change *change_alloc(Editor *ed);
 static void change_free(Change *c);
+/* action management */
 static Action *action_alloc(Editor *ed);
 static void action_free(Action *a);
 static void action_push(Action **stack, Action *action);
