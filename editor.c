@@ -442,6 +442,8 @@ static void change_free(Change *c) {
  *      \-+ <-- +-----+ <-- +---------------+ <-- +-/
  */
 bool editor_insert_raw(Editor *ed, size_t pos, const char *data, size_t len) {
+	if (pos > ed->size)
+		return false;
 	Location loc = piece_get(ed, pos);
 	Piece *p = loc.piece;
 	size_t off = loc.off;
@@ -722,10 +724,9 @@ bool editor_delete(Editor *ed, size_t pos, size_t len) {
 }
 
 bool editor_replace_raw(Editor *ed, size_t pos, const char *data, size_t len) {
-	// TODO argument validation: pos etc.
-	editor_delete(ed, pos, len);
-	editor_insert(ed, pos, data);
-	return true;
+	if (!editor_delete(ed, pos, len))
+		return false;
+	return editor_insert_raw(ed, pos, data, len);
 }
 
 bool editor_replace(Editor *ed, size_t pos, const char *data) {
