@@ -35,18 +35,22 @@ struct Buffer {
  */
 typedef struct Piece Piece;
 struct Piece {
-	Editor *editor;                   /* editor to which this piece belongs */
-	Piece *prev, *next;               /* pointers to the logical predecessor/successor */
-	Piece *global_prev, *global_next; /* double linked list in order of allocation, used to free individual pieces */
-	const char *data;                 /* pointer into a Buffer holding the data */
-	size_t len;                       /* the lenght in number of bytes starting from content */
+	Editor *editor;         /* editor to which this piece belongs */
+	Piece *prev, *next;     /* pointers to the logical predecessor/successor */
+	Piece *global_prev;     /* double linked list in order of allocation, */
+	Piece *global_next;     /* used to free individual pieces */
+	const char *data;       /* pointer into a Buffer holding the data */
+	size_t len;             /* the lenght in number of bytes starting from content */
+	int index;              /* unique index identifiying the piece */
 	// size_t line_count;
-	int index;                        /* unique index identifiying the piece */
 };
 
+/* used to transform a global position (byte offset starting from the begining
+ * of the text) into an offset relative to piece.
+ */
 typedef struct {
-	Piece *piece;
-	size_t off;
+	Piece *piece;           /* piece holding the location */
+	size_t off;             /* offset into the piece in bytes */
 } Location;
 
 /* A Span holds a certain range of pieces. Changes to the document are allways
