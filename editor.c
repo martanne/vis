@@ -194,11 +194,26 @@ static void cache_piece(Editor *ed, Piece *p) {
 /* check whether the given piece was the most recently modified one */
 static bool cache_contains(Editor *ed, Piece *p) {
 	Buffer *buf = ed->buffers;
-	return buf && ed->cache && ed->cache == p && p->content + p->len == buf->content + buf->pos;
+	Action *a = ed->current_action;
+	if (!buf || !ed->cache || ed->cache != p || !a || !a->change)
+		return false;
+
+	Piece *start = a->change->new.start;
+	Piece *end = a->change->new.start;
+	bool found = false;
+	for (Piece *cur = start; !found; cur = cur->next) {
+		if (cur == p)
+			found = true;
+		if (cur == end)
+			break;
+	}
+
+	return found && p->content + p->len == buf->content + buf->pos;
 }
 
 /* try to insert a junk of data at a given piece offset. the insertion is only
- * performed if the piece is the most recenetly changed one. */
+ * performed if the piece is the most recenetly changed one. the legnth of the
+ * piece, the span containing it and the whole text is adjusted accordingly */
 static bool cache_insert(Editor *ed, Piece *p, size_t off, char *text, size_t len) {
 	if (!cache_contains(ed, p))
 		return false;
@@ -206,14 +221,16 @@ static bool cache_insert(Editor *ed, Piece *p, size_t off, char *text, size_t le
 	size_t bufpos = p->content + off - buf->content;
 	if (!buffer_insert(buf, bufpos, text, len))
 		return false;
-	ed->current_action->change->new.len += len;
 	p->len += len;
+	ed->current_action->change->new.len += len;
+	ed->size += len;
 	return true;
 }
 
 /* try to delete a junk of data at a given piece offset. the deletion is only
  * performed if the piece is the most recenetly changed one and the whole
- * affected range lies within it. */
+ * affected range lies within it. the legnth of the piece, the span containing it
+ * and the whole text is adjusted accordingly */
 static bool cache_delete(Editor *ed, Piece *p, size_t off, size_t len) {
 	if (!cache_contains(ed, p))
 		return false;
@@ -221,8 +238,9 @@ static bool cache_delete(Editor *ed, Piece *p, size_t off, size_t len) {
 	size_t bufpos = p->content + off - buf->content;
 	if (off + len > p->len || !buffer_delete(buf, bufpos, len))
 		return false;
-	ed->current_action->change->new.len -= len;
 	p->len -= len;
+	ed->current_action->change->new.len -= len;
+	ed->size -= len;
 	return true;
 }
 
@@ -438,9 +456,6 @@ static Piece* editor_insert_empty(Editor *ed, char *content, size_t len) {
  */
 
 bool editor_insert(Editor *ed, size_t pos, char *text) {
-	Change *c = change_alloc(ed);
-	if (!c)
-		return false;
 	size_t len = strlen(text); // TODO
 
 	Location loc = piece_get(ed, pos);
@@ -448,6 +463,10 @@ bool editor_insert(Editor *ed, size_t pos, char *text) {
 	size_t off = loc.off;
 	if (cache_insert(ed, p, off, text, len))
 		return true;
+
+	Change *c = change_alloc(ed);
+	if (!c)
+		return false;
 
 	if (!(text = buffer_store(ed, text, len)))
 		return false;
