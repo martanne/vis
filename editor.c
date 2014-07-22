@@ -358,28 +358,13 @@ static void piece_init(Piece *p, Piece *prev, Piece *next, char *content, size_t
 	p->len = len;
 }
 
-/* returns the piece holding the text at byte offset pos */
+/* returns the piece holding the text at byte offset pos.
+ * if pos is zero, then the begin sentinel piece is returned. */
 static Location piece_get(Editor *ed, size_t pos) {
 	Location loc = {};
 	// TODO: handle position at end of file: pos+1
 	size_t cur = 0;
 	for (Piece *p = &ed->begin; p->next; p = p->next) {
-		if (cur <= pos && pos <= cur + p->len) {
-			loc.piece = p;
-			loc.off = pos - cur;
-			return loc;
-		}
-		cur += p->len;
-	}
-
-	return loc;
-}
-
-static Location piece_get_public(Editor *ed, size_t pos) {
-	Location loc = {};
-	// TODO: handle position at end of file: pos+1
-	size_t cur = 0;
-	for (Piece *p = ed->begin.next; p->next; p = p->next) {
 		if (cur <= pos && pos <= cur + p->len) {
 			loc.piece = p;
 			loc.off = pos - cur;
@@ -770,8 +755,10 @@ bool editor_modified(Editor *ed) {
 }
 
 Iterator editor_iterator_get(Editor *ed, size_t pos) {
-	Location loc = piece_get_public(ed, pos);
+	Location loc = piece_get(ed, pos);
 	Piece *p = loc.piece;
+	if (p == &ed->begin)
+		p = p->next;
 	return (Iterator){
 		.piece = p,
 		.text = p ? p->content + loc.off : NULL,
