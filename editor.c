@@ -109,6 +109,7 @@ static void action_free(Action *a);
 static void action_push(Action **stack, Action *action);
 static Action *action_pop(Action **stack);
 
+/* allocate a new buffer of MAX(size, BUFFER_SIZE) bytes */
 static Buffer *buffer_alloc(Editor *ed, size_t size) {
 	Buffer *buf = calloc(1, sizeof(Buffer));
 	if (!buf)
@@ -225,6 +226,7 @@ static bool cache_delete(Editor *ed, Piece *p, size_t off, size_t len) {
 	return true;
 }
 
+/* initialize a span and calculate its length */
 static void span_init(Span *span, Piece *start, Piece *end) {
 	size_t len = 0;
 	span->start = start;
@@ -237,6 +239,13 @@ static void span_init(Span *span, Piece *start, Piece *end) {
 	span->len = len;
 }
 
+/* swap out an old span and replace it with a new one.
+ *
+ *  - if old is an empty span do not remove anything, just insert the new one
+ *  - if new is an empty span do not insert anything, just remove the old one
+ *
+ * adjusts the document size accordingly.
+ */
 static void span_swap(Editor *ed, Span *old, Span *new) {
 	/* TODO use a balanced search tree to keep the pieces
 		instead of a doubly linked list.
@@ -272,12 +281,14 @@ static Action *action_pop(Action **stack) {
 	return action;
 }
 
+/* allocate a new action, empty the redo stack and push the new action onto
+ * the undo stack. all further changes will be associated with this action. */
 static Action *action_alloc(Editor *ed) {
 	Action *old, *new = calloc(1, sizeof(Action));
 	if (!new)
 		return NULL;
 	new->time = time(NULL);
-	/* throw a away all old redo operations, since we are about to perform a new one */
+	/* throw a away all old redo operations */
 	while ((old = action_pop(&ed->redo)))
 		action_free(old);
 	ed->current_action = new;
@@ -362,6 +373,8 @@ static Location piece_get_public(Editor *ed, size_t pos) {
 	return loc;
 }
 
+/* allocate a new change, associate it with current action or a newly
+ * allocated one if none exists. */
 static Change *change_alloc(Editor *ed) {
 	Action *a = ed->current_action;
 	if (!a) {
@@ -451,7 +464,8 @@ bool editor_insert(Editor *ed, size_t pos, char *text) {
 	Piece *new = NULL;
 
 	if (off == p->len) {
-		/* insert between two existing pieces */
+		/* insert between two existing pieces, hence there is nothing to
+		 * remove, just add a new piece holding the extra text */
 		if (!(new = piece_alloc(ed)))
 			return false;
 		piece_init(new, p, p->next, text, len);
@@ -482,6 +496,7 @@ bool editor_insert(Editor *ed, size_t pos, char *text) {
 	return true;
 }
 
+/* undo all changes of the last action, return whether changes existed */
 bool editor_undo(Editor *ed) {
 	Action *a = action_pop(&ed->undo);
 	if (!a)
@@ -494,6 +509,7 @@ bool editor_undo(Editor *ed) {
 	return true;
 }
 
+/* redo all changes of the last action, return whether changes existed */
 bool editor_redo(Editor *ed) {
 	Action *a = action_pop(&ed->redo);
 	if (!a)
@@ -513,6 +529,10 @@ bool copy_content(void *data, size_t pos, const char *content, size_t len) {
 	return true;
 }
 
+/* save current content to given filename. the data is first saved to
+ * a file called `.filename.tmp` and then atomically moved to its final
+ * (possibly alredy existing) destination using rename(2).
+ */
 int editor_save(Editor *ed, const char *filename) {
 	size_t len = strlen(filename) + 10;
 	char tmpname[len];
@@ -546,6 +566,8 @@ err:
 	return -1;
 }
 
+/* load the given file as starting point for further editing operations.
+ * to start with an empty document, pass NULL as filename. */
 Editor *editor_load(const char *filename) {
 	Editor *ed = calloc(1, sizeof(Editor));
 	if (!ed)
@@ -705,6 +727,8 @@ bool editor_replace(Editor *ed, size_t pos, char *c) {
 	return true;
 }
 
+/* preserve the current text content such that it can be restored by
+ * means of undo/redo operations */
 void editor_snapshot(Editor *ed) {
 	ed->current_action = NULL;
 	ed->cache = NULL;
