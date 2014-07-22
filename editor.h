@@ -9,7 +9,7 @@ typedef struct {
 	const Piece const *piece;
 } Iterator;
 
-typedef bool (*iterator_callback_t)(void *, size_t pos, const char *content, size_t len);
+typedef bool (*iterator_callback_t)(void*, size_t pos, const char *data, size_t len);
 
 Editor *editor_load(const char *file);
 bool editor_insert(Editor*, size_t pos, const char *data);
@@ -24,7 +24,7 @@ Iterator editor_iterator_get(Editor*, size_t pos);
 bool editor_iterator_valid(const Iterator*);
 void editor_iterator_next(Iterator*);
 void editor_iterator_prev(Iterator*);
-void editor_iterate(Editor*, void *, size_t pos, iterator_callback_t);
+void editor_iterate(Editor*, void*, size_t pos, iterator_callback_t);
 bool editor_modified(Editor*);
 int editor_save(Editor*, const char *file);
 void editor_free(Editor *ed);

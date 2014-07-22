@@ -23,7 +23,7 @@ typedef struct Buffer Buffer;
 struct Buffer {
 	size_t size;            /* maximal capacity */
 	size_t len;             /* current used length / insertion position */
-	char *content;          /* actual data */
+	char *data;             /* actual data */
 	Buffer *next;           /* next junk */
 };
 
@@ -38,7 +38,7 @@ struct Piece {
 	Editor *editor;                   /* editor to which this piece belongs */
 	Piece *prev, *next;               /* pointers to the logical predecessor/successor */
 	Piece *global_prev, *global_next; /* double linked list in order of allocation, used to free individual pieces */
-	const char *content;              /* pointer into a Buffer holding the data */
+	const char *data;                 /* pointer into a Buffer holding the data */
 	size_t len;                       /* the lenght in number of bytes starting from content */
 	// size_t line_count;
 	int index;                        /* unique index identifiying the piece */
@@ -104,7 +104,7 @@ static const char *buffer_store(Editor *ed, const char *data, size_t len);
 /* cache layer */
 static void cache_piece(Editor *ed, Piece *p);
 static bool cache_contains(Editor *ed, Piece *p);
-static bool cache_insert(Editor *ed, Piece *p, size_t off, const char *text, size_t len);
+static bool cache_insert(Editor *ed, Piece *p, size_t off, const char *data, size_t len);
 static bool cache_delete(Editor *ed, Piece *p, size_t off, size_t len);
 /* piece management */
 static Piece *piece_alloc(Editor *ed);
@@ -130,7 +130,7 @@ static Buffer *buffer_alloc(Editor *ed, size_t size) {
 		return NULL;
 	if (BUFFER_SIZE > size)
 		size = BUFFER_SIZE;
-	if (!(buf->content = malloc(size))) {
+	if (!(buf->data = malloc(size))) {
 		free(buf);
 		return NULL;
 	}
@@ -143,7 +143,7 @@ static Buffer *buffer_alloc(Editor *ed, size_t size) {
 static void buffer_free(Buffer *buf) {
 	if (!buf)
 		return;
-	free(buf->content);
+	free(buf->data);
 	free(buf);
 }
 
@@ -153,31 +153,31 @@ static bool buffer_capacity(Buffer *buf, size_t len) {
 }
 
 /* append data to buffer, assumes there is enough space available */
-static const char *buffer_append(Buffer *buf, const char *content, size_t len) {
-	char *dest = memcpy(buf->content + buf->len, content, len);
+static const char *buffer_append(Buffer *buf, const char *data, size_t len) {
+	char *dest = memcpy(buf->data + buf->len, data, len);
 	buf->len += len;
 	return dest;
 }
 
 /* stores the given data in a buffer, allocates a new one if necessary. returns
  * a pointer to the storage location or NULL if allocation failed. */
-static const char *buffer_store(Editor *ed, const char *content, size_t len) {
+static const char *buffer_store(Editor *ed, const char *data, size_t len) {
 	Buffer *buf = ed->buffers;
 	if ((!buf || !buffer_capacity(buf, len)) && !(buf = buffer_alloc(ed, len)))
 		return NULL;
-	return buffer_append(buf, content, len);
+	return buffer_append(buf, data, len);
 }
 
 /* insert data into buffer at an arbitrary position, this should only be used with
  * data of the most recently created piece. */
-static bool buffer_insert(Buffer *buf, size_t pos, const char *content, size_t len) {
+static bool buffer_insert(Buffer *buf, size_t pos, const char *data, size_t len) {
 	if (pos > buf->len || !buffer_capacity(buf, len))
 		return false;
 	if (buf->len == pos)
-		return buffer_append(buf, content, len);
-	char *insert = buf->content + pos;
+		return buffer_append(buf, data, len);
+	char *insert = buf->data + pos;
 	memmove(insert + len, insert, buf->len - pos);
-	memcpy(insert, content, len);
+	memcpy(insert, data, len);
 	buf->len += len;
 	return true;
 }
@@ -191,7 +191,7 @@ static bool buffer_delete(Buffer *buf, size_t pos, size_t len) {
 		buf->len -= len;
 		return true;
 	}
-	char *delete = buf->content + pos;
+	char *delete = buf->data + pos;
 	memmove(delete, delete + len, buf->len - pos - len);
 	buf->len -= len;
 	return true;
@@ -200,7 +200,7 @@ static bool buffer_delete(Buffer *buf, size_t pos, size_t len) {
 /* cache the given piece if it is the most recently changed one */
 static void cache_piece(Editor *ed, Piece *p) {
 	Buffer *buf = ed->buffers;
-	if (!buf || p->content < buf->content || p->content + p->len != buf->content + buf->len)
+	if (!buf || p->data < buf->data || p->data + p->len != buf->data + buf->len)
 		return;
 	ed->cache = p;
 }
@@ -222,18 +222,18 @@ static bool cache_contains(Editor *ed, Piece *p) {
 			break;
 	}
 
-	return found && p->content + p->len == buf->content + buf->len;
+	return found && p->data + p->len == buf->data + buf->len;
 }
 
 /* try to insert a junk of data at a given piece offset. the insertion is only
  * performed if the piece is the most recenetly changed one. the legnth of the
  * piece, the span containing it and the whole text is adjusted accordingly */
-static bool cache_insert(Editor *ed, Piece *p, size_t off, const char *text, size_t len) {
+static bool cache_insert(Editor *ed, Piece *p, size_t off, const char *data, size_t len) {
 	if (!cache_contains(ed, p))
 		return false;
 	Buffer *buf = ed->buffers;
-	size_t bufpos = p->content + off - buf->content;
-	if (!buffer_insert(buf, bufpos, text, len))
+	size_t bufpos = p->data + off - buf->data;
+	if (!buffer_insert(buf, bufpos, data, len))
 		return false;
 	p->len += len;
 	ed->current_action->change->new.len += len;
@@ -249,7 +249,7 @@ static bool cache_delete(Editor *ed, Piece *p, size_t off, size_t len) {
 	if (!cache_contains(ed, p))
 		return false;
 	Buffer *buf = ed->buffers;
-	size_t bufpos = p->content + off - buf->content;
+	size_t bufpos = p->data + off - buf->data;
 	if (off + len > p->len || !buffer_delete(buf, bufpos, len))
 		return false;
 	p->len -= len;
@@ -365,10 +365,10 @@ static void piece_free(Piece *p) {
 	free(p);
 }
 
-static void piece_init(Piece *p, Piece *prev, Piece *next, const char *content, size_t len) {
+static void piece_init(Piece *p, Piece *prev, Piece *next, const char *data, size_t len) {
 	p->prev = prev;
 	p->next = next;
-	p->content = content;
+	p->data = data;
 	p->len = len;
 }
 
@@ -476,9 +476,9 @@ bool editor_insert_raw(Editor *ed, size_t pos, const char *data, size_t len) {
 		Piece *after = piece_alloc(ed);
 		if (!before || !new || !after)
 			return false;
-		piece_init(before, p->prev, new, p->content, off);
+		piece_init(before, p->prev, new, p->data, off);
 		piece_init(new, before, after, data, len);
-		piece_init(after, new, p->next, p->content + off, p->len - off);
+		piece_init(after, new, p->next, p->data + off, p->len - off);
 
 		span_init(&c->new, before, after);
 		span_init(&c->old, p, p);
@@ -584,15 +584,15 @@ Editor *editor_load(const char *filename) {
 			goto out;
 		// XXX: use lseek(fd, 0, SEEK_END); instead?
 		ed->buf.size = ed->info.st_size;
-		ed->buf.content = mmap(NULL, ed->info.st_size, PROT_READ, MAP_SHARED, ed->fd, 0);
-		if (ed->buf.content == MAP_FAILED)
+		ed->buf.data = mmap(NULL, ed->info.st_size, PROT_READ, MAP_SHARED, ed->fd, 0);
+		if (ed->buf.data == MAP_FAILED)
 			goto out;
 
 		Piece *p = piece_alloc(ed);
 		if (!p)
 			goto out;
 		piece_init(&ed->begin, NULL, p, NULL, 0);
-		piece_init(p, &ed->begin, &ed->end, ed->buf.content, ed->buf.size);
+		piece_init(p, &ed->begin, &ed->end, ed->buf.data, ed->buf.size);
 		piece_init(&ed->end, p, NULL, NULL, 0);
 		ed->size = ed->buf.size;
 	}
@@ -605,12 +605,12 @@ out:
 }
 
 static void print_piece(Piece *p) {
-	fprintf(stderr, "index: %d\tnext: %d\tprev: %d\t len: %d\t content: %p\n", p->index,
+	fprintf(stderr, "index: %d\tnext: %d\tprev: %d\t len: %d\t data: %p\n", p->index,
 		p->next ? p->next->index : -1,
 		p->prev ? p->prev->index : -1,
-		p->len, p->content);
+		p->len, p->data);
 	fflush(stderr);
-	write(1, p->content, p->len);
+	write(1, p->data, p->len);
 	write(1, "\n", 1);
 }
 
@@ -620,19 +620,19 @@ void editor_debug(Editor *ed) {
 	}
 }
 
-void editor_iterate(Editor *ed, void *data, size_t pos, iterator_callback_t callback) {
+void editor_iterate(Editor *ed, void *user, size_t pos, iterator_callback_t callback) {
 	Location loc = piece_get(ed, pos);
 	Piece *p = loc.piece;
 	if (!p)
 		return;
 	size_t len = p->len - loc.off;
-	const char *content = p->content + loc.off;
-	while (p && callback(data, pos, content, len)) {
+	const char *data = p->data + loc.off;
+	while (p && callback(user, pos, data, len)) {
 		pos += len;
 		p = p->next;
 		if (!p)
 			return;
-		content = p->content;
+		data = p->data;
 		len = p->len;
 	}
 }
@@ -695,12 +695,12 @@ bool editor_delete(Editor *ed, size_t pos, size_t len) {
 		midway_end = true;
 		end = p;
 		after = piece_alloc(ed);
-		piece_init(after, before, p->next, p->content + p->len - (cur - len), cur - len);
+		piece_init(after, before, p->next, p->data + p->len - (cur - len), cur - len);
 	}
 
 	if (midway_start) {
 		/* we finally know which piece follows our newly allocated before piece */
-		piece_init(before, start->prev, after, start->content, off);
+		piece_init(before, start->prev, after, start->data, off);
 	}
 
 	Piece *new_start = NULL, *new_end = NULL;
@@ -759,8 +759,8 @@ void editor_free(Editor *ed) {
 		buffer_free(buf);
 	}
 
-	if (ed->buf.content)
-		munmap(ed->buf.content, ed->buf.size);
+	if (ed->buf.data)
+		munmap(ed->buf.data, ed->buf.size);
 
 	free(ed);
 }
@@ -776,7 +776,7 @@ Iterator editor_iterator_get(Editor *ed, size_t pos) {
 		p = p->next;
 	return (Iterator){
 		.piece = p,
-		.text = p ? p->content + loc.off : NULL,
+		.text = p ? p->data + loc.off : NULL,
 		.len = p ? p->len - loc.off : 0,
 	};
 }
@@ -785,7 +785,7 @@ void editor_iterator_next(Iterator *it) {
 	Piece *p = it->piece ? it->piece->next : NULL;
 	*it = (Iterator){
 		.piece = p,
-		.text = p ? p->content : NULL,
+		.text = p ? p->data : NULL,
 		.len = p ? p->len : 0,
 	};
 }
@@ -794,7 +794,7 @@ void editor_iterator_prev(Iterator *it) {
 	Piece *p = it->piece ? it->piece->prev : NULL;
 	*it = (Iterator){
 		.piece = p,
-		.text = p ? p->content : NULL,
+		.text = p ? p->data : NULL,
 		.len = p ? p->len : 0,
 	};
 }
