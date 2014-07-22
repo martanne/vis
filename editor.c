@@ -22,7 +22,7 @@
 typedef struct Buffer Buffer;
 struct Buffer {
 	size_t size;            /* maximal capacity */
-	size_t pos;             /* current insertion position */ // TODO: rename to len
+	size_t len;             /* current used length / insertion position */
 	char *content;          /* actual data */
 	Buffer *next;           /* next junk */
 };
@@ -149,13 +149,13 @@ static void buffer_free(Buffer *buf) {
 
 /* check whether buffer has enough free space to store len bytes */
 static bool buffer_capacity(Buffer *buf, size_t len) {
-	return buf->size - buf->pos >= len;
+	return buf->size - buf->len >= len;
 }
 
 /* append data to buffer, assumes there is enough space available */
 static char *buffer_append(Buffer *buf, char *content, size_t len) {
-	char *dest = memcpy(buf->content + buf->pos, content, len);
-	buf->pos += len;
+	char *dest = memcpy(buf->content + buf->len, content, len);
+	buf->len += len;
 	return dest;
 }
 
@@ -171,36 +171,36 @@ static char *buffer_store(Editor *ed, char *content, size_t len) {
 /* insert data into buffer at an arbitrary position, this should only be used with
  * data of the most recently created piece. */
 static bool buffer_insert(Buffer *buf, size_t pos, char *content, size_t len) {
-	if (pos > buf->pos || !buffer_capacity(buf, len))
+	if (pos > buf->len || !buffer_capacity(buf, len))
 		return false;
-	if (buf->pos == pos)
+	if (buf->len == pos)
 		return buffer_append(buf, content, len);
 	char *insert = buf->content + pos;
-	memmove(insert + len, insert, buf->pos - pos);
+	memmove(insert + len, insert, buf->len - pos);
 	memcpy(insert, content, len);
-	buf->pos += len;
+	buf->len += len;
 	return true;
 }
 
 /* delete data from a buffer at an arbitrary position, this should only be used with
  * data of the most recently created piece. */
 static bool buffer_delete(Buffer *buf, size_t pos, size_t len) {
-	if (pos + len > buf->pos)
+	if (pos + len > buf->len)
 		return false;
-	if (buf->pos == pos) {
-		buf->pos -= len;
+	if (buf->len == pos) {
+		buf->len -= len;
 		return true;
 	}
 	char *delete = buf->content + pos;
-	memmove(delete, delete + len, buf->pos - pos - len);
-	buf->pos -= len;
+	memmove(delete, delete + len, buf->len - pos - len);
+	buf->len -= len;
 	return true;
 }
 
 /* cache the given piece if it is the most recently changed one */
 static void cache_piece(Editor *ed, Piece *p) {
 	Buffer *buf = ed->buffers;
-	if (!buf || p->content < buf->content || p->content + p->len != buf->content + buf->pos)
+	if (!buf || p->content < buf->content || p->content + p->len != buf->content + buf->len)
 		return;
 	ed->cache = p;
 }
@@ -222,7 +222,7 @@ static bool cache_contains(Editor *ed, Piece *p) {
 			break;
 	}
 
-	return found && p->content + p->len == buf->content + buf->pos;
+	return found && p->content + p->len == buf->content + buf->len;
 }
 
 /* try to insert a junk of data at a given piece offset. the insertion is only
