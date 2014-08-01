@@ -33,7 +33,6 @@ struct Buffer {
  * Upon insertion/delition new pieces will be created to represent the changes.
  * Generally pieces are never destroyed, but kept around to peform undo/redo operations.
  */
-typedef struct Piece Piece;
 struct Piece {
 	Editor *editor;         /* editor to which this piece belongs */
 	Piece *prev, *next;     /* pointers to the logical predecessor/successor */
@@ -545,12 +544,11 @@ int editor_save(Editor *ed, const char *filename) {
 		if (buf == MAP_FAILED)
 			goto err;
 
-		void *cur = buf;
-		for (Iterator it = editor_iterator_get(ed, 0);
-		     editor_iterator_valid(&it);
-		     editor_iterator_next(&it)) {
-			memcpy(cur, it.text, it.len);
-			cur += it.len;
+		char *cur = buf;
+		editor_iterate(ed, it, 0) {
+			size_t len = it.end - it.start;
+			memcpy(cur, it.start, len);
+			cur += len;
 		}
 
 		if (munmap(buf, ed->size) == -1)
@@ -623,23 +621,6 @@ static void print_piece(Piece *p) {
 void editor_debug(Editor *ed) {
 	for (Piece *p = &ed->begin; p; p = p->next) {
 		print_piece(p);
-	}
-}
-
-void editor_iterate(Editor *ed, void *user, size_t pos, iterator_callback_t callback) {
-	Location loc = piece_get(ed, pos);
-	Piece *p = loc.piece;
-	if (!p)
-		return;
-	size_t len = p->len - loc.off;
-	const char *data = p->data + loc.off;
-	while (p && callback(user, pos, data, len)) {
-		pos += len;
-		p = p->next;
-		if (!p)
-			return;
-		data = p->data;
-		len = p->len;
 	}
 }
 
@@ -774,37 +755,97 @@ bool editor_modified(Editor *ed) {
 	return ed->saved_action != ed->undo;
 }
 
+static bool editor_iterator_init(Iterator *it, Piece *p, size_t off) {
+	*it = (Iterator){
+		.piece = p,
+		.start = p ? p->data : NULL,
+		.end = p ? p->data + p->len : NULL,
+		.text = p ? p->data + off : NULL,
+	};
+	return editor_iterator_valid(it);
+}
+
 Iterator editor_iterator_get(Editor *ed, size_t pos) {
+	Iterator it;
 	Location loc = piece_get(ed, pos);
 	Piece *p = loc.piece;
-	if (p == &ed->begin)
-		p = p->next;
-	return (Iterator){
-		.piece = p,
-		.text = p ? p->data + loc.off : NULL,
-		.len = p ? p->len - loc.off : 0,
-	};
+	editor_iterator_init(&it, p == &ed->begin ? p->next : p, loc.off);
+	return it;
 }
 
-void editor_iterator_next(Iterator *it) {
-	Piece *p = it->piece ? it->piece->next : NULL;
-	*it = (Iterator){
-		.piece = p,
-		.text = p ? p->data : NULL,
-		.len = p ? p->len : 0,
-	};
+Iterator editor_iterator_byte_get(Editor *ed, size_t pos, char *b) {
+	Iterator it = editor_iterator_get(ed, pos);
+	editor_iterator_byte_peek(&it, b);
+	return it;
 }
 
-void editor_iterator_prev(Iterator *it) {
-	Piece *p = it->piece ? it->piece->prev : NULL;
-	*it = (Iterator){
-		.piece = p,
-		.text = p ? p->data : NULL,
-		.len = p ? p->len : 0,
-	};
+bool editor_iterator_next(Iterator *it) {
+	return editor_iterator_init(it, it->piece ? it->piece->next : NULL, 0);
+}
+
+bool editor_iterator_prev(Iterator *it) {
+	return editor_iterator_init(it, it->piece ? it->piece->prev : NULL, 0);
 }
 
 bool editor_iterator_valid(const Iterator *it) {
 	/* filter out sentinel nodes */
 	return it->piece && it->piece->editor;
+}
+
+bool editor_iterator_byte_peek(Iterator *it, char *b) {
+	if (editor_iterator_valid(it) && it->start <= it->text && it->text < it->end) {
+		*b = *it->text;
+		return true;
+	}
+	return false;
+}
+
+bool editor_iterator_byte_next(Iterator *it, char *b) {
+	if (!editor_iterator_valid(it))
+		return false;
+	it->text++;
+	while (it->text == it->end) {
+		if (!editor_iterator_next(it))
+			return false;
+		it->text = it->start;
+	}
+	if (b)
+		*b = *it->text;
+	return true;
+}
+
+bool editor_iterator_byte_prev(Iterator *it, char *b) {
+	if (!editor_iterator_valid(it))
+		return false;
+	while (it->text == it->start) {
+		if (!editor_iterator_prev(it))
+			return false;
+		it->text = it->end;
+	}
+	--it->text;
+	if (b)
+		*b = *it->text;
+	return true;
+}
+
+size_t editor_bytes_get(Editor *ed, size_t pos, size_t len, char *buf) {
+	if (!buf)
+		return 0;
+	char *cur = buf;
+	size_t rem = len;
+	editor_iterate(ed, it, pos) {
+		if (rem == 0)
+			break;
+		size_t piece_len = it.end - it.text;
+		if (piece_len > rem)
+			piece_len = rem;
+		memcpy(cur, it.text, piece_len);
+		cur += piece_len;
+		rem -= piece_len;
+	}
+	return len - rem;
+}
+
+size_t editor_size(Editor *ed) {
+	return ed->size;
 }
