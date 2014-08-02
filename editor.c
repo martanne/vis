@@ -16,6 +16,9 @@
 
 #define BUFFER_SIZE (1 << 20)
 
+/* is c the start of a utf8 sequence? */
+#define isutf8(c) (((c)&0xC0)!=0x80)
+
 /* Buffer holding the file content, either readonly mmap(2)-ed from the original
  * file or heap allocated to store the modifications.
  */
@@ -375,8 +378,14 @@ static void piece_init(Piece *p, Piece *prev, Piece *next, const char *data, siz
 	p->len = len;
 }
 
-/* returns the piece holding the text at byte offset pos.
- * if pos is zero, then the begin sentinel piece is returned. */
+/* returns the piece holding the text at byte offset pos. if pos happens to
+ * be at a piece boundry, the piece to the left is returned with an offset
+ * of piece->len this is convenient for modifications to the piece chain
+ * where both pieces (the returned one and the one following it) are needed,
+ * but unsuitable as a public interface.
+ *
+ * in particular if pos is zero, the begin sentinel piece is returned.
+ */
 static Location piece_get(Editor *ed, size_t pos) {
 	Location loc = {};
 	size_t cur = 0;
@@ -614,8 +623,8 @@ static void print_piece(Piece *p) {
 		p->prev ? p->prev->index : -1,
 		p->len, p->data);
 	fflush(stderr);
-	write(1, p->data, p->len);
-	write(1, "\n", 1);
+	write(2, p->data, p->len);
+	write(2, "\n", 1);
 }
 
 void editor_debug(Editor *ed) {
@@ -755,8 +764,9 @@ bool editor_modified(Editor *ed) {
 	return ed->saved_action != ed->undo;
 }
 
-static bool editor_iterator_init(Iterator *it, Piece *p, size_t off) {
+static bool editor_iterator_init(Iterator *it, size_t pos, Piece *p, size_t off) {
 	*it = (Iterator){
+		.pos = pos,
 		.piece = p,
 		.start = p ? p->data : NULL,
 		.end = p ? p->data + p->len : NULL,
@@ -767,37 +777,39 @@ static bool editor_iterator_init(Iterator *it, Piece *p, size_t off) {
 
 Iterator editor_iterator_get(Editor *ed, size_t pos) {
 	Iterator it;
-	Location loc = piece_get(ed, pos);
-	Piece *p = loc.piece;
-	editor_iterator_init(&it, p == &ed->begin ? p->next : p, loc.off);
+	Piece *p;
+	size_t cur = 0, off = 0;
+	for (p = ed->begin.next; p->next; p = p->next) {
+		if (cur <= pos && pos < cur + p->len) {
+			off = pos - cur;
+			break;
+		}
+		cur += p->len;
+	}
+
+	editor_iterator_init(&it, pos, p, off);
 	return it;
 }
 
-Iterator editor_iterator_byte_get(Editor *ed, size_t pos, char *b) {
-	Iterator it = editor_iterator_get(ed, pos);
-	editor_iterator_byte_peek(&it, b);
-	return it;
-}
-
-bool editor_iterator_next(Iterator *it) {
-	return editor_iterator_init(it, it->piece ? it->piece->next : NULL, 0);
-}
-
-bool editor_iterator_prev(Iterator *it) {
-	return editor_iterator_init(it, it->piece ? it->piece->prev : NULL, 0);
-}
-
-bool editor_iterator_valid(const Iterator *it) {
-	/* filter out sentinel nodes */
-	return it->piece && it->piece->editor;
-}
-
-bool editor_iterator_byte_peek(Iterator *it, char *b) {
+bool editor_iterator_byte_get(Iterator *it, char *b) {
 	if (editor_iterator_valid(it) && it->start <= it->text && it->text < it->end) {
 		*b = *it->text;
 		return true;
 	}
 	return false;
+}
+
+bool editor_iterator_next(Iterator *it) {
+	return editor_iterator_init(it, it->pos, it->piece ? it->piece->next : NULL, 0);
+}
+
+bool editor_iterator_prev(Iterator *it) {
+	return editor_iterator_init(it, it->pos, it->piece ? it->piece->prev : NULL, 0);
+}
+
+bool editor_iterator_valid(const Iterator *it) {
+	/* filter out sentinel nodes */
+	return it->piece && it->piece->editor;
 }
 
 bool editor_iterator_byte_next(Iterator *it, char *b) {
@@ -809,6 +821,7 @@ bool editor_iterator_byte_next(Iterator *it, char *b) {
 			return false;
 		it->text = it->start;
 	}
+	it->pos++;
 	if (b)
 		*b = *it->text;
 	return true;
@@ -823,9 +836,30 @@ bool editor_iterator_byte_prev(Iterator *it, char *b) {
 		it->text = it->end;
 	}
 	--it->text;
+	--it->pos;
 	if (b)
 		*b = *it->text;
 	return true;
+}
+
+bool editor_iterator_char_next(Iterator *it, char *c) {
+	while (editor_iterator_byte_next(it, NULL)) {
+		if (isutf8(*it->text)) {
+			*c = *it->text;
+			return true;
+		}
+	}
+	return false;
+}
+
+bool editor_iterator_char_prev(Iterator *it, char *c) {
+	while (editor_iterator_byte_prev(it, NULL)) {
+		if (isutf8(*it->text)) {
+			*c = *it->text;
+			return true;
+		}
+	}
+	return false;
 }
 
 size_t editor_bytes_get(Editor *ed, size_t pos, size_t len, char *buf) {

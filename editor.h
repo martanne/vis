@@ -4,10 +4,11 @@ typedef struct Editor Editor;
 typedef struct Piece Piece;
 
 typedef struct {
-	const char const *start;
-	const char const *end;
-	const char const *text;
-	const Piece const *piece;
+	const char const *start;  /* begin of piece's data */
+	const char const *end;    /* pointer to the first byte after valid data i.e. [start, end) */
+	const char const *text;   /* current position within piece: start <= text < end */
+	const Piece const *piece; /* internal state do not touch! */
+	size_t pos;               /* global position in bytes from start of file */
 } Iterator;
 
 #define editor_iterate(ed, it, pos) \
@@ -26,14 +27,18 @@ bool editor_undo(Editor*);
 bool editor_redo(Editor*);
 
 size_t editor_bytes_get(Editor*, size_t pos, size_t len, char *buf);
-bool editor_iterator_valid(const Iterator*);
+
 Iterator editor_iterator_get(Editor*, size_t pos);
+bool editor_iterator_valid(const Iterator*);
 bool editor_iterator_next(Iterator*);
 bool editor_iterator_prev(Iterator*);
-Iterator editor_iterator_byte_get(Editor*, size_t pos, char *byte);
+
+bool editor_iterator_byte_get(Iterator *it, char *b);
 bool editor_iterator_byte_next(Iterator*, char *b);
 bool editor_iterator_byte_prev(Iterator*, char *b);
-bool editor_iterator_byte_peek(Iterator *it, char *b);
+
+bool editor_iterator_char_next(Iterator *it, char *c);
+bool editor_iterator_char_prev(Iterator *it, char *c);
 
 size_t editor_size(Editor*);
 bool editor_modified(Editor*);
