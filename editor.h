@@ -17,6 +17,7 @@ typedef struct {
 	     editor_iterator_next(&it))
 
 Editor *editor_load(const char *file);
+const char *editor_filename(Editor*);
 bool editor_insert(Editor*, size_t pos, const char *data);
 bool editor_insert_raw(Editor*, size_t pos, const char *data, size_t len);
 bool editor_delete(Editor*, size_t pos, size_t len);
@@ -25,6 +26,9 @@ bool editor_replace_raw(Editor*, size_t pos, const char *data, size_t len);
 void editor_snapshot(Editor*);
 bool editor_undo(Editor*);
 bool editor_redo(Editor*);
+
+size_t editor_pos_by_lineno(Editor*, size_t lineno);
+size_t editor_lineno_by_pos(Editor*, size_t pos);
 
 size_t editor_bytes_get(Editor*, size_t pos, size_t len, char *buf);
 

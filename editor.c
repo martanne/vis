@@ -13,6 +13,7 @@
 #include "editor.h"
 
 #define MAX(a, b)  ((a) < (b) ? (b) : (a))
+#define MIN(a, b)  ((a) > (b) ? (b) : (a))
 
 #define BUFFER_SIZE (1 << 20)
 
@@ -44,7 +45,6 @@ struct Piece {
 	const char *data;       /* pointer into a Buffer holding the data */
 	size_t len;             /* the lenght in number of bytes starting from content */
 	int index;              /* unique index identifiying the piece */
-	// size_t line_count;
 };
 
 /* used to transform a global position (byte offset starting from the begining
@@ -61,7 +61,6 @@ typedef struct {
 typedef struct {
 	Piece *start, *end;     /* start/end of the span */
 	size_t len;             /* the sum of the lenghts of the pieces which form this span */
-	// size_t line_count;
 } Span;
 
 /* A Change keeps all needed information to redo/undo an insertion/deletion. */
@@ -82,6 +81,11 @@ struct Action {
 	time_t time;            /* when the first change of this action was performed */
 };
 
+typedef struct {
+	size_t pos;             /* position in bytes from start of file */
+	size_t lineno;          /* line number in file i.e. number of '\n' in [0, pos) */
+} LineCache;
+
 /* The main struct holding all information of a given file */
 struct Editor {
 	Buffer buf;             /* original mmap(2)-ed file content at the time of load operation */
@@ -97,6 +101,7 @@ struct Editor {
 	const char *filename;   /* filename of which data was loaded */
 	struct stat info;	/* stat as proped on load time */
 	int fd;                 /* the file descriptor of the original mmap-ed data */
+	LineCache lines;        /* mapping between absolute pos in bytes and logical line breaks */
 };
 
 /* buffer management */
@@ -128,6 +133,10 @@ static Action *action_alloc(Editor *ed);
 static void action_free(Action *a);
 static void action_push(Action **stack, Action *action);
 static Action *action_pop(Action **stack);
+/* logical line counting cache */
+static void lineno_cache_invalidate(LineCache *cache);
+static size_t lines_skip_forward(Editor *ed, size_t pos, size_t lines);
+static size_t lines_count(Editor *ed, size_t pos, size_t len);
 
 /* allocate a new buffer of MAX(size, BUFFER_SIZE) bytes */
 static Buffer *buffer_alloc(Editor *ed, size_t size) {
@@ -456,6 +465,9 @@ static void change_free(Change *c) {
 bool editor_insert_raw(Editor *ed, size_t pos, const char *data, size_t len) {
 	if (pos > ed->size)
 		return false;
+	if (pos < ed->lines.pos)
+		lineno_cache_invalidate(&ed->lines);
+
 	Location loc = piece_get(ed, pos);
 	Piece *p = loc.piece;
 	size_t off = loc.off;
@@ -586,8 +598,9 @@ Editor *editor_load(const char *filename) {
 	ed->piece_count = 2;
 	piece_init(&ed->begin, NULL, &ed->end, NULL, 0);
 	piece_init(&ed->end, &ed->begin, NULL, NULL, 0);
+	lineno_cache_invalidate(&ed->lines);
 	if (filename) {
-		ed->filename = filename;
+		ed->filename = strdup(filename);
 		ed->fd = open(filename, O_RDONLY);
 		if (ed->fd == -1)
 			goto out;
@@ -652,6 +665,8 @@ bool editor_delete(Editor *ed, size_t pos, size_t len) {
 		return true;
 	if (pos + len > ed->size)
 		return false;
+	if (pos < ed->lines.pos)
+		lineno_cache_invalidate(&ed->lines);
 	Location loc = piece_get(ed, pos);
 	Piece *p = loc.piece;
 	size_t off = loc.off;
@@ -757,6 +772,7 @@ void editor_free(Editor *ed) {
 	if (ed->buf.data)
 		munmap(ed->buf.data, ed->buf.size);
 
+	free((char*)ed->filename);
 	free(ed);
 }
 
@@ -882,4 +898,98 @@ size_t editor_bytes_get(Editor *ed, size_t pos, size_t len, char *buf) {
 
 size_t editor_size(Editor *ed) {
 	return ed->size;
+}
+
+/* count the number of new lines '\n' in range [pos, pos+len) */
+static size_t lines_count(Editor *ed, size_t pos, size_t len) {
+	size_t lines = 0;
+	editor_iterate(ed, it, pos) {
+		const char *start = it.text;
+		while (len > 0 && start < it.end) {
+			size_t n = MIN(len, (size_t)(it.end - start));
+			const char *end = memchr(start, '\n', n);
+			if (!end) {
+				len -= n;
+				break;
+			}
+			lines++;
+			len -= end - start + 1;
+			start = end + 1;
+		}
+
+		if (len == 0)
+			break;
+	}
+	return lines;
+}
+
+/* skip n lines forward and return position afterwards */
+static size_t lines_skip_forward(Editor *ed, size_t pos, size_t lines) {
+	editor_iterate(ed, it, pos) {
+		const char *start = it.text;
+		while (lines > 0 && start < it.end) {
+			size_t n = it.end - start;
+			const char *end = memchr(start, '\n', n);
+			if (!end) {
+				pos += n;
+				break;
+			}
+			pos += end - start + 1;
+			start = end + 1;
+			lines--;
+		}
+
+		if (lines == 0) {
+			if (start < it.end && *start == '\r')
+				pos++;
+			break;
+		}
+	}
+	return pos;
+}
+
+static void lineno_cache_invalidate(LineCache *cache) {
+	cache->pos = 0;
+	cache->lineno = 1;
+}
+
+size_t editor_pos_by_lineno(Editor *ed, size_t lineno) {
+	LineCache *cache = &ed->lines;
+	if (lineno <= 1)
+		return 0;
+	if (lineno > cache->lineno) {
+		cache->pos = lines_skip_forward(ed, cache->pos, lineno - cache->lineno);
+	} else if (lineno < cache->lineno) {
+	#if 0
+		// TODO does it make sense to scan memory backwards here?
+		size_t diff = cache->lineno - lineno;
+		if (diff < lineno) {
+			lines_skip_backward(ed, cache->pos, diff);
+		} else
+	#endif
+		cache->pos = lines_skip_forward(ed, 0, lineno - 1);
+	}
+	cache->lineno = lineno;
+	return cache->pos;
+}
+
+size_t editor_lineno_by_pos(Editor *ed, size_t pos) {
+	LineCache *cache = &ed->lines;
+	if (pos > ed->size)
+		pos = ed->size;
+	if (pos < cache->pos) {
+		size_t diff = cache->pos - pos;
+		if (diff < pos)
+			cache->lineno -= lines_count(ed, pos, diff);
+		else
+			cache->lineno = lines_count(ed, 0, pos) + 1;
+	} else if (pos > cache->pos) {
+		cache->lineno += lines_count(ed, cache->pos, pos - cache->pos);
+	}
+	cache->pos = pos;
+	return cache->lineno;
+}
+
+const char *editor_filename(Editor *ed) {
+	return ed->filename;
 }
