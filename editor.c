@@ -14,6 +14,7 @@
 
 #define MAX(a, b)  ((a) < (b) ? (b) : (a))
 #define MIN(a, b)  ((a) > (b) ? (b) : (a))
+#define LENGTH(x)  ((int)(sizeof (x) / sizeof *(x)))
 
 #define BUFFER_SIZE (1 << 20)
 
@@ -102,6 +103,7 @@ struct Editor {
 	struct stat info;	/* stat as proped on load time */
 	int fd;                 /* the file descriptor of the original mmap-ed data */
 	LineCache lines;        /* mapping between absolute pos in bytes and logical line breaks */
+	size_t marks[26];       /* a mark is a byte offset from the start of the document */
 };
 
 /* buffer management */
@@ -467,6 +469,10 @@ bool editor_insert_raw(Editor *ed, size_t pos, const char *data, size_t len) {
 		return false;
 	if (pos < ed->lines.pos)
 		lineno_cache_invalidate(&ed->lines);
+	for (Mark mark = 0; mark < LENGTH(ed->marks); mark++) {
+		if (ed->marks[mark] > pos)
+			ed->marks[mark] += len;
+	}
 
 	Location loc = piece_get(ed, pos);
 	Piece *p = loc.piece;
@@ -667,6 +673,18 @@ bool editor_delete(Editor *ed, size_t pos, size_t len) {
 		return false;
 	if (pos < ed->lines.pos)
 		lineno_cache_invalidate(&ed->lines);
+	for (Mark mark = 0; mark < LENGTH(ed->marks); mark++) {
+		if (ed->marks[mark] > pos) {
+			if (ed->marks[mark] > pos + len) {
+				/* whole delete range before mark position */
+				ed->marks[mark] -= len;
+			} else {
+				/* mark lies within delete range */
+				editor_mark_clear(ed, mark);
+			}
+		}
+	}
+
 	Location loc = piece_get(ed, pos);
 	Piece *p = loc.piece;
 	size_t off = loc.off;

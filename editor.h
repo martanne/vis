@@ -44,6 +44,12 @@ bool editor_iterator_byte_prev(Iterator*, char *b);
 bool editor_iterator_char_next(Iterator *it, char *c);
 bool editor_iterator_char_prev(Iterator *it, char *c);
 
+typedef int Mark;
+void editor_mark_set(Editor*, Mark, size_t pos);
+size_t editor_mark_get(Editor*, Mark);
+void editor_mark_clear(Editor*, Mark);
+void editor_mark_clear_all(Editor*);
+
 size_t editor_size(Editor*);
 bool editor_modified(Editor*);
 int editor_save(Editor*, const char *file);
