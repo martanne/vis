@@ -6,6 +6,7 @@
 #include <time.h>
 #include <fcntl.h>
 #include <errno.h>
+#include <regex.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/mman.h>
@@ -20,6 +21,11 @@
 
 /* is c the start of a utf8 sequence? */
 #define isutf8(c) (((c)&0xC0)!=0x80)
+
+struct Regex {
+	const char *string;
+	regex_t regex;
+};
 
 /* Buffer holding the file content, either readonly mmap(2)-ed from the original
  * file or heap allocated to store the modifications.
@@ -1008,6 +1014,81 @@ size_t editor_lineno_by_pos(Editor *ed, size_t pos) {
 	return cache->lineno;
 }
 
+void editor_mark_set(Editor *ed, Mark mark, size_t pos) {
+	if (mark < 0 || mark >= LENGTH(ed->marks) || pos >= ed->size)
+		return;
+	ed->marks[mark] = pos;
+}
+
+size_t editor_mark_get(Editor *ed, Mark mark) {
+	if (mark < 0 || mark >= LENGTH(ed->marks))
+		return -1;
+	return ed->marks[mark];
+}
+
+void editor_mark_clear(Editor *ed, Mark mark) {
+	if (mark < 0 || mark >= LENGTH(ed->marks))
+		return;
+	ed->marks[mark] = -1;
+}
+
+void editor_mark_clear_all(Editor *ed) {
+	for (Mark mark = 0; mark < LENGTH(ed->marks); mark++)
+		editor_mark_clear(ed, mark);
+}
+
 const char *editor_filename(Editor *ed) {
 	return ed->filename;
+}
+
+Regex *editor_regex_new(void) {
+	return calloc(1, sizeof(Regex));
+}
+
+int editor_regex_compile(Regex *regex, const char *string, int cflags) {
+	regex->string = string;
+	return regcomp(&regex->regex, string, cflags);
+}
+
+void editor_regex_free(Regex *r) {
+	regfree(&r->regex);
+}
+
+int editor_search_forward(Editor *ed, size_t pos, size_t len, Regex *r, size_t nmatch, RegexMatch pmatch[], int eflags) {
+	char *buf = malloc(len + 1);
+	if (!buf)
+		return REG_NOMATCH;
+	len = editor_bytes_get(ed, pos, len, buf);
+	buf[len] = '\0';
+	regmatch_t match[nmatch];
+	int ret = regexec(&r->regex, buf, nmatch, match, eflags);
+	if (!ret) {
+		for (size_t i = 0; i < nmatch; i++) {
+			pmatch[i].start = match[i].rm_so == -1 ? (size_t)-1 : pos + match[i].rm_so;
+			pmatch[i].end = match[i].rm_eo == -1 ? (size_t)-1 : pos + match[i].rm_eo;
+		}
+	}
+	free(buf);
+	return ret;
+}
+
+int editor_search_backward(Editor *ed, size_t pos, size_t len, Regex *r, size_t nmatch, RegexMatch pmatch[], int eflags) {
+	char *buf = malloc(len + 1);
+	if (!buf)
+		return REG_NOMATCH;
+	len = editor_bytes_get(ed, pos, len, buf);
+	buf[len] = '\0';
+	regmatch_t match[nmatch];
+	char *cur = buf;
+	int ret = REG_NOMATCH;
+	while (!regexec(&r->regex, cur, nmatch, match, eflags)) {
+		ret = 0;
+		for (size_t i = 0; i < nmatch; i++) {
+			pmatch[i].start = match[i].rm_so == -1 ? (size_t)-1 : pos + (size_t)(cur - buf) + match[i].rm_so;
+			pmatch[i].end = match[i].rm_eo == -1 ? (size_t)-1 : pos + (size_t)(cur - buf) + match[i].rm_eo;
+		}
+		cur += match[0].rm_eo;
+	}
+	free(buf);
+	return ret;
 }

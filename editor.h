@@ -55,5 +55,18 @@ bool editor_modified(Editor*);
 int editor_save(Editor*, const char *file);
 void editor_free(Editor *ed);
 
+typedef struct Regex Regex;
+
+typedef struct {
+	size_t start; /* start of match in bytes from start of file or -1 if unused */
+	size_t end;   /* end of match in bytes from start of file or -1 if unused */
+} RegexMatch;
+
+Regex *editor_regex_new(void);
+int editor_regex_compile(Regex *r, const char *regex, int cflags);
+void editor_regex_free(Regex *r);
+int editor_search_forward(Editor*, size_t pos, size_t len, Regex *r, size_t nmatch, RegexMatch pmatch[], int eflags);
+int editor_search_backward(Editor*, size_t pos, size_t len, Regex *r, size_t nmatch, RegexMatch pmatch[], int eflags);
+
 // TMP
 void editor_debug(Editor *ed);
