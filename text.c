@@ -11,7 +11,7 @@
 #include <sys/stat.h>
 #include <sys/mman.h>
 
-#include "editor.h"
+#include "text.h"
 
 #define MAX(a, b)  ((a) < (b) ? (b) : (a))
 #define MIN(a, b)  ((a) > (b) ? (b) : (a))
