@@ -756,16 +756,6 @@ bool text_delete(Text *ed, size_t pos, size_t len) {
 	return true;
 }
 
-bool text_replace_raw(Text *ed, size_t pos, const char *data, size_t len) {
-	if (!text_delete(ed, pos, len))
-		return false;
-	return text_insert_raw(ed, pos, data, len);
-}
-
-bool text_replace(Text *ed, size_t pos, const char *data) {
-	return text_replace_raw(ed, pos, data, strlen(data));
-}
-
 /* preserve the current text content such that it can be restored by
  * means of undo/redo operations */
 void text_snapshot(Text *ed) {

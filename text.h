@@ -21,8 +21,6 @@ const char *text_filename(Text*);
 bool text_insert(Text*, size_t pos, const char *data);
 bool text_insert_raw(Text*, size_t pos, const char *data, size_t len);
 bool text_delete(Text*, size_t pos, size_t len);
-bool text_replace(Text*, size_t pos, const char *data);
-bool text_replace_raw(Text*, size_t pos, const char *data, size_t len);
 void text_snapshot(Text*);
 bool text_undo(Text*);
 bool text_redo(Text*);
