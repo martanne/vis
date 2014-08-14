@@ -45,7 +45,7 @@ struct Buffer {
  * Generally pieces are never destroyed, but kept around to peform undo/redo operations.
  */
 struct Piece {
-	Editor *editor;         /* editor to which this piece belongs */
+	Text *editor;         /* editor to which this piece belongs */
 	Piece *prev, *next;     /* pointers to the logical predecessor/successor */
 	Piece *global_prev;     /* double linked list in order of allocation, */
 	Piece *global_next;     /* used to free individual pieces */
@@ -94,7 +94,7 @@ typedef struct {
 } LineCache;
 
 /* The main struct holding all information of a given file */
-struct Editor {
+struct Text {
 	Buffer buf;             /* original mmap(2)-ed file content at the time of load operation */
 	Buffer *buffers;        /* all buffers which have been allocated to hold insertion data */
 	Piece *pieces;		/* all pieces which have been allocated, used to free them */
@@ -113,41 +113,41 @@ struct Editor {
 };
 
 /* buffer management */
-static Buffer *buffer_alloc(Editor *ed, size_t size);
+static Buffer *buffer_alloc(Text *ed, size_t size);
 static void buffer_free(Buffer *buf);
 static bool buffer_capacity(Buffer *buf, size_t len);
 static const char *buffer_append(Buffer *buf, const char *data, size_t len);
 static bool buffer_insert(Buffer *buf, size_t pos, const char *data, size_t len);
 static bool buffer_delete(Buffer *buf, size_t pos, size_t len);
-static const char *buffer_store(Editor *ed, const char *data, size_t len);
+static const char *buffer_store(Text *ed, const char *data, size_t len);
 /* cache layer */
-static void cache_piece(Editor *ed, Piece *p);
-static bool cache_contains(Editor *ed, Piece *p);
-static bool cache_insert(Editor *ed, Piece *p, size_t off, const char *data, size_t len);
-static bool cache_delete(Editor *ed, Piece *p, size_t off, size_t len);
+static void cache_piece(Text *ed, Piece *p);
+static bool cache_contains(Text *ed, Piece *p);
+static bool cache_insert(Text *ed, Piece *p, size_t off, const char *data, size_t len);
+static bool cache_delete(Text *ed, Piece *p, size_t off, size_t len);
 /* piece management */
-static Piece *piece_alloc(Editor *ed);
+static Piece *piece_alloc(Text *ed);
 static void piece_free(Piece *p);
 static void piece_init(Piece *p, Piece *prev, Piece *next, const char *data, size_t len);
-static Location piece_get(Editor *ed, size_t pos);
+static Location piece_get(Text *ed, size_t pos);
 /* span management */
 static void span_init(Span *span, Piece *start, Piece *end);
-static void span_swap(Editor *ed, Span *old, Span *new);
+static void span_swap(Text *ed, Span *old, Span *new);
 /* change management */
-static Change *change_alloc(Editor *ed);
+static Change *change_alloc(Text *ed);
 static void change_free(Change *c);
 /* action management */
-static Action *action_alloc(Editor *ed);
+static Action *action_alloc(Text *ed);
 static void action_free(Action *a);
 static void action_push(Action **stack, Action *action);
 static Action *action_pop(Action **stack);
 /* logical line counting cache */
 static void lineno_cache_invalidate(LineCache *cache);
-static size_t lines_skip_forward(Editor *ed, size_t pos, size_t lines);
-static size_t lines_count(Editor *ed, size_t pos, size_t len);
+static size_t lines_skip_forward(Text *ed, size_t pos, size_t lines);
+static size_t lines_count(Text *ed, size_t pos, size_t len);
 
 /* allocate a new buffer of MAX(size, BUFFER_SIZE) bytes */
-static Buffer *buffer_alloc(Editor *ed, size_t size) {
+static Buffer *buffer_alloc(Text *ed, size_t size) {
 	Buffer *buf = calloc(1, sizeof(Buffer));
 	if (!buf)
 		return NULL;
@@ -184,7 +184,7 @@ static const char *buffer_append(Buffer *buf, const char *data, size_t len) {
 
 /* stores the given data in a buffer, allocates a new one if necessary. returns
  * a pointer to the storage location or NULL if allocation failed. */
-static const char *buffer_store(Editor *ed, const char *data, size_t len) {
+static const char *buffer_store(Text *ed, const char *data, size_t len) {
 	Buffer *buf = ed->buffers;
 	if ((!buf || !buffer_capacity(buf, len)) && !(buf = buffer_alloc(ed, len)))
 		return NULL;
@@ -221,7 +221,7 @@ static bool buffer_delete(Buffer *buf, size_t pos, size_t len) {
 }
 
 /* cache the given piece if it is the most recently changed one */
-static void cache_piece(Editor *ed, Piece *p) {
+static void cache_piece(Text *ed, Piece *p) {
 	Buffer *buf = ed->buffers;
 	if (!buf || p->data < buf->data || p->data + p->len != buf->data + buf->len)
 		return;
@@ -229,7 +229,7 @@ static void cache_piece(Editor *ed, Piece *p) {
 }
 
 /* check whether the given piece was the most recently modified one */
-static bool cache_contains(Editor *ed, Piece *p) {
+static bool cache_contains(Text *ed, Piece *p) {
 	Buffer *buf = ed->buffers;
 	Action *a = ed->current_action;
 	if (!buf || !ed->cache || ed->cache != p || !a || !a->change)
@@ -251,7 +251,7 @@ static bool cache_contains(Editor *ed, Piece *p) {
 /* try to insert a junk of data at a given piece offset. the insertion is only
  * performed if the piece is the most recenetly changed one. the legnth of the
  * piece, the span containing it and the whole text is adjusted accordingly */
-static bool cache_insert(Editor *ed, Piece *p, size_t off, const char *data, size_t len) {
+static bool cache_insert(Text *ed, Piece *p, size_t off, const char *data, size_t len) {
 	if (!cache_contains(ed, p))
 		return false;
 	Buffer *buf = ed->buffers;
@@ -268,7 +268,7 @@ static bool cache_insert(Editor *ed, Piece *p, size_t off, const char *data, siz
  * performed if the piece is the most recenetly changed one and the whole
  * affected range lies within it. the legnth of the piece, the span containing it
  * and the whole text is adjusted accordingly */
-static bool cache_delete(Editor *ed, Piece *p, size_t off, size_t len) {
+static bool cache_delete(Text *ed, Piece *p, size_t off, size_t len) {
 	if (!cache_contains(ed, p))
 		return false;
 	Buffer *buf = ed->buffers;
@@ -301,7 +301,7 @@ static void span_init(Span *span, Piece *start, Piece *end) {
  *
  * adjusts the document size accordingly.
  */
-static void span_swap(Editor *ed, Span *old, Span *new) {
+static void span_swap(Text *ed, Span *old, Span *new) {
 	/* TODO use a balanced search tree to keep the pieces
 		instead of a doubly linked list.
 	 */
@@ -338,7 +338,7 @@ static Action *action_pop(Action **stack) {
 
 /* allocate a new action, empty the redo stack and push the new action onto
  * the undo stack. all further changes will be associated with this action. */
-static Action *action_alloc(Editor *ed) {
+static Action *action_alloc(Text *ed) {
 	Action *old, *new = calloc(1, sizeof(Action));
 	if (!new)
 		return NULL;
@@ -361,7 +361,7 @@ static void action_free(Action *a) {
 	free(a);
 }
 
-static Piece *piece_alloc(Editor *ed) {
+static Piece *piece_alloc(Text *ed) {
 	Piece *p = calloc(1, sizeof(Piece));
 	if (!p)
 		return NULL;
@@ -403,7 +403,7 @@ static void piece_init(Piece *p, Piece *prev, Piece *next, const char *data, siz
  *
  * in particular if pos is zero, the begin sentinel piece is returned.
  */
-static Location piece_get(Editor *ed, size_t pos) {
+static Location piece_get(Text *ed, size_t pos) {
 	Location loc = {};
 	size_t cur = 0;
 	for (Piece *p = &ed->begin; p->next; p = p->next) {
@@ -420,7 +420,7 @@ static Location piece_get(Editor *ed, size_t pos) {
 
 /* allocate a new change, associate it with current action or a newly
  * allocated one if none exists. */
-static Change *change_alloc(Editor *ed) {
+static Change *change_alloc(Text *ed) {
 	Action *a = ed->current_action;
 	if (!a) {
 		a = action_alloc(ed);
@@ -470,7 +470,7 @@ static void change_free(Change *c) {
  *      | |     |short|     | existing text |     | |
  *      \-+ <-- +-----+ <-- +---------------+ <-- +-/
  */
-bool editor_insert_raw(Editor *ed, size_t pos, const char *data, size_t len) {
+bool text_insert_raw(Text *ed, size_t pos, const char *data, size_t len) {
 	if (pos > ed->size)
 		return false;
 	if (pos < ed->lines.pos)
@@ -527,12 +527,12 @@ bool editor_insert_raw(Editor *ed, size_t pos, const char *data, size_t len) {
 	return true;
 }
 
-bool editor_insert(Editor *ed, size_t pos, const char *data) {
-	return editor_insert_raw(ed, pos, data, strlen(data));
+bool text_insert(Text *ed, size_t pos, const char *data) {
+	return text_insert_raw(ed, pos, data, strlen(data));
 }
 
 /* undo all changes of the last action, return whether changes existed */
-bool editor_undo(Editor *ed) {
+bool text_undo(Text *ed) {
 	Action *a = action_pop(&ed->undo);
 	if (!a)
 		return false;
@@ -545,7 +545,7 @@ bool editor_undo(Editor *ed) {
 }
 
 /* redo all changes of the last action, return whether changes existed */
-bool editor_redo(Editor *ed) {
+bool text_redo(Text *ed) {
 	Action *a = action_pop(&ed->redo);
 	if (!a)
 		return false;
@@ -561,7 +561,7 @@ bool editor_redo(Editor *ed) {
  * a file called `.filename.tmp` and then atomically moved to its final
  * (possibly alredy existing) destination using rename(2).
  */
-int editor_save(Editor *ed, const char *filename) {
+int text_save(Text *ed, const char *filename) {
 	size_t len = strlen(filename) + 10;
 	char tmpname[len];
 	snprintf(tmpname, len, ".%s.tmp", filename);
@@ -578,7 +578,7 @@ int editor_save(Editor *ed, const char *filename) {
 			goto err;
 
 		char *cur = buf;
-		editor_iterate(ed, it, 0) {
+		text_iterate(ed, it, 0) {
 			size_t len = it.end - it.start;
 			memcpy(cur, it.start, len);
 			cur += len;
@@ -592,7 +592,7 @@ int editor_save(Editor *ed, const char *filename) {
 	if (rename(tmpname, filename) == -1)
 		return -1;
 	ed->saved_action = ed->undo;
-	editor_snapshot(ed);
+	text_snapshot(ed);
 	return 0;
 err:
 	close(fd);
@@ -601,8 +601,8 @@ err:
 
 /* load the given file as starting point for further editing operations.
  * to start with an empty document, pass NULL as filename. */
-Editor *editor_load(const char *filename) {
-	Editor *ed = calloc(1, sizeof(Editor));
+Text *text_load(const char *filename) {
+	Text *ed = calloc(1, sizeof(Text));
 	if (!ed)
 		return NULL;
 	ed->begin.index = 1;
@@ -638,7 +638,7 @@ Editor *editor_load(const char *filename) {
 out:
 	if (ed->fd > 2)
 		close(ed->fd);
-	editor_free(ed);
+	text_free(ed);
 	return NULL;
 }
 
@@ -652,7 +652,7 @@ static void print_piece(Piece *p) {
 	write(2, "\n", 1);
 }
 
-void editor_debug(Editor *ed) {
+void text_debug(Text *ed) {
 	for (Piece *p = &ed->begin; p; p = p->next) {
 		print_piece(p);
 	}
@@ -672,7 +672,7 @@ void editor_debug(Editor *ed) {
  *      | |     | exi|     |t |     | |
  *      \-+ <-- +----+ <-- +--+ <-- +-/
  */
-bool editor_delete(Editor *ed, size_t pos, size_t len) {
+bool text_delete(Text *ed, size_t pos, size_t len) {
 	if (len == 0)
 		return true;
 	if (pos + len > ed->size)
@@ -686,7 +686,7 @@ bool editor_delete(Editor *ed, size_t pos, size_t len) {
 				ed->marks[mark] -= len;
 			} else {
 				/* mark lies within delete range */
-				editor_mark_clear(ed, mark);
+				text_mark_clear(ed, mark);
 			}
 		}
 	}
@@ -756,24 +756,24 @@ bool editor_delete(Editor *ed, size_t pos, size_t len) {
 	return true;
 }
 
-bool editor_replace_raw(Editor *ed, size_t pos, const char *data, size_t len) {
-	if (!editor_delete(ed, pos, len))
+bool text_replace_raw(Text *ed, size_t pos, const char *data, size_t len) {
+	if (!text_delete(ed, pos, len))
 		return false;
-	return editor_insert_raw(ed, pos, data, len);
+	return text_insert_raw(ed, pos, data, len);
 }
 
-bool editor_replace(Editor *ed, size_t pos, const char *data) {
-	return editor_replace_raw(ed, pos, data, strlen(data));
+bool text_replace(Text *ed, size_t pos, const char *data) {
+	return text_replace_raw(ed, pos, data, strlen(data));
 }
 
 /* preserve the current text content such that it can be restored by
  * means of undo/redo operations */
-void editor_snapshot(Editor *ed) {
+void text_snapshot(Text *ed) {
 	ed->current_action = NULL;
 	ed->cache = NULL;
 }
 
-void editor_free(Editor *ed) {
+void text_free(Text *ed) {
 	if (!ed)
 		return;
 
@@ -800,11 +800,11 @@ void editor_free(Editor *ed) {
 	free(ed);
 }
 
-bool editor_modified(Editor *ed) {
+bool text_modified(Text *ed) {
 	return ed->saved_action != ed->undo;
 }
 
-static bool editor_iterator_init(Iterator *it, size_t pos, Piece *p, size_t off) {
+static bool text_iterator_init(Iterator *it, size_t pos, Piece *p, size_t off) {
 	*it = (Iterator){
 		.pos = pos,
 		.piece = p,
@@ -812,10 +812,10 @@ static bool editor_iterator_init(Iterator *it, size_t pos, Piece *p, size_t off)
 		.end = p ? p->data + p->len : NULL,
 		.text = p ? p->data + off : NULL,
 	};
-	return editor_iterator_valid(it);
+	return text_iterator_valid(it);
 }
 
-Iterator editor_iterator_get(Editor *ed, size_t pos) {
+Iterator text_iterator_get(Text *ed, size_t pos) {
 	Iterator it;
 	Piece *p;
 	size_t cur = 0, off = 0;
@@ -827,37 +827,37 @@ Iterator editor_iterator_get(Editor *ed, size_t pos) {
 		cur += p->len;
 	}
 
-	editor_iterator_init(&it, pos, p, off);
+	text_iterator_init(&it, pos, p, off);
 	return it;
 }
 
-bool editor_iterator_byte_get(Iterator *it, char *b) {
-	if (editor_iterator_valid(it) && it->start <= it->text && it->text < it->end) {
+bool text_iterator_byte_get(Iterator *it, char *b) {
+	if (text_iterator_valid(it) && it->start <= it->text && it->text < it->end) {
 		*b = *it->text;
 		return true;
 	}
 	return false;
 }
 
-bool editor_iterator_next(Iterator *it) {
-	return editor_iterator_init(it, it->pos, it->piece ? it->piece->next : NULL, 0);
+bool text_iterator_next(Iterator *it) {
+	return text_iterator_init(it, it->pos, it->piece ? it->piece->next : NULL, 0);
 }
 
-bool editor_iterator_prev(Iterator *it) {
-	return editor_iterator_init(it, it->pos, it->piece ? it->piece->prev : NULL, 0);
+bool text_iterator_prev(Iterator *it) {
+	return text_iterator_init(it, it->pos, it->piece ? it->piece->prev : NULL, 0);
 }
 
-bool editor_iterator_valid(const Iterator *it) {
+bool text_iterator_valid(const Iterator *it) {
 	/* filter out sentinel nodes */
 	return it->piece && it->piece->editor;
 }
 
-bool editor_iterator_byte_next(Iterator *it, char *b) {
-	if (!editor_iterator_valid(it))
+bool text_iterator_byte_next(Iterator *it, char *b) {
+	if (!text_iterator_valid(it))
 		return false;
 	it->text++;
 	while (it->text == it->end) {
-		if (!editor_iterator_next(it))
+		if (!text_iterator_next(it))
 			return false;
 		it->text = it->start;
 	}
@@ -867,11 +867,11 @@ bool editor_iterator_byte_next(Iterator *it, char *b) {
 	return true;
 }
 
-bool editor_iterator_byte_prev(Iterator *it, char *b) {
-	if (!editor_iterator_valid(it))
+bool text_iterator_byte_prev(Iterator *it, char *b) {
+	if (!text_iterator_valid(it))
 		return false;
 	while (it->text == it->start) {
-		if (!editor_iterator_prev(it))
+		if (!text_iterator_prev(it))
 			return false;
 		it->text = it->end;
 	}
@@ -882,8 +882,8 @@ bool editor_iterator_byte_prev(Iterator *it, char *b) {
 	return true;
 }
 
-bool editor_iterator_char_next(Iterator *it, char *c) {
-	while (editor_iterator_byte_next(it, NULL)) {
+bool text_iterator_char_next(Iterator *it, char *c) {
+	while (text_iterator_byte_next(it, NULL)) {
 		if (isutf8(*it->text)) {
 			*c = *it->text;
 			return true;
@@ -892,8 +892,8 @@ bool editor_iterator_char_next(Iterator *it, char *c) {
 	return false;
 }
 
-bool editor_iterator_char_prev(Iterator *it, char *c) {
-	while (editor_iterator_byte_prev(it, NULL)) {
+bool text_iterator_char_prev(Iterator *it, char *c) {
+	while (text_iterator_byte_prev(it, NULL)) {
 		if (isutf8(*it->text)) {
 			*c = *it->text;
 			return true;
@@ -902,12 +902,12 @@ bool editor_iterator_char_prev(Iterator *it, char *c) {
 	return false;
 }
 
-size_t editor_bytes_get(Editor *ed, size_t pos, size_t len, char *buf) {
+size_t text_bytes_get(Text *ed, size_t pos, size_t len, char *buf) {
 	if (!buf)
 		return 0;
 	char *cur = buf;
 	size_t rem = len;
-	editor_iterate(ed, it, pos) {
+	text_iterate(ed, it, pos) {
 		if (rem == 0)
 			break;
 		size_t piece_len = it.end - it.text;
@@ -920,14 +920,14 @@ size_t editor_bytes_get(Editor *ed, size_t pos, size_t len, char *buf) {
 	return len - rem;
 }
 
-size_t editor_size(Editor *ed) {
+size_t text_size(Text *ed) {
 	return ed->size;
 }
 
 /* count the number of new lines '\n' in range [pos, pos+len) */
-static size_t lines_count(Editor *ed, size_t pos, size_t len) {
+static size_t lines_count(Text *ed, size_t pos, size_t len) {
 	size_t lines = 0;
-	editor_iterate(ed, it, pos) {
+	text_iterate(ed, it, pos) {
 		const char *start = it.text;
 		while (len > 0 && start < it.end) {
 			size_t n = MIN(len, (size_t)(it.end - start));
@@ -948,8 +948,8 @@ static size_t lines_count(Editor *ed, size_t pos, size_t len) {
 }
 
 /* skip n lines forward and return position afterwards */
-static size_t lines_skip_forward(Editor *ed, size_t pos, size_t lines) {
-	editor_iterate(ed, it, pos) {
+static size_t lines_skip_forward(Text *ed, size_t pos, size_t lines) {
+	text_iterate(ed, it, pos) {
 		const char *start = it.text;
 		while (lines > 0 && start < it.end) {
 			size_t n = it.end - start;
@@ -977,7 +977,7 @@ static void lineno_cache_invalidate(LineCache *cache) {
 	cache->lineno = 1;
 }
 
-size_t editor_pos_by_lineno(Editor *ed, size_t lineno) {
+size_t text_pos_by_lineno(Text *ed, size_t lineno) {
 	LineCache *cache = &ed->lines;
 	if (lineno <= 1)
 		return 0;
@@ -997,7 +997,7 @@ size_t editor_pos_by_lineno(Editor *ed, size_t lineno) {
 	return cache->pos;
 }
 
-size_t editor_lineno_by_pos(Editor *ed, size_t pos) {
+size_t text_lineno_by_pos(Text *ed, size_t pos) {
 	LineCache *cache = &ed->lines;
 	if (pos > ed->size)
 		pos = ed->size;
@@ -1014,51 +1014,51 @@ size_t editor_lineno_by_pos(Editor *ed, size_t pos) {
 	return cache->lineno;
 }
 
-void editor_mark_set(Editor *ed, Mark mark, size_t pos) {
+void text_mark_set(Text *ed, Mark mark, size_t pos) {
 	if (mark < 0 || mark >= LENGTH(ed->marks) || pos >= ed->size)
 		return;
 	ed->marks[mark] = pos;
 }
 
-size_t editor_mark_get(Editor *ed, Mark mark) {
+size_t text_mark_get(Text *ed, Mark mark) {
 	if (mark < 0 || mark >= LENGTH(ed->marks))
 		return -1;
 	return ed->marks[mark];
 }
 
-void editor_mark_clear(Editor *ed, Mark mark) {
+void text_mark_clear(Text *ed, Mark mark) {
 	if (mark < 0 || mark >= LENGTH(ed->marks))
 		return;
 	ed->marks[mark] = -1;
 }
 
-void editor_mark_clear_all(Editor *ed) {
+void text_mark_clear_all(Text *ed) {
 	for (Mark mark = 0; mark < LENGTH(ed->marks); mark++)
-		editor_mark_clear(ed, mark);
+		text_mark_clear(ed, mark);
 }
 
-const char *editor_filename(Editor *ed) {
+const char *text_filename(Text *ed) {
 	return ed->filename;
 }
 
-Regex *editor_regex_new(void) {
+Regex *text_regex_new(void) {
 	return calloc(1, sizeof(Regex));
 }
 
-int editor_regex_compile(Regex *regex, const char *string, int cflags) {
+int text_regex_compile(Regex *regex, const char *string, int cflags) {
 	regex->string = string;
 	return regcomp(&regex->regex, string, cflags);
 }
 
-void editor_regex_free(Regex *r) {
+void text_regex_free(Regex *r) {
 	regfree(&r->regex);
 }
 
-int editor_search_forward(Editor *ed, size_t pos, size_t len, Regex *r, size_t nmatch, RegexMatch pmatch[], int eflags) {
+int text_search_forward(Text *ed, size_t pos, size_t len, Regex *r, size_t nmatch, RegexMatch pmatch[], int eflags) {
 	char *buf = malloc(len + 1);
 	if (!buf)
 		return REG_NOMATCH;
-	len = editor_bytes_get(ed, pos, len, buf);
+	len = text_bytes_get(ed, pos, len, buf);
 	buf[len] = '\0';
 	regmatch_t match[nmatch];
 	int ret = regexec(&r->regex, buf, nmatch, match, eflags);
@@ -1072,11 +1072,11 @@ int editor_search_forward(Editor *ed, size_t pos, size_t len, Regex *r, size_t n
 	return ret;
 }
 
-int editor_search_backward(Editor *ed, size_t pos, size_t len, Regex *r, size_t nmatch, RegexMatch pmatch[], int eflags) {
+int text_search_backward(Text *ed, size_t pos, size_t len, Regex *r, size_t nmatch, RegexMatch pmatch[], int eflags) {
 	char *buf = malloc(len + 1);
 	if (!buf)
 		return REG_NOMATCH;
-	len = editor_bytes_get(ed, pos, len, buf);
+	len = text_bytes_get(ed, pos, len, buf);
 	buf[len] = '\0';
 	regmatch_t match[nmatch];
 	char *cur = buf;
