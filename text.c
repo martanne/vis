@@ -109,7 +109,7 @@ struct Text {
 	struct stat info;	/* stat as proped on load time */
 	int fd;                 /* the file descriptor of the original mmap-ed data */
 	LineCache lines;        /* mapping between absolute pos in bytes and logical line breaks */
-	size_t marks[26];       /* a mark is a byte offset from the start of the document */
+	const char *marks[26];  /* a mark is a pointer into an underlying buffer */
 };
 
 /* buffer management */
@@ -493,10 +493,6 @@ bool text_insert_raw(Text *ed, size_t pos, const char *data, size_t len) {
 		return false;
 	if (pos < ed->lines.pos)
 		lineno_cache_invalidate(&ed->lines);
-	for (Mark mark = 0; mark < LENGTH(ed->marks); mark++) {
-		if (ed->marks[mark] > pos)
-			ed->marks[mark] += len;
-	}
 
 	Location loc = piece_get_intern(ed, pos);
 	Piece *p = loc.piece;
@@ -697,17 +693,6 @@ bool text_delete(Text *ed, size_t pos, size_t len) {
 		return false;
 	if (pos < ed->lines.pos)
 		lineno_cache_invalidate(&ed->lines);
-	for (Mark mark = 0; mark < LENGTH(ed->marks); mark++) {
-		if (ed->marks[mark] > pos) {
-			if (ed->marks[mark] > pos + len) {
-				/* whole delete range before mark position */
-				ed->marks[mark] -= len;
-			} else {
-				/* mark lies within delete range */
-				text_mark_clear(ed, mark);
-			}
-		}
-	}
 
 	Location loc = piece_get_intern(ed, pos);
 	Piece *p = loc.piece;
@@ -1014,21 +999,32 @@ size_t text_lineno_by_pos(Text *ed, size_t pos) {
 }
 
 void text_mark_set(Text *ed, Mark mark, size_t pos) {
-	if (mark < 0 || mark >= LENGTH(ed->marks) || pos >= ed->size)
+	if (mark < 0 || mark >= LENGTH(ed->marks))
 		return;
-	ed->marks[mark] = pos;
+	Location loc = piece_get_extern(ed, pos);
+	if (!loc.piece)
+		return;
+	ed->marks[mark] = loc.piece->data + loc.off;
 }
 
 size_t text_mark_get(Text *ed, Mark mark) {
 	if (mark < 0 || mark >= LENGTH(ed->marks))
 		return -1;
-	return ed->marks[mark];
+	const char *pos = ed->marks[mark];
+	size_t cur = 0;
+	for (Piece *p = ed->begin.next; p->next; p = p->next) {
+		if (p->data <= pos && pos < p->data + p->len)
+			return cur + (pos - p->data);
+		cur += p->len;
+	}
+
+	return -1;
 }
 
 void text_mark_clear(Text *ed, Mark mark) {
 	if (mark < 0 || mark >= LENGTH(ed->marks))
 		return;
-	ed->marks[mark] = -1;
+	ed->marks[mark] = NULL;
 }
 
 void text_mark_clear_all(Text *ed) {
