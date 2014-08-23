@@ -12,15 +12,9 @@
 #include <sys/mman.h>
 
 #include "text.h"
-
-#define MAX(a, b)  ((a) < (b) ? (b) : (a))
-#define MIN(a, b)  ((a) > (b) ? (b) : (a))
-#define LENGTH(x)  ((int)(sizeof (x) / sizeof *(x)))
+#include "util.h"
 
 #define BUFFER_SIZE (1 << 20)
-
-/* is c the start of a utf8 sequence? */
-#define isutf8(c) (((c)&0xC0)!=0x80)
 
 struct Regex {
 	const char *string;
