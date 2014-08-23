@@ -129,7 +129,8 @@ static bool cache_delete(Text *ed, Piece *p, size_t off, size_t len);
 static Piece *piece_alloc(Text *ed);
 static void piece_free(Piece *p);
 static void piece_init(Piece *p, Piece *prev, Piece *next, const char *data, size_t len);
-static Location piece_get(Text *ed, size_t pos);
+static Location piece_get_intern(Text *ed, size_t pos);
+static Location piece_get_extern(Text *ed, size_t pos);
 /* span management */
 static void span_init(Span *span, Piece *start, Piece *end);
 static void span_swap(Text *ed, Span *old, Span *new);
@@ -396,21 +397,38 @@ static void piece_init(Piece *p, Piece *prev, Piece *next, const char *data, siz
 }
 
 /* returns the piece holding the text at byte offset pos. if pos happens to
- * be at a piece boundry, the piece to the left is returned with an offset
- * of piece->len this is convenient for modifications to the piece chain
- * where both pieces (the returned one and the one following it) are needed,
- * but unsuitable as a public interface.
+ * be at a piece boundry i.e. the first byte of a piece then the previous piece
+ * to the left is returned with an offset of piece->len. this is convenient for
+ * modifications to the piece chain where both pieces (the returned one and the
+ * one following it) are needed, but unsuitable as a public interface.
  *
  * in particular if pos is zero, the begin sentinel piece is returned.
  */
-static Location piece_get(Text *ed, size_t pos) {
+static Location piece_get_intern(Text *ed, size_t pos) {
 	Location loc = {};
 	size_t cur = 0;
 	for (Piece *p = &ed->begin; p->next; p = p->next) {
 		if (cur <= pos && pos <= cur + p->len) {
 			loc.piece = p;
 			loc.off = pos - cur;
-			return loc;
+			break;
+		}
+		cur += p->len;
+	}
+
+	return loc;
+}
+
+/* similiar to piece_get_intern but usable as a public API. returns the piece
+ * holding the text at byte offset pos. never returns a sentinel piece. */
+static Location piece_get_extern(Text *ed, size_t pos) {
+	Location loc = {};
+	size_t cur = 0;
+	for (Piece *p = ed->begin.next; p->next; p = p->next) {
+		if (cur <= pos && pos < cur + p->len) {
+			loc.piece = p;
+			loc.off = pos - cur;
+			break;
 		}
 		cur += p->len;
 	}
@@ -480,7 +498,7 @@ bool text_insert_raw(Text *ed, size_t pos, const char *data, size_t len) {
 			ed->marks[mark] += len;
 	}
 
-	Location loc = piece_get(ed, pos);
+	Location loc = piece_get_intern(ed, pos);
 	Piece *p = loc.piece;
 	size_t off = loc.off;
 	if (cache_insert(ed, p, off, data, len))
@@ -691,7 +709,7 @@ bool text_delete(Text *ed, size_t pos, size_t len) {
 		}
 	}
 
-	Location loc = piece_get(ed, pos);
+	Location loc = piece_get_intern(ed, pos);
 	Piece *p = loc.piece;
 	size_t off = loc.off;
 	if (cache_delete(ed, p, off, len))
@@ -807,17 +825,8 @@ static bool text_iterator_init(Iterator *it, size_t pos, Piece *p, size_t off) {
 
 Iterator text_iterator_get(Text *ed, size_t pos) {
 	Iterator it;
-	Piece *p;
-	size_t cur = 0, off = 0;
-	for (p = ed->begin.next; p->next; p = p->next) {
-		if (cur <= pos && pos < cur + p->len) {
-			off = pos - cur;
-			break;
-		}
-		cur += p->len;
-	}
-
-	text_iterator_init(&it, pos, p, off);
+	Location loc = piece_get_extern(ed, pos);
+	text_iterator_init(&it, pos, loc.piece, loc.off);
 	return it;
 }
 
