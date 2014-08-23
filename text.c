@@ -555,6 +555,7 @@ bool text_undo(Text *ed) {
 	}
 
 	action_push(&ed->redo, a);
+	lineno_cache_invalidate(&ed->lines);
 	return true;
 }
 
@@ -568,6 +569,7 @@ bool text_redo(Text *ed) {
 	}
 
 	action_push(&ed->undo, a);
+	lineno_cache_invalidate(&ed->lines);
 	return true;
 }
 
