@@ -21,6 +21,8 @@
 #include <errno.h>
 #include "editor.h"
 #include "text.h"
+#include "text-motions.h"
+#include "text-objects.h"
 #include "util.h"
 
 typedef struct {            /* used to calculate the display width of a character */
@@ -729,23 +731,7 @@ size_t editor_line_down(Editor *ed) {
 }
 
 static size_t window_line_begin(Win *win) {
-	char c;
-	size_t pos = win->cursor.pos;
-	Iterator it = text_iterator_get(win->text, pos);
-	if (!text_iterator_byte_get(&it, &c))
-		return pos;
-	if (c == '\r')
-		text_iterator_byte_prev(&it, &c);
-	if (c == '\n')
-		text_iterator_byte_prev(&it, &c);
-	while (text_iterator_byte_get(&it, &c)) {
-		if (c == '\n' || c == '\r') {
-			it.pos++;
-			break;
-		}
-		text_iterator_byte_prev(&it, NULL);
-	}
-	return cursor_move_to(win, it.pos);
+	return cursor_move_to(win, text_line_begin(win->text, win->cursor.pos));
 }
 
 size_t editor_line_begin(Editor *ed) {
@@ -753,213 +739,76 @@ size_t editor_line_begin(Editor *ed) {
 }
 
 size_t editor_line_start(Editor *ed) {
-	char c;
 	Win *win = ed->win;
-	editor_line_begin(ed);
-	Iterator it = text_iterator_get(win->text, win->cursor.pos);
-	while (text_iterator_byte_get(&it, &c) && c != '\n' && isspace(c))
-		text_iterator_byte_next(&it, NULL);
-	while (win->end < it.pos && scroll_line_down(win, 1));
-	return cursor_move_to(win, it.pos);
+	size_t pos = text_line_start(win->text, win->cursor.pos);
+	while (win->end < pos && scroll_line_down(win, 1));
+	return cursor_move_to(win, pos);
 }
 
 size_t editor_line_end(Editor *ed) {
-	char c;
 	Win *win = ed->win;
-	Iterator it = text_iterator_get(win->text, win->cursor.pos);
-	while (text_iterator_byte_get(&it, &c) && c != '\n')
-		text_iterator_byte_next(&it, NULL);
-	while (win->end < it.pos && scroll_line_down(win, 1));
-	return cursor_move_to(win, it.pos);
+	size_t pos = text_line_end(win->text, win->cursor.pos);
+	while (win->end < pos && scroll_line_down(win, 1));
+	return cursor_move_to(win, pos);
 }
 
 size_t editor_line_finish(Editor *ed) {
-	char c;
 	Win *win = ed->win;
-	Iterator it = text_iterator_get(win->text, editor_line_end(ed));
-	do text_iterator_byte_prev(&it, NULL);
-	while (text_iterator_byte_get(&it, &c) && c != '\n' && c != '\r' && isspace(c));
-	return cursor_move_to(win, it.pos);
+	size_t pos = text_line_finish(win->text, win->cursor.pos);
+	return cursor_move_to(win, pos);
 }
 
 size_t editor_word_end_prev(Editor *ed) {
-	char c;
 	Win *win = ed->win;
-	Iterator it = text_iterator_get(win->text, win->cursor.pos);
-	while (text_iterator_byte_prev(&it, &c) && !isspace(c));
-	while (text_iterator_char_prev(&it, &c) && isspace(c));
-	while (win->start > it.pos && scroll_line_up(win, 1));
-	return cursor_move_to(win, it.pos);
+	size_t pos = text_word_end_prev(win->text, win->cursor.pos);
+	while (win->start > pos && scroll_line_up(win, 1));
+	return cursor_move_to(win, pos);
 }
 
 size_t editor_word_end_next(Editor *ed) {
-	char c;
 	Win *win = ed->win;
-	size_t pos = win->cursor.pos;
-	Iterator it = text_iterator_get(win->text, pos);
-	while (text_iterator_char_next(&it, &c) && isspace(c));
-	do pos = it.pos; while (text_iterator_char_next(&it, &c) && !isspace(c));
+	size_t pos = text_word_end_next(win->text, win->cursor.pos);
 	while (win->end < pos && scroll_line_down(win, 1));
 	return cursor_move_to(win, pos);
 }
 
 size_t editor_word_start_next(Editor *ed) {
-	char c;
 	Win *win = ed->win;
-	Iterator it = text_iterator_get(win->text, win->cursor.pos);
-	while (text_iterator_byte_get(&it, &c) && !isspace(c))
-		text_iterator_byte_next(&it, NULL);
-	while (text_iterator_byte_get(&it, &c) && isspace(c))
-		text_iterator_byte_next(&it, NULL);
-	while (win->end < it.pos && scroll_line_down(win, 1));
-	return cursor_move_to(win, it.pos);
+	size_t pos = text_word_start_next(win->text, win->cursor.pos);
+	while (win->end < pos && scroll_line_down(win, 1));
+	return cursor_move_to(win, pos);
 }
 
 size_t editor_word_start_prev(Editor *ed) {
-	char c;
 	Win *win = ed->win;
-	size_t pos = win->cursor.pos;
-	Iterator it = text_iterator_get(win->text, pos);
-	while (text_iterator_byte_prev(&it, &c) && isspace(c));
-	do pos = it.pos; while (text_iterator_char_prev(&it, &c) && !isspace(c));
+	size_t pos = text_word_start_prev(win->text, win->cursor.pos);
 	while (win->start > pos && scroll_line_up(win, 1));
 	return cursor_move_to(win, pos);
 }
 
-static size_t editor_paragraph_sentence_next(Editor *ed, bool sentence) {
-	char c;
-	bool content = false, paragraph = false;
-	Win *win = ed->win;
-	size_t pos = win->cursor.pos;
-	Iterator it = text_iterator_get(win->text, pos);
-	while (text_iterator_byte_next(&it, &c)) {
-		content |= !isspace(c);
-		if (sentence && (c == '.' || c == '?' || c == '!') && text_iterator_byte_next(&it, &c) && isspace(c)) {
-			if (c == '\n' && text_iterator_byte_next(&it, &c)) {
-				if (c == '\r')
-					text_iterator_byte_next(&it, &c);
-			} else {
-				while (text_iterator_byte_get(&it, &c) && c == ' ')
-					text_iterator_byte_next(&it, NULL);
-			}
-			break;
-		}
-		if (c == '\n' && text_iterator_byte_next(&it, &c)) {
-			if (c == '\r')
-				text_iterator_byte_next(&it, &c);
-			content |= !isspace(c);
-			if (c == '\n')
-				paragraph = true;
-		}
-		if (content && paragraph)
-			break;
-	}
-	while (win->end < it.pos && scroll_line_down(win, 1));
-	return cursor_move_to(win, it.pos);
-}
-
 size_t editor_sentence_next(Editor *ed) {
-	return editor_paragraph_sentence_next(ed, true);
+	Win *win = ed->win;
+	return cursor_move_to_line(win, text_sentence_next(win->text, win->cursor.pos));
 }
 
 size_t editor_paragraph_next(Editor *ed) {
-	return editor_paragraph_sentence_next(ed, false);
-}
-
-static size_t editor_paragraph_sentence_prev(Editor *ed, bool sentence) {
-	char prev, c;
-	bool content = false, paragraph = false;
 	Win *win = ed->win;
-	size_t pos = win->cursor.pos;
-
-	Iterator it = text_iterator_get(win->text, pos);
-	if (!text_iterator_byte_get(&it, &prev))
-		return pos;
-
-	while (text_iterator_byte_prev(&it, &c)) {
-		content |= !isspace(c) && c != '.' && c != '?' && c != '!';
-		if (sentence && content && (c == '.' || c == '?' || c == '!') && isspace(prev)) {
-			do text_iterator_byte_next(&it, NULL);
-			while (text_iterator_byte_get(&it, &c) && isspace(c));
-			break;
-		}
-		if (c == '\r')
-			text_iterator_byte_prev(&it, &c);
-		if (c == '\n' && text_iterator_byte_prev(&it, &c)) {
-			content |= !isspace(c);
-			if (c == '\r')
-				text_iterator_byte_prev(&it, &c);
-			if (c == '\n') {
-				paragraph = true;
-				if (content) {
-					do text_iterator_byte_next(&it, NULL);
-					while (text_iterator_byte_get(&it, &c) && isspace(c));
-					break;
-				}
-			}
-		}
-		if (content && paragraph) {
-			do text_iterator_byte_next(&it, NULL);
-			while (text_iterator_byte_get(&it, &c) && !isspace(c));
-			break;
-		}
-		prev = c;
-	}
-	while (win->end < it.pos && scroll_line_down(win, 1));
-	return cursor_move_to(win, it.pos);
+	return cursor_move_to_line(win, text_paragraph_next(win->text, win->cursor.pos));
 }
 
 size_t editor_sentence_prev(Editor *ed) {
-	return editor_paragraph_sentence_prev(ed, true);
+	Win *win = ed->win;
+	return cursor_move_to_line(win, text_sentence_prev(win->text, win->cursor.pos));
 }
 
 size_t editor_paragraph_prev(Editor *ed) {
-	return editor_paragraph_sentence_prev(ed, false);
+	Win *win = ed->win;
+	return cursor_move_to_line(win, text_paragraph_prev(win->text, win->cursor.pos));
 }
 
 size_t editor_bracket_match(Editor *ed) {
 	Win *win = ed->win;
-	int direction, count = 1;
-	char search, current, c;
-	size_t pos = win->cursor.pos;
-	Iterator it = text_iterator_get(win->text, pos);
-	if (!text_iterator_byte_get(&it, &current))
-		return pos;
-
-	switch (current) {
-	case '(': search = ')'; direction =  1; break;
-	case ')': search = '('; direction = -1; break;
-	case '{': search = '}'; direction =  1; break;
-	case '}': search = '{'; direction = -1; break;
-	case '[': search = ']'; direction =  1; break;
-	case ']': search = '['; direction = -1; break;
-	case '<': search = '>'; direction =  1; break;
-	case '>': search = '<'; direction = -1; break;
-	case '"': search = '"'; direction =  1; break;
-	default: return pos;
-	}
-
-	if (direction >= 0) { /* forward search */
-		while (text_iterator_byte_next(&it, &c)) {
-			if (c == search && --count == 0) {
-				pos = it.pos;
-				break;
-			} else if (c == current) {
-				count++;
-			}
-		}
-	} else { /* backwards */
-		while (text_iterator_byte_prev(&it, &c)) {
-			if (c == search && --count == 0) {
-				pos = it.pos;
-				break;
-			} else if (c == current) {
-				count++;
-			}
-		}
-	}
-
-	return cursor_move_to_line(win, pos);
+	return cursor_move_to_line(win, text_bracket_match(win->text, win->cursor.pos));
 }
 
 void editor_draw(Editor *ed) {

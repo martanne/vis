@@ -1,4 +1,12 @@
+#ifndef TEXT_H
+#define TEXT_H
+
 #include <stdbool.h>
+#include <stddef.h>
+
+typedef struct {
+	size_t start, end; /* range in bytes from start of file */
+} Filerange;
 
 typedef struct Text Text;
 typedef struct Piece Piece;
@@ -28,6 +36,7 @@ bool text_redo(Text*);
 size_t text_pos_by_lineno(Text*, size_t lineno);
 size_t text_lineno_by_pos(Text*, size_t pos);
 
+bool text_byte_get(Text *ed, size_t pos, char *buf);
 size_t text_bytes_get(Text*, size_t pos, size_t len, char *buf);
 
 Iterator text_iterator_get(Text*, size_t pos);
@@ -68,3 +77,5 @@ int text_search_backward(Text*, size_t pos, size_t len, Regex *r, size_t nmatch,
 
 // TMP
 void text_debug(Text *ed);
+
+#endif

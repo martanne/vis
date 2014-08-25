@@ -897,6 +897,10 @@ bool text_iterator_char_prev(Iterator *it, char *c) {
 	return false;
 }
 
+bool text_byte_get(Text *ed, size_t pos, char *buf) {
+	return text_bytes_get(ed, pos, 1, buf);
+}
+
 size_t text_bytes_get(Text *ed, size_t pos, size_t len, char *buf) {
 	if (!buf)
 		return 0;

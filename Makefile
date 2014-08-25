@@ -1,6 +1,8 @@
 include config.mk
 
-SRC += vis.c colors.c editor.c text.c
+SRC += vis.c colors.c editor.c text.c text-motions.c text-objects.c
+ALL = ${SRC} util.h editor.h text.h text-motions.h text-objects.h \
+	config.def.h config.mk Makefile LICENSE README vis.1
 OBJ = ${SRC:.c=.o}
 
 all: clean options vis
@@ -36,8 +38,7 @@ clean:
 dist: clean
 	@echo creating dist tarball
 	@mkdir -p vis-${VERSION}
-	@cp -R LICENSE Makefile README config.def.h config.mk \
-		${SRC} editor.h text.h util.h vis.1 vis-${VERSION}
+	@cp -R ${ALL} vis-${VERSION}
 	@tar -cf vis-${VERSION}.tar vis-${VERSION}
 	@gzip vis-${VERSION}.tar
 	@rm -rf vis-${VERSION}

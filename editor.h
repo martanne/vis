@@ -1,5 +1,9 @@
+#ifndef EDITOR_H
+#define EDITOR_H
+
 #include <curses.h>
 #include <regex.h>
+#include "text.h"
 
 typedef struct {
 	short fg, bg;   /* fore and background color */
@@ -24,10 +28,6 @@ typedef struct {                              /* a syntax definition */
 
 typedef struct Editor Editor;
 typedef size_t Filepos;
-
-typedef struct {
-	Filepos start, end; /* range in bytes from start of file */
-} Filerange;
 
 typedef void (*editor_statusbar_t)(WINDOW *win, bool active, const char *filename, int line, int col);
 
@@ -102,3 +102,5 @@ void editor_init(void);
 // TODO: comment
 short editor_color_reserve(short fg, short bg);
 short editor_color_get(short fg, short bg);
+
+#endif
