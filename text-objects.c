@@ -7,18 +7,35 @@ static Filerange empty = {
 	.end = -1,
 };
 
-// TODO: fix problems with inclusive / exclusive
 Filerange text_object_word(Text *txt, size_t pos) {
-	char c;
+	char c, prev = '0', next = '0';
 	Filerange r;
-	if (!text_byte_get(txt, pos, &c))
+	Iterator it = text_iterator_get(txt, pos);
+	if (!text_iterator_byte_get(&it, &c))
 		return empty;
-	if (!isspace(c)) {
-		r.start = text_word_start_prev(txt, pos);
-		r.end = text_word_end_next(txt, pos);
-	} else {
-		r.start = text_word_end_prev(txt, pos);
+	if (text_iterator_byte_prev(&it, &prev))
+		text_iterator_byte_next(&it, NULL);
+	text_iterator_byte_next(&it, &next);
+	if (isspace(c)) {
+		/* we are in the middle of two words */
+		r.start = text_char_next(txt, text_word_end_prev(txt, pos));
 		r.end = text_word_start_next(txt, pos);
+	} else if (isspace(prev) && isspace(next)) {
+		/* on a single character */
+		r.start = pos;
+		r.end = text_char_next(txt, pos);
+	} else if (isspace(prev)) {
+		/* at start of a word */
+		r.start = pos;
+		r.end = text_char_next(txt, text_word_end_next(txt, pos));
+	} else if (isspace(next)) {
+		/* at end of a word */
+		r.start = text_word_start_prev(txt, pos);
+		r.end = text_char_next(txt, pos);
+	} else {
+		/* in the middle of a word */
+		r.start = text_word_start_prev(txt, pos);
+		r.end = text_char_next(txt, text_word_end_next(txt, pos));
 	}
 	return r;
 }
