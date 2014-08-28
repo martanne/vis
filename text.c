@@ -880,7 +880,8 @@ bool text_iterator_byte_prev(Iterator *it, char *b) {
 bool text_iterator_char_next(Iterator *it, char *c) {
 	while (text_iterator_byte_next(it, NULL)) {
 		if (isutf8(*it->text)) {
-			*c = *it->text;
+			if (c)
+				*c = *it->text;
 			return true;
 		}
 	}
@@ -890,7 +891,8 @@ bool text_iterator_char_next(Iterator *it, char *c) {
 bool text_iterator_char_prev(Iterator *it, char *c) {
 	while (text_iterator_byte_prev(it, NULL)) {
 		if (isutf8(*it->text)) {
-			*c = *it->text;
+			if (c)
+				*c = *it->text;
 			return true;
 		}
 	}
