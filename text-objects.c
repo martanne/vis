@@ -17,25 +17,25 @@ Filerange text_object_word(Text *txt, size_t pos) {
 		text_iterator_byte_next(&it, NULL);
 	text_iterator_byte_next(&it, &next);
 	if (isspace(c)) {
-		/* we are in the middle of two words */
+		/* middle of two words, include leading white space */
 		r.start = text_char_next(txt, text_word_end_prev(txt, pos));
-		r.end = text_word_start_next(txt, pos);
+		r.end = text_char_next(txt, text_word_end_next(txt, pos));
 	} else if (isspace(prev) && isspace(next)) {
 		/* on a single character */
 		r.start = pos;
-		r.end = text_char_next(txt, pos);
+		r.end = text_word_start_next(txt, pos);
 	} else if (isspace(prev)) {
 		/* at start of a word */
 		r.start = pos;
-		r.end = text_char_next(txt, text_word_end_next(txt, pos));
+		r.end = text_word_start_next(txt, text_word_end_next(txt, pos));
 	} else if (isspace(next)) {
 		/* at end of a word */
 		r.start = text_word_start_prev(txt, pos);
-		r.end = text_char_next(txt, pos);
+		r.end = text_word_start_next(txt, pos);
 	} else {
 		/* in the middle of a word */
 		r.start = text_word_start_prev(txt, pos);
-		r.end = text_char_next(txt, text_word_end_next(txt, pos));
+		r.end = text_word_start_next(txt, text_word_end_next(txt, pos));
 	}
 	return r;
 }
