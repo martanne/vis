@@ -1,6 +1,7 @@
 #include <ctype.h>
 #include "text-motions.h"
 #include "text-objects.h"
+#include "util.h"
 
 static Filerange empty = {
 	.start = -1,
@@ -8,8 +9,8 @@ static Filerange empty = {
 };
 
 Filerange text_object_word(Text *txt, size_t pos) {
-	char c, prev = '0', next = '0';
 	Filerange r;
+	char c, prev = '0', next = '0';
 	Iterator it = text_iterator_get(txt, pos);
 	if (!text_iterator_byte_get(&it, &c))
 		return empty;
@@ -51,5 +52,55 @@ Filerange text_object_paragraph(Text *txt, size_t pos) {
 	Filerange r;
 	r.start = text_paragraph_prev(txt, pos);
 	r.end = text_paragraph_next(txt, pos);
+	return r;
+}
+
+Filerange text_object_bracket(Text *txt, size_t pos, char type) {
+	char c, open, close;
+	int opened = 1, closed = 1;
+
+	switch (type) {
+	case '(':  case ')': open = '(';  close = ')';  break;
+	case '{':  case '}': open = '{';  close = '}';  break;
+	case '[':  case ']': open = '[';  close = ']';  break;
+	case '<':  case '>': open = '<';  close = '>';  break;
+	case '"':            open = '"';  close = '"';  break;
+	case '\'':           open = '\''; close = '\''; break;
+	default: return empty;
+	}
+
+	Filerange r = empty;
+	Iterator it = text_iterator_get(txt, pos);
+
+	if (open == close && text_iterator_byte_get(&it, &c) && (c == '"' || c == '\'')) {
+		size_t match = text_bracket_match(txt, pos);
+		r.start = MIN(pos, match) + 1;
+		r.end = MAX(pos, match);
+		return r;
+	}
+
+	while (text_iterator_byte_get(&it, &c)) {
+		if (c == open && --opened == 0) {
+			r.start = it.pos + 1;
+			break;
+		} else if (c == close && it.pos != pos) {
+			opened++;
+		}
+		text_iterator_byte_prev(&it, NULL);
+	}
+
+	it = text_iterator_get(txt, pos);
+	while (text_iterator_byte_get(&it, &c)) {
+		if (c == close && --closed == 0) {
+			r.end = it.pos;
+			break;
+		} else if (c == open && it.pos != pos) {
+			closed++;
+		}
+		text_iterator_byte_next(&it, NULL);
+	}
+
+	if (r.start == (size_t)-1 || r.end == (size_t)-1 || r.start > r.end)
+		return empty;
 	return r;
 }

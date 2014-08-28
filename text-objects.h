@@ -11,5 +11,8 @@ Filerange text_object_word_boundry(Text*, size_t pos, int (*isboundry)(int));
 Filerange text_object_char(Text*, size_t pos, char c);
 Filerange text_object_sentence(Text*, size_t pos);
 Filerange text_object_paragraph(Text*, size_t pos);
+/* range delimited by either (), {}, [], <>, ", '. the delimiters themself are not
+ * included in the range */
+Filerange text_object_bracket(Text*, size_t pos, char type);
 
 #endif
