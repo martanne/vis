@@ -1,7 +1,40 @@
 #include <ctype.h>
 #include "text-motions.h"
+#include "util.h"
 
 // TODO: consistent usage of iterators either char or byte based where appropriate.
+
+size_t text_find_char_next(Text *txt, size_t pos, const char *s, size_t len) {
+	char c;
+	size_t matched = 0;
+	Iterator it = text_iterator_get(txt, pos);
+	while (matched < len && text_iterator_byte_get(&it, &c)) {
+		if (c == s[matched])
+			matched++;
+		else
+			matched = 0;
+		text_iterator_byte_next(&it, NULL);
+	}
+	return it.pos - (matched == len ? len : 0);
+}
+
+size_t text_find_char_prev(Text *txt, size_t pos, const char *s, size_t len) {
+	char c;
+	size_t matched = len - 1;
+	Iterator it = text_iterator_get(txt, pos);
+	if (len == 0)
+		return pos;
+	while (text_iterator_byte_get(&it, &c)) {
+		if (c == s[matched]) {
+			if (matched-- == 0)
+				break;
+		} else {
+			matched = len - 1;
+		}
+		text_iterator_byte_next(&it, NULL);
+	}
+	return it.pos;
+}
 
 size_t text_line_begin(Text *txt, size_t pos) {
 	char c;
@@ -19,7 +52,7 @@ size_t text_line_begin(Text *txt, size_t pos) {
 		}
 		text_iterator_byte_prev(&it, NULL);
 	}
-	return pos;
+	return it.pos;
 }
 
 size_t text_line_start(Text *txt, size_t pos) {
@@ -35,17 +68,14 @@ size_t text_line_finish(Text *txt, size_t pos) {
 	Iterator it = text_iterator_get(txt, text_line_end(txt, pos));
 	do text_iterator_byte_prev(&it, NULL);
 	while (text_iterator_byte_get(&it, &c) && c != '\n' && c != '\r' && isspace(c));
+	if (!isutf8(c))
+		text_iterator_char_prev(&it, &c);
 	return it.pos;
 }
 
 size_t text_line_end(Text *txt, size_t pos) {
-	char c;
-	Iterator it = text_iterator_get(txt, pos);
-	while (text_iterator_byte_get(&it, &c) && c != '\n')
-		text_iterator_byte_next(&it, NULL);
-	return it.pos;
+	return text_find_char_next(txt, pos, "\n", 1);
 }
-
 
 size_t text_word_boundry_start_next(Text *txt, size_t pos, int (*isboundry)(int)) {
 	char c;

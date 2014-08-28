@@ -4,11 +4,14 @@
 #include <stddef.h>
 #include "text.h"
 
-/*  begin             finish
- *  v                 v
- *  |      I am a line!      |
- *         ^                 ^
- *         start             end
+size_t text_find_char_next(Text*, size_t pos, const char *s, size_t len);
+size_t text_find_char_prev(Text*, size_t pos, const char *s, size_t len);
+
+/*        begin            finish
+ *        v                v
+ *  \n[\r]      I am a line!       \n[\r]
+ *              ^                  ^
+ *              start              end
  */
 size_t text_line_begin(Text*, size_t pos);
 size_t text_line_start(Text*, size_t pos);
