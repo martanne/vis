@@ -4,6 +4,9 @@
 #include <stddef.h>
 #include "text.h"
 
+size_t text_char_next(Text*, size_t pos);
+size_t text_char_prev(Text*, size_t pos);
+
 size_t text_find_char_next(Text*, size_t pos, const char *s, size_t len);
 size_t text_find_char_prev(Text*, size_t pos, const char *s, size_t len);
 

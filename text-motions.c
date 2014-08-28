@@ -4,6 +4,18 @@
 
 // TODO: consistent usage of iterators either char or byte based where appropriate.
 
+size_t text_char_next(Text *txt, size_t pos) {
+	Iterator it = text_iterator_get(txt, pos);
+	text_iterator_char_next(&it, NULL);
+	return it.pos;
+}
+
+size_t text_char_prev(Text *txt, size_t pos) {
+	Iterator it = text_iterator_get(txt, pos);
+	text_iterator_char_prev(&it, NULL);
+	return it.pos;
+}
+
 size_t text_find_char_next(Text *txt, size_t pos, const char *s, size_t len) {
 	char c;
 	size_t matched = 0;
