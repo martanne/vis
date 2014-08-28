@@ -81,7 +81,7 @@ size_t text_line_finish(Text *txt, size_t pos) {
 	do text_iterator_byte_prev(&it, NULL);
 	while (text_iterator_byte_get(&it, &c) && c != '\n' && c != '\r' && isspace(c));
 	if (!isutf8(c))
-		text_iterator_char_prev(&it, &c);
+		text_iterator_char_prev(&it, NULL);
 	return it.pos;
 }
 
@@ -118,7 +118,8 @@ size_t text_word_boundry_end_next(Text *txt, size_t pos, int (*isboundry)(int)) 
 size_t text_word_boundry_end_prev(Text *txt, size_t pos, int (*isboundry)(int)) {
 	char c;
 	Iterator it = text_iterator_get(txt, pos);
-	while (text_iterator_byte_prev(&it, &c) && !isboundry(c));
+	while (text_iterator_byte_get(&it, &c) && !isboundry(c))
+		text_iterator_byte_prev(&it, NULL);
 	while (text_iterator_char_prev(&it, &c) && isboundry(c));
 	return it.pos;
 }
