@@ -1,4 +1,5 @@
 #include <ctype.h>
+#include <string.h>
 #include "text-motions.h"
 #include "util.h"
 
@@ -241,31 +242,38 @@ size_t text_bracket_match(Text *txt, size_t pos) {
 	case ']': search = '['; direction = -1; break;
 	case '<': search = '>'; direction =  1; break;
 	case '>': search = '<'; direction = -1; break;
-	// TODO: heuristic basic on neighbouring chars shared with text-object
-	case '"': search = '"'; direction =  1; break;
-	case '\'': search = '\''; direction =  1; break;
+	case '"':
+	case '\'': {
+		char special[] = " \n)}]>.,";
+		search = current;
+		direction = 1;
+		if (text_iterator_byte_next(&it, &c)) {
+			/* if a single or double quote is followed by
+			 * a special character, search backwards */
+			if (memchr(special, c, sizeof(special)))
+				direction = -1;
+			text_iterator_byte_prev(&it, NULL);
+		}
+		break;
+	}
 	default: return pos;
 	}
 
 	if (direction >= 0) { /* forward search */
 		while (text_iterator_byte_next(&it, &c)) {
-			if (c == search && --count == 0) {
-				pos = it.pos;
-				break;
-			} else if (c == current) {
+			if (c == search && --count == 0)
+				return it.pos;
+			else if (c == current)
 				count++;
-			}
 		}
 	} else { /* backwards */
 		while (text_iterator_byte_prev(&it, &c)) {
-			if (c == search && --count == 0) {
-				pos = it.pos;
-				break;
-			} else if (c == current) {
+			if (c == search && --count == 0)
+				return it.pos;
+			else if (c == current)
 				count++;
-			}
 		}
 	}
 
-	return pos;
+	return pos; /* no match found */
 }
