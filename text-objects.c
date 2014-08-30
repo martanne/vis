@@ -65,6 +65,7 @@ Filerange text_object_bracket(Text *txt, size_t pos, char type) {
 	case '[':  case ']': open = '[';  close = ']';  break;
 	case '<':  case '>': open = '<';  close = '>';  break;
 	case '"':            open = '"';  close = '"';  break;
+	case '`':            open = '`';  close = '`';  break;
 	case '\'':           open = '\''; close = '\''; break;
 	default: return empty;
 	}
@@ -72,7 +73,7 @@ Filerange text_object_bracket(Text *txt, size_t pos, char type) {
 	Filerange r = empty;
 	Iterator it = text_iterator_get(txt, pos);
 
-	if (open == close && text_iterator_byte_get(&it, &c) && (c == '"' || c == '\'')) {
+	if (open == close && text_iterator_byte_get(&it, &c) && (c == '"' || c == '`' || c == '\'')) {
 		size_t match = text_bracket_match(txt, pos);
 		r.start = MIN(pos, match) + 1;
 		r.end = MAX(pos, match);

@@ -243,6 +243,7 @@ size_t text_bracket_match(Text *txt, size_t pos) {
 	case '<': search = '>'; direction =  1; break;
 	case '>': search = '<'; direction = -1; break;
 	case '"':
+	case '`':
 	case '\'': {
 		char special[] = " \n)}]>.,";
 		search = current;
