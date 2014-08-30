@@ -5,6 +5,14 @@
 
 // TODO: consistent usage of iterators either char or byte based where appropriate.
 
+size_t text_begin(Text *txt, size_t pos) {
+	return 0;
+}
+
+size_t text_end(Text *txt, size_t pos) {
+	return text_size(txt);
+}
+
 size_t text_char_next(Text *txt, size_t pos) {
 	Iterator it = text_iterator_get(txt, pos);
 	text_iterator_char_next(&it, NULL);

@@ -4,6 +4,9 @@
 #include <stddef.h>
 #include "text.h"
 
+size_t text_begin(Text*, size_t pos);
+size_t text_end(Text*, size_t pos);
+
 size_t text_char_next(Text*, size_t pos);
 size_t text_char_prev(Text*, size_t pos);
 
