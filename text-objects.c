@@ -55,7 +55,7 @@ Filerange text_object_paragraph(Text *txt, size_t pos) {
 	return r;
 }
 
-Filerange text_object_bracket(Text *txt, size_t pos, char type) {
+static Filerange text_object_bracket(Text *txt, size_t pos, char type) {
 	char c, open, close;
 	int opened = 1, closed = 1;
 
@@ -104,4 +104,32 @@ Filerange text_object_bracket(Text *txt, size_t pos, char type) {
 	if (r.start == (size_t)-1 || r.end == (size_t)-1 || r.start > r.end)
 		return empty;
 	return r;
+}
+
+Filerange text_object_square_bracket(Text *txt, size_t pos) {
+	return text_object_bracket(txt, pos, ']');
+}
+
+Filerange text_object_curly_bracket(Text *txt, size_t pos) {
+	return text_object_bracket(txt, pos, '}');
+}
+
+Filerange text_object_angle_bracket(Text *txt, size_t pos) {
+	return text_object_bracket(txt, pos, '>');
+}
+
+Filerange text_object_paranthese(Text *txt, size_t pos) {
+	return text_object_bracket(txt, pos, ')');
+}
+
+Filerange text_object_quote(Text *txt, size_t pos) {
+	return text_object_bracket(txt, pos, '"');
+}
+
+Filerange text_object_single_quote(Text *txt, size_t pos) {
+	return text_object_bracket(txt, pos, '\'');
+}
+
+Filerange text_object_backtick(Text *txt, size_t pos) {
+	return text_object_bracket(txt, pos, '`');
 }

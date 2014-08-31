@@ -8,11 +8,16 @@
  * be a whitespace include all neighbouring leading whitespaces and the following word. */
 Filerange text_object_word(Text*, size_t pos);
 Filerange text_object_word_boundry(Text*, size_t pos, int (*isboundry)(int));
-Filerange text_object_char(Text*, size_t pos, char c);
 Filerange text_object_sentence(Text*, size_t pos);
 Filerange text_object_paragraph(Text*, size_t pos);
-/* range delimited by either (), {}, [], <>, ", '. the delimiters themself are not
- * included in the range */
-Filerange text_object_bracket(Text*, size_t pos, char type);
+
+/* the delimiters themself are not included in the range */
+Filerange text_object_square_bracket(Text*, size_t pos);
+Filerange text_object_curly_bracket(Text*, size_t pos);
+Filerange text_object_angle_bracket(Text*, size_t pos);
+Filerange text_object_paranthese(Text*, size_t pos);
+Filerange text_object_quote(Text*, size_t pos);
+Filerange text_object_single_quote(Text*, size_t pos);
+Filerange text_object_backtick(Text*, size_t pos);
 
 #endif
