@@ -84,6 +84,9 @@ bool editor_syntax_load(Editor*, Syntax *syntaxes, Color *colors);
 void editor_syntax_unload(Editor*);
 
 size_t editor_cursor_get(Editor*);
+void editor_scroll_to(Editor*, size_t pos);
+void editor_cursor_to(Editor*, size_t pos);
+Text *editor_text_get(Editor*);
 // TODO void return type?
 size_t editor_selection_start(Editor*);
 size_t editor_selection_end(Editor*);

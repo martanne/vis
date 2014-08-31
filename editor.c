@@ -972,6 +972,21 @@ size_t editor_cursor_get(Editor *ed) {
 	return ed->win->cursor.pos;
 }
 
+Text *editor_text_get(Editor *ed) {
+	return ed->win->text;
+}
+
+void editor_scroll_to(Editor *ed, size_t pos) {
+	Win *win = ed->win;
+	while (pos < win->start && scroll_line_up(win, 1));
+	while (pos > win->end && scroll_line_down(win, 1));
+	cursor_move_to(win, pos);
+}
+
+void editor_cursor_to(Editor *ed, size_t pos) {
+	cursor_move_to(ed->win, pos);
+}
+
 size_t editor_selection_start(Editor *ed) {
 	return ed->win->sel.start = editor_cursor_get(ed);
 }

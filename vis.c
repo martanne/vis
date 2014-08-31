@@ -9,6 +9,7 @@
 #include <sys/ioctl.h>
 
 #include "editor.h"
+#include "vis.h"
 #include "util.h"
 
 #ifdef PDCURSES
@@ -17,39 +18,6 @@ int ESCDELAY;
 #ifndef NCURSES_REENTRANT
 # define set_escdelay(d) (ESCDELAY = (d))
 #endif
-
-typedef union {
-	size_t i;
-	const char *s;
-	size_t (*m)(Editor*);
-	void (*f)(Editor*);
-} Arg;
-
-typedef struct {
-	char str[6];
-	int code;
-} Key;
-
-typedef struct {
-	Key key[2];
-	void (*func)(const Arg *arg);
-	const Arg arg;
-} KeyBinding;
-
-typedef struct Mode Mode;
-struct Mode {
-	Mode *parent;
-	KeyBinding *bindings;
-	const char *name;
-	void (*enter)(void);
-	void (*leave)(void);
-	bool (*input)(const char *str, size_t len);
-};
-
-typedef struct {
-	char *name;
-	Mode *mode;
-} Config;
 
 static void cursor(const Arg *arg);
 static void call(const Arg *arg);
@@ -152,6 +120,8 @@ static KeyBinding *keybinding(Mode *mode, Key *key0, Key *key1) {
 			if (keymatch(key0, &kb->key[0]) && (!key1 || keymatch(key1, &kb->key[1])))
 				return kb;
 		}
+		if (mode->unknown && !mode->unknown(key0, key1))
+			break;
 	}
 	return NULL;
 }
