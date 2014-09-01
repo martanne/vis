@@ -1,9 +1,10 @@
 include config.mk
 
-SRC += vis.c colors.c editor.c text.c text-motions.c text-objects.c register.c
-ALL = ${SRC} util.h editor.h text.h text-motions.h text-objects.h register.h \
-	config.def.h config.mk Makefile LICENSE README vis.1
+SRC += vis.c colors.c window.c text.c text-motions.c text-objects.c register.c
+HDR = ${SRC:.c=.h} util.h config.def.h
+SRC += main.c
 OBJ = ${SRC:.c=.o}
+ALL = ${SRC} ${HDR} config.mk Makefile LICENSE README vis.1
 
 all: clean options vis
 

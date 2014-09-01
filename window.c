@@ -19,7 +19,8 @@
 #include <wchar.h>
 #include <ctype.h>
 #include <errno.h>
-#include "editor.h"
+#include "vis.h"
+#include "window.h"
 #include "text.h"
 #include "text-motions.h"
 #include "text-objects.h"
@@ -56,11 +57,9 @@ typedef struct {            /* cursor position */
 
 typedef struct Win Win;
 struct Win {                /* window showing part of a file */
-	Editor *editor;
 	Text *text;         /* underlying text management */
-	WINDOW *win;        /* curses window for the text area  */
-	WINDOW *statuswin;  /* curses window for the statusbar */
-	int width, height;  /* text area size *not* including the statusbar */
+	WINDOW *win;        /* curses window for the text area */
+	int width, height;  /* window text area size */
 	Filepos start, end; /* currently displayed area [start, end] in bytes from the start of the file */
 	Line *lines;        /* win->height number of lines representing window content */
 	Line *topline;      /* top of the window, first line currently shown */
@@ -68,52 +67,25 @@ struct Win {                /* window showing part of a file */
 	Line *bottomline;   /* bottom of screen, might be unused if lastline < bottomline */
 	Filerange sel;      /* selected text range in bytes from start of file */
 	Cursor cursor;      /* current window cursor position */
+	void (*cursor_moved)(Win*, void *);
+	void *cursor_moved_data;
 
 	Line *line;         // TODO: rename to something more descriptive, these are the current drawing pos
 	int col;
 
 	Syntax *syntax;     /* syntax highlighting definitions for this window or NULL */
 	int tabwidth;       /* how many spaces should be used to display a tab character */
-	Win *prev, *next;   /* neighbouring windows */
 };
 
-struct Editor {
-	int width, height;  /* terminal size, available for all windows */
-	editor_statusbar_t statusbar;
-	Win *windows;       /* list of windows */
-	Win *win;           /* currently active window */
-	Syntax *syntaxes;   /* NULL terminated array of syntax definitions */
-	void (*windows_arrange)(Editor*);
-};
-
-static void editor_windows_arrange(Editor *ed);
-static void editor_windows_arrange_horizontal(Editor *ed); 
-static void editor_windows_arrange_vertical(Editor *ed); 
-static Filerange window_selection_get(Win *win);
-static void window_statusbar_draw(Win *win); 
-static void editor_windows_invalidate(Editor *ed, size_t pos, size_t len);
-static void editor_windows_insert(Editor *ed, size_t pos, const char *c, size_t len); 
-static void editor_windows_delete(Editor *ed, size_t pos, size_t len);
-static void editor_search_forward(Editor *ed, Regex *regex);
-static void editor_search_backward(Editor *ed, Regex *regex);
-static void window_selection_clear(Win *win);
 static void window_clear(Win *win);
 static bool window_addch(Win *win, Char *c);
 static size_t window_cursor_update(Win *win);
-static size_t window_line_begin(Win *win);
-static size_t cursor_move_to(Win *win, size_t pos);
-static size_t cursor_move_to_line(Win *win, size_t pos); 
-static void window_draw(Win *win);
-static bool window_resize(Win *win, int width, int height);
-static void window_move(Win *win, int x, int y); 
-static void window_free(Win *win);
-static Win *window_new(Editor *ed, const char *filename, int x, int y, int w, int h, int pos);
 static size_t pos_by_line(Win *win, Line *line);
 static size_t cursor_offset(Cursor *cursor);
-static bool scroll_line_down(Win *win, int n);
-static bool scroll_line_up(Win *win, int n);
+static bool window_scroll_lines_down(Win *win, int n);
+static bool window_scroll_lines_up(Win *win, int n);
 
-static void window_selection_clear(Win *win) {
+void window_selection_clear(Win *win) {
 	win->sel.start = win->sel.end = (size_t)-1;
 	window_draw(win);
 	window_cursor_update(win);
@@ -139,7 +111,7 @@ static void window_clear(Win *win) {
 	win->col = 0;
 }
 
-static Filerange window_selection_get(Win *win) {
+Filerange window_selection_get(Win *win) {
 	Filerange sel = win->sel;
 	if (sel.start == (size_t)-1) {
 		sel.end = (size_t)-1;
@@ -153,6 +125,9 @@ static Filerange window_selection_get(Win *win) {
 	return sel;
 }
 
+Filerange window_viewport_get(Win *win) {
+	return (Filerange){ .start = win->start, .end = win->end };
+}
 /* try to add another character to the window, return whether there was space left */
 static bool window_addch(Win *win, Char *c) {
 	if (!win->line)
@@ -260,18 +235,16 @@ static bool window_addch(Win *win, Char *c) {
 	}
 }
 
-static void window_statusbar_draw(Win *win) {
-	if (!win->editor->statusbar)
-		return;
+void window_cursor_getxy(Win *win, size_t *lineno, size_t *col) {
 	Cursor *cursor = &win->cursor;
 	Line *line = cursor->line;
-	size_t lineno = line->lineno;
-	int col = cursor->col;
-	while (line->prev && line->prev->lineno == lineno) {
+	*lineno = line->lineno;
+	*col = cursor->col;
+	while (line->prev && line->prev->lineno == *lineno) {
 		line = line->prev;
-		col += line->width;
+		*col += line->width;
 	}
-	win->editor->statusbar(win->statuswin, win->editor->win == win, text_filename(win->text), cursor->line->lineno, col+1);
+	*col += 1;
 }
 
 /* place the cursor according to the screen coordinates in win->{row,col} and
@@ -284,13 +257,14 @@ static size_t window_cursor_update(Win *win) {
 		window_draw(win);
 	}
 	wmove(win->win, cursor->row, cursor->col);
-	window_statusbar_draw(win);
+	if (win->cursor_moved)
+		win->cursor_moved(win, win->cursor_moved_data);
 	return cursor->pos;
 }
 
 /* move the cursor to the character at pos bytes from the begining of the file.
  * if pos is not in the current viewport, redraw the window to make it visible */
-static size_t cursor_move_to(Win *win, size_t pos) {
+void window_cursor_to(Win *win, size_t pos) {
 	Line *line = win->topline;
 	int row = 0;
 	int col = 0;
@@ -299,10 +273,21 @@ static size_t cursor_move_to(Win *win, size_t pos) {
 	if (pos > max)
 		pos = max > 0 ? max - 1 : 0;
 
-	if (pos < win->start || pos > win->end) {
-		win->start = pos;
+	for (int i = 0;  i < 2 && (pos < win->start || pos > win->end); i++) {
+		win->start = i == 0 ? text_line_start(win->text, pos) : pos;
 		window_draw(win);
-	} else {
+	}
+
+#if 0
+	Win *win = vis->win;
+	size_t size = text_size(win->text);
+	if (win->end == size)
+		return cursor_move_to(win, win->end);
+	win->start = size - 1;
+	scroll_line_up(win, win->height / 2);
+	return cursor_move_to(win, win->end);
+#endif
+
 		size_t cur = win->start;
 		while (line && line != win->lastline && cur < pos) {
 			if (cur + line->len > pos)
@@ -324,27 +309,17 @@ static size_t cursor_move_to(Win *win, size_t pos) {
 			line = win->bottomline;
 			row = win->height - 1;
 		}
-	}
 
 	win->cursor.line = line;
 	win->cursor.row = row;
 	win->cursor.col = col;
 	win->cursor.pos = pos;
-	return window_cursor_update(win);
-}
-
-/* move cursor to pos, make sure the whole line is visible */ 
-static size_t cursor_move_to_line(Win *win, size_t pos) {
-	if (pos < win->start || pos > win->end) {
-		win->cursor.pos = pos;
-		window_line_begin(win);
-	}
-	return cursor_move_to(win, pos);
+	window_cursor_update(win);
 }
 
 /* redraw the complete with data starting from win->start bytes into the file.
  * stop once the screen is full, update win->end, win->lastline */
-static void window_draw(Win *win) {
+void window_draw(Win *win) {
 	window_clear(win);
 	wmove(win->win, 0, 0);
 	/* current absolute file position */
@@ -462,12 +437,9 @@ static void window_draw(Win *win) {
 	wclrtobot(win->win);
 }
 
-static bool window_resize(Win *win, int width, int height) {
-	height--; // statusbar
-	if (wresize(win->win, height, width) == ERR ||
-	    wresize(win->statuswin, 1, width) == ERR)
+bool window_resize(Win *win, int width, int height) {
+	if (wresize(win->win, height, width) == ERR) 
 		return false;
-
 	// TODO: only grow memory area
 	win->height = height;
 	win->width = width;
@@ -475,81 +447,44 @@ static bool window_resize(Win *win, int width, int height) {
 	size_t line_size = sizeof(Line) + width*sizeof(Cell);
 	if (!(win->lines = calloc(height, line_size)))
 		return false;
-	window_draw(win);
-	cursor_move_to(win, win->cursor.pos);
 	return true;
 }
 
-static void window_move(Win *win, int x, int y) {
+void window_move(Win *win, int x, int y) {
 	mvwin(win->win, y, x);
-	mvwin(win->statuswin, y + win->height, x);
 }
 
-static void window_free(Win *win) {
+void window_free(Win *win) {
 	if (!win)
 		return;
 	if (win->win)
 		delwin(win->win);
-	if (win->statuswin)
-		delwin(win->statuswin);
-	text_free(win->text);
 	free(win);
 }
 
-static Win *window_new(Editor *ed, const char *filename, int x, int y, int w, int h, int pos) {
-	Win *win = calloc(1, sizeof(Win));
-	if (!win)
+Win *window_new(Text *text) {
+	if (!text)
 		return NULL;
-	win->editor = ed;
-	win->start = pos;
-	win->tabwidth = 8; // TODO make configurable
-
-	if (filename) {
-		for (Syntax *syn = ed->syntaxes; syn && syn->name; syn++) {
-			if (!regexec(&syn->file_regex, filename, 0, NULL, 0)) {
-				win->syntax = syn;
-				break;
-			}
-		}
+	Win *win = calloc(1, sizeof(Win));
+	if (!win || !(win->win = newwin(0, 0, 0, 0))) {
+		window_free(win);
+		return NULL;
 	}
 
-	if (!(win->text = text_load(filename)) ||
-	    !(win->win = newwin(h-1, w, y, x)) ||
-	    !(win->statuswin = newwin(1, w, y+h-1, x)) ||
-	    !window_resize(win, w, h)) {
+	win->text = text;
+	win->tabwidth = 8; // TODO make configurable
+
+	int width, height;
+	getmaxyx(win->win, height, width);
+	if (!window_resize(win, width, height)) {
 		window_free(win);
 		return NULL;
 	}
 
 	window_selection_clear(win);
-	cursor_move_to(win, pos);
+	window_cursor_to(win, 0);
 
 	return win;
-}
-
-Editor *editor_new(int width, int height, editor_statusbar_t statusbar) {
-	Editor *ed = calloc(1, sizeof(Editor));
-	if (!ed)
-		return NULL;
-	ed->width = width;
-	ed->height = height;
-	ed->statusbar = statusbar;
-	ed->windows_arrange = editor_windows_arrange_horizontal; 
-	return ed;
-}
-
-bool editor_load(Editor *ed, const char *filename) {
-	Win *win = window_new(ed, filename, 0, 0, ed->width, ed->height, 0);
-	if (!win)
-		return false;
-
-	if (ed->windows)
-		ed->windows->prev = win;
-	win->next = ed->windows;
-	win->prev = NULL;
-	ed->windows = win;
-	ed->win = win;
-	return true;
 }
 
 static size_t pos_by_line(Win *win, Line *line) {
@@ -559,8 +494,7 @@ static size_t pos_by_line(Win *win, Line *line) {
 	return pos;
 }
 
-size_t editor_char_prev(Editor *ed) {
-	Win *win = ed->win;
+size_t window_char_prev(Win *win) {
 	Cursor *cursor = &win->cursor;
 	Line *line = cursor->line;
 
@@ -580,8 +514,7 @@ size_t editor_char_prev(Editor *ed) {
 	return window_cursor_update(win);
 }
 
-size_t editor_char_next(Editor *ed) {
-	Win *win = ed->win;
+size_t window_char_next(Win *win) {
 	Cursor *cursor = &win->cursor;
 	Line *line = cursor->line;
 
@@ -621,7 +554,7 @@ static size_t cursor_offset(Cursor *cursor) {
 	return off;
 }
 
-static bool scroll_line_down(Win *win, int n) {
+static bool window_scroll_lines_down(Win *win, int n) {
 	Line *line;
 	if (win->end == text_size(win->text))
 		return false;
@@ -635,7 +568,7 @@ static bool scroll_line_down(Win *win, int n) {
 	return true;
 }
 
-static bool scroll_line_up(Win *win, int n) {
+static bool window_scroll_lines_up(Win *win, int n) {
 	/* scrolling up is somewhat tricky because we do not yet know where
 	 * the lines start, therefore scan backwards but stop at a reasonable
 	 * maximum in case we are dealing with a file without any newlines
@@ -668,46 +601,31 @@ static bool scroll_line_up(Win *win, int n) {
 	return true;
 }
 
-size_t editor_file_begin(Editor *ed) {
-	return cursor_move_to(ed->win, 0);
-}
-
-size_t editor_file_end(Editor *ed) {
-	Win *win = ed->win;
-	size_t size = text_size(win->text);
-	if (win->end == size)
-		return cursor_move_to(win, win->end);
-	win->start = size - 1;
-	scroll_line_up(win, win->height / 2);
-	return cursor_move_to(win, win->end);
-}
-
-size_t editor_page_up(Editor *ed) {
-	Win *win = ed->win;
-	if (!scroll_line_up(win, win->height))
-		cursor_move_to(win, win->start);
+size_t window_page_up(Win *win) {
+	if (!window_scroll_lines_up(win, win->height))
+		window_cursor_to(win, win->start);
 	return win->cursor.pos;
 }
 
-size_t editor_page_down(Editor *ed) {
-	Win *win = ed->win;
+size_t window_page_down(Win *win) {
 	Cursor *cursor = &win->cursor;
-	if (win->end == text_size(win->text))
-		return cursor_move_to(win, win->end);
+	if (win->end == text_size(win->text)) {
+		window_cursor_to(win, win->end);
+		return win->end;
+	}
 	win->start = win->end;
 	window_draw(win);
 	int col = cursor->col;
-	cursor_move_to(win, win->start);
+	window_cursor_to(win, win->start);
 	cursor->col = col;
 	cursor->pos += cursor_offset(cursor);
 	return window_cursor_update(win);
 }
 
-size_t editor_line_up(Editor *ed) {
-	Win *win = ed->win;
+size_t window_line_up(Win *win) {
 	Cursor *cursor = &win->cursor;
 	if (!cursor->line->prev) {
-		scroll_line_up(win, 1);
+		window_scroll_lines_up(win, 1);
 		return cursor->pos;
 	}
 	cursor->row--;
@@ -716,12 +634,11 @@ size_t editor_line_up(Editor *ed) {
 	return window_cursor_update(win);
 }
 
-size_t editor_line_down(Editor *ed) {
-	Win *win = ed->win;
+size_t window_line_down(Win *win) {
 	Cursor *cursor = &win->cursor;
 	if (!cursor->line->next) {
 		if (cursor->line == win->bottomline)
-			scroll_line_down(ed->win, 1);
+			window_scroll_lines_down(win, 1);
 		return cursor->pos;
 	}
 	cursor->row++;
@@ -730,196 +647,21 @@ size_t editor_line_down(Editor *ed) {
 	return window_cursor_update(win);
 }
 
-static size_t window_line_begin(Win *win) {
-	return cursor_move_to(win, text_line_begin(win->text, win->cursor.pos));
+void window_update(Win *win) {
+	wnoutrefresh(win->win);
 }
 
-size_t editor_line_begin(Editor *ed) {
-	return window_line_begin(ed->win);
-}
-
-size_t editor_line_start(Editor *ed) {
-	Win *win = ed->win;
-	size_t pos = text_line_start(win->text, win->cursor.pos);
-	while (win->end < pos && scroll_line_down(win, 1));
-	return cursor_move_to(win, pos);
-}
-
-size_t editor_line_end(Editor *ed) {
-	Win *win = ed->win;
-	size_t pos = text_line_end(win->text, win->cursor.pos);
-	while (win->end < pos && scroll_line_down(win, 1));
-	return cursor_move_to(win, pos);
-}
-
-size_t editor_line_finish(Editor *ed) {
-	Win *win = ed->win;
-	size_t pos = text_line_finish(win->text, win->cursor.pos);
-	return cursor_move_to(win, pos);
-}
-
-size_t editor_word_end_prev(Editor *ed) {
-	Win *win = ed->win;
-	size_t pos = text_word_end_prev(win->text, win->cursor.pos);
-	while (win->start > pos && scroll_line_up(win, 1));
-	return cursor_move_to(win, pos);
-}
-
-size_t editor_word_end_next(Editor *ed) {
-	Win *win = ed->win;
-	size_t pos = text_word_end_next(win->text, win->cursor.pos);
-	while (win->end < pos && scroll_line_down(win, 1));
-	return cursor_move_to(win, pos);
-}
-
-size_t editor_word_start_next(Editor *ed) {
-	Win *win = ed->win;
-	size_t pos = text_word_start_next(win->text, win->cursor.pos);
-	while (win->end < pos && scroll_line_down(win, 1));
-	return cursor_move_to(win, pos);
-}
-
-size_t editor_word_start_prev(Editor *ed) {
-	Win *win = ed->win;
-	size_t pos = text_word_start_prev(win->text, win->cursor.pos);
-	while (win->start > pos && scroll_line_up(win, 1));
-	return cursor_move_to(win, pos);
-}
-
-size_t editor_sentence_next(Editor *ed) {
-	Win *win = ed->win;
-	return cursor_move_to_line(win, text_sentence_next(win->text, win->cursor.pos));
-}
-
-size_t editor_paragraph_next(Editor *ed) {
-	Win *win = ed->win;
-	return cursor_move_to_line(win, text_paragraph_next(win->text, win->cursor.pos));
-}
-
-size_t editor_sentence_prev(Editor *ed) {
-	Win *win = ed->win;
-	return cursor_move_to_line(win, text_sentence_prev(win->text, win->cursor.pos));
-}
-
-size_t editor_paragraph_prev(Editor *ed) {
-	Win *win = ed->win;
-	return cursor_move_to_line(win, text_paragraph_prev(win->text, win->cursor.pos));
-}
-
-size_t editor_bracket_match(Editor *ed) {
-	Win *win = ed->win;
-	return cursor_move_to_line(win, text_bracket_match(win->text, win->cursor.pos));
-}
-
-void editor_draw(Editor *ed) {
-	for (Win *win = ed->windows; win; win = win->next) {
-		if (ed->win != win) {
-			window_draw(win);
-			cursor_move_to(win, win->cursor.pos);
-		}
-	}
-	window_draw(ed->win);
-	cursor_move_to(ed->win, ed->win->cursor.pos);
-}
-
-void editor_update(Editor *ed) {
-	for (Win *win = ed->windows; win; win = win->next) {
-		if (ed->win != win) {
-			wnoutrefresh(win->statuswin);
-			wnoutrefresh(win->win);
-		}
-	}
-
-	wnoutrefresh(ed->win->statuswin);
-	wnoutrefresh(ed->win->win);
-}
-
-void editor_free(Editor *ed) {
-	if (!ed)
-		return;
-	window_free(ed->win);
-	free(ed);
-}
-
-bool editor_resize(Editor *ed, int width, int height) {
-	ed->width = width;
-	ed->height = height;
-	editor_windows_arrange(ed);
-	return true;
-}
-
-bool editor_syntax_load(Editor *ed, Syntax *syntaxes, Color *colors) {
-	bool success = true;
-	ed->syntaxes = syntaxes;
-	for (Syntax *syn = syntaxes; syn && syn->name; syn++) {
-		if (regcomp(&syn->file_regex, syn->file, REG_EXTENDED|REG_NOSUB|REG_ICASE|REG_NEWLINE))
-			success = false;
-		Color *color = colors;
-		for (int j = 0; j < LENGTH(syn->rules); j++) {
-			SyntaxRule *rule = &syn->rules[j];
-			if (!rule->rule)
-				break;
-			if (rule->color.fg == 0 && color && color->fg != 0)
-				rule->color = *color++;
-			if (rule->color.attr == 0)
-				rule->color.attr = A_NORMAL;
-			if (rule->color.fg != 0)
-				rule->color.attr |= COLOR_PAIR(editor_color_reserve(rule->color.fg, rule->color.bg));
-			if (regcomp(&rule->regex, rule->rule, REG_EXTENDED|rule->cflags))
-				success = false;
-		}
-	}
-
-	return success;
-}
-
-void editor_syntax_unload(Editor *ed) {
-	for (Syntax *syn = ed->syntaxes; syn && syn->name; syn++) {
-		regfree(&syn->file_regex);
-		for (int j = 0; j < LENGTH(syn->rules); j++) {
-			SyntaxRule *rule = &syn->rules[j];
-			if (!rule->rule)
-				break;
-			regfree(&rule->regex);
-		}
-	}
-
-	ed->syntaxes = NULL;
-}
-
-static void editor_windows_invalidate(Editor *ed, size_t pos, size_t len) {
-	size_t end = pos + len;
-	for (Win *win = ed->windows; win; win = win->next) {
-		if (ed->win != win && ed->win->text == win->text &&
-		    ((win->start <= pos && pos <= win->end) ||
-		     (win->start <= end && end <= win->end))) {
-			window_draw(win);
-			cursor_move_to(win, win->cursor.pos);
-		}
-	}
-}
-
-static void editor_windows_insert(Editor *ed, size_t pos, const char *c, size_t len) {
-	text_insert_raw(ed->win->text, pos, c, len);
-	editor_windows_invalidate(ed, pos, len);
-}
-
-static void editor_windows_delete(Editor *ed, size_t pos, size_t len) {
-	text_delete(ed->win->text, pos, len);
-	editor_windows_invalidate(ed, pos, len);
-}
-
-size_t editor_delete(Editor *ed) {
-	Cursor *cursor = &ed->win->cursor;
+size_t window_delete_key(Win *win) {
+	Cursor *cursor = &win->cursor;
 	Line *line = cursor->line;
 	size_t len = line->cells[cursor->col].len;
-	editor_windows_delete(ed, cursor->pos, len);
-	window_draw(ed->win);
-	return cursor_move_to(ed->win, cursor->pos);
+	text_delete(win->text, cursor->pos, len);
+	window_draw(win);
+	window_cursor_to(win, cursor->pos);
+	return cursor->pos;
 }
 
-size_t editor_backspace(Editor *ed) {
-	Win *win = ed->win;
+size_t window_backspace_key(Win *win) {
 	Cursor *cursor = &win->cursor;
 	if (win->start == cursor->pos) {
 		if (win->start == 0)
@@ -928,30 +670,31 @@ size_t editor_backspace(Editor *ed) {
 		 * first scroll up so that the to be deleted character is
 		 * visible then proceed as normal */
 		size_t pos = cursor->pos;
-		scroll_line_up(win, 1);
-		cursor_move_to(win, pos);
+		window_scroll_lines_up(win, 1);
+		window_cursor_to(win, pos);
 	}
-	editor_char_prev(ed);
+	window_char_prev(win);
 	size_t pos = cursor->pos;
 	size_t len = cursor->line->cells[cursor->col].len;
-	editor_windows_delete(ed, pos, len);
+	text_delete(win->text, pos, len);
 	window_draw(win);
-	return cursor_move_to(ed->win, pos);
+	window_cursor_to(win, pos);
+	return pos;
 }
 
-size_t editor_insert(Editor *ed, const char *c, size_t len) {
-	Win *win = ed->win;
+size_t window_insert_key(Win *win, const char *c, size_t len) {
 	size_t pos = win->cursor.pos;
-	editor_windows_insert(ed, pos, c, len);
+	text_insert_raw(win->text, pos, c, len);
 	if (win->cursor.line == win->bottomline && memchr(c, '\n', len))
-		scroll_line_down(win, 1);
+		window_scroll_lines_down(win, 1);
 	else
 		window_draw(win);
-	return cursor_move_to(win, pos + len);
+	pos += len;
+	window_cursor_to(win, pos);
+	return pos;
 }
 
-size_t editor_replace(Editor *ed, const char *c, size_t len) {
-	Win *win = ed->win;
+size_t window_replace_key(Win *win, const char *c, size_t len) {
 	Cursor *cursor = &win->cursor;
 	Line *line = cursor->line;
 	size_t pos = cursor->pos;
@@ -960,210 +703,43 @@ size_t editor_replace(Editor *ed, const char *c, size_t len) {
 		size_t oldlen = line->cells[cursor->col].len;
 		text_delete(win->text, pos, oldlen);
 	}
-	editor_windows_insert(ed, pos, c, len);
+	text_insert_raw(win->text, pos, c, len);
 	if (cursor->line == win->bottomline && memchr(c, '\n', len))
-		scroll_line_down(win, 1);
+		window_scroll_lines_down(win, 1);
 	else
 		window_draw(win);
-	return cursor_move_to(win, pos + len);
+	pos += len;
+	window_cursor_to(win, pos);
+	return pos;
 }
 
-size_t editor_cursor_get(Editor *ed) {
-	return ed->win->cursor.pos;
+size_t window_cursor_get(Win *win) {
+	return win->cursor.pos;
 }
 
-Text *editor_text_get(Editor *ed) {
-	return ed->win->text;
+void window_scroll_to(Win *win, size_t pos) {
+	while (pos < win->start && window_scroll_lines_up(win, 1));
+	while (pos > win->end && window_scroll_lines_down(win, 1));
+	window_cursor_to(win, pos);
 }
 
-void editor_scroll_to(Editor *ed, size_t pos) {
-	Win *win = ed->win;
-	while (pos < win->start && scroll_line_up(win, 1));
-	while (pos > win->end && scroll_line_down(win, 1));
-	cursor_move_to(win, pos);
+void window_selection_start(Win *win) {
+	win->sel.start = window_cursor_get(win);
 }
 
-void editor_cursor_to(Editor *ed, size_t pos) {
-	cursor_move_to(ed->win, pos);
+void window_selection_end(Win *win) {
+	win->sel.end = window_cursor_get(win);
 }
 
-size_t editor_selection_start(Editor *ed) {
-	return ed->win->sel.start = editor_cursor_get(ed);
+void window_syntax_set(Win *win, Syntax *syntax) {
+	win->syntax = syntax;
 }
 
-size_t editor_selection_end(Editor *ed) {
-	return ed->win->sel.end = editor_cursor_get(ed);
+Syntax *window_syntax_get(Win *win) {
+	return win->syntax; 
 }
 
-Filerange editor_selection_get(Editor *ed) {
-	return window_selection_get(ed->win);
-}
-
-void editor_selection_clear(Editor *ed) {
-	window_selection_clear(ed->win);
-}
-
-size_t editor_line_goto(Editor *ed, size_t lineno) {
-	size_t pos = text_pos_by_lineno(ed->win->text, lineno);
-	return cursor_move_to(ed->win, pos);
-}
-
-static void editor_search_forward(Editor *ed, Regex *regex) {
-	Win *win = ed->win;
-	Cursor *cursor = &win->cursor;
-	int pos = cursor->pos + 1;
-	int end = text_size(win->text);
-	RegexMatch match[1];
-	bool found = false;
-	if (text_search_forward(win->text, pos, end - pos, regex, 1, match, 0)) {
-		pos = 0;
-		end = cursor->pos;
-		if (!text_search_forward(win->text, pos, end, regex, 1, match, 0))
-			found = true;
-	} else {
-		found = true;
-	}
-	if (found)
-		cursor_move_to_line(win, match[0].start);
-}
-
-static void editor_search_backward(Editor *ed, Regex *regex) {
-	Win *win = ed->win;
-	Cursor *cursor = &win->cursor;
-	int pos = 0;
-	int end = cursor->pos;
-	RegexMatch match[1];
-	bool found = false;
-	if (text_search_backward(win->text, pos, end, regex, 1, match, 0)) {
-		pos = cursor->pos + 1;
-		end = text_size(win->text);
-		if (!text_search_backward(win->text, pos, end - pos, regex, 1, match, 0))
-			found = true;
-	} else {
-		found = true;
-	}
-	if (found)
-		cursor_move_to_line(win, match[0].start);
-}
-
-void editor_search(Editor *ed, const char *s, int direction) {
-	Regex *regex = text_regex_new();
-	if (!regex)
-		return;
-	if (!text_regex_compile(regex, s, REG_EXTENDED)) {
-		if (direction >= 0)
-			editor_search_forward(ed, regex);
-		else
-			editor_search_backward(ed, regex);
-	}
-	text_regex_free(regex);
-}
-
-void editor_snapshot(Editor *ed) {
-	text_snapshot(ed->win->text);
-}
-
-void editor_undo(Editor *ed) {
-	Win *win = ed->win;
-	if (text_undo(win->text))
-		window_draw(win);
-}
-
-void editor_redo(Editor *ed) {
-	Win *win = ed->win;
-	if (text_redo(win->text))
-		window_draw(win);
-}
-
-static void editor_windows_arrange(Editor *ed) {
-	erase();
-	wnoutrefresh(stdscr);
-	ed->windows_arrange(ed);
-}
-
-static void editor_windows_arrange_horizontal(Editor *ed) {
-	int n = 0, x = 0, y = 0;
-	for (Win *win = ed->windows; win; win = win->next)
-		n++;
-	int height = ed->height / n; 
-	for (Win *win = ed->windows; win; win = win->next) {
-		window_resize(win, ed->width, win->next ? height : ed->height - y);
-		window_move(win, x, y);
-		y += height;
-	}
-}
-
-static void editor_windows_arrange_vertical(Editor *ed) {
-	int n = 0, x = 0, y = 0;
-	for (Win *win = ed->windows; win; win = win->next)
-		n++;
-	int width = ed->width / n; 
-	for (Win *win = ed->windows; win; win = win->next) {
-		window_resize(win, win->next ? width : ed->width - x, ed->height);
-		window_move(win, x, y);
-		x += width;
-	}
-}
-
-static void editor_window_split_internal(Editor *ed, const char *filename) {
-	Win *sel = ed->win;
-	editor_load(ed, filename);
-	if (sel && !filename) {
-		Win *win = ed->win;
-		text_free(win->text);
-		win->text = sel->text;
-		win->start = sel->start;
-		win->syntax = sel->syntax;
-		win->cursor.pos = sel->cursor.pos;
-		// TODO show begin of line instead of cursor->pos
-	}
-}
-
-void editor_window_split(Editor *ed, const char *filename) {
-	editor_window_split_internal(ed, filename);
-	ed->windows_arrange = editor_windows_arrange_horizontal;
-	editor_windows_arrange(ed);
-}
-
-void editor_window_vsplit(Editor *ed, const char *filename) {
-	editor_window_split_internal(ed, filename);
-	ed->windows_arrange = editor_windows_arrange_vertical;
-	editor_windows_arrange(ed);
-}
-
-void editor_window_next(Editor *ed) {
-	Win *sel = ed->win;
-	if (!sel)
-		return;
-	ed->win = ed->win->next;
-	if (!ed->win)
-		ed->win = ed->windows;
-	window_statusbar_draw(sel);
-	window_statusbar_draw(ed->win);
-}
-
-void editor_window_prev(Editor *ed) {
-	Win *sel = ed->win;
-	if (!sel)
-		return;
-	ed->win = ed->win->prev;
-	if (!ed->win)
-		for (ed->win = ed->windows; ed->win->next; ed->win = ed->win->next);
-	window_statusbar_draw(sel);
-	window_statusbar_draw(ed->win);
-}
-
-void editor_mark_set(Editor *ed, Mark mark, size_t pos) {
-	text_mark_set(ed->win->text, mark, pos);
-}
-
-void editor_mark_goto(Editor *ed, Mark mark) {
-	Win *win = ed->win;
-	size_t pos = text_mark_get(win->text, mark);
-	if (pos != (size_t)-1)
-		cursor_move_to_line(win, pos);
-}
-
-void editor_mark_clear(Editor *ed, Mark mark) {
-	text_mark_clear(ed->win->text, mark);
+void window_cursor_watch(Win *win, void (*cursor_moved)(Win*, void *), void *data) {
+	win->cursor_moved = cursor_moved;
+	win->cursor_moved_data = data;
 }

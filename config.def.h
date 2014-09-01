@@ -32,10 +32,10 @@ void op_delete(OperatorContext *c) {
 	if (c->range.start == (size_t)-1)
 		return;
 	size_t len = c->range.end - c->range.start;
-	text_delete(editor_text_get(editor), c->range.start, len);
+	vis_delete(vis, c->range.start, len);
 	if (c->pos > c->range.start)
-		editor_cursor_to(editor, c->range.start);
-	editor_draw(editor);
+		window_cursor_to(vis->win->win, c->range.start);
+	vis_draw(vis);
 }
 
 void op_change(OperatorContext *c) {
@@ -74,10 +74,10 @@ enum {
 };
 
 static Movement moves[] = {
-	[MOVE_CHAR_PREV]       = { .win = editor_char_prev                                 },
-	[MOVE_CHAR_NEXT]       = { .win = editor_char_next                                 },
-	[MOVE_LINE_UP]         = { .win = editor_line_up                                   },
-	[MOVE_LINE_DOWN]       = { .win = editor_line_down                                 },
+	[MOVE_CHAR_PREV]       = { .win = window_char_prev                                 },
+	[MOVE_CHAR_NEXT]       = { .win = window_char_next                                 },
+	[MOVE_LINE_UP]         = { .win = window_line_up                                   },
+	[MOVE_LINE_DOWN]       = { .win = window_line_down                                 },
 	[MOVE_LINE_BEGIN]      = { .txt = text_line_begin,      .type = LINEWISE           },
 	[MOVE_LINE_START]      = { .txt = text_line_start,      .type = LINEWISE           },
 	[MOVE_LINE_FINISH]     = { .txt = text_line_finish,     .type = LINEWISE           },
@@ -136,7 +136,7 @@ static TextObject textobjs[] = {
 };
 
 /* draw a statubar, do whatever you want with the given curses window */
-static void statusbar(WINDOW *win, bool active, const char *filename, int line, int col) {
+static void statusbar(WINDOW *win, bool active, const char *filename, size_t line, size_t col) {
 	int width, height;
 	getmaxyx(win, height, width);
 	(void)height;
@@ -157,15 +157,15 @@ void quit(const Arg *arg) {
 }
 
 static void split(const Arg *arg) {
-	editor_window_split(editor, arg->s);
+	vis_window_split(vis, arg->s);
 }
 
 static void mark_set(const Arg *arg) {
-	editor_mark_set(editor, arg->i, editor_cursor_get(editor));
+	vis_mark_set(vis, arg->i, window_cursor_get(vis->win->win));
 }
 
 static void mark_goto(const Arg *arg) {
-	editor_mark_goto(editor, arg->i);
+	vis_mark_goto(vis, arg->i);
 }
 
 static Action action;
@@ -203,9 +203,10 @@ void action_reset(Action *a) {
 }
 
 void action_do(Action *a) {
-	Text *txt = editor_text_get(editor);
+	Text *txt = vis->win->text;
+	Win *win = vis->win->win;
 	OperatorContext c;
-	size_t pos = editor_cursor_get(editor);
+	size_t pos = window_cursor_get(win);
 	c.pos = pos;
 	if (a->count == 0)
 		a->count = 1;
@@ -215,15 +216,15 @@ void action_do(Action *a) {
 			if (a->movement->txt)
 				pos = a->movement->txt(txt, pos);
 			else
-				pos = a->movement->win(editor);
+				pos = a->movement->win(win);
 		}
 		c.range.start = MIN(start, pos);
 		c.range.end = MAX(start, pos);
 		if (!a->op) {
 			if (a->movement->type & CHARWISE)
-				editor_scroll_to(editor, pos);
+				window_scroll_to(win, pos);
 			else
-				editor_cursor_to(editor, pos);
+				window_cursor_to(win, pos);
 		} else if (a->movement->type & INCLUSIVE) {
 			Iterator it = text_iterator_get(txt, c.range.end);
 			text_iterator_char_next(&it, NULL);
@@ -254,8 +255,8 @@ static KeyBinding basic_movement[] = {
 	{ { KEY(RIGHT)              }, movement, { .i = MOVE_CHAR_NEXT         } },
 	{ { KEY(UP)                 }, movement, { .i = MOVE_LINE_UP           } },
 	{ { KEY(DOWN)               }, movement, { .i = MOVE_LINE_DOWN         } },
-	{ { KEY(PPAGE)              }, cursor,   { .m = editor_page_up         } },
-	{ { KEY(NPAGE)              }, cursor,   { .m = editor_page_down       } },
+	{ { KEY(PPAGE)              }, cursor,   { .m = window_page_up         } },
+	{ { KEY(NPAGE)              }, cursor,   { .m = window_page_down       } },
 	{ { KEY(HOME)               }, movement, { .i = MOVE_LINE_START        } },
 	{ { KEY(END)                }, movement, { .i = MOVE_LINE_FINISH       } },
 	// temporary until we have a way to enter user commands
@@ -370,19 +371,19 @@ static KeyBinding vis_marks[] = { /* {a-zA-Z} */
 
 static KeyBinding vis_normal[] = {
 	{ { CONTROL('w'), NONE('c') }, split,    { .s = NULL                   } },
-	{ { CONTROL('w'), NONE('j') }, call,     { .f = editor_window_next     } },
-	{ { CONTROL('w'), NONE('k') }, call,     { .f = editor_window_prev     } },
-	{ { CONTROL('F')            }, cursor,   { .m = editor_page_up         } },
-	{ { CONTROL('B')            }, cursor,   { .m = editor_page_down       } },
+	{ { CONTROL('w'), NONE('j') }, call,     { .f = vis_window_next     } },
+	{ { CONTROL('w'), NONE('k') }, call,     { .f = vis_window_prev     } },
+	{ { CONTROL('F')            }, cursor,   { .m = window_page_up         } },
+	{ { CONTROL('B')            }, cursor,   { .m = window_page_down       } },
 	{ { NONE('n')               }, find_forward,  { .s = "if"            } },
 	{ { NONE('p')               }, find_backward, { .s = "if"            } },
-	{ { NONE('x')               }, cursor,        { .m = editor_delete   } },
+	{ { NONE('x')               }, cursor,        { .f = vis_delete_key   } },
 	{ { NONE('i')               }, switchmode,    { .i = VIS_MODE_INSERT } },
 	{ { NONE('v')               }, switchmode,    { .i = VIS_MODE_VISUAL } },
 	{ { NONE('R')               }, switchmode,    { .i = VIS_MODE_REPLACE} },
-	{ { NONE('u')               }, call,          { .f = editor_undo     } },
-	{ { CONTROL('R')            }, call,          { .f = editor_redo     } },
-	{ { CONTROL('L')            }, call,          { .f = editor_draw     } },
+	{ { NONE('u')               }, call,          { .f = vis_undo     } },
+	{ { CONTROL('R')            }, call,          { .f = vis_redo     } },
+	{ { CONTROL('L')            }, call,          { .f = vis_draw     } },
 	{ /* empty last element, array terminator */                           },
 };
 
@@ -392,22 +393,22 @@ static KeyBinding vis_visual[] = {
 };
 
 static void vis_visual_enter(void) {
-	editor_selection_start(editor);
+	window_selection_start(vis->win->win);
 }
 
 static void vis_visual_leave(void) {
-	editor_selection_clear(editor);
+	window_selection_clear(vis->win->win);
 }
 
-static KeyBinding vis_insert[] = {
+static KeyBinding vis_insert_mode[] = {
 	{ { NONE(ESC)               }, switchmode,    { .i = VIS_MODE_NORMAL  } },
-	{ { CONTROL('D')            }, cursor,        { .m = editor_delete    } },
-	BACKSPACE(                     cursor,           m,  editor_backspace   ),
+	{ { CONTROL('D')            }, cursor,        { .f = vis_delete_key   } },
+	BACKSPACE(                     cursor,           f,  vis_backspace_key  ),
 	{ /* empty last element, array terminator */                            },
 };
 
 static bool vis_insert_input(const char *str, size_t len) {
-	editor_insert(editor, str, len);
+	vis_insert_key(vis, str, len);
 	return true;
 }
 
@@ -417,47 +418,47 @@ static KeyBinding vis_replace[] = {
 };
 
 static bool vis_replace_input(const char *str, size_t len) {
-	editor_replace(editor, str, len);
+	vis_replace_key(vis, str, len);
 	return true;
 }
 
-static Mode vis[] = {
+static Mode vis_modes[] = {
 	[VIS_MODE_BASIC] = {
 		.parent = NULL,
 		.bindings = basic_movement,
 	},
 	[VIS_MODE_MOVE] = { 
-		.parent = &vis[VIS_MODE_BASIC],
+		.parent = &vis_modes[VIS_MODE_BASIC],
 		.bindings = vis_movements,
 	},
 	[VIS_MODE_TEXTOBJ] = { 
-		.parent = &vis[VIS_MODE_MOVE],
+		.parent = &vis_modes[VIS_MODE_MOVE],
 		.bindings = vis_textobjs,
 	},
 	[VIS_MODE_OPERATOR] = { 
-		.parent = &vis[VIS_MODE_MOVE],
+		.parent = &vis_modes[VIS_MODE_MOVE],
 		.bindings = vis_operators,
 	},
 	[VIS_MODE_NORMAL] = {
-		.parent = &vis[VIS_MODE_OPERATOR],
+		.parent = &vis_modes[VIS_MODE_OPERATOR],
 		.bindings = vis_normal,
 	},
 	[VIS_MODE_VISUAL] = {
 		.name = "VISUAL",
-		.parent = &vis[VIS_MODE_OPERATOR],
+		.parent = &vis_modes[VIS_MODE_OPERATOR],
 		.bindings = vis_visual,
 		.enter = vis_visual_enter,
 		.leave = vis_visual_leave,
 	},
 	[VIS_MODE_INSERT] = {
 		.name = "INSERT",
-		.parent = &vis[VIS_MODE_BASIC],
-		.bindings = vis_insert,
+		.parent = &vis_modes[VIS_MODE_BASIC],
+		.bindings = vis_insert_mode,
 		.input = vis_insert_input,
 	},
 	[VIS_MODE_REPLACE] = {
 		.name = "REPLACE",
-		.parent = &vis[VIS_MODE_INSERT],
+		.parent = &vis_modes[VIS_MODE_INSERT],
 		.bindings = vis_replace,
 		.input = vis_replace_input,
 	},
@@ -466,7 +467,7 @@ static Mode vis[] = {
 static void switchmode(const Arg *arg) {
 	if (mode->leave)
 		mode->leave();
-	mode = &vis[arg->i];
+	mode = &vis_modes[arg->i];
 	if (mode->enter)
 		mode->enter();
 	// TODO display mode name somewhere?
@@ -498,55 +499,55 @@ XXX: CONTROL(' ') = 0, ^Space                  Go forward one word
 */
 
 /* key binding configuration */
-#if 1
 static KeyBinding nano_keys[] = {
-	{ { CONTROL('D') },   cursor,   { .m = editor_delete          } },
-	BACKSPACE(            cursor,      m,  editor_backspace         ),
-	{ { KEY(LEFT) },      cursor,   { .m = editor_char_prev       } },
-	{ { KEY(RIGHT) },     cursor,   { .m = editor_char_next       } },
-	{ { CONTROL('F') },   cursor,   { .m = editor_char_next       } },
-	{ { KEY(UP) },        cursor,   { .m = editor_line_up         } },
-	{ { CONTROL('P') },   cursor,   { .m = editor_line_up         } },
-	{ { KEY(DOWN) },      cursor,   { .m = editor_line_down       } },
-	{ { CONTROL('N') },   cursor,   { .m = editor_line_down       } },
-	{ { KEY(PPAGE) },     cursor,   { .m = editor_page_up         } },
-	{ { CONTROL('Y') },   cursor,   { .m = editor_page_up         } },
-	{ { KEY(F(7)) },      cursor,   { .m = editor_page_up         } },
-	{ { KEY(NPAGE) },     cursor,   { .m = editor_page_down       } },
-	{ { CONTROL('V') },   cursor,   { .m = editor_page_down       } },
-	{ { KEY(F(8)) },      cursor,   { .m = editor_page_down       } },
-//	{ { CONTROL(' ') },   cursor,   { .m = editor_word_start_next } },
-	{ { META(' ') },      cursor,   { .m = editor_word_start_prev } },
-	{ { CONTROL('A') },   cursor,   { .m = editor_line_start      } },
-	{ { CONTROL('E') },   cursor,   { .m = editor_line_end        } },
-	{ { META(']') },      cursor,   { .m = editor_bracket_match   } },
-	{ { META(')') },      cursor,   { .m = editor_paragraph_next  } },
-	{ { META('(') },      cursor,   { .m = editor_paragraph_prev  } },
-	{ { META('\\') },     cursor,   { .m = editor_file_begin      } },
-	{ { META('|') },      cursor,   { .m = editor_file_begin      } },
-	{ { META('/') },      cursor,   { .m = editor_file_end        } },
-	{ { META('?') },      cursor,   { .m = editor_file_end        } },
-	{ { META('U') },      call,     { .f = editor_undo            } },
-	{ { META('E') },      call,     { .f = editor_redo            } },
+#if 0
+	{ { CONTROL('D') },   cursor,   { .m = vis_delete          } },
+	BACKSPACE(            cursor,      m,  vis_backspace         ),
+	{ { KEY(LEFT) },      cursor,   { .m = vis_char_prev       } },
+	{ { KEY(RIGHT) },     cursor,   { .m = vis_char_next       } },
+	{ { CONTROL('F') },   cursor,   { .m = vis_char_next       } },
+	{ { KEY(UP) },        cursor,   { .m = vis_line_up         } },
+	{ { CONTROL('P') },   cursor,   { .m = vis_line_up         } },
+	{ { KEY(DOWN) },      cursor,   { .m = vis_line_down       } },
+	{ { CONTROL('N') },   cursor,   { .m = vis_line_down       } },
+	{ { KEY(PPAGE) },     cursor,   { .m = vis_page_up         } },
+	{ { CONTROL('Y') },   cursor,   { .m = vis_page_up         } },
+	{ { KEY(F(7)) },      cursor,   { .m = vis_page_up         } },
+	{ { KEY(NPAGE) },     cursor,   { .m = vis_page_down       } },
+	{ { CONTROL('V') },   cursor,   { .m = vis_page_down       } },
+	{ { KEY(F(8)) },      cursor,   { .m = vis_page_down       } },
+//	{ { CONTROL(' ') },   cursor,   { .m = vis_word_start_next } },
+	{ { META(' ') },      cursor,   { .m = vis_word_start_prev } },
+	{ { CONTROL('A') },   cursor,   { .m = vis_line_start      } },
+	{ { CONTROL('E') },   cursor,   { .m = vis_line_end        } },
+	{ { META(']') },      cursor,   { .m = vis_bracket_match   } },
+	{ { META(')') },      cursor,   { .m = vis_paragraph_next  } },
+	{ { META('(') },      cursor,   { .m = vis_paragraph_prev  } },
+	{ { META('\\') },     cursor,   { .m = vis_file_begin      } },
+	{ { META('|') },      cursor,   { .m = vis_file_begin      } },
+	{ { META('/') },      cursor,   { .m = vis_file_end        } },
+	{ { META('?') },      cursor,   { .m = vis_file_end        } },
+	{ { META('U') },      call,     { .f = vis_undo            } },
+	{ { META('E') },      call,     { .f = vis_redo            } },
 	{ { CONTROL('I') },   insert,   { .s = "\t"                   } },
-	/* TODO: handle this in editor to insert \n\r when appriopriate */
+	/* TODO: handle this in vis to insert \n\r when appriopriate */
 	{ { CONTROL('M') },   insert,   { .s = "\n"                   } },
-	{ { CONTROL('L') },   call,     { .f = editor_draw            } },
+	{ { CONTROL('L') },   call,     { .f = vis_draw            } },
+#endif
 	{ /* empty last element, array terminator */              },
 };
-#endif
 
 static Mode nano[] = {
 	{ .parent = NULL,     .bindings = basic_movement,  },
 	{ .parent = &nano[0], .bindings = nano_keys, .input = vis_insert_input, },
 };
 
-/* list of editor configurations, first entry is default. name is matched with
+/* list of vis configurations, first entry is default. name is matched with
  * argv[0] i.e. program name upon execution
  */
 static Config editors[] = {
-	{ .name = "vis",  .mode = &vis[VIS_MODE_NORMAL] },
-	{ .name = "nano", .mode = &nano[1] },
+	{ .name = "vis",  .mode = &vis_modes[VIS_MODE_NORMAL], .statusbar = statusbar },
+	{ .name = "nano", .mode = &nano[1], .statusbar = statusbar },
 };
 
 /* Color definitions, by default the i-th color is used for the i-th syntax
