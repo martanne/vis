@@ -1,8 +1,8 @@
 include config.mk
 
-SRC += vis.c colors.c window.c text.c text-motions.c text-objects.c register.c
-HDR = ${SRC:.c=.h} util.h config.def.h
-SRC += main.c
+SRC = vis.c window.c text.c text-motions.c text-objects.c register.c
+HDR := ${SRC:.c=.h} util.h config.def.h
+SRC += main.c colors.c
 OBJ = ${SRC:.c=.o}
 ALL = ${SRC} ${HDR} config.mk Makefile LICENSE README vis.1
 
