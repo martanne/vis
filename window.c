@@ -273,42 +273,42 @@ void window_cursor_to(Win *win, size_t pos) {
 	if (pos > max)
 		pos = max > 0 ? max - 1 : 0;
 
-	for (int i = 0;  i < 2 && (pos < win->start || pos > win->end); i++) {
-		win->start = i == 0 ? text_line_start(win->text, pos) : pos;
-		window_draw(win);
+	if (pos == max && win->end != max) {
+		/* do not display an empty screen when showing the end of the file */
+		win->start = max - 1;
+		window_scroll_lines_up(win, win->height / 2);
+	} else {
+		/* set the start of the viewable region to the start of the line on which
+		 * the cursor should be placed. if this line requires more space than
+		 * available in the window then simply start displaying text at the new
+		 * cursor position */
+		for (int i = 0;  i < 2 && (pos < win->start || pos > win->end); i++) {
+			win->start = i == 0 ? text_line_begin(win->text, pos) : pos;
+			window_draw(win);
+		}
 	}
 
-#if 0
-	Win *win = vis->win;
-	size_t size = text_size(win->text);
-	if (win->end == size)
-		return cursor_move_to(win, win->end);
-	win->start = size - 1;
-	scroll_line_up(win, win->height / 2);
-	return cursor_move_to(win, win->end);
-#endif
+	size_t cur = win->start;
+	while (line && line != win->lastline && cur < pos) {
+		if (cur + line->len > pos)
+			break;
+		cur += line->len;
+		line = line->next;
+		row++;
+	}
 
-		size_t cur = win->start;
-		while (line && line != win->lastline && cur < pos) {
-			if (cur + line->len > pos)
-				break;
-			cur += line->len;
-			line = line->next;
-			row++;
+	if (line) {
+		int max_col = MIN(win->width, line->width);
+		while (cur < pos && col < max_col) {
+			cur += line->cells[col].len;
+			col++;
 		}
-
-		if (line) {
-			int max_col = MIN(win->width, line->width);
-			while (cur < pos && col < max_col) {
-				cur += line->cells[col].len;
-				col++;
-			}
-			while (col < max_col && line->cells[col].data == '\t')
-				col++;
-		} else {
-			line = win->bottomline;
-			row = win->height - 1;
-		}
+		while (col < max_col && line->cells[col].data == '\t')
+			col++;
+	} else {
+		line = win->bottomline;
+		row = win->height - 1;
+	}
 
 	win->cursor.line = line;
 	win->cursor.row = row;
