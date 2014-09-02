@@ -168,8 +168,12 @@ static void mark_goto(const Arg *arg) {
 	vis_mark_goto(vis, arg->i);
 }
 
-static Action action;
+static Action action, action_prev;
 void action_do(Action *a); 
+
+static void repeat(const Arg *arg) {
+	action_do(&action_prev);
+}
 
 static void count(const Arg *arg) {
 	action.count = action.count * 10 + arg->i;
@@ -240,7 +244,11 @@ void action_do(Action *a) {
 	c.count = a->count;
 	if (a->op)
 		a->op(&c);
-	action_reset(a);
+	if (a != &action_prev) {
+		if (a->op)
+			action_prev = *a;
+		action_reset(a);
+	}
 }
 
 /* use vim's  
@@ -375,6 +383,7 @@ static KeyBinding vis_normal[] = {
 	{ { CONTROL('w'), NONE('k') }, call,     { .f = vis_window_prev     } },
 	{ { CONTROL('F')            }, cursor,   { .m = window_page_up         } },
 	{ { CONTROL('B')            }, cursor,   { .m = window_page_down       } },
+	{ { NONE('.')               }, repeat,   {                             } },
 	{ { NONE('n')               }, find_forward,  { .s = "if"            } },
 	{ { NONE('p')               }, find_backward, { .s = "if"            } },
 	{ { NONE('x')               }, cursor,        { .f = vis_delete_key   } },
