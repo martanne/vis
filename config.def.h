@@ -9,13 +9,19 @@
 	{ { NONE(127) },      (func), { .name = (arg) } }, \
 	{ { CONTROL('B') },   (func), { .name = (arg) } }
 
+static Mode *mode, *mode_prev;
+static Vis *vis;
+static Mode vis_modes[];
+
 static void switchmode(const Arg *arg);
+static void switchmode_to(Mode *new_mode);
 
 enum {
 	VIS_MODE_BASIC,
 	VIS_MODE_MOVE,
 	VIS_MODE_TEXTOBJ,
 	VIS_MODE_OPERATOR,
+	VIS_MODE_OPERATOR_OPTION,
 	VIS_MODE_NORMAL,
 	VIS_MODE_VISUAL,
 	VIS_MODE_INSERT,
@@ -51,14 +57,14 @@ static Operator *ops[] = {
 };
 
 enum {
-	MOVE_CHAR_PREV,
-	MOVE_CHAR_NEXT,
 	MOVE_LINE_UP,
 	MOVE_LINE_DOWN,
 	MOVE_LINE_BEGIN,
 	MOVE_LINE_START,
 	MOVE_LINE_FINISH,
 	MOVE_LINE_END,
+	MOVE_CHAR_PREV,
+	MOVE_CHAR_NEXT,
 	MOVE_WORD_START_PREV,
 	MOVE_WORD_START_NEXT,
 	MOVE_WORD_END_PREV,
@@ -73,14 +79,14 @@ enum {
 };
 
 static Movement moves[] = {
-	[MOVE_CHAR_PREV]       = { .win = window_char_prev                                 },
-	[MOVE_CHAR_NEXT]       = { .win = window_char_next                                 },
 	[MOVE_LINE_UP]         = { .win = window_line_up                                   },
 	[MOVE_LINE_DOWN]       = { .win = window_line_down                                 },
 	[MOVE_LINE_BEGIN]      = { .txt = text_line_begin,      .type = LINEWISE           },
 	[MOVE_LINE_START]      = { .txt = text_line_start,      .type = LINEWISE           },
 	[MOVE_LINE_FINISH]     = { .txt = text_line_finish,     .type = LINEWISE           },
 	[MOVE_LINE_END]        = { .txt = text_line_end,        .type = LINEWISE           },
+	[MOVE_CHAR_PREV]       = { .win = window_char_prev                                 },
+	[MOVE_CHAR_NEXT]       = { .win = window_char_next                                 },
 	[MOVE_WORD_START_PREV] = { .txt = text_word_start_prev, .type = CHARWISE           },
 	[MOVE_WORD_START_NEXT] = { .txt = text_word_start_next, .type = CHARWISE           },
 	[MOVE_WORD_END_PREV]   = { .txt = text_word_end_prev,   .type = CHARWISE|INCLUSIVE },
@@ -96,6 +102,8 @@ static Movement moves[] = {
 
 enum {
 	TEXT_OBJ_WORD,
+	TEXT_OBJ_LINE_UP,
+	TEXT_OBJ_LINE_DOWN,
 	TEXT_OBJ_SENTENCE,
 	TEXT_OBJ_PARAGRAPH,
 	TEXT_OBJ_OUTER_SQUARE_BRACKET,
@@ -116,6 +124,8 @@ enum {
 
 static TextObject textobjs[] = {
 	[TEXT_OBJ_WORD]                 = { text_object_word                  },
+	[TEXT_OBJ_LINE_UP]              = { text_object_line                  },
+	[TEXT_OBJ_LINE_DOWN]            = { text_object_line                  },
 	[TEXT_OBJ_SENTENCE]             = { text_object_sentence              },
 	[TEXT_OBJ_PARAGRAPH]            = { text_object_paragraph             },
 	[TEXT_OBJ_OUTER_SQUARE_BRACKET] = { text_object_square_bracket, OUTER },
@@ -134,6 +144,11 @@ static TextObject textobjs[] = {
 	[TEXT_OBJ_INNER_BACKTICK]       = { text_object_backtick,       INNER },
 };
 
+static TextObject *moves_linewise[] = {
+	[MOVE_LINE_UP]   = &textobjs[TEXT_OBJ_LINE_UP],
+	[MOVE_LINE_DOWN] = &textobjs[TEXT_OBJ_LINE_DOWN],
+};
+
 /* draw a statubar, do whatever you want with the given curses window */
 static void statusbar(WINDOW *win, bool active, const char *filename, size_t line, size_t col) {
 	int width, height;
@@ -150,7 +165,7 @@ static void statusbar(WINDOW *win, bool active, const char *filename, size_t lin
 	}
 }
 
-void quit(const Arg *arg) {
+static void quit(const Arg *arg) {
 	endwin();
 	exit(0);
 }
@@ -169,6 +184,7 @@ static void mark_goto(const Arg *arg) {
 
 static Action action, action_prev;
 void action_do(Action *a); 
+void action_reset(Action *a);
 
 static void repeat(const Arg *arg) {
 	action_do(&action_prev);
@@ -178,17 +194,34 @@ static void count(const Arg *arg) {
 	action.count = action.count * 10 + arg->i;
 }
 
-static void operator(const Arg *arg) {
-	action.op = ops[arg->i];
+static void linewise(const Arg *arg) {
+	action.linewise = arg->b;
 }
 
-static bool operator_unknown(Key *key1, Key *key2) {
-	action.op = NULL;
-	return true;
+static void operator(const Arg *arg) {
+	switchmode(&(const Arg){ .i = VIS_MODE_OPERATOR });
+	Operator *op = ops[arg->i];
+	if (action.op == op) {
+		/* hacky way to handle double operators i.e. things like
+		 * dd, yy etc where the second char isn't a movement */
+		action.textobj = moves_linewise[MOVE_LINE_DOWN];
+		action_do(&action);
+	} else {
+		action.op = op;
+	}
+}
+
+static bool operator_invalid(const char *str, size_t len) {
+	action_reset(&action);
+	switchmode_to(mode_prev);
+	return false;
 }
 
 static void movement(const Arg *arg) {
-	action.movement = &moves[arg->i];
+	if (action.linewise && arg->i < LENGTH(moves_linewise))
+		action.textobj = moves_linewise[arg->i];
+	else
+		action.movement = &moves[arg->i];
 	action_do(&action);
 }
 
@@ -199,6 +232,7 @@ static void textobj(const Arg *arg) {
 
 void action_reset(Action *a) {
 	a->count = 0;
+	a->linewise = false;
 	a->op = NULL;
 	a->movement = NULL;
 	a->textobj = NULL;
@@ -234,20 +268,43 @@ void action_do(Action *a) {
 			c.range.end = it.pos;
 		}
 	} else if (a->textobj) {
-		c.range = a->textobj->range(txt, pos);
-		if (c.range.start != (size_t)-1 && a->textobj->type == OUTER) {
-			c.range.start--;
-			c.range.end++;
+		Filerange r;
+		c.range.start = c.range.end = pos;
+		for (int i = 0; i < a->count; i++) {
+			r = a->textobj->range(txt, pos);
+			// TODO range_valid?
+			if (r.start == (size_t)-1 || r.end == (size_t)-1)
+				continue;
+			if (a->textobj->type == OUTER) {
+				r.start--;
+				r.end++;
+			}
+			// TODO c.range = range_union(&c.range, &r);
+			c.range.start = MIN(c.range.start, r.start);
+			c.range.end = MAX(c.range.end, r.end);
+			if (i < a->count - 1) {
+				if (a->textobj == &textobjs[TEXT_OBJ_LINE_UP]) {
+					pos = c.range.start - 1;
+				} else {
+					pos = c.range.end + 1;
+				}
+			}
 		}
 	}
+
 	c.count = a->count;
-	if (a->op)
+	if (a->op) {
 		a->op(&c);
+		if (mode == &vis_modes[VIS_MODE_OPERATOR])
+			switchmode_to(mode_prev);
+	}
+
 	if (a != &action_prev) {
 		if (a->op)
 			action_prev = *a;
 		action_reset(a);
 	}
+
 }
 
 /* use vim's  
@@ -365,6 +422,20 @@ static KeyBinding vis_operators[] = {
 	{ /* empty last element, array terminator */                           },
 };
 
+static void vis_operators_enter(void) {
+	vis_modes[VIS_MODE_OPERATOR].parent = &vis_modes[VIS_MODE_OPERATOR_OPTION];
+}
+
+static void vis_operators_leave(void) {
+	vis_modes[VIS_MODE_OPERATOR].parent = &vis_modes[VIS_MODE_MOVE];
+}
+
+static KeyBinding vis_operator_options[] = {
+	{ { NONE('v')               }, linewise,      { .b = false           } },
+	{ { NONE('V')               }, linewise,      { .b = true            } },
+	{ /* empty last element, array terminator */                           },
+};
+
 static KeyBinding vis_registers[] = { /* {a-zA-Z0-9.%#:-"} */
 //	{ { NONE('"'), NONE('a')    }, reg,           { .i = 1               } },
 	{ /* empty last element, array terminator */                           },
@@ -384,7 +455,7 @@ static KeyBinding vis_normal[] = {
 	{ { CONTROL('B')            }, cursor,   { .m = window_page_down       } },
 	{ { NONE('.')               }, repeat,   {                             } },
 	{ { NONE('n')               }, find_forward,  { .s = "if"            } },
-	{ { NONE('p')               }, find_backward, { .s = "if"            } },
+	{ { NONE('N')               }, find_backward, { .s = "if"            } },
 	{ { NONE('x')               }, cursor,        { .f = vis_delete_key   } },
 	{ { NONE('i')               }, switchmode,    { .i = VIS_MODE_INSERT } },
 	{ { NONE('v')               }, switchmode,    { .i = VIS_MODE_VISUAL } },
@@ -432,22 +503,35 @@ static bool vis_replace_input(const char *str, size_t len) {
 
 static Mode vis_modes[] = {
 	[VIS_MODE_BASIC] = {
+		.name = "BASIC",
 		.parent = NULL,
 		.bindings = basic_movement,
 	},
 	[VIS_MODE_MOVE] = { 
+		.name = "MOVE",
 		.parent = &vis_modes[VIS_MODE_BASIC],
 		.bindings = vis_movements,
 	},
 	[VIS_MODE_TEXTOBJ] = { 
+		.name = "TEXTOBJ",
 		.parent = &vis_modes[VIS_MODE_MOVE],
 		.bindings = vis_textobjs,
 	},
-	[VIS_MODE_OPERATOR] = { 
+	[VIS_MODE_OPERATOR_OPTION] = {
+		.name = "OPERATOR-OPTION",
+		.parent = &vis_modes[VIS_MODE_TEXTOBJ],
+		.bindings = vis_operator_options,
+	},
+	[VIS_MODE_OPERATOR] = {
+		.name = "OPERATOR",
 		.parent = &vis_modes[VIS_MODE_MOVE],
 		.bindings = vis_operators,
+		.enter = vis_operators_enter,
+		.leave = vis_operators_leave,
+		.input = operator_invalid,
 	},
 	[VIS_MODE_NORMAL] = {
+		.name = "NORMAL",
 		.parent = &vis_modes[VIS_MODE_OPERATOR],
 		.bindings = vis_normal,
 	},
@@ -472,13 +556,20 @@ static Mode vis_modes[] = {
 	},
 };
 
-static void switchmode(const Arg *arg) {
+static void switchmode_to(Mode *new_mode) {
 	if (mode->leave)
 		mode->leave();
-	mode = &vis_modes[arg->i];
+	mode_prev = mode;
+	//fprintf(stderr, "%s -> %s\n", mode_prev->name, new_mode->name);
+	mode = new_mode;
 	if (mode->enter)
 		mode->enter();
 	// TODO display mode name somewhere?
+
+}
+
+static void switchmode(const Arg *arg) {
+	switchmode_to(&vis_modes[arg->i]);
 }
 
 /* incomplete list of usefule but currently missing functionality from nanos help ^G:

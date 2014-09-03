@@ -25,9 +25,6 @@ static void line(const Arg *arg);
 static void find_forward(const Arg *arg);
 static void find_backward(const Arg *arg);
 
-static Mode *mode;
-static Vis *vis;
-
 #include "config.h"
 
 static Config *config = &editors[0];
@@ -136,9 +133,10 @@ int main(int argc, char *argv[]) {
 			break;
 		}
 	}
-	mode = config->mode;
 
+	mode_prev = mode = config->mode;
 	setup();
+
 	if (!(vis = vis_new(screen.w, screen.h)))
 		return 1;
 	if (!vis_syntax_load(vis, syntaxes, colors))

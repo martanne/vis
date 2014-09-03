@@ -32,6 +32,7 @@ struct Vis {
 };
 
 typedef union {
+	bool b;
 	size_t i;
 	const char *s;
 	size_t (*m)(Win*);
@@ -97,6 +98,7 @@ typedef struct {
 
 typedef struct {
 	int count;
+	bool linewise;
 	Operator *op;
 	Movement *movement;
 	TextObject *textobj;
