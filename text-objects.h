@@ -8,6 +8,7 @@
  * be a whitespace include all neighbouring leading whitespaces and the following word. */
 Filerange text_object_word(Text*, size_t pos);
 Filerange text_object_word_boundry(Text*, size_t pos, int (*isboundry)(int));
+Filerange text_object_line(Text*, size_t pos);
 Filerange text_object_sentence(Text*, size_t pos);
 Filerange text_object_paragraph(Text*, size_t pos);
 
