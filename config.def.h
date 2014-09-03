@@ -33,8 +33,7 @@ void op_delete(OperatorContext *c) {
 		return;
 	size_t len = c->range.end - c->range.start;
 	vis_delete(vis, c->range.start, len);
-	if (c->pos > c->range.start)
-		window_cursor_to(vis->win->win, c->range.start);
+	window_cursor_to(vis->win->win, c->range.start);
 	vis_draw(vis);
 }
 
