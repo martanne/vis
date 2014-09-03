@@ -216,6 +216,7 @@ static void vis_windows_invalidate(Vis *vis, size_t start, size_t end) {
 				vis_window_draw(win);
 		}
 	}
+	vis_window_draw(vis->win);
 }
 
 

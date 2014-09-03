@@ -12,6 +12,7 @@
 static Mode *mode, *mode_prev;
 static Vis *vis;
 static Mode vis_modes[];
+static Action action = { .count = 1 }, action_prev = { .count = 1 };
 
 static void switchmode(const Arg *arg);
 static void switchmode_to(Mode *new_mode);
@@ -22,6 +23,7 @@ enum {
 	VIS_MODE_TEXTOBJ,
 	VIS_MODE_OPERATOR,
 	VIS_MODE_OPERATOR_OPTION,
+	VIS_MODE_REGISTER,
 	VIS_MODE_NORMAL,
 	VIS_MODE_VISUAL,
 	VIS_MODE_INSERT,
@@ -32,15 +34,14 @@ enum {
 	OP_DELETE,
 	OP_CHANGE,
 	OP_YANK,
+	OP_PASTE,
 };
 
 void op_delete(OperatorContext *c) {
-	if (c->range.start == (size_t)-1)
-		return;
 	size_t len = c->range.end - c->range.start;
+	register_put(c->reg, vis->win->text, &c->range);
 	vis_delete(vis, c->range.start, len);
 	window_cursor_to(vis->win->win, c->range.start);
-	vis_draw(vis);
 }
 
 void op_change(OperatorContext *c) {
@@ -48,12 +49,21 @@ void op_change(OperatorContext *c) {
 	switchmode(&(const Arg){ .i = VIS_MODE_INSERT });
 }
 
-void op_yank(OperatorContext *c) {}
+void op_yank(OperatorContext *c) {
+	register_put(c->reg, vis->win->text, &c->range);
+}
 
-static Operator *ops[] = {
-	[OP_DELETE] = op_delete,
-	[OP_CHANGE] = op_change,
-	[OP_YANK] = op_yank,
+void op_paste(OperatorContext *c) {
+	size_t pos = window_cursor_get(vis->win->win);
+	vis_insert(vis, pos, c->reg->data, c->reg->len);
+	window_cursor_to(vis->win->win, pos + c->reg->len);
+}
+
+static Operator ops[] = {
+	[OP_DELETE] = { op_delete, false },
+	[OP_CHANGE] = { op_change, false },
+	[OP_YANK]   = { op_yank,   false },
+	[OP_PASTE]  = { op_paste,  true  },
 };
 
 enum {
@@ -182,7 +192,7 @@ static void mark_goto(const Arg *arg) {
 	vis_mark_goto(vis, arg->i);
 }
 
-static Action action, action_prev;
+
 void action_do(Action *a); 
 void action_reset(Action *a);
 
@@ -200,7 +210,7 @@ static void linewise(const Arg *arg) {
 
 static void operator(const Arg *arg) {
 	switchmode(&(const Arg){ .i = VIS_MODE_OPERATOR });
-	Operator *op = ops[arg->i];
+	Operator *op = &ops[arg->i];
 	if (action.op == op) {
 		/* hacky way to handle double operators i.e. things like
 		 * dd, yy etc where the second char isn't a movement */
@@ -208,6 +218,8 @@ static void operator(const Arg *arg) {
 		action_do(&action);
 	} else {
 		action.op = op;
+		if (op->selfcontained)
+			action_do(&action);
 	}
 }
 
@@ -230,8 +242,12 @@ static void textobj(const Arg *arg) {
 	action_do(&action);
 }
 
+static void reg(const Arg *arg) {
+	action.reg = &vis->registers[arg->i];
+}
+
 void action_reset(Action *a) {
-	a->count = 0;
+	a->count = 1;
 	a->linewise = false;
 	a->op = NULL;
 	a->movement = NULL;
@@ -242,11 +258,13 @@ void action_reset(Action *a) {
 void action_do(Action *a) {
 	Text *txt = vis->win->text;
 	Win *win = vis->win->win;
-	OperatorContext c;
 	size_t pos = window_cursor_get(win);
-	c.pos = pos;
-	if (a->count == 0)
-		a->count = 1;
+	OperatorContext c = {
+		.count = a->count,
+		.pos = pos,
+		.reg = a->reg ? a->reg : &vis->registers[REG_DEFAULT],
+	};
+
 	if (a->movement) {
 		size_t start = pos;
 		for (int i = 0; i < a->count; i++) {
@@ -292,9 +310,8 @@ void action_do(Action *a) {
 		}
 	}
 
-	c.count = a->count;
 	if (a->op) {
-		a->op(&c);
+		a->op->func(&c);
 		if (mode == &vis_modes[VIS_MODE_OPERATOR])
 			switchmode_to(mode_prev);
 	}
@@ -304,7 +321,6 @@ void action_do(Action *a) {
 			action_prev = *a;
 		action_reset(a);
 	}
-
 }
 
 /* use vim's  
@@ -419,6 +435,7 @@ static KeyBinding vis_operators[] = {
 	{ { NONE('d')               }, operator,      { .i = OP_DELETE       } },
 	{ { NONE('c')               }, operator,      { .i = OP_CHANGE       } },
 	{ { NONE('y')               }, operator,      { .i = OP_YANK         } },
+	{ { NONE('p')               }, operator,      { .i = OP_PASTE        } },
 	{ /* empty last element, array terminator */                           },
 };
 
@@ -437,7 +454,9 @@ static KeyBinding vis_operator_options[] = {
 };
 
 static KeyBinding vis_registers[] = { /* {a-zA-Z0-9.%#:-"} */
-//	{ { NONE('"'), NONE('a')    }, reg,           { .i = 1               } },
+	{ { NONE('"'), NONE('a')    }, reg,           { .i = REG_a           } },
+	{ { NONE('"'), NONE('b')    }, reg,           { .i = REG_b           } },
+	{ { NONE('"'), NONE('c')    }, reg,           { .i = REG_c           } },
 	{ /* empty last element, array terminator */                           },
 };
 
@@ -530,14 +549,19 @@ static Mode vis_modes[] = {
 		.leave = vis_operators_leave,
 		.input = operator_invalid,
 	},
+	[VIS_MODE_REGISTER] = {
+		.name = "REGISTER",
+		.parent = &vis_modes[VIS_MODE_OPERATOR],
+		.bindings = vis_registers,
+	},
 	[VIS_MODE_NORMAL] = {
 		.name = "NORMAL",
-		.parent = &vis_modes[VIS_MODE_OPERATOR],
+		.parent = &vis_modes[VIS_MODE_REGISTER],
 		.bindings = vis_normal,
 	},
 	[VIS_MODE_VISUAL] = {
 		.name = "VISUAL",
-		.parent = &vis_modes[VIS_MODE_OPERATOR],
+		.parent = &vis_modes[VIS_MODE_REGISTER],
 		.bindings = vis_visual,
 		.enter = vis_visual_enter,
 		.leave = vis_visual_leave,
@@ -557,6 +581,8 @@ static Mode vis_modes[] = {
 };
 
 static void switchmode_to(Mode *new_mode) {
+	if (mode == new_mode)
+		return;
 	if (mode->leave)
 		mode->leave();
 	mode_prev = mode;

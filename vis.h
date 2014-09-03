@@ -22,11 +22,22 @@ struct VisWin {
 
 typedef void (*vis_statusbar_t)(WINDOW *win, bool active, const char *filename, size_t line, size_t col);
 
+enum Reg {
+	REG_a,
+	REG_b,
+	REG_c,
+	// ...
+	REG_z,
+	REG_DEFAULT,
+	REG_LAST,
+};
+
 struct Vis {
 	int width, height;             /* terminal size, available for all windows */
 	VisWin *windows;               /* list of windows */
 	VisWin *win;                   /* currently active window */
 	Syntax *syntaxes;              /* NULL terminated array of syntax definitions */
+	Register registers[REG_LAST];
 	void (*windows_arrange)(Vis*); /* current layout which places the windows */
 	vis_statusbar_t statusbar;     /* configurable user hook to draw statusbar */
 };
@@ -74,7 +85,10 @@ typedef struct {
 	size_t pos;
 } OperatorContext;
 
-typedef void (Operator)(OperatorContext*);
+typedef struct {
+	void (*func)(OperatorContext*); /* function implementing the operator logic */
+	bool selfcontained;             /* is this operator followed by movements/text-objects */
+} Operator;
 
 typedef struct {
 	size_t (*win)(Win*);

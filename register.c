@@ -6,12 +6,6 @@
 
 #define REG_SIZE 1024
 
-struct Register {
-	char *data;
-	size_t len;
-	size_t size;
-};
-
 bool register_alloc(Register *reg, size_t size) {
 	if (size < REG_SIZE)
 		size = REG_SIZE;

@@ -5,7 +5,12 @@
 #include <stdbool.h>
 #include "text.h"
 
-typedef struct Register Register;
+typedef struct {
+	char *data;
+	size_t len;
+	size_t size;
+	bool linewise;
+} Register;
 
 bool register_alloc(Register *reg, size_t size);
 void register_free(Register *reg); 
