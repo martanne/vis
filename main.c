@@ -103,6 +103,8 @@ static bool keymatch(Key *key0, Key *key1) {
 
 static KeyBinding *keybinding(Mode *mode, Key *key0, Key *key1) {
 	for (; mode; mode = mode->parent) {
+		if (mode->common_prefix && !keymatch(key0, &mode->bindings->key[0]))
+			continue;
 		for (KeyBinding *kb = mode->bindings; kb && (kb->key[0].code || kb->key[0].str[0]); kb++) {
 			if (keymatch(key0, &kb->key[0]) && (!key1 || keymatch(key1, &kb->key[1])))
 				return kb;

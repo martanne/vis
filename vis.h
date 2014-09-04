@@ -75,6 +75,7 @@ struct Mode {
 	Mode *parent;
 	KeyBinding *bindings;
 	const char *name;
+	bool common_prefix;
 	void (*enter)(void);
 	void (*leave)(void);
 	bool (*unknown)(Key *key0, Key *key1);        /* unknown key for this mode, return value determines whether parent modes will be checked */ 

@@ -629,11 +629,13 @@ static Mode vis_modes[] = {
 	},
 	[VIS_MODE_MARK] = {
 		.name = "MARK",
+		.common_prefix = true,
 		.parent = &vis_modes[VIS_MODE_BASIC],
 		.bindings = vis_marks,
 	},
 	[VIS_MODE_MARK_LINE] = {
 		.name = "MARK-LINE",
+		.common_prefix = true,
 		.parent = &vis_modes[VIS_MODE_MARK],
 		.bindings = vis_marks_line,
 	},
@@ -662,11 +664,13 @@ static Mode vis_modes[] = {
 	},
 	[VIS_MODE_REGISTER] = {
 		.name = "REGISTER",
+		.common_prefix = true,
 		.parent = &vis_modes[VIS_MODE_OPERATOR],
 		.bindings = vis_registers,
 	},
 	[VIS_MODE_MARK_SET] = {
 		.name = "MARK-SET",
+		.common_prefix = true,
 		.parent = &vis_modes[VIS_MODE_REGISTER],
 		.bindings = vis_marks_set,
 	},
