@@ -128,6 +128,7 @@ typedef struct {
 	TextObject *textobj;
 	Register *reg;
 	Mark mark;
+	Key key;
 	Arg arg;
 } Action;
 

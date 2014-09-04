@@ -74,6 +74,24 @@ static size_t mark_line_goto(const Arg *arg) {
 	return text_line_start(vis->win->text, mark_goto(arg));
 }
 
+static size_t to(const Arg *arg) {
+	return text_find_char_next(vis->win->text, window_cursor_get(vis->win->win) + 1,
+		action.key.str, strlen(action.key.str));
+}
+
+static size_t till(const Arg *arg) {
+	return text_char_prev(vis->win->text, to(arg));
+}
+
+static size_t to_left(const Arg *arg) {
+	return text_find_char_prev(vis->win->text, window_cursor_get(vis->win->win) - 1,
+		action.key.str, strlen(action.key.str));
+}
+
+static size_t till_left(const Arg *arg) {
+	return text_char_next(vis->win->text, to_left(arg));
+}
+
 static Operator ops[] = {
 	[OP_DELETE] = { op_delete, false },
 	[OP_CHANGE] = { op_change, false },
@@ -99,6 +117,10 @@ enum {
 	MOVE_PARAGRAPH_PREV,
 	MOVE_PARAGRAPH_NEXT,
 	MOVE_BRACKET_MATCH,
+	MOVE_LEFT_TO,
+	MOVE_RIGHT_TO,
+	MOVE_LEFT_TILL,
+	MOVE_RIGHT_TILL,
 	MOVE_FILE_BEGIN,
 	MOVE_FILE_END,
 	MOVE_MARK,
@@ -125,6 +147,10 @@ static Movement moves[] = {
 	[MOVE_BRACKET_MATCH]   = { .txt = text_bracket_match,   .type = LINEWISE|INCLUSIVE },
 	[MOVE_FILE_BEGIN]      = { .txt = text_begin,           .type = LINEWISE           },
 	[MOVE_FILE_END]        = { .txt = text_end,             .type = LINEWISE           },
+	[MOVE_LEFT_TO]         = { .cmd = to_left,              .type = LINEWISE           },
+	[MOVE_RIGHT_TO]        = { .cmd = to,                   .type = LINEWISE           },
+	[MOVE_LEFT_TILL]       = { .cmd = till_left,            .type = LINEWISE           },
+	[MOVE_RIGHT_TILL]      = { .cmd = till,                 .type = LINEWISE           },
 	[MOVE_MARK]            = { .cmd = mark_goto,            .type = LINEWISE           },
 	[MOVE_MARK_LINE]       = { .cmd = mark_line_goto,       .type = LINEWISE           },
 };
@@ -237,6 +263,17 @@ static bool operator_invalid(const char *str, size_t len) {
 	action_reset(&action);
 	switchmode_to(mode_prev);
 	return false;
+}
+
+static void movement_key(const Arg *arg) {
+	Key k = getkey();
+	if (!k.str[0]) {
+		action_reset(&action);
+		return;
+	}
+	action.key = k;
+	action.movement = &moves[arg->i];
+	action_do(&action);
 }
 
 static void movement(const Arg *arg) {
@@ -416,6 +453,10 @@ static KeyBinding vis_movements[] = {
 	{ { NONE(')')               }, movement, { .i = MOVE_SENTENCE_NEXT     } },
 	{ { NONE('g'), NONE('g')    }, movement, { .i = MOVE_FILE_BEGIN        } },
 	{ { NONE('G')               }, movement, { .i = MOVE_FILE_END          } },
+	{ { NONE('f')               }, movement_key, { .i = MOVE_RIGHT_TO      } },
+	{ { NONE('F')               }, movement_key, { .i = MOVE_LEFT_TO       } },
+	{ { NONE('t')               }, movement_key, { .i = MOVE_RIGHT_TILL    } },
+	{ { NONE('T')               }, movement_key, { .i = MOVE_LEFT_TILL     } },
 	{ /* empty last element, array terminator */                           },
 };
 
