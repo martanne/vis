@@ -12,7 +12,7 @@
 static Mode *mode, *mode_prev;
 static Vis *vis;
 static Mode vis_modes[];
-static Action action = { .count = 1 }, action_prev = { .count = 1 };
+static Action action, action_prev;
 
 static void switchmode(const Arg *arg);
 static void switchmode_to(Mode *new_mode);
@@ -306,7 +306,7 @@ static void mark_line(const Arg *arg) {
 }
 
 void action_reset(Action *a) {
-	a->count = 1;
+	a->count = 0;
 	a->linewise = false;
 	a->op = NULL;
 	a->movement = NULL;
@@ -318,6 +318,8 @@ void action_do(Action *a) {
 	Text *txt = vis->win->text;
 	Win *win = vis->win->win;
 	size_t pos = window_cursor_get(win);
+	if (a->count == 0)
+		a->count = 1;
 	OperatorContext c = {
 		.count = a->count,
 		.pos = pos,
