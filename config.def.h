@@ -92,6 +92,14 @@ static size_t till_left(const Arg *arg) {
 	return text_char_next(vis->win->text, to_left(arg));
 }
 
+static size_t line(const Arg *arg) {
+	if (action.count == 0)
+		return text_size(vis->win->text);
+	size_t pos = text_pos_by_lineno(vis->win->text, action.count);
+	action.count = 0;
+	return pos;
+}
+
 static Operator ops[] = {
 	[OP_DELETE] = { op_delete, false },
 	[OP_CHANGE] = { op_change, false },
@@ -106,6 +114,7 @@ enum {
 	MOVE_LINE_START,
 	MOVE_LINE_FINISH,
 	MOVE_LINE_END,
+	MOVE_LINE,
 	MOVE_CHAR_PREV,
 	MOVE_CHAR_NEXT,
 	MOVE_WORD_START_PREV,
@@ -134,6 +143,7 @@ static Movement moves[] = {
 	[MOVE_LINE_START]      = { .txt = text_line_start,      .type = LINEWISE           },
 	[MOVE_LINE_FINISH]     = { .txt = text_line_finish,     .type = LINEWISE           },
 	[MOVE_LINE_END]        = { .txt = text_line_end,        .type = LINEWISE           },
+	[MOVE_LINE]            = { .cmd = line,                 .type = LINEWISE           },
 	[MOVE_CHAR_PREV]       = { .win = window_char_prev                                 },
 	[MOVE_CHAR_NEXT]       = { .win = window_char_next                                 },
 	[MOVE_WORD_START_PREV] = { .txt = text_word_start_prev, .type = CHARWISE           },
@@ -454,7 +464,7 @@ static KeyBinding vis_movements[] = {
 	{ { NONE('(')               }, movement, { .i = MOVE_SENTENCE_PREV     } },
 	{ { NONE(')')               }, movement, { .i = MOVE_SENTENCE_NEXT     } },
 	{ { NONE('g'), NONE('g')    }, movement, { .i = MOVE_FILE_BEGIN        } },
-	{ { NONE('G')               }, movement, { .i = MOVE_FILE_END          } },
+	{ { NONE('G')               }, movement, { .i = MOVE_LINE              } },
 	{ { NONE('f')               }, movement_key, { .i = MOVE_RIGHT_TO      } },
 	{ { NONE('F')               }, movement_key, { .i = MOVE_LEFT_TO       } },
 	{ { NONE('t')               }, movement_key, { .i = MOVE_RIGHT_TILL    } },

@@ -42,12 +42,6 @@ void vis_statusbar_set(Vis *vis, vis_statusbar_t statusbar) {
 	vis->statusbar = statusbar;
 }
 
-size_t vis_line_goto(Vis *vis, size_t lineno) {
-	size_t pos = text_pos_by_lineno(vis->win->text, lineno);
-	window_cursor_to(vis->win->win, pos);
-	return pos;
-}
-
 static void vis_search_forward(Vis *vis, Regex *regex) {
 	VisWin *win = vis->win;
 	int pos = window_cursor_get(win->win) + 1;

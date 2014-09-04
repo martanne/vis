@@ -21,8 +21,6 @@ int ESCDELAY;
 static Key getkey(void);
 static void cursor(const Arg *arg);
 static void call(const Arg *arg);
-static void insert(const Arg *arg);
-static void line(const Arg *arg);
 static void find_forward(const Arg *arg);
 static void find_backward(const Arg *arg);
 
@@ -38,20 +36,12 @@ static void call(const Arg *arg) {
 	arg->f(vis);
 }
 
-static void line(const Arg *arg) {
-	vis_line_goto(vis, arg->i);
-}
-
 static void find_forward(const Arg *arg) {
 	vis_search(vis, arg->s, 1);
 }
 
 static void find_backward(const Arg *arg) {
 	vis_search(vis, arg->s, -1);
-}
-
-static void insert(const Arg *arg) {
-	//vis_insert(vis, arg->s, strlen(arg->s));
 }
 
 typedef struct Screen Screen;

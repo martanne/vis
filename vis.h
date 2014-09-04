@@ -175,7 +175,6 @@ bool vis_syntax_load(Vis*, Syntax *syntaxes, Color *colors);
 void vis_syntax_unload(Vis*);
 
 void vis_search(Vis *ed, const char *regex, int direction);
-size_t vis_line_goto(Vis *vis, size_t lineno);
 
 bool vis_window_new(Vis *vis, const char *filename);
 void vis_window_split(Vis *ed, const char *filename);
