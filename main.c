@@ -18,6 +18,7 @@ int ESCDELAY;
 # define set_escdelay(d) (ESCDELAY = (d))
 #endif
 
+static Key getkey(void);
 static void cursor(const Arg *arg);
 static void call(const Arg *arg);
 static void insert(const Arg *arg);
@@ -122,6 +123,31 @@ static KeyBinding *keybinding(Mode *mode, Key *key0, Key *key1) {
 	return NULL;
 }
 
+static Key getkey(void) {
+	Key key = { .str = "\0\0\0\0\0\0", .code = 0 };
+	int keycode = getch();
+	if (keycode == ERR)
+		return key;
+
+	// TODO verbatim insert mode
+	int len = 0;
+	if (keycode >= KEY_MIN) {
+		key.code = keycode;
+	} else {
+		char keychar = keycode;
+		key.str[len++] = keychar;
+
+		if (!ISASCII(keychar) || keychar == '\e') {
+			nodelay(stdscr, TRUE);
+			for (int t; len < LENGTH(key.str) && (t = getch()) != ERR; len++)
+				key.str[len] = t;
+			nodelay(stdscr, FALSE);
+		}
+	}
+
+	return key;
+}
+
 int main(int argc, char *argv[]) {
 	/* decide which key configuration to use based on argv[0] */
 	char *arg0 = argv[0];
@@ -177,32 +203,9 @@ int main(int argc, char *argv[]) {
 			continue;
 		}
 
-		int keycode = getch();
-		if (keycode == ERR)
-			continue;
-
-		// TODO verbatim insert mode
-		int len = 0;
-		if (keycode >= KEY_MIN) {
-			key.code = keycode;
-			key.str[0] = '\0';
-		} else {
-			char keychar = keycode;
-			key.str[len++] = keychar;
-			key.code = 0;
-
-			if (!ISASCII(keychar) || keychar == '\e') {
-				nodelay(stdscr, TRUE);
-				for (int t; len < LENGTH(key.str) && (t = getch()) != ERR; len++)
-					key.str[len] = t;
-				nodelay(stdscr, FALSE);
-			}
-		}
-
-		for (size_t i = len; i < LENGTH(key.str); i++)
-			key.str[i] = '\0';
-
+		key = getkey();
 		KeyBinding *action = keybinding(mode, key_mod ? key_mod : &key, key_mod ? &key : NULL);
+
 		if (!action && key_mod) {
 			/* second char of a combination was invalid, search again without the prefix */ 
 			action = keybinding(mode, &key, NULL);
@@ -220,10 +223,10 @@ int main(int argc, char *argv[]) {
 			continue;
 		}
 
-		if (keycode >= KEY_MIN)
+		if (key.code)
 			continue;
 		
-		if (mode->input && mode->input(key.str, len))
+		if (mode->input && mode->input(key.str, strlen(key.str)))
 			timeout = &idle;
 	}
 
