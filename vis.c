@@ -192,21 +192,6 @@ void vis_window_prev(Vis *vis) {
 	vis_window_statusbar_draw(vis->win);
 }
 
-void vis_mark_set(Vis *vis, Mark mark, size_t pos) {
-	text_mark_set(vis->win->text, mark, pos);
-}
-
-void vis_mark_goto(Vis *vis, Mark mark) {
-	VisWin *win = vis->win;
-	size_t pos = text_mark_get(win->text, mark);
-	if (pos != (size_t)-1)
-		window_cursor_to(win->win, pos);
-}
-
-void vis_mark_clear(Vis *vis, Mark mark) {
-	text_mark_clear(vis->win->text, mark);
-}
-
 static void vis_windows_invalidate(Vis *vis, size_t start, size_t end) {
 	for (VisWin *win = vis->windows; win; win = win->next) {
 		if (vis->win != win && vis->win->text == win->text) {

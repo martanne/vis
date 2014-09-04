@@ -19,6 +19,9 @@ static void switchmode_to(Mode *new_mode);
 
 enum {
 	VIS_MODE_BASIC,
+	VIS_MODE_MARK,
+	VIS_MODE_MARK_LINE,
+	VIS_MODE_MARK_SET,
 	VIS_MODE_MOVE,
 	VIS_MODE_TEXTOBJ,
 	VIS_MODE_OPERATOR,
@@ -59,6 +62,18 @@ void op_paste(OperatorContext *c) {
 	window_cursor_to(vis->win->win, pos + c->reg->len);
 }
 
+static void mark_set(const Arg *arg) {
+	text_mark_set(vis->win->text, arg->i, window_cursor_get(vis->win->win));
+}
+
+static size_t mark_goto(const Arg *arg) {
+	return text_mark_get(vis->win->text, action.mark);
+}
+
+static size_t mark_line_goto(const Arg *arg) {
+	return text_line_start(vis->win->text, mark_goto(arg));
+}
+
 static Operator ops[] = {
 	[OP_DELETE] = { op_delete, false },
 	[OP_CHANGE] = { op_change, false },
@@ -86,6 +101,8 @@ enum {
 	MOVE_BRACKET_MATCH,
 	MOVE_FILE_BEGIN,
 	MOVE_FILE_END,
+	MOVE_MARK,
+	MOVE_MARK_LINE,
 };
 
 static Movement moves[] = {
@@ -108,6 +125,8 @@ static Movement moves[] = {
 	[MOVE_BRACKET_MATCH]   = { .txt = text_bracket_match,   .type = LINEWISE|INCLUSIVE },
 	[MOVE_FILE_BEGIN]      = { .txt = text_begin,           .type = LINEWISE           },
 	[MOVE_FILE_END]        = { .txt = text_end,             .type = LINEWISE           },
+	[MOVE_MARK]            = { .cmd = mark_goto,            .type = LINEWISE           },
+	[MOVE_MARK_LINE]       = { .cmd = mark_line_goto,       .type = LINEWISE           },
 };
 
 enum {
@@ -184,15 +203,6 @@ static void split(const Arg *arg) {
 	vis_window_split(vis, arg->s);
 }
 
-static void mark_set(const Arg *arg) {
-	vis_mark_set(vis, arg->i, window_cursor_get(vis->win->win));
-}
-
-static void mark_goto(const Arg *arg) {
-	vis_mark_goto(vis, arg->i);
-}
-
-
 void action_do(Action *a); 
 void action_reset(Action *a);
 
@@ -246,6 +256,18 @@ static void reg(const Arg *arg) {
 	action.reg = &vis->registers[arg->i];
 }
 
+static void mark(const Arg *arg) {
+	action.mark = arg->i;
+	action.movement = &moves[MOVE_MARK];
+	action_do(&action);
+}
+
+static void mark_line(const Arg *arg) {
+	action.mark = arg->i;
+	action.movement = &moves[MOVE_MARK_LINE];
+	action_do(&action);
+}
+
 void action_reset(Action *a) {
 	a->count = 1;
 	a->linewise = false;
@@ -270,11 +292,22 @@ void action_do(Action *a) {
 		for (int i = 0; i < a->count; i++) {
 			if (a->movement->txt)
 				pos = a->movement->txt(txt, pos);
-			else
+			else if (a->movement->win)
 				pos = a->movement->win(win);
+			else
+				pos = a->movement->cmd(&a->arg);
+			if (pos == (size_t)-1)
+				break;
 		}
-		c.range.start = MIN(start, pos);
-		c.range.end = MAX(start, pos);
+
+		if (pos == (size_t)-1) {
+			c.range.start = start;
+			c.range.end = start;
+		} else {
+			c.range.start = MIN(start, pos);
+			c.range.end = MAX(start, pos);
+		}
+
 		if (!a->op) {
 			if (a->movement->type & CHARWISE)
 				window_scroll_to(win, pos);
@@ -461,8 +494,23 @@ static KeyBinding vis_registers[] = { /* {a-zA-Z0-9.%#:-"} */
 };
 
 static KeyBinding vis_marks[] = { /* {a-zA-Z} */
-//	{ { NONE('`'), NONE('a')    }, mark,          { .i = 1               } },
-//	{ { NONE('\''), NONE('a')    }, mark,          { .i = 1               } },
+	{ { NONE('`'), NONE('a')    }, mark,          { .i = MARK_a          } },
+	{ { NONE('`'), NONE('b')    }, mark,          { .i = MARK_b          } },
+	{ { NONE('`'), NONE('c')    }, mark,          { .i = MARK_c          } },
+	{ /* empty last element, array terminator */                           },
+};
+
+static KeyBinding vis_marks_line[] = { /* {a-zA-Z} */
+	{ { NONE('\''), NONE('a')   }, mark_line,     { .i = MARK_a          } },
+	{ { NONE('\''), NONE('b')   }, mark_line,     { .i = MARK_b          } },
+	{ { NONE('\''), NONE('c')   }, mark_line,     { .i = MARK_c          } },
+	{ /* empty last element, array terminator */                           },
+};
+
+static KeyBinding vis_marks_set[] = { /* {a-zA-Z} */
+	{ { NONE('m'), NONE('a')    }, mark_set,      { .i = MARK_a          } },
+	{ { NONE('m'), NONE('b')    }, mark_set,      { .i = MARK_b          } },
+	{ { NONE('m'), NONE('c')    }, mark_set,      { .i = MARK_c          } },
 	{ /* empty last element, array terminator */                           },
 };
 
@@ -526,9 +574,19 @@ static Mode vis_modes[] = {
 		.parent = NULL,
 		.bindings = basic_movement,
 	},
+	[VIS_MODE_MARK] = {
+		.name = "MARK",
+		.parent = &vis_modes[VIS_MODE_BASIC],
+		.bindings = vis_marks,
+	},
+	[VIS_MODE_MARK_LINE] = {
+		.name = "MARK-LINE",
+		.parent = &vis_modes[VIS_MODE_MARK],
+		.bindings = vis_marks_line,
+	},
 	[VIS_MODE_MOVE] = { 
 		.name = "MOVE",
-		.parent = &vis_modes[VIS_MODE_BASIC],
+		.parent = &vis_modes[VIS_MODE_MARK_LINE],
 		.bindings = vis_movements,
 	},
 	[VIS_MODE_TEXTOBJ] = { 
@@ -554,9 +612,14 @@ static Mode vis_modes[] = {
 		.parent = &vis_modes[VIS_MODE_OPERATOR],
 		.bindings = vis_registers,
 	},
+	[VIS_MODE_MARK_SET] = {
+		.name = "MARK-SET",
+		.parent = &vis_modes[VIS_MODE_REGISTER],
+		.bindings = vis_marks_set,
+	},
 	[VIS_MODE_NORMAL] = {
 		.name = "NORMAL",
-		.parent = &vis_modes[VIS_MODE_REGISTER],
+		.parent = &vis_modes[VIS_MODE_MARK_SET],
 		.bindings = vis_normal,
 	},
 	[VIS_MODE_VISUAL] = {

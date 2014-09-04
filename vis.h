@@ -32,6 +32,15 @@ enum Reg {
 	REG_LAST,
 };
 
+enum Mark {
+	MARK_a,
+	MARK_b,
+	MARK_c,
+	// ...
+	MARK_z,
+	MARK_LAST,
+};
+
 struct Vis {
 	int width, height;             /* terminal size, available for all windows */
 	VisWin *windows;               /* list of windows */
@@ -91,6 +100,7 @@ typedef struct {
 } Operator;
 
 typedef struct {
+	size_t (*cmd)(const Arg*);
 	size_t (*win)(Win*);
 	size_t (*txt)(Text*, size_t pos);
 	enum {
@@ -117,6 +127,8 @@ typedef struct {
 	Movement *movement;
 	TextObject *textobj;
 	Register *reg;
+	Mark mark;
+	Arg arg;
 } Action;
 
 typedef struct {
@@ -156,12 +168,6 @@ void vis_backspace_key(Vis*);
 void vis_delete_key(Vis*);
 void vis_insert(Vis*, size_t pos, const char *data, size_t len);
 void vis_delete(Vis*, size_t pos, size_t len);
-
-// mark handling
-typedef int Mark;
-void vis_mark_set(Vis*, Mark, size_t pos);
-void vis_mark_goto(Vis*, Mark);
-void vis_mark_clear(Vis*, Mark);
 
 // TODO comment
 bool vis_syntax_load(Vis*, Syntax *syntaxes, Color *colors);
