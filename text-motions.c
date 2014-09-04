@@ -52,7 +52,7 @@ size_t text_find_char_prev(Text *txt, size_t pos, const char *s, size_t len) {
 		} else {
 			matched = len - 1;
 		}
-		text_iterator_byte_next(&it, NULL);
+		text_iterator_byte_prev(&it, NULL);
 	}
 	return it.pos;
 }
