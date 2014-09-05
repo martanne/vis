@@ -14,20 +14,22 @@ static void vis_windows_arrange_vertical(Vis *vis);
 
 
 static void vis_window_resize(VisWin *win, int width, int height) {
-	window_resize(win->win, width, height - 1);
-	wresize(win->statuswin, 1, width);
+	window_resize(win->win, width, win->statuswin ?  height - 1 : height);
+	if (win->statuswin)
+		wresize(win->statuswin, 1, width);
 	win->width = width;
 	win->height = height;
 }
 
 static void vis_window_move(VisWin *win, int x, int y) {
 	window_move(win->win, x, y);
-	mvwin(win->statuswin, y + win->height - 1, x);
+	if (win->statuswin)
+		mvwin(win->statuswin, y + win->height - 1, x);
 }
 
 static void vis_window_statusbar_draw(VisWin *win) {
 	size_t line, col;
-	if (win->vis->statusbar) {
+	if (win->statuswin && win->vis->statusbar) {
 		window_cursor_getxy(win->win, &line, &col);
 		win->vis->statusbar(win->statuswin, win->vis->win == win,
 		                    text_filename(win->text), line, col);
@@ -258,12 +260,14 @@ void vis_draw(Vis *vis) {
 void vis_update(Vis *vis) {
 	for (VisWin *win = vis->windows; win; win = win->next) {
 		if (vis->win != win) {
-			wnoutrefresh(win->statuswin);
+			if (win->statuswin)
+				wnoutrefresh(win->statuswin);
 			window_update(win->win);
 		}
 	}
 
-	wnoutrefresh(vis->win->statuswin);
+	if (vis->win->statuswin)
+		wnoutrefresh(vis->win->statuswin);
 	window_update(vis->win->win);
 }
 
