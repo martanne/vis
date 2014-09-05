@@ -426,17 +426,6 @@ static KeyBinding basic_movement[] = {
 	{ /* empty last element, array terminator */                           },
 };
 
-#if 0
-static KeyBinding vis_commands[] = {
-	// DEMO STUFF
-	{ { NONE('5')               }, line,          { .i = 50              } },
-	{ { NONE('s')               }, mark_set,      { .i = 0               } },
-	{ { NONE('9')               }, mark_goto,     { .i = 0               } },
-
-	{ /* empty last element, array terminator */                           },
-};
-#endif
-
 static KeyBinding vis_movements[] = {
 	BACKSPACE(                     movement,    i,  MOVE_CHAR_PREV           ),
 	{ { NONE('h')               }, movement, { .i = MOVE_CHAR_PREV         } },
