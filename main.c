@@ -18,6 +18,89 @@ int ESCDELAY;
 # define set_escdelay(d) (ESCDELAY = (d))
 #endif
 
+typedef union {
+	bool b;
+	size_t i;
+	const char *s;
+	size_t (*m)(Win*);
+	void (*f)(Vis*);
+} Arg;
+
+typedef struct {
+	char str[6];
+	int code;
+} Key;
+
+typedef struct {
+	Key key[2];
+	void (*func)(const Arg *arg);
+	const Arg arg;
+} KeyBinding;
+
+typedef struct Mode Mode;
+struct Mode {
+	Mode *parent;
+	KeyBinding *bindings;
+	const char *name;
+	bool common_prefix;
+	void (*enter)(void);
+	void (*leave)(void);
+	bool (*unknown)(Key *key0, Key *key1);        /* unknown key for this mode, return value determines whether parent modes will be checked */ 
+	bool (*input)(const char *str, size_t len);   /* unknown key for this an all parent modes */
+};
+
+typedef struct {
+	char *name;
+	Mode *mode;
+	vis_statusbar_t statusbar;
+} Config;
+
+typedef struct {
+	int count;
+	Register *reg;
+	Filerange range;
+	size_t pos;
+	bool linewise;
+} OperatorContext;
+
+typedef struct {
+	void (*func)(OperatorContext*); /* function implementing the operator logic */
+	bool selfcontained;             /* is this operator followed by movements/text-objects */
+} Operator;
+
+typedef struct {
+	size_t (*cmd)(const Arg*);
+	size_t (*win)(Win*);
+	size_t (*txt)(Text*, size_t pos);
+	enum {
+		LINEWISE  = 1 << 0,
+		CHARWISE  = 1 << 1,
+		INCLUSIVE = 1 << 2,
+		EXCLUSIVE = 1 << 3,
+	} type;
+	int count;
+} Movement;
+
+typedef struct {
+	Filerange (*range)(Text*, size_t pos);
+	enum {
+		INNER,
+		OUTER,
+	} type;
+} TextObject;
+
+typedef struct {
+	int count;
+	bool linewise;
+	Operator *op;
+	Movement *movement;
+	TextObject *textobj;
+	Register *reg;
+	Mark mark;
+	Key key;
+	Arg arg;
+} Action;
+
 static Key getkey(void);
 static void cursor(const Arg *arg);
 static void call(const Arg *arg);

@@ -51,88 +51,6 @@ struct Vis {
 	vis_statusbar_t statusbar;     /* configurable user hook to draw statusbar */
 };
 
-typedef union {
-	bool b;
-	size_t i;
-	const char *s;
-	size_t (*m)(Win*);
-	void (*f)(Vis*);
-} Arg;
-
-typedef struct {
-	char str[6];
-	int code;
-} Key;
-
-typedef struct {
-	Key key[2];
-	void (*func)(const Arg *arg);
-	const Arg arg;
-} KeyBinding;
-
-typedef struct Mode Mode;
-struct Mode {
-	Mode *parent;
-	KeyBinding *bindings;
-	const char *name;
-	bool common_prefix;
-	void (*enter)(void);
-	void (*leave)(void);
-	bool (*unknown)(Key *key0, Key *key1);        /* unknown key for this mode, return value determines whether parent modes will be checked */ 
-	bool (*input)(const char *str, size_t len);   /* unknown key for this an all parent modes */
-};
-
-typedef struct {
-	char *name;
-	Mode *mode;
-	vis_statusbar_t statusbar;
-} Config;
-
-typedef struct {
-	int count;
-	Register *reg;
-	Filerange range;
-	size_t pos;
-	bool linewise;
-} OperatorContext;
-
-typedef struct {
-	void (*func)(OperatorContext*); /* function implementing the operator logic */
-	bool selfcontained;             /* is this operator followed by movements/text-objects */
-} Operator;
-
-typedef struct {
-	size_t (*cmd)(const Arg*);
-	size_t (*win)(Win*);
-	size_t (*txt)(Text*, size_t pos);
-	enum {
-		LINEWISE  = 1 << 0,
-		CHARWISE  = 1 << 1,
-		INCLUSIVE = 1 << 2,
-		EXCLUSIVE = 1 << 3,
-	} type;
-	int count;
-} Movement;
-
-typedef struct {
-	Filerange (*range)(Text*, size_t pos);
-	enum {
-		INNER,
-		OUTER,
-	} type;
-} TextObject;
-
-typedef struct {
-	int count;
-	bool linewise;
-	Operator *op;
-	Movement *movement;
-	TextObject *textobj;
-	Register *reg;
-	Mark mark;
-	Key key;
-	Arg arg;
-} Action;
 
 typedef struct {
 	short fg, bg;   /* fore and background color */
@@ -176,13 +94,13 @@ void vis_delete(Vis*, size_t pos, size_t len);
 bool vis_syntax_load(Vis*, Syntax *syntaxes, Color *colors);
 void vis_syntax_unload(Vis*);
 
-void vis_search(Vis *ed, const char *regex, int direction);
+void vis_search(Vis*, const char *regex, int direction);
 
-bool vis_window_new(Vis *vis, const char *filename);
-void vis_window_split(Vis *ed, const char *filename);
-void vis_window_vsplit(Vis *ed, const char *filename);
-void vis_window_next(Vis *ed);
-void vis_window_prev(Vis *ed);
+bool vis_window_new(Vis*, const char *filename);
+void vis_window_split(Vis*, const char *filename);
+void vis_window_vsplit(Vis*, const char *filename);
+void vis_window_next(Vis*);
+void vis_window_prev(Vis*);
 
 void vis_statusbar_set(Vis*, vis_statusbar_t);
 
