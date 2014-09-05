@@ -752,41 +752,38 @@ XXX: CONTROL(' ') = 0, ^Space                  Go forward one word
 
 /* key binding configuration */
 static KeyBinding nano_keys[] = {
+	{ { CONTROL('D')            }, cursor,        { .f = vis_delete_key   } },
+	BACKSPACE(                     cursor,           f,  vis_backspace_key  ),
+	{ { CONTROL('F')            }, movement, { .i = MOVE_CHAR_NEXT         } },
+	{ { CONTROL('P')            }, movement, { .i = MOVE_LINE_UP           } },
+	{ { CONTROL('N')            }, movement, { .i = MOVE_LINE_DOWN         } },
+	{ { CONTROL('Y')            }, cursor,   { .m = window_page_up         } },
+	{ { KEY(F(7))               }, cursor,   { .m = window_page_up         } },
+	{ { CONTROL('V')            }, cursor,   { .m = window_page_down       } },
+	{ { KEY(F(8))               }, cursor,   { .m = window_page_down       } },
 #if 0
-	{ { CONTROL('D') },   cursor,   { .m = vis_delete          } },
-	BACKSPACE(            cursor,      m,  vis_backspace         ),
-	{ { KEY(LEFT) },      cursor,   { .m = vis_char_prev       } },
-	{ { KEY(RIGHT) },     cursor,   { .m = vis_char_next       } },
-	{ { CONTROL('F') },   cursor,   { .m = vis_char_next       } },
-	{ { KEY(UP) },        cursor,   { .m = vis_line_up         } },
-	{ { CONTROL('P') },   cursor,   { .m = vis_line_up         } },
-	{ { KEY(DOWN) },      cursor,   { .m = vis_line_down       } },
-	{ { CONTROL('N') },   cursor,   { .m = vis_line_down       } },
-	{ { KEY(PPAGE) },     cursor,   { .m = vis_page_up         } },
-	{ { CONTROL('Y') },   cursor,   { .m = vis_page_up         } },
-	{ { KEY(F(7)) },      cursor,   { .m = vis_page_up         } },
-	{ { KEY(NPAGE) },     cursor,   { .m = vis_page_down       } },
-	{ { CONTROL('V') },   cursor,   { .m = vis_page_down       } },
-	{ { KEY(F(8)) },      cursor,   { .m = vis_page_down       } },
-//	{ { CONTROL(' ') },   cursor,   { .m = vis_word_start_next } },
-	{ { META(' ') },      cursor,   { .m = vis_word_start_prev } },
-	{ { CONTROL('A') },   cursor,   { .m = vis_line_start      } },
-	{ { CONTROL('E') },   cursor,   { .m = vis_line_end        } },
-	{ { META(']') },      cursor,   { .m = vis_bracket_match   } },
-	{ { META(')') },      cursor,   { .m = vis_paragraph_next  } },
-	{ { META('(') },      cursor,   { .m = vis_paragraph_prev  } },
-	{ { META('\\') },     cursor,   { .m = vis_file_begin      } },
-	{ { META('|') },      cursor,   { .m = vis_file_begin      } },
-	{ { META('/') },      cursor,   { .m = vis_file_end        } },
-	{ { META('?') },      cursor,   { .m = vis_file_end        } },
-	{ { META('U') },      call,     { .f = vis_undo            } },
-	{ { META('E') },      call,     { .f = vis_redo            } },
+	// CONTROL(' ') == 0 which signals the end of array
+	{ { CONTROL(' ')            }, movement, { .i = MOVE_WORD_START_NEXT   } },
+#endif
+	{ { META(' ')               }, movement, { .i = MOVE_WORD_START_PREV   } },
+	{ { CONTROL('A')            }, movement, { .i = MOVE_LINE_START        } },
+	{ { CONTROL('E')            }, movement, { .i = MOVE_LINE_END          } },
+	{ { META(']')               }, movement, { .i = MOVE_BRACKET_MATCH     } },
+	{ { META(')')               }, movement, { .i = MOVE_PARAGRAPH_PREV    } },
+	{ { META('(')               }, movement, { .i = MOVE_PARAGRAPH_NEXT    } },
+	{ { META('\\')              }, movement, { .i = MOVE_FILE_BEGIN        } },
+	{ { META('|')               }, movement, { .i = MOVE_FILE_BEGIN        } },
+	{ { META('/')               }, movement, { .i = MOVE_FILE_END          } },
+	{ { META('?')               }, movement, { .i = MOVE_FILE_END          } },
+	{ { META('U')               }, call,     { .f = vis_undo               } },
+	{ { META('E')               }, call,     { .f = vis_redo               } },
+#if 0
 	{ { CONTROL('I') },   insert,   { .s = "\t"                   } },
 	/* TODO: handle this in vis to insert \n\r when appriopriate */
 	{ { CONTROL('M') },   insert,   { .s = "\n"                   } },
-	{ { CONTROL('L') },   call,     { .f = vis_draw            } },
 #endif
-	{ /* empty last element, array terminator */              },
+	{ { CONTROL('L')            }, call,      { .f = vis_draw              } },
+	{ /* empty last element, array terminator */                             },
 };
 
 static Mode nano[] = {
