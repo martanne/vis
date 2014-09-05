@@ -104,6 +104,17 @@ static size_t line(const Arg *arg) {
 	return pos;
 }
 
+static size_t column(const Arg *arg) {
+	char c;
+	VisWin *win = vis->win;
+	size_t pos = window_cursor_get(win->win);
+	Iterator it = text_iterator_get(win->text, text_line_begin(win->text, pos));
+	while (action.count-- > 0 && text_iterator_byte_get(&it, &c) && c != '\n')
+		text_iterator_byte_next(&it, NULL);
+	action.count = 0;
+	return it.pos;
+}
+
 static Operator ops[] = {
 	[OP_DELETE] = { op_delete, false },
 	[OP_CHANGE] = { op_change, false },
@@ -119,6 +130,7 @@ enum {
 	MOVE_LINE_FINISH,
 	MOVE_LINE_END,
 	MOVE_LINE,
+	MOVE_COLUMN,
 	MOVE_CHAR_PREV,
 	MOVE_CHAR_NEXT,
 	MOVE_WORD_START_PREV,
@@ -148,6 +160,7 @@ static Movement moves[] = {
 	[MOVE_LINE_FINISH]     = { .txt = text_line_finish,     .type = LINEWISE           },
 	[MOVE_LINE_END]        = { .txt = text_line_end,        .type = LINEWISE           },
 	[MOVE_LINE]            = { .cmd = line,                 .type = LINEWISE           },
+	[MOVE_COLUMN]          = { .cmd = column,               .type = CHARWISE           },
 	[MOVE_CHAR_PREV]       = { .win = window_char_prev                                 },
 	[MOVE_CHAR_NEXT]       = { .win = window_char_next                                 },
 	[MOVE_WORD_START_PREV] = { .txt = text_word_start_prev, .type = CHARWISE           },
@@ -472,6 +485,7 @@ static KeyBinding vis_movements[] = {
 	{ { NONE(')')               }, movement, { .i = MOVE_SENTENCE_NEXT     } },
 	{ { NONE('g'), NONE('g')    }, movement, { .i = MOVE_FILE_BEGIN        } },
 	{ { NONE('G')               }, movement, { .i = MOVE_LINE              } },
+	{ { NONE('|')               }, movement, { .i = MOVE_COLUMN            } },
 	{ { NONE('f')               }, movement_key, { .i = MOVE_RIGHT_TO      } },
 	{ { NONE('F')               }, movement_key, { .i = MOVE_LEFT_TO       } },
 	{ { NONE('t')               }, movement_key, { .i = MOVE_RIGHT_TILL    } },
