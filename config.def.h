@@ -42,6 +42,7 @@ enum {
 
 void op_delete(OperatorContext *c) {
 	size_t len = c->range.end - c->range.start;
+	c->reg->linewise = c->linewise;
 	register_put(c->reg, vis->win->text, &c->range);
 	vis_delete(vis, c->range.start, len);
 	window_cursor_to(vis->win->win, c->range.start);
@@ -53,11 +54,14 @@ void op_change(OperatorContext *c) {
 }
 
 void op_yank(OperatorContext *c) {
+	c->reg->linewise = c->linewise;
 	register_put(c->reg, vis->win->text, &c->range);
 }
 
 void op_paste(OperatorContext *c) {
 	size_t pos = window_cursor_get(vis->win->win);
+	if (c->reg->linewise)
+		pos = text_line_next(vis->win->text, pos);
 	vis_insert(vis, pos, c->reg->data, c->reg->len);
 	window_cursor_to(vis->win->win, pos + c->reg->len);
 }
@@ -260,6 +264,7 @@ static void operator(const Arg *arg) {
 	if (action.op == op) {
 		/* hacky way to handle double operators i.e. things like
 		 * dd, yy etc where the second char isn't a movement */
+		action.linewise = true;
 		action.textobj = moves_linewise[MOVE_LINE_DOWN];
 		action_do(&action);
 	} else {
@@ -334,6 +339,7 @@ void action_do(Action *a) {
 		.count = a->count,
 		.pos = pos,
 		.reg = a->reg ? a->reg : &vis->registers[REG_DEFAULT],
+		.linewise = a->linewise,
 	};
 
 	if (a->movement) {

@@ -93,6 +93,7 @@ typedef struct {
 	Register *reg;
 	Filerange range;
 	size_t pos;
+	bool linewise;
 } OperatorContext;
 
 typedef struct {
