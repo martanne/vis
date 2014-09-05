@@ -13,8 +13,8 @@ size_t text_char_prev(Text*, size_t pos);
 size_t text_find_char_next(Text*, size_t pos, const char *s, size_t len);
 size_t text_find_char_prev(Text*, size_t pos, const char *s, size_t len);
 
-/*        begin            finish
- *        v                v
+/*        begin            finish        next
+ *        v                v             v
  *  \n[\r]      I am a line!       \n[\r]
  *              ^                  ^
  *              start              end
@@ -23,6 +23,7 @@ size_t text_line_begin(Text*, size_t pos);
 size_t text_line_start(Text*, size_t pos);
 size_t text_line_finish(Text*, size_t pos);
 size_t text_line_end(Text*, size_t pos);
+size_t text_line_next(Text*, size_t pos);
 /*
  * A word consists of a sequence of non-blank characters, separated with white space.
  * TODO?: An empty line is also considered to be a word. This is equivalant to a WORD

@@ -98,6 +98,16 @@ size_t text_line_end(Text *txt, size_t pos) {
 	return text_find_char_next(txt, pos, "\n", 1);
 }
 
+size_t text_line_next(Text *txt, size_t pos) {
+	char c;
+	Iterator it = text_iterator_get(txt, pos);
+	while (text_iterator_byte_get(&it, &c) && c != '\n')
+		text_iterator_byte_next(&it, NULL);
+	if (text_iterator_byte_next(&it, &c) && c == '\r')
+		text_iterator_byte_next(&it, NULL);
+	return it.pos;
+}
+
 size_t text_word_boundry_start_next(Text *txt, size_t pos, int (*isboundry)(int)) {
 	char c;
 	Iterator it = text_iterator_get(txt, pos);
