@@ -259,8 +259,14 @@ static void linewise(const Arg *arg) {
 }
 
 static void operator(const Arg *arg) {
-	switchmode(&(const Arg){ .i = VIS_MODE_OPERATOR });
 	Operator *op = &ops[arg->i];
+	if (mode == &vis_modes[VIS_MODE_VISUAL]) {
+		action.op = op;
+		action_do(&action);
+		return;
+	}
+
+	switchmode(&(const Arg){ .i = VIS_MODE_OPERATOR });
 	if (action.op == op) {
 		/* hacky way to handle double operators i.e. things like
 		 * dd, yy etc where the second char isn't a movement */
@@ -380,7 +386,7 @@ void action_do(Action *a) {
 			r = a->textobj->range(txt, pos);
 			// TODO range_valid?
 			if (r.start == (size_t)-1 || r.end == (size_t)-1)
-				continue;
+				break;
 			if (a->textobj->type == OUTER) {
 				r.start--;
 				r.end++;
@@ -396,12 +402,18 @@ void action_do(Action *a) {
 				}
 			}
 		}
+	} else if (mode == &vis_modes[VIS_MODE_VISUAL]) {
+		c.range = window_selection_get(win);
+		if (c.range.start == (size_t)-1 || c.range.end == (size_t)-1)
+			c.range.start = c.range.end = pos;
 	}
 
 	if (a->op) {
 		a->op->func(&c);
 		if (mode == &vis_modes[VIS_MODE_OPERATOR])
 			switchmode_to(mode_prev);
+		else if (mode == &vis_modes[VIS_MODE_VISUAL])
+			switchmode(&(const Arg){ .i = VIS_MODE_NORMAL });
 	}
 
 	if (a != &action_prev) {
