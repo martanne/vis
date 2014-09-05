@@ -583,7 +583,7 @@ static KeyBinding vis_normal[] = {
 	{ { NONE('.')               }, repeat,   {                             } },
 	{ { NONE('n')               }, find_forward,  { .s = "if"            } },
 	{ { NONE('N')               }, find_backward, { .s = "if"            } },
-	{ { NONE('x')               }, cursor,        { .f = vis_delete_key   } },
+	{ { NONE('x')               }, call,          { .f = vis_delete_key   } },
 	{ { NONE('i')               }, switchmode,    { .i = VIS_MODE_INSERT } },
 	{ { NONE('v')               }, switchmode,    { .i = VIS_MODE_VISUAL } },
 	{ { NONE('R')               }, switchmode,    { .i = VIS_MODE_REPLACE} },
@@ -608,8 +608,8 @@ static void vis_visual_leave(void) {
 
 static KeyBinding vis_insert_mode[] = {
 	{ { NONE(ESC)               }, switchmode,    { .i = VIS_MODE_NORMAL  } },
-	{ { CONTROL('D')            }, cursor,        { .f = vis_delete_key   } },
-	BACKSPACE(                     cursor,           f,  vis_backspace_key  ),
+	{ { CONTROL('D')            }, call,          { .f = vis_delete_key   } },
+	BACKSPACE(                     call,             f,  vis_backspace_key  ),
 	{ /* empty last element, array terminator */                            },
 };
 
@@ -752,8 +752,8 @@ XXX: CONTROL(' ') = 0, ^Space                  Go forward one word
 
 /* key binding configuration */
 static KeyBinding nano_keys[] = {
-	{ { CONTROL('D')            }, cursor,        { .f = vis_delete_key   } },
-	BACKSPACE(                     cursor,           f,  vis_backspace_key  ),
+	{ { CONTROL('D')            }, call,           { .f = vis_delete_key   } },
+	BACKSPACE(                     call,              f,  vis_backspace_key  ),
 	{ { CONTROL('F')            }, movement, { .i = MOVE_CHAR_NEXT         } },
 	{ { CONTROL('P')            }, movement, { .i = MOVE_LINE_UP           } },
 	{ { CONTROL('N')            }, movement, { .i = MOVE_LINE_DOWN         } },
