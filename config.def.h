@@ -115,6 +115,19 @@ static size_t column(const Arg *arg) {
 	return it.pos;
 }
 
+static void insert(const Arg *arg) {
+	vis_insert(vis, window_cursor_get(vis->win->win), arg->s, arg->s ? strlen(arg->s) : 0);
+}
+
+static void insert_tab(const Arg *arg) {
+	insert(&(const Arg){ .s = "\t" });
+}
+
+static void insert_newline(const Arg *arg) {
+	// TODO determine file type to insert \n\r or \n
+	insert(&(const Arg){ .s = "\n" });
+}
+
 static Operator ops[] = {
 	[OP_DELETE] = { op_delete, false },
 	[OP_CHANGE] = { op_change, false },
@@ -436,6 +449,28 @@ void action_do(Action *a) {
 	}
 }
 
+static void delete_word(const Arg *arg) {
+	operator(&(const Arg){ .i = OP_DELETE });
+	movement(&(const Arg){ .i = MOVE_WORD_START_PREV });
+}
+
+static void insert_register(const Arg *arg) {
+	Register *reg = &vis->registers[arg->i];
+	vis_insert(vis, window_cursor_get(vis->win->win), reg->data, reg->len);
+}
+
+static void insert_verbatim(const Arg *arg) {
+	int value = 0;
+	for (int i = 0; i < 3; i++) {
+		Key k = getkey();
+		if (k.str[0] < '0' || k.str[0] > '9')
+			return;
+		value = value * 10 + k.str[0] - '0';
+	}
+	char v = value;
+	vis_insert(vis, window_cursor_get(vis->win->win), &v, 1);
+}
+
 /* use vim's  
    :help motion
    :h operator
@@ -445,7 +480,9 @@ void action_do(Action *a) {
 
 static KeyBinding basic_movement[] = {
 	{ { KEY(LEFT)               }, movement, { .i = MOVE_CHAR_PREV         } },
+	{ { KEY(SLEFT)              }, movement, { .i = MOVE_WORD_START_PREV   } },
 	{ { KEY(RIGHT)              }, movement, { .i = MOVE_CHAR_NEXT         } },
+	{ { KEY(SRIGHT)             }, movement, { .i = MOVE_WORD_START_NEXT   } },
 	{ { KEY(UP)                 }, movement, { .i = MOVE_LINE_UP           } },
 	{ { KEY(DOWN)               }, movement, { .i = MOVE_LINE_DOWN         } },
 	{ { KEY(PPAGE)              }, cursor,   { .m = window_page_up         } },
@@ -459,7 +496,7 @@ static KeyBinding basic_movement[] = {
 
 static KeyBinding vis_movements[] = {
 	BACKSPACE(                     movement,    i,  MOVE_CHAR_PREV           ),
-	{ { NONE('h')               }, movement, { .i = MOVE_CHAR_PREV         } },
+	{ { NONE('H')               }, movement, { .i = MOVE_CHAR_PREV         } },
 	{ { NONE(' ')               }, movement, { .i = MOVE_CHAR_NEXT         } },
 	{ { NONE('l')               }, movement, { .i = MOVE_CHAR_NEXT         } },
 	{ { NONE('k')               }, movement, { .i = MOVE_LINE_UP           } },
@@ -474,9 +511,7 @@ static KeyBinding vis_movements[] = {
 	{ { NONE('$')               }, movement, { .i = MOVE_LINE_END          } },
 	{ { NONE('%')               }, movement, { .i = MOVE_BRACKET_MATCH     } },
 	{ { NONE('b')               }, movement, { .i = MOVE_WORD_START_PREV   } },
-	{ { KEY(SLEFT)              }, movement, { .i = MOVE_WORD_START_PREV   } },
 	{ { NONE('w')               }, movement, { .i = MOVE_WORD_START_NEXT   } },
-	{ { KEY(SRIGHT)             }, movement, { .i = MOVE_WORD_START_NEXT   } },
 	{ { NONE('g'), NONE('e')    }, movement, { .i = MOVE_WORD_END_PREV     } },
 	{ { NONE('e')               }, movement, { .i = MOVE_WORD_END_NEXT     } },
 	{ { NONE('{')               }, movement, { .i = MOVE_PARAGRAPH_PREV    } },
@@ -621,10 +656,23 @@ static void vis_visual_leave(void) {
 }
 
 static KeyBinding vis_insert_mode[] = {
-	{ { NONE(ESC)               }, switchmode,    { .i = VIS_MODE_NORMAL  } },
-	{ { CONTROL('D')            }, call,          { .f = vis_delete_key   } },
-	BACKSPACE(                     call,             f,  vis_backspace_key  ),
-	{ /* empty last element, array terminator */                            },
+	{ { NONE(ESC)               }, switchmode,      { .i = VIS_MODE_NORMAL   } },
+	{ { CONTROL('c')            }, switchmode,      { .i = VIS_MODE_NORMAL   } },
+	{ { CONTROL('L')            }, switchmode,      { .i = VIS_MODE_NORMAL   } },
+	{ { CONTROL('[')            }, switchmode,      { .i = VIS_MODE_NORMAL   } },
+	{ { CONTROL('D')            }, call,            { .f = vis_delete_key    } },
+	BACKSPACE(                     call,               f,  vis_backspace_key   ),
+	{ { CONTROL('H')            }, call,            { .f = vis_backspace_key } },
+	{ { CONTROL('I')            }, insert_tab,      { NULL                   } },
+	{ { CONTROL('J')            }, insert_newline,  { NULL                   } },
+	{ { CONTROL('M')            }, insert_newline,  { NULL                   } },
+	{ { CONTROL('O')            }, switchmode,      { .i = VIS_MODE_OPERATOR } },
+	{ { CONTROL('W')            }, delete_word,     { NULL                   } },
+	{ { CONTROL('R'), NONE('a') }, insert_register, { .i = REG_a             } },
+	{ { CONTROL('R'), NONE('b') }, insert_register, { .i = REG_b             } },
+	{ { CONTROL('R'), NONE('c') }, insert_register, { .i = REG_c             } },
+	{ { CONTROL('V')            }, insert_verbatim, { NULL                   } },
+	{ /* empty last element, array terminator */                               },
 };
 
 static bool vis_insert_input(const char *str, size_t len) {
