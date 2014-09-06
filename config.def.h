@@ -643,8 +643,17 @@ static KeyBinding vis_normal[] = {
 };
 
 static KeyBinding vis_visual[] = {
-	{ { NONE(ESC)               }, switchmode,    { .i = VIS_MODE_NORMAL } },
-	{ /* empty last element, array terminator */                           },
+	{ { NONE(ESC)               }, switchmode,      { .i = VIS_MODE_NORMAL   } },
+	{ { CONTROL('c')            }, switchmode,      { .i = VIS_MODE_NORMAL   } },
+	BACKSPACE(                     operator,           i,  OP_DELETE           ),
+	{ { CONTROL('H')            }, operator,        { .i = OP_DELETE         } },
+	{ { NONE('d')               }, operator,        { .i = OP_DELETE         } },
+	{ { NONE('x')               }, operator,        { .i = OP_DELETE         } },
+	{ { NONE('y')               }, operator,        { .i = OP_YANK           } },
+	{ { NONE('c')               }, operator,        { .i = OP_CHANGE         } },
+	{ { NONE('r')               }, operator,        { .i = OP_CHANGE         } },
+	{ { NONE('s')               }, operator,        { .i = OP_CHANGE         } },
+	{ /* empty last element, array terminator */                               },
 };
 
 static void vis_visual_enter(void) {
