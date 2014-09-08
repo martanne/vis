@@ -275,7 +275,8 @@ void action_do(Action *a);
 void action_reset(Action *a);
 
 static void repeat(const Arg *arg) {
-	action_do(&action_prev);
+	action = action_prev;
+	action_do(&action);
 }
 
 static void count(const Arg *arg) {
