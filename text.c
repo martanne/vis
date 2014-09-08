@@ -414,35 +414,27 @@ static void piece_init(Piece *p, Piece *prev, Piece *next, const char *data, siz
  * in particular if pos is zero, the begin sentinel piece is returned.
  */
 static Location piece_get_intern(Text *ed, size_t pos) {
-	Location loc = {};
 	size_t cur = 0;
 	for (Piece *p = &ed->begin; p->next; p = p->next) {
-		if (cur <= pos && pos <= cur + p->len) {
-			loc.piece = p;
-			loc.off = pos - cur;
-			break;
-		}
+		if (cur <= pos && pos <= cur + p->len)
+			return (Location){ .piece = p, .off = pos - cur };
 		cur += p->len;
 	}
 
-	return loc;
+	return (Location){ 0 };
 }
 
 /* similiar to piece_get_intern but usable as a public API. returns the piece
  * holding the text at byte offset pos. never returns a sentinel piece. */
 static Location piece_get_extern(Text *ed, size_t pos) {
-	Location loc = {};
 	size_t cur = 0;
 	for (Piece *p = ed->begin.next; p->next; p = p->next) {
-		if (cur <= pos && pos < cur + p->len) {
-			loc.piece = p;
-			loc.off = pos - cur;
-			break;
-		}
+		if (cur <= pos && pos < cur + p->len)
+			return (Location){ .piece = p, .off = pos - cur };
 		cur += p->len;
 	}
 
-	return loc;
+	return (Location){ 0 };
 }
 
 /* allocate a new change, associate it with current action or a newly
