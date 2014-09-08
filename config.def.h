@@ -703,6 +703,8 @@ static KeyBinding vis_prompt_mode[] = {
 	{ { CONTROL('J')            }, prompt_enter,    { NULL                   } },
 	{ { KEY(UP)                 }, prompt_up,       { NULL                   } },
 	{ { KEY(DOWN)               }, prompt_down,     { NULL                   } },
+	{ { KEY(HOME)               }, movement,        { .i = MOVE_FILE_BEGIN   } },
+	{ { KEY(END)                }, movement,        { .i = MOVE_FILE_END     } },
 	{ /* empty last element, array terminator */                               },
 };
 
