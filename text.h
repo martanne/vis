@@ -19,8 +19,8 @@ typedef struct {
 	size_t pos;               /* global position in bytes from start of file */
 } Iterator;
 
-#define text_iterate(ed, it, pos) \
-	for (Iterator it = text_iterator_get((ed), (pos)); \
+#define text_iterate(txt, it, pos) \
+	for (Iterator it = text_iterator_get((txt), (pos)); \
 	     text_iterator_valid(&it); \
 	     text_iterator_next(&it))
 
@@ -36,7 +36,7 @@ bool text_redo(Text*);
 size_t text_pos_by_lineno(Text*, size_t lineno);
 size_t text_lineno_by_pos(Text*, size_t pos);
 
-bool text_byte_get(Text *ed, size_t pos, char *buf);
+bool text_byte_get(Text*, size_t pos, char *buf);
 size_t text_bytes_get(Text*, size_t pos, size_t len, char *buf);
 
 Iterator text_iterator_get(Text*, size_t pos);
@@ -44,12 +44,12 @@ bool text_iterator_valid(const Iterator*);
 bool text_iterator_next(Iterator*);
 bool text_iterator_prev(Iterator*);
 
-bool text_iterator_byte_get(Iterator *it, char *b);
+bool text_iterator_byte_get(Iterator*, char *b);
 bool text_iterator_byte_next(Iterator*, char *b);
 bool text_iterator_byte_prev(Iterator*, char *b);
 
-bool text_iterator_char_next(Iterator *it, char *c);
-bool text_iterator_char_prev(Iterator *it, char *c);
+bool text_iterator_char_next(Iterator*, char *c);
+bool text_iterator_char_prev(Iterator*, char *c);
 
 typedef int Mark;
 void text_mark_set(Text*, Mark, size_t pos);
@@ -76,6 +76,6 @@ int text_search_forward(Text*, size_t pos, size_t len, Regex *r, size_t nmatch, 
 int text_search_backward(Text*, size_t pos, size_t len, Regex *r, size_t nmatch, RegexMatch pmatch[], int eflags);
 
 // TMP
-void text_debug(Text *ed);
+void text_debug(Text*);
 
 #endif
