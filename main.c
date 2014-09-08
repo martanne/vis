@@ -43,8 +43,8 @@ struct Mode {
 	KeyBinding *bindings;
 	const char *name;
 	bool common_prefix;
-	void (*enter)(void);
-	void (*leave)(void);
+	void (*enter)(Mode *old);
+	void (*leave)(Mode *new);
 	bool (*unknown)(Key *key0, Key *key1);        /* unknown key for this mode, return value determines whether parent modes will be checked */ 
 	bool (*input)(const char *str, size_t len);   /* unknown key for this an all parent modes */
 };

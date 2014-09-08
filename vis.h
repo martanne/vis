@@ -20,6 +20,14 @@ struct VisWin {
 	VisWin *prev, *next; /* neighbouring windows */
 };
 
+typedef struct {
+	VisWin *win;
+	VisWin *editor; /* active editor window before prompt is shown */
+	char *title;
+	WINDOW *titlewin;
+	bool active;
+} Prompt;
+
 typedef void (*vis_statusbar_t)(WINDOW *win, bool active, const char *filename, size_t line, size_t col);
 
 enum Reg {
@@ -47,6 +55,7 @@ struct Vis {
 	VisWin *win;                   /* currently active window */
 	Syntax *syntaxes;              /* NULL terminated array of syntax definitions */
 	Register registers[REG_LAST];
+	Prompt *prompt;
 	void (*windows_arrange)(Vis*); /* current layout which places the windows */
 	vis_statusbar_t statusbar;     /* configurable user hook to draw statusbar */
 };
@@ -101,6 +110,13 @@ void vis_window_split(Vis*, const char *filename);
 void vis_window_vsplit(Vis*, const char *filename);
 void vis_window_next(Vis*);
 void vis_window_prev(Vis*);
+
+
+char *vis_prompt_get(Vis *vis);
+void vis_prompt_set(Vis *vis, const char *line);
+void vis_prompt_show(Vis *vis, const char *title);
+void vis_prompt_hide(Vis *vis);
+
 
 void vis_statusbar_set(Vis*, vis_statusbar_t);
 

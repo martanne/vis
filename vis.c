@@ -1,4 +1,6 @@
+#define _BSD_SOURCE
 #include <stdlib.h>
+#include <string.h>
 #include "vis.h"
 #include "util.h"
 
@@ -12,6 +14,13 @@ static void vis_search_backward(Vis *vis, Regex *regex);
 static void vis_windows_arrange_horizontal(Vis *vis); 
 static void vis_windows_arrange_vertical(Vis *vis);
 
+static Prompt *vis_prompt_new();
+static void vis_prompt_free(Prompt *prompt);
+static void vis_prompt_clear(Prompt *prompt);
+static void vis_prompt_resize(Prompt *prompt, int width, int height);
+static void vis_prompt_move(Prompt *prompt, int x, int y);
+static void vis_prompt_draw(Prompt *prompt);
+static void vis_prompt_update(Prompt *prompt);
 
 static void vis_window_resize(VisWin *win, int width, int height) {
 	window_resize(win->win, width, win->statuswin ?  height - 1 : height);
@@ -163,6 +172,12 @@ void vis_window_vsplit(Vis *vis, const char *filename) {
 void vis_resize(Vis *vis, int width, int height) {
 	vis->width = width;
 	vis->height = height;
+	if (vis->prompt->active) {
+		vis->height--;
+		vis_prompt_resize(vis->prompt, vis->width, 1);
+		vis_prompt_move(vis->prompt, 0, vis->height);
+		vis_prompt_draw(vis->prompt);
+	}
 	vis_draw(vis);
 }
 
@@ -268,6 +283,8 @@ void vis_update(Vis *vis) {
 
 	if (vis->win->statuswin)
 		wnoutrefresh(vis->win->statuswin);
+	if (vis->prompt && vis->prompt->active)
+		vis_prompt_update(vis->prompt);
 	window_update(vis->win->win);
 }
 
@@ -333,6 +350,10 @@ Vis *vis_new(int width, int height) {
 	Vis *vis = calloc(1, sizeof(Vis));
 	if (!vis)
 		return NULL;
+	if (!(vis->prompt = vis_prompt_new())) {
+		vis_free(vis);
+		return NULL;
+	}
 	vis->width = width;
 	vis->height = height;
 	vis->windows_arrange = vis_windows_arrange_horizontal;
@@ -344,6 +365,7 @@ void vis_free(Vis *vis) {
 		next = win->next;
 		vis_window_free(win);
 	}
+	vis_prompt_free(vis->prompt);
 	free(vis);
 }
 
@@ -381,4 +403,108 @@ void vis_insert(Vis *vis, size_t pos, const char *c, size_t len) {
 void vis_delete(Vis *vis, size_t pos, size_t len) {
 	text_delete(vis->win->text, pos, len);
 	vis_windows_invalidate(vis, pos, pos + len);
+}
+
+
+static void vis_prompt_free(Prompt *prompt) {
+	if (!prompt)
+		return;
+	vis_window_free(prompt->win);
+	if (prompt->titlewin)
+		delwin(prompt->titlewin);
+	free(prompt->title);
+	free(prompt);
+}
+
+static Prompt *vis_prompt_new() {
+	Text *text = text_load(NULL);
+	if (!text)
+		return NULL;
+	Prompt *prompt = calloc(1, sizeof(Prompt));
+	if (!prompt)
+		goto err;
+
+	if (!(prompt->win = calloc(1, sizeof(VisWin))))
+		goto err;
+
+	if (!(prompt->win->win = window_new(text)))
+		goto err;
+
+	prompt->win->text = text;
+
+	if (!(prompt->titlewin = newwin(0, 0, 0, 0)))
+		goto err;
+
+	return prompt;
+err:
+	if (!prompt || !prompt->win)
+		text_free(text);
+	vis_prompt_free(prompt);
+	return NULL;
+}
+
+static void vis_prompt_resize(Prompt *prompt, int width, int height) {
+	size_t title_width = strlen(prompt->title);
+	wresize(prompt->titlewin, height, title_width);
+	vis_window_resize(prompt->win, width - title_width, height);
+}
+
+static void vis_prompt_move(Prompt *prompt, int x, int y) {
+	size_t title_width = strlen(prompt->title);
+	mvwin(prompt->titlewin, y, x);
+	vis_window_move(prompt->win, x + title_width, y);
+}
+
+void vis_prompt_show(Vis *vis, const char *title) {
+	Prompt *prompt = vis->prompt;
+	if (prompt->active)
+		return;
+	prompt->active = true;
+	prompt->editor = vis->win;
+	vis->win = prompt->win;
+	free(prompt->title);
+	prompt->title = strdup(title);
+	vis_resize(vis, vis->width, vis->height);
+}
+
+static void vis_prompt_draw(Prompt *prompt) {
+	mvwaddstr(prompt->titlewin, 0, 0, prompt->title);
+}
+
+static void vis_prompt_update(Prompt *prompt) {
+	wnoutrefresh(prompt->titlewin);
+}
+
+static void vis_prompt_clear(Prompt *prompt) {
+	Text *text = prompt->win->text;
+	while (text_undo(text));
+}
+
+void vis_prompt_hide(Vis *vis) {
+	Prompt *prompt = vis->prompt;
+	if (!prompt->active)
+		return;
+	prompt->active = false;
+	vis->win = prompt->editor;
+	prompt->editor = NULL;
+	vis->height++;
+	vis_prompt_clear(prompt);
+	vis_draw(vis);
+}
+
+void vis_prompt_set(Vis *vis, const char *line) {
+	Text *text = vis->prompt->win->text;
+	vis_prompt_clear(vis->prompt);
+	text_insert_raw(text, 0, line, strlen(line));
+	vis_window_draw(vis->prompt->win);
+}
+
+char *vis_prompt_get(Vis *vis) {
+	Text *text = vis->prompt->win->text;
+	char *buf = malloc(text_size(text) + 1);
+	if (!buf)
+		return NULL;
+	size_t len = text_bytes_get(text, 0, text_size(text), buf);
+	buf[len] = '\0';
+	return buf;
 }

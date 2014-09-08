@@ -29,6 +29,8 @@ enum {
 	VIS_MODE_REGISTER,
 	VIS_MODE_NORMAL,
 	VIS_MODE_VISUAL,
+	VIS_MODE_READLINE,
+	VIS_MODE_PROMPT,
 	VIS_MODE_INSERT,
 	VIS_MODE_REPLACE,
 };
@@ -459,6 +461,26 @@ static void insert_register(const Arg *arg) {
 	vis_insert(vis, window_cursor_get(vis->win->win), reg->data, reg->len);
 }
 
+static void prompt(const Arg *arg) {
+	vis_prompt_show(vis, arg->s);
+	switchmode(&(const Arg){ .i = VIS_MODE_PROMPT });
+}
+
+static void prompt_enter(const Arg *arg) {
+	char *s = vis_prompt_get(vis);
+	fprintf(stderr, "prompt: %s\n", s);
+	free(s);
+	switchmode(&(const Arg){ .i = VIS_MODE_NORMAL });
+}
+
+static void prompt_up(const Arg *arg) {
+	
+}
+
+static void prompt_down(const Arg *arg) {
+
+}
+
 static void insert_verbatim(const Arg *arg) {
 	int value = 0;
 	for (int i = 0; i < 3; i++) {
@@ -581,11 +603,11 @@ static KeyBinding vis_operators[] = {
 	{ /* empty last element, array terminator */                           },
 };
 
-static void vis_operators_enter(void) {
+static void vis_operators_enter(Mode *old) {
 	vis_modes[VIS_MODE_OPERATOR].parent = &vis_modes[VIS_MODE_OPERATOR_OPTION];
 }
 
-static void vis_operators_leave(void) {
+static void vis_operators_leave(Mode *new) {
 	vis_modes[VIS_MODE_OPERATOR].parent = &vis_modes[VIS_MODE_MOVE];
 }
 
@@ -639,6 +661,9 @@ static KeyBinding vis_normal[] = {
 	{ { NONE('u')               }, call,          { .f = vis_undo     } },
 	{ { CONTROL('R')            }, call,          { .f = vis_redo     } },
 	{ { CONTROL('L')            }, call,          { .f = vis_draw     } },
+	{ { NONE(':')               }, prompt,        { .s = ":"             } },
+	{ { NONE('/')               }, prompt,        { .s = "/"             } },
+	{ { NONE('?')               }, prompt,        { .s = "?"             } },
 	{ /* empty last element, array terminator */                           },
 };
 
@@ -656,27 +681,43 @@ static KeyBinding vis_visual[] = {
 	{ /* empty last element, array terminator */                               },
 };
 
-static void vis_visual_enter(void) {
+static void vis_visual_enter(Mode *old) {
 	window_selection_start(vis->win->win);
 }
 
-static void vis_visual_leave(void) {
+static void vis_visual_leave(Mode *new) {
 	window_selection_clear(vis->win->win);
 }
 
-static KeyBinding vis_insert_mode[] = {
+static KeyBinding vis_readline_mode[] = {
 	{ { NONE(ESC)               }, switchmode,      { .i = VIS_MODE_NORMAL   } },
 	{ { CONTROL('c')            }, switchmode,      { .i = VIS_MODE_NORMAL   } },
+	BACKSPACE(                     call,               f,  vis_backspace_key   ),
+	{ { CONTROL('D')            }, call,            { .f = vis_delete_key    } },
+	{ { CONTROL('W')            }, delete_word,     { NULL                   } },
+	{ /* empty last element, array terminator */                               },
+};
+
+static KeyBinding vis_prompt_mode[] = {
+	{ { KEY(ENTER)              }, prompt_enter,    { NULL                   } },
+	{ { CONTROL('J')            }, prompt_enter,    { NULL                   } },
+	{ { KEY(UP)                 }, prompt_up,       { NULL                   } },
+	{ { KEY(DOWN)               }, prompt_down,     { NULL                   } },
+	{ /* empty last element, array terminator */                               },
+};
+
+static void vis_prompt_leave(Mode *new) {
+	if (new != &vis_modes[VIS_MODE_OPERATOR])
+		vis_prompt_hide(vis);
+}
+
+static KeyBinding vis_insert_mode[] = {
 	{ { CONTROL('L')            }, switchmode,      { .i = VIS_MODE_NORMAL   } },
 	{ { CONTROL('[')            }, switchmode,      { .i = VIS_MODE_NORMAL   } },
-	{ { CONTROL('D')            }, call,            { .f = vis_delete_key    } },
-	BACKSPACE(                     call,               f,  vis_backspace_key   ),
-	{ { CONTROL('H')            }, call,            { .f = vis_backspace_key } },
 	{ { CONTROL('I')            }, insert_tab,      { NULL                   } },
 	{ { CONTROL('J')            }, insert_newline,  { NULL                   } },
 	{ { CONTROL('M')            }, insert_newline,  { NULL                   } },
 	{ { CONTROL('O')            }, switchmode,      { .i = VIS_MODE_OPERATOR } },
-	{ { CONTROL('W')            }, delete_word,     { NULL                   } },
 	{ { CONTROL('R'), NONE('a') }, insert_register, { .i = REG_a             } },
 	{ { CONTROL('R'), NONE('b') }, insert_register, { .i = REG_b             } },
 	{ { CONTROL('R'), NONE('c') }, insert_register, { .i = REG_c             } },
@@ -764,9 +805,21 @@ static Mode vis_modes[] = {
 		.enter = vis_visual_enter,
 		.leave = vis_visual_leave,
 	},
+	[VIS_MODE_READLINE] = {
+		.name = "READLINE",
+		.parent = &vis_modes[VIS_MODE_BASIC],
+		.bindings = vis_readline_mode,
+	},
+	[VIS_MODE_PROMPT] = {
+		.name = "PROMPT",
+		.parent = &vis_modes[VIS_MODE_READLINE],
+		.bindings = vis_prompt_mode,
+		.input = vis_insert_input,
+		.leave = vis_prompt_leave,
+	},
 	[VIS_MODE_INSERT] = {
 		.name = "INSERT",
-		.parent = &vis_modes[VIS_MODE_BASIC],
+		.parent = &vis_modes[VIS_MODE_READLINE],
 		.bindings = vis_insert_mode,
 		.input = vis_insert_input,
 	},
@@ -782,12 +835,12 @@ static void switchmode_to(Mode *new_mode) {
 	if (mode == new_mode)
 		return;
 	if (mode->leave)
-		mode->leave();
+		mode->leave(new_mode);
 	mode_prev = mode;
 	//fprintf(stderr, "%s -> %s\n", mode_prev->name, new_mode->name);
 	mode = new_mode;
 	if (mode->enter)
-		mode->enter();
+		mode->enter(mode_prev);
 	// TODO display mode name somewhere?
 
 }
