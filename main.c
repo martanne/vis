@@ -47,6 +47,7 @@ struct Mode {
 	void (*leave)(Mode *new);
 	bool (*unknown)(Key *key0, Key *key1);        /* unknown key for this mode, return value determines whether parent modes will be checked */ 
 	bool (*input)(const char *str, size_t len);   /* unknown key for this an all parent modes */
+	void (*idle)(void);
 };
 
 typedef struct {
@@ -263,7 +264,8 @@ int main(int argc, char *argv[]) {
 		}
 
 		if (!FD_ISSET(STDIN_FILENO, &fds)) {
-			vis_snapshot(vis);
+			if (mode->idle)
+				mode->idle();
 			timeout = NULL;
 			continue;
 		}
@@ -291,7 +293,9 @@ int main(int argc, char *argv[]) {
 		if (key.code)
 			continue;
 		
-		if (mode->input && mode->input(key.str, strlen(key.str)))
+		if (mode->input)
+			mode->input(key.str, strlen(key.str));
+		if (mode->idle)
 			timeout = &idle;
 	}
 

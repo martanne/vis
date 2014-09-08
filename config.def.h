@@ -288,6 +288,10 @@ static void split(const Arg *arg) {
 void action_do(Action *a); 
 void action_reset(Action *a);
 
+static void snapshot(void) {
+	text_snapshot(vis->win->text);
+}
+
 static void repeat(const Arg *arg) {
 	action = action_prev;
 	action_do(&action);
@@ -457,6 +461,7 @@ void action_do(Action *a) {
 			switchmode_to(mode_prev);
 		else if (mode == &vis_modes[VIS_MODE_VISUAL])
 			switchmode(&(const Arg){ .i = VIS_MODE_NORMAL });
+		snapshot();
 	}
 
 	if (a != &action_prev) {
@@ -464,6 +469,16 @@ void action_do(Action *a) {
 			action_prev = *a;
 		action_reset(a);
 	}
+}
+
+static void undo(const Arg *arg) {
+	if (text_undo(vis->win->text))
+		vis_draw(vis);
+}
+
+static void redo(const Arg *arg) {
+	if (text_redo(vis->win->text))
+		vis_draw(vis);
 }
 
 static void zero(const Arg *arg) {
@@ -698,8 +713,8 @@ static KeyBinding vis_normal[] = {
 	{ { NONE('i')               }, switchmode,    { .i = VIS_MODE_INSERT } },
 	{ { NONE('v')               }, switchmode,    { .i = VIS_MODE_VISUAL } },
 	{ { NONE('R')               }, switchmode,    { .i = VIS_MODE_REPLACE} },
-	{ { NONE('u')               }, call,          { .f = vis_undo     } },
-	{ { CONTROL('R')            }, call,          { .f = vis_redo     } },
+	{ { NONE('u')               }, undo,          { NULL                   } },
+	{ { CONTROL('R')            }, redo,          { NULL                   } },
 	{ { CONTROL('L')            }, call,          { .f = vis_draw     } },
 	{ { NONE(':')               }, prompt,        { .s = ":"             } },
 	{ /* empty last element, array terminator */                           },
@@ -862,12 +877,14 @@ static Mode vis_modes[] = {
 		.parent = &vis_modes[VIS_MODE_READLINE],
 		.bindings = vis_insert_mode,
 		.input = vis_insert_input,
+		.idle = snapshot,
 	},
 	[VIS_MODE_REPLACE] = {
 		.name = "REPLACE",
 		.parent = &vis_modes[VIS_MODE_INSERT],
 		.bindings = vis_replace,
 		.input = vis_replace_input,
+		.idle = snapshot,
 	},
 };
 
@@ -939,8 +956,8 @@ static KeyBinding nano_keys[] = {
 	{ { META('|')               }, movement, { .i = MOVE_FILE_BEGIN        } },
 	{ { META('/')               }, movement, { .i = MOVE_FILE_END          } },
 	{ { META('?')               }, movement, { .i = MOVE_FILE_END          } },
-	{ { META('U')               }, call,     { .f = vis_undo               } },
-	{ { META('E')               }, call,     { .f = vis_redo               } },
+	{ { META('U')               }, undo,     { NULL                        } },
+	{ { META('E')               }, redo,     { NULL                        } },
 #if 0
 	{ { CONTROL('I') },   insert,   { .s = "\t"                   } },
 	/* TODO: handle this in vis to insert \n\r when appriopriate */

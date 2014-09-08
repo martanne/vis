@@ -88,9 +88,6 @@ struct Syntax {                              /* a syntax definition */
 Vis *vis_new(int width, int height);
 void vis_free(Vis*); 
 void vis_resize(Vis*, int width, int height); 
-void vis_snapshot(Vis*);
-void vis_undo(Vis*);
-void vis_redo(Vis*);
 void vis_draw(Vis*);
 void vis_update(Vis*);
 void vis_insert_key(Vis*, const char *c, size_t len);

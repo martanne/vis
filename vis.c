@@ -51,24 +51,6 @@ void vis_statusbar_set(Vis *vis, vis_statusbar_t statusbar) {
 	vis->statusbar = statusbar;
 }
 
-void vis_snapshot(Vis *vis) {
-	text_snapshot(vis->win->text);
-}
-
-void vis_undo(Vis *vis) {
-	VisWin *win = vis->win;
-	// TODO window invalidation
-	if (text_undo(win->text))
-		window_draw(win->win);
-}
-
-void vis_redo(Vis *vis) {
-	VisWin *win = vis->win;
-	// TODO window invalidation
-	if (text_redo(win->text))
-		window_draw(win->win);
-}
-
 static void vis_windows_arrange_horizontal(Vis *vis) {
 	int n = 0, x = 0, y = 0;
 	for (VisWin *win = vis->windows; win; win = win->next)
