@@ -68,6 +68,16 @@ void op_paste(OperatorContext *c) {
 	window_cursor_to(vis->win->win, pos + c->reg->len);
 }
 
+static size_t search_forward(const Arg *arg) {
+	size_t pos = window_cursor_get(vis->win->win);
+	return text_search_forward(vis->win->text, pos, vis->search_pattern);
+}
+
+static size_t search_backward(const Arg *arg) {
+	size_t pos = window_cursor_get(vis->win->win);
+	return text_search_backward(vis->win->text, pos, vis->search_pattern);
+}
+
 static void mark_set(const Arg *arg) {
 	text_mark_set(vis->win->text, arg->i, window_cursor_get(vis->win->win));
 }
@@ -165,6 +175,8 @@ enum {
 	MOVE_FILE_END,
 	MOVE_MARK,
 	MOVE_MARK_LINE,
+	MOVE_SEARCH_FORWARD,
+	MOVE_SEARCH_BACKWARD,
 };
 
 static Movement moves[] = {
@@ -195,6 +207,8 @@ static Movement moves[] = {
 	[MOVE_RIGHT_TILL]      = { .cmd = till,                 .type = LINEWISE           },
 	[MOVE_MARK]            = { .cmd = mark_goto,            .type = LINEWISE           },
 	[MOVE_MARK_LINE]       = { .cmd = mark_line_goto,       .type = LINEWISE           },
+	[MOVE_SEARCH_FORWARD]  = { .cmd = search_forward,       .type = LINEWISE           },
+	[MOVE_SEARCH_BACKWARD] = { .cmd = search_backward,      .type = LINEWISE           },
 };
 
 enum {
@@ -477,8 +491,24 @@ static void prompt(const Arg *arg) {
 static void prompt_enter(const Arg *arg) {
 	char *s = vis_prompt_get(vis);
 	fprintf(stderr, "prompt: %s\n", s);
-	free(s);
 	switchmode(&(const Arg){ .i = VIS_MODE_NORMAL });
+	switch (vis->prompt->title[0]) {
+	case '/':
+	case '?':
+		text_regex_free(vis->search_pattern);
+		if (!(vis->search_pattern = text_regex_new()) ||
+		    text_regex_compile(vis->search_pattern, s, REG_EXTENDED)) {
+			action_reset(&action);
+		} else {
+			movement(&(const Arg){ .i = vis->prompt->title[0] == '/' ?
+				MOVE_SEARCH_FORWARD : MOVE_SEARCH_BACKWARD });
+		}
+		break;
+	case ':':
+		/* TODO : parse command */
+		break;
+	}
+	free(s);
 }
 
 static void prompt_up(const Arg *arg) {
@@ -526,7 +556,7 @@ static KeyBinding basic_movement[] = {
 
 static KeyBinding vis_movements[] = {
 	BACKSPACE(                     movement,    i,  MOVE_CHAR_PREV           ),
-	{ { NONE('H')               }, movement, { .i = MOVE_CHAR_PREV         } },
+	{ { NONE('h')               }, movement, { .i = MOVE_CHAR_PREV         } },
 	{ { NONE(' ')               }, movement, { .i = MOVE_CHAR_NEXT         } },
 	{ { NONE('l')               }, movement, { .i = MOVE_CHAR_NEXT         } },
 	{ { NONE('k')               }, movement, { .i = MOVE_LINE_UP           } },
@@ -554,7 +584,9 @@ static KeyBinding vis_movements[] = {
 	{ { NONE('F')               }, movement_key, { .i = MOVE_LEFT_TO       } },
 	{ { NONE('t')               }, movement_key, { .i = MOVE_RIGHT_TILL    } },
 	{ { NONE('T')               }, movement_key, { .i = MOVE_LEFT_TILL     } },
-	{ /* empty last element, array terminator */                           },
+	{ { NONE('/')               }, prompt,        { .s = "/"               } },
+	{ { NONE('?')               }, prompt,        { .s = "?"               } },
+	{ /* empty last element, array terminator */                             },
 };
 
 // TODO: factor out prefix [ia] into spearate mode which sets a flag
@@ -660,8 +692,8 @@ static KeyBinding vis_normal[] = {
 	{ { CONTROL('F')            }, cursor,   { .m = window_page_up         } },
 	{ { CONTROL('B')            }, cursor,   { .m = window_page_down       } },
 	{ { NONE('.')               }, repeat,   {                             } },
-	{ { NONE('n')               }, find_forward,  { .s = "if"            } },
-	{ { NONE('N')               }, find_backward, { .s = "if"            } },
+	{ { NONE('n')               }, movement, { .i = MOVE_SEARCH_FORWARD    } },
+	{ { NONE('N')               }, movement, { .i = MOVE_SEARCH_BACKWARD   } },
 	{ { NONE('x')               }, call,          { .f = vis_delete_key   } },
 	{ { NONE('i')               }, switchmode,    { .i = VIS_MODE_INSERT } },
 	{ { NONE('v')               }, switchmode,    { .i = VIS_MODE_VISUAL } },
@@ -670,8 +702,6 @@ static KeyBinding vis_normal[] = {
 	{ { CONTROL('R')            }, call,          { .f = vis_redo     } },
 	{ { CONTROL('L')            }, call,          { .f = vis_draw     } },
 	{ { NONE(':')               }, prompt,        { .s = ":"             } },
-	{ { NONE('/')               }, prompt,        { .s = "/"             } },
-	{ { NONE('?')               }, prompt,        { .s = "?"             } },
 	{ /* empty last element, array terminator */                           },
 };
 

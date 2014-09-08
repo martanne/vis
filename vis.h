@@ -56,6 +56,7 @@ struct Vis {
 	Syntax *syntaxes;              /* NULL terminated array of syntax definitions */
 	Register registers[REG_LAST];
 	Prompt *prompt;
+	Regex *search_pattern;
 	void (*windows_arrange)(Vis*); /* current layout which places the windows */
 	vis_statusbar_t statusbar;     /* configurable user hook to draw statusbar */
 };
@@ -103,14 +104,11 @@ void vis_delete(Vis*, size_t pos, size_t len);
 bool vis_syntax_load(Vis*, Syntax *syntaxes, Color *colors);
 void vis_syntax_unload(Vis*);
 
-void vis_search(Vis*, const char *regex, int direction);
-
 bool vis_window_new(Vis*, const char *filename);
 void vis_window_split(Vis*, const char *filename);
 void vis_window_vsplit(Vis*, const char *filename);
 void vis_window_next(Vis*);
 void vis_window_prev(Vis*);
-
 
 char *vis_prompt_get(Vis *vis);
 void vis_prompt_set(Vis *vis, const char *line);

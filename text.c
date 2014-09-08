@@ -1055,10 +1055,12 @@ int text_regex_compile(Regex *regex, const char *string, int cflags) {
 }
 
 void text_regex_free(Regex *r) {
+	if (!r)
+		return;
 	regfree(&r->regex);
 }
 
-int text_search_forward(Text *txt, size_t pos, size_t len, Regex *r, size_t nmatch, RegexMatch pmatch[], int eflags) {
+int text_search_range_forward(Text *txt, size_t pos, size_t len, Regex *r, size_t nmatch, RegexMatch pmatch[], int eflags) {
 	char *buf = malloc(len + 1);
 	if (!buf)
 		return REG_NOMATCH;
@@ -1076,7 +1078,7 @@ int text_search_forward(Text *txt, size_t pos, size_t len, Regex *r, size_t nmat
 	return ret;
 }
 
-int text_search_backward(Text *txt, size_t pos, size_t len, Regex *r, size_t nmatch, RegexMatch pmatch[], int eflags) {
+int text_search_range_backward(Text *txt, size_t pos, size_t len, Regex *r, size_t nmatch, RegexMatch pmatch[], int eflags) {
 	char *buf = malloc(len + 1);
 	if (!buf)
 		return REG_NOMATCH;

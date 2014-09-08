@@ -65,4 +65,7 @@ size_t text_section_prev(Text*, size_t pos);
 /* search coresponding '(', ')', '{', '}', '[', ']', '>', '<', '"', ''' */
 size_t text_bracket_match(Text*, size_t pos);
 
+size_t text_search_forward(Text *txt, size_t pos, Regex *regex);
+size_t text_search_backward(Text *txt, size_t pos, Regex *regex);
+
 #endif

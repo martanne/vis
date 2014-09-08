@@ -104,8 +104,6 @@ typedef struct {
 static Key getkey(void);
 static void cursor(const Arg *arg);
 static void call(const Arg *arg);
-static void find_forward(const Arg *arg);
-static void find_backward(const Arg *arg);
 
 #include "config.h"
 
@@ -117,14 +115,6 @@ static void cursor(const Arg *arg) {
 
 static void call(const Arg *arg) {
 	arg->f(vis);
-}
-
-static void find_forward(const Arg *arg) {
-	vis_search(vis, arg->s, 1);
-}
-
-static void find_backward(const Arg *arg) {
-	vis_search(vis, arg->s, -1);
 }
 
 typedef struct Screen Screen;

@@ -9,8 +9,6 @@ static void vis_window_free(VisWin *win);
 static void vis_window_split_internal(Vis *vis, const char *filename); 
 static void vis_windows_invalidate(Vis *vis, size_t start, size_t end); 
 static void vis_window_draw(VisWin *win);
-static void vis_search_forward(Vis *vis, Regex *regex);
-static void vis_search_backward(Vis *vis, Regex *regex);
 static void vis_windows_arrange_horizontal(Vis *vis); 
 static void vis_windows_arrange_vertical(Vis *vis);
 
@@ -51,55 +49,6 @@ static void vis_window_cursor_moved(Win *win, void *data) {
 
 void vis_statusbar_set(Vis *vis, vis_statusbar_t statusbar) {
 	vis->statusbar = statusbar;
-}
-
-static void vis_search_forward(Vis *vis, Regex *regex) {
-	VisWin *win = vis->win;
-	int pos = window_cursor_get(win->win) + 1;
-	int end = text_size(win->text);
-	RegexMatch match[1];
-	bool found = false;
-	if (text_search_forward(win->text, pos, end - pos, regex, 1, match, 0)) {
-		pos = 0;
-		end = window_cursor_get(win->win);
-		if (!text_search_forward(win->text, pos, end, regex, 1, match, 0))
-			found = true;
-	} else {
-		found = true;
-	}
-	if (found)
-		window_cursor_to(win->win, match[0].start);
-}
-
-static void vis_search_backward(Vis *vis, Regex *regex) {
-	VisWin *win = vis->win;
-	int pos = 0;
-	int end = window_cursor_get(win->win);
-	RegexMatch match[1];
-	bool found = false;
-	if (text_search_backward(win->text, pos, end, regex, 1, match, 0)) {
-		pos = window_cursor_get(win->win) + 1;
-		end = text_size(win->text);
-		if (!text_search_backward(win->text, pos, end - pos, regex, 1, match, 0))
-			found = true;
-	} else {
-		found = true;
-	}
-	if (found)
-		window_cursor_to(win->win, match[0].start);
-}
-
-void vis_search(Vis *vis, const char *s, int direction) {
-	Regex *regex = text_regex_new();
-	if (!regex)
-		return;
-	if (!text_regex_compile(regex, s, REG_EXTENDED)) {
-		if (direction >= 0)
-			vis_search_forward(vis, regex);
-		else
-			vis_search_backward(vis, regex);
-	}
-	text_regex_free(regex);
 }
 
 void vis_snapshot(Vis *vis) {
