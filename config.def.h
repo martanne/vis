@@ -451,6 +451,13 @@ void action_do(Action *a) {
 	}
 }
 
+static void zero(const Arg *arg) {
+	if (action.count == 0)
+		movement(&(const Arg){ .i = MOVE_LINE_BEGIN });
+	else
+		count(&(const Arg){ .i = 0 });
+}
+
 static void delete_word(const Arg *arg) {
 	operator(&(const Arg){ .i = OP_DELETE });
 	movement(&(const Arg){ .i = MOVE_WORD_START_PREV });
@@ -527,7 +534,6 @@ static KeyBinding vis_movements[] = {
 	{ { CONTROL('J')            }, movement, { .i = MOVE_LINE_DOWN         } },
 	{ { CONTROL('N')            }, movement, { .i = MOVE_LINE_DOWN         } },
 	{ { KEY(ENTER)              }, movement, { .i = MOVE_LINE_DOWN         } },
-	{ { NONE('0')               }, movement, { .i = MOVE_LINE_BEGIN        } },
 	{ { NONE('^')               }, movement, { .i = MOVE_LINE_START        } },
 	{ { NONE('g'), NONE('_')    }, movement, { .i = MOVE_LINE_FINISH       } },
 	{ { NONE('$')               }, movement, { .i = MOVE_LINE_END          } },
@@ -587,6 +593,7 @@ static KeyBinding vis_textobjs[] = {
 };
 
 static KeyBinding vis_operators[] = {
+	{ { NONE('0')               }, zero,          { NULL                 } },
 	{ { NONE('1')               }, count,         { .i = 1               } },
 	{ { NONE('2')               }, count,         { .i = 2               } },
 	{ { NONE('3')               }, count,         { .i = 3               } },
