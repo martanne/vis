@@ -118,7 +118,7 @@ static size_t column(const Arg *arg) {
 }
 
 static void insert(const Arg *arg) {
-	vis_insert(vis, window_cursor_get(vis->win->win), arg->s, arg->s ? strlen(arg->s) : 0);
+	vis_insert_key(vis, arg->s, arg->s ? strlen(arg->s) : 0);
 }
 
 static void insert_tab(const Arg *arg) {
