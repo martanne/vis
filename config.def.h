@@ -16,6 +16,7 @@ static Action action, action_prev;
 
 static void switchmode(const Arg *arg);
 static void switchmode_to(Mode *new_mode);
+static void movement(const Arg *arg);
 
 enum {
 	VIS_MODE_BASIC,
@@ -262,6 +263,154 @@ static TextObject *moves_linewise[] = {
 	[MOVE_LINE_DOWN] = &textobjs[TEXT_OBJ_LINE_DOWN],
 };
 
+bool cmd_gotoline(const char *argv[]);
+bool cmd_open(const char *argv[]);
+bool cmd_quit(const char *argv[]);
+bool cmd_read(const char *argv[]);
+bool cmd_substitute(const char *argv[]);
+bool cmd_split(const char *argv[]);
+bool cmd_vsplit(const char *argv[]);
+bool cmd_wq(const char *argv[]);
+bool cmd_write(const char *argv[]);
+
+bool cmd_gotoline(const char *argv[]) {
+	action.count = strtoul(argv[0], NULL, 10);
+	movement(&(const Arg){ .i = MOVE_LINE });
+	return true;
+}
+
+bool cmd_open(const char *argv[]) {
+	for (const char **file = &argv[1]; *file; file++)
+		vis_window_new(vis, *file);
+	return true;
+}
+
+bool cmd_quit(const char *argv[]) {
+	bool force = strchr(argv[0], '!') != NULL;
+	for (VisWin *win = vis->windows; win; win = win->next) {
+		if (text_modified(win->text) && !force)
+			return false;
+	}
+	vis->running = false;
+	return true;
+}
+
+bool cmd_read(const char *argv[]) {
+	size_t pos = window_cursor_get(vis->win->win);
+	for (const char **file = &argv[1]; *file; file++) {
+		int fd = open(*file, O_RDONLY);
+		char *data = NULL;
+		struct stat info;
+		if (fd == -1)
+			goto err;
+		if (fstat(fd, &info) == -1)
+			goto err;
+		if (!S_ISREG(info.st_mode))
+			goto err;
+		// XXX: use lseek(fd, 0, SEEK_END); instead?
+		data = mmap(NULL, info.st_size, PROT_READ, MAP_SHARED, fd, 0);
+		if (data == MAP_FAILED)
+			goto err;
+
+		text_insert_raw(vis->win->text, pos, data, info.st_size);
+		pos += info.st_size;
+	err:
+		if (fd > 2)
+			close(fd);
+		if (data && data != MAP_FAILED)
+			munmap(data, info.st_size);
+	}
+	vis_draw(vis);
+	return true;
+}
+
+bool cmd_substitute(const char *argv[]) {
+	// TODO
+	return true;
+}
+
+bool cmd_split(const char *argv[]) {
+	vis_window_split(vis, argv[1]);
+	for (const char **file = &argv[2]; *file; file++)
+		vis_window_split(vis, *file);
+	return true;
+}
+
+bool cmd_vsplit(const char *argv[]) {
+	vis_window_vsplit(vis, argv[1]);
+	for (const char **file = &argv[2]; *file; file++)
+		vis_window_vsplit(vis, *file);
+	return true;
+}
+
+bool cmd_wq(const char *argv[]) {
+	if (cmd_write(argv))
+		return cmd_quit(argv);
+	return false;
+}
+
+bool cmd_write(const char *argv[]) {
+	Text *text = vis->win->text;
+	if (!argv[1])
+		argv[1] = text_filename(text);
+	for (const char **file = &argv[1]; *file; file++) {
+		if (text_save(text, *file))
+			return false;
+	}
+	return true;
+}
+
+/* TODO: do command match based on prefix search instead? */
+/* greedy regex search, top to bottom, first match wins */
+static Command cmds[] = {
+	{ "^[0-9]+",        cmd_gotoline   },
+	{ "^o(pen)?",       cmd_open       },
+	{ "^q(quit)?",      cmd_quit       },
+	{ "^r(ead)?",       cmd_read       },
+	{ "^sp(lit)?",      cmd_split      },
+	{ "^s(ubstitute)?", cmd_substitute },
+	{ "^v(split)?",     cmd_vsplit     },
+	{ "^wq",            cmd_wq         },
+	{ "^w(rite)?",      cmd_write      },
+	{ /* array terminator */           },
+};
+
+bool exec_command(char *cmdline) {
+	static bool init = false;
+	if (!init) {
+		/* compile the regexes on first inovaction */
+		for (Command *c = cmds; c->name; c++)
+			regcomp(&c->regex, c->name, REG_EXTENDED);
+		init = true;
+	}
+
+	Command *cmd = NULL;
+	for (Command *c = cmds; c->name; c++) {
+		if (!regexec(&c->regex, cmdline, 0, NULL, 0)) {
+			cmd = c;
+			break;
+		}
+	}
+
+	if (!cmd)
+		return false;
+
+	const char *argv[32] = { cmdline };
+	char *s = cmdline;
+	for (int i = 1; i < LENGTH(argv); i++) {
+		if (s) {
+			if ((s = strchr(s, ' ')))
+				*s++ = '\0';
+		}
+		while (s && *s && *s == ' ')
+			s++;
+		argv[i] = s ? s : NULL;
+	}
+
+	cmd->cmd(argv);
+	return true;
+}
+
 /* draw a statubar, do whatever you want with the given curses window */
 static void statusbar(WINDOW *win, bool active, const char *filename, size_t line, size_t col) {
 	int width, height;
@@ -505,7 +654,6 @@ static void prompt(const Arg *arg) {
 
 static void prompt_enter(const Arg *arg) {
 	char *s = vis_prompt_get(vis);
-	fprintf(stderr, "prompt: %s\n", s);
 	switchmode(&(const Arg){ .i = VIS_MODE_NORMAL });
 	switch (vis->prompt->title[0]) {
 	case '/':
@@ -518,7 +666,7 @@ static void prompt_enter(const Arg *arg) {
 		}
 		break;
 	case ':':
-		/* TODO : parse command */
+		exec_command(s);
 		break;
 	}
 	free(s);

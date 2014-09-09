@@ -5,8 +5,12 @@
 #include <string.h>
 #include <signal.h>
 #include <errno.h>
+#include <fcntl.h>
 #include <sys/select.h>
+#include <sys/types.h>
+#include <sys/stat.h>
 #include <sys/ioctl.h>
+#include <sys/mman.h>
 
 #include "vis.h"
 #include "util.h"
@@ -101,6 +105,12 @@ typedef struct {
 	Key key;
 	Arg arg;
 } Action;
+
+typedef struct {
+	const char *name;
+	bool (*cmd)(const char *argv[]);
+	regex_t regex;
+} Command;
 
 static Key getkey(void);
 static void cursor(const Arg *arg);
