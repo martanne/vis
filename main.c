@@ -46,7 +46,7 @@ struct Mode {
 	void (*enter)(Mode *old);
 	void (*leave)(Mode *new);
 	bool (*unknown)(Key *key0, Key *key1);        /* unknown key for this mode, return value determines whether parent modes will be checked */ 
-	bool (*input)(const char *str, size_t len);   /* unknown key for this an all parent modes */
+	void (*input)(const char *str, size_t len);   /* unknown key for this an all parent modes */
 	void (*idle)(void);
 };
 

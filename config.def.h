@@ -327,10 +327,9 @@ static void operator(const Arg *arg) {
 	}
 }
 
-static bool operator_invalid(const char *str, size_t len) {
+static void operator_invalid(const char *str, size_t len) {
 	action_reset(&action);
 	switchmode_to(mode_prev);
-	return false;
 }
 
 static void movement_key(const Arg *arg) {
@@ -780,9 +779,8 @@ static KeyBinding vis_insert_mode[] = {
 	{ /* empty last element, array terminator */                               },
 };
 
-static bool vis_insert_input(const char *str, size_t len) {
+static void vis_insert_input(const char *str, size_t len) {
 	vis_insert_key(vis, str, len);
-	return true;
 }
 
 static KeyBinding vis_replace[] = {
@@ -790,9 +788,8 @@ static KeyBinding vis_replace[] = {
 	{ /* empty last element, array terminator */                           },
 };
 
-static bool vis_replace_input(const char *str, size_t len) {
+static void vis_replace_input(const char *str, size_t len) {
 	vis_replace_key(vis, str, len);
-	return true;
 }
 
 static Mode vis_modes[] = {
