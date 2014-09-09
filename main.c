@@ -244,9 +244,13 @@ int main(int argc, char *argv[]) {
 	if (!vis_syntax_load(vis, syntaxes, colors))
 		return 1;
 	vis_statusbar_set(vis, config->statusbar);
-	char *filename = argc > 1 ? argv[1] : NULL;
-	if (!vis_window_new(vis, filename))
+
+	if (!vis_window_new(vis, argc > 1 ? argv[1] : NULL))
 		return 1;
+	for (int i = 2; i < argc; i++) {
+		if (!vis_window_new(vis, argv[i]))
+			return 1;
+	}
 
 	struct timeval idle = { .tv_usec = 0 }, *timeout = NULL;
 	Key key, key_prev, *key_mod = NULL;
