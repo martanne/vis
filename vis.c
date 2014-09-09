@@ -78,13 +78,23 @@ static void vis_windows_arrange_vertical(Vis *vis) {
 static void vis_window_split_internal(Vis *vis, const char *filename) {
 	VisWin *sel = vis->win;
 	if (filename) {
-		// TODO check that this file isn't already open
-		vis_window_new(vis, filename);
-	} else if (sel) {
+		// TODO? move this to vis_window_new
+		sel = NULL;
+		for (VisWin *w = vis->windows; w; w = w->next) {
+			const char *f = text_filename(w->text);
+			if (f && strcmp(f, filename) == 0) {
+				sel = w;
+				break;
+			}
+		}
+	}
+	if (sel) {
 		VisWin *win = vis_window_new_text(vis, sel->text);
 		win->text = sel->text;
 		window_syntax_set(win->win, window_syntax_get(sel->win));
 		window_cursor_to(win->win, window_cursor_get(sel->win));
+	} else {
+		vis_window_new(vis, filename);
 	}
 }
 
