@@ -13,6 +13,8 @@
 #include <sys/mman.h>
 
 #include "editor.h"
+#include "text-motions.h"
+#include "text-objects.h"
 #include "util.h"
 
 #ifdef PDCURSES

@@ -4,6 +4,8 @@
 #include <stdbool.h>
 #include <stddef.h>
 
+typedef size_t Filepos;
+
 typedef struct {
 	size_t start, end; /* range in bytes from start of file */
 } Filerange;

@@ -19,11 +19,12 @@
 #include <wchar.h>
 #include <ctype.h>
 #include <errno.h>
-#include "editor.h"
+#include <regex.h>
+#include <curses.h>
 #include "window.h"
+#include "syntax.h"
 #include "text.h"
 #include "text-motions.h"
-#include "text-objects.h"
 #include "util.h"
 
 typedef struct {            /* used to calculate the display width of a character */

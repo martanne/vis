@@ -1,12 +1,12 @@
 #ifndef EDITOR_H
 #define EDITOR_H
 
+#include <curses.h>
 #include <stddef.h>
-#include <regex.h>
-#include "text-motions.h"
-#include "text-objects.h"
+#include <stdbool.h>
 #include "window.h"
 #include "register.h"
+#include "syntax.h"
 
 typedef struct Editor Editor;
 typedef struct EditorWin EditorWin;
@@ -101,30 +101,6 @@ struct Editor {
 	void (*windows_arrange)(Editor*); /* current layout which places the windows */
 	editor_statusbar_t statusbar;     /* configurable user hook to draw statusbar */
 	bool running;                     /* (TODO move elsewhere?) */
-};
-
-
-typedef struct {
-	short fg, bg;   /* fore and background color */
-	int attr;       /* curses attributes */
-} Color;
-
-typedef struct {
-	char *rule;     /* regex to search for */
-	int cflags;     /* compilation flags (REG_*) used when compiling */
-	Color color;    /* settings to apply in case of a match */
-	regex_t regex;  /* compiled form of the above rule */
-} SyntaxRule;
-
-#define SYNTAX_REGEX_RULES 10
-
-typedef struct Syntax Syntax;
-
-struct Syntax {                              /* a syntax definition */
-	char *name;                           /* syntax name */
-	char *file;                           /* apply to files matching this regex */
-	regex_t file_regex;                   /* compiled file name regex */
-	SyntaxRule rules[SYNTAX_REGEX_RULES]; /* all rules for this file type */
 };
 
 Editor *editor_new(int width, int height);

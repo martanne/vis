@@ -1,12 +1,12 @@
 #ifndef WINDOW_H
 #define WINDOW_H
 
-#include <curses.h>
+#include <stddef.h>
+#include <stdbool.h>
 #include "text.h"
 
 typedef struct Syntax Syntax;
 typedef struct Win Win;
-typedef size_t Filepos;
 
 Win *window_new(Text*);
 void window_free(Win*);
