@@ -438,7 +438,7 @@ void window_draw(Win *win) {
 }
 
 bool window_resize(Win *win, int width, int height) {
-	if (wresize(win->win, height, width) == ERR) 
+	if (wresize(win->win, height, width) == ERR)
 		return false;
 	// TODO: only grow memory area
 	win->height = height;
@@ -737,7 +737,7 @@ void window_syntax_set(Win *win, Syntax *syntax) {
 }
 
 Syntax *window_syntax_get(Win *win) {
-	return win->syntax; 
+	return win->syntax;
 }
 
 void window_cursor_watch(Win *win, void (*cursor_moved)(Win*, void *), void *data) {

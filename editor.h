@@ -128,8 +128,8 @@ struct Syntax {                              /* a syntax definition */
 };
 
 Editor *editor_new(int width, int height);
-void editor_free(Editor*); 
-void editor_resize(Editor*, int width, int height); 
+void editor_free(Editor*);
+void editor_resize(Editor*, int width, int height);
 void editor_draw(Editor*);
 void editor_update(Editor*);
 void editor_insert_key(Editor*, const char *c, size_t len);

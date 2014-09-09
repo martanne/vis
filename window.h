@@ -32,7 +32,7 @@ size_t window_line_down(Win*);
 size_t window_line_up(Win*);
 
 size_t window_cursor_get(Win*);
-void window_cursor_getxy(Win*, size_t *lineno, size_t *col); 
+void window_cursor_getxy(Win*, size_t *lineno, size_t *col);
 void window_scroll_to(Win*, size_t pos);
 void window_cursor_to(Win*, size_t pos);
 void window_selection_start(Win*);
@@ -41,7 +41,7 @@ Filerange window_selection_get(Win*);
 void window_selection_clear(Win*);
 Filerange window_viewport_get(Win*);
 void window_syntax_set(Win*, Syntax*);
-Syntax *window_syntax_get(Win*); 
-void window_cursor_watch(Win *win, void (*cursor_moved)(Win*, void*), void *data); 
+Syntax *window_syntax_get(Win*);
+void window_cursor_watch(Win *win, void (*cursor_moved)(Win*, void*), void *data);
 
 #endif

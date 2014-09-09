@@ -55,7 +55,7 @@ static void editor_windows_arrange_horizontal(Editor *ed) {
 	int n = 0, x = 0, y = 0;
 	for (EditorWin *win = ed->windows; win; win = win->next)
 		n++;
-	int height = ed->height / n; 
+	int height = ed->height / n;
 	for (EditorWin *win = ed->windows; win; win = win->next) {
 		editor_window_resize(win, ed->width, win->next ? height : ed->height - y);
 		editor_window_move(win, x, y);
@@ -290,7 +290,7 @@ bool editor_window_new(Editor *ed, const char *filename) {
 			}
 		}
 	}
-	
+
 	editor_draw(ed);
 
 	return true;

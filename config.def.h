@@ -474,7 +474,7 @@ static Mode vis_modes[] = {
 		.parent = &vis_modes[VIS_MODE_MARK],
 		.bindings = vis_marks_line,
 	},
-	[VIS_MODE_MOVE] = { 
+	[VIS_MODE_MOVE] = {
 		.name = "MOVE",
 		.parent = &vis_modes[VIS_MODE_MARK_LINE],
 		.bindings = vis_movements,
@@ -485,7 +485,7 @@ static Mode vis_modes[] = {
 		.parent = &vis_modes[VIS_MODE_MOVE],
 		.bindings = vis_inner_textobjs,
 	},
-	[VIS_MODE_TEXTOBJ] = { 
+	[VIS_MODE_TEXTOBJ] = {
 		.name = "TEXTOBJ",
 		.common_prefix = true,
 		.parent = &vis_modes[VIS_MODE_INNER_TEXTOBJ],

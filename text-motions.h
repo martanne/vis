@@ -33,7 +33,7 @@ size_t text_word_end_next(Text*, size_t pos);
 size_t text_word_end_prev(Text*, size_t pos);
 size_t text_word_start_next(Text*, size_t pos);
 size_t text_word_start_prev(Text*, size_t pos);
-/* 
+/*
  * These are variants of the above with the additional possibility to implement
  * a custom word detection logic. Can be used to implment the equivalent of a what
  * vim reconizes as a word (lowercase).
@@ -52,13 +52,13 @@ size_t text_word_boundry_start_prev(Text*, size_t pos, int (*isboundry)(int));
 size_t text_sentence_next(Text*, size_t pos);
 size_t text_sentence_prev(Text*, size_t pos);
 /* TODO: implement the following semantics
- * A paragraph begins after each empty line. A section boundary is also a 
+ * A paragraph begins after each empty line. A section boundary is also a
  * paragraph boundary. Note that a blank line (only containing white space)
  * is NOT a paragraph boundary.
  */
 size_t text_paragraph_next(Text*, size_t pos);
 size_t text_paragraph_prev(Text*, size_t pos);
-/* A section begins after a form-feed in the first column. 
+/* A section begins after a form-feed in the first column.
 size_t text_section_next(Text*, size_t pos);
 size_t text_section_prev(Text*, size_t pos);
 */

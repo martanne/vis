@@ -125,7 +125,7 @@ size_t text_word_boundry_start_prev(Text *txt, size_t pos, int (*isboundry)(int)
 	do pos = it.pos; while (text_iterator_char_prev(&it, &c) && !isboundry(c));
 	return pos;
 }
- 
+
 size_t text_word_boundry_end_next(Text *txt, size_t pos, int (*isboundry)(int)) {
 	char c;
 	Iterator it = text_iterator_get(txt, pos);

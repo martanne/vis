@@ -49,7 +49,7 @@ struct Mode {
 	bool common_prefix;
 	void (*enter)(Mode *old);
 	void (*leave)(Mode *new);
-	bool (*unknown)(Key *key0, Key *key1);        /* unknown key for this mode, return value determines whether parent modes will be checked */ 
+	bool (*unknown)(Key *key0, Key *key1);        /* unknown key for this mode, return value determines whether parent modes will be checked */
 	void (*input)(const char *str, size_t len);   /* unknown key for this an all parent modes */
 	void (*idle)(void);
 };
@@ -516,7 +516,7 @@ static void prompt_enter(const Arg *arg) {
 }
 
 static void prompt_up(const Arg *arg) {
-	
+
 }
 
 static void prompt_down(const Arg *arg) {
@@ -971,7 +971,7 @@ int main(int argc, char *argv[]) {
 		KeyBinding *action = keybinding(mode, key_mod ? key_mod : &key, key_mod ? &key : NULL);
 
 		if (!action && key_mod) {
-			/* second char of a combination was invalid, search again without the prefix */ 
+			/* second char of a combination was invalid, search again without the prefix */
 			action = keybinding(mode, &key, NULL);
 			key_mod = NULL;
 		}
@@ -989,7 +989,7 @@ int main(int argc, char *argv[]) {
 
 		if (key.code)
 			continue;
-		
+
 		if (mode->input)
 			mode->input(key.str, strlen(key.str));
 		if (mode->idle)
