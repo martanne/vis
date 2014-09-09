@@ -1,5 +1,5 @@
-#ifndef EDITOR_H
-#define EDITOR_H
+#ifndef WINDOW_H
+#define WINDOW_H
 
 #include <curses.h>
 #include "text.h"

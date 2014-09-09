@@ -19,7 +19,7 @@
 #include <wchar.h>
 #include <ctype.h>
 #include <errno.h>
-#include "vis.h"
+#include "editor.h"
 #include "window.h"
 #include "text.h"
 #include "text-motions.h"

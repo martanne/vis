@@ -334,20 +334,20 @@ static KeyBinding vis_marks_set[] = {
 
 static KeyBinding vis_normal[] = {
 	{ { CONTROL('w'), NONE('c') }, split,    { .s = NULL                   } },
-	{ { CONTROL('w'), NONE('j') }, call,     { .f = vis_window_next     } },
-	{ { CONTROL('w'), NONE('k') }, call,     { .f = vis_window_prev     } },
+	{ { CONTROL('w'), NONE('j') }, call,     { .f = editor_window_next     } },
+	{ { CONTROL('w'), NONE('k') }, call,     { .f = editor_window_prev     } },
 	{ { CONTROL('F')            }, cursor,   { .m = window_page_up         } },
 	{ { CONTROL('B')            }, cursor,   { .m = window_page_down       } },
 	{ { NONE('.')               }, repeat,   {                             } },
 	{ { NONE('n')               }, movement, { .i = MOVE_SEARCH_FORWARD    } },
 	{ { NONE('N')               }, movement, { .i = MOVE_SEARCH_BACKWARD   } },
-	{ { NONE('x')               }, call,          { .f = vis_delete_key   } },
+	{ { NONE('x')               }, call,          { .f = editor_delete_key   } },
 	{ { NONE('i')               }, switchmode,    { .i = VIS_MODE_INSERT } },
 	{ { NONE('v')               }, switchmode,    { .i = VIS_MODE_VISUAL } },
 	{ { NONE('R')               }, switchmode,    { .i = VIS_MODE_REPLACE} },
 	{ { NONE('u')               }, undo,          { NULL                   } },
 	{ { CONTROL('R')            }, redo,          { NULL                   } },
-	{ { CONTROL('L')            }, call,          { .f = vis_draw     } },
+	{ { CONTROL('L')            }, call,          { .f = editor_draw     } },
 	{ { NONE(':')               }, prompt,        { .s = ":"             } },
 	{ /* empty last element, array terminator */                           },
 };
@@ -377,8 +377,8 @@ static void vis_visual_leave(Mode *new) {
 static KeyBinding vis_readline_mode[] = {
 	{ { NONE(ESC)               }, switchmode,      { .i = VIS_MODE_NORMAL   } },
 	{ { CONTROL('c')            }, switchmode,      { .i = VIS_MODE_NORMAL   } },
-	BACKSPACE(                     call,               f,  vis_backspace_key   ),
-	{ { CONTROL('D')            }, call,            { .f = vis_delete_key    } },
+	BACKSPACE(                     call,               f,  editor_backspace_key   ),
+	{ { CONTROL('D')            }, call,            { .f = editor_delete_key    } },
 	{ { CONTROL('W')            }, delete_word,     { NULL                   } },
 	{ /* empty last element, array terminator */                               },
 };
@@ -395,7 +395,7 @@ static KeyBinding vis_prompt_mode[] = {
 
 static void vis_prompt_leave(Mode *new) {
 	if (new != &vis_modes[VIS_MODE_OPERATOR])
-		vis_prompt_hide(vis);
+		editor_prompt_hide(vis);
 }
 
 static KeyBinding vis_insert_register_mode[] = {
@@ -444,7 +444,7 @@ static void vis_insert_idle(void) {
 }
 
 static void vis_insert_input(const char *str, size_t len) {
-	vis_insert_key(vis, str, len);
+	editor_insert_key(vis, str, len);
 }
 
 static KeyBinding vis_replace[] = {
@@ -453,7 +453,7 @@ static KeyBinding vis_replace[] = {
 };
 
 static void vis_replace_input(const char *str, size_t len) {
-	vis_replace_key(vis, str, len);
+	editor_replace_key(vis, str, len);
 }
 
 static Mode vis_modes[] = {
@@ -588,8 +588,8 @@ XXX: CONTROL(' ') = 0, ^Space                  Go forward one word
 */
 
 static KeyBinding nano_keys[] = {
-	{ { CONTROL('D')            }, call,           { .f = vis_delete_key   } },
-	BACKSPACE(                     call,              f,  vis_backspace_key  ),
+	{ { CONTROL('D')            }, call,     { .f = editor_delete_key      } },
+	BACKSPACE(                     call,        f,     editor_backspace_key  ),
 	{ { CONTROL('F')            }, movement, { .i = MOVE_CHAR_NEXT         } },
 	{ { CONTROL('P')            }, movement, { .i = MOVE_LINE_UP           } },
 	{ { CONTROL('N')            }, movement, { .i = MOVE_LINE_DOWN         } },
@@ -618,7 +618,7 @@ static KeyBinding nano_keys[] = {
 	/* TODO: handle this in vis to insert \n\r when appriopriate */
 	{ { CONTROL('M') },   insert,   { .s = "\n"                   } },
 #endif
-	{ { CONTROL('L')            }, call,      { .f = vis_draw              } },
+	{ { CONTROL('L')            }, call,      { .f = editor_draw           } },
 	{ /* empty last element, array terminator */                             },
 };
 

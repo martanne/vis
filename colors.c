@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <curses.h>
 
-#include "vis.h"
+#include "editor.h"
 #include "util.h"
 
 #ifdef NCURSES_VERSION
@@ -30,7 +30,7 @@ static unsigned int color_hash(short fg, short bg)
 	return fg * (COLORS + 2) + bg;
 }
 
-short vis_color_get(short fg, short bg)
+short editor_color_get(short fg, short bg)
 {
 	if (fg >= COLORS)
 		fg = default_fg;
@@ -68,10 +68,10 @@ short vis_color_get(short fg, short bg)
 	return color_pair >= 0 ? color_pair : -color_pair;
 }
 
-short vis_color_reserve(short fg, short bg)
+short editor_color_reserve(short fg, short bg)
 {
 	if (!color2palette)
-		vis_init();
+		editor_init();
 	if (!color2palette || fg >= COLORS || bg >= COLORS)
 		return 0;
 	if (!has_default_colors && fg == -1)
@@ -89,7 +89,7 @@ short vis_color_reserve(short fg, short bg)
 	return color_pair >= 0 ? color_pair : -color_pair;
 }
 
-void vis_init(void)
+void editor_init(void)
 {
 	if (color2palette)
 		return;
@@ -102,5 +102,5 @@ void vis_init(void)
 	color_pairs_max = MIN(COLOR_PAIRS, MAX_COLOR_PAIRS);
 	if (COLORS)
 		color2palette = calloc((COLORS + 2) * (COLORS + 2), sizeof(short));
-	vis_color_reserve(COLOR_WHITE, COLOR_BLACK);
+	editor_color_reserve(COLOR_WHITE, COLOR_BLACK);
 }
