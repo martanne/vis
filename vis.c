@@ -67,11 +67,13 @@ static void vis_windows_arrange_vertical(Vis *vis) {
 	int n = 0, x = 0, y = 0;
 	for (VisWin *win = vis->windows; win; win = win->next)
 		n++;
-	int width = vis->width / n; 
+	int width = vis->width / n - 1;
 	for (VisWin *win = vis->windows; win; win = win->next) {
 		vis_window_resize(win, win->next ? width : vis->width - x, vis->height);
 		vis_window_move(win, x, y);
 		x += width;
+		if (win->next)
+			mvvline(0, x++, ACS_VLINE, vis->height);
 	}
 }
 
@@ -204,13 +206,13 @@ static void vis_window_draw(VisWin *win) {
 
 void vis_draw(Vis *vis) {
 	erase();
-	wnoutrefresh(stdscr);
 	vis->windows_arrange(vis);
 	for (VisWin *win = vis->windows; win; win = win->next) {
 		if (vis->win != win)
 			vis_window_draw(win);
 	}
 	vis_window_draw(vis->win);
+	wnoutrefresh(stdscr);
 }
 
 void vis_update(Vis *vis) {
