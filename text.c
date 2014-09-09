@@ -1058,6 +1058,7 @@ void text_regex_free(Regex *r) {
 	if (!r)
 		return;
 	regfree(&r->regex);
+	free(r);
 }
 
 int text_search_range_forward(Text *txt, size_t pos, size_t len, Regex *r, size_t nmatch, RegexMatch pmatch[], int eflags) {

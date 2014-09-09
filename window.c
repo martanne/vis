@@ -459,6 +459,7 @@ void window_free(Win *win) {
 		return;
 	if (win->win)
 		delwin(win->win);
+	free(win->lines);
 	free(win);
 }
 

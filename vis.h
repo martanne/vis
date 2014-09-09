@@ -59,6 +59,7 @@ struct Vis {
 	Regex *search_pattern;
 	void (*windows_arrange)(Vis*); /* current layout which places the windows */
 	vis_statusbar_t statusbar;     /* configurable user hook to draw statusbar */
+	bool running;
 };
 
 
@@ -102,6 +103,7 @@ bool vis_syntax_load(Vis*, Syntax *syntaxes, Color *colors);
 void vis_syntax_unload(Vis*);
 
 bool vis_window_new(Vis*, const char *filename);
+void vis_window_close(Vis *vis);
 void vis_window_split(Vis*, const char *filename);
 void vis_window_vsplit(Vis*, const char *filename);
 void vis_window_next(Vis*);

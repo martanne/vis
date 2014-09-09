@@ -277,8 +277,7 @@ static void statusbar(WINDOW *win, bool active, const char *filename, size_t lin
 }
 
 static void quit(const Arg *arg) {
-	endwin();
-	exit(0);
+	vis->running = false;
 }
 
 static void split(const Arg *arg) {
@@ -509,9 +508,7 @@ static void prompt_enter(const Arg *arg) {
 	switch (vis->prompt->title[0]) {
 	case '/':
 	case '?':
-		text_regex_free(vis->search_pattern);
-		if (!(vis->search_pattern = text_regex_new()) ||
-		    text_regex_compile(vis->search_pattern, s, REG_EXTENDED)) {
+		if (text_regex_compile(vis->search_pattern, s, REG_EXTENDED)) {
 			action_reset(&action);
 		} else {
 			movement(&(const Arg){ .i = vis->prompt->title[0] == '/' ?

@@ -166,8 +166,8 @@ static void setup() {
 }
 
 static void cleanup() {
-	vis_free(vis);
 	endwin();
+	//delscreen(set_term(NULL));
 }
 
 static bool keymatch(Key *key0, Key *key1) {
@@ -241,7 +241,7 @@ int main(int argc, char *argv[]) {
 	struct timeval idle = { .tv_usec = 0 }, *timeout = NULL;
 	Key key, key_prev, *key_mod = NULL;
 
-	for (;;) {
+	while (vis->running) {
 		if (screen.need_resize) {
 			resize_screen(&screen);
 			vis_resize(vis, screen.w, screen.h);
@@ -299,6 +299,7 @@ int main(int argc, char *argv[]) {
 			timeout = &idle;
 	}
 
+	vis_free(vis);
 	cleanup();
 	return 0;
 }

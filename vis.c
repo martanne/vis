@@ -5,7 +5,7 @@
 #include "util.h"
 
 static VisWin *vis_window_new_text(Vis *vis, Text *text); 
-static void vis_window_free(VisWin *win);
+static void vis_window_free(Vis *vis, VisWin *win);
 static void vis_window_split_internal(Vis *vis, const char *filename); 
 static void vis_windows_invalidate(Vis *vis, size_t start, size_t end); 
 static void vis_window_draw(VisWin *win);
@@ -219,14 +219,21 @@ void vis_update(Vis *vis) {
 	window_update(vis->win->win);
 }
 
-static void vis_window_free(VisWin *win) {
+static void vis_window_free(Vis *vis, VisWin *win) {
 	if (!win)
 		return;
 	window_free(win->win);
 	if (win->statuswin)
 		delwin(win->statuswin);
-	// XXX: open in other windows
-	text_free(win->text);
+	bool needed = false;
+	for (VisWin *w = vis ? vis->windows : NULL; w; w = w->next) {
+		if (w->text == win->text) {
+			needed = true;
+			break;
+		}
+	}
+	if (!needed)
+		text_free(win->text);
 	free(win);
 }
 
@@ -239,7 +246,7 @@ static VisWin *vis_window_new_text(Vis *vis, Text *text) {
 	win->win = window_new(win->text);
 	win->statuswin = newwin(1, vis->width, 0, 0);
 	if (!win->win || !win->statuswin) {
-		vis_window_free(win);
+		vis_window_free(vis, win);
 		return NULL;
 	}
 	window_cursor_watch(win->win, vis_window_cursor_moved, win);
@@ -277,26 +284,49 @@ bool vis_window_new(Vis *vis, const char *filename) {
 	return true;
 }
 
+static void vis_window_detach(Vis *vis, VisWin *win) {
+	if (win->prev)
+		win->prev->next = win->next;
+	if (win->next)
+		win->next->prev = win->prev;
+	if (vis->windows == win)
+		vis->windows = win->next;
+	win->next = win->prev = NULL;
+}
+
+void vis_window_close(Vis *vis) {
+	VisWin *win = vis->win;
+	vis->win = win->next ? win->next : win->prev;
+	vis_window_detach(vis, win);
+	vis_window_free(vis, win);
+}
+
 Vis *vis_new(int width, int height) {
 	Vis *vis = calloc(1, sizeof(Vis));
 	if (!vis)
 		return NULL;
-	if (!(vis->prompt = vis_prompt_new())) {
-		vis_free(vis);
-		return NULL;
-	}
+	if (!(vis->prompt = vis_prompt_new()))
+		goto err;
+	if (!(vis->search_pattern = text_regex_new()))
+		goto err;
 	vis->width = width;
 	vis->height = height;
 	vis->windows_arrange = vis_windows_arrange_horizontal;
+	vis->running = true;
 	return vis;
+err:
+	vis_free(vis);
+	return NULL;
 }
 
 void vis_free(Vis *vis) {
-	for (VisWin *next, *win = vis->windows; win; win = next) {
-		next = win->next;
-		vis_window_free(win);
-	}
+	while (vis->windows)
+		vis_window_close(vis);
 	vis_prompt_free(vis->prompt);
+	text_regex_free(vis->search_pattern);
+	for (int i = 0; i < REG_LAST; i++)
+		register_free(&vis->registers[i]);
+	vis_syntax_unload(vis);
 	free(vis);
 }
 
@@ -340,7 +370,7 @@ void vis_delete(Vis *vis, size_t pos, size_t len) {
 static void vis_prompt_free(Prompt *prompt) {
 	if (!prompt)
 		return;
-	vis_window_free(prompt->win);
+	vis_window_free(NULL, prompt->win);
 	if (prompt->titlewin)
 		delwin(prompt->titlewin);
 	free(prompt->title);
