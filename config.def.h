@@ -383,12 +383,12 @@ static void vis_visual_leave(Mode *new) {
 }
 
 static KeyBinding vis_readline_mode[] = {
-	{ { NONE(ESC)               }, switchmode,      { .i = VIS_MODE_NORMAL   } },
-	{ { CONTROL('c')            }, switchmode,      { .i = VIS_MODE_NORMAL   } },
+	{ { NONE(ESC)               }, switchmode,      { .i = VIS_MODE_NORMAL      } },
+	{ { CONTROL('c')            }, switchmode,      { .i = VIS_MODE_NORMAL      } },
 	BACKSPACE(                     call,               f,  editor_backspace_key   ),
 	{ { CONTROL('D')            }, call,            { .f = editor_delete_key    } },
 	{ { CONTROL('W')            }, delete,          { .i = MOVE_WORD_START_PREV } },
-	{ /* empty last element, array terminator */                               },
+	{ /* empty last element, array terminator */                                  },
 };
 
 static KeyBinding vis_prompt_mode[] = {
