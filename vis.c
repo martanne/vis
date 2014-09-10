@@ -603,6 +603,7 @@ static void prompt_enter(const Arg *arg) {
 		break;
 	}
 	free(s);
+	editor_draw(vis);
 }
 
 static void prompt_up(const Arg *arg) {
