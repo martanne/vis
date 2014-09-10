@@ -313,6 +313,8 @@ static void insert(const Arg *arg);
 static void insert_tab(const Arg *arg);
 /* inserts a newline (either \n or \n\r depending on file type) */
 static void insert_newline(const Arg *arg);
+/* add a new line either before or after the one where the cursor currently is */
+static void openline(const Arg *arg);
 /* split current window horizontally (default) or vertically (if arg->b is set) */
 static void split(const Arg *arg);
 /* perform last action i.e. action_prev again */
@@ -695,6 +697,12 @@ static void insert_tab(const Arg *arg) {
 static void insert_newline(const Arg *arg) {
 	// TODO determine file type to insert \n\r or \n
 	insert(&(const Arg){ .s = "\n" });
+}
+
+static void openline(const Arg *arg) {
+	movement(&(const Arg){ .i = arg->i == MOVE_LINE_NEXT ?
+	                       MOVE_LINE_END : MOVE_LINE_PREV });
+	insert_newline(NULL);
 }
 
 static void switchmode(const Arg *arg) {

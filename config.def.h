@@ -341,6 +341,8 @@ static KeyBinding vis_normal[] = {
 	{ { NONE('.')               }, repeat,   {                             } },
 	{ { NONE('n')               }, movement, { .i = MOVE_SEARCH_FORWARD    } },
 	{ { NONE('N')               }, movement, { .i = MOVE_SEARCH_BACKWARD   } },
+	{ { NONE('o')               }, openline, { .i = MOVE_LINE_NEXT         } },
+	{ { NONE('O')               }, openline, { .i = MOVE_LINE_PREV         } },
 	{ { NONE('x')               }, call,          { .f = editor_delete_key   } },
 	{ { NONE('r')               }, replace,       { NULL                     } },
 	{ { NONE('i')               }, switchmode,    { .i = VIS_MODE_INSERT } },
