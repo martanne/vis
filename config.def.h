@@ -64,8 +64,9 @@ static Command cmds[] = {
 /* draw a statubar, do whatever you want with win->statuswin curses window */
 static void statusbar(EditorWin *win) {
 	size_t line, col;
+	bool focused = vis->win == win || vis->prompt->editor == win;
 	window_cursor_getxy(win->win, &line, &col);
-	wattrset(win->statuswin, vis->win == win ? A_REVERSE|A_BOLD : A_REVERSE);
+	wattrset(win->statuswin, focused ? A_REVERSE|A_BOLD : A_REVERSE);
 	mvwhline(win->statuswin, 0, 0, ' ', win->width);
 	mvwprintw(win->statuswin, 0, 0, "%s %s", text_filename(win->text),
 	          text_modified(win->text) ? "[+]" : "");
