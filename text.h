@@ -7,7 +7,7 @@
 typedef size_t Filepos;
 
 typedef struct {
-	size_t start, end; /* range in bytes from start of file */
+	size_t start, end;        /* range in bytes from start of the file */
 } Filerange;
 
 typedef struct Text Text;

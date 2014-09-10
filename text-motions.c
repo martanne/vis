@@ -89,7 +89,7 @@ size_t text_line_finish(Text *txt, size_t pos) {
 	Iterator it = text_iterator_get(txt, text_line_end(txt, pos));
 	do text_iterator_byte_prev(&it, NULL);
 	while (text_iterator_byte_get(&it, &c) && c != '\n' && c != '\r' && isspace(c));
-	if (!isutf8(c))
+	if (!ISUTF8(c))
 		text_iterator_char_prev(&it, NULL);
 	return it.pos;
 }

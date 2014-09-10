@@ -23,7 +23,8 @@ void window_draw(Win*);
 /* flush all changes made to the ncurses windows to the screen */
 void window_update(Win*);
 
-/* cursor movements, also updates selection if one is active, returns new cursor postion */
+/* cursor movements which also update selection if one is active.
+ * they return new cursor postion */
 size_t window_page_down(Win*);
 size_t window_page_up(Win*);
 size_t window_char_next(Win*);
@@ -31,17 +32,32 @@ size_t window_char_prev(Win*);
 size_t window_line_down(Win*);
 size_t window_line_up(Win*);
 
+/* get cursor position in bytes from start of the file */
 size_t window_cursor_get(Win*);
+/* get cursor position in terms of screen coordinates */
 void window_cursor_getxy(Win*, size_t *lineno, size_t *col);
+/* moves window viewport in direction until pos is visible. should only be
+ * used for short distances between current cursor position and destination */
 void window_scroll_to(Win*, size_t pos);
+/* move cursor to a given position. changes the viewport to make sure that
+ * position is visible. if the position is in the middle of a line, try to
+ * adjust the viewport in such a way that the whole line is displayed */
 void window_cursor_to(Win*, size_t pos);
+/* start selected area at current cursor position. further cursor movements will
+ * affect the selected region. */
 void window_selection_start(Win*);
 void window_selection_end(Win*);
+/* returns the currently selected text region, is either empty or well defined,
+ * i.e. sel.start <= sel.end */
 Filerange window_selection_get(Win*);
+/* clear selection and redraw window */
 void window_selection_clear(Win*);
+/* get the currently displayed area in bytes from the start of the file */
 Filerange window_viewport_get(Win*);
+/* associate a set of syntax highlighting rules to this window. */
 void window_syntax_set(Win*, Syntax*);
 Syntax *window_syntax_get(Win*);
+/* register a user defined function which will be called whenever the cursor has moved */
 void window_cursor_watch(Win *win, void (*cursor_moved)(Win*, void*), void *data);
 
 #endif

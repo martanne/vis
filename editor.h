@@ -108,6 +108,9 @@ void editor_free(Editor*);
 void editor_resize(Editor*, int width, int height);
 void editor_draw(Editor*);
 void editor_update(Editor*);
+
+/* these function operate on the currently focused window but make sure
+ * that all windows which show the affected region are redrawn too. */
 void editor_insert_key(Editor*, const char *c, size_t len);
 void editor_replace_key(Editor*, const char *c, size_t len);
 void editor_backspace_key(Editor*);
@@ -115,18 +118,33 @@ void editor_delete_key(Editor*);
 void editor_insert(Editor*, size_t pos, const char *data, size_t len);
 void editor_delete(Editor*, size_t pos, size_t len);
 
-// TODO comment
+/* load a set of syntax highlighting definitions which will be associated
+ * to the underlying window based on the file type loaded.
+ *
+ * both *syntaxes and *colors must point to a NULL terminated array.
+ * it the i-th syntax definition does not specifiy a fore ground color
+ * then the i-th entry of the color array will be used instead
+ */
 bool editor_syntax_load(Editor*, Syntax *syntaxes, Color *colors);
 void editor_syntax_unload(Editor*);
 
+/* creates a new window, and loads the given file. if filename is NULL
+ * an unamed / empty buffer is created */
 bool editor_window_new(Editor*, const char *filename);
 void editor_window_close(Editor *vis);
+/* if filename is non NULL it is equivalent to window_new call above.
+ * if however filename is NULL a new window is created and linked to the
+ * same underlying text as the currently selected one. changes will
+ * thus be visible in both windows. */
 void editor_window_split(Editor*, const char *filename);
 void editor_window_vsplit(Editor*, const char *filename);
+/* focus the next / previous window */
 void editor_window_next(Editor*);
 void editor_window_prev(Editor*);
-
+/* return the content of the command prompt in a malloc(3)-ed string
+ * which the call site has to free. */
 char *editor_prompt_get(Editor *vis);
+/* replace the current command line content with the one given */
 void editor_prompt_set(Editor *vis, const char *line);
 void editor_prompt_show(Editor *vis, const char *title);
 void editor_prompt_hide(Editor *vis);
@@ -134,9 +152,13 @@ void editor_prompt_hide(Editor *vis);
 
 void editor_statusbar_set(Editor*, editor_statusbar_t);
 
+// TODO cleanup this mess only 1 function should suffice? move perform
+// lazy initialization on first call
 /* library initialization code, should be run at startup */
 void editor_init(void);
 short editor_color_reserve(short fg, short bg);
+/* look up a curses color pair for the given combination of fore and
+ * background color */
 short editor_color_get(short fg, short bg);
 
 #endif

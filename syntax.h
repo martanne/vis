@@ -3,7 +3,7 @@
 
 #include <regex.h>
 
-#define SYNTAX_REGEX_RULES 10
+#define SYNTAX_RULES 10 /* maximal number of syntax rules per file type */
 
 typedef struct {
 	short fg, bg;   /* fore and background color */
@@ -18,11 +18,11 @@ typedef struct {
 } SyntaxRule;
 
 typedef struct Syntax Syntax;
-struct Syntax {                               /* a syntax definition */
-	char *name;                           /* syntax name */
-	char *file;                           /* apply to files matching this regex */
-	regex_t file_regex;                   /* compiled file name regex */
-	SyntaxRule rules[SYNTAX_REGEX_RULES]; /* all rules for this file type */
+struct Syntax {                         /* a syntax definition */
+	char *name;                     /* syntax name */
+	char *file;                     /* apply to files matching this regex */
+	regex_t file_regex;             /* compiled file name regex */
+	SyntaxRule rules[SYNTAX_RULES]; /* all rules for this file type */
 };
 
 #endif

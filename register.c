@@ -6,7 +6,7 @@
 
 #define REG_SIZE 1024
 
-bool register_alloc(Register *reg, size_t size) {
+static bool register_alloc(Register *reg, size_t size) {
 	if (size < REG_SIZE)
 		size = REG_SIZE;
 	if (reg->size < size) {
@@ -28,14 +28,6 @@ void register_free(Register *reg) {
 	reg->data = NULL;
 	reg->len = 0;
 	reg->size = 0;
-}
-
-bool register_store(Register *reg, const char *data, size_t len) {
-	if (!register_alloc(reg, len))
-		return false;
-	memcpy(reg->data, data, len);
-	reg->len = len;
-	return true;
 }
 
 bool register_put(Register *reg, Text *txt, Filerange *range) {

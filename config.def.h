@@ -1,3 +1,6 @@
+/** start by reading from the top of vis.c up until config.h is included */
+
+/* macros used to specify keys for key bindings */
 #define ESC        0x1B
 #define NONE(k)    { .str = { k }, .code = 0 }
 #define KEY(k)     { .str = { '\0' }, .code = KEY_##k }
@@ -9,6 +12,16 @@
 	{ { NONE(127) },      (func), { .name = (arg) } }, \
 	{ { CONTROL('B') },   (func), { .name = (arg) } }
 
+/* a mode contains a set of key bindings which are currently valid.
+ *
+ * each mode can specify one parent mode which is consultated if a given key
+ * is not found in the current mode. hence the modes form a tree which is
+ * searched from the current mode up towards the root mode until a valid binding
+ * is found.
+ *
+ * if no binding is found, mode->input(...) is called and the user entered
+ * keys are passed as argument. this is used to change the document content.
+ */
 static Mode vis_modes[];
 
 enum {
@@ -29,26 +42,6 @@ enum {
 	VIS_MODE_INSERT_REGISTER,
 	VIS_MODE_INSERT,
 	VIS_MODE_REPLACE,
-};
-
-/* operators */
-static void op_change(OperatorContext *c);
-static void op_yank(OperatorContext *c);
-static void op_paste(OperatorContext *c);
-static void op_delete(OperatorContext *c);
-
-enum {
-	OP_DELETE,
-	OP_CHANGE,
-	OP_YANK,
-	OP_PASTE,
-};
-
-static Operator ops[] = {
-	[OP_DELETE] = { op_delete, false },
-	[OP_CHANGE] = { op_change, false },
-	[OP_YANK]   = { op_yank,   false },
-	[OP_PASTE]  = { op_paste,  true  },
 };
 
 /* command recognized at the ':'-prompt, matched using a greedy top to bottom,
@@ -333,7 +326,7 @@ static KeyBinding vis_marks_set[] = {
 };
 
 static KeyBinding vis_normal[] = {
-	{ { CONTROL('w'), NONE('c') }, split,    { .s = NULL                   } },
+	{ { CONTROL('w'), NONE('s') }, split,    { NULL                        } },
 	{ { CONTROL('w'), NONE('j') }, call,     { .f = editor_window_next     } },
 	{ { CONTROL('w'), NONE('k') }, call,     { .f = editor_window_prev     } },
 	{ { CONTROL('F')            }, cursor,   { .m = window_page_up         } },
@@ -455,6 +448,45 @@ static KeyBinding vis_replace[] = {
 static void vis_replace_input(const char *str, size_t len) {
 	editor_replace_key(vis, str, len);
 }
+
+/*
+ * the tree of modes currently looks like this. the double line between OPERATOR-OPTION
+ * and OPERATOR is only in effect once an operator is detected. that is when entering the
+ * OPERATOR mode its parent is set to OPERATOR-OPTION which makes {INNER-,}TEXTOBJ
+ * reachable. once the operator is processed (i.e. the OPERATOR mode is left) its parent
+ * mode is reset back to MOVE.
+ *
+ *
+ *                                         BASIC
+ *                                    (arrow keys etc.)
+ *                                    /      |
+ *               /-------------------/       |
+ *           READLINE                      MARK
+ *          /        \                   (` [a-z])
+ *         /          \                      |
+ *        /            \                     |
+ * INSERT-REGISTER    PROMPT             MARK-LINE
+ * (Ctrl+R [a-z])     (history etc)      (' [a-z])
+ *       |                                   |
+ *       |                                   |
+ *    INSERT                                MOVE
+ *       |                              (h,j,k,l ...)
+ *       |                                   |       \-----------------\
+ *       |                                   |                         |
+ *    REPLACE                            OPERATOR ======\\       INNER-TEXTOBJ
+ *                                     (d,c,y,p ..)     ||    (i [wsp[]()b<>{}B"'`] )
+ *                                           |          ||             |
+ *                                           |          ||             |
+ *                                        REGISTER      ||          TEXTOBJ
+ *                                        (" [a-z])     ||    (a [wsp[]()b<>{}B"'`] )
+ *                           /-----------/   |          \\
+ *                          /                |           \\
+ *                      VISUAL            MARK-SET        \\     OPERATOR-OPTION
+ *                                        (m [a-z])        \\        (v,V)
+ *                                           |              \\        //
+ *                                           |               \\======//
+ *                                         NORMAL
+ */
 
 static Mode vis_modes[] = {
 	[VIS_MODE_BASIC] = {

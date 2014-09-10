@@ -28,13 +28,13 @@ typedef union {
 	bool b;
 	size_t i;
 	const char *s;
-	size_t (*m)(Win*);
-	void (*f)(Editor*);
+	size_t (*m)(Win*);  /* cursor movement based on window content */
+	void (*f)(Editor*); /* generic editor commands */
 } Arg;
 
 typedef struct {
-	char str[6];
-	int code;
+	char str[6]; /* UTF8 character or terminal escape code */
+	int code;    /* curses KEY_* constant */
 } Key;
 
 typedef struct {
@@ -45,29 +45,30 @@ typedef struct {
 
 typedef struct Mode Mode;
 struct Mode {
-	Mode *parent;
-	KeyBinding *bindings;
-	const char *name;
-	bool common_prefix;
-	void (*enter)(Mode *old);
-	void (*leave)(Mode *new);
-	bool (*unknown)(Key *key0, Key *key1);        /* unknown key for this mode, return value determines whether parent modes will be checked */
-	void (*input)(const char *str, size_t len);   /* unknown key for this an all parent modes */
-	void (*idle)(void);
+	Mode *parent;                       /* if no match is found in this mode, search will continue there */
+	KeyBinding *bindings;               /* NULL terminated array of keybindings for this mode */
+	const char *name;                   /* descriptive, user facing name of the mode */
+	bool common_prefix;                 /* whether the first key in this mode is always the same */
+	void (*enter)(Mode *old);           /* called right before the mode becomes active */
+	void (*leave)(Mode *new);           /* called right before the mode becomes inactive */
+	bool (*unknown)(Key*, Key*);        /* called whenever a key is not found in this mode,
+	                                       the return value determines whether parent modes will be searched */
+	void (*input)(const char*, size_t); /* called whenever a key is not found in this mode and all its parent modes */
+	void (*idle)(void);                 /* called whenever a certain idle time i.e. without any user input elapsed */
 };
 
 typedef struct {
-	char *name;
-	Mode *mode;
-	editor_statusbar_t statusbar;
+	char *name;                    /* is used to match against argv[0] to enable this config */
+	Mode *mode;                    /* default mode in which the editor should start in */
+	editor_statusbar_t statusbar;  /* routine which is called whenever the cursor is moved within a window */
 } Config;
 
 typedef struct {
-	int count;
-	Register *reg;
-	Filerange range;
-	size_t pos;
-	bool linewise;
+	int count;        /* how many times should the command be executed? */
+	Register *reg;    /* always non-NULL, set to a default register */
+	Filerange range;  /* which part of the file should be affected by the operator */
+	size_t pos;       /* at which byte from the start of the file should the operation start? */
+	bool linewise;    /* should the changes always affect whole lines? */
 } OperatorContext;
 
 typedef struct {
@@ -76,9 +77,9 @@ typedef struct {
 } Operator;
 
 typedef struct {
-	size_t (*cmd)(const Arg*);
-	size_t (*win)(Win*);
-	size_t (*txt)(Text*, size_t pos);
+	size_t (*cmd)(const Arg*);        /* a custom movement based on user input from vis.c */
+	size_t (*win)(Win*);              /* a movement based on current window content from window.h */
+	size_t (*txt)(Text*, size_t pos); /* a movement form text-motions.h */
 	enum {
 		LINEWISE  = 1 << 0,
 		CHARWISE  = 1 << 1,
@@ -89,14 +90,14 @@ typedef struct {
 } Movement;
 
 typedef struct {
-	Filerange (*range)(Text*, size_t pos);
+	Filerange (*range)(Text*, size_t pos); /* a text object from text-objects.h */
 	enum {
 		INNER,
 		OUTER,
 	} type;
 } TextObject;
 
-typedef struct {
+typedef struct {             /** collects all information until an operator is executed */
 	int count;
 	bool linewise;
 	Operator *op;
@@ -108,31 +109,43 @@ typedef struct {
 	Arg arg;
 } Action;
 
-typedef struct {
-	const char *name;
-	bool (*cmd)(const char *argv[]);
-	regex_t regex;
+typedef struct {                         /* command definitions for the ':'-prompt */
+	const char *name;                /* regular expression pattern to match command */
+	bool (*cmd)(const char *argv[]); /* command logic called with a NULL terminated array
+	                                  * of arguments. argv[0] will be the command name,
+	                                  * as matched by the regex. */
+	regex_t regex;                   /* compiled form of the pattern in 'name' */
 } Command;
 
-/* global variables */
-static Editor *vis;           /* global editor instance, keeps track of all windows etc. */
+/** global variables */
+static Editor *vis;        /* global editor instance, keeps track of all windows etc. */
 static Mode *mode;         /* currently active mode, used to search for keybindings */
 static Mode *mode_prev;    /* mode which was active previously */
 static Action action;      /* current action which is in progress */
 static Action action_prev; /* last operator action used by the repeat '.' key */
 
-/* movements which can be used besides the one in text-motions.h and window.h */
-static size_t search_forward(const Arg *arg);
-static size_t search_backward(const Arg *arg);
-static size_t mark_goto(const Arg *arg);
-static size_t mark_line_goto(const Arg *arg);
-static size_t to(const Arg *arg);
-static size_t till(const Arg *arg);
-static size_t to_left(const Arg *arg);
-static size_t till_left(const Arg *arg);
-static size_t line(const Arg *arg);
-static size_t column(const Arg *arg);
+/** operators */
+static void op_change(OperatorContext *c);
+static void op_yank(OperatorContext *c);
+static void op_paste(OperatorContext *c);
+static void op_delete(OperatorContext *c);
 
+/* these can be passed as int argument to operator(&(const Arg){ .i = OP_*}) */
+enum {
+	OP_DELETE,
+	OP_CHANGE,
+	OP_YANK,
+	OP_PASTE,
+};
+
+static Operator ops[] = {
+	[OP_DELETE] = { op_delete, false },
+	[OP_CHANGE] = { op_change, false },
+	[OP_YANK]   = { op_yank,   false },
+	[OP_PASTE]  = { op_paste,  true  },
+};
+
+/* these can be passed as int argument to movement(&(const Arg){ .i = MOVE_* }) */
 enum {
 	MOVE_LINE_UP,
 	MOVE_LINE_DOWN,
@@ -164,6 +177,27 @@ enum {
 	MOVE_SEARCH_FORWARD,
 	MOVE_SEARCH_BACKWARD,
 };
+
+/** movements which can be used besides the one in text-motions.h and window.h */
+/* search again for the last used search pattern */
+static size_t search_forward(const Arg *arg);
+static size_t search_backward(const Arg *arg);
+/* goto action.mark */
+static size_t mark_goto(const Arg *arg);
+/* goto first non-blank char on line pointed by action.mark */
+static size_t mark_line_goto(const Arg *arg);
+/* goto to next occurence of action.key to the right */
+static size_t to(const Arg *arg);
+/* goto to position before next occurence of action.key to the right */
+static size_t till(const Arg *arg);
+/* goto to next occurence of action.key to the left */
+static size_t to_left(const Arg *arg);
+/* goto to position after next occurence of action.key to the left */
+static size_t till_left(const Arg *arg);
+/* goto line number action.count, or if zero to end of file */
+static size_t line(const Arg *arg);
+/* goto to byte action.count on current line */
+static size_t column(const Arg *arg);
 
 static Movement moves[] = {
 	[MOVE_LINE_UP]         = { .win = window_line_up                                   },
@@ -197,7 +231,7 @@ static Movement moves[] = {
 	[MOVE_SEARCH_BACKWARD] = { .cmd = search_backward,      .type = LINEWISE           },
 };
 
-/* available text objects */
+/* these can be passed as int argument to textobj(&(const Arg){ .i = TEXT_OBJ_* }) */
 enum {
 	TEXT_OBJ_WORD,
 	TEXT_OBJ_LINE_UP,
@@ -248,46 +282,84 @@ static TextObject *moves_linewise[] = {
 	[MOVE_LINE_DOWN] = &textobjs[TEXT_OBJ_LINE_DOWN],
 };
 
-/* functions to be called from keybindings */
+/** functions to be called from keybindings */
+/* switch to mode indicated by arg->i */
 static void switchmode(const Arg *arg);
+/* set mark indicated by arg->i to current cursor position */
 static void mark_set(const Arg *arg);
+/* insert arg->s at the current cursor position */
 static void insert(const Arg *arg);
+/* insert a tab or the needed amount of spaces at the current cursor position */
 static void insert_tab(const Arg *arg);
+/* inserts a newline (either \n or \n\r depending on file type) */
 static void insert_newline(const Arg *arg);
+/* split current window horizontally (default) or vertically (if arg->b is set) */
 static void split(const Arg *arg);
-static void quit(const Arg *arg);
+/* perform last action i.e. action_prev again */
 static void repeat(const Arg *arg);
+/* adjust action.count by arg->i */
 static void count(const Arg *arg);
+/* force operator to linewise (if arg->b is set) */
 static void linewise(const Arg *arg);
+/* make the current action use the operator indicated by arg->i */
 static void operator(const Arg *arg);
+/* blocks to read a key and performs movement indicated by arg->i which
+ * should be one of MOVE_{RIGHT,LEFT}_{TO,TILL} */
 static void movement_key(const Arg *arg);
+/* perform the movement as indicated by arg->i */
 static void movement(const Arg *arg);
+/* let the current operator affect the range indicated by the text object arg->i */
 static void textobj(const Arg *arg);
+/* use register indicated by arg->i for the current operator */
 static void reg(const Arg *arg);
+/* perform a movement to mark arg->i */
 static void mark(const Arg *arg);
+/* perform a movement to the first non-blank on the line pointed by mark arg->i */
 static void mark_line(const Arg *arg);
+/* {un,re}do last action, redraw window */
 static void undo(const Arg *arg);
 static void redo(const Arg *arg);
+/* either part of multiplier or a movement to begin of line */
 static void zero(const Arg *arg);
+/* delete from the current cursor position to the start of the previous word */
 static void delete_word(const Arg *arg);
+/* insert register content indicated by arg->i at current cursor position */
 static void insert_register(const Arg *arg);
+/* show a user prompt to get input with title arg->s */
 static void prompt(const Arg *arg);
+/* evaluate user input at prompt, perform search or execute a command */
 static void prompt_enter(const Arg *arg);
+/* cycle through past user inputs */
 static void prompt_up(const Arg *arg);
 static void prompt_down(const Arg *arg);
+/* blocks to read 3 consecutive digits and inserts the corresponding byte value */
 static void insert_verbatim(const Arg *arg);
+/* cursor movement based on the current window content as indicated by arg->m
+ * which should point to a function from window.h */
 static void cursor(const Arg *arg);
+/* call editor function as indicated by arg->f */
 static void call(const Arg *arg);
+static void quit(const Arg *arg);
 
-/* commands to enter at the ':'-prompt */
+/** commands to enter at the ':'-prompt */
+/* goto line indicated by argv[0] */
 static bool cmd_gotoline(const char *argv[]);
+/* for each argument create a new window and open the corresponding file */
 static bool cmd_open(const char *argv[]);
+/* close the current window, if argv[0] contains a '!' discard modifications */
 static bool cmd_quit(const char *argv[]);
+/* for each argument try to insert the file content at current cursor postion */
 static bool cmd_read(const char *argv[]);
 static bool cmd_substitute(const char *argv[]);
+/* if no argument are given, split the current window horizontally,
+ * otherwise open the file */
 static bool cmd_split(const char *argv[]);
+/* if no argument are given, split the current window vertically,
+ * otherwise open the file */
 static bool cmd_vsplit(const char *argv[]);
+/* save the file displayed in the current window and close it */
 static bool cmd_wq(const char *argv[]);
+/* save the file displayed in the current window to the name given */
 static bool cmd_write(const char *argv[]);
 
 static void action_reset(Action *a);
@@ -299,7 +371,7 @@ static Key getkey(void);
 static void action_do(Action *a);
 static bool exec_command(char *cmdline);
 
-/* operator implementations of type: void (*op)(OperatorContext*) */
+/** operator implementations of type: void (*op)(OperatorContext*) */
 
 static void op_delete(OperatorContext *c) {
 	size_t len = c->range.end - c->range.start;
@@ -327,7 +399,7 @@ static void op_paste(OperatorContext *c) {
 	window_cursor_to(vis->win->win, pos + c->reg->len);
 }
 
-/* movement implementations of type: size_t (*move)(const Arg*) */
+/** movement implementations of type: size_t (*move)(const Arg*) */
 
 static size_t search_forward(const Arg *arg) {
 	size_t pos = window_cursor_get(vis->win->win);
@@ -388,7 +460,7 @@ static size_t column(const Arg *arg) {
 	return it.pos;
 }
 
-/* key bindings functions of type: void (*func)(const Arg*) */
+/** key bindings functions of type: void (*func)(const Arg*) */
 
 static void repeat(const Arg *arg) {
 	action = action_prev;
@@ -542,7 +614,10 @@ static void quit(const Arg *arg) {
 }
 
 static void split(const Arg *arg) {
-	editor_window_split(vis, arg->s);
+	if (arg->b)
+		editor_window_vsplit(vis, arg->s);
+	else
+		editor_window_split(vis, arg->s);
 }
 
 static void cursor(const Arg *arg) {
@@ -570,7 +645,7 @@ static void switchmode(const Arg *arg) {
 	switchmode_to(&vis_modes[arg->i]);
 }
 
-/* action processing, executed the operator / movement / text object */
+/** action processing: execut the operator / movement / text object */
 
 static void action_do(Action *a) {
 	Text *txt = vis->win->text;
@@ -684,9 +759,7 @@ static void switchmode_to(Mode *new_mode) {
 
 }
 
-
-
-/* ':'-command implementations */
+/** ':'-command implementations */
 
 static bool cmd_gotoline(const char *argv[]) {
 	action.count = strtoul(argv[0], NULL, 10);

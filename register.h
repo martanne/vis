@@ -6,15 +6,13 @@
 #include "text.h"
 
 typedef struct {
-	char *data;
-	size_t len;
-	size_t size;
-	bool linewise;
+	char *data;    /* NULL if empty */
+	size_t len;    /* current length of data */
+	size_t size;   /* maximal capacity of the register */
+	bool linewise; /* place register content on a new line when inserting? */
 } Register;
 
-bool register_alloc(Register *reg, size_t size);
 void register_free(Register *reg);
-bool register_store(Register *reg, const char *data, size_t len);
 bool register_put(Register *reg, Text *txt, Filerange *range);
 bool register_append(Register *reg, Text *txt, Filerange *range);
 

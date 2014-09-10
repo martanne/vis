@@ -68,12 +68,10 @@ struct Win {                /* window showing part of a file */
 	Line *bottomline;   /* bottom of screen, might be unused if lastline < bottomline */
 	Filerange sel;      /* selected text range in bytes from start of file */
 	Cursor cursor;      /* current window cursor position */
-	void (*cursor_moved)(Win*, void *);
-	void *cursor_moved_data;
-
-	Line *line;         // TODO: rename to something more descriptive, these are the current drawing pos
-	int col;
-
+	void (*cursor_moved)(Win*, void *); /* registered callback, fires whenever the cursor moved */
+	void *cursor_moved_data; /* user supplied data, passed as second argument to the above callback */
+	Line *line;         /* used while drawing window content, line where next char will be drawn */
+	int col;            /* used while drawing window content, column where next char will be drawn */
 	Syntax *syntax;     /* syntax highlighting definitions for this window or NULL */
 	int tabwidth;       /* how many spaces should be used to display a tab character */
 };
@@ -92,6 +90,7 @@ void window_selection_clear(Win *win) {
 	window_cursor_update(win);
 }
 
+/* reset internal window data structures (cell matrix, line offsets etc.) */
 static void window_clear(Win *win) {
 	size_t line_size = sizeof(Line) + win->width*sizeof(Cell);
 	win->topline = win->lines;
@@ -129,6 +128,7 @@ Filerange window_selection_get(Win *win) {
 Filerange window_viewport_get(Win *win) {
 	return (Filerange){ .start = win->start, .end = win->end };
 }
+
 /* try to add another character to the window, return whether there was space left */
 static bool window_addch(Win *win, Char *c) {
 	if (!win->line)
@@ -249,7 +249,7 @@ void window_cursor_getxy(Win *win, size_t *lineno, size_t *col) {
 }
 
 /* place the cursor according to the screen coordinates in win->{row,col} and
- * update the statusbar. if a selection is active, redraw the window to reflect
+ * fire user callback. if a selection is active, redraw the window to reflect
  * its changes. */
 static size_t window_cursor_update(Win *win) {
 	Cursor *cursor = &win->cursor;
@@ -341,7 +341,7 @@ void window_draw(Win *win) {
 	/* current selection */
 	Filerange sel = window_selection_get(win);
 	/* matched tokens for each syntax rule */
-	regmatch_t match[SYNTAX_REGEX_RULES][1];
+	regmatch_t match[SYNTAX_RULES][1];
 	if (win->syntax) {
 		for (int i = 0; i < LENGTH(win->syntax->rules); i++) {
 			SyntaxRule *rule = &win->syntax->rules[i];
@@ -394,7 +394,7 @@ void window_draw(Win *win) {
 			/* ok, we encountered an invalid multibyte sequence,
 			 * replace it with the Unicode Replacement Character
 			 * (FFFD) and skip until the start of the next utf8 char */
-			for (len = 1; rem > len && !isutf8(cur[len]); len++);
+			for (len = 1; rem > len && !ISUTF8(cur[len]); len++);
 			c = (Char){ .c = "\xEF\xBF\xBD", .wchar = 0xFFFD, .len = len };
 		} else if (len == (size_t)-2) {
 			/* not enough bytes available to convert to a
