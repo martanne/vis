@@ -214,12 +214,14 @@ static void editor_window_draw(EditorWin *win) {
 
 void editor_draw(Editor *ed) {
 	erase();
-	ed->windows_arrange(ed);
-	for (EditorWin *win = ed->windows; win; win = win->next) {
-		if (ed->win != win)
-			editor_window_draw(win);
+	if (ed->windows) {
+		ed->windows_arrange(ed);
+		for (EditorWin *win = ed->windows; win; win = win->next) {
+			if (ed->win != win)
+				editor_window_draw(win);
+		}
+		editor_window_draw(ed->win);
 	}
-	editor_window_draw(ed->win);
 	wnoutrefresh(stdscr);
 }
 
@@ -319,6 +321,7 @@ void editor_window_close(Editor *ed) {
 	ed->win = win->next ? win->next : win->prev;
 	editor_window_detach(ed, win);
 	editor_window_free(ed, win);
+	editor_draw(ed);
 }
 
 Editor *editor_new(int width, int height) {
@@ -332,7 +335,6 @@ Editor *editor_new(int width, int height) {
 	ed->width = width;
 	ed->height = height;
 	ed->windows_arrange = editor_windows_arrange_horizontal;
-	ed->running = true;
 	return ed;
 err:
 	editor_free(ed);

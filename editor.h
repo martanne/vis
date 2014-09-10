@@ -98,7 +98,6 @@ struct Editor {
 	Regex *search_pattern;            /* last used search pattern */
 	void (*windows_arrange)(Editor*); /* current layout which places the windows */
 	void (*statusbar)(EditorWin*);    /* configurable user hook to draw statusbar */
-	bool running;                     /* (TODO move elsewhere?) */
 };
 
 Editor *editor_new(int width, int height);

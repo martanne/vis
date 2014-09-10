@@ -133,11 +133,12 @@ typedef struct {                         /* command definitions for the ':'-prom
 } Command;
 
 /** global variables */
-static Editor *vis;        /* global editor instance, keeps track of all windows etc. */
-static Mode *mode;         /* currently active mode, used to search for keybindings */
-static Mode *mode_prev;    /* mode which was active previously */
-static Action action;      /* current action which is in progress */
-static Action action_prev; /* last operator action used by the repeat '.' key */
+static bool running = true; /* exit main loop once this becomes false */
+static Editor *vis;         /* global editor instance, keeps track of all windows etc. */
+static Mode *mode;          /* currently active mode, used to search for keybindings */
+static Mode *mode_prev;     /* mode which was active previously */
+static Action action;       /* current action which is in progress */
+static Action action_prev;  /* last operator action used by the repeat '.' key */
 
 /** operators */
 static void op_change(OperatorContext *c);
@@ -625,7 +626,7 @@ static void insert_verbatim(const Arg *arg) {
 }
 
 static void quit(const Arg *arg) {
-	vis->running = false;
+	running = false;
 }
 
 static void split(const Arg *arg) {
@@ -790,11 +791,15 @@ static bool cmd_open(const char *argv[]) {
 
 static bool cmd_quit(const char *argv[]) {
 	bool force = strchr(argv[0], '!') != NULL;
-	for (EditorWin *win = vis->windows; win; win = win->next) {
-		if (text_modified(win->text) && !force)
-			return false;
+	for (EditorWin *win = vis->windows; !force && win; win = win->next) {
+		if (win != vis->win && win->text == vis->win->text)
+			force = true;
 	}
-	vis->running = false;
+	if (!force && text_modified(vis->win->text))
+		return false;
+	editor_window_close(vis);
+	if (!vis->windows)
+		running = false;
 	return true;
 }
 
@@ -1028,7 +1033,7 @@ int main(int argc, char *argv[]) {
 	struct timeval idle = { .tv_usec = 0 }, *timeout = NULL;
 	Key key, key_prev, *key_mod = NULL;
 
-	while (vis->running) {
+	while (running) {
 		if (screen.need_resize) {
 			resize_screen(&screen);
 			editor_resize(vis, screen.w, screen.h);
