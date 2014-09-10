@@ -112,6 +112,7 @@ static KeyBinding vis_movements[] = {
 	{ { NONE('b')               }, movement, { .i = MOVE_WORD_START_PREV   } },
 	{ { NONE('B')               }, movement, { .i = MOVE_WORD_START_PREV   } },
 	{ { NONE('w')               }, movement, { .i = MOVE_WORD_START_NEXT   } },
+	{ { NONE('W')               }, movement, { .i = MOVE_WORD_START_NEXT   } },
 	{ { NONE('g'), NONE('e')    }, movement, { .i = MOVE_WORD_END_PREV     } },
 	{ { NONE('e')               }, movement, { .i = MOVE_WORD_END_NEXT     } },
 	{ { NONE('E')               }, movement, { .i = MOVE_WORD_END_NEXT     } },
