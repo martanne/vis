@@ -339,8 +339,12 @@ static void undo(const Arg *arg);
 static void redo(const Arg *arg);
 /* either part of multiplier or a movement to begin of line */
 static void zero(const Arg *arg);
-/* delete from the current cursor position to the start of the previous word */
-static void delete_word(const Arg *arg);
+/* hange/delete from the current cursor position to the end of
+ * movement as indicated by arg->i */
+static void change(const Arg *arg);
+static void delete(const Arg *arg);
+/* perform movement according to arg->i, then switch to insert mode */
+static void insertmode(const Arg *arg);
 /* insert register content indicated by arg->i at current cursor position */
 static void insert_register(const Arg *arg);
 /* show a user prompt to get input with title arg->s */
@@ -580,9 +584,19 @@ static void zero(const Arg *arg) {
 		count(&(const Arg){ .i = 0 });
 }
 
-static void delete_word(const Arg *arg) {
+static void insertmode(const Arg *arg) {
+	movement(arg);
+	switchmode(&(const Arg){ .i = VIS_MODE_INSERT });
+}
+
+static void change(const Arg *arg) {
+	operator(&(const Arg){ .i = OP_CHANGE });
+	movement(arg);
+}
+
+static void delete(const Arg *arg) {
 	operator(&(const Arg){ .i = OP_DELETE });
-	movement(&(const Arg){ .i = MOVE_WORD_START_PREV });
+	movement(arg);
 }
 
 static void insert_register(const Arg *arg) {

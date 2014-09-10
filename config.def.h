@@ -332,6 +332,10 @@ static KeyBinding vis_normal[] = {
 	{ { CONTROL('w'), NONE('k') }, call,     { .f = editor_window_prev     } },
 	{ { CONTROL('F')            }, cursor,   { .m = window_page_up         } },
 	{ { CONTROL('B')            }, cursor,   { .m = window_page_down       } },
+	{ { NONE('A')               }, insertmode, { .i = MOVE_LINE_END        } },
+	{ { NONE('C')               }, change,   { .i = MOVE_LINE_END          } },
+	{ { NONE('D')               }, delete,   { .i = MOVE_LINE_END          } },
+	{ { NONE('I')               }, insertmode, { .i = MOVE_LINE_START      } },
 	{ { NONE('.')               }, repeat,   {                             } },
 	{ { NONE('n')               }, movement, { .i = MOVE_SEARCH_FORWARD    } },
 	{ { NONE('N')               }, movement, { .i = MOVE_SEARCH_BACKWARD   } },
@@ -374,7 +378,7 @@ static KeyBinding vis_readline_mode[] = {
 	{ { CONTROL('c')            }, switchmode,      { .i = VIS_MODE_NORMAL   } },
 	BACKSPACE(                     call,               f,  editor_backspace_key   ),
 	{ { CONTROL('D')            }, call,            { .f = editor_delete_key    } },
-	{ { CONTROL('W')            }, delete_word,     { NULL                   } },
+	{ { CONTROL('W')            }, delete,          { .i = MOVE_WORD_START_PREV } },
 	{ /* empty last element, array terminator */                               },
 };
 
