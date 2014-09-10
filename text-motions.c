@@ -73,6 +73,20 @@ size_t text_find_char_prev(Text *txt, size_t pos, const char *s, size_t len) {
 	return matched == 0 ? it.pos : pos;
 }
 
+size_t text_line_prev(Text *txt, size_t pos) {
+	char c;
+	Iterator it = text_iterator_get(txt, pos);
+	if (!text_iterator_byte_get(&it, &c))
+		return pos;
+	if (c == '\r')
+		text_iterator_byte_prev(&it, &c);
+	if (c == '\n')
+		text_iterator_byte_prev(&it, &c);
+	while (text_iterator_byte_get(&it, &c) && c != '\n')
+		text_iterator_byte_prev(&it, NULL);
+	return it.pos;
+}
+
 size_t text_line_begin(Text *txt, size_t pos) {
 	char c;
 	Iterator it = text_iterator_get(txt, pos);

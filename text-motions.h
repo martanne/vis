@@ -24,9 +24,10 @@ size_t text_find_char_prev(Text*, size_t pos, const char *s, size_t len);
 /*        begin            finish        next
  *        v                v             v
  *  \n[\r]      I am a line!       \n[\r]
- *              ^                  ^
- *              start              end
+ *  ^           ^                  ^
+ *  prev        start              end
  */
+size_t text_line_prev(Text*, size_t pos);
 size_t text_line_begin(Text*, size_t pos);
 size_t text_line_start(Text*, size_t pos);
 size_t text_line_finish(Text*, size_t pos);
