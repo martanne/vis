@@ -321,6 +321,8 @@ static void count(const Arg *arg);
 static void linewise(const Arg *arg);
 /* make the current action use the operator indicated by arg->i */
 static void operator(const Arg *arg);
+/* execute operator twice useful for synonyms (e.g. 'cc') */
+static void operator_twice(const Arg *arg);
 /* blocks to read a key and performs movement indicated by arg->i which
  * should be one of MOVE_{RIGHT,LEFT}_{TO,TILL} */
 static void movement_key(const Arg *arg);
@@ -525,6 +527,11 @@ static void operator(const Arg *arg) {
 		if (op->selfcontained)
 			action_do(&action);
 	}
+}
+
+static void operator_twice(const Arg *arg) {
+	operator(arg);
+	operator(arg);
 }
 
 static void movement_key(const Arg *arg) {
