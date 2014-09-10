@@ -388,6 +388,7 @@ static KeyBinding vis_readline_mode[] = {
 	BACKSPACE(                     call,               f,  editor_backspace_key   ),
 	{ { CONTROL('D')            }, call,            { .f = editor_delete_key    } },
 	{ { CONTROL('W')            }, delete,          { .i = MOVE_WORD_START_PREV } },
+	{ { CONTROL('U')            }, delete,          { .i = MOVE_LINE_BEGIN      } },
 	{ /* empty last element, array terminator */                                  },
 };
 
