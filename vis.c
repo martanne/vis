@@ -313,6 +313,8 @@ static void insert_newline(const Arg *arg);
 static void split(const Arg *arg);
 /* perform last action i.e. action_prev again */
 static void repeat(const Arg *arg);
+/* replace character at cursor with one read form keyboard */
+static void replace(const Arg *arg);
 /* adjust action.count by arg->i */
 static void count(const Arg *arg);
 /* force operator to linewise (if arg->b is set) */
@@ -481,6 +483,13 @@ static size_t column(const Arg *arg) {
 static void repeat(const Arg *arg) {
 	action = action_prev;
 	action_do(&action);
+}
+
+static void replace(const Arg *arg) {
+	Key k = getkey();
+	if (!k.str[0])
+		return;
+	editor_replace_key(vis, k.str, strlen(k.str));
 }
 
 static void count(const Arg *arg) {
