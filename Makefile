@@ -2,7 +2,7 @@ include config.mk
 
 SRC = editor.c window.c text.c text-motions.c text-objects.c register.c
 HDR := ${SRC:.c=.h} syntax.h util.h config.def.h
-SRC += vis.c colors.c
+SRC += vis.c
 OBJ = ${SRC:.c=.o}
 ALL = ${SRC} ${HDR} config.mk Makefile LICENSE README vis.1
 

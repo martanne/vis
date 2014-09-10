@@ -149,14 +149,8 @@ void editor_prompt_set(Editor *vis, const char *line);
 void editor_prompt_show(Editor *vis, const char *title);
 void editor_prompt_hide(Editor *vis);
 
-
 void editor_statusbar_set(Editor*, editor_statusbar_t);
 
-// TODO cleanup this mess only 1 function should suffice? move perform
-// lazy initialization on first call
-/* library initialization code, should be run at startup */
-void editor_init(void);
-short editor_color_reserve(short fg, short bg);
 /* look up a curses color pair for the given combination of fore and
  * background color */
 short editor_color_get(short fg, short bg);

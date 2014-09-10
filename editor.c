@@ -4,6 +4,18 @@
 #include "editor.h"
 #include "util.h"
 
+#ifdef NCURSES_VERSION
+# ifndef NCURSES_EXT_COLORS
+#  define NCURSES_EXT_COLORS 0
+# endif
+# if !NCURSES_EXT_COLORS
+#  define MAX_COLOR_PAIRS 256
+# endif
+#endif
+#ifndef MAX_COLOR_PAIRS
+# define MAX_COLOR_PAIRS COLOR_PAIRS
+#endif
+
 static EditorWin *editor_window_new_text(Editor *ed, Text *text);
 static void editor_window_free(Editor *ed, EditorWin *win);
 static void editor_window_split_internal(Editor *ed, const char *filename);
@@ -175,7 +187,7 @@ bool editor_syntax_load(Editor *ed, Syntax *syntaxes, Color *colors) {
 			if (rule->color.attr == 0)
 				rule->color.attr = A_NORMAL;
 			if (rule->color.fg != 0)
-				rule->color.attr |= COLOR_PAIR(editor_color_reserve(rule->color.fg, rule->color.bg));
+				rule->color.attr |= COLOR_PAIR(editor_color_get(rule->color.fg, rule->color.bg));
 			if (regcomp(&rule->regex, rule->rule, REG_EXTENDED|rule->cflags))
 				success = false;
 		}
@@ -480,4 +492,62 @@ char *editor_prompt_get(Editor *ed) {
 	size_t len = text_bytes_get(text, 0, text_size(text), buf);
 	buf[len] = '\0';
 	return buf;
+}
+
+static unsigned int color_hash(short fg, short bg)
+{
+	if (fg == -1)
+		fg = COLORS;
+	if (bg == -1)
+		bg = COLORS + 1;
+	return fg * (COLORS + 2) + bg;
+}
+
+short editor_color_get(short fg, short bg)
+{
+	static bool has_default_colors;
+	static short *color2palette, default_fg, default_bg;
+	static short color_pairs_max, color_pair_current;
+
+	if (!color2palette) {
+		pair_content(0, &default_fg, &default_bg);
+		if (default_fg == -1)
+			default_fg = COLOR_WHITE;
+		if (default_bg == -1)
+			default_bg = COLOR_BLACK;
+		has_default_colors = (use_default_colors() == OK);
+		color_pairs_max = MIN(COLOR_PAIRS, MAX_COLOR_PAIRS);
+		if (COLORS)
+			color2palette = calloc((COLORS + 2) * (COLORS + 2), sizeof(short));
+	}
+
+	if (fg >= COLORS)
+		fg = default_fg;
+	if (bg >= COLORS)
+		bg = default_bg;
+
+	if (!has_default_colors) {
+		if (fg == -1)
+			fg = default_fg;
+		if (bg == -1)
+			bg = default_bg;
+	}
+
+	if (!color2palette || (fg == -1 && bg == -1))
+		return 0;
+
+	unsigned int index = color_hash(fg, bg);
+	if (color2palette[index] == 0) {
+		short oldfg, oldbg;
+		if (++color_pair_current >= color_pairs_max)
+			color_pair_current = 1;
+		pair_content(color_pair_current, &oldfg, &oldbg);
+		unsigned int old_index = color_hash(oldfg, oldbg);
+		if (init_pair(color_pair_current, fg, bg) == OK) {
+			color2palette[old_index] = 0;
+			color2palette[index] = color_pair_current;
+		}
+	}
+
+	return color2palette[index];
 }
