@@ -51,7 +51,7 @@ size_t text_find_char_next(Text *txt, size_t pos, const char *s, size_t len) {
 			matched = 0;
 		text_iterator_byte_next(&it, NULL);
 	}
-	return it.pos - (matched == len ? len : 0);
+	return matched == len ? it.pos - len : pos;
 }
 
 size_t text_find_char_prev(Text *txt, size_t pos, const char *s, size_t len) {
@@ -62,14 +62,15 @@ size_t text_find_char_prev(Text *txt, size_t pos, const char *s, size_t len) {
 		return pos;
 	while (text_iterator_byte_get(&it, &c)) {
 		if (c == s[matched]) {
-			if (matched-- == 0)
+			if (matched == 0)
 				break;
+			matched--;
 		} else {
 			matched = len - 1;
 		}
 		text_iterator_byte_prev(&it, NULL);
 	}
-	return it.pos;
+	return matched == 0 ? it.pos : pos;
 }
 
 size_t text_line_begin(Text *txt, size_t pos) {
@@ -110,7 +111,11 @@ size_t text_line_finish(Text *txt, size_t pos) {
 }
 
 size_t text_line_end(Text *txt, size_t pos) {
-	return text_find_char_next(txt, pos, "\n", 1);
+	char c;
+	Iterator it = text_iterator_get(txt, pos);
+	while (text_iterator_byte_get(&it, &c) && c != '\n')
+		text_iterator_byte_next(&it, NULL);
+	return it.pos;
 }
 
 size_t text_line_next(Text *txt, size_t pos) {
