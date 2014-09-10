@@ -498,7 +498,8 @@ static void operator(const Arg *arg) {
 		action_do(&action);
 		return;
 	}
-
+	/* switch to operator mode inorder to make operator options and
+	 * text-object available */
 	switchmode(&(const Arg){ .i = VIS_MODE_OPERATOR });
 	if (action.op == op) {
 		/* hacky way to handle double operators i.e. things like
@@ -587,6 +588,10 @@ static void prompt(const Arg *arg) {
 
 static void prompt_enter(const Arg *arg) {
 	char *s = editor_prompt_get(vis);
+	/* it is important to switch to normal mode, which hides the prompt and
+	 * more importantly resets vis->win to the currently focused editor
+	 * window *before* anything is executed which depends on vis->win.
+	 */
 	switchmode(&(const Arg){ .i = VIS_MODE_NORMAL });
 	switch (vis->prompt->title[0]) {
 	case '/':

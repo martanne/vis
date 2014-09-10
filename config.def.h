@@ -388,6 +388,8 @@ static KeyBinding vis_prompt_mode[] = {
 };
 
 static void vis_prompt_leave(Mode *new) {
+	/* prompt mode may be left for operator mode when editing the command prompt.
+	 * for example during Ctrl+w / delete_word. don't hide the prompt in this case */
 	if (new != &vis_modes[VIS_MODE_OPERATOR])
 		editor_prompt_hide(vis);
 }
