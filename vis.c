@@ -60,7 +60,7 @@ struct Mode {
 typedef struct {
 	char *name;                    /* is used to match against argv[0] to enable this config */
 	Mode *mode;                    /* default mode in which the editor should start in */
-	editor_statusbar_t statusbar;  /* routine which is called whenever the cursor is moved within a window */
+	void (*statusbar)(EditorWin*); /* routine which is called whenever the cursor is moved within a window */
 } Config;
 
 typedef struct {

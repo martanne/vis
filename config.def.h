@@ -61,19 +61,19 @@ static Command cmds[] = {
 	{ /* array terminator */           },
 };
 
-/* draw a statubar, do whatever you want with the given curses window */
-static void statusbar(WINDOW *win, bool active, const char *filename, size_t line, size_t col) {
-	int width, height;
-	getmaxyx(win, height, width);
-	(void)height;
-	wattrset(win, active ? A_REVERSE|A_BOLD : A_REVERSE);
-	mvwhline(win, 0, 0, ' ', width);
-	mvwprintw(win, 0, 0, "%s", filename);
-	char buf[width + 1];
-	int len = snprintf(buf, width, "%d, %d", line, col);
+/* draw a statubar, do whatever you want with win->statuswin curses window */
+static void statusbar(EditorWin *win) {
+	size_t line, col;
+	window_cursor_getxy(win->win, &line, &col);
+	wattrset(win->statuswin, vis->win == win ? A_REVERSE|A_BOLD : A_REVERSE);
+	mvwhline(win->statuswin, 0, 0, ' ', win->width);
+	mvwprintw(win->statuswin, 0, 0, "%s %s", text_filename(win->text),
+	          text_modified(win->text) ? "[+]" : "");
+	char buf[win->width + 1];
+	int len = snprintf(buf, win->width, "%d, %d", line, col);
 	if (len > 0) {
 		buf[len] = '\0';
-		mvwaddstr(win, 0, width - len - 1, buf);
+		mvwaddstr(win->statuswin, 0, win->width - len - 1, buf);
 	}
 }
 

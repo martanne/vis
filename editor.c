@@ -47,19 +47,15 @@ static void editor_window_move(EditorWin *win, int x, int y) {
 }
 
 static void editor_window_statusbar_draw(EditorWin *win) {
-	size_t line, col;
-	if (win->statuswin && win->editor->statusbar) {
-		window_cursor_getxy(win->win, &line, &col);
-		win->editor->statusbar(win->statuswin, win->editor->win == win,
-		                       text_filename(win->text), line, col);
-	}
+	if (win->statuswin && win->editor->statusbar)
+		win->editor->statusbar(win);
 }
 
 static void editor_window_cursor_moved(Win *win, void *data) {
 	editor_window_statusbar_draw(data);
 }
 
-void editor_statusbar_set(Editor *ed, editor_statusbar_t statusbar) {
+void editor_statusbar_set(Editor *ed, void (*statusbar)(EditorWin*)) {
 	ed->statusbar = statusbar;
 }
 

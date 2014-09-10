@@ -28,8 +28,6 @@ typedef struct {
 	bool active;            /* whether the prompt is currently shown or not */
 } Prompt;
 
-typedef void (*editor_statusbar_t)(WINDOW *win, bool active, const char *filename, size_t line, size_t col);
-
 enum Reg {
 	REG_a,
 	REG_b,
@@ -99,7 +97,7 @@ struct Editor {
 	Prompt *prompt;                   /* used to get user input */
 	Regex *search_pattern;            /* last used search pattern */
 	void (*windows_arrange)(Editor*); /* current layout which places the windows */
-	editor_statusbar_t statusbar;     /* configurable user hook to draw statusbar */
+	void (*statusbar)(EditorWin*);    /* configurable user hook to draw statusbar */
 	bool running;                     /* (TODO move elsewhere?) */
 };
 
@@ -149,7 +147,7 @@ void editor_prompt_set(Editor *vis, const char *line);
 void editor_prompt_show(Editor *vis, const char *title);
 void editor_prompt_hide(Editor *vis);
 
-void editor_statusbar_set(Editor*, editor_statusbar_t);
+void editor_statusbar_set(Editor*, void (*statusbar)(EditorWin*));
 
 /* look up a curses color pair for the given combination of fore and
  * background color */
