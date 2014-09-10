@@ -347,6 +347,7 @@ static KeyBinding vis_normal[] = {
 	{ { NONE('v')               }, switchmode,    { .i = VIS_MODE_VISUAL } },
 	{ { NONE('R')               }, switchmode,    { .i = VIS_MODE_REPLACE} },
 	{ { NONE('S')               }, operator_twice, { .i = OP_CHANGE        } },
+	{ { NONE('Y')               }, operator_twice, { .i = OP_YANK          } },
 	{ { NONE('u')               }, undo,          { NULL                   } },
 	{ { CONTROL('R')            }, redo,          { NULL                   } },
 	{ { CONTROL('L')            }, call,          { .f = editor_draw     } },
