@@ -27,6 +27,7 @@ typedef struct {
 	     text_iterator_next(&it))
 
 Text *text_load(const char *file);
+/* the filename from which this text was loaded or first saved to */
 const char *text_filename(Text*);
 bool text_insert(Text*, size_t pos, const char *data);
 bool text_insert_raw(Text*, size_t pos, const char *data, size_t len);

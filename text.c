@@ -610,6 +610,8 @@ int text_save(Text *txt, const char *filename) {
 		return -1;
 	txt->saved_action = txt->undo;
 	text_snapshot(txt);
+	if (!txt->filename)
+		txt->filename = strdup(filename);
 	return 0;
 err:
 	close(fd);
