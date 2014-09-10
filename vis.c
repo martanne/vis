@@ -315,6 +315,8 @@ static void insert_tab(const Arg *arg);
 static void insert_newline(const Arg *arg);
 /* add a new line either before or after the one where the cursor currently is */
 static void openline(const Arg *arg);
+/* join the line where the cursor currently is with the one above or below */
+static void joinline(const Arg *arg);
 /* split current window horizontally (default) or vertically (if arg->b is set) */
 static void split(const Arg *arg);
 /* perform last action i.e. action_prev again */
@@ -703,6 +705,21 @@ static void openline(const Arg *arg) {
 	movement(&(const Arg){ .i = arg->i == MOVE_LINE_NEXT ?
 	                       MOVE_LINE_END : MOVE_LINE_PREV });
 	insert_newline(NULL);
+}
+
+static void joinline(const Arg *arg) {
+	Text *txt = vis->win->text;
+	size_t pos = window_cursor_get(vis->win->win), start, end;
+	if (arg->i == MOVE_LINE_NEXT) {
+		start = text_line_end(txt, pos);
+		end = text_line_next(txt, pos);
+	} else {
+		end = text_line_begin(txt, pos);
+		start = text_line_prev(txt, pos);
+	}
+	editor_delete(vis, start, end - start);
+	editor_insert(vis, start, " ", 1);
+	window_cursor_to(vis->win->win, start);
 }
 
 static void switchmode(const Arg *arg) {
