@@ -4,8 +4,8 @@
 #include <stddef.h>
 #include <stdbool.h>
 #include "text.h"
+#include "syntax.h"
 
-typedef struct Syntax Syntax;
 typedef struct Win Win;
 
 Win *window_new(Text*);

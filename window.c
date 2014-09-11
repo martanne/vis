@@ -56,7 +56,6 @@ typedef struct {            /* cursor position */
 	Line *line;         /* screen line on which cursor currently resides */
 } Cursor;
 
-typedef struct Win Win;
 struct Win {                /* window showing part of a file */
 	Text *text;         /* underlying text management */
 	WINDOW *win;        /* curses window for the text area */
