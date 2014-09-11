@@ -301,10 +301,9 @@ void window_cursor_to(Win *win, size_t pos) {
 		int max_col = MIN(win->width, line->width);
 		while (cur < pos && col < max_col) {
 			cur += line->cells[col].len;
-			col++;
+			/* skip over columns occupied by the same character */
+			while (++col < max_col && line->cells[col].len == 0);
 		}
-		while (col < max_col && line->cells[col].data == '\t')
-			col++;
 	} else {
 		line = win->bottomline;
 		row = win->height - 1;
