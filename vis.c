@@ -383,6 +383,9 @@ static void quit(const Arg *arg);
 static bool cmd_gotoline(const char *argv[]);
 /* for each argument create a new window and open the corresponding file */
 static bool cmd_open(const char *argv[]);
+/* close current window (discard modifications if argv[0] contains '!')
+ * and open argv[1], if no argv[1] is given re-read to current file from disk */
+static bool cmd_edit(const char *argv[]);
 /* close the current window, if argv[0] contains a '!' discard modifications */
 static bool cmd_quit(const char *argv[]);
 /* close all windows, exit editor, if argv[0] contains a '!' discard modifications */
@@ -864,18 +867,39 @@ static bool cmd_gotoline(const char *argv[]) {
 }
 
 static bool cmd_open(const char *argv[]) {
-	for (const char **file = &argv[1]; *file; file++)
-		editor_window_new(vis, *file);
+	for (const char **file = &argv[1]; *file; file++) {
+		if (!editor_window_new(vis, *file))
+			return false;
+	}
+	return true;
+}
+
+static bool is_window_closeable(EditorWin *win) {
+	if (!text_modified(win->text))
+		return true;
+	for (EditorWin *w = vis->windows; w; w = w->next) {
+		if (w != win && w->text == win->text)
+			return true;
+	}
+	return false;
+}
+
+static bool cmd_edit(const char *argv[]) {
+	EditorWin *oldwin = vis->win;
+	bool force = strchr(argv[0], '!') != NULL;
+	if (!force && !is_window_closeable(oldwin))
+		return false;
+	if (!argv[1])
+		return editor_window_reload(oldwin);
+	if (!editor_window_new(vis, argv[1]))
+		return false;
+	editor_window_close(oldwin);
 	return true;
 }
 
 static bool cmd_quit(const char *argv[]) {
 	bool force = strchr(argv[0], '!') != NULL;
-	for (EditorWin *win = vis->windows; !force && win; win = win->next) {
-		if (win != vis->win && win->text == vis->win->text)
-			force = true;
-	}
-	if (!force && text_modified(vis->win->text))
+	if (!force && !is_window_closeable(vis->win))
 		return false;
 	editor_window_close(vis->win);
 	if (!vis->windows)

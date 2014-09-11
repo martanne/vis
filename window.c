@@ -463,6 +463,12 @@ void window_free(Win *win) {
 	free(win);
 }
 
+void window_reload(Win *win, Text *text) {
+	win->text = text;
+	window_selection_clear(win);
+	window_cursor_to(win, 0);
+}
+
 Win *window_new(Text *text) {
 	if (!text)
 		return NULL;

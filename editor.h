@@ -128,6 +128,8 @@ void editor_syntax_unload(Editor*);
 /* creates a new window, and loads the given file. if filename is NULL
  * an unamed / empty buffer is created */
 bool editor_window_new(Editor*, const char *filename);
+/* reload the file currently displayed in the window from disk */
+bool editor_window_reload(EditorWin*);
 void editor_window_close(EditorWin*);
 /* if filename is non NULL it is equivalent to window_new call above.
  * if however filename is NULL a new window is created and linked to the

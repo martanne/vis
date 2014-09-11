@@ -9,6 +9,8 @@
 typedef struct Win Win;
 
 Win *window_new(Text*);
+/* change associated text displayed in this window */
+void window_reload(Win*, Text*);
 void window_free(Win*);
 
 /* keyboard input at cursor position */

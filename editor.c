@@ -85,6 +85,29 @@ static void editor_windows_arrange_vertical(Editor *ed) {
 	}
 }
 
+bool editor_window_reload(EditorWin *win) {
+	const char *filename = text_filename(win->text);
+	/* can't reload unsaved file */
+	if (!filename)
+		return false;
+	Text *text = text_load(filename);
+	if (!text)
+		return false;
+	/* check wether the text is displayed in another window */
+	bool needed = false;
+	for (EditorWin *w = win->editor->windows; w; w = w->next) {
+		if (w != win && w->text == win->text) {
+			needed = true;
+			break;
+		}
+	}
+	if (!needed)
+		text_free(win->text);
+	win->text = text;
+	window_reload(win->win, text);
+	return true;
+}
+
 static void editor_window_split_internal(Editor *ed, const char *filename) {
 	EditorWin *sel = ed->win;
 	if (filename) {
