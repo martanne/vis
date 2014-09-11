@@ -1048,7 +1048,11 @@ const char *text_filename(Text *txt) {
 }
 
 Regex *text_regex_new(void) {
-	return calloc(1, sizeof(Regex));
+	Regex *r = calloc(1, sizeof(Regex));
+	if (!r)
+		return NULL;
+	regcomp(&r->regex, "\0\0", 0); /* this should not match anything */
+	return r;
 }
 
 int text_regex_compile(Regex *regex, const char *string, int cflags) {
