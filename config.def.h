@@ -363,6 +363,7 @@ static KeyBinding vis_normal[] = {
 static KeyBinding vis_visual[] = {
 	{ { NONE(ESC)               }, switchmode,      { .i = VIS_MODE_NORMAL   } },
 	{ { CONTROL('c')            }, switchmode,      { .i = VIS_MODE_NORMAL   } },
+	{ { NONE('v')               }, switchmode,      { .i = VIS_MODE_NORMAL   } },
 	BACKSPACE(                     operator,           i,  OP_DELETE           ),
 	{ { CONTROL('H')            }, operator,        { .i = OP_DELETE         } },
 	{ { NONE('d')               }, operator,        { .i = OP_DELETE         } },
