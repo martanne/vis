@@ -333,7 +333,9 @@ static KeyBinding vis_marks_set[] = {
 };
 
 static KeyBinding vis_normal[] = {
-	{ { CONTROL('w'), NONE('s') }, split,          { NULL                      } },
+	{ { CONTROL('w'), NONE('n') }, winnew,         { .s = NULL                 } },
+	{ { CONTROL('w'), NONE('q') }, winclose,       { .s = NULL                 } },
+	{ { CONTROL('w'), NONE('s') }, winsplit,       { .b = false                } },
 	{ { CONTROL('w'), NONE('j') }, call,           { .f = editor_window_next   } },
 	{ { CONTROL('w'), NONE('k') }, call,           { .f = editor_window_prev   } },
 	{ { CONTROL('F')            }, cursor,         { .m = window_page_up       } },
