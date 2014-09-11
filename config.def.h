@@ -504,8 +504,8 @@ static void vis_replace_input(const char *str, size_t len) {
  *                                           |          ||             |
  *                                        REGISTER      ||          TEXTOBJ
  *                                        (" [a-z])     ||    (a [wsp[]()b<>{}B"'`] )
- *                           /-----------/   |          \\
- *                          /                |           \\
+ *                           /-----------/   |          \\             |
+ *                          /                |           \\            |
  *                      VISUAL            MARK-SET        \\     OPERATOR-OPTION
  *                                        (m [a-z])        \\        (v,V)
  *                                           |              \\        //
