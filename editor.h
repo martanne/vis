@@ -128,7 +128,7 @@ void editor_syntax_unload(Editor*);
 /* creates a new window, and loads the given file. if filename is NULL
  * an unamed / empty buffer is created */
 bool editor_window_new(Editor*, const char *filename);
-void editor_window_close(Editor *vis);
+void editor_window_close(EditorWin*);
 /* if filename is non NULL it is equivalent to window_new call above.
  * if however filename is NULL a new window is created and linked to the
  * same underlying text as the currently selected one. changes will

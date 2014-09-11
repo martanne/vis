@@ -380,6 +380,8 @@ static bool cmd_gotoline(const char *argv[]);
 static bool cmd_open(const char *argv[]);
 /* close the current window, if argv[0] contains a '!' discard modifications */
 static bool cmd_quit(const char *argv[]);
+/* close all windows, exit editor, if argv[0] contains a '!' discard modifications */
+static bool cmd_qall(const char *argv[]);
 /* for each argument try to insert the file content at current cursor postion */
 static bool cmd_read(const char *argv[]);
 static bool cmd_substitute(const char *argv[]);
@@ -862,10 +864,22 @@ static bool cmd_quit(const char *argv[]) {
 	}
 	if (!force && text_modified(vis->win->text))
 		return false;
-	editor_window_close(vis);
+	editor_window_close(vis->win);
 	if (!vis->windows)
 		running = false;
 	return true;
+}
+
+static bool cmd_qall(const char *argv[]) {
+	bool force = strchr(argv[0], '!') != NULL;
+	for (EditorWin *next, *win = vis->windows; win; win = next) {
+		next = win->next;
+		if (!text_modified(vis->win->text) || force)
+			editor_window_close(win);
+	}
+	if (!vis->windows)
+		running = false;
+	return vis->windows == NULL;
 }
 
 static bool cmd_read(const char *argv[]) {

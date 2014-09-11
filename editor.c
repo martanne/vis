@@ -316,9 +316,10 @@ static void editor_window_detach(Editor *ed, EditorWin *win) {
 	win->next = win->prev = NULL;
 }
 
-void editor_window_close(Editor *ed) {
-	EditorWin *win = ed->win;
-	ed->win = win->next ? win->next : win->prev;
+void editor_window_close(EditorWin *win) {
+	Editor *ed = win->editor;
+	if (ed->win == win)
+		ed->win = win->next ? win->next : win->prev;
 	editor_window_detach(ed, win);
 	editor_window_free(ed, win);
 	editor_draw(ed);
@@ -343,7 +344,7 @@ err:
 
 void editor_free(Editor *ed) {
 	while (ed->windows)
-		editor_window_close(ed);
+		editor_window_close(ed->windows);
 	editor_prompt_free(ed->prompt);
 	text_regex_free(ed->search_pattern);
 	for (int i = 0; i < REG_LAST; i++)

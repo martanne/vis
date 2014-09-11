@@ -51,6 +51,7 @@ enum {
 static Command cmds[] = {
 	{ "^[0-9]+",        cmd_gotoline   },
 	{ "^o(pen)?",       cmd_open       },
+	{ "^qa(ll)?",       cmd_qall       },
 	{ "^q(quit)?",      cmd_quit       },
 	{ "^r(ead)?",       cmd_read       },
 	{ "^sp(lit)?",      cmd_split      },
