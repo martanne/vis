@@ -375,6 +375,7 @@ static void insert_verbatim(const Arg *arg);
 static void cursor(const Arg *arg);
 /* call editor function as indicated by arg->f */
 static void call(const Arg *arg);
+/* quit editor, discard all changes */
 static void quit(const Arg *arg);
 
 /** commands to enter at the ':'-prompt */
@@ -878,7 +879,7 @@ static bool cmd_quit(const char *argv[]) {
 		return false;
 	editor_window_close(vis->win);
 	if (!vis->windows)
-		running = false;
+		quit(NULL);
 	return true;
 }
 
@@ -890,7 +891,7 @@ static bool cmd_qall(const char *argv[]) {
 			editor_window_close(win);
 	}
 	if (!vis->windows)
-		running = false;
+		quit(NULL);
 	return vis->windows == NULL;
 }
 

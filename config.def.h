@@ -90,9 +90,7 @@ static KeyBinding basic_movement[] = {
 	{ { KEY(NPAGE)              }, cursor,   { .m = window_page_down       } },
 	{ { KEY(HOME)               }, movement, { .i = MOVE_LINE_START        } },
 	{ { KEY(END)                }, movement, { .i = MOVE_LINE_FINISH       } },
-	// temporary until we have a way to enter user commands
-	{ { CONTROL('c')            }, quit,                                   },
-	{ /* empty last element, array terminator */                           },
+	{ /* empty last element, array terminator */                             },
 };
 
 static KeyBinding vis_movements[] = {
