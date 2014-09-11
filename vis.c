@@ -993,6 +993,11 @@ static bool exec_command(char *cmdline) {
 		init = true;
 	}
 
+	/* regex should only apply to command name */
+	char *s = strchr(cmdline, ' ');
+	if (s)
+		*s++ = '\0';
+
 	Command *cmd = NULL;
 	for (Command *c = cmds; c->name; c++) {
 		if (!regexec(&c->regex, cmdline, 0, NULL, 0)) {
@@ -1005,15 +1010,12 @@ static bool exec_command(char *cmdline) {
 		return false;
 
 	const char *argv[32] = { cmdline };
-	char *s = cmdline;
 	for (int i = 1; i < LENGTH(argv); i++) {
-		if (s) {
-			if ((s = strchr(s, ' ')))
-				*s++ = '\0';
-		}
 		while (s && *s && *s == ' ')
 			s++;
-		argv[i] = s ? s : NULL;
+		argv[i] = s;
+		if (s && (s = strchr(s, ' ')))
+			*s++ = '\0';
 	}
 
 	cmd->cmd(argv);

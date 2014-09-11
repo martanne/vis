@@ -44,23 +44,20 @@ enum {
 	VIS_MODE_REPLACE,
 };
 
-/* command recognized at the ':'-prompt, matched using a greedy top to bottom,
- * regex search. make sure the longer commands are listed before the shorter ones
- * e.g. 'sp' before 's' and 'wq' before 'w'.
- */
+/* command recognized at the ':'-prompt. tested top to bottom, first match wins. */
 static Command cmds[] = {
-	{ "^[0-9]+",        cmd_gotoline   },
-	{ "^e(dit)?",       cmd_edit       },
-	{ "^o(pen)?",       cmd_open       },
-	{ "^qa(ll)?",       cmd_qall       },
-	{ "^q(quit)?",      cmd_quit       },
-	{ "^r(ead)?",       cmd_read       },
-	{ "^sp(lit)?",      cmd_split      },
-	{ "^s(ubstitute)?", cmd_substitute },
-	{ "^v(split)?",     cmd_vsplit     },
-	{ "^wq",            cmd_wq         },
-	{ "^w(rite)?",      cmd_write      },
-	{ /* array terminator */           },
+	{ "^[0-9]+$",        cmd_gotoline   },
+	{ "^e(dit)?!?$",     cmd_edit       },
+	{ "^o(pen)?$",       cmd_open       },
+	{ "^qa(ll)?!?$",     cmd_qall       },
+	{ "^q(quit)?!?$",    cmd_quit       },
+	{ "^r(ead)?$",       cmd_read       },
+	{ "^sp(lit)?$",      cmd_split      },
+	{ "^s(ubstitute)?$", cmd_substitute },
+	{ "^v(split)?$",     cmd_vsplit     },
+	{ "^wq!?$",          cmd_wq         },
+	{ "^w(rite)?$",      cmd_write      },
+	{ /* array terminator */            },
 };
 
 /* draw a statubar, do whatever you want with win->statuswin curses window */
