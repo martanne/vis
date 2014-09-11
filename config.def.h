@@ -356,6 +356,7 @@ static KeyBinding vis_normal[] = {
 	{ { NONE('S')               }, operator_twice, { .i = OP_CHANGE            } },
 	{ { NONE('s')               }, change,         { .i = MOVE_CHAR_NEXT       } },
 	{ { NONE('Y')               }, operator_twice, { .i = OP_YANK              } },
+	{ { NONE('X')               }, delete,         { .i = MOVE_CHAR_PREV       } },
 	{ { NONE('u')               }, undo,           { NULL                      } },
 	{ { CONTROL('R')            }, redo,           { NULL                      } },
 	{ { CONTROL('L')            }, call,           { .f = editor_draw          } },
