@@ -1,6 +1,7 @@
 #define _BSD_SOURCE
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 #include "editor.h"
 #include "util.h"
 
@@ -305,9 +306,11 @@ static EditorWin *editor_window_new_text(Editor *ed, Text *text) {
 }
 
 bool editor_window_new(Editor *ed, const char *filename) {
-	Text *text = text_load(filename);
+	Text *text = text_load(filename && access(filename, R_OK) == 0 ? filename : NULL);
 	if (!text)
 		return false;
+	if (filename)
+		text_filename_set(text, filename);
 
 	EditorWin *win = editor_window_new_text(ed, text);
 	if (!win) {
