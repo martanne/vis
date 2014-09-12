@@ -662,7 +662,8 @@ static void prompt_enter(const Arg *arg) {
 		}
 		break;
 	case ':':
-		exec_command(s);
+		if (!exec_command(s))
+			editor_info_show(vis, "Not an editor command");
 		break;
 	}
 	free(s);
@@ -878,8 +879,10 @@ static bool cmd_gotoline(const char *argv[]) {
 
 static bool cmd_open(const char *argv[]) {
 	for (const char **file = &argv[1]; *file; file++) {
-		if (!editor_window_new(vis, *file))
+		if (!editor_window_new(vis, *file)) {
+			editor_info_show(vis, "Can't open `%s'");
 			return false;
+		}
 	}
 	return true;
 }
@@ -897,8 +900,11 @@ static bool is_window_closeable(EditorWin *win) {
 static bool cmd_edit(const char *argv[]) {
 	EditorWin *oldwin = vis->win;
 	bool force = strchr(argv[0], '!') != NULL;
-	if (!force && !is_window_closeable(oldwin))
+	if (!force && !is_window_closeable(oldwin)) {
+		editor_info_show(vis, "No write since last change "
+		                      "(add ! to override)");
 		return false;
+	}
 	if (!argv[1])
 		return editor_window_reload(oldwin);
 	if (!editor_window_new(vis, argv[1]))
@@ -909,8 +915,11 @@ static bool cmd_edit(const char *argv[]) {
 
 static bool cmd_quit(const char *argv[]) {
 	bool force = strchr(argv[0], '!') != NULL;
-	if (!force && !is_window_closeable(vis->win))
+	if (!force && !is_window_closeable(vis->win)) {
+		editor_info_show(vis, "No write since last change "
+		                      "(add ! to override)");
 		return false;
+	}
 	editor_window_close(vis->win);
 	if (!vis->windows)
 		quit(NULL);
@@ -926,6 +935,9 @@ static bool cmd_qall(const char *argv[]) {
 	}
 	if (!vis->windows)
 		quit(NULL);
+	else
+		editor_info_show(vis, "No write since last change "
+		                      "(add ! to override)");
 	return vis->windows == NULL;
 }
 
@@ -988,8 +1000,10 @@ static bool cmd_write(const char *argv[]) {
 	if (!argv[1])
 		argv[1] = text_filename_get(text);
 	for (const char **file = &argv[1]; *file; file++) {
-		if (text_save(text, *file))
+		if (text_save(text, *file)) {
+			editor_info_show(vis, "Can't write `%s'", *file);
 			return false;
+		}
 	}
 	return true;
 }
