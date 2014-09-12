@@ -548,7 +548,6 @@ bool text_insert(Text *txt, size_t pos, const char *data) {
 	return text_insert_raw(txt, pos, data, strlen(data));
 }
 
-/* undo all changes of the last action, return whether changes existed */
 size_t text_undo(Text *txt) {
 	size_t pos = -1;
 	Action *a = action_pop(&txt->undo);
@@ -564,7 +563,6 @@ size_t text_undo(Text *txt) {
 	return pos;
 }
 
-/* redo all changes of the last action, return whether changes existed */
 size_t text_redo(Text *txt) {
 	size_t pos = -1;
 	Action *a = action_pop(&txt->redo);
