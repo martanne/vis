@@ -84,7 +84,8 @@ typedef struct Change Change;
 struct Change {
 	Span old;               /* all pieces which are being modified/swapped out by the change */
 	Span new;               /* all pieces which are introduced/swapped in by the change */
-	Change *next;
+	size_t pos;             /* absolute position at which the change occured */
+	Change *next;           /* next change which is part of the same action */
 };
 
 /* An Action is a list of Changes which are used to undo/redo all modifications
@@ -144,7 +145,7 @@ static Location piece_get_extern(Text *txt, size_t pos);
 static void span_init(Span *span, Piece *start, Piece *end);
 static void span_swap(Text *txt, Span *old, Span *new);
 /* change management */
-static Change *change_alloc(Text *txt);
+static Change *change_alloc(Text *txt, size_t pos);
 static void change_free(Change *c);
 /* action management */
 static Action *action_alloc(Text *txt);
@@ -439,7 +440,7 @@ static Location piece_get_extern(Text *txt, size_t pos) {
 
 /* allocate a new change, associate it with current action or a newly
  * allocated one if none exists. */
-static Change *change_alloc(Text *txt) {
+static Change *change_alloc(Text *txt, size_t pos) {
 	Action *a = txt->current_action;
 	if (!a) {
 		a = action_alloc(txt);
@@ -449,6 +450,7 @@ static Change *change_alloc(Text *txt) {
 	Change *c = calloc(1, sizeof(Change));
 	if (!c)
 		return NULL;
+	c->pos = pos;
 	c->next = a->change;
 	a->change = c;
 	return c;
@@ -501,7 +503,7 @@ bool text_insert_raw(Text *txt, size_t pos, const char *data, size_t len) {
 	if (cache_insert(txt, p, off, data, len))
 		return true;
 
-	Change *c = change_alloc(txt);
+	Change *c = change_alloc(txt, pos);
 	if (!c)
 		return false;
 
@@ -547,31 +549,35 @@ bool text_insert(Text *txt, size_t pos, const char *data) {
 }
 
 /* undo all changes of the last action, return whether changes existed */
-bool text_undo(Text *txt) {
+size_t text_undo(Text *txt) {
+	size_t pos = -1;
 	Action *a = action_pop(&txt->undo);
 	if (!a)
-		return false;
+		return pos;
 	for (Change *c = a->change; c; c = c->next) {
 		span_swap(txt, &c->new, &c->old);
+		pos = c->pos;
 	}
 
 	action_push(&txt->redo, a);
 	lineno_cache_invalidate(&txt->lines);
-	return true;
+	return pos;
 }
 
 /* redo all changes of the last action, return whether changes existed */
-bool text_redo(Text *txt) {
+size_t text_redo(Text *txt) {
+	size_t pos = -1;
 	Action *a = action_pop(&txt->redo);
 	if (!a)
-		return false;
+		return pos;
 	for (Change *c = a->change; c; c = c->next) {
 		span_swap(txt, &c->old, &c->new);
+		pos = c->pos;
 	}
 
 	action_push(&txt->undo, a);
 	lineno_cache_invalidate(&txt->lines);
-	return true;
+	return pos;
 }
 
 /* save current content to given filename. the data is first saved to
@@ -706,7 +712,7 @@ bool text_delete(Text *txt, size_t pos, size_t len) {
 		return true;
 	size_t cur; // how much has already been deleted
 	bool midway_start = false, midway_end = false;
-	Change *c = change_alloc(txt);
+	Change *c = change_alloc(txt, pos);
 	if (!c)
 		return false;
 	Piece *before, *after; // unmodified pieces before / after deletion point

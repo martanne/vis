@@ -593,13 +593,21 @@ static void mark_line(const Arg *arg) {
 }
 
 static void undo(const Arg *arg) {
-	if (text_undo(vis->win->text))
+	size_t pos = text_undo(vis->win->text);
+	if (pos != (size_t)-1) {
+		window_cursor_to(vis->win->win, pos);
+		/* redraw all windows in case some display the same file */
 		editor_draw(vis);
+	}
 }
 
 static void redo(const Arg *arg) {
-	if (text_redo(vis->win->text))
+	size_t pos = text_redo(vis->win->text);
+	if (pos != (size_t)-1) {
+		window_cursor_to(vis->win->win, pos);
+		/* redraw all windows in case some display the same file */
 		editor_draw(vis);
+	}
 }
 
 static void zero(const Arg *arg) {
