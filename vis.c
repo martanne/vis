@@ -76,6 +76,8 @@ typedef struct {
 	char *name;                    /* is used to match against argv[0] to enable this config */
 	Mode *mode;                    /* default mode in which the editor should start in */
 	void (*statusbar)(EditorWin*); /* routine which is called whenever the cursor is moved within a window */
+	bool (*keypress)(Key*);        /* called before any other keybindings are checked,
+	                                * return value decides whether key should be ignored */
 } Config;
 
 typedef struct {
@@ -1189,6 +1191,9 @@ int main(int argc, char *argv[]) {
 		}
 
 		key = getkey();
+		if (config->keypress && !config->keypress(&key))
+			continue;
+
 		KeyBinding *action = keybinding(mode, key_mod ? key_mod : &key, key_mod ? &key : NULL);
 
 		if (!action && key_mod) {
