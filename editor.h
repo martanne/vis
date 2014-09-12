@@ -140,14 +140,19 @@ void editor_window_vsplit(Editor*, const char *filename);
 /* focus the next / previous window */
 void editor_window_next(Editor*);
 void editor_window_prev(Editor*);
+
+/* display a user prompt with a certain title */
+void editor_prompt_show(Editor *vis, const char *title);
+/* hide the user prompt if it is currently shown */
+void editor_prompt_hide(Editor *vis);
 /* return the content of the command prompt in a malloc(3)-ed string
  * which the call site has to free. */
 char *editor_prompt_get(Editor *vis);
 /* replace the current command line content with the one given */
 void editor_prompt_set(Editor *vis, const char *line);
-void editor_prompt_show(Editor *vis, const char *title);
-void editor_prompt_hide(Editor *vis);
 
+/* register a callback which is called whenever the statusbar needs to
+ * be redrawn */
 void editor_statusbar_set(Editor*, void (*statusbar)(EditorWin*));
 
 /* look up a curses color pair for the given combination of fore and
