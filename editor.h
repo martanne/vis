@@ -95,6 +95,7 @@ struct Editor {
 	Syntax *syntaxes;                 /* NULL terminated array of syntax definitions */
 	Register registers[REG_LAST];     /* register used for copy and paste */
 	Prompt *prompt;                   /* used to get user input */
+	char info[255];                   /* a user message currently being displayed */
 	Regex *search_pattern;            /* last used search pattern */
 	void (*windows_arrange)(Editor*); /* current layout which places the windows */
 	void (*statusbar)(EditorWin*);    /* configurable user hook to draw statusbar */
@@ -150,6 +151,10 @@ void editor_prompt_hide(Editor *vis);
 char *editor_prompt_get(Editor *vis);
 /* replace the current command line content with the one given */
 void editor_prompt_set(Editor *vis, const char *line);
+
+/* display a message to the user */
+void editor_info_show(Editor*, const char *msg, ...);
+void editor_info_hide(Editor*);
 
 /* register a callback which is called whenever the statusbar needs to
  * be redrawn */

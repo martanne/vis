@@ -1,6 +1,7 @@
 #define _BSD_SOURCE
 #include <stdlib.h>
 #include <string.h>
+#include <stdarg.h>
 #include <unistd.h>
 #include "editor.h"
 #include "util.h"
@@ -32,6 +33,7 @@ static void editor_prompt_resize(Prompt *prompt, int width, int height);
 static void editor_prompt_move(Prompt *prompt, int x, int y);
 static void editor_prompt_draw(Prompt *prompt);
 static void editor_prompt_update(Prompt *prompt);
+static void editor_info_draw(Editor *ed);
 
 static void editor_window_resize(EditorWin *win, int width, int height) {
 	window_resize(win->win, width, win->statuswin ?  height - 1 : height);
@@ -147,7 +149,9 @@ void editor_window_vsplit(Editor *ed, const char *filename) {
 void editor_resize(Editor *ed, int width, int height) {
 	ed->width = width;
 	ed->height = height;
-	if (ed->prompt->active) {
+	if (ed->info[0]) {
+		ed->height--;
+	} else if (ed->prompt->active) {
 		ed->height--;
 		editor_prompt_resize(ed->prompt, ed->width, 1);
 		editor_prompt_move(ed->prompt, 0, ed->height);
@@ -246,6 +250,8 @@ void editor_draw(Editor *ed) {
 		}
 		editor_window_draw(ed->win);
 	}
+	if (ed->info[0])
+		editor_info_draw(ed);
 	wnoutrefresh(stdscr);
 }
 
@@ -518,6 +524,27 @@ char *editor_prompt_get(Editor *ed) {
 	size_t len = text_bytes_get(text, 0, text_size(text), buf);
 	buf[len] = '\0';
 	return buf;
+}
+
+void editor_info_show(Editor *ed, const char *msg, ...) {
+	va_list ap;
+	va_start(ap, msg);
+	vsnprintf(ed->info, sizeof(ed->info), msg, ap);
+	va_end(ap);
+	editor_resize(ed, ed->width, ed->height);
+}
+
+void editor_info_hide(Editor *ed) {
+	if (!ed->info[0])
+		return;
+	ed->info[0] = '\0';
+	ed->height++;
+	editor_draw(ed);
+}
+
+static void editor_info_draw(Editor *ed) {
+	attrset(A_BOLD);
+	mvaddstr(ed->height, 0, ed->info);
 }
 
 static unsigned int color_hash(short fg, short bg)
