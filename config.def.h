@@ -61,7 +61,7 @@ static Command cmds[] = {
 };
 
 /* draw a statubar, do whatever you want with win->statuswin curses window */
-static void statusbar(EditorWin *win) {
+static void vis_statusbar(EditorWin *win) {
 	size_t line, col;
 	bool focused = vis->win == win || vis->prompt->editor == win;
 	window_cursor_getxy(win->win, &line, &col);
@@ -75,6 +75,13 @@ static void statusbar(EditorWin *win) {
 		buf[len] = '\0';
 		mvwaddstr(win->statuswin, 0, win->width - len - 1, buf);
 	}
+}
+
+/* called before any other keybindings are checked, if the function returns false
+ * the key is completely ignored. used to clear a user visible message. */
+static bool vis_keypress(Key *key) {
+	editor_info_hide(vis);
+	return true;
 }
 
 static KeyBinding basic_movement[] = {
@@ -701,8 +708,18 @@ static Mode nano[] = {
  * argv[0] i.e. program name upon execution
  */
 static Config editors[] = {
-	{ .name = "vis",  .mode = &vis_modes[VIS_MODE_NORMAL], .statusbar = statusbar },
-	{ .name = "nano", .mode = &nano[1], .statusbar = statusbar },
+	{
+		.name = "vis",
+		.mode = &vis_modes[VIS_MODE_NORMAL],
+		.statusbar = vis_statusbar,
+		.keypress = vis_keypress,
+	},
+	{
+		.name = "nano",
+		.mode = &nano[1],
+		.statusbar = vis_statusbar,
+		.keypress = vis_keypress,
+	},
 };
 
 /* Color definitions, by default the i-th color is used for the i-th syntax
