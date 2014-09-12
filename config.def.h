@@ -67,7 +67,7 @@ static void statusbar(EditorWin *win) {
 	window_cursor_getxy(win->win, &line, &col);
 	wattrset(win->statuswin, focused ? A_REVERSE|A_BOLD : A_REVERSE);
 	mvwhline(win->statuswin, 0, 0, ' ', win->width);
-	mvwprintw(win->statuswin, 0, 0, "%s %s", text_filename(win->text),
+	mvwprintw(win->statuswin, 0, 0, "%s %s", text_filename_get(win->text),
 	          text_modified(win->text) ? "[+]" : "");
 	char buf[win->width + 1];
 	int len = snprintf(buf, win->width, "%d, %d", line, col);

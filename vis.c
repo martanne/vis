@@ -984,7 +984,7 @@ static bool cmd_wq(const char *argv[]) {
 static bool cmd_write(const char *argv[]) {
 	Text *text = vis->win->text;
 	if (!argv[1])
-		argv[1] = text_filename(text);
+		argv[1] = text_filename_get(text);
 	for (const char **file = &argv[1]; *file; file++) {
 		if (text_save(text, *file))
 			return false;

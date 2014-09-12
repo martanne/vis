@@ -86,7 +86,7 @@ static void editor_windows_arrange_vertical(Editor *ed) {
 }
 
 bool editor_window_reload(EditorWin *win) {
-	const char *filename = text_filename(win->text);
+	const char *filename = text_filename_get(win->text);
 	/* can't reload unsaved file */
 	if (!filename)
 		return false;
@@ -114,7 +114,7 @@ static void editor_window_split_internal(Editor *ed, const char *filename) {
 		// TODO? move this to editor_window_new
 		sel = NULL;
 		for (EditorWin *w = ed->windows; w; w = w->next) {
-			const char *f = text_filename(w->text);
+			const char *f = text_filename_get(w->text);
 			if (f && strcmp(f, filename) == 0) {
 				sel = w;
 				break;

@@ -1049,7 +1049,7 @@ void text_mark_clear_all(Text *txt) {
 		text_mark_clear(txt, mark);
 }
 
-const char *text_filename(Text *txt) {
+const char *text_filename_get(Text *txt) {
 	return txt->filename;
 }
 
