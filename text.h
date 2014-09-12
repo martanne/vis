@@ -29,6 +29,8 @@ typedef struct {
 Text *text_load(const char *file);
 /* the filename from which this text was loaded or first saved to */
 const char *text_filename_get(Text*);
+/* associate a filename with the yet unnamed buffer */
+void text_filename_set(Text*, const char *filename);
 bool text_insert(Text*, size_t pos, const char *data);
 bool text_insert_raw(Text*, size_t pos, const char *data, size_t len);
 bool text_delete(Text*, size_t pos, size_t len);

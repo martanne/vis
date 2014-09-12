@@ -617,7 +617,7 @@ int text_save(Text *txt, const char *filename) {
 	txt->saved_action = txt->undo;
 	text_snapshot(txt);
 	if (!txt->filename)
-		txt->filename = strdup(filename);
+		text_filename_set(txt, filename);
 	return 0;
 err:
 	close(fd);
@@ -637,7 +637,7 @@ Text *text_load(const char *filename) {
 	piece_init(&txt->end, &txt->begin, NULL, NULL, 0);
 	lineno_cache_invalidate(&txt->lines);
 	if (filename) {
-		txt->filename = strdup(filename);
+		text_filename_set(txt, filename);
 		txt->fd = open(filename, O_RDONLY);
 		if (txt->fd == -1)
 			goto out;
@@ -1051,6 +1051,10 @@ void text_mark_clear_all(Text *txt) {
 
 const char *text_filename_get(Text *txt) {
 	return txt->filename;
+}
+
+void text_filename_set(Text *txt, const char *filename) {
+	txt->filename = strdup(filename);
 }
 
 Regex *text_regex_new(void) {
