@@ -550,6 +550,8 @@ bool text_insert(Text *txt, size_t pos, const char *data) {
 
 size_t text_undo(Text *txt) {
 	size_t pos = -1;
+	/* taking a snapshot makes sure that txt->current_action is reset */
+	text_snapshot(txt);
 	Action *a = action_pop(&txt->undo);
 	if (!a)
 		return pos;
