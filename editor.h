@@ -14,7 +14,7 @@ typedef struct EditorWin EditorWin;
 struct EditorWin {
 	Editor *editor;         /* editor instance to which this window belongs */
 	Text *text;             /* underlying text management */
-	Win *win;               /* vis window for the text area  */
+	Win *win;               /* window for the text area  */
 	WINDOW *statuswin;      /* curses window for the statusbar */
 	int width, height;      /* window size including the statusbar */
 	EditorWin *prev, *next; /* neighbouring windows */
@@ -143,14 +143,14 @@ void editor_window_next(Editor*);
 void editor_window_prev(Editor*);
 
 /* display a user prompt with a certain title */
-void editor_prompt_show(Editor *vis, const char *title);
+void editor_prompt_show(Editor*, const char *title);
 /* hide the user prompt if it is currently shown */
-void editor_prompt_hide(Editor *vis);
+void editor_prompt_hide(Editor*);
 /* return the content of the command prompt in a malloc(3)-ed string
  * which the call site has to free. */
-char *editor_prompt_get(Editor *vis);
+char *editor_prompt_get(Editor*);
 /* replace the current command line content with the one given */
-void editor_prompt_set(Editor *vis, const char *line);
+void editor_prompt_set(Editor*, const char *line);
 
 /* display a message to the user */
 void editor_info_show(Editor*, const char *msg, ...);
