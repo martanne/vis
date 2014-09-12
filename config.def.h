@@ -453,6 +453,11 @@ static KeyBinding vis_insert_mode[] = {
 	{ /* empty last element, array terminator */                               },
 };
 
+static void vis_mode_insert_leave(Mode *old) {
+	/* make sure we can recover the current state after an editing operation */
+	text_snapshot(vis->win->text);
+}
+
 static void vis_insert_idle(void) {
 	text_snapshot(vis->win->text);
 }
@@ -465,6 +470,11 @@ static KeyBinding vis_replace[] = {
 	{ { NONE(ESC)               }, switchmode,   { .i = VIS_MODE_NORMAL  } },
 	{ /* empty last element, array terminator */                           },
 };
+
+static void vis_mode_replace_leave(Mode *old) {
+	/* make sure we can recover the current state after an editing operation */
+	text_snapshot(vis->win->text);
+}
 
 static void vis_replace_input(const char *str, size_t len) {
 	editor_replace_key(vis, str, len);
@@ -603,6 +613,7 @@ static Mode vis_modes[] = {
 		.name = "INSERT",
 		.parent = &vis_modes[VIS_MODE_INSERT_REGISTER],
 		.bindings = vis_insert_mode,
+		.leave = vis_mode_insert_leave,
 		.input = vis_insert_input,
 		.idle = vis_insert_idle,
 	},
@@ -610,6 +621,7 @@ static Mode vis_modes[] = {
 		.name = "REPLACE",
 		.parent = &vis_modes[VIS_MODE_INSERT],
 		.bindings = vis_replace,
+		.leave = vis_mode_replace_leave,
 		.input = vis_replace_input,
 		.idle = vis_insert_idle,
 	},
