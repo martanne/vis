@@ -189,15 +189,16 @@ static KeyBinding vis_operators[] = {
 	{ /* empty last element, array terminator */                           },
 };
 
-static void vis_operators_enter(Mode *old) {
+static void vis_mode_operator_enter(Mode *old) {
 	vis_modes[VIS_MODE_OPERATOR].parent = &vis_modes[VIS_MODE_OPERATOR_OPTION];
 }
 
-static void vis_operators_leave(Mode *new) {
+static void vis_mode_operator_leave(Mode *new) {
 	vis_modes[VIS_MODE_OPERATOR].parent = &vis_modes[VIS_MODE_MOVE];
 }
 
-static void operator_invalid(const char *str, size_t len) {
+static void vis_mode_operator_input(const char *str, size_t len) {
+	/* invalid operator */
 	action_reset(&action);
 	switchmode_to(mode_prev);
 }
@@ -328,7 +329,7 @@ static KeyBinding vis_marks_set[] = {
 	{ /* empty last element, array terminator */                           },
 };
 
-static KeyBinding vis_normal[] = {
+static KeyBinding vis_mode_normal[] = {
 	{ { CONTROL('w'), NONE('n') }, winnew,         { .s = NULL                 } },
 	{ { CONTROL('w'), NONE('q') }, winclose,       { .s = NULL                 } },
 	{ { CONTROL('w'), NONE('s') }, winsplit,       { .b = false                } },
@@ -360,7 +361,7 @@ static KeyBinding vis_normal[] = {
 	{ /* empty last element, array terminator */                                 },
 };
 
-static KeyBinding vis_visual[] = {
+static KeyBinding vis_mode_visual[] = {
 	{ { NONE(ESC)               }, switchmode,      { .i = VIS_MODE_NORMAL   } },
 	{ { CONTROL('c')            }, switchmode,      { .i = VIS_MODE_NORMAL   } },
 	{ { NONE('v')               }, switchmode,      { .i = VIS_MODE_NORMAL   } },
@@ -375,15 +376,15 @@ static KeyBinding vis_visual[] = {
 	{ /* empty last element, array terminator */                               },
 };
 
-static void vis_visual_enter(Mode *old) {
+static void vis_mode_visual_enter(Mode *old) {
 	window_selection_start(vis->win->win);
 }
 
-static void vis_visual_leave(Mode *new) {
+static void vis_mode_visual_leave(Mode *new) {
 	window_selection_clear(vis->win->win);
 }
 
-static KeyBinding vis_readline_mode[] = {
+static KeyBinding vis_mode_readline[] = {
 	{ { NONE(ESC)               }, switchmode,      { .i = VIS_MODE_NORMAL      } },
 	{ { CONTROL('c')            }, switchmode,      { .i = VIS_MODE_NORMAL      } },
 	BACKSPACE(                     call,               f,  editor_backspace_key   ),
@@ -393,7 +394,7 @@ static KeyBinding vis_readline_mode[] = {
 	{ /* empty last element, array terminator */                                  },
 };
 
-static KeyBinding vis_prompt_mode[] = {
+static KeyBinding vis_mode_prompt[] = {
 	{ { KEY(ENTER)              }, prompt_enter,    { NULL                   } },
 	{ { CONTROL('J')            }, prompt_enter,    { NULL                   } },
 	{ { KEY(UP)                 }, prompt_up,       { NULL                   } },
@@ -405,14 +406,18 @@ static KeyBinding vis_prompt_mode[] = {
 	{ /* empty last element, array terminator */                               },
 };
 
-static void vis_prompt_leave(Mode *new) {
+static void vis_mode_prompt_input(const char *str, size_t len) {
+	editor_insert_key(vis, str, len);
+}
+
+static void vis_mode_prompt_leave(Mode *new) {
 	/* prompt mode may be left for operator mode when editing the command prompt.
 	 * for example during Ctrl+w / delete_word. don't hide the prompt in this case */
 	if (new != &vis_modes[VIS_MODE_OPERATOR])
 		editor_prompt_hide(vis);
 }
 
-static KeyBinding vis_insert_register_mode[] = {
+static KeyBinding vis_mode_insert_register[] = {
 	{ { CONTROL('R'), NONE('a') }, insert_register, { .i = REG_a             } },
 	{ { CONTROL('R'), NONE('b') }, insert_register, { .i = REG_b             } },
 	{ { CONTROL('R'), NONE('c') }, insert_register, { .i = REG_c             } },
@@ -442,7 +447,7 @@ static KeyBinding vis_insert_register_mode[] = {
 	{ /* empty last element, array terminator */                               },
 };
 
-static KeyBinding vis_insert_mode[] = {
+static KeyBinding vis_mode_insert[] = {
 	{ { CONTROL('L')            }, switchmode,      { .i = VIS_MODE_NORMAL   } },
 	{ { CONTROL('[')            }, switchmode,      { .i = VIS_MODE_NORMAL   } },
 	{ { CONTROL('I')            }, insert_tab,      { NULL                   } },
@@ -458,15 +463,15 @@ static void vis_mode_insert_leave(Mode *old) {
 	text_snapshot(vis->win->text);
 }
 
-static void vis_insert_idle(void) {
+static void vis_mode_insert_idle(void) {
 	text_snapshot(vis->win->text);
 }
 
-static void vis_insert_input(const char *str, size_t len) {
+static void vis_mode_insert_input(const char *str, size_t len) {
 	editor_insert_key(vis, str, len);
 }
 
-static KeyBinding vis_replace[] = {
+static KeyBinding vis_mode_replace[] = {
 	{ { NONE(ESC)               }, switchmode,   { .i = VIS_MODE_NORMAL  } },
 	{ /* empty last element, array terminator */                           },
 };
@@ -476,7 +481,7 @@ static void vis_mode_replace_leave(Mode *old) {
 	text_snapshot(vis->win->text);
 }
 
-static void vis_replace_input(const char *str, size_t len) {
+static void vis_mode_replace_input(const char *str, size_t len) {
 	editor_replace_key(vis, str, len);
 }
 
@@ -563,9 +568,9 @@ static Mode vis_modes[] = {
 		.name = "OPERATOR",
 		.parent = &vis_modes[VIS_MODE_MOVE],
 		.bindings = vis_operators,
-		.enter = vis_operators_enter,
-		.leave = vis_operators_leave,
-		.input = operator_invalid,
+		.enter = vis_mode_operator_enter,
+		.leave = vis_mode_operator_leave,
+		.input = vis_mode_operator_input,
 	},
 	[VIS_MODE_REGISTER] = {
 		.name = "REGISTER",
@@ -582,48 +587,48 @@ static Mode vis_modes[] = {
 	[VIS_MODE_NORMAL] = {
 		.name = "NORMAL",
 		.parent = &vis_modes[VIS_MODE_MARK_SET],
-		.bindings = vis_normal,
+		.bindings = vis_mode_normal,
 	},
 	[VIS_MODE_VISUAL] = {
 		.name = "VISUAL",
 		.parent = &vis_modes[VIS_MODE_REGISTER],
-		.bindings = vis_visual,
-		.enter = vis_visual_enter,
-		.leave = vis_visual_leave,
+		.bindings = vis_mode_visual,
+		.enter = vis_mode_visual_enter,
+		.leave = vis_mode_visual_leave,
 	},
 	[VIS_MODE_READLINE] = {
 		.name = "READLINE",
 		.parent = &vis_modes[VIS_MODE_BASIC],
-		.bindings = vis_readline_mode,
+		.bindings = vis_mode_readline,
 	},
 	[VIS_MODE_PROMPT] = {
 		.name = "PROMPT",
 		.parent = &vis_modes[VIS_MODE_READLINE],
-		.bindings = vis_prompt_mode,
-		.input = vis_insert_input,
-		.leave = vis_prompt_leave,
+		.bindings = vis_mode_prompt,
+		.input = vis_mode_prompt_input,
+		.leave = vis_mode_prompt_leave,
 	},
 	[VIS_MODE_INSERT_REGISTER] = {
 		.name = "INSERT-REGISTER",
 		.common_prefix = true,
 		.parent = &vis_modes[VIS_MODE_READLINE],
-		.bindings = vis_insert_register_mode,
+		.bindings = vis_mode_insert_register,
 	},
 	[VIS_MODE_INSERT] = {
 		.name = "INSERT",
 		.parent = &vis_modes[VIS_MODE_INSERT_REGISTER],
-		.bindings = vis_insert_mode,
+		.bindings = vis_mode_insert,
 		.leave = vis_mode_insert_leave,
-		.input = vis_insert_input,
-		.idle = vis_insert_idle,
+		.input = vis_mode_insert_input,
+		.idle = vis_mode_insert_idle,
 	},
 	[VIS_MODE_REPLACE] = {
 		.name = "REPLACE",
 		.parent = &vis_modes[VIS_MODE_INSERT],
-		.bindings = vis_replace,
+		.bindings = vis_mode_replace,
 		.leave = vis_mode_replace_leave,
-		.input = vis_replace_input,
-		.idle = vis_insert_idle,
+		.input = vis_mode_replace_input,
+		.idle = vis_mode_insert_idle,
 	},
 };
 
@@ -689,7 +694,7 @@ static KeyBinding nano_keys[] = {
 
 static Mode nano[] = {
 	{ .parent = NULL,     .bindings = basic_movement,  },
-	{ .parent = &nano[0], .bindings = nano_keys, .input = vis_insert_input, },
+	{ .parent = &nano[0], .bindings = nano_keys, .input = vis_mode_insert_input },
 };
 
 /* list of vis configurations, first entry is default. name is matched with
