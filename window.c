@@ -692,7 +692,7 @@ size_t window_backspace_key(Win *win) {
 
 size_t window_insert_key(Win *win, const char *c, size_t len) {
 	size_t pos = win->cursor.pos;
-	text_insert_raw(win->text, pos, c, len);
+	text_insert(win->text, pos, c, len);
 	if (win->cursor.line == win->bottomline && memchr(c, '\n', len))
 		window_scroll_lines_down(win, 1);
 	else
@@ -711,7 +711,7 @@ size_t window_replace_key(Win *win, const char *c, size_t len) {
 		size_t oldlen = line->cells[cursor->col].len;
 		text_delete(win->text, pos, oldlen);
 	}
-	text_insert_raw(win->text, pos, c, len);
+	text_insert(win->text, pos, c, len);
 	if (cursor->line == win->bottomline && memchr(c, '\n', len))
 		window_scroll_lines_down(win, 1);
 	else

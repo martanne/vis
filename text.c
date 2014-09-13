@@ -491,7 +491,7 @@ static void change_free(Change *c) {
  *      | |     |short|     | existing text |     | |
  *      \-+ <-- +-----+ <-- +---------------+ <-- +-/
  */
-bool text_insert_raw(Text *txt, size_t pos, const char *data, size_t len) {
+bool text_insert(Text *txt, size_t pos, const char *data, size_t len) {
 	if (pos > txt->size)
 		return false;
 	if (pos < txt->lines.pos)
@@ -542,10 +542,6 @@ bool text_insert_raw(Text *txt, size_t pos, const char *data, size_t len) {
 	cache_piece(txt, new);
 	span_swap(txt, &c->old, &c->new);
 	return true;
-}
-
-bool text_insert(Text *txt, size_t pos, const char *data) {
-	return text_insert_raw(txt, pos, data, strlen(data));
 }
 
 size_t text_undo(Text *txt) {

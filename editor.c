@@ -412,7 +412,7 @@ void editor_delete_key(Editor *ed) {
 }
 
 void editor_insert(Editor *ed, size_t pos, const char *c, size_t len) {
-	text_insert_raw(ed->win->text, pos, c, len);
+	text_insert(ed->win->text, pos, c, len);
 	editor_windows_invalidate(ed, pos, pos + len);
 }
 
@@ -512,7 +512,7 @@ void editor_prompt_hide(Editor *ed) {
 void editor_prompt_set(Editor *ed, const char *line) {
 	Text *text = ed->prompt->win->text;
 	editor_prompt_clear(ed->prompt);
-	text_insert_raw(text, 0, line, strlen(line));
+	text_insert(text, 0, line, strlen(line));
 	editor_window_draw(ed->prompt->win);
 }
 

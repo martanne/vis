@@ -983,7 +983,7 @@ static bool cmd_read(const char *argv[]) {
 		if (data == MAP_FAILED)
 			goto err;
 
-		text_insert_raw(vis->win->text, pos, data, info.st_size);
+		text_insert(vis->win->text, pos, data, info.st_size);
 		pos += info.st_size;
 	err:
 		if (fd > 2)
