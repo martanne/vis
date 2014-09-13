@@ -4,6 +4,8 @@
 #include <stdbool.h>
 #include <stddef.h>
 
+#define EPOS ((size_t)-1)         /* invalid position */
+
 typedef size_t Filepos;
 
 typedef struct {
@@ -36,7 +38,7 @@ bool text_insert_raw(Text*, size_t pos, const char *data, size_t len);
 bool text_delete(Text*, size_t pos, size_t len);
 void text_snapshot(Text*);
 /* undo/redos to the last snapshoted state. returns the position where
- * the change occured or (size_t)-1 if nothing could be undo/redo. */
+ * the change occured or EPOS if nothing could be undo/redo. */
 size_t text_undo(Text*);
 size_t text_redo(Text*);
 

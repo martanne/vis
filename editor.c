@@ -493,7 +493,7 @@ static void editor_prompt_update(Prompt *prompt) {
 
 static void editor_prompt_clear(Prompt *prompt) {
 	Text *text = prompt->win->text;
-	while (text_undo(text) != (size_t)-1);
+	while (text_undo(text) != EPOS);
 	window_cursor_to(prompt->win->win, 0);
 }
 

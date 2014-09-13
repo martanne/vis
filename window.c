@@ -84,7 +84,7 @@ static bool window_scroll_lines_down(Win *win, int n);
 static bool window_scroll_lines_up(Win *win, int n);
 
 void window_selection_clear(Win *win) {
-	win->sel.start = win->sel.end = (size_t)-1;
+	win->sel.start = win->sel.end = EPOS;
 	window_draw(win);
 	window_cursor_update(win);
 	curs_set(1);
@@ -113,11 +113,11 @@ static void window_clear(Win *win) {
 
 Filerange window_selection_get(Win *win) {
 	Filerange sel = win->sel;
-	if (sel.start == (size_t)-1) {
-		sel.end = (size_t)-1;
-	} else if (sel.end == (size_t)-1) {
-		sel.start = (size_t)-1;
-	} else if (sel.start > sel.end) {
+	if (sel.start == EPOS || sel.end == EPOS) {
+		sel.start = sel.end = EPOS;
+		return sel;
+	}
+	if (sel.start > sel.end) {
 		size_t tmp = sel.start;
 		sel.start = sel.end;
 		sel.end = tmp;
@@ -254,7 +254,7 @@ void window_cursor_getxy(Win *win, size_t *lineno, size_t *col) {
  * its changes. */
 static size_t window_cursor_update(Win *win) {
 	Cursor *cursor = &win->cursor;
-	if (win->sel.start != (size_t)-1) {
+	if (win->sel.start != EPOS) {
 		win->sel.end = cursor->pos;
 		window_draw(win);
 	}

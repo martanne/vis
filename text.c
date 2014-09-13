@@ -1087,8 +1087,8 @@ int text_search_range_forward(Text *txt, size_t pos, size_t len, Regex *r, size_
 	int ret = regexec(&r->regex, buf, nmatch, match, eflags);
 	if (!ret) {
 		for (size_t i = 0; i < nmatch; i++) {
-			pmatch[i].start = match[i].rm_so == -1 ? (size_t)-1 : pos + match[i].rm_so;
-			pmatch[i].end = match[i].rm_eo == -1 ? (size_t)-1 : pos + match[i].rm_eo;
+			pmatch[i].start = match[i].rm_so == -1 ? EPOS : pos + match[i].rm_so;
+			pmatch[i].end = match[i].rm_eo == -1 ? EPOS : pos + match[i].rm_eo;
 		}
 	}
 	free(buf);
@@ -1107,8 +1107,8 @@ int text_search_range_backward(Text *txt, size_t pos, size_t len, Regex *r, size
 	while (!regexec(&r->regex, cur, nmatch, match, eflags)) {
 		ret = 0;
 		for (size_t i = 0; i < nmatch; i++) {
-			pmatch[i].start = match[i].rm_so == -1 ? (size_t)-1 : pos + (size_t)(cur - buf) + match[i].rm_so;
-			pmatch[i].end = match[i].rm_eo == -1 ? (size_t)-1 : pos + (size_t)(cur - buf) + match[i].rm_eo;
+			pmatch[i].start = match[i].rm_so == -1 ? EPOS : pos + (size_t)(cur - buf) + match[i].rm_so;
+			pmatch[i].end = match[i].rm_eo == -1 ? EPOS : pos + (size_t)(cur - buf) + match[i].rm_eo;
 		}
 		cur += match[0].rm_eo;
 	}

@@ -621,7 +621,7 @@ static void mark_line(const Arg *arg) {
 
 static void undo(const Arg *arg) {
 	size_t pos = text_undo(vis->win->text);
-	if (pos != (size_t)-1) {
+	if (pos != EPOS) {
 		window_cursor_to(vis->win->win, pos);
 		/* redraw all windows in case some display the same file */
 		editor_draw(vis);
@@ -630,7 +630,7 @@ static void undo(const Arg *arg) {
 
 static void redo(const Arg *arg) {
 	size_t pos = text_redo(vis->win->text);
-	if (pos != (size_t)-1) {
+	if (pos != EPOS) {
 		window_cursor_to(vis->win->win, pos);
 		/* redraw all windows in case some display the same file */
 		editor_draw(vis);
@@ -804,11 +804,11 @@ static void action_do(Action *a) {
 				pos = a->movement->win(win);
 			else
 				pos = a->movement->cmd(&a->arg);
-			if (pos == (size_t)-1)
+			if (pos == EPOS)
 				break;
 		}
 
-		if (pos == (size_t)-1) {
+		if (pos == EPOS) {
 			c.range.start = start;
 			c.range.end = start;
 		} else {
@@ -832,7 +832,7 @@ static void action_do(Action *a) {
 		for (int i = 0; i < a->count; i++) {
 			r = a->textobj->range(txt, pos);
 			// TODO range_valid?
-			if (r.start == (size_t)-1 || r.end == (size_t)-1)
+			if (r.start == EPOS || r.end == EPOS)
 				break;
 			if (a->textobj->type == OUTER) {
 				r.start--;
@@ -851,7 +851,7 @@ static void action_do(Action *a) {
 		}
 	} else if (mode == &vis_modes[VIS_MODE_VISUAL]) {
 		c.range = window_selection_get(win);
-		if (c.range.start == (size_t)-1 || c.range.end == (size_t)-1)
+		if (c.range.start == EPOS || c.range.end == EPOS)
 			c.range.start = c.range.end = pos;
 	}
 
