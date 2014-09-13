@@ -145,7 +145,7 @@ static Action action_prev;  /* last operator action used by the repeat '.' key *
 /** operators */
 static void op_change(OperatorContext *c);
 static void op_yank(OperatorContext *c);
-static void op_paste(OperatorContext *c);
+static void op_put(OperatorContext *c);
 static void op_delete(OperatorContext *c);
 
 /* these can be passed as int argument to operator(&(const Arg){ .i = OP_*}) */
@@ -153,14 +153,14 @@ enum {
 	OP_DELETE,
 	OP_CHANGE,
 	OP_YANK,
-	OP_PASTE,
+	OP_PUT,
 };
 
 static Operator ops[] = {
 	[OP_DELETE] = { op_delete, false },
 	[OP_CHANGE] = { op_change, false },
 	[OP_YANK]   = { op_yank,   false },
-	[OP_PASTE]  = { op_paste,  true  },
+	[OP_PUT]    = { op_put,    true  },
 };
 
 /* these can be passed as int argument to movement(&(const Arg){ .i = MOVE_* }) */
@@ -447,7 +447,7 @@ static void op_yank(OperatorContext *c) {
 	register_put(c->reg, vis->win->text, &c->range);
 }
 
-static void op_paste(OperatorContext *c) {
+static void op_put(OperatorContext *c) {
 	size_t pos = window_cursor_get(vis->win->win);
 	if (c->reg->linewise)
 		pos = text_line_next(vis->win->text, pos);
