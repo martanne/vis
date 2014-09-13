@@ -196,6 +196,9 @@ enum {
 	MOVE_MARK_LINE,
 	MOVE_SEARCH_FORWARD,
 	MOVE_SEARCH_BACKWARD,
+	MOVE_WINDOW_LINE_TOP,
+	MOVE_WINDOW_LINE_MIDDLE,
+	MOVE_WINDOW_LINE_BOTTOM,
 };
 
 /** movements which can be used besides the one in text-motions.h and window.h */
@@ -218,6 +221,12 @@ static size_t till_left(const Arg *arg);
 static size_t line(const Arg *arg);
 /* goto to byte action.count on current line */
 static size_t column(const Arg *arg);
+/* goto the action.count-th line from top of the focused window */
+static size_t window_line_top(const Arg *arg);
+/* goto the start of middle line of the focused window */
+static size_t window_line_middle(const Arg *arg);
+/* goto the action.count-th line from bottom of the focused window */
+static size_t window_line_bottom(const Arg *arg);
 
 static Movement moves[] = {
 	[MOVE_LINE_UP]         = { .win = window_line_up                                   },
@@ -251,6 +260,9 @@ static Movement moves[] = {
 	[MOVE_MARK_LINE]       = { .cmd = mark_line_goto,       .type = LINEWISE           },
 	[MOVE_SEARCH_FORWARD]  = { .cmd = search_forward,       .type = LINEWISE           },
 	[MOVE_SEARCH_BACKWARD] = { .cmd = search_backward,      .type = LINEWISE           },
+	[MOVE_WINDOW_LINE_TOP]    = { .cmd = window_line_top,   .type = LINEWISE           },
+	[MOVE_WINDOW_LINE_MIDDLE] = { .cmd = window_line_middle,.type = LINEWISE           },
+	[MOVE_WINDOW_LINE_BOTTOM] = { .cmd = window_line_bottom,.type = LINEWISE           },
 };
 
 /* these can be passed as int argument to textobj(&(const Arg){ .i = TEXT_OBJ_* }) */
@@ -502,6 +514,18 @@ static size_t column(const Arg *arg) {
 		text_iterator_byte_next(&it, NULL);
 	action.count = 0;
 	return it.pos;
+}
+
+static size_t window_line_top(const Arg *arg) {
+	return window_line_goto(vis->win->win, action.count);
+}
+
+static size_t window_line_middle(const Arg *arg) {
+	return window_line_goto(vis->win->win, vis->win->height / 2);
+}
+
+static size_t window_line_bottom(const Arg *arg) {
+	return window_line_goto(vis->win->win, vis->win->height - action.count);
 }
 
 /** key bindings functions of type: void (*func)(const Arg*) */

@@ -33,6 +33,8 @@ size_t window_char_next(Win*);
 size_t window_char_prev(Win*);
 size_t window_line_down(Win*);
 size_t window_line_up(Win*);
+/* place the cursor at the start ot the n-th window line, counting from 1 */
+size_t window_line_goto(Win*, int n);
 
 /* get cursor position in bytes from start of the file */
 size_t window_cursor_get(Win*);

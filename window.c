@@ -749,3 +749,10 @@ void window_cursor_watch(Win *win, void (*cursor_moved)(Win*, void *), void *dat
 	win->cursor_moved = cursor_moved;
 	win->cursor_moved_data = data;
 }
+
+size_t window_line_goto(Win *win, int n) {
+	size_t pos = win->start;
+	for (Line *line = win->topline; --n > 0 && line != win->lastline; line = line->next)
+		pos += line->len;
+	return pos;
+}
