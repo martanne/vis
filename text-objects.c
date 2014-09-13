@@ -18,17 +18,12 @@
 #include "text-objects.h"
 #include "util.h"
 
-static Filerange empty = {
-	.start = -1,
-	.end = -1,
-};
-
 Filerange text_object_word(Text *txt, size_t pos) {
 	Filerange r;
 	char c, prev = '0', next = '0';
 	Iterator it = text_iterator_get(txt, pos);
 	if (!text_iterator_byte_get(&it, &c))
-		return empty;
+		return text_range_empty();
 	if (text_iterator_byte_prev(&it, &prev))
 		text_iterator_byte_next(&it, NULL);
 	text_iterator_byte_next(&it, &next);
@@ -86,6 +81,7 @@ Filerange text_object_paragraph(Text *txt, size_t pos) {
 static Filerange text_object_bracket(Text *txt, size_t pos, char type) {
 	char c, open, close;
 	int opened = 1, closed = 1;
+	Filerange r = text_range_empty();
 
 	switch (type) {
 	case '(':  case ')': open = '(';  close = ')';  break;
@@ -95,10 +91,9 @@ static Filerange text_object_bracket(Text *txt, size_t pos, char type) {
 	case '"':            open = '"';  close = '"';  break;
 	case '`':            open = '`';  close = '`';  break;
 	case '\'':           open = '\''; close = '\''; break;
-	default: return empty;
+	default: return r;
 	}
 
-	Filerange r = empty;
 	Iterator it = text_iterator_get(txt, pos);
 
 	if (open == close && text_iterator_byte_get(&it, &c) && (c == '"' || c == '`' || c == '\'')) {
@@ -129,8 +124,8 @@ static Filerange text_object_bracket(Text *txt, size_t pos, char type) {
 		text_iterator_byte_next(&it, NULL);
 	}
 
-	if (r.start == (size_t)-1 || r.end == (size_t)-1 || r.start > r.end)
-		return empty;
+	if (!text_range_valid(&r))
+		return text_range_empty();
 	return r;
 }
 

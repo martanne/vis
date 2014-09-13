@@ -84,7 +84,7 @@ static bool window_scroll_lines_down(Win *win, int n);
 static bool window_scroll_lines_up(Win *win, int n);
 
 void window_selection_clear(Win *win) {
-	win->sel.start = win->sel.end = EPOS;
+	win->sel = text_range_empty();
 	window_draw(win);
 	window_cursor_update(win);
 	curs_set(1);
@@ -113,15 +113,13 @@ static void window_clear(Win *win) {
 
 Filerange window_selection_get(Win *win) {
 	Filerange sel = win->sel;
-	if (sel.start == EPOS || sel.end == EPOS) {
-		sel.start = sel.end = EPOS;
-		return sel;
-	}
 	if (sel.start > sel.end) {
 		size_t tmp = sel.start;
 		sel.start = sel.end;
 		sel.end = tmp;
 	}
+	if (!text_range_valid(&sel))
+		return text_range_empty();
 	sel.end = text_char_next(win->text, sel.end);
 	return sel;
 }

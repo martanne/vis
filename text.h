@@ -12,6 +12,10 @@ typedef struct {
 	size_t start, end;        /* range in bytes from start of the file */
 } Filerange;
 
+bool text_range_valid(Filerange*);
+Filerange text_range_empty(void);
+Filerange text_range_union(Filerange*, Filerange*);
+
 typedef struct Text Text;
 typedef struct Piece Piece;
 

@@ -831,16 +831,15 @@ static void action_do(Action *a) {
 		c.range.start = c.range.end = pos;
 		for (int i = 0; i < a->count; i++) {
 			r = a->textobj->range(txt, pos);
-			// TODO range_valid?
-			if (r.start == EPOS || r.end == EPOS)
+			if (!text_range_valid(&r))
 				break;
 			if (a->textobj->type == OUTER) {
 				r.start--;
 				r.end++;
 			}
-			// TODO c.range = range_union(&c.range, &r);
-			c.range.start = MIN(c.range.start, r.start);
-			c.range.end = MAX(c.range.end, r.end);
+
+			c.range = text_range_union(&c.range, &r);
+
 			if (i < a->count - 1) {
 				if (a->textobj == &textobjs[TEXT_OBJ_LINE_UP]) {
 					pos = c.range.start - 1;
@@ -851,7 +850,7 @@ static void action_do(Action *a) {
 		}
 	} else if (mode == &vis_modes[VIS_MODE_VISUAL]) {
 		c.range = window_selection_get(win);
-		if (c.range.start == EPOS || c.range.end == EPOS)
+		if (!text_range_valid(&c.range))
 			c.range.start = c.range.end = pos;
 	}
 
