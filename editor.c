@@ -66,7 +66,7 @@ static void editor_windows_arrange_horizontal(Editor *ed) {
 	int n = 0, x = 0, y = 0;
 	for (EditorWin *win = ed->windows; win; win = win->next)
 		n++;
-	int height = ed->height / n;
+	int height = ed->height / MAX(1, n);
 	for (EditorWin *win = ed->windows; win; win = win->next) {
 		editor_window_resize(win, ed->width, win->next ? height : ed->height - y);
 		editor_window_move(win, x, y);
@@ -78,7 +78,7 @@ static void editor_windows_arrange_vertical(Editor *ed) {
 	int n = 0, x = 0, y = 0;
 	for (EditorWin *win = ed->windows; win; win = win->next)
 		n++;
-	int width = ed->width / n - 1;
+	int width = (ed->width / MAX(1, n)) - 1;
 	for (EditorWin *win = ed->windows; win; win = win->next) {
 		editor_window_resize(win, win->next ? width : ed->width - x, ed->height);
 		editor_window_move(win, x, y);
@@ -126,6 +126,8 @@ static void editor_window_split_internal(Editor *ed, const char *filename) {
 	}
 	if (sel) {
 		EditorWin *win = editor_window_new_text(ed, sel->text);
+		if (!win)
+			return;
 		win->text = sel->text;
 		window_syntax_set(win->win, window_syntax_get(sel->win));
 		window_cursor_to(win->win, window_cursor_get(sel->win));

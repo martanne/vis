@@ -106,7 +106,7 @@ static void window_clear(Win *win) {
 			prev->next = line;
 		prev = line;
 	}
-	win->bottomline = prev;
+	win->bottomline = prev ? prev : win->topline;
 	win->line = win->topline;
 	win->col = 0;
 }
@@ -338,11 +338,13 @@ void window_draw(Win *win) {
 	Char c;
 	/* current selection */
 	Filerange sel = window_selection_get(win);
+	/* syntax definition to use */
+	Syntax *syntax = win->syntax;
 	/* matched tokens for each syntax rule */
-	regmatch_t match[SYNTAX_RULES][1];
-	if (win->syntax) {
-		for (int i = 0; i < LENGTH(win->syntax->rules); i++) {
-			SyntaxRule *rule = &win->syntax->rules[i];
+	regmatch_t match[syntax ? LENGTH(syntax->rules) : 1][1];
+	if (syntax) {
+		for (int i = 0; i < LENGTH(syntax->rules); i++) {
+			SyntaxRule *rule = &syntax->rules[i];
 			if (!rule->rule)
 				break;
 			if (regexec(&rule->regex, cur, 1, match[i], 0) ||
@@ -357,10 +359,10 @@ void window_draw(Win *win) {
 
 		int attrs = COLOR_PAIR(0) | A_NORMAL;
 
-		if (win->syntax) {
+		if (syntax) {
 			size_t off = cur - text; /* number of already processed bytes */
-			for (int i = 0; i < LENGTH(win->syntax->rules); i++) {
-				SyntaxRule *rule = &win->syntax->rules[i];
+			for (int i = 0; i < LENGTH(syntax->rules); i++) {
+				SyntaxRule *rule = &syntax->rules[i];
 				if (!rule->rule)
 					break;
 				if (match[i][0].rm_so == -1)

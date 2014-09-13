@@ -499,6 +499,8 @@ bool text_insert(Text *txt, size_t pos, const char *data, size_t len) {
 
 	Location loc = piece_get_intern(txt, pos);
 	Piece *p = loc.piece;
+	if (!p)
+		return false;
 	size_t off = loc.off;
 	if (cache_insert(txt, p, off, data, len))
 		return true;
@@ -703,6 +705,8 @@ bool text_delete(Text *txt, size_t pos, size_t len) {
 
 	Location loc = piece_get_intern(txt, pos);
 	Piece *p = loc.piece;
+	if (!p)
+		return false;
 	size_t off = loc.off;
 	if (cache_delete(txt, p, off, len))
 		return true;
@@ -724,6 +728,8 @@ bool text_delete(Text *txt, size_t pos, size_t len) {
 		cur = p->len - off;
 		start = p;
 		before = piece_alloc(txt);
+		if (!before)
+			return false;
 	}
 	/* skip all pieces which fall into deletion range */
 	while (cur < len) {
@@ -740,6 +746,8 @@ bool text_delete(Text *txt, size_t pos, size_t len) {
 		midway_end = true;
 		end = p;
 		after = piece_alloc(txt);
+		if (!after)
+			return false;
 		piece_init(after, before, p->next, p->data + p->len - (cur - len), cur - len);
 	}
 
