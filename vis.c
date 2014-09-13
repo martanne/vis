@@ -498,7 +498,7 @@ static size_t till_left(const Arg *arg) {
 }
 
 static size_t line(const Arg *arg) {
-	if (action.count == 0)
+	if (action.count == 1)
 		return text_size(vis->win->text);
 	size_t pos = text_pos_by_lineno(vis->win->text, action.count);
 	action.count = 0;
