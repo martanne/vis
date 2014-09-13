@@ -515,7 +515,8 @@ static void replace(const Arg *arg) {
 	Key k = getkey();
 	if (!k.str[0])
 		return;
-	editor_replace_key(vis, k.str, strlen(k.str));
+	editor_delete_key(vis);
+	editor_insert_key(vis, k.str, strlen(k.str));
 }
 
 static void count(const Arg *arg) {
