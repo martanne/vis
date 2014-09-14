@@ -549,7 +549,7 @@ bool text_insert(Text *txt, size_t pos, const char *data, size_t len) {
 }
 
 size_t text_undo(Text *txt) {
-	size_t pos = -1;
+	size_t pos = EPOS;
 	/* taking a snapshot makes sure that txt->current_action is reset */
 	text_snapshot(txt);
 	Action *a = action_pop(&txt->undo);
@@ -566,7 +566,7 @@ size_t text_undo(Text *txt) {
 }
 
 size_t text_redo(Text *txt) {
-	size_t pos = -1;
+	size_t pos = EPOS;
 	Action *a = action_pop(&txt->redo);
 	if (!a)
 		return pos;
@@ -1032,7 +1032,7 @@ void text_mark_set(Text *txt, Mark mark, size_t pos) {
 
 size_t text_mark_get(Text *txt, Mark mark) {
 	if (mark < 0 || mark >= LENGTH(txt->marks))
-		return -1;
+		return EPOS;
 	const char *pos = txt->marks[mark];
 	size_t cur = 0;
 	for (Piece *p = txt->begin.next; p->next; p = p->next) {
@@ -1041,7 +1041,7 @@ size_t text_mark_get(Text *txt, Mark mark) {
 		cur += p->len;
 	}
 
-	return -1;
+	return EPOS;
 }
 
 void text_mark_clear(Text *txt, Mark mark) {
