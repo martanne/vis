@@ -377,6 +377,8 @@ err:
 }
 
 void editor_free(Editor *ed) {
+	if (!ed)
+		return;
 	while (ed->windows)
 		editor_window_close(ed->windows);
 	editor_prompt_free(ed->prompt);
