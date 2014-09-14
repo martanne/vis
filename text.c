@@ -591,19 +591,21 @@ size_t text_redo(Text *txt) {
 	return pos;
 }
 
-/* save current content to given filename. the data is first saved to
- * a file called `.filename.tmp` and then atomically moved to its final
- * (possibly alredy existing) destination using rename(2).
+/* save current content to given filename. the data is first saved to `filename~`
+ * and then atomically moved to its final (possibly alredy existing) destination
+ * using rename(2).
  */
 int text_save(Text *txt, const char *filename) {
 	size_t len = strlen(filename) + 10;
-	char tmpname[len];
-	snprintf(tmpname, len, ".%s.tmp", filename);
+	char *tmpname = malloc(len);
+	if (!tmpname)
+		return -1;
+	snprintf(tmpname, len, "%s~", filename);
 	// TODO file ownership, permissions etc
 	/* O_RDWR is needed because otherwise we can't map with MAP_SHARED */
 	int fd = open(tmpname, O_CREAT|O_RDWR|O_TRUNC, S_IRUSR|S_IWUSR);
 	if (fd == -1)
-		return -1;
+		goto err;
 	if (ftruncate(fd, txt->size) == -1)
 		goto err;
 	if (txt->size > 0) {
@@ -622,16 +624,19 @@ int text_save(Text *txt, const char *filename) {
 			goto err;
 	}
 	if (close(fd) == -1)
-		return -1;
+		goto err;
 	if (rename(tmpname, filename) == -1)
-		return -1;
+		goto err;
 	txt->saved_action = txt->undo;
 	text_snapshot(txt);
 	if (!txt->filename)
 		text_filename_set(txt, filename);
+	free(tmpname);
 	return 0;
 err:
-	close(fd);
+	if (fd != -1)
+		close(fd);
+	free(tmpname);
 	return -1;
 }
 
