@@ -61,13 +61,15 @@ static Command cmds[] = {
 };
 
 /* draw a statubar, do whatever you want with win->statuswin curses window */
-static void vis_statusbar(EditorWin *win) {
+static void statusbar(EditorWin *win) {
 	size_t line, col;
 	bool focused = vis->win == win || vis->prompt->editor == win;
 	window_cursor_getxy(win->win, &line, &col);
 	wattrset(win->statuswin, focused ? A_REVERSE|A_BOLD : A_REVERSE);
 	mvwhline(win->statuswin, 0, 0, ' ', win->width);
-	mvwprintw(win->statuswin, 0, 0, "%s %s", text_filename_get(win->text),
+	mvwprintw(win->statuswin, 0, 0, "%s %s %s",
+	          mode->name && mode->name[0] == '-' ? mode->name : "",
+	          text_filename_get(win->text),
 	          text_modified(win->text) ? "[+]" : "");
 	char buf[win->width + 1];
 	int len = snprintf(buf, win->width, "%d, %d", line, col);
@@ -600,7 +602,7 @@ static Mode vis_modes[] = {
 		.bindings = vis_mode_normal,
 	},
 	[VIS_MODE_VISUAL] = {
-		.name = "VISUAL",
+		.name = "--VISUAL--",
 		.parent = &vis_modes[VIS_MODE_REGISTER],
 		.bindings = vis_mode_visual,
 		.enter = vis_mode_visual_enter,
@@ -625,7 +627,7 @@ static Mode vis_modes[] = {
 		.bindings = vis_mode_insert_register,
 	},
 	[VIS_MODE_INSERT] = {
-		.name = "INSERT",
+		.name = "--INSERT--",
 		.parent = &vis_modes[VIS_MODE_INSERT_REGISTER],
 		.bindings = vis_mode_insert,
 		.leave = vis_mode_insert_leave,
@@ -633,7 +635,7 @@ static Mode vis_modes[] = {
 		.idle = vis_mode_insert_idle,
 	},
 	[VIS_MODE_REPLACE] = {
-		.name = "REPLACE",
+		.name = "--REPLACE--",
 		.parent = &vis_modes[VIS_MODE_INSERT],
 		.bindings = vis_mode_replace,
 		.leave = vis_mode_replace_leave,
@@ -714,16 +716,19 @@ static Config editors[] = {
 	{
 		.name = "vis",
 		.mode = &vis_modes[VIS_MODE_NORMAL],
-		.statusbar = vis_statusbar,
+		.statusbar = statusbar,
 		.keypress = vis_keypress,
 	},
 	{
 		.name = "nano",
 		.mode = &nano[1],
-		.statusbar = vis_statusbar,
+		.statusbar = statusbar,
 		.keypress = vis_keypress,
 	},
 };
+
+/* default editor configuration to use */
+static Config *config = &editors[0];
 
 /* Color definitions, by default the i-th color is used for the i-th syntax
  * rule below. A color value of -1 specifies the default terminal color.
