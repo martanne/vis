@@ -426,9 +426,20 @@ static Location piece_get_intern(Text *txt, size_t pos) {
 }
 
 /* similiar to piece_get_intern but usable as a public API. returns the piece
- * holding the text at byte offset pos. never returns a sentinel piece. */
+ * holding the text at byte offset pos. never returns a sentinel piece.
+ * it pos is the end of file (== text_size()) and the file is not empty then
+ * the last piece holding data is returned.
+ */
 static Location piece_get_extern(Text *txt, size_t pos) {
 	size_t cur = 0;
+
+	if (pos > 0 && pos == txt->size) {
+		Piece *p = txt->begin.next;
+		while (p->next->next)
+			p = p->next;
+		return (Location){ .piece = p, .off = p->len };
+	}
+
 	for (Piece *p = txt->begin.next; p->next; p = p->next) {
 		if (cur <= pos && pos < cur + p->len)
 			return (Location){ .piece = p, .off = pos - cur };
@@ -833,9 +844,14 @@ Iterator text_iterator_get(Text *txt, size_t pos) {
 }
 
 bool text_iterator_byte_get(Iterator *it, char *b) {
-	if (text_iterator_valid(it) && it->start <= it->text && it->text < it->end) {
-		*b = *it->text;
-		return true;
+	if (text_iterator_valid(it)) {
+		if (it->start <= it->text && it->text < it->end) {
+			*b = *it->text;
+			return true;
+		} else if (it->pos == it->piece->text->size) { /* EOF */
+			*b = '\0';
+			return true;
+		}
 	}
 	return false;
 }
@@ -857,7 +873,14 @@ bool text_iterator_byte_next(Iterator *it, char *b) {
 	if (!text_iterator_valid(it))
 		return false;
 	it->text++;
-	while (it->text == it->end) {
+	/* special case for advancement to EOF */
+	if (it->text == it->end && !it->piece->next->text) {
+		it->pos++;
+		if (b)
+			*b = '\0';
+		return true;
+	}
+	while (it->text >= it->end) {
 		if (!text_iterator_next(it))
 			return false;
 		it->text = it->start;

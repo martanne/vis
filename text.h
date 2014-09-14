@@ -56,9 +56,14 @@ bool text_iterator_valid(const Iterator*);
 bool text_iterator_next(Iterator*);
 bool text_iterator_prev(Iterator*);
 
+/* get byte at current iterator position, if this is at EOF a NUL
+ * byte (which is not actually part of the file) is read. */
 bool text_iterator_byte_get(Iterator*, char *b);
-bool text_iterator_byte_next(Iterator*, char *b);
+/* advance iterator by one byte and get byte at new position. */
 bool text_iterator_byte_prev(Iterator*, char *b);
+/* if the new position is at EOF a NUL byte (which is not actually
+ * part of the file) is read. */
+bool text_iterator_byte_next(Iterator*, char *b);
 
 bool text_iterator_char_next(Iterator*, char *c);
 bool text_iterator_char_prev(Iterator*, char *c);
