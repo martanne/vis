@@ -381,7 +381,8 @@ void window_draw(Win *win) {
 
 				if (text + match[i][0].rm_so <= cur && cur < text + match[i][0].rm_eo) {
 					/* within matched expression */
-					attrs = rule->color.attr;
+					attrs = rule->color->attr;
+					break; /* first match wins */
 				}
 			}
 		}

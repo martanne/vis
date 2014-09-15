@@ -200,20 +200,20 @@ static void editor_windows_invalidate(Editor *ed, size_t start, size_t end) {
 bool editor_syntax_load(Editor *ed, Syntax *syntaxes, Color *colors) {
 	bool success = true;
 	ed->syntaxes = syntaxes;
+
+	for (Color *color = colors; color && color->fg; color++) {
+		if (color->attr == 0)
+			color->attr = A_NORMAL;
+		color->attr |= COLOR_PAIR(editor_color_get(color->fg, color->bg));
+	}
+
 	for (Syntax *syn = syntaxes; syn && syn->name; syn++) {
 		if (regcomp(&syn->file_regex, syn->file, REG_EXTENDED|REG_NOSUB|REG_ICASE|REG_NEWLINE))
 			success = false;
-		Color *color = colors;
 		for (int j = 0; j < LENGTH(syn->rules); j++) {
 			SyntaxRule *rule = &syn->rules[j];
 			if (!rule->rule)
 				break;
-			if (rule->color.fg == 0 && color && color->fg != 0)
-				rule->color = *color++;
-			if (rule->color.attr == 0)
-				rule->color.attr = A_NORMAL;
-			if (rule->color.fg != 0)
-				rule->color.attr |= COLOR_PAIR(editor_color_get(rule->color.fg, rule->color.bg));
 			if (regcomp(&rule->regex, rule->rule, REG_EXTENDED|rule->cflags))
 				success = false;
 		}

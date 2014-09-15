@@ -119,9 +119,7 @@ void editor_delete(Editor*, size_t pos, size_t len);
 /* load a set of syntax highlighting definitions which will be associated
  * to the underlying window based on the file type loaded.
  *
- * both *syntaxes and *colors must point to a NULL terminated array.
- * it the i-th syntax definition does not specifiy a fore ground color
- * then the i-th entry of the color array will be used instead
+ * both *syntaxes and *colors must point to a NULL terminated arrays.
  */
 bool editor_syntax_load(Editor*, Syntax *syntaxes, Color *colors);
 void editor_syntax_unload(Editor*);

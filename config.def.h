@@ -730,9 +730,26 @@ static Config editors[] = {
 /* default editor configuration to use */
 static Config *config = &editors[0];
 
-/* Color definitions, by default the i-th color is used for the i-th syntax
- * rule below. A color value of -1 specifies the default terminal color.
- */
+/* Color definitions for use in the sytax highlighting rules below. A fore
+ * or background color of -1 specifies the default terminal color. */
+enum {
+	COLOR_SYNTAX0,
+	COLOR_SYNTAX1,
+	COLOR_SYNTAX2,
+	COLOR_SYNTAX3,
+	COLOR_SYNTAX4,
+	COLOR_SYNTAX5,
+	COLOR_SYNTAX6,
+	COLOR_SYNTAX7,
+	COLOR_KEYWORD      = COLOR_SYNTAX1,
+	COLOR_DATATYPE     = COLOR_SYNTAX2,
+	COLOR_CONTROL      = COLOR_SYNTAX3,
+	COLOR_PREPROCESSOR = COLOR_SYNTAX4,
+	COLOR_BRACKETS     = COLOR_SYNTAX5,
+	COLOR_STRING       = COLOR_SYNTAX6,
+	COLOR_COMMENT      = COLOR_SYNTAX7,
+};
+
 static Color colors[] = {
 	{ .fg = COLOR_RED,     .bg = -1, .attr = A_BOLD },
 	{ .fg = COLOR_GREEN,   .bg = -1, .attr = A_BOLD },
@@ -742,19 +759,12 @@ static Color colors[] = {
 	{ .fg = COLOR_BLUE,    .bg = -1, .attr = A_BOLD },
 	{ .fg = COLOR_RED,     .bg = -1, .attr = A_NORMAL },
 	{ .fg = COLOR_BLUE,    .bg = -1, .attr = A_NORMAL },
-	{ .fg = COLOR_BLUE,    .bg = -1, .attr = A_NORMAL },
 	{ /* empty last element, array terminator */ }
 };
 
-/* Syntax color definition, you can define up to SYNTAX_REGEX_RULES
+/* Syntax color definition, you can define up to TODO SYNTAX_REGEX_RULES
  * number of regex rules per file type. Each rule is requires a regular
- * expression and corresponding compilation flags. Optionally a color in
- * the form
- *
- *   { .fg = COLOR_YELLOW, .bg = -1, .attr = A_BOLD }
- *
- * can be specified. If such a color definition is missing the i-th element
- * of the colors array above is used instead.
+ * expression and corresponding compilation flags as well as a color.
  *
  * The array of syntax definition must be terminated with an empty element.
  */
@@ -763,40 +773,48 @@ static Color colors[] = {
 // #define B "^| |\t|\\(|\\)|\\[|\\]|\\{|\\}|\\||$
 
 // changes wrt sandy #precoressor: #   idfdef, #include <file.h> between brackets
+/* these rules are applied top to bottom, first match wins. Therefore more 'greedy'
+ * rules such as for comments should be the first entries */
 static Syntax syntaxes[] = {{
 	.name = "c",
 	.file = "\\.(c(pp|xx)?|h(pp|xx)?|cc)$",
 	.rules = {{
-		"$^",
+		"(/\\*([^*]|\\*[^/])*\\*/|/\\*([^*]|\\*[^/])*$|^([^/]|/[^*])*\\*/)",
+		0,
+		&colors[COLOR_COMMENT],
+	},{
+		"(//.*)",
 		REG_NEWLINE,
+		&colors[COLOR_COMMENT],
+	},{
+		"(\"(\\\\.|[^\"])*\")",
+		//"([\"<](\\\\.|[^ \">])*[\">])",
+		REG_NEWLINE,
+		&colors[COLOR_STRING],
 	},{
 		B"(for|if|while|do|else|case|default|switch|try|throw|catch|operator|new|delete)"B,
 		REG_NEWLINE,
+		&colors[COLOR_KEYWORD],
 	},{
 		B"(float|double|bool|char|int|short|long|sizeof|enum|void|static|const|struct|union|"
 		"typedef|extern|(un)?signed|inline|((s?size)|((u_?)?int(8|16|32|64|ptr)))_t|class|"
 		"namespace|template|public|protected|private|typename|this|friend|virtual|using|"
 		"mutable|volatile|register|explicit)"B,
 		REG_NEWLINE,
+		&colors[COLOR_DATATYPE],
 	},{
 		B"(goto|continue|break|return)"B,
 		REG_NEWLINE,
+		&colors[COLOR_CONTROL],
 	},{
 		"(^#[\\t ]*(define|include(_next)?|(un|ifn?)def|endif|el(if|se)|if|warning|error|pragma))|"
 		B"[A-Z_][0-9A-Z_]+"B"",
 		REG_NEWLINE,
+		&colors[COLOR_PREPROCESSOR],
 	},{
 		"(\\(|\\)|\\{|\\}|\\[|\\])",
 		REG_NEWLINE,
-	},{
-		"(\"(\\\\.|[^\"])*\")",
-		//"([\"<](\\\\.|[^ \">])*[\">])",
-		REG_NEWLINE,
-	},{
-		"(//.*)",
-		REG_NEWLINE,
-	},{
-		"(/\\*([^*]|\\*[^/])*\\*/|/\\*([^*]|\\*[^/])*$|^([^/]|/[^*])*\\*/)",
+		&colors[COLOR_BRACKETS],
 	}},
 },{
 	/* empty last element, array terminator */
