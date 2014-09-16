@@ -21,6 +21,7 @@
 #include <signal.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <limits.h>
 #include <sys/select.h>
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -41,7 +42,7 @@ int ESCDELAY;
 
 typedef union {
 	bool b;
-	size_t i;
+	int i;
 	const char *s;
 	size_t (*m)(Win*);  /* cursor movement based on window content */
 	void (*f)(Editor*); /* generic editor commands */
@@ -162,6 +163,9 @@ static Operator ops[] = {
 	[OP_YANK]   = { op_yank,   false },
 	[OP_PUT]    = { op_put,    true  },
 };
+
+#define PAGE      INT_MAX
+#define PAGE_HALF (INT_MAX-1)
 
 /* these can be passed as int argument to movement(&(const Arg){ .i = MOVE_* }) */
 enum {
@@ -384,9 +388,12 @@ static void prompt_up(const Arg *arg);
 static void prompt_down(const Arg *arg);
 /* blocks to read 3 consecutive digits and inserts the corresponding byte value */
 static void insert_verbatim(const Arg *arg);
-/* cursor movement based on the current window content as indicated by arg->m
- * which should point to a function from window.h */
-static void cursor(const Arg *arg);
+/* scroll window content according to arg->i which can be either PAGE, PAGE_HALF,
+ * or an arbitrary number of lines. a multiplier overrides what is given in arg->i.
+ * negative values scroll back, positive forward. */
+static void wscroll(const Arg *arg);
+/* similar to scroll, but do only move window content not cursor position */
+static void wslide(const Arg *arg);
 /* call editor function as indicated by arg->f */
 static void call(const Arg *arg);
 /* quit editor, discard all changes */
@@ -734,8 +741,33 @@ static void winsplit(const Arg *arg) {
 		editor_window_split(vis, NULL);
 }
 
-static void cursor(const Arg *arg) {
-	arg->m(vis->win->win);
+static int argi2lines(const Arg *arg) {
+	switch (arg->i) {
+	case -PAGE:
+	case +PAGE:
+		return vis->win->height-1;
+	case -PAGE_HALF:
+	case +PAGE_HALF:
+		return vis->win->height/2;
+	default:
+		if (action.count > 0)
+			return action.count;
+		return arg->i < 0 ? -arg->i : arg->i;
+	}
+}
+
+static void wscroll(const Arg *arg) {
+	if (arg->i >= 0)
+		window_scroll_down(vis->win->win, argi2lines(arg));
+	else
+		window_scroll_up(vis->win->win, argi2lines(arg));
+}
+
+static void wslide(const Arg *arg) {
+	if (arg->i >= 0)
+		window_slide_down(vis->win->win, argi2lines(arg));
+	else
+		window_slide_up(vis->win->win, argi2lines(arg));
 }
 
 static void call(const Arg *arg) {

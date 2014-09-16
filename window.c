@@ -619,52 +619,50 @@ static bool window_viewport_up(Win *win, int n) {
 
 size_t window_slide_up(Win *win, int lines) {
 	Cursor *cursor = &win->cursor;
-	if (window_viewport_up(win, lines)) {
-		if (cursor->line == win->lastline)
-			window_cursor_set(win, win->lastline, cursor->col);
-		else
-			window_cursor_to(win, cursor->pos);
-	} else {
-		window_cursor_to(win, 0);
-	}
-	return cursor->pos;
-}
-
-size_t window_slide_down(Win *win, int lines) {
-	Cursor *cursor = &win->cursor;
 	if (window_viewport_down(win, lines)) {
 		if (cursor->line == win->topline)
 			window_cursor_set(win, win->topline, cursor->col);
 		else
 			window_cursor_to(win, cursor->pos);
 	} else {
-		window_cursor_to(win, text_size(win->text));
+		window_line_down(win);
+	}
+	return cursor->pos;
+}
+
+size_t window_slide_down(Win *win, int lines) {
+	Cursor *cursor = &win->cursor;
+	if (window_viewport_up(win, lines)) {
+		if (cursor->line == win->lastline)
+			window_cursor_set(win, win->lastline, cursor->col);
+		else
+			window_cursor_to(win, cursor->pos);
+	} else {
+		window_line_up(win);
 	}
 	return cursor->pos;
 }
 
 size_t window_scroll_up(Win *win, int lines) {
-	if (window_viewport_up(win, lines))
-		window_cursor_set(win, win->topline, win->cursor.col);
-	else
+	Cursor *cursor = &win->cursor;
+	if (window_viewport_up(win, lines)) {
+		Line *line = cursor->line < win->lastline ? cursor->line : win->lastline;
+		window_cursor_set(win, line, win->cursor.col);
+	} else {
 		window_cursor_to(win, 0);
-	return win->cursor.pos;
+	}
+	return cursor->pos;
 }
 
 size_t window_scroll_down(Win *win, int lines) {
-	if (window_viewport_down(win, lines))
-		window_cursor_set(win, win->lastline, win->cursor.col);
-	else
+	Cursor *cursor = &win->cursor;
+	if (window_viewport_down(win, lines)) {
+		Line *line = cursor->line > win->topline ? cursor->line : win->topline;
+		window_cursor_set(win, line, cursor->col);
+	} else {
 		window_cursor_to(win, text_size(win->text));
-	return win->cursor.pos;
-}
-
-size_t window_page_up(Win *win) {
-	return window_scroll_up(win, win->height);
-}
-
-size_t window_page_down(Win *win) {
-	return window_scroll_down(win, win->height);
+	}
+	return cursor->pos;
 }
 
 size_t window_line_up(Win *win) {

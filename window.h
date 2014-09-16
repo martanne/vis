@@ -27,8 +27,6 @@ void window_update(Win*);
 
 /* cursor movements which also update selection if one is active.
  * they return new cursor postion */
-size_t window_page_down(Win*);
-size_t window_page_up(Win*);
 size_t window_char_next(Win*);
 size_t window_char_prev(Win*);
 size_t window_line_down(Win*);
