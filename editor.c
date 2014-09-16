@@ -214,7 +214,10 @@ bool editor_syntax_load(Editor *ed, Syntax *syntaxes, Color *colors) {
 			SyntaxRule *rule = &syn->rules[j];
 			if (!rule->rule)
 				break;
-			if (regcomp(&rule->regex, rule->rule, REG_EXTENDED|rule->cflags))
+			int cflags = REG_EXTENDED;
+			if (!rule->multiline)
+				cflags |= REG_NEWLINE;
+			if (regcomp(&rule->regex, rule->rule, cflags))
 				success = false;
 		}
 	}

@@ -742,24 +742,28 @@ enum {
 	COLOR_SYNTAX6,
 	COLOR_SYNTAX7,
 	COLOR_KEYWORD      = COLOR_SYNTAX1,
+	COLOR_CONSTANTS    = COLOR_SYNTAX1,
 	COLOR_DATATYPE     = COLOR_SYNTAX2,
 	COLOR_CONTROL      = COLOR_SYNTAX3,
 	COLOR_PREPROCESSOR = COLOR_SYNTAX4,
+	COLOR_KEYWORD2     = COLOR_SYNTAX4,
 	COLOR_BRACKETS     = COLOR_SYNTAX5,
 	COLOR_STRING       = COLOR_SYNTAX6,
+	COLOR_VARIABLE     = COLOR_SYNTAX6,
+	COLOR_TARGET       = COLOR_SYNTAX5,
 	COLOR_COMMENT      = COLOR_SYNTAX7,
 };
 
 static Color colors[] = {
-	{ .fg = COLOR_RED,     .bg = -1, .attr = A_BOLD },
-	{ .fg = COLOR_GREEN,   .bg = -1, .attr = A_BOLD },
-	{ .fg = COLOR_GREEN,   .bg = -1, .attr = A_NORMAL },
-	{ .fg = COLOR_MAGENTA, .bg = -1, .attr = A_BOLD },
-	{ .fg = COLOR_MAGENTA, .bg = -1, .attr = A_NORMAL },
-	{ .fg = COLOR_BLUE,    .bg = -1, .attr = A_BOLD },
-	{ .fg = COLOR_RED,     .bg = -1, .attr = A_NORMAL },
-	{ .fg = COLOR_BLUE,    .bg = -1, .attr = A_NORMAL },
-	{ /* empty last element, array terminator */ }
+	[COLOR_SYNTAX0] = { .fg = COLOR_RED,     .bg = -1, .attr = A_BOLD   },
+	[COLOR_SYNTAX1] = { .fg = COLOR_GREEN,   .bg = -1, .attr = A_BOLD   },
+	[COLOR_SYNTAX2] = { .fg = COLOR_GREEN,   .bg = -1, .attr = A_NORMAL },
+	[COLOR_SYNTAX3] = { .fg = COLOR_MAGENTA, .bg = -1, .attr = A_BOLD   },
+	[COLOR_SYNTAX4] = { .fg = COLOR_MAGENTA, .bg = -1, .attr = A_NORMAL },
+	[COLOR_SYNTAX5] = { .fg = COLOR_BLUE,    .bg = -1, .attr = A_BOLD   },
+	[COLOR_SYNTAX6] = { .fg = COLOR_RED,     .bg = -1, .attr = A_NORMAL },
+	[COLOR_SYNTAX7] = { .fg = COLOR_BLUE,    .bg = -1, .attr = A_NORMAL },
+	{ /* empty last element, array terminator */                        }
 };
 
 /* Syntax color definition, you can define up to TODO SYNTAX_REGEX_RULES
@@ -772,50 +776,202 @@ static Color colors[] = {
 /* Use this if \b is not in your libc's regex implementation */
 // #define B "^| |\t|\\(|\\)|\\[|\\]|\\{|\\}|\\||$
 
-// changes wrt sandy #precoressor: #   idfdef, #include <file.h> between brackets
 /* these rules are applied top to bottom, first match wins. Therefore more 'greedy'
- * rules such as for comments should be the first entries */
+ * rules such as for comments should be the first entries
+ *
+ * These rules where initially imported from the sandy editor, written by
+ * Rafael Garcia   <rafael.garcia.gallego@gmail.com> */
 static Syntax syntaxes[] = {{
 	.name = "c",
 	.file = "\\.(c(pp|xx)?|h(pp|xx)?|cc)$",
 	.rules = {{
 		"(/\\*([^*]|\\*[^/])*\\*/|/\\*([^*]|\\*[^/])*$|^([^/]|/[^*])*\\*/)",
-		0,
 		&colors[COLOR_COMMENT],
+		true, /* multiline */
 	},{
 		"(//.*)",
-		REG_NEWLINE,
 		&colors[COLOR_COMMENT],
 	},{
 		"(\"(\\\\.|[^\"])*\")",
 		//"([\"<](\\\\.|[^ \">])*[\">])",
-		REG_NEWLINE,
 		&colors[COLOR_STRING],
 	},{
+		"(^#[\\t ]*(define|include(_next)?|(un|ifn?)def|endif|el(if|se)|if|warning|error|pragma))|"
+		B"[A-Z_][0-9A-Z_]+"B"",
+		&colors[COLOR_PREPROCESSOR],
+	},{
 		B"(for|if|while|do|else|case|default|switch|try|throw|catch|operator|new|delete)"B,
-		REG_NEWLINE,
 		&colors[COLOR_KEYWORD],
 	},{
 		B"(float|double|bool|char|int|short|long|sizeof|enum|void|static|const|struct|union|"
 		"typedef|extern|(un)?signed|inline|((s?size)|((u_?)?int(8|16|32|64|ptr)))_t|class|"
 		"namespace|template|public|protected|private|typename|this|friend|virtual|using|"
 		"mutable|volatile|register|explicit)"B,
-		REG_NEWLINE,
 		&colors[COLOR_DATATYPE],
 	},{
 		B"(goto|continue|break|return)"B,
-		REG_NEWLINE,
 		&colors[COLOR_CONTROL],
 	},{
-		"(^#[\\t ]*(define|include(_next)?|(un|ifn?)def|endif|el(if|se)|if|warning|error|pragma))|"
-		B"[A-Z_][0-9A-Z_]+"B"",
-		REG_NEWLINE,
-		&colors[COLOR_PREPROCESSOR],
+		"(\\(|\\)|\\{|\\}|\\[|\\])",
+		&colors[COLOR_BRACKETS],
+	}}
+},{
+	.name = "sh",
+	.file = "\\.sh$",
+	.rules = {{
+		"#.*$",
+		&colors[COLOR_COMMENT],
+	},{
+		"^[0-9A-Z_]+\\(\\)",
+		&colors[COLOR_CONSTANTS],
+	},{
+		"\\$\\{?[0-9A-Z_!@#$*?-]+\\}?",
+		&colors[COLOR_VARIABLE],
+	},{
+		"\"(\\\\.|[^\"])*\"",
+		&colors[COLOR_STRING],
+	},{
+		B"(case|do|done|elif|else|esac|exit|fi|for|function|if|in|local|read|return|select|shift|then|time|until|while)"B,
+		&colors[COLOR_KEYWORD],
+	},{
+		"(\\{|\\}|\\(|\\)|\\;|\\]|\\[|`|\\\\|\\$|<|>|!|=|&|\\|)",
+		&colors[COLOR_BRACKETS],
+	}}
+},{
+	.name = "makefile",
+	.file = "(Makefile[^/]*|\\.mk)$",
+	.rules = {{
+		"#.*$",
+		&colors[COLOR_COMMENT],
+	},{
+		"\\$+[{(][a-zA-Z0-9_-]+[})]",
+		&colors[COLOR_VARIABLE],
+	},{
+		B"(if|ifeq|else|endif)"B,
+		&colors[COLOR_CONTROL],
+	},{
+		"^[^ 	]+:",
+		&colors[COLOR_TARGET],
+	},{
+		"[:(+?=)]",
+		&colors[COLOR_BRACKETS],
+	}}
+},{
+	.name = "man",
+	.file = "\\.[1-9]x?$",
+	.rules = {{
+		"\\.(BR?|I[PR]?).*$",
+		&colors[COLOR_SYNTAX0],
+	},{
+		"\\.(S|T)H.*$",
+		&colors[COLOR_SYNTAX2],
+	},{
+		"\\.(br|DS|RS|RE|PD)",
+		&colors[COLOR_SYNTAX3],
+	},{
+		"(\\.(S|T)H|\\.TP)",
+		&colors[COLOR_SYNTAX4],
+	},{
+		"\\.(BR?|I[PR]?|PP)",
+		&colors[COLOR_SYNTAX5],
+	},{
+		"\\\\f[BIPR]",
+		&colors[COLOR_SYNTAX6],
+	}}
+},{
+	.name = "vala",
+	.file = "\\.(vapi|vala)$",
+	.rules = {{
+		"(/\\*([^*]|\\*[^/])*\\*/|/\\*([^*]|\\*[^/])*$|^([^/]|/[^*])*\\*/)",
+		&colors[COLOR_COMMENT],
+		true, /* multiline */
+	},{
+		"(//.*)",
+		&colors[COLOR_COMMENT],
+	},{
+		"\"(\\\\.|[^\"])*\"",
+		&colors[COLOR_STRING],
+		true, /* multiline */
+	},{
+		B"[A-Z_][0-9A-Z_]+"B,
+		&colors[COLOR_CONSTANTS],
+	},{
+		B"(for|if|while|do|else|case|default|switch|get|set|value|out|ref|enum)"B,
+		&colors[COLOR_KEYWORD],
+	},{
+		B"(uint|uint8|uint16|uint32|uint64|bool|byte|ssize_t|size_t|char|double|string|float|int|long|short|this|base|transient|void|true|false|null|unowned|owned)"B,
+		&colors[COLOR_DATATYPE],
+	},{
+		B"(try|catch|throw|finally|continue|break|return|new|sizeof|signal|delegate)"B,
+		&colors[COLOR_CONTROL],
+	},{
+		B"(abstract|class|final|implements|import|instanceof|interface|using|private|public|static|strictfp|super|throws)"B,
+		&colors[COLOR_KEYWORD2],
 	},{
 		"(\\(|\\)|\\{|\\}|\\[|\\])",
-		REG_NEWLINE,
 		&colors[COLOR_BRACKETS],
-	}},
+	}}
+},{
+	.name = "java",
+	.file = "\\.java$",
+	.rules = {{
+		"(/\\*([^*]|\\*[^/])*\\*/|/\\*([^*]|\\*[^/])*$|^([^/]|/[^*])*\\*/)",
+		&colors[COLOR_COMMENT],
+		true, /* multiline */
+	},{
+		"(//.*)",
+		&colors[COLOR_COMMENT],
+	},{
+		"\"(\\\\.|[^\"])*\"",
+		&colors[COLOR_STRING],
+		true, /* multiline */
+	},{
+		B"[A-Z_][0-9A-Z_]+"B,
+		&colors[COLOR_CONSTANTS],
+	},{
+		B"(for|if|while|do|else|case|default|switch)"B,
+		&colors[COLOR_KEYWORD],
+	},{
+		B"(boolean|byte|char|double|float|int|long|short|transient|void|true|false|null)"B,
+		&colors[COLOR_DATATYPE],
+	},{
+		B"(try|catch|throw|finally|continue|break|return|new)"B,
+		&colors[COLOR_CONTROL],
+	},{
+		B"(abstract|class|extends|final|implements|import|instanceof|interface|native|package|private|protected|public|static|strictfp|this|super|synchronized|throws|volatile)"B,
+		&colors[COLOR_KEYWORD2],
+	},{
+		"(\\(|\\)|\\{|\\}|\\[|\\])",
+		&colors[COLOR_BRACKETS],
+	}}
+},{
+	.name = "ruby",
+	.file = "\\.rb$",
+	.rules = {{
+		"(#[^{].*$|#$)",
+		&colors[COLOR_COMMENT],
+	},{
+		"(\\$|@|@@)?"B"[A-Z]+[0-9A-Z_a-z]*",
+		&colors[COLOR_VARIABLE],
+	},{
+		B"(__FILE__|__LINE__|BEGIN|END|alias|and|begin|break|case|class|def|defined\?|do|else|elsif|end|ensure|false|for|if|in|module|next|nil|not|or|redo|rescue|retry|return|self|super|then|true|undef|unless|until|when|while|yield)"B,
+		&colors[COLOR_KEYWORD],
+	},{
+		"([ 	]|^):[0-9A-Z_]+"B,
+		&colors[COLOR_SYNTAX2],
+	},{
+		"(/([^/]|(\\/))*/[iomx]*|%r\\{([^}]|(\\}))*\\}[iomx]*)",
+		&colors[COLOR_SYNTAX3],
+	},{
+		"(`[^`]*`|%x\\{[^}]*\\})",
+		&colors[COLOR_SYNTAX4],
+	},{
+		"(\"([^\"]|(\\\\\"))*\"|%[QW]?\\{[^}]*\\}|%[QW]?\\([^)]*\\)|%[QW]?<[^>]*>|%[QW]?\\[[^]]*\\]|%[QW]?\\$[^$]*\\$|%[QW]?\\^[^^]*\\^|%[QW]?![^!]*!|\'([^\']|(\\\\\'))*\'|%[qw]\\{[^}]*\\}|%[qw]\\([^)]*\\)|%[qw]<[^>]*>|%[qw]\\[[^]]*\\]|%[qw]\\$[^$]*\\$|%[qw]\\^[^^]*\\^|%[qw]![^!]*!)",
+		&colors[COLOR_SYNTAX5],
+	},{
+		"#\\{[^}]*\\}",
+		&colors[COLOR_SYNTAX6],
+	}}
 },{
 	/* empty last element, array terminator */
 }};

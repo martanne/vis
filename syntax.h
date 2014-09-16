@@ -12,8 +12,8 @@ typedef struct {
 
 typedef struct {
 	char *rule;     /* regex to search for */
-	int cflags;     /* compilation flags (REG_*) used when compiling */
 	Color *color;   /* settings to apply in case of a match */
+	bool multiline; /* whether . should match new lines */
 	regex_t regex;  /* compiled form of the above rule */
 } SyntaxRule;
 
