@@ -33,6 +33,14 @@ size_t window_char_next(Win*);
 size_t window_char_prev(Win*);
 size_t window_line_down(Win*);
 size_t window_line_up(Win*);
+/* move window content up/down, but keep cursor position unchanged unless it is
+ * on a now invisible line in which case we try to preserve the column position */
+size_t window_slide_up(Win*, int lines);
+size_t window_slide_down(Win*, int lines);
+/* scroll window contents up/down by lines, place the cursor on the newly
+ * visible line, try to preserve the column position */
+size_t window_scroll_up(Win*, int lines);
+size_t window_scroll_down(Win*, int lines);
 /* place the cursor at the start ot the n-th window line, counting from 1 */
 size_t window_line_goto(Win*, int n);
 

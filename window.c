@@ -78,10 +78,18 @@ struct Win {                /* window showing part of a file */
 static void window_clear(Win *win);
 static bool window_addch(Win *win, Char *c);
 static size_t window_cursor_update(Win *win);
-static size_t pos_by_line(Win *win, Line *line);
-static size_t cursor_offset(Cursor *cursor);
-static bool window_scroll_lines_down(Win *win, int n);
-static bool window_scroll_lines_up(Win *win, int n);
+/* set/move current cursor position to a given (line, column) pair */
+static void window_cursor_set(Win *win, Line *line, int col);
+/* move visible viewport n-lines up/down, redraws the window but does not change
+ * cursor position which becomes invalid and should be corrected by either:
+ *
+ *   - window_cursor_to
+ *   - window_cursor_set
+ *
+ * the return value indicates wether the visible area changed.
+ */
+static bool window_viewport_up(Win *win, int n);
+static bool window_viewport_down(Win *win, int n);
 
 void window_selection_clear(Win *win) {
 	win->sel = text_range_empty();
@@ -276,7 +284,7 @@ void window_cursor_to(Win *win, size_t pos) {
 	if (pos == max && win->end != max) {
 		/* do not display an empty screen when showing the end of the file */
 		win->start = max - 1;
-		window_scroll_lines_up(win, win->height / 2);
+		window_viewport_up(win, win->height / 2);
 	} else {
 		/* set the start of the viewable region to the start of the line on which
 		 * the cursor should be placed. if this line requires more space than
@@ -496,13 +504,6 @@ Win *window_new(Text *text) {
 	return win;
 }
 
-static size_t pos_by_line(Win *win, Line *line) {
-	size_t pos = win->start;
-	for (Line *cur = win->topline; cur && cur != line; cur = cur->next)
-		pos += cur->len;
-	return pos;
-}
-
 size_t window_char_prev(Win *win) {
 	Cursor *cursor = &win->cursor;
 	Line *line = cursor->line;
@@ -544,47 +545,56 @@ size_t window_char_next(Win *win) {
 	return window_cursor_update(win);
 }
 
-/* calculate the line offset in bytes of a given cursor position, used after
- * the cursor changes line. this assumes cursor->line already points to the new
- * line, but cursor->col still has the old column position of the previous
- * line based on which the new column position is calculated */
-static size_t cursor_offset(Cursor *cursor) {
-	Line *line = cursor->line;
-	int col = cursor->col;
-	int off = 0;
+static void window_cursor_set(Win *win, Line *line, int col) {
+	int row = 0;
+	size_t pos = win->start;
+	Cursor *cursor = &win->cursor;
+	/* get row number and file offset at start of the given line */
+	for (Line *cur = win->topline; cur && cur != line; cur = cur->next) {
+		pos += cur->len;
+		row++;
+	}
+
 	/* for characters which use more than 1 column, make sure we are on the left most */
 	while (col > 0 && line->cells[col].len == 0 && line->cells[col].data != '\t')
 		col--;
 	while (col < line->width && line->cells[col].data == '\t')
 		col++;
+
+	/* calculate offset within the line */
 	for (int i = 0; i < col; i++)
-		off += line->cells[i].len;
+		pos += line->cells[i].len;
+
 	cursor->col = col;
-	return off;
+	cursor->row = row;
+	cursor->pos = pos;
+	cursor->line = line;
+
+	window_cursor_update(win);
 }
 
-static bool window_scroll_lines_down(Win *win, int n) {
+static bool window_viewport_down(Win *win, int n) {
 	Line *line;
 	if (win->end == text_size(win->text))
 		return false;
-	for (line = win->topline; line && n > 0; line = line->next, n--)
-		win->start += line->len;
+	if (n >= win->height) {
+		win->start = win->end;
+	} else {
+		for (line = win->topline; line && n > 0; line = line->next, n--)
+			win->start += line->len;
+	}
 	window_draw(win);
-	/* try to place the cursor at the same column */
-	Cursor *cursor = &win->cursor;
-	cursor->pos = win->end - win->lastline->len + cursor_offset(cursor);
-	window_cursor_update(win);
 	return true;
 }
 
-static bool window_scroll_lines_up(Win *win, int n) {
+static bool window_viewport_up(Win *win, int n) {
 	/* scrolling up is somewhat tricky because we do not yet know where
 	 * the lines start, therefore scan backwards but stop at a reasonable
 	 * maximum in case we are dealing with a file without any newlines
 	 */
 	if (win->start == 0)
 		return false;
-	size_t max = win->width * win->height / 2;
+	size_t max = win->width * win->height;
 	char c;
 	Iterator it = text_iterator_get(win->text, win->start - 1);
 
@@ -604,56 +614,77 @@ static bool window_scroll_lines_up(Win *win, int n) {
 	} while (text_iterator_byte_prev(&it, &c));
 	win->start -= off;
 	window_draw(win);
-	Cursor *cursor = &win->cursor;
-	cursor->pos = win->start + cursor_offset(cursor);
-	window_cursor_update(win);
 	return true;
 }
 
-size_t window_page_up(Win *win) {
-	if (!window_scroll_lines_up(win, win->height))
-		window_cursor_to(win, win->start);
+size_t window_slide_up(Win *win, int lines) {
+	Cursor *cursor = &win->cursor;
+	if (window_viewport_up(win, lines)) {
+		if (cursor->line == win->lastline)
+			window_cursor_set(win, win->lastline, cursor->col);
+		else
+			window_cursor_to(win, cursor->pos);
+	} else {
+		window_cursor_to(win, 0);
+	}
+	return cursor->pos;
+}
+
+size_t window_slide_down(Win *win, int lines) {
+	Cursor *cursor = &win->cursor;
+	if (window_viewport_down(win, lines)) {
+		if (cursor->line == win->topline)
+			window_cursor_set(win, win->topline, cursor->col);
+		else
+			window_cursor_to(win, cursor->pos);
+	} else {
+		window_cursor_to(win, text_size(win->text));
+	}
+	return cursor->pos;
+}
+
+size_t window_scroll_up(Win *win, int lines) {
+	if (window_viewport_up(win, lines))
+		window_cursor_set(win, win->topline, win->cursor.col);
+	else
+		window_cursor_to(win, 0);
 	return win->cursor.pos;
 }
 
+size_t window_scroll_down(Win *win, int lines) {
+	if (window_viewport_down(win, lines))
+		window_cursor_set(win, win->lastline, win->cursor.col);
+	else
+		window_cursor_to(win, text_size(win->text));
+	return win->cursor.pos;
+}
+
+size_t window_page_up(Win *win) {
+	return window_scroll_up(win, win->height);
+}
+
 size_t window_page_down(Win *win) {
-	Cursor *cursor = &win->cursor;
-	if (win->end == text_size(win->text)) {
-		window_cursor_to(win, win->end);
-		return win->end;
-	}
-	win->start = win->end;
-	window_draw(win);
-	int col = cursor->col;
-	window_cursor_to(win, win->start);
-	cursor->col = col;
-	cursor->pos += cursor_offset(cursor);
-	return window_cursor_update(win);
+	return window_scroll_down(win, win->height);
 }
 
 size_t window_line_up(Win *win) {
 	Cursor *cursor = &win->cursor;
-	if (!cursor->line->prev) {
-		window_scroll_lines_up(win, 1);
-		return cursor->pos;
-	}
-	cursor->row--;
-	cursor->line = cursor->line->prev;
-	cursor->pos = pos_by_line(win, cursor->line) + cursor_offset(cursor);
-	return window_cursor_update(win);
+	if (!cursor->line->prev)
+		window_scroll_up(win, 1);
+	else
+		window_cursor_set(win, cursor->line->prev, cursor->col);
+	return cursor->pos;
 }
 
 size_t window_line_down(Win *win) {
 	Cursor *cursor = &win->cursor;
 	if (!cursor->line->next) {
 		if (cursor->line == win->bottomline)
-			window_scroll_lines_down(win, 1);
-		return cursor->pos;
+			window_scroll_down(win, 1);
+	} else {
+		window_cursor_set(win, cursor->line->next, cursor->col);
 	}
-	cursor->row++;
-	cursor->line = cursor->line->next;
-	cursor->pos = pos_by_line(win, cursor->line) + cursor_offset(cursor);
-	return window_cursor_update(win);
+	return cursor->pos;
 }
 
 void window_update(Win *win) {
@@ -679,7 +710,7 @@ size_t window_backspace_key(Win *win) {
 		 * first scroll up so that the to be deleted character is
 		 * visible then proceed as normal */
 		size_t pos = cursor->pos;
-		window_scroll_lines_up(win, 1);
+		window_viewport_up(win, 1);
 		window_cursor_to(win, pos);
 	}
 	window_char_prev(win);
@@ -695,7 +726,7 @@ size_t window_insert_key(Win *win, const char *c, size_t len) {
 	size_t pos = win->cursor.pos;
 	text_insert(win->text, pos, c, len);
 	if (win->cursor.line == win->bottomline && memchr(c, '\n', len))
-		window_scroll_lines_down(win, 1);
+		window_viewport_down(win, 1);
 	else
 		window_draw(win);
 	pos += len;
@@ -714,7 +745,7 @@ size_t window_replace_key(Win *win, const char *c, size_t len) {
 	}
 	text_insert(win->text, pos, c, len);
 	if (cursor->line == win->bottomline && memchr(c, '\n', len))
-		window_scroll_lines_down(win, 1);
+		window_viewport_down(win, 1);
 	else
 		window_draw(win);
 	pos += len;
@@ -727,8 +758,8 @@ size_t window_cursor_get(Win *win) {
 }
 
 void window_scroll_to(Win *win, size_t pos) {
-	while (pos < win->start && window_scroll_lines_up(win, 1));
-	while (pos > win->end && window_scroll_lines_down(win, 1));
+	while (pos < win->start && window_viewport_up(win, 1));
+	while (pos > win->end && window_viewport_down(win, 1));
 	window_cursor_to(win, pos);
 }
 
