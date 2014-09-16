@@ -663,9 +663,11 @@ Text *text_load(const char *filename) {
 			goto out;
 		// XXX: use lseek(fd, 0, SEEK_END); instead?
 		txt->buf.size = txt->info.st_size;
-		txt->buf.data = mmap(NULL, txt->info.st_size, PROT_READ, MAP_SHARED, txt->fd, 0);
-		if (txt->buf.data == MAP_FAILED)
-			goto out;
+		if (txt->buf.size != 0) {
+			txt->buf.data = mmap(NULL, txt->info.st_size, PROT_READ, MAP_SHARED, txt->fd, 0);
+			if (txt->buf.data == MAP_FAILED)
+				goto out;
+		}
 
 		Piece *p = piece_alloc(txt);
 		if (!p)
