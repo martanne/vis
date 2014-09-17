@@ -52,15 +52,9 @@ Filerange text_object_word(Text *txt, size_t pos) {
 }
 
 Filerange text_object_line(Text *txt, size_t pos) {
-	char c;
 	Filerange r;
 	r.start = text_line_begin(txt, pos);
-	Iterator it = text_iterator_get(txt, text_line_end(txt, pos));
-	if (text_iterator_byte_get(&it, &c) && c == '\n')
-		text_iterator_byte_next(&it, NULL);
-	if (text_iterator_byte_get(&it, &c) && c == '\r')
-		text_iterator_byte_next(&it, NULL);
-	r.end = it.pos;
+	r.end = text_line_next(txt, pos);
 	return r;
 }
 
