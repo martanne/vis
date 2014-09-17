@@ -313,9 +313,7 @@ and their current support in vis.
 
  Operators
  ---------
-   working: d (delete), c (change), y (yank), p (put)
-   planned: > (shift-right), < (shift-left)
-            those depend on handling of indention tabs <-> spaces
+   d (delete), c (change), y (yank), p (put), > (shift-right), < (shift-left)
 
  Movements
  ---------
