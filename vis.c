@@ -152,6 +152,7 @@ static void op_yank(OperatorContext *c);
 static void op_put(OperatorContext *c);
 static void op_delete(OperatorContext *c);
 static void op_shift_right(OperatorContext *c);
+static void op_shift_left(OperatorContext *c);
 
 /* these can be passed as int argument to operator(&(const Arg){ .i = OP_*}) */
 enum {
@@ -160,6 +161,7 @@ enum {
 	OP_YANK,
 	OP_PUT,
 	OP_SHIFT_RIGHT,
+	OP_SHIFT_LEFT,
 };
 
 static Operator ops[] = {
@@ -168,6 +170,7 @@ static Operator ops[] = {
 	[OP_YANK]   = { op_yank,   false },
 	[OP_PUT]    = { op_put,    true  },
 	[OP_SHIFT_RIGHT] = { op_shift_right, false },
+	[OP_SHIFT_LEFT]  = { op_shift_left,  false },
 };
 
 #define PAGE      INT_MAX
@@ -485,6 +488,32 @@ static void op_shift_right(OperatorContext *c) {
 	do {
 		prev_pos = pos = text_line_begin(txt, pos);
 		text_insert(txt, pos, tab, tablen);
+		pos = text_line_prev(txt, pos);
+	}  while (pos >= c->range.start && pos != prev_pos);
+	editor_draw(vis);
+}
+
+static void op_shift_left(OperatorContext *c) {
+	Text *txt = vis->win->text;
+	size_t pos = text_line_begin(txt, c->range.end), prev_pos;
+	size_t tabwidth = 8; // TODO: make configurable
+
+	/* if range ends at the begin of a line, skip line break */
+	if (pos == c->range.end)
+		pos = text_line_prev(txt, pos);
+
+	do {
+		char c;
+		size_t len = 0;
+		prev_pos = pos = text_line_begin(txt, pos);
+		Iterator it = text_iterator_get(txt, pos);
+		if (text_iterator_byte_get(&it, &c) && c == '\t') {
+			len = 1;
+		} else {
+			for (len = 0; text_iterator_byte_get(&it, &c) && c == ' '; len++)
+				text_iterator_byte_next(&it, NULL);
+		}
+		text_delete(txt, pos, MIN(len, tabwidth));
 		pos = text_line_prev(txt, pos);
 	}  while (pos >= c->range.start && pos != prev_pos);
 	editor_draw(vis);
