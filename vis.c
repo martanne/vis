@@ -151,6 +151,7 @@ static void op_change(OperatorContext *c);
 static void op_yank(OperatorContext *c);
 static void op_put(OperatorContext *c);
 static void op_delete(OperatorContext *c);
+static void op_shift_right(OperatorContext *c);
 
 /* these can be passed as int argument to operator(&(const Arg){ .i = OP_*}) */
 enum {
@@ -158,6 +159,7 @@ enum {
 	OP_CHANGE,
 	OP_YANK,
 	OP_PUT,
+	OP_SHIFT_RIGHT,
 };
 
 static Operator ops[] = {
@@ -165,6 +167,7 @@ static Operator ops[] = {
 	[OP_CHANGE] = { op_change, false },
 	[OP_YANK]   = { op_yank,   false },
 	[OP_PUT]    = { op_put,    true  },
+	[OP_SHIFT_RIGHT] = { op_shift_right, false },
 };
 
 #define PAGE      INT_MAX
@@ -463,6 +466,28 @@ static void op_put(OperatorContext *c) {
 		pos = text_line_next(vis->win->text, pos);
 	editor_insert(vis, pos, c->reg->data, c->reg->len);
 	window_cursor_to(vis->win->win, pos + c->reg->len);
+}
+
+static const char *expand_tab(void) {
+	return "\t";
+}
+
+static void op_shift_right(OperatorContext *c) {
+	Text *txt = vis->win->text;
+	size_t pos = text_line_begin(txt, c->range.end), prev_pos;
+	const char *tab = expand_tab();
+	size_t tablen = strlen(tab);
+
+	/* if range ends at the begin of a line, skip line break */
+	if (pos == c->range.end)
+		pos = text_line_prev(txt, pos);
+
+	do {
+		prev_pos = pos = text_line_begin(txt, pos);
+		text_insert(txt, pos, tab, tablen);
+		pos = text_line_prev(txt, pos);
+	}  while (pos >= c->range.start && pos != prev_pos);
+	editor_draw(vis);
 }
 
 /** movement implementations of type: size_t (*move)(const Arg*) */

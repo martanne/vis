@@ -198,6 +198,7 @@ static KeyBinding vis_operators[] = {
 	{ { NONE('c')               }, operator,      { .i = OP_CHANGE       } },
 	{ { NONE('y')               }, operator,      { .i = OP_YANK         } },
 	{ { NONE('p')               }, operator,      { .i = OP_PUT          } },
+	{ { NONE('>')               }, operator,      { .i = OP_SHIFT_RIGHT  } },
 	{ /* empty last element, array terminator */                           },
 };
 
