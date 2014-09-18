@@ -106,6 +106,7 @@ typedef struct {
 		CHARWISE  = 1 << 1,
 		INCLUSIVE = 1 << 2,
 		EXCLUSIVE = 1 << 3,
+		IDEMPOTENT = 1 << 4,
 	} type;
 	int count;
 } Movement;
@@ -250,8 +251,8 @@ static Movement moves[] = {
 	[MOVE_LINE_FINISH]     = { .txt = text_line_finish,     .type = LINEWISE           },
 	[MOVE_LINE_END]        = { .txt = text_line_end,        .type = LINEWISE           },
 	[MOVE_LINE_NEXT]       = { .txt = text_line_next,       .type = LINEWISE           },
-	[MOVE_LINE]            = { .cmd = line,                 .type = LINEWISE           },
-	[MOVE_COLUMN]          = { .cmd = column,               .type = CHARWISE           },
+	[MOVE_LINE]            = { .cmd = line,                 .type = LINEWISE|IDEMPOTENT},
+	[MOVE_COLUMN]          = { .cmd = column,               .type = CHARWISE|IDEMPOTENT},
 	[MOVE_CHAR_PREV]       = { .win = window_char_prev                                 },
 	[MOVE_CHAR_NEXT]       = { .win = window_char_next                                 },
 	[MOVE_WORD_START_PREV] = { .txt = text_word_start_prev, .type = CHARWISE           },
@@ -562,10 +563,9 @@ static size_t till_left(const Arg *arg) {
 }
 
 static size_t line(const Arg *arg) {
-	if (action.count == 1)
+	if (action.count == 0)
 		return text_size(vis->win->text);
 	size_t pos = text_pos_by_lineno(vis->win->text, action.count);
-	action.count = 0;
 	return pos;
 }
 
@@ -574,9 +574,9 @@ static size_t column(const Arg *arg) {
 	EditorWin *win = vis->win;
 	size_t pos = window_cursor_get(win->win);
 	Iterator it = text_iterator_get(win->text, text_line_begin(win->text, pos));
-	while (action.count-- > 0 && text_iterator_byte_get(&it, &c) && c != '\n')
+	int count = action.count;
+	while (count > 0 && text_iterator_byte_get(&it, &c) && c != '\n')
 		text_iterator_byte_next(&it, NULL);
-	action.count = 0;
 	return it.pos;
 }
 
@@ -875,8 +875,7 @@ static void action_do(Action *a) {
 	Text *txt = vis->win->text;
 	Win *win = vis->win->win;
 	size_t pos = window_cursor_get(win);
-	if (a->count == 0)
-		a->count = 1;
+	int count = MAX(1, a->count);
 	OperatorContext c = {
 		.count = a->count,
 		.pos = pos,
@@ -886,14 +885,14 @@ static void action_do(Action *a) {
 
 	if (a->movement) {
 		size_t start = pos;
-		for (int i = 0; i < a->count; i++) {
+		for (int i = 0; i < count; i++) {
 			if (a->movement->txt)
 				pos = a->movement->txt(txt, pos);
 			else if (a->movement->win)
 				pos = a->movement->win(win);
 			else
 				pos = a->movement->cmd(&a->arg);
-			if (pos == EPOS)
+			if (pos == EPOS || a->movement->type & IDEMPOTENT)
 				break;
 		}
 
@@ -918,7 +917,7 @@ static void action_do(Action *a) {
 	} else if (a->textobj) {
 		Filerange r;
 		c.range.start = c.range.end = pos;
-		for (int i = 0; i < a->count; i++) {
+		for (int i = 0; i < count; i++) {
 			r = a->textobj->range(txt, pos);
 			if (!text_range_valid(&r))
 				break;
@@ -929,7 +928,7 @@ static void action_do(Action *a) {
 
 			c.range = text_range_union(&c.range, &r);
 
-			if (i < a->count - 1) {
+			if (i < count - 1) {
 				if (a->textobj == &textobjs[TEXT_OBJ_LINE_UP]) {
 					pos = c.range.start - 1;
 				} else {
