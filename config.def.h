@@ -421,6 +421,7 @@ static KeyBinding vis_mode_prompt[] = {
 	{ { CONTROL('B')            }, movement,        { .i = MOVE_FILE_BEGIN   } },
 	{ { KEY(END)                }, movement,        { .i = MOVE_FILE_END     } },
 	{ { CONTROL('E')            }, movement,        { .i = MOVE_FILE_END     } },
+	{ { NONE('\t')              }, NULL,            { NULL                   } },
 	{ /* empty last element, array terminator */                               },
 };
 

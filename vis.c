@@ -1348,7 +1348,8 @@ int main(int argc, char *argv[]) {
 				key_mod = &key_prev;
 				continue;
 			}
-			action->func(&action->arg);
+			if (action->func)
+				action->func(&action->arg);
 			key_mod = NULL;
 			continue;
 		}
