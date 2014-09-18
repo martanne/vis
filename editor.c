@@ -20,7 +20,7 @@
 
 static EditorWin *editor_window_new_text(Editor *ed, Text *text);
 static void editor_window_free(Editor *ed, EditorWin *win);
-static void editor_window_split_internal(Editor *ed, const char *filename);
+static bool editor_window_split_internal(EditorWin *original);
 static void editor_windows_invalidate(Editor *ed, size_t start, size_t end);
 static void editor_window_draw(EditorWin *win);
 static void editor_windows_arrange_horizontal(Editor *ed);
@@ -111,41 +111,30 @@ bool editor_window_reload(EditorWin *win) {
 	return true;
 }
 
-static void editor_window_split_internal(Editor *ed, const char *filename) {
-	EditorWin *sel = ed->win;
-	if (filename) {
-		// TODO? move this to editor_window_new
-		sel = NULL;
-		for (EditorWin *w = ed->windows; w; w = w->next) {
-			const char *f = text_filename_get(w->text);
-			if (f && strcmp(f, filename) == 0) {
-				sel = w;
-				break;
-			}
-		}
-	}
-	if (sel) {
-		EditorWin *win = editor_window_new_text(ed, sel->text);
-		if (!win)
-			return;
-		win->text = sel->text;
-		window_syntax_set(win->win, window_syntax_get(sel->win));
-		window_cursor_to(win->win, window_cursor_get(sel->win));
-	} else {
-		editor_window_new(ed, filename);
-	}
+static bool editor_window_split_internal(EditorWin *original) {
+	EditorWin *win = editor_window_new_text(original->editor, original->text);
+	if (!win)
+		return false;
+	win->text = original->text;
+	window_syntax_set(win->win, window_syntax_get(original->win));
+	window_cursor_to(win->win, window_cursor_get(original->win));
+	return true;
 }
 
-void editor_window_split(Editor *ed, const char *filename) {
-	editor_window_split_internal(ed, filename);
-	ed->windows_arrange = editor_windows_arrange_horizontal;
-	editor_draw(ed);
+bool editor_window_split(EditorWin *win) {
+	if (!editor_window_split_internal(win))
+		return false;
+	win->editor->windows_arrange = editor_windows_arrange_horizontal;
+	editor_draw(win->editor);
+	return true;
 }
 
-void editor_window_vsplit(Editor *ed, const char *filename) {
-	editor_window_split_internal(ed, filename);
-	ed->windows_arrange = editor_windows_arrange_vertical;
-	editor_draw(ed);
+bool editor_window_vsplit(EditorWin *win) {
+	if (!editor_window_split_internal(win))
+		return false;
+	win->editor->windows_arrange = editor_windows_arrange_vertical;
+	editor_draw(win->editor);
+	return true;
 }
 
 void editor_resize(Editor *ed, int width, int height) {
@@ -317,25 +306,45 @@ static EditorWin *editor_window_new_text(Editor *ed, Text *text) {
 }
 
 bool editor_window_new(Editor *ed, const char *filename) {
-	Text *text = text_load(filename && access(filename, R_OK) == 0 ? filename : NULL);
+	Text *text = NULL;
+	/* try to detect whether the same file is already open in another window
+	 * TODO: do this based on inodes */
+	EditorWin *original = NULL;
+	if (filename) {
+		for (EditorWin *win = ed->windows; win; win = win->next) {
+			const char *f = text_filename_get(win->text);
+			if (f && strcmp(f, filename) == 0) {
+				original = win;
+				break;
+			}
+		}
+	}
+
+	if (original)
+		text = original->text;
+	else
+		text = text_load(filename && access(filename, R_OK) == 0 ? filename : NULL);
 	if (!text)
 		return false;
-	if (filename)
-		text_filename_set(text, filename);
 
 	EditorWin *win = editor_window_new_text(ed, text);
 	if (!win) {
-		text_free(text);
+		if (!original)
+			text_free(text);
 		return false;
 	}
 
 	if (filename) {
+		text_filename_set(text, filename);
 		for (Syntax *syn = ed->syntaxes; syn && syn->name; syn++) {
 			if (!regexec(&syn->file_regex, filename, 0, NULL, 0)) {
 				window_syntax_set(win->win, syn);
 				break;
 			}
 		}
+	} else if (original) {
+		window_syntax_set(win->win, window_syntax_get(original->win));
+		window_cursor_to(win->win, window_cursor_get(original->win));
 	}
 
 	editor_draw(ed);

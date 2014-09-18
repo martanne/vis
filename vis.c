@@ -793,9 +793,9 @@ static void winclose(const Arg *arg) {
 
 static void winsplit(const Arg *arg) {
 	if (arg->b)
-		editor_window_vsplit(vis, NULL);
+		editor_window_vsplit(vis->win);
 	else
-		editor_window_split(vis, NULL);
+		editor_window_split(vis->win);
 }
 
 static int argi2lines(const Arg *arg) {
@@ -995,7 +995,9 @@ static bool cmd_gotoline(const char *argv[]) {
 static bool cmd_open(const char *argv[]) {
 	for (const char **file = &argv[1]; *file; file++) {
 		if (!editor_window_new(vis, *file)) {
-			editor_info_show(vis, "Can't open `%s'");
+			errno = 0;
+			editor_info_show(vis, "Can't open `%s' %s", *file,
+			                 errno ? strerror(errno) : "");
 			return false;
 		}
 	}
@@ -1090,18 +1092,28 @@ static bool cmd_substitute(const char *argv[]) {
 	return true;
 }
 
-static bool cmd_split(const char *argv[]) {
-	editor_window_split(vis, argv[1]);
-	for (const char **file = &argv[2]; *file; file++)
-		editor_window_split(vis, *file);
+static bool openfiles(const char **files) {
+	for (; *files; files++) {
+		errno = 0;
+		if (!editor_window_new(vis, *files)) {
+			editor_info_show(vis, "Could not open `%s' %s", *files,
+			                 errno ? strerror(errno) : "");
+			return false;
+		}
+	}
 	return true;
 }
 
+static bool cmd_split(const char *argv[]) {
+	if (!argv[1])
+		return editor_window_split(vis->win);
+	return openfiles(&argv[1]);
+}
+
 static bool cmd_vsplit(const char *argv[]) {
-	editor_window_vsplit(vis, argv[1]);
-	for (const char **file = &argv[2]; *file; file++)
-		editor_window_vsplit(vis, *file);
-	return true;
+	if (!argv[1])
+		return editor_window_vsplit(vis->win);
+	return openfiles(&argv[1]);
 }
 
 static bool cmd_wq(const char *argv[]) {

@@ -125,17 +125,17 @@ bool editor_syntax_load(Editor*, Syntax *syntaxes, Color *colors);
 void editor_syntax_unload(Editor*);
 
 /* creates a new window, and loads the given file. if filename is NULL
- * an unamed / empty buffer is created */
+ * an unamed / empty buffer is created. If the given file is already opened
+ * in another window, share the underlying text that is changes will be
+ * visible in both windows */
 bool editor_window_new(Editor*, const char *filename);
 /* reload the file currently displayed in the window from disk */
 bool editor_window_reload(EditorWin*);
 void editor_window_close(EditorWin*);
-/* if filename is non NULL it is equivalent to window_new call above.
- * if however filename is NULL a new window is created and linked to the
- * same underlying text as the currently selected one. changes will
- * thus be visible in both windows. */
-void editor_window_split(Editor*, const char *filename);
-void editor_window_vsplit(Editor*, const char *filename);
+/* split the given window either horizontally or vertically, changes to
+ * the displayed text will be reflected in both windows */
+bool editor_window_split(EditorWin*);
+bool editor_window_vsplit(EditorWin*);
 /* focus the next / previous window */
 void editor_window_next(Editor*);
 void editor_window_prev(Editor*);
