@@ -1220,11 +1220,6 @@ static void setup() {
 	sigaction(SIGWINCH, &sa, NULL);
 }
 
-static void cleanup() {
-	endwin();
-	//delscreen(set_term(NULL));
-}
-
 static bool keymatch(Key *key0, Key *key1) {
 	return (key0->str[0] && memcmp(key0->str, key1->str, sizeof(key1->str)) == 0) ||
 	       (key0->code && key0->code == key1->code);
@@ -1267,6 +1262,15 @@ static Key getkey(void) {
 	return key;
 }
 
+static void die(const char *errstr, ...) {
+	va_list ap;
+	endwin();
+	va_start(ap, errstr);
+	vfprintf(stderr, errstr, ap);
+	va_end(ap);
+	exit(EXIT_FAILURE);
+}
+
 int main(int argc, char *argv[]) {
 	/* decide which key configuration to use based on argv[0] */
 	char *arg0 = argv[0];
@@ -1283,16 +1287,15 @@ int main(int argc, char *argv[]) {
 	setup();
 
 	if (!(vis = editor_new(screen.w, screen.h)))
-		return 1;
+		die("Could not allocate editor core\n");
 	if (!editor_syntax_load(vis, syntaxes, colors))
-		return 1;
+		die("Could not load syntax highlighting definitions\n");
 	editor_statusbar_set(vis, config->statusbar);
 
-	if (!editor_window_new(vis, argc > 1 ? argv[1] : NULL))
-		return 1;
-	for (int i = 2; i < argc; i++) {
-		if (!editor_window_new(vis, argv[i]))
-			return 1;
+	for (int i = 1; i < MAX(argc, 2); i++) {
+		const char *file = i < argc ? argv[i] : NULL;
+		if (!editor_window_new(vis, file))
+			die("Could not load `%s': %s\n", file, strerror(errno));
 	}
 
 	struct timeval idle = { .tv_usec = 0 }, *timeout = NULL;
@@ -1316,8 +1319,8 @@ int main(int argc, char *argv[]) {
 			continue;
 
 		if (r < 0) {
-			perror("select()");
-			exit(EXIT_FAILURE);
+			/* TODO save all pending changes to a ~suffixed file */
+			die("Error in mainloop: %s\n", strerror(errno));
 		}
 
 		if (!FD_ISSET(STDIN_FILENO, &fds)) {
@@ -1360,6 +1363,6 @@ int main(int argc, char *argv[]) {
 	}
 
 	editor_free(vis);
-	cleanup();
+	endwin();
 	return 0;
 }
