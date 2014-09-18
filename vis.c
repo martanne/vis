@@ -987,7 +987,7 @@ static void switchmode_to(Mode *new_mode) {
 
 static bool cmd_gotoline(const char *argv[]) {
 	action.count = strtoul(argv[0], NULL, 10);
-	movement(&(const Arg){ .i = MOVE_LINE });
+	movement(&(const Arg){ .i = action.count <= 1 ? MOVE_FILE_BEGIN : MOVE_LINE });
 	return true;
 }
 
