@@ -323,7 +323,7 @@ bool editor_window_new(Editor *ed, const char *filename) {
 	if (original)
 		text = original->text;
 	else
-		text = text_load(filename && access(filename, R_OK) == 0 ? filename : NULL);
+		text = text_load(filename && access(filename, F_OK) == 0 ? filename : NULL);
 	if (!text)
 		return false;
 
