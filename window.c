@@ -337,7 +337,6 @@ void window_draw(Win *win) {
 	/* current absolute file position */
 	size_t pos = win->start;
 	/* number of bytes to read in one go */
-	// TODO read smaller junks
 	size_t text_len = win->width * win->height;
 	/* current buffer to work with */
 	char text[text_len+1];
@@ -354,48 +353,55 @@ void window_draw(Win *win) {
 	/* syntax definition to use */
 	Syntax *syntax = win->syntax;
 	/* matched tokens for each syntax rule */
-	regmatch_t match[syntax ? LENGTH(syntax->rules) : 1][1];
-	if (syntax) {
-		for (int i = 0; i < LENGTH(syntax->rules); i++) {
-			SyntaxRule *rule = &syntax->rules[i];
-			if (!rule->rule)
-				break;
-			if (regexec(&rule->regex, cur, 1, match[i], 0) ||
-			    match[i][0].rm_so == match[i][0].rm_eo) {
-				match[i][0].rm_so = -1;
-				match[i][0].rm_eo = -1;
-			}
-		}
-	}
+	regmatch_t match[syntax ? LENGTH(syntax->rules) : 1][1], *matched = NULL;
+	memset(match, 0, sizeof match);
+	/* default and current curses attributes to use */
+	int default_attrs = COLOR_PAIR(0) | A_NORMAL, attrs = default_attrs;
 
 	while (rem > 0) {
 
-		int attrs = COLOR_PAIR(0) | A_NORMAL;
-
 		if (syntax) {
-			size_t off = cur - text; /* number of already processed bytes */
-			for (int i = 0; i < LENGTH(syntax->rules); i++) {
-				SyntaxRule *rule = &syntax->rules[i];
-				if (!rule->rule)
-					break;
-				if (match[i][0].rm_so == -1)
-					continue; /* no match on whole text */
-				if (off >= (size_t)match[i][0].rm_eo) {
-					/* past match, continue search from current position */
-					if (regexec(&rule->regex, cur, 1, match[i], 0) ||
-					    match[i][0].rm_so == match[i][0].rm_eo) {
-						match[i][0].rm_so = -1;
-						match[i][0].rm_eo = -1;
-						continue;
+			if (matched && cur >= text + matched->rm_eo) {
+				/* end of current match */
+				matched = NULL;
+				attrs = default_attrs;
+				for (int i = 0; i < LENGTH(syntax->rules); i++) {
+					if (match[i][0].rm_so == -1)
+						continue; /* no match on whole text */
+					/* reset matches which overlap with matched */
+					if (text + match[i][0].rm_so <= cur && cur < text + match[i][0].rm_eo) {
+						match[i][0].rm_so = 0;
+						match[i][0].rm_eo = 0;
 					}
-					match[i][0].rm_so += off;
-					match[i][0].rm_eo += off;
 				}
+			}
 
-				if (text + match[i][0].rm_so <= cur && cur < text + match[i][0].rm_eo) {
-					/* within matched expression */
-					attrs = rule->color->attr;
-					break; /* first match wins */
+			if (!matched) {
+				size_t off = cur - text; /* number of already processed bytes */
+				for (int i = 0; i < LENGTH(syntax->rules); i++) {
+					SyntaxRule *rule = &syntax->rules[i];
+					if (!rule->rule)
+						break;
+					if (match[i][0].rm_so == -1)
+						continue; /* no match on whole text */
+					if (off >= (size_t)match[i][0].rm_eo) {
+						/* past match, continue search from current position */
+						if (regexec(&rule->regex, cur, 1, match[i], 0) ||
+						    match[i][0].rm_so == match[i][0].rm_eo) {
+							match[i][0].rm_so = -1;
+							match[i][0].rm_eo = -1;
+							continue;
+						}
+						match[i][0].rm_so += off;
+						match[i][0].rm_eo += off;
+					}
+
+					if (text + match[i][0].rm_so <= cur && cur < text + match[i][0].rm_eo) {
+						/* within matched expression */
+						matched = &match[i][0];
+						attrs = rule->color->attr;
+						break; /* first match wins */
+					}
 				}
 			}
 		}

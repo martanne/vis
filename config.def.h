@@ -751,13 +751,14 @@ enum {
 	COLOR_SYNTAX6,
 	COLOR_SYNTAX7,
 	COLOR_KEYWORD      = COLOR_SYNTAX1,
-	COLOR_CONSTANTS    = COLOR_SYNTAX1,
+	COLOR_CONSTANT     = COLOR_SYNTAX4,
 	COLOR_DATATYPE     = COLOR_SYNTAX2,
 	COLOR_CONTROL      = COLOR_SYNTAX3,
 	COLOR_PREPROCESSOR = COLOR_SYNTAX4,
 	COLOR_KEYWORD2     = COLOR_SYNTAX4,
 	COLOR_BRACKETS     = COLOR_SYNTAX5,
 	COLOR_STRING       = COLOR_SYNTAX6,
+	COLOR_LITERAL      = COLOR_SYNTAX6,
 	COLOR_VARIABLE     = COLOR_SYNTAX6,
 	COLOR_TARGET       = COLOR_SYNTAX5,
 	COLOR_COMMENT      = COLOR_SYNTAX7,
@@ -775,38 +776,71 @@ static Color colors[] = {
 	{ /* empty last element, array terminator */                        }
 };
 
-/* Syntax color definition, you can define up to TODO SYNTAX_REGEX_RULES
- * number of regex rules per file type. Each rule is requires a regular
- * expression and corresponding compilation flags as well as a color.
+/* Syntax color definitions per file type. Each rule consists of a regular
+ * expression, a color to apply in case of a match and boolean flag inidcating
+ * whether it is a multiline rule.
  *
- * The array of syntax definition must be terminated with an empty element.
+ * The syntax rules where initially imported from the sandy editor, written by
+ * Rafael Garcia  <rafael.garcia.gallego@gmail.com>
  */
 #define B "\\b"
 /* Use this if \b is not in your libc's regex implementation */
-// #define B "^| |\t|\\(|\\)|\\[|\\]|\\{|\\}|\\||$
+// #define B "^| |\t|\\(|\\)|\\[|\\]|\\{|\\}|\\||$"
+
+/* common rules, used by multiple languages */
+
+#define SYNTAX_MULTILINE_COMMENT {   \
+	"(/\\*([^*]|\\*[^/])*\\*/)", \
+	&colors[COLOR_COMMENT],      \
+	true, /* multiline */        \
+}
+
+#define SYNTAX_SINGLE_LINE_COMMENT { \
+	"(//.*)",                    \
+	&colors[COLOR_COMMENT],      \
+}
+
+#define SYNTAX_LITERAL {                         \
+	"('(\\\\.|.)')|(0x[0-9A-Fa-f]+|[0-9]+)", \
+	&colors[COLOR_LITERAL],                  \
+}
+
+#define SYNTAX_STRING {         \
+	"(\"(\\\\.|[^\"])*\")", \
+	&colors[COLOR_STRING],  \
+	true, /* multiline */   \
+}
+
+#define SYNTAX_CONSTANT {        \
+	B"[A-Z_][0-9A-Z_]+"B,    \
+	&colors[COLOR_CONSTANT], \
+}
+
+#define SYNTAX_BRACKET {             \
+	"(\\(|\\)|\\{|\\}|\\[|\\])", \
+	&colors[COLOR_BRACKETS],     \
+}
 
 /* these rules are applied top to bottom, first match wins. Therefore more 'greedy'
- * rules such as for comments should be the first entries
+ * rules such as for comments should be the first entries.
  *
- * These rules where initially imported from the sandy editor, written by
- * Rafael Garcia   <rafael.garcia.gallego@gmail.com> */
+ * The array of syntax definition must be terminated with an empty element.
+ */
 static Syntax syntaxes[] = {{
 	.name = "c",
 	.file = "\\.(c(pp|xx)?|h(pp|xx)?|cc)$",
-	.rules = {{
-		"(/\\*([^*]|\\*[^/])*\\*/|/\\*([^*]|\\*[^/])*$|^([^/]|/[^*])*\\*/)",
-		&colors[COLOR_COMMENT],
-		true, /* multiline */
-	},{
-		"(//.*)",
-		&colors[COLOR_COMMENT],
-	},{
-		"(\"(\\\\.|[^\"])*\")",
-		//"([\"<](\\\\.|[^ \">])*[\">])",
+	.rules = {
+		SYNTAX_MULTILINE_COMMENT,
+		SYNTAX_SINGLE_LINE_COMMENT,
+		SYNTAX_LITERAL,
+		SYNTAX_STRING,
+		SYNTAX_CONSTANT,
+		SYNTAX_BRACKET,
+	{
+		"<[a-zA-Z0-9\\.-_]+>",
 		&colors[COLOR_STRING],
 	},{
-		"(^#[\\t ]*(define|include(_next)?|(un|ifn?)def|endif|el(if|se)|if|warning|error|pragma))|"
-		B"[A-Z_][0-9A-Z_]+"B"",
+		"(^#[\\t ]*(define|include(_next)?|(un|ifn?)def|endif|el(if|se)|if|warning|error|pragma))",
 		&colors[COLOR_PREPROCESSOR],
 	},{
 		B"(for|if|while|do|else|case|default|switch|try|throw|catch|operator|new|delete)"B,
@@ -820,9 +854,6 @@ static Syntax syntaxes[] = {{
 	},{
 		B"(goto|continue|break|return)"B,
 		&colors[COLOR_CONTROL],
-	},{
-		"(\\(|\\)|\\{|\\}|\\[|\\])",
-		&colors[COLOR_BRACKETS],
 	}}
 },{
 	.name = "sh",
@@ -830,15 +861,14 @@ static Syntax syntaxes[] = {{
 	.rules = {{
 		"#.*$",
 		&colors[COLOR_COMMENT],
-	},{
+	},
+		SYNTAX_STRING,
+	{
 		"^[0-9A-Z_]+\\(\\)",
-		&colors[COLOR_CONSTANTS],
+		&colors[COLOR_CONSTANT],
 	},{
 		"\\$\\{?[0-9A-Z_!@#$*?-]+\\}?",
 		&colors[COLOR_VARIABLE],
-	},{
-		"\"(\\\\.|[^\"])*\"",
-		&colors[COLOR_STRING],
 	},{
 		B"(case|do|done|elif|else|esac|exit|fi|for|function|if|in|local|read|return|select|shift|then|time|until|while)"B,
 		&colors[COLOR_KEYWORD],
@@ -890,21 +920,14 @@ static Syntax syntaxes[] = {{
 },{
 	.name = "vala",
 	.file = "\\.(vapi|vala)$",
-	.rules = {{
-		"(/\\*([^*]|\\*[^/])*\\*/|/\\*([^*]|\\*[^/])*$|^([^/]|/[^*])*\\*/)",
-		&colors[COLOR_COMMENT],
-		true, /* multiline */
-	},{
-		"(//.*)",
-		&colors[COLOR_COMMENT],
-	},{
-		"\"(\\\\.|[^\"])*\"",
-		&colors[COLOR_STRING],
-		true, /* multiline */
-	},{
-		B"[A-Z_][0-9A-Z_]+"B,
-		&colors[COLOR_CONSTANTS],
-	},{
+	.rules = {
+		SYNTAX_MULTILINE_COMMENT,
+		SYNTAX_SINGLE_LINE_COMMENT,
+		SYNTAX_LITERAL,
+		SYNTAX_STRING,
+		SYNTAX_CONSTANT,
+		SYNTAX_BRACKET,
+	{
 		B"(for|if|while|do|else|case|default|switch|get|set|value|out|ref|enum)"B,
 		&colors[COLOR_KEYWORD],
 	},{
@@ -916,28 +939,18 @@ static Syntax syntaxes[] = {{
 	},{
 		B"(abstract|class|final|implements|import|instanceof|interface|using|private|public|static|strictfp|super|throws)"B,
 		&colors[COLOR_KEYWORD2],
-	},{
-		"(\\(|\\)|\\{|\\}|\\[|\\])",
-		&colors[COLOR_BRACKETS],
 	}}
 },{
 	.name = "java",
 	.file = "\\.java$",
-	.rules = {{
-		"(/\\*([^*]|\\*[^/])*\\*/|/\\*([^*]|\\*[^/])*$|^([^/]|/[^*])*\\*/)",
-		&colors[COLOR_COMMENT],
-		true, /* multiline */
-	},{
-		"(//.*)",
-		&colors[COLOR_COMMENT],
-	},{
-		"\"(\\\\.|[^\"])*\"",
-		&colors[COLOR_STRING],
-		true, /* multiline */
-	},{
-		B"[A-Z_][0-9A-Z_]+"B,
-		&colors[COLOR_CONSTANTS],
-	},{
+	.rules = {
+		SYNTAX_MULTILINE_COMMENT,
+		SYNTAX_SINGLE_LINE_COMMENT,
+		SYNTAX_LITERAL,
+		SYNTAX_STRING,
+		SYNTAX_CONSTANT,
+		SYNTAX_BRACKET,
+	{
 		B"(for|if|while|do|else|case|default|switch)"B,
 		&colors[COLOR_KEYWORD],
 	},{
@@ -949,9 +962,6 @@ static Syntax syntaxes[] = {{
 	},{
 		B"(abstract|class|extends|final|implements|import|instanceof|interface|native|package|private|protected|public|static|strictfp|this|super|synchronized|throws|volatile)"B,
 		&colors[COLOR_KEYWORD2],
-	},{
-		"(\\(|\\)|\\{|\\}|\\[|\\])",
-		&colors[COLOR_BRACKETS],
 	}}
 },{
 	.name = "ruby",
