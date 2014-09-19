@@ -24,6 +24,8 @@ void window_move(Win*, int x, int y);
 void window_draw(Win*);
 /* flush all changes made to the ncurses windows to the screen */
 void window_update(Win*);
+/* changes how many spaces are used for one tab (must be >0), redraws the window */
+void window_tabwidth_set(Win*, int tabwidth);
 
 /* cursor movements which also update selection if one is active.
  * they return new cursor postion */

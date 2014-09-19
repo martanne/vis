@@ -185,6 +185,16 @@ static void editor_windows_invalidate(Editor *ed, size_t start, size_t end) {
 	editor_window_draw(ed->win);
 }
 
+int editor_tabwidth_get(Editor *ed) {
+	return ed->tabwidth;
+}
+
+void editor_tabwidth_set(Editor *ed, int tabwidth) {
+	if (tabwidth < 1 || tabwidth > 8)
+		return;
+	for (EditorWin *win = ed->windows; win; win = win->next)
+		window_tabwidth_set(win->win, tabwidth);
+}
 
 bool editor_syntax_load(Editor *ed, Syntax *syntaxes, Color *colors) {
 	bool success = true;
@@ -296,6 +306,7 @@ static EditorWin *editor_window_new_text(Editor *ed, Text *text) {
 		return NULL;
 	}
 	window_cursor_watch(win->win, editor_window_cursor_moved, win);
+	window_tabwidth_set(win->win, ed->tabwidth);
 	if (ed->windows)
 		ed->windows->prev = win;
 	win->next = ed->windows;
@@ -381,6 +392,8 @@ Editor *editor_new(int width, int height) {
 		goto err;
 	ed->width = width;
 	ed->height = height;
+	ed->tabwidth = 8;
+	ed->expandtab = false;
 	ed->windows_arrange = editor_windows_arrange_horizontal;
 	return ed;
 err:

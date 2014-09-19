@@ -99,6 +99,8 @@ struct Editor {
 	Regex *search_pattern;            /* last used search pattern */
 	void (*windows_arrange)(Editor*); /* current layout which places the windows */
 	void (*statusbar)(EditorWin*);    /* configurable user hook to draw statusbar */
+	int tabwidth;                     /* how many spaces should be used to display a tab */
+	bool expandtab;                   /* whether typed tabs should be converted to spaces */
 };
 
 Editor *editor_new(int width, int height);
@@ -115,6 +117,10 @@ void editor_backspace_key(Editor*);
 void editor_delete_key(Editor*);
 void editor_insert(Editor*, size_t pos, const char *data, size_t len);
 void editor_delete(Editor*, size_t pos, size_t len);
+
+/* set tabwidth (must be in range [1, 8], affects all windows */
+void editor_tabwidth_set(Editor*, int tabwidth);
+int editor_tabwidth_get(Editor*);
 
 /* load a set of syntax highlighting definitions which will be associated
  * to the underlying window based on the file type loaded.

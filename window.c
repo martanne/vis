@@ -91,6 +91,11 @@ static void window_cursor_set(Win *win, Line *line, int col);
 static bool window_viewport_up(Win *win, int n);
 static bool window_viewport_down(Win *win, int n);
 
+void window_tabwidth_set(Win *win, int tabwidth) {
+	win->tabwidth = tabwidth;
+	window_draw(win);
+}
+
 void window_selection_clear(Win *win) {
 	win->sel = text_range_empty();
 	window_draw(win);
@@ -489,7 +494,7 @@ Win *window_new(Text *text) {
 	}
 
 	win->text = text;
-	win->tabwidth = 8; // TODO make configurable
+	win->tabwidth = 8;
 
 	int width, height;
 	getmaxyx(win->win, height, width);

@@ -410,6 +410,8 @@ static void call(const Arg *arg);
 static void quit(const Arg *arg);
 
 /** commands to enter at the ':'-prompt */
+/* set various runtime options */
+static bool cmd_set(const char *argv[]);
 /* goto line indicated by argv[0] */
 static bool cmd_gotoline(const char *argv[]);
 /* for each argument create a new window and open the corresponding file */
@@ -473,7 +475,13 @@ static void op_put(OperatorContext *c) {
 }
 
 static const char *expand_tab(void) {
-	return "\t";
+	static char spaces[9];
+	int tabwidth = editor_tabwidth_get(vis);
+	tabwidth = MIN(tabwidth, LENGTH(spaces) - 1);
+	for (int i = 0; i < tabwidth; i++)
+		spaces[i] = ' ';
+	spaces[tabwidth] = '\0';
+	return vis->expandtab ? spaces : "\t";
 }
 
 static void op_shift_right(OperatorContext *c) {
@@ -497,7 +505,7 @@ static void op_shift_right(OperatorContext *c) {
 static void op_shift_left(OperatorContext *c) {
 	Text *txt = vis->win->text;
 	size_t pos = text_line_begin(txt, c->range.end), prev_pos;
-	size_t tabwidth = 8; // TODO: make configurable
+	size_t tabwidth = editor_tabwidth_get(vis);
 
 	/* if range ends at the begin of a line, skip line break */
 	if (pos == c->range.end)
@@ -836,7 +844,7 @@ static void insert(const Arg *arg) {
 }
 
 static void insert_tab(const Arg *arg) {
-	insert(&(const Arg){ .s = "\t" });
+	return insert(&(const Arg){ .s = expand_tab() });
 }
 
 static void insert_newline(const Arg *arg) {
@@ -984,6 +992,34 @@ static void switchmode_to(Mode *new_mode) {
 }
 
 /** ':'-command implementations */
+
+static bool cmd_set(const char *argv[]) {
+	if (!argv[2]) {
+		editor_info_show(vis, "Expecting: set option value");
+		return false;
+	}
+
+	if (!strcmp("tabwidth", argv[1])) {
+		editor_tabwidth_set(vis, strtoul(argv[2], NULL, 10));
+	} else if (!strcmp("expandtab", argv[1])) {
+		switch (argv[2][0]) {
+		case '1': case 't': /* true */ case 'y': /* yes */
+			vis->expandtab = true;
+			break;
+		case '0': case 'f': /* false */ case 'n': /* no */
+			vis->expandtab = false;
+			break;
+		default:
+			editor_info_show(vis, "Expecting: set expandtab [0|1]");
+			return false;
+		}
+	} else {
+		editor_info_show(vis, "Unknown option: `%s'", argv[1]);
+		return false;
+	}
+
+	return true;
+}
 
 static bool cmd_gotoline(const char *argv[]) {
 	action.count = strtoul(argv[0], NULL, 10);
