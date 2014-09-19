@@ -430,9 +430,10 @@ void window_draw(Win *win) {
 			c.len = len;
 		}
 
-		if (cur[0] == '\n' && rem > 1 && cur[1] == '\r') {
-			/* convert windows style newline \n\r into a single char with len = 2 */
-			c.len = len = 2;
+		if (cur[0] == '\r' && rem > 1 && cur[1] == '\n') {
+			/* convert windows style newline \r\n into a single char with len = 2 */
+			len = 2;
+			c = (Char){ .c = "\n", .wchar = L'\n', .len = len };
 		}
 
 		wattrset(win->win, attrs);
@@ -607,16 +608,18 @@ static bool window_viewport_up(Win *win, int n) {
 		return false;
 	size_t off = 0;
 	/* skip newlines immediately before display area */
-	if (c == '\r' && text_iterator_byte_prev(&it, &c))
-		off++;
 	if (c == '\n' && text_iterator_byte_prev(&it, &c))
 		off++;
+	if (c == '\r' && text_iterator_byte_prev(&it, &c))
+		off++;
 	do {
-		if ((c == '\n' || c == '\r') && --n == 0)
+		if (c == '\n' && --n == 0)
 			break;
 		if (++off > max)
 			break;
 	} while (text_iterator_byte_prev(&it, &c));
+	if (c == '\r')
+		off++;
 	win->start -= off;
 	window_draw(win);
 	return true;

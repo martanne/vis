@@ -339,7 +339,7 @@ static void mark_set(const Arg *arg);
 static void insert(const Arg *arg);
 /* insert a tab or the needed amount of spaces at the current cursor position */
 static void insert_tab(const Arg *arg);
-/* inserts a newline (either \n or \n\r depending on file type) */
+/* inserts a newline (either \n or \r\n depending on file type) */
 static void insert_newline(const Arg *arg);
 /* add a new line either before or after the one where the cursor currently is */
 static void openline(const Arg *arg);
@@ -848,7 +848,7 @@ static void insert_tab(const Arg *arg) {
 }
 
 static void insert_newline(const Arg *arg) {
-	// TODO determine file type to insert \n\r or \n
+	// TODO determine file type to insert \r\n or \n
 	insert(&(const Arg){ .s = "\n" });
 }
 

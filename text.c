@@ -1000,11 +1000,8 @@ static size_t lines_skip_forward(Text *txt, size_t pos, size_t lines) {
 			lines--;
 		}
 
-		if (lines == 0) {
-			if (start < it.end && *start == '\r')
-				pos++;
+		if (lines == 0)
 			break;
-		}
 	}
 	return pos;
 }

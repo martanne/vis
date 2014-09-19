@@ -23,7 +23,7 @@ size_t text_find_char_prev(Text*, size_t pos, const char *s, size_t len);
 
 /*        begin            finish        next
  *        v                v             v
- *  \n[\r]      I am a line!       \n[\r]
+ *  [\r]\n      I am a line!       [\r]\n
  *  ^           ^                  ^
  *  prev        start              end
  */

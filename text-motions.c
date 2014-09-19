@@ -78,12 +78,14 @@ size_t text_line_prev(Text *txt, size_t pos) {
 	Iterator it = text_iterator_get(txt, pos);
 	if (!text_iterator_byte_get(&it, &c))
 		return pos;
-	if (c == '\r')
-		text_iterator_byte_prev(&it, &c);
 	if (c == '\n')
+		text_iterator_byte_prev(&it, &c);
+	if (c == '\r')
 		text_iterator_byte_prev(&it, &c);
 	while (text_iterator_byte_get(&it, &c) && c != '\n')
 		text_iterator_byte_prev(&it, NULL);
+	if (text_iterator_byte_prev(&it, &c) && c != '\r')
+		text_iterator_byte_next(&it, &c);
 	return it.pos;
 }
 
@@ -92,12 +94,12 @@ size_t text_line_begin(Text *txt, size_t pos) {
 	Iterator it = text_iterator_get(txt, pos);
 	if (!text_iterator_byte_get(&it, &c))
 		return pos;
-	if (c == '\r')
-		text_iterator_byte_prev(&it, &c);
 	if (c == '\n')
 		text_iterator_byte_prev(&it, &c);
+	if (c == '\r')
+		text_iterator_byte_prev(&it, &c);
 	while (text_iterator_byte_get(&it, &c)) {
-		if (c == '\n' || c == '\r') {
+		if (c == '\n') {
 			it.pos++;
 			break;
 		}
@@ -118,7 +120,7 @@ size_t text_line_finish(Text *txt, size_t pos) {
 	char c;
 	Iterator it = text_iterator_get(txt, text_line_end(txt, pos));
 	do text_iterator_byte_prev(&it, NULL);
-	while (text_iterator_byte_get(&it, &c) && c != '\n' && c != '\r' && isspace(c));
+	while (text_iterator_byte_get(&it, &c) && c != '\n' && isspace(c));
 	if (!ISUTF8(c))
 		text_iterator_char_prev(&it, NULL);
 	return it.pos;
@@ -127,7 +129,7 @@ size_t text_line_finish(Text *txt, size_t pos) {
 size_t text_line_end(Text *txt, size_t pos) {
 	char c;
 	Iterator it = text_iterator_get(txt, pos);
-	while (text_iterator_byte_get(&it, &c) && c != '\n')
+	while (text_iterator_byte_get(&it, &c) && c != '\r' && c != '\n')
 		text_iterator_byte_next(&it, NULL);
 	return it.pos;
 }
@@ -137,8 +139,7 @@ size_t text_line_next(Text *txt, size_t pos) {
 	Iterator it = text_iterator_get(txt, pos);
 	while (text_iterator_byte_get(&it, &c) && c != '\n')
 		text_iterator_byte_next(&it, NULL);
-	if (text_iterator_byte_next(&it, &c) && c == '\r')
-		text_iterator_byte_next(&it, NULL);
+	text_iterator_byte_next(&it, NULL);
 	return it.pos;
 }
 
