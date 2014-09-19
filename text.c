@@ -120,6 +120,7 @@ struct Text {
 	int fd;                 /* the file descriptor of the original mmap-ed data */
 	LineCache lines;        /* mapping between absolute pos in bytes and logical line breaks */
 	const char *marks[26];  /* a mark is a pointer into an underlying buffer */
+	int newlines;           /* 0: unknown, 1: \n, -1: \r\n */
 };
 
 /* buffer management */
@@ -830,6 +831,20 @@ void text_free(Text *txt) {
 
 bool text_modified(Text *txt) {
 	return txt->saved_action != txt->undo;
+}
+
+bool text_newlines_crnl(Text *txt){
+	if (txt->newlines == 0) {
+		txt->newlines = 1; /* default to UNIX style \n new lines */
+		const char *start = txt->buf.data;
+		if (start) {
+			const char *nl = memchr(start, '\n', txt->buf.len);
+			if (nl > start && nl[-1] == '\r')
+				txt->newlines = -1; /* Windows style \r\n */
+		}
+	}
+
+	return txt->newlines < 0;
 }
 
 static bool text_iterator_init(Iterator *it, size_t pos, Piece *p, size_t off) {

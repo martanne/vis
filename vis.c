@@ -848,8 +848,8 @@ static void insert_tab(const Arg *arg) {
 }
 
 static void insert_newline(const Arg *arg) {
-	// TODO determine file type to insert \r\n or \n
-	insert(&(const Arg){ .s = "\n" });
+	insert(&(const Arg){ .s =
+	       text_newlines_crnl(vis->win->text) ? "\r\n" : "\n" });
 }
 
 static void openline(const Arg *arg) {
