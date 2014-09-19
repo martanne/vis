@@ -314,9 +314,6 @@ static void span_init(Span *span, Piece *start, Piece *end) {
  * adjusts the document size accordingly.
  */
 static void span_swap(Text *txt, Span *old, Span *new) {
-	/* TODO use a balanced search tree to keep the pieces
-		instead of a doubly linked list.
-	 */
 	if (old->len == 0 && new->len == 0) {
 		return;
 	} else if (old->len == 0) {

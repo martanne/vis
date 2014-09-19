@@ -401,7 +401,7 @@ void window_draw(Win *win) {
 		}
 
 		if (sel.start <= pos && pos < sel.end)
-			attrs |= A_REVERSE; // TODO: make configurable
+			attrs |= A_REVERSE;
 
 		size_t len = mbrtowc(&c.wchar, cur, rem, NULL);
 		if (len == (size_t)-1 && errno == EILSEQ) {

@@ -981,14 +981,11 @@ static void switchmode_to(Mode *new_mode) {
 	if (mode->leave)
 		mode->leave(new_mode);
 	mode_prev = mode;
-	//fprintf(stderr, "%s -> %s\n", mode_prev->name, new_mode->name);
 	mode = new_mode;
 	if (mode == config->mode || (mode->name && mode->name[0] == '-'))
 		statusbar(vis->win);
 	if (mode->enter)
 		mode->enter(mode_prev);
-	// TODO display mode name somewhere?
-
 }
 
 /** ':'-command implementations */
