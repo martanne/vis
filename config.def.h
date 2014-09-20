@@ -789,10 +789,10 @@ static Color colors[] = {
 
 /* common rules, used by multiple languages */
 
-#define SYNTAX_MULTILINE_COMMENT {   \
-	"(/\\*([^*]|\\*[^/])*\\*/)", \
-	&colors[COLOR_COMMENT],      \
-	true, /* multiline */        \
+#define SYNTAX_MULTILINE_COMMENT {                                           \
+	"(/\\*([^*]|\\*[^/])*\\*/|/\\*([^*]|\\*[^/])*$|^([^/]|/[^*])*\\*/)", \
+	&colors[COLOR_COMMENT],                                              \
+	true, /* multiline */                                                \
 }
 
 #define SYNTAX_SINGLE_LINE_COMMENT { \
@@ -808,7 +808,7 @@ static Color colors[] = {
 #define SYNTAX_STRING {         \
 	"(\"(\\\\.|[^\"])*\")", \
 	&colors[COLOR_STRING],  \
-	true, /* multiline */   \
+	false, /* multiline */  \
 }
 
 #define SYNTAX_CONSTANT {        \
