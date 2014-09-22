@@ -1010,6 +1010,15 @@ static bool cmd_set(const char *argv[]) {
 			editor_info_show(vis, "Expecting: set expandtab [0|1]");
 			return false;
 		}
+	} else if (!strcmp("syntax", argv[1])) {
+		for (Syntax *syntax = syntaxes; syntax && syntax->name; syntax++) {
+			if (!strcmp(syntax->name, argv[2])) {
+				window_syntax_set(vis->win->win, syntax);
+				return true;
+			}
+		}
+		window_syntax_set(vis->win->win, NULL);
+		return false;
 	} else {
 		editor_info_show(vis, "Unknown option: `%s'", argv[1]);
 		return false;
