@@ -642,6 +642,7 @@ static Mode vis_modes[] = {
 		.leave = vis_mode_insert_leave,
 		.input = vis_mode_insert_input,
 		.idle = vis_mode_insert_idle,
+		.idle_timeout = 3,
 	},
 	[VIS_MODE_REPLACE] = {
 		.name = "--REPLACE--",
@@ -650,6 +651,7 @@ static Mode vis_modes[] = {
 		.leave = vis_mode_replace_leave,
 		.input = vis_mode_replace_input,
 		.idle = vis_mode_insert_idle,
+		.idle_timeout = 3,
 	},
 };
 

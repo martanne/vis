@@ -74,6 +74,7 @@ struct Mode {
 	                                       the return value determines whether parent modes will be searched */
 	void (*input)(const char*, size_t); /* called whenever a key is not found in this mode and all its parent modes */
 	void (*idle)(void);                 /* called whenever a certain idle time i.e. without any user input elapsed */
+	time_t idle_timeout;                /* idle time in seconds after which the registered function will be called */
 };
 
 typedef struct {
@@ -1354,7 +1355,7 @@ int main(int argc, char *argv[]) {
 
 		editor_update(vis);
 		doupdate();
-		idle.tv_sec = 3;
+		idle.tv_sec = mode->idle_timeout;
 		int r = select(1, &fds, NULL, NULL, timeout);
 		if (r == -1 && errno == EINTR)
 			continue;
