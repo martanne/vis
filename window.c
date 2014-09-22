@@ -406,9 +406,6 @@ void window_draw(Win *win) {
 			}
 		}
 
-		if (sel.start <= pos && pos < sel.end)
-			attrs |= A_REVERSE;
-
 		size_t len = mbrtowc(&c.wchar, cur, rem, NULL);
 		if (len == (size_t)-1 && errno == EILSEQ) {
 			/* ok, we encountered an invalid multibyte sequence,
@@ -442,7 +439,11 @@ void window_draw(Win *win) {
 			c = (Char){ .c = "\n", .wchar = L'\n', .len = len };
 		}
 
-		wattrset(win->win, attrs);
+		if (sel.start <= pos && pos < sel.end)
+			wattrset(win->win, attrs | A_REVERSE);
+		else
+			wattrset(win->win, attrs);
+
 		if (!window_addch(win, &c))
 			break;
 
