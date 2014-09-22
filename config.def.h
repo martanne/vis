@@ -281,6 +281,8 @@ static KeyBinding vis_marks[] = {
 	{ { NONE('`'), NONE('x')    }, mark,          { .i = MARK_x          } },
 	{ { NONE('`'), NONE('y')    }, mark,          { .i = MARK_y          } },
 	{ { NONE('`'), NONE('z')    }, mark,          { .i = MARK_z          } },
+	{ { NONE('`'), NONE('<')    }, mark,     { .i = MARK_SELECTION_START } },
+	{ { NONE('`'), NONE('>')    }, mark,     { .i = MARK_SELECTION_END   } },
 	{ /* empty last element, array terminator */                           },
 };
 
@@ -311,6 +313,8 @@ static KeyBinding vis_marks_line[] = {
 	{ { NONE('\''), NONE('x')   }, mark_line,     { .i = MARK_x          } },
 	{ { NONE('\''), NONE('y')   }, mark_line,     { .i = MARK_y          } },
 	{ { NONE('\''), NONE('z')   }, mark_line,     { .i = MARK_z          } },
+	{ { NONE('\''), NONE('<')   }, mark_line, { .i = MARK_SELECTION_START } },
+	{ { NONE('\''), NONE('>')   }, mark_line, { .i = MARK_SELECTION_END   } },
 	{ /* empty last element, array terminator */                           },
 };
 

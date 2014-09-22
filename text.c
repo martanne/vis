@@ -120,7 +120,7 @@ struct Text {
 	struct stat info;	/* stat as proped on load time */
 	int fd;                 /* the file descriptor of the original mmap-ed data */
 	LineCache lines;        /* mapping between absolute pos in bytes and logical line breaks */
-	const char *marks[26];  /* a mark is a pointer into an underlying buffer */
+	const char *marks[32];  /* a mark is a pointer into an underlying buffer */
 	int newlines;           /* 0: unknown, 1: \n, -1: \r\n */
 };
 

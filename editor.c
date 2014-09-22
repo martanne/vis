@@ -55,8 +55,14 @@ static void editor_window_statusbar_draw(EditorWin *win) {
 		win->editor->statusbar(win);
 }
 
-static void editor_window_cursor_moved(Win *win, void *data) {
-	editor_window_statusbar_draw(data);
+static void editor_window_cursor_moved(Win *winwin, void *data) {
+	EditorWin *win = data;
+	Filerange sel = window_selection_get(winwin);
+	if (text_range_valid(&sel) && sel.start != sel.end) {
+		text_mark_set(win->text, MARK_SELECTION_START, sel.start);
+		text_mark_set(win->text, MARK_SELECTION_END, sel.end);
+	}
+	editor_window_statusbar_draw(win);
 }
 
 void editor_statusbar_set(Editor *ed, void (*statusbar)(EditorWin*)) {

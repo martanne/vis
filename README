@@ -389,8 +389,12 @@ and their current support in vis.
  Marks
  -----
 
-  Only the 26 lower case marks [a-z] are supported. No marks across files
-  are supported. Marks are not preserved over editing sessions.
+  [a-z] general purpose marks
+  <     start of the last selected visual area in current buffer
+  >     end of the last selected visual area in current buffer
+
+  No marks across files are supported. Marks are not preserved over
+  editing sessions.
 
  Registers
  ---------

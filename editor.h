@@ -86,6 +86,8 @@ enum Mark {
 	MARK_x,
 	MARK_y,
 	MARK_z,
+	MARK_SELECTION_START,
+	MARK_SELECTION_END,
 };
 
 struct Editor {
