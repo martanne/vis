@@ -857,6 +857,7 @@ static void openline(const Arg *arg) {
 	movement(&(const Arg){ .i = arg->i == MOVE_LINE_NEXT ?
 	                       MOVE_LINE_END : MOVE_LINE_PREV });
 	insert_newline(NULL);
+	switchmode(&(const Arg){ .i = VIS_MODE_INSERT });
 }
 
 static void joinline(const Arg *arg) {
