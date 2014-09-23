@@ -361,6 +361,7 @@ static KeyBinding vis_mode_normal[] = {
 	{ { CONTROL('D')            }, wscroll,        { .i = +PAGE_HALF           } },
 	{ { CONTROL('E')            }, wslide,         { .i = -1                   } },
 	{ { CONTROL('Y')            }, wslide,         { .i = +1                   } },
+	{ { NONE('a')               }, insertmode,     { .i = MOVE_CHAR_NEXT       } },
 	{ { NONE('A')               }, insertmode,     { .i = MOVE_LINE_END        } },
 	{ { NONE('C')               }, change,         { .i = MOVE_LINE_END        } },
 	{ { NONE('D')               }, delete,         { .i = MOVE_LINE_END        } },
