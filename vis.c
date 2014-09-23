@@ -91,11 +91,11 @@ typedef struct {
 	Filerange range;  /* which part of the file should be affected by the operator */
 	size_t pos;       /* at which byte from the start of the file should the operation start? */
 	bool linewise;    /* should the changes always affect whole lines? */
+	const Arg *arg;   /* arbitrary arguments */
 } OperatorContext;
 
 typedef struct {
 	void (*func)(OperatorContext*); /* function implementing the operator logic */
-	bool selfcontained;             /* is this operator followed by movements/text-objects */
 } Operator;
 
 typedef struct {
@@ -167,12 +167,12 @@ enum {
 };
 
 static Operator ops[] = {
-	[OP_DELETE] = { op_delete, false },
-	[OP_CHANGE] = { op_change, false },
-	[OP_YANK]   = { op_yank,   false },
-	[OP_PUT]    = { op_put,    true  },
-	[OP_SHIFT_RIGHT] = { op_shift_right, false },
-	[OP_SHIFT_LEFT]  = { op_shift_left,  false },
+	[OP_DELETE]      = { op_delete      },
+	[OP_CHANGE]      = { op_change      },
+	[OP_YANK]        = { op_yank        },
+	[OP_PUT]         = { op_put         },
+	[OP_SHIFT_RIGHT] = { op_shift_right },
+	[OP_SHIFT_LEFT]  = { op_shift_left  },
 };
 
 #define PAGE      INT_MAX
@@ -342,6 +342,9 @@ static void insert(const Arg *arg);
 static void insert_tab(const Arg *arg);
 /* inserts a newline (either \n or \r\n depending on file type) */
 static void insert_newline(const Arg *arg);
+/* put register content either before (if arg->i < 0) or after (if arg->i > 0)
+ * current cursor position */
+static void put(const Arg *arg);
 /* add a new line either before or after the one where the cursor currently is */
 static void openline(const Arg *arg);
 /* join the line where the cursor currently is with the one above or below */
@@ -468,11 +471,22 @@ static void op_yank(OperatorContext *c) {
 }
 
 static void op_put(OperatorContext *c) {
+	Text *txt = vis->win->text;
 	size_t pos = window_cursor_get(vis->win->win);
-	if (c->reg->linewise)
-		pos = text_line_next(vis->win->text, pos);
+	if (c->arg->i > 0) {
+		if (c->reg->linewise)
+			pos = text_line_next(txt, pos);
+		else
+			pos = text_char_next(txt, pos);
+	} else {
+		if (c->reg->linewise)
+			pos = text_line_begin(txt, pos);
+	}
 	editor_insert(vis, pos, c->reg->data, c->reg->len);
-	window_cursor_to(vis->win->win, pos + c->reg->len);
+	if (c->reg->linewise || c->arg->i > 0)
+		window_cursor_to(vis->win->win, pos);
+	else
+		window_cursor_to(vis->win->win, pos + c->reg->len);
 }
 
 static const char *expand_tab(void) {
@@ -642,8 +656,6 @@ static void operator(const Arg *arg) {
 		action_do(&action);
 	} else {
 		action.op = op;
-		if (op->selfcontained)
-			action_do(&action);
 	}
 }
 
@@ -853,6 +865,12 @@ static void insert_newline(const Arg *arg) {
 	       text_newlines_crnl(vis->win->text) ? "\r\n" : "\n" });
 }
 
+static void put(const Arg *arg) {
+	action.arg = *arg;
+	operator(&(const Arg){ .i = OP_PUT });
+	action_do(&action);
+}
+
 static void openline(const Arg *arg) {
 	movement(&(const Arg){ .i = arg->i == MOVE_LINE_NEXT ?
 	                       MOVE_LINE_END : MOVE_LINE_PREV });
@@ -891,6 +909,7 @@ static void action_do(Action *a) {
 		.pos = pos,
 		.reg = a->reg ? a->reg : &vis->registers[REG_DEFAULT],
 		.linewise = a->linewise,
+		.arg = &a->arg,
 	};
 
 	if (a->movement) {
