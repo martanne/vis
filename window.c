@@ -137,6 +137,11 @@ Filerange window_selection_get(Win *win) {
 	return sel;
 }
 
+void window_selection_set(Win *win, Filerange *sel) {
+	win->sel = *sel;
+	window_draw(win);
+}
+
 Filerange window_viewport_get(Win *win) {
 	return (Filerange){ .start = win->start, .end = win->end };
 }
@@ -780,10 +785,6 @@ void window_selection_start(Win *win) {
 	win->sel.start = win->sel.end = window_cursor_get(win);
 	window_draw(win);
 	curs_set(0);
-}
-
-void window_selection_end(Win *win) {
-	win->sel.end = window_cursor_get(win);
 }
 
 void window_syntax_set(Win *win, Syntax *syntax) {

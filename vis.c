@@ -626,7 +626,7 @@ static void linewise(const Arg *arg) {
 
 static void operator(const Arg *arg) {
 	Operator *op = &ops[arg->i];
-	if (mode == &vis_modes[VIS_MODE_VISUAL]) {
+	if (mode == &vis_modes[VIS_MODE_VISUAL] || mode == &vis_modes[VIS_MODE_VISUAL_LINE]) {
 		action.op = op;
 		action_do(&action);
 		return;
@@ -918,6 +918,22 @@ static void action_do(Action *a) {
 				window_scroll_to(win, pos);
 			else
 				window_cursor_to(win, pos);
+
+			if (mode == &vis_modes[VIS_MODE_VISUAL_LINE]) {
+				Filerange sel = window_selection_get(win);
+				sel.end = text_char_prev(txt, sel.end);
+				size_t start = text_line_begin(txt, sel.start);
+				size_t end = text_line_end(txt, sel.end);
+				if (sel.start == pos) { /* extend selection upwards */
+					sel.end = start;
+					sel.start = end;
+				} else { /* extend selection downwards */
+					sel.start = start;
+					sel.end = end;
+				}
+				window_selection_set(win, &sel);
+				c.range = sel;
+			}
 		} else if (a->movement->type & INCLUSIVE) {
 			Iterator it = text_iterator_get(txt, c.range.end);
 			text_iterator_char_next(&it, NULL);
@@ -945,7 +961,7 @@ static void action_do(Action *a) {
 				}
 			}
 		}
-	} else if (mode == &vis_modes[VIS_MODE_VISUAL]) {
+	} else if (mode == &vis_modes[VIS_MODE_VISUAL] || mode == &vis_modes[VIS_MODE_VISUAL_LINE]) {
 		c.range = window_selection_get(win);
 		if (!text_range_valid(&c.range))
 			c.range.start = c.range.end = pos;
@@ -955,7 +971,7 @@ static void action_do(Action *a) {
 		a->op->func(&c);
 		if (mode == &vis_modes[VIS_MODE_OPERATOR])
 			switchmode_to(mode_prev);
-		else if (mode == &vis_modes[VIS_MODE_VISUAL])
+		else if (mode == &vis_modes[VIS_MODE_VISUAL] || mode == &vis_modes[VIS_MODE_VISUAL_LINE])
 			switchmode(&(const Arg){ .i = VIS_MODE_NORMAL });
 		text_snapshot(txt);
 	}

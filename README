@@ -382,9 +382,7 @@ and their current support in vis.
  -----
 
   At the moment there exists a more or less functional insert, replace
-  and character wise visual mode.
-
-  A line wise visual mode is planned.
+  and visual mode (in both line and character wise variants).
 
  Marks
  -----

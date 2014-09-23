@@ -58,10 +58,10 @@ void window_cursor_to(Win*, size_t pos);
 /* start selected area at current cursor position. further cursor movements will
  * affect the selected region. */
 void window_selection_start(Win*);
-void window_selection_end(Win*);
 /* returns the currently selected text region, is either empty or well defined,
  * i.e. sel.start <= sel.end */
 Filerange window_selection_get(Win*);
+void window_selection_set(Win*, Filerange *sel);
 /* clear selection and redraw window */
 void window_selection_clear(Win*);
 /* get the currently displayed area in bytes from the start of the file */

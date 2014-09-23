@@ -37,6 +37,7 @@ enum {
 	VIS_MODE_REGISTER,
 	VIS_MODE_NORMAL,
 	VIS_MODE_VISUAL,
+	VIS_MODE_VISUAL_LINE,
 	VIS_MODE_READLINE,
 	VIS_MODE_PROMPT,
 	VIS_MODE_INSERT_REGISTER,
@@ -372,6 +373,7 @@ static KeyBinding vis_mode_normal[] = {
 	{ { NONE('r')               }, replace,        { NULL                      } },
 	{ { NONE('i')               }, switchmode,     { .i = VIS_MODE_INSERT      } },
 	{ { NONE('v')               }, switchmode,     { .i = VIS_MODE_VISUAL      } },
+	{ { NONE('V')               }, switchmode,     { .i = VIS_MODE_VISUAL_LINE } },
 	{ { NONE('R')               }, switchmode,     { .i = VIS_MODE_REPLACE     } },
 	{ { NONE('S')               }, operator_twice, { .i = OP_CHANGE            } },
 	{ { NONE('s')               }, change,         { .i = MOVE_CHAR_NEXT       } },
@@ -388,6 +390,7 @@ static KeyBinding vis_mode_visual[] = {
 	{ { NONE(ESC)               }, switchmode,      { .i = VIS_MODE_NORMAL   } },
 	{ { CONTROL('c')            }, switchmode,      { .i = VIS_MODE_NORMAL   } },
 	{ { NONE('v')               }, switchmode,      { .i = VIS_MODE_NORMAL   } },
+	{ { NONE('V')               }, switchmode,      { .i = VIS_MODE_VISUAL_LINE } },
 	BACKSPACE(                     operator,           i,  OP_DELETE           ),
 	{ { CONTROL('H')            }, operator,        { .i = OP_DELETE         } },
 	{ { NONE('d')               }, operator,        { .i = OP_DELETE         } },
@@ -400,11 +403,32 @@ static KeyBinding vis_mode_visual[] = {
 };
 
 static void vis_mode_visual_enter(Mode *old) {
-	window_selection_start(vis->win->win);
+	if (old != &vis_modes[VIS_MODE_VISUAL_LINE])
+		window_selection_start(vis->win->win);
 }
 
 static void vis_mode_visual_leave(Mode *new) {
-	window_selection_clear(vis->win->win);
+	if (new != &vis_modes[VIS_MODE_VISUAL_LINE])
+		window_selection_clear(vis->win->win);
+}
+
+static KeyBinding vis_mode_visual_line[] = {
+	{ { NONE('v')               }, switchmode,      { .i = VIS_MODE_VISUAL   } },
+	{ { NONE('V')               }, switchmode,      { .i = VIS_MODE_NORMAL   } },
+	{ /* empty last element, array terminator */                               },
+};
+
+static void vis_mode_visual_line_enter(Mode *old) {
+	Win *win = vis->win->win;
+	window_cursor_to(win, text_line_begin(vis->win->text, window_cursor_get(win)));
+	if (old != &vis_modes[VIS_MODE_VISUAL])
+		window_selection_start(vis->win->win);
+	movement(&(const Arg){ .i = MOVE_LINE_END });
+}
+
+static void vis_mode_visual_line_leave(Mode *new) {
+	if (new != &vis_modes[VIS_MODE_VISUAL])
+		window_selection_clear(vis->win->win);
 }
 
 static KeyBinding vis_mode_readline[] = {
@@ -543,10 +567,10 @@ static void vis_mode_replace_input(const char *str, size_t len) {
  *                           /-----------/   |          \\             |
  *                          /                |           \\            |
  *                      VISUAL            MARK-SET        \\     OPERATOR-OPTION
- *                                        (m [a-z])        \\        (v,V)
- *                                           |              \\        //
- *                                           |               \\======//
- *                                         NORMAL
+ *                         |              (m [a-z])        \\        (v,V)
+ *                         |                 |              \\        //
+ *                         |                 |               \\======//
+ *                   VISUAL-LINE           NORMAL
  */
 
 static Mode vis_modes[] = {
@@ -620,6 +644,13 @@ static Mode vis_modes[] = {
 		.bindings = vis_mode_visual,
 		.enter = vis_mode_visual_enter,
 		.leave = vis_mode_visual_leave,
+	},
+	[VIS_MODE_VISUAL_LINE] = {
+		.name = "--VISUAL LINE--",
+		.parent = &vis_modes[VIS_MODE_VISUAL],
+		.bindings = vis_mode_visual_line,
+		.enter = vis_mode_visual_line_enter,
+		.leave = vis_mode_visual_line_leave,
 	},
 	[VIS_MODE_READLINE] = {
 		.name = "READLINE",
