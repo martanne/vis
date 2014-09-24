@@ -672,8 +672,10 @@ static void replace(const Arg *arg) {
 	Key k = getkey();
 	if (!k.str[0])
 		return;
+	size_t pos = window_cursor_get(vis->win->win);
 	editor_delete_key(vis);
 	editor_insert_key(vis, k.str, strlen(k.str));
+	window_cursor_to(vis->win->win, pos);
 }
 
 static void count(const Arg *arg) {
