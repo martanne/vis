@@ -431,6 +431,22 @@ and their current support in vis.
    :vsplit  split window vertically
    :wq      write changes then close window
    :write   write current buffer content to file
+   :saveas  save file under another name
+   :set     set the options below
+
+     tabwidth   [1-8]
+
+       set display width of a tab and number of spaces to use if
+       expandtab is enabled
+
+     expandtab  (1|yes|true)|(0|no|false)
+
+       whether typed in tabs should be expanded to tabwidth spaces
+
+     syntax      name
+
+        use syntax definition given (e.g. "c") or disable syntax
+        highlighting if no such definition exists (e.g :set syntax off)
 
   The substitute command is recognized but not yet implemented. The '!'
   command to filter text through an external program is also planned.
