@@ -187,8 +187,8 @@ static Operator ops[] = {
 
 /* these can be passed as int argument to movement(&(const Arg){ .i = MOVE_* }) */
 enum {
-	MOVE_LINE_UP,
-	MOVE_LINE_DOWN,
+	MOVE_SCREEN_LINE_UP,
+	MOVE_SCREEN_LINE_DOWN,
 	MOVE_LINE_PREV,
 	MOVE_LINE_BEGIN,
 	MOVE_LINE_START,
@@ -251,8 +251,8 @@ static size_t window_line_middle(const Arg *arg);
 static size_t window_line_bottom(const Arg *arg);
 
 static Movement moves[] = {
-	[MOVE_LINE_UP]         = { .win = window_line_up                                   },
-	[MOVE_LINE_DOWN]       = { .win = window_line_down                                 },
+	[MOVE_SCREEN_LINE_UP]  = { .win = window_line_up                                   },
+	[MOVE_SCREEN_LINE_DOWN]= { .win = window_line_down                                 },
 	[MOVE_LINE_PREV]       = { .txt = text_line_prev,       .type = LINEWISE           },
 	[MOVE_LINE_BEGIN]      = { .txt = text_line_begin,      .type = LINEWISE           },
 	[MOVE_LINE_START]      = { .txt = text_line_start,      .type = LINEWISE           },
@@ -334,8 +334,8 @@ static TextObject textobjs[] = {
 
 /* if some movements are forced to be linewise, they are translated to text objects */
 static TextObject *moves_linewise[] = {
-	[MOVE_LINE_UP]   = &textobjs[TEXT_OBJ_LINE_UP],
-	[MOVE_LINE_DOWN] = &textobjs[TEXT_OBJ_LINE_DOWN],
+	[MOVE_SCREEN_LINE_UP]   = &textobjs[TEXT_OBJ_LINE_UP],
+	[MOVE_SCREEN_LINE_DOWN] = &textobjs[TEXT_OBJ_LINE_DOWN],
 };
 
 /** functions to be called from keybindings */
@@ -689,7 +689,7 @@ static void operator(const Arg *arg) {
 		/* hacky way to handle double operators i.e. things like
 		 * dd, yy etc where the second char isn't a movement */
 		action.linewise = true;
-		action.textobj = moves_linewise[MOVE_LINE_DOWN];
+		action.textobj = moves_linewise[MOVE_SCREEN_LINE_DOWN];
 		action_do(&action);
 	} else {
 		action.op = op;
