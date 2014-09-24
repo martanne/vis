@@ -25,6 +25,7 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <limits.h>
+#include <ctype.h>
 #include <sys/select.h>
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -158,6 +159,7 @@ static void op_put(OperatorContext *c);
 static void op_delete(OperatorContext *c);
 static void op_shift_right(OperatorContext *c);
 static void op_shift_left(OperatorContext *c);
+static void op_case_change(OperatorContext *c);
 
 /* these can be passed as int argument to operator(&(const Arg){ .i = OP_*}) */
 enum {
@@ -167,6 +169,7 @@ enum {
 	OP_PUT,
 	OP_SHIFT_RIGHT,
 	OP_SHIFT_LEFT,
+	OP_CASE_CHANGE,
 };
 
 static Operator ops[] = {
@@ -176,6 +179,7 @@ static Operator ops[] = {
 	[OP_PUT]         = { op_put         },
 	[OP_SHIFT_RIGHT] = { op_shift_right },
 	[OP_SHIFT_LEFT]  = { op_shift_left  },
+	[OP_CASE_CHANGE] = { op_case_change },
 };
 
 #define PAGE      INT_MAX
@@ -370,6 +374,8 @@ static void linewise(const Arg *arg);
 static void operator(const Arg *arg);
 /* execute operator twice useful for synonyms (e.g. 'cc') */
 static void operator_twice(const Arg *arg);
+/* change case of a file range to upper (arg->i > 0) or lowercase (arg->i < 0) */
+static void changecase(const Arg *arg);
 /* blocks to read a key and performs movement indicated by arg->i which
  * should be one of MOVE_{RIGHT,LEFT}_{TO,TILL} */
 static void movement_key(const Arg *arg);
@@ -552,6 +558,28 @@ static void op_shift_left(OperatorContext *c) {
 	editor_draw(vis);
 }
 
+static void op_case_change(OperatorContext *c) {
+	size_t len = c->range.end - c->range.start;
+	char *buf = malloc(len+1);
+	if (!buf)
+		return;
+	len = text_bytes_get(vis->win->text, c->range.start, len, buf);
+	size_t rem = len;
+	for (char *cur = buf; rem > 0; cur++, rem--) {
+		if (isascii((unsigned char)*cur)) {
+			if (c->arg->i > 0)
+				*cur = toupper((unsigned char)*cur);
+			else
+				*cur = tolower((unsigned char)*cur);
+		}
+	}
+
+	text_delete(vis->win->text, c->range.start, len);
+	text_insert(vis->win->text, c->range.start, buf, len);
+	editor_draw(vis);
+	free(buf);
+}
+
 /** movement implementations of type: size_t (*move)(const Arg*) */
 
 static size_t search_forward(const Arg *arg) {
@@ -671,6 +699,11 @@ static void operator(const Arg *arg) {
 static void operator_twice(const Arg *arg) {
 	operator(arg);
 	operator(arg);
+}
+
+static void changecase(const Arg *arg) {
+	action.arg = *arg;
+	operator(&(const Arg){ .i = OP_CASE_CHANGE });
 }
 
 static void movement_key(const Arg *arg) {
