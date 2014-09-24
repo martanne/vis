@@ -263,7 +263,7 @@ static Movement moves[] = {
 	[MOVE_LINE_BEGIN]      = { .txt = text_line_begin,      .type = LINEWISE           },
 	[MOVE_LINE_START]      = { .txt = text_line_start,      .type = LINEWISE           },
 	[MOVE_LINE_FINISH]     = { .txt = text_line_finish,     .type = LINEWISE           },
-	[MOVE_LINE_END]        = { .txt = text_line_end,        .type = LINEWISE           },
+	[MOVE_LINE_END]        = { .txt = text_line_end,        .type = LINEWISE|INCLUSIVE },
 	[MOVE_LINE_NEXT]       = { .txt = text_line_next,       .type = LINEWISE           },
 	[MOVE_LINE]            = { .cmd = line,                 .type = LINEWISE|IDEMPOTENT},
 	[MOVE_COLUMN]          = { .cmd = column,               .type = CHARWISE|IDEMPOTENT},
@@ -939,7 +939,7 @@ static void joinline(const Arg *arg) {
 	Text *txt = vis->win->text;
 	size_t pos = window_cursor_get(vis->win->win), start, end;
 	if (arg->i == MOVE_LINE_NEXT) {
-		start = text_line_end(txt, pos);
+		start = text_line_prev(txt, text_line_next(txt, pos));
 		end = text_line_next(txt, pos);
 	} else {
 		end = text_line_begin(txt, pos);
@@ -1000,7 +1000,7 @@ static void action_do(Action *a) {
 				Filerange sel = window_selection_get(win);
 				sel.end = text_char_prev(txt, sel.end);
 				size_t start = text_line_begin(txt, sel.start);
-				size_t end = text_line_end(txt, sel.end);
+				size_t end = text_line_prev(txt, text_line_next(txt, sel.end));
 				if (sel.start == pos) { /* extend selection upwards */
 					sel.end = start;
 					sel.start = end;
