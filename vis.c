@@ -454,6 +454,9 @@ static bool cmd_split(const char *argv[]);
 /* if no argument are given, split the current window vertically,
  * otherwise open the file */
 static bool cmd_vsplit(const char *argv[]);
+/* create a new empty window and arrange all windows either horizontally or vertically */
+static bool cmd_new(const char *argv[]);
+static bool cmd_vnew(const char *argv[]);
 /* save the file displayed in the current window and close it */
 static bool cmd_wq(const char *argv[]);
 /* save the file displayed in the current window to the name given.
@@ -1252,6 +1255,16 @@ static bool cmd_vsplit(const char *argv[]) {
 	if (!argv[1])
 		return editor_window_split(vis->win);
 	return openfiles(&argv[1]);
+}
+
+static bool cmd_new(const char *argv[]) {
+	editor_windows_arrange_horizontal(vis);
+	return editor_window_new(vis, NULL);
+}
+
+static bool cmd_vnew(const char *argv[]) {
+	editor_windows_arrange_vertical(vis);
+	return editor_window_new(vis, NULL);
 }
 
 static bool cmd_wq(const char *argv[]) {

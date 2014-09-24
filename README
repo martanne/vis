@@ -429,6 +429,8 @@ and their current support in vis.
    :read    insert content of another file at current cursor position
    :split   split window horizontally
    :vsplit  split window vertically
+   :new     open an empty window, arrange horizontally
+   :vnew    open an empty window, arrange vertically
    :wq      write changes then close window
    :write   write current buffer content to file
    :saveas  save file under another name

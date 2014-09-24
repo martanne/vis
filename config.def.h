@@ -49,6 +49,7 @@ enum {
 static Command cmds[] = {
 	{ "^[0-9]+$",        cmd_gotoline,   false },
 	{ "^e(dit)?!?$",     cmd_edit,       false },
+	{ "^new$",           cmd_new,        false },
 	{ "^o(pen)?$",       cmd_open,       false },
 	{ "^qa(ll)?!?$",     cmd_qall,       false },
 	{ "^q(quit)?!?$",    cmd_quit,       false },
@@ -57,6 +58,7 @@ static Command cmds[] = {
 	{ "^set$",           cmd_set,        true  },
 	{ "^sp(lit)?$",      cmd_split,      false },
 	{ "^s(ubstitute)?$", cmd_substitute, false },
+	{ "^vnew?$",         cmd_vnew,       false },
 	{ "^v(split)?$",     cmd_vsplit,     false },
 	{ "^wq!?$",          cmd_wq,         false },
 	{ "^w(rite)?$",      cmd_write,      false },
