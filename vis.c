@@ -508,8 +508,8 @@ static void op_put(OperatorContext *c) {
 			pos = text_line_begin(txt, pos);
 	}
 	editor_insert(vis, pos, c->reg->data, c->reg->len);
-	if (c->reg->linewise || c->arg->i > 0)
-		window_cursor_to(vis->win->win, pos);
+	if (c->reg->linewise)
+		window_cursor_to(vis->win->win, text_line_start(txt, pos));
 	else
 		window_cursor_to(vis->win->win, pos + c->reg->len);
 }
