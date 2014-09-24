@@ -394,6 +394,8 @@ static KeyBinding vis_mode_normal[] = {
 	{ { CONTROL('R')            }, redo,           { NULL                      } },
 	{ { CONTROL('L')            }, call,           { .f = editor_draw          } },
 	{ { NONE(':')               }, prompt,         { .s = ":"                  } },
+	{ { NONE('Z'), NONE('Z')    }, cmd,            { .s = "wq"                 } },
+	{ { NONE('Z'), NONE('Q')    }, cmd,            { .s = "q!"                 } },
 	{ /* empty last element, array terminator */                                 },
 };
 
