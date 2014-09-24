@@ -438,8 +438,14 @@ static bool cmd_split(const char *argv[]);
 static bool cmd_vsplit(const char *argv[]);
 /* save the file displayed in the current window and close it */
 static bool cmd_wq(const char *argv[]);
-/* save the file displayed in the current window to the name given */
+/* save the file displayed in the current window to the name given.
+ * do not change internal filname association. further :w commands
+ * without arguments will still write to the old filename */
 static bool cmd_write(const char *argv[]);
+/* save the file displayed in the current window to the name given,
+ * associate the new name with the buffer. further :w commands
+ * without arguments will write to the new filename */
+static bool cmd_saveas(const char *argv[]);
 
 static void action_reset(Action *a);
 static void switchmode_to(Mode *new_mode);
@@ -1204,6 +1210,10 @@ static bool cmd_write(const char *argv[]) {
 	Text *text = vis->win->text;
 	if (!argv[1])
 		argv[1] = text_filename_get(text);
+	if (!argv[1]) {
+		editor_info_show(vis, "Filename expected");
+		return false;
+	}
 	for (const char **file = &argv[1]; *file; file++) {
 		if (text_save(text, *file)) {
 			editor_info_show(vis, "Can't write `%s'", *file);
@@ -1211,6 +1221,14 @@ static bool cmd_write(const char *argv[]) {
 		}
 	}
 	return true;
+}
+
+static bool cmd_saveas(const char *argv[]) {
+	if (cmd_write(argv)) {
+		text_filename_set(vis->win->text, argv[1]);
+		return true;
+	}
+	return false;
 }
 
 static bool exec_command(char *cmdline) {

@@ -53,6 +53,7 @@ static Command cmds[] = {
 	{ "^qa(ll)?!?$",     cmd_qall       },
 	{ "^q(quit)?!?$",    cmd_quit       },
 	{ "^r(ead)?$",       cmd_read       },
+	{ "^sav(as)?$",      cmd_saveas     },
 	{ "^set$",           cmd_set        },
 	{ "^sp(lit)?$",      cmd_split      },
 	{ "^s(ubstitute)?$", cmd_substitute },
