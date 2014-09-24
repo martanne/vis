@@ -79,7 +79,7 @@ static void window_clear(Win *win);
 static bool window_addch(Win *win, Char *c);
 static size_t window_cursor_update(Win *win);
 /* set/move current cursor position to a given (line, column) pair */
-static void window_cursor_set(Win *win, Line *line, int col);
+static size_t window_cursor_set(Win *win, Line *line, int col);
 /* move visible viewport n-lines up/down, redraws the window but does not change
  * cursor position which becomes invalid and should be corrected by either:
  *
@@ -563,7 +563,7 @@ size_t window_char_next(Win *win) {
 	return window_cursor_update(win);
 }
 
-static void window_cursor_set(Win *win, Line *line, int col) {
+static size_t window_cursor_set(Win *win, Line *line, int col) {
 	int row = 0;
 	size_t pos = win->start;
 	Cursor *cursor = &win->cursor;
@@ -589,6 +589,8 @@ static void window_cursor_set(Win *win, Line *line, int col) {
 	cursor->line = line;
 
 	window_cursor_update(win);
+
+	return pos;
 }
 
 static bool window_viewport_down(Win *win, int n) {
@@ -703,6 +705,21 @@ size_t window_line_down(Win *win) {
 		window_cursor_set(win, cursor->line->next, cursor->col);
 	}
 	return cursor->pos;
+}
+
+size_t window_line_begin(Win *win) {
+	return window_cursor_set(win, win->cursor.line, 0);
+}
+
+size_t window_line_middle(Win *win) {
+	Cursor *cursor = &win->cursor;
+	return window_cursor_set(win, cursor->line, cursor->line->width / 2);
+}
+
+size_t window_line_end(Win *win) {
+	Cursor *cursor = &win->cursor;
+	int col = cursor->line->width - 1;
+	return window_cursor_set(win, cursor->line, col >= 0 ? col : 0);
 }
 
 void window_update(Win *win) {

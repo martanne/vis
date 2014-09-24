@@ -189,6 +189,9 @@ static Operator ops[] = {
 enum {
 	MOVE_SCREEN_LINE_UP,
 	MOVE_SCREEN_LINE_DOWN,
+	MOVE_SCREEN_LINE_BEGIN,
+	MOVE_SCREEN_LINE_MIDDLE,
+	MOVE_SCREEN_LINE_END,
 	MOVE_LINE_PREV,
 	MOVE_LINE_BEGIN,
 	MOVE_LINE_START,
@@ -253,6 +256,9 @@ static size_t window_lines_bottom(const Arg *arg);
 static Movement moves[] = {
 	[MOVE_SCREEN_LINE_UP]  = { .win = window_line_up                                   },
 	[MOVE_SCREEN_LINE_DOWN]= { .win = window_line_down                                 },
+	[MOVE_SCREEN_LINE_BEGIN]  = { .win = window_line_begin, .type = CHARWISE           },
+	[MOVE_SCREEN_LINE_MIDDLE] = { .win = window_line_middle,.type = CHARWISE           },
+	[MOVE_SCREEN_LINE_END]    = { .win = window_line_end,   .type = CHARWISE|INCLUSIVE },
 	[MOVE_LINE_PREV]       = { .txt = text_line_prev,       .type = LINEWISE           },
 	[MOVE_LINE_BEGIN]      = { .txt = text_line_begin,      .type = LINEWISE           },
 	[MOVE_LINE_START]      = { .txt = text_line_start,      .type = LINEWISE           },
