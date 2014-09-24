@@ -47,20 +47,20 @@ enum {
 
 /* command recognized at the ':'-prompt. tested top to bottom, first match wins. */
 static Command cmds[] = {
-	{ "^[0-9]+$",        cmd_gotoline   },
-	{ "^e(dit)?!?$",     cmd_edit       },
-	{ "^o(pen)?$",       cmd_open       },
-	{ "^qa(ll)?!?$",     cmd_qall       },
-	{ "^q(quit)?!?$",    cmd_quit       },
-	{ "^r(ead)?$",       cmd_read       },
-	{ "^sav(as)?$",      cmd_saveas     },
-	{ "^set$",           cmd_set        },
-	{ "^sp(lit)?$",      cmd_split      },
-	{ "^s(ubstitute)?$", cmd_substitute },
-	{ "^v(split)?$",     cmd_vsplit     },
-	{ "^wq!?$",          cmd_wq         },
-	{ "^w(rite)?$",      cmd_write      },
-	{ /* array terminator */            },
+	{ "^[0-9]+$",        cmd_gotoline,   false },
+	{ "^e(dit)?!?$",     cmd_edit,       false },
+	{ "^o(pen)?$",       cmd_open,       false },
+	{ "^qa(ll)?!?$",     cmd_qall,       false },
+	{ "^q(quit)?!?$",    cmd_quit,       false },
+	{ "^r(ead)?$",       cmd_read,       false },
+	{ "^sav(as)?$",      cmd_saveas,     false },
+	{ "^set$",           cmd_set,        true  },
+	{ "^sp(lit)?$",      cmd_split,      false },
+	{ "^s(ubstitute)?$", cmd_substitute, false },
+	{ "^v(split)?$",     cmd_vsplit,     false },
+	{ "^wq!?$",          cmd_wq,         false },
+	{ "^w(rite)?$",      cmd_write,      false },
+	{ /* array terminator */                   },
 };
 
 /* draw a statubar, do whatever you want with win->statuswin curses window */

@@ -137,6 +137,9 @@ typedef struct {                         /* command definitions for the ':'-prom
 	bool (*cmd)(const char *argv[]); /* command logic called with a NULL terminated array
 	                                  * of arguments. argv[0] will be the command name,
 	                                  * as matched by the regex. */
+	bool args;                       /* whether argv should be populated with words
+	                                  * separated by spaces. if false, argv[1] will
+	                                  * contain the remaining command line unmodified */
 	regex_t regex;                   /* compiled form of the pattern in 'name' */
 } Command;
 
@@ -1260,7 +1263,17 @@ static bool exec_command(char *cmdline) {
 	for (int i = 1; i < LENGTH(argv); i++) {
 		while (s && *s && *s == ' ')
 			s++;
+		if (s && !*s)
+			s = NULL;
 		argv[i] = s;
+		if (!cmd->args) {
+			/* remove trailing spaces */
+			if (s) {
+				while (*s) s++;
+				while (*(--s) == ' ') *s = '\0';
+			}
+			s = NULL;
+		}
 		if (s && (s = strchr(s, ' ')))
 			*s++ = '\0';
 	}
