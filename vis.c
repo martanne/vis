@@ -242,7 +242,7 @@ static size_t till(const Arg *arg);
 static size_t to_left(const Arg *arg);
 /* goto to position after next occurence of action.key to the left */
 static size_t till_left(const Arg *arg);
-/* goto line number action.count, or if zero to end of file */
+/* goto line number action.count */
 static size_t line(const Arg *arg);
 /* goto to byte action.count on current line */
 static size_t column(const Arg *arg);
@@ -374,6 +374,9 @@ static void repeat(const Arg *arg);
 static void replace(const Arg *arg);
 /* adjust action.count by arg->i */
 static void count(const Arg *arg);
+/* move to the action.count-th line or if not given either to the first (arg->i < 0)
+ *  or last (arg->i > 0) line of file */
+static void gotoline(const Arg *arg);
 /* force operator to linewise (if arg->b is set) */
 static void linewise(const Arg *arg);
 /* make the current action use the operator indicated by arg->i */
@@ -629,10 +632,7 @@ static size_t till_left(const Arg *arg) {
 }
 
 static size_t line(const Arg *arg) {
-	if (action.count == 0)
-		return text_size(vis->win->text);
-	size_t pos = text_pos_by_lineno(vis->win->text, action.count);
-	return pos;
+	return text_pos_by_lineno(vis->win->text, action.count);
 }
 
 static size_t column(const Arg *arg) {
@@ -675,6 +675,15 @@ static void replace(const Arg *arg) {
 
 static void count(const Arg *arg) {
 	action.count = action.count * 10 + arg->i;
+}
+
+static void gotoline(const Arg *arg) {
+	if (action.count)
+		movement(&(const Arg){ .i = MOVE_LINE });
+	else if (arg->i < 0)
+		movement(&(const Arg){ .i = MOVE_FILE_BEGIN });
+	else
+		movement(&(const Arg){ .i = MOVE_FILE_END });
 }
 
 static void linewise(const Arg *arg) {
