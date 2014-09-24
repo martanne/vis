@@ -360,8 +360,9 @@ static KeyBinding vis_marks_set[] = {
 
 static KeyBinding vis_mode_normal[] = {
 	{ { CONTROL('w'), NONE('n') }, winnew,         { .s = NULL                 } },
-	{ { CONTROL('w'), NONE('q') }, winclose,       { .s = NULL                 } },
-	{ { CONTROL('w'), NONE('s') }, winsplit,       { .b = false                } },
+	{ { CONTROL('w'), NONE('c') }, cmd,            { .s = "q"                  } },
+	{ { CONTROL('w'), NONE('s') }, cmd,            { .s = "split"              } },
+	{ { CONTROL('w'), NONE('v') }, cmd,            { .s = "vsplit"             } },
 	{ { CONTROL('w'), NONE('j') }, call,           { .f = editor_window_next   } },
 	{ { CONTROL('w'), NONE('k') }, call,           { .f = editor_window_prev   } },
 	{ { CONTROL('B')            }, wscroll,        { .i = -PAGE                } },

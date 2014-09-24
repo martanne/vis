@@ -364,10 +364,8 @@ static void openline(const Arg *arg);
 static void joinline(const Arg *arg);
 /* create a new window with the filename arg->s */
 static void winnew(const Arg *arg);
-/* close currently focused window except if there are unsafed changes */
-static void winclose(const Arg *arg);
-/* split current window horizontally (default) or vertically (if arg->b is set) */
-static void winsplit(const Arg *arg);
+/* execute arg->s as if it was typed on command prompt */
+static void cmd(const Arg *arg);
 /* perform last action i.e. action_prev again */
 static void repeat(const Arg *arg);
 /* replace character at cursor with one read form keyboard */
@@ -870,16 +868,9 @@ static void winnew(const Arg *arg) {
 	editor_window_new(vis, arg->s);
 }
 
-static void winclose(const Arg *arg) {
-	cmd_quit((const char*[]){ "q", NULL });
-}
-
-static void winsplit(const Arg *arg) {
-	editor_window_split(vis->win);
-	if (arg->b)
-		editor_windows_arrange_vertical(vis);
-	else
-		editor_windows_arrange_horizontal(vis);
+static void cmd(const Arg *arg) {
+	/* casting to char* is only save if arg->s contains no arguments */
+	exec_command((char*)arg->s);
 }
 
 static int argi2lines(const Arg *arg) {
