@@ -21,11 +21,10 @@
 
 static EditorWin *editor_window_new_text(Editor *ed, Text *text);
 static void editor_window_free(Editor *ed, EditorWin *win);
-static bool editor_window_split_internal(EditorWin *original);
 static void editor_windows_invalidate(Editor *ed, size_t start, size_t end);
 static void editor_window_draw(EditorWin *win);
-static void editor_windows_arrange_horizontal(Editor *ed);
-static void editor_windows_arrange_vertical(Editor *ed);
+static void windows_arrange_horizontal(Editor *ed);
+static void windows_arrange_vertical(Editor *ed);
 
 static Prompt *editor_prompt_new();
 static void editor_prompt_free(Prompt *prompt);
@@ -69,7 +68,7 @@ void editor_statusbar_set(Editor *ed, void (*statusbar)(EditorWin*)) {
 	ed->statusbar = statusbar;
 }
 
-static void editor_windows_arrange_horizontal(Editor *ed) {
+static void windows_arrange_horizontal(Editor *ed) {
 	int n = 0, x = 0, y = 0;
 	for (EditorWin *win = ed->windows; win; win = win->next)
 		n++;
@@ -81,7 +80,7 @@ static void editor_windows_arrange_horizontal(Editor *ed) {
 	}
 }
 
-static void editor_windows_arrange_vertical(Editor *ed) {
+static void windows_arrange_vertical(Editor *ed) {
 	int n = 0, x = 0, y = 0;
 	for (EditorWin *win = ed->windows; win; win = win->next)
 		n++;
@@ -118,28 +117,23 @@ bool editor_window_reload(EditorWin *win) {
 	return true;
 }
 
-static bool editor_window_split_internal(EditorWin *original) {
+void editor_windows_arrange_vertical(Editor *ed) {
+	ed->windows_arrange = windows_arrange_vertical;
+	editor_draw(ed);
+}
+
+void editor_windows_arrange_horizontal(Editor *ed) {
+	ed->windows_arrange = windows_arrange_horizontal;
+	editor_draw(ed);
+}
+
+bool editor_window_split(EditorWin *original) {
 	EditorWin *win = editor_window_new_text(original->editor, original->text);
 	if (!win)
 		return false;
 	win->text = original->text;
 	window_syntax_set(win->win, window_syntax_get(original->win));
 	window_cursor_to(win->win, window_cursor_get(original->win));
-	return true;
-}
-
-bool editor_window_split(EditorWin *win) {
-	if (!editor_window_split_internal(win))
-		return false;
-	win->editor->windows_arrange = editor_windows_arrange_horizontal;
-	editor_draw(win->editor);
-	return true;
-}
-
-bool editor_window_vsplit(EditorWin *win) {
-	if (!editor_window_split_internal(win))
-		return false;
-	win->editor->windows_arrange = editor_windows_arrange_vertical;
 	editor_draw(win->editor);
 	return true;
 }
@@ -401,7 +395,7 @@ Editor *editor_new(int width, int height) {
 	ed->height = height;
 	ed->tabwidth = 8;
 	ed->expandtab = false;
-	ed->windows_arrange = editor_windows_arrange_horizontal;
+	ed->windows_arrange = windows_arrange_horizontal;
 	return ed;
 err:
 	editor_free(ed);

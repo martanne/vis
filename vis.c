@@ -870,10 +870,11 @@ static void winclose(const Arg *arg) {
 }
 
 static void winsplit(const Arg *arg) {
+	editor_window_split(vis->win);
 	if (arg->b)
-		editor_window_vsplit(vis->win);
+		editor_windows_arrange_vertical(vis);
 	else
-		editor_window_split(vis->win);
+		editor_windows_arrange_horizontal(vis);
 }
 
 static int argi2lines(const Arg *arg) {
@@ -1240,14 +1241,16 @@ static bool openfiles(const char **files) {
 }
 
 static bool cmd_split(const char *argv[]) {
+	editor_windows_arrange_horizontal(vis);
 	if (!argv[1])
 		return editor_window_split(vis->win);
 	return openfiles(&argv[1]);
 }
 
 static bool cmd_vsplit(const char *argv[]) {
+	editor_windows_arrange_vertical(vis);
 	if (!argv[1])
-		return editor_window_vsplit(vis->win);
+		return editor_window_split(vis->win);
 	return openfiles(&argv[1]);
 }
 

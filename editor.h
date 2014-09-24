@@ -140,14 +140,15 @@ bool editor_window_new(Editor*, const char *filename);
 /* reload the file currently displayed in the window from disk */
 bool editor_window_reload(EditorWin*);
 void editor_window_close(EditorWin*);
-/* split the given window either horizontally or vertically, changes to
- * the displayed text will be reflected in both windows */
+/* split the given window. changes to the displayed text will be reflected
+ * in both windows */
 bool editor_window_split(EditorWin*);
-bool editor_window_vsplit(EditorWin*);
 /* focus the next / previous window */
 void editor_window_next(Editor*);
 void editor_window_prev(Editor*);
-
+/* rearrange all windows either vertically or horizontally */
+void editor_windows_arrange_vertical(Editor*);
+void editor_windows_arrange_horizontal(Editor*);
 /* display a user prompt with a certain title */
 void editor_prompt_show(Editor*, const char *title);
 /* hide the user prompt if it is currently shown */
