@@ -55,7 +55,7 @@ static Command cmds[] = {
 	{ "^q(quit)?!?$",    cmd_quit,       false },
 	{ "^r(ead)?$",       cmd_read,       false },
 	{ "^sav(as)?$",      cmd_saveas,     false },
-	{ "^set$",           cmd_set,        true  },
+	{ "^set?$",          cmd_set,        true  },
 	{ "^sp(lit)?$",      cmd_split,      false },
 	{ "^s(ubstitute)?$", cmd_substitute, false },
 	{ "^vnew?$",         cmd_vnew,       false },
