@@ -119,7 +119,9 @@ size_t text_line_start(Text *txt, size_t pos) {
 size_t text_line_finish(Text *txt, size_t pos) {
 	char c;
 	Iterator it = text_iterator_get(txt, text_line_end(txt, pos));
+	do text_iterator_byte_prev(&it, NULL);
 	while (text_iterator_byte_get(&it, &c) && c != '\n' && isspace(c));
+	if (!ISUTF8(c))
 		text_iterator_char_prev(&it, NULL);
 	return it.pos;
 }
@@ -128,8 +130,6 @@ size_t text_line_end(Text *txt, size_t pos) {
 	char c;
 	Iterator it = text_iterator_get(txt, pos);
 	while (text_iterator_byte_get(&it, &c) && c != '\r' && c != '\n')
-		text_iterator_byte_next(&it, NULL);
-	if (text_iterator_char_prev(&it, &c) && c == '\n')
 		text_iterator_byte_next(&it, NULL);
 	return it.pos;
 }
