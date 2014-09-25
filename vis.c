@@ -203,10 +203,10 @@ enum {
 	MOVE_COLUMN,
 	MOVE_CHAR_PREV,
 	MOVE_CHAR_NEXT,
-	MOVE_WORD_START_PREV,
-	MOVE_WORD_START_NEXT,
-	MOVE_WORD_END_PREV,
-	MOVE_WORD_END_NEXT,
+	MOVE_LONGWORD_START_PREV,
+	MOVE_LONGWORD_START_NEXT,
+	MOVE_LONGWORD_END_PREV,
+	MOVE_LONGWORD_END_NEXT,
 	MOVE_SENTENCE_PREV,
 	MOVE_SENTENCE_NEXT,
 	MOVE_PARAGRAPH_PREV,
@@ -274,10 +274,10 @@ static Movement moves[] = {
 	[MOVE_COLUMN]          = { .cmd = column,               .type = CHARWISE|IDEMPOTENT},
 	[MOVE_CHAR_PREV]       = { .win = window_char_prev                                 },
 	[MOVE_CHAR_NEXT]       = { .win = window_char_next                                 },
-	[MOVE_WORD_START_PREV] = { .txt = text_word_start_prev, .type = CHARWISE           },
-	[MOVE_WORD_START_NEXT] = { .txt = text_word_start_next, .type = CHARWISE           },
-	[MOVE_WORD_END_PREV]   = { .txt = text_word_end_prev,   .type = CHARWISE|INCLUSIVE },
-	[MOVE_WORD_END_NEXT]   = { .txt = text_word_end_next,   .type = CHARWISE|INCLUSIVE },
+	[MOVE_LONGWORD_START_PREV] = { .txt = text_longword_start_prev, .type = CHARWISE           },
+	[MOVE_LONGWORD_START_NEXT] = { .txt = text_longword_start_next, .type = CHARWISE           },
+	[MOVE_LONGWORD_END_PREV]   = { .txt = text_longword_end_prev,   .type = CHARWISE|INCLUSIVE },
+	[MOVE_LONGWORD_END_NEXT]   = { .txt = text_longword_end_next,   .type = CHARWISE|INCLUSIVE },
 	[MOVE_SENTENCE_PREV]   = { .txt = text_sentence_prev,   .type = LINEWISE           },
 	[MOVE_SENTENCE_NEXT]   = { .txt = text_sentence_next,   .type = LINEWISE           },
 	[MOVE_PARAGRAPH_PREV]  = { .txt = text_paragraph_prev,  .type = LINEWISE           },
@@ -301,7 +301,7 @@ static Movement moves[] = {
 
 /* these can be passed as int argument to textobj(&(const Arg){ .i = TEXT_OBJ_* }) */
 enum {
-	TEXT_OBJ_WORD,
+	TEXT_OBJ_LONGWORD,
 	TEXT_OBJ_LINE_UP,
 	TEXT_OBJ_LINE_DOWN,
 	TEXT_OBJ_SENTENCE,
@@ -323,7 +323,7 @@ enum {
 };
 
 static TextObject textobjs[] = {
-	[TEXT_OBJ_WORD]                 = { text_object_word                  },
+	[TEXT_OBJ_LONGWORD]             = { text_object_word                  },
 	[TEXT_OBJ_LINE_UP]              = { text_object_line                  },
 	[TEXT_OBJ_LINE_DOWN]            = { text_object_line                  },
 	[TEXT_OBJ_SENTENCE]             = { text_object_sentence              },
@@ -604,7 +604,7 @@ static size_t search_word(const Arg *arg) {
 	size_t pos = window_cursor_get(vis->win->win);
 	/* TODO: to make this useful the other variant breaking on special symbols 
 	 * should be used here */
-	Filerange word = text_object_word_raw(vis->win->text, pos);
+	Filerange word = text_object_longword_raw(vis->win->text, pos);
 	if (!text_range_valid(&word))
 		return pos;
 	size_t len = word.end - word.start;

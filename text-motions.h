@@ -39,10 +39,10 @@ size_t text_line_next(Text*, size_t pos);
  * space. TODO?: An empty line is also considered to be a word.
  * This is equivalant to a WORD in vim terminology.
  */
-size_t text_word_end_next(Text*, size_t pos);
-size_t text_word_end_prev(Text*, size_t pos);
-size_t text_word_start_next(Text*, size_t pos);
-size_t text_word_start_prev(Text*, size_t pos);
+size_t text_longword_end_next(Text*, size_t pos);
+size_t text_longword_end_prev(Text*, size_t pos);
+size_t text_longword_start_next(Text*, size_t pos);
+size_t text_longword_start_prev(Text*, size_t pos);
 /*
  * These are variants of the above with the additional possibility to implement
  * a custom word detection logic. Can be used to implment the equivalent of a

@@ -186,19 +186,19 @@ size_t text_word_boundry_end_prev(Text *txt, size_t pos, int (*isboundry)(int)) 
 	return it.pos;
 }
 
-size_t text_word_end_next(Text *txt, size_t pos) {
+size_t text_longword_end_next(Text *txt, size_t pos) {
 	return text_word_boundry_end_next(txt, pos, isspace);
 }
 
-size_t text_word_end_prev(Text *txt, size_t pos) {
+size_t text_longword_end_prev(Text *txt, size_t pos) {
 	return text_word_boundry_end_prev(txt, pos, isspace);
 }
 
-size_t text_word_start_next(Text *txt, size_t pos) {
+size_t text_longword_start_next(Text *txt, size_t pos) {
 	return text_word_boundry_start_next(txt, pos, isspace);
 }
 
-size_t text_word_start_prev(Text *txt, size_t pos) {
+size_t text_longword_start_prev(Text *txt, size_t pos) {
 	return text_word_boundry_start_prev(txt, pos, isspace);
 }
 

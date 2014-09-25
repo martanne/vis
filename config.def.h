@@ -93,9 +93,9 @@ static bool vis_keypress(Key *key) {
 
 static KeyBinding basic_movement[] = {
 	{ { KEY(LEFT)               }, movement, { .i = MOVE_CHAR_PREV         } },
-	{ { KEY(SLEFT)              }, movement, { .i = MOVE_WORD_START_PREV   } },
+	{ { KEY(SLEFT)              }, movement, { .i = MOVE_LONGWORD_START_PREV   } },
 	{ { KEY(RIGHT)              }, movement, { .i = MOVE_CHAR_NEXT         } },
-	{ { KEY(SRIGHT)             }, movement, { .i = MOVE_WORD_START_NEXT   } },
+	{ { KEY(SRIGHT)             }, movement, { .i = MOVE_LONGWORD_START_NEXT   } },
 	{ { KEY(UP)                 }, movement, { .i = MOVE_SCREEN_LINE_UP    } },
 	{ { KEY(DOWN)               }, movement, { .i = MOVE_SCREEN_LINE_DOWN  } },
 	{ { KEY(PPAGE)              }, wscroll,  { .i = -PAGE                  } },
@@ -120,13 +120,13 @@ static KeyBinding vis_movements[] = {
 	{ { NONE('g'), NONE('_')    }, movement, { .i = MOVE_LINE_FINISH       } },
 	{ { NONE('$')               }, movement, { .i = MOVE_LINE_LASTCHAR     } },
 	{ { NONE('%')               }, movement, { .i = MOVE_BRACKET_MATCH     } },
-	{ { NONE('b')               }, movement, { .i = MOVE_WORD_START_PREV   } },
-	{ { NONE('B')               }, movement, { .i = MOVE_WORD_START_PREV   } },
-	{ { NONE('w')               }, movement, { .i = MOVE_WORD_START_NEXT   } },
-	{ { NONE('W')               }, movement, { .i = MOVE_WORD_START_NEXT   } },
-	{ { NONE('g'), NONE('e')    }, movement, { .i = MOVE_WORD_END_PREV     } },
-	{ { NONE('e')               }, movement, { .i = MOVE_WORD_END_NEXT     } },
-	{ { NONE('E')               }, movement, { .i = MOVE_WORD_END_NEXT     } },
+	{ { NONE('b')               }, movement, { .i = MOVE_LONGWORD_START_PREV   } },
+	{ { NONE('B')               }, movement, { .i = MOVE_LONGWORD_START_PREV   } },
+	{ { NONE('w')               }, movement, { .i = MOVE_LONGWORD_START_NEXT   } },
+	{ { NONE('W')               }, movement, { .i = MOVE_LONGWORD_START_NEXT   } },
+	{ { NONE('g'), NONE('e')    }, movement, { .i = MOVE_LONGWORD_END_PREV     } },
+	{ { NONE('e')               }, movement, { .i = MOVE_LONGWORD_END_NEXT     } },
+	{ { NONE('E')               }, movement, { .i = MOVE_LONGWORD_END_NEXT     } },
 	{ { NONE('{')               }, movement, { .i = MOVE_PARAGRAPH_PREV    } },
 	{ { NONE('}')               }, movement, { .i = MOVE_PARAGRAPH_NEXT    } },
 	{ { NONE('(')               }, movement, { .i = MOVE_SENTENCE_PREV     } },
@@ -153,7 +153,7 @@ static KeyBinding vis_movements[] = {
 };
 
 static KeyBinding vis_textobjs[] = {
-	{ { NONE('a'), NONE('w')  }, textobj, { .i = TEXT_OBJ_WORD                 } },
+	{ { NONE('a'), NONE('w')  }, textobj, { .i = TEXT_OBJ_LONGWORD                 } },
 	{ { NONE('a'), NONE('s')  }, textobj, { .i = TEXT_OBJ_SENTENCE             } },
 	{ { NONE('a'), NONE('p')  }, textobj, { .i = TEXT_OBJ_PARAGRAPH            } },
 	{ { NONE('a'), NONE('[')  }, textobj, { .i = TEXT_OBJ_OUTER_SQUARE_BRACKET } },
@@ -173,7 +173,7 @@ static KeyBinding vis_textobjs[] = {
 };
 
 static KeyBinding vis_inner_textobjs[] = {
-	{ { NONE('i'), NONE('w')  }, textobj, { .i = TEXT_OBJ_WORD                 } },
+	{ { NONE('i'), NONE('w')  }, textobj, { .i = TEXT_OBJ_LONGWORD             } },
 	{ { NONE('i'), NONE('s')  }, textobj, { .i = TEXT_OBJ_SENTENCE             } },
 	{ { NONE('i'), NONE('p')  }, textobj, { .i = TEXT_OBJ_PARAGRAPH            } },
 	{ { NONE('i'), NONE('[')  }, textobj, { .i = TEXT_OBJ_INNER_SQUARE_BRACKET } },
@@ -450,7 +450,7 @@ static KeyBinding vis_mode_readline[] = {
 	{ { CONTROL('c')            }, switchmode,      { .i = VIS_MODE_NORMAL      } },
 	BACKSPACE(                     call,               f,  editor_backspace_key   ),
 	{ { CONTROL('D')            }, call,            { .f = editor_delete_key    } },
-	{ { CONTROL('W')            }, delete,          { .i = MOVE_WORD_START_PREV } },
+	{ { CONTROL('W')            }, delete,          { .i = MOVE_LONGWORD_START_PREV } },
 	{ { CONTROL('U')            }, delete,          { .i = MOVE_LINE_BEGIN      } },
 	{ /* empty last element, array terminator */                                  },
 };
@@ -742,9 +742,9 @@ static KeyBinding nano_keys[] = {
 	{ { KEY(F(8))               }, wscroll,  { .i = +PAGE                  } },
 #if 0
 	// CONTROL(' ') == 0 which signals the end of array
-	{ { CONTROL(' ')            }, movement, { .i = MOVE_WORD_START_NEXT   } },
+	{ { CONTROL(' ')            }, movement, { .i = MOVE_LONGWORD_START_NEXT   } },
 #endif
-	{ { META(' ')               }, movement, { .i = MOVE_WORD_START_PREV   } },
+	{ { META(' ')               }, movement, { .i = MOVE_LONGWORD_START_PREV   } },
 	{ { CONTROL('A')            }, movement, { .i = MOVE_LINE_START        } },
 	{ { CONTROL('E')            }, movement, { .i = MOVE_LINE_END          } },
 	{ { META(']')               }, movement, { .i = MOVE_BRACKET_MATCH     } },
