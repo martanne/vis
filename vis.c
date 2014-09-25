@@ -422,6 +422,8 @@ static void prompt_enter(const Arg *arg);
 /* cycle through past user inputs */
 static void prompt_up(const Arg *arg);
 static void prompt_down(const Arg *arg);
+/* exit command mode if the last char is deleted */
+static void prompt_backspace(const Arg *arg);
 /* blocks to read 3 consecutive digits and inserts the corresponding byte value */
 static void insert_verbatim(const Arg *arg);
 /* scroll window content according to arg->i which can be either PAGE, PAGE_HALF,
@@ -873,6 +875,15 @@ static void prompt_up(const Arg *arg) {
 
 static void prompt_down(const Arg *arg) {
 
+}
+
+static void prompt_backspace(const Arg *arg) {
+	char *cmd = editor_prompt_get(vis);
+	if (!cmd || !*cmd)
+		prompt_enter(NULL);
+	else
+		window_backspace_key(vis->win->win);
+	free(cmd);
 }
 
 static void insert_verbatim(const Arg *arg) {

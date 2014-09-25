@@ -456,6 +456,7 @@ static KeyBinding vis_mode_readline[] = {
 };
 
 static KeyBinding vis_mode_prompt[] = {
+	BACKSPACE(                     prompt_backspace,  s, NULL                  ),
 	{ { KEY(ENTER)              }, prompt_enter,    { NULL                   } },
 	{ { CONTROL('J')            }, prompt_enter,    { NULL                   } },
 	{ { KEY(UP)                 }, prompt_up,       { NULL                   } },
