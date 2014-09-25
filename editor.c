@@ -195,6 +195,7 @@ void editor_tabwidth_set(Editor *ed, int tabwidth) {
 		return;
 	for (EditorWin *win = ed->windows; win; win = win->next)
 		window_tabwidth_set(win->win, tabwidth);
+	ed->tabwidth = tabwidth;
 }
 
 bool editor_syntax_load(Editor *ed, Syntax *syntaxes, Color *colors) {
