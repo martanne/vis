@@ -142,6 +142,7 @@ static KeyBinding vis_movements[] = {
 	{ { NONE('H')               }, movement, { .i = MOVE_WINDOW_LINE_TOP   } },
 	{ { NONE('M')               }, movement, { .i = MOVE_WINDOW_LINE_MIDDLE} },
 	{ { NONE('L')               }, movement, { .i = MOVE_WINDOW_LINE_BOTTOM} },
+	{ { NONE('*')               }, movement, { .i = MOVE_SEARCH_WORD       } },
 	{ { NONE('f')               }, movement_key, { .i = MOVE_RIGHT_TO      } },
 	{ { NONE('F')               }, movement_key, { .i = MOVE_LEFT_TO       } },
 	{ { NONE('t')               }, movement_key, { .i = MOVE_RIGHT_TILL    } },

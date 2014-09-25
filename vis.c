@@ -220,6 +220,7 @@ enum {
 	MOVE_FILE_END,
 	MOVE_MARK,
 	MOVE_MARK_LINE,
+	MOVE_SEARCH_WORD,
 	MOVE_SEARCH_FORWARD,
 	MOVE_SEARCH_BACKWARD,
 	MOVE_WINDOW_LINE_TOP,
@@ -228,6 +229,8 @@ enum {
 };
 
 /** movements which can be used besides the one in text-motions.h and window.h */
+/* search in forward direction for the word where the cursor is currently located */
+static size_t search_word(const Arg *arg);
 /* search again for the last used search pattern */
 static size_t search_forward(const Arg *arg);
 static size_t search_backward(const Arg *arg);
@@ -288,6 +291,7 @@ static Movement moves[] = {
 	[MOVE_RIGHT_TILL]      = { .cmd = till,                 .type = LINEWISE|INCLUSIVE },
 	[MOVE_MARK]            = { .cmd = mark_goto,            .type = LINEWISE           },
 	[MOVE_MARK_LINE]       = { .cmd = mark_line_goto,       .type = LINEWISE           },
+	[MOVE_SEARCH_WORD]     = { .cmd = search_word,          .type = LINEWISE           },
 	[MOVE_SEARCH_FORWARD]  = { .cmd = search_forward,       .type = LINEWISE           },
 	[MOVE_SEARCH_BACKWARD] = { .cmd = search_backward,      .type = LINEWISE           },
 	[MOVE_WINDOW_LINE_TOP]    = { .cmd = window_lines_top,   .type = LINEWISE           },
@@ -593,6 +597,27 @@ static void op_case_change(OperatorContext *c) {
 }
 
 /** movement implementations of type: size_t (*move)(const Arg*) */
+
+static size_t search_word(const Arg *arg) {
+	size_t pos = window_cursor_get(vis->win->win);
+	/* TODO: to make this useful the other variant breaking on special symbols 
+	 * should be used here */
+	Filerange word = text_object_word_raw(vis->win->text, pos);
+	if (!text_range_valid(&word))
+		return pos;
+	size_t len = word.end - word.start;
+	char *buf = malloc(len+1);
+	if (!buf)
+		return pos;
+	len = text_bytes_get(vis->win->text, word.start, len, buf);
+	buf[len] = '\0';
+	/* TODO: using regular expression search here is wrong, but 'n', 'N' should
+	 * reuse this search term */
+	if (!text_regex_compile(vis->search_pattern, buf, REG_EXTENDED))
+		pos = text_search_forward(vis->win->text, pos, vis->search_pattern);
+	free(buf);
+	return pos;
+}
 
 static size_t search_forward(const Arg *arg) {
 	size_t pos = window_cursor_get(vis->win->win);
