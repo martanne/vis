@@ -859,7 +859,7 @@ static void prompt_enter(const Arg *arg) {
 		}
 		break;
 	case ':':
-		if (!exec_command(s))
+		if (s && *s && !exec_command(s))
 			editor_info_show(vis, "Not an editor command");
 		break;
 	}
