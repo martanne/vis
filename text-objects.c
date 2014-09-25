@@ -51,6 +51,38 @@ Filerange text_object_word(Text *txt, size_t pos) {
 	return r;
 }
 
+Filerange text_object_word_raw(Text *txt, size_t pos) {
+	char c, prev = '0', next = '0';
+	Filerange r = text_range_empty();
+	Iterator it = text_iterator_get(txt, pos);
+	if (!text_iterator_byte_get(&it, &c))
+		return r;
+	if (text_iterator_byte_prev(&it, &prev))
+		text_iterator_byte_next(&it, NULL);
+	text_iterator_byte_next(&it, &next);
+	if (isspace(c)) {
+		return r;
+	} else if (isspace(prev) && isspace(next)) {
+		/* on a single character */
+		r.start = pos;
+		r.end = text_char_next(txt, pos);
+	} else if (isspace(prev)) {
+		/* at start of a word */
+		r.start = pos;
+		r.end = text_char_next(txt, text_word_end_next(txt, pos));
+	} else if (isspace(next)) {
+		/* at end of a word */
+		r.start = text_word_start_prev(txt, pos);
+		r.end = text_char_next(txt, pos);
+	} else {
+		/* in the middle of a word */
+		r.start = text_word_start_prev(txt, pos);
+		r.end = text_char_next(txt, text_word_end_next(txt, pos));
+	}
+
+	return r;
+}
+
 Filerange text_object_line(Text *txt, size_t pos) {
 	Filerange r;
 	r.start = text_line_begin(txt, pos);
