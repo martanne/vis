@@ -35,8 +35,8 @@ size_t text_line_lastchar(Text*, size_t pos);
 size_t text_line_end(Text*, size_t pos);
 size_t text_line_next(Text*, size_t pos);
 /*
- * A word consists of a sequence of non-blank characters, separated with white
- * space. TODO?: An empty line is also considered to be a word.
+ * A longword consists of a sequence of non-blank characters, separated with
+ * white space. TODO?: An empty line is also considered to be a word.
  * This is equivalant to a WORD in vim terminology.
  */
 size_t text_longword_end_next(Text*, size_t pos);
@@ -44,14 +44,15 @@ size_t text_longword_end_prev(Text*, size_t pos);
 size_t text_longword_start_next(Text*, size_t pos);
 size_t text_longword_start_prev(Text*, size_t pos);
 /*
- * These are variants of the above with the additional possibility to implement
- * a custom word detection logic. Can be used to implment the equivalent of a
- * what vim reconizes as a word (lowercase).
+ * A word consists of a sequence of letters, digits and underscores, or a
+ * sequence of other non-blank characters, separated with white space.
+ * TODO?: An empty line is also considered to be a word.
+ * This is equivalant to a word (lowercase) in vim terminology.
  */
-size_t text_word_boundry_end_next(Text*, size_t pos, int (*isboundry)(int));
-size_t text_word_boundry_end_prev(Text*, size_t pos, int (*isboundry)(int));
-size_t text_word_boundry_start_next(Text*, size_t pos, int (*isboundry)(int));
-size_t text_word_boundry_start_prev(Text*, size_t pos, int (*isboundry)(int));
+size_t text_word_end_next(Text*, size_t pos);
+size_t text_word_end_prev(Text*, size_t pos);
+size_t text_word_start_next(Text*, size_t pos);
+size_t text_word_start_prev(Text*, size_t pos);
 /* TODO: implement the following semantics
  * A sentence is defined as ending at a '.', '!' or '?' followed by either the
  * end of a line, or by a space or tab.  Any number of closing ')', ']', '"'

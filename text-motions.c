@@ -18,6 +18,13 @@
 #include "text-motions.h"
 #include "util.h"
 
+// TODO: specify this per file type?
+static int is_word_boundry(int c) {
+	return !(('0' <= c && c <= '9') ||
+	         ('a' <= c && c <= 'z') ||
+	         ('A' <= c && c <= 'Z'));
+}
+
 // TODO: consistent usage of iterators either char or byte based where appropriate.
 
 size_t text_begin(Text *txt, size_t pos) {
@@ -154,6 +161,7 @@ size_t text_line_next(Text *txt, size_t pos) {
 size_t text_word_boundry_start_next(Text *txt, size_t pos, int (*isboundry)(int)) {
 	char c;
 	Iterator it = text_iterator_get(txt, pos);
+	text_iterator_byte_next(&it, NULL);
 	while (text_iterator_byte_get(&it, &c) && !isboundry(c))
 		text_iterator_byte_next(&it, NULL);
 	while (text_iterator_byte_get(&it, &c) && isboundry(c))
@@ -200,6 +208,23 @@ size_t text_longword_start_next(Text *txt, size_t pos) {
 
 size_t text_longword_start_prev(Text *txt, size_t pos) {
 	return text_word_boundry_start_prev(txt, pos, isspace);
+}
+
+// TODO: this actually doesn't work that way -> rewrite
+size_t text_word_end_next(Text *txt, size_t pos) {
+	return text_word_boundry_end_next(txt, pos, is_word_boundry);
+}
+
+size_t text_word_end_prev(Text *txt, size_t pos) {
+	return text_word_boundry_end_prev(txt, pos, is_word_boundry);
+}
+
+size_t text_word_start_next(Text *txt, size_t pos) {
+	return text_word_boundry_start_next(txt, pos, is_word_boundry);
+}
+
+size_t text_word_start_prev(Text *txt, size_t pos) {
+	return text_word_boundry_start_prev(txt, pos, is_word_boundry);
 }
 
 static size_t text_paragraph_sentence_next(Text *txt, size_t pos, bool sentence) {
