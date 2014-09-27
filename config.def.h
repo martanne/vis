@@ -526,6 +526,8 @@ static KeyBinding vis_mode_insert[] = {
 	{ { CONTROL('M')            }, insert_newline,  { NULL                   } },
 	{ { CONTROL('O')            }, switchmode,      { .i = VIS_MODE_OPERATOR } },
 	{ { CONTROL('V')            }, insert_verbatim, { NULL                   } },
+	{ { CONTROL('D')            }, operator_twice,  { .i = OP_SHIFT_LEFT     } },
+	{ { CONTROL('T')            }, operator_twice,  { .i = OP_SHIFT_RIGHT    } },
 	{ { NONE('\t')              }, insert_tab,      { NULL                   } },
 	{ /* empty last element, array terminator */                               },
 };
