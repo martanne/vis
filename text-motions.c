@@ -20,7 +20,7 @@
 
 // TODO: specify this per file type?
 static int is_word_boundry(int c) {
-	return !(('0' <= c && c <= '9') ||
+	return ISASCII(c) && !(('0' <= c && c <= '9') ||
 	         ('a' <= c && c <= 'z') ||
 	         ('A' <= c && c <= 'Z'));
 }
@@ -158,73 +158,84 @@ size_t text_line_next(Text *txt, size_t pos) {
 	return it.pos;
 }
 
-size_t text_word_boundry_start_next(Text *txt, size_t pos, int (*isboundry)(int)) {
+static size_t text_customword_start_next(Text *txt, size_t pos, int (*isboundry)(int)) {
 	char c;
 	Iterator it = text_iterator_get(txt, pos);
-	text_iterator_byte_next(&it, NULL);
-	while (text_iterator_byte_get(&it, &c) && !isboundry(c))
-		text_iterator_byte_next(&it, NULL);
-	while (text_iterator_byte_get(&it, &c) && isboundry(c))
-		text_iterator_byte_next(&it, NULL);
+	if (!text_iterator_byte_get(&it, &c))
+		return pos;
+	if (isboundry(c))
+		while (isboundry(c) && !isspace(c) && text_iterator_char_next(&it, &c));
+	else
+		while (!isboundry(c) && text_iterator_char_next(&it, &c));
+	while (isspace(c) && text_iterator_char_next(&it, &c));
 	return it.pos;
 }
 
-size_t text_word_boundry_start_prev(Text *txt, size_t pos, int (*isboundry)(int)) {
+static size_t text_customword_start_prev(Text *txt, size_t pos, int (*isboundry)(int)) {
 	char c;
 	Iterator it = text_iterator_get(txt, pos);
-	while (text_iterator_byte_prev(&it, &c) && isboundry(c));
-	do pos = it.pos; while (text_iterator_char_prev(&it, &c) && !isboundry(c));
+	while (text_iterator_char_prev(&it, &c) && isspace(c));
+	if (isboundry(c))
+		do pos = it.pos; while (text_iterator_char_prev(&it, &c) && isboundry(c) && !isspace(c));
+	else
+		do pos = it.pos; while (text_iterator_char_prev(&it, &c) && !isboundry(c));
 	return pos;
 }
 
-size_t text_word_boundry_end_next(Text *txt, size_t pos, int (*isboundry)(int)) {
+static size_t text_customword_end_next(Text *txt, size_t pos, int (*isboundry)(int)) {
 	char c;
 	Iterator it = text_iterator_get(txt, pos);
-	while (text_iterator_char_next(&it, &c) && isboundry(c));
-	do pos = it.pos; while (text_iterator_char_next(&it, &c) && !isboundry(c));
+	while (text_iterator_char_next(&it, &c) && isspace(c));
+	if (isboundry(c))
+		do pos = it.pos; while (text_iterator_char_next(&it, &c) && isboundry(c) && !isspace(c));
+	else
+		do pos = it.pos; while (text_iterator_char_next(&it, &c) && !isboundry(c));
 	return pos;
 }
 
-size_t text_word_boundry_end_prev(Text *txt, size_t pos, int (*isboundry)(int)) {
+static size_t text_customword_end_prev(Text *txt, size_t pos, int (*isboundry)(int)) {
 	char c;
 	Iterator it = text_iterator_get(txt, pos);
-	while (text_iterator_byte_get(&it, &c) && !isboundry(c))
-		text_iterator_byte_prev(&it, NULL);
-	while (text_iterator_char_prev(&it, &c) && isboundry(c));
+	if (!text_iterator_byte_get(&it, &c))
+		return pos;
+	if (isboundry(c))
+		while (isboundry(c) && !isspace(c) && text_iterator_char_prev(&it, &c));
+	else
+		while (!isboundry(c) && text_iterator_char_prev(&it, &c));
+	while (isspace(c) && text_iterator_char_prev(&it, &c));
 	return it.pos;
 }
 
 size_t text_longword_end_next(Text *txt, size_t pos) {
-	return text_word_boundry_end_next(txt, pos, isspace);
+	return text_customword_end_next(txt, pos, isspace);
 }
 
 size_t text_longword_end_prev(Text *txt, size_t pos) {
-	return text_word_boundry_end_prev(txt, pos, isspace);
+	return text_customword_end_prev(txt, pos, isspace);
 }
 
 size_t text_longword_start_next(Text *txt, size_t pos) {
-	return text_word_boundry_start_next(txt, pos, isspace);
+	return text_customword_start_next(txt, pos, isspace);
 }
 
 size_t text_longword_start_prev(Text *txt, size_t pos) {
-	return text_word_boundry_start_prev(txt, pos, isspace);
+	return text_customword_start_prev(txt, pos, isspace);
 }
 
-// TODO: this actually doesn't work that way -> rewrite
 size_t text_word_end_next(Text *txt, size_t pos) {
-	return text_word_boundry_end_next(txt, pos, is_word_boundry);
+	return text_customword_end_next(txt, pos, is_word_boundry);
 }
 
 size_t text_word_end_prev(Text *txt, size_t pos) {
-	return text_word_boundry_end_prev(txt, pos, is_word_boundry);
+	return text_customword_end_prev(txt, pos, is_word_boundry);
 }
 
 size_t text_word_start_next(Text *txt, size_t pos) {
-	return text_word_boundry_start_next(txt, pos, is_word_boundry);
+	return text_customword_start_next(txt, pos, is_word_boundry);
 }
 
 size_t text_word_start_prev(Text *txt, size_t pos) {
-	return text_word_boundry_start_prev(txt, pos, is_word_boundry);
+	return text_customword_start_prev(txt, pos, is_word_boundry);
 }
 
 static size_t text_paragraph_sentence_next(Text *txt, size_t pos, bool sentence) {

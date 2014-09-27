@@ -346,9 +346,7 @@ and their current support in vis.
    /{text}  (to next match of text in forward direction)
    ?{text}  (to next match of text in backward direction)
 
-  There is currently no distinction between what vim calls a WORD and
-  a word, only the former is implemented. Though infrastructure for
-  the latter also exists.
+  An empty line is currently neither a word nor a WORD.
 
   The semantics of a paragraph and a sentence is also not always 100%
   the same as in vim.
