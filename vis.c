@@ -614,20 +614,25 @@ static void op_case_change(OperatorContext *c) {
 
 static size_t search_word(const Arg *arg) {
 	size_t pos = window_cursor_get(vis->win->win);
-	/* TODO: to make this useful the other variant breaking on special symbols 
-	 * should be used here */
-	Filerange word = text_object_longword_raw(vis->win->text, pos);
+	Filerange word = text_object_word(vis->win->text, pos);
 	if (!text_range_valid(&word))
 		return pos;
 	size_t len = word.end - word.start;
-	char *buf = malloc(len+1);
+	char *buf = malloc(len+1), *start = buf, *end;
 	if (!buf)
 		return pos;
 	len = text_bytes_get(vis->win->text, word.start, len, buf);
 	buf[len] = '\0';
-	/* TODO: using regular expression search here is wrong, but 'n', 'N' should
-	 * reuse this search term */
-	if (!text_regex_compile(vis->search_pattern, buf, REG_EXTENDED))
+	/* remove leading / trailing white spaces */
+	while (*start && isspace(*start))
+		start++;
+	end = start;
+	for (char *cur = start; *cur; cur++) {
+		if (!isspace(*cur))
+			end = cur;
+	}
+	end[1] = '\0';
+	if (!text_regex_compile(vis->search_pattern, start, REG_EXTENDED))
 		pos = text_search_forward(vis->win->text, pos, vis->search_pattern);
 	free(buf);
 	return pos;
