@@ -48,7 +48,7 @@ typedef union {
 	bool b;
 	int i;
 	const char *s;
-	size_t (*m)(Win*);  /* cursor movement based on window content */
+	void (*w)(Win*);    /* generic window commands */
 	void (*f)(Editor*); /* generic editor commands */
 } Arg;
 
@@ -449,6 +449,8 @@ static void wscroll(const Arg *arg);
 static void wslide(const Arg *arg);
 /* call editor function as indicated by arg->f */
 static void call(const Arg *arg);
+/* call window function as indicated by arg->w */
+static void window(const Arg *arg);
 /* quit editor, discard all changes */
 static void quit(const Arg *arg);
 
@@ -979,6 +981,10 @@ static void wslide(const Arg *arg) {
 
 static void call(const Arg *arg) {
 	arg->f(vis);
+}
+
+static void window(const Arg *arg) {
+	arg->w(vis->win->win);
 }
 
 static void insert(const Arg *arg) {

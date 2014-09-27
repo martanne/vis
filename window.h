@@ -58,6 +58,10 @@ void window_scroll_to(Win*, size_t pos);
  * position is visible. if the position is in the middle of a line, try to
  * adjust the viewport in such a way that the whole line is displayed */
 void window_cursor_to(Win*, size_t pos);
+/* redraw current cursor line at top/center/bottom of window */
+void window_redraw_top(Win*);
+void window_redraw_center(Win*);
+void window_redraw_bottom(Win*);
 /* start selected area at current cursor position. further cursor movements will
  * affect the selected region. */
 void window_selection_start(Win*);

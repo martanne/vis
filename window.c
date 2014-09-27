@@ -639,6 +639,48 @@ static bool window_viewport_up(Win *win, int n) {
 	return true;
 }
 
+void window_redraw_top(Win *win) {
+	Line *line = win->cursor.line;
+	for (Line *cur = win->topline; cur && cur != line; cur = cur->next)
+		win->start += cur->len;
+	window_draw(win);
+	window_cursor_to(win, win->cursor.pos);
+}
+
+void window_redraw_center(Win *win) {
+	int center = win->height / 2;
+	size_t pos = win->cursor.pos;
+	for (int i = 0; i < 2; i++) {
+		int linenr = 0;
+		Line *line = win->cursor.line;
+		for (Line *cur = win->topline; cur && cur != line; cur = cur->next)
+			linenr++;
+		if (linenr < center) {
+			window_slide_down(win, center - linenr);
+			continue;
+		}
+		for (Line *cur = win->topline; cur && cur != line && linenr > center; cur = cur->next) {
+			win->start += cur->len;
+			linenr--;
+		}
+		break;
+	}
+	window_draw(win);
+	window_cursor_to(win, pos);
+}
+
+void window_redraw_bottom(Win *win) {
+	Line *line = win->cursor.line;
+	if (line == win->lastline)
+		return;
+	int linenr = 0;
+	size_t pos = win->cursor.pos;
+	for (Line *cur = win->topline; cur && cur != line; cur = cur->next)
+		linenr++;
+	window_slide_down(win, win->height - linenr - 1);
+	window_cursor_to(win, pos);
+}
+
 size_t window_slide_up(Win *win, int lines) {
 	Cursor *cursor = &win->cursor;
 	if (window_viewport_down(win, lines)) {

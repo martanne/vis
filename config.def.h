@@ -402,6 +402,9 @@ static KeyBinding vis_mode_normal[] = {
 	{ { NONE(':')               }, prompt,         { .s = ":"                  } },
 	{ { NONE('Z'), NONE('Z')    }, cmd,            { .s = "wq"                 } },
 	{ { NONE('Z'), NONE('Q')    }, cmd,            { .s = "q!"                 } },
+	{ { NONE('z'), NONE('t')    }, window,         { .w = window_redraw_top    } },
+	{ { NONE('z'), NONE('z')    }, window,         { .w = window_redraw_center } },
+	{ { NONE('z'), NONE('b')    }, window,         { .w = window_redraw_bottom } },
 	{ /* empty last element, array terminator */                                 },
 };
 
