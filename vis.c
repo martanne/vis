@@ -224,7 +224,8 @@ enum {
 	MOVE_FILE_END,
 	MOVE_MARK,
 	MOVE_MARK_LINE,
-	MOVE_SEARCH_WORD,
+	MOVE_SEARCH_WORD_FORWARD,
+	MOVE_SEARCH_WORD_BACKWARD,
 	MOVE_SEARCH_FORWARD,
 	MOVE_SEARCH_BACKWARD,
 	MOVE_WINDOW_LINE_TOP,
@@ -233,8 +234,11 @@ enum {
 };
 
 /** movements which can be used besides the one in text-motions.h and window.h */
-/* search in forward direction for the word where the cursor is currently located */
-static size_t search_word(const Arg *arg);
+
+/* search in forward direction for the word under the cursor */
+static size_t search_word_forward(const Arg *arg);
+/* search in backward direction for the word under the cursor */
+static size_t search_word_backward(const Arg *arg);
 /* search again for the last used search pattern */
 static size_t search_forward(const Arg *arg);
 static size_t search_backward(const Arg *arg);
@@ -299,7 +303,8 @@ static Movement moves[] = {
 	[MOVE_RIGHT_TILL]          = { .cmd = till,                     .type = LINEWISE|INCLUSIVE },
 	[MOVE_MARK]                = { .cmd = mark_goto,                .type = LINEWISE           },
 	[MOVE_MARK_LINE]           = { .cmd = mark_line_goto,           .type = LINEWISE           },
-	[MOVE_SEARCH_WORD]         = { .cmd = search_word,              .type = LINEWISE           },
+	[MOVE_SEARCH_WORD_FORWARD] = { .cmd = search_word_forward,      .type = LINEWISE           },
+	[MOVE_SEARCH_WORD_BACKWARD]= { .cmd = search_word_backward,     .type = LINEWISE           },
 	[MOVE_SEARCH_FORWARD]      = { .cmd = search_forward,           .type = LINEWISE           },
 	[MOVE_SEARCH_BACKWARD]     = { .cmd = search_backward,          .type = LINEWISE           },
 	[MOVE_WINDOW_LINE_TOP]     = { .cmd = window_lines_top,         .type = LINEWISE           },
@@ -612,15 +617,15 @@ static void op_case_change(OperatorContext *c) {
 
 /** movement implementations of type: size_t (*move)(const Arg*) */
 
-static size_t search_word(const Arg *arg) {
+static char *get_word_under_cursor() {
 	size_t pos = window_cursor_get(vis->win->win);
 	Filerange word = text_object_word(vis->win->text, pos);
 	if (!text_range_valid(&word))
-		return pos;
+		return NULL;
 	size_t len = word.end - word.start;
 	char *buf = malloc(len+1), *start = buf, *end;
 	if (!buf)
-		return pos;
+		return NULL;
 	len = text_bytes_get(vis->win->text, word.start, len, buf);
 	buf[len] = '\0';
 	/* remove leading / trailing white spaces */
@@ -632,9 +637,24 @@ static size_t search_word(const Arg *arg) {
 			end = cur;
 	}
 	end[1] = '\0';
-	if (!text_regex_compile(vis->search_pattern, start, REG_EXTENDED))
+	return start;
+}
+
+static size_t search_word_forward(const Arg *arg) {
+	size_t pos = window_cursor_get(vis->win->win);
+	char *word = get_word_under_cursor();
+	if (word && !text_regex_compile(vis->search_pattern, word, REG_EXTENDED))
 		pos = text_search_forward(vis->win->text, pos, vis->search_pattern);
-	free(buf);
+	free(word);
+	return pos;
+}
+
+static size_t search_word_backward(const Arg *arg) {
+	size_t pos = window_cursor_get(vis->win->win);
+	char *word = get_word_under_cursor();
+	if (word && !text_regex_compile(vis->search_pattern, word, REG_EXTENDED))
+		pos = text_search_backward(vis->win->text, pos, vis->search_pattern);
+	free(word);
 	return pos;
 }
 
