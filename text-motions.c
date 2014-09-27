@@ -25,8 +25,6 @@ static int is_word_boundry(int c) {
 	         ('A' <= c && c <= 'Z'));
 }
 
-// TODO: consistent usage of iterators either char or byte based where appropriate.
-
 size_t text_begin(Text *txt, size_t pos) {
 	return 0;
 }
@@ -126,10 +124,8 @@ size_t text_line_start(Text *txt, size_t pos) {
 size_t text_line_finish(Text *txt, size_t pos) {
 	char c;
 	Iterator it = text_iterator_get(txt, text_line_end(txt, pos));
-	do text_iterator_byte_prev(&it, NULL);
+	do text_iterator_char_prev(&it, NULL);
 	while (text_iterator_byte_get(&it, &c) && c != '\n' && isspace(c));
-	if (!ISUTF8(c))
-		text_iterator_char_prev(&it, NULL);
 	return it.pos;
 }
 
