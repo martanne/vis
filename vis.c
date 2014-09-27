@@ -270,7 +270,7 @@ static Movement moves[] = {
 	[MOVE_LINE_PREV]           = { .txt = text_line_prev,           .type = LINEWISE           },
 	[MOVE_LINE_BEGIN]          = { .txt = text_line_begin,          .type = LINEWISE           },
 	[MOVE_LINE_START]          = { .txt = text_line_start,          .type = LINEWISE           },
-	[MOVE_LINE_FINISH]         = { .txt = text_line_finish,         .type = LINEWISE           },
+	[MOVE_LINE_FINISH]         = { .txt = text_line_finish,         .type = LINEWISE|INCLUSIVE },
 	[MOVE_LINE_LASTCHAR]       = { .txt = text_line_lastchar,       .type = LINEWISE|INCLUSIVE },
 	[MOVE_LINE_END]            = { .txt = text_line_end,            .type = LINEWISE           },
 	[MOVE_LINE_NEXT]           = { .txt = text_line_next,           .type = LINEWISE           },
