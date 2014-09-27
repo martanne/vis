@@ -1194,12 +1194,15 @@ static bool is_window_closeable(EditorWin *win) {
 	return false;
 }
 
+static void info_unsaved_changes(void) {
+	editor_info_show(vis, "No write since last change (add ! to override)");
+}
+
 static bool cmd_edit(const char *argv[]) {
 	EditorWin *oldwin = vis->win;
 	bool force = strchr(argv[0], '!') != NULL;
 	if (!force && !is_window_closeable(oldwin)) {
-		editor_info_show(vis, "No write since last change "
-		                      "(add ! to override)");
+		info_unsaved_changes();
 		return false;
 	}
 	if (!argv[1])
@@ -1213,8 +1216,7 @@ static bool cmd_edit(const char *argv[]) {
 static bool cmd_quit(const char *argv[]) {
 	bool force = strchr(argv[0], '!') != NULL;
 	if (!force && !is_window_closeable(vis->win)) {
-		editor_info_show(vis, "No write since last change "
-		                      "(add ! to override)");
+		info_unsaved_changes();
 		return false;
 	}
 	editor_window_close(vis->win);
@@ -1227,8 +1229,7 @@ static bool cmd_bdelete(const char *argv[]) {
 	bool force = strchr(argv[0], '!') != NULL;
 	Text *txt = vis->win->text;
 	if (text_modified(txt) && !force) {
-		editor_info_show(vis, "No write since last change "
-		                      "(add ! to override)");
+		info_unsaved_changes();
 		return false;
 	}
 	for (EditorWin *next, *win = vis->windows; win; win = next) {
@@ -1236,7 +1237,6 @@ static bool cmd_bdelete(const char *argv[]) {
 		if (win->text == txt)
 			editor_window_close(win);
 	}
-
 	if (!vis->windows)
 		quit(NULL);
 	return true;
@@ -1252,8 +1252,7 @@ static bool cmd_qall(const char *argv[]) {
 	if (!vis->windows)
 		quit(NULL);
 	else
-		editor_info_show(vis, "No write since last change "
-		                      "(add ! to override)");
+		info_unsaved_changes();
 	return vis->windows == NULL;
 }
 
