@@ -18,7 +18,7 @@
 #include "text-objects.h"
 #include "util.h"
 
-Filerange text_object_word(Text *txt, size_t pos) {
+Filerange text_object_longword(Text *txt, size_t pos) {
 	Filerange r;
 	char c, prev = '0', next = '0';
 	Iterator it = text_iterator_get(txt, pos);
@@ -51,33 +51,43 @@ Filerange text_object_word(Text *txt, size_t pos) {
 	return r;
 }
 
-Filerange text_object_longword_raw(Text *txt, size_t pos) {
+Filerange text_object_word(Text *txt, size_t pos) {
+	#define isboundry is_word_boundry
+	Filerange r;
 	char c, prev = '0', next = '0';
-	Filerange r = text_range_empty();
 	Iterator it = text_iterator_get(txt, pos);
 	if (!text_iterator_byte_get(&it, &c))
-		return r;
+		return text_range_empty();
 	if (text_iterator_byte_prev(&it, &prev))
 		text_iterator_byte_next(&it, NULL);
 	text_iterator_byte_next(&it, &next);
 	if (isspace(c)) {
-		return r;
-	} else if (isspace(prev) && isspace(next)) {
-		/* on a single character */
-		r.start = pos;
-		r.end = text_char_next(txt, pos);
-	} else if (isspace(prev)) {
+		/* middle of two words, include leading white space */
+		r.start = text_char_next(txt, text_word_end_prev(txt, pos));
+		r.end = text_word_end_next(txt, pos);
+		if (!text_byte_get(txt, r.end, &c) && !isboundry(c))
+			r.end = text_char_next(txt, r.end);
+	} else if (isboundry(prev) && isboundry(next)) {
+		if (isboundry(c)) {
+			r.start = text_word_end_prev(txt, pos);
+			r.end = text_char_next(txt, text_word_end_next(txt, pos));
+		} else {
+			/* on a single character */
+			r.start = pos;
+			r.end = text_char_next(txt, pos);
+		}
+	} else if (isboundry(prev)) {
 		/* at start of a word */
 		r.start = pos;
-		r.end = text_char_next(txt, text_longword_end_next(txt, pos));
-	} else if (isspace(next)) {
+		r.end = text_char_next(txt, text_word_end_next(txt, pos));
+	} else if (isboundry(next)) {
 		/* at end of a word */
-		r.start = text_longword_start_prev(txt, pos);
+		r.start = text_word_start_prev(txt, pos);
 		r.end = text_char_next(txt, pos);
 	} else {
 		/* in the middle of a word */
-		r.start = text_longword_start_prev(txt, pos);
-		r.end = text_char_next(txt, text_longword_end_next(txt, pos));
+		r.start = text_word_start_prev(txt, pos);
+		r.end = text_char_next(txt, text_word_end_next(txt, pos));
 	}
 
 	return r;

@@ -19,7 +19,7 @@
 #include "util.h"
 
 // TODO: specify this per file type?
-static int is_word_boundry(int c) {
+int is_word_boundry(int c) {
 	return ISASCII(c) && !(('0' <= c && c <= '9') ||
 	         ('a' <= c && c <= 'z') ||
 	         ('A' <= c && c <= 'Z'));

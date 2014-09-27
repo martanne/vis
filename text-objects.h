@@ -13,9 +13,8 @@
  * happens to be a whitespace include all neighbouring leading whitespaces
  * and the following word. */
 Filerange text_object_word(Text*, size_t pos);
-/* word which happens to be at pos, _not_ including any white spaces. if pos
- * is not part of a word, an empty range is returned */
-Filerange text_object_longword_raw(Text*, size_t pos);
+/* same semantics as above but for a longword (i.e. delimited by whitespaces) */
+Filerange text_object_longword(Text*, size_t pos);
 Filerange text_object_line(Text*, size_t pos);
 Filerange text_object_sentence(Text*, size_t pos);
 Filerange text_object_paragraph(Text*, size_t pos);
