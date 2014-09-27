@@ -566,13 +566,14 @@ static void op_shift_right(OperatorContext *c) {
 		text_insert(txt, pos, tab, tablen);
 		pos = text_line_prev(txt, pos);
 	}  while (pos >= c->range.start && pos != prev_pos);
+	window_cursor_to(vis->win->win, c->pos + tablen);
 	editor_draw(vis);
 }
 
 static void op_shift_left(OperatorContext *c) {
 	Text *txt = vis->win->text;
 	size_t pos = text_line_begin(txt, c->range.end), prev_pos;
-	size_t tabwidth = editor_tabwidth_get(vis);
+	size_t tabwidth = editor_tabwidth_get(vis), tablen;
 
 	/* if range ends at the begin of a line, skip line break */
 	if (pos == c->range.end)
@@ -589,9 +590,11 @@ static void op_shift_left(OperatorContext *c) {
 			for (len = 0; text_iterator_byte_get(&it, &c) && c == ' '; len++)
 				text_iterator_byte_next(&it, NULL);
 		}
-		text_delete(txt, pos, MIN(len, tabwidth));
+		tablen = MIN(len, tabwidth);
+		text_delete(txt, pos, tablen);
 		pos = text_line_prev(txt, pos);
 	}  while (pos >= c->range.start && pos != prev_pos);
+	window_cursor_to(vis->win->win, c->pos - tablen);
 	editor_draw(vis);
 }
 
