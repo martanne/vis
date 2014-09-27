@@ -528,6 +528,8 @@ static KeyBinding vis_mode_insert[] = {
 	{ { CONTROL('V')            }, insert_verbatim, { NULL                   } },
 	{ { CONTROL('D')            }, operator_twice,  { .i = OP_SHIFT_LEFT     } },
 	{ { CONTROL('T')            }, operator_twice,  { .i = OP_SHIFT_RIGHT    } },
+	{ { CONTROL('X'), CONTROL('E') }, wslide,       { .i = -1                } },
+	{ { CONTROL('X'), CONTROL('Y') }, wslide,       { .i = +1                } },
 	{ { NONE('\t')              }, insert_tab,      { NULL                   } },
 	{ /* empty last element, array terminator */                               },
 };
