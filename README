@@ -420,6 +420,7 @@ and their current support in vis.
   At the ':'-command prompt only the following commands are recognized:
 
    :nnn     go to line nnn
+   :bdelete close all windows which display the same file as the current one
    :edit    replace current file with a new one or reload it from disk
    :open    open a new window
    :qall    close all windows, exit editor

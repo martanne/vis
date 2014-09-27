@@ -457,6 +457,8 @@ static bool cmd_open(const char *argv[]);
 static bool cmd_edit(const char *argv[]);
 /* close the current window, if argv[0] contains a '!' discard modifications */
 static bool cmd_quit(const char *argv[]);
+/* close all windows which show current file. if argv[0] contains a '!' discard modifications */
+static bool cmd_bdelete(const char *argv[]);
 /* close all windows, exit editor, if argv[0] contains a '!' discard modifications */
 static bool cmd_qall(const char *argv[]);
 /* for each argument try to insert the file content at current cursor postion */
@@ -1216,6 +1218,25 @@ static bool cmd_quit(const char *argv[]) {
 		return false;
 	}
 	editor_window_close(vis->win);
+	if (!vis->windows)
+		quit(NULL);
+	return true;
+}
+
+static bool cmd_bdelete(const char *argv[]) {
+	bool force = strchr(argv[0], '!') != NULL;
+	Text *txt = vis->win->text;
+	if (text_modified(txt) && !force) {
+		editor_info_show(vis, "No write since last change "
+		                      "(add ! to override)");
+		return false;
+	}
+	for (EditorWin *next, *win = vis->windows; win; win = next) {
+		next = win->next;
+		if (win->text == txt)
+			editor_window_close(win);
+	}
+
 	if (!vis->windows)
 		quit(NULL);
 	return true;
