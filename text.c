@@ -504,6 +504,8 @@ static void change_free(Change *c) {
  *      \-+ <-- +-----+ <-- +---------------+ <-- +-/
  */
 bool text_insert(Text *txt, size_t pos, const char *data, size_t len) {
+	if (len == 0)
+		return true;
 	if (pos > txt->size)
 		return false;
 	if (pos < txt->lines.pos)
