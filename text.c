@@ -110,6 +110,7 @@ struct Text {
 	Buffer *buffers;        /* all buffers which have been allocated to hold insertion data */
 	Piece *pieces;		/* all pieces which have been allocated, used to free them */
 	Piece *cache;           /* most recently modified piece */
+	Piece *last_insertion;  /* most recently inserted piece */
 	int piece_count;	/* number of pieces allocated, only used for debuging purposes */
 	Piece begin, end;       /* sentinel nodes which always exists but don't hold any data */
 	Action *redo, *undo;    /* two stacks holding all actions performed to the file */
@@ -395,6 +396,8 @@ static void piece_free(Piece *p) {
 		p->text->pieces = p->global_next;
 	if (p->text->cache == p)
 		p->text->cache = NULL;
+	if (p->text->last_insertion == p)
+		p->text->last_insertion = NULL;
 	free(p);
 }
 
@@ -555,6 +558,7 @@ bool text_insert(Text *txt, size_t pos, const char *data, size_t len) {
 		span_init(&c->old, p, p);
 	}
 
+	txt->last_insertion = new;
 	cache_piece(txt, new);
 	span_swap(txt, &c->old, &c->new);
 	return true;
@@ -800,6 +804,15 @@ bool text_delete(Text *txt, size_t pos, size_t len) {
 void text_snapshot(Text *txt) {
 	txt->current_action = NULL;
 	txt->cache = NULL;
+}
+
+size_t text_last_insertion(Text *txt, const char **content) {
+	if (!txt->last_insertion) {
+		*content = NULL;
+		return 0;
+	}
+	*content = txt->last_insertion->data;
+	return txt->last_insertion->len;
 }
 
 void text_free(Text *txt) {
