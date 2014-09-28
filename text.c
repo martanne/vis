@@ -664,8 +664,10 @@ Text *text_load(const char *filename) {
 			goto out;
 		if (fstat(txt->fd, &txt->info) == -1)
 			goto out;
-		if (!S_ISREG(txt->info.st_mode))
+		if (!S_ISREG(txt->info.st_mode)) {
+			errno = EISDIR;
 			goto out;
+		}
 		// XXX: use lseek(fd, 0, SEEK_END); instead?
 		txt->buf.size = txt->info.st_size;
 		if (txt->buf.size != 0) {
