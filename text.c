@@ -249,7 +249,7 @@ static bool cache_contains(Text *txt, Piece *p) {
 		return false;
 
 	Piece *start = a->change->new.start;
-	Piece *end = a->change->new.start;
+	Piece *end = a->change->new.end;
 	bool found = false;
 	for (Piece *cur = start; !found; cur = cur->next) {
 		if (cur == p)
