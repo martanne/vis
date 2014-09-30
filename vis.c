@@ -372,6 +372,8 @@ static TextObject *moves_linewise[] = {
 };
 
 /** functions to be called from keybindings */
+/* temporarily suspend the editor and return to the shell, type 'fg' to get back */
+static void suspend(const Arg *arg);
 /* switch to mode indicated by arg->i */
 static void switchmode(const Arg *arg);
 /* set mark indicated by arg->i to current cursor position */
@@ -767,6 +769,11 @@ static size_t window_lines_bottom(const Arg *arg) {
 }
 
 /** key bindings functions of type: void (*func)(const Arg*) */
+
+static void suspend(const Arg *arg) {
+	endwin();
+	raise(SIGSTOP);
+}
 
 static void repeat(const Arg *arg) {
 	action = action_prev;
@@ -1512,6 +1519,7 @@ static void setup() {
 	sigemptyset(&sa.sa_mask);
 	sa.sa_handler = sigwinch_handler;
 	sigaction(SIGWINCH, &sa, NULL);
+	sigaction(SIGCONT, &sa, NULL);
 }
 
 static bool keymatch(Key *key0, Key *key1) {

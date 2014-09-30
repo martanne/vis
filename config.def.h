@@ -93,6 +93,7 @@ static bool vis_keypress(Key *key) {
 }
 
 static KeyBinding basic_movement[] = {
+	{ { CONTROL('Z')            }, suspend,  { NULL                          } },
 	{ { KEY(LEFT)               }, movement, { .i = MOVE_CHAR_PREV           } },
 	{ { KEY(SLEFT)              }, movement, { .i = MOVE_LONGWORD_START_PREV } },
 	{ { KEY(RIGHT)              }, movement, { .i = MOVE_CHAR_NEXT           } },
