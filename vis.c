@@ -76,6 +76,7 @@ struct Mode {
 	void (*input)(const char*, size_t); /* called whenever a key is not found in this mode and all its parent modes */
 	void (*idle)(void);                 /* called whenever a certain idle time i.e. without any user input elapsed */
 	time_t idle_timeout;                /* idle time in seconds after which the registered function will be called */
+	bool visual;                        /* whether text selection is possible in this mode */
 };
 
 typedef struct {
@@ -809,7 +810,7 @@ static void linewise(const Arg *arg) {
 
 static void operator(const Arg *arg) {
 	Operator *op = &ops[arg->i];
-	if (mode == &vis_modes[VIS_MODE_VISUAL] || mode == &vis_modes[VIS_MODE_VISUAL_LINE]) {
+	if (mode->visual) {
 		action.op = op;
 		action_do(&action);
 		return;
@@ -1152,7 +1153,7 @@ static void action_do(Action *a) {
 				}
 			}
 		}
-	} else if (mode == &vis_modes[VIS_MODE_VISUAL] || mode == &vis_modes[VIS_MODE_VISUAL_LINE]) {
+	} else if (mode->visual) {
 		c.range = window_selection_get(win);
 		if (!text_range_valid(&c.range))
 			c.range.start = c.range.end = pos;
@@ -1162,7 +1163,7 @@ static void action_do(Action *a) {
 		a->op->func(&c);
 		if (mode == &vis_modes[VIS_MODE_OPERATOR])
 			switchmode_to(mode_prev);
-		else if (mode == &vis_modes[VIS_MODE_VISUAL] || mode == &vis_modes[VIS_MODE_VISUAL_LINE])
+		else if (mode->visual)
 			switchmode(&(const Arg){ .i = VIS_MODE_NORMAL });
 		text_snapshot(txt);
 	}

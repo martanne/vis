@@ -427,12 +427,12 @@ static KeyBinding vis_mode_visual[] = {
 };
 
 static void vis_mode_visual_enter(Mode *old) {
-	if (old != &vis_modes[VIS_MODE_VISUAL_LINE])
+	if (!old->visual)
 		window_selection_start(vis->win->win);
 }
 
 static void vis_mode_visual_leave(Mode *new) {
-	if (new != &vis_modes[VIS_MODE_VISUAL_LINE])
+	if (!new->visual)
 		window_selection_clear(vis->win->win);
 }
 
@@ -445,13 +445,13 @@ static KeyBinding vis_mode_visual_line[] = {
 static void vis_mode_visual_line_enter(Mode *old) {
 	Win *win = vis->win->win;
 	window_cursor_to(win, text_line_begin(vis->win->text, window_cursor_get(win)));
-	if (old != &vis_modes[VIS_MODE_VISUAL])
+	if (!old->visual)
 		window_selection_start(vis->win->win);
 	movement(&(const Arg){ .i = MOVE_LINE_END });
 }
 
 static void vis_mode_visual_line_leave(Mode *new) {
-	if (new != &vis_modes[VIS_MODE_VISUAL])
+	if (!new->visual)
 		window_selection_clear(vis->win->win);
 }
 
@@ -676,6 +676,7 @@ static Mode vis_modes[] = {
 		.bindings = vis_mode_visual,
 		.enter = vis_mode_visual_enter,
 		.leave = vis_mode_visual_leave,
+		.visual = true,
 	},
 	[VIS_MODE_VISUAL_LINE] = {
 		.name = "--VISUAL LINE--",
@@ -683,6 +684,7 @@ static Mode vis_modes[] = {
 		.bindings = vis_mode_visual_line,
 		.enter = vis_mode_visual_line_enter,
 		.leave = vis_mode_visual_line_leave,
+		.visual = true,
 	},
 	[VIS_MODE_READLINE] = {
 		.name = "READLINE",
