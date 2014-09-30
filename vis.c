@@ -161,6 +161,7 @@ static void op_shift_right(OperatorContext *c);
 static void op_shift_left(OperatorContext *c);
 static void op_case_change(OperatorContext *c);
 static void op_repeat_insert(OperatorContext *c);
+static void op_join(OperatorContext *c);
 
 /* these can be passed as int argument to operator(&(const Arg){ .i = OP_*}) */
 enum {
@@ -172,6 +173,7 @@ enum {
 	OP_SHIFT_LEFT,
 	OP_CASE_CHANGE,
 	OP_REPEAT_INSERT,
+	OP_JOIN,
 };
 
 static Operator ops[] = {
@@ -183,6 +185,7 @@ static Operator ops[] = {
 	[OP_SHIFT_LEFT]  = { op_shift_left  },
 	[OP_CASE_CHANGE] = { op_case_change },
 	[OP_REPEAT_INSERT] = { op_repeat_insert },
+	[OP_JOIN]          = { op_join          },
 };
 
 #define PAGE      INT_MAX
@@ -384,8 +387,8 @@ static void insert_newline(const Arg *arg);
 static void put(const Arg *arg);
 /* add a new line either before or after the one where the cursor currently is */
 static void openline(const Arg *arg);
-/* join the line where the cursor currently is with the one above or below */
-static void joinline(const Arg *arg);
+/* join lines from current cursor position to movement indicated by arg */
+static void join(const Arg *arg);
 /* create a new window with the filename arg->s */
 static void winnew(const Arg *arg);
 /* execute arg->s as if it was typed on command prompt */
@@ -628,6 +631,29 @@ static void op_repeat_insert(OperatorContext *c) {
 	size_t len = text_last_insertion(vis->win->text, &content);
 	editor_insert(vis, c->pos, content, len);
 	window_cursor_to(vis->win->win, c->pos + len);
+}
+
+static void op_join(OperatorContext *c) {
+	Text *txt = vis->win->text;
+	size_t pos = text_line_begin(txt, c->range.end), prev_pos;
+	/* if range ends at the begin of a line, skip line break */
+	if (pos == c->range.end)
+		pos = text_line_prev(txt, pos);
+
+	do {
+		prev_pos = pos;
+		size_t end = text_line_start(txt, pos);
+		pos = text_char_next(txt, text_line_finish(txt, text_line_prev(txt, end)));
+		if (pos > c->range.start) {
+			text_delete(txt, pos, end - pos);
+			text_insert(txt, pos, " ", 1);
+		} else {
+			break;
+		}
+	} while (pos != prev_pos);
+
+	window_cursor_to(vis->win->win, c->range.start);
+	editor_draw(vis);
 }
 
 /** movement implementations of type: size_t (*move)(const Arg*) */
@@ -1026,19 +1052,9 @@ static void openline(const Arg *arg) {
 	switchmode(&(const Arg){ .i = VIS_MODE_INSERT });
 }
 
-static void joinline(const Arg *arg) {
-	Text *txt = vis->win->text;
-	size_t pos = window_cursor_get(vis->win->win), start, end;
-	if (arg->i == MOVE_LINE_NEXT) {
-		start = text_line_end(txt, pos);
-		end = text_line_next(txt, pos);
-	} else {
-		end = text_line_begin(txt, pos);
-		start = text_line_prev(txt, pos);
-	}
-	editor_delete(vis, start, end - start);
-	editor_insert(vis, start, " ", 1);
-	window_cursor_to(vis->win->win, start);
+static void join(const Arg *arg) {
+	operator(&(const Arg){ .i = OP_JOIN });
+	movement(arg);
 }
 
 static void switchmode(const Arg *arg) {

@@ -385,7 +385,7 @@ static KeyBinding vis_mode_normal[] = {
 	{ { NONE('.')               }, repeat,         { NULL                      } },
 	{ { NONE('o')               }, openline,       { .i = MOVE_LINE_NEXT       } },
 	{ { NONE('O')               }, openline,       { .i = MOVE_LINE_PREV       } },
-	{ { NONE('J')               }, joinline,       { .i = MOVE_LINE_NEXT       } },
+	{ { NONE('J')               }, join,           { .i = MOVE_LINE_NEXT       } },
 	{ { NONE('x')               }, delete,         { .i = MOVE_CHAR_NEXT       } },
 	{ { NONE('r')               }, replace,        { NULL                      } },
 	{ { NONE('i')               }, switchmode,     { .i = VIS_MODE_INSERT      } },
@@ -421,6 +421,7 @@ static KeyBinding vis_mode_visual[] = {
 	{ { NONE('c')               }, operator,       { .i = OP_CHANGE            } },
 	{ { NONE('r')               }, operator,       { .i = OP_CHANGE            } },
 	{ { NONE('s')               }, operator,       { .i = OP_CHANGE            } },
+	{ { NONE('J')               }, operator,       { .i = OP_JOIN              } },
 	{ /* empty last element, array terminator */                                 },
 };
 
