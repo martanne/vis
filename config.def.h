@@ -427,13 +427,17 @@ static KeyBinding vis_mode_visual[] = {
 };
 
 static void vis_mode_visual_enter(Mode *old) {
-	if (!old->visual)
+	if (!old->visual) {
 		window_selection_start(vis->win->win);
+		vis_modes[VIS_MODE_OPERATOR].parent = &vis_modes[VIS_MODE_TEXTOBJ];
+	}
 }
 
 static void vis_mode_visual_leave(Mode *new) {
-	if (!new->visual)
+	if (!new->visual) {
 		window_selection_clear(vis->win->win);
+		vis_modes[VIS_MODE_OPERATOR].parent = &vis_modes[VIS_MODE_MOVE];
+	}
 }
 
 static KeyBinding vis_mode_visual_line[] = {
@@ -445,14 +449,18 @@ static KeyBinding vis_mode_visual_line[] = {
 static void vis_mode_visual_line_enter(Mode *old) {
 	Win *win = vis->win->win;
 	window_cursor_to(win, text_line_begin(vis->win->text, window_cursor_get(win)));
-	if (!old->visual)
+	if (!old->visual) {
 		window_selection_start(vis->win->win);
+		vis_modes[VIS_MODE_OPERATOR].parent = &vis_modes[VIS_MODE_TEXTOBJ];
+	}
 	movement(&(const Arg){ .i = MOVE_LINE_END });
 }
 
 static void vis_mode_visual_line_leave(Mode *new) {
-	if (!new->visual)
+	if (!new->visual) {
 		window_selection_clear(vis->win->win);
+		vis_modes[VIS_MODE_OPERATOR].parent = &vis_modes[VIS_MODE_MOVE];
+	}
 }
 
 static KeyBinding vis_mode_readline[] = {
@@ -573,6 +581,9 @@ static void vis_mode_replace_input(const char *str, size_t len) {
  * reachable. once the operator is processed (i.e. the OPERATOR mode is left) its parent
  * mode is reset back to MOVE.
  *
+ * Similarly the +-ed line between OPERATOR and TEXTOBJ is only active within the visual
+ * modes.
+ *
  *
  *                                         BASIC
  *                                    (arrow keys etc.)
@@ -590,18 +601,18 @@ static void vis_mode_replace_input(const char *str, size_t len) {
  *       |                              (h,j,k,l ...)
  *       |                                   |       \-----------------\
  *       |                                   |                         |
- *    REPLACE                            OPERATOR ======\\       INNER-TEXTOBJ
- *                                     (d,c,y,p ..)     ||    (i [wsp[]()b<>{}B"'`] )
- *                                           |          ||             |
- *                                           |          ||             |
- *                                        REGISTER      ||          TEXTOBJ
- *                                        (" [a-z])     ||    (a [wsp[]()b<>{}B"'`] )
- *                           /-----------/   |          \\             |
- *                          /                |           \\            |
- *                      VISUAL            MARK-SET        \\     OPERATOR-OPTION
- *                         |              (m [a-z])        \\        (v,V)
- *                         |                 |              \\        //
- *                         |                 |               \\======//
+ *    REPLACE                            OPERATOR ++++           INNER-TEXTOBJ
+ *                                     (d,c,y,p ..)   +      (i [wsp[]()b<>{}B"'`] )
+ *                                           |     \\  +               |
+ *                                           |      \\  +              |
+ *                                        REGISTER   \\  +          TEXTOBJ
+ *                                        (" [a-z])   \\  +     (a [wsp[]()b<>{}B"'`] )
+ *                           /-----------/   |         \\  +   +       |
+ *                          /                |          \\  + +        |
+ *                      VISUAL            MARK-SET       \\     OPERATOR-OPTION
+ *                         |              (m [a-z])       \\        (v,V)
+ *                         |                 |             \\        //
+ *                         |                 |              \\======//
  *                   VISUAL-LINE           NORMAL
  */
 

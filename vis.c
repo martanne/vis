@@ -1111,31 +1111,18 @@ static void action_do(Action *a) {
 			else
 				window_cursor_to(win, pos);
 
-			if (mode == &vis_modes[VIS_MODE_VISUAL_LINE]) {
-				Filerange sel = window_selection_get(win);
-				sel.end = text_char_prev(txt, sel.end);
-				size_t start = text_line_begin(txt, sel.start);
-				size_t end = text_line_end(txt, sel.end);
-				if (sel.start == pos) { /* extend selection upwards */
-					sel.end = start;
-					sel.start = end;
-				} else { /* extend selection downwards */
-					sel.start = start;
-					sel.end = end;
-				}
-				window_selection_set(win, &sel);
-				c.range = sel;
-			}
 		} else if (a->movement->type & INCLUSIVE) {
 			Iterator it = text_iterator_get(txt, c.range.end);
 			text_iterator_char_next(&it, NULL);
 			c.range.end = it.pos;
 		}
 	} else if (a->textobj) {
-		Filerange r;
-		c.range.start = c.range.end = pos;
+		if (mode->visual)
+			c.range = window_selection_get(win);
+		else
+			c.range.start = c.range.end = pos;
 		for (int i = 0; i < count; i++) {
-			r = a->textobj->range(txt, pos);
+			Filerange r = a->textobj->range(txt, pos);
 			if (!text_range_valid(&r))
 				break;
 			if (a->textobj->type == OUTER) {
@@ -1153,10 +1140,32 @@ static void action_do(Action *a) {
 				}
 			}
 		}
+
+		if (mode->visual) {
+			window_selection_set(win, &c.range);
+			pos = c.range.end;
+			window_cursor_to(win, pos);
+		}
 	} else if (mode->visual) {
 		c.range = window_selection_get(win);
 		if (!text_range_valid(&c.range))
 			c.range.start = c.range.end = pos;
+	}
+
+	if (mode == &vis_modes[VIS_MODE_VISUAL_LINE] && (a->movement || a->textobj)) {
+		Filerange sel = window_selection_get(win);
+		sel.end = text_char_prev(txt, sel.end);
+		size_t start = text_line_begin(txt, sel.start);
+		size_t end = text_line_end(txt, sel.end);
+		if (sel.start == pos) { /* extend selection upwards */
+			sel.end = start;
+			sel.start = end;
+		} else { /* extend selection downwards */
+			sel.start = start;
+			sel.end = end;
+		}
+		window_selection_set(win, &sel);
+		c.range = sel;
 	}
 
 	if (a->op) {
