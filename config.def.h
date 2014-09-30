@@ -882,9 +882,9 @@ static Color colors[] = {
 	&colors[COLOR_COMMENT],      \
 }
 
-#define SYNTAX_LITERAL {                         \
-	"('(\\\\.|.)')|(0x[0-9A-Fa-f]+|[0-9]+)", \
-	&colors[COLOR_LITERAL],                  \
+#define SYNTAX_LITERAL {                             \
+	"('(\\\\.|.)')|"B"(0x[0-9A-Fa-f]+|[0-9]+)"B, \
+	&colors[COLOR_LITERAL],                      \
 }
 
 #define SYNTAX_STRING {         \
@@ -919,7 +919,7 @@ static Syntax syntaxes[] = {{
 		SYNTAX_CONSTANT,
 		SYNTAX_BRACKET,
 	{
-		"<[a-zA-Z0-9\\.-_]+>",
+		"<[a-zA-Z0-9\\.\\-_/]+\\.(c(pp|xx)?|h(pp|xx)?|cc)>",
 		&colors[COLOR_STRING],
 	},{
 		"(^#[\\t ]*(define|include(_next)?|(un|ifn?)def|endif|el(if|se)|if|warning|error|pragma))",
