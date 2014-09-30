@@ -386,7 +386,7 @@ static KeyBinding vis_mode_normal[] = {
 	{ { NONE('.')               }, repeat,         { NULL                      } },
 	{ { NONE('o')               }, openline,       { .i = MOVE_LINE_NEXT       } },
 	{ { NONE('O')               }, openline,       { .i = MOVE_LINE_PREV       } },
-	{ { NONE('J')               }, join,           { .i = MOVE_LINE_NEXT       } },
+	{ { NONE('J')               }, join,           { .i = MOVE_SCREEN_LINE_DOWN} },
 	{ { NONE('x')               }, delete,         { .i = MOVE_CHAR_NEXT       } },
 	{ { NONE('r')               }, replace,        { NULL                      } },
 	{ { NONE('i')               }, switchmode,     { .i = VIS_MODE_INSERT      } },
