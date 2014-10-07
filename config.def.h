@@ -824,6 +824,7 @@ static Config *config = &editors[0];
 /* Color definitions for use in the sytax highlighting rules below. A fore
  * or background color of -1 specifies the default terminal color. */
 enum {
+	COLOR_NOHILIT,
 	COLOR_SYNTAX0,
 	COLOR_SYNTAX1,
 	COLOR_SYNTAX2,
@@ -835,8 +836,10 @@ enum {
 	COLOR_KEYWORD      = COLOR_SYNTAX1,
 	COLOR_CONSTANT     = COLOR_SYNTAX4,
 	COLOR_DATATYPE     = COLOR_SYNTAX2,
+	COLOR_OPERATOR     = COLOR_SYNTAX2,
 	COLOR_CONTROL      = COLOR_SYNTAX3,
 	COLOR_PREPROCESSOR = COLOR_SYNTAX4,
+	COLOR_PRAGMA       = COLOR_SYNTAX4,
 	COLOR_KEYWORD2     = COLOR_SYNTAX4,
 	COLOR_BRACKETS     = COLOR_SYNTAX5,
 	COLOR_STRING       = COLOR_SYNTAX6,
@@ -847,6 +850,7 @@ enum {
 };
 
 static Color colors[] = {
+	[COLOR_NOHILIT] = { .fg = -1,            .bg = -1, .attr = A_NORMAL },
 	[COLOR_SYNTAX0] = { .fg = COLOR_RED,     .bg = -1, .attr = A_BOLD   },
 	[COLOR_SYNTAX1] = { .fg = COLOR_GREEN,   .bg = -1, .attr = A_BOLD   },
 	[COLOR_SYNTAX2] = { .fg = COLOR_GREEN,   .bg = -1, .attr = A_NORMAL },
@@ -903,6 +907,11 @@ static Color colors[] = {
 	&colors[COLOR_BRACKETS],     \
 }
 
+#define SYNTAX_C_PREPROCESSOR { \
+	"(^#[\\t ]*(define|include(_next)?|(un|ifn?)def|endif|el(if|se)|if|warning|error|pragma))", \
+	&colors[COLOR_PREPROCESSOR], \
+}
+
 /* these rules are applied top to bottom, first match wins. Therefore more 'greedy'
  * rules such as for comments should be the first entries.
  *
@@ -921,10 +930,9 @@ static Syntax syntaxes[] = {{
 	{
 		"<[a-zA-Z0-9\\.\\-_/]+\\.(c(pp|xx)?|h(pp|xx)?|cc)>",
 		&colors[COLOR_STRING],
-	},{
-		"(^#[\\t ]*(define|include(_next)?|(un|ifn?)def|endif|el(if|se)|if|warning|error|pragma))",
-		&colors[COLOR_PREPROCESSOR],
-	},{
+	},
+		SYNTAX_C_PREPROCESSOR,
+	{
 		B"(for|if|while|do|else|case|default|switch|try|throw|catch|operator|new|delete)"B,
 		&colors[COLOR_KEYWORD],
 	},{
@@ -1072,6 +1080,58 @@ static Syntax syntaxes[] = {{
 	},{
 		"#\\{[^}]*\\}",
 		&colors[COLOR_SYNTAX6],
+	}}
+},{
+	.name = "haskell",
+	.file = "\\.hs$",
+	.rules = {{
+		"\\{-#.*#-\\}",
+		&colors[COLOR_PRAGMA],
+	},{
+		"---*([^-!#$%&\\*\\+./<=>\?@\\^|~].*)?$",
+		&colors[COLOR_COMMENT],
+	}, {
+		// These are allowed to be nested, but we can't express that
+		// with regular expressions
+		"\\{-.*-\\}",
+		&colors[COLOR_COMMENT],
+		true
+	},
+		SYNTAX_STRING,
+		SYNTAX_C_PREPROCESSOR,
+	{
+		// as and hiding are only keywords when part of an import, but
+		// I don't want to highlight the whole import line.
+		// capture group coloring or similar would be nice
+		"(^import( qualified)?)|"B"(as|hiding|infix[lr]?)"B,
+		&colors[COLOR_KEYWORD2],
+	},{
+		B"(module|class|data|deriving|instance|default|where|type|newtype)"B,
+		&colors[COLOR_KEYWORD],
+	},{
+		B"(do|case|of|let|in|if|then|else)"B,
+		&colors[COLOR_CONTROL],
+	},{
+		"('(\\\\.|.)')",
+		&colors[COLOR_LITERAL],
+	},{
+		B"[0-9]+\\.[0-9]+([eE][-+]?[0-9]+)?"B,
+		&colors[COLOR_LITERAL],
+	},{
+		B"[0-9]+"B"|"B"0[xX][0-9a-fA-F]+"B"|"B"0[oO][0-7]+"B,
+		&colors[COLOR_LITERAL],
+	},{
+		"("B"[A-Z][a-zA-Z0-9_']*\\.)*"B"[a-zA-Z][a-zA-Z0-9_']*"B,
+		&colors[COLOR_NOHILIT],
+	},{
+		"("B"[A-Z][a-zA-Z0-9_']*\\.)?[-!#$%&\\*\\+/<=>\\?@\\\\^|~:.][-!#$%&\\*\\+/<=>\\?@\\\\^|~:.]*",
+		&colors[COLOR_OPERATOR],
+	},{
+		"`("B"[A-Z][a-zA-Z0-9_']*\\.)?[a-z][a-zA-Z0-9_']*`",
+		&colors[COLOR_OPERATOR],
+	},{
+		"\\(|\\)|\\[|\\]|,|;|_|\\{|\\}",
+		&colors[COLOR_BRACKETS],
 	}}
 },{
 	/* empty last element, array terminator */
