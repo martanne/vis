@@ -146,7 +146,7 @@ typedef struct {                         /* command definitions for the ':'-prom
 } Command;
 
 /** global variables */
-static bool running = true; /* exit main loop once this becomes false */
+static volatile bool running = true; /* exit main loop once this becomes false */
 static Editor *vis;         /* global editor instance, keeps track of all windows etc. */
 static Mode *mode;          /* currently active mode, used to search for keybindings */
 static Mode *mode_prev;     /* mode which was active previously */
