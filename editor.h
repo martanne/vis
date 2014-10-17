@@ -137,6 +137,7 @@ void editor_syntax_unload(Editor*);
  * in another window, share the underlying text that is changes will be
  * visible in both windows */
 bool editor_window_new(Editor*, const char *filename);
+bool editor_window_new_fd(Editor*, int fd);
 /* reload the file currently displayed in the window from disk */
 bool editor_window_reload(EditorWin*);
 void editor_window_close(EditorWin*);

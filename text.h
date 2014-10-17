@@ -33,6 +33,7 @@ typedef struct {
 	     text_iterator_next(&it))
 
 Text *text_load(const char *file);
+Text *text_load_fd(int fd);
 /* the filename from which this text was loaded or first saved to */
 const char *text_filename_get(Text*);
 /* associate a filename with the yet unnamed buffer */

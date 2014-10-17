@@ -365,6 +365,17 @@ bool editor_window_new(Editor *ed, const char *filename) {
 	return true;
 }
 
+bool editor_window_new_fd(Editor *ed, int fd) {
+	Text *txt = text_load_fd(fd);
+	if (!txt)
+		return false;
+	EditorWin *win = editor_window_new_text(ed, txt);
+	if (!win)
+		return false;
+	editor_draw(ed);
+	return true;
+}
+
 static void editor_window_detach(Editor *ed, EditorWin *win) {
 	if (win->prev)
 		win->prev->next = win->next;

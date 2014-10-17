@@ -1671,11 +1671,26 @@ int main(int argc, char *argv[]) {
 		die("Could not load syntax highlighting definitions\n");
 	editor_statusbar_set(vis, config->statusbar);
 
-	for (int i = 1; i < MAX(argc, 2); i++) {
-		const char *file = i < argc ? argv[i] : NULL;
-		if (!editor_window_new(vis, file))
-			die("Could not load `%s': %s\n", file, strerror(errno));
+	for (int i = 1; i < argc; i++) {
+		if (argv[i][0] == '-') {
+			switch (argv[i][1]) {
+			case '\0':
+				if (!editor_window_new_fd(vis, STDIN_FILENO))
+					die("Can not read from stdin\n");
+				int fd = open("/dev/tty", O_RDONLY);
+				if (fd == -1)
+					die("Can not reopen stdin\n");
+				dup2(fd, STDIN_FILENO);
+				close(fd);
+				break;
+			}
+		} else if (!editor_window_new(vis, argv[i])) {
+			die("Can not load `%s': %s\n", argv[i], strerror(errno));
+		}
 	}
+
+	if (!vis->windows && !editor_window_new(vis, NULL))
+		die("Can not create empty buffer\n");
 
 	mainloop();
 	editor_free(vis);

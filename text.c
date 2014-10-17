@@ -692,6 +692,18 @@ out:
 	return NULL;
 }
 
+Text *text_load_fd(int fd) {
+	Text *txt = text_load(NULL);
+	if (!txt)
+		return NULL;
+	char buf[1024];
+	for (ssize_t len = 0; (len = read(fd, buf, sizeof buf)) > 0;)
+		text_insert(txt, text_size(txt), buf, len);
+	text_snapshot(txt);
+	txt->fd = fd;
+	return txt;
+}
+
 static void print_piece(Piece *p) {
 	fprintf(stderr, "index: %d\tnext: %d\tprev: %d\t len: %d\t data: %p\n", p->index,
 		p->next ? p->next->index : -1,
