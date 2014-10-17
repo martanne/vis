@@ -1583,33 +1583,7 @@ static void die(const char *errstr, ...) {
 	exit(EXIT_FAILURE);
 }
 
-int main(int argc, char *argv[]) {
-	/* decide which key configuration to use based on argv[0] */
-	char *arg0 = argv[0];
-	while (*arg0 && (*arg0 == '.' || *arg0 == '/'))
-		arg0++;
-	for (int i = 0; i < LENGTH(editors); i++) {
-		if (editors[i].name[0] == arg0[0]) {
-			config = &editors[i];
-			break;
-		}
-	}
-
-	mode_prev = mode = config->mode;
-	setup();
-
-	if (!(vis = editor_new(screen.w, screen.h)))
-		die("Could not allocate editor core\n");
-	if (!editor_syntax_load(vis, syntaxes, colors))
-		die("Could not load syntax highlighting definitions\n");
-	editor_statusbar_set(vis, config->statusbar);
-
-	for (int i = 1; i < MAX(argc, 2); i++) {
-		const char *file = i < argc ? argv[i] : NULL;
-		if (!editor_window_new(vis, file))
-			die("Could not load `%s': %s\n", file, strerror(errno));
-	}
-
+static void mainloop() {
 	struct timeval idle = { .tv_usec = 0 }, *timeout = NULL;
 	Key key, key_prev, *key_mod = NULL;
 
@@ -1674,7 +1648,36 @@ int main(int argc, char *argv[]) {
 		if (mode->idle)
 			timeout = &idle;
 	}
+}
 
+int main(int argc, char *argv[]) {
+	/* decide which key configuration to use based on argv[0] */
+	char *arg0 = argv[0];
+	while (*arg0 && (*arg0 == '.' || *arg0 == '/'))
+		arg0++;
+	for (int i = 0; i < LENGTH(editors); i++) {
+		if (editors[i].name[0] == arg0[0]) {
+			config = &editors[i];
+			break;
+		}
+	}
+
+	mode_prev = mode = config->mode;
+	setup();
+
+	if (!(vis = editor_new(screen.w, screen.h)))
+		die("Could not allocate editor core\n");
+	if (!editor_syntax_load(vis, syntaxes, colors))
+		die("Could not load syntax highlighting definitions\n");
+	editor_statusbar_set(vis, config->statusbar);
+
+	for (int i = 1; i < MAX(argc, 2); i++) {
+		const char *file = i < argc ? argv[i] : NULL;
+		if (!editor_window_new(vis, file))
+			die("Could not load `%s': %s\n", file, strerror(errno));
+	}
+
+	mainloop();
 	editor_free(vis);
 	endwin();
 	return 0;
