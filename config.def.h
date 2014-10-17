@@ -1,5 +1,5 @@
 /** start by reading from the top of vis.c up until config.h is included */
-
+#define DEFAULT_TERM "xterm" /* default term to use if $TERM isn't set */
 /* macros used to specify keys for key bindings */
 #define ESC        0x1B
 #define NONE(k)    { .str = { k }, .code = 0 }

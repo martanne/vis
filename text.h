@@ -2,7 +2,7 @@
 #define TEXT_H
 
 #include <stdbool.h>
-#include <stddef.h>
+#include <sys/types.h>
 
 #define EPOS ((size_t)-1)         /* invalid position */
 
@@ -34,6 +34,9 @@ typedef struct {
 
 Text *text_load(const char *file);
 Text *text_load_fd(int fd);
+/* return the fd from which this text was loaded or -1 if it was
+ * loaded from a filename */
+int text_fd_get(Text*);
 /* the filename from which this text was loaded or first saved to */
 const char *text_filename_get(Text*);
 /* associate a filename with the yet unnamed buffer */
@@ -82,6 +85,7 @@ bool text_modified(Text*);
 /* test whether the underlying file uses UNIX style \n or Windows style \r\n newlines */
 bool text_newlines_crnl(Text*);
 int text_save(Text*, const char *file);
+ssize_t text_write(Text*, int fd);
 void text_free(Text*);
 
 typedef struct Regex Regex;

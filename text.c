@@ -645,12 +645,36 @@ err:
 	return -1;
 }
 
+ssize_t text_write(Text *txt, int fd) {
+	ssize_t len = 0;
+	text_iterate(txt, it, 0) {
+		size_t plen = it.end - it.start, poff = 0;
+		while (plen > 0) {
+			ssize_t res = write(fd, it.start + poff, plen);
+			if (res < 0) {
+				if (errno == EAGAIN || errno == EINTR)
+					continue;
+				return -1;
+			}
+			if (res == 0)
+				break;
+			poff += res;
+			plen -= res;
+		}
+		len += plen;
+	}
+	txt->saved_action = txt->undo;
+	text_snapshot(txt);
+	return len;
+}
+
 /* load the given file as starting point for further editing operations.
  * to start with an empty document, pass NULL as filename. */
 Text *text_load(const char *filename) {
 	Text *txt = calloc(1, sizeof(Text));
 	if (!txt)
 		return NULL;
+	txt->fd = -1;
 	txt->begin.index = 1;
 	txt->end.index = 2;
 	txt->piece_count = 2;
@@ -686,8 +710,10 @@ Text *text_load(const char *filename) {
 	}
 	return txt;
 out:
-	if (txt->fd > 2)
+	if (txt->fd > 2) {
 		close(txt->fd);
+		txt->fd = -1;
+	}
 	text_free(txt);
 	return NULL;
 }
@@ -1122,6 +1148,10 @@ void text_mark_clear(Text *txt, Mark mark) {
 void text_mark_clear_all(Text *txt) {
 	for (Mark mark = 0; mark < LENGTH(txt->marks); mark++)
 		text_mark_clear(txt, mark);
+}
+
+int text_fd_get(Text *txt) {
+	return txt->fd;
 }
 
 const char *text_filename_get(Text *txt) {

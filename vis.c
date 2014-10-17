@@ -1416,6 +1416,8 @@ static bool cmd_write(const char *argv[]) {
 	if (!argv[1])
 		argv[1] = text_filename_get(text);
 	if (!argv[1]) {
+		if (text_fd_get(text) == STDIN_FILENO)
+			return text_write(text, STDOUT_FILENO) >= 0;
 		editor_info_show(vis, "Filename expected");
 		return false;
 	}
@@ -1490,6 +1492,15 @@ static struct Screen {
 	bool need_resize;
 } screen = { .need_resize = true };
 
+static void die(const char *errstr, ...) {
+	va_list ap;
+	endwin();
+	va_start(ap, errstr);
+	vfprintf(stderr, errstr, ap);
+	va_end(ap);
+	exit(EXIT_FAILURE);
+}
+
 static void sigwinch_handler(int sig) {
 	screen.need_resize = true;
 }
@@ -1513,7 +1524,11 @@ static void setup() {
 	setlocale(LC_CTYPE, "");
 	if (!getenv("ESCDELAY"))
 		set_escdelay(50);
-	initscr();
+	char *term = getenv("TERM");
+	if (!term)
+		term = DEFAULT_TERM;
+	if (!newterm(term, stderr, stdin) == ERR)
+		die("Can not initialize terminal\n");
 	start_color();
 	raw();
 	noecho();
@@ -1572,15 +1587,6 @@ static Key getkey(void) {
 	}
 
 	return key;
-}
-
-static void die(const char *errstr, ...) {
-	va_list ap;
-	endwin();
-	va_start(ap, errstr);
-	vfprintf(stderr, errstr, ap);
-	va_end(ap);
-	exit(EXIT_FAILURE);
 }
 
 static void mainloop() {
