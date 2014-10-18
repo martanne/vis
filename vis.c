@@ -921,7 +921,9 @@ static void delete(const Arg *arg) {
 
 static void insert_register(const Arg *arg) {
 	Register *reg = &vis->registers[arg->i];
-	editor_insert(vis, window_cursor_get(vis->win->win), reg->data, reg->len);
+	int pos = window_cursor_get(vis->win->win);
+	editor_insert(vis, pos, reg->data, reg->len);
+	window_cursor_to(vis->win->win, pos + reg->len);
 }
 
 static void prompt(const Arg *arg) {
