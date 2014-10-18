@@ -601,15 +601,22 @@ size_t text_redo(Text *txt) {
  * using rename(2).
  */
 int text_save(Text *txt, const char *filename) {
+	int fd = -1;
 	size_t len = strlen(filename) + 10;
 	char *tmpname = malloc(len);
 	if (!tmpname)
 		return -1;
 	snprintf(tmpname, len, "%s~", filename);
-	// TODO file ownership, permissions etc
+	// TODO preserve user/group
+	struct stat meta;
+	if (stat(filename, &meta) == -1) {
+		if (errno == ENOENT)
+			meta.st_mode = S_IRUSR|S_IWUSR;
+		else
+			goto err;
+	}
 	/* O_RDWR is needed because otherwise we can't map with MAP_SHARED */
-	int fd = open(tmpname, O_CREAT|O_RDWR|O_TRUNC, S_IRUSR|S_IWUSR);
-	if (fd == -1)
+	if ((fd = open(tmpname, O_CREAT|O_RDWR|O_TRUNC, meta.st_mode)) == -1)
 		goto err;
 	if (ftruncate(fd, txt->size) == -1)
 		goto err;
