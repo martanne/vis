@@ -616,7 +616,11 @@ static void op_case_change(OperatorContext *c) {
 	size_t rem = len;
 	for (char *cur = buf; rem > 0; cur++, rem--) {
 		if (isascii((unsigned char)*cur)) {
-			if (c->arg->i > 0)
+			if (c->arg->i == 0) {
+				*cur = islower((unsigned char)*cur) ?
+				       toupper((unsigned char)*cur) :
+				       tolower((unsigned char)*cur) ;
+			} else if (c->arg->i > 0)
 				*cur = toupper((unsigned char)*cur);
 			else
 				*cur = tolower((unsigned char)*cur);
