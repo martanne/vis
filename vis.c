@@ -615,15 +615,14 @@ static void op_case_change(OperatorContext *c) {
 	len = text_bytes_get(vis->win->text, c->range.start, len, buf);
 	size_t rem = len;
 	for (char *cur = buf; rem > 0; cur++, rem--) {
-		if (isascii((unsigned char)*cur)) {
-			if (c->arg->i == 0) {
-				*cur = islower((unsigned char)*cur) ?
-				       toupper((unsigned char)*cur) :
-				       tolower((unsigned char)*cur) ;
-			} else if (c->arg->i > 0)
-				*cur = toupper((unsigned char)*cur);
+		int ch = (unsigned char)*cur;
+		if (isascii(ch)) {
+			if (c->arg->i == 0)
+				*cur = islower(ch) ? toupper(ch) : tolower(ch);
+			else if (c->arg->i > 0)
+				*cur = toupper(ch);
 			else
-				*cur = tolower((unsigned char)*cur);
+				*cur = tolower(ch);
 		}
 	}
 
