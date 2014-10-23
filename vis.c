@@ -13,10 +13,6 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
-#define _DEFAULT_SOURCE
-#define _POSIX_SOURCE
-/* Necessary for SIGWINCH on OpenBSD */
-#define _BSD_SOURCE
 #include <locale.h>
 #include <stdlib.h>
 #include <unistd.h>
