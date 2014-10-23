@@ -1591,8 +1591,13 @@ static Key getkey(void) {
 }
 
 static void mainloop() {
-	struct timeval idle = { .tv_usec = 0 }, *timeout = NULL;
+	struct timespec idle = { .tv_nsec = 0 }, *timeout = NULL;
 	Key key, key_prev, *key_mod = NULL;
+	sigset_t emptyset, blockset;
+	sigemptyset(&emptyset);
+	sigemptyset(&blockset);
+	sigaddset(&blockset, SIGWINCH);
+	sigprocmask(SIG_BLOCK, &blockset, NULL);
 
 	while (running) {
 		if (screen.need_resize) {
@@ -1607,7 +1612,7 @@ static void mainloop() {
 		editor_update(vis);
 		doupdate();
 		idle.tv_sec = mode->idle_timeout;
-		int r = select(1, &fds, NULL, NULL, timeout);
+		int r = pselect(1, &fds, NULL, NULL, timeout, &emptyset);
 		if (r == -1 && errno == EINTR)
 			continue;
 
