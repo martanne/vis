@@ -132,7 +132,8 @@ typedef struct {             /** collects all information until an operator is e
 
 typedef struct {                         /* command definitions for the ':'-prompt */
 	const char *name;                /* regular expression pattern to match command */
-	bool (*cmd)(const char *argv[]); /* command logic called with a NULL terminated array
+	bool (*cmd)(Filerange*, const char *argv[]);
+	                                 /* command logic called with a NULL terminated array
 	                                  * of arguments. argv[0] will be the command name,
 	                                  * as matched by the regex. */
 	bool args;                       /* whether argv should be populated with words
@@ -462,42 +463,42 @@ static void quit(const Arg *arg);
 
 /** commands to enter at the ':'-prompt */
 /* set various runtime options */
-static bool cmd_set(const char *argv[]);
+static bool cmd_set(Filerange*, const char *argv[]);
 /* goto line indicated by argv[0] */
-static bool cmd_gotoline(const char *argv[]);
+static bool cmd_gotoline(Filerange*, const char *argv[]);
 /* for each argument create a new window and open the corresponding file */
-static bool cmd_open(const char *argv[]);
+static bool cmd_open(Filerange*, const char *argv[]);
 /* close current window (discard modifications if argv[0] contains '!')
  * and open argv[1], if no argv[1] is given re-read to current file from disk */
-static bool cmd_edit(const char *argv[]);
+static bool cmd_edit(Filerange*, const char *argv[]);
 /* close the current window, if argv[0] contains a '!' discard modifications */
-static bool cmd_quit(const char *argv[]);
+static bool cmd_quit(Filerange*, const char *argv[]);
 /* close all windows which show current file. if argv[0] contains a '!' discard modifications */
-static bool cmd_bdelete(const char *argv[]);
+static bool cmd_bdelete(Filerange*, const char *argv[]);
 /* close all windows, exit editor, if argv[0] contains a '!' discard modifications */
-static bool cmd_qall(const char *argv[]);
+static bool cmd_qall(Filerange*, const char *argv[]);
 /* for each argument try to insert the file content at current cursor postion */
-static bool cmd_read(const char *argv[]);
-static bool cmd_substitute(const char *argv[]);
+static bool cmd_read(Filerange*, const char *argv[]);
+static bool cmd_substitute(Filerange*, const char *argv[]);
 /* if no argument are given, split the current window horizontally,
  * otherwise open the file */
-static bool cmd_split(const char *argv[]);
+static bool cmd_split(Filerange*, const char *argv[]);
 /* if no argument are given, split the current window vertically,
  * otherwise open the file */
-static bool cmd_vsplit(const char *argv[]);
+static bool cmd_vsplit(Filerange*, const char *argv[]);
 /* create a new empty window and arrange all windows either horizontally or vertically */
-static bool cmd_new(const char *argv[]);
-static bool cmd_vnew(const char *argv[]);
+static bool cmd_new(Filerange*, const char *argv[]);
+static bool cmd_vnew(Filerange*, const char *argv[]);
 /* save the file displayed in the current window and close it */
-static bool cmd_wq(const char *argv[]);
+static bool cmd_wq(Filerange*, const char *argv[]);
 /* save the file displayed in the current window to the name given.
  * do not change internal filname association. further :w commands
  * without arguments will still write to the old filename */
-static bool cmd_write(const char *argv[]);
+static bool cmd_write(Filerange*, const char *argv[]);
 /* save the file displayed in the current window to the name given,
  * associate the new name with the buffer. further :w commands
  * without arguments will write to the new filename */
-static bool cmd_saveas(const char *argv[]);
+static bool cmd_saveas(Filerange*, const char *argv[]);
 
 static void action_reset(Action *a);
 static void switchmode_to(Mode *new_mode);
@@ -1203,7 +1204,7 @@ static void switchmode_to(Mode *new_mode) {
 
 /** ':'-command implementations */
 
-static bool cmd_set(const char *argv[]) {
+static bool cmd_set(Filerange *range, const char *argv[]) {
 	if (!argv[2]) {
 		editor_info_show(vis, "Expecting: set option value");
 		return false;
@@ -1240,13 +1241,13 @@ static bool cmd_set(const char *argv[]) {
 	return true;
 }
 
-static bool cmd_gotoline(const char *argv[]) {
+static bool cmd_gotoline(Filerange *range, const char *argv[]) {
 	action.count = strtoul(argv[0], NULL, 10);
 	movement(&(const Arg){ .i = action.count <= 1 ? MOVE_FILE_BEGIN : MOVE_LINE });
 	return true;
 }
 
-static bool cmd_open(const char *argv[]) {
+static bool cmd_open(Filerange *range, const char *argv[]) {
 	for (const char **file = &argv[1]; *file; file++) {
 		if (!editor_window_new(vis, *file)) {
 			errno = 0;
@@ -1272,7 +1273,7 @@ static void info_unsaved_changes(void) {
 	editor_info_show(vis, "No write since last change (add ! to override)");
 }
 
-static bool cmd_edit(const char *argv[]) {
+static bool cmd_edit(Filerange *range, const char *argv[]) {
 	EditorWin *oldwin = vis->win;
 	bool force = strchr(argv[0], '!') != NULL;
 	if (!force && !is_window_closeable(oldwin)) {
@@ -1287,7 +1288,7 @@ static bool cmd_edit(const char *argv[]) {
 	return true;
 }
 
-static bool cmd_quit(const char *argv[]) {
+static bool cmd_quit(Filerange *range, const char *argv[]) {
 	bool force = strchr(argv[0], '!') != NULL;
 	if (!force && !is_window_closeable(vis->win)) {
 		info_unsaved_changes();
@@ -1299,7 +1300,7 @@ static bool cmd_quit(const char *argv[]) {
 	return true;
 }
 
-static bool cmd_bdelete(const char *argv[]) {
+static bool cmd_bdelete(Filerange *range, const char *argv[]) {
 	bool force = strchr(argv[0], '!') != NULL;
 	Text *txt = vis->win->text;
 	if (text_modified(txt) && !force) {
@@ -1316,7 +1317,7 @@ static bool cmd_bdelete(const char *argv[]) {
 	return true;
 }
 
-static bool cmd_qall(const char *argv[]) {
+static bool cmd_qall(Filerange *range, const char *argv[]) {
 	bool force = strchr(argv[0], '!') != NULL;
 	for (EditorWin *next, *win = vis->windows; win; win = next) {
 		next = win->next;
@@ -1330,7 +1331,7 @@ static bool cmd_qall(const char *argv[]) {
 	return vis->windows == NULL;
 }
 
-static bool cmd_read(const char *argv[]) {
+static bool cmd_read(Filerange *range, const char *argv[]) {
 	size_t pos = window_cursor_get(vis->win->win);
 	for (const char **file = &argv[1]; *file; file++) {
 		int fd = open(*file, O_RDONLY);
@@ -1359,7 +1360,7 @@ static bool cmd_read(const char *argv[]) {
 	return true;
 }
 
-static bool cmd_substitute(const char *argv[]) {
+static bool cmd_substitute(Filerange *range, const char *argv[]) {
 	// TODO
 	return true;
 }
@@ -1376,37 +1377,37 @@ static bool openfiles(const char **files) {
 	return true;
 }
 
-static bool cmd_split(const char *argv[]) {
+static bool cmd_split(Filerange *range, const char *argv[]) {
 	editor_windows_arrange_horizontal(vis);
 	if (!argv[1])
 		return editor_window_split(vis->win);
 	return openfiles(&argv[1]);
 }
 
-static bool cmd_vsplit(const char *argv[]) {
+static bool cmd_vsplit(Filerange *range, const char *argv[]) {
 	editor_windows_arrange_vertical(vis);
 	if (!argv[1])
 		return editor_window_split(vis->win);
 	return openfiles(&argv[1]);
 }
 
-static bool cmd_new(const char *argv[]) {
+static bool cmd_new(Filerange *range, const char *argv[]) {
 	editor_windows_arrange_horizontal(vis);
 	return editor_window_new(vis, NULL);
 }
 
-static bool cmd_vnew(const char *argv[]) {
+static bool cmd_vnew(Filerange *range, const char *argv[]) {
 	editor_windows_arrange_vertical(vis);
 	return editor_window_new(vis, NULL);
 }
 
-static bool cmd_wq(const char *argv[]) {
-	if (cmd_write(argv))
-		return cmd_quit(argv);
+static bool cmd_wq(Filerange *range, const char *argv[]) {
+	if (cmd_write(range, argv))
+		return cmd_quit(range, argv);
 	return false;
 }
 
-static bool cmd_write(const char *argv[]) {
+static bool cmd_write(Filerange *range, const char *argv[]) {
 	Text *text = vis->win->text;
 	if (!argv[1])
 		argv[1] = text_filename_get(text);
@@ -1425,8 +1426,8 @@ static bool cmd_write(const char *argv[]) {
 	return true;
 }
 
-static bool cmd_saveas(const char *argv[]) {
-	if (cmd_write(argv)) {
+static bool cmd_saveas(Filerange *range, const char *argv[]) {
+	if (cmd_write(range, argv)) {
 		text_filename_set(vis->win->text, argv[1]);
 		return true;
 	}
@@ -1477,7 +1478,7 @@ static bool exec_cmdline_command(char *cmdline) {
 			*s++ = '\0';
 	}
 
-	cmd->cmd(argv);
+	cmd->cmd(NULL, argv);
 	return true;
 }
 
