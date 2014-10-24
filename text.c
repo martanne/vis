@@ -1177,7 +1177,10 @@ Regex *text_regex_new(void) {
 
 int text_regex_compile(Regex *regex, const char *string, int cflags) {
 	regex->string = string;
-	return regcomp(&regex->regex, string, cflags);
+	int r = regcomp(&regex->regex, string, cflags);
+	if (r)
+		regcomp(&regex->regex, "\0\0", 0);
+	return r;
 }
 
 void text_regex_free(Regex *r) {
