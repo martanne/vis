@@ -505,7 +505,7 @@ static void switchmode_to(Mode *new_mode);
 
 static Key getkey(void);
 static void action_do(Action *a);
-static bool exec_command(char *cmdline);
+static bool exec_command(char type, char *cmdline);
 
 /** operator implementations of type: void (*op)(OperatorContext*) */
 
@@ -932,26 +932,7 @@ static void prompt(const Arg *arg) {
 
 static void prompt_enter(const Arg *arg) {
 	char *s = editor_prompt_get(vis);
-	/* it is important to switch to normal mode, which hides the prompt and
-	 * more importantly resets vis->win to the currently focused editor
-	 * window *before* anything is executed which depends on vis->win.
-	 */
-	switchmode(&(const Arg){ .i = VIS_MODE_NORMAL });
-	switch (vis->prompt->title[0]) {
-	case '/':
-	case '?':
-		if (text_regex_compile(vis->search_pattern, s, REG_EXTENDED)) {
-			action_reset(&action);
-		} else {
-			movement(&(const Arg){ .i = vis->prompt->title[0] == '/' ?
-				MOVE_SEARCH_FORWARD : MOVE_SEARCH_BACKWARD });
-		}
-		break;
-	case ':':
-		if (s && *s && !exec_command(s))
-			editor_info_show(vis, "Not an editor command");
-		break;
-	}
+	exec_command(vis->prompt->title[0], s);
 	free(s);
 	editor_draw(vis);
 }
@@ -995,7 +976,7 @@ static void winnew(const Arg *arg) {
 
 static void cmd(const Arg *arg) {
 	/* casting to char* is only save if arg->s contains no arguments */
-	exec_command((char*)arg->s);
+	exec_command(':', (char*)arg->s);
 }
 
 static int argi2lines(const Arg *arg) {
@@ -1439,7 +1420,7 @@ static bool cmd_saveas(const char *argv[]) {
 	return false;
 }
 
-static bool exec_command(char *cmdline) {
+static bool exec_cmdline_command(char *cmdline) {
 	static bool init = false;
 	if (!init) {
 		/* compile the regexes on first inovaction */
@@ -1485,6 +1466,33 @@ static bool exec_command(char *cmdline) {
 
 	cmd->cmd(argv);
 	return true;
+}
+
+static bool exec_command(char type, char *cmd) {
+	/* it is important to switch to normal mode, which hides the prompt and
+	 * more importantly resets vis->win to the currently focused editor
+	 * window *before* anything is executed which depends on vis->win.
+	 */
+	switchmode(&(const Arg){ .i = VIS_MODE_NORMAL });
+	if (!cmd || !cmd[0])
+		return true;
+	switch (type) {
+	case '/':
+	case '?':
+		if (text_regex_compile(vis->search_pattern, cmd, REG_EXTENDED)) {
+			action_reset(&action);
+			return false;
+		}
+		movement(&(const Arg){ .i =
+			type == '/' ? MOVE_SEARCH_FORWARD : MOVE_SEARCH_BACKWARD });
+		return true;
+	case '+':
+	case ':':
+		if (exec_cmdline_command(cmd))
+			return true;
+	}
+	editor_info_show(vis, "Not an editor command");
+	return false;
 }
 
 typedef struct Screen Screen;
@@ -1683,6 +1691,7 @@ int main(int argc, char *argv[]) {
 		die("Could not load syntax highlighting definitions\n");
 	editor_statusbar_set(vis, config->statusbar);
 
+	char *cmd = NULL;
 	for (int i = 1; i < argc; i++) {
 		if (argv[i][0] == '-') {
 			switch (argv[i][1]) {
@@ -1690,8 +1699,13 @@ int main(int argc, char *argv[]) {
 			default:
 				break;
 			}
+		} else if (argv[i][0] == '+') {
+			cmd = argv[i] + (argv[i][1] == '/' || argv[i][1] == '?');
 		} else if (!editor_window_new(vis, argv[i])) {
 			die("Can not load `%s': %s\n", argv[i], strerror(errno));
+		} else if (cmd) {
+			exec_command(cmd[0], cmd+1);
+			cmd = NULL;
 		}
 	}
 
@@ -1707,6 +1721,8 @@ int main(int argc, char *argv[]) {
 		} else if (!editor_window_new(vis, NULL)) {
 			die("Can not create empty buffer\n");
 		}
+		if (cmd)
+			exec_command(cmd[0], cmd+1);
 	}
 
 	mainloop();
