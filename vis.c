@@ -436,7 +436,8 @@ static void insertmode(const Arg *arg);
 /* insert register content indicated by arg->i at current cursor position */
 static void insert_register(const Arg *arg);
 /* show a user prompt to get input with title arg->s */
-static void prompt(const Arg *arg);
+static void prompt_search(const Arg *arg);
+static void prompt_cmd(const Arg *arg);
 /* evaluate user input at prompt, perform search or execute a command */
 static void prompt_enter(const Arg *arg);
 /* cycle through past user inputs */
@@ -925,13 +926,24 @@ static void insert_register(const Arg *arg) {
 	window_cursor_to(vis->win->win, pos + reg->len);
 }
 
-static void prompt(const Arg *arg) {
-	editor_prompt_show(vis, arg->s);
+static void prompt_search(const Arg *arg) {
+	editor_prompt_show(vis, arg->s, "");
+	switchmode(&(const Arg){ .i = VIS_MODE_PROMPT });
+}
+
+static void prompt_cmd(const Arg *arg) {
+	editor_prompt_show(vis, ":", arg->s);
 	switchmode(&(const Arg){ .i = VIS_MODE_PROMPT });
 }
 
 static void prompt_enter(const Arg *arg) {
 	char *s = editor_prompt_get(vis);
+	/* it is important to switch back to the previous mode, which hides
+	 * the prompt and more importantly resets vis->win to the currently
+	 * focused editor window *before* anything is executed which depends
+	 * on vis->win.
+	 */
+	switchmode_to(mode_prev);
 	exec_command(vis->prompt->title[0], s);
 	free(s);
 	editor_draw(vis);
@@ -1180,7 +1192,8 @@ static void switchmode_to(Mode *new_mode) {
 		return;
 	if (mode->leave)
 		mode->leave(new_mode);
-	mode_prev = mode;
+	if (mode == config->mode || (mode->name && mode->name[0] == '-'))
+		mode_prev = mode;
 	mode = new_mode;
 	if (mode == config->mode || (mode->name && mode->name[0] == '-'))
 		statusbar(vis->win);
@@ -1469,11 +1482,6 @@ static bool exec_cmdline_command(char *cmdline) {
 }
 
 static bool exec_command(char type, char *cmd) {
-	/* it is important to switch to normal mode, which hides the prompt and
-	 * more importantly resets vis->win to the currently focused editor
-	 * window *before* anything is executed which depends on vis->win.
-	 */
-	switchmode(&(const Arg){ .i = VIS_MODE_NORMAL });
 	if (!cmd || !cmd[0])
 		return true;
 	switch (type) {

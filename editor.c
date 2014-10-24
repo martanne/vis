@@ -511,15 +511,17 @@ static void editor_prompt_move(Prompt *prompt, int x, int y) {
 	editor_window_move(prompt->win, x + title_width, y);
 }
 
-void editor_prompt_show(Editor *ed, const char *title) {
+void editor_prompt_show(Editor *ed, const char *title, const char *text) {
 	Prompt *prompt = ed->prompt;
 	if (prompt->active)
 		return;
 	prompt->active = true;
 	prompt->editor = ed->win;
-	ed->win = prompt->win;
 	free(prompt->title);
 	prompt->title = strdup(title);
+	text_insert(prompt->win->text, 0, text, strlen(text));
+	window_cursor_to(prompt->win->win, text_size(prompt->win->text));
+	ed->win = prompt->win;
 	editor_resize(ed, ed->width, ed->height);
 }
 

@@ -150,8 +150,8 @@ void editor_window_prev(Editor*);
 /* rearrange all windows either vertically or horizontally */
 void editor_windows_arrange_vertical(Editor*);
 void editor_windows_arrange_horizontal(Editor*);
-/* display a user prompt with a certain title */
-void editor_prompt_show(Editor*, const char *title);
+/* display a user prompt with a certain title and default text */
+void editor_prompt_show(Editor*, const char *title, const char *text);
 /* hide the user prompt if it is currently shown */
 void editor_prompt_hide(Editor*);
 /* return the content of the command prompt in a malloc(3)-ed string

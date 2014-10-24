@@ -151,8 +151,8 @@ static KeyBinding vis_movements[] = {
 	{ { NONE('F')               }, movement_key, { .i = MOVE_LEFT_TO             } },
 	{ { NONE('t')               }, movement_key, { .i = MOVE_RIGHT_TILL          } },
 	{ { NONE('T')               }, movement_key, { .i = MOVE_LEFT_TILL           } },
-	{ { NONE('/')               }, prompt,       { .s = "/"                      } },
-	{ { NONE('?')               }, prompt,       { .s = "?"                      } },
+	{ { NONE('/')               }, prompt_search,{ .s = "/"                      } },
+	{ { NONE('?')               }, prompt_search,{ .s = "?"                      } },
 	{ /* empty last element, array terminator */                                   },
 };
 
@@ -401,7 +401,7 @@ static KeyBinding vis_mode_normal[] = {
 	{ { NONE('u')               }, undo,           { NULL                      } },
 	{ { CONTROL('R')            }, redo,           { NULL                      } },
 	{ { CONTROL('L')            }, call,           { .f = editor_draw          } },
-	{ { NONE(':')               }, prompt,         { .s = ":"                  } },
+	{ { NONE(':')               }, prompt_cmd,     { .s = ""                   } },
 	{ { NONE('Z'), NONE('Z')    }, cmd,            { .s = "wq"                 } },
 	{ { NONE('Z'), NONE('Q')    }, cmd,            { .s = "q!"                 } },
 	{ { NONE('z'), NONE('t')    }, window,         { .w = window_redraw_top    } },
@@ -416,6 +416,7 @@ static KeyBinding vis_mode_visual[] = {
 	{ { CONTROL('c')            }, switchmode,     { .i = VIS_MODE_NORMAL      } },
 	{ { NONE('v')               }, switchmode,     { .i = VIS_MODE_NORMAL      } },
 	{ { NONE('V')               }, switchmode,     { .i = VIS_MODE_VISUAL_LINE } },
+	{ { NONE(':')               }, prompt_cmd,     { .s = "'<,'>"              } },
 	{ { CONTROL('H')            }, operator,       { .i = OP_DELETE            } },
 	{ { NONE('d')               }, operator,       { .i = OP_DELETE            } },
 	{ { NONE('x')               }, operator,       { .i = OP_DELETE            } },
