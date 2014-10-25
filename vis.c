@@ -1521,9 +1521,12 @@ static bool exec_cmdline_command(char *cmdline) {
 
 	char *cmdstart = cmdline;
 	Filerange range = parse_range(&cmdstart);
-	if (cmdstart != cmdline && !text_range_valid(&range)) {
-		editor_info_show(vis, "Invalid range\n");
-		return false;
+	if (!text_range_valid(&range)) {
+		if (cmdstart != cmdline) {
+			editor_info_show(vis, "Invalid range\n");
+			return false;
+		}
+		range = (Filerange){ .start = 0, .end = text_size(vis->win->text) };
 	}
 	char *cmdend = strchr(cmdstart, ' ');
 	/* regex should only apply to command name */
