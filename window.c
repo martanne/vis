@@ -843,6 +843,8 @@ void window_scroll_to(Win *win, size_t pos) {
 }
 
 void window_selection_start(Win *win) {
+	if (win->sel.start != EPOS && win->sel.end != EPOS)
+		return;
 	win->sel.start = win->sel.end = window_cursor_get(win);
 	window_draw(win);
 	curs_set(0);

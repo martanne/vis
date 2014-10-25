@@ -493,10 +493,13 @@ static void vis_mode_prompt_input(const char *str, size_t len) {
 	editor_insert_key(vis, str, len);
 }
 
+static void vis_mode_prompt_enter(Mode *old) {
+	if (old->isuser && old != &vis_modes[VIS_MODE_PROMPT])
+		mode_before_prompt = old;
+}
+
 static void vis_mode_prompt_leave(Mode *new) {
-	/* prompt mode may be left for operator mode when editing the command prompt.
-	 * for example during Ctrl+w / delete_word. don't hide the prompt in this case */
-	if (new != &vis_modes[VIS_MODE_OPERATOR])
+	if (new->isuser)
 		editor_prompt_hide(vis);
 }
 
@@ -681,11 +684,13 @@ static Mode vis_modes[] = {
 	},
 	[VIS_MODE_NORMAL] = {
 		.name = "NORMAL",
+		.isuser = true,
 		.parent = &vis_modes[VIS_MODE_MARK_SET],
 		.bindings = vis_mode_normal,
 	},
 	[VIS_MODE_VISUAL] = {
 		.name = "--VISUAL--",
+		.isuser = true,
 		.parent = &vis_modes[VIS_MODE_REGISTER],
 		.bindings = vis_mode_visual,
 		.enter = vis_mode_visual_enter,
@@ -694,6 +699,7 @@ static Mode vis_modes[] = {
 	},
 	[VIS_MODE_VISUAL_LINE] = {
 		.name = "--VISUAL LINE--",
+		.isuser = true,
 		.parent = &vis_modes[VIS_MODE_VISUAL],
 		.bindings = vis_mode_visual_line,
 		.enter = vis_mode_visual_line_enter,
@@ -707,9 +713,11 @@ static Mode vis_modes[] = {
 	},
 	[VIS_MODE_PROMPT] = {
 		.name = "PROMPT",
+		.isuser = true,
 		.parent = &vis_modes[VIS_MODE_READLINE],
 		.bindings = vis_mode_prompt,
 		.input = vis_mode_prompt_input,
+		.enter = vis_mode_prompt_enter,
 		.leave = vis_mode_prompt_leave,
 	},
 	[VIS_MODE_INSERT_REGISTER] = {
@@ -720,6 +728,7 @@ static Mode vis_modes[] = {
 	},
 	[VIS_MODE_INSERT] = {
 		.name = "--INSERT--",
+		.isuser = true,
 		.parent = &vis_modes[VIS_MODE_INSERT_REGISTER],
 		.bindings = vis_mode_insert,
 		.leave = vis_mode_insert_leave,
@@ -729,6 +738,7 @@ static Mode vis_modes[] = {
 	},
 	[VIS_MODE_REPLACE] = {
 		.name = "--REPLACE--",
+		.isuser = true,
 		.parent = &vis_modes[VIS_MODE_INSERT],
 		.bindings = vis_mode_replace,
 		.leave = vis_mode_replace_leave,

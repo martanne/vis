@@ -64,6 +64,7 @@ struct Mode {
 	Mode *parent;                       /* if no match is found in this mode, search will continue there */
 	KeyBinding *bindings;               /* NULL terminated array of keybindings for this mode */
 	const char *name;                   /* descriptive, user facing name of the mode */
+	bool isuser;                        /* whether this is a user or internal mode */
 	bool common_prefix;                 /* whether the first key in this mode is always the same */
 	void (*enter)(Mode *old);           /* called right before the mode becomes active */
 	void (*leave)(Mode *new);           /* called right before the mode becomes inactive */
@@ -146,7 +147,8 @@ typedef struct {                         /* command definitions for the ':'-prom
 static volatile bool running = true; /* exit main loop once this becomes false */
 static Editor *vis;         /* global editor instance, keeps track of all windows etc. */
 static Mode *mode;          /* currently active mode, used to search for keybindings */
-static Mode *mode_prev;     /* mode which was active previously */
+static Mode *mode_prev;     /* previsouly active user mode */
+static Mode *mode_before_prompt; /* user mode which was active before entering prompt */
 static Action action;       /* current action which is in progress */
 static Action action_prev;  /* last operator action used by the repeat '.' key */
 
@@ -944,8 +946,9 @@ static void prompt_enter(const Arg *arg) {
 	 * focused editor window *before* anything is executed which depends
 	 * on vis->win.
 	 */
-	switchmode_to(mode_prev);
-	exec_command(vis->prompt->title[0], s);
+	switchmode_to(mode_before_prompt);
+	if (s && *s && exec_command(vis->prompt->title[0], s) && running)
+		switchmode(&(const Arg){ .i = VIS_MODE_NORMAL });
 	free(s);
 	editor_draw(vis);
 }
@@ -1193,7 +1196,7 @@ static void switchmode_to(Mode *new_mode) {
 		return;
 	if (mode->leave)
 		mode->leave(new_mode);
-	if (mode == config->mode || (mode->name && mode->name[0] == '-'))
+	if (mode->isuser)
 		mode_prev = mode;
 	mode = new_mode;
 	if (mode == config->mode || (mode->name && mode->name[0] == '-'))
