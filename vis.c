@@ -1528,6 +1528,7 @@ static bool exec_cmdline_command(char *cmdline) {
 		}
 		range = (Filerange){ .start = 0, .end = text_size(vis->win->text) };
 	}
+	while (*cmdstart == ' ') cmdstart++;
 	char *cmdend = strchr(cmdstart, ' ');
 	/* regex should only apply to command name */
 	if (cmdend)
