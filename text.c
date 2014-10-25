@@ -753,6 +753,7 @@ Text *text_load_fd(int fd) {
 	char buf[1024];
 	for (ssize_t len = 0; (len = read(fd, buf, sizeof buf)) > 0;)
 		text_insert(txt, text_size(txt), buf, len);
+	txt->saved_action = txt->undo;
 	text_snapshot(txt);
 	txt->fd = fd;
 	return txt;
