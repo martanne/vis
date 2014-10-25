@@ -1421,7 +1421,7 @@ static bool cmd_write(Filerange *range, const char *argv[]) {
 		return false;
 	}
 	for (const char **file = &argv[1]; *file; file++) {
-		if (text_save(text, *file)) {
+		if (!text_save(text, *file)) {
 			editor_info_show(vis, "Can't write `%s'", *file);
 			return false;
 		}

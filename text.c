@@ -598,12 +598,12 @@ size_t text_redo(Text *txt) {
  * and then atomically moved to its final (possibly alredy existing) destination
  * using rename(2).
  */
-int text_save(Text *txt, const char *filename) {
+bool text_save(Text *txt, const char *filename) {
 	int fd = -1;
 	size_t len = strlen(filename) + 10;
 	char *tmpname = malloc(len);
 	if (!tmpname)
-		return -1;
+		return false;
 	snprintf(tmpname, len, "%s~", filename);
 	// TODO preserve user/group
 	struct stat meta;
@@ -642,12 +642,12 @@ int text_save(Text *txt, const char *filename) {
 	if (!txt->filename)
 		text_filename_set(txt, filename);
 	free(tmpname);
-	return 0;
+	return true;
 err:
 	if (fd != -1)
 		close(fd);
 	free(tmpname);
-	return -1;
+	return false;
 }
 
 ssize_t text_write(Text *txt, int fd) {

@@ -84,7 +84,7 @@ size_t text_size(Text*);
 bool text_modified(Text*);
 /* test whether the underlying file uses UNIX style \n or Windows style \r\n newlines */
 bool text_newlines_crnl(Text*);
-int text_save(Text*, const char *file);
+bool text_save(Text*, const char *file);
 ssize_t text_write(Text*, int fd);
 void text_free(Text*);
 
