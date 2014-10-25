@@ -594,17 +594,23 @@ size_t text_redo(Text *txt) {
 	return pos;
 }
 
+bool text_save(Text *txt, const char *filename) {
+	Filerange r = (Filerange){ .start = 0, .end = text_size(txt) };
+	return text_range_save(txt, &r, filename);
+}
+
 /* save current content to given filename. the data is first saved to `filename~`
  * and then atomically moved to its final (possibly alredy existing) destination
  * using rename(2).
  */
-bool text_save(Text *txt, const char *filename) {
+bool text_range_save(Text *txt, Filerange *range, const char *filename) {
 	int fd = -1;
-	size_t len = strlen(filename) + 10;
-	char *tmpname = malloc(len);
+	size_t bufsize = strlen(filename) + 10;
+	size_t size = range->end - range->start;
+	char *tmpname = malloc(bufsize);
 	if (!tmpname)
 		return false;
-	snprintf(tmpname, len, "%s~", filename);
+	snprintf(tmpname, bufsize, "%s~", filename);
 	// TODO preserve user/group
 	struct stat meta;
 	if (stat(filename, &meta) == -1) {
@@ -616,21 +622,28 @@ bool text_save(Text *txt, const char *filename) {
 	/* O_RDWR is needed because otherwise we can't map with MAP_SHARED */
 	if ((fd = open(tmpname, O_CREAT|O_RDWR|O_TRUNC, meta.st_mode)) == -1)
 		goto err;
-	if (ftruncate(fd, txt->size) == -1)
+	if (ftruncate(fd, size) == -1)
 		goto err;
-	if (txt->size > 0) {
-		void *buf = mmap(NULL, txt->size, PROT_WRITE, MAP_SHARED, fd, 0);
+	if (size > 0) {
+		void *buf = mmap(NULL, size, PROT_WRITE, MAP_SHARED, fd, 0);
 		if (buf == MAP_FAILED)
 			goto err;
 
 		char *cur = buf;
-		text_iterate(txt, it, 0) {
-			size_t len = it.end - it.start;
-			memcpy(cur, it.start, len);
+		size_t rem = size;
+
+		for (Iterator it = text_iterator_get(txt, range->start);
+		     rem > 0 && text_iterator_valid(&it);
+		     text_iterator_next(&it)) {
+			size_t len = it.end - it.text;
+			if (len > rem)
+				len = rem;
+			memcpy(cur, it.text, len);
 			cur += len;
+			rem -= len;
 		}
 
-		if (munmap(buf, txt->size) == -1)
+		if (munmap(buf, size) == -1)
 			goto err;
 	}
 	if (close(fd) == -1)
