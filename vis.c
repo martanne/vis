@@ -1416,7 +1416,7 @@ static bool cmd_write(Filerange *range, const char *argv[]) {
 		argv[1] = text_filename_get(text);
 	if (!argv[1]) {
 		if (text_fd_get(text) == STDIN_FILENO)
-			return text_write(text, STDOUT_FILENO) >= 0;
+			return text_range_write(text, range, STDOUT_FILENO) >= 0;
 		editor_info_show(vis, "Filename expected");
 		return false;
 	}

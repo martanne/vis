@@ -664,26 +664,37 @@ err:
 }
 
 ssize_t text_write(Text *txt, int fd) {
-	ssize_t len = 0;
-	text_iterate(txt, it, 0) {
-		size_t plen = it.end - it.start, poff = 0;
-		while (plen > 0) {
-			ssize_t res = write(fd, it.start + poff, plen);
+	Filerange r = (Filerange){ .start = 0, .end = text_size(txt) };
+	return text_range_write(txt, &r, fd);
+}
+
+ssize_t text_range_write(Text *txt, Filerange *range, int fd) {
+	size_t size = range->end - range->start;
+	size_t rem = size;
+	for (Iterator it = text_iterator_get(txt, range->start);
+	     rem > 0 && text_iterator_valid(&it);
+	     text_iterator_next(&it)) {
+		size_t prem = it.end - it.text, poff = 0;
+		if (prem > rem)
+			prem = rem;
+		while (prem > 0) {
+			ssize_t res = write(fd, it.text + poff, prem);
 			if (res < 0) {
 				if (errno == EAGAIN || errno == EINTR)
 					continue;
 				return -1;
 			}
 			if (res == 0)
-				break;
+				goto out;
 			poff += res;
-			plen -= res;
+			prem -= res;
+			rem  -= res;
 		}
-		len += plen;
 	}
+out:
 	txt->saved_action = txt->undo;
 	text_snapshot(txt);
-	return len;
+	return size - rem;
 }
 
 /* load the given file as starting point for further editing operations.
