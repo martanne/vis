@@ -606,7 +606,7 @@ bool text_save(Text *txt, const char *filename) {
 bool text_range_save(Text *txt, Filerange *range, const char *filename) {
 	int fd = -1;
 	size_t bufsize = strlen(filename) + 10;
-	size_t size = range->end - range->start;
+	size_t size = text_range_size(range);
 	char *tmpname = malloc(bufsize);
 	if (!tmpname)
 		return false;
@@ -669,8 +669,7 @@ ssize_t text_write(Text *txt, int fd) {
 }
 
 ssize_t text_range_write(Text *txt, Filerange *range, int fd) {
-	size_t size = range->end - range->start;
-	size_t rem = size;
+	size_t size = text_range_size(range), rem = size;
 	for (Iterator it = text_iterator_get(txt, range->start);
 	     rem > 0 && text_iterator_valid(&it);
 	     text_iterator_next(&it)) {
@@ -1255,6 +1254,10 @@ int text_search_range_backward(Text *txt, size_t pos, size_t len, Regex *r, size
 
 bool text_range_valid(Filerange *r) {
 	return r->start != EPOS && r->end != EPOS && r->start <= r->end;
+}
+
+size_t text_range_size(Filerange *r) {
+	return text_range_valid(r) ? r-> end - r->start : 0;
 }
 
 Filerange text_range_empty(void) {

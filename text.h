@@ -13,6 +13,7 @@ typedef struct {
 } Filerange;
 
 bool text_range_valid(Filerange*);
+size_t text_range_size(Filerange*);
 Filerange text_range_empty(void);
 Filerange text_range_union(Filerange*, Filerange*);
 
