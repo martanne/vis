@@ -1434,6 +1434,79 @@ static bool cmd_saveas(Filerange *range, const char *argv[]) {
 	return false;
 }
 
+static Filepos parse_pos(char **cmd) {
+	size_t pos = EPOS;
+	Text *txt = vis->win->text;
+	Win *win = vis->win->win;
+	switch (**cmd) {
+	case '.':
+		pos = text_line_begin(txt, window_cursor_get(win));
+		(*cmd)++;
+		break;
+	case '$':
+		pos = text_size(txt);
+		(*cmd)++;
+		break;
+	case '\'':
+		(*cmd)++;
+		if ('a' <= **cmd && **cmd <= 'z')
+			pos = text_mark_get(txt, **cmd - 'a');
+		else if (**cmd == '<')
+			pos = text_mark_get(txt, MARK_SELECTION_START);
+		else if (**cmd == '>')
+			pos = text_mark_get(txt, MARK_SELECTION_END);
+		(*cmd)++;
+		break;
+	case '/':
+		(*cmd)++;
+		char *pattern_end = strchr(*cmd, '/');
+		if (!pattern_end)
+			return EPOS;
+		*pattern_end++ = '\0';
+		Regex *regex = text_regex_new();
+		if (!regex)
+			return EPOS;
+		if (!text_regex_compile(regex, *cmd, 0)) {
+			*cmd = pattern_end;
+			pos = text_search_forward(txt, window_cursor_get(win), regex);
+		}
+		text_regex_free(regex);
+		break;
+	default:
+		if ('0' <= **cmd && **cmd <= '9')
+			pos = text_pos_by_lineno(txt, strtoul(*cmd, cmd, 10));
+		break;
+	}
+
+	return pos;
+}
+
+static Filerange parse_range(char **cmd) {
+	Text *txt = vis->win->text;
+	Filerange r = (Filerange){ .start = 0, .end = text_size(txt) };
+	char *start = *cmd;
+	switch (**cmd) {
+	case '%':
+		(*cmd)++;
+		break;
+	case '*':
+		r.start = text_mark_get(txt, MARK_SELECTION_START);
+		r.end = text_mark_get(txt, MARK_SELECTION_END);
+		(*cmd)++;
+		break;
+	default:
+		r.start = parse_pos(cmd);
+		if (**cmd != ',') {
+			*cmd = start;
+			return text_range_empty();
+		}
+		(*cmd)++;
+		r.end = parse_pos(cmd);
+		break;
+	}
+	return r;
+}
+
 static bool exec_cmdline_command(char *cmdline) {
 	static bool init = false;
 	if (!init) {
@@ -1443,22 +1516,31 @@ static bool exec_cmdline_command(char *cmdline) {
 		init = true;
 	}
 
+	char *cmdstart = cmdline;
+	Filerange range = parse_range(&cmdstart);
+	if (cmdstart != cmdline && !text_range_valid(&range)) {
+		editor_info_show(vis, "Invalid range\n");
+		return false;
+	}
+	char *cmdend = strchr(cmdstart, ' ');
 	/* regex should only apply to command name */
-	char *s = strchr(cmdline, ' ');
-	if (s)
-		*s++ = '\0';
+	if (cmdend)
+		*cmdend++ = '\0';
 
 	Command *cmd = NULL;
 	for (Command *c = cmds; c->name; c++) {
-		if (!regexec(&c->regex, cmdline, 0, NULL, 0)) {
+		if (!regexec(&c->regex, cmdstart, 0, NULL, 0)) {
 			cmd = c;
 			break;
 		}
 	}
 
-	if (!cmd)
+	if (!cmd) {
+		editor_info_show(vis, "Not an editor command");
 		return false;
+	}
 
+	char *s = cmdend;
 	const char *argv[32] = { cmdline };
 	for (int i = 1; i < LENGTH(argv); i++) {
 		while (s && *s && *s == ' ')
@@ -1478,7 +1560,7 @@ static bool exec_cmdline_command(char *cmdline) {
 			*s++ = '\0';
 	}
 
-	cmd->cmd(NULL, argv);
+	cmd->cmd(&range, argv);
 	return true;
 }
 
@@ -1500,7 +1582,6 @@ static bool exec_command(char type, char *cmd) {
 		if (exec_cmdline_command(cmd))
 			return true;
 	}
-	editor_info_show(vis, "Not an editor command");
 	return false;
 }
 
