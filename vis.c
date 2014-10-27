@@ -650,7 +650,7 @@ static void op_join(OperatorContext *c) {
 		prev_pos = pos;
 		size_t end = text_line_start(txt, pos);
 		pos = text_char_next(txt, text_line_finish(txt, text_line_prev(txt, end)));
-		if (pos > c->range.start && end > pos) {
+		if (pos >= c->range.start && end > pos) {
 			text_delete(txt, pos, end - pos);
 			text_insert(txt, pos, " ", 1);
 		} else {
