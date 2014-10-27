@@ -642,8 +642,9 @@ static void op_repeat_insert(OperatorContext *c) {
 static void op_join(OperatorContext *c) {
 	Text *txt = vis->win->text;
 	size_t pos = text_line_begin(txt, c->range.end), prev_pos;
-	/* if range ends at the begin of a line, skip line break */
-	if (pos == c->range.end)
+	Filerange sel = window_selection_get(vis->win->win);
+	/* if a selection ends at the begin of a line, skip line break */
+	if (pos == c->range.end && text_range_valid(&sel))
 		pos = text_line_prev(txt, pos);
 
 	do {
