@@ -1416,8 +1416,12 @@ static bool cmd_write(Filerange *range, const char *argv[]) {
 	if (!argv[1])
 		argv[1] = text_filename_get(text);
 	if (!argv[1]) {
-		if (text_fd_get(text) == STDIN_FILENO)
-			return text_range_write(text, range, STDOUT_FILENO) >= 0;
+		if (text_fd_get(text) == STDIN_FILENO) {
+			if (strchr(argv[0], 'q'))
+				return text_range_write(text, range, STDOUT_FILENO) >= 0;
+			editor_info_show(vis, "No filename given, use 'wq' to write to stdout");
+			return false;
+		}
 		editor_info_show(vis, "Filename expected");
 		return false;
 	}
