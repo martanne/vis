@@ -3,8 +3,9 @@
 
 #include <stddef.h>
 #include <stdbool.h>
-#include "text.h"
+#include "buffer.h"
 
+/* definition has to match Buffer */
 typedef struct {
 	char *data;    /* NULL if empty */
 	size_t len;    /* current length of data */

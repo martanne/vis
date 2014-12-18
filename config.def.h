@@ -73,10 +73,11 @@ static void statusbar(EditorWin *win) {
 	window_cursor_getxy(win->win, &line, &col);
 	wattrset(win->statuswin, focused ? A_REVERSE|A_BOLD : A_REVERSE);
 	mvwhline(win->statuswin, 0, 0, ' ', win->width);
-	mvwprintw(win->statuswin, 0, 0, "%s %s %s",
+	mvwprintw(win->statuswin, 0, 0, "%s %s %s %s",
 	          mode->name && mode->name[0] == '-' ? mode->name : "",
 	          text_filename_get(win->text),
-	          text_modified(win->text) ? "[+]" : "");
+	          text_modified(win->text) ? "[+]" : "",
+	          vis->recording ? "recording": "");
 	char buf[win->width + 1];
 	int len = snprintf(buf, win->width, "%d, %d", line, col);
 	if (len > 0) {
@@ -86,9 +87,11 @@ static void statusbar(EditorWin *win) {
 }
 
 /* called before any other keybindings are checked, if the function returns false
- * the key is completely ignored. used to clear a user visible message. */
+ * the key is completely ignored. */
 static bool vis_keypress(Key *key) {
 	editor_info_hide(vis);
+	if (vis->recording)
+		macro_append(vis->recording, key, sizeof(*key));
 	return true;
 }
 
@@ -407,6 +410,8 @@ static KeyBinding vis_mode_normal[] = {
 	{ { NONE('z'), NONE('t')    }, window,         { .w = window_redraw_top    } },
 	{ { NONE('z'), NONE('z')    }, window,         { .w = window_redraw_center } },
 	{ { NONE('z'), NONE('b')    }, window,         { .w = window_redraw_bottom } },
+	{ { NONE('q')               }, macro_record,   { NULL                      } },
+	{ { NONE('@')               }, macro_replay,   { NULL                      } },
 	{ /* empty last element, array terminator */                                 },
 };
 

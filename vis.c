@@ -375,6 +375,8 @@ static TextObject *moves_linewise[] = {
 };
 
 /** functions to be called from keybindings */
+static void macro_record(const Arg *arg);
+static void macro_replay(const Arg *arg);
 /* temporarily suspend the editor and return to the shell, type 'fg' to get back */
 static void suspend(const Arg *arg);
 /* switch to mode indicated by arg->i */
@@ -511,6 +513,7 @@ static void switchmode_to(Mode *new_mode);
 #include "config.h"
 
 static Key getkey(void);
+static void keypress(Key *key);
 static void action_do(Action *a);
 static bool exec_command(char type, char *cmdline);
 
@@ -777,6 +780,40 @@ static size_t window_lines_bottom(const Arg *arg) {
 }
 
 /** key bindings functions of type: void (*func)(const Arg*) */
+
+static Macro *key2macro(const Arg *arg) {
+	if (arg->i)
+		return &vis->macros[arg->i];
+	Key key = getkey();
+	if (key.str[0] >= 'a' && key.str[0] <= 'z')
+		return &vis->macros[key.str[0] - 'a'];
+	if (key.str[0] == '@')
+		return vis->last_recording;
+	return NULL;
+}
+
+static void macro_record(const Arg *arg) {
+	if (vis->recording) {
+		/* hack to remove last recorded key, otherwise upon replay
+		 * we would start another recording */
+		vis->recording->len -= sizeof(Key);
+		vis->last_recording = vis->recording;
+		vis->recording = NULL;
+	} else {
+		vis->recording = key2macro(arg);
+		if (vis->recording)
+			macro_reset(vis->recording);
+	}
+	editor_draw(vis);
+}
+
+static void macro_replay(const Arg *arg) {
+	Macro *macro = key2macro(arg);
+	if (!macro || macro == vis->recording)
+		return;
+	for (size_t i = 0; i < macro->len; i += sizeof(Key))
+		keypress((Key*)(macro->data + i));
+}
 
 static void suspend(const Arg *arg) {
 	endwin();
@@ -1691,6 +1728,36 @@ static KeyBinding *keybinding(Mode *mode, KeyCombo keys) {
 	return NULL;
 }
 
+static void keypress(Key *key) {
+	static KeyCombo keys;
+	static int keylen;
+
+	if (config->keypress && !config->keypress(key))
+		return;
+
+	keys[keylen++] = *key;
+	KeyBinding *action = keybinding(mode, keys);
+
+	if (action) {
+		int combolen = 0;
+		while (combolen < MAX_KEYS && keyvalid(&action->key[combolen]))
+			combolen++;
+		if (keylen < combolen)
+			return; /* combo not yet complete */
+		/* need to reset state before calling action->func in case
+		 * it will call us (=keypress) again as e.g. macro_replay */
+		keylen = 0;
+		memset(keys, 0, sizeof(keys));
+		if (action->func)
+			action->func(&action->arg);
+	} else if (keylen == 1 && key->code == 0 && mode->input) {
+		mode->input(key->str, strlen(key->str));
+	}
+
+	keylen = 0;
+	memset(keys, 0, sizeof(keys));
+}
+
 static Key getkey(void) {
 	Key key = { .str = "\0\0\0\0\0\0", .code = 0 };
 	int keycode = getch(), len = 0;
@@ -1716,8 +1783,6 @@ static Key getkey(void) {
 
 static void mainloop() {
 	struct timespec idle = { .tv_nsec = 0 }, *timeout = NULL;
-	KeyCombo keys;
-	int keylen = 0;
 	sigset_t emptyset, blockset;
 	sigemptyset(&emptyset);
 	sigemptyset(&blockset);
@@ -1754,35 +1819,8 @@ static void mainloop() {
 		}
 
 		Key key = getkey();
-		if (config->keypress && !config->keypress(&key))
-			continue;
+		keypress(&key);
 
-		keys[keylen++] = key;
-		KeyBinding *action = keybinding(mode, keys);
-
-		if (action) {
-			int combolen = 0;
-			while (combolen < MAX_KEYS && keyvalid(&action->key[combolen]))
-				combolen++;
-			if (combolen == keylen) {
-				if (action->func)
-					action->func(&action->arg);
-				keylen = 0;
-				memset(keys, 0, sizeof(keys));
-			}
-			continue;
-		} else {
-			int oldkeylen = keylen;
-			keylen = 0;
-			memset(keys, 0, sizeof(keys));
-			if (oldkeylen > 1)
-				continue; /* cancel partial action */
-		}
-
-		if (key.code) /* ignore curses KEY_* */
-			continue;
-		if (mode->input)
-			mode->input(key.str, strlen(key.str));
 		if (mode->idle)
 			timeout = &idle;
 	}

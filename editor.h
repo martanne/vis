@@ -6,6 +6,7 @@
 #include <stdbool.h>
 #include "window.h"
 #include "register.h"
+#include "macro.h"
 #include "syntax.h"
 
 typedef struct Editor Editor;
@@ -96,6 +97,8 @@ struct Editor {
 	EditorWin *win;                   /* currently active window */
 	Syntax *syntaxes;                 /* NULL terminated array of syntax definitions */
 	Register registers[REG_LAST];     /* register used for copy and paste */
+	Macro macros[26];                 /* recorded macros */
+	Macro *recording, *last_recording;/* currently and least recently recorded macro */
 	Prompt *prompt;                   /* used to get user input */
 	char info[255];                   /* a user message currently being displayed */
 	Regex *search_pattern;            /* last used search pattern */

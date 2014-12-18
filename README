@@ -414,6 +414,12 @@ and their current support in vis.
   again). The same restriction also applies to commands which are not
   implemented in terms of operators, such as 'o', 'O', 'J' etc.
 
+ Macros
+ ------
+
+  [a-z] are recoginized macro names, q starts a recording, @ plays it back.
+  @@ refers to the least recently recorded macro.
+
  Command line prompt
  -------------------
 
@@ -496,7 +502,6 @@ and their current support in vis.
    - right-to-left text
    - tabs (as in multiple workspaces)
    - ex mode
-   - macro recording
 
 How to help?
 ------------
