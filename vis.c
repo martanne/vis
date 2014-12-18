@@ -53,8 +53,11 @@ typedef struct {
 	int code;    /* curses KEY_* constant */
 } Key;
 
+#define MAX_KEYS 2
+typedef Key KeyCombo[MAX_KEYS];
+
 typedef struct {
-	Key key[2];
+	KeyCombo key;
 	void (*func)(const Arg *arg);
 	const Arg arg;
 } KeyBinding;
@@ -68,7 +71,7 @@ struct Mode {
 	bool common_prefix;                 /* whether the first key in this mode is always the same */
 	void (*enter)(Mode *old);           /* called right before the mode becomes active */
 	void (*leave)(Mode *new);           /* called right before the mode becomes inactive */
-	bool (*unknown)(Key*, Key*);        /* called whenever a key is not found in this mode,
+	bool (*unknown)(KeyCombo);          /* called whenever a key combination is not found in this mode,
 	                                       the return value determines whether parent modes will be searched */
 	void (*input)(const char*, size_t); /* called whenever a key is not found in this mode and all its parent modes */
 	void (*idle)(void);                 /* called whenever a certain idle time i.e. without any user input elapsed */
@@ -1663,15 +1666,26 @@ static bool keymatch(Key *key0, Key *key1) {
 	       (key0->code && key0->code == key1->code);
 }
 
-static KeyBinding *keybinding(Mode *mode, Key *key0, Key *key1) {
+static bool keyvalid(Key *k) {
+	return k && (k->str[0] || k->code);
+}
+
+static KeyBinding *keybinding(Mode *mode, KeyCombo keys) {
+	int combolen = 0;
+	while (combolen < MAX_KEYS && keyvalid(&keys[combolen]))
+		combolen++;
 	for (; mode; mode = mode->parent) {
-		if (mode->common_prefix && !keymatch(key0, &mode->bindings->key[0]))
+		if (mode->common_prefix && !keymatch(&keys[0], &mode->bindings->key[0]))
 			continue;
-		for (KeyBinding *kb = mode->bindings; kb && (kb->key[0].code || kb->key[0].str[0]); kb++) {
-			if (keymatch(key0, &kb->key[0]) && (!key1 || keymatch(key1, &kb->key[1])))
-				return kb;
+		for (KeyBinding *kb = mode->bindings; kb && keyvalid(&kb->key[0]); kb++) {
+			for (int k = 0; k < combolen; k++) {
+				if (!keymatch(&keys[k], &kb->key[k]))
+					break;
+				if (k == combolen - 1)
+					return kb;
+			}
 		}
-		if (mode->unknown && !mode->unknown(key0, key1))
+		if (mode->unknown && !mode->unknown(keys))
 			break;
 	}
 	return NULL;
@@ -1702,7 +1716,8 @@ static Key getkey(void) {
 
 static void mainloop() {
 	struct timespec idle = { .tv_nsec = 0 }, *timeout = NULL;
-	Key key, key_prev, *key_mod = NULL;
+	KeyCombo keys;
+	int keylen = 0;
 	sigset_t emptyset, blockset;
 	sigemptyset(&emptyset);
 	sigemptyset(&blockset);
@@ -1738,33 +1753,34 @@ static void mainloop() {
 			continue;
 		}
 
-		key = getkey();
+		Key key = getkey();
 		if (config->keypress && !config->keypress(&key))
 			continue;
 
-		KeyBinding *action = keybinding(mode, key_mod ? key_mod : &key, key_mod ? &key : NULL);
+		keys[keylen++] = key;
+		KeyBinding *action = keybinding(mode, keys);
 
-		if (!action && key_mod) {
-			/* second char of a combination was invalid, search again without the prefix */
-			action = keybinding(mode, &key, NULL);
-			key_mod = NULL;
-		}
 		if (action) {
-			/* check if it is the first part of a combination */
-			if (!key_mod && (action->key[1].code || action->key[1].str[0])) {
-				key_prev = key;
-				key_mod = &key_prev;
-				continue;
+			int combolen = 0;
+			while (combolen < MAX_KEYS && keyvalid(&action->key[combolen]))
+				combolen++;
+			if (combolen == keylen) {
+				if (action->func)
+					action->func(&action->arg);
+				keylen = 0;
+				memset(keys, 0, sizeof(keys));
 			}
-			if (action->func)
-				action->func(&action->arg);
-			key_mod = NULL;
 			continue;
+		} else {
+			int oldkeylen = keylen;
+			keylen = 0;
+			memset(keys, 0, sizeof(keys));
+			if (oldkeylen > 1)
+				continue; /* cancel partial action */
 		}
 
-		if (key.code)
+		if (key.code) /* ignore curses KEY_* */
 			continue;
-
 		if (mode->input)
 			mode->input(key.str, strlen(key.str));
 		if (mode->idle)
