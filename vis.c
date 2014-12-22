@@ -1732,8 +1732,6 @@ static void keypress(Key *key) {
 	static KeyCombo keys;
 	static int keylen;
 
-	if (config->keypress && !config->keypress(key))
-		return;
 
 	keys[keylen++] = *key;
 	KeyBinding *action = keybinding(mode, keys);
@@ -1759,7 +1757,7 @@ static void keypress(Key *key) {
 }
 
 static Key getkey(void) {
-	Key key = { .str = "\0\0\0\0\0\0", .code = 0 };
+	Key key = { .str = "", .code = 0 };
 	int keycode = getch(), len = 0;
 	if (keycode == ERR)
 		return key;
@@ -1777,6 +1775,9 @@ static Key getkey(void) {
 			nodelay(stdscr, FALSE);
 		}
 	}
+
+	if (config->keypress && !config->keypress(&key))
+		return (Key){ .str = "", .code = 0 };
 
 	return key;
 }
