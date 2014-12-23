@@ -323,8 +323,10 @@ static Movement moves[] = {
 
 /* these can be passed as int argument to textobj(&(const Arg){ .i = TEXT_OBJ_* }) */
 enum {
-	TEXT_OBJ_WORD,
-	TEXT_OBJ_LONGWORD,
+	TEXT_OBJ_INNER_WORD,
+	TEXT_OBJ_OUTER_WORD,
+	TEXT_OBJ_INNER_LONGWORD,
+	TEXT_OBJ_OUTER_LONGWORD,
 	TEXT_OBJ_LINE_UP,
 	TEXT_OBJ_LINE_DOWN,
 	TEXT_OBJ_SENTENCE,
@@ -346,8 +348,10 @@ enum {
 };
 
 static TextObject textobjs[] = {
-	[TEXT_OBJ_WORD]                 = { text_object_word                  },
-	[TEXT_OBJ_LONGWORD]             = { text_object_longword              },
+	[TEXT_OBJ_INNER_WORD]           = { text_object_word                  },
+	[TEXT_OBJ_OUTER_WORD]           = { text_object_word_outer            },
+	[TEXT_OBJ_INNER_LONGWORD]       = { text_object_longword              },
+	[TEXT_OBJ_OUTER_LONGWORD]       = { text_object_longword_outer        },
 	[TEXT_OBJ_LINE_UP]              = { text_object_line                  },
 	[TEXT_OBJ_LINE_DOWN]            = { text_object_line                  },
 	[TEXT_OBJ_SENTENCE]             = { text_object_sentence              },

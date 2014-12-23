@@ -9,12 +9,15 @@
 #include <stddef.h>
 #include "text.h"
 
-/* word which happens to be at pos, includes trailing white spaces. if at pos
- * happens to be a whitespace include all neighbouring leading whitespaces
- * and the following word. */
+/* word which happens to be at pos without any neighbouring white spaces */
 Filerange text_object_word(Text*, size_t pos);
-/* same semantics as above but for a longword (i.e. delimited by whitespaces) */
+/* includes trailing white spaces. if at pos happens to be a white space
+ * include all neighbouring leading white spaces and the following word. */
+Filerange text_object_word_outer(Text*, size_t pos);
+/* same semantics as above but for a longword (i.e. delimited by white spaces) */
 Filerange text_object_longword(Text*, size_t pos);
+Filerange text_object_longword_outer(Text*, size_t pos);
+
 Filerange text_object_line(Text*, size_t pos);
 Filerange text_object_sentence(Text*, size_t pos);
 Filerange text_object_paragraph(Text*, size_t pos);

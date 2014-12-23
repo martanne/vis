@@ -160,8 +160,8 @@ static KeyBinding vis_movements[] = {
 };
 
 static KeyBinding vis_textobjs[] = {
-	{ { NONE('a'), NONE('w')  }, textobj, { .i = TEXT_OBJ_WORD                 } },
-	{ { NONE('a'), NONE('W')  }, textobj, { .i = TEXT_OBJ_LONGWORD             } },
+	{ { NONE('a'), NONE('w')  }, textobj, { .i = TEXT_OBJ_OUTER_WORD           } },
+	{ { NONE('a'), NONE('W')  }, textobj, { .i = TEXT_OBJ_OUTER_LONGWORD       } },
 	{ { NONE('a'), NONE('s')  }, textobj, { .i = TEXT_OBJ_SENTENCE             } },
 	{ { NONE('a'), NONE('p')  }, textobj, { .i = TEXT_OBJ_PARAGRAPH            } },
 	{ { NONE('a'), NONE('[')  }, textobj, { .i = TEXT_OBJ_OUTER_SQUARE_BRACKET } },
@@ -181,8 +181,8 @@ static KeyBinding vis_textobjs[] = {
 };
 
 static KeyBinding vis_inner_textobjs[] = {
-	{ { NONE('i'), NONE('w')  }, textobj, { .i = TEXT_OBJ_WORD                 } },
-	{ { NONE('i'), NONE('W')  }, textobj, { .i = TEXT_OBJ_LONGWORD             } },
+	{ { NONE('i'), NONE('w')  }, textobj, { .i = TEXT_OBJ_INNER_WORD           } },
+	{ { NONE('i'), NONE('W')  }, textobj, { .i = TEXT_OBJ_INNER_LONGWORD       } },
 	{ { NONE('i'), NONE('s')  }, textobj, { .i = TEXT_OBJ_SENTENCE             } },
 	{ { NONE('i'), NONE('p')  }, textobj, { .i = TEXT_OBJ_PARAGRAPH            } },
 	{ { NONE('i'), NONE('[')  }, textobj, { .i = TEXT_OBJ_INNER_SQUARE_BRACKET } },

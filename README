@@ -371,7 +371,7 @@ and their current support in vis.
    p  paragraph
    [,], (,), {,}, <,>, ", ', `         block enclosed by these symbols
 
-  For word, sentence and paragraph there is no difference between the
+  For sentence and paragraph there is no difference between the
   inner and normal variants.
 
  Modes
