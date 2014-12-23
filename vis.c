@@ -676,26 +676,16 @@ static void op_join(OperatorContext *c) {
 /** movement implementations of type: size_t (*move)(const Arg*) */
 
 static char *get_word_under_cursor() {
-	size_t pos = window_cursor_get(vis->win->win);
-	Filerange word = text_object_word(vis->win->text, pos);
+	Filerange word = text_object_word(vis->win->text, window_cursor_get(vis->win->win));
 	if (!text_range_valid(&word))
 		return NULL;
 	size_t len = word.end - word.start;
-	char *buf = malloc(len+1), *start = buf, *end;
+	char *buf = malloc(len+1);
 	if (!buf)
 		return NULL;
 	len = text_bytes_get(vis->win->text, word.start, len, buf);
 	buf[len] = '\0';
-	/* remove leading / trailing white spaces */
-	while (*start && isspace(*start))
-		start++;
-	end = start;
-	for (char *cur = start; *cur; cur++) {
-		if (!isspace(*cur))
-			end = cur;
-	}
-	end[1] = '\0';
-	return start;
+	return buf;
 }
 
 static size_t search_word_forward(const Arg *arg) {
