@@ -1674,7 +1674,7 @@ static void setup() {
 	char *term = getenv("TERM");
 	if (!term)
 		term = DEFAULT_TERM;
-	if (!newterm(term, stderr, stdin) == ERR)
+	if (!newterm(term, stderr, stdin))
 		die("Can not initialize terminal\n");
 	start_color();
 	raw();

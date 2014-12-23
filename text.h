@@ -21,11 +21,11 @@ typedef struct Text Text;
 typedef struct Piece Piece;
 
 typedef struct {
-	const char const *start;  /* begin of piece's data */
-	const char const *end;    /* pointer to the first byte after valid data i.e. [start, end) */
-	const char const *text;   /* current position within piece: start <= text < end */
-	const Piece const *piece; /* internal state do not touch! */
-	size_t pos;               /* global position in bytes from start of file */
+	const char *start;  /* begin of piece's data */
+	const char *end;    /* pointer to the first byte after valid data i.e. [start, end) */
+	const char *text;   /* current position within piece: start <= text < end */
+	const Piece *piece; /* internal state do not touch! */
+	size_t pos;         /* global position in bytes from start of file */
 } Iterator;
 
 #define text_iterate(txt, it, pos) \
