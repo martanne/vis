@@ -1277,6 +1277,8 @@ static bool cmd_set(Filerange *range, const char *argv[]) {
 		}
 		window_syntax_set(vis->win->win, NULL);
 		return false;
+	} else if (!strcmp("number", argv[1])) {
+		window_line_numbers_show(vis->win->win, argv[2][0] == '1');
 	} else {
 		editor_info_show(vis, "Unknown option: `%s'", argv[1]);
 		return false;

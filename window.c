@@ -59,7 +59,9 @@ typedef struct {            /* cursor position */
 struct Win {                /* window showing part of a file */
 	Text *text;         /* underlying text management */
 	WINDOW *win;        /* curses window for the text area */
+	WINDOW *winnum;     /* curses window for the line numbers area */
 	int width, height;  /* window text area size */
+	int w, h, x, y;     /* complete window position & dimension (including line numbers) */
 	Filepos start, end; /* currently displayed area [start, end] in bytes from the start of the file */
 	Line *lines;        /* win->height number of lines representing window content */
 	Line *topline;      /* top of the window, first line currently shown */
@@ -103,15 +105,53 @@ void window_selection_clear(Win *win) {
 	curs_set(1);
 }
 
+static int window_numbers_width(Win *win) {
+	if (!win->winnum)
+		return 0;
+	return snprintf(NULL, 0, "%d", win->topline->lineno + win->height - 1) + 1;
+}
+
+static void window_numbers_draw(Win *win) {
+	if (!win->winnum)
+		return;
+	werase(win->winnum);
+	size_t prev_lineno = -1;
+	int width = window_numbers_width(win), i = 0;
+	char fmt[32];
+	snprintf(fmt, sizeof fmt, "%%%dd", width - 1);
+	for (Line *l = win->topline; l && l <= win->lastline; l = l->next, i++) {
+		if (l->lineno != prev_lineno)
+			mvwprintw(win->winnum, i, 0, fmt, l->lineno);
+		prev_lineno = l->lineno;
+	}
+	mvwvline(win->winnum, 0, width-1, ACS_VLINE, win->height);
+}
+
 /* reset internal window data structures (cell matrix, line offsets etc.) */
 static void window_clear(Win *win) {
-	size_t line_size = sizeof(Line) + win->width*sizeof(Cell);
+	/* calculate line number of first line */
 	win->topline = win->lines;
 	win->topline->lineno = text_lineno_by_pos(win->text, win->start);
 	win->lastline = win->topline;
+
+	/* based on which we can calculate how much space is needed to display line numbers */
+	int lineno_width = window_numbers_width(win);
+	int width = win->w - lineno_width;
+	if (win->winnum) {
+		wresize(win->winnum, win->h, lineno_width);
+		mvwin(win->winnum, win->y, win->x);
+	}
+
+	wresize(win->win, win->height, width);
+	mvwin(win->win, win->y, win->x + lineno_width);
+	win->width = width;
+
+	/* reset all other lines */
+	size_t line_size = sizeof(Line) + win->width*sizeof(Cell);
+	size_t end = win->height * line_size;
 	Line *prev = NULL;
-	for (int i = 0; i < win->height; i++) {
-		Line *line = (Line*)(((char*)win->lines) + i*line_size);
+	for (size_t i = 0; i < end; i += line_size) {
+		Line *line = (Line*)(((char*)win->lines) + i);
 		line->len = 0;
 		line->width = 0;
 		line->prev = prev;
@@ -120,6 +160,7 @@ static void window_clear(Win *win) {
 		prev = line;
 	}
 	win->bottomline = prev ? prev : win->topline;
+	win->bottomline->next = NULL;
 	win->line = win->topline;
 	win->col = 0;
 }
@@ -282,33 +323,12 @@ static size_t window_cursor_update(Win *win) {
 	return cursor->pos;
 }
 
-/* move the cursor to the character at pos bytes from the begining of the file.
- * if pos is not in the current viewport, redraw the window to make it visible */
-void window_cursor_to(Win *win, size_t pos) {
+/* snyc current cursor position with internal Line/Cell structures */
+static void window_cursor_sync(Win *win) {
+	int row = 0, col = 0;
+	size_t cur = win->start, pos = win->cursor.pos;
 	Line *line = win->topline;
-	int row = 0;
-	int col = 0;
-	size_t max = text_size(win->text);
 
-	if (pos > max)
-		pos = max > 0 ? max - 1 : 0;
-
-	if (pos == max && win->end != max) {
-		/* do not display an empty screen when showing the end of the file */
-		win->start = max - 1;
-		window_viewport_up(win, win->height / 2);
-	} else {
-		/* set the start of the viewable region to the start of the line on which
-		 * the cursor should be placed. if this line requires more space than
-		 * available in the window then simply start displaying text at the new
-		 * cursor position */
-		for (int i = 0;  i < 2 && (pos < win->start || pos > win->end); i++) {
-			win->start = i == 0 ? text_line_begin(win->text, pos) : pos;
-			window_draw(win);
-		}
-	}
-
-	size_t cur = win->start;
 	while (line && line != win->lastline && cur < pos) {
 		if (cur + line->len > pos)
 			break;
@@ -332,13 +352,40 @@ void window_cursor_to(Win *win, size_t pos) {
 	win->cursor.line = line;
 	win->cursor.row = row;
 	win->cursor.col = col;
+}
+
+/* move the cursor to the character at pos bytes from the begining of the file.
+ * if pos is not in the current viewport, redraw the window to make it visible */
+void window_cursor_to(Win *win, size_t pos) {
+	size_t max = text_size(win->text);
+
+	if (pos > max)
+		pos = max > 0 ? max - 1 : 0;
+
+	if (pos == max && win->end != max) {
+		/* do not display an empty screen when showing the end of the file */
+		win->start = max - 1;
+		window_viewport_up(win, win->height / 2);
+	} else {
+		/* set the start of the viewable region to the start of the line on which
+		 * the cursor should be placed. if this line requires more space than
+		 * available in the window then simply start displaying text at the new
+		 * cursor position */
+		for (int i = 0;  i < 2 && (pos < win->start || pos > win->end); i++) {
+			win->start = i == 0 ? text_line_begin(win->text, pos) : pos;
+			window_draw(win);
+		}
+	}
+
 	win->cursor.pos = pos;
+	window_cursor_sync(win);
 	window_cursor_update(win);
 }
 
 /* redraw the complete with data starting from win->start bytes into the file.
  * stop once the screen is full, update win->end, win->lastline */
 void window_draw(Win *win) {
+	int old_width = win->width;
 	window_clear(win);
 	wmove(win->win, 0, 0);
 	/* current absolute file position */
@@ -465,28 +512,38 @@ void window_draw(Win *win) {
 	win->lastline->next = NULL;
 	/* and clear the rest of the unused window */
 	wclrtobot(win->win);
+	/* if the text area width has changed because of the line numbers
+	 * we have to (re)sync the cursor->line pointer */
+	if (win->width != old_width)
+		window_cursor_sync(win);
+	/* draw line numbers */
+	window_numbers_draw(win);
 }
 
 bool window_resize(Win *win, int width, int height) {
-	if (wresize(win->win, height, width) == ERR)
-		return false;
 	// TODO: only grow memory area
-	win->height = height;
-	win->width = width;
-	free(win->lines);
 	size_t line_size = sizeof(Line) + width*sizeof(Cell);
-	if (!(win->lines = calloc(height, line_size)))
+	Line *lines = calloc(height, line_size);
+	if (!lines)
 		return false;
+	free(win->lines);
+	win->w = win->width = width;
+	win->h = win->height = height;
+	win->lines = lines;
+	window_clear(win);
 	return true;
 }
 
 void window_move(Win *win, int x, int y) {
-	mvwin(win->win, y, x);
+	win->x = x;
+	win->y = y;
 }
 
 void window_free(Win *win) {
 	if (!win)
 		return;
+	if (win->winnum)
+		delwin(win->winnum);
 	if (win->win)
 		delwin(win->win);
 	free(win->lines);
@@ -735,19 +792,17 @@ size_t window_line_up(Win *win) {
 	Cursor *cursor = &win->cursor;
 	if (!cursor->line->prev)
 		window_scroll_up(win, 1);
-	else
+	if (cursor->line->prev)
 		window_cursor_set(win, cursor->line->prev, cursor->col);
 	return cursor->pos;
 }
 
 size_t window_line_down(Win *win) {
 	Cursor *cursor = &win->cursor;
-	if (!cursor->line->next) {
-		if (cursor->line == win->bottomline)
-			window_scroll_down(win, 1);
-	} else {
+	if (!cursor->line->next && cursor->line == win->bottomline)
+		window_scroll_down(win, 1);
+	if (cursor->line->next)
 		window_cursor_set(win, cursor->line->next, cursor->col);
-	}
 	return cursor->pos;
 }
 
@@ -767,6 +822,8 @@ size_t window_line_end(Win *win) {
 }
 
 void window_update(Win *win) {
+	if (win->winnum)
+		wnoutrefresh(win->winnum);
 	wnoutrefresh(win->win);
 }
 
@@ -868,4 +925,15 @@ size_t window_line_goto(Win *win, int n) {
 	for (Line *line = win->topline; --n > 0 && line != win->lastline; line = line->next)
 		pos += line->len;
 	return pos;
+}
+
+void window_line_numbers_show(Win *win, bool show) {
+	if (show) {
+		if (!win->winnum)
+			win->winnum = newwin(0, 0, 0, 0);
+	} else {
+		if (win->winnum)
+			delwin(win->winnum);
+		win->winnum = NULL;
+	}
 }

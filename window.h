@@ -76,6 +76,8 @@ Filerange window_viewport_get(Win*);
 /* associate a set of syntax highlighting rules to this window. */
 void window_syntax_set(Win*, Syntax*);
 Syntax *window_syntax_get(Win*);
+/* whether to show line numbers to the left of the text content */
+void window_line_numbers_show(Win*, bool show);
 /* register a user defined function which will be called whenever the cursor has moved */
 void window_cursor_watch(Win *win, void (*cursor_moved)(Win*, void*), void *data);
 

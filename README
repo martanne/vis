@@ -214,8 +214,6 @@ The editor takes a similar regex-based approach to syntax highlighting
 than sandy and reuses its syntax definitions but always applies them to
 a "screen full" of text thus enabling multiline coloring.
 
-Currently only the highlighting rules for C have been imported from sandy.
-
 Window-Management
 -----------------
 
@@ -449,6 +447,10 @@ and their current support in vis.
      expandtab  (1|yes|true)|(0|no|false)
 
        whether typed in tabs should be expanded to tabwidth spaces
+
+     number     (1|0)
+
+       whether line numbers are printed alongside the file content
 
      syntax      name
 
