@@ -8,6 +8,7 @@
 #include "register.h"
 #include "macro.h"
 #include "syntax.h"
+#include "ring-buffer.h"
 
 typedef struct Editor Editor;
 typedef struct EditorWin EditorWin;
@@ -16,6 +17,7 @@ struct EditorWin {
 	Editor *editor;         /* editor instance to which this window belongs */
 	Text *text;             /* underlying text management */
 	Win *win;               /* window for the text area  */
+	RingBuffer *jumplist;   /* LRU jump management */
 	WINDOW *statuswin;      /* curses window for the statusbar */
 	int width, height;      /* window size including the statusbar */
 	EditorWin *prev, *next; /* neighbouring windows */
@@ -150,6 +152,11 @@ bool editor_window_split(EditorWin*);
 /* focus the next / previous window */
 void editor_window_next(Editor*);
 void editor_window_prev(Editor*);
+
+void editor_window_jumplist_add(EditorWin*, size_t pos);
+size_t editor_window_jumplist_prev(EditorWin*);
+size_t editor_window_jumplist_next(EditorWin*);
+void editor_window_jumplist_invalidate(EditorWin*);
 /* rearrange all windows either vertically or horizontally */
 void editor_windows_arrange_vertical(Editor*);
 void editor_windows_arrange_horizontal(Editor*);

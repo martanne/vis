@@ -110,6 +110,7 @@ typedef struct {
 		INCLUSIVE = 1 << 2,
 		EXCLUSIVE = 1 << 3,
 		IDEMPOTENT = 1 << 4,
+		JUMP = 1 << 5,
 	} type;
 	int count;
 } Movement;
@@ -287,7 +288,7 @@ static Movement moves[] = {
 	[MOVE_LINE_LASTCHAR]       = { .txt = text_line_lastchar,       .type = LINEWISE|INCLUSIVE },
 	[MOVE_LINE_END]            = { .txt = text_line_end,            .type = LINEWISE           },
 	[MOVE_LINE_NEXT]           = { .txt = text_line_next,           .type = LINEWISE           },
-	[MOVE_LINE]                = { .cmd = line,                     .type = LINEWISE|IDEMPOTENT},
+	[MOVE_LINE]                = { .cmd = line,                     .type = LINEWISE|IDEMPOTENT|JUMP},
 	[MOVE_COLUMN]              = { .cmd = column,                   .type = CHARWISE|IDEMPOTENT},
 	[MOVE_CHAR_PREV]           = { .win = window_char_prev                                     },
 	[MOVE_CHAR_NEXT]           = { .win = window_char_next                                     },
@@ -301,24 +302,24 @@ static Movement moves[] = {
 	[MOVE_LONGWORD_END_NEXT]   = { .txt = text_longword_end_next,   .type = CHARWISE|INCLUSIVE },
 	[MOVE_SENTENCE_PREV]       = { .txt = text_sentence_prev,       .type = LINEWISE           },
 	[MOVE_SENTENCE_NEXT]       = { .txt = text_sentence_next,       .type = LINEWISE           },
-	[MOVE_PARAGRAPH_PREV]      = { .txt = text_paragraph_prev,      .type = LINEWISE           },
-	[MOVE_PARAGRAPH_NEXT]      = { .txt = text_paragraph_next,      .type = LINEWISE           },
-	[MOVE_BRACKET_MATCH]       = { .txt = text_bracket_match,       .type = LINEWISE|INCLUSIVE },
-	[MOVE_FILE_BEGIN]          = { .txt = text_begin,               .type = LINEWISE           },
-	[MOVE_FILE_END]            = { .txt = text_end,                 .type = LINEWISE           },
+	[MOVE_PARAGRAPH_PREV]      = { .txt = text_paragraph_prev,      .type = LINEWISE|JUMP      },
+	[MOVE_PARAGRAPH_NEXT]      = { .txt = text_paragraph_next,      .type = LINEWISE|JUMP      },
+	[MOVE_BRACKET_MATCH]       = { .txt = text_bracket_match,       .type = LINEWISE|INCLUSIVE|JUMP },
+	[MOVE_FILE_BEGIN]          = { .txt = text_begin,               .type = LINEWISE|JUMP      },
+	[MOVE_FILE_END]            = { .txt = text_end,                 .type = LINEWISE|JUMP      },
 	[MOVE_LEFT_TO]             = { .cmd = to_left,                  .type = LINEWISE           },
 	[MOVE_RIGHT_TO]            = { .cmd = to,                       .type = LINEWISE|INCLUSIVE },
 	[MOVE_LEFT_TILL]           = { .cmd = till_left,                .type = LINEWISE           },
 	[MOVE_RIGHT_TILL]          = { .cmd = till,                     .type = LINEWISE|INCLUSIVE },
-	[MOVE_MARK]                = { .cmd = mark_goto,                .type = LINEWISE           },
-	[MOVE_MARK_LINE]           = { .cmd = mark_line_goto,           .type = LINEWISE           },
-	[MOVE_SEARCH_WORD_FORWARD] = { .cmd = search_word_forward,      .type = LINEWISE           },
-	[MOVE_SEARCH_WORD_BACKWARD]= { .cmd = search_word_backward,     .type = LINEWISE           },
-	[MOVE_SEARCH_FORWARD]      = { .cmd = search_forward,           .type = LINEWISE           },
-	[MOVE_SEARCH_BACKWARD]     = { .cmd = search_backward,          .type = LINEWISE           },
-	[MOVE_WINDOW_LINE_TOP]     = { .cmd = window_lines_top,         .type = LINEWISE           },
-	[MOVE_WINDOW_LINE_MIDDLE]  = { .cmd = window_lines_middle,      .type = LINEWISE           },
-	[MOVE_WINDOW_LINE_BOTTOM]  = { .cmd = window_lines_bottom,      .type = LINEWISE           },
+	[MOVE_MARK]                = { .cmd = mark_goto,                .type = LINEWISE|JUMP      },
+	[MOVE_MARK_LINE]           = { .cmd = mark_line_goto,           .type = LINEWISE|JUMP      },
+	[MOVE_SEARCH_WORD_FORWARD] = { .cmd = search_word_forward,      .type = LINEWISE|JUMP      },
+	[MOVE_SEARCH_WORD_BACKWARD]= { .cmd = search_word_backward,     .type = LINEWISE|JUMP      },
+	[MOVE_SEARCH_FORWARD]      = { .cmd = search_forward,           .type = LINEWISE|JUMP      },
+	[MOVE_SEARCH_BACKWARD]     = { .cmd = search_backward,          .type = LINEWISE|JUMP      },
+	[MOVE_WINDOW_LINE_TOP]     = { .cmd = window_lines_top,         .type = LINEWISE|JUMP      },
+	[MOVE_WINDOW_LINE_MIDDLE]  = { .cmd = window_lines_middle,      .type = LINEWISE|JUMP      },
+	[MOVE_WINDOW_LINE_BOTTOM]  = { .cmd = window_lines_bottom,      .type = LINEWISE|JUMP      },
 };
 
 /* these can be passed as int argument to textobj(&(const Arg){ .i = TEXT_OBJ_* }) */
@@ -379,6 +380,8 @@ static TextObject *moves_linewise[] = {
 };
 
 /** functions to be called from keybindings */
+/* navigate jumplist either in forward (arg->i>0) or backward (arg->i<0) direction */
+static void jumplist(const Arg *arg);
 static void macro_record(const Arg *arg);
 static void macro_replay(const Arg *arg);
 /* temporarily suspend the editor and return to the shell, type 'fg' to get back */
@@ -775,6 +778,16 @@ static size_t window_lines_bottom(const Arg *arg) {
 
 /** key bindings functions of type: void (*func)(const Arg*) */
 
+static void jumplist(const Arg *arg) {
+	size_t pos;
+	if (arg->i > 0)
+		pos = editor_window_jumplist_next(vis->win);
+	else
+		pos = editor_window_jumplist_prev(vis->win);
+	if (pos != EPOS)
+		window_cursor_to(vis->win->win, pos);
+}
+
 static Macro *key2macro(const Arg *arg) {
 	if (arg->i)
 		return &vis->macros[arg->i];
@@ -1143,7 +1156,10 @@ static void action_do(Action *a) {
 				window_scroll_to(win, pos);
 			else
 				window_cursor_to(win, pos);
-
+			if (a->movement->type & JUMP)
+				editor_window_jumplist_add(vis->win, pos);
+			else
+				editor_window_jumplist_invalidate(vis->win);
 		} else if (a->movement->type & INCLUSIVE) {
 			Iterator it = text_iterator_get(txt, c.range.end);
 			text_iterator_char_next(&it, NULL);

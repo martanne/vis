@@ -475,7 +475,8 @@ and their current support in vis.
  Jump list and change list
  -------------------------
 
-  Neither the jump list nor the change lists are currently supported.
+  A per window, fixed size, file local jump list is implemented.
+  The change list is currently not supported.
 
  Mouse support
  -------------
