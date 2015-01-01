@@ -56,8 +56,8 @@ static void editor_window_cursor_moved(Win *winwin, void *data) {
 	EditorWin *win = data;
 	Filerange sel = window_selection_get(winwin);
 	if (text_range_valid(&sel) && sel.start != sel.end) {
-		text_mark_set(win->text, MARK_SELECTION_START, sel.start);
-		text_mark_set(win->text, MARK_SELECTION_END, sel.end);
+		text_mark_intern_set(win->text, MARK_SELECTION_START, sel.start);
+		text_mark_intern_set(win->text, MARK_SELECTION_END, sel.end);
 	}
 	editor_window_statusbar_draw(win);
 }

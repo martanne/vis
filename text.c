@@ -1145,7 +1145,7 @@ size_t text_lineno_by_pos(Text *txt, size_t pos) {
 	return cache->lineno;
 }
 
-void text_mark_set(Text *txt, Mark mark, size_t pos) {
+void text_mark_intern_set(Text *txt, MarkIntern mark, size_t pos) {
 	if (mark < 0 || mark >= LENGTH(txt->marks))
 		return;
 	Location loc = piece_get_extern(txt, pos);
@@ -1154,7 +1154,7 @@ void text_mark_set(Text *txt, Mark mark, size_t pos) {
 	txt->marks[mark] = loc.piece->data + loc.off;
 }
 
-size_t text_mark_get(Text *txt, Mark mark) {
+size_t text_mark_intern_get(Text *txt, MarkIntern mark) {
 	if (mark < 0 || mark >= LENGTH(txt->marks))
 		return EPOS;
 	const char *pos = txt->marks[mark];
@@ -1168,15 +1168,15 @@ size_t text_mark_get(Text *txt, Mark mark) {
 	return EPOS;
 }
 
-void text_mark_clear(Text *txt, Mark mark) {
+void text_mark_intern_clear(Text *txt, MarkIntern mark) {
 	if (mark < 0 || mark >= LENGTH(txt->marks))
 		return;
 	txt->marks[mark] = NULL;
 }
 
-void text_mark_clear_all(Text *txt) {
-	for (Mark mark = 0; mark < LENGTH(txt->marks); mark++)
-		text_mark_clear(txt, mark);
+void text_mark_intern_clear_all(Text *txt) {
+	for (MarkIntern mark = 0; mark < LENGTH(txt->marks); mark++)
+		text_mark_intern_clear(txt, mark);
 }
 
 int text_fd_get(Text *txt) {

@@ -175,8 +175,8 @@ Filerange window_selection_get(Win *win) {
 	if (!text_range_valid(&sel))
 		return text_range_empty();
 	sel.end = text_char_next(win->text, sel.end);
-	text_mark_set(win->text, MARK_SELECTION_START, sel.start);
-	text_mark_set(win->text, MARK_SELECTION_END, sel.end);
+	text_mark_intern_set(win->text, MARK_SELECTION_START, sel.start);
+	text_mark_intern_set(win->text, MARK_SELECTION_END, sel.end);
 	return sel;
 }
 

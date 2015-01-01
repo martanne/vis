@@ -129,7 +129,7 @@ typedef struct {             /** collects all information until an operator is e
 	Movement *movement;
 	TextObject *textobj;
 	Register *reg;
-	Mark mark;
+	MarkIntern mark;
 	Key key;
 	Arg arg;
 } Action;
@@ -717,11 +717,11 @@ static size_t search_backward(const Arg *arg) {
 }
 
 static void mark_set(const Arg *arg) {
-	text_mark_set(vis->win->text, arg->i, window_cursor_get(vis->win->win));
+	text_mark_intern_set(vis->win->text, arg->i, window_cursor_get(vis->win->win));
 }
 
 static size_t mark_goto(const Arg *arg) {
-	return text_mark_get(vis->win->text, action.mark);
+	return text_mark_intern_get(vis->win->text, action.mark);
 }
 
 static size_t mark_line_goto(const Arg *arg) {
@@ -1494,11 +1494,11 @@ static Filepos parse_pos(char **cmd) {
 	case '\'':
 		(*cmd)++;
 		if ('a' <= **cmd && **cmd <= 'z')
-			pos = text_mark_get(txt, **cmd - 'a');
+			pos = text_mark_intern_get(txt, **cmd - 'a');
 		else if (**cmd == '<')
-			pos = text_mark_get(txt, MARK_SELECTION_START);
+			pos = text_mark_intern_get(txt, MARK_SELECTION_START);
 		else if (**cmd == '>')
-			pos = text_mark_get(txt, MARK_SELECTION_END);
+			pos = text_mark_intern_get(txt, MARK_SELECTION_END);
 		(*cmd)++;
 		break;
 	case '/':
@@ -1534,8 +1534,8 @@ static Filerange parse_range(char **cmd) {
 		(*cmd)++;
 		break;
 	case '*':
-		r.start = text_mark_get(txt, MARK_SELECTION_START);
-		r.end = text_mark_get(txt, MARK_SELECTION_END);
+		r.start = text_mark_intern_get(txt, MARK_SELECTION_START);
+		r.end = text_mark_intern_get(txt, MARK_SELECTION_END);
 		(*cmd)++;
 		break;
 	default:
