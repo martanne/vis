@@ -75,6 +75,10 @@ bool text_iterator_byte_next(Iterator*, char *b);
 bool text_iterator_char_next(Iterator*, char *c);
 bool text_iterator_char_prev(Iterator*, char *c);
 
+typedef const char* Mark;
+Mark text_mark_set(Text*, size_t pos);
+size_t text_mark_get(Text*, Mark);
+
 typedef int MarkIntern;
 void text_mark_intern_set(Text*, MarkIntern, size_t pos);
 size_t text_mark_intern_get(Text*, MarkIntern);

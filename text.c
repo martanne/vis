@@ -119,7 +119,7 @@ struct Text {
 	struct stat info;	/* stat as proped on load time */
 	int fd;                 /* the file descriptor of the original mmap-ed data */
 	LineCache lines;        /* mapping between absolute pos in bytes and logical line breaks */
-	const char *marks[32];  /* a mark is a pointer into an underlying buffer */
+	Mark marks[32];         /* a mark is a pointer into an underlying buffer */
 	int newlines;           /* 0: unknown, 1: \n, -1: \r\n */
 };
 
@@ -1145,27 +1145,38 @@ size_t text_lineno_by_pos(Text *txt, size_t pos) {
 	return cache->lineno;
 }
 
+Mark text_mark_set(Text *txt, size_t pos) {
+	Location loc = piece_get_extern(txt, pos);
+	if (!loc.piece)
+		return NULL;
+	return loc.piece->data + loc.off;
+}
+
+size_t text_mark_get(Text *txt, Mark mark) {
+	size_t cur = 0;
+
+	if (!mark)
+		return EPOS;
+
+	for (Piece *p = txt->begin.next; p->next; p = p->next) {
+		if (p->data <= mark && mark < p->data + p->len)
+			return cur + (mark - p->data);
+		cur += p->len;
+	}
+
+	return EPOS;
+}
+
 void text_mark_intern_set(Text *txt, MarkIntern mark, size_t pos) {
 	if (mark < 0 || mark >= LENGTH(txt->marks))
 		return;
-	Location loc = piece_get_extern(txt, pos);
-	if (!loc.piece)
-		return;
-	txt->marks[mark] = loc.piece->data + loc.off;
+	txt->marks[mark] = text_mark_set(txt, pos);
 }
 
 size_t text_mark_intern_get(Text *txt, MarkIntern mark) {
 	if (mark < 0 || mark >= LENGTH(txt->marks))
 		return EPOS;
-	const char *pos = txt->marks[mark];
-	size_t cur = 0;
-	for (Piece *p = txt->begin.next; p->next; p = p->next) {
-		if (p->data <= pos && pos < p->data + p->len)
-			return cur + (pos - p->data);
-		cur += p->len;
-	}
-
-	return EPOS;
+	return text_mark_get(txt, txt->marks[mark]);
 }
 
 void text_mark_intern_clear(Text *txt, MarkIntern mark) {
