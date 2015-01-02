@@ -36,7 +36,7 @@ void buffer_free(Buffer *buf) {
 	buf->size = 0;
 }
 
-bool buffer_put(Buffer *buf, void *data, size_t len) {
+bool buffer_put(Buffer *buf, const void *data, size_t len) {
 	if (!buffer_alloc(buf, len))
 		return false;
 	memcpy(buf->data, data, len);
@@ -44,7 +44,7 @@ bool buffer_put(Buffer *buf, void *data, size_t len) {
 	return true;
 }
 
-bool buffer_append(Buffer *buf, void *data, size_t len) {
+bool buffer_append(Buffer *buf, const void *data, size_t len) {
 	size_t rem = buf->size - buf->len;
 	if (len > rem && !buffer_alloc(buf, buf->size + len - rem))
 		return false;

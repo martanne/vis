@@ -14,7 +14,7 @@ typedef struct {
 void buffer_free(Buffer *buf);
 bool buffer_alloc(Buffer *buf, size_t size);
 void buffer_truncate(Buffer *buf);
-bool buffer_put(Buffer *buf, void *data, size_t len);
-bool buffer_append(Buffer *buf, void *data, size_t len);
+bool buffer_put(Buffer *buf, const void *data, size_t len);
+bool buffer_append(Buffer *buf, const void *data, size_t len);
 
 #endif
