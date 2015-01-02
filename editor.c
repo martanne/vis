@@ -499,7 +499,6 @@ void editor_delete(Editor *ed, size_t pos, size_t len) {
 	editor_windows_invalidate(ed, pos, pos + len);
 }
 
-
 static void editor_prompt_free(Prompt *prompt) {
 	if (!prompt)
 		return;

@@ -155,6 +155,7 @@ static Mode *mode_prev;     /* previsouly active user mode */
 static Mode *mode_before_prompt; /* user mode which was active before entering prompt */
 static Action action;       /* current action which is in progress */
 static Action action_prev;  /* last operator action used by the repeat '.' key */
+static Buffer buffer_repeat;/* repeat last modification i.e. insertion/replacement */
 
 /** operators */
 static void op_change(OperatorContext *c);
@@ -165,6 +166,8 @@ static void op_shift_right(OperatorContext *c);
 static void op_shift_left(OperatorContext *c);
 static void op_case_change(OperatorContext *c);
 static void op_join(OperatorContext *c);
+static void op_repeat_insert(OperatorContext *c);
+static void op_repeat_replace(OperatorContext *c);
 
 /* these can be passed as int argument to operator(&(const Arg){ .i = OP_*}) */
 enum {
@@ -176,6 +179,8 @@ enum {
 	OP_SHIFT_LEFT,
 	OP_CASE_CHANGE,
 	OP_JOIN,
+	OP_REPEAT_INSERT,
+	OP_REPEAT_REPLACE,
 };
 
 static Operator ops[] = {
@@ -187,6 +192,8 @@ static Operator ops[] = {
 	[OP_SHIFT_LEFT]  = { op_shift_left  },
 	[OP_CASE_CHANGE] = { op_case_change },
 	[OP_JOIN]          = { op_join          },
+	[OP_REPEAT_INSERT]  = { op_repeat_insert  },
+	[OP_REPEAT_REPLACE] = { op_repeat_replace },
 };
 
 #define PAGE      INT_MAX
@@ -664,6 +671,30 @@ static void op_join(OperatorContext *c) {
 
 	window_cursor_to(vis->win->win, c->range.start);
 	editor_draw(vis);
+}
+
+static void op_repeat_insert(OperatorContext *c) {
+	if (!buffer_repeat.len)
+		return;
+	editor_insert(vis, c->pos, buffer_repeat.data, buffer_repeat.len);
+	window_cursor_to(vis->win->win, c->pos + buffer_repeat.len);
+}
+
+static void op_repeat_replace(OperatorContext *c) {
+	if (!buffer_repeat.len)
+		return;
+
+	size_t chars = 0;
+	for (size_t i = 0; i < buffer_repeat.len; i++) {
+		if (ISUTF8(buffer_repeat.data[i]))
+			chars++;
+	}
+
+	Iterator it = text_iterator_get(vis->win->text, c->pos);
+	while (chars-- > 0)
+		text_iterator_char_next(&it, NULL);
+	editor_delete(vis, c->pos, it.pos - c->pos);
+	op_repeat_insert(c);
 }
 
 /** movement implementations of type: size_t (*move)(const Arg*) */
