@@ -1,7 +1,7 @@
 Why another text editor?
 ========================
 
-It all started when I was recently reading the excellent Project Oberon[0],
+It all started when I was recently reading the excellent [Project Oberon](http://www.inf.ethz.ch/personal/wirth/ProjectOberon/),
 where in chapter 5 a data structure for managing text is introduced.
 I found this rather appealing and wanted to see how it works in practice.
 
@@ -10,8 +10,8 @@ might as well build something which could (at least in the long run)
 replace my current editor of choice: vim.
 
 This should be accomplished by a reasonable amount of clean (your mileage
-may vary), modern and legacy free C code. Certainly not an old, 500'000
-lines[1] long, #ifdef cluttered mess which tries to run on all broken
+may vary), modern and legacy free C code. Certainly not an old, [500'000
+lines long](https://www.openhub.net/p/vim), #ifdef cluttered mess which tries to run on all broken
 systems ever envisioned by mankind.
 
 Admittedly vim has a lot of functionally, most of which I don't use. I
@@ -244,7 +244,7 @@ effort spent on the piece table.
 The long term solution is to write our own regular expression engine or
 modify an existing one to make use of the iterator API. This would allow
 efficient search without having to double memory consumption. At some
-point I will have to (re)read the papers of Russ Cox[2] and Rob Pike
+point I will have to (re)read the [papers](http://swtch.com/~rsc/regexp/) of Russ Cox and Rob Pike
 about this topic.
 
 Command-Prompt
@@ -299,8 +299,8 @@ the mode and when there was an unmatched key.
 vis a vim like frontend
 -----------------------
 
-The vis frontend uses a similar approach to the one suggested by Markus
-Teich[3] but it turns out to be a bit more complicated. For starters
+The vis frontend uses a similar approach to the one suggested by [Markus
+Teich](http://lists.suckless.org/dev/1408/23219.html) but it turns out to be a bit more complicated. For starters
 there are movements and commands which consist of more than one key/
 character. As a consequence the key lookup is not a simple array
 dereference but instead the arrays are looped over until a match
@@ -536,8 +536,3 @@ As always, comments and patches welcome!
 
 Cheers,
 Marc
-
-[0] http://www.inf.ethz.ch/personal/wirth/ProjectOberon/
-[1] https://www.openhub.net/p/vim
-[2] http://swtch.com/~rsc/regexp/
-[3] http://lists.suckless.org/dev/1408/23219.html
