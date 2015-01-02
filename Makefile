@@ -46,7 +46,7 @@ dist: clean
 
 install: vis
 	@echo stripping executable
-	@strip -s vis
+	@${STRIP} vis
 	@echo installing executable file to ${DESTDIR}${PREFIX}/bin
 	@mkdir -p ${DESTDIR}${PREFIX}/bin
 	@cp -f vis ${DESTDIR}${PREFIX}/bin
