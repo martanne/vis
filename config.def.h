@@ -568,9 +568,6 @@ static void vis_mode_insert_idle(void) {
 
 static void vis_mode_insert_input(const char *str, size_t len) {
 	editor_insert_key(vis, str, len);
-	/* make sure we can repeat the last insert */
-	action_reset(&action_prev);
-	action_prev.op = &ops[OP_REPEAT_INSERT];
 }
 
 static KeyBinding vis_mode_replace[] = {

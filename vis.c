@@ -164,7 +164,6 @@ static void op_delete(OperatorContext *c);
 static void op_shift_right(OperatorContext *c);
 static void op_shift_left(OperatorContext *c);
 static void op_case_change(OperatorContext *c);
-static void op_repeat_insert(OperatorContext *c);
 static void op_join(OperatorContext *c);
 
 /* these can be passed as int argument to operator(&(const Arg){ .i = OP_*}) */
@@ -176,7 +175,6 @@ enum {
 	OP_SHIFT_RIGHT,
 	OP_SHIFT_LEFT,
 	OP_CASE_CHANGE,
-	OP_REPEAT_INSERT,
 	OP_JOIN,
 };
 
@@ -188,7 +186,6 @@ static Operator ops[] = {
 	[OP_SHIFT_RIGHT] = { op_shift_right },
 	[OP_SHIFT_LEFT]  = { op_shift_left  },
 	[OP_CASE_CHANGE] = { op_case_change },
-	[OP_REPEAT_INSERT] = { op_repeat_insert },
 	[OP_JOIN]          = { op_join          },
 };
 
@@ -643,13 +640,6 @@ static void op_case_change(OperatorContext *c) {
 	text_insert(vis->win->text, c->range.start, buf, len);
 	editor_draw(vis);
 	free(buf);
-}
-
-static void op_repeat_insert(OperatorContext *c) {
-	const char *content;
-	size_t len = text_last_insertion(vis->win->text, &content);
-	editor_insert(vis, c->pos, content, len);
-	window_cursor_to(vis->win->win, c->pos + len);
 }
 
 static void op_join(OperatorContext *c) {

@@ -50,8 +50,6 @@ void text_snapshot(Text*);
 size_t text_undo(Text*);
 size_t text_redo(Text*);
 
-size_t text_last_insertion(Text*, const char **content);
-
 size_t text_pos_by_lineno(Text*, size_t lineno);
 size_t text_lineno_by_pos(Text*, size_t pos);
 
