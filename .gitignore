@@ -1,0 +1,6 @@
+config.h
+*.swo
+*.swp
+*.o
+nano
+vis
