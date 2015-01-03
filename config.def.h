@@ -79,7 +79,7 @@ static void statusbar(EditorWin *win) {
 	          text_modified(win->text) ? "[+]" : "",
 	          vis->recording ? "recording": "");
 	char buf[win->width + 1];
-	int len = snprintf(buf, win->width, "%d, %d", line, col);
+	int len = snprintf(buf, win->width, "%zd, %zd", line, col);
 	if (len > 0) {
 		buf[len] = '\0';
 		mvwaddstr(win->statuswin, 0, win->width - len - 1, buf);
