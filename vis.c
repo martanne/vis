@@ -484,6 +484,8 @@ static void quit(const Arg *arg);
 static bool cmd_set(Filerange*, const char *argv[]);
 /* goto line indicated by argv[0] */
 static bool cmd_gotoline(Filerange*, const char *argv[]);
+/* goto line indicated by argv[0], relative to the cursor */
+static bool cmd_gotoline_rel(Filerange*, const char *argv[]);
 /* for each argument create a new window and open the corresponding file */
 static bool cmd_open(Filerange*, const char *argv[]);
 /* close current window (discard modifications if argv[0] contains '!')
@@ -1324,6 +1326,20 @@ static bool cmd_set(Filerange *range, const char *argv[]) {
 static bool cmd_gotoline(Filerange *range, const char *argv[]) {
 	action.count = strtoul(argv[0], NULL, 10);
 	movement(&(const Arg){ .i = action.count <= 1 ? MOVE_FILE_BEGIN : MOVE_LINE });
+	return true;
+}
+
+static bool cmd_gotoline_rel(Filerange *range, const char *argv[]) {
+	size_t lineno;
+
+	window_cursor_getxy(vis->win->win, &lineno, NULL);
+
+	action.count = lineno + strtol(argv[0], NULL, 10);
+	/* Clamp the value here as it's going to get converted to a size_t later */
+	if (action.count < 0)
+		action.count = 0;
+	movement(&(const Arg){ .i = MOVE_LINE });
+
 	return true;
 }
 
