@@ -63,6 +63,7 @@ static Command cmds[] = {
 	{ "^v(split)?$",     cmd_vsplit,     false },
 	{ "^wq!?$",          cmd_wq,         false },
 	{ "^w(rite)?$",      cmd_write,      false },
+	{ "^x(it)?!?$",      cmd_xit,        false },
 	{ /* array terminator */                   },
 };
 

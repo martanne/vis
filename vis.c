@@ -509,6 +509,8 @@ static bool cmd_new(Filerange*, const char *argv[]);
 static bool cmd_vnew(Filerange*, const char *argv[]);
 /* save the file displayed in the current window and close it */
 static bool cmd_wq(Filerange*, const char *argv[]);
+/* save the file displayed in the current window if it was changed, then close the window */
+static bool cmd_xit(Filerange*, const char *argv[]);
 /* save the file displayed in the current window to the name given.
  * do not change internal filname association. further :w commands
  * without arguments will still write to the old filename */
@@ -1378,6 +1380,15 @@ static bool cmd_quit(Filerange *range, const char *argv[]) {
 	if (!vis->windows)
 		quit(NULL);
 	return true;
+}
+
+static bool cmd_xit(Filerange *range, const char *argv[]) {
+	if (text_modified(vis->win->text) && !cmd_write(range, argv)) {
+		bool force = strchr(argv[0], '!') != NULL;
+		if (!force)
+			return false;
+	}
+	return cmd_quit(range, argv);
 }
 
 static bool cmd_bdelete(Filerange *range, const char *argv[]) {
