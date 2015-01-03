@@ -1115,6 +1115,45 @@ static Syntax syntaxes[] = {{
 		&colors[COLOR_SYNTAX6],
 	}}
 },{
+	.name = "python",
+	.file = "\\.py$",
+	.rules = {{
+		"(#.*$|#$)",
+		&colors[COLOR_COMMENT],
+	},{
+		"(\"\"\".*\"\"\")",
+		&colors[COLOR_COMMENT],
+		true, /* multiline */
+	},{
+		B"(and|class|def|not|or|return|yield|is)"B,
+		&colors[COLOR_KEYWORD2],
+	},{
+		B"(from|import|as)"B,
+		&colors[COLOR_KEYWORD],
+	},{
+		B"(if|elif|else|while|for|in|try|with|except|in|break|continue|finally)"B,
+		&colors[COLOR_CONTROL],
+	},{
+		B"(int|str|float|unicode|int|bool|chr|type|list|dict|tuple)",
+		&colors[COLOR_DATATYPE],
+	},{
+		"(True|False|None)",
+		&colors[COLOR_LITERAL],
+	},{
+		B"[0-9]+\\.[0-9]+([eE][-+]?[0-9]+)?"B,
+		&colors[COLOR_LITERAL],
+	},{
+		B"[0-9]+"B"|"B"0[xX][0-9a-fA-F]+"B"|"B"0[oO][0-7]+"B,
+		&colors[COLOR_LITERAL],
+	},{
+		"(\"(\\\\.|[^\"])*\"|\'(\\\\.|[^\'])*\')",
+		&colors[COLOR_STRING],
+		false, /* multiline */  
+	},{
+		"(__init__|__str__|__unicode__|__gt__|__lt__|__eq__|__enter__|__exit__|__next__|__getattr__|__getitem__|__setitem__|__call__|__contains__|__iter__|__bool__|__all__|__name__)",
+		&colors[COLOR_SYNTAX2],
+	}}
+},{
 	.name = "haskell",
 	.file = "\\.hs$",
 	.rules = {{
