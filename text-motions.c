@@ -22,7 +22,7 @@
 int is_word_boundry(int c) {
 	return ISASCII(c) && !(('0' <= c && c <= '9') ||
 	         ('a' <= c && c <= 'z') ||
-	         ('A' <= c && c <= 'Z'));
+	         ('A' <= c && c <= 'Z') || c == '_');
 }
 
 size_t text_begin(Text *txt, size_t pos) {
