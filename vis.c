@@ -1127,9 +1127,14 @@ static void put(const Arg *arg) {
 }
 
 static void openline(const Arg *arg) {
-	movement(&(const Arg){ .i = arg->i == MOVE_LINE_NEXT ?
-	                       MOVE_LINE_END : MOVE_LINE_PREV });
-	insert_newline(NULL);
+	if (arg->i == MOVE_LINE_NEXT) {
+		movement(&(const Arg){ .i = MOVE_LINE_END });
+		insert_newline(NULL);
+	} else {
+		movement(&(const Arg){ .i = MOVE_LINE_BEGIN });
+		insert_newline(NULL);
+		movement(&(const Arg){ .i = MOVE_LINE_PREV });
+	}
 	switchmode(&(const Arg){ .i = VIS_MODE_INSERT });
 }
 
