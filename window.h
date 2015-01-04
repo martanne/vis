@@ -8,6 +8,11 @@
 
 typedef struct Win Win;
 
+typedef struct {
+	size_t line;
+	size_t col;
+} CursorPos;
+
 Win *window_new(Text*);
 /* change associated text displayed in this window */
 void window_reload(Win*, Text*);
@@ -50,7 +55,7 @@ size_t window_line_goto(Win*, int n);
 /* get cursor position in bytes from start of the file */
 size_t window_cursor_get(Win*);
 /* get cursor position in terms of screen coordinates */
-void window_cursor_getxy(Win*, size_t *lineno, size_t *col);
+CursorPos window_cursor_getpos(Win*);
 /* moves window viewport in direction until pos is visible. should only be
  * used for short distances between current cursor position and destination */
 void window_scroll_to(Win*, size_t pos);

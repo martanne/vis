@@ -69,9 +69,8 @@ static Command cmds[] = {
 
 /* draw a statubar, do whatever you want with win->statuswin curses window */
 static void statusbar(EditorWin *win) {
-	size_t line, col;
 	bool focused = vis->win == win || vis->prompt->editor == win;
-	window_cursor_getxy(win->win, &line, &col);
+	CursorPos pos = window_cursor_getpos(win->win);
 	wattrset(win->statuswin, focused ? A_REVERSE|A_BOLD : A_REVERSE);
 	mvwhline(win->statuswin, 0, 0, ' ', win->width);
 	mvwprintw(win->statuswin, 0, 0, "%s %s %s %s",
@@ -80,7 +79,7 @@ static void statusbar(EditorWin *win) {
 	          text_modified(win->text) ? "[+]" : "",
 	          vis->recording ? "recording": "");
 	char buf[win->width + 1];
-	int len = snprintf(buf, win->width, "%zd, %zd", line, col);
+	int len = snprintf(buf, win->width, "%zd, %zd", pos.line, pos.col);
 	if (len > 0) {
 		buf[len] = '\0';
 		mvwaddstr(win->statuswin, 0, win->width - len - 1, buf);

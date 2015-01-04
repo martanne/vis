@@ -296,16 +296,16 @@ static bool window_addch(Win *win, Char *c) {
 	}
 }
 
-void window_cursor_getxy(Win *win, size_t *lineno, size_t *col) {
+CursorPos window_cursor_getpos(Win *win) {
 	Cursor *cursor = &win->cursor;
 	Line *line = cursor->line;
-	*lineno = line->lineno;
-	*col = cursor->col;
-	while (line->prev && line->prev->lineno == *lineno) {
+	CursorPos pos = { .line = line->lineno, .col = cursor->col };
+	while (line->prev && line->prev->lineno == pos.line) {
 		line = line->prev;
-		*col += line->width;
+		pos.col += line->width;
 	}
-	*col += 1;
+	pos.col++;
+	return pos;
 }
 
 /* place the cursor according to the screen coordinates in win->{row,col} and
