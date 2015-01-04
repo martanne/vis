@@ -444,11 +444,11 @@ and their current support in vis.
        set display width of a tab and number of spaces to use if
        expandtab is enabled
 
-     expandtab  (1|yes|true)|(0|no|false)
+     expandtab  (yes|no)
 
        whether typed in tabs should be expanded to tabwidth spaces
 
-     number     (1|0)
+     number     (yes|no)
 
        whether line numbers are printed alongside the file content
 
