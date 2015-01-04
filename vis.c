@@ -17,6 +17,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
+#include <strings.h>
 #include <signal.h>
 #include <errno.h>
 #include <fcntl.h>
@@ -1284,40 +1285,133 @@ static void switchmode_to(Mode *new_mode) {
 
 /** ':'-command implementations */
 
+/* parse human-readable boolean value in s. If successful, store the result in
+ * outval and return true. Else return false and leave outval alone. */
+static bool parse_bool(const char *s, bool *outval) {
+	for (const char **t = (const char*[]){"1", "true", "yes", "on", NULL}; *t; t++) {
+		if (!strcasecmp(s, *t)) {
+			*outval = true;
+			return true;
+		}
+	}
+	for (const char **f = (const char*[]){"0", "false", "no", "off", NULL}; *f; f++) {
+		if (!strcasecmp(s, *f)) {
+			*outval = false;
+			return true;
+		}
+	}
+	return false;
+}
+
 static bool cmd_set(Filerange *range, const char *argv[]) {
-	if (!argv[2]) {
-		editor_info_show(vis, "Expecting: set option value");
+
+	typedef struct {
+		const char *name;
+		enum {
+			OPTION_TYPE_STRING,
+			OPTION_TYPE_BOOL,
+			OPTION_TYPE_NUMBER,
+		} type;
+		regex_t regex;
+	} OptionDef;
+
+	enum {
+		OPTION_EXPANDTAB,
+		OPTION_TABWIDTH,
+		OPTION_SYNTAX,
+		OPTION_NUMBER,
+	};
+
+	static OptionDef options[] = {
+		[OPTION_EXPANDTAB] = { "^(expandtab|et)$", OPTION_TYPE_BOOL   },
+		[OPTION_TABWIDTH]  = { "^(tabwidth|tw)$",  OPTION_TYPE_NUMBER },
+		[OPTION_SYNTAX]    = { "^syntax$",         OPTION_TYPE_STRING },
+		[OPTION_NUMBER]    = { "^(numbers?|nu)$",  OPTION_TYPE_BOOL   },
+	};
+
+	static bool init = false;
+
+	if (!init) {
+		for (int i = 0; i < LENGTH(options); i++)
+			regcomp(&options[i].regex, options[i].name, REG_EXTENDED|REG_ICASE);
+		init = true;
+	}
+
+	if (!argv[1]) {
+		editor_info_show(vis, "Expecting: set option [value]");
 		return false;
 	}
 
-	if (!strcmp("tabwidth", argv[1])) {
-		editor_tabwidth_set(vis, strtoul(argv[2], NULL, 10));
-	} else if (!strcmp("expandtab", argv[1])) {
-		switch (argv[2][0]) {
-		case '1': case 't': /* true */ case 'y': /* yes */
-			vis->expandtab = true;
+	int opt = -1; Arg arg; bool invert = false;
+
+	for (int i = 0; i < LENGTH(options); i++) {
+		if (!regexec(&options[i].regex, argv[1], 0, NULL, 0)) {
+			opt = i;
 			break;
-		case '0': case 'f': /* false */ case 'n': /* no */
-			vis->expandtab = false;
+		}
+		if (options[i].type == OPTION_TYPE_BOOL && !strncasecmp(argv[1], "no", 2) &&
+		    !regexec(&options[i].regex, argv[1]+2, 0, NULL, 0)) {
+			opt = i;
+			invert = true;
 			break;
-		default:
-			editor_info_show(vis, "Expecting: set expandtab [0|1]");
+		}
+	}
+
+	if (opt == -1) {
+		editor_info_show(vis, "Unknown option: `%s'", argv[1]);
+		return false;
+	}
+
+	switch (options[opt].type) {
+	case OPTION_TYPE_STRING:
+		if (!argv[2]) {
+			editor_info_show(vis, "Expecting string option value");
 			return false;
 		}
-	} else if (!strcmp("syntax", argv[1])) {
+		break;
+	case OPTION_TYPE_BOOL:
+		if (!argv[2]) {
+			arg.b = true;
+		} else if (!parse_bool(argv[2], &arg.b)) {
+			editor_info_show(vis, "Expecting boolean option value not: `%s'", argv[2]);
+			return false;
+		}
+		if (invert)
+			arg.b = !arg.b;
+		break;
+	case OPTION_TYPE_NUMBER:
+		if (!argv[2]) {
+			editor_info_show(vis, "Expecting number");
+			return false;
+		}
+		/* TODO: error checking? long type */
+		arg.i = strtoul(argv[2], NULL, 10);
+		break;
+	}
+
+	switch (opt) {
+	case OPTION_EXPANDTAB:
+		vis->expandtab = arg.b;
+		break;
+	case OPTION_TABWIDTH:
+		editor_tabwidth_set(vis, arg.i);
+		break;
+	case OPTION_SYNTAX:
 		for (Syntax *syntax = syntaxes; syntax && syntax->name; syntax++) {
-			if (!strcmp(syntax->name, argv[2])) {
+			if (!strcasecmp(syntax->name, argv[2])) {
 				window_syntax_set(vis->win->win, syntax);
 				return true;
 			}
 		}
-		window_syntax_set(vis->win->win, NULL);
-		return false;
-	} else if (!strcmp("number", argv[1])) {
-		window_line_numbers_show(vis->win->win, argv[2][0] == '1');
-	} else {
-		editor_info_show(vis, "Unknown option: `%s'", argv[1]);
-		return false;
+
+		if (parse_bool(argv[2], &arg.b) && !arg.b)
+			window_syntax_set(vis->win->win, NULL);
+		else
+			editor_info_show(vis, "Unknown syntax definition: `%s'", argv[2]);
+		break;
+	case OPTION_NUMBER:
+		window_line_numbers_show(vis->win->win, arg.b);
+		break;
 	}
 
 	return true;
