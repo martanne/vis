@@ -756,7 +756,7 @@ Text *text_load_fd(int fd) {
 }
 
 static void print_piece(Piece *p) {
-	fprintf(stderr, "index: %d\tnext: %d\tprev: %d\t len: %d\t data: %p\n", p->index,
+	fprintf(stderr, "index: %d\tnext: %d\tprev: %d\t len: %zu\t data: %p\n", p->index,
 		p->next ? p->next->index : -1,
 		p->prev ? p->prev->index : -1,
 		p->len, p->data);

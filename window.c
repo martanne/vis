@@ -108,7 +108,7 @@ void window_selection_clear(Win *win) {
 static int window_numbers_width(Win *win) {
 	if (!win->winnum)
 		return 0;
-	return snprintf(NULL, 0, "%d", win->topline->lineno + win->height - 1) + 1;
+	return snprintf(NULL, 0, "%zu", win->topline->lineno + win->height - 1) + 1;
 }
 
 static void window_numbers_draw(Win *win) {
