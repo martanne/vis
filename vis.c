@@ -483,8 +483,6 @@ static void quit(const Arg *arg);
 /** commands to enter at the ':'-prompt */
 /* set various runtime options */
 static bool cmd_set(Filerange*, const char *argv[]);
-/* goto line indicated by argv[0] */
-static bool cmd_gotoline(Filerange*, const char *argv[]);
 /* for each argument create a new window and open the corresponding file */
 static bool cmd_open(Filerange*, const char *argv[]);
 /* close current window (discard modifications if argv[0] contains '!')
@@ -1422,12 +1420,6 @@ static bool cmd_set(Filerange *range, const char *argv[]) {
 	return true;
 }
 
-static bool cmd_gotoline(Filerange *range, const char *argv[]) {
-	action.count = strtoul(argv[0], NULL, 10);
-	movement(&(const Arg){ .i = action.count <= 1 ? MOVE_FILE_BEGIN : MOVE_LINE });
-	return true;
-}
-
 static bool cmd_open(Filerange *range, const char *argv[]) {
 	for (const char **file = &argv[1]; *file; file++) {
 		if (!editor_window_new(vis, *file)) {
@@ -1677,10 +1669,11 @@ static Filepos parse_pos(char **cmd) {
 
 static Filerange parse_range(char **cmd) {
 	Text *txt = vis->win->text;
-	Filerange r = (Filerange){ .start = 0, .end = text_size(txt) };
-	char *start = *cmd;
+	Filerange r = text_range_empty();
 	switch (**cmd) {
 	case '%':
+		r.start = 0;
+		r.end = text_size(txt);
 		(*cmd)++;
 		break;
 	case '*':
@@ -1690,10 +1683,8 @@ static Filerange parse_range(char **cmd) {
 		break;
 	default:
 		r.start = parse_pos(cmd);
-		if (**cmd != ',') {
-			*cmd = start;
-			return text_range_empty();
-		}
+		if (**cmd != ',')
+			return r;
 		(*cmd)++;
 		r.end = parse_pos(cmd);
 		break;
@@ -1713,6 +1704,12 @@ static bool exec_cmdline_command(char *cmdline) {
 	char *cmdstart = cmdline;
 	Filerange range = parse_range(&cmdstart);
 	if (!text_range_valid(&range)) {
+		/* if only one position was given, jump to it */
+		if (range.start != EPOS && !*cmdstart) {
+			window_cursor_to(vis->win->win, range.start);
+			return true;
+		}
+
 		if (cmdstart != cmdline) {
 			editor_info_show(vis, "Invalid range\n");
 			return false;

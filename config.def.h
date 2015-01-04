@@ -47,7 +47,6 @@ enum {
 
 /* command recognized at the ':'-prompt. tested top to bottom, first match wins. */
 static Command cmds[] = {
-	{ "^[0-9]+$",        cmd_gotoline,   false },
 	{ "^bd(elete)?!?$",  cmd_bdelete,    false },
 	{ "^e(dit)?!?$",     cmd_edit,       false },
 	{ "^new$",           cmd_new,        false },
