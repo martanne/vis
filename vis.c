@@ -1658,6 +1658,16 @@ static Filepos parse_pos(char **cmd) {
 		}
 		text_regex_free(regex);
 		break;
+	case '+':
+	case '-':
+	{
+		CursorPos curspos = window_cursor_getpos(win);
+		long long line = curspos.line + strtoll(*cmd, cmd, 10);
+		if (line < 0)
+			line = 0;
+		pos = text_pos_by_lineno(txt, line);
+		break;
+	}
 	default:
 		if ('0' <= **cmd && **cmd <= '9')
 			pos = text_pos_by_lineno(txt, strtoul(*cmd, cmd, 10));
