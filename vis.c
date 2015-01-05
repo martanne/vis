@@ -1113,9 +1113,28 @@ static void insert_tab(const Arg *arg) {
 	return insert(&(const Arg){ .s = expand_tab() });
 }
 
+static void copy_indent_from_previous_line(Win *win, Text *text) {
+	size_t pos = window_cursor_get(win);
+	size_t prev_line = text_line_prev(text, pos);
+	if (pos == prev_line)
+		return;
+	size_t begin = text_line_begin(text, prev_line);
+	size_t start = text_line_start(text, begin);
+	size_t len = start-begin;
+	char *buf = malloc(len+1);
+	if (!buf)
+		return;
+	len = text_bytes_get(text, begin, len, buf);
+	editor_insert_key(vis, buf, len);
+	free(buf);
+}
+
 static void insert_newline(const Arg *arg) {
 	insert(&(const Arg){ .s =
 	       text_newlines_crnl(vis->win->text) ? "\r\n" : "\n" });
+
+	if (vis->autoindent)
+		copy_indent_from_previous_line(vis->win->win, vis->win->text);
 }
 
 static void put(const Arg *arg) {
@@ -1319,6 +1338,7 @@ static bool cmd_set(Filerange *range, const char *argv[]) {
 	} OptionDef;
 
 	enum {
+		OPTION_AUTOINDENT,
 		OPTION_EXPANDTAB,
 		OPTION_TABWIDTH,
 		OPTION_SYNTAX,
@@ -1326,10 +1346,11 @@ static bool cmd_set(Filerange *range, const char *argv[]) {
 	};
 
 	static OptionDef options[] = {
-		[OPTION_EXPANDTAB] = { "^(expandtab|et)$", OPTION_TYPE_BOOL   },
-		[OPTION_TABWIDTH]  = { "^(tabwidth|tw)$",  OPTION_TYPE_NUMBER },
-		[OPTION_SYNTAX]    = { "^syntax$",         OPTION_TYPE_STRING },
-		[OPTION_NUMBER]    = { "^(numbers?|nu)$",  OPTION_TYPE_BOOL   },
+		[OPTION_AUTOINDENT] = { "^(autoindent|ai)$", OPTION_TYPE_BOOL   },
+		[OPTION_EXPANDTAB]  = { "^(expandtab|et)$",  OPTION_TYPE_BOOL   },
+		[OPTION_TABWIDTH]   = { "^(tabwidth|tw)$",   OPTION_TYPE_NUMBER },
+		[OPTION_SYNTAX]     = { "^syntax$",          OPTION_TYPE_STRING },
+		[OPTION_NUMBER]     = { "^(numbers?|nu)$",   OPTION_TYPE_BOOL   },
 	};
 
 	static bool init = false;
@@ -1395,6 +1416,9 @@ static bool cmd_set(Filerange *range, const char *argv[]) {
 	switch (opt) {
 	case OPTION_EXPANDTAB:
 		vis->expandtab = arg.b;
+		break;
+	case OPTION_AUTOINDENT:
+		vis->autoindent = arg.b;
 		break;
 	case OPTION_TABWIDTH:
 		editor_tabwidth_set(vis, arg.i);

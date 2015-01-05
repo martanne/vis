@@ -448,6 +448,11 @@ and their current support in vis.
 
        whether typed in tabs should be expanded to tabwidth spaces
 
+     autoindent (yes|no)
+
+       replicate spaces and tabs at the beginning of the line when
+       starting a new line.
+
      number     (yes|no)
 
        whether line numbers are printed alongside the file content

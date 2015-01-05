@@ -108,6 +108,7 @@ struct Editor {
 	void (*statusbar)(EditorWin*);    /* configurable user hook to draw statusbar */
 	int tabwidth;                     /* how many spaces should be used to display a tab */
 	bool expandtab;                   /* whether typed tabs should be converted to spaces */
+	bool autoindent;                  /* whether indentation should be copied from previous line on newline */
 };
 
 Editor *editor_new(int width, int height);
