@@ -30,6 +30,7 @@
 #include <sys/mman.h>
 
 #include "editor.h"
+#include "indent.h"
 #include "text-motions.h"
 #include "text-objects.h"
 #include "util.h"
@@ -1141,8 +1142,12 @@ static void insert_newline(const Arg *arg) {
 	insert(&(const Arg){ .s =
 	       text_newlines_crnl(vis->win->text) ? "\r\n" : "\n" });
 
-	if (vis->autoindent)
-		copy_indent_from_previous_line(vis->win->win, vis->win->text);
+	if (vis->insert_indent != NULL) {
+		size_t pos = window_cursor_get(vis->win->win);
+		pos = vis->insert_indent(vis->win->text, pos);
+		window_cursor_to(vis->win->win, pos);
+		editor_draw(vis);
+	}
 }
 
 static void put(const Arg *arg) {
@@ -1426,7 +1431,7 @@ static bool cmd_set(Filerange *range, const char *argv[]) {
 		vis->expandtab = arg.b;
 		break;
 	case OPTION_AUTOINDENT:
-		vis->autoindent = arg.b;
+		vis->insert_indent = arg.b ? autoindent : NULL;
 		break;
 	case OPTION_TABWIDTH:
 		editor_tabwidth_set(vis, arg.i);

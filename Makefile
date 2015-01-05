@@ -1,6 +1,6 @@
 include config.mk
 
-SRC = editor.c window.c text.c text-motions.c text-objects.c register.c buffer.c ring-buffer.c
+SRC = editor.c window.c text.c text-motions.c text-objects.c register.c buffer.c ring-buffer.c indent.c
 HDR := ${SRC:.c=.h} macro.h syntax.h util.h config.def.h
 SRC += vis.c
 OBJ = ${SRC:.c=.o}
