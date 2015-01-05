@@ -1393,6 +1393,7 @@ static bool cmd_set(Filerange *range, const char *argv[]) {
 
 	enum {
 		OPTION_AUTOINDENT,
+		OPTION_CINDENT,
 		OPTION_EXPANDTAB,
 		OPTION_TABWIDTH,
 		OPTION_SYNTAX,
@@ -1401,6 +1402,7 @@ static bool cmd_set(Filerange *range, const char *argv[]) {
 
 	static OptionDef options[] = {
 		[OPTION_AUTOINDENT] = { "^(autoindent|ai)$", OPTION_TYPE_BOOL   },
+		[OPTION_CINDENT]    = { "^(cindent|ci)$",    OPTION_TYPE_BOOL   },
 		[OPTION_EXPANDTAB]  = { "^(expandtab|et)$",  OPTION_TYPE_BOOL   },
 		[OPTION_TABWIDTH]   = { "^(tabwidth|tw)$",   OPTION_TYPE_NUMBER },
 		[OPTION_SYNTAX]     = { "^syntax$",          OPTION_TYPE_STRING },
@@ -1473,6 +1475,9 @@ static bool cmd_set(Filerange *range, const char *argv[]) {
 		break;
 	case OPTION_AUTOINDENT:
 		vis->insert_indent = arg.b ? autoindent : NULL;
+		break;
+	case OPTION_CINDENT:
+		vis->insert_indent = arg.b ? cindent : NULL;
 		break;
 	case OPTION_TABWIDTH:
 		editor_tabwidth_set(vis, arg.i);
