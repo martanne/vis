@@ -22,7 +22,15 @@ size_t copy_indent_from_line(Text *text, size_t pos, size_t line) {
 	return insert_copy_of_range(text, pos, &indent_range);
 }
 
-size_t autoindent(Text *text, size_t line_begin) {
+size_t delete_indent(Text *text, size_t line_begin) {
+	size_t line_start = text_line_start(text, line_begin);
+	size_t len = line_start - line_begin;
+	text_delete(text, line_begin, len);
+	return line_start;
+}
+
+size_t autoindent(Text *text, size_t line_begin, bool new_line) {
+	(void)new_line;
 	size_t prev_line = text_line_prev(text, line_begin);
 	return copy_indent_from_line(text, line_begin, prev_line);
 }

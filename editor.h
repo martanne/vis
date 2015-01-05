@@ -112,7 +112,8 @@ struct Editor {
 	Regex *search_pattern;            /* last used search pattern */
 	void (*windows_arrange)(Editor*); /* current layout which places the windows */
 	void (*statusbar)(EditorWin*);    /* configurable user hook to draw statusbar */
-	size_t (*insert_indent)(Text *text, size_t line_begin); /* user hook that inserts indentation for the current line */
+	/* user hook that inserts indentation for the current line */
+	size_t (*insert_indent)(Text *text, size_t line_begin, bool new_line);
 	int tabwidth;                     /* how many spaces should be used to display a tab */
 	bool expandtab;                   /* whether typed tabs should be converted to spaces */
 };

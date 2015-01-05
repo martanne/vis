@@ -218,6 +218,7 @@ static KeyBinding vis_operators[] = {
 	{ { NONE('p')               }, put,           { .i = +1              } },
 	{ { NONE('P')               }, put,           { .i = -1              } },
 	{ { NONE('>')               }, operator,      { .i = OP_SHIFT_RIGHT  } },
+	{ { NONE('=')               }, operator,      { .i = OP_REINDENT     } },
 	{ { NONE('<')               }, operator,      { .i = OP_SHIFT_LEFT   } },
 	{ { NONE('g'), NONE('U')    }, changecase,    { .i = +1              } },
 	{ { NONE('~')               }, changecase,    { .i =  0              } },

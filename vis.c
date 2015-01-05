@@ -170,6 +170,7 @@ static void op_case_change(OperatorContext *c);
 static void op_join(OperatorContext *c);
 static void op_repeat_insert(OperatorContext *c);
 static void op_repeat_replace(OperatorContext *c);
+static void op_reindent(OperatorContext *c);
 
 /* these can be passed as int argument to operator(&(const Arg){ .i = OP_*}) */
 enum {
@@ -177,6 +178,7 @@ enum {
 	OP_CHANGE,
 	OP_YANK,
 	OP_PUT,
+	OP_REINDENT,
 	OP_SHIFT_RIGHT,
 	OP_SHIFT_LEFT,
 	OP_CASE_CHANGE,
@@ -190,6 +192,7 @@ static Operator ops[] = {
 	[OP_CHANGE]      = { op_change      },
 	[OP_YANK]        = { op_yank        },
 	[OP_PUT]         = { op_put         },
+	[OP_REINDENT]    = { op_reindent    },
 	[OP_SHIFT_RIGHT] = { op_shift_right },
 	[OP_SHIFT_LEFT]  = { op_shift_left  },
 	[OP_CASE_CHANGE] = { op_case_change },
@@ -701,6 +704,32 @@ static void op_repeat_replace(OperatorContext *c) {
 	op_repeat_insert(c);
 }
 
+static void do_reindent_line(Text *text, size_t line_begin, size_t *cursor) {
+	size_t prev_start = delete_indent(text, line_begin);
+	size_t new_start = vis->insert_indent(text, line_begin, false);
+	if (*cursor >= prev_start)
+		*cursor = *cursor - prev_start + new_start;
+}
+
+static void op_reindent(OperatorContext *c) {
+	if (vis->insert_indent == NULL)
+		return;
+
+	Text *text = vis->win->text;
+	size_t pos = text_line_begin(text, c->range.start);
+	size_t cursor = window_cursor_get(vis->win->win);
+	do {
+		do_reindent_line(text, pos, &cursor);
+		size_t next_line = text_line_next(text, pos);
+		if (next_line == pos)
+			break;
+		pos = next_line;
+	} while (pos <= c->range.end);
+
+	window_cursor_to(vis->win->win, cursor);
+	editor_draw(vis);
+}
+
 /** movement implementations of type: size_t (*move)(const Arg*) */
 
 static char *get_word_under_cursor() {
@@ -1144,7 +1173,7 @@ static void insert_newline(const Arg *arg) {
 
 	if (vis->insert_indent != NULL) {
 		size_t pos = window_cursor_get(vis->win->win);
-		pos = vis->insert_indent(vis->win->text, pos);
+		pos = vis->insert_indent(vis->win->text, pos, true);
 		window_cursor_to(vis->win->win, pos);
 		editor_draw(vis);
 	}
