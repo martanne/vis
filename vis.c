@@ -627,7 +627,7 @@ static void op_shift_left(OperatorContext *c) {
 
 static void op_case_change(OperatorContext *c) {
 	size_t len = c->range.end - c->range.start;
-	char *buf = malloc(len+1);
+	char *buf = malloc(len);
 	if (!buf)
 		return;
 	len = text_bytes_get(vis->win->text, c->range.start, len, buf);
@@ -1121,7 +1121,7 @@ static void copy_indent_from_previous_line(Win *win, Text *text) {
 	size_t begin = text_line_begin(text, prev_line);
 	size_t start = text_line_start(text, begin);
 	size_t len = start-begin;
-	char *buf = malloc(len+1);
+	char *buf = malloc(len);
 	if (!buf)
 		return;
 	len = text_bytes_get(text, begin, len, buf);
