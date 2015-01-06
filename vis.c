@@ -2106,6 +2106,7 @@ int main(int argc, char *argv[]) {
 			exec_command(cmd[0], cmd+1);
 	}
 
+	settings_apply(settings);
 	mainloop();
 	editor_free(vis);
 	endwin();
