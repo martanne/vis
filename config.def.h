@@ -557,6 +557,7 @@ static KeyBinding vis_mode_insert[] = {
 	{ { CONTROL('X'), CONTROL('Y') }, wslide,       { .i = +1                } },
 	{ { NONE('\t')              }, insert_tab,      { NULL                   } },
 	{ { KEY(END)                }, movement,        { .i = MOVE_LINE_END     } },
+	{ { CONTROL('F'),           }, reindent_line,   { NULL                   } },
 	{ /* empty last element, array terminator */                               },
 };
 

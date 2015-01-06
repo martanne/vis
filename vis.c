@@ -483,6 +483,8 @@ static void call(const Arg *arg);
 static void window(const Arg *arg);
 /* quit editor, discard all changes */
 static void quit(const Arg *arg);
+/* reindent current line */
+static void reindent_line(const Arg *arg);
 
 /** commands to enter at the ':'-prompt */
 /* set various runtime options */
@@ -709,6 +711,16 @@ static void do_reindent_line(Text *text, size_t line_begin, size_t *cursor) {
 	size_t new_start = vis->insert_indent(text, line_begin, false);
 	if (*cursor >= prev_start)
 		*cursor = *cursor - prev_start + new_start;
+}
+
+static void reindent_line(const Arg *arg) {
+	if (vis->insert_indent == NULL)
+		return;
+	size_t cursor = window_cursor_get(vis->win->win);
+	size_t line_begin = text_line_begin(vis->win->text, cursor);
+	do_reindent_line(vis->win->text, line_begin, &cursor);
+	window_cursor_to(vis->win->win, cursor);
+	editor_draw(vis);
 }
 
 static void op_reindent(OperatorContext *c) {
