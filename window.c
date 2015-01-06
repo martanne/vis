@@ -194,8 +194,8 @@ static bool window_addch(Win *win, Char *c) {
 	if (!win->line)
 		return false;
 
-	Cell empty = {};
 	int width;
+	Cell empty = { .len = 0, .data = '\0' };
 	size_t lineno = win->line->lineno;
 
 	switch (c->wchar) {

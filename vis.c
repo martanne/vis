@@ -1110,7 +1110,7 @@ static void insert(const Arg *arg) {
 }
 
 static void insert_tab(const Arg *arg) {
-	return insert(&(const Arg){ .s = expand_tab() });
+	insert(&(const Arg){ .s = expand_tab() });
 }
 
 static void copy_indent_from_previous_line(Win *win, Text *text) {
@@ -1946,7 +1946,7 @@ static Key getkey(void) {
 		int len = 1;
 		unsigned char keychar = keycode;
 		if (ISASCII(keychar)) len = 1;
-		else if (keychar == '\e' || keychar >= 0xFC) len = 6;
+		else if (keychar == 0x1B || keychar >= 0xFC) len = 6;
 		else if (keychar >= 0xF8) len = 5;
 		else if (keychar >= 0xF0) len = 4;
 		else if (keychar >= 0xE0) len = 3;

@@ -22,8 +22,6 @@
  * if no binding is found, mode->input(...) is called and the user entered
  * keys are passed as argument. this is used to change the document content.
  */
-static Mode vis_modes[];
-
 enum {
 	VIS_MODE_BASIC,
 	VIS_MODE_MARK,
@@ -43,7 +41,10 @@ enum {
 	VIS_MODE_INSERT_REGISTER,
 	VIS_MODE_INSERT,
 	VIS_MODE_REPLACE,
+	VIS_MODE_LAST,
 };
+
+static Mode vis_modes[VIS_MODE_LAST];
 
 /* command recognized at the ':'-prompt. tested top to bottom, first match wins. */
 static Command cmds[] = {
