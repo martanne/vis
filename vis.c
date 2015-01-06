@@ -408,8 +408,6 @@ static void put(const Arg *arg);
 static void openline(const Arg *arg);
 /* join lines from current cursor position to movement indicated by arg */
 static void join(const Arg *arg);
-/* create a new window with the filename arg->s */
-static void winnew(const Arg *arg);
 /* execute arg->s as if it was typed on command prompt */
 static void cmd(const Arg *arg);
 /* perform last action i.e. action_prev again */
@@ -1061,10 +1059,6 @@ static void quit(const Arg *arg) {
 	running = false;
 }
 
-static void winnew(const Arg *arg) {
-	vis_window_new(arg->s);
-}
-
 static void cmd(const Arg *arg) {
 	/* casting to char* is only save if arg->s contains no arguments */
 	exec_command(':', (char*)arg->s);
@@ -1447,6 +1441,8 @@ static bool cmd_set(Filerange *range, const char *argv[]) {
 }
 
 static bool cmd_open(Filerange *range, const char *argv[]) {
+	if (!argv[1])
+		return vis_window_new(NULL);
 	for (const char **file = &argv[1]; *file; file++) {
 		if (!vis_window_new(*file)) {
 			errno = 0;
