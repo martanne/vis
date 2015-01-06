@@ -521,6 +521,8 @@ static bool cmd_saveas(Filerange*, const char *argv[]);
 
 static void action_reset(Action *a);
 static void switchmode_to(Mode *new_mode);
+static bool vis_window_new(const char *file);
+static bool vis_window_split(EditorWin *win);
 
 #include "config.h"
 
@@ -1060,7 +1062,7 @@ static void quit(const Arg *arg) {
 }
 
 static void winnew(const Arg *arg) {
-	editor_window_new(vis, arg->s);
+	vis_window_new(arg->s);
 }
 
 static void cmd(const Arg *arg) {
@@ -1446,7 +1448,7 @@ static bool cmd_set(Filerange *range, const char *argv[]) {
 
 static bool cmd_open(Filerange *range, const char *argv[]) {
 	for (const char **file = &argv[1]; *file; file++) {
-		if (!editor_window_new(vis, *file)) {
+		if (!vis_window_new(*file)) {
 			errno = 0;
 			editor_info_show(vis, "Can't open `%s' %s", *file,
 			                 errno ? strerror(errno) : "");
@@ -1479,7 +1481,7 @@ static bool cmd_edit(Filerange *range, const char *argv[]) {
 	}
 	if (!argv[1])
 		return editor_window_reload(oldwin);
-	if (!editor_window_new(vis, argv[1]))
+	if (!vis_window_new(argv[1]))
 		return false;
 	editor_window_close(oldwin);
 	return true;
@@ -1574,7 +1576,7 @@ static bool cmd_substitute(Filerange *range, const char *argv[]) {
 static bool openfiles(const char **files) {
 	for (; *files; files++) {
 		errno = 0;
-		if (!editor_window_new(vis, *files)) {
+		if (!vis_window_new(*files)) {
 			editor_info_show(vis, "Could not open `%s' %s", *files,
 			                 errno ? strerror(errno) : "");
 			return false;
@@ -1586,7 +1588,7 @@ static bool openfiles(const char **files) {
 static bool cmd_split(Filerange *range, const char *argv[]) {
 	editor_windows_arrange_horizontal(vis);
 	if (!argv[1])
-		return editor_window_split(vis->win);
+		return vis_window_split(vis->win);
 	return openfiles(&argv[1]);
 }
 
@@ -1599,12 +1601,12 @@ static bool cmd_vsplit(Filerange *range, const char *argv[]) {
 
 static bool cmd_new(Filerange *range, const char *argv[]) {
 	editor_windows_arrange_horizontal(vis);
-	return editor_window_new(vis, NULL);
+	return vis_window_new(NULL);
 }
 
 static bool cmd_vnew(Filerange *range, const char *argv[]) {
 	editor_windows_arrange_vertical(vis);
-	return editor_window_new(vis, NULL);
+	return vis_window_new(NULL);
 }
 
 static bool cmd_wq(Filerange *range, const char *argv[]) {
@@ -1814,6 +1816,42 @@ static bool exec_command(char type, char *cmd) {
 	return false;
 }
 
+static void settings_apply(const char **settings) {
+	for (const char **opt = settings; opt && *opt; opt++) {
+		char *tmp = strdup(*opt);
+		if (tmp)
+			exec_cmdline_command(tmp);
+		free(tmp);
+	}
+}
+
+static bool vis_window_new(const char *file) {
+	if (!editor_window_new(vis, file))
+		return false;
+	Syntax *s = window_syntax_get(vis->win->win);
+	if (s)
+		settings_apply(s->settings);
+	return true;
+}
+
+static bool vis_window_new_fd(int fd) {
+	if (!editor_window_new_fd(vis, fd))
+		return false;
+	Syntax *s = window_syntax_get(vis->win->win);
+	if (s)
+		settings_apply(s->settings);
+	return true;
+}
+
+static bool vis_window_split(EditorWin *win) {
+	if (!editor_window_split(win))
+		return false;
+	Syntax *s = window_syntax_get(vis->win->win);
+	if (s)
+		settings_apply(s->settings);
+	return true;
+}
+
 typedef struct Screen Screen;
 static struct Screen {
 	int w, h;
@@ -1974,6 +2012,7 @@ static void mainloop() {
 	sigemptyset(&blockset);
 	sigaddset(&blockset, SIGWINCH);
 	sigprocmask(SIG_BLOCK, &blockset, NULL);
+	editor_draw(vis);
 
 	while (running) {
 		if (screen.need_resize) {
@@ -2043,7 +2082,7 @@ int main(int argc, char *argv[]) {
 			}
 		} else if (argv[i][0] == '+') {
 			cmd = argv[i] + (argv[i][1] == '/' || argv[i][1] == '?');
-		} else if (!editor_window_new(vis, argv[i])) {
+		} else if (!vis_window_new(argv[i])) {
 			die("Can not load `%s': %s\n", argv[i], strerror(errno));
 		} else if (cmd) {
 			exec_command(cmd[0], cmd+1);
@@ -2053,14 +2092,14 @@ int main(int argc, char *argv[]) {
 
 	if (!vis->windows) {
 		if (!strcmp(argv[argc-1], "-") || !isatty(STDIN_FILENO)) {
-			if (!editor_window_new_fd(vis, STDIN_FILENO))
+			if (!vis_window_new_fd(STDIN_FILENO))
 				die("Can not read from stdin\n");
 			int fd = open("/dev/tty", O_RDONLY);
 			if (fd == -1)
 				die("Can not reopen stdin\n");
 			dup2(fd, STDIN_FILENO);
 			close(fd);
-		} else if (!editor_window_new(vis, NULL)) {
+		} else if (!vis_window_new(NULL)) {
 			die("Can not create empty buffer\n");
 		}
 		if (cmd)

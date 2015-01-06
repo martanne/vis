@@ -953,6 +953,11 @@ static Color colors[] = {
 static Syntax syntaxes[] = {{
 	.name = "c",
 	.file = "\\.(c(pp|xx)?|h(pp|xx)?|cc)$",
+	.settings = (const char*[]){
+		"set number",
+		"set autoindent",
+		NULL
+	},
 	.rules = {
 		SYNTAX_MULTILINE_COMMENT,
 		SYNTAX_SINGLE_LINE_COMMENT,

@@ -20,6 +20,7 @@ struct Syntax {               /* a syntax definition */
 	char *name;           /* syntax name */
 	char *file;           /* apply to files matching this regex */
 	regex_t file_regex;   /* compiled file name regex */
+	const char **settings;/* settings associated with this file type */
 	SyntaxRule rules[24]; /* all rules for this file type */
 };
 
