@@ -407,10 +407,8 @@ and their current support in vis.
   editing operations (as they are likely unrelated and thus should be
   individually reversible).
 
-  The repeat command '.' currently only works for operators. This for
-  example means that inserting text can not be repeated (i.e. inserted
-  again). The same restriction also applies to commands which are not
-  implemented in terms of operators, such as 'o', 'O', 'J' etc.
+  The repeat command '.' works for all operators and is able to repeat
+  the last insertion or replacement.
 
  Macros
  ------
@@ -435,6 +433,7 @@ and their current support in vis.
    :new     open an empty window, arrange horizontally
    :vnew    open an empty window, arrange vertically
    :wq      write changes then close window
+   :xit     like :wq but write only when changes have been made
    :write   write current buffer content to file
    :saveas  save file under another name
    :set     set the options below
@@ -459,23 +458,37 @@ and their current support in vis.
 
      syntax      name
 
-        use syntax definition given (e.g. "c") or disable syntax
-        highlighting if no such definition exists (e.g :set syntax off)
+       use syntax definition given (e.g. "c") or disable syntax
+       highlighting if no such definition exists (e.g :set syntax off)
+
+  Each command can be prefixed with a range made up of a start and
+  an end position as in start,end. Valid position specifiers are:
+
+      .          start of the current line
+      +n and -n  start of the line relative to the current line
+      'm         position of mark m
+      /pattern/  first match after current position
+
+  If only a start position without a command is given then the cursor
+  is moved to that position. Additionally the following ranges are
+  predefined:
+
+      %          the whole file, equivalent to 1,$
+      *          the current selection, equivalent to '<,'>
 
   The substitute command is recognized but not yet implemented. The '!'
   command to filter text through an external program is also planned.
-  At some point the range syntax should probably also be supported.
 
   History support, tab completion and wildcard expansion are other
-  worthwhile features.
+  worthwhile features. However implementing them inside the editor
+  feels wrong.
 
- Tab <-> Space
- -------------
+ Tab <-> Space and Line endings \n vs \r\n
+ -----------------------------------------
 
-  Currently there is no expand tab functionality i.e. they are always
-  inserted as is. For me personally this is no problem at all. Tabs
-  should be used for indention! That way everybody can configure their
-  preferred tab width whereas spaces should only be used for alignment.
+  Tabs can optionally be expaned to a configurable number of spaces.
+  The first line ending in the file determines what will be inserted
+  upon a line break (defaults to \n).
 
  Jump list and change list
  -------------------------
@@ -526,13 +539,15 @@ WARNING: There are probably still some bugs left which could corrupt your
 
 A quick overview over the code structure to get you started:
 
- config.def.h       definition of key bindings, commands, syntax highlighting etc.
+ config.def.h       definition of key bindings, commands, syntax highlighting
  vis.c              vi(m) specific editor frontend, program entry point
  editor.[ch]        screen / window / statusbar / command prompt management
  window.[ch]        window drawing / syntax highlighting / cursor placement
+ text.[ch]          low level text / marks / {un,re}do / piece table implementation
  text-motions.[ch]  movement functions take a file position and return a new one
  text-objects.[ch]  functions take a file position and return a file range
- text.[ch]          low level text / marks / {un,re}do / piece table implementation
+ buffer.[ch]        dynamically growing buffer used for registers and macros
+ ring-buffer.[ch]   fixed size ring buffer used for the jump list
 
 Hope this gets the interested people started. Feel free to ask questions
 if something is unclear! There are still a lot of bugs left to fix, but
