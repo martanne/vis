@@ -1177,6 +1177,18 @@ void text_mark_intern_clear_all(Text *txt) {
 		text_mark_intern_clear(txt, mark);
 }
 
+size_t text_history_get(Text *txt, size_t index) {
+	for (Action *a = txt->current_action ? txt->current_action : txt->undo; a; a = a->next) {
+		if (index-- == 0) {
+			Change *c = a->change;
+			while (c && c->next)
+				c = c->next;
+			return c ? c->pos : EPOS;
+		}
+	}
+	return EPOS;
+}
+
 int text_fd_get(Text *txt) {
 	return txt->fd;
 }

@@ -83,6 +83,9 @@ size_t text_mark_intern_get(Text*, MarkIntern);
 void text_mark_intern_clear(Text*, MarkIntern);
 void text_mark_intern_clear_all(Text*);
 
+/* get position of change denoted by index, where 0 indicates the most recent */
+size_t text_history_get(Text*, size_t index);
+
 size_t text_size(Text*);
 bool text_modified(Text*);
 /* test whether the underlying file uses UNIX style \n or Windows style \r\n newlines */

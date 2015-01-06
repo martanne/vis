@@ -172,6 +172,34 @@ void editor_window_jumplist_invalidate(EditorWin *win) {
 	ringbuf_invalidate(win->jumplist);
 }
 
+size_t editor_window_changelist_prev(EditorWin *win) {
+	size_t pos = window_cursor_get(win->win);
+	if (pos != win->changelist.pos)
+		win->changelist.index = 0;
+	else
+		win->changelist.index++;
+	size_t newpos = text_history_get(win->text, win->changelist.index);
+	if (newpos == EPOS)
+		win->changelist.index--;
+	else
+		win->changelist.pos = newpos;
+	return win->changelist.pos;
+}
+
+size_t editor_window_changelist_next(EditorWin *win) {
+	size_t pos = window_cursor_get(win->win);
+	if (pos != win->changelist.pos)
+		win->changelist.index = 0;
+	else if (win->changelist.index > 0)
+		win->changelist.index--;
+	size_t newpos = text_history_get(win->text, win->changelist.index);
+	if (newpos == EPOS)
+		win->changelist.index++;
+	else
+		win->changelist.pos = newpos;
+	return win->changelist.pos;
+}
+
 void editor_resize(Editor *ed, int width, int height) {
 	ed->width = width;
 	ed->height = height;

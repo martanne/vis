@@ -385,8 +385,10 @@ static TextObject *moves_linewise[] = {
 };
 
 /** functions to be called from keybindings */
-/* navigate jumplist either in forward (arg->i>0) or backward (arg->i<0) direction */
+/* navigate jump list either in forward (arg->i>0) or backward (arg->i<0) direction */
 static void jumplist(const Arg *arg);
+/* navigate change list either in forward (arg->i>0) or backward (arg->i<0) direction */
+static void changelist(const Arg *arg);
 static void macro_record(const Arg *arg);
 static void macro_replay(const Arg *arg);
 /* temporarily suspend the editor and return to the shell, type 'fg' to get back */
@@ -806,6 +808,16 @@ static void jumplist(const Arg *arg) {
 		pos = editor_window_jumplist_next(vis->win);
 	else
 		pos = editor_window_jumplist_prev(vis->win);
+	if (pos != EPOS)
+		window_cursor_to(vis->win->win, pos);
+}
+
+static void changelist(const Arg *arg) {
+	size_t pos;
+	if (arg->i > 0)
+		pos = editor_window_changelist_next(vis->win);
+	else
+		pos = editor_window_changelist_prev(vis->win);
 	if (pos != EPOS)
 		window_cursor_to(vis->win->win, pos);
 }

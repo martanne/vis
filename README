@@ -480,8 +480,9 @@ and their current support in vis.
  Jump list and change list
  -------------------------
 
-  A per window, fixed size, file local jump list is implemented.
-  The change list is currently not supported.
+  A per window, file local jump list (navigate with CTRL+O and CTRL+I)
+  and change list (navigate with g; and g,) is supported. The jump
+  list is implemented as a fixed sized ring buffer.
 
  Mouse support
  -------------
