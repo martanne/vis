@@ -75,6 +75,7 @@ size_t text_section_prev(Text*, size_t pos);
 */
 /* search coresponding '(', ')', '{', '}', '[', ']', '>', '<', '"', ''' */
 size_t text_bracket_match(Text*, size_t pos);
+size_t text_bracket_match_(Text*, size_t pos, int dir, char inc, char search);
 
 /* search the given regex pattern in either forward or backward direction,
  * starting from pos. does wrap around if no match was found. */

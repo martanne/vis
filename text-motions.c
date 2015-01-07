@@ -319,9 +319,34 @@ size_t text_paragraph_prev(Text *txt, size_t pos) {
 	return text_paragraph_sentence_prev(txt, pos, false);
 }
 
+size_t text_bracket_match_(Text *txt, size_t pos, int direction, char incr,
+                           char search) {
+	Iterator it = text_iterator_get(txt, pos);
+	unsigned count = 1;
+	if (direction >= 0) { /* forward search */
+		char c;
+		while (text_iterator_byte_next(&it, &c)) {
+			if (c == search && --count == 0)
+				return it.pos;
+			else if (c == incr)
+				count++;
+		}
+	} else { /* backwards */
+		char c;
+		while (text_iterator_byte_prev(&it, &c)) {
+			if (c == search && --count == 0)
+				return it.pos;
+			else if (c == incr)
+				count++;
+		}
+	}
+
+	return pos; /* no match found */
+}
+
 size_t text_bracket_match(Text *txt, size_t pos) {
-	int direction, count = 1;
-	char search, current, c;
+	int direction;
+	char search, current;
 	Iterator it = text_iterator_get(txt, pos);
 	if (!text_iterator_byte_get(&it, &current))
 		return pos;
@@ -339,6 +364,7 @@ size_t text_bracket_match(Text *txt, size_t pos) {
 	case '`':
 	case '\'': {
 		char special[] = " \n)}]>.,";
+		char c;
 		search = current;
 		direction = 1;
 		if (text_iterator_byte_next(&it, &c)) {
@@ -353,23 +379,7 @@ size_t text_bracket_match(Text *txt, size_t pos) {
 	default: return pos;
 	}
 
-	if (direction >= 0) { /* forward search */
-		while (text_iterator_byte_next(&it, &c)) {
-			if (c == search && --count == 0)
-				return it.pos;
-			else if (c == current)
-				count++;
-		}
-	} else { /* backwards */
-		while (text_iterator_byte_prev(&it, &c)) {
-			if (c == search && --count == 0)
-				return it.pos;
-			else if (c == current)
-				count++;
-		}
-	}
-
-	return pos; /* no match found */
+	return text_bracket_match_(txt, pos, direction, current, search);
 }
 
 size_t text_search_forward(Text *txt, size_t pos, Regex *regex) {
