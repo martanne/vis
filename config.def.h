@@ -1218,5 +1218,36 @@ static Syntax syntaxes[] = {{
 		&colors[COLOR_BRACKETS],
 	}}
 },{
+	.name = "markdown",
+	.file = "\\.(md|mdwn)$",
+	.rules = {{
+		"(^#{1,6}.*$)", //titles
+		&colors[COLOR_SYNTAX5],
+	},{
+		"((\\* *){3,}|(_ *){3,}|(- *){3,})", // horizontal rules
+		&colors[COLOR_SYNTAX2],
+	},{
+		"(\\*\\*.*\\*\\*)|(__.*__)", // super-bolds
+		&colors[COLOR_SYNTAX4],
+	},{
+		"(\\*.*\\*)|(_.*_)", // bolds
+		&colors[COLOR_SYNTAX3],
+	},{
+		"(\\[.*\\]\\(.*\\))", //links
+		&colors[COLOR_SYNTAX6],
+	},{
+		"(^ *([-\\*\\+]|[0-9]+\\.))", //lists
+		&colors[COLOR_SYNTAX2],
+	},{
+		"(^( {4,}|\t+).*$)", // code blocks
+		&colors[COLOR_SYNTAX7],
+	},{
+		"(`+.*`+)", // inline code
+		&colors[COLOR_SYNTAX7],
+	},{
+		"(^>+.*)", // quotes
+		&colors[COLOR_SYNTAX7],
+	}}
+	},{
 	/* empty last element, array terminator */
 }};
