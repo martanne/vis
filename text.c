@@ -713,7 +713,7 @@ Text *text_load(const char *filename) {
 		if (fstat(txt->fd, &txt->info) == -1)
 			goto out;
 		if (!S_ISREG(txt->info.st_mode)) {
-			errno = EISDIR;
+			errno = S_ISDIR(txt->info.st_mode) ? EISDIR : ENOTSUP;
 			goto out;
 		}
 		// XXX: use lseek(fd, 0, SEEK_END); instead?
