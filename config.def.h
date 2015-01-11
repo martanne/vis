@@ -70,12 +70,13 @@ static Command cmds[] = {
 /* draw a statubar, do whatever you want with win->statuswin curses window */
 static void statusbar(EditorWin *win) {
 	bool focused = vis->win == win || vis->prompt->editor == win;
+	const char *filename = text_filename_get(win->text);
 	CursorPos pos = window_cursor_getpos(win->win);
 	wattrset(win->statuswin, focused ? A_REVERSE|A_BOLD : A_REVERSE);
 	mvwhline(win->statuswin, 0, 0, ' ', win->width);
 	mvwprintw(win->statuswin, 0, 0, "%s %s %s %s",
 	          mode->name && mode->name[0] == '-' ? mode->name : "",
-	          text_filename_get(win->text),
+	          filename ? filename : "[No Name]",
 	          text_modified(win->text) ? "[+]" : "",
 	          vis->recording ? "recording": "");
 	char buf[win->width + 1];
