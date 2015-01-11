@@ -873,6 +873,8 @@ enum {
 	COLOR_SYNTAX5,
 	COLOR_SYNTAX6,
 	COLOR_SYNTAX7,
+	COLOR_SYNTAX8,
+	COLOR_SYNTAX9,
 	COLOR_KEYWORD      = COLOR_SYNTAX1,
 	COLOR_CONSTANT     = COLOR_SYNTAX4,
 	COLOR_DATATYPE     = COLOR_SYNTAX2,
@@ -887,6 +889,8 @@ enum {
 	COLOR_VARIABLE     = COLOR_SYNTAX6,
 	COLOR_TARGET       = COLOR_SYNTAX5,
 	COLOR_COMMENT      = COLOR_SYNTAX7,
+	COLOR_IDENTIFIER   = COLOR_SYNTAX8,
+	COLOR_TYPE         = COLOR_SYNTAX9,
 };
 
 static Color colors[] = {
@@ -899,6 +903,8 @@ static Color colors[] = {
 	[COLOR_SYNTAX5] = { .fg = COLOR_BLUE,    .bg = -1, .attr = A_BOLD   },
 	[COLOR_SYNTAX6] = { .fg = COLOR_RED,     .bg = -1, .attr = A_NORMAL },
 	[COLOR_SYNTAX7] = { .fg = COLOR_BLUE,    .bg = -1, .attr = A_NORMAL },
+	[COLOR_SYNTAX8] = { .fg = COLOR_CYAN,    .bg = -1, .attr = A_NORMAL },
+	[COLOR_SYNTAX9] = { .fg = COLOR_YELLOW,  .bg = -1, .attr = A_NORMAL },
 	{ /* empty last element, array terminator */                        }
 };
 
@@ -1248,6 +1254,41 @@ static Syntax syntaxes[] = {{
 		"(^>+.*)", // quotes
 		&colors[COLOR_SYNTAX7],
 	}}
-	},{
+},{
+	.name = "ledger",
+	.file = "\\.(journal|ledger)$",
+	.rules = {
+	{ /* comment */
+		"^[;#].*",
+		&colors[COLOR_COMMENT],
+	},{ /* value tag */
+		"(  |\t|^ )+?; :([^ ][^:]*:)+[ \\t]*$",
+		&colors[COLOR_DATATYPE],
+	},{ /* typed tag */
+		"(  |\t|^ )+?; [^:]+::.*",
+		&colors[COLOR_DATATYPE],
+	},{ /* tag */
+		"(  |\t|^ )+?; [^:]+:.*",
+		&colors[COLOR_TYPE],
+	},{ /* metadata */
+		"(  |\t|^ )+?;.*",
+		&colors[COLOR_CONSTANT],
+	},{ /* date */
+		"^[0-9][^ \t]+",
+		&colors[COLOR_LITERAL],
+	},{ /* account */
+		"^[ \t]+[a-zA-Z:'!*()%&]+",
+		&colors[COLOR_IDENTIFIER]
+	},{ /* amount */
+		"(  |\t)[^;]+?",
+		&colors[COLOR_LITERAL],
+	},{ /* automated transaction */
+		"^[=~].*",
+		&colors[COLOR_TYPE],
+	},{ /* directives */
+		"^[!@]?(account|alias|assert|bucket|capture|check|comment|commodity|define|end|fixed|endfixed|include|payee|apply|tag|test|year|[AYNDCIiOobh])"B".*",
+		&colors[COLOR_DATATYPE],
+	}}
+},{
 	/* empty last element, array terminator */
 }};
