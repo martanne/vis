@@ -1263,16 +1263,16 @@ static Syntax syntaxes[] = {{
 		"^[;#].*",
 		&colors[COLOR_COMMENT],
 	},{ /* value tag */
-		"(  |\t|^ )+?; :([^ ][^:]*:)+[ \\t]*$",
+		"(  |\t|^ )*; :([^ ][^:]*:)+[ \\t]*$",
 		&colors[COLOR_DATATYPE],
 	},{ /* typed tag */
-		"(  |\t|^ )+?; [^:]+::.*",
+		"(  |\t|^ )*; [^:]+::.*",
 		&colors[COLOR_DATATYPE],
 	},{ /* tag */
-		"(  |\t|^ )+?; [^:]+:.*",
+		"(  |\t|^ )*; [^:]+:.*",
 		&colors[COLOR_TYPE],
 	},{ /* metadata */
-		"(  |\t|^ )+?;.*",
+		"(  |\t|^ )*;.*",
 		&colors[COLOR_CONSTANT],
 	},{ /* date */
 		"^[0-9][^ \t]+",
@@ -1281,7 +1281,7 @@ static Syntax syntaxes[] = {{
 		"^[ \t]+[a-zA-Z:'!*()%&]+",
 		&colors[COLOR_IDENTIFIER]
 	},{ /* amount */
-		"(  |\t)[^;]+?",
+		"(  |\t)[^;]*",
 		&colors[COLOR_LITERAL],
 	},{ /* automated transaction */
 		"^[=~].*",
