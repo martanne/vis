@@ -655,6 +655,7 @@ static void op_case_change(OperatorContext *c) {
 static void op_join(OperatorContext *c) {
 	Text *txt = vis->win->text;
 	size_t pos = text_line_begin(txt, c->range.end), prev_pos;
+	size_t eolprev = text_line_lastchar(txt, prev_pos);
 	Filerange sel = window_selection_get(vis->win->win);
 	/* if a selection ends at the begin of a line, skip line break */
 	if (pos == c->range.end && text_range_valid(&sel))
@@ -672,8 +673,7 @@ static void op_join(OperatorContext *c) {
 		}
 	} while (pos != prev_pos);
 
-	size_t end = text_line_lastchar(txt, c->range.end);
-	window_cursor_to(vis->win->win, end);
+	window_cursor_to(vis->win->win, eolprev);
 	editor_draw(vis);
 }
 
