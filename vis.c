@@ -672,7 +672,8 @@ static void op_join(OperatorContext *c) {
 		}
 	} while (pos != prev_pos);
 
-	window_cursor_to(vis->win->win, c->range.start);
+	size_t end = text_line_lastchar(txt, c->range.end);
+	window_cursor_to(vis->win->win, end);
 	editor_draw(vis);
 }
 
