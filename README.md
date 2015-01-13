@@ -1,7 +1,7 @@
 Why another text editor?
 ========================
 
-It all started when I was recently reading the excellent Project Oberon[0],
+It all started when I was recently reading the excellent [Project Oberon][0],
 where in chapter 5 a data structure for managing text is introduced.
 I found this rather appealing and wanted to see how it works in practice.
 
@@ -11,7 +11,7 @@ replace my current editor of choice: vim.
 
 This should be accomplished by a reasonable amount of clean (your mileage
 may vary), modern and legacy free C code. Certainly not an old, 500'000
-lines[1] long, #ifdef cluttered mess which tries to run on all broken
+lines long, [#ifdef cluttered mess][1] which tries to run on all broken
 systems ever envisioned by mankind.
 
 Admittedly vim has a lot of functionally, most of which I don't use. I
@@ -244,7 +244,7 @@ effort spent on the piece table.
 The long term solution is to write our own regular expression engine or
 modify an existing one to make use of the iterator API. This would allow
 efficient search without having to double memory consumption. At some
-point I will have to (re)read the papers of Russ Cox[2] and Rob Pike
+point I will have to (re)read the papers of [Russ Cox][2] and Rob Pike
 about this topic.
 
 Command-Prompt
@@ -299,8 +299,8 @@ the mode and when there was an unmatched key.
 vis a vim like frontend
 -----------------------
 
-The vis frontend uses a similar approach to the one suggested by Markus
-Teich[3] but it turns out to be a bit more complicated. For starters
+The vis frontend uses a similar approach to the one suggested by [Markus
+Teich][3] but it turns out to be a bit more complicated. For starters
 there are movements and commands which consist of more than one key/
 character. As a consequence the key lookup is not a simple array
 dereference but instead the arrays are looped over until a match
@@ -309,40 +309,42 @@ is found.
 The following section gives a quick overview over various vim features
 and their current support in vis.
 
- Operators
- ---------
-   d (delete), c (change), y (yank), p (put), > (shift-right), < (shift-left)
+Operators
+---------
 
- Movements
- ---------
-   h        (char left)
-   l        (char right)
-   j        (line down)
-   k        (line up)
-   0        (start of line)
-   ^        (first non-blank of line)
-   g_       (last non-blank of line)
-   $        (end of line)
-   %        (match bracket)
-   b        (previous start of a word)
-   w        (next start of a word)
-   e        (next end of a word)
-   ge       (previous end of a word)
-   {        (previous paragraph)
-   }        (next paragraph)
-   (        (previous sentence)
-   )        (next sentence)
-   gg       (begin of file)
-   G        (goto line or end of file)
-   |        (goto column)
-   n        (repeat last search forward)
-   N        (repeat last search backwards)
-   f{char}  (to next occurrence of char to the right)
-   t{char}  (till before next occurrence of char to the right)
-   F{char}  (to next occurrence of char to the left)
-   T{char}  (till before next occurrence of char to the left)
-   /{text}  (to next match of text in forward direction)
-   ?{text}  (to next match of text in backward direction)
+    d (delete), c (change), y (yank), p (put), > (shift-right), < (shift-left)
+
+Movements
+---------
+
+    h        (char left)
+    l        (char right)
+    j        (line down)
+    k        (line up)
+    0        (start of line)
+    ^        (first non-blank of line)
+    g_       (last non-blank of line)
+    $        (end of line)
+    %        (match bracket)
+    b        (previous start of a word)
+    w        (next start of a word)
+    e        (next end of a word)
+    ge       (previous end of a word)
+    {        (previous paragraph)
+    }        (next paragraph)
+    (        (previous sentence)
+    )        (next sentence)
+    gg       (begin of file)
+    G        (goto line or end of file)
+    |        (goto column)
+    n        (repeat last search forward)
+    N        (repeat last search backwards)
+    f{char}  (to next occurrence of char to the right)
+    t{char}  (till before next occurrence of char to the right)
+    F{char}  (to next occurrence of char to the left)
+    T{char}  (till before next occurrence of char to the left)
+    /{text}  (to next match of text in forward direction)
+    ?{text}  (to next match of text in backward direction)
 
   An empty line is currently neither a word nor a WORD.
 
@@ -360,8 +362,8 @@ and their current support in vis.
   them should be inclusive in some context and exclusive in others.
   At the moment they always behave the same.
 
- Text objects
- ------------
+Text objects
+------------
 
   All of the following text objects are implemented in an inner variant
   (prefixed with 'i') and a normal variant (prefixed with 'a'):
@@ -374,30 +376,30 @@ and their current support in vis.
   For sentence and paragraph there is no difference between the
   inner and normal variants.
 
- Modes
- -----
+Modes
+-----
 
   At the moment there exists a more or less functional insert, replace
   and visual mode (in both line and character wise variants).
 
- Marks
- -----
+Marks
+-----
 
-  [a-z] general purpose marks
-  <     start of the last selected visual area in current buffer
-  >     end of the last selected visual area in current buffer
+   [a-z] general purpose marks
+   <     start of the last selected visual area in current buffer
+   >     end of the last selected visual area in current buffer
 
   No marks across files are supported. Marks are not preserved over
   editing sessions.
 
- Registers
- ---------
+Registers
+---------
 
   Only the 26 lower case registers [a-z] and 1 additional default register
   is supported.
 
- Undo/Redo and Repeat
- --------------------
+Undo/Redo and Repeat
+--------------------
 
   The text is currently snapshoted whenever an operator is completed as
   well as when insert or replace mode is left. Additionally a snapshot
@@ -410,33 +412,33 @@ and their current support in vis.
   The repeat command '.' works for all operators and is able to repeat
   the last insertion or replacement.
 
- Macros
- ------
+Macros
+------
 
   [a-z] are recoginized macro names, q starts a recording, @ plays it back.
   @@ refers to the least recently recorded macro.
 
- Command line prompt
- -------------------
+Command line prompt
+-------------------
 
   At the ':'-command prompt only the following commands are recognized:
 
-   :nnn     go to line nnn
-   :bdelete close all windows which display the same file as the current one
-   :edit    replace current file with a new one or reload it from disk
-   :open    open a new window
-   :qall    close all windows, exit editor
-   :quit    close currently focused window
-   :read    insert content of another file at current cursor position
-   :split   split window horizontally
-   :vsplit  split window vertically
-   :new     open an empty window, arrange horizontally
-   :vnew    open an empty window, arrange vertically
-   :wq      write changes then close window
-   :xit     like :wq but write only when changes have been made
-   :write   write current buffer content to file
-   :saveas  save file under another name
-   :set     set the options below
+    :nnn     go to line nnn
+    :bdelete close all windows which display the same file as the current one
+    :edit    replace current file with a new one or reload it from disk
+    :open    open a new window
+    :qall    close all windows, exit editor
+    :quit    close currently focused window
+    :read    insert content of another file at current cursor position
+    :split   split window horizontally
+    :vsplit  split window vertically
+    :new     open an empty window, arrange horizontally
+    :vnew    open an empty window, arrange vertically
+    :wq      write changes then close window
+    :xit     like :wq but write only when changes have been made
+    :write   write current buffer content to file
+    :saveas  save file under another name
+    :set     set the options below
 
      tabwidth   [1-8]
 
@@ -483,27 +485,27 @@ and their current support in vis.
   worthwhile features. However implementing them inside the editor
   feels wrong.
 
- Tab <-> Space and Line endings \n vs \r\n
- -----------------------------------------
+Tab <-> Space and Line endings \n vs \r\n
+-----------------------------------------
 
   Tabs can optionally be expaned to a configurable number of spaces.
   The first line ending in the file determines what will be inserted
   upon a line break (defaults to \n).
 
- Jump list and change list
- -------------------------
+Jump list and change list
+-------------------------
 
   A per window, file local jump list (navigate with CTRL+O and CTRL+I)
   and change list (navigate with g; and g,) is supported. The jump
   list is implemented as a fixed sized ring buffer.
 
- Mouse support
- -------------
+Mouse support
+-------------
 
   The mouse is currently not used at all.
 
- Other features
- --------------
+Other features
+--------------
 
   Other things I would like to add in the long term are:
 
@@ -558,7 +560,7 @@ As always, comments and patches welcome!
 Cheers,
 Marc
 
-[0] http://www.inf.ethz.ch/personal/wirth/ProjectOberon/
-[1] https://www.openhub.net/p/vim
-[2] http://swtch.com/~rsc/regexp/
-[3] http://lists.suckless.org/dev/1408/23219.html
+[0]: http://www.inf.ethz.ch/personal/wirth/ProjectOberon/
+[1]: https://www.openhub.net/p/vim
+[2]: http://swtch.com/~rsc/regexp/
+[3]: http://lists.suckless.org/dev/1408/23219.html
