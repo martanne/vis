@@ -34,6 +34,7 @@ size_t text_line_finish(Text*, size_t pos);
 size_t text_line_lastchar(Text*, size_t pos);
 size_t text_line_end(Text*, size_t pos);
 size_t text_line_next(Text*, size_t pos);
+size_t text_line_offset(Text*, size_t pos, size_t off);
 /*
  * A longword consists of a sequence of non-blank characters, separated with
  * white space. TODO?: An empty line is also considered to be a word.

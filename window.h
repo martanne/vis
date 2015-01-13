@@ -36,6 +36,8 @@ void window_tabwidth_set(Win*, int tabwidth);
  * they return new cursor postion */
 size_t window_char_next(Win*);
 size_t window_char_prev(Win*);
+size_t window_line_down(Win*);
+size_t window_line_up(Win*);
 size_t window_screenline_down(Win*);
 size_t window_screenline_up(Win*);
 size_t window_screenline_begin(Win*);

@@ -154,6 +154,15 @@ size_t text_line_next(Text *txt, size_t pos) {
 	return it.pos;
 }
 
+size_t text_line_offset(Text *txt, size_t pos, size_t off) {
+	char c;
+	size_t bol = text_line_begin(txt, pos);
+	Iterator it = text_iterator_get(txt, bol);
+	while (off-- > 0 && text_iterator_byte_get(&it, &c) && c != '\r' && c != '\n')
+		text_iterator_byte_next(&it, NULL);
+	return it.pos;
+}
+
 static size_t text_customword_start_next(Text *txt, size_t pos, int (*isboundry)(int)) {
 	char c;
 	Iterator it = text_iterator_get(txt, pos);

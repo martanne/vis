@@ -202,6 +202,8 @@ static Operator ops[] = {
 
 /* these can be passed as int argument to movement(&(const Arg){ .i = MOVE_* }) */
 enum {
+	MOVE_LINE_DOWN,
+	MOVE_LINE_UP,
 	MOVE_SCREEN_LINE_UP,
 	MOVE_SCREEN_LINE_DOWN,
 	MOVE_SCREEN_LINE_BEGIN,
@@ -281,6 +283,8 @@ static size_t window_lines_middle(const Arg *arg);
 static size_t window_lines_bottom(const Arg *arg);
 
 static Movement moves[] = {
+	[MOVE_LINE_UP]             = { .win = window_line_up                                       },
+	[MOVE_LINE_DOWN]           = { .win = window_line_down                                     },
 	[MOVE_SCREEN_LINE_UP]      = { .win = window_screenline_up                                 },
 	[MOVE_SCREEN_LINE_DOWN]    = { .win = window_screenline_down                               },
 	[MOVE_SCREEN_LINE_BEGIN]   = { .win = window_screenline_begin,  .type = CHARWISE           },
@@ -380,6 +384,8 @@ static TextObject textobjs[] = {
 
 /* if some movements are forced to be linewise, they are translated to text objects */
 static TextObject *moves_linewise[] = {
+	[MOVE_LINE_UP]          = &textobjs[TEXT_OBJ_LINE_UP],
+	[MOVE_LINE_DOWN]        = &textobjs[TEXT_OBJ_LINE_DOWN],
 	[MOVE_SCREEN_LINE_UP]   = &textobjs[TEXT_OBJ_LINE_UP],
 	[MOVE_SCREEN_LINE_DOWN] = &textobjs[TEXT_OBJ_LINE_DOWN],
 };
