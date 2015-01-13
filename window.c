@@ -748,7 +748,7 @@ size_t window_slide_up(Win *win, int lines) {
 		else
 			window_cursor_to(win, cursor->pos);
 	} else {
-		window_line_down(win);
+		window_screenline_down(win);
 	}
 	return cursor->pos;
 }
@@ -761,7 +761,7 @@ size_t window_slide_down(Win *win, int lines) {
 		else
 			window_cursor_to(win, cursor->pos);
 	} else {
-		window_line_up(win);
+		window_screenline_up(win);
 	}
 	return cursor->pos;
 }
@@ -788,7 +788,7 @@ size_t window_scroll_down(Win *win, int lines) {
 	return cursor->pos;
 }
 
-size_t window_line_up(Win *win) {
+size_t window_screenline_up(Win *win) {
 	Cursor *cursor = &win->cursor;
 	if (!cursor->line->prev)
 		window_scroll_up(win, 1);
@@ -797,7 +797,7 @@ size_t window_line_up(Win *win) {
 	return cursor->pos;
 }
 
-size_t window_line_down(Win *win) {
+size_t window_screenline_down(Win *win) {
 	Cursor *cursor = &win->cursor;
 	if (!cursor->line->next && cursor->line == win->bottomline)
 		window_scroll_down(win, 1);
@@ -806,16 +806,16 @@ size_t window_line_down(Win *win) {
 	return cursor->pos;
 }
 
-size_t window_line_begin(Win *win) {
+size_t window_screenline_begin(Win *win) {
 	return window_cursor_set(win, win->cursor.line, 0);
 }
 
-size_t window_line_middle(Win *win) {
+size_t window_screenline_middle(Win *win) {
 	Cursor *cursor = &win->cursor;
 	return window_cursor_set(win, cursor->line, cursor->line->width / 2);
 }
 
-size_t window_line_end(Win *win) {
+size_t window_screenline_end(Win *win) {
 	Cursor *cursor = &win->cursor;
 	int col = cursor->line->width - 1;
 	return window_cursor_set(win, cursor->line, col >= 0 ? col : 0);
@@ -920,7 +920,7 @@ void window_cursor_watch(Win *win, void (*cursor_moved)(Win*, void *), void *dat
 	win->cursor_moved_data = data;
 }
 
-size_t window_line_goto(Win *win, int n) {
+size_t window_screenline_goto(Win *win, int n) {
 	size_t pos = win->start;
 	for (Line *line = win->topline; --n > 0 && line != win->lastline; line = line->next)
 		pos += line->len;

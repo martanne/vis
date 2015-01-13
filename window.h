@@ -36,11 +36,11 @@ void window_tabwidth_set(Win*, int tabwidth);
  * they return new cursor postion */
 size_t window_char_next(Win*);
 size_t window_char_prev(Win*);
-size_t window_line_down(Win*);
-size_t window_line_up(Win*);
-size_t window_line_begin(Win*);
-size_t window_line_middle(Win*);
-size_t window_line_end(Win*);
+size_t window_screenline_down(Win*);
+size_t window_screenline_up(Win*);
+size_t window_screenline_begin(Win*);
+size_t window_screenline_middle(Win*);
+size_t window_screenline_end(Win*);
 /* move window content up/down, but keep cursor position unchanged unless it is
  * on a now invisible line in which case we try to preserve the column position */
 size_t window_slide_up(Win*, int lines);
@@ -50,7 +50,7 @@ size_t window_slide_down(Win*, int lines);
 size_t window_scroll_up(Win*, int lines);
 size_t window_scroll_down(Win*, int lines);
 /* place the cursor at the start ot the n-th window line, counting from 1 */
-size_t window_line_goto(Win*, int n);
+size_t window_screenline_goto(Win*, int n);
 
 /* get cursor position in bytes from start of the file */
 size_t window_cursor_get(Win*);

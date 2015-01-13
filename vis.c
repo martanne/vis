@@ -281,11 +281,11 @@ static size_t window_lines_middle(const Arg *arg);
 static size_t window_lines_bottom(const Arg *arg);
 
 static Movement moves[] = {
-	[MOVE_SCREEN_LINE_UP]      = { .win = window_line_up                                       },
-	[MOVE_SCREEN_LINE_DOWN]    = { .win = window_line_down                                     },
-	[MOVE_SCREEN_LINE_BEGIN]   = { .win = window_line_begin,        .type = CHARWISE           },
-	[MOVE_SCREEN_LINE_MIDDLE]  = { .win = window_line_middle,       .type = CHARWISE           },
-	[MOVE_SCREEN_LINE_END]     = { .win = window_line_end,          .type = CHARWISE|INCLUSIVE },
+	[MOVE_SCREEN_LINE_UP]      = { .win = window_screenline_up                                 },
+	[MOVE_SCREEN_LINE_DOWN]    = { .win = window_screenline_down                               },
+	[MOVE_SCREEN_LINE_BEGIN]   = { .win = window_screenline_begin,  .type = CHARWISE           },
+	[MOVE_SCREEN_LINE_MIDDLE]  = { .win = window_screenline_middle, .type = CHARWISE           },
+	[MOVE_SCREEN_LINE_END]     = { .win = window_screenline_end,    .type = CHARWISE|INCLUSIVE },
 	[MOVE_LINE_PREV]           = { .txt = text_line_prev,           .type = LINEWISE           },
 	[MOVE_LINE_BEGIN]          = { .txt = text_line_begin,          .type = LINEWISE           },
 	[MOVE_LINE_START]          = { .txt = text_line_start,          .type = LINEWISE           },
@@ -789,15 +789,15 @@ static size_t column(const Arg *arg) {
 }
 
 static size_t window_lines_top(const Arg *arg) {
-	return window_line_goto(vis->win->win, action.count);
+	return window_screenline_goto(vis->win->win, action.count);
 }
 
 static size_t window_lines_middle(const Arg *arg) {
-	return window_line_goto(vis->win->win, vis->win->height / 2);
+	return window_screenline_goto(vis->win->win, vis->win->height / 2);
 }
 
 static size_t window_lines_bottom(const Arg *arg) {
-	return window_line_goto(vis->win->win, vis->win->height - action.count);
+	return window_screenline_goto(vis->win->win, vis->win->height - action.count);
 }
 
 /** key bindings functions of type: void (*func)(const Arg*) */
