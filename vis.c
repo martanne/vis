@@ -784,14 +784,8 @@ static size_t line(const Arg *arg) {
 }
 
 static size_t column(const Arg *arg) {
-	char c;
-	EditorWin *win = vis->win;
-	size_t pos = window_cursor_get(win->win);
-	Iterator it = text_iterator_get(win->text, text_line_begin(win->text, pos));
-	int count = action.count;
-	while (count > 0 && text_iterator_byte_get(&it, &c) && c != '\n')
-		text_iterator_byte_next(&it, NULL);
-	return it.pos;
+	size_t pos = window_cursor_get(vis->win->win);
+	return text_line_offset(vis->win->text, pos, action.count);
 }
 
 static size_t window_lines_top(const Arg *arg) {
