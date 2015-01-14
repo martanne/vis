@@ -275,13 +275,10 @@ Editor Frontends
 
 The editor core is written in a library like fashion which should make
 it possible to write multiple frontends with possibly different user
-interfaces/paradigms.
+interfaces/paradigms. The frontend to run is selected based on the
+executable name.
 
-At the moment there exists a barely functional, non-modal nano/sandy
-like interface which was used during early testing. The default interface
-is a vim clone called vis.
-
-The frontend to run is selected based on the executable name.
+The default interface is a vim clone called vis.
 
 Key binding modes
 -----------------

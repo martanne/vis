@@ -10,14 +10,13 @@ config.h:
 vis: config.h config.mk
 	@echo ${CC} ${CFLAGS} ${LDFLAGS} *.c -o $@
 	@${CC} ${CFLAGS} ${LDFLAGS} *.c -o $@
-	@ln -sf $@ nano
 
 debug: clean
 	@make CFLAGS='${DEBUG_CFLAGS}'
 
 clean:
 	@echo cleaning
-	@rm -f vis nano vis-${VERSION}.tar.gz
+	@rm -f vis vis-${VERSION}.tar.gz
 
 dist: clean
 	@echo creating dist tarball
