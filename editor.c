@@ -138,13 +138,13 @@ bool editor_window_split(EditorWin *original) {
 
 void editor_window_jumplist_add(EditorWin *win, size_t pos) {
 	Mark mark = text_mark_set(win->text, pos);
-	if (mark)
+	if (mark && win->jumplist)
 		ringbuf_add(win->jumplist, mark);
 }
 
 size_t editor_window_jumplist_prev(EditorWin *win) {
 	size_t cur = window_cursor_get(win->win);
-	for (;;) {
+	while (win->jumplist) {
 		Mark mark = ringbuf_prev(win->jumplist);
 		if (!mark)
 			return cur;
@@ -157,7 +157,7 @@ size_t editor_window_jumplist_prev(EditorWin *win) {
 
 size_t editor_window_jumplist_next(EditorWin *win) {
 	size_t cur = window_cursor_get(win->win);
-	for (;;) {
+	while (win->jumplist) {
 		Mark mark = ringbuf_next(win->jumplist);
 		if (!mark)
 			return cur;
@@ -169,7 +169,8 @@ size_t editor_window_jumplist_next(EditorWin *win) {
 }
 
 void editor_window_jumplist_invalidate(EditorWin *win) {
-	ringbuf_invalidate(win->jumplist);
+	if (win->jumplist)
+		ringbuf_invalidate(win->jumplist);
 }
 
 size_t editor_window_changelist_prev(EditorWin *win) {
@@ -367,7 +368,7 @@ static EditorWin *editor_window_new_text(Editor *ed, Text *text) {
 	win->win = window_new(win->text);
 	win->statuswin = newwin(1, ed->width, 0, 0);
 	win->jumplist = ringbuf_alloc(31);
-	if (!win->win || !win->statuswin || !win->jumplist) {
+	if (!win->win || !win->statuswin) {
 		editor_window_free(ed, win);
 		return NULL;
 	}
