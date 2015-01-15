@@ -8,8 +8,8 @@ config.h:
 	cp config.def.h config.h
 
 vis: config.h config.mk
-	@echo ${CC} ${CFLAGS} ${LDFLAGS} *.c -o $@
-	@${CC} ${CFLAGS} ${LDFLAGS} *.c -o $@
+	@echo ${CC} ${CFLAGS} *.c ${LDFLAGS} -o $@
+	@${CC} ${CFLAGS} *.c ${LDFLAGS} -o $@
 
 debug: clean
 	@make CFLAGS='${DEBUG_CFLAGS}'
