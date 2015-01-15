@@ -7,7 +7,7 @@ all: vis
 config.h:
 	cp config.def.h config.h
 
-vis: config.h config.mk
+vis: config.h config.mk *.c *.h
 	@echo ${CC} ${CFLAGS} *.c ${LDFLAGS} -o $@
 	@${CC} ${CFLAGS} *.c ${LDFLAGS} -o $@
 
