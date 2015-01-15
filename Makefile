@@ -45,4 +45,4 @@ uninstall:
 	@echo removing manual page from ${DESTDIR}${MANPREFIX}/man1
 	@rm -f ${DESTDIR}${MANPREFIX}/man1/vis.1
 
-.PHONY: all vis clean dist install uninstall debug
+.PHONY: all clean dist install uninstall debug
