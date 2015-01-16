@@ -644,6 +644,7 @@ bool text_range_save(Text *txt, Filerange *range, const char *filename) {
 	}
 	if (close(fd) == -1)
 		goto err;
+	fd = -1;
 	if (rename(tmpname, filename) == -1)
 		goto err;
 	txt->saved_action = txt->undo;
