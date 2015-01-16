@@ -642,10 +642,10 @@ bool text_range_save(Text *txt, Filerange *range, const char *filename) {
 		if (munmap(buf, size) == -1)
 			goto err;
 	}
-	if (close(fd) == -1)
-		goto err;
 	if (rename(tmpname, filename) == -1)
 		goto err;
+	if (close(fd) == -1)
+		return false;
 	txt->saved_action = txt->undo;
 	text_snapshot(txt);
 	if (!txt->filename)
