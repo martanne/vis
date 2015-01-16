@@ -315,6 +315,8 @@ static void span_init(Span *span, Piece *start, Piece *end) {
 static void span_swap(Text *txt, Span *old, Span *new) {
 	if (old->len == 0 && new->len == 0) {
 		return;
+	} else if (new->end == NULL || new->start == NULL) {
+		return;
 	} else if (old->len == 0) {
 		/* insert new span */
 		new->start->prev->next = new->start;
