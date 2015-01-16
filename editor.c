@@ -412,7 +412,10 @@ bool editor_window_new(Editor *ed, const char *filename) {
 		return false;
 	}
 
-	if (filename) {
+	if (original) {
+		window_syntax_set(win->win, window_syntax_get(original->win));
+		window_cursor_to(win->win, window_cursor_get(original->win));
+	} else if (filename) {
 		text_filename_set(text, filename);
 		for (Syntax *syn = ed->syntaxes; syn && syn->name; syn++) {
 			if (!regexec(&syn->file_regex, filename, 0, NULL, 0)) {
@@ -420,9 +423,6 @@ bool editor_window_new(Editor *ed, const char *filename) {
 				break;
 			}
 		}
-	} else if (original) {
-		window_syntax_set(win->win, window_syntax_get(original->win));
-		window_cursor_to(win->win, window_cursor_get(original->win));
 	}
 
 	editor_draw(ed);
