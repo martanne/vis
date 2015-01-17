@@ -33,3 +33,12 @@ DEBUG_CFLAGS = ${CFLAGS} -UNDEBUG -O0 -g -ggdb -Wall -Wextra -Wno-missing-field-
 
 CC ?= cc
 STRIP ?= strip
+
+# Hardening
+ifeq (${CC},gcc)
+	CFLAGS += -fPIC -fstack-protector-all -D_FORTIFY_SOURCE=2
+	LDFLAGS += -z now -z relro -pie
+else ifeq (${CC},clang)
+	CFLAGS += -fPIE -fstack-protector-all -D_FORTIFY_SOURCE=2
+	LDFLAGS += -z now -z relro -pie
+endif
