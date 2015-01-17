@@ -1106,6 +1106,49 @@ static Syntax syntaxes[] = {{
 		&colors[COLOR_SYNTAX2],
 	}}
 },{
+	.name = "php",
+	.file = "\\.php$",
+	.rules = {
+		SYNTAX_MULTILINE_COMMENT,
+		SYNTAX_SINGLE_LINE_COMMENT,
+		SYNTAX_BRACKET,
+	{
+		"(#.*$|#$)",
+		&colors[COLOR_COMMENT],
+	},{
+		"(\"\"\".*\"\"\")",
+		&colors[COLOR_COMMENT],
+		true, /* multiline */
+	},{
+		B"(class|interface|extends|implements|new|__construct|__destruct|use|namespace|return)"B,
+		&colors[COLOR_KEYWORD2],
+	},{
+		B"(public|private|protected|const|parent|function|->)"B,
+		&colors[COLOR_KEYWORD],
+	},{
+		B"(if|else|while|do|for|foreach|in|try|catch|finally|switch|case|default|break|continue|as|=>)"B,
+		&colors[COLOR_CONTROL],
+	},{
+		B"(array|true|false|null)",
+		&colors[COLOR_DATATYPE],
+	},{
+		B"[0-9]+\\.[0-9]+([eE][-+]?[0-9]+)?"B,
+		&colors[COLOR_LITERAL],
+	},{
+		B"[0-9]+"B"|"B"0[xX][0-9a-fA-F]+"B"|"B"0[oO][0-7]+"B,
+		&colors[COLOR_LITERAL],
+	},{
+		"\\$[a-zA-Z0-9_\\-]+",
+		&colors[COLOR_VARIABLE],
+	},{
+		"(\"(\\\\.|[^\"])*\"|\'(\\\\.|[^\'])*\')",
+		&colors[COLOR_STRING],
+		false, /* multiline */
+	},{
+		"(php|echo|print|var_dump|print_r)",
+		&colors[COLOR_SYNTAX2],
+	}}
+},{
 	.name = "haskell",
 	.file = "\\.hs$",
 	.rules = {{
