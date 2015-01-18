@@ -114,7 +114,7 @@ struct Text {
 	Action *current_action; /* action holding all file changes until a snapshot is performed */
 	Action *saved_action;   /* the last action at the time of the save operation */
 	size_t size;            /* current file content size in bytes */
-	const char *filename;   /* filename of which data was loaded */
+	char *filename;         /* filename of which data was loaded */
 	struct stat info;	/* stat as proped on load time */
 	int fd;                 /* the file descriptor of the original mmap-ed data */
 	LineCache lines;        /* mapping between absolute pos in bytes and logical line breaks */
@@ -895,7 +895,7 @@ void text_free(Text *txt) {
 	if (txt->buf.data)
 		munmap(txt->buf.data, txt->buf.size);
 
-	free((char*)txt->filename);
+	free(txt->filename);
 	free(txt);
 }
 
@@ -1199,7 +1199,8 @@ const char *text_filename_get(Text *txt) {
 }
 
 void text_filename_set(Text *txt, const char *filename) {
-	txt->filename = strdup(filename);
+	free(txt->filename);
+	txt->filename = filename ? strdup(filename) : NULL;
 }
 
 Regex *text_regex_new(void) {
