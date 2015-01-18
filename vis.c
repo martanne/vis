@@ -1567,7 +1567,8 @@ static bool cmd_read(Filerange *range, const char *argv[]) {
 		text_insert(vis->win->text, pos, data, info.st_size);
 		pos += info.st_size;
 	err:
-		close(fd);
+		if (fd != -1)
+			close(fd);
 		if (data && data != MAP_FAILED)
 			munmap(data, info.st_size);
 	}
