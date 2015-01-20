@@ -13,6 +13,7 @@ ifeq ($(shell uname),Darwin)
 	LIBS = -lc -lncurses
 	CFLAGS += -D_DARWIN_C_SOURCE
 else ifeq ($(shell uname),OpenBSD)
+	LIBS = -lc -lncurses
 	CFLAGS += -D_BSD_SOURCE
 else ifeq ($(shell uname),FreeBSD)
 	CFLAGS += -D_BSD_SOURCE
