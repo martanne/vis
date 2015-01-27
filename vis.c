@@ -876,6 +876,7 @@ static void replace(const Arg *arg) {
 	buffer_put(&buffer_repeat, k.str, strlen(k.str));
 	editor_delete_key(vis);
 	editor_insert_key(vis, k.str, strlen(k.str));
+	text_snapshot(vis->win->text);
 	window_cursor_to(vis->win->win, pos);
 }
 
