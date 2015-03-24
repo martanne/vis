@@ -448,6 +448,8 @@ static void movement_key(const Arg *arg);
 static void movement(const Arg *arg);
 /* let the current operator affect the range indicated by the text object arg->i */
 static void textobj(const Arg *arg);
+/* move to the other end of selected text */
+static void selection_end(const Arg *arg);
 /* use register indicated by arg->i for the current operator */
 static void reg(const Arg *arg);
 /* perform a movement to mark arg->i */
@@ -956,6 +958,20 @@ static void movement(const Arg *arg) {
 static void textobj(const Arg *arg) {
 	action.textobj = &textobjs[arg->i];
 	action_do(&action);
+}
+
+static void selection_end(const Arg *arg) {
+	size_t pos = window_cursor_get(vis->win->win);
+	Filerange sel = window_selection_get(vis->win->win);
+	if (pos == sel.start) {
+		pos = text_char_prev(vis->win->text, sel.end);
+	} else {
+		pos = sel.start;
+		sel.start = text_char_prev(vis->win->text, sel.end);
+		sel.end = pos;
+	}
+	window_selection_set(vis->win->win, &sel);
+	window_cursor_to(vis->win->win, pos);
 }
 
 static void reg(const Arg *arg) {

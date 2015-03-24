@@ -447,6 +447,7 @@ static KeyBinding vis_mode_visual[] = {
 	{ { NONE('r')               }, operator,       { .i = OP_CHANGE            } },
 	{ { NONE('s')               }, operator,       { .i = OP_CHANGE            } },
 	{ { NONE('J')               }, operator,       { .i = OP_JOIN              } },
+	{ { NONE('o')               }, selection_end,  { NULL                      } },
 	{ /* empty last element, array terminator */                                 },
 };
 
