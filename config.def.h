@@ -1,5 +1,4 @@
 /** start by reading from the top of vis.c up until config.h is included */
-#define DEFAULT_TERM "xterm" /* default term to use if $TERM isn't set */
 /* macros used to specify keys for key bindings */
 #define ESC        0x1B
 #define NONE(k)    { .str = { k }, .code = 0 }
@@ -70,26 +69,6 @@ static Command cmds[] = {
 	{ { "xit",                     }, cmd_xit,        CMD_OPT_FORCE },
 	{ /* array terminator */                                        },
 };
-
-/* draw a statubar, do whatever you want with win->statuswin curses window */
-static void statusbar(EditorWin *win) {
-	bool focused = vis->win == win || vis->prompt->editor == win;
-	const char *filename = text_filename_get(win->text);
-	CursorPos pos = window_cursor_getpos(win->win);
-	wattrset(win->statuswin, focused ? A_REVERSE|A_BOLD : A_REVERSE);
-	mvwhline(win->statuswin, 0, 0, ' ', win->width);
-	mvwprintw(win->statuswin, 0, 0, "%s %s %s %s",
-	          mode->name && mode->name[0] == '-' ? mode->name : "",
-	          filename ? filename : "[No Name]",
-	          text_modified(win->text) ? "[+]" : "",
-	          vis->recording ? "recording": "");
-	char buf[win->width + 1];
-	int len = snprintf(buf, win->width, "%zd, %zd", pos.line, pos.col);
-	if (len > 0) {
-		buf[len] = '\0';
-		mvwaddstr(win->statuswin, 0, win->width - len - 1, buf);
-	}
-}
 
 /* called before any other keybindings are checked, if the function returns false
  * the key is completely ignored. */
@@ -796,7 +775,6 @@ static Config editors[] = {
 	{
 		.name = "vis",
 		.mode = &vis_modes[VIS_MODE_NORMAL],
-		.statusbar = statusbar,
 		.keypress = vis_keypress,
 	},
 };

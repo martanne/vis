@@ -19,6 +19,8 @@
 #include <string.h>
 #include <strings.h>
 #include <signal.h>
+#include <stdarg.h>
+#include <stdio.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <limits.h>
@@ -29,6 +31,7 @@
 #include <sys/ioctl.h>
 #include <sys/mman.h>
 
+#include "ui-curses.h"
 #include "editor.h"
 #include "text-motions.h"
 #include "text-objects.h"
@@ -84,7 +87,6 @@ struct Mode {
 typedef struct {
 	char *name;                    /* is used to match against argv[0] to enable this config */
 	Mode *mode;                    /* default mode in which the editor should start in */
-	void (*statusbar)(EditorWin*); /* routine which is called whenever the cursor is moved within a window */
 	bool (*keypress)(Key*);        /* called before any other keybindings are checked,
 	                                * return value decides whether key should be ignored */
 } Config;
@@ -155,6 +157,7 @@ typedef struct {             /* command definitions for the ':'-prompt */
 
 /** global variables */
 static volatile bool running = true; /* exit main loop once this becomes false */
+static volatile sig_atomic_t need_resize;
 static Editor *vis;         /* global editor instance, keeps track of all windows etc. */
 static Mode *mode;          /* currently active mode, used to search for keybindings */
 static Mode *mode_prev;     /* previsouly active user mode */
@@ -801,11 +804,13 @@ static size_t window_lines_top(const Arg *arg) {
 }
 
 static size_t window_lines_middle(const Arg *arg) {
-	return window_screenline_goto(vis->win->win, vis->win->height / 2);
+	int h = window_height_get(vis->win->win);
+	return window_screenline_goto(vis->win->win, h/2);
 }
 
 static size_t window_lines_bottom(const Arg *arg) {
-	return window_screenline_goto(vis->win->win, vis->win->height - action.count);
+	int h = window_height_get(vis->win->win);
+	return window_screenline_goto(vis->win->win, h-action.count);
 }
 
 /** key bindings functions of type: void (*func)(const Arg*) */
@@ -865,8 +870,7 @@ static void macro_replay(const Arg *arg) {
 }
 
 static void suspend(const Arg *arg) {
-	endwin();
-	raise(SIGSTOP);
+	editor_suspend(vis);
 }
 
 static void repeat(const Arg *arg) {
@@ -1055,7 +1059,7 @@ static void prompt_enter(const Arg *arg) {
 	 * on vis->win.
 	 */
 	switchmode_to(mode_before_prompt);
-	if (s && *s && exec_command(vis->prompt->title[0], s) && running)
+	if (s && *s && exec_command(vis->prompt_type, s) && running)
 		switchmode(&(const Arg){ .i = VIS_MODE_NORMAL });
 	free(s);
 	editor_draw(vis);
@@ -1102,10 +1106,10 @@ static int argi2lines(const Arg *arg) {
 	switch (arg->i) {
 	case -PAGE:
 	case +PAGE:
-		return vis->win->height-1;
+		return window_height_get(vis->win->win);
 	case -PAGE_HALF:
 	case +PAGE_HALF:
-		return vis->win->height/2;
+		return window_height_get(vis->win->win)/2;
 	default:
 		if (action.count > 0)
 			return action.count;
@@ -1330,7 +1334,7 @@ static void switchmode_to(Mode *new_mode) {
 		mode_prev = mode;
 	mode = new_mode;
 	if (mode == config->mode || (mode->name && mode->name[0] == '-'))
-		statusbar(vis->win);
+		vis->win->ui->draw_status(vis->win->ui);
 	if (mode->enter)
 		mode->enter(mode_prev);
 }
@@ -1467,7 +1471,8 @@ static bool cmd_set(Filerange *range, enum CmdOpt cmdopt, const char *argv[]) {
 			editor_info_show(vis, "Unknown syntax definition: `%s'", argv[2]);
 		break;
 	case OPTION_NUMBER:
-		window_line_numbers_show(vis->win->win, arg.b);
+		editor_window_options(vis->win, arg.b ? UI_OPTION_LINE_NUMBERS_ABSOLUTE :
+			UI_OPTION_LINE_NUMBERS_NONE);
 		break;
 	}
 
@@ -1611,26 +1616,26 @@ static bool openfiles(const char **files) {
 }
 
 static bool cmd_split(Filerange *range, enum CmdOpt opt, const char *argv[]) {
-	editor_windows_arrange_horizontal(vis);
+	editor_windows_arrange(vis, UI_LAYOUT_HORIZONTAL);
 	if (!argv[1])
 		return vis_window_split(vis->win);
 	return openfiles(&argv[1]);
 }
 
 static bool cmd_vsplit(Filerange *range, enum CmdOpt opt, const char *argv[]) {
-	editor_windows_arrange_vertical(vis);
+	editor_windows_arrange(vis, UI_LAYOUT_VERTICAL);
 	if (!argv[1])
-		return editor_window_split(vis->win);
+		return vis_window_split(vis->win);
 	return openfiles(&argv[1]);
 }
 
 static bool cmd_new(Filerange *range, enum CmdOpt opt, const char *argv[]) {
-	editor_windows_arrange_horizontal(vis);
+	editor_windows_arrange(vis, UI_LAYOUT_HORIZONTAL);
 	return vis_window_new(NULL);
 }
 
 static bool cmd_vnew(Filerange *range, enum CmdOpt opt, const char *argv[]) {
-	editor_windows_arrange_vertical(vis);
+	editor_windows_arrange(vis, UI_LAYOUT_VERTICAL);
 	return vis_window_new(NULL);
 }
 
@@ -1883,15 +1888,9 @@ static bool vis_window_split(EditorWin *win) {
 	return true;
 }
 
-typedef struct Screen Screen;
-static struct Screen {
-	int w, h;
-	bool need_resize;
-} screen = { .need_resize = true };
-
 static void die(const char *errstr, ...) {
 	va_list ap;
-	endwin();
+	editor_free(vis);
 	va_start(ap, errstr);
 	vfprintf(stderr, errstr, ap);
 	va_end(ap);
@@ -1899,43 +1898,10 @@ static void die(const char *errstr, ...) {
 }
 
 static void sigwinch_handler(int sig) {
-	screen.need_resize = true;
-}
-
-static void resize_screen(Screen *screen) {
-	struct winsize ws;
-
-	if (ioctl(0, TIOCGWINSZ, &ws) == -1) {
-		getmaxyx(stdscr, screen->h, screen->w);
-	} else {
-		screen->w = ws.ws_col;
-		screen->h = ws.ws_row;
-	}
-
-	resizeterm(screen->h, screen->w);
-	wresize(stdscr, screen->h, screen->w);
-	screen->need_resize = false;
+	need_resize = true;
 }
 
 static void setup() {
-	setlocale(LC_CTYPE, "");
-	if (!getenv("ESCDELAY"))
-		set_escdelay(50);
-	char *term = getenv("TERM");
-	if (!term)
-		term = DEFAULT_TERM;
-	if (!newterm(term, stderr, stdin))
-		die("Can not initialize terminal\n");
-	start_color();
-	raw();
-	noecho();
-	keypad(stdscr, TRUE);
-	meta(stdscr, TRUE);
-	resize_screen(&screen);
-	/* needed because we use getch() which implicitly calls refresh() which
-	   would clear the screen (overwrite it with an empty / unused stdscr */
-	refresh();
-
 	struct sigaction sa;
 	sa.sa_flags = 0;
 	sigemptyset(&sa.sa_mask);
@@ -2046,9 +2012,9 @@ static void mainloop() {
 	editor_draw(vis);
 
 	while (running) {
-		if (screen.need_resize) {
-			resize_screen(&screen);
-			editor_resize(vis, screen.w, screen.h);
+		if (need_resize) {
+			editor_resize(vis);
+			need_resize = false;
 		}
 
 		fd_set fds;
@@ -2056,7 +2022,6 @@ static void mainloop() {
 		FD_SET(STDIN_FILENO, &fds);
 
 		editor_update(vis);
-		doupdate();
 		idle.tv_sec = mode->idle_timeout;
 		int r = pselect(1, &fds, NULL, NULL, timeout, &emptyset);
 		if (r == -1 && errno == EINTR)
@@ -2113,11 +2078,10 @@ int main(int argc, char *argv[]) {
 	mode_prev = mode = config->mode;
 	setup();
 
-	if (!vis_init() || !(vis = editor_new(screen.w, screen.h)))
+	if (!vis_init() || !(vis = editor_new(ui_curses_new())))
 		die("Could not allocate editor core\n");
 	if (!editor_syntax_load(vis, syntaxes, colors))
 		die("Could not load syntax highlighting definitions\n");
-	editor_statusbar_set(vis, config->statusbar);
 
 	char *cmd = NULL;
 	for (int i = 1; i < argc; i++) {
@@ -2157,6 +2121,5 @@ int main(int argc, char *argv[]) {
 	mainloop();
 	editor_free(vis);
 	vis_shutdown();
-	endwin();
 	return 0;
 }

@@ -4,14 +4,17 @@
 #include <curses.h>
 #include <stddef.h>
 #include <stdbool.h>
+
+typedef struct Editor Editor;
+typedef struct EditorWin EditorWin;
+
+#include "ui.h"
 #include "window.h"
 #include "register.h"
 #include "macro.h"
 #include "syntax.h"
 #include "ring-buffer.h"
 
-typedef struct Editor Editor;
-typedef struct EditorWin EditorWin;
 
 typedef struct {
 	size_t index;           /* #number of changes */
@@ -20,22 +23,13 @@ typedef struct {
 
 struct EditorWin {
 	Editor *editor;         /* editor instance to which this window belongs */
+	UiWin *ui;
 	Text *text;             /* underlying text management */
 	Win *win;               /* window for the text area  */
 	RingBuffer *jumplist;   /* LRU jump management */
 	ChangeList changelist;  /* state for iterating through least recently changes */
-	WINDOW *statuswin;      /* curses window for the statusbar */
-	int width, height;      /* window size including the statusbar */
 	EditorWin *prev, *next; /* neighbouring windows */
 };
-
-typedef struct {
-	EditorWin *win;         /* 1-line height editor window used for the prompt */
-	EditorWin *editor;      /* active editor window before prompt is shown */
-	char *title;            /* title displayed to the left of the prompt */
-	WINDOW *titlewin;       /* the curses window holding the prompt title */
-	bool active;            /* whether the prompt is currently shown or not */
-} Prompt;
 
 enum Reg {
 	REG_a,
@@ -100,28 +94,29 @@ enum Mark {
 };
 
 struct Editor {
-	int width, height;                /* terminal size, available for all windows */
+	Ui *ui;
 	EditorWin *windows;               /* list of windows */
 	EditorWin *win;                   /* currently active window */
 	Syntax *syntaxes;                 /* NULL terminated array of syntax definitions */
 	Register registers[REG_LAST];     /* register used for copy and paste */
 	Macro macros[26];                 /* recorded macros */
 	Macro *recording, *last_recording;/* currently and least recently recorded macro */
-	Prompt *prompt;                   /* used to get user input */
-	char info[255];                   /* a user message currently being displayed */
+	EditorWin *prompt;                /* 1-line height window to get user input */
+	EditorWin *prompt_window;         /* window which was focused before prompt was shown */
+	char prompt_type;                 /* command ':' or search '/','?' prompt */
 	Regex *search_pattern;            /* last used search pattern */
 	void (*windows_arrange)(Editor*); /* current layout which places the windows */
-	void (*statusbar)(EditorWin*);    /* configurable user hook to draw statusbar */
 	int tabwidth;                     /* how many spaces should be used to display a tab */
 	bool expandtab;                   /* whether typed tabs should be converted to spaces */
 	bool autoindent;                  /* whether indentation should be copied from previous line on newline */
 };
 
-Editor *editor_new(int width, int height);
+Editor *editor_new(Ui*);
 void editor_free(Editor*);
-void editor_resize(Editor*, int width, int height);
+void editor_resize(Editor*);
 void editor_draw(Editor*);
 void editor_update(Editor*);
+void editor_suspend(Editor*);
 
 /* these function operate on the currently focused window but make sure
  * that all windows which show the affected region are redrawn too. */
@@ -168,8 +163,7 @@ void editor_window_jumplist_invalidate(EditorWin*);
 size_t editor_window_changelist_prev(EditorWin*);
 size_t editor_window_changelist_next(EditorWin*);
 /* rearrange all windows either vertically or horizontally */
-void editor_windows_arrange_vertical(Editor*);
-void editor_windows_arrange_horizontal(Editor*);
+void editor_windows_arrange(Editor*, enum UiLayout);
 /* display a user prompt with a certain title and default text */
 void editor_prompt_show(Editor*, const char *title, const char *text);
 /* hide the user prompt if it is currently shown */
@@ -183,10 +177,7 @@ void editor_prompt_set(Editor*, const char *line);
 /* display a message to the user */
 void editor_info_show(Editor*, const char *msg, ...);
 void editor_info_hide(Editor*);
-
-/* register a callback which is called whenever the statusbar needs to
- * be redrawn */
-void editor_statusbar_set(Editor*, void (*statusbar)(EditorWin*));
+void editor_window_options(EditorWin*, enum UiOption options);
 
 /* look up a curses color pair for the given combination of fore and
  * background color */

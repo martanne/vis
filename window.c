@@ -19,36 +19,12 @@
 #include <ctype.h>
 #include <errno.h>
 #include <regex.h>
-#include <curses.h>
 #include "editor.h"
 #include "window.h"
 #include "syntax.h"
 #include "text.h"
 #include "text-motions.h"
 #include "util.h"
-
-typedef struct {            /* used to calculate the display width of a character */
-	char c[7];	    /* utf8 encoded bytes */
-	size_t len;	    /* number of bytes of the multibyte sequence */
-	wchar_t wchar;	    /* equivalent converted wide character, needed for wcwidth(3) */
-} Char;
-
-typedef struct {
-	unsigned char len;  /* number of bytes the character displayed in this cell uses, for
-	                       character which use more than 1 column to display, their lenght
-	                       is stored in the leftmost cell wheras all following cells
-	                       occupied by the same character have a length of 0. */
-	char data;          /* first byte of the utf8 sequence, used for white space handling */
-} Cell;
-
-typedef struct Line Line;
-struct Line {               /* a line on the screen, *not* in the file */
-	Line *prev, *next;  /* pointer to neighbouring screen lines */
-	size_t len;         /* line length in terms of bytes */
-	size_t lineno;      /* line number from start of file */
-	int width;          /* zero based position of last used column cell */
-	Cell cells[];       /* win->width cells storing information about the displayed characters */
-};
 
 typedef struct {            /* cursor position */
 	Filepos pos;        /* in bytes from the start of the file */
@@ -58,19 +34,16 @@ typedef struct {            /* cursor position */
 
 struct Win {                /* window showing part of a file */
 	Text *text;         /* underlying text management */
-	WINDOW *win;        /* curses window for the text area */
-	WINDOW *winnum;     /* curses window for the line numbers area */
+	UiWin *ui;
 	int width, height;  /* window text area size */
-	int w, h, x, y;     /* complete window position & dimension (including line numbers) */
 	Filepos start, end; /* currently displayed area [start, end] in bytes from the start of the file */
+	size_t lines_size;  /* number of allocated bytes for lines (grows only) */
 	Line *lines;        /* win->height number of lines representing window content */
 	Line *topline;      /* top of the window, first line currently shown */
 	Line *lastline;     /* last currently used line, always <= bottomline */
 	Line *bottomline;   /* bottom of screen, might be unused if lastline < bottomline */
 	Filerange sel;      /* selected text range in bytes from start of file */
 	Cursor cursor;      /* current window cursor position */
-	void (*cursor_moved)(Win*, void *); /* registered callback, fires whenever the cursor moved */
-	void *cursor_moved_data; /* user supplied data, passed as second argument to the above callback */
 	Line *line;         /* used while drawing window content, line where next char will be drawn */
 	int col;            /* used while drawing window content, column where next char will be drawn */
 	Syntax *syntax;     /* syntax highlighting definitions for this window or NULL */
@@ -78,7 +51,7 @@ struct Win {                /* window showing part of a file */
 };
 
 static void window_clear(Win *win);
-static bool window_addch(Win *win, Char *c);
+static bool window_addch(Win *win, Cell *cell);
 static size_t window_cursor_update(Win *win);
 /* set/move current cursor position to a given (line, column) pair */
 static size_t window_cursor_set(Win *win, Line *line, int col);
@@ -105,46 +78,13 @@ void window_selection_clear(Win *win) {
 	curs_set(1);
 }
 
-static int window_numbers_width(Win *win) {
-	if (!win->winnum)
-		return 0;
-	return snprintf(NULL, 0, "%zd", win->topline->lineno + win->height - 1) + 1;
-}
-
-static void window_numbers_draw(Win *win) {
-	if (!win->winnum)
-		return;
-	werase(win->winnum);
-	size_t prev_lineno = -1;
-	int width = window_numbers_width(win), i = 0;
-	char fmt[32];
-	snprintf(fmt, sizeof fmt, "%%%dd", width - 1);
-	for (Line *l = win->topline; l && l <= win->lastline; l = l->next, i++) {
-		if (l->lineno != prev_lineno)
-			mvwprintw(win->winnum, i, 0, fmt, l->lineno);
-		prev_lineno = l->lineno;
-	}
-	mvwvline(win->winnum, 0, width-1, ACS_VLINE, win->height);
-}
-
 /* reset internal window data structures (cell matrix, line offsets etc.) */
 static void window_clear(Win *win) {
 	/* calculate line number of first line */
+	// TODO move elsewhere
 	win->topline = win->lines;
 	win->topline->lineno = text_lineno_by_pos(win->text, win->start);
 	win->lastline = win->topline;
-
-	/* based on which we can calculate how much space is needed to display line numbers */
-	int lineno_width = window_numbers_width(win);
-	int width = win->w - lineno_width;
-	if (win->winnum) {
-		wresize(win->winnum, win->h, lineno_width);
-		mvwin(win->winnum, win->y, win->x);
-	}
-
-	wresize(win->win, win->height, width);
-	mvwin(win->win, win->y, win->x + lineno_width);
-	win->width = width;
 
 	/* reset all other lines */
 	size_t line_size = sizeof(Line) + win->width*sizeof(Cell);
@@ -152,8 +92,8 @@ static void window_clear(Win *win) {
 	Line *prev = NULL;
 	for (size_t i = 0; i < end; i += line_size) {
 		Line *line = (Line*)(((char*)win->lines) + i);
-		line->len = 0;
 		line->width = 0;
+		line->len = 0;
 		line->prev = prev;
 		if (prev)
 			prev->next = line;
@@ -190,15 +130,15 @@ Filerange window_viewport_get(Win *win) {
 }
 
 /* try to add another character to the window, return whether there was space left */
-static bool window_addch(Win *win, Char *c) {
+static bool window_addch(Win *win, Cell *cell) {
 	if (!win->line)
 		return false;
 
 	int width;
-	Cell empty = { .len = 0, .data = '\0' };
+	static Cell empty;
 	size_t lineno = win->line->lineno;
 
-	switch (c->wchar) {
+	switch (cell->data[0]) {
 	case '\t':
 		width = win->tabwidth - (win->col % win->tabwidth);
 		for (int w = 0; w < width; w++) {
@@ -211,68 +151,53 @@ static bool window_addch(Win *win, Char *c) {
 			}
 			if (w == 0) {
 				/* first cell of a tab has a length of 1 */
-				win->line->cells[win->col].len = c->len;
-				win->line->len += c->len;
+				win->line->cells[win->col].len = cell->len;
+				win->line->len += cell->len;
 			} else {
 				/* all remaining ones have a lenght of zero */
 				win->line->cells[win->col].len = 0;
 			}
 			/* but all are marked as part of a tabstop */
-			win->line->cells[win->col].data = '\t';
-			win->col++;
+			win->line->cells[win->col].width = 1;
+			win->line->cells[win->col].data[0] = ' ';
+			win->line->cells[win->col].data[1] = '\0';
+			win->line->cells[win->col].istab = true;
 			win->line->width++;
-			waddch(win->win, ' ');
+			win->col++;
 		}
 		return true;
 	case '\n':
-		width = 1;
-		if (win->col + width > win->width) {
+		cell->width = 1;
+		if (win->col + cell->width > win->width) {
 			win->line = win->line->next;
 			win->col = 0;
 			if (!win->line)
 				return false;
-			win->line->lineno = lineno + 1;
+			win->line->lineno = lineno;
 		}
-		win->line->cells[win->col].len = c->len;
-		win->line->len += c->len;
-		win->line->cells[win->col].data = '\n';
+		win->line->cells[win->col] = *cell;
+		win->line->len += cell->len;
+		win->line->width += cell->width;
 		for (int i = win->col + 1; i < win->width; i++)
 			win->line->cells[i] = empty;
 
-		if (win->line == win->bottomline) {
-			/* XXX: curses bug? the wclrtoeol(win->win); implied by waddch(win->win, '\n')
-			 * doesn't seem to work on the last line!?
-			 *
-			 * Thus explicitly clear the remaining of the line.
-			 */
-			for (int i = win->col; i < win->width; i++)
-				waddch(win->win, ' ');
-		} else if (win->line->width == 0) {
-			/* add a single space in an otherwise empty line, makes selection cohorent */
-			waddch(win->win, ' ');
-		}
-
-		waddch(win->win, '\n');
 		win->line = win->line->next;
 		if (win->line)
 			win->line->lineno = lineno + 1;
 		win->col = 0;
 		return true;
 	default:
-		if (c->wchar < 128 && !isprint(c->wchar)) {
+		if ((unsigned char)cell->data[0] < 128 && !isprint((unsigned char)cell->data[0])) {
 			/* non-printable ascii char, represent it as ^(char + 64) */
-			Char s = { .c = "^_", .len = 1 };
-			s.c[1] = c->c[0] + 64;
-			*c = s;
-			width = 2;
-		} else {
-			if ((width = wcwidth(c->wchar)) == -1) {
-				/* this should never happen */
-				width = 1;
-			}
+			*cell = (Cell) {
+				.data = { '^', cell->data[0] + 64, '\0' },
+				.len = 1,
+				.width = 2,
+				.istab = false,
+			};
 		}
 
-		if (win->col + width > win->width) {
+		if (win->col + cell->width > win->width) {
 			for (int i = win->col; i < win->width; i++)
 				win->line->cells[i] = empty;
 			win->line = win->line->next;
@@ -280,16 +205,14 @@ static bool window_addch(Win *win, Char *c) {
 		}
 
 		if (win->line) {
-			win->line->width += width;
-			win->line->len += c->len;
+			win->line->width += cell->width;
+			win->line->len += cell->len;
 			win->line->lineno = lineno;
-			win->line->cells[win->col].len = c->len;
-			win->line->cells[win->col].data = c->c[0];
+			win->line->cells[win->col] = *cell;
 			win->col++;
 			/* set cells of a character which uses multiple columns */
-			for (int i = 1; i < width; i++)
+			for (int i = 1; i < cell->width; i++)
 				win->line->cells[win->col++] = empty;
-			waddstr(win->win, c->c);
 			return true;
 		}
 		return false;
@@ -317,9 +240,7 @@ static size_t window_cursor_update(Win *win) {
 		win->sel.end = cursor->pos;
 		window_draw(win);
 	}
-	wmove(win->win, cursor->row, cursor->col);
-	if (win->cursor_moved)
-		win->cursor_moved(win, win->cursor_moved_data);
+	win->ui->cursor_to(win->ui, cursor->col, cursor->row);
 	return cursor->pos;
 }
 
@@ -385,9 +306,7 @@ void window_cursor_to(Win *win, size_t pos) {
 /* redraw the complete with data starting from win->start bytes into the file.
  * stop once the screen is full, update win->end, win->lastline */
 void window_draw(Win *win) {
-	int old_width = win->width;
 	window_clear(win);
-	wmove(win->win, 0, 0);
 	/* current absolute file position */
 	size_t pos = win->start;
 	/* number of bytes to read in one go */
@@ -400,8 +319,6 @@ void window_draw(Win *win) {
 	text[rem] = '\0';
 	/* current position into buffer from which to interpret a character */
 	char *cur = text;
-	/* current 'parsed' character' */
-	Char c;
 	/* current selection */
 	Filerange sel = window_selection_get(win);
 	/* syntax definition to use */
@@ -414,6 +331,11 @@ void window_draw(Win *win) {
 
 	while (rem > 0) {
 
+		/* current 'parsed' character' */
+		wchar_t wchar;
+		Cell cell;
+		memset(&cell, 0, sizeof cell);
+	
 		if (syntax) {
 			if (matched && cur >= text + matched->rm_eo) {
 				/* end of current match */
@@ -460,13 +382,13 @@ void window_draw(Win *win) {
 			}
 		}
 
-		size_t len = mbrtowc(&c.wchar, cur, rem, NULL);
+		size_t len = mbrtowc(&wchar, cur, rem, NULL);
 		if (len == (size_t)-1 && errno == EILSEQ) {
 			/* ok, we encountered an invalid multibyte sequence,
 			 * replace it with the Unicode Replacement Character
 			 * (FFFD) and skip until the start of the next utf8 char */
 			for (len = 1; rem > len && !ISUTF8(cur[len]); len++);
-			c = (Char){ .c = "\xEF\xBF\xBD", .wchar = 0xFFFD, .len = len };
+			cell = (Cell){ .data = "\xEF\xBF\xBD", .len = len, .width = 1, .istab = false };
 		} else if (len == (size_t)-2) {
 			/* not enough bytes available to convert to a
 			 * wide character. advance file position and read
@@ -478,74 +400,65 @@ void window_draw(Win *win) {
 			continue;
 		} else if (len == 0) {
 			/* NUL byte encountered, store it and continue */
-			len = 1;
-			c = (Char){ .c = "\x00", .wchar = 0x00, .len = len };
+			cell = (Cell){ .data = "\x00", .len = 1, .width = 0, .istab = false };
 		} else {
 			for (size_t i = 0; i < len; i++)
-				c.c[i] = cur[i];
-			c.c[len] = '\0';
-			c.len = len;
+				cell.data[i] = cur[i];
+			cell.data[len] = '\0';
+			cell.istab = false;
+			cell.len = len;
+			cell.width = wcwidth(wchar);
+			if (cell.width == -1)
+				cell.width = 1;
 		}
 
 		if (cur[0] == '\r' && rem > 1 && cur[1] == '\n') {
 			/* convert windows style newline \r\n into a single char with len = 2 */
-			len = 2;
-			c = (Char){ .c = "\n", .wchar = L'\n', .len = len };
+			cell = (Cell){ .data = "\n", .len = 2, .width = 1, .istab = false };
 		}
 
+		cell.attr = attrs;
 		if (sel.start <= pos && pos < sel.end)
-			wattrset(win->win, attrs | A_REVERSE);
-		else
-			wattrset(win->win, attrs);
-
-		if (!window_addch(win, &c))
+			cell.attr |= A_REVERSE;
+		if (!window_addch(win, &cell))
 			break;
 
- 		rem -= len;
-		cur += len;
-		pos += len;
+ 		rem -= cell.len;
+		cur += cell.len;
+		pos += cell.len;
 	}
 
 	/* set end of viewing region */
 	win->end = pos;
 	win->lastline = win->line ? win->line : win->bottomline;
 	win->lastline->next = NULL;
-	/* and clear the rest of the unused window */
-	wclrtobot(win->win);
-	/* if the text area width has changed because of the line numbers
-	 * we have to (re)sync the cursor->line pointer */
-	if (win->width != old_width)
-		window_cursor_sync(win);
-	/* draw line numbers */
-	window_numbers_draw(win);
+	window_cursor_sync(win);
+	win->ui->draw_text(win->ui, win->topline);
 }
 
 bool window_resize(Win *win, int width, int height) {
-	// TODO: only grow memory area
-	size_t line_size = sizeof(Line) + width*sizeof(Cell);
-	Line *lines = calloc(height, line_size);
-	if (!lines)
-		return false;
-	free(win->lines);
-	win->w = win->width = width;
-	win->h = win->height = height;
-	win->lines = lines;
-	window_clear(win);
+	size_t lines_size = height*(sizeof(Line) + width*sizeof(Cell));
+	if (lines_size > win->lines_size) {
+		Line *lines = malloc(lines_size);
+		if (!lines)
+			return false;
+		win->lines = lines;
+		win->lines_size = lines_size;
+	}
+	win->width = width;
+	win->height = height;
+	memset(win->lines, 0, win->lines_size);
+	window_draw(win);
 	return true;
 }
 
-void window_move(Win *win, int x, int y) {
-	win->x = x;
-	win->y = y;
+int window_height_get(Win *win) {
+	return win->height;
 }
 
 void window_free(Win *win) {
 	if (!win)
 		return;
-	if (win->winnum)
-		delwin(win->winnum);
-	if (win->win)
-		delwin(win->win);
 	free(win->lines);
 	free(win);
 }
@@ -554,27 +467,23 @@ void window_reload(Win *win, Text *text) {
 	win->text = text;
 	window_selection_clear(win);
 	window_cursor_to(win, 0);
+	win->ui->reload(win->ui, text);
 }
 
-Win *window_new(Text *text) {
-	if (!text)
+Win *window_new(Text *text, UiWin *ui, int width, int height) {
+	if (!text || !ui)
 		return NULL;
 	Win *win = calloc(1, sizeof(Win));
-	if (!win || !(win->win = newwin(0, 0, 0, 0))) {
-		window_free(win);
+	if (!win)
 		return NULL;
-	}
 
 	win->text = text;
+	win->ui = ui;
 	win->tabwidth = 8;
-
-	int width, height;
-	getmaxyx(win->win, height, width);
 	if (!window_resize(win, width, height)) {
 		window_free(win);
 		return NULL;
 	}
-
 	window_selection_clear(win);
 	window_cursor_to(win, 0);
 
@@ -633,9 +542,9 @@ static size_t window_cursor_set(Win *win, Line *line, int col) {
 	}
 
 	/* for characters which use more than 1 column, make sure we are on the left most */
-	while (col > 0 && line->cells[col].len == 0 && line->cells[col].data != '\t')
+	while (col > 0 && line->cells[col].len == 0)
 		col--;
-	while (col < line->width && line->cells[col].data == '\t')
+	while (col < line->width && line->cells[col].istab)
 		col++;
 
 	/* calculate offset within the line */
@@ -845,12 +754,6 @@ size_t window_screenline_end(Win *win) {
 	return window_cursor_set(win, cursor->line, col >= 0 ? col : 0);
 }
 
-void window_update(Win *win) {
-	if (win->winnum)
-		wnoutrefresh(win->winnum);
-	wnoutrefresh(win->win);
-}
-
 size_t window_delete_key(Win *win) {
 	Cursor *cursor = &win->cursor;
 	Line *line = cursor->line;
@@ -899,7 +802,7 @@ size_t window_replace_key(Win *win, const char *c, size_t len) {
 	Line *line = cursor->line;
 	size_t pos = cursor->pos;
 	/* do not overwrite new line which would merge the two lines */
-	if (line->cells[cursor->col].data != '\n') {
+	if (line->cells[cursor->col].data[0] != '\n') {
 		size_t oldlen = line->cells[cursor->col].len;
 		text_delete(win->text, pos, oldlen);
 	}
@@ -939,25 +842,9 @@ Syntax *window_syntax_get(Win *win) {
 	return win->syntax;
 }
 
-void window_cursor_watch(Win *win, void (*cursor_moved)(Win*, void *), void *data) {
-	win->cursor_moved = cursor_moved;
-	win->cursor_moved_data = data;
-}
-
 size_t window_screenline_goto(Win *win, int n) {
 	size_t pos = win->start;
 	for (Line *line = win->topline; --n > 0 && line != win->lastline; line = line->next)
 		pos += line->len;
 	return pos;
-}
-
-void window_line_numbers_show(Win *win, bool show) {
-	if (show) {
-		if (!win->winnum)
-			win->winnum = newwin(0, 0, 0, 0);
-	} else {
-		if (win->winnum)
-			delwin(win->winnum);
-		win->winnum = NULL;
-	}
 }

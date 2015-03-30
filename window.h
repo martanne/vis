@@ -4,16 +4,38 @@
 #include <stddef.h>
 #include <stdbool.h>
 #include "text.h"
+#include "ui.h"
 #include "syntax.h"
 
 typedef struct Win Win;
+
+typedef struct {
+	int width;          /* display width i.e. number of columns ocupied by this character */
+	size_t len;         /* number of bytes the character displayed in this cell uses, for
+	                       character which use more than 1 column to display, their lenght
+	                       is stored in the leftmost cell wheras all following cells
+	                       occupied by the same character have a length of 0. */
+	char data[8];       /* utf8 encoded character displayed in this cell might not be the
+			       the same as in the underlying text, for example tabs get expanded */
+	bool istab;
+	unsigned int attr;
+} Cell;
+
+typedef struct Line Line;
+struct Line {               /* a line on the screen, *not* in the file */
+	Line *prev, *next;  /* pointer to neighbouring screen lines */
+	size_t len;         /* line length in terms of bytes */
+	size_t lineno;      /* line number from start of file */
+	int width;          /* zero based position of last used column cell */
+	Cell cells[];       /* win->width cells storing information about the displayed characters */
+};
 
 typedef struct {
 	size_t line;
 	size_t col;
 } CursorPos;
 
-Win *window_new(Text*);
+Win *window_new(Text*, UiWin*, int width, int height);
 /* change associated text displayed in this window */
 void window_reload(Win*, Text*);
 void window_free(Win*);
@@ -25,10 +47,8 @@ size_t window_backspace_key(Win*);
 size_t window_delete_key(Win*);
 
 bool window_resize(Win*, int width, int height);
-void window_move(Win*, int x, int y);
+int window_height_get(Win*);
 void window_draw(Win*);
-/* flush all changes made to the ncurses windows to the screen */
-void window_update(Win*);
 /* changes how many spaces are used for one tab (must be >0), redraws the window */
 void window_tabwidth_set(Win*, int tabwidth);
 
@@ -83,8 +103,6 @@ Filerange window_viewport_get(Win*);
 /* associate a set of syntax highlighting rules to this window. */
 void window_syntax_set(Win*, Syntax*);
 Syntax *window_syntax_get(Win*);
-/* whether to show line numbers to the left of the text content */
-void window_line_numbers_show(Win*, bool show);
 /* register a user defined function which will be called whenever the cursor has moved */
 void window_cursor_watch(Win *win, void (*cursor_moved)(Win*, void*), void *data);
 
