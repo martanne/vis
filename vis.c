@@ -543,7 +543,7 @@ static bool vis_window_split(EditorWin *win);
 static Key getkey(void);
 static void keypress(Key *key);
 static void action_do(Action *a);
-static bool exec_command(char type, char *cmdline);
+static bool exec_command(char type, const char *cmdline);
 
 /** operator implementations of type: void (*op)(OperatorContext*) */
 
@@ -1095,8 +1095,7 @@ static void quit(const Arg *arg) {
 }
 
 static void cmd(const Arg *arg) {
-	/* casting to char* is only save if arg->s contains no arguments */
-	exec_command(':', (char*)arg->s);
+	exec_command(':', arg->s);
 }
 
 static int argi2lines(const Arg *arg) {
@@ -1754,19 +1753,24 @@ static Filerange parse_range(char **cmd) {
 	return r;
 }
 
-static bool exec_cmdline_command(char *line) {
+static bool exec_cmdline_command(const char *cmdline) {
 	enum CmdOpt opt = CMD_OPT_NONE;
+	char *line = strdup(cmdline);
 	char *name = line;
+	if (!line)
+		return false;
 	Filerange range = parse_range(&name);
 	if (!text_range_valid(&range)) {
 		/* if only one position was given, jump to it */
 		if (range.start != EPOS && !*name) {
 			window_cursor_to(vis->win->win, range.start);
+			free(line);
 			return true;
 		}
 
 		if (name != line) {
 			editor_info_show(vis, "Invalid range\n");
+			free(line);
 			return false;
 		}
 		range = (Filerange){ .start = 0, .end = text_size(vis->win->text) };
@@ -1788,6 +1792,7 @@ static bool exec_cmdline_command(char *line) {
 	Command *cmd = map_closest(cmdmap, name);
 	if (!cmd) {
 		editor_info_show(vis, "Not an editor command");
+		free(line);
 		return false;
 	}
 
@@ -1817,10 +1822,11 @@ static bool exec_cmdline_command(char *line) {
 	}
 
 	cmd->cmd(&range, opt, argv);
+	free(line);
 	return true;
 }
 
-static bool exec_command(char type, char *cmd) {
+static bool exec_command(char type, const char *cmd) {
 	if (!cmd || !cmd[0])
 		return true;
 	switch (type) {
