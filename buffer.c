@@ -12,13 +12,11 @@ bool buffer_alloc(Buffer *buf, size_t size) {
 	if (buf->size < size) {
 		if (buf->size > 0)
 			size *= 2;
-		buf->data = realloc(buf->data, size);
-		if (!buf->data) {
-			buf->size = 0;
-			buf->len = 0;
+		char *data = realloc(buf->data, size);
+		if (!data)
 			return false;
-		}
 		buf->size = size;
+		buf->data = data;
 	}
 	return true;
 }
