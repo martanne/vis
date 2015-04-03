@@ -197,10 +197,19 @@ static void ui_window_draw_sidebar(UiCursesWin *win, const Line *line) {
 	} else {
 		int i = 0;
 		size_t prev_lineno = 0;
+		size_t cursor_lineno = window_cursor_getpos(win->view).line;
 		werase(win->winside);
 		for (const Line *l = line; l; l = l->next, i++) {
-			if (l->lineno != prev_lineno)
-				mvwprintw(win->winside, i, 0, "%*u", sidebar_width-1, l->lineno);
+			if (l->lineno != prev_lineno) {
+				if (win->options & UI_OPTION_LINE_NUMBERS_ABSOLUTE) {
+					mvwprintw(win->winside, i, 0, "%*u", sidebar_width-1, l->lineno);
+				} else if (win->options & UI_OPTION_LINE_NUMBERS_RELATIVE) {
+					size_t rel = l->lineno > cursor_lineno ?
+					             l->lineno - cursor_lineno :
+					             cursor_lineno - l->lineno;
+					mvwprintw(win->winside, i, 0, "%*u", sidebar_width-1, rel);
+				}
+			}
 			prev_lineno = l->lineno;
 		}
 		mvwvline(win->winside, 0, sidebar_width-1, ACS_VLINE, win->height-1);
@@ -338,6 +347,8 @@ static void ui_window_cursor_to(UiWin *w, int x, int y) {
 	UiCursesWin *win = (UiCursesWin*)w;
 	wmove(win->win, y, x);
 	ui_window_draw_status(w);
+	if (win->options & UI_OPTION_LINE_NUMBERS_RELATIVE)
+		ui_window_draw_sidebar(win, window_lines_get(win->view));
 }
 
 static void ui_window_draw_text(UiWin *w, const Line *line) {
@@ -386,6 +397,7 @@ static void ui_window_options(UiWin *w, enum UiOption options) {
 		}
 		break;
 	case UI_OPTION_LINE_NUMBERS_ABSOLUTE:
+	case UI_OPTION_LINE_NUMBERS_RELATIVE:
 		if (!win->winside)
 			win->winside = newwin(1, 1, 1, 1);
 		break;

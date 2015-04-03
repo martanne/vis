@@ -76,6 +76,8 @@ size_t window_screenline_goto(Win*, int n);
 
 /* get cursor position in bytes from start of the file */
 size_t window_cursor_get(Win*);
+
+const Line *window_lines_get(Win*);
 /* get cursor position in terms of screen coordinates */
 CursorPos window_cursor_getpos(Win*);
 /* moves window viewport in direction until pos is visible. should only be
@@ -103,7 +105,5 @@ Filerange window_viewport_get(Win*);
 /* associate a set of syntax highlighting rules to this window. */
 void window_syntax_set(Win*, Syntax*);
 Syntax *window_syntax_get(Win*);
-/* register a user defined function which will be called whenever the cursor has moved */
-void window_cursor_watch(Win *win, void (*cursor_moved)(Win*, void*), void *data);
 
 #endif

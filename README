@@ -449,9 +449,11 @@ and their current support in vis.
        replicate spaces and tabs at the beginning of the line when
        starting a new line.
 
-     number     (yes|no)
+     number         (yes|no)
+     relativenumber (yes|no)
 
-       whether line numbers are printed alongside the file content
+       whether absolute or relative line numbers are printed alongside
+       the file content
 
      syntax      name
 

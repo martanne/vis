@@ -820,6 +820,10 @@ size_t window_cursor_get(Win *win) {
 	return win->cursor.pos;
 }
 
+const Line *window_lines_get(Win *win) {
+	return win->topline;
+}
+
 void window_scroll_to(Win *win, size_t pos) {
 	while (pos < win->start && window_viewport_up(win, 1));
 	while (pos > win->end && window_viewport_down(win, 1));

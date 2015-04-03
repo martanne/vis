@@ -1377,6 +1377,7 @@ static bool cmd_set(Filerange *range, enum CmdOpt cmdopt, const char *argv[]) {
 		OPTION_TABWIDTH,
 		OPTION_SYNTAX,
 		OPTION_NUMBER,
+		OPTION_NUMBER_RELATIVE,
 	};
 
 	static OptionDef options[] = {
@@ -1385,6 +1386,7 @@ static bool cmd_set(Filerange *range, enum CmdOpt cmdopt, const char *argv[]) {
 		[OPTION_TABWIDTH]   = { "^(tabwidth|tw)$",   OPTION_TYPE_NUMBER },
 		[OPTION_SYNTAX]     = { "^(syntax|syn?)$",   OPTION_TYPE_STRING },
 		[OPTION_NUMBER]     = { "^(numbers?|nu)$",   OPTION_TYPE_BOOL   },
+		[OPTION_NUMBER_RELATIVE] = { "^(relativenumbers?|rnu)$", OPTION_TYPE_BOOL   },
 	};
 
 	static bool init = false;
@@ -1472,6 +1474,10 @@ static bool cmd_set(Filerange *range, enum CmdOpt cmdopt, const char *argv[]) {
 		break;
 	case OPTION_NUMBER:
 		editor_window_options(vis->win, arg.b ? UI_OPTION_LINE_NUMBERS_ABSOLUTE :
+			UI_OPTION_LINE_NUMBERS_NONE);
+		break;
+	case OPTION_NUMBER_RELATIVE:
+		editor_window_options(vis->win, arg.b ? UI_OPTION_LINE_NUMBERS_RELATIVE :
 			UI_OPTION_LINE_NUMBERS_NONE);
 		break;
 	}
