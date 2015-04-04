@@ -1031,6 +1031,51 @@ static Syntax syntaxes[] = {{
 		&colors[COLOR_KEYWORD2],
 	}}
 },{
+	.name = "lua",
+	.file = "\\.lua$",
+	.settings = (const char*[]){
+		"set number",
+		"set autoindent",
+		NULL
+	},
+	.rules = {{
+		"--\\[(=*)\\[([^]]*)\\](=*)\\]",
+		&colors[COLOR_COMMENT],
+		true,
+	},{
+		"--.*$",
+		&colors[COLOR_COMMENT],
+	},{
+		"(\\[(=*)\\[([^]]*)\\](=*)\\]|^([^][]*)\\](=*)\\])",
+		&colors[COLOR_STRING],
+		true,
+	},
+		SYNTAX_STRING,
+	{
+		B"([0-9]*\\.)?[0-9]+([eE]([\\+-])?[0-9]+)?"B,
+		&colors[COLOR_LITERAL],
+	},{
+		B"0x[0-9a-fA-F]+"B,
+		&colors[COLOR_LITERAL],
+	},{
+		B"(false|nil|true)"B,
+		&colors[COLOR_CONSTANT],
+	},{
+		"(\\.\\.\\.)",
+		&colors[COLOR_CONSTANT],
+	},{
+		B"(break|do|else|elseif|end|for|function|if|in|local|repeat|return|then|until|while)"B,
+		&colors[COLOR_KEYWORD],
+	},{
+		B"(and|not|or)"B,
+		&colors[COLOR_OPERATOR],
+	},{
+		"(\\+|-|\\*|/|%|\\^|#|[=~<>]=|<|>|\\.\\.)",
+		&colors[COLOR_OPERATOR],
+	},
+		SYNTAX_BRACKET,
+	}
+},{
 	.name = "ruby",
 	.file = "\\.rb$",
 	.rules = {{
