@@ -361,20 +361,17 @@ static void ui_window_cursor_to(UiWin *w, int x, int y) {
 static void ui_window_draw_text(UiWin *w, const Line *line) {
 	UiCursesWin *win = (UiCursesWin*)w;
 	wmove(win->win, 0, 0);
-	attr_t attr = 0;
 	for (const Line *l = line; l; l = l->next) {
 		/* add a single space in an otherwise empty line to make
 		 * the selection cohorent */
-		if (l->width == 0)
-                        waddch(win->win, ' ');
-	
-		for (int x = 0; x < l->width; x++) {
-			attr_t newattr = l->cells[x].attr;
-			if (newattr != attr) {
-				wattrset(win->win, newattr);
-				attr = newattr;
+		if (l->width == 1 && l->cells[0].data[0] == '\n') {
+			wattrset(win->win, l->cells[0].attr);
+			waddstr(win->win, " \n");
+		} else {
+			for (int x = 0; x < l->width; x++) {
+				wattrset(win->win, l->cells[x].attr);
+				waddstr(win->win, l->cells[x].data);
 			}
-			waddstr(win->win, l->cells[x].data);
 		}
 		wclrtoeol(win->win);
 	}
