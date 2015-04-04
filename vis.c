@@ -130,9 +130,9 @@ typedef struct {
 typedef struct {             /** collects all information until an operator is executed */
 	int count;
 	bool linewise;
-	Operator *op;
-	Movement *movement;
-	TextObject *textobj;
+	const Operator *op;
+	const Movement *movement;
+	const TextObject *textobj;
 	Register *reg;
 	MarkIntern mark;
 	Key key;
