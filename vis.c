@@ -38,13 +38,6 @@
 #include "util.h"
 #include "map.h"
 
-#ifdef PDCURSES
-int ESCDELAY;
-#endif
-#ifndef NCURSES_REENTRANT
-# define set_escdelay(d) (ESCDELAY = (d))
-#endif
-
 typedef union {
 	bool b;
 	int i;

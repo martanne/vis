@@ -21,6 +21,13 @@
 # define MAX_COLOR_PAIRS COLOR_PAIRS
 #endif
 
+#ifdef PDCURSES
+int ESCDELAY;
+#endif
+#ifndef NCURSES_REENTRANT
+# define set_escdelay(d) (ESCDELAY = (d))
+#endif
+
 #if 0
 #define wresize(win, y, x) do { \
 	if (wresize(win, y, x) == ERR) { \
