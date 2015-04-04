@@ -1363,13 +1363,13 @@ static bool parse_bool(const char *s, bool *outval) {
 static bool cmd_set(Filerange *range, enum CmdOpt cmdopt, const char *argv[]) {
 
 	typedef struct {
-		const char *name;
+		const char *names[3];
 		enum {
 			OPTION_TYPE_STRING,
 			OPTION_TYPE_BOOL,
 			OPTION_TYPE_NUMBER,
 		} type;
-		regex_t regex;
+		int index;
 	} OptionDef;
 
 	enum {
@@ -1381,21 +1381,28 @@ static bool cmd_set(Filerange *range, enum CmdOpt cmdopt, const char *argv[]) {
 		OPTION_NUMBER_RELATIVE,
 	};
 
+	/* definitions have to be in the same order as the enum above */
 	static OptionDef options[] = {
-		[OPTION_AUTOINDENT] = { "^(autoindent|ai)$", OPTION_TYPE_BOOL   },
-		[OPTION_EXPANDTAB]  = { "^(expandtab|et)$",  OPTION_TYPE_BOOL   },
-		[OPTION_TABWIDTH]   = { "^(tabwidth|tw)$",   OPTION_TYPE_NUMBER },
-		[OPTION_SYNTAX]     = { "^(syntax|syn?)$",   OPTION_TYPE_STRING },
-		[OPTION_NUMBER]     = { "^(numbers?|nu)$",   OPTION_TYPE_BOOL   },
-		[OPTION_NUMBER_RELATIVE] = { "^(relativenumbers?|rnu)$", OPTION_TYPE_BOOL   },
+		[OPTION_AUTOINDENT]      = { { "autoindent", "ai"       }, OPTION_TYPE_BOOL   },
+		[OPTION_EXPANDTAB]       = { { "expandtab", "et"        }, OPTION_TYPE_BOOL   },
+		[OPTION_TABWIDTH]        = { { "tabwidth", "tw"         }, OPTION_TYPE_NUMBER },
+		[OPTION_SYNTAX]          = { { "syntax"                 }, OPTION_TYPE_STRING },
+		[OPTION_NUMBER]          = { { "numbers", "nu"          }, OPTION_TYPE_BOOL   },
+		[OPTION_NUMBER_RELATIVE] = { { "relativenumbers", "rnu" }, OPTION_TYPE_BOOL   },
 	};
 
-	static bool init = false;
+	static Map *optmap = NULL;
 
-	if (!init) {
-		for (int i = 0; i < LENGTH(options); i++)
-			regcomp(&options[i].regex, options[i].name, REG_EXTENDED|REG_ICASE);
-		init = true;
+	if (!optmap) {
+		if (!(optmap = map_new()))
+			return false;
+		for (int i = 0; i < LENGTH(options); i++) {
+			options[i].index = i;
+			for (const char **name = options[i].names; *name; name++) {
+				if (!map_put(optmap, *name, &options[i]))
+					return false;
+			}
+		}
 	}
 
 	if (!argv[1]) {
@@ -1403,27 +1410,26 @@ static bool cmd_set(Filerange *range, enum CmdOpt cmdopt, const char *argv[]) {
 		return false;
 	}
 
-	int opt = -1; Arg arg; bool invert = false;
+	Arg arg;
+	bool invert = false;
+	OptionDef *opt = NULL;
 
-	for (int i = 0; i < LENGTH(options); i++) {
-		if (!regexec(&options[i].regex, argv[1], 0, NULL, 0)) {
-			opt = i;
-			break;
-		}
-		if (options[i].type == OPTION_TYPE_BOOL && !strncasecmp(argv[1], "no", 2) &&
-		    !regexec(&options[i].regex, argv[1]+2, 0, NULL, 0)) {
-			opt = i;
+	if (!strncasecmp(argv[1], "no", 2)) {
+		opt = map_closest(optmap, argv[1]+2);
+		if (opt && opt->type == OPTION_TYPE_BOOL)
 			invert = true;
-			break;
-		}
+		else
+			opt = NULL;
 	}
 
-	if (opt == -1) {
+	if (!opt)
+		opt = map_closest(optmap, argv[1]);
+	if (!opt) {
 		editor_info_show(vis, "Unknown option: `%s'", argv[1]);
 		return false;
 	}
 
-	switch (options[opt].type) {
+	switch (opt->type) {
 	case OPTION_TYPE_STRING:
 		if (!argv[2]) {
 			editor_info_show(vis, "Expecting string option value");
@@ -1450,7 +1456,7 @@ static bool cmd_set(Filerange *range, enum CmdOpt cmdopt, const char *argv[]) {
 		break;
 	}
 
-	switch (opt) {
+	switch (opt->index) {
 	case OPTION_EXPANDTAB:
 		vis->expandtab = arg.b;
 		break;
