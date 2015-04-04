@@ -956,6 +956,14 @@ static void movement(const Arg *arg) {
 		action.textobj = moves_linewise[arg->i];
 	else
 		action.movement = &moves[arg->i];
+
+	if (action.op == &ops[OP_CHANGE]) {
+		if (action.movement == &moves[MOVE_WORD_START_NEXT])
+			action.movement = &moves[MOVE_WORD_END_NEXT];
+		else if (action.movement == &moves[MOVE_LONGWORD_START_NEXT])
+			action.movement = &moves[MOVE_LONGWORD_END_NEXT];
+	}
+
 	action_do(&action);
 }
 
