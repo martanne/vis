@@ -1865,12 +1865,8 @@ static bool exec_command(char type, const char *cmd) {
 }
 
 static void settings_apply(const char **settings) {
-	for (const char **opt = settings; opt && *opt; opt++) {
-		char *tmp = strdup(*opt);
-		if (tmp)
-			exec_cmdline_command(tmp);
-		free(tmp);
-	}
+	for (const char **opt = settings; opt && *opt; opt++)
+		exec_cmdline_command(*opt);
 }
 
 static bool vis_window_new(const char *file) {
