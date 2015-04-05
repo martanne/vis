@@ -77,12 +77,6 @@ typedef const char* Mark;
 Mark text_mark_set(Text*, size_t pos);
 size_t text_mark_get(Text*, Mark);
 
-typedef int MarkIntern;
-void text_mark_intern_set(Text*, MarkIntern, size_t pos);
-size_t text_mark_intern_get(Text*, MarkIntern);
-void text_mark_intern_clear(Text*, MarkIntern);
-void text_mark_intern_clear_all(Text*);
-
 /* get position of change denoted by index, where 0 indicates the most recent */
 size_t text_history_get(Text*, size_t index);
 

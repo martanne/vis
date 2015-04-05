@@ -15,22 +15,6 @@ typedef struct EditorWin EditorWin;
 #include "syntax.h"
 #include "ring-buffer.h"
 
-
-typedef struct {
-	size_t index;           /* #number of changes */
-	size_t pos;             /* where the current change occured */
-} ChangeList;
-
-struct EditorWin {
-	Editor *editor;         /* editor instance to which this window belongs */
-	UiWin *ui;
-	Text *text;             /* underlying text management */
-	Win *win;               /* window for the text area  */
-	RingBuffer *jumplist;   /* LRU jump management */
-	ChangeList changelist;  /* state for iterating through least recently changes */
-	EditorWin *prev, *next; /* neighbouring windows */
-};
-
 enum Reg {
 	REG_a,
 	REG_b,
@@ -91,10 +75,37 @@ enum Mark {
 	MARK_z,
 	MARK_SELECTION_START,
 	MARK_SELECTION_END,
+	MARK_LAST,
+};
+
+
+typedef struct VisText VisText;
+
+struct VisText {
+	Text *data;
+	int refcount;
+	Mark marks[MARK_LAST];
+	VisText *next, *prev;
+};
+
+typedef struct {
+	size_t index;           /* #number of changes */
+	size_t pos;             /* where the current change occured */
+} ChangeList;
+
+struct EditorWin {
+	Editor *editor;         /* editor instance to which this window belongs */
+	UiWin *ui;
+	VisText *text;             /* underlying text management */
+	Win *win;               /* window for the text area  */
+	RingBuffer *jumplist;   /* LRU jump management */
+	ChangeList changelist;  /* state for iterating through least recently changes */
+	EditorWin *prev, *next; /* neighbouring windows */
 };
 
 struct Editor {
 	Ui *ui;
+	VisText *texts;
 	EditorWin *windows;               /* list of windows */
 	EditorWin *win;                   /* currently active window */
 	Syntax *syntaxes;                 /* NULL terminated array of syntax definitions */

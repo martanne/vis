@@ -5,7 +5,9 @@
 #include "editor.h"
 #include "util.h"
 
-static EditorWin *editor_window_new_text(Editor *ed, Text *text);
+static void vis_text_free(Editor *ed, VisText *text);
+static VisText *vis_text_new(Editor *ed, const char *filename);
+static EditorWin *editor_window_new_text(Editor *ed, VisText *text);
 static void editor_window_free(EditorWin *win);
 static void editor_windows_invalidate(Editor *ed, size_t start, size_t end);
 
@@ -14,25 +16,16 @@ void editor_windows_arrange(Editor *ed, enum UiLayout layout) {
 }
 
 bool editor_window_reload(EditorWin *win) {
-	const char *filename = text_filename_get(win->text);
+	const char *filename = text_filename_get(win->text->data);
 	/* can't reload unsaved file */
 	if (!filename)
 		return false;
-	Text *text = text_load(filename);
+	VisText *text = vis_text_new(win->editor, filename);
 	if (!text)
 		return false;
-	/* check wether the text is displayed in another window */
-	bool needed = false;
-	for (EditorWin *w = win->editor->windows; w; w = w->next) {
-		if (w != win && w->text == win->text) {
-			needed = true;
-			break;
-		}
-	}
-	if (!needed)
-		text_free(win->text);
+	vis_text_free(win->editor, win->text);
 	win->text = text;
-	window_reload(win->win, text);
+	window_reload(win->win, text->data);
 	return true;
 }
 
@@ -41,6 +34,7 @@ bool editor_window_split(EditorWin *original) {
 	if (!win)
 		return false;
 	win->text = original->text;
+	win->text->refcount++;
 	window_syntax_set(win->win, window_syntax_get(original->win));
 	window_cursor_to(win->win, window_cursor_get(original->win));
 	editor_draw(win->editor);
@@ -48,7 +42,7 @@ bool editor_window_split(EditorWin *original) {
 }
 
 void editor_window_jumplist_add(EditorWin *win, size_t pos) {
-	Mark mark = text_mark_set(win->text, pos);
+	Mark mark = text_mark_set(win->text->data, pos);
 	if (mark && win->jumplist)
 		ringbuf_add(win->jumplist, mark);
 }
@@ -59,7 +53,7 @@ size_t editor_window_jumplist_prev(EditorWin *win) {
 		Mark mark = ringbuf_prev(win->jumplist);
 		if (!mark)
 			return cur;
-		size_t pos = text_mark_get(win->text, mark);
+		size_t pos = text_mark_get(win->text->data, mark);
 		if (pos != EPOS && pos != cur)
 			return pos;
 	}
@@ -72,7 +66,7 @@ size_t editor_window_jumplist_next(EditorWin *win) {
 		Mark mark = ringbuf_next(win->jumplist);
 		if (!mark)
 			return cur;
-		size_t pos = text_mark_get(win->text, mark);
+		size_t pos = text_mark_get(win->text->data, mark);
 		if (pos != EPOS && pos != cur)
 			return pos;
 	}
@@ -90,7 +84,7 @@ size_t editor_window_changelist_prev(EditorWin *win) {
 		win->changelist.index = 0;
 	else
 		win->changelist.index++;
-	size_t newpos = text_history_get(win->text, win->changelist.index);
+	size_t newpos = text_history_get(win->text->data, win->changelist.index);
 	if (newpos == EPOS)
 		win->changelist.index--;
 	else
@@ -104,7 +98,7 @@ size_t editor_window_changelist_next(EditorWin *win) {
 		win->changelist.index = 0;
 	else if (win->changelist.index > 0)
 		win->changelist.index--;
-	size_t newpos = text_history_get(win->text, win->changelist.index);
+	size_t newpos = text_history_get(win->text->data, win->changelist.index);
 	if (newpos == EPOS)
 		win->changelist.index++;
 	else
@@ -221,26 +215,17 @@ static void editor_window_free(EditorWin *win) {
 	if (ed && ed->ui)
 		ed->ui->window_free(win->ui);
 	ringbuf_free(win->jumplist);
-	bool needed = false;
-	for (EditorWin *w = ed ? ed->windows : NULL; w; w = w->next) {
-		if (w->text == win->text) {
-			needed = true;
-			break;
-		}
-	}
-	if (!needed)
-		text_free(win->text);
 	free(win);
 }
 
-static EditorWin *editor_window_new_text(Editor *ed, Text *text) {
+static EditorWin *editor_window_new_text(Editor *ed, VisText *text) {
 	EditorWin *win = calloc(1, sizeof(EditorWin));
 	if (!win)
 		return NULL;
 	win->editor = ed;
 	win->text = text;
 	win->jumplist = ringbuf_alloc(31);
-	win->ui = ed->ui->window_new(ed->ui, text);
+	win->ui = ed->ui->window_new(ed->ui, text->data);
 	if (!win->jumplist || !win->ui) {
 		editor_window_free(win);
 		return NULL;
@@ -250,47 +235,79 @@ static EditorWin *editor_window_new_text(Editor *ed, Text *text) {
 	if (ed->windows)
 		ed->windows->prev = win;
 	win->next = ed->windows;
-	win->prev = NULL;
 	ed->windows = win;
 	ed->win = win;
 	ed->ui->window_focus(win->ui);
 	return win;
 }
 
-bool editor_window_new(Editor *ed, const char *filename) {
-	Text *text = NULL;
-	/* try to detect whether the same file is already open in another window
-	 * TODO: do this based on inodes */
-	EditorWin *original = NULL;
+static void vis_text_free(Editor *ed, VisText *text) {
+	if (!text)
+		return;
+	if (--text->refcount > 0)
+		return;
+	
+	text_free(text->data);
+	
+	if (text->prev)
+		text->prev->next = text->next;
+	if (text->next)
+		text->next->prev = text->prev;
+	if (ed->texts == text)
+		ed->texts = text->next;
+	free(text);
+}
+
+static VisText *vis_text_new_text(Editor *ed, Text *data) {
+	VisText *text = calloc(1, sizeof(*text));
+	if (!text)
+		return NULL;
+	text->data = data;
+	text->refcount++;
+	if (ed->texts)
+		ed->texts->prev = text;
+	text->next = ed->texts;
+	ed->texts = text;
+	return text;
+}
+
+static VisText *vis_text_new(Editor *ed, const char *filename) {
 	if (filename) {
-		for (EditorWin *win = ed->windows; win; win = win->next) {
-			const char *f = text_filename_get(win->text);
+		/* try to detect whether the same file is already open in another window
+		 * TODO: do this based on inodes */
+		for (VisText *txt = ed->texts; txt; txt = txt->next) {
+			const char *f = text_filename_get(txt->data);
 			if (f && strcmp(f, filename) == 0) {
-				original = win;
-				break;
+				txt->refcount++;
+				return txt;
 			}
 		}
 	}
 
-	if (original)
-		text = original->text;
-	else
-		text = text_load(filename && access(filename, F_OK) == 0 ? filename : NULL);
+	Text *data = text_load(filename && access(filename, F_OK) == 0 ? filename : NULL);
+	if (filename)
+		text_filename_set(data, filename);
+	
+	VisText *text = vis_text_new_text(ed, data);
+	if (!text) {
+		text_free(data);
+		return NULL;
+	}
+
+	return text;
+}
+
+bool editor_window_new(Editor *ed, const char *filename) {
+	VisText *text = vis_text_new(ed, filename);
 	if (!text)
 		return false;
-
 	EditorWin *win = editor_window_new_text(ed, text);
 	if (!win) {
-		if (!original)
-			text_free(text);
+		vis_text_free(ed, text);
 		return false;
 	}
 
-	if (original) {
-		window_syntax_set(win->win, window_syntax_get(original->win));
-		window_cursor_to(win->win, window_cursor_get(original->win));
-	} else if (filename) {
-		text_filename_set(text, filename);
+	if (filename) {
 		for (Syntax *syn = ed->syntaxes; syn && syn->name; syn++) {
 			if (!regexec(&syn->file_regex, filename, 0, NULL, 0)) {
 				window_syntax_set(win->win, syn);
@@ -305,18 +322,25 @@ bool editor_window_new(Editor *ed, const char *filename) {
 }
 
 bool editor_window_new_fd(Editor *ed, int fd) {
-	Text *txt = text_load_fd(fd);
-	if (!txt)
+	Text *data = text_load_fd(fd);
+	if (!data)
 		return false;
-	EditorWin *win = editor_window_new_text(ed, txt);
-	if (!win)
+	VisText *text = vis_text_new_text(ed, data);
+	if (!text) {
+		vis_text_free(ed, text);
 		return false;
-	editor_draw(ed);
+	}
+	EditorWin *win = editor_window_new_text(ed, text);
+	if (!win) {
+		vis_text_free(ed, text);
+		return false;
+	}
 	return true;
 }
 
 void editor_window_close(EditorWin *win) {
 	Editor *ed = win->editor;
+	vis_text_free(ed, win->text);
 	if (win->prev)
 		win->prev->next = win->next;
 	if (win->next)
@@ -325,9 +349,9 @@ void editor_window_close(EditorWin *win) {
 		ed->windows = win->next;
 	if (ed->win == win)
 		ed->win = win->next ? win->next : win->prev;
+	editor_window_free(win);
 	if (ed->win)
 		ed->ui->window_focus(ed->win->ui);
-	editor_window_free(win);
 	editor_draw(ed);
 }
 
@@ -343,9 +367,11 @@ Editor *editor_new(Ui *ui) {
 	ed->expandtab = false;
 	if (!(ed->prompt = calloc(1, sizeof(EditorWin))))
 		goto err;
-	if (!(ed->prompt->text = text_load(NULL)))
+	if (!(ed->prompt->text = calloc(1, sizeof(VisText))))
 		goto err;
-	if (!(ed->prompt->ui = ed->ui->prompt_new(ed->ui, ed->prompt->text)))
+	if (!(ed->prompt->text->data = text_load(NULL)))
+		goto err;
+	if (!(ed->prompt->ui = ed->ui->prompt_new(ed->ui, ed->prompt->text->data)))
 		goto err;
 	if (!(ed->search_pattern = text_regex_new()))
 		goto err;
@@ -361,6 +387,7 @@ void editor_free(Editor *ed) {
 		return;
 	while (ed->windows)
 		editor_window_close(ed->windows);
+	vis_text_free(ed, ed->prompt->text);
 	editor_window_free(ed->prompt);
 	text_regex_free(ed->search_pattern);
 	for (int i = 0; i < REG_LAST; i++)
@@ -397,12 +424,12 @@ void editor_delete_key(Editor *ed) {
 }
 
 void editor_insert(Editor *ed, size_t pos, const char *c, size_t len) {
-	text_insert(ed->win->text, pos, c, len);
+	text_insert(ed->win->text->data, pos, c, len);
 	editor_windows_invalidate(ed, pos, pos + len);
 }
 
 void editor_delete(Editor *ed, size_t pos, size_t len) {
-	text_delete(ed->win->text, pos, len);
+	text_delete(ed->win->text->data, pos, len);
 	editor_windows_invalidate(ed, pos, pos + len);
 }
 

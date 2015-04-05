@@ -115,8 +115,9 @@ Filerange window_selection_get(Win *win) {
 	if (!text_range_valid(&sel))
 		return text_range_empty();
 	sel.end = text_char_next(win->text, sel.end);
-	text_mark_intern_set(win->text, MARK_SELECTION_START, sel.start);
-	text_mark_intern_set(win->text, MARK_SELECTION_END, sel.end);
+	// TODO
+	//text_mark_intern_set(win->text, MARK_SELECTION_START, sel.start);
+	//text_mark_intern_set(win->text, MARK_SELECTION_END, sel.end);
 	return sel;
 }
 
@@ -439,7 +440,7 @@ void window_draw(Win *win) {
 bool window_resize(Win *win, int width, int height) {
 	size_t lines_size = height*(sizeof(Line) + width*sizeof(Cell));
 	if (lines_size > win->lines_size) {
-		Line *lines = malloc(lines_size);
+		Line *lines = realloc(win->lines, lines_size);
 		if (!lines)
 			return false;
 		win->lines = lines;

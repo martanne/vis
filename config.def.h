@@ -457,7 +457,7 @@ static KeyBinding vis_mode_visual_line[] = {
 
 static void vis_mode_visual_line_enter(Mode *old) {
 	Win *win = vis->win->win;
-	window_cursor_to(win, text_line_begin(vis->win->text, window_cursor_get(win)));
+	window_cursor_to(win, text_line_begin(vis->win->text->data, window_cursor_get(win)));
 	if (!old->visual) {
 		window_selection_start(vis->win->win);
 		vis_modes[VIS_MODE_OPERATOR].parent = &vis_modes[VIS_MODE_TEXTOBJ];
@@ -559,11 +559,11 @@ static KeyBinding vis_mode_insert[] = {
 
 static void vis_mode_insert_leave(Mode *old) {
 	/* make sure we can recover the current state after an editing operation */
-	text_snapshot(vis->win->text);
+	text_snapshot(vis->win->text->data);
 }
 
 static void vis_mode_insert_idle(void) {
-	text_snapshot(vis->win->text);
+	text_snapshot(vis->win->text->data);
 }
 
 static void vis_mode_insert_input(const char *str, size_t len) {
@@ -585,7 +585,7 @@ static KeyBinding vis_mode_replace[] = {
 
 static void vis_mode_replace_leave(Mode *old) {
 	/* make sure we can recover the current state after an editing operation */
-	text_snapshot(vis->win->text);
+	text_snapshot(vis->win->text->data);
 }
 
 static void vis_mode_replace_input(const char *str, size_t len) {

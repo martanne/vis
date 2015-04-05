@@ -118,7 +118,6 @@ struct Text {
 	struct stat info;	/* stat as proped on load time */
 	int fd;                 /* the file descriptor of the original mmap-ed data */
 	LineCache lines;        /* mapping between absolute pos in bytes and logical line breaks */
-	Mark marks[32];         /* a mark is a pointer into an underlying buffer */
 	int newlines;           /* 0: unknown, 1: \n, -1: \r\n */
 };
 
@@ -1157,29 +1156,6 @@ size_t text_mark_get(Text *txt, Mark mark) {
 	}
 
 	return EPOS;
-}
-
-void text_mark_intern_set(Text *txt, MarkIntern mark, size_t pos) {
-	if (mark < 0 || mark >= LENGTH(txt->marks))
-		return;
-	txt->marks[mark] = text_mark_set(txt, pos);
-}
-
-size_t text_mark_intern_get(Text *txt, MarkIntern mark) {
-	if (mark < 0 || mark >= LENGTH(txt->marks))
-		return EPOS;
-	return text_mark_get(txt, txt->marks[mark]);
-}
-
-void text_mark_intern_clear(Text *txt, MarkIntern mark) {
-	if (mark < 0 || mark >= LENGTH(txt->marks))
-		return;
-	txt->marks[mark] = NULL;
-}
-
-void text_mark_intern_clear_all(Text *txt) {
-	for (MarkIntern mark = 0; mark < LENGTH(txt->marks); mark++)
-		text_mark_intern_clear(txt, mark);
 }
 
 size_t text_history_get(Text *txt, size_t index) {
