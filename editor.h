@@ -116,7 +116,6 @@ struct Editor {
 	EditorWin *prompt_window;         /* window which was focused before prompt was shown */
 	char prompt_type;                 /* command ':' or search '/','?' prompt */
 	Regex *search_pattern;            /* last used search pattern */
-	void (*windows_arrange)(Editor*); /* current layout which places the windows */
 	int tabwidth;                     /* how many spaces should be used to display a tab */
 	bool expandtab;                   /* whether typed tabs should be converted to spaces */
 	bool autoindent;                  /* whether indentation should be copied from previous line on newline */
