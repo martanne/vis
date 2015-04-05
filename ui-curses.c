@@ -194,7 +194,7 @@ static void ui_window_reload(UiWin *w, Text *text) {
 }
 
 static void ui_window_draw_sidebar(UiCursesWin *win, const Line *line) {
-	if (!win->winside)
+	if (!win->winside || !line)
 		return;
 	int sidebar_width = snprintf(NULL, 0, "%zd", line->lineno + win->height - 2) + 1;
 	if (win->sidebar_width != sidebar_width) {

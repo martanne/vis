@@ -448,7 +448,8 @@ bool window_resize(Win *win, int width, int height) {
 	}
 	win->width = width;
 	win->height = height;
-	memset(win->lines, 0, win->lines_size);
+	if (win->lines)
+		memset(win->lines, 0, win->lines_size);
 	window_draw(win);
 	return true;
 }
