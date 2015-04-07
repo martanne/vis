@@ -469,6 +469,8 @@ static void vis_mode_visual_line_leave(Mode *new) {
 	if (!new->visual) {
 		window_selection_clear(vis->win->win);
 		vis_modes[VIS_MODE_OPERATOR].parent = &vis_modes[VIS_MODE_MOVE];
+	} else {
+		window_cursor_to(vis->win->win, window_cursor_get(vis->win->win));
 	}
 }
 

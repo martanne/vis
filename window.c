@@ -76,7 +76,6 @@ void window_selection_clear(Win *win) {
 	win->sel = text_range_empty();
 	window_draw(win);
 	window_cursor_update(win);
-	curs_set(1);
 }
 
 /* reset internal window data structures (cell matrix, line offsets etc.) */
@@ -120,8 +119,11 @@ Filerange window_selection_get(Win *win) {
 }
 
 void window_selection_set(Win *win, Filerange *sel) {
+	Cursor *cursor = &win->cursor;
 	win->sel = *sel;
 	window_draw(win);
+	if (win->ui)
+		win->ui->cursor_to(win->ui, cursor->col, cursor->row);
 }
 
 Filerange window_viewport_get(Win *win) {
@@ -841,9 +843,10 @@ void window_scroll_to(Win *win, size_t pos) {
 void window_selection_start(Win *win) {
 	if (win->sel.start != EPOS && win->sel.end != EPOS)
 		return;
-	win->sel.start = win->sel.end = window_cursor_get(win);
+	size_t pos = window_cursor_get(win);
+	win->sel.start = win->sel.end = pos;
 	window_draw(win);
-	curs_set(0);
+	window_cursor_to(win, pos);
 }
 
 void window_syntax_set(Win *win, Syntax *syntax) {
