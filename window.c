@@ -163,6 +163,7 @@ static bool window_addch(Win *win, Cell *cell) {
 			win->line->cells[win->col].data[0] = ' ';
 			win->line->cells[win->col].data[1] = '\0';
 			win->line->cells[win->col].istab = true;
+			win->line->cells[win->col].attr = cell->attr;
 			win->line->width++;
 			win->col++;
 		}
@@ -195,6 +196,7 @@ static bool window_addch(Win *win, Cell *cell) {
 				.len = 1,
 				.width = 2,
 				.istab = false,
+				.attr = cell->attr,
 			};
 		}
 
