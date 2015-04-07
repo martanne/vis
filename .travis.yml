@@ -1,0 +1,8 @@
+language: c
+compiler:
+  - gcc
+  - clang
+env:
+  - DEBUG=
+  - DEBUG=debug
+script: make $DEBUG
