@@ -35,6 +35,7 @@ typedef struct {            /* cursor position */
 struct Win {                /* window showing part of a file */
 	Text *text;         /* underlying text management */
 	UiWin *ui;
+	ViewEvent *events;
 	int width, height;  /* window text area size */
 	Filepos start, end; /* currently displayed area [start, end] in bytes from the start of the file */
 	size_t lines_size;  /* number of allocated bytes for lines (grows only) */
@@ -115,9 +116,6 @@ Filerange window_selection_get(Win *win) {
 	if (!text_range_valid(&sel))
 		return text_range_empty();
 	sel.end = text_char_next(win->text, sel.end);
-	// TODO
-	//text_mark_intern_set(win->text, MARK_SELECTION_START, sel.start);
-	//text_mark_intern_set(win->text, MARK_SELECTION_END, sel.end);
 	return sel;
 }
 
@@ -241,7 +239,8 @@ static size_t window_cursor_update(Win *win) {
 		win->sel.end = cursor->pos;
 		window_draw(win);
 	}
-	win->ui->cursor_to(win->ui, cursor->col, cursor->row);
+	if (win->ui)
+		win->ui->cursor_to(win->ui, cursor->col, cursor->row);
 	return cursor->pos;
 }
 
@@ -434,7 +433,10 @@ void window_draw(Win *win) {
 	win->lastline = win->line ? win->line : win->bottomline;
 	win->lastline->next = NULL;
 	window_cursor_sync(win);
-	win->ui->draw_text(win->ui, win->topline);
+	if (win->ui)
+		win->ui->draw_text(win->ui, win->topline);
+	if (sel.start != EPOS && win->events && win->events->selection)
+		win->events->selection(win->events->data, &sel);
 }
 
 bool window_resize(Win *win, int width, int height) {
@@ -469,20 +471,21 @@ void window_reload(Win *win, Text *text) {
 	win->text = text;
 	window_selection_clear(win);
 	window_cursor_to(win, 0);
-	win->ui->reload(win->ui, text);
+	if (win->ui)
+		win->ui->reload(win->ui, text);
 }
 
-Win *window_new(Text *text, UiWin *ui, int width, int height) {
-	if (!text || !ui)
+Win *window_new(Text *text, ViewEvent *events) {
+	if (!text)
 		return NULL;
 	Win *win = calloc(1, sizeof(Win));
 	if (!win)
 		return NULL;
-
 	win->text = text;
-	win->ui = ui;
+	win->events = events;
 	win->tabwidth = 8;
-	if (!window_resize(win, width, height)) {
+	
+	if (!window_resize(win, 1, 1)) {
 		window_free(win);
 		return NULL;
 	}
@@ -492,6 +495,9 @@ Win *window_new(Text *text, UiWin *ui, int width, int height) {
 	return win;
 }
 
+void window_ui(Win *win, UiWin* ui) {
+	win->ui = ui;
+}
 size_t window_char_prev(Win *win) {
 	Cursor *cursor = &win->cursor;
 	Line *line = cursor->line;

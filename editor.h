@@ -98,6 +98,7 @@ struct EditorWin {
 	UiWin *ui;
 	VisText *text;             /* underlying text management */
 	Win *win;               /* window for the text area  */
+	ViewEvent events;
 	RingBuffer *jumplist;   /* LRU jump management */
 	ChangeList changelist;  /* state for iterating through least recently changes */
 	EditorWin *prev, *next; /* neighbouring windows */

@@ -26,10 +26,10 @@ struct Ui {
 	void (*free)(Ui*);
 	short (*color_get)(short fg, short bg);
 	void (*resize)(Ui*);
-	UiWin* (*window_new)(Ui*, Text*);
+	UiWin* (*window_new)(Ui*, Win*, Text*);
 	void (*window_free)(UiWin*);
 	void (*window_focus)(UiWin*);
-	UiWin* (*prompt_new)(Ui*, Text*);
+	UiWin* (*prompt_new)(Ui*, Win*, Text*);
 	void (*prompt)(Ui*, const char *title, const char *value);
 	char* (*prompt_input)(Ui*);
 	void (*prompt_hide)(Ui*);
@@ -53,7 +53,6 @@ struct UiWin {
 	void (*cursor_to)(UiWin*, int x, int y);
 	void (*reload)(UiWin*, Text*);
 	void (*options)(UiWin*, enum UiOption);
-	Win* (*view_get)(UiWin*);
 };
 
 #endif

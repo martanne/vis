@@ -11,6 +11,15 @@ static EditorWin *editor_window_new_text(Editor *ed, VisText *text);
 static void editor_window_free(EditorWin *win);
 static void editor_windows_invalidate(Editor *ed, size_t start, size_t end);
 
+
+static void editor_window_selection_changed(void *data, Filerange *sel) {
+	VisText *text = ((EditorWin*)data)->text;
+	if (text_range_valid(sel)) {
+		text->marks[MARK_SELECTION_START] = text_mark_set(text->data, sel->start);
+		text->marks[MARK_SELECTION_END] = text_mark_set(text->data, sel->end);
+	}
+}
+
 void editor_windows_arrange(Editor *ed, enum UiLayout layout) {
 	ed->ui->arrange(ed->ui, layout);
 }
@@ -214,6 +223,7 @@ static void editor_window_free(EditorWin *win) {
 	Editor *ed = win->editor;
 	if (ed && ed->ui)
 		ed->ui->window_free(win->ui);
+	window_free(win->win);
 	ringbuf_free(win->jumplist);
 	free(win);
 }
@@ -224,13 +234,17 @@ static EditorWin *editor_window_new_text(Editor *ed, VisText *text) {
 		return NULL;
 	win->editor = ed;
 	win->text = text;
+	win->events = (ViewEvent) {
+		.data = win,
+		.selection = editor_window_selection_changed,
+	};
 	win->jumplist = ringbuf_alloc(31);
-	win->ui = ed->ui->window_new(ed->ui, text->data);
-	if (!win->jumplist || !win->ui) {
+	win->win = window_new(text->data, &win->events);
+	win->ui = ed->ui->window_new(ed->ui, win->win, text->data);
+	if (!win->jumplist || !win->win || !win->ui) {
 		editor_window_free(win);
 		return NULL;
 	}
-	win->win = win->ui->view_get(win->ui);
 	window_tabwidth_set(win->win, ed->tabwidth);
 	if (ed->windows)
 		ed->windows->prev = win;
@@ -371,11 +385,12 @@ Editor *editor_new(Ui *ui) {
 		goto err;
 	if (!(ed->prompt->text->data = text_load(NULL)))
 		goto err;
-	if (!(ed->prompt->ui = ed->ui->prompt_new(ed->ui, ed->prompt->text->data)))
+	if (!(ed->prompt->win = window_new(ed->prompt->text->data, NULL)))
+		goto err;
+	if (!(ed->prompt->ui = ed->ui->prompt_new(ed->ui, ed->prompt->win, ed->prompt->text->data)))
 		goto err;
 	if (!(ed->search_pattern = text_regex_new()))
 		goto err;
-	ed->prompt->win = ed->prompt->ui->view_get(ed->prompt->ui);
 	return ed;
 err:
 	editor_free(ed);

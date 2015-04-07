@@ -10,6 +10,11 @@
 typedef struct Win Win;
 
 typedef struct {
+	void *data;
+	void (*selection)(void *data, Filerange*);
+} ViewEvent;
+
+typedef struct {
 	int width;          /* display width i.e. number of columns ocupied by this character */
 	size_t len;         /* number of bytes the character displayed in this cell uses, for
 	                       character which use more than 1 column to display, their lenght
@@ -35,7 +40,8 @@ typedef struct {
 	size_t col;
 } CursorPos;
 
-Win *window_new(Text*, UiWin*, int width, int height);
+Win *window_new(Text*, ViewEvent*);
+void window_ui(Win*, UiWin*);
 /* change associated text displayed in this window */
 void window_reload(Win*, Text*);
 void window_free(Win*);

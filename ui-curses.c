@@ -341,13 +341,7 @@ static void ui_window_free(UiWin *w) {
 		delwin(win->winside);
 	if (win->win)
 		delwin(win->win);
-	window_free(win->view);
 	free(win);
-}
-
-static Win *ui_window_view_get(UiWin *win) {
-	UiCursesWin *cwin = (UiCursesWin*)win;
-	return cwin->view;
 }
 
 static void ui_window_cursor_to(UiWin *w, int x, int y) {
@@ -409,7 +403,7 @@ static void ui_window_options(UiWin *w, enum UiOption options) {
 	ui_window_draw(w);
 }
 
-static UiWin *ui_window_new(Ui *ui, Text *text) {
+static UiWin *ui_window_new(Ui *ui, Win *view, Text *text) {
 	UiCurses *uic = (UiCurses*)ui;
 	UiCursesWin *win = calloc(1, sizeof(UiCursesWin));
 	if (!win)
@@ -420,20 +414,20 @@ static UiWin *ui_window_new(Ui *ui, Text *text) {
 		.draw_status = ui_window_draw_status,
 		.draw_text = ui_window_draw_text,
 		.cursor_to = ui_window_cursor_to,
-		.view_get = ui_window_view_get,
 		.options = ui_window_options,
 		.reload = ui_window_reload,
 	};
 
-	if (!(win->view = window_new(text, &win->uiwin, uic->width, uic->height)) ||
-	    !(win->win = newwin(0, 0, 0, 0)) ||
-	    !(win->winstatus = newwin(1, 0, 0, 0))) {
+	if (!(win->win = newwin(0, 0, 0, 0)) || !(win->winstatus = newwin(1, 0, 0, 0))) {
 		ui_window_free((UiWin*)win);
 		return NULL;
 	}
 
 	win->ui = uic;
+	win->view = view;
 	win->text = text;
+	window_ui(view, &win->uiwin);
+	
 	if (uic->windows)
 		uic->windows->prev = win;
 	win->next = uic->windows;
@@ -456,11 +450,11 @@ static void info_hide(Ui *ui) {
 	}
 }
 
-static UiWin *prompt_new(Ui *ui, Text *text) {
+static UiWin *prompt_new(Ui *ui, Win *view, Text *text) {
 	UiCurses *uic = (UiCurses*)ui;
 	if (uic->prompt_win)
 		return (UiWin*)uic->prompt_win;
-	UiWin *uiwin = ui_window_new(ui, text);
+	UiWin *uiwin = ui_window_new(ui, view, text);
 	UiCursesWin *win = (UiCursesWin*)uiwin;
 	if (!win)
 		return NULL;
@@ -483,9 +477,11 @@ static void prompt(Ui *ui, const char *title, const char *text) {
 		return;
 	size_t text_len = strlen(text);
 	strncpy(uic->prompt_title, title, sizeof(uic->prompt_title)-1);
+	while (text_undo(uic->prompt_win->text) != EPOS);
 	text_insert(uic->prompt_win->text, 0, text, text_len);
-	window_cursor_to(uic->prompt_win->view, text_len);
+	window_cursor_to(uic->prompt_win->view, 0);
 	ui_resize_to(ui, uic->width, uic->height);
+	window_cursor_to(uic->prompt_win->view, text_len);
 }
 
 static char *prompt_input(Ui *ui) {
@@ -504,10 +500,6 @@ static char *prompt_input(Ui *ui) {
 static void prompt_hide(Ui *ui) {
 	UiCurses *uic = (UiCurses*)ui;
 	uic->prompt_title[0] = '\0';
-	if (uic->prompt_win) {
-		while (text_undo(uic->prompt_win->text) != EPOS);
-		window_cursor_to(uic->prompt_win->view, 0);
-	}
 	ui_resize_to(ui, uic->width, uic->height);
 }
 
