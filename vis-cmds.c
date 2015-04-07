@@ -850,3 +850,10 @@ static bool cmd_unmap(Vis *vis, Win *win, Command *cmd, const char *argv[], Curs
 		vis_info_show(vis, "Failed to unmap `%s' in %s mode", lhs, argv[1]);
 	return unmapped;
 }
+
+static bool cmd_dump(Vis *vis, Win *win, Command *cmd, const char *argv[], Cursor *cur, Filerange *range) {
+	if (!argv[1])
+		return false;
+	return text_dump(win->file->text, argv[1]);
+}
+

@@ -1175,6 +1175,160 @@ struct stat text_stat(Text *txt) {
 	return txt->info;
 }
 
+static void history_subtree_dump(Text *txt, Revision *rev, bool mainbranch, FILE *file) {
+	/* Create and style current node */
+	fprintf(file, "\t\taction_%p [label=\"%p\"%s%s]\n", (void*)rev, (void*)rev,
+		mainbranch ? ",style=filled,fillcolor=lightgrey" : "",
+		txt->history == rev ? ",fillcolor=red" : "");
+
+	/* draw all "earlier" arrows */
+	Revision *later = rev->later;
+	if (later)
+		fprintf(file, "\t\taction_%p -> action_%p [constraint=false, color=\"blue\", dir=\"both\"]\n", (void*)later, (void*)rev);
+
+	/* Draw relationships between current node and its children */
+	Revision *child = rev->next;
+	if (!child)
+		return;
+	/* draw arrow to "next" if at fork */
+	fprintf(file, "\t\taction_%p -> action_%p [constraint=false, color=\"red\"]\n", (void*)rev, (void*)child);
+	while (child->alt_prev)
+		child = child->alt_prev;
+	for (; child; child = child->alt_next) {
+		/* draw all prev arrows */
+		fprintf(file, "\t\taction_%p -> action_%p\n", (void*)child, (void*)rev);
+		history_subtree_dump(txt, child, mainbranch && child == rev->next, file);
+	}
+}
+
+static void piece_dump(Piece *p, FILE *file) {
+	if (!p->prev || !p->next) {
+		fprintf(file, "\t\tpiece_%p [label=\"\",shape=%shouse,orientation=90,"
+			"style=filled,fillcolor=lightgrey]\n", (void*)p, p->prev ? "inv" : "");
+	} else {
+		fprintf(file, "\t\tpiece_%p [label=\"{{%p|%p|%zu}|", (void*)p, (void*)p, (void*)p->data, p->len);
+		for (const char *c = p->data; c < p->data + p->len; c++) {
+			switch (*c) {
+			case '\r':
+				break;
+			case '\n':
+				fputs(" \\l", file);
+				break;
+			case '"':
+			case '|':
+			case '\\':
+			case '<':
+			case '>':
+			case '{':
+			case '}':
+				fprintf(file, "\\%c", *c);
+				break;
+			default:
+				fputc(*c, file);
+				break;
+			}
+		}
+		fprintf(file, "}\",shape=record%s]\n", p->text->block &&
+			p->text->block->data <= p->data && p->data < p->text->block->data + p->len ?
+			",style=filled,fillcolor=lightgrey\n" : "");
+	}
+}
+
+static void span_dump(Span *s, FILE *file) {
+	for (Piece *p = s->start; p && p != s->end->next; p = p->next)
+		piece_dump(p, file);
+	fputs("\t}\n\n", file);
+	for (Piece *p = s->start; p && p != s->end->next; p = p->next) {
+		bool first = p == s->start;
+		bool last = p == s->end;
+		fprintf(file, "\tpiece_%p%s -> piece_%p\n", (void*)p, first ? ":w" : "", (void*)p->prev);
+		fprintf(file, "\tpiece_%p%s -> piece_%p\n", (void*)p, last ? ":e" : "",  (void*)p->next);
+	}
+	fputs("\n\n", file);
+}
+
+static void change_dump(Change *c, FILE *file, bool undo) {
+	fprintf(file, "\t/* change %p */\n", (void*)c);
+	fprintf(file, "\tsubgraph {\n\t\trank=same; level_%p\n", (void*)c);
+	span_dump(undo ? &c->old : &c->new, file);
+}
+
+static void revision_dump(Revision *rev, FILE *file, bool undo) {
+	fprintf(file, "\t/* revision %p */\n", (void*)rev);
+	for (Change *c = rev->change; c; c = c->next)
+		change_dump(c, file, undo);
+}
+
+bool text_dump(Text *txt, const char *filename) {
+	FILE *file = fopen(filename, "w");
+	if (!file)
+		return false;
+
+	Revision *root, *leaf;
+	for (root = txt->history; root->prev; root = root->prev);
+	for (leaf = txt->history; leaf->next; leaf = leaf->next);
+
+	fputs("digraph {\n\tnode[fontname=\"Courier\"]\n\n", file);
+
+	/* dump undo tree */
+	fputs("\t/* undo tree */\n", file);
+	fputs("\tsubgraph cluster_tree {\n\t\tlabel=\"Undo Tree\"\n", file);
+	history_subtree_dump(txt, root, true, file);
+	fputs("\n\t}\n\n", file);
+
+	/* first dump any revisions which can be redone */
+	for (Revision *rev = leaf; rev != txt->history; rev = rev->prev)
+		revision_dump(rev, file, false);
+
+	/* dump current state */
+	fputs("\t/* current state */\n", file);
+	fprintf(file, "\tsubgraph {\n\t\trank=same; level_%p\n", (void*)txt);
+	for (Piece *p = &txt->begin; p; p = p->next) {
+		piece_dump(p, file);
+		if (p->prev)
+			fprintf(file, "\t\tpiece_%p -> piece_%p\n", (void*)p, (void*)p->prev);
+		if (p->next)
+			fprintf(file, "\t\tpiece_%p -> piece_%p\n", (void*)p, (void*)p->next);
+	}
+	fputs("\t}\n\n", file);
+
+	/* dump all revision which can be undone */
+	for (Revision *rev = txt->history; rev->prev; rev = rev->prev)
+		revision_dump(rev, file, true);
+
+	/* create one node per change to force alignment */
+	fputs("\t/* nodes for alignment */\n", file);
+	fputs("\tsubgraph {\n", file);
+	for (Revision *rev = leaf; rev->prev; rev = rev->prev) {
+		if (rev == txt->history)
+			fprintf(file, "\t\tlevel_%p [shape=plaintext,label=\"current\"]\n", (void*)txt);
+		for (Change *c = rev->change; c; c = c->next) {
+			char buf[255] = "";
+			if (c == rev->change)
+				snprintf(buf, sizeof buf, "action:%p\\l", (void*)rev);
+			fprintf(file, "\t\tlevel_%p [shape=plaintext,label=\"%schange:%p\"]\n", (void*)c, buf, (void*)c);
+		}
+	}
+
+	/* link the change nodes together */
+	if (txt->history->prev || txt->history->next)
+		fputs("\n\t\t", file);
+	for (Revision *rev = leaf; rev->prev; rev = rev->prev) {
+		if (rev == txt->history)
+			fprintf(file, "level_%p -> ", (void*)txt);
+		for (Change *c = rev->change; c; c = c->next) {
+			fprintf(file, "level_%p %s", (void*)c, c->next || rev->prev->prev ? "->" : "");
+		}
+	}
+	if (txt->history->prev || txt->history->next)
+		fputs("[style=invis]\n", file);
+	fputs("\t}\n", file);
+
+	fputs("}\n", file);
+	fclose(file);
+	return true;
+}
+
 /* A delete operation can either start/stop midway through a piece or at
  * a boundry. In the former case a new piece is created to represent the
  * remaining text before/after the modification point.
