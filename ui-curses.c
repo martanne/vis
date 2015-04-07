@@ -532,6 +532,7 @@ Ui *ui_curses_new(void) {
 	if (!newterm(term, stderr, stdin))
 		return NULL;
 	start_color();
+	use_default_colors();
 	raw();
 	noecho();
 	keypad(stdscr, TRUE);
