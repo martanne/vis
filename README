@@ -1,7 +1,8 @@
 Why another text editor?
 ========================
 
-It all started when I was recently reading the excellent Project Oberon[0],
+It all started when I was recently reading the excellent
+[Project Oberon](http://www.inf.ethz.ch/personal/wirth/ProjectOberon/),
 where in chapter 5 a data structure for managing text is introduced.
 I found this rather appealing and wanted to see how it works in practice.
 
@@ -10,9 +11,9 @@ might as well build something which could (at least in the long run)
 replace my current editor of choice: vim.
 
 This should be accomplished by a reasonable amount of clean (your mileage
-may vary), modern and legacy free C code. Certainly not an old, 500'000
-lines[1] long, #ifdef cluttered mess which tries to run on all broken
-systems ever envisioned by mankind.
+may vary), modern and legacy free C code. Certainly not an old,
+[500'000 lines long](https://www.openhub.net/p/vim) #ifdef cluttered
+mess which tries to run on all broken systems ever envisioned by mankind.
 
 Admittedly vim has a lot of functionally, most of which I don't use. I
 therefore set out with the following main goals:
@@ -31,8 +32,6 @@ therefore set out with the following main goals:
 
  - multiple file/window support
 
- - extensible and configurable through familiar config.def.h mechanism
-
 The goal could thus be summarized as "80% of vim's features (in other
 words the useful ones) implemented in roughly 1% of the code".
 
@@ -44,14 +43,14 @@ Text management using a piece table/chain
 =========================================
 
 The core of this editor is a persistent data structure called a piece
-table which supports all modifications in O(m), where m is the number
+table which supports all modifications in `O(m)`, where `m` is the number
 of non-consecutive editing operations. This bound could be further
-improved to O(log m) by use of a balanced search tree, however the
+improved to `O(log m)` by use of a balanced search tree, however the
 additional complexity doesn't seem to be worth it, for now.
 
 The actual data is stored in buffers which are strictly append only.
-There are two types of buffers, a fixed-sized for the original file
-content and append-only ones one for all modifications.
+There exist two types of buffers, one fixed-sized holding the original
+file content and multiple append-only ones storing the modifications.
 
 A text, i.e. a sequence of bytes, is represented as a double linked
 list of pieces each with a pointer into a buffer and an associated
@@ -150,26 +149,26 @@ Properties
 The main advantage of the piece chain as described above is that all
 operations are performed independent of the file size but instead linear
 in the number of pieces i.e. editing operations. The original file buffer
-never changes which means the mmap(2) can be performed read only which
+never changes which means the `mmap(2)` can be performed read only which
 makes optimal use of the operating system's virtual memory / paging system.
 
 The maximum editable file size is limited by the amount of memory a process
 is allowed to map into its virtual address space, this shouldn't be a problem
 in practice. The whole process assumes that the file can be used as is.
 In particular the editor assumes all input and the file itself is encoded
-as UTF-8. Supporting other encodings would require conversion using iconv(3)
+as UTF-8. Supporting other encodings would require conversion using `iconv(3)`
 or similar upon loading and saving the document, which defeats the whole
 purpose.
 
 Similarly the editor has to cope with the fact that lines can be terminated
-either by \n or \n\r. There is no conversion to a line based structure in
+either by `\n` or `\r\n`. There is no conversion to a line based structure in
 place. Instead the whole text is exposed as a sequence of bytes. All
 addressing happens by means of zero based byte offsets from the start of
 the file.
 
 The main disadvantage of the piece chain data structure is that the text
 is not stored contiguous in memory which makes seeking around somewhat
-harder. This also implies that standard library calls like regex(3)
+harder. This also implies that standard library calls like the `regex(3)`
 functions can not be used as is. However this is the case for all but
 the most simple data structures used in text editors.
 
@@ -194,7 +193,7 @@ where each entry stores the length in bytes of the character displayed
 at this particular cell. For characters spanning multiple columns the
 length is always stored in the leftmost cell. As an example a tab has a
 length of 1 byte followed by up to 7 cells with a length of zero.
-Similarly a \n\r line ending occupies only one screen cell but has a
+Similarly a `\r\n` line ending occupies only one screen cell but has a
 length of 2.
 
 This matrix is actually stored per line inside a double linked list of
@@ -217,7 +216,7 @@ a "screen full" of text thus enabling multiline coloring.
 Window-Management
 -----------------
 
-It is possible to open multiple windows via the :split/:vsplit/:open
+It is possible to open multiple windows via the `:split/:vsplit/:open`
 commands or by passing multiple files on the command line.
 
 In principle it would be nice to follow a similar client/server approach
@@ -234,8 +233,6 @@ settled for a single process architecture.
 Search and replace
 ------------------
 
-This is one of the last big conceptual problems.
-
 Currently the editor copies the whole text to a contiguous memory block
 and then uses the standard regex functions from libc. Clearly this is not
 a satisfactory solution for large files and kind of defeats the whole
@@ -243,15 +240,24 @@ effort spent on the piece table.
 
 The long term solution is to write our own regular expression engine or
 modify an existing one to make use of the iterator API. This would allow
-efficient search without having to double memory consumption. At some
-point I will have to (re)read the papers of Russ Cox[2] and Rob Pike
-about this topic.
+efficient search without having to double memory consumption.
+
+The used regex engine should use a non-backtracking algorithm. Useful
+resources include:
+
+ - [Russ Cox's regex pag](http://swtch.com/~rsc/regexp/)
+ - [TRE](https://github.com/laurikari/tre) as
+   [used by musl](http://git.musl-libc.org/cgit/musl/tree/src/regex)
+   which uses a parallel [TNFA matcher](http://laurikari.net/ville/spire2000-tnfa.ps)
+ - [Plan9's regex library](http://plan9.bell-labs.com/sources/plan9/sys/src/libregexp/)
+   which has its root in Rob Pike's sam text editor
+ - [RE2](https://github.com/google/re2) C++ regex library
 
 Command-Prompt
 --------------
 
 The editor needs some form of command prompt to get user input
-(think :, /, ? in vim).
+(think `:`, `/`, `?` in vim).
 
 At first I wanted to implement this in terms of an external process,
 similar to the way it is done in sandy with communication back to the
@@ -278,7 +284,7 @@ it possible to write multiple frontends with possibly different user
 interfaces/paradigms. The frontend to run is selected based on the
 executable name.
 
-The default interface is a vim clone called vis.
+The default, and currently only, interface is a vim clone called vis.
 
 Key binding modes
 -----------------
@@ -296,50 +302,58 @@ the mode and when there was an unmatched key.
 vis a vim like frontend
 -----------------------
 
-The vis frontend uses a similar approach to the one suggested by Markus
-Teich[3] but it turns out to be a bit more complicated. For starters
-there are movements and commands which consist of more than one key/
-character. As a consequence the key lookup is not a simple array
-dereference but instead the arrays are looped over until a match
-is found.
-
 The following section gives a quick overview over various vim features
 and their current support in vis.
 
- Operators
- ---------
-   d (delete), c (change), y (yank), p (put), > (shift-right), < (shift-left)
+###  Operators
 
- Movements
- ---------
-   h        (char left)
-   l        (char right)
-   j        (line down)
-   k        (line up)
-   0        (start of line)
-   ^        (first non-blank of line)
-   g_       (last non-blank of line)
-   $        (end of line)
-   %        (match bracket)
-   b        (previous start of a word)
-   w        (next start of a word)
-   e        (next end of a word)
-   ge       (previous end of a word)
-   {        (previous paragraph)
-   }        (next paragraph)
-   (        (previous sentence)
-   )        (next sentence)
-   gg       (begin of file)
-   G        (goto line or end of file)
-   |        (goto column)
-   n        (repeat last search forward)
-   N        (repeat last search backwards)
-   f{char}  (to next occurrence of char to the right)
-   t{char}  (till before next occurrence of char to the right)
-   F{char}  (to next occurrence of char to the left)
-   T{char}  (till before next occurrence of char to the left)
-   /{text}  (to next match of text in forward direction)
-   ?{text}  (to next match of text in backward direction)
+    d   (delete)
+    c   (change)
+    y   (yank)
+    p   (put)
+    >   (shift-right)
+    <   (shift-left),
+    J   (join)
+    ~   (swap case)
+    gu  (make lowercase)
+    gU  (make uppercase)
+
+### Movements
+
+    h        (char left)
+    l        (char right)
+    j        (line down)
+    k        (line up)
+    gj       (display line down)
+    gk       (display line up)
+    0        (start of line)
+    ^        (first non-blank of line)
+    g_       (last non-blank of line)
+    $        (end of line)
+    %        (match bracket)
+    b        (previous start of a word)
+    B        (previous start of a WORD)
+    w        (next start of a word)
+    W        (next start of a WORD)
+    e        (next end of a word)
+    E        (next end of a WORD)
+    ge       (previous end of a word)
+    gE       (previous end of a WORD)
+    {        (previous paragraph)
+    }        (next paragraph)
+    (        (previous sentence)
+    )        (next sentence)
+    gg       (begin of file)
+    G        (goto line or end of file)
+    |        (goto column)
+    n        (repeat last search forward)
+    N        (repeat last search backwards)
+    f{char}  (to next occurrence of char to the right)
+    t{char}  (till before next occurrence of char to the right)
+    F{char}  (to next occurrence of char to the left)
+    T{char}  (till before next occurrence of char to the left)
+    /{text}  (to next match of text in forward direction)
+    ?{text}  (to next match of text in backward direction)
 
   An empty line is currently neither a word nor a WORD.
 
@@ -347,54 +361,50 @@ and their current support in vis.
   the same as in vim.
 
   Some of these commands do not work as in vim when prefixed with a
-  digit i.e. a multiplier. As an example 3$ should move to the end
-  of the 3rd line down. The way it currently behaves is that the first
-  movement places the cursor at the end of the current line and the last
-  two have thus no effect.
+  digit i.e. a multiplier. As an example in vim `3$` moves to the end
+  of the 3rd line down. However vis treats it as a move to the end of
+  current line which is repeated 3 times where the last two have no
+  effect.
 
   In general there are still a lot of improvements to be made in the
   case movements are forced to be line or character wise. Also some of
   them should be inclusive in some context and exclusive in others.
   At the moment they always behave the same.
 
- Text objects
- ------------
+### Text objects
 
   All of the following text objects are implemented in an inner variant
   (prefixed with 'i') and a normal variant (prefixed with 'a'):
 
-   w  word
-   s  sentence
-   p  paragraph
-   [,], (,), {,}, <,>, ", ', `         block enclosed by these symbols
+    w  word
+    W  WORD
+    s  sentence
+    p  paragraph
+    [,], (,), {,}, <,>, ", ', `         block enclosed by these symbols
 
   For sentence and paragraph there is no difference between the
   inner and normal variants.
 
- Modes
- -----
+### Modes
 
   At the moment there exists a more or less functional insert, replace
   and visual mode (in both line and character wise variants).
 
- Marks
- -----
+### Marks
 
-  [a-z] general purpose marks
-  <     start of the last selected visual area in current buffer
-  >     end of the last selected visual area in current buffer
+    [a-z] general purpose marks
+    <     start of the last selected visual area in current buffer
+    >     end of the last selected visual area in current buffer
 
   No marks across files are supported. Marks are not preserved over
   editing sessions.
 
- Registers
- ---------
+### Registers
 
-  Only the 26 lower case registers [a-z] and 1 additional default register
+  Only the 26 lower case registers `[a-z]` and 1 additional default register
   is supported.
 
- Undo/Redo and Repeat
- --------------------
+### Undo/Redo and Repeat
 
   The text is currently snapshoted whenever an operator is completed as
   well as when insert or replace mode is left. Additionally a snapshot
@@ -404,36 +414,34 @@ and their current support in vis.
   editing operations (as they are likely unrelated and thus should be
   individually reversible).
 
-  The repeat command '.' works for all operators and is able to repeat
+  The repeat command `.` works for all operators and is able to repeat
   the last insertion or replacement.
 
- Macros
- ------
+### Macros
 
-  [a-z] are recoginized macro names, q starts a recording, @ plays it back.
-  @@ refers to the least recently recorded macro.
+`[a-z]` are recoginized macro names, `q` starts a recording, `@` plays it back.
+`@@` refers to the least recently recorded macro.
 
- Command line prompt
- -------------------
+### Command line prompt
 
-  At the ':'-command prompt only the following commands are recognized:
+  At the `:`-command prompt only the following commands are recognized:
 
-   :nnn     go to line nnn
-   :bdelete close all windows which display the same file as the current one
-   :edit    replace current file with a new one or reload it from disk
-   :open    open a new window
-   :qall    close all windows, exit editor
-   :quit    close currently focused window
-   :read    insert content of another file at current cursor position
-   :split   split window horizontally
-   :vsplit  split window vertically
-   :new     open an empty window, arrange horizontally
-   :vnew    open an empty window, arrange vertically
-   :wq      write changes then close window
-   :xit     like :wq but write only when changes have been made
-   :write   write current buffer content to file
-   :saveas  save file under another name
-   :set     set the options below
+    :nnn     go to line nnn
+    :bdelete close all windows which display the same file as the current one
+    :edit    replace current file with a new one or reload it from disk
+    :open    open a new window
+    :qall    close all windows, exit editor
+    :quit    close currently focused window
+    :read    insert content of another file at current cursor position
+    :split   split window horizontally
+    :vsplit  split window vertically
+    :new     open an empty window, arrange horizontally
+    :vnew    open an empty window, arrange vertically
+    :wq      write changes then close window
+    :xit     like :wq but write only when changes have been made
+    :write   write current buffer content to file
+    :saveas  save file under another name
+    :set     set the options below
 
      tabwidth   [1-8]
 
@@ -463,48 +471,44 @@ and their current support in vis.
   Each command can be prefixed with a range made up of a start and
   an end position as in start,end. Valid position specifiers are:
 
-      .          start of the current line
-      +n and -n  start of the line relative to the current line
-      'm         position of mark m
-      /pattern/  first match after current position
+   .          start of the current line
+   +n and -n  start of the line relative to the current line
+   'm         position of mark m
+   /pattern/  first match after current position
 
   If only a start position without a command is given then the cursor
   is moved to that position. Additionally the following ranges are
   predefined:
 
-      %          the whole file, equivalent to 1,$
-      *          the current selection, equivalent to '<,'>
+    %          the whole file, equivalent to 1,$
+    *          the current selection, equivalent to '<,'>
 
-  The substitute command is recognized but not yet implemented. The '!'
+  The substitute command is recognized but not yet implemented. The `!`
   command to filter text through an external program is also planned.
 
   History support, tab completion and wildcard expansion are other
   worthwhile features. However implementing them inside the editor
   feels wrong.
 
- Tab <-> Space and Line endings \n vs \r\n
- -----------------------------------------
+### Tab <-> Space and Line endings \n vs \r\n
 
   Tabs can optionally be expaned to a configurable number of spaces.
   The first line ending in the file determines what will be inserted
   upon a line break (defaults to \n).
 
- Jump list and change list
- -------------------------
+### Jump list and change list
 
-  A per window, file local jump list (navigate with CTRL+O and CTRL+I)
-  and change list (navigate with g; and g,) is supported. The jump
+  A per window, file local jump list (navigate with `CTRL+O` and `CTRL+I`)
+  and change list (navigate with `g;` and `g,`) is supported. The jump
   list is implemented as a fixed sized ring buffer.
 
- Mouse support
- -------------
+### Mouse support
 
   The mouse is currently not used at all.
 
- Other features
- --------------
+### Other features
 
-  Other things I would like to add in the long term are:
+ Things which I would like to add in the long term are:
 
    + code completion: this should be done as an external process. I will
      have to take a look at the tools from the llvm / clang project. Maybe
@@ -513,13 +517,16 @@ and their current support in vis.
 
    + something similar to vim's quick fix functionality
 
-  Stuff which vim does which I don't use and have no plans to add:
+ Things I might add
+
+   + runtime configurable key bindings
+   + visual block mode / multiple selections
+   + text folding
+
+ Stuff which vim does which I don't use and have no plans to add:
 
    - GUIs (neither x11, motif, gtk, win32 ...)
-   - text folding
-   - visual block mode
    - plugins (certainly not vimscript, if anything it should be lua based)
-   - runtime key bindings
    - right-to-left text
    - tabs (as in multiple workspaces)
    - ex mode
@@ -538,26 +545,53 @@ WARNING: There are probably still some bugs left which could corrupt your
 
 A quick overview over the code structure to get you started:
 
- config.def.h       definition of key bindings, commands, syntax highlighting
- vis.c              vi(m) specific editor frontend, program entry point
- editor.[ch]        screen / window / statusbar / command prompt management
- window.[ch]        window drawing / syntax highlighting / cursor placement
- text.[ch]          low level text / marks / {un,re}do / piece table implementation
- text-motions.[ch]  movement functions take a file position and return a new one
- text-objects.[ch]  functions take a file position and return a file range
- buffer.[ch]        dynamically growing buffer used for registers and macros
- ring-buffer.[ch]   fixed size ring buffer used for the jump list
+ File(s)             | Description
+ ------------------- | -----------------------------------------------------
+ `text.[ch]`         | low level text / marks / {un,re}do / piece table implementation
+ `text-motions.[ch]` | movement functions take a file position and return a new one
+ `text-objects.[ch]` | functions take a file position and return a file range
+ `vis.c`             | vi(m) specific editor frontend, program entry point
+ `editor.[ch]`       | editor window management
+ `window.[ch]`       | ui-independent viewport, syntax highlighting, cursor placement
+ `ui.h`              | abstract interface as implemented by user interface
+ `ui-curses.h`       | a terminal / curses based user interface implementation
+ `buffer.[ch]`       | dynamically growing buffer used for registers and macros
+ `ring-buffer.[ch]`  | fixed size ring buffer used for the jump list
+ `map.[ch]`          | crit-bit tree based map supporting unique prefix lookups and ordered iteration. used to implement `:`-commands.
+ `config.def.h`      | definition of key bindings, commands, syntax highlighting
 
-Hope this gets the interested people started. Feel free to ask questions
-if something is unclear! There are still a lot of bugs left to fix, but
-by now I'm fairly sure that the general concept should work.
+Hope this gets the interested people started.
+
+TODO
+----
+
+Here is an incomplete list of TODO items and/or ideas for further work
+in no particular order:
+
+ * Review and cleanup the existing implementation (e.g. selection handling)
+    - Eliminate global state and expose vis frontend as "library"
+ * Implement `:!` using a proper (libuv based?) mainloop
+ * Implement `:substitute`
+ * Bugfix: editing the same file in multiple windows can cause "corruption"
+ * Review/Implement cindent mode #33
+ * Add history support to `:`-prompt
+ * Implement wordwrap (i.e `gq` and `:set textwidth`) using `fmt(1)` ?
+ * Overhaul key bindings to support runtime configuration / streamline config.def.h
+ * Implement/review/merge history undo tree
+ * Implement a regex engine which works with the iterator API
+ * Write [unit test](http://ccodearchive.net/info/tap.html) for the low
+   level `text_*` interface
+ * Improve syntax highlighting, investigate whether already existing
+   syntax definitions from other editors could be reused
+ * Optimize `text_delete` in case of consecutive delete operations
+ * Add a RPC interface, experiment with a client/server architecture and
+   delegate window management to dwm/dvtm
+
+Feel free to ask questions if something is unclear! There are still a lot
+of bugs left to fix, but by now I'm fairly sure that the general concept
+should work.
 
 As always, comments and patches welcome!
 
 Cheers,
 Marc
-
-[0] http://www.inf.ethz.ch/personal/wirth/ProjectOberon/
-[1] https://www.openhub.net/p/vim
-[2] http://swtch.com/~rsc/regexp/
-[3] http://lists.suckless.org/dev/1408/23219.html
