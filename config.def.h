@@ -1034,6 +1034,33 @@ static Syntax syntaxes[] = {{
 		&colors[COLOR_KEYWORD2],
 	}}
 },{
+	.name = "javascript",
+	.file = "\\.(js|json)$",
+	.rules = {
+		SYNTAX_SINGLE_LINE_COMMENT,
+		SYNTAX_LITERAL,
+		SYNTAX_STRING,
+		SYNTAX_BRACKET,
+	{
+		B"(true|false|null|undefined)"B,
+		&colors[COLOR_DATATYPE],
+	},{
+		B"(NaN|Infinity)"B,
+		&colors[COLOR_LITERAL],
+	},{
+		"(\"(\\\\.|[^\"])*\"|\'(\\\\.|[^\'])*\')",
+		&colors[COLOR_STRING],
+	},{
+		B"(for|if|while|do|in|else|case|default|switch|try|throw|catch|operator|new|delete)"B,
+		&colors[COLOR_KEYWORD],
+	},{
+		B"(continue|break|return)"B,
+		&colors[COLOR_CONTROL],
+	},{
+		B"(case|class|const|debugger|default|enum|export|extends|finally|function|implements|import|instanceof|let|this|typeof|var|with|yield)"B,
+		&colors[COLOR_KEYWORD2],
+	}}
+},{
 	.name = "lua",
 	.file = "\\.lua$",
 	.settings = (const char*[]){
