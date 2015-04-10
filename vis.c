@@ -1481,13 +1481,15 @@ static bool cmd_set(Filerange *range, enum CmdOpt cmdopt, const char *argv[]) {
 		for (Syntax *syntax = syntaxes; syntax && syntax->name; syntax++) {
 			if (!strcasecmp(syntax->name, argv[2])) {
 				window_syntax_set(vis->win->win, syntax);
+				editor_info_show(vis, "Syntax set to `%s'", argv[2]);
 				return true;
 			}
 		}
 
-		if (parse_bool(argv[2], &arg.b) && !arg.b)
+		if (parse_bool(argv[2], &arg.b) && !arg.b) {
 			window_syntax_set(vis->win->win, NULL);
-		else
+			editor_info_show(vis, "Syntax disabled");
+		} else
 			editor_info_show(vis, "Unknown syntax definition: `%s'", argv[2]);
 		break;
 	case OPTION_NUMBER:
