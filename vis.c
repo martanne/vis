@@ -1370,6 +1370,7 @@ static bool cmd_set(Filerange *range, enum CmdOpt cmdopt, const char *argv[]) {
 			OPTION_TYPE_BOOL,
 			OPTION_TYPE_NUMBER,
 		} type;
+		bool optional;
 		int index;
 	} OptionDef;
 
@@ -1387,7 +1388,7 @@ static bool cmd_set(Filerange *range, enum CmdOpt cmdopt, const char *argv[]) {
 		[OPTION_AUTOINDENT]      = { { "autoindent", "ai"       }, OPTION_TYPE_BOOL   },
 		[OPTION_EXPANDTAB]       = { { "expandtab", "et"        }, OPTION_TYPE_BOOL   },
 		[OPTION_TABWIDTH]        = { { "tabwidth", "tw"         }, OPTION_TYPE_NUMBER },
-		[OPTION_SYNTAX]          = { { "syntax"                 }, OPTION_TYPE_STRING },
+		[OPTION_SYNTAX]          = { { "syntax"                 }, OPTION_TYPE_STRING, true },
 		[OPTION_NUMBER]          = { { "numbers", "nu"          }, OPTION_TYPE_BOOL   },
 		[OPTION_NUMBER_RELATIVE] = { { "relativenumbers", "rnu" }, OPTION_TYPE_BOOL   },
 	};
@@ -1432,7 +1433,7 @@ static bool cmd_set(Filerange *range, enum CmdOpt cmdopt, const char *argv[]) {
 
 	switch (opt->type) {
 	case OPTION_TYPE_STRING:
-		if (!argv[2]) {
+		if (!opt->optional && !argv[2]) {
 			editor_info_show(vis, "Expecting string option value");
 			return false;
 		}
@@ -1468,6 +1469,15 @@ static bool cmd_set(Filerange *range, enum CmdOpt cmdopt, const char *argv[]) {
 		editor_tabwidth_set(vis, arg.i);
 		break;
 	case OPTION_SYNTAX:
+		if (!argv[2]) {
+			Syntax *syntax = window_syntax_get(vis->win->win);
+			if (syntax)
+				editor_info_show(vis, "Syntax definition in use: `%s'", syntax->name);
+			else
+				editor_info_show(vis, "No syntax definition in use");
+			return true;
+		}
+
 		for (Syntax *syntax = syntaxes; syntax && syntax->name; syntax++) {
 			if (!strcasecmp(syntax->name, argv[2])) {
 				window_syntax_set(vis->win->win, syntax);
