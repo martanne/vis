@@ -5,7 +5,7 @@
  * and D. J. Bernstein.
  *
  * Further information about the data structure can be found at:
- *  http://cr.yp.to/critbit.htm
+ *  http://cr.yp.to/critbit.html
  *  http://github.com/agl/critbit
  *  http://ccodearchive.net/info/strmap.html
  */
