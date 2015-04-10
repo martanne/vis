@@ -30,6 +30,7 @@ typedef struct {            /* cursor position */
 	Filepos pos;        /* in bytes from the start of the file */
 	int row, col;       /* in terms of zero based screen coordinates */
 	Line *line;         /* screen line on which cursor currently resides */
+	bool highlighted;   /* true e.g. when cursor is on a bracket */
 } Cursor;
 
 struct Win {                /* window showing part of a file */
@@ -234,20 +235,6 @@ CursorPos window_cursor_getpos(Win *win) {
 	return pos;
 }
 
-/* place the cursor according to the screen coordinates in win->{row,col} and
- * fire user callback. if a selection is active, redraw the window to reflect
- * its changes. */
-static size_t window_cursor_update(Win *win) {
-	Cursor *cursor = &win->cursor;
-	if (win->sel.start != EPOS) {
-		win->sel.end = cursor->pos;
-		window_draw(win);
-	}
-	if (win->ui)
-		win->ui->cursor_to(win->ui, cursor->col, cursor->row);
-	return cursor->pos;
-}
-
 /* snyc current cursor position with internal Line/Cell structures */
 static void window_cursor_sync(Win *win) {
 	int row = 0, col = 0;
@@ -277,6 +264,37 @@ static void window_cursor_sync(Win *win) {
 	win->cursor.line = line;
 	win->cursor.row = row;
 	win->cursor.col = col;
+}
+
+/* place the cursor according to the screen coordinates in win->{row,col} and
+ * fire user callback. if a selection is active, redraw the window to reflect
+ * its changes. */
+static size_t window_cursor_update(Win *win) {
+	Cursor *cursor = &win->cursor;
+	if (win->sel.start != EPOS) {
+		win->sel.end = cursor->pos;
+		window_draw(win);
+	} else if (win->ui && win->syntax) {
+		size_t pos = cursor->pos;
+		size_t pos_match = text_bracket_match_except(win->text, pos, "<>");
+		if (pos != pos_match && win->start <= pos_match && pos_match < win->end) {
+			if (cursor->highlighted)
+				window_draw(win); /* clear active highlighting */
+			cursor->pos = pos_match;
+			window_cursor_sync(win);
+			cursor->line->cells[cursor->col].attr |= A_REVERSE;
+			cursor->pos = pos;
+			window_cursor_sync(win);
+			win->ui->draw_text(win->ui, win->topline);
+			cursor->highlighted = true;
+		} else if (cursor->highlighted) {
+			cursor->highlighted = false;
+			window_draw(win);
+		}
+	}
+	if (win->ui)
+		win->ui->cursor_to(win->ui, cursor->col, cursor->row);
+	return cursor->pos;
 }
 
 /* move the cursor to the character at pos bytes from the begining of the file.

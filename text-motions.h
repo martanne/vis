@@ -76,6 +76,8 @@ size_t text_section_prev(Text*, size_t pos);
 */
 /* search coresponding '(', ')', '{', '}', '[', ']', '>', '<', '"', ''' */
 size_t text_bracket_match(Text*, size_t pos);
+/* same as above but ignore symbols contained in last argument */
+size_t text_bracket_match_except(Text*, size_t pos, const char *except);
 
 /* search the given regex pattern in either forward or backward direction,
  * starting from pos. does wrap around if no match was found. */
