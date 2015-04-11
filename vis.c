@@ -38,9 +38,7 @@
 #include "util.h"
 #include "map.h"
 
-
 /** global variables */
-static volatile bool running = true; /* exit main loop once this becomes false */
 static Editor *vis;         /* global editor instance, keeps track of all windows etc. */
 
 /** operators */
@@ -945,7 +943,7 @@ static void prompt_enter(const Arg *arg) {
 	 * on vis->win.
 	 */
 	switchmode_to(vis->mode_before_prompt);
-	if (s && *s && exec_command(vis->prompt_type, s) && running)
+	if (s && *s && exec_command(vis->prompt_type, s) && vis->running)
 		switchmode(&(const Arg){ .i = VIS_MODE_NORMAL });
 	free(s);
 	editor_draw(vis);
@@ -981,7 +979,7 @@ static void insert_verbatim(const Arg *arg) {
 }
 
 static void quit(const Arg *arg) {
-	running = false;
+	vis->running = false;
 }
 
 static void cmd(const Arg *arg) {
@@ -1910,8 +1908,9 @@ static void mainloop() {
 	sigaddset(&blockset, SIGWINCH);
 	sigprocmask(SIG_BLOCK, &blockset, NULL);
 	editor_draw(vis);
+	vis->running = true;
 
-	while (running) {
+	while (vis->running) {
 		fd_set fds;
 		FD_ZERO(&fds);
 		FD_SET(STDIN_FILENO, &fds);

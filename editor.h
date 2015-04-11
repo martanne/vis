@@ -242,6 +242,7 @@ struct Editor {
 	Mode *mode;          /* currently active mode, used to search for keybindings */
 	Mode *mode_prev;     /* previsouly active user mode */
 	Mode *mode_before_prompt; /* user mode which was active before entering prompt */
+	volatile bool running; /* exit main loop once this becomes false */
 };
 
 Editor *editor_new(Ui*);
