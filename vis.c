@@ -1392,15 +1392,13 @@ static bool cmd_set(Filerange *range, enum CmdOpt cmdopt, const char *argv[]) {
 		[OPTION_NUMBER_RELATIVE] = { { "relativenumbers", "rnu" }, OPTION_TYPE_BOOL   },
 	};
 
-	static Map *optmap = NULL;
-
-	if (!optmap) {
-		if (!(optmap = map_new()))
+	if (!vis->options) {
+		if (!(vis->options = map_new()))
 			return false;
 		for (int i = 0; i < LENGTH(options); i++) {
 			options[i].index = i;
 			for (const char **name = options[i].names; *name; name++) {
-				if (!map_put(optmap, *name, &options[i]))
+				if (!map_put(vis->options, *name, &options[i]))
 					return false;
 			}
 		}
@@ -1416,7 +1414,7 @@ static bool cmd_set(Filerange *range, enum CmdOpt cmdopt, const char *argv[]) {
 	OptionDef *opt = NULL;
 
 	if (!strncasecmp(argv[1], "no", 2)) {
-		opt = map_closest(optmap, argv[1]+2);
+		opt = map_closest(vis->options, argv[1]+2);
 		if (opt && opt->type == OPTION_TYPE_BOOL)
 			invert = true;
 		else
@@ -1424,7 +1422,7 @@ static bool cmd_set(Filerange *range, enum CmdOpt cmdopt, const char *argv[]) {
 	}
 
 	if (!opt)
-		opt = map_closest(optmap, argv[1]);
+		opt = map_closest(vis->options, argv[1]);
 	if (!opt) {
 		editor_info_show(vis, "Unknown option: `%s'", argv[1]);
 		return false;

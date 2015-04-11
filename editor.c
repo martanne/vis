@@ -410,6 +410,7 @@ void editor_free(Editor *ed) {
 	editor_syntax_unload(ed);
 	ed->ui->free(ed->ui);
 	map_free(ed->cmds);
+	map_free(ed->options);
 	free(ed);
 }
 

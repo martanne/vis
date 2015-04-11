@@ -122,6 +122,7 @@ struct Editor {
 	bool expandtab;                   /* whether typed tabs should be converted to spaces */
 	bool autoindent;                  /* whether indentation should be copied from previous line on newline */
 	Map *cmds;                        /* ":"-commands, used for unique prefix queries */
+	Map *options;                     /* ":set"-options */
 };
 
 Editor *editor_new(Ui*);
