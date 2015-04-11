@@ -38,115 +38,6 @@
 #include "util.h"
 #include "map.h"
 
-typedef union {
-	bool b;
-	int i;
-	const char *s;
-	void (*w)(Win*);    /* generic window commands */
-	void (*f)(Editor*); /* generic editor commands */
-} Arg;
-
-typedef struct {
-	char str[6]; /* UTF8 character or terminal escape code */
-	int code;    /* curses KEY_* constant */
-} Key;
-
-#define MAX_KEYS 2
-typedef Key KeyCombo[MAX_KEYS];
-
-typedef struct {
-	KeyCombo key;
-	void (*func)(const Arg *arg);
-	const Arg arg;
-} KeyBinding;
-
-typedef struct Mode Mode;
-struct Mode {
-	Mode *parent;                       /* if no match is found in this mode, search will continue there */
-	KeyBinding *bindings;               /* NULL terminated array of keybindings for this mode */
-	const char *name;                   /* descriptive, user facing name of the mode */
-	bool isuser;                        /* whether this is a user or internal mode */
-	bool common_prefix;                 /* whether the first key in this mode is always the same */
-	void (*enter)(Mode *old);           /* called right before the mode becomes active */
-	void (*leave)(Mode *new);           /* called right before the mode becomes inactive */
-	bool (*unknown)(KeyCombo);          /* called whenever a key combination is not found in this mode,
-	                                       the return value determines whether parent modes will be searched */
-	void (*input)(const char*, size_t); /* called whenever a key is not found in this mode and all its parent modes */
-	void (*idle)(void);                 /* called whenever a certain idle time i.e. without any user input elapsed */
-	time_t idle_timeout;                /* idle time in seconds after which the registered function will be called */
-	bool visual;                        /* whether text selection is possible in this mode */
-};
-
-typedef struct {
-	char *name;                    /* is used to match against argv[0] to enable this config */
-	Mode *mode;                    /* default mode in which the editor should start in */
-	bool (*keypress)(Key*);        /* called before any other keybindings are checked,
-	                                * return value decides whether key should be ignored */
-} Config;
-
-typedef struct {
-	int count;        /* how many times should the command be executed? */
-	Register *reg;    /* always non-NULL, set to a default register */
-	Filerange range;  /* which part of the file should be affected by the operator */
-	size_t pos;       /* at which byte from the start of the file should the operation start? */
-	bool linewise;    /* should the changes always affect whole lines? */
-	const Arg *arg;   /* arbitrary arguments */
-} OperatorContext;
-
-typedef struct {
-	void (*func)(OperatorContext*); /* function implementing the operator logic */
-} Operator;
-
-typedef struct {
-	size_t (*cmd)(const Arg*);        /* a custom movement based on user input from vis.c */
-	size_t (*win)(Win*);              /* a movement based on current window content from window.h */
-	size_t (*txt)(Text*, size_t pos); /* a movement form text-motions.h */
-	enum {
-		LINEWISE  = 1 << 0,
-		CHARWISE  = 1 << 1,
-		INCLUSIVE = 1 << 2,
-		EXCLUSIVE = 1 << 3,
-		IDEMPOTENT = 1 << 4,
-		JUMP = 1 << 5,
-	} type;
-	int count;
-} Movement;
-
-typedef struct {
-	Filerange (*range)(Text*, size_t pos); /* a text object from text-objects.h */
-	enum {
-		INNER,
-		OUTER,
-	} type;
-} TextObject;
-
-typedef struct {             /** collects all information until an operator is executed */
-	int count;
-	bool linewise;
-	const Operator *op;
-	const Movement *movement;
-	const TextObject *textobj;
-	Register *reg;
-	int mark;
-	Key key;
-	Arg arg;
-} Action;
-
-enum CmdOpt {          /* option flags for command definitions */
-	CMD_OPT_NONE,  /* no option (default value) */
-	CMD_OPT_FORCE, /* whether the command can be forced by appending '!' */
-	CMD_OPT_ARGS,  /* whether the command line should be parsed in to space
-	                * separated arguments to placed into argv, otherwise argv[1]
-	                * will contain the  remaining command line unmodified */
-};
-
-typedef struct {             /* command definitions for the ':'-prompt */
-	const char *name[3]; /* name and optional alias for the command */
-	/* command logic called with a NULL terminated array of arguments.
-	 * argv[0] will be the command name */
-	bool (*cmd)(Filerange*, enum CmdOpt opt, const char *argv[]);
-	enum CmdOpt opt;     /* command option flags */
-} Command;
 
 /** global variables */
 static volatile bool running = true; /* exit main loop once this becomes false */
@@ -154,8 +45,6 @@ static Editor *vis;         /* global editor instance, keeps track of all window
 static Mode *mode;          /* currently active mode, used to search for keybindings */
 static Mode *mode_prev;     /* previsouly active user mode */
 static Mode *mode_before_prompt; /* user mode which was active before entering prompt */
-static Action action;       /* current action which is in progress */
-static Action action_prev;  /* last operator action used by the repeat '.' key */
 
 /** operators */
 static void op_change(OperatorContext *c);
@@ -757,7 +646,7 @@ static void mark_set(const Arg *arg) {
 }
 
 static size_t mark_goto(const Arg *arg) {
-	return text_mark_get(vis->win->text->data, vis->win->text->marks[action.mark]);
+	return text_mark_get(vis->win->text->data, vis->win->text->marks[vis->action.mark]);
 }
 
 static size_t mark_line_goto(const Arg *arg) {
@@ -766,7 +655,7 @@ static size_t mark_line_goto(const Arg *arg) {
 
 static size_t to(const Arg *arg) {
 	return text_find_char_next(vis->win->text->data, window_cursor_get(vis->win->win) + 1,
-		action.key.str, strlen(action.key.str));
+		vis->action.key.str, strlen(vis->action.key.str));
 }
 
 static size_t till(const Arg *arg) {
@@ -775,7 +664,7 @@ static size_t till(const Arg *arg) {
 
 static size_t to_left(const Arg *arg) {
 	return text_find_char_prev(vis->win->text->data, window_cursor_get(vis->win->win) - 1,
-		action.key.str, strlen(action.key.str));
+		vis->action.key.str, strlen(vis->action.key.str));
 }
 
 static size_t till_left(const Arg *arg) {
@@ -783,16 +672,16 @@ static size_t till_left(const Arg *arg) {
 }
 
 static size_t line(const Arg *arg) {
-	return text_pos_by_lineno(vis->win->text->data, action.count);
+	return text_pos_by_lineno(vis->win->text->data, vis->action.count);
 }
 
 static size_t column(const Arg *arg) {
 	size_t pos = window_cursor_get(vis->win->win);
-	return text_line_offset(vis->win->text->data, pos, action.count);
+	return text_line_offset(vis->win->text->data, pos, vis->action.count);
 }
 
 static size_t window_lines_top(const Arg *arg) {
-	return window_screenline_goto(vis->win->win, action.count);
+	return window_screenline_goto(vis->win->win, vis->action.count);
 }
 
 static size_t window_lines_middle(const Arg *arg) {
@@ -802,7 +691,7 @@ static size_t window_lines_middle(const Arg *arg) {
 
 static size_t window_lines_bottom(const Arg *arg) {
 	int h = window_height_get(vis->win->win);
-	return window_screenline_goto(vis->win->win, h-action.count);
+	return window_screenline_goto(vis->win->win, h - vis->action.count);
 }
 
 /** key bindings functions of type: void (*func)(const Arg*) */
@@ -866,8 +755,8 @@ static void suspend(const Arg *arg) {
 }
 
 static void repeat(const Arg *arg) {
-	action = action_prev;
-	action_do(&action);
+	vis->action = vis->action_prev;
+	action_do(&vis->action);
 }
 
 static void replace(const Arg *arg) {
@@ -875,8 +764,8 @@ static void replace(const Arg *arg) {
 	if (!k.str[0])
 		return;
 	size_t pos = window_cursor_get(vis->win->win);
-	action_reset(&action_prev);
-	action_prev.op = &ops[OP_REPEAT_REPLACE];
+	action_reset(&vis->action_prev);
+	vis->action_prev.op = &ops[OP_REPEAT_REPLACE];
 	buffer_put(&vis->buffer_repeat, k.str, strlen(k.str));
 	editor_delete_key(vis);
 	editor_insert_key(vis, k.str, strlen(k.str));
@@ -885,11 +774,11 @@ static void replace(const Arg *arg) {
 }
 
 static void count(const Arg *arg) {
-	action.count = action.count * 10 + arg->i;
+	vis->action.count = vis->action.count * 10 + arg->i;
 }
 
 static void gotoline(const Arg *arg) {
-	if (action.count)
+	if (vis->action.count)
 		movement(&(const Arg){ .i = MOVE_LINE });
 	else if (arg->i < 0)
 		movement(&(const Arg){ .i = MOVE_FILE_BEGIN });
@@ -898,27 +787,27 @@ static void gotoline(const Arg *arg) {
 }
 
 static void linewise(const Arg *arg) {
-	action.linewise = arg->b;
+	vis->action.linewise = arg->b;
 }
 
 static void operator(const Arg *arg) {
 	Operator *op = &ops[arg->i];
 	if (mode->visual) {
-		action.op = op;
-		action_do(&action);
+		vis->action.op = op;
+		action_do(&vis->action);
 		return;
 	}
 	/* switch to operator mode inorder to make operator options and
 	 * text-object available */
 	switchmode(&(const Arg){ .i = VIS_MODE_OPERATOR });
-	if (action.op == op) {
+	if (vis->action.op == op) {
 		/* hacky way to handle double operators i.e. things like
 		 * dd, yy etc where the second char isn't a movement */
-		action.linewise = true;
-		action.textobj = moves_linewise[MOVE_SCREEN_LINE_DOWN];
-		action_do(&action);
+		vis->action.linewise = true;
+		vis->action.textobj = moves_linewise[MOVE_SCREEN_LINE_DOWN];
+		action_do(&vis->action);
 	} else {
-		action.op = op;
+		vis->action.op = op;
 	}
 }
 
@@ -928,40 +817,40 @@ static void operator_twice(const Arg *arg) {
 }
 
 static void changecase(const Arg *arg) {
-	action.arg = *arg;
+	vis->action.arg = *arg;
 	operator(&(const Arg){ .i = OP_CASE_CHANGE });
 }
 
 static void movement_key(const Arg *arg) {
 	Key k = getkey();
 	if (!k.str[0]) {
-		action_reset(&action);
+		action_reset(&vis->action);
 		return;
 	}
-	action.key = k;
-	action.movement = &moves[arg->i];
-	action_do(&action);
+	vis->action.key = k;
+	vis->action.movement = &moves[arg->i];
+	action_do(&vis->action);
 }
 
 static void movement(const Arg *arg) {
-	if (action.linewise && arg->i < LENGTH(moves_linewise))
-		action.textobj = moves_linewise[arg->i];
+	if (vis->action.linewise && arg->i < LENGTH(moves_linewise))
+		vis->action.textobj = moves_linewise[arg->i];
 	else
-		action.movement = &moves[arg->i];
+		vis->action.movement = &moves[arg->i];
 
-	if (action.op == &ops[OP_CHANGE]) {
-		if (action.movement == &moves[MOVE_WORD_START_NEXT])
-			action.movement = &moves[MOVE_WORD_END_NEXT];
-		else if (action.movement == &moves[MOVE_LONGWORD_START_NEXT])
-			action.movement = &moves[MOVE_LONGWORD_END_NEXT];
+	if (vis->action.op == &ops[OP_CHANGE]) {
+		if (vis->action.movement == &moves[MOVE_WORD_START_NEXT])
+			vis->action.movement = &moves[MOVE_WORD_END_NEXT];
+		else if (vis->action.movement == &moves[MOVE_LONGWORD_START_NEXT])
+			vis->action.movement = &moves[MOVE_LONGWORD_END_NEXT];
 	}
 
-	action_do(&action);
+	action_do(&vis->action);
 }
 
 static void textobj(const Arg *arg) {
-	action.textobj = &textobjs[arg->i];
-	action_do(&action);
+	vis->action.textobj = &textobjs[arg->i];
+	action_do(&vis->action);
 }
 
 static void selection_end(const Arg *arg) {
@@ -979,19 +868,19 @@ static void selection_end(const Arg *arg) {
 }
 
 static void reg(const Arg *arg) {
-	action.reg = &vis->registers[arg->i];
+	vis->action.reg = &vis->registers[arg->i];
 }
 
 static void mark(const Arg *arg) {
-	action.mark = arg->i;
-	action.movement = &moves[MOVE_MARK];
-	action_do(&action);
+	vis->action.mark = arg->i;
+	vis->action.movement = &moves[MOVE_MARK];
+	action_do(&vis->action);
 }
 
 static void mark_line(const Arg *arg) {
-	action.mark = arg->i;
-	action.movement = &moves[MOVE_MARK_LINE];
-	action_do(&action);
+	vis->action.mark = arg->i;
+	vis->action.movement = &moves[MOVE_MARK_LINE];
+	action_do(&vis->action);
 }
 
 static void undo(const Arg *arg) {
@@ -1013,7 +902,7 @@ static void redo(const Arg *arg) {
 }
 
 static void zero(const Arg *arg) {
-	if (action.count == 0)
+	if (vis->action.count == 0)
 		movement(&(const Arg){ .i = MOVE_LINE_BEGIN });
 	else
 		count(&(const Arg){ .i = 0 });
@@ -1111,8 +1000,8 @@ static int argi2lines(const Arg *arg) {
 	case +PAGE_HALF:
 		return window_height_get(vis->win->win)/2;
 	default:
-		if (action.count > 0)
-			return action.count;
+		if (vis->action.count > 0)
+			return vis->action.count;
 		return arg->i < 0 ? -arg->i : arg->i;
 	}
 }
@@ -1172,9 +1061,9 @@ static void insert_newline(const Arg *arg) {
 }
 
 static void put(const Arg *arg) {
-	action.arg = *arg;
+	vis->action.arg = *arg;
 	operator(&(const Arg){ .i = OP_PUT });
-	action_do(&action);
+	action_do(&vis->action);
 }
 
 static void openline(const Arg *arg) {
@@ -1309,9 +1198,9 @@ static void action_do(Action *a) {
 		text_snapshot(txt);
 	}
 
-	if (a != &action_prev) {
+	if (a != &vis->action_prev) {
 		if (a->op)
-			action_prev = *a;
+			vis->action_prev = *a;
 		action_reset(a);
 	}
 }
@@ -1869,7 +1758,7 @@ static bool exec_command(char type, const char *cmd) {
 	case '/':
 	case '?':
 		if (text_regex_compile(vis->search_pattern, cmd, REG_EXTENDED)) {
-			action_reset(&action);
+			action_reset(&vis->action);
 			return false;
 		}
 		movement(&(const Arg){ .i =

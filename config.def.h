@@ -223,7 +223,7 @@ static void vis_mode_operator_leave(Mode *new) {
 
 static void vis_mode_operator_input(const char *str, size_t len) {
 	/* invalid operator */
-	action_reset(&action);
+	action_reset(&vis->action);
 	switchmode_to(mode_prev);
 }
 
@@ -575,8 +575,8 @@ static void vis_mode_insert_input(const char *str, size_t len) {
 		buffer_truncate(&vis->buffer_repeat);
 	buffer_append(&vis->buffer_repeat, str, len);
 	oldpos = pos + len;
-	action_reset(&action_prev);
-	action_prev.op = &ops[OP_REPEAT_INSERT];
+	action_reset(&vis->action_prev);
+	vis->action_prev.op = &ops[OP_REPEAT_INSERT];
 	editor_insert_key(vis, str, len);
 }
 
@@ -597,8 +597,8 @@ static void vis_mode_replace_input(const char *str, size_t len) {
 		buffer_truncate(&vis->buffer_repeat);
 	buffer_append(&vis->buffer_repeat, str, len);
 	oldpos = pos + len;
-	action_reset(&action_prev);
-	action_prev.op = &ops[OP_REPEAT_REPLACE];
+	action_reset(&vis->action_prev);
+	vis->action_prev.op = &ops[OP_REPEAT_REPLACE];
 	editor_replace_key(vis, str, len);
 }
 

@@ -16,6 +16,118 @@ typedef struct EditorWin EditorWin;
 #include "ring-buffer.h"
 #include "map.h"
 
+
+
+typedef union {
+	bool b;
+	int i;
+	const char *s;
+	void (*w)(Win*);    /* generic window commands */
+	void (*f)(Editor*); /* generic editor commands */
+} Arg;
+
+typedef struct {
+	char str[6]; /* UTF8 character or terminal escape code */
+	int code;    /* curses KEY_* constant */
+} Key;
+
+#define MAX_KEYS 2
+typedef Key KeyCombo[MAX_KEYS];
+
+typedef struct {
+	KeyCombo key;
+	void (*func)(const Arg *arg);
+	const Arg arg;
+} KeyBinding;
+
+typedef struct Mode Mode;
+struct Mode {
+	Mode *parent;                       /* if no match is found in this mode, search will continue there */
+	KeyBinding *bindings;               /* NULL terminated array of keybindings for this mode */
+	const char *name;                   /* descriptive, user facing name of the mode */
+	bool isuser;                        /* whether this is a user or internal mode */
+	bool common_prefix;                 /* whether the first key in this mode is always the same */
+	void (*enter)(Mode *old);           /* called right before the mode becomes active */
+	void (*leave)(Mode *new);           /* called right before the mode becomes inactive */
+	bool (*unknown)(KeyCombo);          /* called whenever a key combination is not found in this mode,
+	                                       the return value determines whether parent modes will be searched */
+	void (*input)(const char*, size_t); /* called whenever a key is not found in this mode and all its parent modes */
+	void (*idle)(void);                 /* called whenever a certain idle time i.e. without any user input elapsed */
+	time_t idle_timeout;                /* idle time in seconds after which the registered function will be called */
+	bool visual;                        /* whether text selection is possible in this mode */
+};
+
+typedef struct {
+	char *name;                    /* is used to match against argv[0] to enable this config */
+	Mode *mode;                    /* default mode in which the editor should start in */
+	bool (*keypress)(Key*);        /* called before any other keybindings are checked,
+	                                * return value decides whether key should be ignored */
+} Config;
+
+typedef struct {
+	int count;        /* how many times should the command be executed? */
+	Register *reg;    /* always non-NULL, set to a default register */
+	Filerange range;  /* which part of the file should be affected by the operator */
+	size_t pos;       /* at which byte from the start of the file should the operation start? */
+	bool linewise;    /* should the changes always affect whole lines? */
+	const Arg *arg;   /* arbitrary arguments */
+} OperatorContext;
+
+typedef struct {
+	void (*func)(OperatorContext*); /* function implementing the operator logic */
+} Operator;
+
+typedef struct {
+	size_t (*cmd)(const Arg*);        /* a custom movement based on user input from vis.c */
+	size_t (*win)(Win*);              /* a movement based on current window content from window.h */
+	size_t (*txt)(Text*, size_t pos); /* a movement form text-motions.h */
+	enum {
+		LINEWISE  = 1 << 0,
+		CHARWISE  = 1 << 1,
+		INCLUSIVE = 1 << 2,
+		EXCLUSIVE = 1 << 3,
+		IDEMPOTENT = 1 << 4,
+		JUMP = 1 << 5,
+	} type;
+	int count;
+} Movement;
+
+typedef struct {
+	Filerange (*range)(Text*, size_t pos); /* a text object from text-objects.h */
+	enum {
+		INNER,
+		OUTER,
+	} type;
+} TextObject;
+
+typedef struct {             /** collects all information until an operator is executed */
+	int count;
+	bool linewise;
+	const Operator *op;
+	const Movement *movement;
+	const TextObject *textobj;
+	Register *reg;
+	int mark;
+	Key key;
+	Arg arg;
+} Action;
+
+enum CmdOpt {          /* option flags for command definitions */
+	CMD_OPT_NONE,  /* no option (default value) */
+	CMD_OPT_FORCE, /* whether the command can be forced by appending '!' */
+	CMD_OPT_ARGS,  /* whether the command line should be parsed in to space
+	                * separated arguments to placed into argv, otherwise argv[1]
+	                * will contain the  remaining command line unmodified */
+};
+
+typedef struct {             /* command definitions for the ':'-prompt */
+	const char *name[3]; /* name and optional alias for the command */
+	/* command logic called with a NULL terminated array of arguments.
+	 * argv[0] will be the command name */
+	bool (*cmd)(Filerange*, enum CmdOpt opt, const char *argv[]);
+	enum CmdOpt opt;     /* command option flags */
+} Command;
+
 enum Reg {
 	REG_a,
 	REG_b,
@@ -124,6 +236,9 @@ struct Editor {
 	Map *cmds;                        /* ":"-commands, used for unique prefix queries */
 	Map *options;                     /* ":set"-options */
 	Buffer buffer_repeat;             /* holds data to repeat last insertion/replacement */
+	
+	Action action;       /* current action which is in progress */
+	Action action_prev;  /* last operator action used by the repeat '.' key */
 };
 
 Editor *editor_new(Ui*);
