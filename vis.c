@@ -150,7 +150,6 @@ typedef struct {             /* command definitions for the ':'-prompt */
 
 /** global variables */
 static volatile bool running = true; /* exit main loop once this becomes false */
-static volatile sig_atomic_t need_resize;
 static Editor *vis;         /* global editor instance, keeps track of all windows etc. */
 static Mode *mode;          /* currently active mode, used to search for keybindings */
 static Mode *mode_prev;     /* previsouly active user mode */
@@ -1925,19 +1924,6 @@ static void die(const char *errstr, ...) {
 	exit(EXIT_FAILURE);
 }
 
-static void sigwinch_handler(int sig) {
-	need_resize = true;
-}
-
-static void setup() {
-	struct sigaction sa;
-	sa.sa_flags = 0;
-	sigemptyset(&sa.sa_mask);
-	sa.sa_handler = sigwinch_handler;
-	sigaction(SIGWINCH, &sa, NULL);
-	sigaction(SIGCONT, &sa, NULL);
-}
-
 static bool keymatch(Key *key0, Key *key1) {
 	return (key0->str[0] && memcmp(key0->str, key1->str, sizeof(key1->str)) == 0) ||
 	       (key0->code && key0->code == key1->code);
@@ -2040,11 +2026,6 @@ static void mainloop() {
 	editor_draw(vis);
 
 	while (running) {
-		if (need_resize) {
-			editor_resize(vis);
-			need_resize = false;
-		}
-
 		fd_set fds;
 		FD_ZERO(&fds);
 		FD_SET(STDIN_FILENO, &fds);
@@ -2089,7 +2070,6 @@ int main(int argc, char *argv[]) {
 	}
 
 	mode_prev = mode = config->mode;
-	setup();
 
 	if (!(vis = editor_new(ui_curses_new())))
 		die("Could not allocate editor core\n");
