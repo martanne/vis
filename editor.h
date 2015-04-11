@@ -123,6 +123,7 @@ struct Editor {
 	bool autoindent;                  /* whether indentation should be copied from previous line on newline */
 	Map *cmds;                        /* ":"-commands, used for unique prefix queries */
 	Map *options;                     /* ":set"-options */
+	Buffer buffer_repeat;             /* holds data to repeat last insertion/replacement */
 };
 
 Editor *editor_new(Ui*);

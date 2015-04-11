@@ -411,6 +411,7 @@ void editor_free(Editor *ed) {
 	ed->ui->free(ed->ui);
 	map_free(ed->cmds);
 	map_free(ed->options);
+	buffer_free(&ed->buffer_repeat);
 	free(ed);
 }
 

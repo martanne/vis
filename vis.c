@@ -157,7 +157,6 @@ static Mode *mode_prev;     /* previsouly active user mode */
 static Mode *mode_before_prompt; /* user mode which was active before entering prompt */
 static Action action;       /* current action which is in progress */
 static Action action_prev;  /* last operator action used by the repeat '.' key */
-static Buffer buffer_repeat;/* repeat last modification i.e. insertion/replacement */
 
 /** operators */
 static void op_change(OperatorContext *c);
@@ -686,19 +685,20 @@ static void op_join(OperatorContext *c) {
 }
 
 static void op_repeat_insert(OperatorContext *c) {
-	if (!buffer_repeat.len)
+	size_t len = vis->buffer_repeat.len;
+	if (!len)
 		return;
-	editor_insert(vis, c->pos, buffer_repeat.data, buffer_repeat.len);
-	window_cursor_to(vis->win->win, c->pos + buffer_repeat.len);
+	editor_insert(vis, c->pos, vis->buffer_repeat.data, len);
+	window_cursor_to(vis->win->win, c->pos + len);
 }
 
 static void op_repeat_replace(OperatorContext *c) {
-	if (!buffer_repeat.len)
+	size_t chars = 0, len = vis->buffer_repeat.len;
+	if (!len)
 		return;
-
-	size_t chars = 0;
-	for (size_t i = 0; i < buffer_repeat.len; i++) {
-		if (ISUTF8(buffer_repeat.data[i]))
+	const char *data = vis->buffer_repeat.data;
+	for (size_t i = 0; i < len; i++) {
+		if (ISUTF8(data[i]))
 			chars++;
 	}
 
@@ -878,7 +878,7 @@ static void replace(const Arg *arg) {
 	size_t pos = window_cursor_get(vis->win->win);
 	action_reset(&action_prev);
 	action_prev.op = &ops[OP_REPEAT_REPLACE];
-	buffer_put(&buffer_repeat, k.str, strlen(k.str));
+	buffer_put(&vis->buffer_repeat, k.str, strlen(k.str));
 	editor_delete_key(vis);
 	editor_insert_key(vis, k.str, strlen(k.str));
 	text_snapshot(vis->win->text->data);

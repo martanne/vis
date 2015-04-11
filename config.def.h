@@ -572,8 +572,8 @@ static void vis_mode_insert_input(const char *str, size_t len) {
 	static size_t oldpos = EPOS;
 	size_t pos = window_cursor_get(vis->win->win);
 	if (pos != oldpos)
-		buffer_truncate(&buffer_repeat);
-	buffer_append(&buffer_repeat, str, len);
+		buffer_truncate(&vis->buffer_repeat);
+	buffer_append(&vis->buffer_repeat, str, len);
 	oldpos = pos + len;
 	action_reset(&action_prev);
 	action_prev.op = &ops[OP_REPEAT_INSERT];
@@ -594,8 +594,8 @@ static void vis_mode_replace_input(const char *str, size_t len) {
 	static size_t oldpos = EPOS;
 	size_t pos = window_cursor_get(vis->win->win);
 	if (pos != oldpos)
-		buffer_truncate(&buffer_repeat);
-	buffer_append(&buffer_repeat, str, len);
+		buffer_truncate(&vis->buffer_repeat);
+	buffer_append(&vis->buffer_repeat, str, len);
 	oldpos = pos + len;
 	action_reset(&action_prev);
 	action_prev.op = &ops[OP_REPEAT_REPLACE];
