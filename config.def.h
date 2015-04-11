@@ -224,7 +224,7 @@ static void vis_mode_operator_leave(Mode *new) {
 static void vis_mode_operator_input(const char *str, size_t len) {
 	/* invalid operator */
 	action_reset(&vis->action);
-	switchmode_to(mode_prev);
+	switchmode_to(vis->mode_prev);
 }
 
 static KeyBinding vis_operator_options[] = {
@@ -504,7 +504,7 @@ static void vis_mode_prompt_input(const char *str, size_t len) {
 
 static void vis_mode_prompt_enter(Mode *old) {
 	if (old->isuser && old != &vis_modes[VIS_MODE_PROMPT])
-		mode_before_prompt = old;
+		vis->mode_before_prompt = old;
 }
 
 static void vis_mode_prompt_leave(Mode *new) {

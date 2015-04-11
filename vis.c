@@ -42,9 +42,6 @@
 /** global variables */
 static volatile bool running = true; /* exit main loop once this becomes false */
 static Editor *vis;         /* global editor instance, keeps track of all windows etc. */
-static Mode *mode;          /* currently active mode, used to search for keybindings */
-static Mode *mode_prev;     /* previsouly active user mode */
-static Mode *mode_before_prompt; /* user mode which was active before entering prompt */
 
 /** operators */
 static void op_change(OperatorContext *c);
@@ -792,7 +789,7 @@ static void linewise(const Arg *arg) {
 
 static void operator(const Arg *arg) {
 	Operator *op = &ops[arg->i];
-	if (mode->visual) {
+	if (vis->mode->visual) {
 		vis->action.op = op;
 		action_do(&vis->action);
 		return;
@@ -947,7 +944,7 @@ static void prompt_enter(const Arg *arg) {
 	 * focused editor window *before* anything is executed which depends
 	 * on vis->win.
 	 */
-	switchmode_to(mode_before_prompt);
+	switchmode_to(vis->mode_before_prompt);
 	if (s && *s && exec_command(vis->prompt_type, s) && running)
 		switchmode(&(const Arg){ .i = VIS_MODE_NORMAL });
 	free(s);
@@ -1138,7 +1135,7 @@ static void action_do(Action *a) {
 			c.range.end = it.pos;
 		}
 	} else if (a->textobj) {
-		if (mode->visual)
+		if (vis->mode->visual)
 			c.range = window_selection_get(win);
 		else
 			c.range.start = c.range.end = pos;
@@ -1162,18 +1159,18 @@ static void action_do(Action *a) {
 			}
 		}
 
-		if (mode->visual) {
+		if (vis->mode->visual) {
 			window_selection_set(win, &c.range);
 			pos = c.range.end;
 			window_cursor_to(win, pos);
 		}
-	} else if (mode->visual) {
+	} else if (vis->mode->visual) {
 		c.range = window_selection_get(win);
 		if (!text_range_valid(&c.range))
 			c.range.start = c.range.end = pos;
 	}
 
-	if (mode == &vis_modes[VIS_MODE_VISUAL_LINE] && (a->movement || a->textobj)) {
+	if (vis->mode == &vis_modes[VIS_MODE_VISUAL_LINE] && (a->movement || a->textobj)) {
 		Filerange sel = window_selection_get(win);
 		sel.end = text_char_prev(txt, sel.end);
 		size_t start = text_line_begin(txt, sel.start);
@@ -1191,9 +1188,9 @@ static void action_do(Action *a) {
 
 	if (a->op) {
 		a->op->func(&c);
-		if (mode == &vis_modes[VIS_MODE_OPERATOR])
-			switchmode_to(mode_prev);
-		else if (mode->visual)
+		if (vis->mode == &vis_modes[VIS_MODE_OPERATOR])
+			switchmode_to(vis->mode_prev);
+		else if (vis->mode->visual)
 			switchmode(&(const Arg){ .i = VIS_MODE_NORMAL });
 		text_snapshot(txt);
 	}
@@ -1215,17 +1212,17 @@ static void action_reset(Action *a) {
 }
 
 static void switchmode_to(Mode *new_mode) {
-	if (mode == new_mode)
+	if (vis->mode == new_mode)
 		return;
-	if (mode->leave)
-		mode->leave(new_mode);
-	if (mode->isuser)
-		mode_prev = mode;
-	mode = new_mode;
-	if (mode == config->mode || (mode->name && mode->name[0] == '-'))
+	if (vis->mode->leave)
+		vis->mode->leave(new_mode);
+	if (vis->mode->isuser)
+		vis->mode_prev = vis->mode;
+	vis->mode = new_mode;
+	if (new_mode == config->mode || (new_mode->name && new_mode->name[0] == '-'))
 		vis->win->ui->draw_status(vis->win->ui);
-	if (mode->enter)
-		mode->enter(mode_prev);
+	if (new_mode->enter)
+		new_mode->enter(vis->mode_prev);
 }
 
 /** ':'-command implementations */
@@ -1849,7 +1846,7 @@ static void keypress(Key *key) {
 
 
 	keys[keylen++] = *key;
-	KeyBinding *action = keybinding(mode, keys);
+	KeyBinding *action = keybinding(vis->mode, keys);
 
 	if (action) {
 		int combolen = 0;
@@ -1863,8 +1860,8 @@ static void keypress(Key *key) {
 		memset(keys, 0, sizeof(keys));
 		if (action->func)
 			action->func(&action->arg);
-	} else if (keylen == 1 && key->code == 0 && mode->input) {
-		mode->input(key->str, strlen(key->str));
+	} else if (keylen == 1 && key->code == 0 && vis->mode->input) {
+		vis->mode->input(key->str, strlen(key->str));
 	}
 
 	keylen = 0;
@@ -1920,7 +1917,7 @@ static void mainloop() {
 		FD_SET(STDIN_FILENO, &fds);
 
 		editor_update(vis);
-		idle.tv_sec = mode->idle_timeout;
+		idle.tv_sec = vis->mode->idle_timeout;
 		int r = pselect(1, &fds, NULL, NULL, timeout, &emptyset);
 		if (r == -1 && errno == EINTR)
 			continue;
@@ -1931,8 +1928,8 @@ static void mainloop() {
 		}
 
 		if (!FD_ISSET(STDIN_FILENO, &fds)) {
-			if (mode->idle)
-				mode->idle();
+			if (vis->mode->idle)
+				vis->mode->idle();
 			timeout = NULL;
 			continue;
 		}
@@ -1940,7 +1937,7 @@ static void mainloop() {
 		Key key = getkey();
 		keypress(&key);
 
-		if (mode->idle)
+		if (vis->mode->idle)
 			timeout = &idle;
 	}
 }
@@ -1958,10 +1955,11 @@ int main(int argc, char *argv[]) {
 		}
 	}
 
-	mode_prev = mode = config->mode;
-
 	if (!(vis = editor_new(ui_curses_new())))
 		die("Could not allocate editor core\n");
+
+	vis->mode_prev = vis->mode = config->mode;
+
 	if (!editor_syntax_load(vis, syntaxes, colors))
 		die("Could not load syntax highlighting definitions\n");
 

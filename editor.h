@@ -239,6 +239,9 @@ struct Editor {
 	
 	Action action;       /* current action which is in progress */
 	Action action_prev;  /* last operator action used by the repeat '.' key */
+	Mode *mode;          /* currently active mode, used to search for keybindings */
+	Mode *mode_prev;     /* previsouly active user mode */
+	Mode *mode_before_prompt; /* user mode which was active before entering prompt */
 };
 
 Editor *editor_new(Ui*);
