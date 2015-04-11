@@ -14,6 +14,7 @@ typedef struct EditorWin EditorWin;
 #include "macro.h"
 #include "syntax.h"
 #include "ring-buffer.h"
+#include "map.h"
 
 enum Reg {
 	REG_a,
@@ -120,6 +121,7 @@ struct Editor {
 	int tabwidth;                     /* how many spaces should be used to display a tab */
 	bool expandtab;                   /* whether typed tabs should be converted to spaces */
 	bool autoindent;                  /* whether indentation should be copied from previous line on newline */
+	Map *cmds;                        /* ":"-commands, used for unique prefix queries */
 };
 
 Editor *editor_new(Ui*);

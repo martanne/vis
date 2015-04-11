@@ -409,6 +409,7 @@ void editor_free(Editor *ed) {
 		register_free(&ed->registers[i]);
 	editor_syntax_unload(ed);
 	ed->ui->free(ed->ui);
+	map_free(ed->cmds);
 	free(ed);
 }
 

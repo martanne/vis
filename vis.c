@@ -158,7 +158,6 @@ static Mode *mode_before_prompt; /* user mode which was active before entering p
 static Action action;       /* current action which is in progress */
 static Action action_prev;  /* last operator action used by the repeat '.' key */
 static Buffer buffer_repeat;/* repeat last modification i.e. insertion/replacement */
-static Map *cmdmap;         /* :-commands are stored here, used for prefix searches */
 
 /** operators */
 static void op_change(OperatorContext *c);
@@ -1780,6 +1779,19 @@ static Filerange parse_range(char **cmd) {
 	return r;
 }
 
+static Command *lookup_cmd(const char *name) {
+	if (!vis->cmds) {
+		if (!(vis->cmds = map_new()))
+			return NULL;
+	
+		for (Command *cmd = cmds; cmd && cmd->name[0]; cmd++) {
+			for (const char **name = cmd->name; *name; name++)
+				map_put(vis->cmds, *name, cmd);
+		}
+	}
+	return map_closest(vis->cmds, name);
+}
+
 static bool exec_cmdline_command(const char *cmdline) {
 	enum CmdOpt opt = CMD_OPT_NONE;
 	char *line = strdup(cmdline);
@@ -1816,7 +1828,7 @@ static bool exec_cmdline_command(const char *cmdline) {
 	if (*param)
 		*param++ = '\0'; /* truncate by overwriting ' ' or '!' */
 
-	Command *cmd = map_closest(cmdmap, name);
+	Command *cmd = lookup_cmd(name);
 	if (!cmd) {
 		editor_info_show(vis, "Not an editor command");
 		free(line);
@@ -2065,21 +2077,6 @@ static void mainloop() {
 	}
 }
 
-static bool vis_init(void) {
-	if (!(cmdmap = map_new()))
-		return false;
-	for (Command *cmd = cmds; cmd && cmd->name[0]; cmd++) {
-		for (const char **name = cmd->name; *name; name++) {
-			if (!map_put(cmdmap, *name, cmd))
-				return false;
-		}
-	}
-	return true;
-}
-
-static void vis_shutdown(void) {
-	map_free(cmdmap);
-}
 
 int main(int argc, char *argv[]) {
 	/* decide which key configuration to use based on argv[0] */
@@ -2096,7 +2093,7 @@ int main(int argc, char *argv[]) {
 	mode_prev = mode = config->mode;
 	setup();
 
-	if (!vis_init() || !(vis = editor_new(ui_curses_new())))
+	if (!(vis = editor_new(ui_curses_new())))
 		die("Could not allocate editor core\n");
 	if (!editor_syntax_load(vis, syntaxes, colors))
 		die("Could not load syntax highlighting definitions\n");
@@ -2138,6 +2135,5 @@ int main(int argc, char *argv[]) {
 	settings_apply(settings);
 	mainloop();
 	editor_free(vis);
-	vis_shutdown();
 	return 0;
 }
