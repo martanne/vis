@@ -883,7 +883,7 @@ static Color colors[] = {
 }
 
 #define SYNTAX_C_PREPROCESSOR { \
-	"(^#[\\t ]*(define|include(_next)?|(un|ifn?)def|endif|el(if|se)|if|warning|error|pragma))", \
+	"(^#[\\t ]*(define|include(_next)?|(un|ifn?)def|endif|el(if|se)|if|warning|error|pragma)?)", \
 	&colors[COLOR_PREPROCESSOR], \
 }
 
