@@ -28,7 +28,9 @@
 
 typedef struct {            /* cursor position */
 	Filepos pos;        /* in bytes from the start of the file */
+	Filepos lastpos;    /* previous cursor position */
 	int row, col;       /* in terms of zero based screen coordinates */
+	int lastcol;        /* remembered column used when moving across lines */
 	Line *line;         /* screen line on which cursor currently resides */
 	bool highlighted;   /* true e.g. when cursor is on a bracket */
 } Cursor;
@@ -292,6 +294,9 @@ static size_t window_cursor_update(Win *win) {
 			window_draw(win);
 		}
 	}
+	if (cursor->pos != cursor->lastpos)
+		cursor->lastcol = 0;
+	cursor->lastpos = cursor->pos;
 	if (win->ui)
 		win->ui->cursor_to(win->ui, cursor->col, cursor->row);
 	return cursor->pos;
@@ -753,19 +758,27 @@ size_t window_line_down(Win *win) {
 
 size_t window_screenline_up(Win *win) {
 	Cursor *cursor = &win->cursor;
+	int lastcol = cursor->lastcol;
+	if (!lastcol)
+		lastcol = cursor->col;
 	if (!cursor->line->prev)
 		window_scroll_up(win, 1);
 	if (cursor->line->prev)
-		window_cursor_set(win, cursor->line->prev, cursor->col);
+		window_cursor_set(win, cursor->line->prev, lastcol);
+	cursor->lastcol = lastcol;
 	return cursor->pos;
 }
 
 size_t window_screenline_down(Win *win) {
 	Cursor *cursor = &win->cursor;
+	int lastcol = cursor->lastcol;
+	if (!lastcol)
+		lastcol = cursor->col;
 	if (!cursor->line->next && cursor->line == win->bottomline)
 		window_scroll_down(win, 1);
 	if (cursor->line->next)
-		window_cursor_set(win, cursor->line->next, cursor->col);
+		window_cursor_set(win, cursor->line->next, lastcol);
+	cursor->lastcol = lastcol;
 	return cursor->pos;
 }
 
