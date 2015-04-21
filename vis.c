@@ -209,9 +209,9 @@ static Movement moves[] = {
 	[MOVE_SEARCH_WORD_BACKWARD]= { .txt = search_word_backward,     .type = LINEWISE|JUMP      },
 	[MOVE_SEARCH_FORWARD]      = { .txt = search_forward,           .type = LINEWISE|JUMP      },
 	[MOVE_SEARCH_BACKWARD]     = { .txt = search_backward,          .type = LINEWISE|JUMP      },
-	[MOVE_WINDOW_LINE_TOP]     = { .cmd = window_lines_top,         .type = LINEWISE|JUMP      },
-	[MOVE_WINDOW_LINE_MIDDLE]  = { .cmd = window_lines_middle,      .type = LINEWISE|JUMP      },
-	[MOVE_WINDOW_LINE_BOTTOM]  = { .cmd = window_lines_bottom,      .type = LINEWISE|JUMP      },
+	[MOVE_WINDOW_LINE_TOP]     = { .cmd = window_lines_top,         .type = LINEWISE|JUMP|IDEMPOTENT },
+	[MOVE_WINDOW_LINE_MIDDLE]  = { .cmd = window_lines_middle,      .type = LINEWISE|JUMP|IDEMPOTENT },
+	[MOVE_WINDOW_LINE_BOTTOM]  = { .cmd = window_lines_bottom,      .type = LINEWISE|JUMP|IDEMPOTENT },
 };
 
 /* these can be passed as int argument to textobj(&(const Arg){ .i = TEXT_OBJ_* }) */
