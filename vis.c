@@ -136,12 +136,12 @@ enum {
 /** movements which can be used besides the one in text-motions.h and window.h */
 
 /* search in forward direction for the word under the cursor */
-static size_t search_word_forward(const Arg *arg);
+static size_t search_word_forward(Text *txt, size_t pos);
 /* search in backward direction for the word under the cursor */
-static size_t search_word_backward(const Arg *arg);
+static size_t search_word_backward(Text *txt, size_t pos);
 /* search again for the last used search pattern */
-static size_t search_forward(const Arg *arg);
-static size_t search_backward(const Arg *arg);
+static size_t search_forward(Text *txt, size_t pos);
+static size_t search_backward(Text *txt, size_t pos);
 /* goto action.mark */
 static size_t mark_goto(VisText *txt, size_t pos);
 /* goto first non-blank char on line pointed by action.mark */
@@ -205,10 +205,10 @@ static Movement moves[] = {
 	[MOVE_RIGHT_TILL]          = { .txt = till,                     .type = LINEWISE|INCLUSIVE },
 	[MOVE_MARK]                = { .vistxt = mark_goto,             .type = LINEWISE|JUMP|IDEMPOTENT },
 	[MOVE_MARK_LINE]           = { .vistxt = mark_line_goto,        .type = LINEWISE|JUMP|IDEMPOTENT },
-	[MOVE_SEARCH_WORD_FORWARD] = { .cmd = search_word_forward,      .type = LINEWISE|JUMP      },
-	[MOVE_SEARCH_WORD_BACKWARD]= { .cmd = search_word_backward,     .type = LINEWISE|JUMP      },
-	[MOVE_SEARCH_FORWARD]      = { .cmd = search_forward,           .type = LINEWISE|JUMP      },
-	[MOVE_SEARCH_BACKWARD]     = { .cmd = search_backward,          .type = LINEWISE|JUMP      },
+	[MOVE_SEARCH_WORD_FORWARD] = { .txt = search_word_forward,      .type = LINEWISE|JUMP      },
+	[MOVE_SEARCH_WORD_BACKWARD]= { .txt = search_word_backward,     .type = LINEWISE|JUMP      },
+	[MOVE_SEARCH_FORWARD]      = { .txt = search_forward,           .type = LINEWISE|JUMP      },
+	[MOVE_SEARCH_BACKWARD]     = { .txt = search_backward,          .type = LINEWISE|JUMP      },
 	[MOVE_WINDOW_LINE_TOP]     = { .cmd = window_lines_top,         .type = LINEWISE|JUMP      },
 	[MOVE_WINDOW_LINE_MIDDLE]  = { .cmd = window_lines_middle,      .type = LINEWISE|JUMP      },
 	[MOVE_WINDOW_LINE_BOTTOM]  = { .cmd = window_lines_bottom,      .type = LINEWISE|JUMP      },
@@ -598,45 +598,41 @@ static void op_repeat_replace(OperatorContext *c) {
 
 /** movement implementations of type: size_t (*move)(const Arg*) */
 
-static char *get_word_under_cursor() {
-	Filerange word = text_object_word(vis->win->text->data, window_cursor_get(vis->win->win));
+static char *get_word_at(Text *txt, size_t pos) {
+	Filerange word = text_object_word(txt, pos);
 	if (!text_range_valid(&word))
 		return NULL;
 	size_t len = word.end - word.start;
 	char *buf = malloc(len+1);
 	if (!buf)
 		return NULL;
-	len = text_bytes_get(vis->win->text->data, word.start, len, buf);
+	len = text_bytes_get(txt, word.start, len, buf);
 	buf[len] = '\0';
 	return buf;
 }
 
-static size_t search_word_forward(const Arg *arg) {
-	size_t pos = window_cursor_get(vis->win->win);
-	char *word = get_word_under_cursor();
+static size_t search_word_forward(Text *txt, size_t pos) {
+	char *word = get_word_at(txt, pos);
 	if (word && !text_regex_compile(vis->search_pattern, word, REG_EXTENDED))
-		pos = text_search_forward(vis->win->text->data, pos, vis->search_pattern);
+		pos = text_search_forward(txt, pos, vis->search_pattern);
 	free(word);
 	return pos;
 }
 
-static size_t search_word_backward(const Arg *arg) {
-	size_t pos = window_cursor_get(vis->win->win);
-	char *word = get_word_under_cursor();
+static size_t search_word_backward(Text *txt, size_t pos) {
+	char *word = get_word_at(txt, pos);
 	if (word && !text_regex_compile(vis->search_pattern, word, REG_EXTENDED))
-		pos = text_search_backward(vis->win->text->data, pos, vis->search_pattern);
+		pos = text_search_backward(txt, pos, vis->search_pattern);
 	free(word);
 	return pos;
 }
 
-static size_t search_forward(const Arg *arg) {
-	size_t pos = window_cursor_get(vis->win->win);
-	return text_search_forward(vis->win->text->data, pos, vis->search_pattern);
+static size_t search_forward(Text *txt, size_t pos) {
+	return text_search_forward(txt, pos, vis->search_pattern);
 }
 
-static size_t search_backward(const Arg *arg) {
-	size_t pos = window_cursor_get(vis->win->win);
-	return text_search_backward(vis->win->text->data, pos, vis->search_pattern);
+static size_t search_backward(Text *txt, size_t pos) {
+	return text_search_backward(txt, pos, vis->search_pattern);
 }
 
 static void mark_set(const Arg *arg) {
