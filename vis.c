@@ -1160,6 +1160,7 @@ static void action_do(Action *a) {
 		if (pos == EPOS) {
 			c.range.start = start;
 			c.range.end = start;
+			pos = start;
 		} else {
 			c.range.start = MIN(start, pos);
 			c.range.end = MAX(start, pos);
