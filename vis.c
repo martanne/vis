@@ -143,9 +143,9 @@ static size_t search_word_backward(const Arg *arg);
 static size_t search_forward(const Arg *arg);
 static size_t search_backward(const Arg *arg);
 /* goto action.mark */
-static size_t mark_goto(const Arg *arg);
+static size_t mark_goto(VisText *txt, size_t pos);
 /* goto first non-blank char on line pointed by action.mark */
-static size_t mark_line_goto(const Arg *arg);
+static size_t mark_line_goto(VisText *txt, size_t pos);
 /* goto to next occurence of action.key to the right */
 static size_t to(Text *txt, size_t pos);
 /* goto to position before next occurence of action.key to the right */
@@ -203,8 +203,8 @@ static Movement moves[] = {
 	[MOVE_RIGHT_TO]            = { .txt = to,                       .type = LINEWISE|INCLUSIVE },
 	[MOVE_LEFT_TILL]           = { .txt = till_left,                .type = LINEWISE           },
 	[MOVE_RIGHT_TILL]          = { .txt = till,                     .type = LINEWISE|INCLUSIVE },
-	[MOVE_MARK]                = { .cmd = mark_goto,                .type = LINEWISE|JUMP      },
-	[MOVE_MARK_LINE]           = { .cmd = mark_line_goto,           .type = LINEWISE|JUMP      },
+	[MOVE_MARK]                = { .vistxt = mark_goto,             .type = LINEWISE|JUMP|IDEMPOTENT },
+	[MOVE_MARK_LINE]           = { .vistxt = mark_line_goto,        .type = LINEWISE|JUMP|IDEMPOTENT },
 	[MOVE_SEARCH_WORD_FORWARD] = { .cmd = search_word_forward,      .type = LINEWISE|JUMP      },
 	[MOVE_SEARCH_WORD_BACKWARD]= { .cmd = search_word_backward,     .type = LINEWISE|JUMP      },
 	[MOVE_SEARCH_FORWARD]      = { .cmd = search_forward,           .type = LINEWISE|JUMP      },
@@ -644,12 +644,12 @@ static void mark_set(const Arg *arg) {
 	vis->win->text->marks[arg->i] = text_mark_set(vis->win->text->data, pos);
 }
 
-static size_t mark_goto(const Arg *arg) {
-	return text_mark_get(vis->win->text->data, vis->win->text->marks[vis->action.mark]);
+static size_t mark_goto(VisText *txt, size_t pos) {
+	return text_mark_get(txt->data, txt->marks[vis->action.mark]);
 }
 
-static size_t mark_line_goto(const Arg *arg) {
-	return text_line_start(vis->win->text->data, mark_goto(arg));
+static size_t mark_line_goto(VisText *txt, size_t pos) {
+	return text_line_start(txt->data, mark_goto(txt, pos));
 }
 
 static size_t to(Text *txt, size_t pos) {
@@ -1149,6 +1149,8 @@ static void action_do(Action *a) {
 				pos = a->movement->txt(txt, pos);
 			else if (a->movement->win)
 				pos = a->movement->win(win);
+			else if (a->movement->vistxt)
+				pos = a->movement->vistxt(vis->win->text, pos);
 			else
 				pos = a->movement->cmd(&a->arg);
 			if (pos == EPOS || a->movement->type & IDEMPOTENT)

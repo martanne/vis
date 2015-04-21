@@ -16,7 +16,7 @@ typedef struct EditorWin EditorWin;
 #include "ring-buffer.h"
 #include "map.h"
 
-
+typedef struct VisText VisText;
 
 typedef union {
 	bool b;
@@ -81,6 +81,7 @@ typedef struct {
 	size_t (*cmd)(const Arg*);        /* a custom movement based on user input from vis.c */
 	size_t (*win)(Win*);              /* a movement based on current window content from window.h */
 	size_t (*txt)(Text*, size_t pos); /* a movement form text-motions.h */
+	size_t (*vistxt)(VisText*, size_t pos);
 	enum {
 		LINEWISE  = 1 << 0,
 		CHARWISE  = 1 << 1,
@@ -189,9 +190,6 @@ enum Mark {
 	MARK_SELECTION_END,
 	MARK_LAST,
 };
-
-
-typedef struct VisText VisText;
 
 struct VisText {
 	Text *data;
