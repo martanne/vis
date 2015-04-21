@@ -91,11 +91,7 @@ ssize_t text_range_write(Text*, Filerange*, int fd);
 void text_free(Text*);
 
 typedef struct Regex Regex;
-
-typedef struct {
-	size_t start; /* start of match in bytes from start of file or -1 if unused */
-	size_t end;   /* end of match in bytes from start of file or -1 if unused */
-} RegexMatch;
+typedef Filerange RegexMatch;
 
 Regex *text_regex_new(void);
 int text_regex_compile(Regex *r, const char *regex, int cflags);
