@@ -2,6 +2,7 @@
 #include <string.h>
 #include <stdarg.h>
 #include <unistd.h>
+#include <errno.h>
 #include "editor.h"
 #include "util.h"
 
@@ -298,7 +299,11 @@ static VisText *vis_text_new(Editor *ed, const char *filename) {
 		}
 	}
 
-	Text *data = text_load(filename && access(filename, F_OK) == 0 ? filename : NULL);
+	Text *data = text_load(filename);
+	if (!data && filename && errno == ENOENT)
+		data = text_load(NULL);
+	if (!data)
+		return NULL;
 	if (filename)
 		text_filename_set(data, filename);
 	
