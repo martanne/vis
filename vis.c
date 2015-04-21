@@ -763,7 +763,10 @@ static void suspend(const Arg *arg) {
 }
 
 static void repeat(const Arg *arg) {
+	int count = vis->action.count;
 	vis->action = vis->action_prev;
+	if (count)
+		vis->action.count = count;
 	action_do(&vis->action);
 }
 
