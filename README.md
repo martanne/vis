@@ -352,6 +352,8 @@ and their current support in vis.
     t{char}  (till before next occurrence of char to the right)
     F{char}  (to next occurrence of char to the left)
     T{char}  (till before next occurrence of char to the left)
+    ;        (repeat last to/till movement)
+    ,        (repeat last to/till movement but in opposite direction)
     /{text}  (to next match of text in forward direction)
     ?{text}  (to next match of text in backward direction)
 

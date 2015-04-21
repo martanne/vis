@@ -142,6 +142,8 @@ static KeyBinding vis_movements[] = {
 	{ { NONE('F')               }, movement_key, { .i = MOVE_LEFT_TO             } },
 	{ { NONE('t')               }, movement_key, { .i = MOVE_RIGHT_TILL          } },
 	{ { NONE('T')               }, movement_key, { .i = MOVE_LEFT_TILL           } },
+	{ { NONE(';')               }, totill_repeat, { NULL                         } },
+	{ { NONE(',')               }, totill_reverse,{ NULL                         } },
 	{ { NONE('/')               }, prompt_search,{ .s = "/"                      } },
 	{ { NONE('?')               }, prompt_search,{ .s = "?"                      } },
 	{ /* empty last element, array terminator */                                   },

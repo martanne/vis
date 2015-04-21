@@ -303,6 +303,10 @@ static void join(const Arg *arg);
 static void cmd(const Arg *arg);
 /* perform last action i.e. action_prev again */
 static void repeat(const Arg *arg);
+/* repeat last to/till movement */
+static void totill_repeat(const Arg *arg);
+/* repeat last to/till movement but in opposite direction */
+static void totill_reverse(const Arg *arg);
 /* replace character at cursor with one read form keyboard */
 static void replace(const Arg *arg);
 /* adjust action.count by arg->i */
@@ -774,6 +778,33 @@ static void repeat(const Arg *arg) {
 	action_do(&vis->action);
 }
 
+static void totill_repeat(const Arg *arg) {
+	if (!vis->last_totill)
+		return;
+	movement(&(const Arg){ .i = vis->last_totill });
+}
+
+static void totill_reverse(const Arg *arg) {
+	int type = vis->last_totill;
+	switch (type) {
+	case MOVE_RIGHT_TO:
+		type = MOVE_LEFT_TO;
+		break;
+	case MOVE_LEFT_TO:
+		type = MOVE_RIGHT_TO;
+		break;
+	case MOVE_RIGHT_TILL:
+		type = MOVE_LEFT_TILL;
+		break;
+	case MOVE_LEFT_TILL:
+		type = MOVE_RIGHT_TILL;
+		break;
+	default:
+		return;
+	}
+	movement(&(const Arg){ .i = type });
+}
+
 static void replace(const Arg *arg) {
 	Key k = getkey();
 	if (!k.str[0])
@@ -843,6 +874,7 @@ static void movement_key(const Arg *arg) {
 		return;
 	}
 	strncpy(vis->search_char, k.str, sizeof(vis->search_char));
+	vis->last_totill = arg->i;
 	vis->action.movement = &moves[arg->i];
 	action_do(&vis->action);
 }
