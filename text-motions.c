@@ -45,11 +45,12 @@ size_t text_char_prev(Text *txt, size_t pos) {
 	return it.pos;
 }
 
-size_t text_find_char_next(Text *txt, size_t pos, const char *s, size_t len) {
-	char c;
-	size_t matched = 0;
+size_t text_find_next(Text *txt, size_t pos, const char *s) {
+	if (!s)
+		return pos;
+	size_t len = strlen(s), matched = 0;
 	Iterator it = text_iterator_get(txt, pos);
-	while (matched < len && text_iterator_byte_get(&it, &c)) {
+	for (char c; matched < len && text_iterator_byte_get(&it, &c); ) {
 		if (c == s[matched])
 			matched++;
 		else
@@ -59,13 +60,14 @@ size_t text_find_char_next(Text *txt, size_t pos, const char *s, size_t len) {
 	return matched == len ? it.pos - len : pos;
 }
 
-size_t text_find_char_prev(Text *txt, size_t pos, const char *s, size_t len) {
-	char c;
-	size_t matched = len - 1;
+size_t text_find_prev(Text *txt, size_t pos, const char *s) {
+	if (!s)
+		return pos;
+	size_t len = strlen(s), matched = len - 1;
 	Iterator it = text_iterator_get(txt, pos);
 	if (len == 0)
 		return pos;
-	while (text_iterator_byte_get(&it, &c)) {
+	for (char c; text_iterator_byte_get(&it, &c); ) {
 		if (c == s[matched]) {
 			if (matched == 0)
 				break;

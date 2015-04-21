@@ -108,7 +108,6 @@ typedef struct {             /** collects all information until an operator is e
 	const TextObject *textobj;
 	Register *reg;
 	int mark;
-	Key key;
 	Arg arg;
 } Action;
 
@@ -230,6 +229,7 @@ struct Editor {
 	EditorWin *prompt_window;         /* window which was focused before prompt was shown */
 	char prompt_type;                 /* command ':' or search '/','?' prompt */
 	Regex *search_pattern;            /* last used search pattern */
+	char search_char[8];              /* last used character to search for via 'f', 'F', 't', 'T' */
 	int tabwidth;                     /* how many spaces should be used to display a tab */
 	bool expandtab;                   /* whether typed tabs should be converted to spaces */
 	bool autoindent;                  /* whether indentation should be copied from previous line on newline */

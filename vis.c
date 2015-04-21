@@ -649,21 +649,41 @@ static size_t mark_line_goto(const Arg *arg) {
 }
 
 static size_t to(const Arg *arg) {
-	return text_find_char_next(vis->win->text->data, window_cursor_get(vis->win->win) + 1,
-		vis->action.key.str, strlen(vis->action.key.str));
+	char c;
+	Text *txt = vis->win->text->data;
+	size_t pos = window_cursor_get(vis->win->win);
+	size_t hit = text_find_next(txt, pos+1, vis->search_char);
+	if (!text_byte_get(txt, hit, &c) || c != vis->search_char[0])
+		return pos;
+	return hit;
 }
 
 static size_t till(const Arg *arg) {
-	return text_char_prev(vis->win->text->data, to(arg));
+	size_t pos = window_cursor_get(vis->win->win);
+	size_t hit = to(arg);
+	if (hit != pos)
+		return text_char_prev(vis->win->text->data, hit);
+	return pos;
 }
 
 static size_t to_left(const Arg *arg) {
-	return text_find_char_prev(vis->win->text->data, window_cursor_get(vis->win->win) - 1,
-		vis->action.key.str, strlen(vis->action.key.str));
+	char c;
+	Text *txt = vis->win->text->data;
+	size_t pos = window_cursor_get(vis->win->win);
+	if (pos == 0)
+		return pos;
+	size_t hit = text_find_prev(txt, pos-1, vis->search_char);
+	if (!text_byte_get(txt, hit, &c) || c != vis->search_char[0])
+		return pos;
+	return hit;
 }
 
 static size_t till_left(const Arg *arg) {
-	return text_char_next(vis->win->text->data, to_left(arg));
+	size_t pos = window_cursor_get(vis->win->win);
+	size_t hit = to_left(arg);
+	if (hit != pos)
+		return text_char_next(vis->win->text->data, hit);
+	return pos;
 }
 
 static size_t line(const Arg *arg) {
@@ -822,7 +842,7 @@ static void movement_key(const Arg *arg) {
 		action_reset(&vis->action);
 		return;
 	}
-	vis->action.key = k;
+	strncpy(vis->search_char, k.str, sizeof(vis->search_char));
 	vis->action.movement = &moves[arg->i];
 	action_do(&vis->action);
 }
