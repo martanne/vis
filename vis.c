@@ -147,13 +147,13 @@ static size_t mark_goto(const Arg *arg);
 /* goto first non-blank char on line pointed by action.mark */
 static size_t mark_line_goto(const Arg *arg);
 /* goto to next occurence of action.key to the right */
-static size_t to(const Arg *arg);
+static size_t to(Text *txt, size_t pos);
 /* goto to position before next occurence of action.key to the right */
-static size_t till(const Arg *arg);
+static size_t till(Text *txt, size_t pos);
 /* goto to next occurence of action.key to the left */
-static size_t to_left(const Arg *arg);
+static size_t to_left(Text *txt, size_t pos);
 /* goto to position after next occurence of action.key to the left */
-static size_t till_left(const Arg *arg);
+static size_t till_left(Text *txt, size_t pos);
 /* goto line number action.count */
 static size_t line(Text *txt, size_t pos);
 /* goto to byte action.count on current line */
@@ -199,10 +199,10 @@ static Movement moves[] = {
 	[MOVE_BRACKET_MATCH]       = { .txt = text_bracket_match,       .type = LINEWISE|INCLUSIVE|JUMP },
 	[MOVE_FILE_BEGIN]          = { .txt = text_begin,               .type = LINEWISE|JUMP      },
 	[MOVE_FILE_END]            = { .txt = text_end,                 .type = LINEWISE|JUMP      },
-	[MOVE_LEFT_TO]             = { .cmd = to_left,                  .type = LINEWISE           },
-	[MOVE_RIGHT_TO]            = { .cmd = to,                       .type = LINEWISE|INCLUSIVE },
-	[MOVE_LEFT_TILL]           = { .cmd = till_left,                .type = LINEWISE           },
-	[MOVE_RIGHT_TILL]          = { .cmd = till,                     .type = LINEWISE|INCLUSIVE },
+	[MOVE_LEFT_TO]             = { .txt = to_left,                  .type = LINEWISE           },
+	[MOVE_RIGHT_TO]            = { .txt = to,                       .type = LINEWISE|INCLUSIVE },
+	[MOVE_LEFT_TILL]           = { .txt = till_left,                .type = LINEWISE           },
+	[MOVE_RIGHT_TILL]          = { .txt = till,                     .type = LINEWISE|INCLUSIVE },
 	[MOVE_MARK]                = { .cmd = mark_goto,                .type = LINEWISE|JUMP      },
 	[MOVE_MARK_LINE]           = { .cmd = mark_line_goto,           .type = LINEWISE|JUMP      },
 	[MOVE_SEARCH_WORD_FORWARD] = { .cmd = search_word_forward,      .type = LINEWISE|JUMP      },
@@ -652,28 +652,23 @@ static size_t mark_line_goto(const Arg *arg) {
 	return text_line_start(vis->win->text->data, mark_goto(arg));
 }
 
-static size_t to(const Arg *arg) {
+static size_t to(Text *txt, size_t pos) {
 	char c;
-	Text *txt = vis->win->text->data;
-	size_t pos = window_cursor_get(vis->win->win);
 	size_t hit = text_find_next(txt, pos+1, vis->search_char);
 	if (!text_byte_get(txt, hit, &c) || c != vis->search_char[0])
 		return pos;
 	return hit;
 }
 
-static size_t till(const Arg *arg) {
-	size_t pos = window_cursor_get(vis->win->win);
-	size_t hit = to(arg);
+static size_t till(Text *txt, size_t pos) {
+	size_t hit = to(txt, pos);
 	if (hit != pos)
-		return text_char_prev(vis->win->text->data, hit);
+		return text_char_prev(txt, hit);
 	return pos;
 }
 
-static size_t to_left(const Arg *arg) {
+static size_t to_left(Text *txt, size_t pos) {
 	char c;
-	Text *txt = vis->win->text->data;
-	size_t pos = window_cursor_get(vis->win->win);
 	if (pos == 0)
 		return pos;
 	size_t hit = text_find_prev(txt, pos-1, vis->search_char);
@@ -682,11 +677,10 @@ static size_t to_left(const Arg *arg) {
 	return hit;
 }
 
-static size_t till_left(const Arg *arg) {
-	size_t pos = window_cursor_get(vis->win->win);
-	size_t hit = to_left(arg);
+static size_t till_left(Text *txt, size_t pos) {
+	size_t hit = to_left(txt, pos);
 	if (hit != pos)
-		return text_char_next(vis->win->text->data, hit);
+		return text_char_next(txt, hit);
 	return pos;
 }
 
