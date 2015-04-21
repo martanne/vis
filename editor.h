@@ -74,7 +74,7 @@ typedef struct {
 } OperatorContext;
 
 typedef struct {
-	void (*func)(OperatorContext*); /* function implementing the operator logic */
+	size_t (*func)(OperatorContext*); /* operator logic, returns new cursor position */
 } Operator;
 
 typedef struct {
