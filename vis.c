@@ -155,9 +155,9 @@ static size_t to_left(const Arg *arg);
 /* goto to position after next occurence of action.key to the left */
 static size_t till_left(const Arg *arg);
 /* goto line number action.count */
-static size_t line(const Arg *arg);
+static size_t line(Text *txt, size_t pos);
 /* goto to byte action.count on current line */
-static size_t column(const Arg *arg);
+static size_t column(Text *txt, size_t pos);
 /* goto the action.count-th line from top of the focused window */
 static size_t window_lines_top(const Arg *arg);
 /* goto the start of middle line of the focused window */
@@ -180,8 +180,8 @@ static Movement moves[] = {
 	[MOVE_LINE_LASTCHAR]       = { .txt = text_line_lastchar,       .type = LINEWISE|INCLUSIVE },
 	[MOVE_LINE_END]            = { .txt = text_line_end,            .type = LINEWISE           },
 	[MOVE_LINE_NEXT]           = { .txt = text_line_next,           .type = LINEWISE           },
-	[MOVE_LINE]                = { .cmd = line,                     .type = LINEWISE|IDEMPOTENT|JUMP},
-	[MOVE_COLUMN]              = { .cmd = column,                   .type = CHARWISE|IDEMPOTENT},
+	[MOVE_LINE]                = { .txt = line,                     .type = LINEWISE|IDEMPOTENT|JUMP},
+	[MOVE_COLUMN]              = { .txt = column,                   .type = CHARWISE|IDEMPOTENT},
 	[MOVE_CHAR_PREV]           = { .win = window_char_prev                                     },
 	[MOVE_CHAR_NEXT]           = { .win = window_char_next                                     },
 	[MOVE_WORD_START_PREV]     = { .txt = text_word_start_prev,     .type = CHARWISE           },
@@ -690,13 +690,12 @@ static size_t till_left(const Arg *arg) {
 	return pos;
 }
 
-static size_t line(const Arg *arg) {
-	return text_pos_by_lineno(vis->win->text->data, vis->action.count);
+static size_t line(Text *txt, size_t pos) {
+	return text_pos_by_lineno(txt, vis->action.count);
 }
 
-static size_t column(const Arg *arg) {
-	size_t pos = window_cursor_get(vis->win->win);
-	return text_line_offset(vis->win->text->data, pos, vis->action.count);
+static size_t column(Text *txt, size_t pos) {
+	return text_line_offset(txt, pos, vis->action.count);
 }
 
 static size_t window_lines_top(const Arg *arg) {
