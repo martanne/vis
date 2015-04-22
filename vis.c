@@ -1995,7 +1995,7 @@ int main(int argc, char *argv[]) {
 	while (*arg0 && (*arg0 == '.' || *arg0 == '/'))
 		arg0++;
 	for (int i = 0; i < LENGTH(editors); i++) {
-		if (editors[i].name[0] == arg0[0]) {
+		if (strcmp(editors[i].name, arg0) == 0) {
 			config = &editors[i];
 			break;
 		}
