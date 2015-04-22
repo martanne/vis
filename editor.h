@@ -207,7 +207,7 @@ struct EditorWin {
 	Editor *editor;         /* editor instance to which this window belongs */
 	UiWin *ui;
 	File *file;             /* file being displayed in this window */
-	Win *win;               /* window for the text area  */
+	Win *view;              /* currently displayed part of underlying text */
 	ViewEvent events;
 	RingBuffer *jumplist;   /* LRU jump management */
 	ChangeList changelist;  /* state for iterating through least recently changes */

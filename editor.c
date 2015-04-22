@@ -12,7 +12,6 @@ static EditorWin *editor_window_new_file(Editor *ed, File *file);
 static void editor_window_free(EditorWin *win);
 static void editor_windows_invalidate(Editor *ed, size_t start, size_t end);
 
-
 static void editor_window_selection_changed(void *data, Filerange *sel) {
 	File *file = ((EditorWin*)data)->file;
 	if (text_range_valid(sel)) {
@@ -35,7 +34,7 @@ bool editor_window_reload(EditorWin *win) {
 		return false;
 	file_free(win->editor, win->file);
 	win->file = file;
-	window_reload(win->win, file->text);
+	window_reload(win->view, file->text);
 	return true;
 }
 
@@ -45,8 +44,8 @@ bool editor_window_split(EditorWin *original) {
 		return false;
 	win->file = original->file;
 	win->file->refcount++;
-	window_syntax_set(win->win, window_syntax_get(original->win));
-	window_cursor_to(win->win, window_cursor_get(original->win));
+	window_syntax_set(win->view, window_syntax_get(original->view));
+	window_cursor_to(win->view, window_cursor_get(original->view));
 	editor_draw(win->editor);
 	return true;
 }
@@ -58,7 +57,7 @@ void editor_window_jumplist_add(EditorWin *win, size_t pos) {
 }
 
 size_t editor_window_jumplist_prev(EditorWin *win) {
-	size_t cur = window_cursor_get(win->win);
+	size_t cur = window_cursor_get(win->view);
 	while (win->jumplist) {
 		Mark mark = ringbuf_prev(win->jumplist);
 		if (!mark)
@@ -71,7 +70,7 @@ size_t editor_window_jumplist_prev(EditorWin *win) {
 }
 
 size_t editor_window_jumplist_next(EditorWin *win) {
-	size_t cur = window_cursor_get(win->win);
+	size_t cur = window_cursor_get(win->view);
 	while (win->jumplist) {
 		Mark mark = ringbuf_next(win->jumplist);
 		if (!mark)
@@ -89,7 +88,7 @@ void editor_window_jumplist_invalidate(EditorWin *win) {
 }
 
 size_t editor_window_changelist_prev(EditorWin *win) {
-	size_t pos = window_cursor_get(win->win);
+	size_t pos = window_cursor_get(win->view);
 	if (pos != win->changelist.pos)
 		win->changelist.index = 0;
 	else
@@ -103,7 +102,7 @@ size_t editor_window_changelist_prev(EditorWin *win) {
 }
 
 size_t editor_window_changelist_next(EditorWin *win) {
-	size_t pos = window_cursor_get(win->win);
+	size_t pos = window_cursor_get(win->view);
 	if (pos != win->changelist.pos)
 		win->changelist.index = 0;
 	else if (win->changelist.index > 0)
@@ -143,7 +142,7 @@ void editor_window_prev(Editor *ed) {
 static void editor_windows_invalidate(Editor *ed, size_t start, size_t end) {
 	for (EditorWin *win = ed->windows; win; win = win->next) {
 		if (ed->win != win && ed->win->file == win->file) {
-			Filerange view = window_viewport_get(win->win);
+			Filerange view = window_viewport_get(win->view);
 			if ((view.start <= start && start <= view.end) ||
 			    (view.start <= end && end <= view.end))
 				win->ui->draw(win->ui);
@@ -160,7 +159,7 @@ void editor_tabwidth_set(Editor *ed, int tabwidth) {
 	if (tabwidth < 1 || tabwidth > 8)
 		return;
 	for (EditorWin *win = ed->windows; win; win = win->next)
-		window_tabwidth_set(win->win, tabwidth);
+		window_tabwidth_set(win->view, tabwidth);
 	ed->tabwidth = tabwidth;
 }
 
@@ -224,7 +223,7 @@ static void editor_window_free(EditorWin *win) {
 	Editor *ed = win->editor;
 	if (ed && ed->ui)
 		ed->ui->window_free(win->ui);
-	window_free(win->win);
+	window_free(win->view);
 	ringbuf_free(win->jumplist);
 	free(win);
 }
@@ -240,13 +239,13 @@ static EditorWin *editor_window_new_file(Editor *ed, File *file) {
 		.selection = editor_window_selection_changed,
 	};
 	win->jumplist = ringbuf_alloc(31);
-	win->win = window_new(file->text, &win->events);
-	win->ui = ed->ui->window_new(ed->ui, win->win, file->text);
-	if (!win->jumplist || !win->win || !win->ui) {
+	win->view = window_new(file->text, &win->events);
+	win->ui = ed->ui->window_new(ed->ui, win->view, file->text);
+	if (!win->jumplist || !win->view || !win->ui) {
 		editor_window_free(win);
 		return NULL;
 	}
-	window_tabwidth_set(win->win, ed->tabwidth);
+	window_tabwidth_set(win->view, ed->tabwidth);
 	if (ed->windows)
 		ed->windows->prev = win;
 	win->next = ed->windows;
@@ -329,7 +328,7 @@ bool editor_window_new(Editor *ed, const char *filename) {
 	if (filename) {
 		for (Syntax *syn = ed->syntaxes; syn && syn->name; syn++) {
 			if (!regexec(&syn->file_regex, filename, 0, NULL, 0)) {
-				window_syntax_set(win->win, syn);
+				window_syntax_set(win->view, syn);
 				break;
 			}
 		}
@@ -390,9 +389,9 @@ Editor *editor_new(Ui *ui) {
 		goto err;
 	if (!(ed->prompt->file->text = text_load(NULL)))
 		goto err;
-	if (!(ed->prompt->win = window_new(ed->prompt->file->text, NULL)))
+	if (!(ed->prompt->view = window_new(ed->prompt->file->text, NULL)))
 		goto err;
-	if (!(ed->prompt->ui = ed->ui->prompt_new(ed->ui, ed->prompt->win, ed->prompt->file->text)))
+	if (!(ed->prompt->ui = ed->ui->prompt_new(ed->ui, ed->prompt->view, ed->prompt->file->text)))
 		goto err;
 	if (!(ed->search_pattern = text_regex_new()))
 		goto err;
@@ -421,28 +420,28 @@ void editor_free(Editor *ed) {
 }
 
 void editor_insert_key(Editor *ed, const char *c, size_t len) {
-	Win *win = ed->win->win;
+	Win *win = ed->win->view;
 	size_t start = window_cursor_get(win);
 	window_insert_key(win, c, len);
 	editor_windows_invalidate(ed, start, start + len);
 }
 
 void editor_replace_key(Editor *ed, const char *c, size_t len) {
-	Win *win = ed->win->win;
+	Win *win = ed->win->view;
 	size_t start = window_cursor_get(win);
 	window_replace_key(win, c, len);
 	editor_windows_invalidate(ed, start, start + 6);
 }
 
 void editor_backspace_key(Editor *ed) {
-	Win *win = ed->win->win;
+	Win *win = ed->win->view;
 	size_t end = window_cursor_get(win);
 	size_t start = window_backspace_key(win);
 	editor_windows_invalidate(ed, start, end);
 }
 
 void editor_delete_key(Editor *ed) {
-	size_t start = window_delete_key(ed->win->win);
+	size_t start = window_delete_key(ed->win->view);
 	editor_windows_invalidate(ed, start, start + 6);
 }
 

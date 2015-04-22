@@ -433,7 +433,7 @@ static void op_delete(OperatorContext *c) {
 	c->reg->linewise = c->linewise;
 	register_put(c->reg, vis->win->file->text, &c->range);
 	editor_delete(vis, c->range.start, len);
-	window_cursor_to(vis->win->win, c->range.start);
+	window_cursor_to(vis->win->view, c->range.start);
 }
 
 static void op_change(OperatorContext *c) {
@@ -448,7 +448,7 @@ static void op_yank(OperatorContext *c) {
 
 static void op_put(OperatorContext *c) {
 	Text *txt = vis->win->file->text;
-	size_t pos = window_cursor_get(vis->win->win);
+	size_t pos = window_cursor_get(vis->win->view);
 	if (c->arg->i > 0) {
 		if (c->reg->linewise)
 			pos = text_line_next(txt, pos);
@@ -460,9 +460,9 @@ static void op_put(OperatorContext *c) {
 	}
 	editor_insert(vis, pos, c->reg->data, c->reg->len);
 	if (c->reg->linewise)
-		window_cursor_to(vis->win->win, text_line_start(txt, pos));
+		window_cursor_to(vis->win->view, text_line_start(txt, pos));
 	else
-		window_cursor_to(vis->win->win, pos + c->reg->len);
+		window_cursor_to(vis->win->view, pos + c->reg->len);
 }
 
 static const char *expand_tab(void) {
@@ -490,7 +490,7 @@ static void op_shift_right(OperatorContext *c) {
 		text_insert(txt, pos, tab, tablen);
 		pos = text_line_prev(txt, pos);
 	}  while (pos >= c->range.start && pos != prev_pos);
-	window_cursor_to(vis->win->win, c->pos + tablen);
+	window_cursor_to(vis->win->view, c->pos + tablen);
 	editor_draw(vis);
 }
 
@@ -518,7 +518,7 @@ static void op_shift_left(OperatorContext *c) {
 		text_delete(txt, pos, tablen);
 		pos = text_line_prev(txt, pos);
 	}  while (pos >= c->range.start && pos != prev_pos);
-	window_cursor_to(vis->win->win, c->pos - tablen);
+	window_cursor_to(vis->win->view, c->pos - tablen);
 	editor_draw(vis);
 }
 
@@ -550,7 +550,7 @@ static void op_case_change(OperatorContext *c) {
 static void op_join(OperatorContext *c) {
 	Text *txt = vis->win->file->text;
 	size_t pos = text_line_begin(txt, c->range.end), prev_pos;
-	Filerange sel = window_selection_get(vis->win->win);
+	Filerange sel = window_selection_get(vis->win->view);
 	/* if a selection ends at the begin of a line, skip line break */
 	if (pos == c->range.end && text_range_valid(&sel))
 		pos = text_line_prev(txt, pos);
@@ -567,7 +567,7 @@ static void op_join(OperatorContext *c) {
 		}
 	} while (pos != prev_pos);
 
-	window_cursor_to(vis->win->win, c->range.start);
+	window_cursor_to(vis->win->view, c->range.start);
 	editor_draw(vis);
 }
 
@@ -576,7 +576,7 @@ static void op_repeat_insert(OperatorContext *c) {
 	if (!len)
 		return;
 	editor_insert(vis, c->pos, vis->buffer_repeat.data, len);
-	window_cursor_to(vis->win->win, c->pos + len);
+	window_cursor_to(vis->win->view, c->pos + len);
 }
 
 static void op_repeat_replace(OperatorContext *c) {
@@ -636,7 +636,7 @@ static size_t search_backward(Text *txt, size_t pos) {
 }
 
 static void mark_set(const Arg *arg) {
-	size_t pos = window_cursor_get(vis->win->win);
+	size_t pos = window_cursor_get(vis->win->view);
 	vis->win->file->marks[arg->i] = text_mark_set(vis->win->file->text, pos);
 }
 
@@ -689,17 +689,17 @@ static size_t column(Text *txt, size_t pos) {
 }
 
 static size_t window_lines_top(const Arg *arg) {
-	return window_screenline_goto(vis->win->win, vis->action.count);
+	return window_screenline_goto(vis->win->view, vis->action.count);
 }
 
 static size_t window_lines_middle(const Arg *arg) {
-	int h = window_height_get(vis->win->win);
-	return window_screenline_goto(vis->win->win, h/2);
+	int h = window_height_get(vis->win->view);
+	return window_screenline_goto(vis->win->view, h/2);
 }
 
 static size_t window_lines_bottom(const Arg *arg) {
-	int h = window_height_get(vis->win->win);
-	return window_screenline_goto(vis->win->win, h - vis->action.count);
+	int h = window_height_get(vis->win->view);
+	return window_screenline_goto(vis->win->view, h - vis->action.count);
 }
 
 /** key bindings functions of type: void (*func)(const Arg*) */
@@ -711,7 +711,7 @@ static void jumplist(const Arg *arg) {
 	else
 		pos = editor_window_jumplist_prev(vis->win);
 	if (pos != EPOS)
-		window_cursor_to(vis->win->win, pos);
+		window_cursor_to(vis->win->view, pos);
 }
 
 static void changelist(const Arg *arg) {
@@ -721,7 +721,7 @@ static void changelist(const Arg *arg) {
 	else
 		pos = editor_window_changelist_prev(vis->win);
 	if (pos != EPOS)
-		window_cursor_to(vis->win->win, pos);
+		window_cursor_to(vis->win->view, pos);
 }
 
 static Macro *key2macro(const Arg *arg) {
@@ -801,14 +801,14 @@ static void replace(const Arg *arg) {
 	Key k = getkey();
 	if (!k.str[0])
 		return;
-	size_t pos = window_cursor_get(vis->win->win);
+	size_t pos = window_cursor_get(vis->win->view);
 	action_reset(&vis->action_prev);
 	vis->action_prev.op = &ops[OP_REPEAT_REPLACE];
 	buffer_put(&vis->buffer_repeat, k.str, strlen(k.str));
 	editor_delete_key(vis);
 	editor_insert_key(vis, k.str, strlen(k.str));
 	text_snapshot(vis->win->file->text);
-	window_cursor_to(vis->win->win, pos);
+	window_cursor_to(vis->win->view, pos);
 }
 
 static void count(const Arg *arg) {
@@ -893,8 +893,8 @@ static void textobj(const Arg *arg) {
 }
 
 static void selection_end(const Arg *arg) {
-	size_t pos = window_cursor_get(vis->win->win);
-	Filerange sel = window_selection_get(vis->win->win);
+	size_t pos = window_cursor_get(vis->win->view);
+	Filerange sel = window_selection_get(vis->win->view);
 	if (pos == sel.start) {
 		pos = text_char_prev(vis->win->file->text, sel.end);
 	} else {
@@ -902,8 +902,8 @@ static void selection_end(const Arg *arg) {
 		sel.start = text_char_prev(vis->win->file->text, sel.end);
 		sel.end = pos;
 	}
-	window_selection_set(vis->win->win, &sel);
-	window_cursor_to(vis->win->win, pos);
+	window_selection_set(vis->win->view, &sel);
+	window_cursor_to(vis->win->view, pos);
 }
 
 static void reg(const Arg *arg) {
@@ -925,7 +925,7 @@ static void mark_line(const Arg *arg) {
 static void undo(const Arg *arg) {
 	size_t pos = text_undo(vis->win->file->text);
 	if (pos != EPOS) {
-		window_cursor_to(vis->win->win, pos);
+		window_cursor_to(vis->win->view, pos);
 		/* redraw all windows in case some display the same file */
 		editor_draw(vis);
 	}
@@ -934,7 +934,7 @@ static void undo(const Arg *arg) {
 static void redo(const Arg *arg) {
 	size_t pos = text_redo(vis->win->file->text);
 	if (pos != EPOS) {
-		window_cursor_to(vis->win->win, pos);
+		window_cursor_to(vis->win->view, pos);
 		/* redraw all windows in case some display the same file */
 		editor_draw(vis);
 	}
@@ -964,9 +964,9 @@ static void delete(const Arg *arg) {
 
 static void insert_register(const Arg *arg) {
 	Register *reg = &vis->registers[arg->i];
-	int pos = window_cursor_get(vis->win->win);
+	int pos = window_cursor_get(vis->win->view);
 	editor_insert(vis, pos, reg->data, reg->len);
-	window_cursor_to(vis->win->win, pos + reg->len);
+	window_cursor_to(vis->win->view, pos + reg->len);
 }
 
 static void prompt_search(const Arg *arg) {
@@ -1006,7 +1006,7 @@ static void prompt_backspace(const Arg *arg) {
 	if (!cmd || !*cmd)
 		prompt_enter(NULL);
 	else
-		window_backspace_key(vis->win->win);
+		window_backspace_key(vis->win->view);
 	free(cmd);
 }
 
@@ -1019,7 +1019,7 @@ static void insert_verbatim(const Arg *arg) {
 		value = value * 10 + k.str[0] - '0';
 	}
 	char v = value;
-	editor_insert(vis, window_cursor_get(vis->win->win), &v, 1);
+	editor_insert(vis, window_cursor_get(vis->win->view), &v, 1);
 }
 
 static void quit(const Arg *arg) {
@@ -1034,10 +1034,10 @@ static int argi2lines(const Arg *arg) {
 	switch (arg->i) {
 	case -PAGE:
 	case +PAGE:
-		return window_height_get(vis->win->win);
+		return window_height_get(vis->win->view);
 	case -PAGE_HALF:
 	case +PAGE_HALF:
-		return window_height_get(vis->win->win)/2;
+		return window_height_get(vis->win->view)/2;
 	default:
 		if (vis->action.count > 0)
 			return vis->action.count;
@@ -1047,16 +1047,16 @@ static int argi2lines(const Arg *arg) {
 
 static void wscroll(const Arg *arg) {
 	if (arg->i >= 0)
-		window_scroll_down(vis->win->win, argi2lines(arg));
+		window_scroll_down(vis->win->view, argi2lines(arg));
 	else
-		window_scroll_up(vis->win->win, argi2lines(arg));
+		window_scroll_up(vis->win->view, argi2lines(arg));
 }
 
 static void wslide(const Arg *arg) {
 	if (arg->i >= 0)
-		window_slide_down(vis->win->win, argi2lines(arg));
+		window_slide_down(vis->win->view, argi2lines(arg));
 	else
-		window_slide_up(vis->win->win, argi2lines(arg));
+		window_slide_up(vis->win->view, argi2lines(arg));
 }
 
 static void call(const Arg *arg) {
@@ -1064,7 +1064,7 @@ static void call(const Arg *arg) {
 }
 
 static void window(const Arg *arg) {
-	arg->w(vis->win->win);
+	arg->w(vis->win->view);
 }
 
 static void insert(const Arg *arg) {
@@ -1096,7 +1096,7 @@ static void insert_newline(const Arg *arg) {
 	       text_newlines_crnl(vis->win->file->text) ? "\r\n" : "\n" });
 
 	if (vis->autoindent)
-		copy_indent_from_previous_line(vis->win->win, vis->win->file->text);
+		copy_indent_from_previous_line(vis->win->view, vis->win->file->text);
 }
 
 static void put(const Arg *arg) {
@@ -1130,7 +1130,7 @@ static void switchmode(const Arg *arg) {
 
 static void action_do(Action *a) {
 	Text *txt = vis->win->file->text;
-	Win *win = vis->win->win;
+	Win *win = vis->win->view;
 	size_t pos = window_cursor_get(win);
 	int count = MAX(1, a->count);
 	OperatorContext c = {
@@ -1397,7 +1397,7 @@ static bool cmd_set(Filerange *range, enum CmdOpt cmdopt, const char *argv[]) {
 		break;
 	case OPTION_SYNTAX:
 		if (!argv[2]) {
-			Syntax *syntax = window_syntax_get(vis->win->win);
+			Syntax *syntax = window_syntax_get(vis->win->view);
 			if (syntax)
 				editor_info_show(vis, "Syntax definition in use: `%s'", syntax->name);
 			else
@@ -1407,13 +1407,13 @@ static bool cmd_set(Filerange *range, enum CmdOpt cmdopt, const char *argv[]) {
 
 		for (Syntax *syntax = syntaxes; syntax && syntax->name; syntax++) {
 			if (!strcasecmp(syntax->name, argv[2])) {
-				window_syntax_set(vis->win->win, syntax);
+				window_syntax_set(vis->win->view, syntax);
 				return true;
 			}
 		}
 
 		if (parse_bool(argv[2], &arg.b) && !arg.b)
-			window_syntax_set(vis->win->win, NULL);
+			window_syntax_set(vis->win->view, NULL);
 		else
 			editor_info_show(vis, "Unknown syntax definition: `%s'", argv[2]);
 		break;
@@ -1517,7 +1517,7 @@ static bool cmd_qall(Filerange *range, enum CmdOpt opt, const char *argv[]) {
 }
 
 static bool cmd_read(Filerange *range, enum CmdOpt opt, const char *argv[]) {
-	size_t pos = window_cursor_get(vis->win->win);
+	size_t pos = window_cursor_get(vis->win->view);
 	for (const char **file = &argv[1]; *file; file++) {
 		int fd = open(*file, O_RDONLY);
 		char *text = NULL;
@@ -1625,7 +1625,7 @@ static bool cmd_saveas(Filerange *range, enum CmdOpt opt, const char *argv[]) {
 
 static Filepos parse_pos(char **cmd) {
 	size_t pos = EPOS;
-	Win *win = vis->win->win;
+	Win *win = vis->win->view;
 	Text *txt = vis->win->file->text;
 	Mark *marks = vis->win->file->marks;
 	switch (**cmd) {
@@ -1730,7 +1730,7 @@ static bool exec_cmdline_command(const char *cmdline) {
 	if (!text_range_valid(&range)) {
 		/* if only one position was given, jump to it */
 		if (range.start != EPOS && !*name) {
-			window_cursor_to(vis->win->win, range.start);
+			window_cursor_to(vis->win->view, range.start);
 			free(line);
 			return true;
 		}
@@ -1822,7 +1822,7 @@ static void settings_apply(const char **settings) {
 static bool vis_window_new(const char *file) {
 	if (!editor_window_new(vis, file))
 		return false;
-	Syntax *s = window_syntax_get(vis->win->win);
+	Syntax *s = window_syntax_get(vis->win->view);
 	if (s)
 		settings_apply(s->settings);
 	return true;
@@ -1831,7 +1831,7 @@ static bool vis_window_new(const char *file) {
 static bool vis_window_new_fd(int fd) {
 	if (!editor_window_new_fd(vis, fd))
 		return false;
-	Syntax *s = window_syntax_get(vis->win->win);
+	Syntax *s = window_syntax_get(vis->win->view);
 	if (s)
 		settings_apply(s->settings);
 	return true;
@@ -1840,7 +1840,7 @@ static bool vis_window_new_fd(int fd) {
 static bool vis_window_split(EditorWin *win) {
 	if (!editor_window_split(win))
 		return false;
-	Syntax *s = window_syntax_get(vis->win->win);
+	Syntax *s = window_syntax_get(vis->win->view);
 	if (s)
 		settings_apply(s->settings);
 	return true;

@@ -440,14 +440,14 @@ static KeyBinding vis_mode_visual[] = {
 
 static void vis_mode_visual_enter(Mode *old) {
 	if (!old->visual) {
-		window_selection_start(vis->win->win);
+		window_selection_start(vis->win->view);
 		vis_modes[VIS_MODE_OPERATOR].parent = &vis_modes[VIS_MODE_TEXTOBJ];
 	}
 }
 
 static void vis_mode_visual_leave(Mode *new) {
 	if (!new->visual) {
-		window_selection_clear(vis->win->win);
+		window_selection_clear(vis->win->view);
 		vis_modes[VIS_MODE_OPERATOR].parent = &vis_modes[VIS_MODE_MOVE];
 	}
 }
@@ -459,10 +459,10 @@ static KeyBinding vis_mode_visual_line[] = {
 };
 
 static void vis_mode_visual_line_enter(Mode *old) {
-	Win *win = vis->win->win;
+	Win *win = vis->win->view;
 	window_cursor_to(win, text_line_begin(vis->win->file->text, window_cursor_get(win)));
 	if (!old->visual) {
-		window_selection_start(vis->win->win);
+		window_selection_start(vis->win->view);
 		vis_modes[VIS_MODE_OPERATOR].parent = &vis_modes[VIS_MODE_TEXTOBJ];
 	}
 	movement(&(const Arg){ .i = MOVE_LINE_END });
@@ -470,10 +470,10 @@ static void vis_mode_visual_line_enter(Mode *old) {
 
 static void vis_mode_visual_line_leave(Mode *new) {
 	if (!new->visual) {
-		window_selection_clear(vis->win->win);
+		window_selection_clear(vis->win->view);
 		vis_modes[VIS_MODE_OPERATOR].parent = &vis_modes[VIS_MODE_MOVE];
 	} else {
-		window_cursor_to(vis->win->win, window_cursor_get(vis->win->win));
+		window_cursor_to(vis->win->view, window_cursor_get(vis->win->view));
 	}
 }
 
@@ -573,7 +573,7 @@ static void vis_mode_insert_idle(void) {
 
 static void vis_mode_insert_input(const char *str, size_t len) {
 	static size_t oldpos = EPOS;
-	size_t pos = window_cursor_get(vis->win->win);
+	size_t pos = window_cursor_get(vis->win->view);
 	if (pos != oldpos)
 		buffer_truncate(&vis->buffer_repeat);
 	buffer_append(&vis->buffer_repeat, str, len);
@@ -595,7 +595,7 @@ static void vis_mode_replace_leave(Mode *old) {
 
 static void vis_mode_replace_input(const char *str, size_t len) {
 	static size_t oldpos = EPOS;
-	size_t pos = window_cursor_get(vis->win->win);
+	size_t pos = window_cursor_get(vis->win->view);
 	if (pos != oldpos)
 		buffer_truncate(&vis->buffer_repeat);
 	buffer_append(&vis->buffer_repeat, str, len);
