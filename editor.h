@@ -22,7 +22,7 @@ typedef union {
 	bool b;
 	int i;
 	const char *s;
-	void (*w)(Win*);    /* generic window commands */
+	void (*w)(View*);    /* generic window commands */
 	void (*f)(Editor*); /* generic editor commands */
 } Arg;
 
@@ -79,7 +79,7 @@ typedef struct {
 
 typedef struct {
 	size_t (*cmd)(const Arg*);        /* a custom movement based on user input from vis.c */
-	size_t (*win)(Win*);              /* a movement based on current window content from window.h */
+	size_t (*view)(View*);              /* a movement based on current window content from window.h */
 	size_t (*txt)(Text*, size_t pos); /* a movement form text-motions.h */
 	size_t (*file)(File*, size_t pos);
 	enum {
@@ -207,7 +207,7 @@ struct EditorWin {
 	Editor *editor;         /* editor instance to which this window belongs */
 	UiWin *ui;
 	File *file;             /* file being displayed in this window */
-	Win *view;              /* currently displayed part of underlying text */
+	View *view;             /* currently displayed part of underlying text */
 	ViewEvent events;
 	RingBuffer *jumplist;   /* LRU jump management */
 	ChangeList changelist;  /* state for iterating through least recently changes */

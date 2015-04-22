@@ -66,7 +66,7 @@ struct UiCursesWin {
 	UiWin uiwin;              /* generic interface, has to be the first struct member */
 	UiCurses *ui;             /* ui which manages this window */
 	Text *text;               /* underlying text management */
-	Win *view;                /* current viewport */
+	View *view;               /* current viewport */
 	WINDOW *win;              /* curses window for the text area */
 	WINDOW *winstatus;        /* curses window for the status bar */
 	WINDOW *winside;          /* curses window for the side bar (line numbers) */
@@ -147,7 +147,7 @@ static void ui_window_resize(UiCursesWin *win, int width, int height) {
 	wresize(win->win, win->winstatus ? height - 1 : height, width - win->sidebar_width);
 	if (win->winside)
 		wresize(win->winside, height-1, win->sidebar_width);
-	window_resize(win->view, width - win->sidebar_width, win->winstatus ? height - 1 : height);
+	view_resize(win->view, width - win->sidebar_width, win->winstatus ? height - 1 : height);
 }
 
 static void ui_window_move(UiCursesWin *win, int x, int y) {
@@ -168,7 +168,7 @@ static void ui_window_draw_status(UiWin *w) {
 	Editor *vis = uic->ed;
 	bool focused = uic->selwin == win;
 	const char *filename = text_filename_get(win->text);
-	CursorPos pos = window_cursor_getpos(win->view);
+	CursorPos pos = view_cursor_getpos(win->view);
 	wattrset(win->winstatus, focused ? A_REVERSE|A_BOLD : A_REVERSE);
 	mvwhline(win->winstatus, 0, 0, ' ', win->width);
 	mvwprintw(win->winstatus, 0, 0, "%s %s %s %s",
@@ -188,8 +188,8 @@ static void ui_window_draw(UiWin *w) {
 	UiCursesWin *win = (UiCursesWin*)w;
 	if (win->winstatus)
 		ui_window_draw_status((UiWin*)win);
-	window_draw(win->view);
-	window_cursor_to(win->view, window_cursor_get(win->view));
+	view_draw(win->view);
+	view_cursor_to(win->view, view_cursor_get(win->view));
 }
 
 static void ui_window_reload(UiWin *w, Text *text) {
@@ -210,7 +210,7 @@ static void ui_window_draw_sidebar(UiCursesWin *win, const Line *line) {
 	} else {
 		int i = 0;
 		size_t prev_lineno = 0;
-		size_t cursor_lineno = window_cursor_getpos(win->view).line;
+		size_t cursor_lineno = view_cursor_getpos(win->view).line;
 		werase(win->winside);
 		for (const Line *l = line; l; l = l->next, i++) {
 			if (l->lineno != prev_lineno) {
@@ -359,7 +359,7 @@ static void ui_window_cursor_to(UiWin *w, int x, int y) {
 	wmove(win->win, y, x);
 	ui_window_draw_status(w);
 	if (win->options & UI_OPTION_LINE_NUMBERS_RELATIVE)
-		ui_window_draw_sidebar(win, window_lines_get(win->view));
+		ui_window_draw_sidebar(win, view_lines_get(win->view));
 }
 
 static void ui_window_draw_text(UiWin *w, const Line *line) {
@@ -413,7 +413,7 @@ static void ui_window_options(UiWin *w, enum UiOption options) {
 	ui_window_draw(w);
 }
 
-static UiWin *ui_window_new(Ui *ui, Win *view, Text *text) {
+static UiWin *ui_window_new(Ui *ui, View *view, Text *text) {
 	UiCurses *uic = (UiCurses*)ui;
 	UiCursesWin *win = calloc(1, sizeof(UiCursesWin));
 	if (!win)
@@ -436,7 +436,7 @@ static UiWin *ui_window_new(Ui *ui, Win *view, Text *text) {
 	win->ui = uic;
 	win->view = view;
 	win->text = text;
-	window_ui(view, &win->uiwin);
+	view_ui(view, &win->uiwin);
 	
 	if (uic->windows)
 		uic->windows->prev = win;
@@ -460,7 +460,7 @@ static void info_hide(Ui *ui) {
 	}
 }
 
-static UiWin *prompt_new(Ui *ui, Win *view, Text *text) {
+static UiWin *prompt_new(Ui *ui, View *view, Text *text) {
 	UiCurses *uic = (UiCurses*)ui;
 	if (uic->prompt_win)
 		return (UiWin*)uic->prompt_win;
@@ -489,9 +489,9 @@ static void prompt(Ui *ui, const char *title, const char *text) {
 	strncpy(uic->prompt_title, title, sizeof(uic->prompt_title)-1);
 	while (text_undo(uic->prompt_win->text) != EPOS);
 	text_insert(uic->prompt_win->text, 0, text, text_len);
-	window_cursor_to(uic->prompt_win->view, 0);
+	view_cursor_to(uic->prompt_win->view, 0);
 	ui_resize_to(ui, uic->width, uic->height);
-	window_cursor_to(uic->prompt_win->view, text_len);
+	view_cursor_to(uic->prompt_win->view, text_len);
 }
 
 static char *prompt_input(Ui *ui) {
