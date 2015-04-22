@@ -82,8 +82,15 @@ size_t text_history_get(Text*, size_t index);
 
 size_t text_size(Text*);
 bool text_modified(Text*);
-/* test whether the underlying file uses UNIX style \n or Windows style \r\n newlines */
-bool text_newlines_crnl(Text*);
+
+/* which type of new lines does the text use? */
+enum TextNewLine {
+	TEXT_NEWLINE_NL = 1,
+	TEXT_NEWLINE_CRNL,
+};
+
+enum TextNewLine text_newline_type(Text*);
+
 bool text_save(Text*, const char *file);
 bool text_range_save(Text*, Filerange*, const char *file);
 ssize_t text_write(Text*, int fd);

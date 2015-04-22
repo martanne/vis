@@ -118,7 +118,7 @@ struct Text {
 	struct stat info;	/* stat as proped on load time */
 	int fd;                 /* the file descriptor of the original mmap-ed data */
 	LineCache lines;        /* mapping between absolute pos in bytes and logical line breaks */
-	int newlines;           /* 0: unknown, 1: \n, -1: \r\n */
+	enum TextNewLine newlines; /* which type of new lines does the file use */
 };
 
 /* buffer management */
@@ -902,18 +902,23 @@ bool text_modified(Text *txt) {
 	return txt->saved_action != txt->undo;
 }
 
-bool text_newlines_crnl(Text *txt){
-	if (txt->newlines == 0) {
-		txt->newlines = 1; /* default to UNIX style \n new lines */
+enum TextNewLine text_newline_type(Text *txt){
+	if (!txt->newlines) {
+		txt->newlines = TEXT_NEWLINE_NL; /* default to UNIX style \n new lines */
 		const char *start = txt->buf.data;
 		if (start) {
 			const char *nl = memchr(start, '\n', txt->buf.len);
 			if (nl > start && nl[-1] == '\r')
-				txt->newlines = -1; /* Windows style \r\n */
+				txt->newlines = TEXT_NEWLINE_CRNL;
+		} else {
+			char c;
+			size_t nl = lines_skip_forward(txt, 0, 1, NULL);
+			if (nl > 1 && text_byte_get(txt, nl-2, &c) && c == '\r')
+				txt->newlines = TEXT_NEWLINE_CRNL;
 		}
 	}
 
-	return txt->newlines < 0;
+	return txt->newlines;
 }
 
 static bool text_iterator_init(Iterator *it, size_t pos, Piece *p, size_t off) {
@@ -1088,7 +1093,8 @@ static size_t lines_skip_forward(Text *txt, size_t pos, size_t lines, size_t *li
 		if (lines == 0)
 			break;
 	}
-	*lines_skipped = lines_old - lines;
+	if (lines_skipped)
+		*lines_skipped = lines_old - lines;
 	return pos;
 }
 

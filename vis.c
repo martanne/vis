@@ -1092,8 +1092,17 @@ static void copy_indent_from_previous_line(View *view, Text *text) {
 }
 
 static void insert_newline(const Arg *arg) {
-	insert(&(const Arg){ .s =
-	       text_newlines_crnl(vis->win->file->text) ? "\r\n" : "\n" });
+	const char *nl;
+	switch (text_newline_type(vis->win->file->text)) {
+	case TEXT_NEWLINE_CRNL:
+		nl = "\r\n";
+		break;
+	default:
+		nl = "\n";
+		break;
+	}
+
+	insert(&(const Arg){ .s = nl });
 
 	if (vis->autoindent)
 		copy_indent_from_previous_line(vis->win->view, vis->win->file->text);
