@@ -1,5 +1,12 @@
 # vis version
-VERSION = devel
+# we have no tags in git, so just use revision count an hash for now
+GITREVCOUNT = "$(shell git rev-list --count master 2>/dev/null)"
+GITHASH = "$(shell git log -1 --format="%h" 2>/dev/null)"
+ifeq (${GITREVCOUNT},)
+	VERSION = devel
+else
+	VERSION = "0.r${GITREVCOUNT}.g${GITHASH}"
+endif
 
 # Customize below to fit your system
 
