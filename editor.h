@@ -16,7 +16,7 @@ typedef struct EditorWin EditorWin;
 #include "ring-buffer.h"
 #include "map.h"
 
-typedef struct VisText VisText;
+typedef struct File File;
 
 typedef union {
 	bool b;
@@ -81,7 +81,7 @@ typedef struct {
 	size_t (*cmd)(const Arg*);        /* a custom movement based on user input from vis.c */
 	size_t (*win)(Win*);              /* a movement based on current window content from window.h */
 	size_t (*txt)(Text*, size_t pos); /* a movement form text-motions.h */
-	size_t (*vistxt)(VisText*, size_t pos);
+	size_t (*file)(File*, size_t pos);
 	enum {
 		LINEWISE  = 1 << 0,
 		CHARWISE  = 1 << 1,
@@ -191,11 +191,11 @@ enum Mark {
 	MARK_LAST,
 };
 
-struct VisText {
-	Text *data;
+struct File {
+	Text *text;
 	int refcount;
 	Mark marks[MARK_LAST];
-	VisText *next, *prev;
+	File *next, *prev;
 };
 
 typedef struct {
@@ -206,7 +206,7 @@ typedef struct {
 struct EditorWin {
 	Editor *editor;         /* editor instance to which this window belongs */
 	UiWin *ui;
-	VisText *text;             /* underlying text management */
+	File *file;             /* file being displayed in this window */
 	Win *win;               /* window for the text area  */
 	ViewEvent events;
 	RingBuffer *jumplist;   /* LRU jump management */
@@ -216,7 +216,7 @@ struct EditorWin {
 
 struct Editor {
 	Ui *ui;
-	VisText *texts;
+	File *files;
 	EditorWin *windows;               /* list of windows */
 	EditorWin *win;                   /* currently active window */
 	Syntax *syntaxes;                 /* NULL terminated array of syntax definitions */
