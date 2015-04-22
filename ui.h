@@ -18,7 +18,7 @@ enum UiOption {
 #include <stdbool.h>
 #include <stdarg.h>
 #include "text.h"
-#include "window.h"
+#include "view.h"
 #include "editor.h"
 
 struct Ui {

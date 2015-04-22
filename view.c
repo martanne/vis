@@ -20,7 +20,7 @@
 #include <errno.h>
 #include <regex.h>
 #include "editor.h"
-#include "window.h"
+#include "view.h"
 #include "syntax.h"
 #include "text.h"
 #include "text-motions.h"

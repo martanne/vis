@@ -554,9 +554,9 @@ A quick overview over the code structure to get you started:
  `text-objects.[ch]` | functions take a file position and return a file range
  `vis.c`             | vi(m) specific editor frontend, program entry point
  `editor.[ch]`       | editor window management
- `window.[ch]`       | ui-independent viewport, syntax highlighting, cursor placement
+ `view.[ch]`         | ui-independent viewport, shows part of a file, syntax highlighting, cursor placement
  `ui.h`              | abstract interface as implemented by user interface
- `ui-curses.h`       | a terminal / curses based user interface implementation
+ `ui-curses.[ch]`    | a terminal / curses based user interface implementation
  `buffer.[ch]`       | dynamically growing buffer used for registers and macros
  `ring-buffer.[ch]`  | fixed size ring buffer used for the jump list
  `map.[ch]`          | crit-bit tree based map supporting unique prefix lookups and ordered iteration. used to implement `:`-commands.

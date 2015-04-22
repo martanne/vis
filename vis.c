@@ -133,7 +133,7 @@ enum {
 	MOVE_WINDOW_LINE_BOTTOM,
 };
 
-/** movements which can be used besides the one in text-motions.h and window.h */
+/** movements which can be used besides the one in text-motions.h and view.h */
 
 /* search in forward direction for the word under the cursor */
 static size_t search_word_forward(Text *txt, size_t pos);

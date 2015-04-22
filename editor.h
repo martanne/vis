@@ -9,7 +9,7 @@ typedef struct Editor Editor;
 typedef struct Win Win;
 
 #include "ui.h"
-#include "window.h"
+#include "view.h"
 #include "register.h"
 #include "macro.h"
 #include "syntax.h"
@@ -79,7 +79,7 @@ typedef struct {
 
 typedef struct {
 	size_t (*cmd)(const Arg*);        /* a custom movement based on user input from vis.c */
-	size_t (*view)(View*);              /* a movement based on current window content from window.h */
+	size_t (*view)(View*);              /* a movement based on current window content from view.h */
 	size_t (*txt)(Text*, size_t pos); /* a movement form text-motions.h */
 	size_t (*file)(File*, size_t pos);
 	enum {
