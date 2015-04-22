@@ -2013,12 +2013,14 @@ int main(int argc, char *argv[]) {
 	for (int i = 1; i < argc; i++) {
 		if (argv[i][0] == '-') {
 			switch (argv[i][1]) {
-				case 'v':
-					die("vis %s, compiled " __DATE__ " " __TIME__ "\n", VERSION);
-					break;
-				default:
-					die("Unknown command option: %s\n", argv[i]);
-					break;
+			case 'v':
+				die("vis %s, compiled " __DATE__ " " __TIME__ "\n", VERSION);
+				break;
+			case '\0':
+				break;
+			default:
+				die("Unknown command option: %s\n", argv[i]);
+				break;
 			}
 		} else if (argv[i][0] == '+') {
 			cmd = argv[i] + (argv[i][1] == '/' || argv[i][1] == '?');
