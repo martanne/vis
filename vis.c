@@ -417,7 +417,7 @@ static bool cmd_saveas(Filerange*, enum CmdOpt, const char *argv[]);
 static void action_reset(Action *a);
 static void switchmode_to(Mode *new_mode);
 static bool vis_window_new(const char *file);
-static bool vis_window_split(EditorWin *win);
+static bool vis_window_split(Win *win);
 
 #include "config.h"
 
@@ -1444,7 +1444,7 @@ static bool cmd_open(Filerange *range, enum CmdOpt opt, const char *argv[]) {
 	return true;
 }
 
-static bool is_view_closeable(EditorWin *win) {
+static bool is_view_closeable(Win *win) {
 	if (!text_modified(win->file->text))
 		return true;
 	return win->file->refcount > 1;
@@ -1455,7 +1455,7 @@ static void info_unsaved_changes(void) {
 }
 
 static bool cmd_edit(Filerange *range, enum CmdOpt opt, const char *argv[]) {
-	EditorWin *oldwin = vis->win;
+	Win *oldwin = vis->win;
 	if (!(opt & CMD_OPT_FORCE) && !is_view_closeable(oldwin)) {
 		info_unsaved_changes();
 		return false;
@@ -1493,7 +1493,7 @@ static bool cmd_bdelete(Filerange *range, enum CmdOpt opt, const char *argv[]) {
 		info_unsaved_changes();
 		return false;
 	}
-	for (EditorWin *next, *win = vis->windows; win; win = next) {
+	for (Win *next, *win = vis->windows; win; win = next) {
 		next = win->next;
 		if (win->file->text == txt)
 			editor_window_close(win);
@@ -1504,7 +1504,7 @@ static bool cmd_bdelete(Filerange *range, enum CmdOpt opt, const char *argv[]) {
 }
 
 static bool cmd_qall(Filerange *range, enum CmdOpt opt, const char *argv[]) {
-	for (EditorWin *next, *win = vis->windows; win; win = next) {
+	for (Win *next, *win = vis->windows; win; win = next) {
 		next = win->next;
 		if (!text_modified(vis->win->file->text) || (opt & CMD_OPT_FORCE))
 			editor_window_close(win);
@@ -1837,7 +1837,7 @@ static bool vis_window_new_fd(int fd) {
 	return true;
 }
 
-static bool vis_window_split(EditorWin *win) {
+static bool vis_window_split(Win *win) {
 	if (!editor_window_split(win))
 		return false;
 	Syntax *s = view_syntax_get(vis->win->view);

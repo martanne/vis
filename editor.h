@@ -6,7 +6,7 @@
 #include <stdbool.h>
 
 typedef struct Editor Editor;
-typedef struct EditorWin EditorWin;
+typedef struct Win Win;
 
 #include "ui.h"
 #include "window.h"
@@ -203,7 +203,7 @@ typedef struct {
 	size_t pos;             /* where the current change occured */
 } ChangeList;
 
-struct EditorWin {
+struct Win {
 	Editor *editor;         /* editor instance to which this window belongs */
 	UiWin *ui;
 	File *file;             /* file being displayed in this window */
@@ -211,20 +211,20 @@ struct EditorWin {
 	ViewEvent events;
 	RingBuffer *jumplist;   /* LRU jump management */
 	ChangeList changelist;  /* state for iterating through least recently changes */
-	EditorWin *prev, *next; /* neighbouring windows */
+	Win *prev, *next;       /* neighbouring windows */
 };
 
 struct Editor {
 	Ui *ui;
 	File *files;
-	EditorWin *windows;               /* list of windows */
-	EditorWin *win;                   /* currently active window */
+	Win *windows;                     /* list of windows */
+	Win *win;                         /* currently active window */
 	Syntax *syntaxes;                 /* NULL terminated array of syntax definitions */
 	Register registers[REG_LAST];     /* register used for copy and paste */
 	Macro macros[26];                 /* recorded macros */
 	Macro *recording, *last_recording;/* currently and least recently recorded macro */
-	EditorWin *prompt;                /* 1-line height window to get user input */
-	EditorWin *prompt_window;         /* window which was focused before prompt was shown */
+	Win *prompt;                      /* 1-line height window to get user input */
+	Win *prompt_window;               /* window which was focused before prompt was shown */
 	char prompt_type;                 /* command ':' or search '/','?' prompt */
 	Regex *search_pattern;            /* last used search pattern */
 	char search_char[8];              /* last used character to search for via 'f', 'F', 't', 'T' */
@@ -279,22 +279,22 @@ void editor_syntax_unload(Editor*);
 bool editor_window_new(Editor*, const char *filename);
 bool editor_window_new_fd(Editor*, int fd);
 /* reload the file currently displayed in the window from disk */
-bool editor_window_reload(EditorWin*);
-void editor_window_close(EditorWin*);
+bool editor_window_reload(Win*);
+void editor_window_close(Win*);
 /* split the given window. changes to the displayed text will be reflected
  * in both windows */
-bool editor_window_split(EditorWin*);
+bool editor_window_split(Win*);
 /* focus the next / previous window */
 void editor_window_next(Editor*);
 void editor_window_prev(Editor*);
 
-void editor_window_jumplist_add(EditorWin*, size_t pos);
-size_t editor_window_jumplist_prev(EditorWin*);
-size_t editor_window_jumplist_next(EditorWin*);
-void editor_window_jumplist_invalidate(EditorWin*);
+void editor_window_jumplist_add(Win*, size_t pos);
+size_t editor_window_jumplist_prev(Win*);
+size_t editor_window_jumplist_next(Win*);
+void editor_window_jumplist_invalidate(Win*);
 
-size_t editor_window_changelist_prev(EditorWin*);
-size_t editor_window_changelist_next(EditorWin*);
+size_t editor_window_changelist_prev(Win*);
+size_t editor_window_changelist_next(Win*);
 /* rearrange all windows either vertically or horizontally */
 void editor_windows_arrange(Editor*, enum UiLayout);
 /* display a user prompt with a certain title and default text */
@@ -310,7 +310,7 @@ void editor_prompt_set(Editor*, const char *line);
 /* display a message to the user */
 void editor_info_show(Editor*, const char *msg, ...);
 void editor_info_hide(Editor*);
-void editor_window_options(EditorWin*, enum UiOption options);
+void editor_window_options(Win*, enum UiOption options);
 
 /* look up a curses color pair for the given combination of fore and
  * background color */
