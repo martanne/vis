@@ -1,5 +1,5 @@
-#ifndef WINDOW_H
-#define WINDOW_H
+#ifndef VIEW_H
+#define VIEW_H
 
 #include <stddef.h>
 #include <stdbool.h>
