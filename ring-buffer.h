@@ -1,5 +1,4 @@
-#ifndef RING_BUFFER_H
-#define RING_BUFFER_H
+#pragma once
 
 #include <stdbool.h>
 #include <stddef.h>
@@ -17,5 +16,3 @@ void ringbuf_add(RingBuffer*, const void *value);
 const void *ringbuf_prev(RingBuffer*);
 const void *ringbuf_next(RingBuffer*);
 void ringbuf_invalidate(RingBuffer*);
-
-#endif

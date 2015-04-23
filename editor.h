@@ -1,5 +1,4 @@
-#ifndef EDITOR_H
-#define EDITOR_H
+#pragma once
 
 #include <curses.h>
 #include <stddef.h>
@@ -315,5 +314,3 @@ void editor_window_options(Win*, enum UiOption options);
 /* look up a curses color pair for the given combination of fore and
  * background color */
 short editor_color_get(short fg, short bg);
-
-#endif

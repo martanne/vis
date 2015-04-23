@@ -1,5 +1,4 @@
-#ifndef TEXT_MOTIONS_H
-#define TEXT_MOTIONS_H
+#pragma once
 
 /* these function all take a position in bytes from the start of the file,
  * perform a certain movement and return the new postion. if the movement
@@ -86,5 +85,3 @@ size_t text_search_backward(Text *txt, size_t pos, Regex *regex);
 
 /* is c a special symbol delimiting a word? */
 int is_word_boundry(int c);
-
-#endif

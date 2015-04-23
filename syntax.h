@@ -1,5 +1,4 @@
-#ifndef SYNTAX_H
-#define SYNTAX_H
+#pragma once
 
 #include <regex.h>
 
@@ -23,5 +22,3 @@ struct Syntax {               /* a syntax definition */
 	const char **settings;/* settings associated with this file type */
 	SyntaxRule rules[24]; /* all rules for this file type */
 };
-
-#endif

@@ -1,5 +1,4 @@
-#ifndef MAP_H
-#define MAP_H
+#pragma once
 
 #include <stdbool.h>
 
@@ -30,5 +29,3 @@ bool map_empty(const Map*);
 void map_clear(Map*);
 /* Release all memory associated with this map */
 void map_free(Map*);
-
-#endif

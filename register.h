@@ -1,5 +1,4 @@
-#ifndef REGISTER_H
-#define REGISTER_H
+#pragma once
 
 #include <stddef.h>
 #include <stdbool.h>
@@ -16,5 +15,3 @@ typedef struct {
 void register_free(Register *reg);
 bool register_put(Register *reg, Text *txt, Filerange *range);
 bool register_append(Register *reg, Text *txt, Filerange *range);
-
-#endif
