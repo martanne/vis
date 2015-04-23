@@ -1,5 +1,4 @@
-#ifndef WINDOW_H
-#define WINDOW_H
+#pragma once
 
 #include <stddef.h>
 #include <stdbool.h>
@@ -111,5 +110,3 @@ Filerange view_viewport_get(View*);
 /* associate a set of syntax highlighting rules to this window. */
 void view_syntax_set(View*, Syntax*);
 Syntax *view_syntax_get(View*);
-
-#endif

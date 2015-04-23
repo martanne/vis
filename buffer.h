@@ -1,5 +1,4 @@
-#ifndef BUFFER_H
-#define BUFFER_H
+#pragma once
 
 #include <stddef.h>
 #include <stdbool.h>
@@ -16,5 +15,3 @@ bool buffer_alloc(Buffer *buf, size_t size);
 void buffer_truncate(Buffer *buf);
 bool buffer_put(Buffer *buf, const void *data, size_t len);
 bool buffer_append(Buffer *buf, const void *data, size_t len);
-
-#endif

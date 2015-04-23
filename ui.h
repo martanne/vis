@@ -1,5 +1,4 @@
-#ifndef UI_H
-#define UI_H
+#pragma once
 
 typedef struct Ui Ui;
 typedef struct UiWin UiWin; 
@@ -54,5 +53,3 @@ struct UiWin {
 	void (*reload)(UiWin*, Text*);
 	void (*options)(UiWin*, enum UiOption);
 };
-
-#endif

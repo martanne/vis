@@ -1,5 +1,4 @@
-#ifndef TEXT_OBJECTS_H
-#define TEXT_OBJECTS_H
+#pragma once
 
 /* these functions all take a file position. if this position is part of the
  * respective text-object, a corresponding range is returned. if there is no
@@ -31,5 +30,3 @@ Filerange text_object_paranthese(Text*, size_t pos);
 Filerange text_object_quote(Text*, size_t pos);
 Filerange text_object_single_quote(Text*, size_t pos);
 Filerange text_object_backtick(Text*, size_t pos);
-
-#endif
