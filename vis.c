@@ -429,10 +429,11 @@ static bool exec_command(char type, const char *cmdline);
 /** operator implementations of type: void (*op)(OperatorContext*) */
 
 static size_t op_delete(OperatorContext *c) {
+	Text *txt = vis->win->file->text;
 	size_t len = c->range.end - c->range.start;
 	c->reg->linewise = c->linewise;
-	register_put(c->reg, vis->win->file->text, &c->range);
-	editor_delete(vis, c->range.start, len);
+	register_put(c->reg, txt, &c->range);
+	text_delete(txt, c->range.start, len);
 	return c->range.start;
 }
 
@@ -460,7 +461,7 @@ static size_t op_put(OperatorContext *c) {
 		if (c->reg->linewise)
 			pos = text_line_begin(txt, pos);
 	}
-	editor_insert(vis, pos, c->reg->data, c->reg->len);
+	text_insert(txt, pos, c->reg->data, c->reg->len);
 	if (c->reg->linewise)
 		return text_line_start(txt, pos);
 	else
@@ -492,7 +493,7 @@ static size_t op_shift_right(OperatorContext *c) {
 		text_insert(txt, pos, tab, tablen);
 		pos = text_line_prev(txt, pos);
 	}  while (pos >= c->range.start && pos != prev_pos);
-	editor_draw(vis);
+
 	return c->pos + tablen;
 }
 
@@ -520,16 +521,17 @@ static size_t op_shift_left(OperatorContext *c) {
 		text_delete(txt, pos, tablen);
 		pos = text_line_prev(txt, pos);
 	}  while (pos >= c->range.start && pos != prev_pos);
-	editor_draw(vis);
+
 	return c->pos - tablen;
 }
 
 static size_t op_case_change(OperatorContext *c) {
+	Text *txt = vis->win->file->text;
 	size_t len = c->range.end - c->range.start;
 	char *buf = malloc(len);
 	if (!buf)
 		return c->pos;
-	len = text_bytes_get(vis->win->file->text, c->range.start, len, buf);
+	len = text_bytes_get(txt, c->range.start, len, buf);
 	size_t rem = len;
 	for (char *cur = buf; rem > 0; cur++, rem--) {
 		int ch = (unsigned char)*cur;
@@ -543,9 +545,8 @@ static size_t op_case_change(OperatorContext *c) {
 		}
 	}
 
-	text_delete(vis->win->file->text, c->range.start, len);
-	text_insert(vis->win->file->text, c->range.start, buf, len);
-	editor_draw(vis);
+	text_delete(txt, c->range.start, len);
+	text_insert(txt, c->range.start, buf, len);
 	free(buf);
 	return c->pos;
 }
@@ -570,7 +571,6 @@ static size_t op_join(OperatorContext *c) {
 		}
 	} while (pos != prev_pos);
 
-	editor_draw(vis);
 	return c->range.start;
 }
 
@@ -578,11 +578,12 @@ static size_t op_repeat_insert(OperatorContext *c) {
 	size_t len = vis->buffer_repeat.len;
 	if (!len)
 		return c->pos;
-	editor_insert(vis, c->pos, vis->buffer_repeat.data, len);
+	text_insert(vis->win->file->text, c->pos, vis->buffer_repeat.data, len);
 	return c->pos + len;
 }
 
 static size_t op_repeat_replace(OperatorContext *c) {
+	Text *txt = vis->win->file->text;
 	size_t chars = 0, len = vis->buffer_repeat.len;
 	if (!len)
 		return c->pos;
@@ -592,10 +593,10 @@ static size_t op_repeat_replace(OperatorContext *c) {
 			chars++;
 	}
 
-	Iterator it = text_iterator_get(vis->win->file->text, c->pos);
+	Iterator it = text_iterator_get(txt, c->pos);
 	while (chars-- > 0)
 		text_iterator_char_next(&it, NULL);
-	editor_delete(vis, c->pos, it.pos - c->pos);
+	text_delete(txt, c->pos, it.pos - c->pos);
 	return op_repeat_insert(c);
 }
 
@@ -1246,6 +1247,7 @@ static void action_do(Action *a) {
 
 	if (a->op) {
 		view_cursor_to(view, a->op->func(&c));
+		editor_draw(vis);
 
 		if (vis->mode == &vis_modes[VIS_MODE_OPERATOR])
 			switchmode_to(vis->mode_prev);
