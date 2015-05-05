@@ -1780,7 +1780,7 @@ static bool exec_cmdline_command(const char *cmdline) {
 	}
 
 	char *s = param;
-	const char *argv[32] = { line };
+	const char *argv[32] = { name };
 	for (int i = 1; i < LENGTH(argv); i++) {
 		while (s && *s && *s == ' ')
 			s++;
