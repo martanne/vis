@@ -2026,9 +2026,13 @@ int main(int argc, char *argv[]) {
 		die("Could not load syntax highlighting definitions\n");
 
 	char *cmd = NULL;
+	bool end_of_options = false;
 	for (int i = 1; i < argc; i++) {
-		if (argv[i][0] == '-') {
+		if (argv[i][0] == '-' && !end_of_options) {
 			switch (argv[i][1]) {
+			case '-':
+				end_of_options = true;
+				break;
 			case 'v':
 				die("vis %s, compiled " __DATE__ " " __TIME__ "\n", VERSION);
 				break;
