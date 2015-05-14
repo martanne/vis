@@ -1610,6 +1610,8 @@ static bool cmd_wq(Filerange *range, enum CmdOpt opt, const char *argv[]) {
 
 static bool cmd_write(Filerange *range, enum CmdOpt opt, const char *argv[]) {
 	Text *text = vis->win->file->text;
+	if (!text_range_valid(range))
+		range = &(Filerange){ .start = 0, .end = text_size(text) };
 	if (!argv[1])
 		argv[1] = text_filename_get(text);
 	if (!argv[1]) {
@@ -1763,7 +1765,6 @@ static bool exec_cmdline_command(const char *cmdline) {
 			free(line);
 			return false;
 		}
-		range = (Filerange){ .start = 0, .end = text_size(vis->win->file->text) };
 	}
 	/* skip leading white space */
 	while (*name == ' ')
