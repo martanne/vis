@@ -1701,6 +1701,7 @@ static Filerange parse_range(char **cmd) {
 	Text *txt = vis->win->file->text;
 	Filerange r = text_range_empty();
 	Mark *marks = vis->win->file->marks;
+	char start = **cmd;
 	switch (**cmd) {
 	case '%':
 		r.start = 0;
@@ -1714,8 +1715,11 @@ static Filerange parse_range(char **cmd) {
 		break;
 	default:
 		r.start = parse_pos(cmd);
-		if (**cmd != ',')
+		if (**cmd != ',') {
+			if (start == '.')
+				r.end = text_line_next(txt, r.start);
 			return r;
+		}
 		(*cmd)++;
 		r.end = parse_pos(cmd);
 		break;
