@@ -1536,32 +1536,27 @@ static bool cmd_qall(Filerange *range, enum CmdOpt opt, const char *argv[]) {
 }
 
 static bool cmd_read(Filerange *range, enum CmdOpt opt, const char *argv[]) {
-	size_t pos = view_cursor_get(vis->win->view);
-	for (const char **file = &argv[1]; *file; file++) {
-		int fd = open(*file, O_RDONLY);
-		char *text = NULL;
-		struct stat info;
-		if (fd == -1)
-			goto err;
-		if (fstat(fd, &info) == -1)
-			goto err;
-		if (!S_ISREG(info.st_mode))
-			goto err;
-		// XXX: use lseek(fd, 0, SEEK_END); instead?
-		text = mmap(NULL, info.st_size, PROT_READ, MAP_SHARED, fd, 0);
-		if (text == MAP_FAILED)
-			goto err;
+	char cmd[255];
 
-		text_insert(vis->win->file->text, pos, text, info.st_size);
-		pos += info.st_size;
-	err:
-		if (fd != -1)
-			close(fd);
-		if (text && text != MAP_FAILED)
-			munmap(text, info.st_size);
+	if (!argv[1]) {
+		editor_info_show(vis, "Filename or command expected");
+		return false;
 	}
-	editor_draw(vis);
-	return true;
+
+	bool iscmd = (opt & CMD_OPT_FORCE) || argv[1][0] == '!';
+	const char *arg = argv[1]+(argv[1][0] == '!');
+	snprintf(cmd, sizeof cmd, "%s%s", iscmd ? "" : "cat ", arg);
+
+	size_t pos = view_cursor_get(vis->win->view);
+	if (!text_range_valid(range))
+		range = &(Filerange){ .start = pos, .end = pos };
+	Filerange delete = *range;
+	range->start = range->end;
+
+	bool ret = cmd_filter(range, opt, (const char*[]){ argv[0], "sh", "-c", cmd, NULL});
+	if (ret)
+		text_delete(vis->win->file->text, delete.start, delete.end - delete.start);
+	return ret;
 }
 
 static bool cmd_substitute(Filerange *range, enum CmdOpt opt, const char *argv[]) {

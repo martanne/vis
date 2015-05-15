@@ -57,7 +57,7 @@ static Command cmds[] = {
 	{ { "open"                     }, cmd_open,       CMD_OPT_NONE  },
 	{ { "qall"                     }, cmd_qall,       CMD_OPT_FORCE },
 	{ { "quit", "q"                }, cmd_quit,       CMD_OPT_FORCE },
-	{ { "read",                    }, cmd_read,       CMD_OPT_NONE  },
+	{ { "read",                    }, cmd_read,       CMD_OPT_FORCE },
 	{ { "saveas"                   }, cmd_saveas,     CMD_OPT_FORCE },
 	{ { "set",                     }, cmd_set,        CMD_OPT_ARGS  },
 	{ { "split"                    }, cmd_split,      CMD_OPT_NONE  },
