@@ -1560,8 +1560,11 @@ static bool cmd_read(Filerange *range, enum CmdOpt opt, const char *argv[]) {
 }
 
 static bool cmd_substitute(Filerange *range, enum CmdOpt opt, const char *argv[]) {
-	// TODO
-	return true;
+	char pattern[255];
+	if (!text_range_valid(range))
+		range = &(Filerange){ .start = 0, .end = text_size(vis->win->file->text) };
+	snprintf(pattern, sizeof pattern, "s%s", argv[1]);
+	return cmd_filter(range, opt, (const char*[]){ argv[0], "sed", pattern, NULL});
 }
 
 static bool openfiles(const char **files) {
