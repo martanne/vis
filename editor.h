@@ -2,6 +2,7 @@
 #define EDITOR_H
 
 #include <curses.h>
+#include <signal.h>
 #include <stddef.h>
 #include <stdbool.h>
 
@@ -244,6 +245,7 @@ struct Editor {
 	Mode *mode_prev;     /* previsouly active user mode */
 	Mode *mode_before_prompt; /* user mode which was active before entering prompt */
 	volatile bool running; /* exit main loop once this becomes false */
+	volatile sig_atomic_t cancel_filter; /* abort external command */
 };
 
 Editor *editor_new(Ui*);

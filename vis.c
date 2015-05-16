@@ -27,6 +27,7 @@
 #include <ctype.h>
 #include <sys/select.h>
 #include <sys/types.h>
+#include <sys/wait.h>
 #include <sys/stat.h>
 #include <sys/ioctl.h>
 #include <sys/mman.h>
@@ -413,6 +414,8 @@ static bool cmd_write(Filerange*, enum CmdOpt, const char *argv[]);
  * associate the new name with the buffer. further :w commands
  * without arguments will write to the new filename */
 static bool cmd_saveas(Filerange*, enum CmdOpt, const char *argv[]);
+/* filter range through external program argv[1] */
+static bool cmd_filter(Filerange*, enum CmdOpt, const char *argv[]);
 
 static void action_reset(Action *a);
 static void switchmode_to(Mode *new_mode);
@@ -1641,6 +1644,218 @@ static bool cmd_saveas(Filerange *range, enum CmdOpt opt, const char *argv[]) {
 	return false;
 }
 
+static void cancel_filter(int sig) {
+	vis->cancel_filter = true;
+}
+
+static bool cmd_filter(Filerange *range, enum CmdOpt opt, const char *argv[]) {
+	/* if an invalid range was given, stdin (i.e. key board input) is passed
+	 * through the external command. */
+	Text *text = vis->win->file->text;
+	View *view = vis->win->view;
+	int pin[2], pout[2], perr[2], status = -1;
+	bool interactive = !text_range_valid(range);
+	size_t pos = view_cursor_get(view);
+
+	if (pipe(pin) == -1)
+		return false;
+	if (pipe(pout) == -1) {
+		close(pin[0]);
+		close(pin[1]);
+		return false;
+	}
+
+	if (pipe(perr) == -1) {
+		close(pin[0]);
+		close(pin[1]);
+		close(pout[0]);
+		close(pout[1]);
+		return false;
+	}
+
+	reset_shell_mode();
+	pid_t pid = fork();
+
+	if (pid == -1) {
+		close(pin[0]);
+		close(pin[1]);
+		close(pout[0]);
+		close(pout[1]);
+		close(perr[0]);
+		close(perr[1]);
+		editor_info_show(vis, "fork failure: %s", strerror(errno));
+		return false;
+	} else if (pid == 0) { /* child i.e filter */
+		if (!interactive)
+			dup2(pin[0], STDIN_FILENO);
+		close(pin[0]);
+		close(pin[1]);
+		dup2(pout[1], STDOUT_FILENO);
+		close(pout[1]);
+		close(pout[0]);
+		if (!interactive)
+			dup2(perr[1], STDERR_FILENO);
+		close(perr[0]);
+		close(perr[1]);
+		if (!argv[2])
+			execl("/bin/sh", "sh", "-c", argv[1], NULL);
+		else
+			execvp(argv[1], (char**)argv+1);
+		editor_info_show(vis, "exec failure: %s", strerror(errno));
+		exit(EXIT_FAILURE);
+	}
+
+	/* set up a signal handler to cancel the filter via CTRL-C */
+	struct sigaction sa, oldsa;
+	sa.sa_flags = 0;
+	sigemptyset(&sa.sa_mask);
+	sa.sa_handler = cancel_filter;
+
+	bool restore_signals = sigaction(SIGINT, &sa, &oldsa) == 0;
+	vis->cancel_filter = false;
+
+	close(pin[0]);
+	close(pout[1]);
+	close(perr[1]);
+
+	fcntl(pout[0], F_SETFL, O_NONBLOCK);
+	fcntl(perr[0], F_SETFL, O_NONBLOCK);
+
+	if (interactive)
+		range = &(Filerange){ .start = pos, .end = pos };
+
+	/* ranges which are written to the filter and read back in */
+	Filerange rout = *range;
+	Filerange rin = (Filerange){ .start = range->end, .end = range->end };
+
+	/* The general idea is the following:
+	 *
+	 *  1) take a snapshot
+	 *  2) write [range.start, range.end] to exteneral command
+	 *  3) read the output of the external command and insert it after the range
+	 *  4) depending on the exit status of the external command
+	 *     - on success: delete original range
+	 *     - on failure: revert to previous snapshot
+	 *
+	 *  2) and 3) happend in small junks
+	 */
+
+	text_snapshot(text);
+
+	fd_set rfds, wfds;
+	Buffer errmsg;
+	buffer_init(&errmsg);
+
+	do {
+		if (vis->cancel_filter) {
+			kill(-pid, SIGTERM);
+			editor_info_show(vis, "Command cancelled");
+			break;
+		}
+
+		FD_ZERO(&rfds);
+		FD_ZERO(&wfds);
+		if (pin[1] != -1)
+			FD_SET(pin[1], &wfds);
+		if (pout[0] != -1)
+			FD_SET(pout[0], &rfds);
+		if (perr[0] != -1)
+			FD_SET(perr[0], &rfds);
+
+		if (select(FD_SETSIZE, &rfds, &wfds, NULL, NULL) == -1) {
+			if (errno == EINTR)
+				continue;
+			editor_info_show(vis, "Select failure");
+			break;
+		}
+
+		if (FD_ISSET(pin[1], &wfds)) {
+			Filerange junk = *range;
+			if (junk.end > junk.start + PIPE_BUF)
+				junk.end = junk.start + PIPE_BUF;
+			ssize_t len = text_range_write(text, &junk, pin[1]);
+			if (len > 0) {
+				range->start += len;
+				if (text_range_size(range) == 0) {
+					close(pout[1]);
+					pout[1] = -1;
+				}
+			} else {
+				close(pin[1]);
+				pin[1] = -1;
+				if (len == -1)
+					editor_info_show(vis, "Error writing to external command");
+			}
+		}
+
+		if (FD_ISSET(pout[0], &rfds)) {
+			char buf[BUFSIZ];
+			ssize_t len = read(pout[0], buf, sizeof buf);
+			if (len > 0) {
+				text_insert(text, rin.end, buf, len);
+				rin.end += len;
+			} else if (len == 0) {
+				close(pout[0]);
+				pout[0] = -1;
+			} else if (errno != EINTR && errno != EWOULDBLOCK) {
+				editor_info_show(vis, "Error reading from filter stdout");
+				close(pout[0]);
+				pout[0] = -1;
+			}
+		}
+
+		if (FD_ISSET(perr[0], &rfds)) {
+			char buf[BUFSIZ];
+			ssize_t len = read(perr[0], buf, sizeof buf);
+			if (len > 0) {
+				buffer_append(&errmsg, buf, len);
+			} else if (len == 0) {
+				close(perr[0]);
+				perr[0] = -1;
+			} else if (errno != EINTR && errno != EWOULDBLOCK) {
+				editor_info_show(vis, "Error reading from filter stderr");
+				close(pout[0]);
+				pout[0] = -1;
+			}
+		}
+
+	} while (pin[1] != -1 || pout[0] != -1 || perr[0] != -1);
+
+	if (pin[1] != -1)
+		close(pin[1]);
+	if (pout[0] != -1)
+		close(pout[0]);
+	if (perr[0] != -1)
+		close(perr[0]);
+
+	if (waitpid(pid, &status, 0) == pid && status == 0) {
+		text_delete(text, rout.start, rout.end - rout.start);
+		text_snapshot(text);
+	} else {
+		/* make sure we have somehting to undo */
+		text_insert(text, pos, " ", 1);
+		text_undo(text);
+	}
+
+	view_cursor_to(view, rout.start);
+
+	if (!vis->cancel_filter) {
+		if (status == 0)
+			editor_info_show(vis, "Command succeded");
+		else if (errmsg.len > 0)
+			editor_info_show(vis, "Command failed: %s", errmsg.data);
+		else
+			editor_info_show(vis, "Command failed");
+	}
+
+	if (restore_signals)
+		sigaction(SIGTERM, &oldsa, NULL);
+
+	reset_prog_mode();
+	wclear(stdscr);
+	return status == 0;
+}
+
 static Filepos parse_pos(char **cmd) {
 	size_t pos = EPOS;
 	View *view = vis->win->view;
@@ -1983,6 +2198,7 @@ static void mainloop() {
 	sigemptyset(&blockset);
 	sigaddset(&blockset, SIGWINCH);
 	sigprocmask(SIG_BLOCK, &blockset, NULL);
+	signal(SIGPIPE, SIG_IGN);
 	editor_draw(vis);
 	vis->running = true;
 
