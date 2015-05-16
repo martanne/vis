@@ -214,6 +214,8 @@ struct Win {
 	Win *prev, *next;       /* neighbouring windows */
 };
 
+#define MACRO_LAST 26
+
 struct Editor {
 	Ui *ui;
 	File *files;
@@ -221,7 +223,7 @@ struct Editor {
 	Win *win;                         /* currently active window */
 	Syntax *syntaxes;                 /* NULL terminated array of syntax definitions */
 	Register registers[REG_LAST];     /* register used for copy and paste */
-	Macro macros[26];                 /* recorded macros */
+	Macro macros[MACRO_LAST];         /* recorded macros */
 	Macro *recording, *last_recording;/* currently and least recently recorded macro */
 	Win *prompt;                      /* 1-line height window to get user input */
 	Win *prompt_window;               /* window which was focused before prompt was shown */

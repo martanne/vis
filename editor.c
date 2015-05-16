@@ -411,6 +411,8 @@ void editor_free(Editor *ed) {
 	text_regex_free(ed->search_pattern);
 	for (int i = 0; i < REG_LAST; i++)
 		register_release(&ed->registers[i]);
+	for (int i = 0; i < MACRO_LAST; i++)
+		macro_release(&ed->macros[i]);
 	editor_syntax_unload(ed);
 	ed->ui->free(ed->ui);
 	map_free(ed->cmds);
