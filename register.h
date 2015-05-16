@@ -13,7 +13,7 @@ typedef struct {
 	bool linewise; /* place register content on a new line when inserting? */
 } Register;
 
-void register_free(Register *reg);
+void register_release(Register *reg);
 bool register_put(Register *reg, Text *txt, Filerange *range);
 bool register_append(Register *reg, Text *txt, Filerange *range);
 

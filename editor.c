@@ -410,12 +410,12 @@ void editor_free(Editor *ed) {
 	window_free(ed->prompt);
 	text_regex_free(ed->search_pattern);
 	for (int i = 0; i < REG_LAST; i++)
-		register_free(&ed->registers[i]);
+		register_release(&ed->registers[i]);
 	editor_syntax_unload(ed);
 	ed->ui->free(ed->ui);
 	map_free(ed->cmds);
 	map_free(ed->options);
-	buffer_free(&ed->buffer_repeat);
+	buffer_release(&ed->buffer_repeat);
 	free(ed);
 }
 
