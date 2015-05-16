@@ -1742,10 +1742,13 @@ static Command *lookup_cmd(const char *name) {
 
 static bool exec_cmdline_command(const char *cmdline) {
 	enum CmdOpt opt = CMD_OPT_NONE;
-	char *line = strdup(cmdline);
-	char *name = line;
+	size_t len = strlen(cmdline);
+	char *line = malloc(len+2);
 	if (!line)
 		return false;
+	line = strncpy(line, cmdline, len+1);
+	char *name = line;
+
 	Filerange range = parse_range(&name);
 	if (!text_range_valid(&range)) {
 		/* if only one position was given, jump to it */
@@ -1766,15 +1769,20 @@ static bool exec_cmdline_command(const char *cmdline) {
 	while (*name == ' ')
 		name++;
 	char *param = name;
-	while (*param && *param != ' ') {
-		if (*param == '!') {
-			opt |= CMD_OPT_FORCE;
-			break;
-		}
+	while (*param && isalpha(*param))
 		param++;
+
+	if (*param == '!') {
+		if (param != name) {
+			opt |= CMD_OPT_FORCE;
+			*param = ' ';
+		} else {
+			param++;
+		}
 	}
-	if (*param)
-		*param++ = '\0'; /* truncate by overwriting ' ' or '!' */
+
+	memmove(param+1, param, strlen(param)+1);
+	*param++ = '\0'; /* separate command name from parameters */
 
 	Command *cmd = lookup_cmd(name);
 	if (!cmd) {
