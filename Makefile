@@ -12,7 +12,7 @@ vis: config.h config.mk *.c *.h
 	@${CC} ${CFLAGS} *.c ${LDFLAGS} -o $@
 
 debug: clean
-	@make CFLAGS='${DEBUG_CFLAGS}'
+	@$(MAKE) CFLAGS='${DEBUG_CFLAGS}'
 
 clean:
 	@echo cleaning
