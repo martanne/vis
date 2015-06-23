@@ -785,8 +785,6 @@ ssize_t text_range_write(Text *txt, Filerange *range, int fd) {
 		}
 	}
 out:
-	txt->saved_action = txt->history;
-	text_snapshot(txt);
 	return size - rem;
 }
 
