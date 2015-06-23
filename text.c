@@ -70,12 +70,12 @@ typedef struct {
 	size_t off;             /* offset into the piece in bytes */
 } Location;
 
-/* A Span holds a certain range of pieces. Changes to the document are allways
+/* A Span holds a certain range of pieces. Changes to the document are always
  * performed by swapping out an existing span with a new one.
  */
 typedef struct {
 	Piece *start, *end;     /* start/end of the span */
-	size_t len;             /* the sum of the lenghts of the pieces which form this span */
+	size_t len;             /* the sum of the lengths of the pieces which form this span */
 } Span;
 
 /* A Change keeps all needed information to redo/undo an insertion/deletion. */
