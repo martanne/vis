@@ -67,6 +67,8 @@ static Command cmds[] = {
 	{ { "wq",                      }, cmd_wq,         CMD_OPT_FORCE },
 	{ { "write", "w"               }, cmd_write,      CMD_OPT_FORCE },
 	{ { "xit",                     }, cmd_xit,        CMD_OPT_FORCE },
+	{ { "earlier"                  }, cmd_earlier,    CMD_OPT_NONE  },
+	{ { "later"                    }, cmd_later,      CMD_OPT_NONE  },
 	{ { "!",                       }, cmd_filter,     CMD_OPT_NONE  },
 	{ /* array terminator */                                        },
 };
@@ -407,6 +409,8 @@ static KeyBinding vis_mode_normal[] = {
 	{ { NONE('X')               }, delete,         { .i = MOVE_CHAR_PREV       } },
 	{ { NONE('u')               }, undo,           { NULL                      } },
 	{ { CONTROL('R')            }, redo,           { NULL                      } },
+	{ { NONE('g'), NONE('+')    }, later,          { NULL                      } },
+	{ { NONE('g'), NONE('-')    }, earlier,        { NULL                      } },
 	{ { CONTROL('L')            }, call,           { .f = editor_draw          } },
 	{ { NONE(':')               }, prompt_cmd,     { .s = ""                   } },
 	{ { NONE('Z'), NONE('Z')    }, cmd,            { .s = "wq"                 } },

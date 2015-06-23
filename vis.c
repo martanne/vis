@@ -341,6 +341,9 @@ static void mark_line(const Arg *arg);
 /* {un,re}do last action, redraw window */
 static void undo(const Arg *arg);
 static void redo(const Arg *arg);
+/* earlier, later action chronologically, redraw window */
+static void earlier(const Arg *arg);
+static void later(const Arg *arg);
 /* either part of multiplier or a movement to begin of line */
 static void zero(const Arg *arg);
 /* hange/delete from the current cursor position to the end of
@@ -416,6 +419,10 @@ static bool cmd_write(Filerange*, enum CmdOpt, const char *argv[]);
 static bool cmd_saveas(Filerange*, enum CmdOpt, const char *argv[]);
 /* filter range through external program argv[1] */
 static bool cmd_filter(Filerange*, enum CmdOpt, const char *argv[]);
+/* switch to the previous saved state of the text, chronologically */
+static bool cmd_earlier(Filerange*, enum CmdOpt, const char *argv[]);
+/* switch to the next saved state of the text, chronologically */
+static bool cmd_later(Filerange*, enum CmdOpt, const char *argv[]);
 
 static void action_reset(Action *a);
 static void switchmode_to(Mode *new_mode);
@@ -940,6 +947,24 @@ static void undo(const Arg *arg) {
 
 static void redo(const Arg *arg) {
 	size_t pos = text_redo(vis->win->file->text);
+	if (pos != EPOS) {
+		view_cursor_to(vis->win->view, pos);
+		/* redraw all windows in case some display the same file */
+		editor_draw(vis);
+	}
+}
+
+static void earlier(const Arg *arg) {
+	size_t pos = text_earlier(vis->win->file->text);
+	if (pos != EPOS) {
+		view_cursor_to(vis->win->view, pos);
+		/* redraw all windows in case some display the same file */
+		editor_draw(vis);
+	}
+}
+
+static void later(const Arg *arg) {
+	size_t pos = text_later(vis->win->file->text);
 	if (pos != EPOS) {
 		view_cursor_to(vis->win->view, pos);
 		/* redraw all windows in case some display the same file */
@@ -1852,6 +1877,22 @@ static bool cmd_filter(Filerange *range, enum CmdOpt opt, const char *argv[]) {
 	reset_prog_mode();
 	wclear(stdscr);
 	return status == 0;
+}
+
+static bool cmd_earlier(Filerange *range, enum CmdOpt opt, const char *argv[]) {
+	if (argv[1])
+		return false;
+	//TODO eventually support time arguments
+	text_earlier(vis->win->file->text);
+	return true;
+}
+
+static bool cmd_later(Filerange *range, enum CmdOpt opt, const char *argv[]) {
+	if (argv[1])
+		return false;
+	//TODO eventually support time arguments
+	text_later(vis->win->file->text);
+	return true;
 }
 
 static Filepos parse_pos(char **cmd) {
