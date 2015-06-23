@@ -135,13 +135,17 @@ As illustrated above, each change to the text is recorded by an old and
 a new span. An action consists of multiple changes which logically belong
 to each other and should thus also be reverted together. For example
 a search and replace operation is one action with possibly many changes
-all over the text. Actions are kept in an undo respectively redo stack.
+all over the text. Actions are saved in a tree structure.
 
 A state of the text can be marked by means of a snapshotting operation.
+Snapshotting saves a new node to the history tree and creates a fresh Action
+to which future changes will be appended until the next snapshot.
 The undo/redo functionality operates on such marked states and switches
-back and forth between them.
+between them by traversing adjacent nodes in the tree.
 
-The history is currently linear, no undo / history tree is implemented.
+Undo and Redo move the state of the document up and down on a single branch
+of the history tree, but other branches can be accessed with the Earlier
+and Later commands, which iterate through snapshotted states chronologically.
 
 Properties
 ----------
@@ -270,7 +274,7 @@ Unicode support for free. But unfortunately it won't work due to quoting
 issues and other conflicts of special symbols with different meanings.
 
 Later it occurred to me that the editor prompt could just be treated as
-special 1 line file. That is all the main editor functionality is reused
+special 1 line file. That is, all the main editor functionality is reused
 with a slightly different set of key bindings.
 
 This approach also has the added benefit of further testing the main editor
@@ -299,7 +303,7 @@ different modes.
 Each mode can also provide hooks which are executed upon entering/leaving
 the mode and when there was an unmatched key.
 
-vis a vim like frontend
+vis a vim-like frontend
 -----------------------
 
 The following section gives a quick overview over various vim features
@@ -408,7 +412,7 @@ and their current support in vis.
 
 ### Undo/Redo and Repeat
 
-  The text is currently snapshoted whenever an operator is completed as
+  The text is currently snapshotted whenever an operator is completed as
   well as when insert or replace mode is left. Additionally a snapshot
   is also taken if in insert or replace mode a certain idle time elapses.
 
