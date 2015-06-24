@@ -98,6 +98,8 @@ struct Revision {
 	Change *change;         /* the most recent change */
 	Revision *next;         /* the next (child) revision in the undo tree */
 	Revision *prev;         /* the previous (parent) revision in the undo tree */
+	Revision *alt_prev;     /* the previous sibling node, chronologically */
+	Revision *alt_next;     /* the next sibling node, chronologically */
 	Revision *earlier;      /* the previous Revision, chronologically */
 	Revision *later;        /* the next Revision, chronologically */
 	time_t time;            /* when the first change of this revision was performed */
@@ -430,6 +432,14 @@ static Revision *revision_alloc(Text *txt) {
 		return rev;
 	}
 
+	/* set sibling pointers */
+	if (txt->history->next) {
+		Revision *last_alt = txt->history->next;
+		while (last_alt->alt_next)
+			last_alt = last_alt->alt_next;
+		rev->alt_prev = last_alt;
+		last_alt->alt_next = rev;
+	}
 	/* set prev, next pointers */
 	rev->prev = txt->history;
 	txt->history->next = rev;
