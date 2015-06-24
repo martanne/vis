@@ -85,15 +85,19 @@ struct Change {
 	Span new;               /* all pieces which are introduced/swapped in by the change */
 	size_t pos;             /* absolute position at which the change occured */
 	Change *next;           /* next change which is part of the same action */
+	Change *prev;           /* previous change which is part of the same action */
 };
 
 /* An Action is a list of Changes which are used to undo/redo all modifications
- * since the last snapshot operation. Actions are kept in an undo and a redo stack.
+ * since the last snapshot operation. Actions are stored in a directed graph structure.
  */
 typedef struct Action Action;
 struct Action {
 	Change *change;         /* the most recent change */
-	Action *next;           /* next action in the undo/redo stack */
+	Action *next;           /* the next (child) action in the undo tree */
+	Action *prev;           /* the previous (parent) operation in the undo tree */
+	Action *earlier;        /* the previous Action, chronologically */
+	Action *later;          /* the next Action, chronologically */
 	time_t time;            /* when the first change of this action was performed */
 };
 
@@ -106,16 +110,17 @@ typedef struct {
 struct Text {
 	Buffer buf;             /* original mmap(2)-ed file content at the time of load operation */
 	Buffer *buffers;        /* all buffers which have been allocated to hold insertion data */
-	Piece *pieces;		/* all pieces which have been allocated, used to free them */
+	Piece *pieces;          /* all pieces which have been allocated, used to free them */
 	Piece *cache;           /* most recently modified piece */
-	int piece_count;	/* number of pieces allocated, only used for debuging purposes */
+	int piece_count;        /* number of pieces allocated, only used for debuging purposes */
 	Piece begin, end;       /* sentinel nodes which always exists but don't hold any data */
-	Action *redo, *undo;    /* two stacks holding all actions performed to the file */
+	Action *history;        /* undo tree */
 	Action *current_action; /* action holding all file changes until a snapshot is performed */
+	Action *last_action;    /* the last action added to the tree, chronologically */
 	Action *saved_action;   /* the last action at the time of the save operation */
 	size_t size;            /* current file content size in bytes */
 	char *filename;         /* filename of which data was loaded */
-	struct stat info;	/* stat as proped on load time */
+	struct stat info;       /* stat as proped on load time */
 	int fd;                 /* the file descriptor of the original mmap-ed data */
 	LineCache lines;        /* mapping between absolute pos in bytes and logical line breaks */
 	enum TextNewLine newlines; /* which type of new lines does the file use */
@@ -149,8 +154,6 @@ static void change_free(Change *c);
 /* action management */
 static Action *action_alloc(Text *txt);
 static void action_free(Action *a);
-static void action_push(Action **stack, Action *action);
-static Action *action_pop(Action **stack);
 /* logical line counting cache */
 static void lineno_cache_invalidate(LineCache *cache);
 static size_t lines_skip_forward(Text *txt, size_t pos, size_t lines, size_t *lines_skiped);
@@ -331,30 +334,28 @@ static void span_swap(Text *txt, Span *old, Span *new) {
 	txt->size += new->len;
 }
 
-static void action_push(Action **stack, Action *action) {
-	action->next = *stack;
-	*stack = action;
-}
-
-static Action *action_pop(Action **stack) {
-	Action *action = *stack;
-	if (action)
-		*stack = action->next;
-	return action;
-}
-
-/* allocate a new action, empty the redo stack and push the new action onto
- * the undo stack. all further changes will be associated with this action. */
+/* allocate a new action, set its pointers to the other actions in the history,
+ * and set it as txt->history. All further changes will be associated with this action. */
 static Action *action_alloc(Text *txt) {
-	Action *old, *new = calloc(1, sizeof(Action));
+	Action *new = calloc(1, sizeof(Action));
 	if (!new)
 		return NULL;
 	new->time = time(NULL);
-	/* throw a away all old redo operations */
-	while ((old = action_pop(&txt->redo)))
-		action_free(old);
 	txt->current_action = new;
-	action_push(&txt->undo, new);
+	/* set earlier, later pointers */
+	if (txt->last_action)
+		txt->last_action->later = new;
+	new->earlier = txt->last_action;
+
+	if (!txt->history) {
+		txt->history = new;
+		return new;
+	}
+
+	/* set prev, next pointers */
+	new->prev = txt->history;
+	txt->history->next = new;
+	txt->history = new;
 	return new;
 }
 
@@ -459,6 +460,8 @@ static Change *change_alloc(Text *txt, size_t pos) {
 		return NULL;
 	c->pos = pos;
 	c->next = a->change;
+	if (a->change)
+		a->change->prev = c;
 	a->change = c;
 	return c;
 }
@@ -557,36 +560,101 @@ bool text_insert(Text *txt, size_t pos, const char *data, size_t len) {
 	return true;
 }
 
-size_t text_undo(Text *txt) {
+size_t action_undo(Text *txt, Action *a) {
 	size_t pos = EPOS;
-	/* taking a snapshot makes sure that txt->current_action is reset */
-	text_snapshot(txt);
-	Action *a = action_pop(&txt->undo);
-	if (!a)
-		return pos;
 	for (Change *c = a->change; c; c = c->next) {
 		span_swap(txt, &c->new, &c->old);
 		pos = c->pos;
 	}
+	return pos;
+}
 
-	action_push(&txt->redo, a);
+size_t action_redo(Text *txt, Action *a) {
+	size_t pos = EPOS;
+	Change *c = a->change;
+	while (c->next)
+		c = c->next;
+	for ( ; c; c = c->prev) {
+		span_swap(txt, &c->old, &c->new);
+		pos = c->pos;
+	}
+	return pos;
+}
+
+size_t text_undo(Text *txt) {
+	size_t pos = EPOS;
+	/* taking a snapshot makes sure that txt->current_action is reset */
+	text_snapshot(txt);
+	Action *a = txt->history->prev;
+	if (!a)
+		return pos;
+	pos = action_undo(txt, txt->history);
+	txt->history = a;
 	lineno_cache_invalidate(&txt->lines);
 	return pos;
 }
 
 size_t text_redo(Text *txt) {
 	size_t pos = EPOS;
-	Action *a = action_pop(&txt->redo);
+	/* taking a snapshot makes sure that txt->current_action is reset */
+	text_snapshot(txt);
+	Action *a = txt->history->next;
 	if (!a)
 		return pos;
-	for (Change *c = a->change; c; c = c->next) {
-		span_swap(txt, &c->old, &c->new);
-		pos = c->pos;
-	}
-
-	action_push(&txt->undo, a);
+	pos = action_redo(txt, a);
+	txt->history = a;
 	lineno_cache_invalidate(&txt->lines);
 	return pos;
+}
+
+bool history_change_branch(Action *a) {
+	bool changed = false;
+	while (a->prev) {
+		if (a->prev->next != a) {
+			a->prev->next = a;
+			changed = true;
+		}
+		a = a->prev;
+	}
+	return changed;
+}
+
+size_t history_traverse_to(Text *txt, Action *a) {
+	size_t pos = EPOS;
+	if (!a)
+		return pos;
+	bool changed = history_change_branch(a);
+	if (!changed) {
+		if (a->time == txt->history->time) {
+			return txt->lines.pos;
+		} else if (a->time > txt->history->time) {
+			while (txt->history != a)
+				pos = text_redo(txt);
+			return pos;
+		} else if (a->time < txt->history->time) {
+			while (txt->history != a)
+				pos = text_undo(txt);
+			return pos;
+		}
+	} else {
+		while (txt->history->prev && txt->history->prev->next == txt->history)
+			text_undo(txt);
+		pos = text_undo(txt);
+		while (txt->history != a)
+			pos = text_redo(txt);
+		return pos;
+	}
+	return pos;
+}
+
+size_t text_earlier(Text *txt) {
+	Action *earlier = txt->history->earlier;
+	return history_traverse_to(txt, earlier);
+}
+
+size_t text_later(Text *txt) {
+	Action *later = txt->history->later;
+	return history_traverse_to(txt, later);
 }
 
 bool text_save(Text *txt, const char *filename) {
@@ -646,7 +714,7 @@ bool text_range_save(Text *txt, Filerange *range, const char *filename) {
 	fd = -1;
 	if (rename(tmpname, filename) == -1)
 		goto err;
-	txt->saved_action = txt->undo;
+	txt->saved_action = txt->history;
 	text_snapshot(txt);
 	if (!txt->filename)
 		text_filename_set(txt, filename);
@@ -687,7 +755,7 @@ ssize_t text_range_write(Text *txt, Filerange *range, int fd) {
 		}
 	}
 out:
-	txt->saved_action = txt->undo;
+	txt->saved_action = txt->history;
 	text_snapshot(txt);
 	return size - rem;
 }
@@ -732,6 +800,11 @@ Text *text_load(const char *filename) {
 		piece_init(&txt->end, p, NULL, NULL, 0);
 		txt->size = txt->buf.size;
 	}
+	/* write an empty action */
+	change_alloc(txt, EPOS);
+	text_snapshot(txt);
+	txt->saved_action = txt->history;
+
 	return txt;
 out:
 	if (txt->fd > 2) {
@@ -749,7 +822,7 @@ Text *text_load_fd(int fd) {
 	char buf[1024];
 	for (ssize_t len = 0; (len = read(fd, buf, sizeof buf)) > 0;)
 		text_insert(txt, text_size(txt), buf, len);
-	txt->saved_action = txt->undo;
+	txt->saved_action = txt->history;
 	text_snapshot(txt);
 	txt->fd = fd;
 	return txt;
@@ -867,19 +940,26 @@ bool text_delete(Text *txt, size_t pos, size_t len) {
 /* preserve the current text content such that it can be restored by
  * means of undo/redo operations */
 void text_snapshot(Text *txt) {
+	if (txt->current_action)
+		txt->last_action = txt->current_action;
 	txt->current_action = NULL;
 	txt->cache = NULL;
 }
+
 
 void text_free(Text *txt) {
 	if (!txt)
 		return;
 
-	Action *a;
-	while ((a = action_pop(&txt->undo)))
-		action_free(a);
-	while ((a = action_pop(&txt->redo)))
-		action_free(a);
+	// free history
+	Action *hist = txt->history;
+	while (hist && hist->prev)
+		hist = hist->prev;
+	while (hist) {
+		Action *later = hist->later;
+		action_free(hist);
+		hist = later;
+	}
 
 	for (Piece *next, *p = txt->pieces; p; p = next) {
 		next = p->global_next;
@@ -899,7 +979,7 @@ void text_free(Text *txt) {
 }
 
 bool text_modified(Text *txt) {
-	return txt->saved_action != txt->undo;
+	return txt->saved_action != txt->history;
 }
 
 enum TextNewLine text_newline_type(Text *txt){
@@ -1165,7 +1245,7 @@ size_t text_mark_get(Text *txt, Mark mark) {
 }
 
 size_t text_history_get(Text *txt, size_t index) {
-	for (Action *a = txt->current_action ? txt->current_action : txt->undo; a; a = a->next) {
+	for (Action *a = txt->current_action ? txt->current_action : txt->history; a; a = a->prev) {
 		if (index-- == 0) {
 			Change *c = a->change;
 			while (c && c->next)

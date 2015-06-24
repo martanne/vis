@@ -49,6 +49,8 @@ void text_snapshot(Text*);
  * the change occured or EPOS if nothing could be undo/redo. */
 size_t text_undo(Text*);
 size_t text_redo(Text*);
+size_t text_earlier(Text*);
+size_t text_later(Text*);
 
 size_t text_pos_by_lineno(Text*, size_t lineno);
 size_t text_lineno_by_pos(Text*, size_t pos);
