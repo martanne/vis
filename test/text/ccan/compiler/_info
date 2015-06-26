@@ -1,0 +1,64 @@
+#include "config.h"
+#include <string.h>
+#include <stdio.h>
+
+/**
+ * compiler - macros for common compiler extensions
+ *
+ * Abstracts away some compiler hints.  Currently these include:
+ * - COLD
+ *	For functions not called in fast paths (aka. cold functions)
+ * - PRINTF_FMT
+ *	For functions which take printf-style parameters.
+ * - CONST_FUNCTION
+ *	For functions which return the same value for same parameters.
+ * - NEEDED
+ *	For functions and variables which must be emitted even if unused.
+ * - UNNEEDED
+ *	For functions and variables which need not be emitted if unused.
+ * - UNUSED
+ *	For parameters which are not used.
+ * - IS_COMPILE_CONSTANT()
+ *	For using different tradeoffs for compiletime vs runtime evaluation.
+ *
+ * License: CC0 (Public domain)
+ * Author: Rusty Russell <rusty@rustcorp.com.au>
+ *
+ * Example:
+ *	#include <ccan/compiler/compiler.h>
+ *	#include <stdio.h>
+ *	#include <stdarg.h>
+ *
+ *	// Example of a (slow-path) logging function.
+ *	static int log_threshold = 2;
+ *	static void COLD PRINTF_FMT(2,3)
+ *		logger(int level, const char *fmt, ...)
+ *	{
+ *		va_list ap;
+ *		va_start(ap, fmt);
+ *		if (level >= log_threshold)
+ *			vfprintf(stderr, fmt, ap);
+ *		va_end(ap);
+ *	}
+ *
+ *	int main(int argc, char *argv[])
+ *	{
+ *		if (argc != 1) {
+ *			logger(3, "Don't want %i arguments!\n", argc-1);
+ *			return 1;
+ *		}
+ *		return 0;
+ *	}
+ */
+int main(int argc, char *argv[])
+{
+	/* Expect exactly one argument */
+	if (argc != 2)
+		return 1;
+
+	if (strcmp(argv[1], "depends") == 0) {
+		return 0;
+	}
+
+	return 1;
+}
