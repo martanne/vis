@@ -235,6 +235,7 @@ struct Editor {
 	int tabwidth;                     /* how many spaces should be used to display a tab */
 	bool expandtab;                   /* whether typed tabs should be converted to spaces */
 	bool autoindent;                  /* whether indentation should be copied from previous line on newline */
+	bool vicursor;                    /* whether cursor behaves like in nvi/elvis/vim after leaving insert mode */
 	Map *cmds;                        /* ":"-commands, used for unique prefix queries */
 	Map *options;                     /* ":set"-options */
 	Buffer buffer_repeat;             /* holds data to repeat last insertion/replacement */
