@@ -1,0 +1,61 @@
+#include "config.h"
+#include <stdio.h>
+#include <string.h>
+
+/**
+ * tap - Test Anything Protocol
+ *
+ * The tap package produces simple-to-parse mainly-human-readable test
+ * output to assist in the writing of test cases.  It is based on the
+ * (now-defunct) libtap, which is based on Perl's CPAN TAP module.  Its
+ * output can be parsed by a harness such as CPAN's Prove.
+ *
+ * CCAN testcases are expected to output the TAP format, usually using
+ * this package.
+ *
+ * For more information about TAP, see:
+ *	http://en.wikipedia.org/wiki/Test_Anything_Protocol
+ *
+ * Based on the original libtap, Copyright (c) 2004 Nik Clayton.
+ *
+ * License: BSD (2 clause)
+ *
+ * Example:
+ *	#include <string.h>
+ *	#include <ccan/tap/tap.h>
+ *
+ *	// Run some simple (but overly chatty) tests on strcmp().
+ *	int main(int argc, char *argv[])
+ *	{
+ *		const char a[] = "a", another_a[] = "a";
+ *		const char b[] = "b";
+ *		const char ab[] = "ab";
+ *
+ *		plan_tests(4);
+ *		diag("Testing different pointers (%p/%p) with same contents",
+ *		     a, another_a);
+ *		ok1(strcmp(a, another_a) == 0);
+ *
+ *		diag("'a' comes before 'b'");
+ *		ok1(strcmp(a, b) < 0);
+ *		ok1(strcmp(b, a) > 0);
+ *
+ *		diag("'ab' comes after 'a'");
+ *		ok1(strcmp(ab, a) > 0);
+ *		return exit_status();
+ *	}
+ *
+ * Maintainer: Rusty Russell <rusty@rustcorp.com.au>
+ */
+int main(int argc, char *argv[])
+{
+	if (argc != 2)
+		return 1;
+
+	if (strcmp(argv[1], "depends") == 0) {
+		printf("ccan/compiler\n");
+		return 0;
+	}
+
+	return 1;
+}
