@@ -560,7 +560,7 @@ bool text_insert(Text *txt, size_t pos, const char *data, size_t len) {
 	return true;
 }
 
-size_t action_undo(Text *txt, Action *a) {
+static size_t action_undo(Text *txt, Action *a) {
 	size_t pos = EPOS;
 	for (Change *c = a->change; c; c = c->next) {
 		span_swap(txt, &c->new, &c->old);
@@ -569,7 +569,7 @@ size_t action_undo(Text *txt, Action *a) {
 	return pos;
 }
 
-size_t action_redo(Text *txt, Action *a) {
+static size_t action_redo(Text *txt, Action *a) {
 	size_t pos = EPOS;
 	Change *c = a->change;
 	while (c->next)
@@ -607,7 +607,7 @@ size_t text_redo(Text *txt) {
 	return pos;
 }
 
-bool history_change_branch(Action *a) {
+static bool history_change_branch(Action *a) {
 	bool changed = false;
 	while (a->prev) {
 		if (a->prev->next != a) {
@@ -619,7 +619,7 @@ bool history_change_branch(Action *a) {
 	return changed;
 }
 
-size_t history_traverse_to(Text *txt, Action *a) {
+static size_t history_traverse_to(Text *txt, Action *a) {
 	size_t pos = EPOS;
 	if (!a)
 		return pos;
