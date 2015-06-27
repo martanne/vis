@@ -2,6 +2,7 @@
 #define TEXT_H
 
 #include <stdbool.h>
+#include <time.h>
 #include <sys/types.h>
 
 #define EPOS ((size_t)-1)         /* invalid position */
@@ -49,8 +50,13 @@ void text_snapshot(Text*);
  * the change occured or EPOS if nothing could be undo/redo. */
 size_t text_undo(Text*);
 size_t text_redo(Text*);
-size_t text_earlier(Text*);
-size_t text_later(Text*);
+/* move chronlogically to the count earlier/later revision */
+size_t text_earlier(Text*, int count);
+size_t text_later(Text*, int count);
+/* restore the text to the state closest to the time given */
+size_t text_restore(Text*, time_t);
+/* get creation time of current state */
+time_t text_state(Text*);
 
 size_t text_pos_by_lineno(Text*, size_t lineno);
 size_t text_lineno_by_pos(Text*, size_t pos);

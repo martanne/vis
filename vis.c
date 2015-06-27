@@ -25,6 +25,7 @@
 #include <fcntl.h>
 #include <limits.h>
 #include <ctype.h>
+#include <time.h>
 #include <sys/select.h>
 #include <sys/types.h>
 #include <sys/wait.h>
@@ -419,10 +420,8 @@ static bool cmd_write(Filerange*, enum CmdOpt, const char *argv[]);
 static bool cmd_saveas(Filerange*, enum CmdOpt, const char *argv[]);
 /* filter range through external program argv[1] */
 static bool cmd_filter(Filerange*, enum CmdOpt, const char *argv[]);
-/* switch to the previous saved state of the text, chronologically */
-static bool cmd_earlier(Filerange*, enum CmdOpt, const char *argv[]);
-/* switch to the next saved state of the text, chronologically */
-static bool cmd_later(Filerange*, enum CmdOpt, const char *argv[]);
+/* switch to the previous/next saved state of the text, chronologically */
+static bool cmd_earlier_later(Filerange*, enum CmdOpt, const char *argv[]);
 
 static void action_reset(Action *a);
 static void switchmode_to(Mode *new_mode);
@@ -955,7 +954,7 @@ static void redo(const Arg *arg) {
 }
 
 static void earlier(const Arg *arg) {
-	size_t pos = text_earlier(vis->win->file->text);
+	size_t pos = text_earlier(vis->win->file->text, MAX(vis->action.count, 1));
 	if (pos != EPOS) {
 		view_cursor_to(vis->win->view, pos);
 		/* redraw all windows in case some display the same file */
@@ -964,7 +963,7 @@ static void earlier(const Arg *arg) {
 }
 
 static void later(const Arg *arg) {
-	size_t pos = text_later(vis->win->file->text);
+	size_t pos = text_later(vis->win->file->text, MAX(vis->action.count, 1));
 	if (pos != EPOS) {
 		view_cursor_to(vis->win->view, pos);
 		/* redraw all windows in case some display the same file */
@@ -1879,20 +1878,52 @@ static bool cmd_filter(Filerange *range, enum CmdOpt opt, const char *argv[]) {
 	return status == 0;
 }
 
-static bool cmd_earlier(Filerange *range, enum CmdOpt opt, const char *argv[]) {
-	if (argv[1])
-		return false;
-	//TODO eventually support time arguments
-	text_earlier(vis->win->file->text);
-	return true;
-}
+static bool cmd_earlier_later(Filerange *range, enum CmdOpt opt, const char *argv[]) {
+	Text *txt = vis->win->file->text;
+	char *unit = "";
+	long count = 1;
+	size_t pos = EPOS;
+	if (argv[1]) {
+		errno = 0;
+		count = strtol(argv[1], &unit, 10);
+		if (errno || unit == argv[1] || count < 0) {
+			editor_info_show(vis, "Invalid number");
+			return false;
+		}
 
-static bool cmd_later(Filerange *range, enum CmdOpt opt, const char *argv[]) {
-	if (argv[1])
-		return false;
-	//TODO eventually support time arguments
-	text_later(vis->win->file->text);
-	return true;
+		if (*unit) {
+			while (*unit && isspace((unsigned char)*unit))
+				unit++;
+			switch (*unit) {
+			case 'd': count *= 24;
+			case 'h': count *= 60;
+			case 'm': count *= 60;
+			case 's': break;
+			default:
+				editor_info_show(vis, "Unknown time specifier (use: s,m,h or d)");
+				return false;
+			}
+
+			if (argv[0][0] == 'e')
+				count = -count; /* earlier, move back in time */
+
+			pos = text_restore(txt, text_state(txt) + count);
+		}
+	}
+
+	if (!*unit) {
+		if (argv[0][0] == 'e')
+			pos = text_earlier(txt, count);
+		else
+			pos = text_later(txt, count);
+	}
+
+	time_t state = text_state(txt);
+	char buf[32];
+	strftime(buf, sizeof buf, "State from %H:%M", localtime(&state));
+	editor_info_show(vis, "%s", buf);
+
+	return pos != EPOS;
 }
 
 static Filepos parse_pos(char **cmd) {

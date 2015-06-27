@@ -647,14 +647,36 @@ static size_t history_traverse_to(Text *txt, Action *a) {
 	return pos;
 }
 
-size_t text_earlier(Text *txt) {
-	Action *earlier = txt->history->earlier;
-	return history_traverse_to(txt, earlier);
+size_t text_earlier(Text *txt, int count) {
+	Action *a = txt->history;
+	while (count-- > 0 && a->earlier)
+		a = a->earlier;
+	return history_traverse_to(txt, a);
 }
 
-size_t text_later(Text *txt) {
-	Action *later = txt->history->later;
-	return history_traverse_to(txt, later);
+size_t text_later(Text *txt, int count) {
+	Action *a = txt->history;
+	while (count-- > 0 && a->later)
+		a = a->later;
+	return history_traverse_to(txt, a);
+}
+
+size_t text_restore(Text *txt, time_t time) {
+	Action *a = txt->history;
+	while (time < a->time && a->earlier)
+		a = a->earlier;
+	while (time > a->time && a->later)
+		a = a->later;
+	time_t diff = labs(a->time - time);
+	if (a->earlier && a->earlier != txt->history && labs(a->earlier->time - time) < diff)
+		a = a->earlier;
+	if (a->later && a->later != txt->history && labs(a->later->time - time) < diff)
+		a = a->earlier;
+	return history_traverse_to(txt, a);
+}
+
+time_t text_state(Text *txt) {
+	return txt->history->time;
 }
 
 bool text_save(Text *txt, const char *filename) {
