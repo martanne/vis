@@ -99,6 +99,7 @@ struct Action {
 	Action *earlier;        /* the previous Action, chronologically */
 	Action *later;          /* the next Action, chronologically */
 	time_t time;            /* when the first change of this action was performed */
+	size_t seq;             /* a unique, strictly increasing identifier */
 };
 
 typedef struct {
@@ -342,6 +343,13 @@ static Action *action_alloc(Text *txt) {
 		return NULL;
 	new->time = time(NULL);
 	txt->current_action = new;
+
+	/* set sequence number */
+	if (!txt->last_action)
+		new->seq = 0;
+	else
+		new->seq = txt->last_action->seq + 1;
+
 	/* set earlier, later pointers */
 	if (txt->last_action)
 		txt->last_action->later = new;
