@@ -135,17 +135,22 @@ As illustrated above, each change to the text is recorded by an old and
 a new span. An action consists of multiple changes which logically belong
 to each other and should thus also be reverted together. For example
 a search and replace operation is one action with possibly many changes
-all over the text. Actions are saved in a tree structure.
+all over the text.
 
-A state of the text can be marked by means of a snapshotting operation.
-Snapshotting saves a new node to the history tree and creates a fresh Action
-to which future changes will be appended until the next snapshot.
-The undo/redo functionality operates on such marked states and switches
-between them by traversing adjacent nodes in the tree.
+The text states can be marked by means of a snapshotting operation.
+Snapshotting saves a new node to the history graph and creates a fresh
+Action to which future changes will be appended until the next snapshot.
 
-Undo and Redo move the state of the document up and down on a single branch
-of the history tree, but other branches can be accessed with the Earlier
-and Later commands, which iterate through snapshotted states chronologically.
+Actions make up the nodes of a connected digraph, each representing a state
+of the file at some time during the current editing session. The edges of the
+digraph represent state transitions that are supported by the editor. The edges
+are implemented as four Action pointers (`prev`, `next`, `earlier`, and `later`).
+
+The editor operations that execute the four aforementioned transitions
+are `undo`, `redo`,`earlier`, and `later`, respectively. Undo and
+redo behave in the traditional manner, changing the state one Action
+at a time. Earlier and later, however, traverse the states in chronological
+order, which may occasionally involve undoing and redoing many Actions at once.
 
 Properties
 ----------
