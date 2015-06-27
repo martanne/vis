@@ -633,13 +633,13 @@ static size_t history_traverse_to(Text *txt, Action *a) {
 		return pos;
 	bool changed = history_change_branch(a);
 	if (!changed) {
-		if (a->time == txt->history->time) {
+		if (a->seq == txt->history->seq) {
 			return txt->lines.pos;
-		} else if (a->time > txt->history->time) {
+		} else if (a->seq > txt->history->seq) {
 			while (txt->history != a)
 				pos = text_redo(txt);
 			return pos;
-		} else if (a->time < txt->history->time) {
+		} else if (a->seq < txt->history->seq) {
 			while (txt->history != a)
 				pos = text_undo(txt);
 			return pos;
