@@ -1573,7 +1573,7 @@ static bool cmd_read(Filerange *range, enum CmdOpt opt, const char *argv[]) {
 
 	size_t pos = view_cursor_get(vis->win->view);
 	if (!text_range_valid(range))
-		range = &(Filerange){ .start = pos, .end = pos };
+		*range = (Filerange){ .start = pos, .end = pos };
 	Filerange delete = *range;
 	range->start = range->end;
 
@@ -1586,7 +1586,7 @@ static bool cmd_read(Filerange *range, enum CmdOpt opt, const char *argv[]) {
 static bool cmd_substitute(Filerange *range, enum CmdOpt opt, const char *argv[]) {
 	char pattern[255];
 	if (!text_range_valid(range))
-		range = &(Filerange){ .start = 0, .end = text_size(vis->win->file->text) };
+		*range = (Filerange){ .start = 0, .end = text_size(vis->win->file->text) };
 	snprintf(pattern, sizeof pattern, "s%s", argv[1]);
 	return cmd_filter(range, opt, (const char*[]){ argv[0], "sed", pattern, NULL});
 }
@@ -1636,7 +1636,7 @@ static bool cmd_wq(Filerange *range, enum CmdOpt opt, const char *argv[]) {
 static bool cmd_write(Filerange *range, enum CmdOpt opt, const char *argv[]) {
 	Text *text = vis->win->file->text;
 	if (!text_range_valid(range))
-		range = &(Filerange){ .start = 0, .end = text_size(text) };
+		*range = (Filerange){ .start = 0, .end = text_size(text) };
 	if (!argv[1])
 		argv[1] = text_filename_get(text);
 	if (!argv[1]) {
@@ -1744,7 +1744,7 @@ static bool cmd_filter(Filerange *range, enum CmdOpt opt, const char *argv[]) {
 	fcntl(perr[0], F_SETFL, O_NONBLOCK);
 
 	if (interactive)
-		range = &(Filerange){ .start = pos, .end = pos };
+		*range = (Filerange){ .start = pos, .end = pos };
 
 	/* ranges which are written to the filter and read back in */
 	Filerange rout = *range;
