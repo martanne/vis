@@ -679,7 +679,7 @@ size_t text_restore(Text *txt, time_t time) {
 	if (a->earlier && a->earlier != txt->history && labs(a->earlier->time - time) < diff)
 		a = a->earlier;
 	if (a->later && a->later != txt->history && labs(a->later->time - time) < diff)
-		a = a->earlier;
+		a = a->later;
 	return history_traverse_to(txt, a);
 }
 
