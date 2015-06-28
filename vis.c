@@ -1895,9 +1895,9 @@ static bool cmd_earlier_later(Filerange *range, enum CmdOpt opt, const char *arg
 			while (*unit && isspace((unsigned char)*unit))
 				unit++;
 			switch (*unit) {
-			case 'd': count *= 24;
-			case 'h': count *= 60;
-			case 'm': count *= 60;
+			case 'd': count *= 24; /* fall through */
+			case 'h': count *= 60; /* fall through */
+			case 'm': count *= 60; /* fall through */
 			case 's': break;
 			default:
 				editor_info_show(vis, "Unknown time specifier (use: s,m,h or d)");
