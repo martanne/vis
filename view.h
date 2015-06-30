@@ -54,8 +54,6 @@ void view_tabwidth_set(View*, int tabwidth);
 
 /* cursor movements which also update selection if one is active.
  * they return new cursor postion */
-size_t view_char_next(View*);
-size_t view_char_prev(View*);
 size_t view_line_down(View*);
 size_t view_line_up(View*);
 size_t view_screenline_down(View*);

@@ -519,46 +519,6 @@ View *view_new(Text *text, ViewEvent *events) {
 void view_ui(View *view, UiWin* ui) {
 	view->ui = ui;
 }
-size_t view_char_prev(View *view) {
-	Cursor *cursor = &view->cursor;
-	Line *line = cursor->line;
-
-	do {
-		if (cursor->col == 0) {
-			if (!line->prev)
-				return cursor->pos;
-			cursor->line = line = line->prev;
-			cursor->col = MIN(line->width, view->width - 1);
-			cursor->row--;
-		} else {
-			cursor->col--;
-		}
-	} while (line->cells[cursor->col].len == 0);
-
-	cursor->pos -= line->cells[cursor->col].len;
-	return view_cursor_update(view);
-}
-
-size_t view_char_next(View *view) {
-	Cursor *cursor = &view->cursor;
-	Line *line = cursor->line;
-
-	do {
-		cursor->pos += line->cells[cursor->col].len;
-		if ((line->width == view->width && cursor->col == view->width - 1) ||
-		    cursor->col == line->width) {
-			if (!line->next)
-				return cursor->pos;
-			cursor->line = line = line->next;
-			cursor->row++;
-			cursor->col = 0;
-		} else {
-			cursor->col++;
-		}
-	} while (line->cells[cursor->col].len == 0);
-
-	return view_cursor_update(view);
-}
 
 static size_t view_cursor_set(View *view, Line *line, int col) {
 	int row = 0;
