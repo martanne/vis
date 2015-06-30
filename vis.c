@@ -1779,7 +1779,7 @@ static bool cmd_filter(Filerange *range, enum CmdOpt opt, const char *argv[]) {
 			break;
 		}
 
-		if (FD_ISSET(pin[1], &wfds)) {
+		if (pin[1] != -1 && FD_ISSET(pin[1], &wfds)) {
 			Filerange junk = *range;
 			if (junk.end > junk.start + PIPE_BUF)
 				junk.end = junk.start + PIPE_BUF;
@@ -1798,7 +1798,7 @@ static bool cmd_filter(Filerange *range, enum CmdOpt opt, const char *argv[]) {
 			}
 		}
 
-		if (FD_ISSET(pout[0], &rfds)) {
+		if (pout[0] != -1 && FD_ISSET(pout[0], &rfds)) {
 			char buf[BUFSIZ];
 			ssize_t len = read(pout[0], buf, sizeof buf);
 			if (len > 0) {
@@ -1814,7 +1814,7 @@ static bool cmd_filter(Filerange *range, enum CmdOpt opt, const char *argv[]) {
 			}
 		}
 
-		if (FD_ISSET(perr[0], &rfds)) {
+		if (perr[0] != -1 && FD_ISSET(perr[0], &rfds)) {
 			char buf[BUFSIZ];
 			ssize_t len = read(perr[0], buf, sizeof buf);
 			if (len > 0) {
