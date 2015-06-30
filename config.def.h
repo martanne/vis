@@ -486,7 +486,7 @@ static KeyBinding vis_mode_readline[] = {
 	BACKSPACE(                     call,               f,  editor_backspace_key       ),
 	{ { NONE(ESC)               }, switchmode,      { .i = VIS_MODE_NORMAL          } },
 	{ { CONTROL('c')            }, switchmode,      { .i = VIS_MODE_NORMAL          } },
-	{ { CONTROL('D')            }, call,            { .f = editor_delete_key        } },
+	{ { CONTROL('D')            }, delete ,         { .i = MOVE_CHAR_NEXT           } },
 	{ { CONTROL('W')            }, delete,          { .i = MOVE_LONGWORD_START_PREV } },
 	{ { CONTROL('U')            }, delete,          { .i = MOVE_LINE_BEGIN          } },
 	{ /* empty last element, array terminator */                                      },

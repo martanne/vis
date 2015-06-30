@@ -257,12 +257,12 @@ void editor_suspend(Editor*);
 
 /* these function operate on the currently focused window but make sure
  * that all windows which show the affected region are redrawn too. */
-void editor_insert_key(Editor*, const char *c, size_t len);
-void editor_replace_key(Editor*, const char *c, size_t len);
+void editor_insert_key(Editor*, const char *data, size_t len);
+void editor_replace_key(Editor*, const char *data, size_t len);
 void editor_backspace_key(Editor*);
-void editor_delete_key(Editor*);
 void editor_insert(Editor*, size_t pos, const char *data, size_t len);
 void editor_delete(Editor*, size_t pos, size_t len);
+void editor_replace(Editor*, size_t pos, const char *data, size_t len);
 
 /* set tabwidth (must be in range [1, 8], affects all windows */
 void editor_tabwidth_set(Editor*, int tabwidth);

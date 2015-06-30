@@ -592,21 +592,10 @@ static size_t op_repeat_insert(OperatorContext *c) {
 }
 
 static size_t op_repeat_replace(OperatorContext *c) {
-	Text *txt = vis->win->file->text;
-	size_t chars = 0, len = vis->buffer_repeat.len;
-	if (!len)
-		return c->pos;
 	const char *data = vis->buffer_repeat.data;
-	for (size_t i = 0; i < len; i++) {
-		if (ISUTF8(data[i]))
-			chars++;
-	}
-
-	Iterator it = text_iterator_get(txt, c->pos);
-	while (chars-- > 0)
-		text_iterator_char_next(&it, NULL);
-	text_delete(txt, c->pos, it.pos - c->pos);
-	return op_repeat_insert(c);
+	size_t len = vis->buffer_repeat.len;
+	editor_replace(vis, c->pos, data, len);
+	return c->pos + len;
 }
 
 /** movement implementations of type: size_t (*move)(const Arg*) */
@@ -818,8 +807,7 @@ static void replace(const Arg *arg) {
 	action_reset(&vis->action_prev);
 	vis->action_prev.op = &ops[OP_REPEAT_REPLACE];
 	buffer_put(&vis->buffer_repeat, k.str, strlen(k.str));
-	editor_delete_key(vis);
-	editor_insert_key(vis, k.str, strlen(k.str));
+	editor_replace(vis, pos, k.str, strlen(k.str));
 	text_snapshot(vis->win->file->text);
 	view_cursor_to(vis->win->view, pos);
 }
@@ -1037,7 +1025,7 @@ static void prompt_backspace(const Arg *arg) {
 	if (!cmd || !*cmd)
 		prompt_enter(NULL);
 	else
-		view_backspace_key(vis->win->view);
+		delete(&(const Arg){ .i = MOVE_CHAR_PREV });
 	free(cmd);
 }
 

@@ -59,16 +59,6 @@ static bool view_addch(View *view, Cell *cell);
 static size_t view_cursor_update(View *view);
 /* set/move current cursor position to a given (line, column) pair */
 static size_t view_cursor_set(View *view, Line *line, int col);
-/* move visible viewport n-lines up/down, redraws the view but does not change
- * cursor position which becomes invalid and should be corrected by either:
- *
- *   - view_cursor_to
- *   - view_cursor_set
- *
- * the return value indicates wether the visible area changed.
- */
-static bool view_viewport_up(View *view, int n);
-static bool view_viewport_down(View *view, int n);
 
 void view_tabwidth_set(View *view, int tabwidth) {
 	view->tabwidth = tabwidth;
@@ -235,6 +225,10 @@ CursorPos view_cursor_getpos(View *view) {
 	}
 	pos.col++;
 	return pos;
+}
+
+ViewPos view_cursor_viewpos(View *view) {
+	return (ViewPos){ .x = view->cursor.col, .y = view->cursor.row };
 }
 
 /* snyc current cursor position with internal Line/Cell structures */
@@ -596,7 +590,7 @@ static size_t view_cursor_set(View *view, Line *line, int col) {
 	return pos;
 }
 
-static bool view_viewport_down(View *view, int n) {
+bool view_viewport_down(View *view, int n) {
 	Line *line;
 	if (view->end == text_size(view->text))
 		return false;
@@ -610,7 +604,7 @@ static bool view_viewport_down(View *view, int n) {
 	return true;
 }
 
-static bool view_viewport_up(View *view, int n) {
+bool view_viewport_up(View *view, int n) {
 	/* scrolling up is somewhat tricky because we do not yet know where
 	 * the lines start, therefore scan backwards but stop at a reasonable
 	 * maximum in case we are dealing with a file without any newlines
@@ -795,68 +789,6 @@ size_t view_screenline_end(View *view) {
 	Cursor *cursor = &view->cursor;
 	int col = cursor->line->width - 1;
 	return view_cursor_set(view, cursor->line, col >= 0 ? col : 0);
-}
-
-size_t view_delete_key(View *view) {
-	Cursor *cursor = &view->cursor;
-	Line *line = cursor->line;
-	size_t len = line->cells[cursor->col].len;
-	text_delete(view->text, cursor->pos, len);
-	view_draw(view);
-	view_cursor_to(view, cursor->pos);
-	return cursor->pos;
-}
-
-size_t view_backspace_key(View *view) {
-	Cursor *cursor = &view->cursor;
-	if (view->start == cursor->pos) {
-		if (view->start == 0)
-			return cursor->pos;
-		/* if we are on the top left most position in the view
-		 * first scroll up so that the to be deleted character is
-		 * visible then proceed as normal */
-		size_t pos = cursor->pos;
-		view_viewport_up(view, 1);
-		view_cursor_to(view, pos);
-	}
-	view_char_prev(view);
-	size_t pos = cursor->pos;
-	size_t len = cursor->line->cells[cursor->col].len;
-	text_delete(view->text, pos, len);
-	view_draw(view);
-	view_cursor_to(view, pos);
-	return pos;
-}
-
-size_t view_insert_key(View *view, const char *c, size_t len) {
-	size_t pos = view->cursor.pos;
-	text_insert(view->text, pos, c, len);
-	if (view->cursor.line == view->bottomline && memchr(c, '\n', len))
-		view_viewport_down(view, 1);
-	else
-		view_draw(view);
-	pos += len;
-	view_cursor_to(view, pos);
-	return pos;
-}
-
-size_t view_replace_key(View *view, const char *c, size_t len) {
-	Cursor *cursor = &view->cursor;
-	Line *line = cursor->line;
-	size_t pos = cursor->pos;
-	/* do not overwrite new line which would merge the two lines */
-	if (line->cells[cursor->col].data[0] != '\n') {
-		size_t oldlen = line->cells[cursor->col].len;
-		text_delete(view->text, pos, oldlen);
-	}
-	text_insert(view->text, pos, c, len);
-	if (cursor->line == view->bottomline && memchr(c, '\n', len))
-		view_viewport_down(view, 1);
-	else
-		view_draw(view);
-	pos += len;
-	view_cursor_to(view, pos);
-	return pos;
 }
 
 size_t view_cursor_get(View *view) {

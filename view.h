@@ -46,12 +46,6 @@ void view_ui(View*, UiWin*);
 void view_reload(View*, Text*);
 void view_free(View*);
 
-/* keyboard input at cursor position */
-size_t view_insert_key(View*, const char *c, size_t len);
-size_t view_replace_key(View*, const char *c, size_t len);
-size_t view_backspace_key(View*);
-size_t view_delete_key(View*);
-
 bool view_resize(View*, int width, int height);
 int view_height_get(View*);
 void view_draw(View*);
@@ -83,6 +77,12 @@ size_t view_screenline_goto(View*, int n);
 /* get cursor position in bytes from start of the file */
 size_t view_cursor_get(View*);
 
+typedef struct {
+	int x, y;
+} ViewPos;
+
+ViewPos view_cursor_viewpos(View*);
+
 const Line *view_lines_get(View*);
 /* get cursor position in terms of screen coordinates */
 CursorPos view_cursor_getpos(View*);
@@ -108,6 +108,12 @@ void view_selection_set(View*, Filerange *sel);
 void view_selection_clear(View*);
 /* get the currently displayed area in bytes from the start of the file */
 Filerange view_viewport_get(View*);
+/* move visible viewport n-lines up/down, redraws the view but does not change
+ * cursor position which becomes invalid and should be corrected by calling
+ * view_cursor_to. the return value indicates wether the visible area changed.
+ */
+bool view_viewport_up(View *view, int n);
+bool view_viewport_down(View *view, int n);
 /* associate a set of syntax highlighting rules to this window. */
 void view_syntax_set(View*, Syntax*);
 Syntax *view_syntax_get(View*);
