@@ -213,7 +213,7 @@ static void ui_window_draw_sidebar(UiCursesWin *win, const Line *line) {
 		size_t cursor_lineno = view_cursor_getpos(win->view).line;
 		werase(win->winside);
 		for (const Line *l = line; l; l = l->next, i++) {
-			if (l->lineno != prev_lineno) {
+			if (l->lineno && l->lineno != prev_lineno) {
 				if (win->options & UI_OPTION_LINE_NUMBERS_ABSOLUTE) {
 					mvwprintw(win->winside, i, 0, "%*u", sidebar_width-1, l->lineno);
 				} else if (win->options & UI_OPTION_LINE_NUMBERS_RELATIVE) {
@@ -376,6 +376,8 @@ static void ui_window_draw_text(UiWin *w, const Line *line) {
 				wattrset(win->win, l->cells[x].attr);
 				waddstr(win->win, l->cells[x].data);
 			}
+			if (l->width != win->width - win->sidebar_width)
+				waddstr(win->win, "\n");
 		}
 		wclrtoeol(win->win);
 	}

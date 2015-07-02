@@ -827,6 +827,11 @@ enum {
 	COLOR_COMMENT      = COLOR_SYNTAX7,
 	COLOR_IDENTIFIER   = COLOR_SYNTAX8,
 	COLOR_TYPE         = COLOR_SYNTAX9,
+	COLOR_WHITESPACE   = COLOR_COMMENT,
+	COLOR_SPACES       = COLOR_WHITESPACE,
+	COLOR_TABS         = COLOR_WHITESPACE,
+	COLOR_EOL          = COLOR_WHITESPACE,
+	COLOR_EOF          = COLOR_WHITESPACE,
 };
 
 static Color colors[] = {
@@ -894,6 +899,12 @@ static Color colors[] = {
 	&colors[COLOR_PREPROCESSOR], \
 }
 
+#define SYNTAX_SPACES    { "\xC2\xB7",     &colors[COLOR_SPACES] }
+#define SYNTAX_TABS      { "\xE2\x96\xB6", &colors[COLOR_TABS]   }
+#define SYNTAX_TABS_FILL { " ",            &colors[COLOR_TABS]   }
+#define SYNTAX_EOL       { "\xE2\x8F\x8E", &colors[COLOR_EOL]    }
+#define SYNTAX_EOF       { "~",            &colors[COLOR_EOF]    }
+
 /* these rules are applied top to bottom, first match wins. Therefore more 'greedy'
  * rules such as for comments should be the first entries.
  *
@@ -905,7 +916,15 @@ static Syntax syntaxes[] = {{
 	.settings = (const char*[]){
 		"set number",
 		"set autoindent",
+		"set show spaces=0 tabs=1 newlines=1",
 		NULL
+	},
+	.symbols = {
+		SYNTAX_SPACES,
+		SYNTAX_TABS,
+		SYNTAX_TABS_FILL,
+		SYNTAX_EOL,
+		SYNTAX_EOF,
 	},
 	.rules = {
 		SYNTAX_MULTILINE_COMMENT,

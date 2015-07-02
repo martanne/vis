@@ -51,7 +51,24 @@ struct View {               /* viewable area, showing part of a file */
 	Line *line;         /* used while drawing view content, line where next char will be drawn */
 	int col;            /* used while drawing view content, column where next char will be drawn */
 	Syntax *syntax;     /* syntax highlighting definitions for this view or NULL */
+	SyntaxSymbol *symbols[SYNTAX_SYMBOL_LAST]; /* symbols to use for white spaces etc */
 	int tabwidth;       /* how many spaces should be used to display a tab character */
+};
+
+static SyntaxSymbol symbols_none[] = {
+	{ " " }, /* spaces */
+	{ " " }, /* tab first cell */
+	{ " " }, /* tab remaining cells */
+	{ "" },  /* eol */
+	{ "~" }, /* eof */
+};
+
+static SyntaxSymbol symbols_default[] = {
+	{ "\xC2\xB7" },     /* spaces */
+	{ "\xE2\x96\xB6" }, /* tab first cell */
+	{ " " },            /* tab remaining cells */
+	{ "\xE2\x8F\x8E" }, /* eol */
+	{ "~" },            /* eof */
 };
 
 static void view_clear(View *view);
@@ -134,6 +151,8 @@ static bool view_addch(View *view, Cell *cell) {
 
 	switch (cell->data[0]) {
 	case '\t':
+		cell->istab = true;
+		cell->width = 1;
 		width = view->tabwidth - (view->col % view->tabwidth);
 		for (int w = 0; w < width; w++) {
 			if (view->col + 1 > view->width) {
@@ -143,23 +162,18 @@ static bool view_addch(View *view, Cell *cell) {
 					return false;
 				view->line->lineno = lineno;
 			}
-			if (w == 0) {
-				/* first cell of a tab has a length of 1 */
-				view->line->cells[view->col].len = cell->len;
-				view->line->len += cell->len;
-			} else {
-				/* all remaining ones have a lenght of zero */
-				view->line->cells[view->col].len = 0;
-			}
-			/* but all are marked as part of a tabstop */
-			view->line->cells[view->col].width = 1;
-			view->line->cells[view->col].data[0] = ' ';
-			view->line->cells[view->col].data[1] = '\0';
-			view->line->cells[view->col].istab = true;
-			view->line->cells[view->col].attr = cell->attr;
-			view->line->width++;
+
+			cell->len = w == 0 ? 1 : 0;
+			int t = w == 0 ? SYNTAX_SYMBOL_TAB : SYNTAX_SYMBOL_TAB_FILL;
+			strncpy(cell->data, view->symbols[t]->symbol, sizeof(cell->data));
+			if (view->symbols[t]->color)
+				cell->attr = view->symbols[t]->color->attr;
+			view->line->cells[view->col] = *cell;
+			view->line->len += cell->len;
+			view->line->width += cell->width;
 			view->col++;
 		}
+		cell->len = 1;
 		return true;
 	case '\n':
 		cell->width = 1;
@@ -170,6 +184,11 @@ static bool view_addch(View *view, Cell *cell) {
 				return false;
 			view->line->lineno = lineno;
 		}
+
+		strncpy(cell->data, view->symbols[SYNTAX_SYMBOL_EOL]->symbol, sizeof(cell->data));
+		if (view->symbols[SYNTAX_SYMBOL_EOL]->color)
+			cell->attr = view->symbols[SYNTAX_SYMBOL_EOL]->color->attr;
+
 		view->line->cells[view->col] = *cell;
 		view->line->len += cell->len;
 		view->line->width += cell->width;
@@ -191,6 +210,12 @@ static bool view_addch(View *view, Cell *cell) {
 				.istab = false,
 				.attr = cell->attr,
 			};
+		}
+
+		if (cell->data[0] == ' ') {
+			strncpy(cell->data, view->symbols[SYNTAX_SYMBOL_SPACE]->symbol, sizeof(cell->data));
+			if (view->symbols[SYNTAX_SYMBOL_SPACE]->color)
+				cell->attr = view->symbols[SYNTAX_SYMBOL_SPACE]->color->attr;
 		}
 
 		if (view->col + cell->width > view->width) {
@@ -452,7 +477,15 @@ void view_draw(View *view) {
 	/* set end of vieviewg region */
 	view->end = pos;
 	view->lastline = view->line ? view->line : view->bottomline;
-	view->lastline->next = NULL;
+
+	for (Line *l = view->lastline->next; l; l = l->next) {
+		strncpy(l->cells[0].data, view->symbols[SYNTAX_SYMBOL_EOF]->symbol, sizeof(l->cells[0].data));
+		if (view->symbols[SYNTAX_SYMBOL_EOF]->color)
+			l->cells[0].attr =view->symbols[SYNTAX_SYMBOL_EOF]->color->attr;
+		l->width = 1;
+		l->len = 0;
+	}
+
 	view_cursor_sync(view);
 	if (view->ui)
 		view->ui->draw_text(view->ui, view->topline);
@@ -505,6 +538,7 @@ View *view_new(Text *text, ViewEvent *events) {
 	view->text = text;
 	view->events = events;
 	view->tabwidth = 8;
+	view_symbols_set(view, 0);
 	
 	if (!view_resize(view, 1, 1)) {
 		view_free(view);
@@ -776,10 +810,38 @@ void view_selection_start(View *view) {
 
 void view_syntax_set(View *view, Syntax *syntax) {
 	view->syntax = syntax;
+	for (int i = 0; i < LENGTH(view->symbols); i++) {
+		if (syntax && syntax->symbols[i].symbol)
+			view->symbols[i] = &syntax->symbols[i];
+		else
+			view->symbols[i] = &symbols_none[i];
+	}
 }
 
 Syntax *view_syntax_get(View *view) {
 	return view->syntax;
+}
+
+void view_symbols_set(View *view, int flags) {
+	for (int i = 0; i < LENGTH(view->symbols); i++) {
+		if (flags & (1 << i)) {
+			if (view->syntax && view->syntax->symbols[i].symbol)
+				view->symbols[i] = &view->syntax->symbols[i];
+			else
+				view->symbols[i] = &symbols_default[i];
+		} else {
+			view->symbols[i] = &symbols_none[i];
+		}
+	}
+}
+
+int view_symbols_get(View *view) {
+	int flags = 0;
+	for (int i = 0; i < LENGTH(view->symbols); i++) {
+		if (view->symbols[i] != &symbols_none[i])
+			flags |= (1 << i);
+	}
+	return flags;
 }
 
 size_t view_screenline_goto(View *view, int n) {

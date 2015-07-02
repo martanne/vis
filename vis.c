@@ -1339,6 +1339,7 @@ static bool cmd_set(Filerange *range, enum CmdOpt cmdopt, const char *argv[]) {
 		OPTION_EXPANDTAB,
 		OPTION_TABWIDTH,
 		OPTION_SYNTAX,
+		OPTION_SHOW,
 		OPTION_NUMBER,
 		OPTION_NUMBER_RELATIVE,
 	};
@@ -1349,6 +1350,7 @@ static bool cmd_set(Filerange *range, enum CmdOpt cmdopt, const char *argv[]) {
 		[OPTION_EXPANDTAB]       = { { "expandtab", "et"        }, OPTION_TYPE_BOOL   },
 		[OPTION_TABWIDTH]        = { { "tabwidth", "tw"         }, OPTION_TYPE_NUMBER },
 		[OPTION_SYNTAX]          = { { "syntax"                 }, OPTION_TYPE_STRING, true },
+		[OPTION_SHOW]            = { { "show"                   }, OPTION_TYPE_STRING },
 		[OPTION_NUMBER]          = { { "numbers", "nu"          }, OPTION_TYPE_BOOL   },
 		[OPTION_NUMBER_RELATIVE] = { { "relativenumbers", "rnu" }, OPTION_TYPE_BOOL   },
 	};
@@ -1447,6 +1449,36 @@ static bool cmd_set(Filerange *range, enum CmdOpt cmdopt, const char *argv[]) {
 			view_syntax_set(vis->win->view, NULL);
 		else
 			editor_info_show(vis, "Unknown syntax definition: `%s'", argv[2]);
+		break;
+	case OPTION_SHOW:
+		if (!argv[2]) {
+			editor_info_show(vis, "Expecting: spaces, tabs, newlines");
+			return false;
+		}
+		char *keys[] = { "spaces", "tabs", "newlines" };
+		int values[] = {
+			1 << SYNTAX_SYMBOL_SPACE,
+			(1 << SYNTAX_SYMBOL_TAB)|(1 << SYNTAX_SYMBOL_TAB_FILL),
+			1 << SYNTAX_SYMBOL_EOL
+		};
+		int flags = view_symbols_get(vis->win->view);
+		for (const char **args = &argv[2]; *args; args++) {
+			for (int i = 0; i < LENGTH(keys); i++) {
+				if (strcmp(*args, keys[i]) == 0) {
+					flags |= values[i];
+				} else if (strstr(*args, keys[i]) == *args) {
+					bool show;
+					const char *v = *args + strlen(keys[i]);
+					if (*v == '=' && parse_bool(v+1, &show)) {
+						if (show)
+							flags |= values[i];
+						else
+							flags &= ~values[i];
+					}
+				}
+			}
+		}
+		view_symbols_set(vis->win->view, flags);
 		break;
 	case OPTION_NUMBER:
 		editor_window_options(vis->win, arg.b ? UI_OPTION_LINE_NUMBERS_ABSOLUTE :

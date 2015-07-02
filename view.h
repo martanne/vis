@@ -115,5 +115,7 @@ bool view_viewport_down(View *view, int n);
 /* associate a set of syntax highlighting rules to this window. */
 void view_syntax_set(View*, Syntax*);
 Syntax *view_syntax_get(View*);
+void view_symbols_set(View*, int flags);
+int view_symbols_get(View*);
 
 #endif
