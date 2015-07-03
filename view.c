@@ -374,6 +374,8 @@ void view_draw(View *view) {
 	memset(match, 0, sizeof match);
 	/* default and current curses attributes to use */
 	int default_attrs = COLOR_PAIR(0) | A_NORMAL, attrs = default_attrs;
+	/* start from known multibyte state */
+	mbstate_t mbstate = { 0 };
 
 	while (rem > 0) {
 
@@ -428,7 +430,7 @@ void view_draw(View *view) {
 			}
 		}
 
-		size_t len = mbrtowc(&wchar, cur, rem, NULL);
+		size_t len = mbrtowc(&wchar, cur, rem, &mbstate);
 		if (len == (size_t)-1 && errno == EILSEQ) {
 			/* ok, we encountered an invalid multibyte sequence,
 			 * replace it with the Unicode Replacement Character
