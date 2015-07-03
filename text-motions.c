@@ -165,6 +165,24 @@ size_t text_line_offset(Text *txt, size_t pos, size_t off) {
 	return it.pos;
 }
 
+size_t text_line_char_next(Text *txt, size_t pos) {
+	char c;
+	Iterator it = text_iterator_get(txt, pos);
+	if (!text_iterator_byte_get(&it, &c) || c == '\r' || c == '\n')
+		return pos;
+	if (!text_iterator_char_next(&it, &c) || c == '\r' || c == '\n')
+		return pos;
+	return it.pos;
+}
+
+size_t text_line_char_prev(Text *txt, size_t pos) {
+	char c;
+	Iterator it = text_iterator_get(txt, pos);
+	if (!text_iterator_char_prev(&it, &c) || c == '\n')
+		return pos;
+	return it.pos;
+}
+
 static size_t text_customword_start_next(Text *txt, size_t pos, int (*isboundry)(int)) {
 	char c;
 	Iterator it = text_iterator_get(txt, pos);
