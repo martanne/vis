@@ -858,22 +858,6 @@ Text *text_load_fd(int fd) {
 	return txt;
 }
 
-static void print_piece(Piece *p) {
-	fprintf(stdout, "index: %d\tnext: %d\tprev: %d\t len: %zd\t data: %p\n", p->index,
-		p->next ? p->next->index : -1,
-		p->prev ? p->prev->index : -1,
-		p->len, p->data);
-	fwrite(p->data, p->len, 1, stdout);
-	fputc('\n', stdout);
-	fflush(stdout);
-}
-
-void text_debug(Text *txt) {
-	for (Piece *p = &txt->begin; p; p = p->next) {
-		print_piece(p);
-	}
-}
-
 /* A delete operation can either start/stop midway through a piece or at
  * a boundry. In the former case a new piece is created to represent the
  * remaining text before/after the modification point.
