@@ -16,20 +16,22 @@ MANPREFIX = ${PREFIX}/share/man
 INCS = -I.
 LIBS = -lc -lncursesw
 
-ifeq ($(shell uname),Darwin)
+OS = $(shell uname)
+
+ifeq (${OS},Darwin)
 	LIBS = -lc -lncurses
 	CFLAGS += -D_DARWIN_C_SOURCE
-else ifeq ($(shell uname),OpenBSD)
+else ifeq (${OS},OpenBSD)
 	LIBS = -lc -lncurses
 	CFLAGS += -D_BSD_SOURCE
-else ifeq ($(shell uname),FreeBSD)
+else ifeq (${OS},FreeBSD)
 	CFLAGS += -D_BSD_SOURCE
-else ifeq ($(shell uname),NetBSD)
+else ifeq (${OS},NetBSD)
 	LIBS = -lc -lcurses
 	CFLAGS += -D_BSD_SOURCE
-else ifeq ($(shell uname),SunOS)
+else ifeq (${OS},SunOS)
 	INCS += -I/usr/include/ncurses
-else ifeq ($(shell uname),AIX)
+else ifeq (${OS},AIX)
 	CFLAGS += -D_ALL_SOURCE
 endif
 
