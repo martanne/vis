@@ -1,3 +1,7 @@
+# optional features
+HAVE_ACL=0
+HAVE_SELINUX=0
+
 # vis version
 # we have no tags in git, so just use revision count an hash for now
 GITREVCOUNT = "$(shell git rev-list --count master 2>/dev/null)"
@@ -18,7 +22,16 @@ LIBS = -lc -lncursesw
 
 OS = $(shell uname)
 
-ifeq (${OS},Darwin)
+ifeq (${OS},Linux)
+	ifeq (${HAVE_SELINUX},1)
+		CFLAGS += -DHAVE_SELINUX
+		LIBS += -lselinux
+	endif
+	ifeq (${HAVE_ACL},1)
+		CFLAGS += -DHAVE_ACL
+		LIBS += -lacl
+	endif
+else ifeq (${OS},Darwin)
 	LIBS = -lc -lncurses
 	CFLAGS += -D_DARWIN_C_SOURCE
 else ifeq (${OS},OpenBSD)

@@ -24,6 +24,12 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/mman.h>
+#ifdef HAVE_ACL
+#include <sys/acl.h>
+#endif
+#ifdef HAVE_SELINUX
+#include <selinux/selinux.h>
+#endif
 
 #include "text.h"
 #include "util.h"
@@ -161,6 +167,23 @@ static void action_free(Action *a);
 static void lineno_cache_invalidate(LineCache *cache);
 static size_t lines_skip_forward(Text *txt, size_t pos, size_t lines, size_t *lines_skiped);
 static size_t lines_count(Text *txt, size_t pos, size_t len);
+
+static ssize_t write_all(int fd, const char *buf, size_t count) {
+	size_t rem = count;
+	while (rem > 0) {
+		ssize_t written = write(fd, buf, rem);
+		if (written < 0) {
+			if (errno == EAGAIN || errno == EINTR)
+				continue;
+			return -1;
+		} else if (written == 0) {
+			break;
+		}
+		rem -= written;
+		buf += written;
+	}
+	return count - rem;
+}
 
 /* allocate a new buffer of MAX(size, BUFFER_SIZE) bytes */
 static Buffer *buffer_alloc(Text *txt, size_t size) {
@@ -712,36 +735,86 @@ time_t text_state(Text *txt) {
 	return txt->history->time;
 }
 
-bool text_save(Text *txt, const char *filename) {
-	Filerange r = (Filerange){ .start = 0, .end = text_size(txt) };
-	return text_range_save(txt, &r, filename);
+static bool preserve_acl(int src, int dest) {
+#ifdef HAVE_ACL
+	acl_t acl = acl_get_fd(src);
+	if (!acl)
+		return errno == ENOTSUP ? true : false;
+	if (acl_set_fd(dest, acl) == -1) {
+		acl_free(acl);
+		return false;
+	}
+	acl_free(acl);
+#endif /* HAVE_ACL */
+	return true;
 }
 
-/* save current content to given filename. the data is first saved to `filename~`
- * and then atomically moved to its final (possibly alredy existing) destination
- * using rename(2).
- */
-bool text_range_save(Text *txt, Filerange *range, const char *filename) {
-	int fd = -1;
-	size_t bufsize = strlen(filename) + 10;
-	size_t size = text_range_size(range);
-	char *tmpname = malloc(bufsize);
-	if (!tmpname)
+static bool preserve_selinux_context(int src, int dest) {
+#ifdef HAVE_SELINUX
+	char *context = NULL;
+	if (!is_selinux_enabled())
+		return true;
+	if (fgetfilecon(src, &context) == -1)
+		return errno == ENOTSUP ? true : false;
+	if (fsetfilecon(dest, context) == -1) {
+		freecon(context);
 		return false;
-	snprintf(tmpname, bufsize, "%s~", filename);
-	// TODO preserve user/group
+	}
+	freecon(context);
+#endif /* HAVE_SELINUX */
+	return true;
+}
+
+/* Save current content to given filename. The data is first saved to `filename~`
+ * and then atomically moved to its final (possibly alredy existing) destination
+ * using rename(2). This approach does not work if:
+ *
+ *   - the file is a symbolic link
+ *   - the file is a hard link
+ *   - file ownership can not be preserved
+ *   - file group can not be preserved
+ *   - directory permissions do not allow creation of a new file
+ *   - POSXI ACL can not be preserved (if enabled)
+ *   - SELinux security context can not be preserved (if enabled)
+ */
+static bool text_range_save_atomic(Text *txt, Filerange *range, const char *filename) {
 	struct stat meta;
-	if (stat(filename, &meta) == -1) {
-		if (errno == ENOENT)
-			meta.st_mode = S_IRUSR|S_IWUSR;
-		else
+	int fd = -1, oldfd = -1, saved_errno;
+	char *tmpname = NULL;
+	size_t size = text_range_size(range);
+	size_t namelen = strlen(filename) + 1 /* ~ */ + 1 /* \0 */;
+
+	if ((oldfd = open(filename, O_RDONLY)) == -1 && errno != ENOENT)
+		goto err;
+	if (oldfd != -1 && lstat(filename, &meta) == -1)
+		goto err;
+	if (oldfd != -1) {
+		if (S_ISLNK(meta.st_mode)) /* symbolic link */
+			goto err;
+		if (meta.st_nlink > 1) /* hard link */
 			goto err;
 	}
+	if (!(tmpname = calloc(1, namelen)))
+		goto err;
+	snprintf(tmpname, namelen, "%s~", filename);
+
 	/* O_RDWR is needed because otherwise we can't map with MAP_SHARED */
-	if ((fd = open(tmpname, O_CREAT|O_RDWR|O_TRUNC, meta.st_mode)) == -1)
+	if ((fd = open(tmpname, O_CREAT|O_RDWR|O_TRUNC, oldfd == -1 ? S_IRUSR|S_IWUSR : meta.st_mode)) == -1)
 		goto err;
 	if (ftruncate(fd, size) == -1)
 		goto err;
+	if (oldfd != -1) {
+		if (!preserve_acl(oldfd, fd) || !preserve_selinux_context(oldfd, fd))
+			goto err;
+		/* change owner if necessary */
+		if (meta.st_uid != getuid() && fchown(fd, meta.st_uid, (uid_t)-1) == -1)
+			goto err;
+		/* change group if necessary, in case of failure some editors reset
+		 * the group permissions to the same as for others */
+		if (meta.st_gid != getgid() && fchown(fd, (uid_t)-1, meta.st_gid) == -1)
+			goto err;
+	}
+
 	if (size > 0) {
 		void *buf = mmap(NULL, size, PROT_WRITE, MAP_SHARED, fd, 0);
 		if (buf == MAP_FAILED)
@@ -764,21 +837,111 @@ bool text_range_save(Text *txt, Filerange *range, const char *filename) {
 		if (munmap(buf, size) == -1)
 			goto err;
 	}
-	if (close(fd) == -1)
+
+	if (oldfd != -1) {
+		close(oldfd);
+		oldfd = -1;
+	}
+
+	if (fsync(fd) == -1)
 		goto err;
-	fd = -1;
+	if (close(fd) == -1) {
+		fd = -1;
+		goto err;
+	}
+
 	if (rename(tmpname, filename) == -1)
 		goto err;
+
+	free(tmpname);
+	return true;
+err:
+	saved_errno = errno;
+	if (oldfd != -1)
+		close(oldfd);
+	if (fd != -1)
+		close(fd);
+	if (tmpname && *tmpname)
+		unlink(tmpname);
+	free(tmpname);
+	errno = saved_errno;
+	return false;
+}
+
+bool text_save(Text *txt, const char *filename) {
+	Filerange r = (Filerange){ .start = 0, .end = text_size(txt) };
+	return text_range_save(txt, &r, filename);
+}
+
+/* First try to save the file atomically using rename(2) if this does not
+ * work overwrite the file in place. However if something goes wrong during
+ * this overwrite the original file is permanently damaged.
+ */
+bool text_range_save(Text *txt, Filerange *range, const char *filename) {
+	struct stat meta;
+	int fd = -1, newfd = -1;
+	if (text_range_save_atomic(txt, range, filename))
+		goto ok;
+	if ((fd = open(filename, O_CREAT|O_WRONLY, S_IRUSR|S_IWUSR)) == -1)
+		goto err;
+	if (fstat(fd, &meta) == -1)
+		goto err;
+	if (meta.st_dev == txt->info.st_dev && meta.st_ino == txt->info.st_ino &&
+	    txt->buf && txt->buf->type == MMAP && txt->buf->size) {
+		/* The file we are going to overwrite is currently mmap-ed from
+		 * text_load, therefore we copy the mmap-ed buffer to a temporary
+		 * file and remap it at the same position such that all pointers
+		 * from the various pieces are still valid.
+		 */
+		size_t size = txt->buf->size;
+		char tmpname[32] = "/tmp/vis-XXXXXX";
+		if ((newfd = mkstemp(tmpname)) == -1)
+			goto err;
+		if (unlink(tmpname) == -1)
+			goto err;
+		ssize_t written = write_all(newfd, txt->buf->data, size);
+		if (written == -1 || (size_t)written != size)
+			goto err;
+		if (munmap(txt->buf->data, size) == -1)
+			goto err;
+
+		void *data = mmap(txt->buf->data, size, PROT_READ, MAP_SHARED, newfd, 0);
+		if (data == MAP_FAILED)
+			goto err;
+		if (data != txt->buf->data) {
+			munmap(data, size);
+			goto err;
+		}
+		if (close(newfd) == -1) {
+			newfd = -1;
+			goto err;
+		}
+		txt->buf->data = data;
+		newfd = -1;
+	}
+	/* overwrite the exisiting file content, if somehting goes wrong
+	 * here we are screwed, TODO: make a backup before? */
+	if (ftruncate(fd, 0) == -1)
+		goto err;
+	ssize_t written = text_range_write(txt, range, fd);
+	if (written == -1 || (size_t)written != text_range_size(range))
+		goto err;
+
+	if (fsync(fd) == -1)
+		goto err;
+	if (close(fd) == -1)
+		return false;
+ok:
 	txt->saved_action = txt->history;
 	text_snapshot(txt);
 	if (!txt->filename)
 		text_filename_set(txt, filename);
-	free(tmpname);
 	return true;
 err:
 	if (fd != -1)
 		close(fd);
-	free(tmpname);
+	if (newfd != -1)
+		close(newfd);
 	return false;
 }
 
@@ -792,24 +955,16 @@ ssize_t text_range_write(Text *txt, Filerange *range, int fd) {
 	for (Iterator it = text_iterator_get(txt, range->start);
 	     rem > 0 && text_iterator_valid(&it);
 	     text_iterator_next(&it)) {
-		size_t prem = it.end - it.text, poff = 0;
+		size_t prem = it.end - it.text;
 		if (prem > rem)
 			prem = rem;
-		while (prem > 0) {
-			ssize_t res = write(fd, it.text + poff, prem);
-			if (res < 0) {
-				if (errno == EAGAIN || errno == EINTR)
-					continue;
-				return -1;
-			}
-			if (res == 0)
-				goto out;
-			poff += res;
-			prem -= res;
-			rem  -= res;
-		}
+		ssize_t written = write_all(fd, it.text, prem);
+		if (written == -1)
+			return -1;
+		rem -= written;
+		if ((size_t)written != prem)
+			break;
 	}
-out:
 	return size - rem;
 }
 
