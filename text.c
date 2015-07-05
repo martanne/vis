@@ -43,6 +43,7 @@ struct Buffer {
 	size_t size;            /* maximal capacity */
 	size_t len;             /* current used length / insertion position */
 	char *data;             /* actual data */
+	enum { MMAP, MALLOC} type; /* type of allocation */
 	Buffer *next;           /* next junk */
 };
 
@@ -109,7 +110,7 @@ typedef struct {
 
 /* The main struct holding all information of a given file */
 struct Text {
-	Buffer buf;             /* original mmap(2)-ed file content at the time of load operation */
+	Buffer *buf;            /* original file content at the time of load operation */
 	Buffer *buffers;        /* all buffers which have been allocated to hold insertion data */
 	Piece *pieces;          /* all pieces which have been allocated, used to free them */
 	Piece *cache;           /* most recently modified piece */
@@ -129,6 +130,7 @@ struct Text {
 
 /* buffer management */
 static Buffer *buffer_alloc(Text *txt, size_t size);
+static Buffer *buffer_mmap(Text *txt, size_t size, int fd, off_t offset);
 static void buffer_free(Buffer *buf);
 static bool buffer_capacity(Buffer *buf, size_t len);
 static const char *buffer_append(Buffer *buf, const char *data, size_t len);
@@ -171,7 +173,27 @@ static Buffer *buffer_alloc(Text *txt, size_t size) {
 		free(buf);
 		return NULL;
 	}
+	buf->type = MALLOC;
 	buf->size = size;
+	buf->next = txt->buffers;
+	txt->buffers = buf;
+	return buf;
+}
+
+static Buffer *buffer_mmap(Text *txt, size_t size, int fd, off_t offset) {
+	Buffer *buf = calloc(1, sizeof(Buffer));
+	if (!buf)
+		return NULL;
+	if (size) {
+		buf->data = mmap(NULL, size, PROT_READ, MAP_SHARED, fd, offset);
+		if (buf->data == MAP_FAILED) {
+			free(buf);
+			return NULL;
+		}
+	}
+	buf->type = MMAP;
+	buf->size = size;
+	buf->len = size;
 	buf->next = txt->buffers;
 	txt->buffers = buf;
 	return buf;
@@ -180,7 +202,10 @@ static Buffer *buffer_alloc(Text *txt, size_t size) {
 static void buffer_free(Buffer *buf) {
 	if (!buf)
 		return;
-	free(buf->data);
+	if (buf->type == MALLOC)
+		free(buf->data);
+	else if (buf->type == MMAP && buf->data)
+		munmap(buf->data, buf->size);
 	free(buf);
 }
 
@@ -813,20 +838,15 @@ Text *text_load(const char *filename) {
 			goto out;
 		}
 		// XXX: use lseek(fd, 0, SEEK_END); instead?
-		txt->buf.size = txt->info.st_size;
-		if (txt->buf.size != 0) {
-			txt->buf.data = mmap(NULL, txt->info.st_size, PROT_READ, MAP_SHARED, txt->fd, 0);
-			if (txt->buf.data == MAP_FAILED)
-				goto out;
-		}
-
+		if (!(txt->buf = buffer_mmap(txt, txt->info.st_size, txt->fd, 0)))
+			goto out;
 		Piece *p = piece_alloc(txt);
 		if (!p)
 			goto out;
 		piece_init(&txt->begin, NULL, p, NULL, 0);
-		piece_init(p, &txt->begin, &txt->end, txt->buf.data, txt->buf.size);
+		piece_init(p, &txt->begin, &txt->end, txt->buf->data, txt->buf->size);
 		piece_init(&txt->end, p, NULL, NULL, 0);
-		txt->size = txt->buf.size;
+		txt->size = txt->buf->size;
 	}
 	/* write an empty action */
 	change_alloc(txt, EPOS);
@@ -983,9 +1003,6 @@ void text_free(Text *txt) {
 		buffer_free(buf);
 	}
 
-	if (txt->buf.data)
-		munmap(txt->buf.data, txt->buf.size);
-
 	free(txt->filename);
 	free(txt);
 }
@@ -997,9 +1014,9 @@ bool text_modified(Text *txt) {
 enum TextNewLine text_newline_type(Text *txt){
 	if (!txt->newlines) {
 		txt->newlines = TEXT_NEWLINE_NL; /* default to UNIX style \n new lines */
-		const char *start = txt->buf.data;
+		const char *start = txt->buf ? txt->buf->data : NULL;
 		if (start) {
-			const char *nl = memchr(start, '\n', txt->buf.len);
+			const char *nl = memchr(start, '\n', txt->buf->len);
 			if (nl > start && nl[-1] == '\r')
 				txt->newlines = TEXT_NEWLINE_CRNL;
 		} else {
