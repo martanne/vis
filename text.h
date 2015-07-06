@@ -39,10 +39,6 @@ Text *text_load_fd(int fd);
 /* return the fd from which this text was loaded or -1 if it was
  * loaded from a filename */
 int text_fd_get(Text*);
-/* the filename from which this text was loaded or first saved to */
-const char *text_filename_get(Text*);
-/* associate a filename with the yet unnamed buffer */
-void text_filename_set(Text*, const char *filename);
 bool text_insert(Text*, size_t pos, const char *data, size_t len);
 bool text_delete(Text*, size_t pos, size_t len);
 void text_snapshot(Text*);

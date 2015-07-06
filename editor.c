@@ -21,21 +21,35 @@ static void window_selection_changed(void *win, Filerange *sel) {
 	}
 }
 
+void editor_window_name(Win *win, const char *filename) {
+	File *file = win->file;
+	free((char*)file->name);
+	file->name = filename ? strdup(filename) : NULL;
+	
+	if (filename) {
+		for (Syntax *syn = win->editor->syntaxes; syn && syn->name; syn++) {
+			if (!regexec(&syn->file_regex, filename, 0, NULL, 0)) {
+				view_syntax_set(win->view, syn);
+				break;
+			}
+		}
+	}
+}
+
 void editor_windows_arrange(Editor *ed, enum UiLayout layout) {
 	ed->ui->arrange(ed->ui, layout);
 }
 
 bool editor_window_reload(Win *win) {
-	const char *filename = text_filename_get(win->file->text);
 	/* can't reload unsaved file */
-	if (!filename)
+	if (!win->file->name)
 		return false;
-	File *file = file_new(win->editor, filename);
+	File *file = file_new(win->editor, win->file->name);
 	if (!file)
 		return false;
 	file_free(win->editor, win->file);
 	win->file = file;
-	view_reload(win->view, file->text);
+	win->ui->reload(win->ui, file);
 	return true;
 }
 
@@ -241,7 +255,7 @@ static Win *window_new_file(Editor *ed, File *file) {
 	};
 	win->jumplist = ringbuf_alloc(31);
 	win->view = view_new(file->text, &win->events);
-	win->ui = ed->ui->window_new(ed->ui, win->view, file->text);
+	win->ui = ed->ui->window_new(ed->ui, win->view, file);
 	if (!win->jumplist || !win->view || !win->ui) {
 		window_free(win);
 		return NULL;
@@ -263,6 +277,7 @@ static void file_free(Editor *ed, File *file) {
 		return;
 	
 	text_free(file->text);
+	free((char*)file->name);
 	
 	if (file->prev)
 		file->prev->next = file->next;
@@ -291,8 +306,7 @@ static File *file_new(Editor *ed, const char *filename) {
 		/* try to detect whether the same file is already open in another window
 		 * TODO: do this based on inodes */
 		for (File *file = ed->files; file; file = file->next) {
-			const char *name = text_filename_get(file->text);
-			if (name && strcmp(name, filename) == 0) {
+			if (file->name && strcmp(file->name, filename) == 0) {
 				file->refcount++;
 				return file;
 			}
@@ -304,8 +318,6 @@ static File *file_new(Editor *ed, const char *filename) {
 		text = text_load(NULL);
 	if (!text)
 		return NULL;
-	if (filename)
-		text_filename_set(text, filename);
 	
 	File *file = file_new_text(ed, text);
 	if (!file) {
@@ -313,6 +325,8 @@ static File *file_new(Editor *ed, const char *filename) {
 		return NULL;
 	}
 
+	if (filename)
+		file->name = strdup(filename);
 	return file;
 }
 
@@ -326,15 +340,7 @@ bool editor_window_new(Editor *ed, const char *filename) {
 		return false;
 	}
 
-	if (filename) {
-		for (Syntax *syn = ed->syntaxes; syn && syn->name; syn++) {
-			if (!regexec(&syn->file_regex, filename, 0, NULL, 0)) {
-				view_syntax_set(win->view, syn);
-				break;
-			}
-		}
-	}
-
+	editor_window_name(win, filename);
 	editor_draw(ed);
 
 	return true;
@@ -392,7 +398,7 @@ Editor *editor_new(Ui *ui) {
 		goto err;
 	if (!(ed->prompt->view = view_new(ed->prompt->file->text, NULL)))
 		goto err;
-	if (!(ed->prompt->ui = ed->ui->prompt_new(ed->ui, ed->prompt->view, ed->prompt->file->text)))
+	if (!(ed->prompt->ui = ed->ui->prompt_new(ed->ui, ed->prompt->view, ed->prompt->file)))
 		goto err;
 	if (!(ed->search_pattern = text_regex_new()))
 		goto err;

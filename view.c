@@ -527,8 +527,6 @@ void view_reload(View *view, Text *text) {
 	view->text = text;
 	view_selection_clear(view);
 	view_cursor_to(view, 0);
-	if (view->ui)
-		view->ui->reload(view->ui, text);
 }
 
 View *view_new(Text *text, ViewEvent *events) {

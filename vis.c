@@ -1658,11 +1658,12 @@ static bool cmd_wq(Filerange *range, enum CmdOpt opt, const char *argv[]) {
 }
 
 static bool cmd_write(Filerange *range, enum CmdOpt opt, const char *argv[]) {
-	Text *text = vis->win->file->text;
+	File *file = vis->win->file;
+	Text *text = file->text;
 	if (!text_range_valid(range))
 		*range = (Filerange){ .start = 0, .end = text_size(text) };
 	if (!argv[1])
-		argv[1] = text_filename_get(text);
+		argv[1] = file->name;
 	if (!argv[1]) {
 		if (text_fd_get(text) == STDIN_FILENO) {
 			if (strchr(argv[0], 'q'))
@@ -1673,18 +1674,20 @@ static bool cmd_write(Filerange *range, enum CmdOpt opt, const char *argv[]) {
 		editor_info_show(vis, "Filename expected");
 		return false;
 	}
-	for (const char **file = &argv[1]; *file; file++) {
-		if (!text_range_save(text, range, *file)) {
-			editor_info_show(vis, "Can't write `%s'", *file);
+	for (const char **name = &argv[1]; *name; name++) {
+		if (!text_range_save(text, range, *name)) {
+			editor_info_show(vis, "Can't write `%s'", *name);
 			return false;
 		}
+		if (!file->name)
+			editor_window_name(vis->win, *name);
 	}
 	return true;
 }
 
 static bool cmd_saveas(Filerange *range, enum CmdOpt opt, const char *argv[]) {
 	if (cmd_write(range, opt, argv)) {
-		text_filename_set(vis->win->file->text, argv[1]);
+		editor_window_name(vis->win, argv[1]);
 		return true;
 	}
 	return false;

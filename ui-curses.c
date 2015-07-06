@@ -65,7 +65,7 @@ typedef struct {
 struct UiCursesWin {
 	UiWin uiwin;              /* generic interface, has to be the first struct member */
 	UiCurses *ui;             /* ui which manages this window */
-	Text *text;               /* underlying text management */
+	File *file;               /* file being displayed in this window */
 	View *view;               /* current viewport */
 	WINDOW *win;              /* curses window for the text area */
 	WINDOW *winstatus;        /* curses window for the status bar */
@@ -167,14 +167,14 @@ static void ui_window_draw_status(UiWin *w) {
 	UiCurses *uic = win->ui;
 	Editor *vis = uic->ed;
 	bool focused = uic->selwin == win;
-	const char *filename = text_filename_get(win->text);
+	const char *filename = win->file->name;
 	CursorPos pos = view_cursor_getpos(win->view);
 	wattrset(win->winstatus, focused ? A_REVERSE|A_BOLD : A_REVERSE);
 	mvwhline(win->winstatus, 0, 0, ' ', win->width);
 	mvwprintw(win->winstatus, 0, 0, "%s %s %s %s",
 	          vis->mode->name && vis->mode->name[0] == '-' ? vis->mode->name : "",
 	          filename ? filename : "[No Name]",
-	          text_modified(win->text) ? "[+]" : "",
+	          text_modified(win->file->text) ? "[+]" : "",
 	          vis->recording ? "recording": "");
 	char buf[win->width + 1];
 	int len = snprintf(buf, win->width, "%zd, %zd", pos.line, pos.col);
@@ -192,10 +192,11 @@ static void ui_window_draw(UiWin *w) {
 	view_cursor_to(win->view, view_cursor_get(win->view));
 }
 
-static void ui_window_reload(UiWin *w, Text *text) {
+static void ui_window_reload(UiWin *w, File *file) {
 	UiCursesWin *win = (UiCursesWin*)w;
-	win->text = text;
+	win->file = file;
 	win->sidebar_width = 0;
+	view_reload(win->view, file->text);
 	ui_window_draw(w);
 }
 
@@ -415,7 +416,7 @@ static void ui_window_options(UiWin *w, enum UiOption options) {
 	ui_window_draw(w);
 }
 
-static UiWin *ui_window_new(Ui *ui, View *view, Text *text) {
+static UiWin *ui_window_new(Ui *ui, View *view, File *file) {
 	UiCurses *uic = (UiCurses*)ui;
 	UiCursesWin *win = calloc(1, sizeof(UiCursesWin));
 	if (!win)
@@ -437,7 +438,7 @@ static UiWin *ui_window_new(Ui *ui, View *view, Text *text) {
 
 	win->ui = uic;
 	win->view = view;
-	win->text = text;
+	win->file = file;
 	view_ui(view, &win->uiwin);
 	
 	if (uic->windows)
@@ -462,11 +463,11 @@ static void info_hide(Ui *ui) {
 	}
 }
 
-static UiWin *prompt_new(Ui *ui, View *view, Text *text) {
+static UiWin *prompt_new(Ui *ui, View *view, File *file) {
 	UiCurses *uic = (UiCurses*)ui;
 	if (uic->prompt_win)
 		return (UiWin*)uic->prompt_win;
-	UiWin *uiwin = ui_window_new(ui, view, text);
+	UiWin *uiwin = ui_window_new(ui, view, file);
 	UiCursesWin *win = (UiCursesWin*)uiwin;
 	if (!win)
 		return NULL;
@@ -483,24 +484,25 @@ static UiWin *prompt_new(Ui *ui, View *view, Text *text) {
 	return uiwin;
 }
 
-static void prompt(Ui *ui, const char *title, const char *text) {
+static void prompt(Ui *ui, const char *title, const char *data) {
 	UiCurses *uic = (UiCurses*)ui;
 	if (uic->prompt_title[0])
 		return;
-	size_t text_len = strlen(text);
+	size_t len = strlen(data);
+	Text *text = uic->prompt_win->file->text;
 	strncpy(uic->prompt_title, title, sizeof(uic->prompt_title)-1);
-	while (text_undo(uic->prompt_win->text) != EPOS);
-	text_insert(uic->prompt_win->text, 0, text, text_len);
+	while (text_undo(text) != EPOS);
+	text_insert(text, 0, data, len);
 	view_cursor_to(uic->prompt_win->view, 0);
 	ui_resize_to(ui, uic->width, uic->height);
-	view_cursor_to(uic->prompt_win->view, text_len);
+	view_cursor_to(uic->prompt_win->view, len);
 }
 
 static char *prompt_input(Ui *ui) {
 	UiCurses *uic = (UiCurses*)ui;
 	if (!uic->prompt_win)
 		return NULL;
-	Text *text = uic->prompt_win->text;
+	Text *text = uic->prompt_win->file->text;
 	char *buf = malloc(text_size(text) + 1);
 	if (!buf)
 		return NULL;

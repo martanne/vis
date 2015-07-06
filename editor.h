@@ -7,6 +7,7 @@
 #include <stdbool.h>
 
 typedef struct Editor Editor;
+typedef struct File File;
 typedef struct Win Win;
 
 #include "ui.h"
@@ -16,8 +17,6 @@ typedef struct Win Win;
 #include "syntax.h"
 #include "ring-buffer.h"
 #include "map.h"
-
-typedef struct File File;
 
 typedef union {
 	bool b;
@@ -194,6 +193,7 @@ enum Mark {
 
 struct File {
 	Text *text;
+	const char *name;
 	int refcount;
 	Mark marks[MARK_LAST];
 	File *next, *prev;
@@ -291,6 +291,8 @@ bool editor_window_split(Win*);
 /* focus the next / previous window */
 void editor_window_next(Editor*);
 void editor_window_prev(Editor*);
+/* set the filename of the file displayed in this window */
+void editor_window_name(Win*, const char *filename);
 
 void editor_window_jumplist_add(Win*, size_t pos);
 size_t editor_window_jumplist_prev(Win*);

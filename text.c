@@ -131,7 +131,6 @@ struct Text {
 	Action *last_action;    /* the last action added to the tree, chronologically */
 	Action *saved_action;   /* the last action at the time of the save operation */
 	size_t size;            /* current file content size in bytes */
-	char *filename;         /* filename of which data was loaded */
 	struct stat info;       /* stat as proped on load time */
 	int fd;                 /* the file descriptor of the original mmap-ed data */
 	LineCache lines;        /* mapping between absolute pos in bytes and logical line breaks */
@@ -960,8 +959,6 @@ bool text_range_save(Text *txt, Filerange *range, const char *filename) {
 ok:
 	txt->saved_action = txt->history;
 	text_snapshot(txt);
-	if (!txt->filename)
-		text_filename_set(txt, filename);
 	return true;
 err:
 	if (fd != -1)
@@ -1008,7 +1005,6 @@ Text *text_load(const char *filename) {
 	piece_init(&txt->end, &txt->begin, NULL, NULL, 0);
 	lineno_cache_invalidate(&txt->lines);
 	if (filename) {
-		text_filename_set(txt, filename);
 		txt->fd = open(filename, O_RDONLY);
 		if (txt->fd == -1)
 			goto out;
@@ -1189,7 +1185,6 @@ void text_free(Text *txt) {
 		buffer_free(buf);
 	}
 
-	free(txt->filename);
 	free(txt);
 }
 
@@ -1473,15 +1468,6 @@ size_t text_history_get(Text *txt, size_t index) {
 
 int text_fd_get(Text *txt) {
 	return txt->fd;
-}
-
-const char *text_filename_get(Text *txt) {
-	return txt->filename;
-}
-
-void text_filename_set(Text *txt, const char *filename) {
-	free(txt->filename);
-	txt->filename = filename ? strdup(filename) : NULL;
 }
 
 Regex *text_regex_new(void) {
