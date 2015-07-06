@@ -35,10 +35,6 @@ typedef struct {
 	     text_iterator_next(&it))
 
 Text *text_load(const char *file);
-Text *text_load_fd(int fd);
-/* return the fd from which this text was loaded or -1 if it was
- * loaded from a filename */
-int text_fd_get(Text*);
 bool text_insert(Text*, size_t pos, const char *data, size_t len);
 bool text_delete(Text*, size_t pos, size_t len);
 void text_snapshot(Text*);

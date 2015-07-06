@@ -194,6 +194,7 @@ enum Mark {
 struct File {
 	Text *text;
 	const char *name;
+	bool stdin;
 	int refcount;
 	Mark marks[MARK_LAST];
 	File *next, *prev;
@@ -281,7 +282,6 @@ void editor_syntax_unload(Editor*);
  * in another window, share the underlying text that is changes will be
  * visible in both windows */
 bool editor_window_new(Editor*, const char *filename);
-bool editor_window_new_fd(Editor*, int fd);
 /* reload the file currently displayed in the window from disk */
 bool editor_window_reload(Win*);
 void editor_window_close(Win*);

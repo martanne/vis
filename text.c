@@ -132,7 +132,6 @@ struct Text {
 	Action *saved_action;   /* the last action at the time of the save operation */
 	size_t size;            /* current file content size in bytes */
 	struct stat info;       /* stat as proped on load time */
-	int fd;                 /* the file descriptor of the original mmap-ed data */
 	LineCache lines;        /* mapping between absolute pos in bytes and logical line breaks */
 	enum TextNewLine newlines; /* which type of new lines does the file use */
 };
@@ -905,7 +904,7 @@ bool text_save(Text *txt, const char *filename) {
 bool text_range_save(Text *txt, Filerange *range, const char *filename) {
 	struct stat meta;
 	int fd = -1, newfd = -1;
-	if (text_range_save_atomic(txt, range, filename))
+	if (!filename || text_range_save_atomic(txt, range, filename))
 		goto ok;
 	if ((fd = open(filename, O_CREAT|O_WRONLY, S_IRUSR|S_IWUSR)) == -1)
 		goto err;
@@ -997,7 +996,7 @@ Text *text_load(const char *filename) {
 	Text *txt = calloc(1, sizeof(Text));
 	if (!txt)
 		return NULL;
-	txt->fd = -1;
+	int fd = -1;
 	txt->begin.index = 1;
 	txt->end.index = 2;
 	txt->piece_count = 2;
@@ -1005,10 +1004,9 @@ Text *text_load(const char *filename) {
 	piece_init(&txt->end, &txt->begin, NULL, NULL, 0);
 	lineno_cache_invalidate(&txt->lines);
 	if (filename) {
-		txt->fd = open(filename, O_RDONLY);
-		if (txt->fd == -1)
+		if ((fd = open(filename, O_RDONLY)) == -1)
 			goto out;
-		if (fstat(txt->fd, &txt->info) == -1)
+		if (fstat(fd, &txt->info) == -1)
 			goto out;
 		if (!S_ISREG(txt->info.st_mode)) {
 			errno = S_ISDIR(txt->info.st_mode) ? EISDIR : ENOTSUP;
@@ -1017,9 +1015,9 @@ Text *text_load(const char *filename) {
 		// XXX: use lseek(fd, 0, SEEK_END); instead?
 		size_t size = txt->info.st_size;
 		if (size < BUFFER_MMAP_SIZE)
-			txt->buf = buffer_read(txt, size, txt->fd);
+			txt->buf = buffer_read(txt, size, fd);
 		else
-			txt->buf = buffer_mmap(txt, size, txt->fd, 0);
+			txt->buf = buffer_mmap(txt, size, fd, 0);
 		if (!txt->buf)
 			goto out;
 		Piece *p = piece_alloc(txt);
@@ -1035,27 +1033,14 @@ Text *text_load(const char *filename) {
 	text_snapshot(txt);
 	txt->saved_action = txt->history;
 
+	if (fd != -1)
+		close(fd);
 	return txt;
 out:
-	if (txt->fd > 2) {
-		close(txt->fd);
-		txt->fd = -1;
-	}
+	if (fd != -1)
+		close(fd);
 	text_free(txt);
 	return NULL;
-}
-
-Text *text_load_fd(int fd) {
-	Text *txt = text_load(NULL);
-	if (!txt)
-		return NULL;
-	char buf[1024];
-	for (ssize_t len = 0; (len = read(fd, buf, sizeof buf)) > 0;)
-		text_insert(txt, text_size(txt), buf, len);
-	txt->saved_action = txt->history;
-	text_snapshot(txt);
-	txt->fd = fd;
-	return txt;
 }
 
 /* A delete operation can either start/stop midway through a piece or at
@@ -1464,10 +1449,6 @@ size_t text_history_get(Text *txt, size_t index) {
 		}
 	}
 	return EPOS;
-}
-
-int text_fd_get(Text *txt) {
-	return txt->fd;
 }
 
 Regex *text_regex_new(void) {

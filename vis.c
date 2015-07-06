@@ -1665,9 +1665,17 @@ static bool cmd_write(Filerange *range, enum CmdOpt opt, const char *argv[]) {
 	if (!argv[1])
 		argv[1] = file->name;
 	if (!argv[1]) {
-		if (text_fd_get(text) == STDIN_FILENO) {
-			if (strchr(argv[0], 'q'))
-				return text_range_write(text, range, STDOUT_FILENO) >= 0;
+		if (file->stdin) {
+			if (strchr(argv[0], 'q')) {
+				ssize_t written = text_range_write(text, range, STDOUT_FILENO);
+				if (written == -1 || (size_t)written != text_range_size(range)) {
+					editor_info_show(vis, "Can not write to stdout");
+					return false;
+				}
+				/* make sure the file is marked as saved i.e. not modified */
+				text_range_save(text, range, NULL);
+				return true;
+			}
 			editor_info_show(vis, "No filename given, use 'wq' to write to stdout");
 			return false;
 		}
@@ -2169,15 +2177,6 @@ static bool vis_window_new(const char *file) {
 	return true;
 }
 
-static bool vis_window_new_fd(int fd) {
-	if (!editor_window_new_fd(vis, fd))
-		return false;
-	Syntax *s = view_syntax_get(vis->win->view);
-	if (s)
-		settings_apply(s->settings);
-	return true;
-}
-
 static bool vis_window_split(Win *win) {
 	if (!editor_window_split(win))
 		return false;
@@ -2380,8 +2379,18 @@ int main(int argc, char *argv[]) {
 
 	if (!vis->windows) {
 		if (!strcmp(argv[argc-1], "-") || !isatty(STDIN_FILENO)) {
-			if (!vis_window_new_fd(STDIN_FILENO))
+			if (!vis_window_new(NULL))
+				die("Can not create empty buffer\n");
+			ssize_t len = 0;
+			char buf[PIPE_BUF];
+			File *file = vis->win->file;
+			Text *txt = file->text;
+			file->stdin = true;
+			while ((len = read(STDIN_FILENO, buf, sizeof buf)) > 0)
+				text_insert(txt, text_size(txt), buf, len);
+			if (len == -1)
 				die("Can not read from stdin\n");
+			text_snapshot(txt);
 			int fd = open("/dev/tty", O_RDONLY);
 			if (fd == -1)
 				die("Can not reopen stdin\n");

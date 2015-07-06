@@ -346,23 +346,6 @@ bool editor_window_new(Editor *ed, const char *filename) {
 	return true;
 }
 
-bool editor_window_new_fd(Editor *ed, int fd) {
-	Text *text = text_load_fd(fd);
-	if (!text)
-		return false;
-	File *file = file_new_text(ed, text);
-	if (!file) {
-		file_free(ed, file);
-		return false;
-	}
-	Win *win = window_new_file(ed, file);
-	if (!win) {
-		file_free(ed, file);
-		return false;
-	}
-	return true;
-}
-
 void editor_window_close(Win *win) {
 	Editor *ed = win->editor;
 	file_free(ed, win->file);
