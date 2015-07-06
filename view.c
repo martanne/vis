@@ -167,7 +167,7 @@ static bool view_addch(View *view, Cell *cell) {
 			int t = w == 0 ? SYNTAX_SYMBOL_TAB : SYNTAX_SYMBOL_TAB_FILL;
 			strncpy(cell->data, view->symbols[t]->symbol, sizeof(cell->data));
 			if (view->symbols[t]->color)
-				cell->attr = view->symbols[t]->color->attr;
+				cell->attr = view->symbols[t]->color->attr | (cell->attr & A_REVERSE);
 			view->line->cells[view->col] = *cell;
 			view->line->len += cell->len;
 			view->line->width += cell->width;
@@ -215,7 +215,8 @@ static bool view_addch(View *view, Cell *cell) {
 		if (cell->data[0] == ' ') {
 			strncpy(cell->data, view->symbols[SYNTAX_SYMBOL_SPACE]->symbol, sizeof(cell->data));
 			if (view->symbols[SYNTAX_SYMBOL_SPACE]->color)
-				cell->attr = view->symbols[SYNTAX_SYMBOL_SPACE]->color->attr;
+				cell->attr = view->symbols[SYNTAX_SYMBOL_SPACE]->color->attr | (cell->attr & A_REVERSE);
+
 		}
 
 		if (view->col + cell->width > view->width) {
