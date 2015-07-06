@@ -35,6 +35,10 @@
 #include "util.h"
 
 #define BUFFER_SIZE (1 << 20)
+/* Files smaller than this value are copied on load, larger ones are mmap(2)-ed
+ * directely. Hence the former can be truncated, while doing so on the latter
+ * results in havoc. */
+#define BUFFER_MMAP_SIZE (1 << 23)
 
 struct Regex {
 	const char *string;
@@ -136,6 +140,7 @@ struct Text {
 
 /* buffer management */
 static Buffer *buffer_alloc(Text *txt, size_t size);
+static Buffer *buffer_read(Text *txt, size_t size, int fd);
 static Buffer *buffer_mmap(Text *txt, size_t size, int fd, off_t offset);
 static void buffer_free(Buffer *buf);
 static bool buffer_capacity(Buffer *buf, size_t len);
@@ -200,6 +205,27 @@ static Buffer *buffer_alloc(Text *txt, size_t size) {
 	buf->size = size;
 	buf->next = txt->buffers;
 	txt->buffers = buf;
+	return buf;
+}
+
+static Buffer *buffer_read(Text *txt, size_t size, int fd) {
+	Buffer *buf = buffer_alloc(txt, size);
+	if (!buf)
+		return NULL;
+	while (size > 0) {
+		char data[4096];
+		ssize_t len = read(fd, data, MIN(sizeof(data), size));
+		if (len == -1) {
+			txt->buffers = buf->next;
+			buffer_free(buf);
+			return NULL;
+		} else if (len == 0) {
+			break;
+		} else {
+			buffer_append(buf, data, len);
+			size -= len;
+		}
+	}
 	return buf;
 }
 
@@ -993,15 +1019,20 @@ Text *text_load(const char *filename) {
 			goto out;
 		}
 		// XXX: use lseek(fd, 0, SEEK_END); instead?
-		if (!(txt->buf = buffer_mmap(txt, txt->info.st_size, txt->fd, 0)))
+		size_t size = txt->info.st_size;
+		if (size < BUFFER_MMAP_SIZE)
+			txt->buf = buffer_read(txt, size, txt->fd);
+		else
+			txt->buf = buffer_mmap(txt, size, txt->fd, 0);
+		if (!txt->buf)
 			goto out;
 		Piece *p = piece_alloc(txt);
 		if (!p)
 			goto out;
 		piece_init(&txt->begin, NULL, p, NULL, 0);
-		piece_init(p, &txt->begin, &txt->end, txt->buf->data, txt->buf->size);
+		piece_init(p, &txt->begin, &txt->end, txt->buf->data, txt->buf->len);
 		piece_init(&txt->end, p, NULL, NULL, 0);
-		txt->size = txt->buf->size;
+		txt->size = txt->buf->len;
 	}
 	/* write an empty action */
 	change_alloc(txt, EPOS);
