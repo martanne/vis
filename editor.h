@@ -195,6 +195,7 @@ struct File {
 	Text *text;
 	const char *name;
 	bool stdin;
+	struct stat stat;
 	int refcount;
 	Mark marks[MARK_LAST];
 	File *next, *prev;

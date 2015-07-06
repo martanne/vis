@@ -1683,12 +1683,20 @@ static bool cmd_write(Filerange *range, enum CmdOpt opt, const char *argv[]) {
 		return false;
 	}
 	for (const char **name = &argv[1]; *name; name++) {
+		struct stat meta;
+		if (!(opt & CMD_OPT_FORCE) && file->stat.st_mtime && stat(*name, &meta) == 0 &&
+		    file->stat.st_mtime < meta.st_mtime) {
+			editor_info_show(vis, "WARNING: file has been changed since reading it");
+			return false;
+		}
 		if (!text_range_save(text, range, *name)) {
 			editor_info_show(vis, "Can't write `%s'", *name);
 			return false;
 		}
-		if (!file->name)
+		if (!file->name) {
 			editor_window_name(vis->win, *name);
+			file->stat = text_stat(text);
+		}
 	}
 	return true;
 }
@@ -1696,6 +1704,7 @@ static bool cmd_write(Filerange *range, enum CmdOpt opt, const char *argv[]) {
 static bool cmd_saveas(Filerange *range, enum CmdOpt opt, const char *argv[]) {
 	if (cmd_write(range, opt, argv)) {
 		editor_window_name(vis->win, argv[1]);
+		vis->win->file->stat = text_stat(vis->win->file->text);
 		return true;
 	}
 	return false;

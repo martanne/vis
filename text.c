@@ -802,7 +802,7 @@ static bool preserve_selinux_context(int src, int dest) {
  *   - SELinux security context can not be preserved (if enabled)
  */
 static bool text_range_save_atomic(Text *txt, Filerange *range, const char *filename) {
-	struct stat meta;
+	struct stat meta = { 0 };
 	int fd = -1, oldfd = -1, saved_errno;
 	char *tmpname = NULL;
 	size_t size = text_range_size(range);
@@ -877,6 +877,8 @@ static bool text_range_save_atomic(Text *txt, Filerange *range, const char *file
 	if (rename(tmpname, filename) == -1)
 		goto err;
 
+	if (meta.st_mtime)
+		txt->info = meta;
 	free(tmpname);
 	return true;
 err:
@@ -955,6 +957,7 @@ bool text_range_save(Text *txt, Filerange *range, const char *filename) {
 		goto err;
 	if (close(fd) == -1)
 		return false;
+	txt->info = meta;
 ok:
 	txt->saved_action = txt->history;
 	text_snapshot(txt);
@@ -1041,6 +1044,10 @@ out:
 		close(fd);
 	text_free(txt);
 	return NULL;
+}
+
+struct stat text_stat(Text *txt) {
+	return txt->info;
 }
 
 /* A delete operation can either start/stop midway through a piece or at

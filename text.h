@@ -3,7 +3,9 @@
 
 #include <stdbool.h>
 #include <time.h>
+#include <unistd.h>
 #include <sys/types.h>
+#include <sys/stat.h>
 
 #define EPOS ((size_t)-1)         /* invalid position */
 
@@ -35,6 +37,8 @@ typedef struct {
 	     text_iterator_next(&it))
 
 Text *text_load(const char *file);
+/* file information at time of load or last save */
+struct stat text_stat(Text*);
 bool text_insert(Text*, size_t pos, const char *data, size_t len);
 bool text_delete(Text*, size_t pos, size_t len);
 void text_snapshot(Text*);

@@ -293,6 +293,7 @@ static File *file_new_text(Editor *ed, Text *text) {
 	if (!file)
 		return NULL;
 	file->text = text;
+	file->stat = text_stat(text);
 	file->refcount++;
 	if (ed->files)
 		ed->files->prev = file;
