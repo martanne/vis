@@ -870,6 +870,7 @@ static bool text_range_save_atomic(Text *txt, Filerange *range, const char *file
 		fd = -1;
 		goto err;
 	}
+	fd = -1;
 
 	if (rename(tmpname, filename) == -1)
 		goto err;
