@@ -70,7 +70,6 @@ struct Piece {
 	Piece *global_next;     /* used to free individual pieces */
 	const char *data;       /* pointer into a Buffer holding the data */
 	size_t len;             /* the lenght in number of bytes starting from content */
-	int index;              /* unique index identifiying the piece */
 };
 
 /* used to transform a global position (byte offset starting from the begining
@@ -124,7 +123,6 @@ struct Text {
 	Buffer *buffers;        /* all buffers which have been allocated to hold insertion data */
 	Piece *pieces;          /* all pieces which have been allocated, used to free them */
 	Piece *cache;           /* most recently modified piece */
-	int piece_count;        /* number of pieces allocated, only used for debuging purposes */
 	Piece begin, end;       /* sentinel nodes which always exists but don't hold any data */
 	Action *history;        /* undo tree */
 	Action *current_action; /* action holding all file changes until a snapshot is performed */
@@ -454,7 +452,6 @@ static Piece *piece_alloc(Text *txt) {
 	if (!p)
 		return NULL;
 	p->text = txt;
-	p->index = ++txt->piece_count;
 	p->global_next = txt->pieces;
 	if (txt->pieces)
 		txt->pieces->global_prev = p;
@@ -1000,9 +997,6 @@ Text *text_load(const char *filename) {
 	if (!txt)
 		return NULL;
 	int fd = -1;
-	txt->begin.index = 1;
-	txt->end.index = 2;
-	txt->piece_count = 2;
 	piece_init(&txt->begin, NULL, &txt->end, NULL, 0);
 	piece_init(&txt->end, &txt->begin, NULL, NULL, 0);
 	lineno_cache_invalidate(&txt->lines);
