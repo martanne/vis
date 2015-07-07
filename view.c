@@ -165,7 +165,7 @@ static bool view_addch(View *view, Cell *cell) {
 
 			cell->len = w == 0 ? 1 : 0;
 			int t = w == 0 ? SYNTAX_SYMBOL_TAB : SYNTAX_SYMBOL_TAB_FILL;
-			strncpy(cell->data, view->symbols[t]->symbol, sizeof(cell->data));
+			strncpy(cell->data, view->symbols[t]->symbol, sizeof(cell->data)-1);
 			if (view->symbols[t]->color)
 				cell->attr = view->symbols[t]->color->attr | (cell->attr & A_REVERSE);
 			view->line->cells[view->col] = *cell;
@@ -185,7 +185,7 @@ static bool view_addch(View *view, Cell *cell) {
 			view->line->lineno = lineno;
 		}
 
-		strncpy(cell->data, view->symbols[SYNTAX_SYMBOL_EOL]->symbol, sizeof(cell->data));
+		strncpy(cell->data, view->symbols[SYNTAX_SYMBOL_EOL]->symbol, sizeof(cell->data)-1);
 		if (view->symbols[SYNTAX_SYMBOL_EOL]->color)
 			cell->attr = view->symbols[SYNTAX_SYMBOL_EOL]->color->attr;
 
@@ -213,7 +213,7 @@ static bool view_addch(View *view, Cell *cell) {
 		}
 
 		if (cell->data[0] == ' ') {
-			strncpy(cell->data, view->symbols[SYNTAX_SYMBOL_SPACE]->symbol, sizeof(cell->data));
+			strncpy(cell->data, view->symbols[SYNTAX_SYMBOL_SPACE]->symbol, sizeof(cell->data)-1);
 			if (view->symbols[SYNTAX_SYMBOL_SPACE]->color)
 				cell->attr = view->symbols[SYNTAX_SYMBOL_SPACE]->color->attr | (cell->attr & A_REVERSE);
 
