@@ -919,7 +919,10 @@ bool text_range_save(Text *txt, Filerange *range, const char *filename) {
 		 */
 		size_t size = txt->buf->size;
 		char tmpname[32] = "/tmp/vis-XXXXXX";
-		if ((newfd = mkstemp(tmpname)) == -1)
+		mode_t mask = umask(S_IXUSR | S_IRWXG | S_IRWXO);
+		newfd = mkstemp(tmpname);
+		umask(mask);
+		if (newfd == -1)
 			goto err;
 		if (unlink(tmpname) == -1)
 			goto err;
