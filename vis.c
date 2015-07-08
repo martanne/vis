@@ -1150,6 +1150,8 @@ static void openline(const Arg *arg) {
 }
 
 static void join(const Arg *arg) {
+	if (vis->action.count)
+		vis->action.count--;
 	operator(&(const Arg){ .i = OP_JOIN });
 	movement(arg);
 }
