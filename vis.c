@@ -2387,7 +2387,7 @@ int main(int argc, char *argv[]) {
 	}
 
 	if (!vis->windows) {
-		if (!strcmp(argv[argc-1], "-") || !isatty(STDIN_FILENO)) {
+		if (!strcmp(argv[argc-1], "-")) {
 			if (!vis_window_new(NULL))
 				die("Can not create empty buffer\n");
 			ssize_t len = 0;
