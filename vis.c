@@ -447,13 +447,16 @@ static size_t op_delete(OperatorContext *c) {
 	c->reg->linewise = c->linewise;
 	register_put(c->reg, txt, &c->range);
 	text_delete(txt, c->range.start, len);
-	return c->range.start;
+	size_t pos = c->range.start;
+	if (c->linewise && pos == text_size(txt))
+		pos = text_line_begin(txt, text_line_prev(txt, pos));
+	return pos;
 }
 
 static size_t op_change(OperatorContext *c) {
-	size_t pos = op_delete(c);
+	op_delete(c);
 	switchmode(&(const Arg){ .i = VIS_MODE_INSERT });
-	return pos;
+	return c->range.start;
 }
 
 static size_t op_yank(OperatorContext *c) {
