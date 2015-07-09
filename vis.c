@@ -1744,7 +1744,7 @@ static bool cmd_filter(Filerange *range, enum CmdOpt opt, const char *argv[]) {
 		return false;
 	}
 
-	reset_shell_mode();
+	vis->ui->terminal_save(vis->ui);
 	pid_t pid = fork();
 
 	if (pid == -1) {
@@ -1922,8 +1922,7 @@ static bool cmd_filter(Filerange *range, enum CmdOpt opt, const char *argv[]) {
 	if (restore_signals)
 		sigaction(SIGTERM, &oldsa, NULL);
 
-	reset_prog_mode();
-	wclear(stdscr);
+	vis->ui->terminal_restore(vis->ui);
 	return status == 0;
 }
 

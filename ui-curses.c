@@ -568,6 +568,15 @@ static Key ui_getkey(Ui *ui) {
 	return key;
 }
 
+static void ui_terminal_save(Ui *ui) {
+	reset_shell_mode();
+}
+
+static void ui_terminal_restore(Ui *ui) {
+	reset_prog_mode();
+	wclear(stdscr);
+}
+
 Ui *ui_curses_new(void) {
 	setlocale(LC_CTYPE, "");
 	if (!getenv("ESCDELAY"))
@@ -613,6 +622,8 @@ Ui *ui_curses_new(void) {
 		.color_get = color_get,
 		.haskey = ui_haskey,
 		.getkey = ui_getkey,
+		.terminal_save = ui_terminal_save,
+		.terminal_restore = ui_terminal_restore,
 	};
 
 	struct sigaction sa;

@@ -47,6 +47,8 @@ struct Ui {
 	void (*resume)(Ui*);
 	Key (*getkey)(Ui*);
 	bool (*haskey)(Ui*);
+	void (*terminal_save)(Ui*);
+	void (*terminal_restore)(Ui*);
 };
 
 struct UiWin {
