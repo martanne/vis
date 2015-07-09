@@ -5,11 +5,6 @@
 #define KEY(k)     { .str = { '\0' }, .code = KEY_##k }
 #define CONTROL(k) NONE((k)&0x1F)
 #define META(k)    { .str = { ESC, (k) }, .code = 0 }
-#define BACKSPACE(func, name, arg) \
-	{ { KEY(BACKSPACE) }, (func), { .name = (arg) } }, \
-	{ { CONTROL('H') },   (func), { .name = (arg) } }, \
-	{ { NONE(127) },      (func), { .name = (arg) } }, \
-	{ { CONTROL('B') },   (func), { .name = (arg) } }
 
 /* a mode contains a set of key bindings which are currently valid.
  *
@@ -98,7 +93,7 @@ static KeyBinding basic_movement[] = {
 };
 
 static KeyBinding vis_movements[] = {
-	BACKSPACE(                     movement,        i,  MOVE_CHAR_PREV             ),
+	{ { KEY(BACKSPACE)          }, movement,     { .i = MOVE_CHAR_PREV           } },
 	{ { NONE('h')               }, movement,     { .i = MOVE_CHAR_PREV           } },
 	{ { NONE(' ')               }, movement,     { .i = MOVE_CHAR_NEXT           } },
 	{ { NONE('l')               }, movement,     { .i = MOVE_CHAR_NEXT           } },
@@ -424,7 +419,7 @@ static KeyBinding vis_mode_normal[] = {
 };
 
 static KeyBinding vis_mode_visual[] = {
-	BACKSPACE(                     operator,          i,  OP_DELETE              ),
+	{ { KEY(BACKSPACE)          }, operator,       { .i = OP_DELETE            } },
 	{ { KEY(DC)                 }, operator,       { .i = OP_DELETE            } },
 	{ { NONE(ESC)               }, switchmode,     { .i = VIS_MODE_NORMAL      } },
 	{ { CONTROL('c')            }, switchmode,     { .i = VIS_MODE_NORMAL      } },
@@ -483,7 +478,7 @@ static void vis_mode_visual_line_leave(Mode *new) {
 }
 
 static KeyBinding vis_mode_readline[] = {
-	BACKSPACE(                     call,               f,  editor_backspace_key       ),
+	{ { KEY(BACKSPACE)          }, call,            { .f = editor_backspace_key     } },
 	{ { NONE(ESC)               }, switchmode,      { .i = VIS_MODE_NORMAL          } },
 	{ { CONTROL('c')            }, switchmode,      { .i = VIS_MODE_NORMAL          } },
 	{ { CONTROL('D')            }, delete ,         { .i = MOVE_CHAR_NEXT           } },
@@ -493,7 +488,7 @@ static KeyBinding vis_mode_readline[] = {
 };
 
 static KeyBinding vis_mode_prompt[] = {
-	BACKSPACE(                     prompt_backspace,  s, NULL                  ),
+	{ { KEY(BACKSPACE)          }, prompt_backspace,{ .s = NULL              } },
 	{ { KEY(ENTER)              }, prompt_enter,    { NULL                   } },
 	{ { CONTROL('J')            }, prompt_enter,    { NULL                   } },
 	{ { KEY(UP)                 }, prompt_up,       { NULL                   } },

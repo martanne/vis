@@ -28,6 +28,8 @@ int ESCDELAY;
 # define set_escdelay(d) (ESCDELAY = (d))
 #endif
 
+#define CONTROL(k) ((k)&0x1F)
+
 #if 0
 #define wresize(win, y, x) do { \
 	if (wresize(win, y, x) == ERR) { \
@@ -562,6 +564,17 @@ static Key ui_getkey(Ui *ui) {
 			for (int t; cur < len && (t = getch()) != ERR; cur++)
 				key.str[cur] = t;
 			nodelay(stdscr, FALSE);
+		}
+
+		if (len == 1) {
+			switch (key.str[0]) {
+			case 127:
+			case CONTROL('H'):
+			case CONTROL('B'):
+				key.code = KEY_BACKSPACE;
+				key.str[0] = '\0';
+				break;
+			}
 		}
 	}
 
