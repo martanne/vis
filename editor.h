@@ -26,11 +26,6 @@ typedef union {
 	void (*f)(Editor*); /* generic editor commands */
 } Arg;
 
-typedef struct {
-	char str[6]; /* UTF8 character or terminal escape code */
-	int code;    /* curses KEY_* constant */
-} Key;
-
 #define MAX_KEYS 2
 typedef Key KeyCombo[MAX_KEYS];
 

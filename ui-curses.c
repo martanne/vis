@@ -528,6 +528,46 @@ static void ui_suspend(Ui *ui) {
 	raise(SIGSTOP);
 }
 
+static bool ui_haskey(Ui *ui) {
+	nodelay(stdscr, TRUE);
+	int c = getch();
+	if (c != ERR)
+		ungetch(c);
+	nodelay(stdscr, FALSE);
+	return c != ERR;
+}
+
+static Key ui_getkey(Ui *ui) {
+	Key key = { .str = "", .code = 0 };
+	int keycode = getch(), cur = 0;
+	if (keycode == ERR)
+		return key;
+
+	if (keycode >= KEY_MIN) {
+		key.code = keycode;
+	} else {
+		key.str[cur++] = keycode;
+		int len = 1;
+		unsigned char keychar = keycode;
+		if (ISASCII(keychar)) len = 1;
+		else if (keychar == 0x1B || keychar >= 0xFC) len = 6;
+		else if (keychar >= 0xF8) len = 5;
+		else if (keychar >= 0xF0) len = 4;
+		else if (keychar >= 0xE0) len = 3;
+		else if (keychar >= 0xC0) len = 2;
+		len = MIN(len, LENGTH(key.str));
+
+		if (cur < len) {
+			nodelay(stdscr, TRUE);
+			for (int t; cur < len && (t = getch()) != ERR; cur++)
+				key.str[cur] = t;
+			nodelay(stdscr, FALSE);
+		}
+	}
+
+	return key;
+}
+
 Ui *ui_curses_new(void) {
 	setlocale(LC_CTYPE, "");
 	if (!getenv("ESCDELAY"))
@@ -571,6 +611,8 @@ Ui *ui_curses_new(void) {
 		.info = info,
 		.info_hide = info_hide,
 		.color_get = color_get,
+		.haskey = ui_haskey,
+		.getkey = ui_getkey,
 	};
 
 	struct sigaction sa;

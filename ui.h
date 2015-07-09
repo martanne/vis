@@ -15,6 +15,11 @@ enum UiOption {
 	UI_OPTION_LINE_NUMBERS_RELATIVE = 1 << 1,
 };
 
+typedef struct {
+	char str[6]; /* UTF8 character or terminal escape code */
+	int code;    /* curses KEY_* constant */
+} Key;
+
 #include <stdbool.h>
 #include <stdarg.h>
 #include "text.h"
@@ -40,10 +45,8 @@ struct Ui {
 	void (*update)(Ui*);
 	void (*suspend)(Ui*);
 	void (*resume)(Ui*);
-/*	TODO main loop integration, signal handling
-	Key getkey(void);
-	bool haskey(void);
-*/
+	Key (*getkey)(Ui*);
+	bool (*haskey)(Ui*);
 };
 
 struct UiWin {
