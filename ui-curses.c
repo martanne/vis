@@ -1,7 +1,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <signal.h>
-#include <curses.h>
 #include <locale.h>
 #include <sys/ioctl.h>
 

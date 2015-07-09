@@ -2,7 +2,7 @@
 /* macros used to specify keys for key bindings */
 #define ESC        0x1B
 #define NONE(k)    { .str = { k }, .code = 0 }
-#define KEY(k)     { .str = { '\0' }, .code = KEY_##k }
+#define KEY(k)     { .str = { '\0' }, .code = UI_KEY_##k }
 #define CONTROL(k) NONE((k)&0x1F)
 #define META(k)    { .str = { ESC, (k) }, .code = 0 }
 
@@ -80,13 +80,13 @@ static bool vis_keypress(Key *key) {
 static KeyBinding basic_movement[] = {
 	{ { CONTROL('Z')            }, suspend,  { NULL                          } },
 	{ { KEY(LEFT)               }, movement, { .i = MOVE_CHAR_PREV           } },
-	{ { KEY(SLEFT)              }, movement, { .i = MOVE_LONGWORD_START_PREV } },
+	{ { KEY(SHIFT_LEFT)         }, movement, { .i = MOVE_LONGWORD_START_PREV } },
 	{ { KEY(RIGHT)              }, movement, { .i = MOVE_CHAR_NEXT           } },
-	{ { KEY(SRIGHT)             }, movement, { .i = MOVE_LONGWORD_START_NEXT } },
+	{ { KEY(SHIFT_RIGHT)        }, movement, { .i = MOVE_LONGWORD_START_NEXT } },
 	{ { KEY(UP)                 }, movement, { .i = MOVE_LINE_UP             } },
 	{ { KEY(DOWN)               }, movement, { .i = MOVE_LINE_DOWN           } },
-	{ { KEY(PPAGE)              }, wscroll,  { .i = -PAGE                    } },
-	{ { KEY(NPAGE)              }, wscroll,  { .i = +PAGE                    } },
+	{ { KEY(PAGE_UP)            }, wscroll,  { .i = -PAGE                    } },
+	{ { KEY(PAGE_DOWN)          }, wscroll,  { .i = +PAGE                    } },
 	{ { KEY(HOME)               }, movement, { .i = MOVE_LINE_START          } },
 	{ { KEY(END)                }, movement, { .i = MOVE_LINE_FINISH         } },
 	{ /* empty last element, array terminator */                               },
@@ -420,7 +420,7 @@ static KeyBinding vis_mode_normal[] = {
 
 static KeyBinding vis_mode_visual[] = {
 	{ { KEY(BACKSPACE)          }, operator,       { .i = OP_DELETE            } },
-	{ { KEY(DC)                 }, operator,       { .i = OP_DELETE            } },
+	{ { KEY(DELETE)             }, operator,       { .i = OP_DELETE            } },
 	{ { NONE(ESC)               }, switchmode,     { .i = VIS_MODE_NORMAL      } },
 	{ { CONTROL('c')            }, switchmode,     { .i = VIS_MODE_NORMAL      } },
 	{ { NONE('v')               }, switchmode,     { .i = VIS_MODE_NORMAL      } },
