@@ -1698,10 +1698,10 @@ static bool cmd_write(Filerange *range, enum CmdOpt opt, const char *argv[]) {
 			editor_info_show(vis, "Can't write `%s'", *name);
 			return false;
 		}
-		if (!file->name) {
+		if (!file->name)
 			editor_window_name(vis->win, *name);
+		if (strcmp(file->name, *name) == 0)
 			file->stat = text_stat(text);
-		}
 	}
 	return true;
 }
