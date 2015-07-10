@@ -799,7 +799,7 @@ static bool preserve_selinux_context(int src, int dest) {
  *   - SELinux security context can not be preserved (if enabled)
  */
 static bool text_range_save_atomic(Text *txt, Filerange *range, const char *filename) {
-	struct stat meta = { 0 };
+	struct stat meta = { 0 }, oldmeta = { 0 };
 	int fd = -1, oldfd = -1, saved_errno;
 	char *tmpname = NULL;
 	size_t size = text_range_size(range);
@@ -807,12 +807,12 @@ static bool text_range_save_atomic(Text *txt, Filerange *range, const char *file
 
 	if ((oldfd = open(filename, O_RDONLY)) == -1 && errno != ENOENT)
 		goto err;
-	if (oldfd != -1 && lstat(filename, &meta) == -1)
+	if (oldfd != -1 && lstat(filename, &oldmeta) == -1)
 		goto err;
 	if (oldfd != -1) {
-		if (S_ISLNK(meta.st_mode)) /* symbolic link */
+		if (S_ISLNK(oldmeta.st_mode)) /* symbolic link */
 			goto err;
-		if (meta.st_nlink > 1) /* hard link */
+		if (oldmeta.st_nlink > 1) /* hard link */
 			goto err;
 	}
 	if (!(tmpname = calloc(1, namelen)))
@@ -820,7 +820,7 @@ static bool text_range_save_atomic(Text *txt, Filerange *range, const char *file
 	snprintf(tmpname, namelen, "%s~", filename);
 
 	/* O_RDWR is needed because otherwise we can't map with MAP_SHARED */
-	if ((fd = open(tmpname, O_CREAT|O_RDWR|O_TRUNC, oldfd == -1 ? S_IRUSR|S_IWUSR : meta.st_mode)) == -1)
+	if ((fd = open(tmpname, O_CREAT|O_RDWR|O_TRUNC, oldfd == -1 ? S_IRUSR|S_IWUSR : oldmeta.st_mode)) == -1)
 		goto err;
 	if (ftruncate(fd, size) == -1)
 		goto err;
@@ -828,11 +828,11 @@ static bool text_range_save_atomic(Text *txt, Filerange *range, const char *file
 		if (!preserve_acl(oldfd, fd) || !preserve_selinux_context(oldfd, fd))
 			goto err;
 		/* change owner if necessary */
-		if (meta.st_uid != getuid() && fchown(fd, meta.st_uid, (uid_t)-1) == -1)
+		if (oldmeta.st_uid != getuid() && fchown(fd, oldmeta.st_uid, (uid_t)-1) == -1)
 			goto err;
 		/* change group if necessary, in case of failure some editors reset
 		 * the group permissions to the same as for others */
-		if (meta.st_gid != getgid() && fchown(fd, (uid_t)-1, meta.st_gid) == -1)
+		if (oldmeta.st_gid != getgid() && fchown(fd, (uid_t)-1, oldmeta.st_gid) == -1)
 			goto err;
 	}
 
@@ -866,6 +866,10 @@ static bool text_range_save_atomic(Text *txt, Filerange *range, const char *file
 
 	if (fsync(fd) == -1)
 		goto err;
+
+	if (fstat(fd, &meta) == -1)
+		goto err;
+
 	if (close(fd) == -1) {
 		fd = -1;
 		goto err;
