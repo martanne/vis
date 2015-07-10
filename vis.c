@@ -1502,18 +1502,69 @@ static bool cmd_set(Filerange *range, enum CmdOpt cmdopt, const char *argv[]) {
 	return true;
 }
 
-static bool cmd_open(Filerange *range, enum CmdOpt opt, const char *argv[]) {
-	if (!argv[1])
-		return vis_window_new(NULL);
-	for (const char **file = &argv[1]; *file; file++) {
-		if (!vis_window_new(*file)) {
-			errno = 0;
-			editor_info_show(vis, "Can't open `%s' %s", *file,
+static bool is_file_pattern(const char *pattern) {
+	return strcmp(pattern, ".") == 0 || strchr(pattern, '*') ||
+	       strchr(pattern, '[') || strchr(pattern, '{');
+}
+
+static const char *file_open_dialog(const char *pattern) {
+	if (!is_file_pattern(pattern))
+		return pattern;
+	/* this is a bit of a hack, we temporarily replace the text/view of the active
+	 * window such that we can use cmd_filter as is */
+	char vis_open[512];
+	static char filename[PATH_MAX];
+	Filerange range = text_range_empty();
+	Win *win = vis->win;
+	File *file = win->file;
+	Text *txt_orig = file->text;
+	View *view_orig = win->view;
+	Text *txt = text_load(NULL);
+	View *view = view_new(txt, NULL);
+	filename[0] = '\0';
+	snprintf(vis_open, sizeof(filename)-1, "vis-open %s", pattern ? pattern : "");
+
+	if (!txt || !view)
+		goto out;
+	win->view = view;
+	file->text = txt;
+
+	if (cmd_filter(&range, CMD_OPT_NONE, (const char *[]){ "open", vis_open, NULL })) {
+		size_t len = text_size(txt);
+		if (len >= sizeof(filename))
+			len = 0;
+		if (len > 0)
+			text_bytes_get(txt, 0, len-1, filename);
+		filename[len] = '\0';
+	}
+
+out:
+	view_free(view);
+	text_free(txt);
+	win->view = view_orig;
+	file->text = txt_orig;
+	return filename[0] ? filename : NULL;
+}
+
+static bool openfiles(const char **files) {
+	for (; *files; files++) {
+		const char *file = file_open_dialog(*files);
+		if (!file)
+			continue;
+		errno = 0;
+		if (!vis_window_new(file)) {
+			editor_info_show(vis, "Could not open `%s' %s", file,
 			                 errno ? strerror(errno) : "");
 			return false;
 		}
 	}
 	return true;
+}
+
+static bool cmd_open(Filerange *range, enum CmdOpt opt, const char *argv[]) {
+	if (!argv[1])
+		return vis_window_new(NULL);
+	return openfiles(&argv[1]);
 }
 
 static bool is_view_closeable(Win *win) {
@@ -1618,18 +1669,6 @@ static bool cmd_substitute(Filerange *range, enum CmdOpt opt, const char *argv[]
 		*range = (Filerange){ .start = 0, .end = text_size(vis->win->file->text) };
 	snprintf(pattern, sizeof pattern, "s%s", argv[1]);
 	return cmd_filter(range, opt, (const char*[]){ argv[0], "sed", pattern, NULL});
-}
-
-static bool openfiles(const char **files) {
-	for (; *files; files++) {
-		errno = 0;
-		if (!vis_window_new(*files)) {
-			editor_info_show(vis, "Could not open `%s' %s", *files,
-			                 errno ? strerror(errno) : "");
-			return false;
-		}
-	}
-	return true;
 }
 
 static bool cmd_split(Filerange *range, enum CmdOpt opt, const char *argv[]) {
