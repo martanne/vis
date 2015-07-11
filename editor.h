@@ -189,7 +189,7 @@ enum Mark {
 struct File {
 	Text *text;
 	const char *name;
-	bool stdin;
+	bool is_stdin;
 	struct stat stat;
 	int refcount;
 	Mark marks[MARK_LAST];

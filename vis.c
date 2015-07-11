@@ -1709,7 +1709,7 @@ static bool cmd_write(Filerange *range, enum CmdOpt opt, const char *argv[]) {
 	if (!argv[1])
 		argv[1] = file->name;
 	if (!argv[1]) {
-		if (file->stdin) {
+		if (file->is_stdin) {
 			if (strchr(argv[0], 'q')) {
 				ssize_t written = text_range_write(text, range, STDOUT_FILENO);
 				if (written == -1 || (size_t)written != text_range_size(range)) {
@@ -2410,7 +2410,7 @@ int main(int argc, char *argv[]) {
 			char buf[PIPE_BUF];
 			File *file = vis->win->file;
 			Text *txt = file->text;
-			file->stdin = true;
+			file->is_stdin = true;
 			while ((len = read(STDIN_FILENO, buf, sizeof buf)) > 0)
 				text_insert(txt, text_size(txt), buf, len);
 			if (len == -1)
