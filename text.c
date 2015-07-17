@@ -1185,6 +1185,14 @@ bool text_modified(Text *txt) {
 	return txt->saved_action != txt->history;
 }
 
+bool text_sigbus(Text *txt, const char *addr) {
+	for (Buffer *buf = txt->buffers; buf; buf = buf->next) {
+		if (buf->type == MMAP && buf->data <= addr && addr < buf->data + buf->size)
+			return true;
+	}
+	return false;
+}
+
 enum TextNewLine text_newline_type(Text *txt){
 	if (!txt->newlines) {
 		txt->newlines = TEXT_NEWLINE_NL; /* default to UNIX style \n new lines */

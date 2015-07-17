@@ -358,6 +358,8 @@ void editor_window_close(Win *win) {
 		ed->windows = win->next;
 	if (ed->win == win)
 		ed->win = win->next ? win->next : win->prev;
+	if (ed->prompt_window == win)
+		ed->prompt_window = NULL;
 	window_free(win);
 	if (ed->win)
 		ed->ui->window_focus(ed->win->ui);

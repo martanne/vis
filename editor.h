@@ -5,6 +5,7 @@
 #include <signal.h>
 #include <stddef.h>
 #include <stdbool.h>
+#include <setjmp.h>
 
 typedef struct Editor Editor;
 typedef struct File File;
@@ -190,6 +191,7 @@ enum Mark {
 struct File {
 	Text *text;
 	const char *name;
+	volatile sig_atomic_t truncated;
 	bool is_stdin;
 	struct stat stat;
 	int refcount;
@@ -244,6 +246,8 @@ struct Editor {
 	Mode *mode_before_prompt; /* user mode which was active before entering prompt */
 	volatile bool running; /* exit main loop once this becomes false */
 	volatile sig_atomic_t cancel_filter; /* abort external command */
+	volatile sig_atomic_t sigbus;
+	sigjmp_buf sigbus_jmpbuf;
 };
 
 Editor *editor_new(Ui*);

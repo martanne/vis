@@ -2312,8 +2312,23 @@ static Key getkey(void) {
 	return key;
 }
 
+static void sigbus_handler(int sig, siginfo_t *siginfo, void *context) {
+	for (File *file = vis->files; file; file = file->next) {
+		if (text_sigbus(file->text, siginfo->si_addr))
+			file->truncated = true;
+	}
+	vis->sigbus = true;
+	siglongjmp(vis->sigbus_jmpbuf, 1);
+}
+
 static void mainloop() {
 	struct timespec idle = { .tv_nsec = 0 }, *timeout = NULL;
+	struct sigaction sa_sigbus;
+	memset(&sa_sigbus, 0, sizeof sa_sigbus);
+	sa_sigbus.sa_flags = SA_SIGINFO;
+	sa_sigbus.sa_sigaction = sigbus_handler;
+	if (sigaction(SIGBUS, &sa_sigbus, NULL))
+		die("sigaction: %s", strerror(errno));
 	sigset_t emptyset, blockset;
 	sigemptyset(&emptyset);
 	sigemptyset(&blockset);
@@ -2323,10 +2338,30 @@ static void mainloop() {
 	editor_draw(vis);
 	vis->running = true;
 
+	sigsetjmp(vis->sigbus_jmpbuf, 1);
+
 	while (vis->running) {
 		fd_set fds;
 		FD_ZERO(&fds);
 		FD_SET(STDIN_FILENO, &fds);
+
+		if (vis->sigbus) {
+			char *name = NULL;
+			for (Win *next, *win = vis->windows; win; win = next) {
+				next = win->next;
+				if (win->file->truncated) {
+					free(name);
+					name = strdup(win->file->name);
+					editor_window_close(win);
+				}
+			}
+			if (!vis->windows)
+				die("WARNING: file `%s' truncated!\n", name ? name : "-");
+			else
+				editor_info_show(vis, "WARNING: file `%s' truncated!\n", name ? name : "-");
+			vis->sigbus = false;
+			free(name);
+		}
 
 		editor_update(vis);
 		idle.tv_sec = vis->mode->idle_timeout;
