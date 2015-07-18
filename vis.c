@@ -39,6 +39,7 @@
 #include "text-objects.h"
 #include "util.h"
 #include "map.h"
+#include "libutf.h"
 
 /** global variables */
 static Editor *vis;         /* global editor instance, keeps track of all windows etc. */
@@ -1037,15 +1038,65 @@ static void prompt_backspace(const Arg *arg) {
 }
 
 static void insert_verbatim(const Arg *arg) {
-	int value = 0;
-	for (int i = 0; i < 3; i++) {
-		Key k = getkey();
-		if (k.str[0] < '0' || k.str[0] > '9')
+	int len = 0, count = 0, base;
+	Rune rune = 0;
+	Key key = getkey();
+	char buf[4], type = key.str[0];
+	switch (type) {
+	case 'o':
+	case 'O':
+		count = 3;
+		base = 8;
+		break;
+	case 'U':
+		count = 4;
+		/* fall through */
+	case 'u':
+		count += 4;
+		base = 16;
+		break;
+	case 'x':
+	case 'X':
+		count = 2;
+		base = 16;
+		break;
+	default:
+		if (type < '0' || type > '9')
 			return;
-		value = value * 10 + k.str[0] - '0';
+		rune = type - '0';
+		count = 2;
+		base = 10;
+		break;
 	}
-	char v = value;
-	editor_insert(vis, view_cursor_get(vis->win->view), &v, 1);
+
+	while (count-- > 0) {
+		key = getkey();
+		int v = 0;
+		if (base == 8 && '0' <= key.str[0] && key.str[0] <= '7')
+			v = key.str[0] - '0';
+		else if ((base == 10 || base == 16) && '0' <= key.str[0] && key.str[0] <= '9')
+			v = key.str[0] - '0';
+		else if (base == 16 && 'a' <= key.str[0] && key.str[0] <= 'f')
+			v = 10 + key.str[0] - 'a';
+		else if (base == 16 && 'A' <= key.str[0] && key.str[0] <= 'F')
+			v = 10 + key.str[0] - 'A';
+		else
+			break;
+		rune = rune * base + v;
+	}
+
+	if (type == 'u' || type == 'U') {
+		len = runetochar(buf, &rune);
+	} else {
+		buf[0] = rune;
+		len = 1;
+	}
+
+	if (len > 0) {
+		size_t pos = view_cursor_get(vis->win->view);
+		editor_insert(vis, pos, buf, len);
+		view_cursor_to(vis->win->view, pos + len);
+	}
 }
 
 static void quit(const Arg *arg) {
