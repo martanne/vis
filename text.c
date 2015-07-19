@@ -34,6 +34,7 @@
 #include "text.h"
 #include "util.h"
 
+/* Allocate buffers holding the actual file content in junks of size: */
 #define BUFFER_SIZE (1 << 20)
 /* Files smaller than this value are copied on load, larger ones are mmap(2)-ed
  * directely. Hence the former can be truncated, while doing so on the latter
@@ -50,18 +51,19 @@ struct Regex {
  */
 typedef struct Buffer Buffer;
 struct Buffer {
-	size_t size;            /* maximal capacity */
-	size_t len;             /* current used length / insertion position */
-	char *data;             /* actual data */
+	size_t size;               /* maximal capacity */
+	size_t len;                /* current used length / insertion position */
+	char *data;                /* actual data */
 	enum { MMAP, MALLOC} type; /* type of allocation */
-	Buffer *next;           /* next junk */
+	Buffer *next;              /* next junk */
 };
 
 /* A piece holds a reference (but doesn't itself store) a certain amount of data.
  * All active pieces chained together form the whole content of the document.
  * At the beginning there exists only one piece, spanning the whole document.
- * Upon insertion/delition new pieces will be created to represent the changes.
- * Generally pieces are never destroytxt, but kept around to peform undo/redo operations.
+ * Upon insertion/deletion new pieces will be created to represent the changes.
+ * Generally pieces are never destroyed, but kept around to peform undo/redo
+ * operations.
  */
 struct Piece {
 	Text *text;             /* text to which this piece belongs */
@@ -69,11 +71,11 @@ struct Piece {
 	Piece *global_prev;     /* double linked list in order of allocation, */
 	Piece *global_next;     /* used to free individual pieces */
 	const char *data;       /* pointer into a Buffer holding the data */
-	size_t len;             /* the lenght in number of bytes starting from content */
+	size_t len;             /* the length in number of bytes of the data */
 };
 
-/* used to transform a global position (byte offset starting from the begining
- * of the text) into an offset relative to piece.
+/* used to transform a global position (byte offset starting from the beginning
+ * of the text) into an offset relative to a piece.
  */
 typedef struct {
 	Piece *piece;           /* piece holding the location */
@@ -129,7 +131,7 @@ struct Text {
 	Action *last_action;    /* the last action added to the tree, chronologically */
 	Action *saved_action;   /* the last action at the time of the save operation */
 	size_t size;            /* current file content size in bytes */
-	struct stat info;       /* stat as proped on load time */
+	struct stat info;       /* stat as probed at load time */
 	LineCache lines;        /* mapping between absolute pos in bytes and logical line breaks */
 	enum TextNewLine newlines; /* which type of new lines does the file use */
 };
@@ -1081,13 +1083,15 @@ bool text_delete(Text *txt, size_t pos, size_t len) {
 	size_t off = loc.off;
 	if (cache_delete(txt, p, off, len))
 		return true;
-	size_t cur; // how much has already been deleted
-	bool midway_start = false, midway_end = false;
 	Change *c = change_alloc(txt, pos);
 	if (!c)
 		return false;
-	Piece *before, *after; // unmodified pieces before / after deletion point
-	Piece *start, *end; // span which is removed
+
+	bool midway_start = false, midway_end = false; /* split pieces? */
+	Piece *before, *after; /* unmodified pieces before/after deletion point */
+	Piece *start, *end;    /* span which is removed */
+	size_t cur;            /* how much has already been deleted */
+
 	if (off == p->len) {
 		/* deletion starts at a piece boundry */
 		cur = 0;
@@ -1102,6 +1106,7 @@ bool text_delete(Text *txt, size_t pos, size_t len) {
 		if (!before)
 			return false;
 	}
+
 	/* skip all pieces which fall into deletion range */
 	while (cur < len) {
 		p = p->next;
@@ -1112,8 +1117,8 @@ bool text_delete(Text *txt, size_t pos, size_t len) {
 		/* deletion stops at a piece boundry */
 		end = p;
 		after = p->next;
-	} else { // cur > len
-		/* deletion stops midway through a piece */
+	} else {
+		/* cur > len: deletion stops midway through a piece */
 		midway_end = true;
 		end = p;
 		after = piece_alloc(txt);
@@ -1527,7 +1532,7 @@ bool text_range_valid(Filerange *r) {
 }
 
 size_t text_range_size(Filerange *r) {
-	return text_range_valid(r) ? r-> end - r->start : 0;
+	return text_range_valid(r) ? r->end - r->start : 0;
 }
 
 Filerange text_range_empty(void) {

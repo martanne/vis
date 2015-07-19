@@ -15,9 +15,13 @@ typedef struct {
 	size_t start, end;        /* range in bytes from start of the file */
 } Filerange;
 
+/* test whether the given range is valid (start <= end) */
 bool text_range_valid(Filerange*);
+/* get the size of the range (end-start) or zero if invalid */
 size_t text_range_size(Filerange*);
+/* create an empty / invalid range of size zero */
 Filerange text_range_empty(void);
+/* merge two ranges into a new one which contains both of them */
 Filerange text_range_union(Filerange*, Filerange*);
 
 typedef struct Text Text;
@@ -36,17 +40,23 @@ typedef struct {
 	     text_iterator_valid(&it); \
 	     text_iterator_next(&it))
 
-Text *text_load(const char *file);
+/* create a text instance populated with the given file content, if `filename'
+ * is NULL the text starts out empty */
+Text *text_load(const char *filename);
 /* file information at time of load or last save */
 struct stat text_stat(Text*);
+/* insert `len' bytes starting from `data' at `pos' which has to be
+ * in the interval [0, text_size(txt)] */
 bool text_insert(Text*, size_t pos, const char *data, size_t len);
+/* delete `len' bytes starting from `pos' */
 bool text_delete(Text*, size_t pos, size_t len);
+/* mark the current text state, such that it can be {un,re}done */
 void text_snapshot(Text*);
-/* undo/redos to the last snapshoted state. returns the position where
- * the change occured or EPOS if nothing could be undo/redo. */
+/* undo/redo to the last snapshotted state. returns the position where
+ * the change occured or EPOS if nothing could be {un,re}done. */
 size_t text_undo(Text*);
 size_t text_redo(Text*);
-/* move chronlogically to the count earlier/later revision */
+/* move chronlogically to the `count' earlier/later revision */
 size_t text_earlier(Text*, int count);
 size_t text_later(Text*, int count);
 /* restore the text to the state closest to the time given */
@@ -57,7 +67,12 @@ time_t text_state(Text*);
 size_t text_pos_by_lineno(Text*, size_t lineno);
 size_t text_lineno_by_pos(Text*, size_t pos);
 
+/* set `buf' to the byte found at `pos' and return true, if `pos' is invalid
+ * false is returned and `buf' is left unmodified */
 bool text_byte_get(Text*, size_t pos, char *buf);
+/* store at most `len' bytes starting from `pos' into `buf', the return value
+ * indicates how many bytes were copied into `buf'. WARNING buf will not be
+ * NUL terminated. */
 size_t text_bytes_get(Text*, size_t pos, size_t len, char *buf);
 
 Iterator text_iterator_get(Text*, size_t pos);
@@ -78,13 +93,20 @@ bool text_iterator_char_next(Iterator*, char *c);
 bool text_iterator_char_prev(Iterator*, char *c);
 
 typedef const char* Mark;
+/* mark position `pos', the returned mark can be used to later retrieve
+ * the same text segment */
 Mark text_mark_set(Text*, size_t pos);
+/* get position of mark in bytes from start of the file or EPOS if
+ * the mark is not/no longer valid e.g. if the corresponding text was
+ * deleted. If the change is later restored the mark will once again be
+ * valid. */
 size_t text_mark_get(Text*, Mark);
 
 /* get position of change denoted by index, where 0 indicates the most recent */
 size_t text_history_get(Text*, size_t index);
-
+/* return the size in bytes of the whole text */
 size_t text_size(Text*);
+/* query whether the text contains any unsaved modifications */
 bool text_modified(Text*);
 
 /* which type of new lines does the text use? */
@@ -95,10 +117,16 @@ enum TextNewLine {
 
 enum TextNewLine text_newline_type(Text*);
 
-bool text_save(Text*, const char *file);
+/* save the whole text to the given `filename'. Return true if succesful.
+ * In which case an implicit snapshot is taken. The save might associate a
+ * new inode to file. */
+bool text_save(Text*, const char *filename);
 bool text_range_save(Text*, Filerange*, const char *file);
+/* write the text content to the given file descriptor `fd'. Return the
+ * number of bytes written or -1 in case there was an error. */
 ssize_t text_write(Text*, int fd);
 ssize_t text_range_write(Text*, Filerange*, int fd);
+/* release all ressources associated with this text instance */
 void text_free(Text*);
 
 typedef struct Regex Regex;
