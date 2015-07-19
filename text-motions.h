@@ -7,6 +7,7 @@
 
 #include <stddef.h>
 #include "text.h"
+#include "text-regex.h"
 
 size_t text_begin(Text*, size_t pos);
 size_t text_end(Text*, size_t pos);

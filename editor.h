@@ -17,6 +17,7 @@ typedef struct Win Win;
 #include "syntax.h"
 #include "ring-buffer.h"
 #include "map.h"
+#include "text-regex.h"
 
 typedef union {
 	bool b;
