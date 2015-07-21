@@ -1,7 +1,6 @@
 #ifndef EDITOR_H
 #define EDITOR_H
 
-#include <curses.h>
 #include <signal.h>
 #include <stddef.h>
 #include <stdbool.h>
@@ -273,9 +272,9 @@ int editor_tabwidth_get(Editor*);
 /* load a set of syntax highlighting definitions which will be associated
  * to the underlying window based on the file type loaded.
  *
- * both *syntaxes and *colors must point to a NULL terminated arrays.
+ * The parameter `syntaxes' has to point to a NULL terminated array.
  */
-bool editor_syntax_load(Editor*, Syntax *syntaxes, Color *colors);
+bool editor_syntax_load(Editor*, Syntax *syntaxes);
 void editor_syntax_unload(Editor*);
 
 /* creates a new window, and loads the given file. if filename is NULL

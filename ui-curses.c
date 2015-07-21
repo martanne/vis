@@ -371,11 +371,17 @@ static void ui_window_draw_text(UiWin *w, const Line *line) {
 		/* add a single space in an otherwise empty line to make
 		 * the selection cohorent */
 		if (l->width == 1 && l->cells[0].data[0] == '\n') {
-			wattrset(win->win, l->cells[0].attr);
+			int attr = l->cells[0].attr;
+			if (l->cells[0].selected)
+				attr |= A_REVERSE;
+			wattrset(win->win, attr);
 			waddstr(win->win, " \n");
 		} else {
 			for (int x = 0; x < l->width; x++) {
-				wattrset(win->win, l->cells[x].attr);
+				int attr = l->cells[x].attr;
+				if (l->cells[x].selected)
+					attr |= A_REVERSE;
+				wattrset(win->win, attr);
 				waddstr(win->win, l->cells[x].data);
 			}
 			if (l->width != win->width - win->sidebar_width)
@@ -589,7 +595,7 @@ static void ui_terminal_restore(Ui *ui) {
 	wclear(stdscr);
 }
 
-Ui *ui_curses_new(void) {
+Ui *ui_curses_new(Color *colors) {
 	setlocale(LC_CTYPE, "");
 	if (!getenv("ESCDELAY"))
 		set_escdelay(50);
@@ -631,12 +637,17 @@ Ui *ui_curses_new(void) {
 		.arrange = arrange,
 		.info = info,
 		.info_hide = info_hide,
-		.color_get = color_get,
 		.haskey = ui_haskey,
 		.getkey = ui_getkey,
 		.terminal_save = ui_terminal_save,
 		.terminal_restore = ui_terminal_restore,
 	};
+
+	for (Color *color = colors; color && color->fg; color++) {
+		if (color->attr == 0)
+			color->attr = A_NORMAL;
+		color->attr |= COLOR_PAIR(color_get(color->fg, color->bg));
+	}
 
 	struct sigaction sa;
 	sa.sa_flags = 0;

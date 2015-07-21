@@ -29,7 +29,6 @@ typedef struct {
 struct Ui {
 	bool (*init)(Ui*, Editor*);
 	void (*free)(Ui*);
-	short (*color_get)(short fg, short bg);
 	void (*resize)(Ui*);
 	UiWin* (*window_new)(Ui*, View*, File*);
 	void (*window_free)(UiWin*);

@@ -830,18 +830,18 @@ enum {
 };
 
 static Color colors[] = {
-	[COLOR_NOHILIT] = { .fg = -1,            .bg = -1, .attr = A_NORMAL },
-	[COLOR_SYNTAX0] = { .fg = COLOR_RED,     .bg = -1, .attr = A_BOLD   },
-	[COLOR_SYNTAX1] = { .fg = COLOR_GREEN,   .bg = -1, .attr = A_BOLD   },
-	[COLOR_SYNTAX2] = { .fg = COLOR_GREEN,   .bg = -1, .attr = A_NORMAL },
-	[COLOR_SYNTAX3] = { .fg = COLOR_MAGENTA, .bg = -1, .attr = A_BOLD   },
-	[COLOR_SYNTAX4] = { .fg = COLOR_MAGENTA, .bg = -1, .attr = A_NORMAL },
-	[COLOR_SYNTAX5] = { .fg = COLOR_BLUE,    .bg = -1, .attr = A_BOLD   },
-	[COLOR_SYNTAX6] = { .fg = COLOR_RED,     .bg = -1, .attr = A_NORMAL },
-	[COLOR_SYNTAX7] = { .fg = COLOR_BLUE,    .bg = -1, .attr = A_NORMAL },
-	[COLOR_SYNTAX8] = { .fg = COLOR_CYAN,    .bg = -1, .attr = A_NORMAL },
-	[COLOR_SYNTAX9] = { .fg = COLOR_YELLOW,  .bg = -1, .attr = A_NORMAL },
-	{ /* empty last element, array terminator */                        }
+	[COLOR_NOHILIT] = { .fg = UI_COLOR_DEFAULT, .bg = UI_COLOR_DEFAULT, .attr = UI_ATTR_NORMAL },
+	[COLOR_SYNTAX0] = { .fg = UI_COLOR_RED,     .bg = UI_COLOR_DEFAULT, .attr = UI_ATTR_BOLD   },
+	[COLOR_SYNTAX1] = { .fg = UI_COLOR_GREEN,   .bg = UI_COLOR_DEFAULT, .attr = UI_ATTR_BOLD   },
+	[COLOR_SYNTAX2] = { .fg = UI_COLOR_GREEN,   .bg = UI_COLOR_DEFAULT, .attr = UI_ATTR_NORMAL },
+	[COLOR_SYNTAX3] = { .fg = UI_COLOR_MAGENTA, .bg = UI_COLOR_DEFAULT, .attr = UI_ATTR_BOLD   },
+	[COLOR_SYNTAX4] = { .fg = UI_COLOR_MAGENTA, .bg = UI_COLOR_DEFAULT, .attr = UI_ATTR_NORMAL },
+	[COLOR_SYNTAX5] = { .fg = UI_COLOR_BLUE,    .bg = UI_COLOR_DEFAULT, .attr = UI_ATTR_BOLD   },
+	[COLOR_SYNTAX6] = { .fg = UI_COLOR_RED,     .bg = UI_COLOR_DEFAULT, .attr = UI_ATTR_NORMAL },
+	[COLOR_SYNTAX7] = { .fg = UI_COLOR_BLUE,    .bg = UI_COLOR_DEFAULT, .attr = UI_ATTR_NORMAL },
+	[COLOR_SYNTAX8] = { .fg = UI_COLOR_CYAN,    .bg = UI_COLOR_DEFAULT, .attr = UI_ATTR_NORMAL },
+	[COLOR_SYNTAX9] = { .fg = UI_COLOR_YELLOW,  .bg = UI_COLOR_DEFAULT, .attr = UI_ATTR_NORMAL },
+	{ /* empty last element, array terminator */                                               }
 };
 
 /* Syntax color definitions per file type. Each rule consists of a regular

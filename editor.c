@@ -178,15 +178,9 @@ void editor_tabwidth_set(Editor *ed, int tabwidth) {
 	ed->tabwidth = tabwidth;
 }
 
-bool editor_syntax_load(Editor *ed, Syntax *syntaxes, Color *colors) {
+bool editor_syntax_load(Editor *ed, Syntax *syntaxes) {
 	bool success = true;
 	ed->syntaxes = syntaxes;
-
-	for (Color *color = colors; color && color->fg; color++) {
-		if (color->attr == 0)
-			color->attr = A_NORMAL;
-		color->attr |= COLOR_PAIR(ed->ui->color_get(color->fg, color->bg));
-	}
 
 	for (Syntax *syn = syntaxes; syn && syn->name; syn++) {
 		if (regcomp(&syn->file_regex, syn->file, REG_EXTENDED|REG_NOSUB|REG_ICASE|REG_NEWLINE))

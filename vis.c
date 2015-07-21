@@ -2453,12 +2453,12 @@ int main(int argc, char *argv[]) {
 		}
 	}
 
-	if (!(vis = editor_new(ui_curses_new())))
+	if (!(vis = editor_new(ui_curses_new(colors))))
 		die("Could not allocate editor core\n");
 
 	vis->mode_prev = vis->mode = config->mode;
 
-	if (!editor_syntax_load(vis, syntaxes, colors))
+	if (!editor_syntax_load(vis, syntaxes))
 		die("Could not load syntax highlighting definitions\n");
 
 	char *cmd = NULL;

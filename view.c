@@ -167,7 +167,7 @@ static bool view_addch(View *view, Cell *cell) {
 			int t = w == 0 ? SYNTAX_SYMBOL_TAB : SYNTAX_SYMBOL_TAB_FILL;
 			strncpy(cell->data, view->symbols[t]->symbol, sizeof(cell->data)-1);
 			if (view->symbols[t]->color)
-				cell->attr = view->symbols[t]->color->attr | (cell->attr & A_REVERSE);
+				cell->attr = view->symbols[t]->color->attr;
 			view->line->cells[view->col] = *cell;
 			view->line->len += cell->len;
 			view->line->width += cell->width;
@@ -215,7 +215,7 @@ static bool view_addch(View *view, Cell *cell) {
 		if (cell->data[0] == ' ') {
 			strncpy(cell->data, view->symbols[SYNTAX_SYMBOL_SPACE]->symbol, sizeof(cell->data)-1);
 			if (view->symbols[SYNTAX_SYMBOL_SPACE]->color)
-				cell->attr = view->symbols[SYNTAX_SYMBOL_SPACE]->color->attr | (cell->attr & A_REVERSE);
+				cell->attr = view->symbols[SYNTAX_SYMBOL_SPACE]->color->attr;
 
 		}
 
@@ -304,7 +304,7 @@ static size_t view_cursor_update(View *view) {
 				view_draw(view); /* clear active highlighting */
 			cursor->pos = pos_match;
 			view_cursor_sync(view);
-			cursor->line->cells[cursor->col].attr |= A_REVERSE;
+			cursor->line->cells[cursor->col].selected = true;
 			cursor->pos = pos;
 			view_cursor_sync(view);
 			view->ui->draw_text(view->ui, view->topline);
@@ -374,7 +374,7 @@ void view_draw(View *view) {
 	regmatch_t match[syntax ? LENGTH(syntax->rules) : 1][1], *matched = NULL;
 	memset(match, 0, sizeof match);
 	/* default and current curses attributes to use */
-	int default_attrs = COLOR_PAIR(0) | A_NORMAL, attrs = default_attrs;
+	int default_attrs = 0, attrs = default_attrs;
 	/* start from known multibyte state */
 	mbstate_t mbstate = { 0 };
 
@@ -468,7 +468,7 @@ void view_draw(View *view) {
 
 		cell.attr = attrs;
 		if (sel.start <= pos && pos < sel.end)
-			cell.attr |= A_REVERSE;
+			cell.selected = true;
 		if (!view_addch(view, &cell))
 			break;
 

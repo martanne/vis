@@ -22,8 +22,9 @@ typedef struct {
 	                       occupied by the same character have a length of 0. */
 	char data[8];       /* utf8 encoded character displayed in this cell might not be the
 			       the same as in the underlying text, for example tabs get expanded */
-	bool istab;
 	unsigned int attr;
+	bool istab;
+	bool selected;
 } Cell;
 
 typedef struct Line Line;
