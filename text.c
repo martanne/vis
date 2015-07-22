@@ -1489,3 +1489,10 @@ Filerange text_range_union(Filerange *r1, Filerange *r2) {
 		.end = MAX(r1->end, r2->end),
 	};
 }
+
+Filerange text_range_new(size_t a, size_t b) {
+	return (Filerange) {
+		.start = MIN(a, b),
+		.end = MAX(a, b),
+	};
+}
