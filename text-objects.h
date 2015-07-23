@@ -32,4 +32,7 @@ Filerange text_object_quote(Text*, size_t pos);
 Filerange text_object_single_quote(Text*, size_t pos);
 Filerange text_object_backtick(Text*, size_t pos);
 
+/* extend a range to cover whole lines */
+Filerange text_range_linewise(Text*, Filerange*);
+
 #endif

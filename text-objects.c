@@ -264,3 +264,11 @@ Filerange text_object_single_quote(Text *txt, size_t pos) {
 Filerange text_object_backtick(Text *txt, size_t pos) {
 	return text_object_bracket(txt, pos, '`');
 }
+
+Filerange text_range_linewise(Text *txt, Filerange *rin) {
+	Filerange rout = *rin;
+	rout.start = text_line_begin(txt, rin->start);
+	if (rin->end != text_line_begin(txt, rin->end))
+		rout.end = text_line_next(txt, rin->end);
+	return rout;
+}
