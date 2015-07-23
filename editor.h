@@ -75,7 +75,7 @@ typedef struct {
 
 typedef struct {
 	size_t (*cmd)(const Arg*);        /* a custom movement based on user input from vis.c */
-	size_t (*view)(View*);              /* a movement based on current window content from view.h */
+	size_t (*view)(Cursor*);            /* a movement based on current window content from view.h */
 	size_t (*txt)(Text*, size_t pos); /* a movement form text-motions.h */
 	size_t (*file)(File*, size_t pos);
 	enum {
@@ -260,7 +260,6 @@ void editor_suspend(Editor*);
  * that all windows which show the affected region are redrawn too. */
 void editor_insert_key(Editor*, const char *data, size_t len);
 void editor_replace_key(Editor*, const char *data, size_t len);
-void editor_backspace_key(Editor*);
 void editor_insert(Editor*, size_t pos, const char *data, size_t len);
 void editor_delete(Editor*, size_t pos, size_t len);
 void editor_replace(Editor*, size_t pos, const char *data, size_t len);

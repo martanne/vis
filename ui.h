@@ -54,7 +54,6 @@ struct UiWin {
 	void (*draw)(UiWin*);
 	void (*draw_text)(UiWin*, const Line*);
 	void (*draw_status)(UiWin*);
-	void (*cursor_to)(UiWin*, int x, int y);
 	void (*reload)(UiWin*, File*);
 	void (*options)(UiWin*, enum UiOption);
 };

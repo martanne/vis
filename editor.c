@@ -414,12 +414,11 @@ void editor_insert(Editor *ed, size_t pos, const char *data, size_t len) {
 }
 
 void editor_insert_key(Editor *ed, const char *data, size_t len) {
-	View *view = ed->win->view;
-	size_t pos = view_cursor_get(view);
-	if (memchr(data, '\n', len) && view_cursor_viewpos(view).y+1 == view_height_get(view))
-		view_viewport_down(view, 1);
-	editor_insert(ed, pos, data, len);
-	view_cursor_to(view, pos + len);
+	for (Cursor *c = view_cursors(ed->win->view); c; c = view_cursors_next(c)) {
+		size_t pos = view_cursors_pos(c);
+		editor_insert(ed, pos, data, len);
+		view_cursors_scroll_to(c, pos + len);
+	}
 }
 
 void editor_replace(Editor *ed, size_t pos, const char *data, size_t len) {
@@ -439,26 +438,11 @@ void editor_replace(Editor *ed, size_t pos, const char *data, size_t len) {
 }
 
 void editor_replace_key(Editor *ed, const char *data, size_t len) {
-	View *view = ed->win->view;
-	size_t pos = view_cursor_get(view);
-	if (memchr(data, '\n', len) && view_cursor_viewpos(view).y+1 == view_height_get(view))
-		view_viewport_down(view, 1);
-	editor_replace(ed, pos, data, len);
-	view_cursor_to(view, pos + len);
-}
-
-void editor_backspace_key(Editor *ed) {
-	View *view = ed->win->view;
-	Text *txt = ed->win->file->text;
-	size_t end = view_cursor_get(view);
-	size_t start = text_char_prev(txt, end);
-	if (view_viewport_get(view).start == end) {
-		view_viewport_up(view, 1);
-		view_cursor_to(view, end);
+	for (Cursor *c = view_cursors(ed->win->view); c; c = view_cursors_next(c)) {
+		size_t pos = view_cursors_pos(c);
+		editor_replace(ed, pos, data, len);
+		view_cursors_scroll_to(c, pos + len);
 	}
-	text_delete(txt, start, end-start);
-	editor_windows_invalidate(ed, start, end);
-	view_cursor_to(view, start);
 }
 
 void editor_delete(Editor *ed, size_t pos, size_t len) {

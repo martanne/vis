@@ -187,8 +187,8 @@ static Movement moves[] = {
 	[MOVE_LINE_NEXT]           = { .txt = text_line_next,           .type = LINEWISE           },
 	[MOVE_LINE]                = { .txt = line,                     .type = LINEWISE|IDEMPOTENT|JUMP},
 	[MOVE_COLUMN]              = { .txt = column,                   .type = CHARWISE|IDEMPOTENT},
-	[MOVE_CHAR_PREV]           = { .txt = text_char_prev                                       },
-	[MOVE_CHAR_NEXT]           = { .txt = text_char_next                                       },
+	[MOVE_CHAR_PREV]           = { .txt = text_char_prev,           .type = CHARWISE           },
+	[MOVE_CHAR_NEXT]           = { .txt = text_char_next,           .type = CHARWISE           },
 	[MOVE_LINE_CHAR_PREV]      = { .txt = text_line_char_prev,      .type = CHARWISE           },
 	[MOVE_LINE_CHAR_NEXT]      = { .txt = text_line_char_next,      .type = CHARWISE           },
 	[MOVE_WORD_START_PREV]     = { .txt = text_word_start_prev,     .type = CHARWISE           },
@@ -456,7 +456,6 @@ static size_t op_delete(OperatorContext *c) {
 
 static size_t op_change(OperatorContext *c) {
 	op_delete(c);
-	switchmode(&(const Arg){ .i = VIS_MODE_INSERT });
 	return c->range.start;
 }
 
@@ -571,10 +570,13 @@ static size_t op_case_change(OperatorContext *c) {
 static size_t op_join(OperatorContext *c) {
 	Text *txt = vis->win->file->text;
 	size_t pos = text_line_begin(txt, c->range.end), prev_pos;
-	Filerange sel = view_selection_get(vis->win->view);
-	/* if a selection ends at the begin of a line, skip line break */
-	if (pos == c->range.end && text_range_valid(&sel))
-		pos = text_line_prev(txt, pos);
+	/* if selection is linewise, skip last line break */
+	if (c->range.start == text_line_begin(txt, c->range.start) && pos == c->range.end) {
+		size_t line_prev = text_line_prev(txt, pos);
+		size_t line_prev_prev = text_line_prev(txt, line_prev);
+		if (line_prev_prev >= c->range.start)
+			pos = line_prev;
+	}
 
 	do {
 		prev_pos = pos;
@@ -811,13 +813,11 @@ static void replace(const Arg *arg) {
 	Key k = getkey();
 	if (!k.str[0])
 		return;
-	size_t pos = view_cursor_get(vis->win->view);
 	action_reset(&vis->action_prev);
 	vis->action_prev.op = &ops[OP_REPEAT_REPLACE];
 	buffer_put(&vis->buffer_repeat, k.str, strlen(k.str));
-	editor_replace(vis, pos, k.str, strlen(k.str));
+	editor_replace_key(vis, k.str, strlen(k.str));
 	text_snapshot(vis->win->file->text);
-	view_cursor_to(vis->win->view, pos);
 }
 
 static void count(const Arg *arg) {
@@ -902,17 +902,8 @@ static void textobj(const Arg *arg) {
 }
 
 static void selection_end(const Arg *arg) {
-	size_t pos = view_cursor_get(vis->win->view);
-	Filerange sel = view_selection_get(vis->win->view);
-	if (pos == sel.start) {
-		pos = text_char_prev(vis->win->file->text, sel.end);
-	} else {
-		pos = sel.start;
-		sel.start = text_char_prev(vis->win->file->text, sel.end);
-		sel.end = pos;
-	}
-	view_selection_set(vis->win->view, &sel);
-	view_cursor_to(vis->win->view, pos);
+	for (Cursor *c = view_cursors(vis->win->view); c; c = view_cursors_next(c))
+		view_cursors_selection_swap(c);
 }
 
 static void reg(const Arg *arg) {
@@ -1219,116 +1210,120 @@ static void switchmode(const Arg *arg) {
 static void action_do(Action *a) {
 	Text *txt = vis->win->file->text;
 	View *view = vis->win->view;
-	size_t pos = view_cursor_get(view);
 	int count = MAX(1, a->count);
-	OperatorContext c = {
-		.count = a->count,
-		.pos = pos,
-		.range = text_range_empty(),
-		.reg = a->reg ? a->reg : &vis->registers[REG_DEFAULT],
-		.linewise = a->linewise,
-		.arg = &a->arg,
-	};
 
-	if (a->movement) {
-		size_t start = pos;
-		for (int i = 0; i < count; i++) {
-			if (a->movement->txt)
-				pos = a->movement->txt(txt, pos);
-			else if (a->movement->view)
-				pos = a->movement->view(view);
-			else if (a->movement->file)
-				pos = a->movement->file(vis->win->file, pos);
-			else
-				pos = a->movement->cmd(&a->arg);
-			if (pos == EPOS || a->movement->type & IDEMPOTENT)
-				break;
-		}
+	for (Cursor *cursor = view_cursors(view), *next; cursor; cursor = next) {
 
-		if (pos == EPOS) {
-			c.range.start = start;
-			c.range.end = start;
-			pos = start;
-		} else {
-			c.range.start = MIN(start, pos);
-			c.range.end = MAX(start, pos);
-		}
+		next = view_cursors_next(cursor);
+		size_t pos = view_cursors_pos(cursor);
+		OperatorContext c = {
+			.count = a->count,
+			.pos = pos,
+			.range = text_range_empty(),
+			.reg = a->reg ? a->reg : &vis->registers[REG_DEFAULT],
+			.linewise = a->linewise,
+			.arg = &a->arg,
+		};
 
-		if (!a->op) {
-			if (a->movement->type & CHARWISE)
-				view_scroll_to(view, pos);
-			else
-				view_cursor_to(view, pos);
-			if (a->movement->type & JUMP)
-				editor_window_jumplist_add(vis->win, pos);
-			else
-				editor_window_jumplist_invalidate(vis->win);
-		} else if (a->movement->type & INCLUSIVE) {
-			Iterator it = text_iterator_get(txt, c.range.end);
-			text_iterator_char_next(&it, NULL);
-			c.range.end = it.pos;
-		}
-	} else if (a->textobj) {
-		if (vis->mode->visual)
-			c.range = view_selection_get(view);
-		else
-			c.range.start = c.range.end = pos;
-		for (int i = 0; i < count; i++) {
-			Filerange r = a->textobj->range(txt, pos);
-			if (!text_range_valid(&r))
-				break;
-			if (a->textobj->type == OUTER) {
-				r.start--;
-				r.end++;
+		if (a->movement) {
+			size_t start = pos;
+			for (int i = 0; i < count; i++) {
+				if (a->movement->txt)
+					pos = a->movement->txt(txt, pos);
+				else if (a->movement->view)
+					pos = a->movement->view(cursor);
+				else if (a->movement->file)
+					pos = a->movement->file(vis->win->file, pos);
+				else
+					pos = a->movement->cmd(&a->arg);
+				if (pos == EPOS || a->movement->type & IDEMPOTENT)
+					break;
 			}
 
-			c.range = text_range_union(&c.range, &r);
+			if (pos == EPOS) {
+				c.range.start = start;
+				c.range.end = start;
+				pos = start;
+			} else {
+				c.range.start = MIN(start, pos);
+				c.range.end = MAX(start, pos);
+			}
 
-			if (i < count - 1) {
-				if (a->textobj == &textobjs[TEXT_OBJ_LINE_UP]) {
-					pos = c.range.start - 1;
-				} else {
-					pos = c.range.end + 1;
+			if (!a->op) {
+				if (a->movement->type & CHARWISE)
+					view_cursors_scroll_to(cursor, pos);
+				else
+					view_cursors_to(cursor, pos);
+				if (a->movement->type & JUMP)
+					editor_window_jumplist_add(vis->win, pos);
+				else
+					editor_window_jumplist_invalidate(vis->win);
+			} else if (a->movement->type & INCLUSIVE) {
+				Iterator it = text_iterator_get(txt, c.range.end);
+				text_iterator_char_next(&it, NULL);
+				c.range.end = it.pos;
+			}
+		} else if (a->textobj) {
+			if (vis->mode->visual)
+				c.range = view_cursors_selection_get(cursor);
+			else
+				c.range.start = c.range.end = pos;
+			for (int i = 0; i < count; i++) {
+				Filerange r = a->textobj->range(txt, pos);
+				if (!text_range_valid(&r))
+					break;
+				if (a->textobj->type == OUTER) {
+					r.start--;
+					r.end++;
+				}
+
+				c.range = text_range_union(&c.range, &r);
+
+				if (i < count - 1) {
+					if (a->textobj == &textobjs[TEXT_OBJ_LINE_UP]) {
+						pos = c.range.start - 1;
+					} else {
+						pos = c.range.end + 1;
+					}
 				}
 			}
+
+			if (vis->mode->visual) {
+				view_cursors_selection_set(cursor, &c.range);
+				pos = c.range.end;
+				view_cursors_to(cursor, pos);
+			}
+		} else if (vis->mode->visual) {
+			c.range = view_cursors_selection_get(cursor);
+			if (!text_range_valid(&c.range))
+				c.range.start = c.range.end = pos;
 		}
 
-		if (vis->mode->visual) {
-			view_selection_set(view, &c.range);
-			pos = c.range.end;
-			view_cursor_to(view, pos);
+		if (vis->mode == &vis_modes[VIS_MODE_VISUAL_LINE] && (a->movement || a->textobj)) {
+			Filerange sel = view_cursors_selection_get(cursor);
+			c.range = text_range_linewise(txt, &sel);
+			view_cursors_selection_set(cursor, &c.range);
 		}
-	} else if (vis->mode->visual) {
-		c.range = view_selection_get(view);
-		if (!text_range_valid(&c.range))
-			c.range.start = c.range.end = pos;
-	}
 
-	if (vis->mode == &vis_modes[VIS_MODE_VISUAL_LINE] && (a->movement || a->textobj)) {
-		Filerange sel = view_selection_get(view);
-		sel.end = text_char_prev(txt, sel.end);
-		size_t start = text_line_begin(txt, sel.start);
-		size_t end = text_line_end(txt, sel.end);
-		if (sel.start == pos) { /* extend selection upwards */
-			sel.end = start;
-			sel.start = end;
-		} else { /* extend selection downwards */
-			sel.start = start;
-			sel.end = end;
+		if (a->op) {
+			size_t pos = a->op->func(&c);
+			if (pos != EPOS) {
+				view_cursors_to(cursor, pos);
+			} else {
+				view_cursors_free(cursor);
+			}
 		}
-		view_selection_set(view, &sel);
-		c.range = sel;
 	}
 
 	if (a->op) {
-		view_cursor_to(view, a->op->func(&c));
-		editor_draw(vis);
-
-		if (vis->mode == &vis_modes[VIS_MODE_OPERATOR])
+		if (a->op == &ops[OP_CHANGE])
+			switchmode(&(const Arg){ .i = VIS_MODE_INSERT });
+		else if (vis->mode == &vis_modes[VIS_MODE_OPERATOR])
 			switchmode_to(vis->mode_prev);
 		else if (vis->mode->visual)
 			switchmode(&(const Arg){ .i = VIS_MODE_NORMAL });
 		text_snapshot(txt);
+		editor_draw(vis);
 	}
 
 	if (a != &vis->action_prev) {

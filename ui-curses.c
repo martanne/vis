@@ -190,7 +190,6 @@ static void ui_window_draw(UiWin *w) {
 	if (win->winstatus)
 		ui_window_draw_status((UiWin*)win);
 	view_draw(win->view);
-	view_cursor_to(win->view, view_cursor_get(win->view));
 }
 
 static void ui_window_reload(UiWin *w, File *file) {
@@ -356,14 +355,6 @@ static void ui_window_free(UiWin *w) {
 	free(win);
 }
 
-static void ui_window_cursor_to(UiWin *w, int x, int y) {
-	UiCursesWin *win = (UiCursesWin*)w;
-	wmove(win->win, y, x);
-	ui_window_draw_status(w);
-	if (win->options & UI_OPTION_LINE_NUMBERS_RELATIVE)
-		ui_window_draw_sidebar(win, view_lines_get(win->view));
-}
-
 static void ui_window_draw_text(UiWin *w, const Line *line) {
 	UiCursesWin *win = (UiCursesWin*)w;
 	wmove(win->win, 0, 0);
@@ -372,6 +363,8 @@ static void ui_window_draw_text(UiWin *w, const Line *line) {
 		 * the selection cohorent */
 		if (l->width == 1 && l->cells[0].data[0] == '\n') {
 			int attr = l->cells[0].attr;
+			if (l->cells[0].cursor)
+				attr = A_NORMAL | A_REVERSE;
 			if (l->cells[0].selected)
 				attr |= A_REVERSE;
 			wattrset(win->win, attr);
@@ -379,6 +372,8 @@ static void ui_window_draw_text(UiWin *w, const Line *line) {
 		} else {
 			for (int x = 0; x < l->width; x++) {
 				int attr = l->cells[x].attr;
+				if (l->cells[x].cursor)
+					attr = A_NORMAL | A_REVERSE;
 				if (l->cells[x].selected)
 					attr |= A_REVERSE;
 				wattrset(win->win, attr);
@@ -433,7 +428,6 @@ static UiWin *ui_window_new(Ui *ui, View *view, File *file) {
 		.draw = ui_window_draw,
 		.draw_status = ui_window_draw_status,
 		.draw_text = ui_window_draw_text,
-		.cursor_to = ui_window_cursor_to,
 		.options = ui_window_options,
 		.reload = ui_window_reload,
 	};
@@ -610,6 +604,7 @@ Ui *ui_curses_new(Color *colors) {
 	noecho();
 	keypad(stdscr, TRUE);
 	meta(stdscr, TRUE);
+	curs_set(0);
 	/* needed because we use getch() which implicitly calls refresh() which
 	   would clear the screen (overwrite it with an empty / unused stdscr */
 	refresh();
