@@ -183,6 +183,18 @@ size_t text_line_char_prev(Text *txt, size_t pos) {
 	return it.pos;
 }
 
+size_t text_line_up(Text *txt, size_t pos) {
+	size_t bol = text_line_begin(txt, pos);
+	size_t prev = text_line_prev(txt, bol);
+	return text_line_offset(txt, prev, pos - bol);
+}
+
+size_t text_line_down(Text *txt, size_t pos) {
+	size_t bol = text_line_begin(txt, pos);
+	size_t next = text_line_next(txt, bol);
+	return text_line_offset(txt, next, pos - bol);
+}
+
 static size_t text_customword_start_next(Text *txt, size_t pos, int (*isboundry)(int)) {
 	char c;
 	Iterator it = text_iterator_get(txt, pos);
