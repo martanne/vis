@@ -1434,6 +1434,10 @@ size_t text_lineno_by_pos(Text *txt, size_t pos) {
 }
 
 Mark text_mark_set(Text *txt, size_t pos) {
+	if (pos == 0)
+		return (Mark)&txt->begin;
+	if (pos == txt->size)
+		return (Mark)&txt->end;
 	Location loc = piece_get_extern(txt, pos);
 	if (!loc.piece)
 		return NULL;
@@ -1445,6 +1449,10 @@ size_t text_mark_get(Text *txt, Mark mark) {
 
 	if (!mark)
 		return EPOS;
+	if (mark == (Mark)&txt->begin)
+		return 0;
+	if (mark == (Mark)&txt->end)
+		return txt->size;
 
 	for (Piece *p = txt->begin.next; p->next; p = p->next) {
 		if (p->data <= mark && mark < p->data + p->len)
