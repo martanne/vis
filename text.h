@@ -26,6 +26,8 @@ Filerange text_range_empty(void);
 Filerange text_range_union(Filerange*, Filerange*);
 /* create new range [min(a,b), max(a,b)] */
 Filerange text_range_new(size_t a, size_t b);
+/* test whether two ranges overlap */
+bool text_range_overlap(Filerange*, Filerange*);
 
 typedef struct Text Text;
 typedef struct Piece Piece;

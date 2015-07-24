@@ -1496,3 +1496,9 @@ Filerange text_range_new(size_t a, size_t b) {
 		.end = MAX(a, b),
 	};
 }
+
+bool text_range_overlap(Filerange *r1, Filerange *r2) {
+	if (!text_range_valid(r1) || !text_range_valid(r2))
+		return false;
+	return r1->start <= r2->end && r2->start <= r1->end;
+}
