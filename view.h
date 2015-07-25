@@ -52,6 +52,7 @@ void view_free(View*);
 
 bool view_resize(View*, int width, int height);
 int view_height_get(View*);
+int view_width_get(View*);
 void view_draw(View*);
 /* changes how many spaces are used for one tab (must be >0), redraws the window */
 void view_tabwidth_set(View*, int tabwidth);

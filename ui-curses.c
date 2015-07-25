@@ -358,31 +358,17 @@ static void ui_window_free(UiWin *w) {
 static void ui_window_draw_text(UiWin *w, const Line *line) {
 	UiCursesWin *win = (UiCursesWin*)w;
 	wmove(win->win, 0, 0);
+	int width = view_width_get(win->view);
 	for (const Line *l = line; l; l = l->next) {
-		/* add a single space in an otherwise empty line to make
-		 * the selection cohorent */
-		if (l->width == 1 && l->cells[0].data[0] == '\n') {
-			int attr = l->cells[0].attr;
-			if (l->cells[0].cursor)
+		for (int x = 0; x < width; x++) {
+			int attr = l->cells[x].attr;
+			if (l->cells[x].cursor && (win->ui->selwin == win || win->ui->prompt_win == win))
 				attr = A_NORMAL | A_REVERSE;
-			if (l->cells[0].selected)
+			if (l->cells[x].selected)
 				attr |= A_REVERSE;
 			wattrset(win->win, attr);
-			waddstr(win->win, " \n");
-		} else {
-			for (int x = 0; x < l->width; x++) {
-				int attr = l->cells[x].attr;
-				if (l->cells[x].cursor)
-					attr = A_NORMAL | A_REVERSE;
-				if (l->cells[x].selected)
-					attr |= A_REVERSE;
-				wattrset(win->win, attr);
-				waddstr(win->win, l->cells[x].data);
-			}
-			if (l->width != win->width - win->sidebar_width)
-				waddstr(win->win, "\n");
+			waddstr(win->win, l->cells[x].data);
 		}
-		wclrtoeol(win->win);
 	}
 	wclrtobot(win->win);
 
@@ -394,8 +380,8 @@ static void ui_window_focus(UiWin *w) {
 	UiCursesWin *oldsel = win->ui->selwin;
 	win->ui->selwin = win;
 	if (oldsel)
-		ui_window_draw_status((UiWin*)oldsel);
-	ui_window_draw_status(w);
+		ui_window_draw((UiWin*)oldsel);
+	ui_window_draw(w);
 }
 
 static void ui_window_options(UiWin *w, enum UiOption options) {

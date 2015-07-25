@@ -72,7 +72,7 @@ static SyntaxSymbol symbols_none[] = {
 	{ " " }, /* spaces */
 	{ " " }, /* tab first cell */
 	{ " " }, /* tab remaining cells */
-	{ "" },  /* eol */
+	{ " " }, /* eol */
 	{ "~" }, /* eof */
 };
 
@@ -83,6 +83,9 @@ static SyntaxSymbol symbols_default[] = {
 	{ "\xE2\x8F\x8E" }, /* eol */
 	{ "~" },            /* eof */
 };
+
+static Cell cell_unused;
+static Cell cell_blank = { .data = " " };
 
 static void view_clear(View *view);
 static bool view_addch(View *view, Cell *cell);
@@ -132,7 +135,6 @@ static bool view_addch(View *view, Cell *cell) {
 		return false;
 
 	int width;
-	static Cell empty;
 	size_t lineno = view->line->lineno;
 
 	switch (cell->data[0]) {
@@ -179,7 +181,7 @@ static bool view_addch(View *view, Cell *cell) {
 		view->line->len += cell->len;
 		view->line->width += cell->width;
 		for (int i = view->col + 1; i < view->width; i++)
-			view->line->cells[i] = empty;
+			view->line->cells[i] = cell_blank;
 
 		view->line = view->line->next;
 		if (view->line)
@@ -207,7 +209,7 @@ static bool view_addch(View *view, Cell *cell) {
 
 		if (view->col + cell->width > view->width) {
 			for (int i = view->col; i < view->width; i++)
-				view->line->cells[i] = empty;
+				view->line->cells[i] = cell_blank;
 			view->line = view->line->next;
 			view->col = 0;
 		}
@@ -220,7 +222,7 @@ static bool view_addch(View *view, Cell *cell) {
 			view->col++;
 			/* set cells of a character which uses multiple columns */
 			for (int i = 1; i < cell->width; i++)
-				view->line->cells[view->col++] = empty;
+				view->line->cells[view->col++] = cell_unused;
 			return true;
 		}
 		return false;
@@ -444,11 +446,17 @@ void view_draw(View *view) {
 	/* set end of vieviewg region */
 	view->end = pos;
 	view->lastline = view->line ? view->line : view->bottomline;
+	if (view->line) {
+		for (int x = view->col; x < view->width; x++)
+			view->line->cells[x] = cell_blank;
+	}
 
 	for (Line *l = view->lastline->next; l; l = l->next) {
 		strncpy(l->cells[0].data, view->symbols[SYNTAX_SYMBOL_EOF]->symbol, sizeof(l->cells[0].data));
 		if (view->symbols[SYNTAX_SYMBOL_EOF]->color)
 			l->cells[0].attr =view->symbols[SYNTAX_SYMBOL_EOF]->color->attr;
+		for (int x = 1; x < view->width; x++)
+			l->cells[x] = cell_blank;
 		l->width = 1;
 		l->len = 0;
 	}
@@ -487,13 +495,6 @@ void view_draw(View *view) {
 		size_t pos = view_cursors_pos(c);
 		if (view_coord_get(view, pos, &c->line, &c->row, &c->col)) {
 			c->line->cells[c->col].cursor = true;
-			/* if the cursor is at the end of the document where nothing
-			 * is currently displayed, add an empty cell */
-			if (pos == text_size(view->text)) {
-				c->line->width++;
-				c->line->cells[c->col].data[0] = ' ';
-			}
-
 			if (view->ui && view->syntax) {
 				Line *line_match; int col_match;
 				size_t pos_match = text_bracket_match_except(view->text, pos, "<>");
@@ -532,6 +533,10 @@ bool view_resize(View *view, int width, int height) {
 
 int view_height_get(View *view) {
 	return view->height;
+}
+
+int view_width_get(View *view) {
+	return view->width;
 }
 
 void view_free(View *view) {
