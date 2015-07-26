@@ -53,6 +53,8 @@ struct View {
 	ViewEvent *events;
 	int width, height;  /* size of display area */
 	Filepos start, end; /* currently displayed area [start, end] in bytes from the start of the file */
+	Filepos start_last; /* previously used start of visible area, used to update the mark */
+	Mark start_mark;    /* mark to keep track of the start of the visible area */
 	size_t lines_size;  /* number of allocated bytes for lines (grows only) */
 	Line *lines;        /* view->height number of lines representing view content */
 	Line *topline;      /* top of the view, first line currently shown */
@@ -100,8 +102,14 @@ void view_tabwidth_set(View *view, int tabwidth) {
 
 /* reset internal view data structures (cell matrix, line offsets etc.) */
 static void view_clear(View *view) {
-	/* calculate line number of first line */
-	// TODO move elsewhere
+	if (view->start != view->start_last) {
+		view->start_mark = text_mark_set(view->text, view->start);
+		view->start_last = view->start;
+	} else {
+		size_t start = text_mark_get(view->text, view->start_mark);
+		if (start != EPOS)
+			view->start = start;
+	}
 	view->topline = view->lines;
 	view->topline->lineno = text_lineno_by_pos(view->text, view->start);
 	view->lastline = view->topline;
