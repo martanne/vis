@@ -13,6 +13,7 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
+#include <string.h>
 #include <ctype.h>
 #include "text-motions.h"
 #include "text-objects.h"
@@ -163,6 +164,36 @@ Filerange text_object_word_outer(Text *txt, size_t pos) {
 	}
 
 	return r;
+}
+
+Filerange text_object_word_find_next(Text *txt, size_t pos, const char *word) {
+	size_t len = strlen(word);
+	for (;;) {
+		size_t match_pos = text_find_next(txt, pos, word);
+		if (match_pos != pos) {
+			Filerange match_word = text_object_word(txt, match_pos);
+			if (text_range_size(&match_word) == len)
+				return match_word;
+			pos = match_pos;
+		} else {
+			return text_range_empty();
+		}
+	}
+}
+
+Filerange text_object_word_find_prev(Text *txt, size_t pos, const char *word) {
+	size_t len = strlen(word);
+	for (;;) {
+		size_t match_pos = text_find_prev(txt, pos, word);
+		if (match_pos != pos) {
+			Filerange match_word = text_object_word(txt, match_pos);
+			if (text_range_size(&match_word) == len)
+				return match_word;
+			pos = match_pos;
+		} else {
+			return text_range_empty();
+		}
+	}
 }
 
 Filerange text_object_line(Text *txt, size_t pos) {

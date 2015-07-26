@@ -14,6 +14,9 @@ Filerange text_object_word(Text*, size_t pos);
 /* includes trailing white spaces. if at pos happens to be a white space
  * include all neighbouring leading white spaces and the following word. */
 Filerange text_object_word_outer(Text*, size_t pos);
+/* find next occurance of `word' (as word not substring) in forward/backward direction */
+Filerange text_object_word_find_next(Text*, size_t pos, const char *word);
+Filerange text_object_word_find_prev(Text*, size_t pos, const char *word);
 /* same semantics as above but for a longword (i.e. delimited by white spaces) */
 Filerange text_object_longword(Text*, size_t pos);
 Filerange text_object_longword_outer(Text*, size_t pos);
