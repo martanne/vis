@@ -527,7 +527,6 @@ bool view_resize(View *view, int width, int height) {
 	if (view->lines)
 		memset(view->lines, 0, view->lines_size);
 	view_draw(view);
-	view_cursors_to(view->cursor, view_cursors_pos(view->cursor));
 	return true;
 }
 
