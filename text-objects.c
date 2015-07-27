@@ -17,6 +17,7 @@
 #include <ctype.h>
 #include "text-motions.h"
 #include "text-objects.h"
+#include "text-util.h"
 #include "util.h"
 
 #define isboundry is_word_boundry

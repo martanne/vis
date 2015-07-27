@@ -6,6 +6,7 @@
 #include "editor.h"
 #include "util.h"
 #include "text-motions.h"
+#include "text-util.h"
 
 static void file_free(Editor *ed, File *file);
 static File *file_new(Editor *ed, const char *filename);

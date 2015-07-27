@@ -35,6 +35,7 @@
 
 #include "ui-curses.h"
 #include "editor.h"
+#include "text-util.h"
 #include "text-motions.h"
 #include "text-objects.h"
 #include "util.h"

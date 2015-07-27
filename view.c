@@ -24,6 +24,7 @@
 #include "syntax.h"
 #include "text.h"
 #include "text-motions.h"
+#include "text-util.h"
 #include "util.h"
 
 struct Selection {
