@@ -16,6 +16,7 @@
 #include <ctype.h>
 #include <string.h>
 #include "text-motions.h"
+#include "text-util.h"
 #include "util.h"
 
 // TODO: specify this per file type?
@@ -193,6 +194,38 @@ size_t text_line_down(Text *txt, size_t pos) {
 	size_t bol = text_line_begin(txt, pos);
 	size_t next = text_line_next(txt, bol);
 	return text_line_offset(txt, next, pos - bol);
+}
+
+size_t text_range_line_first(Text *txt, Filerange *r) {
+	if (!text_range_valid(r))
+		return EPOS;
+	return r->start;
+}
+
+size_t text_range_line_last(Text *txt, Filerange *r) {
+	if (!text_range_valid(r))
+		return EPOS;
+	size_t pos = text_line_begin(txt, r->end);
+	if (pos == r->end) {
+		/* range ends at a begin of a line, skip last line ending */
+		pos = text_line_prev(txt, pos);
+		pos = text_line_begin(txt, pos);
+	}
+	return r->start <= pos ? pos : r->start;
+}
+
+size_t text_range_line_next(Text *txt, Filerange *r, size_t pos) {
+	if (!text_range_contains(r, pos))
+		return EPOS;
+	size_t newpos = text_line_next(txt, pos);
+	return newpos != pos && newpos < r->end ? newpos : EPOS;
+}
+
+size_t text_range_line_prev(Text *txt, Filerange *r, size_t pos) {
+	if (!text_range_contains(r, pos))
+		return EPOS;
+	size_t newpos = text_line_begin(txt, text_line_prev(txt, pos));
+	return newpos != pos && r->start <= newpos ? newpos : EPOS;
 }
 
 static size_t text_customword_start_next(Text *txt, size_t pos, int (*isboundry)(int)) {

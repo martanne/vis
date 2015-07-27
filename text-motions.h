@@ -42,6 +42,11 @@ size_t text_line_char_prev(Text*, size_t pos);
 /* move to same offset in previous/next line */
 size_t text_line_up(Text*, size_t pos);
 size_t text_line_down(Text*, size_t pos);
+/* functions to iterate over all line beginnings in a given range */
+size_t text_range_line_first(Text*, Filerange*);
+size_t text_range_line_last(Text*, Filerange*);
+size_t text_range_line_next(Text*, Filerange*, size_t pos);
+size_t text_range_line_prev(Text*, Filerange*, size_t pos);
 /*
  * A longword consists of a sequence of non-blank characters, separated with
  * white space. TODO?: An empty line is also considered to be a word.
