@@ -359,6 +359,7 @@ static KeyBinding vis_marks_set[] = {
 };
 
 static KeyBinding vis_mode_normal[] = {
+	{ { NONE(ESC)               }, cursors_clear,  {                           } },
 	{ { CONTROL('w'), NONE('n') }, cmd,            { .s = "open"               } },
 	{ { CONTROL('w'), NONE('c') }, cmd,            { .s = "q"                  } },
 	{ { CONTROL('w'), NONE('s') }, cmd,            { .s = "split"              } },

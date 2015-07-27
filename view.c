@@ -890,6 +890,13 @@ Cursor *view_cursors_new(View *view) {
 	return c;
 }
 
+int view_cursors_count(View *view) {
+	int i = 0;
+	for (Cursor *c = view_cursors(view); c; c = view_cursors_next(c))
+		i++;
+	return i;
+}
+
 void view_cursors_free(Cursor *c) {
 	if (!c)
 		return;
@@ -1051,9 +1058,10 @@ void view_selections_clear(View *view) {
 void view_cursors_clear(View *view) {
 	for (Cursor *c = view->cursors, *next; c; c = next) {
 		next = c->next;
-		view_selections_free(c->sel);
-		if (c != view->cursor)
+		if (c != view->cursor) {
+			view_selections_free(c->sel);
 			view_cursors_free(c);
+		}
 	}
 	view_draw(view);
 } 

@@ -115,6 +115,8 @@ void view_scroll_to(View*, size_t pos);
 void view_cursor_to(View*, size_t pos);
 /* create a new cursor */
 Cursor *view_cursors_new(View*);
+/* get number of active cursors */
+int view_cursors_count(View*);
 /* dispose an existing cursor */
 void view_cursors_free(Cursor*);
 /* only keep the main cursor, release all others together with their
