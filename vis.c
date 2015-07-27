@@ -56,6 +56,7 @@ static size_t op_case_change(OperatorContext *c);
 static size_t op_join(OperatorContext *c);
 static size_t op_repeat_insert(OperatorContext *c);
 static size_t op_repeat_replace(OperatorContext *c);
+static size_t op_cursor(OperatorContext *c);
 
 /* these can be passed as int argument to operator(&(const Arg){ .i = OP_*}) */
 enum {
@@ -69,6 +70,7 @@ enum {
 	OP_JOIN,
 	OP_REPEAT_INSERT,
 	OP_REPEAT_REPLACE,
+	OP_CURSOR,
 };
 
 static Operator ops[] = {
@@ -82,6 +84,7 @@ static Operator ops[] = {
 	[OP_JOIN]          = { op_join          },
 	[OP_REPEAT_INSERT]  = { op_repeat_insert  },
 	[OP_REPEAT_REPLACE] = { op_repeat_replace },
+	[OP_CURSOR]         = { op_cursor         },
 };
 
 #define PAGE      INT_MAX
@@ -566,6 +569,18 @@ static size_t op_case_change(OperatorContext *c) {
 	text_insert(txt, c->range.start, buf, len);
 	free(buf);
 	return c->pos;
+}
+
+static size_t op_cursor(OperatorContext *c) {
+	Text *txt = vis->win->file->text;
+	View *view = vis->win->view;
+	Filerange r = text_range_linewise(txt, &c->range);
+	for (size_t line = text_range_line_first(txt, &r); line != EPOS; line = text_range_line_next(txt, &r, line)) {
+		Cursor *cursor = view_cursors_new(view);
+		if (cursor)
+			view_cursors_to(cursor, text_line_start(txt, line));
+	}
+	return EPOS;
 }
 
 static size_t op_join(OperatorContext *c) {
