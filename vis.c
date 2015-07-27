@@ -320,6 +320,8 @@ static void totill_repeat(const Arg *arg);
 static void totill_reverse(const Arg *arg);
 /* replace character at cursor with one read form keyboard */
 static void replace(const Arg *arg);
+/* create a new cursor on the previous (arg->i < 0) or next (arg->i > 0) line */
+static void cursors_new(const Arg *arg);
 /* remove all but the primary cursor and their selections */
 static void cursors_clear(const Arg *arg);
 /* adjust action.count by arg->i */
@@ -825,6 +827,19 @@ static void totill_reverse(const Arg *arg) {
 		return;
 	}
 	movement(&(const Arg){ .i = type });
+}
+
+static void cursors_new(const Arg *arg) {
+	View *view = vis->win->view;
+	Text *txt = vis->win->file->text;
+	size_t pos = view_cursor_get(view);
+	if (arg->i > 0)
+		pos = text_line_down(txt, pos);
+	else if (arg->i < 0)
+		pos = text_line_up(txt, pos);
+	Cursor *cursor = view_cursors_new(view);
+	if (cursor)
+		view_cursors_to(cursor, pos);
 }
 
 static void cursors_clear(const Arg *arg) {
