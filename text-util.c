@@ -36,3 +36,7 @@ bool text_range_overlap(Filerange *r1, Filerange *r2) {
 		return false;
 	return r1->start <= r2->end && r2->start <= r1->end;
 }
+
+bool text_range_contains(Filerange *r, size_t pos) {
+	return text_range_valid(r) && r->start <= pos && pos <= r->end;
+}

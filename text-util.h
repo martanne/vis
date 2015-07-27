@@ -17,5 +17,7 @@ Filerange text_range_union(Filerange*, Filerange*);
 Filerange text_range_new(size_t a, size_t b);
 /* test whether two ranges overlap */
 bool text_range_overlap(Filerange*, Filerange*);
+/* test whether a given position is within a certain range */
+bool text_range_contains(Filerange*, size_t pos);
 
 #endif
