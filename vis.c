@@ -1227,16 +1227,22 @@ static void action_do(Action *a) {
 	Text *txt = vis->win->file->text;
 	View *view = vis->win->view;
 	int count = MAX(1, a->count);
+	Cursor *cursor = view_cursors(view), *next;
+	bool multiple_cursors = cursor && view_cursors_next(cursor);
 
-	for (Cursor *cursor = view_cursors(view), *next; cursor; cursor = next) {
+	for (; cursor; cursor = next) {
 
 		next = view_cursors_next(cursor);
 		size_t pos = view_cursors_pos(cursor);
+		Register *reg = a->reg ? a->reg : &vis->registers[REG_DEFAULT];
+		if (multiple_cursors)
+			reg = view_cursors_register(cursor);
+
 		OperatorContext c = {
 			.count = a->count,
 			.pos = pos,
 			.range = text_range_empty(),
-			.reg = a->reg ? a->reg : &vis->registers[REG_DEFAULT],
+			.reg = reg,
 			.linewise = a->linewise,
 			.arg = &a->arg,
 		};

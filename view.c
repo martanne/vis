@@ -41,6 +41,7 @@ struct Cursor {             /* cursor position */
 	Line *line;         /* screen line on which cursor currently resides */
 	Mark mark;          /* mark used to keep track of current cursor position */
 	Selection *sel;     /* selection (if any) which folows the cursor upon movement */
+	Register reg;       /* per cursor register to support yank/put operation */
 	View *view;         /* associated view to which this cursor belongs */
 	Cursor *prev, *next;/* previous/next cursors in no particular order */
 };
@@ -892,6 +893,7 @@ Cursor *view_cursors_new(View *view) {
 void view_cursors_free(Cursor *c) {
 	if (!c)
 		return;
+	register_release(&c->reg);
 	if (c->prev)
 		c->prev->next = c->next;
 	if (c->next)
@@ -921,6 +923,10 @@ Cursor *view_cursors_next(Cursor *c) {
 
 size_t view_cursors_pos(Cursor *c) {
 	return text_mark_get(c->view->text, c->mark);
+}
+
+Register *view_cursors_register(Cursor *c) {
+	return &c->reg;
 }
 
 void view_cursors_scroll_to(Cursor *c, size_t pos) {

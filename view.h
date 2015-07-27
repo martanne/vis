@@ -3,6 +3,7 @@
 
 #include <stddef.h>
 #include <stdbool.h>
+#include "register.h"
 #include "text.h"
 #include "ui.h"
 #include "syntax.h"
@@ -130,6 +131,8 @@ size_t view_cursors_pos(Cursor*);
 /* place cursor at `pos' which should be in the interval [0, text-size] */
 void view_cursors_to(Cursor*, size_t pos);
 void view_cursors_scroll_to(Cursor*, size_t pos);
+/* get register associated with this register */
+Register *view_cursors_register(Cursor*);
 /* start selected area at current cursor position. further cursor movements
  * will affect the selected region. */
 void view_cursors_selection_start(Cursor*);
