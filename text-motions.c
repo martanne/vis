@@ -166,6 +166,27 @@ size_t text_line_offset(Text *txt, size_t pos, size_t off) {
 	return it.pos;
 }
 
+size_t text_line_char_set(Text *txt, size_t pos, int count) {
+	char c;
+	size_t bol = text_line_begin(txt, pos);
+	Iterator it = text_iterator_get(txt, bol);
+	while (count-- > 0 && text_iterator_byte_get(&it, &c) && c != '\r' && c != '\n')
+		text_iterator_char_next(&it, NULL);
+	return it.pos;
+}
+
+int text_line_char_get(Text *txt, size_t pos) {
+	char c;
+	int count = 0;
+	size_t bol = text_line_begin(txt, pos);
+	Iterator it = text_iterator_get(txt, bol);
+	while (text_iterator_byte_get(&it, &c) && it.pos < pos && c != '\r' && c != '\n') {
+		text_iterator_char_next(&it, NULL);
+		count++;
+	}
+	return count;
+}
+
 size_t text_line_char_next(Text *txt, size_t pos) {
 	char c;
 	Iterator it = text_iterator_get(txt, pos);
@@ -185,15 +206,15 @@ size_t text_line_char_prev(Text *txt, size_t pos) {
 }
 
 size_t text_line_up(Text *txt, size_t pos) {
-	size_t bol = text_line_begin(txt, pos);
-	size_t prev = text_line_prev(txt, bol);
-	return text_line_offset(txt, prev, pos - bol);
+	int count = text_line_char_get(txt, pos);
+	size_t prev = text_line_prev(txt, pos);
+	return text_line_char_set(txt, prev, count);
 }
 
 size_t text_line_down(Text *txt, size_t pos) {
-	size_t bol = text_line_begin(txt, pos);
-	size_t next = text_line_next(txt, bol);
-	return text_line_offset(txt, next, pos - bol);
+	int count = text_line_char_get(txt, pos);
+	size_t next = text_line_next(txt, pos);
+	return text_line_char_set(txt, next, count);
 }
 
 size_t text_range_line_first(Text *txt, Filerange *r) {
