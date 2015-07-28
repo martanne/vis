@@ -1683,8 +1683,8 @@ static bool cmd_set(Filerange *range, enum CmdOpt cmdopt, const char *argv[]) {
 }
 
 static bool is_file_pattern(const char *pattern) {
-	return strcmp(pattern, ".") == 0 || strchr(pattern, '*') ||
-	       strchr(pattern, '[') || strchr(pattern, '{');
+	return pattern && (strcmp(pattern, ".") == 0 || strchr(pattern, '*') ||
+	       strchr(pattern, '[') || strchr(pattern, '{'));
 }
 
 static const char *file_open_dialog(const char *pattern) {
