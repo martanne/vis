@@ -985,7 +985,9 @@ static void mark_line(const Arg *arg) {
 static void undo(const Arg *arg) {
 	size_t pos = text_undo(vis->win->file->text);
 	if (pos != EPOS) {
-		view_cursor_to(vis->win->view, pos);
+		View *view = vis->win->view;
+		if (view_cursors_count(view) == 1)
+			view_cursor_to(view, pos);
 		/* redraw all windows in case some display the same file */
 		editor_draw(vis);
 	}
@@ -994,7 +996,9 @@ static void undo(const Arg *arg) {
 static void redo(const Arg *arg) {
 	size_t pos = text_redo(vis->win->file->text);
 	if (pos != EPOS) {
-		view_cursor_to(vis->win->view, pos);
+		View *view = vis->win->view;
+		if (view_cursors_count(view) == 1)
+			view_cursor_to(view, pos);
 		/* redraw all windows in case some display the same file */
 		editor_draw(vis);
 	}
