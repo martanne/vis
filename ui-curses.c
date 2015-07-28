@@ -369,6 +369,13 @@ static void ui_window_draw_text(UiWin *w, const Line *line) {
 			wattrset(win->win, attr);
 			waddstr(win->win, l->cells[x].data);
 		}
+		/* try to fixup display issues, in theory we should always output a full line */
+		int x, y;
+		getyx(win->win, y, x);
+		(void)y;
+		wattrset(win->win, A_NORMAL);
+		for (; 0 < x && x < width; x++)
+			waddstr(win->win, " ");
 	}
 	wclrtobot(win->win);
 
