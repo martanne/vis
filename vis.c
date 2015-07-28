@@ -600,12 +600,15 @@ static size_t op_cursor(OperatorContext *c) {
 static size_t op_join(OperatorContext *c) {
 	Text *txt = vis->win->file->text;
 	size_t pos = text_line_begin(txt, c->range.end), prev_pos;
-	/* if selection is linewise, skip last line break */
-	if (text_range_is_linewise(txt, &c->range)) {
-		size_t line_prev = text_line_prev(txt, pos);
-		size_t line_prev_prev = text_line_prev(txt, line_prev);
-		if (line_prev_prev >= c->range.start)
-			pos = line_prev;
+	if (c->cursor) {
+		/* if selection is from visual linewiese mode, skip last line break */
+		Filerange sel = view_cursors_selection_get(c->cursor);
+		if (text_range_equal(&sel, &c->range) && text_range_is_linewise(txt, &sel)) {
+			size_t line_prev = text_line_prev(txt, pos);
+			size_t line_prev_prev = text_line_prev(txt, line_prev);
+			if (line_prev_prev >= sel.start)
+				pos = line_prev;
+		}
 	}
 
 	do {
