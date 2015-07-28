@@ -304,3 +304,9 @@ Filerange text_range_linewise(Text *txt, Filerange *rin) {
 		rout.end = text_line_next(txt, rin->end);
 	return rout;
 }
+
+bool text_range_is_linewise(Text *txt, Filerange *r) {
+	return text_range_valid(r) &&
+	       r->start == text_line_begin(txt, r->start) &&
+	       r->end == text_line_begin(txt, r->end);
+}

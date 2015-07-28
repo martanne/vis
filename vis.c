@@ -601,7 +601,7 @@ static size_t op_join(OperatorContext *c) {
 	Text *txt = vis->win->file->text;
 	size_t pos = text_line_begin(txt, c->range.end), prev_pos;
 	/* if selection is linewise, skip last line break */
-	if (c->range.start == text_line_begin(txt, c->range.start) && pos == c->range.end) {
+	if (text_range_is_linewise(txt, &c->range)) {
 		size_t line_prev = text_line_prev(txt, pos);
 		size_t line_prev_prev = text_line_prev(txt, line_prev);
 		if (line_prev_prev >= c->range.start)
