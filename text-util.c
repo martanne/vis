@@ -31,6 +31,12 @@ Filerange text_range_new(size_t a, size_t b) {
 	};
 }
 
+bool text_range_equal(Filerange *r1, Filerange *r2) {
+	if (!text_range_valid(r1) && !text_range_valid(r2))
+		return true;
+	return r1->start == r2->start && r1->end == r2->end;
+}
+
 bool text_range_overlap(Filerange *r1, Filerange *r2) {
 	if (!text_range_valid(r1) || !text_range_valid(r2))
 		return false;
