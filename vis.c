@@ -1702,7 +1702,7 @@ static const char *file_open_dialog(const char *pattern) {
 	Text *txt = text_load(NULL);
 	View *view = view_new(txt, NULL);
 	filename[0] = '\0';
-	snprintf(vis_open, sizeof(filename)-1, "vis-open %s", pattern ? pattern : "");
+	snprintf(vis_open, sizeof(vis_open)-1, "vis-open %s", pattern ? pattern : "");
 
 	if (!txt || !view)
 		goto out;
@@ -1917,8 +1917,10 @@ static bool cmd_write(Filerange *range, enum CmdOpt opt, const char *argv[]) {
 			editor_info_show(vis, "Can't write `%s'", *name);
 			return false;
 		}
-		if (!file->name)
+		if (!file->name) {
 			editor_window_name(vis->win, *name);
+			file->name = vis->win->file->name;
+		}
 		if (strcmp(file->name, *name) == 0)
 			file->stat = text_stat(text);
 	}
