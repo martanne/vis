@@ -912,6 +912,17 @@ void view_cursors_free(Cursor *c) {
 	free(c);
 }
 
+void view_cursors_dispose(Cursor *c) {
+	if (!c)
+		return;
+	View *view = c->view;
+	if (view->cursors && view->cursors->next) {
+		view_selections_free(c->sel);
+		view_cursors_free(c);
+		view_draw(view);
+	}
+}
+
 Cursor *view_cursors(View *view) {
 	return view->cursors;
 }

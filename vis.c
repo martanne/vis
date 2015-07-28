@@ -326,6 +326,14 @@ static void cursors_new(const Arg *arg);
 static void cursors_align(const Arg *arg);
 /* remove all but the primary cursor and their selections */
 static void cursors_clear(const Arg *arg);
+/* remove the least recently added cursor */
+static void cursors_remove(const Arg *arg);
+/* select the word the cursor is currently over */
+static void cursors_select(const Arg *arg);
+/* select the next region matching the current selection */
+static void cursors_select_next(const Arg *arg);
+/* clear current selection but select next match */
+static void cursors_select_skip(const Arg *arg);
 /* adjust action.count by arg->i */
 static void count(const Arg *arg);
 /* move to the action.count-th line or if not given either to the first (arg->i < 0)
@@ -867,6 +875,59 @@ static void cursors_clear(const Arg *arg) {
 		view_cursors_clear(view);
 	else
 		view_cursors_selection_clear(view_cursor(view));
+}
+
+static void cursors_select(const Arg *arg) {
+	Text *txt = vis->win->file->text;
+	View *view = vis->win->view;
+	for (Cursor *cursor = view_cursors(view); cursor; cursor = view_cursors_next(cursor)) {
+		Filerange sel = view_cursors_selection_get(cursor);
+		Filerange word = text_object_word(txt, view_cursors_pos(cursor));
+		if (!text_range_valid(&sel) && text_range_valid(&word)) {
+			view_cursors_selection_set(cursor, &word);
+			view_cursors_to(cursor, text_char_prev(txt, word.end));
+		}
+	}
+	switchmode(&(const Arg){ .i = VIS_MODE_VISUAL });
+}
+
+static void cursors_select_next(const Arg *arg) {
+	Text *txt = vis->win->file->text;
+	View *view = vis->win->view;
+	Cursor *cursor = view_cursor(view);
+	Filerange sel = view_cursors_selection_get(cursor);
+	if (!text_range_valid(&sel))
+		return;
+
+	size_t len = text_range_size(&sel);
+	char *buf = malloc(len+1);
+	if (!buf)
+		return;
+	len = text_bytes_get(txt, sel.start, len, buf);
+	buf[len] = '\0';
+	Filerange word = text_object_word_find_next(txt, sel.end, buf);
+	free(buf);
+
+	if (text_range_valid(&word)) {
+		cursor = view_cursors_new(view);
+		if (!cursor)
+			return;
+		view_cursors_selection_set(cursor, &word);
+		view_cursors_to(cursor, text_char_prev(txt, word.end));
+	}
+}
+
+static void cursors_select_skip(const Arg *arg) {
+	View *view = vis->win->view;
+	Cursor *cursor = view_cursor(view);
+	cursors_select_next(arg);
+	if (cursor != view_cursor(view))
+		view_cursors_dispose(cursor);
+}
+
+static void cursors_remove(const Arg *arg) {
+	View *view = vis->win->view;
+	view_cursors_dispose(view_cursor(view));
 }
 
 static void replace(const Arg *arg) {

@@ -363,6 +363,8 @@ static KeyBinding vis_mode_normal[] = {
 	{ { CONTROL('K')            }, cursors_new,    { .i = -1                   } },
 	{ { CONTROL('J')            }, cursors_new,    { .i = +1                   } },
 	{ { CONTROL('A')            }, cursors_align,  {                           } },
+	{ { CONTROL('N')            }, cursors_select, {                           } },
+	{ { CONTROL('P')            }, cursors_remove, {                           } },
 	{ { CONTROL('w'), NONE('n') }, cmd,            { .s = "open"               } },
 	{ { CONTROL('w'), NONE('c') }, cmd,            { .s = "q"                  } },
 	{ { CONTROL('w'), NONE('s') }, cmd,            { .s = "split"              } },
@@ -423,6 +425,9 @@ static KeyBinding vis_mode_normal[] = {
 };
 
 static KeyBinding vis_mode_visual[] = {
+	{ { CONTROL('N')            }, cursors_select_next, {                      } },
+	{ { CONTROL('X')            }, cursors_select_skip, {                      } },
+	{ { CONTROL('P')            }, cursors_remove, {                           } },
 	{ { KEY(BACKSPACE)          }, operator,       { .i = OP_DELETE            } },
 	{ { KEY(DELETE)             }, operator,       { .i = OP_DELETE            } },
 	{ { CONTROL('O')            }, operator,       { .i = OP_CURSOR            } },

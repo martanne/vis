@@ -117,7 +117,10 @@ void view_cursor_to(View*, size_t pos);
 Cursor *view_cursors_new(View*);
 /* get number of active cursors */
 int view_cursors_count(View*);
-/* dispose an existing cursor */
+/* dispose an existing cursor with its associated selection (if any),
+ * not applicaple for the last existing cursor */
+void view_cursors_dispose(Cursor*);
+/* dispose an existing cursor, no matter what */
 void view_cursors_free(Cursor*);
 /* only keep the main cursor, release all others together with their
  * selections (if any) */
