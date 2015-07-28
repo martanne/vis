@@ -362,6 +362,7 @@ static KeyBinding vis_mode_normal[] = {
 	{ { NONE(ESC)               }, cursors_clear,  {                           } },
 	{ { CONTROL('K')            }, cursors_new,    { .i = -1                   } },
 	{ { CONTROL('J')            }, cursors_new,    { .i = +1                   } },
+	{ { CONTROL('A')            }, cursors_align,  {                           } },
 	{ { CONTROL('w'), NONE('n') }, cmd,            { .s = "open"               } },
 	{ { CONTROL('w'), NONE('c') }, cmd,            { .s = "q"                  } },
 	{ { CONTROL('w'), NONE('s') }, cmd,            { .s = "split"              } },

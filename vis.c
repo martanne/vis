@@ -322,6 +322,8 @@ static void totill_reverse(const Arg *arg);
 static void replace(const Arg *arg);
 /* create a new cursor on the previous (arg->i < 0) or next (arg->i > 0) line */
 static void cursors_new(const Arg *arg);
+/* try to align all cursors on the same column */
+static void cursors_align(const Arg *arg);
 /* remove all but the primary cursor and their selections */
 static void cursors_clear(const Arg *arg);
 /* adjust action.count by arg->i */
@@ -840,6 +842,23 @@ static void cursors_new(const Arg *arg) {
 	Cursor *cursor = view_cursors_new(view);
 	if (cursor)
 		view_cursors_to(cursor, pos);
+}
+
+static void cursors_align(const Arg *arg) {
+	View *view = vis->win->view;
+	Text *txt = vis->win->file->text;
+	int mincol = INT_MAX;
+	for (Cursor *c = view_cursors(view); c; c = view_cursors_next(c)) {
+		size_t pos = view_cursors_pos(c);
+		int col = text_line_char_get(txt, pos);
+		if (col < mincol)
+			mincol = col;
+	}
+	for (Cursor *c = view_cursors(view); c; c = view_cursors_next(c)) {
+		size_t pos = view_cursors_pos(c);
+		size_t col = text_line_char_set(txt, pos, mincol);
+		view_cursors_to(c, col);
+	}
 }
 
 static void cursors_clear(const Arg *arg) {
