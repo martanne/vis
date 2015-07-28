@@ -67,6 +67,7 @@ typedef struct {
 	size_t pos;       /* at which byte from the start of the file should the operation start? */
 	bool linewise;    /* should the changes always affect whole lines? */
 	const Arg *arg;   /* arbitrary arguments */
+	Cursor *cursor;   /* cursor (if any) which issued this operator */
 } OperatorContext;
 
 typedef struct {

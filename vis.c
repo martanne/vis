@@ -1353,6 +1353,7 @@ static void action_do(Action *a) {
 			.reg = reg,
 			.linewise = a->linewise,
 			.arg = &a->arg,
+			.cursor = cursor,
 		};
 
 		if (a->movement) {
