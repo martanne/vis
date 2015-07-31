@@ -1005,14 +1005,20 @@ void view_cursors_selection_clear(Cursor *c) {
 void view_cursors_selection_swap(Cursor *c) {
 	if (!c->sel)
 		return;
-	Text *txt = c->view->text;
-	bool left_extending = c->mark == c->sel->cursor;
 	view_selections_swap(c->sel);
-	c->mark = c->sel->cursor;
-	size_t pos = text_mark_get(txt, c->mark);
-	if (left_extending)
-		pos = text_char_prev(txt, pos);
-	cursor_to(c, pos);
+	view_cursors_selection_sync(c);
+}
+
+void view_cursors_selection_sync(Cursor *c) {
+	if (!c->sel)
+		return;
+	Text *txt = c->view->text;
+	size_t anchor = text_mark_get(txt, c->sel->anchor);
+	size_t cursor = text_mark_get(txt, c->sel->cursor);
+	bool right_extending = anchor < cursor;
+	if (right_extending)
+		cursor = text_char_prev(txt, cursor);
+	cursor_to(c, cursor);
 }
 
 Filerange view_cursors_selection_get(Cursor *c) {

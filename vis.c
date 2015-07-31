@@ -175,20 +175,20 @@ static size_t view_lines_middle(const Arg *arg);
 static size_t view_lines_bottom(const Arg *arg);
 
 static Movement moves[] = {
-	[MOVE_LINE_UP]             = { .view = view_line_up                                       },
-	[MOVE_LINE_DOWN]           = { .view = view_line_down                                     },
-	[MOVE_SCREEN_LINE_UP]      = { .view = view_screenline_up                                 },
-	[MOVE_SCREEN_LINE_DOWN]    = { .view = view_screenline_down                               },
-	[MOVE_SCREEN_LINE_BEGIN]   = { .view = view_screenline_begin,  .type = CHARWISE           },
-	[MOVE_SCREEN_LINE_MIDDLE]  = { .view = view_screenline_middle, .type = CHARWISE           },
-	[MOVE_SCREEN_LINE_END]     = { .view = view_screenline_end,    .type = CHARWISE|INCLUSIVE },
-	[MOVE_LINE_PREV]           = { .txt = text_line_prev,           .type = LINEWISE           },
-	[MOVE_LINE_BEGIN]          = { .txt = text_line_begin,          .type = LINEWISE           },
-	[MOVE_LINE_START]          = { .txt = text_line_start,          .type = LINEWISE           },
-	[MOVE_LINE_FINISH]         = { .txt = text_line_finish,         .type = LINEWISE|INCLUSIVE },
-	[MOVE_LINE_LASTCHAR]       = { .txt = text_line_lastchar,       .type = LINEWISE|INCLUSIVE },
-	[MOVE_LINE_END]            = { .txt = text_line_end,            .type = LINEWISE           },
-	[MOVE_LINE_NEXT]           = { .txt = text_line_next,           .type = LINEWISE           },
+	[MOVE_LINE_UP]             = { .view = view_line_up,            .type = LINEWISE           },
+	[MOVE_LINE_DOWN]           = { .view = view_line_down,          .type = LINEWISE           },
+	[MOVE_SCREEN_LINE_UP]      = { .view = view_screenline_up,                                 },
+	[MOVE_SCREEN_LINE_DOWN]    = { .view = view_screenline_down,                               },
+	[MOVE_SCREEN_LINE_BEGIN]   = { .view = view_screenline_begin,   .type = CHARWISE           },
+	[MOVE_SCREEN_LINE_MIDDLE]  = { .view = view_screenline_middle,  .type = CHARWISE           },
+	[MOVE_SCREEN_LINE_END]     = { .view = view_screenline_end,     .type = CHARWISE|INCLUSIVE },
+	[MOVE_LINE_PREV]           = { .txt = text_line_prev,                                      },
+	[MOVE_LINE_BEGIN]          = { .txt = text_line_begin,                                     },
+	[MOVE_LINE_START]          = { .txt = text_line_start,                                     },
+	[MOVE_LINE_FINISH]         = { .txt = text_line_finish,         .type = INCLUSIVE          },
+	[MOVE_LINE_LASTCHAR]       = { .txt = text_line_lastchar,       .type = INCLUSIVE          },
+	[MOVE_LINE_END]            = { .txt = text_line_end,                                       },
+	[MOVE_LINE_NEXT]           = { .txt = text_line_next,                                      },
 	[MOVE_LINE]                = { .txt = line,                     .type = LINEWISE|IDEMPOTENT|JUMP},
 	[MOVE_COLUMN]              = { .txt = column,                   .type = CHARWISE|IDEMPOTENT},
 	[MOVE_CHAR_PREV]           = { .txt = text_char_prev,           .type = CHARWISE           },
@@ -207,19 +207,19 @@ static Movement moves[] = {
 	[MOVE_SENTENCE_NEXT]       = { .txt = text_sentence_next,       .type = LINEWISE           },
 	[MOVE_PARAGRAPH_PREV]      = { .txt = text_paragraph_prev,      .type = LINEWISE|JUMP      },
 	[MOVE_PARAGRAPH_NEXT]      = { .txt = text_paragraph_next,      .type = LINEWISE|JUMP      },
-	[MOVE_BRACKET_MATCH]       = { .txt = text_bracket_match,       .type = LINEWISE|INCLUSIVE|JUMP },
+	[MOVE_BRACKET_MATCH]       = { .txt = text_bracket_match,       .type = INCLUSIVE|JUMP     },
 	[MOVE_FILE_BEGIN]          = { .txt = text_begin,               .type = LINEWISE|JUMP      },
 	[MOVE_FILE_END]            = { .txt = text_end,                 .type = LINEWISE|JUMP      },
-	[MOVE_LEFT_TO]             = { .txt = to_left,                  .type = LINEWISE           },
-	[MOVE_RIGHT_TO]            = { .txt = to,                       .type = LINEWISE|INCLUSIVE },
-	[MOVE_LEFT_TILL]           = { .txt = till_left,                .type = LINEWISE           },
-	[MOVE_RIGHT_TILL]          = { .txt = till,                     .type = LINEWISE|INCLUSIVE },
-	[MOVE_MARK]                = { .file = mark_goto,             .type = LINEWISE|JUMP|IDEMPOTENT },
-	[MOVE_MARK_LINE]           = { .file = mark_line_goto,        .type = LINEWISE|JUMP|IDEMPOTENT },
-	[MOVE_SEARCH_WORD_FORWARD] = { .txt = search_word_forward,      .type = LINEWISE|JUMP      },
-	[MOVE_SEARCH_WORD_BACKWARD]= { .txt = search_word_backward,     .type = LINEWISE|JUMP      },
-	[MOVE_SEARCH_FORWARD]      = { .txt = search_forward,           .type = LINEWISE|JUMP      },
-	[MOVE_SEARCH_BACKWARD]     = { .txt = search_backward,          .type = LINEWISE|JUMP      },
+	[MOVE_LEFT_TO]             = { .txt = to_left,                                             },
+	[MOVE_RIGHT_TO]            = { .txt = to,                       .type = INCLUSIVE          },
+	[MOVE_LEFT_TILL]           = { .txt = till_left,                                           },
+	[MOVE_RIGHT_TILL]          = { .txt = till,                     .type = INCLUSIVE          },
+	[MOVE_MARK]                = { .file = mark_goto,               .type = JUMP|IDEMPOTENT    },
+	[MOVE_MARK_LINE]           = { .file = mark_line_goto,          .type = LINEWISE|JUMP|IDEMPOTENT},
+	[MOVE_SEARCH_WORD_FORWARD] = { .txt = search_word_forward,      .type = JUMP                   },
+	[MOVE_SEARCH_WORD_BACKWARD]= { .txt = search_word_backward,     .type = JUMP                   },
+	[MOVE_SEARCH_FORWARD]      = { .txt = search_forward,           .type = JUMP                   },
+	[MOVE_SEARCH_BACKWARD]     = { .txt = search_backward,          .type = JUMP                   },
 	[MOVE_WINDOW_LINE_TOP]     = { .cmd = view_lines_top,         .type = LINEWISE|JUMP|IDEMPOTENT },
 	[MOVE_WINDOW_LINE_MIDDLE]  = { .cmd = view_lines_middle,      .type = LINEWISE|JUMP|IDEMPOTENT },
 	[MOVE_WINDOW_LINE_BOTTOM]  = { .cmd = view_lines_bottom,      .type = LINEWISE|JUMP|IDEMPOTENT },
@@ -231,8 +231,6 @@ enum {
 	TEXT_OBJ_OUTER_WORD,
 	TEXT_OBJ_INNER_LONGWORD,
 	TEXT_OBJ_OUTER_LONGWORD,
-	TEXT_OBJ_LINE_UP,
-	TEXT_OBJ_LINE_DOWN,
 	TEXT_OBJ_SENTENCE,
 	TEXT_OBJ_PARAGRAPH,
 	TEXT_OBJ_OUTER_SQUARE_BRACKET,
@@ -256,8 +254,6 @@ static TextObject textobjs[] = {
 	[TEXT_OBJ_OUTER_WORD]           = { text_object_word_outer            },
 	[TEXT_OBJ_INNER_LONGWORD]       = { text_object_longword              },
 	[TEXT_OBJ_OUTER_LONGWORD]       = { text_object_longword_outer        },
-	[TEXT_OBJ_LINE_UP]              = { text_object_line                  },
-	[TEXT_OBJ_LINE_DOWN]            = { text_object_line                  },
 	[TEXT_OBJ_SENTENCE]             = { text_object_sentence              },
 	[TEXT_OBJ_PARAGRAPH]            = { text_object_paragraph             },
 	[TEXT_OBJ_OUTER_SQUARE_BRACKET] = { text_object_square_bracket, OUTER },
@@ -274,14 +270,6 @@ static TextObject textobjs[] = {
 	[TEXT_OBJ_INNER_SINGLE_QUOTE]   = { text_object_single_quote,   INNER },
 	[TEXT_OBJ_OUTER_BACKTICK]       = { text_object_backtick,       OUTER },
 	[TEXT_OBJ_INNER_BACKTICK]       = { text_object_backtick,       INNER },
-};
-
-/* if some movements are forced to be linewise, they are translated to text objects */
-static TextObject *moves_linewise[] = {
-	[MOVE_LINE_UP]          = &textobjs[TEXT_OBJ_LINE_UP],
-	[MOVE_LINE_DOWN]        = &textobjs[TEXT_OBJ_LINE_DOWN],
-	[MOVE_SCREEN_LINE_UP]   = &textobjs[TEXT_OBJ_LINE_UP],
-	[MOVE_SCREEN_LINE_DOWN] = &textobjs[TEXT_OBJ_LINE_DOWN],
 };
 
 /** functions to be called from keybindings */
@@ -339,8 +327,8 @@ static void count(const Arg *arg);
 /* move to the action.count-th line or if not given either to the first (arg->i < 0)
  *  or last (arg->i > 0) line of file */
 static void gotoline(const Arg *arg);
-/* force operator to linewise (if arg->b is set) */
-static void linewise(const Arg *arg);
+/* set motion type either LINEWISE or CHARWISE via arg->i */
+static void motiontype(const Arg *arg);
 /* make the current action use the operator indicated by arg->i */
 static void operator(const Arg *arg);
 /* execute operator twice useful for synonyms (e.g. 'cc') */
@@ -600,15 +588,13 @@ static size_t op_cursor(OperatorContext *c) {
 static size_t op_join(OperatorContext *c) {
 	Text *txt = vis->win->file->text;
 	size_t pos = text_line_begin(txt, c->range.end), prev_pos;
-	if (c->cursor) {
-		/* if selection is from visual linewiese mode, skip last line break */
-		Filerange sel = view_cursors_selection_get(c->cursor);
-		if (text_range_equal(&sel, &c->range) && text_range_is_linewise(txt, &sel)) {
-			size_t line_prev = text_line_prev(txt, pos);
-			size_t line_prev_prev = text_line_prev(txt, line_prev);
-			if (line_prev_prev >= sel.start)
-				pos = line_prev;
-		}
+
+	/* if operator and range are both linewise, skip last line break */
+	if (c->linewise && text_range_is_linewise(txt, &c->range)) {
+		size_t line_prev = text_line_prev(txt, pos);
+		size_t line_prev_prev = text_line_prev(txt, line_prev);
+		if (line_prev_prev >= c->range.start)
+			pos = line_prev;
 	}
 
 	do {
@@ -957,8 +943,8 @@ static void gotoline(const Arg *arg) {
 		movement(&(const Arg){ .i = MOVE_FILE_END });
 }
 
-static void linewise(const Arg *arg) {
-	vis->action.linewise = arg->b;
+static void motiontype(const Arg *arg) {
+	vis->action.type = arg->i;
 }
 
 static void operator(const Arg *arg) {
@@ -974,8 +960,8 @@ static void operator(const Arg *arg) {
 	if (vis->action.op == op) {
 		/* hacky way to handle double operators i.e. things like
 		 * dd, yy etc where the second char isn't a movement */
-		vis->action.linewise = true;
-		vis->action.textobj = moves_linewise[MOVE_SCREEN_LINE_DOWN];
+		vis->action.type = LINEWISE;
+		vis->action.movement = &moves[MOVE_LINE_NEXT];
 		action_do(&vis->action);
 	} else {
 		vis->action.op = op;
@@ -1005,10 +991,7 @@ static void movement_key(const Arg *arg) {
 }
 
 static void movement(const Arg *arg) {
-	if (vis->action.linewise && arg->i < LENGTH(moves_linewise))
-		vis->action.textobj = moves_linewise[arg->i];
-	else
-		vis->action.movement = &moves[arg->i];
+	vis->action.movement = &moves[arg->i];
 
 	if (vis->action.op == &ops[OP_CHANGE]) {
 		if (vis->action.movement == &moves[MOVE_WORD_START_NEXT])
@@ -1340,6 +1323,9 @@ static void action_do(Action *a) {
 	View *view = vis->win->view;
 	int count = MAX(1, a->count);
 	bool multiple_cursors = view_cursors_count(view) > 1;
+	bool linewise = !(a->type & CHARWISE) && (
+		a->type & LINEWISE || (a->movement && a->movement->type & LINEWISE) ||
+		vis->mode == &vis_modes[VIS_MODE_VISUAL_LINE]);
 
 	for (Cursor *cursor = view_cursors(view), *next; cursor; cursor = next) {
 
@@ -1354,9 +1340,8 @@ static void action_do(Action *a) {
 			.pos = pos,
 			.range = text_range_empty(),
 			.reg = reg,
-			.linewise = a->linewise,
+			.linewise = linewise,
 			.arg = &a->arg,
-			.cursor = cursor,
 		};
 
 		if (a->movement) {
@@ -1379,8 +1364,7 @@ static void action_do(Action *a) {
 				c.range.end = start;
 				pos = start;
 			} else {
-				c.range.start = MIN(start, pos);
-				c.range.end = MAX(start, pos);
+				c.range = text_range_new(start, pos);
 			}
 
 			if (!a->op) {
@@ -1388,14 +1372,14 @@ static void action_do(Action *a) {
 					view_cursors_scroll_to(cursor, pos);
 				else
 					view_cursors_to(cursor, pos);
+				if (vis->mode->visual)
+					c.range = view_cursors_selection_get(cursor);
 				if (a->movement->type & JUMP)
 					editor_window_jumplist_add(vis->win, pos);
 				else
 					editor_window_jumplist_invalidate(vis->win);
 			} else if (a->movement->type & INCLUSIVE) {
-				Iterator it = text_iterator_get(txt, c.range.end);
-				text_iterator_char_next(&it, NULL);
-				c.range.end = it.pos;
+				c.range.end = text_char_next(txt, c.range.end);
 			}
 		} else if (a->textobj) {
 			if (vis->mode->visual)
@@ -1413,19 +1397,8 @@ static void action_do(Action *a) {
 
 				c.range = text_range_union(&c.range, &r);
 
-				if (i < count - 1) {
-					if (a->textobj == &textobjs[TEXT_OBJ_LINE_UP]) {
-						pos = c.range.start - 1;
-					} else {
-						pos = c.range.end + 1;
-					}
-				}
-			}
-
-			if (vis->mode->visual) {
-				view_cursors_selection_set(cursor, &c.range);
-				pos = c.range.end;
-				view_cursors_to(cursor, pos);
+				if (i < count - 1)
+					pos = c.range.end + 1;
 			}
 		} else if (vis->mode->visual) {
 			c.range = view_cursors_selection_get(cursor);
@@ -1433,10 +1406,12 @@ static void action_do(Action *a) {
 				c.range.start = c.range.end = pos;
 		}
 
-		if (vis->mode == &vis_modes[VIS_MODE_VISUAL_LINE] && (a->movement || a->textobj)) {
-			Filerange sel = view_cursors_selection_get(cursor);
-			c.range = text_range_linewise(txt, &sel);
+		if (linewise && vis->mode != &vis_modes[VIS_MODE_VISUAL])
+			c.range = text_range_linewise(txt, &c.range);
+		if (vis->mode->visual) {
 			view_cursors_selection_set(cursor, &c.range);
+			if (vis->mode == &vis_modes[VIS_MODE_VISUAL] || a->textobj)
+				view_cursors_selection_sync(cursor);
 		}
 
 		if (a->op) {
@@ -1469,7 +1444,7 @@ static void action_do(Action *a) {
 
 static void action_reset(Action *a) {
 	a->count = 0;
-	a->linewise = false;
+	a->type = 0;
 	a->op = NULL;
 	a->movement = NULL;
 	a->textobj = NULL;

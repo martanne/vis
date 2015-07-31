@@ -229,8 +229,8 @@ static void vis_mode_operator_input(const char *str, size_t len) {
 }
 
 static KeyBinding vis_operator_options[] = {
-	{ { NONE('v')               }, linewise,      { .b = false           } },
-	{ { NONE('V')               }, linewise,      { .b = true            } },
+	{ { NONE('v')               }, motiontype,    { .i = CHARWISE        } },
+	{ { NONE('V')               }, motiontype,    { .i = LINEWISE        } },
 	{ /* empty last element, array terminator */                           },
 };
 
