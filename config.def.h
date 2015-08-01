@@ -575,6 +575,11 @@ static KeyBinding vis_mode_insert[] = {
 static void vis_mode_insert_leave(Mode *old) {
 	/* make sure we can recover the current state after an editing operation */
 	text_snapshot(vis->win->file->text);
+
+	/* If vicursor is enabled, move the cursor back one column unless already on
+	 * the first one */
+	if (vis->vicursor && view_cursor_getpos(vis->win->view).col != 1)
+		movement(&(const Arg){ .i = MOVE_CHAR_PREV });
 }
 
 static void vis_mode_insert_idle(void) {

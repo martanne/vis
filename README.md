@@ -479,6 +479,11 @@ and their current support in vis.
        use syntax definition given (e.g. "c") or disable syntax
        highlighting if no such definition exists (e.g :set syntax off)
 
+     vicursor (yes|no)
+
+       whether cursor steps back a column after leaving insert mode,
+       as in nvi/elvis/vim
+
   Each command can be prefixed with a range made up of a start and
   an end position as in start,end. Valid position specifiers are:
 

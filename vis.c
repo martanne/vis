@@ -1506,6 +1506,7 @@ static bool cmd_set(Filerange *range, enum CmdOpt cmdopt, const char *argv[]) {
 		OPTION_SHOW,
 		OPTION_NUMBER,
 		OPTION_NUMBER_RELATIVE,
+		OPTION_VICURSOR,
 	};
 
 	/* definitions have to be in the same order as the enum above */
@@ -1517,6 +1518,7 @@ static bool cmd_set(Filerange *range, enum CmdOpt cmdopt, const char *argv[]) {
 		[OPTION_SHOW]            = { { "show"                   }, OPTION_TYPE_STRING },
 		[OPTION_NUMBER]          = { { "numbers", "nu"          }, OPTION_TYPE_BOOL   },
 		[OPTION_NUMBER_RELATIVE] = { { "relativenumbers", "rnu" }, OPTION_TYPE_BOOL   },
+		[OPTION_VICURSOR]        = { { "vicursor"               }, OPTION_TYPE_BOOL   },
 	};
 
 	if (!vis->options) {
@@ -1651,6 +1653,9 @@ static bool cmd_set(Filerange *range, enum CmdOpt cmdopt, const char *argv[]) {
 	case OPTION_NUMBER_RELATIVE:
 		editor_window_options(vis->win, arg.b ? UI_OPTION_LINE_NUMBERS_RELATIVE :
 			UI_OPTION_LINE_NUMBERS_NONE);
+		break;
+	case OPTION_VICURSOR:
+		vis->vicursor = arg.b;
 		break;
 	}
 
