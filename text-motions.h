@@ -43,6 +43,9 @@ size_t text_line_char_set(Text*, size_t pos, int count);
 /* move to the next/previous character on the same line */
 size_t text_line_char_next(Text*, size_t pos);
 size_t text_line_char_prev(Text*, size_t pos);
+/* move to the next/previous empty line */
+size_t text_line_empty_next(Text*, size_t pos);
+size_t text_line_empty_prev(Text*, size_t pos);
 /* move to same offset in previous/next line */
 size_t text_line_up(Text*, size_t pos);
 size_t text_line_down(Text*, size_t pos);
@@ -86,6 +89,11 @@ size_t text_sentence_prev(Text*, size_t pos);
  */
 size_t text_paragraph_next(Text*, size_t pos);
 size_t text_paragraph_prev(Text*, size_t pos);
+/* Find next/previous start/end of a C like function definition */
+size_t text_function_start_next(Text*, size_t pos);
+size_t text_function_start_prev(Text*, size_t pos);
+size_t text_function_end_next(Text*, size_t pos);
+size_t text_function_end_prev(Text*, size_t pos);
 /* A section begins after a form-feed in the first column.
 size_t text_section_next(Text*, size_t pos);
 size_t text_section_prev(Text*, size_t pos);

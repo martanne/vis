@@ -421,6 +421,113 @@ size_t text_paragraph_prev(Text *txt, size_t pos) {
 	return text_paragraph_sentence_prev(txt, pos, false);
 }
 
+size_t text_line_empty_next(Text *txt, size_t pos) {
+	// TODO refactor search \n\n
+	char c;
+	Iterator it = text_iterator_get(txt, pos);
+	while (text_iterator_byte_get(&it, &c)) {
+		if (c == '\n' && text_iterator_byte_next(&it, &c)) {
+			size_t match = it.pos;
+			if (c == '\r')
+				text_iterator_byte_next(&it, &c);
+			if (c == '\n')
+				return match;
+		}
+		text_iterator_byte_next(&it, NULL);
+	}
+	return pos;
+}
+
+size_t text_line_empty_prev(Text *txt, size_t pos) {
+	// TODO refactor search \n\n
+	char c;
+	Iterator it = text_iterator_get(txt, pos);
+	while (text_iterator_byte_prev(&it, &c)) {
+		if (c == '\n' && text_iterator_byte_prev(&it, &c)) {
+			if (c == '\r')
+				text_iterator_byte_prev(&it, &c);
+			if (c == '\n')
+				return it.pos + 1;
+		}
+	}
+	return pos;
+}
+
+size_t text_function_start_next(Text *txt, size_t pos) {
+	size_t a = text_function_end_next(txt, pos);
+	size_t b = a;
+	char c;
+	if (a != pos) {
+		Iterator it = text_iterator_get(txt, a);
+		while (text_iterator_byte_next(&it, &c) && (c == '\r' || c == '\n'));
+		a = it.pos;
+	}
+	if (b != pos) {
+		size_t match = text_bracket_match(txt, b);
+		b = match != b ? text_line_next(txt, text_line_empty_prev(txt, match)) : pos;
+	}
+	if (a <= pos && b <= pos)
+		return pos;
+	else if (a <= pos)
+		return b;
+	else if (b <= pos)
+		return a;
+	else
+		return MIN(a, b);
+}
+
+size_t text_function_start_prev(Text *txt, size_t pos) {
+	char c;
+	size_t apos = text_byte_get(txt, pos, &c) && c == '}' && pos > 0 ? pos - 1 : pos;
+	size_t a = text_function_end_next(txt, apos);
+	size_t b = text_function_end_prev(txt, pos);
+	if (a != apos) {
+		size_t match = text_bracket_match(txt, a);
+		a = match != a ? text_line_next(txt, text_line_empty_prev(txt, match)) : pos;
+	}
+	if (b != pos) {
+		size_t match = text_bracket_match(txt, b);
+		b = match != b ? text_line_next(txt, text_line_empty_prev(txt, match)) : pos;
+	}
+	if (a >= pos && b >= pos)
+		return pos;
+	else if (a >= pos)
+		return b;
+	else if (b >= pos)
+		return a;
+	else
+		return MAX(a, b);
+}
+
+static size_t text_function_end_direction(Text *txt, size_t pos, int direction) {
+	size_t start = pos, match;
+	if (direction < 0 && pos > 0)
+		pos--;
+	for (;;) {
+		char c[3];
+		if (direction > 0)
+			match = text_find_next(txt, pos, "\n}");
+		else
+			match = text_find_prev(txt, pos, "\n}");
+		if (text_bytes_get(txt, match, sizeof c, c) != 3 || c[0] != '\n' || c[1] != '}')
+			break;
+		if (c[2] == '\r' || c[2] == '\n')
+			return match+1;
+		if (match == pos)
+			match += direction;
+		pos = match;
+	}
+	return start;
+}
+
+size_t text_function_end_next(Text *txt, size_t pos) {
+	return text_function_end_direction(txt, pos, +1);
+}
+
+size_t text_function_end_prev(Text *txt, size_t pos) {
+	return text_function_end_direction(txt, pos, -1);
+}
+
 size_t text_bracket_match(Text *txt, size_t pos) {
 	return text_bracket_match_except(txt, pos, NULL);
 }
