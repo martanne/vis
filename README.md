@@ -396,6 +396,9 @@ and their current support in vis.
   For sentence and paragraph there is no difference between the
   inner and normal variants.
 
+  Furthermore `ae` covers the entire content of a file, whereas `ie`
+  does not include leading and trailing empty lines.
+
 ### Modes
 
   At the moment there exists a more or less functional insert, replace

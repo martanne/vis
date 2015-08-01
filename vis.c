@@ -247,6 +247,8 @@ enum {
 	TEXT_OBJ_INNER_SINGLE_QUOTE,
 	TEXT_OBJ_OUTER_BACKTICK,
 	TEXT_OBJ_INNER_BACKTICK,
+	TEXT_OBJ_OUTER_ENTIRE,
+	TEXT_OBJ_INNER_ENTIRE,
 };
 
 static TextObject textobjs[] = {
@@ -270,6 +272,8 @@ static TextObject textobjs[] = {
 	[TEXT_OBJ_INNER_SINGLE_QUOTE]   = { text_object_single_quote,   INNER },
 	[TEXT_OBJ_OUTER_BACKTICK]       = { text_object_backtick,       OUTER },
 	[TEXT_OBJ_INNER_BACKTICK]       = { text_object_backtick,       INNER },
+	[TEXT_OBJ_OUTER_ENTIRE]         = { text_object_entire,               },
+	[TEXT_OBJ_INNER_ENTIRE]         = { text_object_entire_inner,         },
 };
 
 /** functions to be called from keybindings */

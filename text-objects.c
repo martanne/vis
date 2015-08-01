@@ -22,6 +22,23 @@
 
 #define isboundry is_word_boundry
 
+Filerange text_object_entire(Text *txt, size_t pos) {
+	return text_range_new(0, text_size(txt));
+}
+
+Filerange text_object_entire_inner(Text *txt, size_t pos) {
+	char c;
+	Filerange r = text_object_entire(txt, pos);
+	Iterator it = text_iterator_get(txt, r.start);
+	while (text_iterator_byte_get(&it, &c) && (c == '\r' || c == '\n'))
+		text_iterator_byte_next(&it, NULL);
+	r.start = it.pos;
+	it = text_iterator_get(txt, r.end);
+	while (text_iterator_byte_prev(&it, &c) && (c == '\r' || c == '\n'));
+	r.end = it.pos;
+	return text_range_linewise(txt, &r);
+}
+
 /* TODO: reduce code duplication? */
 
 Filerange text_object_longword(Text *txt, size_t pos) {
