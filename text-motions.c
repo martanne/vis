@@ -535,6 +535,7 @@ size_t text_bracket_match(Text *txt, size_t pos) {
 size_t text_bracket_match_except(Text *txt, size_t pos, const char *except) {
 	int direction, count = 1;
 	char search, current, c;
+	bool instring = false;
 	Iterator it = text_iterator_get(txt, pos);
 	if (!text_iterator_byte_get(&it, &current))
 		return pos;
@@ -569,17 +570,25 @@ size_t text_bracket_match_except(Text *txt, size_t pos, const char *except) {
 
 	if (direction >= 0) { /* forward search */
 		while (text_iterator_byte_next(&it, &c)) {
-			if (c == search && --count == 0)
-				return it.pos;
-			else if (c == current)
-				count++;
+			if (c != current && (c == '"' || c == '\''))
+				instring = !instring;
+			if (!instring) {
+				if (c == search && --count == 0)
+					return it.pos;
+				else if (c == current)
+					count++;
+			}
 		}
 	} else { /* backwards */
 		while (text_iterator_byte_prev(&it, &c)) {
-			if (c == search && --count == 0)
-				return it.pos;
-			else if (c == current)
-				count++;
+			if (c != current && (c == '"' || c == '\''))
+				instring = !instring;
+			if (!instring) {
+				if (c == search && --count == 0)
+					return it.pos;
+				else if (c == current)
+					count++;
+			}
 		}
 	}
 
