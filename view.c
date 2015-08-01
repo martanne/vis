@@ -94,6 +94,7 @@ static Cell cell_blank = { .data = " " };
 static void view_clear(View *view);
 static bool view_addch(View *view, Cell *cell);
 static bool view_coord_get(View *view, size_t pos, Line **retline, int *retrow, int *retcol); 
+static void view_cursors_free(Cursor *c);
 /* set/move current cursor position to a given (line, column) pair */
 static size_t cursor_set(Cursor *cursor, Line *line, int col);
 
@@ -897,7 +898,7 @@ int view_cursors_count(View *view) {
 	return i;
 }
 
-void view_cursors_free(Cursor *c) {
+static void view_cursors_free(Cursor *c) {
 	if (!c)
 		return;
 	register_release(&c->reg);

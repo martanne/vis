@@ -1419,7 +1419,7 @@ static void action_do(Action *a) {
 			if (pos != EPOS) {
 				view_cursors_to(cursor, pos);
 			} else {
-				view_cursors_free(cursor);
+				view_cursors_dispose(cursor);
 			}
 		}
 	}
