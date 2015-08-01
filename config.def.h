@@ -170,6 +170,7 @@ static KeyBinding vis_textobjs[] = {
 	{ { NONE('a'), NONE('\'') }, textobj, { .i = TEXT_OBJ_OUTER_SINGLE_QUOTE   } },
 	{ { NONE('a'), NONE('`')  }, textobj, { .i = TEXT_OBJ_OUTER_BACKTICK       } },
 	{ { NONE('a'), NONE('e')  }, textobj, { .i = TEXT_OBJ_OUTER_ENTIRE         } },
+	{ { NONE('a'), NONE('f')  }, textobj, { .i = TEXT_OBJ_OUTER_FUNCTION       } },
 	{ /* empty last element, array terminator */                                 },
 };
 
@@ -192,6 +193,7 @@ static KeyBinding vis_inner_textobjs[] = {
 	{ { NONE('i'), NONE('\'') }, textobj, { .i = TEXT_OBJ_INNER_SINGLE_QUOTE   } },
 	{ { NONE('i'), NONE('`')  }, textobj, { .i = TEXT_OBJ_INNER_BACKTICK       } },
 	{ { NONE('i'), NONE('e')  }, textobj, { .i = TEXT_OBJ_INNER_ENTIRE         } },
+	{ { NONE('i'), NONE('f')  }, textobj, { .i = TEXT_OBJ_INNER_FUNCTION       } },
 	{ /* empty last element, array terminator */                                 },
 };
 

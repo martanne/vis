@@ -257,6 +257,8 @@ enum {
 	TEXT_OBJ_INNER_BACKTICK,
 	TEXT_OBJ_OUTER_ENTIRE,
 	TEXT_OBJ_INNER_ENTIRE,
+	TEXT_OBJ_OUTER_FUNCTION,
+	TEXT_OBJ_INNER_FUNCTION,
 };
 
 static TextObject textobjs[] = {
@@ -282,6 +284,8 @@ static TextObject textobjs[] = {
 	[TEXT_OBJ_INNER_BACKTICK]       = { text_object_backtick,       INNER },
 	[TEXT_OBJ_OUTER_ENTIRE]         = { text_object_entire,               },
 	[TEXT_OBJ_INNER_ENTIRE]         = { text_object_entire_inner,         },
+	[TEXT_OBJ_OUTER_FUNCTION]       = { text_object_function,             },
+	[TEXT_OBJ_INNER_FUNCTION]       = { text_object_function_inner,       },
 };
 
 /** functions to be called from keybindings */

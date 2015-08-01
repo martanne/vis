@@ -235,6 +235,25 @@ Filerange text_object_paragraph(Text *txt, size_t pos) {
 	return r;
 }
 
+Filerange text_object_function(Text *txt, size_t pos) {
+	size_t a = text_function_start_prev(txt, pos);
+	size_t b = text_function_end_next(txt, pos);
+	if (text_function_end_next(txt, a) == b) {
+		Filerange r = text_range_new(a, b+1);
+		return text_range_linewise(txt, &r);
+	}
+	return text_range_empty();
+}
+
+Filerange text_object_function_inner(Text *txt, size_t pos) {
+	Filerange r = text_object_function(txt, pos);
+	if (!text_range_valid(&r))
+		return r;
+	size_t b = text_function_end_next(txt, pos);
+	size_t a = text_bracket_match(txt, b);
+	return text_range_new(a+1, b-1);
+}
+
 static Filerange text_object_bracket(Text *txt, size_t pos, char type) {
 	char c, open, close;
 	int opened = 1, closed = 1;
