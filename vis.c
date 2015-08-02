@@ -326,6 +326,9 @@ static void totill_reverse(const Arg *arg);
 static void replace(const Arg *arg);
 /* create a new cursor on the previous (arg->i < 0) or next (arg->i > 0) line */
 static void cursors_new(const Arg *arg);
+/* create new cursors in visual mode either at the start (arg-i < 0)
+ * or end (arg->i > 0) of the selected lines */
+static void cursors_split(const Arg *arg);
 /* try to align all cursors on the same column */
 static void cursors_align(const Arg *arg);
 /* remove all but the primary cursor and their selections */
@@ -595,8 +598,14 @@ static size_t op_cursor(OperatorContext *c) {
 	Filerange r = text_range_linewise(txt, &c->range);
 	for (size_t line = text_range_line_first(txt, &r); line != EPOS; line = text_range_line_next(txt, &r, line)) {
 		Cursor *cursor = view_cursors_new(view);
-		if (cursor)
-			view_cursors_to(cursor, text_line_start(txt, line));
+		if (cursor) {
+			size_t pos;
+			if (c->arg->i > 0)
+				pos = text_line_finish(txt, line);
+			else
+				pos = text_line_start(txt, line);
+			view_cursors_to(cursor, pos);
+		}
 	}
 	return EPOS;
 }
@@ -855,6 +864,11 @@ static void cursors_new(const Arg *arg) {
 	Cursor *cursor = view_cursors_new(view);
 	if (cursor)
 		view_cursors_to(cursor, pos);
+}
+
+static void cursors_split(const Arg *arg) {
+	vis->action.arg = *arg;
+	operator(&(const Arg){ .i = OP_CURSOR });
 }
 
 static void cursors_align(const Arg *arg) {
