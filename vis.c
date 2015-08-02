@@ -1770,7 +1770,7 @@ static bool cmd_edit(Filerange *range, enum CmdOpt opt, const char *argv[]) {
 	}
 	if (!argv[1])
 		return editor_window_reload(oldwin);
-	if (!vis_window_new(argv[1]))
+	if (!openfiles(&argv[1]))
 		return false;
 	editor_window_close(oldwin);
 	return true;
