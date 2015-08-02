@@ -40,6 +40,8 @@ Finally and most importantly it is fun! Writing a text editor presents
 some interesting challenges and design decisions, some of which are
 explained below.
 
+![vis demo](https://raw.githubusercontent.com/martanne/vis/gh-pages/screencast.gif)
+
 Text management using a piece table/chain
 =========================================
 
