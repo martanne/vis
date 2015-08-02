@@ -12,7 +12,7 @@ replace my current editor of choice: vim.
 
 This should be accomplished by a reasonable amount of clean (your mileage
 may vary), modern and legacy free C code. Certainly not an old,
-[500'000 lines long](https://www.openhub.net/p/vim) #ifdef cluttered
+[500'000 lines long](https://www.openhub.net/p/vim) `#ifdef` cluttered
 mess which tries to run on all broken systems ever envisioned by mankind.
 
 Admittedly vim has a lot of functionally, most of which I don't use. I
@@ -20,17 +20,18 @@ therefore set out with the following main goals:
 
  - Unicode aware
 
- - binary clean
+ - handle arbitrary files including
+    - large ones e.g. >500M SQL dumps or CSV exports
+    - single line ones e.g. minified JavaScript
+    - binary ones e.g. ELF files
 
- - handle arbitrary files (this includes large ones, think >100M SQL-dumps)
-
- - unlimited undo/redo support
-
- - syntax highlighting
+ - unlimited undo/redo support, the possibility to revert to any earlier/later state
 
  - regex search (and replace)
 
  - multiple file/window support
+
+ - syntax highlighting
 
 The goal could thus be summarized as "80% of vim's features (in other
 words the useful ones) implemented in roughly 1% of the code".
@@ -166,8 +167,7 @@ is allowed to map into its virtual address space, this shouldn't be a problem
 in practice. The whole process assumes that the file can be used as is.
 In particular the editor assumes all input and the file itself is encoded
 as UTF-8. Supporting other encodings would require conversion using `iconv(3)`
-or similar upon loading and saving the document, which defeats the whole
-purpose.
+or similar upon loading and saving the document.
 
 Similarly the editor has to cope with the fact that lines can be terminated
 either by `\n` or `\r\n`. There is no conversion to a line based structure in
@@ -181,71 +181,29 @@ harder. This also implies that standard library calls like the `regex(3)`
 functions can not be used as is. However this is the case for all but
 the most simple data structures used in text editors.
 
-Screen Drawing
-==============
+Future Plans / Ideas
+====================
 
-The current code takes a rather simple approach to screen drawing. It
-basically only remembers the starting position of the area being shown.
-Then fetches a "screen full" of bytes and outputs one character at a
-time until the end of the window is reached. A consequence of this
-approach is that lines are always wrapped and horizontal scrolling is
-not supported.
+This section contains some ideas for further architectural changes.
 
-No efforts are made to reduce the terminal output. This task is delegated
-to the underlying curses library which already performs a kind of double
-buffering. The window is always redrawn completely even if only a single
-character changes. It turns out this is actually necessary if one wants
-to support multiline syntax highlighting.
-
-While outputting the individual characters a cell matrix is populated
-where each entry stores the length in bytes of the character displayed
-at this particular cell. For characters spanning multiple columns the
-length is always stored in the leftmost cell. As an example a tab has a
-length of 1 byte followed by up to 7 cells with a length of zero.
-Similarly a `\r\n` line ending occupies only one screen cell but has a
-length of 2.
-
-This matrix is actually stored per line inside a double linked list of
-structures representing screen lines. For each line we keep track of
-the length in bytes of the underlying text, the display width of all
-characters part of the line, and the logical line number.
-
-All cursor positioning is always performed in bytes from the start of
-the file and works by traversing the double linked list of screen lines
-until the correct line is found. Then the cell array is consulted to
-move to the correct column.
-
-Syntax-Highlighting
--------------------
-
-The editor takes a similar regex-based approach to syntax highlighting
-than sandy and reuses its syntax definitions but always applies them to
-a "screen full" of text thus enabling multiline coloring.
-
-Window-Management
------------------
-
-It is possible to open multiple windows via the `:split/:vsplit/:open`
-commands or by passing multiple files on the command line.
+Client/Server Architecture / RPC interface
+------------------------------------------
 
 In principle it would be nice to follow a similar client/server approach
-as sam/samterm i.e. having the main editor as a server and each window
-as a separate client process with communication over a unix domain socket.
+as [sam/samterm](http://sam.cat-v.org/) i.e. having the main editor as a
+server and each window as a separate client process with communication
+over a unix domain socket.
 
 That way window management would be taken care of by dwm or dvtm and the
 different client processes would still share common cut/paste registers
 etc.
 
-However at the moment I don't want to open that can of worms and instead
-settled for a single process architecture.
-
-Search and replace
-------------------
+Efficient Search and Replace
+----------------------------
 
 Currently the editor copies the whole text to a contiguous memory block
 and then uses the standard regex functions from libc. Clearly this is not
-a satisfactory solution for large files and kind of defeats the whole
-effort spent on the piece table.
+a satisfactory solution for large files.
 
 The long term solution is to write our own regular expression engine or
 modify an existing one to make use of the iterator API. This would allow
@@ -254,7 +212,7 @@ efficient search without having to double memory consumption.
 The used regex engine should use a non-backtracking algorithm. Useful
 resources include:
 
- - [Russ Cox's regex pag](http://swtch.com/~rsc/regexp/)
+ - [Russ Cox's regex page](http://swtch.com/~rsc/regexp/)
  - [TRE](https://github.com/laurikari/tre) as
    [used by musl](http://git.musl-libc.org/cgit/musl/tree/src/regex)
    which uses a parallel [TNFA matcher](http://laurikari.net/ville/spire2000-tnfa.ps)
@@ -262,55 +220,14 @@ resources include:
    which has its root in Rob Pike's sam text editor
  - [RE2](https://github.com/google/re2) C++ regex library
 
-Command-Prompt
---------------
-
-The editor needs some form of command prompt to get user input
-(think `:`, `/`, `?` in vim).
-
-At first I wanted to implement this in terms of an external process,
-similar to the way it is done in sandy with communication back to the
-editor via a named pipe.
-
-At some point I thought it would be possible to provide all editor commands
-as shell scripts in a given directory, then set $PATH accordingly and run
-the shell. This would give us readline editing, tab completion, history and
-Unicode support for free. But unfortunately it won't work due to quoting
-issues and other conflicts of special symbols with different meanings.
-
-Later it occurred to me that the editor prompt could just be treated as
-special 1 line file. That is, all the main editor functionality is reused
-with a slightly different set of key bindings.
-
-This approach also has the added benefit of further testing the main editor
-component (in particular corner cases like editing at the end of the file).
-
-Editor Frontends
-================
+vis a vim-like frontend
+=======================
 
 The editor core is written in a library like fashion which should make
 it possible to write multiple frontends with possibly different user
-interfaces/paradigms. The frontend to run is selected based on the
-executable name.
+interfaces/paradigms.
 
 The default, and currently only, interface is a vim clone called vis.
-
-Key binding modes
------------------
-
-The available key bindings for the different modes are arranged in a
-hierarchical way in config.h (there is also an ascii tree giving an
-overview in that file). Each mode can specify a parent mode which is
-used to look up a key binding if it is not found in the current mode.
-This reduces redundancy for keys which have the same meaning in
-different modes.
-
-Each mode can also provide hooks which are executed upon entering/leaving
-the mode and when there was an unmatched key.
-
-vis a vim-like frontend
------------------------
-
 The following section gives a quick overview over various vim features
 and their current support in vis.
 
@@ -326,6 +243,8 @@ and their current support in vis.
     ~   (swap case)
     gu  (make lowercase)
     gU  (make uppercase)
+
+Operators can be forced to work line wise by specifying `V`.
 
 ### Movements
 
@@ -352,11 +271,20 @@ and their current support in vis.
     }        (next paragraph)
     (        (previous sentence)
     )        (next sentence)
+    [[       (previous start of C-like function)
+    []       (previous end of C-like function)
+    ][       (next start of C-like function)
+    ]]       (next end of C-like function)
     gg       (begin of file)
+    g0       (begin of display line)
+    gm       (middle of display line)
+    g$       (end of display line)
     G        (goto line or end of file)
     |        (goto column)
     n        (repeat last search forward)
     N        (repeat last search backwards)
+    *        (search word under cursor forwards)
+    #        (search word under cursor backwards)
     f{char}  (to next occurrence of char to the right)
     t{char}  (till before next occurrence of char to the right)
     F{char}  (to next occurrence of char to the left)
@@ -377,15 +305,10 @@ and their current support in vis.
   current line which is repeated 3 times where the last two have no
   effect.
 
-  In general there are still a lot of improvements to be made in the
-  case movements are forced to be line or character wise. Also some of
-  them should be inclusive in some context and exclusive in others.
-  At the moment they always behave the same.
-
 ### Text objects
 
   All of the following text objects are implemented in an inner variant
-  (prefixed with 'i') and a normal variant (prefixed with 'a'):
+  (prefixed with `i`) and a normal variant (prefixed with `a`):
 
     w  word
     W  WORD
@@ -397,12 +320,42 @@ and their current support in vis.
   inner and normal variants.
 
   Furthermore `ae` covers the entire content of a file, whereas `ie`
-  does not include leading and trailing empty lines.
+  does not include leading and trailing empty lines. `af` tries to
+  match C-like function definitions, `if` only covers the function
+  body.
 
 ### Modes
 
   At the moment there exists a more or less functional insert, replace
   and visual mode (in both line and character wise variants).
+  
+  Visual block mode is not implemented and there exists no immediate
+  plan to do so. Instead vis has built in support for multiple cursors.
+  
+### Multiple Cursors / Selections
+
+  vis supports multiple cursors with immediate visual feedback (unlike
+  in the visual block mode of vim where for example inserts only become
+  visible upon exit). There always exists one primary cursor, additional
+  ones can be created as needed.
+  
+  To manipulate multiple cursors use in normal mode:
+  
+    CTRL-K   create a new cursor on the line above
+    CTRL-J   create a new cursor on the line below
+    CTRL-P   remove least recently added cursor
+    CTRL-N   select word the cursor is currently over, switch to visual mode
+    CTRL-A   try to align all cursor on the same column
+    ESC      if a selection is active, clear it.
+             Otherwise dispose all but the primary cursor.
+
+  Visual mode was enhanced to recognize:
+    
+    I        create a cursor at the start of every selected line
+    A        create a cursor at the end of every selected line
+    CTRL-N   create new cursor and select next word matching current selection
+    CTRL-X   clear (skip) current selection, but select next matching word
+    CTRL-P   remove least recently added cursor
 
 ### Marks
 
@@ -423,39 +376,49 @@ and their current support in vis.
   The text is currently snapshotted whenever an operator is completed as
   well as when insert or replace mode is left. Additionally a snapshot
   is also taken if in insert or replace mode a certain idle time elapses.
-
+  
   Another idea is to snapshot based on the distance between two consecutive
   editing operations (as they are likely unrelated and thus should be
   individually reversible).
+
+  Besides the regular undo functionality, the key bindings `g+` and `g-`
+  traverse the history in chronological order. Further more the `:earlier`
+  and `:later` commands provide means to restore the text to an arbitrary
+  state.
 
   The repeat command `.` works for all operators and is able to repeat
   the last insertion or replacement.
 
 ### Macros
 
-`[a-z]` are recoginized macro names, `q` starts a recording, `@` plays it back.
-`@@` refers to the least recently recorded macro.
+  `[a-z]` are recoginized macro names, `q` starts a recording, `@` plays it back.
+  `@@` refers to the least recently recorded macro.
 
 ### Command line prompt
 
-  At the `:`-command prompt only the following commands are recognized:
+  At the `:`-command prompt only the following commands are recognized, any
+  valid unique prefix can be used:
 
-    :nnn     go to line nnn
-    :bdelete close all windows which display the same file as the current one
-    :edit    replace current file with a new one or reload it from disk
-    :open    open a new window
-    :qall    close all windows, exit editor
-    :quit    close currently focused window
-    :read    insert content of another file at current cursor position
-    :split   split window horizontally
-    :vsplit  split window vertically
-    :new     open an empty window, arrange horizontally
-    :vnew    open an empty window, arrange vertically
-    :wq      write changes then close window
-    :xit     like :wq but write only when changes have been made
-    :write   write current buffer content to file
-    :saveas  save file under another name
-    :set     set the options below
+    :nnn        go to line nnn
+    :bdelete    close all windows which display the same file as the current one
+    :edit       replace current file with a new one or reload it from disk
+    :open       open a new window
+    :qall       close all windows, exit editor
+    :quit       close currently focused window
+    :read       insert content of another file at current cursor position
+    :split      split window horizontally
+    :vsplit     split window vertically
+    :new        open an empty window, arrange horizontally
+    :vnew       open an empty window, arrange vertically
+    :wq         write changes then close window
+    :xit        like :wq but write only when changes have been made
+    :write      write current buffer content to file
+    :saveas     save file under another name
+    :substitute search and replace currently implemented in terms of `sed(1)`
+    :!          filter range through external command
+    :earlier    revert to older text state
+    :later      revert to newer text state 
+    :set        set the options below
 
      tabwidth   [1-8]
 
@@ -482,13 +445,17 @@ and their current support in vis.
        use syntax definition given (e.g. "c") or disable syntax
        highlighting if no such definition exists (e.g :set syntax off)
 
+     show        newlines=[1|0] tabs=[1|0] spaces=[0|1]
+
+       show/hide special white space replacement symbols
+
   Each command can be prefixed with a range made up of a start and
   an end position as in start,end. Valid position specifiers are:
 
-   .          start of the current line
-   +n and -n  start of the line relative to the current line
-   'm         position of mark m
-   /pattern/  first match after current position
+    .          start of the current line
+    +n and -n  start of the line relative to the current line
+    'm         position of mark m
+    /pattern/  first match after current position
 
   If only a start position without a command is given then the cursor
   is moved to that position. Additionally the following ranges are
@@ -497,14 +464,11 @@ and their current support in vis.
     %          the whole file, equivalent to 1,$
     *          the current selection, equivalent to '<,'>
 
-  The substitute command is recognized but not yet implemented. The `!`
-  command to filter text through an external program is also planned.
-
   History support, tab completion and wildcard expansion are other
   worthwhile features. However implementing them inside the editor
   feels wrong.
 
-### Tab <-> Space and Line endings \n vs \r\n
+### Tab <-> Space conversion and Line endings \n vs \r\n
 
   Tabs can optionally be expaned to a configurable number of spaces.
   The first line ending in the file determines what will be inserted
@@ -520,9 +484,9 @@ and their current support in vis.
 
   The mouse is currently not used at all.
 
-### Other features
+### Future Plans / Ideas
 
- Things which I would like to add in the long term are:
+ Potentially interesting features:
 
    + code completion: this should be done as an external process. I will
      have to take a look at the tools from the llvm / clang project. Maybe
@@ -531,26 +495,41 @@ and their current support in vis.
 
    + something similar to vim's quick fix functionality
 
- Things I might add
-
-   + runtime configurable key bindings
-   + visual block mode / multiple selections
    + text folding
 
- Stuff which vim does which I don't use and have no plans to add:
+   + runtime configurable key bindings
 
-   - GUIs (neither x11, motif, gtk, win32 ...)
+### Non Goals
+
+  Some of the features of vim which will *not* be implemented:
+
+   - tabs / multiple workspaces / advanced window management
+   - file and directory browser
+   - support for file archives (tar, zip, ...)
+   - support for network protocols (ftp, http, ssh ...)
+   - encryption
+   - compression
+   - GUIs (neither x11, motif, gtk, win32 ...) although the codebase
+     should make it easy to add them
+   - VimL
    - plugins (certainly not vimscript, if anything it should be lua based)
    - right-to-left text
-   - tabs (as in multiple workspaces)
-   - ex mode
+   - ex mode (if you need a stream editor use `ssam(1)`
+   - diff mode
+   - vimgrep
+   - internal spell checker
+   - compile time configurable features / `#ifdef` mess
 
 How to help?
-------------
+============
 
 At this point it might be best to fetch the code, edit some scratch file,
 notice an odd behavior or missing functionality, write and submit a patch
 for it, then iterate.
+
+Additional test cases either for the [low level text manipulation routines]
+(https://github.com/martanne/vis/tree/test/test/text) or as [commands for the vis frontend]
+(https://github.com/martanne/vis/tree/test/test/vis) would be highly appreciated.
 
 WARNING: There are probably still some bugs left which could corrupt your
          unsaved changes. Use at your own risk. At this point I suggest to
@@ -564,42 +543,19 @@ A quick overview over the code structure to get you started:
  `text.[ch]`         | low level text / marks / {un,re}do / piece table implementation
  `text-motions.[ch]` | movement functions take a file position and return a new one
  `text-objects.[ch]` | functions take a file position and return a file range
- `vis.c`             | vi(m) specific editor frontend, program entry point
- `editor.[ch]`       | editor window management
- `view.[ch]`         | ui-independent viewport, shows part of a file, syntax highlighting, cursor placement
- `ui.h`              | abstract interface as implemented by user interface
+ `text-regex.[ch]`   | text search functionality, designated place for regex engine
+ `text-util.[ch]`    | text related utility functions mostly dealing with file ranges
+ `view.[ch]`         | ui-independent viewport, shows part of a file, syntax highlighting, cursor placement, selection handling
+ `ui.h`              | abstract interface which has to be implemented by ui backends
  `ui-curses.[ch]`    | a terminal / curses based user interface implementation
  `buffer.[ch]`       | dynamically growing buffer used for registers and macros
  `ring-buffer.[ch]`  | fixed size ring buffer used for the jump list
- `map.[ch]`          | crit-bit tree based map supporting unique prefix lookups and ordered iteration. used to implement `:`-commands.
+ `map.[ch]`          | crit-bit tree based map supporting unique prefix lookups and ordered iteration. used to implement `:`-commands
+ `editor.[ch]`       | editor window management
+ `vis.c`             | vi(m) specific editor frontend, program entry point
  `config.def.h`      | definition of key bindings, commands, syntax highlighting
 
 Hope this gets the interested people started.
-
-TODO
-----
-
-Here is an incomplete list of TODO items and/or ideas for further work
-in no particular order:
-
- * Review and cleanup the existing implementation (e.g. selection handling)
-    - Eliminate global state and expose vis frontend as "library"
- * Implement `:!` using a proper (libuv based?) mainloop
- * Implement `:substitute`
- * Bugfix: editing the same file in multiple windows can cause "corruption"
- * Review/Implement cindent mode #33
- * Add history support to `:`-prompt
- * Implement wordwrap (i.e `gq` and `:set textwidth`) using `fmt(1)` ?
- * Overhaul key bindings to support runtime configuration / streamline config.def.h
- * Implement/review/merge history undo tree
- * Implement a regex engine which works with the iterator API
- * Write [unit test](http://ccodearchive.net/info/tap.html) for the low
-   level `text_*` interface
- * Improve syntax highlighting, investigate whether already existing
-   syntax definitions from other editors could be reused
- * Optimize `text_delete` in case of consecutive delete operations
- * Add a RPC interface, experiment with a client/server architecture and
-   delegate window management to dwm/dvtm
 
 Feel free to ask questions if something is unclear! There are still a lot
 of bugs left to fix, but by now I'm fairly sure that the general concept
