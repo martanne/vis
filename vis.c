@@ -146,6 +146,13 @@ enum {
 	MOVE_WINDOW_LINE_BOTTOM,
 };
 
+enum {
+	PUT_AFTER,
+	PUT_AFTER_END,
+	PUT_BEFORE,
+	PUT_BEFORE_END,
+};
+
 /** movements which can be used besides the one in text-motions.h and view.h */
 
 /* search in forward direction for the word under the cursor */
@@ -307,8 +314,7 @@ static void insert(const Arg *arg);
 static void insert_tab(const Arg *arg);
 /* inserts a newline (either \n or \r\n depending on file type) */
 static void insert_newline(const Arg *arg);
-/* put register content either before (if arg->i < 0) or after (if arg->i > 0)
- * current cursor position */
+/* put register content according to arg->i */
 static void put(const Arg *arg);
 /* add a new line either before or after the one where the cursor currently is */
 static void openline(const Arg *arg);
@@ -493,20 +499,42 @@ static size_t op_yank(OperatorContext *c) {
 static size_t op_put(OperatorContext *c) {
 	Text *txt = vis->win->file->text;
 	size_t pos = c->pos;
-	if (c->arg->i > 0) {
+	switch (c->arg->i) {
+	case PUT_AFTER:
+	case PUT_AFTER_END:
 		if (c->reg->linewise)
 			pos = text_line_next(txt, pos);
 		else
 			pos = text_char_next(txt, pos);
-	} else {
+		break;
+	case PUT_BEFORE:
+	case PUT_BEFORE_END:
 		if (c->reg->linewise)
 			pos = text_line_begin(txt, pos);
+		break;
 	}
-	text_insert(txt, pos, c->reg->data, c->reg->len);
-	if (c->reg->linewise)
-		return text_line_start(txt, pos);
-	else
-		return pos + c->reg->len;
+
+	for (int i = 0; i < c->count; i++) {
+		text_insert(txt, pos, c->reg->data, c->reg->len);
+		pos += c->reg->len;
+	}
+
+	if (c->reg->linewise) {
+		switch (c->arg->i) {
+		case PUT_BEFORE_END:
+		case PUT_AFTER_END:
+			pos = text_line_start(txt, pos);
+			break;
+		case PUT_AFTER:
+			pos = text_line_start(txt, text_line_next(txt, c->pos));
+			break;
+		case PUT_BEFORE:
+			pos = text_line_start(txt, c->pos);
+			break;
+		}
+	}
+
+	return pos;
 }
 
 static const char *expand_tab(void) {
@@ -1351,7 +1379,8 @@ static void switchmode(const Arg *arg) {
 static void action_do(Action *a) {
 	Text *txt = vis->win->file->text;
 	View *view = vis->win->view;
-	int count = MAX(1, a->count);
+	if (a->count < 1)
+		a->count = 1;
 	bool multiple_cursors = view_cursors_count(view) > 1;
 	bool linewise = !(a->type & CHARWISE) && (
 		a->type & LINEWISE || (a->movement && a->movement->type & LINEWISE) ||
@@ -1376,7 +1405,7 @@ static void action_do(Action *a) {
 
 		if (a->movement) {
 			size_t start = pos;
-			for (int i = 0; i < count; i++) {
+			for (int i = 0; i < a->count; i++) {
 				if (a->movement->txt)
 					pos = a->movement->txt(txt, pos);
 				else if (a->movement->view)
@@ -1416,7 +1445,7 @@ static void action_do(Action *a) {
 				c.range = view_cursors_selection_get(cursor);
 			else
 				c.range.start = c.range.end = pos;
-			for (int i = 0; i < count; i++) {
+			for (int i = 0; i < a->count; i++) {
 				Filerange r = a->textobj->range(txt, pos);
 				if (!text_range_valid(&r))
 					break;
@@ -1427,7 +1456,7 @@ static void action_do(Action *a) {
 
 				c.range = text_range_union(&c.range, &r);
 
-				if (i < count - 1)
+				if (i < a->count - 1)
 					pos = c.range.end + 1;
 			}
 		} else if (vis->mode->visual) {
