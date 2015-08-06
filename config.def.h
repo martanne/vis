@@ -1379,5 +1379,40 @@ static Syntax syntaxes[] = {{
 		&colors[COLOR_DATATYPE],
 	}}
 },{
+	.name = "apl",
+	.file = "\\.apl$",
+	.settings = (const char*[]){
+		"set number",
+		NULL
+	},
+	.rules = {{
+		"(⍝|#).*$",
+		&colors[COLOR_COMMENT],
+	},{
+		"('([^']|'')*')|(\"([^\"]|\"\")*\")",
+		&colors[COLOR_STRING],
+	},{
+		"^ *(∇|⍫)",
+		&colors[COLOR_SYNTAX9],
+	},{
+		"(⎕[a-zA-Z]*)|[⍞χ⍺⍶⍵⍹]",
+		&colors[COLOR_KEYWORD],
+	},{
+		"[∆⍙_a-zA-Z][∆⍙_¯a-zA-Z0-9]* *:",
+		&colors[COLOR_SYNTAX2],
+	},{
+		"[∆⍙_a-zA-Z][∆⍙_¯a-zA-Z0-9]*",
+		&colors[COLOR_IDENTIFIER],
+	},{
+		"¯?(([0-9]+(\\.[0-9]+)?)|\\.[0-9]+)([eE]¯?[0-9]+)?([jJ]¯?(([0-9]+(\\.[0-9]+)?)|\\.[0-9]+)([eE]¯?[0-9]+)?)?",
+		&colors[COLOR_CONSTANT],
+	},{
+		"[][(){}]",
+		&colors[COLOR_BRACKETS],
+	},{
+		"[←→◊]",
+		&colors[COLOR_SYNTAX3],
+	}}
+},{
 	/* empty last element, array terminator */
 }};
