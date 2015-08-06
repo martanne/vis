@@ -266,6 +266,8 @@ enum {
 	TEXT_OBJ_INNER_ENTIRE,
 	TEXT_OBJ_OUTER_FUNCTION,
 	TEXT_OBJ_INNER_FUNCTION,
+	TEXT_OBJ_OUTER_LINE,
+	TEXT_OBJ_INNER_LINE,
 };
 
 static TextObject textobjs[] = {
@@ -293,6 +295,8 @@ static TextObject textobjs[] = {
 	[TEXT_OBJ_INNER_ENTIRE]         = { text_object_entire_inner,         },
 	[TEXT_OBJ_OUTER_FUNCTION]       = { text_object_function,             },
 	[TEXT_OBJ_INNER_FUNCTION]       = { text_object_function_inner,       },
+	[TEXT_OBJ_OUTER_LINE]           = { text_object_line,                 },
+	[TEXT_OBJ_INNER_LINE]           = { text_object_line_inner,           },
 };
 
 /** functions to be called from keybindings */

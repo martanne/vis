@@ -221,6 +221,11 @@ Filerange text_object_line(Text *txt, size_t pos) {
 	return r;
 }
 
+Filerange text_object_line_inner(Text *txt, size_t pos) {
+	Filerange r = text_object_line(txt, pos);
+	return text_range_inner(txt, &r);
+}
+
 Filerange text_object_sentence(Text *txt, size_t pos) {
 	Filerange r;
 	r.start = text_sentence_prev(txt, pos);
@@ -345,4 +350,16 @@ bool text_range_is_linewise(Text *txt, Filerange *r) {
 	return text_range_valid(r) &&
 	       r->start == text_line_begin(txt, r->start) &&
 	       r->end == text_line_begin(txt, r->end);
+}
+
+Filerange text_range_inner(Text *txt, Filerange *rin) {
+	char c;
+	Filerange r = *rin;
+	Iterator it = text_iterator_get(txt, rin->start);
+	while (text_iterator_byte_get(&it, &c) && isspace((unsigned char)c))
+		text_iterator_byte_next(&it, NULL);
+	r.start = it.pos;
+	it = text_iterator_get(txt, rin->end);
+	do r.end = it.pos; while (text_iterator_byte_prev(&it, &c) && isspace((unsigned char)c));
+	return r;
 }

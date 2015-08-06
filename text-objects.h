@@ -26,6 +26,7 @@ Filerange text_object_longword(Text*, size_t pos);
 Filerange text_object_longword_outer(Text*, size_t pos);
 
 Filerange text_object_line(Text*, size_t pos);
+Filerange text_object_line_inner(Text*, size_t pos);
 Filerange text_object_sentence(Text*, size_t pos);
 Filerange text_object_paragraph(Text*, size_t pos);
 
@@ -45,6 +46,8 @@ Filerange text_object_backtick(Text*, size_t pos);
 
 /* extend a range to cover whole lines */
 Filerange text_range_linewise(Text*, Filerange*);
+/* trim leading and trailing white spaces from range */
+Filerange text_range_inner(Text*, Filerange*);
 /* test whether a given range covers whole lines */
 bool text_range_is_linewise(Text*, Filerange*);
 

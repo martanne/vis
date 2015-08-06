@@ -321,10 +321,15 @@ Operators can be forced to work line wise by specifying `V`.
   For sentence and paragraph there is no difference between the
   inner and normal variants.
 
-  Furthermore `ae` covers the entire content of a file, whereas `ie`
-  does not include leading and trailing empty lines. `af` tries to
-  match C-like function definitions, `if` only covers the function
-  body.
+  Additionally the following text objects, which are not part of stock vim
+  are also supported:
+
+    ae      entire file content
+    ie      entire file content except for leading and trailing empty lines
+    af      C-like function definition including immeadiately preceding comments
+    if      C-like function definition only function body
+    al      current line
+    il      current line without leading and trailing white spaces
 
 ### Modes
 
