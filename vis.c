@@ -373,6 +373,8 @@ static void movement(const Arg *arg);
 static void textobj(const Arg *arg);
 /* move to the other end of selected text */
 static void selection_end(const Arg *arg);
+/* restore least recently used selection */
+static void selection_restore(const Arg *arg);
 /* use register indicated by arg->i for the current operator */
 static void reg(const Arg *arg);
 /* perform a movement to mark arg->i */
@@ -1073,6 +1075,12 @@ static void textobj(const Arg *arg) {
 static void selection_end(const Arg *arg) {
 	for (Cursor *c = view_cursors(vis->win->view); c; c = view_cursors_next(c))
 		view_cursors_selection_swap(c);
+}
+
+static void selection_restore(const Arg *arg) {
+	for (Cursor *c = view_cursors(vis->win->view); c; c = view_cursors_next(c))
+		view_cursors_selection_restore(c);
+	switchmode(&(const Arg){ .i = VIS_MODE_VISUAL });
 }
 
 static void reg(const Arg *arg) {

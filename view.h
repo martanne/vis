@@ -148,6 +148,8 @@ void view_cursors_selection_clear(Cursor*);
 void view_cursors_selection_swap(Cursor*);
 /* move cursor to the end/boundary of the associated selection */
 void view_cursors_selection_sync(Cursor*);
+/* restore previous used selection of this cursor */
+void view_cursors_selection_restore(Cursor*);
 /* get/set the selected region associated with this cursor */
 Filerange view_cursors_selection_get(Cursor*);
 void view_cursors_selection_set(Cursor*, Filerange*);

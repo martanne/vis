@@ -41,6 +41,8 @@ struct Cursor {             /* cursor position */
 	Line *line;         /* screen line on which cursor currently resides */
 	Mark mark;          /* mark used to keep track of current cursor position */
 	Selection *sel;     /* selection (if any) which folows the cursor upon movement */
+	Mark lastsel_anchor;/* previously used selection data, */
+	Mark lastsel_cursor;/* used to restore it */
 	Register reg;       /* per cursor register to support yank/put operation */
 	View *view;         /* associated view to which this cursor belongs */
 	Cursor *prev, *next;/* previous/next cursors in no particular order */
@@ -994,6 +996,23 @@ void view_cursors_selection_start(Cursor *c) {
 	view_draw(c->view);
 }
 
+void view_cursors_selection_restore(Cursor *c) {
+	Text *txt = c->view->text;
+	if (c->sel)
+		return;
+	Filerange sel = text_range_new(
+		text_mark_get(txt, c->lastsel_anchor),
+		text_mark_get(txt, c->lastsel_cursor)
+	);
+	if (!text_range_valid(&sel))
+		return;
+	if (!(c->sel = view_selections_new(c->view)))
+		return;
+	view_selections_set(c->sel, &sel);
+	view_cursors_selection_sync(c);
+	view_draw(c->view);
+}
+
 void view_cursors_selection_stop(Cursor *c) {
 	c->sel = NULL;
 }
@@ -1019,7 +1038,7 @@ void view_cursors_selection_sync(Cursor *c) {
 	bool right_extending = anchor < cursor;
 	if (right_extending)
 		cursor = text_char_prev(txt, cursor);
-	cursor_to(c, cursor);
+	view_cursors_to(c, cursor);
 }
 
 Filerange view_cursors_selection_get(Cursor *c) {
@@ -1061,8 +1080,11 @@ void view_selections_free(Selection *s) {
 		s->view->selections = s->next;
 	// XXX: add backlink Selection->Cursor?
 	for (Cursor *c = s->view->cursors; c; c = c->next) {
-		if (c->sel == s)
+		if (c->sel == s) {
+			c->lastsel_anchor = s->anchor;
+			c->lastsel_cursor = s->cursor;
 			c->sel = NULL;
+		}
 	}
 	free(s);
 }

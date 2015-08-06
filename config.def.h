@@ -433,6 +433,7 @@ static KeyBinding vis_mode_normal[] = {
 	{ { NONE('z'), NONE('b')    }, window,         { .w = view_redraw_bottom } },
 	{ { NONE('q')               }, macro_record,   { NULL                      } },
 	{ { NONE('@')               }, macro_replay,   { NULL                      } },
+	{ { NONE('g'), NONE('v')    }, selection_restore, { NULL                   } },
 	{ /* empty last element, array terminator */                                 },
 };
 
