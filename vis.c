@@ -740,7 +740,7 @@ static size_t mark_line_goto(File *txt, size_t pos) {
 
 static size_t to(Text *txt, size_t pos) {
 	char c;
-	size_t hit = text_find_next(txt, pos+1, vis->search_char);
+	size_t hit = text_line_find_next(txt, pos+1, vis->search_char);
 	if (!text_byte_get(txt, hit, &c) || c != vis->search_char[0])
 		return pos;
 	return hit;
@@ -757,7 +757,7 @@ static size_t to_left(Text *txt, size_t pos) {
 	char c;
 	if (pos == 0)
 		return pos;
-	size_t hit = text_find_prev(txt, pos-1, vis->search_char);
+	size_t hit = text_line_find_prev(txt, pos-1, vis->search_char);
 	if (!text_byte_get(txt, hit, &c) || c != vis->search_char[0])
 		return pos;
 	return hit;

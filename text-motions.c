@@ -46,7 +46,7 @@ size_t text_char_prev(Text *txt, size_t pos) {
 	return it.pos;
 }
 
-size_t text_find_next(Text *txt, size_t pos, const char *s) {
+static size_t find_next(Text *txt, size_t pos, const char *s, bool line) {
 	if (!s)
 		return pos;
 	size_t len = strlen(s), matched = 0;
@@ -61,11 +61,21 @@ size_t text_find_next(Text *txt, size_t pos, const char *s) {
 			matched = 0;
 		}
 		text_iterator_byte_next(&it, NULL);
+		if (line && c == '\n')
+			break;
 	}
 	return matched == len ? it.pos - len : pos;
 }
 
-size_t text_find_prev(Text *txt, size_t pos, const char *s) {
+size_t text_find_next(Text *txt, size_t pos, const char *s) {
+	return find_next(txt, pos, s, false);
+}
+
+size_t text_line_find_next(Text *txt, size_t pos, const char *s) {
+	return find_next(txt, pos, s, true);
+}
+
+static size_t find_prev(Text *txt, size_t pos, const char *s, bool line) {
 	if (!s)
 		return pos;
 	size_t len = strlen(s), matched = len - 1;
@@ -84,8 +94,18 @@ size_t text_find_prev(Text *txt, size_t pos, const char *s) {
 			matched = len - 1;
 		}
 		text_iterator_byte_prev(&it, NULL);
+		if (line && c == '\n')
+			break;
 	}
 	return matched == 0 ? it.pos : pos;
+}
+
+size_t text_find_prev(Text *txt, size_t pos, const char *s) {
+	return find_prev(txt, pos, s, false);
+}
+
+size_t text_line_find_prev(Text *txt, size_t pos, const char *s) {
+	return find_prev(txt, pos, s, true);
 }
 
 size_t text_line_prev(Text *txt, size_t pos) {

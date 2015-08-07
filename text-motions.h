@@ -21,6 +21,9 @@ size_t text_char_prev(Text*, size_t pos);
  * original position */
 size_t text_find_next(Text*, size_t pos, const char *s);
 size_t text_find_prev(Text*, size_t pos, const char *s);
+/* same as above but limit searched range to the line containing pos */
+size_t text_line_find_next(Text*, size_t pos, const char *s);
+size_t text_line_find_prev(Text*, size_t pos, const char *s);
 
 /*        begin            finish  end   next
  *        v                v       v     v
