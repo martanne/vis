@@ -481,10 +481,9 @@ static bool exec_command(char type, const char *cmdline);
 
 static size_t op_delete(OperatorContext *c) {
 	Text *txt = vis->win->file->text;
-	size_t len = c->range.end - c->range.start;
 	c->reg->linewise = c->linewise;
 	register_put(c->reg, txt, &c->range);
-	text_delete(txt, c->range.start, len);
+	text_delete_range(txt, &c->range);
 	size_t pos = c->range.start;
 	if (c->linewise && pos == text_size(txt))
 		pos = text_line_begin(txt, text_line_prev(txt, pos));
@@ -602,7 +601,7 @@ static size_t op_shift_left(OperatorContext *c) {
 
 static size_t op_case_change(OperatorContext *c) {
 	Text *txt = vis->win->file->text;
-	size_t len = c->range.end - c->range.start;
+	size_t len = text_range_size(&c->range);
 	char *buf = malloc(len);
 	if (!buf)
 		return c->pos;
@@ -1885,7 +1884,7 @@ static bool cmd_read(Filerange *range, enum CmdOpt opt, const char *argv[]) {
 
 	bool ret = cmd_filter(range, opt, (const char*[]){ argv[0], "sh", "-c", cmd, NULL});
 	if (ret)
-		text_delete(vis->win->file->text, delete.start, delete.end - delete.start);
+		text_delete_range(vis->win->file->text, &delete);
 	return ret;
 }
 
@@ -2167,7 +2166,7 @@ static bool cmd_filter(Filerange *range, enum CmdOpt opt, const char *argv[]) {
 		close(perr[0]);
 
 	if (waitpid(pid, &status, 0) == pid && status == 0) {
-		text_delete(text, rout.start, rout.end - rout.start);
+		text_delete_range(text, &rout);
 		text_snapshot(text);
 	} else {
 		/* make sure we have somehting to undo */

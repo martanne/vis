@@ -1145,6 +1145,12 @@ bool text_delete(Text *txt, size_t pos, size_t len) {
 	return true;
 }
 
+bool text_delete_range(Text *txt, Filerange *r) {
+	if (!text_range_valid(r))
+		return false;
+	return text_delete(txt, r->start, text_range_size(r));
+}
+
 /* preserve the current text content such that it can be restored by
  * means of undo/redo operations */
 void text_snapshot(Text *txt) {

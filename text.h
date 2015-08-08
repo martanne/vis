@@ -41,6 +41,7 @@ struct stat text_stat(Text*);
 bool text_insert(Text*, size_t pos, const char *data, size_t len);
 /* delete `len' bytes starting from `pos' */
 bool text_delete(Text*, size_t pos, size_t len);
+bool text_delete_range(Text*, Filerange*);
 /* mark the current text state, such that it can be {un,re}done */
 void text_snapshot(Text*);
 /* undo/redo to the last snapshotted state. returns the position where
