@@ -116,11 +116,11 @@ enum TextNewLine text_newline_type(Text*);
  * In which case an implicit snapshot is taken. The save might associate a
  * new inode to file. */
 bool text_save(Text*, const char *filename);
-bool text_range_save(Text*, Filerange*, const char *file);
+bool text_save_range(Text*, Filerange*, const char *file);
 /* write the text content to the given file descriptor `fd'. Return the
  * number of bytes written or -1 in case there was an error. */
 ssize_t text_write(Text*, int fd);
-ssize_t text_range_write(Text*, Filerange*, int fd);
+ssize_t text_write_range(Text*, Filerange*, int fd);
 /* release all ressources associated with this text instance */
 void text_free(Text*);
 

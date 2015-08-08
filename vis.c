@@ -1936,13 +1936,13 @@ static bool cmd_write(Filerange *range, enum CmdOpt opt, const char *argv[]) {
 	if (!argv[1]) {
 		if (file->is_stdin) {
 			if (strchr(argv[0], 'q')) {
-				ssize_t written = text_range_write(text, range, STDOUT_FILENO);
+				ssize_t written = text_write_range(text, range, STDOUT_FILENO);
 				if (written == -1 || (size_t)written != text_range_size(range)) {
 					editor_info_show(vis, "Can not write to stdout");
 					return false;
 				}
 				/* make sure the file is marked as saved i.e. not modified */
-				text_range_save(text, range, NULL);
+				text_save_range(text, range, NULL);
 				return true;
 			}
 			editor_info_show(vis, "No filename given, use 'wq' to write to stdout");
@@ -1958,7 +1958,7 @@ static bool cmd_write(Filerange *range, enum CmdOpt opt, const char *argv[]) {
 			editor_info_show(vis, "WARNING: file has been changed since reading it");
 			return false;
 		}
-		if (!text_range_save(text, range, *name)) {
+		if (!text_save_range(text, range, *name)) {
 			editor_info_show(vis, "Can't write `%s'", *name);
 			return false;
 		}
@@ -2110,7 +2110,7 @@ static bool cmd_filter(Filerange *range, enum CmdOpt opt, const char *argv[]) {
 			Filerange junk = *range;
 			if (junk.end > junk.start + PIPE_BUF)
 				junk.end = junk.start + PIPE_BUF;
-			ssize_t len = text_range_write(text, &junk, pin[1]);
+			ssize_t len = text_write_range(text, &junk, pin[1]);
 			if (len > 0) {
 				range->start += len;
 				if (text_range_size(range) == 0) {

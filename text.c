@@ -795,7 +795,7 @@ static bool preserve_selinux_context(int src, int dest) {
  *   - POSXI ACL can not be preserved (if enabled)
  *   - SELinux security context can not be preserved (if enabled)
  */
-static bool text_range_save_atomic(Text *txt, Filerange *range, const char *filename) {
+static bool text_save_atomic_range(Text *txt, Filerange *range, const char *filename) {
 	struct stat meta = { 0 }, oldmeta = { 0 };
 	int fd = -1, oldfd = -1, saved_errno;
 	char *tmpname = NULL;
@@ -895,17 +895,17 @@ err:
 
 bool text_save(Text *txt, const char *filename) {
 	Filerange r = (Filerange){ .start = 0, .end = text_size(txt) };
-	return text_range_save(txt, &r, filename);
+	return text_save_range(txt, &r, filename);
 }
 
 /* First try to save the file atomically using rename(2) if this does not
  * work overwrite the file in place. However if something goes wrong during
  * this overwrite the original file is permanently damaged.
  */
-bool text_range_save(Text *txt, Filerange *range, const char *filename) {
+bool text_save_range(Text *txt, Filerange *range, const char *filename) {
 	struct stat meta;
 	int fd = -1, newfd = -1;
-	if (!filename || text_range_save_atomic(txt, range, filename))
+	if (!filename || text_save_atomic_range(txt, range, filename))
 		goto ok;
 	if ((fd = open(filename, O_CREAT|O_WRONLY, S_IRUSR|S_IWUSR)) == -1)
 		goto err;
@@ -951,7 +951,7 @@ bool text_range_save(Text *txt, Filerange *range, const char *filename) {
 	 * here we are screwed, TODO: make a backup before? */
 	if (ftruncate(fd, 0) == -1)
 		goto err;
-	ssize_t written = text_range_write(txt, range, fd);
+	ssize_t written = text_write_range(txt, range, fd);
 	if (written == -1 || (size_t)written != text_range_size(range))
 		goto err;
 
@@ -974,10 +974,10 @@ err:
 
 ssize_t text_write(Text *txt, int fd) {
 	Filerange r = (Filerange){ .start = 0, .end = text_size(txt) };
-	return text_range_write(txt, &r, fd);
+	return text_write_range(txt, &r, fd);
 }
 
-ssize_t text_range_write(Text *txt, Filerange *range, int fd) {
+ssize_t text_write_range(Text *txt, Filerange *range, int fd) {
 	size_t size = text_range_size(range), rem = size;
 	for (Iterator it = text_iterator_get(txt, range->start);
 	     rem > 0 && text_iterator_valid(&it);
