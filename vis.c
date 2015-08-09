@@ -1775,7 +1775,7 @@ static bool openfiles(const char **files) {
 	for (; *files; files++) {
 		const char *file = file_open_dialog(*files);
 		if (!file)
-			continue;
+			return false;
 		errno = 0;
 		if (!vis_window_new(file)) {
 			editor_info_show(vis, "Could not open `%s' %s", file,
