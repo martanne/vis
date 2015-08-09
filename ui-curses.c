@@ -574,12 +574,14 @@ static Key ui_getkey(Ui *ui) {
 }
 
 static void ui_terminal_save(Ui *ui) {
+	curs_set(1);
 	reset_shell_mode();
 }
 
 static void ui_terminal_restore(Ui *ui) {
 	reset_prog_mode();
 	wclear(stdscr);
+	curs_set(0);
 }
 
 Ui *ui_curses_new(Color *colors) {
