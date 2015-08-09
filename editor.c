@@ -42,10 +42,13 @@ void editor_windows_arrange(Editor *ed, enum UiLayout layout) {
 }
 
 bool editor_window_reload(Win *win) {
-	/* can't reload unsaved file */
-	if (!win->file->name)
-		return false;
-	File *file = file_new(win->editor, win->file->name);
+	const char *name = win->file->name;
+	if (!name)
+		return false; /* can't reload unsaved file */
+	/* temporarily unset file name, otherwise file_new returns the same File */
+	win->file->name = NULL;
+	File *file = file_new(win->editor, name);
+	win->file->name = name;
 	if (!file)
 		return false;
 	file_free(win->editor, win->file);

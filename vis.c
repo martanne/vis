@@ -1812,8 +1812,9 @@ static bool cmd_edit(Filerange *range, enum CmdOpt opt, const char *argv[]) {
 		return editor_window_reload(oldwin);
 	if (!openfiles(&argv[1]))
 		return false;
-	editor_window_close(oldwin);
-	return true;
+	if (vis->win != oldwin)
+		editor_window_close(oldwin);
+	return vis->win != oldwin;
 }
 
 static bool cmd_quit(Filerange *range, enum CmdOpt opt, const char *argv[]) {
