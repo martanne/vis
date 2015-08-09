@@ -1759,7 +1759,7 @@ static const char *file_open_dialog(const char *pattern) {
 		if (len >= sizeof(filename))
 			len = 0;
 		if (len > 0)
-			text_bytes_get(txt, 0, len-1, filename);
+			text_bytes_get(txt, 0, --len, filename);
 		filename[len] = '\0';
 	}
 
