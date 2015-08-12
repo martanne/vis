@@ -1,3 +1,4 @@
+#include <unistd.h>
 #include <stdlib.h>
 #include <string.h>
 #include <signal.h>
@@ -300,7 +301,7 @@ static void ui_resize(Ui *ui) {
 	struct winsize ws;
 	int width, height;
 
-	if (ioctl(0, TIOCGWINSZ, &ws) == -1) {
+	if (ioctl(STDERR_FILENO, TIOCGWINSZ, &ws) == -1) {
 		getmaxyx(stdscr, height, width);
 	} else {
 		width = ws.ws_col;
