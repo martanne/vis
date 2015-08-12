@@ -7,6 +7,7 @@
 #include <setjmp.h>
 
 typedef struct Editor Editor;
+typedef Editor Vis;
 typedef struct File File;
 typedef struct Win Win;
 
@@ -77,7 +78,7 @@ typedef struct {
 } OperatorContext;
 
 typedef struct {
-	size_t (*func)(OperatorContext*); /* operator logic, returns new cursor position */
+	size_t (*func)(Vis*, Text*, OperatorContext*); /* operator logic, returns new cursor position */
 } Operator;
 
 typedef struct {

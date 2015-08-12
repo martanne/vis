@@ -47,17 +47,17 @@
 static Editor *vis;         /* global editor instance, keeps track of all windows etc. */
 
 /** operators */
-static size_t op_change(OperatorContext *c);
-static size_t op_yank(OperatorContext *c);
-static size_t op_put(OperatorContext *c);
-static size_t op_delete(OperatorContext *c);
-static size_t op_shift_right(OperatorContext *c);
-static size_t op_shift_left(OperatorContext *c);
-static size_t op_case_change(OperatorContext *c);
-static size_t op_join(OperatorContext *c);
-static size_t op_repeat_insert(OperatorContext *c);
-static size_t op_repeat_replace(OperatorContext *c);
-static size_t op_cursor(OperatorContext *c);
+static size_t op_change(Vis*, Text*, OperatorContext *c);
+static size_t op_yank(Vis*, Text*, OperatorContext *c);
+static size_t op_put(Vis*, Text*, OperatorContext *c);
+static size_t op_delete(Vis*, Text*, OperatorContext *c);
+static size_t op_shift_right(Vis*, Text*, OperatorContext *c);
+static size_t op_shift_left(Vis*, Text*, OperatorContext *c);
+static size_t op_case_change(Vis*, Text*, OperatorContext *c);
+static size_t op_join(Vis*, Text*, OperatorContext *c);
+static size_t op_repeat_insert(Vis*, Text*, OperatorContext *c);
+static size_t op_repeat_replace(Vis*, Text*, OperatorContext *c);
+static size_t op_cursor(Vis*, Text*, OperatorContext *c);
 
 /* these can be passed as int argument to operator(&(const Arg){ .i = OP_*}) */
 enum {
@@ -475,8 +475,7 @@ static bool exec_command(char type, const char *cmdline);
 
 /** operator implementations of type: void (*op)(OperatorContext*) */
 
-static size_t op_delete(OperatorContext *c) {
-	Text *txt = vis->win->file->text;
+static size_t op_delete(Vis *vis, Text *txt, OperatorContext *c) {
 	c->reg->linewise = c->linewise;
 	register_put(c->reg, txt, &c->range);
 	text_delete_range(txt, &c->range);
@@ -486,19 +485,18 @@ static size_t op_delete(OperatorContext *c) {
 	return pos;
 }
 
-static size_t op_change(OperatorContext *c) {
-	op_delete(c);
+static size_t op_change(Vis *vis, Text *txt, OperatorContext *c) {
+	op_delete(vis, txt, c);
 	return c->range.start;
 }
 
-static size_t op_yank(OperatorContext *c) {
+static size_t op_yank(Vis *vis, Text *txt, OperatorContext *c) {
 	c->reg->linewise = c->linewise;
-	register_put(c->reg, vis->win->file->text, &c->range);
+	register_put(c->reg, txt, &c->range);
 	return c->pos;
 }
 
-static size_t op_put(OperatorContext *c) {
-	Text *txt = vis->win->file->text;
+static size_t op_put(Vis *vis, Text *txt, OperatorContext *c) {
 	size_t pos = c->pos;
 	switch (c->arg->i) {
 	case PUT_AFTER:
@@ -548,8 +546,7 @@ static const char *expand_tab(void) {
 	return vis->expandtab ? spaces : "\t";
 }
 
-static size_t op_shift_right(OperatorContext *c) {
-	Text *txt = vis->win->file->text;
+static size_t op_shift_right(Vis *vis, Text *txt, OperatorContext *c) {
 	size_t pos = text_line_begin(txt, c->range.end), prev_pos;
 	const char *tab = expand_tab();
 	size_t tablen = strlen(tab);
@@ -567,8 +564,7 @@ static size_t op_shift_right(OperatorContext *c) {
 	return c->pos + tablen;
 }
 
-static size_t op_shift_left(OperatorContext *c) {
-	Text *txt = vis->win->file->text;
+static size_t op_shift_left(Vis *vis, Text *txt, OperatorContext *c) {
 	size_t pos = text_line_begin(txt, c->range.end), prev_pos;
 	size_t tabwidth = editor_tabwidth_get(vis), tablen;
 
@@ -595,8 +591,7 @@ static size_t op_shift_left(OperatorContext *c) {
 	return c->pos - tablen;
 }
 
-static size_t op_case_change(OperatorContext *c) {
-	Text *txt = vis->win->file->text;
+static size_t op_case_change(Vis *vis, Text *txt, OperatorContext *c) {
 	size_t len = text_range_size(&c->range);
 	char *buf = malloc(len);
 	if (!buf)
@@ -621,8 +616,7 @@ static size_t op_case_change(OperatorContext *c) {
 	return c->pos;
 }
 
-static size_t op_cursor(OperatorContext *c) {
-	Text *txt = vis->win->file->text;
+static size_t op_cursor(Vis *vis, Text *txt, OperatorContext *c) {
 	View *view = vis->win->view;
 	Filerange r = text_range_linewise(txt, &c->range);
 	for (size_t line = text_range_line_first(txt, &r); line != EPOS; line = text_range_line_next(txt, &r, line)) {
@@ -639,8 +633,7 @@ static size_t op_cursor(OperatorContext *c) {
 	return EPOS;
 }
 
-static size_t op_join(OperatorContext *c) {
-	Text *txt = vis->win->file->text;
+static size_t op_join(Vis *vis, Text *txt, OperatorContext *c) {
 	size_t pos = text_line_begin(txt, c->range.end), prev_pos;
 
 	/* if operator and range are both linewise, skip last line break */
@@ -666,15 +659,15 @@ static size_t op_join(OperatorContext *c) {
 	return c->range.start;
 }
 
-static size_t op_repeat_insert(OperatorContext *c) {
+static size_t op_repeat_insert(Vis *vis, Text *txt, OperatorContext *c) {
 	size_t len = vis->buffer_repeat.len;
 	if (!len)
 		return c->pos;
-	text_insert(vis->win->file->text, c->pos, vis->buffer_repeat.data, len);
+	text_insert(txt, c->pos, vis->buffer_repeat.data, len);
 	return c->pos + len;
 }
 
-static size_t op_repeat_replace(OperatorContext *c) {
+static size_t op_repeat_replace(Vis *vis, Text *txt, OperatorContext *c) {
 	const char *data = vis->buffer_repeat.data;
 	size_t len = vis->buffer_repeat.len;
 	editor_replace(vis, c->pos, data, len);
@@ -1554,7 +1547,7 @@ static void action_do(Action *a) {
 		}
 
 		if (a->op) {
-			size_t pos = a->op->func(&c);
+			size_t pos = a->op->func(vis, txt, &c);
 			if (pos != EPOS) {
 				view_cursors_to(cursor, pos);
 			} else {
