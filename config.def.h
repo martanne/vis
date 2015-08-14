@@ -982,7 +982,13 @@ static Syntax syntaxes[] = {{
 		"^[0-9A-Z_]+\\(\\)",
 		&colors[COLOR_CONSTANT],
 	},{
-		"\\$\\{?[0-9A-Z_!@#$*?-]+\\}?",
+		"\\$[?!@#$?*-]",
+		&colors[COLOR_VARIABLE],
+	},{
+		"\\$\\{[A-Za-z_][0-9A-Za-z_]+\\}",
+		&colors[COLOR_VARIABLE],
+	},{
+		"\\$[A-Za-z_][0-9A-Za-z_]+",
 		&colors[COLOR_VARIABLE],
 	},{
 		B"(case|do|done|elif|else|esac|exit|fi|for|function|if|in|local|read|return|select|shift|then|time|until|while)"B,
