@@ -563,7 +563,6 @@ static Key ui_getkey(Ui *ui) {
 			switch (key.str[0]) {
 			case 127:
 			case CONTROL('H'):
-			case CONTROL('B'):
 				key.code = KEY_BACKSPACE;
 				key.str[0] = '\0';
 				break;
