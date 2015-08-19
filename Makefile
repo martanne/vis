@@ -11,12 +11,15 @@ vis: config.h config.mk *.c *.h
 	@echo ${CC} ${CFLAGS} *.c ${LDFLAGS} -o $@
 	@${CC} ${CFLAGS} *.c ${LDFLAGS} -o $@
 
+keydoc.txt: config.h
+	awk -f keydoc.awk < $^ > $@
+
 debug: clean
 	@$(MAKE) CFLAGS='${DEBUG_CFLAGS}'
 
 clean:
 	@echo cleaning
-	@rm -f vis vis-${VERSION}.tar.gz
+	@rm -f vis vis-${VERSION}.tar.gz keydoc.txt
 
 dist: clean
 	@echo creating dist tarball
