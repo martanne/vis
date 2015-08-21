@@ -3,13 +3,20 @@ HAVE_ACL=0
 HAVE_SELINUX=0
 
 # vis version
-# we have no tags in git, so just use revision count an hash for now
-GITREVCOUNT = "$(shell git rev-list --count master 2>/dev/null)"
-GITHASH = "$(shell git log -1 --format="%h" 2>/dev/null)"
-ifeq (${GITREVCOUNT},)
-	VERSION = devel
+# try to get a tag and hash first
+GITHASH = $(shell git log -1 --format='%h' 2>/dev/null)
+GITTAG = $(shell git describe --abbrev=0 --tags 2>/dev/null)
+ifneq ($(GITTAG),)
+	# we have a tag and revcount from there
+	GITREVCOUNT = $(shell git rev-list --count ${GITTAG}.. 2>/dev/null)
+	VERSION = ${GITTAG}.r${GITREVCOUNT}.g${GITHASH}
+else ifneq ($(GITHASH),)
+	# we have no tags in git, so just use revision count an hash for now
+	GITREVCOUNT = $(shell git rev-list --count master)
+	VERSION = 0.r${GITREVCOUNT}.g${GITHASH}
 else
-	VERSION = "0.r${GITREVCOUNT}.g${GITHASH}"
+	# this is used when no git is available, e.g. for release tarball
+	VERSION = 0.0.0
 endif
 
 # Customize below to fit your system
