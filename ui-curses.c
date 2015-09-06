@@ -597,6 +597,7 @@ Ui *ui_curses_new(Color *colors) {
 	use_default_colors();
 	raw();
 	noecho();
+	nonl();
 	keypad(stdscr, TRUE);
 	meta(stdscr, TRUE);
 	curs_set(0);

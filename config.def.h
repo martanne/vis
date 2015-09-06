@@ -104,7 +104,8 @@ static KeyBinding vis_movements[] = {
 	{ { NONE('j')               }, movement,     { .i = MOVE_LINE_DOWN           } },
 	{ { CONTROL('J')            }, movement,     { .i = MOVE_LINE_DOWN           } },
 	{ { CONTROL('N')            }, movement,     { .i = MOVE_LINE_DOWN           } },
-	{ { KEY(ENTER)              }, movement,     { .i = MOVE_LINE_DOWN           } },
+	{ { NONE('\n')              }, movement,     { .i = MOVE_LINE_DOWN           } },
+	{ { NONE('\r')              }, movement,     { .i = MOVE_LINE_DOWN           } },
 	{ { NONE('g'), NONE('j')    }, movement,     { .i = MOVE_SCREEN_LINE_DOWN    } },
 	{ { NONE('g'), KEY(DOWN)    }, movement,     { .i = MOVE_SCREEN_LINE_DOWN    } },
 	{ { NONE('^')               }, movement,     { .i = MOVE_LINE_START          } },
@@ -513,7 +514,8 @@ static KeyBinding vis_mode_readline[] = {
 
 static KeyBinding vis_mode_prompt[] = {
 	{ { KEY(BACKSPACE)          }, prompt_backspace,{ .s = NULL              } },
-	{ { KEY(ENTER)              }, prompt_enter,    { NULL                   } },
+	{ { NONE('\n')              }, prompt_enter,    { NULL                   } },
+	{ { NONE('\r')              }, prompt_enter,    { NULL                   } },
 	{ { CONTROL('J')            }, prompt_enter,    { NULL                   } },
 	{ { KEY(UP)                 }, prompt_up,       { NULL                   } },
 	{ { KEY(DOWN)               }, prompt_down,     { NULL                   } },
