@@ -33,6 +33,7 @@
 #include <sys/ioctl.h>
 #include <sys/mman.h>
 
+#include <termkey.h>
 #include "ui-curses.h"
 #include "editor.h"
 #include "text-util.h"
@@ -472,8 +473,8 @@ static bool vis_window_split(Win *win);
 
 #include "config.h"
 
-static Key getkey(void);
-static void keypress(Key *key);
+static const char *getkey(void);
+static bool keypress(const char *key);
 static void action_do(Action *a);
 static bool exec_command(char type, const char *cmdline);
 
@@ -816,10 +817,10 @@ static void changelist(const Arg *arg) {
 static Macro *key2macro(const Arg *arg) {
 	if (arg->i)
 		return &vis->macros[arg->i];
-	Key key = getkey();
-	if (key.str[0] >= 'a' && key.str[0] <= 'z')
-		return &vis->macros[key.str[0] - 'a'];
-	if (key.str[0] == '@')
+	const char *key = getkey();
+	if (key && key[0] >= 'a' && key[0] <= 'z')
+		return &vis->macros[key[0] - 'a'];
+	if (key && key[0] == '@')
 		return vis->last_recording;
 	return NULL;
 }
@@ -828,7 +829,8 @@ static void macro_record(const Arg *arg) {
 	if (vis->recording) {
 		/* hack to remove last recorded key, otherwise upon replay
 		 * we would start another recording */
-		vis->recording->len -= sizeof(Key);
+		// XXX: HACK
+		vis->recording->len--;
 		vis->last_recording = vis->recording;
 		vis->recording = NULL;
 	} else {
@@ -843,8 +845,7 @@ static void macro_replay(const Arg *arg) {
 	Macro *macro = key2macro(arg);
 	if (!macro || macro == vis->recording)
 		return;
-	for (size_t i = 0; i < macro->len; i += sizeof(Key))
-		keypress((Key*)(macro->data + i));
+	keypress(macro->data);
 }
 
 static void suspend(const Arg *arg) {
@@ -983,13 +984,13 @@ static void cursors_remove(const Arg *arg) {
 }
 
 static void replace(const Arg *arg) {
-	Key k = getkey();
-	if (!k.str[0])
+	const char *key = getkey();
+	if (!key)
 		return;
 	action_reset(&vis->action_prev);
 	vis->action_prev.op = &ops[OP_REPEAT_REPLACE];
-	buffer_put(&vis->buffer_repeat, k.str, strlen(k.str));
-	editor_replace_key(vis, k.str, strlen(k.str));
+	buffer_put(&vis->buffer_repeat, key, strlen(key));
+	editor_replace_key(vis, key, strlen(key));
 	text_snapshot(vis->win->file->text);
 }
 
@@ -1042,12 +1043,12 @@ static void changecase(const Arg *arg) {
 }
 
 static void movement_key(const Arg *arg) {
-	Key k = getkey();
-	if (!k.str[0]) {
+	const char *key = getkey();
+	if (!key) {
 		action_reset(&vis->action);
 		return;
 	}
-	strncpy(vis->search_char, k.str, sizeof(vis->search_char));
+	strncpy(vis->search_char, key, sizeof(vis->search_char));
 	vis->last_totill = arg->i;
 	vis->action.movement = &moves[arg->i];
 	action_do(&vis->action);
@@ -1211,8 +1212,10 @@ static void prompt_backspace(const Arg *arg) {
 static void insert_verbatim(const Arg *arg) {
 	int len = 0, count = 0, base;
 	Rune rune = 0;
-	Key key = getkey();
-	char buf[4], type = key.str[0];
+	const char *key = getkey();
+	if (!key)
+		return;
+	char buf[4], type = key[0];
 	switch (type) {
 	case 'o':
 	case 'O':
@@ -1243,14 +1246,16 @@ static void insert_verbatim(const Arg *arg) {
 	while (count-- > 0) {
 		key = getkey();
 		int v = 0;
-		if (base == 8 && '0' <= key.str[0] && key.str[0] <= '7')
-			v = key.str[0] - '0';
-		else if ((base == 10 || base == 16) && '0' <= key.str[0] && key.str[0] <= '9')
-			v = key.str[0] - '0';
-		else if (base == 16 && 'a' <= key.str[0] && key.str[0] <= 'f')
-			v = 10 + key.str[0] - 'a';
-		else if (base == 16 && 'A' <= key.str[0] && key.str[0] <= 'F')
-			v = 10 + key.str[0] - 'A';
+		if (!key)
+			break;
+		else if (base == 8 && '0' <= key[0] && key[0] <= '7')
+			v = key[0] - '0';
+		else if ((base == 10 || base == 16) && '0' <= key[0] && key[0] <= '9')
+			v = key[0] - '0';
+		else if (base == 16 && 'a' <= key[0] && key[0] <= 'f')
+			v = 10 + key[0] - 'a';
+		else if (base == 16 && 'A' <= key[0] && key[0] <= 'F')
+			v = 10 + key[0] - 'A';
 		else
 			break;
 		rune = rune * base + v;
@@ -2475,68 +2480,63 @@ static void die(const char *errstr, ...) {
 	exit(EXIT_FAILURE);
 }
 
-static bool keymatch(Key *key0, Key *key1) {
-	return (key0->str[0] && memcmp(key0->str, key1->str, sizeof(key1->str)) == 0) ||
-	       (key0->code && key0->code == key1->code);
-}
+static bool keypress(const char *input) {
+	if (!input)
+		return true;
+	TermKey *termkey = vis->ui->termkey_get(vis->ui);
+	char *keys = strdup(input), *start = keys, *cur = keys, *end;
+	if (!keys)
+		return true;
 
-static bool keyvalid(Key *k) {
-	return k && (k->str[0] || k->code);
-}
-
-static KeyBinding *keybinding(Mode *mode, KeyCombo keys) {
-	int combolen = 0;
-	while (combolen < MAX_KEYS && keyvalid(&keys[combolen]))
-		combolen++;
-	for (; mode; mode = mode->parent) {
-		if (mode->common_prefix && !keymatch(&keys[0], &mode->bindings->key[0]))
-			continue;
-		for (KeyBinding *kb = mode->bindings; kb && keyvalid(&kb->key[0]); kb++) {
-			for (int k = 0; k < combolen; k++) {
-				if (!keymatch(&keys[k], &kb->key[k]))
-					break;
-				if (k == combolen - 1)
-					return kb;
-			}
+	TermKeyKey key;
+	bool prefix = false;
+	KeyBinding *binding = NULL;
+	
+	while (cur && *cur) {
+		/* first try to parse a special key of the form <Key> */
+		if (*cur == '<' && (end = (char*)termkey_strpkey(termkey, cur+1, &key, TERMKEY_FORMAT_VIM)) && *end == '>') {
+			end++;
+		} else if (!(end = (char*)termkey_strpkey(termkey, cur, &key, TERMKEY_FORMAT_VIM))) {
+			// XXX: insert as document
+			free(keys);
+			return true;
 		}
-		if (mode->unknown && !mode->unknown(keys))
-			break;
-	}
-	return NULL;
-}
 
-static void keypress(Key *key) {
-	static KeyCombo keys;
-	static int keylen;
+		char tmp = *end;
+		*end = '\0';
+		prefix = false;
+		binding = NULL;
 
-
-	keys[keylen++] = *key;
-	KeyBinding *action = keybinding(vis->mode, keys);
-
-	if (action) {
-		int combolen = 0;
-		while (combolen < MAX_KEYS && keyvalid(&action->key[combolen]))
-			combolen++;
-		if (keylen < combolen)
-			return; /* combo not yet complete */
-		/* need to reset state before calling action->func in case
-		 * it will call us (=keypress) again as e.g. macro_replay */
-		keylen = 0;
-		memset(keys, 0, sizeof(keys));
-		if (action->func)
-			action->func(&action->arg);
-	} else if (keylen == 1 && key->code == 0 && vis->mode->input) {
-		vis->mode->input(key->str, strlen(key->str));
+		for (Mode *mode = vis->mode; mode && !binding && !prefix; mode = mode->parent) {
+			binding = map_get(mode->bindings, start);
+			/* "<" is never treated as a prefix because it is used to denote
+			 * special key symbols */
+			if (strcmp(cur, "<"))
+				prefix = !binding && map_contains(mode->bindings, start);
+		}
+		
+		if (binding) { /* exact match */
+			binding->func(&binding->arg);
+			start = cur = end;
+		} else if (prefix) { /* incomplete key binding? */
+			cur = end;
+		} else { /* no keybinding */
+			if (vis->mode->input)
+				vis->mode->input(start, end - start);
+			start = cur = end;
+		}
+		
+		*end = tmp;
 	}
 
-	keylen = 0;
-	memset(keys, 0, sizeof(keys));
+	free(keys);
+	return !prefix;
 }
 
-static Key getkey(void) {
-	Key key = vis->ui->getkey(vis->ui);
-	if (config->keypress && !config->keypress(&key))
-		return (Key){ .str = "", .code = 0 };
+static const char *getkey(void) {
+	const char *key = vis->ui->getkey(vis->ui);
+	if (!key || (config->keypress && !config->keypress(key)))
+		return NULL;
 	return key;
 }
 
@@ -2609,8 +2609,14 @@ static void mainloop() {
 			continue;
 		}
 
-		Key key = getkey();
-		keypress(&key);
+		
+		TermKey *termkey = vis->ui->termkey_get(vis->ui);
+		termkey_advisereadable(termkey);
+		const char *key;
+		while ((key = getkey())) {
+			if (buffer_append0(&vis->input_queue, key) && keypress(vis->input_queue.data))
+				buffer_truncate(&vis->input_queue);
+		}
 
 		if (vis->mode->idle)
 			timeout = &idle;
@@ -2628,6 +2634,12 @@ int main(int argc, char *argv[]) {
 			config = &editors[i];
 			break;
 		}
+	}
+
+	for (int i = 0; i < LENGTH(vis_modes); i++) {
+		Mode *mode = &vis_modes[i];
+		if (!editor_mode_bindings(mode, &mode->default_bindings))
+			die("Could not load bindings for mode: %s\n", mode->name);
 	}
 
 	if (!(vis = editor_new(ui_curses_new(colors))))

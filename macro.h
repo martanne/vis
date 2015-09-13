@@ -6,6 +6,6 @@
 typedef Buffer Macro;
 #define macro_release buffer_release
 #define macro_reset buffer_truncate
-#define macro_append buffer_append
+#define macro_append buffer_append0
 
 #endif

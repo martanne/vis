@@ -3,6 +3,7 @@
 #include <string.h>
 #include <signal.h>
 #include <locale.h>
+#include <poll.h>
 #include <sys/ioctl.h>
 
 #include "ui.h"
@@ -62,6 +63,8 @@ typedef struct {
 	char info[255];           /* info message displayed at the bottom of the screen */
 	int width, height;        /* terminal dimensions available for all windows */
 	enum UiLayout layout;     /* whether windows are displayed horizontally or vertically */
+	TermKey *termkey;         /* libtermkey instance to handle keyboard input */
+	char key[64];             /* string representation of last pressed key */
 } UiCurses;
 
 struct UiCursesWin {
@@ -518,6 +521,11 @@ static bool ui_init(Ui *ui, Editor *ed) {
 	return true;
 }
 
+static TermKey *ui_termkey_get(Ui *ui) {
+	UiCurses *uic = (UiCurses*)ui;
+	return uic->termkey;
+}
+
 static void ui_suspend(Ui *ui) {
 	endwin();
 	raise(SIGSTOP);
@@ -532,59 +540,51 @@ static bool ui_haskey(Ui *ui) {
 	return c != ERR;
 }
 
-static Key ui_getkey(Ui *ui) {
-	Key key = { .str = "", .code = 0 };
-	int keycode = getch(), cur = 0;
-	if (keycode == ERR)
-		return key;
+static const char *ui_getkey(Ui *ui) {
+	UiCurses *uic = (UiCurses*)ui;
+	TermKeyKey key;
+	TermKeyResult ret = termkey_getkey(uic->termkey, &key);
 
-	if (keycode >= KEY_MIN) {
-		key.code = keycode;
-	} else {
-		key.str[cur++] = keycode;
-		int len = 1;
-		unsigned char keychar = keycode;
-		if (ISASCII(keychar)) len = 1;
-		else if (keychar == 0x1B || keychar >= 0xFC) len = 6;
-		else if (keychar >= 0xF8) len = 5;
-		else if (keychar >= 0xF0) len = 4;
-		else if (keychar >= 0xE0) len = 3;
-		else if (keychar >= 0xC0) len = 2;
-		len = MIN(len, LENGTH(key.str));
-
-		if (cur < len) {
-			nodelay(stdscr, TRUE);
-			for (int t; cur < len && (t = getch()) != ERR; cur++)
-				key.str[cur] = t;
-			nodelay(stdscr, FALSE);
-		}
-
-		if (len == 1) {
-			switch (key.str[0]) {
-			case 127:
-			case CONTROL('H'):
-				key.code = KEY_BACKSPACE;
-				key.str[0] = '\0';
-				break;
-			}
-		}
+	if (ret == TERMKEY_RES_AGAIN) {
+		struct pollfd fd;
+		fd.fd = STDIN_FILENO;
+		fd.events = POLLIN;
+		if (poll(&fd, 1, termkey_get_waittime(uic->termkey)) == 0)
+			ret = termkey_getkey_force(uic->termkey, &key);
 	}
-
-	return key;
+	
+	if (ret != TERMKEY_RES_KEY)
+		return NULL;
+	termkey_strfkey(uic->termkey, uic->key, sizeof(uic->key), &key, TERMKEY_FORMAT_VIM);
+	return uic->key;
 }
 
 static void ui_terminal_save(Ui *ui) {
+	UiCurses *uic = (UiCurses*)ui;
+	termkey_stop(uic->termkey);
 	curs_set(1);
 	reset_shell_mode();
 }
 
 static void ui_terminal_restore(Ui *ui) {
+	UiCurses *uic = (UiCurses*)ui;
 	reset_prog_mode();
 	wclear(stdscr);
 	curs_set(0);
+	termkey_start(uic->termkey);
 }
 
 Ui *ui_curses_new(Color *colors) {
+
+	UiCurses *uic = calloc(1, sizeof(UiCurses));
+	Ui *ui = (Ui*)uic;
+	if (!uic)
+		return NULL;
+	if (!(uic->termkey = termkey_new(STDIN_FILENO, TERMKEY_FLAG_UTF8))) {
+		ui_curses_free(ui);
+		return NULL;
+	}
+		
 	setlocale(LC_CTYPE, "");
 	if (!getenv("ESCDELAY"))
 		set_escdelay(50);
@@ -605,14 +605,10 @@ Ui *ui_curses_new(Color *colors) {
 	   would clear the screen (overwrite it with an empty / unused stdscr */
 	refresh();
 
-	UiCurses *uic = calloc(1, sizeof(UiCurses));
-	Ui *ui = (Ui*)uic;
-	if (!uic)
-		return NULL;
-
 	*ui = (Ui) {
 		.init = ui_init,
 		.free = ui_curses_free,
+		.termkey_get = ui_termkey_get,
 		.suspend = ui_suspend,
 		.resume = ui_resize,
 		.resize = ui_resize,
@@ -660,6 +656,8 @@ void ui_curses_free(Ui *ui) {
 	while (uic->windows)
 		ui_window_free((UiWin*)uic->windows);
 	endwin();
+	if (uic->termkey)
+		termkey_destroy(uic->termkey);
 	free(uic);
 }
 

@@ -15,13 +15,9 @@ enum UiOption {
 	UI_OPTION_LINE_NUMBERS_RELATIVE = 1 << 1,
 };
 
-typedef struct {
-	char str[6]; /* UTF8 character or terminal escape code */
-	int code;    /* curses KEY_* constant */
-} Key;
-
 #include <stdbool.h>
 #include <stdarg.h>
+#include <termkey.h>
 #include "text.h"
 #include "view.h"
 #include "editor.h"
@@ -44,10 +40,11 @@ struct Ui {
 	void (*update)(Ui*);
 	void (*suspend)(Ui*);
 	void (*resume)(Ui*);
-	Key (*getkey)(Ui*);
+	const char* (*getkey)(Ui*);
 	bool (*haskey)(Ui*);
 	void (*terminal_save)(Ui*);
 	void (*terminal_restore)(Ui*);
+	TermKey* (*termkey_get)(Ui*);
 };
 
 struct UiWin {

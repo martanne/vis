@@ -230,6 +230,27 @@ void editor_suspend(Editor *ed) {
 	ed->ui->suspend(ed->ui);
 }
 
+bool editor_mode_map(Mode *mode, const char *name, KeyBinding *binding) {
+	return map_put(mode->bindings, name, binding);
+}
+
+bool editor_mode_bindings(Mode *mode, KeyBinding **bindings) {
+	if (!mode->bindings)
+		mode->bindings = map_new();
+	if (!mode->bindings)
+		return false;
+	bool success = true;
+	for (KeyBinding *kb = *bindings; kb->key; kb++) {
+		if (!editor_mode_map(mode, kb->key, kb))
+			success = false;
+	}
+	return success;
+}
+
+bool editor_mode_unmap(Mode *mode, const char *name) {
+	return map_delete(mode->bindings, name);
+}
+
 static void window_free(Win *win) {
 	if (!win)
 		return;

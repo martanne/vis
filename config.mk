@@ -18,7 +18,7 @@ PREFIX ?= /usr/local
 MANPREFIX = ${PREFIX}/share/man
 
 INCS = -I.
-LIBS = -lc -lncursesw
+LIBS = -lc -lncursesw -ltermkey
 
 OS = $(shell uname)
 

@@ -27,11 +27,8 @@ typedef union {
 	void (*f)(Editor*); /* generic editor commands */
 } Arg;
 
-#define MAX_KEYS 2
-typedef Key KeyCombo[MAX_KEYS];
-
 typedef struct {
-	KeyCombo key;
+	const char *key;
 	void (*func)(const Arg *arg);
 	const Arg arg;
 } KeyBinding;
@@ -39,14 +36,13 @@ typedef struct {
 typedef struct Mode Mode;
 struct Mode {
 	Mode *parent;                       /* if no match is found in this mode, search will continue there */
-	KeyBinding *bindings;               /* NULL terminated array of keybindings for this mode */
+	Map *bindings;                      
+	KeyBinding *default_bindings;                      
 	const char *name;                   /* descriptive, user facing name of the mode */
 	bool isuser;                        /* whether this is a user or internal mode */
 	bool common_prefix;                 /* whether the first key in this mode is always the same */
 	void (*enter)(Mode *old);           /* called right before the mode becomes active */
 	void (*leave)(Mode *new);           /* called right before the mode becomes inactive */
-	bool (*unknown)(KeyCombo);          /* called whenever a key combination is not found in this mode,
-	                                       the return value determines whether parent modes will be searched */
 	void (*input)(const char*, size_t); /* called whenever a key is not found in this mode and all its parent modes */
 	void (*idle)(void);                 /* called whenever a certain idle time i.e. without any user input elapsed */
 	time_t idle_timeout;                /* idle time in seconds after which the registered function will be called */
@@ -56,7 +52,7 @@ struct Mode {
 typedef struct {
 	char *name;                    /* is used to match against argv[0] to enable this config */
 	Mode *mode;                    /* default mode in which the editor should start in */
-	bool (*keypress)(Key*);        /* called before any other keybindings are checked,
+	bool (*keypress)(const char *key);        /* called before any other keybindings are checked,
 	                                * return value decides whether key should be ignored */
 } Config;
 
@@ -237,6 +233,7 @@ struct Editor {
 	Map *cmds;                        /* ":"-commands, used for unique prefix queries */
 	Map *options;                     /* ":set"-options */
 	Buffer buffer_repeat;             /* holds data to repeat last insertion/replacement */
+	Buffer input_queue;               /* holds pending input keys */
 	
 	Action action;       /* current action which is in progress */
 	Action action_prev;  /* last operator action used by the repeat '.' key */
@@ -255,6 +252,10 @@ void editor_resize(Editor*);
 void editor_draw(Editor*);
 void editor_update(Editor*);
 void editor_suspend(Editor*);
+
+bool editor_mode_bindings(Mode*, KeyBinding**);
+bool editor_mode_map(Mode*, const char *name, KeyBinding*);
+bool editor_mode_unmap(Mode*, const char *name);
 
 /* these function operate on the currently focused window but make sure
  * that all windows which show the affected region are redrawn too. */
