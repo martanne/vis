@@ -23,5 +23,7 @@ void buffer_truncate(Buffer*);
 bool buffer_put(Buffer*, const void *data, size_t len);
 /* append futher content to the end of the buffer data */
 bool buffer_append(Buffer*, const void *data, size_t len);
+/* append NUl-terminated data */
+bool buffer_append0(Buffer*, const char *data);
 
 #endif

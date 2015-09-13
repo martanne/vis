@@ -52,3 +52,9 @@ bool buffer_append(Buffer *buf, const void *data, size_t len) {
 	buf->len += len;
 	return true;
 }
+
+bool buffer_append0(Buffer *buf, const char *data) {
+	if (buf->len > 0 && buf->data[buf->len-1] == '\0')
+		buf->len--;
+	return buffer_append(buf, data, strlen(data)) && buffer_append(buf, "\0", 1);
+}
