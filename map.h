@@ -12,6 +12,9 @@ void *map_get(const Map*, const char *key);
 /* Returns the corresponding value if the given prefix is unique.
  * Otherwise NULL, if no such prefix exists then errno is set to ENOENT. */
 void *map_closest(const Map*, const char *prefix);
+/* check whether the map contains the given prefix, i.e. whether it can
+ * be extended to match a key of an element stored in the map. */
+bool map_contains(const Map*, const char *prefix);
 /* Place a member in the map. This returns false if we run out of memory
  * (errno = ENOMEM), or if that key already appears in the map (errno = EEXIST). */
 bool map_put(Map*, const char *key, const void *value);
