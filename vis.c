@@ -302,126 +302,126 @@ static TextObject textobjs[] = {
 
 /** functions to be called from keybindings */
 /* navigate jump list either in forward (arg->i>0) or backward (arg->i<0) direction */
-static void jumplist(const Arg *arg);
+static const char *jumplist(const char *keys, const Arg *arg);
 /* navigate change list either in forward (arg->i>0) or backward (arg->i<0) direction */
-static void changelist(const Arg *arg);
-static void macro_record(const Arg *arg);
-static void macro_replay(const Arg *arg);
+static const char *changelist(const char *keys, const Arg *arg);
+static const char *macro_record(const char *keys, const Arg *arg);
+static const char *macro_replay(const char *keys, const Arg *arg);
 /* temporarily suspend the editor and return to the shell, type 'fg' to get back */
-static void suspend(const Arg *arg);
+static const char *suspend(const char *keys, const Arg *arg);
 /* switch to mode indicated by arg->i */
-static void switchmode(const Arg *arg);
+static const char *switchmode(const char *keys, const Arg *arg);
 /* set mark indicated by arg->i to current cursor position */
-static void mark_set(const Arg *arg);
+static const char *mark_set(const char *keys, const Arg *arg);
 /* insert arg->s at the current cursor position */
-static void insert(const Arg *arg);
+static const char *insert(const char *keys, const Arg *arg);
 /* insert a tab or the needed amount of spaces at the current cursor position */
-static void insert_tab(const Arg *arg);
+static const char *insert_tab(const char *keys, const Arg *arg);
 /* inserts a newline (either \n or \r\n depending on file type) */
-static void insert_newline(const Arg *arg);
+static const char *insert_newline(const char *keys, const Arg *arg);
 /* put register content according to arg->i */
-static void put(const Arg *arg);
+static const char *put(const char *keys, const Arg *arg);
 /* add a new line either before or after the one where the cursor currently is */
-static void openline(const Arg *arg);
+static const char *openline(const char *keys, const Arg *arg);
 /* join lines from current cursor position to movement indicated by arg */
-static void join(const Arg *arg);
+static const char *join(const char *keys, const Arg *arg);
 /* execute arg->s as if it was typed on command prompt */
-static void cmd(const Arg *arg);
+static const char *cmd(const char *keys, const Arg *arg);
 /* perform last action i.e. action_prev again */
-static void repeat(const Arg *arg);
+static const char *repeat(const char *keys, const Arg *arg);
 /* repeat last to/till movement */
-static void totill_repeat(const Arg *arg);
+static const char *totill_repeat(const char *keys, const Arg *arg);
 /* repeat last to/till movement but in opposite direction */
-static void totill_reverse(const Arg *arg);
+static const char *totill_reverse(const char *keys, const Arg *arg);
 /* replace character at cursor with one read form keyboard */
-static void replace(const Arg *arg);
+static const char *replace(const char *keys, const Arg *arg);
 /* create a new cursor on the previous (arg->i < 0) or next (arg->i > 0) line */
-static void cursors_new(const Arg *arg);
+static const char *cursors_new(const char *keys, const Arg *arg);
 /* create new cursors in visual mode either at the start (arg-i < 0)
  * or end (arg->i > 0) of the selected lines */
-static void cursors_split(const Arg *arg);
+static const char *cursors_split(const char *keys, const Arg *arg);
 /* try to align all cursors on the same column */
-static void cursors_align(const Arg *arg);
+static const char *cursors_align(const char *keys, const Arg *arg);
 /* remove all but the primary cursor and their selections */
-static void cursors_clear(const Arg *arg);
+static const char *cursors_clear(const char *keys, const Arg *arg);
 /* remove the least recently added cursor */
-static void cursors_remove(const Arg *arg);
+static const char *cursors_remove(const char *keys, const Arg *arg);
 /* select the word the cursor is currently over */
-static void cursors_select(const Arg *arg);
+static const char *cursors_select(const char *keys, const Arg *arg);
 /* select the next region matching the current selection */
-static void cursors_select_next(const Arg *arg);
+static const char *cursors_select_next(const char *keys, const Arg *arg);
 /* clear current selection but select next match */
-static void cursors_select_skip(const Arg *arg);
+static const char *cursors_select_skip(const char *keys, const Arg *arg);
 /* adjust action.count by arg->i */
-static void count(const Arg *arg);
+static const char *count(const char *keys, const Arg *arg);
 /* move to the action.count-th line or if not given either to the first (arg->i < 0)
  *  or last (arg->i > 0) line of file */
-static void gotoline(const Arg *arg);
+static const char *gotoline(const char *keys, const Arg *arg);
 /* set motion type either LINEWISE or CHARWISE via arg->i */
-static void motiontype(const Arg *arg);
+static const char *motiontype(const char *keys, const Arg *arg);
 /* make the current action use the operator indicated by arg->i */
-static void operator(const Arg *arg);
+static const char *operator(const char *keys, const Arg *arg);
 /* execute operator twice useful for synonyms (e.g. 'cc') */
-static void operator_twice(const Arg *arg);
+static const char *operator_twice(const char *keys, const Arg *arg);
 /* change case of a file range to upper (arg->i > 0) or lowercase (arg->i < 0) */
-static void changecase(const Arg *arg);
+static const char *changecase(const char *keys, const Arg *arg);
 /* blocks to read a key and performs movement indicated by arg->i which
  * should be one of MOVE_{RIGHT,LEFT}_{TO,TILL} */
-static void movement_key(const Arg *arg);
+static const char *movement_key(const char *keys, const Arg *arg);
 /* perform the movement as indicated by arg->i */
-static void movement(const Arg *arg);
+static const char *movement(const char *keys, const Arg *arg);
 /* let the current operator affect the range indicated by the text object arg->i */
-static void textobj(const Arg *arg);
+static const char *textobj(const char *keys, const Arg *arg);
 /* move to the other end of selected text */
-static void selection_end(const Arg *arg);
+static const char *selection_end(const char *keys, const Arg *arg);
 /* restore least recently used selection */
-static void selection_restore(const Arg *arg);
+static const char *selection_restore(const char *keys, const Arg *arg);
 /* use register indicated by arg->i for the current operator */
-static void reg(const Arg *arg);
+static const char *reg(const char *keys, const Arg *arg);
 /* perform a movement to mark arg->i */
-static void mark(const Arg *arg);
+static const char *mark(const char *keys, const Arg *arg);
 /* perform a movement to the first non-blank on the line pointed by mark arg->i */
-static void mark_line(const Arg *arg);
+static const char *mark_line(const char *keys, const Arg *arg);
 /* {un,re}do last action, redraw window */
-static void undo(const Arg *arg);
-static void redo(const Arg *arg);
+static const char *undo(const char *keys, const Arg *arg);
+static const char *redo(const char *keys, const Arg *arg);
 /* earlier, later action chronologically, redraw window */
-static void earlier(const Arg *arg);
-static void later(const Arg *arg);
+static const char *earlier(const char *keys, const Arg *arg);
+static const char *later(const char *keys, const Arg *arg);
 /* either part of multiplier or a movement to begin of line */
-static void zero(const Arg *arg);
+static const char *zero(const char *keys, const Arg *arg);
 /* hange/delete from the current cursor position to the end of
  * movement as indicated by arg->i */
-static void change(const Arg *arg);
-static void delete(const Arg *arg);
+static const char *change(const char *keys, const Arg *arg);
+static const char *delete(const char *keys, const Arg *arg);
 /* perform movement according to arg->i, then switch to insert mode */
-static void insertmode(const Arg *arg);
+static const char *insertmode(const char *keys, const Arg *arg);
 /* insert register content indicated by arg->i at current cursor position */
-static void insert_register(const Arg *arg);
+static const char *insert_register(const char *keys, const Arg *arg);
 /* show a user prompt to get input with title arg->s */
-static void prompt_search(const Arg *arg);
-static void prompt_cmd(const Arg *arg);
+static const char *prompt_search(const char *keys, const Arg *arg);
+static const char *prompt_cmd(const char *keys, const Arg *arg);
 /* evaluate user input at prompt, perform search or execute a command */
-static void prompt_enter(const Arg *arg);
+static const char *prompt_enter(const char *keys, const Arg *arg);
 /* cycle through past user inputs */
-static void prompt_up(const Arg *arg);
-static void prompt_down(const Arg *arg);
+static const char *prompt_up(const char *keys, const Arg *arg);
+static const char *prompt_down(const char *keys, const Arg *arg);
 /* exit command mode if the last char is deleted */
-static void prompt_backspace(const Arg *arg);
+static const char *prompt_backspace(const char *keys, const Arg *arg);
 /* blocks to read 3 consecutive digits and inserts the corresponding byte value */
-static void insert_verbatim(const Arg *arg);
+static const char *insert_verbatim(const char *keys, const Arg *arg);
 /* scroll window content according to arg->i which can be either PAGE, PAGE_HALF,
  * or an arbitrary number of lines. a multiplier overrides what is given in arg->i.
  * negative values scroll back, positive forward. */
-static void wscroll(const Arg *arg);
+static const char *wscroll(const char *keys, const Arg *arg);
 /* similar to scroll, but do only move window content not cursor position */
-static void wslide(const Arg *arg);
+static const char *wslide(const char *keys, const Arg *arg);
 /* call editor function as indicated by arg->f */
-static void call(const Arg *arg);
+static const char *call(const char *keys, const Arg *arg);
 /* call window function as indicated by arg->w */
-static void window(const Arg *arg);
+static const char *window(const char *keys, const Arg *arg);
 /* quit editor, discard all changes */
-static void quit(const Arg *arg);
+static const char *quit(const char *keys, const Arg *arg);
 
 /** commands to enter at the ':'-prompt */
 /* set various runtime options */
@@ -474,7 +474,7 @@ static bool vis_window_split(Win *win);
 #include "config.h"
 
 static const char *getkey(void);
-static bool keypress(const char *key);
+static const char *keypress(const char *key);
 static void action_do(Action *a);
 static bool exec_command(char type, const char *cmdline);
 
@@ -725,9 +725,10 @@ static size_t search_backward(Text *txt, size_t pos) {
 	return text_search_backward(txt, pos, vis->search_pattern);
 }
 
-static void mark_set(const Arg *arg) {
+static const char *mark_set(const char *keys, const Arg *arg) {
 	size_t pos = view_cursor_get(vis->win->view);
 	vis->win->file->marks[arg->i] = text_mark_set(vis->win->file->text, pos);
+	return keys;
 }
 
 static size_t mark_goto(File *txt, size_t pos) {
@@ -792,9 +793,9 @@ static size_t view_lines_bottom(const Arg *arg) {
 	return view_screenline_goto(vis->win->view, h - vis->action.count);
 }
 
-/** key bindings functions of type: void (*func)(const Arg*) */
+/** key bindings functions */
 
-static void jumplist(const Arg *arg) {
+static const char *jumplist(const char *keys, const Arg *arg) {
 	size_t pos;
 	if (arg->i > 0)
 		pos = editor_window_jumplist_next(vis->win);
@@ -802,9 +803,10 @@ static void jumplist(const Arg *arg) {
 		pos = editor_window_jumplist_prev(vis->win);
 	if (pos != EPOS)
 		view_cursor_to(vis->win->view, pos);
+	return keys;
 }
 
-static void changelist(const Arg *arg) {
+static const char *changelist(const char *keys, const Arg *arg) {
 	size_t pos;
 	if (arg->i > 0)
 		pos = editor_window_changelist_next(vis->win);
@@ -812,6 +814,7 @@ static void changelist(const Arg *arg) {
 		pos = editor_window_changelist_prev(vis->win);
 	if (pos != EPOS)
 		view_cursor_to(vis->win->view, pos);
+	return keys;
 }
 
 static Macro *key2macro(const Arg *arg) {
@@ -825,7 +828,7 @@ static Macro *key2macro(const Arg *arg) {
 	return NULL;
 }
 
-static void macro_record(const Arg *arg) {
+static const char *macro_record(const char *keys, const Arg *arg) {
 	if (vis->recording) {
 		/* hack to remove last recorded key, otherwise upon replay
 		 * we would start another recording */
@@ -839,34 +842,38 @@ static void macro_record(const Arg *arg) {
 			macro_reset(vis->recording);
 	}
 	editor_draw(vis);
+	return keys;
 }
 
-static void macro_replay(const Arg *arg) {
+static const char *macro_replay(const char *keys, const Arg *arg) {
 	Macro *macro = key2macro(arg);
 	if (!macro || macro == vis->recording)
-		return;
+		return keys;
 	keypress(macro->data);
+	return keys;
 }
 
-static void suspend(const Arg *arg) {
+static const char *suspend(const char *keys, const Arg *arg) {
 	editor_suspend(vis);
+	return keys;
 }
 
-static void repeat(const Arg *arg) {
+static const char *repeat(const char *keys, const Arg *arg) {
 	int count = vis->action.count;
 	vis->action = vis->action_prev;
 	if (count)
 		vis->action.count = count;
 	action_do(&vis->action);
+	return keys;
 }
 
-static void totill_repeat(const Arg *arg) {
+static const char *totill_repeat(const char *keys, const Arg *arg) {
 	if (!vis->last_totill)
-		return;
-	movement(&(const Arg){ .i = vis->last_totill });
+		return keys;
+	return movement(keys, &(const Arg){ .i = vis->last_totill });
 }
 
-static void totill_reverse(const Arg *arg) {
+static const char *totill_reverse(const char *keys, const Arg *arg) {
 	int type = vis->last_totill;
 	switch (type) {
 	case MOVE_RIGHT_TO:
@@ -882,12 +889,12 @@ static void totill_reverse(const Arg *arg) {
 		type = MOVE_RIGHT_TILL;
 		break;
 	default:
-		return;
+		return keys;
 	}
-	movement(&(const Arg){ .i = type });
+	return movement(keys, &(const Arg){ .i = type });
 }
 
-static void cursors_new(const Arg *arg) {
+static const char *cursors_new(const char *keys, const Arg *arg) {
 	View *view = vis->win->view;
 	Text *txt = vis->win->file->text;
 	size_t pos = view_cursor_get(view);
@@ -898,14 +905,15 @@ static void cursors_new(const Arg *arg) {
 	Cursor *cursor = view_cursors_new(view);
 	if (cursor)
 		view_cursors_to(cursor, pos);
+	return keys;
 }
 
-static void cursors_split(const Arg *arg) {
+static const char *cursors_split(const char *keys, const Arg *arg) {
 	vis->action.arg = *arg;
-	operator(&(const Arg){ .i = OP_CURSOR });
+	return operator(keys, &(const Arg){ .i = OP_CURSOR });
 }
 
-static void cursors_align(const Arg *arg) {
+static const char *cursors_align(const char *keys, const Arg *arg) {
 	View *view = vis->win->view;
 	Text *txt = vis->win->file->text;
 	int mincol = INT_MAX;
@@ -920,17 +928,19 @@ static void cursors_align(const Arg *arg) {
 		size_t col = text_line_char_set(txt, pos, mincol);
 		view_cursors_to(c, col);
 	}
+	return keys;
 }
 
-static void cursors_clear(const Arg *arg) {
+static const char *cursors_clear(const char *keys, const Arg *arg) {
 	View *view = vis->win->view;
 	if (view_cursors_count(view) > 1)
 		view_cursors_clear(view);
 	else
 		view_cursors_selection_clear(view_cursor(view));
+	return keys;
 }
 
-static void cursors_select(const Arg *arg) {
+static const char *cursors_select(const char *keys, const Arg *arg) {
 	Text *txt = vis->win->file->text;
 	View *view = vis->win->view;
 	for (Cursor *cursor = view_cursors(view); cursor; cursor = view_cursors_next(cursor)) {
@@ -941,21 +951,21 @@ static void cursors_select(const Arg *arg) {
 			view_cursors_to(cursor, text_char_prev(txt, word.end));
 		}
 	}
-	switchmode(&(const Arg){ .i = VIS_MODE_VISUAL });
+	return switchmode(keys, &(const Arg){ .i = VIS_MODE_VISUAL });
 }
 
-static void cursors_select_next(const Arg *arg) {
+static const char *cursors_select_next(const char *keys, const Arg *arg) {
 	Text *txt = vis->win->file->text;
 	View *view = vis->win->view;
 	Cursor *cursor = view_cursor(view);
 	Filerange sel = view_cursors_selection_get(cursor);
 	if (!text_range_valid(&sel))
-		return;
+		return keys;
 
 	size_t len = text_range_size(&sel);
 	char *buf = malloc(len+1);
 	if (!buf)
-		return;
+		return keys;
 	len = text_bytes_get(txt, sel.start, len, buf);
 	buf[len] = '\0';
 	Filerange word = text_object_word_find_next(txt, sel.end, buf);
@@ -964,63 +974,70 @@ static void cursors_select_next(const Arg *arg) {
 	if (text_range_valid(&word)) {
 		cursor = view_cursors_new(view);
 		if (!cursor)
-			return;
+			return keys;
 		view_cursors_selection_set(cursor, &word);
 		view_cursors_to(cursor, text_char_prev(txt, word.end));
 	}
+	return keys;
 }
 
-static void cursors_select_skip(const Arg *arg) {
+static const char *cursors_select_skip(const char *keys, const Arg *arg) {
 	View *view = vis->win->view;
 	Cursor *cursor = view_cursor(view);
-	cursors_select_next(arg);
+	keys = cursors_select_next(keys, arg);
 	if (cursor != view_cursor(view))
 		view_cursors_dispose(cursor);
+	return keys;
 }
 
-static void cursors_remove(const Arg *arg) {
+static const char *cursors_remove(const char *keys, const Arg *arg) {
 	View *view = vis->win->view;
 	view_cursors_dispose(view_cursor(view));
+	return keys;
 }
 
-static void replace(const Arg *arg) {
+static const char *replace(const char *keys, const Arg *arg) {
 	const char *key = getkey();
 	if (!key)
-		return;
+		return keys;
 	action_reset(&vis->action_prev);
 	vis->action_prev.op = &ops[OP_REPEAT_REPLACE];
 	buffer_put(&vis->buffer_repeat, key, strlen(key));
 	editor_replace_key(vis, key, strlen(key));
 	text_snapshot(vis->win->file->text);
+	return keys;
 }
 
-static void count(const Arg *arg) {
+static const char *count(const char *keys, const Arg *arg) {
 	vis->action.count = vis->action.count * 10 + arg->i;
+	return keys;
 }
 
-static void gotoline(const Arg *arg) {
+static const char *gotoline(const char *keys, const Arg *arg) {
 	if (vis->action.count)
-		movement(&(const Arg){ .i = MOVE_LINE });
+		movement(keys, &(const Arg){ .i = MOVE_LINE });
 	else if (arg->i < 0)
-		movement(&(const Arg){ .i = MOVE_FILE_BEGIN });
+		movement(keys, &(const Arg){ .i = MOVE_FILE_BEGIN });
 	else
-		movement(&(const Arg){ .i = MOVE_FILE_END });
+		movement(keys, &(const Arg){ .i = MOVE_FILE_END });
+	return keys;
 }
 
-static void motiontype(const Arg *arg) {
+static const char *motiontype(const char *keys, const Arg *arg) {
 	vis->action.type = arg->i;
+	return keys;
 }
 
-static void operator(const Arg *arg) {
+static const char *operator(const char *keys, const Arg *arg) {
 	Operator *op = &ops[arg->i];
 	if (vis->mode->visual) {
 		vis->action.op = op;
 		action_do(&vis->action);
-		return;
+		return keys;
 	}
 	/* switch to operator mode inorder to make operator options and
 	 * text-object available */
-	switchmode(&(const Arg){ .i = VIS_MODE_OPERATOR });
+	switchmode(keys, &(const Arg){ .i = VIS_MODE_OPERATOR });
 	if (vis->action.op == op) {
 		/* hacky way to handle double operators i.e. things like
 		 * dd, yy etc where the second char isn't a movement */
@@ -1030,31 +1047,35 @@ static void operator(const Arg *arg) {
 	} else {
 		vis->action.op = op;
 	}
+	return keys;
 }
 
-static void operator_twice(const Arg *arg) {
-	operator(arg);
-	operator(arg);
+static const char *operator_twice(const char *keys, const Arg *arg) {
+	operator(keys, arg);
+	operator(keys, arg);
+	return keys;
 }
 
-static void changecase(const Arg *arg) {
+static const char *changecase(const char *keys, const Arg *arg) {
 	vis->action.arg = *arg;
-	operator(&(const Arg){ .i = OP_CASE_CHANGE });
+	operator(keys, &(const Arg){ .i = OP_CASE_CHANGE });
+	return keys;
 }
 
-static void movement_key(const Arg *arg) {
+static const char *movement_key(const char *keys, const Arg *arg) {
 	const char *key = getkey();
 	if (!key) {
 		action_reset(&vis->action);
-		return;
+		return keys;
 	}
 	strncpy(vis->search_char, key, sizeof(vis->search_char));
 	vis->last_totill = arg->i;
 	vis->action.movement = &moves[arg->i];
 	action_do(&vis->action);
+	return keys;
 }
 
-static void movement(const Arg *arg) {
+static const char *movement(const char *keys, const Arg *arg) {
 	vis->action.movement = &moves[arg->i];
 
 	if (vis->action.op == &ops[OP_CHANGE]) {
@@ -1065,41 +1086,48 @@ static void movement(const Arg *arg) {
 	}
 
 	action_do(&vis->action);
+	return keys;
 }
 
-static void textobj(const Arg *arg) {
+static const char *textobj(const char *keys, const Arg *arg) {
 	vis->action.textobj = &textobjs[arg->i];
 	action_do(&vis->action);
+	return keys;
 }
 
-static void selection_end(const Arg *arg) {
+static const char *selection_end(const char *keys, const Arg *arg) {
 	for (Cursor *c = view_cursors(vis->win->view); c; c = view_cursors_next(c))
 		view_cursors_selection_swap(c);
+	return keys;
 }
 
-static void selection_restore(const Arg *arg) {
+static const char *selection_restore(const char *keys, const Arg *arg) {
 	for (Cursor *c = view_cursors(vis->win->view); c; c = view_cursors_next(c))
 		view_cursors_selection_restore(c);
-	switchmode(&(const Arg){ .i = VIS_MODE_VISUAL });
+	switchmode(keys, &(const Arg){ .i = VIS_MODE_VISUAL });
+	return keys;
 }
 
-static void reg(const Arg *arg) {
+static const char *reg(const char *keys, const Arg *arg) {
 	vis->action.reg = &vis->registers[arg->i];
+	return keys;
 }
 
-static void mark(const Arg *arg) {
+static const char *mark(const char *keys, const Arg *arg) {
 	vis->action.mark = arg->i;
 	vis->action.movement = &moves[MOVE_MARK];
 	action_do(&vis->action);
+	return keys;
 }
 
-static void mark_line(const Arg *arg) {
+static const char *mark_line(const char *keys, const Arg *arg) {
 	vis->action.mark = arg->i;
 	vis->action.movement = &moves[MOVE_MARK_LINE];
 	action_do(&vis->action);
+	return keys;
 }
 
-static void undo(const Arg *arg) {
+static const char *undo(const char *keys, const Arg *arg) {
 	size_t pos = text_undo(vis->win->file->text);
 	if (pos != EPOS) {
 		View *view = vis->win->view;
@@ -1108,9 +1136,10 @@ static void undo(const Arg *arg) {
 		/* redraw all windows in case some display the same file */
 		editor_draw(vis);
 	}
+	return keys;
 }
 
-static void redo(const Arg *arg) {
+static const char *redo(const char *keys, const Arg *arg) {
 	size_t pos = text_redo(vis->win->file->text);
 	if (pos != EPOS) {
 		View *view = vis->win->view;
@@ -1119,66 +1148,75 @@ static void redo(const Arg *arg) {
 		/* redraw all windows in case some display the same file */
 		editor_draw(vis);
 	}
+	return keys;
 }
 
-static void earlier(const Arg *arg) {
+static const char *earlier(const char *keys, const Arg *arg) {
 	size_t pos = text_earlier(vis->win->file->text, MAX(vis->action.count, 1));
 	if (pos != EPOS) {
 		view_cursor_to(vis->win->view, pos);
 		/* redraw all windows in case some display the same file */
 		editor_draw(vis);
 	}
+	return keys;
 }
 
-static void later(const Arg *arg) {
+static const char *later(const char *keys, const Arg *arg) {
 	size_t pos = text_later(vis->win->file->text, MAX(vis->action.count, 1));
 	if (pos != EPOS) {
 		view_cursor_to(vis->win->view, pos);
 		/* redraw all windows in case some display the same file */
 		editor_draw(vis);
 	}
+	return keys;
 }
 
-static void zero(const Arg *arg) {
+static const char *zero(const char *keys, const Arg *arg) {
 	if (vis->action.count == 0)
-		movement(&(const Arg){ .i = MOVE_LINE_BEGIN });
+		return movement(keys, &(const Arg){ .i = MOVE_LINE_BEGIN });
 	else
-		count(&(const Arg){ .i = 0 });
+		return count(keys, &(const Arg){ .i = 0 });
 }
 
-static void insertmode(const Arg *arg) {
-	movement(arg);
-	switchmode(&(const Arg){ .i = VIS_MODE_INSERT });
+static const char *insertmode(const char *keys, const Arg *arg) {
+	movement(keys, arg);
+	switchmode(keys, &(const Arg){ .i = VIS_MODE_INSERT });
+	return keys;
 }
 
-static void change(const Arg *arg) {
-	operator(&(const Arg){ .i = OP_CHANGE });
-	movement(arg);
+static const char *change(const char *keys, const Arg *arg) {
+	operator(keys, &(const Arg){ .i = OP_CHANGE });
+	movement(keys, arg);
+	return keys;
 }
 
-static void delete(const Arg *arg) {
-	operator(&(const Arg){ .i = OP_DELETE });
-	movement(arg);
+static const char *delete(const char *keys, const Arg *arg) {
+	operator(keys, &(const Arg){ .i = OP_DELETE });
+	movement(keys, arg);
+	return keys;
 }
 
-static void insert_register(const Arg *arg) {
+static const char *insert_register(const char *keys, const Arg *arg) {
 	Register *reg = &vis->registers[arg->i];
 	int pos = view_cursor_get(vis->win->view);
 	editor_insert(vis, pos, reg->data, reg->len);
 	view_cursor_to(vis->win->view, pos + reg->len);
+	return keys;
 }
 
-static void prompt_search(const Arg *arg) {
+static const char *prompt_search(const char *keys, const Arg *arg) {
 	editor_prompt_show(vis, arg->s, "");
-	switchmode(&(const Arg){ .i = VIS_MODE_PROMPT });
+	switchmode(keys, &(const Arg){ .i = VIS_MODE_PROMPT });
+	return keys;
 }
 
-static void prompt_cmd(const Arg *arg) {
+static const char *prompt_cmd(const char *keys, const Arg *arg) {
 	editor_prompt_show(vis, ":", arg->s);
-	switchmode(&(const Arg){ .i = VIS_MODE_PROMPT });
+	switchmode(keys, &(const Arg){ .i = VIS_MODE_PROMPT });
+	return keys;
 }
 
-static void prompt_enter(const Arg *arg) {
+static const char *prompt_enter(const char *keys, const Arg *arg) {
 	char *s = editor_prompt_get(vis);
 	/* it is important to switch back to the previous mode, which hides
 	 * the prompt and more importantly resets vis->win to the currently
@@ -1187,34 +1225,36 @@ static void prompt_enter(const Arg *arg) {
 	 */
 	switchmode_to(vis->mode_before_prompt);
 	if (s && *s && exec_command(vis->prompt_type, s) && vis->running)
-		switchmode(&(const Arg){ .i = VIS_MODE_NORMAL });
+		switchmode(keys, &(const Arg){ .i = VIS_MODE_NORMAL });
 	free(s);
 	editor_draw(vis);
+	return keys;
 }
 
-static void prompt_up(const Arg *arg) {
-
+static const char *prompt_up(const char *keys, const Arg *arg) {
+	return keys;
 }
 
-static void prompt_down(const Arg *arg) {
-
+static const char *prompt_down(const char *keys, const Arg *arg) {
+	return keys;
 }
 
-static void prompt_backspace(const Arg *arg) {
+static const char *prompt_backspace(const char *keys, const Arg *arg) {
 	char *cmd = editor_prompt_get(vis);
 	if (!cmd || !*cmd)
-		prompt_enter(NULL);
+		prompt_enter(keys, NULL);
 	else
-		delete(&(const Arg){ .i = MOVE_CHAR_PREV });
+		delete(keys, &(const Arg){ .i = MOVE_CHAR_PREV });
 	free(cmd);
+	return keys;
 }
 
-static void insert_verbatim(const Arg *arg) {
+static const char *insert_verbatim(const char *keys, const Arg *arg) {
 	int len = 0, count = 0, base;
 	Rune rune = 0;
 	const char *key = getkey();
 	if (!key)
-		return;
+		return keys;
 	char buf[4], type = key[0];
 	switch (type) {
 	case 'o':
@@ -1236,7 +1276,7 @@ static void insert_verbatim(const Arg *arg) {
 		break;
 	default:
 		if (type < '0' || type > '9')
-			return;
+			return keys;
 		rune = type - '0';
 		count = 2;
 		base = 10;
@@ -1273,14 +1313,17 @@ static void insert_verbatim(const Arg *arg) {
 		editor_insert(vis, pos, buf, len);
 		view_cursor_to(vis->win->view, pos + len);
 	}
+	return keys;
 }
 
-static void quit(const Arg *arg) {
+static const char *quit(const char *keys, const Arg *arg) {
 	vis->running = false;
+	return keys;
 }
 
-static void cmd(const Arg *arg) {
+static const char *cmd(const char *keys, const Arg *arg) {
 	exec_command(':', arg->s);
+	return keys;
 }
 
 static int argi2lines(const Arg *arg) {
@@ -1298,34 +1341,40 @@ static int argi2lines(const Arg *arg) {
 	}
 }
 
-static void wscroll(const Arg *arg) {
+static const char *wscroll(const char *keys, const Arg *arg) {
 	if (arg->i >= 0)
 		view_scroll_down(vis->win->view, argi2lines(arg));
 	else
 		view_scroll_up(vis->win->view, argi2lines(arg));
+	return keys;
 }
 
-static void wslide(const Arg *arg) {
+static const char *wslide(const char *keys, const Arg *arg) {
 	if (arg->i >= 0)
 		view_slide_down(vis->win->view, argi2lines(arg));
 	else
 		view_slide_up(vis->win->view, argi2lines(arg));
+	return keys;
 }
 
-static void call(const Arg *arg) {
+static const char *call(const char *keys, const Arg *arg) {
 	arg->f(vis);
+	return keys;
 }
 
-static void window(const Arg *arg) {
+static const char *window(const char *keys, const Arg *arg) {
 	arg->w(vis->win->view);
+	return keys;
 }
 
-static void insert(const Arg *arg) {
+static const char *insert(const char *keys, const Arg *arg) {
 	editor_insert_key(vis, arg->s, arg->s ? strlen(arg->s) : 0);
+	return keys;
 }
 
-static void insert_tab(const Arg *arg) {
-	insert(&(const Arg){ .s = expand_tab() });
+static const char *insert_tab(const char *keys, const Arg *arg) {
+	insert(keys, &(const Arg){ .s = expand_tab() });
+	return keys;
 }
 
 static void copy_indent_from_previous_line(View *view, Text *text) {
@@ -1344,7 +1393,7 @@ static void copy_indent_from_previous_line(View *view, Text *text) {
 	free(buf);
 }
 
-static void insert_newline(const Arg *arg) {
+static const char *insert_newline(const char *keys, const Arg *arg) {
 	const char *nl;
 	switch (text_newline_type(vis->win->file->text)) {
 	case TEXT_NEWLINE_CRNL:
@@ -1355,39 +1404,44 @@ static void insert_newline(const Arg *arg) {
 		break;
 	}
 
-	insert(&(const Arg){ .s = nl });
+	insert(keys, &(const Arg){ .s = nl });
 
 	if (vis->autoindent)
 		copy_indent_from_previous_line(vis->win->view, vis->win->file->text);
+	return keys;
 }
 
-static void put(const Arg *arg) {
+static const char *put(const char *keys, const Arg *arg) {
 	vis->action.arg = *arg;
-	operator(&(const Arg){ .i = OP_PUT });
+	operator(keys, &(const Arg){ .i = OP_PUT });
 	action_do(&vis->action);
+	return keys;
 }
 
-static void openline(const Arg *arg) {
+static const char *openline(const char *keys, const Arg *arg) {
 	if (arg->i == MOVE_LINE_NEXT) {
-		movement(&(const Arg){ .i = MOVE_LINE_END });
-		insert_newline(NULL);
+		movement(keys, &(const Arg){ .i = MOVE_LINE_END });
+		insert_newline(keys, NULL);
 	} else {
-		movement(&(const Arg){ .i = MOVE_LINE_BEGIN });
-		insert_newline(NULL);
-		movement(&(const Arg){ .i = MOVE_LINE_PREV });
+		movement(keys, &(const Arg){ .i = MOVE_LINE_BEGIN });
+		insert_newline(keys, NULL);
+		movement(keys, &(const Arg){ .i = MOVE_LINE_PREV });
 	}
-	switchmode(&(const Arg){ .i = VIS_MODE_INSERT });
+	switchmode(keys, &(const Arg){ .i = VIS_MODE_INSERT });
+	return keys;
 }
 
-static void join(const Arg *arg) {
+static const char *join(const char *keys, const Arg *arg) {
 	if (vis->action.count)
 		vis->action.count--;
-	operator(&(const Arg){ .i = OP_JOIN });
-	movement(arg);
+	operator(keys, &(const Arg){ .i = OP_JOIN });
+	movement(keys, arg);
+	return keys;
 }
 
-static void switchmode(const Arg *arg) {
+static const char *switchmode(const char *keys, const Arg *arg) {
 	switchmode_to(&vis_modes[arg->i]);
+	return keys;
 }
 
 /** action processing: execut the operator / movement / text object */
@@ -1501,11 +1555,11 @@ static void action_do(Action *a) {
 
 	if (a->op) {
 		if (a->op == &ops[OP_CHANGE])
-			switchmode(&(const Arg){ .i = VIS_MODE_INSERT });
+			switchmode(NULL, &(const Arg){ .i = VIS_MODE_INSERT });
 		else if (vis->mode == &vis_modes[VIS_MODE_OPERATOR])
 			switchmode_to(vis->mode_prev);
 		else if (vis->mode->visual)
-			switchmode(&(const Arg){ .i = VIS_MODE_NORMAL });
+			switchmode(NULL, &(const Arg){ .i = VIS_MODE_NORMAL });
 		text_snapshot(txt);
 		editor_draw(vis);
 	}
@@ -1829,7 +1883,7 @@ static bool cmd_quit(Filerange *range, enum CmdOpt opt, const char *argv[]) {
 	}
 	editor_window_close(vis->win);
 	if (!vis->windows)
-		quit(NULL);
+		quit(NULL, NULL);
 	return true;
 }
 
@@ -1853,7 +1907,7 @@ static bool cmd_bdelete(Filerange *range, enum CmdOpt opt, const char *argv[]) {
 			editor_window_close(win);
 	}
 	if (!vis->windows)
-		quit(NULL);
+		quit(NULL, NULL);
 	return true;
 }
 
@@ -1864,7 +1918,7 @@ static bool cmd_qall(Filerange *range, enum CmdOpt opt, const char *argv[]) {
 			editor_window_close(win);
 	}
 	if (!vis->windows)
-		quit(NULL);
+		quit(NULL, NULL);
 	else
 		info_unsaved_changes();
 	return vis->windows == NULL;
@@ -2437,7 +2491,7 @@ static bool exec_command(char type, const char *cmd) {
 			action_reset(&vis->action);
 			return false;
 		}
-		movement(&(const Arg){ .i =
+		movement(NULL, &(const Arg){ .i =
 			type == '/' ? MOVE_SEARCH_FORWARD : MOVE_SEARCH_BACKWARD });
 		return true;
 	case '+':
@@ -2480,13 +2534,13 @@ static void die(const char *errstr, ...) {
 	exit(EXIT_FAILURE);
 }
 
-static bool keypress(const char *input) {
+static const char *keypress(const char *input) {
 	if (!input)
-		return true;
+		return NULL;
 	TermKey *termkey = vis->ui->termkey_get(vis->ui);
 	char *keys = strdup(input), *start = keys, *cur = keys, *end;
 	if (!keys)
-		return true;
+		return NULL;
 
 	TermKeyKey key;
 	bool prefix = false;
@@ -2499,7 +2553,7 @@ static bool keypress(const char *input) {
 		} else if (!(end = (char*)termkey_strpkey(termkey, cur, &key, TERMKEY_FORMAT_VIM))) {
 			// XXX: insert as document
 			free(keys);
-			return true;
+			return input + strlen(input);
 		}
 
 		char tmp = *end;
@@ -2514,9 +2568,13 @@ static bool keypress(const char *input) {
 			if (strcmp(cur, "<"))
 				prefix = !binding && map_contains(mode->bindings, start);
 		}
+
+		*end = tmp;
 		
 		if (binding) { /* exact match */
-			binding->func(&binding->arg);
+			end = (char*)binding->func(end, &binding->arg);
+			if (!end)
+				break;
 			start = cur = end;
 		} else if (prefix) { /* incomplete key binding? */
 			cur = end;
@@ -2526,11 +2584,11 @@ static bool keypress(const char *input) {
 			start = cur = end;
 		}
 		
-		*end = tmp;
 	}
 
 	free(keys);
-	return !prefix;
+
+	return input + (start - keys);
 }
 
 static const char *getkey(void) {
@@ -2609,13 +2667,18 @@ static void mainloop() {
 			continue;
 		}
 
-		
 		TermKey *termkey = vis->ui->termkey_get(vis->ui);
 		termkey_advisereadable(termkey);
 		const char *key;
+
 		while ((key = getkey())) {
-			if (buffer_append0(&vis->input_queue, key) && keypress(vis->input_queue.data))
+			if (!buffer_append0(&vis->input_queue, key)) {
 				buffer_truncate(&vis->input_queue);
+				continue;
+			}
+			const char *next = keypress(vis->input_queue.data);
+			if (next)
+				buffer_put0(&vis->input_queue, next);
 		}
 
 		if (vis->mode->idle)
