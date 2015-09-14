@@ -39,9 +39,13 @@ void buffer_release(Buffer *buf) {
 bool buffer_put(Buffer *buf, const void *data, size_t len) {
 	if (!buffer_grow(buf, len))
 		return false;
-	memcpy(buf->data, data, len);
+	memmove(buf->data, data, len);
 	buf->len = len;
 	return true;
+}
+
+bool buffer_put0(Buffer *buf, const char *data) {
+	return buffer_put(buf, data, strlen(data)+1);
 }
 
 bool buffer_append(Buffer *buf, const void *data, size_t len) {

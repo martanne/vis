@@ -21,6 +21,8 @@ bool buffer_grow(Buffer*, size_t size);
 void buffer_truncate(Buffer*);
 /* replace buffer content with given data, growing the buffer if needed */
 bool buffer_put(Buffer*, const void *data, size_t len);
+/* same but with NUL-terminated data */
+bool buffer_put0(Buffer*, const char *data);
 /* append futher content to the end of the buffer data */
 bool buffer_append(Buffer*, const void *data, size_t len);
 /* append NUl-terminated data */
