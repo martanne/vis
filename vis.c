@@ -997,15 +997,16 @@ static const char *cursors_remove(const char *keys, const Arg *arg) {
 }
 
 static const char *replace(const char *keys, const Arg *arg) {
-	const char *key = getkey();
-	if (!key)
-		return keys;
+	if (!keys[0])
+		return NULL;
+	const char *next = utfnext(keys+1);
+	size_t len = next - keys;
 	action_reset(&vis->action_prev);
 	vis->action_prev.op = &ops[OP_REPEAT_REPLACE];
-	buffer_put(&vis->buffer_repeat, key, strlen(key));
-	editor_replace_key(vis, key, strlen(key));
+	buffer_put(&vis->buffer_repeat, keys, len);
+	editor_replace_key(vis, keys, len);
 	text_snapshot(vis->win->file->text);
-	return keys;
+	return next;
 }
 
 static const char *count(const char *keys, const Arg *arg) {
