@@ -817,15 +817,15 @@ static const char *changelist(const char *keys, const Arg *arg) {
 	return keys;
 }
 
-static Macro *key2macro(const Arg *arg) {
-	if (arg->i)
-		return &vis->macros[arg->i];
-	const char *key = getkey();
-	if (key && key[0] >= 'a' && key[0] <= 'z')
-		return &vis->macros[key[0] - 'a'];
-	if (key && key[0] == '@')
-		return vis->last_recording;
-	return NULL;
+static const char *key2macro(const char *keys, Macro **macro) {
+	*macro = NULL;
+	if (keys[0] >= 'a' && keys[0] <= 'z')
+		*macro = &vis->macros[keys[0] - 'a'];
+	else if (keys[0] == '@')
+		*macro = vis->last_recording;
+	else if (keys[0] == '\0')
+		return NULL;
+	return keys+1;
 }
 
 static const char *macro_record(const char *keys, const Arg *arg) {
@@ -837,19 +837,22 @@ static const char *macro_record(const char *keys, const Arg *arg) {
 		vis->last_recording = vis->recording;
 		vis->recording = NULL;
 	} else {
-		vis->recording = key2macro(arg);
-		if (vis->recording)
-			macro_reset(vis->recording);
+		Macro *macro;
+		keys = key2macro(keys, &macro);
+		if (macro) {
+			macro_reset(macro);
+			vis->recording = macro;
+		}
 	}
 	editor_draw(vis);
 	return keys;
 }
 
 static const char *macro_replay(const char *keys, const Arg *arg) {
-	Macro *macro = key2macro(arg);
-	if (!macro || macro == vis->recording)
-		return keys;
-	keypress(macro->data);
+	Macro *macro;
+	keys = key2macro(keys, &macro);
+	if (macro && macro != vis->recording)
+		keypress(macro->data);
 	return keys;
 }
 
