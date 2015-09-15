@@ -1064,16 +1064,14 @@ static const char *changecase(const char *keys, const Arg *arg) {
 }
 
 static const char *movement_key(const char *keys, const Arg *arg) {
-	const char *key = getkey();
-	if (!key) {
-		action_reset(&vis->action);
-		return keys;
-	}
-	strncpy(vis->search_char, key, sizeof(vis->search_char));
+	if (!keys[0])
+		return NULL;
+	const char *next = utfnext(keys+1);
+	strncpy(vis->search_char, keys, next - keys);
 	vis->last_totill = arg->i;
 	vis->action.movement = &moves[arg->i];
 	action_do(&vis->action);
-	return keys;
+	return next;
 }
 
 static const char *movement(const char *keys, const Arg *arg) {
