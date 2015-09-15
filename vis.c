@@ -1249,13 +1249,12 @@ static const char *prompt_backspace(const char *keys, const Arg *arg) {
 }
 
 static const char *insert_verbatim(const char *keys, const Arg *arg) {
-	int len = 0, count = 0, base;
 	Rune rune = 0;
-	const char *key = getkey();
-	if (!key)
-		return keys;
-	char buf[4], type = key[0];
+	char buf[4], type = keys[0];
+	int len = 0, count = 0, base;
 	switch (type) {
+	case '\0':
+		return NULL;
 	case 'o':
 	case 'O':
 		count = 3;
@@ -1282,23 +1281,25 @@ static const char *insert_verbatim(const char *keys, const Arg *arg) {
 		break;
 	}
 
-	while (count-- > 0) {
-		key = getkey();
+	for (keys++; keys[0] && count > 0; keys++, count--) {
 		int v = 0;
-		if (!key)
+		if (base == 8 && '0' <= keys[0] && keys[0] <= '7') {
+			v = keys[0] - '0';
+		} else if ((base == 10 || base == 16) && '0' <= keys[0] && keys[0] <= '9') {
+			v = keys[0] - '0';
+		} else if (base == 16 && 'a' <= keys[0] && keys[0] <= 'f') {
+			v = 10 + keys[0] - 'a';
+		} else if (base == 16 && 'A' <= keys[0] && keys[0] <= 'F') {
+			v = 10 + keys[0] - 'A';
+		} else {
+			count = 0;
 			break;
-		else if (base == 8 && '0' <= key[0] && key[0] <= '7')
-			v = key[0] - '0';
-		else if ((base == 10 || base == 16) && '0' <= key[0] && key[0] <= '9')
-			v = key[0] - '0';
-		else if (base == 16 && 'a' <= key[0] && key[0] <= 'f')
-			v = 10 + key[0] - 'a';
-		else if (base == 16 && 'A' <= key[0] && key[0] <= 'F')
-			v = 10 + key[0] - 'A';
-		else
-			break;
+		}
 		rune = rune * base + v;
 	}
+
+	if (count > 0)
+		return NULL;
 
 	if (type == 'u' || type == 'U') {
 		len = runetochar(buf, &rune);
