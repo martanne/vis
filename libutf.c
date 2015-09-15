@@ -1,5 +1,12 @@
 /* libutf8 © 2012-2015 Connor Lane Smith <cls@lubutu.com> */
 #include "libutf.h"
+#include "util.h"
+
+const char *utfnext(const char *s) {
+	while (!ISUTF8(*s))
+		s++;
+	return s;
+}
 
 int
 runelen(Rune r)
