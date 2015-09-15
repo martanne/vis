@@ -25,7 +25,6 @@ enum {
 	VIS_MODE_VISUAL_LINE,
 	VIS_MODE_READLINE,
 	VIS_MODE_PROMPT,
-	VIS_MODE_INSERT_REGISTER,
 	VIS_MODE_INSERT,
 	VIS_MODE_REPLACE,
 	VIS_MODE_LAST,
@@ -503,36 +502,6 @@ static void vis_mode_prompt_leave(Mode *new) {
 		editor_prompt_hide(vis);
 }
 
-static KeyBinding vis_mode_insert_register[] = {
-	{ "<C-r>a", insert_register, { .i = REG_a             } },
-	{ "<C-r>b", insert_register, { .i = REG_b             } },
-	{ "<C-r>c", insert_register, { .i = REG_c             } },
-	{ "<C-r>d", insert_register, { .i = REG_d             } },
-	{ "<C-r>e", insert_register, { .i = REG_e             } },
-	{ "<C-r>f", insert_register, { .i = REG_f             } },
-	{ "<C-r>g", insert_register, { .i = REG_g             } },
-	{ "<C-r>h", insert_register, { .i = REG_h             } },
-	{ "<C-r>i", insert_register, { .i = REG_i             } },
-	{ "<C-r>j", insert_register, { .i = REG_j             } },
-	{ "<C-r>k", insert_register, { .i = REG_k             } },
-	{ "<C-r>l", insert_register, { .i = REG_l             } },
-	{ "<C-r>m", insert_register, { .i = REG_m             } },
-	{ "<C-r>n", insert_register, { .i = REG_n             } },
-	{ "<C-r>o", insert_register, { .i = REG_o             } },
-	{ "<C-r>p", insert_register, { .i = REG_p             } },
-	{ "<C-r>q", insert_register, { .i = REG_q             } },
-	{ "<C-r>r", insert_register, { .i = REG_r             } },
-	{ "<C-r>s", insert_register, { .i = REG_s             } },
-	{ "<C-r>t", insert_register, { .i = REG_t             } },
-	{ "<C-r>u", insert_register, { .i = REG_u             } },
-	{ "<C-r>v", insert_register, { .i = REG_v             } },
-	{ "<C-r>w", insert_register, { .i = REG_w             } },
-	{ "<C-r>x", insert_register, { .i = REG_x             } },
-	{ "<C-r>y", insert_register, { .i = REG_y             } },
-	{ "<C-r>z", insert_register, { .i = REG_z             } },
-	{ /* empty last element, array terminator */            },
-};
-
 static KeyBinding vis_mode_insert[] = {
 	{ "<Escape>",           switchmode,      { .i = VIS_MODE_NORMAL   } },
 	{ "<C-l>",              switchmode,      { .i = VIS_MODE_NORMAL   } },
@@ -549,6 +518,7 @@ static KeyBinding vis_mode_insert[] = {
 	{ "<C-x><C-y>",         wslide,          { .i = +1                } },
 	{ "<Tab>",              insert_tab,      { NULL                   } },
 	{ "<End>",              movement,        { .i = MOVE_LINE_END     } },
+	{ "<C-r>",              insert_register, { NULL                   } },
 	{ /* empty last element, array terminator */                        },
 };
 
@@ -729,16 +699,10 @@ static Mode vis_modes[] = {
 		.enter = vis_mode_prompt_enter,
 		.leave = vis_mode_prompt_leave,
 	},
-	[VIS_MODE_INSERT_REGISTER] = {
-		.name = "INSERT-REGISTER",
-		.common_prefix = true,
-		.parent = &vis_modes[VIS_MODE_READLINE],
-		.default_bindings = vis_mode_insert_register,
-	},
 	[VIS_MODE_INSERT] = {
 		.name = "--INSERT--",
 		.isuser = true,
-		.parent = &vis_modes[VIS_MODE_INSERT_REGISTER],
+		.parent = &vis_modes[VIS_MODE_READLINE],
 		.default_bindings = vis_mode_insert,
 		.leave = vis_mode_insert_leave,
 		.input = vis_mode_insert_input,

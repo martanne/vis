@@ -1207,10 +1207,13 @@ static const char *delete(const char *keys, const Arg *arg) {
 }
 
 static const char *insert_register(const char *keys, const Arg *arg) {
-	Register *reg = &vis->registers[arg->i];
-	int pos = view_cursor_get(vis->win->view);
-	editor_insert(vis, pos, reg->data, reg->len);
-	view_cursor_to(vis->win->view, pos + reg->len);
+	Register *reg;
+	keys = key2register(keys, &reg);
+	if (reg) {
+		int pos = view_cursor_get(vis->win->view);
+		editor_insert(vis, pos, reg->data, reg->len);
+		view_cursor_to(vis->win->view, pos + reg->len);
+	}
 	return keys;
 }
 
