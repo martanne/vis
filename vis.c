@@ -725,12 +725,6 @@ static size_t search_backward(Text *txt, size_t pos) {
 	return text_search_backward(txt, pos, vis->search_pattern);
 }
 
-static const char *mark_set(const char *keys, const Arg *arg) {
-	size_t pos = view_cursor_get(vis->win->view);
-	vis->win->file->marks[arg->i] = text_mark_set(vis->win->file->text, pos);
-	return keys;
-}
-
 static size_t mark_goto(File *txt, size_t pos) {
 	return text_mark_get(txt->text, txt->marks[vis->action.mark]);
 }
@@ -1123,17 +1117,48 @@ static const char *reg(const char *keys, const Arg *arg) {
 	return key2register(keys, &vis->action.reg);
 }
 
+static const char *key2mark(const char *keys, int *mark) {
+	*mark = -1;
+	if (!keys[0])
+		return NULL;
+	if (keys[0] >= 'a' && keys[0] <= 'z')
+		*mark = keys[0] - 'a';
+	else if (keys[0] == '<')
+		*mark = MARK_SELECTION_START;
+	else if (keys[0] == '>')
+		*mark = MARK_SELECTION_END;
+	return keys+1;
+}
+
+static const char *mark_set(const char *keys, const Arg *arg) {
+	int mark;
+	keys = key2mark(keys, &mark);
+	if (mark != -1) {
+		size_t pos = view_cursor_get(vis->win->view);
+		vis->win->file->marks[mark] = text_mark_set(vis->win->file->text, pos);
+	}
+	return keys;
+}
+
 static const char *mark(const char *keys, const Arg *arg) {
-	vis->action.mark = arg->i;
-	vis->action.movement = &moves[MOVE_MARK];
-	action_do(&vis->action);
+	int mark;
+	keys = key2mark(keys, &mark);
+	if (mark != -1) {
+		vis->action.mark = mark;
+		vis->action.movement = &moves[MOVE_MARK];
+		action_do(&vis->action);
+	}
 	return keys;
 }
 
 static const char *mark_line(const char *keys, const Arg *arg) {
-	vis->action.mark = arg->i;
-	vis->action.movement = &moves[MOVE_MARK_LINE];
-	action_do(&vis->action);
+	int mark;
+	keys = key2mark(keys, &mark);
+	if (mark != -1) {
+		vis->action.mark = mark;
+		vis->action.movement = &moves[MOVE_MARK_LINE];
+		action_do(&vis->action);
+	}
 	return keys;
 }
 
