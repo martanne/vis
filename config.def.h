@@ -20,7 +20,6 @@ enum {
 	VIS_MODE_INNER_TEXTOBJ,
 	VIS_MODE_OPERATOR,
 	VIS_MODE_OPERATOR_OPTION,
-	VIS_MODE_REGISTER,
 	VIS_MODE_NORMAL,
 	VIS_MODE_VISUAL,
 	VIS_MODE_VISUAL_LINE,
@@ -217,6 +216,7 @@ static KeyBinding vis_operators[] = {
 	{ "~"               , changecase,    { .i =  0              } },
 	{ "g~"              , changecase,    { .i =  0              } },
 	{ "gu"              , changecase,    { .i = -1              } },
+	{ "\""              , reg,           { NULL                 } },
 	{ /* empty last element, array terminator */                           },
 };
 
@@ -238,36 +238,6 @@ static KeyBinding vis_operator_options[] = {
 	{ "v"                 , motiontype,    { .i = CHARWISE        } },
 	{ "V"                 , motiontype,    { .i = LINEWISE        } },
 	{ /* empty last element, array terminator */                           },
-};
-
-static KeyBinding vis_registers[] = { /* {a-zA-Z0-9.%#:-"} */
-	{ "\"a", reg,           { .i = REG_a           } },
-	{ "\"b", reg,           { .i = REG_b           } },
-	{ "\"c", reg,           { .i = REG_c           } },
-	{ "\"d", reg,           { .i = REG_d           } },
-	{ "\"e", reg,           { .i = REG_e           } },
-	{ "\"f", reg,           { .i = REG_f           } },
-	{ "\"g", reg,           { .i = REG_g           } },
-	{ "\"h", reg,           { .i = REG_h           } },
-	{ "\"i", reg,           { .i = REG_i           } },
-	{ "\"j", reg,           { .i = REG_j           } },
-	{ "\"k", reg,           { .i = REG_k           } },
-	{ "\"l", reg,           { .i = REG_l           } },
-	{ "\"m", reg,           { .i = REG_m           } },
-	{ "\"n", reg,           { .i = REG_n           } },
-	{ "\"o", reg,           { .i = REG_o           } },
-	{ "\"p", reg,           { .i = REG_p           } },
-	{ "\"q", reg,           { .i = REG_q           } },
-	{ "\"r", reg,           { .i = REG_r           } },
-	{ "\"s", reg,           { .i = REG_s           } },
-	{ "\"t", reg,           { .i = REG_t           } },
-	{ "\"u", reg,           { .i = REG_u           } },
-	{ "\"v", reg,           { .i = REG_v           } },
-	{ "\"w", reg,           { .i = REG_w           } },
-	{ "\"x", reg,           { .i = REG_x           } },
-	{ "\"y", reg,           { .i = REG_y           } },
-	{ "\"z", reg,           { .i = REG_z           } },
-	{ /* empty last element, array terminator */     },
 };
 
 static KeyBinding vis_marks[] = {
@@ -715,16 +685,10 @@ static Mode vis_modes[] = {
 		.leave = vis_mode_operator_leave,
 		.input = vis_mode_operator_input,
 	},
-	[VIS_MODE_REGISTER] = {
-		.name = "REGISTER",
-		.common_prefix = true,
-		.parent = &vis_modes[VIS_MODE_OPERATOR],
-		.default_bindings = vis_registers,
-	},
 	[VIS_MODE_MARK_SET] = {
 		.name = "MARK-SET",
 		.common_prefix = true,
-		.parent = &vis_modes[VIS_MODE_REGISTER],
+		.parent = &vis_modes[VIS_MODE_OPERATOR],
 		.default_bindings = vis_marks_set,
 	},
 	[VIS_MODE_NORMAL] = {
@@ -736,7 +700,7 @@ static Mode vis_modes[] = {
 	[VIS_MODE_VISUAL] = {
 		.name = "--VISUAL--",
 		.isuser = true,
-		.parent = &vis_modes[VIS_MODE_REGISTER],
+		.parent = &vis_modes[VIS_MODE_OPERATOR],
 		.default_bindings = vis_mode_visual,
 		.enter = vis_mode_visual_enter,
 		.leave = vis_mode_visual_leave,

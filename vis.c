@@ -1110,9 +1110,17 @@ static const char *selection_restore(const char *keys, const Arg *arg) {
 	return keys;
 }
 
+static const char *key2register(const char *keys, Register **reg) {
+	*reg = NULL;
+	if (!keys[0])
+		return NULL;
+	if (keys[0] >= 'a' && keys[0] <= 'z')
+		*reg = &vis->registers[keys[0] - 'a'];
+	return keys+1;
+}
+
 static const char *reg(const char *keys, const Arg *arg) {
-	vis->action.reg = &vis->registers[arg->i];
-	return keys;
+	return key2register(keys, &vis->action.reg);
 }
 
 static const char *mark(const char *keys, const Arg *arg) {
