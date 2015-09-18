@@ -474,6 +474,7 @@ static bool vis_window_split(Win *win);
 #include "config.h"
 
 static const char *getkey(void);
+static const char *keynext(const char *keys);
 static const char *keypress(const char *key);
 static void action_do(Action *a);
 static bool exec_command(char type, const char *cmdline);
@@ -996,7 +997,7 @@ static const char *cursors_remove(const char *keys, const Arg *arg) {
 static const char *replace(const char *keys, const Arg *arg) {
 	if (!keys[0])
 		return NULL;
-	const char *next = utfnext(keys+1);
+	const char *next = keynext(keys);
 	size_t len = next - keys;
 	action_reset(&vis->action_prev);
 	vis->action_prev.op = &ops[OP_REPEAT_REPLACE];
@@ -1063,7 +1064,7 @@ static const char *changecase(const char *keys, const Arg *arg) {
 static const char *movement_key(const char *keys, const Arg *arg) {
 	if (!keys[0])
 		return NULL;
-	const char *next = utfnext(keys+1);
+	const char *next = keynext(keys);
 	strncpy(vis->search_char, keys, next - keys);
 	vis->last_totill = arg->i;
 	vis->action.movement = &moves[arg->i];
@@ -2573,25 +2574,38 @@ static void die(const char *errstr, ...) {
 	exit(EXIT_FAILURE);
 }
 
+static const char *keynext(const char *keys) {
+	TermKeyKey key;
+	TermKey *termkey = vis->ui->termkey_get(vis->ui);
+	const char *next = NULL;
+	if (!keys)
+		return NULL;
+	/* first try to parse a special key of the form <Key> */
+	if (*keys == '<' && (next = termkey_strpkey(termkey, keys+1, &key, TERMKEY_FORMAT_VIM)) && *next == '>')
+		return next+1;
+	while (!ISUTF8(*keys))
+		keys++;
+	return termkey_strpkey(termkey, keys, &key, TERMKEY_FORMAT_VIM);
+}
+
 static const char *keypress(const char *input) {
 	if (!input)
 		return NULL;
-	TermKey *termkey = vis->ui->termkey_get(vis->ui);
-	char *keys = strdup(input), *start = keys, *cur = keys, *end;
-	if (!keys)
-		return NULL;
 
-	TermKeyKey key;
+	if (!buffer_append0(&vis->input_queue, input)) {
+		buffer_truncate(&vis->input_queue);
+		return NULL;
+	}
+
+	char *keys = vis->input_queue.data, *start = keys, *cur = keys, *end;
 	bool prefix = false;
 	KeyBinding *binding = NULL;
 	
 	while (cur && *cur) {
-		/* first try to parse a special key of the form <Key> */
-		if (*cur == '<' && (end = (char*)termkey_strpkey(termkey, cur+1, &key, TERMKEY_FORMAT_VIM)) && *end == '>') {
-			end++;
-		} else if (!(end = (char*)termkey_strpkey(termkey, cur, &key, TERMKEY_FORMAT_VIM))) {
-			// XXX: insert as document
-			free(keys);
+
+		if (!(end = (char*)keynext(cur))) {
+			// XXX: can't parse key this should never happen, throw away remaining input
+			buffer_truncate(&vis->input_queue);
 			return input + strlen(input);
 		}
 
@@ -2622,11 +2636,9 @@ static const char *keypress(const char *input) {
 				vis->mode->input(start, end - start);
 			start = cur = end;
 		}
-		
 	}
 
-	free(keys);
-
+	buffer_put0(&vis->input_queue, start);
 	return input + (start - keys);
 }
 
@@ -2710,15 +2722,8 @@ static void mainloop() {
 		termkey_advisereadable(termkey);
 		const char *key;
 
-		while ((key = getkey())) {
-			if (!buffer_append0(&vis->input_queue, key)) {
-				buffer_truncate(&vis->input_queue);
-				continue;
-			}
-			const char *next = keypress(vis->input_queue.data);
-			if (next)
-				buffer_put0(&vis->input_queue, next);
-		}
+		while ((key = getkey()))
+			keypress(key);
 
 		if (vis->mode->idle)
 			timeout = &idle;

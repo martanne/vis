@@ -1,8 +1,6 @@
 #ifndef LIBUTF_H
 #define LIBUTF_H
 
-const char *utfnext(const char *s);
-
 /* libutf8 © 2012-2015 Connor Lane Smith <cls@lubutu.com> */
 #include <stddef.h>
 #include <stdint.h>

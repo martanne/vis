@@ -2,12 +2,6 @@
 #include "libutf.h"
 #include "util.h"
 
-const char *utfnext(const char *s) {
-	while (!ISUTF8(*s))
-		s++;
-	return s;
-}
-
 int
 runelen(Rune r)
 {
