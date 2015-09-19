@@ -14,7 +14,6 @@ enum {
 	VIS_MODE_BASIC,
 	VIS_MODE_MOVE,
 	VIS_MODE_TEXTOBJ,
-	VIS_MODE_INNER_TEXTOBJ,
 	VIS_MODE_OPERATOR,
 	VIS_MODE_OPERATOR_OPTION,
 	VIS_MODE_NORMAL,
@@ -163,10 +162,6 @@ static KeyBinding vis_textobjs[] = {
 	{ "ae",  textobj, { .i = TEXT_OBJ_OUTER_ENTIRE         } },
 	{ "af",  textobj, { .i = TEXT_OBJ_OUTER_FUNCTION       } },
 	{ "al",  textobj, { .i = TEXT_OBJ_OUTER_LINE           } },
-	{ /* empty last element, array terminator */                                 },
-};
-
-static KeyBinding vis_inner_textobjs[] = {
 	{ "iw",  textobj, { .i = TEXT_OBJ_INNER_WORD           } },
 	{ "iW",  textobj, { .i = TEXT_OBJ_INNER_LONGWORD       } },
 	{ "is",  textobj, { .i = TEXT_OBJ_SENTENCE             } },
@@ -187,7 +182,7 @@ static KeyBinding vis_inner_textobjs[] = {
 	{ "ie",  textobj, { .i = TEXT_OBJ_INNER_ENTIRE         } },
 	{ "if",  textobj, { .i = TEXT_OBJ_INNER_FUNCTION       } },
 	{ "il",  textobj, { .i = TEXT_OBJ_INNER_LINE           } },
-	{ /* empty last element, array terminator */                                 },
+	{ /* empty last element, array terminator */             },
 };
 
 static KeyBinding vis_operators[] = {
@@ -516,16 +511,10 @@ static Mode vis_modes[] = {
 		.parent = &vis_modes[VIS_MODE_BASIC],
 		.default_bindings = vis_movements,
 	},
-	[VIS_MODE_INNER_TEXTOBJ] = {
-		.name = "INNER-TEXTOBJ",
-		.common_prefix = true,
-		.parent = &vis_modes[VIS_MODE_MOVE],
-		.default_bindings = vis_inner_textobjs,
-	},
 	[VIS_MODE_TEXTOBJ] = {
 		.name = "TEXTOBJ",
 		.common_prefix = true,
-		.parent = &vis_modes[VIS_MODE_INNER_TEXTOBJ],
+		.parent = &vis_modes[VIS_MODE_MOVE],
 		.default_bindings = vis_textobjs,
 	},
 	[VIS_MODE_OPERATOR_OPTION] = {
