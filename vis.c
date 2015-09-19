@@ -2625,10 +2625,15 @@ static const char *keypress(const char *input) {
 		*end = tmp;
 		
 		if (binding) { /* exact match */
-			end = (char*)binding->func(end, &binding->arg);
-			if (!end)
-				break;
-			start = cur = end;
+			if (binding->func) {
+				end = (char*)binding->func(end, &binding->arg);
+				if (!end)
+					break;
+				start = cur = end;
+			} else { /* alias */
+				buffer_put0(&vis->input_queue, end);
+				buffer_prepend0(&vis->input_queue, binding->alias);
+			}
 		} else if (prefix) { /* incomplete key binding? */
 			cur = end;
 		} else { /* no keybinding */

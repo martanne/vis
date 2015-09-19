@@ -33,6 +33,7 @@ typedef struct {
 	/* returns a pointer to the first not consumed character in keys
 	 * or NULL if not enough input was available to complete the command */
 	const Arg arg;
+	const char *alias;
 } KeyBinding;
 
 typedef struct Mode Mode;
