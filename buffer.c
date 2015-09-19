@@ -62,3 +62,16 @@ bool buffer_append0(Buffer *buf, const char *data) {
 		buf->len--;
 	return buffer_append(buf, data, strlen(data)) && buffer_append(buf, "\0", 1);
 }
+
+bool buffer_prepend(Buffer *buf, const void *data, size_t len) {
+	if (!buffer_grow(buf, buf->len + len))
+		return false;
+	memmove(buf->data + len, buf->data, buf->len);
+	memcpy(buf->data, data, len);
+	buf->len += len;
+	return true;
+}
+
+bool buffer_prepend0(Buffer *buf, const char *data) {
+	return buffer_prepend(buf, data, strlen(data) + (buf->len == 0));
+}

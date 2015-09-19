@@ -28,4 +28,7 @@ bool buffer_append(Buffer*, const void *data, size_t len);
 /* append NUl-terminated data */
 bool buffer_append0(Buffer*, const char *data);
 
+bool buffer_prepend(Buffer*, const void *data, size_t len);
+bool buffer_prepend0(Buffer*, const char *data);
+
 #endif
