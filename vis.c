@@ -361,8 +361,6 @@ static const char *gotoline(const char *keys, const Arg *arg);
 static const char *motiontype(const char *keys, const Arg *arg);
 /* make the current action use the operator indicated by arg->i */
 static const char *operator(const char *keys, const Arg *arg);
-/* execute operator twice useful for synonyms (e.g. 'cc') */
-static const char *operator_twice(const char *keys, const Arg *arg);
 /* change case of a file range to upper (arg->i > 0) or lowercase (arg->i < 0) */
 static const char *changecase(const char *keys, const Arg *arg);
 /* blocks to read a key and performs movement indicated by arg->i which
@@ -388,14 +386,9 @@ static const char *redo(const char *keys, const Arg *arg);
 /* earlier, later action chronologically, redraw window */
 static const char *earlier(const char *keys, const Arg *arg);
 static const char *later(const char *keys, const Arg *arg);
-/* either part of multiplier or a movement to begin of line */
-static const char *zero(const char *keys, const Arg *arg);
 /* hange/delete from the current cursor position to the end of
  * movement as indicated by arg->i */
-static const char *change(const char *keys, const Arg *arg);
 static const char *delete(const char *keys, const Arg *arg);
-/* perform movement according to arg->i, then switch to insert mode */
-static const char *insertmode(const char *keys, const Arg *arg);
 /* insert register content indicated by arg->i at current cursor position */
 static const char *insert_register(const char *keys, const Arg *arg);
 /* show a user prompt to get input with title arg->s */
@@ -403,9 +396,6 @@ static const char *prompt_search(const char *keys, const Arg *arg);
 static const char *prompt_cmd(const char *keys, const Arg *arg);
 /* evaluate user input at prompt, perform search or execute a command */
 static const char *prompt_enter(const char *keys, const Arg *arg);
-/* cycle through past user inputs */
-static const char *prompt_up(const char *keys, const Arg *arg);
-static const char *prompt_down(const char *keys, const Arg *arg);
 /* exit command mode if the last char is deleted */
 static const char *prompt_backspace(const char *keys, const Arg *arg);
 /* blocks to read 3 consecutive digits and inserts the corresponding byte value */
@@ -1008,7 +998,12 @@ static const char *replace(const char *keys, const Arg *arg) {
 }
 
 static const char *count(const char *keys, const Arg *arg) {
-	vis->action.count = vis->action.count * 10 + arg->i;
+	int digit = keys[-1] - '0';
+	if (0 <= digit && digit <= 9) {
+		if (digit == 0 && vis->action.count == 0)
+			return movement(keys, &(const Arg){ .i = MOVE_LINE_BEGIN });
+		vis->action.count = vis->action.count * 10 + digit;
+	}
 	return keys;
 }
 
@@ -1046,12 +1041,6 @@ static const char *operator(const char *keys, const Arg *arg) {
 	} else {
 		vis->action.op = op;
 	}
-	return keys;
-}
-
-static const char *operator_twice(const char *keys, const Arg *arg) {
-	operator(keys, arg);
-	operator(keys, arg);
 	return keys;
 }
 
@@ -1207,25 +1196,6 @@ static const char *later(const char *keys, const Arg *arg) {
 	return keys;
 }
 
-static const char *zero(const char *keys, const Arg *arg) {
-	if (vis->action.count == 0)
-		return movement(keys, &(const Arg){ .i = MOVE_LINE_BEGIN });
-	else
-		return count(keys, &(const Arg){ .i = 0 });
-}
-
-static const char *insertmode(const char *keys, const Arg *arg) {
-	movement(keys, arg);
-	switchmode(keys, &(const Arg){ .i = VIS_MODE_INSERT });
-	return keys;
-}
-
-static const char *change(const char *keys, const Arg *arg) {
-	operator(keys, &(const Arg){ .i = OP_CHANGE });
-	movement(keys, arg);
-	return keys;
-}
-
 static const char *delete(const char *keys, const Arg *arg) {
 	operator(keys, &(const Arg){ .i = OP_DELETE });
 	movement(keys, arg);
@@ -1267,14 +1237,6 @@ static const char *prompt_enter(const char *keys, const Arg *arg) {
 		switchmode(keys, &(const Arg){ .i = VIS_MODE_NORMAL });
 	free(s);
 	editor_draw(vis);
-	return keys;
-}
-
-static const char *prompt_up(const char *keys, const Arg *arg) {
-	return keys;
-}
-
-static const char *prompt_down(const char *keys, const Arg *arg) {
 	return keys;
 }
 
@@ -2625,12 +2587,12 @@ static const char *keypress(const char *input) {
 		*end = tmp;
 		
 		if (binding) { /* exact match */
-			if (binding->func) {
-				end = (char*)binding->func(end, &binding->arg);
+			if (binding->action) {
+				end = (char*)binding->action->func(end, &binding->action->arg);
 				if (!end)
 					break;
 				start = cur = end;
-			} else { /* alias */
+			} else if (binding->alias) {
 				buffer_put0(&vis->input_queue, end);
 				buffer_prepend0(&vis->input_queue, binding->alias);
 			}

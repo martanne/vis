@@ -13,10 +13,10 @@
 enum {
 	VIS_MODE_BASIC,
 	VIS_MODE_MOVE,
-	VIS_MODE_TEXTOBJ,
 	VIS_MODE_OPERATOR,
 	VIS_MODE_OPERATOR_OPTION,
 	VIS_MODE_NORMAL,
+	VIS_MODE_TEXTOBJ,
 	VIS_MODE_VISUAL,
 	VIS_MODE_VISUAL_LINE,
 	VIS_MODE_READLINE,
@@ -65,152 +65,1075 @@ static bool vis_keypress(const char *key) {
 	return true;
 }
 
+#define ALIAS(name) .alias = name,
+#define ACTION(id) .action = &vis_action[VIS_ACTION_##id],
+
+enum {
+	VIS_ACTION_EDITOR_SUSPEND,
+	VIS_ACTION_CURSOR_CHAR_PREV,
+	VIS_ACTION_CURSOR_CHAR_NEXT,
+	VIS_ACTION_CURSOR_WORD_START_PREV,
+	VIS_ACTION_CURSOR_WORD_START_NEXT,
+	VIS_ACTION_CURSOR_WORD_END_PREV,
+	VIS_ACTION_CURSOR_WORD_END_NEXT,
+	VIS_ACTION_CURSOR_LONGWORD_START_PREV,
+	VIS_ACTION_CURSOR_LONGWORD_START_NEXT,
+	VIS_ACTION_CURSOR_LONGWORD_END_PREV,
+	VIS_ACTION_CURSOR_LONGWORD_END_NEXT,
+	VIS_ACTION_CURSOR_LINE_UP,
+	VIS_ACTION_CURSOR_LINE_DOWN,
+	VIS_ACTION_CURSOR_LINE_START,
+	VIS_ACTION_CURSOR_LINE_FINISH,
+	VIS_ACTION_CURSOR_LINE_BEGIN,
+	VIS_ACTION_CURSOR_LINE_END,
+	VIS_ACTION_CURSOR_SCREEN_LINE_UP,
+	VIS_ACTION_CURSOR_SCREEN_LINE_DOWN,
+	VIS_ACTION_CURSOR_SCREEN_LINE_BEGIN,
+	VIS_ACTION_CURSOR_SCREEN_LINE_MIDDLE,
+	VIS_ACTION_CURSOR_SCREEN_LINE_END,
+	VIS_ACTION_CURSOR_BRACKET_MATCH,
+	VIS_ACTION_CURSOR_PARAGRAPH_PREV,
+	VIS_ACTION_CURSOR_PARAGRAPH_NEXT,
+	VIS_ACTION_CURSOR_SENTENCE_PREV,
+	VIS_ACTION_CURSOR_SENTENCE_NEXT,
+	VIS_ACTION_CURSOR_FUNCTION_START_PREV,
+	VIS_ACTION_CURSOR_FUNCTION_END_PREV,
+	VIS_ACTION_CURSOR_FUNCTION_START_NEXT,
+	VIS_ACTION_CURSOR_FUNCTION_END_NEXT,
+	VIS_ACTION_CURSOR_COLUMN,
+	VIS_ACTION_CURSOR_LINE_FIRST,
+	VIS_ACTION_CURSOR_LINE_LAST,
+	VIS_ACTION_CURSOR_WINDOW_LINE_TOP,
+	VIS_ACTION_CURSOR_WINDOW_LINE_MIDDLE,
+	VIS_ACTION_CURSOR_WINDOW_LINE_BOTTOM,
+	VIS_ACTION_CURSOR_SEARCH_FORWARD,
+	VIS_ACTION_CURSOR_SEARCH_BACKWARD,
+	VIS_ACTION_CURSOR_SEARCH_WORD_FORWARD,
+	VIS_ACTION_CURSOR_SEARCH_WORD_BACKWARD,
+	VIS_ACTION_WINDOW_PAGE_UP,
+	VIS_ACTION_WINDOW_PAGE_DOWN,
+	VIS_ACTION_WINDOW_HALFPAGE_UP,
+	VIS_ACTION_WINDOW_HALFPAGE_DOWN,
+	VIS_ACTION_MODE_NORMAL,
+	VIS_ACTION_MODE_VISUAL,
+	VIS_ACTION_MODE_VISUAL_LINE,
+	VIS_ACTION_MODE_INSERT,
+	VIS_ACTION_MODE_REPLACE,
+	VIS_ACTION_MODE_OPERATOR_PENDING,
+	VIS_ACTION_DELETE_CHAR_PREV,
+	VIS_ACTION_DELETE_CHAR_NEXT,
+	VIS_ACTION_DELETE_LINE_BEGIN,
+	VIS_ACTION_DELETE_WORD_PREV,
+	VIS_ACTION_JUMPLIST_PREV,
+	VIS_ACTION_JUMPLIST_NEXT,
+	VIS_ACTION_CHANGELIST_PREV,
+	VIS_ACTION_CHANGELIST_NEXT,
+	VIS_ACTION_UNDO,
+	VIS_ACTION_REDO,
+	VIS_ACTION_EARLIER,
+	VIS_ACTION_LATER,
+	VIS_ACTION_MACRO_RECORD,
+	VIS_ACTION_MACRO_REPLAY,
+	VIS_ACTION_MARK_SET,
+	VIS_ACTION_MARK_GOTO,
+	VIS_ACTION_MARK_GOTO_LINE,
+	VIS_ACTION_REDRAW,
+	VIS_ACTION_REPLACE_CHAR,
+	VIS_ACTION_TOTILL_REPEAT,
+	VIS_ACTION_TOTILL_REVERSE,
+	VIS_ACTION_SEARCH_FORWARD,
+	VIS_ACTION_SEARCH_BACKWARD,
+	VIS_ACTION_TILL_LEFT,
+	VIS_ACTION_TILL_RIGHT,
+	VIS_ACTION_TO_LEFT,
+	VIS_ACTION_TO_RIGHT,
+	VIS_ACTION_REGISTER,
+	VIS_ACTION_OPERATOR_CHANGE,
+	VIS_ACTION_OPERATOR_DELETE,
+	VIS_ACTION_OPERATOR_YANK,
+	VIS_ACTION_OPERATOR_SHIFT_LEFT,
+	VIS_ACTION_OPERATOR_SHIFT_RIGHT,
+	VIS_ACTION_OPERATOR_CASE_LOWER,
+	VIS_ACTION_OPERATOR_CASE_UPPER,
+	VIS_ACTION_OPERATOR_CASE_SWAP,
+	VIS_ACTION_COUNT,
+	VIS_ACTION_INSERT_NEWLINE,
+	VIS_ACTION_INSERT_TAB,
+	VIS_ACTION_INSERT_VERBATIM,
+	VIS_ACTION_INSERT_REGISTER,
+	VIS_ACTION_WINDOW_NEXT,
+	VIS_ACTION_WINDOW_PREV,
+	VIS_ACTION_OPEN_LINE_ABOVE,
+	VIS_ACTION_OPEN_LINE_BELOW,
+	VIS_ACTION_JOIN_LINE_BELOW,
+	VIS_ACTION_JOIN_LINES,
+	VIS_ACTION_PROMPT_SHOW,
+	VIS_ACTION_PROMPT_BACKSPACE,
+	VIS_ACTION_PROMPT_ENTER,
+	VIS_ACTION_PROMPT_SHOW_VISUAL,
+	VIS_ACTION_REPEAT,
+	VIS_ACTION_SELECTION_FLIP,
+	VIS_ACTION_SELECTION_RESTORE,
+	VIS_ACTION_WINDOW_REDRAW_TOP,
+	VIS_ACTION_WINDOW_REDRAW_CENTER,
+	VIS_ACTION_WINDOW_REDRAW_BOTTOM,
+	VIS_ACTION_WINDOW_SLIDE_UP,
+	VIS_ACTION_WINDOW_SLIDE_DOWN,
+	VIS_ACTION_PUT_AFTER,
+	VIS_ACTION_PUT_BEFORE,
+	VIS_ACTION_PUT_AFTER_END,
+	VIS_ACTION_PUT_BEFORE_END,
+	VIS_ACTION_CURSOR_SELECT_WORD,
+	VIS_ACTION_CURSORS_NEW_LINE_ABOVE,
+	VIS_ACTION_CURSORS_NEW_LINE_BELOW,
+	VIS_ACTION_CURSORS_NEW_LINES_BEGIN,
+	VIS_ACTION_CURSORS_NEW_LINES_END,
+	VIS_ACTION_CURSORS_NEW_MATCH_NEXT,
+	VIS_ACTION_CURSORS_NEW_MATCH_SKIP,
+	VIS_ACTION_CURSORS_ALIGN,
+	VIS_ACTION_CURSORS_REMOVE_ALL,
+	VIS_ACTION_CURSORS_REMOVE_LAST,
+	VIS_ACTION_TEXT_OBJECT_WORD_OUTER,
+	VIS_ACTION_TEXT_OBJECT_WORD_INNER,
+	VIS_ACTION_TEXT_OBJECT_LONGWORD_OUTER,
+	VIS_ACTION_TEXT_OBJECT_LONGWORD_INNER,
+	VIS_ACTION_TEXT_OBJECT_SENTENCE,
+	VIS_ACTION_TEXT_OBJECT_PARAGRAPH,
+	VIS_ACTION_TEXT_OBJECT_SQUARE_BRACKET_OUTER,
+	VIS_ACTION_TEXT_OBJECT_SQUARE_BRACKET_INNER,
+	VIS_ACTION_TEXT_OBJECT_PARANTHESE_OUTER,
+	VIS_ACTION_TEXT_OBJECT_PARANTHESE_INNER,
+	VIS_ACTION_TEXT_OBJECT_ANGLE_BRACKET_OUTER,
+	VIS_ACTION_TEXT_OBJECT_ANGLE_BRACKET_INNER,
+	VIS_ACTION_TEXT_OBJECT_CURLY_BRACKET_OUTER,
+	VIS_ACTION_TEXT_OBJECT_CURLY_BRACKET_INNER,
+	VIS_ACTION_TEXT_OBJECT_QUOTE_OUTER,
+	VIS_ACTION_TEXT_OBJECT_QUOTE_INNER,
+	VIS_ACTION_TEXT_OBJECT_SINGLE_QUOTE_OUTER,
+	VIS_ACTION_TEXT_OBJECT_SINGLE_QUOTE_INNER,
+	VIS_ACTION_TEXT_OBJECT_BACKTICK_OUTER,
+	VIS_ACTION_TEXT_OBJECT_BACKTICK_INNER,
+	VIS_ACTION_TEXT_OBJECT_ENTIRE_OUTER,
+	VIS_ACTION_TEXT_OBJECT_ENTIRE_INNER,
+	VIS_ACTION_TEXT_OBJECT_FUNCTION_OUTER,
+	VIS_ACTION_TEXT_OBJECT_FUNCTION_INNER,
+	VIS_ACTION_TEXT_OBJECT_LINE_OUTER,
+	VIS_ACTION_TEXT_OBJECT_LINE_INNER,
+	VIS_ACTION_MOTION_CHARWISE,
+	VIS_ACTION_MOTION_LINEWISE,
+};
+
+static KeyAction vis_action[] = {
+	[VIS_ACTION_EDITOR_SUSPEND] = {
+		"editor-suspend",
+		"Suspend the editor",
+		suspend,
+	},
+	[VIS_ACTION_CURSOR_CHAR_PREV] = {
+		"cursor-char-prev",
+		"Move cursor left, to the previous character",
+		movement, { .i = MOVE_CHAR_PREV }
+	},
+	[VIS_ACTION_CURSOR_CHAR_NEXT] = {
+		"cursor-char-next",
+		"Move cursor rigth, to the next character",
+		movement, { .i = MOVE_CHAR_NEXT }
+	},
+	[VIS_ACTION_CURSOR_WORD_START_PREV] = {
+		"cursor-word-start-prev",
+		"Move cursor words backwards",
+		movement, { .i = MOVE_WORD_START_PREV }
+	},
+	[VIS_ACTION_CURSOR_WORD_START_NEXT] = {
+		"cursor-word-start-next",
+		"Move cursor words forwards",
+		movement, { .i = MOVE_WORD_START_NEXT }
+	},
+	[VIS_ACTION_CURSOR_WORD_END_PREV] = {
+		"cursor-word-end-prev",
+		"Move cursor bacwards to the end of word",
+		movement, { .i = MOVE_WORD_END_PREV }
+	},
+	[VIS_ACTION_CURSOR_WORD_END_NEXT] = {
+		"cursor-word-end-next",
+		"Move cursor forward to the end of word",
+		movement, { .i = MOVE_WORD_END_NEXT }
+	},
+	[VIS_ACTION_CURSOR_LONGWORD_START_PREV] = {
+		"cursor-longword-start-prev",
+		"Move cursor WORDS backwards",
+		movement, { .i = MOVE_LONGWORD_START_PREV }
+	},
+	[VIS_ACTION_CURSOR_LONGWORD_START_NEXT] = {
+		"cursor-longword-start-next",
+		"Move cursor WORDS forwards",
+		movement, { .i = MOVE_LONGWORD_START_NEXT }
+	},
+	[VIS_ACTION_CURSOR_LONGWORD_END_PREV] = {
+		"cursor-longword-end-prev",
+		"Move cursor bacwards to the end of WORD",
+		movement, { .i = MOVE_LONGWORD_END_PREV }
+	},
+	[VIS_ACTION_CURSOR_LONGWORD_END_NEXT] = {
+		"cursor-longword-end-next",
+		"Move cursor forward to the end of WORD",
+		movement, { .i = MOVE_LONGWORD_END_NEXT }
+	},
+	[VIS_ACTION_CURSOR_LINE_UP] = {
+		"cursor-line-up",
+		"Move cursor line upwards",
+		movement, { .i = MOVE_LINE_UP }
+	},
+	[VIS_ACTION_CURSOR_LINE_DOWN] = {
+		"cursor-line-down",
+		"Move cursor line downwards",
+		movement, { .i = MOVE_LINE_DOWN }
+	},
+	[VIS_ACTION_CURSOR_LINE_START] = {
+		"cursor-line-start",
+		"Move cursor to first non-blank character of the line",
+		movement, { .i = MOVE_LINE_START }
+	},
+	[VIS_ACTION_CURSOR_LINE_FINISH] = {
+		"cursor-line-finish",
+		"Move cursor to last non-blank character of the line",
+		movement, { .i = MOVE_LINE_FINISH }
+	},
+	[VIS_ACTION_CURSOR_LINE_BEGIN] = {
+		"cursor-line-begin",
+		"Move cursor to first character of the line",
+		movement, { .i = MOVE_LINE_BEGIN }
+	},
+	[VIS_ACTION_CURSOR_LINE_END] = {
+		"cursor-line-end",
+		"Move cursor to end of the line",
+		movement, { .i = MOVE_LINE_LASTCHAR }
+	},
+	[VIS_ACTION_CURSOR_SCREEN_LINE_UP] = {
+		"cursor-sceenline-up",
+		"Move cursor screen/display line upwards",
+		movement, { .i = MOVE_SCREEN_LINE_UP }
+	},
+	[VIS_ACTION_CURSOR_SCREEN_LINE_DOWN] = {
+		"cursor-screenline-down",
+		"Move cursor screen/display line downwards",
+		movement, { .i = MOVE_SCREEN_LINE_DOWN }
+	},
+	[VIS_ACTION_CURSOR_SCREEN_LINE_BEGIN] = {
+		"cursor-screenline-begin",
+		"Move cursor to begin of screen/display line",
+		movement, { .i = MOVE_SCREEN_LINE_BEGIN }
+	},
+	[VIS_ACTION_CURSOR_SCREEN_LINE_MIDDLE] = {
+		"cursor-screenline-middle",
+		"Move cursor to middle of screen/display line",
+		movement, { .i = MOVE_SCREEN_LINE_MIDDLE }
+	},
+	[VIS_ACTION_CURSOR_SCREEN_LINE_END] = {
+		"cursor-screenline-end",
+		"Move cursor to end of screen/display line",
+		movement, { .i = MOVE_SCREEN_LINE_END }
+	},
+	[VIS_ACTION_CURSOR_BRACKET_MATCH] = {
+		"cursor-match-bracket",
+		"Match corresponding symbol if cursor is on one of ",
+		movement, { .i = MOVE_BRACKET_MATCH }
+	},
+	[VIS_ACTION_CURSOR_PARAGRAPH_PREV] = {
+		"cursor-paragraph-prev",
+		"Move cursor paragraph backward",
+		movement, { .i = MOVE_PARAGRAPH_PREV }
+	},
+	[VIS_ACTION_CURSOR_PARAGRAPH_NEXT] = {
+		"cursor-paragraph-next",
+		"Move cursor paragraph forward",
+		movement, { .i = MOVE_PARAGRAPH_NEXT }
+	},
+	[VIS_ACTION_CURSOR_SENTENCE_PREV] = {
+		"cursor-sentence-prev",
+		"Move cursor sentence backward",
+		movement, { .i = MOVE_SENTENCE_PREV }
+	},
+	[VIS_ACTION_CURSOR_SENTENCE_NEXT] = {
+		"cursor-sentence-next",
+		"Move cursor sentence forward",
+		movement, { .i = MOVE_SENTENCE_NEXT }
+	},
+	[VIS_ACTION_CURSOR_FUNCTION_START_PREV] = {
+		"cursor-function-start-prev",
+		"Move cursor backwards to start of function",
+		movement, { .i = MOVE_FUNCTION_START_PREV }
+	},
+	[VIS_ACTION_CURSOR_FUNCTION_START_NEXT] = {
+		"cursor-function-start-next",
+		"Move cursor forwards to start of function",
+		movement, { .i = MOVE_FUNCTION_START_NEXT }
+	},
+	[VIS_ACTION_CURSOR_FUNCTION_END_PREV] = {
+		"cursor-function-end-prev",
+		"Move cursor backwards to end of function",
+		movement, { .i = MOVE_FUNCTION_END_PREV }
+	},
+	[VIS_ACTION_CURSOR_FUNCTION_END_NEXT] = {
+		"cursor-function-end-next",
+		"Move cursor forwards to end of function",
+		movement, { .i = MOVE_FUNCTION_END_NEXT }
+	},
+	[VIS_ACTION_CURSOR_COLUMN] = {
+		"cursor-column",
+		"Move cursor to given column of current line",
+		movement, { .i = MOVE_COLUMN }
+	},
+	[VIS_ACTION_CURSOR_LINE_FIRST] = {
+		"cursor-line-first",
+		"Move cursor to given line (defaults to first)",
+		gotoline, { .i = -1 }
+	},
+	[VIS_ACTION_CURSOR_LINE_LAST] = {
+		"cursor-line-last",
+		"Move cursor to given line (defaults to last)",
+		gotoline, { .i = +1 }
+	},
+	[VIS_ACTION_CURSOR_WINDOW_LINE_TOP] = {
+		"cursor-window-line-top",
+		"Move cursor to top line of the window",
+		movement, { .i = MOVE_WINDOW_LINE_TOP }
+	},
+	[VIS_ACTION_CURSOR_WINDOW_LINE_MIDDLE] = {
+		"cursor-window-line-middle",
+		"Move cursor to middle line of the window",
+		movement, { .i = MOVE_WINDOW_LINE_MIDDLE }
+	},
+	[VIS_ACTION_CURSOR_WINDOW_LINE_BOTTOM] = {
+		"cursor-window-line-bottom",
+		"Move cursor to bottom line of the window",
+		movement, { .i = MOVE_WINDOW_LINE_BOTTOM }
+	},
+	[VIS_ACTION_CURSOR_SEARCH_FORWARD] = {
+		"cursor-search-forward",
+		"Move cursor to bottom line of the window",
+		movement, { .i = MOVE_SEARCH_FORWARD }
+	},
+	[VIS_ACTION_CURSOR_SEARCH_BACKWARD] = {
+		"cursor-search-backward",
+		"Move cursor to bottom line of the window",
+		movement, { .i = MOVE_SEARCH_BACKWARD }
+	},
+	[VIS_ACTION_CURSOR_SEARCH_WORD_FORWARD] = {
+		"cursor-search-word-forward",
+		"Move cursor next occurence of the word under cursor",
+		movement, { .i = MOVE_SEARCH_WORD_FORWARD }
+	},
+	[VIS_ACTION_CURSOR_SEARCH_WORD_BACKWARD] = {
+		"cursor-search-word-backward",
+		"Move cursor previous occurence of the word under cursor",
+		 movement, { .i = MOVE_SEARCH_WORD_BACKWARD }
+	},
+	[VIS_ACTION_WINDOW_PAGE_UP] = {
+		"window-page-up",
+		"Scroll window pages backwards (upwards)",
+		wscroll, { .i = -PAGE }
+	},
+	[VIS_ACTION_WINDOW_HALFPAGE_UP] = {
+		"window-halfpage-up",
+		"Scroll window half pages backwards (upwards)",
+		wscroll, { .i = -PAGE_HALF }
+	},
+	[VIS_ACTION_WINDOW_PAGE_DOWN] = {
+		"window-page-down",
+		"Scroll window pages forwards (downwards)",
+		wscroll, { .i = +PAGE }
+	},
+	[VIS_ACTION_WINDOW_HALFPAGE_DOWN] = {
+		"window-halfpage-down",
+		"Scroll window half pages forwards (downwards)",
+		wscroll, { .i = +PAGE_HALF }
+	},
+	[VIS_ACTION_MODE_NORMAL] = {
+		"vis-mode-normal",
+		"Enter normal mode",
+		switchmode, { .i = VIS_MODE_NORMAL }
+	},
+	[VIS_ACTION_MODE_VISUAL] = {
+		"vis-mode-visual",
+		"Enter characterwise visual mode",
+		switchmode, { .i = VIS_MODE_VISUAL }
+	},
+	[VIS_ACTION_MODE_VISUAL_LINE] = {
+		"vis-mode-visual",
+		"Enter linewise visual mode",
+		switchmode, { .i = VIS_MODE_VISUAL_LINE }
+	},
+	[VIS_ACTION_MODE_INSERT] = {
+		"vis-mode-insert",
+		"Enter insert mode",
+		switchmode, { .i = VIS_MODE_INSERT }
+	},
+	[VIS_ACTION_MODE_REPLACE] = {
+		"vis-mode-replace",
+		"Enter replace mode",
+		switchmode, { .i = VIS_MODE_REPLACE }
+	},
+	[VIS_ACTION_MODE_OPERATOR_PENDING] = {
+		"vis-mode-operator-pending",
+		"Enter to operator pending mode",
+		switchmode, { .i = VIS_MODE_OPERATOR }
+	},
+	[VIS_ACTION_DELETE_CHAR_PREV] = {
+		"delete-char-prev",
+		"Delete the previous character",
+		delete, { .i = MOVE_CHAR_PREV }
+	},
+	[VIS_ACTION_DELETE_CHAR_NEXT] = {
+		"delete-char-next",
+		"Delete the next character",
+		delete, { .i = MOVE_CHAR_NEXT }
+	},
+	[VIS_ACTION_DELETE_LINE_BEGIN] = {
+		"delete-line-begin",
+		"Delete until the start of the current line",
+		delete, { .i = MOVE_LINE_BEGIN }
+	},
+	[VIS_ACTION_DELETE_WORD_PREV] = {
+		"delete-word-prev",
+		"Delete the previous WORD",
+		delete, { .i = MOVE_LONGWORD_START_PREV }
+	},
+	[VIS_ACTION_JUMPLIST_PREV] = {
+		"jumplist-prev",
+		"Go to older cursor positon in jump list",
+		jumplist, { .i = -1 }
+	},
+	[VIS_ACTION_JUMPLIST_NEXT] = {
+		"jumplist-next",
+		"Go to newer cursor positon in jump list",
+		jumplist, { .i = +1 }
+	},
+	[VIS_ACTION_CHANGELIST_PREV] = {
+		"changelist-prev",
+		"Go to older cursor positon in change list",
+		changelist, { .i = -1 }
+	},
+	[VIS_ACTION_CHANGELIST_NEXT] = {
+		"changelist-next",
+		"Go to newer cursor positon in change list",
+		changelist, { .i = +1 }
+	},
+	[VIS_ACTION_UNDO] = {
+		"editor-undo",
+		"Undo last change",
+		undo,
+	},
+	[VIS_ACTION_REDO] = {
+		"editor-redo",
+		"Redo last change",
+		redo,
+	},
+	[VIS_ACTION_EARLIER] = {
+		"editor-earlier",
+		"Goto older text state",
+		earlier,
+	},
+	[VIS_ACTION_LATER] = {
+		"editor-later",
+		"Goto newer text state",
+		later,
+	},
+	[VIS_ACTION_MACRO_RECORD] = {
+		"macro-record",
+		"Record macro into given regiser",
+		macro_record,
+	},
+	[VIS_ACTION_MACRO_REPLAY] = {
+		"macro-replay",
+		"Replay macro, execute the content of the given regiser",
+		macro_replay,
+	},
+	[VIS_ACTION_MARK_SET] = {
+		"mark-set",
+		"Set given mark at current cursor position",
+		mark_set,
+	},
+	[VIS_ACTION_MARK_GOTO] = {
+		"mark-goto",
+		"Goto the position of the given mark",
+		mark,
+	},
+	[VIS_ACTION_MARK_GOTO_LINE] = {
+		"mark-goto-line",
+		"Goto first non-blank character of the line containing the given mark",
+		mark_line,
+	},
+	[VIS_ACTION_REDRAW] = {
+		"editor-redraw",
+		"Redraw current editor content",
+		 call, { .f = editor_draw }
+	},
+	[VIS_ACTION_REPLACE_CHAR] = {
+		"replace-char",
+		"Replace the character under the cursor",
+		replace,
+	},
+	[VIS_ACTION_TOTILL_REPEAT] = {
+		"totill-repeat",
+		"Repeat latest to/till motion",
+		totill_repeat,
+	},
+	[VIS_ACTION_TOTILL_REVERSE] = {
+		"totill-reverse",
+		"Repeat latest to/till motion but in opposite direction",
+		totill_reverse,
+	},
+	[VIS_ACTION_SEARCH_FORWARD] = {
+		"search-forward",
+		"Search forward",
+		prompt_search, { .s = "/" }
+	},
+	[VIS_ACTION_SEARCH_BACKWARD] = {
+		"search-backward",
+		"Search backward",
+		prompt_search, { .s = "?" }
+	},
+	[VIS_ACTION_TILL_LEFT] = {
+		"till-left",
+		"Till after the occurrence of character to the left",
+		movement_key, { .i = MOVE_LEFT_TILL }
+	},
+	[VIS_ACTION_TILL_RIGHT] = {
+		"till-right",
+		"Till before the occurrence of character to the right",
+		movement_key, { .i = MOVE_RIGHT_TILL }
+	},
+	[VIS_ACTION_TO_LEFT] = {
+		"to-left",
+		"To the first occurrence of character to the left",
+		movement_key, { .i = MOVE_LEFT_TO }
+	},
+	[VIS_ACTION_TO_RIGHT] = {
+		"to-right",
+		"To the first occurrence of character to the right",
+		movement_key, { .i = MOVE_RIGHT_TO }
+	},
+	[VIS_ACTION_REGISTER] = {
+		"register",
+		"Use given register for next operator",
+		reg,
+	},
+	[VIS_ACTION_OPERATOR_CHANGE] = {
+		"vis-operator-change",
+		"Change operator",
+		operator, { .i = OP_CHANGE }
+	},
+	[VIS_ACTION_OPERATOR_DELETE] = {
+		"vis-operator-delete",
+		"Delete operator",
+		operator, { .i = OP_DELETE }
+	},
+	[VIS_ACTION_OPERATOR_YANK] = {
+		"vis-operator-yank",
+		"Yank operator",
+		operator, { .i = OP_YANK }
+	},
+	[VIS_ACTION_OPERATOR_SHIFT_LEFT] = {
+		"vis-operator-shift-left",
+		"Shift left operator",
+		operator, { .i = OP_SHIFT_LEFT }
+	},
+	[VIS_ACTION_OPERATOR_SHIFT_RIGHT] = {
+		"vis-operator-shift-right",
+		"Shift right operator",
+		operator, { .i = OP_SHIFT_RIGHT }
+	},
+	[VIS_ACTION_OPERATOR_CASE_LOWER] = {
+		"vis-operator-case-lower",
+		"Lowercase operator",
+		changecase, { .i = -1 }
+	},
+	[VIS_ACTION_OPERATOR_CASE_UPPER] = {
+		"vis-operator-case-upper",
+		"Uppercase operator",
+		changecase, { .i = +1 }
+	},
+	[VIS_ACTION_OPERATOR_CASE_SWAP] = {
+		"vis-operator-case-swap",
+		"Swap case operator",
+		changecase, { .i = 0 }
+	},
+	[VIS_ACTION_COUNT] = {
+		"vis-count",
+		"Count specifier",
+		count,
+	},
+	[VIS_ACTION_INSERT_NEWLINE] = {
+		"insert-newline",
+		"Insert a line break (depending on file type)",
+		insert_newline,
+	},
+	[VIS_ACTION_INSERT_TAB] = {
+		"insert-tab",
+		"Insert a tab (might be converted to spaces)",
+		insert_tab,
+	},
+	[VIS_ACTION_INSERT_VERBATIM] = {
+		"insert-verbatim",
+		"Insert Unicode character based on code point",
+		insert_verbatim,
+	},
+	[VIS_ACTION_INSERT_REGISTER] = {
+		"insert-register",
+		"Insert specified register content",
+		insert_register,
+	},
+	[VIS_ACTION_WINDOW_NEXT] = {
+		"window-next",
+		"Focus next window",
+		call, { .f = editor_window_next }
+	},
+	[VIS_ACTION_WINDOW_PREV] = {
+		"window-prev",
+		"Focus previous window",
+		call, { .f = editor_window_prev }
+	},
+	[VIS_ACTION_OPEN_LINE_ABOVE] = {
+		"open-line-above",
+		"Begin a new line above the cursor",
+		openline, { .i = MOVE_LINE_PREV }
+	},
+	[VIS_ACTION_OPEN_LINE_BELOW] = {
+		"open-line-below",
+		"Begin a new line below the cursor",
+		openline, { .i = MOVE_LINE_NEXT }
+	},
+	[VIS_ACTION_JOIN_LINE_BELOW] = {
+		"join-line-below",
+		"Join line(s)",
+		join, { .i = MOVE_LINE_NEXT },
+	},
+	[VIS_ACTION_JOIN_LINES] = {
+		"join-lines",
+		"Join selected lines",
+		operator, { .i = OP_JOIN }
+	},
+	[VIS_ACTION_PROMPT_SHOW] = {
+		"prompt-show",
+		"Show editor command line prompt",
+		prompt_cmd, { .s = "" }
+	},
+	[VIS_ACTION_PROMPT_BACKSPACE] = {
+		"prompt-backspace",
+		"Delete previous character in prompt",
+		prompt_backspace
+	},
+	[VIS_ACTION_PROMPT_ENTER] = {
+		"prompt-enter",
+		"Execute current prompt content",
+		prompt_enter
+	},
+	[VIS_ACTION_PROMPT_SHOW_VISUAL] = {
+		"prompt-show-visual",
+		"Show editor command line prompt in visual mode",
+		prompt_cmd, { .s = "'<,'>" }
+	},
+	[VIS_ACTION_REPEAT] = {
+		"editor-repeat",
+		"Repeat latest editor command",
+		repeat
+	},
+	[VIS_ACTION_SELECTION_FLIP] = {
+		"selection-flip",
+		"Flip selection, move cursor to other end",
+		selection_end,
+	},
+	[VIS_ACTION_SELECTION_RESTORE] = {
+		"selection-restore",
+		"Restore last selection",
+		selection_restore,
+	},
+	[VIS_ACTION_WINDOW_REDRAW_TOP] = {
+		"window-redraw-top",
+		"Redraw cursor line at the top of the window",
+		window, { .w = view_redraw_top }
+	},
+	[VIS_ACTION_WINDOW_REDRAW_CENTER] = {
+		"window-redraw-center",
+		"Redraw cursor line at the center of the window",
+		window, { .w = view_redraw_center }
+	},
+	[VIS_ACTION_WINDOW_REDRAW_BOTTOM] = {
+		"window-redraw-bottom",
+		"Redraw cursor line at the bottom of the window",
+		window, { .w = view_redraw_bottom }
+	},
+	[VIS_ACTION_WINDOW_SLIDE_UP] = {
+		"window-slide-up",
+		"Slide window content upwards",
+		wslide, { .i = -1 }
+	},
+	[VIS_ACTION_WINDOW_SLIDE_DOWN] = {
+		"window-slide-down",
+		"Slide window content downwards",
+		wslide, { .i = +1 }
+	},
+	[VIS_ACTION_PUT_AFTER] = {
+		"put-after",
+		"Put text after the cursor",
+		put, { .i = PUT_AFTER }
+	},
+	[VIS_ACTION_PUT_BEFORE] = {
+		"put-before",
+		"Put text before the cursor",
+		put, { .i = PUT_BEFORE }
+	},
+	[VIS_ACTION_PUT_AFTER_END] = {
+		"put-after-end",
+		"Put text after the cursor, place it after new text",
+		put, { .i = PUT_AFTER_END }
+	},
+	[VIS_ACTION_PUT_BEFORE_END] = {
+		"put-before-end",
+		"Put text before the cursor, place it after new text",
+		put, { .i = PUT_BEFORE_END }
+	},
+	[VIS_ACTION_CURSOR_SELECT_WORD] = {
+		"cursors-select-word",
+		"Select word under cursor",
+		cursors_select,
+	},
+	[VIS_ACTION_CURSORS_NEW_LINE_ABOVE] = {
+		"cursors-new-lines-above",
+		"Create a new cursor on the line above",
+		cursors_new, { .i = -1 }
+	},
+	[VIS_ACTION_CURSORS_NEW_LINE_BELOW] = {
+		"cursor-new-lines-below",
+		"Create a new cursor on the line below",
+		cursors_new, { .i = +1 }
+	},
+	[VIS_ACTION_CURSORS_NEW_LINES_BEGIN] = {
+		"cursors-new-lines-begin",
+		"Create a new cursor at the start of every line covered by selection",
+		cursors_split, { .i = -1 }
+	},
+	[VIS_ACTION_CURSORS_NEW_LINES_END] = {
+		"cursors-new-lines-end",
+		"Create a new cursor at the end of every line covered by selection",
+		cursors_split, { .i = +1 }
+	},
+	[VIS_ACTION_CURSORS_NEW_MATCH_NEXT] = {
+		"cursors-new-match-next",
+		"Select the next region matching the current selection",
+		cursors_select_next
+	},
+	[VIS_ACTION_CURSORS_NEW_MATCH_SKIP] = {
+		"cursors-new-match-skip",
+		"Clear current selection, but select next match",
+		cursors_select_skip,
+	},
+	[VIS_ACTION_CURSORS_ALIGN] = {
+		"cursors-align",
+		"Try to align all cursors on the same column",
+		cursors_align,
+	},
+	[VIS_ACTION_CURSORS_REMOVE_ALL] = {
+		"cursors-remove-all",
+		"Remove all but the primary cursor",
+		cursors_clear,
+	},
+	[VIS_ACTION_CURSORS_REMOVE_LAST] = {
+		"cursors-remove-last",
+		"Remove least recently created cursor",
+		cursors_remove,
+	},
+	[VIS_ACTION_TEXT_OBJECT_WORD_OUTER] = {
+		"text-object-word-outer",
+		"A word leading and trailing whitespace included",
+		textobj, { .i = TEXT_OBJ_OUTER_WORD }
+	},
+	[VIS_ACTION_TEXT_OBJECT_WORD_INNER] = {
+		"text-object-word-inner",
+		"A word leading and trailing whitespace excluded",
+		textobj, { .i = TEXT_OBJ_INNER_WORD }
+	},
+	[VIS_ACTION_TEXT_OBJECT_LONGWORD_OUTER] = {
+		"text-object-longword-outer",
+		"A WORD leading and trailing whitespace included",
+		 textobj, { .i = TEXT_OBJ_OUTER_LONGWORD }
+	},
+	[VIS_ACTION_TEXT_OBJECT_LONGWORD_INNER] = {
+		"text-object-longword-inner",
+		"A WORD leading and trailing whitespace excluded",
+		 textobj, { .i = TEXT_OBJ_INNER_LONGWORD }
+	},
+	[VIS_ACTION_TEXT_OBJECT_SENTENCE] = {
+		"text-object-sentence",
+		"A sentence",
+		textobj, { .i = TEXT_OBJ_SENTENCE }
+	},
+	[VIS_ACTION_TEXT_OBJECT_PARAGRAPH] = {
+		"text-object-paragraph",
+		"A paragraph",
+		textobj, { .i = TEXT_OBJ_PARAGRAPH }
+	},
+	[VIS_ACTION_TEXT_OBJECT_SQUARE_BRACKET_OUTER] = {
+		"text-object-square-bracket-outer",
+		"[] block (outer variant)",
+		textobj, { .i = TEXT_OBJ_OUTER_SQUARE_BRACKET }
+	},
+	[VIS_ACTION_TEXT_OBJECT_SQUARE_BRACKET_INNER] = {
+		"text-object-square-bracket-inner",
+		"[] block (inner variant)",
+		textobj, { .i = TEXT_OBJ_INNER_SQUARE_BRACKET }
+	},
+	[VIS_ACTION_TEXT_OBJECT_PARANTHESE_OUTER] = {
+		"text-object-parentheses-outer",
+		"() block (outer variant)",
+		textobj, { .i = TEXT_OBJ_OUTER_PARANTHESE }
+	},
+	[VIS_ACTION_TEXT_OBJECT_PARANTHESE_INNER] = {
+		"text-object-parentheses-inner",
+		"() block (inner variant)",
+		textobj, { .i = TEXT_OBJ_INNER_PARANTHESE }
+	},
+	[VIS_ACTION_TEXT_OBJECT_ANGLE_BRACKET_OUTER] = {
+		"text-object-angle-bracket-outer",
+		"<> block (outer variant)",
+		textobj, { .i = TEXT_OBJ_OUTER_ANGLE_BRACKET }
+	},
+	[VIS_ACTION_TEXT_OBJECT_ANGLE_BRACKET_INNER] = {
+		"text-object-angle-bracket-inner",
+		"<> block (inner variant)",
+		textobj, { .i = TEXT_OBJ_INNER_ANGLE_BRACKET }
+	},
+	[VIS_ACTION_TEXT_OBJECT_CURLY_BRACKET_OUTER] = {
+		"text-object-curly-bracket-outer",
+		"{} block (outer variant)",
+		textobj, { .i = TEXT_OBJ_OUTER_CURLY_BRACKET }
+	},
+	[VIS_ACTION_TEXT_OBJECT_CURLY_BRACKET_INNER] = {
+		"text-object-curly-bracket-inner",
+		"{} block (inner variant)",
+		textobj, { .i = TEXT_OBJ_INNER_CURLY_BRACKET }
+	},
+	[VIS_ACTION_TEXT_OBJECT_QUOTE_OUTER] = {
+		"text-object-quote-outer",
+		"A quoted string, including the quotation marks",
+		textobj, { .i = TEXT_OBJ_OUTER_QUOTE }
+	},
+	[VIS_ACTION_TEXT_OBJECT_QUOTE_INNER] = {
+		"text-object-quote-inner",
+		"A quoted string, excluding the quotation marks",
+		textobj, { .i = TEXT_OBJ_INNER_QUOTE }
+	},
+	[VIS_ACTION_TEXT_OBJECT_SINGLE_QUOTE_OUTER] = {
+		"text-object-single-quote-outer",
+		"A single quoted string, including the quotation marks",
+		textobj, { .i = TEXT_OBJ_OUTER_SINGLE_QUOTE }
+	},
+	[VIS_ACTION_TEXT_OBJECT_SINGLE_QUOTE_INNER] = {
+		"text-object-single-quote-inner",
+		"A single quoted string, excluding the quotation marks",
+		textobj, { .i = TEXT_OBJ_INNER_SINGLE_QUOTE }
+	},
+	[VIS_ACTION_TEXT_OBJECT_BACKTICK_OUTER] = {
+		"text-object-backtick-outer",
+		"A backtick deliminated string (outer variant)",
+		textobj, { .i = TEXT_OBJ_OUTER_BACKTICK }
+	},
+	[VIS_ACTION_TEXT_OBJECT_BACKTICK_INNER] = {
+		"text-object-backtick-inner",
+		"A backtick deliminated string (inner variant)",
+		textobj, { .i = TEXT_OBJ_INNER_BACKTICK }
+	},
+	[VIS_ACTION_TEXT_OBJECT_ENTIRE_OUTER] = {
+		"text-object-entire-outer",
+		"The whole text content",
+		textobj, { .i = TEXT_OBJ_OUTER_ENTIRE }
+	},
+	[VIS_ACTION_TEXT_OBJECT_ENTIRE_INNER] = {
+		"text-object-entire-inner",
+		"The whole text content, expect for leading and trailing empty lines",
+		textobj, { .i = TEXT_OBJ_INNER_ENTIRE }
+	},
+	[VIS_ACTION_TEXT_OBJECT_FUNCTION_OUTER] = {
+		"text-object-function-outer",
+		"A whole C-like function",
+		 textobj, { .i = TEXT_OBJ_OUTER_FUNCTION }
+	},
+	[VIS_ACTION_TEXT_OBJECT_FUNCTION_INNER] = {
+		"text-object-function-inner",
+		"A whole C-like function body",
+		 textobj, { .i = TEXT_OBJ_INNER_FUNCTION }
+	},
+	[VIS_ACTION_TEXT_OBJECT_LINE_OUTER] = {
+		"text-object-line-outer",
+		"The whole line",
+		 textobj, { .i = TEXT_OBJ_OUTER_LINE }
+	},
+	[VIS_ACTION_TEXT_OBJECT_LINE_INNER] = {
+		"text-object-line-inner",
+		"The whole line, excluding leading and trailing whitespace",
+		textobj, { .i = TEXT_OBJ_INNER_LINE }
+	},
+	[VIS_ACTION_MOTION_CHARWISE] = {
+		"motion-charwise",
+		"Force motion to be charwise",
+		motiontype, { .i = CHARWISE }
+	},
+	[VIS_ACTION_MOTION_LINEWISE] = {
+		"motion-linewise",
+		"Force motion to be linewise",
+		motiontype, { .i = LINEWISE }
+	},
+};
+
 static KeyBinding basic_movement[] = {
-	{ "<C-z>"                    , suspend,  { NULL                          } },
-	{ "<Left>"                   , movement, { .i = MOVE_CHAR_PREV           } },
-	{ "<S-Left>"                 , movement, { .i = MOVE_LONGWORD_START_PREV } },
-	{ "<Right>"                  , movement, { .i = MOVE_CHAR_NEXT           } },
-	{ "<S-Right>"                , movement, { .i = MOVE_LONGWORD_START_NEXT } },
-	{ "<Up>"                     , movement, { .i = MOVE_LINE_UP             } },
-	{ "<Down>"                   , movement, { .i = MOVE_LINE_DOWN           } },
-	{ "<PageUp>"                 , wscroll,  { .i = -PAGE                    } },
-	{ "<PageDown>"               , wscroll,  { .i = +PAGE                    } },
-	{ "<Home>"                   , movement, { .i = MOVE_LINE_START          } },
-	{ "<End>"                    , movement, { .i = MOVE_LINE_FINISH         } },
-	{ /* empty last element, array terminator */                               },
+	{ "<C-z>",         ACTION(EDITOR_SUSPEND)                  },
+	{ "<Left>",        ACTION(CURSOR_CHAR_PREV)                },
+	{ "<S-Left>",      ACTION(CURSOR_LONGWORD_START_PREV)      },
+	{ "<Right>",       ACTION(CURSOR_CHAR_NEXT)                },
+	{ "<S-Right>",     ACTION(CURSOR_LONGWORD_START_NEXT)      },
+	{ "<Up>",          ACTION(CURSOR_LINE_UP)                  },
+	{ "<Down>",        ACTION(CURSOR_LINE_DOWN)                },
+	{ "<PageUp>",      ACTION(WINDOW_PAGE_UP)                  },
+	{ "<PageDown>",    ACTION(WINDOW_PAGE_DOWN)                },
+	{ "<S-PageUp>",    ACTION(WINDOW_HALFPAGE_UP)              },
+	{ "<S-PageDown>",  ACTION(WINDOW_HALFPAGE_DOWN)            },
+	{ "<Home>",        ACTION(CURSOR_LINE_BEGIN)               },
+	{ "<End>",         ACTION(CURSOR_LINE_END)                 },
+	{ /* empty last element, array terminator */               },
 };
 
 static KeyBinding vis_movements[] = {
-	{ "<Backspace>"              , movement,     { .i = MOVE_CHAR_PREV           } },
-	{ "h"                        , movement,     { .i = MOVE_CHAR_PREV           } },
-	{ " "                        , movement,     { .i = MOVE_CHAR_NEXT           } },
-	{ "l"                        , movement,     { .i = MOVE_CHAR_NEXT           } },
-	{ "k"                        , movement,     { .i = MOVE_LINE_UP             } },
-	{ "C-p"                      , movement,     { .i = MOVE_LINE_UP             } },
-	{ "gk"                       , movement,     { .i = MOVE_SCREEN_LINE_UP      } },
-	{ "g<Up>"                    , movement,     { .i = MOVE_SCREEN_LINE_UP      } },
-	{ "j"                        , movement,     { .i = MOVE_LINE_DOWN           } },
-	{ "<C-j>"                    , movement,     { .i = MOVE_LINE_DOWN           } },
-	{ "<C-n>"                    , movement,     { .i = MOVE_LINE_DOWN           } },
-	{ "<Enter>"                  , movement,     { .i = MOVE_LINE_DOWN           } },
-	{ "gj"                       , movement,     { .i = MOVE_SCREEN_LINE_DOWN    } },
-	{ "g<Down>"                  , movement,     { .i = MOVE_SCREEN_LINE_DOWN    } },
-	{ "^"                        , movement,     { .i = MOVE_LINE_START          } },
-	{ "g_"                       , movement,     { .i = MOVE_LINE_FINISH         } },
-	{ "$"                        , movement,     { .i = MOVE_LINE_LASTCHAR       } },
-	{ "%"                        , movement,     { .i = MOVE_BRACKET_MATCH       } },
-	{ "b"                        , movement,     { .i = MOVE_WORD_START_PREV     } },
-	{ "B"                        , movement,     { .i = MOVE_LONGWORD_START_PREV } },
-	{ "w"                        , movement,     { .i = MOVE_WORD_START_NEXT     } },
-	{ "W"                        , movement,     { .i = MOVE_LONGWORD_START_NEXT } },
-	{ "ge"                       , movement,     { .i = MOVE_WORD_END_PREV       } },
-	{ "gE"                       , movement,     { .i = MOVE_LONGWORD_END_PREV   } },
-	{ "e"                        , movement,     { .i = MOVE_WORD_END_NEXT       } },
-	{ "E"                        , movement,     { .i = MOVE_LONGWORD_END_NEXT   } },
-	{ "{"                        , movement,     { .i = MOVE_PARAGRAPH_PREV      } },
-	{ "}"                        , movement,     { .i = MOVE_PARAGRAPH_NEXT      } },
-	{ "("                        , movement,     { .i = MOVE_SENTENCE_PREV       } },
-	{ ")"                        , movement,     { .i = MOVE_SENTENCE_NEXT       } },
-	{ "[["                       , movement,     { .i = MOVE_FUNCTION_START_PREV } },
-	{ "[]"                       , movement,     { .i = MOVE_FUNCTION_END_PREV   } },
-	{ "]["                       , movement,     { .i = MOVE_FUNCTION_START_NEXT } },
-	{ "]]"                       , movement,     { .i = MOVE_FUNCTION_END_NEXT   } },
-	{ "gg"                       , gotoline,     { .i = -1                       } },
-	{ "g0"                       , movement,     { .i = MOVE_SCREEN_LINE_BEGIN   } },
-	{ "gm"                       , movement,     { .i = MOVE_SCREEN_LINE_MIDDLE  } },
-	{ "g$"                       , movement,     { .i = MOVE_SCREEN_LINE_END     } },
-	{ "G"                        , gotoline,     { .i = +1                       } },
-	{ "|"                        , movement,     { .i = MOVE_COLUMN              } },
-	{ "n"                        , movement,     { .i = MOVE_SEARCH_FORWARD      } },
-	{ "N"                        , movement,     { .i = MOVE_SEARCH_BACKWARD     } },
-	{ "H"                        , movement,     { .i = MOVE_WINDOW_LINE_TOP     } },
-	{ "M"                        , movement,     { .i = MOVE_WINDOW_LINE_MIDDLE  } },
-	{ "L"                        , movement,     { .i = MOVE_WINDOW_LINE_BOTTOM  } },
-	{ "*"                        , movement,     { .i = MOVE_SEARCH_WORD_FORWARD } },
-	{ "#"                        , movement,     { .i = MOVE_SEARCH_WORD_BACKWARD} },
-	{ "f"                        , movement_key, { .i = MOVE_RIGHT_TO            } },
-	{ "F"                        , movement_key, { .i = MOVE_LEFT_TO             } },
-	{ "t"                        , movement_key, { .i = MOVE_RIGHT_TILL          } },
-	{ "T"                        , movement_key, { .i = MOVE_LEFT_TILL           } },
-	{ ";"                        , totill_repeat, { NULL                         } },
-	{ ","                        , totill_reverse,{ NULL                         } },
-	{ "/"                        , prompt_search,{ .s = "/"                      } },
-	{ "?"                        , prompt_search,{ .s = "?"                      } },
-	{ "`"                        , mark,         { NULL                          } },
-	{ "'"                        , mark_line,    { NULL                          } },
-	{ /* empty last element, array terminator */                                   },
+	{ "h",             ACTION(CURSOR_CHAR_PREV)                },
+	{ "<Backspace>",   ALIAS("h")                              },
+	{ "l",             ACTION(CURSOR_CHAR_NEXT)                },
+	{ "<Space>",       ALIAS("l")                              },
+	{ "k",             ACTION(CURSOR_LINE_UP)                  },
+	{ "C-p",           ALIAS("k")                              },
+	{ "j",             ACTION(CURSOR_LINE_DOWN)                },
+	{ "<C-j>",         ALIAS("j")                              },
+	{ "<C-n>",         ALIAS("j")                              },
+	{ "<Enter>",       ALIAS("j")                              },
+	{ "gk",            ACTION(CURSOR_SCREEN_LINE_UP)           },
+	{ "g<Up>",         ALIAS("gk")                             },
+	{ "gj",            ACTION(CURSOR_SCREEN_LINE_DOWN)         },
+	{ "g<Down>",       ALIAS("gj")                             },
+	{ "^",             ACTION(CURSOR_LINE_START)               },
+	{ "g_",            ACTION(CURSOR_LINE_FINISH)              },
+	{ "$",             ACTION(CURSOR_LINE_END)                 },
+	{ "%",             ACTION(CURSOR_BRACKET_MATCH)            },
+	{ "b",             ACTION(CURSOR_WORD_START_PREV)          },
+	{ "B",             ACTION(CURSOR_LONGWORD_START_PREV)      },
+	{ "w",             ACTION(CURSOR_WORD_START_NEXT)          },
+	{ "W",             ACTION(CURSOR_LONGWORD_START_NEXT)      },
+	{ "ge",            ACTION(CURSOR_WORD_END_PREV)            },
+	{ "gE",            ACTION(CURSOR_LONGWORD_END_PREV)        },
+	{ "e",             ACTION(CURSOR_WORD_END_NEXT)            },
+	{ "E",             ACTION(CURSOR_LONGWORD_END_NEXT)        },
+	{ "{",             ACTION(CURSOR_PARAGRAPH_PREV)           },
+	{ "}",             ACTION(CURSOR_PARAGRAPH_NEXT)           },
+	{ "(",             ACTION(CURSOR_SENTENCE_PREV)            },
+	{ ")",             ACTION(CURSOR_SENTENCE_NEXT)            },
+	{ "[[",            ACTION(CURSOR_FUNCTION_START_PREV)      },
+	{ "[]",            ACTION(CURSOR_FUNCTION_END_PREV)        },
+	{ "][",            ACTION(CURSOR_FUNCTION_START_NEXT)      },
+	{ "]]",            ACTION(CURSOR_FUNCTION_END_NEXT)        },
+	{ "gg",            ACTION(CURSOR_LINE_FIRST)               },
+	{ "g0",            ACTION(CURSOR_SCREEN_LINE_BEGIN)        },
+	{ "gm",            ACTION(CURSOR_SCREEN_LINE_MIDDLE)       },
+	{ "g$",            ACTION(CURSOR_SCREEN_LINE_END)          },
+	{ "G",             ACTION(CURSOR_LINE_LAST)                },
+	{ "|",             ACTION(CURSOR_COLUMN)                   },
+	{ "n",             ACTION(CURSOR_SEARCH_FORWARD)           },
+	{ "N",             ACTION(CURSOR_SEARCH_BACKWARD)          },
+	{ "H",             ACTION(CURSOR_WINDOW_LINE_TOP)          },
+	{ "M",             ACTION(CURSOR_WINDOW_LINE_MIDDLE)       },
+	{ "L",             ACTION(CURSOR_WINDOW_LINE_BOTTOM)       },
+	{ "*",             ACTION(CURSOR_SEARCH_WORD_FORWARD)      },
+	{ "#",             ACTION(CURSOR_SEARCH_WORD_BACKWARD)     },
+	{ "f",             ACTION(TO_RIGHT)                        },
+	{ "F",             ACTION(TO_LEFT)                         },
+	{ "t",             ACTION(TILL_RIGHT)                      },
+	{ "T",             ACTION(TILL_LEFT)                       },
+	{ ";",             ACTION(TOTILL_REPEAT)                   },
+	{ ",",             ACTION(TOTILL_REVERSE)                  },
+	{ "/",             ACTION(SEARCH_FORWARD)                  },
+	{ "?",             ACTION(SEARCH_BACKWARD)                 },
+	{ "`",             ACTION(MARK_GOTO)                       },
+	{ "'",             ACTION(MARK_GOTO_LINE)                  },
+	{ /* empty last element, array terminator */               },
 };
 
 static KeyBinding vis_textobjs[] = {
-	{ "aw",  textobj, { .i = TEXT_OBJ_OUTER_WORD           } },
-	{ "aW",  textobj, { .i = TEXT_OBJ_OUTER_LONGWORD       } },
-	{ "as",  textobj, { .i = TEXT_OBJ_SENTENCE             } },
-	{ "ap",  textobj, { .i = TEXT_OBJ_PARAGRAPH            } },
-	{ "a[",  textobj, { .i = TEXT_OBJ_OUTER_SQUARE_BRACKET } },
-	{ "a]",  textobj, { .i = TEXT_OBJ_OUTER_SQUARE_BRACKET } },
-	{ "a(",  textobj, { .i = TEXT_OBJ_OUTER_PARANTHESE     } },
-	{ "a)",  textobj, { .i = TEXT_OBJ_OUTER_PARANTHESE     } },
-	{ "ab",  textobj, { .i = TEXT_OBJ_OUTER_PARANTHESE     } },
-	{ "a<",  textobj, { .i = TEXT_OBJ_OUTER_ANGLE_BRACKET  } },
-	{ "a>",  textobj, { .i = TEXT_OBJ_OUTER_ANGLE_BRACKET  } },
-	{ "a{",  textobj, { .i = TEXT_OBJ_OUTER_CURLY_BRACKET  } },
-	{ "a}",  textobj, { .i = TEXT_OBJ_OUTER_CURLY_BRACKET  } },
-	{ "aB",  textobj, { .i = TEXT_OBJ_OUTER_CURLY_BRACKET  } },
-	{ "a\"", textobj, { .i = TEXT_OBJ_OUTER_QUOTE          } },
-	{ "a\'", textobj, { .i = TEXT_OBJ_OUTER_SINGLE_QUOTE   } },
-	{ "a`",  textobj, { .i = TEXT_OBJ_OUTER_BACKTICK       } },
-	{ "ae",  textobj, { .i = TEXT_OBJ_OUTER_ENTIRE         } },
-	{ "af",  textobj, { .i = TEXT_OBJ_OUTER_FUNCTION       } },
-	{ "al",  textobj, { .i = TEXT_OBJ_OUTER_LINE           } },
-	{ "iw",  textobj, { .i = TEXT_OBJ_INNER_WORD           } },
-	{ "iW",  textobj, { .i = TEXT_OBJ_INNER_LONGWORD       } },
-	{ "is",  textobj, { .i = TEXT_OBJ_SENTENCE             } },
-	{ "ip",  textobj, { .i = TEXT_OBJ_PARAGRAPH            } },
-	{ "i[",  textobj, { .i = TEXT_OBJ_INNER_SQUARE_BRACKET } },
-	{ "i]",  textobj, { .i = TEXT_OBJ_INNER_SQUARE_BRACKET } },
-	{ "i(",  textobj, { .i = TEXT_OBJ_INNER_PARANTHESE     } },
-	{ "i)",  textobj, { .i = TEXT_OBJ_INNER_PARANTHESE     } },
-	{ "ib",  textobj, { .i = TEXT_OBJ_INNER_PARANTHESE     } },
-	{ "i<",  textobj, { .i = TEXT_OBJ_INNER_ANGLE_BRACKET  } },
-	{ "i>",  textobj, { .i = TEXT_OBJ_INNER_ANGLE_BRACKET  } },
-	{ "i{",  textobj, { .i = TEXT_OBJ_INNER_CURLY_BRACKET  } },
-	{ "i}",  textobj, { .i = TEXT_OBJ_INNER_CURLY_BRACKET  } },
-	{ "iB",  textobj, { .i = TEXT_OBJ_INNER_CURLY_BRACKET  } },
-	{ "i\"", textobj, { .i = TEXT_OBJ_INNER_QUOTE          } },
-	{ "i\'", textobj, { .i = TEXT_OBJ_INNER_SINGLE_QUOTE   } },
-	{ "i`",  textobj, { .i = TEXT_OBJ_INNER_BACKTICK       } },
-	{ "ie",  textobj, { .i = TEXT_OBJ_INNER_ENTIRE         } },
-	{ "if",  textobj, { .i = TEXT_OBJ_INNER_FUNCTION       } },
-	{ "il",  textobj, { .i = TEXT_OBJ_INNER_LINE           } },
+	{ "aw",  ACTION(TEXT_OBJECT_WORD_OUTER)                  },
+	{ "aW",  ACTION(TEXT_OBJECT_LONGWORD_OUTER)              },
+	{ "as",  ACTION(TEXT_OBJECT_SENTENCE)                    },
+	{ "ap",  ACTION(TEXT_OBJECT_PARAGRAPH)                   },
+	{ "a[",  ACTION(TEXT_OBJECT_SQUARE_BRACKET_OUTER)        },
+	{ "a]",  ALIAS("a[")                                     },
+	{ "a(",  ACTION(TEXT_OBJECT_PARANTHESE_OUTER)            },
+	{ "a)",  ALIAS("a(")                                     },
+	{ "ab",  ALIAS("a(")                                     },
+	{ "a<",  ACTION(TEXT_OBJECT_ANGLE_BRACKET_OUTER)         },
+	{ "a>",  ALIAS("a<")                                     },
+	{ "a{",  ACTION(TEXT_OBJECT_CURLY_BRACKET_OUTER)         },
+	{ "a}",  ALIAS("a{")                                     },
+	{ "aB",  ALIAS("a{")                                     },
+	{ "a\"", ACTION(TEXT_OBJECT_QUOTE_OUTER)                 },
+	{ "a\'", ACTION(TEXT_OBJECT_SINGLE_QUOTE_OUTER)          },
+	{ "a`",  ACTION(TEXT_OBJECT_BACKTICK_OUTER)              },
+	{ "ae",  ACTION(TEXT_OBJECT_ENTIRE_OUTER)                },
+	{ "af",  ACTION(TEXT_OBJECT_FUNCTION_OUTER)              },
+	{ "al",  ACTION(TEXT_OBJECT_LINE_OUTER)                  },
+	{ "iw",  ACTION(TEXT_OBJECT_WORD_INNER)                  },
+	{ "iW",  ACTION(TEXT_OBJECT_LONGWORD_INNER)              },
+	{ "is",  ACTION(TEXT_OBJECT_SENTENCE)                    },
+	{ "ip",  ACTION(TEXT_OBJECT_PARAGRAPH)                   },
+	{ "i[",  ACTION(TEXT_OBJECT_SQUARE_BRACKET_INNER)        },
+	{ "i]",  ALIAS("i[")                                     },
+	{ "i(",  ACTION(TEXT_OBJECT_PARANTHESE_INNER)            },
+	{ "i)",  ALIAS("i(")                                     },
+	{ "ib",  ALIAS("ib")                                     },
+	{ "i<",  ACTION(TEXT_OBJECT_ANGLE_BRACKET_INNER)         },
+	{ "i>",  ALIAS("i<")                                     },
+	{ "i{",  ACTION(TEXT_OBJECT_CURLY_BRACKET_INNER)         },
+	{ "i}",  ALIAS("i{")                                     },
+	{ "iB",  ALIAS("i{")                                     },
+	{ "i\"", ACTION(TEXT_OBJECT_QUOTE_INNER)                 },
+	{ "i\'", ACTION(TEXT_OBJECT_SINGLE_QUOTE_INNER)          },
+	{ "i`",  ACTION(TEXT_OBJECT_BACKTICK_INNER)              },
+	{ "ie",  ACTION(TEXT_OBJECT_ENTIRE_INNER)                },
+	{ "if",  ACTION(TEXT_OBJECT_FUNCTION_INNER)              },
+	{ "il",  ACTION(TEXT_OBJECT_LINE_INNER)                  },
 	{ /* empty last element, array terminator */             },
 };
 
 static KeyBinding vis_operators[] = {
-	{ "0"               , zero,          { NULL                 } },
-	{ "1"               , count,         { .i = 1               } },
-	{ "2"               , count,         { .i = 2               } },
-	{ "3"               , count,         { .i = 3               } },
-	{ "4"               , count,         { .i = 4               } },
-	{ "5"               , count,         { .i = 5               } },
-	{ "6"               , count,         { .i = 6               } },
-	{ "7"               , count,         { .i = 7               } },
-	{ "8"               , count,         { .i = 8               } },
-	{ "9"               , count,         { .i = 9               } },
-	{ "d"               , operator,      { .i = OP_DELETE       } },
-	{ "c"               , operator,      { .i = OP_CHANGE       } },
-	{ "y"               , operator,      { .i = OP_YANK         } },
-	{ "p"               , put,           { .i = PUT_AFTER       } },
-	{ "P"               , put,           { .i = PUT_BEFORE      } },
-	{ "gp"              , put,           { .i = PUT_AFTER_END   } },
-	{ "gP"              , put,           { .i = PUT_BEFORE_END  } },
-	{ ">"               , operator,      { .i = OP_SHIFT_RIGHT  } },
-	{ "<"               , operator,      { .i = OP_SHIFT_LEFT   } },
-	{ "gU"              , changecase,    { .i = +1              } },
-	{ "~"               , changecase,    { .i =  0              } },
-	{ "g~"              , changecase,    { .i =  0              } },
-	{ "gu"              , changecase,    { .i = -1              } },
-	{ "\""              , reg,           { NULL                 } },
-	{ /* empty last element, array terminator */                           },
+	{ "0",              ACTION(COUNT)                             },
+	{ "1",              ACTION(COUNT)                             },
+	{ "2",              ACTION(COUNT)                             },
+	{ "3",              ACTION(COUNT)                             },
+	{ "4",              ACTION(COUNT)                             },
+	{ "5",              ACTION(COUNT)                             },
+	{ "6",              ACTION(COUNT)                             },
+	{ "7",              ACTION(COUNT)                             },
+	{ "8",              ACTION(COUNT)                             },
+	{ "9",              ACTION(COUNT)                             },
+	{ "d",              ACTION(OPERATOR_DELETE)                   },
+	{ "c",              ACTION(OPERATOR_CHANGE)                   },
+	{ "y",              ACTION(OPERATOR_YANK)                     },
+	{ "p",              ACTION(PUT_AFTER)                         },
+	{ "P",              ACTION(PUT_BEFORE)                        },
+	{ "gp",             ACTION(PUT_AFTER_END)                     },
+	{ "gP",             ACTION(PUT_BEFORE_END)                    },
+	{ ">",              ACTION(OPERATOR_SHIFT_RIGHT)              },
+	{ "<",              ACTION(OPERATOR_SHIFT_LEFT)               },
+	{ "gU",             ACTION(OPERATOR_CASE_UPPER)               },
+	{ "~",              ACTION(OPERATOR_CASE_SWAP)                },
+	{ "g~",             ACTION(OPERATOR_CASE_SWAP)                },
+	{ "gu",             ACTION(OPERATOR_CASE_LOWER)               },
+	{ "\"",             ACTION(REGISTER)                          },
+	{ /* empty last element, array terminator */                  },
 };
 
 static void vis_mode_operator_enter(Mode *old) {
@@ -228,102 +1151,98 @@ static void vis_mode_operator_input(const char *str, size_t len) {
 }
 
 static KeyBinding vis_operator_options[] = {
-	{ "v"                 , motiontype,    { .i = CHARWISE        } },
-	{ "V"                 , motiontype,    { .i = LINEWISE        } },
-	{ /* empty last element, array terminator */                           },
+	{ "v",    ACTION(MOTION_CHARWISE)                               },
+	{ "V",    ACTION(MOTION_LINEWISE)                               },
+	{ /* empty last element, array terminator */                    },
 };
 
 static KeyBinding vis_mode_normal[] = {
-	{ "<Escape>",         cursors_clear,  {                           } },
-	{ "<C-k>",            cursors_new,    { .i = -1                   } },
-	{ "<C-j>",            cursors_new,    { .i = +1                   } },
-	{ "<C-a>",            cursors_align,  {                           } },
-	{ "<C-n>",            cursors_select, {                           } },
-	{ "<C-p>",            cursors_remove, {                           } },
-	{ "<C-w>n",           cmd,            { .s = "open"               } },
-	{ "<C-w>c",           cmd,            { .s = "q"                  } },
-	{ "<C-w>s",           cmd,            { .s = "split"              } },
-	{ "<C-w>v",           cmd,            { .s = "vsplit"             } },
-	{ "<C-w>j",           call,           { .f = editor_window_next   } },
-	{ "<C-w>l",           call,           { .f = editor_window_next   } },
-	{ "<C-w>k",           call,           { .f = editor_window_prev   } },
-	{ "<C-w>h",           call,           { .f = editor_window_prev   } },
-	{ "<C-w><C-j>",       call,           { .f = editor_window_next   } },
-	{ "<C-w><C-l>",       call,           { .f = editor_window_next   } },
-	{ "<C-w><C-k>",       call,           { .f = editor_window_prev   } },
-	{ "<C-w><C-w>",       call,           { .f = editor_window_next   } },
-	{ "<C-w><C-h>",       call,           { .f = editor_window_prev   } },
-	{ "<C-w><Backspace>", call,           { .f = editor_window_prev   } },
-	{ "<C-b>",            wscroll,        { .i = -PAGE                } },
-	{ "<C-f>",            wscroll,        { .i = +PAGE                } },
-	{ "<C-u>",            wscroll,        { .i = -PAGE_HALF           } },
-	{ "<C-d>",            wscroll,        { .i = +PAGE_HALF           } },
-	{ "<C-e>",            wslide,         { .i = -1                   } },
-	{ "<C-y>",            wslide,         { .i = +1                   } },
-	{ "<C-o>",            jumplist,       { .i = -1                   } },
-	{ "<C-i>",            jumplist,       { .i = +1                   } },
-	{ "g;",               changelist,     { .i = -1                   } },
-	{ "g,",               changelist,     { .i = +1                   } },
-	{ "a",                insertmode,     { .i = MOVE_CHAR_NEXT       } },
-	{ "A",                insertmode,     { .i = MOVE_LINE_END        } },
-	{ "C",                change,         { .i = MOVE_LINE_END        } },
-	{ "D",                delete,         { .i = MOVE_LINE_END        } },
-	{ "I",                insertmode,     { .i = MOVE_LINE_START      } },
-	{ ".",                repeat,         { NULL                      } },
-	{ "o",                openline,       { .i = MOVE_LINE_NEXT       } },
-	{ "O",                openline,       { .i = MOVE_LINE_PREV       } },
-	{ "J",                join,           { .i = MOVE_LINE_NEXT       } },
-	{ "x",                delete,         { .i = MOVE_CHAR_NEXT       } },
-	{ "r",                replace,        { NULL                      } },
-	{ "i",                switchmode,     { .i = VIS_MODE_INSERT      } },
-	{ "v",                switchmode,     { .i = VIS_MODE_VISUAL      } },
-	{ "V",                switchmode,     { .i = VIS_MODE_VISUAL_LINE } },
-	{ "R",                switchmode,     { .i = VIS_MODE_REPLACE     } },
-	{ "S",                operator_twice, { .i = OP_CHANGE            } },
-	{ "s",                change,         { .i = MOVE_CHAR_NEXT       } },
-	{ "Y",                operator_twice, { .i = OP_YANK              } },
-	{ "X",                delete,         { .i = MOVE_CHAR_PREV       } },
-	{ "u",                undo,           { NULL                      } },
-	{ "<C-r>",            redo,           { NULL                      } },
-	{ "g+",               later,          { NULL                      } },
-	{ "g-",               earlier,        { NULL                      } },
-	{ "<C-l>",            call,           { .f = editor_draw          } },
-	{ ":",                prompt_cmd,     { .s = ""                   } },
-	{ "ZZ",               cmd,            { .s = "wq"                 } },
-	{ "ZQ",               cmd,            { .s = "q!"                 } },
-	{ "zt",               window,         { .w = view_redraw_top      } },
-	{ "zz",               window,         { .w = view_redraw_center   } },
-	{ "zb",               window,         { .w = view_redraw_bottom   } },
-	{ "q",                macro_record,   { NULL                      } },
-	{ "@",                macro_replay,   { NULL                      } },
-	{ "gv",               selection_restore, { NULL                   } },
-	{ "m",                mark_set,       { NULL                      } },
+	{ "<Escape>",         ACTION(CURSORS_REMOVE_ALL)                    },
+	{ "<C-k>",            ACTION(CURSORS_NEW_LINE_ABOVE)                },
+	{ "<C-j>",            ACTION(CURSORS_NEW_LINE_BELOW)                },
+	{ "<C-a>",            ACTION(CURSORS_ALIGN)                         },
+	{ "<C-n>",            ACTION(CURSOR_SELECT_WORD)                    },
+	{ "<C-p>",            ACTION(CURSORS_REMOVE_LAST)                   },
+	{ "<C-w>n",           ALIAS(":open<Enter>")                         },
+	{ "<C-w>c",           ALIAS(":q<Enter>")                            },
+	{ "<C-w>s",           ALIAS(":split<Enter>")                        },
+	{ "<C-w>v",           ALIAS(":vsplit<Enter>")                       },
+	{ "<C-w>j",           ACTION(WINDOW_NEXT)                           },
+	{ "<C-w>l",           ALIAS("<C-w>j")                               },
+	{ "<C-w><C-w>",       ALIAS("<C-w>j")                               },
+	{ "<C-w><C-j>",       ALIAS("<C-w>j")                               },
+	{ "<C-w><C-l>",       ALIAS("<C-w>j")                               },
+	{ "<C-w>k",           ACTION(WINDOW_PREV)                           },
+	{ "<C-w>h",           ALIAS("<C-w>k")                               },
+	{ "<C-w><C-h>",       ALIAS("<C-w>k")                               },
+	{ "<C-w><C-k>",       ALIAS("<C-w>k")                               },
+	{ "<C-w><Backspace>", ALIAS("<C-w>k")                               },
+	{ "<C-b>",            ALIAS("<PageUp>")                             },
+	{ "<C-f>",            ALIAS("<PageDown>")                           },
+	{ "<C-u>",            ALIAS("<S-PageUp>")                           },
+	{ "<C-d>",            ALIAS("<S-PageDown>")                         },
+	{ "<C-e>",            ACTION(WINDOW_SLIDE_UP)                       },
+	{ "<C-y>",            ACTION(WINDOW_SLIDE_DOWN)                     },
+	{ "<C-o>",            ACTION(JUMPLIST_PREV)                         },
+	{ "<C-i>",            ACTION(JUMPLIST_NEXT)                         },
+	{ "g;",               ACTION(CHANGELIST_PREV)                       },
+	{ "g,",               ACTION(CHANGELIST_NEXT)                       },
+	{ "a",                ALIAS("li")                                   },
+	{ "A",                ALIAS("$a")                                   },
+	{ "C",                ALIAS("c$")                                   },
+	{ "D",                ALIAS("d$")                                   },
+	{ "I",                ALIAS("^i")                                   },
+	{ ".",                ACTION(REPEAT)                                },
+	{ "o",                ACTION(OPEN_LINE_BELOW)                       },
+	{ "O",                ACTION(OPEN_LINE_ABOVE)                       },
+	{ "J",                ACTION(JOIN_LINE_BELOW)                       },
+	{ "x",                ACTION(DELETE_CHAR_NEXT)                      },
+	{ "r",                ACTION(REPLACE_CHAR)                          },
+	{ "i",                ACTION(MODE_INSERT)                           },
+	{ "v",                ACTION(MODE_VISUAL)                           },
+	{ "V",                ACTION(MODE_VISUAL_LINE)                      },
+	{ "R",                ACTION(MODE_REPLACE)                          },
+	{ "S",                ALIAS("cc")                                   },
+	{ "s",                ALIAS("cl")                                   },
+	{ "Y",                ALIAS("yy")                                   },
+	{ "X",                ALIAS("dh")                                   },
+	{ "u",                ACTION(UNDO)                                  },
+	{ "<C-r>",            ACTION(REDO)                                  },
+	{ "g+",               ACTION(LATER)                                 },
+	{ "g-",               ACTION(EARLIER)                               },
+	{ "<C-l>",            ACTION(REDRAW)                                },
+	{ ":",                ACTION(PROMPT_SHOW)                           },
+	{ "ZZ",               ALIAS(":wq<Enter>")                           },
+	{ "ZQ",               ALIAS(":q!<Enter>")                           },
+	{ "zt",               ACTION(WINDOW_REDRAW_TOP)                     },
+	{ "zz",               ACTION(WINDOW_REDRAW_CENTER)                  },
+	{ "zb",               ACTION(WINDOW_REDRAW_BOTTOM)                  },
+	{ "q",                ACTION(MACRO_RECORD)                          },
+	{ "@",                ACTION(MACRO_REPLAY)                          },
+	{ "gv",               ACTION(SELECTION_RESTORE)                     },
+	{ "m",                ACTION(MARK_SET)                              },
 	{ /* empty last element, array terminator */                        },
 };
 
 static KeyBinding vis_mode_visual[] = {
-	{ "<C-n>",              cursors_select_next, {                      } },
-	{ "<C-x>",              cursors_select_skip, {                      } },
-	{ "<C-p>",              cursors_remove, {                           } },
-	{ "I",                  cursors_split,  { .i = -1                   } },
-	{ "A",                  cursors_split,  { .i = +1                   } },
-	{ "<Backspace>",        operator,       { .i = OP_DELETE            } },
-	{ "<DEL>",              operator,       { .i = OP_DELETE            } },
-	{ "<Escape>",           switchmode,     { .i = VIS_MODE_NORMAL      } },
-	{ "<C-c>",              switchmode,     { .i = VIS_MODE_NORMAL      } },
-	{ "v",                  switchmode,     { .i = VIS_MODE_NORMAL      } },
-	{ "V",                  switchmode,     { .i = VIS_MODE_VISUAL_LINE } },
-	{ ":",                  prompt_cmd,     { .s = "'<,'>"              } },
-	{ "<C-h>",              operator,       { .i = OP_DELETE            } },
-	{ "d",                  operator,       { .i = OP_DELETE            } },
-	{ "x",                  operator,       { .i = OP_DELETE            } },
-	{ "y",                  operator,       { .i = OP_YANK              } },
-	{ "c",                  operator,       { .i = OP_CHANGE            } },
-	{ "r",                  operator,       { .i = OP_CHANGE            } },
-	{ "s",                  operator,       { .i = OP_CHANGE            } },
-	{ "J",                  operator,       { .i = OP_JOIN              } },
-	{ "o",                  selection_end,  { NULL                      } },
-	{ /* empty last element, array terminator */                                 },
+	{ "<C-n>",              ACTION(CURSORS_NEW_MATCH_NEXT)                },
+	{ "<C-x>",              ACTION(CURSORS_NEW_MATCH_SKIP)                },
+	{ "<C-p>",              ACTION(CURSORS_REMOVE_LAST)                   },
+	{ "I",                  ACTION(CURSORS_NEW_LINES_BEGIN)               },
+	{ "A",                  ACTION(CURSORS_NEW_LINES_END)                 },
+	{ "<Backspace>",        ALIAS("d")                                    },
+	{ "<DEL>",              ALIAS("d")                                    },
+	{ "<Escape>",           ACTION(MODE_NORMAL)                           },
+	{ "<C-c>",              ALIAS("<Escape>")                             },
+	{ "v",                  ALIAS("<Escape>")                             },
+	{ "V",                  ACTION(MODE_VISUAL_LINE)                      },
+	{ ":",                  ACTION(PROMPT_SHOW_VISUAL)                    },
+	{ "x",                  ALIAS("d")                                    },
+	{ "r",                  ALIAS("c")                                    },
+	{ "s",                  ALIAS("c")                                    },
+	{ "J",                  ACTION(JOIN_LINES)                            },
+	{ "o",                  ACTION(SELECTION_FLIP)                        },
+	{ /* empty last element, array terminator */                          },
 };
 
 static void vis_mode_visual_enter(Mode *old) {
@@ -342,8 +1261,8 @@ static void vis_mode_visual_leave(Mode *new) {
 }
 
 static KeyBinding vis_mode_visual_line[] = {
-	{ "v",                switchmode,      { .i = VIS_MODE_VISUAL   } },
-	{ "V",                switchmode,      { .i = VIS_MODE_NORMAL   } },
+	{ "v",      ACTION(MODE_VISUAL)                                   },
+	{ "V",      ACTION(MODE_NORMAL)                                   },
 	{ /* empty last element, array terminator */                      },
 };
 
@@ -366,26 +1285,20 @@ static void vis_mode_visual_line_leave(Mode *new) {
 }
 
 static KeyBinding vis_mode_readline[] = {
-	{ "<Backspace>",    delete,          { .i = MOVE_CHAR_PREV           } },
-	{ "<Escape>",       switchmode,      { .i = VIS_MODE_NORMAL          } },
-	{ "<C-c>",          switchmode,      { .i = VIS_MODE_NORMAL          } },
-	{ "<C-d>",          delete ,         { .i = MOVE_CHAR_NEXT           } },
-	{ "<C-w>",          delete,          { .i = MOVE_LONGWORD_START_PREV } },
-	{ "<C-u>",          delete,          { .i = MOVE_LINE_BEGIN          } },
-	{ /* empty last element, array terminator */                           },
+	{ "<Backspace>",    ACTION(DELETE_CHAR_PREV)                    },
+	{ "<Escape>",       ACTION(MODE_NORMAL)                         },
+	{ "<C-c>",          ALIAS("<Enter>")                            },
+	{ "<C-d>",          ACTION(DELETE_CHAR_NEXT)                    },
+	{ "<C-w>",          ACTION(DELETE_WORD_PREV)                    },
+	{ "<C-u>",          ACTION(DELETE_LINE_BEGIN)                   },
+	{ /* empty last element, array terminator */                    },
 };
 
 static KeyBinding vis_mode_prompt[] = {
-	{ "<Backspace>",    prompt_backspace,{ .s = NULL              } },
-	{ "<Enter>",        prompt_enter,    { NULL                   } },
-	{ "<C-j>",          prompt_enter,    { NULL                   } },
-	{ "<Up>",           prompt_up,       { NULL                   } },
-	{ "<Down>",         prompt_down,     { NULL                   } },
-	{ "<Home>",         movement,        { .i = MOVE_FILE_BEGIN   } },
-	{ "<C-b>",          movement,        { .i = MOVE_FILE_BEGIN   } },
-	{ "<End>",          movement,        { .i = MOVE_FILE_END     } },
-	{ "<C-e>",          movement,        { .i = MOVE_FILE_END     } },
-	{ "<Tab>",          NULL,            { NULL                   } },
+	{ "<Backspace>",    ACTION(PROMPT_BACKSPACE)                    },
+	{ "<Enter>",        ACTION(PROMPT_ENTER)                        },
+	{ "<C-j>",          ALIAS("<Enter>")                            },
+	{ "<Tab>",                                                      },
 	{ /* empty last element, array terminator */                    },
 };
 
@@ -404,22 +1317,20 @@ static void vis_mode_prompt_leave(Mode *new) {
 }
 
 static KeyBinding vis_mode_insert[] = {
-	{ "<Escape>",           switchmode,      { .i = VIS_MODE_NORMAL   } },
-	{ "<C-l>",              switchmode,      { .i = VIS_MODE_NORMAL   } },
-	{ "<C-[>",              switchmode,      { .i = VIS_MODE_NORMAL   } },
-	{ "<C-i>",              insert_tab,      { NULL                   } },
-	{ "<C-j>",              insert_newline,  { NULL                   } },
-	{ "<C-m>",              insert_newline,  { NULL                   } },
-	{ "<Enter>",            insert_newline,  { NULL                   } },
-	{ "<C-o>",              switchmode,      { .i = VIS_MODE_OPERATOR } },
-	{ "<C-v>",              insert_verbatim, { NULL                   } },
-	{ "<C-d>",              operator_twice,  { .i = OP_SHIFT_LEFT     } },
-	{ "<C-t>",              operator_twice,  { .i = OP_SHIFT_RIGHT    } },
-	{ "<C-x><C-e>",         wslide,          { .i = -1                } },
-	{ "<C-x><C-y>",         wslide,          { .i = +1                } },
-	{ "<Tab>",              insert_tab,      { NULL                   } },
-	{ "<End>",              movement,        { .i = MOVE_LINE_END     } },
-	{ "<C-r>",              insert_register, { NULL                   } },
+	{ "<Escape>",           ACTION(MODE_NORMAL)                         },
+	{ "<C-l>",              ALIAS("<Escape>")                           },
+	{ "<C-i>",              ALIAS("<Tab>")                              },
+	{ "<Enter>",            ACTION(INSERT_NEWLINE)                      },
+	{ "<C-j>",              ALIAS("<Enter>")                            },
+	{ "<C-m>",              ALIAS("<Enter>")                            },
+	{ "<C-o>",              ACTION(MODE_OPERATOR_PENDING)               },
+	{ "<C-v>",              ACTION(INSERT_VERBATIM)                     },
+	{ "<C-d>",              ALIAS("<Escape><<i")                        },
+	{ "<C-t>",              ALIAS("<Escape>>>i")                        },
+	{ "<C-x><C-e>",         ACTION(WINDOW_SLIDE_UP)                     },
+	{ "<C-x><C-y>",         ACTION(WINDOW_SLIDE_DOWN)                   },
+	{ "<Tab>",              ACTION(INSERT_TAB)                          },
+	{ "<C-r>",              ACTION(INSERT_REGISTER)                     },
 	{ /* empty last element, array terminator */                        },
 };
 
@@ -445,7 +1356,6 @@ static void vis_mode_insert_input(const char *str, size_t len) {
 }
 
 static KeyBinding vis_mode_replace[] = {
-	{ "<Escape>",                  switchmode,   { .i = VIS_MODE_NORMAL  } },
 	{ /* empty last element, array terminator */                           },
 };
 
@@ -512,7 +1422,7 @@ static Mode vis_modes[] = {
 		.default_bindings = vis_movements,
 	},
 	[VIS_MODE_TEXTOBJ] = {
-		.name = "TEXTOBJ",
+		.name = "TEXT-OBJECTS",
 		.parent = &vis_modes[VIS_MODE_MOVE],
 		.default_bindings = vis_textobjs,
 	},
