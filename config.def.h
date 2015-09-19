@@ -513,7 +513,6 @@ static Mode vis_modes[] = {
 	},
 	[VIS_MODE_TEXTOBJ] = {
 		.name = "TEXTOBJ",
-		.common_prefix = true,
 		.parent = &vis_modes[VIS_MODE_MOVE],
 		.default_bindings = vis_textobjs,
 	},

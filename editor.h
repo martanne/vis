@@ -43,7 +43,6 @@ struct Mode {
 	KeyBinding *default_bindings;                      
 	const char *name;                   /* descriptive, user facing name of the mode */
 	bool isuser;                        /* whether this is a user or internal mode */
-	bool common_prefix;                 /* whether the first key in this mode is always the same */
 	void (*enter)(Mode *old);           /* called right before the mode becomes active */
 	void (*leave)(Mode *new);           /* called right before the mode becomes inactive */
 	void (*input)(const char*, size_t); /* called whenever a key is not found in this mode and all its parent modes */
