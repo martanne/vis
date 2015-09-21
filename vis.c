@@ -2595,6 +2595,7 @@ static const char *keypress(const char *input) {
 			} else if (binding->alias) {
 				buffer_put0(&vis->input_queue, end);
 				buffer_prepend0(&vis->input_queue, binding->alias);
+				start = cur = vis->input_queue.data;
 			}
 		} else if (prefix) { /* incomplete key binding? */
 			cur = end;
