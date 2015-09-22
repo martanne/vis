@@ -4,6 +4,7 @@
 #include <stdbool.h>
 #include <time.h>
 #include <unistd.h>
+#include <stdarg.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 
@@ -36,6 +37,8 @@ typedef struct {
 Text *text_load(const char *filename);
 /* file information at time of load or last save */
 struct stat text_stat(Text*);
+bool text_printf(Text*, size_t pos, const char *format, ...);
+bool text_vprintf(Text*, size_t pos, const char *format, va_list ap);
 /* insert `len' bytes starting from `data' at `pos' which has to be
  * in the interval [0, text_size(txt)] */
 bool text_insert(Text*, size_t pos, const char *data, size_t len);

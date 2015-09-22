@@ -634,6 +634,24 @@ bool text_insert(Text *txt, size_t pos, const char *data, size_t len) {
 	return true;
 }
 
+bool text_printf(Text *txt, size_t pos, const char *format, ...) {
+	va_list ap;
+	va_start(ap, format);
+	bool ret = text_vprintf(txt, pos, format, ap);
+	va_end(ap);
+	return ret;
+}
+
+bool text_vprintf(Text *txt, size_t pos, const char *format, va_list ap) {
+	int len = vsnprintf(NULL, 0, format, ap);
+	if (len == -1)
+		return false;
+	char *buf = malloc(len+1);
+	bool ret = buf && (vsnprintf(buf, len+1, format, ap) == len) && text_insert(txt, pos, buf, len);
+	free(buf);
+	return ret;
+}
+
 static size_t action_undo(Text *txt, Action *a) {
 	size_t pos = EPOS;
 	for (Change *c = a->change; c; c = c->next) {
