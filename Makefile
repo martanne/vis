@@ -14,6 +14,9 @@ vis: config.h config.mk *.c *.h
 debug: clean
 	@$(MAKE) CFLAGS='${DEBUG_CFLAGS}'
 
+profile: clean
+	@$(MAKE) CFLAGS='${DEBUG_CFLAGS} -pg'
+
 clean:
 	@echo cleaning
 	@rm -f vis vis-${VERSION}.tar.gz
