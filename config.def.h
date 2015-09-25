@@ -36,6 +36,7 @@ static Command cmds[] = {
 	/* command name / optional alias, function,       options */
 	{ { "bdelete"                  }, cmd_bdelete,    CMD_OPT_FORCE },
 	{ { "edit"                     }, cmd_edit,       CMD_OPT_FORCE },
+	{ { "help"                     }, cmd_help,       CMD_OPT_NONE  },
 	{ { "new"                      }, cmd_new,        CMD_OPT_NONE  },
 	{ { "open"                     }, cmd_open,       CMD_OPT_NONE  },
 	{ { "qall"                     }, cmd_qall,       CMD_OPT_FORCE },

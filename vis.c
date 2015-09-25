@@ -455,6 +455,8 @@ static bool cmd_saveas(Filerange*, enum CmdOpt, const char *argv[]);
 static bool cmd_filter(Filerange*, enum CmdOpt, const char *argv[]);
 /* switch to the previous/next saved state of the text, chronologically */
 static bool cmd_earlier_later(Filerange*, enum CmdOpt, const char *argv[]);
+/* dump current key bindings */
+static bool cmd_help(Filerange*, enum CmdOpt, const char *argv[]);
 
 static void action_reset(Action *a);
 static void switchmode_to(Mode *new_mode);
@@ -2300,6 +2302,39 @@ static bool cmd_earlier_later(Filerange *range, enum CmdOpt opt, const char *arg
 	editor_info_show(vis, "%s", buf);
 
 	return pos != EPOS;
+}
+
+bool print_keybinding(const char *key, void *value, void *data) {
+	Text *txt = (Text*)data;
+	KeyBinding *binding = (KeyBinding*)value;
+	const char *desc = binding->alias;
+	if (!desc && binding->action)
+		desc = binding->action->help;
+	return text_printf(txt, text_size(txt), "  %-15s\t%s\n", key, desc ? desc : "");
+}
+
+static void print_mode(Mode *mode, Text *txt, bool recursive) {
+	if (recursive && mode->parent)
+		print_mode(mode->parent, txt, recursive);
+	map_iterate(mode->bindings, print_keybinding, txt);
+}
+
+static bool cmd_help(Filerange *range, enum CmdOpt opt, const char *argv[]) {
+	if (!vis_window_new(NULL))
+		return false;
+	
+	Text *txt = vis->win->file->text;
+	for (int i = 0; i < LENGTH(vis_modes); i++) {
+		Mode *mode = &vis_modes[i];
+		if (mode->isuser || i == VIS_MODE_TEXTOBJ) {
+			text_printf(txt, text_size(txt), "\n%s\n\n", mode->name);
+			print_mode(mode, txt, i == VIS_MODE_NORMAL ||
+				i == VIS_MODE_INSERT);
+		}
+	}
+	
+	text_save(txt, NULL);
+	return true;
 }
 
 static Filepos parse_pos(char **cmd) {
