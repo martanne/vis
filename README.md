@@ -570,5 +570,14 @@ should work.
 
 As always, comments and patches welcome!
 
-Cheers,
-Marc
+Build dependencies
+==================
+
+In order to build vis you will need a C99 compiler as well as:
+
+ * a C library, we recommend [musl](http://www.musl-libc.org/)
+ * [libcurses](http://www.gnu.org/software/ncurses/), preferably in the
+   wide-character version
+ * [libtermkey](http://www.leonerd.org.uk/code/libtermkey/)
+
+Adapt `config.mk` to match your system and run `make`.
