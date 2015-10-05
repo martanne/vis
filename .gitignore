@@ -4,3 +4,4 @@ config.h
 *.o
 nano
 vis
+keydoc.txt
