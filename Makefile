@@ -51,6 +51,6 @@ uninstall:
 	@rm -f ${DESTDIR}${MANPREFIX}/man1/vis.1
 
 release:
-	git archive --format=tar.xz --prefix=vis-$(RELEASE)/ $(RELEASE) > vis-$(RELEASE).tar.xz
+	@git archive --prefix=vis-$(RELEASE)/ -o vis-$(RELEASE).tar.gz $(RELEASE)
 
 .PHONY: all clean dist install uninstall debug
