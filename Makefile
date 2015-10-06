@@ -50,4 +50,7 @@ uninstall:
 	@echo removing manual page from ${DESTDIR}${MANPREFIX}/man1
 	@rm -f ${DESTDIR}${MANPREFIX}/man1/vis.1
 
+release:
+	git archive --format=tar.xz --prefix=vis-$(RELEASE)/ $(RELEASE) > vis-$(RELEASE).tar.xz
+
 .PHONY: all clean dist install uninstall debug

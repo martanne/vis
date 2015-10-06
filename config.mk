@@ -3,6 +3,7 @@ HAVE_ACL=0
 HAVE_SELINUX=0
 
 # vis version
+RELEASE = 0.0.0
 # try to get a tag and hash first
 GITHASH = $(shell git log -1 --format='%h' 2>/dev/null)
 GITTAG = $(shell git describe --abbrev=0 --tags 2>/dev/null)
@@ -16,7 +17,7 @@ else ifneq ($(GITHASH),)
 	VERSION = 0.r${GITREVCOUNT}.g${GITHASH}
 else
 	# this is used when no git is available, e.g. for release tarball
-	VERSION = 0.0.0
+	VERSION = ${RELEASE}
 endif
 
 # Customize below to fit your system
