@@ -4,4 +4,8 @@ compiler:
 env:
   - DEBUG=
   - DEBUG=debug
-script: make $DEBUG
+install:
+  - export LIBTERMKEY=libtermkey-0.17 && \
+    curl http://www.leonerd.org.uk/code/libtermkey/$LIBTERMKEY.tar.gz | tar xzf - && \
+    make -C $LIBTERMKEY && make -C $LIBTERMKEY PREFIX=$(pwd)/build install
+script: CFLAGS=-I./build/include LDFLAGS=-L./build/lib make $DEBUG
