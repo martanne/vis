@@ -580,10 +580,8 @@ Ui *ui_curses_new(Color *colors) {
 	Ui *ui = (Ui*)uic;
 	if (!uic)
 		return NULL;
-	if (!(uic->termkey = termkey_new(STDIN_FILENO, TERMKEY_FLAG_UTF8))) {
-		ui_curses_free(ui);
-		return NULL;
-	}
+	if (!(uic->termkey = termkey_new(STDIN_FILENO, TERMKEY_FLAG_UTF8)))
+		goto err;
 		
 	setlocale(LC_CTYPE, "");
 	if (!getenv("ESCDELAY"))
@@ -592,7 +590,7 @@ Ui *ui_curses_new(Color *colors) {
 	if (!term)
 		term = "xterm";
 	if (!newterm(term, stderr, stdin))
-		return NULL;
+		goto err;
 	start_color();
 	use_default_colors();
 	raw();
@@ -646,6 +644,9 @@ Ui *ui_curses_new(Color *colors) {
 	ui_resize(ui);
 
 	return ui;
+err:
+	ui_curses_free(ui);
+	return NULL;
 }
 
 void ui_curses_free(Ui *ui) {
