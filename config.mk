@@ -13,7 +13,7 @@ ifneq ($(GITTAG),)
 	VERSION = ${GITTAG}.r${GITREVCOUNT}.g${GITHASH}
 else ifneq ($(GITHASH),)
 	# we have no tags in git, so just use revision count an hash for now
-	GITREVCOUNT = $(shell git rev-list --count master)
+	GITREVCOUNT = $(shell git rev-list --count HEAD)
 	VERSION = 0.r${GITREVCOUNT}.g${GITHASH}
 else
 	# this is used when no git is available, e.g. for release tarball
