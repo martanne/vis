@@ -643,12 +643,15 @@ bool text_printf(Text *txt, size_t pos, const char *format, ...) {
 }
 
 bool text_vprintf(Text *txt, size_t pos, const char *format, va_list ap) {
+	va_list ap_save;
+	va_copy(ap_save, ap);
 	int len = vsnprintf(NULL, 0, format, ap);
 	if (len == -1)
 		return false;
 	char *buf = malloc(len+1);
-	bool ret = buf && (vsnprintf(buf, len+1, format, ap) == len) && text_insert(txt, pos, buf, len);
+	bool ret = buf && (vsnprintf(buf, len+1, format, ap_save) == len) && text_insert(txt, pos, buf, len);
 	free(buf);
+	va_end(ap_save);
 	return ret;
 }
 
