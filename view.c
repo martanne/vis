@@ -167,8 +167,7 @@ static bool view_addch(View *view, Cell *cell) {
 			cell->len = w == 0 ? 1 : 0;
 			int t = w == 0 ? SYNTAX_SYMBOL_TAB : SYNTAX_SYMBOL_TAB_FILL;
 			strncpy(cell->data, view->symbols[t]->symbol, sizeof(cell->data)-1);
-			if (view->symbols[t]->color)
-				cell->attr = view->symbols[t]->color->attr;
+			cell->attr = view->symbols[t]->style;
 			view->line->cells[view->col] = *cell;
 			view->line->len += cell->len;
 			view->line->width += cell->width;
@@ -187,8 +186,7 @@ static bool view_addch(View *view, Cell *cell) {
 		}
 
 		strncpy(cell->data, view->symbols[SYNTAX_SYMBOL_EOL]->symbol, sizeof(cell->data)-1);
-		if (view->symbols[SYNTAX_SYMBOL_EOL]->color)
-			cell->attr = view->symbols[SYNTAX_SYMBOL_EOL]->color->attr;
+		cell->attr = view->symbols[SYNTAX_SYMBOL_EOL]->style;
 
 		view->line->cells[view->col] = *cell;
 		view->line->len += cell->len;
@@ -215,8 +213,7 @@ static bool view_addch(View *view, Cell *cell) {
 
 		if (cell->data[0] == ' ') {
 			strncpy(cell->data, view->symbols[SYNTAX_SYMBOL_SPACE]->symbol, sizeof(cell->data)-1);
-			if (view->symbols[SYNTAX_SYMBOL_SPACE]->color)
-				cell->attr = view->symbols[SYNTAX_SYMBOL_SPACE]->color->attr;
+			cell->attr = view->symbols[SYNTAX_SYMBOL_SPACE]->style;
 
 		}
 
@@ -405,7 +402,7 @@ void view_draw(View *view) {
 					if (text + match[i][0].rm_so <= cur && cur < text + match[i][0].rm_eo) {
 						/* within matched expression */
 						matched = &match[i][0];
-						attrs = rule->color->attr;
+						attrs = rule->style;
 						break; /* first match views */
 					}
 				}
@@ -466,8 +463,7 @@ void view_draw(View *view) {
 
 	for (Line *l = view->lastline->next; l; l = l->next) {
 		strncpy(l->cells[0].data, view->symbols[SYNTAX_SYMBOL_EOF]->symbol, sizeof(l->cells[0].data));
-		if (view->symbols[SYNTAX_SYMBOL_EOF]->color)
-			l->cells[0].attr =view->symbols[SYNTAX_SYMBOL_EOF]->color->attr;
+		l->cells[0].attr = view->symbols[SYNTAX_SYMBOL_EOF]->style;
 		for (int x = 1; x < view->width; x++)
 			l->cells[x] = cell_blank;
 		l->width = 1;
@@ -843,6 +839,11 @@ void view_syntax_set(View *view, Syntax *syntax) {
 			view->symbols[i] = &syntax->symbols[i];
 		else
 			view->symbols[i] = &symbols_none[i];
+	}
+	if (syntax) {
+		for (const char **style = syntax->styles; *style; style++) {
+			view->ui->syntax_style(view->ui, style - syntax->styles, *style);
+		}
 	}
 }
 

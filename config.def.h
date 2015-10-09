@@ -1539,6 +1539,7 @@ enum {
 	COLOR_SYNTAX7,
 	COLOR_SYNTAX8,
 	COLOR_SYNTAX9,
+	COLOR_SYNTAX_LAST, /* below are only aliases */
 	COLOR_KEYWORD      = COLOR_SYNTAX1,
 	COLOR_CONSTANT     = COLOR_SYNTAX4,
 	COLOR_DATATYPE     = COLOR_SYNTAX2,
@@ -1562,19 +1563,19 @@ enum {
 	COLOR_EOF          = COLOR_WHITESPACE,
 };
 
-static Color colors[] = {
-	[COLOR_NOHILIT] = { .fg = UI_COLOR_DEFAULT, .bg = UI_COLOR_DEFAULT, .attr = UI_ATTR_NORMAL },
-	[COLOR_SYNTAX0] = { .fg = UI_COLOR_RED,     .bg = UI_COLOR_DEFAULT, .attr = UI_ATTR_BOLD   },
-	[COLOR_SYNTAX1] = { .fg = UI_COLOR_GREEN,   .bg = UI_COLOR_DEFAULT, .attr = UI_ATTR_BOLD   },
-	[COLOR_SYNTAX2] = { .fg = UI_COLOR_GREEN,   .bg = UI_COLOR_DEFAULT, .attr = UI_ATTR_NORMAL },
-	[COLOR_SYNTAX3] = { .fg = UI_COLOR_MAGENTA, .bg = UI_COLOR_DEFAULT, .attr = UI_ATTR_BOLD   },
-	[COLOR_SYNTAX4] = { .fg = UI_COLOR_MAGENTA, .bg = UI_COLOR_DEFAULT, .attr = UI_ATTR_NORMAL },
-	[COLOR_SYNTAX5] = { .fg = UI_COLOR_BLUE,    .bg = UI_COLOR_DEFAULT, .attr = UI_ATTR_BOLD   },
-	[COLOR_SYNTAX6] = { .fg = UI_COLOR_RED,     .bg = UI_COLOR_DEFAULT, .attr = UI_ATTR_NORMAL },
-	[COLOR_SYNTAX7] = { .fg = UI_COLOR_BLUE,    .bg = UI_COLOR_DEFAULT, .attr = UI_ATTR_NORMAL },
-	[COLOR_SYNTAX8] = { .fg = UI_COLOR_CYAN,    .bg = UI_COLOR_DEFAULT, .attr = UI_ATTR_NORMAL },
-	[COLOR_SYNTAX9] = { .fg = UI_COLOR_YELLOW,  .bg = UI_COLOR_DEFAULT, .attr = UI_ATTR_NORMAL },
-	{ /* empty last element, array terminator */                                               }
+static const char *styles[] = {
+	[COLOR_NOHILIT] = "",
+	[COLOR_SYNTAX0] = "fore:red,bold",
+	[COLOR_SYNTAX1] = "fore:green,bold",
+	[COLOR_SYNTAX2] = "fore:green",
+	[COLOR_SYNTAX3] = "fore:magenta,bold",
+	[COLOR_SYNTAX4] = "fore:magenta",
+	[COLOR_SYNTAX5] = "fore:blue,bold",
+	[COLOR_SYNTAX6] = "fore:red",
+	[COLOR_SYNTAX7] = "fore:blue",
+	[COLOR_SYNTAX8] = "fore:cyan",
+	[COLOR_SYNTAX9] = "fore:yellow",
+	[COLOR_SYNTAX_LAST] = NULL,
 };
 
 /* Syntax color definitions per file type. Each rule consists of a regular
@@ -1592,46 +1593,46 @@ static Color colors[] = {
 
 #define SYNTAX_MULTILINE_COMMENT {    \
 	"(/\\*([^*]|\\*+[^*/])*\\*+/|/\\*([^*]|\\*+[^*/])*$|^([^/]|/+[^/*])*\\*/)", \
-	&colors[COLOR_COMMENT],       \
+	COLOR_COMMENT,                \
 	true, /* multiline */         \
 }
 
 #define SYNTAX_SINGLE_LINE_COMMENT { \
 	"(//.*)",                    \
-	&colors[COLOR_COMMENT],      \
+	COLOR_COMMENT,               \
 }
 
 #define SYNTAX_LITERAL {                             \
 	"('(\\\\.|.)')|"B"(0x[0-9A-Fa-f]+|[0-9]+)"B, \
-	&colors[COLOR_LITERAL],                      \
+	COLOR_LITERAL,                               \
 }
 
 #define SYNTAX_STRING {         \
 	"(\"(\\\\.|[^\"])*\")", \
-	&colors[COLOR_STRING],  \
+	COLOR_STRING,           \
 	false, /* multiline */  \
 }
 
 #define SYNTAX_CONSTANT {        \
 	B"[A-Z_][0-9A-Z_]+"B,    \
-	&colors[COLOR_CONSTANT], \
+	COLOR_CONSTANT,          \
 }
 
 #define SYNTAX_BRACKET {             \
 	"(\\(|\\)|\\{|\\}|\\[|\\])", \
-	&colors[COLOR_BRACKETS],     \
+	COLOR_BRACKETS,              \
 }
 
 #define SYNTAX_C_PREPROCESSOR { \
 	"(^#[\\t ]*(define|include(_next)?|(un|ifn?)def|endif|el(if|se)|if|warning|error|pragma)?)", \
-	&colors[COLOR_PREPROCESSOR], \
+	COLOR_PREPROCESSOR, \
 }
 
-#define SYNTAX_SPACES    { "\xC2\xB7",     &colors[COLOR_SPACES] }
-#define SYNTAX_TABS      { "\xE2\x96\xB6", &colors[COLOR_TABS]   }
-#define SYNTAX_TABS_FILL { " ",            &colors[COLOR_TABS]   }
-#define SYNTAX_EOL       { "\xE2\x8F\x8E", &colors[COLOR_EOL]    }
-#define SYNTAX_EOF       { "~",            &colors[COLOR_EOF]    }
+#define SYNTAX_SPACES    { "\xC2\xB7",     COLOR_SPACES }
+#define SYNTAX_TABS      { "\xE2\x96\xB6", COLOR_TABS   }
+#define SYNTAX_TABS_FILL { " ",            COLOR_TABS   }
+#define SYNTAX_EOL       { "\xE2\x8F\x8E", COLOR_EOL    }
+#define SYNTAX_EOF       { "~",            COLOR_EOF    }
 
 /* these rules are applied top to bottom, first match wins. Therefore more 'greedy'
  * rules such as for comments should be the first entries.
@@ -1647,6 +1648,7 @@ static Syntax syntaxes[] = {{
 		"set show spaces=0 tabs=1 newlines=1",
 		NULL
 	},
+	.styles = styles,
 	.symbols = {
 		SYNTAX_SPACES,
 		SYNTAX_TABS,
@@ -1663,93 +1665,97 @@ static Syntax syntaxes[] = {{
 		SYNTAX_BRACKET,
 	{
 		"<[a-zA-Z0-9\\.\\-_/]+\\.(c(pp|xx)?|h(pp|xx)?|cc)>",
-		&colors[COLOR_STRING],
+		COLOR_STRING,
 	},
 		SYNTAX_C_PREPROCESSOR,
 	{
 		B"(for|if|while|do|else|case|default|switch|try|throw|catch|operator|new|delete)"B,
-		&colors[COLOR_KEYWORD],
+		COLOR_KEYWORD,
 	},{
 		B"(float|double|bool|char|int|short|long|sizeof|enum|void|static|const|struct|union|"
 		"typedef|extern|(un)?signed|inline|((s?size)|((u_?)?int(8|16|32|64|ptr)))_t|class|"
 		"namespace|template|public|protected|private|typename|this|friend|virtual|using|"
 		"mutable|volatile|register|explicit)"B,
-		&colors[COLOR_DATATYPE],
+		COLOR_DATATYPE,
 	},{
 		B"(goto|continue|break|return)"B,
-		&colors[COLOR_CONTROL],
+		COLOR_CONTROL,
 	}}
 },{
 	.name = "sh",
 	.file = "\\.sh$",
+	.styles = styles,
 	.rules = {{
 		"#.*$",
-		&colors[COLOR_COMMENT],
+		COLOR_COMMENT,
 	},
 		SYNTAX_STRING,
 	{
 		"^[0-9A-Z_]+\\(\\)",
-		&colors[COLOR_CONSTANT],
+		COLOR_CONSTANT,
 	},{
 		"\\$[?!@#$?*-]",
-		&colors[COLOR_VARIABLE],
+		COLOR_VARIABLE,
 	},{
 		"\\$\\{[A-Za-z_][0-9A-Za-z_]+\\}",
-		&colors[COLOR_VARIABLE],
+		COLOR_VARIABLE,
 	},{
 		"\\$[A-Za-z_][0-9A-Za-z_]+",
-		&colors[COLOR_VARIABLE],
+		COLOR_VARIABLE,
 	},{
 		B"(case|do|done|elif|else|esac|exit|fi|for|function|if|in|local|read|return|select|shift|then|time|until|while)"B,
-		&colors[COLOR_KEYWORD],
+		COLOR_KEYWORD,
 	},{
 		"(\\{|\\}|\\(|\\)|\\;|\\]|\\[|`|\\\\|\\$|<|>|!|=|&|\\|)",
-		&colors[COLOR_BRACKETS],
+		COLOR_BRACKETS,
 	}}
 },{
 	.name = "makefile",
 	.file = "(Makefile[^/]*|\\.mk)$",
+	.styles = styles,
 	.rules = {{
 		"#.*$",
-		&colors[COLOR_COMMENT],
+		COLOR_COMMENT,
 	},{
 		"\\$+[{(][a-zA-Z0-9_-]+[})]",
-		&colors[COLOR_VARIABLE],
+		COLOR_VARIABLE,
 	},{
 		B"(if|ifeq|else|endif)"B,
-		&colors[COLOR_CONTROL],
+		COLOR_CONTROL,
 	},{
 		"^[^ 	]+:",
-		&colors[COLOR_TARGET],
+		COLOR_TARGET,
 	},{
 		"[:(+?=)]",
-		&colors[COLOR_BRACKETS],
+		COLOR_BRACKETS,
 	}}
 },{
 	.name = "man",
 	.file = "\\.[1-9]x?$",
+	.styles = styles,
 	.rules = {{
 		"\\.(BR?|I[PR]?).*$",
-		&colors[COLOR_SYNTAX0],
+		COLOR_SYNTAX0,
 	},{
 		"\\.(S|T)H.*$",
-		&colors[COLOR_SYNTAX2],
+		COLOR_SYNTAX2,
 	},{
 		"\\.(br|DS|RS|RE|PD)",
-		&colors[COLOR_SYNTAX3],
+		COLOR_SYNTAX3,
 	},{
 		"(\\.(S|T)H|\\.TP)",
-		&colors[COLOR_SYNTAX4],
+		COLOR_SYNTAX4,
 	},{
 		"\\.(BR?|I[PR]?|PP)",
-		&colors[COLOR_SYNTAX5],
+		COLOR_SYNTAX5,
 	},{
 		"\\\\f[BIPR]",
-		&colors[COLOR_SYNTAX6],
+		COLOR_SYNTAX6,
 	}}
 },{
 	.name = "vala",
 	.file = "\\.(vapi|vala)$",
+	.styles = styles,
 	.rules = {
 		SYNTAX_MULTILINE_COMMENT,
 		SYNTAX_SINGLE_LINE_COMMENT,
@@ -1759,20 +1765,21 @@ static Syntax syntaxes[] = {{
 		SYNTAX_BRACKET,
 	{
 		B"(for|if|while|do|else|case|default|switch|get|set|value|out|ref|enum)"B,
-		&colors[COLOR_KEYWORD],
+		COLOR_KEYWORD,
 	},{
 		B"(uint|uint8|uint16|uint32|uint64|bool|byte|ssize_t|size_t|char|double|string|float|int|long|short|this|base|transient|void|true|false|null|unowned|owned)"B,
-		&colors[COLOR_DATATYPE],
+		COLOR_DATATYPE,
 	},{
 		B"(try|catch|throw|finally|continue|break|return|new|sizeof|signal|delegate)"B,
-		&colors[COLOR_CONTROL],
+		COLOR_CONTROL,
 	},{
 		B"(abstract|class|final|implements|import|instanceof|interface|using|private|public|static|strictfp|super|throws)"B,
-		&colors[COLOR_KEYWORD2],
+		COLOR_KEYWORD2,
 	}}
 },{
 	.name = "java",
 	.file = "\\.java$",
+	.styles = styles,
 	.rules = {
 		SYNTAX_MULTILINE_COMMENT,
 		SYNTAX_SINGLE_LINE_COMMENT,
@@ -1782,20 +1789,21 @@ static Syntax syntaxes[] = {{
 		SYNTAX_BRACKET,
 	{
 		B"(for|if|while|do|else|case|default|switch)"B,
-		&colors[COLOR_KEYWORD],
+		COLOR_KEYWORD,
 	},{
 		B"(boolean|byte|char|double|float|int|long|short|transient|void|true|false|null)"B,
-		&colors[COLOR_DATATYPE],
+		COLOR_DATATYPE,
 	},{
 		B"(try|catch|throw|finally|continue|break|return|new)"B,
-		&colors[COLOR_CONTROL],
+		COLOR_CONTROL,
 	},{
 		B"(abstract|class|extends|final|implements|import|instanceof|interface|native|package|private|protected|public|static|strictfp|this|super|synchronized|throws|volatile)"B,
-		&colors[COLOR_KEYWORD2],
+		COLOR_KEYWORD2,
 	}}
 },{
 	.name = "javascript",
 	.file = "\\.(js|json)$",
+	.styles = styles,
 	.rules = {
 		SYNTAX_SINGLE_LINE_COMMENT,
 		SYNTAX_LITERAL,
@@ -1803,22 +1811,22 @@ static Syntax syntaxes[] = {{
 		SYNTAX_BRACKET,
 	{
 		B"(true|false|null|undefined)"B,
-		&colors[COLOR_DATATYPE],
+		COLOR_DATATYPE,
 	},{
 		B"(NaN|Infinity)"B,
-		&colors[COLOR_LITERAL],
+		COLOR_LITERAL,
 	},{
 		"(\"(\\\\.|[^\"])*\"|\'(\\\\.|[^\'])*\')",
-		&colors[COLOR_STRING],
+		COLOR_STRING,
 	},{
 		B"(for|if|while|do|in|else|case|default|switch|try|throw|catch|operator|new|delete)"B,
-		&colors[COLOR_KEYWORD],
+		COLOR_KEYWORD,
 	},{
 		B"(continue|break|return)"B,
-		&colors[COLOR_CONTROL],
+		COLOR_CONTROL,
 	},{
 		B"(case|class|const|debugger|default|enum|export|extends|finally|function|implements|import|instanceof|let|this|typeof|var|with|yield)"B,
-		&colors[COLOR_KEYWORD2],
+		COLOR_KEYWORD2,
 	}}
 },{
 	.name = "lua",
@@ -1828,167 +1836,172 @@ static Syntax syntaxes[] = {{
 		"set autoindent",
 		NULL
 	},
+	.styles = styles,
 	.rules = {{
 		"--\\[(=*)\\[([^]]*)\\](=*)\\]",
-		&colors[COLOR_COMMENT],
+		COLOR_COMMENT,
 		true,
 	},{
 		"--.*$",
-		&colors[COLOR_COMMENT],
+		COLOR_COMMENT,
 	},{
 		"(\\[(=*)\\[([^]]*)\\](=*)\\]|^([^][]*)\\](=*)\\])",
-		&colors[COLOR_STRING],
+		COLOR_STRING,
 		true,
 	},
 		SYNTAX_STRING,
 	{
 		B"([0-9]*\\.)?[0-9]+([eE]([\\+-])?[0-9]+)?"B,
-		&colors[COLOR_LITERAL],
+		COLOR_LITERAL,
 	},{
 		B"0x[0-9a-fA-F]+"B,
-		&colors[COLOR_LITERAL],
+		COLOR_LITERAL,
 	},{
 		B"(false|nil|true)"B,
-		&colors[COLOR_CONSTANT],
+		COLOR_CONSTANT,
 	},{
 		"(\\.\\.\\.)",
-		&colors[COLOR_CONSTANT],
+		COLOR_CONSTANT,
 	},{
 		B"(break|do|else|elseif|end|for|function|if|in|local|repeat|return|then|until|while)"B,
-		&colors[COLOR_KEYWORD],
+		COLOR_KEYWORD,
 	},{
 		B"(and|not|or)"B,
-		&colors[COLOR_OPERATOR],
+		COLOR_OPERATOR,
 	},{
 		"(\\+|-|\\*|/|%|\\^|#|[=~<>]=|<|>|\\.\\.)",
-		&colors[COLOR_OPERATOR],
+		COLOR_OPERATOR,
 	},
 		SYNTAX_BRACKET,
 	}
 },{
 	.name = "ruby",
 	.file = "\\.rb$",
+	.styles = styles,
 	.rules = {{
 		"(#[^{].*$|#$)",
-		&colors[COLOR_COMMENT],
+		COLOR_COMMENT,
 	},{
 		"(\\$|@|@@)?"B"[A-Z]+[0-9A-Z_a-z]*",
-		&colors[COLOR_VARIABLE],
+		COLOR_VARIABLE,
 	},{
 		B"(__FILE__|__LINE__|BEGIN|END|alias|and|begin|break|case|class|def|defined\?|do|else|elsif|end|ensure|false|for|if|in|module|next|nil|not|or|redo|rescue|retry|return|self|super|then|true|undef|unless|until|when|while|yield)"B,
-		&colors[COLOR_KEYWORD],
+		COLOR_KEYWORD,
 	},{
 		"([ 	]|^):[0-9A-Z_]+"B,
-		&colors[COLOR_SYNTAX2],
+		COLOR_SYNTAX2,
 	},{
 		"(/([^/]|(\\/))*/[iomx]*|%r\\{([^}]|(\\}))*\\}[iomx]*)",
-		&colors[COLOR_SYNTAX3],
+		COLOR_SYNTAX3,
 	},{
 		"(`[^`]*`|%x\\{[^}]*\\})",
-		&colors[COLOR_SYNTAX4],
+		COLOR_SYNTAX4,
 	},{
 		"(\"([^\"]|(\\\\\"))*\"|%[QW]?\\{[^}]*\\}|%[QW]?\\([^)]*\\)|%[QW]?<[^>]*>|%[QW]?\\[[^]]*\\]|%[QW]?\\$[^$]*\\$|%[QW]?\\^[^^]*\\^|%[QW]?![^!]*!|\'([^\']|(\\\\\'))*\'|%[qw]\\{[^}]*\\}|%[qw]\\([^)]*\\)|%[qw]<[^>]*>|%[qw]\\[[^]]*\\]|%[qw]\\$[^$]*\\$|%[qw]\\^[^^]*\\^|%[qw]![^!]*!)",
-		&colors[COLOR_SYNTAX5],
+		COLOR_SYNTAX5,
 	},{
 		"#\\{[^}]*\\}",
-		&colors[COLOR_SYNTAX6],
+		COLOR_SYNTAX6,
 	}}
 },{
 	.name = "python",
 	.file = "\\.py$",
+	.styles = styles,
 	.rules = {{
 		"(#.*$|#$)",
-		&colors[COLOR_COMMENT],
+		COLOR_COMMENT,
 	},{
 		"(\"\"\".*\"\"\")",
-		&colors[COLOR_COMMENT],
+		COLOR_COMMENT,
 		true, /* multiline */
 	},{
 		B"(and|class|def|not|or|return|yield|is)"B,
-		&colors[COLOR_KEYWORD2],
+		COLOR_KEYWORD2,
 	},{
 		B"(from|import|as)"B,
-		&colors[COLOR_KEYWORD],
+		COLOR_KEYWORD,
 	},{
 		B"(if|elif|else|while|for|in|try|with|except|in|break|continue|finally)"B,
-		&colors[COLOR_CONTROL],
+		COLOR_CONTROL,
 	},{
 		B"(int|str|float|unicode|int|bool|chr|type|list|dict|tuple)",
-		&colors[COLOR_DATATYPE],
+		COLOR_DATATYPE,
 	},{
 		"(True|False|None)",
-		&colors[COLOR_LITERAL],
+		COLOR_LITERAL,
 	},{
 		B"[0-9]+\\.[0-9]+([eE][-+]?[0-9]+)?"B,
-		&colors[COLOR_LITERAL],
+		COLOR_LITERAL,
 	},{
 		B"[0-9]+"B"|"B"0[xX][0-9a-fA-F]+"B"|"B"0[oO][0-7]+"B,
-		&colors[COLOR_LITERAL],
+		COLOR_LITERAL,
 	},{
 		"(\"(\\\\.|[^\"])*\"|\'(\\\\.|[^\'])*\')",
-		&colors[COLOR_STRING],
+		COLOR_STRING,
 		false, /* multiline */  
 	},{
 		"(__init__|__str__|__unicode__|__gt__|__lt__|__eq__|__enter__|__exit__|__next__|__getattr__|__getitem__|__setitem__|__call__|__contains__|__iter__|__bool__|__all__|__name__)",
-		&colors[COLOR_SYNTAX2],
+		COLOR_SYNTAX2,
 	}}
 },{
 	.name = "php",
 	.file = "\\.php$",
+	.styles = styles,
 	.rules = {
 		SYNTAX_MULTILINE_COMMENT,
 		SYNTAX_SINGLE_LINE_COMMENT,
 		SYNTAX_BRACKET,
 	{
 		"(#.*$|#$)",
-		&colors[COLOR_COMMENT],
+		COLOR_COMMENT,
 	},{
 		"(\"\"\".*\"\"\")",
-		&colors[COLOR_COMMENT],
+		COLOR_COMMENT,
 		true, /* multiline */
 	},{
 		B"(class|interface|extends|implements|new|__construct|__destruct|use|namespace|return)"B,
-		&colors[COLOR_KEYWORD2],
+		COLOR_KEYWORD2,
 	},{
 		B"(public|private|protected|const|parent|function|->)"B,
-		&colors[COLOR_KEYWORD],
+		COLOR_KEYWORD,
 	},{
 		B"(if|else|while|do|for|foreach|in|try|catch|finally|switch|case|default|break|continue|as|=>)"B,
-		&colors[COLOR_CONTROL],
+		COLOR_CONTROL,
 	},{
 		B"(array|true|false|null)",
-		&colors[COLOR_DATATYPE],
+		COLOR_DATATYPE,
 	},{
 		B"[0-9]+\\.[0-9]+([eE][-+]?[0-9]+)?"B,
-		&colors[COLOR_LITERAL],
+		COLOR_LITERAL,
 	},{
 		B"[0-9]+"B"|"B"0[xX][0-9a-fA-F]+"B"|"B"0[oO][0-7]+"B,
-		&colors[COLOR_LITERAL],
+		COLOR_LITERAL,
 	},{
 		"\\$[a-zA-Z0-9_\\-]+",
-		&colors[COLOR_VARIABLE],
+		COLOR_VARIABLE,
 	},{
 		"(\"(\\\\.|[^\"])*\"|\'(\\\\.|[^\'])*\')",
-		&colors[COLOR_STRING],
+		COLOR_STRING,
 		false, /* multiline */
 	},{
 		"(php|echo|print|var_dump|print_r)",
-		&colors[COLOR_SYNTAX2],
+		COLOR_SYNTAX2,
 	}}
 },{
 	.name = "haskell",
 	.file = "\\.hs$",
+	.styles = styles,
 	.rules = {{
 		"\\{-#.*#-\\}",
-		&colors[COLOR_PRAGMA],
+		COLOR_PRAGMA,
 	},{
 		"---*([^-!#$%&\\*\\+./<=>\?@\\^|~].*)?$",
-		&colors[COLOR_COMMENT],
+		COLOR_COMMENT,
 	}, {
 		// These are allowed to be nested, but we can't express that
 		// with regular expressions
 		"\\{-.*-\\}",
-		&colors[COLOR_COMMENT],
+		COLOR_COMMENT,
 		true
 	},
 		SYNTAX_STRING,
@@ -1998,100 +2011,102 @@ static Syntax syntaxes[] = {{
 		// I don't want to highlight the whole import line.
 		// capture group coloring or similar would be nice
 		"(^import( qualified)?)|"B"(as|hiding|infix[lr]?)"B,
-		&colors[COLOR_KEYWORD2],
+		COLOR_KEYWORD2,
 	},{
 		B"(module|class|data|deriving|instance|default|where|type|newtype)"B,
-		&colors[COLOR_KEYWORD],
+		COLOR_KEYWORD,
 	},{
 		B"(do|case|of|let|in|if|then|else)"B,
-		&colors[COLOR_CONTROL],
+		COLOR_CONTROL,
 	},{
 		"('(\\\\.|.)')",
-		&colors[COLOR_LITERAL],
+		COLOR_LITERAL,
 	},{
 		B"[0-9]+\\.[0-9]+([eE][-+]?[0-9]+)?"B,
-		&colors[COLOR_LITERAL],
+		COLOR_LITERAL,
 	},{
 		B"[0-9]+"B"|"B"0[xX][0-9a-fA-F]+"B"|"B"0[oO][0-7]+"B,
-		&colors[COLOR_LITERAL],
+		COLOR_LITERAL,
 	},{
 		"("B"[A-Z][a-zA-Z0-9_']*\\.)*"B"[a-zA-Z][a-zA-Z0-9_']*"B,
-		&colors[COLOR_NOHILIT],
+		COLOR_NOHILIT,
 	},{
 		"("B"[A-Z][a-zA-Z0-9_']*\\.)?[-!#$%&\\*\\+/<=>\\?@\\\\^|~:.][-!#$%&\\*\\+/<=>\\?@\\\\^|~:.]*",
-		&colors[COLOR_OPERATOR],
+		COLOR_OPERATOR,
 	},{
 		"`("B"[A-Z][a-zA-Z0-9_']*\\.)?[a-z][a-zA-Z0-9_']*`",
-		&colors[COLOR_OPERATOR],
+		COLOR_OPERATOR,
 	},{
 		"\\(|\\)|\\[|\\]|,|;|_|\\{|\\}",
-		&colors[COLOR_BRACKETS],
+		COLOR_BRACKETS,
 	}}
 },{
 	.name = "markdown",
 	.file = "\\.(md|mdwn)$",
+	.styles = styles,
 	.rules = {{
 		"(^#{1,6}.*$)", //titles
-		&colors[COLOR_SYNTAX5],
+		COLOR_SYNTAX5,
 	},{
 		"((\\* *){3,}|(_ *){3,}|(- *){3,})", // horizontal rules
-		&colors[COLOR_SYNTAX2],
+		COLOR_SYNTAX2,
 	},{
 		"(\\*\\*.*\\*\\*)|(__.*__)", // super-bolds
-		&colors[COLOR_SYNTAX4],
+		COLOR_SYNTAX4,
 	},{
 		"(\\*.*\\*)|(_.*_)", // bolds
-		&colors[COLOR_SYNTAX3],
+		COLOR_SYNTAX3,
 	},{
 		"(\\[.*\\]\\(.*\\))", //links
-		&colors[COLOR_SYNTAX6],
+		COLOR_SYNTAX6,
 	},{
 		"(^ *([-\\*\\+]|[0-9]+\\.))", //lists
-		&colors[COLOR_SYNTAX2],
+		COLOR_SYNTAX2,
 	},{
 		"(^( {4,}|\t+).*$)", // code blocks
-		&colors[COLOR_SYNTAX7],
+		COLOR_SYNTAX7,
 	},{
 		"(`+.*`+)", // inline code
-		&colors[COLOR_SYNTAX7],
+		COLOR_SYNTAX7,
 	},{
 		"(^>+.*)", // quotes
-		&colors[COLOR_SYNTAX7],
+		COLOR_SYNTAX7,
 	}}
 },{
 	.name = "ledger",
 	.file = "\\.(journal|ledger)$",
+	.styles = styles,
 	.rules = {
 	{ /* comment */
 		"^[;#].*",
-		&colors[COLOR_COMMENT],
+		COLOR_COMMENT,
 	},{ /* value tag */
 		"(  |\t|^ )*; :([^ ][^:]*:)+[ \\t]*$",
-		&colors[COLOR_DATATYPE],
+		COLOR_DATATYPE,
 	},{ /* typed tag */
 		"(  |\t|^ )*; [^:]+::.*",
-		&colors[COLOR_DATATYPE],
+		COLOR_DATATYPE,
 	},{ /* tag */
 		"(  |\t|^ )*; [^:]+:.*",
-		&colors[COLOR_TYPE],
+		COLOR_TYPE,
 	},{ /* metadata */
 		"(  |\t|^ )*;.*",
-		&colors[COLOR_CONSTANT],
+		COLOR_CONSTANT,
 	},{ /* date */
 		"^[0-9][^ \t]+",
-		&colors[COLOR_LITERAL],
+		COLOR_LITERAL,
 	},{ /* account */
 		"^[ \t]+[a-zA-Z:'!*()%&]+",
-		&colors[COLOR_IDENTIFIER]
+		COLOR_IDENTIFIER,
 	},{ /* amount */
 		"(  |\t)[^;]*",
-		&colors[COLOR_LITERAL],
+		COLOR_LITERAL,
 	},{ /* automated transaction */
 		"^[=~].*",
-		&colors[COLOR_TYPE],
+		COLOR_TYPE,
 	},{ /* directives */
 		"^[!@]?(account|alias|assert|bucket|capture|check|comment|commodity|define|end|fixed|endfixed|include|payee|apply|tag|test|year|[AYNDCIiOobh])"B".*",
-		&colors[COLOR_DATATYPE],
+		COLOR_DATATYPE,
 	}}
 },{
 	.name = "apl",
@@ -2100,33 +2115,34 @@ static Syntax syntaxes[] = {{
 		"set number",
 		NULL
 	},
+	.styles = styles,
 	.rules = {{
 		"(⍝|#).*$",
-		&colors[COLOR_COMMENT],
+		COLOR_COMMENT,
 	},{
 		"('([^']|'')*')|(\"([^\"]|\"\")*\")",
-		&colors[COLOR_STRING],
+		COLOR_STRING,
 	},{
 		"^ *(∇|⍫)",
-		&colors[COLOR_SYNTAX9],
+		COLOR_SYNTAX9,
 	},{
 		"(⎕[a-zA-Z]*)|[⍞χ⍺⍶⍵⍹]",
-		&colors[COLOR_KEYWORD],
+		COLOR_KEYWORD,
 	},{
 		"[∆⍙_a-zA-Z][∆⍙_¯a-zA-Z0-9]* *:",
-		&colors[COLOR_SYNTAX2],
+		COLOR_SYNTAX2,
 	},{
 		"[∆⍙_a-zA-Z][∆⍙_¯a-zA-Z0-9]*",
-		&colors[COLOR_IDENTIFIER],
+		COLOR_IDENTIFIER,
 	},{
 		"¯?(([0-9]+(\\.[0-9]+)?)|\\.[0-9]+)([eE]¯?[0-9]+)?([jJ]¯?(([0-9]+(\\.[0-9]+)?)|\\.[0-9]+)([eE]¯?[0-9]+)?)?",
-		&colors[COLOR_CONSTANT],
+		COLOR_CONSTANT,
 	},{
 		"[][(){}]",
-		&colors[COLOR_BRACKETS],
+		COLOR_BRACKETS,
 	},{
 		"[←→◊]",
-		&colors[COLOR_SYNTAX3],
+		COLOR_SYNTAX3,
 	}}
 },{
 	/* empty last element, array terminator */

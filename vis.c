@@ -2758,7 +2758,7 @@ int main(int argc, char *argv[]) {
 			die("Could not load bindings for mode: %s\n", mode->name);
 	}
 
-	if (!(vis = editor_new(ui_curses_new(colors))))
+	if (!(vis = editor_new(ui_curses_new())))
 		die("Could not allocate editor core\n");
 
 	vis->mode_prev = vis->mode = config->mode;

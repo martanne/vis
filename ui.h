@@ -1,6 +1,10 @@
 #ifndef UI_H
 #define UI_H
 
+#include <stdbool.h>
+#include <stdarg.h>
+#include <termkey.h>
+
 typedef struct Ui Ui;
 typedef struct UiWin UiWin; 
 
@@ -15,9 +19,8 @@ enum UiOption {
 	UI_OPTION_LINE_NUMBERS_RELATIVE = 1 << 1,
 };
 
-#include <stdbool.h>
-#include <stdarg.h>
-#include <termkey.h>
+#define UI_STYLES_MAX 64
+
 #include "text.h"
 #include "view.h"
 #include "editor.h"
@@ -53,6 +56,7 @@ struct UiWin {
 	void (*draw_status)(UiWin*);
 	void (*reload)(UiWin*, File*);
 	void (*options)(UiWin*, enum UiOption);
+	bool (*syntax_style)(UiWin*, int id, const char *style);
 };
 
 #endif
