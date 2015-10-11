@@ -222,6 +222,7 @@ enum {
 	VIS_ACTION_TEXT_OBJECT_LINE_INNER,
 	VIS_ACTION_MOTION_CHARWISE,
 	VIS_ACTION_MOTION_LINEWISE,
+	VIS_ACTION_NOP,
 };
 
 static KeyAction vis_action[] = {
@@ -985,6 +986,11 @@ static KeyAction vis_action[] = {
 		"Force motion to be linewise",
 		motiontype, { .i = LINEWISE }
 	},
+	[VIS_ACTION_NOP] = {
+		"nop",
+		"Ignore key, do nothing",
+		nop,
+	},
 };
 
 static KeyBinding basic_movement[] = {
@@ -1299,7 +1305,7 @@ static KeyBinding vis_mode_prompt[] = {
 	{ "<Backspace>",    ACTION(PROMPT_BACKSPACE)                    },
 	{ "<Enter>",        ACTION(PROMPT_ENTER)                        },
 	{ "<C-j>",          ALIAS("<Enter>")                            },
-	{ "<Tab>",                                                      },
+	{ "<Tab>",          ACTION(NOP)                                 },
 	{ /* empty last element, array terminator */                    },
 };
 

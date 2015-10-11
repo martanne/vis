@@ -301,6 +301,8 @@ static TextObject textobjs[] = {
 };
 
 /** functions to be called from keybindings */
+/* ignore key, do nothing */
+static const char *nop(const char *keys, const Arg *arg);
 /* navigate jump list either in forward (arg->i>0) or backward (arg->i<0) direction */
 static const char *jumplist(const char *keys, const Arg *arg);
 /* navigate change list either in forward (arg->i>0) or backward (arg->i<0) direction */
@@ -781,6 +783,10 @@ static size_t view_lines_bottom(const Arg *arg) {
 }
 
 /** key bindings functions */
+
+static const char *nop(const char *keys, const Arg *arg) {
+	return keys;
+}
 
 static const char *jumplist(const char *keys, const Arg *arg) {
 	size_t pos;
