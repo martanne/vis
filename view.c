@@ -873,6 +873,14 @@ int view_symbols_get(View *view) {
 	return flags;
 }
 
+void view_options_set(View *view, enum UiOption options) {
+	view->ui->options_set(view->ui, options);
+}
+
+enum UiOption view_options_get(View *view) {
+	return view->ui->options_get(view->ui);
+}
+
 size_t view_screenline_goto(View *view, int n) {
 	size_t pos = view->start;
 	for (Line *line = view->topline; --n > 0 && line != view->lastline; line = line->next)

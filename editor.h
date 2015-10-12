@@ -325,7 +325,6 @@ void editor_prompt_set(Editor*, const char *line);
 /* display a message to the user */
 void editor_info_show(Editor*, const char *msg, ...);
 void editor_info_hide(Editor*);
-void editor_window_options(Win*, enum UiOption options);
 
 /* look up a curses color pair for the given combination of fore and
  * background color */

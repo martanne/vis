@@ -64,6 +64,7 @@ bool editor_window_split(Win *original) {
 	win->file = original->file;
 	win->file->refcount++;
 	view_syntax_set(win->view, view_syntax_get(original->view));
+	view_options_set(win->view, view_options_get(original->view));
 	view_cursor_to(win->view, view_cursor_get(original->view));
 	editor_draw(win->editor);
 	return true;
@@ -506,8 +507,3 @@ void editor_info_show(Editor *ed, const char *msg, ...) {
 void editor_info_hide(Editor *ed) {
 	ed->ui->info_hide(ed->ui);
 }
-
-void editor_window_options(Win *win, enum UiOption options) {
-	win->ui->options(win->ui, options);
-}
-

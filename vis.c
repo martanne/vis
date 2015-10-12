@@ -1783,14 +1783,28 @@ static bool cmd_set(Filerange *range, enum CmdOpt cmdopt, const char *argv[]) {
 		}
 		view_symbols_set(vis->win->view, flags);
 		break;
-	case OPTION_NUMBER:
-		editor_window_options(vis->win, arg.b ? UI_OPTION_LINE_NUMBERS_ABSOLUTE :
-			UI_OPTION_LINE_NUMBERS_NONE);
+	case OPTION_NUMBER: {
+		enum UiOption opt = view_options_get(vis->win->view);
+		if (arg.b) {
+			opt &= ~UI_OPTION_LINE_NUMBERS_RELATIVE;
+			opt |=  UI_OPTION_LINE_NUMBERS_ABSOLUTE;
+		} else {
+			opt &= ~UI_OPTION_LINE_NUMBERS_ABSOLUTE;
+		}
+		view_options_set(vis->win->view, opt); 
 		break;
-	case OPTION_NUMBER_RELATIVE:
-		editor_window_options(vis->win, arg.b ? UI_OPTION_LINE_NUMBERS_RELATIVE :
-			UI_OPTION_LINE_NUMBERS_NONE);
+	}
+	case OPTION_NUMBER_RELATIVE: {
+		enum UiOption opt = view_options_get(vis->win->view);
+		if (arg.b) {
+			opt &= ~UI_OPTION_LINE_NUMBERS_ABSOLUTE;
+			opt |=  UI_OPTION_LINE_NUMBERS_RELATIVE;
+		} else {
+			opt &= ~UI_OPTION_LINE_NUMBERS_RELATIVE;
+		}
+		view_options_set(vis->win->view, opt); 
 		break;
+	}
 	}
 
 	return true;

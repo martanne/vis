@@ -798,24 +798,25 @@ static void ui_window_focus(UiWin *w) {
 	ui_window_draw(w);
 }
 
-static void ui_window_options(UiWin *w, enum UiOption options) {
+static void ui_window_options_set(UiWin *w, enum UiOption options) {
 	UiCursesWin *win = (UiCursesWin*)w;
 	win->options = options;
-	switch (options) {
-	case UI_OPTION_LINE_NUMBERS_NONE:
+	if (options & (UI_OPTION_LINE_NUMBERS_ABSOLUTE|UI_OPTION_LINE_NUMBERS_RELATIVE)) {
+		if (!win->winside)
+			win->winside = newwin(1, 1, 1, 1);
+	} else {
 		if (win->winside) {
 			delwin(win->winside);
 			win->winside = NULL;
 			win->sidebar_width = 0;
 		}
-		break;
-	case UI_OPTION_LINE_NUMBERS_ABSOLUTE:
-	case UI_OPTION_LINE_NUMBERS_RELATIVE:
-		if (!win->winside)
-			win->winside = newwin(1, 1, 1, 1);
-		break;
 	}
 	ui_window_draw(w);
+}
+
+static enum UiOption ui_window_options_get(UiWin *w) {
+	UiCursesWin *win = (UiCursesWin*)w;
+	return win->options;
 }
 
 static UiWin *ui_window_new(Ui *ui, View *view, File *file) {
@@ -828,7 +829,8 @@ static UiWin *ui_window_new(Ui *ui, View *view, File *file) {
 		.draw = ui_window_draw,
 		.draw_status = ui_window_draw_status,
 		.draw_text = ui_window_draw_text,
-		.options = ui_window_options,
+		.options_set = ui_window_options_set,
+		.options_get = ui_window_options_get,
 		.reload = ui_window_reload,
 		.syntax_style = ui_window_syntax_style,
 	};

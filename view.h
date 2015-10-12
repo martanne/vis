@@ -97,6 +97,9 @@ Syntax *view_syntax_get(View*);
 void view_symbols_set(View*, int flags);
 int view_symbols_get(View*);
 
+void view_options_set(View*, enum UiOption options);
+enum UiOption view_options_get(View*);
+
 /* A view can manage multiple cursors, one of which (the main cursor) is always
  * placed within the visible viewport. All functions named view_cursor_* operate
  * on this cursor. Additional cursor can be created and manipulated using the
