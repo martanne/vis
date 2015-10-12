@@ -26,6 +26,7 @@
 #include <limits.h>
 #include <ctype.h>
 #include <time.h>
+#include <regex.h>
 #include <sys/select.h>
 #include <sys/types.h>
 #include <sys/wait.h>
@@ -157,7 +158,6 @@ struct Vis {
 	File *files;
 	Win *windows;                     /* list of windows */
 	Win *win;                         /* currently active window */
-	Syntax *syntaxes;                 /* NULL terminated array of syntax definitions */
 	Register registers[VIS_REGISTER_INVALID];     /* register used for copy and paste */
 	Macro macros[VIS_MACRO_INVALID];         /* recorded macros */
 	Macro *recording, *last_recording;/* currently and least recently recorded macro */
@@ -276,18 +276,6 @@ static void window_name(Win *win, const char *filename) {
 	if (filename != file->name) {
 		free((char*)file->name);
 		file->name = filename ? strdup(filename) : NULL;
-	}
-	
-	if (filename) {
-		Vis *vis = win->editor;
-		for (Syntax *syn = vis->syntaxes; syn && syn->name; syn++) {
-			if (!regexec(&syn->file_regex, filename, 0, NULL, 0)) {
-				view_syntax_set(win->view, syn);
-				for (const char **opt = syn->settings; opt && *opt; opt++)
-					vis_cmd(vis, *opt);
-				break;
-			}
-		}
 	}
 }
 
@@ -418,42 +406,6 @@ static void tabwidth_set(Vis *vis, int tabwidth) {
 	vis->tabwidth = tabwidth;
 }
 
-bool vis_syntax_load(Vis *vis, Syntax *syntaxes) {
-	bool success = true;
-	vis->syntaxes = syntaxes;
-
-	for (Syntax *syn = syntaxes; syn && syn->name; syn++) {
-		if (regcomp(&syn->file_regex, syn->file, REG_EXTENDED|REG_NOSUB|REG_ICASE|REG_NEWLINE))
-			success = false;
-		for (int j = 0; j < LENGTH(syn->rules); j++) {
-			SyntaxRule *rule = &syn->rules[j];
-			if (!rule->rule)
-				break;
-			int cflags = REG_EXTENDED;
-			if (!rule->multiline)
-				cflags |= REG_NEWLINE;
-			if (regcomp(&rule->regex, rule->rule, cflags))
-				success = false;
-		}
-	}
-
-	return success;
-}
-
-void vis_syntax_unload(Vis *vis) {
-	for (Syntax *syn = vis->syntaxes; syn && syn->name; syn++) {
-		regfree(&syn->file_regex);
-		for (int j = 0; j < LENGTH(syn->rules); j++) {
-			SyntaxRule *rule = &syn->rules[j];
-			if (!rule->rule)
-				break;
-			regfree(&rule->regex);
-		}
-	}
-
-	vis->syntaxes = NULL;
-}
-
 void vis_draw(Vis *vis) {
 	vis->ui->draw(vis->ui);
 }
@@ -547,7 +499,6 @@ void vis_free(Vis *vis) {
 		register_release(&vis->registers[i]);
 	for (int i = 0; i < LENGTH(vis->macros); i++)
 		macro_release(&vis->macros[i]);
-	vis_syntax_unload(vis);
 	vis->ui->free(vis->ui);
 	map_free(vis->cmds);
 	map_free(vis->options);
@@ -1790,25 +1741,20 @@ static bool cmd_set(Vis *vis, Filerange *range, enum CmdOpt cmdopt, const char *
 		break;
 	case OPTION_SYNTAX:
 		if (!argv[2]) {
-			Syntax *syntax = view_syntax_get(vis->win->view);
+			const char *syntax = view_syntax_get(vis->win->view);
 			if (syntax)
-				vis_info_show(vis, "Syntax definition in use: `%s'", syntax->name);
+				vis_info_show(vis, "Syntax definition in use: `%s'", syntax);
 			else
 				vis_info_show(vis, "No syntax definition in use");
 			return true;
 		}
 
-		for (Syntax *syntax = vis->syntaxes; syntax && syntax->name; syntax++) {
-			if (!strcasecmp(syntax->name, argv[2])) {
-				view_syntax_set(vis->win->view, syntax);
-				return true;
-			}
-		}
-
 		if (parse_bool(argv[2], &arg.b) && !arg.b)
-			view_syntax_set(vis->win->view, NULL);
-		else
+			return view_syntax_set(vis->win->view, NULL);
+		if (!view_syntax_set(vis->win->view, argv[2])) {
 			vis_info_show(vis, "Unknown syntax definition: `%s'", argv[2]);
+			return false;
+		}
 		break;
 	case OPTION_SHOW:
 		if (!argv[2]) {

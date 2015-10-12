@@ -1556,9 +1556,6 @@ int main(int argc, char *argv[]) {
 			vis_die(vis, "Could not load default bindings\n");
 	}
 
-	if (!vis_syntax_load(vis, syntaxes))
-		vis_die(vis, "Could not load syntax highlighting definitions\n");
-
 	/* install signal handlers etc. */
 	struct sigaction sa;
 	memset(&sa, 0, sizeof sa);
