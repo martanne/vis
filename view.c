@@ -68,26 +68,26 @@ struct View {
 	Line *line;         /* used while drawing view content, line where next char will be drawn */
 	int col;            /* used while drawing view content, column where next char will be drawn */
 	Syntax *syntax;     /* syntax highlighting definitions for this view or NULL */
-	SyntaxSymbol *symbols[SYNTAX_SYMBOL_LAST]; /* symbols to use for white spaces etc */
+	const SyntaxSymbol *symbols[SYNTAX_SYMBOL_LAST]; /* symbols to use for white spaces etc */
 	int tabwidth;       /* how many spaces should be used to display a tab character */
 	Cursor *cursors;    /* all cursors currently active */
 	Selection *selections; /* all selected regions */
 };
 
-static SyntaxSymbol symbols_none[] = {
-	{ " " }, /* spaces */
-	{ " " }, /* tab first cell */
-	{ " " }, /* tab remaining cells */
-	{ " " }, /* eol */
-	{ "~" }, /* eof */
+static const SyntaxSymbol symbols_none[] = {
+	[SYNTAX_SYMBOL_SPACE]    = { " " },
+	[SYNTAX_SYMBOL_TAB]      = { " " },
+	[SYNTAX_SYMBOL_TAB_FILL] = { " " },
+	[SYNTAX_SYMBOL_EOL]      = { " " },
+	[SYNTAX_SYMBOL_EOF]      = { "~" },
 };
 
-static SyntaxSymbol symbols_default[] = {
-	{ "\xC2\xB7" },     /* spaces */
-	{ "\xE2\x96\xB6" }, /* tab first cell */
-	{ " " },            /* tab remaining cells */
-	{ "\xE2\x8F\x8E" }, /* eol */
-	{ "~" },            /* eof */
+static const SyntaxSymbol symbols_default[] = {
+	[SYNTAX_SYMBOL_SPACE]    = { "\xC2\xB7" },
+	[SYNTAX_SYMBOL_TAB]      = { "\xE2\x96\xB6" },
+	[SYNTAX_SYMBOL_TAB_FILL] = { " " },
+	[SYNTAX_SYMBOL_EOL]      = { "\xE2\x8F\x8E" },
+	[SYNTAX_SYMBOL_EOF]      = { "~" },
 };
 
 static Cell cell_unused;
@@ -578,7 +578,7 @@ View *view_new(Text *text, ViewEvent *events) {
 	view->text = text;
 	view->events = events;
 	view->tabwidth = 8;
-	view_symbols_set(view, 0);
+	view_options_set(view, 0);
 	
 	if (!view_resize(view, 1, 1)) {
 		view_free(view);
@@ -851,9 +851,16 @@ Syntax *view_syntax_get(View *view) {
 	return view->syntax;
 }
 
-void view_symbols_set(View *view, int flags) {
-	for (int i = 0; i < LENGTH(view->symbols); i++) {
-		if (flags & (1 << i)) {
+void view_options_set(View *view, enum UiOption options) {
+	int mapping[] = {
+		[SYNTAX_SYMBOL_SPACE]    = UI_OPTION_SYMBOL_SPACE,
+		[SYNTAX_SYMBOL_TAB]      = UI_OPTION_SYMBOL_TAB,
+		[SYNTAX_SYMBOL_TAB_FILL] = UI_OPTION_SYMBOL_TAB_FILL,
+		[SYNTAX_SYMBOL_EOL]      = UI_OPTION_SYMBOL_EOL,
+		[SYNTAX_SYMBOL_EOF]      = UI_OPTION_SYMBOL_EOF,
+	};
+	for (int i = 0; i < LENGTH(mapping); i++) {
+		if (options & mapping[i]) {
 			if (view->syntax && view->syntax->symbols[i].symbol)
 				view->symbols[i] = &view->syntax->symbols[i];
 			else
@@ -862,23 +869,12 @@ void view_symbols_set(View *view, int flags) {
 			view->symbols[i] = &symbols_none[i];
 		}
 	}
-}
-
-int view_symbols_get(View *view) {
-	int flags = 0;
-	for (int i = 0; i < LENGTH(view->symbols); i++) {
-		if (view->symbols[i] != &symbols_none[i])
-			flags |= (1 << i);
-	}
-	return flags;
-}
-
-void view_options_set(View *view, enum UiOption options) {
-	view->ui->options_set(view->ui, options);
+	if (view->ui)
+		view->ui->options_set(view->ui, options);
 }
 
 enum UiOption view_options_get(View *view) {
-	return view->ui->options_get(view->ui);
+	return view->ui ? view->ui->options_get(view->ui) : 0;
 }
 
 size_t view_screenline_goto(View *view, int n) {

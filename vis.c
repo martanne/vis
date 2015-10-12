@@ -1760,11 +1760,11 @@ static bool cmd_set(Filerange *range, enum CmdOpt cmdopt, const char *argv[]) {
 		}
 		char *keys[] = { "spaces", "tabs", "newlines" };
 		int values[] = {
-			1 << SYNTAX_SYMBOL_SPACE,
-			(1 << SYNTAX_SYMBOL_TAB)|(1 << SYNTAX_SYMBOL_TAB_FILL),
-			1 << SYNTAX_SYMBOL_EOL
+			UI_OPTION_SYMBOL_SPACE,
+			UI_OPTION_SYMBOL_TAB|UI_OPTION_SYMBOL_TAB_FILL,
+			UI_OPTION_SYMBOL_EOL,
 		};
-		int flags = view_symbols_get(vis->win->view);
+		int flags = view_options_get(vis->win->view);
 		for (const char **args = &argv[2]; *args; args++) {
 			for (int i = 0; i < LENGTH(keys); i++) {
 				if (strcmp(*args, keys[i]) == 0) {
@@ -1781,7 +1781,7 @@ static bool cmd_set(Filerange *range, enum CmdOpt cmdopt, const char *argv[]) {
 				}
 			}
 		}
-		view_symbols_set(vis->win->view, flags);
+		view_options_set(vis->win->view, flags);
 		break;
 	case OPTION_NUMBER: {
 		enum UiOption opt = view_options_get(vis->win->view);
