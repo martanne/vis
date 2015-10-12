@@ -246,25 +246,20 @@ static bool cmd_set(Vis *vis, Filerange *range, enum CmdOpt cmdopt, const char *
 		break;
 	case OPTION_SYNTAX:
 		if (!argv[2]) {
-			Syntax *syntax = view_syntax_get(vis->win->view);
+			const char *syntax = view_syntax_get(vis->win->view);
 			if (syntax)
-				vis_info_show(vis, "Syntax definition in use: `%s'", syntax->name);
+				vis_info_show(vis, "Syntax definition in use: `%s'", syntax);
 			else
 				vis_info_show(vis, "No syntax definition in use");
 			return true;
 		}
 
-		for (Syntax *syntax = vis->syntaxes; syntax && syntax->name; syntax++) {
-			if (!strcasecmp(syntax->name, argv[2])) {
-				view_syntax_set(vis->win->view, syntax);
-				return true;
-			}
-		}
-
 		if (parse_bool(argv[2], &arg.b) && !arg.b)
-			view_syntax_set(vis->win->view, NULL);
-		else
+			return view_syntax_set(vis->win->view, NULL);
+		if (!view_syntax_set(vis->win->view, argv[2])) {
 			vis_info_show(vis, "Unknown syntax definition: `%s'", argv[2]);
+			return false;
+		}
 		break;
 	case OPTION_SHOW:
 		if (!argv[2]) {

@@ -92,8 +92,8 @@ Filerange view_viewport_get(View*);
 bool view_viewport_up(View *view, int n);
 bool view_viewport_down(View *view, int n);
 /* associate a set of syntax highlighting rules to this window. */
-void view_syntax_set(View*, Syntax*);
-Syntax *view_syntax_get(View*);
+bool view_syntax_set(View*, const char *name);
+const char *view_syntax_get(View*);
 
 void view_options_set(View*, enum UiOption options);
 enum UiOption view_options_get(View*);

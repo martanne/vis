@@ -26,6 +26,7 @@
 #include <limits.h>
 #include <ctype.h>
 #include <time.h>
+#include <regex.h>
 #include <sys/select.h>
 #include <sys/types.h>
 #include <sys/wait.h>
@@ -123,18 +124,6 @@ void vis_window_name(Win *win, const char *filename) {
 	if (filename != file->name) {
 		free((char*)file->name);
 		file->name = filename ? strdup(filename) : NULL;
-	}
-	
-	if (filename) {
-		Vis *vis = win->vis;
-		for (Syntax *syn = vis->syntaxes; syn && syn->name; syn++) {
-			if (!regexec(&syn->file_regex, filename, 0, NULL, 0)) {
-				view_syntax_set(win->view, syn);
-				for (const char **opt = syn->settings; opt && *opt; opt++)
-					vis_cmd(vis, *opt);
-				break;
-			}
-		}
 	}
 }
 
@@ -245,42 +234,6 @@ void vis_window_prev(Vis *vis) {
 	vis->ui->window_focus(vis->win->ui);
 }
 
-bool vis_syntax_load(Vis *vis, Syntax *syntaxes) {
-	bool success = true;
-	vis->syntaxes = syntaxes;
-
-	for (Syntax *syn = syntaxes; syn && syn->name; syn++) {
-		if (regcomp(&syn->file_regex, syn->file, REG_EXTENDED|REG_NOSUB|REG_ICASE|REG_NEWLINE))
-			success = false;
-		for (int j = 0; j < LENGTH(syn->rules); j++) {
-			SyntaxRule *rule = &syn->rules[j];
-			if (!rule->rule)
-				break;
-			int cflags = REG_EXTENDED;
-			if (!rule->multiline)
-				cflags |= REG_NEWLINE;
-			if (regcomp(&rule->regex, rule->rule, cflags))
-				success = false;
-		}
-	}
-
-	return success;
-}
-
-void vis_syntax_unload(Vis *vis) {
-	for (Syntax *syn = vis->syntaxes; syn && syn->name; syn++) {
-		regfree(&syn->file_regex);
-		for (int j = 0; j < LENGTH(syn->rules); j++) {
-			SyntaxRule *rule = &syn->rules[j];
-			if (!rule->rule)
-				break;
-			regfree(&rule->regex);
-		}
-	}
-
-	vis->syntaxes = NULL;
-}
-
 void vis_draw(Vis *vis) {
 	vis->ui->draw(vis->ui);
 }
@@ -374,7 +327,6 @@ void vis_free(Vis *vis) {
 		register_release(&vis->registers[i]);
 	for (int i = 0; i < LENGTH(vis->macros); i++)
 		macro_release(&vis->macros[i]);
-	vis_syntax_unload(vis);
 	vis->ui->free(vis->ui);
 	map_free(vis->cmds);
 	map_free(vis->options);

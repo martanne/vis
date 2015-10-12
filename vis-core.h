@@ -128,7 +128,6 @@ struct Vis {
 	File *files;                         /* all files currently managed by this editor instance */
 	Win *windows;                        /* all windows currently managed by this editor instance */
 	Win *win;                            /* currently active/focused window */
-	Syntax *syntaxes;                    /* NULL terminated array of syntax definitions */
 	Register registers[VIS_REG_INVALID]; /* registers used for yank and put */
 	Macro macros[VIS_MACRO_INVALID];     /* recorded macros */
 	Macro *recording, *last_recording;   /* currently (if non NULL) and least recently recorded macro */

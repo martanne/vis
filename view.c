@@ -67,7 +67,6 @@ struct View {
 	Cursor *cursor;     /* main cursor, always placed within the visible viewport */
 	Line *line;         /* used while drawing view content, line where next char will be drawn */
 	int col;            /* used while drawing view content, column where next char will be drawn */
-	Syntax *syntax;     /* syntax highlighting definitions for this view or NULL */
 	const SyntaxSymbol *symbols[SYNTAX_SYMBOL_LAST]; /* symbols to use for white spaces etc */
 	int tabwidth;       /* how many spaces should be used to display a tab character */
 	Cursor *cursors;    /* all cursors currently active */
@@ -346,11 +345,6 @@ void view_draw(View *view) {
 	text[rem] = '\0';
 	/* current position into buffer from which to interpret a character */
 	char *cur = text;
-	/* syntax definition to use */
-	Syntax *syntax = view->syntax;
-	/* matched tokens for each syntax rule */
-	regmatch_t match[syntax ? LENGTH(syntax->rules) : 1][1], *matched = NULL;
-	memset(match, 0, sizeof match);
 	/* default and current curses attributes to use */
 	int default_attrs = 0, attrs = default_attrs;
 	/* start from known multibyte state */
@@ -362,52 +356,6 @@ void view_draw(View *view) {
 		wchar_t wchar;
 		Cell cell;
 		memset(&cell, 0, sizeof cell);
-	
-		if (syntax) {
-			if (matched && cur >= text + matched->rm_eo) {
-				/* end of current match */
-				matched = NULL;
-				attrs = default_attrs;
-				for (int i = 0; i < LENGTH(syntax->rules); i++) {
-					if (match[i][0].rm_so == -1)
-						continue; /* no match on whole text */
-					/* reset matches which overlap with matched */
-					if (text + match[i][0].rm_so <= cur && cur < text + match[i][0].rm_eo) {
-						match[i][0].rm_so = 0;
-						match[i][0].rm_eo = 0;
-					}
-				}
-			}
-
-			if (!matched) {
-				size_t off = cur - text; /* number of already processed bytes */
-				for (int i = 0; i < LENGTH(syntax->rules); i++) {
-					SyntaxRule *rule = &syntax->rules[i];
-					if (!rule->rule)
-						break;
-					if (match[i][0].rm_so == -1)
-						continue; /* no match on whole text */
-					if (off >= (size_t)match[i][0].rm_eo) {
-						/* past match, continue search from current position */
-						if (regexec(&rule->regex, cur, 1, match[i], 0) ||
-						    match[i][0].rm_so == match[i][0].rm_eo) {
-							match[i][0].rm_so = -1;
-							match[i][0].rm_eo = -1;
-							continue;
-						}
-						match[i][0].rm_so += off;
-						match[i][0].rm_eo += off;
-					}
-
-					if (text + match[i][0].rm_so <= cur && cur < text + match[i][0].rm_eo) {
-						/* within matched expression */
-						matched = &match[i][0];
-						attrs = rule->style;
-						break; /* first match views */
-					}
-				}
-			}
-		}
 
 		size_t len = mbrtowc(&wchar, cur, rem, &mbstate);
 		if (len == (size_t)-1 && errno == EILSEQ) {
@@ -504,7 +452,7 @@ void view_draw(View *view) {
 		size_t pos = view_cursors_pos(c);
 		if (view_coord_get(view, pos, &c->line, &c->row, &c->col)) {
 			c->line->cells[c->col].cursor = true;
-			if (view->ui && view->syntax) {
+			if (view->ui) {
 				Line *line_match; int col_match;
 				size_t pos_match = text_bracket_match_except(view->text, pos, "<>");
 				if (pos != pos_match && view_coord_get(view, pos_match, &line_match, NULL, &col_match)) {
@@ -834,23 +782,12 @@ void view_scroll_to(View *view, size_t pos) {
 	view_cursors_scroll_to(view->cursor, pos);
 }
 
-void view_syntax_set(View *view, Syntax *syntax) {
-	view->syntax = syntax;
-	for (int i = 0; i < LENGTH(view->symbols); i++) {
-		if (syntax && syntax->symbols[i].symbol)
-			view->symbols[i] = &syntax->symbols[i];
-		else
-			view->symbols[i] = &symbols_none[i];
-	}
-	if (syntax) {
-		for (const char **style = syntax->styles; *style; style++) {
-			view->ui->syntax_style(view->ui, style - syntax->styles, *style);
-		}
-	}
+bool view_syntax_set(View *view, const char *name) {
+	return false;
 }
 
-Syntax *view_syntax_get(View *view) {
-	return view->syntax;
+const char *view_syntax_get(View *view) {
+	return NULL;
 }
 
 void view_options_set(View *view, enum UiOption options) {
@@ -862,14 +799,8 @@ void view_options_set(View *view, enum UiOption options) {
 		[SYNTAX_SYMBOL_EOF]      = UI_OPTION_SYMBOL_EOF,
 	};
 	for (int i = 0; i < LENGTH(mapping); i++) {
-		if (options & mapping[i]) {
-			if (view->syntax && view->syntax->symbols[i].symbol)
-				view->symbols[i] = &view->syntax->symbols[i];
-			else
-				view->symbols[i] = &symbols_default[i];
-		} else {
-			view->symbols[i] = &symbols_none[i];
-		}
+		view->symbols[i] = (options & mapping[i]) ? &symbols_default[i] :
+			&symbols_none[i];
 	}
 	if (view->ui)
 		view->ui->options_set(view->ui, options);

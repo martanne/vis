@@ -51,14 +51,6 @@ void vis_update(Vis*);
 /* temporarily supsend the editor process, resumes upon receiving SIGCONT */
 void vis_suspend(Vis*);
 
-/* load a set of syntax highlighting definitions which will be associated
- * to the underlying window based on the file type loaded.
- *
- * The parameter `syntaxes' has to point to a NULL terminated array.
- */
-bool vis_syntax_load(Vis*, Syntax *syntaxes);
-void vis_syntax_unload(Vis*);
-
 /* creates a new window, and loads the given file. if filename is NULL
  * an unamed / empty buffer is created. If the given file is already opened
  * in another window, share the underlying text that is changes will be
