@@ -156,6 +156,7 @@ struct Vis {
 	volatile sig_atomic_t sigbus;        /* one of the memory mapped region became unavailable (SIGBUS) */
 	sigjmp_buf sigbus_jmpbuf;            /* used to jump back to a known good state in the mainloop after (SIGBUS) */
 	Map *actions;                        /* registered editor actions / special keys commands */
+	lua_State *lua;                      /* lua context used for syntax highligthing */
 };
 
 /** stuff used by multiple of the vis-* files */

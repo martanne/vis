@@ -33,8 +33,12 @@
 #include <sys/stat.h>
 #include <sys/ioctl.h>
 #include <sys/mman.h>
-
+#include <pwd.h>
+#include <lauxlib.h>
+#include <lualib.h>
+#include <lua.h>
 #include <termkey.h>
+
 #include "vis.h"
 #include "text-util.h"
 #include "text-motions.h"
@@ -120,10 +124,24 @@ static File *file_new(Vis *vis, const char *filename) {
 }
 
 void vis_window_name(Win *win, const char *filename) {
+	lua_State *L = win->vis->lua;
 	File *file = win->file;
 	if (filename != file->name) {
 		free((char*)file->name);
 		file->name = filename ? strdup(filename) : NULL;
+	}
+
+	if (filename && L) {
+		lua_getglobal(L, "lexers");
+		lua_getfield(L, -1, "lexer_name");
+		lua_pushstring(L, filename);
+		lua_pcall(L, 1, 1, 0);
+		if (lua_isstring(L, -1)) {
+			const char *lexer_name = lua_tostring(L, -1);
+			if (lexer_name)
+				view_syntax_set(win->view, lexer_name);
+		}
+		lua_pop(L, 2); /* return value: lexer name, lexers variable */
 	}
 }
 
@@ -169,7 +187,7 @@ static Win *window_new_file(Vis *vis, File *file) {
 		.selection = window_selection_changed,
 	};
 	win->jumplist = ringbuf_alloc(31);
-	win->view = view_new(file->text, &win->events);
+	win->view = view_new(file->text, vis->lua, &win->events);
 	win->ui = vis->ui->window_new(vis->ui, win->view, file);
 	if (!win->jumplist || !win->view || !win->ui) {
 		window_free(win);
@@ -287,6 +305,64 @@ Vis *vis_new(Ui *ui) {
 	Vis *vis = calloc(1, sizeof(Vis));
 	if (!vis)
 		return NULL;
+	lua_State *L = lua_open();
+	if (!(vis->lua = L))
+		goto err;
+	luaL_openlibs(L);
+
+	/* try to get users home directory */
+	const char *home = getenv("HOME");
+	if (!home || !*home) {
+		struct passwd *pw = getpwuid(getuid());
+		if (pw)
+			home = pw->pw_dir;
+	}
+
+	/* extends lua's package.path with:
+	 * - $VIS_PATH/lexers
+	 * - $HOME/.vis/lexers
+	 * - /usr/local/share/vis/lexers
+	 * - /usr/share/vis/lexers
+	 * - package.path (standard lua search path)
+	 */
+	int paths = 3;
+	lua_getglobal(L, "package");
+
+	const char *vis_path = getenv("VIS_PATH");
+	if (vis_path) {
+		lua_pushstring(L, vis_path);
+		lua_pushstring(L, "/lexers/?.lua;");
+		lua_concat(L, 2);
+		paths++;
+	}
+
+	if (home && *home) {
+		lua_pushstring(L, home);
+		lua_pushstring(L, "/.vis/lexers/?.lua;");
+		lua_concat(L, 2);
+		paths++;
+	}
+
+	lua_pushstring(L, "/usr/local/share/vis/lexers/?.lua;");
+	lua_pushstring(L, "/usr/share/vis/lexers/?.lua;");
+	lua_getfield(L, -paths, "path");
+	lua_concat(L, paths);
+	lua_setfield(L, -2, "path");
+	lua_pop(L, 1); /* package */
+
+	/* try to load the lexer module */
+	lua_getglobal(L, "require");
+	lua_pushstring(L, "lexer");
+	if (lua_pcall(L, 1, 1, 0)) {
+		lua_close(L);
+		vis->lua = L = NULL;
+	} else {
+		lua_setglobal(L, "lexers");
+		lua_getglobal(L, "require");
+		lua_pushstring(L, "themes/default");
+		lua_pcall(L, 1, 0, 0);
+	}
+
 	vis->ui = ui;
 	vis->ui->init(vis->ui, vis);
 	vis->tabwidth = 8;
@@ -302,7 +378,7 @@ Vis *vis_new(Ui *ui) {
 		goto err;
 	if (!(vis->prompt->file->text = text_load(NULL)))
 		goto err;
-	if (!(vis->prompt->view = view_new(vis->prompt->file->text, NULL)))
+	if (!(vis->prompt->view = view_new(vis->prompt->file->text, NULL, NULL)))
 		goto err;
 	if (!(vis->prompt->ui = vis->ui->prompt_new(vis->ui, vis->prompt->view, vis->prompt->file)))
 		goto err;
@@ -318,6 +394,8 @@ err:
 void vis_free(Vis *vis) {
 	if (!vis)
 		return;
+	if (vis->lua)
+		lua_close(vis->lua);
 	while (vis->windows)
 		vis_window_close(vis->windows);
 	file_free(vis, vis->prompt->file);

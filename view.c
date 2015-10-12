@@ -71,6 +71,8 @@ struct View {
 	int tabwidth;       /* how many spaces should be used to display a tab character */
 	Cursor *cursors;    /* all cursors currently active */
 	Selection *selections; /* all selected regions */
+	lua_State *lua;     /* lua state used for syntax highlighting */
+	char *lexer_name;
 };
 
 static const SyntaxSymbol symbols_none[] = {
@@ -333,20 +335,31 @@ void view_cursor_to(View *view, size_t pos) {
  * stop once the screen is full, update view->end, view->lastline */
 void view_draw(View *view) {
 	view_clear(view);
-	/* current absolute file position */
-	size_t pos = view->start;
+	/* absolute start of visible area */
+	size_t start = view->start;
+	/* maximal number of bytes to consider for syntax highlighting before
+	 * the visible area */
+	const size_t lexer_before_max = 4096;
+	/* absolute position to start syntax highlighting */
+	size_t lexer_start = start >= lexer_before_max ? start - lexer_before_max : 0;
+	/* number of bytes used for syntax highlighting before visible are */
+	size_t lexer_before = start - lexer_start;
 	/* number of bytes to read in one go */
-	size_t text_len = view->width * view->height;
+	const size_t text_size = lexer_before_max + (view->width * view->height);
 	/* current buffer to work with */
-	char text[text_len+1];
+	char text[text_size+1];
 	/* remaining bytes to process in buffer*/
-	size_t rem = text_bytes_get(view->text, pos, text_len, text);
-	/* NUL terminate because regex(3) function expect it */
-	text[rem] = '\0';
+	size_t text_len = text_bytes_get(view->text, lexer_start, text_size, text);
+	/* NUL terminate text section */
+	text[text_len] = '\0';
+	/* remaining bytes to process */
+	size_t rem = text_len;
+	if (rem >= lexer_before)
+		rem -= lexer_before;
+	/* absolute position of character currently being added to display */
+	size_t pos = start;
 	/* current position into buffer from which to interpret a character */
-	char *cur = text;
-	/* default and current curses attributes to use */
-	int default_attrs = 0, attrs = default_attrs;
+	char *cur = text + lexer_before;
 	/* start from known multibyte state */
 	mbstate_t mbstate = { 0 };
 
@@ -369,7 +382,7 @@ void view_draw(View *view) {
 			 * wide character. advance file position and read
 			 * another junk into buffer.
 			 */
-			rem = text_bytes_get(view->text, pos, text_len, text);
+			rem = text_bytes_get(view->text, pos, text_size, text);
 			text[rem] = '\0';
 			cur = text;
 			continue;
@@ -392,7 +405,6 @@ void view_draw(View *view) {
 			cell = (Cell){ .data = "\n", .len = 2, .width = 1, .istab = false };
 		}
 
-		cell.attr = attrs;
 		if (!view_addch(view, &cell))
 			break;
 
@@ -404,6 +416,70 @@ void view_draw(View *view) {
 	/* set end of vieviewg region */
 	view->end = pos;
 	view->lastline = view->line ? view->line : view->bottomline;
+
+	lua_State *L = view->lua;
+	if (L && view->lexer_name) {
+
+		lua_getglobal(L, "lexers");
+		lua_getfield(L, -1, "load");
+		lua_pushstring(L, view->lexer_name);
+		lua_pcall(L, 1, 1, 0);
+
+		lua_getfield(L, -1, "_TOKENSTYLES");
+		lua_getfield(L, -2, "lex");
+
+		lua_pushvalue(L, -3); /* lexer obj */
+
+		const char *lex_text = text;
+		if (lexer_start > 0) {
+			/* try to start lexing at a line boundry */
+			const char *newline = memchr(text, '\n', lexer_before);
+			if (newline)
+				lex_text = newline;
+		}
+
+		lua_pushlstring(L, lex_text, text_len - (lex_text - text));
+		lua_pushinteger(L, 1 /* inital style: whitespace */);
+
+		int token_count;
+
+		if (lua_isfunction(L, -4) &&  !lua_pcall(L, 3, 1, 0) && lua_istable(L, -1) &&
+		   (token_count = lua_objlen(L, -1)) > 0) {
+
+			size_t pos = lexer_before - (lex_text - text);
+			Line *line = view->topline;
+			int col = 0;
+
+			for (int i = 1; i < token_count; i += 2) {
+				lua_rawgeti(L, -1, i);
+				//const char *name = lua_tostring(L, -1);
+				lua_gettable(L, -3); /* _TOKENSTYLES[token] */
+				size_t token_style = lua_tointeger(L, -1);
+				lua_pop(L, 1); /* style */
+				lua_rawgeti(L, -1, i + 1);
+				size_t token_end = lua_tointeger(L, -1) - 1;
+				lua_pop(L, 1); /* pos */
+
+				for (bool token_next = false; line; line = line->next, col = 0) {
+					for (; col < line->width; col++) {
+						if (pos < token_end) {
+							line->cells[col].attr = token_style;
+							pos += line->cells[col].len;
+						} else {
+							token_next = true;
+							break;
+						}
+					}
+					if (token_next)
+						break;
+				}
+			}
+			lua_pop(L, 1);
+		}
+
+		lua_pop(L, 3); /* _TOKENSTYLES, language specific lexer, lexers globale */
+	}
+
 	if (view->line) {
 		for (int x = view->col; x < view->width; x++)
 			view->line->cells[x] = cell_blank;
@@ -507,6 +583,7 @@ void view_free(View *view) {
 	while (view->selections)
 		view_selections_free(view->selections);
 	free(view->lines);
+	free(view->lexer_name);
 	free(view);
 }
 
@@ -516,7 +593,7 @@ void view_reload(View *view, Text *text) {
 	view_cursor_to(view, 0);
 }
 
-View *view_new(Text *text, ViewEvent *events) {
+View *view_new(Text *text, lua_State *lua, ViewEvent *events) {
 	if (!text)
 		return NULL;
 	View *view = calloc(1, sizeof(View));
@@ -528,6 +605,7 @@ View *view_new(Text *text, ViewEvent *events) {
 	}
 		
 	view->text = text;
+	view->lua = lua;
 	view->events = events;
 	view->tabwidth = 8;
 	view_options_set(view, 0);
@@ -782,12 +860,85 @@ void view_scroll_to(View *view, size_t pos) {
 	view_cursors_scroll_to(view->cursor, pos);
 }
 
+#include <stdio.h>
+
+
 bool view_syntax_set(View *view, const char *name) {
-	return false;
+	if (!name) {
+		free(view->lexer_name);
+		view->lexer_name = NULL;
+		return true;
+	}
+
+	lua_State *L = view->lua;
+	if (!L)
+		return false;
+
+	/* Try to load the specified lexer and parse its token styles.
+	 * Roughly equivalent to the following lua code:
+	 *
+	 * lang = lexers.load(name)
+	 * for token_name, id in pairs(lang._TOKENSTYLES) do
+	 * 	ui->syntax_style(id, lexers:get_style(lang, token_name); 
+	 */
+	lua_getglobal(L, "lexers");
+
+	lua_getfield(L, -1, "STYLE_DEFAULT");
+	view->ui->syntax_style(view->ui, UI_STYLE_DEFAULT, lua_tostring(L, -1));
+	lua_pop(L, 1);
+	lua_getfield(L, -1, "STYLE_CURSOR");
+	view->ui->syntax_style(view->ui, UI_STYLE_CURSOR, lua_tostring(L, -1));
+	lua_pop(L, 1);
+	lua_getfield(L, -1, "STYLE_SELECTION");
+	view->ui->syntax_style(view->ui, UI_STYLE_SELECTION, lua_tostring(L, -1));
+	lua_pop(L, 1);
+	lua_getfield(L, -1, "STYLE_LINENUMBER");
+	view->ui->syntax_style(view->ui, UI_STYLE_LINENUMBER, lua_tostring(L, -1));
+	lua_pop(L, 1);
+
+
+	lua_getfield(L, -1, "load");
+	lua_pushstring(L, name);
+
+	if (lua_pcall(L, 1, 1, 0))
+		return false;
+
+	if (!lua_istable(L, -1)) {
+		lua_pop(L, 2);
+		return false;
+	}
+
+	view->lexer_name = strdup(name);
+	/* loop through all _TOKENSTYLES and parse them */
+	lua_getfield(L, -1, "_TOKENSTYLES");
+	lua_pushnil(L); /* first key */
+	
+	while (lua_next(L, -2)) {
+		size_t id = lua_tointeger(L, -1);
+		//const char *name = lua_tostring(L, -2);
+		lua_pop(L, 1); /* remove value (=id), keep key (=name) */
+		lua_getfield(L, -4, "get_style");
+		lua_pushvalue(L, -5); /* lexer */
+		lua_pushvalue(L, -5); /* lang */
+		lua_pushvalue(L, -4); /* token_name */
+		if (lua_pcall(L, 3, 1, 0))
+			return false;
+		const char *style = lua_tostring(L, -1);
+		//printf("%s\t%d\t%s\n", name, id, style);
+		view->ui->syntax_style(view->ui, id, style);
+		lua_pop(L, 1); /* style */
+	}
+
+	lua_pop(L, 1); /* _TOKENSTYLES */
+	lua_pop(L, 1); /* grammar */
+
+	lua_pop(L, 1); /* lexers */
+
+	return true;
 }
 
 const char *view_syntax_get(View *view) {
-	return NULL;
+	return view->lexer_name;
 }
 
 void view_options_set(View *view, enum UiOption options) {
