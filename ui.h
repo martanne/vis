@@ -23,7 +23,14 @@ enum UiOption {
 	UI_OPTION_SYMBOL_EOF = 1 << 6,
 };
 
-#define UI_STYLES_MAX 64
+enum UiStyles {
+	UI_STYLE_LEXER_MAX = 64,
+	UI_STYLE_DEFAULT,
+	UI_STYLE_CURSOR,
+	UI_STYLE_SELECTION,
+	UI_STYLE_LINENUMBER,
+	UI_STYLE_MAX,
+};
 
 #include "text.h"
 #include "view.h"

@@ -59,6 +59,11 @@ int ESCDELAY;
 } while (0);
 #endif
 
+typedef struct {
+	attr_t attr;
+	short fg, bg;
+} CellStyle;
+
 typedef struct UiCursesWin UiCursesWin;
 
 typedef struct {
@@ -88,7 +93,7 @@ struct UiCursesWin {
 	int sidebar_width;        /* width of the sidebar showing line numbers etc. */
 	UiCursesWin *next, *prev; /* pointers to neighbouring windows */
 	enum UiOption options;    /* display settings for this window */
-	attr_t styles[UI_STYLES_MAX];
+	CellStyle styles[UI_STYLE_MAX];
 };
 
 static volatile sig_atomic_t need_resize; /* TODO */
@@ -421,6 +426,8 @@ static int color_find_rgb(unsigned char r, unsigned char g, unsigned char b)
 /* Convert color from string. */
 static int color_fromstring(const char *s)
 {
+	if (!s)
+		return -1;
 	if (*s == '#' && strlen(s) == 7) {
 		const char *cp;
 		unsigned char r, g, b;
@@ -452,7 +459,7 @@ static int color_fromstring(const char *s)
 	return -1;
 }
 
-static unsigned int color_pair_hash(short fg, short bg) {
+static inline unsigned int color_pair_hash(short fg, short bg) {
 	if (fg == -1)
 		fg = COLORS;
 	if (bg == -1)
@@ -508,41 +515,47 @@ static short color_pair_get(short fg, short bg) {
 	return color2palette[index];
 }
 
+static inline attr_t style_to_attr(CellStyle *style) {
+	return style->attr | COLOR_PAIR(color_pair_get(style->fg, style->bg));
+}
+
 static bool ui_window_syntax_style(UiWin *w, int id, const char *style) {
 	UiCursesWin *win = (UiCursesWin*)w;
-	if (id >= UI_STYLES_MAX)
+	if (id >= UI_STYLE_MAX)
 		return false;
-	short fg = -1, bg = -1;
-	attr_t attr = A_NORMAL;
+	if (!style)
+		return true;
+	CellStyle cell_style = win->styles[UI_STYLE_DEFAULT];
 	char *style_copy = strdup(style), *option = style_copy, *next, *p;
 	while (option) {
 		if ((next = strchr(option, ',')))
 			*next++ = '\0';
 		if ((p = strchr(option, ':')))
 			*p++ = '\0';
-		if (!strcasecmp(option, "bold")) {
-			attr |= A_BOLD;
+		if (!strcasecmp(option, "reverse")) {
+			cell_style.attr |= A_REVERSE;
+		} else if (!strcasecmp(option, "bold")) {
+			cell_style.attr |= A_BOLD;
 		} else if (!strcasecmp(option, "notbold")) {
-			attr &= ~A_BOLD;
+			cell_style.attr &= ~A_BOLD;
 #ifdef A_ITALIC
 		} else if (!strcasecmp(option, "italics")) {
-			attr |= A_ITALIC;
+			cell_style.attr |= A_ITALIC;
 		} else if (!strcasecmp(option, "notitalics")) {
-			attr &= ~A_ITALIC;
+			cell_style.attr &= ~A_ITALIC;
 #endif
 		} else if (!strcasecmp(option, "underlined")) {
-			attr |= A_UNDERLINE;
+			cell_style.attr |= A_UNDERLINE;
 		} else if (!strcasecmp(option, "notunderlined")) {
-			attr &= ~A_UNDERLINE;
+			cell_style.attr &= ~A_UNDERLINE;
 		} else if (!strcasecmp(option, "fore")) {
-			fg = color_fromstring(p);
+			cell_style.fg = color_fromstring(p);
 		} else if (!strcasecmp(option, "back")) {
-			bg = color_fromstring(p);
+			cell_style.bg = color_fromstring(p);
 		}
 		option = next;
 	}
-	attr |= COLOR_PAIR(color_pair_get(fg, bg));
-	win->styles[id] = attr;
+	win->styles[id] = cell_style;
 	free(style_copy);
 	return true;
 }
@@ -583,6 +596,8 @@ static bool ui_window_draw_sidebar(UiCursesWin *win) {
 		size_t prev_lineno = 0;
 		size_t cursor_lineno = view_cursor_getpos(win->view).line;
 		werase(win->winside);
+		wbkgd(win->winside, style_to_attr(&win->styles[UI_STYLE_DEFAULT]));
+		wattrset(win->winside, style_to_attr(&win->styles[UI_STYLE_LINENUMBER]));
 		for (const Line *l = line; l; l = l->next, i++) {
 			if (l->lineno && l->lineno != prev_lineno) {
 				if (win->options & UI_OPTION_LINE_NUMBERS_ABSOLUTE) {
@@ -630,15 +645,25 @@ static void ui_window_draw(UiWin *w) {
 	UiCursesWin *win = (UiCursesWin*)w;
 	if (!ui_window_draw_sidebar(win))
 		return;
+	wbkgd(win->win, style_to_attr(&win->styles[UI_STYLE_DEFAULT]));
 	wmove(win->win, 0, 0);
 	int width = view_width_get(win->view);
+	CellStyle *prev_style = NULL;
+	short selection_bg = win->styles[UI_STYLE_SELECTION].bg;
+	attr_t attr;
 	for (const Line *l = view_lines_get(win->view); l; l = l->next) {
 		for (int x = 0; x < width; x++) {
-			int attr = win->styles[l->cells[x].attr];
-			if (l->cells[x].cursor && (win->ui->selwin == win || win->ui->prompt_win == win))
-				attr = A_NORMAL | A_REVERSE;
-			if (l->cells[x].selected)
-				attr |= A_REVERSE;
+			CellStyle *style = &win->styles[l->cells[x].attr];
+			if (l->cells[x].cursor && (win->ui->selwin == win || win->ui->prompt_win == win)) {
+				attr = style_to_attr(&win->styles[UI_STYLE_CURSOR]);
+				prev_style = NULL;
+			} else if (l->cells[x].selected) {
+				attr = style->attr | COLOR_PAIR(color_pair_get(style->fg, selection_bg));
+				prev_style = NULL;
+			} else if (style != prev_style) {
+				attr = style_to_attr(style);
+				prev_style = style;
+			}
 			wattrset(win->win, attr);
 			waddstr(win->win, l->cells[x].data);
 		}
@@ -838,6 +863,18 @@ static UiWin *ui_window_new(Ui *ui, View *view, File *file) {
 		ui_window_free((UiWin*)win);
 		return NULL;
 	}
+
+	CellStyle style = (CellStyle) {
+		.fg = -1, .bg = -1, .attr = A_NORMAL,
+	};
+
+	for (int i = 0; i < UI_STYLE_MAX; i++) {
+		win->styles[i] = style;
+	}
+
+	style.attr |= A_REVERSE;
+	win->styles[UI_STYLE_CURSOR] = style;
+	win->styles[UI_STYLE_SELECTION] = style;
 
 	win->ui = uic;
 	win->view = view;
@@ -1070,4 +1107,3 @@ void ui_curses_free(Ui *ui) {
 		termkey_destroy(uic->termkey);
 	free(uic);
 }
-

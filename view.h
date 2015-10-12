@@ -3,6 +3,7 @@
 
 #include <stddef.h>
 #include <stdbool.h>
+#include <lua.h>
 #include "register.h"
 #include "text.h"
 #include "ui.h"
@@ -45,7 +46,7 @@ typedef struct {
 	size_t col;
 } CursorPos;
 
-View *view_new(Text*, ViewEvent*);
+View *view_new(Text*, lua_State*, ViewEvent*);
 void view_ui(View*, UiWin*);
 /* change associated text displayed in this window */
 void view_reload(View*, Text*);
