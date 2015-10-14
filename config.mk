@@ -24,14 +24,17 @@ endif
 
 PREFIX ?= /usr/local
 MANPREFIX = ${PREFIX}/share/man
+SHAREPREFIX = ${PREFIX}/share/vis
 
+CFLAGS_LUA = $(shell pkg-config --cflags lua5.1 2> /dev/null || echo "-I/usr/include/lua5.1")
 CFLAGS_TERMKEY = $(shell pkg-config --cflags termkey 2> /dev/null || echo "")
 CFLAGS_CURSES = $(shell pkg-config --cflags ncursesw 2> /dev/null || echo "-I/usr/include/ncursesw")
 
+LDFLAGS_LUA = $(shell pkg-config --libs lua5.1 2> /dev/null || echo "-llua")
 LDFLAGS_TERMKEY = $(shell pkg-config --libs termkey 2> /dev/null || echo "-ltermkey")
 LDFLAGS_CURSES = $(shell pkg-config --libs ncursesw 2> /dev/null || echo "-lncursesw")
 
-LIBS = -lc
+LIBS = -lm -lc
 OS = $(shell uname)
 
 ifeq (${OS},Linux)
@@ -55,8 +58,8 @@ else ifeq (${OS},AIX)
 	CFLAGS += -D_ALL_SOURCE
 endif
 
-CFLAGS_LIBS = $(CFLAGS_TERMKEY) $(CFLAGS_CURSES)
-LDFLAGS_LIBS = $(LDFLAGS_TERMKEY) $(LDFLAGS_CURSES) $(LIBS)
+CFLAGS_LIBS = $(CFLAGS_LUA) $(CFLAGS_TERMKEY) $(CFLAGS_CURSES)
+LDFLAGS_LIBS = $(LDFLAGS_LUA) $(LDFLAGS_TERMKEY) $(LDFLAGS_CURSES) $(LIBS)
 
 CFLAGS_VIS = $(CFLAGS_LIBS) -std=c99 -Os -DVERSION=\"${VERSION}\" -DNDEBUG -D_POSIX_C_SOURCE=200809L -D_XOPEN_SOURCE=700
 LDFLAGS_VIS = $(LDFLAGS_LIBS)
