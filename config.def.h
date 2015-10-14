@@ -457,12 +457,12 @@ static KeyAction vis_action[] = {
 		switchmode, { .i = VIS_MODE_NORMAL }
 	},
 	[VIS_ACTION_MODE_VISUAL] = {
-		"vis-mode-visual",
+		"vis-mode-visual-charwise",
 		"Enter characterwise visual mode",
 		switchmode, { .i = VIS_MODE_VISUAL }
 	},
 	[VIS_ACTION_MODE_VISUAL_LINE] = {
-		"vis-mode-visual",
+		"vis-mode-visual-linewise",
 		"Enter linewise visual mode",
 		switchmode, { .i = VIS_MODE_VISUAL_LINE }
 	},
