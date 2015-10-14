@@ -2600,6 +2600,18 @@ static const char *keynext(const char *keys) {
 	/* first try to parse a special key of the form <Key> */
 	if (*keys == '<' && (next = termkey_strpkey(termkey, keys+1, &key, TERMKEY_FORMAT_VIM)) && *next == '>')
 		return next+1;
+	if (*keys == '<') {
+		const char *start = keys + 1, *end = start;
+		while (*end && *end != '>')
+			end++;
+		if (end > start && end - start - 1 < 64 && *end == '>') {
+			char key[64];
+			memcpy(key, start, end - start);
+			key[end - start] = '\0';
+			if (map_get(vis->actions, key))
+				return end + 1;
+		}
+	}
 	while (!ISUTF8(*keys))
 		keys++;
 	return termkey_strpkey(termkey, keys, &key, TERMKEY_FORMAT_VIM);
@@ -2655,7 +2667,20 @@ static const char *keypress(const char *input) {
 		} else if (prefix) { /* incomplete key binding? */
 			cur = end;
 		} else { /* no keybinding */
-			if (vis->mode->input)
+			KeyAction *action = NULL;
+			if (start[0] == '<' && end[-1] == '>') {
+				/* test for special editor key command */
+				char tmp = end[-1];
+				end[-1] = '\0';
+				action = map_get(vis->actions, start+1);
+				end[-1] = tmp;
+				if (action) {
+					end = (char*)action->func(end, &action->arg);
+					if (!end)
+						break;
+				}
+			}
+			if (!action && vis->mode->input)
 				vis->mode->input(start, end - start);
 			start = cur = end;
 		}
@@ -2779,6 +2804,12 @@ int main(int argc, char *argv[]) {
 
 	if (!editor_syntax_load(vis, syntaxes))
 		die("Could not load syntax highlighting definitions\n");
+
+	for (int i = 0; i < LENGTH(vis_action); i++) {
+		KeyAction *action = &vis_action[i];
+		if (!editor_action_register(vis, action))
+			die("Could not register action: %s\n", action->name);
+	}
 
 	char *cmd = NULL;
 	bool end_of_options = false;

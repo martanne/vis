@@ -253,6 +253,7 @@ struct Editor {
 	volatile sig_atomic_t cancel_filter; /* abort external command */
 	volatile sig_atomic_t sigbus;
 	sigjmp_buf sigbus_jmpbuf;
+	Map *actions;          /* built in special editor keys / commands */
 };
 
 Editor *editor_new(Ui*);
@@ -265,6 +266,8 @@ void editor_suspend(Editor*);
 bool editor_mode_bindings(Mode*, KeyBinding**);
 bool editor_mode_map(Mode*, const char *name, KeyBinding*);
 bool editor_mode_unmap(Mode*, const char *name);
+
+bool editor_action_register(Editor*, KeyAction*);
 
 /* these function operate on the currently focused window but make sure
  * that all windows which show the affected region are redrawn too. */

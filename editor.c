@@ -252,6 +252,14 @@ bool editor_mode_unmap(Mode *mode, const char *name) {
 	return map_delete(mode->bindings, name);
 }
 
+bool editor_action_register(Editor *ed, KeyAction *action) {
+	if (!ed->actions)
+		ed->actions = map_new();
+	if (!ed->actions)
+		return false;
+	return map_put(ed->actions, action->name, action);
+}
+
 static void window_free(Win *win) {
 	if (!win)
 		return;
@@ -430,6 +438,7 @@ void editor_free(Editor *ed) {
 	ed->ui->free(ed->ui);
 	map_free(ed->cmds);
 	map_free(ed->options);
+	map_free(ed->actions);
 	buffer_release(&ed->buffer_repeat);
 	free(ed);
 }
