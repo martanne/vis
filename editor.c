@@ -165,10 +165,10 @@ static void editor_windows_invalidate(Editor *ed, size_t start, size_t end) {
 			Filerange view = view_viewport_get(win->view);
 			if ((view.start <= start && start <= view.end) ||
 			    (view.start <= end && end <= view.end))
-				win->ui->draw(win->ui);
+				view_draw(win->view);
 		}
 	}
-	ed->win->ui->draw(ed->win->ui);
+	view_draw(ed->win->view);
 }
 
 int editor_tabwidth_get(Editor *ed) {

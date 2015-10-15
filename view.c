@@ -519,7 +519,7 @@ void view_draw(View *view) {
 	}
 
 	if (view->ui)
-		view->ui->draw_text(view->ui, view->topline);
+		view->ui->draw(view->ui);
 }
 
 bool view_resize(View *view, int width, int height) {

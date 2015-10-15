@@ -568,6 +568,39 @@ static void ui_window_move(UiCursesWin *win, int x, int y) {
 		mvwin(win->winstatus, y + win->height - 1, x);
 }
 
+static bool ui_window_draw_sidebar(UiCursesWin *win) {
+	if (!win->winside)
+		return true;
+	const Line *line = view_lines_get(win->view);
+	int sidebar_width = snprintf(NULL, 0, "%zd", line->lineno + win->height - 2) + 1;
+	if (win->sidebar_width != sidebar_width) {
+		win->sidebar_width = sidebar_width;
+		ui_window_resize(win, win->width, win->height);
+		ui_window_move(win, win->x, win->y);
+		return false;
+	} else {
+		int i = 0;
+		size_t prev_lineno = 0;
+		size_t cursor_lineno = view_cursor_getpos(win->view).line;
+		werase(win->winside);
+		for (const Line *l = line; l; l = l->next, i++) {
+			if (l->lineno && l->lineno != prev_lineno) {
+				if (win->options & UI_OPTION_LINE_NUMBERS_ABSOLUTE) {
+					mvwprintw(win->winside, i, 0, "%*u", sidebar_width-1, l->lineno);
+				} else if (win->options & UI_OPTION_LINE_NUMBERS_RELATIVE) {
+					size_t rel = l->lineno > cursor_lineno ?
+					             l->lineno - cursor_lineno :
+					             cursor_lineno - l->lineno;
+					mvwprintw(win->winside, i, 0, "%*u", sidebar_width-1, rel);
+				}
+			}
+			prev_lineno = l->lineno;
+		}
+		mvwvline(win->winside, 0, sidebar_width-1, ACS_VLINE, win->height-1);
+		return true;
+	}
+}
+
 static void ui_window_draw_status(UiWin *w) {
 	UiCursesWin *win = (UiCursesWin*)w;
 	if (!win->winstatus)
@@ -594,9 +627,32 @@ static void ui_window_draw_status(UiWin *w) {
 
 static void ui_window_draw(UiWin *w) {
 	UiCursesWin *win = (UiCursesWin*)w;
+	if (!ui_window_draw_sidebar(win))
+		return;
+	wmove(win->win, 0, 0);
+	int width = view_width_get(win->view);
+	for (const Line *l = view_lines_get(win->view); l; l = l->next) {
+		for (int x = 0; x < width; x++) {
+			int attr = win->styles[l->cells[x].attr];
+			if (l->cells[x].cursor && (win->ui->selwin == win || win->ui->prompt_win == win))
+				attr = A_NORMAL | A_REVERSE;
+			if (l->cells[x].selected)
+				attr |= A_REVERSE;
+			wattrset(win->win, attr);
+			waddstr(win->win, l->cells[x].data);
+		}
+		/* try to fixup display issues, in theory we should always output a full line */
+		int x, y;
+		getyx(win->win, y, x);
+		(void)y;
+		wattrset(win->win, A_NORMAL);
+		for (; 0 < x && x < width; x++)
+			waddstr(win->win, " ");
+	}
+	wclrtobot(win->win);
+
 	if (win->winstatus)
-		ui_window_draw_status((UiWin*)win);
-	view_draw(win->view);
+		ui_window_draw_status(w);
 }
 
 static void ui_window_reload(UiWin *w, File *file) {
@@ -605,36 +661,6 @@ static void ui_window_reload(UiWin *w, File *file) {
 	win->sidebar_width = 0;
 	view_reload(win->view, file->text);
 	ui_window_draw(w);
-}
-
-static void ui_window_draw_sidebar(UiCursesWin *win, const Line *line) {
-	if (!win->winside || !line)
-		return;
-	int sidebar_width = snprintf(NULL, 0, "%zd", line->lineno + win->height - 2) + 1;
-	if (win->sidebar_width != sidebar_width) {
-		win->sidebar_width = sidebar_width;
-		ui_window_resize(win, win->width, win->height);
-		ui_window_move(win, win->x, win->y);
-	} else {
-		int i = 0;
-		size_t prev_lineno = 0;
-		size_t cursor_lineno = view_cursor_getpos(win->view).line;
-		werase(win->winside);
-		for (const Line *l = line; l; l = l->next, i++) {
-			if (l->lineno && l->lineno != prev_lineno) {
-				if (win->options & UI_OPTION_LINE_NUMBERS_ABSOLUTE) {
-					mvwprintw(win->winside, i, 0, "%*u", sidebar_width-1, l->lineno);
-				} else if (win->options & UI_OPTION_LINE_NUMBERS_RELATIVE) {
-					size_t rel = l->lineno > cursor_lineno ?
-					             l->lineno - cursor_lineno :
-					             cursor_lineno - l->lineno;
-					mvwprintw(win->winside, i, 0, "%*u", sidebar_width-1, rel);
-				}
-			}
-			prev_lineno = l->lineno;
-		}
-		mvwvline(win->winside, 0, sidebar_width-1, ACS_VLINE, win->height-1);
-	}
 }
 
 static void ui_window_update(UiCursesWin *win) {
@@ -762,33 +788,6 @@ static void ui_window_free(UiWin *w) {
 	free(win);
 }
 
-static void ui_window_draw_text(UiWin *w, const Line *line) {
-	UiCursesWin *win = (UiCursesWin*)w;
-	wmove(win->win, 0, 0);
-	int width = view_width_get(win->view);
-	for (const Line *l = line; l; l = l->next) {
-		for (int x = 0; x < width; x++) {
-			int attr = win->styles[l->cells[x].attr];
-			if (l->cells[x].cursor && (win->ui->selwin == win || win->ui->prompt_win == win))
-				attr = A_NORMAL | A_REVERSE;
-			if (l->cells[x].selected)
-				attr |= A_REVERSE;
-			wattrset(win->win, attr);
-			waddstr(win->win, l->cells[x].data);
-		}
-		/* try to fixup display issues, in theory we should always output a full line */
-		int x, y;
-		getyx(win->win, y, x);
-		(void)y;
-		wattrset(win->win, A_NORMAL);
-		for (; 0 < x && x < width; x++)
-			waddstr(win->win, " ");
-	}
-	wclrtobot(win->win);
-
-	ui_window_draw_sidebar(win, line);
-}
-
 static void ui_window_focus(UiWin *w) {
 	UiCursesWin *win = (UiCursesWin*)w;
 	UiCursesWin *oldsel = win->ui->selwin;
@@ -828,7 +827,6 @@ static UiWin *ui_window_new(Ui *ui, View *view, File *file) {
 	win->uiwin = (UiWin) {
 		.draw = ui_window_draw,
 		.draw_status = ui_window_draw_status,
-		.draw_text = ui_window_draw_text,
 		.options_set = ui_window_options_set,
 		.options_get = ui_window_options_get,
 		.reload = ui_window_reload,
