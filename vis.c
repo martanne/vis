@@ -1981,17 +1981,23 @@ static bool cmd_substitute(Filerange *range, enum CmdOpt opt, const char *argv[]
 }
 
 static bool cmd_split(Filerange *range, enum CmdOpt opt, const char *argv[]) {
+	enum UiOption options = view_options_get(vis->win->view);
 	editor_windows_arrange(vis, UI_LAYOUT_HORIZONTAL);
 	if (!argv[1])
 		return vis_window_split(vis->win);
-	return openfiles(&argv[1]);
+	bool ret = openfiles(&argv[1]);
+	view_options_set(vis->win->view, options);
+	return ret;
 }
 
 static bool cmd_vsplit(Filerange *range, enum CmdOpt opt, const char *argv[]) {
+	enum UiOption options = view_options_get(vis->win->view);
 	editor_windows_arrange(vis, UI_LAYOUT_VERTICAL);
 	if (!argv[1])
 		return vis_window_split(vis->win);
-	return openfiles(&argv[1]);
+	bool ret = openfiles(&argv[1]);
+	view_options_set(vis->win->view, options);
+	return ret;
 }
 
 static bool cmd_new(Filerange *range, enum CmdOpt opt, const char *argv[]) {
