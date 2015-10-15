@@ -671,7 +671,7 @@ static void ui_window_update(UiCursesWin *win) {
 	wnoutrefresh(win->win);
 }
 
-static void arrange(Ui *ui, enum UiLayout layout) {
+static void ui_arrange(Ui *ui, enum UiLayout layout) {
 	UiCurses *uic = (UiCurses*)ui;
 	uic->layout = layout;
 	int n = 0, x = 0, y = 0;
@@ -695,10 +695,10 @@ static void arrange(Ui *ui, enum UiLayout layout) {
 	}
 }
 
-static void draw(Ui *ui) { 
+static void ui_draw(Ui *ui) {
 	UiCurses *uic = (UiCurses*)ui;
 	erase();
-	arrange(ui, uic->layout);
+	ui_arrange(ui, uic->layout);
 	
 	for (UiCursesWin *win = uic->windows; win; win = win->next)
 		ui_window_draw((UiWin*)win);
@@ -726,7 +726,7 @@ static void ui_resize_to(Ui *ui, int width, int height) {
 		ui_window_resize(uic->prompt_win, width - title_width, 1);
 		ui_window_move(uic->prompt_win, title_width, height-1);
 	}
-	draw(ui);
+	ui_draw(ui);
 }
 
 static void ui_resize(Ui *ui) {
@@ -745,7 +745,7 @@ static void ui_resize(Ui *ui) {
 	ui_resize_to(ui, width, height);
 }
 
-static void update(Ui *ui) {
+static void ui_update(Ui *ui) {
 	UiCurses *uic = (UiCurses*)ui;
 	if (need_resize) {
 		ui_resize(ui);
@@ -851,21 +851,21 @@ static UiWin *ui_window_new(Ui *ui, View *view, File *file) {
 	return &win->uiwin;
 }
 
-static void info(Ui *ui, const char *msg, va_list ap) {
+static void ui_info(Ui *ui, const char *msg, va_list ap) {
 	UiCurses *uic = (UiCurses*)ui;
 	vsnprintf(uic->info, sizeof(uic->info), msg, ap);
-	draw(ui);
+	ui_draw(ui);
 }
 
-static void info_hide(Ui *ui) {
+static void ui_info_hide(Ui *ui) {
 	UiCurses *uic = (UiCurses*)ui;
 	if (uic->info[0]) { 
 		uic->info[0] = '\0';
-		draw(ui);
+		ui_draw(ui);
 	}
 }
 
-static UiWin *prompt_new(Ui *ui, View *view, File *file) {
+static UiWin *ui_prompt_new(Ui *ui, View *view, File *file) {
 	UiCurses *uic = (UiCurses*)ui;
 	if (uic->prompt_win)
 		return (UiWin*)uic->prompt_win;
@@ -886,7 +886,7 @@ static UiWin *prompt_new(Ui *ui, View *view, File *file) {
 	return uiwin;
 }
 
-static void prompt(Ui *ui, const char *title, const char *data) {
+static void ui_prompt(Ui *ui, const char *title, const char *data) {
 	UiCurses *uic = (UiCurses*)ui;
 	if (uic->prompt_title[0])
 		return;
@@ -900,7 +900,7 @@ static void prompt(Ui *ui, const char *title, const char *data) {
 	view_cursor_to(uic->prompt_win->view, len);
 }
 
-static char *prompt_input(Ui *ui) {
+static char *ui_prompt_input(Ui *ui) {
 	UiCurses *uic = (UiCurses*)ui;
 	if (!uic->prompt_win)
 		return NULL;
@@ -913,7 +913,7 @@ static char *prompt_input(Ui *ui) {
 	return buf;
 }
 
-static void prompt_hide(Ui *ui) {
+static void ui_prompt_hide(Ui *ui) {
 	UiCurses *uic = (UiCurses*)ui;
 	uic->prompt_title[0] = '\0';
 	ui_resize_to(ui, uic->width, uic->height);
@@ -1014,18 +1014,18 @@ Ui *ui_curses_new(void) {
 		.suspend = ui_suspend,
 		.resume = ui_resize,
 		.resize = ui_resize,
-		.update = update,
+		.update = ui_update,
 		.window_new = ui_window_new,
 		.window_free = ui_window_free,
 		.window_focus = ui_window_focus,
-		.prompt_new = prompt_new,
-		.prompt = prompt,
-		.prompt_input = prompt_input,
-		.prompt_hide = prompt_hide,
-		.draw = draw,
-		.arrange = arrange,
-		.info = info,
-		.info_hide = info_hide,
+		.prompt_new = ui_prompt_new,
+		.prompt = ui_prompt,
+		.prompt_input = ui_prompt_input,
+		.prompt_hide = ui_prompt_hide,
+		.draw = ui_draw,
+		.arrange = ui_arrange,
+		.info = ui_info,
+		.info_hide = ui_info_hide,
 		.haskey = ui_haskey,
 		.getkey = ui_getkey,
 		.terminal_save = ui_terminal_save,
