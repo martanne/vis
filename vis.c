@@ -529,9 +529,7 @@ Vis *vis_new(Ui *ui) {
 		vis->lua = L = NULL;
 	} else {
 		lua_setglobal(L, "lexers");
-		lua_getglobal(L, "require");
-		lua_pushstring(L, "themes/default");
-		lua_pcall(L, 1, 0, 0);
+		vis_theme_load(vis, "default");
 	}
 
 	vis->ui = ui;
@@ -1731,6 +1729,7 @@ static bool cmd_set(Vis *vis, Filerange *range, enum CmdOpt cmdopt, const char *
 		OPTION_NUMBER,
 		OPTION_NUMBER_RELATIVE,
 		OPTION_CURSOR_LINE,
+		OPTION_THEME,
 	};
 
 	/* definitions have to be in the same order as the enum above */
@@ -1743,6 +1742,7 @@ static bool cmd_set(Vis *vis, Filerange *range, enum CmdOpt cmdopt, const char *
 		[OPTION_NUMBER]          = { { "numbers", "nu"          }, OPTION_TYPE_BOOL   },
 		[OPTION_NUMBER_RELATIVE] = { { "relativenumbers", "rnu" }, OPTION_TYPE_BOOL   },
 		[OPTION_CURSOR_LINE]     = { { "cursorline", "cul"      }, OPTION_TYPE_BOOL   },
+		[OPTION_THEME]           = { { "theme"                  }, OPTION_TYPE_STRING },
 	};
 
 	if (!vis->options) {
@@ -1787,6 +1787,7 @@ static bool cmd_set(Vis *vis, Filerange *range, enum CmdOpt cmdopt, const char *
 			vis_info_show(vis, "Expecting string option value");
 			return false;
 		}
+		arg.s = argv[2];
 		break;
 	case OPTION_TYPE_BOOL:
 		if (!argv[2]) {
@@ -1896,6 +1897,12 @@ static bool cmd_set(Vis *vis, Filerange *range, enum CmdOpt cmdopt, const char *
 		view_options_set(vis->win->view, opt);
 		break;
 	}
+	case OPTION_THEME:
+		if (!vis_theme_load(vis, arg.s)) {
+			vis_info_show(vis, "Failed to load theme: `%s'", arg.s);
+			return false;
+		}
+		break;
 	}
 
 	return true;
@@ -3224,4 +3231,28 @@ Text *vis_file_text(File *file) {
 
 const char *vis_file_name(File *file) {
 	return file->name;
+}
+
+bool vis_theme_load(Vis *vis, const char *name) {
+	lua_State *L = vis->lua;
+	if (!L)
+		return false;
+	/* package.loaded['themes/'..name] = nil
+	 * require 'themes/'..name */
+	lua_pushstring(L, "themes/");
+	lua_pushstring(L, name);
+	lua_concat(L, 2);
+	lua_getglobal(L, "package");
+	lua_getfield(L, -1, "loaded");
+	lua_pushvalue(L, -3);
+	lua_pushnil(L);
+	lua_settable(L, -3);
+	lua_pop(L, 2);
+	lua_getglobal(L, "require");
+	lua_pushvalue(L, -2);
+	if (lua_pcall(L, 1, 0, 0))
+		return false;
+	for (Win *win = vis->windows; win; win = win->next)
+		view_syntax_set(win->view, view_syntax_get(win->view));
+	return true;
 }

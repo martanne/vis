@@ -322,4 +322,6 @@ View *vis_view(Vis*);
 Text *vis_file_text(File*);
 const char *vis_file_name(File*);
 
+bool vis_theme_load(Vis*, const char *name);
+
 #endif
