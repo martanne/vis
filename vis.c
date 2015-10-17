@@ -358,9 +358,7 @@ Vis *vis_new(Ui *ui) {
 		vis->lua = L = NULL;
 	} else {
 		lua_setglobal(L, "lexers");
-		lua_getglobal(L, "require");
-		lua_pushstring(L, "themes/default");
-		lua_pcall(L, 1, 0, 0);
+		vis_theme_load(vis, "default");
 	}
 
 	vis->ui = ui;
@@ -1333,4 +1331,28 @@ Text *vis_file_text(File *file) {
 
 const char *vis_file_name(File *file) {
 	return file->name;
+}
+
+bool vis_theme_load(Vis *vis, const char *name) {
+	lua_State *L = vis->lua;
+	if (!L)
+		return false;
+	/* package.loaded['themes/'..name] = nil
+	 * require 'themes/'..name */
+	lua_pushstring(L, "themes/");
+	lua_pushstring(L, name);
+	lua_concat(L, 2);
+	lua_getglobal(L, "package");
+	lua_getfield(L, -1, "loaded");
+	lua_pushvalue(L, -3);
+	lua_pushnil(L);
+	lua_settable(L, -3);
+	lua_pop(L, 2);
+	lua_getglobal(L, "require");
+	lua_pushvalue(L, -2);
+	if (lua_pcall(L, 1, 0, 0))
+		return false;
+	for (Win *win = vis->windows; win; win = win->next)
+		view_syntax_set(win->view, view_syntax_get(win->view));
+	return true;
 }

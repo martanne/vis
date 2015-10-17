@@ -159,6 +159,7 @@ static bool cmd_set(Vis *vis, Filerange *range, enum CmdOpt cmdopt, const char *
 		OPTION_NUMBER,
 		OPTION_NUMBER_RELATIVE,
 		OPTION_CURSOR_LINE,
+		OPTION_THEME,
 	};
 
 	/* definitions have to be in the same order as the enum above */
@@ -171,6 +172,7 @@ static bool cmd_set(Vis *vis, Filerange *range, enum CmdOpt cmdopt, const char *
 		[OPTION_NUMBER]          = { { "numbers", "nu"          }, OPTION_TYPE_BOOL   },
 		[OPTION_NUMBER_RELATIVE] = { { "relativenumbers", "rnu" }, OPTION_TYPE_BOOL   },
 		[OPTION_CURSOR_LINE]     = { { "cursorline", "cul"      }, OPTION_TYPE_BOOL   },
+		[OPTION_THEME]           = { { "theme"                  }, OPTION_TYPE_STRING },
 	};
 
 	if (!vis->options) {
@@ -215,6 +217,7 @@ static bool cmd_set(Vis *vis, Filerange *range, enum CmdOpt cmdopt, const char *
 			vis_info_show(vis, "Expecting string option value");
 			return false;
 		}
+		arg.s = argv[2];
 		break;
 	case OPTION_TYPE_BOOL:
 		if (!argv[2]) {
@@ -324,6 +327,12 @@ static bool cmd_set(Vis *vis, Filerange *range, enum CmdOpt cmdopt, const char *
 		view_options_set(vis->win->view, opt);
 		break;
 	}
+	case OPTION_THEME:
+		if (!vis_theme_load(vis, arg.s)) {
+			vis_info_show(vis, "Failed to load theme: `%s'", arg.s);
+			return false;
+		}
+		break;
 	}
 
 	return true;
