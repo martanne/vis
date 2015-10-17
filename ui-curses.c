@@ -17,6 +17,7 @@
 #include "ui.h"
 #include "ui-curses.h"
 #include "util.h"
+#include "text-util.h"
 
 #ifdef NCURSES_VERSION
 # ifndef NCURSES_EXT_COLORS
@@ -649,9 +650,18 @@ static void ui_window_draw(UiWin *w) {
 	wmove(win->win, 0, 0);
 	int width = view_width_get(win->view);
 	CellStyle *prev_style = NULL;
+	size_t cursor_lineno = -1;
+	if (win->options & UI_OPTION_CURSOR_LINE && win->ui->selwin == win) {
+		Cursor *cursor = view_cursors(win->view);
+		Filerange selection = view_cursors_selection_get(cursor);
+		if (!view_cursors_next(cursor) && !text_range_valid(&selection))
+			cursor_lineno = view_cursor_getpos(win->view).line;
+	}
 	short selection_bg = win->styles[UI_STYLE_SELECTION].bg;
+	short cursor_line_bg = win->styles[UI_STYLE_CURSOR_LINE].bg;
 	attr_t attr;
 	for (const Line *l = view_lines_get(win->view); l; l = l->next) {
+		bool cursor_line = l->lineno == cursor_lineno;
 		for (int x = 0; x < width; x++) {
 			CellStyle *style = &win->styles[l->cells[x].attr];
 			if (l->cells[x].cursor && (win->ui->selwin == win || win->ui->prompt_win == win)) {
@@ -659,6 +669,9 @@ static void ui_window_draw(UiWin *w) {
 				prev_style = NULL;
 			} else if (l->cells[x].selected) {
 				attr = style->attr | COLOR_PAIR(color_pair_get(style->fg, selection_bg));
+				prev_style = NULL;
+			} else if (cursor_line) {
+				attr = style->attr | COLOR_PAIR(color_pair_get(style->fg, cursor_line_bg));
 				prev_style = NULL;
 			} else if (style != prev_style) {
 				attr = style_to_attr(style);
