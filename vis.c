@@ -1730,6 +1730,7 @@ static bool cmd_set(Vis *vis, Filerange *range, enum CmdOpt cmdopt, const char *
 		OPTION_SHOW,
 		OPTION_NUMBER,
 		OPTION_NUMBER_RELATIVE,
+		OPTION_CURSOR_LINE,
 	};
 
 	/* definitions have to be in the same order as the enum above */
@@ -1741,6 +1742,7 @@ static bool cmd_set(Vis *vis, Filerange *range, enum CmdOpt cmdopt, const char *
 		[OPTION_SHOW]            = { { "show"                   }, OPTION_TYPE_STRING },
 		[OPTION_NUMBER]          = { { "numbers", "nu"          }, OPTION_TYPE_BOOL   },
 		[OPTION_NUMBER_RELATIVE] = { { "relativenumbers", "rnu" }, OPTION_TYPE_BOOL   },
+		[OPTION_CURSOR_LINE]     = { { "cursorline", "cul"      }, OPTION_TYPE_BOOL   },
 	};
 
 	if (!vis->options) {
@@ -1883,6 +1885,15 @@ static bool cmd_set(Vis *vis, Filerange *range, enum CmdOpt cmdopt, const char *
 			opt &= ~UI_OPTION_LINE_NUMBERS_RELATIVE;
 		}
 		view_options_set(vis->win->view, opt); 
+		break;
+	}
+	case OPTION_CURSOR_LINE: {
+		enum UiOption opt = view_options_get(vis->win->view);
+		if (arg.b)
+			opt |= UI_OPTION_CURSOR_LINE;
+		else
+			opt &= ~UI_OPTION_CURSOR_LINE;
+		view_options_set(vis->win->view, opt);
 		break;
 	}
 	}

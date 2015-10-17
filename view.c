@@ -891,6 +891,9 @@ bool view_syntax_set(View *view, const char *name) {
 	lua_getfield(L, -1, "STYLE_CURSOR");
 	view->ui->syntax_style(view->ui, UI_STYLE_CURSOR, lua_tostring(L, -1));
 	lua_pop(L, 1);
+	lua_getfield(L, -1, "STYLE_CURSOR_LINE");
+	view->ui->syntax_style(view->ui, UI_STYLE_CURSOR_LINE, lua_tostring(L, -1));
+	lua_pop(L, 1);
 	lua_getfield(L, -1, "STYLE_SELECTION");
 	view->ui->syntax_style(view->ui, UI_STYLE_SELECTION, lua_tostring(L, -1));
 	lua_pop(L, 1);
