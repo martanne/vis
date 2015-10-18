@@ -430,6 +430,9 @@ void vis_draw(Vis *vis) {
 }
 
 void vis_update(Vis *vis) {
+	for (Win *win = vis->windows; win; win = win->next)
+		view_update(win->view);
+	view_update(vis->win->view);
 	vis->ui->update(vis->ui);
 }
 
