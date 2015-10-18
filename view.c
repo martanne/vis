@@ -73,6 +73,7 @@ struct View {
 	Selection *selections; /* all selected regions */
 	lua_State *lua;     /* lua state used for syntax highlighting */
 	char *lexer_name;
+	bool need_update;   /* whether view has been redrawn */
 };
 
 static const SyntaxSymbol symbols_none[] = {
@@ -335,31 +336,18 @@ void view_cursor_to(View *view, size_t pos) {
  * stop once the screen is full, update view->end, view->lastline */
 void view_draw(View *view) {
 	view_clear(view);
-	/* absolute start of visible area */
-	size_t start = view->start;
-	/* maximal number of bytes to consider for syntax highlighting before
-	 * the visible area */
-	const size_t lexer_before_max = 4096;
-	/* absolute position to start syntax highlighting */
-	size_t lexer_start = start >= lexer_before_max ? start - lexer_before_max : 0;
-	/* number of bytes used for syntax highlighting before visible are */
-	size_t lexer_before = start - lexer_start;
-	/* number of bytes to read in one go */
-	const size_t text_size = lexer_before_max + (view->width * view->height);
+	/* read a screenful of text */
+	const size_t text_size = view->width * view->height;
 	/* current buffer to work with */
 	char text[text_size+1];
-	/* remaining bytes to process in buffer*/
-	size_t text_len = text_bytes_get(view->text, lexer_start, text_size, text);
+	/* remaining bytes to process in buffer */
+	size_t rem = text_bytes_get(view->text, view->start, text_size, text);
 	/* NUL terminate text section */
-	text[text_len] = '\0';
-	/* remaining bytes to process */
-	size_t rem = text_len;
-	if (rem >= lexer_before)
-		rem -= lexer_before;
+	text[rem] = '\0';
 	/* absolute position of character currently being added to display */
-	size_t pos = start;
+	size_t pos = view->start;
 	/* current position into buffer from which to interpret a character */
-	char *cur = text + lexer_before;
+	char *cur = text;
 	/* start from known multibyte state */
 	mbstate_t mbstate = { 0 };
 
@@ -417,6 +405,53 @@ void view_draw(View *view) {
 	view->end = pos;
 	view->lastline = view->line ? view->line : view->bottomline;
 
+	/* clear remaining of line, important to show cursor at end of file */
+	if (view->line) {
+		for (int x = view->col; x < view->width; x++)
+			view->line->cells[x] = cell_blank;
+	}
+
+	/* resync position of cursors within visible area */
+	for (Cursor *c = view->cursors; c; c = c->next) {
+		size_t pos = view_cursors_pos(c);
+		if (view_coord_get(view, pos, &c->line, &c->row, &c->col)) {
+			c->line->cells[c->col].cursor = true;
+			if (view->ui) {
+				Line *line_match; int col_match;
+				size_t pos_match = text_bracket_match_except(view->text, pos, "<>");
+				if (pos != pos_match && view_coord_get(view, pos_match, &line_match, NULL, &col_match)) {
+					line_match->cells[col_match].selected = true;
+				}
+			}
+		} else if (c == view->cursor) {
+			c->line = view->topline;
+			c->row = 0;
+			c->col = 0;
+		}
+	}
+
+	view->need_update = true;
+}
+
+void view_update(View *view) {
+	if (!view->need_update)
+		return;
+	/* maximal number of bytes to consider for syntax highlighting before
+	 * the visible area */
+	const size_t lexer_before_max = 4096;
+	/* absolute position to start syntax highlighting */
+	const size_t lexer_start = view->start >= lexer_before_max ? view->start - lexer_before_max : 0;
+	/* number of bytes used for syntax highlighting before visible are */
+	const size_t lexer_before = view->start - lexer_start;
+	/* number of bytes to read in one go */
+	const size_t text_size = lexer_before + (view->end - view->start);
+	/* current buffer to work with */
+	char text[text_size+1];
+	/* bytes to process */
+	const size_t text_len = text_bytes_get(view->text, lexer_start, text_size, text);
+	/* NUL terminate text section */
+	text[text_len] = '\0';
+
 	lua_State *L = view->lua;
 	if (L && view->lexer_name) {
 
@@ -433,6 +468,7 @@ void view_draw(View *view) {
 		const char *lex_text = text;
 		if (lexer_start > 0) {
 			/* try to start lexing at a line boundry */
+			/* TODO: start at known state, handle nested lexers */
 			const char *newline = memchr(text, '\n', lexer_before);
 			if (newline)
 				lex_text = newline;
@@ -477,12 +513,7 @@ void view_draw(View *view) {
 			lua_pop(L, 1);
 		}
 
-		lua_pop(L, 3); /* _TOKENSTYLES, language specific lexer, lexers globale */
-	}
-
-	if (view->line) {
-		for (int x = view->col; x < view->width; x++)
-			view->line->cells[x] = cell_blank;
+		lua_pop(L, 3); /* _TOKENSTYLES, language specific lexer, lexers global */
 	}
 
 	for (Line *l = view->lastline->next; l; l = l->next) {
@@ -524,26 +555,9 @@ void view_draw(View *view) {
 		}
 	}
 
-	for (Cursor *c = view->cursors; c; c = c->next) {
-		size_t pos = view_cursors_pos(c);
-		if (view_coord_get(view, pos, &c->line, &c->row, &c->col)) {
-			c->line->cells[c->col].cursor = true;
-			if (view->ui) {
-				Line *line_match; int col_match;
-				size_t pos_match = text_bracket_match_except(view->text, pos, "<>");
-				if (pos != pos_match && view_coord_get(view, pos_match, &line_match, NULL, &col_match)) {
-					line_match->cells[col_match].selected = true;
-				}
-			}
-		} else if (c == view->cursor) {
-			c->line = view->topline;
-			c->row = 0;
-			c->col = 0;
-		}
-	}
-
 	if (view->ui)
 		view->ui->draw(view->ui);
+	view->need_update = false;
 }
 
 bool view_resize(View *view, int width, int height) {
@@ -859,9 +873,6 @@ const Line *view_lines_get(View *view) {
 void view_scroll_to(View *view, size_t pos) {
 	view_cursors_scroll_to(view->cursor, pos);
 }
-
-#include <stdio.h>
-
 
 bool view_syntax_set(View *view, const char *name) {
 	if (!name) {
