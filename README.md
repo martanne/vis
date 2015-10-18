@@ -183,6 +183,18 @@ harder. This also implies that standard library calls like the `regex(3)`
 functions can not be used as is. However this is the case for all but
 the most simple data structures used in text editors.
 
+Syntax Highlighting using Parsing Expression Grammars
+=====================================================
+
+[Parsing Expression Grammars](https://en.wikipedia.org/wiki/Parsing_expression_grammar)
+(PEG) have the nice property that they are closed under composition.
+In the context of an editor this is useful because lexers can be
+embedded into each other, thus simplifying syntax highlighting
+definitions.
+
+Vis reuses the [Lua](http://www.lua.org/) [LPeg](http://www.inf.puc-rio.br/~roberto/lpeg/)
+based lexers from the [Scintillua](http://foicica.com/scintillua/) project.
+
 Future Plans / Ideas
 ====================
 
@@ -456,6 +468,14 @@ Operators can be forced to work line wise by specifying `V`.
 
        show/hide special white space replacement symbols
 
+     cursorline (yes|no)
+
+       highlight the line on which the cursor currently resides
+
+     theme      name
+
+       use the given theme / color scheme for syntax highlighting
+
   Each command can be prefixed with a range made up of a start and
   an end position as in start,end. Valid position specifiers are:
 
@@ -579,5 +599,14 @@ In order to build vis you will need a C99 compiler as well as:
  * [libcurses](http://www.gnu.org/software/ncurses/), preferably in the
    wide-character version
  * [libtermkey](http://www.leonerd.org.uk/code/libtermkey/)
+ * [lua](http://www.lua.org/) 5.1.4
+ * [LPeg](http://www.inf.puc-rio.br/~roberto/lpeg/) 0.12 (runtime
+   dependency required for syntax highlighting)
 
-Adapt `config.mk` to match your system and run `make`.
+If you want a self contained statically linked binary you can try
+to run `make standalone` which will attempt to download, compile
+and install all of the above dependencies.
+
+To build a regular dynamically linked binary using the system
+libraries, simply run `make` (possibly after adapting `config.mk`
+to match your system).
