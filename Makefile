@@ -168,8 +168,8 @@ dependency/sources/patch-liblua: dependency/sources/extract-liblua
 	touch $@
 
 dependency/sources/build-liblua: dependency/sources/patch-liblua dependency/sources/install-liblpeg
-	#make -C $(dir $<)/$(LIBLUA)/src all CC=$(CC) MYCFLAGS="-DLUA_USE_POSIX -DLUA_USE_DLOPEN" MYLIBS="-Wl,-E -ldl -lncursesw"
-	make -C $(dir $<)/$(LIBLUA) posix CC=$(CC)
+	make -C $(dir $<)/$(LIBLUA)/src all CC=$(CC) MYCFLAGS="-DLUA_USE_POSIX -DLUA_USE_DLOPEN -fPIC" MYLIBS="-Wl,-E -ldl -lncursesw -lm"
+	#make -C $(dir $<)/$(LIBLUA) posix CC=$(CC)
 	touch $@
 
 dependency/sources/install-liblua: dependency/sources/build-liblua
