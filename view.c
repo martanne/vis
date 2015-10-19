@@ -74,6 +74,7 @@ struct View {
 	lua_State *lua;     /* lua state used for syntax highlighting */
 	char *lexer_name;
 	bool need_update;   /* whether view has been redrawn */
+	int colorcolumn;
 };
 
 static const SyntaxSymbol symbols_none[] = {
@@ -516,6 +517,15 @@ void view_update(View *view) {
 		lua_pop(L, 3); /* _TOKENSTYLES, language specific lexer, lexers global */
 	}
 
+	if (view->colorcolumn > 0 && view->colorcolumn <= view->width) {
+		size_t lineno = 0;
+		for (Line *l = view->topline; l; l = l->next) {
+			if (l->lineno != lineno)
+				l->cells[view->colorcolumn-1].attr = UI_STYLE_COLOR_COLUMN;
+			lineno = l->lineno;
+		}
+	}
+
 	for (Line *l = view->lastline->next; l; l = l->next) {
 		strncpy(l->cells[0].data, view->symbols[SYNTAX_SYMBOL_EOF]->symbol, sizeof(l->cells[0].data));
 		l->cells[0].attr = view->symbols[SYNTAX_SYMBOL_EOF]->style;
@@ -909,6 +919,9 @@ bool view_syntax_set(View *view, const char *name) {
 	lua_getfield(L, -1, "STYLE_LINENUMBER");
 	view->ui->syntax_style(view->ui, UI_STYLE_LINENUMBER, lua_tostring(L, -1));
 	lua_pop(L, 1);
+	lua_getfield(L, -1, "STYLE_COLOR_COLUMN");
+	view->ui->syntax_style(view->ui, UI_STYLE_COLOR_COLUMN, lua_tostring(L, -1));
+	lua_pop(L, 1);
 
 
 	lua_getfield(L, -1, "load");
@@ -973,6 +986,15 @@ void view_options_set(View *view, enum UiOption options) {
 
 enum UiOption view_options_get(View *view) {
 	return view->ui ? view->ui->options_get(view->ui) : 0;
+}
+
+void view_colorcolumn_set(View *view, int col) {
+	if (col >= 0)
+		view->colorcolumn = col;
+}
+
+int view_colorcolumn_get(View *view) {
+	return view->colorcolumn;
 }
 
 size_t view_screenline_goto(View *view, int n) {
