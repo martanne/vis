@@ -669,7 +669,10 @@ static void ui_window_draw(UiWin *w) {
 				attr = style_to_attr(&win->styles[UI_STYLE_CURSOR]);
 				prev_style = NULL;
 			} else if (l->cells[x].selected) {
-				attr = style->attr | COLOR_PAIR(color_pair_get(style->fg, selection_bg));
+				if (style->fg == selection_bg)
+					attr = style_to_attr(&win->styles[UI_STYLE_SELECTION]);
+				else
+					attr = style->attr | COLOR_PAIR(color_pair_get(style->fg, selection_bg));
 				prev_style = NULL;
 			} else if (cursor_line) {
 				attr = style->attr | COLOR_PAIR(color_pair_get(style->fg, cursor_line_bg));
