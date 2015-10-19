@@ -472,6 +472,10 @@ Operators can be forced to work line wise by specifying `V`.
 
        highlight the line on which the cursor currently resides
 
+     colorcolumn number
+
+       highlight the given column
+
      theme      name
 
        use the given theme / color scheme for syntax highlighting

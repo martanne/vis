@@ -892,6 +892,7 @@ static UiWin *ui_window_new(Ui *ui, View *view, File *file) {
 	style.attr |= A_REVERSE;
 	win->styles[UI_STYLE_CURSOR] = style;
 	win->styles[UI_STYLE_SELECTION] = style;
+	win->styles[UI_STYLE_COLOR_COLUMN] = style;
 
 	win->ui = uic;
 	win->view = view;
