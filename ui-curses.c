@@ -570,6 +570,7 @@ static void ui_window_resize(UiCursesWin *win, int width, int height) {
 	if (win->winside)
 		wresize(win->winside, height-1, win->sidebar_width);
 	view_resize(win->view, width - win->sidebar_width, win->winstatus ? height - 1 : height);
+	view_update(win->view);
 }
 
 static void ui_window_move(UiCursesWin *win, int x, int y) {
