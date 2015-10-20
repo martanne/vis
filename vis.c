@@ -481,7 +481,7 @@ Vis *vis_new(Ui *ui) {
 	Vis *vis = calloc(1, sizeof(Vis));
 	if (!vis)
 		return NULL;
-	lua_State *L = lua_open();
+	lua_State *L = luaL_newstate();
 	if (!(vis->lua = L))
 		goto err;
 	luaL_openlibs(L);

@@ -853,7 +853,7 @@ local M = {}
 --   Table of style names at positions in the buffer starting from zero.
 module('lexer')]=]
 
-local lpeg = require('lpeg')
+lpeg = require('lpeg')
 local lpeg_P, lpeg_R, lpeg_S, lpeg_V = lpeg.P, lpeg.R, lpeg.S, lpeg.V
 local lpeg_Ct, lpeg_Cc, lpeg_Cp = lpeg.Ct, lpeg.Cc, lpeg.Cp
 local lpeg_Cmt, lpeg_C = lpeg.Cmt, lpeg.C
