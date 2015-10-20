@@ -163,12 +163,12 @@ dependency/sources/extract-liblua: dependency/sources/$(LIBLUA).tar.gz
 	touch $@
 
 dependency/sources/patch-liblua: dependency/sources/extract-liblua
-	cd $(dir $<) && ([ -e lua-5.1.4-lpeg.patch ] || wget http://www.brain-dump.org/projects/vis/lua-5.1.4-lpeg.patch)
-	cd $(dir $<)/$(LIBLUA) && patch -p1 < ../lua-5.1.4-lpeg.patch
+	cd $(dir $<) && ([ -e $(LIBLUA)-lpeg.patch ] || wget http://www.brain-dump.org/projects/vis/$(LIBLUA)-lpeg.patch)
+	cd $(dir $<)/$(LIBLUA) && patch -p1 < ../$(LIBLUA)-lpeg.patch
 	touch $@
 
 dependency/sources/build-liblua: dependency/sources/patch-liblua dependency/sources/install-liblpeg
-	make -C $(dir $<)/$(LIBLUA)/src all CC=$(CC) MYCFLAGS="-DLUA_USE_POSIX -DLUA_USE_DLOPEN -fPIC" MYLIBS="-Wl,-E -ldl -lncursesw -lm"
+	make -C $(dir $<)/$(LIBLUA)/src all CC=$(CC) MYCFLAGS="-DLUA_COMPAT_5_1 -DLUA_COMPAT_5_2 -DLUA_COMPAT_ALL -DLUA_USE_POSIX -DLUA_USE_DLOPEN -fPIC" MYLIBS="-Wl,-E -ldl -lncursesw -lm"
 	#make -C $(dir $<)/$(LIBLUA) posix CC=$(CC)
 	touch $@
 
@@ -198,7 +198,7 @@ dependencies: dependency/sources/install-libtermkey dependency/sources/install-l
 dependencies-full: dependency/sources/install-libncurses dependencies
 
 local: dependencies
-	CFLAGS="$(CFLAGS) -I$(DEPS_INC)" LDFLAGS="$(LDFLAGS) -L$(DEPS_LIB)" make
+	CFLAGS="$(CFLAGS) -I$(DEPS_INC)" LDFLAGS="$(LDFLAGS) -L$(DEPS_LIB)" make CFLAGS_LUA= CFLAGS_TERMKEY= LDFLAGS_LUA=-llua LDFLAGS_TERMKEY=-ltermkey
 	@echo Run with: LD_LIBRARY_PATH=$(DEPS_LIB) ./vis
 
 standalone: dependency/sources/install-libmusl
