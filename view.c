@@ -523,6 +523,10 @@ void view_draw(View *view) {
 }
 
 bool view_resize(View *view, int width, int height) {
+	if (width <= 0)
+		width = 1;
+	if (height <= 0)
+		height = 1;
 	size_t lines_size = height*(sizeof(Line) + width*sizeof(Cell));
 	if (lines_size > view->lines_size) {
 		Line *lines = realloc(view->lines, lines_size);
