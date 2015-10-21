@@ -187,13 +187,13 @@ static size_t view_lines_middle(const Arg *arg);
 static size_t view_lines_bottom(const Arg *arg);
 
 static Movement moves[] = {
-	[MOVE_LINE_UP]             = { .view = view_line_up,            .type = LINEWISE           },
-	[MOVE_LINE_DOWN]           = { .view = view_line_down,          .type = LINEWISE           },
-	[MOVE_SCREEN_LINE_UP]      = { .view = view_screenline_up,                                 },
-	[MOVE_SCREEN_LINE_DOWN]    = { .view = view_screenline_down,                               },
-	[MOVE_SCREEN_LINE_BEGIN]   = { .view = view_screenline_begin,   .type = CHARWISE           },
-	[MOVE_SCREEN_LINE_MIDDLE]  = { .view = view_screenline_middle,  .type = CHARWISE           },
-	[MOVE_SCREEN_LINE_END]     = { .view = view_screenline_end,     .type = CHARWISE|INCLUSIVE },
+	[MOVE_LINE_UP]             = { .cur = view_line_up,            .type = LINEWISE           },
+	[MOVE_LINE_DOWN]           = { .cur = view_line_down,          .type = LINEWISE           },
+	[MOVE_SCREEN_LINE_UP]      = { .cur = view_screenline_up,                                 },
+	[MOVE_SCREEN_LINE_DOWN]    = { .cur = view_screenline_down,                               },
+	[MOVE_SCREEN_LINE_BEGIN]   = { .cur = view_screenline_begin,   .type = CHARWISE           },
+	[MOVE_SCREEN_LINE_MIDDLE]  = { .cur = view_screenline_middle,  .type = CHARWISE           },
+	[MOVE_SCREEN_LINE_END]     = { .cur = view_screenline_end,     .type = CHARWISE|INCLUSIVE },
 	[MOVE_LINE_PREV]           = { .txt = text_line_prev,                                      },
 	[MOVE_LINE_BEGIN]          = { .txt = text_line_begin,                                     },
 	[MOVE_LINE_START]          = { .txt = text_line_start,                                     },
@@ -1481,8 +1481,8 @@ static void action_do(Action *a) {
 			for (int i = 0; i < a->count; i++) {
 				if (a->movement->txt)
 					pos = a->movement->txt(txt, pos);
-				else if (a->movement->view)
-					pos = a->movement->view(cursor);
+				else if (a->movement->cur)
+					pos = a->movement->cur(cursor);
 				else if (a->movement->file)
 					pos = a->movement->file(vis, vis->win->file, pos);
 				else if (a->movement->vis)
