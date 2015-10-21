@@ -462,7 +462,7 @@ static bool cmd_help(Vis*, Filerange*, enum CmdOpt, const char *argv[]);
 
 static void action_reset(Action *a);
 static void switchmode_to(Mode *new_mode);
-static bool vis_window_new(const char *file);
+static bool vis_window_new(Vis*, const char *file);
 static bool vis_window_split(Win *win);
 
 #include "config.h"
@@ -536,7 +536,7 @@ static size_t op_put(Vis *vis, Text *txt, OperatorContext *c) {
 	return pos;
 }
 
-static const char *expand_tab(void) {
+static const char *expand_tab(Vis *vis) {
 	static char spaces[9];
 	int tabwidth = editor_tabwidth_get(vis);
 	tabwidth = MIN(tabwidth, LENGTH(spaces) - 1);
@@ -548,7 +548,7 @@ static const char *expand_tab(void) {
 
 static size_t op_shift_right(Vis *vis, Text *txt, OperatorContext *c) {
 	size_t pos = text_line_begin(txt, c->range.end), prev_pos;
-	const char *tab = expand_tab();
+	const char *tab = expand_tab(vis);
 	size_t tablen = strlen(tab);
 
 	/* if range ends at the begin of a line, skip line break */
@@ -1376,7 +1376,7 @@ static const char *insert(const char *keys, const Arg *arg) {
 }
 
 static const char *insert_tab(const char *keys, const Arg *arg) {
-	insert(keys, &(const Arg){ .s = expand_tab() });
+	insert(keys, &(const Arg){ .s = expand_tab(vis) });
 	return keys;
 }
 
@@ -1807,7 +1807,7 @@ static bool is_file_pattern(const char *pattern) {
 	       strchr(pattern, '[') || strchr(pattern, '{'));
 }
 
-static const char *file_open_dialog(const char *pattern) {
+static const char *file_open_dialog(Vis *vis, const char *pattern) {
 	if (!is_file_pattern(pattern))
 		return pattern;
 	/* this is a bit of a hack, we temporarily replace the text/view of the active
@@ -1846,13 +1846,13 @@ out:
 	return filename[0] ? filename : NULL;
 }
 
-static bool openfiles(const char **files) {
+static bool openfiles(Vis *vis, const char **files) {
 	for (; *files; files++) {
-		const char *file = file_open_dialog(*files);
+		const char *file = file_open_dialog(vis, *files);
 		if (!file)
 			return false;
 		errno = 0;
-		if (!vis_window_new(file)) {
+		if (!vis_window_new(vis, file)) {
 			editor_info_show(vis, "Could not open `%s' %s", file,
 			                 errno ? strerror(errno) : "");
 			return false;
@@ -1863,8 +1863,8 @@ static bool openfiles(const char **files) {
 
 static bool cmd_open(Vis *vis, Filerange *range, enum CmdOpt opt, const char *argv[]) {
 	if (!argv[1])
-		return vis_window_new(NULL);
-	return openfiles(&argv[1]);
+		return vis_window_new(vis, NULL);
+	return openfiles(vis, &argv[1]);
 }
 
 static bool is_view_closeable(Win *win) {
@@ -1885,7 +1885,7 @@ static bool cmd_edit(Vis *vis, Filerange *range, enum CmdOpt opt, const char *ar
 	}
 	if (!argv[1])
 		return editor_window_reload(oldwin);
-	if (!openfiles(&argv[1]))
+	if (!openfiles(vis, &argv[1]))
 		return false;
 	if (vis->win != oldwin)
 		editor_window_close(oldwin);
@@ -1977,7 +1977,7 @@ static bool cmd_split(Vis *vis, Filerange *range, enum CmdOpt opt, const char *a
 	editor_windows_arrange(vis, UI_LAYOUT_HORIZONTAL);
 	if (!argv[1])
 		return vis_window_split(vis->win);
-	bool ret = openfiles(&argv[1]);
+	bool ret = openfiles(vis, &argv[1]);
 	view_options_set(vis->win->view, options);
 	return ret;
 }
@@ -1987,19 +1987,19 @@ static bool cmd_vsplit(Vis *vis, Filerange *range, enum CmdOpt opt, const char *
 	editor_windows_arrange(vis, UI_LAYOUT_VERTICAL);
 	if (!argv[1])
 		return vis_window_split(vis->win);
-	bool ret = openfiles(&argv[1]);
+	bool ret = openfiles(vis, &argv[1]);
 	view_options_set(vis->win->view, options);
 	return ret;
 }
 
 static bool cmd_new(Vis *vis, Filerange *range, enum CmdOpt opt, const char *argv[]) {
 	editor_windows_arrange(vis, UI_LAYOUT_HORIZONTAL);
-	return vis_window_new(NULL);
+	return vis_window_new(vis, NULL);
 }
 
 static bool cmd_vnew(Vis *vis, Filerange *range, enum CmdOpt opt, const char *argv[]) {
 	editor_windows_arrange(vis, UI_LAYOUT_VERTICAL);
-	return vis_window_new(NULL);
+	return vis_window_new(vis, NULL);
 }
 
 static bool cmd_wq(Vis *vis, Filerange *range, enum CmdOpt opt, const char *argv[]) {
@@ -2338,7 +2338,7 @@ static void print_mode(Mode *mode, Text *txt, bool recursive) {
 }
 
 static bool cmd_help(Vis *vis, Filerange *range, enum CmdOpt opt, const char *argv[]) {
-	if (!vis_window_new(NULL))
+	if (!vis_window_new(vis, NULL))
 		return false;
 	
 	Text *txt = vis->win->file->text;
@@ -2463,7 +2463,7 @@ static Filerange parse_range(Win *win, char **cmd) {
 	return r;
 }
 
-static Command *lookup_cmd(const char *name) {
+static Command *lookup_cmd(Vis *vis, const char *name) {
 	if (!vis->cmds) {
 		if (!(vis->cmds = map_new()))
 			return NULL;
@@ -2519,7 +2519,7 @@ static bool exec_cmdline_command(const char *cmdline) {
 	memmove(param+1, param, strlen(param)+1);
 	*param++ = '\0'; /* separate command name from parameters */
 
-	Command *cmd = lookup_cmd(name);
+	Command *cmd = lookup_cmd(vis, name);
 	if (!cmd) {
 		editor_info_show(vis, "Not an editor command");
 		free(line);
@@ -2582,7 +2582,7 @@ static void settings_apply(const char **settings) {
 		exec_cmdline_command(*opt);
 }
 
-static bool vis_window_new(const char *file) {
+static bool vis_window_new(Vis *vis, const char *file) {
 	if (!editor_window_new(vis, file))
 		return false;
 	Syntax *s = view_syntax_get(vis->win->view);
@@ -2594,7 +2594,7 @@ static bool vis_window_new(const char *file) {
 static bool vis_window_split(Win *win) {
 	if (!editor_window_split(win))
 		return false;
-	Syntax *s = view_syntax_get(vis->win->view);
+	Syntax *s = view_syntax_get(win->view);
 	if (s)
 		settings_apply(s->settings);
 	return true;
@@ -2848,7 +2848,7 @@ int main(int argc, char *argv[]) {
 			}
 		} else if (argv[i][0] == '+') {
 			cmd = argv[i] + (argv[i][1] == '/' || argv[i][1] == '?');
-		} else if (!vis_window_new(argv[i])) {
+		} else if (!vis_window_new(vis, argv[i])) {
 			die("Can not load `%s': %s\n", argv[i], strerror(errno));
 		} else if (cmd) {
 			exec_command(cmd[0], cmd+1);
@@ -2858,7 +2858,7 @@ int main(int argc, char *argv[]) {
 
 	if (!vis->windows) {
 		if (!strcmp(argv[argc-1], "-")) {
-			if (!vis_window_new(NULL))
+			if (!vis_window_new(vis, NULL))
 				die("Can not create empty buffer\n");
 			ssize_t len = 0;
 			char buf[PIPE_BUF];
@@ -2875,7 +2875,7 @@ int main(int argc, char *argv[]) {
 				die("Can not reopen stdin\n");
 			dup2(fd, STDIN_FILENO);
 			close(fd);
-		} else if (!vis_window_new(NULL)) {
+		} else if (!vis_window_new(vis, NULL)) {
 			die("Can not create empty buffer\n");
 		}
 		if (cmd)
