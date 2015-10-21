@@ -180,11 +180,11 @@ static size_t line(Vis*, Text *txt, size_t pos);
 /* goto to byte action.count on current line */
 static size_t column(Vis*, Text *txt, size_t pos);
 /* goto the action.count-th line from top of the focused window */
-static size_t view_lines_top(const Arg *arg);
+static size_t view_lines_top(Vis*, View*);
 /* goto the start of middle line of the focused window */
-static size_t view_lines_middle(const Arg *arg);
+static size_t view_lines_middle(Vis*, View*);
 /* goto the action.count-th line from bottom of the focused window */
-static size_t view_lines_bottom(const Arg *arg);
+static size_t view_lines_bottom(Vis*, View*);
 
 static Movement moves[] = {
 	[MOVE_LINE_UP]             = { .cur = view_line_up,            .type = LINEWISE           },
@@ -236,9 +236,9 @@ static Movement moves[] = {
 	[MOVE_SEARCH_WORD_BACKWARD]= { .vis = search_word_backward,     .type = JUMP                   },
 	[MOVE_SEARCH_FORWARD]      = { .vis = search_forward,           .type = JUMP                   },
 	[MOVE_SEARCH_BACKWARD]     = { .vis = search_backward,          .type = JUMP                   },
-	[MOVE_WINDOW_LINE_TOP]     = { .cmd = view_lines_top,         .type = LINEWISE|JUMP|IDEMPOTENT },
-	[MOVE_WINDOW_LINE_MIDDLE]  = { .cmd = view_lines_middle,      .type = LINEWISE|JUMP|IDEMPOTENT },
-	[MOVE_WINDOW_LINE_BOTTOM]  = { .cmd = view_lines_bottom,      .type = LINEWISE|JUMP|IDEMPOTENT },
+	[MOVE_WINDOW_LINE_TOP]     = { .view = view_lines_top,         .type = LINEWISE|JUMP|IDEMPOTENT },
+	[MOVE_WINDOW_LINE_MIDDLE]  = { .view = view_lines_middle,      .type = LINEWISE|JUMP|IDEMPOTENT },
+	[MOVE_WINDOW_LINE_BOTTOM]  = { .view = view_lines_bottom,      .type = LINEWISE|JUMP|IDEMPOTENT },
 };
 
 /* these can be passed as int argument to textobj(&(const Arg){ .i = TEXT_OBJ_* }) */
@@ -761,16 +761,16 @@ static size_t column(Vis *vis, Text *txt, size_t pos) {
 	return text_line_offset(txt, pos, vis->action.count);
 }
 
-static size_t view_lines_top(const Arg *arg) {
-	return view_screenline_goto(vis->win->view, vis->action.count);
+static size_t view_lines_top(Vis *vis, View *view) {
+	return view_screenline_goto(view, vis->action.count);
 }
 
-static size_t view_lines_middle(const Arg *arg) {
-	int h = view_height_get(vis->win->view);
-	return view_screenline_goto(vis->win->view, h/2);
+static size_t view_lines_middle(Vis *vis, View *view) {
+	int h = view_height_get(view);
+	return view_screenline_goto(view, h/2);
 }
 
-static size_t view_lines_bottom(const Arg *arg) {
+static size_t view_lines_bottom(Vis *vis, View *view) {
 	int h = view_height_get(vis->win->view);
 	return view_screenline_goto(vis->win->view, h - vis->action.count);
 }
@@ -1488,7 +1488,7 @@ static void action_do(Action *a) {
 				else if (a->movement->vis)
 					pos = a->movement->vis(vis, txt, pos);
 				else
-					pos = a->movement->cmd(&a->arg);
+					pos = a->movement->view(vis, view);
 				if (pos == EPOS || a->movement->type & IDEMPOTENT)
 					break;
 			}
