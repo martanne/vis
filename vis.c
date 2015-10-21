@@ -157,28 +157,28 @@ enum {
 /** movements which can be used besides the one in text-motions.h and view.h */
 
 /* search in forward direction for the word under the cursor */
-static size_t search_word_forward(Text *txt, size_t pos);
+static size_t search_word_forward(Vis*, Text *txt, size_t pos);
 /* search in backward direction for the word under the cursor */
-static size_t search_word_backward(Text *txt, size_t pos);
+static size_t search_word_backward(Vis*, Text *txt, size_t pos);
 /* search again for the last used search pattern */
-static size_t search_forward(Text *txt, size_t pos);
-static size_t search_backward(Text *txt, size_t pos);
+static size_t search_forward(Vis*, Text *txt, size_t pos);
+static size_t search_backward(Vis*, Text *txt, size_t pos);
 /* goto action.mark */
-static size_t mark_goto(File *txt, size_t pos);
+static size_t mark_goto(Vis*, File *txt, size_t pos);
 /* goto first non-blank char on line pointed by action.mark */
-static size_t mark_line_goto(File *txt, size_t pos);
+static size_t mark_line_goto(Vis*, File *txt, size_t pos);
 /* goto to next occurence of action.key to the right */
-static size_t to(Text *txt, size_t pos);
+static size_t to(Vis*, Text *txt, size_t pos);
 /* goto to position before next occurence of action.key to the right */
-static size_t till(Text *txt, size_t pos);
+static size_t till(Vis*, Text *txt, size_t pos);
 /* goto to next occurence of action.key to the left */
-static size_t to_left(Text *txt, size_t pos);
+static size_t to_left(Vis*, Text *txt, size_t pos);
 /* goto to position after next occurence of action.key to the left */
-static size_t till_left(Text *txt, size_t pos);
+static size_t till_left(Vis*, Text *txt, size_t pos);
 /* goto line number action.count */
-static size_t line(Text *txt, size_t pos);
+static size_t line(Vis*, Text *txt, size_t pos);
 /* goto to byte action.count on current line */
-static size_t column(Text *txt, size_t pos);
+static size_t column(Vis*, Text *txt, size_t pos);
 /* goto the action.count-th line from top of the focused window */
 static size_t view_lines_top(const Arg *arg);
 /* goto the start of middle line of the focused window */
@@ -201,8 +201,8 @@ static Movement moves[] = {
 	[MOVE_LINE_LASTCHAR]       = { .txt = text_line_lastchar,       .type = INCLUSIVE          },
 	[MOVE_LINE_END]            = { .txt = text_line_end,                                       },
 	[MOVE_LINE_NEXT]           = { .txt = text_line_next,                                      },
-	[MOVE_LINE]                = { .txt = line,                     .type = LINEWISE|IDEMPOTENT|JUMP},
-	[MOVE_COLUMN]              = { .txt = column,                   .type = CHARWISE|IDEMPOTENT},
+	[MOVE_LINE]                = { .vis = line,                     .type = LINEWISE|IDEMPOTENT|JUMP},
+	[MOVE_COLUMN]              = { .vis = column,                   .type = CHARWISE|IDEMPOTENT},
 	[MOVE_CHAR_PREV]           = { .txt = text_char_prev,           .type = CHARWISE           },
 	[MOVE_CHAR_NEXT]           = { .txt = text_char_next,           .type = CHARWISE           },
 	[MOVE_LINE_CHAR_PREV]      = { .txt = text_line_char_prev,      .type = CHARWISE           },
@@ -226,16 +226,16 @@ static Movement moves[] = {
 	[MOVE_BRACKET_MATCH]       = { .txt = text_bracket_match,       .type = INCLUSIVE|JUMP     },
 	[MOVE_FILE_BEGIN]          = { .txt = text_begin,               .type = LINEWISE|JUMP      },
 	[MOVE_FILE_END]            = { .txt = text_end,                 .type = LINEWISE|JUMP      },
-	[MOVE_LEFT_TO]             = { .txt = to_left,                                             },
-	[MOVE_RIGHT_TO]            = { .txt = to,                       .type = INCLUSIVE          },
-	[MOVE_LEFT_TILL]           = { .txt = till_left,                                           },
-	[MOVE_RIGHT_TILL]          = { .txt = till,                     .type = INCLUSIVE          },
+	[MOVE_LEFT_TO]             = { .vis = to_left,                                             },
+	[MOVE_RIGHT_TO]            = { .vis = to,                       .type = INCLUSIVE          },
+	[MOVE_LEFT_TILL]           = { .vis = till_left,                                           },
+	[MOVE_RIGHT_TILL]          = { .vis = till,                     .type = INCLUSIVE          },
 	[MOVE_MARK]                = { .file = mark_goto,               .type = JUMP|IDEMPOTENT    },
 	[MOVE_MARK_LINE]           = { .file = mark_line_goto,          .type = LINEWISE|JUMP|IDEMPOTENT},
-	[MOVE_SEARCH_WORD_FORWARD] = { .txt = search_word_forward,      .type = JUMP                   },
-	[MOVE_SEARCH_WORD_BACKWARD]= { .txt = search_word_backward,     .type = JUMP                   },
-	[MOVE_SEARCH_FORWARD]      = { .txt = search_forward,           .type = JUMP                   },
-	[MOVE_SEARCH_BACKWARD]     = { .txt = search_backward,          .type = JUMP                   },
+	[MOVE_SEARCH_WORD_FORWARD] = { .vis = search_word_forward,      .type = JUMP                   },
+	[MOVE_SEARCH_WORD_BACKWARD]= { .vis = search_word_backward,     .type = JUMP                   },
+	[MOVE_SEARCH_FORWARD]      = { .vis = search_forward,           .type = JUMP                   },
+	[MOVE_SEARCH_BACKWARD]     = { .vis = search_backward,          .type = JUMP                   },
 	[MOVE_WINDOW_LINE_TOP]     = { .cmd = view_lines_top,         .type = LINEWISE|JUMP|IDEMPOTENT },
 	[MOVE_WINDOW_LINE_MIDDLE]  = { .cmd = view_lines_middle,      .type = LINEWISE|JUMP|IDEMPOTENT },
 	[MOVE_WINDOW_LINE_BOTTOM]  = { .cmd = view_lines_bottom,      .type = LINEWISE|JUMP|IDEMPOTENT },
@@ -689,7 +689,7 @@ static char *get_word_at(Text *txt, size_t pos) {
 	return buf;
 }
 
-static size_t search_word_forward(Text *txt, size_t pos) {
+static size_t search_word_forward(Vis *vis, Text *txt, size_t pos) {
 	char *word = get_word_at(txt, pos);
 	if (word && !text_regex_compile(vis->search_pattern, word, REG_EXTENDED))
 		pos = text_search_forward(txt, pos, vis->search_pattern);
@@ -697,7 +697,7 @@ static size_t search_word_forward(Text *txt, size_t pos) {
 	return pos;
 }
 
-static size_t search_word_backward(Text *txt, size_t pos) {
+static size_t search_word_backward(Vis *vis, Text *txt, size_t pos) {
 	char *word = get_word_at(txt, pos);
 	if (word && !text_regex_compile(vis->search_pattern, word, REG_EXTENDED))
 		pos = text_search_backward(txt, pos, vis->search_pattern);
@@ -705,23 +705,23 @@ static size_t search_word_backward(Text *txt, size_t pos) {
 	return pos;
 }
 
-static size_t search_forward(Text *txt, size_t pos) {
+static size_t search_forward(Vis *vis, Text *txt, size_t pos) {
 	return text_search_forward(txt, pos, vis->search_pattern);
 }
 
-static size_t search_backward(Text *txt, size_t pos) {
+static size_t search_backward(Vis *vis, Text *txt, size_t pos) {
 	return text_search_backward(txt, pos, vis->search_pattern);
 }
 
-static size_t mark_goto(File *txt, size_t pos) {
-	return text_mark_get(txt->text, txt->marks[vis->action.mark]);
+static size_t mark_goto(Vis *vis, File *file, size_t pos) {
+	return text_mark_get(file->text, file->marks[vis->action.mark]);
 }
 
-static size_t mark_line_goto(File *txt, size_t pos) {
-	return text_line_start(txt->text, mark_goto(txt, pos));
+static size_t mark_line_goto(Vis *vis, File *file, size_t pos) {
+	return text_line_start(file->text, mark_goto(vis, file, pos));
 }
 
-static size_t to(Text *txt, size_t pos) {
+static size_t to(Vis *vis, Text *txt, size_t pos) {
 	char c;
 	size_t hit = text_line_find_next(txt, pos+1, vis->search_char);
 	if (!text_byte_get(txt, hit, &c) || c != vis->search_char[0])
@@ -729,14 +729,14 @@ static size_t to(Text *txt, size_t pos) {
 	return hit;
 }
 
-static size_t till(Text *txt, size_t pos) {
-	size_t hit = to(txt, pos);
+static size_t till(Vis *vis, Text *txt, size_t pos) {
+	size_t hit = to(vis, txt, pos);
 	if (hit != pos)
 		return text_char_prev(txt, hit);
 	return pos;
 }
 
-static size_t to_left(Text *txt, size_t pos) {
+static size_t to_left(Vis *vis, Text *txt, size_t pos) {
 	char c;
 	if (pos == 0)
 		return pos;
@@ -746,18 +746,18 @@ static size_t to_left(Text *txt, size_t pos) {
 	return hit;
 }
 
-static size_t till_left(Text *txt, size_t pos) {
-	size_t hit = to_left(txt, pos);
+static size_t till_left(Vis *vis, Text *txt, size_t pos) {
+	size_t hit = to_left(vis, txt, pos);
 	if (hit != pos)
 		return text_char_next(txt, hit);
 	return pos;
 }
 
-static size_t line(Text *txt, size_t pos) {
+static size_t line(Vis *vis, Text *txt, size_t pos) {
 	return text_pos_by_lineno(txt, vis->action.count);
 }
 
-static size_t column(Text *txt, size_t pos) {
+static size_t column(Vis *vis, Text *txt, size_t pos) {
 	return text_line_offset(txt, pos, vis->action.count);
 }
 
@@ -1484,7 +1484,9 @@ static void action_do(Action *a) {
 				else if (a->movement->view)
 					pos = a->movement->view(cursor);
 				else if (a->movement->file)
-					pos = a->movement->file(vis->win->file, pos);
+					pos = a->movement->file(vis, vis->win->file, pos);
+				else if (a->movement->vis)
+					pos = a->movement->vis(vis, txt, pos);
 				else
 					pos = a->movement->cmd(&a->arg);
 				if (pos == EPOS || a->movement->type & IDEMPOTENT)
