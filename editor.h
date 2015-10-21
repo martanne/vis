@@ -128,7 +128,7 @@ typedef struct {             /* command definitions for the ':'-prompt */
 	const char *name[3]; /* name and optional alias for the command */
 	/* command logic called with a NULL terminated array of arguments.
 	 * argv[0] will be the command name */
-	bool (*cmd)(Filerange*, enum CmdOpt opt, const char *argv[]);
+	bool (*cmd)(Vis*, Filerange*, enum CmdOpt opt, const char *argv[]);
 	enum CmdOpt opt;     /* command option flags */
 } Command;
 
