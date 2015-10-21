@@ -1281,7 +1281,7 @@ static void vis_mode_visual_line_enter(Vis *vis, Mode *old) {
 			view_cursors_selection_start(c);
 		vis_modes[VIS_MODE_OPERATOR].parent = &vis_modes[VIS_MODE_TEXTOBJ];
 	}
-	movement(NULL, &(const Arg){ .i = MOVE_LINE_END });
+	movement(vis, NULL, &(const Arg){ .i = MOVE_LINE_END });
 }
 
 static void vis_mode_visual_line_leave(Vis *vis, Mode *new) {

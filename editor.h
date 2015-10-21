@@ -31,7 +31,7 @@ typedef union {
 typedef struct {
 	const char *name;
 	const char *help;
-	const char* (*func)(const char *keys, const Arg*);
+	const char* (*func)(Vis*, const char *keys, const Arg*);
 	/* returns a pointer to the first not consumed character in keys
 	 * or NULL if not enough input was available to complete the command */
 	const Arg arg;
