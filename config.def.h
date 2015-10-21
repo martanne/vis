@@ -1144,15 +1144,15 @@ static KeyBinding vis_operators[] = {
 	{ /* empty last element, array terminator */                  },
 };
 
-static void vis_mode_operator_enter(Mode *old) {
+static void vis_mode_operator_enter(Vis *vis, Mode *old) {
 	vis_modes[VIS_MODE_OPERATOR].parent = &vis_modes[VIS_MODE_OPERATOR_OPTION];
 }
 
-static void vis_mode_operator_leave(Mode *new) {
+static void vis_mode_operator_leave(Vis *vis, Mode *new) {
 	vis_modes[VIS_MODE_OPERATOR].parent = &vis_modes[VIS_MODE_MOVE];
 }
 
-static void vis_mode_operator_input(const char *str, size_t len) {
+static void vis_mode_operator_input(Vis *vis, const char *str, size_t len) {
 	/* invalid operator */
 	action_reset(&vis->action);
 	switchmode_to(vis->mode_prev);
@@ -1254,7 +1254,7 @@ static KeyBinding vis_mode_visual[] = {
 	{ /* empty last element, array terminator */                          },
 };
 
-static void vis_mode_visual_enter(Mode *old) {
+static void vis_mode_visual_enter(Vis *vis, Mode *old) {
 	if (!old->visual) {
 		for (Cursor *c = view_cursors(vis->win->view); c; c = view_cursors_next(c))
 			view_cursors_selection_start(c);
@@ -1262,7 +1262,7 @@ static void vis_mode_visual_enter(Mode *old) {
 	}
 }
 
-static void vis_mode_visual_leave(Mode *new) {
+static void vis_mode_visual_leave(Vis *vis, Mode *new) {
 	if (!new->visual) {
 		view_selections_clear(vis->win->view);
 		vis_modes[VIS_MODE_OPERATOR].parent = &vis_modes[VIS_MODE_MOVE];
@@ -1275,7 +1275,7 @@ static KeyBinding vis_mode_visual_line[] = {
 	{ /* empty last element, array terminator */                      },
 };
 
-static void vis_mode_visual_line_enter(Mode *old) {
+static void vis_mode_visual_line_enter(Vis *vis, Mode *old) {
 	if (!old->visual) {
 		for (Cursor *c = view_cursors(vis->win->view); c; c = view_cursors_next(c))
 			view_cursors_selection_start(c);
@@ -1284,7 +1284,7 @@ static void vis_mode_visual_line_enter(Mode *old) {
 	movement(NULL, &(const Arg){ .i = MOVE_LINE_END });
 }
 
-static void vis_mode_visual_line_leave(Mode *new) {
+static void vis_mode_visual_line_leave(Vis *vis, Mode *new) {
 	if (!new->visual) {
 		view_selections_clear(vis->win->view);
 		vis_modes[VIS_MODE_OPERATOR].parent = &vis_modes[VIS_MODE_MOVE];
@@ -1313,16 +1313,16 @@ static KeyBinding vis_mode_prompt[] = {
 	{ /* empty last element, array terminator */                    },
 };
 
-static void vis_mode_prompt_input(const char *str, size_t len) {
+static void vis_mode_prompt_input(Vis *vis, const char *str, size_t len) {
 	editor_insert_key(vis, str, len);
 }
 
-static void vis_mode_prompt_enter(Mode *old) {
+static void vis_mode_prompt_enter(Vis *vis, Mode *old) {
 	if (old->isuser && old != &vis_modes[VIS_MODE_PROMPT])
 		vis->mode_before_prompt = old;
 }
 
-static void vis_mode_prompt_leave(Mode *new) {
+static void vis_mode_prompt_leave(Vis *vis, Mode *new) {
 	if (new->isuser)
 		editor_prompt_hide(vis);
 }
@@ -1345,16 +1345,16 @@ static KeyBinding vis_mode_insert[] = {
 	{ /* empty last element, array terminator */                        },
 };
 
-static void vis_mode_insert_leave(Mode *old) {
+static void vis_mode_insert_leave(Vis *vis, Mode *old) {
 	/* make sure we can recover the current state after an editing operation */
 	text_snapshot(vis->win->file->text);
 }
 
-static void vis_mode_insert_idle(void) {
+static void vis_mode_insert_idle(Vis *vis) {
 	text_snapshot(vis->win->file->text);
 }
 
-static void vis_mode_insert_input(const char *str, size_t len) {
+static void vis_mode_insert_input(Vis *vis, const char *str, size_t len) {
 	static size_t oldpos = EPOS;
 	size_t pos = view_cursor_get(vis->win->view);
 	if (pos != oldpos)
@@ -1370,12 +1370,12 @@ static KeyBinding vis_mode_replace[] = {
 	{ /* empty last element, array terminator */                           },
 };
 
-static void vis_mode_replace_leave(Mode *old) {
+static void vis_mode_replace_leave(Vis *vis, Mode *old) {
 	/* make sure we can recover the current state after an editing operation */
 	text_snapshot(vis->win->file->text);
 }
 
-static void vis_mode_replace_input(const char *str, size_t len) {
+static void vis_mode_replace_input(Vis *vis, const char *str, size_t len) {
 	static size_t oldpos = EPOS;
 	size_t pos = view_cursor_get(vis->win->view);
 	if (pos != oldpos)

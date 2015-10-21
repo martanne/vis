@@ -53,10 +53,10 @@ struct Mode {
 	const char *status;                 /* name displayed in the window status bar */
 	const char *help;                   /* short description used by :help */
 	bool isuser;                        /* whether this is a user or internal mode */
-	void (*enter)(Mode *old);           /* called right before the mode becomes active */
-	void (*leave)(Mode *new);           /* called right before the mode becomes inactive */
-	void (*input)(const char*, size_t); /* called whenever a key is not found in this mode and all its parent modes */
-	void (*idle)(void);                 /* called whenever a certain idle time i.e. without any user input elapsed */
+	void (*enter)(Vis*, Mode *old);           /* called right before the mode becomes active */
+	void (*leave)(Vis*, Mode *new);           /* called right before the mode becomes inactive */
+	void (*input)(Vis*, const char*, size_t); /* called whenever a key is not found in this mode and all its parent modes */
+	void (*idle)(Vis*);                 /* called whenever a certain idle time i.e. without any user input elapsed */
 	time_t idle_timeout;                /* idle time in seconds after which the registered function will be called */
 	bool visual;                        /* whether text selection is possible in this mode */
 };

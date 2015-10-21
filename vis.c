@@ -1587,12 +1587,12 @@ static void switchmode_to(Mode *new_mode) {
 	if (vis->mode == new_mode)
 		return;
 	if (vis->mode->leave)
-		vis->mode->leave(new_mode);
+		vis->mode->leave(vis, new_mode);
 	if (vis->mode->isuser)
 		vis->mode_prev = vis->mode;
 	vis->mode = new_mode;
 	if (new_mode->enter)
-		new_mode->enter(vis->mode_prev);
+		new_mode->enter(vis, vis->mode_prev);
 	vis->win->ui->draw_status(vis->win->ui);
 }
 
@@ -2699,7 +2699,7 @@ static const char *keypress(const char *input) {
 				}
 			}
 			if (!action && vis->mode->input)
-				vis->mode->input(start, end - start);
+				vis->mode->input(vis, start, end - start);
 			start = cur = end;
 		}
 	}
@@ -2779,7 +2779,7 @@ static void mainloop() {
 
 		if (!FD_ISSET(STDIN_FILENO, &fds)) {
 			if (vis->mode->idle)
-				vis->mode->idle();
+				vis->mode->idle(vis);
 			timeout = NULL;
 			continue;
 		}
