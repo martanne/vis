@@ -2067,10 +2067,6 @@ static bool cmd_saveas(Vis *vis, Filerange *range, enum CmdOpt opt, const char *
 	return false;
 }
 
-static void cancel_filter(int sig) {
-	vis->cancel_filter = true;
-}
-
 static bool cmd_filter(Vis *vis, Filerange *range, enum CmdOpt opt, const char *argv[]) {
 	/* if an invalid range was given, stdin (i.e. key board input) is passed
 	 * through the external command. */
@@ -2128,13 +2124,6 @@ static bool cmd_filter(Vis *vis, Filerange *range, enum CmdOpt opt, const char *
 		exit(EXIT_FAILURE);
 	}
 
-	/* set up a signal handler to cancel the filter via CTRL-C */
-	struct sigaction sa, oldsa;
-	sa.sa_flags = 0;
-	sigemptyset(&sa.sa_mask);
-	sa.sa_handler = cancel_filter;
-
-	bool restore_signals = sigaction(SIGINT, &sa, &oldsa) == 0;
 	vis->cancel_filter = false;
 
 	close(pin[0]);
@@ -2270,9 +2259,6 @@ static bool cmd_filter(Vis *vis, Filerange *range, enum CmdOpt opt, const char *
 		else
 			editor_info_show(vis, "Command failed");
 	}
-
-	if (restore_signals)
-		sigaction(SIGTERM, &oldsa, NULL);
 
 	vis->ui->terminal_restore(vis->ui);
 	return status == 0;
@@ -2722,22 +2708,37 @@ static const char *getkey(Vis *vis) {
 	return key;
 }
 
-static void sigbus_handler(int sig, siginfo_t *siginfo, void *context) {
-	for (File *file = vis->files; file; file = file->next) {
-		if (text_sigbus(file->text, siginfo->si_addr))
-			file->truncated = true;
+static bool vis_signal_handler(Vis *vis, int signum, const siginfo_t *siginfo, const void *context) {
+	switch (signum) {
+	case SIGBUS:
+		for (File *file = vis->files; file; file = file->next) {
+			if (text_sigbus(file->text, siginfo->si_addr))
+				file->truncated = true;
+		}
+		vis->sigbus = true;
+		if (vis->running)
+			siglongjmp(vis->sigbus_jmpbuf, 1);
+		return true;
+	case SIGINT:
+		vis->cancel_filter = true;
+		return true;
 	}
-	vis->sigbus = true;
-	siglongjmp(vis->sigbus_jmpbuf, 1);
+	return false;
+}
+
+static void signal_handler(int signum, siginfo_t *siginfo, void *context) {
+	vis_signal_handler(vis, signum, siginfo, context);
 }
 
 static void mainloop(Vis *vis) {
 	struct timespec idle = { .tv_nsec = 0 }, *timeout = NULL;
-	struct sigaction sa_sigbus;
-	memset(&sa_sigbus, 0, sizeof sa_sigbus);
-	sa_sigbus.sa_flags = SA_SIGINFO;
-	sa_sigbus.sa_sigaction = sigbus_handler;
-	if (sigaction(SIGBUS, &sa_sigbus, NULL))
+	struct sigaction sa;
+	memset(&sa, 0, sizeof sa);
+	sa.sa_flags = SA_SIGINFO;
+	sa.sa_sigaction = signal_handler;
+	if (sigaction(SIGBUS, &sa, NULL))
+		die("sigaction: %s", strerror(errno));
+	if (sigaction(SIGINT, &sa, NULL))
 		die("sigaction: %s", strerror(errno));
 	sigset_t emptyset, blockset;
 	sigemptyset(&emptyset);
