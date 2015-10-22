@@ -2805,17 +2805,6 @@ static void mainloop(Vis *vis) {
 
 
 int main(int argc, char *argv[]) {
-	/* decide which key configuration to use based on argv[0] */
-	char *arg0 = argv[0];
-	while (*arg0 && (*arg0 == '.' || *arg0 == '/'))
-		arg0++;
-	for (int i = 0; i < LENGTH(editors); i++) {
-		if (strcmp(editors[i].name, arg0) == 0) {
-			config = &editors[i];
-			break;
-		}
-	}
-
 	for (int i = 0; i < LENGTH(vis_modes); i++) {
 		Mode *mode = &vis_modes[i];
 		if (!editor_mode_bindings(mode, &mode->default_bindings))
@@ -2825,7 +2814,7 @@ int main(int argc, char *argv[]) {
 	if (!(vis = editor_new(ui_curses_new())))
 		die("Could not allocate editor core\n");
 
-	vis->mode_prev = vis->mode = config->mode;
+	vis->mode_prev = vis->mode = &vis_modes[VIS_MODE_NORMAL];
 
 	if (!editor_syntax_load(vis, syntaxes))
 		die("Could not load syntax highlighting definitions\n");

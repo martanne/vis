@@ -1512,19 +1512,6 @@ static Mode vis_modes[] = {
 	},
 };
 
-/* list of vis configurations, first entry is default. name is matched with
- * argv[0] i.e. program name upon execution
- */
-static Config editors[] = {
-	{
-		.name = "vis",
-		.mode = &vis_modes[VIS_MODE_NORMAL],
-	},
-};
-
-/* default editor configuration to use */
-static Config *config = &editors[0];
-
 /* null terminated default settings/commands executed once on editor startup */
 static const char *settings[] = {
 	NULL

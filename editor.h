@@ -62,13 +62,6 @@ struct Mode {
 };
 
 typedef struct {
-	char *name;                    /* is used to match against argv[0] to enable this config */
-	Mode *mode;                    /* default mode in which the editor should start in */
-	bool (*keypress)(const char *key);        /* called before any other keybindings are checked,
-	                                * return value decides whether key should be ignored */
-} Config;
-
-typedef struct {
 	int count;        /* how many times should the command be executed? */
 	Register *reg;    /* always non-NULL, set to a default register */
 	Filerange range;  /* which part of the file should be affected by the operator */
