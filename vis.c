@@ -460,18 +460,18 @@ static bool cmd_earlier_later(Vis*, Filerange*, enum CmdOpt, const char *argv[])
 /* dump current key bindings */
 static bool cmd_help(Vis*, Filerange*, enum CmdOpt, const char *argv[]);
 
-static void action_reset(Action *a);
-static void switchmode_to(Mode *new_mode);
+static void action_reset(Vis*, Action *a);
+static void switchmode_to(Vis*, Mode *new_mode);
 static bool vis_window_new(Vis*, const char *file);
 static bool vis_window_split(Win *win);
 
 #include "config.h"
 
 static const char *getkey(void);
-static const char *keynext(const char *keys);
-static const char *keypress(const char *key);
-static void action_do(Action *a);
-static bool exec_command(char type, const char *cmdline);
+static const char *keynext(Vis*, const char *keys);
+static const char *keypress(Vis*, const char *key);
+static void action_do(Vis*, Action *a);
+static bool exec_command(Vis *vis, char type, const char *cmdline);
 
 /** operator implementations of type: void (*op)(OperatorContext*) */
 
@@ -838,7 +838,7 @@ static const char *macro_replay(Vis *vis, const char *keys, const Arg *arg) {
 	Macro *macro;
 	keys = key2macro(vis, keys, &macro);
 	if (macro && macro != vis->recording)
-		keypress(macro->data);
+		keypress(vis, macro->data);
 	return keys;
 }
 
@@ -852,7 +852,7 @@ static const char *repeat(Vis *vis, const char *keys, const Arg *arg) {
 	vis->action = vis->action_prev;
 	if (count)
 		vis->action.count = count;
-	action_do(&vis->action);
+	action_do(vis, &vis->action);
 	return keys;
 }
 
@@ -988,9 +988,9 @@ static const char *cursors_remove(Vis *vis, const char *keys, const Arg *arg) {
 static const char *replace(Vis *vis, const char *keys, const Arg *arg) {
 	if (!keys[0])
 		return NULL;
-	const char *next = keynext(keys);
+	const char *next = keynext(vis, keys);
 	size_t len = next - keys;
-	action_reset(&vis->action_prev);
+	action_reset(vis, &vis->action_prev);
 	vis->action_prev.op = &ops[OP_REPEAT_REPLACE];
 	buffer_put(&vis->buffer_repeat, keys, len);
 	editor_replace_key(vis, keys, len);
@@ -1027,7 +1027,7 @@ static const char *operator(Vis *vis, const char *keys, const Arg *arg) {
 	Operator *op = &ops[arg->i];
 	if (vis->mode->visual) {
 		vis->action.op = op;
-		action_do(&vis->action);
+		action_do(vis, &vis->action);
 		return keys;
 	}
 	/* switch to operator mode inorder to make operator options and
@@ -1038,7 +1038,7 @@ static const char *operator(Vis *vis, const char *keys, const Arg *arg) {
 		 * dd, yy etc where the second char isn't a movement */
 		vis->action.type = LINEWISE;
 		vis->action.movement = &moves[MOVE_LINE_NEXT];
-		action_do(&vis->action);
+		action_do(vis, &vis->action);
 	} else {
 		vis->action.op = op;
 	}
@@ -1054,11 +1054,11 @@ static const char *changecase(Vis *vis, const char *keys, const Arg *arg) {
 static const char *movement_key(Vis *vis, const char *keys, const Arg *arg) {
 	if (!keys[0])
 		return NULL;
-	const char *next = keynext(keys);
+	const char *next = keynext(vis, keys);
 	strncpy(vis->search_char, keys, next - keys);
 	vis->last_totill = arg->i;
 	vis->action.movement = &moves[arg->i];
-	action_do(&vis->action);
+	action_do(vis, &vis->action);
 	return next;
 }
 
@@ -1072,13 +1072,13 @@ static const char *movement(Vis *vis, const char *keys, const Arg *arg) {
 			vis->action.movement = &moves[MOVE_LONGWORD_END_NEXT];
 	}
 
-	action_do(&vis->action);
+	action_do(vis, &vis->action);
 	return keys;
 }
 
 static const char *textobj(Vis *vis, const char *keys, const Arg *arg) {
 	vis->action.textobj = &textobjs[arg->i];
-	action_do(&vis->action);
+	action_do(vis, &vis->action);
 	return keys;
 }
 
@@ -1137,7 +1137,7 @@ static const char *mark(Vis *vis, const char *keys, const Arg *arg) {
 	if (mark != -1) {
 		vis->action.mark = mark;
 		vis->action.movement = &moves[MOVE_MARK];
-		action_do(&vis->action);
+		action_do(vis, &vis->action);
 	}
 	return keys;
 }
@@ -1148,7 +1148,7 @@ static const char *mark_line(Vis *vis, const char *keys, const Arg *arg) {
 	if (mark != -1) {
 		vis->action.mark = mark;
 		vis->action.movement = &moves[MOVE_MARK_LINE];
-		action_do(&vis->action);
+		action_do(vis, &vis->action);
 	}
 	return keys;
 }
@@ -1233,8 +1233,8 @@ static const char *prompt_enter(Vis *vis, const char *keys, const Arg *arg) {
 	 * focused editor window *before* anything is executed which depends
 	 * on vis->win.
 	 */
-	switchmode_to(vis->mode_before_prompt);
-	if (s && *s && exec_command(vis->prompt_type, s) && vis->running)
+	switchmode_to(vis, vis->mode_before_prompt);
+	if (s && *s && exec_command(vis, vis->prompt_type, s) && vis->running)
 		switchmode(vis, keys, &(const Arg){ .i = VIS_MODE_NORMAL });
 	free(s);
 	editor_draw(vis);
@@ -1325,7 +1325,7 @@ static const char *quit(Vis *vis, const char *keys, const Arg *arg) {
 }
 
 static const char *cmd(Vis *vis, const char *keys, const Arg *arg) {
-	exec_command(':', arg->s);
+	exec_command(vis, ':', arg->s);
 	return keys;
 }
 
@@ -1380,7 +1380,9 @@ static const char *insert_tab(Vis *vis, const char *keys, const Arg *arg) {
 	return keys;
 }
 
-static void copy_indent_from_previous_line(View *view, Text *text) {
+static void copy_indent_from_previous_line(Win *win) {
+	View *view = win->view;
+	Text *text = win->file->text;
 	size_t pos = view_cursor_get(view);
 	size_t prev_line = text_line_prev(text, pos);
 	if (pos == prev_line)
@@ -1392,7 +1394,7 @@ static void copy_indent_from_previous_line(View *view, Text *text) {
 	if (!buf)
 		return;
 	len = text_bytes_get(text, begin, len, buf);
-	editor_insert_key(vis, buf, len);
+	editor_insert_key(win->editor, buf, len);
 	free(buf);
 }
 
@@ -1410,14 +1412,14 @@ static const char *insert_newline(Vis *vis, const char *keys, const Arg *arg) {
 	insert(vis, keys, &(const Arg){ .s = nl });
 
 	if (vis->autoindent)
-		copy_indent_from_previous_line(vis->win->view, vis->win->file->text);
+		copy_indent_from_previous_line(vis->win);
 	return keys;
 }
 
 static const char *put(Vis *vis, const char *keys, const Arg *arg) {
 	vis->action.arg = *arg;
 	operator(vis, keys, &(const Arg){ .i = OP_PUT });
-	action_do(&vis->action);
+	action_do(vis, &vis->action);
 	return keys;
 }
 
@@ -1443,13 +1445,13 @@ static const char *join(Vis *vis, const char *keys, const Arg *arg) {
 }
 
 static const char *switchmode(Vis *vis, const char *keys, const Arg *arg) {
-	switchmode_to(&vis_modes[arg->i]);
+	switchmode_to(vis, &vis_modes[arg->i]);
 	return keys;
 }
 
 /** action processing: execut the operator / movement / text object */
 
-static void action_do(Action *a) {
+static void action_do(Vis *vis, Action *a) {
 	Text *txt = vis->win->file->text;
 	View *view = vis->win->view;
 	if (a->count < 1)
@@ -1562,7 +1564,7 @@ static void action_do(Action *a) {
 		if (a->op == &ops[OP_CHANGE])
 			switchmode(vis, NULL, &(const Arg){ .i = VIS_MODE_INSERT });
 		else if (vis->mode == &vis_modes[VIS_MODE_OPERATOR])
-			switchmode_to(vis->mode_prev);
+			switchmode_to(vis, vis->mode_prev);
 		else if (vis->mode->visual)
 			switchmode(vis, NULL, &(const Arg){ .i = VIS_MODE_NORMAL });
 		text_snapshot(txt);
@@ -1572,11 +1574,11 @@ static void action_do(Action *a) {
 	if (a != &vis->action_prev) {
 		if (a->op)
 			vis->action_prev = *a;
-		action_reset(a);
+		action_reset(vis, a);
 	}
 }
 
-static void action_reset(Action *a) {
+static void action_reset(Vis *vis, Action *a) {
 	a->count = 0;
 	a->type = 0;
 	a->op = NULL;
@@ -1585,7 +1587,7 @@ static void action_reset(Action *a) {
 	a->reg = NULL;
 }
 
-static void switchmode_to(Mode *new_mode) {
+static void switchmode_to(Vis *vis, Mode *new_mode) {
 	if (vis->mode == new_mode)
 		return;
 	if (vis->mode->leave)
@@ -1875,14 +1877,14 @@ static bool is_view_closeable(Win *win) {
 	return win->file->refcount > 1;
 }
 
-static void info_unsaved_changes(void) {
+static void info_unsaved_changes(Vis *vis) {
 	editor_info_show(vis, "No write since last change (add ! to override)");
 }
 
 static bool cmd_edit(Vis *vis, Filerange *range, enum CmdOpt opt, const char *argv[]) {
 	Win *oldwin = vis->win;
 	if (!(opt & CMD_OPT_FORCE) && !is_view_closeable(oldwin)) {
-		info_unsaved_changes();
+		info_unsaved_changes(vis);
 		return false;
 	}
 	if (!argv[1])
@@ -1896,7 +1898,7 @@ static bool cmd_edit(Vis *vis, Filerange *range, enum CmdOpt opt, const char *ar
 
 static bool cmd_quit(Vis *vis, Filerange *range, enum CmdOpt opt, const char *argv[]) {
 	if (!(opt & CMD_OPT_FORCE) && !is_view_closeable(vis->win)) {
-		info_unsaved_changes();
+		info_unsaved_changes(vis);
 		return false;
 	}
 	editor_window_close(vis->win);
@@ -1916,7 +1918,7 @@ static bool cmd_xit(Vis *vis, Filerange *range, enum CmdOpt opt, const char *arg
 static bool cmd_bdelete(Vis *vis, Filerange *range, enum CmdOpt opt, const char *argv[]) {
 	Text *txt = vis->win->file->text;
 	if (text_modified(txt) && !(opt & CMD_OPT_FORCE)) {
-		info_unsaved_changes();
+		info_unsaved_changes(vis);
 		return false;
 	}
 	for (Win *next, *win = vis->windows; win; win = next) {
@@ -1938,7 +1940,7 @@ static bool cmd_qall(Vis *vis, Filerange *range, enum CmdOpt opt, const char *ar
 	if (!vis->windows)
 		quit(vis, NULL, NULL);
 	else
-		info_unsaved_changes();
+		info_unsaved_changes(vis);
 	return vis->windows == NULL;
 }
 
@@ -2478,7 +2480,7 @@ static Command *lookup_cmd(Vis *vis, const char *name) {
 	return map_closest(vis->cmds, name);
 }
 
-static bool exec_cmdline_command(const char *cmdline) {
+static bool exec_cmdline_command(Vis *vis, const char *cmdline) {
 	enum CmdOpt opt = CMD_OPT_NONE;
 	size_t len = strlen(cmdline);
 	char *line = malloc(len+2);
@@ -2558,14 +2560,14 @@ static bool exec_cmdline_command(const char *cmdline) {
 	return true;
 }
 
-static bool exec_command(char type, const char *cmd) {
+static bool exec_command(Vis *vis, char type, const char *cmd) {
 	if (!cmd || !cmd[0])
 		return true;
 	switch (type) {
 	case '/':
 	case '?':
 		if (text_regex_compile(vis->search_pattern, cmd, REG_EXTENDED)) {
-			action_reset(&vis->action);
+			action_reset(vis, &vis->action);
 			return false;
 		}
 		movement(vis, NULL, &(const Arg){ .i =
@@ -2573,15 +2575,15 @@ static bool exec_command(char type, const char *cmd) {
 		return true;
 	case '+':
 	case ':':
-		if (exec_cmdline_command(cmd))
+		if (exec_cmdline_command(vis, cmd))
 			return true;
 	}
 	return false;
 }
 
-static void settings_apply(const char **settings) {
+static void settings_apply(Vis *vis, const char **settings) {
 	for (const char **opt = settings; opt && *opt; opt++)
-		exec_cmdline_command(*opt);
+		exec_cmdline_command(vis, *opt);
 }
 
 static bool vis_window_new(Vis *vis, const char *file) {
@@ -2589,7 +2591,7 @@ static bool vis_window_new(Vis *vis, const char *file) {
 		return false;
 	Syntax *s = view_syntax_get(vis->win->view);
 	if (s)
-		settings_apply(s->settings);
+		settings_apply(vis, s->settings);
 	return true;
 }
 
@@ -2598,7 +2600,7 @@ static bool vis_window_split(Win *win) {
 		return false;
 	Syntax *s = view_syntax_get(win->view);
 	if (s)
-		settings_apply(s->settings);
+		settings_apply(win->editor, s->settings);
 	return true;
 }
 
@@ -2611,7 +2613,7 @@ static void die(const char *errstr, ...) {
 	exit(EXIT_FAILURE);
 }
 
-static const char *keynext(const char *keys) {
+static const char *keynext(Vis *vis, const char *keys) {
 	TermKeyKey key;
 	TermKey *termkey = vis->ui->termkey_get(vis->ui);
 	const char *next = NULL;
@@ -2637,7 +2639,7 @@ static const char *keynext(const char *keys) {
 	return termkey_strpkey(termkey, keys, &key, TERMKEY_FORMAT_VIM);
 }
 
-static const char *keypress(const char *input) {
+static const char *keypress(Vis *vis, const char *input) {
 	if (!input)
 		return NULL;
 
@@ -2652,7 +2654,7 @@ static const char *keypress(const char *input) {
 	
 	while (cur && *cur) {
 
-		if (!(end = (char*)keynext(cur))) {
+		if (!(end = (char*)keynext(vis, cur))) {
 			// XXX: can't parse key this should never happen, throw away remaining input
 			buffer_truncate(&vis->input_queue);
 			return input + strlen(input);
@@ -2726,7 +2728,7 @@ static void sigbus_handler(int sig, siginfo_t *siginfo, void *context) {
 	siglongjmp(vis->sigbus_jmpbuf, 1);
 }
 
-static void mainloop() {
+static void mainloop(Vis *vis) {
 	struct timespec idle = { .tv_nsec = 0 }, *timeout = NULL;
 	struct sigaction sa_sigbus;
 	memset(&sa_sigbus, 0, sizeof sa_sigbus);
@@ -2791,7 +2793,7 @@ static void mainloop() {
 		const char *key;
 
 		while ((key = getkey()))
-			keypress(key);
+			keypress(vis, key);
 
 		if (vis->mode->idle)
 			timeout = &idle;
@@ -2853,7 +2855,7 @@ int main(int argc, char *argv[]) {
 		} else if (!vis_window_new(vis, argv[i])) {
 			die("Can not load `%s': %s\n", argv[i], strerror(errno));
 		} else if (cmd) {
-			exec_command(cmd[0], cmd+1);
+			exec_command(vis, cmd[0], cmd+1);
 			cmd = NULL;
 		}
 	}
@@ -2881,11 +2883,11 @@ int main(int argc, char *argv[]) {
 			die("Can not create empty buffer\n");
 		}
 		if (cmd)
-			exec_command(cmd[0], cmd+1);
+			exec_command(vis, cmd[0], cmd+1);
 	}
 
-	settings_apply(settings);
-	mainloop();
+	settings_apply(vis, settings);
+	mainloop(vis);
 	editor_free(vis);
 	return 0;
 }
