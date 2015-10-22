@@ -467,7 +467,7 @@ static bool vis_window_split(Win *win);
 
 #include "config.h"
 
-static const char *getkey(void);
+static const char *getkey(Vis*);
 static const char *keynext(Vis*, const char *keys);
 static const char *keypress(Vis*, const char *key);
 static void action_do(Vis*, Action *a);
@@ -2712,10 +2712,13 @@ static const char *keypress(Vis *vis, const char *input) {
 	return input + (start - keys);
 }
 
-static const char *getkey(void) {
+static const char *getkey(Vis *vis) {
 	const char *key = vis->ui->getkey(vis->ui);
-	if (!key || (config->keypress && !config->keypress(key)))
+	if (!key)
 		return NULL;
+	editor_info_hide(vis);
+	if (vis->recording)
+		macro_append(vis->recording, key);
 	return key;
 }
 
@@ -2792,7 +2795,7 @@ static void mainloop(Vis *vis) {
 		termkey_advisereadable(termkey);
 		const char *key;
 
-		while ((key = getkey()))
+		while ((key = getkey(vis)))
 			keypress(vis, key);
 
 		if (vis->mode->idle)

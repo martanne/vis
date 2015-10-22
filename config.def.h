@@ -57,15 +57,6 @@ static Command cmds[] = {
 	{ /* array terminator */                                        },
 };
 
-/* called before any other keybindings are checked, if the function returns false
- * the key is completely ignored. */
-static bool vis_keypress(const char *key) {
-	editor_info_hide(vis);
-	if (vis->recording && key)
-		macro_append(vis->recording, key);
-	return true;
-}
-
 #define ALIAS(name) .alias = name,
 #define ACTION(id) .action = &vis_action[VIS_ACTION_##id],
 
@@ -1528,7 +1519,6 @@ static Config editors[] = {
 	{
 		.name = "vis",
 		.mode = &vis_modes[VIS_MODE_NORMAL],
-		.keypress = vis_keypress,
 	},
 };
 
