@@ -2374,6 +2374,10 @@ static bool cmd_help(Filerange *range, enum CmdOpt opt, const char *argv[]) {
 	text_appendf(txt, "\n Motions\n\n");
 	print_mode(&vis_modes[VIS_MODE_MOVE], txt, false);
 
+	text_appendf(txt, "\n :-Commands\n\n");
+	for (Command *cmd = cmds; cmd && cmd->name[0]; cmd++)
+		text_appendf(txt, "  %s\n", cmd->name[0]);
+
 	text_save(txt, NULL);
 	return true;
 }
