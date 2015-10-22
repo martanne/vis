@@ -851,6 +851,12 @@ static UiWin *ui_window_new(Ui *ui, View *view, File *file) {
 	return &win->uiwin;
 }
 
+static void ui_die(Ui *ui, const char *msg, va_list ap) {
+	endwin();
+	vfprintf(stderr, msg, ap);
+	exit(EXIT_FAILURE);
+}
+
 static void ui_info(Ui *ui, const char *msg, va_list ap) {
 	UiCurses *uic = (UiCurses*)ui;
 	vsnprintf(uic->info, sizeof(uic->info), msg, ap);
@@ -1024,6 +1030,7 @@ Ui *ui_curses_new(void) {
 		.prompt_hide = ui_prompt_hide,
 		.draw = ui_draw,
 		.arrange = ui_arrange,
+		.die = ui_die,
 		.info = ui_info,
 		.info_hide = ui_info_hide,
 		.haskey = ui_haskey,

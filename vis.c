@@ -2590,13 +2590,11 @@ static bool vis_window_split(Win *win) {
 	return true;
 }
 
-static void die(const char *errstr, ...) {
+static void vis_die(Vis *vis, const char *msg, ...) {
 	va_list ap;
-	editor_free(vis);
-	va_start(ap, errstr);
-	vfprintf(stderr, errstr, ap);
+	va_start(ap, msg);
+	vis->ui->die(vis->ui, msg, ap);
 	va_end(ap);
-	exit(EXIT_FAILURE);
 }
 
 static const char *keynext(Vis *vis, const char *keys) {
@@ -2737,9 +2735,9 @@ static void mainloop(Vis *vis) {
 	sa.sa_flags = SA_SIGINFO;
 	sa.sa_sigaction = signal_handler;
 	if (sigaction(SIGBUS, &sa, NULL))
-		die("sigaction: %s", strerror(errno));
+		vis_die(vis, "sigaction: %s", strerror(errno));
 	if (sigaction(SIGINT, &sa, NULL))
-		die("sigaction: %s", strerror(errno));
+		vis_die(vis, "sigaction: %s", strerror(errno));
 	sigset_t emptyset, blockset;
 	sigemptyset(&emptyset);
 	sigemptyset(&blockset);
@@ -2767,7 +2765,7 @@ static void mainloop(Vis *vis) {
 				}
 			}
 			if (!vis->windows)
-				die("WARNING: file `%s' truncated!\n", name ? name : "-");
+				vis_die(vis, "WARNING: file `%s' truncated!\n", name ? name : "-");
 			else
 				editor_info_show(vis, "WARNING: file `%s' truncated!\n", name ? name : "-");
 			vis->sigbus = false;
@@ -2782,7 +2780,7 @@ static void mainloop(Vis *vis) {
 
 		if (r < 0) {
 			/* TODO save all pending changes to a ~suffixed file */
-			die("Error in mainloop: %s\n", strerror(errno));
+			vis_die(vis, "Error in mainloop: %s\n", strerror(errno));
 		}
 
 		if (!FD_ISSET(STDIN_FILENO, &fds)) {
@@ -2809,21 +2807,21 @@ int main(int argc, char *argv[]) {
 	for (int i = 0; i < LENGTH(vis_modes); i++) {
 		Mode *mode = &vis_modes[i];
 		if (!editor_mode_bindings(mode, &mode->default_bindings))
-			die("Could not load bindings for mode: %s\n", mode->name);
+			vis_die(vis, "Could not load bindings for mode: %s\n", mode->name);
 	}
 
 	if (!(vis = editor_new(ui_curses_new())))
-		die("Could not allocate editor core\n");
+		vis_die(vis, "Could not allocate editor core\n");
 
 	vis->mode_prev = vis->mode = &vis_modes[VIS_MODE_NORMAL];
 
 	if (!editor_syntax_load(vis, syntaxes))
-		die("Could not load syntax highlighting definitions\n");
+		vis_die(vis, "Could not load syntax highlighting definitions\n");
 
 	for (int i = 0; i < LENGTH(vis_action); i++) {
 		KeyAction *action = &vis_action[i];
 		if (!editor_action_register(vis, action))
-			die("Could not register action: %s\n", action->name);
+			vis_die(vis, "Could not register action: %s\n", action->name);
 	}
 
 	char *cmd = NULL;
@@ -2835,18 +2833,18 @@ int main(int argc, char *argv[]) {
 				end_of_options = true;
 				break;
 			case 'v':
-				die("vis %s, compiled " __DATE__ " " __TIME__ "\n", VERSION);
+				vis_die(vis, "vis %s, compiled " __DATE__ " " __TIME__ "\n", VERSION);
 				break;
 			case '\0':
 				break;
 			default:
-				die("Unknown command option: %s\n", argv[i]);
+				vis_die(vis, "Unknown command option: %s\n", argv[i]);
 				break;
 			}
 		} else if (argv[i][0] == '+') {
 			cmd = argv[i] + (argv[i][1] == '/' || argv[i][1] == '?');
 		} else if (!vis_window_new(vis, argv[i])) {
-			die("Can not load `%s': %s\n", argv[i], strerror(errno));
+			vis_die(vis, "Can not load `%s': %s\n", argv[i], strerror(errno));
 		} else if (cmd) {
 			exec_command(vis, cmd[0], cmd+1);
 			cmd = NULL;
@@ -2856,7 +2854,7 @@ int main(int argc, char *argv[]) {
 	if (!vis->windows) {
 		if (!strcmp(argv[argc-1], "-")) {
 			if (!vis_window_new(vis, NULL))
-				die("Can not create empty buffer\n");
+				vis_die(vis, "Can not create empty buffer\n");
 			ssize_t len = 0;
 			char buf[PIPE_BUF];
 			File *file = vis->win->file;
@@ -2865,15 +2863,15 @@ int main(int argc, char *argv[]) {
 			while ((len = read(STDIN_FILENO, buf, sizeof buf)) > 0)
 				text_insert(txt, text_size(txt), buf, len);
 			if (len == -1)
-				die("Can not read from stdin\n");
+				vis_die(vis, "Can not read from stdin\n");
 			text_snapshot(txt);
 			int fd = open("/dev/tty", O_RDONLY);
 			if (fd == -1)
-				die("Can not reopen stdin\n");
+				vis_die(vis, "Can not reopen stdin\n");
 			dup2(fd, STDIN_FILENO);
 			close(fd);
 		} else if (!vis_window_new(vis, NULL)) {
-			die("Can not create empty buffer\n");
+			vis_die(vis, "Can not create empty buffer\n");
 		}
 		if (cmd)
 			exec_command(vis, cmd[0], cmd+1);

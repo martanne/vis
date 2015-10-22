@@ -40,6 +40,7 @@ struct Ui {
 	void (*prompt)(Ui*, const char *title, const char *value);
 	char* (*prompt_input)(Ui*);
 	void (*prompt_hide)(Ui*);
+	void (*die)(Ui*, const char *msg, va_list ap);
 	void (*info)(Ui*, const char *msg, va_list ap);
 	void (*info_hide)(Ui*);
 	void (*arrange)(Ui*, enum UiLayout);
