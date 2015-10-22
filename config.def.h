@@ -238,7 +238,7 @@ static KeyAction vis_action[] = {
 	},
 	[VIS_ACTION_CURSOR_CHAR_NEXT] = {
 		"cursor-char-next",
-		"Move cursor rigth, to the next character",
+		"Move cursor right, to the next character",
 		movement, { .i = MOVE_CHAR_NEXT }
 	},
 	[VIS_ACTION_CURSOR_WORD_START_PREV] = {
@@ -253,7 +253,7 @@ static KeyAction vis_action[] = {
 	},
 	[VIS_ACTION_CURSOR_WORD_END_PREV] = {
 		"cursor-word-end-prev",
-		"Move cursor bacwards to the end of word",
+		"Move cursor backwards to the end of word",
 		movement, { .i = MOVE_WORD_END_PREV }
 	},
 	[VIS_ACTION_CURSOR_WORD_END_NEXT] = {
@@ -273,7 +273,7 @@ static KeyAction vis_action[] = {
 	},
 	[VIS_ACTION_CURSOR_LONGWORD_END_PREV] = {
 		"cursor-longword-end-prev",
-		"Move cursor bacwards to the end of WORD",
+		"Move cursor backwards to the end of WORD",
 		movement, { .i = MOVE_LONGWORD_END_PREV }
 	},
 	[VIS_ACTION_CURSOR_LONGWORD_END_NEXT] = {
@@ -323,7 +323,7 @@ static KeyAction vis_action[] = {
 	},
 	[VIS_ACTION_CURSOR_SCREEN_LINE_BEGIN] = {
 		"cursor-screenline-begin",
-		"Move cursor to begin of screen/display line",
+		"Move cursor to beginning of screen/display line",
 		movement, { .i = MOVE_SCREEN_LINE_BEGIN }
 	},
 	[VIS_ACTION_CURSOR_SCREEN_LINE_MIDDLE] = {
@@ -338,7 +338,7 @@ static KeyAction vis_action[] = {
 	},
 	[VIS_ACTION_CURSOR_BRACKET_MATCH] = {
 		"cursor-match-bracket",
-		"Match corresponding symbol if cursor is on one of ",
+		"Match corresponding symbol if cursor is on a bracket character",
 		movement, { .i = MOVE_BRACKET_MATCH }
 	},
 	[VIS_ACTION_CURSOR_PARAGRAPH_PREV] = {
@@ -423,12 +423,12 @@ static KeyAction vis_action[] = {
 	},
 	[VIS_ACTION_CURSOR_SEARCH_WORD_FORWARD] = {
 		"cursor-search-word-forward",
-		"Move cursor next occurence of the word under cursor",
+		"Move cursor to next occurence of the word under cursor",
 		movement, { .i = MOVE_SEARCH_WORD_FORWARD }
 	},
 	[VIS_ACTION_CURSOR_SEARCH_WORD_BACKWARD] = {
 		"cursor-search-word-backward",
-		"Move cursor previous occurence of the word under cursor",
+		"Move cursor to previous occurence of the word under cursor",
 		 movement, { .i = MOVE_SEARCH_WORD_BACKWARD }
 	},
 	[VIS_ACTION_WINDOW_PAGE_UP] = {
@@ -503,22 +503,22 @@ static KeyAction vis_action[] = {
 	},
 	[VIS_ACTION_JUMPLIST_PREV] = {
 		"jumplist-prev",
-		"Go to older cursor positon in jump list",
+		"Go to older cursor position in jump list",
 		jumplist, { .i = -1 }
 	},
 	[VIS_ACTION_JUMPLIST_NEXT] = {
 		"jumplist-next",
-		"Go to newer cursor positon in jump list",
+		"Go to newer cursor position in jump list",
 		jumplist, { .i = +1 }
 	},
 	[VIS_ACTION_CHANGELIST_PREV] = {
 		"changelist-prev",
-		"Go to older cursor positon in change list",
+		"Go to older cursor position in change list",
 		changelist, { .i = -1 }
 	},
 	[VIS_ACTION_CHANGELIST_NEXT] = {
 		"changelist-next",
-		"Go to newer cursor positon in change list",
+		"Go to newer cursor position in change list",
 		changelist, { .i = +1 }
 	},
 	[VIS_ACTION_UNDO] = {
@@ -543,12 +543,12 @@ static KeyAction vis_action[] = {
 	},
 	[VIS_ACTION_MACRO_RECORD] = {
 		"macro-record",
-		"Record macro into given regiser",
+		"Record macro into given register",
 		macro_record,
 	},
 	[VIS_ACTION_MACRO_REPLAY] = {
 		"macro-replay",
-		"Replay macro, execute the content of the given regiser",
+		"Replay macro, execute the content of the given register",
 		macro_replay,
 	},
 	[VIS_ACTION_MARK_SET] = {
@@ -788,12 +788,12 @@ static KeyAction vis_action[] = {
 	},
 	[VIS_ACTION_PUT_AFTER_END] = {
 		"put-after-end",
-		"Put text after the cursor, place it after new text",
+		"Put text after the cursor, place cursor after new text",
 		put, { .i = PUT_AFTER_END }
 	},
 	[VIS_ACTION_PUT_BEFORE_END] = {
 		"put-before-end",
-		"Put text before the cursor, place it after new text",
+		"Put text before the cursor, place cursor after new text",
 		put, { .i = PUT_BEFORE_END }
 	},
 	[VIS_ACTION_CURSOR_SELECT_WORD] = {
@@ -938,12 +938,12 @@ static KeyAction vis_action[] = {
 	},
 	[VIS_ACTION_TEXT_OBJECT_BACKTICK_OUTER] = {
 		"text-object-backtick-outer",
-		"A backtick deliminated string (outer variant)",
+		"A backtick delimited string (outer variant)",
 		textobj, { .i = TEXT_OBJ_OUTER_BACKTICK }
 	},
 	[VIS_ACTION_TEXT_OBJECT_BACKTICK_INNER] = {
 		"text-object-backtick-inner",
-		"A backtick deliminated string (inner variant)",
+		"A backtick delimited string (inner variant)",
 		textobj, { .i = TEXT_OBJ_INNER_BACKTICK }
 	},
 	[VIS_ACTION_TEXT_OBJECT_ENTIRE_OUTER] = {
@@ -953,7 +953,7 @@ static KeyAction vis_action[] = {
 	},
 	[VIS_ACTION_TEXT_OBJECT_ENTIRE_INNER] = {
 		"text-object-entire-inner",
-		"The whole text content, expect for leading and trailing empty lines",
+		"The whole text content, except for leading and trailing empty lines",
 		textobj, { .i = TEXT_OBJ_INNER_ENTIRE }
 	},
 	[VIS_ACTION_TEXT_OBJECT_FUNCTION_OUTER] = {
