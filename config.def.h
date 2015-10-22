@@ -1512,11 +1512,6 @@ static Mode vis_modes[] = {
 	},
 };
 
-/* null terminated default settings/commands executed once on editor startup */
-static const char *settings[] = {
-	NULL
-};
-
 /* Color definitions for use in the sytax highlighting rules below. A fore
  * or background color of -1 specifies the default terminal color. */
 enum {

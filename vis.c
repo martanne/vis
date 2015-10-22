@@ -43,9 +43,6 @@
 #include "map.h"
 #include "libutf.h"
 
-/** global variables */
-static Editor *vis;         /* global editor instance, keeps track of all windows etc. */
-
 /** operators */
 static size_t op_change(Vis*, Text*, OperatorContext *c);
 static size_t op_yank(Vis*, Text*, OperatorContext *c);
@@ -2724,26 +2721,11 @@ static bool vis_signal_handler(Vis *vis, int signum, const siginfo_t *siginfo, c
 	return false;
 }
 
-static void signal_handler(int signum, siginfo_t *siginfo, void *context) {
-	vis_signal_handler(vis, signum, siginfo, context);
-}
-
-static void mainloop(Vis *vis) {
+static void vis_run(Vis *vis) {
 	struct timespec idle = { .tv_nsec = 0 }, *timeout = NULL;
-	struct sigaction sa;
-	memset(&sa, 0, sizeof sa);
-	sa.sa_flags = SA_SIGINFO;
-	sa.sa_sigaction = signal_handler;
-	if (sigaction(SIGBUS, &sa, NULL))
-		vis_die(vis, "sigaction: %s", strerror(errno));
-	if (sigaction(SIGINT, &sa, NULL))
-		vis_die(vis, "sigaction: %s", strerror(errno));
-	sigset_t emptyset, blockset;
+
+	sigset_t emptyset;
 	sigemptyset(&emptyset);
-	sigemptyset(&blockset);
-	sigaddset(&blockset, SIGWINCH);
-	sigprocmask(SIG_BLOCK, &blockset, NULL);
-	signal(SIGPIPE, SIG_IGN);
 	editor_draw(vis);
 	vis->running = true;
 
@@ -2802,16 +2784,16 @@ static void mainloop(Vis *vis) {
 	}
 }
 
+Vis *vis_new(Ui *ui) {
+	Vis *vis = editor_new(ui);
+	if (!vis)
+		return NULL;
 
-int main(int argc, char *argv[]) {
 	for (int i = 0; i < LENGTH(vis_modes); i++) {
 		Mode *mode = &vis_modes[i];
 		if (!editor_mode_bindings(mode, &mode->default_bindings))
 			vis_die(vis, "Could not load bindings for mode: %s\n", mode->name);
 	}
-
-	if (!(vis = editor_new(ui_curses_new())))
-		vis_die(vis, "Could not allocate editor core\n");
 
 	vis->mode_prev = vis->mode = &vis_modes[VIS_MODE_NORMAL];
 
@@ -2823,6 +2805,19 @@ int main(int argc, char *argv[]) {
 		if (!editor_action_register(vis, action))
 			vis_die(vis, "Could not register action: %s\n", action->name);
 	}
+
+	return vis;
+}
+
+static Vis *vis;         /* global editor instance */
+
+static void signal_handler(int signum, siginfo_t *siginfo, void *context) {
+	vis_signal_handler(vis, signum, siginfo, context);
+}
+
+int main(int argc, char *argv[]) {
+
+	vis = vis_new(ui_curses_new());
 
 	char *cmd = NULL;
 	bool end_of_options = false;
@@ -2877,8 +2872,21 @@ int main(int argc, char *argv[]) {
 			exec_command(vis, cmd[0], cmd+1);
 	}
 
-	settings_apply(vis, settings);
-	mainloop(vis);
+	/* install signal handlers etc. */
+	struct sigaction sa;
+	memset(&sa, 0, sizeof sa);
+	sa.sa_flags = SA_SIGINFO;
+	sa.sa_sigaction = signal_handler;
+	if (sigaction(SIGBUS, &sa, NULL) || sigaction(SIGINT, &sa, NULL))
+		vis_die(vis, "sigaction: %s", strerror(errno));
+
+	sigset_t blockset;
+	sigemptyset(&blockset);
+	sigaddset(&blockset, SIGWINCH);
+	sigprocmask(SIG_BLOCK, &blockset, NULL);
+	signal(SIGPIPE, SIG_IGN);
+
+	vis_run(vis);
 	editor_free(vis);
 	return 0;
 }
