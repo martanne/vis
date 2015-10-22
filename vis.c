@@ -1598,10 +1598,9 @@ static void switchmode_to(Mode *new_mode) {
 	if (vis->mode->isuser)
 		vis->mode_prev = vis->mode;
 	vis->mode = new_mode;
-	if (new_mode == config->mode || (new_mode->name && new_mode->name[0] == '-'))
-		vis->win->ui->draw_status(vis->win->ui);
 	if (new_mode->enter)
 		new_mode->enter(vis->mode_prev);
+	vis->win->ui->draw_status(vis->win->ui);
 }
 
 /** ':'-command implementations */
@@ -2336,7 +2335,7 @@ bool print_keybinding(const char *key, void *value, void *data) {
 	const char *desc = binding->alias;
 	if (!desc && binding->action)
 		desc = binding->action->help;
-	return text_printf(txt, text_size(txt), "  %-15s\t%s\n", key, desc ? desc : "");
+	return text_appendf(txt, "  %-15s\t%s\n", key, desc ? desc : "");
 }
 
 static void print_mode(Mode *mode, Text *txt, bool recursive) {
@@ -2350,15 +2349,31 @@ static bool cmd_help(Filerange *range, enum CmdOpt opt, const char *argv[]) {
 		return false;
 	
 	Text *txt = vis->win->file->text;
+
+	text_appendf(txt, "vis %s, compiled " __DATE__ " " __TIME__ "\n\n", VERSION);
+
+	text_appendf(txt, " Modes\n\n");
 	for (int i = 0; i < LENGTH(vis_modes); i++) {
 		Mode *mode = &vis_modes[i];
-		if (mode->isuser || i == VIS_MODE_TEXTOBJ) {
-			text_printf(txt, text_size(txt), "\n%s\n\n", mode->name);
+		if (mode->help)
+			text_appendf(txt, "  %-15s\t%s\n", mode->name, mode->help);
+	}
+
+	for (int i = 0; i < LENGTH(vis_modes); i++) {
+		Mode *mode = &vis_modes[i];
+		if (mode->isuser && !map_empty(mode->bindings)) {
+			text_appendf(txt, "\n %s\n\n", mode->name);
 			print_mode(mode, txt, i == VIS_MODE_NORMAL ||
 				i == VIS_MODE_INSERT);
 		}
 	}
 	
+	text_appendf(txt, "\n Text objects\n\n");
+	print_mode(&vis_modes[VIS_MODE_TEXTOBJ], txt, false);
+
+	text_appendf(txt, "\n Motions\n\n");
+	print_mode(&vis_modes[VIS_MODE_MOVE], txt, false);
+
 	text_save(txt, NULL);
 	return true;
 }

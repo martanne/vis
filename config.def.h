@@ -1452,12 +1452,16 @@ static Mode vis_modes[] = {
 	},
 	[VIS_MODE_NORMAL] = {
 		.name = "NORMAL",
+		.status = "",
+		.help = "",
 		.isuser = true,
 		.parent = &vis_modes[VIS_MODE_OPERATOR],
 		.default_bindings = vis_mode_normal,
 	},
 	[VIS_MODE_VISUAL] = {
-		.name = "--VISUAL--",
+		.name = "VISUAL",
+		.status = "--VISUAL--",
+		.help = "",
 		.isuser = true,
 		.parent = &vis_modes[VIS_MODE_OPERATOR],
 		.default_bindings = vis_mode_visual,
@@ -1466,7 +1470,9 @@ static Mode vis_modes[] = {
 		.visual = true,
 	},
 	[VIS_MODE_VISUAL_LINE] = {
-		.name = "--VISUAL LINE--",
+		.name = "VISUAL LINE",
+		.status = "--VISUAL LINE--",
+		.help = "",
 		.isuser = true,
 		.parent = &vis_modes[VIS_MODE_VISUAL],
 		.default_bindings = vis_mode_visual_line,
@@ -1481,6 +1487,7 @@ static Mode vis_modes[] = {
 	},
 	[VIS_MODE_PROMPT] = {
 		.name = "PROMPT",
+		.help = "",
 		.isuser = true,
 		.parent = &vis_modes[VIS_MODE_READLINE],
 		.default_bindings = vis_mode_prompt,
@@ -1489,7 +1496,9 @@ static Mode vis_modes[] = {
 		.leave = vis_mode_prompt_leave,
 	},
 	[VIS_MODE_INSERT] = {
-		.name = "--INSERT--",
+		.name = "INSERT",
+		.status = "--INSERT--",
+		.help = "",
 		.isuser = true,
 		.parent = &vis_modes[VIS_MODE_READLINE],
 		.default_bindings = vis_mode_insert,
@@ -1499,7 +1508,9 @@ static Mode vis_modes[] = {
 		.idle_timeout = 3,
 	},
 	[VIS_MODE_REPLACE] = {
-		.name = "--REPLACE--",
+		.name = "REPLACE",
+		.status = "--REPLACE--",
+		.help = "",
 		.isuser = true,
 		.parent = &vis_modes[VIS_MODE_INSERT],
 		.default_bindings = vis_mode_replace,

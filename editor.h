@@ -49,6 +49,8 @@ struct Mode {
 	Map *bindings;                      
 	KeyBinding *default_bindings;                      
 	const char *name;                   /* descriptive, user facing name of the mode */
+	const char *status;                 /* name displayed in the window status bar */
+	const char *help;                   /* short description used by :help */
 	bool isuser;                        /* whether this is a user or internal mode */
 	void (*enter)(Mode *old);           /* called right before the mode becomes active */
 	void (*leave)(Mode *new);           /* called right before the mode becomes inactive */

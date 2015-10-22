@@ -613,7 +613,7 @@ static void ui_window_draw_status(UiWin *w) {
 	wattrset(win->winstatus, focused ? A_REVERSE|A_BOLD : A_REVERSE);
 	mvwhline(win->winstatus, 0, 0, ' ', win->width);
 	mvwprintw(win->winstatus, 0, 0, "%s %s %s %s",
-	          vis->mode->name && vis->mode->name[0] == '-' ? vis->mode->name : "",
+	          focused && vis->mode->status ? vis->mode->status : "",
 	          filename ? filename : "[No Name]",
 	          text_modified(win->file->text) ? "[+]" : "",
 	          vis->recording ? "recording": "");
