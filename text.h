@@ -37,6 +37,7 @@ typedef struct {
 Text *text_load(const char *filename);
 /* file information at time of load or last save */
 struct stat text_stat(Text*);
+bool text_appendf(Text*, const char *format, ...);
 bool text_printf(Text*, size_t pos, const char *format, ...);
 bool text_vprintf(Text*, size_t pos, const char *format, va_list ap);
 /* insert `len' bytes starting from `data' at `pos' which has to be

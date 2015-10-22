@@ -634,6 +634,14 @@ bool text_insert(Text *txt, size_t pos, const char *data, size_t len) {
 	return true;
 }
 
+bool text_appendf(Text *txt, const char *format, ...) {
+	va_list ap;
+	va_start(ap, format);
+	bool ret = text_vprintf(txt, text_size(txt), format, ap);
+	va_end(ap);
+	return ret;
+}
+
 bool text_printf(Text *txt, size_t pos, const char *format, ...) {
 	va_list ap;
 	va_start(ap, format);
