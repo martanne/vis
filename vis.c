@@ -1156,7 +1156,7 @@ static const char *quit(Vis *vis, const char *keys, const Arg *arg) {
 }
 
 static const char *cmd(Vis *vis, const char *keys, const Arg *arg) {
-	exec_command(vis, ':', arg->s);
+	vis_cmd(vis, arg->s);
 	return keys;
 }
 
@@ -2297,7 +2297,7 @@ static Command *lookup_cmd(Vis *vis, const char *name) {
 	return map_closest(vis->cmds, name);
 }
 
-static bool exec_cmdline_command(Vis *vis, const char *cmdline) {
+bool vis_cmd(Vis *vis, const char *cmdline) {
 	enum CmdOpt opt = CMD_OPT_NONE;
 	size_t len = strlen(cmdline);
 	char *line = malloc(len+2);
@@ -2391,7 +2391,7 @@ static bool exec_command(Vis *vis, char type, const char *cmd) {
 		return true;
 	case '+':
 	case ':':
-		if (exec_cmdline_command(vis, cmd))
+		if (vis_cmd(vis, cmd))
 			return true;
 	}
 	return false;
@@ -2399,7 +2399,7 @@ static bool exec_command(Vis *vis, char type, const char *cmd) {
 
 static void settings_apply(Vis *vis, const char **settings) {
 	for (const char **opt = settings; opt && *opt; opt++)
-		exec_cmdline_command(vis, *opt);
+		vis_cmd(vis, *opt);
 }
 
 static bool vis_window_new(Vis *vis, const char *file) {
