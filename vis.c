@@ -34,8 +34,7 @@
 #include <sys/mman.h>
 
 #include <termkey.h>
-#include "ui-curses.h"
-#include "editor.h"
+#include "vis.h"
 #include "text-util.h"
 #include "text-motions.h"
 #include "text-objects.h"
@@ -55,21 +54,6 @@ static size_t op_join(Vis*, Text*, OperatorContext *c);
 static size_t op_repeat_insert(Vis*, Text*, OperatorContext *c);
 static size_t op_repeat_replace(Vis*, Text*, OperatorContext *c);
 static size_t op_cursor(Vis*, Text*, OperatorContext *c);
-
-/* these can be passed as int argument to operator(&(const Arg){ .i = OP_*}) */
-enum {
-	OP_DELETE,
-	OP_CHANGE,
-	OP_YANK,
-	OP_PUT,
-	OP_SHIFT_RIGHT,
-	OP_SHIFT_LEFT,
-	OP_CASE_CHANGE,
-	OP_JOIN,
-	OP_REPEAT_INSERT,
-	OP_REPEAT_REPLACE,
-	OP_CURSOR,
-};
 
 static Operator ops[] = {
 	[OP_DELETE]      = { op_delete      },
@@ -2587,7 +2571,7 @@ static bool vis_window_split(Win *win) {
 	return true;
 }
 
-static void vis_die(Vis *vis, const char *msg, ...) {
+void vis_die(Vis *vis, const char *msg, ...) {
 	va_list ap;
 	va_start(ap, msg);
 	vis->ui->die(vis->ui, msg, ap);
@@ -2703,7 +2687,7 @@ static const char *getkey(Vis *vis) {
 	return key;
 }
 
-static bool vis_signal_handler(Vis *vis, int signum, const siginfo_t *siginfo, const void *context) {
+bool vis_signal_handler(Vis *vis, int signum, const siginfo_t *siginfo, const void *context) {
 	switch (signum) {
 	case SIGBUS:
 		for (File *file = vis->files; file; file = file->next) {
@@ -2721,7 +2705,64 @@ static bool vis_signal_handler(Vis *vis, int signum, const siginfo_t *siginfo, c
 	return false;
 }
 
-static void vis_run(Vis *vis) {
+static void vis_args(Vis *vis, int argc, char *argv[]) {
+	char *cmd = NULL;
+	bool end_of_options = false;
+	for (int i = 1; i < argc; i++) {
+		if (argv[i][0] == '-' && !end_of_options) {
+			switch (argv[i][1]) {
+			case '-':
+				end_of_options = true;
+				break;
+			case 'v':
+				vis_die(vis, "vis %s, compiled " __DATE__ " " __TIME__ "\n", VERSION);
+				break;
+			case '\0':
+				break;
+			default:
+				vis_die(vis, "Unknown command option: %s\n", argv[i]);
+				break;
+			}
+		} else if (argv[i][0] == '+') {
+			cmd = argv[i] + (argv[i][1] == '/' || argv[i][1] == '?');
+		} else if (!vis_window_new(vis, argv[i])) {
+			vis_die(vis, "Can not load `%s': %s\n", argv[i], strerror(errno));
+		} else if (cmd) {
+			exec_command(vis, cmd[0], cmd+1);
+			cmd = NULL;
+		}
+	}
+
+	if (!vis->windows) {
+		if (!strcmp(argv[argc-1], "-")) {
+			if (!vis_window_new(vis, NULL))
+				vis_die(vis, "Can not create empty buffer\n");
+			ssize_t len = 0;
+			char buf[PIPE_BUF];
+			File *file = vis->win->file;
+			Text *txt = file->text;
+			file->is_stdin = true;
+			while ((len = read(STDIN_FILENO, buf, sizeof buf)) > 0)
+				text_insert(txt, text_size(txt), buf, len);
+			if (len == -1)
+				vis_die(vis, "Can not read from stdin\n");
+			text_snapshot(txt);
+			int fd = open("/dev/tty", O_RDONLY);
+			if (fd == -1)
+				vis_die(vis, "Can not reopen stdin\n");
+			dup2(fd, STDIN_FILENO);
+			close(fd);
+		} else if (!vis_window_new(vis, NULL)) {
+			vis_die(vis, "Can not create empty buffer\n");
+		}
+		if (cmd)
+			exec_command(vis, cmd[0], cmd+1);
+	}
+}
+
+void vis_run(Vis *vis, int argc, char *argv[]) {
+	vis_args(vis, argc, argv);
+
 	struct timespec idle = { .tv_nsec = 0 }, *timeout = NULL;
 
 	sigset_t emptyset;
@@ -2809,84 +2850,3 @@ Vis *vis_new(Ui *ui) {
 	return vis;
 }
 
-static Vis *vis;         /* global editor instance */
-
-static void signal_handler(int signum, siginfo_t *siginfo, void *context) {
-	vis_signal_handler(vis, signum, siginfo, context);
-}
-
-int main(int argc, char *argv[]) {
-
-	vis = vis_new(ui_curses_new());
-
-	char *cmd = NULL;
-	bool end_of_options = false;
-	for (int i = 1; i < argc; i++) {
-		if (argv[i][0] == '-' && !end_of_options) {
-			switch (argv[i][1]) {
-			case '-':
-				end_of_options = true;
-				break;
-			case 'v':
-				vis_die(vis, "vis %s, compiled " __DATE__ " " __TIME__ "\n", VERSION);
-				break;
-			case '\0':
-				break;
-			default:
-				vis_die(vis, "Unknown command option: %s\n", argv[i]);
-				break;
-			}
-		} else if (argv[i][0] == '+') {
-			cmd = argv[i] + (argv[i][1] == '/' || argv[i][1] == '?');
-		} else if (!vis_window_new(vis, argv[i])) {
-			vis_die(vis, "Can not load `%s': %s\n", argv[i], strerror(errno));
-		} else if (cmd) {
-			exec_command(vis, cmd[0], cmd+1);
-			cmd = NULL;
-		}
-	}
-
-	if (!vis->windows) {
-		if (!strcmp(argv[argc-1], "-")) {
-			if (!vis_window_new(vis, NULL))
-				vis_die(vis, "Can not create empty buffer\n");
-			ssize_t len = 0;
-			char buf[PIPE_BUF];
-			File *file = vis->win->file;
-			Text *txt = file->text;
-			file->is_stdin = true;
-			while ((len = read(STDIN_FILENO, buf, sizeof buf)) > 0)
-				text_insert(txt, text_size(txt), buf, len);
-			if (len == -1)
-				vis_die(vis, "Can not read from stdin\n");
-			text_snapshot(txt);
-			int fd = open("/dev/tty", O_RDONLY);
-			if (fd == -1)
-				vis_die(vis, "Can not reopen stdin\n");
-			dup2(fd, STDIN_FILENO);
-			close(fd);
-		} else if (!vis_window_new(vis, NULL)) {
-			vis_die(vis, "Can not create empty buffer\n");
-		}
-		if (cmd)
-			exec_command(vis, cmd[0], cmd+1);
-	}
-
-	/* install signal handlers etc. */
-	struct sigaction sa;
-	memset(&sa, 0, sizeof sa);
-	sa.sa_flags = SA_SIGINFO;
-	sa.sa_sigaction = signal_handler;
-	if (sigaction(SIGBUS, &sa, NULL) || sigaction(SIGINT, &sa, NULL))
-		vis_die(vis, "sigaction: %s", strerror(errno));
-
-	sigset_t blockset;
-	sigemptyset(&blockset);
-	sigaddset(&blockset, SIGWINCH);
-	sigprocmask(SIG_BLOCK, &blockset, NULL);
-	signal(SIGPIPE, SIG_IGN);
-
-	vis_run(vis);
-	editor_free(vis);
-	return 0;
-}

@@ -1,31 +1,5 @@
 /** start by reading from the top of vis.c up until config.h is included */
 
-/* a mode contains a set of key bindings which are currently valid.
- *
- * each mode can specify one parent mode which is consultated if a given key
- * is not found in the current mode. hence the modes form a tree which is
- * searched from the current mode up towards the root mode until a valid binding
- * is found.
- *
- * if no binding is found, mode->input(...) is called and the user entered
- * keys are passed as argument. this is used to change the document content.
- */
-enum {
-	VIS_MODE_BASIC,
-	VIS_MODE_MOVE,
-	VIS_MODE_OPERATOR,
-	VIS_MODE_OPERATOR_OPTION,
-	VIS_MODE_NORMAL,
-	VIS_MODE_TEXTOBJ,
-	VIS_MODE_VISUAL,
-	VIS_MODE_VISUAL_LINE,
-	VIS_MODE_READLINE,
-	VIS_MODE_PROMPT,
-	VIS_MODE_INSERT,
-	VIS_MODE_REPLACE,
-	VIS_MODE_LAST,
-};
-
 static Mode vis_modes[VIS_MODE_LAST];
 
 /* command recognized at the ':'-prompt. commands are found using a unique

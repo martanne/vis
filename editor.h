@@ -44,6 +44,16 @@ typedef struct {
 	const char *alias;
 } KeyBinding;
 
+/* a mode contains a set of key bindings which are currently valid.
+ *
+ * each mode can specify one parent mode which is consultated if a given key
+ * is not found in the current mode. hence the modes form a tree which is
+ * searched from the current mode up towards the root mode until a valid binding
+ * is found.
+ *
+ * if no binding is found, mode->input(...) is called and the user entered
+ * keys are passed as argument. this is used to change the document content.
+ */
 typedef struct Mode Mode;
 struct Mode {
 	Mode *parent;                       /* if no match is found in this mode, search will continue there */
