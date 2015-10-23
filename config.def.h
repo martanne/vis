@@ -1120,7 +1120,7 @@ static void vis_mode_operator_leave(Vis *vis, Mode *new) {
 static void vis_mode_operator_input(Vis *vis, const char *str, size_t len) {
 	/* invalid operator */
 	action_reset(vis, &vis->action);
-	switchmode_to(vis, vis->mode_prev);
+	vis_mode_set(vis, vis->mode_prev);
 }
 
 static KeyBinding vis_operator_options[] = {

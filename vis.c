@@ -442,7 +442,7 @@ static bool cmd_earlier_later(Vis*, Filerange*, enum CmdOpt, const char *argv[])
 static bool cmd_help(Vis*, Filerange*, enum CmdOpt, const char *argv[]);
 
 static void action_reset(Vis*, Action *a);
-static void switchmode_to(Vis*, Mode *new_mode);
+static void vis_mode_set(Vis*, Mode *new_mode);
 static bool vis_window_new(Vis*, const char *file);
 static bool vis_window_split(Win *win);
 
@@ -922,7 +922,8 @@ static const char *cursors_select(Vis *vis, const char *keys, const Arg *arg) {
 			view_cursors_to(cursor, text_char_prev(txt, word.end));
 		}
 	}
-	return switchmode(vis, keys, &(const Arg){ .i = VIS_MODE_VISUAL });
+	vis_mode_switch(vis, VIS_MODE_VISUAL);
+	return keys;
 }
 
 static const char *cursors_select_next(Vis *vis, const char *keys, const Arg *arg) {
@@ -1056,7 +1057,7 @@ static const char *selection_end(Vis *vis, const char *keys, const Arg *arg) {
 static const char *selection_restore(Vis *vis, const char *keys, const Arg *arg) {
 	for (Cursor *c = view_cursors(vis->win->view); c; c = view_cursors_next(c))
 		view_cursors_selection_restore(c);
-	switchmode(vis, keys, &(const Arg){ .i = VIS_MODE_VISUAL });
+	vis_mode_switch(vis, VIS_MODE_VISUAL);
 	return keys;
 }
 
@@ -1181,13 +1182,13 @@ static const char *insert_register(Vis *vis, const char *keys, const Arg *arg) {
 
 static const char *prompt_search(Vis *vis, const char *keys, const Arg *arg) {
 	editor_prompt_show(vis, arg->s, "");
-	switchmode(vis, keys, &(const Arg){ .i = VIS_MODE_PROMPT });
+	vis_mode_switch(vis, VIS_MODE_PROMPT);
 	return keys;
 }
 
 static const char *prompt_cmd(Vis *vis, const char *keys, const Arg *arg) {
 	editor_prompt_show(vis, ":", arg->s);
-	switchmode(vis, keys, &(const Arg){ .i = VIS_MODE_PROMPT });
+	vis_mode_switch(vis, VIS_MODE_PROMPT);
 	return keys;
 }
 
@@ -1198,9 +1199,9 @@ static const char *prompt_enter(Vis *vis, const char *keys, const Arg *arg) {
 	 * focused editor window *before* anything is executed which depends
 	 * on vis->win.
 	 */
-	switchmode_to(vis, vis->mode_before_prompt);
+	vis_mode_set(vis, vis->mode_before_prompt);
 	if (s && *s && exec_command(vis, vis->prompt_type, s) && vis->running)
-		switchmode(vis, keys, &(const Arg){ .i = VIS_MODE_NORMAL });
+		vis_mode_switch(vis, VIS_MODE_NORMAL);
 	free(s);
 	editor_draw(vis);
 	return keys;
@@ -1397,7 +1398,7 @@ static const char *openline(Vis *vis, const char *keys, const Arg *arg) {
 		insert_newline(vis, keys, NULL);
 		movement(vis, keys, &(const Arg){ .i = MOVE_LINE_PREV });
 	}
-	switchmode(vis, keys, &(const Arg){ .i = VIS_MODE_INSERT });
+	vis_mode_switch(vis, VIS_MODE_INSERT);
 	return keys;
 }
 
@@ -1410,7 +1411,7 @@ static const char *join(Vis *vis, const char *keys, const Arg *arg) {
 }
 
 static const char *switchmode(Vis *vis, const char *keys, const Arg *arg) {
-	switchmode_to(vis, &vis_modes[arg->i]);
+	vis_mode_switch(vis, arg->i);
 	return keys;
 }
 
@@ -1527,11 +1528,11 @@ static void action_do(Vis *vis, Action *a) {
 
 	if (a->op) {
 		if (a->op == &ops[OP_CHANGE])
-			switchmode(vis, NULL, &(const Arg){ .i = VIS_MODE_INSERT });
+			vis_mode_switch(vis, VIS_MODE_INSERT);
 		else if (vis->mode == &vis_modes[VIS_MODE_OPERATOR])
-			switchmode_to(vis, vis->mode_prev);
+			vis_mode_set(vis, vis->mode_prev);
 		else if (vis->mode->visual)
-			switchmode(vis, NULL, &(const Arg){ .i = VIS_MODE_NORMAL });
+			vis_mode_switch(vis, VIS_MODE_NORMAL);
 		text_snapshot(txt);
 		editor_draw(vis);
 	}
@@ -1552,7 +1553,7 @@ static void action_reset(Vis *vis, Action *a) {
 	a->reg = NULL;
 }
 
-static void switchmode_to(Vis *vis, Mode *new_mode) {
+static void vis_mode_set(Vis *vis, Mode *new_mode) {
 	if (vis->mode == new_mode)
 		return;
 	if (vis->mode->leave)
@@ -2843,7 +2844,7 @@ void vis_operator(Vis *vis, enum VisOperator opi) {
 	}
 	/* switch to operator mode inorder to make operator options and
 	 * text-object available */
-	switchmode(vis, NULL, &(const Arg){ .i = VIS_MODE_OPERATOR });
+	vis_mode_switch(vis, VIS_MODE_OPERATOR);
 	if (vis->action.op == op) {
 		/* hacky way to handle double operators i.e. things like
 		 * dd, yy etc where the second char isn't a movement */
@@ -2853,4 +2854,8 @@ void vis_operator(Vis *vis, enum VisOperator opi) {
 	} else {
 		vis->action.op = op;
 	}
+}
+
+void vis_mode_switch(Vis *vis, enum VisMode mode) {
+	vis_mode_set(vis, &vis_modes[mode]);
 }

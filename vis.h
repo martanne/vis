@@ -28,6 +28,8 @@ enum VisMode {
 	VIS_MODE_LAST,
 };
 
+void vis_mode_switch(Vis*, enum VisMode);
+
 enum VisOperator {
 	OP_DELETE,
 	OP_CHANGE,
