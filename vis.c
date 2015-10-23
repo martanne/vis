@@ -166,36 +166,6 @@ static Movement moves[] = {
 	[MOVE_WINDOW_LINE_BOTTOM]  = { .view = view_lines_bottom,      .type = LINEWISE|JUMP|IDEMPOTENT },
 };
 
-/* these can be passed as int argument to textobj(&(const Arg){ .i = TEXT_OBJ_* }) */
-enum {
-	TEXT_OBJ_INNER_WORD,
-	TEXT_OBJ_OUTER_WORD,
-	TEXT_OBJ_INNER_LONGWORD,
-	TEXT_OBJ_OUTER_LONGWORD,
-	TEXT_OBJ_SENTENCE,
-	TEXT_OBJ_PARAGRAPH,
-	TEXT_OBJ_OUTER_SQUARE_BRACKET,
-	TEXT_OBJ_INNER_SQUARE_BRACKET,
-	TEXT_OBJ_OUTER_CURLY_BRACKET,
-	TEXT_OBJ_INNER_CURLY_BRACKET,
-	TEXT_OBJ_OUTER_ANGLE_BRACKET,
-	TEXT_OBJ_INNER_ANGLE_BRACKET,
-	TEXT_OBJ_OUTER_PARANTHESE,
-	TEXT_OBJ_INNER_PARANTHESE,
-	TEXT_OBJ_OUTER_QUOTE,
-	TEXT_OBJ_INNER_QUOTE,
-	TEXT_OBJ_OUTER_SINGLE_QUOTE,
-	TEXT_OBJ_INNER_SINGLE_QUOTE,
-	TEXT_OBJ_OUTER_BACKTICK,
-	TEXT_OBJ_INNER_BACKTICK,
-	TEXT_OBJ_OUTER_ENTIRE,
-	TEXT_OBJ_INNER_ENTIRE,
-	TEXT_OBJ_OUTER_FUNCTION,
-	TEXT_OBJ_INNER_FUNCTION,
-	TEXT_OBJ_OUTER_LINE,
-	TEXT_OBJ_INNER_LINE,
-};
-
 static TextObject textobjs[] = {
 	[TEXT_OBJ_INNER_WORD]           = { text_object_word                  },
 	[TEXT_OBJ_OUTER_WORD]           = { text_object_word_outer            },
@@ -947,8 +917,7 @@ static const char *movement(Vis *vis, const char *keys, const Arg *arg) {
 }
 
 static const char *textobj(Vis *vis, const char *keys, const Arg *arg) {
-	vis->action.textobj = &textobjs[arg->i];
-	action_do(vis, &vis->action);
+	vis_textobject(vis, arg->i);
 	return keys;
 }
 
@@ -2823,4 +2792,11 @@ void vis_motion(Vis *vis, enum VisMotion motion, ...) {
 out:
 	va_end(ap);
 
+}
+
+void vis_textobject(Vis *vis, enum VisTextObject textobj) {
+	if (textobj < LENGTH(textobjs)) {
+		vis->action.textobj = &textobjs[textobj];
+		action_do(vis, &vis->action);
+	}
 }
