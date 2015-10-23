@@ -42,6 +42,8 @@ enum VisOperator {
 	OP_CURSOR,
 };
 
+void vis_operator(Vis*, enum VisOperator);
+
 bool vis_signal_handler(Vis*, int signum, const siginfo_t *siginfo,
 	const void *context);
 

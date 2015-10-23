@@ -880,7 +880,8 @@ static const char *cursors_new(Vis *vis, const char *keys, const Arg *arg) {
 
 static const char *cursors_split(Vis *vis, const char *keys, const Arg *arg) {
 	vis->action.arg = *arg;
-	return operator(vis, keys, &(const Arg){ .i = OP_CURSOR });
+	vis_operator(vis, OP_CURSOR);
+	return keys;
 }
 
 static const char *cursors_align(Vis *vis, const char *keys, const Arg *arg) {
@@ -1005,30 +1006,13 @@ static const char *motiontype(Vis *vis, const char *keys, const Arg *arg) {
 }
 
 static const char *operator(Vis *vis, const char *keys, const Arg *arg) {
-	Operator *op = &ops[arg->i];
-	if (vis->mode->visual) {
-		vis->action.op = op;
-		action_do(vis, &vis->action);
-		return keys;
-	}
-	/* switch to operator mode inorder to make operator options and
-	 * text-object available */
-	switchmode(vis, keys, &(const Arg){ .i = VIS_MODE_OPERATOR });
-	if (vis->action.op == op) {
-		/* hacky way to handle double operators i.e. things like
-		 * dd, yy etc where the second char isn't a movement */
-		vis->action.type = LINEWISE;
-		vis->action.movement = &moves[MOVE_LINE_NEXT];
-		action_do(vis, &vis->action);
-	} else {
-		vis->action.op = op;
-	}
+	vis_operator(vis, arg->i);
 	return keys;
 }
 
 static const char *changecase(Vis *vis, const char *keys, const Arg *arg) {
 	vis->action.arg = *arg;
-	operator(vis, keys, &(const Arg){ .i = OP_CASE_CHANGE });
+	vis_operator(vis, OP_CASE_CHANGE);
 	return keys;
 }
 
@@ -1179,7 +1163,7 @@ static const char *later(Vis *vis, const char *keys, const Arg *arg) {
 }
 
 static const char *delete(Vis *vis, const char *keys, const Arg *arg) {
-	operator(vis, keys, &(const Arg){ .i = OP_DELETE });
+	vis_operator(vis, OP_DELETE);
 	movement(vis, keys, arg);
 	return keys;
 }
@@ -1399,7 +1383,7 @@ static const char *insert_newline(Vis *vis, const char *keys, const Arg *arg) {
 
 static const char *put(Vis *vis, const char *keys, const Arg *arg) {
 	vis->action.arg = *arg;
-	operator(vis, keys, &(const Arg){ .i = OP_PUT });
+	vis_operator(vis, OP_PUT);
 	action_do(vis, &vis->action);
 	return keys;
 }
@@ -1420,7 +1404,7 @@ static const char *openline(Vis *vis, const char *keys, const Arg *arg) {
 static const char *join(Vis *vis, const char *keys, const Arg *arg) {
 	if (vis->action.count)
 		vis->action.count--;
-	operator(vis, keys, &(const Arg){ .i = OP_JOIN });
+	vis_operator(vis, OP_JOIN);
 	movement(vis, keys, arg);
 	return keys;
 }
@@ -2850,3 +2834,23 @@ Vis *vis_new(Ui *ui) {
 	return vis;
 }
 
+void vis_operator(Vis *vis, enum VisOperator opi) {
+	Operator *op = &ops[opi];
+	if (vis->mode->visual) {
+		vis->action.op = op;
+		action_do(vis, &vis->action);
+		return;
+	}
+	/* switch to operator mode inorder to make operator options and
+	 * text-object available */
+	switchmode(vis, NULL, &(const Arg){ .i = VIS_MODE_OPERATOR });
+	if (vis->action.op == op) {
+		/* hacky way to handle double operators i.e. things like
+		 * dd, yy etc where the second char isn't a movement */
+		vis->action.type = LINEWISE;
+		vis->action.movement = &moves[MOVE_LINE_NEXT];
+		action_do(vis, &vis->action);
+	} else {
+		vis->action.op = op;
+	}
+}
