@@ -360,7 +360,6 @@ static bool vis_window_split(Win *win);
 
 static const char *getkey(Vis*);
 static const char *keynext(Vis*, const char *keys);
-static const char *keypress(Vis*, const char *key);
 static void action_do(Vis*, Action *a);
 static bool exec_command(Vis *vis, char type, const char *cmdline);
 
@@ -729,7 +728,7 @@ static const char *macro_replay(Vis *vis, const char *keys, const Arg *arg) {
 	Macro *macro;
 	keys = key2macro(vis, keys, &macro);
 	if (macro && macro != vis->recording)
-		keypress(vis, macro->data);
+		vis_keys(vis, macro->data);
 	return keys;
 }
 
@@ -2453,7 +2452,7 @@ static const char *keynext(Vis *vis, const char *keys) {
 	return termkey_strpkey(termkey, keys, &key, TERMKEY_FORMAT_VIM);
 }
 
-static const char *keypress(Vis *vis, const char *input) {
+const char *vis_keys(Vis *vis, const char *input) {
 	if (!input)
 		return NULL;
 
@@ -2667,7 +2666,7 @@ void vis_run(Vis *vis, int argc, char *argv[]) {
 		const char *key;
 
 		while ((key = getkey(vis)))
-			keypress(vis, key);
+			vis_keys(vis, key);
 
 		if (vis->mode->idle)
 			timeout = &idle;

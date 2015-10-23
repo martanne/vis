@@ -139,6 +139,8 @@ void vis_textobject(Vis*, enum VisTextObject);
 
 bool vis_cmd(Vis*, const char *cmdline);
 
+const char *vis_keys(Vis*, const char *input);
+
 bool vis_signal_handler(Vis*, int signum, const siginfo_t *siginfo,
 	const void *context);
 
