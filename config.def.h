@@ -544,12 +544,12 @@ static KeyAction vis_action[] = {
 	[VIS_ACTION_TOTILL_REPEAT] = {
 		"totill-repeat",
 		"Repeat latest to/till motion",
-		totill_repeat,
+		movement, { .i = MOVE_TOTILL_REPEAT }
 	},
 	[VIS_ACTION_TOTILL_REVERSE] = {
 		"totill-reverse",
 		"Repeat latest to/till motion but in opposite direction",
-		totill_reverse,
+		movement, { .i = MOVE_TOTILL_REVERSE }
 	},
 	[VIS_ACTION_SEARCH_FORWARD] = {
 		"search-forward",

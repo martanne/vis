@@ -72,62 +72,6 @@ static Operator ops[] = {
 #define PAGE      INT_MAX
 #define PAGE_HALF (INT_MAX-1)
 
-/* these can be passed as int argument to movement(&(const Arg){ .i = MOVE_* }) */
-enum {
-	MOVE_LINE_DOWN,
-	MOVE_LINE_UP,
-	MOVE_SCREEN_LINE_UP,
-	MOVE_SCREEN_LINE_DOWN,
-	MOVE_SCREEN_LINE_BEGIN,
-	MOVE_SCREEN_LINE_MIDDLE,
-	MOVE_SCREEN_LINE_END,
-	MOVE_LINE_PREV,
-	MOVE_LINE_BEGIN,
-	MOVE_LINE_START,
-	MOVE_LINE_FINISH,
-	MOVE_LINE_LASTCHAR,
-	MOVE_LINE_END,
-	MOVE_LINE_NEXT,
-	MOVE_LINE,
-	MOVE_COLUMN,
-	MOVE_CHAR_PREV,
-	MOVE_CHAR_NEXT,
-	MOVE_LINE_CHAR_PREV,
-	MOVE_LINE_CHAR_NEXT,
-	MOVE_WORD_START_NEXT,
-	MOVE_WORD_END_PREV,
-	MOVE_WORD_END_NEXT,
-	MOVE_WORD_START_PREV,
-	MOVE_LONGWORD_START_PREV,
-	MOVE_LONGWORD_START_NEXT,
-	MOVE_LONGWORD_END_PREV,
-	MOVE_LONGWORD_END_NEXT,
-	MOVE_SENTENCE_PREV,
-	MOVE_SENTENCE_NEXT,
-	MOVE_PARAGRAPH_PREV,
-	MOVE_PARAGRAPH_NEXT,
-	MOVE_FUNCTION_START_PREV,
-	MOVE_FUNCTION_START_NEXT,
-	MOVE_FUNCTION_END_PREV,
-	MOVE_FUNCTION_END_NEXT,
-	MOVE_BRACKET_MATCH,
-	MOVE_LEFT_TO,
-	MOVE_RIGHT_TO,
-	MOVE_LEFT_TILL,
-	MOVE_RIGHT_TILL,
-	MOVE_FILE_BEGIN,
-	MOVE_FILE_END,
-	MOVE_MARK,
-	MOVE_MARK_LINE,
-	MOVE_SEARCH_WORD_FORWARD,
-	MOVE_SEARCH_WORD_BACKWARD,
-	MOVE_SEARCH_FORWARD,
-	MOVE_SEARCH_BACKWARD,
-	MOVE_WINDOW_LINE_TOP,
-	MOVE_WINDOW_LINE_MIDDLE,
-	MOVE_WINDOW_LINE_BOTTOM,
-};
-
 enum {
 	PUT_AFTER,
 	PUT_AFTER_END,
@@ -312,10 +256,6 @@ static const char *join(Vis*, const char *keys, const Arg *arg);
 static const char *cmd(Vis*, const char *keys, const Arg *arg);
 /* perform last action i.e. action_prev again */
 static const char *repeat(Vis*, const char *keys, const Arg *arg);
-/* repeat last to/till movement */
-static const char *totill_repeat(Vis*, const char *keys, const Arg *arg);
-/* repeat last to/till movement but in opposite direction */
-static const char *totill_reverse(Vis*, const char *keys, const Arg *arg);
 /* replace character at cursor with one read form keyboard */
 static const char *replace(Vis*, const char *keys, const Arg *arg);
 /* create a new cursor on the previous (arg->i < 0) or next (arg->i > 0) line */
@@ -837,33 +777,6 @@ static const char *repeat(Vis *vis, const char *keys, const Arg *arg) {
 	return keys;
 }
 
-static const char *totill_repeat(Vis *vis, const char *keys, const Arg *arg) {
-	if (!vis->last_totill)
-		return keys;
-	return movement(vis, keys, &(const Arg){ .i = vis->last_totill });
-}
-
-static const char *totill_reverse(Vis *vis, const char *keys, const Arg *arg) {
-	int type = vis->last_totill;
-	switch (type) {
-	case MOVE_RIGHT_TO:
-		type = MOVE_LEFT_TO;
-		break;
-	case MOVE_LEFT_TO:
-		type = MOVE_RIGHT_TO;
-		break;
-	case MOVE_RIGHT_TILL:
-		type = MOVE_LEFT_TILL;
-		break;
-	case MOVE_LEFT_TILL:
-		type = MOVE_RIGHT_TILL;
-		break;
-	default:
-		return keys;
-	}
-	return movement(vis, keys, &(const Arg){ .i = type });
-}
-
 static const char *cursors_new(Vis *vis, const char *keys, const Arg *arg) {
 	View *view = vis->win->view;
 	Text *txt = vis->win->file->text;
@@ -985,7 +898,7 @@ static const char *count(Vis *vis, const char *keys, const Arg *arg) {
 	int digit = keys[-1] - '0';
 	if (0 <= digit && digit <= 9) {
 		if (digit == 0 && vis->action.count == 0)
-			return movement(vis, keys, &(const Arg){ .i = MOVE_LINE_BEGIN });
+			vis_motion(vis, MOVE_LINE_BEGIN);
 		vis->action.count = vis->action.count * 10 + digit;
 	}
 	return keys;
@@ -993,11 +906,11 @@ static const char *count(Vis *vis, const char *keys, const Arg *arg) {
 
 static const char *gotoline(Vis *vis, const char *keys, const Arg *arg) {
 	if (vis->action.count)
-		movement(vis, keys, &(const Arg){ .i = MOVE_LINE });
+		vis_motion(vis, MOVE_LINE);
 	else if (arg->i < 0)
-		movement(vis, keys, &(const Arg){ .i = MOVE_FILE_BEGIN });
+		vis_motion(vis, MOVE_FILE_BEGIN);
 	else
-		movement(vis, keys, &(const Arg){ .i = MOVE_FILE_END });
+		vis_motion(vis, MOVE_FILE_END);
 	return keys;
 }
 
@@ -1020,25 +933,16 @@ static const char *changecase(Vis *vis, const char *keys, const Arg *arg) {
 static const char *movement_key(Vis *vis, const char *keys, const Arg *arg) {
 	if (!keys[0])
 		return NULL;
+	char key[32];
 	const char *next = keynext(vis, keys);
-	strncpy(vis->search_char, keys, next - keys);
-	vis->last_totill = arg->i;
-	vis->action.movement = &moves[arg->i];
-	action_do(vis, &vis->action);
+	strncpy(key, keys, next - keys + 1);
+	key[sizeof(key)-1] = '\0';
+	vis_motion(vis, arg->i, key);
 	return next;
 }
 
 static const char *movement(Vis *vis, const char *keys, const Arg *arg) {
-	vis->action.movement = &moves[arg->i];
-
-	if (vis->action.op == &ops[OP_CHANGE]) {
-		if (vis->action.movement == &moves[MOVE_WORD_START_NEXT])
-			vis->action.movement = &moves[MOVE_WORD_END_NEXT];
-		else if (vis->action.movement == &moves[MOVE_LONGWORD_START_NEXT])
-			vis->action.movement = &moves[MOVE_LONGWORD_END_NEXT];
-	}
-
-	action_do(vis, &vis->action);
+	vis_motion(vis, arg->i);
 	return keys;
 }
 
@@ -1100,22 +1004,14 @@ static const char *mark_set(Vis *vis, const char *keys, const Arg *arg) {
 static const char *mark(Vis *vis, const char *keys, const Arg *arg) {
 	int mark;
 	keys = key2mark(vis, keys, &mark);
-	if (mark != -1) {
-		vis->action.mark = mark;
-		vis->action.movement = &moves[MOVE_MARK];
-		action_do(vis, &vis->action);
-	}
+	vis_motion(vis, MOVE_MARK, mark);
 	return keys;
 }
 
 static const char *mark_line(Vis *vis, const char *keys, const Arg *arg) {
 	int mark;
 	keys = key2mark(vis, keys, &mark);
-	if (mark != -1) {
-		vis->action.mark = mark;
-		vis->action.movement = &moves[MOVE_MARK_LINE];
-		action_do(vis, &vis->action);
-	}
+	vis_motion(vis, MOVE_MARK_LINE, mark);
 	return keys;
 }
 
@@ -1165,7 +1061,7 @@ static const char *later(Vis *vis, const char *keys, const Arg *arg) {
 
 static const char *delete(Vis *vis, const char *keys, const Arg *arg) {
 	vis_operator(vis, OP_DELETE);
-	movement(vis, keys, arg);
+	vis_motion(vis, arg->i);
 	return keys;
 }
 
@@ -1391,12 +1287,12 @@ static const char *put(Vis *vis, const char *keys, const Arg *arg) {
 
 static const char *openline(Vis *vis, const char *keys, const Arg *arg) {
 	if (arg->i == MOVE_LINE_NEXT) {
-		movement(vis, keys, &(const Arg){ .i = MOVE_LINE_END });
+		vis_motion(vis, MOVE_LINE_END);
 		insert_newline(vis, keys, NULL);
 	} else {
-		movement(vis, keys, &(const Arg){ .i = MOVE_LINE_BEGIN });
+		vis_motion(vis, MOVE_LINE_BEGIN);
 		insert_newline(vis, keys, NULL);
-		movement(vis, keys, &(const Arg){ .i = MOVE_LINE_PREV });
+		vis_motion(vis, MOVE_LINE_PREV);
 	}
 	vis_mode_switch(vis, VIS_MODE_INSERT);
 	return keys;
@@ -1406,7 +1302,7 @@ static const char *join(Vis *vis, const char *keys, const Arg *arg) {
 	if (vis->action.count)
 		vis->action.count--;
 	vis_operator(vis, OP_JOIN);
-	movement(vis, keys, arg);
+	vis_motion(vis, arg->i);
 	return keys;
 }
 
@@ -2522,8 +2418,7 @@ static bool exec_command(Vis *vis, char type, const char *cmd) {
 			action_reset(vis, &vis->action);
 			return false;
 		}
-		movement(vis, NULL, &(const Arg){ .i =
-			type == '/' ? MOVE_SEARCH_FORWARD : MOVE_SEARCH_BACKWARD });
+		vis_motion(vis, type == '/' ? MOVE_SEARCH_FORWARD : MOVE_SEARCH_BACKWARD);
 		return true;
 	case '+':
 	case ':':
@@ -2849,8 +2744,7 @@ void vis_operator(Vis *vis, enum VisOperator opi) {
 		/* hacky way to handle double operators i.e. things like
 		 * dd, yy etc where the second char isn't a movement */
 		vis->action.type = LINEWISE;
-		vis->action.movement = &moves[MOVE_LINE_NEXT];
-		action_do(vis, &vis->action);
+		vis_motion(vis, MOVE_LINE_NEXT);
 	} else {
 		vis->action.op = op;
 	}
@@ -2858,4 +2752,75 @@ void vis_operator(Vis *vis, enum VisOperator opi) {
 
 void vis_mode_switch(Vis *vis, enum VisMode mode) {
 	vis_mode_set(vis, &vis_modes[mode]);
+}
+
+void vis_motion(Vis *vis, enum VisMotion motion, ...) {
+	va_list ap;
+	va_start(ap, motion);
+
+	switch (motion) {
+	case MOVE_WORD_START_NEXT:
+		if (vis->action.op == &ops[OP_CHANGE])
+			motion = MOVE_WORD_END_NEXT;
+		break;
+	case MOVE_LONGWORD_START_NEXT:
+		if (vis->action.op == &ops[OP_CHANGE])
+			motion = MOVE_LONGWORD_END_NEXT;
+		break;
+	case MOVE_RIGHT_TO:
+	case MOVE_LEFT_TO:
+	case MOVE_RIGHT_TILL:
+	case MOVE_LEFT_TILL:
+	{
+		const char *key = va_arg(ap, char*);
+		if (!key)
+			goto out;
+		strncpy(vis->search_char, key, sizeof(vis->search_char));
+		vis->search_char[sizeof(vis->search_char)-1] = '\0';
+		vis->last_totill = motion;
+		break;
+	}
+	case MOVE_TOTILL_REPEAT:
+		if (!vis->last_totill)
+			goto out;
+		motion = vis->last_totill;
+		break;
+	case MOVE_TOTILL_REVERSE:
+		switch (vis->last_totill) {
+		case MOVE_RIGHT_TO:
+			motion = MOVE_LEFT_TO;
+			break;
+		case MOVE_LEFT_TO:
+			motion = MOVE_RIGHT_TO;
+			break;
+		case MOVE_RIGHT_TILL:
+			motion = MOVE_LEFT_TILL;
+			break;
+		case MOVE_LEFT_TILL:
+			motion = MOVE_RIGHT_TILL;
+			break;
+		default:
+			goto out;
+		}
+		break;
+	case MOVE_MARK:
+	case MOVE_MARK_LINE:
+	{
+		int mark = va_arg(ap, int);
+		if (MARK_a <= mark && mark < MARK_LAST)
+			vis->action.mark = mark;
+		else
+			goto out;
+		break;
+	}
+	default:
+		break;
+	}
+
+
+	vis->action.movement = &moves[motion];
+	action_do(vis, &vis->action);
+out:
+	va_end(ap);
+
 }
