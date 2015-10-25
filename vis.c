@@ -363,7 +363,6 @@ static bool vis_window_split(Win *win);
 #include "config.h"
 
 static const char *getkey(Vis*);
-static const char *keynext(Vis*, const char *keys);
 static void action_do(Vis*, Action *a);
 static bool exec_command(Vis *vis, char type, const char *cmdline);
 
@@ -877,7 +876,7 @@ static const char *cursors_remove(Vis *vis, const char *keys, const Arg *arg) {
 static const char *replace(Vis *vis, const char *keys, const Arg *arg) {
 	if (!keys[0])
 		return NULL;
-	const char *next = keynext(vis, keys);
+	const char *next = vis_key_next(vis, keys);
 	size_t len = next - keys;
 	action_reset(vis, &vis->action_prev);
 	vis->action_prev.op = &ops[OP_REPEAT_REPLACE];
@@ -928,7 +927,7 @@ static const char *movement_key(Vis *vis, const char *keys, const Arg *arg) {
 	if (!keys[0])
 		return NULL;
 	char key[32];
-	const char *next = keynext(vis, keys);
+	const char *next = vis_key_next(vis, keys);
 	strncpy(key, keys, next - keys + 1);
 	key[sizeof(key)-1] = '\0';
 	vis_motion(vis, arg->i, key);
@@ -2460,7 +2459,7 @@ void vis_die(Vis *vis, const char *msg, ...) {
 	va_end(ap);
 }
 
-static const char *keynext(Vis *vis, const char *keys) {
+const char *vis_key_next(Vis *vis, const char *keys) {
 	TermKeyKey key;
 	TermKey *termkey = vis->ui->termkey_get(vis->ui);
 	const char *next = NULL;
@@ -2493,7 +2492,7 @@ static const char *vis_keys_raw(Vis *vis, Buffer *buf, const char *input) {
 	
 	while (cur && *cur) {
 
-		if (!(end = (char*)keynext(vis, cur))) {
+		if (!(end = (char*)vis_key_next(vis, cur))) {
 			// XXX: can't parse key this should never happen, throw away remaining input
 			buffer_truncate(buf);
 			return input + strlen(input);
