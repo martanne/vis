@@ -889,16 +889,17 @@ static const char *replace(Vis *vis, const char *keys, const Arg *arg) {
 
 static const char *count(Vis *vis, const char *keys, const Arg *arg) {
 	int digit = keys[-1] - '0';
+	int count = vis_count_get(vis);
 	if (0 <= digit && digit <= 9) {
-		if (digit == 0 && vis->action.count == 0)
+		if (digit == 0 && count == 0)
 			vis_motion(vis, MOVE_LINE_BEGIN);
-		vis->action.count = vis->action.count * 10 + digit;
+		vis_count_set(vis, count * 10 + digit);
 	}
 	return keys;
 }
 
 static const char *gotoline(Vis *vis, const char *keys, const Arg *arg) {
-	if (vis->action.count)
+	if (vis_count_get(vis))
 		vis_motion(vis, MOVE_LINE);
 	else if (arg->i < 0)
 		vis_motion(vis, MOVE_FILE_BEGIN);
@@ -1022,7 +1023,7 @@ static const char *redo(Vis *vis, const char *keys, const Arg *arg) {
 }
 
 static const char *earlier(Vis *vis, const char *keys, const Arg *arg) {
-	size_t pos = text_earlier(vis->win->file->text, MAX(vis->action.count, 1));
+	size_t pos = text_earlier(vis->win->file->text, MAX(vis_count_get(vis), 1));
 	if (pos != EPOS) {
 		view_cursor_to(vis->win->view, pos);
 		/* redraw all windows in case some display the same file */
@@ -1032,7 +1033,7 @@ static const char *earlier(Vis *vis, const char *keys, const Arg *arg) {
 }
 
 static const char *later(Vis *vis, const char *keys, const Arg *arg) {
-	size_t pos = text_later(vis->win->file->text, MAX(vis->action.count, 1));
+	size_t pos = text_later(vis->win->file->text, MAX(vis_count_get(vis), 1));
 	if (pos != EPOS) {
 		view_cursor_to(vis->win->view, pos);
 		/* redraw all windows in case some display the same file */
@@ -1182,8 +1183,8 @@ static int argi2lines(Vis *vis, const Arg *arg) {
 	case +PAGE_HALF:
 		return view_height_get(vis->win->view)/2;
 	default:
-		if (vis->action.count > 0)
-			return vis->action.count;
+		if (vis_count_get(vis) > 0)
+			return vis_count_get(vis);
 		return arg->i < 0 ? -arg->i : arg->i;
 	}
 }
@@ -1281,8 +1282,9 @@ static const char *openline(Vis *vis, const char *keys, const Arg *arg) {
 }
 
 static const char *join(Vis *vis, const char *keys, const Arg *arg) {
-	if (vis->action.count)
-		vis->action.count--;
+	int count = vis_count_get(vis);
+	if (count)
+		vis_count_set(vis, count-1);
 	vis_operator(vis, OP_JOIN);
 	vis_motion(vis, arg->i);
 	return keys;
@@ -2891,4 +2893,12 @@ void vis_mark_set(Vis *vis, enum VisMark mark, size_t pos) {
 
 void vis_motion_type(Vis *vis, enum VisMotionType type) {
 	vis->action.type = type;
+}
+
+int vis_count_get(Vis *vis) {
+	return vis->action.count;
+}
+
+void vis_count_set(Vis *vis, int count) {
+	vis->action.count = count;
 }

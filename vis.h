@@ -110,6 +110,9 @@ enum VisMotion {
 
 void vis_motion(Vis*, enum VisMotion, ...);
 
+int vis_count_get(Vis*);
+void vis_count_set(Vis*, int count);
+
 enum VisMotionType {
 	VIS_MOTION_LINEWISE  = 1 << 0,
 	VIS_MOTION_CHARWISE  = 1 << 1,
