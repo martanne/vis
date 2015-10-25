@@ -316,11 +316,6 @@ void editor_window_prev(Editor*);
 /* set the filename of the file displayed in this window */
 void editor_window_name(Win*, const char *filename);
 
-void editor_window_jumplist_add(Win*, size_t pos);
-size_t editor_window_jumplist_prev(Win*);
-size_t editor_window_jumplist_next(Win*);
-void editor_window_jumplist_invalidate(Win*);
-
 /* rearrange all windows either vertically or horizontally */
 void editor_windows_arrange(Editor*, enum UiLayout);
 /* display a user prompt with a certain title and default text */

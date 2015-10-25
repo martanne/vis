@@ -113,6 +113,9 @@ static size_t view_lines_bottom(Vis*, View*);
 /* navigate the change list */
 static size_t window_changelist_next(Vis*, Win*, size_t pos);
 static size_t window_changelist_prev(Vis*, Win*, size_t pos);
+/* navigate the jump list */
+static size_t window_jumplist_next(Vis*, Win*, size_t pos);
+static size_t window_jumplist_prev(Vis*, Win*, size_t pos);
 
 static Movement moves[] = {
 	[MOVE_LINE_UP]             = { .cur = view_line_up,            .type = LINEWISE           },
@@ -169,6 +172,8 @@ static Movement moves[] = {
 	[MOVE_WINDOW_LINE_BOTTOM]  = { .view = view_lines_bottom,      .type = LINEWISE|JUMP|IDEMPOTENT },
 	[MOVE_CHANGELIST_NEXT]     = { .win = window_changelist_next,  .type = INCLUSIVE               },
 	[MOVE_CHANGELIST_PREV]     = { .win = window_changelist_prev,  .type = INCLUSIVE               },
+	[MOVE_JUMPLIST_NEXT]       = { .win = window_jumplist_next,    .type = INCLUSIVE               },
+	[MOVE_JUMPLIST_PREV]       = { .win = window_jumplist_prev,    .type = INCLUSIVE               },
 };
 
 static TextObject textobjs[] = {
@@ -203,8 +208,6 @@ static TextObject textobjs[] = {
 /** functions to be called from keybindings */
 /* ignore key, do nothing */
 static const char *nop(Vis*, const char *keys, const Arg *arg);
-/* navigate jump list either in forward (arg->i>0) or backward (arg->i<0) direction */
-static const char *jumplist(Vis*, const char *keys, const Arg *arg);
 static const char *macro_record(Vis*, const char *keys, const Arg *arg);
 static const char *macro_replay(Vis*, const char *keys, const Arg *arg);
 /* temporarily suspend the editor and return to the shell, type 'fg' to get back */
@@ -702,20 +705,32 @@ static size_t window_changelist_prev(Vis *vis, Win *win, size_t pos) {
 	return cl->pos;
 }
 
+static size_t window_jumplist_next(Vis *vis, Win *win, size_t cur) {
+	while (win->jumplist) {
+		Mark mark = ringbuf_next(win->jumplist);
+		if (!mark)
+			return cur;
+		size_t pos = text_mark_get(win->file->text, mark);
+		if (pos != EPOS && pos != cur)
+			return pos;
+	}
+	return cur;
+}
+
+static size_t window_jumplist_prev(Vis *vis, Win *win, size_t cur) {
+	while (win->jumplist) {
+		Mark mark = ringbuf_prev(win->jumplist);
+		if (!mark)
+			return cur;
+		size_t pos = text_mark_get(win->file->text, mark);
+		if (pos != EPOS && pos != cur)
+			return pos;
+	}
+	return cur;
+}
 /** key bindings functions */
 
 static const char *nop(Vis *vis, const char *keys, const Arg *arg) {
-	return keys;
-}
-
-static const char *jumplist(Vis *vis, const char *keys, const Arg *arg) {
-	size_t pos;
-	if (arg->i > 0)
-		pos = editor_window_jumplist_next(vis->win);
-	else
-		pos = editor_window_jumplist_prev(vis->win);
-	if (pos != EPOS)
-		view_cursor_to(vis->win->view, pos);
 	return keys;
 }
 
@@ -1292,6 +1307,17 @@ static const char *switchmode(Vis *vis, const char *keys, const Arg *arg) {
 
 /** action processing: execut the operator / movement / text object */
 
+static void window_jumplist_add(Win *win, size_t pos) {
+	Mark mark = text_mark_set(win->file->text, pos);
+	if (mark && win->jumplist)
+		ringbuf_add(win->jumplist, mark);
+}
+
+static void window_jumplist_invalidate(Win *win) {
+	if (win->jumplist)
+		ringbuf_invalidate(win->jumplist);
+}
+
 static void action_do(Vis *vis, Action *a) {
 	Win *win = vis->win;
 	Text *txt = win->file->text;
@@ -1355,9 +1381,9 @@ static void action_do(Vis *vis, Action *a) {
 				if (vis->mode->visual)
 					c.range = view_cursors_selection_get(cursor);
 				if (a->movement->type & JUMP)
-					editor_window_jumplist_add(vis->win, pos);
+					window_jumplist_add(win, pos);
 				else
-					editor_window_jumplist_invalidate(vis->win);
+					window_jumplist_invalidate(win);
 			} else if (a->movement->type & INCLUSIVE) {
 				c.range.end = text_char_next(txt, c.range.end);
 			}

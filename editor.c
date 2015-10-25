@@ -70,43 +70,6 @@ bool editor_window_split(Win *original) {
 	return true;
 }
 
-void editor_window_jumplist_add(Win *win, size_t pos) {
-	Mark mark = text_mark_set(win->file->text, pos);
-	if (mark && win->jumplist)
-		ringbuf_add(win->jumplist, mark);
-}
-
-size_t editor_window_jumplist_prev(Win *win) {
-	size_t cur = view_cursor_get(win->view);
-	while (win->jumplist) {
-		Mark mark = ringbuf_prev(win->jumplist);
-		if (!mark)
-			return cur;
-		size_t pos = text_mark_get(win->file->text, mark);
-		if (pos != EPOS && pos != cur)
-			return pos;
-	}
-	return cur;
-}
-
-size_t editor_window_jumplist_next(Win *win) {
-	size_t cur = view_cursor_get(win->view);
-	while (win->jumplist) {
-		Mark mark = ringbuf_next(win->jumplist);
-		if (!mark)
-			return cur;
-		size_t pos = text_mark_get(win->file->text, mark);
-		if (pos != EPOS && pos != cur)
-			return pos;
-	}
-	return cur;
-}
-
-void editor_window_jumplist_invalidate(Win *win) {
-	if (win->jumplist)
-		ringbuf_invalidate(win->jumplist);
-}
-
 void editor_resize(Editor *ed) {
 	ed->ui->resize(ed->ui);
 }

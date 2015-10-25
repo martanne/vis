@@ -469,12 +469,12 @@ static KeyAction vis_action[] = {
 	[VIS_ACTION_JUMPLIST_PREV] = {
 		"jumplist-prev",
 		"Go to older cursor position in jump list",
-		jumplist, { .i = -1 }
+		movement, { .i = MOVE_JUMPLIST_PREV }
 	},
 	[VIS_ACTION_JUMPLIST_NEXT] = {
 		"jumplist-next",
 		"Go to newer cursor position in jump list",
-		jumplist, { .i = +1 }
+		movement, { .i = MOVE_JUMPLIST_NEXT }
 	},
 	[VIS_ACTION_CHANGELIST_PREV] = {
 		"changelist-prev",

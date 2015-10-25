@@ -101,6 +101,8 @@ enum VisMotion {
 	MOVE_WINDOW_LINE_BOTTOM,
 	MOVE_CHANGELIST_NEXT,
 	MOVE_CHANGELIST_PREV,
+	MOVE_JUMPLIST_NEXT,
+	MOVE_JUMPLIST_PREV,
 	/* pseudo motions: keep them at the end to save space in array definition */
 	MOVE_TOTILL_REPEAT,
 	MOVE_TOTILL_REVERSE,
