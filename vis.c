@@ -727,11 +727,7 @@ static const char *suspend(Vis *vis, const char *keys, const Arg *arg) {
 }
 
 static const char *repeat(Vis *vis, const char *keys, const Arg *arg) {
-	int count = vis->action.count;
-	vis->action = vis->action_prev;
-	if (count)
-		vis->action.count = count;
-	action_do(vis, &vis->action);
+	vis_repeat(vis);
 	return keys;
 }
 
@@ -2834,4 +2830,12 @@ bool vis_macro_replay(Vis *vis, enum VisMacro id) {
 	vis_keys_raw(vis, &buf, macro->data);
 	buffer_release(&buf);
 	return true;
+}
+
+void vis_repeat(Vis *vis) {
+	int count = vis->action.count;
+	vis->action = vis->action_prev;
+	if (count)
+		vis->action.count = count;
+	action_do(vis, &vis->action);
 }

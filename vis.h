@@ -147,6 +147,8 @@ bool vis_macro_record(Vis*, enum VisMacro);
 bool vis_macro_record_stop(Vis*);
 bool vis_macro_replay(Vis*, enum VisMacro);
 
+void vis_repeat(Vis*);
+
 bool vis_cmd(Vis*, const char *cmdline);
 
 const char *vis_keys(Vis*, const char *input);
