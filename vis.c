@@ -693,42 +693,31 @@ static const char *changelist(Vis *vis, const char *keys, const Arg *arg) {
 	return keys;
 }
 
-static const char *key2macro(Vis *vis, const char *keys, Macro **macro) {
-	*macro = NULL;
+static const char *key2macro(Vis *vis, const char *keys, enum VisMacro *macro) {
+	*macro = VIS_MACRO_INVALID;
 	if (keys[0] >= 'a' && keys[0] <= 'z')
-		*macro = &vis->macros[keys[0] - 'a'];
+		*macro = keys[0] - 'a';
 	else if (keys[0] == '@')
-		*macro = vis->last_recording;
+		*macro = VIS_MACRO_LAST_RECORDED;
 	else if (keys[0] == '\0')
 		return NULL;
 	return keys+1;
 }
 
 static const char *macro_record(Vis *vis, const char *keys, const Arg *arg) {
-	if (vis->recording) {
-		/* hack to remove last recorded key, otherwise upon replay
-		 * we would start another recording */
-		// XXX: HACK
-		vis->recording->len--;
-		vis->last_recording = vis->recording;
-		vis->recording = NULL;
-	} else {
-		Macro *macro;
-		keys = key2macro(vis, keys, &macro);
-		if (macro) {
-			macro_reset(macro);
-			vis->recording = macro;
-		}
-	}
+	if (vis_macro_record_stop(vis))
+		return keys;
+	enum VisMacro macro;
+	keys = key2macro(vis, keys, &macro);
+	vis_macro_record(vis, macro);
 	editor_draw(vis);
 	return keys;
 }
 
 static const char *macro_replay(Vis *vis, const char *keys, const Arg *arg) {
-	Macro *macro;
+	enum VisMacro macro;
 	keys = key2macro(vis, keys, &macro);
-	if (macro && macro != vis->recording)
-		vis_keys(vis, macro->data);
+	vis_macro_replay(vis, macro);
 	return keys;
 }
 
@@ -2452,16 +2441,8 @@ static const char *keynext(Vis *vis, const char *keys) {
 	return termkey_strpkey(termkey, keys, &key, TERMKEY_FORMAT_VIM);
 }
 
-const char *vis_keys(Vis *vis, const char *input) {
-	if (!input)
-		return NULL;
-
-	if (!buffer_append0(&vis->input_queue, input)) {
-		buffer_truncate(&vis->input_queue);
-		return NULL;
-	}
-
-	char *keys = vis->input_queue.data, *start = keys, *cur = keys, *end;
+static const char *vis_keys_raw(Vis *vis, Buffer *buf, const char *input) {
+	char *keys = buf->data, *start = keys, *cur = keys, *end;
 	bool prefix = false;
 	KeyBinding *binding = NULL;
 	
@@ -2469,7 +2450,7 @@ const char *vis_keys(Vis *vis, const char *input) {
 
 		if (!(end = (char*)keynext(vis, cur))) {
 			// XXX: can't parse key this should never happen, throw away remaining input
-			buffer_truncate(&vis->input_queue);
+			buffer_truncate(buf);
 			return input + strlen(input);
 		}
 
@@ -2495,9 +2476,9 @@ const char *vis_keys(Vis *vis, const char *input) {
 					break;
 				start = cur = end;
 			} else if (binding->alias) {
-				buffer_put0(&vis->input_queue, end);
-				buffer_prepend0(&vis->input_queue, binding->alias);
-				start = cur = vis->input_queue.data;
+				buffer_put0(buf, end);
+				buffer_prepend0(buf, binding->alias);
+				start = cur = buf->data;
 			}
 		} else if (prefix) { /* incomplete key binding? */
 			cur = end;
@@ -2521,8 +2502,20 @@ const char *vis_keys(Vis *vis, const char *input) {
 		}
 	}
 
-	buffer_put0(&vis->input_queue, start);
+	buffer_put0(buf, start);
 	return input + (start - keys);
+}
+
+const char *vis_keys(Vis *vis, const char *input) {
+	if (!input)
+		return NULL;
+
+	if (!buffer_append0(&vis->input_queue, input)) {
+		buffer_truncate(&vis->input_queue);
+		return NULL;
+	}
+
+	return vis_keys_raw(vis, &vis->input_queue, input);
 }
 
 static const char *getkey(Vis *vis) {
@@ -2798,4 +2791,47 @@ void vis_textobject(Vis *vis, enum VisTextObject textobj) {
 		vis->action.textobj = &textobjs[textobj];
 		action_do(vis, &vis->action);
 	}
+}
+
+static Macro *macro_get(Vis *vis, enum VisMacro m) {
+	if (m == VIS_MACRO_LAST_RECORDED)
+		return vis->last_recording;
+	if (m < LENGTH(vis->macros))
+		return &vis->macros[m];
+	return NULL;
+}
+
+bool vis_macro_record(Vis *vis, enum VisMacro id) {
+	Macro *macro = macro_get(vis, id);
+	if (vis->recording || !macro)
+		return false;
+	macro_reset(macro);
+	vis->recording = macro;
+	return true;
+}
+
+bool vis_macro_record_stop(Vis *vis) {
+	if (!vis->recording)
+		return false;
+	/* XXX: hack to remove last recorded key, otherwise upon replay
+	 * we would start another recording */
+	if (vis->recording->len > 1) {
+		vis->recording->len--;
+		vis->recording->data[vis->recording->len-1] = '\0';
+	}
+	vis->last_recording = vis->recording;
+	vis->recording = NULL;
+	return true;
+}
+
+bool vis_macro_replay(Vis *vis, enum VisMacro id) {
+	Macro *macro = macro_get(vis, id);
+	if (!macro || macro == vis->recording)
+		return false;
+	Buffer buf;
+	buffer_init(&buf);
+	buffer_put(&buf, macro->data, macro->len);
+	vis_keys_raw(vis, &buf, macro->data);
+	buffer_release(&buf);
+	return true;
 }

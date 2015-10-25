@@ -137,6 +137,16 @@ enum VisTextObject {
 
 void vis_textobject(Vis*, enum VisTextObject);
 
+enum VisMacro {
+	/* XXX: TEMPORARY */
+	VIS_MACRO_LAST_RECORDED = 26,
+	VIS_MACRO_INVALID, /* hast to be the last enum member */
+};
+
+bool vis_macro_record(Vis*, enum VisMacro);
+bool vis_macro_record_stop(Vis*);
+bool vis_macro_replay(Vis*, enum VisMacro);
+
 bool vis_cmd(Vis*, const char *cmdline);
 
 const char *vis_keys(Vis*, const char *input);
