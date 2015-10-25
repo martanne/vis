@@ -958,17 +958,20 @@ static const char *selection_restore(Vis *vis, const char *keys, const Arg *arg)
 	return keys;
 }
 
-static const char *key2register(Vis *vis, const char *keys, Register **reg) {
-	*reg = NULL;
+static const char *key2register(Vis *vis, const char *keys, enum VisRegister *reg) {
+	*reg = VIS_REGISTER_INVALID;
 	if (!keys[0])
 		return NULL;
 	if (keys[0] >= 'a' && keys[0] <= 'z')
-		*reg = &vis->registers[keys[0] - 'a'];
+		*reg = keys[0] - 'a';
 	return keys+1;
 }
 
 static const char *reg(Vis *vis, const char *keys, const Arg *arg) {
-	return key2register(vis, keys, &vis->action.reg);
+	enum VisRegister reg;
+	keys = key2register(vis, keys, &reg);
+	vis_register_set(vis, reg);
+	return keys;
 }
 
 static const char *key2mark(Vis *vis, const char *keys, int *mark) {
@@ -1049,8 +1052,9 @@ static const char *delete(Vis *vis, const char *keys, const Arg *arg) {
 }
 
 static const char *insert_register(Vis *vis, const char *keys, const Arg *arg) {
-	Register *reg;
-	keys = key2register(vis, keys, &reg);
+	enum VisRegister regid;
+	keys = key2register(vis, keys, &regid);
+	Register *reg = vis_register_get(vis, regid);
 	if (reg) {
 		int pos = view_cursor_get(vis->win->view);
 		editor_insert(vis, pos, reg->data, reg->len);
@@ -2901,4 +2905,15 @@ int vis_count_get(Vis *vis) {
 
 void vis_count_set(Vis *vis, int count) {
 	vis->action.count = count;
+}
+
+void vis_register_set(Vis *vis, enum VisRegister reg) {
+	if (reg < LENGTH(vis->registers))
+		vis->action.reg = &vis->registers[reg];
+}
+
+Register *vis_register_get(Vis *vis, enum VisRegister reg) {
+	if (reg < LENGTH(vis->registers))
+		return &vis->registers[reg];
+	return NULL;
 }

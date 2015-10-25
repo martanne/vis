@@ -168,6 +168,14 @@ enum VisMark {
 
 void vis_mark_set(Vis*, enum VisMark mark, size_t pos);
 
+enum VisRegister {
+	/* TODO: temporary */
+	VIS_REGISTER_INVALID = REG_LAST,
+};
+
+void vis_register_set(Vis*, enum VisRegister);
+Register *vis_register_get(Vis*, enum VisRegister);
+
 void vis_repeat(Vis*);
 
 bool vis_cmd(Vis*, const char *cmdline);
