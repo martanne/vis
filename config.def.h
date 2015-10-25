@@ -479,12 +479,12 @@ static KeyAction vis_action[] = {
 	[VIS_ACTION_CHANGELIST_PREV] = {
 		"changelist-prev",
 		"Go to older cursor position in change list",
-		changelist, { .i = -1 }
+		movement, { .i = MOVE_CHANGELIST_PREV }
 	},
 	[VIS_ACTION_CHANGELIST_NEXT] = {
 		"changelist-next",
 		"Go to newer cursor position in change list",
-		changelist, { .i = +1 }
+		movement, { .i = MOVE_CHANGELIST_NEXT }
 	},
 	[VIS_ACTION_UNDO] = {
 		"editor-undo",

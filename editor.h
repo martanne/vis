@@ -85,11 +85,13 @@ typedef struct {
 } Operator;
 
 typedef struct {
+	/* TODO: merge types / use union to save space */
 	size_t (*cur)(Cursor*);            /* a movement based on current window content from view.h */
 	size_t (*txt)(Text*, size_t pos); /* a movement form text-motions.h */
 	size_t (*file)(Vis*, File*, size_t pos);
 	size_t (*vis)(Vis*, Text*, size_t pos);
 	size_t (*view)(Vis*, View*);
+	size_t (*win)(Vis*, Win*, size_t pos);
 	enum {
 		LINEWISE  = 1 << 0,
 		CHARWISE  = 1 << 1,
@@ -211,6 +213,7 @@ struct File {
 };
 
 typedef struct {
+	time_t state;           /* state of the text, used to invalidate change list */
 	size_t index;           /* #number of changes */
 	size_t pos;             /* where the current change occured */
 } ChangeList;
@@ -318,8 +321,6 @@ size_t editor_window_jumplist_prev(Win*);
 size_t editor_window_jumplist_next(Win*);
 void editor_window_jumplist_invalidate(Win*);
 
-size_t editor_window_changelist_prev(Win*);
-size_t editor_window_changelist_next(Win*);
 /* rearrange all windows either vertically or horizontally */
 void editor_windows_arrange(Editor*, enum UiLayout);
 /* display a user prompt with a certain title and default text */

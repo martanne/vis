@@ -110,6 +110,9 @@ static size_t view_lines_top(Vis*, View*);
 static size_t view_lines_middle(Vis*, View*);
 /* goto the action.count-th line from bottom of the focused window */
 static size_t view_lines_bottom(Vis*, View*);
+/* navigate the change list */
+static size_t window_changelist_next(Vis*, Win*, size_t pos);
+static size_t window_changelist_prev(Vis*, Win*, size_t pos);
 
 static Movement moves[] = {
 	[MOVE_LINE_UP]             = { .cur = view_line_up,            .type = LINEWISE           },
@@ -164,6 +167,8 @@ static Movement moves[] = {
 	[MOVE_WINDOW_LINE_TOP]     = { .view = view_lines_top,         .type = LINEWISE|JUMP|IDEMPOTENT },
 	[MOVE_WINDOW_LINE_MIDDLE]  = { .view = view_lines_middle,      .type = LINEWISE|JUMP|IDEMPOTENT },
 	[MOVE_WINDOW_LINE_BOTTOM]  = { .view = view_lines_bottom,      .type = LINEWISE|JUMP|IDEMPOTENT },
+	[MOVE_CHANGELIST_NEXT]     = { .win = window_changelist_next,  .type = INCLUSIVE               },
+	[MOVE_CHANGELIST_PREV]     = { .win = window_changelist_prev,  .type = INCLUSIVE               },
 };
 
 static TextObject textobjs[] = {
@@ -200,8 +205,6 @@ static TextObject textobjs[] = {
 static const char *nop(Vis*, const char *keys, const Arg *arg);
 /* navigate jump list either in forward (arg->i>0) or backward (arg->i<0) direction */
 static const char *jumplist(Vis*, const char *keys, const Arg *arg);
-/* navigate change list either in forward (arg->i>0) or backward (arg->i<0) direction */
-static const char *changelist(Vis*, const char *keys, const Arg *arg);
 static const char *macro_record(Vis*, const char *keys, const Arg *arg);
 static const char *macro_replay(Vis*, const char *keys, const Arg *arg);
 /* temporarily suspend the editor and return to the shell, type 'fg' to get back */
@@ -665,6 +668,40 @@ static size_t view_lines_bottom(Vis *vis, View *view) {
 	return view_screenline_goto(vis->win->view, h - vis->action.count);
 }
 
+static size_t window_changelist_next(Vis *vis, Win *win, size_t pos) {
+	ChangeList *cl = &win->changelist;
+	Text *txt = win->file->text;
+	time_t state = text_state(txt);
+	if (cl->state != state)
+		cl->index = 0;
+	else if (cl->index > 0 && pos == cl->pos)
+		cl->index--;
+	size_t newpos = text_history_get(txt, cl->index);
+	if (newpos == EPOS)
+		cl->index++;
+	else
+		cl->pos = newpos;
+	cl->state = state;
+	return cl->pos;
+}
+
+static size_t window_changelist_prev(Vis *vis, Win *win, size_t pos) {
+	ChangeList *cl = &win->changelist;
+	Text *txt = win->file->text;
+	time_t state = text_state(txt);
+	if (cl->state != state)
+		cl->index = 0;
+	else if (pos == cl->pos)
+		win->changelist.index++;
+	size_t newpos = text_history_get(txt, cl->index);
+	if (newpos == EPOS)
+		cl->index--;
+	else
+		cl->pos = newpos;
+	cl->state = state;
+	return cl->pos;
+}
+
 /** key bindings functions */
 
 static const char *nop(Vis *vis, const char *keys, const Arg *arg) {
@@ -677,17 +714,6 @@ static const char *jumplist(Vis *vis, const char *keys, const Arg *arg) {
 		pos = editor_window_jumplist_next(vis->win);
 	else
 		pos = editor_window_jumplist_prev(vis->win);
-	if (pos != EPOS)
-		view_cursor_to(vis->win->view, pos);
-	return keys;
-}
-
-static const char *changelist(Vis *vis, const char *keys, const Arg *arg) {
-	size_t pos;
-	if (arg->i > 0)
-		pos = editor_window_changelist_next(vis->win);
-	else
-		pos = editor_window_changelist_prev(vis->win);
 	if (pos != EPOS)
 		view_cursor_to(vis->win->view, pos);
 	return keys;
@@ -1267,8 +1293,9 @@ static const char *switchmode(Vis *vis, const char *keys, const Arg *arg) {
 /** action processing: execut the operator / movement / text object */
 
 static void action_do(Vis *vis, Action *a) {
-	Text *txt = vis->win->file->text;
-	View *view = vis->win->view;
+	Win *win = vis->win;
+	Text *txt = win->file->text;
+	View *view = win->view;
 	if (a->count < 1)
 		a->count = 1;
 	bool multiple_cursors = view_cursors_count(view) > 1;
@@ -1304,8 +1331,10 @@ static void action_do(Vis *vis, Action *a) {
 					pos = a->movement->file(vis, vis->win->file, pos);
 				else if (a->movement->vis)
 					pos = a->movement->vis(vis, txt, pos);
-				else
+				else if (a->movement->view)
 					pos = a->movement->view(vis, view);
+				else if (a->movement->win)
+					pos = a->movement->win(vis, win, pos);
 				if (pos == EPOS || a->movement->type & IDEMPOTENT)
 					break;
 			}
