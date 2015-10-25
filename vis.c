@@ -908,7 +908,7 @@ static const char *gotoline(Vis *vis, const char *keys, const Arg *arg) {
 }
 
 static const char *motiontype(Vis *vis, const char *keys, const Arg *arg) {
-	vis->action.type = arg->i;
+	vis_motion_type(vis, arg->i);
 	return keys;
 }
 
@@ -2887,4 +2887,8 @@ void vis_mark_set(Vis *vis, enum VisMark mark, size_t pos) {
 	File *file = vis->win->file;
 	if (mark < LENGTH(file->marks))
 		file->marks[mark] = text_mark_set(file->text, pos);
+}
+
+void vis_motion_type(Vis *vis, enum VisMotionType type) {
+	vis->action.type = type;
 }

@@ -110,6 +110,13 @@ enum VisMotion {
 
 void vis_motion(Vis*, enum VisMotion, ...);
 
+enum VisMotionType {
+	VIS_MOTION_LINEWISE  = 1 << 0,
+	VIS_MOTION_CHARWISE  = 1 << 1,
+};
+
+void vis_motion_type(Vis *vis, enum VisMotionType);
+
 enum VisTextObject {
 	TEXT_OBJ_INNER_WORD,
 	TEXT_OBJ_OUTER_WORD,
