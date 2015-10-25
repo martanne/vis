@@ -151,6 +151,13 @@ bool vis_macro_record(Vis*, enum VisMacro);
 bool vis_macro_record_stop(Vis*);
 bool vis_macro_replay(Vis*, enum VisMacro);
 
+enum VisMark {
+	/* TODO: temporary */
+	VIS_MARK_INVALID,
+};
+
+void vis_mark_set(Vis*, enum VisMark mark, size_t pos);
+
 void vis_repeat(Vis*);
 
 bool vis_cmd(Vis*, const char *cmdline);

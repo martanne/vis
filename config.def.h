@@ -524,12 +524,12 @@ static KeyAction vis_action[] = {
 	[VIS_ACTION_MARK_GOTO] = {
 		"mark-goto",
 		"Goto the position of the given mark",
-		mark,
+		mark_motion, { .i = MOVE_MARK }
 	},
 	[VIS_ACTION_MARK_GOTO_LINE] = {
 		"mark-goto-line",
 		"Goto first non-blank character of the line containing the given mark",
-		mark_line,
+		mark_motion, { .i = MOVE_MARK_LINE }
 	},
 	[VIS_ACTION_REDRAW] = {
 		"editor-redraw",

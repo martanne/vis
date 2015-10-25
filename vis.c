@@ -275,10 +275,8 @@ static const char *selection_end(Vis*, const char *keys, const Arg *arg);
 static const char *selection_restore(Vis*, const char *keys, const Arg *arg);
 /* use register indicated by arg->i for the current operator */
 static const char *reg(Vis*, const char *keys, const Arg *arg);
-/* perform a movement to mark arg->i */
-static const char *mark(Vis*, const char *keys, const Arg *arg);
-/* perform a movement to the first non-blank on the line pointed by mark arg->i */
-static const char *mark_line(Vis*, const char *keys, const Arg *arg);
+/* perform arg->i motion with a mark as argument */
+static const char *mark_motion(Vis*, const char *keys, const Arg *arg);
 /* {un,re}do last action, redraw window */
 static const char *undo(Vis*, const char *keys, const Arg *arg);
 static const char *redo(Vis*, const char *keys, const Arg *arg);
@@ -973,7 +971,7 @@ static const char *reg(Vis *vis, const char *keys, const Arg *arg) {
 }
 
 static const char *key2mark(Vis *vis, const char *keys, int *mark) {
-	*mark = -1;
+	*mark = MARK_INVALID;
 	if (!keys[0])
 		return NULL;
 	if (keys[0] >= 'a' && keys[0] <= 'z')
@@ -988,24 +986,14 @@ static const char *key2mark(Vis *vis, const char *keys, int *mark) {
 static const char *mark_set(Vis *vis, const char *keys, const Arg *arg) {
 	int mark;
 	keys = key2mark(vis, keys, &mark);
-	if (mark != -1) {
-		size_t pos = view_cursor_get(vis->win->view);
-		vis->win->file->marks[mark] = text_mark_set(vis->win->file->text, pos);
-	}
+	vis_mark_set(vis, mark, view_cursor_get(vis->win->view));
 	return keys;
 }
 
-static const char *mark(Vis *vis, const char *keys, const Arg *arg) {
+static const char *mark_motion(Vis *vis, const char *keys, const Arg *arg) {
 	int mark;
 	keys = key2mark(vis, keys, &mark);
-	vis_motion(vis, MOVE_MARK, mark);
-	return keys;
-}
-
-static const char *mark_line(Vis *vis, const char *keys, const Arg *arg) {
-	int mark;
-	keys = key2mark(vis, keys, &mark);
-	vis_motion(vis, MOVE_MARK_LINE, mark);
+	vis_motion(vis, arg->i, mark);
 	return keys;
 }
 
@@ -2819,7 +2807,7 @@ void vis_motion(Vis *vis, enum VisMotion motion, ...) {
 	case MOVE_MARK_LINE:
 	{
 		int mark = va_arg(ap, int);
-		if (MARK_a <= mark && mark < MARK_LAST)
+		if (MARK_a <= mark && mark < MARK_INVALID)
 			vis->action.mark = mark;
 		else
 			goto out;
@@ -2893,4 +2881,10 @@ void vis_repeat(Vis *vis) {
 	if (count)
 		vis->action.count = count;
 	action_do(vis, &vis->action);
+}
+
+void vis_mark_set(Vis *vis, enum VisMark mark, size_t pos) {
+	File *file = vis->win->file;
+	if (mark < LENGTH(file->marks))
+		file->marks[mark] = text_mark_set(file->text, pos);
 }

@@ -198,7 +198,7 @@ enum Mark {
 	MARK_z,
 	MARK_SELECTION_START,
 	MARK_SELECTION_END,
-	MARK_LAST,
+	MARK_INVALID,
 };
 
 struct File {
@@ -208,7 +208,7 @@ struct File {
 	bool is_stdin;
 	struct stat stat;
 	int refcount;
-	Mark marks[MARK_LAST];
+	Mark marks[MARK_INVALID];
 	File *next, *prev;
 };
 
