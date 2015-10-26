@@ -1083,7 +1083,7 @@ static size_t op_put(Vis *vis, Text *txt, OperatorContext *c) {
 	return pos;
 }
 
-const char *vis_expandtab(Vis *vis) {
+static const char *expandtab(Vis *vis) {
 	static char spaces[9];
 	int tabwidth = tabwidth_get(vis);
 	tabwidth = MIN(tabwidth, LENGTH(spaces) - 1);
@@ -1095,7 +1095,7 @@ const char *vis_expandtab(Vis *vis) {
 
 static size_t op_shift_right(Vis *vis, Text *txt, OperatorContext *c) {
 	size_t pos = text_line_begin(txt, c->range.end), prev_pos;
-	const char *tab = vis_expandtab(vis);
+	const char *tab = expandtab(vis);
 	size_t tablen = strlen(tab);
 
 	/* if range ends at the begin of a line, skip line break */
@@ -3034,4 +3034,44 @@ void vis_exit(Vis *vis, int status) {
 
 const char *vis_mode_status(Vis *vis) {
 	return vis->mode->status;
+}
+
+void vis_insert_tab(Vis *vis) {
+	const char *tab = expandtab(vis);
+	vis_insert_key(vis, tab, strlen(tab));
+}
+
+static void copy_indent_from_previous_line(Win *win) {
+	View *view = win->view;
+	Text *text = win->file->text;
+	size_t pos = view_cursor_get(view);
+	size_t prev_line = text_line_prev(text, pos);
+	if (pos == prev_line)
+		return;
+	size_t begin = text_line_begin(text, prev_line);
+	size_t start = text_line_start(text, begin);
+	size_t len = start-begin;
+	char *buf = malloc(len);
+	if (!buf)
+		return;
+	len = text_bytes_get(text, begin, len, buf);
+	vis_insert_key(win->editor, buf, len);
+	free(buf);
+}
+
+void vis_insert_nl(Vis *vis) {
+	const char *nl;
+	switch (text_newline_type(vis->win->file->text)) {
+	case TEXT_NEWLINE_CRNL:
+		nl = "\r\n";
+		break;
+	default:
+		nl = "\n";
+		break;
+	}
+
+	vis_insert_key(vis, nl, strlen(nl));
+
+	if (vis->autoindent)
+		copy_indent_from_previous_line(vis->win);
 }

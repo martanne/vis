@@ -96,6 +96,8 @@ void vis_replace_key(Vis*, const char *data, size_t len);
 void vis_insert(Vis*, size_t pos, const char *data, size_t len);
 void vis_delete(Vis*, size_t pos, size_t len);
 void vis_replace(Vis*, size_t pos, const char *data, size_t len);
+void vis_insert_tab(Vis*);
+void vis_insert_nl(Vis*);
 
 int vis_run(Vis*, int argc, char *argv[]);
 void vis_exit(Vis*, int status);
@@ -328,8 +330,6 @@ bool vis_prompt_cmd(Vis *vis, char type, const char *cmd);
 
 const char *vis_key_next(Vis*, const char *keys);
 const char *vis_keys(Vis*, const char *input);
-
-const char *vis_expandtab(Vis*);
 
 bool vis_signal_handler(Vis*, int signum, const siginfo_t *siginfo,
 	const void *context);

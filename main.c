@@ -25,12 +25,6 @@ static const char *suspend(Vis*, const char *keys, const Arg *arg);
 static const char *switchmode(Vis*, const char *keys, const Arg *arg);
 /* set mark indicated by arg->i to current cursor position */
 static const char *mark_set(Vis*, const char *keys, const Arg *arg);
-/* insert arg->s at the current cursor position */
-static const char *insert(Vis*, const char *keys, const Arg *arg);
-/* insert a tab or the needed amount of spaces at the current cursor position */
-static const char *insert_tab(Vis*, const char *keys, const Arg *arg);
-/* inserts a newline (either \n or \r\n depending on file type) */
-static const char *insert_newline(Vis*, const char *keys, const Arg *arg);
 /* add a new line either before or after the one where the cursor currently is */
 static const char *openline(Vis*, const char *keys, const Arg *arg);
 /* join lines from current cursor position to movement indicated by arg */
@@ -710,12 +704,12 @@ static KeyAction vis_action[] = {
 	[VIS_ACTION_INSERT_NEWLINE] = {
 		"insert-newline",
 		"Insert a line break (depending on file type)",
-		insert_newline,
+		call, { .f = vis_insert_nl }
 	},
 	[VIS_ACTION_INSERT_TAB] = {
 		"insert-tab",
 		"Insert a tab (might be converted to spaces)",
-		insert_tab,
+		call, { .f = vis_insert_tab }
 	},
 	[VIS_ACTION_INSERT_VERBATIM] = {
 		"insert-verbatim",
@@ -1514,59 +1508,13 @@ static const char *window(Vis *vis, const char *keys, const Arg *arg) {
 	return keys;
 }
 
-static const char *insert(Vis *vis, const char *keys, const Arg *arg) {
-	vis_insert_key(vis, arg->s, arg->s ? strlen(arg->s) : 0);
-	return keys;
-}
-
-static const char *insert_tab(Vis *vis, const char *keys, const Arg *arg) {
-	insert(vis, keys, &(const Arg){ .s = vis_expandtab(vis) });
-	return keys;
-}
-
-static void copy_indent_from_previous_line(Win *win) {
-	View *view = win->view;
-	Text *text = win->file->text;
-	size_t pos = view_cursor_get(view);
-	size_t prev_line = text_line_prev(text, pos);
-	if (pos == prev_line)
-		return;
-	size_t begin = text_line_begin(text, prev_line);
-	size_t start = text_line_start(text, begin);
-	size_t len = start-begin;
-	char *buf = malloc(len);
-	if (!buf)
-		return;
-	len = text_bytes_get(text, begin, len, buf);
-	vis_insert_key(win->editor, buf, len);
-	free(buf);
-}
-
-static const char *insert_newline(Vis *vis, const char *keys, const Arg *arg) {
-	const char *nl;
-	switch (text_newline_type(vis->win->file->text)) {
-	case TEXT_NEWLINE_CRNL:
-		nl = "\r\n";
-		break;
-	default:
-		nl = "\n";
-		break;
-	}
-
-	insert(vis, keys, &(const Arg){ .s = nl });
-
-	if (vis->autoindent)
-		copy_indent_from_previous_line(vis->win);
-	return keys;
-}
-
 static const char *openline(Vis *vis, const char *keys, const Arg *arg) {
 	if (arg->i == MOVE_LINE_NEXT) {
 		vis_motion(vis, MOVE_LINE_END);
-		insert_newline(vis, keys, NULL);
+		vis_insert_nl(vis);
 	} else {
 		vis_motion(vis, MOVE_LINE_BEGIN);
-		insert_newline(vis, keys, NULL);
+		vis_insert_nl(vis);
 		vis_motion(vis, MOVE_LINE_PREV);
 	}
 	vis_mode_switch(vis, VIS_MODE_INSERT);
