@@ -271,6 +271,7 @@ enum VisMacro {
 
 bool vis_macro_record(Vis*, enum VisMacro);
 bool vis_macro_record_stop(Vis*);
+bool vis_macro_recording(Vis*);
 bool vis_macro_replay(Vis*, enum VisMacro);
 
 enum VisMark {

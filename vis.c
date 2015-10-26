@@ -2979,6 +2979,10 @@ bool vis_macro_record_stop(Vis *vis) {
 	return true;
 }
 
+bool vis_macro_recording(Vis *vis) {
+	return vis->recording;
+}
+
 bool vis_macro_replay(Vis *vis, enum VisMacro id) {
 	Macro *macro = macro_get(vis, id);
 	if (!macro || macro == vis->recording)

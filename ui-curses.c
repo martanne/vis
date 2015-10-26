@@ -617,7 +617,7 @@ static void ui_window_draw_status(UiWin *w) {
 	          focused && status ? status : "",
 	          filename ? filename : "[No Name]",
 	          text_modified(win->file->text) ? "[+]" : "",
-	          vis->recording ? "recording": "");
+	          vis_macro_recording(vis) ? "recording": "");
 	char buf[win->width + 1];
 	int len = snprintf(buf, win->width, "%zd, %zd", pos.line, pos.col);
 	if (len > 0) {
