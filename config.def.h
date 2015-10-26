@@ -534,7 +534,7 @@ static KeyAction vis_action[] = {
 	[VIS_ACTION_REDRAW] = {
 		"editor-redraw",
 		"Redraw current editor content",
-		 call, { .f = editor_draw }
+		 call, { .f = vis_draw }
 	},
 	[VIS_ACTION_REPLACE_CHAR] = {
 		"replace-char",
@@ -654,12 +654,12 @@ static KeyAction vis_action[] = {
 	[VIS_ACTION_WINDOW_NEXT] = {
 		"window-next",
 		"Focus next window",
-		call, { .f = editor_window_next }
+		call, { .f = vis_window_next }
 	},
 	[VIS_ACTION_WINDOW_PREV] = {
 		"window-prev",
 		"Focus previous window",
-		call, { .f = editor_window_prev }
+		call, { .f = vis_window_prev }
 	},
 	[VIS_ACTION_OPEN_LINE_ABOVE] = {
 		"open-line-above",
@@ -1279,7 +1279,7 @@ static KeyBinding vis_mode_prompt[] = {
 };
 
 static void vis_mode_prompt_input(Vis *vis, const char *str, size_t len) {
-	editor_insert_key(vis, str, len);
+	vis_insert_key(vis, str, len);
 }
 
 static void vis_mode_prompt_enter(Vis *vis, Mode *old) {
@@ -1289,7 +1289,7 @@ static void vis_mode_prompt_enter(Vis *vis, Mode *old) {
 
 static void vis_mode_prompt_leave(Vis *vis, Mode *new) {
 	if (new->isuser)
-		editor_prompt_hide(vis);
+		vis_prompt_hide(vis);
 }
 
 static KeyBinding vis_mode_insert[] = {
@@ -1328,7 +1328,7 @@ static void vis_mode_insert_input(Vis *vis, const char *str, size_t len) {
 	oldpos = pos + len;
 	action_reset(vis, &vis->action_prev);
 	vis->action_prev.op = &ops[OP_REPEAT_INSERT];
-	editor_insert_key(vis, str, len);
+	vis_insert_key(vis, str, len);
 }
 
 static KeyBinding vis_mode_replace[] = {
@@ -1349,7 +1349,7 @@ static void vis_mode_replace_input(Vis *vis, const char *str, size_t len) {
 	oldpos = pos + len;
 	action_reset(vis, &vis->action_prev);
 	vis->action_prev.op = &ops[OP_REPEAT_REPLACE];
-	editor_replace_key(vis, str, len);
+	vis_replace_key(vis, str, len);
 }
 
 /*

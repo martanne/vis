@@ -42,6 +42,478 @@
 #include "map.h"
 #include "libutf.h"
 
+typedef struct {
+	int count;        /* how many times should the command be executed? */
+	Register *reg;    /* always non-NULL, set to a default register */
+	Filerange range;  /* which part of the file should be affected by the operator */
+	size_t pos;       /* at which byte from the start of the file should the operation start? */
+	bool linewise;    /* should the changes always affect whole lines? */
+	const Arg *arg;   /* arbitrary arguments */
+} OperatorContext;
+
+struct Operator {
+	size_t (*func)(Vis*, Text*, OperatorContext*); /* operator logic, returns new cursor position */
+};
+
+struct Movement {
+	/* TODO: merge types / use union to save space */
+	size_t (*cur)(Cursor*);            /* a movement based on current window content from view.h */
+	size_t (*txt)(Text*, size_t pos); /* a movement form text-motions.h */
+	size_t (*file)(Vis*, File*, size_t pos);
+	size_t (*vis)(Vis*, Text*, size_t pos);
+	size_t (*view)(Vis*, View*);
+	size_t (*win)(Vis*, Win*, size_t pos);
+	enum {
+		LINEWISE  = 1 << 0,
+		CHARWISE  = 1 << 1,
+		INCLUSIVE = 1 << 2,
+		EXCLUSIVE = 1 << 3,
+		IDEMPOTENT = 1 << 4,
+		JUMP = 1 << 5,
+	} type;
+	int count;
+}; 
+
+struct TextObject {
+	Filerange (*range)(Text*, size_t pos); /* a text object from text-objects.h */
+	enum {
+		INNER,
+		OUTER,
+	} type;
+};
+
+enum CmdOpt {          /* option flags for command definitions */
+	CMD_OPT_NONE,  /* no option (default value) */
+	CMD_OPT_FORCE, /* whether the command can be forced by appending '!' */
+	CMD_OPT_ARGS,  /* whether the command line should be parsed in to space
+	                * separated arguments to placed into argv, otherwise argv[1]
+	                * will contain the  remaining command line unmodified */
+};
+
+typedef struct {             /* command definitions for the ':'-prompt */
+	const char *name[3]; /* name and optional alias for the command */
+	/* command logic called with a NULL terminated array of arguments.
+	 * argv[0] will be the command name */
+	bool (*cmd)(Vis*, Filerange*, enum CmdOpt opt, const char *argv[]);
+	enum CmdOpt opt;     /* command option flags */
+} Command;
+
+/** window / file handling */
+
+static void file_free(Vis *vis, File *file) {
+	if (!file)
+		return;
+	if (--file->refcount > 0)
+		return;
+	
+	text_free(file->text);
+	free((char*)file->name);
+	
+	if (file->prev)
+		file->prev->next = file->next;
+	if (file->next)
+		file->next->prev = file->prev;
+	if (vis->files == file)
+		vis->files = file->next;
+	free(file);
+}
+
+static File *file_new_text(Vis *vis, Text *text) {
+	File *file = calloc(1, sizeof(*file));
+	if (!file)
+		return NULL;
+	file->text = text;
+	file->stat = text_stat(text);
+	file->refcount++;
+	if (vis->files)
+		vis->files->prev = file;
+	file->next = vis->files;
+	vis->files = file;
+	return file;
+}
+
+static File *file_new(Vis *vis, const char *filename) {
+	if (filename) {
+		/* try to detect whether the same file is already open in another window
+		 * TODO: do this based on inodes */
+		for (File *file = vis->files; file; file = file->next) {
+			if (file->name && strcmp(file->name, filename) == 0) {
+				file->refcount++;
+				return file;
+			}
+		}
+	}
+
+	Text *text = text_load(filename);
+	if (!text && filename && errno == ENOENT)
+		text = text_load(NULL);
+	if (!text)
+		return NULL;
+	
+	File *file = file_new_text(vis, text);
+	if (!file) {
+		text_free(text);
+		return NULL;
+	}
+
+	if (filename)
+		file->name = strdup(filename);
+	return file;
+}
+
+static void window_name(Win *win, const char *filename) {
+	File *file = win->file;
+	if (filename != file->name) {
+		free((char*)file->name);
+		file->name = filename ? strdup(filename) : NULL;
+	}
+	
+	if (filename) {
+		Vis *vis = win->editor;
+		for (Syntax *syn = vis->syntaxes; syn && syn->name; syn++) {
+			if (!regexec(&syn->file_regex, filename, 0, NULL, 0)) {
+				view_syntax_set(win->view, syn);
+				for (const char **opt = syn->settings; opt && *opt; opt++)
+					vis_cmd(vis, *opt);
+				break;
+			}
+		}
+	}
+}
+
+static void windows_invalidate(Vis *vis, size_t start, size_t end) {
+	for (Win *win = vis->windows; win; win = win->next) {
+		if (vis->win != win && vis->win->file == win->file) {
+			Filerange view = view_viewport_get(win->view);
+			if ((view.start <= start && start <= view.end) ||
+			    (view.start <= end && end <= view.end))
+				view_draw(win->view);
+		}
+	}
+	view_draw(vis->win->view);
+}
+
+static void window_selection_changed(void *win, Filerange *sel) {
+	File *file = ((Win*)win)->file;
+	if (text_range_valid(sel)) {
+		file->marks[MARK_SELECTION_START] = text_mark_set(file->text, sel->start);
+		file->marks[MARK_SELECTION_END] = text_mark_set(file->text, sel->end);
+	}
+}
+
+static void windows_arrange(Vis *vis, enum UiLayout layout) {
+	vis->ui->arrange(vis->ui, layout);
+}
+
+static void window_free(Win *win) {
+	if (!win)
+		return;
+	Vis *vis = win->editor;
+	if (vis && vis->ui)
+		vis->ui->window_free(win->ui);
+	view_free(win->view);
+	ringbuf_free(win->jumplist);
+	free(win);
+}
+
+static Win *window_new_file(Vis *vis, File *file) {
+	Win *win = calloc(1, sizeof(Win));
+	if (!win)
+		return NULL;
+	win->editor = vis;
+	win->file = file;
+	win->events = (ViewEvent) {
+		.data = win,
+		.selection = window_selection_changed,
+	};
+	win->jumplist = ringbuf_alloc(31);
+	win->view = view_new(file->text, &win->events);
+	win->ui = vis->ui->window_new(vis->ui, win->view, file);
+	if (!win->jumplist || !win->view || !win->ui) {
+		window_free(win);
+		return NULL;
+	}
+	view_tabwidth_set(win->view, vis->tabwidth);
+	if (vis->windows)
+		vis->windows->prev = win;
+	win->next = vis->windows;
+	vis->windows = win;
+	vis->win = win;
+	vis->ui->window_focus(win->ui);
+	return win;
+}
+
+bool vis_window_reload(Win *win) {
+	const char *name = win->file->name;
+	if (!name)
+		return false; /* can't reload unsaved file */
+	/* temporarily unset file name, otherwise file_new returns the same File */
+	win->file->name = NULL;
+	File *file = file_new(win->editor, name);
+	win->file->name = name;
+	if (!file)
+		return false;
+	file_free(win->editor, win->file);
+	win->file = file;
+	win->ui->reload(win->ui, file);
+	return true;
+}
+
+bool vis_window_split(Win *original) {
+	Win *win = window_new_file(original->editor, original->file);
+	if (!win)
+		return false;
+	win->file = original->file;
+	win->file->refcount++;
+	view_syntax_set(win->view, view_syntax_get(original->view));
+	view_options_set(win->view, view_options_get(original->view));
+	view_cursor_to(win->view, view_cursor_get(original->view));
+	vis_draw(win->editor);
+	return true;
+}
+
+void vis_resize(Vis *vis) {
+	vis->ui->resize(vis->ui);
+}
+
+void vis_window_next(Vis *vis) {
+	Win *sel = vis->win;
+	if (!sel)
+		return;
+	vis->win = vis->win->next;
+	if (!vis->win)
+		vis->win = vis->windows;
+	vis->ui->window_focus(vis->win->ui);
+}
+
+void vis_window_prev(Vis *vis) {
+	Win *sel = vis->win;
+	if (!sel)
+		return;
+	vis->win = vis->win->prev;
+	if (!vis->win)
+		for (vis->win = vis->windows; vis->win->next; vis->win = vis->win->next);
+	vis->ui->window_focus(vis->win->ui);
+}
+
+static int tabwidth_get(Vis *vis) {
+	return vis->tabwidth;
+}
+
+static void tabwidth_set(Vis *vis, int tabwidth) {
+	if (tabwidth < 1 || tabwidth > 8)
+		return;
+	for (Win *win = vis->windows; win; win = win->next)
+		view_tabwidth_set(win->view, tabwidth);
+	vis->tabwidth = tabwidth;
+}
+
+bool vis_syntax_load(Vis *vis, Syntax *syntaxes) {
+	bool success = true;
+	vis->syntaxes = syntaxes;
+
+	for (Syntax *syn = syntaxes; syn && syn->name; syn++) {
+		if (regcomp(&syn->file_regex, syn->file, REG_EXTENDED|REG_NOSUB|REG_ICASE|REG_NEWLINE))
+			success = false;
+		for (int j = 0; j < LENGTH(syn->rules); j++) {
+			SyntaxRule *rule = &syn->rules[j];
+			if (!rule->rule)
+				break;
+			int cflags = REG_EXTENDED;
+			if (!rule->multiline)
+				cflags |= REG_NEWLINE;
+			if (regcomp(&rule->regex, rule->rule, cflags))
+				success = false;
+		}
+	}
+
+	return success;
+}
+
+void vis_syntax_unload(Vis *vis) {
+	for (Syntax *syn = vis->syntaxes; syn && syn->name; syn++) {
+		regfree(&syn->file_regex);
+		for (int j = 0; j < LENGTH(syn->rules); j++) {
+			SyntaxRule *rule = &syn->rules[j];
+			if (!rule->rule)
+				break;
+			regfree(&rule->regex);
+		}
+	}
+
+	vis->syntaxes = NULL;
+}
+
+void vis_draw(Vis *vis) {
+	vis->ui->draw(vis->ui);
+}
+
+void vis_update(Vis *vis) {
+	vis->ui->update(vis->ui);
+}
+
+void vis_suspend(Vis *vis) {
+	vis->ui->suspend(vis->ui);
+}
+
+bool vis_window_new(Vis *vis, const char *filename) {
+	File *file = file_new(vis, filename);
+	if (!file)
+		return false;
+	Win *win = window_new_file(vis, file);
+	if (!win) {
+		file_free(vis, file);
+		return false;
+	}
+
+	window_name(win, filename);
+	vis_draw(vis);
+
+	return true;
+}
+
+void vis_window_close(Win *win) {
+	Vis *vis = win->editor;
+	file_free(vis, win->file);
+	if (win->prev)
+		win->prev->next = win->next;
+	if (win->next)
+		win->next->prev = win->prev;
+	if (vis->windows == win)
+		vis->windows = win->next;
+	if (vis->win == win)
+		vis->win = win->next ? win->next : win->prev;
+	if (vis->prompt_window == win)
+		vis->prompt_window = NULL;
+	window_free(win);
+	if (vis->win)
+		vis->ui->window_focus(vis->win->ui);
+	vis_draw(vis);
+}
+
+Vis *vis_new0(Ui *ui) {
+	if (!ui)
+		return NULL;
+	Vis *vis = calloc(1, sizeof(Vis));
+	if (!vis)
+		return NULL;
+	vis->ui = ui;
+	vis->ui->init(vis->ui, vis);
+	vis->tabwidth = 8;
+	vis->expandtab = false;
+	if (!(vis->prompt = calloc(1, sizeof(Win))))
+		goto err;
+	if (!(vis->prompt->file = calloc(1, sizeof(File))))
+		goto err;
+	if (!(vis->prompt->file->text = text_load(NULL)))
+		goto err;
+	if (!(vis->prompt->view = view_new(vis->prompt->file->text, NULL)))
+		goto err;
+	if (!(vis->prompt->ui = vis->ui->prompt_new(vis->ui, vis->prompt->view, vis->prompt->file)))
+		goto err;
+	if (!(vis->search_pattern = text_regex_new()))
+		goto err;
+	return vis;
+err:
+	vis_free(vis);
+	return NULL;
+}
+
+void vis_free(Vis *vis) {
+	if (!vis)
+		return;
+	while (vis->windows)
+		vis_window_close(vis->windows);
+	file_free(vis, vis->prompt->file);
+	window_free(vis->prompt);
+	text_regex_free(vis->search_pattern);
+	for (int i = 0; i < LENGTH(vis->registers); i++)
+		register_release(&vis->registers[i]);
+	for (int i = 0; i < LENGTH(vis->macros); i++)
+		macro_release(&vis->macros[i]);
+	vis_syntax_unload(vis);
+	vis->ui->free(vis->ui);
+	map_free(vis->cmds);
+	map_free(vis->options);
+	map_free(vis->actions);
+	buffer_release(&vis->buffer_repeat);
+	free(vis);
+}
+
+void vis_insert(Vis *vis, size_t pos, const char *data, size_t len) {
+	text_insert(vis->win->file->text, pos, data, len);
+	windows_invalidate(vis, pos, pos + len);
+}
+
+void vis_insert_key(Vis *vis, const char *data, size_t len) {
+	for (Cursor *c = view_cursors(vis->win->view); c; c = view_cursors_next(c)) {
+		size_t pos = view_cursors_pos(c);
+		vis_insert(vis, pos, data, len);
+		view_cursors_scroll_to(c, pos + len);
+	}
+}
+
+void vis_replace(Vis *vis, size_t pos, const char *data, size_t len) {
+	size_t chars = 0;
+	for (size_t i = 0; i < len; i++) {
+		if (ISUTF8(data[i]))
+			chars++;
+	}
+
+	Text *txt = vis->win->file->text;
+	Iterator it = text_iterator_get(txt, pos);
+	for (char c; chars-- > 0 && text_iterator_byte_get(&it, &c) && c != '\r' && c != '\n'; )
+		text_iterator_char_next(&it, NULL);
+
+	text_delete(txt, pos, it.pos - pos);
+	vis_insert(vis, pos, data, len);
+}
+
+void vis_replace_key(Vis *vis, const char *data, size_t len) {
+	for (Cursor *c = view_cursors(vis->win->view); c; c = view_cursors_next(c)) {
+		size_t pos = view_cursors_pos(c);
+		vis_replace(vis, pos, data, len);
+		view_cursors_scroll_to(c, pos + len);
+	}
+}
+
+void vis_delete(Vis *vis, size_t pos, size_t len) {
+	text_delete(vis->win->file->text, pos, len);
+	windows_invalidate(vis, pos, pos + len);
+}
+
+void vis_prompt_show(Vis *vis, const char *title, const char *text) {
+	if (vis->prompt_window)
+		return;
+	vis->prompt_window = vis->win;
+	vis->win = vis->prompt;
+	vis->prompt_type = title[0];
+	vis->ui->prompt(vis->ui, title, text);
+}
+
+void vis_prompt_hide(Vis *vis) {
+	if (!vis->prompt_window)
+		return;
+	vis->ui->prompt_hide(vis->ui);
+	vis->win = vis->prompt_window;
+	vis->prompt_window = NULL;
+}
+
+char *vis_prompt_get(Vis *vis) {
+	return vis->ui->prompt_input(vis->ui);
+}
+
+void vis_info_show(Vis *vis, const char *msg, ...) {
+	va_list ap;
+	va_start(ap, msg);
+	vis->ui->info(vis->ui, msg, ap);
+	va_end(ap);
+}
+
+void vis_info_hide(Vis *vis) {
+	vis->ui->info_hide(vis->ui);
+}
+
 /** operators */
 static size_t op_change(Vis*, Text*, OperatorContext *c);
 static size_t op_yank(Vis*, Text*, OperatorContext *c);
@@ -338,7 +810,7 @@ static bool cmd_new(Vis*, Filerange*, enum CmdOpt, const char *argv[]);
 static bool cmd_vnew(Vis*, Filerange*, enum CmdOpt, const char *argv[]);
 /* save the file displayed in the current window and close it */
 static bool cmd_wq(Vis*, Filerange*, enum CmdOpt, const char *argv[]);
-/* save the file displayed in the current window if it was changed, then close the window */
+/* save the file displayed in the current window if it was changvis, then close the window */
 static bool cmd_xit(Vis*, Filerange*, enum CmdOpt, const char *argv[]);
 /* save the file displayed in the current window to the name given.
  * do not change internal filname association. further :w commands
@@ -357,10 +829,49 @@ static bool cmd_help(Vis*, Filerange*, enum CmdOpt, const char *argv[]);
 
 static void action_reset(Vis*, Action *a);
 static void vis_mode_set(Vis*, Mode *new_mode);
-static bool vis_window_new(Vis*, const char *file);
-static bool vis_window_split(Win *win);
 
 #include "config.h"
+
+static Mode *mode_get(Vis *vis, enum VisMode mode) {
+	if (mode < LENGTH(vis_modes))
+		return &vis_modes[mode];
+	return NULL;
+}
+
+static bool mode_map(Mode *mode, const char *name, KeyBinding *binding) {
+	return map_put(mode->bindings, name, binding);
+} 
+
+bool vis_mode_map(Vis *vis, enum VisMode modeid, const char *name, KeyBinding *binding) {
+	Mode *mode = mode_get(vis, modeid);
+	return mode && map_put(mode->bindings, name, binding);
+}
+
+static bool mode_bindings(Mode *mode, KeyBinding **bindings) {
+	if (!mode->bindings)
+		mode->bindings = map_new();
+	if (!mode->bindings)
+		return false;
+	bool success = true;
+	for (KeyBinding *kb = *bindings; kb->key; kb++) {
+		if (!mode_map(mode, kb->key, kb))
+			success = false;
+	}
+	return success;
+}
+
+bool vis_mode_unmap(Vis *vis, enum VisMode modeid, const char *name) {
+	Mode *mode = mode_get(vis, modeid);
+	return mode && map_delete(mode->bindings, name);
+}
+
+bool vis_action_register(Vis *vis, KeyAction *action) {
+	if (!vis->actions)
+		vis->actions = map_new();
+	if (!vis->actions)
+		return false;
+	return map_put(vis->actions, action->name, action);
+}
 
 static const char *getkey(Vis*);
 static void action_do(Vis*, Action *a);
@@ -431,7 +942,7 @@ static size_t op_put(Vis *vis, Text *txt, OperatorContext *c) {
 
 static const char *expand_tab(Vis *vis) {
 	static char spaces[9];
-	int tabwidth = editor_tabwidth_get(vis);
+	int tabwidth = tabwidth_get(vis);
 	tabwidth = MIN(tabwidth, LENGTH(spaces) - 1);
 	for (int i = 0; i < tabwidth; i++)
 		spaces[i] = ' ';
@@ -459,7 +970,7 @@ static size_t op_shift_right(Vis *vis, Text *txt, OperatorContext *c) {
 
 static size_t op_shift_left(Vis *vis, Text *txt, OperatorContext *c) {
 	size_t pos = text_line_begin(txt, c->range.end), prev_pos;
-	size_t tabwidth = editor_tabwidth_get(vis), tablen;
+	size_t tabwidth = tabwidth_get(vis), tablen;
 
 	/* if range ends at the begin of a line, skip line break */
 	if (pos == c->range.end)
@@ -563,7 +1074,7 @@ static size_t op_repeat_insert(Vis *vis, Text *txt, OperatorContext *c) {
 static size_t op_repeat_replace(Vis *vis, Text *txt, OperatorContext *c) {
 	const char *data = vis->buffer_repeat.data;
 	size_t len = vis->buffer_repeat.len;
-	editor_replace(vis, c->pos, data, len);
+	vis_replace(vis, c->pos, data, len);
 	return c->pos + len;
 }
 
@@ -748,7 +1259,7 @@ static const char *macro_record(Vis *vis, const char *keys, const Arg *arg) {
 	enum VisMacro macro;
 	keys = key2macro(vis, keys, &macro);
 	vis_macro_record(vis, macro);
-	editor_draw(vis);
+	vis_draw(vis);
 	return keys;
 }
 
@@ -760,7 +1271,7 @@ static const char *macro_replay(Vis *vis, const char *keys, const Arg *arg) {
 }
 
 static const char *suspend(Vis *vis, const char *keys, const Arg *arg) {
-	editor_suspend(vis);
+	vis_suspend(vis);
 	return keys;
 }
 
@@ -881,7 +1392,7 @@ static const char *replace(Vis *vis, const char *keys, const Arg *arg) {
 	action_reset(vis, &vis->action_prev);
 	vis->action_prev.op = &ops[OP_REPEAT_REPLACE];
 	buffer_put(&vis->buffer_repeat, keys, len);
-	editor_replace_key(vis, keys, len);
+	vis_replace_key(vis, keys, len);
 	text_snapshot(vis->win->file->text);
 	return next;
 }
@@ -974,7 +1485,7 @@ static const char *reg(Vis *vis, const char *keys, const Arg *arg) {
 }
 
 static const char *key2mark(Vis *vis, const char *keys, int *mark) {
-	*mark = MARK_INVALID;
+	*mark = VIS_MARK_INVALID;
 	if (!keys[0])
 		return NULL;
 	if (keys[0] >= 'a' && keys[0] <= 'z')
@@ -1007,7 +1518,7 @@ static const char *undo(Vis *vis, const char *keys, const Arg *arg) {
 		if (view_cursors_count(view) == 1)
 			view_cursor_to(view, pos);
 		/* redraw all windows in case some display the same file */
-		editor_draw(vis);
+		vis_draw(vis);
 	}
 	return keys;
 }
@@ -1019,7 +1530,7 @@ static const char *redo(Vis *vis, const char *keys, const Arg *arg) {
 		if (view_cursors_count(view) == 1)
 			view_cursor_to(view, pos);
 		/* redraw all windows in case some display the same file */
-		editor_draw(vis);
+		vis_draw(vis);
 	}
 	return keys;
 }
@@ -1029,7 +1540,7 @@ static const char *earlier(Vis *vis, const char *keys, const Arg *arg) {
 	if (pos != EPOS) {
 		view_cursor_to(vis->win->view, pos);
 		/* redraw all windows in case some display the same file */
-		editor_draw(vis);
+		vis_draw(vis);
 	}
 	return keys;
 }
@@ -1039,7 +1550,7 @@ static const char *later(Vis *vis, const char *keys, const Arg *arg) {
 	if (pos != EPOS) {
 		view_cursor_to(vis->win->view, pos);
 		/* redraw all windows in case some display the same file */
-		editor_draw(vis);
+		vis_draw(vis);
 	}
 	return keys;
 }
@@ -1056,26 +1567,26 @@ static const char *insert_register(Vis *vis, const char *keys, const Arg *arg) {
 	Register *reg = vis_register_get(vis, regid);
 	if (reg) {
 		int pos = view_cursor_get(vis->win->view);
-		editor_insert(vis, pos, reg->data, reg->len);
+		vis_insert(vis, pos, reg->data, reg->len);
 		view_cursor_to(vis->win->view, pos + reg->len);
 	}
 	return keys;
 }
 
 static const char *prompt_search(Vis *vis, const char *keys, const Arg *arg) {
-	editor_prompt_show(vis, arg->s, "");
+	vis_prompt_show(vis, arg->s, "");
 	vis_mode_switch(vis, VIS_MODE_PROMPT);
 	return keys;
 }
 
 static const char *prompt_cmd(Vis *vis, const char *keys, const Arg *arg) {
-	editor_prompt_show(vis, ":", arg->s);
+	vis_prompt_show(vis, ":", arg->s);
 	vis_mode_switch(vis, VIS_MODE_PROMPT);
 	return keys;
 }
 
 static const char *prompt_enter(Vis *vis, const char *keys, const Arg *arg) {
-	char *s = editor_prompt_get(vis);
+	char *s = vis_prompt_get(vis);
 	/* it is important to switch back to the previous mode, which hides
 	 * the prompt and more importantly resets vis->win to the currently
 	 * focused editor window *before* anything is executed which depends
@@ -1085,12 +1596,12 @@ static const char *prompt_enter(Vis *vis, const char *keys, const Arg *arg) {
 	if (s && *s && exec_command(vis, vis->prompt_type, s) && vis->running)
 		vis_mode_switch(vis, VIS_MODE_NORMAL);
 	free(s);
-	editor_draw(vis);
+	vis_draw(vis);
 	return keys;
 }
 
 static const char *prompt_backspace(Vis *vis, const char *keys, const Arg *arg) {
-	char *cmd = editor_prompt_get(vis);
+	char *cmd = vis_prompt_get(vis);
 	if (!cmd || !*cmd)
 		prompt_enter(vis, keys, NULL);
 	else
@@ -1161,7 +1672,7 @@ static const char *insert_verbatim(Vis *vis, const char *keys, const Arg *arg) {
 
 	if (len > 0) {
 		size_t pos = view_cursor_get(vis->win->view);
-		editor_insert(vis, pos, buf, len);
+		vis_insert(vis, pos, buf, len);
 		view_cursor_to(vis->win->view, pos + len);
 	}
 	return keys;
@@ -1219,7 +1730,7 @@ static const char *window(Vis *vis, const char *keys, const Arg *arg) {
 }
 
 static const char *insert(Vis *vis, const char *keys, const Arg *arg) {
-	editor_insert_key(vis, arg->s, arg->s ? strlen(arg->s) : 0);
+	vis_insert_key(vis, arg->s, arg->s ? strlen(arg->s) : 0);
 	return keys;
 }
 
@@ -1242,7 +1753,7 @@ static void copy_indent_from_previous_line(Win *win) {
 	if (!buf)
 		return;
 	len = text_bytes_get(text, begin, len, buf);
-	editor_insert_key(win->editor, buf, len);
+	vis_insert_key(win->editor, buf, len);
 	free(buf);
 }
 
@@ -1431,7 +1942,7 @@ static void action_do(Vis *vis, Action *a) {
 		else if (vis->mode->visual)
 			vis_mode_switch(vis, VIS_MODE_NORMAL);
 		text_snapshot(txt);
-		editor_draw(vis);
+		vis_draw(vis);
 	}
 
 	if (a != &vis->action_prev) {
@@ -1530,7 +2041,7 @@ static bool cmd_set(Vis *vis, Filerange *range, enum CmdOpt cmdopt, const char *
 	}
 
 	if (!argv[1]) {
-		editor_info_show(vis, "Expecting: set option [value]");
+		vis_info_show(vis, "Expecting: set option [value]");
 		return false;
 	}
 
@@ -1549,14 +2060,14 @@ static bool cmd_set(Vis *vis, Filerange *range, enum CmdOpt cmdopt, const char *
 	if (!opt)
 		opt = map_closest(vis->options, argv[1]);
 	if (!opt) {
-		editor_info_show(vis, "Unknown option: `%s'", argv[1]);
+		vis_info_show(vis, "Unknown option: `%s'", argv[1]);
 		return false;
 	}
 
 	switch (opt->type) {
 	case OPTION_TYPE_STRING:
 		if (!opt->optional && !argv[2]) {
-			editor_info_show(vis, "Expecting string option value");
+			vis_info_show(vis, "Expecting string option value");
 			return false;
 		}
 		break;
@@ -1564,7 +2075,7 @@ static bool cmd_set(Vis *vis, Filerange *range, enum CmdOpt cmdopt, const char *
 		if (!argv[2]) {
 			arg.b = true;
 		} else if (!parse_bool(argv[2], &arg.b)) {
-			editor_info_show(vis, "Expecting boolean option value not: `%s'", argv[2]);
+			vis_info_show(vis, "Expecting boolean option value not: `%s'", argv[2]);
 			return false;
 		}
 		if (invert)
@@ -1572,7 +2083,7 @@ static bool cmd_set(Vis *vis, Filerange *range, enum CmdOpt cmdopt, const char *
 		break;
 	case OPTION_TYPE_NUMBER:
 		if (!argv[2]) {
-			editor_info_show(vis, "Expecting number");
+			vis_info_show(vis, "Expecting number");
 			return false;
 		}
 		/* TODO: error checking? long type */
@@ -1588,15 +2099,15 @@ static bool cmd_set(Vis *vis, Filerange *range, enum CmdOpt cmdopt, const char *
 		vis->autoindent = arg.b;
 		break;
 	case OPTION_TABWIDTH:
-		editor_tabwidth_set(vis, arg.i);
+		tabwidth_set(vis, arg.i);
 		break;
 	case OPTION_SYNTAX:
 		if (!argv[2]) {
 			Syntax *syntax = view_syntax_get(vis->win->view);
 			if (syntax)
-				editor_info_show(vis, "Syntax definition in use: `%s'", syntax->name);
+				vis_info_show(vis, "Syntax definition in use: `%s'", syntax->name);
 			else
-				editor_info_show(vis, "No syntax definition in use");
+				vis_info_show(vis, "No syntax definition in use");
 			return true;
 		}
 
@@ -1610,11 +2121,11 @@ static bool cmd_set(Vis *vis, Filerange *range, enum CmdOpt cmdopt, const char *
 		if (parse_bool(argv[2], &arg.b) && !arg.b)
 			view_syntax_set(vis->win->view, NULL);
 		else
-			editor_info_show(vis, "Unknown syntax definition: `%s'", argv[2]);
+			vis_info_show(vis, "Unknown syntax definition: `%s'", argv[2]);
 		break;
 	case OPTION_SHOW:
 		if (!argv[2]) {
-			editor_info_show(vis, "Expecting: spaces, tabs, newlines");
+			vis_info_show(vis, "Expecting: spaces, tabs, newlines");
 			return false;
 		}
 		char *keys[] = { "spaces", "tabs", "newlines" };
@@ -1720,7 +2231,7 @@ static bool openfiles(Vis *vis, const char **files) {
 			return false;
 		errno = 0;
 		if (!vis_window_new(vis, file)) {
-			editor_info_show(vis, "Could not open `%s' %s", file,
+			vis_info_show(vis, "Could not open `%s' %s", file,
 			                 errno ? strerror(errno) : "");
 			return false;
 		}
@@ -1741,7 +2252,7 @@ static bool is_view_closeable(Win *win) {
 }
 
 static void info_unsaved_changes(Vis *vis) {
-	editor_info_show(vis, "No write since last change (add ! to override)");
+	vis_info_show(vis, "No write since last change (add ! to override)");
 }
 
 static bool cmd_edit(Vis *vis, Filerange *range, enum CmdOpt opt, const char *argv[]) {
@@ -1751,11 +2262,11 @@ static bool cmd_edit(Vis *vis, Filerange *range, enum CmdOpt opt, const char *ar
 		return false;
 	}
 	if (!argv[1])
-		return editor_window_reload(oldwin);
+		return vis_window_reload(oldwin);
 	if (!openfiles(vis, &argv[1]))
 		return false;
 	if (vis->win != oldwin)
-		editor_window_close(oldwin);
+		vis_window_close(oldwin);
 	return vis->win != oldwin;
 }
 
@@ -1764,7 +2275,7 @@ static bool cmd_quit(Vis *vis, Filerange *range, enum CmdOpt opt, const char *ar
 		info_unsaved_changes(vis);
 		return false;
 	}
-	editor_window_close(vis->win);
+	vis_window_close(vis->win);
 	if (!vis->windows)
 		quit(vis, NULL, NULL);
 	return true;
@@ -1787,7 +2298,7 @@ static bool cmd_bdelete(Vis *vis, Filerange *range, enum CmdOpt opt, const char 
 	for (Win *next, *win = vis->windows; win; win = next) {
 		next = win->next;
 		if (win->file->text == txt)
-			editor_window_close(win);
+			vis_window_close(win);
 	}
 	if (!vis->windows)
 		quit(vis, NULL, NULL);
@@ -1798,7 +2309,7 @@ static bool cmd_qall(Vis *vis, Filerange *range, enum CmdOpt opt, const char *ar
 	for (Win *next, *win = vis->windows; win; win = next) {
 		next = win->next;
 		if (!text_modified(vis->win->file->text) || (opt & CMD_OPT_FORCE))
-			editor_window_close(win);
+			vis_window_close(win);
 	}
 	if (!vis->windows)
 		quit(vis, NULL, NULL);
@@ -1811,7 +2322,7 @@ static bool cmd_read(Vis *vis, Filerange *range, enum CmdOpt opt, const char *ar
 	char cmd[255];
 
 	if (!argv[1]) {
-		editor_info_show(vis, "Filename or command expected");
+		vis_info_show(vis, "Filename or command expected");
 		return false;
 	}
 
@@ -1841,7 +2352,7 @@ static bool cmd_substitute(Vis *vis, Filerange *range, enum CmdOpt opt, const ch
 
 static bool cmd_split(Vis *vis, Filerange *range, enum CmdOpt opt, const char *argv[]) {
 	enum UiOption options = view_options_get(vis->win->view);
-	editor_windows_arrange(vis, UI_LAYOUT_HORIZONTAL);
+	windows_arrange(vis, UI_LAYOUT_HORIZONTAL);
 	if (!argv[1])
 		return vis_window_split(vis->win);
 	bool ret = openfiles(vis, &argv[1]);
@@ -1851,7 +2362,7 @@ static bool cmd_split(Vis *vis, Filerange *range, enum CmdOpt opt, const char *a
 
 static bool cmd_vsplit(Vis *vis, Filerange *range, enum CmdOpt opt, const char *argv[]) {
 	enum UiOption options = view_options_get(vis->win->view);
-	editor_windows_arrange(vis, UI_LAYOUT_VERTICAL);
+	windows_arrange(vis, UI_LAYOUT_VERTICAL);
 	if (!argv[1])
 		return vis_window_split(vis->win);
 	bool ret = openfiles(vis, &argv[1]);
@@ -1860,12 +2371,12 @@ static bool cmd_vsplit(Vis *vis, Filerange *range, enum CmdOpt opt, const char *
 }
 
 static bool cmd_new(Vis *vis, Filerange *range, enum CmdOpt opt, const char *argv[]) {
-	editor_windows_arrange(vis, UI_LAYOUT_HORIZONTAL);
+	windows_arrange(vis, UI_LAYOUT_HORIZONTAL);
 	return vis_window_new(vis, NULL);
 }
 
 static bool cmd_vnew(Vis *vis, Filerange *range, enum CmdOpt opt, const char *argv[]) {
-	editor_windows_arrange(vis, UI_LAYOUT_VERTICAL);
+	windows_arrange(vis, UI_LAYOUT_VERTICAL);
 	return vis_window_new(vis, NULL);
 }
 
@@ -1887,32 +2398,32 @@ static bool cmd_write(Vis *vis, Filerange *range, enum CmdOpt opt, const char *a
 			if (strchr(argv[0], 'q')) {
 				ssize_t written = text_write_range(text, range, STDOUT_FILENO);
 				if (written == -1 || (size_t)written != text_range_size(range)) {
-					editor_info_show(vis, "Can not write to stdout");
+					vis_info_show(vis, "Can not write to stdout");
 					return false;
 				}
 				/* make sure the file is marked as saved i.e. not modified */
 				text_save_range(text, range, NULL);
 				return true;
 			}
-			editor_info_show(vis, "No filename given, use 'wq' to write to stdout");
+			vis_info_show(vis, "No filename given, use 'wq' to write to stdout");
 			return false;
 		}
-		editor_info_show(vis, "Filename expected");
+		vis_info_show(vis, "Filename expected");
 		return false;
 	}
 	for (const char **name = &argv[1]; *name; name++) {
 		struct stat meta;
 		if (!(opt & CMD_OPT_FORCE) && file->stat.st_mtime && stat(*name, &meta) == 0 &&
 		    file->stat.st_mtime < meta.st_mtime) {
-			editor_info_show(vis, "WARNING: file has been changed since reading it");
+			vis_info_show(vis, "WARNING: file has been changed since reading it");
 			return false;
 		}
 		if (!text_save_range(text, range, *name)) {
-			editor_info_show(vis, "Can't write `%s'", *name);
+			vis_info_show(vis, "Can't write `%s'", *name);
 			return false;
 		}
 		if (!file->name) {
-			editor_window_name(vis->win, *name);
+			window_name(vis->win, *name);
 			file->name = vis->win->file->name;
 		}
 		if (strcmp(file->name, *name) == 0)
@@ -1923,7 +2434,7 @@ static bool cmd_write(Vis *vis, Filerange *range, enum CmdOpt opt, const char *a
 
 static bool cmd_saveas(Vis *vis, Filerange *range, enum CmdOpt opt, const char *argv[]) {
 	if (cmd_write(vis, range, opt, argv)) {
-		editor_window_name(vis->win, argv[1]);
+		window_name(vis->win, argv[1]);
 		vis->win->file->stat = text_stat(vis->win->file->text);
 		return true;
 	}
@@ -1965,7 +2476,7 @@ static bool cmd_filter(Vis *vis, Filerange *range, enum CmdOpt opt, const char *
 		close(pout[1]);
 		close(perr[0]);
 		close(perr[1]);
-		editor_info_show(vis, "fork failure: %s", strerror(errno));
+		vis_info_show(vis, "fork failure: %s", strerror(errno));
 		return false;
 	} else if (pid == 0) { /* child i.e filter */
 		if (!interactive)
@@ -1983,7 +2494,7 @@ static bool cmd_filter(Vis *vis, Filerange *range, enum CmdOpt opt, const char *
 			execl("/bin/sh", "sh", "-c", argv[1], NULL);
 		else
 			execvp(argv[1], (char**)argv+1);
-		editor_info_show(vis, "exec failure: %s", strerror(errno));
+		vis_info_show(vis, "exec failure: %s", strerror(errno));
 		exit(EXIT_FAILURE);
 	}
 
@@ -2024,7 +2535,7 @@ static bool cmd_filter(Vis *vis, Filerange *range, enum CmdOpt opt, const char *
 	do {
 		if (vis->cancel_filter) {
 			kill(-pid, SIGTERM);
-			editor_info_show(vis, "Command cancelled");
+			vis_info_show(vis, "Command cancelled");
 			break;
 		}
 
@@ -2040,7 +2551,7 @@ static bool cmd_filter(Vis *vis, Filerange *range, enum CmdOpt opt, const char *
 		if (select(FD_SETSIZE, &rfds, &wfds, NULL, NULL) == -1) {
 			if (errno == EINTR)
 				continue;
-			editor_info_show(vis, "Select failure");
+			vis_info_show(vis, "Select failure");
 			break;
 		}
 
@@ -2059,7 +2570,7 @@ static bool cmd_filter(Vis *vis, Filerange *range, enum CmdOpt opt, const char *
 				close(pin[1]);
 				pin[1] = -1;
 				if (len == -1)
-					editor_info_show(vis, "Error writing to external command");
+					vis_info_show(vis, "Error writing to external command");
 			}
 		}
 
@@ -2073,7 +2584,7 @@ static bool cmd_filter(Vis *vis, Filerange *range, enum CmdOpt opt, const char *
 				close(pout[0]);
 				pout[0] = -1;
 			} else if (errno != EINTR && errno != EWOULDBLOCK) {
-				editor_info_show(vis, "Error reading from filter stdout");
+				vis_info_show(vis, "Error reading from filter stdout");
 				close(pout[0]);
 				pout[0] = -1;
 			}
@@ -2088,7 +2599,7 @@ static bool cmd_filter(Vis *vis, Filerange *range, enum CmdOpt opt, const char *
 				close(perr[0]);
 				perr[0] = -1;
 			} else if (errno != EINTR && errno != EWOULDBLOCK) {
-				editor_info_show(vis, "Error reading from filter stderr");
+				vis_info_show(vis, "Error reading from filter stderr");
 				close(pout[0]);
 				pout[0] = -1;
 			}
@@ -2116,11 +2627,11 @@ static bool cmd_filter(Vis *vis, Filerange *range, enum CmdOpt opt, const char *
 
 	if (!vis->cancel_filter) {
 		if (status == 0)
-			editor_info_show(vis, "Command succeded");
+			vis_info_show(vis, "Command succeded");
 		else if (errmsg.len > 0)
-			editor_info_show(vis, "Command failed: %s", errmsg.data);
+			vis_info_show(vis, "Command failed: %s", errmsg.data);
 		else
-			editor_info_show(vis, "Command failed");
+			vis_info_show(vis, "Command failed");
 	}
 
 	vis->ui->terminal_restore(vis->ui);
@@ -2136,7 +2647,7 @@ static bool cmd_earlier_later(Vis *vis, Filerange *range, enum CmdOpt opt, const
 		errno = 0;
 		count = strtol(argv[1], &unit, 10);
 		if (errno || unit == argv[1] || count < 0) {
-			editor_info_show(vis, "Invalid number");
+			vis_info_show(vis, "Invalid number");
 			return false;
 		}
 
@@ -2149,7 +2660,7 @@ static bool cmd_earlier_later(Vis *vis, Filerange *range, enum CmdOpt opt, const
 			case 'm': count *= 60; /* fall through */
 			case 's': break;
 			default:
-				editor_info_show(vis, "Unknown time specifier (use: s,m,h or d)");
+				vis_info_show(vis, "Unknown time specifier (use: s,m,h or d)");
 				return false;
 			}
 
@@ -2170,7 +2681,7 @@ static bool cmd_earlier_later(Vis *vis, Filerange *range, enum CmdOpt opt, const
 	time_t state = text_state(txt);
 	char buf[32];
 	strftime(buf, sizeof buf, "State from %H:%M", localtime(&state));
-	editor_info_show(vis, "%s", buf);
+	vis_info_show(vis, "%s", buf);
 
 	return pos != EPOS;
 }
@@ -2348,7 +2859,7 @@ bool vis_cmd(Vis *vis, const char *cmdline) {
 		}
 
 		if (name != line) {
-			editor_info_show(vis, "Invalid range\n");
+			vis_info_show(vis, "Invalid range\n");
 			free(line);
 			return false;
 		}
@@ -2374,7 +2885,7 @@ bool vis_cmd(Vis *vis, const char *cmdline) {
 
 	Command *cmd = lookup_cmd(vis, name);
 	if (!cmd) {
-		editor_info_show(vis, "Not an editor command");
+		vis_info_show(vis, "Not an editor command");
 		free(line);
 		return false;
 	}
@@ -2427,29 +2938,6 @@ static bool exec_command(Vis *vis, char type, const char *cmd) {
 			return true;
 	}
 	return false;
-}
-
-static void settings_apply(Vis *vis, const char **settings) {
-	for (const char **opt = settings; opt && *opt; opt++)
-		vis_cmd(vis, *opt);
-}
-
-static bool vis_window_new(Vis *vis, const char *file) {
-	if (!editor_window_new(vis, file))
-		return false;
-	Syntax *s = view_syntax_get(vis->win->view);
-	if (s)
-		settings_apply(vis, s->settings);
-	return true;
-}
-
-static bool vis_window_split(Win *win) {
-	if (!editor_window_split(win))
-		return false;
-	Syntax *s = view_syntax_get(win->view);
-	if (s)
-		settings_apply(win->editor, s->settings);
-	return true;
 }
 
 void vis_die(Vis *vis, const char *msg, ...) {
@@ -2566,7 +3054,7 @@ static const char *getkey(Vis *vis) {
 	const char *key = vis->ui->getkey(vis->ui);
 	if (!key)
 		return NULL;
-	editor_info_hide(vis);
+	vis_info_hide(vis);
 	if (vis->recording)
 		macro_append(vis->recording, key);
 	return key;
@@ -2652,7 +3140,7 @@ void vis_run(Vis *vis, int argc, char *argv[]) {
 
 	sigset_t emptyset;
 	sigemptyset(&emptyset);
-	editor_draw(vis);
+	vis_draw(vis);
 	vis->running = true;
 
 	sigsetjmp(vis->sigbus_jmpbuf, 1);
@@ -2669,18 +3157,18 @@ void vis_run(Vis *vis, int argc, char *argv[]) {
 				if (win->file->truncated) {
 					free(name);
 					name = strdup(win->file->name);
-					editor_window_close(win);
+					vis_window_close(win);
 				}
 			}
 			if (!vis->windows)
 				vis_die(vis, "WARNING: file `%s' truncated!\n", name ? name : "-");
 			else
-				editor_info_show(vis, "WARNING: file `%s' truncated!\n", name ? name : "-");
+				vis_info_show(vis, "WARNING: file `%s' truncated!\n", name ? name : "-");
 			vis->sigbus = false;
 			free(name);
 		}
 
-		editor_update(vis);
+		vis_update(vis);
 		idle.tv_sec = vis->mode->idle_timeout;
 		int r = pselect(1, &fds, NULL, NULL, timeout, &emptyset);
 		if (r == -1 && errno == EINTR)
@@ -2711,24 +3199,24 @@ void vis_run(Vis *vis, int argc, char *argv[]) {
 }
 
 Vis *vis_new(Ui *ui) {
-	Vis *vis = editor_new(ui);
+	Vis *vis = vis_new0(ui);
 	if (!vis)
 		return NULL;
 
 	for (int i = 0; i < LENGTH(vis_modes); i++) {
 		Mode *mode = &vis_modes[i];
-		if (!editor_mode_bindings(mode, &mode->default_bindings))
+		if (!mode_bindings(mode, &mode->default_bindings))
 			vis_die(vis, "Could not load bindings for mode: %s\n", mode->name);
 	}
 
 	vis->mode_prev = vis->mode = &vis_modes[VIS_MODE_NORMAL];
 
-	if (!editor_syntax_load(vis, syntaxes))
+	if (!vis_syntax_load(vis, syntaxes))
 		vis_die(vis, "Could not load syntax highlighting definitions\n");
 
 	for (int i = 0; i < LENGTH(vis_action); i++) {
 		KeyAction *action = &vis_action[i];
-		if (!editor_action_register(vis, action))
+		if (!vis_action_register(vis, action))
 			vis_die(vis, "Could not register action: %s\n", action->name);
 	}
 
@@ -2812,7 +3300,7 @@ void vis_motion(Vis *vis, enum VisMotion motion, ...) {
 	case MOVE_MARK_LINE:
 	{
 		int mark = va_arg(ap, int);
-		if (MARK_a <= mark && mark < MARK_INVALID)
+		if (MARK_a <= mark && mark < VIS_MARK_INVALID)
 			vis->action.mark = mark;
 		else
 			goto out;

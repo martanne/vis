@@ -63,7 +63,7 @@ typedef struct UiCursesWin UiCursesWin;
 
 typedef struct {
 	Ui ui;                    /* generic ui interface, has to be the first struct member */
-	Editor *ed;               /* editor instance to which this ui belongs */
+	Vis *vis;              /* editor instance to which this ui belongs */
 	UiCursesWin *windows;     /* all windows managed by this ui */
 	UiCursesWin *selwin;      /* the currently selected layout */
 	char prompt_title[255];   /* prompt_title[0] == '\0' if prompt isn't shown */
@@ -606,7 +606,7 @@ static void ui_window_draw_status(UiWin *w) {
 	if (!win->winstatus)
 		return;
 	UiCurses *uic = win->ui;
-	Editor *vis = uic->ed;
+	Vis *vis = uic->vis;
 	bool focused = uic->selwin == win;
 	const char *filename = win->file->name;
 	CursorPos pos = view_cursor_getpos(win->view);
@@ -925,9 +925,9 @@ static void ui_prompt_hide(Ui *ui) {
 	ui_resize_to(ui, uic->width, uic->height);
 }
 
-static bool ui_init(Ui *ui, Editor *ed) {
+static bool ui_init(Ui *ui, Vis *vis) {
 	UiCurses *uic = (UiCurses*)ui;
-	uic->ed = ed;
+	uic->vis = vis;
 	return true;
 }
 

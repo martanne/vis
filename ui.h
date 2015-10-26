@@ -27,10 +27,10 @@ enum UiOption {
 
 #include "text.h"
 #include "view.h"
-#include "editor.h"
+#include "vis.h"
 
 struct Ui {
-	bool (*init)(Ui*, Editor*);
+	bool (*init)(Ui*, Vis*);
 	void (*free)(Ui*);
 	void (*resize)(Ui*);
 	UiWin* (*window_new)(Ui*, View*, File*);

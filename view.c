@@ -19,7 +19,7 @@
 #include <ctype.h>
 #include <errno.h>
 #include <regex.h>
-#include "editor.h"
+#include "vis.h"
 #include "view.h"
 #include "syntax.h"
 #include "text.h"
