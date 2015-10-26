@@ -609,11 +609,12 @@ static void ui_window_draw_status(UiWin *w) {
 	Vis *vis = uic->vis;
 	bool focused = uic->selwin == win;
 	const char *filename = win->file->name;
+	const char *status = vis_mode_status(vis);
 	CursorPos pos = view_cursor_getpos(win->view);
 	wattrset(win->winstatus, focused ? A_REVERSE|A_BOLD : A_REVERSE);
 	mvwhline(win->winstatus, 0, 0, ' ', win->width);
 	mvwprintw(win->winstatus, 0, 0, "%s %s %s %s",
-	          focused && vis->mode->status ? vis->mode->status : "",
+	          focused && status ? status : "",
 	          filename ? filename : "[No Name]",
 	          text_modified(win->file->text) ? "[+]" : "",
 	          vis->recording ? "recording": "");

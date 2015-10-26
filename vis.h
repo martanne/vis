@@ -97,7 +97,8 @@ void vis_insert(Vis*, size_t pos, const char *data, size_t len);
 void vis_delete(Vis*, size_t pos, size_t len);
 void vis_replace(Vis*, size_t pos, const char *data, size_t len);
 
-void vis_run(Vis*, int argc, char *argv[]);
+int vis_run(Vis*, int argc, char *argv[]);
+void vis_exit(Vis*, int status);
 void vis_die(Vis*, const char *msg, ...);
 
 enum VisMode {
@@ -119,6 +120,11 @@ enum VisMode {
 void vis_mode_switch(Vis*, enum VisMode);
 bool vis_mode_map(Vis*, enum VisMode, const char *name, KeyBinding*);
 bool vis_mode_unmap(Vis*, enum VisMode, const char *name); 
+bool vis_mode_bindings(Vis*, enum VisMode, KeyBinding **bindings);
+const char *vis_mode_status(Vis*);
+/* TODO: temporary */
+typedef struct Mode Mode;
+void vis_mode_set(Vis*, Mode*);
 
 bool vis_action_register(Vis*, KeyAction*);
 
@@ -134,6 +140,18 @@ enum VisOperator {
 	OP_REPEAT_INSERT,
 	OP_REPEAT_REPLACE,
 	OP_CURSOR,
+};
+
+/* TODO: overhaul repeatable infrastructure:
+ *        - put is not really an operator, but should still be repeatable
+ *          and respect count
+ "        - review OP_REPEAT_{REPLACE,INSERT}
+ */
+enum {
+	PUT_AFTER,
+	PUT_AFTER_END,
+	PUT_BEFORE,
+	PUT_BEFORE_END,
 };
 
 void vis_operator(Vis*, enum VisOperator);
@@ -186,8 +204,8 @@ enum VisMotion {
 	MOVE_MARK_LINE,
 	MOVE_SEARCH_WORD_FORWARD,
 	MOVE_SEARCH_WORD_BACKWARD,
-	MOVE_SEARCH_FORWARD,
-	MOVE_SEARCH_BACKWARD,
+	MOVE_SEARCH_NEXT,
+	MOVE_SEARCH_PREV,
 	MOVE_WINDOW_LINE_TOP,
 	MOVE_WINDOW_LINE_MIDDLE,
 	MOVE_WINDOW_LINE_BOTTOM,
@@ -195,19 +213,22 @@ enum VisMotion {
 	MOVE_CHANGELIST_PREV,
 	MOVE_JUMPLIST_NEXT,
 	MOVE_JUMPLIST_PREV,
+	MOVE_NOP,
 	/* pseudo motions: keep them at the end to save space in array definition */
 	MOVE_TOTILL_REPEAT,
 	MOVE_TOTILL_REVERSE,
+	MOVE_SEARCH_FORWARD,
+	MOVE_SEARCH_BACKWARD,
 };
 
-void vis_motion(Vis*, enum VisMotion, ...);
+bool vis_motion(Vis*, enum VisMotion, ...);
 
 int vis_count_get(Vis*);
 void vis_count_set(Vis*, int count);
 
 enum VisMotionType {
-	VIS_MOTION_LINEWISE  = 1 << 0,
-	VIS_MOTION_CHARWISE  = 1 << 1,
+	VIS_MOTIONTYPE_LINEWISE  = 1 << 0,
+	VIS_MOTIONTYPE_CHARWISE  = 1 << 1,
 };
 
 void vis_motion_type(Vis *vis, enum VisMotionType);
@@ -300,10 +321,15 @@ Register *vis_register_get(Vis*, enum VisRegister);
 
 void vis_repeat(Vis*);
 
-bool vis_cmd(Vis*, const char *cmdline);
+/* execute a :-command (call without without leading ':') */
+bool vis_cmd(Vis*, const char *cmd);
+/* TODO temporary. type is either '/', '?', '+', or ':' */
+bool vis_prompt_cmd(Vis *vis, char type, const char *cmd);
 
 const char *vis_key_next(Vis*, const char *keys);
 const char *vis_keys(Vis*, const char *input);
+
+const char *vis_expandtab(Vis*);
 
 bool vis_signal_handler(Vis*, int signum, const siginfo_t *siginfo,
 	const void *context);
@@ -323,33 +349,6 @@ typedef struct {             /** collects all information until an operator is e
 	enum VisMark mark;
 	Arg arg;
 } Action;
-
-/* a mode contains a set of key bindings which are currently valid.
- *
- * each mode can specify one parent mode which is consultated if a given key
- * is not found in the current mode. hence the modes form a tree which is
- * searched from the current mode up towards the root mode until a valid binding
- * is found.
- *
- * if no binding is found, mode->input(...) is called and the user entered
- * keys are passed as argument. this is used to change the document content.
- */
-typedef struct Mode Mode;
-struct Mode {
-	Mode *parent;                       /* if no match is found in this mode, search will continue there */
-	Map *bindings;                      
-	KeyBinding *default_bindings;                      
-	const char *name;                   /* descriptive, user facing name of the mode */
-	const char *status;                 /* name displayed in the window status bar */
-	const char *help;                   /* short description used by :help */
-	bool isuser;                        /* whether this is a user or internal mode */
-	void (*enter)(Vis*, Mode *old);           /* called right before the mode becomes active */
-	void (*leave)(Vis*, Mode *new);           /* called right before the mode becomes inactive */
-	void (*input)(Vis*, const char*, size_t); /* called whenever a key is not found in this mode and all its parent modes */
-	void (*idle)(Vis*);                 /* called whenever a certain idle time i.e. without any user input elapsed */
-	time_t idle_timeout;                /* idle time in seconds after which the registered function will be called */
-	bool visual;                        /* whether text selection is possible in this mode */
-};
 
 struct File {
 	Text *text;
@@ -408,6 +407,7 @@ struct Vis {
 	Mode *mode_prev;     /* previsouly active user mode */
 	Mode *mode_before_prompt; /* user mode which was active before entering prompt */
 	volatile bool running; /* exit main loop once this becomes false */
+	int exit_status;
 	volatile sig_atomic_t cancel_filter; /* abort external command */
 	volatile sig_atomic_t sigbus;
 	sigjmp_buf sigbus_jmpbuf;
