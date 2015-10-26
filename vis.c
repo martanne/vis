@@ -576,7 +576,7 @@ static Operator ops[] = {
 	[OP_JOIN]          = { op_join          },
 	[OP_REPEAT_INSERT]  = { op_repeat_insert  },
 	[OP_REPEAT_REPLACE] = { op_repeat_replace },
-	[OP_CURSOR]         = { op_cursor         },
+	[OP_CURSOR_SOL]         = { op_cursor         },
 };
 
 /** movements which can be used besides the one in text-motions.h and view.h */
@@ -1170,7 +1170,7 @@ static size_t op_cursor(Vis *vis, Text *txt, OperatorContext *c) {
 		Cursor *cursor = view_cursors_new(view);
 		if (cursor) {
 			size_t pos;
-			if (c->arg->i > 0)
+			if (c->arg->i == OP_CURSOR_EOL)
 				pos = text_line_finish(txt, line);
 			else
 				pos = text_line_start(txt, line);
@@ -2807,6 +2807,11 @@ bool vis_operator(Vis *vis, enum VisOperator id) {
 	case OP_CASE_SWAP:
 		vis->action.arg.i = id;
 		id = OP_CASE_SWAP;
+		break;
+	case OP_CURSOR_SOL:
+	case OP_CURSOR_EOL:
+		vis->action.arg.i = id;
+		id = OP_CURSOR_SOL;
 		break;
 	default:
 		break;

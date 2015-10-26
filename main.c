@@ -45,9 +45,6 @@ static const char *repeat(Vis*, const char *keys, const Arg *arg);
 static const char *replace(Vis*, const char *keys, const Arg *arg);
 /* create a new cursor on the previous (arg->i < 0) or next (arg->i > 0) line */
 static const char *cursors_new(Vis*, const char *keys, const Arg *arg);
-/* create new cursors in visual mode either at the start (arg-i < 0)
- * or end (arg->i > 0) of the selected lines */
-static const char *cursors_split(Vis*, const char *keys, const Arg *arg);
 /* try to align all cursors on the same column */
 static const char *cursors_align(Vis*, const char *keys, const Arg *arg);
 /* remove all but the primary cursor and their selections */
@@ -860,12 +857,12 @@ static KeyAction vis_action[] = {
 	[VIS_ACTION_CURSORS_NEW_LINES_BEGIN] = {
 		"cursors-new-lines-begin",
 		"Create a new cursor at the start of every line covered by selection",
-		cursors_split, { .i = -1 }
+		operator, { .i = OP_CURSOR_SOL }
 	},
 	[VIS_ACTION_CURSORS_NEW_LINES_END] = {
 		"cursors-new-lines-end",
 		"Create a new cursor at the end of every line covered by selection",
-		cursors_split, { .i = +1 }
+		operator, { .i = OP_CURSOR_EOL }
 	},
 	[VIS_ACTION_CURSORS_NEW_MATCH_NEXT] = {
 		"cursors-new-match-next",
@@ -1096,12 +1093,6 @@ static const char *cursors_new(Vis *vis, const char *keys, const Arg *arg) {
 	Cursor *cursor = view_cursors_new(view);
 	if (cursor)
 		view_cursors_to(cursor, pos);
-	return keys;
-}
-
-static const char *cursors_split(Vis *vis, const char *keys, const Arg *arg) {
-	vis->action.arg = *arg;
-	vis_operator(vis, OP_CURSOR);
 	return keys;
 }
 
