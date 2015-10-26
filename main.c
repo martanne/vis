@@ -87,8 +87,6 @@ static const char *insert_register(Vis*, const char *keys, const Arg *arg);
 /* show a user prompt to get input with title arg->s */
 static const char *prompt_search(Vis*, const char *keys, const Arg *arg);
 static const char *prompt_cmd(Vis*, const char *keys, const Arg *arg);
-/* evaluate user input at prompt, perform search or execute a command */
-static const char *prompt_enter(Vis*, const char *keys, const Arg *arg);
 /* exit command mode if the last char is deleted */
 static const char *prompt_backspace(Vis*, const char *keys, const Arg *arg);
 /* blocks to read 3 consecutive digits and inserts the corresponding byte value */
@@ -764,7 +762,7 @@ static KeyAction vis_action[] = {
 	[VIS_ACTION_PROMPT_ENTER] = {
 		"prompt-enter",
 		"Execute current prompt content",
-		prompt_enter
+		call, { .f = vis_prompt_enter }
 	},
 	[VIS_ACTION_PROMPT_SHOW_VISUAL] = {
 		"prompt-show-visual",
@@ -1369,25 +1367,10 @@ static const char *prompt_cmd(Vis *vis, const char *keys, const Arg *arg) {
 	return keys;
 }
 
-static const char *prompt_enter(Vis *vis, const char *keys, const Arg *arg) {
-	char *s = vis_prompt_get(vis);
-	/* it is important to switch back to the previous mode, which hides
-	 * the prompt and more importantly resets vis->win to the currently
-	 * focused editor window *before* anything is executed which depends
-	 * on vis->win.
-	 */
-	vis_mode_set(vis, vis->mode_before_prompt);
-	if (s && *s && vis_prompt_cmd(vis, vis->prompt_type, s) && vis->running)
-		vis_mode_switch(vis, VIS_MODE_NORMAL);
-	free(s);
-	vis_draw(vis);
-	return keys;
-}
-
 static const char *prompt_backspace(Vis *vis, const char *keys, const Arg *arg) {
 	char *cmd = vis_prompt_get(vis);
 	if (!cmd || !*cmd)
-		prompt_enter(vis, keys, NULL);
+		vis_mode_switch(vis, VIS_MODE_NORMAL);
 	else
 		delete(vis, keys, &(const Arg){ .i = MOVE_CHAR_PREV });
 	free(cmd);

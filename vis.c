@@ -126,6 +126,7 @@ typedef struct {             /* command definitions for the ':'-prompt */
 	enum CmdOpt opt;     /* command option flags */
 } Command;
 
+static void mode_set(Vis *vis, Mode *new_mode);
 /** window / file handling */
 
 static void file_free(Vis *vis, File *file) {
@@ -766,7 +767,7 @@ static void vis_mode_operator_leave(Vis *vis, Mode *new) {
 static void vis_mode_operator_input(Vis *vis, const char *str, size_t len) {
 	/* invalid operator */
 	action_reset(vis, &vis->action);
-	vis_mode_set(vis, vis->mode_prev);
+	mode_set(vis, vis->mode_prev);
 }
 
 static void vis_mode_visual_enter(Vis *vis, Mode *old) {
@@ -1513,7 +1514,7 @@ static void action_do(Vis *vis, Action *a) {
 		if (a->op == &ops[OP_CHANGE])
 			vis_mode_switch(vis, VIS_MODE_INSERT);
 		else if (vis->mode == &vis_modes[VIS_MODE_OPERATOR])
-			vis_mode_set(vis, vis->mode_prev);
+			mode_set(vis, vis->mode_prev);
 		else if (vis->mode->visual)
 			vis_mode_switch(vis, VIS_MODE_NORMAL);
 		text_snapshot(txt);
@@ -1536,7 +1537,7 @@ static void action_reset(Vis *vis, Action *a) {
 	a->reg = NULL;
 }
 
-void vis_mode_set(Vis *vis, Mode *new_mode) {
+static void mode_set(Vis *vis, Mode *new_mode) {
 	if (vis->mode == new_mode)
 		return;
 	if (vis->mode->leave)
@@ -2851,7 +2852,7 @@ bool vis_operator(Vis *vis, enum VisOperator id) {
 }
 
 void vis_mode_switch(Vis *vis, enum VisMode mode) {
-	vis_mode_set(vis, &vis_modes[mode]);
+	mode_set(vis, &vis_modes[mode]);
 }
 
 bool vis_motion(Vis *vis, enum VisMotion motion, ...) {
@@ -3074,4 +3075,18 @@ void vis_insert_nl(Vis *vis) {
 
 	if (vis->autoindent)
 		copy_indent_from_previous_line(vis->win);
+}
+
+void vis_prompt_enter(Vis *vis) {
+	char *s = vis_prompt_get(vis);
+	/* it is important to switch back to the previous mode, which hides
+	 * the prompt and more importantly resets vis->win to the currently
+	 * focused editor window *before* anything is executed which depends
+	 * on vis->win.
+	 */
+	mode_set(vis, vis->mode_before_prompt);
+	if (s && *s && vis_prompt_cmd(vis, vis->prompt_type, s) && vis->running)
+		vis_mode_switch(vis, VIS_MODE_NORMAL);
+	free(s);
+	vis_draw(vis);
 }

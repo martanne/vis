@@ -44,8 +44,6 @@ typedef struct {
 	const char *alias;
 } KeyBinding;
 
-
-
 Vis *vis_new(Ui*);
 void vis_free(Vis*);
 void vis_resize(Vis*);
@@ -77,6 +75,8 @@ void vis_window_next(Vis*);
 void vis_window_prev(Vis*);
 /* display a user prompt with a certain title and default text */
 void vis_prompt_show(Vis*, const char *title, const char *text);
+/* TODO: bad abstraction */
+void vis_prompt_enter(Vis*);
 /* hide the user prompt if it is currently shown */
 void vis_prompt_hide(Vis*);
 /* return the content of the command prompt in a malloc(3)-ed string
@@ -124,9 +124,6 @@ bool vis_mode_map(Vis*, enum VisMode, const char *name, KeyBinding*);
 bool vis_mode_unmap(Vis*, enum VisMode, const char *name); 
 bool vis_mode_bindings(Vis*, enum VisMode, KeyBinding **bindings);
 const char *vis_mode_status(Vis*);
-/* TODO: temporary */
-typedef struct Mode Mode;
-void vis_mode_set(Vis*, Mode*);
 
 bool vis_action_register(Vis*, KeyAction*);
 
@@ -335,6 +332,7 @@ bool vis_signal_handler(Vis*, int signum, const siginfo_t *siginfo,
 	const void *context);
 
 /* TODO: temporary */
+typedef struct Mode Mode;
 typedef struct Operator Operator;
 typedef struct Movement Movement;
 typedef struct TextObject TextObject;
