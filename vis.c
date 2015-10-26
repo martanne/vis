@@ -569,7 +569,7 @@ static Operator ops[] = {
 	[OP_DELETE]      = { op_delete      },
 	[OP_CHANGE]      = { op_change      },
 	[OP_YANK]        = { op_yank        },
-	[OP_PUT]         = { op_put         },
+	[OP_PUT_AFTER]   = { op_put         },
 	[OP_SHIFT_RIGHT] = { op_shift_right },
 	[OP_SHIFT_LEFT]  = { op_shift_left  },
 	[OP_CASE_SWAP] = { op_case_change },
@@ -1046,15 +1046,15 @@ static size_t op_yank(Vis *vis, Text *txt, OperatorContext *c) {
 static size_t op_put(Vis *vis, Text *txt, OperatorContext *c) {
 	size_t pos = c->pos;
 	switch (c->arg->i) {
-	case PUT_AFTER:
-	case PUT_AFTER_END:
+	case OP_PUT_AFTER:
+	case OP_PUT_AFTER_END:
 		if (c->reg->linewise)
 			pos = text_line_next(txt, pos);
 		else
 			pos = text_char_next(txt, pos);
 		break;
-	case PUT_BEFORE:
-	case PUT_BEFORE_END:
+	case OP_PUT_BEFORE:
+	case OP_PUT_BEFORE_END:
 		if (c->reg->linewise)
 			pos = text_line_begin(txt, pos);
 		break;
@@ -1067,14 +1067,14 @@ static size_t op_put(Vis *vis, Text *txt, OperatorContext *c) {
 
 	if (c->reg->linewise) {
 		switch (c->arg->i) {
-		case PUT_BEFORE_END:
-		case PUT_AFTER_END:
+		case OP_PUT_BEFORE_END:
+		case OP_PUT_AFTER_END:
 			pos = text_line_start(txt, pos);
 			break;
-		case PUT_AFTER:
+		case OP_PUT_AFTER:
 			pos = text_line_start(txt, text_line_next(txt, c->pos));
 			break;
-		case PUT_BEFORE:
+		case OP_PUT_BEFORE:
 			pos = text_line_start(txt, c->pos);
 			break;
 		}
@@ -2813,6 +2813,13 @@ bool vis_operator(Vis *vis, enum VisOperator id) {
 		vis->action.arg.i = id;
 		id = OP_CURSOR_SOL;
 		break;
+	case OP_PUT_AFTER:
+	case OP_PUT_AFTER_END:
+	case OP_PUT_BEFORE:
+	case OP_PUT_BEFORE_END:
+		vis->action.arg.i = id;
+		id = OP_PUT_AFTER;
+		break;
 	default:
 		break;
 	}
@@ -2835,6 +2842,11 @@ bool vis_operator(Vis *vis, enum VisOperator id) {
 	} else {
 		vis->action.op = op;
 	}
+
+	/* put is not a real operator, does not need a range to operate on */
+	if (id == OP_PUT_AFTER)
+		vis_motion(vis, MOVE_NOP);
+
 	return true;
 }
 

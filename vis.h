@@ -128,11 +128,16 @@ void vis_mode_set(Vis*, Mode*);
 
 bool vis_action_register(Vis*, KeyAction*);
 
+/* TODO: overhaul repeatable infrastructure:
+ *        - put is not really an operator, but should still be repeatable
+ *          and respect count
+ "        - review OP_REPEAT_{REPLACE,INSERT}
+ */
 enum VisOperator {
 	OP_DELETE,
 	OP_CHANGE,
 	OP_YANK,
-	OP_PUT,
+	OP_PUT_AFTER,
 	OP_SHIFT_RIGHT,
 	OP_SHIFT_LEFT,
 	OP_JOIN,
@@ -144,18 +149,9 @@ enum VisOperator {
 	OP_CASE_LOWER,
 	OP_CASE_UPPER,
 	OP_CURSOR_EOL,
-};
-
-/* TODO: overhaul repeatable infrastructure:
- *        - put is not really an operator, but should still be repeatable
- *          and respect count
- "        - review OP_REPEAT_{REPLACE,INSERT}
- */
-enum {
-	PUT_AFTER,
-	PUT_AFTER_END,
-	PUT_BEFORE,
-	PUT_BEFORE_END,
+	OP_PUT_AFTER_END,
+	OP_PUT_BEFORE,
+	OP_PUT_BEFORE_END,
 };
 
 bool vis_operator(Vis*, enum VisOperator);

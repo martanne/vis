@@ -31,8 +31,6 @@ static const char *insert(Vis*, const char *keys, const Arg *arg);
 static const char *insert_tab(Vis*, const char *keys, const Arg *arg);
 /* inserts a newline (either \n or \r\n depending on file type) */
 static const char *insert_newline(Vis*, const char *keys, const Arg *arg);
-/* put register content according to arg->i */
-static const char *put(Vis*, const char *keys, const Arg *arg);
 /* add a new line either before or after the one where the cursor currently is */
 static const char *openline(Vis*, const char *keys, const Arg *arg);
 /* join lines from current cursor position to movement indicated by arg */
@@ -822,22 +820,22 @@ static KeyAction vis_action[] = {
 	[VIS_ACTION_PUT_AFTER] = {
 		"put-after",
 		"Put text after the cursor",
-		put, { .i = PUT_AFTER }
+		operator, { .i = OP_PUT_AFTER }
 	},
 	[VIS_ACTION_PUT_BEFORE] = {
 		"put-before",
 		"Put text before the cursor",
-		put, { .i = PUT_BEFORE }
+		operator, { .i = OP_PUT_BEFORE }
 	},
 	[VIS_ACTION_PUT_AFTER_END] = {
 		"put-after-end",
 		"Put text after the cursor, place cursor after new text",
-		put, { .i = PUT_AFTER_END }
+		operator, { .i = OP_PUT_AFTER_END }
 	},
 	[VIS_ACTION_PUT_BEFORE_END] = {
 		"put-before-end",
 		"Put text before the cursor, place cursor after new text",
-		put, { .i = PUT_BEFORE_END }
+		operator, { .i = OP_PUT_BEFORE_END }
 	},
 	[VIS_ACTION_CURSOR_SELECT_WORD] = {
 		"cursors-select-word",
@@ -1559,13 +1557,6 @@ static const char *insert_newline(Vis *vis, const char *keys, const Arg *arg) {
 
 	if (vis->autoindent)
 		copy_indent_from_previous_line(vis->win);
-	return keys;
-}
-
-static const char *put(Vis *vis, const char *keys, const Arg *arg) {
-	vis->action.arg = *arg;
-	vis_operator(vis, OP_PUT);
-	vis_motion(vis, MOVE_NOP);
 	return keys;
 }
 
