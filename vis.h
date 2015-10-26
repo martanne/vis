@@ -13,12 +13,7 @@ typedef struct Win Win;
 #include "ui.h"
 #include "view.h"
 #include "register.h"
-#include "macro.h"
 #include "syntax.h"
-#include "ring-buffer.h"
-#include "map.h"
-#include "text-regex.h"
-
 
 typedef union {
 	bool b;
@@ -323,8 +318,6 @@ void vis_repeat(Vis*);
 
 /* execute a :-command (call without without leading ':') */
 bool vis_cmd(Vis*, const char *cmd);
-/* TODO temporary. type is either '/', '?', '+', or ':' */
-bool vis_prompt_cmd(Vis *vis, char type, const char *cmd);
 
 const char *vis_key_next(Vis*, const char *keys);
 const char *vis_keys(Vis*, const char *input);
@@ -332,85 +325,9 @@ const char *vis_keys(Vis*, const char *input);
 bool vis_signal_handler(Vis*, int signum, const siginfo_t *siginfo,
 	const void *context);
 
-/* TODO: temporary */
-typedef struct Mode Mode;
-typedef struct Operator Operator;
-typedef struct Movement Movement;
-typedef struct TextObject TextObject;
-
-typedef struct {             /** collects all information until an operator is executed */
-	int count;
-	enum VisMotionType type;
-	const Operator *op;
-	const Movement *movement;
-	const TextObject *textobj;
-	Register *reg;
-	enum VisMark mark;
-	Arg arg;
-} Action;
-
-struct File {
-	Text *text;
-	const char *name;
-	volatile sig_atomic_t truncated;
-	bool is_stdin;
-	struct stat stat;
-	int refcount;
-	Mark marks[VIS_MARK_INVALID];
-	File *next, *prev;
-};
-
-typedef struct {
-	time_t state;           /* state of the text, used to invalidate change list */
-	size_t index;           /* #number of changes */
-	size_t pos;             /* where the current change occured */
-} ChangeList;
-
-struct Win {
-	Vis *editor;         /* editor instance to which this window belongs */
-	UiWin *ui;
-	File *file;             /* file being displayed in this window */
-	View *view;             /* currently displayed part of underlying text */
-	ViewEvent events;
-	RingBuffer *jumplist;   /* LRU jump management */
-	ChangeList changelist;  /* state for iterating through least recently changes */
-	Win *prev, *next;       /* neighbouring windows */
-};
-
-struct Vis {
-	Ui *ui;
-	File *files;
-	Win *windows;                     /* list of windows */
-	Win *win;                         /* currently active window */
-	Syntax *syntaxes;                 /* NULL terminated array of syntax definitions */
-	Register registers[VIS_REGISTER_INVALID];     /* register used for copy and paste */
-	Macro macros[VIS_MACRO_INVALID];         /* recorded macros */
-	Macro *recording, *last_recording;/* currently and least recently recorded macro */
-	Win *prompt;                      /* 1-line height window to get user input */
-	Win *prompt_window;               /* window which was focused before prompt was shown */
-	char prompt_type;                 /* command ':' or search '/','?' prompt */
-	Regex *search_pattern;            /* last used search pattern */
-	char search_char[8];              /* last used character to search for via 'f', 'F', 't', 'T' */
-	int last_totill;                  /* last to/till movement used for ';' and ',' */
-	int tabwidth;                     /* how many spaces should be used to display a tab */
-	bool expandtab;                   /* whether typed tabs should be converted to spaces */
-	bool autoindent;                  /* whether indentation should be copied from previous line on newline */
-	Map *cmds;                        /* ":"-commands, used for unique prefix queries */
-	Map *options;                     /* ":set"-options */
-	Buffer buffer_repeat;             /* holds data to repeat last insertion/replacement */
-	Buffer input_queue;               /* holds pending input keys */
-	
-	Action action;       /* current action which is in progress */
-	Action action_prev;  /* last operator action used by the repeat '.' key */
-	Mode *mode;          /* currently active mode, used to search for keybindings */
-	Mode *mode_prev;     /* previsouly active user mode */
-	Mode *mode_before_prompt; /* user mode which was active before entering prompt */
-	volatile bool running; /* exit main loop once this becomes false */
-	int exit_status;
-	volatile sig_atomic_t cancel_filter; /* abort external command */
-	volatile sig_atomic_t sigbus;
-	sigjmp_buf sigbus_jmpbuf;
-	Map *actions;          /* built in special editor keys / commands */
-};
+Text *vis_text(Vis*);
+View *vis_view(Vis*);
+Text *vis_file_text(File*);
+const char *vis_file_name(File*);
 
 #endif

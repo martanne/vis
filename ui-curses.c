@@ -608,7 +608,7 @@ static void ui_window_draw_status(UiWin *w) {
 	UiCurses *uic = win->ui;
 	Vis *vis = uic->vis;
 	bool focused = uic->selwin == win;
-	const char *filename = win->file->name;
+	const char *filename = vis_file_name(win->file);
 	const char *status = vis_mode_status(vis);
 	CursorPos pos = view_cursor_getpos(win->view);
 	wattrset(win->winstatus, focused ? A_REVERSE|A_BOLD : A_REVERSE);
@@ -616,7 +616,7 @@ static void ui_window_draw_status(UiWin *w) {
 	mvwprintw(win->winstatus, 0, 0, "%s %s %s %s",
 	          focused && status ? status : "",
 	          filename ? filename : "[No Name]",
-	          text_modified(win->file->text) ? "[+]" : "",
+	          text_modified(vis_file_text(win->file)) ? "[+]" : "",
 	          vis_macro_recording(vis) ? "recording": "");
 	char buf[win->width + 1];
 	int len = snprintf(buf, win->width, "%zd, %zd", pos.line, pos.col);
@@ -660,7 +660,7 @@ static void ui_window_reload(UiWin *w, File *file) {
 	UiCursesWin *win = (UiCursesWin*)w;
 	win->file = file;
 	win->sidebar_width = 0;
-	view_reload(win->view, file->text);
+	view_reload(win->view, vis_file_text(file));
 	ui_window_draw(w);
 }
 
@@ -898,7 +898,7 @@ static void ui_prompt(Ui *ui, const char *title, const char *data) {
 	if (uic->prompt_title[0])
 		return;
 	size_t len = strlen(data);
-	Text *text = uic->prompt_win->file->text;
+	Text *text = vis_file_text(uic->prompt_win->file);
 	strncpy(uic->prompt_title, title, sizeof(uic->prompt_title)-1);
 	while (text_undo(text) != EPOS);
 	text_insert(text, 0, data, len);
@@ -911,7 +911,7 @@ static char *ui_prompt_input(Ui *ui) {
 	UiCurses *uic = (UiCurses*)ui;
 	if (!uic->prompt_win)
 		return NULL;
-	Text *text = uic->prompt_win->file->text;
+	Text *text = vis_file_text(uic->prompt_win->file);
 	char *buf = malloc(text_size(text) + 1);
 	if (!buf)
 		return NULL;

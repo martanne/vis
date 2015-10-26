@@ -1073,8 +1073,8 @@ static const char *repeat(Vis *vis, const char *keys, const Arg *arg) {
 }
 
 static const char *cursors_new(Vis *vis, const char *keys, const Arg *arg) {
-	View *view = vis->win->view;
-	Text *txt = vis->win->file->text;
+	View *view = vis_view(vis);
+	Text *txt = vis_text(vis);
 	size_t pos = view_cursor_get(view);
 	if (arg->i > 0)
 		pos = text_line_down(txt, pos);
@@ -1087,8 +1087,8 @@ static const char *cursors_new(Vis *vis, const char *keys, const Arg *arg) {
 }
 
 static const char *cursors_align(Vis *vis, const char *keys, const Arg *arg) {
-	View *view = vis->win->view;
-	Text *txt = vis->win->file->text;
+	View *view = vis_view(vis);
+	Text *txt = vis_text(vis);
 	int mincol = INT_MAX;
 	for (Cursor *c = view_cursors(view); c; c = view_cursors_next(c)) {
 		size_t pos = view_cursors_pos(c);
@@ -1105,7 +1105,7 @@ static const char *cursors_align(Vis *vis, const char *keys, const Arg *arg) {
 }
 
 static const char *cursors_clear(Vis *vis, const char *keys, const Arg *arg) {
-	View *view = vis->win->view;
+	View *view = vis_view(vis);
 	if (view_cursors_count(view) > 1)
 		view_cursors_clear(view);
 	else
@@ -1114,8 +1114,8 @@ static const char *cursors_clear(Vis *vis, const char *keys, const Arg *arg) {
 }
 
 static const char *cursors_select(Vis *vis, const char *keys, const Arg *arg) {
-	Text *txt = vis->win->file->text;
-	View *view = vis->win->view;
+	Text *txt = vis_text(vis);
+	View *view = vis_view(vis);
 	for (Cursor *cursor = view_cursors(view); cursor; cursor = view_cursors_next(cursor)) {
 		Filerange sel = view_cursors_selection_get(cursor);
 		Filerange word = text_object_word(txt, view_cursors_pos(cursor));
@@ -1129,8 +1129,8 @@ static const char *cursors_select(Vis *vis, const char *keys, const Arg *arg) {
 }
 
 static const char *cursors_select_next(Vis *vis, const char *keys, const Arg *arg) {
-	Text *txt = vis->win->file->text;
-	View *view = vis->win->view;
+	Text *txt = vis_text(vis);
+	View *view = vis_view(vis);
 	Cursor *cursor = view_cursor(view);
 	Filerange sel = view_cursors_selection_get(cursor);
 	if (!text_range_valid(&sel))
@@ -1156,7 +1156,7 @@ static const char *cursors_select_next(Vis *vis, const char *keys, const Arg *ar
 }
 
 static const char *cursors_select_skip(Vis *vis, const char *keys, const Arg *arg) {
-	View *view = vis->win->view;
+	View *view = vis_view(vis);
 	Cursor *cursor = view_cursor(view);
 	keys = cursors_select_next(vis, keys, arg);
 	if (cursor != view_cursor(view))
@@ -1165,7 +1165,7 @@ static const char *cursors_select_skip(Vis *vis, const char *keys, const Arg *ar
 }
 
 static const char *cursors_remove(Vis *vis, const char *keys, const Arg *arg) {
-	View *view = vis->win->view;
+	View *view = vis_view(vis);
 	view_cursors_dispose(view_cursor(view));
 	return keys;
 }
@@ -1181,7 +1181,7 @@ static const char *replace(Vis *vis, const char *keys, const Arg *arg) {
 	buffer_put(&vis->buffer_repeat, keys, len);
 	*/
 	vis_replace_key(vis, keys, len);
-	text_snapshot(vis->win->file->text);
+	text_snapshot(vis_text(vis));
 	return next;
 }
 
@@ -1238,13 +1238,13 @@ static const char *textobj(Vis *vis, const char *keys, const Arg *arg) {
 }
 
 static const char *selection_end(Vis *vis, const char *keys, const Arg *arg) {
-	for (Cursor *c = view_cursors(vis->win->view); c; c = view_cursors_next(c))
+	for (Cursor *c = view_cursors(vis_view(vis)); c; c = view_cursors_next(c))
 		view_cursors_selection_swap(c);
 	return keys;
 }
 
 static const char *selection_restore(Vis *vis, const char *keys, const Arg *arg) {
-	for (Cursor *c = view_cursors(vis->win->view); c; c = view_cursors_next(c))
+	for (Cursor *c = view_cursors(vis_view(vis)); c; c = view_cursors_next(c))
 		view_cursors_selection_restore(c);
 	vis_mode_switch(vis, VIS_MODE_VISUAL);
 	return keys;
@@ -1282,7 +1282,7 @@ static const char *key2mark(Vis *vis, const char *keys, int *mark) {
 static const char *mark_set(Vis *vis, const char *keys, const Arg *arg) {
 	int mark;
 	keys = key2mark(vis, keys, &mark);
-	vis_mark_set(vis, mark, view_cursor_get(vis->win->view));
+	vis_mark_set(vis, mark, view_cursor_get(vis_view(vis)));
 	return keys;
 }
 
@@ -1294,9 +1294,9 @@ static const char *mark_motion(Vis *vis, const char *keys, const Arg *arg) {
 }
 
 static const char *undo(Vis *vis, const char *keys, const Arg *arg) {
-	size_t pos = text_undo(vis->win->file->text);
+	size_t pos = text_undo(vis_text(vis));
 	if (pos != EPOS) {
-		View *view = vis->win->view;
+		View *view = vis_view(vis);
 		if (view_cursors_count(view) == 1)
 			view_cursor_to(view, pos);
 		/* redraw all windows in case some display the same file */
@@ -1306,9 +1306,9 @@ static const char *undo(Vis *vis, const char *keys, const Arg *arg) {
 }
 
 static const char *redo(Vis *vis, const char *keys, const Arg *arg) {
-	size_t pos = text_redo(vis->win->file->text);
+	size_t pos = text_redo(vis_text(vis));
 	if (pos != EPOS) {
-		View *view = vis->win->view;
+		View *view = vis_view(vis);
 		if (view_cursors_count(view) == 1)
 			view_cursor_to(view, pos);
 		/* redraw all windows in case some display the same file */
@@ -1318,9 +1318,9 @@ static const char *redo(Vis *vis, const char *keys, const Arg *arg) {
 }
 
 static const char *earlier(Vis *vis, const char *keys, const Arg *arg) {
-	size_t pos = text_earlier(vis->win->file->text, MAX(vis_count_get(vis), 1));
+	size_t pos = text_earlier(vis_text(vis), MAX(vis_count_get(vis), 1));
 	if (pos != EPOS) {
-		view_cursor_to(vis->win->view, pos);
+		view_cursor_to(vis_view(vis), pos);
 		/* redraw all windows in case some display the same file */
 		vis_draw(vis);
 	}
@@ -1328,9 +1328,9 @@ static const char *earlier(Vis *vis, const char *keys, const Arg *arg) {
 }
 
 static const char *later(Vis *vis, const char *keys, const Arg *arg) {
-	size_t pos = text_later(vis->win->file->text, MAX(vis_count_get(vis), 1));
+	size_t pos = text_later(vis_text(vis), MAX(vis_count_get(vis), 1));
 	if (pos != EPOS) {
-		view_cursor_to(vis->win->view, pos);
+		view_cursor_to(vis_view(vis), pos);
 		/* redraw all windows in case some display the same file */
 		vis_draw(vis);
 	}
@@ -1348,9 +1348,9 @@ static const char *insert_register(Vis *vis, const char *keys, const Arg *arg) {
 	keys = key2register(vis, keys, &regid);
 	Register *reg = vis_register_get(vis, regid);
 	if (reg) {
-		int pos = view_cursor_get(vis->win->view);
+		int pos = view_cursor_get(vis_view(vis));
 		vis_insert(vis, pos, reg->data, reg->len);
-		view_cursor_to(vis->win->view, pos + reg->len);
+		view_cursor_to(vis_view(vis), pos + reg->len);
 	}
 	return keys;
 }
@@ -1438,9 +1438,9 @@ static const char *insert_verbatim(Vis *vis, const char *keys, const Arg *arg) {
 	}
 
 	if (len > 0) {
-		size_t pos = view_cursor_get(vis->win->view);
+		size_t pos = view_cursor_get(vis_view(vis));
 		vis_insert(vis, pos, buf, len);
-		view_cursor_to(vis->win->view, pos + len);
+		view_cursor_to(vis_view(vis), pos + len);
 	}
 	return keys;
 }
@@ -1454,10 +1454,10 @@ static int argi2lines(Vis *vis, const Arg *arg) {
 	switch (arg->i) {
 	case -PAGE:
 	case +PAGE:
-		return view_height_get(vis->win->view);
+		return view_height_get(vis_view(vis));
 	case -PAGE_HALF:
 	case +PAGE_HALF:
-		return view_height_get(vis->win->view)/2;
+		return view_height_get(vis_view(vis))/2;
 	default:
 		if (vis_count_get(vis) > 0)
 			return vis_count_get(vis);
@@ -1467,17 +1467,17 @@ static int argi2lines(Vis *vis, const Arg *arg) {
 
 static const char *wscroll(Vis *vis, const char *keys, const Arg *arg) {
 	if (arg->i >= 0)
-		view_scroll_down(vis->win->view, argi2lines(vis, arg));
+		view_scroll_down(vis_view(vis), argi2lines(vis, arg));
 	else
-		view_scroll_up(vis->win->view, argi2lines(vis, arg));
+		view_scroll_up(vis_view(vis), argi2lines(vis, arg));
 	return keys;
 }
 
 static const char *wslide(Vis *vis, const char *keys, const Arg *arg) {
 	if (arg->i >= 0)
-		view_slide_down(vis->win->view, argi2lines(vis, arg));
+		view_slide_down(vis_view(vis), argi2lines(vis, arg));
 	else
-		view_slide_up(vis->win->view, argi2lines(vis, arg));
+		view_slide_up(vis_view(vis), argi2lines(vis, arg));
 	return keys;
 }
 
@@ -1487,7 +1487,7 @@ static const char *call(Vis *vis, const char *keys, const Arg *arg) {
 }
 
 static const char *window(Vis *vis, const char *keys, const Arg *arg) {
-	arg->w(vis->win->view);
+	arg->w(vis_view(vis));
 	return keys;
 }
 

@@ -38,8 +38,12 @@
 #include "text-util.h"
 #include "text-motions.h"
 #include "text-objects.h"
+#include "text-regex.h"
 #include "util.h"
 #include "map.h"
+#include "ring-buffer.h"
+#include "macro.h"
+
 
 /* a mode contains a set of key bindings which are currently valid.
  *
@@ -51,6 +55,7 @@
  * if no binding is found, mode->input(...) is called and the user entered
  * keys are passed as argument. this is used to change the document content.
  */
+typedef struct Mode Mode;
 struct Mode {
 	Mode *parent;                       /* if no match is found in this mode, search will continue there */
 	Map *bindings;                      
@@ -67,8 +72,6 @@ struct Mode {
 };
 
 
-/* TODO make part of struct Vis? */
-static Mode vis_modes[VIS_MODE_LAST];
 
 typedef struct {
 	int count;        /* how many times should the command be executed? */
@@ -79,11 +82,11 @@ typedef struct {
 	const Arg *arg;   /* arbitrary arguments */
 } OperatorContext;
 
-struct Operator {
+typedef struct {
 	size_t (*func)(Vis*, Text*, OperatorContext*); /* operator logic, returns new cursor position */
-};
+} Operator;
 
-struct Movement {
+typedef struct {
 	/* TODO: merge types / use union to save space */
 	size_t (*cur)(Cursor*);            /* a movement based on current window content from view.h */
 	size_t (*txt)(Text*, size_t pos); /* a movement form text-motions.h */
@@ -100,15 +103,93 @@ struct Movement {
 		JUMP = 1 << 5,
 	} type;
 	int count;
-}; 
+} Movement;
 
-struct TextObject {
+typedef struct {
 	Filerange (*range)(Text*, size_t pos); /* a text object from text-objects.h */
 	enum {
 		INNER,
 		OUTER,
 	} type;
+} TextObject;
+
+typedef struct {             /** collects all information until an operator is executed */
+	int count;
+	enum VisMotionType type;
+	const Operator *op;
+	const Movement *movement;
+	const TextObject *textobj;
+	Register *reg;
+	enum VisMark mark;
+	Arg arg;
+} Action;
+
+struct File {
+	Text *text;
+	const char *name;
+	volatile sig_atomic_t truncated;
+	bool is_stdin;
+	struct stat stat;
+	int refcount;
+	Mark marks[VIS_MARK_INVALID];
+	File *next, *prev;
 };
+
+typedef struct {
+	time_t state;           /* state of the text, used to invalidate change list */
+	size_t index;           /* #number of changes */
+	size_t pos;             /* where the current change occured */
+} ChangeList;
+
+struct Win {
+	Vis *editor;         /* editor instance to which this window belongs */
+	UiWin *ui;
+	File *file;             /* file being displayed in this window */
+	View *view;             /* currently displayed part of underlying text */
+	ViewEvent events;
+	RingBuffer *jumplist;   /* LRU jump management */
+	ChangeList changelist;  /* state for iterating through least recently changes */
+	Win *prev, *next;       /* neighbouring windows */
+};
+
+struct Vis {
+	Ui *ui;
+	File *files;
+	Win *windows;                     /* list of windows */
+	Win *win;                         /* currently active window */
+	Syntax *syntaxes;                 /* NULL terminated array of syntax definitions */
+	Register registers[VIS_REGISTER_INVALID];     /* register used for copy and paste */
+	Macro macros[VIS_MACRO_INVALID];         /* recorded macros */
+	Macro *recording, *last_recording;/* currently and least recently recorded macro */
+	Win *prompt;                      /* 1-line height window to get user input */
+	Win *prompt_window;               /* window which was focused before prompt was shown */
+	char prompt_type;                 /* command ':' or search '/','?' prompt */
+	Regex *search_pattern;            /* last used search pattern */
+	char search_char[8];              /* last used character to search for via 'f', 'F', 't', 'T' */
+	int last_totill;                  /* last to/till movement used for ';' and ',' */
+	int tabwidth;                     /* how many spaces should be used to display a tab */
+	bool expandtab;                   /* whether typed tabs should be converted to spaces */
+	bool autoindent;                  /* whether indentation should be copied from previous line on newline */
+	Map *cmds;                        /* ":"-commands, used for unique prefix queries */
+	Map *options;                     /* ":set"-options */
+	Buffer buffer_repeat;             /* holds data to repeat last insertion/replacement */
+	Buffer input_queue;               /* holds pending input keys */
+	
+	Action action;       /* current action which is in progress */
+	Action action_prev;  /* last operator action used by the repeat '.' key */
+	Mode *mode;          /* currently active mode, used to search for keybindings */
+	Mode *mode_prev;     /* previsouly active user mode */
+	Mode *mode_before_prompt; /* user mode which was active before entering prompt */
+	volatile bool running; /* exit main loop once this becomes false */
+	int exit_status;
+	volatile sig_atomic_t cancel_filter; /* abort external command */
+	volatile sig_atomic_t sigbus;
+	sigjmp_buf sigbus_jmpbuf;
+	Map *actions;          /* built in special editor keys / commands */
+};
+
+/* TODO make part of struct Vis? */
+static Mode vis_modes[VIS_MODE_LAST];
 
 enum CmdOpt {          /* option flags for command definitions */
 	CMD_OPT_NONE,  /* no option (default value) */
@@ -2526,7 +2607,7 @@ bool vis_cmd(Vis *vis, const char *cmdline) {
 	return true;
 }
 
-bool vis_prompt_cmd(Vis *vis, char type, const char *cmd) {
+static bool prompt_cmd(Vis *vis, char type, const char *cmd) {
 	if (!cmd || !cmd[0])
 		return true;
 	switch (type) {
@@ -2702,7 +2783,7 @@ static void vis_args(Vis *vis, int argc, char *argv[]) {
 		} else if (!vis_window_new(vis, argv[i])) {
 			vis_die(vis, "Can not load `%s': %s\n", argv[i], strerror(errno));
 		} else if (cmd) {
-			vis_prompt_cmd(vis, cmd[0], cmd+1);
+			prompt_cmd(vis, cmd[0], cmd+1);
 			cmd = NULL;
 		}
 	}
@@ -2730,7 +2811,7 @@ static void vis_args(Vis *vis, int argc, char *argv[]) {
 			vis_die(vis, "Can not create empty buffer\n");
 		}
 		if (cmd)
-			vis_prompt_cmd(vis, cmd[0], cmd+1);
+			prompt_cmd(vis, cmd[0], cmd+1);
 	}
 }
 
@@ -3089,8 +3170,24 @@ void vis_prompt_enter(Vis *vis) {
 	 * on vis->win.
 	 */
 	mode_set(vis, vis->mode_before_prompt);
-	if (s && *s && vis_prompt_cmd(vis, vis->prompt_type, s) && vis->running)
+	if (s && *s && prompt_cmd(vis, vis->prompt_type, s) && vis->running)
 		vis_mode_switch(vis, VIS_MODE_NORMAL);
 	free(s);
 	vis_draw(vis);
+}
+
+Text *vis_text(Vis *vis) {
+	return vis->win->file->text;
+}
+
+View *vis_view(Vis *vis) {
+	return vis->win->view;
+}
+
+Text *vis_file_text(File *file) {
+	return file->text;
+}
+
+const char *vis_file_name(File *file) {
+	return file->name;
 }
