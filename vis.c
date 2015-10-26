@@ -572,7 +572,7 @@ static Operator ops[] = {
 	[OP_PUT]         = { op_put         },
 	[OP_SHIFT_RIGHT] = { op_shift_right },
 	[OP_SHIFT_LEFT]  = { op_shift_left  },
-	[OP_CASE_CHANGE] = { op_case_change },
+	[OP_CASE_SWAP] = { op_case_change },
 	[OP_JOIN]          = { op_join          },
 	[OP_REPEAT_INSERT]  = { op_repeat_insert  },
 	[OP_REPEAT_REPLACE] = { op_repeat_replace },
@@ -1148,9 +1148,9 @@ static size_t op_case_change(Vis *vis, Text *txt, OperatorContext *c) {
 	for (char *cur = buf; rem > 0; cur++, rem--) {
 		int ch = (unsigned char)*cur;
 		if (isascii(ch)) {
-			if (c->arg->i == 0)
+			if (c->arg->i == OP_CASE_SWAP)
 				*cur = islower(ch) ? toupper(ch) : tolower(ch);
-			else if (c->arg->i > 0)
+			else if (c->arg->i == OP_CASE_UPPER)
 				*cur = toupper(ch);
 			else
 				*cur = tolower(ch);
@@ -2800,12 +2800,24 @@ int vis_run(Vis *vis, int argc, char *argv[]) {
 	return vis->exit_status;
 }
 
-void vis_operator(Vis *vis, enum VisOperator opi) {
-	Operator *op = &ops[opi];
+bool vis_operator(Vis *vis, enum VisOperator id) {
+	switch (id) {
+	case OP_CASE_LOWER:
+	case OP_CASE_UPPER:
+	case OP_CASE_SWAP:
+		vis->action.arg.i = id;
+		id = OP_CASE_SWAP;
+		break;
+	default:
+		break;
+	}
+	if (id >= LENGTH(ops))
+		return false;
+	Operator *op = &ops[id];
 	if (vis->mode->visual) {
 		vis->action.op = op;
 		action_do(vis, &vis->action);
-		return;
+		return true;
 	}
 	/* switch to operator mode inorder to make operator options and
 	 * text-object available */
@@ -2818,6 +2830,7 @@ void vis_operator(Vis *vis, enum VisOperator opi) {
 	} else {
 		vis->action.op = op;
 	}
+	return true;
 }
 
 void vis_mode_switch(Vis *vis, enum VisMode mode) {

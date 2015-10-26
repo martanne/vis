@@ -135,11 +135,14 @@ enum VisOperator {
 	OP_PUT,
 	OP_SHIFT_RIGHT,
 	OP_SHIFT_LEFT,
-	OP_CASE_CHANGE,
 	OP_JOIN,
 	OP_REPEAT_INSERT,
 	OP_REPEAT_REPLACE,
 	OP_CURSOR,
+	OP_CASE_SWAP,
+	/* pseudo operators: keep them at the end to save space in array definition */
+	OP_CASE_LOWER,
+	OP_CASE_UPPER,
 };
 
 /* TODO: overhaul repeatable infrastructure:
@@ -154,7 +157,7 @@ enum {
 	PUT_BEFORE_END,
 };
 
-void vis_operator(Vis*, enum VisOperator);
+bool vis_operator(Vis*, enum VisOperator);
 
 enum VisMotion {
 	MOVE_LINE_DOWN,

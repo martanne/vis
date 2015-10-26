@@ -69,8 +69,6 @@ static const char *gotoline(Vis*, const char *keys, const Arg *arg);
 static const char *motiontype(Vis*, const char *keys, const Arg *arg);
 /* make the current action use the operator indicated by arg->i */
 static const char *operator(Vis*, const char *keys, const Arg *arg);
-/* change case of a file range to upper (arg->i > 0) or lowercase (arg->i < 0) */
-static const char *changecase(Vis*, const char *keys, const Arg *arg);
 /* blocks to read a key and performs movement indicated by arg->i which
  * should be one of MOVE_{RIGHT,LEFT}_{TO,TILL} */
 static const char *movement_key(Vis*, const char *keys, const Arg *arg);
@@ -697,17 +695,17 @@ static KeyAction vis_action[] = {
 	[VIS_ACTION_OPERATOR_CASE_LOWER] = {
 		"vis-operator-case-lower",
 		"Lowercase operator",
-		changecase, { .i = -1 }
+		operator, { .i = OP_CASE_LOWER }
 	},
 	[VIS_ACTION_OPERATOR_CASE_UPPER] = {
 		"vis-operator-case-upper",
 		"Uppercase operator",
-		changecase, { .i = +1 }
+		operator, { .i = OP_CASE_UPPER }
 	},
 	[VIS_ACTION_OPERATOR_CASE_SWAP] = {
 		"vis-operator-case-swap",
 		"Swap case operator",
-		changecase, { .i = 0 }
+		operator, { .i = OP_CASE_SWAP }
 	},
 	[VIS_ACTION_COUNT] = {
 		"vis-count",
@@ -1234,12 +1232,6 @@ static const char *motiontype(Vis *vis, const char *keys, const Arg *arg) {
 
 static const char *operator(Vis *vis, const char *keys, const Arg *arg) {
 	vis_operator(vis, arg->i);
-	return keys;
-}
-
-static const char *changecase(Vis *vis, const char *keys, const Arg *arg) {
-	vis->action.arg = *arg;
-	vis_operator(vis, OP_CASE_CHANGE);
 	return keys;
 }
 
