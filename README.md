@@ -558,8 +558,8 @@ A quick overview over the code structure to get you started:
  `buffer.[ch]`       | dynamically growing buffer used for registers and macros
  `ring-buffer.[ch]`  | fixed size ring buffer used for the jump list
  `map.[ch]`          | crit-bit tree based map supporting unique prefix lookups and ordered iteration. used to implement `:`-commands
- `editor.[ch]`       | editor window management
- `vis.c`             | vi(m) specific editor frontend, program entry point
+ `vis.[ch]`          | vi(m) specific editor frontend
+ `main.c`            | key action definitions, program entry point
  `config.def.h`      | definition of key bindings, commands, syntax highlighting
 
 Hope this gets the interested people started.
