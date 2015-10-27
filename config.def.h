@@ -277,7 +277,7 @@ static KeyBinding vis_mode_prompt[] = {
 
 static KeyBinding vis_mode_insert[] = {
 	{ "<Escape>",           ACTION(MODE_NORMAL)                         },
-	{ "<C-l>",              ALIAS("<Escape>")                           },
+	{ "<C-c>",              ALIAS("<Escape>")                           },
 	{ "<C-i>",              ALIAS("<Tab>")                              },
 	{ "<Enter>",            ACTION(INSERT_NEWLINE)                      },
 	{ "<C-j>",              ALIAS("<Enter>")                            },
