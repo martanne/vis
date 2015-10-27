@@ -8,14 +8,14 @@ config.h:
 	cp config.def.h config.h
 
 vis: config.h config.mk *.c *.h
-	@echo ${CC} ${CFLAGS} *.c ${LDFLAGS} -o $@
-	@${CC} ${CFLAGS} *.c ${LDFLAGS} -o $@
+	@echo ${CC} ${CFLAGS} ${CFLAGS_VIS} *.c ${LDFLAGS} ${LDFLAGS_VIS} -o $@
+	@${CC} ${CFLAGS} ${CFLAGS_VIS} *.c ${LDFLAGS} ${LDFLAGS_VIS} -o $@
 
 debug: clean
-	@$(MAKE) CFLAGS='${DEBUG_CFLAGS}'
+	@$(MAKE) CFLAGS_VIS='${DEBUG_CFLAGS_VIS}'
 
 profile: clean
-	@$(MAKE) CFLAGS='${DEBUG_CFLAGS} -pg'
+	@$(MAKE) CFLAGS_VIS='${DEBUG_CFLAGS_VIS} -pg'
 
 clean:
 	@echo cleaning

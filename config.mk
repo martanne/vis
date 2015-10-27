@@ -25,9 +25,13 @@ endif
 PREFIX ?= /usr/local
 MANPREFIX = ${PREFIX}/share/man
 
-INCS = -I.
-LIBS = -lc -lncursesw -ltermkey
+CFLAGS_TERMKEY = $(shell pkg-config --cflags termkey 2> /dev/null || echo "")
+CFLAGS_CURSES = $(shell pkg-config --cflags ncursesw 2> /dev/null || echo "-I/usr/include/ncursesw")
 
+LDFLAGS_TERMKEY = $(shell pkg-config --libs termkey 2> /dev/null || echo "-ltermkey")
+LDFLAGS_CURSES = $(shell pkg-config --libs ncursesw 2> /dev/null || echo "-lncursesw")
+
+LIBS = -lc
 OS = $(shell uname)
 
 ifeq (${OS},Linux)
@@ -40,27 +44,24 @@ ifeq (${OS},Linux)
 		LIBS += -lacl
 	endif
 else ifeq (${OS},Darwin)
-	LIBS = -lc -lncurses
 	CFLAGS += -D_DARWIN_C_SOURCE
 else ifeq (${OS},OpenBSD)
-	LIBS = -lc -lncurses
 	CFLAGS += -D_BSD_SOURCE
 else ifeq (${OS},FreeBSD)
 	CFLAGS += -D_BSD_SOURCE
 else ifeq (${OS},NetBSD)
-	LIBS = -lc -lcurses
 	CFLAGS += -D_BSD_SOURCE
-else ifeq (${OS},SunOS)
-	INCS += -I/usr/include/ncurses
 else ifeq (${OS},AIX)
 	CFLAGS += -D_ALL_SOURCE
 endif
 
-CFLAGS += -std=c99 -Os ${INCS} -DVERSION=\"${VERSION}\" -DNDEBUG -D_POSIX_C_SOURCE=200809L -D_XOPEN_SOURCE=700
+CFLAGS_LIBS = $(CFLAGS_TERMKEY) $(CFLAGS_CURSES)
+LDFLAGS_LIBS = $(LDFLAGS_TERMKEY) $(LDFLAGS_CURSES) $(LIBS)
 
-LDFLAGS += ${LIBS}
+CFLAGS_VIS = $(CFLAGS_LIBS) -std=c99 -Os -DVERSION=\"${VERSION}\" -DNDEBUG -D_POSIX_C_SOURCE=200809L -D_XOPEN_SOURCE=700
+LDFLAGS_VIS = $(LDFLAGS_LIBS)
 
-DEBUG_CFLAGS = ${CFLAGS} -UNDEBUG -O0 -g -ggdb -Wall -Wextra -Wno-missing-field-initializers -Wno-unused-parameter
+DEBUG_CFLAGS_VIS = ${CFLAGS_VIS} -UNDEBUG -O0 -g -ggdb -Wall -Wextra -Wno-missing-field-initializers -Wno-unused-parameter
 
 CC ?= cc
 STRIP ?= strip
