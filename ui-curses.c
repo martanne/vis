@@ -421,6 +421,8 @@ static int color_find_rgb(unsigned char r, unsigned char g, unsigned char b)
 /* Convert color from string. */
 static int color_fromstring(const char *s)
 {
+	if (!s)
+		return -1;
 	if (*s == '#' && strlen(s) == 7) {
 		const char *cp;
 		unsigned char r, g, b;
