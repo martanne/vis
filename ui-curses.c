@@ -853,7 +853,10 @@ static UiWin *ui_window_new(Ui *ui, View *view, File *file) {
 }
 
 static void ui_die(Ui *ui, const char *msg, va_list ap) {
+	UiCurses *uic = (UiCurses*)ui;
 	endwin();
+	if (uic->termkey)
+		termkey_stop(uic->termkey);
 	vfprintf(stderr, msg, ap);
 	exit(EXIT_FAILURE);
 }
@@ -972,17 +975,17 @@ static const char *ui_getkey(Ui *ui) {
 
 static void ui_terminal_save(Ui *ui) {
 	UiCurses *uic = (UiCurses*)ui;
-	termkey_stop(uic->termkey);
 	curs_set(1);
 	reset_shell_mode();
+	termkey_stop(uic->termkey);
 }
 
 static void ui_terminal_restore(Ui *ui) {
 	UiCurses *uic = (UiCurses*)ui;
+	termkey_start(uic->termkey);
 	reset_prog_mode();
 	wclear(stdscr);
 	curs_set(0);
-	termkey_start(uic->termkey);
 }
 
 Ui *ui_curses_new(void) {
