@@ -1599,6 +1599,7 @@ local files = {
 	[".adb|.ads"] = "ada",
 	[".g|.g4"] = "antlr",
 	[".ans|.inp|.mac"] = "apdl",
+	[".apl"] = "apl",
 	[".applescript"] = "applescript",
 	[".asm|.ASM|.s|.S"] = "asm",
 	[".asa|.asp|.hta"] = "asp",
