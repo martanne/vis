@@ -17,13 +17,14 @@
 /** functions to be called from keybindings */
 /* ignore key, do nothing */
 static const char *nop(Vis*, const char *keys, const Arg *arg);
+/* record/replay macro indicated by keys */
 static const char *macro_record(Vis*, const char *keys, const Arg *arg);
 static const char *macro_replay(Vis*, const char *keys, const Arg *arg);
 /* temporarily suspend the editor and return to the shell, type 'fg' to get back */
 static const char *suspend(Vis*, const char *keys, const Arg *arg);
 /* switch to mode indicated by arg->i */
 static const char *switchmode(Vis*, const char *keys, const Arg *arg);
-/* set mark indicated by arg->i to current cursor position */
+/* set mark indicated by keys to current cursor position */
 static const char *mark_set(Vis*, const char *keys, const Arg *arg);
 /* add a new line either before or after the one where the cursor currently is */
 static const char *openline(Vis*, const char *keys, const Arg *arg);
@@ -33,7 +34,7 @@ static const char *join(Vis*, const char *keys, const Arg *arg);
 static const char *cmd(Vis*, const char *keys, const Arg *arg);
 /* perform last action i.e. action_prev again */
 static const char *repeat(Vis*, const char *keys, const Arg *arg);
-/* replace character at cursor with one read form keyboard */
+/* replace character at cursor with one from keys */
 static const char *replace(Vis*, const char *keys, const Arg *arg);
 /* create a new cursor on the previous (arg->i < 0) or next (arg->i > 0) line */
 static const char *cursors_new(Vis*, const char *keys, const Arg *arg);
@@ -49,9 +50,9 @@ static const char *cursors_select(Vis*, const char *keys, const Arg *arg);
 static const char *cursors_select_next(Vis*, const char *keys, const Arg *arg);
 /* clear current selection but select next match */
 static const char *cursors_select_skip(Vis*, const char *keys, const Arg *arg);
-/* adjust action.count by arg->i */
+/* adjust current used count according to keys */
 static const char *count(Vis*, const char *keys, const Arg *arg);
-/* move to the action.count-th line or if not given either to the first (arg->i < 0)
+/* move to the count-th line or if not given either to the first (arg->i < 0)
  *  or last (arg->i > 0) line of file */
 static const char *gotoline(Vis*, const char *keys, const Arg *arg);
 /* set motion type either LINEWISE or CHARWISE via arg->i */
@@ -69,9 +70,9 @@ static const char *textobj(Vis*, const char *keys, const Arg *arg);
 static const char *selection_end(Vis*, const char *keys, const Arg *arg);
 /* restore least recently used selection */
 static const char *selection_restore(Vis*, const char *keys, const Arg *arg);
-/* use register indicated by arg->i for the current operator */
+/* use register indicated by keys for the current operator */
 static const char *reg(Vis*, const char *keys, const Arg *arg);
-/* perform arg->i motion with a mark as argument */
+/* perform arg->i motion with a mark indicated by keys as argument */
 static const char *mark_motion(Vis*, const char *keys, const Arg *arg);
 /* {un,re}do last action, redraw window */
 static const char *undo(Vis*, const char *keys, const Arg *arg);
@@ -79,10 +80,10 @@ static const char *redo(Vis*, const char *keys, const Arg *arg);
 /* earlier, later action chronologically, redraw window */
 static const char *earlier(Vis*, const char *keys, const Arg *arg);
 static const char *later(Vis*, const char *keys, const Arg *arg);
-/* hange/delete from the current cursor position to the end of
+/* delete from the current cursor position to the end of
  * movement as indicated by arg->i */
 static const char *delete(Vis*, const char *keys, const Arg *arg);
-/* insert register content indicated by arg->i at current cursor position */
+/* insert register content indicated by keys at current cursor position */
 static const char *insert_register(Vis*, const char *keys, const Arg *arg);
 /* show a user prompt to get input with title arg->s */
 static const char *prompt_search(Vis*, const char *keys, const Arg *arg);
