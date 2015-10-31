@@ -10,7 +10,7 @@ local M = {_NAME = 'apl'}
 local ws = token(l.WHITESPACE, l.space^1)
 
 -- Comments.
-local comment = token(l.COMMENT, '⍝' * l.nonnewline^0)
+local comment = token(l.COMMENT, (P('⍝') + P('#')) * l.nonnewline^0)
 
 -- Strings.
 local sq_str = l.delimited_range("'", false, true)
@@ -19,22 +19,39 @@ local dq_str = l.delimited_range('"')
 local string = token(l.STRING, sq_str + dq_str)
 
 -- Numbers.
-local number = token(l.NUMBER, l.float + l.integer)
+local dig = R('09')
+local rad = P('.')
+local exp = S('eE')
+local img = S('jJ')
+local sgn = P('¯')^-1
+local float = sgn * (dig^0 * rad * dig^1 + dig^1 * rad * dig^0 + dig^1)
+	* (exp * sgn *dig^1)^-1
+local number = token(l.NUMBER, float * img * float + float)
 
 -- Keywords.
-local keyword = token(l.KEYWORD, P('⍞') + (P('⎕') * l.alpha^0))
+local keyword = token(l.KEYWORD, P('⍞') + P('χ') + P('⍺') + P('⍶')
+	+ P('⍵') + P('⍹') + P('⎕') * R('AZ', 'az')^0)
 
--- Variables.
-local variable = token(l.VARIABLE, (l.alpha + S('_∆⍙')) * (l.alnum + S('_∆⍙¯')^0))
-
--- Operators.
-local operator = token(l.OPERATOR, S('{}[]()←→'))
+-- Names.
+local n1l = R('AZ', 'az')
+local n1b = P('_') + P('∆') + P('⍙')
+local n2l = n1l + R('09')
+local n2b = n1b + P('¯')
+local n1 = n1l + n1b
+local n2 = n2l + n2b
+local name = n1 * n2^0
 
 -- Labels.
-local label = token(l.LABEL, l.alnum^1 * P(':'))
+local label = token(l.LABEL, name * P(':'))
+
+-- Variables.
+local variable = token(l.VARIABLE, name)
+
+-- Special.
+local special = token(l.TYPE, S('{}[]();') + P('←') + P('→') + P('◊'))
 
 -- Nabla.
-local nabla = token('nabla', S('∇⍫'))
+local nabla = token(l.PREPROCESSOR, P('∇') + P('⍫'))
 
 M._rules = {
   {'whitespace', ws},
@@ -44,12 +61,8 @@ M._rules = {
   {'keyword', keyword},
   {'label', label},
   {'variable', variable},
-  {'operator', operator},
+  {'special', special},
   {'nabla', nabla},
-}
-
-M._tokenstyles = {
-
 }
 
 return M
