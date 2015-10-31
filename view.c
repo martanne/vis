@@ -707,11 +707,9 @@ void view_redraw_bottom(View *view) {
 	Line *line = view->cursor->line;
 	if (line == view->lastline)
 		return;
-	int linenr = 0;
 	size_t pos = view->cursor->pos;
-	for (Line *cur = view->topline; cur && cur != line; cur = cur->next)
-		linenr++;
-	view_slide_down(view, view->height - linenr - 1);
+	view_viewport_up(view, view->height);
+	while (pos > view->end && view_viewport_down(view, 1));
 	view_cursor_to(view, pos);
 }
 
