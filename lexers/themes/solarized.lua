@@ -1,6 +1,6 @@
 -- Solarized color codes Copyright (c) 2011 Ethan Schoonover
 local colors = {
-	['base03'] = '#002b36',
+	['base03'] = '#000000', -- '#002b36',
 	['base02'] = '#073642',
 	['base01'] = '#586e75',
 	['base00'] = '#657b83',
