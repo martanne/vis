@@ -1595,6 +1595,7 @@ function M.get_style(lexer, lang, token_name)
 end
 
 local files = {
+	[".1|.2|.3|.4|.5|.6|.7|.8|.9|.1x|.2x|.3x|.4x|.5x|.6x|.7x|.8x|.9x"] = "man",
 	[".as|.asc"] = "actionscript",
 	[".adb|.ads"] = "ada",
 	[".g|.g4"] = "antlr",
