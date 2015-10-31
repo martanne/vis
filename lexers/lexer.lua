@@ -1648,6 +1648,7 @@ local files = {
 	[".bbl|.dtx|.ins|.ltx|.tex|.sty"] = "latex",
 	[".less"] = "less",
 	[".lily|.ly"] = "lilypond",
+	[".ledger|.journal"] = "ledger",
 	[".cl|.el|.lisp|.lsp"] = "lisp",
 	[".litcoffee"] = "litcoffee",
 	[".lua"] = "lua",
