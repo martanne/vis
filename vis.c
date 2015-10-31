@@ -119,6 +119,7 @@ typedef struct {             /** collects all information until an operator is e
 	const Operator *op;
 	const Movement *movement;
 	const TextObject *textobj;
+	const Macro *macro;
 	Register *reg;
 	enum VisMark mark;
 	Arg arg;
@@ -161,6 +162,7 @@ struct Vis {
 	Register registers[VIS_REGISTER_INVALID];     /* register used for copy and paste */
 	Macro macros[VIS_MACRO_INVALID];         /* recorded macros */
 	Macro *recording, *last_recording;/* currently and least recently recorded macro */
+	Macro *macro_operator;
 	Win *prompt;                      /* 1-line height window to get user input */
 	Win *prompt_window;               /* window which was focused before prompt was shown */
 	char prompt_type;                 /* command ':' or search '/','?' prompt */
@@ -172,7 +174,6 @@ struct Vis {
 	bool autoindent;                  /* whether indentation should be copied from previous line on newline */
 	Map *cmds;                        /* ":"-commands, used for unique prefix queries */
 	Map *options;                     /* ":set"-options */
-	Buffer buffer_repeat;             /* holds data to repeat last insertion/replacement */
 	Buffer input_queue;               /* holds pending input keys */
 	
 	Action action;       /* current action which is in progress */
@@ -208,6 +209,12 @@ typedef struct {             /* command definitions for the ':'-prompt */
 } Command;
 
 static void mode_set(Vis *vis, Mode *new_mode);
+static Mode *mode_get(Vis *vis, enum VisMode mode);
+static Macro *macro_get(Vis *vis, enum VisMacro m);
+static void macro_replay(Vis *vis, const Macro *macro);
+static void macro_operator_stop(Vis *vis);
+static void macro_operator_record(Vis *vis);
+
 /** window / file handling */
 
 static void file_free(Vis *vis, File *file) {
@@ -552,7 +559,6 @@ void vis_free(Vis *vis) {
 	map_free(vis->cmds);
 	map_free(vis->options);
 	map_free(vis->actions);
-	buffer_release(&vis->buffer_repeat);
 	for (int i = 0; i < VIS_MODE_LAST; i++) {
 		Mode *mode = &vis_modes[i];
 		map_free(mode->bindings);
@@ -643,8 +649,8 @@ static size_t op_shift_right(Vis*, Text*, OperatorContext *c);
 static size_t op_shift_left(Vis*, Text*, OperatorContext *c);
 static size_t op_case_change(Vis*, Text*, OperatorContext *c);
 static size_t op_join(Vis*, Text*, OperatorContext *c);
-static size_t op_repeat_insert(Vis*, Text*, OperatorContext *c);
-static size_t op_repeat_replace(Vis*, Text*, OperatorContext *c);
+static size_t op_insert(Vis*, Text*, OperatorContext *c);
+static size_t op_replace(Vis*, Text*, OperatorContext *c);
 static size_t op_cursor(Vis*, Text*, OperatorContext *c);
 
 static Operator ops[] = {
@@ -656,8 +662,8 @@ static Operator ops[] = {
 	[OP_SHIFT_LEFT]  = { op_shift_left  },
 	[OP_CASE_SWAP] = { op_case_change },
 	[OP_JOIN]          = { op_join          },
-	[OP_REPEAT_INSERT]  = { op_repeat_insert  },
-	[OP_REPEAT_REPLACE] = { op_repeat_replace },
+	[OP_INSERT]      = { op_insert      },
+	[OP_REPLACE]     = { op_replace     },
 	[OP_CURSOR_SOL]         = { op_cursor         },
 };
 
@@ -898,9 +904,20 @@ static void vis_mode_prompt_leave(Vis *vis, Mode *new) {
 		vis_prompt_hide(vis);
 }
 
-static void vis_mode_insert_leave(Vis *vis, Mode *old) {
+static void vis_mode_insert_enter(Vis *vis, Mode *old) {
+	if (!vis->macro_operator) {
+		macro_operator_record(vis);
+		action_reset(vis, &vis->action_prev);
+		vis->action_prev.macro = vis->macro_operator;
+		vis->action_prev.op = &ops[OP_INSERT];
+	}
+}
+
+static void vis_mode_insert_leave(Vis *vis, Mode *new) {
 	/* make sure we can recover the current state after an editing operation */
 	text_snapshot(vis->win->file->text);
+	if (new == mode_get(vis, VIS_MODE_NORMAL))
+		macro_operator_stop(vis);
 }
 
 static void vis_mode_insert_idle(Vis *vis) {
@@ -908,31 +925,26 @@ static void vis_mode_insert_idle(Vis *vis) {
 }
 
 static void vis_mode_insert_input(Vis *vis, const char *str, size_t len) {
-	static size_t oldpos = EPOS;
-	size_t pos = view_cursor_get(vis->win->view);
-	if (pos != oldpos)
-		buffer_truncate(&vis->buffer_repeat);
-	buffer_append(&vis->buffer_repeat, str, len);
-	oldpos = pos + len;
-	action_reset(vis, &vis->action_prev);
-	vis->action_prev.op = &ops[OP_REPEAT_INSERT];
 	vis_insert_key(vis, str, len);
 }
 
-static void vis_mode_replace_leave(Vis *vis, Mode *old) {
+static void vis_mode_replace_enter(Vis *vis, Mode *old) {
+	if (!vis->macro_operator) {
+		macro_operator_record(vis);
+		action_reset(vis, &vis->action_prev);
+		vis->action_prev.macro = vis->macro_operator;
+		vis->action_prev.op = &ops[OP_REPLACE];
+	}
+}
+
+static void vis_mode_replace_leave(Vis *vis, Mode *new) {
 	/* make sure we can recover the current state after an editing operation */
 	text_snapshot(vis->win->file->text);
+	if (new == mode_get(vis, VIS_MODE_NORMAL))
+		macro_operator_stop(vis);
 }
 
 static void vis_mode_replace_input(Vis *vis, const char *str, size_t len) {
-	static size_t oldpos = EPOS;
-	size_t pos = view_cursor_get(vis->win->view);
-	if (pos != oldpos)
-		buffer_truncate(&vis->buffer_repeat);
-	buffer_append(&vis->buffer_repeat, str, len);
-	oldpos = pos + len;
-	action_reset(vis, &vis->action_prev);
-	vis->action_prev.op = &ops[OP_REPEAT_REPLACE];
 	vis_replace_key(vis, str, len);
 }
 
@@ -1040,6 +1052,7 @@ static Mode vis_modes[] = {
 		.help = "",
 		.isuser = true,
 		.parent = &vis_modes[VIS_MODE_READLINE],
+		.enter = vis_mode_insert_enter,
 		.leave = vis_mode_insert_leave,
 		.input = vis_mode_insert_input,
 		.idle = vis_mode_insert_idle,
@@ -1051,6 +1064,7 @@ static Mode vis_modes[] = {
 		.help = "",
 		.isuser = true,
 		.parent = &vis_modes[VIS_MODE_INSERT],
+		.enter = vis_mode_replace_enter,
 		.leave = vis_mode_replace_leave,
 		.input = vis_mode_replace_input,
 		.idle = vis_mode_insert_idle,
@@ -1116,6 +1130,8 @@ static size_t op_delete(Vis *vis, Text *txt, OperatorContext *c) {
 
 static size_t op_change(Vis *vis, Text *txt, OperatorContext *c) {
 	op_delete(vis, txt, c);
+	macro_operator_record(vis);
+	vis_mode_switch(vis, VIS_MODE_INSERT);
 	return c->range.start;
 }
 
@@ -1288,19 +1304,16 @@ static size_t op_join(Vis *vis, Text *txt, OperatorContext *c) {
 	return c->range.start;
 }
 
-static size_t op_repeat_insert(Vis *vis, Text *txt, OperatorContext *c) {
-	size_t len = vis->buffer_repeat.len;
-	if (!len)
-		return c->pos;
-	text_insert(txt, c->pos, vis->buffer_repeat.data, len);
-	return c->pos + len;
+static size_t op_insert(Vis *vis, Text *txt, OperatorContext *c) {
+	macro_operator_record(vis);
+	vis_mode_switch(vis, VIS_MODE_INSERT);
+	return c->pos; // c->range.end; // TODO
 }
 
-static size_t op_repeat_replace(Vis *vis, Text *txt, OperatorContext *c) {
-	const char *data = vis->buffer_repeat.data;
-	size_t len = vis->buffer_repeat.len;
-	vis_replace(vis, c->pos, data, len);
-	return c->pos + len;
+static size_t op_replace(Vis *vis, Text *txt, OperatorContext *c) {
+	macro_operator_record(vis);
+	vis_mode_switch(vis, VIS_MODE_REPLACE);
+	return c->pos; // c->range.end; // TODO
 }
 
 /** movement implementations of type: size_t (*move)(const Arg*) */
@@ -1485,6 +1498,7 @@ static void action_do(Vis *vis, Action *a) {
 	View *view = win->view;
 	if (a->count < 1)
 		a->count = 1;
+	bool repeatable = a->op && !vis->macro_operator;
 	bool multiple_cursors = view_cursors_count(view) > 1;
 	bool linewise = !(a->type & CHARWISE) && (
 		a->type & LINEWISE || (a->movement && a->movement->type & LINEWISE) ||
@@ -1592,9 +1606,7 @@ static void action_do(Vis *vis, Action *a) {
 	}
 
 	if (a->op) {
-		if (a->op == &ops[OP_CHANGE])
-			vis_mode_switch(vis, VIS_MODE_INSERT);
-		else if (vis->mode == &vis_modes[VIS_MODE_OPERATOR])
+		if (vis->mode == &vis_modes[VIS_MODE_OPERATOR])
 			mode_set(vis, vis->mode_prev);
 		else if (vis->mode->visual)
 			vis_mode_switch(vis, VIS_MODE_NORMAL);
@@ -1603,19 +1615,17 @@ static void action_do(Vis *vis, Action *a) {
 	}
 
 	if (a != &vis->action_prev) {
-		if (a->op)
+		if (repeatable) {
+			if (!a->macro)
+				a->macro = vis->macro_operator;
 			vis->action_prev = *a;
+		}
 		action_reset(vis, a);
 	}
 }
 
 static void action_reset(Vis *vis, Action *a) {
-	a->count = 0;
-	a->type = 0;
-	a->op = NULL;
-	a->movement = NULL;
-	a->textobj = NULL;
-	a->reg = NULL;
+	memset(a, 0, sizeof(*a));
 }
 
 static void mode_set(Vis *vis, Mode *new_mode) {
@@ -2739,6 +2749,8 @@ static const char *getkey(Vis *vis) {
 	vis_info_hide(vis);
 	if (vis->recording)
 		macro_append(vis->recording, key);
+	if (vis->macro_operator)
+		macro_append(vis->macro_operator, key);
 	return key;
 }
 
@@ -3037,6 +3049,15 @@ static Macro *macro_get(Vis *vis, enum VisMacro m) {
 	return NULL;
 }
 
+static void macro_operator_record(Vis *vis) {
+	vis->macro_operator = macro_get(vis, VIS_MACRO_OPERATOR);
+	macro_reset(vis->macro_operator);
+}
+
+static void macro_operator_stop(Vis *vis) {
+	vis->macro_operator = NULL;
+}
+
 bool vis_macro_record(Vis *vis, enum VisMacro id) {
 	Macro *macro = macro_get(vis, id);
 	if (vis->recording || !macro)
@@ -3064,24 +3085,38 @@ bool vis_macro_recording(Vis *vis) {
 	return vis->recording;
 }
 
-bool vis_macro_replay(Vis *vis, enum VisMacro id) {
-	Macro *macro = macro_get(vis, id);
-	if (!macro || macro == vis->recording)
-		return false;
+static void macro_replay(Vis *vis, const Macro *macro) {
 	Buffer buf;
 	buffer_init(&buf);
 	buffer_put(&buf, macro->data, macro->len);
 	vis_keys_raw(vis, &buf, macro->data);
 	buffer_release(&buf);
+}
+
+bool vis_macro_replay(Vis *vis, enum VisMacro id) {
+	Macro *macro = macro_get(vis, id);
+	if (!macro || macro == vis->recording)
+		return false;
+	macro_replay(vis, macro);
 	return true;
 }
 
 void vis_repeat(Vis *vis) {
 	int count = vis->action.count;
-	vis->action = vis->action_prev;
+	Macro *macro_operator = macro_get(vis, VIS_MACRO_OPERATOR);
+	Macro *macro_repeat = macro_get(vis, VIS_MACRO_REPEAT);
+	const Macro *macro = vis->action_prev.macro;
+	if (macro == macro_operator) {
+		buffer_put(macro_repeat, macro_operator->data, macro_operator->len);
+		macro = macro_repeat;
+		vis->action_prev.macro = macro;
+	}
 	if (count)
-		vis->action.count = count;
-	action_do(vis, &vis->action);
+		vis->action_prev.count = count;
+	action_do(vis, &vis->action_prev);
+	if (macro)
+		macro_replay(vis, macro);
+	action_reset(vis, &vis->action);
 }
 
 void vis_mark_set(Vis *vis, enum VisMark mark, size_t pos) {

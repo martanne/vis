@@ -135,8 +135,8 @@ enum VisOperator {
 	OP_SHIFT_RIGHT,
 	OP_SHIFT_LEFT,
 	OP_JOIN,
-	OP_REPEAT_INSERT,
-	OP_REPEAT_REPLACE,
+	OP_INSERT,
+	OP_REPLACE,
 	OP_CURSOR_SOL,
 	OP_CASE_SWAP,
 	/* pseudo operators: keep them at the end to save space in array definition */
@@ -261,6 +261,8 @@ void vis_textobject(Vis*, enum VisTextObject);
 enum VisMacro {
 	/* XXX: TEMPORARY */
 	VIS_MACRO_LAST_RECORDED = 26,
+	VIS_MACRO_REPEAT,
+	VIS_MACRO_OPERATOR,
 	VIS_MACRO_INVALID, /* hast to be the last enum member */
 };
 
