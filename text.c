@@ -680,6 +680,8 @@ static size_t action_redo(Text *txt, Action *a) {
 	for ( ; c; c = c->prev) {
 		span_swap(txt, &c->old, &c->new);
 		pos = c->pos;
+		if (c->new.len > c->old.len)
+			pos += c->new.len - c->old.len;
 	}
 	return pos;
 }
