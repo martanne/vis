@@ -194,7 +194,7 @@ static KeyBinding vis_mode_normal[] = {
 	{ "A",                ACTION(APPEND_LINE_END)                       },
 	{ "C",                ALIAS("c$")                                   },
 	{ "D",                ALIAS("d$")                                   },
-	{ "I",                ALIAS("^i")                                   },
+	{ "I",                ACTION(INSERT_LINE_START)                     },
 	{ ".",                ACTION(REPEAT)                                },
 	{ "o",                ACTION(OPEN_LINE_BELOW)                       },
 	{ "O",                ACTION(OPEN_LINE_ABOVE)                       },

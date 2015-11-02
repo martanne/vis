@@ -202,6 +202,7 @@ enum {
 	VIS_ACTION_WINDOW_PREV,
 	VIS_ACTION_APPEND_CHAR_NEXT,
 	VIS_ACTION_APPEND_LINE_END,
+	VIS_ACTION_INSERT_LINE_START,
 	VIS_ACTION_OPEN_LINE_ABOVE,
 	VIS_ACTION_OPEN_LINE_BELOW,
 	VIS_ACTION_JOIN_LINE_BELOW,
@@ -743,6 +744,11 @@ static KeyAction vis_action[] = {
 		"append-line-end",
 		"Append text after the end of the line",
 		insertmode, { .i = MOVE_LINE_END },
+	},
+	[VIS_ACTION_INSERT_LINE_START] = {
+		"insert-line-start",
+		"Insert text before the first non-blank in the line",
+		insertmode, { .i = MOVE_LINE_START },
 	},
 	[VIS_ACTION_OPEN_LINE_ABOVE] = {
 		"open-line-above",
