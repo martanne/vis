@@ -3114,8 +3114,18 @@ void vis_repeat(Vis *vis) {
 	if (count)
 		vis->action_prev.count = count;
 	action_do(vis, &vis->action_prev);
-	if (macro)
-		macro_replay(vis, macro);
+	if (macro) {
+		Mode *mode = vis->mode;
+		Action action_prev = vis->action_prev;
+		count = action_prev.count;
+		if (count < 1 || action_prev.op == &ops[OP_CHANGE])
+			count = 1;
+		for (int i = 0; i < count; i++) {
+			mode_set(vis, mode);
+			macro_replay(vis, macro);
+		}
+		vis->action_prev = action_prev;
+	}
 	action_reset(vis, &vis->action);
 }
 
