@@ -24,6 +24,8 @@ static const char *macro_replay(Vis*, const char *keys, const Arg *arg);
 static const char *suspend(Vis*, const char *keys, const Arg *arg);
 /* switch to mode indicated by arg->i */
 static const char *switchmode(Vis*, const char *keys, const Arg *arg);
+/* switch to insert mode after performing movement indicated by arg->i */
+static const char *insertmode(Vis*, const char *keys, const Arg *arg);
 /* set mark indicated by keys to current cursor position */
 static const char *mark_set(Vis*, const char *keys, const Arg *arg);
 /* add a new line either before or after the one where the cursor currently is */
@@ -198,6 +200,8 @@ enum {
 	VIS_ACTION_INSERT_REGISTER,
 	VIS_ACTION_WINDOW_NEXT,
 	VIS_ACTION_WINDOW_PREV,
+	VIS_ACTION_APPEND_CHAR_NEXT,
+	VIS_ACTION_APPEND_LINE_END,
 	VIS_ACTION_OPEN_LINE_ABOVE,
 	VIS_ACTION_OPEN_LINE_BELOW,
 	VIS_ACTION_JOIN_LINE_BELOW,
@@ -729,6 +733,16 @@ static KeyAction vis_action[] = {
 		"window-prev",
 		"Focus previous window",
 		call, { .f = vis_window_prev }
+	},
+	[VIS_ACTION_APPEND_CHAR_NEXT] = {
+		"append-char-next",
+		"Append text after the cursor",
+		insertmode, { .i = MOVE_CHAR_NEXT }
+	},
+	[VIS_ACTION_APPEND_LINE_END] = {
+		"append-line-end",
+		"Append text after the end of the line",
+		insertmode, { .i = MOVE_LINE_END },
 	},
 	[VIS_ACTION_OPEN_LINE_ABOVE] = {
 		"open-line-above",
@@ -1516,6 +1530,12 @@ static const char *join(Vis *vis, const char *keys, const Arg *arg) {
 
 static const char *switchmode(Vis *vis, const char *keys, const Arg *arg) {
 	vis_mode_switch(vis, arg->i);
+	return keys;
+}
+
+static const char *insertmode(Vis *vis, const char *keys, const Arg *arg) {
+	vis_operator(vis, OP_INSERT);
+	vis_motion(vis, arg->i);
 	return keys;
 }
 

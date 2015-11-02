@@ -78,6 +78,7 @@ typedef struct {
 	Register *reg;    /* always non-NULL, set to a default register */
 	Filerange range;  /* which part of the file should be affected by the operator */
 	size_t pos;       /* at which byte from the start of the file should the operation start? */
+	size_t newpos;    /* new position after motion or EPOS if none given */
 	bool linewise;    /* should the changes always affect whole lines? */
 	const Arg *arg;   /* arbitrary arguments */
 } OperatorContext;
@@ -1307,13 +1308,13 @@ static size_t op_join(Vis *vis, Text *txt, OperatorContext *c) {
 static size_t op_insert(Vis *vis, Text *txt, OperatorContext *c) {
 	macro_operator_record(vis);
 	vis_mode_switch(vis, VIS_MODE_INSERT);
-	return c->pos; // c->range.end; // TODO
+	return c->newpos != EPOS ? c->newpos : c->pos;
 }
 
 static size_t op_replace(Vis *vis, Text *txt, OperatorContext *c) {
 	macro_operator_record(vis);
 	vis_mode_switch(vis, VIS_MODE_REPLACE);
-	return c->pos; // c->range.end; // TODO
+	return c->newpos != EPOS ? c->newpos : c->pos;
 }
 
 /** movement implementations of type: size_t (*move)(const Arg*) */
@@ -1515,6 +1516,7 @@ static void action_do(Vis *vis, Action *a) {
 		OperatorContext c = {
 			.count = a->count,
 			.pos = pos,
+			.newpos = EPOS,
 			.range = text_range_empty(),
 			.reg = reg,
 			.linewise = linewise,
@@ -1546,6 +1548,7 @@ static void action_do(Vis *vis, Action *a) {
 				pos = start;
 			} else {
 				c.range = text_range_new(start, pos);
+				c.newpos = pos;
 			}
 
 			if (!a->op) {
@@ -3113,7 +3116,12 @@ void vis_repeat(Vis *vis) {
 	}
 	if (count)
 		vis->action_prev.count = count;
+	count = vis->action_prev.count;
+	/* for some operators count should be applied only to the macro not the motion */
+	if (vis->action_prev.op == &ops[OP_INSERT] || vis->action_prev.op == &ops[OP_REPLACE])
+		vis->action_prev.count = 1;
 	action_do(vis, &vis->action_prev);
+	vis->action_prev.count = count;
 	if (macro) {
 		Mode *mode = vis->mode;
 		Action action_prev = vis->action_prev;
