@@ -2737,6 +2737,11 @@ const char *vis_keys(Vis *vis, const char *input) {
 	if (!input)
 		return NULL;
 
+	if (vis->recording)
+		macro_append(vis->recording, input);
+	if (vis->macro_operator)
+		macro_append(vis->macro_operator, input);
+
 	if (!buffer_append0(&vis->input_queue, input)) {
 		buffer_truncate(&vis->input_queue);
 		return NULL;
@@ -2750,10 +2755,6 @@ static const char *getkey(Vis *vis) {
 	if (!key)
 		return NULL;
 	vis_info_hide(vis);
-	if (vis->recording)
-		macro_append(vis->recording, key);
-	if (vis->macro_operator)
-		macro_append(vis->macro_operator, key);
 	return key;
 }
 
