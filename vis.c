@@ -560,6 +560,7 @@ void vis_free(Vis *vis) {
 	map_free(vis->cmds);
 	map_free(vis->options);
 	map_free(vis->actions);
+	buffer_release(&vis->input_queue);
 	for (int i = 0; i < VIS_MODE_LAST; i++) {
 		Mode *mode = &vis_modes[i];
 		map_free(mode->bindings);
