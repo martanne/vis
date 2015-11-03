@@ -1195,14 +1195,16 @@ static const char *replace(Vis *vis, const char *keys, const Arg *arg) {
 	if (!keys[0])
 		return NULL;
 	const char *next = vis_key_next(vis, keys);
+	if (!next)
+		return NULL;
 	size_t len = next - keys;
-	/* TODO: fix
-	action_reset(vis, &vis->action_prev);
-	vis->action_prev.op = &ops[OP_REPEAT_REPLACE];
-	buffer_put(&vis->buffer_repeat, keys, len);
-	*/
-	vis_replace_key(vis, keys, len);
-	text_snapshot(vis_text(vis));
+	char key[len+1];
+	memcpy(key, keys, len);
+	key[len] = '\0';
+	vis_operator(vis, OP_REPLACE);
+	vis_motion(vis, MOVE_NOP);
+	vis_keys_inject(vis, next, key);
+	vis_keys_inject(vis, next+len, "<Escape>");
 	return next;
 }
 
