@@ -753,12 +753,12 @@ static KeyAction vis_action[] = {
 	[VIS_ACTION_OPEN_LINE_ABOVE] = {
 		"open-line-above",
 		"Begin a new line above the cursor",
-		openline, { .i = MOVE_LINE_PREV }
+		openline, { .i = -1 }
 	},
 	[VIS_ACTION_OPEN_LINE_BELOW] = {
 		"open-line-below",
 		"Begin a new line below the cursor",
-		openline, { .i = MOVE_LINE_NEXT }
+		openline, { .i = +1 }
 	},
 	[VIS_ACTION_JOIN_LINE_BELOW] = {
 		"join-line-below",
@@ -1515,15 +1515,14 @@ static const char *window(Vis *vis, const char *keys, const Arg *arg) {
 }
 
 static const char *openline(Vis *vis, const char *keys, const Arg *arg) {
-	if (arg->i == MOVE_LINE_NEXT) {
+	vis_operator(vis, OP_INSERT);
+	if (arg->i > 0) {
 		vis_motion(vis, MOVE_LINE_END);
-		vis_insert_nl(vis);
+		vis_keys_inject(vis, keys, "<Enter>");
 	} else {
 		vis_motion(vis, MOVE_LINE_BEGIN);
-		vis_insert_nl(vis);
-		vis_motion(vis, MOVE_LINE_PREV);
+		vis_keys_inject(vis, keys, "<Enter><Up>");
 	}
-	vis_mode_switch(vis, VIS_MODE_INSERT);
 	return keys;
 }
 
