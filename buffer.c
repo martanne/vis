@@ -48,13 +48,27 @@ bool buffer_put0(Buffer *buf, const char *data) {
 	return buffer_put(buf, data, strlen(data)+1);
 }
 
-bool buffer_append(Buffer *buf, const void *data, size_t len) {
-	size_t rem = buf->size - buf->len;
-	if (len > rem && !buffer_grow(buf, buf->size + len - rem))
+bool buffer_insert(Buffer *buf, size_t pos, const void *data, size_t len) {
+	if (pos > buf->len)
 		return false;
-	memcpy(buf->data + buf->len, data, len);
+	if (!buffer_grow(buf, buf->len + len))
+		return false;
+	memmove(buf->data + pos + len, buf->data + pos, buf->len - pos);
+	memcpy(buf->data + pos, data, len);
 	buf->len += len;
 	return true;
+}
+
+bool buffer_insert0(Buffer *buf, size_t pos, const char *data) {
+	if (pos == 0)
+		return buffer_prepend0(buf, data);
+	if (pos == buf->len)
+		return buffer_append0(buf, data);
+	return buffer_insert(buf, pos, data, strlen(data));
+}
+
+bool buffer_append(Buffer *buf, const void *data, size_t len) {
+	return buffer_insert(buf, buf->len, data, len);
 }
 
 bool buffer_append0(Buffer *buf, const char *data) {
@@ -64,12 +78,7 @@ bool buffer_append0(Buffer *buf, const char *data) {
 }
 
 bool buffer_prepend(Buffer *buf, const void *data, size_t len) {
-	if (!buffer_grow(buf, buf->len + len))
-		return false;
-	memmove(buf->data + len, buf->data, buf->len);
-	memcpy(buf->data, data, len);
-	buf->len += len;
-	return true;
+	return buffer_insert(buf, 0, data, len);
 }
 
 bool buffer_prepend0(Buffer *buf, const char *data) {

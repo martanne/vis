@@ -23,6 +23,10 @@ void buffer_truncate(Buffer*);
 bool buffer_put(Buffer*, const void *data, size_t len);
 /* same but with NUL-terminated data */
 bool buffer_put0(Buffer*, const char *data);
+/* insert arbitrary data of length len at pos (in [0, buf->len]) */
+bool buffer_insert(Buffer*, size_t pos, const void *data, size_t len);
+/* insert NUL-terminate data at pos (in [0, buf->len]) */
+bool buffer_insert0(Buffer*, size_t pos, const char *data);
 /* append futher content to the end of the buffer data */
 bool buffer_append(Buffer*, const void *data, size_t len);
 /* append NUl-terminated data */
