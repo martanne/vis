@@ -323,6 +323,7 @@ bool vis_cmd(Vis*, const char *cmd);
 
 const char *vis_key_next(Vis*, const char *keys);
 const char *vis_keys(Vis*, const char *input);
+bool vis_keys_inject(Vis*, const char *pos, const char *input);
 
 bool vis_signal_handler(Vis*, int signum, const siginfo_t *siginfo,
 	const void *context);

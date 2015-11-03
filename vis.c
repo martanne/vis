@@ -188,6 +188,8 @@ struct Vis {
 	volatile sig_atomic_t sigbus;
 	sigjmp_buf sigbus_jmpbuf;
 	Map *actions;          /* built in special editor keys / commands */
+	Buffer *keys;          /* if non-NULL we are currently handling keys from this buffer,
+	                        * points to either the input_queue or a macro */
 };
 
 /* TODO make part of struct Vis? */
@@ -2676,11 +2678,8 @@ static const char *vis_keys_raw(Vis *vis, Buffer *buf, const char *input) {
 	
 	while (cur && *cur) {
 
-		if (!(end = (char*)vis_key_next(vis, cur))) {
-			// XXX: can't parse key this should never happen, throw away remaining input
-			buffer_truncate(buf);
-			return input + strlen(input);
-		}
+		if (!(end = (char*)vis_key_next(vis, cur)))
+			goto err; // XXX: can't parse key this should never happen
 
 		char tmp = *end;
 		*end = '\0';
@@ -2696,7 +2695,8 @@ static const char *vis_keys_raw(Vis *vis, Buffer *buf, const char *input) {
 		}
 
 		*end = tmp;
-		
+		vis->keys = buf;
+
 		if (binding) { /* exact match */
 			if (binding->action) {
 				end = (char*)binding->action->func(vis, end, &binding->action->arg);
@@ -2730,8 +2730,26 @@ static const char *vis_keys_raw(Vis *vis, Buffer *buf, const char *input) {
 		}
 	}
 
+	vis->keys = NULL;
 	buffer_put0(buf, start);
 	return input + (start - keys);
+err:
+	vis->keys = NULL;
+	buffer_truncate(buf);
+	return input + strlen(input);
+}
+
+bool vis_keys_inject(Vis *vis, const char *pos, const char *input) {
+	Buffer *buf = vis->keys;
+	if (!buf)
+		return false;
+	if (pos < buf->data || pos > buf->data + buf->len)
+		return false;
+	size_t off = pos - buf->data;
+	buffer_insert0(buf, off, input);
+	if (vis->macro_operator)
+		macro_append(vis->macro_operator, input);
+	return true;
 }
 
 const char *vis_keys(Vis *vis, const char *input) {
