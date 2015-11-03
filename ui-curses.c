@@ -998,7 +998,7 @@ Ui *ui_curses_new(void) {
 		return NULL;
 	if (!(uic->termkey = termkey_new(STDIN_FILENO, TERMKEY_FLAG_UTF8)))
 		goto err;
-		
+	termkey_set_canonflags(uic->termkey, TERMKEY_CANON_DELBS);
 	setlocale(LC_CTYPE, "");
 	if (!getenv("ESCDELAY"))
 		set_escdelay(50);

@@ -22,7 +22,6 @@ static KeyBinding basic_movement[] = {
 static KeyBinding vis_movements[] = {
 	{ "h",             ACTION(CURSOR_CHAR_PREV)                },
 	{ "<Backspace>",   ALIAS("h")                              },
-	{ "<DEL>",         ALIAS("<Backspace>")                    },
 	{ "<C-h>",         ALIAS("<Backspace>")                    },
 	{ "l",             ACTION(CURSOR_CHAR_NEXT)                },
 	{ "<Space>",       ALIAS("l")                              },
@@ -181,7 +180,6 @@ static KeyBinding vis_mode_normal[] = {
 	{ "<C-w><C-h>",       ALIAS("<C-w>k")                               },
 	{ "<C-w><C-k>",       ALIAS("<C-w>k")                               },
 	{ "<C-w><Backspace>", ALIAS("<C-w>k")                               },
-	{ "<C-w><DEL>",       ALIAS("<C-w><Backspace>")                     },
 	{ "<C-b>",            ALIAS("<PageUp>")                             },
 	{ "<C-f>",            ALIAS("<PageDown>")                           },
 	{ "<C-u>",            ALIAS("<S-PageUp>")                           },
@@ -237,7 +235,6 @@ static KeyBinding vis_mode_visual[] = {
 	{ "A",                  ACTION(CURSORS_NEW_LINES_END)                 },
 	{ "<Backspace>",        ALIAS("d")                                    },
 	{ "<C-h>",              ALIAS("<Backspace>")                          },
-	{ "<DEL>",              ALIAS("<Backspace>")                          },
 	{ "<Escape>",           ACTION(MODE_NORMAL)                           },
 	{ "<C-c>",              ALIAS("<Escape>")                             },
 	{ "v",                  ALIAS("<Escape>")                             },
@@ -259,7 +256,6 @@ static KeyBinding vis_mode_visual_line[] = {
 
 static KeyBinding vis_mode_readline[] = {
 	{ "<Backspace>",    ACTION(DELETE_CHAR_PREV)                    },
-	{ "<DEL>",          ALIAS("<Backspace>")                        },
 	{ "<C-h>",          ALIAS("<Backspace>")                        },
 	{ "<Escape>",       ACTION(MODE_NORMAL)                         },
 	{ "<C-c>",          ALIAS("<Enter>")                            },
@@ -271,7 +267,6 @@ static KeyBinding vis_mode_readline[] = {
 
 static KeyBinding vis_mode_prompt[] = {
 	{ "<Backspace>",    ACTION(PROMPT_BACKSPACE)                    },
-	{ "<DEL>",          ALIAS("<Backspace>")                        },
 	{ "<C-h>",          ALIAS("<Backspace>")                        },
 	{ "<Enter>",        ACTION(PROMPT_ENTER)                        },
 	{ "<C-j>",          ALIAS("<Enter>")                            },
