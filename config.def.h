@@ -161,6 +161,7 @@ static KeyBinding vis_operator_options[] = {
 
 static KeyBinding vis_mode_normal[] = {
 	{ "<Escape>",         ACTION(CURSORS_REMOVE_ALL)                    },
+	{ "<Delete>",         ALIAS("x")                                    },
 	{ "<C-k>",            ACTION(CURSORS_NEW_LINE_ABOVE)                },
 	{ "<C-j>",            ACTION(CURSORS_NEW_LINE_BELOW)                },
 	{ "<C-a>",            ACTION(CURSORS_ALIGN)                         },
@@ -235,6 +236,7 @@ static KeyBinding vis_mode_visual[] = {
 	{ "A",                  ACTION(CURSORS_NEW_LINES_END)                 },
 	{ "<Backspace>",        ALIAS("d")                                    },
 	{ "<C-h>",              ALIAS("<Backspace>")                          },
+	{ "<Delete>",           ALIAS("<Backspace>")                          },
 	{ "<Escape>",           ACTION(MODE_NORMAL)                           },
 	{ "<C-c>",              ALIAS("<Escape>")                             },
 	{ "v",                  ALIAS("<Escape>")                             },
@@ -257,6 +259,7 @@ static KeyBinding vis_mode_visual_line[] = {
 static KeyBinding vis_mode_readline[] = {
 	{ "<Backspace>",    ACTION(DELETE_CHAR_PREV)                    },
 	{ "<C-h>",          ALIAS("<Backspace>")                        },
+	{ "<Delete>",       ACTION(DELETE_CHAR_NEXT)                    },
 	{ "<Escape>",       ACTION(MODE_NORMAL)                         },
 	{ "<C-c>",          ALIAS("<Enter>")                            },
 	{ "<C-d>",          ACTION(DELETE_CHAR_NEXT)                    },
