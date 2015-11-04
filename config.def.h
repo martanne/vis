@@ -24,7 +24,7 @@ static KeyBinding vis_movements[] = {
 	{ "<Backspace>",   ALIAS("h")                              },
 	{ "<C-h>",         ALIAS("<Backspace>")                    },
 	{ "l",             ACTION(CURSOR_CHAR_NEXT)                },
-	{ "<Space>",       ALIAS("l")                              },
+	{ " ",             ALIAS("l")                              },
 	{ "k",             ACTION(CURSOR_LINE_UP)                  },
 	{ "C-p",           ALIAS("k")                              },
 	{ "j",             ACTION(CURSOR_LINE_DOWN)                },
