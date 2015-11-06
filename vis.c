@@ -1609,6 +1609,10 @@ static void action_do(Vis *vis, Action *a) {
 	}
 
 	if (a->op) {
+		/* we do not support visual repeat, still do something resonable */
+		if (vis->mode->visual && !a->movement && !a->textobj)
+			a->movement = &moves[MOVE_NOP];
+
 		/* operator implementations must not change the mode,
 		 * they might get called multiple times (once for every cursor)
 		 */
