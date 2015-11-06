@@ -1135,7 +1135,6 @@ static size_t op_delete(Vis *vis, Text *txt, OperatorContext *c) {
 static size_t op_change(Vis *vis, Text *txt, OperatorContext *c) {
 	op_delete(vis, txt, c);
 	macro_operator_record(vis);
-	vis_mode_switch(vis, VIS_MODE_INSERT);
 	return c->range.start;
 }
 
@@ -1310,13 +1309,11 @@ static size_t op_join(Vis *vis, Text *txt, OperatorContext *c) {
 
 static size_t op_insert(Vis *vis, Text *txt, OperatorContext *c) {
 	macro_operator_record(vis);
-	vis_mode_switch(vis, VIS_MODE_INSERT);
 	return c->newpos != EPOS ? c->newpos : c->pos;
 }
 
 static size_t op_replace(Vis *vis, Text *txt, OperatorContext *c) {
 	macro_operator_record(vis);
-	vis_mode_switch(vis, VIS_MODE_REPLACE);
 	return c->newpos != EPOS ? c->newpos : c->pos;
 }
 
@@ -1612,7 +1609,14 @@ static void action_do(Vis *vis, Action *a) {
 	}
 
 	if (a->op) {
-		if (vis->mode == &vis_modes[VIS_MODE_OPERATOR])
+		/* operator implementations must not change the mode,
+		 * they might get called multiple times (once for every cursor)
+		 */
+		if (a->op == &ops[OP_INSERT] || a->op == &ops[OP_CHANGE])
+			vis_mode_switch(vis, VIS_MODE_INSERT);
+		else if (a->op == &ops[OP_REPLACE])
+			vis_mode_switch(vis, VIS_MODE_REPLACE);
+		else if (vis->mode == &vis_modes[VIS_MODE_OPERATOR])
 			mode_set(vis, vis->mode_prev);
 		else if (vis->mode->visual)
 			vis_mode_switch(vis, VIS_MODE_NORMAL);
