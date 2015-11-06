@@ -34,7 +34,7 @@ LDFLAGS_LUA = $(shell pkg-config --libs lua5.1 2> /dev/null || echo "-llua")
 LDFLAGS_TERMKEY = $(shell pkg-config --libs termkey 2> /dev/null || echo "-ltermkey")
 LDFLAGS_CURSES = $(shell pkg-config --libs ncursesw 2> /dev/null || echo "-lncursesw")
 
-LIBS = -lm -lc
+LIBS = -lm -ldl -lc
 OS = $(shell uname)
 
 ifeq (${OS},Linux)
