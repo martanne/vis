@@ -1179,6 +1179,13 @@ static size_t op_put(Vis *vis, Text *txt, OperatorContext *c) {
 			pos = text_line_start(txt, c->pos);
 			break;
 		}
+	} else {
+		switch (c->arg->i) {
+		case OP_PUT_AFTER:
+		case OP_PUT_BEFORE:
+			pos = text_char_prev(txt, pos);
+			break;
+		}
 	}
 
 	return pos;
