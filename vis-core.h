@@ -158,4 +158,6 @@ struct Vis {
 /* TODO: make part of Vis struct? enable dynamic modes? */
 extern Mode vis_modes[VIS_MODE_LAST];
 
+extern Movement moves[MOVE_INVALID];
+
 #endif

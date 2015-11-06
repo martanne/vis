@@ -209,6 +209,7 @@ enum VisMotion {
 	MOVE_JUMPLIST_NEXT,
 	MOVE_JUMPLIST_PREV,
 	MOVE_NOP,
+	MOVE_INVALID,
 	/* pseudo motions: keep them at the end to save space in array definition */
 	MOVE_TOTILL_REPEAT,
 	MOVE_TOTILL_REVERSE,
