@@ -65,6 +65,7 @@ void vis_window_close(Win*);
 /* split the given window. changes to the displayed text will be reflected
  * in both windows */
 bool vis_window_split(Win*);
+void vis_window_name(Win*, const char *filename);
 /* focus the next / previous window */
 void vis_window_next(Vis*);
 void vis_window_prev(Vis*);
