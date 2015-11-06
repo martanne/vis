@@ -199,7 +199,7 @@ dependencies-full: dependency/sources/install-libncurses dependencies
 
 local: dependencies
 	CFLAGS="$(CFLAGS) -I$(DEPS_INC)" LDFLAGS="$(LDFLAGS) -L$(DEPS_LIB)" make CFLAGS_LUA= CFLAGS_TERMKEY= LDFLAGS_LUA=-llua LDFLAGS_TERMKEY=-ltermkey
-	@echo Run with: LD_LIBRARY_PATH=$(DEPS_LIB) ./vis
+	@echo Run with: LD_LIBRARY_PATH=$(DEPS_LIB) VIS_PATH=. ./vis
 
 standalone: dependency/sources/install-libmusl
 	PATH=$(DEPS_BIN):$$PATH CC=musl-gcc PKG_CONFIG_PATH= PKG_CONFIG_LIBDIR= CFLAGS=-I$(DEPS_INC)/ncursesw $(MAKE) dependencies-full
