@@ -48,6 +48,12 @@ config.mk:
 vis: config.h config.mk *.c *.h
 	${CC} ${CFLAGS} ${CFLAGS_VIS} ${SRC} ${LDFLAGS} ${LDFLAGS_VIS} -o $@
 
+test: vis
+	@$(MAKE) -C test
+
+test-local: vis
+	@$(MAKE) -C test test-local
+
 debug: clean
 	@$(MAKE) CFLAGS_VIS='${DEBUG_CFLAGS_VIS}'
 
@@ -91,4 +97,4 @@ uninstall:
 	@echo removing support files from ${DESTDIR}${SHAREPREFIX}/vis
 	@rm -rf ${DESTDIR}${SHAREPREFIX}/vis
 
-.PHONY: all clean dist install uninstall debug profile
+.PHONY: all clean dist install uninstall debug profile test
