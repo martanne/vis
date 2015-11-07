@@ -58,7 +58,7 @@ static void vis_mode_operator_leave(Vis *vis, Mode *new) {
 
 static void vis_mode_operator_input(Vis *vis, const char *str, size_t len) {
 	/* invalid operator */
-	action_reset(vis, &vis->action);
+	vis_cancel(vis);
 	mode_set(vis, vis->mode_prev);
 }
 
@@ -112,7 +112,7 @@ static void vis_mode_prompt_leave(Vis *vis, Mode *new) {
 static void vis_mode_insert_enter(Vis *vis, Mode *old) {
 	if (!vis->macro_operator) {
 		macro_operator_record(vis);
-		action_reset(vis, &vis->action_prev);
+		action_reset(&vis->action_prev);
 		vis->action_prev.macro = vis->macro_operator;
 		vis->action_prev.op = &ops[OP_INSERT];
 	}
@@ -136,7 +136,7 @@ static void vis_mode_insert_input(Vis *vis, const char *str, size_t len) {
 static void vis_mode_replace_enter(Vis *vis, Mode *old) {
 	if (!vis->macro_operator) {
 		macro_operator_record(vis);
-		action_reset(vis, &vis->action_prev);
+		action_reset(&vis->action_prev);
 		vis->action_prev.macro = vis->macro_operator;
 		vis->action_prev.op = &ops[OP_REPLACE];
 	}

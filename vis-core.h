@@ -167,7 +167,7 @@ const char *expandtab(Vis *vis);
 void macro_operator_stop(Vis *vis);
 void macro_operator_record(Vis *vis);
 
-void action_reset(Vis*, Action *a);
+void action_reset(Action*);
 
 void mode_set(Vis *vis, Mode *new_mode);
 Mode *mode_get(Vis *vis, enum VisMode mode);

@@ -660,11 +660,15 @@ static void action_do(Vis *vis, Action *a) {
 				a->macro = vis->macro_operator;
 			vis->action_prev = *a;
 		}
-		action_reset(vis, a);
+		action_reset(a);
 	}
 }
 
-void action_reset(Vis *vis, Action *a) {
+void vis_cancel(Vis *vis) {
+	action_reset(&vis->action);
+}
+
+void action_reset(Action *a) {
 	memset(a, 0, sizeof(*a));
 }
 
@@ -1034,7 +1038,7 @@ bool vis_motion(Vis *vis, enum VisMotion motion, ...) {
 	{
 		const char *pattern = va_arg(ap, char*);
 		if (text_regex_compile(vis->search_pattern, pattern, REG_EXTENDED)) {
-			action_reset(vis, &vis->action);
+			vis_cancel(vis);
 			goto err;
 		}
 		if (motion == MOVE_SEARCH_FORWARD)
@@ -1199,7 +1203,7 @@ void vis_repeat(Vis *vis) {
 		}
 		vis->action_prev = action_prev;
 	}
-	action_reset(vis, &vis->action);
+	vis_cancel(vis);
 }
 
 void vis_mark_set(Vis *vis, enum VisMark mark, size_t pos) {

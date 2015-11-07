@@ -320,6 +320,7 @@ void vis_register_set(Vis*, enum VisRegister);
 Register *vis_register_get(Vis*, enum VisRegister);
 
 void vis_repeat(Vis*);
+void vis_cancel(Vis*);
 
 /* execute a :-command (call without without leading ':') */
 bool vis_cmd(Vis*, const char *cmd);
