@@ -2,6 +2,5 @@ language: c
 compiler:
   - gcc
 env:
-  - CFLAGS=
-  - CFLAGS="-Wextra -Wno-missing-field-initializers -Wno-unused-parameter"
-script: make local
+  - TARGET="local test-local"
+script: LD_LIBRARY_PATH="$(pwd)/dependency/install/usr/lib" make $TARGET
