@@ -1024,7 +1024,6 @@ Ui *ui_curses_new(void) {
 		.free = ui_curses_free,
 		.termkey_get = ui_termkey_get,
 		.suspend = ui_suspend,
-		.resume = ui_resize,
 		.resize = ui_resize,
 		.update = ui_update,
 		.window_new = ui_window_new,

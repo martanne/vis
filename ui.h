@@ -47,7 +47,6 @@ struct Ui {
 	void (*draw)(Ui*);
 	void (*update)(Ui*);
 	void (*suspend)(Ui*);
-	void (*resume)(Ui*);
 	const char* (*getkey)(Ui*);
 	bool (*haskey)(Ui*);
 	void (*terminal_save)(Ui*);

@@ -1194,7 +1194,7 @@ static const char *cursors_remove(Vis *vis, const char *keys, const Arg *arg) {
 static const char *replace(Vis *vis, const char *keys, const Arg *arg) {
 	if (!keys[0])
 		return NULL;
-	const char *next = vis_key_next(vis, keys);
+	const char *next = vis_keys_next(vis, keys);
 	if (!next)
 		return NULL;
 	size_t len = next - keys;
@@ -1243,7 +1243,7 @@ static const char *movement_key(Vis *vis, const char *keys, const Arg *arg) {
 	if (!keys[0])
 		return NULL;
 	char key[32];
-	const char *next = vis_key_next(vis, keys);
+	const char *next = vis_keys_next(vis, keys);
 	strncpy(key, keys, next - keys + 1);
 	key[sizeof(key)-1] = '\0';
 	vis_motion(vis, arg->i, key);
@@ -1274,7 +1274,7 @@ static const char *selection_restore(Vis *vis, const char *keys, const Arg *arg)
 }
 
 static const char *key2register(Vis *vis, const char *keys, enum VisRegister *reg) {
-	*reg = VIS_REGISTER_INVALID;
+	*reg = VIS_REG_INVALID;
 	if (!keys[0])
 		return NULL;
 	if (keys[0] >= 'a' && keys[0] <= 'z')

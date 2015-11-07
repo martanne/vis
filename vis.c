@@ -225,10 +225,6 @@ bool vis_window_split(Win *original) {
 	return true;
 }
 
-void vis_resize(Vis *vis) {
-	vis->ui->resize(vis->ui);
-}
-
 void vis_window_next(Vis *vis) {
 	Win *sel = vis->win;
 	if (!sel)
@@ -535,7 +531,7 @@ static void action_do(Vis *vis, Action *a) {
 
 		next = view_cursors_next(cursor);
 		size_t pos = view_cursors_pos(cursor);
-		Register *reg = a->reg ? a->reg : &vis->registers[REG_DEFAULT];
+		Register *reg = a->reg ? a->reg : &vis->registers[VIS_REG_DEFAULT];
 		if (multiple_cursors)
 			reg = view_cursors_register(cursor);
 
@@ -694,7 +690,7 @@ void vis_die(Vis *vis, const char *msg, ...) {
 	va_end(ap);
 }
 
-const char *vis_key_next(Vis *vis, const char *keys) {
+const char *vis_keys_next(Vis *vis, const char *keys) {
 	TermKeyKey key;
 	TermKey *termkey = vis->ui->termkey_get(vis->ui);
 	const char *next = NULL;
@@ -727,7 +723,7 @@ static const char *vis_keys_raw(Vis *vis, Buffer *buf, const char *input) {
 	
 	while (cur && *cur) {
 
-		if (!(end = (char*)vis_key_next(vis, cur)))
+		if (!(end = (char*)vis_keys_next(vis, cur)))
 			goto err; // XXX: can't parse key this should never happen
 
 		char tmp = *end;
@@ -801,7 +797,7 @@ bool vis_keys_inject(Vis *vis, const char *pos, const char *input) {
 	return true;
 }
 
-const char *vis_keys(Vis *vis, const char *input) {
+const char *vis_keys_push(Vis *vis, const char *input) {
 	if (!input)
 		return NULL;
 
@@ -958,7 +954,7 @@ int vis_run(Vis *vis, int argc, char *argv[]) {
 		const char *key;
 
 		while ((key = getkey(vis)))
-			vis_keys(vis, key);
+			vis_keys_push(vis, key);
 
 		if (vis->mode->idle)
 			timeout = &idle;
@@ -1087,7 +1083,7 @@ bool vis_motion(Vis *vis, enum VisMotion motion, ...) {
 	case MOVE_MARK_LINE:
 	{
 		int mark = va_arg(ap, int);
-		if (MARK_a <= mark && mark < VIS_MARK_INVALID)
+		if (VIS_MARK_a <= mark && mark < VIS_MARK_INVALID)
 			vis->action.mark = mark;
 		else
 			goto err;
@@ -1221,7 +1217,8 @@ int vis_count_get(Vis *vis) {
 }
 
 void vis_count_set(Vis *vis, int count) {
-	vis->action.count = count;
+	if (count >= 0)
+		vis->action.count = count;
 }
 
 void vis_register_set(Vis *vis, enum VisRegister reg) {

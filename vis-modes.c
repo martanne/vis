@@ -20,13 +20,13 @@ void mode_set(Vis *vis, Mode *new_mode) {
 	vis->win->ui->draw_status(vis->win->ui);
 }
 
-static bool mode_map(Mode *mode, const char *name, KeyBinding *binding) {
-	return map_put(mode->bindings, name, binding);
+static bool mode_map(Mode *mode, const char *key, KeyBinding *binding) {
+	return map_put(mode->bindings, key, binding);
 }
 
-bool vis_mode_map(Vis *vis, enum VisMode modeid, const char *name, KeyBinding *binding) {
+bool vis_mode_map(Vis *vis, enum VisMode modeid, const char *key, KeyBinding *binding) {
 	Mode *mode = mode_get(vis, modeid);
-	return mode && map_put(mode->bindings, name, binding);
+	return mode && mode_map(mode, key, binding);
 }
 
 bool vis_mode_bindings(Vis *vis, enum VisMode modeid, KeyBinding **bindings) {
@@ -41,9 +41,9 @@ bool vis_mode_bindings(Vis *vis, enum VisMode modeid, KeyBinding **bindings) {
 	return success;
 }
 
-bool vis_mode_unmap(Vis *vis, enum VisMode modeid, const char *name) {
+bool vis_mode_unmap(Vis *vis, enum VisMode modeid, const char *key) {
 	Mode *mode = mode_get(vis, modeid);
-	return mode && map_delete(mode->bindings, name);
+	return mode && map_delete(mode->bindings, key);
 }
 
 /** mode switching event handlers */

@@ -1,6 +1,7 @@
 #ifndef VIS_CORE_H
 #define VIS_CORE_H
 
+#include <setjmp.h>
 #include "vis.h"
 #include "text.h"
 #include "text-regex.h"
@@ -123,7 +124,7 @@ struct Vis {
 	Win *windows;                     /* list of windows */
 	Win *win;                         /* currently active window */
 	Syntax *syntaxes;                 /* NULL terminated array of syntax definitions */
-	Register registers[VIS_REGISTER_INVALID];     /* register used for copy and paste */
+	Register registers[VIS_REG_INVALID];     /* register used for copy and paste */
 	Macro macros[VIS_MACRO_INVALID];         /* recorded macros */
 	Macro *recording, *last_recording;/* currently and least recently recorded macro */
 	Macro *macro_operator;
