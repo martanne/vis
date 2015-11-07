@@ -45,8 +45,17 @@ static void mode_set(Vis *vis, Mode *new_mode);
 static Mode *mode_get(Vis *vis, enum VisMode mode);
 static Macro *macro_get(Vis *vis, enum VisMacro m);
 static void macro_replay(Vis *vis, const Macro *macro);
-static void macro_operator_stop(Vis *vis);
-static void macro_operator_record(Vis *vis);
+
+const char *expandtab(Vis *vis) {
+	static char spaces[9];
+	int tabwidth = vis->tabwidth;
+	tabwidth = MIN(tabwidth, LENGTH(spaces) - 1);
+	for (int i = 0; i < tabwidth; i++)
+		spaces[i] = ' ';
+	spaces[tabwidth] = '\0';
+	return vis->expandtab ? spaces : "\t";
+}
+
 
 /** window / file handling */
 
@@ -240,10 +249,6 @@ void vis_window_prev(Vis *vis) {
 	if (!vis->win)
 		for (vis->win = vis->windows; vis->win->next; vis->win = vis->win->next);
 	vis->ui->window_focus(vis->win->ui);
-}
-
-static int tabwidth_get(Vis *vis) {
-	return vis->tabwidth;
 }
 
 bool vis_syntax_load(Vis *vis, Syntax *syntaxes) {
@@ -461,33 +466,6 @@ void vis_info_show(Vis *vis, const char *msg, ...) {
 void vis_info_hide(Vis *vis) {
 	vis->ui->info_hide(vis->ui);
 }
-
-/** operators */
-static size_t op_change(Vis*, Text*, OperatorContext *c);
-static size_t op_yank(Vis*, Text*, OperatorContext *c);
-static size_t op_put(Vis*, Text*, OperatorContext *c);
-static size_t op_delete(Vis*, Text*, OperatorContext *c);
-static size_t op_shift_right(Vis*, Text*, OperatorContext *c);
-static size_t op_shift_left(Vis*, Text*, OperatorContext *c);
-static size_t op_case_change(Vis*, Text*, OperatorContext *c);
-static size_t op_join(Vis*, Text*, OperatorContext *c);
-static size_t op_insert(Vis*, Text*, OperatorContext *c);
-static size_t op_replace(Vis*, Text*, OperatorContext *c);
-static size_t op_cursor(Vis*, Text*, OperatorContext *c);
-
-static Operator ops[] = {
-	[OP_DELETE]      = { op_delete      },
-	[OP_CHANGE]      = { op_change      },
-	[OP_YANK]        = { op_yank        },
-	[OP_PUT_AFTER]   = { op_put         },
-	[OP_SHIFT_RIGHT] = { op_shift_right },
-	[OP_SHIFT_LEFT]  = { op_shift_left  },
-	[OP_CASE_SWAP] = { op_case_change },
-	[OP_JOIN]          = { op_join          },
-	[OP_INSERT]      = { op_insert      },
-	[OP_REPLACE]     = { op_replace     },
-	[OP_CURSOR_SOL]         = { op_cursor         },
-};
 
 static TextObject textobjs[] = {
 	[TEXT_OBJ_INNER_WORD]           = { text_object_word                  },
@@ -795,209 +773,6 @@ bool vis_action_register(Vis *vis, KeyAction *action) {
 static const char *getkey(Vis*);
 static void action_do(Vis*, Action *a);
 
-/** operator implementations of type: void (*op)(OperatorContext*) */
-
-static size_t op_delete(Vis *vis, Text *txt, OperatorContext *c) {
-	c->reg->linewise = c->linewise;
-	register_put(c->reg, txt, &c->range);
-	text_delete_range(txt, &c->range);
-	size_t pos = c->range.start;
-	if (c->linewise && pos == text_size(txt))
-		pos = text_line_begin(txt, text_line_prev(txt, pos));
-	return pos;
-}
-
-static size_t op_change(Vis *vis, Text *txt, OperatorContext *c) {
-	op_delete(vis, txt, c);
-	macro_operator_record(vis);
-	return c->range.start;
-}
-
-static size_t op_yank(Vis *vis, Text *txt, OperatorContext *c) {
-	c->reg->linewise = c->linewise;
-	register_put(c->reg, txt, &c->range);
-	return c->pos;
-}
-
-static size_t op_put(Vis *vis, Text *txt, OperatorContext *c) {
-	size_t pos = c->pos;
-	switch (c->arg->i) {
-	case OP_PUT_AFTER:
-	case OP_PUT_AFTER_END:
-		if (c->reg->linewise)
-			pos = text_line_next(txt, pos);
-		else
-			pos = text_char_next(txt, pos);
-		break;
-	case OP_PUT_BEFORE:
-	case OP_PUT_BEFORE_END:
-		if (c->reg->linewise)
-			pos = text_line_begin(txt, pos);
-		break;
-	}
-
-	for (int i = 0; i < c->count; i++) {
-		text_insert(txt, pos, c->reg->data, c->reg->len);
-		pos += c->reg->len;
-	}
-
-	if (c->reg->linewise) {
-		switch (c->arg->i) {
-		case OP_PUT_BEFORE_END:
-		case OP_PUT_AFTER_END:
-			pos = text_line_start(txt, pos);
-			break;
-		case OP_PUT_AFTER:
-			pos = text_line_start(txt, text_line_next(txt, c->pos));
-			break;
-		case OP_PUT_BEFORE:
-			pos = text_line_start(txt, c->pos);
-			break;
-		}
-	} else {
-		switch (c->arg->i) {
-		case OP_PUT_AFTER:
-		case OP_PUT_BEFORE:
-			pos = text_char_prev(txt, pos);
-			break;
-		}
-	}
-
-	return pos;
-}
-
-static const char *expandtab(Vis *vis) {
-	static char spaces[9];
-	int tabwidth = tabwidth_get(vis);
-	tabwidth = MIN(tabwidth, LENGTH(spaces) - 1);
-	for (int i = 0; i < tabwidth; i++)
-		spaces[i] = ' ';
-	spaces[tabwidth] = '\0';
-	return vis->expandtab ? spaces : "\t";
-}
-
-static size_t op_shift_right(Vis *vis, Text *txt, OperatorContext *c) {
-	size_t pos = text_line_begin(txt, c->range.end), prev_pos;
-	const char *tab = expandtab(vis);
-	size_t tablen = strlen(tab);
-
-	/* if range ends at the begin of a line, skip line break */
-	if (pos == c->range.end)
-		pos = text_line_prev(txt, pos);
-
-	do {
-		prev_pos = pos = text_line_begin(txt, pos);
-		text_insert(txt, pos, tab, tablen);
-		pos = text_line_prev(txt, pos);
-	}  while (pos >= c->range.start && pos != prev_pos);
-
-	return c->pos + tablen;
-}
-
-static size_t op_shift_left(Vis *vis, Text *txt, OperatorContext *c) {
-	size_t pos = text_line_begin(txt, c->range.end), prev_pos;
-	size_t tabwidth = tabwidth_get(vis), tablen;
-
-	/* if range ends at the begin of a line, skip line break */
-	if (pos == c->range.end)
-		pos = text_line_prev(txt, pos);
-
-	do {
-		char c;
-		size_t len = 0;
-		prev_pos = pos = text_line_begin(txt, pos);
-		Iterator it = text_iterator_get(txt, pos);
-		if (text_iterator_byte_get(&it, &c) && c == '\t') {
-			len = 1;
-		} else {
-			for (len = 0; text_iterator_byte_get(&it, &c) && c == ' '; len++)
-				text_iterator_byte_next(&it, NULL);
-		}
-		tablen = MIN(len, tabwidth);
-		text_delete(txt, pos, tablen);
-		pos = text_line_prev(txt, pos);
-	}  while (pos >= c->range.start && pos != prev_pos);
-
-	return c->pos - tablen;
-}
-
-static size_t op_case_change(Vis *vis, Text *txt, OperatorContext *c) {
-	size_t len = text_range_size(&c->range);
-	char *buf = malloc(len);
-	if (!buf)
-		return c->pos;
-	len = text_bytes_get(txt, c->range.start, len, buf);
-	size_t rem = len;
-	for (char *cur = buf; rem > 0; cur++, rem--) {
-		int ch = (unsigned char)*cur;
-		if (isascii(ch)) {
-			if (c->arg->i == OP_CASE_SWAP)
-				*cur = islower(ch) ? toupper(ch) : tolower(ch);
-			else if (c->arg->i == OP_CASE_UPPER)
-				*cur = toupper(ch);
-			else
-				*cur = tolower(ch);
-		}
-	}
-
-	text_delete(txt, c->range.start, len);
-	text_insert(txt, c->range.start, buf, len);
-	free(buf);
-	return c->pos;
-}
-
-static size_t op_cursor(Vis *vis, Text *txt, OperatorContext *c) {
-	View *view = vis->win->view;
-	Filerange r = text_range_linewise(txt, &c->range);
-	for (size_t line = text_range_line_first(txt, &r); line != EPOS; line = text_range_line_next(txt, &r, line)) {
-		Cursor *cursor = view_cursors_new(view);
-		if (cursor) {
-			size_t pos;
-			if (c->arg->i == OP_CURSOR_EOL)
-				pos = text_line_finish(txt, line);
-			else
-				pos = text_line_start(txt, line);
-			view_cursors_to(cursor, pos);
-		}
-	}
-	return EPOS;
-}
-
-static size_t op_join(Vis *vis, Text *txt, OperatorContext *c) {
-	size_t pos = text_line_begin(txt, c->range.end), prev_pos;
-
-	/* if operator and range are both linewise, skip last line break */
-	if (c->linewise && text_range_is_linewise(txt, &c->range)) {
-		size_t line_prev = text_line_prev(txt, pos);
-		size_t line_prev_prev = text_line_prev(txt, line_prev);
-		if (line_prev_prev >= c->range.start)
-			pos = line_prev;
-	}
-
-	do {
-		prev_pos = pos;
-		size_t end = text_line_start(txt, pos);
-		pos = text_char_next(txt, text_line_finish(txt, text_line_prev(txt, end)));
-		if (pos >= c->range.start && end > pos) {
-			text_delete(txt, pos, end - pos);
-			text_insert(txt, pos, " ", 1);
-		} else {
-			break;
-		}
-	} while (pos != prev_pos);
-
-	return c->range.start;
-}
-
-static size_t op_insert(Vis *vis, Text *txt, OperatorContext *c) {
-	macro_operator_record(vis);
-	return c->newpos != EPOS ? c->newpos : c->pos;
-}
-
-static size_t op_replace(Vis *vis, Text *txt, OperatorContext *c) {
-	macro_operator_record(vis);
-	return c->newpos != EPOS ? c->newpos : c->pos;
-}
 
 /** action processing: execut the operator / movement / text object */
 
@@ -1623,12 +1398,12 @@ static Macro *macro_get(Vis *vis, enum VisMacro m) {
 	return NULL;
 }
 
-static void macro_operator_record(Vis *vis) {
+void macro_operator_record(Vis *vis) {
 	vis->macro_operator = macro_get(vis, VIS_MACRO_OPERATOR);
 	macro_reset(vis->macro_operator);
 }
 
-static void macro_operator_stop(Vis *vis) {
+void macro_operator_stop(Vis *vis) {
 	vis->macro_operator = NULL;
 }
 
