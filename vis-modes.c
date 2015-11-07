@@ -100,13 +100,22 @@ static void vis_mode_prompt_input(Vis *vis, const char *str, size_t len) {
 }
 
 static void vis_mode_prompt_enter(Vis *vis, Mode *old) {
-	if (old->isuser && old != &vis_modes[VIS_MODE_PROMPT])
+	if (old->isuser && old != &vis_modes[VIS_MODE_PROMPT]) {
 		vis->mode_before_prompt = old;
+		/* prompt manipulations e.g. <Backspace> should not affect default register */
+		Register tmp = vis->registers[VIS_REG_PROMPT];
+		vis->registers[VIS_REG_PROMPT] = vis->registers[VIS_REG_DEFAULT];
+		vis->registers[VIS_REG_DEFAULT] = tmp;
+	}
 }
 
 static void vis_mode_prompt_leave(Vis *vis, Mode *new) {
-	if (new->isuser)
+	if (new->isuser) {
 		vis_prompt_hide(vis);
+		Register tmp = vis->registers[VIS_REG_DEFAULT];
+		vis->registers[VIS_REG_DEFAULT] = vis->registers[VIS_REG_PROMPT];
+		vis->registers[VIS_REG_PROMPT] = tmp;
+	}
 }
 
 static void vis_mode_insert_enter(Vis *vis, Mode *old) {
