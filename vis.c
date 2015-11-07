@@ -132,7 +132,8 @@ void vis_window_name(Win *win, const char *filename) {
 	}
 
 	if (filename && L) {
-		lua_getglobal(L, "lexers");
+		lua_getglobal(L, "vis");
+		lua_getfield(L, -1, "lexers");
 		lua_getfield(L, -1, "lexer_name");
 		lua_pushstring(L, filename);
 		lua_pcall(L, 1, 1, 0);
@@ -360,7 +361,10 @@ Vis *vis_new(Ui *ui) {
 		lua_close(L);
 		vis->lua = L = NULL;
 	} else {
-		lua_setglobal(L, "lexers");
+		lua_newtable(L); /* vis */
+		lua_pushvalue(L, -2); /* require return value */
+		lua_setfield(L, -2, "lexers");
+		lua_setglobal(L, "vis");
 		vis_theme_load(vis, "default");
 	}
 

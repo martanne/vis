@@ -456,7 +456,8 @@ void view_update(View *view) {
 	lua_State *L = view->lua;
 	if (L && view->lexer_name) {
 
-		lua_getglobal(L, "lexers");
+		lua_getglobal(L, "vis");
+		lua_getfield(L, -1, "lexers");
 		lua_getfield(L, -1, "load");
 		lua_pushstring(L, view->lexer_name);
 		lua_pcall(L, 1, 1, 0);
@@ -898,11 +899,12 @@ bool view_syntax_set(View *view, const char *name) {
 	/* Try to load the specified lexer and parse its token styles.
 	 * Roughly equivalent to the following lua code:
 	 *
-	 * lang = lexers.load(name)
+	 * lang = vis.lexers.load(name)
 	 * for token_name, id in pairs(lang._TOKENSTYLES) do
-	 * 	ui->syntax_style(id, lexers:get_style(lang, token_name); 
+	 * 	ui->syntax_style(id, vis.lexers:get_style(lang, token_name);
 	 */
-	lua_getglobal(L, "lexers");
+	lua_getglobal(L, "vis");
+	lua_getfield(L, -1, "lexers");
 
 	lua_getfield(L, -1, "STYLE_DEFAULT");
 	view->ui->syntax_style(view->ui, UI_STYLE_DEFAULT, lua_tostring(L, -1));
@@ -922,7 +924,6 @@ bool view_syntax_set(View *view, const char *name) {
 	lua_getfield(L, -1, "STYLE_COLOR_COLUMN");
 	view->ui->syntax_style(view->ui, UI_STYLE_COLOR_COLUMN, lua_tostring(L, -1));
 	lua_pop(L, 1);
-
 
 	lua_getfield(L, -1, "load");
 	lua_pushstring(L, name);
@@ -956,10 +957,7 @@ bool view_syntax_set(View *view, const char *name) {
 		lua_pop(L, 1); /* style */
 	}
 
-	lua_pop(L, 1); /* _TOKENSTYLES */
-	lua_pop(L, 1); /* grammar */
-
-	lua_pop(L, 1); /* lexers */
+	lua_pop(L, 4); /* _TOKENSTYLES, grammar, lexers, vis */
 
 	return true;
 }

@@ -1,4 +1,6 @@
 -- Solarized color codes Copyright (c) 2011 Ethan Schoonover
+local lexers = vis.lexers
+
 local colors = {
 	['base03'] = '#000000', -- '#002b36',
 	['base02'] = '#073642',
