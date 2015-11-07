@@ -590,7 +590,7 @@ size_t text_bracket_match_except(Text *txt, size_t pos, const char *except) {
 
 	if (direction >= 0) { /* forward search */
 		while (text_iterator_byte_next(&it, &c)) {
-			if (c != current && (c == '"' || c == '\''))
+			if (c != current && c == '"')
 				instring = !instring;
 			if (!instring) {
 				if (c == search && --count == 0)
@@ -601,7 +601,7 @@ size_t text_bracket_match_except(Text *txt, size_t pos, const char *except) {
 		}
 	} else { /* backwards */
 		while (text_iterator_byte_prev(&it, &c)) {
-			if (c != current && (c == '"' || c == '\''))
+			if (c != current && c == '"')
 				instring = !instring;
 			if (!instring) {
 				if (c == search && --count == 0)
