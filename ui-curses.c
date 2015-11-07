@@ -987,6 +987,9 @@ static void ui_prompt_hide(Ui *ui) {
 static bool ui_init(Ui *ui, Vis *vis) {
 	UiCurses *uic = (UiCurses*)ui;
 	uic->vis = vis;
+	const char *theme = getenv("VIS_THEME");
+	if (!theme || !theme[0] || !vis_theme_load(vis, theme))
+		vis_theme_load(vis, COLORS <= 16 ? "default-16" : "default-256");
 	return true;
 }
 

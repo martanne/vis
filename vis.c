@@ -365,7 +365,6 @@ Vis *vis_new(Ui *ui) {
 		lua_pushvalue(L, -2); /* require return value */
 		lua_setfield(L, -2, "lexers");
 		lua_setglobal(L, "vis");
-		vis_theme_load(vis, "default");
 	}
 
 	vis->ui = ui;
