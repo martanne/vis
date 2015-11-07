@@ -57,6 +57,12 @@ vis: config.h config.mk *.c *.h
 	@echo ${CC} ${CFLAGS} ${CFLAGS_VIS} *.c ${LDFLAGS} ${LDFLAGS_VIS} -o $@
 	@${CC} ${CFLAGS} ${CFLAGS_VIS} *.c ${LDFLAGS} ${LDFLAGS_VIS} -o $@
 
+test: vis
+	@$(MAKE) -C test
+
+test-local: vis
+	@$(MAKE) -C test test-local
+
 debug: clean
 	@$(MAKE) CFLAGS_VIS='${DEBUG_CFLAGS_VIS}'
 
@@ -220,4 +226,4 @@ standalone: dependency/sources/install-libmusl
 	PATH=$(DEPS_BIN):$$PATH CC=musl-gcc PKG_CONFIG_PATH= PKG_CONFIG_LIBDIR= CFLAGS="--static -Wl,--as-needed -I$(DEPS_INC)/ncursesw" $(MAKE) CFLAGS_LIBS= debug
 	@echo Run with: VIS_PATH=. ./vis
 
-.PHONY: all clean dist install uninstall debug profile standalone dependencies dependencies-full local
+.PHONY: all clean dist install uninstall debug profile standalone dependencies dependencies-full local test
