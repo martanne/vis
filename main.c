@@ -903,132 +903,132 @@ static KeyAction vis_action[] = {
 	[VIS_ACTION_TEXT_OBJECT_WORD_OUTER] = {
 		"text-object-word-outer",
 		"A word leading and trailing whitespace included",
-		textobj, { .i = TEXT_OBJ_OUTER_WORD }
+		textobj, { .i = VIS_TEXTOBJECT_OUTER_WORD }
 	},
 	[VIS_ACTION_TEXT_OBJECT_WORD_INNER] = {
 		"text-object-word-inner",
 		"A word leading and trailing whitespace excluded",
-		textobj, { .i = TEXT_OBJ_INNER_WORD }
+		textobj, { .i = VIS_TEXTOBJECT_INNER_WORD }
 	},
 	[VIS_ACTION_TEXT_OBJECT_LONGWORD_OUTER] = {
 		"text-object-longword-outer",
 		"A WORD leading and trailing whitespace included",
-		 textobj, { .i = TEXT_OBJ_OUTER_LONGWORD }
+		 textobj, { .i = VIS_TEXTOBJECT_OUTER_LONGWORD }
 	},
 	[VIS_ACTION_TEXT_OBJECT_LONGWORD_INNER] = {
 		"text-object-longword-inner",
 		"A WORD leading and trailing whitespace excluded",
-		 textobj, { .i = TEXT_OBJ_INNER_LONGWORD }
+		 textobj, { .i = VIS_TEXTOBJECT_INNER_LONGWORD }
 	},
 	[VIS_ACTION_TEXT_OBJECT_SENTENCE] = {
 		"text-object-sentence",
 		"A sentence",
-		textobj, { .i = TEXT_OBJ_SENTENCE }
+		textobj, { .i = VIS_TEXTOBJECT_SENTENCE }
 	},
 	[VIS_ACTION_TEXT_OBJECT_PARAGRAPH] = {
 		"text-object-paragraph",
 		"A paragraph",
-		textobj, { .i = TEXT_OBJ_PARAGRAPH }
+		textobj, { .i = VIS_TEXTOBJECT_PARAGRAPH }
 	},
 	[VIS_ACTION_TEXT_OBJECT_SQUARE_BRACKET_OUTER] = {
 		"text-object-square-bracket-outer",
 		"[] block (outer variant)",
-		textobj, { .i = TEXT_OBJ_OUTER_SQUARE_BRACKET }
+		textobj, { .i = VIS_TEXTOBJECT_OUTER_SQUARE_BRACKET }
 	},
 	[VIS_ACTION_TEXT_OBJECT_SQUARE_BRACKET_INNER] = {
 		"text-object-square-bracket-inner",
 		"[] block (inner variant)",
-		textobj, { .i = TEXT_OBJ_INNER_SQUARE_BRACKET }
+		textobj, { .i = VIS_TEXTOBJECT_INNER_SQUARE_BRACKET }
 	},
 	[VIS_ACTION_TEXT_OBJECT_PARANTHESE_OUTER] = {
 		"text-object-parentheses-outer",
 		"() block (outer variant)",
-		textobj, { .i = TEXT_OBJ_OUTER_PARANTHESE }
+		textobj, { .i = VIS_TEXTOBJECT_OUTER_PARANTHESE }
 	},
 	[VIS_ACTION_TEXT_OBJECT_PARANTHESE_INNER] = {
 		"text-object-parentheses-inner",
 		"() block (inner variant)",
-		textobj, { .i = TEXT_OBJ_INNER_PARANTHESE }
+		textobj, { .i = VIS_TEXTOBJECT_INNER_PARANTHESE }
 	},
 	[VIS_ACTION_TEXT_OBJECT_ANGLE_BRACKET_OUTER] = {
 		"text-object-angle-bracket-outer",
 		"<> block (outer variant)",
-		textobj, { .i = TEXT_OBJ_OUTER_ANGLE_BRACKET }
+		textobj, { .i = VIS_TEXTOBJECT_OUTER_ANGLE_BRACKET }
 	},
 	[VIS_ACTION_TEXT_OBJECT_ANGLE_BRACKET_INNER] = {
 		"text-object-angle-bracket-inner",
 		"<> block (inner variant)",
-		textobj, { .i = TEXT_OBJ_INNER_ANGLE_BRACKET }
+		textobj, { .i = VIS_TEXTOBJECT_INNER_ANGLE_BRACKET }
 	},
 	[VIS_ACTION_TEXT_OBJECT_CURLY_BRACKET_OUTER] = {
 		"text-object-curly-bracket-outer",
 		"{} block (outer variant)",
-		textobj, { .i = TEXT_OBJ_OUTER_CURLY_BRACKET }
+		textobj, { .i = VIS_TEXTOBJECT_OUTER_CURLY_BRACKET }
 	},
 	[VIS_ACTION_TEXT_OBJECT_CURLY_BRACKET_INNER] = {
 		"text-object-curly-bracket-inner",
 		"{} block (inner variant)",
-		textobj, { .i = TEXT_OBJ_INNER_CURLY_BRACKET }
+		textobj, { .i = VIS_TEXTOBJECT_INNER_CURLY_BRACKET }
 	},
 	[VIS_ACTION_TEXT_OBJECT_QUOTE_OUTER] = {
 		"text-object-quote-outer",
 		"A quoted string, including the quotation marks",
-		textobj, { .i = TEXT_OBJ_OUTER_QUOTE }
+		textobj, { .i = VIS_TEXTOBJECT_OUTER_QUOTE }
 	},
 	[VIS_ACTION_TEXT_OBJECT_QUOTE_INNER] = {
 		"text-object-quote-inner",
 		"A quoted string, excluding the quotation marks",
-		textobj, { .i = TEXT_OBJ_INNER_QUOTE }
+		textobj, { .i = VIS_TEXTOBJECT_INNER_QUOTE }
 	},
 	[VIS_ACTION_TEXT_OBJECT_SINGLE_QUOTE_OUTER] = {
 		"text-object-single-quote-outer",
 		"A single quoted string, including the quotation marks",
-		textobj, { .i = TEXT_OBJ_OUTER_SINGLE_QUOTE }
+		textobj, { .i = VIS_TEXTOBJECT_OUTER_SINGLE_QUOTE }
 	},
 	[VIS_ACTION_TEXT_OBJECT_SINGLE_QUOTE_INNER] = {
 		"text-object-single-quote-inner",
 		"A single quoted string, excluding the quotation marks",
-		textobj, { .i = TEXT_OBJ_INNER_SINGLE_QUOTE }
+		textobj, { .i = VIS_TEXTOBJECT_INNER_SINGLE_QUOTE }
 	},
 	[VIS_ACTION_TEXT_OBJECT_BACKTICK_OUTER] = {
 		"text-object-backtick-outer",
 		"A backtick delimited string (outer variant)",
-		textobj, { .i = TEXT_OBJ_OUTER_BACKTICK }
+		textobj, { .i = VIS_TEXTOBJECT_OUTER_BACKTICK }
 	},
 	[VIS_ACTION_TEXT_OBJECT_BACKTICK_INNER] = {
 		"text-object-backtick-inner",
 		"A backtick delimited string (inner variant)",
-		textobj, { .i = TEXT_OBJ_INNER_BACKTICK }
+		textobj, { .i = VIS_TEXTOBJECT_INNER_BACKTICK }
 	},
 	[VIS_ACTION_TEXT_OBJECT_ENTIRE_OUTER] = {
 		"text-object-entire-outer",
 		"The whole text content",
-		textobj, { .i = TEXT_OBJ_OUTER_ENTIRE }
+		textobj, { .i = VIS_TEXTOBJECT_OUTER_ENTIRE }
 	},
 	[VIS_ACTION_TEXT_OBJECT_ENTIRE_INNER] = {
 		"text-object-entire-inner",
 		"The whole text content, except for leading and trailing empty lines",
-		textobj, { .i = TEXT_OBJ_INNER_ENTIRE }
+		textobj, { .i = VIS_TEXTOBJECT_INNER_ENTIRE }
 	},
 	[VIS_ACTION_TEXT_OBJECT_FUNCTION_OUTER] = {
 		"text-object-function-outer",
 		"A whole C-like function",
-		 textobj, { .i = TEXT_OBJ_OUTER_FUNCTION }
+		 textobj, { .i = VIS_TEXTOBJECT_OUTER_FUNCTION }
 	},
 	[VIS_ACTION_TEXT_OBJECT_FUNCTION_INNER] = {
 		"text-object-function-inner",
 		"A whole C-like function body",
-		 textobj, { .i = TEXT_OBJ_INNER_FUNCTION }
+		 textobj, { .i = VIS_TEXTOBJECT_INNER_FUNCTION }
 	},
 	[VIS_ACTION_TEXT_OBJECT_LINE_OUTER] = {
 		"text-object-line-outer",
 		"The whole line",
-		 textobj, { .i = TEXT_OBJ_OUTER_LINE }
+		 textobj, { .i = VIS_TEXTOBJECT_OUTER_LINE }
 	},
 	[VIS_ACTION_TEXT_OBJECT_LINE_INNER] = {
 		"text-object-line-inner",
 		"The whole line, excluding leading and trailing whitespace",
-		textobj, { .i = TEXT_OBJ_INNER_LINE }
+		textobj, { .i = VIS_TEXTOBJECT_INNER_LINE }
 	},
 	[VIS_ACTION_MOTION_CHARWISE] = {
 		"motion-charwise",
