@@ -638,9 +638,9 @@ static void action_do(Vis *vis, Action *a) {
 		/* operator implementations must not change the mode,
 		 * they might get called multiple times (once for every cursor)
 		 */
-		if (a->op == &ops[OP_INSERT] || a->op == &ops[OP_CHANGE])
+		if (a->op == &ops[VIS_OP_INSERT] || a->op == &ops[VIS_OP_CHANGE])
 			vis_mode_switch(vis, VIS_MODE_INSERT);
-		else if (a->op == &ops[OP_REPLACE])
+		else if (a->op == &ops[VIS_OP_REPLACE])
 			vis_mode_switch(vis, VIS_MODE_REPLACE);
 		else if (vis->mode == &vis_modes[VIS_MODE_OPERATOR])
 			mode_set(vis, vis->mode_prev);
@@ -964,23 +964,23 @@ int vis_run(Vis *vis, int argc, char *argv[]) {
 
 bool vis_operator(Vis *vis, enum VisOperator id) {
 	switch (id) {
-	case OP_CASE_LOWER:
-	case OP_CASE_UPPER:
-	case OP_CASE_SWAP:
+	case VIS_OP_CASE_LOWER:
+	case VIS_OP_CASE_UPPER:
+	case VIS_OP_CASE_SWAP:
 		vis->action.arg.i = id;
-		id = OP_CASE_SWAP;
+		id = VIS_OP_CASE_SWAP;
 		break;
-	case OP_CURSOR_SOL:
-	case OP_CURSOR_EOL:
+	case VIS_OP_CURSOR_SOL:
+	case VIS_OP_CURSOR_EOL:
 		vis->action.arg.i = id;
-		id = OP_CURSOR_SOL;
+		id = VIS_OP_CURSOR_SOL;
 		break;
-	case OP_PUT_AFTER:
-	case OP_PUT_AFTER_END:
-	case OP_PUT_BEFORE:
-	case OP_PUT_BEFORE_END:
+	case VIS_OP_PUT_AFTER:
+	case VIS_OP_PUT_AFTER_END:
+	case VIS_OP_PUT_BEFORE:
+	case VIS_OP_PUT_BEFORE_END:
 		vis->action.arg.i = id;
-		id = OP_PUT_AFTER;
+		id = VIS_OP_PUT_AFTER;
 		break;
 	default:
 		break;
@@ -1006,7 +1006,7 @@ bool vis_operator(Vis *vis, enum VisOperator id) {
 	}
 
 	/* put is not a real operator, does not need a range to operate on */
-	if (id == OP_PUT_AFTER)
+	if (id == VIS_OP_PUT_AFTER)
 		vis_motion(vis, MOVE_NOP);
 
 	return true;
@@ -1022,11 +1022,11 @@ bool vis_motion(Vis *vis, enum VisMotion motion, ...) {
 
 	switch (motion) {
 	case MOVE_WORD_START_NEXT:
-		if (vis->action.op == &ops[OP_CHANGE])
+		if (vis->action.op == &ops[VIS_OP_CHANGE])
 			motion = MOVE_WORD_END_NEXT;
 		break;
 	case MOVE_LONGWORD_START_NEXT:
-		if (vis->action.op == &ops[OP_CHANGE])
+		if (vis->action.op == &ops[VIS_OP_CHANGE])
 			motion = MOVE_LONGWORD_END_NEXT;
 		break;
 	case MOVE_SEARCH_FORWARD:
@@ -1183,7 +1183,7 @@ void vis_repeat(Vis *vis) {
 		vis->action_prev.count = count;
 	count = vis->action_prev.count;
 	/* for some operators count should be applied only to the macro not the motion */
-	if (vis->action_prev.op == &ops[OP_INSERT] || vis->action_prev.op == &ops[OP_REPLACE])
+	if (vis->action_prev.op == &ops[VIS_OP_INSERT] || vis->action_prev.op == &ops[VIS_OP_REPLACE])
 		vis->action_prev.count = 1;
 	action_do(vis, &vis->action_prev);
 	vis->action_prev.count = count;
@@ -1191,7 +1191,7 @@ void vis_repeat(Vis *vis) {
 		Mode *mode = vis->mode;
 		Action action_prev = vis->action_prev;
 		count = action_prev.count;
-		if (count < 1 || action_prev.op == &ops[OP_CHANGE])
+		if (count < 1 || action_prev.op == &ops[VIS_OP_CHANGE])
 			count = 1;
 		for (int i = 0; i < count; i++) {
 			mode_set(vis, mode);

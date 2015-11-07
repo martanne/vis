@@ -663,42 +663,42 @@ static KeyAction vis_action[] = {
 	[VIS_ACTION_OPERATOR_CHANGE] = {
 		"vis-operator-change",
 		"Change operator",
-		operator, { .i = OP_CHANGE }
+		operator, { .i = VIS_OP_CHANGE }
 	},
 	[VIS_ACTION_OPERATOR_DELETE] = {
 		"vis-operator-delete",
 		"Delete operator",
-		operator, { .i = OP_DELETE }
+		operator, { .i = VIS_OP_DELETE }
 	},
 	[VIS_ACTION_OPERATOR_YANK] = {
 		"vis-operator-yank",
 		"Yank operator",
-		operator, { .i = OP_YANK }
+		operator, { .i = VIS_OP_YANK }
 	},
 	[VIS_ACTION_OPERATOR_SHIFT_LEFT] = {
 		"vis-operator-shift-left",
 		"Shift left operator",
-		operator, { .i = OP_SHIFT_LEFT }
+		operator, { .i = VIS_OP_SHIFT_LEFT }
 	},
 	[VIS_ACTION_OPERATOR_SHIFT_RIGHT] = {
 		"vis-operator-shift-right",
 		"Shift right operator",
-		operator, { .i = OP_SHIFT_RIGHT }
+		operator, { .i = VIS_OP_SHIFT_RIGHT }
 	},
 	[VIS_ACTION_OPERATOR_CASE_LOWER] = {
 		"vis-operator-case-lower",
 		"Lowercase operator",
-		operator, { .i = OP_CASE_LOWER }
+		operator, { .i = VIS_OP_CASE_LOWER }
 	},
 	[VIS_ACTION_OPERATOR_CASE_UPPER] = {
 		"vis-operator-case-upper",
 		"Uppercase operator",
-		operator, { .i = OP_CASE_UPPER }
+		operator, { .i = VIS_OP_CASE_UPPER }
 	},
 	[VIS_ACTION_OPERATOR_CASE_SWAP] = {
 		"vis-operator-case-swap",
 		"Swap case operator",
-		operator, { .i = OP_CASE_SWAP }
+		operator, { .i = VIS_OP_CASE_SWAP }
 	},
 	[VIS_ACTION_COUNT] = {
 		"vis-count",
@@ -768,7 +768,7 @@ static KeyAction vis_action[] = {
 	[VIS_ACTION_JOIN_LINES] = {
 		"join-lines",
 		"Join selected lines",
-		operator, { .i = OP_JOIN }
+		operator, { .i = VIS_OP_JOIN }
 	},
 	[VIS_ACTION_PROMPT_SHOW] = {
 		"prompt-show",
@@ -833,22 +833,22 @@ static KeyAction vis_action[] = {
 	[VIS_ACTION_PUT_AFTER] = {
 		"put-after",
 		"Put text after the cursor",
-		operator, { .i = OP_PUT_AFTER }
+		operator, { .i = VIS_OP_PUT_AFTER }
 	},
 	[VIS_ACTION_PUT_BEFORE] = {
 		"put-before",
 		"Put text before the cursor",
-		operator, { .i = OP_PUT_BEFORE }
+		operator, { .i = VIS_OP_PUT_BEFORE }
 	},
 	[VIS_ACTION_PUT_AFTER_END] = {
 		"put-after-end",
 		"Put text after the cursor, place cursor after new text",
-		operator, { .i = OP_PUT_AFTER_END }
+		operator, { .i = VIS_OP_PUT_AFTER_END }
 	},
 	[VIS_ACTION_PUT_BEFORE_END] = {
 		"put-before-end",
 		"Put text before the cursor, place cursor after new text",
-		operator, { .i = OP_PUT_BEFORE_END }
+		operator, { .i = VIS_OP_PUT_BEFORE_END }
 	},
 	[VIS_ACTION_CURSOR_SELECT_WORD] = {
 		"cursors-select-word",
@@ -868,12 +868,12 @@ static KeyAction vis_action[] = {
 	[VIS_ACTION_CURSORS_NEW_LINES_BEGIN] = {
 		"cursors-new-lines-begin",
 		"Create a new cursor at the start of every line covered by selection",
-		operator, { .i = OP_CURSOR_SOL }
+		operator, { .i = VIS_OP_CURSOR_SOL }
 	},
 	[VIS_ACTION_CURSORS_NEW_LINES_END] = {
 		"cursors-new-lines-end",
 		"Create a new cursor at the end of every line covered by selection",
-		operator, { .i = OP_CURSOR_EOL }
+		operator, { .i = VIS_OP_CURSOR_EOL }
 	},
 	[VIS_ACTION_CURSORS_NEW_MATCH_NEXT] = {
 		"cursors-new-match-next",
@@ -1201,7 +1201,7 @@ static const char *replace(Vis *vis, const char *keys, const Arg *arg) {
 	char key[len+1];
 	memcpy(key, keys, len);
 	key[len] = '\0';
-	vis_operator(vis, OP_REPLACE);
+	vis_operator(vis, VIS_OP_REPLACE);
 	vis_motion(vis, MOVE_NOP);
 	vis_keys_inject(vis, next, key);
 	vis_keys_inject(vis, next+len, "<Escape>");
@@ -1361,7 +1361,7 @@ static const char *later(Vis *vis, const char *keys, const Arg *arg) {
 }
 
 static const char *delete(Vis *vis, const char *keys, const Arg *arg) {
-	vis_operator(vis, OP_DELETE);
+	vis_operator(vis, VIS_OP_DELETE);
 	vis_motion(vis, arg->i);
 	return keys;
 }
@@ -1515,7 +1515,7 @@ static const char *window(Vis *vis, const char *keys, const Arg *arg) {
 }
 
 static const char *openline(Vis *vis, const char *keys, const Arg *arg) {
-	vis_operator(vis, OP_INSERT);
+	vis_operator(vis, VIS_OP_INSERT);
 	if (arg->i > 0) {
 		vis_motion(vis, MOVE_LINE_END);
 		vis_keys_inject(vis, keys, "<Enter>");
@@ -1530,7 +1530,7 @@ static const char *join(Vis *vis, const char *keys, const Arg *arg) {
 	int count = vis_count_get(vis);
 	if (count)
 		vis_count_set(vis, count-1);
-	vis_operator(vis, OP_JOIN);
+	vis_operator(vis, VIS_OP_JOIN);
 	vis_motion(vis, arg->i);
 	return keys;
 }
@@ -1541,7 +1541,7 @@ static const char *switchmode(Vis *vis, const char *keys, const Arg *arg) {
 }
 
 static const char *insertmode(Vis *vis, const char *keys, const Arg *arg) {
-	vis_operator(vis, OP_INSERT);
+	vis_operator(vis, VIS_OP_INSERT);
 	vis_motion(vis, arg->i);
 	return keys;
 }

@@ -161,7 +161,7 @@ extern Mode vis_modes[VIS_MODE_LAST];
 
 extern Movement moves[MOVE_INVALID];
 
-extern Operator ops[OP_INVALID];
+extern Operator ops[VIS_OP_INVALID];
 
 const char *expandtab(Vis *vis);
 

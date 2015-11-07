@@ -149,25 +149,25 @@ const char *vis_mode_status(Vis*);
 bool vis_action_register(Vis*, KeyAction*);
 
 enum VisOperator {
-	OP_DELETE,
-	OP_CHANGE,
-	OP_YANK,
-	OP_PUT_AFTER,
-	OP_SHIFT_RIGHT,
-	OP_SHIFT_LEFT,
-	OP_JOIN,
-	OP_INSERT,
-	OP_REPLACE,
-	OP_CURSOR_SOL,
-	OP_CASE_SWAP,
-	OP_INVALID, /* denotes the end of the "real" operators */
+	VIS_OP_DELETE,
+	VIS_OP_CHANGE,
+	VIS_OP_YANK,
+	VIS_OP_PUT_AFTER,
+	VIS_OP_SHIFT_RIGHT,
+	VIS_OP_SHIFT_LEFT,
+	VIS_OP_JOIN,
+	VIS_OP_INSERT,
+	VIS_OP_REPLACE,
+	VIS_OP_CURSOR_SOL,
+	VIS_OP_CASE_SWAP,
+	VIS_OP_INVALID, /* denotes the end of the "real" operators */
 	/* pseudo operators: keep them at the end to save space in array definition */
-	OP_CASE_LOWER,
-	OP_CASE_UPPER,
-	OP_CURSOR_EOL,
-	OP_PUT_AFTER_END,
-	OP_PUT_BEFORE,
-	OP_PUT_BEFORE_END,
+	VIS_OP_CASE_LOWER,
+	VIS_OP_CASE_UPPER,
+	VIS_OP_CURSOR_EOL,
+	VIS_OP_PUT_AFTER_END,
+	VIS_OP_PUT_BEFORE,
+	VIS_OP_PUT_BEFORE_END,
 };
 
 /* set operator to execute, has immediate effect if

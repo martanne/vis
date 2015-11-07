@@ -6,33 +6,6 @@
 #include "text-util.h"
 #include "util.h"
 
-/** operators */
-static size_t op_change(Vis*, Text*, OperatorContext *c);
-static size_t op_yank(Vis*, Text*, OperatorContext *c);
-static size_t op_put(Vis*, Text*, OperatorContext *c);
-static size_t op_delete(Vis*, Text*, OperatorContext *c);
-static size_t op_shift_right(Vis*, Text*, OperatorContext *c);
-static size_t op_shift_left(Vis*, Text*, OperatorContext *c);
-static size_t op_case_change(Vis*, Text*, OperatorContext *c);
-static size_t op_join(Vis*, Text*, OperatorContext *c);
-static size_t op_insert(Vis*, Text*, OperatorContext *c);
-static size_t op_replace(Vis*, Text*, OperatorContext *c);
-static size_t op_cursor(Vis*, Text*, OperatorContext *c);
-
-Operator ops[] = {
-	[OP_DELETE]      = { op_delete      },
-	[OP_CHANGE]      = { op_change      },
-	[OP_YANK]        = { op_yank        },
-	[OP_PUT_AFTER]   = { op_put         },
-	[OP_SHIFT_RIGHT] = { op_shift_right },
-	[OP_SHIFT_LEFT]  = { op_shift_left  },
-	[OP_CASE_SWAP] = { op_case_change },
-	[OP_JOIN]          = { op_join          },
-	[OP_INSERT]      = { op_insert      },
-	[OP_REPLACE]     = { op_replace     },
-	[OP_CURSOR_SOL]         = { op_cursor         },
-};
-
 static size_t op_delete(Vis *vis, Text *txt, OperatorContext *c) {
 	c->reg->linewise = c->linewise;
 	register_put(c->reg, txt, &c->range);
@@ -58,15 +31,15 @@ static size_t op_yank(Vis *vis, Text *txt, OperatorContext *c) {
 static size_t op_put(Vis *vis, Text *txt, OperatorContext *c) {
 	size_t pos = c->pos;
 	switch (c->arg->i) {
-	case OP_PUT_AFTER:
-	case OP_PUT_AFTER_END:
+	case VIS_OP_PUT_AFTER:
+	case VIS_OP_PUT_AFTER_END:
 		if (c->reg->linewise)
 			pos = text_line_next(txt, pos);
 		else
 			pos = text_char_next(txt, pos);
 		break;
-	case OP_PUT_BEFORE:
-	case OP_PUT_BEFORE_END:
+	case VIS_OP_PUT_BEFORE:
+	case VIS_OP_PUT_BEFORE_END:
 		if (c->reg->linewise)
 			pos = text_line_begin(txt, pos);
 		break;
@@ -79,21 +52,21 @@ static size_t op_put(Vis *vis, Text *txt, OperatorContext *c) {
 
 	if (c->reg->linewise) {
 		switch (c->arg->i) {
-		case OP_PUT_BEFORE_END:
-		case OP_PUT_AFTER_END:
+		case VIS_OP_PUT_BEFORE_END:
+		case VIS_OP_PUT_AFTER_END:
 			pos = text_line_start(txt, pos);
 			break;
-		case OP_PUT_AFTER:
+		case VIS_OP_PUT_AFTER:
 			pos = text_line_start(txt, text_line_next(txt, c->pos));
 			break;
-		case OP_PUT_BEFORE:
+		case VIS_OP_PUT_BEFORE:
 			pos = text_line_start(txt, c->pos);
 			break;
 		}
 	} else {
 		switch (c->arg->i) {
-		case OP_PUT_AFTER:
-		case OP_PUT_BEFORE:
+		case VIS_OP_PUT_AFTER:
+		case VIS_OP_PUT_BEFORE:
 			pos = text_char_prev(txt, pos);
 			break;
 		}
@@ -157,9 +130,9 @@ static size_t op_case_change(Vis *vis, Text *txt, OperatorContext *c) {
 	for (char *cur = buf; rem > 0; cur++, rem--) {
 		int ch = (unsigned char)*cur;
 		if (isascii(ch)) {
-			if (c->arg->i == OP_CASE_SWAP)
+			if (c->arg->i == VIS_OP_CASE_SWAP)
 				*cur = islower(ch) ? toupper(ch) : tolower(ch);
-			else if (c->arg->i == OP_CASE_UPPER)
+			else if (c->arg->i == VIS_OP_CASE_UPPER)
 				*cur = toupper(ch);
 			else
 				*cur = tolower(ch);
@@ -179,7 +152,7 @@ static size_t op_cursor(Vis *vis, Text *txt, OperatorContext *c) {
 		Cursor *cursor = view_cursors_new(view);
 		if (cursor) {
 			size_t pos;
-			if (c->arg->i == OP_CURSOR_EOL)
+			if (c->arg->i == VIS_OP_CURSOR_EOL)
 				pos = text_line_finish(txt, line);
 			else
 				pos = text_line_start(txt, line);
@@ -224,3 +197,17 @@ static size_t op_replace(Vis *vis, Text *txt, OperatorContext *c) {
 	macro_operator_record(vis);
 	return c->newpos != EPOS ? c->newpos : c->pos;
 }
+
+Operator ops[] = {
+	[VIS_OP_DELETE]      = { op_delete      },
+	[VIS_OP_CHANGE]      = { op_change      },
+	[VIS_OP_YANK]        = { op_yank        },
+	[VIS_OP_PUT_AFTER]   = { op_put         },
+	[VIS_OP_SHIFT_RIGHT] = { op_shift_right },
+	[VIS_OP_SHIFT_LEFT]  = { op_shift_left  },
+	[VIS_OP_CASE_SWAP]   = { op_case_change },
+	[VIS_OP_JOIN]        = { op_join        },
+	[VIS_OP_INSERT]      = { op_insert      },
+	[VIS_OP_REPLACE]     = { op_replace     },
+	[VIS_OP_CURSOR_SOL]  = { op_cursor      },
+};
