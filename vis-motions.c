@@ -3,105 +3,6 @@
 #include "text-objects.h"
 #include "text-util.h"
 
-/** movements which can be used besides the one in text-motions.h and view.h */
-
-/* search in forward direction for the word under the cursor */
-static size_t search_word_forward(Vis*, Text *txt, size_t pos);
-/* search in backward direction for the word under the cursor */
-static size_t search_word_backward(Vis*, Text *txt, size_t pos);
-/* search again for the last used search pattern */
-static size_t search_forward(Vis*, Text *txt, size_t pos);
-static size_t search_backward(Vis*, Text *txt, size_t pos);
-/* goto action.mark */
-static size_t mark_goto(Vis*, File *txt, size_t pos);
-/* goto first non-blank char on line pointed by action.mark */
-static size_t mark_line_goto(Vis*, File *txt, size_t pos);
-/* goto to next occurence of action.key to the right */
-static size_t to(Vis*, Text *txt, size_t pos);
-/* goto to position before next occurence of action.key to the right */
-static size_t till(Vis*, Text *txt, size_t pos);
-/* goto to next occurence of action.key to the left */
-static size_t to_left(Vis*, Text *txt, size_t pos);
-/* goto to position after next occurence of action.key to the left */
-static size_t till_left(Vis*, Text *txt, size_t pos);
-/* goto line number action.count */
-static size_t line(Vis*, Text *txt, size_t pos);
-/* goto to byte action.count on current line */
-static size_t column(Vis*, Text *txt, size_t pos);
-/* goto the action.count-th line from top of the focused window */
-static size_t view_lines_top(Vis*, View*);
-/* goto the start of middle line of the focused window */
-static size_t view_lines_middle(Vis*, View*);
-/* goto the action.count-th line from bottom of the focused window */
-static size_t view_lines_bottom(Vis*, View*);
-/* navigate the change list */
-static size_t window_changelist_next(Vis*, Win*, size_t pos);
-static size_t window_changelist_prev(Vis*, Win*, size_t pos);
-/* navigate the jump list */
-static size_t window_jumplist_next(Vis*, Win*, size_t pos);
-static size_t window_jumplist_prev(Vis*, Win*, size_t pos);
-static size_t window_nop(Vis*, Win*, size_t pos);
-
-Movement moves[] = {
-	[MOVE_LINE_UP]             = { .cur = view_line_up,            .type = LINEWISE           },
-	[MOVE_LINE_DOWN]           = { .cur = view_line_down,          .type = LINEWISE           },
-	[MOVE_SCREEN_LINE_UP]      = { .cur = view_screenline_up,                                 },
-	[MOVE_SCREEN_LINE_DOWN]    = { .cur = view_screenline_down,                               },
-	[MOVE_SCREEN_LINE_BEGIN]   = { .cur = view_screenline_begin,   .type = CHARWISE           },
-	[MOVE_SCREEN_LINE_MIDDLE]  = { .cur = view_screenline_middle,  .type = CHARWISE           },
-	[MOVE_SCREEN_LINE_END]     = { .cur = view_screenline_end,     .type = CHARWISE|INCLUSIVE },
-	[MOVE_LINE_PREV]           = { .txt = text_line_prev,                                      },
-	[MOVE_LINE_BEGIN]          = { .txt = text_line_begin,                                     },
-	[MOVE_LINE_START]          = { .txt = text_line_start,                                     },
-	[MOVE_LINE_FINISH]         = { .txt = text_line_finish,         .type = INCLUSIVE          },
-	[MOVE_LINE_LASTCHAR]       = { .txt = text_line_lastchar,       .type = INCLUSIVE          },
-	[MOVE_LINE_END]            = { .txt = text_line_end,                                       },
-	[MOVE_LINE_NEXT]           = { .txt = text_line_next,                                      },
-	[MOVE_LINE]                = { .vis = line,                     .type = LINEWISE|IDEMPOTENT|JUMP},
-	[MOVE_COLUMN]              = { .vis = column,                   .type = CHARWISE|IDEMPOTENT},
-	[MOVE_CHAR_PREV]           = { .txt = text_char_prev,           .type = CHARWISE           },
-	[MOVE_CHAR_NEXT]           = { .txt = text_char_next,           .type = CHARWISE           },
-	[MOVE_LINE_CHAR_PREV]      = { .txt = text_line_char_prev,      .type = CHARWISE           },
-	[MOVE_LINE_CHAR_NEXT]      = { .txt = text_line_char_next,      .type = CHARWISE           },
-	[MOVE_WORD_START_PREV]     = { .txt = text_word_start_prev,     .type = CHARWISE           },
-	[MOVE_WORD_START_NEXT]     = { .txt = text_word_start_next,     .type = CHARWISE           },
-	[MOVE_WORD_END_PREV]       = { .txt = text_word_end_prev,       .type = CHARWISE|INCLUSIVE },
-	[MOVE_WORD_END_NEXT]       = { .txt = text_word_end_next,       .type = CHARWISE|INCLUSIVE },
-	[MOVE_LONGWORD_START_PREV] = { .txt = text_longword_start_prev, .type = CHARWISE           },
-	[MOVE_LONGWORD_START_NEXT] = { .txt = text_longword_start_next, .type = CHARWISE           },
-	[MOVE_LONGWORD_END_PREV]   = { .txt = text_longword_end_prev,   .type = CHARWISE|INCLUSIVE },
-	[MOVE_LONGWORD_END_NEXT]   = { .txt = text_longword_end_next,   .type = CHARWISE|INCLUSIVE },
-	[MOVE_SENTENCE_PREV]       = { .txt = text_sentence_prev,       .type = LINEWISE           },
-	[MOVE_SENTENCE_NEXT]       = { .txt = text_sentence_next,       .type = LINEWISE           },
-	[MOVE_PARAGRAPH_PREV]      = { .txt = text_paragraph_prev,      .type = LINEWISE|JUMP      },
-	[MOVE_PARAGRAPH_NEXT]      = { .txt = text_paragraph_next,      .type = LINEWISE|JUMP      },
-	[MOVE_FUNCTION_START_PREV] = { .txt = text_function_start_prev, .type = LINEWISE|JUMP      },
-	[MOVE_FUNCTION_START_NEXT] = { .txt = text_function_start_next, .type = LINEWISE|JUMP      },
-	[MOVE_FUNCTION_END_PREV]   = { .txt = text_function_end_prev,   .type = LINEWISE|JUMP      },
-	[MOVE_FUNCTION_END_NEXT]   = { .txt = text_function_end_next,   .type = LINEWISE|JUMP      },
-	[MOVE_BRACKET_MATCH]       = { .txt = text_bracket_match,       .type = INCLUSIVE|JUMP     },
-	[MOVE_FILE_BEGIN]          = { .txt = text_begin,               .type = LINEWISE|JUMP      },
-	[MOVE_FILE_END]            = { .txt = text_end,                 .type = LINEWISE|JUMP      },
-	[MOVE_LEFT_TO]             = { .vis = to_left,                                             },
-	[MOVE_RIGHT_TO]            = { .vis = to,                       .type = INCLUSIVE          },
-	[MOVE_LEFT_TILL]           = { .vis = till_left,                                           },
-	[MOVE_RIGHT_TILL]          = { .vis = till,                     .type = INCLUSIVE          },
-	[MOVE_MARK]                = { .file = mark_goto,               .type = JUMP|IDEMPOTENT    },
-	[MOVE_MARK_LINE]           = { .file = mark_line_goto,          .type = LINEWISE|JUMP|IDEMPOTENT},
-	[MOVE_SEARCH_WORD_FORWARD] = { .vis = search_word_forward,      .type = JUMP                   },
-	[MOVE_SEARCH_WORD_BACKWARD]= { .vis = search_word_backward,     .type = JUMP                   },
-	[MOVE_SEARCH_NEXT]         = { .vis = search_forward,           .type = JUMP                   },
-	[MOVE_SEARCH_PREV]         = { .vis = search_backward,          .type = JUMP                   },
-	[MOVE_WINDOW_LINE_TOP]     = { .view = view_lines_top,         .type = LINEWISE|JUMP|IDEMPOTENT },
-	[MOVE_WINDOW_LINE_MIDDLE]  = { .view = view_lines_middle,      .type = LINEWISE|JUMP|IDEMPOTENT },
-	[MOVE_WINDOW_LINE_BOTTOM]  = { .view = view_lines_bottom,      .type = LINEWISE|JUMP|IDEMPOTENT },
-	[MOVE_CHANGELIST_NEXT]     = { .win = window_changelist_next,  .type = INCLUSIVE               },
-	[MOVE_CHANGELIST_PREV]     = { .win = window_changelist_prev,  .type = INCLUSIVE               },
-	[MOVE_JUMPLIST_NEXT]       = { .win = window_jumplist_next,    .type = INCLUSIVE               },
-	[MOVE_JUMPLIST_PREV]       = { .win = window_jumplist_prev,    .type = INCLUSIVE               },
-	[MOVE_NOP]                 = { .win = window_nop,              .type = IDEMPOTENT              },
-};
-
 /** utility functions */
 
 static char *get_word_at(Text *txt, size_t pos) {
@@ -117,7 +18,7 @@ static char *get_word_at(Text *txt, size_t pos) {
 	return buf;
 }
 
-/** movement implementations */
+/** motion implementations */
 
 static size_t search_word_forward(Vis *vis, Text *txt, size_t pos) {
 	char *word = get_word_at(txt, pos);
@@ -266,4 +167,64 @@ static size_t window_jumplist_prev(Vis *vis, Win *win, size_t cur) {
 static size_t window_nop(Vis *vis, Win *win, size_t pos) {
 	return pos;
 }
+
+Movement moves[] = {
+	[VIS_MOVE_LINE_UP]             = { .cur = view_line_up,            .type = LINEWISE                  },
+	[VIS_MOVE_LINE_DOWN]           = { .cur = view_line_down,          .type = LINEWISE                  },
+	[VIS_MOVE_SCREEN_LINE_UP]      = { .cur = view_screenline_up,                                        },
+	[VIS_MOVE_SCREEN_LINE_DOWN]    = { .cur = view_screenline_down,                                      },
+	[VIS_MOVE_SCREEN_LINE_BEGIN]   = { .cur = view_screenline_begin,   .type = CHARWISE                  },
+	[VIS_MOVE_SCREEN_LINE_MIDDLE]  = { .cur = view_screenline_middle,  .type = CHARWISE                  },
+	[VIS_MOVE_SCREEN_LINE_END]     = { .cur = view_screenline_end,     .type = CHARWISE|INCLUSIVE        },
+	[VIS_MOVE_LINE_PREV]           = { .txt = text_line_prev,                                            },
+	[VIS_MOVE_LINE_BEGIN]          = { .txt = text_line_begin,                                           },
+	[VIS_MOVE_LINE_START]          = { .txt = text_line_start,                                           },
+	[VIS_MOVE_LINE_FINISH]         = { .txt = text_line_finish,         .type = INCLUSIVE                },
+	[VIS_MOVE_LINE_LASTCHAR]       = { .txt = text_line_lastchar,       .type = INCLUSIVE                },
+	[VIS_MOVE_LINE_END]            = { .txt = text_line_end,                                             },
+	[VIS_MOVE_LINE_NEXT]           = { .txt = text_line_next,                                            },
+	[VIS_MOVE_LINE]                = { .vis = line,                     .type = LINEWISE|IDEMPOTENT|JUMP },
+	[VIS_MOVE_COLUMN]              = { .vis = column,                   .type = CHARWISE|IDEMPOTENT      },
+	[VIS_MOVE_CHAR_PREV]           = { .txt = text_char_prev,           .type = CHARWISE                 },
+	[VIS_MOVE_CHAR_NEXT]           = { .txt = text_char_next,           .type = CHARWISE                 },
+	[VIS_MOVE_LINE_CHAR_PREV]      = { .txt = text_line_char_prev,      .type = CHARWISE                 },
+	[VIS_MOVE_LINE_CHAR_NEXT]      = { .txt = text_line_char_next,      .type = CHARWISE                 },
+	[VIS_MOVE_WORD_START_PREV]     = { .txt = text_word_start_prev,     .type = CHARWISE                 },
+	[VIS_MOVE_WORD_START_NEXT]     = { .txt = text_word_start_next,     .type = CHARWISE                 },
+	[VIS_MOVE_WORD_END_PREV]       = { .txt = text_word_end_prev,       .type = CHARWISE|INCLUSIVE       },
+	[VIS_MOVE_WORD_END_NEXT]       = { .txt = text_word_end_next,       .type = CHARWISE|INCLUSIVE       },
+	[VIS_MOVE_LONGWORD_START_PREV] = { .txt = text_longword_start_prev, .type = CHARWISE                 },
+	[VIS_MOVE_LONGWORD_START_NEXT] = { .txt = text_longword_start_next, .type = CHARWISE                 },
+	[VIS_MOVE_LONGWORD_END_PREV]   = { .txt = text_longword_end_prev,   .type = CHARWISE|INCLUSIVE       },
+	[VIS_MOVE_LONGWORD_END_NEXT]   = { .txt = text_longword_end_next,   .type = CHARWISE|INCLUSIVE       },
+	[VIS_MOVE_SENTENCE_PREV]       = { .txt = text_sentence_prev,       .type = LINEWISE                 },
+	[VIS_MOVE_SENTENCE_NEXT]       = { .txt = text_sentence_next,       .type = LINEWISE                 },
+	[VIS_MOVE_PARAGRAPH_PREV]      = { .txt = text_paragraph_prev,      .type = LINEWISE|JUMP            },
+	[VIS_MOVE_PARAGRAPH_NEXT]      = { .txt = text_paragraph_next,      .type = LINEWISE|JUMP            },
+	[VIS_MOVE_FUNCTION_START_PREV] = { .txt = text_function_start_prev, .type = LINEWISE|JUMP            },
+	[VIS_MOVE_FUNCTION_START_NEXT] = { .txt = text_function_start_next, .type = LINEWISE|JUMP            },
+	[VIS_MOVE_FUNCTION_END_PREV]   = { .txt = text_function_end_prev,   .type = LINEWISE|JUMP            },
+	[VIS_MOVE_FUNCTION_END_NEXT]   = { .txt = text_function_end_next,   .type = LINEWISE|JUMP            },
+	[VIS_MOVE_BRACKET_MATCH]       = { .txt = text_bracket_match,       .type = INCLUSIVE|JUMP           },
+	[VIS_MOVE_FILE_BEGIN]          = { .txt = text_begin,               .type = LINEWISE|JUMP            },
+	[VIS_MOVE_FILE_END]            = { .txt = text_end,                 .type = LINEWISE|JUMP            },
+	[VIS_MOVE_LEFT_TO]             = { .vis = to_left,                                                   },
+	[VIS_MOVE_RIGHT_TO]            = { .vis = to,                       .type = INCLUSIVE                },
+	[VIS_MOVE_LEFT_TILL]           = { .vis = till_left,                                                 },
+	[VIS_MOVE_RIGHT_TILL]          = { .vis = till,                     .type = INCLUSIVE                },
+	[VIS_MOVE_MARK]                = { .file = mark_goto,               .type = JUMP|IDEMPOTENT          },
+	[VIS_MOVE_MARK_LINE]           = { .file = mark_line_goto,          .type = LINEWISE|JUMP|IDEMPOTENT },
+	[VIS_MOVE_SEARCH_WORD_FORWARD] = { .vis = search_word_forward,      .type = JUMP                     },
+	[VIS_MOVE_SEARCH_WORD_BACKWARD]= { .vis = search_word_backward,     .type = JUMP                     },
+	[VIS_MOVE_SEARCH_NEXT]         = { .vis = search_forward,           .type = JUMP                     },
+	[VIS_MOVE_SEARCH_PREV]         = { .vis = search_backward,          .type = JUMP                     },
+	[VIS_MOVE_WINDOW_LINE_TOP]     = { .view = view_lines_top,          .type = LINEWISE|JUMP|IDEMPOTENT },
+	[VIS_MOVE_WINDOW_LINE_MIDDLE]  = { .view = view_lines_middle,       .type = LINEWISE|JUMP|IDEMPOTENT },
+	[VIS_MOVE_WINDOW_LINE_BOTTOM]  = { .view = view_lines_bottom,       .type = LINEWISE|JUMP|IDEMPOTENT },
+	[VIS_MOVE_CHANGELIST_NEXT]     = { .win = window_changelist_next,   .type = INCLUSIVE                },
+	[VIS_MOVE_CHANGELIST_PREV]     = { .win = window_changelist_prev,   .type = INCLUSIVE                },
+	[VIS_MOVE_JUMPLIST_NEXT]       = { .win = window_jumplist_next,     .type = INCLUSIVE                },
+	[VIS_MOVE_JUMPLIST_PREV]       = { .win = window_jumplist_prev,     .type = INCLUSIVE                },
+	[VIS_MOVE_NOP]                 = { .win = window_nop,               .type = IDEMPOTENT               },
+};
 

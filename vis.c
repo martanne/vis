@@ -633,7 +633,7 @@ static void action_do(Vis *vis, Action *a) {
 	if (a->op) {
 		/* we do not support visual repeat, still do something resonable */
 		if (vis->mode->visual && !a->movement && !a->textobj)
-			a->movement = &moves[MOVE_NOP];
+			a->movement = &moves[VIS_MOVE_NOP];
 
 		/* operator implementations must not change the mode,
 		 * they might get called multiple times (once for every cursor)
@@ -673,9 +673,9 @@ static bool prompt_cmd(Vis *vis, char type, const char *cmd) {
 		return true;
 	switch (type) {
 	case '/':
-		return vis_motion(vis, MOVE_SEARCH_FORWARD, cmd);
+		return vis_motion(vis, VIS_MOVE_SEARCH_FORWARD, cmd);
 	case '?':
-		return vis_motion(vis, MOVE_SEARCH_BACKWARD, cmd);
+		return vis_motion(vis, VIS_MOVE_SEARCH_BACKWARD, cmd);
 	case '+':
 	case ':':
 		return vis_cmd(vis, cmd);
@@ -1000,14 +1000,14 @@ bool vis_operator(Vis *vis, enum VisOperator id) {
 		/* hacky way to handle double operators i.e. things like
 		 * dd, yy etc where the second char isn't a movement */
 		vis->action.type = LINEWISE;
-		vis_motion(vis, MOVE_LINE_NEXT);
+		vis_motion(vis, VIS_MOVE_LINE_NEXT);
 	} else {
 		vis->action.op = op;
 	}
 
 	/* put is not a real operator, does not need a range to operate on */
 	if (id == VIS_OP_PUT_AFTER)
-		vis_motion(vis, MOVE_NOP);
+		vis_motion(vis, VIS_MOVE_NOP);
 
 	return true;
 }
@@ -1021,32 +1021,32 @@ bool vis_motion(Vis *vis, enum VisMotion motion, ...) {
 	va_start(ap, motion);
 
 	switch (motion) {
-	case MOVE_WORD_START_NEXT:
+	case VIS_MOVE_WORD_START_NEXT:
 		if (vis->action.op == &ops[VIS_OP_CHANGE])
-			motion = MOVE_WORD_END_NEXT;
+			motion = VIS_MOVE_WORD_END_NEXT;
 		break;
-	case MOVE_LONGWORD_START_NEXT:
+	case VIS_MOVE_LONGWORD_START_NEXT:
 		if (vis->action.op == &ops[VIS_OP_CHANGE])
-			motion = MOVE_LONGWORD_END_NEXT;
+			motion = VIS_MOVE_LONGWORD_END_NEXT;
 		break;
-	case MOVE_SEARCH_FORWARD:
-	case MOVE_SEARCH_BACKWARD:
+	case VIS_MOVE_SEARCH_FORWARD:
+	case VIS_MOVE_SEARCH_BACKWARD:
 	{
 		const char *pattern = va_arg(ap, char*);
 		if (text_regex_compile(vis->search_pattern, pattern, REG_EXTENDED)) {
 			vis_cancel(vis);
 			goto err;
 		}
-		if (motion == MOVE_SEARCH_FORWARD)
-			motion = MOVE_SEARCH_NEXT;
+		if (motion == VIS_MOVE_SEARCH_FORWARD)
+			motion = VIS_MOVE_SEARCH_NEXT;
 		else
-			motion = MOVE_SEARCH_PREV;
+			motion = VIS_MOVE_SEARCH_PREV;
 		break;
 	}
-	case MOVE_RIGHT_TO:
-	case MOVE_LEFT_TO:
-	case MOVE_RIGHT_TILL:
-	case MOVE_LEFT_TILL:
+	case VIS_MOVE_RIGHT_TO:
+	case VIS_MOVE_LEFT_TO:
+	case VIS_MOVE_RIGHT_TILL:
+	case VIS_MOVE_LEFT_TILL:
 	{
 		const char *key = va_arg(ap, char*);
 		if (!key)
@@ -1056,31 +1056,31 @@ bool vis_motion(Vis *vis, enum VisMotion motion, ...) {
 		vis->last_totill = motion;
 		break;
 	}
-	case MOVE_TOTILL_REPEAT:
+	case VIS_MOVE_TOTILL_REPEAT:
 		if (!vis->last_totill)
 			goto err;
 		motion = vis->last_totill;
 		break;
-	case MOVE_TOTILL_REVERSE:
+	case VIS_MOVE_TOTILL_REVERSE:
 		switch (vis->last_totill) {
-		case MOVE_RIGHT_TO:
-			motion = MOVE_LEFT_TO;
+		case VIS_MOVE_RIGHT_TO:
+			motion = VIS_MOVE_LEFT_TO;
 			break;
-		case MOVE_LEFT_TO:
-			motion = MOVE_RIGHT_TO;
+		case VIS_MOVE_LEFT_TO:
+			motion = VIS_MOVE_RIGHT_TO;
 			break;
-		case MOVE_RIGHT_TILL:
-			motion = MOVE_LEFT_TILL;
+		case VIS_MOVE_RIGHT_TILL:
+			motion = VIS_MOVE_LEFT_TILL;
 			break;
-		case MOVE_LEFT_TILL:
-			motion = MOVE_RIGHT_TILL;
+		case VIS_MOVE_LEFT_TILL:
+			motion = VIS_MOVE_RIGHT_TILL;
 			break;
 		default:
 			goto err;
 		}
 		break;
-	case MOVE_MARK:
-	case MOVE_MARK_LINE:
+	case VIS_MOVE_MARK:
+	case VIS_MOVE_MARK_LINE:
 	{
 		int mark = va_arg(ap, int);
 		if (VIS_MARK_a <= mark && mark < VIS_MARK_INVALID)

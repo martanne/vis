@@ -62,7 +62,7 @@ static const char *motiontype(Vis*, const char *keys, const Arg *arg);
 /* make the current action use the operator indicated by arg->i */
 static const char *operator(Vis*, const char *keys, const Arg *arg);
 /* blocks to read a key and performs movement indicated by arg->i which
- * should be one of MOVE_{RIGHT,LEFT}_{TO,TILL} */
+ * should be one of VIS_MOVE_{RIGHT,LEFT}_{TO,TILL} */
 static const char *movement_key(Vis*, const char *keys, const Arg *arg);
 /* perform the movement as indicated by arg->i */
 static const char *movement(Vis*, const char *keys, const Arg *arg);
@@ -273,157 +273,157 @@ static KeyAction vis_action[] = {
 	[VIS_ACTION_CURSOR_CHAR_PREV] = {
 		"cursor-char-prev",
 		"Move cursor left, to the previous character",
-		movement, { .i = MOVE_CHAR_PREV }
+		movement, { .i = VIS_MOVE_CHAR_PREV }
 	},
 	[VIS_ACTION_CURSOR_CHAR_NEXT] = {
 		"cursor-char-next",
 		"Move cursor right, to the next character",
-		movement, { .i = MOVE_CHAR_NEXT }
+		movement, { .i = VIS_MOVE_CHAR_NEXT }
 	},
 	[VIS_ACTION_CURSOR_WORD_START_PREV] = {
 		"cursor-word-start-prev",
 		"Move cursor words backwards",
-		movement, { .i = MOVE_WORD_START_PREV }
+		movement, { .i = VIS_MOVE_WORD_START_PREV }
 	},
 	[VIS_ACTION_CURSOR_WORD_START_NEXT] = {
 		"cursor-word-start-next",
 		"Move cursor words forwards",
-		movement, { .i = MOVE_WORD_START_NEXT }
+		movement, { .i = VIS_MOVE_WORD_START_NEXT }
 	},
 	[VIS_ACTION_CURSOR_WORD_END_PREV] = {
 		"cursor-word-end-prev",
 		"Move cursor backwards to the end of word",
-		movement, { .i = MOVE_WORD_END_PREV }
+		movement, { .i = VIS_MOVE_WORD_END_PREV }
 	},
 	[VIS_ACTION_CURSOR_WORD_END_NEXT] = {
 		"cursor-word-end-next",
 		"Move cursor forward to the end of word",
-		movement, { .i = MOVE_WORD_END_NEXT }
+		movement, { .i = VIS_MOVE_WORD_END_NEXT }
 	},
 	[VIS_ACTION_CURSOR_LONGWORD_START_PREV] = {
 		"cursor-longword-start-prev",
 		"Move cursor WORDS backwards",
-		movement, { .i = MOVE_LONGWORD_START_PREV }
+		movement, { .i = VIS_MOVE_LONGWORD_START_PREV }
 	},
 	[VIS_ACTION_CURSOR_LONGWORD_START_NEXT] = {
 		"cursor-longword-start-next",
 		"Move cursor WORDS forwards",
-		movement, { .i = MOVE_LONGWORD_START_NEXT }
+		movement, { .i = VIS_MOVE_LONGWORD_START_NEXT }
 	},
 	[VIS_ACTION_CURSOR_LONGWORD_END_PREV] = {
 		"cursor-longword-end-prev",
 		"Move cursor backwards to the end of WORD",
-		movement, { .i = MOVE_LONGWORD_END_PREV }
+		movement, { .i = VIS_MOVE_LONGWORD_END_PREV }
 	},
 	[VIS_ACTION_CURSOR_LONGWORD_END_NEXT] = {
 		"cursor-longword-end-next",
 		"Move cursor forward to the end of WORD",
-		movement, { .i = MOVE_LONGWORD_END_NEXT }
+		movement, { .i = VIS_MOVE_LONGWORD_END_NEXT }
 	},
 	[VIS_ACTION_CURSOR_LINE_UP] = {
 		"cursor-line-up",
 		"Move cursor line upwards",
-		movement, { .i = MOVE_LINE_UP }
+		movement, { .i = VIS_MOVE_LINE_UP }
 	},
 	[VIS_ACTION_CURSOR_LINE_DOWN] = {
 		"cursor-line-down",
 		"Move cursor line downwards",
-		movement, { .i = MOVE_LINE_DOWN }
+		movement, { .i = VIS_MOVE_LINE_DOWN }
 	},
 	[VIS_ACTION_CURSOR_LINE_START] = {
 		"cursor-line-start",
 		"Move cursor to first non-blank character of the line",
-		movement, { .i = MOVE_LINE_START }
+		movement, { .i = VIS_MOVE_LINE_START }
 	},
 	[VIS_ACTION_CURSOR_LINE_FINISH] = {
 		"cursor-line-finish",
 		"Move cursor to last non-blank character of the line",
-		movement, { .i = MOVE_LINE_FINISH }
+		movement, { .i = VIS_MOVE_LINE_FINISH }
 	},
 	[VIS_ACTION_CURSOR_LINE_BEGIN] = {
 		"cursor-line-begin",
 		"Move cursor to first character of the line",
-		movement, { .i = MOVE_LINE_BEGIN }
+		movement, { .i = VIS_MOVE_LINE_BEGIN }
 	},
 	[VIS_ACTION_CURSOR_LINE_END] = {
 		"cursor-line-end",
 		"Move cursor to end of the line",
-		movement, { .i = MOVE_LINE_LASTCHAR }
+		movement, { .i = VIS_MOVE_LINE_LASTCHAR }
 	},
 	[VIS_ACTION_CURSOR_SCREEN_LINE_UP] = {
 		"cursor-sceenline-up",
 		"Move cursor screen/display line upwards",
-		movement, { .i = MOVE_SCREEN_LINE_UP }
+		movement, { .i = VIS_MOVE_SCREEN_LINE_UP }
 	},
 	[VIS_ACTION_CURSOR_SCREEN_LINE_DOWN] = {
 		"cursor-screenline-down",
 		"Move cursor screen/display line downwards",
-		movement, { .i = MOVE_SCREEN_LINE_DOWN }
+		movement, { .i = VIS_MOVE_SCREEN_LINE_DOWN }
 	},
 	[VIS_ACTION_CURSOR_SCREEN_LINE_BEGIN] = {
 		"cursor-screenline-begin",
 		"Move cursor to beginning of screen/display line",
-		movement, { .i = MOVE_SCREEN_LINE_BEGIN }
+		movement, { .i = VIS_MOVE_SCREEN_LINE_BEGIN }
 	},
 	[VIS_ACTION_CURSOR_SCREEN_LINE_MIDDLE] = {
 		"cursor-screenline-middle",
 		"Move cursor to middle of screen/display line",
-		movement, { .i = MOVE_SCREEN_LINE_MIDDLE }
+		movement, { .i = VIS_MOVE_SCREEN_LINE_MIDDLE }
 	},
 	[VIS_ACTION_CURSOR_SCREEN_LINE_END] = {
 		"cursor-screenline-end",
 		"Move cursor to end of screen/display line",
-		movement, { .i = MOVE_SCREEN_LINE_END }
+		movement, { .i = VIS_MOVE_SCREEN_LINE_END }
 	},
 	[VIS_ACTION_CURSOR_BRACKET_MATCH] = {
 		"cursor-match-bracket",
 		"Match corresponding symbol if cursor is on a bracket character",
-		movement, { .i = MOVE_BRACKET_MATCH }
+		movement, { .i = VIS_MOVE_BRACKET_MATCH }
 	},
 	[VIS_ACTION_CURSOR_PARAGRAPH_PREV] = {
 		"cursor-paragraph-prev",
 		"Move cursor paragraph backward",
-		movement, { .i = MOVE_PARAGRAPH_PREV }
+		movement, { .i = VIS_MOVE_PARAGRAPH_PREV }
 	},
 	[VIS_ACTION_CURSOR_PARAGRAPH_NEXT] = {
 		"cursor-paragraph-next",
 		"Move cursor paragraph forward",
-		movement, { .i = MOVE_PARAGRAPH_NEXT }
+		movement, { .i = VIS_MOVE_PARAGRAPH_NEXT }
 	},
 	[VIS_ACTION_CURSOR_SENTENCE_PREV] = {
 		"cursor-sentence-prev",
 		"Move cursor sentence backward",
-		movement, { .i = MOVE_SENTENCE_PREV }
+		movement, { .i = VIS_MOVE_SENTENCE_PREV }
 	},
 	[VIS_ACTION_CURSOR_SENTENCE_NEXT] = {
 		"cursor-sentence-next",
 		"Move cursor sentence forward",
-		movement, { .i = MOVE_SENTENCE_NEXT }
+		movement, { .i = VIS_MOVE_SENTENCE_NEXT }
 	},
 	[VIS_ACTION_CURSOR_FUNCTION_START_PREV] = {
 		"cursor-function-start-prev",
 		"Move cursor backwards to start of function",
-		movement, { .i = MOVE_FUNCTION_START_PREV }
+		movement, { .i = VIS_MOVE_FUNCTION_START_PREV }
 	},
 	[VIS_ACTION_CURSOR_FUNCTION_START_NEXT] = {
 		"cursor-function-start-next",
 		"Move cursor forwards to start of function",
-		movement, { .i = MOVE_FUNCTION_START_NEXT }
+		movement, { .i = VIS_MOVE_FUNCTION_START_NEXT }
 	},
 	[VIS_ACTION_CURSOR_FUNCTION_END_PREV] = {
 		"cursor-function-end-prev",
 		"Move cursor backwards to end of function",
-		movement, { .i = MOVE_FUNCTION_END_PREV }
+		movement, { .i = VIS_MOVE_FUNCTION_END_PREV }
 	},
 	[VIS_ACTION_CURSOR_FUNCTION_END_NEXT] = {
 		"cursor-function-end-next",
 		"Move cursor forwards to end of function",
-		movement, { .i = MOVE_FUNCTION_END_NEXT }
+		movement, { .i = VIS_MOVE_FUNCTION_END_NEXT }
 	},
 	[VIS_ACTION_CURSOR_COLUMN] = {
 		"cursor-column",
 		"Move cursor to given column of current line",
-		movement, { .i = MOVE_COLUMN }
+		movement, { .i = VIS_MOVE_COLUMN }
 	},
 	[VIS_ACTION_CURSOR_LINE_FIRST] = {
 		"cursor-line-first",
@@ -438,37 +438,37 @@ static KeyAction vis_action[] = {
 	[VIS_ACTION_CURSOR_WINDOW_LINE_TOP] = {
 		"cursor-window-line-top",
 		"Move cursor to top line of the window",
-		movement, { .i = MOVE_WINDOW_LINE_TOP }
+		movement, { .i = VIS_MOVE_WINDOW_LINE_TOP }
 	},
 	[VIS_ACTION_CURSOR_WINDOW_LINE_MIDDLE] = {
 		"cursor-window-line-middle",
 		"Move cursor to middle line of the window",
-		movement, { .i = MOVE_WINDOW_LINE_MIDDLE }
+		movement, { .i = VIS_MOVE_WINDOW_LINE_MIDDLE }
 	},
 	[VIS_ACTION_CURSOR_WINDOW_LINE_BOTTOM] = {
 		"cursor-window-line-bottom",
 		"Move cursor to bottom line of the window",
-		movement, { .i = MOVE_WINDOW_LINE_BOTTOM }
+		movement, { .i = VIS_MOVE_WINDOW_LINE_BOTTOM }
 	},
 	[VIS_ACTION_CURSOR_SEARCH_NEXT] = {
 		"cursor-search-forward",
 		"Move cursor to bottom line of the window",
-		movement, { .i = MOVE_SEARCH_NEXT }
+		movement, { .i = VIS_MOVE_SEARCH_NEXT }
 	},
 	[VIS_ACTION_CURSOR_SEARCH_PREV] = {
 		"cursor-search-backward",
 		"Move cursor to bottom line of the window",
-		movement, { .i = MOVE_SEARCH_PREV }
+		movement, { .i = VIS_MOVE_SEARCH_PREV }
 	},
 	[VIS_ACTION_CURSOR_SEARCH_WORD_FORWARD] = {
 		"cursor-search-word-forward",
 		"Move cursor to next occurence of the word under cursor",
-		movement, { .i = MOVE_SEARCH_WORD_FORWARD }
+		movement, { .i = VIS_MOVE_SEARCH_WORD_FORWARD }
 	},
 	[VIS_ACTION_CURSOR_SEARCH_WORD_BACKWARD] = {
 		"cursor-search-word-backward",
 		"Move cursor to previous occurence of the word under cursor",
-		 movement, { .i = MOVE_SEARCH_WORD_BACKWARD }
+		 movement, { .i = VIS_MOVE_SEARCH_WORD_BACKWARD }
 	},
 	[VIS_ACTION_WINDOW_PAGE_UP] = {
 		"window-page-up",
@@ -523,42 +523,42 @@ static KeyAction vis_action[] = {
 	[VIS_ACTION_DELETE_CHAR_PREV] = {
 		"delete-char-prev",
 		"Delete the previous character",
-		delete, { .i = MOVE_CHAR_PREV }
+		delete, { .i = VIS_MOVE_CHAR_PREV }
 	},
 	[VIS_ACTION_DELETE_CHAR_NEXT] = {
 		"delete-char-next",
 		"Delete the next character",
-		delete, { .i = MOVE_CHAR_NEXT }
+		delete, { .i = VIS_MOVE_CHAR_NEXT }
 	},
 	[VIS_ACTION_DELETE_LINE_BEGIN] = {
 		"delete-line-begin",
 		"Delete until the start of the current line",
-		delete, { .i = MOVE_LINE_BEGIN }
+		delete, { .i = VIS_MOVE_LINE_BEGIN }
 	},
 	[VIS_ACTION_DELETE_WORD_PREV] = {
 		"delete-word-prev",
 		"Delete the previous WORD",
-		delete, { .i = MOVE_LONGWORD_START_PREV }
+		delete, { .i = VIS_MOVE_LONGWORD_START_PREV }
 	},
 	[VIS_ACTION_JUMPLIST_PREV] = {
 		"jumplist-prev",
 		"Go to older cursor position in jump list",
-		movement, { .i = MOVE_JUMPLIST_PREV }
+		movement, { .i = VIS_MOVE_JUMPLIST_PREV }
 	},
 	[VIS_ACTION_JUMPLIST_NEXT] = {
 		"jumplist-next",
 		"Go to newer cursor position in jump list",
-		movement, { .i = MOVE_JUMPLIST_NEXT }
+		movement, { .i = VIS_MOVE_JUMPLIST_NEXT }
 	},
 	[VIS_ACTION_CHANGELIST_PREV] = {
 		"changelist-prev",
 		"Go to older cursor position in change list",
-		movement, { .i = MOVE_CHANGELIST_PREV }
+		movement, { .i = VIS_MOVE_CHANGELIST_PREV }
 	},
 	[VIS_ACTION_CHANGELIST_NEXT] = {
 		"changelist-next",
 		"Go to newer cursor position in change list",
-		movement, { .i = MOVE_CHANGELIST_NEXT }
+		movement, { .i = VIS_MOVE_CHANGELIST_NEXT }
 	},
 	[VIS_ACTION_UNDO] = {
 		"editor-undo",
@@ -598,12 +598,12 @@ static KeyAction vis_action[] = {
 	[VIS_ACTION_MARK_GOTO] = {
 		"mark-goto",
 		"Goto the position of the given mark",
-		mark_motion, { .i = MOVE_MARK }
+		mark_motion, { .i = VIS_MOVE_MARK }
 	},
 	[VIS_ACTION_MARK_GOTO_LINE] = {
 		"mark-goto-line",
 		"Goto first non-blank character of the line containing the given mark",
-		mark_motion, { .i = MOVE_MARK_LINE }
+		mark_motion, { .i = VIS_MOVE_MARK_LINE }
 	},
 	[VIS_ACTION_REDRAW] = {
 		"editor-redraw",
@@ -618,12 +618,12 @@ static KeyAction vis_action[] = {
 	[VIS_ACTION_TOTILL_REPEAT] = {
 		"totill-repeat",
 		"Repeat latest to/till motion",
-		movement, { .i = MOVE_TOTILL_REPEAT }
+		movement, { .i = VIS_MOVE_TOTILL_REPEAT }
 	},
 	[VIS_ACTION_TOTILL_REVERSE] = {
 		"totill-reverse",
 		"Repeat latest to/till motion but in opposite direction",
-		movement, { .i = MOVE_TOTILL_REVERSE }
+		movement, { .i = VIS_MOVE_TOTILL_REVERSE }
 	},
 	[VIS_ACTION_PROMPT_SEARCH_FORWARD] = {
 		"search-forward",
@@ -638,22 +638,22 @@ static KeyAction vis_action[] = {
 	[VIS_ACTION_TILL_LEFT] = {
 		"till-left",
 		"Till after the occurrence of character to the left",
-		movement_key, { .i = MOVE_LEFT_TILL }
+		movement_key, { .i = VIS_MOVE_LEFT_TILL }
 	},
 	[VIS_ACTION_TILL_RIGHT] = {
 		"till-right",
 		"Till before the occurrence of character to the right",
-		movement_key, { .i = MOVE_RIGHT_TILL }
+		movement_key, { .i = VIS_MOVE_RIGHT_TILL }
 	},
 	[VIS_ACTION_TO_LEFT] = {
 		"to-left",
 		"To the first occurrence of character to the left",
-		movement_key, { .i = MOVE_LEFT_TO }
+		movement_key, { .i = VIS_MOVE_LEFT_TO }
 	},
 	[VIS_ACTION_TO_RIGHT] = {
 		"to-right",
 		"To the first occurrence of character to the right",
-		movement_key, { .i = MOVE_RIGHT_TO }
+		movement_key, { .i = VIS_MOVE_RIGHT_TO }
 	},
 	[VIS_ACTION_REGISTER] = {
 		"register",
@@ -738,17 +738,17 @@ static KeyAction vis_action[] = {
 	[VIS_ACTION_APPEND_CHAR_NEXT] = {
 		"append-char-next",
 		"Append text after the cursor",
-		insertmode, { .i = MOVE_CHAR_NEXT }
+		insertmode, { .i = VIS_MOVE_CHAR_NEXT }
 	},
 	[VIS_ACTION_APPEND_LINE_END] = {
 		"append-line-end",
 		"Append text after the end of the line",
-		insertmode, { .i = MOVE_LINE_END },
+		insertmode, { .i = VIS_MOVE_LINE_END },
 	},
 	[VIS_ACTION_INSERT_LINE_START] = {
 		"insert-line-start",
 		"Insert text before the first non-blank in the line",
-		insertmode, { .i = MOVE_LINE_START },
+		insertmode, { .i = VIS_MOVE_LINE_START },
 	},
 	[VIS_ACTION_OPEN_LINE_ABOVE] = {
 		"open-line-above",
@@ -763,7 +763,7 @@ static KeyAction vis_action[] = {
 	[VIS_ACTION_JOIN_LINE_BELOW] = {
 		"join-line-below",
 		"Join line(s)",
-		join, { .i = MOVE_LINE_NEXT },
+		join, { .i = VIS_MOVE_LINE_NEXT },
 	},
 	[VIS_ACTION_JOIN_LINES] = {
 		"join-lines",
@@ -1202,7 +1202,7 @@ static const char *replace(Vis *vis, const char *keys, const Arg *arg) {
 	memcpy(key, keys, len);
 	key[len] = '\0';
 	vis_operator(vis, VIS_OP_REPLACE);
-	vis_motion(vis, MOVE_NOP);
+	vis_motion(vis, VIS_MOVE_NOP);
 	vis_keys_inject(vis, next, key);
 	vis_keys_inject(vis, next+len, "<Escape>");
 	return next;
@@ -1213,7 +1213,7 @@ static const char *count(Vis *vis, const char *keys, const Arg *arg) {
 	int count = vis_count_get(vis);
 	if (0 <= digit && digit <= 9) {
 		if (digit == 0 && count == 0)
-			vis_motion(vis, MOVE_LINE_BEGIN);
+			vis_motion(vis, VIS_MOVE_LINE_BEGIN);
 		vis_count_set(vis, count * 10 + digit);
 	}
 	return keys;
@@ -1221,11 +1221,11 @@ static const char *count(Vis *vis, const char *keys, const Arg *arg) {
 
 static const char *gotoline(Vis *vis, const char *keys, const Arg *arg) {
 	if (vis_count_get(vis))
-		vis_motion(vis, MOVE_LINE);
+		vis_motion(vis, VIS_MOVE_LINE);
 	else if (arg->i < 0)
-		vis_motion(vis, MOVE_FILE_BEGIN);
+		vis_motion(vis, VIS_MOVE_FILE_BEGIN);
 	else
-		vis_motion(vis, MOVE_FILE_END);
+		vis_motion(vis, VIS_MOVE_FILE_END);
 	return keys;
 }
 
@@ -1395,7 +1395,7 @@ static const char *prompt_backspace(Vis *vis, const char *keys, const Arg *arg) 
 	if (!cmd || !*cmd)
 		vis_mode_switch(vis, VIS_MODE_NORMAL);
 	else
-		delete(vis, keys, &(const Arg){ .i = MOVE_CHAR_PREV });
+		delete(vis, keys, &(const Arg){ .i = VIS_MOVE_CHAR_PREV });
 	free(cmd);
 	return keys;
 }
@@ -1517,10 +1517,10 @@ static const char *window(Vis *vis, const char *keys, const Arg *arg) {
 static const char *openline(Vis *vis, const char *keys, const Arg *arg) {
 	vis_operator(vis, VIS_OP_INSERT);
 	if (arg->i > 0) {
-		vis_motion(vis, MOVE_LINE_END);
+		vis_motion(vis, VIS_MOVE_LINE_END);
 		vis_keys_inject(vis, keys, "<Enter>");
 	} else {
-		vis_motion(vis, MOVE_LINE_BEGIN);
+		vis_motion(vis, VIS_MOVE_LINE_BEGIN);
 		vis_keys_inject(vis, keys, "<Enter><Up>");
 	}
 	return keys;

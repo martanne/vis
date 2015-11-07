@@ -76,7 +76,7 @@ static void vis_mode_visual_line_enter(Vis *vis, Mode *old) {
 			view_cursors_selection_start(c);
 		vis_modes[VIS_MODE_OPERATOR].parent = &vis_modes[VIS_MODE_TEXTOBJ];
 	}
-	vis_motion(vis, MOVE_LINE_END);
+	vis_motion(vis, VIS_MOVE_LINE_END);
 }
 
 static void vis_mode_visual_line_leave(Vis *vis, Mode *new) {
