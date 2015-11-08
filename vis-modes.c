@@ -162,42 +162,7 @@ static void vis_mode_replace_input(Vis *vis, const char *str, size_t len) {
 	vis_replace_key(vis, str, len);
 }
 
-
-
-/*
- * the tree of modes currently looks like this. the double line between OPERATOR-OPTION
- * and OPERATOR is only in effect once an operator is detected. that is when entering the
- * OPERATOR mode its parent is set to OPERATOR-OPTION which makes {INNER-,}TEXTOBJ
- * reachable. once the operator is processed (i.e. the OPERATOR mode is left) its parent
- * mode is reset back to MOVE.
- *
- * Similarly the +-ed line between OPERATOR and TEXTOBJ is only active within the visual
- * modes.
- *
- *
- *                                         BASIC
- *                                    (arrow keys etc.)
- *                                    /      |
- *               /-------------------/       |
- *            READLINE                      MOVE
- *            /       \                 (h,j,k,l ...)
- *           /         \                     |       \-----------------\
- *          /           \                    |                         |
- *       INSERT       PROMPT             OPERATOR ++++           INNER-TEXTOBJ
- *          |      (history etc)       (d,c,y,p ..)   +      (i [wsp[]()b<>{}B"'`] )
- *          |                                |     \\  +               |
- *          |                                |      \\  +              |
- *       REPLACE                           NORMAL    \\  +          TEXTOBJ
- *                                           |        \\  +     (a [wsp[]()b<>{}B"'`] )
- *                                           |         \\  +   +       |
- *                                           |          \\  + +        |
- *                                         VISUAL        \\     OPERATOR-OPTION
- *                                           |            \\        (v,V)
- *                                           |             \\        //
- *                                           |              \\======//
- *                                      VISUAL-LINE
- */
-
+/** definition of mode tree structure */
 Mode vis_modes[] = {
 	[VIS_MODE_BASIC] = {
 		.name = "BASIC",
