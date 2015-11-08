@@ -582,9 +582,16 @@ A quick overview over the code structure to get you started:
  `buffer.[ch]`       | dynamically growing buffer used for registers and macros
  `ring-buffer.[ch]`  | fixed size ring buffer used for the jump list
  `map.[ch]`          | crit-bit tree based map supporting unique prefix lookups and ordered iteration. used to implement `:`-commands
- `vis.[ch]`          | vi(m) specific editor frontend
+ `vis.h`             | vi(m) specific editor frontend library public API
+ `vis.c`             | vi(m) specific editor frontend implementation
+ `vis-core.h`        | internal header file, various structs for core editor primitives
+ `vis-cmds.c`        | vi(m) `:`-command implementation
+ `vis-modes.c`       | vi(m) mode switching, enter/leave event handling
+ `vis-motions.c`     | vi(m) cursor motion implementation
+ `vis-operators.c`   | vi(m) operator implementation
  `main.c`            | key action definitions, program entry point
- `config.def.h`      | definition of key bindings, commands, syntax highlighting
+ `config.def.h`      | definition of default key bindings (mapping of key actions)
+ `lexers/`           | Lua LPeg based lexers used for syntax highlighting
 
 Hope this gets the interested people started.
 
