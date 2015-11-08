@@ -169,13 +169,13 @@ static size_t window_nop(Vis *vis, Win *win, size_t pos) {
 }
 
 Movement moves[] = {
-	[VIS_MOVE_LINE_UP]             = { .cur = view_line_up,            .type = LINEWISE                  },
-	[VIS_MOVE_LINE_DOWN]           = { .cur = view_line_down,          .type = LINEWISE                  },
+	[VIS_MOVE_LINE_UP]             = { .cur = view_line_up,             .type = LINEWISE                 },
+	[VIS_MOVE_LINE_DOWN]           = { .cur = view_line_down,           .type = LINEWISE                 },
 	[VIS_MOVE_SCREEN_LINE_UP]      = { .cur = view_screenline_up,                                        },
 	[VIS_MOVE_SCREEN_LINE_DOWN]    = { .cur = view_screenline_down,                                      },
-	[VIS_MOVE_SCREEN_LINE_BEGIN]   = { .cur = view_screenline_begin,   .type = CHARWISE                  },
-	[VIS_MOVE_SCREEN_LINE_MIDDLE]  = { .cur = view_screenline_middle,  .type = CHARWISE                  },
-	[VIS_MOVE_SCREEN_LINE_END]     = { .cur = view_screenline_end,     .type = CHARWISE|INCLUSIVE        },
+	[VIS_MOVE_SCREEN_LINE_BEGIN]   = { .cur = view_screenline_begin,    .type = CHARWISE                 },
+	[VIS_MOVE_SCREEN_LINE_MIDDLE]  = { .cur = view_screenline_middle,   .type = CHARWISE                 },
+	[VIS_MOVE_SCREEN_LINE_END]     = { .cur = view_screenline_end,      .type = CHARWISE|INCLUSIVE       },
 	[VIS_MOVE_LINE_PREV]           = { .txt = text_line_prev,                                            },
 	[VIS_MOVE_LINE_BEGIN]          = { .txt = text_line_begin,                                           },
 	[VIS_MOVE_LINE_START]          = { .txt = text_line_start,                                           },

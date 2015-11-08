@@ -7,7 +7,6 @@
 #include "text-regex.h"
 #include "map.h"
 #include "ring-buffer.h"
-#include "macro.h"
 
 /* a mode contains a set of key bindings which are currently valid.
  *
@@ -35,8 +34,6 @@ struct Mode {
 	bool visual;                        /* whether text selection is possible in this mode */
 };
 
-
-
 typedef struct {
 	int count;        /* how many times should the command be executed? */
 	Register *reg;    /* always non-NULL, set to a default register */
@@ -48,35 +45,43 @@ typedef struct {
 } OperatorContext;
 
 typedef struct {
-	size_t (*func)(Vis*, Text*, OperatorContext*); /* operator logic, returns new cursor position */
+	/* operator logic, returns new cursor position, if EPOS is
+	 * the cursor is disposed (except if it is the primary one) */
+	size_t (*func)(Vis*, Text*, OperatorContext*);
 } Operator;
 
-typedef struct {
+typedef struct { /* Motion implementation, takes a cursor postion and returns a new one */
 	/* TODO: merge types / use union to save space */
-	size_t (*cur)(Cursor*);            /* a movement based on current window content from view.h */
-	size_t (*txt)(Text*, size_t pos); /* a movement form text-motions.h */
+	size_t (*cur)(Cursor*);
+	size_t (*txt)(Text*, size_t pos);
 	size_t (*file)(Vis*, File*, size_t pos);
 	size_t (*vis)(Vis*, Text*, size_t pos);
 	size_t (*view)(Vis*, View*);
 	size_t (*win)(Vis*, Win*, size_t pos);
 	enum {
-		LINEWISE  = 1 << 0,
-		CHARWISE  = 1 << 1,
-		INCLUSIVE = 1 << 2,
-		EXCLUSIVE = 1 << 3,
-		IDEMPOTENT = 1 << 4,
-		JUMP = 1 << 5,
+		LINEWISE  = 1 << 0,  /* should the covered range be extended to whole lines? */
+		CHARWISE  = 1 << 1,  /* scrolls window content until position is visible */
+		INCLUSIVE = 1 << 2,  /* should new position be included in operator range? */
+		IDEMPOTENT = 1 << 3, /* does the returned postion remain the same if called multiple times? */
+		JUMP = 1 << 4,
 	} type;
-	int count;
 } Movement;
 
 typedef struct {
-	Filerange (*range)(Text*, size_t pos); /* a text object from text-objects.h */
-	enum {
+	/* gets a cursor position and returns a file range (or text_range_empty())
+	 * representing the text object containing the position. */
+	Filerange (*range)(Text*, size_t pos);
+	enum {  /* whether the object should include the delimiting symbols or not */
 		INNER,
 		OUTER,
 	} type;
 } TextObject;
+
+/* a macro is just a sequence of symbolic keys as received from ui->getkey */
+typedef Buffer Macro;
+#define macro_release buffer_release
+#define macro_reset buffer_truncate
+#define macro_append buffer_append0
 
 typedef struct {             /** collects all information until an operator is executed */
 	int count;
@@ -90,14 +95,14 @@ typedef struct {             /** collects all information until an operator is e
 	Arg arg;
 } Action;
 
-struct File {
-	Text *text;
-	const char *name;
-	volatile sig_atomic_t truncated;
-	bool is_stdin;
-	struct stat stat;
-	int refcount;
-	Mark marks[VIS_MARK_INVALID];
+struct File { /* shared state among windows displaying the same file */
+	Text *text;                      /* data structure holding the file content */
+	const char *name;                /* file name used when loading/saving */
+	volatile sig_atomic_t truncated; /* whether the underlying memory mapped region became invalid (SIGBUS) */
+	bool is_stdin;                   /* whether file content was read from stdin */
+	struct stat stat;                /* filesystem information when loaded/saved, used to detect changes outside the editor */
+	int refcount;                    /* how many windows are displaying this file? (always >= 1) */
+	Mark marks[VIS_MARK_INVALID];    /* marks which are shared across windows */
 	File *next, *prev;
 };
 
@@ -108,8 +113,8 @@ typedef struct {
 } ChangeList;
 
 struct Win {
-	Vis *editor;         /* editor instance to which this window belongs */
-	UiWin *ui;
+	Vis *vis;               /* editor instance to which this window belongs to */
+	UiWin *ui;              /* ui object handling visual appearance of this window */
 	File *file;             /* file being displayed in this window */
 	View *view;             /* currently displayed part of underlying text */
 	ViewEvent events;
@@ -119,42 +124,42 @@ struct Win {
 };
 
 struct Vis {
-	Ui *ui;
-	File *files;
-	Win *windows;                     /* list of windows */
-	Win *win;                         /* currently active window */
-	Syntax *syntaxes;                 /* NULL terminated array of syntax definitions */
-	Register registers[VIS_REG_INVALID];     /* register used for copy and paste */
-	Macro macros[VIS_MACRO_INVALID];         /* recorded macros */
-	Macro *recording, *last_recording;/* currently and least recently recorded macro */
-	Macro *macro_operator;
-	Win *prompt;                      /* 1-line height window to get user input */
-	Win *prompt_window;               /* window which was focused before prompt was shown */
-	char prompt_type;                 /* command ':' or search '/','?' prompt */
-	Regex *search_pattern;            /* last used search pattern */
-	char search_char[8];              /* last used character to search for via 'f', 'F', 't', 'T' */
-	int last_totill;                  /* last to/till movement used for ';' and ',' */
-	int tabwidth;                     /* how many spaces should be used to display a tab */
-	bool expandtab;                   /* whether typed tabs should be converted to spaces */
-	bool autoindent;                  /* whether indentation should be copied from previous line on newline */
-	Map *cmds;                        /* ":"-commands, used for unique prefix queries */
-	Map *options;                     /* ":set"-options */
-	Buffer input_queue;               /* holds pending input keys */
-	
-	Action action;       /* current action which is in progress */
-	Action action_prev;  /* last operator action used by the repeat '.' key */
-	Mode *mode;          /* currently active mode, used to search for keybindings */
-	Mode *mode_prev;     /* previsouly active user mode */
-	Mode *mode_before_prompt; /* user mode which was active before entering prompt */
-	volatile bool running; /* exit main loop once this becomes false */
-	int exit_status;
-	volatile sig_atomic_t cancel_filter; /* abort external command */
-	volatile sig_atomic_t sigbus;
-	sigjmp_buf sigbus_jmpbuf;
-	Map *actions;          /* built in special editor keys / commands */
-	Buffer *keys;          /* if non-NULL we are currently handling keys from this buffer,
-	                        * points to either the input_queue or a macro */
+	Ui *ui;                              /* user interface repsonsible for visual appearance */
+	File *files;                         /* all files currently managed by this editor instance */
+	Win *windows;                        /* all windows currently managed by this editor instance */
+	Win *win;                            /* currently active/focused window */
+	Syntax *syntaxes;                    /* NULL terminated array of syntax definitions */
+	Register registers[VIS_REG_INVALID]; /* registers used for yank and put */
+	Macro macros[VIS_MACRO_INVALID];     /* recorded macros */
+	Macro *recording, *last_recording;   /* currently (if non NULL) and least recently recorded macro */
+	Macro *macro_operator;               /* special macro used to repeat certain operators */
+	Win *prompt;                         /* 1-line height window to get user input */
+	Win *prompt_window;                  /* window which was focused before prompt was shown */
+	char prompt_type;                    /* command ':' or search '/','?' prompt */
+	Mode *mode_before_prompt;            /* user mode which was active before entering prompt */
+	Regex *search_pattern;               /* last used search pattern */
+	char search_char[8];                 /* last used character to search for via 'f', 'F', 't', 'T' */
+	int last_totill;                     /* last to/till movement used for ';' and ',' */
+	int tabwidth;                        /* how many spaces should be used to display a tab */
+	bool expandtab;                      /* whether typed tabs should be converted to spaces */
+	bool autoindent;                     /* whether indentation should be copied from previous line on newline */
+	Map *cmds;                           /* ":"-commands, used for unique prefix queries */
+	Map *options;                        /* ":set"-options */
+	Buffer input_queue;                  /* holds pending input keys */
+	Buffer *keys;                        /* currently active keys buffer (either the input_queue or a macro) */
+	Action action;                       /* current action which is in progress */
+	Action action_prev;                  /* last operator action used by the repeat (dot) command */
+	Mode *mode;                          /* currently active mode, used to search for keybindings */
+	Mode *mode_prev;                     /* previsouly active user mode */
+	volatile bool running;               /* exit main loop once this becomes false */
+	int exit_status;                     /* exit status when terminating main loop */
+	volatile sig_atomic_t cancel_filter; /* abort external command/filter (SIGINT occured) */
+	volatile sig_atomic_t sigbus;        /* one of the memory mapped region became unavailable (SIGBUS) */
+	sigjmp_buf sigbus_jmpbuf;            /* used to jump back to a known good state in the mainloop after (SIGBUS) */
+	Map *actions;                        /* registered editor actions / special keys commands */
 };
+
+/** stuff used by multiple of the vis-* files */
 
 /* TODO: make part of Vis struct? enable dynamic modes? */
 extern Mode vis_modes[VIS_MODE_LAST];

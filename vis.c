@@ -126,7 +126,7 @@ void vis_window_name(Win *win, const char *filename) {
 	}
 	
 	if (filename) {
-		Vis *vis = win->editor;
+		Vis *vis = win->vis;
 		for (Syntax *syn = vis->syntaxes; syn && syn->name; syn++) {
 			if (!regexec(&syn->file_regex, filename, 0, NULL, 0)) {
 				view_syntax_set(win->view, syn);
@@ -161,7 +161,7 @@ static void window_selection_changed(void *win, Filerange *sel) {
 static void window_free(Win *win) {
 	if (!win)
 		return;
-	Vis *vis = win->editor;
+	Vis *vis = win->vis;
 	if (vis && vis->ui)
 		vis->ui->window_free(win->ui);
 	view_free(win->view);
@@ -173,7 +173,7 @@ static Win *window_new_file(Vis *vis, File *file) {
 	Win *win = calloc(1, sizeof(Win));
 	if (!win)
 		return NULL;
-	win->editor = vis;
+	win->vis = vis;
 	win->file = file;
 	win->events = (ViewEvent) {
 		.data = win,
@@ -202,18 +202,18 @@ bool vis_window_reload(Win *win) {
 		return false; /* can't reload unsaved file */
 	/* temporarily unset file name, otherwise file_new returns the same File */
 	win->file->name = NULL;
-	File *file = file_new(win->editor, name);
+	File *file = file_new(win->vis, name);
 	win->file->name = name;
 	if (!file)
 		return false;
-	file_free(win->editor, win->file);
+	file_free(win->vis, win->file);
 	win->file = file;
 	win->ui->reload(win->ui, file);
 	return true;
 }
 
 bool vis_window_split(Win *original) {
-	Win *win = window_new_file(original->editor, original->file);
+	Win *win = window_new_file(original->vis, original->file);
 	if (!win)
 		return false;
 	win->file = original->file;
@@ -221,7 +221,7 @@ bool vis_window_split(Win *original) {
 	view_syntax_set(win->view, view_syntax_get(original->view));
 	view_options_set(win->view, view_options_get(original->view));
 	view_cursor_to(win->view, view_cursor_get(original->view));
-	vis_draw(win->editor);
+	vis_draw(win->vis);
 	return true;
 }
 
@@ -310,7 +310,7 @@ bool vis_window_new(Vis *vis, const char *filename) {
 }
 
 void vis_window_close(Win *win) {
-	Vis *vis = win->editor;
+	Vis *vis = win->vis;
 	file_free(vis, win->file);
 	if (win->prev)
 		win->prev->next = win->next;
@@ -498,12 +498,6 @@ bool vis_action_register(Vis *vis, KeyAction *action) {
 	return map_put(vis->actions, action->name, action);
 }
 
-static const char *getkey(Vis*);
-static void action_do(Vis*, Action *a);
-
-
-/** action processing: execut the operator / movement / text object */
-
 static void window_jumplist_add(Win *win, size_t pos) {
 	Mark mark = text_mark_set(win->file->text, pos);
 	if (mark && win->jumplist)
@@ -660,12 +654,12 @@ static void action_do(Vis *vis, Action *a) {
 	}
 }
 
-void vis_cancel(Vis *vis) {
-	action_reset(&vis->action);
-}
-
 void action_reset(Action *a) {
 	memset(a, 0, sizeof(*a));
+}
+
+void vis_cancel(Vis *vis) {
+	action_reset(&vis->action);
 }
 
 static bool prompt_cmd(Vis *vis, char type, const char *cmd) {
@@ -1260,7 +1254,7 @@ static void copy_indent_from_previous_line(Win *win) {
 	if (!buf)
 		return;
 	len = text_bytes_get(text, begin, len, buf);
-	vis_insert_key(win->editor, buf, len);
+	vis_insert_key(win->vis, buf, len);
 	free(buf);
 }
 
