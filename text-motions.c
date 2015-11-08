@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014 Marc André Tanner <mat at brain-dump.org>
+ * Copyright (c) 2014-2015 Marc André Tanner <mat at brain-dump.org>
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
