@@ -12,9 +12,31 @@ vis - a vim like text editor
 is a highly efficient vim like text editor.
 .SH OPTIONS
 .B \-v
-Print version information to standard output and exit.
+Print version information and exit.
 
 .B \-\-
-Denotes the end of the options. Arguments after this will be handled as a file name. This can be used to edit a filename that starts with a '-'.
+Denotes the end of the options. Arguments after this will be handled as a file name.
+.SH ENVIRONMENT VARIABLES
+.TP
+.B VIS_PATH
+Override path to look for Lua support files as used for syntax highlighting.
+Defaults (in this order) to:
+.RS
+.RS
+.nf
+.PP
+.B  $HOME/.vis
+.B  /usr/local/share/vis
+.B  /usr/share/vis
+.fi
+.RE
+.RE
+.TP
+.B VIS_THEME
+Override syntax highlighting theme to use.
+.SH HELP
+Type
+.B :help
+to get a list of currently active key bindings and their respective meaning.
 .SH AUTHOR
 vis is written by Marc André Tanner <mat at brain-dump.org>
