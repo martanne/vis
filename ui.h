@@ -6,7 +6,7 @@
 #include <termkey.h>
 
 typedef struct Ui Ui;
-typedef struct UiWin UiWin; 
+typedef struct UiWin UiWin;
 
 enum UiLayout {
 	UI_LAYOUT_HORIZONTAL,

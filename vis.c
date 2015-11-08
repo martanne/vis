@@ -67,10 +67,10 @@ static void file_free(Vis *vis, File *file) {
 		return;
 	if (--file->refcount > 0)
 		return;
-	
+
 	text_free(file->text);
 	free((char*)file->name);
-	
+
 	if (file->prev)
 		file->prev->next = file->next;
 	if (file->next)
@@ -111,7 +111,7 @@ static File *file_new(Vis *vis, const char *filename) {
 		text = text_load(NULL);
 	if (!text)
 		return NULL;
-	
+
 	File *file = file_new_text(vis, text);
 	if (!file) {
 		text_free(text);
@@ -748,7 +748,7 @@ static const char *vis_keys_raw(Vis *vis, Buffer *buf, const char *input) {
 	char *keys = buf->data, *start = keys, *cur = keys, *end;
 	bool prefix = false;
 	KeyBinding *binding = NULL;
-	
+
 	while (cur && *cur) {
 
 		if (!(end = (char*)vis_keys_next(vis, cur)))

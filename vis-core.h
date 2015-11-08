@@ -21,7 +21,7 @@
 typedef struct Mode Mode;
 struct Mode {
 	Mode *parent;                       /* if no match is found in this mode, search will continue there */
-	Map *bindings;                      
+	Map *bindings;
 	const char *name;                   /* descriptive, user facing name of the mode */
 	const char *status;                 /* name displayed in the window status bar */
 	const char *help;                   /* short description used by :help */

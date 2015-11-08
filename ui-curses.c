@@ -742,7 +742,7 @@ static void ui_draw(Ui *ui) {
 	UiCurses *uic = (UiCurses*)ui;
 	erase();
 	ui_arrange(ui, uic->layout);
-	
+
 	for (UiCursesWin *win = uic->windows; win; win = win->next)
 		ui_window_draw((UiWin*)win);
 
@@ -898,7 +898,7 @@ static UiWin *ui_window_new(Ui *ui, View *view, File *file) {
 	win->view = view;
 	win->file = file;
 	view_ui(view, &win->uiwin);
-	
+
 	if (uic->windows)
 		uic->windows->prev = win;
 	win->next = uic->windows;
@@ -924,7 +924,7 @@ static void ui_info(Ui *ui, const char *msg, va_list ap) {
 
 static void ui_info_hide(Ui *ui) {
 	UiCurses *uic = (UiCurses*)ui;
-	if (uic->info[0]) { 
+	if (uic->info[0]) {
 		uic->info[0] = '\0';
 		ui_draw(ui);
 	}
@@ -1024,7 +1024,7 @@ static const char *ui_getkey(Ui *ui) {
 		if (poll(&fd, 1, termkey_get_waittime(uic->termkey)) == 0)
 			ret = termkey_getkey_force(uic->termkey, &key);
 	}
-	
+
 	if (ret != TERMKEY_RES_KEY)
 		return NULL;
 	termkey_strfkey(uic->termkey, uic->key, sizeof(uic->key), &key, TERMKEY_FORMAT_VIM);
@@ -1106,7 +1106,7 @@ Ui *ui_curses_new(void) {
 	sa.sa_handler = sigwinch_handler;
 	sigaction(SIGWINCH, &sa, NULL);
 	sigaction(SIGCONT, &sa, NULL);
-	
+
 	ui_resize(ui);
 
 	return ui;

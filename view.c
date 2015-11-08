@@ -111,7 +111,7 @@ static Cell cell_blank = { .data = " " };
 
 static void view_clear(View *view);
 static bool view_addch(View *view, Cell *cell);
-static bool view_coord_get(View *view, size_t pos, Line **retline, int *retrow, int *retcol); 
+static bool view_coord_get(View *view, size_t pos, Line **retline, int *retrow, int *retcol);
 static void view_cursors_free(Cursor *c);
 /* set/move current cursor position to a given (line, column) pair */
 static size_t cursor_set(Cursor *cursor, Line *line, int col);
@@ -334,7 +334,7 @@ static bool view_coord_get(View *view, size_t pos, Line **retline, int *retrow, 
 		row = view->height - 1;
 	}
 
-	if (retline) *retline = line; 
+	if (retline) *retline = line;
 	if (retrow) *retrow = row;
 	if (retcol) *retcol = col;
 	return true;
@@ -551,7 +551,7 @@ void view_update(View *view) {
 
 	for (Selection *s = view->selections; s; s = s->next) {
 		Filerange sel = view_selections_get(s);
-		if (text_range_valid(&sel)) { 
+		if (text_range_valid(&sel)) {
 			Line *start_line; int start_col;
 			Line *end_line; int end_col;
 			view_coord_get(view, sel.start, &start_line, NULL, &start_col);
@@ -641,13 +641,13 @@ View *view_new(Text *text, lua_State *lua, ViewEvent *events) {
 		view_free(view);
 		return NULL;
 	}
-		
+
 	view->text = text;
 	view->lua = lua;
 	view->events = events;
 	view->tabwidth = 8;
 	view_options_set(view, 0);
-	
+
 	if (!view_resize(view, 1, 1)) {
 		view_free(view);
 		return NULL;
@@ -953,7 +953,7 @@ bool view_syntax_set(View *view, const char *name) {
 	/* loop through all _TOKENSTYLES and parse them */
 	lua_getfield(L, -1, "_TOKENSTYLES");
 	lua_pushnil(L); /* first key */
-	
+
 	while (lua_next(L, -2)) {
 		size_t id = lua_tointeger(L, -1);
 		//const char *name = lua_tostring(L, -2);
@@ -1188,7 +1188,7 @@ void view_cursors_selection_set(Cursor *c, Filerange *r) {
 		c->sel = view_selections_new(c->view);
 	if (!c->sel)
 		return;
-	
+
 	view_selections_set(c->sel, r);
 }
 
@@ -1240,7 +1240,7 @@ void view_cursors_clear(View *view) {
 		}
 	}
 	view_draw(view);
-} 
+}
 
 void view_selections_swap(Selection *s) {
 	Mark temp = s->anchor;

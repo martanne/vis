@@ -306,7 +306,7 @@ static bool cmd_set(Vis *vis, Filerange *range, enum CmdOpt cmdopt, const char *
 		} else {
 			opt &= ~UI_OPTION_LINE_NUMBERS_ABSOLUTE;
 		}
-		view_options_set(vis->win->view, opt); 
+		view_options_set(vis->win->view, opt);
 		break;
 	}
 	case OPTION_NUMBER_RELATIVE: {
@@ -317,7 +317,7 @@ static bool cmd_set(Vis *vis, Filerange *range, enum CmdOpt cmdopt, const char *
 		} else {
 			opt &= ~UI_OPTION_LINE_NUMBERS_RELATIVE;
 		}
-		view_options_set(vis->win->view, opt); 
+		view_options_set(vis->win->view, opt);
 		break;
 	}
 	case OPTION_CURSOR_LINE: {
@@ -867,7 +867,7 @@ static void print_mode(Mode *mode, Text *txt, bool recursive) {
 static bool cmd_help(Vis *vis, Filerange *range, enum CmdOpt opt, const char *argv[]) {
 	if (!vis_window_new(vis, NULL))
 		return false;
-	
+
 	Text *txt = vis->win->file->text;
 
 	text_appendf(txt, "vis %s, compiled " __DATE__ " " __TIME__ "\n\n", VERSION);
@@ -887,7 +887,7 @@ static bool cmd_help(Vis *vis, Filerange *range, enum CmdOpt opt, const char *ar
 				i == VIS_MODE_INSERT);
 		}
 	}
-	
+
 	text_appendf(txt, "\n Text objects\n\n");
 	print_mode(&vis_modes[VIS_MODE_TEXTOBJ], txt, false);
 
@@ -994,7 +994,7 @@ static Command *lookup_cmd(Vis *vis, const char *name) {
 	if (!vis->cmds) {
 		if (!(vis->cmds = map_new()))
 			return NULL;
-	
+
 		for (Command *cmd = cmds; cmd && cmd->name[0]; cmd++) {
 			for (const char **name = cmd->name; *name; name++)
 				map_put(vis->cmds, *name, cmd);

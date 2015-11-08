@@ -144,7 +144,7 @@ Register *view_cursors_register(Cursor*);
  * will affect the selected region. */
 void view_cursors_selection_start(Cursor*);
 /* detach cursor from selection, further cursor movements will not affect
- * the selected region. */ 
+ * the selected region. */
 void view_cursors_selection_stop(Cursor*);
 /* clear selection associated with this cursor (if any) */
 void view_cursors_selection_clear(Cursor*);
