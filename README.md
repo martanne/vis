@@ -616,7 +616,9 @@ In order to build vis you will need a C99 compiler as well as:
 
 If you want a self contained statically linked binary you can try
 to run `make standalone` which will attempt to download, compile
-and install all of the above dependencies.
+and install all of the above dependencies. `make local` will do
+the same but only for libtermkey, lua and LPeg (i.e. the system
+C and curses libraries are used).
 
 To build a regular dynamically linked binary using the system
 libraries, simply run `make` (possibly after adapting `config.mk`

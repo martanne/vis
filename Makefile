@@ -204,5 +204,6 @@ local: dependencies
 standalone: dependency/sources/install-libmusl
 	PATH=$(DEPS_BIN):$$PATH CC=musl-gcc PKG_CONFIG_PATH= PKG_CONFIG_LIBDIR= CFLAGS=-I$(DEPS_INC)/ncursesw $(MAKE) dependencies-full
 	PATH=$(DEPS_BIN):$$PATH CC=musl-gcc PKG_CONFIG_PATH= PKG_CONFIG_LIBDIR= CFLAGS="--static -Wl,--as-needed -I$(DEPS_INC)/ncursesw" $(MAKE) CFLAGS_LIBS= debug
+	@echo Run with: VIS_PATH=. ./vis
 
-.PHONY: all clean dist install uninstall debug profile standalone dependencies dependencies-full directories
+.PHONY: all clean dist install uninstall debug profile standalone dependencies dependencies-full local
