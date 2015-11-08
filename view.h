@@ -7,7 +7,6 @@
 #include "register.h"
 #include "text.h"
 #include "ui.h"
-#include "syntax.h"
 
 typedef struct View View;
 typedef struct Cursor Cursor;

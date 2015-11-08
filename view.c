@@ -21,11 +21,24 @@
 #include <regex.h>
 #include "vis.h"
 #include "view.h"
-#include "syntax.h"
 #include "text.h"
 #include "text-motions.h"
 #include "text-util.h"
 #include "util.h"
+
+typedef struct {
+	char *symbol;
+	int style;
+} SyntaxSymbol;
+
+enum {
+	SYNTAX_SYMBOL_SPACE,
+	SYNTAX_SYMBOL_TAB,
+	SYNTAX_SYMBOL_TAB_FILL,
+	SYNTAX_SYMBOL_EOL,
+	SYNTAX_SYMBOL_EOF,
+	SYNTAX_SYMBOL_LAST,
+};
 
 struct Selection {
 	Mark anchor;             /* position where the selection was created */

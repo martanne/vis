@@ -3,7 +3,6 @@
 
 #include <curses.h>
 #include "ui.h"
-#include "syntax.h"
 
 Ui *ui_curses_new(void);
 void ui_curses_free(Ui*);

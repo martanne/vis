@@ -12,7 +12,6 @@ typedef struct Win Win;
 #include "ui.h"
 #include "view.h"
 #include "register.h"
-#include "syntax.h"
 
 typedef union { /* various types of arguments passed to key action functions */
 	bool b;
