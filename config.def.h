@@ -263,6 +263,7 @@ static KeyBinding vis_mode_normal[] = {
 	{ "@",                  ACTION(MACRO_REPLAY)                        },
 	{ "gv",                 ACTION(SELECTION_RESTORE)                   },
 	{ "m",                  ACTION(MARK_SET)                            },
+	{ "<F1>",               ALIAS(":help<Enter>")                       },
 	{ /* empty last element, array terminator */                        },
 };
 
