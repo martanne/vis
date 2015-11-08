@@ -104,7 +104,7 @@ int vis_run(Vis*, int argc, char *argv[]);
 /* terminate editing session, given status will be the return value of vis_run */
 void vis_exit(Vis*, int status);
 /* emergency exit, print given message, perform minimal ui cleanup and exit process */
-void vis_die(Vis*, const char *msg, ...);
+void vis_die(Vis*, const char *msg, ...) __attribute__((noreturn));
 
 /* user facing modes are: NORMAL, VISUAL, VISUAL_LINE, PROMPT, INSERT, REPLACE.
  * the others should be considered as implementation details (TODO: do not expose them?) */

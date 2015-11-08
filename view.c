@@ -599,8 +599,7 @@ bool view_resize(View *view, int width, int height) {
 	}
 	view->width = width;
 	view->height = height;
-	if (view->lines)
-		memset(view->lines, 0, view->lines_size);
+	memset(view->lines, 0, view->lines_size);
 	view_draw(view);
 	return true;
 }

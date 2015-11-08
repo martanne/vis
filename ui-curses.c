@@ -672,7 +672,7 @@ static void ui_window_draw(UiWin *w) {
 	}
 	short selection_bg = win->styles[UI_STYLE_SELECTION].bg;
 	short cursor_line_bg = win->styles[UI_STYLE_CURSOR_LINE].bg;
-	attr_t attr;
+	attr_t attr = A_NORMAL;
 	for (const Line *l = view_lines_get(win->view); l; l = l->next) {
 		bool cursor_line = l->lineno == cursor_lineno;
 		for (int x = 0; x < width; x++) {
@@ -919,7 +919,7 @@ static UiWin *ui_window_new(Ui *ui, View *view, File *file) {
 	return &win->uiwin;
 }
 
-static void ui_die(Ui *ui, const char *msg, va_list ap) {
+__attribute__((noreturn)) static void ui_die(Ui *ui, const char *msg, va_list ap) {
 	UiCurses *uic = (UiCurses*)ui;
 	endwin();
 	if (uic->termkey)
