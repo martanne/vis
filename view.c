@@ -1105,11 +1105,14 @@ void view_cursors_to(Cursor *c, size_t pos) {
 			view->start = pos;
 			view_viewport_up(view, view->height / 2);
 		} else {
+			/* make sure we redraw changes to the very first character of the window */
+			if (view->start == pos)
+				view->start_last = 0;
 			/* set the start of the viewable region to the start of the line on which
 			 * the cursor should be placed. if this line requires more space than
 			 * available in the view then simply start displaying text at the new
 			 * cursor position */
-			for (int i = 0;  i < 2 && (pos < view->start || pos > view->end); i++) {
+			for (int i = 0;  i < 2 && (pos <= view->start || pos > view->end); i++) {
 				view->start = i == 0 ? text_line_begin(view->text, pos) : pos;
 				view_draw(view);
 			}
