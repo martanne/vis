@@ -125,12 +125,12 @@ void view_tabwidth_set(View *view, int tabwidth) {
 static void view_clear(View *view) {
 	if (view->start != view->start_last) {
 		view->start_mark = text_mark_set(view->text, view->start);
-		view->start_last = view->start;
 	} else {
 		size_t start = text_mark_get(view->text, view->start_mark);
 		if (start != EPOS)
 			view->start = start;
 	}
+	view->start_last = view->start;
 	view->topline = view->lines;
 	view->topline->lineno = text_lineno_by_pos(view->text, view->start);
 	view->lastline = view->topline;
