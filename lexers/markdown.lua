@@ -82,7 +82,7 @@ M._rules = {
 }
 
 local font_size = 10
-local hstyle = 'fore:$(color.red)'
+local hstyle = 'fore:red'
 M._tokenstyles = {
   h6 = hstyle,
   h5 = hstyle..',size:'..(font_size + 1),
@@ -91,7 +91,7 @@ M._tokenstyles = {
   h2 = hstyle..',size:'..(font_size + 4),
   h1 = hstyle..',size:'..(font_size + 5),
   code = l.STYLE_EMBEDDED..',eolfilled',
-  hr = 'back:$(color.black),eolfilled',
+  hr = 'back:black,eolfilled',
   link = 'underlined',
   link_url = 'underlined',
   link_label = l.STYLE_LABEL,

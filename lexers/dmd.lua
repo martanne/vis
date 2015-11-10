@@ -159,7 +159,7 @@ M._rules = {
 
 M._tokenstyles = {
   annotation = l.STYLE_PREPROCESSOR,
-  traits = 'fore:$(color.yellow)',
+  traits = l.STYLE_CLASS,
   versions = l.STYLE_CONSTANT,
   scopes = l.STYLE_CONSTANT
 }
