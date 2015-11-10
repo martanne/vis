@@ -123,7 +123,7 @@ dependency/sources/extract-libncurses: dependency/sources/$(LIBNCURSES).tar.gz
 	touch $@
 
 dependency/sources/configure-libncurses: dependency/sources/extract-libncurses
-	cd $(dir $<)/$(LIBNCURSES) && ./configure --prefix=/usr $(LIBNCURSES_CONFIG)
+	cd $(dir $<)/$(LIBNCURSES) && ./configure --prefix=/usr --libdir=/usr/lib $(LIBNCURSES_CONFIG)
 	touch $@
 
 dependency/sources/build-libncurses: dependency/sources/configure-libncurses
