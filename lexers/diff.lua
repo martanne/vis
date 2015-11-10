@@ -34,9 +34,9 @@ M._rules = {
 
 M._tokenstyles = {
   header = l.STYLE_COMMENT,
-  addition = 'fore:'..l.colors.green,
-  deletion = 'fore:'..l.colors.red,
-  change = 'fore:'..l.colors.yellow,
+  addition = 'fore:green',
+  deletion = 'fore:red',
+  change = 'fore:yellow',
 }
 
 M._LEXBYLINE = true
