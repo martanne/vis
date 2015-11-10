@@ -150,7 +150,7 @@ dependency/sources/build-libtermkey: dependency/sources/extract-libtermkey
 	touch $@
 
 dependency/sources/install-libtermkey: dependency/sources/build-libtermkey
-	make -C $(dir $<)/$(LIBTERMKEY) PREFIX=$(DEPS_PREFIX) install
+	make -C $(dir $<)/$(LIBTERMKEY) PREFIX=$(DEPS_PREFIX) install-inc install-lib
 	touch $@
 
 dependency/sources/lua-%: | dependency/sources
