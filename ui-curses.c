@@ -1079,8 +1079,11 @@ Ui *ui_curses_new(void) {
 	char *term = getenv("TERM");
 	if (!term)
 		term = "xterm";
-	if (!newterm(term, stderr, stdin))
-		goto err;
+	if (!newterm(term, stderr, stdin)) {
+		snprintf(uic->info, sizeof(uic->info), "Warning: unknown term `%s'", term);
+		if (!newterm("xterm-256color", stderr, stdin))
+			goto err;
+	}
 	start_color();
 	use_default_colors();
 	raw();
