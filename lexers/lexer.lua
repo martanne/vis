@@ -1668,6 +1668,7 @@ local files = {
 	[".eps|.ps"] = "ps",
 	[".prolog"] = "prolog",
 	[".props|.properties"] = "props",
+	[".pure"] = "pure",
 	[".sc|.py|.pyw"] = "python",
 	[".R|.Rout|.Rhistory|.Rt|Rout.save|Rout.fail"] = "rstats",
 	[".r|.reb"] = "rebol",
