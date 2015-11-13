@@ -452,7 +452,7 @@ void view_update(View *view) {
 		return;
 	/* maximal number of bytes to consider for syntax highlighting before
 	 * the visible area */
-	const size_t lexer_before_max = 4096;
+	const size_t lexer_before_max = 16384;
 	/* absolute position to start syntax highlighting */
 	const size_t lexer_start = view->start >= lexer_before_max ? view->start - lexer_before_max : 0;
 	/* number of bytes used for syntax highlighting before visible are */
