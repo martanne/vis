@@ -10,22 +10,22 @@ local M = {_NAME = 'pure'}
 local ws = token(l.WHITESPACE, l.space^1)
 
 -- Comments.
-local line_comment = '//' * l.nonnewline_esc^0
+local line_comment = '//' * l.nonnewline^0
 local block_comment = '/*' * (l.any - '*/')^0 * P('*/')^-1
 local comment = token(l.COMMENT, line_comment + block_comment)
 
 -- Strings.
-local sq_str = P('L')^-1 * l.delimited_range("'", true)
-local dq_str = P('L')^-1 * l.delimited_range('"', true)
-local string = token(l.STRING, sq_str + dq_str)
+local string = token(l.STRING, l.delimited_range('"', true))
 
 -- Numbers.
 local bin = '0' * S('Bb') * S('01')^1
 local hex = '0' * S('Xx') * (R('09') + R('af') + R('AF'))^1
-local int = R('09')^1
-local exp = S('Ee') * S('+-')^-1 * int
-local flt = int * ('.' * int)^-1 * exp + int^-1 * '.' * int * exp^-1
-local number = token(l.NUMBER, flt + bin + hex + int * P('L')^-1)
+local dec = R('09')^1
+local int = (bin + hex + dec) * P('L')^-1
+local rad = P('.') - P('..')
+local exp = (S('Ee') * S('+-')^-1 * int)^-1
+local flt = int * (rad * dec)^-1 * exp + int^-1 * rad * dec * exp
+local number = token(l.NUMBER, flt + int)
 
 -- Keywords.
 local keyword = token(l.KEYWORD, word_match{
@@ -39,16 +39,23 @@ local keyword = token(l.KEYWORD, word_match{
 local identifier = token(l.IDENTIFIER, l.word)
 
 -- Operators.
-local operator = token(l.OPERATOR, S('+-/*%<>~!=^&|?~:;,.()[]{}@\\'))
+local punct = S('+-/*%<>~!=^&|?~:;,.()[]{}@#$`\\\'')
+local dots = P('..')
+local operator = token(l.OPERATOR, dots + punct)
+
+-- Pragmas.
+local hashbang = l.starts_line('#!') * (l.nonnewline - P('//'))^0
+local pragma = token(l.PREPROCESSOR, hashbang)
 
 M._rules = {
   {'whitespace', ws},
+  {'comment', comment},
+  {'pragma', pragma},
   {'keyword', keyword},
   {'number', number},
+  {'operator', operator},
   {'identifier', identifier},
   {'string', string},
-  {'comment', comment},
-  {'operator', operator},
 }
 
 return M
