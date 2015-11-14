@@ -871,6 +871,14 @@ static void ui_window_options_set(UiWin *w, enum UiOption options) {
 			win->sidebar_width = 0;
 		}
 	}
+	if (options & UI_OPTION_STATUSBAR) {
+		if (!win->winstatus)
+			win->winstatus = newwin(1, 0, 0, 0);
+	} else {
+		if (win->winstatus)
+			delwin(win->winstatus);
+		win->winstatus = NULL;
+	}
 	ui_window_draw(w);
 }
 
@@ -879,7 +887,7 @@ static enum UiOption ui_window_options_get(UiWin *w) {
 	return win->options;
 }
 
-static UiWin *ui_window_new(Ui *ui, View *view, File *file) {
+static UiWin *ui_window_new(Ui *ui, View *view, File *file, enum UiOption options) {
 	UiCurses *uic = (UiCurses*)ui;
 	UiCursesWin *win = calloc(1, sizeof(UiCursesWin));
 	if (!win)
@@ -894,7 +902,7 @@ static UiWin *ui_window_new(Ui *ui, View *view, File *file) {
 		.syntax_style = ui_window_syntax_style,
 	};
 
-	if (!(win->win = newwin(0, 0, 0, 0)) || !(win->winstatus = newwin(1, 0, 0, 0))) {
+	if (!(win->win = newwin(0, 0, 0, 0))) {
 		ui_window_free((UiWin*)win);
 		return NULL;
 	}
@@ -921,6 +929,8 @@ static UiWin *ui_window_new(Ui *ui, View *view, File *file) {
 		uic->windows->prev = win;
 	win->next = uic->windows;
 	uic->windows = win;
+
+	ui_window_options_set((UiWin*)win, options);
 
 	return &win->uiwin;
 }
@@ -952,19 +962,13 @@ static UiWin *ui_prompt_new(Ui *ui, View *view, File *file) {
 	UiCurses *uic = (UiCurses*)ui;
 	if (uic->prompt_win)
 		return (UiWin*)uic->prompt_win;
-	UiWin *uiwin = ui_window_new(ui, view, file);
+	UiWin *uiwin = ui_window_new(ui, view, file, UI_OPTION_NONE);
 	UiCursesWin *win = (UiCursesWin*)uiwin;
 	if (!win)
 		return NULL;
 	uic->windows = win->next;
 	if (uic->windows)
 		uic->windows->prev = NULL;
-	if (win->winstatus)
-		delwin(win->winstatus);
-	if (win->winside)
-		delwin(win->winside);
-	win->winstatus = NULL;
-	win->winside = NULL;
 	uic->prompt_win = win;
 	return uiwin;
 }

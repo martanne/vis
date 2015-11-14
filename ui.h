@@ -14,6 +14,7 @@ enum UiLayout {
 };
 
 enum UiOption {
+	UI_OPTION_NONE = 0,
 	UI_OPTION_LINE_NUMBERS_ABSOLUTE = 1 << 0,
 	UI_OPTION_LINE_NUMBERS_RELATIVE = 1 << 1,
 	UI_OPTION_SYMBOL_SPACE = 1 << 2,
@@ -22,6 +23,7 @@ enum UiOption {
 	UI_OPTION_SYMBOL_EOL = 1 << 5,
 	UI_OPTION_SYMBOL_EOF = 1 << 6,
 	UI_OPTION_CURSOR_LINE = 1 << 7,
+	UI_OPTION_STATUSBAR = 1 << 8,
 };
 
 enum UiStyles {
@@ -43,7 +45,7 @@ struct Ui {
 	bool (*init)(Ui*, Vis*);
 	void (*free)(Ui*);
 	void (*resize)(Ui*);
-	UiWin* (*window_new)(Ui*, View*, File*);
+	UiWin* (*window_new)(Ui*, View*, File*, enum UiOption);
 	void (*window_free)(UiWin*);
 	void (*window_focus)(UiWin*);
 	UiWin* (*prompt_new)(Ui*, View*, File*);

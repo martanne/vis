@@ -164,7 +164,7 @@ static Win *window_new_file(Vis *vis, File *file) {
 	win->file = file;
 	win->jumplist = ringbuf_alloc(31);
 	win->view = view_new(file->text, vis->lua);
-	win->ui = vis->ui->window_new(vis->ui, win->view, file);
+	win->ui = vis->ui->window_new(vis->ui, win->view, file, UI_OPTION_STATUSBAR);
 	if (!win->jumplist || !win->view || !win->ui) {
 		window_free(win);
 		return NULL;
