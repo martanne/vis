@@ -62,8 +62,10 @@ const char *expandtab(Vis *vis) {
 static void file_free(Vis *vis, File *file) {
 	if (!file)
 		return;
-	if (--file->refcount > 0)
+	if (file->refcount > 1) {
+		--file->refcount;
 		return;
+	}
 	if (vis->event && vis->event->file_close)
 		vis->event->file_close(vis, file);
 	text_free(file->text);
@@ -84,7 +86,6 @@ static File *file_new_text(Vis *vis, Text *text) {
 		return NULL;
 	file->text = text;
 	file->stat = text_stat(text);
-	file->refcount++;
 	if (vis->files)
 		vis->files->prev = file;
 	file->next = vis->files;
@@ -98,7 +99,6 @@ static File *file_new(Vis *vis, const char *filename) {
 		 * TODO: do this based on inodes */
 		for (File *file = vis->files; file; file = file->next) {
 			if (file->name && strcmp(file->name, filename) == 0) {
-				file->refcount++;
 				return file;
 			}
 		}
@@ -143,11 +143,22 @@ static void windows_invalidate(Vis *vis, size_t start, size_t end) {
 	view_draw(vis->win->view);
 }
 
+void window_selection_save(Win *win) {
+	File *file = win->file;
+	Filerange sel = view_cursors_selection_get(view_cursors(win->view));
+	file->marks[VIS_MARK_SELECTION_START] = text_mark_set(file->text, sel.start);
+	file->marks[VIS_MARK_SELECTION_END] = text_mark_set(file->text, sel.end);
+}
+
 static void window_free(Win *win) {
 	if (!win)
 		return;
 	Vis *vis = win->vis;
-	if (vis && vis->ui)
+	for (Win *other = vis->windows; other; other = other->next) {
+		if (other->parent == win)
+			other->parent = NULL;
+	}
+	if (vis->ui)
 		vis->ui->window_free(win->ui);
 	view_free(win->view);
 	for (size_t i = 0; i < LENGTH(win->modes); i++)
@@ -169,6 +180,7 @@ static Win *window_new_file(Vis *vis, File *file) {
 		window_free(win);
 		return NULL;
 	}
+	file->refcount++;
 	view_tabwidth_set(win->view, vis->tabwidth);
 	if (vis->windows)
 		vis->windows->prev = win;
@@ -194,6 +206,7 @@ bool vis_window_reload(Win *win) {
 	if (!file)
 		return false;
 	file_free(win->vis, win->file);
+	file->refcount = 1;
 	win->file = file;
 	win->ui->reload(win->ui, file);
 	return true;
@@ -286,8 +299,6 @@ void vis_window_close(Win *win) {
 		vis->windows = win->next;
 	if (vis->win == win)
 		vis->win = win->next ? win->next : win->prev;
-	if (vis->prompt_window == win)
-		vis->prompt_window = NULL;
 	window_free(win);
 	if (vis->win)
 		vis->ui->window_focus(vis->win->ui);
@@ -306,18 +317,16 @@ Vis *vis_new(Ui *ui, VisEvent *event) {
 	vis->ui->init(vis->ui, vis);
 	vis->tabwidth = 8;
 	vis->expandtab = false;
-	if (!(vis->prompt = calloc(1, sizeof(Win))))
-		goto err;
-	if (!(vis->prompt->file = calloc(1, sizeof(File))))
-		goto err;
-	if (!(vis->prompt->file->text = text_load(NULL)))
-		goto err;
-	if (!(vis->prompt->view = view_new(vis->prompt->file->text, NULL)))
-		goto err;
-	if (!(vis->prompt->ui = vis->ui->prompt_new(vis->ui, vis->prompt->view, vis->prompt->file)))
-		goto err;
 	if (!(vis->search_pattern = text_regex_new()))
 		goto err;
+	if (!(vis->command_file = file_new(vis, NULL)))
+		goto err;
+	vis->command_file->refcount = 1;
+	vis->command_file->internal = true;
+	if (!(vis->search_file = file_new(vis, NULL)))
+		goto err;
+	vis->search_file->refcount = 1;
+	vis->search_file->internal = true;
 	vis->mode_prev = vis->mode = &vis_modes[VIS_MODE_NORMAL];
 	vis->event = event;
 	return vis;
@@ -334,8 +343,8 @@ void vis_free(Vis *vis) {
 	vis->event = NULL;
 	while (vis->windows)
 		vis_window_close(vis->windows);
-	file_free(vis, vis->prompt->file);
-	window_free(vis->prompt);
+	file_free(vis, vis->command_file);
+	file_free(vis, vis->search_file);
 	text_regex_free(vis->search_pattern);
 	for (int i = 0; i < LENGTH(vis->registers); i++)
 		register_release(&vis->registers[i]);
@@ -388,26 +397,157 @@ void vis_delete(Vis *vis, size_t pos, size_t len) {
 	windows_invalidate(vis, pos, pos + len);
 }
 
-void vis_prompt_show(Vis *vis, const char *title, const char *text) {
-	if (vis->prompt_window)
-		return;
-	vis->prompt_window = vis->win;
-	vis->prompt_type = title[0];
-	vis->ui->prompt(vis->ui, title, text);
-	vis_mode_switch(vis, VIS_MODE_PROMPT);
-	vis->win = vis->prompt;
+static bool prompt_cmd(Vis *vis, const char *cmd) {
+	if (!cmd || !cmd[0] || !cmd[1])
+		return true;
+	switch (cmd[0]) {
+	case '/':
+		return vis_motion(vis, VIS_MOVE_SEARCH_FORWARD, cmd+1);
+	case '?':
+		return vis_motion(vis, VIS_MOVE_SEARCH_BACKWARD, cmd+1);
+	case '+':
+	case ':':
+		return vis_cmd(vis, cmd+1);
+	}
+	return false;
 }
 
-void vis_prompt_hide(Vis *vis) {
-	if (!vis->prompt_window)
-		return;
-	vis->ui->prompt_hide(vis->ui);
-	vis->win = vis->prompt_window;
-	vis->prompt_window = NULL;
+static void prompt_hide(Win *win) {
+	Vis *vis = win->vis;
+	Text *txt = win->file->text;
+	size_t size = text_size(txt);
+	/* make sure that file is new line terminated */
+	char lastchar;
+	if (size > 1 && text_byte_get(txt, size-1, &lastchar) && lastchar != '\n')
+		text_insert(txt, size, "\n", 1);
+	/* remove empty entries */
+	Filerange line = text_object_line(txt, size);
+	size_t line_size = text_range_size(&line);
+	if (line_size <= 2)
+		text_delete(txt, line.start, line_size);
+	if (win->parent)
+		vis->win = win->parent;
+	vis->mode = win->parent_mode;
+	vis_window_close(win);
 }
 
-char *vis_prompt_get(Vis *vis) {
-	return vis->ui->prompt_input(vis->ui);
+static const char *prompt_enter(Vis *vis, const char *keys, const Arg *arg) {
+	Win *prompt_win = vis->win;
+	View *view = prompt_win->view;
+	Text *txt = prompt_win->file->text;
+	Win *win = prompt_win->parent;
+	char *cmd = NULL;
+
+	Filerange range = view_selection_get(view);
+	if (!text_range_valid(&range))
+		range = text_object_line_inner(txt, view_cursor_get(view));
+	if (text_range_valid(&range))
+		cmd = text_bytes_alloc0(txt, range.start, text_range_size(&range));
+
+	if (!win || !cmd) {
+		vis_info_show(vis, "Prompt window invalid\n");
+		prompt_hide(prompt_win);
+		free(cmd);
+		return keys;
+	}
+
+	/* restore window and mode which was active before the prompt window
+	 * we deliberately don't use vis_mode_switch because we do not want
+	 * to invoke the modes enter/leave functions */
+	vis->win = win;
+	vis->mode = prompt_win->parent_mode;
+	if (prompt_cmd(vis, cmd)) {
+		prompt_hide(prompt_win);
+	} else {
+		vis->win = prompt_win;
+		vis->mode = &vis_modes[VIS_MODE_INSERT];
+	}
+	free(cmd);
+	vis_draw(vis);
+	return keys;
+}
+
+static const char *prompt_esc(Vis *vis, const char *keys, const Arg *arg) {
+	if (view_cursors_count(vis->win->view) > 1)
+		view_cursors_clear(vis->win->view);
+	else
+		prompt_hide(vis->win);
+	return keys;
+}
+
+static const char *prompt_up(Vis *vis, const char *keys, const Arg *arg) {
+	vis_motion(vis, VIS_MOVE_LINE_UP);
+	vis_window_mode_unmap(vis->win, VIS_MODE_INSERT, "<Up>");
+	view_options_set(vis->win->view, UI_OPTION_NONE);
+	return keys;
+}
+
+static const char *prompt_backspace(Vis *vis, const char *keys, const Arg *arg) {
+	Text *txt = vis->win->file->text;
+	size_t size = text_size(txt);
+	size_t pos = view_cursor_get(vis->win->view);
+	char c;
+	if (pos == size && (pos == 1 || (size >= 2 && text_byte_get(txt, size-2, &c) && c == '\n'))) {
+		 prompt_hide(vis->win);
+	} else {
+		vis_operator(vis, VIS_OP_DELETE);
+		vis_motion(vis, VIS_MOVE_CHAR_PREV);
+	}
+	return keys;
+}
+
+static const KeyBinding prompt_enter_binding = {
+	.key = "<Enter>",
+	.action = &(KeyAction){
+		.func = prompt_enter,
+	},
+};
+
+static const KeyBinding prompt_esc_binding = {
+	.key = "<Escape>",
+	.action = &(KeyAction){
+		.func = prompt_esc,
+	},
+};
+
+static const KeyBinding prompt_up_binding = {
+	.key = "<Up>",
+	.action = &(KeyAction){
+		.func = prompt_up,
+	},
+};
+
+static const KeyBinding prompt_backspace_binding = {
+	.key = "<Enter>",
+	.action = &(KeyAction){
+		.func = prompt_backspace,
+	},
+};
+
+void vis_prompt_show(Vis *vis, const char *title) {
+	Win *active = vis->win;
+	Win *prompt = window_new_file(vis, title[0] == ':' ? vis->command_file : vis->search_file);
+	if (!prompt)
+		return;
+	if (vis->mode->visual)
+		window_selection_save(active);
+	view_options_set(prompt->view, UI_OPTION_ONELINE);
+	Text *txt = prompt->file->text;
+	text_insert(txt, text_size(txt), title, strlen(title));
+	view_cursors_scroll_to(view_cursor(prompt->view), text_size(txt));
+	view_draw(prompt->view);
+	prompt->parent = active;
+	prompt->parent_mode = vis->mode;
+	vis_window_mode_map(prompt, VIS_MODE_NORMAL, "<Enter>", &prompt_enter_binding);
+	vis_window_mode_map(prompt, VIS_MODE_INSERT, "<Enter>", &prompt_enter_binding);
+	vis_window_mode_map(prompt, VIS_MODE_REPLACE, "<Enter>", &prompt_enter_binding);
+	vis_window_mode_map(prompt, VIS_MODE_VISUAL, "<Enter>", &prompt_enter_binding);
+	vis_window_mode_map(prompt, VIS_MODE_VISUAL_LINE, "<Enter>", &prompt_enter_binding);
+	vis_window_mode_map(prompt, VIS_MODE_NORMAL, "<Escape>", &prompt_esc_binding);
+	vis_window_mode_map(prompt, VIS_MODE_INSERT, "<Up>", &prompt_up_binding);
+	vis_window_mode_map(prompt, VIS_MODE_INSERT, "<Backspace>", &prompt_backspace_binding);
+	vis_mode_switch(vis, VIS_MODE_INSERT);
+	vis_draw(vis);
 }
 
 void vis_info_show(Vis *vis, const char *msg, ...) {
@@ -605,7 +745,7 @@ static void action_do(Vis *vis, Action *a) {
 				vis_mode_switch(vis, VIS_MODE_NORMAL);
 				vis_cmd(vis, a->arg.s);
 			} else {
-				vis_prompt_show(vis, ":", "'<,'>!");
+				vis_prompt_show(vis, ":'<,'>!");
 			}
 		} else if (vis->mode == &vis_modes[VIS_MODE_OPERATOR_PENDING]) {
 			mode_set(vis, vis->mode_prev);
@@ -632,21 +772,6 @@ void action_reset(Action *a) {
 
 void vis_cancel(Vis *vis) {
 	action_reset(&vis->action);
-}
-
-static bool prompt_cmd(Vis *vis, char type, const char *cmd) {
-	if (!cmd || !cmd[0])
-		return true;
-	switch (type) {
-	case '/':
-		return vis_motion(vis, VIS_MOVE_SEARCH_FORWARD, cmd);
-	case '?':
-		return vis_motion(vis, VIS_MOVE_SEARCH_BACKWARD, cmd);
-	case '+':
-	case ':':
-		return vis_cmd(vis, cmd);
-	}
-	return false;
 }
 
 void vis_die(Vis *vis, const char *msg, ...) {
@@ -838,7 +963,7 @@ static void vis_args(Vis *vis, int argc, char *argv[]) {
 		} else if (!vis_window_new(vis, argv[i])) {
 			vis_die(vis, "Can not load `%s': %s\n", argv[i], strerror(errno));
 		} else if (cmd) {
-			prompt_cmd(vis, cmd[0], cmd+1);
+			prompt_cmd(vis, cmd);
 			cmd = NULL;
 		}
 	}
@@ -866,7 +991,7 @@ static void vis_args(Vis *vis, int argc, char *argv[]) {
 			vis_die(vis, "Can not create empty buffer\n");
 		}
 		if (cmd)
-			prompt_cmd(vis, cmd[0], cmd+1);
+			prompt_cmd(vis, cmd);
 	}
 }
 
@@ -1282,20 +1407,6 @@ void vis_insert_nl(Vis *vis) {
 
 	if (vis->autoindent)
 		copy_indent_from_previous_line(vis->win);
-}
-
-void vis_prompt_enter(Vis *vis) {
-	char *s = vis_prompt_get(vis);
-	/* it is important to switch back to the previous mode, which hides
-	 * the prompt and more importantly resets vis->win to the currently
-	 * focused editor window *before* anything is executed which depends
-	 * on vis->win.
-	 */
-	mode_set(vis, vis->mode_before_prompt);
-	if (s && *s && prompt_cmd(vis, vis->prompt_type, s) && vis->prompt_type == ':')
-		vis_mode_switch(vis, VIS_MODE_NORMAL);
-	free(s);
-	vis_draw(vis);
 }
 
 Text *vis_text(Vis *vis) {

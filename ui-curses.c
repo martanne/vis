@@ -85,8 +85,6 @@ typedef struct {
 	Vis *vis;              /* editor instance to which this ui belongs */
 	UiCursesWin *windows;     /* all windows managed by this ui */
 	UiCursesWin *selwin;      /* the currently selected layout */
-	char prompt_title[255];   /* prompt_title[0] == '\0' if prompt isn't shown */
-	UiCursesWin *prompt_win;  /* like a normal window but without a status bar */
 	char info[255];           /* info message displayed at the bottom of the screen */
 	int width, height;        /* terminal dimensions available for all windows */
 	enum UiLayout layout;     /* whether windows are displayed horizontally or vertically */
@@ -678,7 +676,7 @@ static void ui_window_draw(UiWin *w) {
 		bool cursor_line = l->lineno == cursor_lineno;
 		for (int x = 0; x < width; x++) {
 			CellStyle *style = &win->styles[l->cells[x].attr];
-			if (l->cells[x].cursor && (win->ui->selwin == win || win->ui->prompt_win == win)) {
+			if (l->cells[x].cursor && win->ui->selwin == win) {
 				attr = style_to_attr(&win->styles[UI_STYLE_CURSOR]);
 				prev_style = NULL;
 			} else if (l->cells[x].selected) {
@@ -730,24 +728,43 @@ static void ui_window_update(UiCursesWin *win) {
 static void ui_arrange(Ui *ui, enum UiLayout layout) {
 	UiCurses *uic = (UiCurses*)ui;
 	uic->layout = layout;
-	int n = 0, x = 0, y = 0;
-	for (UiCursesWin *win = uic->windows; win; win = win->next)
-		n++;
-	int max_height = uic->height - !!(uic->prompt_title[0] || uic->info[0]);
+	int n = 0, m = !!uic->info[0], x = 0, y = 0;
+	for (UiCursesWin *win = uic->windows; win; win = win->next) {
+		if (win->options & UI_OPTION_ONELINE)
+			m++;
+		else
+			n++;
+	}
+	int max_height = uic->height - m;
 	int width = (uic->width / MAX(1, n)) - 1;
 	int height = max_height / MAX(1, n);
 	for (UiCursesWin *win = uic->windows; win; win = win->next) {
+		if (win->options & UI_OPTION_ONELINE)
+			continue;
+		n--;
 		if (layout == UI_LAYOUT_HORIZONTAL) {
-			ui_window_resize(win, uic->width, win->next ? height : max_height - y);
+			int h = n ? height : max_height - y;
+			ui_window_resize(win, uic->width, h);
 			ui_window_move(win, x, y);
-			y += height;
+			y += h;
 		} else {
-			ui_window_resize(win, win->next ? width : uic->width - x, max_height);
+			int w = n ? width : uic->width - x;
+			ui_window_resize(win, w, max_height);
 			ui_window_move(win, x, y);
-			x += width;
-			if (win->next)
+			x += w;
+			if (n)
 				mvvline(0, x++, ACS_VLINE, max_height);
 		}
+	}
+
+	if (layout == UI_LAYOUT_VERTICAL)
+		y = max_height;
+
+	for (UiCursesWin *win = uic->windows; win; win = win->next) {
+		if (!(win->options & UI_OPTION_ONELINE))
+			continue;
+		ui_window_resize(win, uic->width, 1);
+		ui_window_move(win, 0, y++);
 	}
 }
 
@@ -764,12 +781,6 @@ static void ui_draw(Ui *ui) {
         	mvaddstr(uic->height-1, 0, uic->info);
 	}
 
-	if (uic->prompt_title[0]) {
-	        attrset(A_NORMAL);
-        	mvaddstr(uic->height-1, 0, uic->prompt_title);
-		ui_window_draw((UiWin*)uic->prompt_win);
-	}
-
 	wnoutrefresh(stdscr);
 }
 
@@ -782,11 +793,6 @@ static void ui_resize_to(Ui *ui, int width, int height) {
 	UiCurses *uic = (UiCurses*)ui;
 	uic->width = width;
 	uic->height = height;
-	if (uic->prompt_title[0]) {
-		size_t title_width = strlen(uic->prompt_title);
-		ui_window_resize(uic->prompt_win, width - title_width, 1);
-		ui_window_move(uic->prompt_win, title_width, height-1);
-	}
 	ui_draw(ui);
 }
 
@@ -819,10 +825,6 @@ static void ui_update(Ui *ui) {
 
 	if (uic->selwin)
 		ui_window_update(uic->selwin);
-	if (uic->prompt_title[0]) {
-		wnoutrefresh(uic->prompt_win->win);
-		ui_window_update(uic->prompt_win);
-	}
 	doupdate();
 }
 
@@ -879,7 +881,27 @@ static void ui_window_options_set(UiWin *w, enum UiOption options) {
 			delwin(win->winstatus);
 		win->winstatus = NULL;
 	}
-	ui_window_draw(w);
+
+	if (options & UI_OPTION_ONELINE) {
+		/* move the new window to the end of the list */
+		UiCurses *uic = win->ui;
+		UiCursesWin *last = uic->windows;
+		while (last->next)
+			last = last->next;
+		if (last != win) {
+			if (win->prev)
+				win->prev->next = win->next;
+			if (win->next)
+				win->next->prev = win->prev;
+			if (uic->windows == win)
+				uic->windows = win->next;
+			last->next = win;
+			win->prev = last;
+			win->next = NULL;
+		}
+	}
+
+	ui_draw((Ui*)win->ui);
 }
 
 static enum UiOption ui_window_options_get(UiWin *w) {
@@ -956,49 +978,6 @@ static void ui_info_hide(Ui *ui) {
 		uic->info[0] = '\0';
 		ui_draw(ui);
 	}
-}
-
-static UiWin *ui_prompt_new(Ui *ui, View *view, File *file) {
-	UiCurses *uic = (UiCurses*)ui;
-	if (uic->prompt_win)
-		return (UiWin*)uic->prompt_win;
-	UiWin *uiwin = ui_window_new(ui, view, file, UI_OPTION_NONE);
-	UiCursesWin *win = (UiCursesWin*)uiwin;
-	if (!win)
-		return NULL;
-	uic->windows = win->next;
-	if (uic->windows)
-		uic->windows->prev = NULL;
-	uic->prompt_win = win;
-	return uiwin;
-}
-
-static void ui_prompt(Ui *ui, const char *title, const char *data) {
-	UiCurses *uic = (UiCurses*)ui;
-	if (uic->prompt_title[0])
-		return;
-	size_t len = strlen(data);
-	Text *text = vis_file_text(uic->prompt_win->file);
-	strncpy(uic->prompt_title, title, sizeof(uic->prompt_title)-1);
-	while (text_undo(text) != EPOS);
-	text_insert(text, 0, data, len);
-	view_cursor_to(uic->prompt_win->view, 0);
-	ui_resize_to(ui, uic->width, uic->height);
-	view_cursor_to(uic->prompt_win->view, len);
-}
-
-static char *ui_prompt_input(Ui *ui) {
-	UiCurses *uic = (UiCurses*)ui;
-	if (!uic->prompt_win)
-		return NULL;
-	Text *text = vis_file_text(uic->prompt_win->file);
-	return text_bytes_alloc0(text, 0, text_size(text));
-}
-
-static void ui_prompt_hide(Ui *ui) {
-	UiCurses *uic = (UiCurses*)ui;
-	uic->prompt_title[0] = '\0';
-	ui_resize_to(ui, uic->width, uic->height);
 }
 
 static bool ui_init(Ui *ui, Vis *vis) {
@@ -1111,10 +1090,6 @@ Ui *ui_curses_new(void) {
 		.window_new = ui_window_new,
 		.window_free = ui_window_free,
 		.window_focus = ui_window_focus,
-		.prompt_new = ui_prompt_new,
-		.prompt = ui_prompt,
-		.prompt_input = ui_prompt_input,
-		.prompt_hide = ui_prompt_hide,
 		.draw = ui_draw,
 		.redraw = ui_redraw,
 		.arrange = ui_arrange,
@@ -1146,7 +1121,6 @@ void ui_curses_free(Ui *ui) {
 	UiCurses *uic = (UiCurses*)ui;
 	if (!uic)
 		return;
-	ui_window_free((UiWin*)uic->prompt_win);
 	while (uic->windows)
 		ui_window_free((UiWin*)uic->windows);
 	endwin();

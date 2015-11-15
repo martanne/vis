@@ -92,10 +92,7 @@ static const char *delete(Vis*, const char *keys, const Arg *arg);
 /* insert register content indicated by keys at current cursor position */
 static const char *insert_register(Vis*, const char *keys, const Arg *arg);
 /* show a user prompt to get input with title arg->s */
-static const char *prompt_search(Vis*, const char *keys, const Arg *arg);
-static const char *prompt_cmd(Vis*, const char *keys, const Arg *arg);
-/* exit command mode if the last char is deleted */
-static const char *prompt_backspace(Vis*, const char *keys, const Arg *arg);
+static const char *prompt_show(Vis*, const char *keys, const Arg *arg);
 /* blocks to read 3 consecutive digits and inserts the corresponding byte value */
 static const char *insert_verbatim(Vis*, const char *keys, const Arg *arg);
 /* scroll window content according to arg->i which can be either PAGE, PAGE_HALF,
@@ -216,8 +213,6 @@ enum {
 	VIS_ACTION_JOIN_LINE_BELOW,
 	VIS_ACTION_JOIN_LINES,
 	VIS_ACTION_PROMPT_SHOW,
-	VIS_ACTION_PROMPT_BACKSPACE,
-	VIS_ACTION_PROMPT_ENTER,
 	VIS_ACTION_PROMPT_SHOW_VISUAL,
 	VIS_ACTION_REPEAT,
 	VIS_ACTION_SELECTION_FLIP,
@@ -637,12 +632,12 @@ static KeyAction vis_action[] = {
 	[VIS_ACTION_PROMPT_SEARCH_FORWARD] = {
 		"search-forward",
 		"Search forward",
-		prompt_search, { .s = "/" }
+		prompt_show, { .s = "/" }
 	},
 	[VIS_ACTION_PROMPT_SEARCH_BACKWARD] = {
 		"search-backward",
 		"Search backward",
-		prompt_search, { .s = "?" }
+		prompt_show, { .s = "?" }
 	},
 	[VIS_ACTION_TILL_LEFT] = {
 		"till-left",
@@ -792,22 +787,12 @@ static KeyAction vis_action[] = {
 	[VIS_ACTION_PROMPT_SHOW] = {
 		"prompt-show",
 		"Show editor command line prompt",
-		prompt_cmd, { .s = "" }
-	},
-	[VIS_ACTION_PROMPT_BACKSPACE] = {
-		"prompt-backspace",
-		"Delete previous character in prompt",
-		prompt_backspace
-	},
-	[VIS_ACTION_PROMPT_ENTER] = {
-		"prompt-enter",
-		"Execute current prompt content",
-		call, { .f = vis_prompt_enter }
+		prompt_show, { .s = ":" }
 	},
 	[VIS_ACTION_PROMPT_SHOW_VISUAL] = {
 		"prompt-show-visual",
 		"Show editor command line prompt in visual mode",
-		prompt_cmd, { .s = "'<,'>" }
+		prompt_show, { .s = "'<,'>" }
 	},
 	[VIS_ACTION_REPEAT] = {
 		"editor-repeat",
@@ -1409,23 +1394,8 @@ static const char *insert_register(Vis *vis, const char *keys, const Arg *arg) {
 	return keys;
 }
 
-static const char *prompt_search(Vis *vis, const char *keys, const Arg *arg) {
-	vis_prompt_show(vis, arg->s, "");
-	return keys;
-}
-
-static const char *prompt_cmd(Vis *vis, const char *keys, const Arg *arg) {
-	vis_prompt_show(vis, ":", arg->s);
-	return keys;
-}
-
-static const char *prompt_backspace(Vis *vis, const char *keys, const Arg *arg) {
-	char *cmd = vis_prompt_get(vis);
-	if (!cmd || !*cmd)
-		vis_mode_switch(vis, VIS_MODE_NORMAL);
-	else
-		delete(vis, keys, &(const Arg){ .i = VIS_MOVE_CHAR_PREV });
-	free(cmd);
+static const char *prompt_show(Vis *vis, const char *keys, const Arg *arg) {
+	vis_prompt_show(vis, arg->s);
 	return keys;
 }
 

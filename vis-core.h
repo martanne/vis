@@ -100,6 +100,7 @@ struct File { /* shared state among windows displaying the same file */
 	const char *name;                /* file name used when loading/saving */
 	volatile sig_atomic_t truncated; /* whether the underlying memory mapped region became invalid (SIGBUS) */
 	bool is_stdin;                   /* whether file content was read from stdin */
+	bool internal;                   /* whether it is an internal file (e.g. used for the prompt) */
 	struct stat stat;                /* filesystem information when loaded/saved, used to detect changes outside the editor */
 	int refcount;                    /* how many windows are displaying this file? (always >= 1) */
 	Mark marks[VIS_MARK_INVALID];    /* marks which are shared across windows */
@@ -120,21 +121,22 @@ struct Win {
 	RingBuffer *jumplist;   /* LRU jump management */
 	ChangeList changelist;  /* state for iterating through least recently changes */
 	Mode modes[VIS_MODE_LAST]; /* overlay mods used for per window key bindings */
+	Win *parent;            /* window which was active when showing the command prompt */
+	Mode *parent_mode;      /* mode which was active when showing the command prompt */
 	Win *prev, *next;       /* neighbouring windows */
 };
 
 struct Vis {
 	Ui *ui;                              /* user interface repsonsible for visual appearance */
 	File *files;                         /* all files currently managed by this editor instance */
+	File *command_file;                  /* special internal file used to store :-command prompt */
+	File *search_file;                   /* special internal file used to store /,? search prompt */
 	Win *windows;                        /* all windows currently managed by this editor instance */
 	Win *win;                            /* currently active/focused window */
 	Register registers[VIS_REG_INVALID]; /* registers used for yank and put */
 	Macro macros[VIS_MACRO_INVALID];     /* recorded macros */
 	Macro *recording, *last_recording;   /* currently (if non NULL) and least recently recorded macro */
 	Macro *macro_operator;               /* special macro used to repeat certain operators */
-	Win *prompt;                         /* 1-line height window to get user input */
-	Win *prompt_window;                  /* window which was focused before prompt was shown */
-	char prompt_type;                    /* command ':' or search '/','?' prompt */
 	Mode *mode_before_prompt;            /* user mode which was active before entering prompt */
 	Regex *search_pattern;               /* last used search pattern */
 	char search_char[8];                 /* last used character to search for via 'f', 'F', 't', 'T' */
@@ -178,5 +180,7 @@ void action_reset(Action*);
 
 void mode_set(Vis *vis, Mode *new_mode);
 Mode *mode_get(Vis *vis, enum VisMode mode);
+
+void window_selection_save(Win *win);
 
 #endif

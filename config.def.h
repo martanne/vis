@@ -275,15 +275,6 @@ static const KeyBinding bindings_readline[] = {
 	{ 0 /* empty last element, array terminator */                      },
 };
 
-static const KeyBinding bindings_prompt[] = {
-	{ "<Backspace>",        ACTION(PROMPT_BACKSPACE)                    },
-	{ "<C-h>",              ALIAS("<Backspace>")                        },
-	{ "<Enter>",            ACTION(PROMPT_ENTER)                        },
-	{ "<C-j>",              ALIAS("<Enter>")                            },
-	{ "<Tab>",              ACTION(NOP)                                 },
-	{ 0 /* empty last element, array terminator */                      },
-};
-
 static const KeyBinding bindings_insert[] = {
 	{ "<Escape>",           ACTION(MODE_NORMAL)                         },
 	{ "<C-c>",              ALIAS("<Escape>")                           },
@@ -349,12 +340,6 @@ static const KeyBinding **default_bindings[] = {
 	[VIS_MODE_REPLACE] = (const KeyBinding*[]){
 		bindings_replace,
 		bindings_insert,
-		bindings_readline,
-		bindings_basic,
-		NULL,
-	},
-	[VIS_MODE_PROMPT] = (const KeyBinding*[]){
-		bindings_prompt,
 		bindings_readline,
 		bindings_basic,
 		NULL,

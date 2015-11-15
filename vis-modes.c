@@ -61,31 +61,23 @@ static void vis_mode_operator_input(Vis *vis, const char *str, size_t len) {
 
 static void vis_mode_visual_enter(Vis *vis, Mode *old) {
 	if (!old->visual) {
-		if (old != &vis_modes[VIS_MODE_PROMPT]) {
-			for (Cursor *c = view_cursors(vis->win->view); c; c = view_cursors_next(c))
-				view_cursors_selection_start(c);
-		}
+		for (Cursor *c = view_cursors(vis->win->view); c; c = view_cursors_next(c))
+			view_cursors_selection_start(c);
 	}
 }
 
 static void vis_mode_visual_line_enter(Vis *vis, Mode *old) {
 	if (!old->visual) {
-		if (old != &vis_modes[VIS_MODE_PROMPT]) {
-			for (Cursor *c = view_cursors(vis->win->view); c; c = view_cursors_next(c))
-				view_cursors_selection_start(c);
-		}
+		for (Cursor *c = view_cursors(vis->win->view); c; c = view_cursors_next(c))
+			view_cursors_selection_start(c);
 	}
 	vis_motion(vis, VIS_MOVE_LINE_END);
 }
 
 static void vis_mode_visual_line_leave(Vis *vis, Mode *new) {
 	if (!new->visual) {
-		File *file = vis->win->file;
-		Filerange sel = view_cursors_selection_get(view_cursors(vis->win->view));
-		file->marks[VIS_MARK_SELECTION_START] = text_mark_set(file->text, sel.start);
-		file->marks[VIS_MARK_SELECTION_END] = text_mark_set(file->text, sel.end);
-		if (new != &vis_modes[VIS_MODE_PROMPT])
-			view_selections_clear(vis->win->view);
+		window_selection_save(vis->win);
+		view_selections_clear(vis->win->view);
 	} else {
 		view_cursor_to(vis->win->view, view_cursor_get(vis->win->view));
 	}
@@ -93,37 +85,8 @@ static void vis_mode_visual_line_leave(Vis *vis, Mode *new) {
 
 static void vis_mode_visual_leave(Vis *vis, Mode *new) {
 	if (!new->visual) {
-		File *file = vis->win->file;
-		Filerange sel = view_cursors_selection_get(view_cursors(vis->win->view));
-		file->marks[VIS_MARK_SELECTION_START] = text_mark_set(file->text, sel.start);
-		file->marks[VIS_MARK_SELECTION_END] = text_mark_set(file->text, sel.end);
-		if (new != &vis_modes[VIS_MODE_PROMPT])
-			view_selections_clear(vis->win->view);
-	}
-}
-
-static void vis_mode_prompt_input(Vis *vis, const char *str, size_t len) {
-	vis_insert_key(vis, str, len);
-}
-
-static void vis_mode_prompt_enter(Vis *vis, Mode *old) {
-	if (old->isuser && old != &vis_modes[VIS_MODE_PROMPT]) {
-		vis->mode_before_prompt = old;
-		/* prompt manipulations e.g. <Backspace> should not affect default register */
-		Register tmp = vis->registers[VIS_REG_PROMPT];
-		vis->registers[VIS_REG_PROMPT] = vis->registers[VIS_REG_DEFAULT];
-		vis->registers[VIS_REG_DEFAULT] = tmp;
-	}
-}
-
-static void vis_mode_prompt_leave(Vis *vis, Mode *new) {
-	if (new->isuser) {
-		vis_prompt_hide(vis);
-		Register tmp = vis->registers[VIS_REG_DEFAULT];
-		vis->registers[VIS_REG_DEFAULT] = vis->registers[VIS_REG_PROMPT];
-		vis->registers[VIS_REG_PROMPT] = tmp;
-		if (vis->action_prev.op == &ops[VIS_OP_FILTER])
-			macro_operator_stop(vis);
+		window_selection_save(vis->win);
+		view_selections_clear(vis->win->view);
 	}
 }
 
@@ -201,14 +164,6 @@ Mode vis_modes[] = {
 		.enter = vis_mode_visual_line_enter,
 		.leave = vis_mode_visual_line_leave,
 		.visual = true,
-	},
-	[VIS_MODE_PROMPT] = {
-		.name = "PROMPT",
-		.help = "",
-		.isuser = true,
-		.input = vis_mode_prompt_input,
-		.enter = vis_mode_prompt_enter,
-		.leave = vis_mode_prompt_leave,
 	},
 	[VIS_MODE_INSERT] = {
 		.name = "INSERT",

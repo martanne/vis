@@ -79,16 +79,7 @@ void vis_window_name(Win*, const char *filename);
 void vis_window_next(Vis*);
 void vis_window_prev(Vis*);
 /* display a user prompt with a certain title and default text */
-void vis_prompt_show(Vis*, const char *title, const char *text);
-/* execute current prompt content as command, as if the user had pressed <Enter> */
-void vis_prompt_enter(Vis*); /* TODO: bad abstraction */
-/* hide the user prompt if it is currently shown */
-void vis_prompt_hide(Vis*);
-/* return the content of the command prompt in a malloc(3)-ed string
- * which the call site has to free. */
-char *vis_prompt_get(Vis*);
-/* replace the current command line content with the one given */
-void vis_prompt_set(Vis*, const char *line);
+void vis_prompt_show(Vis*, const char *title);
 
 /* display a message to the user */
 void vis_info_show(Vis*, const char *msg, ...);
@@ -124,7 +115,6 @@ enum VisMode {
 	VIS_MODE_OPERATOR_PENDING,
 	VIS_MODE_VISUAL,
 	VIS_MODE_VISUAL_LINE,
-	VIS_MODE_PROMPT,
 	VIS_MODE_INSERT,
 	VIS_MODE_REPLACE,
 	VIS_MODE_LAST,

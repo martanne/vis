@@ -24,6 +24,7 @@ enum UiOption {
 	UI_OPTION_SYMBOL_EOF = 1 << 6,
 	UI_OPTION_CURSOR_LINE = 1 << 7,
 	UI_OPTION_STATUSBAR = 1 << 8,
+	UI_OPTION_ONELINE = 1 << 9,
 };
 
 enum UiStyles {
@@ -48,10 +49,6 @@ struct Ui {
 	UiWin* (*window_new)(Ui*, View*, File*, enum UiOption);
 	void (*window_free)(UiWin*);
 	void (*window_focus)(UiWin*);
-	UiWin* (*prompt_new)(Ui*, View*, File*);
-	void (*prompt)(Ui*, const char *title, const char *value);
-	char* (*prompt_input)(Ui*);
-	void (*prompt_hide)(Ui*);
 	void (*die)(Ui*, const char *msg, va_list ap) __attribute__((noreturn));
 	void (*info)(Ui*, const char *msg, va_list ap);
 	void (*info_hide)(Ui*);

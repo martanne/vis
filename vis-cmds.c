@@ -443,13 +443,21 @@ static bool cmd_edit(Vis *vis, Filerange *range, enum CmdOpt opt, const char *ar
 	return vis->win != oldwin;
 }
 
+static bool has_windows(Vis *vis) {
+	for (Win *win = vis->windows; win; win = win->next) {
+		if (!win->file->internal)
+			return true;
+	}
+	return false;
+}
+
 static bool cmd_quit(Vis *vis, Filerange *range, enum CmdOpt opt, const char *argv[]) {
 	if (!(opt & CMD_OPT_FORCE) && !is_view_closeable(vis->win)) {
 		info_unsaved_changes(vis);
 		return false;
 	}
 	vis_window_close(vis->win);
-	if (!vis->windows)
+	if (!has_windows(vis))
 		vis_exit(vis, EXIT_SUCCESS);
 	return true;
 }
@@ -473,7 +481,7 @@ static bool cmd_bdelete(Vis *vis, Filerange *range, enum CmdOpt opt, const char 
 		if (win->file->text == txt)
 			vis_window_close(win);
 	}
-	if (!vis->windows)
+	if (!has_windows(vis))
 		vis_exit(vis, EXIT_SUCCESS);
 	return true;
 }
@@ -484,7 +492,7 @@ static bool cmd_qall(Vis *vis, Filerange *range, enum CmdOpt opt, const char *ar
 		if (!text_modified(vis->win->file->text) || (opt & CMD_OPT_FORCE))
 			vis_window_close(win);
 	}
-	if (!vis->windows)
+	if (!has_windows(vis))
 		vis_exit(vis, EXIT_SUCCESS);
 	else
 		info_unsaved_changes(vis);
@@ -1097,6 +1105,8 @@ static Command *lookup_cmd(Vis *vis, const char *name) {
 
 bool vis_cmd(Vis *vis, const char *cmdline) {
 	enum CmdOpt opt = CMD_OPT_NONE;
+	while (*cmdline == ':')
+		cmdline++;
 	size_t len = strlen(cmdline);
 	char *line = malloc(len+2);
 	if (!line)
