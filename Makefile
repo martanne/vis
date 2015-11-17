@@ -29,7 +29,7 @@ LIBLUA_SHA1 = b3882111ad02ecc6b972f8c1241647905cb2e3fc
 LIBLPEG = lpeg-1.0.0
 LIBLPEG_SHA1 = 64a0920c9243b624a277c987d2219b6c50c43971
 
-LIBNCURSES_CONFIG = --disable-database --with-fallbacks=st-256color,xterm-256color,vt100 \
+LIBNCURSES_CONFIG = --disable-database --with-fallbacks=st,st-256color,xterm,xterm-256color,vt100 \
 	--with-shared --enable-widec --enable-ext-colors --with-termlib=tinfo \
 	--without-ada --without-cxx --without-cxx-binding --without-manpages --without-progs \
 	--without-tests --without-progs --without-debug --without-profile \
