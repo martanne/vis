@@ -30,12 +30,18 @@ static size_t op_yank(Vis *vis, Text *txt, OperatorContext *c) {
 
 static size_t op_put(Vis *vis, Text *txt, OperatorContext *c) {
 	size_t pos = c->pos;
+	bool sel = text_range_size(&c->range) > 0;
+	bool sel_linewise = sel && text_range_is_linewise(txt, &c->range);
+	if (sel) {
+		text_delete_range(txt, &c->range);
+		pos = c->pos = c->range.start;
+	}
 	switch (c->arg->i) {
 	case VIS_OP_PUT_AFTER:
 	case VIS_OP_PUT_AFTER_END:
-		if (c->reg->linewise)
+		if (c->reg->linewise && !sel_linewise)
 			pos = text_line_next(txt, pos);
-		else
+		else if (!sel)
 			pos = text_char_next(txt, pos);
 		break;
 	case VIS_OP_PUT_BEFORE:
