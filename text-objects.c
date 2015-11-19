@@ -192,7 +192,7 @@ Filerange text_object_word_find_next(Text *txt, size_t pos, const char *word) {
 			Filerange match_word = text_object_word(txt, match_pos);
 			if (text_range_size(&match_word) == len)
 				return match_word;
-			pos = match_pos;
+			pos = match_word.end;
 		} else {
 			return text_range_empty();
 		}
