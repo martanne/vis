@@ -11,9 +11,12 @@ void buffer_init(Buffer *buf) {
 }
 
 bool buffer_grow(Buffer *buf, size_t size) {
+	/* ensure minimal buffer size, to avoid repeated realloc(3) calls */
 	if (size < BUF_SIZE)
 		size = BUF_SIZE;
 	if (buf->size < size) {
+		/* if this is not the first allocation i.e. the buffer is
+		 * currently full, double the size to avoid memory pressure */
 		if (buf->size > 0)
 			size *= 2;
 		char *data = realloc(buf->data, size);

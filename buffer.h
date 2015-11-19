@@ -5,15 +5,16 @@
 #include <stdbool.h>
 #include "text.h"
 
-typedef struct {       /* a dynamically growing buffer storing arbitrary data */
+/* a dynamically growing buffer storing arbitrary data, used for registers/macros */
+typedef struct {
 	char *data;    /* NULL if empty */
 	size_t len;    /* current length of data */
 	size_t size;   /* maximal capacity of the buffer */
 } Buffer;
 
-/* initalize a (stack allocated) Buffer insteance */
+/* initalize a (stack allocated) Buffer instance */
 void buffer_init(Buffer*);
-/* relase/free all data stored in this buffer, reset size to zero */
+/* release/free all data stored in this buffer, reset size to zero */
 void buffer_release(Buffer*);
 /* reserve space to store at least size bytes in this buffer.*/
 bool buffer_grow(Buffer*, size_t size);
@@ -31,8 +32,9 @@ bool buffer_insert0(Buffer*, size_t pos, const char *data);
 bool buffer_append(Buffer*, const void *data, size_t len);
 /* append NUl-terminated data */
 bool buffer_append0(Buffer*, const char *data);
-
+/* insert new data at the start of the buffer */
 bool buffer_prepend(Buffer*, const void *data, size_t len);
+/* prepend NUL-terminated data */
 bool buffer_prepend0(Buffer*, const char *data);
 
 #endif
