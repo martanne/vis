@@ -1188,6 +1188,7 @@ static const char *cursors_select_skip(Vis *vis, const char *keys, const Arg *ar
 static const char *cursors_remove(Vis *vis, const char *keys, const Arg *arg) {
 	View *view = vis_view(vis);
 	view_cursors_dispose(view_cursor(view));
+	view_cursor_to(view, view_cursor_get(view));
 	return keys;
 }
 
