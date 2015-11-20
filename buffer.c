@@ -15,10 +15,7 @@ bool buffer_grow(Buffer *buf, size_t size) {
 	if (size < BUF_SIZE)
 		size = BUF_SIZE;
 	if (buf->size < size) {
-		/* if this is not the first allocation i.e. the buffer is
-		 * currently full, double the size to avoid memory pressure */
-		if (buf->size > 0)
-			size *= 2;
+		size = MAX(size, buf->size*2);
 		char *data = realloc(buf->data, size);
 		if (!data)
 			return false;
