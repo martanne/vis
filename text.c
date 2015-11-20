@@ -988,6 +988,8 @@ bool text_save_range(Text *txt, Filerange *range, const char *filename) {
 
 	if (fsync(fd) == -1)
 		goto err;
+	if (fstat(fd, &meta) == -1)
+		goto err;
 	if (close(fd) == -1)
 		return false;
 	txt->info = meta;
