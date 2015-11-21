@@ -1006,7 +1006,7 @@ static bool ui_init(Ui *ui, Vis *vis) {
 	} else {
 		theme = COLORS <= 16 ? "default-16" : "default-256";
 		if (!vis_theme_load(vis, theme))
-			vis_info_show(vis, "Warning: failed to load theme `%s' set $VIS_PATH", theme);
+			vis_info_show(vis, "Warning: failed to load theme `%s' set $VIS_THEME", theme);
 	}
 	return true;
 }
