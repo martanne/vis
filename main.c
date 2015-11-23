@@ -104,6 +104,8 @@ static const char *wslide(Vis*, const char *keys, const Arg *arg);
 static const char *call(Vis*, const char *keys, const Arg *arg);
 /* call window function as indicated by arg->w */
 static const char *window(Vis*, const char *keys, const Arg *arg);
+/* show info about Unicode character at cursor position */
+static const char *unicode_info(Vis*, const char *keys, const Arg *arg);
 
 enum {
 	VIS_ACTION_EDITOR_SUSPEND,
@@ -261,6 +263,7 @@ enum {
 	VIS_ACTION_TEXT_OBJECT_LINE_INNER,
 	VIS_ACTION_MOTION_CHARWISE,
 	VIS_ACTION_MOTION_LINEWISE,
+	VIS_ACTION_UNICODE_INFO,
 	VIS_ACTION_NOP,
 };
 
@@ -1040,6 +1043,11 @@ static KeyAction vis_action[] = {
 		"Force motion to be linewise",
 		motiontype, { .i = VIS_MOTIONTYPE_LINEWISE }
 	},
+	[VIS_ACTION_UNICODE_INFO] = {
+		"unicode-info",
+		"Show Unicode codepoint(s) of character under cursor",
+		unicode_info,
+	},
 	[VIS_ACTION_NOP] = {
 		"nop",
 		"Ignore key, do nothing",
@@ -1544,6 +1552,29 @@ static const char *switchmode(Vis *vis, const char *keys, const Arg *arg) {
 static const char *insertmode(Vis *vis, const char *keys, const Arg *arg) {
 	vis_operator(vis, VIS_OP_INSERT);
 	vis_motion(vis, arg->i);
+	return keys;
+}
+
+static const char *unicode_info(Vis *vis, const char *keys, const Arg *arg) {
+	View *view = vis_view(vis);
+	Text *txt = vis_text(vis);
+	size_t start = view_cursor_get(view);
+	size_t end = text_char_next(txt, start);
+	char data[end-start], *data_cur = data;
+	text_bytes_get(txt, start, end - start, data);
+	Iterator it = text_iterator_get(txt, start);
+	char info[255] = "", *info_cur = info;
+	for (size_t pos = start; it.pos < end; pos = it.pos) {
+		text_iterator_codepoint_next(&it, NULL);
+		size_t len = it.pos - pos;
+		wchar_t wc = 0xFFFD;
+		mbtowc(&wc, data_cur, len);
+		int width = wcwidth(wc);
+		info_cur += snprintf(info_cur, sizeof(info) - (info_cur - info) - 1,
+			"<%s%.*s> U+%04x ", width == 0 ? " " : "", len, data_cur, wc);
+		data_cur += len;
+	}
+	vis_info_show(vis, "%s", info);
 	return keys;
 }
 
