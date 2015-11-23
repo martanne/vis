@@ -84,7 +84,12 @@ bool text_iterator_byte_prev(Iterator*, char *b);
 /* if the new position is at EOF a NUL byte (which is not actually
  * part of the file) is read. */
 bool text_iterator_byte_next(Iterator*, char *b);
-
+/* move to the next/previous UTF-8 encoded Unicode codepoint
+ * and set c (if it is non NULL) to the first byte */
+bool text_iterator_codepoint_next(Iterator *it, char *c);
+bool text_iterator_codepoint_prev(Iterator *it, char *c);
+/* move to next/previous grapheme i.e. might skip over multiple
+ * Unicode codepoints (e.g. for combining characters) */
 bool text_iterator_char_next(Iterator*, char *c);
 bool text_iterator_char_prev(Iterator*, char *c);
 

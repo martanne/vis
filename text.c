@@ -20,6 +20,7 @@
 #include <time.h>
 #include <fcntl.h>
 #include <errno.h>
+#include <wchar.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/mman.h>
@@ -1333,7 +1334,7 @@ bool text_iterator_byte_prev(Iterator *it, char *b) {
 	return true;
 }
 
-bool text_iterator_char_next(Iterator *it, char *c) {
+bool text_iterator_codepoint_next(Iterator *it, char *c) {
 	while (text_iterator_byte_next(it, NULL)) {
 		if (ISUTF8(*it->text)) {
 			if (c)
@@ -1344,7 +1345,7 @@ bool text_iterator_char_next(Iterator *it, char *c) {
 	return false;
 }
 
-bool text_iterator_char_prev(Iterator *it, char *c) {
+bool text_iterator_codepoint_prev(Iterator *it, char *c) {
 	while (text_iterator_byte_prev(it, NULL)) {
 		if (ISUTF8(*it->text)) {
 			if (c)
@@ -1353,6 +1354,58 @@ bool text_iterator_char_prev(Iterator *it, char *c) {
 		}
 	}
 	return false;
+}
+
+bool text_iterator_char_next(Iterator *it, char *c) {
+	if (!text_iterator_codepoint_next(it, c))
+		return false;
+	mbstate_t ps = { 0 };
+	for (;;) {
+		char buf[MB_CUR_MAX];
+		size_t len = text_bytes_get(it->piece->text, it->pos, sizeof buf, buf);
+		wchar_t wc;
+		size_t wclen = mbrtowc(&wc, buf, len, &ps);
+		if (wclen == (size_t)-1 && errno == EILSEQ) {
+			return true;
+		} else if (wclen == (size_t)-2) {
+			return false;
+		} else if (wclen == 0) {
+			return true;
+		} else {
+			int width = wcwidth(wc);
+			if (width != 0)
+				return true;
+			if (!text_iterator_codepoint_next(it, c))
+				return false;
+		}
+	}
+	return true;
+}
+
+bool text_iterator_char_prev(Iterator *it, char *c) {
+	if (!text_iterator_codepoint_prev(it, c))
+		return false;
+	for (;;) {
+		char buf[MB_CUR_MAX];
+		size_t len = text_bytes_get(it->piece->text, it->pos, sizeof buf, buf);
+		wchar_t wc;
+		mbstate_t ps = { 0 };
+		size_t wclen = mbrtowc(&wc, buf, len, &ps);
+		if (wclen == (size_t)-1 && errno == EILSEQ) {
+			return true;
+		} else if (wclen == (size_t)-2) {
+			return false;
+		} else if (wclen == 0) {
+			return true;
+		} else {
+			int width = wcwidth(wc);
+			if (width != 0)
+				return true;
+			if (!text_iterator_codepoint_prev(it, c))
+				return false;
+		}
+	}
+	return true;
 }
 
 bool text_byte_get(Text *txt, size_t pos, char *buf) {
