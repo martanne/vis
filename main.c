@@ -1,6 +1,7 @@
 #include <signal.h>
 #include <limits.h>
 #include <string.h>
+#include <wchar.h>
 #include <errno.h>
 
 #include "ui-curses.h"
@@ -1571,7 +1572,7 @@ static const char *unicode_info(Vis *vis, const char *keys, const Arg *arg) {
 		mbtowc(&wc, data_cur, len);
 		int width = wcwidth(wc);
 		info_cur += snprintf(info_cur, sizeof(info) - (info_cur - info) - 1,
-			"<%s%.*s> U+%04x ", width == 0 ? " " : "", len, data_cur, wc);
+			"<%s%.*s> U+%04x ", width == 0 ? " " : "", (int)len, data_cur, wc);
 		data_cur += len;
 	}
 	vis_info_show(vis, "%s", info);
