@@ -32,6 +32,7 @@ if ! type "$VIS_MENU" >/dev/null 2>&1; then
 fi
 
 DIR=""
+[ ! -z "$PATTERN" -a "$PATTERN" != "." -a -d "$PATTERN" ] && DIR="$PATTERN"
 
 while true; do
 	SEL=$({ echo ..; ls -1 $PATTERN; } | $VIS_MENU $VIS_MENU_ARGS)

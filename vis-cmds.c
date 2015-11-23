@@ -344,8 +344,12 @@ static bool cmd_set(Vis *vis, Filerange *range, enum CmdOpt cmdopt, const char *
 }
 
 static bool is_file_pattern(const char *pattern) {
-	return pattern && (strcmp(pattern, ".") == 0 || strchr(pattern, '*') ||
-	       strchr(pattern, '[') || strchr(pattern, '{'));
+	if (!pattern)
+		return false;
+	struct stat meta;
+	if (stat(pattern, &meta) == 0 && S_ISDIR(meta.st_mode))
+		return true;
+	return strchr(pattern, '*') || strchr(pattern, '[') || strchr(pattern, '{');
 }
 
 static const char *file_open_dialog(Vis *vis, const char *pattern) {
