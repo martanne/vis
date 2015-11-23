@@ -21,5 +21,7 @@ bool text_range_equal(Filerange*, Filerange*);
 bool text_range_overlap(Filerange*, Filerange*);
 /* test whether a given position is within a certain range */
 bool text_range_contains(Filerange*, size_t pos);
+/* count the number of graphemes in data */
+int text_char_count(const char *data, size_t len);
 
 #endif

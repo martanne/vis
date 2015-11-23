@@ -435,14 +435,9 @@ void vis_insert_key(Vis *vis, const char *data, size_t len) {
 }
 
 void vis_replace(Vis *vis, size_t pos, const char *data, size_t len) {
-	size_t chars = 0;
-	for (size_t i = 0; i < len; i++) {
-		if (ISUTF8(data[i]))
-			chars++;
-	}
-
 	Text *txt = vis->win->file->text;
 	Iterator it = text_iterator_get(txt, pos);
+	int chars = text_char_count(data, len);
 	for (char c; chars-- > 0 && text_iterator_byte_get(&it, &c) && c != '\r' && c != '\n'; )
 		text_iterator_char_next(&it, NULL);
 
