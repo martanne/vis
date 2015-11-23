@@ -48,7 +48,8 @@ local link = token('link', P('!')^-1 * l.delimited_range('[]') *
                             (S(' \t')^1 *
                              l.delimited_range('"', false, true))^-1 * ')' +
                             S(' \t')^0 * l.delimited_range('[]')) +
-                           P('http://') * (l.any - l.space)^1)
+                           P('http://') * (l.any - l.space)^1 +
+                           P('https://') * (l.any - l.space)^1)
 local link_label = token('link_label', l.delimited_range('[]') * ':') * ws *
                    token('link_url', (l.any - l.space)^1) *
                    (ws * (dq_str + sq_str + paren_str))^-1
