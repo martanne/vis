@@ -146,7 +146,7 @@ size_t text_line_begin(Text *txt, size_t pos) {
 size_t text_line_start(Text *txt, size_t pos) {
 	char c;
 	Iterator it = text_iterator_get(txt, text_line_begin(txt, pos));
-	while (text_iterator_byte_get(&it, &c) && c != '\n' && isspace(c))
+	while (text_iterator_byte_get(&it, &c) && c != '\n' && isspace((unsigned char)c))
 		text_iterator_byte_next(&it, NULL);
 	return it.pos;
 }
@@ -155,7 +155,7 @@ size_t text_line_finish(Text *txt, size_t pos) {
 	char c;
 	Iterator it = text_iterator_get(txt, text_line_end(txt, pos));
 	do text_iterator_char_prev(&it, NULL);
-	while (text_iterator_byte_get(&it, &c) && c != '\n' && isspace(c));
+	while (text_iterator_byte_get(&it, &c) && c != '\n' && isspace((unsigned char)c));
 	return it.pos;
 }
 
@@ -281,33 +281,33 @@ static size_t text_customword_start_next(Text *txt, size_t pos, int (*isboundry)
 	Iterator it = text_iterator_get(txt, pos);
 	if (!text_iterator_byte_get(&it, &c))
 		return pos;
-	if (isboundry(c))
-		while (isboundry(c) && !isspace(c) && text_iterator_char_next(&it, &c));
+	if (isboundry((unsigned char)c))
+		while (isboundry((unsigned char)c) && !isspace((unsigned char)c) && text_iterator_char_next(&it, &c));
 	else
-		while (!isboundry(c) && text_iterator_char_next(&it, &c));
-	while (isspace(c) && text_iterator_char_next(&it, &c));
+		while (!isboundry((unsigned char)c) && text_iterator_char_next(&it, &c));
+	while (isspace((unsigned char)c) && text_iterator_char_next(&it, &c));
 	return it.pos;
 }
 
 static size_t text_customword_start_prev(Text *txt, size_t pos, int (*isboundry)(int)) {
 	char c;
 	Iterator it = text_iterator_get(txt, pos);
-	while (text_iterator_char_prev(&it, &c) && isspace(c));
-	if (isboundry(c))
-		do pos = it.pos; while (text_iterator_char_prev(&it, &c) && isboundry(c) && !isspace(c));
+	while (text_iterator_char_prev(&it, &c) && isspace((unsigned char)c));
+	if (isboundry((unsigned char)c))
+		do pos = it.pos; while (text_iterator_char_prev(&it, &c) && isboundry((unsigned char)c) && !isspace((unsigned char)c));
 	else
-		do pos = it.pos; while (text_iterator_char_prev(&it, &c) && !isboundry(c));
+		do pos = it.pos; while (text_iterator_char_prev(&it, &c) && !isboundry((unsigned char)c));
 	return pos;
 }
 
 static size_t text_customword_end_next(Text *txt, size_t pos, int (*isboundry)(int)) {
 	char c;
 	Iterator it = text_iterator_get(txt, pos);
-	while (text_iterator_char_next(&it, &c) && isspace(c));
-	if (isboundry(c))
-		do pos = it.pos; while (text_iterator_char_next(&it, &c) && isboundry(c) && !isspace(c));
+	while (text_iterator_char_next(&it, &c) && isspace((unsigned char)c));
+	if (isboundry((unsigned char)c))
+		do pos = it.pos; while (text_iterator_char_next(&it, &c) && isboundry((unsigned char)c) && !isspace((unsigned char)c));
 	else
-		do pos = it.pos; while (text_iterator_char_next(&it, &c) && !isboundry(c));
+		do pos = it.pos; while (text_iterator_char_next(&it, &c) && !isboundry((unsigned char)c));
 	return pos;
 }
 
@@ -316,11 +316,11 @@ static size_t text_customword_end_prev(Text *txt, size_t pos, int (*isboundry)(i
 	Iterator it = text_iterator_get(txt, pos);
 	if (!text_iterator_byte_get(&it, &c))
 		return pos;
-	if (isboundry(c))
-		while (isboundry(c) && !isspace(c) && text_iterator_char_prev(&it, &c));
+	if (isboundry((unsigned char)c))
+		while (isboundry((unsigned char)c) && !isspace((unsigned char)c) && text_iterator_char_prev(&it, &c));
 	else
-		while (!isboundry(c) && text_iterator_char_prev(&it, &c));
-	while (isspace(c) && text_iterator_char_prev(&it, &c));
+		while (!isboundry((unsigned char)c) && text_iterator_char_prev(&it, &c));
+	while (isspace((unsigned char)c) && text_iterator_char_prev(&it, &c));
 	return it.pos;
 }
 
@@ -361,8 +361,8 @@ static size_t text_paragraph_sentence_next(Text *txt, size_t pos, bool sentence)
 	bool content = false, paragraph = false;
 	Iterator it = text_iterator_get(txt, pos);
 	while (text_iterator_byte_next(&it, &c)) {
-		content |= !isspace(c);
-		if (sentence && (c == '.' || c == '?' || c == '!') && text_iterator_byte_next(&it, &c) && isspace(c)) {
+		content |= !isspace((unsigned char)c);
+		if (sentence && (c == '.' || c == '?' || c == '!') && text_iterator_byte_next(&it, &c) && isspace((unsigned char)c)) {
 			if (c == '\n' && text_iterator_byte_next(&it, &c)) {
 				if (c == '\r')
 					text_iterator_byte_next(&it, &c);
@@ -375,7 +375,7 @@ static size_t text_paragraph_sentence_next(Text *txt, size_t pos, bool sentence)
 		if (c == '\n' && text_iterator_byte_next(&it, &c)) {
 			if (c == '\r')
 				text_iterator_byte_next(&it, &c);
-			content |= !isspace(c);
+			content |= !isspace((unsigned char)c);
 			if (c == '\n')
 				paragraph = true;
 		}
@@ -394,30 +394,30 @@ static size_t text_paragraph_sentence_prev(Text *txt, size_t pos, bool sentence)
 		return pos;
 
 	while (text_iterator_byte_prev(&it, &c)) {
-		content |= !isspace(c) && c != '.' && c != '?' && c != '!';
-		if (sentence && content && (c == '.' || c == '?' || c == '!') && isspace(prev)) {
+		content |= !isspace((unsigned char)c) && c != '.' && c != '?' && c != '!';
+		if (sentence && content && (c == '.' || c == '?' || c == '!') && isspace((unsigned char)prev)) {
 			do text_iterator_byte_next(&it, NULL);
-			while (text_iterator_byte_get(&it, &c) && isspace(c));
+			while (text_iterator_byte_get(&it, &c) && isspace((unsigned char)c));
 			break;
 		}
 		if (c == '\r')
 			text_iterator_byte_prev(&it, &c);
 		if (c == '\n' && text_iterator_byte_prev(&it, &c)) {
-			content |= !isspace(c);
+			content |= !isspace((unsigned char)c);
 			if (c == '\r')
 				text_iterator_byte_prev(&it, &c);
 			if (c == '\n') {
 				paragraph = true;
 				if (content) {
 					do text_iterator_byte_next(&it, NULL);
-					while (text_iterator_byte_get(&it, &c) && isspace(c));
+					while (text_iterator_byte_get(&it, &c) && isspace((unsigned char)c));
 					break;
 				}
 			}
 		}
 		if (content && paragraph) {
 			do text_iterator_byte_next(&it, NULL);
-			while (text_iterator_byte_get(&it, &c) && !isspace(c));
+			while (text_iterator_byte_get(&it, &c) && !isspace((unsigned char)c));
 			break;
 		}
 		prev = c;
