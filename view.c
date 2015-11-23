@@ -123,6 +123,7 @@ void view_tabwidth_set(View *view, int tabwidth) {
 
 /* reset internal view data structures (cell matrix, line offsets etc.) */
 static void view_clear(View *view) {
+	memset(view->lines, 0, view->lines_size);
 	if (view->start != view->start_last) {
 		view->start_mark = text_mark_set(view->text, view->start);
 	} else {
@@ -130,19 +131,17 @@ static void view_clear(View *view) {
 		if (start != EPOS)
 			view->start = start;
 	}
+
 	view->start_last = view->start;
 	view->topline = view->lines;
 	view->topline->lineno = text_lineno_by_pos(view->text, view->start);
 	view->lastline = view->topline;
 
-	/* reset all other lines */
 	size_t line_size = sizeof(Line) + view->width*sizeof(Cell);
 	size_t end = view->height * line_size;
 	Line *prev = NULL;
 	for (size_t i = 0; i < end; i += line_size) {
 		Line *line = (Line*)(((char*)view->lines) + i);
-		line->width = 0;
-		line->len = 0;
 		line->prev = prev;
 		if (prev)
 			prev->next = line;
@@ -365,12 +364,12 @@ void view_draw(View *view) {
 	/* start from known multibyte state */
 	mbstate_t mbstate = { 0 };
 
+	Cell cell = { 0 }, prev_cell = { 0 };
+
 	while (rem > 0) {
 
 		/* current 'parsed' character' */
 		wchar_t wchar;
-		Cell cell;
-		memset(&cell, 0, sizeof cell);
 
 		size_t len = mbrtowc(&wchar, cur, rem, &mbstate);
 		if (len == (size_t)-1 && errno == EILSEQ) {
@@ -407,13 +406,24 @@ void view_draw(View *view) {
 			cell = (Cell){ .data = "\n", .len = 2, .width = 1, .istab = false };
 		}
 
-		if (!view_addch(view, &cell))
-			break;
+		if (cell.width == 0 && prev_cell.len + cell.len < sizeof(cell.len)) {
+			prev_cell.len += cell.len;
+			strcat(prev_cell.data, cell.data);
+		} else {
+			if (prev_cell.len && !view_addch(view, &prev_cell))
+				break;
+			prev_cell = cell;
+		}
 
  		rem -= cell.len;
 		cur += cell.len;
 		pos += cell.len;
+
+		memset(&cell, 0, sizeof cell);
 	}
+
+	if (prev_cell.len && view_addch(view, &prev_cell))
+		pos += prev_cell.len;
 
 	/* set end of vieviewg region */
 	view->end = pos;

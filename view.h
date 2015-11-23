@@ -23,8 +23,9 @@ typedef struct {
 	                       character which use more than 1 column to display, their lenght
 	                       is stored in the leftmost cell wheras all following cells
 	                       occupied by the same character have a length of 0. */
-	char data[8];       /* utf8 encoded character displayed in this cell might not be the
-			       the same as in the underlying text, for example tabs get expanded */
+	char data[16];      /* utf8 encoded character displayed in this cell (might be more than
+	                       one Unicode codepoint. might also not be the same as in the
+	                       underlying text, for example tabs get expanded */
 	unsigned int attr;
 	bool istab;
 	bool selected;      /* whether this cell is part of a selected region */
