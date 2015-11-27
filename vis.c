@@ -645,10 +645,10 @@ static void action_do(Vis *vis, Action *a) {
 
 		if (a->op) {
 			size_t pos = a->op->func(vis, txt, &c);
-			if (pos != EPOS) {
-				view_cursors_to(cursor, pos);
-			} else {
+			if (pos == EPOS) {
 				view_cursors_dispose(cursor);
+			} else if (pos <= text_size(txt)) {
+				view_cursors_to(cursor, pos);
 			}
 		}
 	}
