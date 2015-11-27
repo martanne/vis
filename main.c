@@ -1110,15 +1110,15 @@ static const char *repeat(Vis *vis, const char *keys, const Arg *arg) {
 
 static const char *cursors_new(Vis *vis, const char *keys, const Arg *arg) {
 	View *view = vis_view(vis);
-	Text *txt = vis_text(vis);
 	size_t pos = view_cursor_get(view);
-	if (arg->i > 0)
-		pos = text_line_down(txt, pos);
-	else if (arg->i < 0)
-		pos = text_line_up(txt, pos);
 	Cursor *cursor = view_cursors_new(view);
-	if (cursor)
+	if (cursor) {
 		view_cursors_to(cursor, pos);
+		if (arg->i > 0)
+			view_line_down(cursor);
+		else if (arg->i < 0)
+			view_line_up(cursor);
+	}
 	return keys;
 }
 
