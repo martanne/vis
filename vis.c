@@ -542,6 +542,10 @@ static void action_do(Vis *vis, Action *a) {
 	Win *win = vis->win;
 	Text *txt = win->file->text;
 	View *view = win->view;
+
+	if (a->op == &ops[VIS_OP_FILTER] && !vis->mode->visual)
+		vis_mode_switch(vis, VIS_MODE_VISUAL);
+
 	if (a->count < 1)
 		a->count = 1;
 	bool repeatable = a->op && !vis->macro_operator;
@@ -661,14 +665,18 @@ static void action_do(Vis *vis, Action *a) {
 		/* operator implementations must not change the mode,
 		 * they might get called multiple times (once for every cursor)
 		 */
-		if (a->op == &ops[VIS_OP_INSERT] || a->op == &ops[VIS_OP_CHANGE])
+		if (a->op == &ops[VIS_OP_INSERT] || a->op == &ops[VIS_OP_CHANGE]) {
 			vis_mode_switch(vis, VIS_MODE_INSERT);
-		else if (a->op == &ops[VIS_OP_REPLACE])
+		} else if (a->op == &ops[VIS_OP_REPLACE]) {
 			vis_mode_switch(vis, VIS_MODE_REPLACE);
-		else if (vis->mode == &vis_modes[VIS_MODE_OPERATOR])
+		} else if (a->op == &ops[VIS_OP_FILTER]) {
+			vis_prompt_show(vis, ":", "'<,'>!");
+			vis_mode_switch(vis, VIS_MODE_PROMPT);
+		} else if (vis->mode == &vis_modes[VIS_MODE_OPERATOR]) {
 			mode_set(vis, vis->mode_prev);
-		else if (vis->mode->visual)
+		} else if (vis->mode->visual) {
 			vis_mode_switch(vis, VIS_MODE_NORMAL);
+		}
 		text_snapshot(txt);
 		vis_draw(vis);
 	}
@@ -1005,6 +1013,9 @@ bool vis_operator(Vis *vis, enum VisOperator id) {
 		vis->action.arg.i = id;
 		id = VIS_OP_PUT_AFTER;
 		break;
+	case VIS_OP_FILTER:
+		vis->action.type = LINEWISE;
+		break;
 	default:
 		break;
 	}
@@ -1016,6 +1027,7 @@ bool vis_operator(Vis *vis, enum VisOperator id) {
 		action_do(vis, &vis->action);
 		return true;
 	}
+
 	/* switch to operator mode inorder to make operator options and
 	 * text-object available */
 	vis_mode_switch(vis, VIS_MODE_OPERATOR);
@@ -1214,7 +1226,7 @@ void vis_repeat(Vis *vis) {
 		Mode *mode = vis->mode;
 		Action action_prev = vis->action_prev;
 		count = action_prev.count;
-		if (count < 1 || action_prev.op == &ops[VIS_OP_CHANGE])
+		if (count < 1 || action_prev.op == &ops[VIS_OP_CHANGE] || action_prev.op == &ops[VIS_OP_FILTER])
 			count = 1;
 		for (int i = 0; i < count; i++) {
 			mode_set(vis, mode);

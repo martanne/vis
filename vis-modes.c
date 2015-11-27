@@ -115,6 +115,8 @@ static void vis_mode_prompt_leave(Vis *vis, Mode *new) {
 		Register tmp = vis->registers[VIS_REG_DEFAULT];
 		vis->registers[VIS_REG_DEFAULT] = vis->registers[VIS_REG_PROMPT];
 		vis->registers[VIS_REG_PROMPT] = tmp;
+		if (vis->action_prev.op == &ops[VIS_OP_FILTER])
+			macro_operator_stop(vis);
 	}
 }
 

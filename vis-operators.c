@@ -204,6 +204,11 @@ static size_t op_replace(Vis *vis, Text *txt, OperatorContext *c) {
 	return c->newpos != EPOS ? c->newpos : c->pos;
 }
 
+static size_t op_filter(Vis *vis, Text *txt, OperatorContext *c) {
+	macro_operator_record(vis);
+	return text_size(txt) + 1; /* do not change cursor position, would destroy selection */
+}
+
 Operator ops[] = {
 	[VIS_OP_DELETE]      = { op_delete      },
 	[VIS_OP_CHANGE]      = { op_change      },
@@ -216,4 +221,5 @@ Operator ops[] = {
 	[VIS_OP_INSERT]      = { op_insert      },
 	[VIS_OP_REPLACE]     = { op_replace     },
 	[VIS_OP_CURSOR_SOL]  = { op_cursor      },
+	[VIS_OP_FILTER]      = { op_filter      },
 };

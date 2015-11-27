@@ -187,6 +187,7 @@ static KeyBinding vis_operators[] = {
 	{ "~",                  ACTION(OPERATOR_CASE_SWAP)                  },
 	{ "g~",                 ACTION(OPERATOR_CASE_SWAP)                  },
 	{ "gu",                 ACTION(OPERATOR_CASE_LOWER)                 },
+	{ "!",                  ACTION(OPERATOR_FILTER)                     },
 	{ "\"",                 ACTION(REGISTER)                            },
 	{ /* empty last element, array terminator */                        },
 };

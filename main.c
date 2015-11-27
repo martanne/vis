@@ -196,6 +196,7 @@ enum {
 	VIS_ACTION_OPERATOR_CASE_LOWER,
 	VIS_ACTION_OPERATOR_CASE_UPPER,
 	VIS_ACTION_OPERATOR_CASE_SWAP,
+	VIS_ACTION_OPERATOR_FILTER,
 	VIS_ACTION_COUNT,
 	VIS_ACTION_INSERT_NEWLINE,
 	VIS_ACTION_INSERT_TAB,
@@ -703,6 +704,11 @@ static KeyAction vis_action[] = {
 		"vis-operator-case-swap",
 		"Swap case operator",
 		operator, { .i = VIS_OP_CASE_SWAP }
+	},
+	[VIS_ACTION_OPERATOR_FILTER] = {
+		"vis-operator-filter",
+		"Filter operator",
+		operator, { .i = VIS_OP_FILTER }
 	},
 	[VIS_ACTION_COUNT] = {
 		"vis-count",
