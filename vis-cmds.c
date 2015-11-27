@@ -767,8 +767,8 @@ static bool cmd_filter(Vis *vis, Filerange *range, enum CmdOpt opt, const char *
 				perr[0] = -1;
 			} else if (errno != EINTR && errno != EWOULDBLOCK) {
 				vis_info_show(vis, "Error reading from filter stderr");
-				close(pout[0]);
-				pout[0] = -1;
+				close(perr[0]);
+				perr[0] = -1;
 			}
 		}
 
