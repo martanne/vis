@@ -1127,15 +1127,16 @@ static const char *cursors_align(Vis *vis, const char *keys, const Arg *arg) {
 	Text *txt = vis_text(vis);
 	int mincol = INT_MAX;
 	for (Cursor *c = view_cursors(view); c; c = view_cursors_next(c)) {
-		size_t pos = view_cursors_pos(c);
-		int col = text_line_char_get(txt, pos);
-		if (col < mincol)
+		int col = view_cursors_cell_get(c);
+		if (col >= 0 && col < mincol)
 			mincol = col;
 	}
 	for (Cursor *c = view_cursors(view); c; c = view_cursors_next(c)) {
-		size_t pos = view_cursors_pos(c);
-		size_t col = text_line_char_set(txt, pos, mincol);
-		view_cursors_to(c, col);
+		if (view_cursors_cell_set(c, mincol) == -1) {
+			size_t pos = view_cursors_pos(c);
+			size_t col = text_line_char_set(txt, pos, mincol);
+			view_cursors_to(c, col);
+		}
 	}
 	return keys;
 }

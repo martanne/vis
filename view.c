@@ -1091,6 +1091,17 @@ size_t view_cursors_pos(Cursor *c) {
 	return text_mark_get(c->view->text, c->mark);
 }
 
+int view_cursors_cell_get(Cursor *c) {
+	return c->line ? c->col : -1;
+}
+
+int view_cursors_cell_set(Cursor *c, int cell) {
+	if (!c->line || cell < 0)
+		return -1;
+	cursor_set(c, c->line, cell);
+	return c->col;
+}
+
 Register *view_cursors_register(Cursor *c) {
 	return &c->reg;
 }

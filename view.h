@@ -136,6 +136,10 @@ Cursor *view_cursors_prev(Cursor*);
 Cursor *view_cursors_next(Cursor*);
 /* get current position of cursor in bytes from the start of the file */
 size_t view_cursors_pos(Cursor*);
+/* get/set zero based index of cell on which cursor currently resides,
+ * -1 if cursor is currently not visible */
+int view_cursors_cell_get(Cursor*);
+int view_cursors_cell_set(Cursor*, int cell);
 /* place cursor at `pos' which should be in the interval [0, text-size] */
 void view_cursors_to(Cursor*, size_t pos);
 void view_cursors_scroll_to(Cursor*, size_t pos);
