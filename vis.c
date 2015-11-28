@@ -158,14 +158,6 @@ static void windows_invalidate(Vis *vis, size_t start, size_t end) {
 	view_draw(vis->win->view);
 }
 
-static void window_selection_changed(void *win, Filerange *sel) {
-	File *file = ((Win*)win)->file;
-	if (text_range_valid(sel)) {
-		file->marks[MARK_SELECTION_START] = text_mark_set(file->text, sel->start);
-		file->marks[MARK_SELECTION_END] = text_mark_set(file->text, sel->end);
-	}
-}
-
 static void window_free(Win *win) {
 	if (!win)
 		return;
@@ -183,12 +175,8 @@ static Win *window_new_file(Vis *vis, File *file) {
 		return NULL;
 	win->vis = vis;
 	win->file = file;
-	win->events = (ViewEvent) {
-		.data = win,
-		.selection = window_selection_changed,
-	};
 	win->jumplist = ringbuf_alloc(31);
-	win->view = view_new(file->text, vis->lua, &win->events);
+	win->view = view_new(file->text, vis->lua);
 	win->ui = vis->ui->window_new(vis->ui, win->view, file);
 	if (!win->jumplist || !win->view || !win->ui) {
 		window_free(win);
@@ -382,7 +370,7 @@ Vis *vis_new(Ui *ui) {
 		goto err;
 	if (!(vis->prompt->file->text = text_load(NULL)))
 		goto err;
-	if (!(vis->prompt->view = view_new(vis->prompt->file->text, NULL, NULL)))
+	if (!(vis->prompt->view = view_new(vis->prompt->file->text, NULL)))
 		goto err;
 	if (!(vis->prompt->ui = vis->ui->prompt_new(vis->ui, vis->prompt->view, vis->prompt->file)))
 		goto err;

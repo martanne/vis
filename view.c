@@ -67,7 +67,6 @@ struct Cursor {             /* cursor position */
 struct View {
 	Text *text;         /* underlying text management */
 	UiWin *ui;
-	ViewEvent *events;
 	int width, height;  /* size of display area */
 	Filepos start, end; /* currently displayed area [start, end] in bytes from the start of the file */
 	Filepos start_last; /* previously used start of visible area, used to update the mark */
@@ -580,9 +579,6 @@ void view_update(View *view) {
 					}
 				}
 			}
-
-			if (view->events && view->events->selection)
-				view->events->selection(view->events->data, &sel);
 		}
 	}
 
@@ -637,7 +633,7 @@ void view_reload(View *view, Text *text) {
 	view_cursor_to(view, 0);
 }
 
-View *view_new(Text *text, lua_State *lua, ViewEvent *events) {
+View *view_new(Text *text, lua_State *lua) {
 	if (!text)
 		return NULL;
 	View *view = calloc(1, sizeof(View));
@@ -650,7 +646,6 @@ View *view_new(Text *text, lua_State *lua, ViewEvent *events) {
 
 	view->text = text;
 	view->lua = lua;
-	view->events = events;
 	view->tabwidth = 8;
 	view_options_set(view, 0);
 

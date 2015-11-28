@@ -117,7 +117,6 @@ struct Win {
 	UiWin *ui;              /* ui object handling visual appearance of this window */
 	File *file;             /* file being displayed in this window */
 	View *view;             /* currently displayed part of underlying text */
-	ViewEvent events;
 	RingBuffer *jumplist;   /* LRU jump management */
 	ChangeList changelist;  /* state for iterating through least recently changes */
 	Win *prev, *next;       /* neighbouring windows */

@@ -365,7 +365,7 @@ static const char *file_open_dialog(Vis *vis, const char *pattern) {
 	Text *txt_orig = file->text;
 	View *view_orig = win->view;
 	Text *txt = text_load(NULL);
-	View *view = view_new(txt, NULL, NULL);
+	View *view = view_new(txt, NULL);
 	filename[0] = '\0';
 	snprintf(vis_open, sizeof(vis_open)-1, "vis-open %s", pattern ? pattern : "");
 
