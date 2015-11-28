@@ -199,6 +199,7 @@ enum {
 	VIS_ACTION_OPERATOR_CASE_UPPER,
 	VIS_ACTION_OPERATOR_CASE_SWAP,
 	VIS_ACTION_OPERATOR_FILTER,
+	VIS_ACTION_OPERATOR_FILTER_FMT,
 	VIS_ACTION_COUNT,
 	VIS_ACTION_INSERT_NEWLINE,
 	VIS_ACTION_INSERT_TAB,
@@ -711,6 +712,11 @@ static KeyAction vis_action[] = {
 		"vis-operator-filter",
 		"Filter operator",
 		operator_filter,
+	},
+	[VIS_ACTION_OPERATOR_FILTER_FMT] = {
+		"vis-operator-filter-format",
+		"Formating operator, filter range through fmt(1)",
+		operator_filter, { .s = "'<,'>!fmt" }
 	},
 	[VIS_ACTION_COUNT] = {
 		"vis-count",
