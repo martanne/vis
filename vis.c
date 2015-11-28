@@ -1326,7 +1326,7 @@ void vis_prompt_enter(Vis *vis) {
 	 * on vis->win.
 	 */
 	mode_set(vis, vis->mode_before_prompt);
-	if (s && *s && prompt_cmd(vis, vis->prompt_type, s) && vis->running)
+	if (s && *s && prompt_cmd(vis, vis->prompt_type, s) && vis->prompt_type == ':')
 		vis_mode_switch(vis, VIS_MODE_NORMAL);
 	free(s);
 	vis_draw(vis);
