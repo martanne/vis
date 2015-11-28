@@ -167,7 +167,6 @@ static bool view_addch(View *view, Cell *cell) {
 
 	switch (cell->data[0]) {
 	case '\t':
-		cell->istab = true;
 		cell->width = 1;
 		width = view->tabwidth - (view->col % view->tabwidth);
 		for (int w = 0; w < width; w++) {
@@ -221,7 +220,6 @@ static bool view_addch(View *view, Cell *cell) {
 				.data = { '^', cell->data[0] + 64, '\0' },
 				.len = 1,
 				.width = 2,
-				.istab = false,
 				.attr = cell->attr,
 			};
 		}
@@ -377,7 +375,7 @@ void view_draw(View *view) {
 			 * replace it with the Unicode Replacement Character
 			 * (FFFD) and skip until the start of the next utf8 char */
 			for (len = 1; rem > len && !ISUTF8(cur[len]); len++);
-			cell = (Cell){ .data = "\xEF\xBF\xBD", .len = len, .width = 1, .istab = false };
+			cell = (Cell){ .data = "\xEF\xBF\xBD", .len = len, .width = 1 };
 		} else if (len == (size_t)-2) {
 			/* not enough bytes available to convert to a
 			 * wide character. advance file position and read
@@ -389,12 +387,11 @@ void view_draw(View *view) {
 			continue;
 		} else if (len == 0) {
 			/* NUL byte encountered, store it and continue */
-			cell = (Cell){ .data = "\x00", .len = 1, .width = 0, .istab = false };
+			cell = (Cell){ .data = "\x00", .len = 1, .width = 0 };
 		} else {
 			for (size_t i = 0; i < len; i++)
 				cell.data[i] = cur[i];
 			cell.data[len] = '\0';
-			cell.istab = false;
 			cell.len = len;
 			cell.width = wcwidth(wchar);
 			if (cell.width == -1)
@@ -403,7 +400,7 @@ void view_draw(View *view) {
 
 		if (cur[0] == '\r' && rem > 1 && cur[1] == '\n') {
 			/* convert views style newline \r\n into a single char with len = 2 */
-			cell = (Cell){ .data = "\n", .len = 2, .width = 1, .istab = false };
+			cell = (Cell){ .data = "\n", .len = 2, .width = 1 };
 		}
 
 		if (cell.width == 0 && prev_cell.len + cell.len < sizeof(cell.len)) {
@@ -684,9 +681,6 @@ static size_t cursor_set(Cursor *cursor, Line *line, int col) {
 	/* for characters which use more than 1 column, make sure we are on the left most */
 	while (col > 0 && line->cells[col].len == 0)
 		col--;
-	while (col < line->width && line->cells[col].istab)
-		col++;
-
 	/* calculate offset within the line */
 	for (int i = 0; i < col; i++)
 		pos += line->cells[i].len;

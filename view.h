@@ -27,7 +27,6 @@ typedef struct {
 	                       one Unicode codepoint. might also not be the same as in the
 	                       underlying text, for example tabs get expanded */
 	unsigned int attr;
-	bool istab;
 	bool selected;      /* whether this cell is part of a selected region */
 	bool cursor;        /* whether a cursor is currently locaated on the cell */
 } Cell;
