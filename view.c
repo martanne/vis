@@ -830,20 +830,30 @@ size_t view_scroll_down(View *view, int lines) {
 
 size_t view_line_up(Cursor *cursor) {
 	if (cursor->line && cursor->line->prev && cursor->line->prev->prev &&
-	    cursor->line->lineno != cursor->line->prev->lineno &&
-	    cursor->line->prev->lineno != cursor->line->prev->prev->lineno)
+	   cursor->line->lineno != cursor->line->prev->lineno &&
+	   cursor->line->prev->lineno != cursor->line->prev->prev->lineno)
 		return view_screenline_up(cursor);
-	size_t pos = text_line_up(cursor->view->text, cursor->pos);
-	view_cursors_to(cursor, pos);
-	return pos;
+	int lastcol = cursor->lastcol;
+	if (!lastcol)
+		lastcol = cursor->col;
+	view_cursors_to(cursor, text_line_up(cursor->view->text, cursor->pos));
+	if (cursor->line)
+		cursor_set(cursor, cursor->line, lastcol);
+	cursor->lastcol = lastcol;
+	return cursor->pos;
 }
 
 size_t view_line_down(Cursor *cursor) {
 	if (cursor->line && (!cursor->line->next || cursor->line->next->lineno != cursor->line->lineno))
 		return view_screenline_down(cursor);
-	size_t pos = text_line_down(cursor->view->text, cursor->pos);
-	view_cursors_to(cursor, pos);
-	return pos;
+	int lastcol = cursor->lastcol;
+	if (!lastcol)
+		lastcol = cursor->col;
+	view_cursors_to(cursor, text_line_down(cursor->view->text, cursor->pos));
+	if (cursor->line)
+		cursor_set(cursor, cursor->line, lastcol);
+	cursor->lastcol = lastcol;
+	return cursor->pos;
 }
 
 size_t view_screenline_up(Cursor *cursor) {
