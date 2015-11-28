@@ -1326,9 +1326,9 @@ static const char *key2mark(Vis *vis, const char *keys, int *mark) {
 	if (keys[0] >= 'a' && keys[0] <= 'z')
 		*mark = keys[0] - 'a';
 	else if (keys[0] == '<')
-		*mark = MARK_SELECTION_START;
+		*mark = VIS_MARK_SELECTION_START;
 	else if (keys[0] == '>')
-		*mark = MARK_SELECTION_END;
+		*mark = VIS_MARK_SELECTION_END;
 	return keys+1;
 }
 

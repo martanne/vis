@@ -88,8 +88,8 @@ static void vis_mode_visual_line_leave(Vis *vis, Mode *new) {
 		vis_modes[VIS_MODE_OPERATOR].parent = &vis_modes[VIS_MODE_MOVE];
 		File *file = vis->win->file;
 		Filerange sel = view_cursors_selection_get(view_cursors(vis->win->view));
-		file->marks[MARK_SELECTION_START] = text_mark_set(file->text, sel.start);
-		file->marks[MARK_SELECTION_END] = text_mark_set(file->text, sel.end);
+		file->marks[VIS_MARK_SELECTION_START] = text_mark_set(file->text, sel.start);
+		file->marks[VIS_MARK_SELECTION_END] = text_mark_set(file->text, sel.end);
 		if (new != &vis_modes[VIS_MODE_PROMPT])
 			view_selections_clear(vis->win->view);
 	} else {
@@ -102,8 +102,8 @@ static void vis_mode_visual_leave(Vis *vis, Mode *new) {
 		vis_modes[VIS_MODE_OPERATOR].parent = &vis_modes[VIS_MODE_MOVE];
 		File *file = vis->win->file;
 		Filerange sel = view_cursors_selection_get(view_cursors(vis->win->view));
-		file->marks[MARK_SELECTION_START] = text_mark_set(file->text, sel.start);
-		file->marks[MARK_SELECTION_END] = text_mark_set(file->text, sel.end);
+		file->marks[VIS_MARK_SELECTION_START] = text_mark_set(file->text, sel.start);
+		file->marks[VIS_MARK_SELECTION_END] = text_mark_set(file->text, sel.end);
 		if (new != &vis_modes[VIS_MODE_PROMPT])
 			view_selections_clear(vis->win->view);
 	}

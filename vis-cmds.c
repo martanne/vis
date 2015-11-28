@@ -925,9 +925,9 @@ static Filepos parse_pos(Win *win, char **cmd) {
 		if ('a' <= **cmd && **cmd <= 'z')
 			pos = text_mark_get(txt, marks[**cmd - 'a']);
 		else if (**cmd == '<')
-			pos = text_mark_get(txt, marks[MARK_SELECTION_START]);
+			pos = text_mark_get(txt, marks[VIS_MARK_SELECTION_START]);
 		else if (**cmd == '>')
-			pos = text_mark_get(txt, marks[MARK_SELECTION_END]);
+			pos = text_mark_get(txt, marks[VIS_MARK_SELECTION_END]);
 		(*cmd)++;
 		break;
 	case '/':
@@ -976,8 +976,8 @@ static Filerange parse_range(Win *win, char **cmd) {
 		(*cmd)++;
 		break;
 	case '*':
-		r.start = text_mark_get(txt, marks[MARK_SELECTION_START]);
-		r.end = text_mark_get(txt, marks[MARK_SELECTION_END]);
+		r.start = text_mark_get(txt, marks[VIS_MARK_SELECTION_START]);
+		r.end = text_mark_get(txt, marks[VIS_MARK_SELECTION_END]);
 		(*cmd)++;
 		break;
 	default:

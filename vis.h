@@ -331,8 +331,8 @@ enum VisMark {
 	VIS_MARK_p, VIS_MARK_q, VIS_MARK_r, VIS_MARK_s, VIS_MARK_t,
 	VIS_MARK_u, VIS_MARK_v, VIS_MARK_w, VIS_MARK_x, VIS_MARK_y,
 	VIS_MARK_z,
-	MARK_SELECTION_START, /* '< */
-	MARK_SELECTION_END,   /* '> */
+	VIS_MARK_SELECTION_START, /* '< */
+	VIS_MARK_SELECTION_END,   /* '> */
 	VIS_MARK_INVALID,     /* has to be the last enum member */
 };
 
