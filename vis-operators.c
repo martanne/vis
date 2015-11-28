@@ -205,7 +205,8 @@ static size_t op_replace(Vis *vis, Text *txt, OperatorContext *c) {
 }
 
 static size_t op_filter(Vis *vis, Text *txt, OperatorContext *c) {
-	macro_operator_record(vis);
+	if (!c->arg->s)
+		macro_operator_record(vis);
 	return text_size(txt) + 1; /* do not change cursor position, would destroy selection */
 }
 

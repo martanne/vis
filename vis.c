@@ -670,8 +670,13 @@ static void action_do(Vis *vis, Action *a) {
 		} else if (a->op == &ops[VIS_OP_REPLACE]) {
 			vis_mode_switch(vis, VIS_MODE_REPLACE);
 		} else if (a->op == &ops[VIS_OP_FILTER]) {
-			vis_prompt_show(vis, ":", "'<,'>!");
-			vis_mode_switch(vis, VIS_MODE_PROMPT);
+			if (a->arg.s) {
+				if (vis_cmd(vis, a->arg.s))
+					vis_mode_switch(vis, VIS_MODE_NORMAL);
+			} else {
+				vis_prompt_show(vis, ":", "'<,'>!");
+				vis_mode_switch(vis, VIS_MODE_PROMPT);
+			}
 		} else if (vis->mode == &vis_modes[VIS_MODE_OPERATOR]) {
 			mode_set(vis, vis->mode_prev);
 		} else if (vis->mode->visual) {
@@ -993,7 +998,10 @@ int vis_run(Vis *vis, int argc, char *argv[]) {
 	return vis->exit_status;
 }
 
-bool vis_operator(Vis *vis, enum VisOperator id) {
+bool vis_operator(Vis *vis, enum VisOperator id, ...) {
+	va_list ap;
+	va_start(ap, id);
+
 	switch (id) {
 	case VIS_OP_CASE_LOWER:
 	case VIS_OP_CASE_UPPER:
@@ -1015,17 +1023,18 @@ bool vis_operator(Vis *vis, enum VisOperator id) {
 		break;
 	case VIS_OP_FILTER:
 		vis->action.type = LINEWISE;
+		vis->action.arg.s = va_arg(ap, char*);
 		break;
 	default:
 		break;
 	}
 	if (id >= LENGTH(ops))
-		return false;
+		goto err;
 	Operator *op = &ops[id];
 	if (vis->mode->visual) {
 		vis->action.op = op;
 		action_do(vis, &vis->action);
-		return true;
+		goto out;
 	}
 
 	/* switch to operator mode inorder to make operator options and
@@ -1044,7 +1053,12 @@ bool vis_operator(Vis *vis, enum VisOperator id) {
 	if (id == VIS_OP_PUT_AFTER)
 		vis_motion(vis, VIS_MOVE_NOP);
 
+out:
+	va_end(ap);
 	return true;
+err:
+	va_end(ap);
+	return false;
 }
 
 void vis_mode_switch(Vis *vis, enum VisMode mode) {

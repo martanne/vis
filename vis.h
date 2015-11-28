@@ -168,8 +168,12 @@ enum VisOperator {
  * otherwise waits until a range is determinded i.e.
  *  - a motion is provided (see vis_motion)
  *  - a text object is provided (vis_textobject)
+ *
+ * the expected varying arguments are as follows:
+ *
+ *  - VIS_OP_FILTER     a char pointer referring to the command to run
  */
-bool vis_operator(Vis*, enum VisOperator);
+bool vis_operator(Vis*, enum VisOperator, ...);
 
 enum VisMotion {
 	VIS_MOVE_LINE_DOWN,
