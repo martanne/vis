@@ -1410,13 +1410,11 @@ static const char *insert_register(Vis *vis, const char *keys, const Arg *arg) {
 
 static const char *prompt_search(Vis *vis, const char *keys, const Arg *arg) {
 	vis_prompt_show(vis, arg->s, "");
-	vis_mode_switch(vis, VIS_MODE_PROMPT);
 	return keys;
 }
 
 static const char *prompt_cmd(Vis *vis, const char *keys, const Arg *arg) {
 	vis_prompt_show(vis, ":", arg->s);
-	vis_mode_switch(vis, VIS_MODE_PROMPT);
 	return keys;
 }
 

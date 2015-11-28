@@ -462,9 +462,10 @@ void vis_prompt_show(Vis *vis, const char *title, const char *text) {
 	if (vis->prompt_window)
 		return;
 	vis->prompt_window = vis->win;
-	vis->win = vis->prompt;
 	vis->prompt_type = title[0];
 	vis->ui->prompt(vis->ui, title, text);
+	vis_mode_switch(vis, VIS_MODE_PROMPT);
+	vis->win = vis->prompt;
 }
 
 void vis_prompt_hide(Vis *vis) {
@@ -544,7 +545,7 @@ static void action_do(Vis *vis, Action *a) {
 	View *view = win->view;
 
 	if (a->op == &ops[VIS_OP_FILTER] && !vis->mode->visual)
-		vis_mode_switch(vis, VIS_MODE_VISUAL);
+		vis_mode_switch(vis, VIS_MODE_VISUAL_LINE);
 
 	if (a->count < 1)
 		a->count = 1;
@@ -671,11 +672,10 @@ static void action_do(Vis *vis, Action *a) {
 			vis_mode_switch(vis, VIS_MODE_REPLACE);
 		} else if (a->op == &ops[VIS_OP_FILTER]) {
 			if (a->arg.s) {
-				if (vis_cmd(vis, a->arg.s))
-					vis_mode_switch(vis, VIS_MODE_NORMAL);
+				vis_mode_switch(vis, VIS_MODE_NORMAL);
+				vis_cmd(vis, a->arg.s);
 			} else {
 				vis_prompt_show(vis, ":", "'<,'>!");
-				vis_mode_switch(vis, VIS_MODE_PROMPT);
 			}
 		} else if (vis->mode == &vis_modes[VIS_MODE_OPERATOR]) {
 			mode_set(vis, vis->mode_prev);

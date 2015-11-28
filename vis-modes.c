@@ -64,16 +64,20 @@ static void vis_mode_operator_input(Vis *vis, const char *str, size_t len) {
 
 static void vis_mode_visual_enter(Vis *vis, Mode *old) {
 	if (!old->visual) {
-		for (Cursor *c = view_cursors(vis->win->view); c; c = view_cursors_next(c))
-			view_cursors_selection_start(c);
+		if (old != &vis_modes[VIS_MODE_PROMPT]) {
+			for (Cursor *c = view_cursors(vis->win->view); c; c = view_cursors_next(c))
+				view_cursors_selection_start(c);
+		}
 		vis_modes[VIS_MODE_OPERATOR].parent = &vis_modes[VIS_MODE_TEXTOBJ];
 	}
 }
 
 static void vis_mode_visual_line_enter(Vis *vis, Mode *old) {
 	if (!old->visual) {
-		for (Cursor *c = view_cursors(vis->win->view); c; c = view_cursors_next(c))
-			view_cursors_selection_start(c);
+		if (old != &vis_modes[VIS_MODE_PROMPT]) {
+			for (Cursor *c = view_cursors(vis->win->view); c; c = view_cursors_next(c))
+				view_cursors_selection_start(c);
+		}
 		vis_modes[VIS_MODE_OPERATOR].parent = &vis_modes[VIS_MODE_TEXTOBJ];
 	}
 	vis_motion(vis, VIS_MOVE_LINE_END);
@@ -81,8 +85,13 @@ static void vis_mode_visual_line_enter(Vis *vis, Mode *old) {
 
 static void vis_mode_visual_line_leave(Vis *vis, Mode *new) {
 	if (!new->visual) {
-		view_selections_clear(vis->win->view);
 		vis_modes[VIS_MODE_OPERATOR].parent = &vis_modes[VIS_MODE_MOVE];
+		File *file = vis->win->file;
+		Filerange sel = view_cursors_selection_get(view_cursors(vis->win->view));
+		file->marks[MARK_SELECTION_START] = text_mark_set(file->text, sel.start);
+		file->marks[MARK_SELECTION_END] = text_mark_set(file->text, sel.end);
+		if (new != &vis_modes[VIS_MODE_PROMPT])
+			view_selections_clear(vis->win->view);
 	} else {
 		view_cursor_to(vis->win->view, view_cursor_get(vis->win->view));
 	}
@@ -90,8 +99,13 @@ static void vis_mode_visual_line_leave(Vis *vis, Mode *new) {
 
 static void vis_mode_visual_leave(Vis *vis, Mode *new) {
 	if (!new->visual) {
-		view_selections_clear(vis->win->view);
 		vis_modes[VIS_MODE_OPERATOR].parent = &vis_modes[VIS_MODE_MOVE];
+		File *file = vis->win->file;
+		Filerange sel = view_cursors_selection_get(view_cursors(vis->win->view));
+		file->marks[MARK_SELECTION_START] = text_mark_set(file->text, sel.start);
+		file->marks[MARK_SELECTION_END] = text_mark_set(file->text, sel.end);
+		if (new != &vis_modes[VIS_MODE_PROMPT])
+			view_selections_clear(vis->win->view);
 	}
 }
 
