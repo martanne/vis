@@ -213,6 +213,7 @@ static KeyBinding vis_mode_normal[] = {
 	{ "<C-w>v",             ALIAS(":vsplit<Enter>")                     },
 	{ "<C-w>j",             ACTION(WINDOW_NEXT)                         },
 	{ "<C-w>l",             ALIAS("<C-w>j")                             },
+	{ "<C-w>w",             ALIAS("<C-w>j")                             },
 	{ "<C-w><C-w>",         ALIAS("<C-w>j")                             },
 	{ "<C-w><C-j>",         ALIAS("<C-w>j")                             },
 	{ "<C-w><C-l>",         ALIAS("<C-w>j")                             },
