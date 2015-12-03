@@ -1624,6 +1624,7 @@ local files = {
 	[".e|.eif"] = "eiffel",
 	[".ex|.exs"] = "elixir",
 	[".erl|.hrl"] = "erlang",
+	[".dsp"] = "faust",
 	[".fs"] = "fsharp",
 	[".fish"] = "fish",
 	[".forth|.frt|.fs"] = "forth",
