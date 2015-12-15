@@ -247,7 +247,7 @@ static KeyBinding vis_mode_normal[] = {
 	{ "v",                  ACTION(MODE_VISUAL)                         },
 	{ "V",                  ACTION(MODE_VISUAL_LINE)                    },
 	{ "R",                  ACTION(MODE_REPLACE)                        },
-	{ "S",                  ALIAS("cc")                                 },
+	{ "S",                  ALIAS("^c$")                                },
 	{ "s",                  ALIAS("cl")                                 },
 	{ "Y",                  ALIAS("yy")                                 },
 	{ "X",                  ALIAS("dh")                                 },
