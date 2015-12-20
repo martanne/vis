@@ -6,6 +6,7 @@
 
 #include "ui-curses.h"
 #include "vis.h"
+#include "vis-lua.h"
 #include "text-util.h"
 #include "text-motions.h"
 #include "text-objects.h"
@@ -1620,7 +1621,17 @@ static void signal_handler(int signum, siginfo_t *siginfo, void *context) {
 
 int main(int argc, char *argv[]) {
 
-	vis = vis_new(ui_curses_new());
+	VisEvent event = {
+		.vis_start = vis_lua_start,
+		.vis_quit = vis_lua_quit,
+		.file_open = vis_lua_file_open,
+		.file_save = vis_lua_file_save,
+		.file_close = vis_lua_file_close,
+		.win_open = vis_lua_win_open,
+		.win_close = vis_lua_win_close,
+	};
+
+	vis = vis_new(ui_curses_new(), &event);
 	if (!vis)
 		return EXIT_FAILURE;
 

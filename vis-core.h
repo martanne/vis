@@ -156,6 +156,7 @@ struct Vis {
 	sigjmp_buf sigbus_jmpbuf;            /* used to jump back to a known good state in the mainloop after (SIGBUS) */
 	Map *actions;                        /* registered editor actions / special keys commands */
 	lua_State *lua;                      /* lua context used for syntax highligthing */
+	VisEvent *event;
 };
 
 /** stuff used by multiple of the vis-* files */

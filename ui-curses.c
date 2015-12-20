@@ -26,8 +26,9 @@
 #include <poll.h>
 #include <sys/ioctl.h>
 
-#include "ui.h"
 #include "ui-curses.h"
+#include "vis.h"
+#include "text.h"
 #include "util.h"
 #include "text-util.h"
 

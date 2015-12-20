@@ -1,6 +1,7 @@
 # optional features
 HAVE_ACL=0
 HAVE_SELINUX=0
+CONFIG_LUA=1
 
 # vis version
 RELEASE = HEAD
@@ -26,16 +27,21 @@ PREFIX ?= /usr/local
 MANPREFIX = ${PREFIX}/share/man
 SHAREPREFIX = ${PREFIX}/share/vis
 
-CFLAGS_LUA = $(shell pkg-config --cflags lua5.1 2> /dev/null || echo "-I/usr/include/lua5.1")
-CFLAGS_TERMKEY = $(shell pkg-config --cflags termkey 2> /dev/null || echo "")
-CFLAGS_CURSES = $(shell pkg-config --cflags ncursesw 2> /dev/null || echo "-I/usr/include/ncursesw")
+ifeq (${CONFIG_LUA},1)
+	CFLAGS_LUA = $(shell pkg-config --cflags lua5.2 2> /dev/null || echo "-I/usr/include/lua5.2")
+	LDFLAGS_LUA = $(shell pkg-config --libs lua5.2 2> /dev/null || echo "-llua")
+endif
 
-LDFLAGS_LUA = $(shell pkg-config --libs lua5.1 2> /dev/null || echo "-llua")
+CFLAGS_TERMKEY = $(shell pkg-config --cflags termkey 2> /dev/null || echo "")
 LDFLAGS_TERMKEY = $(shell pkg-config --libs termkey 2> /dev/null || echo "-ltermkey")
+
+CFLAGS_CURSES = $(shell pkg-config --cflags ncursesw 2> /dev/null || echo "-I/usr/include/ncursesw")
 LDFLAGS_CURSES = $(shell pkg-config --libs ncursesw 2> /dev/null || echo "-lncursesw")
 
 LIBS = -lm -ldl -lc
 OS = $(shell uname)
+
+CFLAGS += -DCONFIG_LUA=${CONFIG_LUA}
 
 ifeq (${OS},Linux)
 	ifeq (${HAVE_SELINUX},1)

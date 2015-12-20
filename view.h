@@ -3,7 +3,6 @@
 
 #include <stddef.h>
 #include <stdbool.h>
-#include <lua.h>
 #include "register.h"
 #include "text.h"
 #include "ui.h"
@@ -11,6 +10,7 @@
 typedef struct View View;
 typedef struct Cursor Cursor;
 typedef struct Selection Selection;
+typedef struct lua_State lua_State;
 
 typedef struct {
 	int width;          /* display width i.e. number of columns ocupied by this character */

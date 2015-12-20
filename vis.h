@@ -13,6 +13,16 @@ typedef struct Win Win;
 #include "view.h"
 #include "register.h"
 
+typedef struct {
+	void (*vis_start)(Vis*);
+	void (*vis_quit)(Vis*);
+	void (*file_open)(Vis*, File*);
+	void (*file_save)(Vis*, File*);
+	void (*file_close)(Vis*, File*);
+	void (*win_open)(Vis*, Win*);
+	void (*win_close)(Vis*, Win*);
+} VisEvent;
+
 typedef union { /* various types of arguments passed to key action functions */
 	bool b;
 	int i;
@@ -40,7 +50,7 @@ typedef struct {           /* a key binding either refers to an action or an ali
 } KeyBinding;
 
 /* creates a new editor instance using the specified user interface */
-Vis *vis_new(Ui*);
+Vis *vis_new(Ui*, VisEvent*);
 /* frees all resources associated with this editor instance, terminates ui */
 void vis_free(Vis*);
 /* instructs the user interface to draw to an internal buffer */

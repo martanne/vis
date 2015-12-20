@@ -610,7 +610,7 @@ In order to build vis you will need a C99 compiler as well as:
  * [libcurses](http://www.gnu.org/software/ncurses/), preferably in the
    wide-character version
  * [libtermkey](http://www.leonerd.org.uk/code/libtermkey/)
- * [lua](http://www.lua.org/) >= 5.1
+ * [lua](http://www.lua.org/) >= 5.2
  * [LPeg](http://www.inf.puc-rio.br/~roberto/lpeg/) >= 0.12 (runtime
    dependency required for syntax highlighting)
 

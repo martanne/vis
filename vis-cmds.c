@@ -595,6 +595,8 @@ static bool cmd_write(Vis *vis, Filerange *range, enum CmdOpt opt, const char *a
 		}
 		if (strcmp(file->name, *name) == 0)
 			file->stat = text_stat(text);
+		if (vis->event && vis->event->file_save)
+			vis->event->file_save(vis, file);
 	}
 	return true;
 }
