@@ -616,7 +616,7 @@ static KeyAction vis_action[] = {
 	[VIS_ACTION_REDRAW] = {
 		"editor-redraw",
 		"Redraw current editor content",
-		 call, { .f = vis_draw }
+		 call, { .f = vis_redraw }
 	},
 	[VIS_ACTION_REPLACE_CHAR] = {
 		"replace-char",

@@ -45,6 +45,7 @@ Vis *vis_new(Ui*);
 void vis_free(Vis*);
 /* instructs the user interface to draw to an internal buffer */
 void vis_draw(Vis*);
+void vis_redraw(Vis*);
 /* flushes the state of the internal buffer to the output device */
 void vis_update(Vis*);
 /* temporarily supsend the editor process, resumes upon receiving SIGCONT */

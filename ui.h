@@ -55,6 +55,7 @@ struct Ui {
 	void (*info_hide)(Ui*);
 	void (*arrange)(Ui*, enum UiLayout);
 	void (*draw)(Ui*);
+	void (*redraw)(Ui*);
 	void (*update)(Ui*);
 	void (*suspend)(Ui*);
 	const char* (*getkey)(Ui*);

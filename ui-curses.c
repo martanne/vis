@@ -772,6 +772,11 @@ static void ui_draw(Ui *ui) {
 	wnoutrefresh(stdscr);
 }
 
+static void ui_redraw(Ui *ui) {
+	clear();
+	ui_draw(ui);
+}
+
 static void ui_resize_to(Ui *ui, int width, int height) {
 	UiCurses *uic = (UiCurses*)ui;
 	uic->width = width;
@@ -1111,6 +1116,7 @@ Ui *ui_curses_new(void) {
 		.prompt_input = ui_prompt_input,
 		.prompt_hide = ui_prompt_hide,
 		.draw = ui_draw,
+		.redraw = ui_redraw,
 		.arrange = ui_arrange,
 		.die = ui_die,
 		.info = ui_info,
