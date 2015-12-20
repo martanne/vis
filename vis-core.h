@@ -59,8 +59,8 @@ typedef struct { /* Motion implementation, takes a cursor postion and returns a 
 	size_t (*view)(Vis*, View*);
 	size_t (*win)(Vis*, Win*, size_t pos);
 	enum {
-		LINEWISE  = 1 << 0,  /* should the covered range be extended to whole lines? */
-		CHARWISE  = 1 << 1,  /* scrolls window content until position is visible */
+		LINEWISE  = VIS_MOTIONTYPE_LINEWISE,  /* should the covered range be extended to whole lines? */
+		CHARWISE  = VIS_MOTIONTYPE_CHARWISE,  /* scrolls window content until position is visible */
 		INCLUSIVE = 1 << 2,  /* should new position be included in operator range? */
 		IDEMPOTENT = 1 << 3, /* does the returned postion remain the same if called multiple times? */
 		JUMP = 1 << 4,
