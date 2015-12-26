@@ -368,10 +368,10 @@ void vis_lua_start(Vis *vis) {
 	}
 
 	/* extends lua's package.path with:
-	 * - $VIS_PATH/lexers
-	 * - $HOME/.vis/lexers
-	 * - /usr/local/share/vis/lexers
-	 * - /usr/share/vis/lexers
+	 * - $VIS_PATH/{,lexers}
+	 * - $HOME/.vis{,lexers}
+	 * - /usr/local/share/vis/{,lexers}
+	 * - /usr/share/vis/{,lexers}
 	 * - package.path (standard lua search path)
 	 */
 	int paths = 3;
@@ -380,20 +380,24 @@ void vis_lua_start(Vis *vis) {
 	const char *vis_path = getenv("VIS_PATH");
 	if (vis_path) {
 		lua_pushstring(L, vis_path);
+		lua_pushstring(L, "/?.lua;");
+		lua_pushstring(L, vis_path);
 		lua_pushstring(L, "/lexers/?.lua;");
-		lua_concat(L, 2);
+		lua_concat(L, 4);
 		paths++;
 	}
 
 	if (home && *home) {
 		lua_pushstring(L, home);
+		lua_pushstring(L, "/.vis/?.lua;");
+		lua_pushstring(L, home);
 		lua_pushstring(L, "/.vis/lexers/?.lua;");
-		lua_concat(L, 2);
+		lua_concat(L, 4);
 		paths++;
 	}
 
-	lua_pushstring(L, "/usr/local/share/vis/lexers/?.lua;");
-	lua_pushstring(L, "/usr/share/vis/lexers/?.lua;");
+	lua_pushstring(L, "/usr/local/share/vis/?.lua;/usr/local/share/vis/lexers/?.lua");
+	lua_pushstring(L, "/usr/share/vis/?.lua;/usr/share/vis/lexers/?.lua");
 	lua_getfield(L, -paths, "path");
 	lua_concat(L, paths);
 	lua_setfield(L, -2, "path");
