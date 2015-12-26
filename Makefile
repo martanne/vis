@@ -74,7 +74,7 @@ install: vis
 	@chmod 755 ${DESTDIR}${PREFIX}/bin/vis-open
 	@echo installing support files to ${DESTDIR}${SHAREPREFIX}
 	@mkdir -p ${DESTDIR}${SHAREPREFIX}
-	@cp -r lexers ${DESTDIR}${SHAREPREFIX}
+	@cp -r visrc.lua lexers ${DESTDIR}${SHAREPREFIX}
 	@echo installing manual page to ${DESTDIR}${MANPREFIX}/man1
 	@mkdir -p ${DESTDIR}${MANPREFIX}/man1
 	@sed "s/VERSION/${VERSION}/g" < vis.1 > ${DESTDIR}${MANPREFIX}/man1/vis.1
