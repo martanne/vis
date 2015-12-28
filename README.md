@@ -1,249 +1,63 @@
-Why another text editor?
-========================
+Vis a vim-like text editor
+==========================
 
-It all started when I was recently reading the excellent
-[Project Oberon](http://www.inf.ethz.ch/personal/wirth/ProjectOberon/),
-where in chapter 5 a data structure for managing text is introduced.
-I found this rather appealing and wanted to see how it works in practice.
+Vis aims to be a modern, legacy free, simple yet efficient vim-like editor.
 
-After some time I decided that besides just having fun hacking around I
-might as well build something which could (at least in the long run)
-replace my current editor of choice: vim.
+As an universal editor it has decent Unicode support (including double width
+and combining characters) and should cope with arbitrary files including:
 
-This should be accomplished by a reasonable amount of clean (your mileage
-may vary), modern and legacy free C code. Certainly not an old,
-[500'000 lines long](https://www.openhub.net/p/vim) `#ifdef` cluttered
-mess which tries to run on all broken systems ever envisioned by mankind.
+ - large ones e.g. >500M SQL dumps or CSV exports
+ - single line ones e.g. minified JavaScript
+ - binary ones e.g. ELF files
 
-Admittedly vim has a lot of functionally, most of which I don't use. I
-therefore set out with the following main goals:
+Efficient syntax highlighting is provided using Parsing Expression Grammars
+which can be conveniently expressed using Lua in form of LPeg.
 
- - Unicode aware
+The editor core is written in a reasonable amount of clean (your mileage
+may vary), modern and legacy free C code enabling it to run in resource
+constrained environments. The implementation should be easy to hack on
+and encourage experimentation (e.g. native built in support for multiple
+cursors). There also exists a Lua API for in process extensions.
 
- - handle arbitrary files including
-    - large ones e.g. >500M SQL dumps or CSV exports
-    - single line ones e.g. minified JavaScript
-    - binary ones e.g. ELF files
+Vis strives to be *simple* and focuses on its core task: efficient text
+management. As an example the file open dialog is provided by an independent
+utility. There exist plans to use a client/server architecture, delegating
+window management to your windowing system or favorite terminal multiplexer.
 
- - unlimited undo/redo support, the possibility to revert to any earlier/later state
-
- - regex search (and replace)
-
- - multiple file/window support
-
- - syntax highlighting
-
-The goal could thus be summarized as "80% of vim's features (in other
-words the useful ones) implemented in roughly 1% of the code".
-
-Finally and most importantly it is fun! Writing a text editor presents
-some interesting challenges and design decisions, some of which are
-explained below.
+The intention is *not* to be bug for bug compatible with vim, instead a 
+similar editing experience should be provided. The goal could thus be
+summarized as "80% of vim's features implemented in roughly 1% of the code".
 
 ![vis demo](https://raw.githubusercontent.com/martanne/vis/gh-pages/screencast.gif)
 
-Text management using a piece table/chain
-=========================================
+Getting started / Build instructions
+====================================
 
-The core of this editor is a persistent data structure called a piece
-table which supports all modifications in `O(m)`, where `m` is the number
-of non-consecutive editing operations. This bound could be further
-improved to `O(log m)` by use of a balanced search tree, however the
-additional complexity doesn't seem to be worth it, for now.
+In order to build vis you will need a C99 compiler as well as:
 
-The actual data is stored in buffers which are strictly append only.
-There exist two types of buffers, one fixed-sized holding the original
-file content and multiple append-only ones storing the modifications.
+ * a C library, we recommend [musl](http://www.musl-libc.org/)
+ * [libcurses](http://www.gnu.org/software/ncurses/), preferably in the
+   wide-character version
+ * [libtermkey](http://www.leonerd.org.uk/code/libtermkey/)
+ * [lua](http://www.lua.org/) >= 5.2
+ * [LPeg](http://www.inf.puc-rio.br/~roberto/lpeg/) >= 0.12 (runtime
+   dependency required for syntax highlighting)
 
-A text, i.e. a sequence of bytes, is represented as a double linked
-list of pieces each with a pointer into a buffer and an associated
-length. Pieces are never deleted but instead always kept around for
-redo/undo support. A span is a range of pieces, consisting of a start
-and end piece. Changes to the text are always performed by swapping
-out an existing, possibly empty, span with a new one.
+If you want a self contained statically linked binary you can try
+to run `make standalone` which will attempt to download, compile
+and install all of the above dependencies. `make local` will do
+the same but only for libtermkey, lua and LPeg (i.e. the system
+C and curses libraries are used).
 
-An empty document is represented by two special sentinel pieces which
-always exist:
+To build a regular dynamically linked binary using the system
+libraries, simply run `make` (possibly after adapting `config.mk`
+to match your system).
 
-    /-+ --> +-\
-    | |     | |
-    \-+ <-- +-/
-     #1     #2
+Editing Features
+================
 
-Loading a file from disk is as simple as mmap(2)-ing it into a buffer,
-creating a corresponding piece and adding it to the double linked list.
-Hence loading a file is a constant time operation i.e. independent of
-the actual file size (assuming the operating system uses demand paging).
-
-    /-+ --> +-----------------+ --> +-\
-    | |     | I am an editor! |     | |
-    \-+ <-- +-----------------+ <-- +-/
-     #1             #3              #2
-
-Insert
-------
-
-Inserting a junk of data amounts to appending the new content to a
-modification buffer. Followed by the creation of new pieces. An insertion
-in the middle of an existing piece requires the creation of 3 new pieces.
-Two of them hold references to the text before respectively after the
-insertion point. While the third one points to the newly added text.
-
-    /-+ --> +---------------+ --> +----------------+ --> +--+ --> +-\
-    | |     | I am an editor|     |which sucks less|     |! |     | |
-    \-+ <-- +---------------+ <-- +----------------+ <-- +--+ <-- +-/
-     #1            #4                   #5                #6      #2
-
-           modification buffer content: "which sucks less"
-
-During this insertion operation the old span [3,3] has been replaced
-by the new span [4,6]. Notice that the pieces in the old span were not
-changed, therefore still point to their predecessors/successors, and can
-thus be swapped back in.
-
-If the insertion point happens to be at a piece boundary, the old span
-is empty, and the new span only consists of the newly allocated piece.
-
-Delete
-------
-
-Similarly a delete operation splits the pieces at appropriate places.
-
-    /-+ --> +-----+ --> +--+ --> +-\
-    | |     | I am|     |! |     | |
-    \-+ <-- +-----+ <-- +--+ <-- +-/
-     #1       #7         #6      #2
-
-Where the old span [4,5] got replaced by the new span [7,7]. The underlying
-buffers remain unchanged.
-
-Cache
------
-
-Notice that the common case of appending text to a given piece is fast
-since, the new data is simply appended to the buffer and the piece length
-is increased accordingly. In order to keep the number of pieces down,
-the least recently edited piece is cached and changes to it are done
-in place (this is the only time buffers are modified in a non-append
-only way). As a consequence they can not be undone.
-
-Undo/redo
----------
-
-Since the buffers are append only and the spans/pieces are never destroyed
-undo/redo functionality is implemented by swapping the required spans/pieces
-back in.
-
-As illustrated above, each change to the text is recorded by an old and
-a new span. An action consists of multiple changes which logically belong
-to each other and should thus also be reverted together. For example
-a search and replace operation is one action with possibly many changes
-all over the text.
-
-The text states can be marked by means of a snapshotting operation.
-Snapshotting saves a new node to the history graph and creates a fresh
-Action to which future changes will be appended until the next snapshot.
-
-Actions make up the nodes of a connected digraph, each representing a state
-of the file at some time during the current editing session. The edges of the
-digraph represent state transitions that are supported by the editor. The edges
-are implemented as four Action pointers (`prev`, `next`, `earlier`, and `later`).
-
-The editor operations that execute the four aforementioned transitions
-are `undo`, `redo`,`earlier`, and `later`, respectively. Undo and
-redo behave in the traditional manner, changing the state one Action
-at a time. Earlier and later, however, traverse the states in chronological
-order, which may occasionally involve undoing and redoing many Actions at once.
-
-Properties
-----------
-
-The main advantage of the piece chain as described above is that all
-operations are performed independent of the file size but instead linear
-in the number of pieces i.e. editing operations. The original file buffer
-never changes which means the `mmap(2)` can be performed read only which
-makes optimal use of the operating system's virtual memory / paging system.
-
-The maximum editable file size is limited by the amount of memory a process
-is allowed to map into its virtual address space, this shouldn't be a problem
-in practice. The whole process assumes that the file can be used as is.
-In particular the editor assumes all input and the file itself is encoded
-as UTF-8. Supporting other encodings would require conversion using `iconv(3)`
-or similar upon loading and saving the document.
-
-Similarly the editor has to cope with the fact that lines can be terminated
-either by `\n` or `\r\n`. There is no conversion to a line based structure in
-place. Instead the whole text is exposed as a sequence of bytes. All
-addressing happens by means of zero based byte offsets from the start of
-the file.
-
-The main disadvantage of the piece chain data structure is that the text
-is not stored contiguous in memory which makes seeking around somewhat
-harder. This also implies that standard library calls like the `regex(3)`
-functions can not be used as is. However this is the case for all but
-the most simple data structures used in text editors.
-
-Syntax Highlighting using Parsing Expression Grammars
-=====================================================
-
-[Parsing Expression Grammars](https://en.wikipedia.org/wiki/Parsing_expression_grammar)
-(PEG) have the nice property that they are closed under composition.
-In the context of an editor this is useful because lexers can be
-embedded into each other, thus simplifying syntax highlighting
-definitions.
-
-Vis reuses the [Lua](http://www.lua.org/) [LPeg](http://www.inf.puc-rio.br/~roberto/lpeg/)
-based lexers from the [Scintillua](http://foicica.com/scintillua/) project.
-
-Future Plans / Ideas
-====================
-
-This section contains some ideas for further architectural changes.
-
-Client/Server Architecture / RPC interface
-------------------------------------------
-
-In principle it would be nice to follow a similar client/server approach
-as [sam/samterm](http://sam.cat-v.org/) i.e. having the main editor as a
-server and each window as a separate client process with communication
-over a unix domain socket.
-
-That way window management would be taken care of by dwm or dvtm and the
-different client processes would still share common cut/paste registers
-etc.
-
-Efficient Search and Replace
-----------------------------
-
-Currently the editor copies the whole text to a contiguous memory block
-and then uses the standard regex functions from libc. Clearly this is not
-a satisfactory solution for large files.
-
-The long term solution is to write our own regular expression engine or
-modify an existing one to make use of the iterator API. This would allow
-efficient search without having to double memory consumption.
-
-The used regex engine should use a non-backtracking algorithm. Useful
-resources include:
-
- - [Russ Cox's regex page](http://swtch.com/~rsc/regexp/)
- - [TRE](https://github.com/laurikari/tre) as
-   [used by musl](http://git.musl-libc.org/cgit/musl/tree/src/regex)
-   which uses a parallel [TNFA matcher](http://laurikari.net/ville/spire2000-tnfa.ps)
- - [Plan9's regex library](http://plan9.bell-labs.com/sources/plan9/sys/src/libregexp/)
-   which has its root in Rob Pike's sam text editor
- - [RE2](https://github.com/google/re2) C++ regex library
-
-vis a vim-like frontend
-=======================
-
-The editor core is written in a library like fashion which should make
-it possible to write multiple frontends with possibly different user
-interfaces/paradigms.
-
-The default, and currently only, interface is a vim clone called vis.
-The following section gives a quick overview over various vim features
-and their current support in vis.
+The following section gives a quick overview over the currently
+supported features.
 
 ###  Operators
 
@@ -257,6 +71,8 @@ and their current support in vis.
     ~   (swap case)
     gu  (make lowercase)
     gU  (make uppercase)
+    !   (filter)
+    =   (format using fmt(1))
 
 Operators can be forced to work line wise by specifying `V`.
 
@@ -515,21 +331,6 @@ Operators can be forced to work line wise by specifying `V`.
 
   The mouse is currently not used at all.
 
-### Future Plans / Ideas
-
- Potentially interesting features:
-
-   + code completion: this should be done as an external process. I will
-     have to take a look at the tools from the llvm / clang project. Maybe
-     dvtm's terminal emulation support could be reused to display an
-     slmenu inside the editor at the cursor position?
-
-   + something similar to vim's quick fix functionality
-
-   + text folding
-
-   + runtime configurable key bindings
-
 ### Non Goals
 
   Some of the features of vim which will *not* be implemented:
@@ -551,21 +352,228 @@ Operators can be forced to work line wise by specifying `V`.
    - internal spell checker
    - compile time configurable features / `#ifdef` mess
 
-How to help?
-============
 
-At this point it might be best to fetch the code, edit some scratch file,
-notice an odd behavior or missing functionality, write and submit a patch
-for it, then iterate.
+Text management using a piece table/chain
+=========================================
 
-Additional test cases either for the [low level text manipulation routines]
-(https://github.com/martanne/vis/tree/test/test/text) or as [commands for the vis frontend]
-(https://github.com/martanne/vis/tree/test/test/vis) would be highly appreciated.
+The core of this editor is a persistent data structure called a piece
+table which supports all modifications in `O(m)`, where `m` is the number
+of non-consecutive editing operations. This bound could be further
+improved to `O(log m)` by use of a balanced search tree, however the
+additional complexity doesn't seem to be worth it, for now.
 
-WARNING: There are probably still some bugs left which could corrupt your
-         unsaved changes. Use at your own risk. At this point I suggest to
-         only edit non-critical files which are under version control and
-         thus easily recoverable!
+The actual data is stored in buffers which are strictly append only.
+There exist two types of buffers, one fixed-sized holding the original
+file content and multiple append-only ones storing the modifications.
+
+A text, i.e. a sequence of bytes, is represented as a double linked
+list of pieces each with a pointer into a buffer and an associated
+length. Pieces are never deleted but instead always kept around for
+redo/undo support. A span is a range of pieces, consisting of a start
+and end piece. Changes to the text are always performed by swapping
+out an existing, possibly empty, span with a new one.
+
+An empty document is represented by two special sentinel pieces which
+always exist:
+
+    /-+ --> +-\
+    | |     | |
+    \-+ <-- +-/
+     #1     #2
+
+Loading a file from disk is as simple as mmap(2)-ing it into a buffer,
+creating a corresponding piece and adding it to the double linked list.
+Hence loading a file is a constant time operation i.e. independent of
+the actual file size (assuming the operating system uses demand paging).
+
+    /-+ --> +-----------------+ --> +-\
+    | |     | I am an editor! |     | |
+    \-+ <-- +-----------------+ <-- +-/
+     #1             #3              #2
+
+Insert
+------
+
+Inserting a junk of data amounts to appending the new content to a
+modification buffer. Followed by the creation of new pieces. An insertion
+in the middle of an existing piece requires the creation of 3 new pieces.
+Two of them hold references to the text before respectively after the
+insertion point. While the third one points to the newly added text.
+
+    /-+ --> +---------------+ --> +----------------+ --> +--+ --> +-\
+    | |     | I am an editor|     |which sucks less|     |! |     | |
+    \-+ <-- +---------------+ <-- +----------------+ <-- +--+ <-- +-/
+     #1            #4                   #5                #6      #2
+
+           modification buffer content: "which sucks less"
+
+During this insertion operation the old span [3,3] has been replaced
+by the new span [4,6]. Notice that the pieces in the old span were not
+changed, therefore still point to their predecessors/successors, and can
+thus be swapped back in.
+
+If the insertion point happens to be at a piece boundary, the old span
+is empty, and the new span only consists of the newly allocated piece.
+
+Delete
+------
+
+Similarly a delete operation splits the pieces at appropriate places.
+
+    /-+ --> +-----+ --> +--+ --> +-\
+    | |     | I am|     |! |     | |
+    \-+ <-- +-----+ <-- +--+ <-- +-/
+     #1       #7         #6      #2
+
+Where the old span [4,5] got replaced by the new span [7,7]. The underlying
+buffers remain unchanged.
+
+Cache
+-----
+
+Notice that the common case of appending text to a given piece is fast
+since, the new data is simply appended to the buffer and the piece length
+is increased accordingly. In order to keep the number of pieces down,
+the least recently edited piece is cached and changes to it are done
+in place (this is the only time buffers are modified in a non-append
+only way). As a consequence they can not be undone.
+
+Undo/redo
+---------
+
+Since the buffers are append only and the spans/pieces are never destroyed
+undo/redo functionality is implemented by swapping the required spans/pieces
+back in.
+
+As illustrated above, each change to the text is recorded by an old and
+a new span. An action consists of multiple changes which logically belong
+to each other and should thus also be reverted together. For example
+a search and replace operation is one action with possibly many changes
+all over the text.
+
+The text states can be marked by means of a snapshotting operation.
+Snapshotting saves a new node to the history graph and creates a fresh
+Action to which future changes will be appended until the next snapshot.
+
+Actions make up the nodes of a connected digraph, each representing a state
+of the file at some time during the current editing session. The edges of the
+digraph represent state transitions that are supported by the editor. The edges
+are implemented as four Action pointers (`prev`, `next`, `earlier`, and `later`).
+
+The editor operations that execute the four aforementioned transitions
+are `undo`, `redo`,`earlier`, and `later`, respectively. Undo and
+redo behave in the traditional manner, changing the state one Action
+at a time. Earlier and later, however, traverse the states in chronological
+order, which may occasionally involve undoing and redoing many Actions at once.
+
+Marks
+-----
+
+Because we are working with a persistent data structure marks can be
+represented as pointers into the underlying (append only) buffers.
+To get the position of an existing mark it suffices to traverse the
+list of pieces and perform a range query on the associated buffer
+segments. This also nicely integrates with the undo/redo mechanism.
+If a span is swapped out all contained marks (pointers) become invalid
+because they are no longer reachable from the piece chain. Once an
+action is undone, and the corresponding span swapped back in, the
+marks become visible again. No explicit mark management is necessary.
+
+Properties
+----------
+
+The main advantage of the piece chain as described above is that all
+operations are performed independent of the file size but instead linear
+in the number of pieces i.e. editing operations. The original file buffer
+never changes which means the `mmap(2)` can be performed read only which
+makes optimal use of the operating system's virtual memory / paging system.
+
+The maximum editable file size is limited by the amount of memory a process
+is allowed to map into its virtual address space, this shouldn't be a problem
+in practice. The whole process assumes that the file can be used as is.
+In particular the editor assumes all input and the file itself is encoded
+as UTF-8. Supporting other encodings would require conversion using `iconv(3)`
+or similar upon loading and saving the document.
+
+Similarly the editor has to cope with the fact that lines can be terminated
+either by `\n` or `\r\n`. There is no conversion to a line based structure in
+place. Instead the whole text is exposed as a sequence of bytes. All
+addressing happens by means of zero based byte offsets from the start of
+the file.
+
+The main disadvantage of the piece chain data structure is that the text
+is not stored contiguous in memory which makes seeking around somewhat
+harder. This also implies that standard library calls like the `regex(3)`
+functions can not be used as is. However this is the case for all but
+the most simple data structures used in text editors.
+
+Syntax Highlighting using Parsing Expression Grammars
+=====================================================
+
+[Parsing Expression Grammars](https://en.wikipedia.org/wiki/Parsing_expression_grammar)
+(PEG) have the nice property that they are closed under composition.
+In the context of an editor this is useful because lexers can be
+embedded into each other, thus simplifying syntax highlighting
+definitions.
+
+Vis reuses the [Lua](http://www.lua.org/) [LPeg](http://www.inf.puc-rio.br/~roberto/lpeg/)
+based lexers from the [Scintillua](http://foicica.com/scintillua/) project.
+
+Future Plans / Ideas
+====================
+
+This section contains some ideas for further architectural changes.
+
+Event loop with asynchronous I/O
+--------------------------------
+
+The editor core should feature a proper main loop mechanism supporting
+asynchronous non-blocking and always cancelable tasks which could be
+used for all possibly long lived actions such as:
+
+ - `!`, `=` operators
+ - `:substitute` and `:write` commands
+ - code completion
+ - compiler integration (similar to vim's quick fix functionality)
+
+Client/Server Architecture / RPC interface
+------------------------------------------
+
+In principle it would be nice to follow a similar client/server approach
+as [sam/samterm](http://sam.cat-v.org/) i.e. having the main editor as a
+server and each window as a separate client process with communication
+over a unix domain socket.
+
+That way window management would be taken care of by dwm or dvtm and the
+different client processes would still share common cut/paste registers
+etc.
+
+This would also enable a language agnostic plugin system.
+
+Efficient Search and Replace
+----------------------------
+
+Currently the editor copies the whole text to a contiguous memory block
+and then uses the standard regex functions from libc. Clearly this is not
+a satisfactory solution for large files.
+
+The long term solution is to write our own regular expression engine or
+modify an existing one to make use of the iterator API. This would allow
+efficient search without having to double memory consumption.
+
+The used regex engine should use a non-backtracking algorithm. Useful
+resources include:
+
+ - [Russ Cox's regex page](http://swtch.com/~rsc/regexp/)
+ - [TRE](https://github.com/laurikari/tre) as
+   [used by musl](http://git.musl-libc.org/cgit/musl/tree/src/regex)
+   which uses a parallel [TNFA matcher](http://laurikari.net/ville/spire2000-tnfa.ps)
+ - [Plan9's regex library](http://plan9.bell-labs.com/sources/plan9/sys/src/libregexp/)
+   which has its root in Rob Pike's sam text editor
+ - [RE2](https://github.com/google/re2) C++ regex library
+
+Developer Overview
+==================
 
 A quick overview over the code structure to get you started:
 
@@ -589,37 +597,14 @@ A quick overview over the code structure to get you started:
  `vis-modes.c`       | vi(m) mode switching, enter/leave event handling
  `vis-motions.c`     | vi(m) cursor motion implementation
  `vis-operators.c`   | vi(m) operator implementation
+ `vis-lua.c`         | Lua bindings, exposing core vis APIs for in process extension
  `main.c`            | key action definitions, program entry point
  `config.def.h`      | definition of default key bindings (mapping of key actions)
+ `visrc.lua`         | Lua startup and configuration script
  `lexers/`           | Lua LPeg based lexers used for syntax highlighting
 
-Hope this gets the interested people started.
-
-Feel free to ask questions if something is unclear! There are still a lot
-of bugs left to fix, but by now I'm fairly sure that the general concept
-should work.
-
-As always, comments and patches welcome!
-
-Build dependencies
-==================
-
-In order to build vis you will need a C99 compiler as well as:
-
- * a C library, we recommend [musl](http://www.musl-libc.org/)
- * [libcurses](http://www.gnu.org/software/ncurses/), preferably in the
-   wide-character version
- * [libtermkey](http://www.leonerd.org.uk/code/libtermkey/)
- * [lua](http://www.lua.org/) >= 5.2
- * [LPeg](http://www.inf.puc-rio.br/~roberto/lpeg/) >= 0.12 (runtime
-   dependency required for syntax highlighting)
-
-If you want a self contained statically linked binary you can try
-to run `make standalone` which will attempt to download, compile
-and install all of the above dependencies. `make local` will do
-the same but only for libtermkey, lua and LPeg (i.e. the system
-C and curses libraries are used).
-
-To build a regular dynamically linked binary using the system
-libraries, simply run `make` (possibly after adapting `config.mk`
-to match your system).
+Testing infrastructure for the [low level text manipulation routines]
+(https://github.com/martanne/vis/tree/test/test/text), [vim compatibility]
+(https://github.com/martanne/vis/tree/test/test/vim) and [vis specific features]
+(https://github.com/martanne/vis/tree/test/test/vis) is in place, but
+lacks proper test cases.
