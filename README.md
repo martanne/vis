@@ -255,44 +255,48 @@ Operators can be forced to work line wise by specifying `V`.
     :later      revert to newer text state 
     :set        set the options below
 
-     tabwidth   [1-8]
+     tabwidth   [1-8]           default 8
 
        set display width of a tab and number of spaces to use if
        expandtab is enabled
 
-     expandtab  (yes|no)
+     expandtab  (yes|no)        default no
 
        whether typed in tabs should be expanded to tabwidth spaces
 
-     autoindent (yes|no)
+     autoindent (yes|no)        default no
 
        replicate spaces and tabs at the beginning of the line when
        starting a new line.
 
-     number         (yes|no)
-     relativenumber (yes|no)
+     number         (yes|no)    default no
+     relativenumber (yes|no)    default no
 
        whether absolute or relative line numbers are printed alongside
        the file content
 
-     syntax      name
+     syntax      name           default yes
 
        use syntax definition given (e.g. "c") or disable syntax
        highlighting if no such definition exists (e.g :set syntax off)
 
-     show        newlines=[1|0] tabs=[1|0] spaces=[0|1]
+     show
 
        show/hide special white space replacement symbols
 
-     cursorline (yes|no)
+       newlines = [0|1]         default 0
+       tabs     = [0|1]         default 0
+       spaces   = [0|1]         default 0
+
+     cursorline (yes|no)        default no
 
        highlight the line on which the cursor currently resides
 
-     colorcolumn number
+     colorcolumn number         default 0
 
        highlight the given column
 
-     theme      name
+     theme      name            default dark-16.lua | solarized.lua (16 | 256 color)
 
        use the given theme / color scheme for syntax highlighting
 
