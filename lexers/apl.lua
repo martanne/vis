@@ -1,4 +1,5 @@
 -- APL LPeg lexer.
+-- Author: David B. Lamkins <david@lamkins.net>
 
 local l = require('lexer')
 local token, word_match = l.token, l.word_match

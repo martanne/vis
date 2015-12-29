@@ -1,5 +1,5 @@
 -- Copyright 2015 Charles Lehner. See LICENSE.
--- ledger journal LPeg lexer.
+-- ledger journal LPeg lexer, see http://www.ledger-cli.org/
 
 local l = require('lexer')
 local token, word_match = l.token, l.word_match
