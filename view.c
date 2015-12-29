@@ -580,12 +580,12 @@ void view_draw(View *view) {
 		} else {
 			if (prev_cell.len && !view_addch(view, &prev_cell))
 				break;
+			pos += prev_cell.len;
 			prev_cell = cell;
 		}
 
  		rem -= cell.len;
 		cur += cell.len;
-		pos += cell.len;
 
 		memset(&cell, 0, sizeof cell);
 	}
