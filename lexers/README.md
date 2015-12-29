@@ -9,7 +9,7 @@ based lexers from the [Scintillua](http://foicica.com/scintillua/) project.
 Vis searches the lexers in the following locations:
 
  * `$VIS_PATH/lexers`
- * `$HOME/.vis/lexers`
+ * `$XDG_CONFIG_HOME/vis/lexers`
  * `/usr/local/share/vis/lexers`
  * `/usr/share/vis/lexers`
  * `package.path` (standard lua search path)

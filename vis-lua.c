@@ -359,17 +359,10 @@ void vis_lua_start(Vis *vis) {
 	vis->lua = L;
 	luaL_openlibs(L);
 
-	/* try to get users home directory */
-	const char *home = getenv("HOME");
-	if (!home || !*home) {
-		struct passwd *pw = getpwuid(getuid());
-		if (pw)
-			home = pw->pw_dir;
-	}
 
 	/* extends lua's package.path with:
 	 * - $VIS_PATH/{,lexers}
-	 * - $HOME/.vis{,lexers}
+	 * - $XDG_CONFIG_HOME/vis/{,lexers} (defaulting to $HOME/.config/vis/{,lexers})
 	 * - /usr/local/share/vis/{,lexers}
 	 * - /usr/share/vis/{,lexers}
 	 * - package.path (standard lua search path)
@@ -387,17 +380,33 @@ void vis_lua_start(Vis *vis) {
 		paths++;
 	}
 
-	if (home && *home) {
+	/* try to get users home directory */
+	const char *home = getenv("HOME");
+	if (!home || !*home) {
+		struct passwd *pw = getpwuid(getuid());
+		if (pw)
+			home = pw->pw_dir;
+	}
+
+	const char *xdg_config = getenv("XDG_CONFIG_HOME");
+	if (xdg_config) {
+		lua_pushstring(L, xdg_config);
+		lua_pushstring(L, "/vis/?.lua;");
+		lua_pushstring(L, xdg_config);
+		lua_pushstring(L, "/vis/lexers/?.lua;");
+		lua_concat(L, 4);
+		paths++;
+	} else if (home && *home) {
 		lua_pushstring(L, home);
-		lua_pushstring(L, "/.vis/?.lua;");
+		lua_pushstring(L, "/.config/vis/?.lua;");
 		lua_pushstring(L, home);
-		lua_pushstring(L, "/.vis/lexers/?.lua;");
+		lua_pushstring(L, "/.config/vis/lexers/?.lua;");
 		lua_concat(L, 4);
 		paths++;
 	}
 
-	lua_pushstring(L, "/usr/local/share/vis/?.lua;/usr/local/share/vis/lexers/?.lua");
-	lua_pushstring(L, "/usr/share/vis/?.lua;/usr/share/vis/lexers/?.lua");
+	lua_pushstring(L, "/usr/local/share/vis/?.lua;/usr/local/share/vis/lexers/?.lua;");
+	lua_pushstring(L, "/usr/share/vis/?.lua;/usr/share/vis/lexers/?.lua;");
 	lua_getfield(L, -paths, "path");
 	lua_concat(L, paths);
 	lua_setfield(L, -2, "path");
