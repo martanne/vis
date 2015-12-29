@@ -1,25 +1,10 @@
-# optional features
-HAVE_ACL=0
-HAVE_SELINUX=0
-CONFIG_LUA=1
-
 # vis version
-RELEASE = HEAD
-# try to get a tag and hash first
-GITHASH = $(shell git log -1 --format='%h' 2>/dev/null)
-GITTAG = $(shell git describe --abbrev=0 --tags 2>/dev/null)
-ifneq ($(GITTAG),)
-	# we have a tag and revcount from there
-	GITREVCOUNT = $(shell git rev-list --count ${GITTAG}.. 2>/dev/null)
-	VERSION = ${GITTAG}.r${GITREVCOUNT}.g${GITHASH}
-else ifneq ($(GITHASH),)
-	# we have no tags in git, so just use revision count an hash for now
-	GITREVCOUNT = $(shell git rev-list --count HEAD)
-	VERSION = 0.r${GITREVCOUNT}.g${GITHASH}
-else
-	# this is used when no git is available, e.g. for release tarball
-	VERSION = ${RELEASE}
-endif
+VERSION = 0.1
+
+# optional features
+CONFIG_LUA=1
+CONFIG_ACL=0
+CONFIG_SELINUX=0
 
 # Customize below to fit your system
 
@@ -27,10 +12,7 @@ PREFIX ?= /usr/local
 MANPREFIX = ${PREFIX}/share/man
 SHAREPREFIX = ${PREFIX}/share/vis
 
-ifeq (${CONFIG_LUA},1)
-	CFLAGS_LUA = $(shell pkg-config --cflags lua5.2 2> /dev/null || echo "-I/usr/include/lua5.2")
-	LDFLAGS_LUA = $(shell pkg-config --libs lua5.2 2> /dev/null || echo "-llua")
-endif
+LIBS = -lm -ldl -lc
 
 CFLAGS_TERMKEY = $(shell pkg-config --cflags termkey 2> /dev/null || echo "")
 LDFLAGS_TERMKEY = $(shell pkg-config --libs termkey 2> /dev/null || echo "-ltermkey")
@@ -38,19 +20,24 @@ LDFLAGS_TERMKEY = $(shell pkg-config --libs termkey 2> /dev/null || echo "-lterm
 CFLAGS_CURSES = $(shell pkg-config --cflags ncursesw 2> /dev/null || echo "-I/usr/include/ncursesw")
 LDFLAGS_CURSES = $(shell pkg-config --libs ncursesw 2> /dev/null || echo "-lncursesw")
 
-LIBS = -lm -ldl -lc
-OS = $(shell uname)
+ifeq (${CONFIG_LUA},1)
+	CFLAGS_LUA = $(shell pkg-config --cflags lua5.2 2> /dev/null || echo "-I/usr/include/lua5.2")
+	LDFLAGS_LUA = $(shell pkg-config --libs lua5.2 2> /dev/null || echo "-llua")
+endif
 
 CFLAGS += -DCONFIG_LUA=${CONFIG_LUA}
+CFLAGS += -DCONFIG_SELINUX=${CONFIG_SELINUX}
+CFLAGS += -DCONFIG_ACL=${CONFIG_ACL}
+
+ifeq (${CONFIG_ACL},1)
+	LIBS += -lacl
+endif
+
+OS = $(shell uname)
 
 ifeq (${OS},Linux)
-	ifeq (${HAVE_SELINUX},1)
-		CFLAGS += -DHAVE_SELINUX
+	ifeq (${CONFIG_SELINUX},1)
 		LIBS += -lselinux
-	endif
-	ifeq (${HAVE_ACL},1)
-		CFLAGS += -DHAVE_ACL
-		LIBS += -lacl
 	endif
 else ifeq (${OS},Darwin)
 	CFLAGS += -D_DARWIN_C_SOURCE

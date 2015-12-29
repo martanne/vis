@@ -1,5 +1,18 @@
 include config.mk
 
+# try to get a tag and hash first
+GITHASH = $(shell git log -1 --format='%h' 2>/dev/null)
+GITTAG = $(shell git describe --abbrev=0 --tags 2>/dev/null)
+ifneq ($(GITTAG),)
+	# we have a tag and revcount from there
+	GITREVCOUNT = $(shell git rev-list --count ${GITTAG}.. 2>/dev/null)
+	VERSION = ${GITTAG}.r${GITREVCOUNT}.g${GITHASH}
+else ifneq ($(GITHASH),)
+	# we have no tags in git, so just use revision count an hash for now
+	GITREVCOUNT = $(shell git rev-list --count HEAD)
+	VERSION = 0.r${GITREVCOUNT}.g${GITHASH}
+endif
+
 SRCDIR = $(realpath $(dir $(firstword $(MAKEFILE_LIST))))
 
 ALL = *.c *.h config.mk Makefile LICENSE README.md vis.1
@@ -56,12 +69,7 @@ clean:
 
 dist: clean
 	@echo creating dist tarball
-	@mkdir -p vis-${VERSION}
-	@cp -R ${ALL} vis-${VERSION}
-	@rm -f vis-${VERSION}/config.h
-	@tar -cf vis-${VERSION}.tar vis-${VERSION}
-	@gzip vis-${VERSION}.tar
-	@rm -rf vis-${VERSION}
+	@git archive --prefix=vis-${VERSION}/ -o vis-${VERSION}.tar.gz HEAD
 
 install: vis
 	@echo stripping executable
@@ -85,9 +93,8 @@ uninstall:
 	@rm -f ${DESTDIR}${PREFIX}/bin/vis
 	@echo removing manual page from ${DESTDIR}${MANPREFIX}/man1
 	@rm -f ${DESTDIR}${MANPREFIX}/man1/vis.1
-
-release:
-	@git archive --prefix=vis-$(RELEASE)/ -o vis-$(RELEASE).tar.gz $(RELEASE)
+	@echo removing support files from ${DESTDIR}${SHAREPREFIX}
+	@[ ! -z "${SHAREPREFIX}" ] && rm -rf ${DESTDIR}${SHAREPREFIX}
 
 dependency/sources:
 	mkdir -p $@

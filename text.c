@@ -24,10 +24,10 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/mman.h>
-#ifdef HAVE_ACL
+#if CONFIG_ACL
 #include <sys/acl.h>
 #endif
-#ifdef HAVE_SELINUX
+#if CONFIG_SELINUX
 #include <selinux/selinux.h>
 #endif
 
@@ -786,7 +786,7 @@ time_t text_state(Text *txt) {
 }
 
 static bool preserve_acl(int src, int dest) {
-#ifdef HAVE_ACL
+#if CONFIG_ACL
 	acl_t acl = acl_get_fd(src);
 	if (!acl)
 		return errno == ENOTSUP ? true : false;
@@ -795,12 +795,12 @@ static bool preserve_acl(int src, int dest) {
 		return false;
 	}
 	acl_free(acl);
-#endif /* HAVE_ACL */
+#endif /* CONFIG_ACL */
 	return true;
 }
 
 static bool preserve_selinux_context(int src, int dest) {
-#ifdef HAVE_SELINUX
+#if CONFIG_SELINUX
 	char *context = NULL;
 	if (!is_selinux_enabled())
 		return true;
@@ -811,7 +811,7 @@ static bool preserve_selinux_context(int src, int dest) {
 		return false;
 	}
 	freecon(context);
-#endif /* HAVE_SELINUX */
+#endif /* CONFIG_SELINUX */
 	return true;
 }
 
