@@ -1137,7 +1137,7 @@ void view_cursors_to(Cursor *c, size_t pos) {
 		c->mark = text_mark_set(view->text, pos);
 
 		size_t max = text_size(view->text);
-		if (pos == max && view->end != max) {
+		if (pos == max && view->end < max) {
 			/* do not display an empty screen when shoviewg the end of the file */
 			view->start = pos;
 			view_viewport_up(view, view->height / 2);
