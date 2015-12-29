@@ -383,7 +383,7 @@ static bool view_addch(View *view, Cell *cell) {
 		if (view->line)
 			view->line->lineno = lineno + 1;
 		view->col = 0;
-		return true;
+		return view->line;
 	default:
 		if ((unsigned char)cell->data[0] < 128 && !isprint((unsigned char)cell->data[0])) {
 			/* non-printable ascii char, represent it as ^(char + 64) */
