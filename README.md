@@ -39,9 +39,9 @@ In order to build vis you will need a C99 compiler as well as:
  * [libcurses](http://www.gnu.org/software/ncurses/), preferably in the
    wide-character version
  * [libtermkey](http://www.leonerd.org.uk/code/libtermkey/)
- * [lua](http://www.lua.org/) (optional) >= 5.2 
+ * [lua](http://www.lua.org/) (optional) >= 5.2
  * [LPeg](http://www.inf.puc-rio.br/~roberto/lpeg/) (optional) >= 0.12 runtime
-   dependency required for syntax highlighting 
+   dependency required for syntax highlighting
 
 If you want a self contained statically linked binary you can try
 to run `make standalone` which will attempt to download, compile
@@ -52,6 +52,8 @@ C and curses libraries are used).
 To build a regular dynamically linked binary using the system
 libraries, simply run `make` (possibly after adapting `config.mk`
 to match your system).
+
+To build without lua dependency do `make CONFIG_LUA=0`.
 
 Editing Features
 ================
