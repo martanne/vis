@@ -228,11 +228,23 @@ static int info(lua_State *L) {
 	return 0;
 }
 
+static int open(lua_State *L) {
+	Vis *vis = lua_touserdata(L, lua_upvalueindex(1));
+	const char *name = luaL_checkstring(L, 1);
+	File *file = NULL;
+	if (vis_window_new(vis, name))
+		file = obj_ref_new(L, vis->win->file, "vis.file");
+	if (!file)
+		lua_pushnil(L);
+	return 1;
+}
+
 static const struct luaL_Reg vis_lua[] = {
 	{ "files", files },
 	{ "windows", windows },
 	{ "command", command },
 	{ "info", info },
+	{ "open", open },
 	{ NULL, NULL },
 };
 
