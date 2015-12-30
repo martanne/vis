@@ -32,7 +32,7 @@ static void stack_dump_entry(lua_State *L, int i) {
 		printf(lua_toboolean(L, i) ? "true" : "false");
 		break;
 	case LUA_TLIGHTUSERDATA:
-		printf("lightuserdata(%p)", (void*)lua_touserdata(L, i));
+		printf("lightuserdata(%p)", lua_touserdata(L, i));
 		break;
 	case LUA_TNUMBER:
 		printf("%g", lua_tonumber(L, i));
@@ -53,7 +53,7 @@ static void stack_dump_entry(lua_State *L, int i) {
 		printf("]");
 		break;
 	case LUA_TUSERDATA:
-		printf("userdata(%p)", (void*)lua_touserdata(L, i));
+		printf("userdata(%p)", lua_touserdata(L, i));
 		break;
 	default:  /* other values */
 		printf("%s", lua_typename(L, t));
@@ -159,7 +159,7 @@ static int newindex_common(lua_State *L) {
 static int windows_iter(lua_State *L);
 
 static int windows(lua_State *L) {
-	Vis *vis = (Vis*)lua_touserdata(L, lua_upvalueindex(1));
+	Vis *vis = lua_touserdata(L, lua_upvalueindex(1));
 	Win **handle = lua_newuserdata(L, sizeof *handle);
 	*handle = vis->windows;
 	lua_pushcclosure(L, windows_iter, 1);
@@ -167,7 +167,7 @@ static int windows(lua_State *L) {
 }
 
 static int windows_iter(lua_State *L) {
-	Win **handle = (Win**)lua_touserdata(L, lua_upvalueindex(1));
+	Win **handle = lua_touserdata(L, lua_upvalueindex(1));
 	if (!*handle)
 		return 0;
 	Win *win = obj_new(L, *handle, "vis.window");
@@ -180,7 +180,7 @@ static int windows_iter(lua_State *L) {
 static int files_iter(lua_State *L);
 
 static int files(lua_State *L) {
-	Vis *vis = (Vis*)lua_touserdata(L, lua_upvalueindex(1));
+	Vis *vis = lua_touserdata(L, lua_upvalueindex(1));
 	File **handle = lua_newuserdata(L, sizeof *handle);
 	*handle = vis->files;
 	lua_pushcclosure(L, files_iter, 1);
@@ -188,7 +188,7 @@ static int files(lua_State *L) {
 }
 
 static int files_iter(lua_State *L) {
-	File **handle = (File**)lua_touserdata(L, lua_upvalueindex(1));
+	File **handle = lua_touserdata(L, lua_upvalueindex(1));
 	if (!*handle)
 		return 0;
 	File *file = obj_new(L, *handle, "vis.file");
@@ -199,7 +199,7 @@ static int files_iter(lua_State *L) {
 }
 
 static int command(lua_State *L) {
-	Vis *vis = (Vis*)lua_touserdata(L, lua_upvalueindex(1));
+	Vis *vis = lua_touserdata(L, lua_upvalueindex(1));
 	const char *cmd = luaL_checkstring(L, 1);
 	bool ret = vis_cmd(vis, cmd);
 	lua_pushboolean(L, ret);
@@ -207,7 +207,7 @@ static int command(lua_State *L) {
 }
 
 static int info(lua_State *L) {
-	Vis *vis = (Vis*)lua_touserdata(L, lua_upvalueindex(1));
+	Vis *vis = lua_touserdata(L, lua_upvalueindex(1));
 	const char *msg = luaL_checkstring(L, 1);
 	vis_info_show(vis, "%s", msg);
 	return 0;
