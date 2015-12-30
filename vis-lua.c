@@ -73,12 +73,22 @@ static void stack_dump(lua_State *L, const char *format, ...) {
 		printf("\n");
 	}
 	printf("\n\n");
+	fflush(stdout);
 }
 
 #endif
 
+static void *obj_new(lua_State *L, size_t size, const char *type) {
+	void *obj = lua_newuserdata(L, size);
+	luaL_getmetatable(L, type);
+	lua_setmetatable(L, -2);
+	lua_newtable(L);
+	lua_setuservalue(L, -2);
+	return obj;
+}
+
 /* returns registry["vis.objects"][addr] if it is of correct type */
-static void *obj_get(lua_State *L, void *addr, const char *type) {
+static void *obj_ref_get(lua_State *L, void *addr, const char *type) {
 	lua_getfield(L, LUA_REGISTRYINDEX, "vis.objects");
 	lua_pushlightuserdata(L, addr);
 	lua_gettable(L, -2);
@@ -94,7 +104,7 @@ static void *obj_get(lua_State *L, void *addr, const char *type) {
  *
  *   registry["vis.objects"][addr] = userdata
  */
-static void obj_set(lua_State *L, void *addr) {
+static void obj_ref_set(lua_State *L, void *addr) {
 	lua_getfield(L, LUA_REGISTRYINDEX, "vis.objects");
 	lua_pushlightuserdata(L, addr);
 	lua_pushvalue(L, -3);
@@ -102,38 +112,43 @@ static void obj_set(lua_State *L, void *addr) {
 	lua_pop(L, 1);
 }
 
-static void obj_del(lua_State *L, void *addr) {
+/* invalidates an object reference
+ *
+ *   registry["vis.objects"][addr] = nil
+ */
+static void obj_ref_free(lua_State *L, void *addr) {
 	lua_pushnil(L);
-	obj_set(L, addr);
+	obj_ref_set(L, addr);
 }
 
-static void *obj_new(lua_State *L, void *addr, const char *type) {
+/* creates a new object reference of given type if it does not
+ * already exist in the registry */
+static void *obj_ref_new(lua_State *L, void *addr, const char *type) {
 	if (!addr)
 		return NULL;
-	void **handle = (void**)obj_get(L, addr, type);
+	void **handle = (void**)obj_ref_get(L, addr, type);
 	if (!handle) {
-		handle = lua_newuserdata(L, sizeof(addr));
-		obj_set(L, addr);
+		handle = obj_new(L, sizeof(addr), type);
+		obj_ref_set(L, addr);
 		*handle = addr;
-		luaL_getmetatable(L, type);
-		lua_setmetatable(L, -2);
-		lua_newtable(L);
-		lua_setuservalue(L, -2);
 	}
 	return *handle;
 }
 
-static void *obj_arg_get(lua_State *L, int idx, const char *type) {
+/* retrieve object stored in reference at stack location `idx' */
+static void *obj_ref_check_get(lua_State *L, int idx, const char *type) {
 	void **addr = luaL_checkudata(L, idx, type);
-	return obj_get(L, *addr, type);
+	if (!obj_ref_get(L, *addr, type))
+		return NULL;
+	return *addr;
 }
 
-static void *obj_check(lua_State *L, int idx, const char *type) {
-	void **addr = luaL_checkudata(L, idx, type);
-	if (!obj_get(L, *addr, type))
-		return NULL;
-	lua_pop(L, 1);
-	return *addr;
+/* (type) check validity of object reference at stack location `idx' */
+static void *obj_ref_check(lua_State *L, int idx, const char *type) {
+	void *obj = obj_ref_check_get(L, idx, type);
+	if (obj)
+		lua_pop(L, 1);
+	return obj;
 }
 
 static int index_common(lua_State *L) {
@@ -170,7 +185,7 @@ static int windows_iter(lua_State *L) {
 	Win **handle = lua_touserdata(L, lua_upvalueindex(1));
 	if (!*handle)
 		return 0;
-	Win *win = obj_new(L, *handle, "vis.window");
+	Win *win = obj_ref_new(L, *handle, "vis.window");
 	if (!win)
 		return 0;
 	*handle = win->next;
@@ -191,7 +206,7 @@ static int files_iter(lua_State *L) {
 	File **handle = lua_touserdata(L, lua_upvalueindex(1));
 	if (!*handle)
 		return 0;
-	File *file = obj_new(L, *handle, "vis.file");
+	File *file = obj_ref_new(L, *handle, "vis.file");
 	if (!file)
 		return 0;
 	*handle = file->next;
@@ -222,7 +237,7 @@ static const struct luaL_Reg vis_lua[] = {
 };
 
 static int window_index(lua_State *L) {
-	Win *win = obj_check(L, 1, "vis.window");
+	Win *win = obj_ref_check(L, 1, "vis.window");
 	if (!win) {
 		lua_pushnil(L);
 		return 1;
@@ -231,7 +246,7 @@ static int window_index(lua_State *L) {
 	if (lua_isstring(L, 2)) {
 		const char *key = lua_tostring(L, 2);
 		if (strcmp(key, "file") == 0) {
-			obj_new(L, win->file, "vis.file");
+			obj_ref_new(L, win->file, "vis.file");
 			return 1;
 		}
 	}
@@ -240,7 +255,7 @@ static int window_index(lua_State *L) {
 }
 
 static int window_newindex(lua_State *L) {
-	Win *win = obj_check(L, 1, "vis.window");
+	Win *win = obj_ref_check(L, 1, "vis.window");
 	if (!win)
 		return 0;
 	return newindex_common(L);
@@ -253,7 +268,7 @@ static const struct luaL_Reg window_funcs[] = {
 };
 
 static int file_index(lua_State *L) {
-	File *file = obj_check(L, 1, "vis.file");
+	File *file = obj_ref_check(L, 1, "vis.file");
 	if (!file) {
 		lua_pushnil(L);
 		return 1;
@@ -271,14 +286,14 @@ static int file_index(lua_State *L) {
 }
 
 static int file_newindex(lua_State *L) {
-	File *file = obj_check(L, 1, "vis.file");
+	File *file = obj_ref_check(L, 1, "vis.file");
 	if (!file)
 		return 0;
 	return newindex_common(L);
 }
 
 static int file_insert(lua_State *L) {
-	File *file = obj_check(L, 1, "vis.file");
+	File *file = obj_ref_check(L, 1, "vis.file");
 	if (file) {
 		size_t pos = luaL_checkunsigned(L, 2);
 		size_t len;
@@ -293,7 +308,7 @@ static int file_insert(lua_State *L) {
 }
 
 static int file_delete(lua_State *L) {
-	File *file = obj_check(L, 1, "vis.file");
+	File *file = obj_ref_check(L, 1, "vis.file");
 	if (file) {
 		size_t pos = luaL_checkunsigned(L, 2);
 		size_t len = luaL_checkunsigned(L, 3);
@@ -308,7 +323,7 @@ static int file_delete(lua_State *L) {
 static int file_lines_iter(lua_State *L);
 
 static int file_lines(lua_State *L) {
-	obj_arg_get(L, 1, "vis.file");
+	obj_ref_arg(L, 1, "vis.file");
 	size_t *pos = lua_newuserdata(L, sizeof *pos);
 	*pos = 0;
 	lua_pushcclosure(L, file_lines_iter, 2);
@@ -449,10 +464,10 @@ void vis_lua_file_close(Vis *vis, File *file) {
 	lua_State *L = vis->lua;
 	vis_lua_event(vis, "file_close");
 	if (lua_isfunction(L, -1)) {
-		obj_new(L, file, "vis.file");
+		obj_ref_new(L, file, "vis.file");
 		lua_pcall(L, 1, 0, 0);
 	}
-	obj_del(L, file);
+	obj_ref_free(L, file);
 	lua_pop(L, 1);
 }
 
@@ -460,7 +475,7 @@ void vis_lua_win_open(Vis *vis, Win *win) {
 	lua_State *L = vis->lua;
 	vis_lua_event(vis, "win_open");
 	if (lua_isfunction(L, -1)) {
-		obj_new(L, win, "vis.window");
+		obj_ref_new(L, win, "vis.window");
 		lua_pcall(L, 1, 0, 0);
 	}
 	lua_pop(L, 1);
@@ -470,10 +485,10 @@ void vis_lua_win_close(Vis *vis, Win *win) {
 	lua_State *L = vis->lua;
 	vis_lua_event(vis, "win_close");
 	if (lua_isfunction(L, -1)) {
-		obj_new(L, win, "vis.window");
+		obj_ref_new(L, win, "vis.window");
 		lua_pcall(L, 1, 0, 0);
 	}
-	obj_del(L, win);
+	obj_ref_free(L, win);
 	lua_pop(L, 1);
 }
 
