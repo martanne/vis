@@ -24,7 +24,7 @@ management. As an example the file open dialog is provided by an independent
 utility. There exist plans to use a client/server architecture, delegating
 window management to your windowing system or favorite terminal multiplexer.
 
-The intention is *not* to be bug for bug compatible with vim, instead a 
+The intention is *not* to be bug for bug compatible with vim, instead a
 similar editing experience should be provided. The goal could thus be
 summarized as "80% of vim's features implemented in roughly 1% of the code".
 
@@ -39,9 +39,9 @@ In order to build vis you will need a C99 compiler as well as:
  * [libcurses](http://www.gnu.org/software/ncurses/), preferably in the
    wide-character version
  * [libtermkey](http://www.leonerd.org.uk/code/libtermkey/)
- * [lua](http://www.lua.org/) >= 5.2
- * [LPeg](http://www.inf.puc-rio.br/~roberto/lpeg/) >= 0.12 (runtime
-   dependency required for syntax highlighting)
+ * [lua](http://www.lua.org/) (optional) >= 5.2
+ * [LPeg](http://www.inf.puc-rio.br/~roberto/lpeg/) (optional) >= 0.12 runtime
+   dependency required for syntax highlighting
 
 If you want a self contained statically linked binary you can try
 to run `make standalone` which will attempt to download, compile
@@ -52,6 +52,8 @@ C and curses libraries are used).
 To build a regular dynamically linked binary using the system
 libraries, simply run `make` (possibly after adapting `config.mk`
 to match your system).
+
+To build without lua dependency do `make CONFIG_LUA=0`.
 
 Editing Features
 ================
@@ -163,19 +165,19 @@ Operators can be forced to work line wise by specifying `V`.
 
   At the moment there exists a more or less functional insert, replace
   and visual mode (in both line and character wise variants).
-  
+
   Visual block mode is not implemented and there exists no immediate
   plan to do so. Instead vis has built in support for multiple cursors.
-  
+
 ### Multiple Cursors / Selections
 
   vis supports multiple cursors with immediate visual feedback (unlike
   in the visual block mode of vim where for example inserts only become
   visible upon exit). There always exists one primary cursor, additional
   ones can be created as needed.
-  
+
   To manipulate multiple cursors use in normal mode:
-  
+
     CTRL-K   create a new cursor on the line above
     CTRL-J   create a new cursor on the line below
     CTRL-P   remove least recently added cursor
@@ -185,7 +187,7 @@ Operators can be forced to work line wise by specifying `V`.
              Otherwise dispose all but the primary cursor.
 
   Visual mode was enhanced to recognize:
-    
+
     I        create a cursor at the start of every selected line
     A        create a cursor at the end of every selected line
     CTRL-N   create new cursor and select next word matching current selection
@@ -211,7 +213,7 @@ Operators can be forced to work line wise by specifying `V`.
   The text is currently snapshotted whenever an operator is completed as
   well as when insert or replace mode is left. Additionally a snapshot
   is also taken if in insert or replace mode a certain idle time elapses.
-  
+
   Another idea is to snapshot based on the distance between two consecutive
   editing operations (as they are likely unrelated and thus should be
   individually reversible).
@@ -252,47 +254,51 @@ Operators can be forced to work line wise by specifying `V`.
     :substitute search and replace currently implemented in terms of `sed(1)`
     :!          filter range through external command
     :earlier    revert to older text state
-    :later      revert to newer text state 
+    :later      revert to newer text state
     :set        set the options below
 
-     tabwidth   [1-8]
+     tabwidth   [1-8]           default 8
 
        set display width of a tab and number of spaces to use if
        expandtab is enabled
 
-     expandtab  (yes|no)
+     expandtab  (yes|no)        default no
 
        whether typed in tabs should be expanded to tabwidth spaces
 
-     autoindent (yes|no)
+     autoindent (yes|no)        default no
 
        replicate spaces and tabs at the beginning of the line when
        starting a new line.
 
-     number         (yes|no)
-     relativenumber (yes|no)
+     number         (yes|no)    default no
+     relativenumber (yes|no)    default no
 
        whether absolute or relative line numbers are printed alongside
        the file content
 
-     syntax      name
+     syntax      name           default yes
 
        use syntax definition given (e.g. "c") or disable syntax
        highlighting if no such definition exists (e.g :set syntax off)
 
-     show        newlines=[1|0] tabs=[1|0] spaces=[0|1]
+     show
 
        show/hide special white space replacement symbols
 
-     cursorline (yes|no)
+       newlines = [0|1]         default 0
+       tabs     = [0|1]         default 0
+       spaces   = [0|1]         default 0
+
+     cursorline (yes|no)        default no
 
        highlight the line on which the cursor currently resides
 
-     colorcolumn number
+     colorcolumn number         default 0
 
        highlight the given column
 
-     theme      name
+     theme      name            default dark-16.lua | solarized.lua (16 | 256 color)
 
        use the given theme / color scheme for syntax highlighting
 
