@@ -292,6 +292,10 @@ static int file_index(lua_State *L) {
 			lua_pushstring(L, file->name);
 			return 1;
 		}
+		if (strcmp(key, "lines") == 0) {
+			obj_ref_new(L, file->text, "vis.file.text");
+			return 1;
+		}
 	}
 
 	return index_common(L);
@@ -332,30 +336,33 @@ static int file_delete(lua_State *L) {
 	return 1;
 }
 
-static int file_lines_iter(lua_State *L);
+static int file_lines_iterator_it(lua_State *L);
 
-static int file_lines(lua_State *L) {
-	obj_ref_arg(L, 1, "vis.file");
+static int file_lines_iterator(lua_State *L) {
+	/* need to check second parameter first, because obj_ref_check_get
+	 * modifies the stack */
+	size_t line = luaL_optunsigned(L, 2, 1);
+	File *file = obj_ref_check_get(L, 1, "vis.file");
 	size_t *pos = lua_newuserdata(L, sizeof *pos);
-	*pos = 0;
-	lua_pushcclosure(L, file_lines_iter, 2);
+	*pos = text_pos_by_lineno(file->text, line);
+	lua_pushcclosure(L, file_lines_iterator_it, 2);
 	return 1;
 }
 
-static int file_lines_iter(lua_State *L) {
+static int file_lines_iterator_it(lua_State *L) {
 	File *file = *(File**)lua_touserdata(L, lua_upvalueindex(1));
-	size_t *pos = lua_touserdata(L, lua_upvalueindex(2));
-	size_t new_pos = text_line_next(file->text, *pos);
-	size_t len = new_pos - *pos;
-	if (len == 0)
+	size_t *start = lua_touserdata(L, lua_upvalueindex(2));
+	if (*start == text_size(file->text))
 		return 0;
+	size_t end = text_line_end(file->text, *start);
+	size_t len = end - *start;
 	char *buf = malloc(len);
-	if (!buf)
+	if (!buf && len)
 		return 0;
-	len = text_bytes_get(file->text, *pos, len, buf);
+	len = text_bytes_get(file->text, *start, len, buf);
 	lua_pushlstring(L, buf, len);
 	free(buf);
-	*pos = new_pos;
+	*start = text_line_next(file->text, end);
 	return 1;
 }
 
@@ -364,10 +371,76 @@ static const struct luaL_Reg file_funcs[] = {
 	{ "__newindex", file_newindex },
 	{ "insert", file_insert },
 	{ "delete", file_delete },
-	{ "lines", file_lines },
+	{ "lines_iterator", file_lines_iterator },
 	{ NULL, NULL },
 };
 
+static int file_lines_index(lua_State *L) {
+	Text *txt = obj_ref_check(L, 1, "vis.file.text");
+	if (!txt)
+		goto err;
+	size_t line = luaL_checkunsigned(L, 2);
+	size_t start = text_pos_by_lineno(txt, line);
+	size_t end = text_line_end(txt, start);
+	if (start != EPOS && end != EPOS) {
+		size_t size = end - start;
+		char *data = malloc(size);
+		if (!data && size)
+			goto err;
+		size = text_bytes_get(txt, start, size, data);
+		lua_pushlstring(L, data, size);
+		free(data);
+		return 1;
+	}
+err:
+	lua_pushnil(L);
+	return 1;
+}
+
+static int file_lines_newindex(lua_State *L) {
+	Text *txt = obj_ref_check(L, 1, "vis.file.text");
+	if (!txt)
+		return 0;
+	size_t line = luaL_checkunsigned(L, 2);
+	size_t size;
+	const char *data = luaL_checklstring(L, 3, &size);
+	if (line == 0) {
+		text_insert(txt, 0, data, size);
+		text_insert_newline(txt, size);
+		return 0;
+	}
+	size_t start = text_pos_by_lineno(txt, line);
+	size_t end = text_line_end(txt, start);
+	if (start != EPOS && end != EPOS) {
+		text_delete(txt, start, end - start);
+		text_insert(txt, start, data, size);
+		if (text_size(txt) == start + size)
+			text_insert_newline(txt, text_size(txt));
+	}
+	return 0;
+}
+
+static int file_lines_len(lua_State *L) {
+	Text *txt = obj_ref_check(L, 1, "vis.file.text");
+	size_t lines = 0;
+	if (txt) {
+		char lastchar;
+		size_t size = text_size(txt);
+		if (size > 0)
+			lines = text_lineno_by_pos(txt, size);
+		if (lines > 1 && text_byte_get(txt, size-1, &lastchar) && lastchar == '\n')
+			lines--;
+	}
+	lua_pushunsigned(L, lines);
+	return 1;
+}
+
+static const struct luaL_Reg file_lines_funcs[] = {
+	{ "__index", file_lines_index },
+	{ "__newindex", file_lines_newindex },
+	{ "__len", file_lines_len },
+	{ NULL, NULL },
+};
 
 static void vis_lua_event(Vis *vis, const char *name) {
 	lua_State *L = vis->lua;
@@ -445,6 +518,8 @@ void vis_lua_start(Vis *vis) {
 	/* metatable used to type check user data */
 	luaL_newmetatable(L, "vis.file");
 	luaL_setfuncs(L, file_funcs, 0);
+	luaL_newmetatable(L, "vis.file.text");
+	luaL_setfuncs(L, file_lines_funcs, 0);
 	luaL_newmetatable(L, "vis.window");
 	luaL_setfuncs(L, window_funcs, 0);
 	/* vis module table with up value as the C pointer */
@@ -479,6 +554,7 @@ void vis_lua_file_close(Vis *vis, File *file) {
 		obj_ref_new(L, file, "vis.file");
 		lua_pcall(L, 1, 0, 0);
 	}
+	obj_ref_free(L, file->text);
 	obj_ref_free(L, file);
 	lua_pop(L, 1);
 }
