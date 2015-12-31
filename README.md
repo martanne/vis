@@ -356,6 +356,45 @@ Operators can be forced to work line wise by specifying `V`.
    - internal spell checker
    - compile time configurable features / `#ifdef` mess
 
+Lua API for in process extension
+================================
+
+Vis provides a simple Lua API for in process extension. At startup the
+`visrc.lua` file is executed, this can be used to register a few event
+callbacks which will be invoked from the editor core. While executing
+these user scripts the editor core is blocked, hence it is intended for
+simple short lived (configuration) tasks.
+
+At this time there exists no API stability guarantees.
+
+ - `vis`
+   - `lexers` LPeg lexer support module
+   - `events` hooks
+     - `start()`
+     - `quit()`
+     - `win_open(win)`
+     - `win_close(win)`
+   - `files()` iterator
+   - `windows()` iterator
+   - `command(cmd)`
+   - `info(msg)`
+   - `open(filename)`
+ - `file`
+   - `insert(file, pos, data)`
+   - `delete(file, pos, len)`
+   - `lines_iterator(file)`
+   - `name`
+   - `lines[0..#lines+1]` array giving read/write access to lines
+ - `window`
+   - `file`
+   - `cursor`
+     - `line`, `col`
+     - `pos` bytes from start of file
+
+Most of the exposed objects are managed by the C core. Allthough there
+is a simple object life time management mechanism in place, it is still
+recommended to *not* let the Lua objects escape from the event handlers
+(e.g. by assigning to global Lua variables).
 
 Text management using a piece table/chain
 =========================================
