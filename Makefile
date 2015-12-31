@@ -91,6 +91,7 @@ install: vis
 uninstall:
 	@echo removing executable file from ${DESTDIR}${PREFIX}/bin
 	@rm -f ${DESTDIR}${PREFIX}/bin/vis
+	@rm -f ${DESTDIR}${PREFIX}/bin/vis-open
 	@echo removing manual page from ${DESTDIR}${MANPREFIX}/man1
 	@rm -f ${DESTDIR}${MANPREFIX}/man1/vis.1
 	@echo removing support files from ${DESTDIR}${SHAREPREFIX}
