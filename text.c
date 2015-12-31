@@ -1517,7 +1517,7 @@ size_t text_pos_by_lineno(Text *txt, size_t lineno) {
 		cache->pos = lines_skip_forward(txt, 0, lineno - 1, &lines_skipped);
 		cache->lineno = lines_skipped + 1;
 	}
-	return cache->pos;
+	return cache->lineno == lineno ? cache->pos : EPOS;
 }
 
 size_t text_lineno_by_pos(Text *txt, size_t pos) {
