@@ -261,6 +261,11 @@ static int window_index(lua_State *L) {
 			obj_ref_new(L, win->file, "vis.file");
 			return 1;
 		}
+
+		if (strcmp(key, "cursor") == 0) {
+			obj_ref_new(L, win->view, "vis.window.cursor");
+			return 1;
+		}
 	}
 
 	return index_common(L);
@@ -276,6 +281,55 @@ static int window_newindex(lua_State *L) {
 static const struct luaL_Reg window_funcs[] = {
 	{ "__index", window_index },
 	{ "__newindex", window_newindex },
+	{ NULL, NULL },
+};
+
+static int window_cursor_index(lua_State *L) {
+	View *view = obj_ref_check(L, 1, "vis.window.cursor");
+	if (!view) {
+		lua_pushnil(L);
+		return 1;
+	}
+
+	if (lua_isstring(L, 2)) {
+		const char *key = lua_tostring(L, 2);
+		if (strcmp(key, "pos") == 0) {
+			lua_pushunsigned(L, view_cursor_get(view));
+			return 1;
+		}
+
+		if (strcmp(key, "line") == 0) {
+			lua_pushunsigned(L, view_cursor_getpos(view).line);
+			return 1;
+		}
+
+		if (strcmp(key, "col") == 0) {
+			lua_pushunsigned(L, view_cursor_getpos(view).col);
+			return 1;
+		}
+	}
+
+	return index_common(L);
+}
+
+static int window_cursor_newindex(lua_State *L) {
+	View *view = obj_ref_check(L, 1, "vis.window.cursor");
+	if (!view)
+		return 0;
+	if (lua_isstring(L, 2)) {
+		const char *key = lua_tostring(L, 2);
+		if (strcmp(key, "pos") == 0) {
+			size_t pos = luaL_checkunsigned(L, 3);
+			view_cursor_to(view, pos);
+			return 0;
+		}
+	}
+	return newindex_common(L);
+}
+
+static const struct luaL_Reg window_cursor_funcs[] = {
+	{ "__index", window_cursor_index },
+	{ "__newindex", window_cursor_newindex },
 	{ NULL, NULL },
 };
 
@@ -522,6 +576,8 @@ void vis_lua_start(Vis *vis) {
 	luaL_setfuncs(L, file_lines_funcs, 0);
 	luaL_newmetatable(L, "vis.window");
 	luaL_setfuncs(L, window_funcs, 0);
+	luaL_newmetatable(L, "vis.window.cursor");
+	luaL_setfuncs(L, window_cursor_funcs, 0);
 	/* vis module table with up value as the C pointer */
 	luaL_newlibtable(L, vis_lua);
 	lua_pushlightuserdata(L, vis);
@@ -576,6 +632,7 @@ void vis_lua_win_close(Vis *vis, Win *win) {
 		obj_ref_new(L, win, "vis.window");
 		lua_pcall(L, 1, 0, 0);
 	}
+	obj_ref_free(L, win->view);
 	obj_ref_free(L, win);
 	lua_pop(L, 1);
 }
