@@ -664,6 +664,17 @@ bool text_vprintf(Text *txt, size_t pos, const char *format, va_list ap) {
 	return ret;
 }
 
+bool text_insert_newline(Text *txt, size_t pos) {
+	switch (text_newline_type(txt)) {
+	case TEXT_NEWLINE_NL:
+		return text_insert(txt, pos, "\n", 1);
+	case TEXT_NEWLINE_CRNL:
+		return text_insert(txt, pos, "\r\n", 2);
+	default:
+		return false;
+	}
+}
+
 static size_t action_undo(Text *txt, Action *a) {
 	size_t pos = EPOS;
 	for (Change *c = a->change; c; c = c->next) {
