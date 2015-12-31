@@ -587,12 +587,21 @@ void vis_lua_start(Vis *vis) {
 	lua_getglobal(L, "require");
 	lua_pushstring(L, "visrc");
 	lua_pcall(L, 1, 0, 0);
+	vis_lua_event(vis, "start");
+	if (lua_isfunction(L, -1))
+		lua_pcall(L, 0, 0, 0);
+	lua_pop(L, 1);
 }
 
 void vis_lua_quit(Vis *vis) {
 	lua_State *L = vis->lua;
-	if (L)
-		lua_close(L);
+	if (!L)
+		return;
+	vis_lua_event(vis, "quit");
+	if (lua_isfunction(L, -1))
+		lua_pcall(L, 0, 0, 0);
+	lua_pop(L, 1);
+	lua_close(L);
 }
 
 void vis_lua_file_open(Vis *vis, File *file) {
