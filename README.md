@@ -53,6 +53,10 @@ To build a regular dynamically linked binary using the system
 libraries, simply run `make` (possibly after adapting `config.mk`
 to match your system).
 
+    $ $EDITOR config.mk
+    $ make
+    $ VIS_PATH=. ./vis config.h
+
 Editing Features
 ================
 
