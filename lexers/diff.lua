@@ -1,4 +1,4 @@
--- Copyright 2006-2015 Mitchell mitchell.att.foicica.com. See LICENSE.
+-- Copyright 2006-2016 Mitchell mitchell.att.foicica.com. See LICENSE.
 -- Diff LPeg lexer.
 
 local l = require('lexer')

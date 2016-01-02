@@ -1,3 +1,4 @@
+-- Copyright 2015-2016 David B. Lamkins <david@lamkins.net>. See LICENSE.
 -- man/roff LPeg lexer.
 
 local l = require('lexer')
@@ -11,13 +12,14 @@ local ws = token(l.WHITESPACE, l.space^1)
 
 -- Markup.
 local rule1 = token(l.STRING,
-	P('.') * (P('B') * P('R')^-1 + P('I') * P('PR')^-1) * l.nonnewline^0)
+                    P('.') * (P('B') * P('R')^-1 + P('I') * P('PR')^-1) *
+                    l.nonnewline^0)
 local rule2 = token(l.NUMBER, P('.') * S('ST') * P('H') * l.nonnewline^0)
 local rule3 = token(l.KEYWORD,
-	P('.br') + P('.DS') + P('.RS') + P('.RE') + P('.PD'))
+                    P('.br') + P('.DS') + P('.RS') + P('.RE') + P('.PD'))
 local rule4 = token(l.LABEL, P('.') * (S('ST') * P('H') + P('.TP')))
 local rule5 = token(l.VARIABLE,
-	P('.B') * P('R')^-1 + P('.I') * S('PR')^-1 + P('.PP'))
+                    P('.B') * P('R')^-1 + P('.I') * S('PR')^-1 + P('.PP'))
 local rule6 = token(l.TYPE, P('\\f') * S('BIPR'))
 local rule7 = token(l.PREPROCESSOR, l.starts_line('.') * l.alpha^1)
 

@@ -1,5 +1,5 @@
+-- Copyright 2015-2016 David B. Lamkins <david@lamkins.net>. See LICENSE.
 -- Faust LPeg lexer, see http://faust.grame.fr/
--- Author: David B. Lamkins <david@lamkins.net>
 
 local l = require('lexer')
 local token, word_match = l.token, l.word_match
@@ -27,10 +27,10 @@ local number = token(l.NUMBER, flt + int)
 
 -- Keywords.
 local keyword = token(l.KEYWORD, word_match{
-  'declare', 'import', 'mdoctags', 'dependencies', 'distributed',
-  'inputs', 'outputs', 'par', 'seq', 'sum', 'prod', 'xor', 'with',
-  'environment', 'library', 'component', 'ffunction', 'fvariable',
-  'fconstant', 'int', 'float', 'case', 'waveform', 'h:', 'v:', 't:'
+  'declare', 'import', 'mdoctags', 'dependencies', 'distributed', 'inputs',
+  'outputs', 'par', 'seq', 'sum', 'prod', 'xor', 'with', 'environment',
+  'library', 'component', 'ffunction', 'fvariable', 'fconstant', 'int', 'float',
+  'case', 'waveform', 'h:', 'v:', 't:'
 })
 
 -- Identifiers.

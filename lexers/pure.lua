@@ -1,5 +1,5 @@
+-- Copyright 2015-2016 David B. Lamkins <david@lamkins.net>. See LICENSE.
 -- pure LPeg lexer, see http://purelang.bitbucket.org/
--- Author: David B. Lamkins <david@lamkins.net>
 
 local l = require('lexer')
 local token, word_match = l.token, l.word_match
@@ -30,10 +30,10 @@ local number = token(l.NUMBER, flt + int)
 
 -- Keywords.
 local keyword = token(l.KEYWORD, word_match{
-  'namespace', 'with', 'end', 'using', 'interface', 'extern', 'let',
-  'const', 'def', 'type', 'public', 'private', 'nonfix', 'outfix',
-  'infix', 'infixl', 'infixr', 'prefix', 'postfix', 'if', 'otherwise',
-  'when', 'case', 'of', 'then', 'else'
+  'namespace', 'with', 'end', 'using', 'interface', 'extern', 'let', 'const',
+  'def', 'type', 'public', 'private', 'nonfix', 'outfix', 'infix', 'infixl',
+  'infixr', 'prefix', 'postfix', 'if', 'otherwise', 'when', 'case', 'of',
+  'then', 'else'
 })
 
 -- Identifiers.

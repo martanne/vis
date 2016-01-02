@@ -1,4 +1,4 @@
--- Copyright 2015 Alejandro Baez (https://twitter.com/a_baez). See LICENSE.
+-- Copyright 2015-2016 Alejandro Baez (https://twitter.com/a_baez). See LICENSE.
 -- TOML LPeg lexer.
 
 local l = require("lexer")

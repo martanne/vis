@@ -1,4 +1,4 @@
--- Copyright 2006-2015 Mitchell mitchell.att.foicica.com. See LICENSE.
+-- Copyright 2006-2016 Mitchell mitchell.att.foicica.com. See LICENSE.
 -- Rexx LPeg lexer.
 
 local l = require('lexer')
@@ -67,7 +67,7 @@ local func = token(l.FUNCTION, word_match({
 }, '2', true))
 
 -- Identifiers.
-local word = l.alpha * (l.alnum + S('@#$\\.!?_')^0)
+local word = l.alpha * (l.alnum + S('@#$\\.!?_'))^0
 local identifier = token(l.IDENTIFIER, word)
 
 -- Operators.

@@ -1,5 +1,5 @@
+-- Copyright 2015-2016 David B. Lamkins <david@lamkins.net>. See LICENSE.
 -- APL LPeg lexer.
--- Author: David B. Lamkins <david@lamkins.net>
 
 local l = require('lexer')
 local token, word_match = l.token, l.word_match
@@ -25,13 +25,13 @@ local rad = P('.')
 local exp = S('eE')
 local img = S('jJ')
 local sgn = P('¯')^-1
-local float = sgn * (dig^0 * rad * dig^1 + dig^1 * rad * dig^0 + dig^1)
-	* (exp * sgn *dig^1)^-1
+local float = sgn * (dig^0 * rad * dig^1 + dig^1 * rad * dig^0 + dig^1) *
+              (exp * sgn *dig^1)^-1
 local number = token(l.NUMBER, float * img * float + float)
 
 -- Keywords.
-local keyword = token(l.KEYWORD, P('⍞') + P('χ') + P('⍺') + P('⍶')
-	+ P('⍵') + P('⍹') + P('⎕') * R('AZ', 'az')^0)
+local keyword = token(l.KEYWORD, P('⍞') + P('χ') + P('⍺') + P('⍶') + P('⍵') +
+                                 P('⍹') + P('⎕') * R('AZ', 'az')^0)
 
 -- Names.
 local n1l = R('AZ', 'az')
