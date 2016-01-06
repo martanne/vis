@@ -1519,11 +1519,8 @@ static const char *insert_verbatim(Vis *vis, const char *keys, const Arg *arg) {
 		}
 	}
 
-	if (len > 0) {
-		size_t pos = view_cursor_get(vis_view(vis));
-		vis_insert(vis, pos, data, len);
-		view_cursor_to(vis_view(vis), pos + len);
-	}
+	if (len > 0)
+		vis_insert_key(vis, data, len);
 	return keys;
 }
 
