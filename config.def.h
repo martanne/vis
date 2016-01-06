@@ -308,6 +308,7 @@ static KeyBinding vis_mode_readline[] = {
 	{ "<C-d>",              ACTION(DELETE_CHAR_NEXT)                    },
 	{ "<C-w>",              ACTION(DELETE_WORD_PREV)                    },
 	{ "<C-u>",              ACTION(DELETE_LINE_BEGIN)                   },
+	{ "<C-v>",              ACTION(INSERT_VERBATIM)                     },
 	{ /* empty last element, array terminator */                        },
 };
 
@@ -328,7 +329,6 @@ static KeyBinding vis_mode_insert[] = {
 	{ "<C-j>",              ALIAS("<Enter>")                            },
 	{ "<C-m>",              ALIAS("<Enter>")                            },
 	{ "<C-o>",              ACTION(MODE_OPERATOR_PENDING)               },
-	{ "<C-v>",              ACTION(INSERT_VERBATIM)                     },
 	{ "<C-d>",              ALIAS("<Escape><<i")                        },
 	{ "<C-t>",              ALIAS("<Escape>>>i")                        },
 	{ "<C-x><C-e>",         ACTION(WINDOW_SLIDE_UP)                     },
