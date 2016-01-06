@@ -1432,7 +1432,8 @@ static const char *prompt_backspace(Vis *vis, const char *keys, const Arg *arg) 
 static const char *insert_verbatim(Vis *vis, const char *keys, const Arg *arg) {
 	Rune rune = 0;
 	char buf[4], type = keys[0];
-	int len = 0, count = 0, base;
+	const char *data = NULL;
+	int len = 0, count = 0, base = 0;
 	switch (type) {
 	case '\0':
 		return NULL;
@@ -1454,44 +1455,73 @@ static const char *insert_verbatim(Vis *vis, const char *keys, const Arg *arg) {
 		base = 16;
 		break;
 	default:
-		if (type < '0' || type > '9')
-			return keys;
-		rune = type - '0';
-		count = 2;
-		base = 10;
+		if ('0' <= type && type <= '9') {
+			rune = type - '0';
+			count = 2;
+			base = 10;
+		}
 		break;
 	}
 
-	for (keys++; keys[0] && count > 0; keys++, count--) {
-		int v = 0;
-		if (base == 8 && '0' <= keys[0] && keys[0] <= '7') {
-			v = keys[0] - '0';
-		} else if ((base == 10 || base == 16) && '0' <= keys[0] && keys[0] <= '9') {
-			v = keys[0] - '0';
-		} else if (base == 16 && 'a' <= keys[0] && keys[0] <= 'f') {
-			v = 10 + keys[0] - 'a';
-		} else if (base == 16 && 'A' <= keys[0] && keys[0] <= 'F') {
-			v = 10 + keys[0] - 'A';
-		} else {
-			count = 0;
-			break;
+	if (base) {
+		for (keys++; keys[0] && count > 0; keys++, count--) {
+			int v = 0;
+			if (base == 8 && '0' <= keys[0] && keys[0] <= '7') {
+				v = keys[0] - '0';
+			} else if ((base == 10 || base == 16) && '0' <= keys[0] && keys[0] <= '9') {
+				v = keys[0] - '0';
+			} else if (base == 16 && 'a' <= keys[0] && keys[0] <= 'f') {
+				v = 10 + keys[0] - 'a';
+			} else if (base == 16 && 'A' <= keys[0] && keys[0] <= 'F') {
+				v = 10 + keys[0] - 'A';
+			} else {
+				count = 0;
+				break;
+			}
+			rune = rune * base + v;
 		}
-		rune = rune * base + v;
-	}
 
-	if (count > 0)
-		return NULL;
+		if (count > 0)
+			return NULL;
+		if (type == 'u' || type == 'U') {
+			len = runetochar(buf, &rune);
+		} else {
+			buf[0] = rune;
+			len = 1;
+		}
 
-	if (type == 'u' || type == 'U') {
-		len = runetochar(buf, &rune);
+		data = buf;
 	} else {
-		buf[0] = rune;
-		len = 1;
+		const char *next = vis_keys_next(vis, keys);
+		if (!next)
+			return NULL;
+		size_t keylen = next - keys;
+		char key[keylen+1];
+		memcpy(key, keys, keylen);
+		key[keylen] = '\0';
+
+		static const char *keysym[] = {
+			"<Enter>", "\n",
+			"<Tab>", "\t",
+			"<Backspace>", "\b",
+			"<Escape>", "\x1b",
+			"<DEL>", "\x7f",
+			NULL,
+		};
+
+		for (const char **k = keysym; k[0]; k += 2) {
+			if (strcmp(k[0], key) == 0) {
+				data = k[1];
+				len = strlen(data);
+				keys = next;
+				break;
+			}
+		}
 	}
 
 	if (len > 0) {
 		size_t pos = view_cursor_get(vis_view(vis));
-		vis_insert(vis, pos, buf, len);
+		vis_insert(vis, pos, data, len);
 		view_cursor_to(vis_view(vis), pos + len);
 	}
 	return keys;
