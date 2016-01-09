@@ -9,10 +9,10 @@ CONFIG_SELINUX=0
 # Customize below to fit your system
 
 PREFIX ?= /usr/local
-MANPREFIX = ${PREFIX}/share/man
+MANPREFIX ?= ${PREFIX}/share/man
 SHAREPREFIX = ${PREFIX}/share/vis
 
-LIBS = -lm -ldl -lc
+LIBS ?= -lm -ldl -lc
 
 CFLAGS_TERMKEY = $(shell pkg-config --cflags termkey 2> /dev/null || echo "")
 LDFLAGS_TERMKEY = $(shell pkg-config --libs termkey 2> /dev/null || echo "-ltermkey")
@@ -21,8 +21,8 @@ CFLAGS_CURSES = $(shell pkg-config --cflags ncursesw 2> /dev/null || echo "-I/us
 LDFLAGS_CURSES = $(shell pkg-config --libs ncursesw 2> /dev/null || echo "-lncursesw")
 
 ifeq (${CONFIG_LUA},1)
-	CFLAGS_LUA = $(shell pkg-config --cflags lua5.2 2> /dev/null || echo "-I/usr/include/lua5.2")
-	LDFLAGS_LUA = $(shell pkg-config --libs lua5.2 2> /dev/null || echo "-llua")
+	CFLAGS_LUA ?= $(shell pkg-config --cflags lua5.2 2> /dev/null || echo "-I/usr/include/lua5.2")
+	LDFLAGS_LUA ?= $(shell pkg-config --libs lua5.2 2> /dev/null || echo "-llua")
 endif
 
 CFLAGS += -DCONFIG_LUA=${CONFIG_LUA}
