@@ -6,16 +6,16 @@ PATTERN="."
 
 while [ $# -gt 0 ]; do
 	case "$1" in
-		-h|--help)
+	-h|--help)
 		echo "usage: $(basename $0) [-h] [-p prompt] [file-pattern]"
 		exit 0;
 		;;
-		-p)
+	-p)
 		VIS_MENU_ARGS="$VIS_MENU_ARGS -p $2"
 		shift
 		shift
 		;;
-		*)
+	*)
 		PATTERN=$*
 		break
 		;;
