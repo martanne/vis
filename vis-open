@@ -7,7 +7,7 @@ PATTERN="."
 while [ $# -gt 0 ]; do
 	case "$1" in
 		-h|--help)
-		echo "usage: $0 [-h] [-p prompt] [file-pattern]"
+		echo "usage: $(basename $0) [-h] [-p prompt] [file-pattern]"
 		exit 0;
 		;;
 		-p)
@@ -26,7 +26,7 @@ if ! type "$VIS_MENU" >/dev/null 2>&1; then
 	if [ ! -z "$DISPLAY" ] && type "dmenu" >/dev/null 2>&1; then
 		VIS_MENU="dmenu"
 	else
-		echo "Neither slmenu nor dmenu found"
+		echo "Neither slmenu nor dmenu found" >&2
 		exit 1
 	fi
 fi
