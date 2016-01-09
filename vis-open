@@ -7,7 +7,7 @@ PATTERN="."
 while [ $# -gt 0 ]; do
 	case "$1" in
 		-h|--help)
-		echo "usage: $0 [-h] [-p prompt] [file-pattern]"
+		echo "usage: $(basename $0) [-h] [-p prompt] [file-pattern]"
 		exit 0;
 		;;
 		-p)
