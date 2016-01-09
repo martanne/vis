@@ -114,11 +114,11 @@ dependency/sources/configure-libmusl: dependency/sources/extract-libmusl
 	touch $@
 
 dependency/sources/build-libmusl: dependency/sources/configure-libmusl
-	make -C $(dir $<)/$(LIBMUSL)
+	$(MAKE) -C $(dir $<)/$(LIBMUSL)
 	touch $@
 
 dependency/sources/install-libmusl: dependency/sources/build-libmusl
-	make -C $(dir $<)/$(LIBMUSL) install
+	$(MAKE) -C $(dir $<)/$(LIBMUSL) install
 	touch $@
 
 dependency/sources/ncurses-%: | dependency/sources
@@ -135,11 +135,11 @@ dependency/sources/configure-libncurses: dependency/sources/extract-libncurses
 	touch $@
 
 dependency/sources/build-libncurses: dependency/sources/configure-libncurses
-	make -C $(dir $<)/$(LIBNCURSES)
+	$(MAKE) -C $(dir $<)/$(LIBNCURSES)
 	touch $@
 
 dependency/sources/install-libncurses: dependency/sources/build-libncurses
-	make -C $(dir $<)/$(LIBNCURSES) install.libs DESTDIR=$(DEPS_ROOT)
+	$(MAKE) -C $(dir $<)/$(LIBNCURSES) install.libs DESTDIR=$(DEPS_ROOT)
 	touch $@
 
 dependency/sources/libtermkey-%: | dependency/sources
@@ -154,11 +154,11 @@ dependency/sources/extract-libtermkey: dependency/sources/$(LIBTERMKEY).tar.gz
 dependency/sources/build-libtermkey: dependency/sources/extract-libtermkey
 	# TODO no sane way to avoid pkg-config and specify LDFLAGS?
 	sed -i 's/LDFLAGS+=-lncurses$$/LDFLAGS+=-lncursesw/g' $(dir $<)/$(LIBTERMKEY)/Makefile
-	make -C $(dir $<)/$(LIBTERMKEY) PREFIX=$(DEPS_PREFIX) termkey.h libtermkey.la
+	$(MAKE) -C $(dir $<)/$(LIBTERMKEY) PREFIX=$(DEPS_PREFIX) termkey.h libtermkey.la
 	touch $@
 
 dependency/sources/install-libtermkey: dependency/sources/build-libtermkey
-	make -C $(dir $<)/$(LIBTERMKEY) PREFIX=$(DEPS_PREFIX) install-inc install-lib
+	$(MAKE) -C $(dir $<)/$(LIBTERMKEY) PREFIX=$(DEPS_PREFIX) install-inc install-lib
 	touch $@
 
 dependency/sources/lua-%: | dependency/sources
@@ -176,12 +176,12 @@ dependency/sources/patch-liblua: dependency/sources/extract-liblua
 	touch $@
 
 dependency/sources/build-liblua: dependency/sources/patch-liblua dependency/sources/install-liblpeg
-	make -C $(dir $<)/$(LIBLUA)/src all CC=$(CC) MYCFLAGS="-DLUA_COMPAT_5_1 -DLUA_COMPAT_5_2 -DLUA_COMPAT_ALL -DLUA_USE_POSIX -DLUA_USE_DLOPEN -fPIC" MYLIBS="-Wl,-E -ldl -lncursesw -lm"
-	#make -C $(dir $<)/$(LIBLUA) posix CC=$(CC)
+	$(MAKE) -C $(dir $<)/$(LIBLUA)/src all CC=$(CC) MYCFLAGS="-DLUA_COMPAT_5_1 -DLUA_COMPAT_5_2 -DLUA_COMPAT_ALL -DLUA_USE_POSIX -DLUA_USE_DLOPEN -fPIC" MYLIBS="-Wl,-E -ldl -lncursesw -lm"
+	#$(MAKE) -C $(dir $<)/$(LIBLUA) posix CC=$(CC)
 	touch $@
 
 dependency/sources/install-liblua: dependency/sources/build-liblua
-	make -C $(dir $<)/$(LIBLUA) INSTALL_TOP=$(DEPS_PREFIX) install
+	$(MAKE) -C $(dir $<)/$(LIBLUA) INSTALL_TOP=$(DEPS_PREFIX) install
 	touch $@
 
 dependency/sources/lpeg-%: | dependency/sources
@@ -194,7 +194,7 @@ dependency/sources/extract-liblpeg: dependency/sources/$(LIBLPEG).tar.gz
 	touch $@
 
 dependency/sources/build-liblpeg: dependency/sources/extract-liblpeg
-	make -C $(dir $<)/$(LIBLPEG) LUADIR=../$(LIBLUA)/src CC=$(CC)
+	$(MAKE) -C $(dir $<)/$(LIBLPEG) LUADIR=../$(LIBLUA)/src CC=$(CC)
 	touch $@
 
 dependency/sources/install-liblpeg: dependency/sources/build-liblpeg dependency/sources/extract-liblua
@@ -206,7 +206,7 @@ dependencies: dependency/sources/install-libtermkey dependency/sources/install-l
 dependencies-full: dependency/sources/install-libncurses dependencies
 
 local: dependencies
-	CFLAGS="$(CFLAGS) -I$(DEPS_INC)" LDFLAGS="$(LDFLAGS) -L$(DEPS_LIB)" make CFLAGS_LUA= CFLAGS_TERMKEY= LDFLAGS_LUA=-llua LDFLAGS_TERMKEY=-ltermkey
+	CFLAGS="$(CFLAGS) -I$(DEPS_INC)" LDFLAGS="$(LDFLAGS) -L$(DEPS_LIB)" $(MAKE) CFLAGS_LUA= CFLAGS_TERMKEY= LDFLAGS_LUA=-llua LDFLAGS_TERMKEY=-ltermkey
 	@echo Run with: LD_LIBRARY_PATH=$(DEPS_LIB) VIS_PATH=. ./vis
 
 standalone: dependency/sources/install-libmusl
