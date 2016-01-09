@@ -1,6 +1,6 @@
-config.h
+/config.h
 *.swo
 *.swp
 *.o
-./vis
-dependency
+/vis
+/dependency
