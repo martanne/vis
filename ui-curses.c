@@ -988,12 +988,7 @@ static char *ui_prompt_input(Ui *ui) {
 	if (!uic->prompt_win)
 		return NULL;
 	Text *text = vis_file_text(uic->prompt_win->file);
-	char *buf = malloc(text_size(text) + 1);
-	if (!buf)
-		return NULL;
-	size_t len = text_bytes_get(text, 0, text_size(text), buf);
-	buf[len] = '\0';
-	return buf;
+	return text_bytes_alloc0(text, 0, text_size(text));
 }
 
 static void ui_prompt_hide(Ui *ui) {

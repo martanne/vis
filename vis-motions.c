@@ -10,13 +10,7 @@ static char *get_word_at(Text *txt, size_t pos) {
 	Filerange word = text_object_word(txt, pos);
 	if (!text_range_valid(&word))
 		return NULL;
-	size_t len = word.end - word.start;
-	char *buf = malloc(len+1);
-	if (!buf)
-		return NULL;
-	len = text_bytes_get(txt, word.start, len, buf);
-	buf[len] = '\0';
-	return buf;
+	return text_bytes_alloc0(txt, word.start, word.end - word.start);
 }
 
 /** motion implementations */

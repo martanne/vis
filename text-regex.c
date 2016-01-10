@@ -32,11 +32,9 @@ void text_regex_free(Regex *r) {
 }
 
 int text_search_range_forward(Text *txt, size_t pos, size_t len, Regex *r, size_t nmatch, RegexMatch pmatch[], int eflags) {
-	char *buf = malloc(len + 1);
+	char *buf = text_bytes_alloc0(txt, pos, len);
 	if (!buf)
 		return REG_NOMATCH;
-	len = text_bytes_get(txt, pos, len, buf);
-	buf[len] = '\0';
 	regmatch_t match[nmatch];
 	int ret = regexec(&r->regex, buf, nmatch, match, eflags);
 	if (!ret) {
@@ -50,11 +48,9 @@ int text_search_range_forward(Text *txt, size_t pos, size_t len, Regex *r, size_
 }
 
 int text_search_range_backward(Text *txt, size_t pos, size_t len, Regex *r, size_t nmatch, RegexMatch pmatch[], int eflags) {
-	char *buf = malloc(len + 1);
+	char *buf = text_bytes_alloc0(txt, pos, len);
 	if (!buf)
 		return REG_NOMATCH;
-	len = text_bytes_get(txt, pos, len, buf);
-	buf[len] = '\0';
 	regmatch_t match[nmatch];
 	char *cur = buf;
 	int ret = REG_NOMATCH;
