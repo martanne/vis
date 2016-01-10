@@ -21,6 +21,7 @@
 #include <fcntl.h>
 #include <errno.h>
 #include <wchar.h>
+#include <stdint.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/mman.h>
@@ -1439,6 +1440,17 @@ size_t text_bytes_get(Text *txt, size_t pos, size_t len, char *buf) {
 		rem -= piece_len;
 	}
 	return len - rem;
+}
+
+char *text_bytes_alloc0(Text *txt, size_t pos, size_t len) {
+	if (len == SIZE_MAX)
+		return NULL;
+	char *buf = malloc(len+1);
+	if (!buf)
+		return NULL;
+	len = text_bytes_get(txt, pos, len, buf);
+	buf[len] = '\0';
+	return buf;
 }
 
 size_t text_size(Text *txt) {

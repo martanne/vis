@@ -72,6 +72,9 @@ bool text_byte_get(Text*, size_t pos, char *buf);
  * indicates how many bytes were copied into `buf'. WARNING buf will not be
  * NUL terminated. */
 size_t text_bytes_get(Text*, size_t pos, size_t len, char *buf);
+/* allocate a NUL terminated buffer and fill at most `len' bytes
+ * starting at `pos'. Freeing is the caller's responsibility! */
+char *text_bytes_alloc0(Text*, size_t pos, size_t len);
 
 Iterator text_iterator_get(Text*, size_t pos);
 bool text_iterator_valid(const Iterator*);
