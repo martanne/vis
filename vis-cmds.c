@@ -76,6 +76,9 @@ static bool cmd_filter(Vis*, Filerange*, enum CmdOpt, const char *argv[]);
 static bool cmd_earlier_later(Vis*, Filerange*, enum CmdOpt, const char *argv[]);
 /* dump current key bindings */
 static bool cmd_help(Vis*, Filerange*, enum CmdOpt, const char *argv[]);
+/* change runtime key bindings */
+static bool cmd_map(Vis*, Filerange*, enum CmdOpt, const char *argv[]);
+static bool cmd_unmap(Vis*, Filerange*, enum CmdOpt, const char *argv[]);
 
 /* command recognized at the ':'-prompt. commands are found using a unique
  * prefix match. that is if a command should be available under an abbreviation
@@ -86,6 +89,8 @@ static Command cmds[] = {
 	{ { "bdelete"                  }, cmd_bdelete,    CMD_OPT_FORCE },
 	{ { "edit"                     }, cmd_edit,       CMD_OPT_FORCE },
 	{ { "help"                     }, cmd_help,       CMD_OPT_NONE  },
+	{ { "map",                     }, cmd_map,        CMD_OPT_FORCE|CMD_OPT_ARGS },
+	{ { "unmap",                   }, cmd_unmap,      CMD_OPT_ARGS  },
 	{ { "new"                      }, cmd_new,        CMD_OPT_NONE  },
 	{ { "open"                     }, cmd_open,       CMD_OPT_NONE  },
 	{ { "qall"                     }, cmd_qall,       CMD_OPT_FORCE },
@@ -896,6 +901,78 @@ static bool cmd_help(Vis *vis, Filerange *range, enum CmdOpt opt, const char *ar
 
 	text_save(txt, NULL);
 	return true;
+}
+
+static enum VisMode getmode(const char *mode) {
+	const char *modes[] = {
+		[VIS_MODE_NORMAL] = "normal",
+		[VIS_MODE_OPERATOR_PENDING] = "operator-pending",
+		[VIS_MODE_VISUAL] = "visual",
+		[VIS_MODE_VISUAL_LINE] = "visual-line",
+		[VIS_MODE_INSERT] = "insert",
+		[VIS_MODE_REPLACE] = "replace",
+	};
+
+	for (size_t i = 0; i < LENGTH(modes); i++) {
+		if (mode && modes[i] && strcmp(mode, modes[i]) == 0)
+			return i;
+	}
+	return VIS_MODE_LAST;
+}
+
+static bool cmd_map(Vis *vis, Filerange *range, enum CmdOpt opt, const char *argv[]) {
+	enum VisMode mode = getmode(argv[1]);
+	const char *lhs = argv[2];
+	const char *rhs = argv[3];
+	if (mode == VIS_MODE_LAST || !lhs || !rhs) {
+		vis_info_show(vis, "usage: map mode lhs rhs\n");
+		return false;
+	}
+
+	KeyBinding *binding = calloc(1, sizeof *binding);
+	if (!binding)
+		return false;
+	if (rhs[0] == '<') {
+		const char *next = vis_keys_next(vis, rhs);
+		if (next && next[-1] == '>') {
+			const char *start = rhs + 1;
+			const char *end = next - 1;
+			char key[64];
+			if (end > start && end - start - 1 < (ptrdiff_t)sizeof key) {
+				memcpy(key, start, end - start);
+				key[end - start] = '\0';
+				binding->action = map_get(vis->actions, key);
+			}
+		}
+	}
+
+	if (!binding->action) {
+		binding->alias = strdup(rhs);
+		if (!binding->alias) {
+			free(binding);
+			return false;
+		}
+	}
+
+	bool mapped = vis_mode_map(vis, mode, lhs, binding);
+	if (!mapped && opt & CMD_OPT_FORCE) {
+		mapped = vis_mode_unmap(vis, mode, lhs) &&
+		         vis_mode_map(vis, mode, lhs, binding);
+	}
+
+	if (!mapped)
+		free(binding);
+	return mapped;
+}
+
+static bool cmd_unmap(Vis *vis, Filerange *range, enum CmdOpt opt, const char *argv[]) {
+	enum VisMode mode = getmode(argv[1]);
+	const char *lhs = argv[2];
+	if (mode == VIS_MODE_LAST || !lhs) {
+		vis_info_show(vis, "usage: unmap mode lhs rhs\n");
+		return false;
+	}
+	return vis_mode_unmap(vis, mode, lhs);
 }
 
 static Filepos parse_pos(Win *win, char **cmd) {
