@@ -20,25 +20,9 @@ void mode_set(Vis *vis, Mode *new_mode) {
 	vis->win->ui->draw_status(vis->win->ui);
 }
 
-static bool mode_map(Mode *mode, const char *key, KeyBinding *binding) {
-	return map_put(mode->bindings, key, binding);
-}
-
-bool vis_mode_map(Vis *vis, enum VisMode modeid, const char *key, KeyBinding *binding) {
+bool vis_mode_map(Vis *vis, enum VisMode modeid, const char *key, const KeyBinding *binding) {
 	Mode *mode = mode_get(vis, modeid);
-	return mode && mode_map(mode, key, binding);
-}
-
-bool vis_mode_bindings(Vis *vis, enum VisMode modeid, KeyBinding **bindings) {
-	Mode *mode = mode_get(vis, modeid);
-	if (!mode)
-		return false;
-	bool success = true;
-	for (KeyBinding *kb = *bindings; kb->key; kb++) {
-		if (!mode_map(mode, kb->key, kb))
-			success = false;
-	}
-	return success;
+	return mode && map_put(mode->bindings, key, binding);
 }
 
 bool vis_mode_unmap(Vis *vis, enum VisMode modeid, const char *key) {
@@ -47,14 +31,6 @@ bool vis_mode_unmap(Vis *vis, enum VisMode modeid, const char *key) {
 }
 
 /** mode switching event handlers */
-
-static void vis_mode_operator_enter(Vis *vis, Mode *old) {
-	vis_modes[VIS_MODE_OPERATOR].parent = &vis_modes[VIS_MODE_OPERATOR_OPTION];
-}
-
-static void vis_mode_operator_leave(Vis *vis, Mode *new) {
-	vis_modes[VIS_MODE_OPERATOR].parent = &vis_modes[VIS_MODE_MOVE];
-}
 
 static void vis_mode_operator_input(Vis *vis, const char *str, size_t len) {
 	/* invalid operator */
@@ -68,7 +44,6 @@ static void vis_mode_visual_enter(Vis *vis, Mode *old) {
 			for (Cursor *c = view_cursors(vis->win->view); c; c = view_cursors_next(c))
 				view_cursors_selection_start(c);
 		}
-		vis_modes[VIS_MODE_OPERATOR].parent = &vis_modes[VIS_MODE_TEXTOBJ];
 	}
 }
 
@@ -78,14 +53,12 @@ static void vis_mode_visual_line_enter(Vis *vis, Mode *old) {
 			for (Cursor *c = view_cursors(vis->win->view); c; c = view_cursors_next(c))
 				view_cursors_selection_start(c);
 		}
-		vis_modes[VIS_MODE_OPERATOR].parent = &vis_modes[VIS_MODE_TEXTOBJ];
 	}
 	vis_motion(vis, VIS_MOVE_LINE_END);
 }
 
 static void vis_mode_visual_line_leave(Vis *vis, Mode *new) {
 	if (!new->visual) {
-		vis_modes[VIS_MODE_OPERATOR].parent = &vis_modes[VIS_MODE_MOVE];
 		File *file = vis->win->file;
 		Filerange sel = view_cursors_selection_get(view_cursors(vis->win->view));
 		file->marks[VIS_MARK_SELECTION_START] = text_mark_set(file->text, sel.start);
@@ -99,7 +72,6 @@ static void vis_mode_visual_line_leave(Vis *vis, Mode *new) {
 
 static void vis_mode_visual_leave(Vis *vis, Mode *new) {
 	if (!new->visual) {
-		vis_modes[VIS_MODE_OPERATOR].parent = &vis_modes[VIS_MODE_MOVE];
 		File *file = vis->win->file;
 		Filerange sel = view_cursors_selection_get(view_cursors(vis->win->view));
 		file->marks[VIS_MARK_SELECTION_START] = text_mark_set(file->text, sel.start);
@@ -178,44 +150,24 @@ static void vis_mode_replace_input(Vis *vis, const char *str, size_t len) {
 	vis_replace_key(vis, str, len);
 }
 
-/** definition of mode tree structure */
 Mode vis_modes[] = {
-	[VIS_MODE_BASIC] = {
-		.name = "BASIC",
-		.parent = NULL,
-	},
-	[VIS_MODE_MOVE] = {
-		.name = "MOVE",
-		.parent = &vis_modes[VIS_MODE_BASIC],
-	},
-	[VIS_MODE_TEXTOBJ] = {
-		.name = "TEXT-OBJECTS",
-		.parent = &vis_modes[VIS_MODE_MOVE],
-	},
-	[VIS_MODE_OPERATOR_OPTION] = {
-		.name = "OPERATOR-OPTION",
-		.parent = &vis_modes[VIS_MODE_TEXTOBJ],
-	},
-	[VIS_MODE_OPERATOR] = {
-		.name = "OPERATOR",
-		.parent = &vis_modes[VIS_MODE_MOVE],
-		.enter = vis_mode_operator_enter,
-		.leave = vis_mode_operator_leave,
+	[VIS_MODE_OPERATOR_PENDING] = {
+		.name = "OPERATOR-PENDING",
 		.input = vis_mode_operator_input,
+		.help = "",
+		.isuser = false,
 	},
 	[VIS_MODE_NORMAL] = {
 		.name = "NORMAL",
 		.status = "",
 		.help = "",
 		.isuser = true,
-		.parent = &vis_modes[VIS_MODE_OPERATOR],
 	},
 	[VIS_MODE_VISUAL] = {
 		.name = "VISUAL",
 		.status = "--VISUAL--",
 		.help = "",
 		.isuser = true,
-		.parent = &vis_modes[VIS_MODE_OPERATOR],
 		.enter = vis_mode_visual_enter,
 		.leave = vis_mode_visual_leave,
 		.visual = true,
@@ -225,20 +177,14 @@ Mode vis_modes[] = {
 		.status = "--VISUAL LINE--",
 		.help = "",
 		.isuser = true,
-		.parent = &vis_modes[VIS_MODE_VISUAL],
 		.enter = vis_mode_visual_line_enter,
 		.leave = vis_mode_visual_line_leave,
 		.visual = true,
-	},
-	[VIS_MODE_READLINE] = {
-		.name = "READLINE",
-		.parent = &vis_modes[VIS_MODE_BASIC],
 	},
 	[VIS_MODE_PROMPT] = {
 		.name = "PROMPT",
 		.help = "",
 		.isuser = true,
-		.parent = &vis_modes[VIS_MODE_READLINE],
 		.input = vis_mode_prompt_input,
 		.enter = vis_mode_prompt_enter,
 		.leave = vis_mode_prompt_leave,
@@ -248,7 +194,6 @@ Mode vis_modes[] = {
 		.status = "--INSERT--",
 		.help = "",
 		.isuser = true,
-		.parent = &vis_modes[VIS_MODE_READLINE],
 		.enter = vis_mode_insert_enter,
 		.leave = vis_mode_insert_leave,
 		.input = vis_mode_insert_input,
@@ -260,7 +205,6 @@ Mode vis_modes[] = {
 		.status = "--REPLACE--",
 		.help = "",
 		.isuser = true,
-		.parent = &vis_modes[VIS_MODE_INSERT],
 		.enter = vis_mode_replace_enter,
 		.leave = vis_mode_replace_leave,
 		.input = vis_mode_replace_input,

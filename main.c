@@ -527,7 +527,7 @@ static KeyAction vis_action[] = {
 	[VIS_ACTION_MODE_OPERATOR_PENDING] = {
 		"vis-mode-operator-pending",
 		"Enter to operator pending mode",
-		switchmode, { .i = VIS_MODE_OPERATOR }
+		switchmode, { .i = VIS_MODE_OPERATOR_PENDING }
 	},
 	[VIS_ACTION_DELETE_CHAR_PREV] = {
 		"delete-char-prev",
@@ -1627,21 +1627,6 @@ static const char *unicode_info(Vis *vis, const char *keys, const Arg *arg) {
 
 static Vis *vis;
 
-static KeyBinding *default_bindings[] = {
-	[VIS_MODE_BASIC] = basic_movement,
-	[VIS_MODE_MOVE] = vis_movements,
-	[VIS_MODE_TEXTOBJ] = vis_textobjs,
-	[VIS_MODE_OPERATOR_OPTION] = vis_operator_options,
-	[VIS_MODE_OPERATOR] = vis_operators,
-	[VIS_MODE_NORMAL] = vis_mode_normal,
-	[VIS_MODE_VISUAL] = vis_mode_visual,
-	[VIS_MODE_VISUAL_LINE] = vis_mode_visual_line,
-	[VIS_MODE_READLINE] = vis_mode_readline,
-	[VIS_MODE_PROMPT] = vis_mode_prompt,
-	[VIS_MODE_INSERT] = vis_mode_insert,
-	[VIS_MODE_REPLACE]  = vis_mode_replace,
-};
-
 static void signal_handler(int signum, siginfo_t *siginfo, void *context) {
 	vis_signal_handler(vis, signum, siginfo, context);
 }
@@ -1669,8 +1654,11 @@ int main(int argc, char *argv[]) {
 	}
 
 	for (int i = 0; i < LENGTH(default_bindings); i++) {
-		if (!vis_mode_bindings(vis, i, &default_bindings[i]))
-			vis_die(vis, "Could not load default bindings\n");
+		for (const KeyBinding **binding = default_bindings[i]; binding && *binding; binding++) {
+			for (const KeyBinding *kb = *binding; kb->key; kb++) {
+				vis_mode_map(vis, i, kb->key, kb);
+			}
+		}
 	}
 
 	/* install signal handlers etc. */

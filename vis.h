@@ -120,15 +120,10 @@ void vis_die(Vis*, const char *msg, ...) __attribute__((noreturn));
 /* user facing modes are: NORMAL, VISUAL, VISUAL_LINE, INSERT, REPLACE.
  * the others should be considered as implementation details (TODO: do not expose them?) */
 enum VisMode {
-	VIS_MODE_BASIC,
-	VIS_MODE_MOVE,
-	VIS_MODE_OPERATOR,
-	VIS_MODE_OPERATOR_OPTION,
 	VIS_MODE_NORMAL,
-	VIS_MODE_TEXTOBJ,
+	VIS_MODE_OPERATOR_PENDING,
 	VIS_MODE_VISUAL,
 	VIS_MODE_VISUAL_LINE,
-	VIS_MODE_READLINE,
 	VIS_MODE_PROMPT,
 	VIS_MODE_INSERT,
 	VIS_MODE_REPLACE,
@@ -138,12 +133,9 @@ enum VisMode {
 void vis_mode_switch(Vis*, enum VisMode);
 /* in the specified mode: map a given key to a binding (binding->key is ignored),
  * fails if key is already mapped */
-bool vis_mode_map(Vis*, enum VisMode, const char *key, KeyBinding*);
+bool vis_mode_map(Vis*, enum VisMode, const char *key, const KeyBinding*);
 /* in the specified mode: unmap a given key, fails if the key is not currently mapped */
 bool vis_mode_unmap(Vis*, enum VisMode, const char *key);
-/* map a NULL-terminated array of key bindings, return value indicates whether *all*
- * bindings were succesfully performed */
-bool vis_mode_bindings(Vis*, enum VisMode, KeyBinding **bindings);
 /* get the current mode's status line indicator */
 const char *vis_mode_status(Vis*);
 /* associates the special pseudo key <keyaction->name> with the given key action.

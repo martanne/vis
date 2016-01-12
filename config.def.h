@@ -1,46 +1,9 @@
-/* Configure your desired default key bindings.
- *
- * Vis stores modes in a tree structure. Key lookup starts in the currently active
- * mode and continues recursively towards the root of the tree until a match is found.
- * This reduces duplication since shared key bindings can be stored in a common
- * ancestor mode.
- *
- * The tree of modes is depicted below. The double line between OPERATOR-OPTION
- * and OPERATOR is only in effect once an operator is detected. That is when
- * entering the OPERATOR mode its parent is set to OPERATOR-OPTION which makes
- * TEXTOBJ reachable. Once the operator is processed (i.e. OPERATOR mode is left)
- * its parent mode is reset back to MOVE.
- *
- * Similarly the +-ed line between OPERATOR and TEXTOBJ is only active within
- * the visual modes.
- *
- *                                         BASIC
- *                                    (arrow keys etc.)
- *                                    /      |
- *               /-------------------/       |
- *            READLINE                      MOVE
- *            /       \                 (h,j,k,l ...)
- *           /         \                     |       \-----------------\
- *          /           \                    |                         |
- *       INSERT       PROMPT             OPERATOR ++++              -TEXTOBJ
- *          |      (history etc)       (d,c,y,p ..)   +      (ia [wsp[]()b<>{}B"'`] )
- *          |                                |     \\  +      +        |
- *          |                                |      \\  +    +         |
- *       REPLACE                           NORMAL    \\  +  +          |
- *                                           |        \\  ++           |
- *                                           |         \\              |
- *                                           |          \\             |
- *                                         VISUAL        \\     OPERATOR-OPTION
- *                                           |            \\        (v,V)
- *                                           |             \\        //
- *                                           |              \\======//
- *                                      VISUAL-LINE
- */
+/* Configure your desired default key bindings. */
 
 #define ALIAS(name) .alias = name,
 #define ACTION(id) .action = &vis_action[VIS_ACTION_##id],
 
-static KeyBinding basic_movement[] = {
+static const KeyBinding bindings_basic[] = {
 	{ "<C-z>",              ACTION(EDITOR_SUSPEND)                      },
 	{ "<Left>",             ACTION(CURSOR_CHAR_PREV)                    },
 	{ "<S-Left>",           ACTION(CURSOR_LONGWORD_START_PREV)          },
@@ -57,7 +20,7 @@ static KeyBinding basic_movement[] = {
 	{ 0 /* empty last element, array terminator */                      },
 };
 
-static KeyBinding vis_movements[] = {
+static const KeyBinding bindings_motions[] = {
 	{ "h",                  ACTION(CURSOR_CHAR_PREV)                    },
 	{ "<Backspace>",        ALIAS("h")                                  },
 	{ "<C-h>",              ALIAS("<Backspace>")                        },
@@ -119,7 +82,7 @@ static KeyBinding vis_movements[] = {
 	{ 0 /* empty last element, array terminator */                      },
 };
 
-static KeyBinding vis_textobjs[] = {
+static const KeyBinding bindings_textobjects[] = {
 	{ "aw",                 ACTION(TEXT_OBJECT_WORD_OUTER)              },
 	{ "aW",                 ACTION(TEXT_OBJECT_LONGWORD_OUTER)          },
 	{ "as",                 ACTION(TEXT_OBJECT_SENTENCE)                },
@@ -163,7 +126,7 @@ static KeyBinding vis_textobjs[] = {
 	{ 0 /* empty last element, array terminator */                      },
 };
 
-static KeyBinding vis_operators[] = {
+static const KeyBinding bindings_operators[] = {
 	{ "0",                  ACTION(COUNT)                               },
 	{ "1",                  ACTION(COUNT)                               },
 	{ "2",                  ACTION(COUNT)                               },
@@ -177,10 +140,6 @@ static KeyBinding vis_operators[] = {
 	{ "d",                  ACTION(OPERATOR_DELETE)                     },
 	{ "c",                  ACTION(OPERATOR_CHANGE)                     },
 	{ "y",                  ACTION(OPERATOR_YANK)                       },
-	{ "p",                  ACTION(PUT_AFTER)                           },
-	{ "P",                  ACTION(PUT_BEFORE)                          },
-	{ "gp",                 ACTION(PUT_AFTER_END)                       },
-	{ "gP",                 ACTION(PUT_BEFORE_END)                      },
 	{ ">",                  ACTION(OPERATOR_SHIFT_RIGHT)                },
 	{ "<",                  ACTION(OPERATOR_SHIFT_LEFT)                 },
 	{ "gU",                 ACTION(OPERATOR_CASE_UPPER)                 },
@@ -193,13 +152,13 @@ static KeyBinding vis_operators[] = {
 	{ 0 /* empty last element, array terminator */                      },
 };
 
-static KeyBinding vis_operator_options[] = {
+static const KeyBinding bindings_operator_options[] = {
 	{ "v",                  ACTION(MOTION_CHARWISE)                     },
 	{ "V",                  ACTION(MOTION_LINEWISE)                     },
 	{ 0 /* empty last element, array terminator */                      },
 };
 
-static KeyBinding vis_mode_normal[] = {
+static const KeyBinding bindings_normal[] = {
 	{ "<Escape>",           ACTION(CURSORS_REMOVE_ALL)                  },
 	{ "<Delete>",           ALIAS("x")                                  },
 	{ "<C-k>",              ACTION(CURSORS_NEW_LINE_ABOVE)              },
@@ -268,10 +227,14 @@ static KeyBinding vis_mode_normal[] = {
 	{ "m",                  ACTION(MARK_SET)                            },
 	{ "<F1>",               ALIAS(":help<Enter>")                       },
 	{ "ga",                 ACTION(UNICODE_INFO)                        },
+	{ "p",                  ACTION(PUT_AFTER)                           },
+	{ "P",                  ACTION(PUT_BEFORE)                          },
+	{ "gp",                 ACTION(PUT_AFTER_END)                       },
+	{ "gP",                 ACTION(PUT_BEFORE_END)                      },
 	{ 0 /* empty last element, array terminator */                      },
 };
 
-static KeyBinding vis_mode_visual[] = {
+static const KeyBinding bindings_visual[] = {
 	{ "<C-n>",              ACTION(CURSORS_NEW_MATCH_NEXT)              },
 	{ "<C-x>",              ACTION(CURSORS_NEW_MATCH_SKIP)              },
 	{ "<C-p>",              ACTION(CURSORS_REMOVE_LAST)                 },
@@ -293,13 +256,13 @@ static KeyBinding vis_mode_visual[] = {
 	{ 0 /* empty last element, array terminator */                      },
 };
 
-static KeyBinding vis_mode_visual_line[] = {
+static const KeyBinding bindings_visual_line[] = {
 	{ "v",                  ACTION(MODE_VISUAL)                         },
 	{ "V",                  ACTION(MODE_NORMAL)                         },
 	{ 0 /* empty last element, array terminator */                      },
 };
 
-static KeyBinding vis_mode_readline[] = {
+static const KeyBinding bindings_readline[] = {
 	{ "<Backspace>",        ACTION(DELETE_CHAR_PREV)                    },
 	{ "<C-h>",              ALIAS("<Backspace>")                        },
 	{ "<Delete>",           ACTION(DELETE_CHAR_NEXT)                    },
@@ -312,7 +275,7 @@ static KeyBinding vis_mode_readline[] = {
 	{ 0 /* empty last element, array terminator */                      },
 };
 
-static KeyBinding vis_mode_prompt[] = {
+static const KeyBinding bindings_prompt[] = {
 	{ "<Backspace>",        ACTION(PROMPT_BACKSPACE)                    },
 	{ "<C-h>",              ALIAS("<Backspace>")                        },
 	{ "<Enter>",            ACTION(PROMPT_ENTER)                        },
@@ -321,7 +284,7 @@ static KeyBinding vis_mode_prompt[] = {
 	{ 0 /* empty last element, array terminator */                      },
 };
 
-static KeyBinding vis_mode_insert[] = {
+static const KeyBinding bindings_insert[] = {
 	{ "<Escape>",           ACTION(MODE_NORMAL)                         },
 	{ "<C-c>",              ALIAS("<Escape>")                           },
 	{ "<C-i>",              ALIAS("<Tab>")                              },
@@ -338,6 +301,62 @@ static KeyBinding vis_mode_insert[] = {
 	{ 0 /* empty last element, array terminator */                      },
 };
 
-static KeyBinding vis_mode_replace[] = {
+static const KeyBinding bindings_replace[] = {
 	{ 0 /* empty last element, array terminator */                      },
+};
+
+/* For each mode we list a all key bindings, if a key is bound in more than
+ * one array the first definition is used and further ones are ignored. */
+static const KeyBinding **default_bindings[] = {
+	[VIS_MODE_OPERATOR_PENDING] = (const KeyBinding*[]){
+		bindings_operator_options,
+		bindings_operators,
+		bindings_textobjects,
+		bindings_motions,
+		bindings_basic,
+		NULL,
+	},
+	[VIS_MODE_NORMAL] = (const KeyBinding*[]){
+		bindings_normal,
+		bindings_operators,
+		bindings_motions,
+		bindings_basic,
+		NULL,
+	},
+	[VIS_MODE_VISUAL] = (const KeyBinding*[]){
+		bindings_visual,
+		bindings_textobjects,
+		bindings_operators,
+		bindings_motions,
+		bindings_basic,
+		NULL,
+	},
+	[VIS_MODE_VISUAL_LINE] = (const KeyBinding*[]){
+		bindings_visual_line,
+		bindings_visual,
+		bindings_textobjects,
+		bindings_operators,
+		bindings_motions,
+		bindings_basic,
+		NULL,
+	},
+	[VIS_MODE_INSERT] = (const KeyBinding*[]){
+		bindings_insert,
+		bindings_readline,
+		bindings_basic,
+		NULL,
+	},
+	[VIS_MODE_REPLACE] = (const KeyBinding*[]){
+		bindings_replace,
+		bindings_insert,
+		bindings_readline,
+		bindings_basic,
+		NULL,
+	},
+	[VIS_MODE_PROMPT] = (const KeyBinding*[]){
+		bindings_prompt,
+		bindings_readline,
+		bindings_basic,
+		NULL,
+	},
 };

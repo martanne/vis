@@ -604,7 +604,7 @@ static void action_do(Vis *vis, Action *a) {
 			} else {
 				vis_prompt_show(vis, ":", "'<,'>!");
 			}
-		} else if (vis->mode == &vis_modes[VIS_MODE_OPERATOR]) {
+		} else if (vis->mode == &vis_modes[VIS_MODE_OPERATOR_PENDING]) {
 			mode_set(vis, vis->mode_prev);
 		} else if (vis->mode->visual) {
 			vis_mode_switch(vis, VIS_MODE_NORMAL);
@@ -966,7 +966,7 @@ bool vis_operator(Vis *vis, enum VisOperator id, ...) {
 
 	/* switch to operator mode inorder to make operator options and
 	 * text-object available */
-	vis_mode_switch(vis, VIS_MODE_OPERATOR);
+	vis_mode_switch(vis, VIS_MODE_OPERATOR_PENDING);
 	if (vis->action.op == op) {
 		/* hacky way to handle double operators i.e. things like
 		 * dd, yy etc where the second char isn't a movement */

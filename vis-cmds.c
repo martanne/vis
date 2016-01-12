@@ -864,9 +864,9 @@ bool print_keybinding(const char *key, void *value, void *data) {
 	return text_appendf(txt, "  %-15s\t%s\n", key, desc ? desc : "");
 }
 
-static void print_mode(Mode *mode, Text *txt, bool recursive) {
-	if (recursive && mode->parent)
-		print_mode(mode->parent, txt, recursive);
+static void print_mode(Mode *mode, Text *txt) {
+	if (!map_empty(mode->bindings))
+		text_appendf(txt, "\n %s\n\n", mode->name);
 	map_iterate(mode->bindings, print_keybinding, txt);
 }
 
@@ -885,20 +885,10 @@ static bool cmd_help(Vis *vis, Filerange *range, enum CmdOpt opt, const char *ar
 			text_appendf(txt, "  %-15s\t%s\n", mode->name, mode->help);
 	}
 
-	for (int i = 0; i < LENGTH(vis_modes); i++) {
-		Mode *mode = &vis_modes[i];
-		if (mode->isuser && !map_empty(mode->bindings)) {
-			text_appendf(txt, "\n %s\n\n", mode->name);
-			print_mode(mode, txt, i == VIS_MODE_NORMAL ||
-				i == VIS_MODE_INSERT);
-		}
-	}
-
-	text_appendf(txt, "\n Text objects\n\n");
-	print_mode(&vis_modes[VIS_MODE_TEXTOBJ], txt, false);
-
-	text_appendf(txt, "\n Motions\n\n");
-	print_mode(&vis_modes[VIS_MODE_MOVE], txt, false);
+	print_mode(&vis_modes[VIS_MODE_NORMAL], txt);
+	print_mode(&vis_modes[VIS_MODE_OPERATOR_PENDING], txt);
+	print_mode(&vis_modes[VIS_MODE_VISUAL], txt);
+	print_mode(&vis_modes[VIS_MODE_INSERT], txt);
 
 	text_appendf(txt, "\n :-Commands\n\n");
 	for (Command *cmd = cmds; cmd && cmd->name[0]; cmd++)
