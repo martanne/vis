@@ -194,7 +194,7 @@ void *map_delete(Map *map, const char *key)
 	/* Did we find it? */
 	if (strcmp(key, n->u.s)) {
 		errno = ENOENT;
-		return false;
+		return NULL;
 	}
 
 	free((char*)n->u.s);
