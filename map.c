@@ -284,6 +284,28 @@ void map_clear(Map *map)
 	map->v = NULL;
 }
 
+static bool copy(Map *dest, Map n)
+{
+	if (!n.v) {
+		return copy(dest, n.u.n->child[0]) &&
+		       copy(dest, n.u.n->child[1]);
+	} else {
+		if (!map_put(dest, n.u.s, n.v) && map_get(dest, n.u.s) != n.v) {
+			map_delete(dest, n.u.s);
+			return map_put(dest, n.u.s, n.v);
+		}
+		return true;
+	}
+}
+
+bool map_copy(Map *dest, Map *src)
+{
+	if (!src || !src->u.n)
+		return true;
+
+	return copy(dest, *src);
+}
+
 bool map_empty(const Map *map)
 {
 	return map->u.n == NULL;

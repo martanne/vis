@@ -21,6 +21,8 @@ bool map_put(Map*, const char *key, const void *value);
 /* Remove a member from the map. Returns the removed entry or NULL
  * if there was no entry found using the given key*/
 void *map_delete(Map*, const char *key);
+/* Copy all entries from `src' into `dest', overwrites existing entries in `dest' */
+bool map_copy(Map *dest, Map *src);
 /* Ordered iteration over a map, call handle for every entry. If handle
  * returns false, the iteration will stop. */
 void map_iterate(const Map*, bool (*handle)(const char *key, void *value, void *data), const void *data);
