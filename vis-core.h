@@ -169,6 +169,7 @@ extern Movement moves[VIS_MOVE_INVALID];
 extern Operator ops[VIS_OP_INVALID];
 
 const char *expandtab(Vis *vis);
+const char *expandtab_cursor(Vis *vis, Cursor *c);
 
 void macro_operator_stop(Vis *vis);
 void macro_operator_record(Vis *vis);
