@@ -119,6 +119,7 @@ struct Win {
 	View *view;             /* currently displayed part of underlying text */
 	RingBuffer *jumplist;   /* LRU jump management */
 	ChangeList changelist;  /* state for iterating through least recently changes */
+	Mode modes[VIS_MODE_LAST]; /* overlay mods used for per window key bindings */
 	Win *prev, *next;       /* neighbouring windows */
 };
 

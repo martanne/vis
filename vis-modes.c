@@ -20,14 +20,35 @@ void mode_set(Vis *vis, Mode *new_mode) {
 	vis->win->ui->draw_status(vis->win->ui);
 }
 
-bool vis_mode_map(Vis *vis, enum VisMode modeid, const char *key, const KeyBinding *binding) {
-	Mode *mode = mode_get(vis, modeid);
-	return mode && map_put(mode->bindings, key, binding);
+static bool mode_map(Mode *mode, const char *key, const KeyBinding *binding) {
+	if (!mode)
+		return false;
+	if (!mode->bindings) {
+		mode->bindings = map_new();
+		if (!mode->bindings)
+			return false;
+	}
+	return map_put(mode->bindings, key, binding);
 }
 
-bool vis_mode_unmap(Vis *vis, enum VisMode modeid, const char *key) {
-	Mode *mode = mode_get(vis, modeid);
-	return mode && map_delete(mode->bindings, key);
+bool vis_mode_map(Vis *vis, enum VisMode id, const char *key, const KeyBinding *binding) {
+	return id < LENGTH(vis_modes) && mode_map(&vis_modes[id], key, binding);
+}
+
+bool vis_window_mode_map(Win *win, enum VisMode id, const char *key, const KeyBinding *binding) {
+	return id < LENGTH(win->modes) && mode_map(&win->modes[id], key, binding);
+}
+
+static bool mode_unmap(Mode *mode, const char *key) {
+	return mode && mode->bindings && map_delete(mode->bindings, key);
+}
+
+bool vis_mode_unmap(Vis *vis, enum VisMode id, const char *key) {
+	return id < LENGTH(vis_modes) && mode_unmap(&vis_modes[id], key);
+}
+
+bool vis_window_mode_unmap(Win *win, enum VisMode id, const char *key) {
+	return id < LENGTH(win->modes) && mode_unmap(&win->modes[id], key);
 }
 
 /** mode switching event handlers */

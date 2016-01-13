@@ -134,8 +134,10 @@ void vis_mode_switch(Vis*, enum VisMode);
 /* in the specified mode: map a given key to a binding (binding->key is ignored),
  * fails if key is already mapped */
 bool vis_mode_map(Vis*, enum VisMode, const char *key, const KeyBinding*);
+bool vis_window_mode_map(Win*, enum VisMode, const char *key, const KeyBinding*);
 /* in the specified mode: unmap a given key, fails if the key is not currently mapped */
 bool vis_mode_unmap(Vis*, enum VisMode, const char *key);
+bool vis_window_mode_unmap(Win*, enum VisMode, const char *key);
 /* get the current mode's status line indicator */
 const char *vis_mode_status(Vis*);
 /* associates the special pseudo key <keyaction->name> with the given key action.

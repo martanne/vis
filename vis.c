@@ -150,6 +150,8 @@ static void window_free(Win *win) {
 	if (vis && vis->ui)
 		vis->ui->window_free(win->ui);
 	view_free(win->view);
+	for (size_t i = 0; i < LENGTH(win->modes); i++)
+		map_free(win->modes[i].bindings);
 	ringbuf_free(win->jumplist);
 	free(win);
 }
@@ -174,6 +176,8 @@ static Win *window_new_file(Vis *vis, File *file) {
 	vis->windows = win;
 	vis->win = win;
 	vis->ui->window_focus(win->ui);
+	for (size_t i = 0; i < LENGTH(win->modes); i++)
+		win->modes[i].parent = &vis_modes[i];
 	if (vis->event && vis->event->win_open)
 		vis->event->win_open(vis, win);
 	return win;
@@ -199,6 +203,12 @@ bool vis_window_split(Win *original) {
 	Win *win = window_new_file(original->vis, original->file);
 	if (!win)
 		return false;
+	for (size_t i = 0; i < LENGTH(win->modes); i++) {
+		if (original->modes[i].bindings)
+			win->modes[i].bindings = map_new();
+		if (win->modes[i].bindings)
+			map_copy(win->modes[i].bindings, original->modes[i].bindings);
+	}
 	win->file = original->file;
 	win->file->refcount++;
 	view_syntax_set(win->view, view_syntax_get(original->view));
@@ -296,11 +306,6 @@ Vis *vis_new(Ui *ui, VisEvent *event) {
 	vis->ui->init(vis->ui, vis);
 	vis->tabwidth = 8;
 	vis->expandtab = false;
-	for (int i = 0; i < VIS_MODE_LAST; i++) {
-		Mode *mode = &vis_modes[i];
-		if (!(mode->bindings = map_new()))
-			goto err;
-	}
 	if (!(vis->prompt = calloc(1, sizeof(Win))))
 		goto err;
 	if (!(vis->prompt->file = calloc(1, sizeof(File))))
@@ -341,10 +346,8 @@ void vis_free(Vis *vis) {
 	map_free(vis->options);
 	map_free(vis->actions);
 	buffer_release(&vis->input_queue);
-	for (int i = 0; i < VIS_MODE_LAST; i++) {
-		Mode *mode = &vis_modes[i];
-		map_free(mode->bindings);
-	}
+	for (int i = 0; i < VIS_MODE_LAST; i++)
+		map_free(vis_modes[i].bindings);
 	free(vis);
 }
 
@@ -694,7 +697,16 @@ static const char *vis_keys_raw(Vis *vis, Buffer *buf, const char *input) {
 		prefix = false;
 		binding = NULL;
 
-		for (Mode *mode = vis->mode; mode && !binding && !prefix; mode = mode->parent) {
+		Mode *mode = vis->mode;
+		for (size_t i = 0; i < LENGTH(vis->win->modes); i++) {
+			if (mode == &vis_modes[i]) {
+				if (vis->win->modes[i].bindings)
+					mode = &vis->win->modes[i];
+				break;
+			}
+		}
+
+		for (; mode && !binding && !prefix; mode = mode->parent) {
 			binding = map_get(mode->bindings, start);
 			/* "<" is never treated as a prefix because it is used to denote
 			 * special key symbols */
