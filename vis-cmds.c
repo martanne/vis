@@ -1104,7 +1104,7 @@ bool vis_cmd(Vis *vis, const char *cmdline) {
 	while (*name == ' ')
 		name++;
 	char *param = name;
-	while (*param && isalpha(*param))
+	while (*param && (isalpha((unsigned char)*param) || *param == '-'))
 		param++;
 
 	if (*param == '!') {
