@@ -1218,8 +1218,23 @@ const char *vis_mode_status(Vis *vis) {
 }
 
 void vis_insert_tab(Vis *vis) {
-	const char *tab = expandtab(vis);
-	vis_insert_key(vis, tab, strlen(tab));
+	if (!vis->expandtab) {
+		vis_insert_key(vis, "\t", 1);
+		return;
+	}
+	char spaces[9];
+	int tabwidth = MIN(vis->tabwidth, LENGTH(spaces) - 1);
+	for (Cursor *c = view_cursors(vis->win->view); c; c = view_cursors_next(c)) {
+		size_t pos = view_cursors_pos(c);
+		/* FIXME: this does not take double width characters into account */
+		int chars = text_line_char_get(vis->win->file->text, pos);
+		int count = tabwidth - (chars % tabwidth);
+		for (int i = 0; i < count; i++)
+			spaces[i] = ' ';
+		spaces[count] = '\0';
+		vis_insert(vis, pos, spaces, count);
+		view_cursors_scroll_to(c, pos + count);
+	}
 }
 
 static void copy_indent_from_previous_line(Win *win) {
