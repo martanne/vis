@@ -60,15 +60,11 @@ const char *expandtab_cursor(Vis *vis, Cursor *c) {
     if (!vis->expandtab)
         return "\t";
 
-    const int MAX_TABWIDTH = 8;
-    int tabwidth = MIN(vis->tabwidth, MAX_TABWIDTH);
-    size_t pos = view_cursors_pos(c);
-    int w=tabwidth;
-    while(w<=pos) 
-        w += tabwidth;
-    tabwidth = w - pos;
-
     static char spaces[9];
+    int tabwidth = MIN(vis->tabwidth, LENGTH(spaces) - 1);
+    size_t pos = view_cursors_pos(c);
+    tabwidth = tabwidth - (pos % tabwidth);
+
     for (int i = 0; i < tabwidth; i++)
         spaces[i] = ' ';
     spaces[tabwidth] = '\0';
