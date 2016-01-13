@@ -109,6 +109,8 @@ int view_colorcolumn_get(View*);
 CursorPos view_cursor_getpos(View*);
 /* get main cursor position in bytes from start of the file */
 size_t view_cursor_get(View*);
+/* get selection associated with primary cursor */
+Filerange view_selection_get(View*);
 /* moves window viewport in direction until pos is visible. should only be
  * used for short distances between current cursor position and destination */
 void view_scroll_to(View*, size_t pos);

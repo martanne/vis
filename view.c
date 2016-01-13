@@ -1301,6 +1301,10 @@ Selection *view_selections_next(Selection *s) {
 	return s->next;
 }
 
+Filerange view_selection_get(View *view) {
+	return view_selections_get(view->cursor->sel);
+}
+
 Filerange view_selections_get(Selection *s) {
 	if (!s)
 		return text_range_empty();
