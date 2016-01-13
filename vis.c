@@ -47,13 +47,33 @@ static Macro *macro_get(Vis *vis, enum VisMacro m);
 static void macro_replay(Vis *vis, const Macro *macro);
 
 const char *expandtab(Vis *vis) {
-	static char spaces[9];
-	int tabwidth = vis->tabwidth;
-	tabwidth = MIN(tabwidth, LENGTH(spaces) - 1);
-	for (int i = 0; i < tabwidth; i++)
-		spaces[i] = ' ';
-	spaces[tabwidth] = '\0';
-	return vis->expandtab ? spaces : "\t";
+    static char spaces[9];
+    int tabwidth = vis->tabwidth;
+    tabwidth = MIN(tabwidth, LENGTH(spaces) - 1);
+    for (int i = 0; i < tabwidth; i++)
+        spaces[i] = ' ';
+    spaces[tabwidth] = '\0';
+    return vis->expandtab ? spaces : "\t";
+}
+
+const char *expandtab_cursor(Vis *vis, Cursor *c) {
+    if (!vis->expandtab)
+        return "\t";
+
+    const int MAX_TABWIDTH = 8;
+    int tabwidth = MIN(vis->tabwidth, MAX_TABWIDTH);
+    size_t pos = view_cursors_pos(c);
+    int w=tabwidth;
+    while(w<=pos) 
+        w += tabwidth;
+    tabwidth = w - pos;
+
+    static char spaces[9];
+    for (int i = 0; i < tabwidth; i++)
+        spaces[i] = ' ';
+    spaces[tabwidth] = '\0';
+
+    return spaces;
 }
 
 
@@ -351,6 +371,12 @@ void vis_free(Vis *vis) {
 void vis_insert(Vis *vis, size_t pos, const char *data, size_t len) {
 	text_insert(vis->win->file->text, pos, data, len);
 	windows_invalidate(vis, pos, pos + len);
+}
+
+void vis_insert_key_cursor(Vis *vis, const char *data, size_t len, Cursor *c) {
+	size_t pos = view_cursors_pos(c);
+	vis_insert(vis, pos, data, len);
+	view_cursors_scroll_to(c, pos + len);
 }
 
 void vis_insert_key(Vis *vis, const char *data, size_t len) {
@@ -1218,8 +1244,10 @@ const char *vis_mode_status(Vis *vis) {
 }
 
 void vis_insert_tab(Vis *vis) {
-	const char *tab = expandtab(vis);
-	vis_insert_key(vis, tab, strlen(tab));
+	for (Cursor *c = view_cursors(vis->win->view); c; c = view_cursors_next(c)) {
+	    const char *tab = expandtab_cursor(vis, c);
+	    vis_insert_key_cursor(vis, tab, strlen(tab), c);
+	}
 }
 
 static void copy_indent_from_previous_line(Win *win) {
