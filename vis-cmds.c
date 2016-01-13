@@ -90,7 +90,9 @@ static Command cmds[] = {
 	{ { "edit"                     }, cmd_edit,       CMD_OPT_FORCE },
 	{ { "help"                     }, cmd_help,       CMD_OPT_NONE  },
 	{ { "map",                     }, cmd_map,        CMD_OPT_FORCE|CMD_OPT_ARGS },
+	{ { "map-window",              }, cmd_map,        CMD_OPT_FORCE|CMD_OPT_ARGS },
 	{ { "unmap",                   }, cmd_unmap,      CMD_OPT_ARGS  },
+	{ { "unmap-window",            }, cmd_unmap,      CMD_OPT_ARGS  },
 	{ { "new"                      }, cmd_new,        CMD_OPT_NONE  },
 	{ { "open"                     }, cmd_open,       CMD_OPT_NONE  },
 	{ { "qall"                     }, cmd_qall,       CMD_OPT_FORCE },
@@ -110,7 +112,6 @@ static Command cmds[] = {
 	{ { "!",                       }, cmd_filter,     CMD_OPT_NONE  },
 	{ { NULL,                      }, NULL,           CMD_OPT_NONE  },
 };
-
 
 static void windows_arrange(Vis *vis, enum UiLayout layout) {
 	vis->ui->arrange(vis->ui, layout);
@@ -921,9 +922,11 @@ static enum VisMode getmode(const char *mode) {
 }
 
 static bool cmd_map(Vis *vis, Filerange *range, enum CmdOpt opt, const char *argv[]) {
+	bool local = strstr(argv[0], "-") != NULL;
 	enum VisMode mode = getmode(argv[1]);
 	const char *lhs = argv[2];
 	const char *rhs = argv[3];
+
 	if (mode == VIS_MODE_LAST || !lhs || !rhs) {
 		vis_info_show(vis, "usage: map mode lhs rhs\n");
 		return false;
@@ -954,10 +957,20 @@ static bool cmd_map(Vis *vis, Filerange *range, enum CmdOpt opt, const char *arg
 		}
 	}
 
-	bool mapped = vis_mode_map(vis, mode, lhs, binding);
+	bool mapped;
+	if (local)
+		mapped = vis_window_mode_map(vis->win, mode, lhs, binding);
+	else
+		mapped = vis_mode_map(vis, mode, lhs, binding);
+
 	if (!mapped && opt & CMD_OPT_FORCE) {
-		mapped = vis_mode_unmap(vis, mode, lhs) &&
-		         vis_mode_map(vis, mode, lhs, binding);
+		if (local) {
+			mapped = vis_window_mode_unmap(vis->win, mode, lhs) &&
+			         vis_window_mode_map(vis->win, mode, lhs, binding);
+		} else {
+			mapped = vis_mode_unmap(vis, mode, lhs) &&
+			         vis_mode_map(vis, mode, lhs, binding);
+		}
 	}
 
 	if (!mapped)
@@ -966,13 +979,19 @@ static bool cmd_map(Vis *vis, Filerange *range, enum CmdOpt opt, const char *arg
 }
 
 static bool cmd_unmap(Vis *vis, Filerange *range, enum CmdOpt opt, const char *argv[]) {
+	bool local = strstr(argv[0], "-") != NULL;
 	enum VisMode mode = getmode(argv[1]);
 	const char *lhs = argv[2];
+
 	if (mode == VIS_MODE_LAST || !lhs) {
 		vis_info_show(vis, "usage: unmap mode lhs rhs\n");
 		return false;
 	}
-	return vis_mode_unmap(vis, mode, lhs);
+
+	if (local)
+		return vis_window_mode_unmap(vis->win, mode, lhs);
+	else
+		return vis_mode_unmap(vis, mode, lhs);
 }
 
 static Filepos parse_pos(Win *win, char **cmd) {
