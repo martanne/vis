@@ -103,7 +103,7 @@ static Command cmds[] = {
 	{ { "earlier"                  }, cmd_earlier_later, CMD_OPT_NONE },
 	{ { "later"                    }, cmd_earlier_later, CMD_OPT_NONE },
 	{ { "!",                       }, cmd_filter,     CMD_OPT_NONE  },
-	{ /* array terminator */                                        },
+	{ { NULL,                      }, NULL,           CMD_OPT_NONE  },
 };
 
 

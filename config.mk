@@ -57,7 +57,7 @@ LDFLAGS_LIBS = $(LDFLAGS_LUA) $(LDFLAGS_TERMKEY) $(LDFLAGS_CURSES) $(LIBS)
 CFLAGS_VIS = $(CFLAGS_LIBS) -std=c99 -Os -DVERSION=\"${VERSION}\" -DNDEBUG -D_POSIX_C_SOURCE=200809L -D_XOPEN_SOURCE=700 -DLUA_COMPAT_5_1 -DLUA_COMPAT_5_2 -DLUA_COMPAT_ALL
 LDFLAGS_VIS = $(LDFLAGS_LIBS)
 
-DEBUG_CFLAGS_VIS = ${CFLAGS_VIS} -UNDEBUG -O0 -g -ggdb -Wall -Wextra -Wno-missing-field-initializers -Wno-unused-parameter
+DEBUG_CFLAGS_VIS = ${CFLAGS_VIS} -UNDEBUG -O0 -g -ggdb -Wall -Wextra -pedantic -Wno-missing-field-initializers -Wno-unused-parameter
 
 CC ?= cc
 STRIP ?= strip

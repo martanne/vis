@@ -54,7 +54,7 @@ static KeyBinding basic_movement[] = {
 	{ "<S-PageDown>",       ACTION(WINDOW_HALFPAGE_DOWN)                },
 	{ "<Home>",             ACTION(CURSOR_LINE_BEGIN)                   },
 	{ "<End>",              ACTION(CURSOR_LINE_END)                     },
-	{ /* empty last element, array terminator */                        },
+	{ 0 /* empty last element, array terminator */                      },
 };
 
 static KeyBinding vis_movements[] = {
@@ -116,7 +116,7 @@ static KeyBinding vis_movements[] = {
 	{ "?",                  ACTION(PROMPT_SEARCH_BACKWARD)              },
 	{ "`",                  ACTION(MARK_GOTO)                           },
 	{ "'",                  ACTION(MARK_GOTO_LINE)                      },
-	{ /* empty last element, array terminator */                        },
+	{ 0 /* empty last element, array terminator */                      },
 };
 
 static KeyBinding vis_textobjs[] = {
@@ -160,7 +160,7 @@ static KeyBinding vis_textobjs[] = {
 	{ "ie",                 ACTION(TEXT_OBJECT_ENTIRE_INNER)            },
 	{ "if",                 ACTION(TEXT_OBJECT_FUNCTION_INNER)          },
 	{ "il",                 ACTION(TEXT_OBJECT_LINE_INNER)              },
-	{ /* empty last element, array terminator */                        },
+	{ 0 /* empty last element, array terminator */                      },
 };
 
 static KeyBinding vis_operators[] = {
@@ -190,13 +190,13 @@ static KeyBinding vis_operators[] = {
 	{ "!",                  ACTION(OPERATOR_FILTER)                     },
 	{ "=",                  ACTION(OPERATOR_FILTER_FMT)                 },
 	{ "\"",                 ACTION(REGISTER)                            },
-	{ /* empty last element, array terminator */                        },
+	{ 0 /* empty last element, array terminator */                      },
 };
 
 static KeyBinding vis_operator_options[] = {
 	{ "v",                  ACTION(MOTION_CHARWISE)                     },
 	{ "V",                  ACTION(MOTION_LINEWISE)                     },
-	{ /* empty last element, array terminator */                        },
+	{ 0 /* empty last element, array terminator */                      },
 };
 
 static KeyBinding vis_mode_normal[] = {
@@ -268,7 +268,7 @@ static KeyBinding vis_mode_normal[] = {
 	{ "m",                  ACTION(MARK_SET)                            },
 	{ "<F1>",               ALIAS(":help<Enter>")                       },
 	{ "ga",                 ACTION(UNICODE_INFO)                        },
-	{ /* empty last element, array terminator */                        },
+	{ 0 /* empty last element, array terminator */                      },
 };
 
 static KeyBinding vis_mode_visual[] = {
@@ -290,13 +290,13 @@ static KeyBinding vis_mode_visual[] = {
 	{ "s",                  ALIAS("c")                                  },
 	{ "J",                  ACTION(JOIN_LINES)                          },
 	{ "o",                  ACTION(SELECTION_FLIP)                      },
-	{ /* empty last element, array terminator */                        },
+	{ 0 /* empty last element, array terminator */                      },
 };
 
 static KeyBinding vis_mode_visual_line[] = {
 	{ "v",                  ACTION(MODE_VISUAL)                         },
 	{ "V",                  ACTION(MODE_NORMAL)                         },
-	{ /* empty last element, array terminator */                        },
+	{ 0 /* empty last element, array terminator */                      },
 };
 
 static KeyBinding vis_mode_readline[] = {
@@ -309,7 +309,7 @@ static KeyBinding vis_mode_readline[] = {
 	{ "<C-w>",              ACTION(DELETE_WORD_PREV)                    },
 	{ "<C-u>",              ACTION(DELETE_LINE_BEGIN)                   },
 	{ "<C-v>",              ACTION(INSERT_VERBATIM)                     },
-	{ /* empty last element, array terminator */                        },
+	{ 0 /* empty last element, array terminator */                      },
 };
 
 static KeyBinding vis_mode_prompt[] = {
@@ -318,7 +318,7 @@ static KeyBinding vis_mode_prompt[] = {
 	{ "<Enter>",            ACTION(PROMPT_ENTER)                        },
 	{ "<C-j>",              ALIAS("<Enter>")                            },
 	{ "<Tab>",              ACTION(NOP)                                 },
-	{ /* empty last element, array terminator */                        },
+	{ 0 /* empty last element, array terminator */                      },
 };
 
 static KeyBinding vis_mode_insert[] = {
@@ -335,9 +335,9 @@ static KeyBinding vis_mode_insert[] = {
 	{ "<C-x><C-y>",         ACTION(WINDOW_SLIDE_DOWN)                   },
 	{ "<Tab>",              ACTION(INSERT_TAB)                          },
 	{ "<C-r>",              ACTION(INSERT_REGISTER)                     },
-	{ /* empty last element, array terminator */                        },
+	{ 0 /* empty last element, array terminator */                      },
 };
 
 static KeyBinding vis_mode_replace[] = {
-	{ /* empty last element, array terminator */                        },
+	{ 0 /* empty last element, array terminator */                      },
 };
