@@ -435,6 +435,10 @@ CursorPos view_cursor_getpos(View *view) {
 	return pos;
 }
 
+int view_cursor_col(Cursor *c) {
+  return c->col;
+}
+
 static void cursor_to(Cursor *c, size_t pos) {
 	Text *txt = c->view->text;
 	c->mark = text_mark_set(txt, pos);

@@ -103,6 +103,8 @@ int view_colorcolumn_get(View*);
 
 /* get main cursor position in terms of screen coordinates */
 CursorPos view_cursor_getpos(View*);
+/* get cursor.col (i was not able to call c->col in vis.c)*/
+int view_cursor_col(Cursor*);
 /* get main cursor position in bytes from start of the file */
 size_t view_cursor_get(View*);
 /* moves window viewport in direction until pos is visible. should only be

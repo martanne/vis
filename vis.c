@@ -59,16 +59,12 @@ const char *expandtab(Vis *vis) {
 const char *expandtab_cursor(Vis *vis, Cursor *c) {
     if (!vis->expandtab)
         return "\t";
-
     static char spaces[9];
     int tabwidth = MIN(vis->tabwidth, LENGTH(spaces) - 1);
-    size_t pos = view_cursors_pos(c);
-    tabwidth = tabwidth - (pos % tabwidth);
-
+    tabwidth = tabwidth - (view_cursor_col(c) % tabwidth);
     for (int i = 0; i < tabwidth; i++)
         spaces[i] = ' ';
     spaces[tabwidth] = '\0';
-
     return spaces;
 }
 
