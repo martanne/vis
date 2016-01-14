@@ -912,7 +912,7 @@ static bool cmd_help(Vis *vis, Filerange *range, enum CmdOpt opt, const char *ar
 	return true;
 }
 
-static enum VisMode getmode(const char *mode) {
+static enum VisMode str2vismode(const char *mode) {
 	const char *modes[] = {
 		[VIS_MODE_NORMAL] = "normal",
 		[VIS_MODE_OPERATOR_PENDING] = "operator-pending",
@@ -931,7 +931,7 @@ static enum VisMode getmode(const char *mode) {
 
 static bool cmd_map(Vis *vis, Filerange *range, enum CmdOpt opt, const char *argv[]) {
 	bool local = strstr(argv[0], "-") != NULL;
-	enum VisMode mode = getmode(argv[1]);
+	enum VisMode mode = str2vismode(argv[1]);
 	const char *lhs = argv[2];
 	const char *rhs = argv[3];
 
@@ -988,7 +988,7 @@ static bool cmd_map(Vis *vis, Filerange *range, enum CmdOpt opt, const char *arg
 
 static bool cmd_unmap(Vis *vis, Filerange *range, enum CmdOpt opt, const char *argv[]) {
 	bool local = strstr(argv[0], "-") != NULL;
-	enum VisMode mode = getmode(argv[1]);
+	enum VisMode mode = str2vismode(argv[1]);
 	const char *lhs = argv[2];
 
 	if (mode == VIS_MODE_LAST || !lhs) {
