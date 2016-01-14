@@ -82,9 +82,11 @@ static size_t op_put(Vis *vis, Text *txt, OperatorContext *c) {
 }
 
 static size_t op_shift_right(Vis *vis, Text *txt, OperatorContext *c) {
-	size_t pos = text_line_begin(txt, c->range.end), prev_pos;
-	const char *tab = expandtab(vis);
+	char spaces[9] = "         ";
+	spaces[MIN(vis->tabwidth, LENGTH(spaces) - 1)] = '\0';
+	const char *tab = vis->expandtab ? spaces : "\t";
 	size_t tablen = strlen(tab);
+	size_t pos = text_line_begin(txt, c->range.end), prev_pos;
 
 	/* if range ends at the begin of a line, skip line break */
 	if (pos == c->range.end)

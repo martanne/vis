@@ -46,17 +46,6 @@
 static Macro *macro_get(Vis *vis, enum VisMacro m);
 static void macro_replay(Vis *vis, const Macro *macro);
 
-const char *expandtab(Vis *vis) {
-	static char spaces[9];
-	int tabwidth = vis->tabwidth;
-	tabwidth = MIN(tabwidth, LENGTH(spaces) - 1);
-	for (int i = 0; i < tabwidth; i++)
-		spaces[i] = ' ';
-	spaces[tabwidth] = '\0';
-	return vis->expandtab ? spaces : "\t";
-}
-
-
 /** window / file handling */
 
 static void file_free(Vis *vis, File *file) {
