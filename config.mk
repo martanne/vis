@@ -12,7 +12,7 @@ PREFIX ?= /usr/local
 MANPREFIX = ${PREFIX}/share/man
 SHAREPREFIX = ${PREFIX}/share/vis
 
-LIBS = -lm -ldl -lc
+LIBS = -lc
 
 CFLAGS_TERMKEY = $(shell pkg-config --cflags termkey 2> /dev/null || echo "")
 LDFLAGS_TERMKEY = $(shell pkg-config --libs termkey 2> /dev/null || echo "-ltermkey")
@@ -22,7 +22,7 @@ LDFLAGS_CURSES = $(shell pkg-config --libs ncursesw 2> /dev/null || echo "-lncur
 
 ifeq (${CONFIG_LUA},1)
 	CFLAGS_LUA = $(shell pkg-config --cflags lua5.2 2> /dev/null || echo "-I/usr/include/lua5.2")
-	LDFLAGS_LUA = $(shell pkg-config --libs lua5.2 2> /dev/null || echo "-llua")
+	LDFLAGS_LUA = $(shell pkg-config --libs lua5.2 2> /dev/null || echo "-llua -lm")
 endif
 
 CFLAGS += -DCONFIG_LUA=${CONFIG_LUA}
