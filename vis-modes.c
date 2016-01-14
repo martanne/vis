@@ -1,7 +1,7 @@
 #include "vis-core.h"
 #include "util.h"
 
-Mode *mode_get(Vis *vis, enum VisMode mode) {
+static Mode *mode_get(Vis *vis, enum VisMode mode) {
 	if (mode < LENGTH(vis_modes))
 		return &vis_modes[mode];
 	return NULL;
@@ -18,6 +18,10 @@ void mode_set(Vis *vis, Mode *new_mode) {
 	if (new_mode->enter)
 		new_mode->enter(vis, vis->mode_prev);
 	vis->win->ui->draw_status(vis->win->ui);
+}
+
+void vis_mode_switch(Vis *vis, enum VisMode mode) {
+	mode_set(vis, &vis_modes[mode]);
 }
 
 static bool mode_map(Mode *mode, const char *key, const KeyBinding *binding) {

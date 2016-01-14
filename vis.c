@@ -1030,10 +1030,6 @@ int vis_run(Vis *vis, int argc, char *argv[]) {
 	return vis->exit_status;
 }
 
-void vis_mode_switch(Vis *vis, enum VisMode mode) {
-	mode_set(vis, &vis_modes[mode]);
-}
-
 static Macro *macro_get(Vis *vis, enum VisMacro m) {
 	if (m == VIS_MACRO_LAST_RECORDED)
 		return vis->last_recording;

@@ -169,15 +169,13 @@ extern Movement vis_motions[VIS_MOVE_INVALID];
 extern Operator vis_operators[VIS_OP_INVALID];
 extern TextObject vis_textobjects[VIS_TEXTOBJECT_INVALID];
 
-void action_do(Vis *vis, Action *a);
-
 void macro_operator_stop(Vis *vis);
 void macro_operator_record(Vis *vis);
 
+void action_do(Vis *vis, Action *a);
 void action_reset(Action*);
 
 void mode_set(Vis *vis, Mode *new_mode);
-Mode *mode_get(Vis *vis, enum VisMode mode);
 
 void window_selection_save(Win *win);
 
