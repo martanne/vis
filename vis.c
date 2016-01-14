@@ -425,9 +425,9 @@ void action_do(Vis *vis, Action *a) {
 
 		next = view_cursors_next(cursor);
 		size_t pos = view_cursors_pos(cursor);
-		Register *reg = a->reg ? a->reg : &vis->registers[VIS_REG_DEFAULT];
-		if (multiple_cursors)
-			reg = view_cursors_register(cursor);
+		Register *reg = multiple_cursors ? view_cursors_register(cursor) : a->reg;
+		if (!reg)
+			reg = &vis->registers[win->file->internal ? VIS_REG_PROMPT : VIS_REG_DEFAULT];
 
 		OperatorContext c = {
 			.count = a->count,
