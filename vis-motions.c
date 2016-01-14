@@ -1,3 +1,4 @@
+#include <string.h>
 #include <regex.h>
 #include "vis-core.h"
 #include "text-motions.h"
@@ -161,6 +162,96 @@ static size_t window_jumplist_prev(Vis *vis, Win *win, size_t cur) {
 
 static size_t window_nop(Vis *vis, Win *win, size_t pos) {
 	return pos;
+}
+
+void vis_motion_type(Vis *vis, enum VisMotionType type) {
+	vis->action.type = type;
+}
+
+bool vis_motion(Vis *vis, enum VisMotion motion, ...) {
+	va_list ap;
+	va_start(ap, motion);
+
+	switch (motion) {
+	case VIS_MOVE_WORD_START_NEXT:
+		if (vis->action.op == &ops[VIS_OP_CHANGE])
+			motion = VIS_MOVE_WORD_END_NEXT;
+		break;
+	case VIS_MOVE_LONGWORD_START_NEXT:
+		if (vis->action.op == &ops[VIS_OP_CHANGE])
+			motion = VIS_MOVE_LONGWORD_END_NEXT;
+		break;
+	case VIS_MOVE_SEARCH_FORWARD:
+	case VIS_MOVE_SEARCH_BACKWARD:
+	{
+		const char *pattern = va_arg(ap, char*);
+		if (text_regex_compile(vis->search_pattern, pattern, REG_EXTENDED)) {
+			vis_cancel(vis);
+			goto err;
+		}
+		if (motion == VIS_MOVE_SEARCH_FORWARD)
+			motion = VIS_MOVE_SEARCH_NEXT;
+		else
+			motion = VIS_MOVE_SEARCH_PREV;
+		break;
+	}
+	case VIS_MOVE_RIGHT_TO:
+	case VIS_MOVE_LEFT_TO:
+	case VIS_MOVE_RIGHT_TILL:
+	case VIS_MOVE_LEFT_TILL:
+	{
+		const char *key = va_arg(ap, char*);
+		if (!key)
+			goto err;
+		strncpy(vis->search_char, key, sizeof(vis->search_char));
+		vis->search_char[sizeof(vis->search_char)-1] = '\0';
+		vis->last_totill = motion;
+		break;
+	}
+	case VIS_MOVE_TOTILL_REPEAT:
+		if (!vis->last_totill)
+			goto err;
+		motion = vis->last_totill;
+		break;
+	case VIS_MOVE_TOTILL_REVERSE:
+		switch (vis->last_totill) {
+		case VIS_MOVE_RIGHT_TO:
+			motion = VIS_MOVE_LEFT_TO;
+			break;
+		case VIS_MOVE_LEFT_TO:
+			motion = VIS_MOVE_RIGHT_TO;
+			break;
+		case VIS_MOVE_RIGHT_TILL:
+			motion = VIS_MOVE_LEFT_TILL;
+			break;
+		case VIS_MOVE_LEFT_TILL:
+			motion = VIS_MOVE_RIGHT_TILL;
+			break;
+		default:
+			goto err;
+		}
+		break;
+	case VIS_MOVE_MARK:
+	case VIS_MOVE_MARK_LINE:
+	{
+		int mark = va_arg(ap, int);
+		if (VIS_MARK_a <= mark && mark < VIS_MARK_INVALID)
+			vis->action.mark = mark;
+		else
+			goto err;
+		break;
+	}
+	default:
+		break;
+	}
+
+	vis->action.movement = &moves[motion];
+	va_end(ap);
+	action_do(vis, &vis->action);
+	return true;
+err:
+	va_end(ap);
+	return false;
 }
 
 Movement moves[] = {
