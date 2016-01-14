@@ -178,5 +178,6 @@ void action_reset(Action*);
 void mode_set(Vis *vis, Mode *new_mode);
 
 void window_selection_save(Win *win);
+Win *window_new_file(Vis *vis, File *file);
 
 #endif

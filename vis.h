@@ -358,6 +358,8 @@ void vis_cancel(Vis*);
 
 /* execute a :-command (including an optinal range specifier) */
 bool vis_cmd(Vis*, const char *cmd);
+/* execute any kind (:,?,/) of prompt command */
+bool vis_prompt_cmd(Vis*, const char *cmd);
 
 /* given the start of a key, returns a pointer to the start of the one immediately
  * following as will be processed by the input system. skips over special keys
