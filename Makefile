@@ -206,7 +206,7 @@ dependencies: dependency/sources/install-libtermkey dependency/sources/install-l
 dependencies-full: dependency/sources/install-libncurses dependencies
 
 local: dependencies
-	CFLAGS="$(CFLAGS) -I$(DEPS_INC)" LDFLAGS="$(LDFLAGS) -L$(DEPS_LIB)" $(MAKE) CFLAGS_LUA= CFLAGS_TERMKEY= LDFLAGS_LUA=-llua LDFLAGS_TERMKEY=-ltermkey
+	CFLAGS="$(CFLAGS) -I$(DEPS_INC)" LDFLAGS="$(LDFLAGS) -L$(DEPS_LIB)" $(MAKE) CFLAGS_LUA= CFLAGS_TERMKEY= LDFLAGS_LUA="-llua -lm" LDFLAGS_TERMKEY=-ltermkey
 	@echo Run with: LD_LIBRARY_PATH=$(DEPS_LIB) VIS_PATH=. ./vis
 
 standalone: dependency/sources/install-libmusl
