@@ -926,7 +926,7 @@ static enum VisMode str2vismode(const char *mode) {
 		if (mode && modes[i] && strcmp(mode, modes[i]) == 0)
 			return i;
 	}
-	return VIS_MODE_LAST;
+	return VIS_MODE_INVALID;
 }
 
 static bool cmd_map(Vis *vis, Filerange *range, enum CmdOpt opt, const char *argv[]) {
@@ -935,7 +935,7 @@ static bool cmd_map(Vis *vis, Filerange *range, enum CmdOpt opt, const char *arg
 	const char *lhs = argv[2];
 	const char *rhs = argv[3];
 
-	if (mode == VIS_MODE_LAST || !lhs || !rhs) {
+	if (mode == VIS_MODE_INVALID || !lhs || !rhs) {
 		vis_info_show(vis, "usage: map mode lhs rhs\n");
 		return false;
 	}
@@ -991,7 +991,7 @@ static bool cmd_unmap(Vis *vis, Filerange *range, enum CmdOpt opt, const char *a
 	enum VisMode mode = str2vismode(argv[1]);
 	const char *lhs = argv[2];
 
-	if (mode == VIS_MODE_LAST || !lhs) {
+	if (mode == VIS_MODE_INVALID || !lhs) {
 		vis_info_show(vis, "usage: unmap mode lhs rhs\n");
 		return false;
 	}

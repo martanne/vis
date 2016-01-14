@@ -117,7 +117,7 @@ enum VisMode {
 	VIS_MODE_VISUAL_LINE,
 	VIS_MODE_INSERT,
 	VIS_MODE_REPLACE,
-	VIS_MODE_LAST,
+	VIS_MODE_INVALID,
 };
 
 void vis_mode_switch(Vis*, enum VisMode);

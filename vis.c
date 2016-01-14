@@ -344,7 +344,7 @@ void vis_free(Vis *vis) {
 	map_free(vis->options);
 	map_free(vis->actions);
 	buffer_release(&vis->input_queue);
-	for (int i = 0; i < VIS_MODE_LAST; i++)
+	for (int i = 0; i < VIS_MODE_INVALID; i++)
 		map_free(vis_modes[i].bindings);
 	free(vis);
 }

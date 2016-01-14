@@ -120,7 +120,7 @@ struct Win {
 	View *view;             /* currently displayed part of underlying text */
 	RingBuffer *jumplist;   /* LRU jump management */
 	ChangeList changelist;  /* state for iterating through least recently changes */
-	Mode modes[VIS_MODE_LAST]; /* overlay mods used for per window key bindings */
+	Mode modes[VIS_MODE_INVALID]; /* overlay mods used for per window key bindings */
 	Win *parent;            /* window which was active when showing the command prompt */
 	Mode *parent_mode;      /* mode which was active when showing the command prompt */
 	Win *prev, *next;       /* neighbouring windows */
@@ -165,7 +165,7 @@ struct Vis {
 /** stuff used by multiple of the vis-* files */
 
 /* TODO: make part of Vis struct? enable dynamic modes? */
-extern Mode vis_modes[VIS_MODE_LAST];
+extern Mode vis_modes[VIS_MODE_INVALID];
 
 extern Movement moves[VIS_MOVE_INVALID];
 
