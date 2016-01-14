@@ -1030,69 +1030,6 @@ int vis_run(Vis *vis, int argc, char *argv[]) {
 	return vis->exit_status;
 }
 
-bool vis_operator(Vis *vis, enum VisOperator id, ...) {
-	va_list ap;
-	va_start(ap, id);
-
-	switch (id) {
-	case VIS_OP_CASE_LOWER:
-	case VIS_OP_CASE_UPPER:
-	case VIS_OP_CASE_SWAP:
-		vis->action.arg.i = id;
-		id = VIS_OP_CASE_SWAP;
-		break;
-	case VIS_OP_CURSOR_SOL:
-	case VIS_OP_CURSOR_EOL:
-		vis->action.arg.i = id;
-		id = VIS_OP_CURSOR_SOL;
-		break;
-	case VIS_OP_PUT_AFTER:
-	case VIS_OP_PUT_AFTER_END:
-	case VIS_OP_PUT_BEFORE:
-	case VIS_OP_PUT_BEFORE_END:
-		vis->action.arg.i = id;
-		id = VIS_OP_PUT_AFTER;
-		break;
-	case VIS_OP_FILTER:
-		vis->action.type = LINEWISE;
-		vis->action.arg.s = va_arg(ap, char*);
-		break;
-	default:
-		break;
-	}
-	if (id >= LENGTH(ops))
-		goto err;
-	Operator *op = &ops[id];
-	if (vis->mode->visual) {
-		vis->action.op = op;
-		action_do(vis, &vis->action);
-		goto out;
-	}
-
-	/* switch to operator mode inorder to make operator options and
-	 * text-object available */
-	vis_mode_switch(vis, VIS_MODE_OPERATOR_PENDING);
-	if (vis->action.op == op) {
-		/* hacky way to handle double operators i.e. things like
-		 * dd, yy etc where the second char isn't a movement */
-		vis->action.type = LINEWISE;
-		vis_motion(vis, VIS_MOVE_LINE_NEXT);
-	} else {
-		vis->action.op = op;
-	}
-
-	/* put is not a real operator, does not need a range to operate on */
-	if (id == VIS_OP_PUT_AFTER)
-		vis_motion(vis, VIS_MOVE_NOP);
-
-out:
-	va_end(ap);
-	return true;
-err:
-	va_end(ap);
-	return false;
-}
-
 void vis_mode_switch(Vis *vis, enum VisMode mode) {
 	mode_set(vis, &vis_modes[mode]);
 }
