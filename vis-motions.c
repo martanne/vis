@@ -245,7 +245,7 @@ bool vis_motion(Vis *vis, enum VisMotion motion, ...) {
 		break;
 	}
 
-	vis->action.movement = &moves[motion];
+	vis->action.movement = &vis_motions[motion];
 	va_end(ap);
 	action_do(vis, &vis->action);
 	return true;
@@ -254,7 +254,7 @@ err:
 	return false;
 }
 
-Movement moves[] = {
+Movement vis_motions[] = {
 	[VIS_MOVE_LINE_UP]             = { .cur = view_line_up,             .type = LINEWISE                 },
 	[VIS_MOVE_LINE_DOWN]           = { .cur = view_line_down,           .type = LINEWISE                 },
 	[VIS_MOVE_SCREEN_LINE_UP]      = { .cur = view_screenline_up,                                        },

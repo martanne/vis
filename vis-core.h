@@ -164,11 +164,8 @@ struct Vis {
 
 /** stuff used by multiple of the vis-* files */
 
-/* TODO: make part of Vis struct? enable dynamic modes? */
 extern Mode vis_modes[VIS_MODE_INVALID];
-
-extern Movement moves[VIS_MOVE_INVALID];
-
+extern Movement vis_motions[VIS_MOVE_INVALID];
 extern Operator vis_operators[VIS_OP_INVALID];
 extern TextObject vis_textobjects[VIS_TEXTOBJECT_INVALID];
 
