@@ -582,7 +582,7 @@ void action_do(Vis *vis, Action *a) {
 	Text *txt = win->file->text;
 	View *view = win->view;
 
-	if (a->op == &ops[VIS_OP_FILTER] && !vis->mode->visual)
+	if (a->op == &vis_operators[VIS_OP_FILTER] && !vis->mode->visual)
 		vis_mode_switch(vis, VIS_MODE_VISUAL_LINE);
 
 	if (a->count < 1)
@@ -704,11 +704,11 @@ void action_do(Vis *vis, Action *a) {
 		/* operator implementations must not change the mode,
 		 * they might get called multiple times (once for every cursor)
 		 */
-		if (a->op == &ops[VIS_OP_INSERT] || a->op == &ops[VIS_OP_CHANGE]) {
+		if (a->op == &vis_operators[VIS_OP_INSERT] || a->op == &vis_operators[VIS_OP_CHANGE]) {
 			vis_mode_switch(vis, VIS_MODE_INSERT);
-		} else if (a->op == &ops[VIS_OP_REPLACE]) {
+		} else if (a->op == &vis_operators[VIS_OP_REPLACE]) {
 			vis_mode_switch(vis, VIS_MODE_REPLACE);
-		} else if (a->op == &ops[VIS_OP_FILTER]) {
+		} else if (a->op == &vis_operators[VIS_OP_FILTER]) {
 			if (a->arg.s) {
 				vis_mode_switch(vis, VIS_MODE_NORMAL);
 				vis_cmd(vis, a->arg.s);
@@ -1108,7 +1108,7 @@ void vis_repeat(Vis *vis) {
 		vis->action_prev.count = count;
 	count = vis->action_prev.count;
 	/* for some operators count should be applied only to the macro not the motion */
-	if (vis->action_prev.op == &ops[VIS_OP_INSERT] || vis->action_prev.op == &ops[VIS_OP_REPLACE])
+	if (vis->action_prev.op == &vis_operators[VIS_OP_INSERT] || vis->action_prev.op == &vis_operators[VIS_OP_REPLACE])
 		vis->action_prev.count = 1;
 	action_do(vis, &vis->action_prev);
 	vis->action_prev.count = count;
@@ -1116,7 +1116,7 @@ void vis_repeat(Vis *vis) {
 		Mode *mode = vis->mode;
 		Action action_prev = vis->action_prev;
 		count = action_prev.count;
-		if (count < 1 || action_prev.op == &ops[VIS_OP_CHANGE] || action_prev.op == &ops[VIS_OP_FILTER])
+		if (count < 1 || action_prev.op == &vis_operators[VIS_OP_CHANGE] || action_prev.op == &vis_operators[VIS_OP_FILTER])
 			count = 1;
 		for (int i = 0; i < count; i++) {
 			mode_set(vis, mode);

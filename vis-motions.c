@@ -174,11 +174,11 @@ bool vis_motion(Vis *vis, enum VisMotion motion, ...) {
 
 	switch (motion) {
 	case VIS_MOVE_WORD_START_NEXT:
-		if (vis->action.op == &ops[VIS_OP_CHANGE])
+		if (vis->action.op == &vis_operators[VIS_OP_CHANGE])
 			motion = VIS_MOVE_WORD_END_NEXT;
 		break;
 	case VIS_MOVE_LONGWORD_START_NEXT:
-		if (vis->action.op == &ops[VIS_OP_CHANGE])
+		if (vis->action.op == &vis_operators[VIS_OP_CHANGE])
 			motion = VIS_MOVE_LONGWORD_END_NEXT;
 		break;
 	case VIS_MOVE_SEARCH_FORWARD:

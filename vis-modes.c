@@ -95,7 +95,7 @@ static void vis_mode_insert_enter(Vis *vis, Mode *old) {
 		macro_operator_record(vis);
 		action_reset(&vis->action_prev);
 		vis->action_prev.macro = vis->macro_operator;
-		vis->action_prev.op = &ops[VIS_OP_INSERT];
+		vis->action_prev.op = &vis_operators[VIS_OP_INSERT];
 	}
 }
 
@@ -119,7 +119,7 @@ static void vis_mode_replace_enter(Vis *vis, Mode *old) {
 		macro_operator_record(vis);
 		action_reset(&vis->action_prev);
 		vis->action_prev.macro = vis->macro_operator;
-		vis->action_prev.op = &ops[VIS_OP_REPLACE];
+		vis->action_prev.op = &vis_operators[VIS_OP_REPLACE];
 	}
 }
 

@@ -169,7 +169,7 @@ extern Mode vis_modes[VIS_MODE_INVALID];
 
 extern Movement moves[VIS_MOVE_INVALID];
 
-extern Operator ops[VIS_OP_INVALID];
+extern Operator vis_operators[VIS_OP_INVALID];
 extern TextObject vis_textobjects[VIS_TEXTOBJECT_INVALID];
 
 void action_do(Vis *vis, Action *a);

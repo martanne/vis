@@ -242,9 +242,9 @@ bool vis_operator(Vis *vis, enum VisOperator id, ...) {
 	default:
 		break;
 	}
-	if (id >= LENGTH(ops))
+	if (id >= LENGTH(vis_operators))
 		goto err;
-	Operator *op = &ops[id];
+	Operator *op = &vis_operators[id];
 	if (vis->mode->visual) {
 		vis->action.op = op;
 		action_do(vis, &vis->action);
@@ -275,7 +275,7 @@ err:
 	return false;
 }
 
-Operator ops[] = {
+Operator vis_operators[] = {
 	[VIS_OP_DELETE]      = { op_delete      },
 	[VIS_OP_CHANGE]      = { op_change      },
 	[VIS_OP_YANK]        = { op_yank        },
