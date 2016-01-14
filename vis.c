@@ -413,7 +413,6 @@ static bool prompt_cmd(Vis *vis, const char *cmd) {
 }
 
 static void prompt_hide(Win *win) {
-	Vis *vis = win->vis;
 	Text *txt = win->file->text;
 	size_t size = text_size(txt);
 	/* make sure that file is new line terminated */
@@ -425,17 +424,24 @@ static void prompt_hide(Win *win) {
 	size_t line_size = text_range_size(&line);
 	if (line_size <= 2)
 		text_delete(txt, line.start, line_size);
-	if (win->parent)
-		vis->win = win->parent;
-	vis->mode = win->parent_mode;
 	vis_window_close(win);
 }
 
+static void prompt_restore(Win *win) {
+	Vis *vis = win->vis;
+	/* restore window and mode which was active before the prompt window
+	 * we deliberately don't use vis_mode_switch because we do not want
+	 * to invoke the modes enter/leave functions */
+	if (win->parent)
+		vis->win = win->parent;
+	vis->mode = win->parent_mode;
+}
+
 static const char *prompt_enter(Vis *vis, const char *keys, const Arg *arg) {
-	Win *prompt_win = vis->win;
-	View *view = prompt_win->view;
-	Text *txt = prompt_win->file->text;
-	Win *win = prompt_win->parent;
+	Win *prompt = vis->win;
+	View *view = prompt->view;
+	Text *txt = prompt->file->text;
+	Win *win = prompt->parent;
 	char *cmd = NULL;
 
 	Filerange range = view_selection_get(view);
@@ -446,20 +452,17 @@ static const char *prompt_enter(Vis *vis, const char *keys, const Arg *arg) {
 
 	if (!win || !cmd) {
 		vis_info_show(vis, "Prompt window invalid\n");
-		prompt_hide(prompt_win);
+		prompt_restore(prompt);
+		prompt_hide(prompt);
 		free(cmd);
 		return keys;
 	}
 
-	/* restore window and mode which was active before the prompt window
-	 * we deliberately don't use vis_mode_switch because we do not want
-	 * to invoke the modes enter/leave functions */
-	vis->win = win;
-	vis->mode = prompt_win->parent_mode;
+	prompt_restore(prompt);
 	if (prompt_cmd(vis, cmd)) {
-		prompt_hide(prompt_win);
+		prompt_hide(prompt);
 	} else {
-		vis->win = prompt_win;
+		vis->win = prompt;
 		vis->mode = &vis_modes[VIS_MODE_INSERT];
 	}
 	free(cmd);
@@ -468,10 +471,13 @@ static const char *prompt_enter(Vis *vis, const char *keys, const Arg *arg) {
 }
 
 static const char *prompt_esc(Vis *vis, const char *keys, const Arg *arg) {
-	if (view_cursors_count(vis->win->view) > 1)
-		view_cursors_clear(vis->win->view);
-	else
-		prompt_hide(vis->win);
+	Win *prompt = vis->win;
+	if (view_cursors_count(prompt->view) > 1) {
+		view_cursors_clear(prompt->view);
+	} else {
+		prompt_restore(prompt);
+		prompt_hide(prompt);
+	}
 	return keys;
 }
 
@@ -483,12 +489,14 @@ static const char *prompt_up(Vis *vis, const char *keys, const Arg *arg) {
 }
 
 static const char *prompt_backspace(Vis *vis, const char *keys, const Arg *arg) {
-	Text *txt = vis->win->file->text;
+	Win *prompt = vis->win;
+	Text *txt = prompt->file->text;
 	size_t size = text_size(txt);
-	size_t pos = view_cursor_get(vis->win->view);
+	size_t pos = view_cursor_get(prompt->view);
 	char c;
 	if (pos == size && (pos == 1 || (size >= 2 && text_byte_get(txt, size-2, &c) && c == '\n'))) {
-		 prompt_hide(vis->win);
+		prompt_restore(prompt);
+		prompt_hide(prompt);
 	} else {
 		vis_operator(vis, VIS_OP_DELETE);
 		vis_motion(vis, VIS_MOVE_CHAR_PREV);
