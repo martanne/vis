@@ -558,35 +558,6 @@ void vis_info_hide(Vis *vis) {
 	vis->ui->info_hide(vis->ui);
 }
 
-static TextObject textobjs[] = {
-	[VIS_TEXTOBJECT_INNER_WORD]           = { text_object_word                  },
-	[VIS_TEXTOBJECT_OUTER_WORD]           = { text_object_word_outer            },
-	[VIS_TEXTOBJECT_INNER_LONGWORD]       = { text_object_longword              },
-	[VIS_TEXTOBJECT_OUTER_LONGWORD]       = { text_object_longword_outer        },
-	[VIS_TEXTOBJECT_SENTENCE]             = { text_object_sentence              },
-	[VIS_TEXTOBJECT_PARAGRAPH]            = { text_object_paragraph             },
-	[VIS_TEXTOBJECT_OUTER_SQUARE_BRACKET] = { text_object_square_bracket, OUTER },
-	[VIS_TEXTOBJECT_INNER_SQUARE_BRACKET] = { text_object_square_bracket, INNER },
-	[VIS_TEXTOBJECT_OUTER_CURLY_BRACKET]  = { text_object_curly_bracket,  OUTER },
-	[VIS_TEXTOBJECT_INNER_CURLY_BRACKET]  = { text_object_curly_bracket,  INNER },
-	[VIS_TEXTOBJECT_OUTER_ANGLE_BRACKET]  = { text_object_angle_bracket,  OUTER },
-	[VIS_TEXTOBJECT_INNER_ANGLE_BRACKET]  = { text_object_angle_bracket,  INNER },
-	[VIS_TEXTOBJECT_OUTER_PARANTHESE]     = { text_object_paranthese,     OUTER },
-	[VIS_TEXTOBJECT_INNER_PARANTHESE]     = { text_object_paranthese,     INNER },
-	[VIS_TEXTOBJECT_OUTER_QUOTE]          = { text_object_quote,          OUTER },
-	[VIS_TEXTOBJECT_INNER_QUOTE]          = { text_object_quote,          INNER },
-	[VIS_TEXTOBJECT_OUTER_SINGLE_QUOTE]   = { text_object_single_quote,   OUTER },
-	[VIS_TEXTOBJECT_INNER_SINGLE_QUOTE]   = { text_object_single_quote,   INNER },
-	[VIS_TEXTOBJECT_OUTER_BACKTICK]       = { text_object_backtick,       OUTER },
-	[VIS_TEXTOBJECT_INNER_BACKTICK]       = { text_object_backtick,       INNER },
-	[VIS_TEXTOBJECT_OUTER_ENTIRE]         = { text_object_entire,               },
-	[VIS_TEXTOBJECT_INNER_ENTIRE]         = { text_object_entire_inner,         },
-	[VIS_TEXTOBJECT_OUTER_FUNCTION]       = { text_object_function,             },
-	[VIS_TEXTOBJECT_INNER_FUNCTION]       = { text_object_function_inner,       },
-	[VIS_TEXTOBJECT_OUTER_LINE]           = { text_object_line,                 },
-	[VIS_TEXTOBJECT_INNER_LINE]           = { text_object_line_inner,           },
-};
-
 bool vis_action_register(Vis *vis, KeyAction *action) {
 	if (!vis->actions)
 		vis->actions = map_new();
@@ -606,7 +577,7 @@ static void window_jumplist_invalidate(Win *win) {
 		ringbuf_invalidate(win->jumplist);
 }
 
-static void action_do(Vis *vis, Action *a) {
+void action_do(Vis *vis, Action *a) {
 	Win *win = vis->win;
 	Text *txt = win->file->text;
 	View *view = win->view;
@@ -1210,13 +1181,6 @@ bool vis_motion(Vis *vis, enum VisMotion motion, ...) {
 err:
 	va_end(ap);
 	return false;
-}
-
-void vis_textobject(Vis *vis, enum VisTextObject textobj) {
-	if (textobj < LENGTH(textobjs)) {
-		vis->action.textobj = &textobjs[textobj];
-		action_do(vis, &vis->action);
-	}
 }
 
 static Macro *macro_get(Vis *vis, enum VisMacro m) {

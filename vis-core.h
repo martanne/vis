@@ -170,8 +170,9 @@ extern Mode vis_modes[VIS_MODE_LAST];
 extern Movement moves[VIS_MOVE_INVALID];
 
 extern Operator ops[VIS_OP_INVALID];
+extern TextObject vis_textobjects[VIS_TEXTOBJECT_INVALID];
 
-const char *expandtab(Vis *vis);
+void action_do(Vis *vis, Action *a);
 
 void macro_operator_stop(Vis *vis);
 void macro_operator_record(Vis *vis);

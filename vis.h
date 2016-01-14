@@ -292,6 +292,7 @@ enum VisTextObject {
 	VIS_TEXTOBJECT_INNER_FUNCTION,
 	VIS_TEXTOBJECT_OUTER_LINE,
 	VIS_TEXTOBJECT_INNER_LINE,
+	VIS_TEXTOBJECT_INVALID,
 };
 
 void vis_textobject(Vis*, enum VisTextObject);
