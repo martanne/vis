@@ -60,11 +60,19 @@ static void printkey(TermKeyKey *key) {
 		case TERMKEY_SYM_SPACE:
 			print(" ");
 			break;
-		case TERMKEY_SYM_DEL:
 		case TERMKEY_SYM_UP:
+			print("\033OA");
+			break;
 		case TERMKEY_SYM_DOWN:
-		case TERMKEY_SYM_LEFT:
+			print("\033OB");
+			break;
 		case TERMKEY_SYM_RIGHT:
+			print("\033OC");
+			break;
+		case TERMKEY_SYM_LEFT:
+			print("\033OD");
+			break;
+		case TERMKEY_SYM_DEL:
 		case TERMKEY_SYM_BEGIN:
 		case TERMKEY_SYM_FIND:
 		case TERMKEY_SYM_INSERT:
