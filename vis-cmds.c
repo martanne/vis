@@ -1158,7 +1158,7 @@ bool vis_cmd(Vis *vis, const char *cmdline) {
 	char *s = param;
 	const char *argv[32] = { name };
 	for (int i = 1; i < LENGTH(argv); i++) {
-		while (s && *s && *s == ' ')
+		while (s && isspace((unsigned char)*s))
 			s++;
 		if (s && !*s)
 			s = NULL;

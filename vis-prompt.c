@@ -52,7 +52,7 @@ static const char *prompt_enter(Vis *vis, const char *keys, const Arg *arg) {
 
 	Filerange range = view_selection_get(view);
 	if (!text_range_valid(&range))
-		range = text_object_line_inner(txt, view_cursor_get(view));
+		range = text_object_line(txt, view_cursor_get(view));
 	if (text_range_valid(&range))
 		cmd = text_bytes_alloc0(txt, range.start, text_range_size(&range));
 
@@ -64,9 +64,15 @@ static const char *prompt_enter(Vis *vis, const char *keys, const Arg *arg) {
 		return keys;
 	}
 
+	bool lastline = (range.end == text_size(txt));
+
 	prompt_restore(prompt);
 	if (vis_prompt_cmd(vis, cmd)) {
 		prompt_hide(prompt);
+		if (!lastline) {
+			text_delete(txt, range.start, text_range_size(&range));
+			text_insert(txt, text_size(txt), cmd, strlen(cmd));
+		}
 	} else {
 		vis->win = prompt;
 		vis->mode = &vis_modes[VIS_MODE_INSERT];
