@@ -1544,10 +1544,10 @@ static const char *openline(Vis *vis, const char *keys, const Arg *arg) {
 	vis_operator(vis, VIS_OP_INSERT);
 	if (arg->i > 0) {
 		vis_motion(vis, VIS_MOVE_LINE_END);
-		vis_keys_inject(vis, keys, "<Enter>");
+		vis_keys_inject(vis, keys, "<insert-newline>");
 	} else {
 		vis_motion(vis, VIS_MOVE_LINE_BEGIN);
-		vis_keys_inject(vis, keys, "<Enter><Up>");
+		vis_keys_inject(vis, keys, "<insert-newline><Up>");
 	}
 	return keys;
 }
