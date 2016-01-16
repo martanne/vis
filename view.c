@@ -1145,8 +1145,6 @@ void view_cursors_to(Cursor *c, size_t pos) {
 			/* make sure we redraw changes to the very first character of the window */
 			if (view->start == pos)
 				view->start_last = 0;
-			if (view->end == pos)
-				view_viewport_down(view, 1);
 			/* set the start of the viewable region to the start of the line on which
 			 * the cursor should be placed. if this line requires more space than
 			 * available in the view then simply start displaying text at the new
