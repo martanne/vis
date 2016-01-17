@@ -619,9 +619,11 @@ static bool ui_window_draw_sidebar(UiCursesWin *win) {
 				if (win->options & UI_OPTION_LINE_NUMBERS_ABSOLUTE) {
 					mvwprintw(win->winside, i, 0, "%*u", sidebar_width-1, l->lineno);
 				} else if (win->options & UI_OPTION_LINE_NUMBERS_RELATIVE) {
-					size_t rel = l->lineno > cursor_lineno ?
-					             l->lineno - cursor_lineno :
-					             cursor_lineno - l->lineno;
+					size_t rel = l->lineno;
+					if (l->lineno > cursor_lineno)
+						rel = l->lineno - cursor_lineno;
+					else if (l->lineno < cursor_lineno)
+						rel = cursor_lineno - l->lineno;
 					mvwprintw(win->winside, i, 0, "%*u", sidebar_width-1, rel);
 				}
 			}
