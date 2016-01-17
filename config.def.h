@@ -231,6 +231,7 @@ static const KeyBinding bindings_normal[] = {
 	{ "P",                  ACTION(PUT_BEFORE)                          },
 	{ "gp",                 ACTION(PUT_AFTER_END)                       },
 	{ "gP",                 ACTION(PUT_BEFORE_END)                      },
+	{ "~",                  ALIAS("<vis-operator-case-swap>l")          },
 	{ 0 /* empty last element, array terminator */                      },
 };
 
