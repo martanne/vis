@@ -208,7 +208,7 @@ static const KeyBinding bindings_normal[] = {
 	{ "R",                  ACTION(MODE_REPLACE)                        },
 	{ "S",                  ALIAS("^c$")                                },
 	{ "s",                  ALIAS("cl")                                 },
-	{ "Y",                  ALIAS("yy")                                 },
+	{ "Y",                  ALIAS("y$")                                 },
 	{ "X",                  ALIAS("dh")                                 },
 	{ "u",                  ACTION(UNDO)                                },
 	{ "<C-r>",              ACTION(REDO)                                },
