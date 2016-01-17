@@ -87,7 +87,7 @@ static bool cmd_unmap(Vis*, Filerange*, enum CmdOpt, const char *argv[]);
 static Command cmds[] = {
 	/* command name / optional alias, function,          options */
 	{ { "bdelete"                  }, cmd_bdelete,       CMD_OPT_FORCE              },
-	{ { "edit"                     }, cmd_edit,          CMD_OPT_FORCE              },
+	{ { "edit", "e"                }, cmd_edit,          CMD_OPT_FORCE              },
 	{ { "help"                     }, cmd_help,          CMD_OPT_NONE               },
 	{ { "map",                     }, cmd_map,           CMD_OPT_FORCE|CMD_OPT_ARGS },
 	{ { "map-window",              }, cmd_map,           CMD_OPT_FORCE|CMD_OPT_ARGS },
