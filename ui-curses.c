@@ -450,6 +450,9 @@ static int color_fromstring(const char *s)
 		if (n != 3)
 			return -1;
 		return color_find_rgb(r, g, b);
+	} else if ('0' <= *s && *s <= '9') {
+		int col = atoi(s);
+		return (col <= 0 || col > 255) ? -1 : col;
 	}
 
 	if (strcasecmp(s, "black") == 0)
