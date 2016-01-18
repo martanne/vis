@@ -1167,12 +1167,9 @@ static const char *cursors_select_next(Vis *vis, const char *keys, const Arg *ar
 	if (!text_range_valid(&sel))
 		return keys;
 
-	size_t len = text_range_size(&sel);
-	char *buf = malloc(len+1);
+	char *buf = text_bytes_alloc0(txt, sel.start, text_range_size(&sel));
 	if (!buf)
 		return keys;
-	len = text_bytes_get(txt, sel.start, len, buf);
-	buf[len] = '\0';
 	Filerange word = text_object_word_find_next(txt, sel.end, buf);
 	free(buf);
 
