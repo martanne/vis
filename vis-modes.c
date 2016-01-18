@@ -75,7 +75,7 @@ static void vis_mode_visual_line_enter(Vis *vis, Mode *old) {
 		for (Cursor *c = view_cursors(vis->win->view); c; c = view_cursors_next(c))
 			view_cursors_selection_start(c);
 	}
-	vis_motion(vis, VIS_MOVE_LINE_END);
+	vis_motion(vis, VIS_MOVE_NOP);
 }
 
 static void vis_mode_visual_line_leave(Vis *vis, Mode *new) {
