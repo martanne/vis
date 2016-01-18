@@ -57,7 +57,7 @@ static size_t to(Vis *vis, Text *txt, size_t pos) {
 }
 
 static size_t till(Vis *vis, Text *txt, size_t pos) {
-	size_t hit = to(vis, txt, pos);
+	size_t hit = to(vis, txt, pos+1);
 	if (hit != pos)
 		return text_char_prev(txt, hit);
 	return pos;
@@ -74,7 +74,9 @@ static size_t to_left(Vis *vis, Text *txt, size_t pos) {
 }
 
 static size_t till_left(Vis *vis, Text *txt, size_t pos) {
-	size_t hit = to_left(vis, txt, pos);
+	if (pos == 0)
+		return pos;
+	size_t hit = to_left(vis, txt, pos-1);
 	if (hit != pos)
 		return text_char_next(txt, hit);
 	return pos;
