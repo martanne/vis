@@ -4,7 +4,7 @@
 vis - a vim like text editor
 .SH SYNOPSIS
 .B vis
-.RI [ +command ... ]
+.RI [ +command ...]
 .RI [ files ...|-]
 .br
 .SH DESCRIPTION
@@ -23,12 +23,17 @@ Override path to look for Lua support files as used for syntax highlighting.
 Defaults (in this order) to:
 .RS
 .RS
-.nf
-.PP
-.B  $HOME/.vis
+.TP
+.B  $XDG_CONFIG_HOME/vis
+where
+.B $XDG_CONFIG_HOME
+refers to
+.B $HOME/.config
+if unset
+.TP
 .B  /usr/local/share/vis
+.TP
 .B  /usr/share/vis
-.fi
 .RE
 .RE
 .TP
