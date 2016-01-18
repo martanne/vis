@@ -4,7 +4,6 @@
 #include "text-regex.h"
 
 struct Regex {
-	const char *string;
 	regex_t regex;
 };
 
@@ -17,7 +16,6 @@ Regex *text_regex_new(void) {
 }
 
 int text_regex_compile(Regex *regex, const char *string, int cflags) {
-	regex->string = string;
 	int r = regcomp(&regex->regex, string, cflags);
 	if (r)
 		regcomp(&regex->regex, "\0\0", 0);
