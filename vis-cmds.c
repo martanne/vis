@@ -489,14 +489,16 @@ static bool cmd_bdelete(Vis *vis, Filerange *range, enum CmdOpt opt, const char 
 static bool cmd_qall(Vis *vis, Filerange *range, enum CmdOpt opt, const char *argv[]) {
 	for (Win *next, *win = vis->windows; win; win = next) {
 		next = win->next;
-		if (!text_modified(vis->win->file->text) || (opt & CMD_OPT_FORCE))
+		if (!win->file->internal && (!text_modified(win->file->text) || (opt & CMD_OPT_FORCE)))
 			vis_window_close(win);
 	}
-	if (!has_windows(vis))
+	if (!has_windows(vis)) {
 		vis_exit(vis, EXIT_SUCCESS);
-	else
+		return true;
+	} else {
 		info_unsaved_changes(vis);
-	return vis->windows == NULL;
+		return false;
+	}
 }
 
 static bool cmd_read(Vis *vis, Filerange *range, enum CmdOpt opt, const char *argv[]) {
