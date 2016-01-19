@@ -519,7 +519,18 @@ void action_do(Vis *vis, Action *a) {
 			if (pos == EPOS) {
 				view_cursors_dispose(cursor);
 			} else if (pos <= text_size(txt)) {
+				/* moving the cursor will affect the selection.
+				 * because we want to be able to later restore
+				 * the old selection we update it again before
+				 * leaving visual mode.
+				 */
+				Filerange sel = view_cursors_selection_get(cursor);
 				view_cursors_to(cursor, pos);
+				if (vis->mode->visual) {
+					if (vis->mode == &vis_modes[VIS_MODE_VISUAL_LINE])
+						sel = text_range_linewise(txt, &sel);
+					view_cursors_selection_set(cursor, &sel);
+				}
 			}
 		}
 	}

@@ -1280,9 +1280,15 @@ static const char *selection_end(Vis *vis, const char *keys, const Arg *arg) {
 }
 
 static const char *selection_restore(Vis *vis, const char *keys, const Arg *arg) {
-	for (Cursor *c = view_cursors(vis_view(vis)); c; c = view_cursors_next(c))
+	Text *txt = vis_text(vis);
+	View *view = vis_view(vis);
+	for (Cursor *c = view_cursors(view); c; c = view_cursors_next(c))
 		view_cursors_selection_restore(c);
-	vis_mode_switch(vis, VIS_MODE_VISUAL);
+	Filerange sel = view_selection_get(view);
+	if (text_range_is_linewise(txt, &sel))
+		vis_mode_switch(vis, VIS_MODE_VISUAL_LINE);
+	else
+		vis_mode_switch(vis, VIS_MODE_VISUAL);
 	return keys;
 }
 
