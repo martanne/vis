@@ -1113,7 +1113,11 @@ bool vis_cmd(Vis *vis, const char *cmdline) {
 	char *line = malloc(len+2);
 	if (!line)
 		return false;
-	line = strncpy(line, cmdline, len+1);
+	strncpy(line, cmdline, len+1);
+
+	for (char *end = line + len - 1; end >= line && isspace((unsigned char)*end); end--)
+		*end = '\0';
+
 	char *name = line;
 
 	Filerange range = parse_range(vis->win, &name);
@@ -1173,8 +1177,12 @@ bool vis_cmd(Vis *vis, const char *cmdline) {
 			}
 			s = NULL;
 		}
-		if (s && (s = strchr(s, ' ')))
-			*s++ = '\0';
+		if (s) {
+			while (*s && !isspace((unsigned char)*s))
+				s++;
+			if (*s)
+				*s++ = '\0';
+		}
 		/* strip out a single '!' argument to make ":q !" work */
 		if (argv[i] && !strcmp(argv[i], "!")) {
 			opt |= CMD_OPT_FORCE;
