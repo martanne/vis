@@ -1,3 +1,4 @@
+#include <stdio.h>
 #include <string.h>
 #include <regex.h>
 #include "vis-core.h"
@@ -7,28 +8,30 @@
 
 /** utility functions */
 
-static char *get_word_at(Text *txt, size_t pos) {
+static bool search_word(Vis *vis, Text *txt, size_t pos) {
+	char expr[512];
 	Filerange word = text_object_word(txt, pos);
 	if (!text_range_valid(&word))
-		return NULL;
-	return text_bytes_alloc0(txt, word.start, word.end - word.start);
+		return false;
+	char *buf = text_bytes_alloc0(txt, word.start, text_range_size(&word));
+	if (!buf)
+		return false;
+	snprintf(expr, sizeof(expr), "\\<%s\\>", buf);
+	free(buf);
+	return text_regex_compile(vis->search_pattern, expr, REG_EXTENDED) == 0;
 }
 
 /** motion implementations */
 
 static size_t search_word_forward(Vis *vis, Text *txt, size_t pos) {
-	char *word = get_word_at(txt, pos);
-	if (word && !text_regex_compile(vis->search_pattern, word, REG_EXTENDED))
+	if (search_word(vis, txt, pos))
 		pos = text_search_forward(txt, pos, vis->search_pattern);
-	free(word);
 	return pos;
 }
 
 static size_t search_word_backward(Vis *vis, Text *txt, size_t pos) {
-	char *word = get_word_at(txt, pos);
-	if (word && !text_regex_compile(vis->search_pattern, word, REG_EXTENDED))
+	if (search_word(vis, txt, pos))
 		pos = text_search_backward(txt, pos, vis->search_pattern);
-	free(word);
 	return pos;
 }
 
