@@ -87,6 +87,7 @@ static size_t op_shift_right(Vis *vis, Text *txt, OperatorContext *c) {
 	const char *tab = vis->expandtab ? spaces : "\t";
 	size_t tablen = strlen(tab);
 	size_t pos = text_line_begin(txt, c->range.end), prev_pos;
+	size_t inserted = 0;
 
 	/* if range ends at the begin of a line, skip line break */
 	if (pos == c->range.end)
@@ -96,14 +97,16 @@ static size_t op_shift_right(Vis *vis, Text *txt, OperatorContext *c) {
 		prev_pos = pos = text_line_begin(txt, pos);
 		text_insert(txt, pos, tab, tablen);
 		pos = text_line_prev(txt, pos);
+		inserted += tablen;
 	}  while (pos >= c->range.start && pos != prev_pos);
 
-	return c->pos + tablen;
+	return c->pos + inserted;
 }
 
 static size_t op_shift_left(Vis *vis, Text *txt, OperatorContext *c) {
 	size_t pos = text_line_begin(txt, c->range.end), prev_pos;
 	size_t tabwidth = vis->tabwidth, tablen;
+	size_t deleted = 0;
 
 	/* if range ends at the begin of a line, skip line break */
 	if (pos == c->range.end)
@@ -123,9 +126,10 @@ static size_t op_shift_left(Vis *vis, Text *txt, OperatorContext *c) {
 		tablen = MIN(len, tabwidth);
 		text_delete(txt, pos, tablen);
 		pos = text_line_prev(txt, pos);
+		deleted += tablen;
 	}  while (pos >= c->range.start && pos != prev_pos);
 
-	return c->pos - tablen;
+	return c->pos - deleted;
 }
 
 static size_t op_case_change(Vis *vis, Text *txt, OperatorContext *c) {
@@ -236,8 +240,11 @@ bool vis_operator(Vis *vis, enum VisOperator id, ...) {
 		id = VIS_OP_PUT_AFTER;
 		break;
 	case VIS_OP_FILTER:
-		vis->action.type = LINEWISE;
 		vis->action.arg.s = va_arg(ap, char*);
+		/* fall through */
+	case VIS_OP_SHIFT_LEFT:
+	case VIS_OP_SHIFT_RIGHT:
+		vis_motion_type(vis, VIS_MOTIONTYPE_LINEWISE);
 		break;
 	default:
 		break;
