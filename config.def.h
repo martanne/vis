@@ -254,6 +254,8 @@ static const KeyBinding bindings_visual[] = {
 	{ "s",                  ALIAS("c")                                  },
 	{ "J",                  ACTION(JOIN_LINES)                          },
 	{ "o",                  ACTION(SELECTION_FLIP)                      },
+	{ ">",                  ALIAS("<vis-operator-shift-right>gv")       },
+	{ "<",                  ALIAS("<vis-operator-shift-left>gv")        },
 	{ 0 /* empty last element, array terminator */                      },
 };
 
