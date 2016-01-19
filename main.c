@@ -792,7 +792,7 @@ static KeyAction vis_action[] = {
 	[VIS_ACTION_PROMPT_SHOW_VISUAL] = {
 		"prompt-show-visual",
 		"Show editor command line prompt in visual mode",
-		prompt_show, { .s = "'<,'>" }
+		prompt_show, { .s = ":'<,'>" }
 	},
 	[VIS_ACTION_REPEAT] = {
 		"editor-repeat",
