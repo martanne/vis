@@ -320,8 +320,16 @@ Operators can be forced to work line wise by specifying `V`.
     *          the current selection, equivalent to '<,'>
 
   History support, tab completion and wildcard expansion are other
-  worthwhile features. However implementing them inside the editor
-  feels wrong.
+  worthwhile features. However implementing them inside the editor feels
+  wrong. For now you can use the `:edit` command with a pattern or a
+  directory like this.
+
+    :e *.c
+    :e .
+
+  vis will call the `vis-open` script which invokes dmenu or slmenu
+  with the files corresponding to the pattern. The file you select in
+  dmenu/slmenu will be opened in vis.
 
 ### Tab <-> Space conversion and Line endings \n vs \r\n
 
