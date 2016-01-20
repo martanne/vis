@@ -527,6 +527,12 @@ void action_do(Vis *vis, Action *a) {
 				Filerange sel = view_cursors_selection_get(cursor);
 				view_cursors_to(cursor, pos);
 				if (vis->mode->visual) {
+					if (sel.start == EPOS && sel.end == EPOS)
+						sel = c.range;
+					else if (sel.start == EPOS)
+						sel = text_range_new(c.range.start, sel.end);
+					else if (sel.end == EPOS)
+						sel = text_range_new(c.range.start, sel.start);
 					if (vis->mode == &vis_modes[VIS_MODE_VISUAL_LINE])
 						sel = text_range_linewise(txt, &sel);
 					view_cursors_selection_set(cursor, &sel);
