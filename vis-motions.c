@@ -53,6 +53,8 @@ static size_t mark_line_goto(Vis *vis, File *file, size_t pos) {
 
 static size_t to(Vis *vis, Text *txt, size_t pos) {
 	char c;
+	if (pos == text_line_end(txt, pos))
+		return pos;
 	size_t hit = text_line_find_next(txt, pos+1, vis->search_char);
 	if (!text_byte_get(txt, hit, &c) || c != vis->search_char[0])
 		return pos;
@@ -61,6 +63,8 @@ static size_t to(Vis *vis, Text *txt, size_t pos) {
 
 static size_t till(Vis *vis, Text *txt, size_t pos) {
 	size_t hit = to(vis, txt, pos+1);
+	if (pos == text_line_end(txt, pos))
+		return pos;
 	if (hit != pos)
 		return text_char_prev(txt, hit);
 	return pos;
@@ -68,7 +72,7 @@ static size_t till(Vis *vis, Text *txt, size_t pos) {
 
 static size_t to_left(Vis *vis, Text *txt, size_t pos) {
 	char c;
-	if (pos == 0)
+	if (pos == text_line_begin(txt, pos))
 		return pos;
 	size_t hit = text_line_find_prev(txt, pos-1, vis->search_char);
 	if (!text_byte_get(txt, hit, &c) || c != vis->search_char[0])
@@ -77,7 +81,7 @@ static size_t to_left(Vis *vis, Text *txt, size_t pos) {
 }
 
 static size_t till_left(Vis *vis, Text *txt, size_t pos) {
-	if (pos == 0)
+	if (pos == text_line_begin(txt, pos))
 		return pos;
 	size_t hit = to_left(vis, txt, pos-1);
 	if (hit != pos)

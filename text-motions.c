@@ -79,13 +79,15 @@ static size_t find_prev(Text *txt, size_t pos, const char *s, bool line) {
 	if (!s)
 		return pos;
 	size_t len = strlen(s), matched = len - 1;
-	Iterator it = text_iterator_get(txt, pos), sit;
+	Iterator it, sit;
 	if (len == 0)
 		return pos;
-	for (char c; text_iterator_byte_get(&it, &c); ) {
+	pos += len;
+	it = text_iterator_get(txt, pos);
+	for (char c; text_iterator_byte_prev(&it, &c); ) {
 		if (c == s[matched]) {
 			if (matched == 0)
-				break;
+				return it.pos;
 			if (matched == len - 1)
 				sit = it;
 			matched--;
@@ -93,11 +95,10 @@ static size_t find_prev(Text *txt, size_t pos, const char *s, bool line) {
 			it = sit;
 			matched = len - 1;
 		}
-		text_iterator_byte_prev(&it, NULL);
 		if (line && c == '\n')
 			break;
 	}
-	return matched == 0 ? it.pos : pos;
+	return pos;
 }
 
 size_t text_find_prev(Text *txt, size_t pos, const char *s) {
