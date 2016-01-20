@@ -126,6 +126,7 @@ enum {
 	VIS_ACTION_CURSOR_LINE_FINISH,
 	VIS_ACTION_CURSOR_LINE_BEGIN,
 	VIS_ACTION_CURSOR_LINE_END,
+	VIS_ACTION_CURSOR_LINE_LASTCHAR,
 	VIS_ACTION_CURSOR_SCREEN_LINE_UP,
 	VIS_ACTION_CURSOR_SCREEN_LINE_DOWN,
 	VIS_ACTION_CURSOR_SCREEN_LINE_BEGIN,
@@ -352,6 +353,11 @@ static KeyAction vis_action[] = {
 	[VIS_ACTION_CURSOR_LINE_END] = {
 		"cursor-line-end",
 		"Move cursor to end of the line",
+		movement, { .i = VIS_MOVE_LINE_END }
+	},
+	[VIS_ACTION_CURSOR_LINE_LASTCHAR] = {
+		"cursor-line-lastchar",
+		"Move cursor to last character of the line",
 		movement, { .i = VIS_MOVE_LINE_LASTCHAR }
 	},
 	[VIS_ACTION_CURSOR_SCREEN_LINE_UP] = {

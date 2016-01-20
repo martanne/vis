@@ -38,7 +38,7 @@ static const KeyBinding bindings_motions[] = {
 	{ "g<Down>",            ALIAS("gj")                                 },
 	{ "^",                  ACTION(CURSOR_LINE_START)                   },
 	{ "g_",                 ACTION(CURSOR_LINE_FINISH)                  },
-	{ "$",                  ACTION(CURSOR_LINE_END)                     },
+	{ "$",                  ACTION(CURSOR_LINE_LASTCHAR)                },
 	{ "%",                  ACTION(CURSOR_BRACKET_MATCH)                },
 	{ "b",                  ACTION(CURSOR_WORD_START_PREV)              },
 	{ "B",                  ACTION(CURSOR_LONGWORD_START_PREV)          },
@@ -232,6 +232,7 @@ static const KeyBinding bindings_normal[] = {
 	{ "gp",                 ACTION(PUT_AFTER_END)                       },
 	{ "gP",                 ACTION(PUT_BEFORE_END)                      },
 	{ "~",                  ALIAS("<vis-operator-case-swap>l")          },
+	{ "<End>",              ALIAS("$")                                  },
 	{ 0 /* empty last element, array terminator */                      },
 };
 
