@@ -1395,11 +1395,8 @@ static const char *insert_register(Vis *vis, const char *keys, const Arg *arg) {
 	enum VisRegister regid;
 	keys = key2register(vis, keys, &regid);
 	Register *reg = vis_register_get(vis, regid);
-	if (reg) {
-		int pos = view_cursor_get(vis_view(vis));
-		vis_insert(vis, pos, reg->data, reg->len);
-		view_cursor_to(vis_view(vis), pos + reg->len);
-	}
+	if (reg)
+		vis_insert_key(vis, reg->data, reg->len);
 	return keys;
 }
 
