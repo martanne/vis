@@ -12,7 +12,7 @@ void mode_set(Vis *vis, Mode *new_mode) {
 		return;
 	if (vis->mode->leave)
 		vis->mode->leave(vis, new_mode);
-	if (vis->mode->isuser)
+	if (vis->mode != &vis_modes[VIS_MODE_OPERATOR_PENDING])
 		vis->mode_prev = vis->mode;
 	vis->mode = new_mode;
 	if (new_mode->enter)
@@ -143,19 +143,16 @@ Mode vis_modes[] = {
 		.name = "OPERATOR-PENDING",
 		.input = vis_mode_operator_input,
 		.help = "",
-		.isuser = false,
 	},
 	[VIS_MODE_NORMAL] = {
 		.name = "NORMAL",
 		.status = "",
 		.help = "",
-		.isuser = true,
 	},
 	[VIS_MODE_VISUAL] = {
 		.name = "VISUAL",
 		.status = "--VISUAL--",
 		.help = "",
-		.isuser = true,
 		.enter = vis_mode_visual_enter,
 		.leave = vis_mode_visual_leave,
 		.visual = true,
@@ -164,7 +161,6 @@ Mode vis_modes[] = {
 		.name = "VISUAL LINE",
 		.status = "--VISUAL LINE--",
 		.help = "",
-		.isuser = true,
 		.enter = vis_mode_visual_line_enter,
 		.leave = vis_mode_visual_line_leave,
 		.visual = true,
@@ -173,7 +169,6 @@ Mode vis_modes[] = {
 		.name = "INSERT",
 		.status = "--INSERT--",
 		.help = "",
-		.isuser = true,
 		.enter = vis_mode_insert_enter,
 		.leave = vis_mode_insert_leave,
 		.input = vis_mode_insert_input,
@@ -184,7 +179,6 @@ Mode vis_modes[] = {
 		.name = "REPLACE",
 		.status = "--REPLACE--",
 		.help = "",
-		.isuser = true,
 		.enter = vis_mode_replace_enter,
 		.leave = vis_mode_replace_leave,
 		.input = vis_mode_replace_input,
