@@ -1224,7 +1224,7 @@ static const char *replace(Vis *vis, const char *keys, const Arg *arg) {
 
 static const char *count(Vis *vis, const char *keys, const Arg *arg) {
 	int digit = keys[-1] - '0';
-	int count = vis_count_get(vis);
+	int count = vis_count_get_default(vis, 0);
 	if (0 <= digit && digit <= 9) {
 		if (digit == 0 && count == 0)
 			vis_motion(vis, VIS_MOVE_LINE_BEGIN);
@@ -1234,7 +1234,7 @@ static const char *count(Vis *vis, const char *keys, const Arg *arg) {
 }
 
 static const char *gotoline(Vis *vis, const char *keys, const Arg *arg) {
-	if (vis_count_get(vis))
+	if (vis_count_get(vis) != VIS_COUNT_UNKNOWN)
 		vis_motion(vis, VIS_MOVE_LINE);
 	else if (arg->i < 0)
 		vis_motion(vis, VIS_MOVE_FILE_BEGIN);
@@ -1366,7 +1366,7 @@ static const char *redo(Vis *vis, const char *keys, const Arg *arg) {
 }
 
 static const char *earlier(Vis *vis, const char *keys, const Arg *arg) {
-	size_t pos = text_earlier(vis_text(vis), MAX(vis_count_get(vis), 1));
+	size_t pos = text_earlier(vis_text(vis), vis_count_get_default(vis, 1));
 	if (pos != EPOS) {
 		view_cursor_to(vis_view(vis), pos);
 		/* redraw all windows in case some display the same file */
@@ -1376,7 +1376,7 @@ static const char *earlier(Vis *vis, const char *keys, const Arg *arg) {
 }
 
 static const char *later(Vis *vis, const char *keys, const Arg *arg) {
-	size_t pos = text_later(vis_text(vis), MAX(vis_count_get(vis), 1));
+	size_t pos = text_later(vis_text(vis), vis_count_get_default(vis, 1));
 	if (pos != EPOS) {
 		view_cursor_to(vis_view(vis), pos);
 		/* redraw all windows in case some display the same file */
@@ -1506,6 +1506,7 @@ static const char *cmd(Vis *vis, const char *keys, const Arg *arg) {
 }
 
 static int argi2lines(Vis *vis, const Arg *arg) {
+	int count = vis_count_get(vis);
 	switch (arg->i) {
 	case -PAGE:
 	case +PAGE:
@@ -1514,8 +1515,8 @@ static int argi2lines(Vis *vis, const Arg *arg) {
 	case +PAGE_HALF:
 		return view_height_get(vis_view(vis))/2;
 	default:
-		if (vis_count_get(vis) > 0)
-			return vis_count_get(vis);
+		if (count != VIS_COUNT_UNKNOWN)
+			return count;
 		return arg->i < 0 ? -arg->i : arg->i;
 	}
 }
@@ -1559,7 +1560,7 @@ static const char *openline(Vis *vis, const char *keys, const Arg *arg) {
 }
 
 static const char *join(Vis *vis, const char *keys, const Arg *arg) {
-	int count = vis_count_get(vis);
+	int count = vis_count_get_default(vis, 0);
 	if (count)
 		vis_count_set(vis, count-1);
 	vis_operator(vis, VIS_OP_JOIN);

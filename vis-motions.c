@@ -90,15 +90,15 @@ static size_t till_left(Vis *vis, Text *txt, size_t pos) {
 }
 
 static size_t line(Vis *vis, Text *txt, size_t pos) {
-	return text_pos_by_lineno(txt, vis->action.count);
+	return text_pos_by_lineno(txt, vis_count_get_default(vis, 1));
 }
 
 static size_t column(Vis *vis, Text *txt, size_t pos) {
-	return text_line_offset(txt, pos, vis->action.count);
+	return text_line_offset(txt, pos, vis_count_get_default(vis, 0));
 }
 
 static size_t view_lines_top(Vis *vis, View *view) {
-	return view_screenline_goto(view, vis->action.count);
+	return view_screenline_goto(view, vis_count_get_default(vis, 1));
 }
 
 static size_t view_lines_middle(Vis *vis, View *view) {
@@ -108,7 +108,7 @@ static size_t view_lines_middle(Vis *vis, View *view) {
 
 static size_t view_lines_bottom(Vis *vis, View *view) {
 	int h = view_height_get(vis->win->view);
-	return view_screenline_goto(vis->win->view, h - vis->action.count);
+	return view_screenline_goto(vis->win->view, h - vis_count_get_default(vis, 0));
 }
 
 static size_t window_changelist_next(Vis *vis, Win *win, size_t pos) {

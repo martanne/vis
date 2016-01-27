@@ -252,10 +252,12 @@ enum VisMotion {
  */
 bool vis_motion(Vis*, enum VisMotion, ...);
 
-/* a count of zero indicates that so far no special count was given.
- * operators, motions and text object will always perform their function
- * as if a minimal count of 1 was given */
+/* If no count is explicitly specified, operators, motions and
+ * text object will always perform their function as if a minimal
+ * count of 1 was given */
+#define VIS_COUNT_UNKNOWN (-1)
 int vis_count_get(Vis*);
+int vis_count_get_default(Vis*, int def);
 void vis_count_set(Vis*, int count);
 
 enum VisMotionType {

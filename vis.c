@@ -306,6 +306,7 @@ Vis *vis_new(Ui *ui, VisEvent *event) {
 	vis->ui->init(vis->ui, vis);
 	vis->tabwidth = 8;
 	vis->expandtab = false;
+	action_reset(&vis->action);
 	if (!(vis->search_pattern = text_regex_new()))
 		goto err;
 	if (!(vis->command_file = file_new(vis, NULL)))
@@ -413,8 +414,7 @@ void action_do(Vis *vis, Action *a) {
 	if (a->op == &vis_operators[VIS_OP_FILTER] && !vis->mode->visual)
 		vis_mode_switch(vis, VIS_MODE_VISUAL_LINE);
 
-	if (a->count < 1)
-		a->count = 1;
+	int count = MAX(a->count, 1);
 	bool repeatable = a->op && !vis->macro_operator;
 	bool multiple_cursors = view_cursors_count(view) > 1;
 	bool linewise = !(a->type & CHARWISE) && (
@@ -430,7 +430,7 @@ void action_do(Vis *vis, Action *a) {
 			reg = &vis->registers[win->file->internal ? VIS_REG_PROMPT : VIS_REG_DEFAULT];
 
 		OperatorContext c = {
-			.count = a->count,
+			.count = count,
 			.pos = pos,
 			.newpos = EPOS,
 			.range = text_range_empty(),
@@ -441,7 +441,7 @@ void action_do(Vis *vis, Action *a) {
 
 		if (a->movement) {
 			size_t start = pos;
-			for (int i = 0; i < a->count; i++) {
+			for (int i = 0; i < count; i++) {
 				if (a->movement->txt)
 					pos = a->movement->txt(txt, pos);
 				else if (a->movement->cur)
@@ -486,7 +486,7 @@ void action_do(Vis *vis, Action *a) {
 				c.range = view_cursors_selection_get(cursor);
 			else
 				c.range.start = c.range.end = pos;
-			for (int i = 0; i < a->count; i++) {
+			for (int i = 0; i < count; i++) {
 				Filerange r = a->textobj->range(txt, pos);
 				if (!text_range_valid(&r))
 					break;
@@ -497,7 +497,7 @@ void action_do(Vis *vis, Action *a) {
 
 				c.range = text_range_union(&c.range, &r);
 
-				if (i < a->count - 1)
+				if (i < count - 1)
 					pos = c.range.end + 1;
 			}
 		} else if (vis->mode->visual) {
@@ -581,6 +581,7 @@ void action_do(Vis *vis, Action *a) {
 
 void action_reset(Action *a) {
 	memset(a, 0, sizeof(*a));
+	a->count = VIS_COUNT_UNKNOWN;
 }
 
 void vis_cancel(Vis *vis) {
@@ -945,7 +946,7 @@ void vis_repeat(Vis *vis) {
 		macro = macro_repeat;
 		vis->action_prev.macro = macro;
 	}
-	if (count)
+	if (count != VIS_COUNT_UNKNOWN)
 		vis->action_prev.count = count;
 	count = vis->action_prev.count;
 	/* for some operators count should be applied only to the macro not the motion */
@@ -978,9 +979,14 @@ int vis_count_get(Vis *vis) {
 	return vis->action.count;
 }
 
+int vis_count_get_default(Vis *vis, int def) {
+	if (vis->action.count == VIS_COUNT_UNKNOWN)
+		return def;
+	return vis->action.count;
+}
+
 void vis_count_set(Vis *vis, int count) {
-	if (count >= 0)
-		vis->action.count = count;
+	vis->action.count = (count >= 0 ? count : VIS_COUNT_UNKNOWN);
 }
 
 void vis_register_set(Vis *vis, enum VisRegister reg) {
