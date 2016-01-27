@@ -610,7 +610,7 @@ void view_draw(View *view) {
 			c->line->cells[c->col].cursor = true;
 			if (view->ui && !c->sel) {
 				Line *line_match; int col_match;
-				size_t pos_match = text_bracket_match_except(view->text, pos, "<>");
+				size_t pos_match = text_bracket_match_symbol(view->text, pos, "(){}[]\"'`");
 				if (pos != pos_match && view_coord_get(view, pos_match, &line_match, NULL, &col_match)) {
 					line_match->cells[col_match].selected = true;
 				}

@@ -550,17 +550,17 @@ size_t text_function_end_prev(Text *txt, size_t pos) {
 }
 
 size_t text_bracket_match(Text *txt, size_t pos) {
-	return text_bracket_match_except(txt, pos, NULL);
+	return text_bracket_match_symbol(txt, pos, NULL);
 }
 
-size_t text_bracket_match_except(Text *txt, size_t pos, const char *except) {
+size_t text_bracket_match_symbol(Text *txt, size_t pos, const char *symbols) {
 	int direction, count = 1;
 	char search, current, c;
 	bool instring = false;
 	Iterator it = text_iterator_get(txt, pos);
 	if (!text_iterator_byte_get(&it, &current))
 		return pos;
-	if (except && memchr(except, current, strlen(except)))
+	if (symbols && !memchr(symbols, current, strlen(symbols)))
 		return pos;
 	switch (current) {
 	case '(': search = ')'; direction =  1; break;
