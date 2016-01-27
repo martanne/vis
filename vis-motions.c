@@ -173,6 +173,27 @@ static size_t window_nop(Vis *vis, Win *win, size_t pos) {
 	return pos;
 }
 
+static size_t bracket_match(Text *txt, size_t pos) {
+	size_t hit = text_bracket_match_except(txt, pos, "<>\"'`");
+	if (hit != pos)
+		return hit;
+	char current;
+	Iterator it = text_iterator_get(txt, pos);
+	while (text_iterator_byte_get(&it, &current)) {
+		switch (current) {
+		case '(':
+		case ')':
+		case '{':
+		case '}':
+		case '[':
+		case ']':
+			return it.pos;
+		}
+		text_iterator_byte_next(&it, NULL);
+	}
+	return pos;
+}
+
 void vis_motion_type(Vis *vis, enum VisMotionType type) {
 	vis->action.type = type;
 }
@@ -300,7 +321,7 @@ Movement vis_motions[] = {
 	[VIS_MOVE_FUNCTION_START_NEXT] = { .txt = text_function_start_next, .type = LINEWISE|JUMP            },
 	[VIS_MOVE_FUNCTION_END_PREV]   = { .txt = text_function_end_prev,   .type = LINEWISE|JUMP            },
 	[VIS_MOVE_FUNCTION_END_NEXT]   = { .txt = text_function_end_next,   .type = LINEWISE|JUMP            },
-	[VIS_MOVE_BRACKET_MATCH]       = { .txt = text_bracket_match,       .type = INCLUSIVE|JUMP           },
+	[VIS_MOVE_BRACKET_MATCH]       = { .txt = bracket_match,            .type = INCLUSIVE|JUMP           },
 	[VIS_MOVE_FILE_BEGIN]          = { .txt = text_begin,               .type = LINEWISE|JUMP            },
 	[VIS_MOVE_FILE_END]            = { .txt = text_end,                 .type = LINEWISE|JUMP            },
 	[VIS_MOVE_LEFT_TO]             = { .vis = to_left,                                                   },
