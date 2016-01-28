@@ -1,4 +1,4 @@
--- Copyright 2015-2016 Alejandro Baez (https://twitter.com/a_baez). See LICENSE.
+-- Copyright 2015-2016 Alejandro Baez (https://keybase.io/baez). See LICENSE.
 -- Rust LPeg lexer.
 
 local l = require("lexer")
@@ -18,11 +18,11 @@ local comment = token(l.COMMENT, line_comment + block_comment)
 -- Strings.
 local sq_str = P('L')^-1 * l.delimited_range("'")
 local dq_str = P('L')^-1 * l.delimited_range('"')
-local raw_str = "##" * (l.any - '##')^0 * P("##")^-1
+local raw_str =  '#"' * (l.any - '#')^0 * P('#')^-1
 local string = token(l.STRING, dq_str + raw_str)
 
 -- Numbers.
-local number = token(l.NUMBER, l.float +
+local number = token(l.NUMBER, l.float + (l.dec_num + "_")^1 +
                      "0b" * (l.dec_num + "_")^1 + l.integer)
 
 -- Keywords.
@@ -33,10 +33,11 @@ local keyword = token(l.KEYWORD, word_match{
   'fn',         'for',        'if',       'impl',     'in',
   'let',        'loop',       'macro',    'match',    'mod',
   'move',       'mut',        "offsetof", 'override', 'priv',
-  'pub',        'pure',       'ref',      'return',   'sizeof',
-  'static',     'self',       'struct',   'super',    'true',
-  'trait',      'type',       'typeof',   'unsafe',   'unsized',
-  'use',        'virtual',    'where',    'while',    'yield'
+  'proc',       'pub',        'pure',     'ref',      'return',
+  'Self',       'self',       'sizeof',   'static',   'struct',
+  'super',      'trait',      'true',     'type',     'typeof',
+  'unsafe',     'unsized',    'use',      'virtual',  'where',
+  'while',      'yield'
 })
 
 -- Library types
