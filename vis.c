@@ -112,6 +112,15 @@ static File *file_new(Vis *vis, const char *filename) {
 	return file;
 }
 
+static File *file_new_internal(Vis *vis, const char *filename) {
+	File *file = file_new(vis, filename);
+	if (file) {
+		file->refcount = 1;
+		file->internal = true;
+	}
+	return file;
+}
+
 void vis_window_name(Win *win, const char *filename) {
 	File *file = win->file;
 	if (filename != file->name) {
@@ -309,14 +318,10 @@ Vis *vis_new(Ui *ui, VisEvent *event) {
 	action_reset(&vis->action);
 	if (!(vis->search_pattern = text_regex_new()))
 		goto err;
-	if (!(vis->command_file = file_new(vis, NULL)))
+	if (!(vis->command_file = file_new_internal(vis, NULL)))
 		goto err;
-	vis->command_file->refcount = 1;
-	vis->command_file->internal = true;
-	if (!(vis->search_file = file_new(vis, NULL)))
+	if (!(vis->search_file = file_new_internal(vis, NULL)))
 		goto err;
-	vis->search_file->refcount = 1;
-	vis->search_file->internal = true;
 	vis->mode_prev = vis->mode = &vis_modes[VIS_MODE_NORMAL];
 	vis->event = event;
 	return vis;
