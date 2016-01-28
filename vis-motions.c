@@ -194,6 +194,13 @@ static size_t bracket_match(Text *txt, size_t pos) {
 	return pos;
 }
 
+static size_t percent(Vis *vis, Text *txt, size_t pos) {
+	int ratio = vis_count_get_default(vis, 0);
+	if (ratio > 100)
+		ratio = 100;
+	return text_size(txt) * ratio / 100;
+}
+
 void vis_motion_type(Vis *vis, enum VisMotionType type) {
 	vis->action.type = type;
 }
@@ -342,5 +349,6 @@ Movement vis_motions[] = {
 	[VIS_MOVE_JUMPLIST_NEXT]       = { .win = window_jumplist_next,     .type = INCLUSIVE                },
 	[VIS_MOVE_JUMPLIST_PREV]       = { .win = window_jumplist_prev,     .type = INCLUSIVE                },
 	[VIS_MOVE_NOP]                 = { .win = window_nop,               .type = IDEMPOTENT               },
+	[VIS_MOVE_PERCENT]             = { .vis = percent,                  .type = IDEMPOTENT               },
 };
 

@@ -107,6 +107,8 @@ static const char *call(Vis*, const char *keys, const Arg *arg);
 static const char *window(Vis*, const char *keys, const Arg *arg);
 /* show info about Unicode character at cursor position */
 static const char *unicode_info(Vis*, const char *keys, const Arg *arg);
+/* either go to count % of ile or to matching item */
+static const char *percent(Vis*, const char *keys, const Arg *arg);
 
 enum {
 	VIS_ACTION_EDITOR_SUSPEND,
@@ -132,7 +134,7 @@ enum {
 	VIS_ACTION_CURSOR_SCREEN_LINE_BEGIN,
 	VIS_ACTION_CURSOR_SCREEN_LINE_MIDDLE,
 	VIS_ACTION_CURSOR_SCREEN_LINE_END,
-	VIS_ACTION_CURSOR_BRACKET_MATCH,
+	VIS_ACTION_CURSOR_PERCENT,
 	VIS_ACTION_CURSOR_PARAGRAPH_PREV,
 	VIS_ACTION_CURSOR_PARAGRAPH_NEXT,
 	VIS_ACTION_CURSOR_SENTENCE_PREV,
@@ -385,10 +387,10 @@ static KeyAction vis_action[] = {
 		"Move cursor to end of screen/display line",
 		movement, { .i = VIS_MOVE_SCREEN_LINE_END }
 	},
-	[VIS_ACTION_CURSOR_BRACKET_MATCH] = {
-		"cursor-match-bracket",
-		"Match corresponding symbol if cursor is on a bracket character",
-		movement, { .i = VIS_MOVE_BRACKET_MATCH }
+	[VIS_ACTION_CURSOR_PERCENT] = {
+		"cursor-percent",
+		"Move to count % of file or matching item",
+		percent
 	},
 	[VIS_ACTION_CURSOR_PARAGRAPH_PREV] = {
 		"cursor-paragraph-prev",
@@ -1599,6 +1601,14 @@ static const char *unicode_info(Vis *vis, const char *keys, const Arg *arg) {
 		data_cur += len;
 	}
 	vis_info_show(vis, "%s", info);
+	return keys;
+}
+
+static const char *percent(Vis *vis, const char *keys, const Arg *arg) {
+	if (vis_count_get(vis) == VIS_COUNT_UNKNOWN)
+		vis_motion(vis, VIS_MOVE_BRACKET_MATCH);
+	else
+		vis_motion(vis, VIS_MOVE_PERCENT);
 	return keys;
 }
 

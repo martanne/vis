@@ -39,7 +39,7 @@ static const KeyBinding bindings_motions[] = {
 	{ "^",                  ACTION(CURSOR_LINE_START)                   },
 	{ "g_",                 ACTION(CURSOR_LINE_FINISH)                  },
 	{ "$",                  ACTION(CURSOR_LINE_LASTCHAR)                },
-	{ "%",                  ACTION(CURSOR_BRACKET_MATCH)                },
+	{ "%",                  ACTION(CURSOR_PERCENT)                      },
 	{ "b",                  ACTION(CURSOR_WORD_START_PREV)              },
 	{ "B",                  ACTION(CURSOR_LONGWORD_START_PREV)          },
 	{ "w",                  ACTION(CURSOR_WORD_START_NEXT)              },

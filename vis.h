@@ -228,6 +228,7 @@ enum VisMotion {
 	VIS_MOVE_JUMPLIST_NEXT,
 	VIS_MOVE_JUMPLIST_PREV,
 	VIS_MOVE_NOP,
+	VIS_MOVE_PERCENT,
 	VIS_MOVE_INVALID, /* denotes the end of the "real" motions */
 	/* pseudo motions: keep them at the end to save space in array definition */
 	VIS_MOVE_TOTILL_REPEAT,
