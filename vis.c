@@ -297,6 +297,8 @@ void vis_window_close(Win *win) {
 		vis->windows = win->next;
 	if (vis->win == win)
 		vis->win = win->next ? win->next : win->prev;
+	if (win == vis->message_window)
+		vis->message_window = NULL;
 	window_free(win);
 	if (vis->win)
 		vis->ui->window_focus(vis->win->ui);
@@ -309,8 +311,6 @@ Vis *vis_new(Ui *ui, VisEvent *event) {
 	Vis *vis = calloc(1, sizeof(Vis));
 	if (!vis)
 		return NULL;
-	if (event && event->vis_start)
-		event->vis_start(vis);
 	vis->ui = ui;
 	vis->ui->init(vis->ui, vis);
 	vis->tabwidth = 8;
@@ -324,6 +324,9 @@ Vis *vis_new(Ui *ui, VisEvent *event) {
 		goto err;
 	vis->mode_prev = vis->mode = &vis_modes[VIS_MODE_NORMAL];
 	vis->event = event;
+	if (event && event->vis_start)
+		event->vis_start(vis);
+	vis->ui->start(vis->ui);
 	return vis;
 err:
 	vis_free(vis);

@@ -78,6 +78,28 @@ static void stack_dump(lua_State *L, const char *format, ...) {
 
 #endif
 
+static int error_function(lua_State *L) {
+	Vis *vis = lua_touserdata(L, lua_upvalueindex(1));
+	size_t len;
+	const char *msg = lua_tostring(L, 1);
+	if (msg)
+		luaL_traceback(L, L, msg, 1);
+	msg = lua_tolstring(L, 1, &len);
+	vis_message_show(vis, msg);
+	return 1;
+}
+
+static int pcall(Vis *vis, lua_State *L, int nargs, int nresults) {
+	/* insert a custom error function below all arguments */
+	int msgh = lua_gettop(L) - nargs;
+	lua_pushlightuserdata(L, vis);
+	lua_pushcclosure(L, error_function, 1);
+	lua_insert(L, msgh);
+	int ret = lua_pcall(L, nargs, nresults, msgh);
+	lua_remove(L, msgh);
+	return ret;
+}
+
 static void *obj_new(lua_State *L, size_t size, const char *type) {
 	void *obj = lua_newuserdata(L, size);
 	luaL_getmetatable(L, type);
@@ -586,10 +608,10 @@ void vis_lua_start(Vis *vis) {
 
 	lua_getglobal(L, "require");
 	lua_pushstring(L, "visrc");
-	lua_pcall(L, 1, 0, 0);
+	pcall(vis, L, 1, 0);
 	vis_lua_event(vis, "start");
 	if (lua_isfunction(L, -1))
-		lua_pcall(L, 0, 0, 0);
+		pcall(vis, L, 0, 0);
 	lua_pop(L, 1);
 }
 
@@ -599,7 +621,7 @@ void vis_lua_quit(Vis *vis) {
 		return;
 	vis_lua_event(vis, "quit");
 	if (lua_isfunction(L, -1))
-		lua_pcall(L, 0, 0, 0);
+		pcall(vis, L, 0, 0);
 	lua_pop(L, 1);
 	lua_close(L);
 }
@@ -617,7 +639,7 @@ void vis_lua_file_close(Vis *vis, File *file) {
 	vis_lua_event(vis, "file_close");
 	if (lua_isfunction(L, -1)) {
 		obj_ref_new(L, file, "vis.file");
-		lua_pcall(L, 1, 0, 0);
+		pcall(vis, L, 1, 0);
 	}
 	obj_ref_free(L, file->text);
 	obj_ref_free(L, file);
@@ -629,7 +651,7 @@ void vis_lua_win_open(Vis *vis, Win *win) {
 	vis_lua_event(vis, "win_open");
 	if (lua_isfunction(L, -1)) {
 		obj_ref_new(L, win, "vis.window");
-		lua_pcall(L, 1, 0, 0);
+		pcall(vis, L, 1, 0);
 	}
 	lua_pop(L, 1);
 }
@@ -639,7 +661,7 @@ void vis_lua_win_close(Vis *vis, Win *win) {
 	vis_lua_event(vis, "win_close");
 	if (lua_isfunction(L, -1)) {
 		obj_ref_new(L, win, "vis.window");
-		lua_pcall(L, 1, 0, 0);
+		pcall(vis, L, 1, 0);
 	}
 	obj_ref_free(L, win->view);
 	obj_ref_free(L, win);
@@ -663,7 +685,7 @@ bool vis_theme_load(Vis *vis, const char *name) {
 	lua_pop(L, 2);
 	lua_getglobal(L, "require");
 	lua_pushvalue(L, -2);
-	if (lua_pcall(L, 1, 0, 0))
+	if (pcall(vis, L, 1, 0))
 		return false;
 	for (Win *win = vis->windows; win; win = win->next)
 		view_syntax_set(win->view, view_syntax_get(win->view));

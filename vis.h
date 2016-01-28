@@ -81,9 +81,13 @@ void vis_window_prev(Vis*);
 /* display a user prompt with a certain title and default text */
 void vis_prompt_show(Vis*, const char *title);
 
-/* display a message to the user */
+/* display a one line message to the user, will be hidden upon keypress */
 void vis_info_show(Vis*, const char *msg, ...);
 void vis_info_hide(Vis*);
+
+/* display an arbitrary long message in a special window/file */
+void vis_message_show(Vis*, const char *msg);
+void vis_message_hide(Vis*);
 
 /* these function operate on the currently focused window but make sure
  * that all windows which show the affected region are redrawn too. */

@@ -988,6 +988,11 @@ static void ui_info_hide(Ui *ui) {
 static bool ui_init(Ui *ui, Vis *vis) {
 	UiCurses *uic = (UiCurses*)ui;
 	uic->vis = vis;
+	return true;
+}
+
+static bool ui_start(Ui *ui) {
+	Vis *vis = ((UiCurses*)ui)->vis;
 	const char *theme = getenv("VIS_THEME");
 	if (theme && theme[0]) {
 		if (!vis_theme_load(vis, theme))
@@ -1087,6 +1092,7 @@ Ui *ui_curses_new(void) {
 
 	*ui = (Ui) {
 		.init = ui_init,
+		.start = ui_start,
 		.free = ui_curses_free,
 		.termkey_get = ui_termkey_get,
 		.suspend = ui_suspend,

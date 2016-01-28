@@ -44,6 +44,7 @@ enum UiStyles {
 
 struct Ui {
 	bool (*init)(Ui*, Vis*);
+	bool (*start)(Ui*);
 	void (*free)(Ui*);
 	void (*resize)(Ui*);
 	UiWin* (*window_new)(Ui*, View*, File*, enum UiOption);

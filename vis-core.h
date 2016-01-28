@@ -132,6 +132,7 @@ struct Vis {
 	File *search_file;                   /* special internal file used to store /,? search prompt */
 	Win *windows;                        /* all windows currently managed by this editor instance */
 	Win *win;                            /* currently active/focused window */
+	Win *message_window;                 /* special window to display multi line messages */
 	Register registers[VIS_REG_INVALID]; /* registers used for yank and put */
 	Macro macros[VIS_MACRO_INVALID];     /* recorded macros */
 	Macro *recording, *last_recording;   /* currently (if non NULL) and least recently recorded macro */
