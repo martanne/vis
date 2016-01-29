@@ -79,6 +79,8 @@ static bool cmd_write(Vis*, Filerange*, enum CmdOpt, const char *argv[]);
 static bool cmd_saveas(Vis*, Filerange*, enum CmdOpt, const char *argv[]);
 /* filter range through external program argv[1] */
 static bool cmd_filter(Vis*, Filerange*, enum CmdOpt, const char *argv[]);
+/* write range to external program, display output in a new window */
+static bool cmd_pipe(Vis *vis, Filerange*, enum CmdOpt, const char *argv[]);
 /* switch to the previous/next saved state of the text, chronologically */
 static bool cmd_earlier_later(Vis*, Filerange*, enum CmdOpt, const char *argv[]);
 /* dump current key bindings */
@@ -117,6 +119,7 @@ static Command cmds[] = {
 	{ { "earlier"                  }, cmd_earlier_later, CMD_OPT_NONE               },
 	{ { "later"                    }, cmd_earlier_later, CMD_OPT_NONE               },
 	{ { "!",                       }, cmd_filter,        CMD_OPT_NONE               },
+	{ { "|",                       }, cmd_pipe,          CMD_OPT_NONE               },
 	{ { NULL,                      }, NULL,              CMD_OPT_NONE               },
 };
 
@@ -601,6 +604,12 @@ static bool cmd_write(Vis *vis, Filerange *range, enum CmdOpt opt, const char *a
 		vis_info_show(vis, "Filename expected");
 		return false;
 	}
+
+	if (argv[1][0] == '!') {
+		argv[1]++;
+		return cmd_pipe(vis, range, opt, argv);
+	}
+
 	for (const char **name = &argv[1]; *name; name++) {
 		struct stat meta;
 		if (!(opt & CMD_OPT_FORCE) && file->stat.st_mtime && stat(*name, &meta) == 0 &&
@@ -850,6 +859,48 @@ static bool cmd_filter(Vis *vis, Filerange *range, enum CmdOpt opt, const char *
 		text_insert(txt, filter.pos, " ", 1);
 		text_undo(txt);
 	}
+
+	if (vis->cancel_filter)
+		vis_info_show(vis, "Command cancelled");
+	else if (status == 0)
+		vis_info_show(vis, "Command succeded");
+	else if (filter.stderr.len > 0)
+		vis_info_show(vis, "Command failed: %s", filter.stderr.data);
+	else
+		vis_info_show(vis, "Command failed");
+
+	buffer_release(&filter.stderr);
+
+	return !vis->cancel_filter && status == 0;
+}
+
+static ssize_t read_stdout_new(void *context, char *data, size_t len) {
+	Filter *filter = context;
+
+	if (!filter->txt && vis_window_new(filter->vis, NULL))
+		filter->txt = filter->vis->win->file->text;
+
+	if (filter->txt) {
+		text_insert(filter->txt, filter->pos, data, len);
+		filter->pos += len;
+	}
+	return len;
+}
+
+static bool cmd_pipe(Vis *vis, Filerange *range, enum CmdOpt opt, const char *argv[]) {
+	Text *txt = vis->win->file->text;
+	if (!text_range_valid(range))
+		*range = (Filerange){ .start = 0, .end = text_size(txt) };
+
+	Filter filter = {
+		.vis = vis,
+		.txt = NULL,
+		.pos = 0,
+	};
+
+	buffer_init(&filter.stderr);
+
+	int status = vis_pipe(vis, &filter, range, argv, read_stdout_new, read_stderr);
 
 	if (vis->cancel_filter)
 		vis_info_show(vis, "Command cancelled");
@@ -1181,7 +1232,7 @@ bool vis_cmd(Vis *vis, const char *cmdline) {
 	while (*name == ' ')
 		name++;
 	char *param = name;
-	while (*param && (isalpha((unsigned char)*param) || *param == '-'))
+	while (*param && (isalpha((unsigned char)*param) || *param == '-' || *param == '|'))
 		param++;
 
 	if (*param == '!') {
