@@ -364,6 +364,11 @@ bool vis_cmd(Vis*, const char *cmd);
 /* execute any kind (:,?,/) of prompt command */
 bool vis_prompt_cmd(Vis*, const char *cmd);
 
+/* pipe a given file range to an external process */
+int vis_pipe(Vis *vis, void *context, Filerange *range, const char *argv[],
+	ssize_t (*read_stdout)(void *context, char *data, size_t len),
+	ssize_t (*read_stderr)(void *context, char *data, size_t len));
+
 /* given the start of a key, returns a pointer to the start of the one immediately
  * following as will be processed by the input system. skips over special keys
  * such as <Enter> as well as pseudo keys registered via vis_action_register. */

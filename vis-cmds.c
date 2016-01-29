@@ -32,6 +32,13 @@ typedef struct {             /* command definitions for the ':'-prompt */
 	enum CmdOpt opt;     /* command option flags */
 } Command;
 
+typedef struct {        /* used to keep context when dealing with external proceses */
+	Vis *vis;       /* editor instance */
+	Text *txt;      /* text into which received data will be inserted */
+	size_t pos;     /* position at which to insert new data */
+	Buffer stderr;  /* used to store everything the process writes to stderr */
+} Filter;
+
 /** ':'-command implementations */
 /* set various runtime options */
 static bool cmd_set(Vis*, Filerange*, enum CmdOpt, const char *argv[]);
@@ -626,7 +633,10 @@ static bool cmd_saveas(Vis *vis, Filerange *range, enum CmdOpt opt, const char *
 	return false;
 }
 
-static bool cmd_filter(Vis *vis, Filerange *range, enum CmdOpt opt, const char *argv[]) {
+int vis_pipe(Vis *vis, void *context, Filerange *range, const char *argv[],
+	ssize_t (*read_stdout)(void *context, char *data, size_t len),
+	ssize_t (*read_stderr)(void *context, char *data, size_t len)) {
+
 	/* if an invalid range was given, stdin (i.e. key board input) is passed
 	 * through the external command. */
 	Text *text = vis->win->file->text;
@@ -634,13 +644,16 @@ static bool cmd_filter(Vis *vis, Filerange *range, enum CmdOpt opt, const char *
 	int pin[2], pout[2], perr[2], status = -1;
 	bool interactive = !text_range_valid(range);
 	size_t pos = view_cursor_get(view);
+	Filerange rout = *range;
+	if (interactive)
+		rout = (Filerange){ .start = pos, .end = pos };
 
 	if (pipe(pin) == -1)
-		return false;
+		return -1;
 	if (pipe(pout) == -1) {
 		close(pin[0]);
 		close(pin[1]);
-		return false;
+		return -1;
 	}
 
 	if (pipe(perr) == -1) {
@@ -648,7 +661,7 @@ static bool cmd_filter(Vis *vis, Filerange *range, enum CmdOpt opt, const char *
 		close(pin[1]);
 		close(pout[0]);
 		close(pout[1]);
-		return false;
+		return -1;
 	}
 
 	vis->ui->terminal_save(vis->ui);
@@ -662,7 +675,7 @@ static bool cmd_filter(Vis *vis, Filerange *range, enum CmdOpt opt, const char *
 		close(perr[0]);
 		close(perr[1]);
 		vis_info_show(vis, "fork failure: %s", strerror(errno));
-		return false;
+		return -1;
 	} else if (pid == 0) { /* child i.e filter */
 		if (!interactive)
 			dup2(pin[0], STDIN_FILENO);
@@ -692,35 +705,12 @@ static bool cmd_filter(Vis *vis, Filerange *range, enum CmdOpt opt, const char *
 	fcntl(pout[0], F_SETFL, O_NONBLOCK);
 	fcntl(perr[0], F_SETFL, O_NONBLOCK);
 
-	if (interactive)
-		*range = (Filerange){ .start = pos, .end = pos };
-
-	/* ranges which are written to the filter and read back in */
-	Filerange rout = *range;
-	Filerange rin = (Filerange){ .start = range->end, .end = range->end };
-
-	/* The general idea is the following:
-	 *
-	 *  1) take a snapshot
-	 *  2) write [range.start, range.end] to exteneral command
-	 *  3) read the output of the external command and insert it after the range
-	 *  4) depending on the exit status of the external command
-	 *     - on success: delete original range
-	 *     - on failure: revert to previous snapshot
-	 *
-	 *  2) and 3) happend in small junks
-	 */
-
-	text_snapshot(text);
 
 	fd_set rfds, wfds;
-	Buffer errmsg;
-	buffer_init(&errmsg);
 
 	do {
 		if (vis->cancel_filter) {
 			kill(-pid, SIGTERM);
-			vis_info_show(vis, "Command cancelled");
 			break;
 		}
 
@@ -741,13 +731,13 @@ static bool cmd_filter(Vis *vis, Filerange *range, enum CmdOpt opt, const char *
 		}
 
 		if (pin[1] != -1 && FD_ISSET(pin[1], &wfds)) {
-			Filerange junk = *range;
+			Filerange junk = rout;
 			if (junk.end > junk.start + PIPE_BUF)
 				junk.end = junk.start + PIPE_BUF;
 			ssize_t len = text_write_range(text, &junk, pin[1]);
 			if (len > 0) {
-				range->start += len;
-				if (text_range_size(range) == 0) {
+				rout.start += len;
+				if (text_range_size(&rout) == 0) {
 					close(pout[1]);
 					pout[1] = -1;
 				}
@@ -763,8 +753,8 @@ static bool cmd_filter(Vis *vis, Filerange *range, enum CmdOpt opt, const char *
 			char buf[BUFSIZ];
 			ssize_t len = read(pout[0], buf, sizeof buf);
 			if (len > 0) {
-				text_insert(text, rin.end, buf, len);
-				rin.end += len;
+				if (read_stdout)
+					(*read_stdout)(context, buf, len);
 			} else if (len == 0) {
 				close(pout[0]);
 				pout[0] = -1;
@@ -779,7 +769,8 @@ static bool cmd_filter(Vis *vis, Filerange *range, enum CmdOpt opt, const char *
 			char buf[BUFSIZ];
 			ssize_t len = read(perr[0], buf, sizeof buf);
 			if (len > 0) {
-				buffer_append(&errmsg, buf, len);
+				if (read_stderr)
+					(*read_stderr)(context, buf, len);
 			} else if (len == 0) {
 				close(perr[0]);
 				perr[0] = -1;
@@ -799,28 +790,79 @@ static bool cmd_filter(Vis *vis, Filerange *range, enum CmdOpt opt, const char *
 	if (perr[0] != -1)
 		close(perr[0]);
 
-	if (waitpid(pid, &status, 0) == pid && status == 0) {
-		text_delete_range(text, &rout);
-		text_snapshot(text);
-	} else {
-		/* make sure we have somehting to undo */
-		text_insert(text, pos, " ", 1);
-		text_undo(text);
-	}
-
-	view_cursor_to(view, rout.start);
-
-	if (!vis->cancel_filter) {
-		if (status == 0)
-			vis_info_show(vis, "Command succeded");
-		else if (errmsg.len > 0)
-			vis_info_show(vis, "Command failed: %s", errmsg.data);
-		else
-			vis_info_show(vis, "Command failed");
-	}
+	for (pid_t died; (died = waitpid(pid, &status, 0)) != -1 && pid != died;);
 
 	vis->ui->terminal_restore(vis->ui);
-	return status == 0;
+
+	return status;
+}
+
+static ssize_t read_stdout(void *context, char *data, size_t len) {
+	Filter *filter = context;
+	text_insert(filter->txt, filter->pos, data, len);
+	filter->pos += len;
+	return len;
+}
+
+static ssize_t read_stderr(void *context, char *data, size_t len) {
+	Filter *filter = context;
+	buffer_append(&filter->stderr, data, len);
+	return len;
+}
+
+static bool cmd_filter(Vis *vis, Filerange *range, enum CmdOpt opt, const char *argv[]) {
+	Text *txt = vis->win->file->text;
+	View *view = vis->win->view;
+
+	Filter filter = {
+		.vis = vis,
+		.txt = vis->win->file->text,
+		.pos = range->end != EPOS ? range->end : view_cursor_get(view),
+	};
+
+	buffer_init(&filter.stderr);
+
+	/* The general idea is the following:
+	 *
+	 *  1) take a snapshot
+	 *  2) write [range.start, range.end] to exteneral command
+	 *  3) read the output of the external command and insert it after the range
+	 *  4) depending on the exit status of the external command
+	 *     - on success: delete original range
+	 *     - on failure: revert to previous snapshot
+	 *
+	 *  2) and 3) happend in small junks
+	 */
+
+	text_snapshot(txt);
+
+	int status = vis_pipe(vis, &filter, range, argv, read_stdout, read_stderr);
+
+	if (range->start != EPOS)
+		view_cursor_to(view, range->start);
+
+	if (status == 0) {
+		if (text_range_valid(range))
+			text_delete_range(txt, range);
+		text_snapshot(txt);
+	} else {
+		/* make sure we have somehting to undo */
+		text_insert(txt, filter.pos, " ", 1);
+		text_undo(txt);
+	}
+
+	if (vis->cancel_filter)
+		vis_info_show(vis, "Command cancelled");
+	else if (status == 0)
+		vis_info_show(vis, "Command succeded");
+	else if (filter.stderr.len > 0)
+		vis_info_show(vis, "Command failed: %s", filter.stderr.data);
+	else
+		vis_info_show(vis, "Command failed");
+
+	buffer_release(&filter.stderr);
+
+	return !vis->cancel_filter && status == 0;
 }
 
 static bool cmd_earlier_later(Vis *vis, Filerange *range, enum CmdOpt opt, const char *argv[]) {
