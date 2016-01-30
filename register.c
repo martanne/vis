@@ -11,22 +11,45 @@ void register_release(Register *reg) {
 }
 
 const char *register_get(Register *reg, size_t *len) {
-	*len = reg->buf.len;
-	return reg->buf.data;
+	switch (reg->type) {
+	case REGISTER_NORMAL:
+		*len = reg->buf.len;
+		return reg->buf.data;
+	case REGISTER_BLACKHOLE:
+	default:
+		*len = 0;
+		return NULL;
+	}
 }
 
 bool register_put(Register *reg, Text *txt, Filerange *range) {
-	size_t len = text_range_size(range);
-	if (!buffer_grow(&reg->buf, len))
+	switch (reg->type) {
+	case REGISTER_NORMAL:
+	{
+		size_t len = text_range_size(range);
+		if (!buffer_grow(&reg->buf, len))
+			return false;
+		reg->buf.len = text_bytes_get(txt, range->start, len, reg->buf.data);
+		return true;
+	}
+	case REGISTER_BLACKHOLE:
+		return true;
+	default:
 		return false;
-	reg->buf.len = text_bytes_get(txt, range->start, len, reg->buf.data);
-	return true;
+	}
 }
 
 bool register_append(Register *reg, Text *txt, Filerange *range) {
-	size_t len = text_range_size(range);
-	if (!buffer_grow(&reg->buf, reg->buf.len + len))
+	switch (reg->type) {
+	case REGISTER_NORMAL:
+	{
+		size_t len = text_range_size(range);
+		if (!buffer_grow(&reg->buf, reg->buf.len + len))
+			return false;
+		reg->buf.len += text_bytes_get(txt, range->start, len, reg->buf.data + reg->buf.len);
+		return true;
+	}
+	default:
 		return false;
-	reg->buf.len += text_bytes_get(txt, range->start, len, reg->buf.data + reg->buf.len);
-	return true;
+	}
 }

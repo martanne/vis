@@ -315,6 +315,7 @@ Vis *vis_new(Ui *ui, VisEvent *event) {
 	vis->ui->init(vis->ui, vis);
 	vis->tabwidth = 8;
 	vis->expandtab = false;
+	vis->registers[VIS_REG_BLACKHOLE].type = REGISTER_BLACKHOLE;
 	action_reset(&vis->action);
 	if (!(vis->search_pattern = text_regex_new()))
 		goto err;

@@ -9,6 +9,10 @@
 typedef struct {
 	Buffer buf;
 	bool linewise; /* place register content on a new line when inserting? */
+	enum {
+		REGISTER_NORMAL,
+		REGISTER_BLACKHOLE,
+	} type;
 } Register;
 
 void register_release(Register *reg);
