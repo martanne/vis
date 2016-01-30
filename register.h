@@ -13,6 +13,7 @@ typedef struct Vis Vis;
 typedef struct {
 	Buffer buf;
 	bool linewise; /* place register content on a new line when inserting? */
+	bool append;
 	enum {
 		REGISTER_NORMAL,
 		REGISTER_BLACKHOLE,

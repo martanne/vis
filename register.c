@@ -59,6 +59,8 @@ const char *register_get(Vis *vis, Register *reg, size_t *len) {
 }
 
 bool register_put(Vis *vis, Register *reg, Text *txt, Filerange *range) {
+	if (reg->append)
+		return register_append(reg, txt, range);
 	switch (reg->type) {
 	case REGISTER_NORMAL:
 	{

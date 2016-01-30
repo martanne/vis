@@ -1000,11 +1000,18 @@ void vis_count_set(Vis *vis, int count) {
 }
 
 void vis_register_set(Vis *vis, enum VisRegister reg) {
-	if (reg < LENGTH(vis->registers))
+	if (reg >= VIS_REG_A && reg <= VIS_REG_Z) {
+		vis->action.reg = &vis->registers[reg - VIS_REG_A];
+		vis->action.reg->append = true;
+	} else if (reg < LENGTH(vis->registers)) {
 		vis->action.reg = &vis->registers[reg];
+		vis->action.reg->append = false;
+	}
 }
 
 const char *vis_register_get(Vis *vis, enum VisRegister reg, size_t *len) {
+	if (reg >= VIS_REG_A && reg <= VIS_REG_Z)
+		reg -= VIS_REG_A;
 	if (reg < LENGTH(vis->registers))
 		return register_get(vis, &vis->registers[reg], len);
 	*len = 0;
