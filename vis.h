@@ -349,6 +349,7 @@ enum VisRegister {
 	VIS_REG_z,
 	VIS_REG_DEFAULT, /* used when no other register is specified */
 	VIS_REG_BLACKHOLE, /* /dev/null register */
+	VIS_REG_CLIPBOARD, /* system clipboard register */
 	VIS_REG_PROMPT,  /* internal register which shadows DEFAULT in PROMPT mode */
 	VIS_REG_INVALID, /* has to be the last enum member */
 };

@@ -1,0 +1,10 @@
+#!/bin/sh
+
+if [ ! -z "$DISPLAY" ]; then
+	exec xsel -i
+elif type pbcopy >/dev/null 2>&1; then
+	exec pbcopy
+else
+	echo "System clipboard not supported" 1>&2
+	exit 1
+fi

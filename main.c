@@ -1306,6 +1306,8 @@ static const char *key2register(Vis *vis, const char *keys, enum VisRegister *re
 		return NULL;
 	if (keys[0] >= 'a' && keys[0] <= 'z')
 		*reg = keys[0] - 'a';
+	else if (keys[0] == '*' || keys[0] == '+')
+		*reg = VIS_REG_CLIPBOARD;
 	else if (keys[0] == '_')
 		*reg = VIS_REG_BLACKHOLE;
 	return keys+1;

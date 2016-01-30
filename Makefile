@@ -80,6 +80,10 @@ install: vis
 	@chmod 755 ${DESTDIR}${PREFIX}/bin/vis
 	@cp -f vis-open ${DESTDIR}${PREFIX}/bin
 	@chmod 755 ${DESTDIR}${PREFIX}/bin/vis-open
+	@cp -f vis-copy ${DESTDIR}${PREFIX}/bin
+	@chmod 755 ${DESTDIR}${PREFIX}/bin/vis-copy
+	@cp -f vis-paste ${DESTDIR}${PREFIX}/bin
+	@chmod 755 ${DESTDIR}${PREFIX}/bin/vis-paste
 	@echo installing support files to ${DESTDIR}${SHAREPREFIX}
 	@mkdir -p ${DESTDIR}${SHAREPREFIX}
 	@cp -r visrc.lua lexers ${DESTDIR}${SHAREPREFIX}
@@ -92,6 +96,8 @@ uninstall:
 	@echo removing executable file from ${DESTDIR}${PREFIX}/bin
 	@rm -f ${DESTDIR}${PREFIX}/bin/vis
 	@rm -f ${DESTDIR}${PREFIX}/bin/vis-open
+	@rm -f ${DESTDIR}${PREFIX}/bin/vis-copy
+	@rm -f ${DESTDIR}${PREFIX}/bin/vis-paste
 	@echo removing manual page from ${DESTDIR}${MANPREFIX}/man1
 	@rm -f ${DESTDIR}${MANPREFIX}/man1/vis.1
 	@echo removing support files from ${DESTDIR}${SHAREPREFIX}

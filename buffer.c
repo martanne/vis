@@ -36,6 +36,10 @@ void buffer_release(Buffer *buf) {
 	buffer_init(buf);
 }
 
+void buffer_clear(Buffer *buf) {
+	buf->len = 0;
+}
+
 bool buffer_put(Buffer *buf, const void *data, size_t len) {
 	if (!buffer_grow(buf, len))
 		return false;

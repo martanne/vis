@@ -1,20 +1,56 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "register.h"
-#include "buffer.h"
+#include "vis.h"
 #include "text.h"
 #include "util.h"
+#include "register.h"
+
+typedef struct {
+	Buffer *stdout;
+	Buffer *stderr;
+} Clipboard;
+
+static ssize_t read_stdout(void *context, char *data, size_t len) {
+	Buffer *buf = ((Clipboard*)context)->stdout;
+	buffer_append(buf, data, len);
+	return len;
+}
+
+static ssize_t read_stderr(void *context, char *data, size_t len) {
+	Buffer *buf = ((Clipboard*)context)->stderr;
+	buffer_append(buf, data, len);
+	return len;
+}
 
 void register_release(Register *reg) {
 	buffer_release(&reg->buf);
 }
 
-const char *register_get(Register *reg, size_t *len) {
+const char *register_get(Vis *vis, Register *reg, size_t *len) {
 	switch (reg->type) {
 	case REGISTER_NORMAL:
 		*len = reg->buf.len;
 		return reg->buf.data;
+	case REGISTER_CLIPBOARD:
+	{
+		Buffer stderr;
+		buffer_init(&stderr);
+		buffer_clear(&reg->buf);
+		Clipboard clipboard = {
+			.stdout = &reg->buf,
+			.stderr = &stderr,
+		};
+
+		int status = vis_pipe(vis, &clipboard,
+			&(Filerange){ .start = 0, .end = 0 },
+			(const char*[]){ "vis-paste", "vis-paste", NULL },
+			read_stdout, read_stderr);
+		if (status != 0)
+			vis_info_show(vis, "Command failed %s", stderr.len > 0 ? stderr.data : "");
+		*len = reg->buf.len;
+		return reg->buf.data;
+	}
 	case REGISTER_BLACKHOLE:
 	default:
 		*len = 0;
@@ -22,7 +58,7 @@ const char *register_get(Register *reg, size_t *len) {
 	}
 }
 
-bool register_put(Register *reg, Text *txt, Filerange *range) {
+bool register_put(Vis *vis, Register *reg, Text *txt, Filerange *range) {
 	switch (reg->type) {
 	case REGISTER_NORMAL:
 	{
@@ -31,6 +67,22 @@ bool register_put(Register *reg, Text *txt, Filerange *range) {
 			return false;
 		reg->buf.len = text_bytes_get(txt, range->start, len, reg->buf.data);
 		return true;
+	}
+	case REGISTER_CLIPBOARD:
+	{
+		Buffer stderr;
+		buffer_init(&stderr);
+		Clipboard clipboard = {
+			.stderr = &stderr,
+		};
+
+		int status = vis_pipe(vis, &clipboard, range,
+			(const char*[]){ "vis-copy", "vis-copy", NULL },
+			NULL, read_stderr);
+
+		if (status != 0)
+			vis_info_show(vis, "Command failed %s", stderr.len > 0 ? stderr.data : "");
+		return status == 0;
 	}
 	case REGISTER_BLACKHOLE:
 		return true;

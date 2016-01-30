@@ -38,9 +38,9 @@ enum UiStyles {
 	UI_STYLE_MAX,
 };
 
+#include "vis.h"
 #include "text.h"
 #include "view.h"
-#include "vis.h"
 
 struct Ui {
 	bool (*init)(Ui*, Vis*);

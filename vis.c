@@ -316,6 +316,7 @@ Vis *vis_new(Ui *ui, VisEvent *event) {
 	vis->tabwidth = 8;
 	vis->expandtab = false;
 	vis->registers[VIS_REG_BLACKHOLE].type = REGISTER_BLACKHOLE;
+	vis->registers[VIS_REG_CLIPBOARD].type = REGISTER_CLIPBOARD;
 	action_reset(&vis->action);
 	if (!(vis->search_pattern = text_regex_new()))
 		goto err;
@@ -1005,7 +1006,7 @@ void vis_register_set(Vis *vis, enum VisRegister reg) {
 
 const char *vis_register_get(Vis *vis, enum VisRegister reg, size_t *len) {
 	if (reg < LENGTH(vis->registers))
-		return register_get(&vis->registers[reg], len);
+		return register_get(vis, &vis->registers[reg], len);
 	*len = 0;
 	return NULL;
 }

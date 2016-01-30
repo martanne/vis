@@ -16,6 +16,8 @@ typedef struct {
 void buffer_init(Buffer*);
 /* release/free all data stored in this buffer, reset size to zero */
 void buffer_release(Buffer*);
+/* set buffer size to zero, keep allocated memory */
+void buffer_clear(Buffer*);
 /* reserve space to store at least size bytes in this buffer.*/
 bool buffer_grow(Buffer*, size_t size);
 /* truncate buffer, but keep associated memory region for further data */

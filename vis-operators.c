@@ -8,7 +8,7 @@
 
 static size_t op_delete(Vis *vis, Text *txt, OperatorContext *c) {
 	c->reg->linewise = c->linewise;
-	register_put(c->reg, txt, &c->range);
+	register_put(vis, c->reg, txt, &c->range);
 	text_delete_range(txt, &c->range);
 	size_t pos = c->range.start;
 	if (c->linewise && pos == text_size(txt))
@@ -24,7 +24,7 @@ static size_t op_change(Vis *vis, Text *txt, OperatorContext *c) {
 
 static size_t op_yank(Vis *vis, Text *txt, OperatorContext *c) {
 	c->reg->linewise = c->linewise;
-	register_put(c->reg, txt, &c->range);
+	register_put(vis, c->reg, txt, &c->range);
 	return c->pos;
 }
 
@@ -52,7 +52,7 @@ static size_t op_put(Vis *vis, Text *txt, OperatorContext *c) {
 	}
 
 	size_t len;
-	const char *data = register_get(c->reg, &len);
+	const char *data = register_get(vis, c->reg, &len);
 
 	for (int i = 0; i < c->count; i++) {
 		text_insert(txt, pos, data, len);
