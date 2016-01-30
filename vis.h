@@ -11,7 +11,6 @@ typedef struct Win Win;
 
 #include "ui.h"
 #include "view.h"
-#include "register.h"
 
 typedef struct {
 	void (*vis_start)(Vis*);
@@ -355,7 +354,8 @@ enum VisRegister {
 
 /* set the register to use, if none is given the DEFAULT register is used */
 void vis_register_set(Vis*, enum VisRegister);
-Register *vis_register_get(Vis*, enum VisRegister);
+/* get register content */
+const char *vis_register_get(Vis*, enum VisRegister, size_t *len);
 
 /* repeat last operator, possibly with a new count if one was provided in the meantime */
 void vis_repeat(Vis*);

@@ -3,6 +3,7 @@
 
 #include <setjmp.h>
 #include "vis.h"
+#include "register.h"
 #include "text.h"
 #include "text-regex.h"
 #include "map.h"

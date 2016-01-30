@@ -1002,9 +1002,10 @@ void vis_register_set(Vis *vis, enum VisRegister reg) {
 		vis->action.reg = &vis->registers[reg];
 }
 
-Register *vis_register_get(Vis *vis, enum VisRegister reg) {
+const char *vis_register_get(Vis *vis, enum VisRegister reg, size_t *len) {
 	if (reg < LENGTH(vis->registers))
-		return &vis->registers[reg];
+		return register_get(&vis->registers[reg], len);
+	*len = 0;
 	return NULL;
 }
 

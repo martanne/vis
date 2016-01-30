@@ -51,9 +51,12 @@ static size_t op_put(Vis *vis, Text *txt, OperatorContext *c) {
 		break;
 	}
 
+	size_t len;
+	const char *data = register_get(c->reg, &len);
+
 	for (int i = 0; i < c->count; i++) {
-		text_insert(txt, pos, c->reg->data, c->reg->len);
-		pos += c->reg->len;
+		text_insert(txt, pos, data, len);
+		pos += len;
 	}
 
 	if (c->reg->linewise) {

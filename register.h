@@ -4,16 +4,15 @@
 #include <stddef.h>
 #include <stdbool.h>
 #include "buffer.h"
+#include "text-util.h"
 
-/* definition has to match Buffer */
 typedef struct {
-	char *data;    /* NULL if empty */
-	size_t len;    /* current length of data */
-	size_t size;   /* maximal capacity of the register */
+	Buffer buf;
 	bool linewise; /* place register content on a new line when inserting? */
 } Register;
 
 void register_release(Register *reg);
+const char *register_get(Register *reg, size_t *len);
 bool register_put(Register *reg, Text *txt, Filerange *range);
 bool register_append(Register *reg, Text *txt, Filerange *range);
 

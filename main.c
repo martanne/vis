@@ -1396,9 +1396,9 @@ static const char *delete(Vis *vis, const char *keys, const Arg *arg) {
 static const char *insert_register(Vis *vis, const char *keys, const Arg *arg) {
 	enum VisRegister regid;
 	keys = key2register(vis, keys, &regid);
-	Register *reg = vis_register_get(vis, regid);
-	if (reg)
-		vis_insert_key(vis, reg->data, reg->len);
+	size_t len;
+	const char *data = vis_register_get(vis, regid, &len);
+	vis_insert_key(vis, data, len);
 	return keys;
 }
 
