@@ -36,7 +36,7 @@ typedef struct {        /* used to keep context when dealing with external proce
 	Vis *vis;       /* editor instance */
 	Text *txt;      /* text into which received data will be inserted */
 	size_t pos;     /* position at which to insert new data */
-	Buffer stderr;  /* used to store everything the process writes to stderr */
+	Buffer err;     /* used to store everything the process writes to stderr */
 } Filter;
 
 /** ':'-command implementations */
@@ -815,7 +815,7 @@ static ssize_t read_stdout(void *context, char *data, size_t len) {
 
 static ssize_t read_stderr(void *context, char *data, size_t len) {
 	Filter *filter = context;
-	buffer_append(&filter->stderr, data, len);
+	buffer_append(&filter->err, data, len);
 	return len;
 }
 
@@ -829,7 +829,7 @@ static bool cmd_filter(Vis *vis, Filerange *range, enum CmdOpt opt, const char *
 		.pos = range->end != EPOS ? range->end : view_cursor_get(view),
 	};
 
-	buffer_init(&filter.stderr);
+	buffer_init(&filter.err);
 
 	/* The general idea is the following:
 	 *
@@ -864,12 +864,12 @@ static bool cmd_filter(Vis *vis, Filerange *range, enum CmdOpt opt, const char *
 		vis_info_show(vis, "Command cancelled");
 	else if (status == 0)
 		vis_info_show(vis, "Command succeded");
-	else if (filter.stderr.len > 0)
-		vis_info_show(vis, "Command failed: %s", filter.stderr.data);
+	else if (filter.err.len > 0)
+		vis_info_show(vis, "Command failed: %s", filter.err.data);
 	else
 		vis_info_show(vis, "Command failed");
 
-	buffer_release(&filter.stderr);
+	buffer_release(&filter.err);
 
 	return !vis->cancel_filter && status == 0;
 }
@@ -898,7 +898,7 @@ static bool cmd_pipe(Vis *vis, Filerange *range, enum CmdOpt opt, const char *ar
 		.pos = 0,
 	};
 
-	buffer_init(&filter.stderr);
+	buffer_init(&filter.err);
 
 	int status = vis_pipe(vis, &filter, range, argv, read_stdout_new, read_stderr);
 
@@ -906,12 +906,12 @@ static bool cmd_pipe(Vis *vis, Filerange *range, enum CmdOpt opt, const char *ar
 		vis_info_show(vis, "Command cancelled");
 	else if (status == 0)
 		vis_info_show(vis, "Command succeded");
-	else if (filter.stderr.len > 0)
-		vis_info_show(vis, "Command failed: %s", filter.stderr.data);
+	else if (filter.err.len > 0)
+		vis_info_show(vis, "Command failed: %s", filter.err.data);
 	else
 		vis_info_show(vis, "Command failed");
 
-	buffer_release(&filter.stderr);
+	buffer_release(&filter.err);
 
 	return !vis->cancel_filter && status == 0;
 }
