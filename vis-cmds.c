@@ -14,6 +14,7 @@
 #include "vis-core.h"
 #include "text-util.h"
 #include "text-motions.h"
+#include "text-objects.h"
 #include "util.h"
 
 enum CmdOpt {          /* option flags for command definitions */
@@ -538,7 +539,7 @@ static bool cmd_read(Vis *vis, Filerange *range, enum CmdOpt opt, const char *ar
 static bool cmd_substitute(Vis *vis, Filerange *range, enum CmdOpt opt, const char *argv[]) {
 	char pattern[255];
 	if (!text_range_valid(range))
-		*range = (Filerange){ .start = 0, .end = text_size(vis->win->file->text) };
+		*range = text_object_line(vis->win->file->text, view_cursor_get(vis->win->view));
 	snprintf(pattern, sizeof pattern, "s%s", argv[1]);
 	return cmd_filter(vis, range, opt, (const char*[]){ argv[0], "sed", pattern, NULL});
 }
@@ -847,12 +848,11 @@ static bool cmd_filter(Vis *vis, Filerange *range, enum CmdOpt opt, const char *
 
 	int status = vis_pipe(vis, &filter, range, argv, read_stdout, read_stderr);
 
-	if (range->start != EPOS)
-		view_cursor_to(view, range->start);
-
 	if (status == 0) {
-		if (text_range_valid(range))
+		if (text_range_valid(range)) {
 			text_delete_range(txt, range);
+			view_cursor_to(view, range->start);
+		}
 		text_snapshot(txt);
 	} else {
 		/* make sure we have somehting to undo */
