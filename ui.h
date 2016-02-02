@@ -25,6 +25,7 @@ enum UiOption {
 	UI_OPTION_CURSOR_LINE = 1 << 7,
 	UI_OPTION_STATUSBAR = 1 << 8,
 	UI_OPTION_ONELINE = 1 << 9,
+	UI_OPTION_LARGE_FILE = 1 << 10,
 };
 
 enum UiStyles {

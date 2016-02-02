@@ -43,6 +43,9 @@
 #include "util.h"
 #include "vis-core.h"
 
+/* enable large file optimization for files larger than: */
+#define LARGE_FILE (1 << 25)
+
 static Macro *macro_get(Vis *vis, enum VisMacro m);
 static void macro_replay(Vis *vis, const Macro *macro);
 
@@ -180,6 +183,14 @@ Win *window_new_file(Vis *vis, File *file) {
 	}
 	file->refcount++;
 	view_tabwidth_set(win->view, vis->tabwidth);
+
+	if (text_size(file->text) > LARGE_FILE) {
+		enum UiOption opt = view_options_get(win->view);
+		opt |= UI_OPTION_LARGE_FILE;
+		opt &= ~UI_OPTION_LINE_NUMBERS_ABSOLUTE;
+		view_options_set(win->view, opt);
+	}
+
 	if (vis->windows)
 		vis->windows->prev = win;
 	win->next = vis->windows;

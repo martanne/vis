@@ -86,6 +86,7 @@ struct View {
 	lua_State *lua;     /* lua state used for syntax highlighting */
 	char *lexer_name;
 	bool need_update;   /* whether view has been redrawn */
+	bool large_file;    /* optimize for displaying large files */
 	int colorcolumn;
 };
 
@@ -305,7 +306,7 @@ static void view_clear(View *view) {
 
 	view->start_last = view->start;
 	view->topline = view->lines;
-	view->topline->lineno = text_lineno_by_pos(view->text, view->start);
+	view->topline->lineno = view->large_file ? 1 : text_lineno_by_pos(view->text, view->start);
 	view->lastline = view->topline;
 
 	size_t line_size = sizeof(Line) + view->width*sizeof(Cell);
@@ -1012,10 +1013,17 @@ void view_options_set(View *view, enum UiOption options) {
 		[SYNTAX_SYMBOL_EOL]      = UI_OPTION_SYMBOL_EOL,
 		[SYNTAX_SYMBOL_EOF]      = UI_OPTION_SYMBOL_EOF,
 	};
+
 	for (int i = 0; i < LENGTH(mapping); i++) {
 		view->symbols[i] = (options & mapping[i]) ? &symbols_default[i] :
 			&symbols_none[i];
 	}
+
+	if (options & UI_OPTION_LINE_NUMBERS_ABSOLUTE)
+		options &= ~UI_OPTION_LARGE_FILE;
+
+	view->large_file = (options & UI_OPTION_LARGE_FILE);
+
 	if (view->ui)
 		view->ui->options_set(view->ui, options);
 }

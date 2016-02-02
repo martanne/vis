@@ -619,7 +619,7 @@ static bool ui_window_draw_sidebar(UiCursesWin *win) {
 				if (win->options & UI_OPTION_LINE_NUMBERS_ABSOLUTE) {
 					mvwprintw(win->winside, i, 0, "%*u", sidebar_width-1, l->lineno);
 				} else if (win->options & UI_OPTION_LINE_NUMBERS_RELATIVE) {
-					size_t rel = l->lineno;
+					size_t rel = (win->options & UI_OPTION_LARGE_FILE) ? 0 : l->lineno;
 					if (l->lineno > cursor_lineno)
 						rel = l->lineno - cursor_lineno;
 					else if (l->lineno < cursor_lineno)
@@ -643,7 +643,6 @@ static void ui_window_draw_status(UiWin *w) {
 	bool focused = uic->selwin == win;
 	const char *filename = vis_file_name(win->file);
 	const char *status = vis_mode_status(vis);
-	CursorPos pos = view_cursor_getpos(win->view);
 	wattrset(win->winstatus, focused ? A_REVERSE|A_BOLD : A_REVERSE);
 	mvwhline(win->winstatus, 0, 0, ' ', win->width);
 	mvwprintw(win->winstatus, 0, 0, "%s %s %s %s",
@@ -651,11 +650,15 @@ static void ui_window_draw_status(UiWin *w) {
 	          filename ? filename : "[No Name]",
 	          text_modified(vis_file_text(win->file)) ? "[+]" : "",
 	          vis_macro_recording(vis) ? "recording": "");
-	char buf[win->width + 1];
-	int len = snprintf(buf, win->width, "%zd, %zd", pos.line, pos.col);
-	if (len > 0) {
-		buf[len] = '\0';
-		mvwaddstr(win->winstatus, 0, win->width - len - 1, buf);
+
+	if (!(win->options & UI_OPTION_LARGE_FILE)) {
+		CursorPos pos = view_cursor_getpos(win->view);
+		char buf[win->width + 1];
+		int len = snprintf(buf, win->width, "%zd, %zd", pos.line, pos.col);
+		if (len > 0) {
+			buf[len] = '\0';
+			mvwaddstr(win->winstatus, 0, win->width - len - 1, buf);
+		}
 	}
 }
 
