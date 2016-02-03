@@ -20,6 +20,7 @@
 #include "text-util.h"
 #include "util.h"
 
+#define space(c) (isspace((unsigned char)c))
 #define isboundry is_word_boundry
 
 Filerange text_object_entire(Text *txt, size_t pos) {
@@ -48,7 +49,7 @@ static Filerange text_object_customword(Text *txt, size_t pos, int (*isboundry)(
 	if (text_iterator_byte_prev(&it, &prev))
 		text_iterator_byte_next(&it, NULL);
 	text_iterator_byte_next(&it, &next);
-	if (isspace((unsigned char)c)) {
+	if (space(c)) {
 		r.start = text_char_next(txt, text_customword_end_prev(txt, pos, isboundry));
 		r.end = text_customword_start_next(txt, pos, isboundry);
 	} else if (isboundry(prev) && isboundry(next)) {
@@ -94,7 +95,7 @@ static Filerange text_object_customword_outer(Text *txt, size_t pos, int (*isbou
 	if (text_iterator_byte_prev(&it, &prev))
 		text_iterator_byte_next(&it, NULL);
 	text_iterator_byte_next(&it, &next);
-	if (isspace((unsigned char)c)) {
+	if (space(c)) {
 		/* middle of two words, include leading white space */
 		r.start = text_char_next(txt, text_customword_end_prev(txt, pos, isboundry));
 		r.end = text_char_next(txt, text_customword_end_next(txt, pos, isboundry));
@@ -304,10 +305,10 @@ Filerange text_range_inner(Text *txt, Filerange *rin) {
 	char c;
 	Filerange r = *rin;
 	Iterator it = text_iterator_get(txt, rin->start);
-	while (text_iterator_byte_get(&it, &c) && isspace((unsigned char)c))
+	while (text_iterator_byte_get(&it, &c) && space(c))
 		text_iterator_byte_next(&it, NULL);
 	r.start = it.pos;
 	it = text_iterator_get(txt, rin->end);
-	do r.end = it.pos; while (text_iterator_byte_prev(&it, &c) && isspace((unsigned char)c));
+	do r.end = it.pos; while (text_iterator_byte_prev(&it, &c) && space(c));
 	return r;
 }
