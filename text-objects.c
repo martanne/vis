@@ -126,7 +126,7 @@ Filerange text_object_word(Text *txt, size_t pos) {
 		} else {
 			/* on a single character */
 			r.start = pos;
-			r.end = text_char_next(txt, pos);
+			r.end = text_word_start_next(txt, pos);
 		}
 	} else if (isboundry(prev)) {
 		/* at start of a word */
@@ -157,7 +157,7 @@ Filerange text_object_word_outer(Text *txt, size_t pos) {
 	if (isspace((unsigned char)c)) {
 		/* middle of two words, include leading white space */
 		r.start = text_char_next(txt, text_word_end_prev(txt, pos));
-		r.end = text_word_end_next(txt, pos);
+		r.end = text_char_next(txt, text_word_end_next(txt, pos));
 	} else if (isboundry(prev) && isboundry(next)) {
 		if (isboundry(c)) {
 			r.start = text_char_next(txt, text_word_end_prev(txt, pos));
