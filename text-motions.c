@@ -19,6 +19,8 @@
 #include "text-util.h"
 #include "util.h"
 
+#define space(c) (isspace((unsigned char)c))
+
 // TODO: specify this per file type?
 int is_word_boundry(int c) {
 	return ISASCII(c) && !(('0' <= c && c <= '9') ||
@@ -147,7 +149,7 @@ size_t text_line_begin(Text *txt, size_t pos) {
 size_t text_line_start(Text *txt, size_t pos) {
 	char c;
 	Iterator it = text_iterator_get(txt, text_line_begin(txt, pos));
-	while (text_iterator_byte_get(&it, &c) && c != '\n' && isspace((unsigned char)c))
+	while (text_iterator_byte_get(&it, &c) && c != '\n' && space(c))
 		text_iterator_byte_next(&it, NULL);
 	return it.pos;
 }
@@ -156,7 +158,7 @@ size_t text_line_finish(Text *txt, size_t pos) {
 	char c;
 	Iterator it = text_iterator_get(txt, text_line_end(txt, pos));
 	do text_iterator_char_prev(&it, NULL);
-	while (text_iterator_byte_get(&it, &c) && c != '\n' && isspace((unsigned char)c));
+	while (text_iterator_byte_get(&it, &c) && c != '\n' && space(c));
 	return it.pos;
 }
 
@@ -283,19 +285,19 @@ size_t text_customword_start_next(Text *txt, size_t pos, int (*isboundry)(int)) 
 	if (!text_iterator_byte_get(&it, &c))
 		return pos;
 	if (isboundry((unsigned char)c))
-		while (isboundry((unsigned char)c) && !isspace((unsigned char)c) && text_iterator_char_next(&it, &c));
+		while (isboundry((unsigned char)c) && !space(c) && text_iterator_char_next(&it, &c));
 	else
 		while (!isboundry((unsigned char)c) && text_iterator_char_next(&it, &c));
-	while (isspace((unsigned char)c) && text_iterator_char_next(&it, &c));
+	while (space(c) && text_iterator_char_next(&it, &c));
 	return it.pos;
 }
 
 size_t text_customword_start_prev(Text *txt, size_t pos, int (*isboundry)(int)) {
 	char c;
 	Iterator it = text_iterator_get(txt, pos);
-	while (text_iterator_char_prev(&it, &c) && isspace((unsigned char)c));
+	while (text_iterator_char_prev(&it, &c) && space(c));
 	if (isboundry((unsigned char)c))
-		do pos = it.pos; while (text_iterator_char_prev(&it, &c) && isboundry((unsigned char)c) && !isspace((unsigned char)c));
+		do pos = it.pos; while (text_iterator_char_prev(&it, &c) && isboundry((unsigned char)c) && !space(c));
 	else
 		do pos = it.pos; while (text_iterator_char_prev(&it, &c) && !isboundry((unsigned char)c));
 	return pos;
@@ -304,9 +306,9 @@ size_t text_customword_start_prev(Text *txt, size_t pos, int (*isboundry)(int)) 
 size_t text_customword_end_next(Text *txt, size_t pos, int (*isboundry)(int)) {
 	char c;
 	Iterator it = text_iterator_get(txt, pos);
-	while (text_iterator_char_next(&it, &c) && isspace((unsigned char)c));
+	while (text_iterator_char_next(&it, &c) && space(c));
 	if (isboundry((unsigned char)c))
-		do pos = it.pos; while (text_iterator_char_next(&it, &c) && isboundry((unsigned char)c) && !isspace((unsigned char)c));
+		do pos = it.pos; while (text_iterator_char_next(&it, &c) && isboundry((unsigned char)c) && !space(c));
 	else
 		do pos = it.pos; while (text_iterator_char_next(&it, &c) && !isboundry((unsigned char)c));
 	return pos;
@@ -318,10 +320,10 @@ size_t text_customword_end_prev(Text *txt, size_t pos, int (*isboundry)(int)) {
 	if (!text_iterator_byte_get(&it, &c))
 		return pos;
 	if (isboundry((unsigned char)c))
-		while (isboundry((unsigned char)c) && !isspace((unsigned char)c) && text_iterator_char_prev(&it, &c));
+		while (isboundry((unsigned char)c) && !space(c) && text_iterator_char_prev(&it, &c));
 	else
 		while (!isboundry((unsigned char)c) && text_iterator_char_prev(&it, &c));
-	while (isspace((unsigned char)c) && text_iterator_char_prev(&it, &c));
+	while (space(c) && text_iterator_char_prev(&it, &c));
 	return it.pos;
 }
 
@@ -364,14 +366,14 @@ size_t text_sentence_next(Text *txt, size_t pos) {
 	if (!text_iterator_byte_get(&it, &c))
 		return pos;
 
-	while (text_iterator_byte_get(&rev, &prev) && isspace((unsigned char)prev))
+	while (text_iterator_byte_get(&rev, &prev) && space(prev))
 		text_iterator_byte_prev(&rev, NULL);
 	prev = rev.pos == 0 ? '.' : prev; /* simulate punctuation at BOF */
 
 	do {
-		if ((prev == '.' || prev == '?' || prev == '!') && isspace((unsigned char)c)) {
+		if ((prev == '.' || prev == '?' || prev == '!') && space(c)) {
 			do text_iterator_byte_next(&it, NULL);
-			while (text_iterator_byte_get(&it, &c) && isspace((unsigned char)c));
+			while (text_iterator_byte_get(&it, &c) && space(c));
 			return it.pos;
 		}
 		prev = c;
@@ -385,16 +387,16 @@ size_t text_sentence_prev(Text *txt, size_t pos) {
 	Iterator it = text_iterator_get(txt, pos);
 
 	while (it.pos != 0 && text_iterator_byte_prev(&it, &c)) {
-		if (content && isspace((unsigned char)prev) && (c == '.' || c == '?' || c == '!')) {
+		if (content && space(prev) && (c == '.' || c == '?' || c == '!')) {
 			do text_iterator_byte_next(&it, NULL);
-			while (text_iterator_byte_get(&it, &c) && isspace((unsigned char)c));
+			while (text_iterator_byte_get(&it, &c) && space(c));
 			return it.pos;
 		}
-		content |= !isspace((unsigned char)c);
+		content |= !space(c);
 		prev = c;
 	} /* The loop only ends on hitting BOF or error */
 	if (content) /* starting pos was after first sentence in file => find that sentences start */
-		while (text_iterator_byte_get(&it, &c) && isspace((unsigned char)c))
+		while (text_iterator_byte_get(&it, &c) && space(c))
 			text_iterator_byte_next(&it, NULL);
 	return it.pos;
 }
