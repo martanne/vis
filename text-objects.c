@@ -287,6 +287,19 @@ Filerange text_object_backtick(Text *txt, size_t pos) {
 	return text_object_bracket(txt, pos, '`');
 }
 
+Filerange text_object_range(Text *txt, size_t pos, int (*isboundary)(int)) {
+	char c;
+	size_t start;
+	Iterator it = text_iterator_get(txt, pos);
+	if (!text_iterator_byte_get(&it, &c) || boundary(c))
+		return text_range_empty();
+	do start = it.pos; while (text_iterator_char_prev(&it, &c) && !boundary(c));
+	it = text_iterator_get(txt, pos);
+	text_iterator_byte_get(&it, &c);
+	while (!boundary(c) && text_iterator_byte_next(&it, &c));
+	return text_range_new(start, it.pos);
+}
+
 Filerange text_range_linewise(Text *txt, Filerange *rin) {
 	Filerange rout = *rin;
 	rout.start = text_line_begin(txt, rin->start);
