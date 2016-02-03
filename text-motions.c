@@ -20,6 +20,7 @@
 #include "util.h"
 
 #define space(c) (isspace((unsigned char)c))
+#define boundary(c) (isboundary((unsigned char)c))
 
 // TODO: specify this per file type?
 int is_word_boundry(int c) {
@@ -279,50 +280,50 @@ size_t text_range_line_prev(Text *txt, Filerange *r, size_t pos) {
 	return newpos != pos && r->start <= newpos ? newpos : EPOS;
 }
 
-size_t text_customword_start_next(Text *txt, size_t pos, int (*isboundry)(int)) {
+size_t text_customword_start_next(Text *txt, size_t pos, int (*isboundary)(int)) {
 	char c;
 	Iterator it = text_iterator_get(txt, pos);
 	if (!text_iterator_byte_get(&it, &c))
 		return pos;
-	if (isboundry((unsigned char)c))
-		while (isboundry((unsigned char)c) && !space(c) && text_iterator_char_next(&it, &c));
+	if (boundary(c))
+		while (boundary(c) && !space(c) && text_iterator_char_next(&it, &c));
 	else
-		while (!isboundry((unsigned char)c) && text_iterator_char_next(&it, &c));
+		while (!boundary(c) && text_iterator_char_next(&it, &c));
 	while (space(c) && text_iterator_char_next(&it, &c));
 	return it.pos;
 }
 
-size_t text_customword_start_prev(Text *txt, size_t pos, int (*isboundry)(int)) {
+size_t text_customword_start_prev(Text *txt, size_t pos, int (*isboundary)(int)) {
 	char c;
 	Iterator it = text_iterator_get(txt, pos);
 	while (text_iterator_char_prev(&it, &c) && space(c));
-	if (isboundry((unsigned char)c))
-		do pos = it.pos; while (text_iterator_char_prev(&it, &c) && isboundry((unsigned char)c) && !space(c));
+	if (boundary(c))
+		do pos = it.pos; while (text_iterator_char_prev(&it, &c) && boundary(c) && !space(c));
 	else
-		do pos = it.pos; while (text_iterator_char_prev(&it, &c) && !isboundry((unsigned char)c));
+		do pos = it.pos; while (text_iterator_char_prev(&it, &c) && !boundary(c));
 	return pos;
 }
 
-size_t text_customword_end_next(Text *txt, size_t pos, int (*isboundry)(int)) {
+size_t text_customword_end_next(Text *txt, size_t pos, int (*isboundary)(int)) {
 	char c;
 	Iterator it = text_iterator_get(txt, pos);
 	while (text_iterator_char_next(&it, &c) && space(c));
-	if (isboundry((unsigned char)c))
-		do pos = it.pos; while (text_iterator_char_next(&it, &c) && isboundry((unsigned char)c) && !space(c));
+	if (boundary(c))
+		do pos = it.pos; while (text_iterator_char_next(&it, &c) && boundary(c) && !space(c));
 	else
-		do pos = it.pos; while (text_iterator_char_next(&it, &c) && !isboundry((unsigned char)c));
+		do pos = it.pos; while (text_iterator_char_next(&it, &c) && !isboundary(c));
 	return pos;
 }
 
-size_t text_customword_end_prev(Text *txt, size_t pos, int (*isboundry)(int)) {
+size_t text_customword_end_prev(Text *txt, size_t pos, int (*isboundary)(int)) {
 	char c;
 	Iterator it = text_iterator_get(txt, pos);
 	if (!text_iterator_byte_get(&it, &c))
 		return pos;
-	if (isboundry((unsigned char)c))
-		while (isboundry((unsigned char)c) && !space(c) && text_iterator_char_prev(&it, &c));
+	if (boundary(c))
+		while (boundary(c) && !space(c) && text_iterator_char_prev(&it, &c));
 	else
-		while (!isboundry((unsigned char)c) && text_iterator_char_prev(&it, &c));
+		while (!boundary(c) && text_iterator_char_prev(&it, &c));
 	while (space(c) && text_iterator_char_prev(&it, &c));
 	return it.pos;
 }
