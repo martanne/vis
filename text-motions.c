@@ -357,93 +357,68 @@ size_t text_word_start_prev(Text *txt, size_t pos) {
 	return text_customword_start_prev(txt, pos, is_word_boundry);
 }
 
-static size_t text_paragraph_sentence_next(Text *txt, size_t pos, bool sentence) {
-	char c;
-	bool content = false, paragraph = false;
-	Iterator it = text_iterator_get(txt, pos);
-	while (text_iterator_byte_next(&it, &c)) {
-		content |= !isspace((unsigned char)c);
-		if (sentence && (c == '.' || c == '?' || c == '!') && text_iterator_byte_next(&it, &c) && isspace((unsigned char)c)) {
-			if (c == '\n' && text_iterator_byte_next(&it, &c)) {
-				if (c == '\r')
-					text_iterator_byte_next(&it, &c);
-			} else {
-				while (text_iterator_byte_get(&it, &c) && c == ' ')
-					text_iterator_byte_next(&it, NULL);
-			}
-			break;
-		}
-		if (c == '\n' && text_iterator_byte_next(&it, &c)) {
-			if (c == '\r')
-				text_iterator_byte_next(&it, &c);
-			content |= !isspace((unsigned char)c);
-			if (c == '\n')
-				paragraph = true;
-		}
-		if (content && paragraph)
-			break;
-	}
-	return it.pos;
-}
+size_t text_sentence_next(Text *txt, size_t pos) {
+	char c, prev = 'X';
+	Iterator it = text_iterator_get(txt, pos), rev = text_iterator_get(txt, pos);
 
-static size_t text_paragraph_sentence_prev(Text *txt, size_t pos, bool sentence) {
-	char prev, c;
-	bool content = false, paragraph = false;
-
-	Iterator it = text_iterator_get(txt, pos);
-	if (!text_iterator_byte_get(&it, &prev))
+	if (!text_iterator_byte_get(&it, &c))
 		return pos;
 
-	while (text_iterator_byte_prev(&it, &c)) {
-		content |= !isspace((unsigned char)c) && c != '.' && c != '?' && c != '!';
-		if (sentence && content && (c == '.' || c == '?' || c == '!') && isspace((unsigned char)prev)) {
+	while (text_iterator_byte_get(&rev, &prev) && isspace((unsigned char)prev))
+		text_iterator_byte_prev(&rev, NULL);
+	prev = rev.pos == 0 ? '.' : prev; /* simulate punctuation at BOF */
+
+	do {
+		if ((prev == '.' || prev == '?' || prev == '!') && isspace((unsigned char)c)) {
 			do text_iterator_byte_next(&it, NULL);
 			while (text_iterator_byte_get(&it, &c) && isspace((unsigned char)c));
-			break;
-		}
-		if (c == '\r')
-			text_iterator_byte_prev(&it, &c);
-		if (c == '\n' && text_iterator_byte_prev(&it, &c)) {
-			content |= !isspace((unsigned char)c);
-			if (c == '\r')
-				text_iterator_byte_prev(&it, &c);
-			if (c == '\n') {
-				paragraph = true;
-				if (content) {
-					do text_iterator_byte_next(&it, NULL);
-					while (text_iterator_byte_get(&it, &c) && isspace((unsigned char)c));
-					break;
-				}
-			}
-		}
-		if (content && paragraph) {
-			do text_iterator_byte_next(&it, NULL);
-			while (text_iterator_byte_get(&it, &c) && !isspace((unsigned char)c));
-			break;
+			return it.pos;
 		}
 		prev = c;
-	}
+	} while (text_iterator_byte_next(&it, &c));
 	return it.pos;
-}
-
-size_t text_sentence_next(Text *txt, size_t pos) {
-	return text_paragraph_sentence_next(txt, pos, true);
 }
 
 size_t text_sentence_prev(Text *txt, size_t pos) {
-	return text_paragraph_sentence_prev(txt, pos, true);
+	char c, prev = 'X';
+	bool content = false;
+	Iterator it = text_iterator_get(txt, pos);
+
+	while (it.pos != 0 && text_iterator_byte_prev(&it, &c)) {
+		if (content && isspace((unsigned char)prev) && (c == '.' || c == '?' || c == '!')) {
+			do text_iterator_byte_next(&it, NULL);
+			while (text_iterator_byte_get(&it, &c) && isspace((unsigned char)c));
+			return it.pos;
+		}
+		content |= !isspace((unsigned char)c);
+		prev = c;
+	} /* The loop only ends on hitting BOF or error */
+	if (content) /* starting pos was after first sentence in file => find that sentences start */
+		while (text_iterator_byte_get(&it, &c) && isspace((unsigned char)c))
+			text_iterator_byte_next(&it, NULL);
+	return it.pos;
 }
 
 size_t text_paragraph_next(Text *txt, size_t pos) {
-	return text_paragraph_sentence_next(txt, pos, false);
+	char c;
+	Iterator it = text_iterator_get(txt, pos);
+
+	while (text_iterator_byte_get(&it, &c) && (c == '\n' || c == '\r'))
+		text_iterator_byte_next(&it, NULL);
+	return text_line_empty_next(txt, it.pos);
 }
 
 size_t text_paragraph_prev(Text *txt, size_t pos) {
-	return text_paragraph_sentence_prev(txt, pos, false);
+	char c;
+	Iterator it = text_iterator_get(txt, pos);
+
+	/* c == \0 catches starting the search at EOF */
+	while (text_iterator_byte_get(&it, &c) && (c == '\n' || c == '\r' || c == '\0'))
+		text_iterator_byte_prev(&it, NULL);
+	return text_line_empty_prev(txt, it.pos);
 }
 
 size_t text_line_empty_next(Text *txt, size_t pos) {
-	// TODO refactor search \n\n
 	char c;
 	Iterator it = text_iterator_get(txt, pos);
 	while (text_iterator_byte_get(&it, &c)) {
@@ -456,11 +431,10 @@ size_t text_line_empty_next(Text *txt, size_t pos) {
 		}
 		text_iterator_byte_next(&it, NULL);
 	}
-	return pos;
+	return it.pos;
 }
 
 size_t text_line_empty_prev(Text *txt, size_t pos) {
-	// TODO refactor search \n\n
 	char c;
 	Iterator it = text_iterator_get(txt, pos);
 	while (text_iterator_byte_prev(&it, &c)) {
@@ -471,7 +445,7 @@ size_t text_line_empty_prev(Text *txt, size_t pos) {
 				return it.pos + 1;
 		}
 	}
-	return pos;
+	return it.pos;
 }
 
 size_t text_function_start_next(Text *txt, size_t pos) {
