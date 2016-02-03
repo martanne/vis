@@ -21,7 +21,7 @@
 #include "util.h"
 
 #define space(c) (isspace((unsigned char)c))
-#define isboundry is_word_boundry
+#define boundary(c) (isboundary((unsigned char)c))
 
 Filerange text_object_entire(Text *txt, size_t pos) {
 	return text_range_new(0, text_size(txt));
@@ -40,7 +40,7 @@ Filerange text_object_entire_inner(Text *txt, size_t pos) {
 	return text_range_linewise(txt, &r);
 }
 
-static Filerange text_object_customword(Text *txt, size_t pos, int (*isboundry)(int)) {
+static Filerange text_object_customword(Text *txt, size_t pos, int (*isboundary)(int)) {
 	Filerange r;
 	char c, prev = '0', next = '0';
 	Iterator it = text_iterator_get(txt, pos);
@@ -50,29 +50,29 @@ static Filerange text_object_customword(Text *txt, size_t pos, int (*isboundry)(
 		text_iterator_byte_next(&it, NULL);
 	text_iterator_byte_next(&it, &next);
 	if (space(c)) {
-		r.start = text_char_next(txt, text_customword_end_prev(txt, pos, isboundry));
-		r.end = text_customword_start_next(txt, pos, isboundry);
-	} else if (isboundry(prev) && isboundry(next)) {
-		if (isboundry(c)) {
-			r.start = text_char_next(txt, text_customword_end_prev(txt, pos, isboundry));
-			r.end = text_char_next(txt, text_customword_end_next(txt, pos, isboundry));
+		r.start = text_char_next(txt, text_customword_end_prev(txt, pos, isboundary));
+		r.end = text_customword_start_next(txt, pos, isboundary);
+	} else if (boundary(prev) && boundary(next)) {
+		if (boundary(c)) {
+			r.start = text_char_next(txt, text_customword_end_prev(txt, pos, isboundary));
+			r.end = text_char_next(txt, text_customword_end_next(txt, pos, isboundary));
 		} else {
 			/* on a single character */
 			r.start = pos;
 			r.end = text_char_next(txt, pos);
 		}
-	} else if (isboundry(prev)) {
+	} else if (boundary(prev)) {
 		/* at start of a word */
 		r.start = pos;
-		r.end = text_char_next(txt, text_customword_end_next(txt, pos, isboundry));
-	} else if (isboundry(next)) {
+		r.end = text_char_next(txt, text_customword_end_next(txt, pos, isboundary));
+	} else if (boundary(next)) {
 		/* at end of a word */
-		r.start = text_customword_start_prev(txt, pos, isboundry);
+		r.start = text_customword_start_prev(txt, pos, isboundary);
 		r.end = text_char_next(txt, pos);
 	} else {
 		/* in the middle of a word */
-		r.start = text_customword_start_prev(txt, pos, isboundry);
-		r.end = text_char_next(txt, text_customword_end_next(txt, pos, isboundry));
+		r.start = text_customword_start_prev(txt, pos, isboundary);
+		r.end = text_char_next(txt, text_customword_end_next(txt, pos, isboundary));
 	}
 
 	return r;
@@ -86,7 +86,7 @@ Filerange text_object_longword(Text *txt, size_t pos) {
 	return text_object_customword(txt, pos, isspace);
 }
 
-static Filerange text_object_customword_outer(Text *txt, size_t pos, int (*isboundry)(int)) {
+static Filerange text_object_customword_outer(Text *txt, size_t pos, int (*isboundary)(int)) {
 	Filerange r;
 	char c, prev = '0', next = '0';
 	Iterator it = text_iterator_get(txt, pos);
@@ -97,29 +97,29 @@ static Filerange text_object_customword_outer(Text *txt, size_t pos, int (*isbou
 	text_iterator_byte_next(&it, &next);
 	if (space(c)) {
 		/* middle of two words, include leading white space */
-		r.start = text_char_next(txt, text_customword_end_prev(txt, pos, isboundry));
-		r.end = text_char_next(txt, text_customword_end_next(txt, pos, isboundry));
-	} else if (isboundry(prev) && isboundry(next)) {
-		if (isboundry(c)) {
-			r.start = text_char_next(txt, text_customword_end_prev(txt, pos, isboundry));
-			r.end = text_word_start_next(txt, text_customword_end_next(txt, pos, isboundry));
+		r.start = text_char_next(txt, text_customword_end_prev(txt, pos, isboundary));
+		r.end = text_char_next(txt, text_customword_end_next(txt, pos, isboundary));
+	} else if (boundary(prev) && boundary(next)) {
+		if (boundary(c)) {
+			r.start = text_char_next(txt, text_customword_end_prev(txt, pos, isboundary));
+			r.end = text_word_start_next(txt, text_customword_end_next(txt, pos, isboundary));
 		} else {
 			/* on a single character */
 			r.start = pos;
-			r.end = text_customword_start_next(txt, pos, isboundry);
+			r.end = text_customword_start_next(txt, pos, isboundary);
 		}
-	} else if (isboundry(prev)) {
+	} else if (boundary(prev)) {
 		/* at start of a word */
 		r.start = pos;
-		r.end = text_customword_start_next(txt, text_customword_end_next(txt, pos, isboundry), isboundry);
-	} else if (isboundry(next)) {
+		r.end = text_customword_start_next(txt, text_customword_end_next(txt, pos, isboundary), isboundary);
+	} else if (boundary(next)) {
 		/* at end of a word */
-		r.start = text_customword_start_prev(txt, pos, isboundry);
-		r.end = text_customword_start_next(txt, pos, isboundry);
+		r.start = text_customword_start_prev(txt, pos, isboundary);
+		r.end = text_customword_start_next(txt, pos, isboundary);
 	} else {
 		/* in the middle of a word */
-		r.start = text_customword_start_prev(txt, pos, isboundry);
-		r.end = text_customword_start_next(txt, text_customword_end_next(txt, pos, isboundry), isboundry);
+		r.start = text_customword_start_prev(txt, pos, isboundary);
+		r.end = text_customword_start_next(txt, text_customword_end_next(txt, pos, isboundary), isboundary);
 	}
 
 	return r;
