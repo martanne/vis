@@ -277,7 +277,7 @@ size_t text_range_line_prev(Text *txt, Filerange *r, size_t pos) {
 	return newpos != pos && r->start <= newpos ? newpos : EPOS;
 }
 
-static size_t text_customword_start_next(Text *txt, size_t pos, int (*isboundry)(int)) {
+size_t text_customword_start_next(Text *txt, size_t pos, int (*isboundry)(int)) {
 	char c;
 	Iterator it = text_iterator_get(txt, pos);
 	if (!text_iterator_byte_get(&it, &c))
@@ -290,7 +290,7 @@ static size_t text_customword_start_next(Text *txt, size_t pos, int (*isboundry)
 	return it.pos;
 }
 
-static size_t text_customword_start_prev(Text *txt, size_t pos, int (*isboundry)(int)) {
+size_t text_customword_start_prev(Text *txt, size_t pos, int (*isboundry)(int)) {
 	char c;
 	Iterator it = text_iterator_get(txt, pos);
 	while (text_iterator_char_prev(&it, &c) && isspace((unsigned char)c));
@@ -301,7 +301,7 @@ static size_t text_customword_start_prev(Text *txt, size_t pos, int (*isboundry)
 	return pos;
 }
 
-static size_t text_customword_end_next(Text *txt, size_t pos, int (*isboundry)(int)) {
+size_t text_customword_end_next(Text *txt, size_t pos, int (*isboundry)(int)) {
 	char c;
 	Iterator it = text_iterator_get(txt, pos);
 	while (text_iterator_char_next(&it, &c) && isspace((unsigned char)c));
@@ -312,7 +312,7 @@ static size_t text_customword_end_next(Text *txt, size_t pos, int (*isboundry)(i
 	return pos;
 }
 
-static size_t text_customword_end_prev(Text *txt, size_t pos, int (*isboundry)(int)) {
+size_t text_customword_end_prev(Text *txt, size_t pos, int (*isboundry)(int)) {
 	char c;
 	Iterator it = text_iterator_get(txt, pos);
 	if (!text_iterator_byte_get(&it, &c))

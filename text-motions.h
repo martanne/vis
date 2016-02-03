@@ -76,6 +76,13 @@ size_t text_word_end_next(Text*, size_t pos);
 size_t text_word_end_prev(Text*, size_t pos);
 size_t text_word_start_next(Text*, size_t pos);
 size_t text_word_start_prev(Text*, size_t pos);
+/*
+ * More general versions of the above, define your own word boundaries.
+ */
+size_t text_customword_start_next(Text*, size_t pos, int (*isboundry)(int));
+size_t text_customword_start_prev(Text*, size_t pos, int (*isboundry)(int));
+size_t text_customword_end_next(Text*, size_t pos, int (*isboundry)(int));
+size_t text_customword_end_prev(Text*, size_t pos, int (*isboundry)(int));
 /* TODO: implement the following semantics
  * A sentence is defined as ending at a '.', '!' or '?' followed by either the
  * end of a line, or by a space or tab.  Any number of closing ')', ']', '"'
