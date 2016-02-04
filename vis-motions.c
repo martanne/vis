@@ -16,7 +16,7 @@ static bool search_word(Vis *vis, Text *txt, size_t pos) {
 	char *buf = text_bytes_alloc0(txt, word.start, text_range_size(&word));
 	if (!buf)
 		return false;
-	snprintf(expr, sizeof(expr), "\\<%s\\>", buf);
+	snprintf(expr, sizeof(expr), "[[:<:]]%s[[:>:]]", buf);
 	free(buf);
 	return text_regex_compile(vis->search_pattern, expr, REG_EXTENDED) == 0;
 }
