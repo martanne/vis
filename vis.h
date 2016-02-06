@@ -26,6 +26,7 @@ typedef union { /* various types of arguments passed to key action functions */
 	bool b;
 	int i;
 	const char *s;
+	const void *v;
 	void (*w)(View*);
 	void (*f)(Vis*);
 } Arg;
@@ -39,7 +40,7 @@ typedef struct {             /* a KeyAction can be bound to a key binding */
 	 * to complete the action. In this case the function will be called again when more input
 	 * becomes available */
 	const char* (*func)(Vis*, const char *keys, const Arg*);
-	const Arg arg;       /* additional arguments which will be passed as to func */
+	Arg arg;       /* additional arguments which will be passed as to func */
 } KeyAction;
 
 typedef struct {           /* a key binding either refers to an action or an alias */

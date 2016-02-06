@@ -100,6 +100,37 @@ static int pcall(Vis *vis, lua_State *L, int nargs, int nresults) {
 	return ret;
 }
 
+/* expects a lua function at the top of the stack and stores a
+ * reference to it in the registry. The return value can be used
+ * to look it up.
+ *
+ *   registry["vis.functions"][(void*)(function)] = function
+ */
+static const void *func_ref_new(lua_State *L) {
+	const void *addr = lua_topointer(L, -1);
+	if (!lua_isfunction(L, -1) || !addr)
+		return NULL;
+	lua_getfield(L, LUA_REGISTRYINDEX, "vis.functions");
+	lua_pushlightuserdata(L, (void*)addr);
+	lua_pushvalue(L, -3);
+	lua_settable(L, -3);
+	lua_pop(L, 1);
+	return addr;
+}
+
+/* retrieve function from registry and place it at the top of the stack */
+static bool func_ref_get(lua_State *L, const void *addr) {
+	lua_getfield(L, LUA_REGISTRYINDEX, "vis.functions");
+	lua_pushlightuserdata(L, (void*)addr);
+	lua_gettable(L, -2);
+	lua_remove(L, -2);
+	if (!lua_isfunction(L, -1)) {
+		lua_pop(L, 1);
+		return false;
+	}
+	return true;
+}
+
 static void *obj_new(lua_State *L, size_t size, const char *type) {
 	void *obj = lua_newuserdata(L, size);
 	luaL_getmetatable(L, type);
@@ -193,6 +224,14 @@ static int newindex_common(lua_State *L) {
 	return 0;
 }
 
+static const char *keymapping(Vis *vis, const char *keys, const Arg *arg) {
+	lua_State *L = vis->lua;
+	if (!func_ref_get(L, arg->v))
+		return keys;
+	pcall(vis, L, 0, 0);
+	return keys;
+}
+
 static int windows_iter(lua_State *L);
 
 static int windows(lua_State *L) {
@@ -261,12 +300,55 @@ static int open(lua_State *L) {
 	return 1;
 }
 
+static int map(lua_State *L) {
+	KeyBinding *binding = NULL;
+	KeyAction *action = NULL;
+	Vis *vis = lua_touserdata(L, lua_upvalueindex(1));
+
+	int mode = luaL_checkint(L, 1);
+	const char *key = luaL_checkstring(L, 2);
+
+	if (!key || !lua_isfunction(L, 3))
+		goto err;
+	if (!(binding = calloc(1, sizeof *binding)) || !(action = calloc(1, sizeof *action)))
+		goto err;
+
+	/* store reference to function in the registry */
+	lua_pushvalue(L, 3);
+	const void *func = func_ref_new(L);
+	if (!func)
+		goto err;
+
+	*action = (KeyAction){
+		.name = NULL,
+		.help = NULL,
+		.func = keymapping,
+		.arg = (const Arg){
+			.v = func,
+		},
+	};
+
+	binding->action = action;
+
+	if (!vis_mode_map(vis, mode, key, binding))
+		goto err;
+
+	lua_pushboolean(L, true);
+	return 1;
+err:
+	free(binding);
+	free(action);
+	lua_pushboolean(L, false);
+	return 1;
+}
+
 static const struct luaL_Reg vis_lua[] = {
 	{ "files", files },
 	{ "windows", windows },
 	{ "command", command },
 	{ "info", info },
 	{ "open", open },
+	{ "map", map },
 	{ NULL, NULL },
 };
 
@@ -591,6 +673,9 @@ void vis_lua_start(Vis *vis) {
 	/* table in registry to track lifetimes of C objects */
 	lua_newtable(L);
 	lua_setfield(L, LUA_REGISTRYINDEX, "vis.objects");
+	/* table in registry to store references to Lua functions */
+	lua_newtable(L);
+	lua_setfield(L, LUA_REGISTRYINDEX, "vis.functions");
 	/* metatable used to type check user data */
 	luaL_newmetatable(L, "vis.file");
 	luaL_setfuncs(L, file_funcs, 0);
