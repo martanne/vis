@@ -67,6 +67,8 @@ void vis_suspend(Vis*);
 bool vis_window_new(Vis*, const char *filename);
 /* reload the file currently displayed in the window from disk */
 bool vis_window_reload(Win*);
+/* check whether closing the window would loose unsaved changes */
+bool vis_window_closable(Win*);
 /* close window, redraw user interface */
 void vis_window_close(Win*);
 /* split the given window. changes to the displayed text will be reflected
@@ -405,6 +407,7 @@ bool vis_signal_handler(Vis*, int signum, const siginfo_t *siginfo, const void *
 /* TODO: expose proper API to iterate through files etc */
 Text *vis_text(Vis*);
 View *vis_view(Vis*);
+Win *vis_window(Vis*);
 Text *vis_file_text(File*);
 const char *vis_file_name(File*);
 

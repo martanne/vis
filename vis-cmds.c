@@ -429,19 +429,13 @@ static bool cmd_open(Vis *vis, Filerange *range, enum CmdOpt opt, const char *ar
 	return openfiles(vis, &argv[1]);
 }
 
-static bool is_view_closeable(Win *win) {
-	if (!text_modified(win->file->text))
-		return true;
-	return win->file->refcount > 1;
-}
-
 static void info_unsaved_changes(Vis *vis) {
 	vis_info_show(vis, "No write since last change (add ! to override)");
 }
 
 static bool cmd_edit(Vis *vis, Filerange *range, enum CmdOpt opt, const char *argv[]) {
 	Win *oldwin = vis->win;
-	if (!(opt & CMD_OPT_FORCE) && !is_view_closeable(oldwin)) {
+	if (!(opt & CMD_OPT_FORCE) && !vis_window_closable(oldwin)) {
 		info_unsaved_changes(vis);
 		return false;
 	}
@@ -463,7 +457,7 @@ static bool has_windows(Vis *vis) {
 }
 
 static bool cmd_quit(Vis *vis, Filerange *range, enum CmdOpt opt, const char *argv[]) {
-	if (!(opt & CMD_OPT_FORCE) && !is_view_closeable(vis->win)) {
+	if (!(opt & CMD_OPT_FORCE) && !vis_window_closable(vis->win)) {
 		info_unsaved_changes(vis);
 		return false;
 	}

@@ -284,6 +284,12 @@ bool vis_window_new(Vis *vis, const char *filename) {
 	return true;
 }
 
+bool vis_window_closable(Win *win) {
+	if (!text_modified(win->file->text))
+		return true;
+	return win->file->refcount > 1;
+}
+
 void vis_window_close(Win *win) {
 	Vis *vis = win->vis;
 	if (vis->event && vis->event->win_close)
@@ -1088,6 +1094,10 @@ Text *vis_text(Vis *vis) {
 
 View *vis_view(Vis *vis) {
 	return vis->win->view;
+}
+
+Win *vis_window(Vis *vis) {
+	return vis->win;
 }
 
 Text *vis_file_text(File *file) {
