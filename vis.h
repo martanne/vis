@@ -350,6 +350,7 @@ enum VisRegister {
 	VIS_REG_u, VIS_REG_v, VIS_REG_w, VIS_REG_x, VIS_REG_y,
 	VIS_REG_z,
 	VIS_REG_DEFAULT, /* used when no other register is specified */
+	VIS_REG_ZERO, /* yank register */
 	VIS_REG_BLACKHOLE, /* /dev/null register */
 	VIS_REG_CLIPBOARD, /* system clipboard register */
 	VIS_REG_PROMPT,  /* internal register which shadows DEFAULT in PROMPT mode */

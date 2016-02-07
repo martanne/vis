@@ -25,6 +25,8 @@ static size_t op_change(Vis *vis, Text *txt, OperatorContext *c) {
 static size_t op_yank(Vis *vis, Text *txt, OperatorContext *c) {
 	c->reg->linewise = c->linewise;
 	register_put(vis, c->reg, txt, &c->range);
+	if (c->reg == &vis->registers[VIS_REG_DEFAULT])
+		register_put(vis, &vis->registers[VIS_REG_ZERO], txt, &c->range);
 	return c->pos;
 }
 

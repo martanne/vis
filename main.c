@@ -1340,6 +1340,8 @@ static const char *key2register(Vis *vis, const char *keys, enum VisRegister *re
 		*reg = VIS_REG_CLIPBOARD;
 	else if (keys[0] == '_')
 		*reg = VIS_REG_BLACKHOLE;
+	else if (keys[0] == '0')
+		*reg = VIS_REG_ZERO;
 	return keys+1;
 }
 
