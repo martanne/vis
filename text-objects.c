@@ -325,6 +325,21 @@ Filerange text_object_number(Text *txt, size_t pos) {
 	return r;
 }
 
+static int is_filename_boundary(int c) {
+	switch (c) {
+	case ';': case ':': case '|':
+	case '"': case '\'':
+	case '<': case '>':
+		return true;
+	default:
+		return isspace(c);
+	}
+}
+
+Filerange text_object_filename(Text *txt, size_t pos) {
+	return text_object_range(txt, pos, is_filename_boundary);
+}
+
 Filerange text_range_linewise(Text *txt, Filerange *rin) {
 	Filerange rout = *rin;
 	rout.start = text_line_begin(txt, rin->start);
