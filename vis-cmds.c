@@ -913,6 +913,9 @@ static bool cmd_pipe(Vis *vis, Filerange *range, enum CmdOpt opt, const char *ar
 
 	buffer_release(&filter.err);
 
+	if (filter.txt)
+		text_save(filter.txt, NULL);
+
 	return !vis->cancel_filter && status == 0;
 }
 
