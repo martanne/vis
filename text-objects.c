@@ -13,6 +13,8 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
+#include <errno.h>
+#include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
 #include "text-motions.h"
@@ -298,6 +300,29 @@ Filerange text_object_range(Text *txt, size_t pos, int (*isboundary)(int)) {
 	text_iterator_byte_get(&it, &c);
 	while (!boundary(c) && text_iterator_byte_next(&it, &c));
 	return text_range_new(start, it.pos);
+}
+
+static int is_number(int c) {
+	return !(c == '-' || c == 'x' || c == 'X' ||
+	         ('0' <= c && c <= '9') ||
+	         ('a' <= c && c <= 'f') || ('A' <= c && c <= 'F'));
+}
+
+Filerange text_object_number(Text *txt, size_t pos) {
+	char *buf, *err = NULL;
+	Filerange r = text_object_range(txt, pos, is_number);
+	if (!text_range_valid(&r))
+		return r;
+	if (!(buf = text_bytes_alloc0(txt, r.start, text_range_size(&r))))
+		return text_range_empty();
+	errno = 0;
+	strtoll(buf, &err, 0);
+	if (errno || err == buf)
+		r = text_range_empty();
+	else
+		r.end = r.start + (err - buf);
+	free(buf);
+	return r;
 }
 
 Filerange text_range_linewise(Text *txt, Filerange *rin) {
