@@ -233,6 +233,8 @@ static const KeyBinding bindings_normal[] = {
 	{ "gP",                 ACTION(PUT_BEFORE_END)                      },
 	{ "~",                  ALIAS("<vis-operator-case-swap>l")          },
 	{ "<End>",              ALIAS("$")                                  },
+	{ "gf",                 ACTION(OPEN_FILE_UNDER_CURSOR)              },
+	{ "<C-w>gf",            ACTION(OPEN_FILE_UNDER_CURSOR_NEW_WINDOW)   },
 	{ 0 /* empty last element, array terminator */                      },
 };
 
