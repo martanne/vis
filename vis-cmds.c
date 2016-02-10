@@ -961,9 +961,9 @@ static bool cmd_earlier_later(Vis *vis, Filerange *range, enum CmdOpt opt, const
 	return pos != EPOS;
 }
 
-bool print_keybinding(const char *key, void *value, void *data) {
-	Text *txt = (Text*)data;
-	KeyBinding *binding = (KeyBinding*)value;
+static bool print_keybinding(const char *key, void *value, void *data) {
+	Text *txt = data;
+	KeyBinding *binding = value;
 	const char *desc = binding->alias;
 	if (!desc && binding->action)
 		desc = binding->action->help;
@@ -974,6 +974,12 @@ static void print_mode(Mode *mode, Text *txt) {
 	if (!map_empty(mode->bindings))
 		text_appendf(txt, "\n %s\n\n", mode->name);
 	map_iterate(mode->bindings, print_keybinding, txt);
+}
+
+static bool print_action(const char *key, void *value, void *data) {
+	Text *txt = data;
+	KeyAction *action = value;
+	return text_appendf(txt, "  %-30s\t%s\n", key, action->help);
 }
 
 static bool cmd_help(Vis *vis, Filerange *range, enum CmdOpt opt, const char *argv[]) {
@@ -999,6 +1005,9 @@ static bool cmd_help(Vis *vis, Filerange *range, enum CmdOpt opt, const char *ar
 	text_appendf(txt, "\n :-Commands\n\n");
 	for (Command *cmd = cmds; cmd && cmd->name[0]; cmd++)
 		text_appendf(txt, "  %s\n", cmd->name[0]);
+
+	text_appendf(txt, "\n Key binding actions\n\n");
+	map_iterate(vis->actions, print_action, txt);
 
 	text_save(txt, NULL);
 	return true;
