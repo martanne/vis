@@ -159,6 +159,7 @@ Mode vis_modes[] = {
 	},
 	[VIS_MODE_VISUAL_LINE] = {
 		.name = "VISUAL LINE",
+		.parent = &vis_modes[VIS_MODE_VISUAL],
 		.status = "--VISUAL LINE--",
 		.help = "",
 		.enter = vis_mode_visual_line_enter,
@@ -177,6 +178,7 @@ Mode vis_modes[] = {
 	},
 	[VIS_MODE_REPLACE] = {
 		.name = "REPLACE",
+		.parent = &vis_modes[VIS_MODE_INSERT],
 		.status = "--REPLACE--",
 		.help = "",
 		.enter = vis_mode_replace_enter,

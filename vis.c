@@ -662,6 +662,8 @@ static const char *vis_keys_raw(Vis *vis, Buffer *buf, const char *input) {
 		}
 
 		for (; mode && !binding && !prefix; mode = mode->parent) {
+			if (!mode->bindings)
+				continue;
 			binding = map_get(mode->bindings, start);
 			/* "<" is never treated as a prefix because it is used to denote
 			 * special key symbols */

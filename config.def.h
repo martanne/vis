@@ -330,11 +330,6 @@ static const KeyBinding **default_bindings[] = {
 	},
 	[VIS_MODE_VISUAL_LINE] = (const KeyBinding*[]){
 		bindings_visual_line,
-		bindings_visual,
-		bindings_textobjects,
-		bindings_operators,
-		bindings_motions,
-		bindings_basic,
 		NULL,
 	},
 	[VIS_MODE_INSERT] = (const KeyBinding*[]){
@@ -345,9 +340,6 @@ static const KeyBinding **default_bindings[] = {
 	},
 	[VIS_MODE_REPLACE] = (const KeyBinding*[]){
 		bindings_replace,
-		bindings_insert,
-		bindings_readline,
-		bindings_basic,
 		NULL,
 	},
 };
