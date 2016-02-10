@@ -16,7 +16,11 @@ static bool search_word(Vis *vis, Text *txt, size_t pos) {
 	char *buf = text_bytes_alloc0(txt, word.start, text_range_size(&word));
 	if (!buf)
 		return false;
+	#ifdef __APPLE__
+	snprintf(expr, sizeof(expr), "[[:<:]]%s[[:>:]]", buf);
+	#else
 	snprintf(expr, sizeof(expr), "\\<%s\\>", buf);
+	#endif
 	free(buf);
 	return text_regex_compile(vis->search_pattern, expr, REG_EXTENDED) == 0;
 }
