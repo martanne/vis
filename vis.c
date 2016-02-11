@@ -503,15 +503,22 @@ void action_do(Vis *vis, Action *a) {
 			else
 				c.range.start = c.range.end = pos;
 			for (int i = 0; i < count; i++) {
-				Filerange r = a->textobj->range(txt, pos);
+				Filerange r;
+				if (a->textobj->txt)
+					r = a->textobj->txt(txt, pos);
+				else
+					r = a->textobj->vis(vis, txt, pos);
 				if (!text_range_valid(&r))
 					break;
-				if (a->textobj->type == OUTER) {
+				if (a->textobj->type & OUTER) {
 					r.start--;
 					r.end++;
 				}
 
-				c.range = text_range_union(&c.range, &r);
+				if (a->textobj->type & SPLIT)
+					c.range = r;
+				else
+					c.range = text_range_union(&c.range, &r);
 
 				if (i < count - 1)
 					pos = c.range.end + 1;

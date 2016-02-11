@@ -70,10 +70,12 @@ typedef struct { /* Motion implementation, takes a cursor postion and returns a 
 typedef struct {
 	/* gets a cursor position and returns a file range (or text_range_empty())
 	 * representing the text object containing the position. */
-	Filerange (*range)(Text*, size_t pos);
-	enum {  /* whether the object should include the delimiting symbols or not */
-		INNER,
-		OUTER,
+	Filerange (*txt)(Text*, size_t pos);
+	Filerange (*vis)(Vis*, Text*, size_t pos);
+	enum {
+		INNER = 1 << 0, /* whether the object should include */
+		OUTER = 1 << 1, /* the delimiting symbols or not */
+		SPLIT = 1 << 2, /* whether multiple applications will yield a split range */
 	} type;
 } TextObject;
 
