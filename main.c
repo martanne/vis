@@ -269,6 +269,8 @@ enum {
 	VIS_ACTION_TEXT_OBJECT_FUNCTION_INNER,
 	VIS_ACTION_TEXT_OBJECT_LINE_OUTER,
 	VIS_ACTION_TEXT_OBJECT_LINE_INNER,
+	VIS_ACTION_TEXT_OBJECT_SEARCH_FORWARD,
+	VIS_ACTION_TEXT_OBJECT_SEARCH_BACKWARD,
 	VIS_ACTION_MOTION_CHARWISE,
 	VIS_ACTION_MOTION_LINEWISE,
 	VIS_ACTION_UNICODE_INFO,
@@ -1049,6 +1051,16 @@ static KeyAction vis_action[] = {
 		"text-object-line-inner",
 		"The whole line, excluding leading and trailing whitespace",
 		textobj, { .i = VIS_TEXTOBJECT_INNER_LINE }
+	},
+	[VIS_ACTION_TEXT_OBJECT_SEARCH_FORWARD] = {
+		"text-object-search-forward",
+		"The next search match in forward direction",
+		textobj, { .i = VIS_TEXTOBJECT_SEARCH_FORWARD }
+	},
+	[VIS_ACTION_TEXT_OBJECT_SEARCH_BACKWARD] = {
+		"text-object-search-backward",
+		"The next search match in backward direction",
+		textobj, { .i = VIS_TEXTOBJECT_SEARCH_BACKWARD }
 	},
 	[VIS_ACTION_MOTION_CHARWISE] = {
 		"motion-charwise",

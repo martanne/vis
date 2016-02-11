@@ -340,6 +340,26 @@ Filerange text_object_filename(Text *txt, size_t pos) {
 	return text_object_range(txt, pos, is_filename_boundary);
 }
 
+Filerange text_object_search_forward(Text *txt, size_t pos, Regex *regex) {
+	size_t start = pos;
+	size_t end = text_size(txt);
+	RegexMatch match[1];
+	bool found = start < end && !text_search_range_forward(txt, start, end - start, regex, 1, match, 0);
+	if (found)
+		return text_range_new(match[0].start, match[0].end);
+	return text_range_empty();
+}
+
+Filerange text_object_search_backward(Text *txt, size_t pos, Regex *regex) {
+	size_t start = 0;
+	size_t end = pos;
+	RegexMatch match[1];
+	bool found = !text_search_range_backward(txt, start, end, regex, 1, match, 0);
+	if (found)
+		return text_range_new(match[0].start, match[0].end);
+	return text_range_empty();
+}
+
 Filerange text_range_linewise(Text *txt, Filerange *rin) {
 	Filerange rout = *rin;
 	rout.start = text_line_begin(txt, rin->start);
