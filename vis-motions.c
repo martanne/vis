@@ -296,7 +296,7 @@ err:
 	return false;
 }
 
-Movement vis_motions[] = {
+const Movement vis_motions[] = {
 	[VIS_MOVE_LINE_UP]             = { .cur = view_line_up,             .type = LINEWISE                 },
 	[VIS_MOVE_LINE_DOWN]           = { .cur = view_line_down,           .type = LINEWISE                 },
 	[VIS_MOVE_SCREEN_LINE_UP]      = { .cur = view_screenline_up,                                        },

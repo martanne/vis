@@ -281,7 +281,7 @@ enum {
 	VIS_ACTION_NOP,
 };
 
-static KeyAction vis_action[] = {
+static const KeyAction vis_action[] = {
 	[VIS_ACTION_EDITOR_SUSPEND] = {
 		"editor-suspend",
 		"Suspend the editor",
@@ -1769,7 +1769,7 @@ int main(int argc, char *argv[]) {
 		return EXIT_FAILURE;
 
 	for (int i = 0; i < LENGTH(vis_action); i++) {
-		KeyAction *action = &vis_action[i];
+		const KeyAction *action = &vis_action[i];
 		if (!vis_action_register(vis, action))
 			vis_die(vis, "Could not register action: %s\n", action->name);
 	}

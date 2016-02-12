@@ -414,7 +414,7 @@ void vis_delete(Vis *vis, size_t pos, size_t len) {
 	windows_invalidate(vis, pos, pos + len);
 }
 
-bool vis_action_register(Vis *vis, KeyAction *action) {
+bool vis_action_register(Vis *vis, const KeyAction *action) {
 	if (!vis->actions)
 		vis->actions = map_new();
 	if (!vis->actions)

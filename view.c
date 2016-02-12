@@ -1006,7 +1006,7 @@ const char *view_syntax_get(View *view) {
 }
 
 void view_options_set(View *view, enum UiOption options) {
-	int mapping[] = {
+	const int mapping[] = {
 		[SYNTAX_SYMBOL_SPACE]    = UI_OPTION_SYMBOL_SPACE,
 		[SYNTAX_SYMBOL_TAB]      = UI_OPTION_SYMBOL_TAB,
 		[SYNTAX_SYMBOL_TAB_FILL] = UI_OPTION_SYMBOL_TAB_FILL,

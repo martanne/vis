@@ -44,7 +44,7 @@ typedef struct {             /* a KeyAction can be bound to a key binding */
 
 typedef struct {           /* a key binding either refers to an action or an alias */
 	const char *key;   /* symbolic key to trigger this binding */
-	KeyAction *action; /* action to launch upon triggering this binding */
+	const KeyAction *action; /* action to launch upon triggering this binding */
 	const char *alias; /* replaces key with alias in the input queue */
 } KeyBinding;
 
@@ -137,7 +137,7 @@ bool vis_window_mode_unmap(Win*, enum VisMode, const char *key);
 const char *vis_mode_status(Vis*);
 /* associates the special pseudo key <keyaction->name> with the given key action.
  * after successfull registration the pseudo key can be used key binding aliases */
-bool vis_action_register(Vis*, KeyAction*);
+bool vis_action_register(Vis*, const KeyAction*);
 
 enum VisOperator {
 	VIS_OP_DELETE,

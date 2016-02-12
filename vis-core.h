@@ -168,9 +168,9 @@ struct Vis {
 /** stuff used by multiple of the vis-* files */
 
 extern Mode vis_modes[VIS_MODE_INVALID];
-extern Movement vis_motions[VIS_MOVE_INVALID];
-extern Operator vis_operators[VIS_OP_INVALID];
-extern TextObject vis_textobjects[VIS_TEXTOBJECT_INVALID];
+extern const Movement vis_motions[VIS_MOVE_INVALID];
+extern const Operator vis_operators[VIS_OP_INVALID];
+extern const TextObject vis_textobjects[VIS_TEXTOBJECT_INVALID];
 
 void macro_operator_stop(Vis *vis);
 void macro_operator_record(Vis *vis);

@@ -94,7 +94,7 @@ static bool cmd_unmap(Vis*, Filerange*, enum CmdOpt, const char *argv[]);
  * prefix match. that is if a command should be available under an abbreviation
  * which is a prefix for another command it has to be added as an alias. the
  * long human readable name should always come first */
-static Command cmds[] = {
+static const Command cmds[] = {
 	/* command name / optional alias, function,          options */
 	{ { "bdelete"                  }, cmd_bdelete,       CMD_OPT_FORCE              },
 	{ { "edit", "e"                }, cmd_edit,          CMD_OPT_FORCE              },
@@ -290,8 +290,8 @@ static bool cmd_set(Vis *vis, Filerange *range, enum CmdOpt cmdopt, const char *
 			vis_info_show(vis, "Expecting: spaces, tabs, newlines");
 			return false;
 		}
-		char *keys[] = { "spaces", "tabs", "newlines" };
-		int values[] = {
+		const char *keys[] = { "spaces", "tabs", "newlines" };
+		const int values[] = {
 			UI_OPTION_SYMBOL_SPACE,
 			UI_OPTION_SYMBOL_TAB|UI_OPTION_SYMBOL_TAB_FILL,
 			UI_OPTION_SYMBOL_EOL,
@@ -1003,7 +1003,7 @@ static bool cmd_help(Vis *vis, Filerange *range, enum CmdOpt opt, const char *ar
 	print_mode(&vis_modes[VIS_MODE_INSERT], txt);
 
 	text_appendf(txt, "\n :-Commands\n\n");
-	for (Command *cmd = cmds; cmd && cmd->name[0]; cmd++)
+	for (const Command *cmd = cmds; cmd && cmd->name[0]; cmd++)
 		text_appendf(txt, "  %s\n", cmd->name[0]);
 
 	text_appendf(txt, "\n Key binding actions\n\n");
@@ -1191,13 +1191,13 @@ static Filerange parse_range(Win *win, char **cmd) {
 	return r;
 }
 
-static Command *lookup_cmd(Vis *vis, const char *name) {
+static const Command *lookup_cmd(Vis *vis, const char *name) {
 	if (!vis->cmds) {
 		if (!(vis->cmds = map_new()))
 			return NULL;
 
-		for (Command *cmd = cmds; cmd && cmd->name[0]; cmd++) {
-			for (const char **name = cmd->name; *name; name++)
+		for (const Command *cmd = cmds; cmd && cmd->name[0]; cmd++) {
+			for (const char *const *name = cmd->name; *name; name++)
 				map_put(vis->cmds, *name, cmd);
 		}
 	}
@@ -1253,7 +1253,7 @@ bool vis_cmd(Vis *vis, const char *cmdline) {
 	memmove(param+1, param, strlen(param)+1);
 	*param++ = '\0'; /* separate command name from parameters */
 
-	Command *cmd = lookup_cmd(vis, name);
+	const Command *cmd = lookup_cmd(vis, name);
 	if (!cmd) {
 		vis_info_show(vis, "Not an editor command");
 		free(line);

@@ -17,7 +17,7 @@ static Filerange search_backward(Vis *vis, Text *txt, size_t pos) {
 	return text_object_search_backward(txt, pos, vis->search_pattern);
 }
 
-TextObject vis_textobjects[] = {
+const TextObject vis_textobjects[] = {
 	[VIS_TEXTOBJECT_INNER_WORD]           = { .txt = text_object_word                          },
 	[VIS_TEXTOBJECT_OUTER_WORD]           = { .txt = text_object_word_outer                    },
 	[VIS_TEXTOBJECT_INNER_LONGWORD]       = { .txt = text_object_longword                      },
