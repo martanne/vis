@@ -70,6 +70,10 @@ static const char *prompt_enter(Vis *vis, const char *keys, const Arg *arg) {
 		return keys;
 	}
 
+	size_t len = strlen(cmd);
+	if (len > 0 && cmd[len-1] == '\n')
+		cmd[len-1] = '\0';
+
 	bool lastline = (range.end == text_size(txt));
 
 	prompt_restore(prompt);
@@ -77,7 +81,7 @@ static const char *prompt_enter(Vis *vis, const char *keys, const Arg *arg) {
 		prompt_hide(prompt);
 		if (!lastline) {
 			text_delete(txt, range.start, text_range_size(&range));
-			text_insert(txt, text_size(txt), cmd, strlen(cmd));
+			text_appendf(txt, "%s\n", cmd);
 		}
 	} else {
 		vis->win = prompt;
