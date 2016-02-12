@@ -1688,10 +1688,10 @@ static const char *number_increment_decrement(Vis *vis, const char *keys, const 
 				snprintf(fmt, sizeof fmt, "%lld", value);
 			} else if (hex) {
 				size_t len = strlen(number) - 2;
-				snprintf(fmt, sizeof fmt, "0x%0*llx", len, value);
+				snprintf(fmt, sizeof fmt, "0x%0*llx", (int)len, value);
 			} else {
 				size_t len = strlen(number) - 1;
-				snprintf(fmt, sizeof fmt, "0%0*llo", len, value);
+				snprintf(fmt, sizeof fmt, "0%0*llo", (int)len, value);
 			}
 			text_delete_range(txt, &r);
 			text_insert(txt, r.start, fmt, strlen(fmt));
