@@ -292,13 +292,12 @@ Filerange text_object_backtick(Text *txt, size_t pos) {
 Filerange text_object_range(Text *txt, size_t pos, int (*isboundary)(int)) {
 	char c;
 	size_t start;
-	Iterator it = text_iterator_get(txt, pos);
-	if (!text_iterator_byte_get(&it, &c) || boundary(c))
+	Iterator it = text_iterator_get(txt, pos), rit = it;
+	if (!text_iterator_byte_get(&rit, &c) || boundary(c))
 		return text_range_empty();
-	do start = it.pos; while (text_iterator_char_prev(&it, &c) && !boundary(c));
-	it = text_iterator_get(txt, pos);
-	text_iterator_byte_get(&it, &c);
-	while (!boundary(c) && text_iterator_byte_next(&it, &c));
+	char tmp = c;
+	do start = rit.pos; while (text_iterator_char_prev(&rit, &c) && !boundary(c));
+	for (c = tmp; !boundary(c) && text_iterator_byte_next(&it, &c););
 	return text_range_new(start, it.pos);
 }
 
