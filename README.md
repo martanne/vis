@@ -6,7 +6,9 @@ Vis aims to be a modern, legacy free, simple yet efficient vim-like editor.
 As an universal editor it has decent Unicode support (including double width
 and combining characters) and should cope with arbitrary files including:
 
- - large ones e.g. >500M SQL dumps or CSV exports
+ - large (up to a few Gigabytes) ones including
+   - Wikipedia/OpenStreetMap XML / SQL / CVS dumps
+   - amalgamated source trees (e.g. SQLite)
  - single line ones e.g. minified JavaScript
  - binary ones e.g. ELF files
 
@@ -70,7 +72,7 @@ supported features.
     y   (yank)
     p   (put)
     >   (shift-right)
-    <   (shift-left),
+    <   (shift-left)
     J   (join)
     ~   (swap case)
     gu  (make lowercase)
@@ -117,6 +119,9 @@ Operators can be forced to work line wise by specifying `V`.
     |        (goto column)
     n        (repeat last search forward)
     N        (repeat last search backwards)
+    H        (goto top/home line of window)
+    M        (goto middle line of window)
+    L        (goto bottom/last line of window)
     *        (search word under cursor forwards)
     #        (search word under cursor backwards)
     f{char}  (to next occurrence of char to the right)
@@ -127,11 +132,10 @@ Operators can be forced to work line wise by specifying `V`.
     ,        (repeat last to/till movement but in opposite direction)
     /{text}  (to next match of text in forward direction)
     ?{text}  (to next match of text in backward direction)
+    `{mark}  (go to mark)
+    '{mark}  (go to start of line containing mark)
 
   An empty line is currently neither a word nor a WORD.
-
-  The semantics of a paragraph and a sentence is also not always 100%
-  the same as in vim.
 
   Some of these commands do not work as in vim when prefixed with a
   digit i.e. a multiplier. As an example in vim `3$` moves to the end
@@ -153,23 +157,32 @@ Operators can be forced to work line wise by specifying `V`.
   For sentence and paragraph there is no difference between the
   inner and normal variants.
 
+    gn      matches the last used search term in forward direction
+    gN      matches the last used search term in backward direction
+
   Additionally the following text objects, which are not part of stock vim
   are also supported:
 
     ae      entire file content
     ie      entire file content except for leading and trailing empty lines
-    af      C-like function definition including immeadiately preceding comments
+    af      C-like function definition including immediately preceding comments
     if      C-like function definition only function body
     al      current line
     il      current line without leading and trailing white spaces
 
 ### Modes
 
-  At the moment there exists a more or less functional insert, replace
-  and visual mode (in both line and character wise variants).
+  Vis implements more or less functional normal, operator-pending, insert,
+  replace and visual (in both line and character wise variants) modes.
   
   Visual block mode is not implemented and there exists no immediate
   plan to do so. Instead vis has built in support for multiple cursors.
+
+  Command mode is implemented as a regular file. Use the full power of the
+  editor to edit your commands / search terms.
+
+  Ex mode is deliberately not implemented, use `ssam(1)` if you need a
+  stream editor.
   
 ### Multiple Cursors / Selections
 
@@ -207,8 +220,17 @@ Operators can be forced to work line wise by specifying `V`.
 
 ### Registers
 
-  Only the 26 lower case registers `[a-z]` and 1 additional default register
-  is supported.
+  Supported registers include:
+
+    "a-"z   general purpose registers
+    "A-"Z   append to corresponding general purpose register
+    "*, "+  system clipboard integration via shell scripts vis-{copy,paste}
+    "0      yank register
+    "_      black hole (/dev/null) register
+
+  If no explicit register is specified a default register is used.
+
+  Registers used for macros are currently independent.
 
 ### Undo/Redo and Repeat
 
@@ -230,7 +252,7 @@ Operators can be forced to work line wise by specifying `V`.
 
 ### Macros
 
-  `[a-z]` are recoginized macro names, `q` starts a recording, `@` plays it back.
+  `[a-z]` are recognized macro names, `q` starts a recording, `@` plays it back.
   `@@` refers to the least recently recorded macro.
 
 ### Command line prompt
@@ -238,26 +260,31 @@ Operators can be forced to work line wise by specifying `V`.
   At the `:`-command prompt only the following commands are recognized, any
   valid unique prefix can be used:
 
-    :nnn        go to line nnn
-    :bdelete    close all windows which display the same file as the current one
-    :edit       replace current file with a new one or reload it from disk
-    :open       open a new window
-    :qall       close all windows, exit editor
-    :quit       close currently focused window
-    :read       insert content of another file at current cursor position
-    :split      split window horizontally
-    :vsplit     split window vertically
-    :new        open an empty window, arrange horizontally
-    :vnew       open an empty window, arrange vertically
-    :wq         write changes then close window
-    :xit        like :wq but write only when changes have been made
-    :write      write current buffer content to file
-    :saveas     save file under another name
-    :substitute search and replace currently implemented in terms of `sed(1)`
-    :!          filter range through external command
-    :earlier    revert to older text state
-    :later      revert to newer text state 
-    :set        set the options below
+    :nnn          go to line nnn
+    :bdelete      close all windows which display the same file as the current one
+    :edit         replace current file with a new one or reload it from disk
+    :open         open a new window
+    :qall         close all windows, exit editor
+    :quit         close currently focused window
+    :read         insert content of another file at current cursor position
+    :split        split window horizontally
+    :vsplit       split window vertically
+    :new          open an empty window, arrange horizontally
+    :vnew         open an empty window, arrange vertically
+    :wq           write changes then close window
+    :xit          like :wq but write only when changes have been made
+    :write        write current buffer content to file
+    :saveas       save file under another name
+    :substitute   search and replace currently implemented in terms of `sed(1)`
+    :earlier      revert to older text state
+    :later        revert to newer text state
+    :map          add a global key mapping
+    :unmap        remove a global key mapping
+    :map-window   add a window local key mapping
+    :unmap-window remove a window local key mapping
+    :!            filter range through external command
+    :|            pipe range to external command and display output in a new window
+    :set          set the options below
 
      tabwidth   [1-8]           default 8
 
@@ -331,9 +358,38 @@ Operators can be forced to work line wise by specifying `V`.
   with the files corresponding to the pattern. The file you select in
   dmenu/slmenu will be opened in vis.
 
+### Runtime Configurable Key Bindings
+
+Vis supports run time key bindings via the `:{un,}map{,-window}` set of
+commands. The basic syntax is:
+
+    :map <mode> <lhs> <rhs>
+
+where mode is one of `normal`, `insert`, `replace`, `visual`,
+`visual-line` or `operator-pending`. lhs refers to the key to map, rhs is
+a key action or alias. An existing mapping can be overridden by appending
+`!` to the map command.
+
+Key mappings are always recursive, this means doing something like:
+
+    :map! normal j 2j
+
+will not work because it will enter an endless loop. Instead vis uses
+pseudo keys referred to as key actions which can be used to invoke a set
+of available (see :help or <F1> for a list) editor functions. Hence the
+correct thing to do would be:
+
+    :map! normal j 2<cursor-line-down>
+
+Unmapping works as follows:
+
+    :unmap <lhs>
+
+The commands suffixed with `-window` only affect the currently active window.
+
 ### Tab <-> Space conversion and Line endings \n vs \r\n
 
-  Tabs can optionally be expaned to a configurable number of spaces.
+  Tabs can optionally be expanded to a configurable number of spaces.
   The first line ending in the file determines what will be inserted
   upon a line break (defaults to \n).
 
