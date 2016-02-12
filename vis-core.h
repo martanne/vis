@@ -21,6 +21,7 @@
  */
 typedef struct Mode Mode;
 struct Mode {
+	enum VisMode id;
 	Mode *parent;                       /* if no match is found in this mode, search will continue there */
 	Map *bindings;
 	const char *name;                   /* descriptive, user facing name of the mode */

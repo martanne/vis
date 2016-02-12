@@ -140,16 +140,19 @@ static void vis_mode_replace_input(Vis *vis, const char *str, size_t len) {
 
 Mode vis_modes[] = {
 	[VIS_MODE_OPERATOR_PENDING] = {
+		.id = VIS_MODE_OPERATOR_PENDING,
 		.name = "OPERATOR-PENDING",
 		.input = vis_mode_operator_input,
 		.help = "",
 	},
 	[VIS_MODE_NORMAL] = {
+		.id = VIS_MODE_NORMAL,
 		.name = "NORMAL",
 		.status = "",
 		.help = "",
 	},
 	[VIS_MODE_VISUAL] = {
+		.id = VIS_MODE_VISUAL,
 		.name = "VISUAL",
 		.status = "--VISUAL--",
 		.help = "",
@@ -158,6 +161,7 @@ Mode vis_modes[] = {
 		.visual = true,
 	},
 	[VIS_MODE_VISUAL_LINE] = {
+		.id = VIS_MODE_VISUAL_LINE,
 		.name = "VISUAL LINE",
 		.parent = &vis_modes[VIS_MODE_VISUAL],
 		.status = "--VISUAL LINE--",
@@ -167,6 +171,7 @@ Mode vis_modes[] = {
 		.visual = true,
 	},
 	[VIS_MODE_INSERT] = {
+		.id = VIS_MODE_INSERT,
 		.name = "INSERT",
 		.status = "--INSERT--",
 		.help = "",
@@ -177,6 +182,7 @@ Mode vis_modes[] = {
 		.idle_timeout = 3,
 	},
 	[VIS_MODE_REPLACE] = {
+		.id = VIS_MODE_REPLACE,
 		.name = "REPLACE",
 		.parent = &vis_modes[VIS_MODE_INSERT],
 		.status = "--REPLACE--",

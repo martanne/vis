@@ -670,23 +670,17 @@ static const char *vis_keys_raw(Vis *vis, Buffer *buf, const char *input) {
 		prefix = false;
 		binding = NULL;
 
-		Mode *mode = vis->mode;
-		for (size_t i = 0; i < LENGTH(vis->win->modes); i++) {
-			if (mode == &vis_modes[i]) {
-				if (vis->win->modes[i].bindings)
-					mode = &vis->win->modes[i];
-				break;
+		for (Mode *mode = vis->mode; mode && !binding && !prefix; mode = mode->parent) {
+			for (int global = 0; global < 2 && !binding && !prefix; global++) {
+				Mode *mode_local = global ? mode : &vis->win->modes[mode->id];
+				if (!mode_local->bindings)
+					continue;
+				binding = map_get(mode_local->bindings, start);
+				/* "<" is never treated as a prefix because it is used to denote
+				 * special key symbols */
+				if (strcmp(cur, "<"))
+					prefix = !binding && map_contains(mode_local->bindings, start);
 			}
-		}
-
-		for (; mode && !binding && !prefix; mode = mode->parent) {
-			if (!mode->bindings)
-				continue;
-			binding = map_get(mode->bindings, start);
-			/* "<" is never treated as a prefix because it is used to denote
-			 * special key symbols */
-			if (strcmp(cur, "<"))
-				prefix = !binding && map_contains(mode->bindings, start);
 		}
 
 		*end = tmp;
