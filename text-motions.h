@@ -43,6 +43,10 @@ size_t text_line_offset(Text*, size_t pos, size_t off);
 int text_line_char_get(Text*, size_t pos);
 /* get position of the `count' grapheme in the line containing `pos' */
 size_t text_line_char_set(Text*, size_t pos, int count);
+/* get display width of line upto `pos' */
+int text_line_width_get(Text*, size_t pos);
+/* get position of character being displayed at `width' in line containing `pos' */
+size_t text_line_width_set(Text*, size_t pos, int width);
 /* move to the next/previous grapheme on the same line */
 size_t text_line_char_next(Text*, size_t pos);
 size_t text_line_char_prev(Text*, size_t pos);

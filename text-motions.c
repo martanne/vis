@@ -15,6 +15,9 @@
  */
 #include <ctype.h>
 #include <string.h>
+#include <stdlib.h>
+#include <wchar.h>
+#include <errno.h>
 #include "text-motions.h"
 #include "text-util.h"
 #include "util.h"
@@ -216,6 +219,80 @@ int text_line_char_get(Text *txt, size_t pos) {
 		count++;
 	}
 	return count;
+}
+
+int text_line_width_get(Text *txt, size_t pos) {
+	int width = 0;
+	mbstate_t ps = { 0 };
+	size_t bol = text_line_begin(txt, pos);
+	Iterator it = text_iterator_get(txt, bol);
+
+	while (it.pos < pos) {
+		char buf[MB_CUR_MAX];
+		size_t len = text_bytes_get(txt, it.pos, sizeof buf, buf);
+		if (len == 0 || buf[0] == '\r' || buf[0] == '\n')
+			break;
+		wchar_t wc;
+		size_t wclen = mbrtowc(&wc, buf, len, &ps);
+		if (wclen == (size_t)-1 && errno == EILSEQ) {
+			/* assume a replacement symbol will be displayed */
+			width++;
+		} else if (wclen == (size_t)-2) {
+			/* do nothing, advance to next character */
+		} else if (wclen == 0) {
+			/* assume NUL byte will be displayed as ^@ */
+			width += 2;
+		} else if (buf[0] == '\t') {
+			width++;
+		} else {
+			int w = wcwidth(wc);
+			if (w == -1)
+				w = 2; /* assume non-printable will be displayed as ^{char} */
+			width += w;
+		}
+
+		if (!text_iterator_codepoint_next(&it, NULL))
+			break;
+	}
+
+	return width;
+}
+
+size_t text_line_width_set(Text *txt, size_t pos, int width) {
+	int cur_width = 0;
+	mbstate_t ps = { 0 };
+	size_t bol = text_line_begin(txt, pos);
+	Iterator it = text_iterator_get(txt, bol);
+
+	for (;;) {
+		char buf[MB_CUR_MAX];
+		size_t len = text_bytes_get(txt, it.pos, sizeof buf, buf);
+		if (len == 0 || buf[0] == '\r' || buf[0] == '\n')
+			break;
+		wchar_t wc;
+		size_t wclen = mbrtowc(&wc, buf, len, &ps);
+		if (wclen == (size_t)-1 && errno == EILSEQ) {
+			/* assume a replacement symbol will be displayed */
+			cur_width++;
+		} else if (wclen == (size_t)-2) {
+			/* do nothing, advance to next character */
+		} else if (wclen == 0) {
+			/* assume NUL byte will be displayed as ^@ */
+			cur_width += 2;
+		} else if (buf[0] == '\t') {
+			cur_width++;
+		} else {
+			int w = wcwidth(wc);
+			if (w == -1)
+				w = 2; /* assume non-printable will be displayed as ^{char} */
+			cur_width += w;
+		}
+
+		if (cur_width >= width || !text_iterator_codepoint_next(&it, NULL))
+			break;
+	}
+
+	return it.pos;
 }
 
 size_t text_line_char_next(Text *txt, size_t pos) {
