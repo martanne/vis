@@ -1830,6 +1830,9 @@ int main(int argc, char *argv[]) {
 		}
 	}
 
+	for (const char **k = keymaps; k[0]; k += 2)
+		vis_keymap_add(vis, k[0], k[1]);
+
 	/* install signal handlers etc. */
 	struct sigaction sa;
 	memset(&sa, 0, sizeof sa);

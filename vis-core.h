@@ -150,6 +150,7 @@ struct Vis {
 	bool autoindent;                     /* whether indentation should be copied from previous line on newline */
 	Map *cmds;                           /* ":"-commands, used for unique prefix queries */
 	Map *options;                        /* ":set"-options */
+	Map *keymap;                         /* key translation before any bindings are matched */
 	Buffer input_queue;                  /* holds pending input keys */
 	Buffer *keys;                        /* currently active keys buffer (either the input_queue or a macro) */
 	Action action;                       /* current action which is in progress */

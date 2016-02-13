@@ -341,6 +341,8 @@ Vis *vis_new(Ui *ui, VisEvent *event) {
 		goto err;
 	if (!(vis->search_file = file_new_internal(vis, NULL)))
 		goto err;
+	if (!(vis->keymap = map_new()))
+		goto err;
 	vis->mode_prev = vis->mode = &vis_modes[VIS_MODE_NORMAL];
 	vis->event = event;
 	if (event && event->vis_start)
@@ -371,6 +373,7 @@ void vis_free(Vis *vis) {
 	map_free(vis->cmds);
 	map_free(vis->options);
 	map_free(vis->actions);
+	map_free(vis->keymap);
 	buffer_release(&vis->input_queue);
 	for (int i = 0; i < VIS_MODE_INVALID; i++)
 		map_free(vis_modes[i].bindings);
@@ -420,6 +423,10 @@ bool vis_action_register(Vis *vis, const KeyAction *action) {
 	if (!vis->actions)
 		return false;
 	return map_put(vis->actions, action->name, action);
+}
+
+bool vis_keymap_add(Vis *vis, const char *key, const char *mapping) {
+	return map_put(vis->keymap, key, mapping);
 }
 
 static void window_jumplist_add(Win *win, size_t pos) {
@@ -763,6 +770,11 @@ static const char *getkey(Vis *vis) {
 	if (!key)
 		return NULL;
 	vis_info_hide(vis);
+	if (!vis->mode->input) {
+		const char *mapped = map_get(vis->keymap, key);
+		if (mapped)
+			return mapped;
+	}
 	return key;
 }
 

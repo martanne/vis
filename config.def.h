@@ -3,6 +3,10 @@
 #define ALIAS(name) .alias = name,
 #define ACTION(id) .action = &vis_action[VIS_ACTION_##id],
 
+static const char *keymaps[] = {
+	NULL
+};
+
 static const KeyBinding bindings_basic[] = {
 	{ "<C-z>",              ACTION(EDITOR_SUSPEND)                      },
 	{ "<Left>",             ACTION(CURSOR_CHAR_PREV)                    },

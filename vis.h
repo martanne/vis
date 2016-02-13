@@ -138,6 +138,9 @@ const char *vis_mode_status(Vis*);
 /* associates the special pseudo key <keyaction->name> with the given key action.
  * after successfull registration the pseudo key can be used key binding aliases */
 bool vis_action_register(Vis*, const KeyAction*);
+/* add a key mapping which is applied for all modes except insert/replace
+ * before any key bindings are evaluated */
+bool vis_keymap_add(Vis*, const char *key, const char *mapping);
 
 enum VisOperator {
 	VIS_OP_DELETE,
