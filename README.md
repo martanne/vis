@@ -209,6 +209,10 @@ Operators can be forced to work line wise by specifying `V`.
     CTRL-X   clear (skip) current selection, but select next matching word
     CTRL-P   remove least recently added cursor
 
+  In insert/replace mode
+
+    S-Tab    aligns all cursors by inserting spaces
+
 ### Marks
 
     [a-z] general purpose marks

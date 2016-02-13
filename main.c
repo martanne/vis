@@ -44,6 +44,8 @@ static const char *replace(Vis*, const char *keys, const Arg *arg);
 static const char *cursors_new(Vis*, const char *keys, const Arg *arg);
 /* try to align all cursors on the same column */
 static const char *cursors_align(Vis*, const char *keys, const Arg *arg);
+/* try to align all cursors by inserting the correct amount of white spaces */
+static const char *cursors_align_indent(Vis*, const char *keys, const Arg *arg);
 /* remove all but the primary cursor and their selections */
 static const char *cursors_clear(Vis*, const char *keys, const Arg *arg);
 /* remove the least recently added cursor */
@@ -241,6 +243,7 @@ enum {
 	VIS_ACTION_CURSORS_NEW_MATCH_NEXT,
 	VIS_ACTION_CURSORS_NEW_MATCH_SKIP,
 	VIS_ACTION_CURSORS_ALIGN,
+	VIS_ACTION_CURSORS_ALIGN_INDENT,
 	VIS_ACTION_CURSORS_REMOVE_ALL,
 	VIS_ACTION_CURSORS_REMOVE_LAST,
 	VIS_ACTION_TEXT_OBJECT_WORD_OUTER,
@@ -912,6 +915,11 @@ static const KeyAction vis_action[] = {
 		"Try to align all cursors on the same column",
 		cursors_align,
 	},
+	[VIS_ACTION_CURSORS_ALIGN_INDENT] = {
+		"cursors-align-indent",
+		"Try to align all cursors by inserting spaces",
+		cursors_align_indent,
+	},
 	[VIS_ACTION_CURSORS_REMOVE_ALL] = {
 		"cursors-remove-all",
 		"Remove all but the primary cursor",
@@ -1180,6 +1188,40 @@ static const char *cursors_align(Vis *vis, const char *keys, const Arg *arg) {
 			view_cursors_to(c, col);
 		}
 	}
+	return keys;
+}
+
+static const char *cursors_align_indent(Vis *vis, const char *keys, const Arg *arg) {
+	View *view = vis_view(vis);
+	Text *txt = vis_text(vis);
+	int mincol = INT_MAX, maxcol = 0;
+
+	for (Cursor *c = view_cursors(view); c; c = view_cursors_next(c)) {
+		int col = text_line_width_get(txt, view_cursors_pos(c));
+		if (col < mincol)
+			mincol = col;
+		if (col > maxcol)
+			maxcol = col;
+	}
+
+	size_t len = maxcol - mincol;
+	char *buf = malloc(len);
+	if (!buf)
+		return keys;
+	memset(buf, ' ', len);
+
+	for (Cursor *c = view_cursors(view); c; c = view_cursors_next(c)) {
+		size_t pos = view_cursors_pos(c);
+		int col = text_line_width_get(txt, pos);
+		if (col < maxcol) {
+			size_t off = maxcol - col;
+			if (off <= len)
+				text_insert(txt, pos, buf, off);
+		}
+	}
+
+	view_draw(view);
+	free(buf);
 	return keys;
 }
 
