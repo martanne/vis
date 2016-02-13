@@ -314,15 +314,15 @@ size_t text_line_char_prev(Text *txt, size_t pos) {
 }
 
 size_t text_line_up(Text *txt, size_t pos) {
-	int count = text_line_char_get(txt, pos);
+	int width = text_line_width_get(txt, pos);
 	size_t prev = text_line_prev(txt, pos);
-	return text_line_char_set(txt, prev, count);
+	return text_line_width_set(txt, prev, width);
 }
 
 size_t text_line_down(Text *txt, size_t pos) {
-	int count = text_line_char_get(txt, pos);
+	int width = text_line_width_get(txt, pos);
 	size_t next = text_line_next(txt, pos);
-	return text_line_char_set(txt, next, count);
+	return text_line_width_set(txt, next, width);
 }
 
 size_t text_range_line_first(Text *txt, Filerange *r) {

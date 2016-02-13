@@ -1056,9 +1056,8 @@ void vis_insert_tab(Vis *vis) {
 	int tabwidth = MIN(vis->tabwidth, LENGTH(spaces) - 1);
 	for (Cursor *c = view_cursors(vis->win->view); c; c = view_cursors_next(c)) {
 		size_t pos = view_cursors_pos(c);
-		/* FIXME: this does not take double width characters into account */
-		int chars = text_line_char_get(vis->win->file->text, pos);
-		int count = tabwidth - (chars % tabwidth);
+		int width = text_line_width_get(vis->win->file->text, pos);
+		int count = tabwidth - (width % tabwidth);
 		for (int i = 0; i < count; i++)
 			spaces[i] = ' ';
 		spaces[count] = '\0';
