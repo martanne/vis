@@ -22,7 +22,7 @@ static void print(const char *fmt, ...) {
         va_end(ap);
 }
 
-static void wait(void) {
+static void delay(void) {
 	usleep(termkey_get_waittime(termkey)*10000);
 }
 
@@ -55,7 +55,7 @@ static void printkey(TermKeyKey *key) {
 			break;
 		case TERMKEY_SYM_ESCAPE:
 			print("\033");
-			wait();
+			delay();
 			break;
 		case TERMKEY_SYM_SPACE:
 			print(" ");
