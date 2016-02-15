@@ -806,10 +806,12 @@ static void vis_args(Vis *vis, int argc, char *argv[]) {
 			cmd = argv[i] + (argv[i][1] == '/' || argv[i][1] == '?');
 		} else if (!vis_window_new(vis, argv[i])) {
 			vis_die(vis, "Can not load `%s': %s\n", argv[i], strerror(errno));
-		} else if (cmd) {
-			vis_prompt_cmd(vis, cmd);
-			cmd = NULL;
 		}
+	}
+
+	if (cmd) {
+		vis_prompt_cmd(vis, cmd);
+		cmd = NULL;
 	}
 
 	if (!vis->windows) {
