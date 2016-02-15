@@ -162,6 +162,7 @@ static const KeyBinding bindings_operator_options[] = {
 
 static const KeyBinding bindings_normal[] = {
 	{ "<Escape>",           ACTION(CURSORS_REMOVE_ALL)                  },
+	{ "<C-c>",              ALIAS("<Escape>")                           },
 	{ "<Delete>",           ALIAS("x")                                  },
 	{ "<C-k>",              ACTION(CURSORS_NEW_LINE_ABOVE)              },
 	{ "<C-j>",              ACTION(CURSORS_NEW_LINE_BELOW)              },
