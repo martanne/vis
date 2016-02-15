@@ -787,6 +787,7 @@ bool vis_signal_handler(Vis *vis, int signum, const siginfo_t *siginfo, const vo
 static void vis_args(Vis *vis, int argc, char *argv[]) {
 	char *cmd = NULL;
 	bool end_of_options = false;
+	char edit_cmd[256];
 	for (int i = 1; i < argc; i++) {
 		if (argv[i][0] == '-' && !end_of_options) {
 			switch (argv[i][1]) {
@@ -805,7 +806,13 @@ static void vis_args(Vis *vis, int argc, char *argv[]) {
 		} else if (argv[i][0] == '+') {
 			cmd = argv[i] + (argv[i][1] == '/' || argv[i][1] == '?');
 		} else if (!vis_window_new(vis, argv[i])) {
-			vis_die(vis, "Can not load `%s': %s\n", argv[i], strerror(errno));
+			if(errno == EISDIR) {
+				snprintf(edit_cmd, sizeof edit_cmd, ":edit %s", argv[i]);
+				cmd = edit_cmd;
+				break;
+			} else {
+				vis_die(vis, "Can not load `%s': %s\n", argv[i], strerror(errno));
+			}
 		} else if (cmd) {
 			vis_prompt_cmd(vis, cmd);
 			cmd = NULL;
