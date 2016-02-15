@@ -51,6 +51,8 @@ Filerange text_object_filename(Text*, size_t pos);
 /* match a search term in either forward or backward direction */
 Filerange text_object_search_forward(Text*, size_t pos, Regex*);
 Filerange text_object_search_backward(Text*, size_t pos, Regex*);
+/* match all lines with same indendation level than the current one */
+Filerange text_object_indentation(Text*, size_t pos);
 
 /* extend a range to cover whole lines */
 Filerange text_range_linewise(Text*, Filerange*);

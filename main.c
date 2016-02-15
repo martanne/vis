@@ -272,6 +272,7 @@ enum {
 	VIS_ACTION_TEXT_OBJECT_FUNCTION_INNER,
 	VIS_ACTION_TEXT_OBJECT_LINE_OUTER,
 	VIS_ACTION_TEXT_OBJECT_LINE_INNER,
+	VIS_ACTION_TEXT_OBJECT_INDENTATION,
 	VIS_ACTION_TEXT_OBJECT_SEARCH_FORWARD,
 	VIS_ACTION_TEXT_OBJECT_SEARCH_BACKWARD,
 	VIS_ACTION_MOTION_CHARWISE,
@@ -1059,6 +1060,11 @@ static const KeyAction vis_action[] = {
 		"text-object-line-inner",
 		"The whole line, excluding leading and trailing whitespace",
 		textobj, { .i = VIS_TEXTOBJECT_INNER_LINE }
+	},
+	[VIS_ACTION_TEXT_OBJECT_INDENTATION] = {
+		"text-object-indentation",
+		"All adjacent lines with the same indentation level as the current one",
+		textobj, { .i = VIS_TEXTOBJECT_INDENTATION }
 	},
 	[VIS_ACTION_TEXT_OBJECT_SEARCH_FORWARD] = {
 		"text-object-search-forward",

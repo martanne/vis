@@ -123,6 +123,8 @@ static const KeyBinding bindings_textobjects[] = {
 	{ "ie",                 ACTION(TEXT_OBJECT_ENTIRE_INNER)            },
 	{ "if",                 ACTION(TEXT_OBJECT_FUNCTION_INNER)          },
 	{ "il",                 ACTION(TEXT_OBJECT_LINE_INNER)              },
+	{ "i<Tab>",             ACTION(TEXT_OBJECT_INDENTATION)             },
+	{ "a<Tab>",             ACTION(TEXT_OBJECT_INDENTATION)             },
 	{ "gn",                 ACTION(TEXT_OBJECT_SEARCH_FORWARD)          },
 	{ "gN",                 ACTION(TEXT_OBJECT_SEARCH_BACKWARD)         },
 	{ 0 /* empty last element, array terminator */                      },

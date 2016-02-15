@@ -359,6 +359,62 @@ Filerange text_object_search_backward(Text *txt, size_t pos, Regex *regex) {
 	return text_range_empty();
 }
 
+Filerange text_object_indentation(Text *txt, size_t pos) {
+	char c;
+	size_t bol = text_line_begin(txt, pos);
+	size_t sol = text_line_start(txt, bol);
+	size_t start = bol;
+	size_t end = text_line_next(txt, bol);
+	size_t line_indent = sol - bol;
+	bool line_empty = text_byte_get(txt, bol, &c) && (c == '\r' || c == '\n');
+
+	char *buf = text_bytes_alloc0(txt, bol, line_indent);
+	char *tmp = malloc(line_indent);
+
+	if (!buf || !tmp) {
+		free(buf);
+		free(tmp);
+		return text_range_empty();
+	}
+
+	while ((bol = text_line_begin(txt, text_line_prev(txt, start))) != start) {
+		sol = text_line_start(txt, bol);
+		size_t indent = sol - bol;
+		if (indent < line_indent)
+			break;
+		bool empty = text_byte_get(txt, bol, &c) && (c == '\r' || c == '\n');
+		if (line_empty && !empty)
+			break;
+		if (line_indent == 0 && empty)
+			break;
+		text_bytes_get(txt, bol, line_indent, tmp);
+		if (memcmp(buf, tmp, line_indent))
+			break;
+		start = bol;
+	}
+
+	do {
+		bol = end;
+		sol = text_line_start(txt, bol);
+		size_t indent = sol - bol;
+		if (indent < line_indent)
+			break;
+		bool empty = text_byte_get(txt, bol, &c) && (c == '\r' || c == '\n');
+		if (line_empty && !empty)
+			break;
+		if (line_indent == 0 && empty)
+			break;
+		text_bytes_get(txt, bol, line_indent, tmp);
+		if (memcmp(buf, tmp, line_indent))
+			break;
+		end = text_line_next(txt, bol);
+	} while (bol != end);
+
+	free(buf);
+	free(tmp);
+	return text_range_new(start, end);
+}
+
 Filerange text_range_linewise(Text *txt, Filerange *rin) {
 	Filerange rout = *rin;
 	rout.start = text_line_begin(txt, rin->start);
