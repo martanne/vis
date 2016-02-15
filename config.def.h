@@ -162,6 +162,7 @@ static const KeyBinding bindings_operator_options[] = {
 
 static const KeyBinding bindings_normal[] = {
 	{ "<Escape>",           ACTION(CURSORS_REMOVE_ALL)                  },
+	{ "<C-c>",              ALIAS("<Escape>")                           },
 	{ "<Delete>",           ALIAS("x")                                  },
 	{ "<C-k>",              ACTION(CURSORS_NEW_LINE_ABOVE)              },
 	{ "<C-j>",              ACTION(CURSORS_NEW_LINE_BELOW)              },
@@ -277,7 +278,7 @@ static const KeyBinding bindings_readline[] = {
 	{ "<C-h>",              ALIAS("<Backspace>")                        },
 	{ "<Delete>",           ACTION(DELETE_CHAR_NEXT)                    },
 	{ "<Escape>",           ACTION(MODE_NORMAL)                         },
-	{ "<C-c>",              ALIAS("<Enter>")                            },
+	{ "<C-c>",              ALIAS("<Escape>")                           },
 	{ "<C-d>",              ACTION(DELETE_CHAR_NEXT)                    },
 	{ "<C-w>",              ACTION(DELETE_WORD_PREV)                    },
 	{ "<C-u>",              ACTION(DELETE_LINE_BEGIN)                   },
@@ -287,7 +288,6 @@ static const KeyBinding bindings_readline[] = {
 
 static const KeyBinding bindings_insert[] = {
 	{ "<Escape>",           ACTION(MODE_NORMAL)                         },
-	{ "<C-c>",              ALIAS("<Escape>")                           },
 	{ "<C-i>",              ALIAS("<Tab>")                              },
 	{ "<Enter>",            ACTION(INSERT_NEWLINE)                      },
 	{ "<C-j>",              ALIAS("<Enter>")                            },
