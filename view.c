@@ -336,8 +336,9 @@ static bool view_addch(View *view, Cell *cell) {
 
 	int width;
 	size_t lineno = view->line->lineno;
+	unsigned char ch = (unsigned char)cell->data[0];
 
-	switch (cell->data[0]) {
+	switch (ch) {
 	case '\t':
 		cell->width = 1;
 		width = view->tabwidth - (view->col % view->tabwidth);
@@ -386,17 +387,17 @@ static bool view_addch(View *view, Cell *cell) {
 		view->col = 0;
 		return true;
 	default:
-		if ((unsigned char)cell->data[0] < 128 && !isprint((unsigned char)cell->data[0])) {
+		if (ch < 128 && !isprint(ch)) {
 			/* non-printable ascii char, represent it as ^(char + 64) */
 			*cell = (Cell) {
-				.data = { '^', cell->data[0] + 64, '\0' },
+				.data = { '^', ch == 127 ? '?' : ch + 64, '\0' },
 				.len = 1,
 				.width = 2,
 				.attr = cell->attr,
 			};
 		}
 
-		if (cell->data[0] == ' ') {
+		if (ch == ' ') {
 			strncpy(cell->data, view->symbols[SYNTAX_SYMBOL_SPACE]->symbol, sizeof(cell->data)-1);
 			cell->attr = view->symbols[SYNTAX_SYMBOL_SPACE]->style;
 
