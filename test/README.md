@@ -1,8 +1,10 @@
-Testing infrastructure
+Testing Infrastructure
 ----------------------
 
-The `text` subdirectory contains tests for the low level text manipulation
-routines while the highlevel tests for the vim-like editor frontend are
-found in `vis`.
+There exist 3 different kinds of tests:
 
-Run `make` to execute both testsuites.
+ * `core` are C unit tests for core data structures used by vis
+ * `vim` tests vim compatibility
+ * `vis` contains tests for vis specific behavior/features
+
+Run `make` to execute all test suites.
