@@ -1,5 +1,5 @@
 test:
-	@$(MAKE) -C text
+	@$(MAKE) -C core
 	@$(MAKE) -C vim
 	@$(MAKE) -C vis
 
@@ -9,7 +9,7 @@ keys-local:
 	@$(MAKE) -C util $@
 
 clean:
-	@$(MAKE) -C text clean
+	@$(MAKE) -C core clean
 	@$(MAKE) -C vim clean
 	@$(MAKE) -C vis clean
 
