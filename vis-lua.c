@@ -397,6 +397,13 @@ err:
 	return 1;
 }
 
+static int textobject(lua_State *L) {
+	Vis *vis = obj_ref_check(L, 1, "vis");
+	enum VisTextObject id = luaL_checkunsigned(L, 2);
+	lua_pushboolean(L, vis && vis_textobject(vis, id));
+	return 1;
+}
+
 static int vis_index(lua_State *L) {
 	Vis *vis = obj_ref_check(L, 1, "vis");
 	if (!vis) {
@@ -461,6 +468,7 @@ static const struct luaL_Reg vis_lua[] = {
 	{ "map", map },
 	{ "motion", motion },
 	{ "motion_register", motion_register },
+	{ "textobject", textobject },
 	{ "__index", vis_index },
 	{ "__newindex", vis_newindex },
 	{ NULL, NULL },

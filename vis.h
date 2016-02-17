@@ -315,7 +315,7 @@ enum VisTextObject {
 	VIS_TEXTOBJECT_INVALID,
 };
 
-void vis_textobject(Vis*, enum VisTextObject);
+bool vis_textobject(Vis*, enum VisTextObject);
 
 /* macro REPEAT and INVALID should be considered as implementation details (TODO: hide them?) */
 enum VisMacro {

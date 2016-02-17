@@ -2,11 +2,13 @@
 #include "text-objects.h"
 #include "util.h"
 
-void vis_textobject(Vis *vis, enum VisTextObject id) {
+bool vis_textobject(Vis *vis, enum VisTextObject id) {
 	if (id < LENGTH(vis_textobjects)) {
 		vis->action.textobj = &vis_textobjects[id];
 		action_do(vis, &vis->action);
+		return true;
 	}
+	return false;
 }
 
 static Filerange search_forward(Vis *vis, Text *txt, size_t pos) {
