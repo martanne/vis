@@ -404,6 +404,29 @@ static int textobject(lua_State *L) {
 	return 1;
 }
 
+
+static Filerange textobject_lua(Vis *vis, Win *win, void *data, size_t pos) {
+	lua_State *L = vis->lua;
+	if (!func_ref_get(L, data) || !obj_ref_new(L, win, "vis.window"))
+		return text_range_empty();
+	lua_pushunsigned(L, pos);
+	if (pcall(vis, L, 2, 2) != 0)
+		return text_range_empty();
+	return text_range_new(luaL_checkunsigned(L, -2), luaL_checkunsigned(L, -1));
+}
+
+static int textobject_register(lua_State *L) {
+	int id = -1;
+	const void *func;
+	Vis *vis = obj_ref_check(L, 1, "vis");
+	if (!vis || !lua_isfunction(L, 2) || !(func = func_ref_new(L)))
+		goto err;
+	id = vis_textobject_register(vis, 0, (void*)func, textobject_lua);
+err:
+	lua_pushinteger(L, id);
+	return 1;
+}
+
 static int vis_index(lua_State *L) {
 	Vis *vis = obj_ref_check(L, 1, "vis");
 	if (!vis) {
@@ -469,6 +492,7 @@ static const struct luaL_Reg vis_lua[] = {
 	{ "motion", motion },
 	{ "motion_register", motion_register },
 	{ "textobject", textobject },
+	{ "textobject_register", textobject_register },
 	{ "__index", vis_index },
 	{ "__newindex", vis_newindex },
 	{ NULL, NULL },
