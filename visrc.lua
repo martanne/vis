@@ -2,6 +2,33 @@ vis.lexers = require('lexer')
 
 vis.events = {}
 
+vis.motion_new = function(vis, key, motion)
+	local id = vis:motion_register(motion)
+	if id < 0 then
+		return false
+	end
+	local binding = function()
+		vis:motion(id)
+	end
+	vis:map(vis.MODE_NORMAL, key, binding)
+	vis:map(vis.MODE_VISUAL, key, binding)
+	vis:map(vis.MODE_OPERATOR_PENDING, key, binding)
+	return true
+end
+
+vis.textobject_new = function(vis, key, textobject)
+	local id = vis:textobject_register(textobject)
+	if id < 0 then
+		return false
+	end
+	local binding = function()
+		vis:textobject(id)
+	end
+	vis:map(vis.MODE_VISUAL, key, binding)
+	vis:map(vis.MODE_OPERATOR_PENDING, key, binding)
+	return true
+end
+
 vis.events.win_open = function(win)
 
 	local files = {
