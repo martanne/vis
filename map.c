@@ -68,7 +68,7 @@ void *map_closest(const Map *map, const char *prefix)
 	if (v)
 		return v;
 	const Map *m = map_prefix(map, prefix);
-	if (!m->v)
+	if (map_empty(m))
 		errno = ENOENT;
 	return m->v;
 }
