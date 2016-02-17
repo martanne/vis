@@ -89,6 +89,8 @@ static bool cmd_help(Vis*, Filerange*, enum CmdOpt, const char *argv[]);
 /* change runtime key bindings */
 static bool cmd_map(Vis*, Filerange*, enum CmdOpt, const char *argv[]);
 static bool cmd_unmap(Vis*, Filerange*, enum CmdOpt, const char *argv[]);
+/* set language specific key bindings */
+static bool cmd_langmap(Vis*, Filerange*, enum CmdOpt, const char *argv[]);
 
 /* command recognized at the ':'-prompt. commands are found using a unique
  * prefix match. that is if a command should be available under an abbreviation
@@ -103,6 +105,7 @@ static const Command cmds[] = {
 	{ { "map-window",              }, cmd_map,           CMD_OPT_FORCE|CMD_OPT_ARGS },
 	{ { "unmap",                   }, cmd_unmap,         CMD_OPT_ARGS               },
 	{ { "unmap-window",            }, cmd_unmap,         CMD_OPT_ARGS               },
+	{ { "langmap",                 }, cmd_langmap,       CMD_OPT_FORCE|CMD_OPT_ARGS },
 	{ { "new"                      }, cmd_new,           CMD_OPT_NONE               },
 	{ { "open"                     }, cmd_open,          CMD_OPT_NONE               },
 	{ { "qall"                     }, cmd_qall,          CMD_OPT_FORCE              },
@@ -1030,34 +1033,12 @@ static enum VisMode str2vismode(const char *mode) {
 	return VIS_MODE_INVALID;
 }
 
-static bool cmd_map(Vis *vis, Filerange *range, enum CmdOpt opt, const char *argv[]) {
-	bool local = strstr(argv[0], "-") != NULL;
-	enum VisMode mode = str2vismode(argv[1]);
-	const char *lhs = argv[2];
-	const char *rhs = argv[3];
-
-	if (mode == VIS_MODE_INVALID || !lhs || !rhs) {
-		vis_info_show(vis, "usage: map mode lhs rhs\n");
-		return false;
-	}
-
+static bool bind_key(Vis *vis, enum VisMode mode, const char *lhs, const char *rhs, bool local, bool force) {
 	KeyBinding *binding = calloc(1, sizeof *binding);
 	if (!binding)
 		return false;
-	if (rhs[0] == '<') {
-		const char *next = vis_keys_next(vis, rhs);
-		if (next && next[-1] == '>') {
-			const char *start = rhs + 1;
-			const char *end = next - 1;
-			char key[64];
-			if (end > start && end - start - 1 < (ptrdiff_t)sizeof key) {
-				memcpy(key, start, end - start);
-				key[end - start] = '\0';
-				binding->action = map_get(vis->actions, key);
-			}
-		}
-	}
-
+	binding->action = map_get(vis->actions, rhs);
+		
 	if (!binding->action) {
 		binding->alias = strdup(rhs);
 		if (!binding->alias) {
@@ -1072,7 +1053,7 @@ static bool cmd_map(Vis *vis, Filerange *range, enum CmdOpt opt, const char *arg
 	else
 		mapped = vis_mode_map(vis, mode, lhs, binding);
 
-	if (!mapped && opt & CMD_OPT_FORCE) {
+	if (!mapped && force) {
 		if (local) {
 			mapped = vis_window_mode_unmap(vis->win, mode, lhs) &&
 			         vis_window_mode_map(vis->win, mode, lhs, binding);
@@ -1085,6 +1066,80 @@ static bool cmd_map(Vis *vis, Filerange *range, enum CmdOpt opt, const char *arg
 	if (!mapped)
 		free(binding);
 	return mapped;
+}
+
+static bool cmd_langmap(Vis *vis, Filerange *range, enum CmdOpt opt, const char *argv[]) {
+	const char *latin = argv[1];
+	const char *nonlatin = argv[2];
+	const char UNICODE_MULTIBYTE = 1<<7;
+	bool mapped = false;
+	bool force = opt & CMD_OPT_FORCE;
+
+	if ( !latin || !nonlatin) {
+		vis_info_show(vis, "usage: langmap <latin keys> <non-latin keys>");
+		return false;
+	}
+	/* Two separated counters for latin and nonlatin strings required due to unicode chars*/
+	size_t latin_i = 0;
+	size_t nonlatin_i = 0;
+	size_t nonlatin_size = strlen(nonlatin);
+	char latin_key[2];
+	latin_key[1] = '\0';
+	for (latin_i = 0; latin_i < strlen(latin); latin_i++) {
+		char nonlatin_key[5]; /*5 bytes should be enough for unicode char with EOL */
+		latin_key[0] = latin[latin_i];
+		if (latin_key[0] & UNICODE_MULTIBYTE) {
+			vis_info_show(vis, "no non-latin characters allowed in first argument");
+			return false;
+		}
+		size_t char_size = 0;
+		if (nonlatin[nonlatin_i] & UNICODE_MULTIBYTE) {
+			char_size = 3 - (~nonlatin[nonlatin_i] >> 4);
+			char_size += (!char_size);
+		}
+		char_size += 1;
+		memcpy(nonlatin_key, nonlatin+nonlatin_i, char_size);
+		nonlatin_i += char_size;
+		nonlatin_key[char_size] = '\0';
+		mapped &= bind_key(vis, VIS_MODE_NORMAL, nonlatin_key, latin_key, false, force) &&	
+		         bind_key(vis, VIS_MODE_VISUAL, nonlatin_key, latin_key, false, force);
+	}
+	return mapped;
+}
+
+static bool cmd_map(Vis *vis, Filerange *range, enum CmdOpt opt, const char *argv[]) {
+	bool local = strstr(argv[0], "-") != NULL;
+	enum VisMode mode = str2vismode(argv[1]);
+	const char *lhs = argv[2];
+	const char *rhs = argv[3];
+	char *key;
+	
+	if (mode == VIS_MODE_INVALID || !lhs || !rhs) {
+		vis_info_show(vis, "usage: map mode lhs rhs\n");
+		return false;
+	}
+
+	if (rhs[0] == '<') {
+		const char *next = vis_keys_next(vis, rhs);
+		if (next && next[-1] == '>') {
+			const char *start = rhs + 1;
+			const char *end = next - 1;
+			key = calloc(64, sizeof(char));
+			if (!key) {
+				return false;
+			}
+			if (end > start && end - start - 1 < (ptrdiff_t)sizeof key) {
+				memcpy(key, start, end - start);
+				key[end - start] = '\0';
+			}
+		}
+	}
+	else {
+		key = strdup(rhs);
+	}
+	bool result = bind_key(vis, mode, lhs, key, local, opt & CMD_OPT_FORCE);
+	free(key);
+	return result;
 }
 
 static bool cmd_unmap(Vis *vis, Filerange *range, enum CmdOpt opt, const char *argv[]) {
