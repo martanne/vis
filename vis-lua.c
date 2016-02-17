@@ -421,6 +421,15 @@ static int window_index(lua_State *L) {
 			obj_ref_new(L, win->view, "vis.window.cursor");
 			return 1;
 		}
+
+		if (strcmp(key, "syntax") == 0) {
+			const char *syntax = view_syntax_get(win->view);
+			if (syntax)
+				lua_pushstring(L, syntax);
+			else
+				lua_pushnil(L);
+			return 1;
+		}
 	}
 
 	return index_common(L);
@@ -430,6 +439,14 @@ static int window_newindex(lua_State *L) {
 	Win *win = obj_ref_check(L, 1, "vis.window");
 	if (!win)
 		return 0;
+	if (lua_isstring(L, 2)) {
+		const char *key = lua_tostring(L, 2);
+		if (strcmp(key, "syntax") == 0) {
+			const char *syntax = luaL_checkstring(L, 3);
+			view_syntax_set(win->view, syntax);
+			return 0;
+		}
+	}
 	return newindex_common(L);
 }
 
