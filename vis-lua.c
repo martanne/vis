@@ -706,12 +706,31 @@ static int file_lines_iterator_it(lua_State *L) {
 	return 1;
 }
 
+static int file_content(lua_State *L) {
+	File *file = obj_ref_check(L, 1, "vis.file");
+	if (!file)
+		goto err;
+	size_t pos = luaL_checkunsigned(L, 2);
+	size_t len = luaL_checkunsigned(L, 3);
+	char *data = malloc(len);
+	if (!data)
+		goto err;
+	len = text_bytes_get(file->text, pos, len, data);
+	lua_pushlstring(L, data, len);
+	free(data);
+	return 1;
+err:
+	lua_pushnil(L);
+	return 1;
+}
+
 static const struct luaL_Reg file_funcs[] = {
 	{ "__index", file_index },
 	{ "__newindex", file_newindex },
 	{ "insert", file_insert },
 	{ "delete", file_delete },
 	{ "lines_iterator", file_lines_iterator },
+	{ "content", file_content },
 	{ NULL, NULL },
 };
 
