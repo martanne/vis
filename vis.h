@@ -317,6 +317,11 @@ enum VisTextObject {
 
 bool vis_textobject(Vis*, enum VisTextObject);
 
+/* register a new text object, if successful the returned id is positive
+ * and can be used as argument for the vis_textobject function. */
+int vis_textobject_register(Vis*, int type, void *data,
+	Filerange (*textobject)(Vis*, Win*, void*, size_t pos));
+
 /* macro REPEAT and INVALID should be considered as implementation details (TODO: hide them?) */
 enum VisMacro {
 	VIS_MACRO_a, VIS_MACRO_b, VIS_MACRO_c, VIS_MACRO_d, VIS_MACRO_e,

@@ -378,6 +378,7 @@ void vis_free(Vis *vis) {
 	for (int i = 0; i < VIS_MODE_INVALID; i++)
 		map_free(vis_modes[i].bindings);
 	array_release_full(&vis->motions);
+	array_release_full(&vis->textobjects);
 	free(vis);
 }
 
@@ -524,11 +525,13 @@ void action_do(Vis *vis, Action *a) {
 			else
 				c.range.start = c.range.end = pos;
 			for (int i = 0; i < count; i++) {
-				Filerange r;
+				Filerange r = text_range_empty();
 				if (a->textobj->txt)
 					r = a->textobj->txt(txt, pos);
-				else
+				else if (a->textobj->vis)
 					r = a->textobj->vis(vis, txt, pos);
+				else if (a->textobj->user)
+					r = a->textobj->user(vis, win, a->textobj->data, pos);
 				if (!text_range_valid(&r))
 					break;
 				if (a->textobj->type & OUTER) {

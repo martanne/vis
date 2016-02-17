@@ -76,11 +76,13 @@ typedef struct {
 	 * representing the text object containing the position. */
 	Filerange (*txt)(Text*, size_t pos);
 	Filerange (*vis)(Vis*, Text*, size_t pos);
+	Filerange (*user)(Vis*, Win*, void *data, size_t pos);
 	enum {
 		INNER = 1 << 0, /* whether the object should include */
 		OUTER = 1 << 1, /* the delimiting symbols or not */
 		SPLIT = 1 << 2, /* whether multiple applications will yield a split range */
 	} type;
+	void *data;
 } TextObject;
 
 /* a macro is just a sequence of symbolic keys as received from ui->getkey */
@@ -169,6 +171,7 @@ struct Vis {
 	lua_State *lua;                      /* lua context used for syntax highligthing */
 	VisEvent *event;
 	Array motions;
+	Array textobjects;
 };
 
 /** stuff used by multiple of the vis-* files */

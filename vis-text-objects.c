@@ -2,13 +2,32 @@
 #include "text-objects.h"
 #include "util.h"
 
+int vis_textobject_register(Vis *vis, int type, void *data,
+	Filerange (*textobject)(Vis*, Win*, void*, size_t pos)) {
+
+	TextObject *obj = calloc(1, sizeof *obj);
+	if (!obj)
+		return -1;
+
+	obj->user = textobject;
+	obj->type = type;
+	obj->data = data;
+
+	if (array_add(&vis->textobjects, obj))
+		return LENGTH(vis_textobjects) + array_length(&vis->textobjects) - 1;
+	free(obj);
+	return -1;
+}
+
 bool vis_textobject(Vis *vis, enum VisTextObject id) {
-	if (id < LENGTH(vis_textobjects)) {
+	if (id < LENGTH(vis_textobjects))
 		vis->action.textobj = &vis_textobjects[id];
-		action_do(vis, &vis->action);
-		return true;
-	}
-	return false;
+	else
+		vis->action.textobj = array_get(&vis->textobjects, id - LENGTH(vis_textobjects));
+	if (!vis->action.textobj)
+		return false;
+	action_do(vis, &vis->action);
+	return true;
 }
 
 static Filerange search_forward(Vis *vis, Text *txt, size_t pos) {
