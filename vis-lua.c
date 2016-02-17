@@ -366,6 +366,14 @@ err:
 	return 1;
 }
 
+static int motion(lua_State *L) {
+	Vis *vis = obj_ref_check(L, 1, "vis");
+	enum VisMotion id = luaL_checkunsigned(L, 2);
+	// TODO handle var args?
+	lua_pushboolean(L, vis && vis_motion(vis, id));
+	return 1;
+}
+
 static int vis_index(lua_State *L) {
 	Vis *vis = obj_ref_check(L, 1, "vis");
 	if (!vis) {
@@ -428,6 +436,7 @@ static const struct luaL_Reg vis_lua[] = {
 	{ "info", info },
 	{ "open", open },
 	{ "map", map },
+	{ "motion", motion },
 	{ "__index", vis_index },
 	{ "__newindex", vis_newindex },
 	{ NULL, NULL },
