@@ -5,6 +5,7 @@
 #include "text-motions.h"
 #include "text-objects.h"
 #include "text-util.h"
+#include "util.h"
 
 /** utility functions */
 
@@ -210,6 +211,23 @@ void vis_motion_type(Vis *vis, enum VisMotionType type) {
 	vis->action.type = type;
 }
 
+int vis_motion_register(Vis *vis, enum VisMotionType type, void *data,
+	size_t (*motion)(Vis*, Win*, void*, size_t pos)) {
+
+	Movement *move = calloc(1, sizeof *move);
+	if (!move)
+		return -1;
+
+	move->user = motion;
+	move->type = type;
+	move->data = data;
+
+	if (array_add(&vis->motions, move))
+		return VIS_MOVE_LAST + array_length(&vis->motions) - 1;
+	free(move);
+	return -1;
+}
+
 bool vis_motion(Vis *vis, enum VisMotion motion, ...) {
 	va_list ap;
 	va_start(ap, motion);
@@ -287,7 +305,14 @@ bool vis_motion(Vis *vis, enum VisMotion motion, ...) {
 		break;
 	}
 
-	vis->action.movement = &vis_motions[motion];
+	if (motion < LENGTH(vis_motions))
+		vis->action.movement = &vis_motions[motion];
+	else
+		vis->action.movement = array_get(&vis->motions, motion - VIS_MOVE_LAST);
+
+	if (!vis->action.movement)
+		goto err;
+
 	va_end(ap);
 	action_do(vis, &vis->action);
 	return true;

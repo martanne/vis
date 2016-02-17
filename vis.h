@@ -242,6 +242,7 @@ enum VisMotion {
 	VIS_MOVE_TOTILL_REVERSE,
 	VIS_MOVE_SEARCH_FORWARD,
 	VIS_MOVE_SEARCH_BACKWARD,
+	VIS_MOVE_LAST, /* denotes the end of all motions */
 };
 
 /* set motion to perform, the following take an additional argument:
@@ -274,6 +275,12 @@ enum VisMotionType {
 };
 /* force certain motion to behave in line or character wise mode */
 void vis_motion_type(Vis *vis, enum VisMotionType);
+
+/* register a motion function, if positive the return value can be used
+ * as an id for the vis_motion funntion. A negative return value indicates
+ * an error */
+int vis_motion_register(Vis*, enum VisMotionType, void *data,
+	size_t (*motion)(Vis*, Win*, void*, size_t pos));
 
 enum VisTextObject {
 	VIS_TEXTOBJECT_INNER_WORD,

@@ -377,6 +377,7 @@ void vis_free(Vis *vis) {
 	buffer_release(&vis->input_queue);
 	for (int i = 0; i < VIS_MODE_INVALID; i++)
 		map_free(vis_modes[i].bindings);
+	array_release_full(&vis->motions);
 	free(vis);
 }
 
@@ -488,6 +489,8 @@ void action_do(Vis *vis, Action *a) {
 					pos = a->movement->view(vis, view);
 				else if (a->movement->win)
 					pos = a->movement->win(vis, win, pos);
+				else if (a->movement->user)
+					pos = a->movement->user(vis, win, a->movement->data, pos);
 				if (pos == EPOS || a->movement->type & IDEMPOTENT)
 					break;
 			}

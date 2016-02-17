@@ -8,6 +8,7 @@
 #include "text-regex.h"
 #include "map.h"
 #include "ring-buffer.h"
+#include "array.h"
 
 /* a mode contains a set of key bindings which are currently valid.
  *
@@ -59,6 +60,7 @@ typedef struct { /* Motion implementation, takes a cursor postion and returns a 
 	size_t (*vis)(Vis*, Text*, size_t pos);
 	size_t (*view)(Vis*, View*);
 	size_t (*win)(Vis*, Win*, size_t pos);
+	size_t (*user)(Vis*, Win*, void*, size_t pos);
 	enum {
 		LINEWISE  = VIS_MOTIONTYPE_LINEWISE,  /* should the covered range be extended to whole lines? */
 		CHARWISE  = VIS_MOTIONTYPE_CHARWISE,  /* scrolls window content until position is visible */
@@ -66,6 +68,7 @@ typedef struct { /* Motion implementation, takes a cursor postion and returns a 
 		IDEMPOTENT = 1 << 3, /* does the returned postion remain the same if called multiple times? */
 		JUMP = 1 << 4,
 	} type;
+	void *data;
 } Movement;
 
 typedef struct {
@@ -165,6 +168,7 @@ struct Vis {
 	Map *actions;                        /* registered editor actions / special keys commands */
 	lua_State *lua;                      /* lua context used for syntax highligthing */
 	VisEvent *event;
+	Array motions;
 };
 
 /** stuff used by multiple of the vis-* files */
