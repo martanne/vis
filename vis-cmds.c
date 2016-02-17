@@ -1071,7 +1071,6 @@ static bool bind_key(Vis *vis, enum VisMode mode, const char *lhs, const char *r
 static bool cmd_langmap(Vis *vis, Filerange *range, enum CmdOpt opt, const char *argv[]) {
 	const char *latin = argv[1];
 	const char *nonlatin = argv[2];
-	const char UNICODE_MULTIBYTE = 1<<7;
 	bool mapped = false;
 	bool force = opt & CMD_OPT_FORCE;
 
@@ -1087,20 +1086,17 @@ static bool cmd_langmap(Vis *vis, Filerange *range, enum CmdOpt opt, const char 
 	for (latin_i = 0; latin_i < strlen(latin); latin_i++) {
 		char nonlatin_key[5]; /*5 bytes should be enough for unicode char with EOL */
 		latin_key[0] = latin[latin_i];
-		if (latin_key[0] & UNICODE_MULTIBYTE) {
+		if (!ISASCII(latin_key[0])) {
 			vis_info_show(vis, "no non-latin characters allowed in first argument");
 			return false;
 		}
-		size_t char_size = 0;
-		if (nonlatin[nonlatin_i] & UNICODE_MULTIBYTE) {
-			char_size = 3 - (~nonlatin[nonlatin_i] >> 4);
-			if (char_size > 3) {
-				vis_info_show(vis, "bad unicode character encountered");
-				return false;
-			}
-			char_size += (!char_size);
+		size_t char_size = 1;
+		char char_head = nonlatin[nonlatin_i];
+		if (ISUTF8(char_head)) {
+			bool third_byte = char_head & (1 << 5);
+			bool fourth_byte = third_byte && (char_head & (1 << 4));
+			char_size = 2 + third_byte + fourth_byte;
 		}
-		char_size += 1;
 		memcpy(nonlatin_key, nonlatin+nonlatin_i, char_size);
 		nonlatin_i += char_size;
 		nonlatin_key[char_size] = '\0';
