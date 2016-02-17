@@ -379,6 +379,36 @@ static int vis_index(lua_State *L) {
 			obj_ref_new(L, vis->windows, "vis.window");
 			return 1;
 		}
+
+		if (strcmp(key, "MODE_NORMAL") == 0) {
+			lua_pushunsigned(L, VIS_MODE_NORMAL);
+			return 1;
+		}
+
+		if (strcmp(key, "MODE_OPERATOR_PENDING") == 0) {
+			lua_pushunsigned(L, VIS_MODE_OPERATOR_PENDING);
+			return 1;
+		}
+
+		if (strcmp(key, "MODE_VISUAL") == 0) {
+			lua_pushunsigned(L, VIS_MODE_VISUAL);
+			return 1;
+		}
+
+		if (strcmp(key, "MODE_VISUAL_LINE") == 0) {
+			lua_pushunsigned(L, VIS_MODE_VISUAL_LINE);
+			return 1;
+		}
+
+		if (strcmp(key, "MODE_INSERT") == 0) {
+			lua_pushunsigned(L, VIS_MODE_INSERT);
+			return 1;
+		}
+
+		if (strcmp(key, "MODE_REPLACE") == 0) {
+			lua_pushunsigned(L, VIS_MODE_REPLACE);
+			return 1;
+		}
 	}
 
 	return index_common(L);
