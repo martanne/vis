@@ -1133,6 +1133,9 @@ static bool cmd_map(Vis *vis, Filerange *range, enum CmdOpt opt, const char *arg
 				key[end - start] = '\0';
 			}
 		}
+		else {
+			return false;
+		}
 	}
 	else {
 		key = strdup(rhs);
