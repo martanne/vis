@@ -113,6 +113,7 @@ bool map_put(Map *map, const char *k, const void *value)
 		if (key[byte_num] == '\0') {
 			/* All identical! */
 			free(key);
+			errno = EEXIST;
 			return false;
 		}
 	}
