@@ -235,7 +235,11 @@ static const char *keymapping(Vis *vis, const char *keys, const Arg *arg) {
 static int windows_iter(lua_State *L);
 
 static int windows(lua_State *L) {
-	Vis *vis = lua_touserdata(L, lua_upvalueindex(1));
+	Vis *vis = obj_ref_check(L, 1, "vis");
+	if (!vis) {
+		lua_pushnil(L);
+		return 1;
+	}
 	Win **handle = lua_newuserdata(L, sizeof *handle);
 	*handle = vis->windows;
 	lua_pushcclosure(L, windows_iter, 1);
@@ -256,7 +260,11 @@ static int windows_iter(lua_State *L) {
 static int files_iter(lua_State *L);
 
 static int files(lua_State *L) {
-	Vis *vis = lua_touserdata(L, lua_upvalueindex(1));
+	Vis *vis = obj_ref_check(L, 1, "vis");
+	if (!vis) {
+		lua_pushnil(L);
+		return 1;
+	}
 	File **handle = lua_newuserdata(L, sizeof *handle);
 	*handle = vis->files;
 	lua_pushcclosure(L, files_iter, 1);
@@ -275,23 +283,35 @@ static int files_iter(lua_State *L) {
 }
 
 static int command(lua_State *L) {
-	Vis *vis = lua_touserdata(L, lua_upvalueindex(1));
-	const char *cmd = luaL_checkstring(L, 1);
+	Vis *vis = obj_ref_check(L, 1, "vis");
+	if (!vis) {
+		lua_pushnil(L);
+		return 1;
+	}
+	const char *cmd = luaL_checkstring(L, 2);
 	bool ret = vis_cmd(vis, cmd);
 	lua_pushboolean(L, ret);
 	return 1;
 }
 
 static int info(lua_State *L) {
-	Vis *vis = lua_touserdata(L, lua_upvalueindex(1));
-	const char *msg = luaL_checkstring(L, 1);
+	Vis *vis = obj_ref_check(L, 1, "vis");
+	if (!vis) {
+		lua_pushnil(L);
+		return 1;
+	}
+	const char *msg = luaL_checkstring(L, 2);
 	vis_info_show(vis, "%s", msg);
 	return 0;
 }
 
 static int open(lua_State *L) {
-	Vis *vis = lua_touserdata(L, lua_upvalueindex(1));
-	const char *name = luaL_checkstring(L, 1);
+	Vis *vis = obj_ref_check(L, 1, "vis");
+	if (!vis) {
+		lua_pushnil(L);
+		return 1;
+	}
+	const char *name = luaL_checkstring(L, 2);
 	File *file = NULL;
 	if (vis_window_new(vis, name))
 		file = obj_ref_new(L, vis->win->file, "vis.file");
@@ -301,20 +321,24 @@ static int open(lua_State *L) {
 }
 
 static int map(lua_State *L) {
+	Vis *vis = obj_ref_check(L, 1, "vis");
+	if (!vis) {
+		lua_pushnil(L);
+		return 1;
+	}
 	KeyBinding *binding = NULL;
 	KeyAction *action = NULL;
-	Vis *vis = lua_touserdata(L, lua_upvalueindex(1));
 
-	int mode = luaL_checkint(L, 1);
-	const char *key = luaL_checkstring(L, 2);
+	int mode = luaL_checkint(L, 2);
+	const char *key = luaL_checkstring(L, 3);
 
-	if (!key || !lua_isfunction(L, 3))
+	if (!key || !lua_isfunction(L, 4))
 		goto err;
 	if (!(binding = calloc(1, sizeof *binding)) || !(action = calloc(1, sizeof *action)))
 		goto err;
 
 	/* store reference to function in the registry */
-	lua_pushvalue(L, 3);
+	lua_pushvalue(L, 4);
 	const void *func = func_ref_new(L);
 	if (!func)
 		goto err;
@@ -342,6 +366,31 @@ err:
 	return 1;
 }
 
+static int vis_index(lua_State *L) {
+	Vis *vis = obj_ref_check(L, 1, "vis");
+	if (!vis) {
+		lua_pushnil(L);
+		return 1;
+	}
+
+	if (lua_isstring(L, 2)) {
+		const char *key = lua_tostring(L, 2);
+		if (strcmp(key, "win") == 0) {
+			obj_ref_new(L, vis->windows, "vis.window");
+			return 1;
+		}
+	}
+
+	return index_common(L);
+}
+
+static int vis_newindex(lua_State *L) {
+	Vis *vis = obj_ref_check(L, 1, "vis");
+	if (!vis)
+		return 0;
+	return newindex_common(L);
+}
+
 static const struct luaL_Reg vis_lua[] = {
 	{ "files", files },
 	{ "windows", windows },
@@ -349,6 +398,8 @@ static const struct luaL_Reg vis_lua[] = {
 	{ "info", info },
 	{ "open", open },
 	{ "map", map },
+	{ "__index", vis_index },
+	{ "__newindex", vis_newindex },
 	{ NULL, NULL },
 };
 
@@ -686,9 +737,9 @@ void vis_lua_start(Vis *vis) {
 	luaL_newmetatable(L, "vis.window.cursor");
 	luaL_setfuncs(L, window_cursor_funcs, 0);
 	/* vis module table with up value as the C pointer */
-	luaL_newlibtable(L, vis_lua);
-	lua_pushlightuserdata(L, vis);
-	luaL_setfuncs(L, vis_lua, 1);
+	luaL_newmetatable(L, "vis");
+	luaL_setfuncs(L, vis_lua, 0);
+	obj_ref_new(L, vis, "vis");
 	lua_setglobal(L, "vis");
 
 	lua_getglobal(L, "require");

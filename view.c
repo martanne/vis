@@ -1337,3 +1337,7 @@ void view_selections_set(Selection *s, Filerange *r) {
 	}
 	view_draw(s->view);
 }
+
+Text *view_text(View *view) {
+	return view->text;
+}

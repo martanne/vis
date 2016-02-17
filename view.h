@@ -172,5 +172,6 @@ Selection *view_selections_prev(Selection*);
 Selection *view_selections_next(Selection*);
 Filerange view_selections_get(Selection*);
 void view_selections_set(Selection*, Filerange*);
+Text *view_text(View*);
 
 #endif

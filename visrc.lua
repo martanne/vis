@@ -124,7 +124,7 @@ vis.events.win_open = function(win)
 				if #filename >= #pattern then
 					local s, e = string.find(filename, pattern, -#pattern, true)
 					if s ~= e and e == #filename then
-						vis.command('set syntax '.. lang)
+						vis:command('set syntax '.. lang)
 						return;
 					end
 				end
