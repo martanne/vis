@@ -17,17 +17,17 @@ typedef struct Cursor Cursor;
 typedef struct Selection Selection;
 
 typedef struct {
-	int width;          /* display width i.e. number of columns ocupied by this character */
+	int width;          /* display width i.e. number of columns occupied by this character */
 	size_t len;         /* number of bytes the character displayed in this cell uses, for
-	                       character which use more than 1 column to display, their lenght
-	                       is stored in the leftmost cell wheras all following cells
+	                       characters which use more than 1 column to display, their length
+	                       is stored in the leftmost cell whereas all following cells
 	                       occupied by the same character have a length of 0. */
 	char data[16];      /* utf8 encoded character displayed in this cell (might be more than
 	                       one Unicode codepoint. might also not be the same as in the
 	                       underlying text, for example tabs get expanded */
 	unsigned int attr;
 	bool selected;      /* whether this cell is part of a selected region */
-	bool cursor;        /* whether a cursor is currently locaated on the cell */
+	bool cursor;        /* whether a cursor is currently located on the cell */
 } Cell;
 
 typedef struct Line Line;

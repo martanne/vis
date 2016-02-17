@@ -560,7 +560,7 @@ void view_draw(View *view) {
 			continue;
 		} else if (len == 0) {
 			/* NUL byte encountered, store it and continue */
-			cell = (Cell){ .data = "\x00", .len = 1, .width = 0 };
+			cell = (Cell){ .data = "\x00", .len = 1, .width = 2 };
 		} else {
 			for (size_t i = 0; i < len; i++)
 				cell.data[i] = cur[i];
