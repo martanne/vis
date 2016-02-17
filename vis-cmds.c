@@ -1115,7 +1115,7 @@ static bool cmd_map(Vis *vis, Filerange *range, enum CmdOpt opt, const char *arg
 	enum VisMode mode = str2vismode(argv[1]);
 	const char *lhs = argv[2];
 	const char *rhs = argv[3];
-	char *key;
+	char *key = 0;
 	
 	if (mode == VIS_MODE_INVALID || !lhs || !rhs) {
 		vis_info_show(vis, "usage: map mode lhs rhs\n");
@@ -1136,11 +1136,8 @@ static bool cmd_map(Vis *vis, Filerange *range, enum CmdOpt opt, const char *arg
 				key[end - start] = '\0';
 			}
 		}
-		else {
-			return false;
-		}
 	}
-	else {
+	if (!key) {
 		key = strdup(rhs);
 	}
 	bool result = bind_key(vis, mode, lhs, key, local, opt & CMD_OPT_FORCE);
