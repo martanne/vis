@@ -1082,7 +1082,6 @@ static bool cmd_langmap(Vis *vis, Filerange *range, enum CmdOpt opt, const char 
 	/* Two separated counters for latin and nonlatin strings required due to unicode chars*/
 	size_t latin_i = 0;
 	size_t nonlatin_i = 0;
-	size_t nonlatin_size = strlen(nonlatin);
 	char latin_key[2];
 	latin_key[1] = '\0';
 	for (latin_i = 0; latin_i < strlen(latin); latin_i++) {
@@ -1095,6 +1094,10 @@ static bool cmd_langmap(Vis *vis, Filerange *range, enum CmdOpt opt, const char 
 		size_t char_size = 0;
 		if (nonlatin[nonlatin_i] & UNICODE_MULTIBYTE) {
 			char_size = 3 - (~nonlatin[nonlatin_i] >> 4);
+			if (char_size > 3) {
+				vis_info_show(vis, "bad unicode character encountered");
+				return false;
+			}
 			char_size += (!char_size);
 		}
 		char_size += 1;
