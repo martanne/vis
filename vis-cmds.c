@@ -1104,8 +1104,10 @@ static bool cmd_langmap(Vis *vis, Filerange *range, enum CmdOpt opt, const char 
 		memcpy(nonlatin_key, nonlatin+nonlatin_i, char_size);
 		nonlatin_i += char_size;
 		nonlatin_key[char_size] = '\0';
-		mapped &= bind_key(vis, VIS_MODE_NORMAL, nonlatin_key, latin_key, false, force) &&	
-		         bind_key(vis, VIS_MODE_VISUAL, nonlatin_key, latin_key, false, force);
+		mapped &= bind_key(vis, VIS_MODE_NORMAL, nonlatin_key, latin_key, false, force) &&
+		          bind_key(vis, VIS_MODE_OPERATOR_PENDING, nonlatin_key, latin_key, false, force) &&
+		          bind_key(vis, VIS_MODE_VISUAL_LINE, nonlatin_key, latin_key, false, force) &&
+		          bind_key(vis, VIS_MODE_VISUAL, nonlatin_key, latin_key, false, force);
 	}
 	return mapped;
 }
