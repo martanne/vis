@@ -447,6 +447,7 @@ static int window_cursor_index(lua_State *L) {
 	}
 
 	if (lua_isstring(L, 2)) {
+		Text *txt = view_text(view);
 		const char *key = lua_tostring(L, 2);
 		if (strcmp(key, "pos") == 0) {
 			lua_pushunsigned(L, view_cursor_get(view));
@@ -454,12 +455,16 @@ static int window_cursor_index(lua_State *L) {
 		}
 
 		if (strcmp(key, "line") == 0) {
-			lua_pushunsigned(L, view_cursor_getpos(view).line);
+			size_t pos = view_cursor_get(view);
+			size_t line = text_lineno_by_pos(txt, pos);
+			lua_pushunsigned(L, line);
 			return 1;
 		}
 
 		if (strcmp(key, "col") == 0) {
-			lua_pushunsigned(L, view_cursor_getpos(view).col);
+			size_t pos = view_cursor_get(view);
+			int col = text_line_char_get(txt, pos);
+			lua_pushunsigned(L, col);
 			return 1;
 		}
 	}
@@ -482,9 +487,23 @@ static int window_cursor_newindex(lua_State *L) {
 	return newindex_common(L);
 }
 
+static int window_cursor_to(lua_State *L) {
+	View *view = obj_ref_check(L, 1, "vis.window.cursor");
+	if (view) {
+		Text *txt = view_text(view);
+		size_t line = luaL_checkunsigned(L, 2);
+		size_t col = luaL_checkunsigned(L, 3);
+		size_t pos = text_pos_by_lineno(txt, line);
+		pos = text_line_char_set(txt, pos, col);
+		view_cursor_to(view, pos);
+	}
+	return 0;
+}
+
 static const struct luaL_Reg window_cursor_funcs[] = {
 	{ "__index", window_cursor_index },
 	{ "__newindex", window_cursor_newindex },
+	{ "to", window_cursor_to },
 	{ NULL, NULL },
 };
 
