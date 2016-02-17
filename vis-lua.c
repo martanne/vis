@@ -374,6 +374,29 @@ static int motion(lua_State *L) {
 	return 1;
 }
 
+static size_t motion_lua(Vis *vis, Win *win, void *data, size_t pos) {
+	lua_State *L = vis->lua;
+	if (!func_ref_get(L, data) || !obj_ref_new(L, win, "vis.window"))
+		return EPOS;
+
+	lua_pushunsigned(L, pos);
+	if (pcall(vis, L, 2, 1) != 0)
+		return EPOS;
+	return luaL_checkunsigned(L, -1);
+}
+
+static int motion_register(lua_State *L) {
+	int id = -1;
+	const void *func;
+	Vis *vis = obj_ref_check(L, 1, "vis");
+	if (!vis || !lua_isfunction(L, 2) || !(func = func_ref_new(L)))
+		goto err;
+	id = vis_motion_register(vis, 0, (void*)func, motion_lua);
+err:
+	lua_pushinteger(L, id);
+	return 1;
+}
+
 static int vis_index(lua_State *L) {
 	Vis *vis = obj_ref_check(L, 1, "vis");
 	if (!vis) {
@@ -437,6 +460,7 @@ static const struct luaL_Reg vis_lua[] = {
 	{ "open", open },
 	{ "map", map },
 	{ "motion", motion },
+	{ "motion_register", motion_register },
 	{ "__index", vis_index },
 	{ "__newindex", vis_newindex },
 	{ NULL, NULL },
