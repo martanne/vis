@@ -1092,7 +1092,7 @@ static bool cmd_langmap(Vis *vis, Filerange *range, enum CmdOpt opt, const char 
 		}
 		size_t char_size = 1;
 		char char_head = nonlatin[nonlatin_i];
-		if (ISUTF8(char_head)) {
+		if ((!ISASCII(char_head)) && ISUTF8(char_head)) {
 			bool third_byte = char_head & (1 << 5);
 			bool fourth_byte = third_byte && (char_head & (1 << 4));
 			char_size = 2 + third_byte + fourth_byte;
