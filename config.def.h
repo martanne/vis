@@ -172,7 +172,7 @@ static const KeyBinding bindings_normal[] = {
 	{ "<Delete>",           ALIAS("x")                                  },
 	{ "<C-k>",              ACTION(CURSORS_NEW_LINE_ABOVE)              },
 	{ "<C-j>",              ACTION(CURSORS_NEW_LINE_BELOW)              },
-	{ "<C-a>",              ACTION(CURSORS_ALIGN)                       },
+	{ "<Tab>",              ACTION(CURSORS_ALIGN)                       },
 	{ "<C-n>",              ACTION(CURSOR_SELECT_WORD)                  },
 	{ "<C-p>",              ACTION(CURSORS_REMOVE_LAST)                 },
 	{ "<C-w>n",             ALIAS(":open<Enter>")                       },

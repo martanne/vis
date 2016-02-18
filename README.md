@@ -197,7 +197,7 @@ Operators can be forced to work line wise by specifying `V`.
     CTRL-J   create a new cursor on the line below
     CTRL-P   remove least recently added cursor
     CTRL-N   select word the cursor is currently over, switch to visual mode
-    CTRL-A   try to align all cursor on the same column
+    TAB      try to align all cursor on the same column
     ESC      if a selection is active, clear it.
              Otherwise dispose all but the primary cursor.
 
