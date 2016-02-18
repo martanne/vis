@@ -286,6 +286,7 @@ Operators can be forced to work line wise by specifying `V`.
     :unmap        remove a global key mapping
     :map-window   add a window local key mapping
     :unmap-window remove a window local key mapping
+    :langmap      set key equivalents for layout specific key mappings
     :!            filter range through external command
     :|            pipe range to external command and display output in a new window
     :set          set the options below
@@ -390,6 +391,22 @@ Unmapping works as follows:
     :unmap <lhs>
 
 The commands suffixed with `-window` only affect the currently active window.
+
+### Layout Specific Key Bindings
+
+Vis allows user to set key equivalents for non-latin keyboard layout to avoid
+often layout switching while editing non-latin text like vim's `:set langmap` does.
+For example, just type something like:
+
+    :langmap hjkl ролд
+
+to add support of movement keys in Russian layout.
+In general, syntax of `:langmap` command can be described as
+
+    :langmap <sequence of keys in latin layout> <sequence of equivalent keys in your layout>
+
+If one of key sequences is shorter than other, the rest of the longest sequence
+will be discarded.
 
 ### Tab <-> Space conversion and Line endings \n vs \r\n
 
