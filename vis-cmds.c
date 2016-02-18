@@ -1068,7 +1068,6 @@ static bool cmd_langmap(Vis *vis, Filerange *range, enum CmdOpt opt, const char 
 		nonlatin_key[char_size] = '\0';
 		mapped &= vis_keymap_add(vis, nonlatin_key, strdup(latin_key));
 	}
-	if (mapped) vis_info_show(vis, "Success!");
 	return mapped;
 }
 
