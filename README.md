@@ -440,6 +440,7 @@ simple short lived (configuration) tasks.
 At this time there exists no API stability guarantees.
 
  - `vis`
+   - `MODE_NORMAL`, `MODE_OPERATOR_PENDING`, `MODE_INSERT`, `MODE_REPLACE`, `MODE_VISUAL`, `MODE_VISUAL_LINE` mode constants
    - `lexers` LPeg lexer support module
    - `events` hooks
      - `start()`
@@ -451,17 +452,25 @@ At this time there exists no API stability guarantees.
    - `command(cmd)`
    - `info(msg)`
    - `open(filename)`
+   - `textobject_register(function)` register a Lua function as a text object, returns associated `id` or `-1`
+   - `textobject(id)` select/execute a text object
+   - `motion_register(function)` register a Lua function as a motion, returns associated `id` or `-1`
+   - `motion(id)` select/execute a motion
+   - `map(mode, key, function)` map a Lua function to `key` in `mode`
  - `file`
-   - `insert(file, pos, data)`
-   - `delete(file, pos, len)`
-   - `lines_iterator(file)`
+   - `content(pos, len)`
+   - `insert(pos, data)`
+   - `delete(pos, len)`
+   - `lines_iterator()`
    - `name`
    - `lines[0..#lines+1]` array giving read/write access to lines
  - `window`
    - `file`
+   - `syntax` lexer name used for syntax highlighting or `nil`
    - `cursor`
-     - `line`, `col`
-     - `pos` bytes from start of file
+     - `line` (1 based), `col` (0 based)
+     - `to(line, col)`
+     - `pos` bytes from start of file (0 based)
 
 Most of the exposed objects are managed by the C core. Allthough there
 is a simple object life time management mechanism in place, it is still
