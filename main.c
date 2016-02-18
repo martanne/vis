@@ -1211,7 +1211,7 @@ static const char *cursors_align_indent(Vis *vis, const char *keys, const Arg *a
 	}
 
 	size_t len = maxcol - mincol;
-	char *buf = malloc(len);
+	char *buf = malloc(len+1);
 	if (!buf)
 		return keys;
 	memset(buf, ' ', len);
