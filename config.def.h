@@ -246,6 +246,8 @@ static const KeyBinding bindings_normal[] = {
 	{ "<C-w>gf",            ACTION(OPEN_FILE_UNDER_CURSOR_NEW_WINDOW)   },
 	{ "gn",                 ALIAS("vgn")                                },
 	{ "gN",                 ALIAS("vgN")                                },
+	{ "<C-a>",              ACTION(NUMBER_INCREMENT)                    },
+	{ "<C-x>",              ACTION(NUMBER_DECREMENT)                    },
 	{ 0 /* empty last element, array terminator */                      },
 };
 
