@@ -633,11 +633,27 @@ void view_update(View *view) {
 
 	view_syntax_color(view);
 
-	if (view->colorcolumn > 0 && view->colorcolumn <= view->width) {
+	if (view->colorcolumn > 0) {
 		size_t lineno = 0;
+		int line_cols; /* Track the number of columns we've passed on each line */
+		bool line_cc_set; /* Has the colorcolumn attribute been set for this line yet */
+
 		for (Line *l = view->topline; l; l = l->next) {
-			if (l->lineno != lineno)
-				l->cells[view->colorcolumn-1].attr = UI_STYLE_COLOR_COLUMN;
+			if (l->lineno != lineno) {
+				line_cols = 0;
+				line_cc_set = false;
+			}
+
+			if (!line_cc_set) {
+				line_cols += view->width;
+
+				/* This screen line contains the cell we want to highlight */
+				if (line_cols >= view->colorcolumn) {
+					l->cells[(view->colorcolumn - 1) % view->width].attr = UI_STYLE_COLOR_COLUMN;
+					line_cc_set = true;
+				}
+			}
+
 			lineno = l->lineno;
 		}
 	}
