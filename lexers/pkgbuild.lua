@@ -43,13 +43,45 @@ local keyword = token(l.KEYWORD, word_match({
 }, '-'))
 
 -- Functions.
-local func = token(l.FUNCTION, word_match{'build'})
+local func = token(l.FUNCTION, word_match{
+  'build',
+  'check',
+  'package',
+  'pkgver',
+  'prepare'
+})
 
+-- Constants.
 local constant = token(l.CONSTANT, word_match{
-  'pkgname', 'pkgver', 'pkgrel', 'pkgdesc', 'arch', 'url',
-  'license', 'optdepends', 'depends', 'makedepends', 'provides',
-  'conflicts', 'replaces', 'install', 'source', 'md5sums',
-  'pkgdir', 'srcdir'
+  'arch',
+  'backup',
+  'changelog',
+  'checkdepends',
+  'conflicts',
+  'depends',
+  'epoch',
+  'groups',
+  'install',
+  'license',
+  'makedepends',
+  'md5sums',
+  'noextract',
+  'optdepends',
+  'options',
+  'pkgbase',
+  'pkgdesc',
+  'pkgname',
+  'pkgrel',
+  'pkgver',
+  'provides',
+  'replaces',
+  'sha1sums',
+  'sha256sums',
+  'sha384sums',
+  'sha512sums',
+  'source',
+  'url',
+  'validpgpkeys'
 })
 
 -- Identifiers.
