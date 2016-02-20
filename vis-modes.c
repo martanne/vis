@@ -1,3 +1,4 @@
+#include <string.h>
 #include "vis-core.h"
 #include "util.h"
 
@@ -26,6 +27,8 @@ void vis_mode_switch(Vis *vis, enum VisMode mode) {
 
 static bool mode_map(Mode *mode, const char *key, const KeyBinding *binding) {
 	if (!mode)
+		return false;
+	if (binding->alias && key[0] != '<' && strncmp(key, binding->alias, strlen(key)) == 0)
 		return false;
 	if (!mode->bindings) {
 		mode->bindings = map_new();
