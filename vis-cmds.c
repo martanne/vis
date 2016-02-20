@@ -89,6 +89,8 @@ static bool cmd_help(Vis*, Filerange*, enum CmdOpt, const char *argv[]);
 /* change runtime key bindings */
 static bool cmd_map(Vis*, Filerange*, enum CmdOpt, const char *argv[]);
 static bool cmd_unmap(Vis*, Filerange*, enum CmdOpt, const char *argv[]);
+/* set language specific key bindings */
+static bool cmd_langmap(Vis*, Filerange*, enum CmdOpt, const char *argv[]);
 
 /* command recognized at the ':'-prompt. commands are found using a unique
  * prefix match. that is if a command should be available under an abbreviation
@@ -103,6 +105,7 @@ static const Command cmds[] = {
 	{ { "map-window",              }, cmd_map,           CMD_OPT_FORCE|CMD_OPT_ARGS },
 	{ { "unmap",                   }, cmd_unmap,         CMD_OPT_ARGS               },
 	{ { "unmap-window",            }, cmd_unmap,         CMD_OPT_ARGS               },
+	{ { "langmap",                 }, cmd_langmap,       CMD_OPT_FORCE|CMD_OPT_ARGS },
 	{ { "new"                      }, cmd_new,           CMD_OPT_NONE               },
 	{ { "open"                     }, cmd_open,          CMD_OPT_NONE               },
 	{ { "qall"                     }, cmd_qall,          CMD_OPT_FORCE              },
@@ -1028,6 +1031,37 @@ static enum VisMode str2vismode(const char *mode) {
 			return i;
 	}
 	return VIS_MODE_INVALID;
+}
+
+static bool cmd_langmap(Vis *vis, Filerange *range, enum CmdOpt opt, const char *argv[]) {
+	const char *nonlatin = argv[1];
+	const char *latin = argv[2];
+	bool mapped = true;
+
+	if (!latin || !nonlatin) {
+		vis_info_show(vis, "usage: langmap <non-latin keys> <latin keys>");
+		return false;
+	}
+
+	while (*latin && *nonlatin) {
+		size_t i = 0, j = 0;
+		char latin_key[8], nonlatin_key[8];
+		do {
+			if (i < sizeof(latin_key)-1)
+				latin_key[i++] = *latin;
+			latin++;
+		} while (!ISUTF8(*latin));
+		do {
+			if (j < sizeof(nonlatin_key)-1)
+				nonlatin_key[j++] = *nonlatin;
+			nonlatin++;
+		} while (!ISUTF8(*nonlatin));
+		latin_key[i] = '\0';
+		nonlatin_key[j] = '\0';
+		mapped &= vis_keymap_add(vis, nonlatin_key, strdup(latin_key));
+	}
+
+	return mapped;
 }
 
 static bool cmd_map(Vis *vis, Filerange *range, enum CmdOpt opt, const char *argv[]) {
