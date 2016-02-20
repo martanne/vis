@@ -964,6 +964,10 @@ static bool cmd_earlier_later(Vis *vis, Filerange *range, enum CmdOpt opt, const
 	return pos != EPOS;
 }
 
+static bool print_keylayout(const char *key, void *value, void *data) {
+	return text_appendf(data, "  %-15s\t%s\n", key, (char*)value);
+}
+
 static bool print_keybinding(const char *key, void *value, void *data) {
 	Text *txt = data;
 	KeyBinding *binding = value;
@@ -998,6 +1002,12 @@ static bool cmd_help(Vis *vis, Filerange *range, enum CmdOpt opt, const char *ar
 		Mode *mode = &vis_modes[i];
 		if (mode->help)
 			text_appendf(txt, "  %-15s\t%s\n", mode->name, mode->help);
+	}
+
+
+	if (!map_empty(vis->keymap)) {
+		text_appendf(txt, "\n Layout specific mappings (affects all modes except INSERT/REPLACE)\n\n");
+		map_iterate(vis->keymap, print_keylayout, txt);
 	}
 
 	print_mode(&vis_modes[VIS_MODE_NORMAL], txt);
