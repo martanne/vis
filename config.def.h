@@ -240,7 +240,7 @@ static const KeyBinding bindings_normal[] = {
 	{ "m",                  ACTION(MARK_SET)                            },
 	{ "<F1>",               ALIAS(":help<Enter>")                       },
 	{ "ga",                 ACTION(UNICODE_INFO)                        },
-	{ "~",                  ALIAS("<vis-operator-case-swap>l")          },
+	{ "~",                  ALIAS("<vis-operator-case-swap>ll")         },
 	{ "<End>",              ALIAS("$")                                  },
 	{ "gf",                 ACTION(OPEN_FILE_UNDER_CURSOR)              },
 	{ "<C-w>gf",            ACTION(OPEN_FILE_UNDER_CURSOR_NEW_WINDOW)   },
