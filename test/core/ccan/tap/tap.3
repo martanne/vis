@@ -1,0 +1,362 @@
+.Dd December 20, 2004
+.Os
+.Dt TAP 3
+.Sh NAME
+.Nm tap
+.Nd write tests that implement the Test Anything Protocol
+.Sh SYNOPSIS
+.In tap.h
+.Sh DESCRIPTION
+The
+.Nm
+library provides functions for writing test scripts that produce output
+consistent with the Test Anything Protocol.  A test harness that parses
+this protocol can run these tests and produce useful reports indicating
+their success or failure.
+.Ss PRINTF STRINGS
+In the descriptions that follow, for any function that takes as the
+last two parameters
+.Dq Fa const char * , Fa ...
+it can be assumed that the
+.Fa const char *
+is a
+.Fn printf
+-like format string, and the optional arguments are values to be placed
+in that string.
+.Ss TEST PLANS
+.Bl -tag -width indent
+.It Xo
+.Ft void
+.Fn plan_tests "unsigned int"
+.Xc
+.It Xo
+.Ft void
+.Fn plan_no_plan "void"
+.Xc
+.It Xo
+.Ft void
+.Fn plan_skip_all "const char *" "..."
+.Xc
+.El
+.Pp
+You must first specify a test plan.  This indicates how many tests you
+intend to run, and allows the test harness to notice if any tests were
+missed, or if the test program exited prematurely.
+.Pp
+To do this, use
+.Fn plan_tests .
+The function will cause your program to exit prematurely if you specify
+0 tests.
+.Pp
+In some situations you may not know how many tests you will be running, or
+you are developing your test program, and do not want to update the
+.Fn plan_tests
+parameter every time you make a change.  For those situations use
+.Fn plan_no_plan .
+It indicates to the test harness that an indeterminate number
+of tests will be run.
+.Pp
+Both
+.Fn plan_tests
+and
+.Fn plan_no_plan
+will cause your test program to exit prematurely with a diagnostic
+message if they are called more than once.
+.Pp
+If your test program detects at run time that some required functionality
+is missing (for example, it relies on a database connection which is not
+present, or a particular configuration option that has not been included
+in the running kernel) use
+.Fn plan_skip_all ,
+passing as parameters a string to display indicating the reason for skipping
+the tests.
+.Ss SIMPLE TESTS
+.Bl -tag -width indent
+.It Xo
+.Ft unsigned int
+.Fn ok "expression" "const char *" "..."
+.Xc
+.It Xo
+.Ft unsigned int
+.Fn ok1 "expression"
+.Xc
+.It Xo
+.Ft unsigned int
+.Fn pass "const char *" "..."
+.Xc
+.It Xo
+.Ft unsigned int
+.Fn fail "const char *" "..."
+.Xc
+.El
+.Pp
+Tests are implemented as expressions checked by calls to the
+.Fn ok
+and
+.Fn ok1
+macros.  In both cases
+.Fa expression
+should evaluate to true if the test succeeded.
+.Pp
+.Fn ok
+allows you to specify a name, or comment, describing the test which will
+be included in the output.
+.Fn ok1
+is for those times when the expression to be tested is self
+explanatory and does not need an associated comment.  In those cases
+the test expression becomes the comment.
+.Pp
+These four calls are equivalent:
+.Bd -literal -offset indent
+int i = 5;
+
+ok(i == 5, "i equals 5");      /* Overly verbose */
+ok(i == 5, "i equals %d", i);  /* Just to demonstrate printf-like
+                                  behaviour of the test name */
+ok(i == 5, "i == 5");          /* Needless repetition */
+ok1(i == 5);                   /* Just right */
+.Ed
+.Pp
+It is good practice to ensure that the test name describes the meaning
+behind the test rather than what you are testing.  Viz
+.Bd -literal -offset indent
+ok(db != NULL, "db is not NULL");            /* Not bad, but */
+ok(db != NULL, "Database conn. succeeded");  /* this is better */
+.Ed
+.Pp
+.Fn ok
+and
+.Fn ok1
+return 1 if the expression evaluated to true, and 0 if it evaluated to
+false.  This lets you chain calls from
+.Fn ok
+to
+.Fn diag
+to only produce diagnostic output if the test failed.  For example, this
+code will include diagnostic information about why the database connection
+failed, but only if the test failed.
+.Bd -literal -offset indent
+if (!ok(db != NULL, "Database conn. succeeded")) {
+    diag("Database error code: %d", dberrno);
+}
+.Ed
+.Pp
+You also have
+.Fn pass
+and
+.Fn fail .
+From the Test::More documentation:
+.Bd -literal -offset indent
+Sometimes you just want to say that the tests have passed.
+Usually the case is you've got some complicated condition
+that is difficult to wedge into an ok().  In this case,
+you can simply use pass() (to declare the test ok) or fail
+(for not ok).
+
+Use these very, very, very sparingly.
+.Ed
+.Pp
+These are synonyms for ok(1, ...) and ok(0, ...).
+.Ss SKIPPING TESTS
+.Bl -tag -width indent
+.It Xo
+.Ft void
+.Fn skip "unsigned int" "const char *" "..."
+.Xc
+.It Xo
+.Fn skip_if "expression" "unsigned int" "const char *" "..."
+.Xc
+.El
+.Pp
+Sets of tests can be skipped.  Ordinarily you would do this because
+the test can't be run in this particular testing environment.
+.Pp
+For example, suppose some tests should be run as root.  If the test is
+not being run as root then the tests should be skipped.  In this 
+implementation, skipped tests are flagged as being ok, with a special
+message indicating that they were skipped.  It is your responsibility
+to ensure that the number of tests skipped (the first parameter to
+.Fn skip )
+is correct for the number of tests to skip.
+.Pp
+One way of implementing this is with a
+.Dq do { } while(0);
+loop, or an
+.Dq if( ) { } else { }
+construct, to ensure that there are no additional side effects from the
+skipped tests.
+.Bd -literal -offset indent
+if(getuid() != 0) {
+        skip(1, "because test only works as root");
+} else {
+        ok(do_something_as_root() == 0, "Did something as root");
+}
+.Ed
+.Pp
+A convenient macro is provided to assist with this.  The previous example could
+be re-written as follows.
+.Bd -literal -offset indent
+skip_if(getuid() != 0, 1, "because test only works as root") {
+	ok(do_something_as_root() == 0, "Did something as root");
+}
+.Ed
+.Ss MARKING TESTS AS Dq TODO
+.Bl -tag -width indent
+.It Xo
+.Ft void
+.Fn todo_start "const char *" "..."
+.Xc
+.It Xo
+.Ft void
+.Fn todo_end "void"
+.Xc
+.El
+.Pp
+Sets of tests can be flagged as being
+.Dq TODO .
+These are tests that you expect to fail, probably because you haven't
+fixed a bug, or finished a new feature yet.  These tests will still be
+run, but with additional output that indicates that they are expected
+to fail.  Should a test start to succeed unexpectedly, tools like
+.Xr prove 1
+will indicate this, and you can move the test out of the todo
+block.  This is much more useful than simply commenting out (or
+.Dq #ifdef 0 ... #endif )
+the tests.
+.Bd -literal -offset indent
+todo_start("dwim() not returning true yet");
+
+ok(dwim(), "Did what the user wanted");
+
+todo_end();
+.Ed
+.Pp
+Should
+.Fn dwim
+ever start succeeding you will know about it as soon as you run the
+tests.  Note that
+.Em unlike
+the
+.Fn skip_*
+family, additional code between
+.Fn todo_start
+and
+.Fn todo_end
+.Em is
+executed.
+.Ss SKIP vs. TODO
+From the Test::More documentation;
+.Bd -literal -offset indent
+If it's something the user might not be able to do, use SKIP.
+This includes optional modules that aren't installed, running
+under an OS that doesn't have some feature (like fork() or
+symlinks), or maybe you need an Internet connection and one
+isn't available.
+
+If it's something the programmer hasn't done yet, use TODO.
+This is for any code you haven't written yet, or bugs you have
+yet to fix, but want to put tests in your testing script 
+(always a good idea).
+.Ed
+.Ss DIAGNOSTIC OUTPUT
+.Bl -tag -width indent
+.It Xo
+.Fr int
+.Fn diag "const char *" "..."
+.Xc
+.El
+.Pp
+If your tests need to produce diagnostic output, use
+.Fn diag .
+It ensures that the output will not be considered by the TAP test harness.
+.Fn diag
+adds the necessary trailing
+.Dq \en
+for you.
+It returns the number of characters written.
+.Bd -literal -offset indent
+diag("Expected return code 0, got return code %d", rcode);
+.Ed
+.Ss EXIT STATUS
+.Bl -tag -width indent
+.It Xo
+.Fr int
+.Fn exit_status void
+.Xc
+.El
+.Pp
+For maximum compatability your test program should return a particular
+exit code.  This is calculated by
+.Fn exit_status
+so it is sufficient to always return from
+.Fn main
+with either
+.Dq return exit_status();
+or
+.Dq exit(exit_status());
+as appropriate.
+.Sh EXAMPLES
+The
+.Pa tests
+directory in the source distribution contains numerous tests of
+.Nm
+functionality, written using
+.Nm .
+Examine them for examples of how to construct test suites.
+.Sh COMPATABILITY
+.Nm
+strives to be compatible with the Perl Test::More and Test::Harness 
+modules.  The test suite verifies that
+.Nm
+is bug-for-bug compatible with their behaviour.  This is why some
+functions which would more naturally return nothing return constant
+values.
+.Pp
+If the
+.Lb libpthread
+is found at compile time,
+.Nm
+.Em should
+be thread safe.  Indications to the contrary (and test cases that expose
+incorrect behaviour) are very welcome.
+.Sh SEE ALSO
+.Xr Test::More 1 ,
+.Xr Test::Harness 1 ,
+.Xr prove 1
+.Sh STANDARDS
+.Nm
+requires a
+.St -isoC-99
+compiler.  Some of the
+.Nm
+functionality is implemented as variadic macros, and that functionality
+was not formally codified until C99.  Patches to use
+.Nm
+with earlier compilers that have their own implementation of variadic
+macros will be gratefully received.
+.Sh HISTORY
+.Nm
+was written to help improve the quality and coverage of the FreeBSD
+regression test suite, and released in the hope that others find it
+a useful tool to help improve the quality of their code.
+.Sh AUTHORS
+.An "Nik Clayton" Aq nik@ngo.org.uk ,
+.Aq nik@FreeBSD.org
+.Pp
+.Nm
+would not exist without the efforts of
+.An "Michael G Schwern" Aq schqern@pobox.com ,
+.An "Andy Lester" Aq andy@petdance.com ,
+and the countless others who have worked on the Perl QA programme.
+.Sh BUGS
+Ideally, running the tests would have no side effects on the behaviour
+of the application you are testing.  However, it is not always possible
+to avoid them.  The following side effects of using
+.Nm
+are known.
+.Bl -bullet -offset indent
+.It
+stdout is set to unbuffered mode after calling any of the
+.Fn plan_*
+functions.
+.El
