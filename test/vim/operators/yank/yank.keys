@@ -1,1 +1,8 @@
-y$P0yyp..
+ywj'\"'0p              /* yank word 'this', move down and paste from yank register */
+kfrdwj'\"''\"'p        /* delete word 'random', move down and paste from default register */
+kwviw'\"'ay            /* yank 'text' in visual mode using register a */
+j'\"'ap                /* move down, paste register a */
+'\"'AyiwP              /* yank to A register then paste */
+yypkkyyjVp             /* yank top line, replace next visual line with it */
+byiw                   /* yank last word vis */
+0'\"'_D11p             /* delete line using black hole register, paste vis x11 */
