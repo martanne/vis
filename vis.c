@@ -1103,16 +1103,7 @@ static void copy_indent_from_previous_line(Win *win) {
 }
 
 void vis_insert_nl(Vis *vis) {
-	const char *nl;
-	switch (text_newline_type(vis->win->file->text)) {
-	case TEXT_NEWLINE_CRNL:
-		nl = "\r\n";
-		break;
-	default:
-		nl = "\n";
-		break;
-	}
-
+	const char *nl = text_newline_char(vis->win->file->text);
 	vis_insert_key(vis, nl, strlen(nl));
 
 	if (vis->autoindent)

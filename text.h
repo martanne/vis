@@ -41,7 +41,7 @@ bool text_appendf(Text*, const char *format, ...);
 bool text_printf(Text*, size_t pos, const char *format, ...);
 bool text_vprintf(Text*, size_t pos, const char *format, va_list ap);
 /* inserts a line ending character (depending on file type) */
-bool text_insert_newline(Text*, size_t pos);
+size_t text_insert_newline(Text*, size_t pos);
 /* insert `len' bytes starting from `data' at `pos' which has to be
  * in the interval [0, text_size(txt)] */
 bool text_insert(Text*, size_t pos, const char *data, size_t len);
@@ -125,6 +125,7 @@ enum TextNewLine {
 };
 
 enum TextNewLine text_newline_type(Text*);
+const char *text_newline_char(Text*);
 
 /* save the whole text to the given `filename'. Return true if succesful.
  * In which case an implicit snapshot is taken. The save might associate a

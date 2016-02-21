@@ -665,15 +665,10 @@ bool text_vprintf(Text *txt, size_t pos, const char *format, va_list ap) {
 	return ret;
 }
 
-bool text_insert_newline(Text *txt, size_t pos) {
-	switch (text_newline_type(txt)) {
-	case TEXT_NEWLINE_NL:
-		return text_insert(txt, pos, "\n", 1);
-	case TEXT_NEWLINE_CRNL:
-		return text_insert(txt, pos, "\r\n", 2);
-	default:
-		return false;
-	}
+size_t text_insert_newline(Text *txt, size_t pos) {
+	const char *data = text_newline_char(txt);
+	size_t len = strlen(data);
+	return text_insert(txt, pos, data, len) ? len : 0;
 }
 
 static size_t action_undo(Text *txt, Action *a) {
@@ -1263,6 +1258,14 @@ enum TextNewLine text_newline_type(Text *txt){
 	}
 
 	return txt->newlines;
+}
+
+const char *text_newline_char(Text *txt) {
+	static const char *types[] = {
+		[TEXT_NEWLINE_NL] = "\n",
+		[TEXT_NEWLINE_CRNL] = "\r\n",
+	};
+	return types[text_newline_type(txt)];
 }
 
 static bool text_iterator_init(Iterator *it, size_t pos, Piece *p, size_t off) {
