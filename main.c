@@ -1347,13 +1347,16 @@ static const char *operator_filter(Vis *vis, const char *keys, const Arg *arg) {
 }
 
 static const char *movement_key(Vis *vis, const char *keys, const Arg *arg) {
-	if (!keys[0])
-		return NULL;
 	char key[32];
-	const char *next = vis_keys_next(vis, keys);
-	strncpy(key, keys, next - keys + 1);
-	key[sizeof(key)-1] = '\0';
-	vis_motion(vis, arg->i, key);
+	const char *next;
+	if (!keys[0] || !(next = vis_keys_next(vis, keys)))
+		return NULL;
+	size_t len = next - keys;
+	if (len < sizeof key) {
+		strncpy(key, keys, len);
+		key[len] = '\0';
+		vis_motion(vis, arg->i, key);
+	}
 	return next;
 }
 
