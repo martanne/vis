@@ -3,7 +3,7 @@
 [ -z "$VIS" ] && VIS="../../vis"
 
 TESTS=$1
-[ -z "$TESTS" ] && TESTS=$(find . -name '*.in' | sed 's/\.in$//g')
+[ -z "$TESTS" ] && TESTS=$(find . -name '*.keys' | sed 's/\.keys$//g')
 
 TESTS_RUN=0
 TESTS_OK=0
