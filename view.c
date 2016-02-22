@@ -635,8 +635,8 @@ void view_update(View *view) {
 
 	if (view->colorcolumn > 0) {
 		size_t lineno = 0;
-		int line_cols; /* Track the number of columns we've passed on each line */
-		bool line_cc_set; /* Has the colorcolumn attribute been set for this line yet */
+		int line_cols = 0; /* Track the number of columns we've passed on each line */
+		bool line_cc_set = false; /* Has the colorcolumn attribute been set for this line yet */
 
 		for (Line *l = view->topline; l; l = l->next) {
 			if (l->lineno != lineno) {
