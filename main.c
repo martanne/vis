@@ -34,8 +34,6 @@ static const char *mark_set(Vis*, const char *keys, const Arg *arg);
 static const char *openline(Vis*, const char *keys, const Arg *arg);
 /* join lines from current cursor position to movement indicated by arg */
 static const char *join(Vis*, const char *keys, const Arg *arg);
-/* execute arg->s as if it was typed on command prompt */
-static const char *cmd(Vis*, const char *keys, const Arg *arg);
 /* perform last action i.e. action_prev again */
 static const char *repeat(Vis*, const char *keys, const Arg *arg);
 /* replace character at cursor with one from keys */
@@ -1595,11 +1593,6 @@ static const char *insert_verbatim(Vis *vis, const char *keys, const Arg *arg) {
 
 	if (len > 0)
 		vis_insert_key(vis, data, len);
-	return keys;
-}
-
-static const char *cmd(Vis *vis, const char *keys, const Arg *arg) {
-	vis_cmd(vis, arg->s);
 	return keys;
 }
 
