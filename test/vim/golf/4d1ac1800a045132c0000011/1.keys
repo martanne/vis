@@ -1,0 +1,9 @@
+f<i<Space><Escape>          /* move to first < and insert space */
+o<Escape>                   /* insert new line */
+jf{i<Enter><Escape>         /* insert new line before { */
+w.                          /* repeat to insert new line before puts */
+f;a<Enter><Escape>          /* insert new line after ; */
+;.                          /* repeat last f search, repeat append */
+ki<Space><Escape>           /* move line up, insert space */
+3.                          /* insert 3 more spaces (TODO: implement [count]i ?) */
+k^4.                        /* move line up, insert 4 spaces */

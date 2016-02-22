@@ -1,0 +1,3 @@
+attr_reader :align, :variables, :with
+attr_accessor :spaces, :to, :complete, :challenge
+# vim: set expandtab:

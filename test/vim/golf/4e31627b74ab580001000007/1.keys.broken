@@ -1,0 +1,21 @@
+dd
+ipublic <Escape>
+:%s,\$this->,,g<Enter>                       /* we use , as delimiter because // interferes with the CPP */
+:%s,\$,,g<Enter>
+:%s,private var,private double var,<Enter>
+/sqrt<Enter>
+iMath.<Escape>
+gg
+/function<Enter>
+dw
+n
+cwvoid<Escape>
+n
+.
+n
+cwdouble<Escape> 
+gg
+/val
+idouble <Escape>
+2n.
+/><Enter>dd                                  /* TODO: Gdd does not work */

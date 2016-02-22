@@ -1,0 +1,6 @@
+10 PRINT "The actual"
+15 PRINT "code doesn't"
+16 PRINT "really matter."
+20 PRINT "Just take"
+25 PRINT "care of"
+30 PRINT "the numbers."

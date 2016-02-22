@@ -1,0 +1,20 @@
+qq              /* start macro recording */
+*               /* search word under cursor */
+dd              /* delete line */
+N               /* repeat search */
+P               /* put before */
+2j              /* 2 lines down */
+q               /* stop macro recording */
+@q              /* 11@q repeat macro 11 times */
+@@
+@@
+@@
+@@
+@@
+@@
+@@
+@@
+@@
+@@
+@@
+@@
