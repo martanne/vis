@@ -1,0 +1,6 @@
+enum PlaybackRequestType {
+    case Next
+    case Previous
+    case Play
+    case Stop
+}

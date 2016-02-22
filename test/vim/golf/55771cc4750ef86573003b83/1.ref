@@ -1,0 +1,11 @@
+foo {
+    a       => "a",
+    bc      => "bc",
+    def     => "def",
+    ghij    => "ghij",
+    k       => "k",
+    lmn     => "lmn",
+    opqrst  => "opqrst",
+    uvw     => "uvw",
+    xyz     => "xyz",
+}

@@ -1,0 +1,28 @@
+<?php
+class Foo
+{
+        private $var1;
+        private $var2;
+
+        public function Foo($val)
+        {
+                $this->init($val);
+                $this->doSomething();
+        }
+
+        private function init($val)
+        {
+                $this->var1 = $val;
+        }
+        
+        private function doSomething()
+        {
+                $this->var2 = sqrt($this->var1);
+        }
+
+        public function getResult()
+        {
+                return $this->var2;
+        }
+}
+?>

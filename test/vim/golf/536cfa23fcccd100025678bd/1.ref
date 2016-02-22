@@ -1,0 +1,2 @@
+f=function(v){return v};
+attr("y",f)
