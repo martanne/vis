@@ -48,7 +48,10 @@ static void printkey(TermKeyKey *key) {
 			print("\b");
 			break;
 		case TERMKEY_SYM_TAB:
-			print("\t");
+			if (key->modifiers & TERMKEY_KEYMOD_SHIFT)
+				print("\033[Z");
+			else
+				print("\t");
 			break;
 		case TERMKEY_SYM_ENTER:
 			print("\n");
