@@ -30,7 +30,7 @@ void register_release(Register *reg) {
 const char *register_get(Vis *vis, Register *reg, size_t *len) {
 	switch (reg->type) {
 	case REGISTER_NORMAL:
-		*len = reg->buf.len;
+		*len = buffer_length0(&reg->buf);
 		return reg->buf.data;
 	case REGISTER_CLIPBOARD:
 	{

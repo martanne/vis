@@ -88,3 +88,10 @@ bool buffer_prepend(Buffer *buf, const void *data, size_t len) {
 bool buffer_prepend0(Buffer *buf, const char *data) {
 	return buffer_prepend(buf, data, strlen(data) + (buf->len == 0));
 }
+
+size_t buffer_length0(Buffer *buf) {
+	size_t len = buf->len;
+	if (len > 0 && buf->data[len-1] == '\0')
+		len--;
+	return len;
+}
