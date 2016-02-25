@@ -46,7 +46,7 @@
 /* enable large file optimization for files larger than: */
 #define LARGE_FILE (1 << 25)
 
-static Macro *macro_get(Vis *vis, enum VisMacro m);
+static Macro *macro_get(Vis *vis, enum VisRegister);
 static void macro_replay(Vis *vis, const Macro *macro);
 
 /** window / file handling */
@@ -367,8 +367,6 @@ void vis_free(Vis *vis) {
 	text_regex_free(vis->search_pattern);
 	for (int i = 0; i < LENGTH(vis->registers); i++)
 		register_release(&vis->registers[i]);
-	for (int i = 0; i < LENGTH(vis->macros); i++)
-		macro_release(&vis->macros[i]);
 	vis->ui->free(vis->ui);
 	map_free(vis->cmds);
 	map_free(vis->options);
@@ -924,11 +922,13 @@ int vis_run(Vis *vis, int argc, char *argv[]) {
 	return vis->exit_status;
 }
 
-static Macro *macro_get(Vis *vis, enum VisMacro m) {
-	if (m == VIS_MACRO_LAST_RECORDED)
+static Macro *macro_get(Vis *vis, enum VisRegister id) {
+	if (id == VIS_MACRO_LAST_RECORDED)
 		return vis->last_recording;
-	if (m < LENGTH(vis->macros))
-		return &vis->macros[m];
+	if (VIS_REG_A <= id && id <= VIS_REG_Z)
+		id -= VIS_REG_A;
+	if (id < LENGTH(vis->registers))
+		return &vis->registers[id].buf;
 	return NULL;
 }
 
@@ -941,11 +941,12 @@ void macro_operator_stop(Vis *vis) {
 	vis->macro_operator = NULL;
 }
 
-bool vis_macro_record(Vis *vis, enum VisMacro id) {
+bool vis_macro_record(Vis *vis, enum VisRegister id) {
 	Macro *macro = macro_get(vis, id);
 	if (vis->recording || !macro)
 		return false;
-	macro_reset(macro);
+	if (!(VIS_REG_A <= id && id <= VIS_REG_Z))
+		macro_reset(macro);
 	vis->recording = macro;
 	return true;
 }
@@ -972,11 +973,12 @@ static void macro_replay(Vis *vis, const Macro *macro) {
 	Buffer buf;
 	buffer_init(&buf);
 	buffer_put(&buf, macro->data, macro->len);
+	buffer_append(&buf, "\0", 1);
 	vis_keys_raw(vis, &buf, macro->data);
 	buffer_release(&buf);
 }
 
-bool vis_macro_replay(Vis *vis, enum VisMacro id) {
+bool vis_macro_replay(Vis *vis, enum VisRegister id) {
 	Macro *macro = macro_get(vis, id);
 	if (!macro || macro == vis->recording)
 		return false;
@@ -1048,7 +1050,7 @@ void vis_register_set(Vis *vis, enum VisRegister reg) {
 }
 
 const char *vis_register_get(Vis *vis, enum VisRegister reg, size_t *len) {
-	if (reg >= VIS_REG_A && reg <= VIS_REG_Z)
+	if (VIS_REG_A <= reg && reg <= VIS_REG_Z)
 		reg -= VIS_REG_A;
 	if (reg < LENGTH(vis->registers))
 		return register_get(vis, &vis->registers[reg], len);

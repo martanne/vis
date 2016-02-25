@@ -256,8 +256,9 @@ Operators can be forced to work line wise by specifying `V`.
 
 ### Macros
 
-  `[a-z]` are recognized macro names, `q` starts a recording, `@` plays it back.
-  `@@` refers to the least recently recorded macro.
+  The general purpose registers `[a-z]` can be used to record macros. Use
+  one of `[A-Z]` to append to an existing macro. `q` starts a recording,
+  `@` plays it back.  `@@` refers to the least recently recorded macro.
 
 ### Command line prompt
 

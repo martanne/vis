@@ -1124,31 +1124,39 @@ static const char *nop(Vis *vis, const char *keys, const Arg *arg) {
 	return keys;
 }
 
-static const char *key2macro(Vis *vis, const char *keys, enum VisMacro *macro) {
-	*macro = VIS_MACRO_INVALID;
-	if (keys[0] >= 'a' && keys[0] <= 'z')
-		*macro = keys[0] - 'a';
-	else if (keys[0] == '@')
-		*macro = VIS_MACRO_LAST_RECORDED;
-	else if (keys[0] == '\0')
+static const char *key2register(Vis *vis, const char *keys, enum VisRegister *reg) {
+	*reg = VIS_REG_INVALID;
+	if (!keys[0])
 		return NULL;
+	if ('a' <= keys[0] && keys[0] <= 'z')
+		*reg = keys[0] - 'a';
+	else if ('A' <= keys[0] && keys[0] <= 'Z')
+		*reg = VIS_REG_A + keys[0] - 'A';
+	else if (keys[0] == '*' || keys[0] == '+')
+		*reg = VIS_REG_CLIPBOARD;
+	else if (keys[0] == '_')
+		*reg = VIS_REG_BLACKHOLE;
+	else if (keys[0] == '0')
+		*reg = VIS_REG_ZERO;
+	else if (keys[0] == '@')
+		*reg = VIS_MACRO_LAST_RECORDED;
 	return keys+1;
 }
 
 static const char *macro_record(Vis *vis, const char *keys, const Arg *arg) {
-	if (vis_macro_record_stop(vis))
-		return keys;
-	enum VisMacro macro;
-	keys = key2macro(vis, keys, &macro);
-	vis_macro_record(vis, macro);
+	if (!vis_macro_record_stop(vis)) {
+		enum VisRegister reg;
+		keys = key2register(vis, keys, &reg);
+		vis_macro_record(vis, reg);
+	}
 	vis_draw(vis);
 	return keys;
 }
 
 static const char *macro_replay(Vis *vis, const char *keys, const Arg *arg) {
-	enum VisMacro macro;
-	keys = key2macro(vis, keys, &macro);
-	vis_macro_replay(vis, macro);
+	enum VisRegister reg;
+	keys = key2register(vis, keys, &reg);
+	vis_macro_replay(vis, reg);
 	return keys;
 }
 
@@ -1387,23 +1395,6 @@ static const char *selection_restore(Vis *vis, const char *keys, const Arg *arg)
 	else
 		vis_mode_switch(vis, VIS_MODE_VISUAL);
 	return keys;
-}
-
-static const char *key2register(Vis *vis, const char *keys, enum VisRegister *reg) {
-	*reg = VIS_REG_INVALID;
-	if (!keys[0])
-		return NULL;
-	if (keys[0] >= 'a' && keys[0] <= 'z')
-		*reg = keys[0] - 'a';
-	else if (keys[0] >= 'A' && keys[0] <= 'Z')
-		*reg = VIS_REG_A + keys[0] - 'A';
-	else if (keys[0] == '*' || keys[0] == '+')
-		*reg = VIS_REG_CLIPBOARD;
-	else if (keys[0] == '_')
-		*reg = VIS_REG_BLACKHOLE;
-	else if (keys[0] == '0')
-		*reg = VIS_REG_ZERO;
-	return keys+1;
 }
 
 static const char *reg(Vis *vis, const char *keys, const Arg *arg) {

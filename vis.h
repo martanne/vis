@@ -322,28 +322,6 @@ bool vis_textobject(Vis*, enum VisTextObject);
 int vis_textobject_register(Vis*, int type, void *data,
 	Filerange (*textobject)(Vis*, Win*, void*, size_t pos));
 
-/* macro REPEAT and INVALID should be considered as implementation details (TODO: hide them?) */
-enum VisMacro {
-	VIS_MACRO_a, VIS_MACRO_b, VIS_MACRO_c, VIS_MACRO_d, VIS_MACRO_e,
-	VIS_MACRO_f, VIS_MACRO_g, VIS_MACRO_h, VIS_MACRO_i, VIS_MACRO_j,
-	VIS_MACRO_k, VIS_MACRO_l, VIS_MACRO_m, VIS_MACRO_n, VIS_MACRO_o,
-	VIS_MACRO_p, VIS_MACRO_q, VIS_MACRO_r, VIS_MACRO_s, VIS_MACRO_t,
-	VIS_MACRO_u, VIS_MACRO_v, VIS_MACRO_w, VIS_MACRO_x, VIS_MACRO_y,
-	VIS_MACRO_z,
-	VIS_MACRO_OPERATOR,      /* records entered keys after an operator */
-	VIS_MACRO_REPEAT,        /* copy of the above macro once the recording is finished */
-	VIS_MACRO_INVALID,       /* denotes the end of "real" macros */
-	VIS_MACRO_LAST_RECORDED, /* pseudo macro referring to last recorded one */
-};
-
-/* start a macro recording, fails if a recording is already on going */
-bool vis_macro_record(Vis*, enum VisMacro);
-/* stop recording, fails if there is nothing to stop */
-bool vis_macro_record_stop(Vis*);
-/* check whether a recording is currently on going */
-bool vis_macro_recording(Vis*);
-/* replay a macro. a macro currently being recorded can't be replayed */
-bool vis_macro_replay(Vis*, enum VisMacro);
 
 enum VisMark {
 	VIS_MARK_a, VIS_MARK_b, VIS_MARK_c, VIS_MARK_d, VIS_MARK_e,
@@ -371,6 +349,8 @@ enum VisRegister {
 	VIS_REG_BLACKHOLE, /* /dev/null register */
 	VIS_REG_CLIPBOARD, /* system clipboard register */
 	VIS_REG_PROMPT,  /* internal register which shadows DEFAULT in PROMPT mode */
+	VIS_MACRO_OPERATOR,      /* records entered keys after an operator */
+	VIS_MACRO_REPEAT,        /* copy of the above macro once the recording is finished */
 	VIS_REG_INVALID, /* has to be the last 'real' register */
 	VIS_REG_A, VIS_REG_B, VIS_REG_C, VIS_REG_D, VIS_REG_E,
 	VIS_REG_F, VIS_REG_G, VIS_REG_H, VIS_REG_I, VIS_REG_J,
@@ -378,12 +358,22 @@ enum VisRegister {
 	VIS_REG_P, VIS_REG_Q, VIS_REG_R, VIS_REG_S, VIS_REG_T,
 	VIS_REG_U, VIS_REG_V, VIS_REG_W, VIS_REG_X, VIS_REG_Y,
 	VIS_REG_Z,
+	VIS_MACRO_LAST_RECORDED, /* pseudo macro referring to last recorded one */
 };
 
 /* set the register to use, if none is given the DEFAULT register is used */
 void vis_register_set(Vis*, enum VisRegister);
 /* get register content */
 const char *vis_register_get(Vis*, enum VisRegister, size_t *len);
+
+/* start a macro recording, fails if a recording is already on going */
+bool vis_macro_record(Vis*, enum VisRegister);
+/* stop recording, fails if there is nothing to stop */
+bool vis_macro_record_stop(Vis*);
+/* check whether a recording is currently on going */
+bool vis_macro_recording(Vis*);
+/* replay a macro. a macro currently being recorded can't be replayed */
+bool vis_macro_replay(Vis*, enum VisRegister);
 
 /* repeat last operator, possibly with a new count if one was provided in the meantime */
 void vis_repeat(Vis*);
