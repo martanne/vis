@@ -1,7 +1,7 @@
 include ../../config.mk
 
 SRC = $(wildcard ccan/*/*.c)
-CFLAGS_VIS += -I. -I../..
+CFLAGS += -I. -I../..
 
 test: text buffer map
 	@./text
@@ -14,18 +14,18 @@ config.h:
 
 text: config.h text.c ../../text.c ../../text-util.c
 	@echo Compiling $@ binary
-	@${CC} ${CFLAGS} ${CFLAGS_VIS} $^ ${SRC} ${LDFLAGS} -o $@
+	@${CC} ${CFLAGS} ${CFLAGS_STD} ${filter %.c, $^} ${SRC} ${LDFLAGS} -o $@
 
 buffer: config.h buffer.c ../../buffer.c
 	@echo Compiling $@ binary
-	@${CC} ${CFLAGS} ${CFLAGS_VIS} $^ ${SRC} ${LDFLAGS} -o $@
+	@${CC} ${CFLAGS} ${CFLAGS_STD} ${filter %.c, $^} ${SRC} ${LDFLAGS} -o $@
 
 map: config.h map.c ../../map.c
 	@echo Compiling $@ binary
-	@${CC} ${CFLAGS} ${CFLAGS_VIS} $^ ${SRC} ${LDFLAGS} -o $@
+	@${CC} ${CFLAGS} ${CFLAGS_STD} ${filter %.c, $^} ${SRC} ${LDFLAGS} -o $@
 
 debug: clean
-	@$(MAKE) CFLAGS_VIS='${DEBUG_CFLAGS_VIS}'
+	$(MAKE) CFLAGS_VIS='${DEBUG_CFLAGS_VIS}'
 
 clean:
 	@echo cleaning
