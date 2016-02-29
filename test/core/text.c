@@ -41,7 +41,7 @@ int main(int argc, char *argv[]) {
 	txt = text_load("/");
 	ok(txt == NULL && errno == EISDIR, "Opening directory");
 
-	txt = text_load("/etc/shadow");
+	txt = text_load("testfile");
 	ok(txt == NULL && errno == EACCES, "Opening file without sufficient permissions");
 
 	txt = text_load(NULL);
