@@ -66,12 +66,3 @@ DEBUG_CFLAGS_VIS = ${CFLAGS_VIS} -UNDEBUG -O0 -g -ggdb -Wall -Wextra -pedantic -
 
 CC ?= cc
 STRIP ?= strip
-
-# Hardening
-ifeq (${CC},gcc)
-	CFLAGS += -fPIC -fstack-protector-all -D_FORTIFY_SOURCE=2
-	LDFLAGS += -z now -z relro -pie
-else ifeq (${CC},clang)
-	CFLAGS += -fPIE -fstack-protector-all -D_FORTIFY_SOURCE=2
-	LDFLAGS += -z now -z relro -pie
-endif
