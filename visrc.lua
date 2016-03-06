@@ -1,4 +1,10 @@
-vis.lexers = require('lexer')
+local ok, msg = pcall(function()
+	vis.lexers = require('lexer')
+end)
+
+if not ok then
+	vis:info('WARNING: could not load lexer module')
+end
 
 vis.events = {}
 
