@@ -31,7 +31,7 @@ static const KeyBinding bindings_motions[] = {
 	{ "l",                  ACTION(CURSOR_CHAR_NEXT)                    },
 	{ " ",                  ALIAS("l")                                  },
 	{ "k",                  ACTION(CURSOR_LINE_UP)                      },
-	{ "C-p",                ALIAS("k")                                  },
+	{ "<C-p>",              ALIAS("k")                                  },
 	{ "j",                  ACTION(CURSOR_LINE_DOWN)                    },
 	{ "<C-j>",              ALIAS("j")                                  },
 	{ "<C-n>",              ALIAS("j")                                  },
