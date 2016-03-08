@@ -1,9 +1,10 @@
 local ok, msg = pcall(function()
+	vis.lexers = {}
 	vis.lexers = require('lexer')
 end)
 
 if not ok then
-	vis:info('WARNING: could not load lexer module')
+	vis:info('WARNING: could not load lexer module, is lpeg installed?')
 end
 
 vis.events = {}
@@ -188,7 +189,7 @@ vis.events.win_open = function(win)
 				if #filename >= #pattern then
 					local s, e = string.find(filename, pattern, -#pattern, true)
 					if s ~= e and e == #filename then
-						vis:command('set syntax '.. lang)
+						win.syntax = lang
 						return;
 					end
 				end
