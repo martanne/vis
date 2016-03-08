@@ -520,8 +520,8 @@ void view_cursor_to(View *view, size_t pos) {
  * stop once the screen is full, update view->end, view->lastline */
 void view_draw(View *view) {
 	view_clear(view);
-	/* read a screenful of text */
-	const size_t text_size = view->width * view->height;
+	/* read a screenful of text considering each character as 4-byte UTF character*/
+	const size_t text_size = view->width * view->height * 4;
 	/* current buffer to work with */
 	char text[text_size+1];
 	/* remaining bytes to process in buffer */
