@@ -245,7 +245,7 @@ bool vis_motion(Vis *vis, enum VisMotion motion, ...) {
 	case VIS_MOVE_SEARCH_BACKWARD:
 	{
 		const char *pattern = va_arg(ap, char*);
-		if (text_regex_compile(vis->search_pattern, pattern, REG_EXTENDED)) {
+		if (text_regex_compile(vis->search_pattern, pattern, REG_EXTENDED|REG_NEWLINE)) {
 			vis_cancel(vis);
 			goto err;
 		}
