@@ -28,6 +28,7 @@ typedef struct {
 	unsigned int attr;
 	bool selected;      /* whether this cell is part of a selected region */
 	bool cursor;        /* whether a cursor is currently located on the cell */
+	bool cursor_primary;
 } Cell;
 
 typedef struct Line Line;

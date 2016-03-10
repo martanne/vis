@@ -683,13 +683,17 @@ static void ui_window_draw(UiWin *w) {
 	}
 	short selection_bg = win->styles[UI_STYLE_SELECTION].bg;
 	short cursor_line_bg = win->styles[UI_STYLE_CURSOR_LINE].bg;
+	bool multiple_cursors = view_cursors_next(view_cursors(win->view));
 	attr_t attr = A_NORMAL;
 	for (const Line *l = view_lines_get(win->view); l; l = l->next) {
 		bool cursor_line = l->lineno == cursor_lineno;
 		for (int x = 0; x < width; x++) {
 			CellStyle *style = &win->styles[l->cells[x].attr];
 			if (l->cells[x].cursor && win->ui->selwin == win) {
-				attr = style_to_attr(&win->styles[UI_STYLE_CURSOR]);
+				if (multiple_cursors && l->cells[x].cursor_primary)
+					attr = style_to_attr(&win->styles[UI_STYLE_CURSOR_PRIMARY]);
+				else
+					attr = style_to_attr(&win->styles[UI_STYLE_CURSOR]);
 				prev_style = NULL;
 			} else if (l->cells[x].selected) {
 				if (style->fg == selection_bg)

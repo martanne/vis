@@ -235,6 +235,9 @@ bool view_syntax_set(View *view, const char *name) {
 	lua_getfield(L, -1, "STYLE_CURSOR");
 	view->ui->syntax_style(view->ui, UI_STYLE_CURSOR, lua_tostring(L, -1));
 	lua_pop(L, 1);
+	lua_getfield(L, -1, "STYLE_CURSOR_PRIMARY");
+	view->ui->syntax_style(view->ui, UI_STYLE_CURSOR_PRIMARY, lua_tostring(L, -1));
+	lua_pop(L, 1);
 	lua_getfield(L, -1, "STYLE_CURSOR_LINE");
 	view->ui->syntax_style(view->ui, UI_STYLE_CURSOR_LINE, lua_tostring(L, -1));
 	lua_pop(L, 1);
@@ -610,6 +613,7 @@ void view_draw(View *view) {
 		size_t pos = view_cursors_pos(c);
 		if (view_coord_get(view, pos, &c->line, &c->row, &c->col)) {
 			c->line->cells[c->col].cursor = true;
+			c->line->cells[c->col].cursor_primary = (c == view->cursor);
 			if (view->ui && !c->sel) {
 				Line *line_match; int col_match;
 				size_t pos_match = text_bracket_match_symbol(view->text, pos, "(){}[]\"'`");
