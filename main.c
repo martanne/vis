@@ -48,6 +48,8 @@ static const char *cursors_align_indent(Vis*, const char *keys, const Arg *arg);
 static const char *cursors_clear(Vis*, const char *keys, const Arg *arg);
 /* remove the least recently added cursor */
 static const char *cursors_remove(Vis*, const char *keys, const Arg *arg);
+/* move to the previous (arg->i < 0) or next (arg->i > 0) cursor */
+static const char *cursors_navigate(Vis*, const char *keys, const Arg *arg);
 /* select the word the cursor is currently over */
 static const char *cursors_select(Vis*, const char *keys, const Arg *arg);
 /* select the next region matching the current selection */
@@ -244,6 +246,8 @@ enum {
 	VIS_ACTION_CURSORS_ALIGN_INDENT,
 	VIS_ACTION_CURSORS_REMOVE_ALL,
 	VIS_ACTION_CURSORS_REMOVE_LAST,
+	VIS_ACTION_CURSORS_PREV,
+	VIS_ACTION_CURSORS_NEXT,
 	VIS_ACTION_TEXT_OBJECT_WORD_OUTER,
 	VIS_ACTION_TEXT_OBJECT_WORD_INNER,
 	VIS_ACTION_TEXT_OBJECT_LONGWORD_OUTER,
@@ -929,6 +933,16 @@ static const KeyAction vis_action[] = {
 		"Remove least recently created cursor",
 		cursors_remove,
 	},
+	[VIS_ACTION_CURSORS_PREV] = {
+		"cursors-prev",
+		"Move to the previous cursor",
+		cursors_navigate, { .i = -PAGE_HALF }
+	},
+	[VIS_ACTION_CURSORS_NEXT] = {
+		"cursors-next",
+		"Move to the next cursor",
+		cursors_navigate, { .i = +PAGE_HALF }
+	},
 	[VIS_ACTION_TEXT_OBJECT_WORD_OUTER] = {
 		"text-object-word-outer",
 		"A word leading and trailing whitespace included",
@@ -1298,6 +1312,28 @@ static const char *cursors_remove(Vis *vis, const char *keys, const Arg *arg) {
 	View *view = vis_view(vis);
 	view_cursors_dispose(view_cursors_primary_get(view));
 	view_cursor_to(view, view_cursor_get(view));
+	return keys;
+}
+
+static const char *cursors_navigate(Vis *vis, const char *keys, const Arg *arg) {
+	View *view = vis_view(vis);
+	bool multiple_cursors = view_cursors_next(view_cursors(view));
+	if (!multiple_cursors)
+		return wscroll(vis, keys, arg);
+	Cursor *c = view_cursors_primary_get(view);
+	if (arg->i < 0) {
+		c = view_cursors_next(c);
+		if (!c)
+			c = view_cursors(view);
+	} else {
+		c = view_cursors_prev(c);
+		if (!c) {
+			c = view_cursors(view);
+			for (Cursor *n = c; n; n = view_cursors_next(n))
+				c = n;
+		}
+	}
+	view_cursors_primary_set(c);
 	return keys;
 }
 
