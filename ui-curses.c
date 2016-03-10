@@ -563,6 +563,10 @@ static bool ui_window_syntax_style(UiWin *w, int id, const char *style) {
 			cell_style.attr |= A_UNDERLINE;
 		} else if (!strcasecmp(option, "notunderlined")) {
 			cell_style.attr &= ~A_UNDERLINE;
+		} else if (!strcasecmp(option, "blink")) {
+			cell_style.attr |= A_BLINK;
+		} else if (!strcasecmp(option, "notblink")) {
+			cell_style.attr &= ~A_BLINK;
 		} else if (!strcasecmp(option, "fore")) {
 			cell_style.fg = color_fromstring(p);
 		} else if (!strcasecmp(option, "back")) {
