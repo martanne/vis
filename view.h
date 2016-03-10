@@ -128,12 +128,14 @@ void view_cursors_dispose(Cursor*);
 /* only keep the main cursor, release all others together with their
  * selections (if any) */
 void view_cursors_clear(View*);
-/* get the main cursor which is always in the visible viewport */
-Cursor *view_cursor(View*);
 /* get the first cursor */
 Cursor *view_cursors(View*);
+/* get other cursors, no ordering is guaranteed */
 Cursor *view_cursors_prev(Cursor*);
 Cursor *view_cursors_next(Cursor*);
+/* get the primary cursor which is always in the visible viewport */
+Cursor *view_cursors_primary_get(View*);
+void view_cursors_primary_set(Cursor*);
 /* get current position of cursor in bytes from the start of the file */
 size_t view_cursors_pos(Cursor*);
 /* get/set zero based index of cell on which cursor currently resides,

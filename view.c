@@ -1116,8 +1116,18 @@ Cursor *view_cursors(View *view) {
 	return view->cursors;
 }
 
-Cursor *view_cursor(View *view) {
+Cursor *view_cursors_primary_get(View *view) {
 	return view->cursor;
+}
+
+void view_cursors_primary_set(Cursor *c) {
+	if (!c)
+		return;
+	View *view = c->view;
+	view->cursor = c;
+	Filerange sel = view_cursors_selection_get(c);
+	view_cursors_to(c, view_cursors_pos(c));
+	view_cursors_selection_set(c, &sel);
 }
 
 Cursor *view_cursors_prev(Cursor *c) {
@@ -1158,7 +1168,7 @@ void view_cursors_scroll_to(Cursor *c, size_t pos) {
 
 void view_cursors_to(Cursor *c, size_t pos) {
 	View *view = c->view;
-	if (c->view->cursors == c) {
+	if (c->view->cursor == c) {
 		c->mark = text_mark_set(view->text, pos);
 
 		size_t max = text_size(view->text);

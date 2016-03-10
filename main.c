@@ -1242,7 +1242,7 @@ static const char *cursors_clear(Vis *vis, const char *keys, const Arg *arg) {
 	if (view_cursors_count(view) > 1)
 		view_cursors_clear(view);
 	else
-		view_cursors_selection_clear(view_cursor(view));
+		view_cursors_selection_clear(view_cursors_primary_get(view));
 	return keys;
 }
 
@@ -1264,7 +1264,7 @@ static const char *cursors_select(Vis *vis, const char *keys, const Arg *arg) {
 static const char *cursors_select_next(Vis *vis, const char *keys, const Arg *arg) {
 	Text *txt = vis_text(vis);
 	View *view = vis_view(vis);
-	Cursor *cursor = view_cursor(view);
+	Cursor *cursor = view_cursors_primary_get(view);
 	Filerange sel = view_cursors_selection_get(cursor);
 	if (!text_range_valid(&sel))
 		return keys;
@@ -1287,16 +1287,16 @@ static const char *cursors_select_next(Vis *vis, const char *keys, const Arg *ar
 
 static const char *cursors_select_skip(Vis *vis, const char *keys, const Arg *arg) {
 	View *view = vis_view(vis);
-	Cursor *cursor = view_cursor(view);
+	Cursor *cursor = view_cursors_primary_get(view);
 	keys = cursors_select_next(vis, keys, arg);
-	if (cursor != view_cursor(view))
+	if (cursor != view_cursors_primary_get(view))
 		view_cursors_dispose(cursor);
 	return keys;
 }
 
 static const char *cursors_remove(Vis *vis, const char *keys, const Arg *arg) {
 	View *view = vis_view(vis);
-	view_cursors_dispose(view_cursor(view));
+	view_cursors_dispose(view_cursors_primary_get(view));
 	view_cursor_to(view, view_cursor_get(view));
 	return keys;
 }

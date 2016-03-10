@@ -164,7 +164,8 @@ void vis_prompt_show(Vis *vis, const char *title) {
 	view_options_set(prompt->view, UI_OPTION_ONELINE);
 	Text *txt = prompt->file->text;
 	text_insert(txt, text_size(txt), title, strlen(title));
-	view_cursors_scroll_to(view_cursor(prompt->view), text_size(txt));
+	Cursor *cursor = view_cursors_primary_get(prompt->view);
+	view_cursors_scroll_to(cursor, text_size(txt));
 	view_draw(prompt->view);
 	prompt->parent = active;
 	prompt->parent_mode = vis->mode;
