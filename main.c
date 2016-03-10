@@ -1253,7 +1253,7 @@ static const char *cursors_align_indent(Vis *vis, const char *keys, const Arg *a
 
 static const char *cursors_clear(Vis *vis, const char *keys, const Arg *arg) {
 	View *view = vis_view(vis);
-	if (view_cursors_count(view) > 1)
+	if (view_cursors_multiple(view))
 		view_cursors_clear(view);
 	else
 		view_cursors_selection_clear(view_cursors_primary_get(view));
@@ -1317,8 +1317,7 @@ static const char *cursors_remove(Vis *vis, const char *keys, const Arg *arg) {
 
 static const char *cursors_navigate(Vis *vis, const char *keys, const Arg *arg) {
 	View *view = vis_view(vis);
-	bool multiple_cursors = view_cursors_next(view_cursors(view));
-	if (!multiple_cursors)
+	if (!view_cursors_multiple(view))
 		return wscroll(vis, keys, arg);
 	Cursor *c = view_cursors_primary_get(view);
 	if (arg->i < 0) {
@@ -1471,7 +1470,7 @@ static const char *undo(Vis *vis, const char *keys, const Arg *arg) {
 	size_t pos = text_undo(vis_text(vis));
 	if (pos != EPOS) {
 		View *view = vis_view(vis);
-		if (view_cursors_count(view) == 1)
+		if (!view_cursors_multiple(view))
 			view_cursor_to(view, pos);
 		/* redraw all windows in case some display the same file */
 		vis_draw(vis);
@@ -1483,7 +1482,7 @@ static const char *redo(Vis *vis, const char *keys, const Arg *arg) {
 	size_t pos = text_redo(vis_text(vis));
 	if (pos != EPOS) {
 		View *view = vis_view(vis);
-		if (view_cursors_count(view) == 1)
+		if (!view_cursors_multiple(view))
 			view_cursor_to(view, pos);
 		/* redraw all windows in case some display the same file */
 		vis_draw(vis);

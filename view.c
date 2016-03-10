@@ -1090,6 +1090,10 @@ int view_cursors_count(View *view) {
 	return i;
 }
 
+bool view_cursors_multiple(View *view) {
+	return view->cursors && view->cursors->next;
+}
+
 static void view_cursors_free(Cursor *c) {
 	if (!c)
 		return;

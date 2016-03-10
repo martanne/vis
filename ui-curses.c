@@ -683,7 +683,7 @@ static void ui_window_draw(UiWin *w) {
 	}
 	short selection_bg = win->styles[UI_STYLE_SELECTION].bg;
 	short cursor_line_bg = win->styles[UI_STYLE_CURSOR_LINE].bg;
-	bool multiple_cursors = view_cursors_next(view_cursors(win->view));
+	bool multiple_cursors = view_cursors_multiple(win->view);
 	attr_t attr = A_NORMAL;
 	for (const Line *l = view_lines_get(win->view); l; l = l->next) {
 		bool cursor_line = l->lineno == cursor_lineno;
