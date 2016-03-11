@@ -1320,19 +1320,22 @@ static const char *cursors_navigate(Vis *vis, const char *keys, const Arg *arg) 
 	if (!view_cursors_multiple(view))
 		return wscroll(vis, keys, arg);
 	Cursor *c = view_cursors_primary_get(view);
-	if (arg->i < 0) {
-		c = view_cursors_next(c);
-		if (!c)
-			c = view_cursors(view);
-	} else {
-		c = view_cursors_prev(c);
-		if (!c) {
-			c = view_cursors(view);
-			for (Cursor *n = c; n; n = view_cursors_next(n))
-				c = n;
+	for (int count = vis_count_get_default(vis, 1); count > 0; count--) {
+		if (arg->i < 0) {
+			c = view_cursors_next(c);
+			if (!c)
+				c = view_cursors(view);
+		} else {
+			c = view_cursors_prev(c);
+			if (!c) {
+				c = view_cursors(view);
+				for (Cursor *n = c; n; n = view_cursors_next(n))
+					c = n;
+			}
 		}
 	}
 	view_cursors_primary_set(c);
+	vis_count_set(vis, VIS_COUNT_UNKNOWN);
 	return keys;
 }
 
