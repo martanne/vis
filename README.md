@@ -188,8 +188,9 @@ Operators can be forced to work line wise by specifying `V`.
 
   vis supports multiple cursors with immediate visual feedback (unlike
   in the visual block mode of vim where for example inserts only become
-  visible upon exit). There always exists one primary cursor, additional
-  ones can be created as needed.
+  visible upon exit). There always exists one primary cursor located
+  within the current view port. Additional cursors ones can be created
+  as needed. If more than one cursor exists, the primary one is blinking.
   
   To manipulate multiple cursors use in normal mode:
   
@@ -197,6 +198,8 @@ Operators can be forced to work line wise by specifying `V`.
     CTRL-J   create a new cursor on the line below
     CTRL-P   remove least recently added cursor
     CTRL-N   select word the cursor is currently over, switch to visual mode
+    CTRL-U   make the previous cursor primary
+    CTRL-D   make the next cursor primary
     TAB      try to align all cursor on the same column
     ESC      if a selection is active, clear it.
              Otherwise dispose all but the primary cursor.
@@ -207,7 +210,9 @@ Operators can be forced to work line wise by specifying `V`.
     A        create a cursor at the end of every selected line
     CTRL-N   create new cursor and select next word matching current selection
     CTRL-X   clear (skip) current selection, but select next matching word
-    CTRL-P   remove least recently added cursor
+    CTRL-P   remove primary cursor
+    CTRL-U   make the previous cursor primary
+    CTRL-D   make the next cursor primary
 
   In insert/replace mode
 
