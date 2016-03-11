@@ -16,6 +16,7 @@
 #include "text-motions.h"
 #include "text-objects.h"
 #include "util.h"
+#include "sam.h"
 
 enum CmdOpt {          /* option flags for command definitions */
 	CMD_OPT_NONE,  /* no option (default value) */
@@ -91,6 +92,7 @@ static bool cmd_map(Vis*, Filerange*, enum CmdOpt, const char *argv[]);
 static bool cmd_unmap(Vis*, Filerange*, enum CmdOpt, const char *argv[]);
 /* set language specific key bindings */
 static bool cmd_langmap(Vis*, Filerange*, enum CmdOpt, const char *argv[]);
+static bool cmd_sam(Vis*, Filerange*, enum CmdOpt, const char *argv[]);
 
 /* command recognized at the ':'-prompt. commands are found using a unique
  * prefix match. that is if a command should be available under an abbreviation
@@ -124,6 +126,7 @@ static const Command cmds[] = {
 	{ { "later"                    }, cmd_earlier_later, CMD_OPT_NONE               },
 	{ { "!",                       }, cmd_filter,        CMD_OPT_NONE               },
 	{ { "|",                       }, cmd_pipe,          CMD_OPT_NONE               },
+	{ { "sam"                      }, cmd_sam,           CMD_OPT_NONE               },
 	{ { NULL,                      }, NULL,              CMD_OPT_NONE               },
 };
 
@@ -1150,6 +1153,13 @@ static bool cmd_unmap(Vis *vis, Filerange *range, enum CmdOpt opt, const char *a
 		return vis_window_mode_unmap(vis->win, mode, lhs);
 	else
 		return vis_mode_unmap(vis, mode, lhs);
+}
+
+static bool cmd_sam(Vis *vis, Filerange *range, enum CmdOpt opt, const char *argv[]) {
+	enum SamError err = sam_cmd(vis, argv[1]);
+	if (err != SAM_ERR_OK)
+		vis_info_show(vis, "%s", sam_error(err));
+	return err == SAM_ERR_OK;
 }
 
 static Filepos parse_pos(Win *win, char **cmd) {

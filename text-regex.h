@@ -1,6 +1,7 @@
 #ifndef TEXT_REGEX_H
 #define TEXT_REGEX_H
 
+#include <regex.h>
 #include "text.h"
 
 typedef struct Regex Regex;

@@ -26,6 +26,9 @@ under terms compatible with the above ISC license:
  - libutf.[ch] originate from libutf a port of Plan 9's Unicode library
    to Unix and are MIT licensed
 
+ - sam.[ch] is based on Rob Pike's sam text editor for Plan 9.
+   Licensed under the Lucent Public License Version 1.02.
+
  - lexers/* the LPeg based lexers used for syntax highlighting are
    imported from the Scintillua project licensed under the MIT license
 
