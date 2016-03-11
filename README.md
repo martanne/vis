@@ -3,6 +3,11 @@ Vis a vim-like text editor
 
 Vis aims to be a modern, legacy free, simple yet efficient vim-like editor.
 
+It extends vim's modal editing with built-in support for multiple
+cursors/selections and combines it with [sam's](http://sam.cat-v.org/)
+[structural regular expression](http://doc.cat-v.org/bell_labs/structural_regexps/)
+based [command language](http://doc.cat-v.org/bell_labs/sam_lang_tutorial/).
+
 As an universal editor it has decent Unicode support (including double width
 and combining characters) and should cope with arbitrary files including:
 
@@ -26,7 +31,7 @@ management. As an example the file open dialog is provided by an independent
 utility. There exist plans to use a client/server architecture, delegating
 window management to your windowing system or favorite terminal multiplexer.
 
-The intention is *not* to be bug for bug compatible with vim, instead a 
+The intention is *not* to be bug for bug compatible with vim, instead a
 similar editing experience should be provided. The goal could thus be
 summarized as "80% of vim's features implemented in roughly 1% of the code".
 
@@ -179,16 +184,16 @@ Operators can be forced to work line wise by specifying `V`.
 
   Vis implements more or less functional normal, operator-pending, insert,
   replace and visual (in both line and character wise variants) modes.
-  
+
   Visual block mode is not implemented and there exists no immediate
   plan to do so. Instead vis has built in support for multiple cursors.
 
   Command mode is implemented as a regular file. Use the full power of the
   editor to edit your commands / search terms.
 
-  Ex mode is deliberately not implemented, use `ssam(1)` if you need a
-  stream editor.
-  
+  Ex mode is deliberately not implemented, instead a variant of the structural
+  regular expression based command language of `sam(1)` is supported.
+
 ### Multiple Cursors / Selections
 
   vis supports multiple cursors with immediate visual feedback (unlike
@@ -196,7 +201,7 @@ Operators can be forced to work line wise by specifying `V`.
   visible upon exit). There always exists one primary cursor located
   within the current view port. Additional cursors ones can be created
   as needed. If more than one cursor exists, the primary one is blinking.
-  
+
   To manipulate multiple cursors use in normal mode:
   
     Ctrl-K       create count new cursors on the lines above
@@ -258,7 +263,7 @@ Operators can be forced to work line wise by specifying `V`.
   The text is currently snapshotted whenever an operator is completed as
   well as when insert or replace mode is left. Additionally a snapshot
   is also taken if in insert or replace mode a certain idle time elapses.
-  
+
   Another idea is to snapshot based on the distance between two consecutive
   editing operations (as they are likely unrelated and thus should be
   individually reversible).
@@ -277,6 +282,87 @@ Operators can be forced to work line wise by specifying `V`.
   one of `[A-Z]` to append to an existing macro. `q` starts a recording,
   `@` plays it back. `@@` refers to the least recently recorded macro.
   `@:` repeats the last :-command. `@/` is equivalent to `n` in normal mode.
+
+### Structural Regular Expression based Command Language
+
+  Vis supports [sam's](http://sam.cat-v.org/)
+  [structural regular expression](http://doc.cat-v.org/bell_labs/structural_regexps/)
+  based [command language](http://doc.cat-v.org/bell_labs/sam_lang_tutorial/).
+
+  The basic command syntax supported is mostly compatible with the description
+  found in the [sam manual page](http://man.cat-v.org/plan_9/1/sam).
+  The [sam reference card](http://sam.cat-v.org/cheatsheet/) might also be useful.
+
+  For now sam commands can be entered from the vis prompt via `:sam <cmd>`
+
+  A command behaves differently depending on the mode in which it is issued:
+
+   - in visual mode it behaves as if an implicit extract x command
+     matching the current selection(s) would be preceding it. That is
+     the command is executed once for each selection.
+
+   - in normal mode:
+
+      * if an address for the command was provided it is evaluated starting
+        from the current cursor position(s) i.e. dot is set to the current
+        cursor position.
+
+      * if no address was supplied to the command then:
+
+         + if multiple cursors exist, the command is executed once for every
+           cursor with dot set to the current line of the cursor
+
+         + otherwise if there is only 1 cursor then the command is executed
+           with dot set to the whole file
+
+  The command syntax was slightly tweaked to accept more terse commands.
+
+  - When specifying text or regular expressions the trailing delimiter can
+    be elided if the meaning is unambiguous.
+
+  - If only an address is provided the print command will be executed.
+
+  - The print command creates a selection matching its range.
+
+  - In text entry `\t` inserts a literal tab character (sam only recognizes `\n`).
+
+  Hence the sam command `,x/pattern/` can be abbreviated to `x/pattern`
+
+  If a command is successful vis switches to normal mode (and hence removes
+  any selections), otherwise the editor is kept in visual mode. The print
+  command "fails" by definition.
+
+  Other differences compared to sam include:
+
+  - The following commands are deliberately not implemented:
+
+     * move `m`
+     * copy `t`
+     * print line address `=`
+     * print character address `=#`
+     * set current file mark `k`
+     * quit `q`
+     * undo `u`
+
+  - Multi file support is currently very primitive:
+
+     * the "regexp" construct to evaluate an address in a file matching
+       regexp is currently not supported.
+
+     * the following commands related to multiple file editing are not
+       supported: `b`, `B`, `n`, `D`, `f`.
+
+  - The special grouping semantics where all commands of a group operate
+    on the the same state is not implemented.
+
+  - The file mark address `'` (and corresponding k command) is not supported
+
+  - The I/O related commands `e`, `r`, `w`, `<`, `>`, `|`, `!` and `cd`
+    are not yet implemented.
+
+    These should not be hard to add later on. The equivalent vi commands
+    `:r !`, `:w !`, `:!` are supported hence the necessary infrastructure to
+    implement them is already there.
 
 ### Command line prompt
 
@@ -459,7 +545,7 @@ sequence will be discarded.
    - VimL
    - plugins (certainly not vimscript, if anything it should be lua based)
    - right-to-left text
-   - ex mode (if you need a stream editor use `ssam(1)`
+   - ex mode
    - diff mode
    - vimgrep
    - internal spell checker
