@@ -25,6 +25,7 @@ lexers.STYLE_IDENTIFIER = 'fore:white'
 
 lexers.STYLE_LINENUMBER = 'fore:white'
 lexers.STYLE_CURSOR = 'reverse'
+lexers.STYLE_CURSOR_PRIMARY = lexers.STYLE_CURSOR..',blink'
 lexers.STYLE_CURSOR_LINE = 'back:white'
 lexers.STYLE_COLOR_COLUMN = 'back:white'
 lexers.STYLE_SELECTION = 'back:white'
