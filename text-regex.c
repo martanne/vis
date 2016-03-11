@@ -30,6 +30,10 @@ void text_regex_free(Regex *r) {
 	free(r);
 }
 
+int text_regex_match(Regex *r, const char *data, int eflags) {
+	return regexec(&r->regex, data, 0, NULL, eflags);
+}
+
 int text_search_range_forward(Text *txt, size_t pos, size_t len, Regex *r, size_t nmatch, RegexMatch pmatch[], int eflags) {
 	char *buf = text_bytes_alloc0(txt, pos, len);
 	if (!buf)
