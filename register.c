@@ -58,9 +58,9 @@ const char *register_get(Vis *vis, Register *reg, size_t *len) {
 	}
 }
 
-bool register_put(Vis *vis, Register *reg, Text *txt, Filerange *range) {
+bool register_put_range(Vis *vis, Register *reg, Text *txt, Filerange *range) {
 	if (reg->append)
-		return register_append(reg, txt, range);
+		return register_append_range(reg, txt, range);
 	switch (reg->type) {
 	case REGISTER_NORMAL:
 	{
@@ -93,7 +93,7 @@ bool register_put(Vis *vis, Register *reg, Text *txt, Filerange *range) {
 	}
 }
 
-bool register_append(Register *reg, Text *txt, Filerange *range) {
+bool register_append_range(Register *reg, Text *txt, Filerange *range) {
 	switch (reg->type) {
 	case REGISTER_NORMAL:
 	{
