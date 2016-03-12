@@ -213,37 +213,27 @@ bool view_syntax_set(View *view, const char *name) {
 	if (!L)
 		return name == NULL;
 
-	/* Try to load the specified lexer and parse its token styles.
-	 * Roughly equivalent to the following lua code:
-	 *
-	 * lang = vis.lexers.load(name)
-	 * for token_name, id in pairs(lang._TOKENSTYLES) do
-	 * 	ui->syntax_style(id, vis.lexers:get_style(lang, token_name);
-	 */
 	lua_getglobal(L, "vis");
 	lua_getfield(L, -1, "lexers");
 
-	lua_getfield(L, -1, "STYLE_DEFAULT");
-	view->ui->syntax_style(view->ui, UI_STYLE_DEFAULT, lua_tostring(L, -1));
-	lua_pop(L, 1);
-	lua_getfield(L, -1, "STYLE_CURSOR");
-	view->ui->syntax_style(view->ui, UI_STYLE_CURSOR, lua_tostring(L, -1));
-	lua_pop(L, 1);
-	lua_getfield(L, -1, "STYLE_CURSOR_PRIMARY");
-	view->ui->syntax_style(view->ui, UI_STYLE_CURSOR_PRIMARY, lua_tostring(L, -1));
-	lua_pop(L, 1);
-	lua_getfield(L, -1, "STYLE_CURSOR_LINE");
-	view->ui->syntax_style(view->ui, UI_STYLE_CURSOR_LINE, lua_tostring(L, -1));
-	lua_pop(L, 1);
-	lua_getfield(L, -1, "STYLE_SELECTION");
-	view->ui->syntax_style(view->ui, UI_STYLE_SELECTION, lua_tostring(L, -1));
-	lua_pop(L, 1);
-	lua_getfield(L, -1, "STYLE_LINENUMBER");
-	view->ui->syntax_style(view->ui, UI_STYLE_LINENUMBER, lua_tostring(L, -1));
-	lua_pop(L, 1);
-	lua_getfield(L, -1, "STYLE_COLOR_COLUMN");
-	view->ui->syntax_style(view->ui, UI_STYLE_COLOR_COLUMN, lua_tostring(L, -1));
-	lua_pop(L, 1);
+	static const struct {
+		enum UiStyles id;
+		const char *name;
+	} styles[] = {
+		{ UI_STYLE_DEFAULT,        "STYLE_DEFAULT"        },
+		{ UI_STYLE_CURSOR,         "STYLE_CURSOR"         },
+		{ UI_STYLE_CURSOR_PRIMARY, "STYLE_CURSOR_PRIMARY" },
+		{ UI_STYLE_CURSOR_LINE,    "STYLE_CURSOR_LINE"    },
+		{ UI_STYLE_SELECTION,      "STYLE_SELECTION"      },
+		{ UI_STYLE_LINENUMBER,     "STYLE_LINENUMBER"     },
+		{ UI_STYLE_COLOR_COLUMN,   "STYLE_COLOR_COLUMN"   },
+	};
+
+	for (size_t i = 0; i < LENGTH(styles); i++) {
+		lua_getfield(L, -1, styles[i].name);
+		view->ui->syntax_style(view->ui, styles[i].id, lua_tostring(L, -1));
+		lua_pop(L, 1);
+	}
 
 	if (!name) {
 		free(view->lexer_name);
@@ -251,6 +241,13 @@ bool view_syntax_set(View *view, const char *name) {
 		return true;
 	}
 
+	/* Try to load the specified lexer and parse its token styles.
+	 * Roughly equivalent to the following lua code:
+	 *
+	 * lang = vis.lexers.load(name)
+	 * for token_name, id in pairs(lang._TOKENSTYLES) do
+	 * 	ui->syntax_style(id, vis.lexers:get_style(lang, token_name);
+	 */
 	lua_getfield(L, -1, "load");
 	lua_pushstring(L, name);
 
