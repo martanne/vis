@@ -956,10 +956,10 @@ static UiWin *ui_window_new(Ui *ui, View *view, File *file, enum UiOption option
 		win->styles[i] = style;
 	}
 
-	style.attr |= A_REVERSE;
-	win->styles[UI_STYLE_CURSOR] = style;
-	win->styles[UI_STYLE_SELECTION] = style;
-	win->styles[UI_STYLE_COLOR_COLUMN] = style;
+	win->styles[UI_STYLE_CURSOR].attr |= A_REVERSE;
+	win->styles[UI_STYLE_CURSOR_PRIMARY].attr |= A_REVERSE|A_BLINK;
+	win->styles[UI_STYLE_SELECTION].attr |= A_REVERSE;
+	win->styles[UI_STYLE_COLOR_COLUMN].attr |= A_REVERSE;
 
 	win->ui = uic;
 	win->view = view;
