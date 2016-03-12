@@ -209,15 +209,9 @@ static void view_syntax_color(View *view) {
 }
 
 bool view_syntax_set(View *view, const char *name) {
-	if (!name) {
-		free(view->lexer_name);
-		view->lexer_name = NULL;
-		return true;
-	}
-
 	lua_State *L = view->lua;
 	if (!L)
-		return false;
+		return name == NULL;
 
 	/* Try to load the specified lexer and parse its token styles.
 	 * Roughly equivalent to the following lua code:
@@ -250,6 +244,12 @@ bool view_syntax_set(View *view, const char *name) {
 	lua_getfield(L, -1, "STYLE_COLOR_COLUMN");
 	view->ui->syntax_style(view->ui, UI_STYLE_COLOR_COLUMN, lua_tostring(L, -1));
 	lua_pop(L, 1);
+
+	if (!name) {
+		free(view->lexer_name);
+		view->lexer_name = NULL;
+		return true;
+	}
 
 	lua_getfield(L, -1, "load");
 	lua_pushstring(L, name);
