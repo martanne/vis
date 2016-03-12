@@ -1154,6 +1154,8 @@ static const char *key2register(Vis *vis, const char *keys, enum VisRegister *re
 		*reg = VIS_REG_ZERO;
 	else if (keys[0] == '@')
 		*reg = VIS_MACRO_LAST_RECORDED;
+	else if (keys[0] == '/')
+		*reg = VIS_REG_SEARCH;
 	return keys+1;
 }
 

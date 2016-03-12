@@ -9,44 +9,56 @@
 
 /** utility functions */
 
-static bool search_word(Vis *vis, Text *txt, size_t pos) {
+static Regex *search_word(Vis *vis, Text *txt, size_t pos) {
 	char expr[512];
 	Filerange word = text_object_word(txt, pos);
 	if (!text_range_valid(&word))
-		return false;
+		return NULL;
 	char *buf = text_bytes_alloc0(txt, word.start, text_range_size(&word));
 	if (!buf)
-		return false;
+		return NULL;
 	snprintf(expr, sizeof(expr), "[[:<:]]%s[[:>:]]", buf);
-	bool ret = text_regex_compile(vis->search_pattern, expr, REG_EXTENDED) == 0;
-	if (!ret) {
+	Regex *regex = vis_regex(vis, expr);
+	if (!regex) {
 		snprintf(expr, sizeof(expr), "\\<%s\\>", buf);
-		ret = text_regex_compile(vis->search_pattern, expr, REG_EXTENDED) == 0;
+		regex = vis_regex(vis, expr);
 	}
 	free(buf);
-	return ret;
+	return regex;
 }
 
 /** motion implementations */
 
 static size_t search_word_forward(Vis *vis, Text *txt, size_t pos) {
-	if (search_word(vis, txt, pos))
-		pos = text_search_forward(txt, pos, vis->search_pattern);
+	Regex *regex = search_word(vis, txt, pos);
+	if (regex)
+		pos = text_search_forward(txt, pos, regex);
+	text_regex_free(regex);
 	return pos;
 }
 
 static size_t search_word_backward(Vis *vis, Text *txt, size_t pos) {
-	if (search_word(vis, txt, pos))
-		pos = text_search_backward(txt, pos, vis->search_pattern);
+	Regex *regex = search_word(vis, txt, pos);
+	if (regex)
+		pos = text_search_backward(txt, pos, regex);
+	text_regex_free(regex);
 	return pos;
 }
 
 static size_t search_forward(Vis *vis, Text *txt, size_t pos) {
-	return text_search_forward(txt, pos, vis->search_pattern);
+	Regex *regex = vis_regex(vis, NULL);
+	if (regex)
+		pos = text_search_forward(txt, pos, regex);
+	text_regex_free(regex);
+	return pos;
 }
 
 static size_t search_backward(Vis *vis, Text *txt, size_t pos) {
-	return text_search_backward(txt, pos, vis->search_pattern);
+	Regex *regex = vis_regex(vis, NULL);
+	if (regex)
+		pos = text_search_backward(txt, pos, regex);
+	text_regex_free(regex);
+	return pos;
 }
 
 static size_t mark_goto(Vis *vis, File *file, size_t pos) {
@@ -245,10 +257,12 @@ bool vis_motion(Vis *vis, enum VisMotion motion, ...) {
 	case VIS_MOVE_SEARCH_BACKWARD:
 	{
 		const char *pattern = va_arg(ap, char*);
-		if (text_regex_compile(vis->search_pattern, pattern, REG_EXTENDED|REG_NEWLINE)) {
+		Regex *regex = vis_regex(vis, pattern);
+		if (!regex) {
 			vis_cancel(vis);
 			goto err;
 		}
+		text_regex_free(regex);
 		if (motion == VIS_MOVE_SEARCH_FORWARD)
 			motion = VIS_MOVE_SEARCH_NEXT;
 		else

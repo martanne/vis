@@ -1177,13 +1177,10 @@ static Filepos parse_pos(Win *win, char **cmd) {
 		if (!pattern_end)
 			return EPOS;
 		*pattern_end++ = '\0';
-		Regex *regex = text_regex_new();
+		Regex *regex = vis_regex(win->vis, *cmd);
 		if (!regex)
 			return EPOS;
-		if (!text_regex_compile(regex, *cmd, 0)) {
-			*cmd = pattern_end;
-			pos = text_search_forward(txt, view_cursor_get(view), regex);
-		}
+		pos = text_search_forward(txt, view_cursor_get(view), regex);
 		text_regex_free(regex);
 		break;
 	case '+':
