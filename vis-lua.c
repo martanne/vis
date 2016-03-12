@@ -537,7 +537,9 @@ static int window_newindex(lua_State *L) {
 	if (lua_isstring(L, 2)) {
 		const char *key = lua_tostring(L, 2);
 		if (strcmp(key, "syntax") == 0) {
-			const char *syntax = luaL_checkstring(L, 3);
+			const char *syntax = NULL;
+			if (!lua_isnil(L, 3))
+				syntax = luaL_checkstring(L, 3);
 			view_syntax_set(win->view, syntax);
 			return 0;
 		}

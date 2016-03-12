@@ -196,4 +196,7 @@ vis.events.win_open = function(win)
 			end
 		end
 	end
+
+	win.syntax = nil
+
 end
