@@ -114,13 +114,12 @@ static Address *address_new(void) {
 	return calloc(1, sizeof(Address));
 }
 
-static void address_free(Vis *vis, Address *addr) {
+static void address_free(Address *addr) {
 	if (!addr)
 		return;
-	if (addr->regex != vis->search_pattern)
-		text_regex_free(addr->regex);
-	address_free(vis, addr->left);
-	address_free(vis, addr->right);
+	text_regex_free(addr->regex);
+	address_free(addr->left);
+	address_free(addr->right);
 	free(addr);
 }
 
@@ -226,17 +225,7 @@ static Regex *parse_regex(Vis *vis, const char **s) {
 	if (**s == delim || **s == '\0') {
 		if (**s == delim)
 			(*s)++;
-		if (buffer_length0(&buf) == 0) {
-			regex = vis->search_pattern;
-		} else if ((regex = text_regex_new())) {
-			if (text_regex_compile(regex, buf.data, REG_EXTENDED|REG_NEWLINE) != 0) {
-				text_regex_free(regex);
-				regex = NULL;
-			} else {
-				text_regex_free(vis->search_pattern);
-				vis->search_pattern = regex;
-			}
-		}
+		regex = vis_regex(vis, buffer_length0(&buf) ? buf.data : NULL);
 	}
 
 	buffer_release(&buf);
@@ -304,7 +293,7 @@ static Address *address_parse_simple(Vis *vis, const char **s, enum SamError *er
 			if (addr.type != '+' && addr.type != '-') {
 				Address *plus = address_new();
 				if (!plus) {
-					address_free(vis, addr.right);
+					address_free(addr.right);
 					return NULL;
 				}
 				plus->type = '+';
@@ -317,7 +306,7 @@ static Address *address_parse_simple(Vis *vis, const char **s, enum SamError *er
 
 	Address *ret = address_new();
 	if (!ret) {
-		address_free(vis, addr.right);
+		address_free(addr.right);
 		return NULL;
 	}
 	*ret = addr;
@@ -355,8 +344,8 @@ static Address *address_parse_compound(Vis *vis, const char **s, enum SamError *
 	}
 
 fail:
-	address_free(vis, left);
-	address_free(vis, right);
+	address_free(left);
+	address_free(right);
 	return NULL;
 }
 
@@ -364,18 +353,17 @@ static Command *command_new(void) {
 	return calloc(1, sizeof(Command));
 }
 
-static void command_free(Vis *vis, Command *cmd) {
+static void command_free(Command *cmd) {
 	if (!cmd)
 		return;
 
 	for (Command *c = cmd->cmd, *next; c; c = next) {
 		next = c->next;
-		command_free(vis, c);
+		command_free(c);
 	}
 
-	address_free(vis, cmd->address);
-	if (cmd->regex != vis->search_pattern)
-		text_regex_free(cmd->regex);
+	address_free(cmd->address);
+	text_regex_free(cmd->regex);
 	free(cmd->text);
 	free(cmd);
 }
@@ -428,7 +416,7 @@ static Command *command_parse(Vis *vis, const char **s, int level, enum SamError
 				goto fail;
 			}
 			(*s)++;
-			command_free(vis, cmd);
+			command_free(cmd);
 			return NULL;
 		default:
 			*err = SAM_ERR_COMMAND;
@@ -495,7 +483,7 @@ static Command *command_parse(Vis *vis, const char **s, int level, enum SamError
 
 	return cmd;
 fail:
-	command_free(vis, cmd);
+	command_free(cmd);
 	return NULL;
 }
 
@@ -506,7 +494,7 @@ static Command *sam_parse(Vis *vis, const char *cmd, enum SamError *err) {
 		return NULL;
 	Command *sel = command_new();
 	if (!sel) {
-		command_free(vis, c);
+		command_free(c);
 		return NULL;
 	}
 	sel->cmd = c;
@@ -646,7 +634,7 @@ enum SamError sam_cmd(Vis *vis, const char *s) {
 	Filerange range = text_range_empty();
 	bool status = sam_execute(vis, vis->win, cmd, &range);
 	vis_mode_switch(vis, status ? VIS_MODE_NORMAL : VIS_MODE_VISUAL);
-	command_free(vis, cmd);
+	command_free(cmd);
 	return err;
 }
 
