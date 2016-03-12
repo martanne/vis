@@ -23,6 +23,7 @@ typedef struct {
 
 void register_release(Register *reg);
 const char *register_get(Vis*, Register*reg, size_t *len);
+bool register_put(Vis*, Register *reg, const char *data, size_t len);
 bool register_put_range(Vis*, Register *reg, Text *txt, Filerange *range);
 bool register_append_range(Register *reg, Text *txt, Filerange *range);
 
