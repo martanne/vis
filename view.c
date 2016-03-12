@@ -191,7 +191,7 @@ static void view_syntax_color(View *view) {
 			for (bool token_next = false; line; line = line->next, col = 0) {
 				for (; col < line->width; col++) {
 					if (pos < token_end) {
-						line->cells[col].attr = token_style;
+						line->cells[col].style = token_style;
 						pos += line->cells[col].len;
 					} else {
 						token_next = true;
@@ -354,7 +354,7 @@ static bool view_addch(View *view, Cell *cell) {
 			cell->len = w == 0 ? 1 : 0;
 			int t = w == 0 ? SYNTAX_SYMBOL_TAB : SYNTAX_SYMBOL_TAB_FILL;
 			strncpy(cell->data, view->symbols[t]->symbol, sizeof(cell->data)-1);
-			cell->attr = view->symbols[t]->style;
+			cell->style = view->symbols[t]->style;
 			view->line->cells[view->col] = *cell;
 			view->line->len += cell->len;
 			view->line->width += cell->width;
@@ -373,7 +373,7 @@ static bool view_addch(View *view, Cell *cell) {
 		}
 
 		strncpy(cell->data, view->symbols[SYNTAX_SYMBOL_EOL]->symbol, sizeof(cell->data)-1);
-		cell->attr = view->symbols[SYNTAX_SYMBOL_EOL]->style;
+		cell->style = view->symbols[SYNTAX_SYMBOL_EOL]->style;
 
 		view->line->cells[view->col] = *cell;
 		view->line->len += cell->len;
@@ -393,13 +393,13 @@ static bool view_addch(View *view, Cell *cell) {
 				.data = { '^', ch == 127 ? '?' : ch + 64, '\0' },
 				.len = 1,
 				.width = 2,
-				.attr = cell->attr,
+				.style = cell->style,
 			};
 		}
 
 		if (ch == ' ') {
 			strncpy(cell->data, view->symbols[SYNTAX_SYMBOL_SPACE]->symbol, sizeof(cell->data)-1);
-			cell->attr = view->symbols[SYNTAX_SYMBOL_SPACE]->style;
+			cell->style = view->symbols[SYNTAX_SYMBOL_SPACE]->style;
 
 		}
 
@@ -650,7 +650,7 @@ void view_update(View *view) {
 
 				/* This screen line contains the cell we want to highlight */
 				if (line_cols >= view->colorcolumn) {
-					l->cells[(view->colorcolumn - 1) % view->width].attr = UI_STYLE_COLOR_COLUMN;
+					l->cells[(view->colorcolumn - 1) % view->width].style = UI_STYLE_COLOR_COLUMN;
 					line_cc_set = true;
 				}
 			}
@@ -661,7 +661,7 @@ void view_update(View *view) {
 
 	for (Line *l = view->lastline->next; l; l = l->next) {
 		strncpy(l->cells[0].data, view->symbols[SYNTAX_SYMBOL_EOF]->symbol, sizeof(l->cells[0].data));
-		l->cells[0].attr = view->symbols[SYNTAX_SYMBOL_EOF]->style;
+		l->cells[0].style = view->symbols[SYNTAX_SYMBOL_EOF]->style;
 		for (int x = 1; x < view->width; x++)
 			l->cells[x] = cell_blank;
 		l->width = 1;

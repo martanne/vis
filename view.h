@@ -25,10 +25,10 @@ typedef struct {
 	char data[16];      /* utf8 encoded character displayed in this cell (might be more than
 	                       one Unicode codepoint. might also not be the same as in the
 	                       underlying text, for example tabs get expanded */
-	unsigned int attr;
+	enum UiStyles style;/* style id used to display this cell */
 	bool selected;      /* whether this cell is part of a selected region */
 	bool cursor;        /* whether a cursor is currently located on the cell */
-	bool cursor_primary;
+	bool cursor_primary;/* whether it is the primary cursor located on the cell */
 } Cell;
 
 typedef struct Line Line;

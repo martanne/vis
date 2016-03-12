@@ -670,28 +670,33 @@ static void ui_window_draw(UiWin *w) {
 	UiCursesWin *win = (UiCursesWin*)w;
 	if (!ui_window_draw_sidebar(win))
 		return;
+
 	wbkgd(win->win, style_to_attr(&win->styles[UI_STYLE_DEFAULT]));
 	wmove(win->win, 0, 0);
 	int width = view_width_get(win->view);
 	CellStyle *prev_style = NULL;
 	size_t cursor_lineno = -1;
+
 	if (win->options & UI_OPTION_CURSOR_LINE && win->ui->selwin == win) {
 		Cursor *cursor = view_cursors(win->view);
 		Filerange selection = view_cursors_selection_get(cursor);
 		if (!view_cursors_next(cursor) && !text_range_valid(&selection))
 			cursor_lineno = view_cursor_getpos(win->view).line;
 	}
+
 	short selection_bg = win->styles[UI_STYLE_SELECTION].bg;
 	short cursor_line_bg = win->styles[UI_STYLE_CURSOR_LINE].bg;
 	bool multiple_cursors = view_cursors_multiple(win->view);
 	attr_t attr = A_NORMAL;
+
 	for (const Line *l = view_lines_get(win->view); l; l = l->next) {
 		bool cursor_line = l->lineno == cursor_lineno;
 		for (int x = 0; x < width; x++) {
-			unsigned int style_id = l->cells[x].attr;
+			enum UiStyles style_id = l->cells[x].style;
 			if (style_id == 0)
 				style_id = UI_STYLE_DEFAULT;
 			CellStyle *style = &win->styles[style_id];
+
 			if (l->cells[x].cursor && win->ui->selwin == win) {
 				if (multiple_cursors && l->cells[x].cursor_primary)
 					attr = style_to_attr(&win->styles[UI_STYLE_CURSOR_PRIMARY]);
@@ -725,6 +730,7 @@ static void ui_window_draw(UiWin *w) {
 		for (; 0 < x && x < width; x++)
 			waddstr(win->win, " ");
 	}
+
 	wclrtobot(win->win);
 
 	if (win->winstatus)
@@ -951,12 +957,11 @@ static UiWin *ui_window_new(Ui *ui, View *view, File *file, enum UiOption option
 		return NULL;
 	}
 
-	CellStyle style = (CellStyle) {
-		.fg = -1, .bg = -1, .attr = A_NORMAL,
-	};
 
 	for (int i = 0; i < UI_STYLE_MAX; i++) {
-		win->styles[i] = style;
+		win->styles[i] = (CellStyle) {
+			.fg = -1, .bg = -1, .attr = A_NORMAL,
+		};
 	}
 
 	win->styles[UI_STYLE_CURSOR].attr |= A_REVERSE;
