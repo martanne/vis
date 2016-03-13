@@ -196,7 +196,7 @@ Operators can be forced to work line wise by specifying `V`.
   
     CTRL-K   create a new cursor on the line above
     CTRL-J   create a new cursor on the line below
-    CTRL-P   remove least recently added cursor
+    CTRL-P   remove primary cursor
     CTRL-N   select word the cursor is currently over, switch to visual mode
     CTRL-U   make the previous cursor primary
     CTRL-D   make the next cursor primary
@@ -235,11 +235,10 @@ Operators can be forced to work line wise by specifying `V`.
     "A-"Z   append to corresponding general purpose register
     "*, "+  system clipboard integration via shell scripts vis-{copy,paste}
     "0      yank register
+    "/      search register
     "_      black hole (/dev/null) register
 
   If no explicit register is specified a default register is used.
-
-  Registers used for macros are currently independent.
 
 ### Undo/Redo and Repeat
 
