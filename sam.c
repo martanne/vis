@@ -197,38 +197,11 @@ static char *parse_text(const char **s) {
 }
 
 static Regex *parse_regex(Vis *vis, const char **s) {
-	Buffer buf;
-	bool escaped = false;
-	char delim = **s;
-	buffer_init(&buf);
-
-	for ((*s)++; **s && (**s != delim || escaped); (*s)++) {
-		if (!escaped && **s == '\\') {
-			escaped = true;
-			continue;
-		}
-		if (escaped) {
-			escaped = false;
-			if (**s != delim)
-				buffer_append(&buf, "\\", 1);
-		}
-		if (!buffer_append(&buf, *s, 1)) {
-			buffer_release(&buf);
-			return NULL;
-		}
-	}
-
-	buffer_append(&buf, "\0", 1);
-
-	Regex *regex = NULL;
-
-	if (**s == delim || **s == '\0') {
-		if (**s == delim)
-			(*s)++;
-		regex = vis_regex(vis, buffer_length0(&buf) ? buf.data : NULL);
-	}
-
-	buffer_release(&buf);
+	char *pattern = parse_delimited_text(s);
+	if (!pattern)
+		return NULL;
+	Regex *regex = vis_regex(vis, *pattern ? pattern : NULL);
+	free(pattern);
 	return regex;
 }
 
