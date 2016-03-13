@@ -625,6 +625,8 @@ static bool sam_execute(Vis *vis, Win *win, Command *cmd, Filerange *range) {
 
 enum SamError sam_cmd(Vis *vis, const char *s) {
 	enum SamError err = SAM_ERR_OK;
+	if (!s)
+		return err;
 	Command *cmd = sam_parse(vis, s, &err);
 	if (!cmd) {
 		if (err == SAM_ERR_OK)
