@@ -655,30 +655,37 @@ static bool cmd_extract(Vis *vis, Win *win, Command *cmd, Filerange *range) {
 	bool ret = true;
 	Text *txt = win->file->text;
 	if (cmd->regex) {
-		size_t start = range->start, end = range->end;
+		size_t start = range->start, end = range->end, last_start = EPOS;
 		RegexMatch match[1];
 		while (start < end) {
 			bool found = text_search_range_forward(txt, start,
-				end - start, cmd->regex, 1, match, 0) == 0 &&
-				match[0].start != match[0].end;
+				end - start, cmd->regex, 1, match, 0) == 0;
 			Filerange r = text_range_empty();
 			if (found) {
 				if (cmd->name == 'x')
 					r = text_range_new(match[0].start, match[0].end);
 				else
 					r = text_range_new(start, match[0].start);
-				start = match[0].end;
+				if (match[0].start == match[0].end) {
+					if (last_start == match[0].start) {
+						start++;
+						continue;
+					}
+					start = match[0].end+1;
+				} else {
+					start = match[0].end;
+				}
 			} else {
 				if (cmd->name == 'y')
 					r = text_range_new(start, end);
 				start = end;
 			}
 
-			if (text_range_valid(&r) && r.start != r.end) {
+			if (text_range_valid(&r)) {
 				Mark mark_start = text_mark_set(txt, start);
 				Mark mark_end = text_mark_set(txt, end);
 				ret &= sam_execute(vis, win, cmd->cmd, &r);
-				start = text_mark_get(txt, mark_start);
+				last_start = start = text_mark_get(txt, mark_start);
 				end = text_mark_get(txt, mark_end);
 				if (start == EPOS || end == EPOS)
 					return false;
