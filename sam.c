@@ -315,8 +315,6 @@ static Address *address_parse_simple(Vis *vis, const char **s, enum SamError *er
 
 static Address *address_parse_compound(Vis *vis, const char **s, enum SamError *err) {
 	Address addr = { 0 }, *left = address_parse_simple(vis, s, err), *right = NULL;
-	if (!left)
-		return NULL;
 	skip_spaces(s);
 	addr.type = **s;
 	switch (addr.type) {
@@ -324,9 +322,8 @@ static Address *address_parse_compound(Vis *vis, const char **s, enum SamError *
 	case ';': /* a1;a2 */
 		(*s)++;
 		right = address_parse_compound(vis, s, err);
-		if (!right || ((right->type == ',' || right->type == ';') && !right->left)) {
-			if (right)
-				*err = SAM_ERR_ADDRESS;
+		if (right && (right->type == ',' || right->type == ';') && !right->left) {
+			*err = SAM_ERR_ADDRESS;
 			goto fail;
 		}
 		break;
