@@ -146,7 +146,6 @@ struct Vis {
 	Macro *recording, *last_recording;   /* currently (if non NULL) and least recently recorded macro */
 	Macro *macro_operator;               /* special macro used to repeat certain operators */
 	Mode *mode_before_prompt;            /* user mode which was active before entering prompt */
-	Regex *search_pattern;               /* last used search pattern */
 	char search_char[8];                 /* last used character to search for via 'f', 'F', 't', 'T' */
 	int last_totill;                     /* last to/till movement used for ';' and ',' */
 	int tabwidth;                        /* how many spaces should be used to display a tab */

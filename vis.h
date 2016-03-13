@@ -352,7 +352,7 @@ enum VisRegister {
 	VIS_REG_PROMPT,  /* internal register which shadows DEFAULT in PROMPT mode */
 	VIS_MACRO_OPERATOR,      /* records entered keys after an operator */
 	VIS_MACRO_REPEAT,        /* copy of the above macro once the recording is finished */
-	VIS_REG_SEARCH,
+	VIS_REG_SEARCH,  /* last used search pattern "/ */
 	VIS_REG_INVALID, /* has to be the last 'real' register */
 	VIS_REG_A, VIS_REG_B, VIS_REG_C, VIS_REG_D, VIS_REG_E,
 	VIS_REG_F, VIS_REG_G, VIS_REG_H, VIS_REG_I, VIS_REG_J,

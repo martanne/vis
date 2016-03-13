@@ -335,8 +335,6 @@ Vis *vis_new(Ui *ui, VisEvent *event) {
 	vis->registers[VIS_REG_BLACKHOLE].type = REGISTER_BLACKHOLE;
 	vis->registers[VIS_REG_CLIPBOARD].type = REGISTER_CLIPBOARD;
 	action_reset(&vis->action);
-	if (!(vis->search_pattern = text_regex_new()))
-		goto err;
 	if (!(vis->command_file = file_new_internal(vis, NULL)))
 		goto err;
 	if (!(vis->search_file = file_new_internal(vis, NULL)))
@@ -364,7 +362,6 @@ void vis_free(Vis *vis) {
 		vis_window_close(vis->windows);
 	file_free(vis, vis->command_file);
 	file_free(vis, vis->search_file);
-	text_regex_free(vis->search_pattern);
 	for (int i = 0; i < LENGTH(vis->registers); i++)
 		register_release(&vis->registers[i]);
 	vis->ui->free(vis->ui);
