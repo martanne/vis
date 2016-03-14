@@ -597,15 +597,27 @@ enum SamError sam_cmd(Vis *vis, const char *s) {
 	enum SamError err = SAM_ERR_OK;
 	if (!s)
 		return err;
+
 	Command *cmd = sam_parse(vis, s, &err);
 	if (!cmd) {
 		if (err == SAM_ERR_OK)
 			err = SAM_ERR_MEMORY;
 		return err;
 	}
+
 	Filerange range = text_range_empty();
-	bool status = sam_execute(vis, vis->win, cmd, &range);
-	vis_mode_switch(vis, status ? VIS_MODE_NORMAL : VIS_MODE_VISUAL);
+	sam_execute(vis, vis->win, cmd, &range);
+
+	bool completed = true;
+	for (Cursor *c = view_cursors(vis->win->view); c; c = view_cursors_next(c)) {
+		Filerange sel = view_cursors_selection_get(c);
+		if (text_range_valid(&sel)) {
+			completed = false;
+			break;
+		}
+	}
+
+	vis_mode_switch(vis, completed ? VIS_MODE_NORMAL : VIS_MODE_VISUAL);
 	command_free(cmd);
 	return err;
 }
@@ -734,15 +746,20 @@ static bool cmd_select(Vis *vis, Win *win, Command *cmd, Filerange *range) {
 }
 
 static bool cmd_print(Vis *vis, Win *win, Command *cmd, Filerange *range) {
+	if (!text_range_valid(range))
+		return false;
 	View *view = win->view;
 	Text *txt = win->file->text;
 	Cursor *cursor = view_cursors_new(view);
 	if (cursor) {
-		view_cursors_selection_set(cursor, range);
-		view_cursors_to(cursor, text_char_prev(txt, range->end));
+		if (range->start != range->end) {
+			view_cursors_selection_set(cursor, range);
+			view_cursors_to(cursor, text_char_prev(txt, range->end));
+		} else {
+			view_cursors_to(cursor, range->end);
+		}
 	}
-	/* indicate "failure"/incomplete command to keep visual mode */
-	return false;
+	return cursor != NULL;
 }
 
 static bool cmd_files(Vis *vis, Win *win, Command *cmd, Filerange *range) {
