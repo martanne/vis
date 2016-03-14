@@ -1,4 +1,5 @@
 #include <stdlib.h>
+#include <string.h>
 #include <regex.h>
 
 #include "text-regex.h"
@@ -58,7 +59,16 @@ int text_search_range_backward(Text *txt, size_t pos, size_t len, Regex *r, size
 			pmatch[i].start = match[i].rm_so == -1 ? EPOS : pos + (size_t)(cur - buf) + match[i].rm_so;
 			pmatch[i].end = match[i].rm_eo == -1 ? EPOS : pos + (size_t)(cur - buf) + match[i].rm_eo;
 		}
-		cur += match[0].rm_eo;
+		if (match[0].rm_so == 0 && match[0].rm_eo == 0) {
+			/* empty match at the beginning of cur, advance to next line */
+			if ((cur = strchr(cur, '\n')))
+				cur++;
+			else
+				break;
+
+		} else {
+			cur += match[0].rm_eo;
+		}
 	}
 	free(buf);
 	return ret;
