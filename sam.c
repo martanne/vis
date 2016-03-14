@@ -473,18 +473,22 @@ static Command *sam_parse(Vis *vis, const char *cmd, enum SamError *err) {
 }
 
 static Filerange address_line_evaluate(Address *addr, File *file, Filerange *range, int sign) {
+	Text *txt = file->text;
 	size_t offset = addr->number != 0 ? addr->number : 1;
-	size_t line;
+	size_t start = range->start, end = range->end, line;
 	if (sign > 0) {
-		line = text_lineno_by_pos(file->text, range->end);
-		line = text_pos_by_lineno(file->text, line + offset);
+		char c;
+		if (end > 0 && text_byte_get(txt, end-1, &c) && c == '\n')
+			end--;
+		line = text_lineno_by_pos(txt, end);
+		line = text_pos_by_lineno(txt, line + offset);
 	} else if (sign < 0) {
-		line = text_lineno_by_pos(file->text, range->start);
-		line = offset < line ? text_pos_by_lineno(file->text, line - offset) : 0;
+		line = text_lineno_by_pos(txt, start);
+		line = offset < line ? text_pos_by_lineno(txt, line - offset) : 0;
 	} else {
-		line = text_pos_by_lineno(file->text, addr->number);
+		line = text_pos_by_lineno(txt, addr->number);
 	}
-	return text_range_new(line, text_line_next(file->text, line));
+	return text_range_new(line, text_line_next(txt, line));
 }
 
 static Filerange address_evaluate(Address *addr, File *file, Filerange *range, int sign) {
