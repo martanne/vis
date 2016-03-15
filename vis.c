@@ -976,6 +976,13 @@ static void macro_replay(Vis *vis, const Macro *macro) {
 }
 
 bool vis_macro_replay(Vis *vis, enum VisRegister id) {
+	if (id == VIS_REG_SEARCH)
+		return vis_motion(vis, VIS_MOVE_SEARCH_NEXT);
+	if (id == VIS_REG_COMMAND) {
+		const char *cmd = register_get(vis, &vis->registers[id], NULL);
+		return vis_cmd(vis, cmd);
+	}
+
 	Macro *macro = macro_get(vis, id);
 	if (!macro || macro == vis->recording)
 		return false;
