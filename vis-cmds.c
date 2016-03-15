@@ -1246,6 +1246,8 @@ static const Command *lookup_cmd(Vis *vis, const char *name) {
 }
 
 bool vis_cmd(Vis *vis, const char *cmdline) {
+	if (!cmdline)
+		return true;
 	enum CmdOpt opt = CMD_OPT_NONE;
 	while (*cmdline == ':')
 		cmdline++;
