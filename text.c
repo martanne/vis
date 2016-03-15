@@ -944,8 +944,11 @@ bool text_save(Text *txt, const char *filename) {
 bool text_save_range(Text *txt, Filerange *range, const char *filename) {
 	struct stat meta;
 	int fd = -1, newfd = -1;
+	errno = 0;
 	if (!filename || text_save_atomic_range(txt, range, filename))
 		goto ok;
+	if (errno == ENOSPC)
+		goto err;
 	if ((fd = open(filename, O_CREAT|O_WRONLY, S_IRUSR|S_IWUSR)) == -1)
 		goto err;
 	if (fstat(fd, &meta) == -1)
