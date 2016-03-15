@@ -1119,7 +1119,7 @@ Regex *vis_regex(Vis *vis, const char *pattern) {
 		text_regex_free(regex);
 		return NULL;
 	}
-	register_put(vis, &vis->registers[VIS_REG_SEARCH], pattern, strlen(pattern)+1);
+	register_put0(vis, &vis->registers[VIS_REG_SEARCH], pattern);
 	return regex;
 }
 

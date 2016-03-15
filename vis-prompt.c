@@ -14,7 +14,7 @@ bool vis_prompt_cmd(Vis *vis, const char *cmd) {
 	case '+':
 	case ':':
 	{
-		register_put(vis, &vis->registers[VIS_REG_COMMAND], cmd+1, strlen(cmd+1)+1);
+		register_put0(vis, &vis->registers[VIS_REG_COMMAND], cmd+1);
 		bool ret = vis_cmd(vis, cmd+1);
 		if (ret && vis->mode->visual)
 			vis_mode_switch(vis, VIS_MODE_NORMAL);

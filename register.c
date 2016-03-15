@@ -65,6 +65,10 @@ bool register_put(Vis *vis, Register *reg, const char *data, size_t len) {
 	return reg->type == REGISTER_NORMAL && buffer_put(&reg->buf, data, len);
 }
 
+bool register_put0(Vis *vis, Register *reg, const char *data) {
+	return register_put(vis, reg, data, strlen(data)+1);
+}
+
 bool register_put_range(Vis *vis, Register *reg, Text *txt, Filerange *range) {
 	if (reg->append)
 		return register_append_range(reg, txt, range);

@@ -21,10 +21,11 @@ typedef struct {
 	} type;
 } Register;
 
-void register_release(Register *reg);
-const char *register_get(Vis*, Register*reg, size_t *len);
-bool register_put(Vis*, Register *reg, const char *data, size_t len);
-bool register_put_range(Vis*, Register *reg, Text *txt, Filerange *range);
-bool register_append_range(Register *reg, Text *txt, Filerange *range);
+void register_release(Register*);
+const char *register_get(Vis*, Register*, size_t *len);
+bool register_put(Vis*, Register*, const char *data, size_t len);
+bool register_put0(Vis*, Register*, const char *data);
+bool register_put_range(Vis*, Register*, Text*, Filerange*);
+bool register_append_range(Register*, Text*, Filerange*);
 
 #endif
