@@ -236,6 +236,7 @@ Operators can be forced to work line wise by specifying `V`.
     "*, "+  system clipboard integration via shell scripts vis-{copy,paste}
     "0      yank register
     "/      search register
+    ":      command register
     "_      black hole (/dev/null) register
 
   If no explicit register is specified a default register is used.
