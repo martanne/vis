@@ -41,23 +41,25 @@ In order to build vis you will need a C99 compiler as well as:
  * [libcurses](http://www.gnu.org/software/ncurses/), preferably in the
    wide-character version
  * [libtermkey](http://www.leonerd.org.uk/code/libtermkey/)
- * [lua](http://www.lua.org/) >= 5.2
- * [LPeg](http://www.inf.puc-rio.br/~roberto/lpeg/) >= 0.12 (runtime
-   dependency required for syntax highlighting)
+ * [lua](http://www.lua.org/) >= 5.2 (optional)
+ * [LPeg](http://www.inf.puc-rio.br/~roberto/lpeg/) >= 0.12
+   (optional runtime dependency required for syntax highlighting)
 
-If you want a self contained statically linked binary you can try
-to run `make standalone` which will attempt to download, compile
-and install all of the above dependencies. `make local` will do
-the same but only for libtermkey, lua and LPeg (i.e. the system
-C and curses libraries are used).
+Assuming these dependencies are met, execute:
 
-To build a regular dynamically linked binary using the system
-libraries, simply run `make` (possibly after adapting `config.mk`
-to match your system).
-
-    $ $EDITOR config.mk
-    $ make
+    $ ./configure && make
     $ VIS_PATH=. ./vis config.h
+
+By default the `configure` script will try to auto detect support for
+Lua. See `configure --help` for a list of supported options. You can
+also manually tweak the generated `config.mk` file.
+
+On Linux based systems `make standalone` will attempt to download,
+compile and install all of the above dependencies into a subfolder
+inorder to build a self contained statically linked binary.
+
+`make local` will do the same but only for libtermkey, Lua and LPeg
+(i.e. the system C and curses libraries are used).
 
 Editing Features
 ================
