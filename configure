@@ -19,6 +19,8 @@ Installation directories:
 
 Fine tuning of the installation directories:
   --bindir=DIR            user executables [EPREFIX/bin]
+  --sharedir=DIR          share directories [PREFIX/share]
+  --mandir=DIR            man pages [PREFIX/share/man]
 
 Optional features:
   --enable-lua            build with Lua support [auto]
@@ -107,6 +109,8 @@ srcdir=
 prefix=/usr/local
 exec_prefix='$(prefix)'
 bindir='$(exec_prefix)/bin'
+sharedir='$(prefix)/share'
+mandir='$(prefix)/share/man'
 
 lua=auto
 selinux=auto
@@ -119,6 +123,8 @@ case "$arg" in
 --prefix=*) prefix=${arg#*=} ;;
 --exec-prefix=*) exec_prefix=${arg#*=} ;;
 --bindir=*) bindir=${arg#*=} ;;
+--sharedir=*) sharedir=${arg#*=} ;;
+--mandir=*) mandir=${arg#*=} ;;
 --enable-lua|--enable-lua=yes) lua=yes ;;
 --disable-lua|--enable-lua=no) lua=no ;;
 --enable-selinux|--enable-selinux=yes) selinux=yes ;;
@@ -420,8 +426,8 @@ srcdir = $srcdir
 prefix = $prefix
 exec_prefix = $exec_prefix
 bindir = $bindir
-MANPREFIX = $prefix/share/man
-SHAREPREFIX = $prefix/share/vis
+MANPREFIX = $mandir
+SHAREPREFIX = $sharedir
 CC = $CC
 CFLAGS = $CFLAGS
 CFLAGS_STD = $CFLAGS_STD
