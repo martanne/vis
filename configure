@@ -358,8 +358,8 @@ EOF
 		LDFLAGS_ACL="-lacl"
 	fi
 
-	if $CC $CFLAGS $LDFLAGS $CFLAGS_ACL $LDFLAGS_ACL \
-		-o /dev/null "$tmpc" >/dev/null 2>&1; then
+	if $CC $CFLAGS $CFLAGS_ACL "$tmpc" \
+		$LDFLAGS $LDFLAGS_ACL -o /dev/null >/dev/null 2>&1; then
 		CONFIG_ACL=1
 		printf "%s\n" "yes"
 	else
