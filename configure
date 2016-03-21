@@ -198,7 +198,7 @@ tryflag   CFLAGS_TRY  -Werror=unused-command-line-argument
 tryldflag LDFLAGS_TRY -Werror=unknown-warning-option
 tryldflag LDFLAGS_TRY -Werror=unused-command-line-argument
 
-CFLAGS_STD="-std=c99 -D_POSIX_C_SOURCE=200809L -D_XOPEN_SOURCE=700 -DNDEBUG -Os"
+CFLAGS_STD="-std=c99 -D_POSIX_C_SOURCE=200809L -D_XOPEN_SOURCE=700 -DNDEBUG"
 LDFLAGS_STD="-lc"
 
 OS=$(uname)
@@ -209,12 +209,15 @@ Darwin) CFLAGS_STD+=-D_BSD_SOURCE ;;
 AIX)    CFLAGS_STD+=-D_ALL_SOURCE ;;
 esac
 
+tryflag CFLAGS_AUTO -pipe
+
+# Try flags to optimize binary size
+tryflag CFLAGS_AUTO -Os
+
 have_pkgconfig=no
 printf "checking for pkg-config... "
 cmdexists pkg-config && have_pkgconfig=yes
 printf "%s\n" "$have_pkgconfig"
-
-tryflag CFLAGS_AUTO -pipe
 
 # libcurses is a mandatory dependency
 
@@ -430,11 +433,10 @@ MANPREFIX = $mandir
 SHAREPREFIX = $sharedir
 CC = $CC
 CFLAGS = $CFLAGS
+LDFLAGS = $LDFLAGS
 CFLAGS_STD = $CFLAGS_STD
 LDFLAGS_STD = $LDFLAGS_STD
 CFLAGS_AUTO = $CFLAGS_AUTO
-LDFLAGS_AUTO = $LDFLAGS_AUTO
-LDFLAGS = $LDFLAGS
 LDFLAGS_AUTO = $LDFLAGS_AUTO
 CFLAGS_CURSES = $CFLAGS_CURSES
 LDFLAGS_CURSES = $LDFLAGS_CURSES
