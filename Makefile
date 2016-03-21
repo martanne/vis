@@ -31,6 +31,9 @@ all: vis
 config.h:
 	cp config.def.h config.h
 
+config.mk:
+	@touch $@
+
 vis: config.h config.mk *.c *.h
 	${CC} ${CFLAGS} ${CFLAGS_VIS} *.c ${LDFLAGS} ${LDFLAGS_VIS} -o $@
 
