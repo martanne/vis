@@ -276,8 +276,8 @@ if test -z "$LDFLAGS_TERMKEY"; then
 	LDFLAGS_TERMKEY="-ltermkey"
 fi
 
-if $CC $CFLAGS $CFLAGS_TERMKEY $LDFLAGS $LDFLAGS_TERMKEY \
-	-o /dev/null "$tmpc" >/dev/null 2>&1; then
+if $CC $CFLAGS $CFLAGS_TERMKEY "$tmpc" $LDFLAGS $LDFLAGS_TERMKEY \
+	-o /dev/null >/dev/null 2>&1; then
 	printf "%s\n" "yes"
 else
 	printf "%s\n" "no"
