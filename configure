@@ -308,8 +308,8 @@ EOF
 		if test "$have_pkgconfig" = "yes" ; then
 			CFLAGS_LUA=$(pkg-config --cflags $liblua 2>/dev/null)
 			LDFLAGS_LUA=$(pkg-config --libs $liblua 2>/dev/null)
-			if test $? -eq 0 && $CC $CFLAGS $LDFLAGS $CFLAGS_LUA $LDFLAGS_LUA \
-				-o /dev/null "$tmpc" >/dev/null 2>&1 ; then
+			if test $? -eq 0 && $CC $CFLAGS $CFLAGS_LUA "$tmpc" \
+				$LDFLAGS $LDFLAGS_LUA -o /dev/null >/dev/null 2>&1 ; then
 				CONFIG_LUA=1
 				printf "yes\n"
 				break
@@ -319,8 +319,8 @@ EOF
 		CFLAGS_LUA="-I/usr/include/$liblua"
 		LDFLAGS_LUA="-l$liblua -lm"
 
-		if $CC $CFLAGS $LDFLAGS $CFLAGS_LUA $LDFLAGS_LUA \
-			-o /dev/null "$tmpc" >/dev/null 2>&1 ; then
+		if $CC $CFLAGS $CFLAGS_LUA "$tmpc" \
+			$LDFLAGS $LDFLAGS_LUA -o /dev/null >/dev/null 2>&1 ; then
 			CONFIG_LUA=1
 			printf "yes\n"
 			break
