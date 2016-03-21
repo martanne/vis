@@ -61,9 +61,9 @@ install: vis
 	@chmod 755 ${DESTDIR}${PREFIX}/bin/vis-copy
 	@cp -f vis-paste ${DESTDIR}${PREFIX}/bin
 	@chmod 755 ${DESTDIR}${PREFIX}/bin/vis-paste
-	@echo installing support files to ${DESTDIR}${SHAREPREFIX}
-	@mkdir -p ${DESTDIR}${SHAREPREFIX}
-	@cp -r visrc.lua lexers ${DESTDIR}${SHAREPREFIX}
+	@echo installing support files to ${DESTDIR}${SHAREPREFIX}/vis
+	@mkdir -p ${DESTDIR}${SHAREPREFIX}/vis
+	@cp -r visrc.lua lexers ${DESTDIR}${SHAREPREFIX}/vis
 	@echo installing manual page to ${DESTDIR}${MANPREFIX}/man1
 	@mkdir -p ${DESTDIR}${MANPREFIX}/man1
 	@sed "s/VERSION/${VERSION}/g" < vis.1 > ${DESTDIR}${MANPREFIX}/man1/vis.1
@@ -77,7 +77,7 @@ uninstall:
 	@rm -f ${DESTDIR}${PREFIX}/bin/vis-paste
 	@echo removing manual page from ${DESTDIR}${MANPREFIX}/man1
 	@rm -f ${DESTDIR}${MANPREFIX}/man1/vis.1
-	@echo removing support files from ${DESTDIR}${SHAREPREFIX}
-	@[ ! -z "${SHAREPREFIX}" ] && rm -rf ${DESTDIR}${SHAREPREFIX}
+	@echo removing support files from ${DESTDIR}${SHAREPREFIX}/vis
+	@rm -rf ${DESTDIR}${SHAREPREFIX}/vis
 
 .PHONY: all clean dist install uninstall debug profile
