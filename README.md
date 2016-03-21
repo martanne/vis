@@ -47,8 +47,7 @@ In order to build vis you will need a C99 compiler as well as:
 
 Assuming these dependencies are met, execute:
 
-    $ ./configure && make
-    $ VIS_PATH=. ./vis config.h
+    $ ./configure && make && sudo make install
 
 By default the `configure` script will try to auto detect support for
 Lua. See `configure --help` for a list of supported options. You can

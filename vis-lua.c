@@ -1,6 +1,9 @@
 #include <stdarg.h>
 #include <stdio.h>
 #include <string.h>
+#include <limits.h>
+#include <unistd.h>
+#include <libgen.h>
 #include <sys/types.h>
 #include <pwd.h>
 
@@ -823,6 +826,7 @@ void vis_lua_start(Vis *vis) {
 
 	/* extends lua's package.path with:
 	 * - $VIS_PATH/{,lexers}
+	 * - {,lexers} relative to the binary location
 	 * - $XDG_CONFIG_HOME/vis/{,lexers} (defaulting to $HOME/.config/vis/{,lexers})
 	 * - /usr/local/share/vis/{,lexers}
 	 * - /usr/share/vis/{,lexers}
@@ -836,6 +840,19 @@ void vis_lua_start(Vis *vis) {
 		lua_pushstring(L, vis_path);
 		lua_pushstring(L, "/?.lua;");
 		lua_pushstring(L, vis_path);
+		lua_pushstring(L, "/lexers/?.lua;");
+		lua_concat(L, 4);
+		paths++;
+	}
+
+	char exe[PATH_MAX];
+	ssize_t len = readlink("/proc/self/exe", exe, sizeof(exe)-1);
+	if (len > 0) {
+		exe[len] = '\0';
+		char *exe_path = dirname(exe);
+		lua_pushstring(L, exe_path);
+		lua_pushstring(L, "/?.lua;");
+		lua_pushstring(L, exe_path);
 		lua_pushstring(L, "/lexers/?.lua;");
 		lua_concat(L, 4);
 		paths++;

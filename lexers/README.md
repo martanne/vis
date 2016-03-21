@@ -9,6 +9,7 @@ based lexers from the [Scintillua](http://foicica.com/scintillua/) project.
 Vis searches the lexers in the following locations:
 
  * `$VIS_PATH/lexers`
+ * `./lexers` relative to the binary location (using `/proc/self/exe`)
  * `$XDG_CONFIG_HOME/vis/lexers`
  * `/usr/local/share/vis/lexers`
  * `/usr/share/vis/lexers`

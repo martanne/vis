@@ -147,7 +147,7 @@ local: clean dependencies
 		CFLAGS_TERMKEY=	LDFLAGS_TERMKEY=-ltermkey \
 		CFLAGS_LUA="-DLUA_COMPAT_5_1 -DLUA_COMPAT_5_2 -DLUA_COMPAT_ALL" \
 		LDFLAGS_LUA="-llua -lm -ldl"
-	@echo Run with: LD_LIBRARY_PATH=$(DEPS_LIB) VIS_PATH=. ./vis
+	@echo Run with: LD_LIBRARY_PATH=$(DEPS_LIB) ./vis
 
 standalone: clean dependency/sources/install-libmusl
 	PATH=$(DEPS_BIN):$$PATH PKG_CONFIG_PATH= PKG_CONFIG_LIBDIR= $(MAKE) \
@@ -160,6 +160,5 @@ standalone: clean dependency/sources/install-libmusl
 		LDFLAGS_LUA="-llua -lm -ldl" \
 		CONFIG_ACL=0 CFLAGS_ACL= LDFLAGS_ACL= \
 		CONFIG_SELINUX=0 CFLAGS_SELINUX= LDFLAGS_SELINUX=
-	@echo Run with: VIS_PATH=. ./vis
 
 .PHONY: standalone dependencies dependencies-full local
