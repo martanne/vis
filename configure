@@ -393,8 +393,8 @@ EOF
 		LDFLAGS_SELINUX="-lselinux"
 	fi
 
-	if $CC $CFLAGS $LDFLAGS $CFLAGS_SELINUX $LDFLAGS_SELINUX \
-		-o /dev/null "$tmpc" >/dev/null 2>&1; then
+	if $CC $CFLAGS $CFLAGS_SELINUX "$tmpc" \
+		$LDFLAGS $LDFLAGS_SELINUX -o /dev/null >/dev/null 2>&1; then
 		CONFIG_SELINUX=1
 		printf "%s\n" "yes"
 	else
