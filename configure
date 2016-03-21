@@ -213,6 +213,9 @@ tryflag CFLAGS_AUTO -pipe
 
 # Try flags to optimize binary size
 tryflag CFLAGS_AUTO -Os
+#tryflag CFLAGS_AUTO -ffunction-sections
+#tryflag CFLAGS_AUTO -fdata-sections
+#tryldflag LDFLAGS_AUTO -Wl,--gc-sections
 
 have_pkgconfig=no
 printf "checking for pkg-config... "
