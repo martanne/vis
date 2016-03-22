@@ -1,0 +1,104 @@
+#!/bin/sh
+
+# Copyright (C) 2016 Richard Burke, ISC licensed
+
+vc_fatal() {
+	echo "$@" >&2
+	exit 1
+}
+
+vc_usage() {
+	vc_fatal "`basename $0` [--usable|--copy|--paste]"
+}
+
+vc_determine_command() {
+	if [ -n "$DISPLAY" ]; then
+		for c in xclip xsel; do
+			if type "$c" >/dev/null 2>&1; then
+				echo "$c"
+				return 0
+			fi
+		done
+	elif type pbcopy >/dev/null 2>&1; then
+		echo 'mac'
+		return 0
+	elif [ -c /dev/clipboard ]; then
+		echo 'cygwin'
+		return 0
+	fi
+
+	return 1
+}
+
+vc_usable() {
+	if vc_determine_command >/dev/null 2>&1; then
+		exit 0
+	fi
+
+	exit 1
+}
+
+vc_copy() {
+	COPY_CMD="`vc_determine_command 2>/dev/null`"
+
+	if [ $? -ne 0 ] || [ -z "$COPY_CMD" ]; then
+		vc_fatal 'System clipboard not supported'
+	fi
+
+	vc_${COPY_CMD}_copy
+
+	exit $?
+}
+
+vc_paste() {
+	PASTE_CMD="`vc_determine_command 2>/dev/null`"
+
+	if [ $? -ne 0 ] || [ -z "$PASTE_CMD" ]; then
+		vc_fatal 'System clipboard not supported'
+	fi
+
+	vc_${PASTE_CMD}_paste
+
+	exit $?
+}
+
+vc_xsel_copy() {
+	xsel -bi
+}
+
+vc_xsel_paste() {
+	xsel -bo
+}
+
+vc_xclip_copy() {
+	xclip -selection clipboard -i >/dev/null 2>&1
+}
+
+vc_xclip_paste() {
+	xclip -selection clipboard -o
+}
+
+vc_mac_copy() {
+	pbcopy
+}
+
+vc_mac_paste() {
+	pbpaste
+}
+
+vc_cygwin_copy() {
+	cat >/dev/clipboard
+}
+
+vc_cygwin_paste() {
+	cat /dev/clipboard
+}
+
+case "$1" in
+	--usable) vc_usable;;
+	--copy) vc_copy;;
+	--paste) vc_paste;;
+	*) ;;
+esac
+
+vc_usage
