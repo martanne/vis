@@ -234,7 +234,7 @@ Operators can be forced to work line wise by specifying `V`.
 
     "a-"z   general purpose registers
     "A-"Z   append to corresponding general purpose register
-    "*, "+  system clipboard integration via shell scripts vis-{copy,paste}
+    "*, "+  system clipboard integration via shell script vis-clipboard
     "0      yank register
     "/      search register
     ":      command register
