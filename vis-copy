@@ -4,6 +4,8 @@ if [ ! -z "$DISPLAY" ]; then
 	exec xsel -ib
 elif type pbcopy >/dev/null 2>&1; then
 	exec pbcopy
+elif [ -c /dev/clipboard ]; then
+	exec cat >/dev/clipboard
 else
 	echo "System clipboard not supported" 1>&2
 	exit 1
