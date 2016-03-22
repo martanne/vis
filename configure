@@ -345,6 +345,8 @@ EOF
 			break
 		else
 			printf "no\n"
+			CFLAGS_LUA=""
+			LDFLAGS_LUA=""
 		fi
 	done
 
