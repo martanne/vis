@@ -176,9 +176,9 @@ trap 'rm -f "$tmpc" "$tmpo"' EXIT INT QUIT TERM HUP
 # Find a C compiler to use
 #
 printf "checking for C compiler... "
-trycc c99
 trycc cc
 trycc gcc
+trycc clang
 printf "%s\n" "$CC"
 test -n "$CC" || { echo "$0: cannot find a C compiler" ; exit 1 ; }
 
