@@ -87,7 +87,7 @@ dependency/sources/extract-libtermkey: dependency/sources/$(LIBTERMKEY).tar.gz
 	tar xzf $< -C $(dir $<)
 	touch $@
 
-dependency/sources/build-libtermkey: dependency/sources/extract-libtermkey
+dependency/sources/build-libtermkey: dependency/sources/extract-libtermkey dependency/sources/install-libncurses
 	# TODO no sane way to avoid pkg-config and specify LDFLAGS?
 	sed -i 's/LDFLAGS+=-lncurses$$/LDFLAGS+=-lncursesw/g' $(dir $<)/$(LIBTERMKEY)/Makefile
 	$(MAKE) -C $(dir $<)/$(LIBTERMKEY) PREFIX=$(DEPS_PREFIX) termkey.h libtermkey.la
