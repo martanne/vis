@@ -34,26 +34,26 @@ LIBNCURSES_CONFIG = --disable-database --with-fallbacks=st,st-256color,xterm,xte
 	--without-cxx-shared --without-termlib --without--ticlib
 
 dependency/sources:
-	mkdir -p $@
+	mkdir -p "$@" "$(dir $@)/build"
 
 dependency/sources/musl-%: | dependency/sources
 	wget -c -O $@.part http://www.musl-libc.org/releases/$(LIBMUSL).tar.gz
 	mv $@.part $@
 	[ -z $(LIBMUSL_SHA1) ] || (echo '$(LIBMUSL_SHA1)  $@' | sha1sum -c)
 
-dependency/sources/extract-libmusl: dependency/sources/$(LIBMUSL).tar.gz
-	tar xzf $< -C $(dir $<)
+dependency/build/libmusl-extract: dependency/sources/$(LIBMUSL).tar.gz
+	tar xzf $< -C $(dir $@)
 	touch $@
 
-dependency/sources/configure-libmusl: dependency/sources/extract-libmusl
+dependency/build/libmusl-configure: dependency/build/libmusl-extract
 	cd $(dir $<)/$(LIBMUSL) && ./configure --prefix=$(DEPS_PREFIX) --syslibdir=$(DEPS_PREFIX)/lib
 	touch $@
 
-dependency/sources/build-libmusl: dependency/sources/configure-libmusl
+dependency/build/libmusl-build: dependency/build/libmusl-configure
 	$(MAKE) -C $(dir $<)/$(LIBMUSL)
 	touch $@
 
-dependency/sources/install-libmusl: dependency/sources/build-libmusl
+dependency/build/libmusl-install: dependency/build/libmusl-build
 	$(MAKE) -C $(dir $<)/$(LIBMUSL) install
 	touch $@
 
@@ -62,19 +62,19 @@ dependency/sources/ncurses-%: | dependency/sources
 	mv $@.part $@
 	[ -z $(LIBNCURSES_SHA1) ] || (echo '$(LIBNCURSES_SHA1)  $@' | sha1sum -c)
 
-dependency/sources/extract-libncurses: dependency/sources/$(LIBNCURSES).tar.gz
-	tar xzf $< -C $(dir $<)
+dependency/build/libncurses-extract: dependency/sources/$(LIBNCURSES).tar.gz
+	tar xzf $< -C $(dir $@)
 	touch $@
 
-dependency/sources/configure-libncurses: dependency/sources/extract-libncurses
+dependency/build/libncurses-configure: dependency/build/libncurses-extract
 	cd $(dir $<)/$(LIBNCURSES) && ./configure --prefix=/usr --libdir=/usr/lib $(LIBNCURSES_CONFIG)
 	touch $@
 
-dependency/sources/build-libncurses: dependency/sources/configure-libncurses
+dependency/build/libncurses-build: dependency/build/libncurses-configure
 	$(MAKE) -C $(dir $<)/$(LIBNCURSES)
 	touch $@
 
-dependency/sources/install-libncurses: dependency/sources/build-libncurses
+dependency/build/libncurses-install: dependency/build/libncurses-build
 	$(MAKE) -C $(dir $<)/$(LIBNCURSES) install.libs DESTDIR=$(DEPS_ROOT)
 	touch $@
 
@@ -83,17 +83,17 @@ dependency/sources/libtermkey-%: | dependency/sources
 	mv $@.part $@
 	[ -z $(LIBTERMKEY_SHA1) ] || (echo '$(LIBTERMKEY_SHA1)  $@' | sha1sum -c)
 
-dependency/sources/extract-libtermkey: dependency/sources/$(LIBTERMKEY).tar.gz
-	tar xzf $< -C $(dir $<)
+dependency/build/libtermkey-extract: dependency/sources/$(LIBTERMKEY).tar.gz
+	tar xzf $< -C $(dir $@)
 	touch $@
 
-dependency/sources/build-libtermkey: dependency/sources/extract-libtermkey dependency/sources/install-libncurses
+dependency/build/libtermkey-build: dependency/build/libtermkey-extract dependency/build/libncurses-install
 	# TODO no sane way to avoid pkg-config and specify LDFLAGS?
 	sed -i 's/LDFLAGS+=-lncurses$$/LDFLAGS+=-lncursesw/g' $(dir $<)/$(LIBTERMKEY)/Makefile
 	$(MAKE) -C $(dir $<)/$(LIBTERMKEY) PREFIX=$(DEPS_PREFIX) termkey.h libtermkey.la
 	touch $@
 
-dependency/sources/install-libtermkey: dependency/sources/build-libtermkey
+dependency/build/libtermkey-install: dependency/build/libtermkey-build
 	$(MAKE) -C $(dir $<)/$(LIBTERMKEY) PREFIX=$(DEPS_PREFIX) install-inc install-lib
 	touch $@
 
@@ -102,21 +102,21 @@ dependency/sources/lua-%: | dependency/sources
 	mv $@.part $@
 	[ -z $(LIBLUA_SHA1) ] || (echo '$(LIBLUA_SHA1)  $@' | sha1sum -c)
 
-dependency/sources/extract-liblua: dependency/sources/$(LIBLUA).tar.gz
-	tar xzf $< -C $(dir $<)
+dependency/build/liblua-extract: dependency/sources/$(LIBLUA).tar.gz
+	tar xzf $< -C $(dir $@)
 	touch $@
 
-dependency/sources/patch-liblua: dependency/sources/extract-liblua
+dependency/build/liblua-patch: dependency/build/liblua-extract
 	cd $(dir $<) && ([ -e $(LIBLUA)-lpeg.patch ] || wget http://www.brain-dump.org/projects/vis/$(LIBLUA)-lpeg.patch)
 	cd $(dir $<)/$(LIBLUA) && patch -p1 < ../$(LIBLUA)-lpeg.patch
 	touch $@
 
-dependency/sources/build-liblua: dependency/sources/patch-liblua dependency/sources/install-liblpeg
+dependency/build/liblua-build: dependency/build/liblua-patch dependency/build/liblpeg-install
 	$(MAKE) -C $(dir $<)/$(LIBLUA)/src all CC=$(CC) MYCFLAGS="-DLUA_COMPAT_5_1 -DLUA_COMPAT_5_2 -DLUA_COMPAT_ALL -DLUA_USE_POSIX -DLUA_USE_DLOPEN -fPIC" MYLIBS="-Wl,-E -ldl -lm"
 	#$(MAKE) -C $(dir $<)/$(LIBLUA) posix CC=$(CC)
 	touch $@
 
-dependency/sources/install-liblua: dependency/sources/build-liblua
+dependency/build/liblua-install: dependency/build/liblua-build
 	$(MAKE) -C $(dir $<)/$(LIBLUA) INSTALL_TOP=$(DEPS_PREFIX) install
 	touch $@
 
@@ -125,21 +125,21 @@ dependency/sources/lpeg-%: | dependency/sources
 	mv $@.part $@
 	[ -z $(LIBLPEG_SHA1) ] || (echo '$(LIBLPEG_SHA1)  $@' | sha1sum -c)
 
-dependency/sources/extract-liblpeg: dependency/sources/$(LIBLPEG).tar.gz
-	tar xzf $< -C $(dir $<)
+dependency/build/liblpeg-extract: dependency/sources/$(LIBLPEG).tar.gz
+	tar xzf $< -C $(dir $@)
 	touch $@
 
-dependency/sources/build-liblpeg: dependency/sources/extract-liblpeg
+dependency/build/liblpeg-build: dependency/build/liblpeg-extract
 	$(MAKE) -C $(dir $<)/$(LIBLPEG) LUADIR=../$(LIBLUA)/src CC=$(CC)
 	touch $@
 
-dependency/sources/install-liblpeg: dependency/sources/build-liblpeg dependency/sources/extract-liblua
+dependency/build/liblpeg-install: dependency/build/liblpeg-build dependency/build/liblua-extract
 	cp $(dir $<)/$(LIBLPEG)/*.o $(dir $<)/$(LIBLUA)/src
 	touch $@
 
-dependencies: dependency/sources/install-libtermkey dependency/sources/install-liblua dependency/sources/install-liblpeg
+dependencies: dependency/build/libtermkey-install dependency/build/liblua-install dependency/build/liblpeg-install
 
-dependencies-full: dependency/sources/install-libncurses dependencies
+dependencies-full: dependency/build/libncurses-install dependencies
 
 local: clean dependencies
 	$(MAKE) CFLAGS="$(CFLAGS) -I$(DEPS_INC)" LDFLAGS="$(LDFLAGS) -L$(DEPS_LIB)" \
@@ -149,7 +149,7 @@ local: clean dependencies
 		LDFLAGS_LUA="-llua -lm -ldl"
 	@echo Run with: LD_LIBRARY_PATH=$(DEPS_LIB) ./vis
 
-standalone: clean dependency/sources/install-libmusl
+standalone: clean dependency/build/libmusl-install
 	PATH=$(DEPS_BIN):$$PATH PKG_CONFIG_PATH= PKG_CONFIG_LIBDIR= $(MAKE) \
 		CC=musl-gcc dependencies-full
 	PATH=$(DEPS_BIN):$$PATH PKG_CONFIG_PATH= PKG_CONFIG_LIBDIR= $(MAKE) \
