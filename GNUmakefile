@@ -137,11 +137,31 @@ dependency/build/liblpeg-install: dependency/build/liblpeg-build dependency/buil
 	cp $(dir $<)/$(LIBLPEG)/*.o $(dir $<)/$(LIBLUA)/src
 	touch $@
 
-dependencies: dependency/build/libtermkey-install dependency/build/liblua-install dependency/build/liblpeg-install
+dependencies-common: dependency/build/libtermkey-install dependency/build/liblua-install dependency/build/liblpeg-install
 
-dependencies-full: dependency/build/libncurses-install dependencies
+dependency/build/local: dependencies-common
+	touch $@
 
-local: clean dependencies
+dependency/build/standalone: dependency/build/libncurses-install dependencies-common
+	touch $@
+
+dependencies-clean:
+	rm -rf dependency/build/*curses*
+	rm -rf dependency/build/libtermkey*
+	rm -rf dependency/build/*lua*
+	rm -rf dependency/build/*lpeg*
+	rm -f dependency/build/local
+	rm -f dependency/build/standalone
+
+local: clean
+	[ ! -e dependency/build/standalone ] || $(MAKE) dependencies-clean
+	mkdir -p dependency/build && \
+	touch dependency/build/libncurses-extract && \
+	touch dependency/build/libncurses-configure && \
+	touch dependency/build/libncurses-build && \
+	touch dependency/build/libncurses-install
+
+	$(MAKE) dependency/build/local
 	$(MAKE) CFLAGS="$(CFLAGS) -I$(DEPS_INC)" LDFLAGS="$(LDFLAGS) -L$(DEPS_LIB)" \
 		CFLAGS_CURSES="-I/usr/include/ncursesw" LDFLAGS_CURSES="-lncursesw" \
 		CFLAGS_TERMKEY=	LDFLAGS_TERMKEY=-ltermkey \
@@ -150,15 +170,17 @@ local: clean dependencies
 	@echo Run with: LD_LIBRARY_PATH=$(DEPS_LIB) ./vis
 
 standalone: clean dependency/build/libmusl-install
+	[ ! -e dependency/build/local ] || $(MAKE) dependencies-clean
 	PATH=$(DEPS_BIN):$$PATH PKG_CONFIG_PATH= PKG_CONFIG_LIBDIR= $(MAKE) \
-		CC=musl-gcc dependencies-full
+		CC=musl-gcc dependency/build/standalone
 	PATH=$(DEPS_BIN):$$PATH PKG_CONFIG_PATH= PKG_CONFIG_LIBDIR= $(MAKE) \
 		CC=musl-gcc CFLAGS="--static -Wl,--as-needed" \
 		CFLAGS_CURSES= LDFLAGS_CURSES="-lncursesw" \
 		CFLAGS_TERMKEY= LDFLAGS_TERMKEY=-ltermkey \
 		CFLAGS_LUA="-DLUA_COMPAT_5_1 -DLUA_COMPAT_5_2 -DLUA_COMPAT_ALL" \
 		LDFLAGS_LUA="-llua -lm -ldl" \
+		CFLAGS_AUTO=-Os LDFLAGS_AUTO= \
 		CONFIG_ACL=0 CFLAGS_ACL= LDFLAGS_ACL= \
 		CONFIG_SELINUX=0 CFLAGS_SELINUX= LDFLAGS_SELINUX=
 
-.PHONY: standalone dependencies dependencies-full local
+.PHONY: standalone local dependencies-common dependencies-clean
