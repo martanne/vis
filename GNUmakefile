@@ -112,7 +112,7 @@ dependency/sources/patch-liblua: dependency/sources/extract-liblua
 	touch $@
 
 dependency/sources/build-liblua: dependency/sources/patch-liblua dependency/sources/install-liblpeg
-	$(MAKE) -C $(dir $<)/$(LIBLUA)/src all CC=$(CC) MYCFLAGS="-DLUA_COMPAT_5_1 -DLUA_COMPAT_5_2 -DLUA_COMPAT_ALL -DLUA_USE_POSIX -DLUA_USE_DLOPEN -fPIC" MYLIBS="-Wl,-E -ldl -lncursesw -lm"
+	$(MAKE) -C $(dir $<)/$(LIBLUA)/src all CC=$(CC) MYCFLAGS="-DLUA_COMPAT_5_1 -DLUA_COMPAT_5_2 -DLUA_COMPAT_ALL -DLUA_USE_POSIX -DLUA_USE_DLOPEN -fPIC" MYLIBS="-Wl,-E -ldl -lm"
 	#$(MAKE) -C $(dir $<)/$(LIBLUA) posix CC=$(CC)
 	touch $@
 
