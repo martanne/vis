@@ -62,7 +62,7 @@ echo "typedef int x;" > "$tmpc"
 echo "#if $1" >> "$tmpc"
 echo "#error yes" >> "$tmpc"
 echo "#endif" >> "$tmpc"
-if $CC $2 -c -o /dev/null "$tmpc" >/dev/null 2>&1 ; then
+if $CC $2 -c -o "$tmpo" "$tmpc" >/dev/null 2>&1 ; then
 printf "false\n"
 return 1
 else
@@ -74,7 +74,7 @@ fi
 tryflag () {
 printf "checking whether compiler accepts %s... " "$2"
 echo "typedef int x;" > "$tmpc"
-if $CC $CFLAGS_TRY $2 -c -o /dev/null "$tmpc" >/dev/null 2>&1 ; then
+if $CC $CFLAGS_TRY $2 -c -o "$tmpo" "$tmpc" >/dev/null 2>&1 ; then
 printf "yes\n"
 eval "$1=\"\${$1} \$2\""
 eval "$1=\${$1# }"
@@ -88,7 +88,7 @@ fi
 tryldflag () {
 printf "checking whether linker accepts %s... " "$2"
 echo "typedef int x;" > "$tmpc"
-if $CC $LDFLAGS_TRY -nostdlib -shared "$2" -o /dev/null "$tmpc" >/dev/null 2>&1 ; then
+if $CC $LDFLAGS_TRY -nostdlib -shared "$2" -o "$tmpo" "$tmpc" >/dev/null 2>&1 ; then
 printf "yes\n"
 eval "$1=\"\${$1} \$2\""
 eval "$1=\${$1# }"
@@ -165,11 +165,12 @@ i=0
 set -C
 while : ; do i=$(($i+1))
 tmpc="./conf$$-$PPID-$i.c"
+tmpo="./conf$$-$PPID-$i.o"
 2>|/dev/null > "$tmpc" && break
 test "$i" -gt 50 && fail "$0: cannot create temporary file $tmpc"
 done
 set +C
-trap 'rm "$tmpc"' EXIT INT QUIT TERM HUP
+trap 'rm -f "$tmpc" "$tmpo"' EXIT INT QUIT TERM HUP
 
 #
 # Find a C compiler to use
@@ -183,7 +184,7 @@ test -n "$CC" || { echo "$0: cannot find a C compiler" ; exit 1 ; }
 
 printf "checking whether C compiler works... "
 echo "typedef int x;" > "$tmpc"
-if output=$($CC $CPPFLAGS $CFLAGS -c -o /dev/null "$tmpc" 2>&1) ; then
+if output=$($CC $CPPFLAGS $CFLAGS -c -o "$tmpo" "$tmpc" 2>&1) ; then
 printf "yes\n"
 else
 printf "no; compiler output follows:\n%s\n" "$output"
@@ -251,7 +252,7 @@ for curses in ncursesw ncurses curses; do
 		CFLAGS_CURSES=$(pkg-config --cflags $curses 2>/dev/null)
 		LDFLAGS_CURSES=$(pkg-config --libs $curses 2>/dev/null)
 		if test $? -eq 0 && $CC $CFLAGS $CFLAGS_CURSES "$tmpc" \
-			$LDFLAGS $LDFLAGS_CURSES -o /dev/null >/dev/null 2>&1 ; then
+			$LDFLAGS $LDFLAGS_CURSES -o "$tmpo" >/dev/null 2>&1 ; then
 			CONFIG_CURSES=1
 			printf "yes\n"
 			break
@@ -262,7 +263,7 @@ for curses in ncursesw ncurses curses; do
 	LDFLAGS_CURSES="-l$curses"
 
 	if $CC $CFLAGS $CFLAGS_CURSES "$tmpc" \
-		$LDFLAGS $LDFLAGS_CURSES -o /dev/null >/dev/null 2>&1 ; then
+		$LDFLAGS $LDFLAGS_CURSES -o "$tmpo" >/dev/null 2>&1 ; then
 		CONFIG_CURSES=1
 		printf "yes\n"
 		break
@@ -296,7 +297,7 @@ if test -z "$LDFLAGS_TERMKEY"; then
 fi
 
 if $CC $CFLAGS $CFLAGS_TERMKEY "$tmpc" $LDFLAGS $LDFLAGS_TERMKEY \
-	-o /dev/null >/dev/null 2>&1; then
+	-o "$tmpo" >/dev/null 2>&1; then
 	printf "%s\n" "yes"
 else
 	printf "%s\n" "no"
@@ -328,7 +329,7 @@ EOF
 			CFLAGS_LUA=$(pkg-config --cflags $liblua 2>/dev/null)
 			LDFLAGS_LUA=$(pkg-config --libs $liblua 2>/dev/null)
 			if test $? -eq 0 && $CC $CFLAGS $CFLAGS_LUA "$tmpc" \
-				$LDFLAGS $LDFLAGS_LUA -o /dev/null >/dev/null 2>&1 ; then
+				$LDFLAGS $LDFLAGS_LUA -o "$tmpo" >/dev/null 2>&1 ; then
 				CONFIG_LUA=1
 				printf "yes\n"
 				break
@@ -339,7 +340,7 @@ EOF
 		LDFLAGS_LUA="-l$liblua -lm"
 
 		if $CC $CFLAGS $CFLAGS_LUA "$tmpc" \
-			$LDFLAGS $LDFLAGS_LUA -o /dev/null >/dev/null 2>&1 ; then
+			$LDFLAGS $LDFLAGS_LUA -o "$tmpo" >/dev/null 2>&1 ; then
 			CONFIG_LUA=1
 			printf "yes\n"
 			break
@@ -383,7 +384,7 @@ EOF
 	fi
 
 	if $CC $CFLAGS $CFLAGS_ACL "$tmpc" \
-		$LDFLAGS $LDFLAGS_ACL -o /dev/null >/dev/null 2>&1; then
+		$LDFLAGS $LDFLAGS_ACL -o "$tmpo" >/dev/null 2>&1; then
 		CONFIG_ACL=1
 		printf "%s\n" "yes"
 	else
@@ -418,7 +419,7 @@ EOF
 	fi
 
 	if $CC $CFLAGS $CFLAGS_SELINUX "$tmpc" \
-		$LDFLAGS $LDFLAGS_SELINUX -o /dev/null >/dev/null 2>&1; then
+		$LDFLAGS $LDFLAGS_SELINUX -o "$tmpo" >/dev/null 2>&1; then
 		CONFIG_SELINUX=1
 		printf "%s\n" "yes"
 	else
