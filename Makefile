@@ -1,5 +1,11 @@
 -include config.mk
 
+# conditionally initialized, this is needed for standalone build
+# with empty config.mk
+PREFIX ?= /usr/local
+MANPREFIX ?= ${PREFIX}/share/man
+SHAREPREFIX ?= ${PREFIX}/share/vis
+
 VERSION = $(shell git describe 2>/dev/null || echo "0.1.x")
 
 CONFIG_LUA ?= 1
