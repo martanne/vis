@@ -67,8 +67,7 @@ vis:textobject_new("ii", function(win, pos)
 	return pos, pos
 end)
 
-vis.events.win_open = function(win)
-
+local set_filetype = function(win)
 	local files = {
 		[".1|.2|.3|.4|.5|.6|.7|.8|.9|.1x|.2x|.3x|.4x|.5x|.6x|.7x|.8x|.9x"] = "man",
 		[".au3|.a3x"] = "autoit",
@@ -198,5 +197,11 @@ vis.events.win_open = function(win)
 	end
 
 	win.syntax = nil
+end
 
+vis.events.win_open = function(win)
+	set_filetype(win)
+
+	-- eg Turn on line numbering
+	-- vis:command('set number')
 end
