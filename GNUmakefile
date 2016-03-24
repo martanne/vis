@@ -44,7 +44,7 @@ dependency/sources/musl-%: | dependency/sources
 	mv $@.part $@
 	[ -z $(LIBMUSL_SHA1) ] || (echo '$(LIBMUSL_SHA1)  $@' | sha1sum -c)
 
-dependency/build/libmusl-extract: dependency/sources/$(LIBMUSL).tar.gz dependency/build
+dependency/build/libmusl-extract: dependency/sources/$(LIBMUSL).tar.gz | dependency/build
 	tar xzf $< -C $(dir $@)
 	touch $@
 
@@ -65,7 +65,7 @@ dependency/sources/ncurses-%: | dependency/sources
 	mv $@.part $@
 	[ -z $(LIBNCURSES_SHA1) ] || (echo '$(LIBNCURSES_SHA1)  $@' | sha1sum -c)
 
-dependency/build/libncurses-extract: dependency/sources/$(LIBNCURSES).tar.gz dependency/build
+dependency/build/libncurses-extract: dependency/sources/$(LIBNCURSES).tar.gz | dependency/build
 	tar xzf $< -C $(dir $@)
 	touch $@
 
@@ -86,7 +86,7 @@ dependency/sources/libtermkey-%: | dependency/sources
 	mv $@.part $@
 	[ -z $(LIBTERMKEY_SHA1) ] || (echo '$(LIBTERMKEY_SHA1)  $@' | sha1sum -c)
 
-dependency/build/libtermkey-extract: dependency/sources/$(LIBTERMKEY).tar.gz dependency/build
+dependency/build/libtermkey-extract: dependency/sources/$(LIBTERMKEY).tar.gz | dependency/build
 	tar xzf $< -C $(dir $@)
 	touch $@
 
@@ -105,7 +105,7 @@ dependency/sources/lua-%.tar.gz: | dependency/sources
 	mv $@.part $@
 	[ -z $(LIBLUA_SHA1) ] || (echo '$(LIBLUA_SHA1)  $@' | sha1sum -c)
 
-dependency/build/liblua-extract: dependency/sources/$(LIBLUA).tar.gz dependency/build
+dependency/build/liblua-extract: dependency/sources/$(LIBLUA).tar.gz | dependency/build
 	tar xzf $< -C $(dir $@)
 	touch $@
 
@@ -132,7 +132,7 @@ dependency/sources/lpeg-%: | dependency/sources
 	mv $@.part $@
 	[ -z $(LIBLPEG_SHA1) ] || (echo '$(LIBLPEG_SHA1)  $@' | sha1sum -c)
 
-dependency/build/liblpeg-extract: dependency/sources/$(LIBLPEG).tar.gz dependency/build
+dependency/build/liblpeg-extract: dependency/sources/$(LIBLPEG).tar.gz | dependency/build
 	tar xzf $< -C $(dir $@)
 	touch $@
 
@@ -164,11 +164,12 @@ dependencies-clean:
 
 dependencies-local:
 	[ ! -e dependency/build/standalone ] || $(MAKE) dependencies-clean
-	mkdir -p dependency/build && \
-	touch dependency/build/libncurses-extract && \
-	touch dependency/build/libncurses-configure && \
-	touch dependency/build/libncurses-build && \
-	touch dependency/build/libncurses-install
+	mkdir -p dependency/build
+	[ -e dependency/build/libncurses-install ] || touch \
+		dependency/build/libncurses-extract \
+		dependency/build/libncurses-configure \
+		dependency/build/libncurses-build \
+		dependency/build/libncurses-install
 	$(MAKE) dependency/build/local
 
 local: clean
