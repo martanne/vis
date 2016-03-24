@@ -23,6 +23,9 @@ under terms compatible with the above ISC license:
  - map.[ch] originate from the Comprehensive C Archive Network strmap
    module and are public domain / CC0 licensed
 
+ - libutf.[ch] originate from libutf a port of Plan 9's Unicode library
+   to Unix and are MIT licensed
+
  - lexers/* the LPeg based lexers used for syntax highlighting are
    imported from the Scintillua project licensed under the MIT license
 
