@@ -100,7 +100,7 @@ dependency/build/libtermkey-install: dependency/build/libtermkey-build
 	$(MAKE) -C $(dir $<)/$(LIBTERMKEY) PREFIX=$(DEPS_PREFIX) install-inc install-lib
 	touch $@
 
-dependency/sources/lua-%: | dependency/sources
+dependency/sources/lua-%.tar.gz: | dependency/sources
 	wget -c -O $@.part http://www.lua.org/ftp/$(LIBLUA).tar.gz
 	mv $@.part $@
 	[ -z $(LIBLUA_SHA1) ] || (echo '$(LIBLUA_SHA1)  $@' | sha1sum -c)
@@ -109,9 +109,13 @@ dependency/build/liblua-extract: dependency/sources/$(LIBLUA).tar.gz dependency/
 	tar xzf $< -C $(dir $@)
 	touch $@
 
-dependency/build/liblua-patch: dependency/build/liblua-extract
-	cd $(dir $<) && ([ -e $(LIBLUA)-lpeg.patch ] || wget http://www.brain-dump.org/projects/vis/$(LIBLUA)-lpeg.patch)
-	cd $(dir $<)/$(LIBLUA) && patch -p1 < ../$(LIBLUA)-lpeg.patch
+dependency/sources/lua-%-lpeg.patch: | dependency/sources
+	wget -c -O $@.part http://www.brain-dump.org/projects/vis/$(LIBLUA)-lpeg.patch
+	mv $@.part $@
+	[ -z $(LIBLUA_LPEG_SHA1) ] || (echo '$(LIBLUA_LPEG_SHA1)  $@' | sha1sum -c)
+
+dependency/build/liblua-patch: dependency/build/liblua-extract dependency/sources/$(LIBLUA)-lpeg.patch
+	cd $(dir $<)/$(LIBLUA) && patch -p1 < ../../sources/$(LIBLUA)-lpeg.patch
 	touch $@
 
 dependency/build/liblua-build: dependency/build/liblua-patch dependency/build/liblpeg-install
