@@ -153,22 +153,26 @@ dependency/build/standalone: dependency/build/libncurses-install dependencies-co
 	touch $@
 
 dependencies-clean:
+	rm -f dependency/build/libmusl-install
 	rm -rf dependency/build/*curses*
 	rm -rf dependency/build/libtermkey*
 	rm -rf dependency/build/*lua*
 	rm -rf dependency/build/*lpeg*
 	rm -f dependency/build/local
 	rm -f dependency/build/standalone
+	rm -rf dependency/install
 
-local: clean
+dependencies-local:
 	[ ! -e dependency/build/standalone ] || $(MAKE) dependencies-clean
 	mkdir -p dependency/build && \
 	touch dependency/build/libncurses-extract && \
 	touch dependency/build/libncurses-configure && \
 	touch dependency/build/libncurses-build && \
 	touch dependency/build/libncurses-install
-
 	$(MAKE) dependency/build/local
+
+local: clean
+	$(MAKE) dependencies-local
 	$(MAKE) CFLAGS="$(CFLAGS) -I$(DEPS_INC)" LDFLAGS="$(LDFLAGS) -L$(DEPS_LIB)" \
 		CFLAGS_CURSES="-I/usr/include/ncursesw" LDFLAGS_CURSES="-lncursesw" \
 		CFLAGS_TERMKEY=	LDFLAGS_TERMKEY=-ltermkey \
@@ -176,8 +180,9 @@ local: clean
 		LDFLAGS_LUA="-llua -lm -ldl"
 	@echo Run with: LD_LIBRARY_PATH=$(DEPS_LIB) ./vis
 
-standalone: clean dependency/build/libmusl-install
+standalone: clean
 	[ ! -e dependency/build/local ] || $(MAKE) dependencies-clean
+	$(MAKE) dependency/build/libmusl-install
 	PATH=$(DEPS_BIN):$$PATH PKG_CONFIG_PATH= PKG_CONFIG_LIBDIR= $(MAKE) \
 		CC=musl-gcc dependency/build/standalone
 	PATH=$(DEPS_BIN):$$PATH PKG_CONFIG_PATH= PKG_CONFIG_LIBDIR= $(MAKE) \
@@ -190,4 +195,4 @@ standalone: clean dependency/build/libmusl-install
 		CONFIG_ACL=0 CFLAGS_ACL= LDFLAGS_ACL= \
 		CONFIG_SELINUX=0 CFLAGS_SELINUX= LDFLAGS_SELINUX=
 
-.PHONY: standalone local dependencies-common dependencies-clean
+.PHONY: standalone local dependencies-common dependencies-local dependencies-clean
