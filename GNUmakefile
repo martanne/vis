@@ -33,15 +33,18 @@ LIBNCURSES_CONFIG = --disable-database --with-fallbacks=st,st-256color,xterm,xte
 	--without-tests --without-progs --without-debug --without-profile \
 	--without-cxx-shared --without-termlib --without--ticlib
 
+dependency/build:
+	mkdir -p "$@"
+
 dependency/sources:
-	mkdir -p "$@" "$(dir $@)/build"
+	mkdir -p "$@"
 
 dependency/sources/musl-%: | dependency/sources
 	wget -c -O $@.part http://www.musl-libc.org/releases/$(LIBMUSL).tar.gz
 	mv $@.part $@
 	[ -z $(LIBMUSL_SHA1) ] || (echo '$(LIBMUSL_SHA1)  $@' | sha1sum -c)
 
-dependency/build/libmusl-extract: dependency/sources/$(LIBMUSL).tar.gz
+dependency/build/libmusl-extract: dependency/sources/$(LIBMUSL).tar.gz dependency/build
 	tar xzf $< -C $(dir $@)
 	touch $@
 
@@ -62,7 +65,7 @@ dependency/sources/ncurses-%: | dependency/sources
 	mv $@.part $@
 	[ -z $(LIBNCURSES_SHA1) ] || (echo '$(LIBNCURSES_SHA1)  $@' | sha1sum -c)
 
-dependency/build/libncurses-extract: dependency/sources/$(LIBNCURSES).tar.gz
+dependency/build/libncurses-extract: dependency/sources/$(LIBNCURSES).tar.gz dependency/build
 	tar xzf $< -C $(dir $@)
 	touch $@
 
@@ -83,7 +86,7 @@ dependency/sources/libtermkey-%: | dependency/sources
 	mv $@.part $@
 	[ -z $(LIBTERMKEY_SHA1) ] || (echo '$(LIBTERMKEY_SHA1)  $@' | sha1sum -c)
 
-dependency/build/libtermkey-extract: dependency/sources/$(LIBTERMKEY).tar.gz
+dependency/build/libtermkey-extract: dependency/sources/$(LIBTERMKEY).tar.gz dependency/build
 	tar xzf $< -C $(dir $@)
 	touch $@
 
@@ -102,7 +105,7 @@ dependency/sources/lua-%: | dependency/sources
 	mv $@.part $@
 	[ -z $(LIBLUA_SHA1) ] || (echo '$(LIBLUA_SHA1)  $@' | sha1sum -c)
 
-dependency/build/liblua-extract: dependency/sources/$(LIBLUA).tar.gz
+dependency/build/liblua-extract: dependency/sources/$(LIBLUA).tar.gz dependency/build
 	tar xzf $< -C $(dir $@)
 	touch $@
 
@@ -125,7 +128,7 @@ dependency/sources/lpeg-%: | dependency/sources
 	mv $@.part $@
 	[ -z $(LIBLPEG_SHA1) ] || (echo '$(LIBLPEG_SHA1)  $@' | sha1sum -c)
 
-dependency/build/liblpeg-extract: dependency/sources/$(LIBLPEG).tar.gz
+dependency/build/liblpeg-extract: dependency/sources/$(LIBLPEG).tar.gz dependency/build
 	tar xzf $< -C $(dir $@)
 	touch $@
 
