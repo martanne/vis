@@ -6,7 +6,7 @@ PREFIX ?= /usr/local
 MANPREFIX ?= ${PREFIX}/share/man
 SHAREPREFIX ?= ${PREFIX}/share/vis
 
-VERSION = $(shell git describe 2>/dev/null || echo "0.1.x")
+VERSION = $(shell git describe 2>/dev/null || echo "0.2")
 
 CONFIG_LUA ?= 1
 CONFIG_ACL ?= 0
