@@ -221,9 +221,9 @@ tryflag CFLAGS_AUTO -Os
 # Try hardening flags
 tryflag CFLAGS_AUTO -fPIE
 tryflag CFLAGS_AUTO -fstack-protector-all
-tryldflag LDFLAGS_AUTO "-z now"
-tryldflag LDFLAGS_AUTO "-z relro"
-tryldflag LDFLAGS_AUTO -pie
+tryldflag LDFLAGS_AUTO -Wl,-z,now
+tryldflag LDFLAGS_AUTO -Wl,-z,relro
+tryldflag LDFLAGS_AUTO -Wl,-pie
 
 have_pkgconfig=no
 printf "checking for pkg-config... "
