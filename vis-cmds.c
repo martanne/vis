@@ -214,6 +214,11 @@ static bool cmd_set(Vis *vis, Filerange *range, enum CmdOpt cmdopt, const char *
 		return false;
 	}
 
+	if (!vis->win) {
+		vis_info_show(vis, "Need active window for :set command");
+		return false;
+	}
+
 	Arg arg;
 	bool invert = false;
 	OptionDef *opt = NULL;
@@ -1203,8 +1208,10 @@ static Filepos parse_pos(Win *win, char **cmd) {
 }
 
 static Filerange parse_range(Win *win, char **cmd) {
-	Text *txt = win->file->text;
 	Filerange r = text_range_empty();
+	if (!win)
+		return r;
+	Text *txt = win->file->text;
 	Mark *marks = win->file->marks;
 	char start = **cmd;
 	switch (**cmd) {
