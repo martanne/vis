@@ -792,7 +792,7 @@ static void vis_args(Vis *vis, int argc, char *argv[]) {
 				end_of_options = true;
 				break;
 			case 'v':
-				vis_die(vis, "vis %s, compiled " __DATE__ " " __TIME__ "\n", VERSION);
+				vis_die(vis, "vis %s\n", VERSION);
 				break;
 			case '\0':
 				break;

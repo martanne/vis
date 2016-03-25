@@ -1000,7 +1000,7 @@ static bool cmd_help(Vis *vis, Filerange *range, enum CmdOpt opt, const char *ar
 
 	Text *txt = vis->win->file->text;
 
-	text_appendf(txt, "vis %s, compiled " __DATE__ " " __TIME__ "\n\n", VERSION);
+	text_appendf(txt, "vis %s\n\n", VERSION);
 
 	text_appendf(txt, " Modes\n\n");
 	for (int i = 0; i < LENGTH(vis_modes); i++) {
