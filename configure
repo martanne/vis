@@ -223,7 +223,7 @@ tryflag CFLAGS_AUTO -fPIE
 tryflag CFLAGS_AUTO -fstack-protector-all
 tryldflag LDFLAGS_AUTO -Wl,-z,now
 tryldflag LDFLAGS_AUTO -Wl,-z,relro
-tryldflag LDFLAGS_AUTO -Wl,-pie
+tryldflag LDFLAGS_AUTO -pie
 
 have_pkgconfig=no
 printf "checking for pkg-config... "
