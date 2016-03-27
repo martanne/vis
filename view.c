@@ -42,6 +42,7 @@ struct Cursor {             /* cursor position */
 	Mark lastsel_anchor;/* previously used selection data, */
 	Mark lastsel_cursor;/* used to restore it */
 	Register reg;       /* per cursor register to support yank/put operation */
+	int generation;     /* used to filter out newly created cursors during iteration */
 	View *view;         /* associated view to which this cursor belongs */
 	Cursor *prev, *next;/* previous/next cursors in no particular order */
 };
@@ -69,6 +70,7 @@ struct View {
 	Cursor *cursors;    /* all cursors currently active */
 	Selection *selections; /* all selected regions */
 	lua_State *lua;     /* lua state used for syntax highlighting */
+	int cursor_generation; /* used to filter out newly created cursors during iteration */
 	char *lexer_name;
 	bool need_update;   /* whether view has been redrawn */
 	bool large_file;    /* optimize for displaying large files */
@@ -737,7 +739,7 @@ View *view_new(Text *text, lua_State *lua) {
 	View *view = calloc(1, sizeof(View));
 	if (!view)
 		return NULL;
-	if (!view_cursors_new(view, EPOS)) {
+	if (!view_cursors_new(view, 0)) {
 		view_free(view);
 		return NULL;
 	}
@@ -1056,13 +1058,41 @@ Cursor *view_cursors_new(View *view, size_t pos) {
 	if (!c)
 		return NULL;
 	c->view = view;
-	c->next = view->cursors;
-	if (view->cursors)
-		view->cursors->prev = c;
-	view->cursors = c;
+	c->generation = view->cursor_generation;
+	if (!view->cursors) {
+		view->cursor = c;
+		view->cursors = c;
+		return c;
+	}
+
+	Cursor *prev = NULL, *next = NULL;
+	size_t cur = view_cursors_pos(view->cursor);
+	if (pos >= cur) {
+		prev = view->cursor;
+		for (next = prev->next; next; prev = next, next = next->next) {
+			cur = view_cursors_pos(next);
+			if (pos <= cur)
+				break;
+		}
+	} else { // pos < cur
+		next = view->cursor;
+		for (prev = next->prev; prev; next = prev, prev = prev->prev) {
+			cur = view_cursors_pos(prev);
+			if (pos >= cur)
+				break;
+		}
+	}
+
+	c->prev = prev;
+	c->next = next;
+	if (prev)
+		prev->next = c;
+	if (next)
+		next->prev = c;
+	if (!prev)
+		view->cursors = c;
 	view->cursor = c;
-	if (pos != EPOS)
-		view_cursors_to(c, pos);
+	view_cursors_to(c, pos);
 	return c;
 }
 
@@ -1104,10 +1134,12 @@ void view_cursors_dispose(Cursor *c) {
 }
 
 Cursor *view_cursors(View *view) {
+	view->cursor_generation++;
 	return view->cursors;
 }
 
 Cursor *view_cursors_primary_get(View *view) {
+	view->cursor_generation++;
 	return view->cursor;
 }
 
@@ -1122,11 +1154,23 @@ void view_cursors_primary_set(Cursor *c) {
 }
 
 Cursor *view_cursors_prev(Cursor *c) {
-	return c->prev;
+	View *view = c->view;
+	for (c = c->prev; c; c = c->prev) {
+		if (c->generation != view->cursor_generation)
+			return c;
+	}
+	view->cursor_generation++;
+	return NULL;
 }
 
 Cursor *view_cursors_next(Cursor *c) {
-	return c->next;
+	View *view = c->view;
+	for (c = c->next; c; c = c->next) {
+		if (c->generation != view->cursor_generation)
+			return c;
+	}
+	view->cursor_generation++;
+	return NULL;
 }
 
 size_t view_cursors_pos(Cursor *c) {
