@@ -1230,7 +1230,9 @@ static const char *cursors_align_indent(Vis *vis, const char *keys, const Arg *a
 	for (int i = 0; i < columns; i++) {
 		int mincol = INT_MAX, maxcol = 0;
 		for (Cursor *c = view_cursors_column(view, i); c; c = view_cursors_column_next(c, i)) {
-			int col = text_line_width_get(txt, view_cursors_pos(c));
+			Filerange sel = view_cursors_selection_get(c);
+			size_t pos = text_range_valid(&sel) ? sel.start : view_cursors_pos(c);
+			int col = text_line_width_get(txt, pos);
 			if (col < mincol)
 				mincol = col;
 			if (col > maxcol)
@@ -1244,7 +1246,8 @@ static const char *cursors_align_indent(Vis *vis, const char *keys, const Arg *a
 		memset(buf, ' ', len);
 
 		for (Cursor *c = view_cursors_column(view, i); c; c = view_cursors_column_next(c, i)) {
-			size_t pos = view_cursors_pos(c);
+			Filerange sel = view_cursors_selection_get(c);
+			size_t pos = text_range_valid(&sel) ? sel.start : view_cursors_pos(c);
 			int col = text_line_width_get(txt, pos);
 			if (col < maxcol) {
 				size_t off = maxcol - col;

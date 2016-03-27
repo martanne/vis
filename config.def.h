@@ -278,6 +278,7 @@ static const KeyBinding bindings_visual[] = {
 	{ "o",                  ACTION(SELECTION_FLIP)                      },
 	{ ">",                  ALIAS("<vis-operator-shift-right>gv")       },
 	{ "<",                  ALIAS("<vis-operator-shift-left>gv")        },
+	{ "<Tab>"  ,            ACTION(CURSORS_ALIGN_INDENT)                },
 	{ 0 /* empty last element, array terminator */                      },
 };
 
