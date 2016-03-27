@@ -1190,15 +1190,15 @@ static const char *repeat(Vis *vis, const char *keys, const Arg *arg) {
 
 static const char *cursors_new(Vis *vis, const char *keys, const Arg *arg) {
 	View *view = vis_view(vis);
-	size_t pos = view_cursor_get(view);
-	Cursor *cursor = view_cursors_new(view);
-	if (cursor) {
-		view_cursors_to(cursor, pos);
-		if (arg->i > 0)
-			view_line_down(cursor);
-		else if (arg->i < 0)
-			view_line_up(cursor);
-	}
+	Cursor *cursor = view_cursors_primary_get(view);
+	size_t oldpos = view_cursors_pos(cursor);
+	if (arg->i > 0)
+		view_line_down(cursor);
+	else if (arg->i < 0)
+		view_line_up(cursor);
+	size_t newpos = view_cursors_pos(cursor);
+	view_cursors_to(cursor, oldpos);
+	view_cursors_new(view, newpos);
 	return keys;
 }
 
@@ -1294,11 +1294,11 @@ static const char *cursors_select_next(Vis *vis, const char *keys, const Arg *ar
 	free(buf);
 
 	if (text_range_valid(&word)) {
-		cursor = view_cursors_new(view);
+		size_t pos = text_char_prev(txt, word.end);
+		cursor = view_cursors_new(view, pos);
 		if (!cursor)
 			return keys;
 		view_cursors_selection_set(cursor, &word);
-		view_cursors_to(cursor, text_char_prev(txt, word.end));
 	}
 	return keys;
 }

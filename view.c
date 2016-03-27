@@ -737,7 +737,7 @@ View *view_new(Text *text, lua_State *lua) {
 	View *view = calloc(1, sizeof(View));
 	if (!view)
 		return NULL;
-	if (!view_cursors_new(view)) {
+	if (!view_cursors_new(view, EPOS)) {
 		view_free(view);
 		return NULL;
 	}
@@ -1051,17 +1051,18 @@ size_t view_screenline_goto(View *view, int n) {
 	return pos;
 }
 
-Cursor *view_cursors_new(View *view) {
+Cursor *view_cursors_new(View *view, size_t pos) {
 	Cursor *c = calloc(1, sizeof(*c));
 	if (!c)
 		return NULL;
-
 	c->view = view;
 	c->next = view->cursors;
 	if (view->cursors)
 		view->cursors->prev = c;
 	view->cursors = c;
 	view->cursor = c;
+	if (pos != EPOS)
+		view_cursors_to(c, pos);
 	return c;
 }
 

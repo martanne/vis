@@ -169,15 +169,12 @@ static size_t op_cursor(Vis *vis, Text *txt, OperatorContext *c) {
 	View *view = vis->win->view;
 	Filerange r = text_range_linewise(txt, &c->range);
 	for (size_t line = text_range_line_first(txt, &r); line != EPOS; line = text_range_line_next(txt, &r, line)) {
-		Cursor *cursor = view_cursors_new(view);
-		if (cursor) {
-			size_t pos;
-			if (c->arg->i == VIS_OP_CURSOR_EOL)
-				pos = text_line_finish(txt, line);
-			else
-				pos = text_line_start(txt, line);
-			view_cursors_to(cursor, pos);
-		}
+		size_t pos;
+		if (c->arg->i == VIS_OP_CURSOR_EOL)
+			pos = text_line_finish(txt, line);
+		else
+			pos = text_line_start(txt, line);
+		view_cursors_new(view, pos);
 	}
 	return EPOS;
 }

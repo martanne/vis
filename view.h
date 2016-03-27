@@ -119,8 +119,8 @@ void view_scroll_to(View*, size_t pos);
  * position is visible. if the position is in the middle of a line, try to
  * adjust the viewport in such a way that the whole line is displayed */
 void view_cursor_to(View*, size_t pos);
-/* create a new cursor */
-Cursor *view_cursors_new(View*);
+/* create a new cursor, at given position */
+Cursor *view_cursors_new(View*, size_t pos);
 /* get number of active cursors */
 int view_cursors_count(View*);
 /* exist there more than 1 cursor */
