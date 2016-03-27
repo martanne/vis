@@ -1360,7 +1360,7 @@ static const char *cursors_navigate(Vis *vis, const char *keys, const Arg *arg) 
 		return wscroll(vis, keys, arg);
 	Cursor *c = view_cursors_primary_get(view);
 	for (int count = vis_count_get_default(vis, 1); count > 0; count--) {
-		if (arg->i < 0) {
+		if (arg->i > 0) {
 			c = view_cursors_next(c);
 			if (!c)
 				c = view_cursors(view);
