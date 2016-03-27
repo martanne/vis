@@ -237,7 +237,9 @@ enum {
 	VIS_ACTION_PUT_BEFORE_END,
 	VIS_ACTION_CURSOR_SELECT_WORD,
 	VIS_ACTION_CURSORS_NEW_LINE_ABOVE,
+	VIS_ACTION_CURSORS_NEW_LINE_ABOVE_FIRST,
 	VIS_ACTION_CURSORS_NEW_LINE_BELOW,
+	VIS_ACTION_CURSORS_NEW_LINE_BELOW_LAST,
 	VIS_ACTION_CURSORS_NEW_LINES_BEGIN,
 	VIS_ACTION_CURSORS_NEW_LINES_END,
 	VIS_ACTION_CURSORS_NEW_MATCH_NEXT,
@@ -888,10 +890,20 @@ static const KeyAction vis_action[] = {
 		"Create a new cursor on the line above",
 		cursors_new, { .i = -1 }
 	},
+	[VIS_ACTION_CURSORS_NEW_LINE_ABOVE_FIRST] = {
+		"cursors-new-lines-above-first",
+		"Create a new cursor on the line above the first cursor",
+		cursors_new, { .i = INT_MIN }
+	},
 	[VIS_ACTION_CURSORS_NEW_LINE_BELOW] = {
 		"cursor-new-lines-below",
 		"Create a new cursor on the line below",
 		cursors_new, { .i = +1 }
+	},
+	[VIS_ACTION_CURSORS_NEW_LINE_BELOW_LAST] = {
+		"cursor-new-lines-below-last",
+		"Create a new cursor on the line below the last cursor",
+		cursors_new, { .i = INT_MAX }
 	},
 	[VIS_ACTION_CURSORS_NEW_LINES_BEGIN] = {
 		"cursors-new-lines-begin",
@@ -1190,7 +1202,22 @@ static const char *repeat(Vis *vis, const char *keys, const Arg *arg) {
 
 static const char *cursors_new(Vis *vis, const char *keys, const Arg *arg) {
 	View *view = vis_view(vis);
-	Cursor *cursor = view_cursors_primary_get(view);
+	Cursor *cursor;
+	switch (arg->i) {
+	case -1:
+	case +1:
+		cursor = view_cursors_primary_get(view);
+		break;
+	case INT_MIN:
+		cursor = view_cursors(view);
+		break;
+	case INT_MAX:
+		for (Cursor *c = view_cursors(view); c; c = view_cursors_next(c))
+			cursor = c;
+		break;
+	default:
+		return keys;
+	}
 	size_t oldpos = view_cursors_pos(cursor);
 	if (arg->i > 0)
 		view_line_down(cursor);
