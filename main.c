@@ -1202,30 +1202,33 @@ static const char *repeat(Vis *vis, const char *keys, const Arg *arg) {
 
 static const char *cursors_new(Vis *vis, const char *keys, const Arg *arg) {
 	View *view = vis_view(vis);
-	Cursor *cursor;
-	switch (arg->i) {
-	case -1:
-	case +1:
-		cursor = view_cursors_primary_get(view);
-		break;
-	case INT_MIN:
-		cursor = view_cursors(view);
-		break;
-	case INT_MAX:
-		for (Cursor *c = view_cursors(view); c; c = view_cursors_next(c))
-			cursor = c;
-		break;
-	default:
-		return keys;
+	for (int count = vis_count_get_default(vis, 1); count > 0; count--) {
+		Cursor *cursor;
+		switch (arg->i) {
+		case -1:
+		case +1:
+			cursor = view_cursors_primary_get(view);
+			break;
+		case INT_MIN:
+			cursor = view_cursors(view);
+			break;
+		case INT_MAX:
+			for (Cursor *c = view_cursors(view); c; c = view_cursors_next(c))
+				cursor = c;
+			break;
+		default:
+			return keys;
+		}
+		size_t oldpos = view_cursors_pos(cursor);
+		if (arg->i > 0)
+			view_line_down(cursor);
+		else if (arg->i < 0)
+			view_line_up(cursor);
+		size_t newpos = view_cursors_pos(cursor);
+		view_cursors_to(cursor, oldpos);
+		view_cursors_new(view, newpos);
 	}
-	size_t oldpos = view_cursors_pos(cursor);
-	if (arg->i > 0)
-		view_line_down(cursor);
-	else if (arg->i < 0)
-		view_line_up(cursor);
-	size_t newpos = view_cursors_pos(cursor);
-	view_cursors_to(cursor, oldpos);
-	view_cursors_new(view, newpos);
+	vis_count_set(vis, VIS_COUNT_UNKNOWN);
 	return keys;
 }
 
