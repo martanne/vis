@@ -1068,14 +1068,14 @@ Cursor *view_cursors_new(View *view, size_t pos) {
 
 	Cursor *prev = NULL, *next = NULL;
 	size_t cur = view_cursors_pos(view->cursor);
-	if (pos >= cur) {
+	if (pos > cur) {
 		prev = view->cursor;
 		for (next = prev->next; next; prev = next, next = next->next) {
 			cur = view_cursors_pos(next);
 			if (pos <= cur)
 				break;
 		}
-	} else { // pos < cur
+	} else if (pos < cur) {
 		next = view->cursor;
 		for (prev = next->prev; prev; next = prev, prev = prev->prev) {
 			cur = view_cursors_pos(prev);
@@ -1083,6 +1083,9 @@ Cursor *view_cursors_new(View *view, size_t pos) {
 				break;
 		}
 	}
+
+	if (pos == cur)
+		goto err;
 
 	c->prev = prev;
 	c->next = next;
@@ -1095,6 +1098,9 @@ Cursor *view_cursors_new(View *view, size_t pos) {
 	view->cursor = c;
 	view_cursors_to(c, pos);
 	return c;
+err:
+	free(c);
+	return NULL;
 }
 
 int view_cursors_count(View *view) {
