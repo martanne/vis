@@ -4,6 +4,7 @@
 #include <ctype.h>
 #include <errno.h>
 #include <regex.h>
+#include <limits.h>
 #include "vis-lua.h"
 #include "view.h"
 #include "text.h"
@@ -1101,6 +1102,59 @@ int view_cursors_count(View *view) {
 	for (Cursor *c = view_cursors(view); c; c = view_cursors_next(c))
 		i++;
 	return i;
+}
+
+int view_cursors_column_count(View *view) {
+	Text *txt = view->text;
+	int cpl_max = 0, cpl = 0; /* cursors per line */
+	size_t line_prev = 0;
+	for (Cursor *c = view->cursors; c; c = c->next) {
+		size_t pos = view_cursors_pos(c);
+		size_t line = text_lineno_by_pos(txt, pos);
+		if (line == line_prev)
+			cpl++;
+		else
+			cpl = 1;
+		line_prev = line;
+		if (cpl > cpl_max)
+			cpl_max = cpl;
+	}
+	return cpl_max;
+}
+
+static Cursor *cursors_column_next(View *view, Cursor *c, int column) {
+	size_t line_cur = 0;
+	int column_cur = 0;
+	Text *txt = view->text;
+	if (c) {
+		size_t pos = view_cursors_pos(c);
+		line_cur = text_lineno_by_pos(txt, pos);
+		column_cur = INT_MIN;
+	} else {
+		c = view->cursors;
+	}
+
+	for (; c; c = c->next) {
+		size_t pos = view_cursors_pos(c);
+		size_t line = text_lineno_by_pos(txt, pos);
+		if (line != line_cur) {
+			line_cur = line;
+			column_cur = 0;
+		} else {
+			column_cur++;
+		}
+		if (column == column_cur)
+			return c;
+	}
+	return NULL;
+}
+
+Cursor *view_cursors_column(View *view, int column) {
+	return cursors_column_next(view, NULL, column);
+}
+
+Cursor *view_cursors_column_next(Cursor *c, int column) {
+	return cursors_column_next(c->view, c, column);
 }
 
 bool view_cursors_multiple(View *view) {

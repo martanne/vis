@@ -179,4 +179,11 @@ Filerange view_selections_get(Selection*);
 void view_selections_set(Selection*, Filerange*);
 Text *view_text(View*);
 
+/* get number of columns, that is maximal number of cursors on a line */
+int view_cursors_column_count(View*);
+/* get first cursor in zero based column */
+Cursor *view_cursors_column(View*, int column);
+/* get next cursor (i.e. on another line) in zero based column */
+Cursor *view_cursors_column_next(Cursor*, int column);
+
 #endif
