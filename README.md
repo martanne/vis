@@ -195,29 +195,33 @@ Operators can be forced to work line wise by specifying `V`.
   
   To manipulate multiple cursors use in normal mode:
   
-    CTRL-K   create a new cursor on the line above
-    CTRL-J   create a new cursor on the line below
-    CTRL-P   remove primary cursor
-    CTRL-N   select word the cursor is currently over, switch to visual mode
-    CTRL-U   make the previous cursor primary
-    CTRL-D   make the next cursor primary
-    TAB      try to align all cursor on the same column
-    ESC      if a selection is active, clear it.
-             Otherwise dispose all but the primary cursor.
+    Ctrl-K       create count new cursors on the lines above
+    Ctrl-Meta-K  create count new cursors on the lines above the first cursor
+    Ctrl-J       create count new cursors on the lines below
+    Ctrl-Meta-J  create count new cursors on the lines below the last cursor
+    Ctrl-P       remove primary cursor
+    Ctrl-N       select word the cursor is currently over, switch to visual mode
+    Ctrl-U       make the count previous cursor primary
+    Ctrl-D       make the count next cursor primary
+    Tab          try to align all cursor on the same column
+    Esc          dispose all but the primary cursor
 
   Visual mode was enhanced to recognize:
     
-    I        create a cursor at the start of every selected line
-    A        create a cursor at the end of every selected line
-    CTRL-N   create new cursor and select next word matching current selection
-    CTRL-X   clear (skip) current selection, but select next matching word
-    CTRL-P   remove primary cursor
-    CTRL-U   make the previous cursor primary
-    CTRL-D   make the next cursor primary
+    I            create a cursor at the start of every selected line
+    A            create a cursor at the end of every selected line
+    Tab          left align selections by inserting spaces
+    Shift-Tab    right align selections by inserting spaces
+    Ctrl-N       create new cursor and select next word matching current selection
+    Ctrl-X       clear (skip) current selection, but select next matching word
+    Ctrl-P       remove primary cursor
+    Ctrl-U       make the count previous cursor primary
+    Ctrl-D       make the count next cursor primary
+    Esc          clear all selections, switch to normal mode
 
   In insert/replace mode
 
-    S-Tab    aligns all cursors by inserting spaces
+    Shift-Tab    align all cursors by inserting spaces
 
 ### Marks
 
