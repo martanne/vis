@@ -1105,7 +1105,7 @@ err:
 
 int view_cursors_count(View *view) {
 	int i = 0;
-	for (Cursor *c = view_cursors(view); c; c = view_cursors_next(c))
+	for (Cursor *c = view->cursors; c; c = c->next)
 		i++;
 	return i;
 }

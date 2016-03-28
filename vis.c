@@ -432,7 +432,7 @@ void action_do(Vis *vis, Action *a) {
 
 	int count = MAX(a->count, 1);
 	bool repeatable = a->op && !vis->macro_operator;
-	bool multiple_cursors = view_cursors_count(view) > 1;
+	bool multiple_cursors = view_cursors_multiple(view);
 	bool linewise = !(a->type & CHARWISE) && (
 		a->type & LINEWISE || (a->movement && a->movement->type & LINEWISE) ||
 		vis->mode == &vis_modes[VIS_MODE_VISUAL_LINE]);
