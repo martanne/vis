@@ -1232,7 +1232,14 @@ static const char *cursors_new(Vis *vis, const char *keys, const Arg *arg) {
 			view_line_up(cursor);
 		size_t newpos = view_cursors_pos(cursor);
 		view_cursors_to(cursor, oldpos);
-		view_cursors_new(view, newpos);
+		if (!view_cursors_new(view, newpos)) {
+			if (arg->i == -1) {
+				cursor = view_cursors_prev(cursor);
+			} else if (arg->i == +1) {
+				cursor = view_cursors_next(cursor);
+			}
+			view_cursors_primary_set(cursor);
+		}
 	}
 	vis_count_set(vis, VIS_COUNT_UNKNOWN);
 	return keys;
