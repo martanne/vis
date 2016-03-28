@@ -1224,34 +1224,39 @@ static const char *cursors_align(Vis *vis, const char *keys, const Arg *arg) {
 static const char *cursors_align_indent(Vis *vis, const char *keys, const Arg *arg) {
 	View *view = vis_view(vis);
 	Text *txt = vis_text(vis);
-	int mincol = INT_MAX, maxcol = 0;
+	bool left_align = arg->i < 0;
+	int columns = view_cursors_column_count(view);
 
-	for (Cursor *c = view_cursors(view); c; c = view_cursors_next(c)) {
-		int col = text_line_width_get(txt, view_cursors_pos(c));
-		if (col < mincol)
-			mincol = col;
-		if (col > maxcol)
-			maxcol = col;
-	}
-
-	size_t len = maxcol - mincol;
-	char *buf = malloc(len+1);
-	if (!buf)
-		return keys;
-	memset(buf, ' ', len);
-
-	for (Cursor *c = view_cursors(view); c; c = view_cursors_next(c)) {
-		size_t pos = view_cursors_pos(c);
-		int col = text_line_width_get(txt, pos);
-		if (col < maxcol) {
-			size_t off = maxcol - col;
-			if (off <= len)
-				text_insert(txt, pos, buf, off);
+	for (int i = 0; i < columns; i++) {
+		int mincol = INT_MAX, maxcol = 0;
+		for (Cursor *c = view_cursors_column(view, i); c; c = view_cursors_column_next(c, i)) {
+			int col = text_line_width_get(txt, view_cursors_pos(c));
+			if (col < mincol)
+				mincol = col;
+			if (col > maxcol)
+				maxcol = col;
 		}
+
+		size_t len = maxcol - mincol;
+		char *buf = malloc(len+1);
+		if (!buf)
+			return keys;
+		memset(buf, ' ', len);
+
+		for (Cursor *c = view_cursors_column(view, i); c; c = view_cursors_column_next(c, i)) {
+			size_t pos = view_cursors_pos(c);
+			int col = text_line_width_get(txt, pos);
+			if (col < maxcol) {
+				size_t off = maxcol - col;
+				if (off <= len)
+					text_insert(txt, pos, buf, off);
+			}
+		}
+
+		free(buf);
 	}
 
 	view_draw(view);
-	free(buf);
 	return keys;
 }
 
