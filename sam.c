@@ -729,6 +729,8 @@ static bool cmd_select(Vis *vis, Win *win, Command *cmd, Filerange *range) {
 	View *view = win->view;
 	Text *txt = win->file->text;
 	bool multiple_cursors = view_cursors_multiple(view);
+	size_t pos = view_cursor_get(view);
+	Cursor *cursor = NULL;
 	for (Cursor *c = view_cursors(view), *next; c; c = next) {
 		next = view_cursors_next(c);
 		Filerange sel;
@@ -743,9 +745,18 @@ static bool cmd_select(Vis *vis, Win *win, Command *cmd, Filerange *range) {
 		} else {
 			sel = text_range_new(0, text_size(txt));
 		}
+		if (!view_cursors_dispose(c)) {
+			cursor = view_cursors_new(view, text_size(txt)+1);
+			view_cursors_dispose(c);
+		}
 		ret &= sam_execute(vis, win, cmd->cmd, &sel);
-		view_cursors_dispose(c);
 	}
+
+	if (cursor && !view_cursors_dispose(cursor)) {
+		view_cursors_selection_clear(cursor);
+		view_cursors_to(cursor, pos);
+	}
+
 	return ret;
 }
 
