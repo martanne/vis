@@ -407,7 +407,7 @@ static Command *command_parse(Vis *vis, const char **s, int level, enum SamError
 		cmd->count = parse_number(s);
 
 	if (cmddef->flags & CMD_REGEX) {
-		if (cmddef->flags & CMD_REGEX_DEFAULT && **s == ' ') {
+		if ((cmddef->flags & CMD_REGEX_DEFAULT) && (!**s || **s == ' ')) {
 			skip_spaces(s);
 		} else if (!(cmd->regex = parse_regex(vis, s))) {
 			*err = SAM_ERR_REGEX;
