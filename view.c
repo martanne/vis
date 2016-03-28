@@ -1183,15 +1183,16 @@ static void view_cursors_free(Cursor *c) {
 	free(c);
 }
 
-void view_cursors_dispose(Cursor *c) {
+bool view_cursors_dispose(Cursor *c) {
 	if (!c)
-		return;
+		return false;
 	View *view = c->view;
-	if (view->cursors && view->cursors->next) {
-		view_selections_free(c->sel);
-		view_cursors_free(c);
-		view_draw(view);
-	}
+	if (!view->cursors || !view->cursors->next)
+		return false;
+	view_selections_free(c->sel);
+	view_cursors_free(c);
+	view_cursors_primary_set(view->cursor);
+	return true;
 }
 
 Cursor *view_cursors(View *view) {
