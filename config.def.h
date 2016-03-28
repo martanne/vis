@@ -280,7 +280,8 @@ static const KeyBinding bindings_visual[] = {
 	{ "o",                  ACTION(SELECTION_FLIP)                      },
 	{ ">",                  ALIAS("<vis-operator-shift-right>gv")       },
 	{ "<",                  ALIAS("<vis-operator-shift-left>gv")        },
-	{ "<Tab>"  ,            ACTION(CURSORS_ALIGN_INDENT)                },
+	{ "<Tab>"  ,            ACTION(CURSORS_ALIGN_INDENT_LEFT)           },
+	{ "<S-Tab>"  ,          ACTION(CURSORS_ALIGN_INDENT_RIGHT)          },
 	{ 0 /* empty last element, array terminator */                      },
 };
 
@@ -315,7 +316,7 @@ static const KeyBinding bindings_insert[] = {
 	{ "<C-x><C-e>",         ACTION(WINDOW_SLIDE_UP)                     },
 	{ "<C-x><C-y>",         ACTION(WINDOW_SLIDE_DOWN)                   },
 	{ "<Tab>",              ACTION(INSERT_TAB)                          },
-	{ "<S-Tab>",            ACTION(CURSORS_ALIGN_INDENT)                },
+	{ "<S-Tab>",            ACTION(CURSORS_ALIGN_INDENT_LEFT)           },
 	{ "<C-r>",              ACTION(INSERT_REGISTER)                     },
 	{ 0 /* empty last element, array terminator */                      },
 };

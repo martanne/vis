@@ -245,7 +245,8 @@ enum {
 	VIS_ACTION_CURSORS_NEW_MATCH_NEXT,
 	VIS_ACTION_CURSORS_NEW_MATCH_SKIP,
 	VIS_ACTION_CURSORS_ALIGN,
-	VIS_ACTION_CURSORS_ALIGN_INDENT,
+	VIS_ACTION_CURSORS_ALIGN_INDENT_LEFT,
+	VIS_ACTION_CURSORS_ALIGN_INDENT_RIGHT,
 	VIS_ACTION_CURSORS_REMOVE_ALL,
 	VIS_ACTION_CURSORS_REMOVE_LAST,
 	VIS_ACTION_CURSORS_PREV,
@@ -930,10 +931,15 @@ static const KeyAction vis_action[] = {
 		"Try to align all cursors on the same column",
 		cursors_align,
 	},
-	[VIS_ACTION_CURSORS_ALIGN_INDENT] = {
-		"cursors-align-indent",
-		"Try to align all cursors by inserting spaces",
-		cursors_align_indent,
+	[VIS_ACTION_CURSORS_ALIGN_INDENT_LEFT] = {
+		"cursors-align-indent-left",
+		"Left align all cursors/selections by inserting spaces",
+		cursors_align_indent, { .i = -1 }
+	},
+	[VIS_ACTION_CURSORS_ALIGN_INDENT_RIGHT] = {
+		"cursors-align-indent-right",
+		"Right align all cursors/selections by inserting spaces",
+		cursors_align_indent, { .i = +1 }
 	},
 	[VIS_ACTION_CURSORS_REMOVE_ALL] = {
 		"cursors-remove-all",
@@ -1260,8 +1266,12 @@ static const char *cursors_align_indent(Vis *vis, const char *keys, const Arg *a
 	for (int i = 0; i < columns; i++) {
 		int mincol = INT_MAX, maxcol = 0;
 		for (Cursor *c = view_cursors_column(view, i); c; c = view_cursors_column_next(c, i)) {
+			size_t pos;
 			Filerange sel = view_cursors_selection_get(c);
-			size_t pos = text_range_valid(&sel) ? sel.start : view_cursors_pos(c);
+			if (text_range_valid(&sel))
+				pos = left_align ? sel.start : sel.end;
+			else
+				pos = view_cursors_pos(c);
 			int col = text_line_width_get(txt, pos);
 			if (col < mincol)
 				mincol = col;
@@ -1276,13 +1286,20 @@ static const char *cursors_align_indent(Vis *vis, const char *keys, const Arg *a
 		memset(buf, ' ', len);
 
 		for (Cursor *c = view_cursors_column(view, i); c; c = view_cursors_column_next(c, i)) {
+			size_t pos, ipos;
 			Filerange sel = view_cursors_selection_get(c);
-			size_t pos = text_range_valid(&sel) ? sel.start : view_cursors_pos(c);
+			if (text_range_valid(&sel)) {
+				pos = left_align ? sel.start : sel.end;
+				ipos = sel.start;
+			} else {
+				pos = view_cursors_pos(c);
+				ipos = pos;
+			}
 			int col = text_line_width_get(txt, pos);
 			if (col < maxcol) {
 				size_t off = maxcol - col;
 				if (off <= len)
-					text_insert(txt, pos, buf, off);
+					text_insert(txt, ipos, buf, off);
 			}
 		}
 
