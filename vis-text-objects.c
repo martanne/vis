@@ -13,7 +13,7 @@ int vis_textobject_register(Vis *vis, int type, void *data,
 	obj->type = type;
 	obj->data = data;
 
-	if (array_add(&vis->textobjects, obj))
+	if (array_add_ptr(&vis->textobjects, obj))
 		return LENGTH(vis_textobjects) + array_length(&vis->textobjects) - 1;
 	free(obj);
 	return -1;
@@ -23,7 +23,7 @@ bool vis_textobject(Vis *vis, enum VisTextObject id) {
 	if (id < LENGTH(vis_textobjects))
 		vis->action.textobj = &vis_textobjects[id];
 	else
-		vis->action.textobj = array_get(&vis->textobjects, id - LENGTH(vis_textobjects));
+		vis->action.textobj = array_get_ptr(&vis->textobjects, id - LENGTH(vis_textobjects));
 	if (!vis->action.textobj)
 		return false;
 	action_do(vis, &vis->action);

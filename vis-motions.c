@@ -234,7 +234,7 @@ int vis_motion_register(Vis *vis, enum VisMotionType type, void *data,
 	move->type = type;
 	move->data = data;
 
-	if (array_add(&vis->motions, move))
+	if (array_add_ptr(&vis->motions, move))
 		return VIS_MOVE_LAST + array_length(&vis->motions) - 1;
 	free(move);
 	return -1;
@@ -322,7 +322,7 @@ bool vis_motion(Vis *vis, enum VisMotion motion, ...) {
 	if (motion < LENGTH(vis_motions))
 		vis->action.movement = &vis_motions[motion];
 	else
-		vis->action.movement = array_get(&vis->motions, motion - VIS_MOVE_LAST);
+		vis->action.movement = array_get_ptr(&vis->motions, motion - VIS_MOVE_LAST);
 
 	if (!vis->action.movement)
 		goto err;

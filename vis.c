@@ -319,6 +319,8 @@ Vis *vis_new(Ui *ui, VisEvent *event) {
 	vis->expandtab = false;
 	vis->registers[VIS_REG_BLACKHOLE].type = REGISTER_BLACKHOLE;
 	vis->registers[VIS_REG_CLIPBOARD].type = REGISTER_CLIPBOARD;
+	array_init(&vis->motions);
+	array_init(&vis->textobjects);
 	action_reset(&vis->action);
 	if (!(vis->command_file = file_new_internal(vis, NULL)))
 		goto err;
