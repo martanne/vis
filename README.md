@@ -60,6 +60,10 @@ inorder to build a self contained statically linked binary.
 `make local` will do the same but only for libtermkey, Lua and LPeg
 (i.e. the system C and curses libraries are used).
 
+Or simply use one of the distribution provided packages:
+
+ * [ArchLinux](http://www.archlinux.org/packages/?q=vis)
+
 Editing Features
 ================
 
