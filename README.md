@@ -221,6 +221,8 @@ Operators can be forced to work line wise by specifying `V`.
     Ctrl-P       remove primary cursor
     Ctrl-U       make the count previous cursor primary
     Ctrl-D       make the count next cursor primary
+    +            rotates selections rightwards count times
+    -            rotates selections leftwards count times
     Esc          clear all selections, switch to normal mode
 
   In insert/replace mode

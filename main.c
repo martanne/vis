@@ -12,6 +12,7 @@
 #include "text-objects.h"
 #include "util.h"
 #include "libutf.h"
+#include "array.h"
 
 #define PAGE      INT_MAX
 #define PAGE_HALF (INT_MAX-1)
@@ -56,6 +57,8 @@ static const char *cursors_select(Vis*, const char *keys, const Arg *arg);
 static const char *cursors_select_next(Vis*, const char *keys, const Arg *arg);
 /* clear current selection but select next match */
 static const char *cursors_select_skip(Vis*, const char *keys, const Arg *arg);
+/* rotate selection content count times left (arg->i < 0) or right (arg->i > 0) */
+static const char *selections_rotate(Vis*, const char *keys, const Arg *arg);
 /* adjust current used count according to keys */
 static const char *count(Vis*, const char *keys, const Arg *arg);
 /* move to the count-th line or if not given either to the first (arg->i < 0)
@@ -251,6 +254,8 @@ enum {
 	VIS_ACTION_CURSORS_REMOVE_LAST,
 	VIS_ACTION_CURSORS_PREV,
 	VIS_ACTION_CURSORS_NEXT,
+	VIS_ACTION_SELECTIONS_ROTATE_LEFT,
+	VIS_ACTION_SELECTIONS_ROTATE_RIGHT,
 	VIS_ACTION_TEXT_OBJECT_WORD_OUTER,
 	VIS_ACTION_TEXT_OBJECT_WORD_INNER,
 	VIS_ACTION_TEXT_OBJECT_LONGWORD_OUTER,
@@ -961,6 +966,16 @@ static const KeyAction vis_action[] = {
 		"Move to the next cursor",
 		cursors_navigate, { .i = +PAGE_HALF }
 	},
+	[VIS_ACTION_SELECTIONS_ROTATE_LEFT] = {
+		"selections-rotate-left",
+		"Rotate selections left",
+		selections_rotate, { .i = -1 }
+	},
+	[VIS_ACTION_SELECTIONS_ROTATE_RIGHT] = {
+		"selections-rotate-right",
+		"Rotate selections right",
+		selections_rotate, { .i = +1 }
+	},
 	[VIS_ACTION_TEXT_OBJECT_WORD_OUTER] = {
 		"text-object-word-outer",
 		"A word leading and trailing whitespace included",
@@ -1401,6 +1416,70 @@ static const char *cursors_navigate(Vis *vis, const char *keys, const Arg *arg) 
 		}
 	}
 	view_cursors_primary_set(c);
+	vis_count_set(vis, VIS_COUNT_UNKNOWN);
+	return keys;
+}
+
+static const char *selections_rotate(Vis *vis, const char *keys, const Arg *arg) {
+
+	typedef struct {
+		Cursor *cursor;
+		char *data;
+		size_t len;
+	} Rotate;
+
+	Array arr;
+	Text *txt = vis_text(vis);
+	View *view = vis_view(vis);
+	int columns = view_cursors_column_count(view);
+	int selections = columns == 1 ? view_cursors_count(view) : columns;
+	int count = vis_count_get_default(vis, 1);
+	array_init_sized(&arr, sizeof(Rotate));
+	if (!array_reserve(&arr, selections))
+		return keys;
+	size_t line_prev = 0;
+
+	for (Cursor *c = view_cursors(view), *next; c; c = next) {
+		next = view_cursors_next(c);
+
+		Filerange sel = view_cursors_selection_get(c);
+		Rotate rot;
+		rot.cursor = c;
+		rot.len = text_range_size(&sel);
+		if ((rot.data = malloc(rot.len)))
+			rot.len = text_bytes_get(txt, sel.start, rot.len, rot.data);
+		else
+			rot.len = 0;
+		array_add(&arr, &rot);
+
+		size_t pos = view_cursors_pos(c);
+		size_t line = text_lineno_by_pos(txt, pos);
+		if (!next || (columns > 1 && line_prev && line != line_prev)) {
+			size_t len = array_length(&arr);
+			size_t off = arg->i > 0 ? count % len : len - (count % len);
+			for (size_t i = 0; i < len; i++) {
+				size_t j = (i + off) % len;
+				Rotate *oldrot = array_get(&arr, i);
+				Rotate *newrot = array_get(&arr, j);
+				if (!oldrot || !newrot || oldrot == newrot)
+					continue;
+				Filerange newsel = view_cursors_selection_get(newrot->cursor);
+				if (!text_range_valid(&newsel))
+					continue;
+				if (!text_delete_range(txt, &newsel))
+					continue;
+				if (!text_insert(txt, newsel.start, oldrot->data, oldrot->len))
+					continue;
+				newsel.end = newsel.start + oldrot->len;
+				view_cursors_selection_set(newrot->cursor, &newsel);
+				view_cursors_selection_sync(newrot->cursor);
+				free(oldrot->data);
+			}
+			array_clear(&arr);
+		}
+		line_prev = line;
+	}
+
 	vis_count_set(vis, VIS_COUNT_UNKNOWN);
 	return keys;
 }
