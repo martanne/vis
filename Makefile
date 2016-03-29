@@ -43,7 +43,7 @@ config.h:
 	cp config.def.h config.h
 
 config.mk:
-	@touch $@
+	[ -e $@ ] || echo CFLAGS_STD ?= ${CFLAGS_STD} >> $@
 
 vis: config.h config.mk *.c *.h
 	${CC} ${CFLAGS} ${CFLAGS_VIS} ${SRC} ${LDFLAGS} ${LDFLAGS_VIS} -o $@
