@@ -3,10 +3,11 @@ include ../../config.mk
 SRC = $(wildcard ccan/*/*.c)
 CFLAGS += -I. -I../..
 
-test: text buffer map
+test: text buffer map array
 	@./text
 	@./buffer
 	@./map
+	@./array
 
 config.h:
 	@echo Generating ccan configuration header
@@ -24,6 +25,10 @@ map: config.h map.c ../../map.c
 	@echo Compiling $@ binary
 	@${CC} ${CFLAGS} ${CFLAGS_STD} ${filter %.c, $^} ${SRC} ${LDFLAGS} -o $@
 
+array: config.h array.c ../../array.c
+	@echo Compiling $@ binary
+	@${CC} ${CFLAGS} ${CFLAGS_STD} ${filter %.c, $^} ${SRC} ${LDFLAGS} -o $@
+
 debug: clean
 	$(MAKE) CFLAGS_VIS='${DEBUG_CFLAGS_VIS}'
 
@@ -32,5 +37,6 @@ clean:
 	@rm -f text
 	@rm -f buffer
 	@rm -f map
+	@rm -f array
 
 .PHONY: clean debug
