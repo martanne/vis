@@ -4,6 +4,7 @@
 #include <string.h>
 #include <errno.h>
 #include <stdio.h>
+#include <unistd.h>
 #include "text.h"
 #include "text-util.h"
 
@@ -41,8 +42,10 @@ int main(int argc, char *argv[]) {
 	txt = text_load("/");
 	ok(txt == NULL && errno == EISDIR, "Opening directory");
 
-	txt = text_load("/etc/shadow");
-	ok(txt == NULL && errno == EACCES, "Opening file without sufficient permissions");
+	if (access("/etc/shadow", F_OK) == 0) {
+		txt = text_load("/etc/shadow");
+		ok(txt == NULL && errno == EACCES, "Opening file without sufficient permissions");
+	}
 
 	txt = text_load(NULL);
 	ok(txt != NULL && isempty(txt), "Opening empty file");
