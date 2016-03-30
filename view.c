@@ -26,6 +26,21 @@ enum {
 	SYNTAX_SYMBOL_LAST,
 };
 
+/* A selection is made up of two marks named cursor and anchor.
+ * While the anchor remains fixed the cursor mark follows cursor motions.
+ * For a selection (indicated by []), the marks (^) are placed as follows:
+ *
+ *     [some text]              [!]
+ *      ^       ^                ^
+ *                               ^
+ *
+ * That is the marks point to the *start* of the first and last character
+ * of the selection. In particular for a single character selection (as
+ * depicted on the right above) both marks point to the same location.
+ *
+ * The view_selections_{get,set} functions take care of adding/removing
+ * the necessary offset for the last character.
+ */
 struct Selection {
 	Mark anchor;             /* position where the selection was created */
 	Mark cursor;             /* other selection endpoint where it changes */
@@ -432,20 +447,6 @@ static void cursor_to(Cursor *c, size_t pos) {
 		c->lastcol = 0;
 	c->pos = pos;
 	if (c->sel) {
-		size_t anchor = text_mark_get(txt, c->sel->anchor);
-		size_t cursor = text_mark_get(txt, c->sel->cursor);
-		/* do we have to change the orientation of the selection? */
-		if (pos < anchor && anchor < cursor) {
-			/* right extend -> left extend  */
-			anchor = text_char_next(txt, anchor);
-			c->sel->anchor = text_mark_set(txt, anchor);
-		} else if (cursor < anchor && anchor <= pos) {
-			/* left extend  -> right extend */
-			anchor = text_char_prev(txt, anchor);
-			c->sel->anchor = text_mark_set(txt, anchor);
-		}
-		if (anchor <= pos)
-			pos = text_char_next(txt, pos);
 		c->sel->cursor = text_mark_set(txt, pos);
 	}
 	if (!view_coord_get(c->view, pos, &c->line, &c->row, &c->col)) {
@@ -1297,7 +1298,7 @@ void view_cursors_selection_start(Cursor *c) {
 		return;
 	Text *txt = c->view->text;
 	c->sel->anchor = text_mark_set(txt, pos);
-	c->sel->cursor = text_mark_set(txt, text_char_next(txt, pos));
+	c->sel->cursor = c->sel->anchor;
 	view_draw(c->view);
 }
 
@@ -1311,6 +1312,7 @@ void view_cursors_selection_restore(Cursor *c) {
 	);
 	if (!text_range_valid(&sel))
 		return;
+	sel.end = text_char_next(txt, sel.end);
 	if (!(c->sel = view_selections_new(c->view)))
 		return;
 	view_selections_set(c->sel, &sel);
@@ -1338,11 +1340,7 @@ void view_cursors_selection_sync(Cursor *c) {
 	if (!c->sel)
 		return;
 	Text *txt = c->view->text;
-	size_t anchor = text_mark_get(txt, c->sel->anchor);
 	size_t cursor = text_mark_get(txt, c->sel->cursor);
-	bool right_extending = anchor < cursor;
-	if (right_extending)
-		cursor = text_char_prev(txt, cursor);
 	view_cursors_to(c, cursor);
 }
 
@@ -1439,7 +1437,10 @@ Filerange view_selections_get(Selection *s) {
 	Text *txt = s->view->text;
 	size_t anchor = text_mark_get(txt, s->anchor);
 	size_t cursor = text_mark_get(txt, s->cursor);
-	return text_range_new(anchor, cursor);
+	Filerange sel = text_range_new(anchor, cursor);
+	if (text_range_valid(&sel))
+		sel.end = text_char_next(txt, sel.end);
+	return sel;
 }
 
 void view_selections_set(Selection *s, Filerange *r) {
@@ -1448,13 +1449,16 @@ void view_selections_set(Selection *s, Filerange *r) {
 	Text *txt = s->view->text;
 	size_t anchor = text_mark_get(txt, s->anchor);
 	size_t cursor = text_mark_get(txt, s->cursor);
-	bool left_extending = anchor > cursor;
+	bool left_extending = anchor != EPOS && anchor > cursor;
+	size_t end = r->end;
+	if (r->start != end)
+		end = text_char_prev(txt, end);
 	if (left_extending) {
-		s->anchor = text_mark_set(txt, r->end);
+		s->anchor = text_mark_set(txt, end);
 		s->cursor = text_mark_set(txt, r->start);
 	} else {
 		s->anchor = text_mark_set(txt, r->start);
-		s->cursor = text_mark_set(txt, r->end);
+		s->cursor = text_mark_set(txt, end);
 	}
 	view_draw(s->view);
 }
