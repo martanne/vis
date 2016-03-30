@@ -1348,7 +1348,7 @@ Filerange view_cursors_selection_get(Cursor *c) {
 	return view_selections_get(c->sel);
 }
 
-void view_cursors_selection_set(Cursor *c, Filerange *r) {
+void view_cursors_selection_set(Cursor *c, const Filerange *r) {
 	if (!text_range_valid(r))
 		return;
 	if (!c->sel)
@@ -1443,7 +1443,7 @@ Filerange view_selections_get(Selection *s) {
 	return sel;
 }
 
-void view_selections_set(Selection *s, Filerange *r) {
+void view_selections_set(Selection *s, const Filerange *r) {
 	if (!text_range_valid(r))
 		return;
 	Text *txt = s->view->text;

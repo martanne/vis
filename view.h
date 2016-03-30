@@ -166,7 +166,7 @@ void view_cursors_selection_sync(Cursor*);
 void view_cursors_selection_restore(Cursor*);
 /* get/set the selected region associated with this cursor */
 Filerange view_cursors_selection_get(Cursor*);
-void view_cursors_selection_set(Cursor*, Filerange*);
+void view_cursors_selection_set(Cursor*, const Filerange*);
 
 Selection *view_selections_new(View*);
 void view_selections_free(Selection*);
@@ -176,7 +176,7 @@ Selection *view_selections(View*);
 Selection *view_selections_prev(Selection*);
 Selection *view_selections_next(Selection*);
 Filerange view_selections_get(Selection*);
-void view_selections_set(Selection*, Filerange*);
+void view_selections_set(Selection*, const Filerange*);
 Text *view_text(View*);
 
 /* get number of columns, that is maximal number of cursors on a line */
