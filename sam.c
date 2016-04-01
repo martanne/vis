@@ -104,6 +104,8 @@ static const CommandDef cmds[] = {
 	{ { "|" },  CMD_SHELL,                           NULL, cmd_filter     },
 	{ { "w" },  CMD_ARGV|CMD_FORCE,                  NULL, cmd_write      },
 	{ { "r" },  CMD_FILE,                            NULL, cmd_read       },
+	{ { "{" },  0,                                   NULL, NULL           },
+	{ { "}" },  0,                                   NULL, NULL           },
 	{ { NULL }, 0,                                   NULL, NULL           },
 };
 
@@ -447,51 +449,38 @@ static Command *command_parse(Vis *vis, const char **s, int level, enum SamError
 		char name[2] = { **s ? **s : 'p', '\0' };
 		if (**s)
 			(*s)++;
-		cmd->argv[0] = strdup(name);
+		if (!(cmd->argv[0] = strdup(name)))
+			goto fail;
 	}
 
-	const CommandDef *cmddef = NULL;
-	if (cmd->argv[0]) {
-		cmddef = command_lookup(vis, cmd->argv[0]);
-	} else {
-		switch (**s) {
-		case '{':
-		{
-			/* let it point to an all zero dummy entry */
-			cmddef = &cmds[LENGTH(cmds)-1];
-			if (!(cmd->argv[0] = strdup("{")))
-				goto fail;
-			(*s)++;
-			Command *prev = NULL, *next;
-			do {
-				skip_spaces(s);
-				if (**s == '\n')
-					(*s)++;
-				next = command_parse(vis, s, level+1, err);
-				if (prev)
-					prev->next = next;
-				else
-					cmd->cmd = next;
-			} while ((prev = next));
-			break;
-		}
-		case '}':
-			if (level == 0) {
-				*err = SAM_ERR_UNMATCHED_BRACE;
-				goto fail;
-			}
-			(*s)++;
-			command_free(cmd);
-			return NULL;
-		}
-	}
-
+	const CommandDef *cmddef = command_lookup(vis, cmd->argv[0]);
 	if (!cmddef) {
 		*err = SAM_ERR_COMMAND;
 		goto fail;
 	}
 
 	cmd->cmddef = cmddef;
+
+	if (strcmp(cmd->argv[0], "{") == 0) {
+		Command *prev = NULL, *next;
+		do {
+			skip_spaces(s);
+			if (**s == '\n')
+				(*s)++;
+			next = command_parse(vis, s, level+1, err);
+			if (prev)
+				prev->next = next;
+			else
+				cmd->cmd = next;
+		} while ((prev = next));
+	} else if (strcmp(cmd->argv[0], "}") == 0) {
+		if (level == 0) {
+			*err = SAM_ERR_UNMATCHED_BRACE;
+			goto fail;
+		}
+		command_free(cmd);
+		return NULL;
+	}
 
 	if (cmddef->flags & CMD_ADDRESS_NONE && cmd->address) {
 		*err = SAM_ERR_NO_ADDRESS;
