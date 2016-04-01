@@ -7,6 +7,7 @@
  */
 #include <string.h>
 #include <stdio.h>
+#include <ctype.h>
 #include "sam.h"
 #include "vis-core.h"
 #include "buffer.h"
@@ -15,6 +16,8 @@
 #include "text-objects.h"
 #include "text-regex.h"
 #include "util.h"
+
+#define MAX_ARGV 8
 
 typedef struct Address Address;
 typedef struct Command Command;
@@ -29,10 +32,10 @@ struct Address {
 };
 
 struct Command {
-	char name;                /* "index" into command table */
+	const char *argv[MAX_ARGV];/* [0]=cmd-name, [1..MAX_ARGV-2]=arguments, last element always NULL */
 	Address *address;         /* range of text for command */
 	Regex *regex;             /* regex to match, used by x, y, g, v, X, Y */
-	char *text;               /* text to insert, used by i, a, c */
+	char *text;               /* text to insert for i, a, c. filename for w, r */
 	const CommandDef *cmddef; /* which command is this? */
 	int count;                /* command count if any */
 	char flag;                /* command specific flags */
@@ -51,6 +54,9 @@ struct CommandDef {
 		CMD_ADDRESS_NONE  = 1 << 5, /* is it an error to specify an address for the command */
 		CMD_ADDRESS_ALL   = 1 << 6, /* if no address is given, use the whole file */
 		CMD_SHELL         = 1 << 7, /* command needs a shell command as argument */
+		CMD_FILE          = 1 << 8, /* does the command take a file name */
+		CMD_FORCE         = 1 << 9, /* can the command be forced with ! */
+		CMD_ARGV          = 1 << 10, /* whether shell like argument splitted is desired */
 	} flags;
 	char defcmd;                        /* name of a default target command */
 	bool (*func)(Vis*, Win*, Command*, Filerange*); /* command imiplementation */
@@ -67,6 +73,8 @@ static bool cmd_print(Vis*, Win*, Command*, Filerange*);
 static bool cmd_files(Vis*, Win*, Command*, Filerange*);
 static bool cmd_shell(Vis*, Win*, Command*, Filerange*);
 static bool cmd_substitute(Vis*, Win*, Command*, Filerange*);
+static bool cmd_write(Vis*, Win*, Command*, Filerange*);
+static bool cmd_read(Vis*, Win*, Command*, Filerange*);
 
 static const CommandDef cmds[] = {
 	/* name, flags,                default command,  command        */
@@ -86,6 +94,9 @@ static const CommandDef cmds[] = {
 	{ '>', CMD_SHELL,                            0,  cmd_shell      },
 	{ '<', CMD_SHELL,                            0,  cmd_shell      },
 	{ '|', CMD_SHELL,                            0,  cmd_shell      },
+	{ 'w', CMD_FILE|CMD_FORCE,                   0,  cmd_write      },
+	{ 'r', CMD_FILE,                             0,  cmd_read       },
+	{ 'f', CMD_ARGV,                             0,  cmd_read       },
 	{ 0 /* array terminator */                                      },
 };
 
@@ -103,7 +114,8 @@ const char *sam_error(enum SamError err) {
 		[SAM_ERR_UNMATCHED_BRACE] = "Unmatched `}'",
 		[SAM_ERR_REGEX]           = "Bad regular expression",
 		[SAM_ERR_TEXT]            = "Bad text",
-		[SAM_ERR_COMMAND]         = "Unknown command",
+		[SAM_ERR_FILENAME]        = "Filename expected",
+		[SAM_ERR_COMMAND]         = "Unknown sam command",
 		[SAM_ERR_EXECUTE]         = "Error executing command",
 	};
 
@@ -192,6 +204,56 @@ static char *parse_text(const char **s) {
 		buffer_release(&buf);
 		return NULL;
 	}
+
+	return buf.data;
+}
+
+static char *parse_until(const char **s, const char *until) {
+	Buffer buf;
+	buffer_init(&buf);
+	size_t len = strlen(until);
+
+	while (**s && !memchr(until, **s, len))
+		buffer_append(&buf, (*s)++, 1);
+
+	if (buffer_length(&buf))
+	    buffer_append(&buf, "\0", 1);
+
+	return buf.data;
+}
+
+static char *parse_shellcmd(const char **s) {
+	skip_spaces(s);
+	return parse_until(s, "\n");
+}
+
+static char *parse_filename(const char **s) {
+	skip_spaces(s);
+	if (**s == '"' || **s == '\'')
+		return parse_delimited_text(s);
+	return parse_until(s, "\n");
+}
+
+static void parse_argv(const char **s, const char *argv[], size_t maxarg) {
+	for (size_t i = 0; i < maxarg; i++) {
+		skip_spaces(s);
+		if (**s == '"' || **s == '\'')
+			argv[i] = parse_delimited_text(s);
+		else
+			argv[i] = parse_until(s, " \t\n");
+	}
+}
+
+static char *parse_cmdname(const char **s) {
+	skip_spaces(s);
+	Buffer buf;
+	buffer_init(&buf);
+
+	while (isalpha((unsigned char)**s))
+		buffer_append(&buf, (*s)++, 1);
+
+	if (buffer_length(&buf))
+	    buffer_append(&buf, "\0", 1);
 
 	return buf.data;
 }
@@ -334,6 +396,8 @@ static void command_free(Command *cmd) {
 		command_free(c);
 	}
 
+	for (const char **args = cmd->argv; *args; args++)
+		free((void*)*args);
 	address_free(cmd->address);
 	text_regex_free(cmd->regex);
 	free(cmd->text);
@@ -358,16 +422,22 @@ static Command *command_parse(Vis *vis, const char **s, int level, enum SamError
 	cmd->address = address_parse_compound(vis, s, err);
 	skip_spaces(s);
 
-	cmd->name = **s;
+	cmd->argv[0] = parse_cmdname(s);
 
-	const CommandDef *cmddef = command_lookup(cmds, cmd->name);
+	if (!cmd->argv[0] && !**s)
+		cmd->argv[0] = strdup("p");
 
-	if (!cmddef) {
-		/* let it point to an all zero dummy entry */
-		cmddef = &cmds_internal[LENGTH(cmds_internal)-1];
-		switch (cmd->name) {
+	const CommandDef *cmddef = NULL;
+	if (cmd->argv[0]) {
+		cmddef = command_lookup(cmds, cmd->argv[0][0]);
+	} else {
+		switch (**s) {
 		case '{':
 		{
+			/* let it point to an all zero dummy entry */
+			cmddef = &cmds_internal[LENGTH(cmds_internal)-1];
+			if (!(cmd->argv[0] = strdup("{")))
+				goto fail;
 			(*s)++;
 			Command *prev = NULL, *next;
 			do {
@@ -390,15 +460,15 @@ static Command *command_parse(Vis *vis, const char **s, int level, enum SamError
 			(*s)++;
 			command_free(cmd);
 			return NULL;
-		default:
-			*err = SAM_ERR_COMMAND;
-			goto fail;
 		}
 	}
 
-	cmd->cmddef = cmddef;
+	if (!cmddef) {
+		*err = SAM_ERR_COMMAND;
+		goto fail;
+	}
 
-	(*s)++; /* skip command name */
+	cmd->cmddef = cmddef;
 
 	if (cmddef->flags & CMD_ADDRESS_NONE && cmd->address) {
 		*err = SAM_ERR_NO_ADDRESS;
@@ -407,6 +477,18 @@ static Command *command_parse(Vis *vis, const char **s, int level, enum SamError
 
 	if (cmddef->flags & CMD_COUNT)
 		cmd->count = parse_number(s);
+
+	if (cmddef->flags & CMD_FORCE && **s == '!') {
+		cmd->flag = '!';
+		(*s)++;
+	}
+
+	if (cmddef->flags & CMD_FILE) {
+		if (!(cmd->text = parse_filename(s)) && cmd->argv[0][0] != 'w') {
+			*err = SAM_ERR_FILENAME;
+			goto fail;
+		}
+	}
 
 	if (cmddef->flags & CMD_REGEX) {
 		if ((cmddef->flags & CMD_REGEX_DEFAULT) && (!**s || **s == ' ')) {
@@ -417,9 +499,19 @@ static Command *command_parse(Vis *vis, const char **s, int level, enum SamError
 		}
 	}
 
+	if (cmddef->flags & CMD_SHELL && !(cmd->text = parse_shellcmd(s))) {
+		*err = SAM_ERR_SHELL;
+		goto fail;
+	}
+
 	if (cmddef->flags & CMD_TEXT && !(cmd->text = parse_text(s))) {
 		*err = SAM_ERR_TEXT;
 		goto fail;
+	}
+
+	if (cmddef->flags & CMD_ARGV) {
+		parse_argv(s, &cmd->argv[1], MAX_ARGV-2);
+		cmd->argv[MAX_ARGV-1] = NULL;
 	}
 
 	if (cmddef->flags & CMD_CMD) {
@@ -427,19 +519,20 @@ static Command *command_parse(Vis *vis, const char **s, int level, enum SamError
 		if (cmddef->defcmd && (**s == '\n' || **s == '\0')) {
 			if (**s == '\n')
 				(*s)++;
-			if (!(cmd->cmd = command_new()))
+			char name[2] = { cmddef->defcmd, '\0' };
+			if (!(cmd->cmd = command_new()) || !(cmd->cmd->argv[0] = strdup(name)))
 				goto fail;
-			cmd->cmd->name = cmddef->defcmd;
 			cmd->cmd->cmddef = command_lookup(cmds, cmddef->defcmd);
 		} else {
 			if (!(cmd->cmd = command_parse(vis, s, level, err)))
 				goto fail;
-			if (cmd->name == 'X' || cmd->name == 'Y') {
+			if (strcmp(cmd->argv[0], "X") == 0 || strcmp(cmd->argv[0], "Y") == 0) {
 				Command *sel = command_new();
 				if (!sel)
 					goto fail;
 				sel->cmd = cmd->cmd;
 				sel->cmddef = command_lookup(cmds_internal, 's');
+				sel->argv[0] = strdup("s");
 				cmd->cmd = sel;
 			}
 		}
@@ -471,6 +564,7 @@ static Command *sam_parse(Vis *vis, const char *cmd, enum SamError *err) {
 	}
 	sel->cmd = c;
 	sel->cmddef = command_lookup(cmds_internal, 's');
+	sel->argv[0] = strdup("s");
 	return sel;
 }
 
@@ -573,7 +667,7 @@ static bool sam_execute(Vis *vis, Win *win, Command *cmd, Filerange *range) {
 	bool ret = true;
 	Filerange r = cmd->address ? address_evaluate(cmd->address, win->file, range, 0) : *range;
 
-	switch (cmd->name) {
+	switch (cmd->argv[0][0]) {
 	case '{':
 	{
 		Text *txt = win->file->text;
@@ -669,7 +763,7 @@ static bool cmd_delete(Vis *vis, Win *win, Command *cmd, Filerange *range) {
 static bool cmd_guard(Vis *vis, Win *win, Command *cmd, Filerange *range) {
 	bool match = !text_search_range_forward(win->file->text, range->start,
 		text_range_size(range), cmd->regex, 0, NULL, 0);
-	if (match ^ (cmd->name == 'v'))
+	if (match ^ (cmd->argv[0][0] == 'v'))
 		return sam_execute(vis, win, cmd->cmd, range);
 	return true;
 }
@@ -685,7 +779,7 @@ static bool cmd_extract(Vis *vis, Win *win, Command *cmd, Filerange *range) {
 				end - start, cmd->regex, 1, match, 0) == 0;
 			Filerange r = text_range_empty();
 			if (found) {
-				if (cmd->name == 'x')
+				if (cmd->argv[0][0] == 'x')
 					r = text_range_new(match[0].start, match[0].end);
 				else
 					r = text_range_new(start, match[0].start);
@@ -699,7 +793,7 @@ static bool cmd_extract(Vis *vis, Win *win, Command *cmd, Filerange *range) {
 					start = match[0].end;
 				}
 			} else {
-				if (cmd->name == 'y')
+				if (cmd->argv[0][0] == 'y')
 					r = text_range_new(start, end);
 				start = end;
 			}
@@ -788,7 +882,7 @@ static bool cmd_files(Vis *vis, Win *win, Command *cmd, Filerange *range) {
 			continue;
 		bool match = !cmd->regex || (win->file->name &&
 		             text_regex_match(cmd->regex, win->file->name, 0));
-		if (match ^ (cmd->name == 'Y'))
+		if (match ^ (cmd->argv[0][0] == 'Y'))
 			ret &= sam_execute(vis, win, cmd->cmd, range);
 	}
 	return ret;
@@ -799,5 +893,13 @@ static bool cmd_shell(Vis *vis, Win *win, Command *cmd, Filerange *range) {
 }
 
 static bool cmd_substitute(Vis *vis, Win *win, Command *cmd, Filerange *range) {
+	return false;
+}
+
+static bool cmd_write(Vis *vis, Win *win, Command *cmd, Filerange *range) {
+	return false;
+}
+
+static bool cmd_read(Vis *vis, Win *win, Command *cmd, Filerange *range) {
 	return false;
 }
