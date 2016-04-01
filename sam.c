@@ -166,6 +166,10 @@ static char *parse_delimited_text(const char **s) {
 			case 't':
 				c = '\t';
 				break;
+			default:
+				if (**s != '\\' && **s != delim)
+					buffer_append(&buf, "\\", 1);
+				break;
 			}
 		}
 
