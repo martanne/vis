@@ -40,5 +40,7 @@ bool buffer_prepend(Buffer*, const void *data, size_t len);
 bool buffer_prepend0(Buffer*, const char *data);
 /* return length of a buffer without trailing NUL byte */
 size_t buffer_length0(Buffer*);
+/* return length of a buffer including possible NUL byte */
+size_t buffer_length(Buffer*);
 
 #endif

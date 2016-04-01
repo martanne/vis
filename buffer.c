@@ -95,3 +95,7 @@ size_t buffer_length0(Buffer *buf) {
 		len--;
 	return len;
 }
+
+size_t buffer_length(Buffer *buf) {
+	return buf->len;
+}
