@@ -964,7 +964,19 @@ static bool cmd_write(Vis *vis, Win *win, Command *cmd, Filerange *range) {
 }
 
 static bool cmd_read(Vis *vis, Win *win, Command *cmd, Filerange *range) {
-	return false;
+
+	bool ret = false;
+	Buffer buf;
+	buffer_init(&buf);
+
+	if (!buffer_put0(&buf, "cat ") || !buffer_append0(&buf, cmd->text))
+		goto out;
+
+	Command pipe_cmd = { .text = buf.data }; // FIXME
+	ret = cmd_pipein(vis, win, &pipe_cmd, range);
+out:
+	buffer_release(&buf);
+	return ret;
 }
 
 static ssize_t read_stdout(void *context, char *data, size_t len) {
