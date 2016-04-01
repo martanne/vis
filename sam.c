@@ -38,7 +38,7 @@ struct Command {
 	char *text;               /* text to insert for i, a, c. filename for w, r */
 	const CommandDef *cmddef; /* which command is this? */
 	int count;                /* command count if any */
-	char flag;                /* command specific flags */
+	char flags;               /* command specific flags */
 	Command *cmd;             /* target of x, y, g, v, X, Y, { */
 	Command *next;            /* next command in {} group */
 };
@@ -94,7 +94,7 @@ static const CommandDef cmds[] = {
 	{ { ">" },  CMD_SHELL,                           NULL, cmd_shell      },
 	{ { "<" },  CMD_SHELL,                           NULL, cmd_shell      },
 	{ { "|" },  CMD_SHELL,                           NULL, cmd_shell      },
-	{ { "w" },  CMD_FILE|CMD_FORCE,                  NULL, cmd_write      },
+	{ { "w" },  CMD_ARGV|CMD_FORCE,                  NULL, cmd_write      },
 	{ { "r" },  CMD_FILE,                            NULL, cmd_read       },
 	{ { NULL }, 0,                                   NULL, NULL           },
 };
@@ -490,7 +490,7 @@ static Command *command_parse(Vis *vis, const char **s, int level, enum SamError
 		cmd->count = parse_number(s);
 
 	if (cmddef->flags & CMD_FORCE && **s == '!') {
-		cmd->flag = '!';
+		cmd->flags = '!';
 		(*s)++;
 	}
 
@@ -905,7 +905,50 @@ static bool cmd_substitute(Vis *vis, Win *win, Command *cmd, Filerange *range) {
 }
 
 static bool cmd_write(Vis *vis, Win *win, Command *cmd, Filerange *range) {
-	return false;
+	File *file = win->file;
+	Text *text = file->text;
+	if (!argv[1])
+		argv[1] = file->name ? strdup(file->name) : NULL;
+	if (!argv[1]) {
+		if (file->is_stdin) {
+			if (strchr(cmd->argv[0], 'q')) {
+				ssize_t written = text_write_range(text, range, STDOUT_FILENO);
+				if (written == -1 || (size_t)written != text_range_size(range)) {
+					vis_info_show(vis, "Can not write to stdout");
+					return false;
+				}
+				/* make sure the file is marked as saved i.e. not modified */
+				text_save_range(text, range, NULL);
+				return true;
+			}
+			vis_info_show(vis, "No filename given, use 'wq' to write to stdout");
+			return false;
+		}
+		vis_info_show(vis, "Filename expected");
+		return false;
+	}
+
+	for (const char **name = &cmd->argv[1]; *name; name++) {
+		struct stat meta;
+		if (cmd->flags != '!' && file->stat.st_mtime && stat(*name, &meta) == 0 &&
+		    file->stat.st_mtime < meta.st_mtime) {
+			vis_info_show(vis, "WARNING: file has been changed since reading it");
+			return false;
+		}
+		if (!text_save_range(text, range, *name)) {
+			vis_info_show(vis, "Can't write `%s'", *name);
+			return false;
+		}
+		if (!file->name) {
+			vis_window_name(win, *name);
+			file->name = win->file->name;
+		}
+		if (strcmp(file->name, *name) == 0)
+			file->stat = text_stat(text);
+		if (vis->event && vis->event->file_save)
+			vis->event->file_save(vis, file);
+	}
+	return true;
 }
 
 static bool cmd_read(Vis *vis, Win *win, Command *cmd, Filerange *range) {
