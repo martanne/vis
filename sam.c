@@ -23,6 +23,13 @@ typedef struct Address Address;
 typedef struct Command Command;
 typedef struct CommandDef CommandDef;
 
+typedef struct {        /* used to keep context when dealing with external proceses */
+	Vis *vis;       /* editor instance */
+	Text *txt;      /* text into which received data will be inserted */
+	size_t pos;     /* position at which to insert new data */
+	Buffer err;     /* used to store everything the process writes to stderr */
+} Filter;
+
 struct Address {
 	char type;      /* # (char) l (line) g (goto line) / ? . $ + - , ; * */
 	Regex *regex;   /* NULL denotes default for x, y, X, and Y commands */
@@ -72,6 +79,7 @@ static bool cmd_select(Vis*, Win*, Command*, Filerange*);
 static bool cmd_print(Vis*, Win*, Command*, Filerange*);
 static bool cmd_files(Vis*, Win*, Command*, Filerange*);
 static bool cmd_shell(Vis*, Win*, Command*, Filerange*);
+static bool cmd_filter(Vis*, Win*, Command*, Filerange*);
 static bool cmd_substitute(Vis*, Win*, Command*, Filerange*);
 static bool cmd_write(Vis*, Win*, Command*, Filerange*);
 static bool cmd_read(Vis*, Win*, Command*, Filerange*);
@@ -90,10 +98,9 @@ static const CommandDef cmds[] = {
 	{ { "y" },  CMD_CMD|CMD_REGEX|CMD_REGEX_DEFAULT, "p",  cmd_extract    },
 	{ { "X" },  CMD_CMD|CMD_REGEX|CMD_REGEX_DEFAULT, NULL, cmd_files      },
 	{ { "Y" },  CMD_CMD|CMD_REGEX|CMD_REGEX_DEFAULT, NULL, cmd_files      },
-	{ { "!" },  CMD_SHELL|CMD_ADDRESS_NONE,          NULL, cmd_shell      },
 	{ { ">" },  CMD_SHELL,                           NULL, cmd_shell      },
 	{ { "<" },  CMD_SHELL,                           NULL, cmd_shell      },
-	{ { "|" },  CMD_SHELL,                           NULL, cmd_shell      },
+	{ { "|" },  CMD_SHELL,                           NULL, cmd_filter     },
 	{ { "w" },  CMD_ARGV|CMD_FORCE,                  NULL, cmd_write      },
 	{ { "r" },  CMD_FILE,                            NULL, cmd_read       },
 	{ { NULL }, 0,                                   NULL, NULL           },
@@ -435,8 +442,12 @@ static Command *command_parse(Vis *vis, const char **s, int level, enum SamError
 
 	cmd->argv[0] = parse_cmdname(s);
 
-	if (!cmd->argv[0] && !**s)
-		cmd->argv[0] = strdup("p");
+	if (!cmd->argv[0]) {
+		char name[2] = { **s ? **s : 'p', '\0' };
+		if (**s)
+			(*s)++;
+		cmd->argv[0] = strdup(name);
+	}
 
 	const CommandDef *cmddef = NULL;
 	if (cmd->argv[0]) {
@@ -953,4 +964,70 @@ static bool cmd_write(Vis *vis, Win *win, Command *cmd, Filerange *range) {
 
 static bool cmd_read(Vis *vis, Win *win, Command *cmd, Filerange *range) {
 	return false;
+}
+
+static ssize_t read_stdout(void *context, char *data, size_t len) {
+	Filter *filter = context;
+	text_insert(filter->txt, filter->pos, data, len);
+	filter->pos += len;
+	return len;
+}
+
+static ssize_t read_stderr(void *context, char *data, size_t len) {
+	Filter *filter = context;
+	buffer_append(&filter->err, data, len);
+	return len;
+}
+
+static bool cmd_filter(Vis *vis, Win *win, Command *cmd, Filerange *range) {
+	Text *txt = win->file->text;
+
+	Filter filter = {
+		.vis = vis,
+		.txt = txt,
+		.pos = range->end,
+	};
+
+	buffer_init(&filter.err);
+
+	/* The general idea is the following:
+	 *
+	 *  1) take a snapshot
+	 *  2) write [range.start, range.end] to exteneral command
+	 *  3) read the output of the external command and insert it after the range
+	 *  4) depending on the exit status of the external command
+	 *     - on success: delete original range
+	 *     - on failure: revert to previous snapshot
+	 *
+	 *  2) and 3) happend in small junks
+	 */
+
+	text_snapshot(txt);
+
+	const char *argv[] = { cmd->text, NULL };
+
+	int status = vis_pipe(vis, &filter, range, argv, read_stdout, read_stderr);
+
+	if (status == 0) {
+		text_delete_range(txt, range);
+		text_snapshot(txt);
+		range->end = filter.pos - text_range_size(range);
+	} else {
+		/* make sure we have somehting to undo */
+		text_insert(txt, filter.pos, " ", 1);
+		text_undo(txt);
+	}
+
+	if (vis->cancel_filter)
+		vis_info_show(vis, "Command cancelled");
+	else if (status == 0)
+		; //vis_info_show(vis, "Command succeded");
+	else if (filter.err.len > 0)
+		vis_info_show(vis, "Command failed: %s", filter.err.data);
+	else
+		vis_info_show(vis, "Command failed");
+
+	buffer_release(&filter.err);
+
+	return !vis->cancel_filter && status == 0;
 }
