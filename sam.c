@@ -44,7 +44,7 @@ struct Command {
 };
 
 struct CommandDef {
-	char name;
+	const char *name[3];                /* name and optional alias for the command */
 	enum {
 		CMD_CMD           = 1 << 0, /* does the command take a sub/target command? */
 		CMD_REGEX         = 1 << 1, /* regex after command? */
@@ -58,7 +58,7 @@ struct CommandDef {
 		CMD_FORCE         = 1 << 9, /* can the command be forced with ! */
 		CMD_ARGV          = 1 << 10, /* whether shell like argument splitted is desired */
 	} flags;
-	char defcmd;                        /* name of a default target command */
+	const char *defcmd;                  /* name of a default target command */
 	bool (*func)(Vis*, Win*, Command*, Filerange*); /* command imiplementation */
 };
 
@@ -77,33 +77,30 @@ static bool cmd_write(Vis*, Win*, Command*, Filerange*);
 static bool cmd_read(Vis*, Win*, Command*, Filerange*);
 
 static const CommandDef cmds[] = {
-	/* name, flags,                default command,  command        */
-	{ 'a', CMD_TEXT,                             0,  cmd_append     },
-	{ 'c', CMD_TEXT,                             0,  cmd_change     },
-	{ 'd', 0,                                    0,  cmd_delete     },
-	{ 'g', CMD_CMD|CMD_REGEX,                   'p', cmd_guard      },
-	{ 'i', CMD_TEXT,                             0,  cmd_insert     },
-	{ 'p', 0,                                    0,  cmd_print      },
-	{ 's', CMD_TEXT,                             0,  cmd_substitute },
-	{ 'v', CMD_CMD|CMD_REGEX,                   'p', cmd_guard      },
-	{ 'x', CMD_CMD|CMD_REGEX|CMD_REGEX_DEFAULT, 'p', cmd_extract    },
-	{ 'y', CMD_CMD|CMD_REGEX|CMD_REGEX_DEFAULT, 'p', cmd_extract    },
-	{ 'X', CMD_CMD|CMD_REGEX|CMD_REGEX_DEFAULT,  0,  cmd_files      },
-	{ 'Y', CMD_CMD|CMD_REGEX|CMD_REGEX_DEFAULT,  0,  cmd_files      },
-	{ '!', CMD_SHELL|CMD_ADDRESS_NONE,           0,  cmd_shell      },
-	{ '>', CMD_SHELL,                            0,  cmd_shell      },
-	{ '<', CMD_SHELL,                            0,  cmd_shell      },
-	{ '|', CMD_SHELL,                            0,  cmd_shell      },
-	{ 'w', CMD_FILE|CMD_FORCE,                   0,  cmd_write      },
-	{ 'r', CMD_FILE,                             0,  cmd_read       },
-	{ 'f', CMD_ARGV,                             0,  cmd_read       },
-	{ 0 /* array terminator */                                      },
+	/* name(s), flags,                    default command, command        */
+	{ { "a" },  CMD_TEXT,                            NULL, cmd_append     },
+	{ { "c" },  CMD_TEXT,                            NULL, cmd_change     },
+	{ { "d" },  0,                                   NULL, cmd_delete     },
+	{ { "g" },  CMD_CMD|CMD_REGEX,                   "p",  cmd_guard      },
+	{ { "i" },  CMD_TEXT,                            NULL, cmd_insert     },
+	{ { "p" },  0,                                   NULL, cmd_print      },
+	{ { "s" },  CMD_TEXT,                            NULL, cmd_substitute },
+	{ { "v" },  CMD_CMD|CMD_REGEX,                   "p",  cmd_guard      },
+	{ { "x" },  CMD_CMD|CMD_REGEX|CMD_REGEX_DEFAULT, "p",  cmd_extract    },
+	{ { "y" },  CMD_CMD|CMD_REGEX|CMD_REGEX_DEFAULT, "p",  cmd_extract    },
+	{ { "X" },  CMD_CMD|CMD_REGEX|CMD_REGEX_DEFAULT, NULL, cmd_files      },
+	{ { "Y" },  CMD_CMD|CMD_REGEX|CMD_REGEX_DEFAULT, NULL, cmd_files      },
+	{ { "!" },  CMD_SHELL|CMD_ADDRESS_NONE,          NULL, cmd_shell      },
+	{ { ">" },  CMD_SHELL,                           NULL, cmd_shell      },
+	{ { "<" },  CMD_SHELL,                           NULL, cmd_shell      },
+	{ { "|" },  CMD_SHELL,                           NULL, cmd_shell      },
+	{ { "w" },  CMD_FILE|CMD_FORCE,                  NULL, cmd_write      },
+	{ { "r" },  CMD_FILE,                            NULL, cmd_read       },
+	{ { NULL }, 0,                                   NULL, NULL           },
 };
 
-static const CommandDef cmds_internal[] = {
-	{ 's', 0,                                    0,  cmd_select     },
-	{ 0 /* array terminator */                                      },
-};
+static const CommandDef cmddef_select =
+	{ { "s" }, 0,                                    NULL,  cmd_select   };
 
 const char *sam_error(enum SamError err) {
 	static const char *error_msg[] = {
@@ -387,8 +384,15 @@ fail:
 	return NULL;
 }
 
-static Command *command_new(void) {
-	return calloc(1, sizeof(Command));
+static Command *command_new(const char *name) {
+	Command *cmd = calloc(1, sizeof(Command));
+	if (!cmd)
+		return NULL;
+	if (name && !(cmd->argv[0] = strdup(name))) {
+		free(cmd);
+		return NULL;
+	}
+	return cmd;
 }
 
 static void command_free(Command *cmd) {
@@ -408,18 +412,21 @@ static void command_free(Command *cmd) {
 	free(cmd);
 }
 
-static const CommandDef *command_lookup(const CommandDef *cmds, char name) {
-	if (!name)
-		name = 'p';
-	for (const CommandDef *cmd = cmds; cmd->name; cmd++) {
-		if (cmd->name == name)
-			return cmd;
+static const CommandDef *command_lookup(Vis *vis, const char *name) {
+	if (!vis->sam_cmds) {
+		if (!(vis->sam_cmds = map_new()))
+			return NULL;
+
+		for (const CommandDef *cmd = cmds; cmd && cmd->name[0]; cmd++) {
+			for (const char *const *name = cmd->name; *name; name++)
+				map_put(vis->sam_cmds, *name, cmd);
+		}
 	}
-	return NULL;
+	return map_closest(vis->sam_cmds, name);
 }
 
 static Command *command_parse(Vis *vis, const char **s, int level, enum SamError *err) {
-	Command *cmd = command_new();
+	Command *cmd = command_new(NULL);
 	if (!cmd)
 		return NULL;
 
@@ -433,13 +440,13 @@ static Command *command_parse(Vis *vis, const char **s, int level, enum SamError
 
 	const CommandDef *cmddef = NULL;
 	if (cmd->argv[0]) {
-		cmddef = command_lookup(cmds, cmd->argv[0][0]);
+		cmddef = command_lookup(vis, cmd->argv[0]);
 	} else {
 		switch (**s) {
 		case '{':
 		{
 			/* let it point to an all zero dummy entry */
-			cmddef = &cmds_internal[LENGTH(cmds_internal)-1];
+			cmddef = &cmds[LENGTH(cmds)-1];
 			if (!(cmd->argv[0] = strdup("{")))
 				goto fail;
 			(*s)++;
@@ -523,20 +530,18 @@ static Command *command_parse(Vis *vis, const char **s, int level, enum SamError
 		if (cmddef->defcmd && (**s == '\n' || **s == '\0')) {
 			if (**s == '\n')
 				(*s)++;
-			char name[2] = { cmddef->defcmd, '\0' };
-			if (!(cmd->cmd = command_new()) || !(cmd->cmd->argv[0] = strdup(name)))
+			if (!(cmd->cmd = command_new(cmddef->defcmd)))
 				goto fail;
-			cmd->cmd->cmddef = command_lookup(cmds, cmddef->defcmd);
+			cmd->cmd->cmddef = command_lookup(vis, cmddef->defcmd);
 		} else {
 			if (!(cmd->cmd = command_parse(vis, s, level, err)))
 				goto fail;
 			if (strcmp(cmd->argv[0], "X") == 0 || strcmp(cmd->argv[0], "Y") == 0) {
-				Command *sel = command_new();
+				Command *sel = command_new("s");
 				if (!sel)
 					goto fail;
 				sel->cmd = cmd->cmd;
-				sel->cmddef = command_lookup(cmds_internal, 's');
-				sel->argv[0] = strdup("s");
+				sel->cmddef = &cmddef_select;
 				cmd->cmd = sel;
 			}
 		}
@@ -561,14 +566,13 @@ static Command *sam_parse(Vis *vis, const char *cmd, enum SamError *err) {
 	Command *c = command_parse(vis, s, 0, err);
 	if (!c)
 		return NULL;
-	Command *sel = command_new();
+	Command *sel = command_new("s");
 	if (!sel) {
 		command_free(c);
 		return NULL;
 	}
 	sel->cmd = c;
-	sel->cmddef = command_lookup(cmds_internal, 's');
-	sel->argv[0] = strdup("s");
+	sel->cmddef = &cmddef_select;
 	return sel;
 }
 
