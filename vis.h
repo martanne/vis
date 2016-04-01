@@ -389,7 +389,16 @@ bool vis_cmd(Vis*, const char *cmd);
 /* execute any kind (:,?,/) of prompt command */
 bool vis_prompt_cmd(Vis*, const char *cmd);
 
-/* pipe a given file range to an external process */
+/* pipe a given file range to an external process
+ *
+ * if argv contains only one non-NULL element the command is executed using
+ * /bin/sh -c (i.e. argument expansion is performed by the shell). In contrast
+ * if argv contains more than one non-NULL element execvp(argv[0], argv); will
+ * be used.
+ *
+ * if read_std{out,err} are non-NULL they will be called when output from
+ * the forked process is available.
+ */
 int vis_pipe(Vis *vis, void *context, Filerange *range, const char *argv[],
 	ssize_t (*read_stdout)(void *context, char *data, size_t len),
 	ssize_t (*read_stderr)(void *context, char *data, size_t len));

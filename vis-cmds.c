@@ -700,10 +700,10 @@ int vis_pipe(Vis *vis, void *context, Filerange *range, const char *argv[],
 			dup2(perr[1], STDERR_FILENO);
 		close(perr[0]);
 		close(perr[1]);
-		if (!argv[2])
-			execl("/bin/sh", "sh", "-c", argv[1], NULL);
+		if (!argv[1])
+			execl("/bin/sh", "sh", "-c", argv[0], NULL);
 		else
-			execvp(argv[1], (char**)argv+1);
+			execvp(argv[0], (char* const*)argv);
 		vis_info_show(vis, "exec failure: %s", strerror(errno));
 		exit(EXIT_FAILURE);
 	}
@@ -848,7 +848,7 @@ static bool cmd_filter(Vis *vis, Filerange *range, enum CmdOpt opt, const char *
 
 	text_snapshot(txt);
 
-	int status = vis_pipe(vis, &filter, range, argv, read_stdout, read_stderr);
+	int status = vis_pipe(vis, &filter, range, &argv[1], read_stdout, read_stderr);
 
 	if (status == 0) {
 		if (text_range_valid(range)) {
@@ -902,7 +902,7 @@ static bool cmd_pipe(Vis *vis, Filerange *range, enum CmdOpt opt, const char *ar
 
 	buffer_init(&filter.err);
 
-	int status = vis_pipe(vis, &filter, range, argv, read_stdout_new, read_stderr);
+	int status = vis_pipe(vis, &filter, range, &argv[1], read_stdout_new, read_stderr);
 
 	if (vis->cancel_filter)
 		vis_info_show(vis, "Command cancelled");

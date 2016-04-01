@@ -47,7 +47,7 @@ const char *register_get(Vis *vis, Register *reg, size_t *len) {
 
 		int status = vis_pipe(vis, &clipboard,
 			&(Filerange){ .start = 0, .end = 0 },
-			(const char*[]){ "vis-clipboard", "vis-clipboard", "--paste", NULL },
+			(const char*[]){ "vis-clipboard", "--paste", NULL },
 			read_stdout, read_stderr);
 		if (status != 0)
 			vis_info_show(vis, "Command failed %s", stderr.len > 0 ? stderr.data : "");
@@ -90,7 +90,7 @@ bool register_put_range(Vis *vis, Register *reg, Text *txt, Filerange *range) {
 		};
 
 		int status = vis_pipe(vis, &clipboard, range,
-			(const char*[]){ "vis-clipboard", "vis-clipboard", "--copy", NULL },
+			(const char*[]){ "vis-clipboard", "--copy", NULL },
 			NULL, read_stderr);
 
 		if (status != 0)
