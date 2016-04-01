@@ -21,7 +21,7 @@ typedef struct Command Command;
 typedef struct CommandDef CommandDef;
 
 struct Address {
-	char type;      /* # (char) l (line) / ? . $ + - , ; * */
+	char type;      /* # (char) l (line) g (goto line) / ? . $ + - , ; * */
 	Regex *regex;   /* NULL denotes default for x, y, X, and Y commands */
 	size_t number;  /* line or character number */
 	Address *left;  /* left hand side of a compound address , ; */
@@ -235,6 +235,8 @@ static Address *address_parse_simple(Vis *vis, const char **s, enum SamError *er
 	case '5': case '6': case '7': case '8': case '9':
 		addr.type = 'l';
 		addr.number = parse_number(s);
+		if (!**s && !vis->mode->visual)
+			addr.type = 'g';
 		break;
 	case '/': /* regexp forwards */
 	case '?': /* regexp backwards */
@@ -488,7 +490,11 @@ static Filerange address_line_evaluate(Address *addr, File *file, Filerange *ran
 	} else {
 		line = text_pos_by_lineno(txt, addr->number);
 	}
-	return text_range_new(line, text_line_next(txt, line));
+
+	if (addr->type == 'g')
+		return text_range_new(line, line);
+	else
+		return text_range_new(line, text_line_next(txt, line));
 }
 
 static Filerange address_evaluate(Address *addr, File *file, Filerange *range, int sign) {
@@ -505,6 +511,7 @@ static Filerange address_evaluate(Address *addr, File *file, Filerange *range, i
 				ret = text_range_new(addr->number, addr->number);
 			break;
 		case 'l':
+		case 'g':
 			ret = address_line_evaluate(addr, file, range, sign);
 			break;
 		case '?':
