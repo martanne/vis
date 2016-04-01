@@ -79,6 +79,7 @@ static bool cmd_select(Vis*, Win*, Command*, Filerange*);
 static bool cmd_print(Vis*, Win*, Command*, Filerange*);
 static bool cmd_files(Vis*, Win*, Command*, Filerange*);
 static bool cmd_shell(Vis*, Win*, Command*, Filerange*);
+static bool cmd_pipein(Vis*, Win*, Command*, Filerange*);
 static bool cmd_filter(Vis*, Win*, Command*, Filerange*);
 static bool cmd_substitute(Vis*, Win*, Command*, Filerange*);
 static bool cmd_write(Vis*, Win*, Command*, Filerange*);
@@ -99,7 +100,7 @@ static const CommandDef cmds[] = {
 	{ { "X" },  CMD_CMD|CMD_REGEX|CMD_REGEX_DEFAULT, NULL, cmd_files      },
 	{ { "Y" },  CMD_CMD|CMD_REGEX|CMD_REGEX_DEFAULT, NULL, cmd_files      },
 	{ { ">" },  CMD_SHELL,                           NULL, cmd_shell      },
-	{ { "<" },  CMD_SHELL,                           NULL, cmd_shell      },
+	{ { "<" },  CMD_SHELL,                           NULL, cmd_pipein     },
 	{ { "|" },  CMD_SHELL,                           NULL, cmd_filter     },
 	{ { "w" },  CMD_ARGV|CMD_FORCE,                  NULL, cmd_write      },
 	{ { "r" },  CMD_FILE,                            NULL, cmd_read       },
@@ -1030,4 +1031,15 @@ static bool cmd_filter(Vis *vis, Win *win, Command *cmd, Filerange *range) {
 	buffer_release(&filter.err);
 
 	return !vis->cancel_filter && status == 0;
+}
+
+static bool cmd_pipein(Vis *vis, Win *win, Command *cmd, Filerange *range) {
+	Filerange filter_range = text_range_new(range->end, range->end);
+	Command filter_cmd = { .text = cmd->text }; // FIXME
+	bool ret = cmd_filter(vis, win, &filter_cmd, &filter_range);
+	if (ret) {
+		text_delete_range(win->file->text, range);
+		range->end = range->start + text_range_size(&filter_range);
+	}
+	return ret;
 }
