@@ -78,8 +78,8 @@ static bool cmd_extract(Vis*, Win*, Command*, Filerange*);
 static bool cmd_select(Vis*, Win*, Command*, Filerange*);
 static bool cmd_print(Vis*, Win*, Command*, Filerange*);
 static bool cmd_files(Vis*, Win*, Command*, Filerange*);
-static bool cmd_shell(Vis*, Win*, Command*, Filerange*);
 static bool cmd_pipein(Vis*, Win*, Command*, Filerange*);
+static bool cmd_pipeout(Vis*, Win*, Command*, Filerange*);
 static bool cmd_filter(Vis*, Win*, Command*, Filerange*);
 static bool cmd_substitute(Vis*, Win*, Command*, Filerange*);
 static bool cmd_write(Vis*, Win*, Command*, Filerange*);
@@ -99,7 +99,7 @@ static const CommandDef cmds[] = {
 	{ { "y" },  CMD_CMD|CMD_REGEX|CMD_REGEX_DEFAULT, "p",  cmd_extract    },
 	{ { "X" },  CMD_CMD|CMD_REGEX|CMD_REGEX_DEFAULT, NULL, cmd_files      },
 	{ { "Y" },  CMD_CMD|CMD_REGEX|CMD_REGEX_DEFAULT, NULL, cmd_files      },
-	{ { ">" },  CMD_SHELL,                           NULL, cmd_shell      },
+	{ { ">" },  CMD_SHELL,                           NULL, cmd_pipeout    },
 	{ { "<" },  CMD_SHELL,                           NULL, cmd_pipein     },
 	{ { "|" },  CMD_SHELL,                           NULL, cmd_filter     },
 	{ { "w" },  CMD_ARGV|CMD_FORCE,                  NULL, cmd_write      },
@@ -908,10 +908,6 @@ static bool cmd_files(Vis *vis, Win *win, Command *cmd, Filerange *range) {
 	return ret;
 }
 
-static bool cmd_shell(Vis *vis, Win *win, Command *cmd, Filerange *range) {
-	return false;
-}
-
 static bool cmd_substitute(Vis *vis, Win *win, Command *cmd, Filerange *range) {
 	return false;
 }
@@ -1054,4 +1050,26 @@ static bool cmd_pipein(Vis *vis, Win *win, Command *cmd, Filerange *range) {
 		range->end = range->start + text_range_size(&filter_range);
 	}
 	return ret;
+}
+
+static bool cmd_pipeout(Vis *vis, Win *win, Command *cmd, Filerange *range) {
+	Filter filter;
+	buffer_init(&filter.err);
+
+	const char *argv[] = { cmd->text, NULL };
+
+	int status = vis_pipe(vis, &filter, range, argv, NULL, read_stderr);
+
+	if (vis->cancel_filter)
+		vis_info_show(vis, "Command cancelled");
+	else if (status == 0)
+		; //vis_info_show(vis, "Command succeded");
+	else if (filter.err.len > 0)
+		vis_info_show(vis, "Command failed: %s", filter.err.data);
+	else
+		vis_info_show(vis, "Command failed");
+
+	buffer_release(&filter.err);
+
+	return !vis->cancel_filter && status == 0;
 }
