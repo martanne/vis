@@ -685,14 +685,15 @@ static Filerange address_evaluate(Address *addr, File *file, Filerange *range, i
 
 static bool sam_execute(Vis *vis, Win *win, Command *cmd, Filerange *range) {
 	bool ret = true;
-	Filerange r = cmd->address ? address_evaluate(cmd->address, win->file, range, 0) : *range;
+	if (cmd->address)
+		*range = address_evaluate(cmd->address, win->file, range, 0);
 
 	switch (cmd->argv[0][0]) {
 	case '{':
 	{
 		Text *txt = win->file->text;
 		Mark start, end;
-		Filerange group = r;
+		Filerange group = *range;
 
 		for (Command *c = cmd->cmd; c; c = c->next) {
 			if (!text_range_valid(&group))
@@ -712,7 +713,7 @@ static bool sam_execute(Vis *vis, Win *win, Command *cmd, Filerange *range) {
 		break;
 	}
 	default:
-		ret = cmd->cmddef->func(vis, win, cmd, &r);
+		ret = cmd->cmddef->func(vis, win, cmd, range);
 		break;
 	}
 	return ret;
@@ -823,6 +824,8 @@ static bool cmd_extract(Vis *vis, Win *win, Command *cmd, Filerange *range) {
 				Mark mark_end = text_mark_set(txt, end);
 				ret &= sam_execute(vis, win, cmd->cmd, &r);
 				last_start = start = text_mark_get(txt, mark_start);
+				if (start == EPOS && last_start != r.end)
+					last_start = start = r.end;
 				end = text_mark_get(txt, mark_end);
 				if (start == EPOS || end == EPOS)
 					return false;
@@ -870,7 +873,8 @@ static bool cmd_select(Vis *vis, Win *win, Command *cmd, Filerange *range) {
 			cursor = view_cursors_new(view, text_size(txt)+1);
 			view_cursors_dispose(c);
 		}
-		ret &= sam_execute(vis, win, cmd->cmd, &sel);
+		if (text_range_valid(&sel))
+			ret &= sam_execute(vis, win, cmd->cmd, &sel);
 	}
 
 	if (cursor && !view_cursors_dispose(cursor)) {
