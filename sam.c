@@ -900,15 +900,11 @@ static bool cmd_files(Vis *vis, Win *win, Command *cmd, const char *argv[], File
 }
 
 static bool cmd_substitute(Vis *vis, Win *win, Command *cmd, const char *argv[], Filerange *range) {
-	bool ret = false;
 	Buffer buf;
 	buffer_init(&buf);
-
-	if (!buffer_put0(&buf, "s") || !buffer_append0(&buf, argv[1]))
-		goto out;
-
-	ret = cmd_filter(vis, win, cmd, (const char*[]){ argv[0], "sed", buf.data, NULL }, range);
-out:
+	bool ret = false;
+	if (buffer_put0(&buf, "s") && buffer_append0(&buf, argv[1]))
+		ret = cmd_filter(vis, win, cmd, (const char*[]){ argv[0], "sed", buf.data, NULL }, range);
 	buffer_release(&buf);
 	return ret;
 }
@@ -961,16 +957,11 @@ static bool cmd_write(Vis *vis, Win *win, Command *cmd, const char *argv[], File
 }
 
 static bool cmd_read(Vis *vis, Win *win, Command *cmd, const char *argv[], Filerange *range) {
-
-	bool ret = false;
 	Buffer buf;
 	buffer_init(&buf);
-
-	if (!buffer_put0(&buf, "cat ") || !buffer_append0(&buf, argv[1]))
-		goto out;
-
-	ret = cmd_pipein(vis, win, cmd, (const char*[]){ argv[0], buf.data, NULL }, range);
-out:
+	bool ret = false;
+	if (buffer_put0(&buf, "cat ") && buffer_append0(&buf, argv[1]))
+		ret = cmd_pipein(vis, win, cmd, (const char*[]){ argv[0], buf.data, NULL }, range);
 	buffer_release(&buf);
 	return ret;
 }
