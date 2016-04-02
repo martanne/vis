@@ -92,7 +92,7 @@ static const CommandDef cmds[] = {
 	{ { "g" },  CMD_CMD|CMD_REGEX,                   "p",  cmd_guard      },
 	{ { "i" },  CMD_TEXT,                            NULL, cmd_insert     },
 	{ { "p" },  0,                                   NULL, cmd_print      },
-	{ { "s" },  CMD_TEXT,                            NULL, cmd_substitute },
+	{ { "s" },  CMD_SHELL,                           NULL, cmd_substitute },
 	{ { "v" },  CMD_CMD|CMD_REGEX,                   "p",  cmd_guard      },
 	{ { "x" },  CMD_CMD|CMD_REGEX|CMD_REGEX_DEFAULT, "p",  cmd_extract    },
 	{ { "y" },  CMD_CMD|CMD_REGEX|CMD_REGEX_DEFAULT, "p",  cmd_extract    },
@@ -900,7 +900,17 @@ static bool cmd_files(Vis *vis, Win *win, Command *cmd, const char *argv[], File
 }
 
 static bool cmd_substitute(Vis *vis, Win *win, Command *cmd, const char *argv[], Filerange *range) {
-	return false;
+	bool ret = false;
+	Buffer buf;
+	buffer_init(&buf);
+
+	if (!buffer_put0(&buf, "s") || !buffer_append0(&buf, argv[1]))
+		goto out;
+
+	ret = cmd_filter(vis, win, cmd, (const char*[]){ argv[0], "sed", buf.data, NULL }, range);
+out:
+	buffer_release(&buf);
+	return ret;
 }
 
 static bool cmd_write(Vis *vis, Win *win, Command *cmd, const char *argv[], Filerange *range) {
@@ -1003,7 +1013,7 @@ static bool cmd_filter(Vis *vis, Win *win, Command *cmd, const char *argv[], Fil
 
 	text_snapshot(txt);
 
-	int status = vis_pipe(vis, &filter, range, (const char*[]){ argv[1], NULL }, read_stdout, read_stderr);
+	int status = vis_pipe(vis, &filter, range, &argv[1], read_stdout, read_stderr);
 
 	if (status == 0) {
 		text_delete_range(txt, range);
