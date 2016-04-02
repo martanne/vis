@@ -13,13 +13,8 @@ bool vis_prompt_cmd(Vis *vis, const char *cmd) {
 		return vis_motion(vis, VIS_MOVE_SEARCH_BACKWARD, cmd+1);
 	case '+':
 	case ':':
-	{
 		register_put0(vis, &vis->registers[VIS_REG_COMMAND], cmd+1);
-		bool ret = vis_cmd(vis, cmd+1);
-		if (ret && vis->mode->visual)
-			;//vis_mode_switch(vis, VIS_MODE_NORMAL);
-		return ret;
-	}
+		return vis_cmd(vis, cmd+1);
 	default:
 		return false;
 	}

@@ -228,7 +228,6 @@ enum {
 	VIS_ACTION_JOIN_LINE_BELOW,
 	VIS_ACTION_JOIN_LINES,
 	VIS_ACTION_PROMPT_SHOW,
-	VIS_ACTION_PROMPT_SHOW_VISUAL,
 	VIS_ACTION_REPEAT,
 	VIS_ACTION_SELECTION_FLIP,
 	VIS_ACTION_SELECTION_RESTORE,
@@ -748,7 +747,7 @@ static const KeyAction vis_action[] = {
 	[VIS_ACTION_OPERATOR_FILTER_FMT] = {
 		"vis-operator-filter-format",
 		"Formating operator, filter range through fmt(1)",
-		operator_filter, { .s = "'<,'>!fmt" }
+		operator_filter, { .s = "|fmt" }
 	},
 	[VIS_ACTION_COUNT] = {
 		"vis-count",
@@ -824,11 +823,6 @@ static const KeyAction vis_action[] = {
 		"prompt-show",
 		"Show editor command line prompt",
 		prompt_show, { .s = ":" }
-	},
-	[VIS_ACTION_PROMPT_SHOW_VISUAL] = {
-		"prompt-show-visual",
-		"Show editor command line prompt in visual mode",
-		prompt_show, { .s = ":'<,'>" }
 	},
 	[VIS_ACTION_REPEAT] = {
 		"editor-repeat",

@@ -8,6 +8,7 @@
 #include <string.h>
 #include <stdio.h>
 #include <ctype.h>
+#include <errno.h>
 #include "sam.h"
 #include "vis-core.h"
 #include "buffer.h"
@@ -65,51 +66,93 @@ struct CommandDef {
 		CMD_ARGV          = 1 << 10, /* whether shell like argument splitted is desired */
 	} flags;
 	const char *defcmd;                  /* name of a default target command */
-	bool (*func)(Vis*, Win*, Command*, const char *argv[], Filerange*); /* command implementation */
+	bool (*func)(Vis*, Win*, Command*, const char *argv[], Cursor*, Filerange*); /* command implementation */
 };
 
-static bool cmd_insert(Vis*, Win*, Command*, const char *argv[], Filerange*);
-static bool cmd_append(Vis*, Win*, Command*, const char *argv[], Filerange*);
-static bool cmd_change(Vis*, Win*, Command*, const char *argv[], Filerange*);
-static bool cmd_delete(Vis*, Win*, Command*, const char *argv[], Filerange*);
-static bool cmd_guard(Vis*, Win*, Command*, const char *argv[], Filerange*);
-static bool cmd_extract(Vis*, Win*, Command*, const char *argv[], Filerange*);
-static bool cmd_select(Vis*, Win*, Command*, const char *argv[], Filerange*);
-static bool cmd_print(Vis*, Win*, Command*, const char *argv[], Filerange*);
-static bool cmd_files(Vis*, Win*, Command*, const char *argv[], Filerange*);
-static bool cmd_pipein(Vis*, Win*, Command*, const char *argv[], Filerange*);
-static bool cmd_pipeout(Vis*, Win*, Command*, const char *argv[], Filerange*);
-static bool cmd_filter(Vis*, Win*, Command*, const char *argv[], Filerange*);
-static bool cmd_substitute(Vis*, Win*, Command*, const char *argv[], Filerange*);
-static bool cmd_write(Vis*, Win*, Command*,const char *argv[], Filerange*);
-static bool cmd_read(Vis*, Win*, Command*, const char *argv[], Filerange*);
+/* sam commands */
+static bool cmd_insert(Vis*, Win*, Command*, const char *argv[], Cursor*, Filerange*);
+static bool cmd_append(Vis*, Win*, Command*, const char *argv[], Cursor*, Filerange*);
+static bool cmd_change(Vis*, Win*, Command*, const char *argv[], Cursor*, Filerange*);
+static bool cmd_delete(Vis*, Win*, Command*, const char *argv[], Cursor*, Filerange*);
+static bool cmd_guard(Vis*, Win*, Command*, const char *argv[], Cursor*, Filerange*);
+static bool cmd_extract(Vis*, Win*, Command*, const char *argv[], Cursor*, Filerange*);
+static bool cmd_select(Vis*, Win*, Command*, const char *argv[], Cursor*, Filerange*);
+static bool cmd_print(Vis*, Win*, Command*, const char *argv[], Cursor*, Filerange*);
+static bool cmd_files(Vis*, Win*, Command*, const char *argv[], Cursor*, Filerange*);
+static bool cmd_pipein(Vis*, Win*, Command*, const char *argv[], Cursor*, Filerange*);
+static bool cmd_pipeout(Vis*, Win*, Command*, const char *argv[], Cursor*, Filerange*);
+static bool cmd_filter(Vis*, Win*, Command*, const char *argv[], Cursor*, Filerange*);
+static bool cmd_substitute(Vis*, Win*, Command*, const char *argv[], Cursor*, Filerange*);
+static bool cmd_write(Vis*, Win*, Command*,const char *argv[], Cursor*, Filerange*);
+static bool cmd_read(Vis*, Win*, Command*, const char *argv[], Cursor*, Filerange*);
+static bool cmd_edit(Vis*, Win*, Command*, const char *argv[], Cursor*, Filerange*);
+static bool cmd_quit(Vis*, Win*, Command*, const char *argv[], Cursor*, Filerange*);
+/* vi(m) commands */
+static bool cmd_set(Vis*, Win*, Command*, const char *argv[], Cursor*, Filerange*);
+static bool cmd_open(Vis*, Win*, Command*, const char *argv[], Cursor*, Filerange*);
+static bool cmd_bdelete(Vis*, Win*, Command*, const char *argv[], Cursor*, Filerange*);
+static bool cmd_qall(Vis*, Win*, Command*, const char *argv[], Cursor*, Filerange*);
+static bool cmd_split(Vis*, Win*, Command*, const char *argv[], Cursor*, Filerange*);
+static bool cmd_vsplit(Vis*, Win*, Command*, const char *argv[], Cursor*, Filerange*);
+static bool cmd_new(Vis*, Win*, Command*, const char *argv[], Cursor*, Filerange*);
+static bool cmd_vnew(Vis*, Win*, Command*, const char *argv[], Cursor*, Filerange*);
+static bool cmd_wq(Vis*, Win*, Command*, const char *argv[], Cursor*, Filerange*);
+static bool cmd_earlier_later(Vis*, Win*, Command*, const char *argv[], Cursor*, Filerange*);
+static bool cmd_help(Vis*, Win*, Command*, const char *argv[], Cursor*, Filerange*);
+static bool cmd_map(Vis*, Win*, Command*, const char *argv[], Cursor*, Filerange*);
+static bool cmd_unmap(Vis*, Win*, Command*, const char *argv[], Cursor*, Filerange*);
+static bool cmd_langmap(Vis*, Win*, Command*, const char *argv[], Cursor*, Filerange*);
 
+/* command recognized at the ':'-prompt. commands are found using a unique
+ * prefix match. that is if a command should be available under an abbreviation
+ * which is a prefix for another command it has to be added as an alias. the
+ * long human readable name should always come first */
 static const CommandDef cmds[] = {
-	/* name(s), flags,                    default command, command        */
-	{ { "a" },  CMD_TEXT,                            NULL, cmd_append     },
-	{ { "c" },  CMD_TEXT,                            NULL, cmd_change     },
-	{ { "d" },  0,                                   NULL, cmd_delete     },
-	{ { "g" },  CMD_CMD|CMD_REGEX,                   "p",  cmd_guard      },
-	{ { "i" },  CMD_TEXT,                            NULL, cmd_insert     },
-	{ { "p" },  0,                                   NULL, cmd_print      },
-	{ { "s" },  CMD_SHELL,                           NULL, cmd_substitute },
-	{ { "v" },  CMD_CMD|CMD_REGEX,                   "p",  cmd_guard      },
-	{ { "x" },  CMD_CMD|CMD_REGEX|CMD_REGEX_DEFAULT, "p",  cmd_extract    },
-	{ { "y" },  CMD_CMD|CMD_REGEX|CMD_REGEX_DEFAULT, "p",  cmd_extract    },
-	{ { "X" },  CMD_CMD|CMD_REGEX|CMD_REGEX_DEFAULT, NULL, cmd_files      },
-	{ { "Y" },  CMD_CMD|CMD_REGEX|CMD_REGEX_DEFAULT, NULL, cmd_files      },
-	{ { ">" },  CMD_SHELL,                           NULL, cmd_pipeout    },
-	{ { "<" },  CMD_SHELL,                           NULL, cmd_pipein     },
-	{ { "|" },  CMD_SHELL,                           NULL, cmd_filter     },
-	{ { "w" },  CMD_ARGV|CMD_FORCE,                  NULL, cmd_write      },
-	{ { "r" },  CMD_FILE,                            NULL, cmd_read       },
-	{ { "{" },  0,                                   NULL, NULL           },
-	{ { "}" },  0,                                   NULL, NULL           },
-	{ { NULL }, 0,                                   NULL, NULL           },
+	/* name(s),           flags,                    default command, implementation    */
+	{ { "a"            }, CMD_TEXT,                            NULL, cmd_append        },
+	{ { "c"            }, CMD_TEXT,                            NULL, cmd_change        },
+	{ { "d"            }, 0,                                   NULL, cmd_delete        },
+	{ { "g"            }, CMD_CMD|CMD_REGEX,                   "p",  cmd_guard         },
+	{ { "i"            }, CMD_TEXT,                            NULL, cmd_insert        },
+	{ { "p"            }, 0,                                   NULL, cmd_print         },
+	{ { "s"            }, CMD_SHELL,                           NULL, cmd_substitute    },
+	{ { "v"            }, CMD_CMD|CMD_REGEX,                   "p",  cmd_guard         },
+	{ { "x"            }, CMD_CMD|CMD_REGEX|CMD_REGEX_DEFAULT, "p",  cmd_extract       },
+	{ { "y"            }, CMD_CMD|CMD_REGEX|CMD_REGEX_DEFAULT, "p",  cmd_extract       },
+	{ { "X"            }, CMD_CMD|CMD_REGEX|CMD_REGEX_DEFAULT, NULL, cmd_files         },
+	{ { "Y"            }, CMD_CMD|CMD_REGEX|CMD_REGEX_DEFAULT, NULL, cmd_files         },
+	{ { ">"            }, CMD_SHELL,                           NULL, cmd_pipeout       },
+	{ { "<"            }, CMD_SHELL,                           NULL, cmd_pipein        },
+	{ { "|"            }, CMD_SHELL,                           NULL, cmd_filter        },
+	{ { "w"            }, CMD_ARGV|CMD_FORCE,                  NULL, cmd_write         },
+	{ { "r"            }, CMD_FILE,                            NULL, cmd_read          },
+	{ { "{"            }, 0,                                   NULL, NULL              },
+	{ { "}"            }, 0,                                   NULL, NULL              },
+	{ { "e"            }, CMD_FILE|CMD_FORCE,                  NULL, cmd_edit          },
+	{ { "q"            }, CMD_FORCE,                           NULL, cmd_quit          },
+	/* vi(m) related commands */
+	{ { "bdelete"      }, CMD_FORCE,                           NULL, cmd_bdelete       },
+	{ { "help"         }, 0,                                   NULL, cmd_help          },
+	{ { "map"          }, CMD_ARGV|CMD_FORCE,                  NULL, cmd_map           },
+	{ { "map-window"   }, CMD_ARGV|CMD_FORCE,                  NULL, cmd_map           },
+	{ { "unmap"        }, CMD_ARGV,                            NULL, cmd_unmap         },
+	{ { "unmap-window" }, CMD_ARGV,                            NULL, cmd_unmap         },
+	{ { "langmap"      }, CMD_ARGV|CMD_FORCE,                  NULL, cmd_langmap       },
+	{ { "new"          }, CMD_ARGV,                            NULL, cmd_new           },
+	{ { "open"         }, CMD_ARGV,                            NULL, cmd_open          },
+	{ { "qall"         }, CMD_FORCE,                           NULL, cmd_qall          },
+	{ { "set"          }, CMD_ARGV,                            NULL, cmd_set           },
+	{ { "split"        }, CMD_ARGV,                            NULL, cmd_split         },
+	{ { "vnew"         }, CMD_ARGV,                            NULL, cmd_vnew          },
+	{ { "vsplit"       }, CMD_ARGV,                            NULL, cmd_vsplit        },
+	{ { "wq"           }, CMD_ARGV|CMD_FORCE,                  NULL, cmd_wq            },
+	{ { "earlier"      }, CMD_ARGV,                            NULL, cmd_earlier_later },
+	{ { "later"        }, CMD_ARGV,                            NULL, cmd_earlier_later },
+	{ { NULL           }, 0,                                   NULL, NULL              },
 };
 
 static const CommandDef cmddef_select =
-	{ { "s" }, 0,                                    NULL,  cmd_select   };
+	{ { "s"            }, 0,                                   NULL, cmd_select        };
 
 const char *sam_error(enum SamError err) {
 	static const char *error_msg[] = {
@@ -670,7 +713,7 @@ static Filerange address_evaluate(Address *addr, File *file, Filerange *range, i
 	return ret;
 }
 
-static bool sam_execute(Vis *vis, Win *win, Command *cmd, Filerange *range) {
+static bool sam_execute(Vis *vis, Win *win, Command *cmd, Cursor *cur, Filerange *range) {
 	bool ret = true;
 	if (cmd->address)
 		*range = address_evaluate(cmd->address, win->file, range, 0);
@@ -689,7 +732,7 @@ static bool sam_execute(Vis *vis, Win *win, Command *cmd, Filerange *range) {
 			start = text_mark_set(txt, group.start);
 			end = text_mark_set(txt, group.end);
 
-			ret &= sam_execute(vis, win, c, &group);
+			ret &= sam_execute(vis, win, c, cur, &group);
 
 			size_t s = text_mark_get(txt, start);
 			/* hack to make delete work, only update if still valid */
@@ -700,7 +743,7 @@ static bool sam_execute(Vis *vis, Win *win, Command *cmd, Filerange *range) {
 		break;
 	}
 	default:
-		ret = cmd->cmddef->func(vis, win, cmd, cmd->argv, range);
+		ret = cmd->cmddef->func(vis, win, cmd, cmd->argv, cur, range);
 		break;
 	}
 	return ret;
@@ -719,7 +762,7 @@ enum SamError sam_cmd(Vis *vis, const char *s) {
 	}
 
 	Filerange range = text_range_empty();
-	sam_execute(vis, vis->win, cmd, &range);
+	sam_execute(vis, vis->win, cmd, NULL, &range);
 
 	bool completed = true;
 	for (Cursor *c = view_cursors(vis->win->view); c; c = view_cursors_next(c)) {
@@ -735,7 +778,7 @@ enum SamError sam_cmd(Vis *vis, const char *s) {
 	return err;
 }
 
-static bool cmd_insert(Vis *vis, Win *win, Command *cmd, const char *argv[], Filerange *range) {
+static bool cmd_insert(Vis *vis, Win *win, Command *cmd, const char *argv[], Cursor *cur, Filerange *range) {
 	size_t len = strlen(argv[1]);
 	bool ret = text_insert(win->file->text, range->start, argv[1], len);
 	if (ret)
@@ -743,7 +786,7 @@ static bool cmd_insert(Vis *vis, Win *win, Command *cmd, const char *argv[], Fil
 	return ret;
 }
 
-static bool cmd_append(Vis *vis, Win *win, Command *cmd, const char *argv[], Filerange *range) {
+static bool cmd_append(Vis *vis, Win *win, Command *cmd, const char *argv[], Cursor *cur, Filerange *range) {
 	size_t len = strlen(argv[1]);
 	bool ret = text_insert(win->file->text, range->end, argv[1], len);
 	if (ret)
@@ -751,7 +794,7 @@ static bool cmd_append(Vis *vis, Win *win, Command *cmd, const char *argv[], Fil
 	return ret;
 }
 
-static bool cmd_change(Vis *vis, Win *win, Command *cmd, const char *argv[], Filerange *range) {
+static bool cmd_change(Vis *vis, Win *win, Command *cmd, const char *argv[], Cursor *cur, Filerange *range) {
 	Text *txt = win->file->text;
 	size_t len = strlen(argv[1]);
 	bool ret = text_delete(txt, range->start, text_range_size(range)) &&
@@ -761,24 +804,34 @@ static bool cmd_change(Vis *vis, Win *win, Command *cmd, const char *argv[], Fil
 	return ret;
 }
 
-static bool cmd_delete(Vis *vis, Win *win, Command *cmd, const char *argv[], Filerange *range) {
+static bool cmd_delete(Vis *vis, Win *win, Command *cmd, const char *argv[], Cursor *cur, Filerange *range) {
 	bool ret = text_delete(win->file->text, range->start, text_range_size(range));
 	if (ret)
 		*range = text_range_new(range->start, range->start);
 	return ret;
 }
 
-static bool cmd_guard(Vis *vis, Win *win, Command *cmd, const char *argv[], Filerange *range) {
+static bool cmd_guard(Vis *vis, Win *win, Command *cmd, const char *argv[], Cursor *cur, Filerange *range) {
 	bool match = !text_search_range_forward(win->file->text, range->start,
 		text_range_size(range), cmd->regex, 0, NULL, 0);
 	if (match ^ (argv[0][0] == 'v'))
-		return sam_execute(vis, win, cmd->cmd, range);
+		return sam_execute(vis, win, cmd->cmd, cur, range);
+	view_cursors_dispose(cur);
 	return true;
 }
 
-static bool cmd_extract(Vis *vis, Win *win, Command *cmd, const char *argv[], Filerange *range) {
+static bool cmd_extract(Vis *vis, Win *win, Command *cmd, const char *argv[], Cursor *cur, Filerange *range) {
 	bool ret = true;
+	View *view = win->view;
 	Text *txt = win->file->text;
+
+	Cursor *cursor = NULL;
+	size_t pos = view_cursor_get(view);
+	if (!view_cursors_dispose(cur)) {
+		cursor = view_cursors_new(view, text_size(txt)+1);
+		view_cursors_dispose(cur);
+	}
+
 	if (cmd->regex) {
 		size_t start = range->start, end = range->end, last_start = EPOS;
 		RegexMatch match[1];
@@ -809,13 +862,15 @@ static bool cmd_extract(Vis *vis, Win *win, Command *cmd, const char *argv[], Fi
 			if (text_range_valid(&r)) {
 				Mark mark_start = text_mark_set(txt, start);
 				Mark mark_end = text_mark_set(txt, end);
-				ret &= sam_execute(vis, win, cmd->cmd, &r);
+				ret &= sam_execute(vis, win, cmd->cmd, NULL, &r);
 				last_start = start = text_mark_get(txt, mark_start);
 				if (start == EPOS && last_start != r.end)
 					last_start = start = r.end;
 				end = text_mark_get(txt, mark_end);
-				if (start == EPOS || end == EPOS)
-					return false;
+				if (start == EPOS || end == EPOS) {
+					ret = false;
+					break;
+				}
 			}
 		}
 	} else {
@@ -826,22 +881,28 @@ static bool cmd_extract(Vis *vis, Win *win, Command *cmd, const char *argv[], Fi
 			if (start == end || !text_range_valid(&line))
 				break;
 			Mark mark_end = text_mark_set(txt, end);
-			ret &= sam_execute(vis, win, cmd->cmd, &line);
+			ret &= sam_execute(vis, win, cmd->cmd, NULL, &line);
 			start = text_mark_get(txt, mark_end);
-			if (start == EPOS)
-				return false;
+			if (start == EPOS) {
+				ret = false;
+				break;
+			}
 		}
 	}
+
+	if (cursor && !view_cursors_dispose(cursor)) {
+		view_cursors_selection_clear(cursor);
+		view_cursors_to(cursor, pos);
+	}
+
 	return ret;
 }
 
-static bool cmd_select(Vis *vis, Win *win, Command *cmd, const char *argv[], Filerange *range) {
+static bool cmd_select(Vis *vis, Win *win, Command *cmd, const char *argv[], Cursor *cur, Filerange *range) {
 	bool ret = true;
 	View *view = win->view;
 	Text *txt = win->file->text;
 	bool multiple_cursors = view_cursors_multiple(view);
-	size_t pos = view_cursor_get(view);
-	Cursor *cursor = NULL;
 	for (Cursor *c = view_cursors(view), *next; c; c = next) {
 		next = view_cursors_next(c);
 		Filerange sel;
@@ -856,23 +917,14 @@ static bool cmd_select(Vis *vis, Win *win, Command *cmd, const char *argv[], Fil
 		} else {
 			sel = text_range_new(0, text_size(txt));
 		}
-		if (!view_cursors_dispose(c)) {
-			cursor = view_cursors_new(view, text_size(txt)+1);
-			view_cursors_dispose(c);
-		}
 		if (text_range_valid(&sel))
-			ret &= sam_execute(vis, win, cmd->cmd, &sel);
-	}
-
-	if (cursor && !view_cursors_dispose(cursor)) {
-		view_cursors_selection_clear(cursor);
-		view_cursors_to(cursor, pos);
+			ret &= sam_execute(vis, win, cmd->cmd, c, &sel);
 	}
 
 	return ret;
 }
 
-static bool cmd_print(Vis *vis, Win *win, Command *cmd, const char *argv[], Filerange *range) {
+static bool cmd_print(Vis *vis, Win *win, Command *cmd, const char *argv[], Cursor *cur, Filerange *range) {
 	if (!text_range_valid(range))
 		return false;
 	View *view = win->view;
@@ -880,13 +932,20 @@ static bool cmd_print(Vis *vis, Win *win, Command *cmd, const char *argv[], File
 	size_t pos = range->end;
 	if (range->start != range->end)
 		pos = text_char_prev(txt, pos);
-	Cursor *cursor = view_cursors_new(view, pos);
-	if (cursor && range->start != range->end)
-		view_cursors_selection_set(cursor, range);
-	return cursor != NULL;
+	if (cur)
+		view_cursors_to(cur, pos);
+	else
+		cur = view_cursors_new(view, pos);
+	if (cur) {
+		if (range->start != range->end)
+			view_cursors_selection_set(cur, range);
+		else
+			view_cursors_selection_clear(cur);
+	}
+	return cur != NULL;
 }
 
-static bool cmd_files(Vis *vis, Win *win, Command *cmd, const char *argv[], Filerange *range) {
+static bool cmd_files(Vis *vis, Win *win, Command *cmd, const char *argv[], Cursor *cur, Filerange *range) {
 	bool ret = true;
 	for (Win *win = vis->windows; win; win = win->next) {
 		if (win->file->internal)
@@ -894,22 +953,22 @@ static bool cmd_files(Vis *vis, Win *win, Command *cmd, const char *argv[], File
 		bool match = !cmd->regex || (win->file->name &&
 		             text_regex_match(cmd->regex, win->file->name, 0));
 		if (match ^ (argv[0][0] == 'Y'))
-			ret &= sam_execute(vis, win, cmd->cmd, range);
+			ret &= sam_execute(vis, win, cmd->cmd, NULL, range);
 	}
 	return ret;
 }
 
-static bool cmd_substitute(Vis *vis, Win *win, Command *cmd, const char *argv[], Filerange *range) {
+static bool cmd_substitute(Vis *vis, Win *win, Command *cmd, const char *argv[], Cursor *cur, Filerange *range) {
 	Buffer buf;
 	buffer_init(&buf);
 	bool ret = false;
 	if (buffer_put0(&buf, "s") && buffer_append0(&buf, argv[1]))
-		ret = cmd_filter(vis, win, cmd, (const char*[]){ argv[0], "sed", buf.data, NULL }, range);
+		ret = cmd_filter(vis, win, cmd, (const char*[]){ argv[0], "sed", buf.data, NULL }, cur, range);
 	buffer_release(&buf);
 	return ret;
 }
 
-static bool cmd_write(Vis *vis, Win *win, Command *cmd, const char *argv[], Filerange *range) {
+static bool cmd_write(Vis *vis, Win *win, Command *cmd, const char *argv[], Cursor *cur, Filerange *range) {
 	File *file = win->file;
 	Text *text = file->text;
 	if (!argv[1])
@@ -956,12 +1015,12 @@ static bool cmd_write(Vis *vis, Win *win, Command *cmd, const char *argv[], File
 	return true;
 }
 
-static bool cmd_read(Vis *vis, Win *win, Command *cmd, const char *argv[], Filerange *range) {
+static bool cmd_read(Vis *vis, Win *win, Command *cmd, const char *argv[], Cursor *cur, Filerange *range) {
 	Buffer buf;
 	buffer_init(&buf);
 	bool ret = false;
 	if (buffer_put0(&buf, "cat ") && buffer_append0(&buf, argv[1]))
-		ret = cmd_pipein(vis, win, cmd, (const char*[]){ argv[0], buf.data, NULL }, range);
+		ret = cmd_pipein(vis, win, cmd, (const char*[]){ argv[0], buf.data, NULL }, cur, range);
 	buffer_release(&buf);
 	return ret;
 }
@@ -979,7 +1038,7 @@ static ssize_t read_stderr(void *context, char *data, size_t len) {
 	return len;
 }
 
-static bool cmd_filter(Vis *vis, Win *win, Command *cmd, const char *argv[], Filerange *range) {
+static bool cmd_filter(Vis *vis, Win *win, Command *cmd, const char *argv[], Cursor *cur, Filerange *range) {
 	Text *txt = win->file->text;
 
 	Filter filter = {
@@ -1010,6 +1069,8 @@ static bool cmd_filter(Vis *vis, Win *win, Command *cmd, const char *argv[], Fil
 		text_delete_range(txt, range);
 		text_snapshot(txt);
 		range->end = filter.pos - text_range_size(range);
+		if (cur)
+			view_cursors_to(cur, range->start);
 	} else {
 		/* make sure we have somehting to undo */
 		text_insert(txt, filter.pos, " ", 1);
@@ -1030,21 +1091,26 @@ static bool cmd_filter(Vis *vis, Win *win, Command *cmd, const char *argv[], Fil
 	return !vis->cancel_filter && status == 0;
 }
 
-static bool cmd_pipein(Vis *vis, Win *win, Command *cmd, const char *argv[], Filerange *range) {
+static bool cmd_pipein(Vis *vis, Win *win, Command *cmd, const char *argv[], Cursor *cur, Filerange *range) {
 	Filerange filter_range = text_range_new(range->end, range->end);
-	bool ret = cmd_filter(vis, win, cmd, (const char*[]){ argv[0], argv[1], NULL }, &filter_range);
+	bool ret = cmd_filter(vis, win, cmd, (const char*[]){ argv[0], argv[1], NULL }, cur, &filter_range);
 	if (ret) {
 		text_delete_range(win->file->text, range);
 		range->end = range->start + text_range_size(&filter_range);
+		if (cur)
+			view_cursors_to(cur, range->start);
 	}
 	return ret;
 }
 
-static bool cmd_pipeout(Vis *vis, Win *win, Command *cmd, const char *argv[], Filerange *range) {
+static bool cmd_pipeout(Vis *vis, Win *win, Command *cmd, const char *argv[], Cursor *cur, Filerange *range) {
 	Filter filter;
 	buffer_init(&filter.err);
 
 	int status = vis_pipe(vis, &filter, range, (const char*[]){ argv[1], NULL }, NULL, read_stderr);
+
+	if (status == 0 && cur)
+		view_cursors_to(cur, range->start);
 
 	if (vis->cancel_filter)
 		vis_info_show(vis, "Command cancelled");
@@ -1059,3 +1125,5 @@ static bool cmd_pipeout(Vis *vis, Win *win, Command *cmd, const char *argv[], Fi
 
 	return !vis->cancel_filter && status == 0;
 }
+
+#include "vis-cmds.c"
