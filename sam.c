@@ -42,7 +42,6 @@ struct Command {
 	const char *argv[MAX_ARGV];/* [0]=cmd-name, [1..MAX_ARGV-2]=arguments, last element always NULL */
 	Address *address;         /* range of text for command */
 	Regex *regex;             /* regex to match, used by x, y, g, v, X, Y */
-	char *text;               /* text to insert for i, a, c. filename for w, r */
 	const CommandDef *cmddef; /* which command is this? */
 	int count;                /* command count if any */
 	char flags;               /* command specific flags */
@@ -66,24 +65,24 @@ struct CommandDef {
 		CMD_ARGV          = 1 << 10, /* whether shell like argument splitted is desired */
 	} flags;
 	const char *defcmd;                  /* name of a default target command */
-	bool (*func)(Vis*, Win*, Command*, Filerange*); /* command imiplementation */
+	bool (*func)(Vis*, Win*, Command*, const char *argv[], Filerange*); /* command implementation */
 };
 
-static bool cmd_insert(Vis*, Win*, Command*, Filerange*);
-static bool cmd_append(Vis*, Win*, Command*, Filerange*);
-static bool cmd_change(Vis*, Win*, Command*, Filerange*);
-static bool cmd_delete(Vis*, Win*, Command*, Filerange*);
-static bool cmd_guard(Vis*, Win*, Command*, Filerange*);
-static bool cmd_extract(Vis*, Win*, Command*, Filerange*);
-static bool cmd_select(Vis*, Win*, Command*, Filerange*);
-static bool cmd_print(Vis*, Win*, Command*, Filerange*);
-static bool cmd_files(Vis*, Win*, Command*, Filerange*);
-static bool cmd_pipein(Vis*, Win*, Command*, Filerange*);
-static bool cmd_pipeout(Vis*, Win*, Command*, Filerange*);
-static bool cmd_filter(Vis*, Win*, Command*, Filerange*);
-static bool cmd_substitute(Vis*, Win*, Command*, Filerange*);
-static bool cmd_write(Vis*, Win*, Command*, Filerange*);
-static bool cmd_read(Vis*, Win*, Command*, Filerange*);
+static bool cmd_insert(Vis*, Win*, Command*, const char *argv[], Filerange*);
+static bool cmd_append(Vis*, Win*, Command*, const char *argv[], Filerange*);
+static bool cmd_change(Vis*, Win*, Command*, const char *argv[], Filerange*);
+static bool cmd_delete(Vis*, Win*, Command*, const char *argv[], Filerange*);
+static bool cmd_guard(Vis*, Win*, Command*, const char *argv[], Filerange*);
+static bool cmd_extract(Vis*, Win*, Command*, const char *argv[], Filerange*);
+static bool cmd_select(Vis*, Win*, Command*, const char *argv[], Filerange*);
+static bool cmd_print(Vis*, Win*, Command*, const char *argv[], Filerange*);
+static bool cmd_files(Vis*, Win*, Command*, const char *argv[], Filerange*);
+static bool cmd_pipein(Vis*, Win*, Command*, const char *argv[], Filerange*);
+static bool cmd_pipeout(Vis*, Win*, Command*, const char *argv[], Filerange*);
+static bool cmd_filter(Vis*, Win*, Command*, const char *argv[], Filerange*);
+static bool cmd_substitute(Vis*, Win*, Command*, const char *argv[], Filerange*);
+static bool cmd_write(Vis*, Win*, Command*,const char *argv[], Filerange*);
+static bool cmd_read(Vis*, Win*, Command*, const char *argv[], Filerange*);
 
 static const CommandDef cmds[] = {
 	/* name(s), flags,                    default command, command        */
@@ -418,7 +417,6 @@ static void command_free(Command *cmd) {
 		free((void*)*args);
 	address_free(cmd->address);
 	text_regex_free(cmd->regex);
-	free(cmd->text);
 	free(cmd);
 }
 
@@ -496,7 +494,7 @@ static Command *command_parse(Vis *vis, const char **s, int level, enum SamError
 	}
 
 	if (cmddef->flags & CMD_FILE) {
-		if (!(cmd->text = parse_filename(s)) && cmd->argv[0][0] != 'w') {
+		if (!(cmd->argv[1] = parse_filename(s)) && cmd->argv[0][0] != 'w') {
 			*err = SAM_ERR_FILENAME;
 			goto fail;
 		}
@@ -511,12 +509,12 @@ static Command *command_parse(Vis *vis, const char **s, int level, enum SamError
 		}
 	}
 
-	if (cmddef->flags & CMD_SHELL && !(cmd->text = parse_shellcmd(s))) {
+	if (cmddef->flags & CMD_SHELL && !(cmd->argv[1] = parse_shellcmd(s))) {
 		*err = SAM_ERR_SHELL;
 		goto fail;
 	}
 
-	if (cmddef->flags & CMD_TEXT && !(cmd->text = parse_text(s))) {
+	if (cmddef->flags & CMD_TEXT && !(cmd->argv[1] = parse_text(s))) {
 		*err = SAM_ERR_TEXT;
 		goto fail;
 	}
@@ -702,7 +700,7 @@ static bool sam_execute(Vis *vis, Win *win, Command *cmd, Filerange *range) {
 		break;
 	}
 	default:
-		ret = cmd->cmddef->func(vis, win, cmd, range);
+		ret = cmd->cmddef->func(vis, win, cmd, cmd->argv, range);
 		break;
 	}
 	return ret;
@@ -737,48 +735,48 @@ enum SamError sam_cmd(Vis *vis, const char *s) {
 	return err;
 }
 
-static bool cmd_insert(Vis *vis, Win *win, Command *cmd, Filerange *range) {
-	size_t len = strlen(cmd->text);
-	bool ret = text_insert(win->file->text, range->start, cmd->text, len);
+static bool cmd_insert(Vis *vis, Win *win, Command *cmd, const char *argv[], Filerange *range) {
+	size_t len = strlen(argv[1]);
+	bool ret = text_insert(win->file->text, range->start, argv[1], len);
 	if (ret)
 		*range = text_range_new(range->start, range->start + len);
 	return ret;
 }
 
-static bool cmd_append(Vis *vis, Win *win, Command *cmd, Filerange *range) {
-	size_t len = strlen(cmd->text);
-	bool ret = text_insert(win->file->text, range->end, cmd->text, len);
+static bool cmd_append(Vis *vis, Win *win, Command *cmd, const char *argv[], Filerange *range) {
+	size_t len = strlen(argv[1]);
+	bool ret = text_insert(win->file->text, range->end, argv[1], len);
 	if (ret)
 		*range = text_range_new(range->end, range->end + len);
 	return ret;
 }
 
-static bool cmd_change(Vis *vis, Win *win, Command *cmd, Filerange *range) {
+static bool cmd_change(Vis *vis, Win *win, Command *cmd, const char *argv[], Filerange *range) {
 	Text *txt = win->file->text;
-	size_t len = strlen(cmd->text);
+	size_t len = strlen(argv[1]);
 	bool ret = text_delete(txt, range->start, text_range_size(range)) &&
-	      text_insert(txt, range->start, cmd->text, len);
+	      text_insert(txt, range->start, argv[1], len);
 	if (ret)
 		*range = text_range_new(range->start, range->start + len);
 	return ret;
 }
 
-static bool cmd_delete(Vis *vis, Win *win, Command *cmd, Filerange *range) {
+static bool cmd_delete(Vis *vis, Win *win, Command *cmd, const char *argv[], Filerange *range) {
 	bool ret = text_delete(win->file->text, range->start, text_range_size(range));
 	if (ret)
 		*range = text_range_new(range->start, range->start);
 	return ret;
 }
 
-static bool cmd_guard(Vis *vis, Win *win, Command *cmd, Filerange *range) {
+static bool cmd_guard(Vis *vis, Win *win, Command *cmd, const char *argv[], Filerange *range) {
 	bool match = !text_search_range_forward(win->file->text, range->start,
 		text_range_size(range), cmd->regex, 0, NULL, 0);
-	if (match ^ (cmd->argv[0][0] == 'v'))
+	if (match ^ (argv[0][0] == 'v'))
 		return sam_execute(vis, win, cmd->cmd, range);
 	return true;
 }
 
-static bool cmd_extract(Vis *vis, Win *win, Command *cmd, Filerange *range) {
+static bool cmd_extract(Vis *vis, Win *win, Command *cmd, const char *argv[], Filerange *range) {
 	bool ret = true;
 	Text *txt = win->file->text;
 	if (cmd->regex) {
@@ -789,7 +787,7 @@ static bool cmd_extract(Vis *vis, Win *win, Command *cmd, Filerange *range) {
 				end - start, cmd->regex, 1, match, 0) == 0;
 			Filerange r = text_range_empty();
 			if (found) {
-				if (cmd->argv[0][0] == 'x')
+				if (argv[0][0] == 'x')
 					r = text_range_new(match[0].start, match[0].end);
 				else
 					r = text_range_new(start, match[0].start);
@@ -803,7 +801,7 @@ static bool cmd_extract(Vis *vis, Win *win, Command *cmd, Filerange *range) {
 					start = match[0].end;
 				}
 			} else {
-				if (cmd->argv[0][0] == 'y')
+				if (argv[0][0] == 'y')
 					r = text_range_new(start, end);
 				start = end;
 			}
@@ -837,7 +835,7 @@ static bool cmd_extract(Vis *vis, Win *win, Command *cmd, Filerange *range) {
 	return ret;
 }
 
-static bool cmd_select(Vis *vis, Win *win, Command *cmd, Filerange *range) {
+static bool cmd_select(Vis *vis, Win *win, Command *cmd, const char *argv[], Filerange *range) {
 	bool ret = true;
 	View *view = win->view;
 	Text *txt = win->file->text;
@@ -874,7 +872,7 @@ static bool cmd_select(Vis *vis, Win *win, Command *cmd, Filerange *range) {
 	return ret;
 }
 
-static bool cmd_print(Vis *vis, Win *win, Command *cmd, Filerange *range) {
+static bool cmd_print(Vis *vis, Win *win, Command *cmd, const char *argv[], Filerange *range) {
 	if (!text_range_valid(range))
 		return false;
 	View *view = win->view;
@@ -888,31 +886,31 @@ static bool cmd_print(Vis *vis, Win *win, Command *cmd, Filerange *range) {
 	return cursor != NULL;
 }
 
-static bool cmd_files(Vis *vis, Win *win, Command *cmd, Filerange *range) {
+static bool cmd_files(Vis *vis, Win *win, Command *cmd, const char *argv[], Filerange *range) {
 	bool ret = true;
 	for (Win *win = vis->windows; win; win = win->next) {
 		if (win->file->internal)
 			continue;
 		bool match = !cmd->regex || (win->file->name &&
 		             text_regex_match(cmd->regex, win->file->name, 0));
-		if (match ^ (cmd->argv[0][0] == 'Y'))
+		if (match ^ (argv[0][0] == 'Y'))
 			ret &= sam_execute(vis, win, cmd->cmd, range);
 	}
 	return ret;
 }
 
-static bool cmd_substitute(Vis *vis, Win *win, Command *cmd, Filerange *range) {
+static bool cmd_substitute(Vis *vis, Win *win, Command *cmd, const char *argv[], Filerange *range) {
 	return false;
 }
 
-static bool cmd_write(Vis *vis, Win *win, Command *cmd, Filerange *range) {
+static bool cmd_write(Vis *vis, Win *win, Command *cmd, const char *argv[], Filerange *range) {
 	File *file = win->file;
 	Text *text = file->text;
 	if (!argv[1])
 		argv[1] = file->name ? strdup(file->name) : NULL;
 	if (!argv[1]) {
 		if (file->is_stdin) {
-			if (strchr(cmd->argv[0], 'q')) {
+			if (strchr(argv[0], 'q')) {
 				ssize_t written = text_write_range(text, range, STDOUT_FILENO);
 				if (written == -1 || (size_t)written != text_range_size(range)) {
 					vis_info_show(vis, "Can not write to stdout");
@@ -929,7 +927,7 @@ static bool cmd_write(Vis *vis, Win *win, Command *cmd, Filerange *range) {
 		return false;
 	}
 
-	for (const char **name = &cmd->argv[1]; *name; name++) {
+	for (const char **name = &argv[1]; *name; name++) {
 		struct stat meta;
 		if (cmd->flags != '!' && file->stat.st_mtime && stat(*name, &meta) == 0 &&
 		    file->stat.st_mtime < meta.st_mtime) {
@@ -952,17 +950,16 @@ static bool cmd_write(Vis *vis, Win *win, Command *cmd, Filerange *range) {
 	return true;
 }
 
-static bool cmd_read(Vis *vis, Win *win, Command *cmd, Filerange *range) {
+static bool cmd_read(Vis *vis, Win *win, Command *cmd, const char *argv[], Filerange *range) {
 
 	bool ret = false;
 	Buffer buf;
 	buffer_init(&buf);
 
-	if (!buffer_put0(&buf, "cat ") || !buffer_append0(&buf, cmd->text))
+	if (!buffer_put0(&buf, "cat ") || !buffer_append0(&buf, argv[1]))
 		goto out;
 
-	Command pipe_cmd = { .text = buf.data }; // FIXME
-	ret = cmd_pipein(vis, win, &pipe_cmd, range);
+	ret = cmd_pipein(vis, win, cmd, (const char*[]){ argv[0], buf.data, NULL }, range);
 out:
 	buffer_release(&buf);
 	return ret;
@@ -981,7 +978,7 @@ static ssize_t read_stderr(void *context, char *data, size_t len) {
 	return len;
 }
 
-static bool cmd_filter(Vis *vis, Win *win, Command *cmd, Filerange *range) {
+static bool cmd_filter(Vis *vis, Win *win, Command *cmd, const char *argv[], Filerange *range) {
 	Text *txt = win->file->text;
 
 	Filter filter = {
@@ -1006,9 +1003,7 @@ static bool cmd_filter(Vis *vis, Win *win, Command *cmd, Filerange *range) {
 
 	text_snapshot(txt);
 
-	const char *argv[] = { cmd->text, NULL };
-
-	int status = vis_pipe(vis, &filter, range, argv, read_stdout, read_stderr);
+	int status = vis_pipe(vis, &filter, range, (const char*[]){ argv[1], NULL }, read_stdout, read_stderr);
 
 	if (status == 0) {
 		text_delete_range(txt, range);
@@ -1034,10 +1029,9 @@ static bool cmd_filter(Vis *vis, Win *win, Command *cmd, Filerange *range) {
 	return !vis->cancel_filter && status == 0;
 }
 
-static bool cmd_pipein(Vis *vis, Win *win, Command *cmd, Filerange *range) {
+static bool cmd_pipein(Vis *vis, Win *win, Command *cmd, const char *argv[], Filerange *range) {
 	Filerange filter_range = text_range_new(range->end, range->end);
-	Command filter_cmd = { .text = cmd->text }; // FIXME
-	bool ret = cmd_filter(vis, win, &filter_cmd, &filter_range);
+	bool ret = cmd_filter(vis, win, cmd, (const char*[]){ argv[0], argv[1], NULL }, &filter_range);
 	if (ret) {
 		text_delete_range(win->file->text, range);
 		range->end = range->start + text_range_size(&filter_range);
@@ -1045,13 +1039,11 @@ static bool cmd_pipein(Vis *vis, Win *win, Command *cmd, Filerange *range) {
 	return ret;
 }
 
-static bool cmd_pipeout(Vis *vis, Win *win, Command *cmd, Filerange *range) {
+static bool cmd_pipeout(Vis *vis, Win *win, Command *cmd, const char *argv[], Filerange *range) {
 	Filter filter;
 	buffer_init(&filter.err);
 
-	const char *argv[] = { cmd->text, NULL };
-
-	int status = vis_pipe(vis, &filter, range, argv, NULL, read_stderr);
+	int status = vis_pipe(vis, &filter, range, (const char*[]){ argv[1], NULL }, NULL, read_stderr);
 
 	if (vis->cancel_filter)
 		vis_info_show(vis, "Command cancelled");
