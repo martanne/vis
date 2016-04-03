@@ -31,7 +31,7 @@ typedef struct {        /* used to keep context when dealing with external proce
 } Filter;
 
 struct Address {
-	char type;      /* # (char) l (line) g (goto line) / ? . $ + - , ; * */
+	char type;      /* # (char) l (line) g (goto line) / ? . $ + - , ; % */
 	Regex *regex;   /* NULL denotes default for x, y, X, and Y commands */
 	size_t number;  /* line or character number */
 	Address *left;  /* left hand side of a compound address , ; */
@@ -366,6 +366,7 @@ static Address *address_parse_simple(Vis *vis, const char **s, enum SamError *er
 	case '.':
 	case '+':
 	case '-':
+	case '%':
 		(*s)++;
 		break;
 	default:
@@ -594,7 +595,7 @@ static Command *command_parse(Vis *vis, const char **s, int level, enum SamError
 		if (cmddef->flags & CMD_ADDRESS_ALL) {
 			if (!(cmd->address = address_new()))
 				goto fail;
-			cmd->address->type = '*';
+			cmd->address->type = '%';
 		}
 	}
 
@@ -704,7 +705,7 @@ static Filerange address_evaluate(Address *addr, File *file, Filerange *range, i
 			/* TODO: enforce strict ordering? */
 			return text_range_union(&left, &right);
 		}
-		case '*':
+		case '%':
 			return text_range_new(0, text_size(file->text));
 		}
 		if (text_range_valid(&ret))
