@@ -284,6 +284,7 @@ static const KeyBinding bindings_visual[] = {
 	{ "<S-Tab>",            ACTION(CURSORS_ALIGN_INDENT_RIGHT)          },
 	{ "-",                  ACTION(SELECTIONS_ROTATE_LEFT)              },
 	{ "+",                  ACTION(SELECTIONS_ROTATE_RIGHT)             },
+	{ "\\",                 ACTION(SELECTIONS_TRIM)                     },
 	{ 0 /* empty last element, array terminator */                      },
 };
 

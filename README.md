@@ -223,6 +223,7 @@ Operators can be forced to work line wise by specifying `V`.
     Ctrl-D       make the count next cursor primary
     +            rotates selections rightwards count times
     -            rotates selections leftwards count times
+    \            trim selections, remove leading and trailing white space
     Esc          clear all selections, switch to normal mode
 
   In insert/replace mode

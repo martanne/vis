@@ -2,6 +2,7 @@
 #include <limits.h>
 #include <string.h>
 #include <wchar.h>
+#include <ctype.h>
 #include <errno.h>
 
 #include "ui-curses.h"
@@ -59,6 +60,8 @@ static const char *cursors_select_next(Vis*, const char *keys, const Arg *arg);
 static const char *cursors_select_skip(Vis*, const char *keys, const Arg *arg);
 /* rotate selection content count times left (arg->i < 0) or right (arg->i > 0) */
 static const char *selections_rotate(Vis*, const char *keys, const Arg *arg);
+/* remove leading and trailing white spaces from selections */
+static const char *selections_trim(Vis*, const char *keys, const Arg *arg);
 /* adjust current used count according to keys */
 static const char *count(Vis*, const char *keys, const Arg *arg);
 /* move to the count-th line or if not given either to the first (arg->i < 0)
@@ -256,6 +259,7 @@ enum {
 	VIS_ACTION_CURSORS_NEXT,
 	VIS_ACTION_SELECTIONS_ROTATE_LEFT,
 	VIS_ACTION_SELECTIONS_ROTATE_RIGHT,
+	VIS_ACTION_SELECTIONS_TRIM,
 	VIS_ACTION_TEXT_OBJECT_WORD_OUTER,
 	VIS_ACTION_TEXT_OBJECT_WORD_INNER,
 	VIS_ACTION_TEXT_OBJECT_LONGWORD_OUTER,
@@ -976,6 +980,11 @@ static const KeyAction vis_action[] = {
 		"Rotate selections right",
 		selections_rotate, { .i = +1 }
 	},
+	[VIS_ACTION_SELECTIONS_TRIM] = {
+		"selections-trim",
+		"Remove leading and trailing white space from selections",
+		selections_trim
+	},
 	[VIS_ACTION_TEXT_OBJECT_WORD_OUTER] = {
 		"text-object-word-outer",
 		"A word leading and trailing whitespace included",
@@ -1481,6 +1490,28 @@ static const char *selections_rotate(Vis *vis, const char *keys, const Arg *arg)
 	}
 
 	vis_count_set(vis, VIS_COUNT_UNKNOWN);
+	return keys;
+}
+
+static const char *selections_trim(Vis *vis, const char *keys, const Arg *arg) {
+	Text *txt = vis_text(vis);
+	View *view = vis_view(vis);
+	for (Cursor *c = view_cursors(view), *next; c; c = next) {
+		next = view_cursors_next(c);
+		Filerange sel = view_cursors_selection_get(c);
+		if (!text_range_valid(&sel))
+			continue;
+		for (char b; sel.start < sel.end && text_byte_get(txt, sel.end-1, &b)
+			&& isspace((unsigned char)b); sel.end--);
+		for (char b; sel.start <= sel.end && text_byte_get(txt, sel.start, &b)
+			&& isspace((unsigned char)b); sel.start++);
+		if (sel.start < sel.end) {
+			view_cursors_selection_set(c, &sel);
+			view_cursors_selection_sync(c);
+		} else if (!view_cursors_dispose(c)) {
+			vis_mode_switch(vis, VIS_MODE_NORMAL);
+		}
+	}
 	return keys;
 }
 
