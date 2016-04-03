@@ -1118,9 +1118,9 @@ Regex *vis_regex(Vis *vis, const char *pattern) {
 	return regex;
 }
 
-int vis_pipe(Vis *vis, void *context, Filerange *range, const char *argv[],
-	ssize_t (*read_stdout)(void *context, char *data, size_t len),
-	ssize_t (*read_stderr)(void *context, char *data, size_t len)) {
+int vis_pipe(Vis *vis, Filerange *range, const char *argv[],
+	void *stdout_context, ssize_t (*read_stdout)(void *stdout_context, char *data, size_t len),
+	void *stderr_context, ssize_t (*read_stderr)(void *stderr_context, char *data, size_t len)) {
 
 	/* if an invalid range was given, stdin (i.e. key board input) is passed
 	 * through the external command. */
@@ -1239,7 +1239,7 @@ int vis_pipe(Vis *vis, void *context, Filerange *range, const char *argv[],
 			ssize_t len = read(pout[0], buf, sizeof buf);
 			if (len > 0) {
 				if (read_stdout)
-					(*read_stdout)(context, buf, len);
+					(*read_stdout)(stdout_context, buf, len);
 			} else if (len == 0) {
 				close(pout[0]);
 				pout[0] = -1;
@@ -1255,7 +1255,7 @@ int vis_pipe(Vis *vis, void *context, Filerange *range, const char *argv[],
 			ssize_t len = read(perr[0], buf, sizeof buf);
 			if (len > 0) {
 				if (read_stderr)
-					(*read_stderr)(context, buf, len);
+					(*read_stderr)(stderr_context, buf, len);
 			} else if (len == 0) {
 				close(perr[0]);
 				perr[0] = -1;

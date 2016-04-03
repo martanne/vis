@@ -28,7 +28,6 @@ typedef struct {        /* used to keep context when dealing with external proce
 	Vis *vis;       /* editor instance */
 	Text *txt;      /* text into which received data will be inserted */
 	size_t pos;     /* position at which to insert new data */
-	Buffer err;     /* used to store everything the process writes to stderr */
 } Filter;
 
 struct Address {
@@ -1025,29 +1024,20 @@ static bool cmd_read(Vis *vis, Win *win, Command *cmd, const char *argv[], Curso
 	return ret;
 }
 
-static ssize_t read_stdout(void *context, char *data, size_t len) {
+static ssize_t read_text(void *context, char *data, size_t len) {
 	Filter *filter = context;
 	text_insert(filter->txt, filter->pos, data, len);
 	filter->pos += len;
 	return len;
 }
 
-static ssize_t read_stderr(void *context, char *data, size_t len) {
-	Filter *filter = context;
-	buffer_append(&filter->err, data, len);
+static ssize_t read_buffer(void *context, char *data, size_t len) {
+	buffer_append(context, data, len);
 	return len;
 }
 
 static bool cmd_filter(Vis *vis, Win *win, Command *cmd, const char *argv[], Cursor *cur, Filerange *range) {
 	Text *txt = win->file->text;
-
-	Filter filter = {
-		.vis = vis,
-		.txt = txt,
-		.pos = range->end,
-	};
-
-	buffer_init(&filter.err);
 
 	/* The general idea is the following:
 	 *
@@ -1063,7 +1053,16 @@ static bool cmd_filter(Vis *vis, Win *win, Command *cmd, const char *argv[], Cur
 
 	text_snapshot(txt);
 
-	int status = vis_pipe(vis, &filter, range, &argv[1], read_stdout, read_stderr);
+	Filter filter = {
+		.vis = vis,
+		.txt = txt,
+		.pos = range->end,
+	};
+
+	Buffer buferr;
+	buffer_init(&buferr);
+
+	int status = vis_pipe(vis, range, &argv[1], &filter, read_text, &buferr, read_buffer);
 
 	if (status == 0) {
 		text_delete_range(txt, range);
@@ -1081,12 +1080,10 @@ static bool cmd_filter(Vis *vis, Win *win, Command *cmd, const char *argv[], Cur
 		vis_info_show(vis, "Command cancelled");
 	else if (status == 0)
 		; //vis_info_show(vis, "Command succeded");
-	else if (filter.err.len > 0)
-		vis_info_show(vis, "Command failed: %s", filter.err.data);
 	else
-		vis_info_show(vis, "Command failed");
+		vis_info_show(vis, "Command failed %s", buffer_content0(&buferr));
 
-	buffer_release(&filter.err);
+	buffer_release(&buferr);
 
 	return !vis->cancel_filter && status == 0;
 }
@@ -1104,10 +1101,10 @@ static bool cmd_pipein(Vis *vis, Win *win, Command *cmd, const char *argv[], Cur
 }
 
 static bool cmd_pipeout(Vis *vis, Win *win, Command *cmd, const char *argv[], Cursor *cur, Filerange *range) {
-	Filter filter;
-	buffer_init(&filter.err);
+	Buffer buferr;
+	buffer_init(&buferr);
 
-	int status = vis_pipe(vis, &filter, range, (const char*[]){ argv[1], NULL }, NULL, read_stderr);
+	int status = vis_pipe(vis, range, (const char*[]){ argv[1], NULL }, NULL, NULL, &buferr, read_buffer);
 
 	if (status == 0 && cur)
 		view_cursors_to(cur, range->start);
@@ -1116,12 +1113,10 @@ static bool cmd_pipeout(Vis *vis, Win *win, Command *cmd, const char *argv[], Cu
 		vis_info_show(vis, "Command cancelled");
 	else if (status == 0)
 		; //vis_info_show(vis, "Command succeded");
-	else if (filter.err.len > 0)
-		vis_info_show(vis, "Command failed: %s", filter.err.data);
 	else
-		vis_info_show(vis, "Command failed");
+		vis_info_show(vis, "Command failed %s", buffer_content0(&buferr));
 
-	buffer_release(&filter.err);
+	buffer_release(&buferr);
 
 	return !vis->cancel_filter && status == 0;
 }
