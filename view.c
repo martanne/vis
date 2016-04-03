@@ -141,7 +141,7 @@ static void view_syntax_color(View *view) {
 	/* absolute position to start syntax highlighting */
 	const size_t lexer_start = view->start >= lexer_before_max ? view->start - lexer_before_max : 0;
 	/* number of bytes used for syntax highlighting before visible are */
-	const size_t lexer_before = view->start - lexer_start;
+	size_t lexer_before = view->start - lexer_start;
 	/* number of bytes to read in one go */
 	const size_t text_size = lexer_before + (view->end - view->start);
 	/* current buffer to work with */
@@ -150,6 +150,8 @@ static void view_syntax_color(View *view) {
 	const size_t text_len = text_bytes_get(view->text, lexer_start, text_size, text);
 	/* NUL terminate text section */
 	text[text_len] = '\0';
+	if (text_len < lexer_before)
+		lexer_before = text_len;
 
 	lua_getfield(L, -1, "load");
 	lua_pushstring(L, view->lexer_name);
