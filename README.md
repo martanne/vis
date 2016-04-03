@@ -293,7 +293,7 @@ Operators can be forced to work line wise by specifying `V`.
   found in the [sam manual page](http://man.cat-v.org/plan_9/1/sam).
   The [sam reference card](http://sam.cat-v.org/cheatsheet/) might also be useful.
 
-  For now sam commands can be entered from the vis prompt via `:sam <cmd>`
+  Sam commands can be entered from the vis prompt as `:<cmd>`
 
   A command behaves differently depending on the mode in which it is issued:
 
@@ -328,9 +328,8 @@ Operators can be forced to work line wise by specifying `V`.
 
   Hence the sam command `,x/pattern/` can be abbreviated to `x/pattern`
 
-  If a command is successful vis switches to normal mode (and hence removes
-  any selections), otherwise the editor is kept in visual mode. The print
-  command "fails" by definition.
+  If after a command no selections remain, the editor will switch to normal
+  mode otherwise it remains in visual mode.
 
   Other differences compared to sam include:
 
@@ -341,7 +340,6 @@ Operators can be forced to work line wise by specifying `V`.
      * print line address `=`
      * print character address `=#`
      * set current file mark `k`
-     * quit `q`
      * undo `u`
 
   - Multi file support is currently very primitive:
@@ -355,36 +353,26 @@ Operators can be forced to work line wise by specifying `V`.
   - The special grouping semantics where all commands of a group operate
     on the the same state is not implemented.
 
-  - The file mark address `'` (and corresponding k command) is not supported
-
-  - The I/O related commands `e`, `r`, `w`, `<`, `>`, `|`, `!` and `cd`
-    are not yet implemented.
-
-    These should not be hard to add later on. The equivalent vi commands
-    `:r !`, `:w !`, `:!` are supported hence the necessary infrastructure to
-    implement them is already there.
+  - The file mark address `'` (and corresponding `k` command) is not supported
 
 ### Command line prompt
 
-  At the `:`-command prompt only the following commands are recognized, any
-  valid unique prefix can be used:
+  Besides the sam command language the following commands are also recognized
+  at the `:`-command prompt. Any unique prefix can be used.
 
-    :nnn          go to line nnn
     :bdelete      close all windows which display the same file as the current one
-    :edit         replace current file with a new one or reload it from disk
+    :e            replace current file with a new one or reload it from disk
     :open         open a new window
     :qall         close all windows, exit editor
-    :quit         close currently focused window
-    :read         insert content of another file at current cursor position
+    :q            close currently focused window
+    :r            insert content of another file at current cursor position
     :split        split window horizontally
     :vsplit       split window vertically
     :new          open an empty window, arrange horizontally
     :vnew         open an empty window, arrange vertically
     :wq           write changes then close window
-    :xit          like :wq but write only when changes have been made
-    :write        write current buffer content to file
-    :saveas       save file under another name
-    :substitute   search and replace currently implemented in terms of `sed(1)`
+    :w            write current buffer content to file
+    :s            search and replace currently implemented in terms of `sed(1)`
     :earlier      revert to older text state
     :later        revert to newer text state
     :map          add a global key mapping
@@ -392,8 +380,7 @@ Operators can be forced to work line wise by specifying `V`.
     :map-window   add a window local key mapping
     :unmap-window remove a window local key mapping
     :langmap      set key equivalents for layout specific key mappings
-    :!            filter range through external command
-    :|            pipe range to external command and display output in a new window
+    :!            launch external command, redirect keyboard input to it
     :set          set the options below
 
      tabwidth   [1-8]           default 8
@@ -441,32 +428,11 @@ Operators can be forced to work line wise by specifying `V`.
 
        use the given theme / color scheme for syntax highlighting
 
-  Each command can be prefixed with a range made up of a start and
-  an end position as in start,end. Valid position specifiers are:
+  Commands taking a file name will use a simple file open dialog based
+  on the `vis-open` shell script, if given a file pattern or directory.
 
-    .          start of the current line
-    +n and -n  start of the line relative to the current line
-    'm         position of mark m
-    /pattern/  first match after current position
-
-  If only a start position without a command is given then the cursor
-  is moved to that position. Additionally the following ranges are
-  predefined:
-
-    %          the whole file, equivalent to 1,$
-    *          the current selection, equivalent to '<,'>
-
-  History support, tab completion and wildcard expansion are other
-  worthwhile features. However implementing them inside the editor feels
-  wrong. For now you can use the `:edit` command with a pattern or a
-  directory like this.
-
-    :e *.c
-    :e .
-
-  vis will call the `vis-open` script which invokes dmenu or slmenu
-  with the files corresponding to the pattern. The file you select in
-  dmenu/slmenu will be opened in vis.
+    :e *.c          # opens a menu with all C files
+    :e .            # opens a menu with all files of the current directory
 
 ### Runtime Configurable Key Bindings
 
