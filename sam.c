@@ -908,6 +908,8 @@ static bool cmd_select(Vis *vis, Win *win, Command *cmd, const char *argv[], Cur
 	View *view = win->view;
 	Text *txt = win->file->text;
 	bool multiple_cursors = view_cursors_multiple(view);
+	Cursor *primary = view_cursors_primary_get(view);
+
 	for (Cursor *c = view_cursors(view), *next; c; c = next) {
 		next = view_cursors_next(c);
 		Filerange sel;
@@ -926,6 +928,8 @@ static bool cmd_select(Vis *vis, Win *win, Command *cmd, const char *argv[], Cur
 			ret &= sam_execute(vis, win, cmd->cmd, c, &sel);
 	}
 
+	if (primary != view_cursors_primary_get(view))
+		view_cursors_primary_set(view_cursors(view));
 	return ret;
 }
 
