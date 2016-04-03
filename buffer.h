@@ -42,6 +42,9 @@ bool buffer_prepend0(Buffer*, const char *data);
 size_t buffer_length0(Buffer*);
 /* return length of a buffer including possible NUL byte */
 size_t buffer_length(Buffer*);
+/* pointer to buffer data, guaranteed to return a NUL terminated
+ * string even if buffer is empty */
+const char *buffer_content0(Buffer*);
 /* pointer to buffer data, might be NULL if empty, might not be NUL terminated */
 const char *buffer_content(Buffer*);
 

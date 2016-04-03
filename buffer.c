@@ -103,3 +103,9 @@ size_t buffer_length(Buffer *buf) {
 const char *buffer_content(Buffer *buf) {
 	return buf->data;
 }
+
+const char *buffer_content0(Buffer *buf) {
+	if (buf->len == 0 || (buf->data[buf->len-1] != '\0' && !buffer_append(buf, "\0", 1)))
+		return "";
+	return buf->data;
+}
