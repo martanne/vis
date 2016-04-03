@@ -99,3 +99,7 @@ size_t buffer_length0(Buffer *buf) {
 size_t buffer_length(Buffer *buf) {
 	return buf->len;
 }
+
+const char *buffer_content(Buffer *buf) {
+	return buf->data;
+}
