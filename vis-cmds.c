@@ -251,46 +251,37 @@ static bool is_file_pattern(const char *pattern) {
 }
 
 static const char *file_open_dialog(Vis *vis, const char *pattern) {
-	/* FIXME/TODO rewrite this mess */
-	return NULL;
-#if 0
+	static char name[PATH_MAX];
+	name[0] = '\0';
+
 	if (!is_file_pattern(pattern))
 		return pattern;
-	/* this is a bit of a hack, we temporarily replace the text/view of the active
-	 * window such that we can use cmd_filter as is */
-	char vis_open[512];
-	static char filename[PATH_MAX];
-	Filerange range = text_range_empty();
-	Win *win = vis->win;
-	File *file = win->file;
-	Text *txt_orig = file->text;
-	View *view_orig = win->view;
-	Text *txt = text_load(NULL);
-	View *view = view_new(txt, NULL);
-	filename[0] = '\0';
-	snprintf(vis_open, sizeof(vis_open)-1, "vis-open %s", pattern ? pattern : "");
 
-	if (!txt || !view)
-		goto out;
-	win->view = view;
-	file->text = txt;
+	Buffer bufcmd, bufout, buferr;
+	buffer_init(&bufcmd);
+	buffer_init(&bufout);
+	buffer_init(&buferr);
 
-	if (cmd_filter(vis, win, &range, CMD_OPT_NONE, (const char *[]){ "open", vis_open, NULL })) {
-		size_t len = text_size(txt);
-		if (len >= sizeof(filename))
-			len = 0;
-		if (len > 0)
-			text_bytes_get(txt, 0, --len, filename);
-		filename[len] = '\0';
-	}
+	if (!buffer_put0(&bufcmd, "vis-open ") || !buffer_append0(&bufcmd, pattern ? pattern : ""))
+		return NULL;
 
-out:
-	view_free(view);
-	text_free(txt);
-	win->view = view_orig;
-	file->text = txt_orig;
-	return filename[0] ? filename : NULL;
-#endif
+	Filerange empty = text_range_empty();
+	int status = vis_pipe(vis, &empty, (const char*[]){ buffer_content0(&bufcmd), NULL },
+		&bufout, read_buffer, &buferr, read_buffer);
+
+	if (status == 0)
+		strncpy(name, buffer_content0(&bufout), sizeof(name)-1);
+	else
+		vis_info_show(vis, "Command failed %s", buffer_content0(&buferr));
+
+	buffer_release(&bufcmd);
+	buffer_release(&bufout);
+	buffer_release(&buferr);
+
+	for (char *end = name+strlen(name)-1; end >= name && isspace((unsigned char)*end); end--)
+		*end = '\0';
+
+	return name[0] ? name : NULL;
 }
 
 static bool openfiles(Vis *vis, const char **files) {
