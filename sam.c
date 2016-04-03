@@ -81,6 +81,7 @@ static bool cmd_files(Vis*, Win*, Command*, const char *argv[], Cursor*, Fileran
 static bool cmd_pipein(Vis*, Win*, Command*, const char *argv[], Cursor*, Filerange*);
 static bool cmd_pipeout(Vis*, Win*, Command*, const char *argv[], Cursor*, Filerange*);
 static bool cmd_filter(Vis*, Win*, Command*, const char *argv[], Cursor*, Filerange*);
+static bool cmd_launch(Vis*, Win*, Command*, const char *argv[], Cursor*, Filerange*);
 static bool cmd_substitute(Vis*, Win*, Command*, const char *argv[], Cursor*, Filerange*);
 static bool cmd_write(Vis*, Win*, Command*,const char *argv[], Cursor*, Filerange*);
 static bool cmd_read(Vis*, Win*, Command*, const char *argv[], Cursor*, Filerange*);
@@ -123,6 +124,7 @@ static const CommandDef cmds[] = {
 	{ { ">"            }, CMD_SHELL,                           NULL, cmd_pipeout       },
 	{ { "<"            }, CMD_SHELL,                           NULL, cmd_pipein        },
 	{ { "|"            }, CMD_SHELL,                           NULL, cmd_filter        },
+	{ { "!"            }, CMD_SHELL,                           NULL, cmd_launch        },
 	{ { "w"            }, CMD_ARGV|CMD_FORCE,                  NULL, cmd_write         },
 	{ { "r"            }, CMD_FILE,                            NULL, cmd_read          },
 	{ { "{"            }, 0,                                   NULL, NULL              },
@@ -1086,6 +1088,11 @@ static bool cmd_filter(Vis *vis, Win *win, Command *cmd, const char *argv[], Cur
 	buffer_release(&buferr);
 
 	return !vis->cancel_filter && status == 0;
+}
+
+static bool cmd_launch(Vis *vis, Win *win, Command *cmd, const char *argv[], Cursor *cur, Filerange *range) {
+	Filerange empty = text_range_new(range->start, EPOS);
+	return cmd_filter(vis, win, cmd, argv, cur, &empty);
 }
 
 static bool cmd_pipein(Vis *vis, Win *win, Command *cmd, const char *argv[], Cursor *cur, Filerange *range) {
