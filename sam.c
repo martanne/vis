@@ -9,6 +9,7 @@
 #include <stdio.h>
 #include <ctype.h>
 #include <errno.h>
+#include <unistd.h>
 #include "sam.h"
 #include "vis-core.h"
 #include "buffer.h"
@@ -87,6 +88,7 @@ static bool cmd_write(Vis*, Win*, Command*,const char *argv[], Cursor*, Filerang
 static bool cmd_read(Vis*, Win*, Command*, const char *argv[], Cursor*, Filerange*);
 static bool cmd_edit(Vis*, Win*, Command*, const char *argv[], Cursor*, Filerange*);
 static bool cmd_quit(Vis*, Win*, Command*, const char *argv[], Cursor*, Filerange*);
+static bool cmd_cd(Vis*, Win*, Command*, const char *argv[], Cursor*, Filerange*);
 /* vi(m) commands */
 static bool cmd_set(Vis*, Win*, Command*, const char *argv[], Cursor*, Filerange*);
 static bool cmd_open(Vis*, Win*, Command*, const char *argv[], Cursor*, Filerange*);
@@ -131,6 +133,7 @@ static const CommandDef cmds[] = {
 	{ { "}"            }, 0,                                   NULL, NULL              },
 	{ { "e"            }, CMD_FILE|CMD_FORCE,                  NULL, cmd_edit          },
 	{ { "q"            }, CMD_FORCE,                           NULL, cmd_quit          },
+	{ { "cd"           }, CMD_ARGV,                            NULL, cmd_cd            },
 	/* vi(m) related commands */
 	{ { "bdelete"      }, CMD_FORCE,                           NULL, cmd_bdelete       },
 	{ { "help"         }, 0,                                   NULL, cmd_help          },
@@ -1127,6 +1130,13 @@ static bool cmd_pipeout(Vis *vis, Win *win, Command *cmd, const char *argv[], Cu
 	buffer_release(&buferr);
 
 	return !vis->cancel_filter && status == 0;
+}
+
+static bool cmd_cd(Vis *vis, Win *win, Command *cmd, const char *argv[], Cursor *cur, Filerange *range) {
+	const char *dir = argv[1];
+	if (!dir)
+		dir = getenv("HOME");
+	return chdir(dir) == 0;
 }
 
 #include "vis-cmds.c"
