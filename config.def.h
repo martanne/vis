@@ -273,6 +273,8 @@ static const KeyBinding bindings_visual[] = {
 	{ "<C-f>",              ALIAS("<PageDown>")                         },
 	{ "<C-u>",              ACTION(CURSORS_PREV)                        },
 	{ "<C-d>",              ACTION(CURSORS_NEXT)                        },
+	{ "<C-k>",              ALIAS("<C-u>")                              },
+	{ "<C-j>",              ALIAS("<C-d>")                              },
 	{ "x",                  ALIAS("d")                                  },
 	{ "r",                  ALIAS("c")                                  },
 	{ "s",                  ALIAS("c")                                  },

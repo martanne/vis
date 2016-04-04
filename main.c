@@ -1401,8 +1401,12 @@ static const char *cursors_remove(Vis *vis, const char *keys, const Arg *arg) {
 
 static const char *cursors_navigate(Vis *vis, const char *keys, const Arg *arg) {
 	View *view = vis_view(vis);
-	if (!view_cursors_multiple(view))
-		return wscroll(vis, keys, arg);
+	if (!view_cursors_multiple(view)) {
+		Filerange sel = view_selection_get(view);
+		if (!text_range_valid(&sel))
+			return wscroll(vis, keys, arg);
+		return keys;
+	}
 	Cursor *c = view_cursors_primary_get(view);
 	for (int count = vis_count_get_default(vis, 1); count > 0; count--) {
 		if (arg->i > 0) {
