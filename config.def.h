@@ -268,7 +268,7 @@ static const KeyBinding bindings_visual[] = {
 	{ "<C-c>",              ALIAS("<Escape>")                           },
 	{ "v",                  ALIAS("<Escape>")                           },
 	{ "V",                  ACTION(MODE_VISUAL_LINE)                    },
-	{ ":",                  ACTION(PROMPT_SHOW_VISUAL)                  },
+	{ ":",                  ACTION(PROMPT_SHOW)                         },
 	{ "<C-b>",              ALIAS("<PageUp>")                           },
 	{ "<C-f>",              ALIAS("<PageDown>")                         },
 	{ "<C-u>",              ACTION(CURSORS_PREV)                        },

@@ -27,6 +27,7 @@
 #include "text-objects.h"
 #include "util.h"
 #include "vis-core.h"
+#include "sam.h"
 
 /* enable large file optimization for files larger than: */
 #define LARGE_FILE (1 << 25)
@@ -587,7 +588,7 @@ void action_do(Vis *vis, Action *a) {
 				vis_mode_switch(vis, VIS_MODE_NORMAL);
 				vis_cmd(vis, a->arg.s);
 			} else {
-				vis_prompt_show(vis, ":'<,'>!");
+				vis_prompt_show(vis, ":|");
 			}
 		} else if (vis->mode == &vis_modes[VIS_MODE_OPERATOR_PENDING]) {
 			mode_set(vis, vis->mode_prev);
@@ -1115,6 +1116,191 @@ Regex *vis_regex(Vis *vis, const char *pattern) {
 	}
 	register_put0(vis, &vis->registers[VIS_REG_SEARCH], pattern);
 	return regex;
+}
+
+int vis_pipe(Vis *vis, Filerange *range, const char *argv[],
+	void *stdout_context, ssize_t (*read_stdout)(void *stdout_context, char *data, size_t len),
+	void *stderr_context, ssize_t (*read_stderr)(void *stderr_context, char *data, size_t len)) {
+
+	/* if an invalid range was given, stdin (i.e. key board input) is passed
+	 * through the external command. */
+	Text *text = vis->win->file->text;
+	View *view = vis->win->view;
+	int pin[2], pout[2], perr[2], status = -1;
+	bool interactive = !text_range_valid(range);
+	size_t pos = view_cursor_get(view);
+	Filerange rout = *range;
+	if (interactive)
+		rout = (Filerange){ .start = pos, .end = pos };
+
+	if (pipe(pin) == -1)
+		return -1;
+	if (pipe(pout) == -1) {
+		close(pin[0]);
+		close(pin[1]);
+		return -1;
+	}
+
+	if (pipe(perr) == -1) {
+		close(pin[0]);
+		close(pin[1]);
+		close(pout[0]);
+		close(pout[1]);
+		return -1;
+	}
+
+	vis->ui->terminal_save(vis->ui);
+	pid_t pid = fork();
+
+	if (pid == -1) {
+		close(pin[0]);
+		close(pin[1]);
+		close(pout[0]);
+		close(pout[1]);
+		close(perr[0]);
+		close(perr[1]);
+		vis_info_show(vis, "fork failure: %s", strerror(errno));
+		return -1;
+	} else if (pid == 0) { /* child i.e filter */
+		if (!interactive)
+			dup2(pin[0], STDIN_FILENO);
+		close(pin[0]);
+		close(pin[1]);
+		dup2(pout[1], STDOUT_FILENO);
+		close(pout[1]);
+		close(pout[0]);
+		if (!interactive)
+			dup2(perr[1], STDERR_FILENO);
+		close(perr[0]);
+		close(perr[1]);
+		if (!argv[1])
+			execl("/bin/sh", "sh", "-c", argv[0], NULL);
+		else
+			execvp(argv[0], (char* const*)argv);
+		vis_info_show(vis, "exec failure: %s", strerror(errno));
+		exit(EXIT_FAILURE);
+	}
+
+	vis->cancel_filter = false;
+
+	close(pin[0]);
+	close(pout[1]);
+	close(perr[1]);
+
+	fcntl(pout[0], F_SETFL, O_NONBLOCK);
+	fcntl(perr[0], F_SETFL, O_NONBLOCK);
+
+
+	fd_set rfds, wfds;
+
+	do {
+		if (vis->cancel_filter) {
+			kill(-pid, SIGTERM);
+			break;
+		}
+
+		FD_ZERO(&rfds);
+		FD_ZERO(&wfds);
+		if (pin[1] != -1)
+			FD_SET(pin[1], &wfds);
+		if (pout[0] != -1)
+			FD_SET(pout[0], &rfds);
+		if (perr[0] != -1)
+			FD_SET(perr[0], &rfds);
+
+		if (select(FD_SETSIZE, &rfds, &wfds, NULL, NULL) == -1) {
+			if (errno == EINTR)
+				continue;
+			vis_info_show(vis, "Select failure");
+			break;
+		}
+
+		if (pin[1] != -1 && FD_ISSET(pin[1], &wfds)) {
+			Filerange junk = rout;
+			if (junk.end > junk.start + PIPE_BUF)
+				junk.end = junk.start + PIPE_BUF;
+			ssize_t len = text_write_range(text, &junk, pin[1]);
+			if (len > 0) {
+				rout.start += len;
+				if (text_range_size(&rout) == 0) {
+					close(pout[1]);
+					pout[1] = -1;
+				}
+			} else {
+				close(pin[1]);
+				pin[1] = -1;
+				if (len == -1)
+					vis_info_show(vis, "Error writing to external command");
+			}
+		}
+
+		if (pout[0] != -1 && FD_ISSET(pout[0], &rfds)) {
+			char buf[BUFSIZ];
+			ssize_t len = read(pout[0], buf, sizeof buf);
+			if (len > 0) {
+				if (read_stdout)
+					(*read_stdout)(stdout_context, buf, len);
+			} else if (len == 0) {
+				close(pout[0]);
+				pout[0] = -1;
+			} else if (errno != EINTR && errno != EWOULDBLOCK) {
+				vis_info_show(vis, "Error reading from filter stdout");
+				close(pout[0]);
+				pout[0] = -1;
+			}
+		}
+
+		if (perr[0] != -1 && FD_ISSET(perr[0], &rfds)) {
+			char buf[BUFSIZ];
+			ssize_t len = read(perr[0], buf, sizeof buf);
+			if (len > 0) {
+				if (read_stderr)
+					(*read_stderr)(stderr_context, buf, len);
+			} else if (len == 0) {
+				close(perr[0]);
+				perr[0] = -1;
+			} else if (errno != EINTR && errno != EWOULDBLOCK) {
+				vis_info_show(vis, "Error reading from filter stderr");
+				close(perr[0]);
+				perr[0] = -1;
+			}
+		}
+
+	} while (pin[1] != -1 || pout[0] != -1 || perr[0] != -1);
+
+	if (pin[1] != -1)
+		close(pin[1]);
+	if (pout[0] != -1)
+		close(pout[0]);
+	if (perr[0] != -1)
+		close(perr[0]);
+
+	for (pid_t died; (died = waitpid(pid, &status, 0)) != -1 && pid != died;);
+
+	vis->ui->terminal_restore(vis->ui);
+
+	return status;
+}
+
+bool vis_cmd(Vis *vis, const char *cmdline) {
+	if (!cmdline)
+		return true;
+	while (*cmdline == ':')
+		cmdline++;
+	size_t len = strlen(cmdline);
+	char *line = malloc(len+2);
+	if (!line)
+		return false;
+	strncpy(line, cmdline, len+1);
+
+	for (char *end = line + len - 1; end >= line && isspace((unsigned char)*end); end--)
+		*end = '\0';
+
+	enum SamError err = sam_cmd(vis, line);
+	if (err != SAM_ERR_OK)
+		vis_info_show(vis, "%s", sam_error(err));
+	free(line);
+	return err == SAM_ERR_OK;
 }
 
 Text *vis_text(Vis *vis) {

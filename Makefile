@@ -1,5 +1,10 @@
 -include config.mk
 
+SRC = array.c buffer.c libutf.c main.c map.c register.c ring-buffer.c \
+	sam.c text.c text-motions.c text-objects.c text-regex.c text-util.c \
+	ui-curses.c view.c vis.c vis-lua.c vis-modes.c vis-motions.c \
+	vis-operators.c vis-prompt.c vis-text-objects.c
+
 # conditionally initialized, this is needed for standalone build
 # with empty config.mk
 PREFIX ?= /usr/local
@@ -41,7 +46,7 @@ config.mk:
 	@touch $@
 
 vis: config.h config.mk *.c *.h
-	${CC} ${CFLAGS} ${CFLAGS_VIS} *.c ${LDFLAGS} ${LDFLAGS_VIS} -o $@
+	${CC} ${CFLAGS} ${CFLAGS_VIS} ${SRC} ${LDFLAGS} ${LDFLAGS_VIS} -o $@
 
 debug: clean
 	@$(MAKE) CFLAGS_VIS='${DEBUG_CFLAGS_VIS}'

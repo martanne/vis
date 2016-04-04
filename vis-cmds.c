@@ -1,131 +1,4 @@
-#include <stdbool.h>
-#include <string.h>
-#include <strings.h>
-#include <stdio.h>
-#include <limits.h>
-#include <errno.h>
-#include <unistd.h>
-#include <fcntl.h>
-#include <ctype.h>
-#include <sys/select.h>
-#include <sys/types.h>
-#include <sys/wait.h>
-
-#include "vis-core.h"
-#include "text-util.h"
-#include "text-motions.h"
-#include "text-objects.h"
-#include "util.h"
-
-enum CmdOpt {          /* option flags for command definitions */
-	CMD_OPT_NONE,  /* no option (default value) */
-	CMD_OPT_FORCE, /* whether the command can be forced by appending '!' */
-	CMD_OPT_ARGS,  /* whether the command line should be parsed in to space
-	                * separated arguments to placed into argv, otherwise argv[1]
-	                * will contain the  remaining command line unmodified */
-};
-
-typedef struct {             /* command definitions for the ':'-prompt */
-	const char *name[3]; /* name and optional alias for the command */
-	/* command logic called with a NULL terminated array of arguments.
-	 * argv[0] will be the command name */
-	bool (*cmd)(Vis*, Filerange*, enum CmdOpt opt, const char *argv[]);
-	enum CmdOpt opt;     /* command option flags */
-} Command;
-
-typedef struct {        /* used to keep context when dealing with external proceses */
-	Vis *vis;       /* editor instance */
-	Text *txt;      /* text into which received data will be inserted */
-	size_t pos;     /* position at which to insert new data */
-	Buffer err;     /* used to store everything the process writes to stderr */
-} Filter;
-
-/** ':'-command implementations */
-/* set various runtime options */
-static bool cmd_set(Vis*, Filerange*, enum CmdOpt, const char *argv[]);
-/* for each argument create a new window and open the corresponding file */
-static bool cmd_open(Vis*, Filerange*, enum CmdOpt, const char *argv[]);
-/* close current window (discard modifications if forced ) and open argv[1],
- * if no argv[1] is given re-read to current file from disk */
-static bool cmd_edit(Vis*, Filerange*, enum CmdOpt, const char *argv[]);
-/* close the current window, discard modifications if forced */
-static bool cmd_quit(Vis*, Filerange*, enum CmdOpt, const char *argv[]);
-/* close all windows which show current file, discard modifications if forced  */
-static bool cmd_bdelete(Vis*, Filerange*, enum CmdOpt, const char *argv[]);
-/* close all windows, exit editor, discard modifications if forced */
-static bool cmd_qall(Vis*, Filerange*, enum CmdOpt, const char *argv[]);
-/* for each argument try to insert the file content at current cursor postion */
-static bool cmd_read(Vis*, Filerange*, enum CmdOpt, const char *argv[]);
-static bool cmd_substitute(Vis*, Filerange*, enum CmdOpt, const char *argv[]);
-/* if no argument are given, split the current window horizontally,
- * otherwise open the file */
-static bool cmd_split(Vis*, Filerange*, enum CmdOpt, const char *argv[]);
-/* if no argument are given, split the current window vertically,
- * otherwise open the file */
-static bool cmd_vsplit(Vis*, Filerange*, enum CmdOpt, const char *argv[]);
-/* create a new empty window and arrange all windows either horizontally or vertically */
-static bool cmd_new(Vis*, Filerange*, enum CmdOpt, const char *argv[]);
-static bool cmd_vnew(Vis*, Filerange*, enum CmdOpt, const char *argv[]);
-/* save the file displayed in the current window and close it */
-static bool cmd_wq(Vis*, Filerange*, enum CmdOpt, const char *argv[]);
-/* save the file displayed in the current window if it was changvis, then close the window */
-static bool cmd_xit(Vis*, Filerange*, enum CmdOpt, const char *argv[]);
-/* save the file displayed in the current window to the name given.
- * do not change internal filname association. further :w commands
- * without arguments will still write to the old filename */
-static bool cmd_write(Vis*, Filerange*, enum CmdOpt, const char *argv[]);
-/* save the file displayed in the current window to the name given,
- * associate the new name with the buffer. further :w commands
- * without arguments will write to the new filename */
-static bool cmd_saveas(Vis*, Filerange*, enum CmdOpt, const char *argv[]);
-/* filter range through external program argv[1] */
-static bool cmd_filter(Vis*, Filerange*, enum CmdOpt, const char *argv[]);
-/* write range to external program, display output in a new window */
-static bool cmd_pipe(Vis *vis, Filerange*, enum CmdOpt, const char *argv[]);
-/* switch to the previous/next saved state of the text, chronologically */
-static bool cmd_earlier_later(Vis*, Filerange*, enum CmdOpt, const char *argv[]);
-/* dump current key bindings */
-static bool cmd_help(Vis*, Filerange*, enum CmdOpt, const char *argv[]);
-/* change runtime key bindings */
-static bool cmd_map(Vis*, Filerange*, enum CmdOpt, const char *argv[]);
-static bool cmd_unmap(Vis*, Filerange*, enum CmdOpt, const char *argv[]);
-/* set language specific key bindings */
-static bool cmd_langmap(Vis*, Filerange*, enum CmdOpt, const char *argv[]);
-
-/* command recognized at the ':'-prompt. commands are found using a unique
- * prefix match. that is if a command should be available under an abbreviation
- * which is a prefix for another command it has to be added as an alias. the
- * long human readable name should always come first */
-static const Command cmds[] = {
-	/* command name / optional alias, function,          options */
-	{ { "bdelete"                  }, cmd_bdelete,       CMD_OPT_FORCE              },
-	{ { "edit", "e"                }, cmd_edit,          CMD_OPT_FORCE              },
-	{ { "help"                     }, cmd_help,          CMD_OPT_NONE               },
-	{ { "map",                     }, cmd_map,           CMD_OPT_FORCE|CMD_OPT_ARGS },
-	{ { "map-window",              }, cmd_map,           CMD_OPT_FORCE|CMD_OPT_ARGS },
-	{ { "unmap",                   }, cmd_unmap,         CMD_OPT_ARGS               },
-	{ { "unmap-window",            }, cmd_unmap,         CMD_OPT_ARGS               },
-	{ { "langmap",                 }, cmd_langmap,       CMD_OPT_FORCE|CMD_OPT_ARGS },
-	{ { "new"                      }, cmd_new,           CMD_OPT_NONE               },
-	{ { "open"                     }, cmd_open,          CMD_OPT_NONE               },
-	{ { "qall"                     }, cmd_qall,          CMD_OPT_FORCE              },
-	{ { "quit", "q"                }, cmd_quit,          CMD_OPT_FORCE              },
-	{ { "read",                    }, cmd_read,          CMD_OPT_FORCE              },
-	{ { "saveas"                   }, cmd_saveas,        CMD_OPT_FORCE              },
-	{ { "set",                     }, cmd_set,           CMD_OPT_ARGS               },
-	{ { "split"                    }, cmd_split,         CMD_OPT_NONE               },
-	{ { "substitute", "s"          }, cmd_substitute,    CMD_OPT_NONE               },
-	{ { "vnew"                     }, cmd_vnew,          CMD_OPT_NONE               },
-	{ { "vsplit",                  }, cmd_vsplit,        CMD_OPT_NONE               },
-	{ { "wq",                      }, cmd_wq,            CMD_OPT_FORCE              },
-	{ { "write", "w"               }, cmd_write,         CMD_OPT_FORCE              },
-	{ { "xit",                     }, cmd_xit,           CMD_OPT_FORCE              },
-	{ { "earlier"                  }, cmd_earlier_later, CMD_OPT_NONE               },
-	{ { "later"                    }, cmd_earlier_later, CMD_OPT_NONE               },
-	{ { "!",                       }, cmd_filter,        CMD_OPT_NONE               },
-	{ { "|",                       }, cmd_pipe,          CMD_OPT_NONE               },
-	{ { NULL,                      }, NULL,              CMD_OPT_NONE               },
-};
+/* this file is included from sam.c */
 
 static void windows_arrange(Vis *vis, enum UiLayout layout) {
 	vis->ui->arrange(vis->ui, layout);
@@ -157,7 +30,7 @@ static bool parse_bool(const char *s, bool *outval) {
 	return false;
 }
 
-static bool cmd_set(Vis *vis, Filerange *range, enum CmdOpt cmdopt, const char *argv[]) {
+static bool cmd_set(Vis *vis, Win *win, Command *cmd, const char *argv[], Cursor *cur, Filerange *range) {
 
 	typedef struct {
 		const char *names[3];
@@ -214,7 +87,7 @@ static bool cmd_set(Vis *vis, Filerange *range, enum CmdOpt cmdopt, const char *
 		return false;
 	}
 
-	if (!vis->win) {
+	if (!win) {
 		vis_info_show(vis, "Need active window for :set command");
 		return false;
 	}
@@ -278,7 +151,7 @@ static bool cmd_set(Vis *vis, Filerange *range, enum CmdOpt cmdopt, const char *
 		break;
 	case OPTION_SYNTAX:
 		if (!argv[2]) {
-			const char *syntax = view_syntax_get(vis->win->view);
+			const char *syntax = view_syntax_get(win->view);
 			if (syntax)
 				vis_info_show(vis, "Syntax definition in use: `%s'", syntax);
 			else
@@ -287,8 +160,8 @@ static bool cmd_set(Vis *vis, Filerange *range, enum CmdOpt cmdopt, const char *
 		}
 
 		if (parse_bool(argv[2], &arg.b) && !arg.b)
-			return view_syntax_set(vis->win->view, NULL);
-		if (!view_syntax_set(vis->win->view, argv[2])) {
+			return view_syntax_set(win->view, NULL);
+		if (!view_syntax_set(win->view, argv[2])) {
 			vis_info_show(vis, "Unknown syntax definition: `%s'", argv[2]);
 			return false;
 		}
@@ -304,7 +177,7 @@ static bool cmd_set(Vis *vis, Filerange *range, enum CmdOpt cmdopt, const char *
 			UI_OPTION_SYMBOL_TAB|UI_OPTION_SYMBOL_TAB_FILL,
 			UI_OPTION_SYMBOL_EOL,
 		};
-		int flags = view_options_get(vis->win->view);
+		int flags = view_options_get(win->view);
 		for (const char **args = &argv[2]; *args; args++) {
 			for (int i = 0; i < LENGTH(keys); i++) {
 				if (strcmp(*args, keys[i]) == 0) {
@@ -321,37 +194,37 @@ static bool cmd_set(Vis *vis, Filerange *range, enum CmdOpt cmdopt, const char *
 				}
 			}
 		}
-		view_options_set(vis->win->view, flags);
+		view_options_set(win->view, flags);
 		break;
 	case OPTION_NUMBER: {
-		enum UiOption opt = view_options_get(vis->win->view);
+		enum UiOption opt = view_options_get(win->view);
 		if (arg.b) {
 			opt &= ~UI_OPTION_LINE_NUMBERS_RELATIVE;
 			opt |=  UI_OPTION_LINE_NUMBERS_ABSOLUTE;
 		} else {
 			opt &= ~UI_OPTION_LINE_NUMBERS_ABSOLUTE;
 		}
-		view_options_set(vis->win->view, opt);
+		view_options_set(win->view, opt);
 		break;
 	}
 	case OPTION_NUMBER_RELATIVE: {
-		enum UiOption opt = view_options_get(vis->win->view);
+		enum UiOption opt = view_options_get(win->view);
 		if (arg.b) {
 			opt &= ~UI_OPTION_LINE_NUMBERS_ABSOLUTE;
 			opt |=  UI_OPTION_LINE_NUMBERS_RELATIVE;
 		} else {
 			opt &= ~UI_OPTION_LINE_NUMBERS_RELATIVE;
 		}
-		view_options_set(vis->win->view, opt);
+		view_options_set(win->view, opt);
 		break;
 	}
 	case OPTION_CURSOR_LINE: {
-		enum UiOption opt = view_options_get(vis->win->view);
+		enum UiOption opt = view_options_get(win->view);
 		if (arg.b)
 			opt |= UI_OPTION_CURSOR_LINE;
 		else
 			opt &= ~UI_OPTION_CURSOR_LINE;
-		view_options_set(vis->win->view, opt);
+		view_options_set(win->view, opt);
 		break;
 	}
 	case OPTION_THEME:
@@ -361,7 +234,7 @@ static bool cmd_set(Vis *vis, Filerange *range, enum CmdOpt cmdopt, const char *
 		}
 		break;
 	case OPTION_COLOR_COLUMN:
-		view_colorcolumn_set(vis->win->view, arg.i);
+		view_colorcolumn_set(win->view, arg.i);
 		break;
 	}
 
@@ -378,42 +251,37 @@ static bool is_file_pattern(const char *pattern) {
 }
 
 static const char *file_open_dialog(Vis *vis, const char *pattern) {
+	static char name[PATH_MAX];
+	name[0] = '\0';
+
 	if (!is_file_pattern(pattern))
 		return pattern;
-	/* this is a bit of a hack, we temporarily replace the text/view of the active
-	 * window such that we can use cmd_filter as is */
-	char vis_open[512];
-	static char filename[PATH_MAX];
-	Filerange range = text_range_empty();
-	Win *win = vis->win;
-	File *file = win->file;
-	Text *txt_orig = file->text;
-	View *view_orig = win->view;
-	Text *txt = text_load(NULL);
-	View *view = view_new(txt, NULL);
-	filename[0] = '\0';
-	snprintf(vis_open, sizeof(vis_open)-1, "vis-open %s", pattern ? pattern : "");
 
-	if (!txt || !view)
-		goto out;
-	win->view = view;
-	file->text = txt;
+	Buffer bufcmd, bufout, buferr;
+	buffer_init(&bufcmd);
+	buffer_init(&bufout);
+	buffer_init(&buferr);
 
-	if (cmd_filter(vis, &range, CMD_OPT_NONE, (const char *[]){ "open", vis_open, NULL })) {
-		size_t len = text_size(txt);
-		if (len >= sizeof(filename))
-			len = 0;
-		if (len > 0)
-			text_bytes_get(txt, 0, --len, filename);
-		filename[len] = '\0';
-	}
+	if (!buffer_put0(&bufcmd, "vis-open ") || !buffer_append0(&bufcmd, pattern ? pattern : ""))
+		return NULL;
 
-out:
-	view_free(view);
-	text_free(txt);
-	win->view = view_orig;
-	file->text = txt_orig;
-	return filename[0] ? filename : NULL;
+	Filerange empty = text_range_empty();
+	int status = vis_pipe(vis, &empty, (const char*[]){ buffer_content0(&bufcmd), NULL },
+		&bufout, read_buffer, &buferr, read_buffer);
+
+	if (status == 0)
+		strncpy(name, buffer_content0(&bufout), sizeof(name)-1);
+	else
+		vis_info_show(vis, "Command failed %s", buffer_content0(&buferr));
+
+	buffer_release(&bufcmd);
+	buffer_release(&bufout);
+	buffer_release(&buferr);
+
+	for (char *end = name+strlen(name)-1; end >= name && isspace((unsigned char)*end); end--)
+		*end = '\0';
+
+	return name[0] ? name : NULL;
 }
 
 static bool openfiles(Vis *vis, const char **files) {
@@ -431,7 +299,7 @@ static bool openfiles(Vis *vis, const char **files) {
 	return true;
 }
 
-static bool cmd_open(Vis *vis, Filerange *range, enum CmdOpt opt, const char *argv[]) {
+static bool cmd_open(Vis *vis, Win *win, Command *cmd, const char *argv[], Cursor *cur, Filerange *range) {
 	if (!argv[1])
 		return vis_window_new(vis, NULL);
 	return openfiles(vis, &argv[1]);
@@ -441,9 +309,9 @@ static void info_unsaved_changes(Vis *vis) {
 	vis_info_show(vis, "No write since last change (add ! to override)");
 }
 
-static bool cmd_edit(Vis *vis, Filerange *range, enum CmdOpt opt, const char *argv[]) {
-	Win *oldwin = vis->win;
-	if (!(opt & CMD_OPT_FORCE) && !vis_window_closable(oldwin)) {
+static bool cmd_edit(Vis *vis, Win *win, Command *cmd, const char *argv[], Cursor *cur, Filerange *range) {
+	Win *oldwin = win;
+	if (cmd->flags != '!' && !vis_window_closable(oldwin)) {
 		info_unsaved_changes(vis);
 		return false;
 	}
@@ -464,28 +332,20 @@ static bool has_windows(Vis *vis) {
 	return false;
 }
 
-static bool cmd_quit(Vis *vis, Filerange *range, enum CmdOpt opt, const char *argv[]) {
-	if (!(opt & CMD_OPT_FORCE) && !vis_window_closable(vis->win)) {
+static bool cmd_quit(Vis *vis, Win *win, Command *cmd, const char *argv[], Cursor *cur, Filerange *range) {
+	if (cmd->flags != '!' && !vis_window_closable(win)) {
 		info_unsaved_changes(vis);
 		return false;
 	}
-	vis_window_close(vis->win);
+	vis_window_close(win);
 	if (!has_windows(vis))
 		vis_exit(vis, EXIT_SUCCESS);
 	return true;
 }
 
-static bool cmd_xit(Vis *vis, Filerange *range, enum CmdOpt opt, const char *argv[]) {
-	if (text_modified(vis->win->file->text) && !cmd_write(vis, range, opt, argv)) {
-		if (!(opt & CMD_OPT_FORCE))
-			return false;
-	}
-	return cmd_quit(vis, range, opt, argv);
-}
-
-static bool cmd_bdelete(Vis *vis, Filerange *range, enum CmdOpt opt, const char *argv[]) {
-	Text *txt = vis->win->file->text;
-	if (text_modified(txt) && !(opt & CMD_OPT_FORCE)) {
+static bool cmd_bdelete(Vis *vis, Win *win, Command *cmd, const char *argv[], Cursor *cur, Filerange *range) {
+	Text *txt = win->file->text;
+	if (text_modified(txt) && cmd->flags != '!') {
 		info_unsaved_changes(vis);
 		return false;
 	}
@@ -499,10 +359,10 @@ static bool cmd_bdelete(Vis *vis, Filerange *range, enum CmdOpt opt, const char 
 	return true;
 }
 
-static bool cmd_qall(Vis *vis, Filerange *range, enum CmdOpt opt, const char *argv[]) {
+static bool cmd_qall(Vis *vis, Win *win, Command *cmd, const char *argv[], Cursor *cur, Filerange *range) {
 	for (Win *next, *win = vis->windows; win; win = next) {
 		next = win->next;
-		if (!win->file->internal && (!text_modified(win->file->text) || (opt & CMD_OPT_FORCE)))
+		if (!win->file->internal && (!text_modified(win->file->text) || cmd->flags == '!'))
 			vis_window_close(win);
 	}
 	if (!has_windows(vis)) {
@@ -514,415 +374,46 @@ static bool cmd_qall(Vis *vis, Filerange *range, enum CmdOpt opt, const char *ar
 	}
 }
 
-static bool cmd_read(Vis *vis, Filerange *range, enum CmdOpt opt, const char *argv[]) {
-	char cmd[255];
-
-	if (!argv[1]) {
-		vis_info_show(vis, "Filename or command expected");
-		return false;
-	}
-
-	bool iscmd = (opt & CMD_OPT_FORCE) || argv[1][0] == '!';
-	const char *arg = argv[1]+(argv[1][0] == '!');
-	snprintf(cmd, sizeof cmd, "%s%s", iscmd ? "" : "cat ", arg);
-
-	size_t pos = view_cursor_get(vis->win->view);
-	if (!text_range_valid(range))
-		*range = (Filerange){ .start = pos, .end = pos };
-	Filerange delete = *range;
-	range->start = range->end;
-
-	bool ret = cmd_filter(vis, range, opt, (const char*[]){ argv[0], "sh", "-c", cmd, NULL});
+static bool cmd_split(Vis *vis, Win *win, Command *cmd, const char *argv[], Cursor *cur, Filerange *range) {
+	enum UiOption options = view_options_get(win->view);
+	windows_arrange(vis, UI_LAYOUT_HORIZONTAL);
+	if (!argv[1])
+		return vis_window_split(win);
+	bool ret = openfiles(vis, &argv[1]);
 	if (ret)
-		text_delete_range(vis->win->file->text, &delete);
+		view_options_set(vis->win->view, options);
 	return ret;
 }
 
-static bool cmd_substitute(Vis *vis, Filerange *range, enum CmdOpt opt, const char *argv[]) {
-	char pattern[255];
-	if (!text_range_valid(range))
-		*range = text_object_line(vis->win->file->text, view_cursor_get(vis->win->view));
-	snprintf(pattern, sizeof pattern, "s%s", argv[1]);
-	return cmd_filter(vis, range, opt, (const char*[]){ argv[0], "sed", pattern, NULL});
-}
-
-static bool cmd_split(Vis *vis, Filerange *range, enum CmdOpt opt, const char *argv[]) {
-	enum UiOption options = view_options_get(vis->win->view);
-	windows_arrange(vis, UI_LAYOUT_HORIZONTAL);
-	if (!argv[1])
-		return vis_window_split(vis->win);
-	bool ret = openfiles(vis, &argv[1]);
-	view_options_set(vis->win->view, options);
-	return ret;
-}
-
-static bool cmd_vsplit(Vis *vis, Filerange *range, enum CmdOpt opt, const char *argv[]) {
-	enum UiOption options = view_options_get(vis->win->view);
+static bool cmd_vsplit(Vis *vis, Win *win, Command *cmd, const char *argv[], Cursor *cur, Filerange *range) {
+	enum UiOption options = view_options_get(win->view);
 	windows_arrange(vis, UI_LAYOUT_VERTICAL);
 	if (!argv[1])
-		return vis_window_split(vis->win);
+		return vis_window_split(win);
 	bool ret = openfiles(vis, &argv[1]);
-	view_options_set(vis->win->view, options);
+	if (ret)
+		view_options_set(vis->win->view, options);
 	return ret;
 }
 
-static bool cmd_new(Vis *vis, Filerange *range, enum CmdOpt opt, const char *argv[]) {
+static bool cmd_new(Vis *vis, Win *win, Command *cmd, const char *argv[], Cursor *cur, Filerange *range) {
 	windows_arrange(vis, UI_LAYOUT_HORIZONTAL);
 	return vis_window_new(vis, NULL);
 }
 
-static bool cmd_vnew(Vis *vis, Filerange *range, enum CmdOpt opt, const char *argv[]) {
+static bool cmd_vnew(Vis *vis, Win *win, Command *cmd, const char *argv[], Cursor *cur, Filerange *range) {
 	windows_arrange(vis, UI_LAYOUT_VERTICAL);
 	return vis_window_new(vis, NULL);
 }
 
-static bool cmd_wq(Vis *vis, Filerange *range, enum CmdOpt opt, const char *argv[]) {
-	if (cmd_write(vis, range, opt, argv))
-		return cmd_quit(vis, range, opt, argv);
+static bool cmd_wq(Vis *vis, Win *win, Command *cmd, const char *argv[], Cursor *cur, Filerange *range) {
+	if (cmd_write(vis, win, cmd, argv, cur, range))
+		return cmd_quit(vis, win, cmd, argv, cur, range);
 	return false;
 }
 
-static bool cmd_write(Vis *vis, Filerange *range, enum CmdOpt opt, const char *argv[]) {
-	File *file = vis->win->file;
-	Text *text = file->text;
-	if (!text_range_valid(range))
-		*range = (Filerange){ .start = 0, .end = text_size(text) };
-	if (!argv[1])
-		argv[1] = file->name;
-	if (!argv[1]) {
-		if (file->is_stdin) {
-			if (strchr(argv[0], 'q')) {
-				ssize_t written = text_write_range(text, range, STDOUT_FILENO);
-				if (written == -1 || (size_t)written != text_range_size(range)) {
-					vis_info_show(vis, "Can not write to stdout");
-					return false;
-				}
-				/* make sure the file is marked as saved i.e. not modified */
-				text_save_range(text, range, NULL);
-				return true;
-			}
-			vis_info_show(vis, "No filename given, use 'wq' to write to stdout");
-			return false;
-		}
-		vis_info_show(vis, "Filename expected");
-		return false;
-	}
-
-	if (argv[1][0] == '!') {
-		argv[1]++;
-		return cmd_pipe(vis, range, opt, argv);
-	}
-
-	for (const char **name = &argv[1]; *name; name++) {
-		struct stat meta;
-		if (!(opt & CMD_OPT_FORCE) && file->stat.st_mtime && stat(*name, &meta) == 0 &&
-		    file->stat.st_mtime < meta.st_mtime) {
-			vis_info_show(vis, "WARNING: file has been changed since reading it");
-			return false;
-		}
-		if (!text_save_range(text, range, *name)) {
-			vis_info_show(vis, "Can't write `%s'", *name);
-			return false;
-		}
-		if (!file->name) {
-			vis_window_name(vis->win, *name);
-			file->name = vis->win->file->name;
-		}
-		if (strcmp(file->name, *name) == 0)
-			file->stat = text_stat(text);
-		if (vis->event && vis->event->file_save)
-			vis->event->file_save(vis, file);
-	}
-	return true;
-}
-
-static bool cmd_saveas(Vis *vis, Filerange *range, enum CmdOpt opt, const char *argv[]) {
-	if (cmd_write(vis, range, opt, argv)) {
-		vis_window_name(vis->win, argv[1]);
-		vis->win->file->stat = text_stat(vis->win->file->text);
-		return true;
-	}
-	return false;
-}
-
-int vis_pipe(Vis *vis, void *context, Filerange *range, const char *argv[],
-	ssize_t (*read_stdout)(void *context, char *data, size_t len),
-	ssize_t (*read_stderr)(void *context, char *data, size_t len)) {
-
-	/* if an invalid range was given, stdin (i.e. key board input) is passed
-	 * through the external command. */
-	Text *text = vis->win->file->text;
-	View *view = vis->win->view;
-	int pin[2], pout[2], perr[2], status = -1;
-	bool interactive = !text_range_valid(range);
-	size_t pos = view_cursor_get(view);
-	Filerange rout = *range;
-	if (interactive)
-		rout = (Filerange){ .start = pos, .end = pos };
-
-	if (pipe(pin) == -1)
-		return -1;
-	if (pipe(pout) == -1) {
-		close(pin[0]);
-		close(pin[1]);
-		return -1;
-	}
-
-	if (pipe(perr) == -1) {
-		close(pin[0]);
-		close(pin[1]);
-		close(pout[0]);
-		close(pout[1]);
-		return -1;
-	}
-
-	vis->ui->terminal_save(vis->ui);
-	pid_t pid = fork();
-
-	if (pid == -1) {
-		close(pin[0]);
-		close(pin[1]);
-		close(pout[0]);
-		close(pout[1]);
-		close(perr[0]);
-		close(perr[1]);
-		vis_info_show(vis, "fork failure: %s", strerror(errno));
-		return -1;
-	} else if (pid == 0) { /* child i.e filter */
-		if (!interactive)
-			dup2(pin[0], STDIN_FILENO);
-		close(pin[0]);
-		close(pin[1]);
-		dup2(pout[1], STDOUT_FILENO);
-		close(pout[1]);
-		close(pout[0]);
-		if (!interactive)
-			dup2(perr[1], STDERR_FILENO);
-		close(perr[0]);
-		close(perr[1]);
-		if (!argv[1])
-			execl("/bin/sh", "sh", "-c", argv[0], NULL);
-		else
-			execvp(argv[0], (char* const*)argv);
-		vis_info_show(vis, "exec failure: %s", strerror(errno));
-		exit(EXIT_FAILURE);
-	}
-
-	vis->cancel_filter = false;
-
-	close(pin[0]);
-	close(pout[1]);
-	close(perr[1]);
-
-	fcntl(pout[0], F_SETFL, O_NONBLOCK);
-	fcntl(perr[0], F_SETFL, O_NONBLOCK);
-
-
-	fd_set rfds, wfds;
-
-	do {
-		if (vis->cancel_filter) {
-			kill(-pid, SIGTERM);
-			break;
-		}
-
-		FD_ZERO(&rfds);
-		FD_ZERO(&wfds);
-		if (pin[1] != -1)
-			FD_SET(pin[1], &wfds);
-		if (pout[0] != -1)
-			FD_SET(pout[0], &rfds);
-		if (perr[0] != -1)
-			FD_SET(perr[0], &rfds);
-
-		if (select(FD_SETSIZE, &rfds, &wfds, NULL, NULL) == -1) {
-			if (errno == EINTR)
-				continue;
-			vis_info_show(vis, "Select failure");
-			break;
-		}
-
-		if (pin[1] != -1 && FD_ISSET(pin[1], &wfds)) {
-			Filerange junk = rout;
-			if (junk.end > junk.start + PIPE_BUF)
-				junk.end = junk.start + PIPE_BUF;
-			ssize_t len = text_write_range(text, &junk, pin[1]);
-			if (len > 0) {
-				rout.start += len;
-				if (text_range_size(&rout) == 0) {
-					close(pout[1]);
-					pout[1] = -1;
-				}
-			} else {
-				close(pin[1]);
-				pin[1] = -1;
-				if (len == -1)
-					vis_info_show(vis, "Error writing to external command");
-			}
-		}
-
-		if (pout[0] != -1 && FD_ISSET(pout[0], &rfds)) {
-			char buf[BUFSIZ];
-			ssize_t len = read(pout[0], buf, sizeof buf);
-			if (len > 0) {
-				if (read_stdout)
-					(*read_stdout)(context, buf, len);
-			} else if (len == 0) {
-				close(pout[0]);
-				pout[0] = -1;
-			} else if (errno != EINTR && errno != EWOULDBLOCK) {
-				vis_info_show(vis, "Error reading from filter stdout");
-				close(pout[0]);
-				pout[0] = -1;
-			}
-		}
-
-		if (perr[0] != -1 && FD_ISSET(perr[0], &rfds)) {
-			char buf[BUFSIZ];
-			ssize_t len = read(perr[0], buf, sizeof buf);
-			if (len > 0) {
-				if (read_stderr)
-					(*read_stderr)(context, buf, len);
-			} else if (len == 0) {
-				close(perr[0]);
-				perr[0] = -1;
-			} else if (errno != EINTR && errno != EWOULDBLOCK) {
-				vis_info_show(vis, "Error reading from filter stderr");
-				close(perr[0]);
-				perr[0] = -1;
-			}
-		}
-
-	} while (pin[1] != -1 || pout[0] != -1 || perr[0] != -1);
-
-	if (pin[1] != -1)
-		close(pin[1]);
-	if (pout[0] != -1)
-		close(pout[0]);
-	if (perr[0] != -1)
-		close(perr[0]);
-
-	for (pid_t died; (died = waitpid(pid, &status, 0)) != -1 && pid != died;);
-
-	vis->ui->terminal_restore(vis->ui);
-
-	return status;
-}
-
-static ssize_t read_stdout(void *context, char *data, size_t len) {
-	Filter *filter = context;
-	text_insert(filter->txt, filter->pos, data, len);
-	filter->pos += len;
-	return len;
-}
-
-static ssize_t read_stderr(void *context, char *data, size_t len) {
-	Filter *filter = context;
-	buffer_append(&filter->err, data, len);
-	return len;
-}
-
-static bool cmd_filter(Vis *vis, Filerange *range, enum CmdOpt opt, const char *argv[]) {
-	Text *txt = vis->win->file->text;
-	View *view = vis->win->view;
-
-	Filter filter = {
-		.vis = vis,
-		.txt = vis->win->file->text,
-		.pos = range->end != EPOS ? range->end : view_cursor_get(view),
-	};
-
-	buffer_init(&filter.err);
-
-	/* The general idea is the following:
-	 *
-	 *  1) take a snapshot
-	 *  2) write [range.start, range.end] to exteneral command
-	 *  3) read the output of the external command and insert it after the range
-	 *  4) depending on the exit status of the external command
-	 *     - on success: delete original range
-	 *     - on failure: revert to previous snapshot
-	 *
-	 *  2) and 3) happend in small junks
-	 */
-
-	text_snapshot(txt);
-
-	int status = vis_pipe(vis, &filter, range, &argv[1], read_stdout, read_stderr);
-
-	if (status == 0) {
-		if (text_range_valid(range)) {
-			text_delete_range(txt, range);
-			view_cursor_to(view, range->start);
-		}
-		text_snapshot(txt);
-	} else {
-		/* make sure we have somehting to undo */
-		text_insert(txt, filter.pos, " ", 1);
-		text_undo(txt);
-	}
-
-	if (vis->cancel_filter)
-		vis_info_show(vis, "Command cancelled");
-	else if (status == 0)
-		vis_info_show(vis, "Command succeded");
-	else if (filter.err.len > 0)
-		vis_info_show(vis, "Command failed: %s", filter.err.data);
-	else
-		vis_info_show(vis, "Command failed");
-
-	buffer_release(&filter.err);
-
-	return !vis->cancel_filter && status == 0;
-}
-
-static ssize_t read_stdout_new(void *context, char *data, size_t len) {
-	Filter *filter = context;
-
-	if (!filter->txt && vis_window_new(filter->vis, NULL))
-		filter->txt = filter->vis->win->file->text;
-
-	if (filter->txt) {
-		text_insert(filter->txt, filter->pos, data, len);
-		filter->pos += len;
-	}
-	return len;
-}
-
-static bool cmd_pipe(Vis *vis, Filerange *range, enum CmdOpt opt, const char *argv[]) {
-	Text *txt = vis->win->file->text;
-	if (!text_range_valid(range))
-		*range = (Filerange){ .start = 0, .end = text_size(txt) };
-
-	Filter filter = {
-		.vis = vis,
-		.txt = NULL,
-		.pos = 0,
-	};
-
-	buffer_init(&filter.err);
-
-	int status = vis_pipe(vis, &filter, range, &argv[1], read_stdout_new, read_stderr);
-
-	if (vis->cancel_filter)
-		vis_info_show(vis, "Command cancelled");
-	else if (status == 0)
-		vis_info_show(vis, "Command succeded");
-	else if (filter.err.len > 0)
-		vis_info_show(vis, "Command failed: %s", filter.err.data);
-	else
-		vis_info_show(vis, "Command failed");
-
-	buffer_release(&filter.err);
-
-	if (filter.txt)
-		text_save(filter.txt, NULL);
-
-	return !vis->cancel_filter && status == 0;
-}
-
-static bool cmd_earlier_later(Vis *vis, Filerange *range, enum CmdOpt opt, const char *argv[]) {
-	Text *txt = vis->win->file->text;
+static bool cmd_earlier_later(Vis *vis, Win *win, Command *cmd, const char *argv[], Cursor *cur, Filerange *range) {
+	Text *txt = win->file->text;
 	char *unit = "";
 	long count = 1;
 	size_t pos = EPOS;
@@ -994,7 +485,7 @@ static bool print_action(const char *key, void *value, void *data) {
 	return text_appendf(txt, "  %-30s\t%s\n", key, action->help);
 }
 
-static bool cmd_help(Vis *vis, Filerange *range, enum CmdOpt opt, const char *argv[]) {
+static bool cmd_help(Vis *vis, Win *win, Command *cmd, const char *argv[], Cursor *cur, Filerange *range) {
 	if (!vis_window_new(vis, NULL))
 		return false;
 
@@ -1021,7 +512,7 @@ static bool cmd_help(Vis *vis, Filerange *range, enum CmdOpt opt, const char *ar
 	print_mode(&vis_modes[VIS_MODE_INSERT], txt);
 
 	text_appendf(txt, "\n :-Commands\n\n");
-	for (const Command *cmd = cmds; cmd && cmd->name[0]; cmd++)
+	for (const CommandDef *cmd = cmds; cmd && cmd->name[0]; cmd++)
 		text_appendf(txt, "  %s\n", cmd->name[0]);
 
 	text_appendf(txt, "\n Key binding actions\n\n");
@@ -1048,7 +539,7 @@ static enum VisMode str2vismode(const char *mode) {
 	return VIS_MODE_INVALID;
 }
 
-static bool cmd_langmap(Vis *vis, Filerange *range, enum CmdOpt opt, const char *argv[]) {
+static bool cmd_langmap(Vis *vis, Win *win, Command *cmd, const char *argv[], Cursor *cur, Filerange *range) {
 	const char *nonlatin = argv[1];
 	const char *latin = argv[2];
 	bool mapped = true;
@@ -1079,7 +570,7 @@ static bool cmd_langmap(Vis *vis, Filerange *range, enum CmdOpt opt, const char 
 	return mapped;
 }
 
-static bool cmd_map(Vis *vis, Filerange *range, enum CmdOpt opt, const char *argv[]) {
+static bool cmd_map(Vis *vis, Win *win, Command *cmd, const char *argv[], Cursor *cur, Filerange *range) {
 	bool local = strstr(argv[0], "-") != NULL;
 	enum VisMode mode = str2vismode(argv[1]);
 	const char *lhs = argv[2];
@@ -1117,14 +608,14 @@ static bool cmd_map(Vis *vis, Filerange *range, enum CmdOpt opt, const char *arg
 
 	bool mapped;
 	if (local)
-		mapped = vis_window_mode_map(vis->win, mode, lhs, binding);
+		mapped = vis_window_mode_map(win, mode, lhs, binding);
 	else
 		mapped = vis_mode_map(vis, mode, lhs, binding);
 
-	if (!mapped && opt & CMD_OPT_FORCE) {
+	if (!mapped && cmd->flags == '!') {
 		if (local) {
-			mapped = vis_window_mode_unmap(vis->win, mode, lhs) &&
-			         vis_window_mode_map(vis->win, mode, lhs, binding);
+			mapped = vis_window_mode_unmap(win, mode, lhs) &&
+			         vis_window_mode_map(win, mode, lhs, binding);
 		} else {
 			mapped = vis_mode_unmap(vis, mode, lhs) &&
 			         vis_mode_map(vis, mode, lhs, binding);
@@ -1136,7 +627,7 @@ static bool cmd_map(Vis *vis, Filerange *range, enum CmdOpt opt, const char *arg
 	return mapped;
 }
 
-static bool cmd_unmap(Vis *vis, Filerange *range, enum CmdOpt opt, const char *argv[]) {
+static bool cmd_unmap(Vis *vis, Win *win, Command *cmd, const char *argv[], Cursor *cur, Filerange *range) {
 	bool local = strstr(argv[0], "-") != NULL;
 	enum VisMode mode = str2vismode(argv[1]);
 	const char *lhs = argv[2];
@@ -1147,199 +638,7 @@ static bool cmd_unmap(Vis *vis, Filerange *range, enum CmdOpt opt, const char *a
 	}
 
 	if (local)
-		return vis_window_mode_unmap(vis->win, mode, lhs);
+		return vis_window_mode_unmap(win, mode, lhs);
 	else
 		return vis_mode_unmap(vis, mode, lhs);
-}
-
-static Filepos parse_pos(Win *win, char **cmd) {
-	size_t pos = EPOS;
-	View *view = win->view;
-	Text *txt = win->file->text;
-	Mark *marks = win->file->marks;
-	switch (**cmd) {
-	case '.':
-		pos = text_line_begin(txt, view_cursor_get(view));
-		(*cmd)++;
-		break;
-	case '$':
-		pos = text_size(txt);
-		(*cmd)++;
-		break;
-	case '\'':
-		(*cmd)++;
-		if ('a' <= **cmd && **cmd <= 'z')
-			pos = text_mark_get(txt, marks[**cmd - 'a']);
-		else if (**cmd == '<')
-			pos = text_mark_get(txt, marks[VIS_MARK_SELECTION_START]);
-		else if (**cmd == '>')
-			pos = text_mark_get(txt, marks[VIS_MARK_SELECTION_END]);
-		(*cmd)++;
-		break;
-	case '/':
-		(*cmd)++;
-		char *pattern_end = strchr(*cmd, '/');
-		if (!pattern_end)
-			return EPOS;
-		*pattern_end++ = '\0';
-		Regex *regex = vis_regex(win->vis, *cmd);
-		if (!regex)
-			return EPOS;
-		pos = text_search_forward(txt, view_cursor_get(view), regex);
-		text_regex_free(regex);
-		break;
-	case '+':
-	case '-':
-	{
-		CursorPos curspos = view_cursor_getpos(view);
-		long long line = curspos.line + strtoll(*cmd, cmd, 10);
-		if (line < 0)
-			line = 0;
-		pos = text_pos_by_lineno(txt, line);
-		break;
-	}
-	default:
-		if ('0' <= **cmd && **cmd <= '9')
-			pos = text_pos_by_lineno(txt, strtoul(*cmd, cmd, 10));
-		break;
-	}
-
-	return pos;
-}
-
-static Filerange parse_range(Win *win, char **cmd) {
-	Filerange r = text_range_empty();
-	if (!win)
-		return r;
-	Text *txt = win->file->text;
-	Mark *marks = win->file->marks;
-	char start = **cmd;
-	switch (**cmd) {
-	case '%':
-		r.start = 0;
-		r.end = text_size(txt);
-		(*cmd)++;
-		break;
-	case '*':
-		r.start = text_mark_get(txt, marks[VIS_MARK_SELECTION_START]);
-		r.end = text_mark_get(txt, marks[VIS_MARK_SELECTION_END]);
-		(*cmd)++;
-		break;
-	default:
-		r.start = parse_pos(win, cmd);
-		if (**cmd != ',') {
-			if (start == '.')
-				r.end = text_line_next(txt, r.start);
-			return r;
-		}
-		(*cmd)++;
-		r.end = parse_pos(win, cmd);
-		break;
-	}
-	return r;
-}
-
-static const Command *lookup_cmd(Vis *vis, const char *name) {
-	if (!vis->cmds) {
-		if (!(vis->cmds = map_new()))
-			return NULL;
-
-		for (const Command *cmd = cmds; cmd && cmd->name[0]; cmd++) {
-			for (const char *const *name = cmd->name; *name; name++)
-				map_put(vis->cmds, *name, cmd);
-		}
-	}
-	return map_closest(vis->cmds, name);
-}
-
-bool vis_cmd(Vis *vis, const char *cmdline) {
-	if (!cmdline)
-		return true;
-	enum CmdOpt opt = CMD_OPT_NONE;
-	while (*cmdline == ':')
-		cmdline++;
-	size_t len = strlen(cmdline);
-	char *line = malloc(len+2);
-	if (!line)
-		return false;
-	strncpy(line, cmdline, len+1);
-
-	for (char *end = line + len - 1; end >= line && isspace((unsigned char)*end); end--)
-		*end = '\0';
-
-	char *name = line;
-
-	Filerange range = parse_range(vis->win, &name);
-	if (!text_range_valid(&range)) {
-		/* if only one position was given, jump to it */
-		if (range.start != EPOS && !*name) {
-			view_cursor_to(vis->win->view, range.start);
-			free(line);
-			return true;
-		}
-
-		if (name != line) {
-			vis_info_show(vis, "Invalid range\n");
-			free(line);
-			return false;
-		}
-	}
-	/* skip leading white space */
-	while (*name == ' ')
-		name++;
-	char *param = name;
-	while (*param && (isalpha((unsigned char)*param) || *param == '-' || *param == '|'))
-		param++;
-
-	if (*param == '!') {
-		if (param != name) {
-			opt |= CMD_OPT_FORCE;
-			*param = ' ';
-		} else {
-			param++;
-		}
-	}
-
-	memmove(param+1, param, strlen(param)+1);
-	*param++ = '\0'; /* separate command name from parameters */
-
-	const Command *cmd = lookup_cmd(vis, name);
-	if (!cmd) {
-		vis_info_show(vis, "Not an editor command");
-		free(line);
-		return false;
-	}
-
-	char *s = param;
-	const char *argv[32] = { name };
-	for (int i = 1; i < LENGTH(argv); i++) {
-		while (s && isspace((unsigned char)*s))
-			s++;
-		if (s && !*s)
-			s = NULL;
-		argv[i] = s;
-		if (!(cmd->opt & CMD_OPT_ARGS)) {
-			/* remove trailing spaces */
-			if (s) {
-				while (*s) s++;
-				while (*(--s) == ' ') *s = '\0';
-			}
-			s = NULL;
-		}
-		if (s) {
-			while (*s && !isspace((unsigned char)*s))
-				s++;
-			if (*s)
-				*s++ = '\0';
-		}
-		/* strip out a single '!' argument to make ":q !" work */
-		if (argv[i] && !strcmp(argv[i], "!")) {
-			opt |= CMD_OPT_FORCE;
-			i--;
-		}
-	}
-
-	cmd->cmd(vis, &range, opt, argv);
-	free(line);
-	return true;
 }

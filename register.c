@@ -6,20 +6,8 @@
 #include "util.h"
 #include "register.h"
 
-typedef struct {
-	Buffer *stdout;
-	Buffer *stderr;
-} Clipboard;
-
-static ssize_t read_stdout(void *context, char *data, size_t len) {
-	Buffer *buf = ((Clipboard*)context)->stdout;
-	buffer_append(buf, data, len);
-	return len;
-}
-
-static ssize_t read_stderr(void *context, char *data, size_t len) {
-	Buffer *buf = ((Clipboard*)context)->stderr;
-	buffer_append(buf, data, len);
+static ssize_t read_buffer(void *context, char *data, size_t len) {
+	buffer_append(context, data, len);
 	return len;
 }
 
@@ -37,20 +25,16 @@ const char *register_get(Vis *vis, Register *reg, size_t *len) {
 		return reg->buf.data;
 	case REGISTER_CLIPBOARD:
 	{
-		Buffer stderr;
-		buffer_init(&stderr);
+		Buffer buferr;
+		buffer_init(&buferr);
 		buffer_clear(&reg->buf);
-		Clipboard clipboard = {
-			.stdout = &reg->buf,
-			.stderr = &stderr,
-		};
 
-		int status = vis_pipe(vis, &clipboard,
-			&(Filerange){ .start = 0, .end = 0 },
+		int status = vis_pipe(vis, &(Filerange){ .start = 0, .end = 0 },
 			(const char*[]){ "vis-clipboard", "--paste", NULL },
-			read_stdout, read_stderr);
+			&reg->buf, read_buffer, &buferr, read_buffer);
+
 		if (status != 0)
-			vis_info_show(vis, "Command failed %s", stderr.len > 0 ? stderr.data : "");
+			vis_info_show(vis, "Command failed %s", buffer_content0(&buferr));
 		*len = reg->buf.len;
 		return reg->buf.data;
 	}
@@ -83,18 +67,14 @@ bool register_put_range(Vis *vis, Register *reg, Text *txt, Filerange *range) {
 	}
 	case REGISTER_CLIPBOARD:
 	{
-		Buffer stderr;
-		buffer_init(&stderr);
-		Clipboard clipboard = {
-			.stderr = &stderr,
-		};
+		Buffer buferr;
+		buffer_init(&buferr);
 
-		int status = vis_pipe(vis, &clipboard, range,
-			(const char*[]){ "vis-clipboard", "--copy", NULL },
-			NULL, read_stderr);
+		int status = vis_pipe(vis, range, (const char*[]){ "vis-clipboard", "--copy", NULL },
+			NULL, NULL, &buferr, read_buffer);
 
 		if (status != 0)
-			vis_info_show(vis, "Command failed %s", stderr.len > 0 ? stderr.data : "");
+			vis_info_show(vis, "Command failed %s", buffer_content0(&buferr));
 		return status == 0;
 	}
 	case REGISTER_BLACKHOLE:

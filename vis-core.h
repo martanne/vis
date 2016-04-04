@@ -152,6 +152,7 @@ struct Vis {
 	bool expandtab;                      /* whether typed tabs should be converted to spaces */
 	bool autoindent;                     /* whether indentation should be copied from previous line on newline */
 	Map *cmds;                           /* ":"-commands, used for unique prefix queries */
+	Map *sam_cmds;                       /* ":"-commands, used for unique prefix queries */
 	Map *options;                        /* ":set"-options */
 	Map *keymap;                         /* key translation before any bindings are matched */
 	Buffer input_queue;                  /* holds pending input keys */

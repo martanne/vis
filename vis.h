@@ -399,9 +399,9 @@ bool vis_prompt_cmd(Vis*, const char *cmd);
  * if read_std{out,err} are non-NULL they will be called when output from
  * the forked process is available.
  */
-int vis_pipe(Vis *vis, void *context, Filerange *range, const char *argv[],
-	ssize_t (*read_stdout)(void *context, char *data, size_t len),
-	ssize_t (*read_stderr)(void *context, char *data, size_t len));
+int vis_pipe(Vis *vis, Filerange *range, const char *argv[],
+	void *stdout_context, ssize_t (*read_stdout)(void *stdout_context, char *data, size_t len),
+	void *stderr_context, ssize_t (*read_stderr)(void *stderr_context, char *data, size_t len));
 
 /* given the start of a key, returns a pointer to the start of the one immediately
  * following as will be processed by the input system. skips over special keys
