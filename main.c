@@ -1444,10 +1444,11 @@ static const char *selections_rotate(Vis *vis, const char *keys, const Arg *arg)
 	array_init_sized(&arr, sizeof(Rotate));
 	if (!array_reserve(&arr, selections))
 		return keys;
-	size_t line_prev = 0;
+	size_t line = 0;
 
 	for (Cursor *c = view_cursors(view), *next; c; c = next) {
 		next = view_cursors_next(c);
+		size_t line_next = 0;
 
 		Filerange sel = view_cursors_selection_get(c);
 		Rotate rot;
@@ -1459,9 +1460,11 @@ static const char *selections_rotate(Vis *vis, const char *keys, const Arg *arg)
 			rot.len = 0;
 		array_add(&arr, &rot);
 
-		size_t pos = view_cursors_pos(c);
-		size_t line = text_lineno_by_pos(txt, pos);
-		if (!next || (columns > 1 && line_prev && line != line_prev)) {
+		if (!line)
+			line = text_lineno_by_pos(txt, view_cursors_pos(c));
+		if (next)
+			line_next = text_lineno_by_pos(txt, view_cursors_pos(next));
+		if (!next || (columns > 1 && line != line_next)) {
 			size_t len = array_length(&arr);
 			size_t off = arg->i > 0 ? count % len : len - (count % len);
 			for (size_t i = 0; i < len; i++) {
@@ -1484,7 +1487,7 @@ static const char *selections_rotate(Vis *vis, const char *keys, const Arg *arg)
 			}
 			array_clear(&arr);
 		}
-		line_prev = line;
+		line = line_next;
 	}
 
 	vis_count_set(vis, VIS_COUNT_UNKNOWN);
