@@ -174,7 +174,7 @@ static const KeyBinding bindings_operator_options[] = {
 
 static const KeyBinding bindings_normal[] = {
 	{ "<Escape>",           ACTION(CURSORS_REMOVE_ALL)                  },
-	{ "<C-c>",              ALIAS("<Escape>")                           },
+	{ "<C-c>",              ACTION(CURSORS_REMOVE_COLUMN)               },
 	{ "<Delete>",           ALIAS("x")                                  },
 	{ "<C-k>",              ACTION(CURSORS_NEW_LINE_ABOVE)              },
 	{ "<M-C-k>",            ACTION(CURSORS_NEW_LINE_ABOVE_FIRST)        },
@@ -265,7 +265,7 @@ static const KeyBinding bindings_visual[] = {
 	{ "<C-h>",              ALIAS("<Backspace>")                        },
 	{ "<Delete>",           ALIAS("<Backspace>")                        },
 	{ "<Escape>",           ACTION(MODE_NORMAL)                         },
-	{ "<C-c>",              ALIAS("<Escape>")                           },
+	{ "<C-c>",              ACTION(CURSORS_REMOVE_COLUMN)               },
 	{ "v",                  ALIAS("<Escape>")                           },
 	{ "V",                  ACTION(MODE_VISUAL_LINE)                    },
 	{ ":",                  ACTION(PROMPT_SHOW)                         },
