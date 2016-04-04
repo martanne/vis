@@ -122,9 +122,9 @@ static const CommandDef cmds[] = {
 	{ { "s"            }, CMD_SHELL,                           NULL, cmd_substitute    },
 	{ { "v"            }, CMD_CMD|CMD_REGEX,                   "p",  cmd_guard         },
 	{ { "x"            }, CMD_CMD|CMD_REGEX|CMD_REGEX_DEFAULT, "p",  cmd_extract       },
-	{ { "y"            }, CMD_CMD|CMD_REGEX|CMD_REGEX_DEFAULT, "p",  cmd_extract       },
+	{ { "y"            }, CMD_CMD|CMD_REGEX,                   "p",  cmd_extract       },
 	{ { "X"            }, CMD_CMD|CMD_REGEX|CMD_REGEX_DEFAULT, NULL, cmd_files         },
-	{ { "Y"            }, CMD_CMD|CMD_REGEX|CMD_REGEX_DEFAULT, NULL, cmd_files         },
+	{ { "Y"            }, CMD_CMD|CMD_REGEX,                   NULL, cmd_files         },
 	{ { ">"            }, CMD_SHELL|CMD_ADDRESS_LINE,          NULL, cmd_pipeout       },
 	{ { "<"            }, CMD_SHELL|CMD_ADDRESS_LINE,          NULL, cmd_pipein        },
 	{ { "|"            }, CMD_SHELL|CMD_ADDRESS_LINE,          NULL, cmd_filter        },
@@ -200,6 +200,8 @@ static char *parse_delimited_text(const char **s) {
 	bool escaped = false;
 	char delim = **s;
 
+	if (!delim)
+		return NULL;
 	buffer_init(&buf);
 
 	for ((*s)++; **s && (**s != delim || escaped); (*s)++) {
