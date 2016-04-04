@@ -929,7 +929,7 @@ static bool cmd_select(Vis *vis, Win *win, Command *cmd, const char *argv[], Cur
 			ret &= sam_execute(vis, win, cmd->cmd, c, &sel);
 	}
 
-	if (primary != view_cursors_primary_get(view))
+	if (view == vis->win->view && primary != view_cursors_primary_get(view))
 		view_cursors_primary_set(view_cursors(view));
 	return ret;
 }
