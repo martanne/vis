@@ -873,16 +873,23 @@ static bool cmd_extract(Vis *vis, Win *win, Command *cmd, const char *argv[], Cu
 			}
 		}
 	} else {
-		size_t start = range->start;
-		for (;;) {
-			size_t end = text_line_next(txt, start);
-			Filerange line = text_range_new(start, end);
-			if (start == end || !text_range_valid(&line))
+		size_t start = range->start, end = range->end;
+		while (start < end) {
+			size_t next = text_line_next(txt, start);
+			if (next > end)
+				next = end;
+			Filerange r = text_range_new(start, next);
+			if (start == next || !text_range_valid(&r))
 				break;
+			start = next;
+			Mark mark_start = text_mark_set(txt, start);
 			Mark mark_end = text_mark_set(txt, end);
-			ret &= sam_execute(vis, win, cmd->cmd, NULL, &line);
-			start = text_mark_get(txt, mark_end);
-			if (start == EPOS) {
+			ret &= sam_execute(vis, win, cmd->cmd, NULL, &r);
+			start = text_mark_get(txt, mark_start);
+			if (start == EPOS)
+				start = r.end;
+			end = text_mark_get(txt, mark_end);
+			if (end == EPOS) {
 				ret = false;
 				break;
 			}
