@@ -355,8 +355,6 @@ static Address *address_parse_simple(Vis *vis, const char **s, enum SamError *er
 	case '5': case '6': case '7': case '8': case '9':
 		addr.type = 'l';
 		addr.number = parse_number(s);
-		if (!**s && !vis->mode->visual)
-			addr.type = 'g';
 		break;
 	case '/': /* regexp forwards */
 	case '?': /* regexp backwards */
@@ -914,14 +912,27 @@ static bool cmd_select(Vis *vis, Win *win, Command *cmd, const char *argv[], Cur
 	for (Cursor *c = view_cursors(view), *next; c; c = next) {
 		next = view_cursors_next(c);
 		Filerange sel;
+		size_t pos = view_cursors_pos(c);
 		if (vis->mode->visual) {
 			sel = view_cursors_selection_get(c);
 		} else if (cmd->cmd->address) {
-			size_t start = view_cursors_pos(c);
-			size_t end = text_char_next(txt, start);
-			sel = text_range_new(start, end);
+			/* convert a single line range to a goto line motion */
+			if (!multiple_cursors && cmd->cmd->cmddef->func == cmd_print) {
+				Address *addr = cmd->cmd->address;
+				switch (addr->type) {
+				case '+':
+				case '-':
+					addr = addr->right;
+					/* fall through */
+				case 'l':
+					if (addr && addr->type == 'l' && !addr->right)
+						addr->type = 'g';
+					break;
+				}
+			}
+			sel = text_range_new(pos, text_char_next(txt, pos));
 		} else if (multiple_cursors) {
-			sel = text_object_line(txt, view_cursors_pos(c));
+			sel = text_object_line(txt, pos);
 		} else {
 			sel = text_range_new(0, text_size(txt));
 		}
