@@ -6,6 +6,7 @@
  *  Copyright © 2016 Marc André Tanner <mat at brain-dump.org>
  */
 #include <string.h>
+#include <strings.h>
 #include <stdio.h>
 #include <ctype.h>
 #include <errno.h>
