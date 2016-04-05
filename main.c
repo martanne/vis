@@ -52,6 +52,8 @@ static const char *cursors_clear(Vis*, const char *keys, const Arg *arg);
 static const char *cursors_remove(Vis*, const char *keys, const Arg *arg);
 /* remove count (or arg->i)-th cursor column */
 static const char *cursors_remove_column(Vis*, const char *keys, const Arg *arg);
+/* remove all but the count (or arg->i)-th cursor column */
+static const char *cursors_remove_column_except(Vis*, const char *keys, const Arg *arg);
 /* move to the previous (arg->i < 0) or next (arg->i > 0) cursor */
 static const char *cursors_navigate(Vis*, const char *keys, const Arg *arg);
 /* select the word the cursor is currently over */
@@ -257,6 +259,7 @@ enum {
 	VIS_ACTION_CURSORS_REMOVE_ALL,
 	VIS_ACTION_CURSORS_REMOVE_LAST,
 	VIS_ACTION_CURSORS_REMOVE_COLUMN,
+	VIS_ACTION_CURSORS_REMOVE_COLUMN_EXCEPT,
 	VIS_ACTION_CURSORS_PREV,
 	VIS_ACTION_CURSORS_NEXT,
 	VIS_ACTION_SELECTIONS_ROTATE_LEFT,
@@ -962,6 +965,11 @@ static const KeyAction vis_action[] = {
 		"Remove count cursor column",
 		cursors_remove_column, { .i = 1 }
 	},
+	[VIS_ACTION_CURSORS_REMOVE_COLUMN_EXCEPT] = {
+		"cursors-remove-column-except",
+		"Remove all but the count cursor column",
+		cursors_remove_column_except, { .i = 1 }
+	},
 	[VIS_ACTION_CURSORS_PREV] = {
 		"cursors-prev",
 		"Move to the previous cursor",
@@ -1421,6 +1429,31 @@ static const char *cursors_remove_column(Vis *vis, const char *keys, const Arg *
 	for (Cursor *c = view_cursors_column(view, column), *next; c; c = next) {
 		next = view_cursors_column_next(c, column);
 		view_cursors_dispose(c);
+	}
+
+	vis_count_set(vis, VIS_COUNT_UNKNOWN);
+	return keys;
+}
+
+static const char *cursors_remove_column_except(Vis *vis, const char *keys, const Arg *arg) {
+	View *view = vis_view(vis);
+	int max = view_cursors_column_count(view);
+	int column = vis_count_get_default(vis, arg->i) - 1;
+	if (column >= max)
+		column = max - 1;
+	if (!view_cursors_multiple(view)) {
+		vis_redraw(vis);
+		return keys;
+	}
+
+	Cursor *cur = view_cursors(view);
+	Cursor *col = view_cursors_column(view, column);
+	for (Cursor *next; cur; cur = next) {
+		next = view_cursors_next(cur);
+		if (cur == col)
+			col = view_cursors_column_next(col, column);
+		else
+			view_cursors_dispose(cur);
 	}
 
 	vis_count_set(vis, VIS_COUNT_UNKNOWN);
