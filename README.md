@@ -212,6 +212,8 @@ Operators can be forced to work line wise by specifying `V`.
     Ctrl-N       select word the cursor is currently over, switch to visual mode
     Ctrl-U       make the count previous cursor primary
     Ctrl-D       make the count next cursor primary
+    Ctrl-C       remove the count cursor column
+    Ctrl-L       remove all but the count cursor column
     Tab          try to align all cursor on the same column
     Esc          dispose all but the primary cursor
 
@@ -224,8 +226,11 @@ Operators can be forced to work line wise by specifying `V`.
     Ctrl-N       create new cursor and select next word matching current selection
     Ctrl-X       clear (skip) current selection, but select next matching word
     Ctrl-P       remove primary cursor
-    Ctrl-U       make the count previous cursor primary
-    Ctrl-D       make the count next cursor primary
+    Ctrl-U/K     make the count previous cursor primary
+    Ctrl-D/J     make the count next cursor primary
+    Ctrl-D/J     make the count next cursor primary
+    Ctrl-C       remove the count cursor column
+    Ctrl-L       remove all but the count cursor column
     +            rotates selections rightwards count times
     -            rotates selections leftwards count times
     \            trim selections, remove leading and trailing white space
