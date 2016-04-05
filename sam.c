@@ -472,16 +472,16 @@ static void command_free(Command *cmd) {
 }
 
 static const CommandDef *command_lookup(Vis *vis, const char *name) {
-	if (!vis->sam_cmds) {
-		if (!(vis->sam_cmds = map_new()))
+	if (!vis->cmds) {
+		if (!(vis->cmds = map_new()))
 			return NULL;
 
 		for (const CommandDef *cmd = cmds; cmd && cmd->name[0]; cmd++) {
 			for (const char *const *name = cmd->name; *name; name++)
-				map_put(vis->sam_cmds, *name, cmd);
+				map_put(vis->cmds, *name, cmd);
 		}
 	}
-	return map_closest(vis->sam_cmds, name);
+	return map_closest(vis->cmds, name);
 }
 
 static Command *command_parse(Vis *vis, const char **s, int level, enum SamError *err) {
