@@ -87,7 +87,7 @@ static bool cmd_pipeout(Vis*, Win*, Command*, const char *argv[], Cursor*, Filer
 static bool cmd_filter(Vis*, Win*, Command*, const char *argv[], Cursor*, Filerange*);
 static bool cmd_launch(Vis*, Win*, Command*, const char *argv[], Cursor*, Filerange*);
 static bool cmd_substitute(Vis*, Win*, Command*, const char *argv[], Cursor*, Filerange*);
-static bool cmd_write(Vis*, Win*, Command*,const char *argv[], Cursor*, Filerange*);
+static bool cmd_write(Vis*, Win*, Command*, const char *argv[], Cursor*, Filerange*);
 static bool cmd_read(Vis*, Win*, Command*, const char *argv[], Cursor*, Filerange*);
 static bool cmd_edit(Vis*, Win*, Command*, const char *argv[], Cursor*, Filerange*);
 static bool cmd_quit(Vis*, Win*, Command*, const char *argv[], Cursor*, Filerange*);
@@ -171,7 +171,7 @@ const char *sam_error(enum SamError err) {
 		[SAM_ERR_REGEX]           = "Bad regular expression",
 		[SAM_ERR_TEXT]            = "Bad text",
 		[SAM_ERR_FILENAME]        = "Filename expected",
-		[SAM_ERR_COMMAND]         = "Unknown sam command",
+		[SAM_ERR_COMMAND]         = "Unknown command",
 		[SAM_ERR_EXECUTE]         = "Error executing command",
 	};
 
