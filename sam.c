@@ -725,7 +725,7 @@ static bool sam_execute(Vis *vis, Win *win, Command *cmd, Cursor *cur, Filerange
 		Mark start, end;
 		Filerange group = *range;
 
-		for (Command *c = cmd->cmd; c; c = c->next) {
+		for (Command *c = cmd->cmd; c && ret; c = c->next) {
 			if (!text_range_valid(&group))
 				return false;
 
@@ -912,7 +912,7 @@ static bool cmd_select(Vis *vis, Win *win, Command *cmd, const char *argv[], Cur
 	bool multiple_cursors = view_cursors_multiple(view);
 	Cursor *primary = view_cursors_primary_get(view);
 
-	for (Cursor *c = view_cursors(view), *next; c; c = next) {
+	for (Cursor *c = view_cursors(view), *next; c && ret; c = next) {
 		next = view_cursors_next(c);
 		Filerange sel;
 		size_t pos = view_cursors_pos(c);
