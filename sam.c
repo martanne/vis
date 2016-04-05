@@ -11,6 +11,7 @@
 #include <ctype.h>
 #include <errno.h>
 #include <unistd.h>
+#include <limits.h>
 #include "sam.h"
 #include "vis-core.h"
 #include "buffer.h"
