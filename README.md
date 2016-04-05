@@ -35,7 +35,7 @@ The intention is *not* to be bug for bug compatible with vim, instead a
 similar editing experience should be provided. The goal could thus be
 summarized as "80% of vim's features implemented in roughly 1% of the code".
 
-![vis demo](https://raw.githubusercontent.com/martanne/vis/gh-pages/screencast.gif)
+[![vis demo](https://asciinema.org/a/41361.png)](https://asciinema.org/a/41361)
 
 Getting started / Build instructions
 ====================================
