@@ -1162,7 +1162,7 @@ static bool cmd_cd(Vis *vis, Win *win, Command *cmd, const char *argv[], Cursor 
 	const char *dir = argv[1];
 	if (!dir)
 		dir = getenv("HOME");
-	return chdir(dir) == 0;
+	return dir && chdir(dir) == 0;
 }
 
 #include "vis-cmds.c"

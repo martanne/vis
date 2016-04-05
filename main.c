@@ -1243,7 +1243,7 @@ static const char *repeat(Vis *vis, const char *keys, const Arg *arg) {
 static const char *cursors_new(Vis *vis, const char *keys, const Arg *arg) {
 	View *view = vis_view(vis);
 	for (int count = vis_count_get_default(vis, 1); count > 0; count--) {
-		Cursor *cursor;
+		Cursor *cursor = NULL;
 		switch (arg->i) {
 		case -1:
 		case +1:
