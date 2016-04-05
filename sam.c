@@ -66,6 +66,7 @@ struct CommandDef {
 		CMD_FILE          = 1 << 9,  /* does the command take a file name */
 		CMD_FORCE         = 1 << 10, /* can the command be forced with ! */
 		CMD_ARGV          = 1 << 11, /* whether shell like argument splitted is desired */
+		CMD_ONCE          = 1 << 12, /* command should only be executed once, not for every selection */
 	} flags;
 	const char *defcmd;                  /* name of a default target command */
 	bool (*func)(Vis*, Win*, Command*, const char *argv[], Cursor*, Filerange*); /* command implementation */
@@ -128,32 +129,32 @@ static const CommandDef cmds[] = {
 	{ { ">"            }, CMD_SHELL|CMD_ADDRESS_LINE,          NULL, cmd_pipeout       },
 	{ { "<"            }, CMD_SHELL|CMD_ADDRESS_LINE,          NULL, cmd_pipein        },
 	{ { "|"            }, CMD_SHELL|CMD_ADDRESS_LINE,          NULL, cmd_filter        },
-	{ { "!"            }, CMD_SHELL,                           NULL, cmd_launch        },
+	{ { "!"            }, CMD_SHELL|CMD_ONCE,                  NULL, cmd_launch        },
 	{ { "w"            }, CMD_ARGV|CMD_FORCE,                  NULL, cmd_write         },
 	{ { "r"            }, CMD_FILE|CMD_ADDRESS_AFTER,          NULL, cmd_read          },
 	{ { "{"            }, 0,                                   NULL, NULL              },
 	{ { "}"            }, 0,                                   NULL, NULL              },
-	{ { "e"            }, CMD_FILE|CMD_FORCE,                  NULL, cmd_edit          },
-	{ { "q"            }, CMD_FORCE,                           NULL, cmd_quit          },
-	{ { "cd"           }, CMD_ARGV,                            NULL, cmd_cd            },
+	{ { "e"            }, CMD_FILE|CMD_FORCE|CMD_ONCE,         NULL, cmd_edit          },
+	{ { "q"            }, CMD_FORCE|CMD_ONCE,                  NULL, cmd_quit          },
+	{ { "cd"           }, CMD_ARGV|CMD_ONCE,                   NULL, cmd_cd            },
 	/* vi(m) related commands */
-	{ { "bdelete"      }, CMD_FORCE,                           NULL, cmd_bdelete       },
-	{ { "help"         }, 0,                                   NULL, cmd_help          },
-	{ { "map"          }, CMD_ARGV|CMD_FORCE,                  NULL, cmd_map           },
-	{ { "map-window"   }, CMD_ARGV|CMD_FORCE,                  NULL, cmd_map           },
-	{ { "unmap"        }, CMD_ARGV,                            NULL, cmd_unmap         },
-	{ { "unmap-window" }, CMD_ARGV,                            NULL, cmd_unmap         },
-	{ { "langmap"      }, CMD_ARGV|CMD_FORCE,                  NULL, cmd_langmap       },
-	{ { "new"          }, CMD_ARGV,                            NULL, cmd_new           },
-	{ { "open"         }, CMD_ARGV,                            NULL, cmd_open          },
-	{ { "qall"         }, CMD_FORCE,                           NULL, cmd_qall          },
-	{ { "set"          }, CMD_ARGV,                            NULL, cmd_set           },
-	{ { "split"        }, CMD_ARGV,                            NULL, cmd_split         },
-	{ { "vnew"         }, CMD_ARGV,                            NULL, cmd_vnew          },
-	{ { "vsplit"       }, CMD_ARGV,                            NULL, cmd_vsplit        },
-	{ { "wq"           }, CMD_ARGV|CMD_FORCE,                  NULL, cmd_wq            },
-	{ { "earlier"      }, CMD_ARGV,                            NULL, cmd_earlier_later },
-	{ { "later"        }, CMD_ARGV,                            NULL, cmd_earlier_later },
+	{ { "bdelete"      }, CMD_FORCE|CMD_ONCE,                  NULL, cmd_bdelete       },
+	{ { "help"         }, CMD_ONCE,                            NULL, cmd_help          },
+	{ { "map"          }, CMD_ARGV|CMD_FORCE|CMD_ONCE,         NULL, cmd_map           },
+	{ { "map-window"   }, CMD_ARGV|CMD_FORCE|CMD_ONCE,         NULL, cmd_map           },
+	{ { "unmap"        }, CMD_ARGV|CMD_ONCE,                   NULL, cmd_unmap         },
+	{ { "unmap-window" }, CMD_ARGV|CMD_ONCE,                   NULL, cmd_unmap         },
+	{ { "langmap"      }, CMD_ARGV|CMD_FORCE|CMD_ONCE,         NULL, cmd_langmap       },
+	{ { "new"          }, CMD_ARGV|CMD_ONCE,                   NULL, cmd_new           },
+	{ { "open"         }, CMD_ARGV|CMD_ONCE,                   NULL, cmd_open          },
+	{ { "qall"         }, CMD_FORCE|CMD_ONCE,                  NULL, cmd_qall          },
+	{ { "set"          }, CMD_ARGV|CMD_ONCE,                   NULL, cmd_set           },
+	{ { "split"        }, CMD_ARGV|CMD_ONCE,                   NULL, cmd_split         },
+	{ { "vnew"         }, CMD_ARGV|CMD_ONCE,                   NULL, cmd_vnew          },
+	{ { "vsplit"       }, CMD_ARGV|CMD_ONCE,                   NULL, cmd_vsplit        },
+	{ { "wq"           }, CMD_ARGV|CMD_FORCE|CMD_ONCE,         NULL, cmd_wq            },
+	{ { "earlier"      }, CMD_ARGV|CMD_ONCE,                   NULL, cmd_earlier_later },
+	{ { "later"        }, CMD_ARGV|CMD_ONCE,                   NULL, cmd_earlier_later },
 	{ { NULL           }, 0,                                   NULL, NULL              },
 };
 
@@ -943,6 +944,8 @@ static bool cmd_select(Vis *vis, Win *win, Command *cmd, const char *argv[], Cur
 		}
 		if (text_range_valid(&sel))
 			ret &= sam_execute(vis, win, cmd->cmd, c, &sel);
+		if (cmd->cmd->cmddef->flags & CMD_ONCE)
+			break;
 	}
 
 	if (view == vis->win->view && primary != view_cursors_primary_get(view))
