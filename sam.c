@@ -485,6 +485,8 @@ static const CommandDef *command_lookup(Vis *vis, const char *name) {
 }
 
 static Command *command_parse(Vis *vis, const char **s, int level, enum SamError *err) {
+	if (!**s)
+		return NULL;
 	Command *cmd = command_new(NULL);
 	if (!cmd)
 		return NULL;
@@ -732,7 +734,7 @@ static bool sam_execute(Vis *vis, Win *win, Command *cmd, Cursor *cur, Filerange
 			start = text_mark_set(txt, group.start);
 			end = text_mark_set(txt, group.end);
 
-			ret &= sam_execute(vis, win, c, cur, &group);
+			ret &= sam_execute(vis, win, c, NULL, &group);
 
 			size_t s = text_mark_get(txt, start);
 			/* hack to make delete work, only update if still valid */
@@ -827,7 +829,7 @@ static bool cmd_extract(Vis *vis, Win *win, Command *cmd, const char *argv[], Cu
 
 	Cursor *cursor = NULL;
 	size_t pos = view_cursor_get(view);
-	if (!view_cursors_dispose(cur)) {
+	if (cur && !view_cursors_dispose(cur)) {
 		cursor = view_cursors_new(view, text_size(txt)+1);
 		view_cursors_dispose(cur);
 	}
