@@ -196,6 +196,7 @@ Filerange text_object_function(Text *txt, size_t pos) {
 	Filerange r = object_function(txt, pos);
 	if (!text_range_valid(&r))
 		return r;
+	r.end++;
 	return text_range_linewise(txt, &r);
 }
 
