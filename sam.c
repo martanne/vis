@@ -1141,20 +1141,6 @@ static bool cmd_filter(Vis *vis, Win *win, Command *cmd, const char *argv[], Cur
 		return false;
 	Text *txt = win->file->text;
 
-	/* The general idea is the following:
-	 *
-	 *  1) take a snapshot
-	 *  2) write [range.start, range.end] to external command
-	 *  3) read the output of the external command and insert it after the range
-	 *  4) depending on the exit status of the external command
-	 *     - on success: delete original range
-	 *     - on failure: revert to previous snapshot
-	 *
-	 *  2) and 3) happen in small chunks
-	 */
-
-	text_snapshot(txt);
-
 	Filter filter = {
 		.vis = vis,
 		.txt = txt,
@@ -1168,14 +1154,11 @@ static bool cmd_filter(Vis *vis, Win *win, Command *cmd, const char *argv[], Cur
 
 	if (status == 0) {
 		text_delete_range(txt, range);
-		text_snapshot(txt);
 		range->end = filter.pos - text_range_size(range);
 		if (cur)
 			view_cursors_to(cur, range->start);
 	} else {
-		/* make sure we have somehting to undo */
-		text_insert(txt, filter.pos, " ", 1);
-		text_undo(txt);
+		text_delete(txt, range->end, filter.pos - range->end);
 	}
 
 	if (vis->cancel_filter)
