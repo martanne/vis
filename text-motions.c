@@ -70,11 +70,9 @@ static size_t find_prev(Text *txt, size_t pos, const char *s, bool line) {
 	if (!s)
 		return pos;
 	size_t len = strlen(s), matched = len - 1;
-	Iterator it, sit;
+	Iterator it = text_iterator_get(txt, pos), sit;
 	if (len == 0)
 		return pos;
-	pos += len;
-	it = text_iterator_get(txt, pos);
 	for (char c; text_iterator_byte_prev(&it, &c); ) {
 		if (c == s[matched]) {
 			if (matched == 0)
