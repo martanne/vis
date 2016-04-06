@@ -584,12 +584,10 @@ void action_do(Vis *vis, Action *a) {
 		} else if (a->op == &vis_operators[VIS_OP_REPLACE]) {
 			vis_mode_switch(vis, VIS_MODE_REPLACE);
 		} else if (a->op == &vis_operators[VIS_OP_FILTER]) {
-			if (a->arg.s) {
-				vis_mode_switch(vis, VIS_MODE_NORMAL);
+			if (a->arg.s)
 				vis_cmd(vis, a->arg.s);
-			} else {
+			else
 				vis_prompt_show(vis, ":|");
-			}
 		} else if (vis->mode == &vis_modes[VIS_MODE_OPERATOR_PENDING]) {
 			mode_set(vis, vis->mode_prev);
 		} else if (vis->mode->visual) {
