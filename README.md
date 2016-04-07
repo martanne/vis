@@ -77,73 +77,73 @@ supported features.
 
 ###  Operators
 
-    d   (delete)
     c   (change)
-    y   (yank)
-    p   (put)
-    >   (shift-right)
-    <   (shift-left)
-    J   (join)
-    ~   (swap case)
-    gu  (make lowercase)
-    gU  (make uppercase)
+    d   (delete)
     !   (filter)
     =   (format using fmt(1))
+    gu  (make lowercase)
+    gU  (make uppercase)
+    J   (join)
+    p   (put)
+    <   (shift-left)
+    >   (shift-right)
+    ~   (swap case)
+    y   (yank)
 
 Operators can be forced to work line wise by specifying `V`.
 
 ### Movements
 
-    h        (char left)
-    l        (char right)
-    j        (line down)
-    k        (line up)
-    gj       (display line down)
-    gk       (display line up)
     0        (start of line)
-    ^        (first non-blank of line)
-    g_       (last non-blank of line)
-    $        (end of line)
-    %        (match bracket)
     b        (previous start of a word)
     B        (previous start of a WORD)
-    w        (next start of a word)
-    W        (next start of a WORD)
+    $        (end of line)
     e        (next end of a word)
     E        (next end of a WORD)
+    F{char}  (to next occurrence of char to the left)
+    f{char}  (to next occurrence of char to the right)
+    ^        (first non-blank of line)
+    g0       (begin of display line)
+    g$       (end of display line)
     ge       (previous end of a word)
     gE       (previous end of a WORD)
-    {        (previous paragraph)
-    }        (next paragraph)
-    (        (previous sentence)
-    )        (next sentence)
-    [[       (previous start of C-like function)
-    []       (previous end of C-like function)
-    ][       (next start of C-like function)
-    ]]       (next end of C-like function)
     gg       (begin of file)
-    g0       (begin of display line)
-    gm       (middle of display line)
-    g$       (end of display line)
     G        (goto line or end of file)
+    gj       (display line down)
+    gk       (display line up)
+    g_       (last non-blank of line)
+    gm       (middle of display line)
     |        (goto column)
-    n        (repeat last search forward)
-    N        (repeat last search backwards)
+    h        (char left)
     H        (goto top/home line of window)
-    M        (goto middle line of window)
+    j        (line down)
+    k        (line up)
+    l        (char right)
     L        (goto bottom/last line of window)
-    *        (search word under cursor forwards)
-    #        (search word under cursor backwards)
-    f{char}  (to next occurrence of char to the right)
-    t{char}  (till before next occurrence of char to the right)
-    F{char}  (to next occurrence of char to the left)
-    T{char}  (till before next occurrence of char to the left)
-    ;        (repeat last to/till movement)
-    ,        (repeat last to/till movement but in opposite direction)
-    /{text}  (to next match of text in forward direction)
-    ?{text}  (to next match of text in backward direction)
     `{mark}  (go to mark)
     '{mark}  (go to start of line containing mark)
+    %        (match bracket)
+    M        (goto middle line of window)
+    ]]       (next end of C-like function)
+    }        (next paragraph)
+    )        (next sentence)
+    ][       (next start of C-like function)
+    N        (repeat last search backwards)
+    n        (repeat last search forward)
+    []       (previous end of C-like function)
+    {        (previous paragraph)
+    (        (previous sentence)
+    [[       (previous start of C-like function)
+    ;        (repeat last to/till movement)
+    ,        (repeat last to/till movement but in opposite direction)
+    #        (search word under cursor backwards)
+    *        (search word under cursor forwards)
+    T{char}  (till before next occurrence of char to the left)
+    t{char}  (till before next occurrence of char to the right)
+    ?{text}  (to next match of text in backward direction)
+    /{text}  (to next match of text in forward direction)
+    w        (next start of a word)
+    W        (next start of a WORD)
 
   An empty line is currently neither a word nor a WORD.
 
@@ -227,7 +227,6 @@ Operators can be forced to work line wise by specifying `V`.
     Ctrl-X       clear (skip) current selection, but select next matching word
     Ctrl-P       remove primary cursor
     Ctrl-U/K     make the count previous cursor primary
-    Ctrl-D/J     make the count next cursor primary
     Ctrl-D/J     make the count next cursor primary
     Ctrl-C       remove the count cursor column
     Ctrl-L       remove all but the count cursor column
@@ -366,27 +365,27 @@ Operators can be forced to work line wise by specifying `V`.
   at the `:`-command prompt. Any unique prefix can be used.
 
     :bdelete      close all windows which display the same file as the current one
+    :earlier      revert to older text state
     :e            replace current file with a new one or reload it from disk
+    :langmap      set key equivalents for layout specific key mappings
+    :later        revert to newer text state
+    :!            launch external command, redirect keyboard input to it
+    :map          add a global key mapping
+    :map-window   add a window local key mapping
+    :new          open an empty window, arrange horizontally
     :open         open a new window
     :qall         close all windows, exit editor
     :q            close currently focused window
     :r            insert content of another file at current cursor position
+    :set          set the options below
     :split        split window horizontally
-    :vsplit       split window vertically
-    :new          open an empty window, arrange horizontally
+    :s            search and replace currently implemented in terms of `sed(1)`
+    :unmap        remove a global key mapping
+    :unmap-window remove a window local key mapping
     :vnew         open an empty window, arrange vertically
+    :vsplit       split window vertically
     :wq           write changes then close window
     :w            write current buffer content to file
-    :s            search and replace currently implemented in terms of `sed(1)`
-    :earlier      revert to older text state
-    :later        revert to newer text state
-    :map          add a global key mapping
-    :unmap        remove a global key mapping
-    :map-window   add a window local key mapping
-    :unmap-window remove a window local key mapping
-    :langmap      set key equivalents for layout specific key mappings
-    :!            launch external command, redirect keyboard input to it
-    :set          set the options below
 
      tabwidth   [1-8]           default 8
 
