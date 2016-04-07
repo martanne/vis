@@ -2,7 +2,7 @@
 -- Contributed by Richard Philips.
 -- Elixer LPeg lexer.
 
-local l = lexer
+local l = require('lexer')
 local token, style, color, word_match = l.token, l.style, l.color, l.word_match
 local B, P, R, S = lpeg.B, lpeg.P, lpeg.R, lpeg.S
 

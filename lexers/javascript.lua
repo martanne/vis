@@ -18,9 +18,11 @@ local comment = token(l.COMMENT, line_comment + block_comment)
 -- Strings.
 local sq_str = l.delimited_range("'")
 local dq_str = l.delimited_range('"')
+local template_str = l.delimited_range('`')
 local regex_str = #P('/') * l.last_char_includes('+-*%^!=&|?:;,([{<>') *
                   l.delimited_range('/', true) * S('igm')^0
-local string = token(l.STRING, sq_str + dq_str) + token(l.REGEX, regex_str)
+local string = token(l.STRING, sq_str + dq_str + template_str) +
+               token(l.REGEX, regex_str)
 
 -- Numbers.
 local number = token(l.NUMBER, l.float + l.integer)
@@ -31,10 +33,10 @@ local keyword = token(l.KEYWORD, word_match{
   'const', 'continue', 'debugger', 'default', 'delete', 'do', 'double', 'else',
   'enum', 'export', 'extends', 'false', 'final', 'finally', 'float', 'for',
   'function', 'goto', 'if', 'implements', 'import', 'in', 'instanceof', 'int',
-  'interface', 'let', 'long', 'native', 'new', 'null', 'package', 'private',
-  'protected', 'public', 'return', 'short', 'static', 'super', 'switch',
-  'synchronized', 'this', 'throw', 'throws', 'transient', 'true', 'try',
-  'typeof', 'var', 'void', 'volatile', 'while', 'with', 'yield'
+  'interface', 'let', 'long', 'native', 'new', 'null', 'of', 'package',
+  'private', 'protected', 'public', 'return', 'short', 'static', 'super',
+  'switch', 'synchronized', 'this', 'throw', 'throws', 'transient', 'true',
+  'try', 'typeof', 'var', 'void', 'volatile', 'while', 'with', 'yield'
 })
 
 -- Identifiers.
