@@ -5,6 +5,8 @@ SRC = array.c buffer.c libutf.c main.c map.c register.c ring-buffer.c \
 	ui-curses.c view.c vis.c vis-lua.c vis-modes.c vis-motions.c \
 	vis-operators.c vis-prompt.c vis-text-objects.c
 
+OBJ = $(patsubst %.c,%.o,$(SRC))
+
 # conditionally initialized, this is needed for standalone build
 # with empty config.mk
 PREFIX ?= /usr/local
@@ -45,8 +47,11 @@ config.h:
 config.mk:
 	@touch $@
 
-vis: config.h config.mk *.c *.h
-	${CC} ${CFLAGS} ${CFLAGS_VIS} ${SRC} ${LDFLAGS} ${LDFLAGS_VIS} -o $@
+%.o: %.c
+	${CC} -c ${CFLAGS} ${CFLAGS_VIS} -o $@ $<
+
+vis: config.h config.mk ${OBJ} *.h
+	${CC} ${OBJ} ${LDFLAGS} ${LDFLAGS_VIS} -o $@
 
 debug: clean
 	@$(MAKE) CFLAGS_VIS='${DEBUG_CFLAGS_VIS}'
@@ -56,6 +61,7 @@ profile: clean
 
 clean:
 	@echo cleaning
+	@rm -f ${OBJ}
 	@rm -f vis vis-${VERSION}.tar.gz
 
 dist: clean
