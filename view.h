@@ -123,6 +123,8 @@ void view_cursor_to(View*, size_t pos);
 Cursor *view_cursors_new(View*, size_t pos);
 /* get number of active cursors */
 int view_cursors_count(View*);
+/* get index/relative order at time of creation of a cursor [0,count-1] */
+int view_cursors_number(Cursor*);
 /* exist there more than 1 cursor */
 bool view_cursors_multiple(View*);
 /* dispose an existing cursor with its associated selection (if any),

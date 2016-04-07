@@ -59,8 +59,9 @@ struct Cursor {             /* cursor position */
 	Mark lastsel_cursor;/* used to restore it */
 	Register reg;       /* per cursor register to support yank/put operation */
 	int generation;     /* used to filter out newly created cursors during iteration */
+	int number;         /* how many cursors are located before this one */
 	View *view;         /* associated view to which this cursor belongs */
-	Cursor *prev, *next;/* previous/next cursors in no particular order */
+	Cursor *prev, *next;/* previous/next cursors ordered by location at creation time */
 };
 
 /* Viewable area, showing part of a file. Keeps track of cursors and selections.
@@ -79,6 +80,7 @@ struct View {
 	Line *lastline;     /* last currently used line, always <= bottomline */
 	Line *bottomline;   /* bottom of view, might be unused if lastline < bottomline */
 	Cursor *cursor;     /* main cursor, always placed within the visible viewport */
+	int cursor_count;   /* how many cursors do currently exist */
 	Line *line;         /* used while drawing view content, line where next char will be drawn */
 	int col;            /* used while drawing view content, column where next char will be drawn */
 	const SyntaxSymbol *symbols[SYNTAX_SYMBOL_LAST]; /* symbols to use for white spaces etc */
@@ -1066,6 +1068,7 @@ Cursor *view_cursors_new(View *view, size_t pos) {
 	if (!view->cursors) {
 		view->cursor = c;
 		view->cursors = c;
+		view->cursor_count = 1;
 		return c;
 	}
 
@@ -1090,15 +1093,21 @@ Cursor *view_cursors_new(View *view, size_t pos) {
 	if (pos == cur)
 		goto err;
 
+	for (Cursor *after = next; after; after = after->next)
+		after->number++;
+
 	c->prev = prev;
 	c->next = next;
-	if (prev)
-		prev->next = c;
 	if (next)
 		next->prev = c;
-	if (!prev)
+	if (prev) {
+		prev->next = c;
+		c->number = prev->number + 1;
+	} else {
 		view->cursors = c;
+	}
 	view->cursor = c;
+	view->cursor_count++;;
 	view_cursors_to(c, pos);
 	return c;
 err:
@@ -1107,10 +1116,11 @@ err:
 }
 
 int view_cursors_count(View *view) {
-	int i = 0;
-	for (Cursor *c = view->cursors; c; c = c->next)
-		i++;
-	return i;
+	return view->cursor_count;
+}
+
+int view_cursors_number(Cursor *c) {
+	return c->number;
 }
 
 int view_cursors_column_count(View *view) {
@@ -1174,6 +1184,8 @@ static void view_cursors_free(Cursor *c) {
 	if (!c)
 		return;
 	register_release(&c->reg);
+	for (Cursor *after = c->next; after; after = after->next)
+		after->number--;
 	if (c->prev)
 		c->prev->next = c->next;
 	if (c->next)
@@ -1182,6 +1194,7 @@ static void view_cursors_free(Cursor *c) {
 		c->view->cursors = c->next;
 	if (c->view->cursor == c)
 		c->view->cursor = c->next ? c->next : c->prev;
+	c->view->cursor_count--;
 	free(c);
 }
 

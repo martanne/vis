@@ -641,15 +641,21 @@ static void ui_window_draw_status(UiWin *w) {
 	          text_modified(vis_file_text(win->file)) ? "[+]" : "",
 	          vis_macro_recording(vis) ? "recording": "");
 
+	char buf[4*32] = "", *msg = buf;
+	int cursor_count = view_cursors_count(win->view);
+	if (cursor_count > 1) {
+		Cursor *c = view_cursors_primary_get(win->view);
+		int cursor_number = view_cursors_number(c) + 1;
+		msg += sprintf(msg, "[%d/%d] ", cursor_number, cursor_count);
+	}
+
 	if (!(win->options & UI_OPTION_LARGE_FILE)) {
 		CursorPos pos = view_cursor_getpos(win->view);
-		char buf[win->width + 1];
-		int len = snprintf(buf, win->width, "%zd, %zd", pos.line, pos.col);
-		if (len > 0) {
-			buf[len] = '\0';
-			mvwaddstr(win->winstatus, 0, win->width - len - 1, buf);
-		}
+		msg += sprintf(msg, "%zd, %zd", pos.line, pos.col);
 	}
+
+	if (buf[0])
+		mvwaddstr(win->winstatus, 0, win->width - (msg - buf) - 1, buf);
 }
 
 static void ui_window_draw(UiWin *w) {
