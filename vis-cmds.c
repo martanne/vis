@@ -470,7 +470,7 @@ static bool print_keybinding(const char *key, void *value, void *data) {
 	const char *desc = binding->alias;
 	if (!desc && binding->action)
 		desc = binding->action->help;
-	return text_appendf(txt, "  %-15s\t%s\n", key, desc ? desc : "");
+	return text_appendf(txt, "  %-15s\t%s\n", isspace(key[0]) ? "<Space>" : key, desc ? desc : "");
 }
 
 static void print_mode(Mode *mode, Text *txt) {
