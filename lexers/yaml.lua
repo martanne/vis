@@ -102,7 +102,7 @@ M._rules = {
 }
 
 M._tokenstyles = {
-  indent_error = 'back:%(color.red)',
+  indent_error = 'back:red',
   document = l.STYLE_CONSTANT,
   literal = l.STYLE_DEFAULT,
   timestamp = l.STYLE_NUMBER,

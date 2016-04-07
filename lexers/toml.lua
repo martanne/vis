@@ -59,7 +59,7 @@ M._rules = {
 }
 
 M._tokenstyles = {
-  indent_error = 'back:%(color.red)',
+  indent_error = 'back:red',
   timestamp = l.STYLE_NUMBER,
 }
 
