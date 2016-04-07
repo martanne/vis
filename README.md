@@ -12,7 +12,7 @@ As an universal editor it has decent Unicode support (including double width
 and combining characters) and should cope with arbitrary files including:
 
  - large (up to a few Gigabytes) ones including
-   - Wikipedia/OpenStreetMap XML / SQL / CVS dumps
+   - Wikipedia/OpenStreetMap XML / SQL / CSV dumps
    - amalgamated source trees (e.g. SQLite)
  - single line ones e.g. minified JavaScript
  - binary ones e.g. ELF files
