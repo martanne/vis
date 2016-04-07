@@ -226,24 +226,29 @@ bool vis_window_split(Win *original) {
 	return true;
 }
 
+void vis_window_focus(Win *win) {
+	if (!win)
+		return;
+	Vis *vis = win->vis;
+	vis->win = win;
+	vis->ui->window_focus(win->ui);
+}
+
 void vis_window_next(Vis *vis) {
 	Win *sel = vis->win;
 	if (!sel)
 		return;
-	vis->win = vis->win->next;
-	if (!vis->win)
-		vis->win = vis->windows;
-	vis->ui->window_focus(vis->win->ui);
+	vis_window_focus(sel->next ? sel->next : vis->windows);
 }
 
 void vis_window_prev(Vis *vis) {
 	Win *sel = vis->win;
 	if (!sel)
 		return;
-	vis->win = vis->win->prev;
-	if (!vis->win)
-		for (vis->win = vis->windows; vis->win->next; vis->win = vis->win->next);
-	vis->ui->window_focus(vis->win->ui);
+	sel = sel->prev;
+	if (!sel)
+		for (sel = vis->windows; sel->next; sel = sel->next);
+	vis_window_focus(sel);
 }
 
 void vis_draw(Vis *vis) {
