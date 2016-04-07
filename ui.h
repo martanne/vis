@@ -52,6 +52,7 @@ struct Ui {
 	UiWin* (*window_new)(Ui*, View*, File*, enum UiOption);
 	void (*window_free)(UiWin*);
 	void (*window_focus)(UiWin*);
+	void (*window_swap)(UiWin*, UiWin*);
 	void (*die)(Ui*, const char *msg, va_list ap) __attribute__((noreturn));
 	void (*info)(Ui*, const char *msg, va_list ap);
 	void (*info_hide)(Ui*);

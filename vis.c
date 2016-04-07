@@ -292,6 +292,35 @@ bool vis_window_closable(Win *win) {
 	return win->file->refcount > 1;
 }
 
+void vis_window_swap(Win *a, Win *b) {
+	if (a == b || !a || !b)
+		return;
+	Vis *vis = a->vis;
+	Win *tmp = a->next;
+	a->next = b->next;
+	b->next = tmp;
+	if (a->next)
+		a->next->prev = a;
+	if (b->next)
+		b->next->prev = b;
+	tmp = a->prev;
+	a->prev = b->prev;
+	b->prev = tmp;
+	if (a->prev)
+		a->prev->next = a;
+	if (b->prev)
+		b->prev->next = b;
+	if (vis->windows == a)
+		vis->windows = b;
+	else if (vis->windows == b)
+		vis->windows = a;
+	vis->ui->window_swap(a->ui, b->ui);
+	if (vis->win == a)
+		vis_window_focus(b);
+	else if (vis->win == b)
+		vis_window_focus(a);
+}
+
 void vis_window_close(Win *win) {
 	Vis *vis = win->vis;
 	if (vis->event && vis->event->win_close)

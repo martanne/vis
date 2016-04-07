@@ -83,6 +83,8 @@ void vis_window_next(Vis*);
 void vis_window_prev(Vis*);
 /* change currently focused window, receiving user input */
 void vis_window_focus(Win*);
+/* swap location of two windows */
+void vis_window_swap(Win*, Win*);
 /* display a user prompt with a certain title and default text */
 void vis_prompt_show(Vis*, const char *title);
 

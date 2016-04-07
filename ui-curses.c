@@ -929,6 +929,36 @@ static enum UiOption ui_window_options_get(UiWin *w) {
 	return win->options;
 }
 
+static void ui_window_swap(UiWin *aw, UiWin *bw) {
+	UiCursesWin *a = (UiCursesWin*)aw;
+	UiCursesWin *b = (UiCursesWin*)bw;
+	if (a == b || !a || !b)
+		return;
+	UiCurses *ui = a->ui;
+	UiCursesWin *tmp = a->next;
+	a->next = b->next;
+	b->next = tmp;
+	if (a->next)
+		a->next->prev = a;
+	if (b->next)
+		b->next->prev = b;
+	tmp = a->prev;
+	a->prev = b->prev;
+	b->prev = tmp;
+	if (a->prev)
+		a->prev->next = a;
+	if (b->prev)
+		b->prev->next = b;
+	if (ui->windows == a)
+		ui->windows = b;
+	else if (ui->windows == b)
+		ui->windows = a;
+	if (ui->selwin == a)
+		ui_window_focus(bw);
+	else if (ui->selwin == b)
+		ui_window_focus(aw);
+}
+
 static UiWin *ui_window_new(Ui *ui, View *view, File *file, enum UiOption options) {
 	UiCurses *uic = (UiCurses*)ui;
 	UiCursesWin *win = calloc(1, sizeof(UiCursesWin));
@@ -1115,6 +1145,7 @@ Ui *ui_curses_new(void) {
 		.window_new = ui_window_new,
 		.window_free = ui_window_free,
 		.window_focus = ui_window_focus,
+		.window_swap = ui_window_swap,
 		.draw = ui_draw,
 		.redraw = ui_redraw,
 		.arrange = ui_arrange,

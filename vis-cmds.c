@@ -319,8 +319,12 @@ static bool cmd_edit(Vis *vis, Win *win, Command *cmd, const char *argv[], Curso
 		return vis_window_reload(oldwin);
 	if (!openfiles(vis, &argv[1]))
 		return false;
-	if (vis->win != oldwin)
+	if (vis->win != oldwin) {
+		Win *newwin = vis->win;
+		vis_window_swap(oldwin, newwin);
 		vis_window_close(oldwin);
+		vis_window_focus(newwin);
+	}
 	return vis->win != oldwin;
 }
 
