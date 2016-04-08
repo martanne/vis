@@ -440,6 +440,14 @@ Operators can be forced to work line wise by specifying `V`.
     :e *.c          # opens a menu with all C files
     :e .            # opens a menu with all files of the current directory
 
+### The vis config file: visrc.lua
+
+Settings and keymaps can be specified in a `visrc.lua` file, which will
+be read by `vis` at runtime. An example `visrc.lua` file is installed
+in `/usr/local/share/vis` by default. This file can be copied to
+`$XDG_CONFIG_HOME/vis` (which defaults to `$HOME/.config/vis`) for
+further configuration.
+
 ### Runtime Configurable Key Bindings
 
 Vis supports run time key bindings via the `:{un,}map{,-window}` set of
