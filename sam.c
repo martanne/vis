@@ -61,13 +61,14 @@ struct CommandDef {
 		CMD_COUNT         = 1 << 3,  /* does the command support a count as in s2/../? */
 		CMD_TEXT          = 1 << 4,  /* does the command need a text to insert? */
 		CMD_ADDRESS_NONE  = 1 << 5,  /* is it an error to specify an address for the command? */
-		CMD_ADDRESS_LINE  = 1 << 6,  /* if no address is given, use the current line */
-		CMD_ADDRESS_AFTER = 1 << 7,  /* if no address is given, begin at the start of the next line */
-		CMD_SHELL         = 1 << 8,  /* command needs a shell command as argument */
-		CMD_FILE          = 1 << 9,  /* does the command take a file name */
-		CMD_FORCE         = 1 << 10, /* can the command be forced with ! */
-		CMD_ARGV          = 1 << 11, /* whether shell like argument splitted is desired */
-		CMD_ONCE          = 1 << 12, /* command should only be executed once, not for every selection */
+		CMD_ADDRESS_POS   = 1 << 6,  /* no address implies an empty range at current cursor position */
+		CMD_ADDRESS_LINE  = 1 << 7,  /* if no address is given, use the current line */
+		CMD_ADDRESS_AFTER = 1 << 8,  /* if no address is given, begin at the start of the next line */
+		CMD_SHELL         = 1 << 9,  /* command needs a shell command as argument */
+		CMD_FILE          = 1 << 10, /* does the command take a file name */
+		CMD_FORCE         = 1 << 11, /* can the command be forced with ! */
+		CMD_ARGV          = 1 << 12, /* whether shell like argument splitted is desired */
+		CMD_ONCE          = 1 << 13, /* command should only be executed once, not for every selection */
 	} flags;
 	const char *defcmd;                  /* name of a default target command */
 	bool (*func)(Vis*, Win*, Command*, const char *argv[], Cursor*, Filerange*); /* command implementation */
@@ -128,8 +129,8 @@ static const CommandDef cmds[] = {
 	{ { "X"            }, CMD_CMD|CMD_REGEX|CMD_REGEX_DEFAULT, NULL, cmd_files         },
 	{ { "Y"            }, CMD_CMD|CMD_REGEX,                   NULL, cmd_files         },
 	{ { ">"            }, CMD_SHELL|CMD_ADDRESS_LINE,          NULL, cmd_pipeout       },
-	{ { "<"            }, CMD_SHELL|CMD_ADDRESS_LINE,          NULL, cmd_pipein        },
-	{ { "|"            }, CMD_SHELL|CMD_ADDRESS_LINE,          NULL, cmd_filter        },
+	{ { "<"            }, CMD_SHELL|CMD_ADDRESS_POS,           NULL, cmd_pipein        },
+	{ { "|"            }, CMD_SHELL|CMD_ADDRESS_POS,           NULL, cmd_filter        },
 	{ { "!"            }, CMD_SHELL|CMD_ONCE,                  NULL, cmd_launch        },
 	{ { "w"            }, CMD_ARGV|CMD_FORCE,                  NULL, cmd_write         },
 	{ { "r"            }, CMD_FILE|CMD_ADDRESS_AFTER,          NULL, cmd_read          },
@@ -936,12 +937,16 @@ static bool cmd_select(Vis *vis, Win *win, Command *cmd, const char *argv[], Cur
 					break;
 				}
 			}
-			sel = text_range_new(pos, text_char_next(txt, pos));
-		} else if (multiple_cursors || (cmd->cmd->cmddef->flags & CMD_ADDRESS_LINE)) {
+			sel = text_range_new(pos, pos);
+		} else if (cmd->cmd->cmddef->flags & CMD_ADDRESS_POS) {
+			sel = text_range_new(pos, pos);
+		} else if (cmd->cmd->cmddef->flags & CMD_ADDRESS_LINE) {
 			sel = text_object_line(txt, pos);
 		} else if (cmd->cmd->cmddef->flags & CMD_ADDRESS_AFTER) {
 			size_t next_line = text_line_next(txt, pos);
 			sel = text_range_new(next_line, next_line);
+		} else if (multiple_cursors) {
+			sel = text_object_line(txt, pos);
 		} else {
 			sel = text_range_new(0, text_size(txt));
 		}
