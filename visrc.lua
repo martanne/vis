@@ -202,6 +202,7 @@ end
 vis.events.win_open = function(win)
 	set_filetype(win)
 
-	-- eg Turn on line numbering
+	-- Your local configuration options e.g.
 	-- vis:command('set number')
+	-- vis:command('map! normal j gj')
 end
