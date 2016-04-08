@@ -68,6 +68,8 @@ inorder to build a self contained statically linked binary.
 Or simply use one of the distribution provided packages:
 
  * [ArchLinux](http://www.archlinux.org/packages/?q=vis)
+ * [Alpine Linux](https://pkgs.alpinelinux.org/packages?name=vis)
+ * [Void Linux](https://github.com/voidlinux/void-packages/tree/master/srcpkgs/vis)
 
 Editing Features
 ================
