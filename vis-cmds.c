@@ -407,7 +407,9 @@ static bool cmd_vnew(Vis *vis, Win *win, Command *cmd, const char *argv[], Curso
 }
 
 static bool cmd_wq(Vis *vis, Win *win, Command *cmd, const char *argv[], Cursor *cur, Filerange *range) {
-	if (cmd_write(vis, win, cmd, argv, cur, range))
+	File *file = win->file;
+	bool unmodified = !file->is_stdin && !file->name && !text_modified(file->text);
+	if (unmodified || cmd_write(vis, win, cmd, argv, cur, range))
 		return cmd_quit(vis, win, cmd, argv, cur, range);
 	return false;
 }
