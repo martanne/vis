@@ -1,8 +1,8 @@
 -- Eight-color scheme
 local lexers = vis.lexers
 -- dark
-lexers.STYLE_DEFAULT = 'back:black,fore:white'
-lexers.STYLE_NOTHING = 'back:black'
+lexers.STYLE_DEFAULT = 'back:default,fore:default'
+lexers.STYLE_NOTHING = 'back:default'
 lexers.STYLE_CLASS = 'fore:yellow'
 lexers.STYLE_COMMENT = 'fore:blue'
 lexers.STYLE_CONSTANT = 'fore:cyan'
@@ -23,7 +23,7 @@ lexers.STYLE_WHITESPACE = ''
 lexers.STYLE_EMBEDDED = 'back:blue'
 lexers.STYLE_IDENTIFIER = 'fore:white'
 
-lexers.STYLE_LINENUMBER = 'fore:white'
+lexers.STYLE_LINENUMBER = 'fore:default'
 lexers.STYLE_CURSOR = 'reverse'
 lexers.STYLE_CURSOR_PRIMARY = lexers.STYLE_CURSOR..',blink'
 lexers.STYLE_CURSOR_LINE = 'back:white'
