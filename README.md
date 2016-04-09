@@ -489,7 +489,7 @@ correct thing to do would be:
 
 Unmapping works as follows:
 
-    :unmap <lhs>
+    :unmap <mode> <lhs>
 
 The commands suffixed with `-window` only affect the currently active window.
 
