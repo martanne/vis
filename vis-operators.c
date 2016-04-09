@@ -62,6 +62,8 @@ static size_t op_put(Vis *vis, Text *txt, OperatorContext *c) {
 			pos += text_insert_newline(txt, pos);
 		text_insert(txt, pos, data, len);
 		pos += len;
+		if (c->reg->linewise && pos > 0 && text_byte_get(txt, pos-1, &nl) && nl != '\n')
+			pos += text_insert_newline(txt, pos);
 	}
 
 	if (c->reg->linewise) {
