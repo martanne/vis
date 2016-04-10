@@ -64,6 +64,7 @@ time_t text_state(Text*);
 
 size_t text_pos_by_lineno(Text*, size_t lineno);
 size_t text_lineno_by_pos(Text*, size_t pos);
+size_t text_skip_forward(Text *, size_t pos, size_t lines, size_t *lines_skipped);
 
 /* set `buf' to the byte found at `pos' and return true, if `pos' is invalid
  * false is returned and `buf' is left unmodified */
@@ -77,9 +78,11 @@ size_t text_bytes_get(Text*, size_t pos, size_t len, char *buf);
 char *text_bytes_alloc0(Text*, size_t pos, size_t len);
 
 Iterator text_iterator_get(Text*, size_t pos);
+bool text_iterator_at_end(const Iterator *);
 bool text_iterator_valid(const Iterator*);
 bool text_iterator_next(Iterator*);
 bool text_iterator_prev(Iterator*);
+bool text_iterator_skip_bytes(Iterator *, size_t count);
 
 /* get byte at current iterator position, if this is at EOF a NUL
  * byte (which is not actually part of the file) is read. */

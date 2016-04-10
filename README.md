@@ -49,6 +49,7 @@ In order to build vis you will need a C99 compiler as well as:
  * [lua](http://www.lua.org/) >= 5.2 (optional)
  * [LPeg](http://www.inf.puc-rio.br/~roberto/lpeg/) >= 0.12
    (optional runtime dependency required for syntax highlighting)
+ * [sregex](https://github.com/openresty/sregex/) >= v0.0.1rc1 (optional)
 
 Assuming these dependencies are met, execute:
 
