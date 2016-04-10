@@ -70,6 +70,7 @@ Or simply use one of the distribution provided packages:
  * [ArchLinux](http://www.archlinux.org/packages/?q=vis)
  * [Alpine Linux](https://pkgs.alpinelinux.org/packages?name=vis)
  * [Void Linux](https://github.com/voidlinux/void-packages/tree/master/srcpkgs/vis)
+ * [pkgsrc](http://pkgsrc.se/wip/vis-editor)
 
 Editing Features
 ================
