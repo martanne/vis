@@ -181,6 +181,36 @@ static size_t op_cursor(Vis *vis, Text *txt, OperatorContext *c) {
 	return EPOS;
 }
 
+static size_t op_wrap_text(Vis *vis, Text *txt, OperatorContext *c) {
+	size_t pos = text_line_prev(txt, c->range.start), prev_pos;
+
+	if (vis->textwidth < 1)
+		return c->range.start;
+
+	do {
+		prev_pos = pos;
+		size_t end = text_line_next(txt, pos);
+		while (pos - prev_pos < vis->textwidth && end > pos)
+			pos = text_longword_end_next(txt, pos);
+		if (pos - prev_pos >= vis->textwidth) {
+			size_t break_pos = text_longword_start_prev(txt, pos);
+			if (break_pos == prev_pos) {
+				/* vis->textwidth is longer than this word, insert line break
+				 * immediately after this word */
+				break_pos = pos + 1;
+			} else {
+				/* found an appropriate line break point just before this word */
+				break_pos = break_pos - 1;
+			}
+			text_delete(txt, break_pos, 1);
+			text_insert(txt, break_pos, "\n", 1);
+			pos = break_pos + 1;
+		}
+	} while (pos != prev_pos && pos < c->range.end);
+
+	return c->range.end;
+}
+
 static size_t op_join(Vis *vis, Text *txt, OperatorContext *c) {
 	size_t pos = text_line_begin(txt, c->range.end), prev_pos;
 
@@ -302,4 +332,5 @@ const Operator vis_operators[] = {
 	[VIS_OP_REPLACE]     = { op_replace     },
 	[VIS_OP_CURSOR_SOL]  = { op_cursor      },
 	[VIS_OP_FILTER]      = { op_filter      },
+	[VIS_OP_WRAP_TEXT]   = { op_wrap_text   },
 };

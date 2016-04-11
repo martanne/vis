@@ -158,6 +158,7 @@ static const KeyBinding bindings_operators[] = {
 	{ "g~",                 ACTION(OPERATOR_CASE_SWAP)                  },
 	{ "gp",                 ACTION(PUT_AFTER_END)                       },
 	{ "gP",                 ACTION(PUT_BEFORE_END)                      },
+	{ "gq",                 ACTION(OPERATOR_WRAP_TEXT)                  },
 	{ "gu",                 ACTION(OPERATOR_CASE_LOWER)                 },
 	{ "gU",                 ACTION(OPERATOR_CASE_UPPER)                 },
 	{ "p",                  ACTION(PUT_AFTER)                           },
