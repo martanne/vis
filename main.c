@@ -1171,7 +1171,7 @@ static const KeyAction vis_action[] = {
 		open_file_under_cursor, { .b = false }
 	},
 	[VIS_ACTION_OPEN_FILE_UNDER_CURSOR_NEW_WINDOW] = {
-		"open-file-under-cursor-new-cursor",
+		"open-file-under-cursor-new-window",
 		"Open file under the cursor in a new window",
 		open_file_under_cursor, { .b = true }
 	},
