@@ -66,7 +66,7 @@ static Filerange text_object_customword(Text *txt, size_t pos, int (*isboundary)
 }
 
 Filerange text_object_word(Text *txt, size_t pos) {
-	return text_object_customword(txt, pos, is_word_boundry);
+	return text_object_customword(txt, pos, is_word_boundary);
 }
 
 Filerange text_object_longword(Text *txt, size_t pos) {
@@ -117,7 +117,7 @@ Filerange text_object_longword_outer(Text *txt, size_t pos) {
 }
 
 Filerange text_object_word_outer(Text *txt, size_t pos) {
-	return text_object_customword_outer(txt, pos, is_word_boundry);
+	return text_object_customword_outer(txt, pos, is_word_boundary);
 }
 
 Filerange text_object_word_find_next(Text *txt, size_t pos, const char *word) {
