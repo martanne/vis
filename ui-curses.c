@@ -651,7 +651,8 @@ static void ui_window_draw_status(UiWin *w) {
 
 	if (!(win->options & UI_OPTION_LARGE_FILE)) {
 		CursorPos pos = view_cursor_getpos(win->view);
-		msg += sprintf(msg, "%zd, %zd", pos.line, pos.col);
+		size_t total_lineno = text_lines(vis_file_text(win->file));
+		msg += sprintf(msg, "%zd/%d, %zd", pos.line, total_lineno, pos.col);
 	}
 
 	if (buf[0])

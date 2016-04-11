@@ -112,6 +112,8 @@ size_t text_mark_get(Text*, Mark);
 size_t text_history_get(Text*, size_t index);
 /* return the size in bytes of the whole text */
 size_t text_size(Text*);
+/* return the number of lines in the whole text */
+size_t text_lines(Text*);
 /* query whether the text contains any unsaved modifications */
 bool text_modified(Text*);
 /* query whether `addr` is part of a memory mapped region associated with
