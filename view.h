@@ -106,6 +106,8 @@ int view_colorcolumn_get(View*);
  * on this cursor. Additional cursor can be created and manipulated using the
  * functions named view_cursors_* */
 
+/* get main cursor position in terms of bytes from start of file */
+size_t view_cursor_getbyte(View*);
 /* get main cursor position in terms of screen coordinates */
 CursorPos view_cursor_getpos(View*);
 /* get main cursor position in bytes from start of the file */

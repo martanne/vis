@@ -652,7 +652,11 @@ static void ui_window_draw_status(UiWin *w) {
 	if (!(win->options & UI_OPTION_LARGE_FILE)) {
 		CursorPos pos = view_cursor_getpos(win->view);
 		size_t total_lineno = text_lines(vis_file_text(win->file));
-		int percent = (int)((pos.line * 100.0) / total_lineno);
+
+		size_t cursor_byte = view_cursor_getbyte(win->view);
+		size_t total_bytes = text_size(vis_file_text(win->file));
+		int percent = (int)((cursor_byte * 100.0) / total_bytes);
+		
 		msg += sprintf(msg, "%zd/%d %2d%%, %zd", pos.line, total_lineno, percent, pos.col);
 	}
 

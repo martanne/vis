@@ -432,6 +432,10 @@ static bool view_addch(View *view, Cell *cell) {
 	}
 }
 
+size_t view_cursor_getbyte(View *view) {
+	return view->cursor->pos;
+}
+
 CursorPos view_cursor_getpos(View *view) {
 	Cursor *cursor = view->cursor;
 	Line *line = cursor->line;
