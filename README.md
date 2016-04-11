@@ -1,6 +1,9 @@
 Vis a vim-like text editor
 ==========================
 
+[![Build
+status](https://travis-ci.org/martanne/vis.svg?branch=master)](https://travis-ci.org/martanne/vis)
+
 Vis aims to be a modern, legacy free, simple yet efficient vim-like editor.
 
 It extends vim's modal editing with built-in support for multiple
