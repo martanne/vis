@@ -1448,10 +1448,6 @@ size_t text_size(Text *txt) {
 	return txt->size;
 }
 
-size_t text_lines(Text *txt) {
-	return lines_count(txt, 0, text_size(txt));
-}
-
 /* count the number of new lines '\n' in range [pos, pos+len) */
 static size_t lines_count(Text *txt, size_t pos, size_t len) {
 	size_t lines = 0;
