@@ -823,32 +823,37 @@ A quick overview over the code structure to get you started:
 
  File(s)             | Description
  ------------------- | -----------------------------------------------------
- `text.[ch]`         | low level text / marks / {un,re}do / piece table implementation
+ `array.[ch]`        | dynamically growing array, can store arbitrarily sized objects
+ `buffer.[ch]`       | dynamically growing buffer used for registers and macros
+ `config.def.h`      | definition of default key bindings (mapping of key actions)
+ `lexers/`           | Lua LPeg based lexers used for syntax highlighting
+ `main.c`            | key action definitions, program entry point
+ `map.[ch]`          | crit-bit tree based map supporting unique prefix lookups and ordered iteration, used to implement `:`-commands and run time key bindings
+ `register.[ch]`     | register implementation, system clipboard integration via `vis-clipboard`
+ `ring-buffer.[ch]`  | fixed size ring buffer used for the jump list
+ `sam.[ch]`          | structural regular expression based command language
+ `text.[ch]`         | low level text / marks / {un,re}do tree / piece table implementation
  `text-motions.[ch]` | movement functions take a file position and return a new one
  `text-objects.[ch]` | functions take a file position and return a file range
  `text-regex.[ch]`   | text search functionality, designated place for regex engine
  `text-util.[ch]`    | text related utility functions mostly dealing with file ranges
- `view.[ch]`         | ui-independent viewport, shows part of a file, syntax highlighting, cursor placement, selection handling
- `ui.h`              | abstract interface which has to be implemented by ui backends
  `ui-curses.[ch]`    | a terminal / curses based user interface implementation
- `buffer.[ch]`       | dynamically growing buffer used for registers and macros
- `ring-buffer.[ch]`  | fixed size ring buffer used for the jump list
- `map.[ch]`          | crit-bit tree based map supporting unique prefix lookups and ordered iteration. used to implement `:`-commands
- `vis.h`             | vi(m) specific editor frontend library public API
- `vis.c`             | vi(m) specific editor frontend implementation
- `vis-core.h`        | internal header file, various structs for core editor primitives
+ `ui.h`              | abstract interface which has to be implemented by ui backends
+ `view.[ch]`         | ui-independent viewport, shows part of a file, syntax highlighting, cursor placement, selection handling
  `vis-cmds.c`        | vi(m) `:`-command implementation
+ `vis-core.h`        | internal header file, various structs for core editor primitives
+ `vis.c`             | vi(m) specific editor frontend implementation
+ `vis.h`             | vi(m) specific editor frontend library public API
+ `vis-lua.[ch]`      | Lua bindings, exposing core vis APIs for in process extension
  `vis-modes.c`       | vi(m) mode switching, enter/leave event handling
- `vis-motions.c`     | vi(m) cursor motion implementation
+ `vis-motions.c`     | vi(m) cursor motion implementations, uses `text-motions.h` internally
  `vis-operators.c`   | vi(m) operator implementation
- `vis-lua.c`         | Lua bindings, exposing core vis APIs for in process extension
- `main.c`            | key action definitions, program entry point
- `config.def.h`      | definition of default key bindings (mapping of key actions)
+ `vis-prompt.c`      | `:`, `/` and `?` prompt implemented as a regular file/window with custom key bindings
+ `vis-text-objects.c`| vi(m) text object implementations, uses `text-objects.h` internally
  `visrc.lua`         | Lua startup and configuration script
- `lexers/`           | Lua LPeg based lexers used for syntax highlighting
 
-Testing infrastructure for the [low level text manipulation routines]
-(https://github.com/martanne/vis/tree/test/test/text), [vim compatibility]
+Testing infrastructure for the [low level core data structures]
+(https://github.com/martanne/vis/tree/test/test/core), [vim compatibility]
 (https://github.com/martanne/vis/tree/test/test/vim) and [vis specific features]
 (https://github.com/martanne/vis/tree/test/test/vis) is in place, but
 lacks proper test cases.
