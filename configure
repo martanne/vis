@@ -322,7 +322,7 @@ int main(int argc, char *argv[]) {
 }
 EOF
 
-	for liblua in lua lua5.2 lua5.3; do
+	for liblua in lua lua5.2 lua5.3 lua-5.2 lua-5.3; do
 		printf " checking for %s... " "$liblua"
 
 		if test "$have_pkgconfig" = "yes" ; then
