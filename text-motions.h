@@ -112,6 +112,8 @@ size_t text_function_end_prev(Text*, size_t pos);
 size_t text_section_next(Text*, size_t pos);
 size_t text_section_prev(Text*, size_t pos);
 */
+size_t text_block_start(Text*, size_t pos);
+size_t text_block_end(Text*, size_t pos);
 /* search coresponding '(', ')', '{', '}', '[', ']', '>', '<', '"', ''' */
 size_t text_bracket_match(Text*, size_t pos);
 /* same as above but explicitly specify symbols to match */

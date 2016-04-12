@@ -30,6 +30,8 @@ static const KeyBinding bindings_motions[] = {
 	{ "[]",                 ACTION(CURSOR_FUNCTION_END_PREV)            },
 	{ "][",                 ACTION(CURSOR_FUNCTION_START_NEXT)          },
 	{ "[[",                 ACTION(CURSOR_FUNCTION_START_PREV)          },
+	{ "[{",                 ACTION(CURSOR_BLOCK_START)                  },
+	{ "]}",                 ACTION(CURSOR_BLOCK_END)                    },
 	{ "$",                  ACTION(CURSOR_LINE_LASTCHAR)                },
 	{ "^",                  ACTION(CURSOR_LINE_START)                   },
 	{ "}",                  ACTION(CURSOR_PARAGRAPH_NEXT)               },

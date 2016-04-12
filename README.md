@@ -137,6 +137,8 @@ Operators can be forced to work line wise by specifying `V`.
     N        (repeat last search backwards)
     n        (repeat last search forward)
     []       (previous end of C-like function)
+    [{       (previous start of block)
+    ]}       (next start of block)
     {        (previous paragraph)
     (        (previous sentence)
     [[       (previous start of C-like function)

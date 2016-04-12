@@ -159,6 +159,8 @@ enum {
 	VIS_ACTION_CURSOR_FUNCTION_END_PREV,
 	VIS_ACTION_CURSOR_FUNCTION_START_NEXT,
 	VIS_ACTION_CURSOR_FUNCTION_END_NEXT,
+	VIS_ACTION_CURSOR_BLOCK_START,
+	VIS_ACTION_CURSOR_BLOCK_END,
 	VIS_ACTION_CURSOR_COLUMN,
 	VIS_ACTION_CURSOR_LINE_FIRST,
 	VIS_ACTION_CURSOR_LINE_LAST,
@@ -464,6 +466,16 @@ static const KeyAction vis_action[] = {
 		"cursor-function-end-next",
 		"Move cursor forwards to end of function",
 		movement, { .i = VIS_MOVE_FUNCTION_END_NEXT }
+	},
+	[VIS_ACTION_CURSOR_BLOCK_START] = {
+		"cursor-block-start",
+		"Move cursor to the opening curly brace in a block",
+		movement, { .i = VIS_MOVE_BLOCK_START }
+	},
+	[VIS_ACTION_CURSOR_BLOCK_END] = {
+		"cursor-block-end",
+		"Move cursor to the closing curly brace in a block",
+		movement, { .i = VIS_MOVE_BLOCK_END }
 	},
 	[VIS_ACTION_CURSOR_COLUMN] = {
 		"cursor-column",

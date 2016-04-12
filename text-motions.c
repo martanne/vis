@@ -6,6 +6,7 @@
 #include "text-motions.h"
 #include "text-util.h"
 #include "util.h"
+#include "text-objects.h"
 
 #define space(c) (isspace((unsigned char)c))
 #define boundary(c) (isboundary((unsigned char)c))
@@ -584,6 +585,31 @@ size_t text_function_end_next(Text *txt, size_t pos) {
 
 size_t text_function_end_prev(Text *txt, size_t pos) {
 	return text_function_end_direction(txt, pos, -1);
+}
+
+static size_t text_paren_start_end(Text *txt, size_t pos, int direction, Filerange (*rangefn)(Text *, size_t)) {
+	/* don't select (as a text obj) a bracket we're currently on */
+	size_t offbracketpos = pos + direction;
+
+	Filerange r = rangefn(txt, offbracketpos);
+	if (!text_range_valid(&r))
+		return pos;
+
+	/* we want the outer text object */
+	r.start += direction;
+	r.end -= direction;
+	if (!text_range_valid(&r))
+		return pos;
+
+	return direction < 0 ? r.start : r.end;
+}
+
+size_t text_block_start(Text *txt, size_t pos) {
+	return text_paren_start_end(txt, pos, -1, text_object_curly_bracket);
+}
+
+size_t text_block_end(Text *txt, size_t pos) {
+	return text_paren_start_end(txt, pos, +1, text_object_curly_bracket);
 }
 
 size_t text_bracket_match(Text *txt, size_t pos) {
