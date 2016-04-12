@@ -139,6 +139,8 @@ Operators can be forced to work line wise by specifying `V`.
     []       (previous end of C-like function)
     [{       (previous start of block)
     ]}       (next start of block)
+    [(       (previous start of parenthese pair)
+    ])       (next start of parenthese pair)
     {        (previous paragraph)
     (        (previous sentence)
     [[       (previous start of C-like function)

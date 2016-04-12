@@ -161,6 +161,8 @@ enum {
 	VIS_ACTION_CURSOR_FUNCTION_END_NEXT,
 	VIS_ACTION_CURSOR_BLOCK_START,
 	VIS_ACTION_CURSOR_BLOCK_END,
+	VIS_ACTION_CURSOR_PARENTHESE_START,
+	VIS_ACTION_CURSOR_PARENTHESE_END,
 	VIS_ACTION_CURSOR_COLUMN,
 	VIS_ACTION_CURSOR_LINE_FIRST,
 	VIS_ACTION_CURSOR_LINE_LAST,
@@ -476,6 +478,16 @@ static const KeyAction vis_action[] = {
 		"cursor-block-end",
 		"Move cursor to the closing curly brace in a block",
 		movement, { .i = VIS_MOVE_BLOCK_END }
+	},
+	[VIS_ACTION_CURSOR_PARENTHESE_START] = {
+		"cursor-parenthese-start",
+		"Move cursor to the opening parenthese inside a pair of parentheses",
+		movement, { .i = VIS_MOVE_PARENTHESE_START }
+	},
+	[VIS_ACTION_CURSOR_PARENTHESE_END] = {
+		"cursor-parenthese-end",
+		"Move cursor to the closing parenthese inside a pair of parentheses",
+		movement, { .i = VIS_MOVE_PARENTHESE_END }
 	},
 	[VIS_ACTION_CURSOR_COLUMN] = {
 		"cursor-column",

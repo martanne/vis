@@ -368,6 +368,8 @@ const Movement vis_motions[] = {
 	[VIS_MOVE_FUNCTION_END_NEXT]   = { .txt = text_function_end_next,   .type = LINEWISE|JUMP            },
 	[VIS_MOVE_BLOCK_START]         = { .txt = text_block_start,         .type = JUMP                     },
 	[VIS_MOVE_BLOCK_END]           = { .txt = text_block_end,           .type = JUMP                     },
+	[VIS_MOVE_PARENTHESE_START]    = { .txt = text_parenthese_start,    .type = JUMP                     },
+	[VIS_MOVE_PARENTHESE_END]      = { .txt = text_parenthese_end,      .type = JUMP                     },
 	[VIS_MOVE_BRACKET_MATCH]       = { .txt = bracket_match,            .type = INCLUSIVE|JUMP           },
 	[VIS_MOVE_FILE_BEGIN]          = { .txt = text_begin,               .type = LINEWISE|JUMP            },
 	[VIS_MOVE_FILE_END]            = { .txt = text_end,                 .type = LINEWISE|JUMP            },

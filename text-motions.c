@@ -612,6 +612,14 @@ size_t text_block_end(Text *txt, size_t pos) {
 	return text_paren_start_end(txt, pos, +1, text_object_curly_bracket);
 }
 
+size_t text_parenthese_start(Text *txt, size_t pos) {
+	return text_paren_start_end(txt, pos, -1, text_object_paranthese);
+}
+
+size_t text_parenthese_end(Text *txt, size_t pos) {
+	return text_paren_start_end(txt, pos, +1, text_object_paranthese);
+}
+
 size_t text_bracket_match(Text *txt, size_t pos) {
 	return text_bracket_match_symbol(txt, pos, NULL);
 }
