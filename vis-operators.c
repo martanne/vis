@@ -182,16 +182,31 @@ static size_t op_cursor(Vis *vis, Text *txt, OperatorContext *c) {
 }
 
 static size_t op_wrap_text(Vis *vis, Text *txt, OperatorContext *c) {
-	size_t pos = text_line_prev(txt, c->range.start), prev_pos;
+	size_t pos = text_line_start(txt, c->range.start), prev_pos;
 
 	if (vis->textwidth < 1)
 		return c->range.start;
 
 	do {
+		size_t end = text_line_end(txt, pos);
+
+		while (end - pos < vis->textwidth && end < c->range.end) {
+			size_t nextln = text_line_next(txt, end);
+			/* this line isn't long enough to be split, see if we can eat a solitary newline */
+			if (text_line_empty_next(txt, end) != nextln) {
+				/* solitary newline, replace it with a space */
+				text_delete(txt, end, nextln - end);
+				text_insert(txt, end, " ", 1);
+			} else {
+				break;
+			}
+			end = text_line_end(txt, nextln);
+		}
+
 		prev_pos = pos;
-		size_t end = text_line_next(txt, pos);
 		while (pos - prev_pos < vis->textwidth && end > pos)
 			pos = text_longword_end_next(txt, pos);
+
 		if (pos - prev_pos >= vis->textwidth) {
 			size_t break_pos = text_longword_start_prev(txt, pos);
 			if (break_pos == prev_pos) {
