@@ -150,6 +150,7 @@ static Action *action_alloc(Text *txt);
 static void action_free(Action *a);
 /* logical line counting cache */
 static void lineno_cache_invalidate(LineCache *cache);
+static size_t lines_skip_forward(Text *txt, size_t pos, size_t lines, size_t *lines_skipped);
 static size_t lines_count(Text *txt, size_t pos, size_t len);
 
 static ssize_t write_all(int fd, const char *buf, size_t count) {
@@ -1238,7 +1239,7 @@ enum TextNewLine text_newline_type(Text *txt){
 				txt->newlines = TEXT_NEWLINE_CRNL;
 		} else {
 			char c;
-			size_t nl = text_skip_forward(txt, 0, 1, NULL);
+			size_t nl = lines_skip_forward(txt, 0, 1, NULL);
 			if (nl > 1 && text_byte_get(txt, nl-2, &c) && c == '\r')
 				txt->newlines = TEXT_NEWLINE_CRNL;
 		}
@@ -1309,7 +1310,7 @@ bool text_iterator_skip_bytes(Iterator *it, size_t count) {
 
         size_t remaining = count;
 
-	while (remaining >= it->end - it->text) {
+	while (it->text + remaining >= it->end) {
                 remaining -= (it->end - it->text);
                 if (!text_iterator_next(it))
                         return false;
@@ -1494,7 +1495,7 @@ static size_t lines_count(Text *txt, size_t pos, size_t len) {
 }
 
 /* skip n lines forward and return position afterwards */
-size_t text_skip_forward(Text *txt, size_t pos, size_t lines, size_t *lines_skipped) {
+static size_t lines_skip_forward(Text *txt, size_t pos, size_t lines, size_t *lines_skipped) {
 	size_t lines_old = lines;
 	text_iterate(txt, it, pos) {
 		const char *start = it.text;
@@ -1529,7 +1530,7 @@ size_t text_pos_by_lineno(Text *txt, size_t lineno) {
 	if (lineno <= 1)
 		return 0;
 	if (lineno > cache->lineno) {
-		cache->pos = text_skip_forward(txt, cache->pos, lineno - cache->lineno, &lines_skipped);
+		cache->pos = lines_skip_forward(txt, cache->pos, lineno - cache->lineno, &lines_skipped);
 		cache->lineno += lines_skipped;
 	} else if (lineno < cache->lineno) {
 	#if 0
@@ -1539,7 +1540,7 @@ size_t text_pos_by_lineno(Text *txt, size_t lineno) {
 			lines_skip_backward(txt, cache->pos, diff);
 		} else
 	#endif
-		cache->pos = text_skip_forward(txt, 0, lineno - 1, &lines_skipped);
+		cache->pos = lines_skip_forward(txt, 0, lineno - 1, &lines_skipped);
 		cache->lineno = lines_skipped + 1;
 	}
 	return cache->lineno == lineno ? cache->pos : EPOS;

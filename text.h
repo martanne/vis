@@ -64,7 +64,6 @@ time_t text_state(Text*);
 
 size_t text_pos_by_lineno(Text*, size_t lineno);
 size_t text_lineno_by_pos(Text*, size_t pos);
-size_t text_skip_forward(Text *, size_t pos, size_t lines, size_t *lines_skipped);
 
 /* set `buf' to the byte found at `pos' and return true, if `pos' is invalid
  * false is returned and `buf' is left unmodified */

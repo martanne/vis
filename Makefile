@@ -1,9 +1,11 @@
 -include config.mk
 
+REGEX_SRC ?= text-regex.c
+
 SRC = array.c buffer.c libutf.c main.c map.c register.c ring-buffer.c \
 	sam.c text.c text-motions.c text-objects.c text-util.c \
 	ui-curses.c view.c vis.c vis-lua.c vis-modes.c vis-motions.c \
-	vis-operators.c vis-prompt.c vis-text-objects.c
+	vis-operators.c vis-prompt.c vis-text-objects.c $(REGEX_SRC)
 
 # conditionally initialized, this is needed for standalone build
 # with empty config.mk
@@ -14,15 +16,8 @@ SHAREPREFIX ?= ${PREFIX}/share/vis
 VERSION = $(shell git describe 2>/dev/null || echo "0.2")
 
 CONFIG_LUA ?= 1
-CONFIG_SREGEX ?= 0
 CONFIG_ACL ?= 0
 CONFIG_SELINUX ?= 0
-
-ifeq ($(CONFIG_SREGEX),1)
-SRC += text-sregex.c
-else
-SRC += text-regex.c
-endif
 
 CFLAGS_STD ?= -std=c99 -D_POSIX_C_SOURCE=200809L -D_XOPEN_SOURCE=700 -DNDEBUG
 LDFLAGS_STD ?= -lc
