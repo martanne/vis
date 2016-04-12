@@ -351,6 +351,7 @@ Vis *vis_new(Ui *ui, VisEvent *event) {
 	vis->ui = ui;
 	vis->ui->init(vis->ui, vis);
 	vis->tabwidth = 8;
+	vis->textwidth = 0;
 	vis->expandtab = false;
 	vis->registers[VIS_REG_BLACKHOLE].type = REGISTER_BLACKHOLE;
 	vis->registers[VIS_REG_CLIPBOARD].type = REGISTER_CLIPBOARD;

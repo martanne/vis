@@ -87,6 +87,7 @@ supported features.
     d   (delete)
     !   (filter)
     =   (format using fmt(1))
+    gq  (wrap text)
     gu  (make lowercase)
     gU  (make uppercase)
     J   (join)

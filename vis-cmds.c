@@ -12,6 +12,12 @@ static void tabwidth_set(Vis *vis, int tabwidth) {
 	vis->tabwidth = tabwidth;
 }
 
+static void textwidth_set(Vis *vis, int textwidth) {
+	if (textwidth < 0)
+		return;
+	vis->textwidth = textwidth;
+}
+
 /* parse human-readable boolean value in s. If successful, store the result in
  * outval and return true. Else return false and leave outval alone. */
 static bool parse_bool(const char *s, bool *outval) {
@@ -47,6 +53,7 @@ static bool cmd_set(Vis *vis, Win *win, Command *cmd, const char *argv[], Cursor
 		OPTION_AUTOINDENT,
 		OPTION_EXPANDTAB,
 		OPTION_TABWIDTH,
+		OPTION_TEXTWIDTH,
 		OPTION_SYNTAX,
 		OPTION_SHOW,
 		OPTION_NUMBER,
@@ -61,6 +68,7 @@ static bool cmd_set(Vis *vis, Win *win, Command *cmd, const char *argv[], Cursor
 		[OPTION_AUTOINDENT]      = { { "autoindent", "ai"       }, OPTION_TYPE_BOOL   },
 		[OPTION_EXPANDTAB]       = { { "expandtab", "et"        }, OPTION_TYPE_BOOL   },
 		[OPTION_TABWIDTH]        = { { "tabwidth", "tw"         }, OPTION_TYPE_NUMBER },
+		[OPTION_TEXTWIDTH]       = { { "textwidth"              }, OPTION_TYPE_NUMBER },
 		[OPTION_SYNTAX]          = { { "syntax"                 }, OPTION_TYPE_STRING, true },
 		[OPTION_SHOW]            = { { "show"                   }, OPTION_TYPE_STRING },
 		[OPTION_NUMBER]          = { { "numbers", "nu"          }, OPTION_TYPE_BOOL   },
@@ -148,6 +156,9 @@ static bool cmd_set(Vis *vis, Win *win, Command *cmd, const char *argv[], Cursor
 		break;
 	case OPTION_TABWIDTH:
 		tabwidth_set(vis, arg.i);
+		break;
+	case OPTION_TEXTWIDTH:
+		textwidth_set(vis, arg.i);
 		break;
 	case OPTION_SYNTAX:
 		if (!argv[2]) {

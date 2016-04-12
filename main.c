@@ -212,6 +212,7 @@ enum {
 	VIS_ACTION_OPERATOR_YANK,
 	VIS_ACTION_OPERATOR_SHIFT_LEFT,
 	VIS_ACTION_OPERATOR_SHIFT_RIGHT,
+	VIS_ACTION_OPERATOR_WRAP_TEXT,
 	VIS_ACTION_OPERATOR_CASE_LOWER,
 	VIS_ACTION_OPERATOR_CASE_UPPER,
 	VIS_ACTION_OPERATOR_CASE_SWAP,
@@ -729,6 +730,11 @@ static const KeyAction vis_action[] = {
 		"vis-operator-shift-right",
 		"Shift right operator",
 		operator, { .i = VIS_OP_SHIFT_RIGHT }
+	},
+	[VIS_ACTION_OPERATOR_WRAP_TEXT] = {
+		"vis-operator-wrap-text",
+		"Text wrap operator",
+		operator, { .i = VIS_OP_WRAP_TEXT }
 	},
 	[VIS_ACTION_OPERATOR_CASE_LOWER] = {
 		"vis-operator-case-lower",
