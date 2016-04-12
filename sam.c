@@ -1080,13 +1080,13 @@ static bool cmd_filter(Vis *vis, Win *win, Command *cmd, const char *argv[], Cur
 	/* The general idea is the following:
 	 *
 	 *  1) take a snapshot
-	 *  2) write [range.start, range.end] to exteneral command
+	 *  2) write [range.start, range.end] to external command
 	 *  3) read the output of the external command and insert it after the range
 	 *  4) depending on the exit status of the external command
 	 *     - on success: delete original range
 	 *     - on failure: revert to previous snapshot
 	 *
-	 *  2) and 3) happend in small junks
+	 *  2) and 3) happen in small chunks
 	 */
 
 	text_snapshot(txt);

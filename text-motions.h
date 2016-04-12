@@ -123,6 +123,6 @@ size_t text_search_forward(Text *txt, size_t pos, Regex *regex);
 size_t text_search_backward(Text *txt, size_t pos, Regex *regex);
 
 /* is c a special symbol delimiting a word? */
-int is_word_boundry(int c);
+int is_word_boundary(int c);
 
 #endif

@@ -11,7 +11,7 @@
 #define boundary(c) (isboundary((unsigned char)c))
 
 // TODO: specify this per file type?
-int is_word_boundry(int c) {
+int is_word_boundary(int c) {
 	return ISASCII(c) && !(('0' <= c && c <= '9') ||
 	         ('a' <= c && c <= 'z') ||
 	         ('A' <= c && c <= 'Z') || c == '_');
@@ -405,19 +405,19 @@ size_t text_longword_start_prev(Text *txt, size_t pos) {
 }
 
 size_t text_word_end_next(Text *txt, size_t pos) {
-	return text_customword_end_next(txt, pos, is_word_boundry);
+	return text_customword_end_next(txt, pos, is_word_boundary);
 }
 
 size_t text_word_end_prev(Text *txt, size_t pos) {
-	return text_customword_end_prev(txt, pos, is_word_boundry);
+	return text_customword_end_prev(txt, pos, is_word_boundary);
 }
 
 size_t text_word_start_next(Text *txt, size_t pos) {
-	return text_customword_start_next(txt, pos, is_word_boundry);
+	return text_customword_start_next(txt, pos, is_word_boundary);
 }
 
 size_t text_word_start_prev(Text *txt, size_t pos) {
-	return text_customword_start_prev(txt, pos, is_word_boundry);
+	return text_customword_start_prev(txt, pos, is_word_boundary);
 }
 
 size_t text_sentence_next(Text *txt, size_t pos) {
