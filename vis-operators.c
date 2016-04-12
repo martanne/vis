@@ -197,14 +197,14 @@ static size_t op_wrap_text(Vis *vis, Text *txt, OperatorContext *c) {
 			if (break_pos == prev_pos) {
 				/* vis->textwidth is longer than this word, insert line break
 				 * immediately after this word */
-				break_pos = pos + 1;
+				break_pos = text_char_next(txt, pos);
 			} else {
 				/* found an appropriate line break point just before this word */
-				break_pos = break_pos - 1;
+				break_pos = text_char_prev(txt, break_pos);
 			}
 			text_delete(txt, break_pos, 1);
 			text_insert(txt, break_pos, "\n", 1);
-			pos = break_pos + 1;
+			pos = text_char_next(txt, break_pos);
 		}
 	} while (pos != prev_pos && pos < c->range.end);
 
