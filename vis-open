@@ -4,6 +4,30 @@ PATTERN="."
 [ -z "$VIS_MENU" ] && VIS_MENU="slmenu"
 [ -z "$VIS_MENU_ARGS" ] && VIS_MENU_ARGS="-b"
 
+zenity_wrapper () {
+	local ARGS
+
+	while [ $# -gt 0 ]; do
+		case "$1" in
+		-p)
+			ARGS="$ARGS --text $2"
+			shift
+			shift
+			;;
+		-b)
+			# Not relevant for zenity
+			shift
+			;;
+		*)
+			echo "Unhandled option $1" >&2
+			exit 1
+			;;
+		esac
+	done
+
+	zenity --list --column Filename $ARGS 2>/dev/null
+}
+
 while [ $# -gt 0 ]; do
 	case "$1" in
 	-h|--help)
@@ -23,11 +47,15 @@ while [ $# -gt 0 ]; do
 done
 
 if ! type "$VIS_MENU" >/dev/null 2>&1; then
-	if [ ! -z "$DISPLAY" ] && type "dmenu" >/dev/null 2>&1; then
-		VIS_MENU="dmenu"
-	else
-		echo "Neither slmenu nor dmenu found" >&2
-		exit 1
+	if [ ! -z "$DISPLAY" ]; then
+		if type "dmenu" >/dev/null 2>&1; then
+			VIS_MENU="dmenu"
+		elif type "zenity" >/dev/null 2>&1; then
+			VIS_MENU="zenity_wrapper"
+		else
+			echo "No compatible menu helper found" >&2
+			exit 1
+		fi
 	fi
 fi
 
