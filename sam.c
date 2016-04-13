@@ -833,7 +833,8 @@ static bool cmd_extract(Vis *vis, Win *win, Command *cmd, const char *argv[], Cu
 		RegexMatch match[1];
 		while (start < end) {
 			bool found = text_search_range_forward(txt, start,
-				end - start, cmd->regex, 1, match, 0) == 0;
+				end - start, cmd->regex, 1, match,
+				start > range->start ? REG_NOTBOL : 0) == 0;
 			Filerange r = text_range_empty();
 			if (found) {
 				if (argv[0][0] == 'x')
@@ -845,10 +846,15 @@ static bool cmd_extract(Vis *vis, Win *win, Command *cmd, const char *argv[], Cu
 						start++;
 						continue;
 					}
-					start = match[0].end+1;
-				} else {
-					start = match[0].end;
+					/* in Plan 9's regexp library ^ matches the beginning
+					 * of a line, however in POSIX with REG_NEWLINE ^
+					 * matches the zero-length string immediately after a
+					 * newline. Try filtering out the last such match at EOF.
+					 */
+					if (end == match[0].start && start > range->start)
+						break;
 				}
+				start = match[0].end;
 			} else {
 				if (argv[0][0] == 'y')
 					r = text_range_new(start, end);
