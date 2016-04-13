@@ -495,6 +495,7 @@ void action_do(Vis *vis, Action *a) {
 		if (a->movement) {
 			size_t start = pos;
 			for (int i = 0; i < count; i++) {
+				size_t pos_prev = pos;
 				if (a->movement->txt)
 					pos = a->movement->txt(txt, pos);
 				else if (a->movement->cur)
@@ -509,7 +510,7 @@ void action_do(Vis *vis, Action *a) {
 					pos = a->movement->win(vis, win, pos);
 				else if (a->movement->user)
 					pos = a->movement->user(vis, win, a->movement->data, pos);
-				if (pos == EPOS || a->movement->type & IDEMPOTENT)
+				if (pos == EPOS || a->movement->type & IDEMPOTENT || pos == pos_prev)
 					break;
 			}
 
