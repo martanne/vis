@@ -176,7 +176,7 @@ static size_t op_cursor(Vis *vis, Text *txt, OperatorContext *c) {
 			pos = text_line_finish(txt, line);
 		else
 			pos = text_line_start(txt, line);
-		view_cursors_new(view, pos);
+		view_cursors_new_force(view, pos);
 	}
 	return EPOS;
 }

@@ -826,15 +826,7 @@ static bool cmd_guard(Vis *vis, Win *win, Command *cmd, const char *argv[], Curs
 
 static bool cmd_extract(Vis *vis, Win *win, Command *cmd, const char *argv[], Cursor *cur, Filerange *range) {
 	bool ret = true;
-	View *view = win->view;
 	Text *txt = win->file->text;
-
-	Cursor *cursor = NULL;
-	size_t pos = view_cursor_get(view);
-	if (cur && !view_cursors_dispose(cur)) {
-		cursor = view_cursors_new(view, text_size(txt)+1);
-		view_cursors_dispose(cur);
-	}
 
 	if (cmd->regex) {
 		size_t start = range->start, end = range->end, last_start = EPOS;
@@ -901,11 +893,7 @@ static bool cmd_extract(Vis *vis, Win *win, Command *cmd, const char *argv[], Cu
 		}
 	}
 
-	if (cursor && !view_cursors_dispose(cursor)) {
-		view_cursors_selection_clear(cursor);
-		view_cursors_to(cursor, pos);
-	}
-
+	view_cursors_dispose(cur);
 	return ret;
 }
 
@@ -972,7 +960,7 @@ static bool cmd_print(Vis *vis, Win *win, Command *cmd, const char *argv[], Curs
 	if (cur)
 		view_cursors_to(cur, pos);
 	else
-		cur = view_cursors_new(view, pos);
+		cur = view_cursors_new_force(view, pos);
 	if (cur) {
 		if (range->start != range->end)
 			view_cursors_selection_set(cur, range);
