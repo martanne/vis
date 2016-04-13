@@ -1059,7 +1059,7 @@ size_t view_screenline_goto(View *view, int n) {
 	return pos;
 }
 
-Cursor *view_cursors_new(View *view, size_t pos) {
+static Cursor *cursors_new(View *view, size_t pos, bool force) {
 	Cursor *c = calloc(1, sizeof(*c));
 	if (!c)
 		return NULL;
@@ -1074,7 +1074,7 @@ Cursor *view_cursors_new(View *view, size_t pos) {
 
 	Cursor *prev = NULL, *next = NULL;
 	size_t cur = view_cursors_pos(view->cursor);
-	if (pos > cur) {
+	if (pos >= cur) {
 		prev = view->cursor;
 		for (next = prev->next; next; prev = next, next = next->next) {
 			cur = view_cursors_pos(next);
@@ -1090,7 +1090,7 @@ Cursor *view_cursors_new(View *view, size_t pos) {
 		}
 	}
 
-	if (pos == cur)
+	if (pos == cur && !force)
 		goto err;
 
 	for (Cursor *after = next; after; after = after->next)
@@ -1113,6 +1113,14 @@ Cursor *view_cursors_new(View *view, size_t pos) {
 err:
 	free(c);
 	return NULL;
+}
+
+Cursor *view_cursors_new(View *view, size_t pos) {
+	return cursors_new(view, pos, false);
+}
+
+Cursor *view_cursors_new_force(View *view, size_t pos) {
+	return cursors_new(view, pos, true);
 }
 
 int view_cursors_count(View *view) {
