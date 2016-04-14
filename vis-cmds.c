@@ -1,5 +1,9 @@
 /* this file is included from sam.c */
 
+#ifndef VIS_OPEN
+#define VIS_OPEN "vis-open"
+#endif
+
 static void windows_arrange(Vis *vis, enum UiLayout layout) {
 	vis->ui->arrange(vis->ui, layout);
 }
@@ -262,7 +266,7 @@ static const char *file_open_dialog(Vis *vis, const char *pattern) {
 	buffer_init(&bufout);
 	buffer_init(&buferr);
 
-	if (!buffer_put0(&bufcmd, "vis-open ") || !buffer_append0(&bufcmd, pattern ? pattern : ""))
+	if (!buffer_put0(&bufcmd, VIS_OPEN " ") || !buffer_append0(&bufcmd, pattern ? pattern : ""))
 		return NULL;
 
 	Filerange empty = text_range_empty();
