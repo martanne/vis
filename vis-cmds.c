@@ -471,16 +471,15 @@ static bool cmd_earlier_later(Vis *vis, Win *win, Command *cmd, const char *argv
 }
 
 static bool print_keylayout(const char *key, void *value, void *data) {
-	return text_appendf(data, "  %-15s\t%s\n", key, (char*)value);
+	return text_appendf(data, "  %-18s\t%s\n", key[0] == ' ' ? "␣" : key, (char*)value);
 }
 
 static bool print_keybinding(const char *key, void *value, void *data) {
-	Text *txt = data;
 	KeyBinding *binding = value;
 	const char *desc = binding->alias;
 	if (!desc && binding->action)
 		desc = binding->action->help;
-	return text_appendf(txt, "  %-15s\t%s\n", key[0] == ' ' ? "<Space>" : key, desc ? desc : "");
+	return text_appendf(data, "  %-18s\t%s\n", key[0] == ' ' ? "␣" : key, desc ? desc : "");
 }
 
 static void print_mode(Mode *mode, Text *txt) {
@@ -507,7 +506,7 @@ static bool cmd_help(Vis *vis, Win *win, Command *cmd, const char *argv[], Curso
 	for (int i = 0; i < LENGTH(vis_modes); i++) {
 		Mode *mode = &vis_modes[i];
 		if (mode->help)
-			text_appendf(txt, "  %-15s\t%s\n", mode->name, mode->help);
+			text_appendf(txt, "  %-18s\t%s\n", mode->name, mode->help);
 	}
 
 
