@@ -185,7 +185,7 @@ Win *window_new_file(Vis *vis, File *file) {
 	vis->ui->window_focus(win->ui);
 	for (size_t i = 0; i < LENGTH(win->modes); i++)
 		win->modes[i].parent = &vis_modes[i];
-	if (vis->event && vis->event->win_open)
+	if (!file->internal && vis->event && vis->event->win_open)
 		vis->event->win_open(vis, win);
 	return win;
 }
