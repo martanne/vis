@@ -580,6 +580,11 @@ static int window_cursor_index(lua_State *L) {
 			lua_pushunsigned(L, view_cursors_col(cur));
 			return 1;
 		}
+
+		if (strcmp(key, "number") == 0) {
+			lua_pushunsigned(L, view_cursors_number(cur)+1);
+			return 1;
+		}
 	}
 
 	return index_common(L);

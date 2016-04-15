@@ -602,6 +602,7 @@ At this time there exists no API stability guarantees.
      - `line` (1 based), `col` (1 based)
      - `to(line, col)`
      - `pos` bytes from start of file (0 based)
+     - `number` zero based index of cursor
 
 Most of the exposed objects are managed by the C core. Allthough there
 is a simple object life time management mechanism in place, it is still
