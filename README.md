@@ -593,6 +593,7 @@ At this time there exists no API stability guarantees.
    - `lines_iterator()`
    - `name`
    - `lines[0..#lines+1]` array giving read/write access to lines
+   - `newlines` type of newlines either `"nl"` or `"crnl"`
  - `window`
    - `file`
    - `syntax` lexer name used for syntax highlighting or `nil`

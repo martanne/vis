@@ -637,8 +637,24 @@ static int file_index(lua_State *L) {
 			lua_pushstring(L, file->name);
 			return 1;
 		}
+
 		if (strcmp(key, "lines") == 0) {
 			obj_ref_new(L, file->text, "vis.file.text");
+			return 1;
+		}
+
+		if (strcmp(key, "newlines") == 0) {
+			switch (text_newline_type(file->text)) {
+			case TEXT_NEWLINE_NL:
+				lua_pushstring(L, "nl");
+				break;
+			case TEXT_NEWLINE_CRNL:
+				lua_pushstring(L, "crnl");
+				break;
+			default:
+				lua_pushnil(L);
+				break;
+			}
 			return 1;
 		}
 	}
