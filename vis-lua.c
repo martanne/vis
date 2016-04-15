@@ -516,7 +516,8 @@ static int window_index(lua_State *L) {
 		}
 
 		if (strcmp(key, "cursor") == 0) {
-			obj_ref_new(L, win->view, "vis.window.cursor");
+			Cursor *cur = view_cursors_primary_get(win->view);
+			obj_ref_new(L, cur, "vis.window.cursor");
 			return 1;
 		}
 
@@ -557,31 +558,26 @@ static const struct luaL_Reg window_funcs[] = {
 };
 
 static int window_cursor_index(lua_State *L) {
-	View *view = obj_ref_check(L, 1, "vis.window.cursor");
-	if (!view) {
+	Cursor *cur = obj_ref_check(L, 1, "vis.window.cursor");
+	if (!cur) {
 		lua_pushnil(L);
 		return 1;
 	}
 
 	if (lua_isstring(L, 2)) {
-		Text *txt = view_text(view);
 		const char *key = lua_tostring(L, 2);
 		if (strcmp(key, "pos") == 0) {
-			lua_pushunsigned(L, view_cursor_get(view));
+			lua_pushunsigned(L, view_cursors_pos(cur));
 			return 1;
 		}
 
 		if (strcmp(key, "line") == 0) {
-			size_t pos = view_cursor_get(view);
-			size_t line = text_lineno_by_pos(txt, pos);
-			lua_pushunsigned(L, line);
+			lua_pushunsigned(L, view_cursors_line(cur));
 			return 1;
 		}
 
 		if (strcmp(key, "col") == 0) {
-			size_t pos = view_cursor_get(view);
-			int col = text_line_char_get(txt, pos);
-			lua_pushunsigned(L, col);
+			lua_pushunsigned(L, view_cursors_col(cur));
 			return 1;
 		}
 	}
@@ -590,14 +586,14 @@ static int window_cursor_index(lua_State *L) {
 }
 
 static int window_cursor_newindex(lua_State *L) {
-	View *view = obj_ref_check(L, 1, "vis.window.cursor");
-	if (!view)
+	Cursor *cur = obj_ref_check(L, 1, "vis.window.cursor");
+	if (!cur)
 		return 0;
 	if (lua_isstring(L, 2)) {
 		const char *key = lua_tostring(L, 2);
 		if (strcmp(key, "pos") == 0) {
 			size_t pos = luaL_checkunsigned(L, 3);
-			view_cursor_to(view, pos);
+			view_cursors_to(cur, pos);
 			return 0;
 		}
 	}
@@ -605,14 +601,11 @@ static int window_cursor_newindex(lua_State *L) {
 }
 
 static int window_cursor_to(lua_State *L) {
-	View *view = obj_ref_check(L, 1, "vis.window.cursor");
-	if (view) {
-		Text *txt = view_text(view);
+	Cursor *cur = obj_ref_check(L, 1, "vis.window.cursor");
+	if (cur) {
 		size_t line = luaL_checkunsigned(L, 2);
 		size_t col = luaL_checkunsigned(L, 3);
-		size_t pos = text_pos_by_lineno(txt, line);
-		pos = text_line_char_set(txt, pos, col);
-		view_cursor_to(view, pos);
+		view_cursors_place(cur, line, col);
 	}
 	return 0;
 }

@@ -598,8 +598,8 @@ At this time there exists no API stability guarantees.
  - `window`
    - `file`
    - `syntax` lexer name used for syntax highlighting or `nil`
-   - `cursor`
-     - `line` (1 based), `col` (0 based)
+   - `cursor` primary cursor
+     - `line` (1 based), `col` (1 based)
      - `to(line, col)`
      - `pos` bytes from start of file (0 based)
 
