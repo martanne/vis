@@ -1324,6 +1324,13 @@ void view_cursors_to(Cursor *c, size_t pos) {
 	cursor_to(c, pos);
 }
 
+void view_cursors_place(Cursor *c, size_t line, size_t col) {
+	Text *txt = c->view->text;
+	size_t pos = text_pos_by_lineno(txt, line);
+	pos = text_line_char_set(txt, pos, col);
+	view_cursors_to(c, pos);
+}
+
 void view_cursors_selection_start(Cursor *c) {
 	if (c->sel)
 		return;
