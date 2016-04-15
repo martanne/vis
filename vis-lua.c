@@ -551,9 +551,33 @@ static int window_newindex(lua_State *L) {
 	return newindex_common(L);
 }
 
+static int window_cursors_iterator_next(lua_State *L) {
+	Cursor **handle = lua_touserdata(L, lua_upvalueindex(1));
+	if (!*handle)
+		return 0;
+	Cursor *cur = obj_ref_new(L, *handle, "vis.window.cursor");
+	if (!cur)
+		return 0;
+	*handle = view_cursors_next(cur);
+	return 1;
+}
+
+static int window_cursors_iterator(lua_State *L) {
+	Win *win = obj_ref_check(L, 1, "vis.window");
+	if (!win) {
+		lua_pushnil(L);
+		return 1;
+	}
+	Cursor **handle = lua_newuserdata(L, sizeof *handle);
+	*handle = view_cursors(win->view);
+	lua_pushcclosure(L, window_cursors_iterator_next, 1);
+	return 1;
+}
+
 static const struct luaL_Reg window_funcs[] = {
 	{ "__index", window_index },
 	{ "__newindex", window_newindex },
+	{ "cursors_iterator", window_cursors_iterator },
 	{ NULL, NULL },
 };
 

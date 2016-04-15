@@ -598,6 +598,7 @@ At this time there exists no API stability guarantees.
  - `window`
    - `file`
    - `syntax` lexer name used for syntax highlighting or `nil`
+   - `cursors_iterator()`
    - `cursor` primary cursor
      - `line` (1 based), `col` (1 based)
      - `to(line, col)`
