@@ -1267,6 +1267,11 @@ size_t view_cursors_line(Cursor *c) {
 	return text_lineno_by_pos(c->view->text, pos);
 }
 
+size_t view_cursors_col(Cursor *c) {
+	size_t pos = view_cursors_pos(c);
+	return text_line_char_get(c->view->text, pos) + 1;
+}
+
 int view_cursors_cell_get(Cursor *c) {
 	return c->line ? c->col : -1;
 }
