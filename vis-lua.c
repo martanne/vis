@@ -657,6 +657,11 @@ static int file_index(lua_State *L) {
 			}
 			return 1;
 		}
+
+		if (strcmp(key, "size") == 0) {
+			lua_pushunsigned(L, text_size(file->text));
+			return 1;
+		}
 	}
 
 	return index_common(L);
