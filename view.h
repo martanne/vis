@@ -148,6 +148,8 @@ Cursor *view_cursors_primary_get(View*);
 void view_cursors_primary_set(Cursor*);
 /* get current position of cursor in bytes from the start of the file */
 size_t view_cursors_pos(Cursor*);
+/* get 1-based line number of cursor location */
+size_t view_cursors_line(Cursor*);
 /* get/set zero based index of cell on which cursor currently resides,
  * -1 if cursor is currently not visible */
 int view_cursors_cell_get(Cursor*);
