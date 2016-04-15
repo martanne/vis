@@ -521,6 +521,11 @@ static int window_index(lua_State *L) {
 			return 1;
 		}
 
+		if (strcmp(key, "cursors") == 0) {
+			obj_ref_new(L, win->view, "vis.window.cursors");
+			return 1;
+		}
+
 		if (strcmp(key, "syntax") == 0) {
 			const char *syntax = view_syntax_get(win->view);
 			if (syntax)
@@ -578,6 +583,37 @@ static const struct luaL_Reg window_funcs[] = {
 	{ "__index", window_index },
 	{ "__newindex", window_newindex },
 	{ "cursors_iterator", window_cursors_iterator },
+	{ NULL, NULL },
+};
+
+static int window_cursors_index(lua_State *L) {
+	View *view = obj_ref_check(L, 1, "vis.window.cursors");
+	if (!view)
+		goto err;
+	size_t index = luaL_checkunsigned(L, 2);
+	size_t count = view_cursors_count(view);
+	if (index == 0 || index > count)
+		goto err;
+	for (Cursor *c = view_cursors(view); c; c = view_cursors_next(c)) {
+		if (!--index) {
+			obj_ref_new(L, c, "vis.window.cursor");
+			return 1;
+		}
+	}
+err:
+	lua_pushnil(L);
+	return 1;
+}
+
+static int window_cursors_len(lua_State *L) {
+	View *view = obj_ref_check(L, 1, "vis.window.cursors");
+	lua_pushunsigned(L, view ? view_cursors_count(view) : 0);
+	return 1;
+}
+
+static const struct luaL_Reg window_cursors_funcs[] = {
+	{ "__index", window_cursors_index },
+	{ "__len", window_cursors_len },
 	{ NULL, NULL },
 };
 
@@ -948,6 +984,8 @@ void vis_lua_start(Vis *vis) {
 	luaL_setfuncs(L, window_funcs, 0);
 	luaL_newmetatable(L, "vis.window.cursor");
 	luaL_setfuncs(L, window_cursor_funcs, 0);
+	luaL_newmetatable(L, "vis.window.cursors");
+	luaL_setfuncs(L, window_cursors_funcs, 0);
 	/* vis module table with up value as the C pointer */
 	luaL_newmetatable(L, "vis");
 	luaL_setfuncs(L, vis_lua, 0);
