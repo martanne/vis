@@ -35,7 +35,7 @@ DIR=""
 [ ! -z "$PATTERN" -a "$PATTERN" != "." -a -d "$PATTERN" ] && DIR="$PATTERN"
 
 while true; do
-	SEL=$({ echo ..; ls -1 $PATTERN; } | $VIS_MENU $VIS_MENU_ARGS)
+	SEL=$({ echo ..; ls -1 $PATTERN 2>/dev/null || echo $PATTERN; } | $VIS_MENU $VIS_MENU_ARGS)
 	[ -z "$SEL" ] && exit 1
 	[ ! -z "$DIR" ] && SEL="$DIR/$SEL"
 	if [ -d "$SEL" ]; then

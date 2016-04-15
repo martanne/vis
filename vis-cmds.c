@@ -251,7 +251,11 @@ static bool is_file_pattern(const char *pattern) {
 	struct stat meta;
 	if (stat(pattern, &meta) == 0 && S_ISDIR(meta.st_mode))
 		return true;
-	return strchr(pattern, '*') || strchr(pattern, '[') || strchr(pattern, '{');
+	for (char special[] = "*?[{$~", *s = special; *s; s++) {
+		if (strchr(pattern, *s))
+			return true;
+	}
+	return false;
 }
 
 static const char *file_open_dialog(Vis *vis, const char *pattern) {
