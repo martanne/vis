@@ -646,7 +646,7 @@ static bool cmd_unmap(Vis *vis, Win *win, Command *cmd, const char *argv[], Curs
 	const char *lhs = argv[2];
 
 	if (mode == VIS_MODE_INVALID || !lhs) {
-		vis_info_show(vis, "usage: unmap mode lhs rhs\n");
+		vis_info_show(vis, "usage: unmap mode lhs\n");
 		return false;
 	}
 
