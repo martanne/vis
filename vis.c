@@ -1111,10 +1111,9 @@ void vis_insert_tab(Vis *vis) {
 	}
 }
 
-static void copy_indent_from_previous_line(Win *win) {
-	View *view = win->view;
+static void copy_indent_from_previous_line(Win *win, Cursor *cur) {
 	Text *text = win->file->text;
-	size_t pos = view_cursor_get(view);
+	size_t pos = view_cursors_pos(cur);
 	size_t prev_line = text_line_prev(text, pos);
 	if (pos == prev_line)
 		return;
@@ -1125,7 +1124,8 @@ static void copy_indent_from_previous_line(Win *win) {
 	if (!buf)
 		return;
 	len = text_bytes_get(text, begin, len, buf);
-	vis_insert_key(win->vis, buf, len);
+	text_insert(text, pos, buf, len);
+	view_cursors_scroll_to(cur, pos + len);
 	free(buf);
 }
 
@@ -1133,8 +1133,11 @@ void vis_insert_nl(Vis *vis) {
 	const char *nl = text_newline_char(vis->win->file->text);
 	vis_insert_key(vis, nl, strlen(nl));
 
-	if (vis->autoindent)
-		copy_indent_from_previous_line(vis->win);
+	if (!vis->autoindent)
+		return;
+
+	for (Cursor *c = view_cursors(vis->win->view); c; c = view_cursors_next(c))
+		copy_indent_from_previous_line(vis->win, c);
 }
 
 Regex *vis_regex(Vis *vis, const char *pattern) {
