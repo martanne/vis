@@ -645,6 +645,22 @@ static int window_cursor_index(lua_State *L) {
 			lua_pushunsigned(L, view_cursors_number(cur)+1);
 			return 1;
 		}
+
+		if (strcmp(key, "selection") == 0) {
+			Filerange sel = view_cursors_selection_get(cur);
+			if (text_range_valid(&sel)) {
+				lua_createtable(L, 0, 2);
+				lua_pushstring(L, "start");
+				lua_pushunsigned(L, sel.start);
+				lua_settable(L, -3);
+				lua_pushstring(L, "finish");
+				lua_pushunsigned(L, sel.end);
+				lua_settable(L, -3);
+			} else {
+				lua_pushnil(L);
+			}
+			return 1;
+		}
 	}
 
 	return index_common(L);
