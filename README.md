@@ -577,6 +577,7 @@ At this time there exists no API stability guarantees.
      - `win_open(win)`
      - `win_close(win)`
    - `files()` iterator
+   - `win` currently focused window
    - `windows()` iterator
    - `command(cmd)`
    - `info(msg)`
@@ -597,10 +598,11 @@ At this time there exists no API stability guarantees.
    - `size` current file size in bytes
  - `window`
    - `file`
-   - `syntax` lexer name used for syntax highlighting or `nil`
    - `cursors_iterator()`
    - `cursors[1..#cursors]` array giving read access to all cursors
    - `cursor` primary cursor
+   - `syntax` lexer name used for syntax highlighting or `nil`
+ - `cursor`
      - `line` (1 based), `col` (1 based)
      - `to(line, col)`
      - `pos` bytes from start of file (0 based)
