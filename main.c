@@ -40,6 +40,8 @@ static const char *join(Vis*, const char *keys, const Arg *arg);
 static const char *repeat(Vis*, const char *keys, const Arg *arg);
 /* replace character at cursor with one from keys */
 static const char *replace(Vis*, const char *keys, const Arg *arg);
+/* complete word by first match */
+static const char *complete_word(Vis*, const char *keys, const Arg *arg);
 /* create a new cursor on the previous (arg->i < 0) or next (arg->i > 0) line */
 static const char *cursors_new(Vis*, const char *keys, const Arg *arg);
 /* try to align all cursors on the same column */
@@ -248,6 +250,7 @@ enum {
 	VIS_ACTION_PUT_BEFORE,
 	VIS_ACTION_PUT_AFTER_END,
 	VIS_ACTION_PUT_BEFORE_END,
+	VIS_ACTION_COMPLETE_WORD,
 	VIS_ACTION_CURSOR_SELECT_WORD,
 	VIS_ACTION_CURSORS_NEW_LINE_ABOVE,
 	VIS_ACTION_CURSORS_NEW_LINE_ABOVE_FIRST,
@@ -914,6 +917,11 @@ static const KeyAction vis_action[] = {
 		"Put text before the cursor, place cursor after new text",
 		operator, { .i = VIS_OP_PUT_BEFORE_END }
 	},
+	[VIS_ACTION_COMPLETE_WORD] = {
+		"complete-word",
+		"Complete word by first match",
+		complete_word,
+	},
 	[VIS_ACTION_CURSOR_SELECT_WORD] = {
 		"cursors-select-word",
 		"Select word under cursor",
@@ -1261,6 +1269,42 @@ static const char *suspend(Vis *vis, const char *keys, const Arg *arg) {
 
 static const char *repeat(Vis *vis, const char *keys, const Arg *arg) {
 	vis_repeat(vis);
+	return keys;
+}
+
+static const char *complete_word(Vis *vis, const char *keys, const Arg *arg) {
+	Text *txt = vis_text(vis);
+	View *view = vis_view(vis);
+	Cursor *cursor = view_cursors_primary_get(view);
+	Filerange word = text_object_word(txt, view_cursors_pos(cursor) - 1);
+	if (!text_range_valid(&word))
+		return keys;
+	size_t word_len = text_range_size(&word);
+	char *buf = text_bytes_alloc0(txt, word.start, word_len);
+	if (!buf)
+		return keys;
+	Filepos next_p = text_find_next(txt, 0, buf);
+	if(word.start == next_p) 
+		next_p = text_find_next(txt, word.start + word_len, buf);
+	free(buf);
+	if(word.start == next_p)
+		return keys;
+	Filerange next = text_object_word(txt, next_p);
+	next.start = next_p;
+	if (!text_range_valid(&next))
+		return keys;
+	size_t next_len = text_range_size(&next);
+	size_t dif = next_len - word_len;
+	if(dif <= 0) 
+		return keys;
+	buf = text_bytes_alloc0(txt, next.start + next_len - dif, dif);
+	if (!buf)
+		return keys;
+	for (Cursor *c = view_cursors(view); c; c = view_cursors_next(c)) {
+		text_insert(txt, view_cursors_pos(c), buf, dif);
+		view_cursors_scroll_to(c, view_cursors_pos(c));
+	}
+	free(buf);
 	return keys;
 }
 
