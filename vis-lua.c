@@ -444,6 +444,11 @@ static int vis_index(lua_State *L) {
 			return 1;
 		}
 
+		if (strcmp(key, "mode") == 0) {
+			lua_pushunsigned(L, vis->mode->id);
+			return 1;
+		}
+
 		if (strcmp(key, "MODE_NORMAL") == 0) {
 			lua_pushunsigned(L, VIS_MODE_NORMAL);
 			return 1;
