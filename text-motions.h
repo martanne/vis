@@ -9,6 +9,8 @@
 #include "text.h"
 #include "text-regex.h"
 
+#define NOT_FOUND -1
+
 size_t text_begin(Text*, size_t pos);
 size_t text_end(Text*, size_t pos);
 
