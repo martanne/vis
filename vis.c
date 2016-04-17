@@ -361,7 +361,7 @@ Vis *vis_new(Ui *ui, VisEvent *event) {
 		goto err;
 	if (!(vis->search_file = file_new_internal(vis, NULL)))
 		goto err;
-	if (!(vis->keymap = map_new()) || !map_put(vis->keymap, " ", "<Space>"))
+	if (!(vis->keymap = map_new()))
 		goto err;
 	vis->mode_prev = vis->mode = &vis_modes[VIS_MODE_NORMAL];
 	vis->event = event;
