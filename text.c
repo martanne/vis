@@ -36,7 +36,11 @@ struct Buffer {
 	size_t size;               /* maximal capacity */
 	size_t len;                /* current used length / insertion position */
 	char *data;                /* actual data */
-	enum { MMAP, MALLOC} type; /* type of allocation */
+	enum {                     /* type of allocation */
+		MMAP_ORIG,         /* mmap(2)-ed from an external file */
+		MMAP,              /* mmap(2)-ed from a temporary file only known to this process */
+		MALLOC,            /* heap allocated buffer using malloc(3) */
+	} type;
 	Buffer *next;              /* next junk */
 };
 
@@ -116,6 +120,18 @@ struct Text {
 	struct stat info;       /* stat as probed at load time */
 	LineCache lines;        /* mapping between absolute pos in bytes and logical line breaks */
 	enum TextNewLine newlines; /* which type of new lines does the file use */
+};
+
+struct TextSave {                  /* used to hold context between text_save_{begin,commit} calls */
+	Text *txt;                 /* text to operate on */
+	char *filename;            /* filename to save to as given to text_save_begin */
+	char *tmpname;             /* temporary name used for atomic rename(2) */
+	int fd;                    /* file descriptor to write data to using text_save_write */
+	enum {
+		TEXT_SAVE_UNKNOWN,
+		TEXT_SAVE_ATOMIC,  /* create a new file, write content, atomically rename(2) over old file */
+		TEXT_SAVE_INPLACE, /* truncate file, overwrite content (any error will result in data loss) */
+	} type;
 };
 
 /* buffer management */
@@ -220,7 +236,7 @@ static Buffer *buffer_mmap(Text *txt, size_t size, int fd, off_t offset) {
 			return NULL;
 		}
 	}
-	buf->type = MMAP;
+	buf->type = MMAP_ORIG;
 	buf->size = size;
 	buf->len = size;
 	buf->next = txt->buffers;
@@ -233,7 +249,7 @@ static void buffer_free(Buffer *buf) {
 		return;
 	if (buf->type == MALLOC)
 		free(buf->data);
-	else if (buf->type == MMAP && buf->data)
+	else if ((buf->type == MMAP_ORIG || buf->type == MMAP) && buf->data)
 		munmap(buf->data, buf->size);
 	free(buf);
 }
@@ -807,9 +823,12 @@ static bool preserve_selinux_context(int src, int dest) {
 	return true;
 }
 
-/* Save current content to given filename. The data is first saved to `filename~`
- * and then atomically moved to its final (possibly alredy existing) destination
- * using rename(2). This approach does not work if:
+/* Create a new file named `filename~` and try to preserve all important
+ * meta data. After the file content has been written to this temporary
+ * file, text_save_commit_atomic will atomically move it to  its final
+ * (possibly already existing) destination using rename(2).
+ *
+ * This approach does not work if:
  *
  *   - the file is a symbolic link
  *   - the file is a hard link
@@ -819,16 +838,12 @@ static bool preserve_selinux_context(int src, int dest) {
  *   - POSXI ACL can not be preserved (if enabled)
  *   - SELinux security context can not be preserved (if enabled)
  */
-static bool text_save_atomic_range(Text *txt, Filerange *range, const char *filename) {
-	struct stat meta = { 0 }, oldmeta = { 0 };
-	int fd = -1, oldfd = -1, saved_errno;
-	char *tmpname = NULL;
-	size_t size = text_range_size(range);
-	size_t namelen = strlen(filename) + 1 /* ~ */ + 1 /* \0 */;
-
-	if ((oldfd = open(filename, O_RDONLY)) == -1 && errno != ENOENT)
+static bool text_save_begin_atomic(TextSave *ctx) {
+	int oldfd, saved_errno;
+	if ((oldfd = open(ctx->filename, O_RDONLY)) == -1 && errno != ENOENT)
 		goto err;
-	if (oldfd != -1 && lstat(filename, &oldmeta) == -1)
+	struct stat oldmeta = { 0 };
+	if (oldfd != -1 && lstat(ctx->filename, &oldmeta) == -1)
 		goto err;
 	if (oldfd != -1) {
 		if (S_ISLNK(oldmeta.st_mode)) /* symbolic link */
@@ -836,110 +851,71 @@ static bool text_save_atomic_range(Text *txt, Filerange *range, const char *file
 		if (oldmeta.st_nlink > 1) /* hard link */
 			goto err;
 	}
-	if (!(tmpname = calloc(1, namelen)))
-		goto err;
-	snprintf(tmpname, namelen, "%s~", filename);
 
-	/* O_RDWR is needed because otherwise we can't map with MAP_SHARED */
-	if ((fd = open(tmpname, O_CREAT|O_RDWR|O_TRUNC, oldfd == -1 ? S_IRUSR|S_IWUSR : oldmeta.st_mode)) == -1)
+	size_t namelen = strlen(ctx->filename) + 1 /* ~ */ + 1 /* \0 */;
+	if (!(ctx->tmpname = calloc(1, namelen)))
 		goto err;
-	if (ftruncate(fd, size) == -1)
+	snprintf(ctx->tmpname, namelen, "%s~", ctx->filename);
+
+	if ((ctx->fd = open(ctx->tmpname, O_CREAT|O_WRONLY|O_TRUNC, oldfd == -1 ? S_IRUSR|S_IWUSR : oldmeta.st_mode)) == -1)
 		goto err;
 	if (oldfd != -1) {
-		if (!preserve_acl(oldfd, fd) || !preserve_selinux_context(oldfd, fd))
+		if (!preserve_acl(oldfd, ctx->fd) || !preserve_selinux_context(oldfd, ctx->fd))
 			goto err;
 		/* change owner if necessary */
-		if (oldmeta.st_uid != getuid() && fchown(fd, oldmeta.st_uid, (uid_t)-1) == -1)
+		if (oldmeta.st_uid != getuid() && fchown(ctx->fd, oldmeta.st_uid, (uid_t)-1) == -1)
 			goto err;
 		/* change group if necessary, in case of failure some editors reset
 		 * the group permissions to the same as for others */
-		if (oldmeta.st_gid != getgid() && fchown(fd, (uid_t)-1, oldmeta.st_gid) == -1)
+		if (oldmeta.st_gid != getgid() && fchown(ctx->fd, (uid_t)-1, oldmeta.st_gid) == -1)
 			goto err;
-	}
-
-	if (size > 0) {
-		void *buf = mmap(NULL, size, PROT_WRITE, MAP_SHARED, fd, 0);
-		if (buf == MAP_FAILED)
-			goto err;
-
-		char *cur = buf;
-		size_t rem = size;
-
-		for (Iterator it = text_iterator_get(txt, range->start);
-		     rem > 0 && text_iterator_valid(&it);
-		     text_iterator_next(&it)) {
-			size_t len = it.end - it.text;
-			if (len > rem)
-				len = rem;
-			memcpy(cur, it.text, len);
-			cur += len;
-			rem -= len;
-		}
-
-		if (munmap(buf, size) == -1)
-			goto err;
-	}
-
-	if (oldfd != -1) {
 		close(oldfd);
-		oldfd = -1;
 	}
 
-	if (fsync(fd) == -1)
-		goto err;
-
-	if (fstat(fd, &meta) == -1)
-		goto err;
-
-	if (close(fd) == -1) {
-		fd = -1;
-		goto err;
-	}
-	fd = -1;
-
-	if (rename(tmpname, filename) == -1)
-		goto err;
-
-	if (meta.st_mtime)
-		txt->info = meta;
-	free(tmpname);
+	ctx->type = TEXT_SAVE_ATOMIC;
 	return true;
 err:
 	saved_errno = errno;
 	if (oldfd != -1)
 		close(oldfd);
-	if (fd != -1)
-		close(fd);
-	if (tmpname && *tmpname)
-		unlink(tmpname);
-	free(tmpname);
+	if (ctx->fd != -1)
+		close(ctx->fd);
+	ctx->fd = -1;
 	errno = saved_errno;
 	return false;
 }
 
-bool text_save(Text *txt, const char *filename) {
-	Filerange r = (Filerange){ .start = 0, .end = text_size(txt) };
-	return text_save_range(txt, &r, filename);
+static bool text_save_commit_atomic(TextSave *ctx) {
+	if (fsync(ctx->fd) == -1)
+		return false;
+
+	struct stat meta = { 0 };
+	if (fstat(ctx->fd, &meta) == -1)
+		return false;
+
+	bool close_failed = close(ctx->fd) == -1;
+	ctx->fd = -1;
+	if (close_failed)
+		return false;
+
+	if (rename(ctx->tmpname, ctx->filename) == -1)
+		return false;
+
+	if (meta.st_mtime)
+		ctx->txt->info = meta;
+	return true;
 }
 
-/* First try to save the file atomically using rename(2) if this does not
- * work overwrite the file in place. However if something goes wrong during
- * this overwrite the original file is permanently damaged.
- */
-bool text_save_range(Text *txt, Filerange *range, const char *filename) {
-	struct stat meta;
-	int fd = -1, newfd = -1;
-	errno = 0;
-	if (!filename || text_save_atomic_range(txt, range, filename))
-		goto ok;
-	if (errno == ENOSPC)
+static bool text_save_begin_inplace(TextSave *ctx) {
+	Text *txt = ctx->txt;
+	struct stat meta = { 0 };
+	int newfd = -1, saved_errno;
+	if ((ctx->fd = open(ctx->filename, O_CREAT|O_WRONLY, S_IRUSR|S_IWUSR)) == -1)
 		goto err;
-	if ((fd = open(filename, O_CREAT|O_WRONLY, S_IRUSR|S_IWUSR)) == -1)
-		goto err;
-	if (fstat(fd, &meta) == -1)
+	if (fstat(ctx->fd, &meta) == -1)
 		goto err;
 	if (meta.st_dev == txt->info.st_dev && meta.st_ino == txt->info.st_ino &&
-	    txt->buf && txt->buf->type == MMAP && txt->buf->size) {
+	    txt->buf && txt->buf->type == MMAP_ORIG && txt->buf->size) {
 		/* The file we are going to overwrite is currently mmap-ed from
 		 * text_load, therefore we copy the mmap-ed buffer to a temporary
 		 * file and remap it at the same position such that all pointers
@@ -967,38 +943,132 @@ bool text_save_range(Text *txt, Filerange *range, const char *filename) {
 			munmap(data, size);
 			goto err;
 		}
-		if (close(newfd) == -1) {
-			newfd = -1;
+		bool close_failed = (close(newfd) == -1);
+		newfd = -1;
+		if (close_failed)
 			goto err;
-		}
 		txt->buf->data = data;
+		txt->buf->type = MMAP;
 		newfd = -1;
 	}
 	/* overwrite the exisiting file content, if somehting goes wrong
 	 * here we are screwed, TODO: make a backup before? */
-	if (ftruncate(fd, 0) == -1)
+	if (ftruncate(ctx->fd, 0) == -1)
 		goto err;
-	ssize_t written = text_write_range(txt, range, fd);
-	if (written == -1 || (size_t)written != text_range_size(range))
-		goto err;
-
-	if (fsync(fd) == -1)
-		goto err;
-	if (fstat(fd, &meta) == -1)
-		goto err;
-	if (close(fd) == -1)
-		return false;
-	txt->info = meta;
-ok:
-	txt->saved_action = txt->history;
-	text_snapshot(txt);
+	ctx->type = TEXT_SAVE_INPLACE;
 	return true;
 err:
-	if (fd != -1)
-		close(fd);
+	saved_errno = errno;
 	if (newfd != -1)
 		close(newfd);
+	if (ctx->fd != -1)
+		close(ctx->fd);
+	ctx->fd = -1;
+	errno = saved_errno;
 	return false;
+}
+
+static bool text_save_commit_inplace(TextSave *ctx) {
+	if (fsync(ctx->fd) == -1)
+		return false;
+	struct stat meta = { 0 };
+	if (fstat(ctx->fd, &meta) == -1)
+		return false;
+	if (close(ctx->fd) == -1)
+		return false;
+	ctx->txt->info = meta;
+	return true;
+}
+
+TextSave *text_save_begin(Text *txt, const char *filename) {
+	if (!filename)
+		return NULL;
+	TextSave *ctx = calloc(1, sizeof *ctx);
+	if (!ctx)
+		return NULL;
+	ctx->txt = txt;
+	ctx->fd = -1;
+	if (!(ctx->filename = strdup(filename)))
+		goto err;
+	errno = 0;
+	if (text_save_begin_atomic(ctx))
+		return ctx;
+	if (errno == ENOSPC)
+		goto err;
+	if (text_save_begin_inplace(ctx))
+		return ctx;
+err:
+	text_save_cancel(ctx);
+	return NULL;
+}
+
+bool text_save_commit(TextSave *ctx) {
+	if (!ctx)
+		return true;
+	bool ret;
+	Text *txt = ctx->txt;
+	switch (ctx->type) {
+	case TEXT_SAVE_ATOMIC:
+		ret = text_save_commit_atomic(ctx);
+		break;
+	case TEXT_SAVE_INPLACE:
+		ret = text_save_commit_inplace(ctx);
+		break;
+	default:
+		ret = false;
+		break;
+	}
+
+	if (ret) {
+		txt->saved_action = txt->history;
+		text_snapshot(txt);
+	}
+	text_save_cancel(ctx);
+	return ret;
+}
+
+void text_save_cancel(TextSave *ctx) {
+	if (!ctx)
+		return;
+	int saved_errno = errno;
+	if (ctx->fd != -1)
+		close(ctx->fd);
+	if (ctx->tmpname && ctx->tmpname[0])
+		unlink(ctx->tmpname);
+	free(ctx->tmpname);
+	free(ctx->filename);
+	free(ctx);
+	errno = saved_errno;
+}
+
+bool text_save(Text *txt, const char *filename) {
+	Filerange r = (Filerange){ .start = 0, .end = text_size(txt) };
+	return text_save_range(txt, &r, filename);
+}
+
+/* First try to save the file atomically using rename(2) if this does not
+ * work overwrite the file in place. However if something goes wrong during
+ * this overwrite the original file is permanently damaged.
+ */
+bool text_save_range(Text *txt, Filerange *range, const char *filename) {
+	if (!filename) {
+		txt->saved_action = txt->history;
+		text_snapshot(txt);
+		return true;
+	}
+	TextSave *ctx = text_save_begin(txt, filename);
+	if (!ctx)
+		return false;
+	ssize_t written = text_write_range(txt, range, ctx->fd);
+	if (written == -1 || (size_t)written != text_range_size(range)) {
+		text_save_cancel(ctx);
+		return false;
+	}
+	return text_save_commit(ctx);
+}
+
+ssize_t text_save_write_range(TextSave *ctx, Filerange *range) {
+	return text_write_range(ctx->txt, range, ctx->fd);
 }
 
 ssize_t text_write(Text *txt, int fd) {
@@ -1223,7 +1293,8 @@ bool text_modified(Text *txt) {
 
 bool text_sigbus(Text *txt, const char *addr) {
 	for (Buffer *buf = txt->buffers; buf; buf = buf->next) {
-		if (buf->type == MMAP && buf->data <= addr && addr < buf->data + buf->size)
+		if ((buf->type == MMAP_ORIG || buf->type == MMAP) &&
+		    buf->data <= addr && addr < buf->data + buf->size)
 			return true;
 	}
 	return false;

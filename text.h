@@ -18,6 +18,7 @@ typedef struct {
 
 typedef struct Text Text;
 typedef struct Piece Piece;
+typedef struct TextSave TextSave;
 
 typedef struct {
 	const char *start;  /* begin of piece's data */
@@ -132,6 +133,20 @@ const char *text_newline_char(Text*);
  * new inode to file. */
 bool text_save(Text*, const char *filename);
 bool text_save_range(Text*, Filerange*, const char *file);
+
+/* this set of functions can be used to write multiple non-consecutive
+ * file ranges. For every call to `text_save_begin` there must be exactly
+ * one matching call to either `text_save_commit` or `text_save_cancel`
+ * to release the underlying resources. */
+TextSave *text_save_begin(Text*, const char *filename);
+ssize_t text_save_write_range(TextSave*, Filerange*);
+/* try committing the changes to disk */
+bool text_save_commit(TextSave*);
+/* does not guarantee to undo the previous writes (they might have been
+ * performed in-place) however it releases the underlying resources and
+ * free(3)'s the given TextSave* pointer which must no longer be used. */
+void text_save_cancel(TextSave*);
+
 /* write the text content to the given file descriptor `fd'. Return the
  * number of bytes written or -1 in case there was an error. */
 ssize_t text_write(Text*, int fd);
