@@ -709,10 +709,7 @@ static void ui_window_draw(UiWin *w) {
 				prev_style = style;
 			}
 			wattrset(win->win, attr);
-			if (multiple_cursors && l->cells[x].cursor_primary && l->cells[x].data[0] == ' ')
-				waddstr(win->win, "█");
-			else
-				waddstr(win->win, l->cells[x].data);
+			waddstr(win->win, l->cells[x].data);
 		}
 		/* try to fixup display issues, in theory we should always output a full line */
 		int x, y;
