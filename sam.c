@@ -132,7 +132,7 @@ static const CommandDef cmds[] = {
 	{ { "<"            }, CMD_SHELL|CMD_ADDRESS_POS,           NULL, cmd_pipein        },
 	{ { "|"            }, CMD_SHELL|CMD_ADDRESS_POS,           NULL, cmd_filter        },
 	{ { "!"            }, CMD_SHELL|CMD_ONCE,                  NULL, cmd_launch        },
-	{ { "w"            }, CMD_ARGV|CMD_FORCE,                  NULL, cmd_write         },
+	{ { "w"            }, CMD_ARGV|CMD_FORCE|CMD_ADDRESS_NONE|CMD_ONCE, NULL, cmd_write},
 	{ { "r"            }, CMD_FILE|CMD_ADDRESS_AFTER,          NULL, cmd_read          },
 	{ { "{"            }, 0,                                   NULL, NULL              },
 	{ { "}"            }, 0,                                   NULL, NULL              },
@@ -154,7 +154,7 @@ static const CommandDef cmds[] = {
 	{ { "split"        }, CMD_ARGV|CMD_ONCE,                   NULL, cmd_split         },
 	{ { "vnew"         }, CMD_ARGV|CMD_ONCE,                   NULL, cmd_vnew          },
 	{ { "vsplit"       }, CMD_ARGV|CMD_ONCE,                   NULL, cmd_vsplit        },
-	{ { "wq"           }, CMD_ARGV|CMD_FORCE|CMD_ONCE,         NULL, cmd_wq            },
+	{ { "wq"           }, CMD_ARGV|CMD_FORCE|CMD_ADDRESS_NONE|CMD_ONCE, NULL, cmd_wq   },
 	{ { "earlier"      }, CMD_ARGV|CMD_ONCE,                   NULL, cmd_earlier_later },
 	{ { "later"        }, CMD_ARGV|CMD_ONCE,                   NULL, cmd_earlier_later },
 	{ { NULL           }, 0,                                   NULL, NULL              },
@@ -999,27 +999,43 @@ static bool cmd_substitute(Vis *vis, Win *win, Command *cmd, const char *argv[],
 	return ret;
 }
 
-static bool cmd_write(Vis *vis, Win *win, Command *cmd, const char *argv[], Cursor *cur, Filerange *range) {
+static bool cmd_write(Vis *vis, Win *win, Command *cmd, const char *argv[], Cursor *cur, Filerange *r) {
 	File *file = win->file;
 	Text *text = file->text;
+	bool noname = !argv[1];
 	if (!argv[1])
 		argv[1] = file->name ? strdup(file->name) : NULL;
 	if (!argv[1]) {
-		if (file->is_stdin) {
-			if (strchr(argv[0], 'q')) {
-				ssize_t written = text_write_range(text, range, STDOUT_FILENO);
-				if (written == -1 || (size_t)written != text_range_size(range)) {
-					vis_info_show(vis, "Can not write to stdout");
-					return false;
-				}
-				/* make sure the file is marked as saved i.e. not modified */
-				text_save_range(text, range, NULL);
-				return true;
-			}
+		if (!file->is_stdin) {
+			vis_info_show(vis, "Filename expected");
+			return false;
+		}
+		if (!strchr(argv[0], 'q')) {
 			vis_info_show(vis, "No filename given, use 'wq' to write to stdout");
 			return false;
 		}
-		vis_info_show(vis, "Filename expected");
+
+		for (Cursor *c = view_cursors(win->view); c; c = view_cursors_next(c)) {
+			Filerange range = view_cursors_selection_get(c);
+			bool all = !text_range_valid(&range);
+			if (all)
+				range = text_range_new(0, text_size(text));
+			ssize_t written = text_write_range(text, &range, STDOUT_FILENO);
+			if (written == -1 || (size_t)written != text_range_size(&range)) {
+				vis_info_show(vis, "Can not write to stdout");
+				return false;
+			}
+			if (all)
+				break;
+		}
+
+		/* make sure the file is marked as saved i.e. not modified */
+		text_save(text, NULL);
+		return true;
+	}
+
+	if (noname && cmd->flags != '!' && vis->mode->visual) {
+		vis_info_show(vis, "WARNING: file will be reduced to active selection");
 		return false;
 	}
 
@@ -1030,10 +1046,35 @@ static bool cmd_write(Vis *vis, Win *win, Command *cmd, const char *argv[], Curs
 			vis_info_show(vis, "WARNING: file has been changed since reading it");
 			return false;
 		}
-		if (!text_save_range(text, range, *name)) {
+
+		TextSave *ctx = text_save_begin(text, *name);
+		if (!ctx)
+			return false;
+
+		bool failure = false;
+
+		for (Cursor *c = view_cursors(win->view); c; c = view_cursors_next(c)) {
+			Filerange range = view_cursors_selection_get(c);
+			bool all = !text_range_valid(&range);
+			if (all)
+				range = text_range_new(0, text_size(text));
+
+			ssize_t written = text_save_write_range(ctx, &range);
+			failure = (written == -1 || (size_t)written != text_range_size(&range));
+			if (failure) {
+				text_save_cancel(ctx);
+				break;
+			}
+
+			if (all)
+				break;
+		}
+
+		if (failure || !text_save_commit(ctx)) {
 			vis_info_show(vis, "Can't write `%s'", *name);
 			return false;
 		}
+
 		if (!file->name) {
 			vis_window_name(win, *name);
 			file->name = win->file->name;
