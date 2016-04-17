@@ -1,0 +1,2 @@
+vGI             /* create cursor at start of every line */
+i/*                switch to insert mode, so that <Esc> after test leaves cursors active */
