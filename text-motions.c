@@ -40,7 +40,7 @@ size_t text_char_prev(Text *txt, size_t pos) {
 
 static size_t find_next(Text *txt, size_t pos, const char *s, bool line) {
 	if (!s)
-		return NOT_FOUND;
+		return EPOS;
 	size_t len = strlen(s), matched = 0;
 	Iterator it = text_iterator_get(txt, pos), sit;
 	for (char c; matched < len && text_iterator_byte_get(&it, &c); ) {
@@ -56,7 +56,7 @@ static size_t find_next(Text *txt, size_t pos, const char *s, bool line) {
 		if (line && c == '\n')
 			break;
 	}
-	return matched == len ? it.pos - len : NOT_FOUND;
+	return matched == len ? it.pos - len : EPOS;
 }
 
 size_t text_find_next(Text *txt, size_t pos, const char *s) {
@@ -69,11 +69,11 @@ size_t text_line_find_next(Text *txt, size_t pos, const char *s) {
 
 static size_t find_prev(Text *txt, size_t pos, const char *s, bool line) {
 	if (!s)
-		return NOT_FOUND;
+		return EPOS;
 	size_t len = strlen(s), matched = len - 1;
 	Iterator it = text_iterator_get(txt, pos), sit;
 	if (len == 0)
-		return NOT_FOUND;
+		return EPOS;
 	for (char c; text_iterator_byte_prev(&it, &c); ) {
 		if (c == s[matched]) {
 			if (matched == 0)
@@ -88,7 +88,7 @@ static size_t find_prev(Text *txt, size_t pos, const char *s, bool line) {
 		if (line && c == '\n')
 			break;
 	}
-	return NOT_FOUND;
+	return EPOS;
 }
 
 size_t text_find_prev(Text *txt, size_t pos, const char *s) {
@@ -572,7 +572,7 @@ static size_t text_function_end_direction(Text *txt, size_t pos, int direction) 
 			break;
 		if (c[2] == '\r' || c[2] == '\n')
 			return match+1;
-		if (match == NOT_FOUND)
+		if (match == EPOS)
 			match += direction;
 		pos = match;
 	}

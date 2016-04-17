@@ -74,7 +74,7 @@ static size_t to(Vis *vis, Text *txt, size_t pos) {
 	if (pos == text_line_end(txt, pos))
 		return pos;
 	size_t hit = text_line_find_next(txt, pos+1, vis->search_char);
-	if (hit == NOT_FOUND || !text_byte_get(txt, hit, &c) || c != vis->search_char[0])
+	if (hit == EPOS || !text_byte_get(txt, hit, &c) || c != vis->search_char[0])
 		return pos;
 	return hit;
 }
@@ -96,7 +96,7 @@ static size_t till_left(Vis *vis, Text *txt, size_t pos) {
 	if (pos == text_line_begin(txt, pos))
 		return pos;
 	size_t hit = to_left(vis, txt, pos-1);
-	if (hit != NOT_FOUND && hit != pos-1)
+	if (hit != EPOS && hit != pos-1)
 		return text_char_next(txt, hit);
 	return pos;
 }
