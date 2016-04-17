@@ -445,7 +445,9 @@ Operators can be forced to work line wise by specifying `V`.
        use the given theme / color scheme for syntax highlighting
 
   Commands taking a file name will use a simple file open dialog based
-  on the `vis-open` shell script, if given a file pattern or directory.
+  on the `vis-open` shell script and the
+  [`slmenu`](https://bitbucket.org/rafaelgg/slmenu) utility,
+  if given a file pattern or directory.
 
     :e *.c          # opens a menu with all C files
     :e .            # opens a menu with all files of the current directory
