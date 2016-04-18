@@ -916,13 +916,28 @@ static void vis_lua_event(Vis *vis, const char *name) {
 	lua_remove(L, -2);
 }
 
+static bool vis_lua_path_add(Vis *vis, const char *path) {
+	if (!path)
+		return false;
+	lua_State *L = vis->lua;
+	lua_getglobal(L, "package");
+	lua_pushstring(L, path);
+	lua_pushstring(L, "/?.lua;");
+	lua_pushstring(L, path);
+	lua_pushstring(L, "/lexers/?.lua;");
+	lua_getfield(L, -5, "path");
+	lua_concat(L, 5);
+	lua_setfield(L, -2, "path");
+	lua_pop(L, 1); /* package */
+	return true;
+}
+
 void vis_lua_start(Vis *vis) {
 	lua_State *L = luaL_newstate();
 	if (!L)
 		return;
 	vis->lua = L;
 	luaL_openlibs(L);
-
 
 	/* extends lua's package.path with:
 	 * - $VIS_PATH/{,lexers}
@@ -932,31 +947,10 @@ void vis_lua_start(Vis *vis) {
 	 * - /usr/share/vis/{,lexers}
 	 * - package.path (standard lua search path)
 	 */
-	int paths = 3;
-	lua_getglobal(L, "package");
+	char path[PATH_MAX];
 
-	const char *vis_path = getenv("VIS_PATH");
-	if (vis_path) {
-		lua_pushstring(L, vis_path);
-		lua_pushstring(L, "/?.lua;");
-		lua_pushstring(L, vis_path);
-		lua_pushstring(L, "/lexers/?.lua;");
-		lua_concat(L, 4);
-		paths++;
-	}
-
-	char exe[PATH_MAX];
-	ssize_t len = readlink("/proc/self/exe", exe, sizeof(exe)-1);
-	if (len > 0) {
-		exe[len] = '\0';
-		char *exe_path = dirname(exe);
-		lua_pushstring(L, exe_path);
-		lua_pushstring(L, "/?.lua;");
-		lua_pushstring(L, exe_path);
-		lua_pushstring(L, "/lexers/?.lua;");
-		lua_concat(L, 4);
-		paths++;
-	}
+	vis_lua_path_add(vis, "/usr/share/vis");
+	vis_lua_path_add(vis, "/usr/local/share/vis");
 
 	/* try to get users home directory */
 	const char *home = getenv("HOME");
@@ -968,27 +962,19 @@ void vis_lua_start(Vis *vis) {
 
 	const char *xdg_config = getenv("XDG_CONFIG_HOME");
 	if (xdg_config) {
-		lua_pushstring(L, xdg_config);
-		lua_pushstring(L, "/vis/?.lua;");
-		lua_pushstring(L, xdg_config);
-		lua_pushstring(L, "/vis/lexers/?.lua;");
-		lua_concat(L, 4);
-		paths++;
+		vis_lua_path_add(vis, xdg_config);
 	} else if (home && *home) {
-		lua_pushstring(L, home);
-		lua_pushstring(L, "/.config/vis/?.lua;");
-		lua_pushstring(L, home);
-		lua_pushstring(L, "/.config/vis/lexers/?.lua;");
-		lua_concat(L, 4);
-		paths++;
+		snprintf(path, sizeof path, "%s/.config/vis", home);
+		vis_lua_path_add(vis, path);
 	}
 
-	lua_pushstring(L, "/usr/local/share/vis/?.lua;/usr/local/share/vis/lexers/?.lua;");
-	lua_pushstring(L, "/usr/share/vis/?.lua;/usr/share/vis/lexers/?.lua;");
-	lua_getfield(L, -paths, "path");
-	lua_concat(L, paths);
-	lua_setfield(L, -2, "path");
-	lua_pop(L, 1); /* package */
+	ssize_t len = readlink("/proc/self/exe", path, sizeof(path)-1);
+	if (len > 0) {
+		path[len] = '\0';
+		vis_lua_path_add(vis, dirname(path));
+	}
+
+	vis_lua_path_add(vis, getenv("VIS_PATH"));
 
 	/* table in registry to track lifetimes of C objects */
 	lua_newtable(L);
