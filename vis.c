@@ -44,7 +44,7 @@ static void file_free(Vis *vis, File *file) {
 		--file->refcount;
 		return;
 	}
-	if (vis->event && vis->event->file_close)
+	if (!file->internal && vis->event && vis->event->file_close)
 		vis->event->file_close(vis, file);
 	text_free(file->text);
 	free((char*)file->name);
@@ -96,7 +96,7 @@ static File *file_new(Vis *vis, const char *filename) {
 
 	if (filename)
 		file->name = strdup(filename);
-	if (vis->event && vis->event->file_open)
+	if (!file->internal && vis->event && vis->event->file_open)
 		vis->event->file_open(vis, file);
 	return file;
 }
@@ -323,7 +323,7 @@ void vis_window_swap(Win *a, Win *b) {
 
 void vis_window_close(Win *win) {
 	Vis *vis = win->vis;
-	if (vis->event && vis->event->win_close)
+	if (!win->file->internal && vis->event && vis->event->win_close)
 		vis->event->win_close(vis, win);
 	file_free(vis, win->file);
 	if (win->prev)
