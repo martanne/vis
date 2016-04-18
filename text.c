@@ -7,6 +7,7 @@
 #include <errno.h>
 #include <wchar.h>
 #include <stdint.h>
+#include <libgen.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/mman.h>
@@ -893,12 +894,27 @@ static bool text_save_commit_atomic(TextSave *ctx) {
 	if (fstat(ctx->fd, &meta) == -1)
 		return false;
 
-	bool close_failed = close(ctx->fd) == -1;
+	bool close_failed = (close(ctx->fd) == -1);
 	ctx->fd = -1;
 	if (close_failed)
 		return false;
 
 	if (rename(ctx->tmpname, ctx->filename) == -1)
+		return false;
+
+	free(ctx->tmpname);
+	ctx->tmpname = NULL;
+
+	int dir = open(dirname(ctx->filename), O_DIRECTORY|O_RDONLY);
+	if (dir == -1)
+		return false;
+
+	if (fsync(dir) == -1) {
+		close(dir);
+		return false;
+	}
+
+	if (close(dir) == -1)
 		return false;
 
 	if (meta.st_mtime)
