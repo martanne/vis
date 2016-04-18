@@ -916,6 +916,44 @@ static void vis_lua_event(Vis *vis, const char *name) {
 	lua_remove(L, -2);
 }
 
+static bool vis_lua_path_strip(Vis *vis) {
+	lua_State *L = vis->lua;
+	lua_getglobal(L, "package");
+
+	for (const char **var = (const char*[]){ "path", "cpath", NULL }; *var; var++) {
+
+		lua_getfield(L, -1, *var);
+		const char *path = lua_tostring(L, -1);
+		lua_pop(L, 1);
+		if (!path)
+			return false;
+
+		char *copy = strdup(path), *stripped = calloc(1, strlen(path)+2);
+		if (!copy || !stripped) {
+			free(copy);
+			free(stripped);
+			return false;
+		}
+
+		for (char *elem = copy, *stripped_elem = stripped, *next; elem; elem = next) {
+			if ((next = strstr(elem, ";")))
+				*next++ = '\0';
+			if (strstr(elem, "./"))
+				continue; /* skip relative path entries */
+			stripped_elem += sprintf(stripped_elem, "%s;", elem);
+		}
+
+		lua_pushstring(L, stripped);
+		lua_setfield(L, -2, *var);
+
+		free(copy);
+		free(stripped);
+	}
+
+	lua_pop(L, 1); /* package */
+	return true;
+}
+
 static bool vis_lua_path_add(Vis *vis, const char *path) {
 	if (!path)
 		return false;
@@ -938,6 +976,9 @@ void vis_lua_start(Vis *vis) {
 		return;
 	vis->lua = L;
 	luaL_openlibs(L);
+
+	/* remove any relative paths from lua's default package.path */
+	vis_lua_path_strip(vis);
 
 	/* extends lua's package.path with:
 	 * - $VIS_PATH/{,lexers}
