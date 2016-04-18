@@ -189,18 +189,17 @@ void vis_info_hide(Vis *vis) {
 void vis_message_show(Vis *vis, const char *msg) {
 	if (!msg)
 		return;
-	if (!vis->message_window) {
-		if (!vis_window_new(vis, NULL))
-			return;
-		vis->message_window = vis->win;
-	}
-
+	if (!vis->message_window)
+		vis->message_window = window_new_file(vis, vis->error_file);
 	Win *win = vis->message_window;
+	if (!win)
+		return;
 	Text *txt = win->file->text;
 	size_t pos = text_size(txt);
 	text_appendf(txt, "%s\n", msg);
 	text_save(txt, NULL);
 	view_cursor_to(win->view, pos);
+	vis_window_focus(win);
 }
 
 void vis_message_hide(Vis *vis) {

@@ -361,6 +361,8 @@ Vis *vis_new(Ui *ui, VisEvent *event) {
 		goto err;
 	if (!(vis->search_file = file_new_internal(vis, NULL)))
 		goto err;
+	if (!(vis->error_file = file_new_internal(vis, NULL)))
+		goto err;
 	if (!(vis->keymap = map_new()))
 		goto err;
 	vis->mode_prev = vis->mode = &vis_modes[VIS_MODE_NORMAL];
@@ -384,6 +386,7 @@ void vis_free(Vis *vis) {
 		vis_window_close(vis->windows);
 	file_free(vis, vis->command_file);
 	file_free(vis, vis->search_file);
+	file_free(vis, vis->error_file);
 	for (int i = 0; i < LENGTH(vis->registers); i++)
 		register_release(&vis->registers[i]);
 	vis->ui->free(vis->ui);
