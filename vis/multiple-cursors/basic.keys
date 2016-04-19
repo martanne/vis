@@ -1,0 +1,6 @@
+vGI             /* create cursor at start of every line */
+df<Space>       /* delete to first space */
+.               /* delete to second space */
+A : end<Escape> /* append " : end" to line */
+.               /* repeat */
+u               /* undo */

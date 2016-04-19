@@ -1,0 +1,14 @@
+List<Double> c = new ArrayList<Double>();
+c.add(112.2);
+c.add(102d);
+c.add(12d);
+c.add(954d);
+c.add(39.43);
+c.add(49.4);
+c.add(2224.6);
+c.add(94d);
+c.add(123d);
+c.add(4929.55);
+c.add(12d);
+c.add(98d);
+c.add(91.22);

@@ -1,0 +1,17 @@
+a<Enter><Space><Space><Escape>                  /* line break after {, indent following line with 2 spaces */
+qq                                              /* start macro recording */
+f{a<Enter><Space><Space><Space><Space><Escape>  /* line break after {, indent following line with 4 spaces */
+2f,l.
+2;l.
+t}a<Enter><Space><Space><Escape>
+e.x
+q
+@q
+@@
+@@
+@@
+@@
+gg /* go to very first { of file */
+%  /* go to matching bracket at end of file */
+i<Enter><Escape> /* move it to a new line */
+jdd /* delete last line of file */
