@@ -130,6 +130,8 @@ enum {
 	VIS_ACTION_EDITOR_SUSPEND,
 	VIS_ACTION_CURSOR_CHAR_PREV,
 	VIS_ACTION_CURSOR_CHAR_NEXT,
+	VIS_ACTION_CURSOR_LINE_CHAR_PREV,
+	VIS_ACTION_CURSOR_LINE_CHAR_NEXT,
 	VIS_ACTION_CURSOR_WORD_START_PREV,
 	VIS_ACTION_CURSOR_WORD_START_NEXT,
 	VIS_ACTION_CURSOR_WORD_END_PREV,
@@ -323,6 +325,16 @@ static const KeyAction vis_action[] = {
 		"cursor-char-next",
 		"Move cursor right, to the next character",
 		movement, { .i = VIS_MOVE_CHAR_NEXT }
+	},
+	[VIS_ACTION_CURSOR_LINE_CHAR_PREV] = {
+		"cursor-line-char-prev",
+		"Move cursor left, to the previous character on the same line",
+		movement, { .i = VIS_MOVE_LINE_CHAR_PREV }
+	},
+	[VIS_ACTION_CURSOR_LINE_CHAR_NEXT] = {
+		"cursor-line-char-next",
+		"Move cursor right, to the next character on the same line",
+		movement, { .i = VIS_MOVE_LINE_CHAR_NEXT }
 	},
 	[VIS_ACTION_CURSOR_WORD_START_PREV] = {
 		"cursor-word-start-prev",
