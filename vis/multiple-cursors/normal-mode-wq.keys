@@ -1,0 +1,4 @@
+vGI    /* create cursor at start of every line */
+<C-k>  /* move primary cursor up */
+<C-p>  /* remove primary cursor */
+i      /* switch to insert mode, so that <Esc> after test leaves cursors active */
