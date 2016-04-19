@@ -59,6 +59,7 @@ static bool cmd_set(Vis *vis, Win *win, Command *cmd, const char *argv[], Cursor
 		OPTION_CURSOR_LINE,
 		OPTION_THEME,
 		OPTION_COLOR_COLUMN,
+		OPTION_HORIZON,
 	};
 
 	/* definitions have to be in the same order as the enum above */
@@ -73,6 +74,7 @@ static bool cmd_set(Vis *vis, Win *win, Command *cmd, const char *argv[], Cursor
 		[OPTION_CURSOR_LINE]     = { { "cursorline", "cul"      }, OPTION_TYPE_BOOL   },
 		[OPTION_THEME]           = { { "theme"                  }, OPTION_TYPE_STRING },
 		[OPTION_COLOR_COLUMN]    = { { "colorcolumn", "cc"      }, OPTION_TYPE_NUMBER },
+		[OPTION_HORIZON]         = { { "horizon"                }, OPTION_TYPE_UNSIGNED },
 	};
 
 	if (!vis->options) {
@@ -241,6 +243,9 @@ static bool cmd_set(Vis *vis, Win *win, Command *cmd, const char *argv[], Cursor
 		break;
 	case OPTION_COLOR_COLUMN:
 		view_colorcolumn_set(win->view, arg.i);
+		break;
+	case OPTION_HORIZON:
+		view_horizon_set(win->view, arg.u);
 		break;
 	}
 

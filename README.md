@@ -441,6 +441,10 @@ Operators can be forced to work line wise by specifying `V`.
 
        highlight the given column
 
+     horizon    number          default 32768 (32K)
+
+       how far back the lexer will look to synchronize parsing
+
      theme      name            default dark-16.lua | solarized.lua (16 | 256 color)
 
        use the given theme / color scheme for syntax highlighting

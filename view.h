@@ -100,6 +100,8 @@ void view_options_set(View*, enum UiOption options);
 enum UiOption view_options_get(View*);
 void view_colorcolumn_set(View*, int col);
 int view_colorcolumn_get(View*);
+void view_horizon_set(View*, size_t bytes);
+size_t view_horizon_get(View*);
 
 /* A view can manage multiple cursors, one of which (the main cursor) is always
  * placed within the visible viewport. All functions named view_cursor_* operate
