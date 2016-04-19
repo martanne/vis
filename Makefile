@@ -54,6 +54,14 @@ debug: clean
 profile: clean
 	@$(MAKE) CFLAGS_VIS='${DEBUG_CFLAGS_VIS} -pg'
 
+test-update:
+	git submodule init
+	git submodule update --remote --rebase
+
+test:
+	[ -d test ] || $(MAKE) test-update
+	@$(MAKE) -C test
+
 clean:
 	@echo cleaning
 	@rm -f vis vis-${VERSION}.tar.gz
@@ -91,4 +99,4 @@ uninstall:
 	@echo removing support files from ${DESTDIR}${SHAREPREFIX}/vis
 	@rm -rf ${DESTDIR}${SHAREPREFIX}/vis
 
-.PHONY: all clean dist install uninstall debug profile
+.PHONY: all clean dist install uninstall debug profile test test-update

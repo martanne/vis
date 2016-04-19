@@ -876,7 +876,7 @@ A quick overview over the code structure to get you started:
  `visrc.lua`         | Lua startup and configuration script
 
 Testing infrastructure for the [low level core data structures]
-(https://github.com/martanne/vis/tree/test/test/core), [vim compatibility]
-(https://github.com/martanne/vis/tree/test/test/vim) and [vis specific features]
-(https://github.com/martanne/vis/tree/test/test/vis) is in place, but
+(https://github.com/martanne/vis-test/tree/master/core), [vim compatibility]
+(https://github.com/martanne/vis-test/tree/master/vim) and [vis specific features]
+(https://github.com/martanne/vis-test/tree/master/vis) is in place, but
 lacks proper test cases.
