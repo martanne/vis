@@ -59,7 +59,7 @@ test-update:
 	git submodule update --remote --rebase
 
 test:
-	[ -d test ] || $(MAKE) test-update
+	[ -e test/Makefile ] || $(MAKE) test-update
 	@$(MAKE) -C test
 
 clean:
