@@ -26,6 +26,7 @@ typedef struct {
 typedef union { /* various types of arguments passed to key action functions */
 	bool b;
 	int i;
+	size_t u;
 	const char *s;
 	const void *v;
 	void (*w)(View*);

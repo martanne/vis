@@ -42,6 +42,7 @@ static bool cmd_set(Vis *vis, Win *win, Command *cmd, const char *argv[], Cursor
 			OPTION_TYPE_STRING,
 			OPTION_TYPE_BOOL,
 			OPTION_TYPE_NUMBER,
+			OPTION_TYPE_UNSIGNED,
 		} type;
 		bool optional;
 		int index;
@@ -134,12 +135,13 @@ static bool cmd_set(Vis *vis, Win *win, Command *cmd, const char *argv[], Cursor
 			arg.b = !arg.b;
 		break;
 	case OPTION_TYPE_NUMBER:
+	case OPTION_TYPE_UNSIGNED:
 		if (!argv[2]) {
 			vis_info_show(vis, "Expecting number");
 			return false;
 		}
 		/* TODO: error checking? long type */
-		arg.i = strtoul(argv[2], NULL, 10);
+		arg.u = strtoul(argv[2], NULL, 10);
 		break;
 	}
 
