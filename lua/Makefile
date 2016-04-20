@@ -1,7 +1,7 @@
 all: clean test
 
 clean:
-	rm -f *.out *.true vis.exe.stackdump
+	rm -f *.out *.true
 
 test:
 	@./test.sh
