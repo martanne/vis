@@ -366,9 +366,11 @@ Vis *vis_new(Ui *ui, VisEvent *event) {
 		goto err;
 	vis->mode_prev = vis->mode = &vis_modes[VIS_MODE_NORMAL];
 	vis->event = event;
+	if (event && event->vis_init)
+		event->vis_init(vis);
+	vis->ui->start(vis->ui);
 	if (event && event->vis_start)
 		event->vis_start(vis);
-	vis->ui->start(vis->ui);
 	return vis;
 err:
 	vis_free(vis);

@@ -11,6 +11,7 @@ typedef struct lua_State lua_State;
 
 #include "vis.h"
 
+void vis_lua_init(Vis*);
 void vis_lua_start(Vis*);
 void vis_lua_quit(Vis*);
 void vis_lua_file_open(Vis*, File*);

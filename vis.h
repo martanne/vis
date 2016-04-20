@@ -14,6 +14,7 @@ typedef struct Win Win;
 #include "text-regex.h"
 
 typedef struct {
+	void (*vis_init)(Vis*);
 	void (*vis_start)(Vis*);
 	void (*vis_quit)(Vis*);
 	void (*file_open)(Vis*, File*);

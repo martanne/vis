@@ -13,6 +13,7 @@
 
 #if !CONFIG_LUA
 
+void vis_lua_init(Vis *vis) { }
 void vis_lua_start(Vis *vis) { }
 void vis_lua_quit(Vis *vis) { }
 void vis_lua_file_open(Vis *vis, File *file) { }
@@ -970,7 +971,7 @@ static bool vis_lua_path_add(Vis *vis, const char *path) {
 	return true;
 }
 
-void vis_lua_start(Vis *vis) {
+void vis_lua_init(Vis *vis) {
 	lua_State *L = luaL_newstate();
 	if (!L)
 		return;
@@ -1043,6 +1044,12 @@ void vis_lua_start(Vis *vis) {
 	lua_getglobal(L, "require");
 	lua_pushstring(L, "visrc");
 	pcall(vis, L, 1, 0);
+}
+
+void vis_lua_start(Vis *vis) {
+	lua_State *L = vis->lua;
+	if (!L)
+		return;
 	vis_lua_event(vis, "start");
 	if (lua_isfunction(L, -1))
 		pcall(vis, L, 0, 0);
