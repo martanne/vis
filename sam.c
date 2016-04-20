@@ -768,16 +768,17 @@ enum SamError sam_cmd(Vis *vis, const char *s) {
 	Filerange range = text_range_empty();
 	sam_execute(vis, vis->win, cmd, NULL, &range);
 
-	bool completed = true;
-	for (Cursor *c = view_cursors(vis->win->view); c; c = view_cursors_next(c)) {
-		Filerange sel = view_cursors_selection_get(c);
-		if (text_range_valid(&sel)) {
-			completed = false;
-			break;
+	if (vis->win) {
+		bool completed = true;
+		for (Cursor *c = view_cursors(vis->win->view); c; c = view_cursors_next(c)) {
+			Filerange sel = view_cursors_selection_get(c);
+			if (text_range_valid(&sel)) {
+				completed = false;
+				break;
+			}
 		}
+		vis_mode_switch(vis, completed ? VIS_MODE_NORMAL : VIS_MODE_VISUAL);
 	}
-
-	vis_mode_switch(vis, completed ? VIS_MODE_NORMAL : VIS_MODE_VISUAL);
 	command_free(cmd);
 	return err;
 }
@@ -950,7 +951,7 @@ static bool cmd_select(Vis *vis, Win *win, Command *cmd, const char *argv[], Cur
 			break;
 	}
 
-	if (view == vis->win->view && primary != view_cursors_primary_get(view))
+	if (vis->win && vis->win->view == view && primary != view_cursors_primary_get(view))
 		view_cursors_primary_set(view_cursors(view));
 	return ret;
 }

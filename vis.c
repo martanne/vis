@@ -280,7 +280,6 @@ bool vis_window_new(Vis *vis, const char *filename) {
 		return false;
 	}
 
-	vis_window_name(win, filename);
 	vis_draw(vis);
 
 	return true;
@@ -849,7 +848,7 @@ static void vis_args(Vis *vis, int argc, char *argv[]) {
 		}
 	}
 
-	if (!vis->windows) {
+	if (!vis->windows && vis->running) {
 		if (!strcmp(argv[argc-1], "-")) {
 			if (!vis_window_new(vis, NULL))
 				vis_die(vis, "Can not create empty buffer\n");
@@ -877,6 +876,7 @@ static void vis_args(Vis *vis, int argc, char *argv[]) {
 }
 
 int vis_run(Vis *vis, int argc, char *argv[]) {
+	vis->running = true;
 	vis_args(vis, argc, argv);
 
 	struct timespec idle = { .tv_nsec = 0 }, *timeout = NULL;
@@ -884,7 +884,6 @@ int vis_run(Vis *vis, int argc, char *argv[]) {
 	sigset_t emptyset;
 	sigemptyset(&emptyset);
 	vis_draw(vis);
-	vis->running = true;
 	vis->exit_status = EXIT_SUCCESS;
 
 	sigsetjmp(vis->sigbus_jmpbuf, 1);
