@@ -8,8 +8,8 @@ SRC = array.c buffer.c libutf.c main.c map.c register.c ring-buffer.c \
 # conditionally initialized, this is needed for standalone build
 # with empty config.mk
 PREFIX ?= /usr/local
-MANPREFIX ?= ${PREFIX}/share/man
-SHAREPREFIX ?= ${PREFIX}/share/vis
+SHAREPREFIX ?= ${PREFIX}/share
+MANPREFIX ?= ${PREFIX}/man
 
 VERSION = $(shell git describe 2>/dev/null || echo "0.2")
 
@@ -24,6 +24,7 @@ CFLAGS_VIS = $(CFLAGS_AUTO) $(CFLAGS_TERMKEY) $(CFLAGS_CURSES) $(CFLAGS_ACL) \
 	$(CFLAGS_SELINUX) $(CFLAGS_LUA) $(CFLAGS_STD)
 
 CFLAGS_VIS += -DVERSION=\"${VERSION}\"
+CFLAGS_VIS += -DVIS_PATH=\"${SHAREPREFIX}/vis\"
 CFLAGS_VIS += -DCONFIG_LUA=${CONFIG_LUA}
 CFLAGS_VIS += -DCONFIG_SELINUX=${CONFIG_SELINUX}
 CFLAGS_VIS += -DCONFIG_ACL=${CONFIG_ACL}

@@ -11,6 +11,10 @@
 #include "vis-core.h"
 #include "text-motions.h"
 
+#ifndef VIS_PATH
+#define VIS_PATH "/usr/local/share/vis"
+#endif
+
 #if !CONFIG_LUA
 
 void vis_lua_init(Vis *vis) { }
@@ -985,14 +989,12 @@ void vis_lua_init(Vis *vis) {
 	 * - $VIS_PATH/{,lexers}
 	 * - {,lexers} relative to the binary location
 	 * - $XDG_CONFIG_HOME/vis/{,lexers} (defaulting to $HOME/.config/vis/{,lexers})
-	 * - /usr/local/share/vis/{,lexers}
-	 * - /usr/share/vis/{,lexers}
+	 * - /usr/local/share/vis/{,lexers} (or whatever is specified during ./configure)
 	 * - package.path (standard lua search path)
 	 */
 	char path[PATH_MAX];
 
-	vis_lua_path_add(vis, "/usr/share/vis");
-	vis_lua_path_add(vis, "/usr/local/share/vis");
+	vis_lua_path_add(vis, VIS_PATH);
 
 	/* try to get users home directory */
 	const char *home = getenv("HOME");
