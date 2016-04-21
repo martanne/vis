@@ -1,5 +1,8 @@
 #!/bin/bash
 
+[ -z "$VIS" ] && VIS="../../vis"
+$VIS -v
+
 TESTS_OK=0
 TESTS_RUN=0
 
