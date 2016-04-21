@@ -4,6 +4,50 @@
 #define VIS_OPEN "vis-open"
 #endif
 
+typedef struct {
+	CmdFunc func;
+	void *data;
+} CmdUser;
+
+bool vis_cmd_register(Vis *vis, const char *name, void *data, CmdFunc func) {
+	if (!name)
+		return false;
+	if (!vis->usercmds && !(vis->usercmds = map_new()))
+		return false;
+	CmdUser *cmd = calloc(1, sizeof *cmd);
+	if (!cmd)
+		return false;
+	cmd->func = func;
+	cmd->data = data;
+	if (!map_put(vis->cmds, name, &cmddef_user))
+		goto err;
+	if (!map_put(vis->usercmds, name, cmd)) {
+		map_delete(vis->cmds, name);
+		goto err;
+	}
+	return true;
+err:
+	free(cmd);
+	return false;
+}
+
+bool vis_cmd_unregister(Vis *vis, const char *name) {
+	if (!name)
+		return true;
+	CmdUser *cmd = map_delete(vis->usercmds, name);
+	if (!cmd)
+		return false;
+	if (!map_delete(vis->cmds, name))
+		return false;
+	free(cmd);
+	return true;
+}
+
+static bool cmd_user(Vis *vis, Win *win, Command *cmd, const char *argv[], Cursor *cur, Filerange *range) {
+	CmdUser *user = map_get(vis->usercmds, argv[0]);
+	return user && user->func(vis, win, user->data, cmd->flags == '!', argv, cur, range);
+}
+
 static void windows_arrange(Vis *vis, enum UiLayout layout) {
 	vis->ui->arrange(vis->ui, layout);
 }

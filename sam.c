@@ -109,6 +109,7 @@ static bool cmd_help(Vis*, Win*, Command*, const char *argv[], Cursor*, Filerang
 static bool cmd_map(Vis*, Win*, Command*, const char *argv[], Cursor*, Filerange*);
 static bool cmd_unmap(Vis*, Win*, Command*, const char *argv[], Cursor*, Filerange*);
 static bool cmd_langmap(Vis*, Win*, Command*, const char *argv[], Cursor*, Filerange*);
+static bool cmd_user(Vis*, Win*, Command*, const char *argv[], Cursor*, Filerange*);
 
 /* command recognized at the ':'-prompt. commands are found using a unique
  * prefix match. that is if a command should be available under an abbreviation
@@ -161,7 +162,10 @@ static const CommandDef cmds[] = {
 };
 
 static const CommandDef cmddef_select =
-	{ { "s"            }, 0,                                   NULL, cmd_select        };
+	{ { NULL           }, 0,                                   NULL, cmd_select        };
+
+static const CommandDef cmddef_user =
+	{ { NULL           }, CMD_ARGV|CMD_FORCE|CMD_ONCE,         NULL, cmd_user          };
 
 bool sam_init(Vis *vis) {
 	if (!(vis->cmds = map_new()))

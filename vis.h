@@ -396,6 +396,14 @@ void vis_cancel(Vis*);
 
 /* execute a :-command (including an optinal range specifier) */
 bool vis_cmd(Vis*, const char *cmd);
+
+/* type of user defined function which can be registered */
+typedef bool (*CmdFunc)(Vis*, Win*, void *data, bool force,
+	const char *argv[], Cursor*, Filerange*);
+/* the function will be invoked whenever a command which matches a
+ * unique prefix of the given name is executed */
+bool vis_cmd_register(Vis*, const char *name, void *data, CmdFunc);
+bool vis_cmd_unregister(Vis*, const char *name);
 /* execute any kind (:,?,/) of prompt command */
 bool vis_prompt_cmd(Vis*, const char *cmd);
 

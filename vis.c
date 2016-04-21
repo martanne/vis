@@ -394,6 +394,7 @@ void vis_free(Vis *vis) {
 		register_release(&vis->registers[i]);
 	vis->ui->free(vis->ui);
 	map_free(vis->cmds);
+	map_free_full(vis->usercmds);
 	map_free(vis->options);
 	map_free(vis->actions);
 	map_free(vis->keymap);
