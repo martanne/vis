@@ -163,6 +163,17 @@ static const CommandDef cmds[] = {
 static const CommandDef cmddef_select =
 	{ { "s"            }, 0,                                   NULL, cmd_select        };
 
+bool sam_init(Vis *vis) {
+	if (!(vis->cmds = map_new()))
+		return false;
+	bool ret = true;
+	for (const CommandDef *cmd = cmds; cmd && cmd->name[0]; cmd++) {
+		for (const char *const *name = cmd->name; *name; name++)
+			ret &= map_put(vis->cmds, *name, cmd);
+	}
+	return ret;
+}
+
 const char *sam_error(enum SamError err) {
 	static const char *error_msg[] = {
 		[SAM_ERR_OK]              = "Success",
@@ -474,15 +485,6 @@ static void command_free(Command *cmd) {
 }
 
 static const CommandDef *command_lookup(Vis *vis, const char *name) {
-	if (!vis->cmds) {
-		if (!(vis->cmds = map_new()))
-			return NULL;
-
-		for (const CommandDef *cmd = cmds; cmd && cmd->name[0]; cmd++) {
-			for (const char *const *name = cmd->name; *name; name++)
-				map_put(vis->cmds, *name, cmd);
-		}
-	}
 	return map_closest(vis->cmds, name);
 }
 

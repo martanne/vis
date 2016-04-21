@@ -364,6 +364,8 @@ Vis *vis_new(Ui *ui, VisEvent *event) {
 		goto err;
 	if (!(vis->keymap = map_new()))
 		goto err;
+	if (!sam_init(vis))
+		goto err;
 	vis->mode_prev = vis->mode = &vis_modes[VIS_MODE_NORMAL];
 	vis->event = event;
 	if (event && event->vis_init)
