@@ -3,7 +3,7 @@
 all: clean test
 
 clean:
-	rm -f *.out *.true
+	rm -f *.out *.status *.err
 
 test:
 	@./test.sh

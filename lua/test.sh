@@ -26,15 +26,16 @@ for t in $test_files; do
 			TESTS_OK=$((TESTS_OK + 1))
 		else
 			printf "FAIL\n"
-			diff -u $t.ref $t.out
+			diff -u $t.ref $t.out > $t.err
 		fi
-	elif [ -e $t.true ]; then
-		if ! grep -v true $t.true > /dev/null; then
+	elif [ -e $t.status ]; then
+		if ! grep -v true $t.status > /dev/null; then
 			printf "PASS\n"
 			TESTS_OK=$((TESTS_OK + 1))
 		else
 			printf "FAIL\n"
-			grep -vn true $t.true
+			printf "$t\n" > $t.err
+			grep -vn true $t.status >> $t.err
 		fi
 	else
 		printf "FAIL\n"
