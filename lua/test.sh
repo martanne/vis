@@ -16,8 +16,7 @@ for t in $test_files; do
 	TESTS_RUN=$((TESTS_RUN + 1))
 	t=${t%.in}
 	t=${t#./}
-# 	vis $t.in
-	printf "<Escape>Q:q<Enter>" | ../util/keys | vis $t.in
+	$VIS $t.in
 
 	printf "%-30s" "$t"
 	if [ -e $t.out ]; then

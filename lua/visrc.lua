@@ -2,13 +2,10 @@ require("utils")
 
 vis.events = {}
 vis.events.win_open = function(win)
+	-- test.in file passed to vis
 	in_file = win.file.name
+	-- use the corresponding test.lua file
 	lua_file = string.gsub(in_file, '%.in$', '')
 	require(lua_file)
--- 	These both seem to cause crashes at the moment.
--- 	vis:command('q!')
---
--- 	vis:map(vis.MODE_NORMAL, "Q", function()
--- 		vis:command('q!')
--- 	end)
+	vis:command('q!')
 end
