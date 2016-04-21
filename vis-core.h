@@ -139,6 +139,7 @@ struct Vis {
 	File *files;                         /* all files currently managed by this editor instance */
 	File *command_file;                  /* special internal file used to store :-command prompt */
 	File *search_file;                   /* special internal file used to store /,? search prompt */
+	File *error_file;                    /* special internal file used to store lua error messages */
 	Win *windows;                        /* all windows currently managed by this editor instance */
 	Win *win;                            /* currently active/focused window */
 	Win *message_window;                 /* special window to display multi line messages */
@@ -152,6 +153,7 @@ struct Vis {
 	bool expandtab;                      /* whether typed tabs should be converted to spaces */
 	bool autoindent;                     /* whether indentation should be copied from previous line on newline */
 	Map *cmds;                           /* ":"-commands, used for unique prefix queries */
+	Map *usercmds;                       /* user registered ":"-commands */
 	Map *options;                        /* ":set"-options */
 	Map *keymap;                         /* key translation before any bindings are matched */
 	Buffer input_queue;                  /* holds pending input keys */

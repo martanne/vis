@@ -1,8 +1,54 @@
 /* this file is included from sam.c */
 
+#include <termkey.h>
+
 #ifndef VIS_OPEN
 #define VIS_OPEN "vis-open"
 #endif
+
+typedef struct {
+	CmdFunc func;
+	void *data;
+} CmdUser;
+
+bool vis_cmd_register(Vis *vis, const char *name, void *data, CmdFunc func) {
+	if (!name)
+		return false;
+	if (!vis->usercmds && !(vis->usercmds = map_new()))
+		return false;
+	CmdUser *cmd = calloc(1, sizeof *cmd);
+	if (!cmd)
+		return false;
+	cmd->func = func;
+	cmd->data = data;
+	if (!map_put(vis->cmds, name, &cmddef_user))
+		goto err;
+	if (!map_put(vis->usercmds, name, cmd)) {
+		map_delete(vis->cmds, name);
+		goto err;
+	}
+	return true;
+err:
+	free(cmd);
+	return false;
+}
+
+bool vis_cmd_unregister(Vis *vis, const char *name) {
+	if (!name)
+		return true;
+	CmdUser *cmd = map_delete(vis->usercmds, name);
+	if (!cmd)
+		return false;
+	if (!map_delete(vis->cmds, name))
+		return false;
+	free(cmd);
+	return true;
+}
+
+static bool cmd_user(Vis *vis, Win *win, Command *cmd, const char *argv[], Cursor *cur, Filerange *range) {
+	CmdUser *user = map_get(vis->usercmds, argv[0]);
+	return user && user->func(vis, win, user->data, cmd->flags == '!', argv, cur, range);
+}
 
 static void windows_arrange(Vis *vis, enum UiLayout layout) {
 	vis->ui->arrange(vis->ui, layout);
@@ -42,6 +88,7 @@ static bool cmd_set(Vis *vis, Win *win, Command *cmd, const char *argv[], Cursor
 			OPTION_TYPE_STRING,
 			OPTION_TYPE_BOOL,
 			OPTION_TYPE_NUMBER,
+			OPTION_TYPE_UNSIGNED,
 		} type;
 		bool optional;
 		int index;
@@ -58,6 +105,7 @@ static bool cmd_set(Vis *vis, Win *win, Command *cmd, const char *argv[], Cursor
 		OPTION_CURSOR_LINE,
 		OPTION_THEME,
 		OPTION_COLOR_COLUMN,
+		OPTION_HORIZON,
 	};
 
 	/* definitions have to be in the same order as the enum above */
@@ -72,6 +120,7 @@ static bool cmd_set(Vis *vis, Win *win, Command *cmd, const char *argv[], Cursor
 		[OPTION_CURSOR_LINE]     = { { "cursorline", "cul"      }, OPTION_TYPE_BOOL   },
 		[OPTION_THEME]           = { { "theme"                  }, OPTION_TYPE_STRING },
 		[OPTION_COLOR_COLUMN]    = { { "colorcolumn", "cc"      }, OPTION_TYPE_NUMBER },
+		[OPTION_HORIZON]         = { { "horizon"                }, OPTION_TYPE_UNSIGNED },
 	};
 
 	if (!vis->options) {
@@ -134,12 +183,13 @@ static bool cmd_set(Vis *vis, Win *win, Command *cmd, const char *argv[], Cursor
 			arg.b = !arg.b;
 		break;
 	case OPTION_TYPE_NUMBER:
+	case OPTION_TYPE_UNSIGNED:
 		if (!argv[2]) {
 			vis_info_show(vis, "Expecting number");
 			return false;
 		}
 		/* TODO: error checking? long type */
-		arg.i = strtoul(argv[2], NULL, 10);
+		arg.u = strtoul(argv[2], NULL, 10);
 		break;
 	}
 
@@ -239,6 +289,9 @@ static bool cmd_set(Vis *vis, Win *win, Command *cmd, const char *argv[], Cursor
 		break;
 	case OPTION_COLOR_COLUMN:
 		view_colorcolumn_set(win->view, arg.i);
+		break;
+	case OPTION_HORIZON:
+		view_horizon_set(win->view, arg.u);
 		break;
 	}
 
@@ -493,9 +546,82 @@ static void print_mode(Mode *mode, Text *txt) {
 }
 
 static bool print_action(const char *key, void *value, void *data) {
-	Text *txt = data;
 	KeyAction *action = value;
-	return text_appendf(txt, "  %-30s\t%s\n", key, action->help);
+	return text_appendf(data, "  %-30s\t%s\n", key, action->help);
+}
+
+static bool print_cmd(const char *key, void *value, void *data) {
+	return text_appendf(data, "  %s\n", key);
+}
+
+static void print_symbolic_keys(Vis *vis, Text *txt) {
+	static const int keys[] = {
+		TERMKEY_SYM_BACKSPACE,
+		TERMKEY_SYM_TAB,
+		TERMKEY_SYM_ENTER,
+		TERMKEY_SYM_ESCAPE,
+		//TERMKEY_SYM_SPACE,
+		TERMKEY_SYM_DEL,
+		TERMKEY_SYM_UP,
+		TERMKEY_SYM_DOWN,
+		TERMKEY_SYM_LEFT,
+		TERMKEY_SYM_RIGHT,
+		TERMKEY_SYM_BEGIN,
+		TERMKEY_SYM_FIND,
+		TERMKEY_SYM_INSERT,
+		TERMKEY_SYM_DELETE,
+		TERMKEY_SYM_SELECT,
+		TERMKEY_SYM_PAGEUP,
+		TERMKEY_SYM_PAGEDOWN,
+		TERMKEY_SYM_HOME,
+		TERMKEY_SYM_END,
+		TERMKEY_SYM_CANCEL,
+		TERMKEY_SYM_CLEAR,
+		TERMKEY_SYM_CLOSE,
+		TERMKEY_SYM_COMMAND,
+		TERMKEY_SYM_COPY,
+		TERMKEY_SYM_EXIT,
+		TERMKEY_SYM_HELP,
+		TERMKEY_SYM_MARK,
+		TERMKEY_SYM_MESSAGE,
+		TERMKEY_SYM_MOVE,
+		TERMKEY_SYM_OPEN,
+		TERMKEY_SYM_OPTIONS,
+		TERMKEY_SYM_PRINT,
+		TERMKEY_SYM_REDO,
+		TERMKEY_SYM_REFERENCE,
+		TERMKEY_SYM_REFRESH,
+		TERMKEY_SYM_REPLACE,
+		TERMKEY_SYM_RESTART,
+		TERMKEY_SYM_RESUME,
+		TERMKEY_SYM_SAVE,
+		TERMKEY_SYM_SUSPEND,
+		TERMKEY_SYM_UNDO,
+		TERMKEY_SYM_KP0,
+		TERMKEY_SYM_KP1,
+		TERMKEY_SYM_KP2,
+		TERMKEY_SYM_KP3,
+		TERMKEY_SYM_KP4,
+		TERMKEY_SYM_KP5,
+		TERMKEY_SYM_KP6,
+		TERMKEY_SYM_KP7,
+		TERMKEY_SYM_KP8,
+		TERMKEY_SYM_KP9,
+		TERMKEY_SYM_KPENTER,
+		TERMKEY_SYM_KPPLUS,
+		TERMKEY_SYM_KPMINUS,
+		TERMKEY_SYM_KPMULT,
+		TERMKEY_SYM_KPDIV,
+		TERMKEY_SYM_KPCOMMA,
+		TERMKEY_SYM_KPPERIOD,
+		TERMKEY_SYM_KPEQUALS,
+	};
+
+	TermKey *termkey = vis->ui->termkey_get(vis->ui);
+	text_appendf(txt, "  ␣ (a literal \" \" space symbol must be used to refer to <Space>)\n");
+	for (size_t i = 0; i < LENGTH(keys); i++) {
+		text_appendf(txt, "  <%s>\n", termkey_get_keyname(termkey, keys[i]));
+	}
 }
 
 static bool cmd_help(Vis *vis, Win *win, Command *cmd, const char *argv[], Cursor *cur, Filerange *range) {
@@ -513,7 +639,6 @@ static bool cmd_help(Vis *vis, Win *win, Command *cmd, const char *argv[], Curso
 			text_appendf(txt, "  %-18s\t%s\n", mode->name, mode->help);
 	}
 
-
 	if (!map_empty(vis->keymap)) {
 		text_appendf(txt, "\n Layout specific mappings (affects all modes except INSERT/REPLACE)\n\n");
 		map_iterate(vis->keymap, print_keylayout, txt);
@@ -525,11 +650,14 @@ static bool cmd_help(Vis *vis, Win *win, Command *cmd, const char *argv[], Curso
 	print_mode(&vis_modes[VIS_MODE_INSERT], txt);
 
 	text_appendf(txt, "\n :-Commands\n\n");
-	for (const CommandDef *cmd = cmds; cmd && cmd->name[0]; cmd++)
-		text_appendf(txt, "  %s\n", cmd->name[0]);
+	map_iterate(vis->cmds, print_cmd, txt);
 
 	text_appendf(txt, "\n Key binding actions\n\n");
 	map_iterate(vis->actions, print_action, txt);
+
+	text_appendf(txt, "\n Symbolic keys usable for key bindings "
+		"(prefix with C-, S-, and M- for Ctrl, Shift and Alt respectively)\n\n");
+	print_symbolic_keys(vis, txt);
 
 	text_save(txt, NULL);
 	return true;

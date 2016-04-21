@@ -90,6 +90,8 @@ struct View {
 	lua_State *lua;     /* lua state used for syntax highlighting */
 	int cursor_generation; /* used to filter out newly created cursors during iteration */
 	char *lexer_name;
+	size_t horizon; /* maximal number of bytes to consider for syntax highlighting
+	                 * before the visible area */
 	bool need_update;   /* whether view has been redrawn */
 	bool large_file;    /* optimize for displaying large files */
 	int colorcolumn;
@@ -137,11 +139,9 @@ static void view_syntax_color(View *view) {
 	if (lua_isnil(L, -1))
 		return;
 
-	/* maximal number of bytes to consider for syntax highlighting before
-	 * the visible area */
-	const size_t lexer_before_max = 16384;
 	/* absolute position to start syntax highlighting */
-	const size_t lexer_start = view->start >= lexer_before_max ? view->start - lexer_before_max : 0;
+	const size_t lexer_start = view->start >= view->horizon ?
+		view->start - view->horizon : 0;
 	/* number of bytes used for syntax highlighting before visible are */
 	size_t lexer_before = view->start - lexer_start;
 	/* number of bytes to read in one go */
@@ -753,6 +753,7 @@ View *view_new(Text *text, lua_State *lua) {
 	view->text = text;
 	view->lua = lua;
 	view->tabwidth = 8;
+	view->horizon = 1 << 15;
 	view_options_set(view, 0);
 
 	if (!view_resize(view, 1, 1)) {
@@ -1050,6 +1051,14 @@ void view_colorcolumn_set(View *view, int col) {
 
 int view_colorcolumn_get(View *view) {
 	return view->colorcolumn;
+}
+
+void view_horizon_set(View *view, size_t bytes) {
+	view->horizon = bytes;
+}
+
+size_t view_horizon_get(View *view) {
+	return view->horizon;
 }
 
 size_t view_screenline_goto(View *view, int n) {

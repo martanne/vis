@@ -17,7 +17,8 @@ enum SamError {
 	SAM_ERR_EXECUTE,
 };
 
-enum SamError sam_cmd(Vis *vis, const char *cmd);
+bool sam_init(Vis*);
+enum SamError sam_cmd(Vis*, const char *cmd);
 const char *sam_error(enum SamError);
 
 #endif

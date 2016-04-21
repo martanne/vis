@@ -11,8 +11,13 @@
 #include "vis-core.h"
 #include "text-motions.h"
 
+#ifndef VIS_PATH
+#define VIS_PATH "/usr/local/share/vis"
+#endif
+
 #if !CONFIG_LUA
 
+void vis_lua_init(Vis *vis) { }
 void vis_lua_start(Vis *vis) { }
 void vis_lua_quit(Vis *vis) { }
 void vis_lua_file_open(Vis *vis, File *file) { }
@@ -227,6 +232,36 @@ static int newindex_common(lua_State *L) {
 	return 0;
 }
 
+static void pushrange(lua_State *L, Filerange *r) {
+	if (!text_range_valid(r)) {
+		lua_pushnil(L);
+		return;
+	}
+	lua_createtable(L, 0, 2);
+	lua_pushstring(L, "start");
+	lua_pushunsigned(L, r->start);
+	lua_settable(L, -3);
+	lua_pushstring(L, "finish");
+	lua_pushunsigned(L, r->end);
+	lua_settable(L, -3);
+}
+
+static Filerange getrange(lua_State *L, int index) {
+	Filerange range = text_range_empty();
+	if (lua_istable(L, index)) {
+		lua_getfield(L, index, "start");
+		range.start = luaL_checkunsigned(L, -1);
+		lua_pop(L, 1);
+		lua_getfield(L, index, "finish");
+		range.end = luaL_checkunsigned(L, -1);
+		lua_pop(L, 1);
+	} else {
+		range.start = luaL_checkunsigned(L, index);
+		range.end = range.start + luaL_checkunsigned(L, index+1);
+	}
+	return range;
+}
+
 static const char *keymapping(Vis *vis, const char *keys, const Arg *arg) {
 	lua_State *L = vis->lua;
 	if (!func_ref_get(L, arg->v))
@@ -299,13 +334,22 @@ static int command(lua_State *L) {
 
 static int info(lua_State *L) {
 	Vis *vis = obj_ref_check(L, 1, "vis");
-	if (!vis) {
-		lua_pushnil(L);
-		return 1;
+	if (vis) {
+		const char *msg = luaL_checkstring(L, 2);
+		vis_info_show(vis, "%s", msg);
 	}
-	const char *msg = luaL_checkstring(L, 2);
-	vis_info_show(vis, "%s", msg);
-	return 0;
+	lua_pushboolean(L, vis != NULL);
+	return 1;
+}
+
+static int message(lua_State *L) {
+	Vis *vis = obj_ref_check(L, 1, "vis");
+	if (vis) {
+		const char *msg = luaL_checkstring(L, 2);
+		vis_message_show(vis, msg);
+	}
+	lua_pushboolean(L, vis != NULL);
+	return 1;
 }
 
 static int open(lua_State *L) {
@@ -430,6 +474,40 @@ err:
 	return 1;
 }
 
+static bool command_lua(Vis *vis, Win *win, void *data, bool force, const char *argv[], Cursor *cur, Filerange *range) {
+	lua_State *L = vis->lua;
+	if (!func_ref_get(L, data))
+		return false;
+	lua_newtable(L);
+	for (size_t i = 0; argv[i]; i++) {
+		lua_pushunsigned(L, i);
+		lua_pushstring(L, argv[i]);
+		lua_settable(L, -3);
+	}
+	lua_pushboolean(L, force);
+	if (!obj_ref_new(L, win, "vis.window"))
+		return false;
+	if (!cur)
+		cur = view_cursors_primary_get(win->view);
+	if (!obj_ref_new(L, cur, "vis.window.cursor"))
+		return false;
+	pushrange(L, range);
+	if (pcall(vis, L, 5, 1) != 0)
+		return false;
+	return lua_toboolean(L, -1);
+}
+
+static int command_register(lua_State *L) {
+	bool ret = false;
+	const void *func;
+	Vis *vis = obj_ref_check(L, 1, "vis");
+	const char *name = luaL_checkstring(L, 2);
+	if (vis && lua_isfunction(L, 3) && (func = func_ref_new(L)))
+		ret = vis_cmd_register(vis, name, (void*)func, command_lua);
+	lua_pushboolean(L, ret);
+	return 1;
+}
+
 static int vis_index(lua_State *L) {
 	Vis *vis = obj_ref_check(L, 1, "vis");
 	if (!vis) {
@@ -495,12 +573,14 @@ static const struct luaL_Reg vis_lua[] = {
 	{ "windows", windows },
 	{ "command", command },
 	{ "info", info },
+	{ "message", message },
 	{ "open", open },
 	{ "map", map },
 	{ "motion", motion },
 	{ "motion_register", motion_register },
 	{ "textobject", textobject },
 	{ "textobject_register", textobject_register },
+	{ "command_register", command_register },
 	{ "__index", vis_index },
 	{ "__newindex", vis_newindex },
 	{ NULL, NULL },
@@ -653,17 +733,7 @@ static int window_cursor_index(lua_State *L) {
 
 		if (strcmp(key, "selection") == 0) {
 			Filerange sel = view_cursors_selection_get(cur);
-			if (text_range_valid(&sel)) {
-				lua_createtable(L, 0, 2);
-				lua_pushstring(L, "start");
-				lua_pushunsigned(L, sel.start);
-				lua_settable(L, -3);
-				lua_pushstring(L, "finish");
-				lua_pushunsigned(L, sel.end);
-				lua_settable(L, -3);
-			} else {
-				lua_pushnil(L);
-			}
+			pushrange(L, &sel);
 			return 1;
 		}
 	}
@@ -680,6 +750,15 @@ static int window_cursor_newindex(lua_State *L) {
 		if (strcmp(key, "pos") == 0) {
 			size_t pos = luaL_checkunsigned(L, 3);
 			view_cursors_to(cur, pos);
+			return 0;
+		}
+
+		if (strcmp(key, "selection") == 0) {
+			Filerange sel = getrange(L, 3);
+			if (text_range_valid(&sel))
+				view_cursors_selection_set(cur, &sel);
+			else
+				view_cursors_selection_clear(cur);
 			return 0;
 		}
 	}
@@ -771,10 +850,8 @@ static int file_insert(lua_State *L) {
 static int file_delete(lua_State *L) {
 	File *file = obj_ref_check(L, 1, "vis.file");
 	if (file) {
-		size_t pos = luaL_checkunsigned(L, 2);
-		size_t len = luaL_checkunsigned(L, 3);
-		bool ret = text_delete(file->text, pos, len);
-		lua_pushboolean(L, ret);
+		Filerange range = getrange(L, 2);
+		lua_pushboolean(L, text_delete_range(file->text, &range));
 	} else {
 		lua_pushboolean(L, false);
 	}
@@ -815,12 +892,14 @@ static int file_content(lua_State *L) {
 	File *file = obj_ref_check(L, 1, "vis.file");
 	if (!file)
 		goto err;
-	size_t pos = luaL_checkunsigned(L, 2);
-	size_t len = luaL_checkunsigned(L, 3);
+	Filerange range = getrange(L, 2);
+	if (!text_range_valid(&range))
+		goto err;
+	size_t len = text_range_size(&range);
 	char *data = malloc(len);
 	if (!data)
 		goto err;
-	len = text_bytes_get(file->text, pos, len, data);
+	len = text_bytes_get(file->text, range.start, len, data);
 	lua_pushlstring(L, data, len);
 	free(data);
 	return 1;
@@ -916,47 +995,80 @@ static void vis_lua_event(Vis *vis, const char *name) {
 	lua_remove(L, -2);
 }
 
-void vis_lua_start(Vis *vis) {
+static bool vis_lua_path_strip(Vis *vis) {
+	lua_State *L = vis->lua;
+	lua_getglobal(L, "package");
+
+	for (const char **var = (const char*[]){ "path", "cpath", NULL }; *var; var++) {
+
+		lua_getfield(L, -1, *var);
+		const char *path = lua_tostring(L, -1);
+		lua_pop(L, 1);
+		if (!path)
+			return false;
+
+		char *copy = strdup(path), *stripped = calloc(1, strlen(path)+2);
+		if (!copy || !stripped) {
+			free(copy);
+			free(stripped);
+			return false;
+		}
+
+		for (char *elem = copy, *stripped_elem = stripped, *next; elem; elem = next) {
+			if ((next = strstr(elem, ";")))
+				*next++ = '\0';
+			if (strstr(elem, "./"))
+				continue; /* skip relative path entries */
+			stripped_elem += sprintf(stripped_elem, "%s;", elem);
+		}
+
+		lua_pushstring(L, stripped);
+		lua_setfield(L, -2, *var);
+
+		free(copy);
+		free(stripped);
+	}
+
+	lua_pop(L, 1); /* package */
+	return true;
+}
+
+static bool vis_lua_path_add(Vis *vis, const char *path) {
+	if (!path)
+		return false;
+	lua_State *L = vis->lua;
+	lua_getglobal(L, "package");
+	lua_pushstring(L, path);
+	lua_pushstring(L, "/?.lua;");
+	lua_pushstring(L, path);
+	lua_pushstring(L, "/lexers/?.lua;");
+	lua_getfield(L, -5, "path");
+	lua_concat(L, 5);
+	lua_setfield(L, -2, "path");
+	lua_pop(L, 1); /* package */
+	return true;
+}
+
+void vis_lua_init(Vis *vis) {
 	lua_State *L = luaL_newstate();
 	if (!L)
 		return;
 	vis->lua = L;
 	luaL_openlibs(L);
 
+	/* remove any relative paths from lua's default package.path */
+	vis_lua_path_strip(vis);
 
 	/* extends lua's package.path with:
 	 * - $VIS_PATH/{,lexers}
 	 * - {,lexers} relative to the binary location
 	 * - $XDG_CONFIG_HOME/vis/{,lexers} (defaulting to $HOME/.config/vis/{,lexers})
-	 * - /usr/local/share/vis/{,lexers}
-	 * - /usr/share/vis/{,lexers}
+	 * - /usr/local/share/vis/{,lexers} (or whatever is specified during ./configure)
 	 * - package.path (standard lua search path)
 	 */
-	int paths = 3;
-	lua_getglobal(L, "package");
+	char path[PATH_MAX];
 
-	const char *vis_path = getenv("VIS_PATH");
-	if (vis_path) {
-		lua_pushstring(L, vis_path);
-		lua_pushstring(L, "/?.lua;");
-		lua_pushstring(L, vis_path);
-		lua_pushstring(L, "/lexers/?.lua;");
-		lua_concat(L, 4);
-		paths++;
-	}
-
-	char exe[PATH_MAX];
-	ssize_t len = readlink("/proc/self/exe", exe, sizeof(exe)-1);
-	if (len > 0) {
-		exe[len] = '\0';
-		char *exe_path = dirname(exe);
-		lua_pushstring(L, exe_path);
-		lua_pushstring(L, "/?.lua;");
-		lua_pushstring(L, exe_path);
-		lua_pushstring(L, "/lexers/?.lua;");
-		lua_concat(L, 4);
-		paths++;
-	}
+	vis_lua_path_add(vis, VIS_PATH);
 
 	/* try to get users home directory */
 	const char *home = getenv("HOME");
@@ -968,27 +1080,19 @@ void vis_lua_start(Vis *vis) {
 
 	const char *xdg_config = getenv("XDG_CONFIG_HOME");
 	if (xdg_config) {
-		lua_pushstring(L, xdg_config);
-		lua_pushstring(L, "/vis/?.lua;");
-		lua_pushstring(L, xdg_config);
-		lua_pushstring(L, "/vis/lexers/?.lua;");
-		lua_concat(L, 4);
-		paths++;
+		vis_lua_path_add(vis, xdg_config);
 	} else if (home && *home) {
-		lua_pushstring(L, home);
-		lua_pushstring(L, "/.config/vis/?.lua;");
-		lua_pushstring(L, home);
-		lua_pushstring(L, "/.config/vis/lexers/?.lua;");
-		lua_concat(L, 4);
-		paths++;
+		snprintf(path, sizeof path, "%s/.config/vis", home);
+		vis_lua_path_add(vis, path);
 	}
 
-	lua_pushstring(L, "/usr/local/share/vis/?.lua;/usr/local/share/vis/lexers/?.lua;");
-	lua_pushstring(L, "/usr/share/vis/?.lua;/usr/share/vis/lexers/?.lua;");
-	lua_getfield(L, -paths, "path");
-	lua_concat(L, paths);
-	lua_setfield(L, -2, "path");
-	lua_pop(L, 1); /* package */
+	ssize_t len = readlink("/proc/self/exe", path, sizeof(path)-1);
+	if (len > 0) {
+		path[len] = '\0';
+		vis_lua_path_add(vis, dirname(path));
+	}
+
+	vis_lua_path_add(vis, getenv("VIS_PATH"));
 
 	/* table in registry to track lifetimes of C objects */
 	lua_newtable(L);
@@ -1016,6 +1120,12 @@ void vis_lua_start(Vis *vis) {
 	lua_getglobal(L, "require");
 	lua_pushstring(L, "visrc");
 	pcall(vis, L, 1, 0);
+}
+
+void vis_lua_start(Vis *vis) {
+	lua_State *L = vis->lua;
+	if (!L)
+		return;
 	vis_lua_event(vis, "start");
 	if (lua_isfunction(L, -1))
 		pcall(vis, L, 0, 0);

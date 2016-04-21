@@ -441,6 +441,10 @@ Operators can be forced to work line wise by specifying `V`.
 
        highlight the given column
 
+     horizon    number          default 32768 (32K)
+
+       how far back the lexer will look to synchronize parsing
+
      theme      name            default dark-16.lua | solarized.lua (16 | 256 color)
 
        use the given theme / color scheme for syntax highlighting
@@ -584,17 +588,19 @@ At this time there exists no API stability guarantees.
    - `win` currently focused window
    - `windows()` iterator
    - `command(cmd)`
-   - `info(msg)`
+   - `info(msg)` display a single line message
+   - `message(msg)` display an arbitrarily long message
    - `open(filename)`
    - `textobject_register(function)` register a Lua function as a text object, returns associated `id` or `-1`
    - `textobject(id)` select/execute a text object
    - `motion_register(function)` register a Lua function as a motion, returns associated `id` or `-1`
    - `motion(id)` select/execute a motion
+   - `command_register(name, function(argv, force, win, cursor, range))` hook up a Lua function to `:name` command
    - `map(mode, key, function)` map a Lua function to `key` in `mode`
  - `file`
-   - `content(pos, len)`
+   - `content(pos, len)` or `content({start, finish})`
    - `insert(pos, data)`
-   - `delete(pos, len)`
+   - `delete(pos, len)` or `delete({start, finish})`
    - `lines_iterator()`
    - `name`
    - `lines[0..#lines+1]` array giving read/write access to lines
@@ -607,11 +613,15 @@ At this time there exists no API stability guarantees.
    - `cursor` primary cursor
    - `syntax` lexer name used for syntax highlighting or `nil`
  - `cursor`
-     - `line` (1 based), `col` (1 based)
-     - `to(line, col)`
-     - `pos` bytes from start of file (0 based)
-     - `number` zero based index of cursor
-     - `selection` either `nil` or a table `{start, finish}`
+   - `line` (1 based), `col` (1 based)
+   - `to(line, col)`
+   - `pos` bytes from start of file (0 based)
+   - `number` one based index of cursor
+   - `selection` read/write access to selection represented as a `range`
+ - `range` denoted by absolute postions in bytes from the start of the file,
+   an invalid range is represented as `nil`
+   - `start`
+   - `finish`
 
 Most of the exposed objects are managed by the C core. Allthough there
 is a simple object life time management mechanism in place, it is still
@@ -876,7 +886,7 @@ A quick overview over the code structure to get you started:
  `visrc.lua`         | Lua startup and configuration script
 
 Testing infrastructure for the [low level core data structures]
-(https://github.com/martanne/vis/tree/test/test/core), [vim compatibility]
-(https://github.com/martanne/vis/tree/test/test/vim) and [vis specific features]
-(https://github.com/martanne/vis/tree/test/test/vis) is in place, but
+(https://github.com/martanne/vis-test/tree/master/core), [vim compatibility]
+(https://github.com/martanne/vis-test/tree/master/vim) and [vis specific features]
+(https://github.com/martanne/vis-test/tree/master/vis) is in place, but
 lacks proper test cases.

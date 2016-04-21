@@ -44,7 +44,7 @@ static void file_free(Vis *vis, File *file) {
 		--file->refcount;
 		return;
 	}
-	if (vis->event && vis->event->file_close)
+	if (!file->internal && vis->event && vis->event->file_close)
 		vis->event->file_close(vis, file);
 	text_free(file->text);
 	free((char*)file->name);
@@ -96,7 +96,7 @@ static File *file_new(Vis *vis, const char *filename) {
 
 	if (filename)
 		file->name = strdup(filename);
-	if (vis->event && vis->event->file_open)
+	if (!file->internal && vis->event && vis->event->file_open)
 		vis->event->file_open(vis, file);
 	return file;
 }
@@ -280,7 +280,6 @@ bool vis_window_new(Vis *vis, const char *filename) {
 		return false;
 	}
 
-	vis_window_name(win, filename);
 	vis_draw(vis);
 
 	return true;
@@ -323,7 +322,7 @@ void vis_window_swap(Win *a, Win *b) {
 
 void vis_window_close(Win *win) {
 	Vis *vis = win->vis;
-	if (vis->event && vis->event->win_close)
+	if (!win->file->internal && vis->event && vis->event->win_close)
 		vis->event->win_close(vis, win);
 	file_free(vis, win->file);
 	if (win->prev)
@@ -361,13 +360,19 @@ Vis *vis_new(Ui *ui, VisEvent *event) {
 		goto err;
 	if (!(vis->search_file = file_new_internal(vis, NULL)))
 		goto err;
+	if (!(vis->error_file = file_new_internal(vis, NULL)))
+		goto err;
 	if (!(vis->keymap = map_new()))
+		goto err;
+	if (!sam_init(vis))
 		goto err;
 	vis->mode_prev = vis->mode = &vis_modes[VIS_MODE_NORMAL];
 	vis->event = event;
+	if (event && event->vis_init)
+		event->vis_init(vis);
+	vis->ui->start(vis->ui);
 	if (event && event->vis_start)
 		event->vis_start(vis);
-	vis->ui->start(vis->ui);
 	return vis;
 err:
 	vis_free(vis);
@@ -384,10 +389,12 @@ void vis_free(Vis *vis) {
 		vis_window_close(vis->windows);
 	file_free(vis, vis->command_file);
 	file_free(vis, vis->search_file);
+	file_free(vis, vis->error_file);
 	for (int i = 0; i < LENGTH(vis->registers); i++)
 		register_release(&vis->registers[i]);
 	vis->ui->free(vis->ui);
 	map_free(vis->cmds);
+	map_free_full(vis->usercmds);
 	map_free(vis->options);
 	map_free(vis->actions);
 	map_free(vis->keymap);
@@ -846,7 +853,7 @@ static void vis_args(Vis *vis, int argc, char *argv[]) {
 		}
 	}
 
-	if (!vis->windows) {
+	if (!vis->windows && vis->running) {
 		if (!strcmp(argv[argc-1], "-")) {
 			if (!vis_window_new(vis, NULL))
 				vis_die(vis, "Can not create empty buffer\n");
@@ -874,6 +881,7 @@ static void vis_args(Vis *vis, int argc, char *argv[]) {
 }
 
 int vis_run(Vis *vis, int argc, char *argv[]) {
+	vis->running = true;
 	vis_args(vis, argc, argv);
 
 	struct timespec idle = { .tv_nsec = 0 }, *timeout = NULL;
@@ -881,7 +889,6 @@ int vis_run(Vis *vis, int argc, char *argv[]) {
 	sigset_t emptyset;
 	sigemptyset(&emptyset);
 	vis_draw(vis);
-	vis->running = true;
 	vis->exit_status = EXIT_SUCCESS;
 
 	sigsetjmp(vis->sigbus_jmpbuf, 1);

@@ -14,6 +14,7 @@ typedef struct Win Win;
 #include "text-regex.h"
 
 typedef struct {
+	void (*vis_init)(Vis*);
 	void (*vis_start)(Vis*);
 	void (*vis_quit)(Vis*);
 	void (*file_open)(Vis*, File*);
@@ -26,6 +27,7 @@ typedef struct {
 typedef union { /* various types of arguments passed to key action functions */
 	bool b;
 	int i;
+	size_t u;
 	const char *s;
 	const void *v;
 	void (*w)(View*);
@@ -394,6 +396,14 @@ void vis_cancel(Vis*);
 
 /* execute a :-command (including an optinal range specifier) */
 bool vis_cmd(Vis*, const char *cmd);
+
+/* type of user defined function which can be registered */
+typedef bool (*CmdFunc)(Vis*, Win*, void *data, bool force,
+	const char *argv[], Cursor*, Filerange*);
+/* the function will be invoked whenever a command which matches a
+ * unique prefix of the given name is executed */
+bool vis_cmd_register(Vis*, const char *name, void *data, CmdFunc);
+bool vis_cmd_unregister(Vis*, const char *name);
 /* execute any kind (:,?,/) of prompt command */
 bool vis_prompt_cmd(Vis*, const char *cmd);
 

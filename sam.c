@@ -109,6 +109,7 @@ static bool cmd_help(Vis*, Win*, Command*, const char *argv[], Cursor*, Filerang
 static bool cmd_map(Vis*, Win*, Command*, const char *argv[], Cursor*, Filerange*);
 static bool cmd_unmap(Vis*, Win*, Command*, const char *argv[], Cursor*, Filerange*);
 static bool cmd_langmap(Vis*, Win*, Command*, const char *argv[], Cursor*, Filerange*);
+static bool cmd_user(Vis*, Win*, Command*, const char *argv[], Cursor*, Filerange*);
 
 /* command recognized at the ':'-prompt. commands are found using a unique
  * prefix match. that is if a command should be available under an abbreviation
@@ -161,7 +162,21 @@ static const CommandDef cmds[] = {
 };
 
 static const CommandDef cmddef_select =
-	{ { "s"            }, 0,                                   NULL, cmd_select        };
+	{ { NULL           }, 0,                                   NULL, cmd_select        };
+
+static const CommandDef cmddef_user =
+	{ { NULL           }, CMD_ARGV|CMD_FORCE|CMD_ONCE,         NULL, cmd_user          };
+
+bool sam_init(Vis *vis) {
+	if (!(vis->cmds = map_new()))
+		return false;
+	bool ret = true;
+	for (const CommandDef *cmd = cmds; cmd && cmd->name[0]; cmd++) {
+		for (const char *const *name = cmd->name; *name; name++)
+			ret &= map_put(vis->cmds, *name, cmd);
+	}
+	return ret;
+}
 
 const char *sam_error(enum SamError err) {
 	static const char *error_msg[] = {
@@ -474,15 +489,6 @@ static void command_free(Command *cmd) {
 }
 
 static const CommandDef *command_lookup(Vis *vis, const char *name) {
-	if (!vis->cmds) {
-		if (!(vis->cmds = map_new()))
-			return NULL;
-
-		for (const CommandDef *cmd = cmds; cmd && cmd->name[0]; cmd++) {
-			for (const char *const *name = cmd->name; *name; name++)
-				map_put(vis->cmds, *name, cmd);
-		}
-	}
 	return map_closest(vis->cmds, name);
 }
 
@@ -768,16 +774,17 @@ enum SamError sam_cmd(Vis *vis, const char *s) {
 	Filerange range = text_range_empty();
 	sam_execute(vis, vis->win, cmd, NULL, &range);
 
-	bool completed = true;
-	for (Cursor *c = view_cursors(vis->win->view); c; c = view_cursors_next(c)) {
-		Filerange sel = view_cursors_selection_get(c);
-		if (text_range_valid(&sel)) {
-			completed = false;
-			break;
+	if (vis->win) {
+		bool completed = true;
+		for (Cursor *c = view_cursors(vis->win->view); c; c = view_cursors_next(c)) {
+			Filerange sel = view_cursors_selection_get(c);
+			if (text_range_valid(&sel)) {
+				completed = false;
+				break;
+			}
 		}
+		vis_mode_switch(vis, completed ? VIS_MODE_NORMAL : VIS_MODE_VISUAL);
 	}
-
-	vis_mode_switch(vis, completed ? VIS_MODE_NORMAL : VIS_MODE_VISUAL);
 	command_free(cmd);
 	return err;
 }
@@ -950,7 +957,7 @@ static bool cmd_select(Vis *vis, Win *win, Command *cmd, const char *argv[], Cur
 			break;
 	}
 
-	if (view == vis->win->view && primary != view_cursors_primary_get(view))
+	if (vis->win && vis->win->view == view && primary != view_cursors_primary_get(view))
 		view_cursors_primary_set(view_cursors(view));
 	return ret;
 }
