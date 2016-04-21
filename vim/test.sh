@@ -23,7 +23,7 @@ for t in $TESTS; do
 		VIM_OUT="$t.$VIM.out"
 		printf "Running test %s with %s ... " "$t" "$e"
 		rm -f "$OUT" "$ERR"
-		[ "$e" = "$VIM" ] && EDITOR="$VIM -u NONE"
+		[ "$e" = "$VIM" ] && EDITOR="$VIM -u NONE -U NONE -N -i NONE"
 		{ cat "$t.keys"; printf "<Escape>:wq! $OUT<Enter>"; } | cpp -P 2>/dev/null | ../util/keys | $EDITOR "$t.in" 2> /dev/null
 		if [ "$e" = "$VIM" ]; then
 			if [ -e "$REF" ]; then
