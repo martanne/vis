@@ -594,6 +594,7 @@ At this time there exists no API stability guarantees.
    - `textobject(id)` select/execute a text object
    - `motion_register(function)` register a Lua function as a motion, returns associated `id` or `-1`
    - `motion(id)` select/execute a motion
+   - `command_register(name, function(argv, force, win, cursor, range))` hook up a Lua function to `:name` command
    - `map(mode, key, function)` map a Lua function to `key` in `mode`
  - `file`
    - `content(pos, len)`

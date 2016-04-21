@@ -449,6 +449,40 @@ err:
 	return 1;
 }
 
+static bool command_lua(Vis *vis, Win *win, void *data, bool force, const char *argv[], Cursor *cur, Filerange *range) {
+	lua_State *L = vis->lua;
+	if (!func_ref_get(L, data))
+		return false;
+	lua_newtable(L);
+	for (size_t i = 0; argv[i]; i++) {
+		lua_pushunsigned(L, i);
+		lua_pushstring(L, argv[i]);
+		lua_settable(L, -3);
+	}
+	lua_pushboolean(L, force);
+	if (!obj_ref_new(L, win, "vis.window"))
+		return false;
+	if (!cur)
+		cur = view_cursors_primary_get(win->view);
+	if (!obj_ref_new(L, cur, "vis.window.cursor"))
+		return false;
+	pushrange(L, range);
+	if (pcall(vis, L, 5, 1) != 0)
+		return false;
+	return lua_toboolean(L, -1);
+}
+
+static int command_register(lua_State *L) {
+	bool ret = false;
+	const void *func;
+	Vis *vis = obj_ref_check(L, 1, "vis");
+	const char *name = luaL_checkstring(L, 2);
+	if (vis && lua_isfunction(L, 3) && (func = func_ref_new(L)))
+		ret = vis_cmd_register(vis, name, (void*)func, command_lua);
+	lua_pushboolean(L, ret);
+	return 1;
+}
+
 static int vis_index(lua_State *L) {
 	Vis *vis = obj_ref_check(L, 1, "vis");
 	if (!vis) {
@@ -520,6 +554,7 @@ static const struct luaL_Reg vis_lua[] = {
 	{ "motion_register", motion_register },
 	{ "textobject", textobject },
 	{ "textobject_register", textobject_register },
+	{ "command_register", command_register },
 	{ "__index", vis_index },
 	{ "__newindex", vis_newindex },
 	{ NULL, NULL },
