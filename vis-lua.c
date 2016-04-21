@@ -334,13 +334,22 @@ static int command(lua_State *L) {
 
 static int info(lua_State *L) {
 	Vis *vis = obj_ref_check(L, 1, "vis");
-	if (!vis) {
-		lua_pushnil(L);
-		return 1;
+	if (vis) {
+		const char *msg = luaL_checkstring(L, 2);
+		vis_info_show(vis, "%s", msg);
 	}
-	const char *msg = luaL_checkstring(L, 2);
-	vis_info_show(vis, "%s", msg);
-	return 0;
+	lua_pushboolean(L, vis != NULL);
+	return 1;
+}
+
+static int message(lua_State *L) {
+	Vis *vis = obj_ref_check(L, 1, "vis");
+	if (vis) {
+		const char *msg = luaL_checkstring(L, 2);
+		vis_message_show(vis, msg);
+	}
+	lua_pushboolean(L, vis != NULL);
+	return 1;
 }
 
 static int open(lua_State *L) {
@@ -564,6 +573,7 @@ static const struct luaL_Reg vis_lua[] = {
 	{ "windows", windows },
 	{ "command", command },
 	{ "info", info },
+	{ "message", message },
 	{ "open", open },
 	{ "map", map },
 	{ "motion", motion },

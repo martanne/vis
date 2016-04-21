@@ -588,7 +588,8 @@ At this time there exists no API stability guarantees.
    - `win` currently focused window
    - `windows()` iterator
    - `command(cmd)`
-   - `info(msg)`
+   - `info(msg)` display a single line message
+   - `message(msg)` display an arbitrarily long message
    - `open(filename)`
    - `textobject_register(function)` register a Lua function as a text object, returns associated `id` or `-1`
    - `textobject(id)` select/execute a text object
