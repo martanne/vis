@@ -23,7 +23,7 @@ for t in $test_files; do
 
 	printf "%-30s" "$t"
 	if [ -e $t.out ]; then
-		if cmp $t.ref $t.out 2> /dev/null; then
+		if cmp -s $t.ref $t.out 2> /dev/null; then
 			printf "PASS\n"
 			TESTS_OK=$((TESTS_OK + 1))
 		else
