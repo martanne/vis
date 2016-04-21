@@ -1,0 +1,55 @@
+args: 0
+bang: no
+name: basic_command_register.in
+pos: 49
+range: [0, 0]
+
+args: 0
+bang: yes
+name: basic_command_register.in
+pos: 122
+range: [0, 72]
+
+args: 0
+bang: yes
+name: basic_command_register.in
+pos: 197
+range: [8, 57]
+
+args: 0
+bang: no
+name: basic_command_register.in
+pos: 271
+range: [0, 222]
+
+args: 1
+	1 one
+bang: no
+name: basic_command_register.in
+pos: 353
+range: [0, 297]
+
+args: 2
+	1 one
+	2 two
+bang: no
+name: basic_command_register.in
+pos: 437
+range: [0, 374]
+
+args: 10
+	1 one
+	2 two
+	3 three
+	4 four
+	5 five
+	6 six
+	7 seven
+	8 eight
+	9 nine
+	10 ten
+bang: no
+name: basic_command_register.in
+pos: 563
+range: [0, 468]
+
