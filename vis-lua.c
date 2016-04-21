@@ -232,6 +232,20 @@ static int newindex_common(lua_State *L) {
 	return 0;
 }
 
+static void pushrange(lua_State *L, Filerange *r) {
+	if (!text_range_valid(r)) {
+		lua_pushnil(L);
+		return;
+	}
+	lua_createtable(L, 0, 2);
+	lua_pushstring(L, "start");
+	lua_pushunsigned(L, r->start);
+	lua_settable(L, -3);
+	lua_pushstring(L, "finish");
+	lua_pushunsigned(L, r->end);
+	lua_settable(L, -3);
+}
+
 static const char *keymapping(Vis *vis, const char *keys, const Arg *arg) {
 	lua_State *L = vis->lua;
 	if (!func_ref_get(L, arg->v))
@@ -658,17 +672,7 @@ static int window_cursor_index(lua_State *L) {
 
 		if (strcmp(key, "selection") == 0) {
 			Filerange sel = view_cursors_selection_get(cur);
-			if (text_range_valid(&sel)) {
-				lua_createtable(L, 0, 2);
-				lua_pushstring(L, "start");
-				lua_pushunsigned(L, sel.start);
-				lua_settable(L, -3);
-				lua_pushstring(L, "finish");
-				lua_pushunsigned(L, sel.end);
-				lua_settable(L, -3);
-			} else {
-				lua_pushnil(L);
-			}
+			pushrange(L, &sel);
 			return 1;
 		}
 	}
