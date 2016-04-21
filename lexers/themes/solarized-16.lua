@@ -23,58 +23,30 @@
 
 local lexers = vis.lexers
 
-local colors = {
-	['base03']  = '8',
-	['base02']  = '0',
-	['base01']  = '10',
-	['base00']  = '11',
-	['base0']   = '12',
-	['base1']   = '14',
-	['base2']   = '7',
-	['base3']   = '15',
-	['yellow']  = '3',
-	['orange']  = '9',
-	['red']     = '1',
-	['magenta'] = '5',
-	['violet']  = '13',
-	['blue']    = '4',
-	['cyan']    = '6',
-	['green']   = '2',
-} 
-
-lexers.colors = colors
--- dark
-local fg = ',fore:'..colors.base0..','
-local bg = ',back:'..colors.base03..','
--- light
--- local fg = ',fore:'..colors.base03..','
--- local bg = ',back:'..colors.base3..','
-
-lexers.STYLE_DEFAULT = bg..fg
-lexers.STYLE_NOTHING = bg
-lexers.STYLE_CLASS = 'fore:'..colors.yellow
-lexers.STYLE_COMMENT = 'fore:'..colors.base01
-lexers.STYLE_CONSTANT = 'fore:'..colors.cyan
-lexers.STYLE_DEFINITION = 'fore:'..colors.blue
-lexers.STYLE_ERROR = 'fore:'..colors.red..',italics'
-lexers.STYLE_FUNCTION = 'fore:'..colors.blue
-lexers.STYLE_KEYWORD = 'fore:'..colors.green
-lexers.STYLE_LABEL = 'fore:'..colors.green
-lexers.STYLE_NUMBER = 'fore:'..colors.cyan
-lexers.STYLE_OPERATOR = 'fore:'..colors.green
-lexers.STYLE_REGEX = 'fore:green'
-lexers.STYLE_STRING = 'fore:'..colors.cyan
-lexers.STYLE_PREPROCESSOR = 'fore:'..colors.orange
-lexers.STYLE_TAG = 'fore:'..colors.red
-lexers.STYLE_TYPE = 'fore:'..colors.yellow
-lexers.STYLE_VARIABLE = 'fore:'..colors.blue
-lexers.STYLE_WHITESPACE = ''
-lexers.STYLE_EMBEDDED = 'fore:'..colors.blue
-lexers.STYLE_IDENTIFIER = fg
-
-lexers.STYLE_LINENUMBER = fg
-lexers.STYLE_CURSOR = 'fore:'..colors.base03..',back:'..colors.base0
-lexers.STYLE_CURSOR_PRIMARY = lexers.STYLE_CURSOR..',blink'
-lexers.STYLE_CURSOR_LINE = 'back:'..colors.base02
-lexers.STYLE_COLOR_COLUMN = 'back:'..colors.base02
-lexers.STYLE_SELECTION = 'back:'..colors.base3
+lexers.STYLE_DEFAULT = 'fore:12,back:8'
+lexers.STYLE_NOTHING = ''
+lexers.STYLE_CLASS = 'fore:3,back:8'
+lexers.STYLE_COMMENT = 'fore:10,back:8'
+lexers.STYLE_CONSTANT = 'fore:6,back:8'
+lexers.STYLE_DEFINITION = 'fore:4,back:8'
+lexers.STYLE_ERROR = 'fore:1,back:8'
+lexers.STYLE_FUNCTION = 'fore:4,back:8'
+lexers.STYLE_KEYWORD = 'fore:2,back:8'
+lexers.STYLE_LABEL = 'fore:2,back:8'
+lexers.STYLE_NUMBER = 'fore:6,back:8'
+lexers.STYLE_OPERATOR = 'fore:12,back:8'
+lexers.STYLE_REGEX = 'fore:13,back:8'
+lexers.STYLE_STRING = 'fore:6,back:8'
+lexers.STYLE_PREPROCESSOR = 'fore:9,back:8'
+lexers.STYLE_TAG = 'fore:1,back:8'
+lexers.STYLE_TYPE = 'fore:3,back:8'
+lexers.STYLE_VARIABLE = 'fore:4,back:8'
+lexers.STYLE_WHITESPACE = 'fore:12,back:8'
+lexers.STYLE_EMBEDDED = 'fore:4,back:8'
+lexers.STYLE_IDENTIFIER = 'fore:12,back:8'
+lexers.STYLE_LINENUMBER = 'fore:12,back:8'
+lexers.STYLE_CURSOR = 'fore:8,back:14'
+lexers.STYLE_CURSOR_PRIMARY = 'fore:8,back:10'
+lexers.STYLE_CURSOR_LINE = 'back:0'
+lexers.STYLE_COLOR_COLUMN = 'back:0'
+lexers.STYLE_SELECTION = 'back:7'
