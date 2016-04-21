@@ -35,5 +35,7 @@ bool map_empty(const Map*);
 void map_clear(Map*);
 /* Release all memory associated with this map */
 void map_free(Map*);
+/* Call free(3) for every pointer stored in the map, then free the map itself */
+void map_free_full(Map*);
 
 #endif

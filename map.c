@@ -324,3 +324,17 @@ void map_free(Map *map)
 	map_clear(map);
 	free(map);
 }
+
+static bool free_elem(const char *key, void *value, void *data)
+{
+	free(value);
+	return true;
+}
+
+void map_free_full(Map *map)
+{
+	if (!map)
+		return;
+	map_iterate(map, free_elem, NULL);
+	map_free(map);
+}
