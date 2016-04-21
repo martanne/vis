@@ -546,9 +546,12 @@ static void print_mode(Mode *mode, Text *txt) {
 }
 
 static bool print_action(const char *key, void *value, void *data) {
-	Text *txt = data;
 	KeyAction *action = value;
-	return text_appendf(txt, "  %-30s\t%s\n", key, action->help);
+	return text_appendf(data, "  %-30s\t%s\n", key, action->help);
+}
+
+static bool print_cmd(const char *key, void *value, void *data) {
+	return text_appendf(data, "  %s\n", key);
 }
 
 static void print_symbolic_keys(Vis *vis, Text *txt) {
@@ -647,8 +650,7 @@ static bool cmd_help(Vis *vis, Win *win, Command *cmd, const char *argv[], Curso
 	print_mode(&vis_modes[VIS_MODE_INSERT], txt);
 
 	text_appendf(txt, "\n :-Commands\n\n");
-	for (const CommandDef *cmd = cmds; cmd && cmd->name[0]; cmd++)
-		text_appendf(txt, "  %s\n", cmd->name[0]);
+	map_iterate(vis->cmds, print_cmd, txt);
 
 	text_appendf(txt, "\n Key binding actions\n\n");
 	map_iterate(vis->actions, print_action, txt);
