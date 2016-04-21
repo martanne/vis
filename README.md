@@ -597,9 +597,9 @@ At this time there exists no API stability guarantees.
    - `command_register(name, function(argv, force, win, cursor, range))` hook up a Lua function to `:name` command
    - `map(mode, key, function)` map a Lua function to `key` in `mode`
  - `file`
-   - `content(pos, len)`
+   - `content(pos, len)` or `content({start, finish})`
    - `insert(pos, data)`
-   - `delete(pos, len)`
+   - `delete(pos, len)` or `delete({start, finish})`
    - `lines_iterator()`
    - `name`
    - `lines[0..#lines+1]` array giving read/write access to lines
@@ -612,11 +612,15 @@ At this time there exists no API stability guarantees.
    - `cursor` primary cursor
    - `syntax` lexer name used for syntax highlighting or `nil`
  - `cursor`
-     - `line` (1 based), `col` (1 based)
-     - `to(line, col)`
-     - `pos` bytes from start of file (0 based)
-     - `number` zero based index of cursor
-     - `selection` either `nil` or a table `{start, finish}`
+   - `line` (1 based), `col` (1 based)
+   - `to(line, col)`
+   - `pos` bytes from start of file (0 based)
+   - `number` one based index of cursor
+   - `selection` a `range`
+ - `range` denoted by absolute postions in bytes from the start of the file,
+   an invalid range is represented as `nil`
+   - `start`
+   - `finish`
 
 Most of the exposed objects are managed by the C core. Allthough there
 is a simple object life time management mechanism in place, it is still

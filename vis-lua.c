@@ -246,6 +246,22 @@ static void pushrange(lua_State *L, Filerange *r) {
 	lua_settable(L, -3);
 }
 
+static Filerange getrange(lua_State *L, int index) {
+	Filerange range = text_range_empty();
+	if (lua_istable(L, index)) {
+		lua_getfield(L, index, "start");
+		range.start = luaL_checkunsigned(L, -1);
+		lua_pop(L, 1);
+		lua_getfield(L, index, "finish");
+		range.end = luaL_checkunsigned(L, -1);
+		lua_pop(L, 1);
+	} else {
+		range.start = luaL_checkunsigned(L, index);
+		range.end = range.start + luaL_checkunsigned(L, index+1);
+	}
+	return range;
+}
+
 static const char *keymapping(Vis *vis, const char *keys, const Arg *arg) {
 	lua_State *L = vis->lua;
 	if (!func_ref_get(L, arg->v))
@@ -815,10 +831,8 @@ static int file_insert(lua_State *L) {
 static int file_delete(lua_State *L) {
 	File *file = obj_ref_check(L, 1, "vis.file");
 	if (file) {
-		size_t pos = luaL_checkunsigned(L, 2);
-		size_t len = luaL_checkunsigned(L, 3);
-		bool ret = text_delete(file->text, pos, len);
-		lua_pushboolean(L, ret);
+		Filerange range = getrange(L, 2);
+		lua_pushboolean(L, text_delete_range(file->text, &range));
 	} else {
 		lua_pushboolean(L, false);
 	}
@@ -859,12 +873,14 @@ static int file_content(lua_State *L) {
 	File *file = obj_ref_check(L, 1, "vis.file");
 	if (!file)
 		goto err;
-	size_t pos = luaL_checkunsigned(L, 2);
-	size_t len = luaL_checkunsigned(L, 3);
+	Filerange range = getrange(L, 2);
+	if (!text_range_valid(&range))
+		goto err;
+	size_t len = text_range_size(&range);
 	char *data = malloc(len);
 	if (!data)
 		goto err;
-	len = text_bytes_get(file->text, pos, len, data);
+	len = text_bytes_get(file->text, range.start, len, data);
 	lua_pushlstring(L, data, len);
 	free(data);
 	return 1;
