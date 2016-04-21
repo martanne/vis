@@ -617,7 +617,7 @@ At this time there exists no API stability guarantees.
    - `to(line, col)`
    - `pos` bytes from start of file (0 based)
    - `number` one based index of cursor
-   - `selection` a `range`
+   - `selection` read/write access to selection represented as a `range`
  - `range` denoted by absolute postions in bytes from the start of the file,
    an invalid range is represented as `nil`
    - `start`

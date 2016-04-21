@@ -752,6 +752,15 @@ static int window_cursor_newindex(lua_State *L) {
 			view_cursors_to(cur, pos);
 			return 0;
 		}
+
+		if (strcmp(key, "selection") == 0) {
+			Filerange sel = getrange(L, 3);
+			if (text_range_valid(&sel))
+				view_cursors_selection_set(cur, &sel);
+			else
+				view_cursors_selection_clear(cur);
+			return 0;
+		}
 	}
 	return newindex_common(L);
 }
