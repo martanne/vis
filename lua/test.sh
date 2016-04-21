@@ -12,7 +12,7 @@ export VIS_THEME=theme
 if [ $# -gt 0 ]; then
 	test_files=$@
 else
-	test_files=$(find . -type f -name "*.in")
+	test_files="$(find . -type f -name "*.in") basic_empty_file.in"
 fi
 
 for t in $test_files; do
