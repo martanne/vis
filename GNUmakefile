@@ -90,7 +90,16 @@ dependency/build/libtermkey-extract: dependency/sources/$(LIBTERMKEY).tar.gz | d
 	tar xzf $< -C $(dir $@)
 	touch $@
 
-dependency/build/libtermkey-build: dependency/build/libtermkey-extract dependency/build/libncurses-install
+dependency/sources/libtermkey-cflags.patch: | dependency/sources
+	wget -c -O $@.part http://www.eworm.de/download/linux/libtermkey-cflags.patch
+	mv $@.part $@
+	[ -z $(LIBTERMKEY_CFLAGS_SHA1) ] || (echo '$(LIBTERMKEY_CFLAGS_SHA1)  $@' | sha1sum -c)
+
+dependency/build/libtermkey-cflags: dependency/build/libtermkey-extract dependency/sources/libtermkey-cflags.patch
+	cd $(dir $<)/$(LIBTERMKEY) && patch -p1 < ../../sources/libtermkey-cflags.patch
+	touch $@
+
+dependency/build/libtermkey-build: dependency/build/libtermkey-cflags dependency/build/libncurses-install
 	# TODO no sane way to avoid pkg-config and specify LDFLAGS?
 	sed -i 's/LDFLAGS+=-lncurses$$/LDFLAGS+=-lncursesw/g' $(dir $<)/$(LIBTERMKEY)/Makefile
 	$(MAKE) -C $(dir $<)/$(LIBTERMKEY) PREFIX=$(DEPS_PREFIX) termkey.h libtermkey.la
