@@ -236,6 +236,7 @@ static const KeyBinding bindings_normal[] = {
 	{ "I",                  ACTION(INSERT_LINE_START)                   },
 	{ "i",                  ACTION(MODE_INSERT)                         },
 	{ "J",                  ACTION(JOIN_LINE_BELOW)                     },
+	{ "K",                  ALIAS("i<Enter><Escape>")                   },
 	{ "m",                  ACTION(MARK_SET)                            },
 	{ "<M-C-j>",            ACTION(CURSORS_NEW_LINE_BELOW_LAST)         },
 	{ "<M-C-k>",            ACTION(CURSORS_NEW_LINE_ABOVE_FIRST)        },
