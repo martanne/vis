@@ -109,16 +109,17 @@ dependency/build/liblua-extract: dependency/sources/$(LIBLUA).tar.gz | dependenc
 	tar xzf $< -C $(dir $@)
 	touch $@
 
-dependency/sources/lua-%-lpeg.patch: | dependency/sources
-	wget -c -O $@.part http://www.brain-dump.org/projects/vis/$(LIBLUA)-lpeg.patch
+dependency/sources/lua-%-lpeg.patch1: | dependency/sources
+	wget -c -O $@.part http://www.brain-dump.org/projects/vis/$(LIBLUA)-lpeg.patch1
 	mv $@.part $@
 	[ -z $(LIBLUA_LPEG_SHA1) ] || (echo '$(LIBLUA_LPEG_SHA1)  $@' | sha1sum -c)
 
-dependency/build/liblua-patch: dependency/build/liblua-extract dependency/sources/$(LIBLUA)-lpeg.patch
-	cd $(dir $<)/$(LIBLUA) && patch -p1 < ../../sources/$(LIBLUA)-lpeg.patch
+dependency/build/liblua-patch: dependency/build/liblua-extract dependency/sources/$(LIBLUA)-lpeg.patch1 dependency/build/liblpeg-extract
+	cd $(dir $<)/$(LIBLUA) && patch -p1 < ../../sources/$(LIBLUA)-lpeg.patch1
+	cp $(dir $<)/$(LIBLPEG)/*.[ch] $(dir $<)/$(LIBLUA)/src
 	touch $@
 
-dependency/build/liblua-build: dependency/build/liblua-patch dependency/build/liblpeg-install
+dependency/build/liblua-build: dependency/build/liblua-patch
 	$(MAKE) -C $(dir $<)/$(LIBLUA)/src all CC=$(CC) MYCFLAGS="-DLUA_COMPAT_5_1 -DLUA_COMPAT_5_2 -DLUA_COMPAT_ALL -DLUA_USE_POSIX -DLUA_USE_DLOPEN -fPIC" MYLIBS="-Wl,-E -ldl -lm"
 	#$(MAKE) -C $(dir $<)/$(LIBLUA) posix CC=$(CC)
 	touch $@
@@ -136,15 +137,7 @@ dependency/build/liblpeg-extract: dependency/sources/$(LIBLPEG).tar.gz | depende
 	tar xzf $< -C $(dir $@)
 	touch $@
 
-dependency/build/liblpeg-build: dependency/build/liblpeg-extract
-	$(MAKE) -C $(dir $<)/$(LIBLPEG) LUADIR=../$(LIBLUA)/src CC=$(CC)
-	touch $@
-
-dependency/build/liblpeg-install: dependency/build/liblpeg-build dependency/build/liblua-extract
-	cp $(dir $<)/$(LIBLPEG)/*.o $(dir $<)/$(LIBLUA)/src
-	touch $@
-
-dependencies-common: dependency/build/libtermkey-install dependency/build/liblua-install dependency/build/liblpeg-install
+dependencies-common: dependency/build/libtermkey-install dependency/build/liblua-install
 
 dependency/build/local: dependencies-common
 	touch $@
