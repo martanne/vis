@@ -259,7 +259,7 @@ for curses in ncursesw ncurses curses; do
 		fi
 	fi
 
-	CFLAGS_CURSES="-I/usr/include/$curses"
+	CFLAGS_CURSES=""
 	LDFLAGS_CURSES="-l$curses"
 
 	if $CC $CFLAGS $CFLAGS_CURSES "$tmpc" \
@@ -336,8 +336,8 @@ EOF
 			fi
 		fi
 
-		CFLAGS_LUA="-I/usr/include/$liblua"
-		LDFLAGS_LUA="-l$liblua -lm"
+		CFLAGS_LUA=""
+		LDFLAGS_LUA="-l$liblua -lm -ldl"
 
 		if $CC $CFLAGS $CFLAGS_LUA "$tmpc" \
 			$LDFLAGS $LDFLAGS_LUA -o "$tmpo" >/dev/null 2>&1 ; then
