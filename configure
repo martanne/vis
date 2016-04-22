@@ -225,7 +225,9 @@ tryflag CFLAGS -fPIE
 tryflag CFLAGS_AUTO -fstack-protector-all
 tryldflag LDFLAGS -Wl,-z,now
 tryldflag LDFLAGS -Wl,-z,relro
-#tryldflag LDFLAGS_AUTO -pie
+# You can not link libraries with -pie (unless you add a main() function).
+# So keep this a vis-only flag.
+tryldflag LDFLAGS_AUTO -pie
 
 printf "creating config.mk... "
 
