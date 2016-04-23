@@ -73,6 +73,7 @@ Or simply use one of the distribution provided packages:
 
  * [ArchLinux](http://www.archlinux.org/packages/?q=vis)
  * [Alpine Linux](https://pkgs.alpinelinux.org/packages?name=vis)
+ * [NixOS](https://github.com/NixOS/nixpkgs/blob/master/pkgs/applications/editors/vis/default.nix)
  * [Source Mage GNU/Linux](http://download.sourcemage.org/grimoire/codex/test/editors/vis)
  * [Void Linux](https://github.com/voidlinux/void-packages/tree/master/srcpkgs/vis)
  * [pkgsrc](http://pkgsrc.se/wip/vis-editor)
