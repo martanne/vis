@@ -1,6 +1,7 @@
 /* this file is included from sam.c */
 
 #include <termkey.h>
+#include "vis-lua.h"
 
 #ifndef VIS_OPEN
 #define VIS_OPEN "vis-open"
@@ -658,6 +659,20 @@ static bool cmd_help(Vis *vis, Win *win, Command *cmd, const char *argv[], Curso
 	text_appendf(txt, "\n Symbolic keys usable for key bindings "
 		"(prefix with C-, S-, and M- for Ctrl, Shift and Alt respectively)\n\n");
 	print_symbolic_keys(vis, txt);
+
+	const char *paths = vis_lua_paths_get(vis);
+	if (paths) {
+		char *copy = strdup(paths);
+		text_appendf(txt, "\n Lua paths used to load runtime files "
+			"(? will be replaced by filename):\n\n");
+		for (char *elem = copy, *next; elem; elem = next) {
+			if ((next = strstr(elem, ";")))
+				*next++ = '\0';
+			if (*elem)
+				text_appendf(txt, "  %s\n", elem);
+		}
+		free (copy);
+	}
 
 	text_save(txt, NULL);
 	return true;

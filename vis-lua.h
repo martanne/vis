@@ -11,6 +11,12 @@ typedef struct lua_State lua_State;
 
 #include "vis.h"
 
+/* add a directory to consider when loading lua files */
+bool vis_lua_path_add(Vis*, const char *path);
+/* get semi colon separated list of paths to load lua files */
+const char *vis_lua_paths_get(Vis*);
+
+/* various event handlers, triggered by the vis core */
 void vis_lua_init(Vis*);
 void vis_lua_start(Vis*);
 void vis_lua_quit(Vis*);

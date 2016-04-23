@@ -17,6 +17,8 @@
 
 #if !CONFIG_LUA
 
+bool vis_lua_path_add(Vis *vis, const char *path) { return true; }
+const char *vis_lua_paths_get(Vis *vis) { return NULL; }
 void vis_lua_init(Vis *vis) { }
 void vis_lua_start(Vis *vis) { }
 void vis_lua_quit(Vis *vis) { }
@@ -1033,7 +1035,7 @@ static bool vis_lua_path_strip(Vis *vis) {
 	return true;
 }
 
-static bool vis_lua_path_add(Vis *vis, const char *path) {
+bool vis_lua_path_add(Vis *vis, const char *path) {
 	if (!path)
 		return false;
 	lua_State *L = vis->lua;
@@ -1047,6 +1049,15 @@ static bool vis_lua_path_add(Vis *vis, const char *path) {
 	lua_setfield(L, -2, "path");
 	lua_pop(L, 1); /* package */
 	return true;
+}
+
+const char *vis_lua_paths_get(Vis *vis) {
+	lua_State *L = vis->lua;
+	if (!L)
+		return NULL;
+	lua_getglobal(L, "package");
+	lua_getfield(L, -1, "path");
+	return lua_tostring(L, -1);
 }
 
 void vis_lua_init(Vis *vis) {
