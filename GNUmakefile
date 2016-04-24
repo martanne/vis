@@ -169,6 +169,7 @@ dependencies-local:
 	$(MAKE) dependency/build/local
 
 local: clean
+	./configure --environment-only
 	$(MAKE) dependencies-local
 	./configure CFLAGS="-I$(DEPS_INC)" LDFLAGS="-L$(DEPS_LIB)" LD_LIBRARY_PATH="$(DEPS_LIB)"
 	$(MAKE)
@@ -176,6 +177,7 @@ local: clean
 
 standalone: clean
 	[ ! -e dependency/build/local ] || $(MAKE) dependencies-clean
+	./configure --environment-only
 	$(MAKE) dependency/build/libmusl-install
 	PATH=$(DEPS_BIN):$$PATH PKG_CONFIG_PATH= PKG_CONFIG_LIBDIR= $(MAKE) \
 		CC=musl-gcc dependency/build/standalone
