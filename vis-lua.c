@@ -822,6 +822,11 @@ static int file_index(lua_State *L) {
 			lua_pushunsigned(L, text_size(file->text));
 			return 1;
 		}
+
+		if (strcmp(key, "modified") == 0) {
+			lua_pushboolean(L, text_modified(file->text));
+			return 1;
+		}
 	}
 
 	return index_common(L);

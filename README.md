@@ -607,6 +607,7 @@ At this time there exists no API stability guarantees.
    - `lines[0..#lines+1]` array giving read/write access to lines
    - `newlines` type of newlines either `"nl"` or `"crnl"`
    - `size` current file size in bytes
+   - `modified` whether the file contains unsaved changes
  - `window`
    - `file`
    - `cursors_iterator()`
