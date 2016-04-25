@@ -467,9 +467,6 @@ fi
 
 printf "completing config.mk... "
 
-cmdline=$(quote "$0")
-for i ; do cmdline="$cmdline $(quote "$i")" ; done
-
 exec 3>&1 1>>config.mk
 
 cat << EOF
