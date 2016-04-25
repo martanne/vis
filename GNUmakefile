@@ -177,11 +177,11 @@ local: clean
 
 standalone: clean
 	[ ! -e dependency/build/local ] || $(MAKE) dependencies-clean
-	./configure --environment-only
+	./configure --environment-only --static
 	$(MAKE) dependency/build/libmusl-install
 	PATH=$(DEPS_BIN):$$PATH PKG_CONFIG_PATH= PKG_CONFIG_LIBDIR= $(MAKE) \
 		CC=musl-gcc dependency/build/standalone
-	PATH=$(DEPS_BIN):$$PATH PKG_CONFIG_PATH= PKG_CONFIG_LIBDIR= ./configure \
+	PATH=$(DEPS_BIN):$$PATH PKG_CONFIG_PATH= PKG_CONFIG_LIBDIR= ./configure --static \
 		CFLAGS="-I$(DEPS_INC) --static -Wl,--as-needed" LDFLAGS="-L$(DEPS_LIB)" CC=musl-gcc
 	PATH=$(DEPS_BIN):$$PATH $(MAKE)
 
