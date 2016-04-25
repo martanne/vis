@@ -29,4 +29,4 @@ delete(win, '%')
 for i, res in pairs(results) do
 	append(win, i-1, tostring(res))
 end
-vis:command('w! basic_cursor.status')
+vis:command('w! basic_cursor.out')

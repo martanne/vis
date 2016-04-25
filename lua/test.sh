@@ -30,15 +30,6 @@ for t in $test_files; do
 			printf "FAIL\n"
 			diff -u "$t".ref "$t".out > "$t".err
 		fi
-	elif [ -e "$t".status ]; then
-		if ! grep -v true "$t".status > /dev/null; then
-			printf "PASS\n"
-			TESTS_OK=$((TESTS_OK + 1))
-		else
-			printf "FAIL\n"
-			printf "%s\n" "$t" > "$t".err
-			grep -vn true "$t".status >> "$t".err
-		fi
 	else
 		printf "FAIL\n"
 	fi
