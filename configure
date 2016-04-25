@@ -13,6 +13,7 @@ Defaults for the options are specified in brackets.
 Configuration:
   --srcdir=DIR            source directory [detected]
   --environment-only      check environment only, no system libraries
+  --static                prepare for static build
 
 Installation directories:
   --prefix=PREFIX         main installation prefix [/usr/local]
@@ -127,6 +128,7 @@ case "$arg" in
 --sharedir=*) SHAREDIR=${arg#*=} ;;
 --mandir=*) MANDIR=${arg#*=} ;;
 --environment-only) environmentonly=yes ;;
+--static) static=yes ;;
 --enable-lua|--enable-lua=yes) lua=yes ;;
 --disable-lua|--enable-lua=no) lua=no ;;
 --enable-selinux|--enable-selinux=yes) selinux=yes ;;
@@ -227,7 +229,9 @@ tryldflag LDFLAGS -Wl,-z,now
 tryldflag LDFLAGS -Wl,-z,relro
 # You can not link libraries with -pie (unless you add a main() function).
 # So keep this a vis-only flag.
-tryldflag LDFLAGS_AUTO -pie
+if test "$static" != "yes" ; then
+	tryldflag LDFLAGS_AUTO -pie
+fi
 
 printf "creating config.mk... "
 
