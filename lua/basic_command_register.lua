@@ -1,5 +1,8 @@
 local win = vis.win
+local cnt = 0
 vis:command_register("foo", function(argv, force, win, cursor, range)
+	cnt = cnt + 1
+	append(win, '$', 'test: ' .. cnt)
 	append(win, '$', 'args: ' .. #argv)
 	for i,arg in ipairs(argv) do
 		append(win, '$', '\t' .. i .. ' ' .. arg)
@@ -16,12 +19,10 @@ end)
 
 vis:command('foo')
 vis:command('foo!')
--- TODO Providing a range does not work
 vis:command('2,4foo!')
 vis:command('%foo')
 vis:command('foo one')
 vis:command('foo one two')
--- TODO Is there a limit on number of arguments?
-vis:command('foo one two three four five six seven eight nine ten')
+vis:command('foo one two three four five six')
 
 vis:command('w! basic_command_register.out')
