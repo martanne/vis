@@ -227,9 +227,13 @@ tryflag CFLAGS -fPIE
 tryflag CFLAGS_AUTO -fstack-protector-all
 tryldflag LDFLAGS -Wl,-z,now
 tryldflag LDFLAGS -Wl,-z,relro
-# You can not link libraries with -pie (unless you add a main() function).
-# So keep this a vis-only flag.
-if test "$static" != "yes" ; then
+# in theory it should be perfectly fine to produce a staticically linked PIE
+# however in practice it is not yet properly supported by gcc:
+#
+#  cc -fPIE -pie --static
+#
+# will always add a PT_INTERP referencing the dynamic loader/linker
+if test "$static" != "yes" || tryldflag LDFLAGS_AUTO -Wl,--no-dynamic-linker ; then
 	tryldflag LDFLAGS_AUTO -pie
 fi
 

@@ -51,6 +51,8 @@ dependency/build/libmusl-extract: dependency/sources/$(LIBMUSL).tar.gz | depende
 	touch $@
 
 dependency/build/libmusl-configure: dependency/build/libmusl-extract
+	# tweak musl gcc wrapper/spec file to support static PIE linking
+	sed -i 's#%{pie:S}crt1.o#%{pie:%{static:rcrt1.o%s;:Scrt1.o%s};:crt1.o%s}#' $(dir $<)/$(LIBMUSL)/tools/musl-gcc.specs.sh
 	cd $(dir $<)/$(LIBMUSL) && ./configure --prefix=$(DEPS_PREFIX) --syslibdir=$(DEPS_PREFIX)/lib
 	touch $@
 
