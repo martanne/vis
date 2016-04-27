@@ -284,8 +284,7 @@ size_t text_line_char_next(Text *txt, size_t pos) {
 	Iterator it = text_iterator_get(txt, pos);
 	if (!text_iterator_byte_get(&it, &c) || c == '\r' || c == '\n')
 		return pos;
-	if (!text_iterator_char_next(&it, &c) || c == '\r' || c == '\n')
-		return pos;
+	text_iterator_char_next(&it, NULL);
 	return it.pos;
 }
 
