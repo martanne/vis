@@ -161,6 +161,7 @@ int view_cursors_cell_set(Cursor*, int cell);
 /* place cursor at `pos' which should be in the interval [0, text-size] */
 void view_cursors_to(Cursor*, size_t pos);
 void view_cursors_scroll_to(Cursor*, size_t pos);
+/* place cursor on given (line, column) pair, both values are 1-based */
 void view_cursors_place(Cursor*, size_t line, size_t col);
 /* get register associated with this register */
 Register *view_cursors_register(Cursor*);
