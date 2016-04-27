@@ -520,7 +520,7 @@ static int vis_index(lua_State *L) {
 	if (lua_isstring(L, 2)) {
 		const char *key = lua_tostring(L, 2);
 		if (strcmp(key, "win") == 0) {
-			obj_ref_new(L, vis->windows, "vis.window");
+			obj_ref_new(L, vis->win, "vis.window");
 			return 1;
 		}
 
