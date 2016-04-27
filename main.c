@@ -829,7 +829,7 @@ static const KeyAction vis_action[] = {
 	[VIS_ACTION_APPEND_CHAR_NEXT] = {
 		"append-char-next",
 		"Append text after the cursor",
-		insertmode, { .i = VIS_MOVE_CHAR_NEXT }
+		insertmode, { .i = VIS_MOVE_LINE_CHAR_NEXT }
 	},
 	[VIS_ACTION_APPEND_LINE_END] = {
 		"append-line-end",
