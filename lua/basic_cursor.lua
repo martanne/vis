@@ -7,8 +7,8 @@ results[3] = win.cursor.pos == 0
 -- Place cursor within text
 win.cursor:to(5, 3)
 results[4] = win.cursor.line == 5
-results[5] = win.cursor.col == 4
-results[6] = win.cursor.pos == 31
+results[5] = win.cursor.col == 3
+results[6] = win.cursor.pos == 30
 -- Invalid location
 win.cursor:to(0, 0)
 results[7] = win.cursor.line == 1
