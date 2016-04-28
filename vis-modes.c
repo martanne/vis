@@ -35,7 +35,7 @@ static bool mode_map(Mode *mode, const char *key, const KeyBinding *binding) {
 		if (!mode->bindings)
 			return false;
 	}
-	return map_put(mode->bindings, key, binding);
+	return (strcmp(key, "<") == 0 || !map_contains(mode->bindings, key)) && map_put(mode->bindings, key, binding);
 }
 
 bool vis_mode_map(Vis *vis, enum VisMode id, const char *key, const KeyBinding *binding) {
