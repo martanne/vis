@@ -666,11 +666,11 @@ void vis_die(Vis *vis, const char *msg, ...) {
 }
 
 const char *vis_keys_next(Vis *vis, const char *keys) {
+	if (!keys || !*keys)
+		return NULL;
 	TermKeyKey key;
 	TermKey *termkey = vis->ui->termkey_get(vis->ui);
 	const char *next = NULL;
-	if (!keys)
-		return NULL;
 	/* first try to parse a special key of the form <Key> */
 	if (*keys == '<' && (next = termkey_strpkey(termkey, keys+1, &key, TERMKEY_FORMAT_VIM)) && *next == '>')
 		return next+1;

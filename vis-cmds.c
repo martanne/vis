@@ -727,59 +727,50 @@ static bool cmd_langmap(Vis *vis, Win *win, Command *cmd, const char *argv[], Cu
 }
 
 static bool cmd_map(Vis *vis, Win *win, Command *cmd, const char *argv[], Cursor *cur, Filerange *range) {
+	KeyBinding *binding = NULL;
+	bool mapped = false;
 	bool local = strstr(argv[0], "-") != NULL;
 	enum VisMode mode = str2vismode(argv[1]);
-	const char *lhs = argv[2];
-	const char *rhs = argv[3];
 
-	if (mode == VIS_MODE_INVALID || !lhs || !rhs) {
+	if (mode == VIS_MODE_INVALID || !argv[2] || !argv[3]) {
 		vis_info_show(vis, "usage: map mode lhs rhs\n");
 		return false;
 	}
 
-	KeyBinding *binding = calloc(1, sizeof *binding);
-	if (!binding)
-		return false;
-	if (rhs[0] == '<') {
-		const char *next = vis_keys_next(vis, rhs);
-		if (next && next[-1] == '>') {
-			const char *start = rhs + 1;
-			const char *end = next - 1;
-			char key[64];
-			if (end > start && end - start - 1 < (ptrdiff_t)sizeof key) {
-				memcpy(key, start, end - start);
-				key[end - start] = '\0';
-				binding->action = map_get(vis->actions, key);
-			}
+	char *lhs = strdup(argv[2]);
+	char *rhs = strdup(argv[3]);
+	if (!lhs || !rhs || !(binding = calloc(1, sizeof *binding)))
+		goto err;
+
+	char *next = lhs;
+	while (cmd->flags == '!' && next) {
+		char tmp;
+		next = (char*)vis_keys_next(vis, next);
+		if (next) {
+			tmp = *next;
+			*next = '\0';
 		}
+		if (local)
+			vis_window_mode_unmap(win, mode, lhs);
+		else
+			vis_mode_unmap(vis, mode, lhs);
+		if (next)
+			*next = tmp;
 	}
 
-	if (!binding->action) {
-		binding->alias = strdup(rhs);
-		if (!binding->alias) {
-			free(binding);
-			return false;
-		}
-	}
+	binding->alias = rhs;
 
-	bool mapped;
 	if (local)
 		mapped = vis_window_mode_map(win, mode, lhs, binding);
 	else
 		mapped = vis_mode_map(vis, mode, lhs, binding);
 
-	if (!mapped && cmd->flags == '!') {
-		if (local) {
-			mapped = vis_window_mode_unmap(win, mode, lhs) &&
-			         vis_window_mode_map(win, mode, lhs, binding);
-		} else {
-			mapped = vis_mode_unmap(vis, mode, lhs) &&
-			         vis_mode_map(vis, mode, lhs, binding);
-		}
-	}
-
-	if (!mapped)
+err:
+	free(lhs);
+	if (!mapped) {
+		free(rhs);
 		free(binding);
+	}
 	return mapped;
 }
 
