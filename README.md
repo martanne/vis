@@ -885,6 +885,7 @@ A quick overview over the code structure to get you started:
  `vis-operators.c`   | vi(m) operator implementation
  `vis-prompt.c`      | `:`, `/` and `?` prompt implemented as a regular file/window with custom key bindings
  `vis-text-objects.c`| vi(m) text object implementations, uses `text-objects.h` internally
+ `vis.lua`           | Lua library for vis, providing parts of the exposed API
  `visrc.lua`         | Lua startup and configuration script
 
 Testing infrastructure for the [low level core data structures]
