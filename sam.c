@@ -725,12 +725,16 @@ static Filerange address_evaluate(Address *addr, File *file, Filerange *range, i
 
 static bool sam_execute(Vis *vis, Win *win, Command *cmd, Cursor *cur, Filerange *range) {
 	bool ret = true;
-	if (cmd->address)
+	if (cmd->address && win)
 		*range = address_evaluate(cmd->address, win->file, range, 0);
 
 	switch (cmd->argv[0][0]) {
 	case '{':
 	{
+		if (!win) {
+			ret = false;
+			break;
+		}
 		Text *txt = win->file->text;
 		Mark start, end;
 		Filerange group = *range;
@@ -790,6 +794,8 @@ enum SamError sam_cmd(Vis *vis, const char *s) {
 }
 
 static bool cmd_insert(Vis *vis, Win *win, Command *cmd, const char *argv[], Cursor *cur, Filerange *range) {
+	if (!win)
+		return false;
 	size_t len = strlen(argv[1]);
 	bool ret = text_insert(win->file->text, range->start, argv[1], len);
 	if (ret)
@@ -798,6 +804,8 @@ static bool cmd_insert(Vis *vis, Win *win, Command *cmd, const char *argv[], Cur
 }
 
 static bool cmd_append(Vis *vis, Win *win, Command *cmd, const char *argv[], Cursor *cur, Filerange *range) {
+	if (!win)
+		return false;
 	size_t len = strlen(argv[1]);
 	bool ret = text_insert(win->file->text, range->end, argv[1], len);
 	if (ret)
@@ -806,6 +814,8 @@ static bool cmd_append(Vis *vis, Win *win, Command *cmd, const char *argv[], Cur
 }
 
 static bool cmd_change(Vis *vis, Win *win, Command *cmd, const char *argv[], Cursor *cur, Filerange *range) {
+	if (!win)
+		return false;
 	Text *txt = win->file->text;
 	size_t len = strlen(argv[1]);
 	bool ret = text_delete(txt, range->start, text_range_size(range)) &&
@@ -816,6 +826,8 @@ static bool cmd_change(Vis *vis, Win *win, Command *cmd, const char *argv[], Cur
 }
 
 static bool cmd_delete(Vis *vis, Win *win, Command *cmd, const char *argv[], Cursor *cur, Filerange *range) {
+	if (!win)
+		return false;
 	bool ret = text_delete(win->file->text, range->start, text_range_size(range));
 	if (ret)
 		*range = text_range_new(range->start, range->start);
@@ -823,6 +835,8 @@ static bool cmd_delete(Vis *vis, Win *win, Command *cmd, const char *argv[], Cur
 }
 
 static bool cmd_guard(Vis *vis, Win *win, Command *cmd, const char *argv[], Cursor *cur, Filerange *range) {
+	if (!win)
+		return false;
 	bool match = !text_search_range_forward(win->file->text, range->start,
 		text_range_size(range), cmd->regex, 0, NULL, 0);
 	if (match ^ (argv[0][0] == 'v'))
@@ -832,6 +846,8 @@ static bool cmd_guard(Vis *vis, Win *win, Command *cmd, const char *argv[], Curs
 }
 
 static bool cmd_extract(Vis *vis, Win *win, Command *cmd, const char *argv[], Cursor *cur, Filerange *range) {
+	if (!win)
+		return false;
 	bool ret = true;
 	Text *txt = win->file->text;
 
@@ -911,6 +927,9 @@ static bool cmd_extract(Vis *vis, Win *win, Command *cmd, const char *argv[], Cu
 }
 
 static bool cmd_select(Vis *vis, Win *win, Command *cmd, const char *argv[], Cursor *cur, Filerange *range) {
+	Filerange sel = text_range_empty();
+	if (!win)
+		return sam_execute(vis, NULL, cmd->cmd, NULL, &sel);
 	bool ret = true;
 	View *view = win->view;
 	Text *txt = win->file->text;
@@ -919,7 +938,6 @@ static bool cmd_select(Vis *vis, Win *win, Command *cmd, const char *argv[], Cur
 
 	for (Cursor *c = view_cursors(view), *next; c && ret; c = next) {
 		next = view_cursors_next(c);
-		Filerange sel;
 		size_t pos = view_cursors_pos(c);
 		if (vis->mode->visual) {
 			sel = view_cursors_selection_get(c);
@@ -963,7 +981,7 @@ static bool cmd_select(Vis *vis, Win *win, Command *cmd, const char *argv[], Cur
 }
 
 static bool cmd_print(Vis *vis, Win *win, Command *cmd, const char *argv[], Cursor *cur, Filerange *range) {
-	if (!text_range_valid(range))
+	if (!win || !text_range_valid(range))
 		return false;
 	View *view = win->view;
 	Text *txt = win->file->text;
@@ -1007,6 +1025,8 @@ static bool cmd_substitute(Vis *vis, Win *win, Command *cmd, const char *argv[],
 }
 
 static bool cmd_write(Vis *vis, Win *win, Command *cmd, const char *argv[], Cursor *cur, Filerange *r) {
+	if (!win)
+		return false;
 	File *file = win->file;
 	Text *text = file->text;
 	bool noname = !argv[1];
@@ -1117,6 +1137,8 @@ static ssize_t read_buffer(void *context, char *data, size_t len) {
 }
 
 static bool cmd_filter(Vis *vis, Win *win, Command *cmd, const char *argv[], Cursor *cur, Filerange *range) {
+	if (!win)
+		return false;
 	Text *txt = win->file->text;
 
 	/* The general idea is the following:
@@ -1174,6 +1196,8 @@ static bool cmd_launch(Vis *vis, Win *win, Command *cmd, const char *argv[], Cur
 }
 
 static bool cmd_pipein(Vis *vis, Win *win, Command *cmd, const char *argv[], Cursor *cur, Filerange *range) {
+	if (!win)
+		return false;
 	Filerange filter_range = text_range_new(range->end, range->end);
 	bool ret = cmd_filter(vis, win, cmd, (const char*[]){ argv[0], argv[1], NULL }, cur, &filter_range);
 	if (ret) {
@@ -1186,6 +1210,8 @@ static bool cmd_pipein(Vis *vis, Win *win, Command *cmd, const char *argv[], Cur
 }
 
 static bool cmd_pipeout(Vis *vis, Win *win, Command *cmd, const char *argv[], Cursor *cur, Filerange *range) {
+	if (!win)
+		return false;
 	Buffer buferr;
 	buffer_init(&buferr);
 

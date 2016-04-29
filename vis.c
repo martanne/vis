@@ -286,7 +286,7 @@ bool vis_window_new(Vis *vis, const char *filename) {
 }
 
 bool vis_window_closable(Win *win) {
-	if (!text_modified(win->file->text))
+	if (!win || !text_modified(win->file->text))
 		return true;
 	return win->file->refcount > 1;
 }
@@ -321,6 +321,8 @@ void vis_window_swap(Win *a, Win *b) {
 }
 
 void vis_window_close(Win *win) {
+	if (!win)
+		return;
 	Vis *vis = win->vis;
 	if (!win->file->internal && vis->event && vis->event->win_close)
 		vis->event->win_close(vis, win);

@@ -91,7 +91,10 @@ static bool cmd_set(Vis *vis, Win *win, Command *cmd, const char *argv[], Cursor
 			OPTION_TYPE_NUMBER,
 			OPTION_TYPE_UNSIGNED,
 		} type;
-		bool optional;
+		enum {
+			OPTION_FLAG_OPTIONAL = 1 << 0,
+			OPTION_FLAG_WINDOW = 1 << 1,
+		} flags;
 		int index;
 	} OptionDef;
 
@@ -99,29 +102,29 @@ static bool cmd_set(Vis *vis, Win *win, Command *cmd, const char *argv[], Cursor
 		OPTION_AUTOINDENT,
 		OPTION_EXPANDTAB,
 		OPTION_TABWIDTH,
+		OPTION_THEME,
 		OPTION_SYNTAX,
 		OPTION_SHOW,
 		OPTION_NUMBER,
 		OPTION_NUMBER_RELATIVE,
 		OPTION_CURSOR_LINE,
-		OPTION_THEME,
 		OPTION_COLOR_COLUMN,
 		OPTION_HORIZON,
 	};
 
 	/* definitions have to be in the same order as the enum above */
 	static OptionDef options[] = {
-		[OPTION_AUTOINDENT]      = { { "autoindent", "ai"       }, OPTION_TYPE_BOOL   },
-		[OPTION_EXPANDTAB]       = { { "expandtab", "et"        }, OPTION_TYPE_BOOL   },
-		[OPTION_TABWIDTH]        = { { "tabwidth", "tw"         }, OPTION_TYPE_NUMBER },
-		[OPTION_SYNTAX]          = { { "syntax"                 }, OPTION_TYPE_STRING, true },
-		[OPTION_SHOW]            = { { "show"                   }, OPTION_TYPE_STRING },
-		[OPTION_NUMBER]          = { { "numbers", "nu"          }, OPTION_TYPE_BOOL   },
-		[OPTION_NUMBER_RELATIVE] = { { "relativenumbers", "rnu" }, OPTION_TYPE_BOOL   },
-		[OPTION_CURSOR_LINE]     = { { "cursorline", "cul"      }, OPTION_TYPE_BOOL   },
-		[OPTION_THEME]           = { { "theme"                  }, OPTION_TYPE_STRING },
-		[OPTION_COLOR_COLUMN]    = { { "colorcolumn", "cc"      }, OPTION_TYPE_NUMBER },
-		[OPTION_HORIZON]         = { { "horizon"                }, OPTION_TYPE_UNSIGNED },
+		[OPTION_AUTOINDENT]      = { { "autoindent", "ai"       }, OPTION_TYPE_BOOL                                              },
+		[OPTION_EXPANDTAB]       = { { "expandtab", "et"        }, OPTION_TYPE_BOOL                                              },
+		[OPTION_TABWIDTH]        = { { "tabwidth", "tw"         }, OPTION_TYPE_NUMBER                                            },
+		[OPTION_THEME]           = { { "theme"                  }, OPTION_TYPE_STRING,                                           },
+		[OPTION_SYNTAX]          = { { "syntax"                 }, OPTION_TYPE_STRING,   OPTION_FLAG_WINDOW|OPTION_FLAG_OPTIONAL },
+		[OPTION_SHOW]            = { { "show"                   }, OPTION_TYPE_STRING,   OPTION_FLAG_WINDOW                      },
+		[OPTION_NUMBER]          = { { "numbers", "nu"          }, OPTION_TYPE_BOOL,     OPTION_FLAG_WINDOW                      },
+		[OPTION_NUMBER_RELATIVE] = { { "relativenumbers", "rnu" }, OPTION_TYPE_BOOL,     OPTION_FLAG_WINDOW                      },
+		[OPTION_CURSOR_LINE]     = { { "cursorline", "cul"      }, OPTION_TYPE_BOOL,     OPTION_FLAG_WINDOW                      },
+		[OPTION_COLOR_COLUMN]    = { { "colorcolumn", "cc"      }, OPTION_TYPE_NUMBER,   OPTION_FLAG_WINDOW                      },
+		[OPTION_HORIZON]         = { { "horizon"                }, OPTION_TYPE_UNSIGNED, OPTION_FLAG_WINDOW                      },
 	};
 
 	if (!vis->options) {
@@ -138,11 +141,6 @@ static bool cmd_set(Vis *vis, Win *win, Command *cmd, const char *argv[], Cursor
 
 	if (!argv[1]) {
 		vis_info_show(vis, "Expecting: set option [value]");
-		return false;
-	}
-
-	if (!win) {
-		vis_info_show(vis, "Need active window for :set command");
 		return false;
 	}
 
@@ -165,9 +163,14 @@ static bool cmd_set(Vis *vis, Win *win, Command *cmd, const char *argv[], Cursor
 		return false;
 	}
 
+	if (!win && (opt->flags & OPTION_FLAG_WINDOW)) {
+		vis_info_show(vis, "Need active window for :set command");
+		return false;
+	}
+
 	switch (opt->type) {
 	case OPTION_TYPE_STRING:
-		if (!opt->optional && !argv[2]) {
+		if (!(opt->flags & OPTION_FLAG_OPTIONAL) && !argv[2]) {
 			vis_info_show(vis, "Expecting string option value");
 			return false;
 		}
@@ -373,6 +376,8 @@ static void info_unsaved_changes(Vis *vis) {
 
 static bool cmd_edit(Vis *vis, Win *win, Command *cmd, const char *argv[], Cursor *cur, Filerange *range) {
 	Win *oldwin = win;
+	if (!oldwin)
+		return false;
 	if (cmd->flags != '!' && !vis_window_closable(oldwin)) {
 		info_unsaved_changes(vis);
 		return false;
@@ -410,6 +415,8 @@ static bool cmd_quit(Vis *vis, Win *win, Command *cmd, const char *argv[], Curso
 }
 
 static bool cmd_bdelete(Vis *vis, Win *win, Command *cmd, const char *argv[], Cursor *cur, Filerange *range) {
+	if (!win)
+		return false;
 	Text *txt = win->file->text;
 	if (text_modified(txt) && cmd->flags != '!') {
 		info_unsaved_changes(vis);
@@ -441,6 +448,8 @@ static bool cmd_qall(Vis *vis, Win *win, Command *cmd, const char *argv[], Curso
 }
 
 static bool cmd_split(Vis *vis, Win *win, Command *cmd, const char *argv[], Cursor *cur, Filerange *range) {
+	if (!win)
+		return false;
 	enum UiOption options = view_options_get(win->view);
 	windows_arrange(vis, UI_LAYOUT_HORIZONTAL);
 	if (!argv[1])
@@ -452,6 +461,8 @@ static bool cmd_split(Vis *vis, Win *win, Command *cmd, const char *argv[], Curs
 }
 
 static bool cmd_vsplit(Vis *vis, Win *win, Command *cmd, const char *argv[], Cursor *cur, Filerange *range) {
+	if (!win)
+		return false;
 	enum UiOption options = view_options_get(win->view);
 	windows_arrange(vis, UI_LAYOUT_VERTICAL);
 	if (!argv[1])
@@ -473,6 +484,8 @@ static bool cmd_vnew(Vis *vis, Win *win, Command *cmd, const char *argv[], Curso
 }
 
 static bool cmd_wq(Vis *vis, Win *win, Command *cmd, const char *argv[], Cursor *cur, Filerange *range) {
+	if (!win)
+		return false;
 	File *file = win->file;
 	bool unmodified = !file->is_stdin && !file->name && !text_modified(file->text);
 	if (unmodified || cmd_write(vis, win, cmd, argv, cur, range))
@@ -481,6 +494,8 @@ static bool cmd_wq(Vis *vis, Win *win, Command *cmd, const char *argv[], Cursor 
 }
 
 static bool cmd_earlier_later(Vis *vis, Win *win, Command *cmd, const char *argv[], Cursor *cur, Filerange *range) {
+	if (!win)
+		return false;
 	Text *txt = win->file->text;
 	char *unit = "";
 	long count = 1;
@@ -732,6 +747,9 @@ static bool cmd_map(Vis *vis, Win *win, Command *cmd, const char *argv[], Cursor
 	bool local = strstr(argv[0], "-") != NULL;
 	enum VisMode mode = str2vismode(argv[1]);
 
+	if (local && !win)
+		return false;
+
 	if (mode == VIS_MODE_INVALID || !argv[2] || !argv[3]) {
 		vis_info_show(vis, "usage: map mode lhs rhs\n");
 		return false;
@@ -778,6 +796,9 @@ static bool cmd_unmap(Vis *vis, Win *win, Command *cmd, const char *argv[], Curs
 	bool local = strstr(argv[0], "-") != NULL;
 	enum VisMode mode = str2vismode(argv[1]);
 	const char *lhs = argv[2];
+
+	if (local && !win)
+		return false;
 
 	if (mode == VIS_MODE_INVALID || !lhs) {
 		vis_info_show(vis, "usage: unmap mode lhs\n");
