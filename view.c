@@ -897,9 +897,11 @@ size_t view_slide_up(View *view, int lines) {
 
 size_t view_slide_down(View *view, int lines) {
 	Cursor *cursor = view->cursor;
+	bool lastline = cursor->line == view->lastline;
+	size_t col = cursor->col;
 	if (view_viewport_up(view, lines)) {
-		if (cursor->line == view->lastline)
-			cursor_set(cursor, view->lastline, cursor->col);
+		if (lastline)
+			cursor_set(cursor, view->lastline, col);
 		else
 			view_cursor_to(view, cursor->pos);
 	} else {
