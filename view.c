@@ -878,8 +878,8 @@ void view_redraw_bottom(View *view) {
 		return;
 	size_t pos = view->cursor->pos;
 	view_viewport_up(view, view->height);
-	while (pos > view->end && view_viewport_down(view, 1));
-	view_cursor_to(view, pos);
+	while (pos >= view->end && view_viewport_down(view, 1));
+	cursor_to(view->cursor, pos);
 }
 
 size_t view_slide_up(View *view, int lines) {
@@ -1310,25 +1310,28 @@ void view_cursors_scroll_to(Cursor *c, size_t pos) {
 void view_cursors_to(Cursor *c, size_t pos) {
 	View *view = c->view;
 	if (c->view->cursor == c) {
-		c->mark = text_mark_set(view->text, pos);
+		/* make sure we redraw changes to the very first character of the window */
+		if (view->start == pos)
+			view->start_last = 0;
 
-		size_t max = text_size(view->text);
-		if (pos == max && view->end < max) {
-			/* do not display an empty screen when shoviewg the end of the file */
+		if (view->end == pos && view->lastline == view->bottomline) {
+			view->start += view->topline->len;
+			view_draw(view);
+		}
+
+		if (pos < view->start || pos > view->end) {
 			view->start = pos;
 			view_viewport_up(view, view->height / 2);
-		} else {
-			/* make sure we redraw changes to the very first character of the window */
-			if (view->start == pos)
-				view->start_last = 0;
-			/* set the start of the viewable region to the start of the line on which
-			 * the cursor should be placed. if this line requires more space than
-			 * available in the view then simply start displaying text at the new
-			 * cursor position */
-			for (int i = 0;  i < 2 && (pos <= view->start || pos > view->end); i++) {
-				view->start = i == 0 ? text_line_begin(view->text, pos) : pos;
-				view_draw(view);
-			}
+		}
+
+		if (pos <= view->start || pos > view->end) {
+			view->start = text_line_begin(view->text, pos);
+			view_draw(view);
+		}
+
+		if (pos <= view->start || pos > view->end) {
+			view->start = pos;
+			view_draw(view);
 		}
 	}
 
