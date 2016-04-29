@@ -1319,9 +1319,9 @@ void view_cursors_to(Cursor *c, size_t pos) {
 			view_draw(view);
 		}
 
-		if (pos < view->start || pos > view->end) {
+		if (pos > view->end) {
 			view->start = pos;
-			view_viewport_up(view, view->height / 2);
+			view_viewport_up(view, view->height - 1);
 		}
 
 		if (pos <= view->start || pos > view->end) {
