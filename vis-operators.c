@@ -184,6 +184,7 @@ static size_t op_cursor(Vis *vis, Text *txt, OperatorContext *c) {
 
 static size_t op_join(Vis *vis, Text *txt, OperatorContext *c) {
 	size_t pos = text_line_begin(txt, c->range.end), prev_pos;
+	Mark mark = NULL;
 
 	/* if operator and range are both linewise, skip last line break */
 	if (c->linewise && text_range_is_linewise(txt, &c->range)) {
@@ -200,12 +201,15 @@ static size_t op_join(Vis *vis, Text *txt, OperatorContext *c) {
 		if (pos >= c->range.start && end > pos) {
 			text_delete(txt, pos, end - pos);
 			text_insert(txt, pos, " ", 1);
+			if (!mark)
+				mark = text_mark_set(txt, pos);
 		} else {
 			break;
 		}
 	} while (pos != prev_pos);
 
-	return c->range.start;
+	size_t newpos = text_mark_get(txt, mark);
+	return newpos != EPOS ? newpos : c->range.start;
 }
 
 static size_t op_insert(Vis *vis, Text *txt, OperatorContext *c) {
