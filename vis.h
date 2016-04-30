@@ -431,13 +431,12 @@ const char *vis_keys_next(Vis*, const char *keys);
  *
  * this functions pushes/appends further input to the end of the input queue
  * and immediately tries to interpret them */
-const char *vis_keys_push(Vis*, const char *input);
-/* inject new input keys at the position indicated by a pointer to a valid, not
- * yet consumed key from the current input queue. does not try to interpret the
- * new queue content.
- *
- * typically only called from within key handling functions */
-bool vis_keys_inject(Vis*, const char *pos, const char *input);
+void vis_keys_input(Vis*, const char *input);
+/* like the above, but only pushes the input to the input queue, does *not*
+ * try to interpret the contents of the input queue. intended to be used from
+ * key handlers. the remaining queue content will be interpreted once the
+ * key handler returns. */
+void vis_keys_push(Vis*, const char *input);
 /* inform vis that a signal occured, the return value indicates whether the signal
  * was handled by vis */
 bool vis_signal_handler(Vis*, int signum, const siginfo_t *siginfo, const void *context);

@@ -34,6 +34,7 @@
 
 static Macro *macro_get(Vis *vis, enum VisRegister);
 static void macro_replay(Vis *vis, const Macro *macro);
+static void vis_keys_process(Vis *vis);
 
 /** window / file handling */
 
@@ -358,6 +359,8 @@ Vis *vis_new(Ui *ui, VisEvent *event) {
 	array_init(&vis->motions);
 	array_init(&vis->textobjects);
 	action_reset(&vis->action);
+	buffer_init(&vis->input_queue);
+	vis->keys = &vis->input_queue;
 	if (!(vis->command_file = file_new_internal(vis, NULL)))
 		goto err;
 	if (!(vis->search_file = file_new_internal(vis, NULL)))
@@ -693,7 +696,13 @@ const char *vis_keys_next(Vis *vis, const char *keys) {
 	return termkey_strpkey(termkey, keys, &key, TERMKEY_FORMAT_VIM);
 }
 
-static const char *vis_keys_raw(Vis *vis, Buffer *buf, const char *input) {
+void vis_keys_input(Vis *vis, const char *input) {
+	vis_keys_push(vis, input);
+	vis_keys_process(vis);
+}
+
+static void vis_keys_process(Vis *vis) {
+	Buffer *buf = vis->keys;
 	char *keys = buf->data, *start = keys, *cur = keys, *end;
 	bool prefix = false;
 	KeyBinding *binding = NULL;
@@ -722,7 +731,6 @@ static const char *vis_keys_raw(Vis *vis, Buffer *buf, const char *input) {
 		}
 
 		*end = tmp;
-		vis->keys = buf;
 
 		if (binding) { /* exact match */
 			if (binding->action) {
@@ -757,43 +765,21 @@ static const char *vis_keys_raw(Vis *vis, Buffer *buf, const char *input) {
 		}
 	}
 
-	vis->keys = NULL;
 	buffer_put0(buf, start);
-	return input + (start - keys);
+	return;
 err:
-	vis->keys = NULL;
 	buffer_truncate(buf);
-	return input + strlen(input);
 }
 
-bool vis_keys_inject(Vis *vis, const char *pos, const char *input) {
-	Buffer *buf = vis->keys;
-	if (!buf)
-		return false;
-	if (pos < buf->data || pos > buf->data + buf->len)
-		return false;
-	size_t off = pos - buf->data;
-	buffer_insert0(buf, off, input);
-	if (vis->macro_operator)
-		macro_append(vis->macro_operator, input);
-	return true;
-}
-
-const char *vis_keys_push(Vis *vis, const char *input) {
+void vis_keys_push(Vis *vis, const char *input) {
 	if (!input)
-		return NULL;
-
+		return;
 	if (vis->recording)
 		macro_append(vis->recording, input);
 	if (vis->macro_operator)
 		macro_append(vis->macro_operator, input);
-
-	if (!buffer_append0(&vis->input_queue, input)) {
-		buffer_truncate(&vis->input_queue);
-		return NULL;
-	}
-
-	return vis_keys_raw(vis, &vis->input_queue, input);
+	if (!buffer_append0(vis->keys, input))
+		buffer_truncate(vis->keys);
 }
 
 static const char *getkey(Vis *vis) {
@@ -941,7 +927,7 @@ int vis_run(Vis *vis, int argc, char *argv[]) {
 		const char *key;
 
 		while ((key = getkey(vis)))
-			vis_keys_push(vis, key);
+			vis_keys_input(vis, key);
 
 		if (vis->mode->idle)
 			timeout = &idle;
@@ -997,12 +983,29 @@ bool vis_macro_recording(Vis *vis) {
 }
 
 static void macro_replay(Vis *vis, const Macro *macro) {
-	Buffer buf;
+	Buffer buf, *input_queue = vis->keys;
 	buffer_init(&buf);
-	buffer_put(&buf, macro->data, macro->len);
-	buffer_append(&buf, "\0", 1);
-	vis_keys_raw(vis, &buf, macro->data);
+	vis->keys = &buf;
+	for (char *key = macro->data, *next; key; key = next) {
+		char tmp;
+		next = (char*)vis_keys_next(vis, key);
+		if (next) {
+			tmp = *next;
+			*next = '\0';
+		}
+
+		if (vis->macro_operator)
+			macro_append(vis->macro_operator, key);
+		if (!buffer_append0(&buf, key))
+			buffer_truncate(&buf);
+		vis_keys_process(vis);
+
+		if (next)
+			*next = tmp;
+	}
+
 	buffer_release(&buf);
+	vis->keys = input_queue;
 }
 
 bool vis_macro_replay(Vis *vis, enum VisRegister id) {
