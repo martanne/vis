@@ -1621,8 +1621,8 @@ static const char *replace(Vis *vis, const char *keys, const Arg *arg) {
 		return NULL;
 	vis_operator(vis, VIS_OP_REPLACE);
 	vis_motion(vis, VIS_MOVE_NOP);
-	vis_keys_push(vis, keys);
-	vis_keys_push(vis, "<Escape>");
+	vis_keys_feed(vis, keys);
+	vis_keys_feed(vis, "<Escape>");
 	return next;
 }
 
@@ -1944,10 +1944,10 @@ static const char *openline(Vis *vis, const char *keys, const Arg *arg) {
 	vis_operator(vis, VIS_OP_INSERT);
 	if (arg->i > 0) {
 		vis_motion(vis, VIS_MOVE_LINE_END);
-		vis_keys_push(vis, "<insert-newline>");
+		vis_keys_feed(vis, "<insert-newline>");
 	} else {
 		vis_motion(vis, VIS_MOVE_LINE_BEGIN);
-		vis_keys_push(vis, "<insert-newline><Up>");
+		vis_keys_feed(vis, "<insert-newline><Up>");
 	}
 	return keys;
 }

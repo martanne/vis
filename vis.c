@@ -696,21 +696,19 @@ const char *vis_keys_next(Vis *vis, const char *keys) {
 	return termkey_strpkey(termkey, keys, &key, TERMKEY_FORMAT_VIM);
 }
 
-void vis_keys_input(Vis *vis, const char *input) {
-	vis_keys_push(vis, input);
-	vis_keys_process(vis);
-}
-
 static void vis_keys_process(Vis *vis) {
 	Buffer *buf = vis->keys;
 	char *keys = buf->data, *start = keys, *cur = keys, *end;
-	bool prefix = false;
+	bool prefix = false, unknown_key = false;
 	KeyBinding *binding = NULL;
+	vis->keyhandler = true;
 
 	while (cur && *cur) {
 
-		if (!(end = (char*)vis_keys_next(vis, cur)))
-			goto err; // XXX: can't parse key this should never happen
+		if (!(end = (char*)vis_keys_next(vis, cur))) {
+			unknown_key = true;
+			goto out;
+		}
 
 		char tmp = *end;
 		*end = '\0';
@@ -765,13 +763,15 @@ static void vis_keys_process(Vis *vis) {
 		}
 	}
 
-	buffer_put0(buf, start);
-	return;
-err:
-	buffer_truncate(buf);
+out:
+	if (unknown_key)
+		buffer_truncate(buf);
+	else
+		buffer_put0(buf, start);
+	vis->keyhandler = false;
 }
 
-void vis_keys_push(Vis *vis, const char *input) {
+void vis_keys_feed(Vis *vis, const char *input) {
 	if (!input)
 		return;
 	if (vis->recording)
@@ -780,6 +780,12 @@ void vis_keys_push(Vis *vis, const char *input) {
 		macro_append(vis->macro_operator, input);
 	if (!buffer_append0(vis->keys, input))
 		buffer_truncate(vis->keys);
+	/* if we are being called from within a keyhandler then appending
+	 * the new keys to the end of the input queue is enough. they will
+	 * be interpreted once the key handler returns and control reaches
+	 * back to the vis_keys_process function. */
+	if (!vis->keyhandler)
+		vis_keys_process(vis);
 }
 
 static const char *getkey(Vis *vis) {
@@ -927,7 +933,7 @@ int vis_run(Vis *vis, int argc, char *argv[]) {
 		const char *key;
 
 		while ((key = getkey(vis)))
-			vis_keys_input(vis, key);
+			vis_keys_feed(vis, key);
 
 		if (vis->mode->idle)
 			timeout = &idle;

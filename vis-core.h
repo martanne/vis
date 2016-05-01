@@ -158,6 +158,7 @@ struct Vis {
 	Map *keymap;                         /* key translation before any bindings are matched */
 	Buffer input_queue;                  /* holds pending input keys */
 	Buffer *keys;                        /* currently active keys buffer (either the input_queue or a macro) */
+	bool keyhandler;                     /* whether a key handling function is currently being called */
 	Action action;                       /* current action which is in progress */
 	Action action_prev;                  /* last operator action used by the repeat (dot) command */
 	Mode *mode;                          /* currently active mode, used to search for keybindings */
