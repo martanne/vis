@@ -367,6 +367,8 @@ Vis *vis_new(Ui *ui, VisEvent *event) {
 		goto err;
 	if (!(vis->error_file = file_new_internal(vis, NULL)))
 		goto err;
+	if (!(vis->actions = map_new()))
+		goto err;
 	if (!(vis->keymap = map_new()))
 		goto err;
 	if (!sam_init(vis))
@@ -376,8 +378,6 @@ Vis *vis_new(Ui *ui, VisEvent *event) {
 	if (event && event->vis_init)
 		event->vis_init(vis);
 	vis->ui->start(vis->ui);
-	if (event && event->vis_start)
-		event->vis_start(vis);
 	return vis;
 err:
 	vis_free(vis);
@@ -449,10 +449,6 @@ void vis_delete(Vis *vis, size_t pos, size_t len) {
 }
 
 bool vis_action_register(Vis *vis, const KeyAction *action) {
-	if (!vis->actions)
-		vis->actions = map_new();
-	if (!vis->actions)
-		return false;
 	return map_put(vis->actions, action->name, action);
 }
 
@@ -717,7 +713,7 @@ static void vis_keys_process(Vis *vis) {
 
 		for (Mode *mode = vis->mode; mode && !binding && !prefix; mode = mode->parent) {
 			for (int global = 0; global < 2 && !binding && !prefix; global++) {
-				Mode *mode_local = global ? mode : &vis->win->modes[mode->id];
+				Mode *mode_local = global || !vis->win ? mode : &vis->win->modes[mode->id];
 				if (!mode_local->bindings)
 					continue;
 				binding = map_get(mode_local->bindings, start);
@@ -878,6 +874,8 @@ int vis_run(Vis *vis, int argc, char *argv[]) {
 	vis->running = true;
 	vis_args(vis, argc, argv);
 
+	if (vis->event && vis->event->vis_start)
+		vis->event->vis_start(vis);
 	struct timespec idle = { .tv_nsec = 0 }, *timeout = NULL;
 
 	sigset_t emptyset;
