@@ -598,6 +598,7 @@ At this time there exists no API stability guarantees.
    - `motion(id)` select/execute a motion
    - `command_register(name, function(argv, force, win, cursor, range))` hook up a Lua function to `:name` command
    - `map(mode, key, function)` map a Lua function to `key` in `mode`
+   - `feedkeys(keys)` interpret `keys` as if they were read from the keyboard. If called from a key handling function, the keys will only be processed *after* the current key handling function has returned.
  - `file`
    - `content(pos, len)` or `content({start, finish})`
    - `insert(pos, data)`

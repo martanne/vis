@@ -510,6 +510,15 @@ static int command_register(lua_State *L) {
 	return 1;
 }
 
+static int feedkeys(lua_State *L) {
+	Vis *vis = obj_ref_check(L, 1, "vis");
+	const char *keys = luaL_checkstring(L, 2);
+	if (vis)
+		vis_keys_feed(vis, keys);
+	lua_pushboolean(L, vis != NULL);
+	return 1;
+}
+
 static int vis_index(lua_State *L) {
 	Vis *vis = obj_ref_check(L, 1, "vis");
 	if (!vis) {
@@ -583,6 +592,7 @@ static const struct luaL_Reg vis_lua[] = {
 	{ "textobject", textobject },
 	{ "textobject_register", textobject_register },
 	{ "command_register", command_register },
+	{ "feedkeys", feedkeys },
 	{ "__index", vis_index },
 	{ "__newindex", vis_newindex },
 	{ NULL, NULL },
