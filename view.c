@@ -432,18 +432,6 @@ static bool view_addch(View *view, Cell *cell) {
 	}
 }
 
-CursorPos view_cursor_getpos(View *view) {
-	Cursor *cursor = view->cursor;
-	Line *line = cursor->line;
-	CursorPos pos = { .line = line->lineno, .col = cursor->col };
-	while (line->prev && line->prev->lineno == pos.line) {
-		line = line->prev;
-		pos.col += line->width;
-	}
-	pos.col++;
-	return pos;
-}
-
 static void cursor_to(Cursor *c, size_t pos) {
 	Text *txt = c->view->text;
 	c->mark = text_mark_set(txt, pos);
@@ -1009,6 +997,10 @@ size_t view_cursor_get(View *view) {
 
 const Line *view_lines_get(View *view) {
 	return view->topline;
+}
+
+const Line *view_line_get(View *view) {
+	return view->cursor->line;
 }
 
 void view_scroll_to(View *view, size_t pos) {

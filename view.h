@@ -40,11 +40,6 @@ struct Line {               /* a line on the screen, *not* in the file */
 	Cell cells[];       /* win->width cells storing information about the displayed characters */
 };
 
-typedef struct {
-	size_t line;
-	size_t col;
-} CursorPos;
-
 View *view_new(Text*, lua_State*);
 void view_ui(View*, UiWin*);
 /* change associated text displayed in this window */
@@ -68,6 +63,7 @@ size_t view_screenline_up(Cursor*);
 size_t view_screenline_begin(Cursor*);
 size_t view_screenline_middle(Cursor*);
 size_t view_screenline_end(Cursor*);
+
 /* move window content up/down, but keep cursor position unchanged unless it is
  * on a now invisible line in which case we try to preserve the column position */
 size_t view_slide_up(View*, int lines);
@@ -80,6 +76,7 @@ size_t view_scroll_down(View*, int lines);
 size_t view_screenline_goto(View*, int n);
 
 const Line *view_lines_get(View*);
+const Line *view_line_get(View*);
 /* redraw current cursor line at top/center/bottom of window */
 void view_redraw_top(View*);
 void view_redraw_center(View*);
@@ -108,8 +105,6 @@ size_t view_horizon_get(View*);
  * on this cursor. Additional cursor can be created and manipulated using the
  * functions named view_cursors_* */
 
-/* get main cursor position in terms of screen coordinates */
-CursorPos view_cursor_getpos(View*);
 /* get main cursor position in bytes from start of the file */
 size_t view_cursor_get(View*);
 /* get selection associated with primary cursor */

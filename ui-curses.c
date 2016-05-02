@@ -606,7 +606,8 @@ static bool ui_window_draw_sidebar(UiCursesWin *win) {
 	} else {
 		int i = 0;
 		size_t prev_lineno = 0;
-		size_t cursor_lineno = view_cursor_getpos(win->view).line;
+		const Line *cursor_line = view_line_get(win->view);
+		size_t cursor_lineno = cursor_line->lineno;
 		werase(win->winside);
 		wbkgd(win->winside, style_to_attr(&win->styles[UI_STYLE_DEFAULT]));
 		wattrset(win->winside, style_to_attr(&win->styles[UI_STYLE_LINENUMBER]));
@@ -656,8 +657,10 @@ static void ui_window_draw_status(UiWin *w) {
 	}
 
 	if (!(win->options & UI_OPTION_LARGE_FILE)) {
-		CursorPos pos = view_cursor_getpos(win->view);
-		msg += sprintf(msg, "%zd, %zd", pos.line, pos.col);
+		Cursor *cur = view_cursors_primary_get(win->view);
+		size_t line = view_cursors_line(cur);
+		size_t col = view_cursors_col(cur);
+		msg += sprintf(msg, "%zu, %zu", line, col);
 	}
 
 	if (buf[0])
@@ -676,10 +679,11 @@ static void ui_window_draw(UiWin *w) {
 	size_t cursor_lineno = -1;
 
 	if (win->options & UI_OPTION_CURSOR_LINE && win->ui->selwin == win) {
-		Cursor *cursor = view_cursors(win->view);
-		Filerange selection = view_cursors_selection_get(cursor);
-		if (!view_cursors_next(cursor) && !text_range_valid(&selection))
-			cursor_lineno = view_cursor_getpos(win->view).line;
+		Filerange selection = view_selection_get(win->view);
+		if (!view_cursors_multiple(win->view) && !text_range_valid(&selection)) {
+			const Line *line = view_line_get(win->view);
+			cursor_lineno = line->lineno;
+		}
 	}
 
 	short selection_bg = win->styles[UI_STYLE_SELECTION].bg;
