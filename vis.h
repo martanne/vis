@@ -446,8 +446,6 @@ Regex *vis_regex(Vis*, const char *pattern);
 Text *vis_text(Vis*);
 View *vis_view(Vis*);
 Win *vis_window(Vis*);
-Text *vis_file_text(File*);
-const char *vis_file_name(File*);
 
 bool vis_theme_load(Vis*, const char *name);
 

@@ -19,6 +19,7 @@
 
 #include "ui-curses.h"
 #include "vis.h"
+#include "vis-core.h"
 #include "text.h"
 #include "util.h"
 #include "text-util.h"
@@ -638,14 +639,14 @@ static void ui_window_draw_status(UiWin *w) {
 	UiCurses *uic = win->ui;
 	Vis *vis = uic->vis;
 	bool focused = uic->selwin == win;
-	const char *filename = vis_file_name(win->file);
+	const char *filename = win->file->name;
 	const char *status = vis_mode_status(vis);
 	wattrset(win->winstatus, focused ? A_REVERSE|A_BOLD : A_REVERSE);
 	mvwhline(win->winstatus, 0, 0, ' ', win->width);
 	mvwprintw(win->winstatus, 0, 0, "%s %s %s %s",
 	          focused && status ? status : "",
 	          filename ? filename : "[No Name]",
-	          text_modified(vis_file_text(win->file)) ? "[+]" : "",
+	          text_modified(win->file->text) ? "[+]" : "",
 	          vis_macro_recording(vis) ? "recording": "");
 
 	char buf[4*32] = "", *msg = buf;
@@ -660,6 +661,8 @@ static void ui_window_draw_status(UiWin *w) {
 		Cursor *cur = view_cursors_primary_get(win->view);
 		size_t line = view_cursors_line(cur);
 		size_t col = view_cursors_col(cur);
+		if (col > UI_LARGE_FILE_LINE_SIZE)
+			win->options |= UI_OPTION_LARGE_FILE;
 		msg += sprintf(msg, "%zu, %zu", line, col);
 	}
 
@@ -740,7 +743,7 @@ static void ui_window_reload(UiWin *w, File *file) {
 	UiCursesWin *win = (UiCursesWin*)w;
 	win->file = file;
 	win->sidebar_width = 0;
-	view_reload(win->view, vis_file_text(file));
+	view_reload(win->view, file->text);
 	ui_window_draw(w);
 }
 
@@ -1007,6 +1010,11 @@ static UiWin *ui_window_new(Ui *ui, View *view, File *file, enum UiOption option
 		uic->windows->prev = win;
 	win->next = uic->windows;
 	uic->windows = win;
+
+	if (text_size(file->text) > UI_LARGE_FILE_SIZE) {
+		options |= UI_OPTION_LARGE_FILE;
+		options &= ~UI_OPTION_LINE_NUMBERS_ABSOLUTE;
+	}
 
 	ui_window_options_set((UiWin*)win, options);
 

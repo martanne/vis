@@ -28,9 +28,6 @@
 #include "vis-core.h"
 #include "sam.h"
 
-/* enable large file optimization for files larger than: */
-#define LARGE_FILE (1 << 25)
-
 static Macro *macro_get(Vis *vis, enum VisRegister);
 static void macro_replay(Vis *vis, const Macro *macro);
 static void vis_keys_process(Vis *vis);
@@ -169,13 +166,6 @@ Win *window_new_file(Vis *vis, File *file) {
 	}
 	file->refcount++;
 	view_tabwidth_set(win->view, vis->tabwidth);
-
-	if (text_size(file->text) > LARGE_FILE) {
-		enum UiOption opt = view_options_get(win->view);
-		opt |= UI_OPTION_LARGE_FILE;
-		opt &= ~UI_OPTION_LINE_NUMBERS_ABSOLUTE;
-		view_options_set(win->view, opt);
-	}
 
 	if (vis->windows)
 		vis->windows->prev = win;
@@ -1373,12 +1363,3 @@ View *vis_view(Vis *vis) {
 Win *vis_window(Vis *vis) {
 	return vis->win;
 }
-
-Text *vis_file_text(File *file) {
-	return file->text;
-}
-
-const char *vis_file_name(File *file) {
-	return file->name;
-}
-
