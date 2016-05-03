@@ -9,21 +9,25 @@ win.cursor:to(5, 3)
 results[4] = win.cursor.line == 5
 results[5] = win.cursor.col == 3
 results[6] = win.cursor.pos == 30
+win.cursor:to(8, 1)
+results[7] = win.cursor.line == 8
+results[8] = win.cursor.col == 1
+results[9] = win.cursor.pos == 49
 -- Invalid location
 win.cursor:to(0, 0)
-results[7] = win.cursor.line == 1
-results[8] = win.cursor.col == 1
-results[9] = win.cursor.pos == 0
+results[10] = win.cursor.line == 1
+results[11] = win.cursor.col == 1
+results[12] = win.cursor.pos == 0
 -- Invalid location, negative (TODO these two seem flaky)
 win.cursor:to(-20, -20)
-results[10] = win.cursor.line == 1 or true
-results[11] = win.cursor.col == 1
-results[12] = win.cursor.pos == 0 or true
+results[13] = win.cursor.line == 1 or true
+results[14] = win.cursor.col == 1
+results[15] = win.cursor.pos == 0 or true
 -- Invalid location, after end of text, cursor ends up on last char
 win.cursor:to(1000, 1000)
-results[13] = win.cursor.line == 9 or true
-results[14] = win.cursor.col == 1
-results[15] = win.cursor.pos == 63 or true
+results[16] = win.cursor.line == 9 or true
+results[17] = win.cursor.col == 1
+results[18] = win.cursor.pos == 63 or true
 
 delete(win, '%')
 for i, res in pairs(results) do
