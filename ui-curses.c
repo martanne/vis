@@ -11,6 +11,10 @@
 #include <locale.h>
 #include <poll.h>
 #include <sys/ioctl.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <termios.h>
 
 #include "ui-curses.h"
 #include "vis.h"
@@ -74,7 +78,8 @@ typedef struct {
 	char info[255];           /* info message displayed at the bottom of the screen */
 	int width, height;        /* terminal dimensions available for all windows */
 	enum UiLayout layout;     /* whether windows are displayed horizontally or vertically */
-	TermKey *termkey;         /* libtermkey instance to handle keyboard input */
+	TermKey *termkey;         /* libtermkey instance to handle keyboard input (stdin or /dev/tty) */
+	struct termios tio;       /* terminal state to restore before exiting */
 	char key[64];             /* string representation of last pressed key */
 } UiCurses;
 
@@ -1008,8 +1013,16 @@ __attribute__((noreturn)) static void ui_die(Ui *ui, const char *msg, va_list ap
 	endwin();
 	if (uic->termkey)
 		termkey_stop(uic->termkey);
+	tcsetattr(STDERR_FILENO, TCSANOW, &uic->tio);
 	vfprintf(stderr, msg, ap);
 	exit(EXIT_FAILURE);
+}
+
+__attribute__((noreturn)) static void ui_die_msg(Ui *ui, const char *msg, ...) {
+	va_list ap;
+	va_start(ap, msg);
+	ui_die(ui, msg, ap);
+	va_end(ap);
 }
 
 static void ui_info(Ui *ui, const char *msg, va_list ap) {
@@ -1046,6 +1059,13 @@ static bool ui_start(Ui *ui) {
 	return true;
 }
 
+static TermKey *ui_termkey_new(int fd) {
+	TermKey *termkey = termkey_new(fd, TERMKEY_FLAG_UTF8);
+	if (termkey)
+		termkey_set_canonflags(termkey, TERMKEY_CANON_DELBS);
+	return termkey;
+}
+
 static TermKey *ui_termkey_get(Ui *ui) {
 	UiCurses *uic = (UiCurses*)ui;
 	return uic->termkey;
@@ -1070,6 +1090,18 @@ static const char *ui_getkey(Ui *ui) {
 	TermKeyKey key;
 	TermKeyResult ret = termkey_getkey(uic->termkey, &key);
 
+	if (ret == TERMKEY_RES_EOF) {
+		int tty = open("/dev/tty", O_RDWR);
+		if (tty == -1)
+			goto fatal;
+		if (tty != STDIN_FILENO && dup2(tty, STDIN_FILENO) == -1)
+			goto fatal;
+		termkey_destroy(uic->termkey);
+		if (!(uic->termkey = ui_termkey_new(STDIN_FILENO)))
+			goto fatal;
+		return NULL;
+	}
+
 	if (ret == TERMKEY_RES_AGAIN) {
 		struct pollfd fd;
 		fd.fd = STDIN_FILENO;
@@ -1082,6 +1114,10 @@ static const char *ui_getkey(Ui *ui) {
 		return NULL;
 	termkey_strfkey(uic->termkey, uic->key, sizeof(uic->key), &key, TERMKEY_FORMAT_VIM);
 	return uic->key;
+
+fatal:
+	ui_die_msg(ui, "Failed to re-open stdin as /dev/tty\n");
+	return NULL;
 }
 
 static void ui_terminal_save(Ui *ui) {
@@ -1105,9 +1141,9 @@ Ui *ui_curses_new(void) {
 	Ui *ui = (Ui*)uic;
 	if (!uic)
 		return NULL;
-	if (!(uic->termkey = termkey_new(STDIN_FILENO, TERMKEY_FLAG_UTF8)))
+	tcgetattr(STDERR_FILENO, &uic->tio);
+	if (!(uic->termkey = ui_termkey_new(STDIN_FILENO)))
 		goto err;
-	termkey_set_canonflags(uic->termkey, TERMKEY_CANON_DELBS);
 	setlocale(LC_CTYPE, "");
 	if (!getenv("ESCDELAY"))
 		set_escdelay(50);
@@ -1179,5 +1215,6 @@ void ui_curses_free(Ui *ui) {
 	endwin();
 	if (uic->termkey)
 		termkey_destroy(uic->termkey);
+	tcsetattr(STDERR_FILENO, TCSANOW, &uic->tio);
 	free(uic);
 }
