@@ -1120,7 +1120,8 @@ void vis_lua_init(Vis *vis) {
 
 	const char *xdg_config = getenv("XDG_CONFIG_HOME");
 	if (xdg_config) {
-		vis_lua_path_add(vis, xdg_config);
+		snprintf(path, sizeof path, "%s/vis", xdg_config);
+		vis_lua_path_add(vis, path);
 	} else if (home && *home) {
 		snprintf(path, sizeof path, "%s/.config/vis", home);
 		vis_lua_path_add(vis, path);
