@@ -1016,14 +1016,21 @@ static const struct luaL_Reg file_lines_funcs[] = {
 	{ NULL, NULL },
 };
 
-static void vis_lua_event(Vis *vis, const char *name) {
-	lua_State *L = vis->lua;
+static void vis_lua_event_get(lua_State *L, const char *name) {
 	lua_getglobal(L, "vis");
 	lua_getfield(L, -1, "events");
 	if (lua_istable(L, -1)) {
 		lua_getfield(L, -1, name);
 	}
 	lua_remove(L, -2);
+}
+
+static void vis_lua_event_call(Vis *vis, const char *name) {
+	lua_State *L = vis->lua;
+	vis_lua_event_get(L, name);
+	if (lua_isfunction(L, -1))
+		pcall(vis, L, 0, 0);
+	lua_pop(L, 1);
 }
 
 static bool vis_lua_path_strip(Vis *vis) {
@@ -1164,24 +1171,13 @@ void vis_lua_init(Vis *vis) {
 }
 
 void vis_lua_start(Vis *vis) {
-	lua_State *L = vis->lua;
-	if (!L)
-		return;
-	vis_lua_event(vis, "start");
-	if (lua_isfunction(L, -1))
-		pcall(vis, L, 0, 0);
-	lua_pop(L, 1);
+	vis_lua_event_call(vis, "start");
 }
 
 void vis_lua_quit(Vis *vis) {
-	lua_State *L = vis->lua;
-	if (!L)
-		return;
-	vis_lua_event(vis, "quit");
-	if (lua_isfunction(L, -1))
-		pcall(vis, L, 0, 0);
-	lua_pop(L, 1);
-	lua_close(L);
+	vis_lua_event_call(vis, "quit");
+	lua_close(vis->lua);
+	vis->lua = NULL;
 }
 
 void vis_lua_file_open(Vis *vis, File *file) {
@@ -1194,7 +1190,7 @@ void vis_lua_file_save(Vis *vis, File *file) {
 
 void vis_lua_file_close(Vis *vis, File *file) {
 	lua_State *L = vis->lua;
-	vis_lua_event(vis, "file_close");
+	vis_lua_event_get(L, "file_close");
 	if (lua_isfunction(L, -1)) {
 		obj_ref_new(L, file, "vis.file");
 		pcall(vis, L, 1, 0);
@@ -1206,7 +1202,7 @@ void vis_lua_file_close(Vis *vis, File *file) {
 
 void vis_lua_win_open(Vis *vis, Win *win) {
 	lua_State *L = vis->lua;
-	vis_lua_event(vis, "win_open");
+	vis_lua_event_get(L, "win_open");
 	if (lua_isfunction(L, -1)) {
 		obj_ref_new(L, win, "vis.window");
 		pcall(vis, L, 1, 0);
@@ -1216,7 +1212,7 @@ void vis_lua_win_open(Vis *vis, Win *win) {
 
 void vis_lua_win_close(Vis *vis, Win *win) {
 	lua_State *L = vis->lua;
-	vis_lua_event(vis, "win_close");
+	vis_lua_event_get(L, "win_close");
 	if (lua_isfunction(L, -1)) {
 		obj_ref_new(L, win, "vis.window");
 		pcall(vis, L, 1, 0);
