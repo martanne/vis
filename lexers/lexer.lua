@@ -862,7 +862,7 @@ local lpeg_match = lpeg.match
 M.LEXERPATH = package.path
 
 -- Table of loaded lexers.
-local lexers = {}
+M.lexers = {}
 
 -- Keep track of the last parent lexer loaded. This lexer's rules are used for
 -- proxy lexers (those that load parent and child lexers to embed) that do not
@@ -1002,7 +1002,7 @@ end
 -- @return lexer object
 -- @name load
 function M.load(name, alt_name)
-  if lexers[alt_name or name] then return lexers[alt_name or name] end
+  if M.lexers[alt_name or name] then return M.lexers[alt_name or name] end
   parent_lexer = nil -- reset
 
   -- When using Scintillua as a stand-alone module, the `property` and
@@ -1069,7 +1069,7 @@ function M.load(name, alt_name)
   end
 
   lexer.lex, lexer.fold = M.lex, M.fold
-  lexers[alt_name or name] = lexer
+  M.lexers[alt_name or name] = lexer
   return lexer
 end
 

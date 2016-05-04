@@ -201,3 +201,19 @@ vis.filetype_detect = function(win)
 	win.syntax = nil
 end
 
+vis.events.theme_change = function(name)
+	if name ~= nil then
+		local theme = 'themes/'..name
+		package.loaded[theme] = nil
+		require(theme)
+	end
+
+	if vis.lexers ~= nil then
+		vis.lexers.lexers = {}
+	end
+
+	for win in vis:windows() do
+		win.syntax = win.syntax;
+	end
+end
+
