@@ -4,6 +4,7 @@
 #include <wchar.h>
 #include <ctype.h>
 #include <errno.h>
+#include <stdlib.h>
 
 #include "ui-curses.h"
 #include "vis.h"

@@ -3,7 +3,6 @@
 
 #include <stdbool.h>
 #include <stdarg.h>
-#include <termkey.h>
 
 typedef struct Ui Ui;
 typedef struct UiWin UiWin;
@@ -48,7 +47,6 @@ struct Ui {
 	bool (*init)(Ui*, Vis*);
 	bool (*start)(Ui*);
 	void (*free)(Ui*);
-	void (*resize)(Ui*);
 	UiWin* (*window_new)(Ui*, View*, File*, enum UiOption);
 	void (*window_free)(UiWin*);
 	void (*window_focus)(UiWin*);
@@ -62,10 +60,9 @@ struct Ui {
 	void (*update)(Ui*);
 	void (*suspend)(Ui*);
 	const char* (*getkey)(Ui*);
-	bool (*haskey)(Ui*);
+	void (*needkey)(Ui*);
 	void (*terminal_save)(Ui*);
 	void (*terminal_restore)(Ui*);
-	TermKey* (*termkey_get)(Ui*);
 };
 
 struct UiWin {

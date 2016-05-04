@@ -15,6 +15,7 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <termios.h>
+#include <termkey.h>
 
 #include "ui-curses.h"
 #include "vis.h"
@@ -1066,23 +1067,14 @@ static TermKey *ui_termkey_new(int fd) {
 	return termkey;
 }
 
-static TermKey *ui_termkey_get(Ui *ui) {
-	UiCurses *uic = (UiCurses*)ui;
-	return uic->termkey;
-}
-
 static void ui_suspend(Ui *ui) {
 	endwin();
 	raise(SIGSTOP);
 }
 
-static bool ui_haskey(Ui *ui) {
-	nodelay(stdscr, TRUE);
-	int c = getch();
-	if (c != ERR)
-		ungetch(c);
-	nodelay(stdscr, FALSE);
-	return c != ERR;
+static void ui_needkey(Ui *ui) {
+	UiCurses *uic = (UiCurses*)ui;
+	termkey_advisereadable(uic->termkey);
 }
 
 static const char *ui_getkey(Ui *ui) {
@@ -1171,9 +1163,7 @@ Ui *ui_curses_new(void) {
 		.init = ui_init,
 		.start = ui_start,
 		.free = ui_curses_free,
-		.termkey_get = ui_termkey_get,
 		.suspend = ui_suspend,
-		.resize = ui_resize,
 		.update = ui_update,
 		.window_new = ui_window_new,
 		.window_free = ui_window_free,
@@ -1185,7 +1175,7 @@ Ui *ui_curses_new(void) {
 		.die = ui_die,
 		.info = ui_info,
 		.info_hide = ui_info_hide,
-		.haskey = ui_haskey,
+		.needkey = ui_needkey,
 		.getkey = ui_getkey,
 		.terminal_save = ui_terminal_save,
 		.terminal_restore = ui_terminal_restore,
