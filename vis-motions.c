@@ -330,8 +330,8 @@ err:
 }
 
 const Movement vis_motions[] = {
-	[VIS_MOVE_LINE_UP]             = { .cur = view_line_up,             .type = LINEWISE                 },
-	[VIS_MOVE_LINE_DOWN]           = { .cur = view_line_down,           .type = LINEWISE|INCLUSIVE       },
+	[VIS_MOVE_LINE_UP]             = { .cur = view_line_up,             .type = LINEWISE|LINEWISE_INCLUSIVE },
+	[VIS_MOVE_LINE_DOWN]           = { .cur = view_line_down,           .type = LINEWISE|LINEWISE_INCLUSIVE },
 	[VIS_MOVE_SCREEN_LINE_UP]      = { .cur = view_screenline_up,                                        },
 	[VIS_MOVE_SCREEN_LINE_DOWN]    = { .cur = view_screenline_down,                                      },
 	[VIS_MOVE_SCREEN_LINE_BEGIN]   = { .cur = view_screenline_begin,    .type = CHARWISE                 },
