@@ -1224,25 +1224,17 @@ void vis_lua_win_close(Vis *vis, Win *win) {
 
 bool vis_theme_load(Vis *vis, const char *name) {
 	lua_State *L = vis->lua;
-	if (!L)
-		return false;
+	vis_lua_event_get(L, "theme_change");
+	if (lua_isfunction(L, -1)) {
+		if (name)
+			lua_pushstring(L, name);
+		else
+			lua_pushnil(L);
+		pcall(vis, L, 1, 0);
+	}
+	lua_pop(L, 1);
 	/* package.loaded['themes/'..name] = nil
 	 * require 'themes/'..name */
-	lua_pushstring(L, "themes/");
-	lua_pushstring(L, name);
-	lua_concat(L, 2);
-	lua_getglobal(L, "package");
-	lua_getfield(L, -1, "loaded");
-	lua_pushvalue(L, -3);
-	lua_pushnil(L);
-	lua_settable(L, -3);
-	lua_pop(L, 2);
-	lua_getglobal(L, "require");
-	lua_pushvalue(L, -2);
-	if (pcall(vis, L, 1, 0))
-		return false;
-	for (Win *win = vis->windows; win; win = win->next)
-		view_syntax_set(win->view, view_syntax_get(win->view));
 	return true;
 }
 

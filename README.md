@@ -586,6 +586,7 @@ At this time there exists no API stability guarantees.
      - `quit()`
      - `win_open(win)`
      - `win_close(win)`
+     - `theme_change(name)`
    - `files()` iterator
    - `win` currently focused window
    - `windows()` iterator
