@@ -214,7 +214,8 @@ Operators can be forced to work line wise by specifying `V`.
   in the visual block mode of vim where for example inserts only become
   visible upon exit). There always exists one primary cursor located
   within the current view port. Additional cursors ones can be created
-  as needed. If more than one cursor exists, the primary one is blinking.
+  as needed. If more than one cursor exists, the primary one is styled 
+  differently (yellow by default).
 
   To manipulate multiple cursors use in normal mode:
   
