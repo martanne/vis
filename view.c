@@ -54,6 +54,7 @@ struct Cursor {             /* cursor position */
 	int lastcol;        /* remembered column used when moving across lines */
 	Line *line;         /* screen line on which cursor currently resides */
 	Mark mark;          /* mark used to keep track of current cursor position */
+	Mark mark_old;      /* previous value of the mark, used to recover cursor position */
 	Selection *sel;     /* selection (if any) which folows the cursor upon movement */
 	Mark lastsel_anchor;/* previously used selection data, */
 	Mark lastsel_cursor;/* used to restore it */
@@ -434,6 +435,7 @@ static bool view_addch(View *view, Cell *cell) {
 
 static void cursor_to(Cursor *c, size_t pos) {
 	Text *txt = c->view->text;
+	c->mark_old = c->mark;
 	c->mark = text_mark_set(txt, pos);
 	if (pos != c->pos)
 		c->lastcol = 0;
@@ -1256,7 +1258,8 @@ Cursor *view_cursors_next(Cursor *c) {
 }
 
 size_t view_cursors_pos(Cursor *c) {
-	return text_mark_get(c->view->text, c->mark);
+	size_t pos = text_mark_get(c->view->text, c->mark);
+	return pos != EPOS ? pos : text_mark_get(c->view->text, c->mark_old);
 }
 
 size_t view_cursors_line(Cursor *c) {
