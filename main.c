@@ -413,7 +413,7 @@ static const KeyAction vis_action[] = {
 		movement, { .i = VIS_MOVE_LINE_LASTCHAR }
 	},
 	[VIS_ACTION_CURSOR_SCREEN_LINE_UP] = {
-		"cursor-sceenline-up",
+		"cursor-screenline-up",
 		"Move cursor screen/display line upwards",
 		movement, { .i = VIS_MOVE_SCREEN_LINE_UP }
 	},
