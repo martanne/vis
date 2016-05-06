@@ -80,6 +80,7 @@ vis.filetypes =	{
 	[".asa|.bas|.cls|.ctl|.dob|.dsm|.dsr|.frm|.pag|.vb|.vba|.vbs"] = "vb",
 	[".as|.asc"] = "actionscript",
 	[".asm|.ASM|.s|.S"] = "asm",
+	[".automount|.device|.mount|.path|.scope|.service|.slice|.socket|.swap|.target|.timer"] = "systemd",
 	[".au3|.a3x"] = "autoit",
 	[".awk"] = "awk",
 	[".bash|.bashrc|.bash_profile|.configure|.csh|.sh|.zsh"] = "bash",
