@@ -1,6 +1,6 @@
 /config.h
 /config.mk
-/README.html
+README.html
 *.swo
 *.swp
 *.o
