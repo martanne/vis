@@ -13,7 +13,7 @@ config.h:
 	@echo Generating ccan configuration header
 	@${CC} ccan-config.c && ./a.out > config.h && rm -f a.out
 
-text: config.h text.c ../../text.c ../../text-util.c
+text: config.h text.c ../../text.c ../../text-util.c ../../text-motions.c ../../text-objects.c ../../text-regex.c
 	@echo Compiling $@ binary
 	@${CC} ${CFLAGS} ${CFLAGS_STD} ${filter %.c, $^} ${SRC} ${LDFLAGS} -o $@
 
