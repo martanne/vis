@@ -142,6 +142,7 @@ vis.filetypes =	{
 	[".ledger|.journal"] = "ledger",
 	[".less"] = "less",
 	[".lily|.ly"] = "lilypond",
+	[".link|.network|.netdev"] = "networkd",
 	[".litcoffee"] = "litcoffee",
 	[".lua"] = "lua",
 	[".md|.markdown"] = "markdown",
