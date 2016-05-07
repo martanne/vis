@@ -20,6 +20,7 @@
 
 #include "text.h"
 #include "text-util.h"
+#include "text-motions.h"
 #include "util.h"
 
 /* Allocate buffers holding the actual file content in junks of size: */
@@ -1623,7 +1624,7 @@ size_t text_lineno_by_pos(Text *txt, size_t pos) {
 	} else if (pos > cache->pos) {
 		cache->lineno += lines_count(txt, cache->pos, pos - cache->pos);
 	}
-	cache->pos = pos;
+	cache->pos = text_line_begin(txt, pos);
 	return cache->lineno;
 }
 
