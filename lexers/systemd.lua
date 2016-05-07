@@ -39,13 +39,21 @@ local number = token(l.NUMBER, (l.float + integer))
 
 -- Keywords.
 local keyword = token(l.KEYWORD, word_match({
-  -- values
+  -- boolean values
   'true',
   'false',
   'on',
   'off',
   'yes',
   'no',
+
+  -- service types
+  'forking',
+  'simple',
+  'oneshot',
+  'dbus',
+  'notify',
+  'idle',
 
   -- special system units
   'basic.target',
