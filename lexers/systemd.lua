@@ -16,7 +16,6 @@ local comment = token(l.COMMENT, l.starts_line(S(';#')) * l.nonnewline^0)
 -- Strings.
 local sq_str = l.delimited_range("'")
 local dq_str = l.delimited_range('"')
---local label = l.delimited_range('[]', true, true)
 local section_word = word_match{
   'Automount',
   'BusName',
