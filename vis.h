@@ -449,4 +449,7 @@ Win *vis_window(Vis*);
 
 bool vis_theme_load(Vis*, const char *name);
 
+/* Get value of autoindent */
+bool vis_get_autoindent(const Vis*);
+
 #endif

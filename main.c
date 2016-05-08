@@ -1947,7 +1947,11 @@ static const char *openline(Vis *vis, const char *keys, const Arg *arg) {
 		vis_motion(vis, VIS_MOVE_LINE_END);
 		vis_keys_feed(vis, "<insert-newline>");
 	} else {
-		vis_motion(vis, VIS_MOVE_LINE_BEGIN);
+		if (vis_get_autoindent(vis)) {
+			vis_motion(vis, VIS_MOVE_LINE_START);
+		} else {
+			vis_motion(vis, VIS_MOVE_LINE_BEGIN);
+		}
 		vis_keys_feed(vis, "<insert-newline><Up>");
 	}
 	return keys;

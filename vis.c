@@ -1363,3 +1363,7 @@ View *vis_view(Vis *vis) {
 Win *vis_window(Vis *vis) {
 	return vis->win;
 }
+
+bool vis_get_autoindent(const Vis *vis) {
+	return vis->autoindent;
+}
