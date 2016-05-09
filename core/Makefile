@@ -11,7 +11,7 @@ test: text buffer map array
 
 config.h:
 	@echo Generating ccan configuration header
-	@${CC} ccan-config.c && ./a.out > config.h && rm -f a.out
+	@${CC} ccan-config.c -o ccan-config && ./ccan-config > config.h
 
 text: config.h text.c ../../text.c ../../text-util.c ../../text-motions.c ../../text-objects.c ../../text-regex.c
 	@echo Compiling $@ binary

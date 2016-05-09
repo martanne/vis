@@ -1,5 +1,3 @@
-.PHONY=all clean test
-
 all: clean test
 
 clean:
@@ -10,3 +8,5 @@ test:
 
 %: %.in
 	@./test.sh $@
+
+.PHONY: all clean test
