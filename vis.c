@@ -1138,7 +1138,7 @@ static void copy_indent_from_previous_line(Win *win, Cursor *cur) {
 		return;
 	len = text_bytes_get(text, begin, len, buf);
 	text_insert(text, pos, buf, len);
-	view_cursors_scroll_to(cur, pos + len);
+	view_cursors_to(cur, pos + len);
 	free(buf);
 }
 
