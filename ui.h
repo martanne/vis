@@ -3,6 +3,7 @@
 
 #include <stdbool.h>
 #include <stdarg.h>
+#include <termkey.h>
 
 /* enable large file optimization for files larger than: */
 #define UI_LARGE_FILE_SIZE (1 << 25)
@@ -52,6 +53,7 @@ struct Ui {
 	bool (*init)(Ui*, Vis*);
 	bool (*start)(Ui*);
 	void (*free)(Ui*);
+	void (*resize)(Ui*);
 	UiWin* (*window_new)(Ui*, View*, File*, enum UiOption);
 	void (*window_free)(UiWin*);
 	void (*window_focus)(UiWin*);
@@ -65,9 +67,10 @@ struct Ui {
 	void (*update)(Ui*);
 	void (*suspend)(Ui*);
 	const char* (*getkey)(Ui*);
-	void (*needkey)(Ui*);
+	bool (*haskey)(Ui*);
 	void (*terminal_save)(Ui*);
 	void (*terminal_restore)(Ui*);
+	TermKey* (*termkey_get)(Ui*);
 };
 
 struct UiWin {

@@ -2,7 +2,6 @@
 #define VIS_CORE_H
 
 #include <setjmp.h>
-#include <termkey.h>
 #include "vis.h"
 #include "register.h"
 #include "text.h"
@@ -175,7 +174,6 @@ struct Vis {
 	VisEvent *event;
 	Array motions;
 	Array textobjects;
-	TermKey *termkey;                    /* libtermkey instance used to parse special keys given by ui */
 };
 
 /** stuff used by multiple of the vis-* files */

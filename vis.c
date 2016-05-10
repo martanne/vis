@@ -19,6 +19,7 @@
 #include <sys/ioctl.h>
 #include <sys/mman.h>
 #include <pwd.h>
+#include <termkey.h>
 
 #include "vis.h"
 #include "text-util.h"
@@ -339,12 +340,6 @@ Vis *vis_new(Ui *ui, VisEvent *event) {
 	Vis *vis = calloc(1, sizeof(Vis));
 	if (!vis)
 		return NULL;
-	const char *term = getenv("TERM");
-	if (!term)
-		term = "xterm";
-	vis->termkey = termkey_new_abstract(term, TERMKEY_FLAG_UTF8);
-	if (!vis->termkey)
-		goto err;
 	vis->ui = ui;
 	vis->ui->init(vis->ui, vis);
 	vis->tabwidth = 8;
@@ -403,8 +398,6 @@ void vis_free(Vis *vis) {
 		map_free(vis_modes[i].bindings);
 	array_release_full(&vis->motions);
 	array_release_full(&vis->textobjects);
-	if (vis->termkey)
-		termkey_destroy(vis->termkey);
 	free(vis);
 }
 
@@ -668,7 +661,7 @@ const char *vis_keys_next(Vis *vis, const char *keys) {
 	if (!keys || !*keys)
 		return NULL;
 	TermKeyKey key;
-	TermKey *termkey = vis->termkey;
+	TermKey *termkey = vis->ui->termkey_get(vis->ui);
 	const char *next = NULL;
 	/* first try to parse a special key of the form <Key> */
 	if (*keys == '<' && (next = termkey_strpkey(termkey, keys+1, &key, TERMKEY_FORMAT_VIM)) && *next == '>')
@@ -924,7 +917,8 @@ int vis_run(Vis *vis, int argc, char *argv[]) {
 			continue;
 		}
 
-		vis->ui->needkey(vis->ui);
+		TermKey *termkey = vis->ui->termkey_get(vis->ui);
+		termkey_advisereadable(termkey);
 		const char *key;
 
 		while ((key = getkey(vis)))
