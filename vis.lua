@@ -128,6 +128,7 @@ vis.filetypes =	{
 	["GNUmakefile|.iface|.mak|.mk|makefile|Makefile"] = "makefile",
 	[".go"] = "go",
 	[".groovy|.gvy"] = "groovy",
+	["group|gshadow|passwd|shadow"] = "dsv",
 	[".gtkrc"] = "gtkrc",
 	[".hs"] = "haskell",
 	[".htm|.html|.shtm|.shtml|.xhtml"] = "html",
