@@ -122,6 +122,7 @@ vis.filetypes =	{
 	[".fish"] = "fish",
 	[".forth|.frt|.fs"] = "forth",
 	[".fs"] = "fsharp",
+	["fstab"] = "fstab",
 	[".g|.g4"] = "antlr",
 	[".g|.gd|.gi|.gap"] = "gap",
 	[".glslf|.glslv"] = "glsl",
