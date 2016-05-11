@@ -22,6 +22,8 @@ void buffer_clear(Buffer*);
 bool buffer_grow(Buffer*, size_t size);
 /* truncate buffer, but keep associated memory region for further data */
 void buffer_truncate(Buffer*);
+/* if buffer is not empty, make sure it is NUL terminated */
+bool buffer_terminate(Buffer*);
 /* replace buffer content with given data, growing the buffer if needed */
 bool buffer_put(Buffer*, const void *data, size_t len);
 /* same but with NUL-terminated data */
