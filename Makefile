@@ -82,15 +82,16 @@ install: vis
 	@chmod 755 ${DESTDIR}${PREFIX}/bin/vis-open
 	@cp -f vis-clipboard ${DESTDIR}${PREFIX}/bin
 	@chmod 755 ${DESTDIR}${PREFIX}/bin/vis-clipboard
-ifeq ($(CONFIG_LUA),1)
-	@echo installing support files to ${DESTDIR}${SHAREPREFIX}/vis
-	@mkdir -p ${DESTDIR}${SHAREPREFIX}/vis
-	@cp -r visrc.lua vis.lua lexers ${DESTDIR}${SHAREPREFIX}/vis
-endif
 	@echo installing manual page to ${DESTDIR}${MANPREFIX}/man1
 	@mkdir -p ${DESTDIR}${MANPREFIX}/man1
 	@sed "s/VERSION/${VERSION}/g" < vis.1 > ${DESTDIR}${MANPREFIX}/man1/vis.1
 	@chmod 644 ${DESTDIR}${MANPREFIX}/man1/vis.1
+	@test "${CONFIG_LUA}" -eq 1 && $(MAKE) install-lua || true
+
+install-lua:
+	@echo installing support files to ${DESTDIR}${SHAREPREFIX}/vis
+	@mkdir -p ${DESTDIR}${SHAREPREFIX}/vis
+	@cp -r visrc.lua vis.lua lexers ${DESTDIR}${SHAREPREFIX}/vis
 
 uninstall:
 	@echo removing executable file from ${DESTDIR}${PREFIX}/bin
@@ -102,4 +103,4 @@ uninstall:
 	@echo removing support files from ${DESTDIR}${SHAREPREFIX}/vis
 	@rm -rf ${DESTDIR}${SHAREPREFIX}/vis
 
-.PHONY: all clean dist install uninstall debug profile test test-update
+.PHONY: all clean dist install install-lua uninstall debug profile test test-update
