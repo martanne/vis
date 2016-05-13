@@ -165,12 +165,12 @@ void vis_prompt_show(Vis *vis, const char *title) {
 	view_draw(prompt->view);
 	prompt->parent = active;
 	prompt->parent_mode = vis->mode;
-	vis_window_mode_map(prompt, VIS_MODE_NORMAL, "<Enter>", &prompt_enter_binding);
-	vis_window_mode_map(prompt, VIS_MODE_INSERT, "<Enter>", &prompt_enter_binding);
-	vis_window_mode_map(prompt, VIS_MODE_VISUAL, "<Enter>", &prompt_enter_binding);
-	vis_window_mode_map(prompt, VIS_MODE_NORMAL, "<Escape>", &prompt_esc_binding);
-	vis_window_mode_map(prompt, VIS_MODE_INSERT, "<Up>", &prompt_up_binding);
-	vis_window_mode_map(prompt, VIS_MODE_INSERT, "<Backspace>", &prompt_backspace_binding);
+	vis_window_mode_map(prompt, VIS_MODE_NORMAL, true, "<Enter>", &prompt_enter_binding);
+	vis_window_mode_map(prompt, VIS_MODE_INSERT, true, "<Enter>", &prompt_enter_binding);
+	vis_window_mode_map(prompt, VIS_MODE_VISUAL, true, "<Enter>", &prompt_enter_binding);
+	vis_window_mode_map(prompt, VIS_MODE_NORMAL, true, "<Escape>", &prompt_esc_binding);
+	vis_window_mode_map(prompt, VIS_MODE_INSERT, true, "<Up>", &prompt_up_binding);
+	vis_window_mode_map(prompt, VIS_MODE_INSERT, true, "<Backspace>", &prompt_backspace_binding);
 	vis_mode_switch(vis, VIS_MODE_INSERT);
 	vis_draw(vis);
 }

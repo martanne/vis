@@ -410,21 +410,7 @@ static int map(lua_State *L) {
 
 	binding->action = action;
 
-	char *lhs = strdup(key), *next = lhs;
-	while (next) {
-		char tmp;
-		next = (char*)vis_keys_next(vis, next);
-		if (next) {
-			tmp = *next;
-			*next = '\0';
-		}
-		vis_mode_unmap(vis, mode, lhs);
-		if (next)
-			*next = tmp;
-	}
-	free(lhs);
-
-	if (!vis_mode_map(vis, mode, key, binding))
+	if (!vis_mode_map(vis, mode, true, key, binding))
 		goto err;
 
 	lua_pushboolean(L, true);

@@ -755,36 +755,19 @@ static bool cmd_map(Vis *vis, Win *win, Command *cmd, const char *argv[], Cursor
 		return false;
 	}
 
-	char *lhs = strdup(argv[2]);
+	const char *lhs = argv[2];
 	char *rhs = strdup(argv[3]);
-	if (!lhs || !rhs || !(binding = calloc(1, sizeof *binding)))
+	if (!rhs || !(binding = calloc(1, sizeof *binding)))
 		goto err;
-
-	char *next = lhs;
-	while (cmd->flags == '!' && next) {
-		char tmp;
-		next = (char*)vis_keys_next(vis, next);
-		if (next) {
-			tmp = *next;
-			*next = '\0';
-		}
-		if (local)
-			vis_window_mode_unmap(win, mode, lhs);
-		else
-			vis_mode_unmap(vis, mode, lhs);
-		if (next)
-			*next = tmp;
-	}
 
 	binding->alias = rhs;
 
 	if (local)
-		mapped = vis_window_mode_map(win, mode, lhs, binding);
+		mapped = vis_window_mode_map(win, mode, cmd->flags == '!', lhs, binding);
 	else
-		mapped = vis_mode_map(vis, mode, lhs, binding);
+		mapped = vis_mode_map(vis, mode, cmd->flags == '!', lhs, binding);
 
 err:
-	free(lhs);
 	if (!mapped) {
 		free(rhs);
 		free(binding);

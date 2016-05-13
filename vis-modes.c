@@ -25,27 +25,6 @@ void vis_mode_switch(Vis *vis, enum VisMode mode) {
 	mode_set(vis, &vis_modes[mode]);
 }
 
-static bool mode_map(Mode *mode, const char *key, const KeyBinding *binding) {
-	if (!mode)
-		return false;
-	if (binding->alias && key[0] != '<' && strncmp(key, binding->alias, strlen(key)) == 0)
-		return false;
-	if (!mode->bindings) {
-		mode->bindings = map_new();
-		if (!mode->bindings)
-			return false;
-	}
-	return (strcmp(key, "<") == 0 || !map_contains(mode->bindings, key)) && map_put(mode->bindings, key, binding);
-}
-
-bool vis_mode_map(Vis *vis, enum VisMode id, const char *key, const KeyBinding *binding) {
-	return id < LENGTH(vis_modes) && mode_map(&vis_modes[id], key, binding);
-}
-
-bool vis_window_mode_map(Win *win, enum VisMode id, const char *key, const KeyBinding *binding) {
-	return id < LENGTH(win->modes) && mode_map(&win->modes[id], key, binding);
-}
-
 static bool mode_unmap(Mode *mode, const char *key) {
 	return mode && mode->bindings && map_delete(mode->bindings, key);
 }
@@ -56,6 +35,41 @@ bool vis_mode_unmap(Vis *vis, enum VisMode id, const char *key) {
 
 bool vis_window_mode_unmap(Win *win, enum VisMode id, const char *key) {
 	return id < LENGTH(win->modes) && mode_unmap(&win->modes[id], key);
+}
+
+static bool mode_map(Vis *vis, Mode *mode, bool force, const char *key, const KeyBinding *binding) {
+	if (!mode)
+		return false;
+	if (binding->alias && key[0] != '<' && strncmp(key, binding->alias, strlen(key)) == 0)
+		return false;
+	if (!mode->bindings && !(mode->bindings = map_new()))
+		return false;
+	if (force) {
+		char *lhs = strdup(key), *next = lhs;
+		if (!lhs)
+			return false;
+		while (next) {
+			char tmp;
+			next = (char*)vis_keys_next(vis, next);
+			if (next) {
+				tmp = *next;
+				*next = '\0';
+			}
+			mode_unmap(mode, lhs);
+			if (next)
+				*next = tmp;
+		}
+		free(lhs);
+	}
+	return (strcmp(key, "<") == 0 || !map_contains(mode->bindings, key)) && map_put(mode->bindings, key, binding);
+}
+
+bool vis_mode_map(Vis *vis, enum VisMode id, bool force, const char *key, const KeyBinding *binding) {
+	return id < LENGTH(vis_modes) && mode_map(vis, &vis_modes[id], force, key, binding);
+}
+
+bool vis_window_mode_map(Win *win, enum VisMode id, bool force, const char *key, const KeyBinding *binding) {
+	return id < LENGTH(win->modes) && mode_map(win->vis, &win->modes[id], force, key, binding);
 }
 
 /** mode switching event handlers */

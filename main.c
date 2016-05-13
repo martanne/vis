@@ -2125,7 +2125,7 @@ int main(int argc, char *argv[]) {
 	for (int i = 0; i < LENGTH(default_bindings); i++) {
 		for (const KeyBinding **binding = default_bindings[i]; binding && *binding; binding++) {
 			for (const KeyBinding *kb = *binding; kb->key; kb++) {
-				vis_mode_map(vis, i, kb->key, kb);
+				vis_mode_map(vis, i, false, kb->key, kb);
 			}
 		}
 	}
