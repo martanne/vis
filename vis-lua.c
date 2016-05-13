@@ -369,27 +369,20 @@ static int open(lua_State *L) {
 	return 1;
 }
 
-static int map(lua_State *L) {
-	Vis *vis = obj_ref_check(L, 1, "vis");
+static int map(Vis *vis, Win *win, int mode, const char *key, const void *func) {
+	bool local = false;
 	if (!vis) {
-		lua_pushnil(L);
-		return 1;
+		local = true;
+		if (!win) {
+			return 0;
+		}
 	}
+
 	KeyBinding *binding = NULL;
 	KeyAction *action = NULL;
+	bool mapped = false;
 
-	int mode = luaL_checkint(L, 2);
-	const char *key = luaL_checkstring(L, 3);
-
-	if (!key || !lua_isfunction(L, 4))
-		goto err;
 	if (!(binding = calloc(1, sizeof *binding)) || !(action = calloc(1, sizeof *action)))
-		goto err;
-
-	/* store reference to function in the registry */
-	lua_pushvalue(L, 4);
-	const void *func = func_ref_new(L);
-	if (!func)
 		goto err;
 
 	*action = (KeyAction){
@@ -411,21 +404,52 @@ static int map(lua_State *L) {
 			tmp = *next;
 			*next = '\0';
 		}
-		vis_mode_unmap(vis, mode, lhs);
+		if (local)
+			vis_mode_unmap(vis, mode, lhs);
+		else
+			vis_window_mode_unmap(win, mode, lhs);
 		if (next)
 			*next = tmp;
 	}
+
+	return 1;
 	free(lhs);
 
-	if (!vis_mode_map(vis, mode, key, binding))
+	if (local)
+		mapped = vis_window_mode_map(win, mode, key, binding);
+	else
+		mapped = vis_mode_map(vis, mode, key, binding);
+	
+err:
+	if (!mapped) {
+		free(binding);
+		free(action);
+	}
+	return mapped;
+}
+
+static int map_global(lua_State *L) {
+	Vis *vis = obj_ref_check(L, 1, "vis");
+	if (!vis) {
+		lua_pushnil(L);
+		return 1;
+	}
+	int mode = luaL_checkint(L, 2);
+	const char *key = luaL_checkstring(L, 3);
+
+	if (!key || !lua_isfunction(L, 4))
 		goto err;
 
-	lua_pushboolean(L, true);
-	return 1;
+	/* store reference to function in the registry */
+	lua_pushvalue(L, 4);
+	const void *func = func_ref_new(L);
+	if (!func)
+		goto err;
+
+	return map(vis, NULL, mode, key, func);
+
 err:
-	free(binding);
-	free(action);
-	lua_pushboolean(L, false);
+	lua_pushnil(L);
 	return 1;
 }
 
@@ -600,7 +624,7 @@ static const struct luaL_Reg vis_lua[] = {
 	{ "info", info },
 	{ "message", message },
 	{ "open", open },
-	{ "map", map },
+	{ "map", map_global },
 	{ "motion", motion },
 	{ "motion_register", motion_register },
 	{ "textobject", textobject },
@@ -690,10 +714,37 @@ static int window_cursors_iterator(lua_State *L) {
 	return 1;
 }
 
+static int window_map(lua_State *L) {
+	Win *win = obj_ref_check(L, 1, "vis.window");
+	if (!win) {
+		lua_pushnil(L);
+		return 1;
+	}
+
+	int mode = luaL_checkint(L, 2);
+	const char *key = luaL_checkstring(L, 3);
+
+	if (!key || !lua_isfunction(L, 4))
+		goto err;
+
+	/* store reference to function in the registry */
+	lua_pushvalue(L, 4);
+	const void *func = func_ref_new(L);
+	if (!func)
+		goto err;
+
+	return map(NULL, win, mode, key, func);
+
+err:
+	lua_pushnil(L);
+	return 1;
+}
+
 static const struct luaL_Reg window_funcs[] = {
 	{ "__index", window_index },
 	{ "__newindex", window_newindex },
 	{ "cursors_iterator", window_cursors_iterator },
+	{ "map", window_map },
 	{ NULL, NULL },
 };
 
