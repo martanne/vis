@@ -234,6 +234,13 @@ static int newindex_common(lua_State *L) {
 	return 0;
 }
 
+static size_t checkpos(lua_State *L, int narg) {
+	lua_Number n = luaL_checknumber(L, narg);
+	if (n >= 0 && n <= SIZE_MAX && n == (size_t)n)
+		return n;
+	return luaL_argerror(L, narg, "expected position, got number");
+}
+
 static void pushrange(lua_State *L, Filerange *r) {
 	if (!text_range_valid(r)) {
 		lua_pushnil(L);
@@ -252,14 +259,14 @@ static Filerange getrange(lua_State *L, int index) {
 	Filerange range = text_range_empty();
 	if (lua_istable(L, index)) {
 		lua_getfield(L, index, "start");
-		range.start = luaL_checkunsigned(L, -1);
+		range.start = checkpos(L, -1);
 		lua_pop(L, 1);
 		lua_getfield(L, index, "finish");
-		range.end = luaL_checkunsigned(L, -1);
+		range.end = checkpos(L, -1);
 		lua_pop(L, 1);
 	} else {
-		range.start = luaL_checkunsigned(L, index);
-		range.end = range.start + luaL_checkunsigned(L, index+1);
+		range.start = checkpos(L, index);
+		range.end = range.start + checkpos(L, index+1);
 	}
 	return range;
 }
@@ -445,7 +452,7 @@ static size_t motion_lua(Vis *vis, Win *win, void *data, size_t pos) {
 	lua_pushunsigned(L, pos);
 	if (pcall(vis, L, 2, 1) != 0)
 		return EPOS;
-	return luaL_checkunsigned(L, -1);
+	return checkpos(L, -1);
 }
 
 static int motion_register(lua_State *L) {
@@ -467,7 +474,6 @@ static int textobject(lua_State *L) {
 	return 1;
 }
 
-
 static Filerange textobject_lua(Vis *vis, Win *win, void *data, size_t pos) {
 	lua_State *L = vis->lua;
 	if (!func_ref_get(L, data) || !obj_ref_new(L, win, "vis.window"))
@@ -475,7 +481,7 @@ static Filerange textobject_lua(Vis *vis, Win *win, void *data, size_t pos) {
 	lua_pushunsigned(L, pos);
 	if (pcall(vis, L, 2, 2) != 0)
 		return text_range_empty();
-	return text_range_new(luaL_checkunsigned(L, -2), luaL_checkunsigned(L, -1));
+	return text_range_new(checkpos(L, -2), checkpos(L, -1));
 }
 
 static int textobject_register(lua_State *L) {
@@ -774,7 +780,7 @@ static int window_cursor_newindex(lua_State *L) {
 	if (lua_isstring(L, 2)) {
 		const char *key = lua_tostring(L, 2);
 		if (strcmp(key, "pos") == 0) {
-			size_t pos = luaL_checkunsigned(L, 3);
+			size_t pos = checkpos(L, 3);
 			view_cursors_to(cur, pos);
 			return 0;
 		}
@@ -794,8 +800,8 @@ static int window_cursor_newindex(lua_State *L) {
 static int window_cursor_to(lua_State *L) {
 	Cursor *cur = obj_ref_check(L, 1, "vis.window.cursor");
 	if (cur) {
-		size_t line = luaL_checkunsigned(L, 2);
-		size_t col = luaL_checkunsigned(L, 3);
+		size_t line = checkpos(L, 2);
+		size_t col = checkpos(L, 3);
 		view_cursors_place(cur, line, col);
 	}
 	return 0;
@@ -866,7 +872,7 @@ static int file_newindex(lua_State *L) {
 static int file_insert(lua_State *L) {
 	File *file = obj_ref_check(L, 1, "vis.file");
 	if (file) {
-		size_t pos = luaL_checkunsigned(L, 2);
+		size_t pos = checkpos(L, 2);
 		size_t len;
 		luaL_checkstring(L, 3);
 		const char *data = lua_tolstring(L, 3, &len);
