@@ -376,12 +376,7 @@ static int open(lua_State *L) {
 	return 1;
 }
 
-static int map(lua_State *L) {
-	Vis *vis = obj_ref_check(L, 1, "vis");
-	if (!vis) {
-		lua_pushnil(L);
-		return 1;
-	}
+static int keymap(lua_State *L, Vis *vis, Win *win) {
 	KeyBinding *binding = NULL;
 	KeyAction *action = NULL;
 
@@ -410,8 +405,13 @@ static int map(lua_State *L) {
 
 	binding->action = action;
 
-	if (!vis_mode_map(vis, mode, true, key, binding))
-		goto err;
+	if (win) {
+		if (!vis_window_mode_map(win, mode, true, key, binding))
+			goto err;
+	} else {
+		if (!vis_mode_map(vis, mode, true, key, binding))
+			goto err;
+	}
 
 	lua_pushboolean(L, true);
 	return 1;
@@ -420,6 +420,15 @@ err:
 	free(action);
 	lua_pushboolean(L, false);
 	return 1;
+}
+
+static int map(lua_State *L) {
+	Vis *vis = obj_ref_check(L, 1, "vis");
+	if (!vis) {
+		lua_pushboolean(L, false);
+		return 1;
+	}
+	return keymap(L, vis, NULL);
 }
 
 static int motion(lua_State *L) {
@@ -682,10 +691,20 @@ static int window_cursors_iterator(lua_State *L) {
 	return 1;
 }
 
+static int window_map(lua_State *L) {
+	Win *win = obj_ref_check(L, 1, "vis.window");
+	if (!win) {
+		lua_pushboolean(L, false);
+		return 1;
+	}
+	return keymap(L, win->vis, win);
+}
+
 static const struct luaL_Reg window_funcs[] = {
 	{ "__index", window_index },
 	{ "__newindex", window_newindex },
 	{ "cursors_iterator", window_cursors_iterator },
+	{ "map", window_map },
 	{ NULL, NULL },
 };
 
