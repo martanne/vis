@@ -320,6 +320,7 @@ static const KeyBinding bindings_insert[] = {
 	{ "<C-i>",              ALIAS("<Tab>")                              },
 	{ "<C-j>",              ALIAS("<Enter>")                            },
 	{ "<C-n>",              ACTION(COMPLETE_WORD)                       },
+	{ "<C-x><C-f>",         ACTION(COMPLETE_FILENAME)                   },
 	{ "<C-m>",              ALIAS("<Enter>")                            },
 	{ "<C-o>",              ACTION(MODE_OPERATOR_PENDING)               },
 	{ "<C-r>",              ACTION(INSERT_REGISTER)                     },

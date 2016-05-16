@@ -127,6 +127,8 @@ static const char *number_increment_decrement(Vis*, const char *keys, const Arg 
 static const char *open_file_under_cursor(Vis*, const char *keys, const Arg *arg);
 /* complete input text at cursor based on the words in the current file */
 static const char *complete_word(Vis*, const char *keys, const Arg *arg);
+/* complete input text at cursor based on file names of the current directory */
+static const char *complete_filename(Vis*, const char *keys, const Arg *arg);
 
 enum {
 	VIS_ACTION_EDITOR_SUSPEND,
@@ -310,6 +312,7 @@ enum {
 	VIS_ACTION_OPEN_FILE_UNDER_CURSOR,
 	VIS_ACTION_OPEN_FILE_UNDER_CURSOR_NEW_WINDOW,
 	VIS_ACTION_COMPLETE_WORD,
+	VIS_ACTION_COMPLETE_FILENAME,
 	VIS_ACTION_NOP,
 };
 
@@ -1218,6 +1221,11 @@ static const KeyAction vis_action[] = {
 		"complete-word",
 		"Complete word in file",
 		complete_word,
+	},
+	[VIS_ACTION_COMPLETE_FILENAME] = {
+		"complete-filename",
+		"Complete file name",
+		complete_filename,
 	},
 	[VIS_ACTION_NOP] = {
 		"nop",
@@ -2143,6 +2151,20 @@ static const char *complete_word(Vis *vis, const char *keys, const Arg *arg) {
 	    " grep '^%s' | sort | uniq | " VIS_MENU " | tr -d '\n' | sed 's/%s//'", prefix, prefix)) {
 		Filerange all = text_range_new(0, text_size(txt));
 		insert_dialog_selection(vis, &all, (const char*[]){ buffer_content0(&cmd), NULL });
+	}
+	buffer_release(&cmd);
+	free(prefix);
+	return keys;
+}
+
+static const char *complete_filename(Vis *vis, const char *keys, const Arg *arg) {
+	Buffer cmd;
+	buffer_init(&cmd);
+	char *prefix = get_completion_prefix(vis);
+	if (prefix && buffer_printf(&cmd, "ls | grep '^%s' | sort | " VIS_MENU
+	    " | tr -d '\n' | sed 's/%s//'", prefix, prefix)) {
+		Filerange empty = text_range_new(0, 0);
+		insert_dialog_selection(vis, &empty, (const char*[]){ buffer_content0(&cmd), NULL });
 	}
 	buffer_release(&cmd);
 	free(prefix);
