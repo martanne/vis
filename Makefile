@@ -78,6 +78,8 @@ install: vis
 	@mkdir -p ${DESTDIR}${PREFIX}/bin
 	@cp -f vis ${DESTDIR}${PREFIX}/bin
 	@chmod 755 ${DESTDIR}${PREFIX}/bin/vis
+	@cp -f vis-menu ${DESTDIR}${PREFIX}/bin
+	@chmod 755 ${DESTDIR}${PREFIX}/bin/vis-menu
 	@cp -f vis-open ${DESTDIR}${PREFIX}/bin
 	@chmod 755 ${DESTDIR}${PREFIX}/bin/vis-open
 	@cp -f vis-clipboard ${DESTDIR}${PREFIX}/bin

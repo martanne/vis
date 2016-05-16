@@ -1,8 +1,7 @@
 #!/bin/sh
 
 PATTERN="."
-[ -z "$VIS_MENU" ] && VIS_MENU="slmenu"
-[ -z "$VIS_MENU_ARGS" ] && VIS_MENU_ARGS="-b"
+VIS_MENU_ARGS=""
 
 while [ $# -gt 0 ]; do
 	case "$1" in
@@ -22,20 +21,11 @@ while [ $# -gt 0 ]; do
 	esac
 done
 
-if ! type "$VIS_MENU" >/dev/null 2>&1; then
-	if [ ! -z "$DISPLAY" ] && type "dmenu" >/dev/null 2>&1; then
-		VIS_MENU="dmenu"
-	else
-		echo "Neither slmenu nor dmenu found" >&2
-		exit 1
-	fi
-fi
-
 DIR=""
 [ ! -z "$PATTERN" -a "$PATTERN" != "." -a -d "$PATTERN" ] && DIR="$PATTERN"
 
 while true; do
-	SEL=$({ echo ..; ls -1 $PATTERN 2>/dev/null || echo $PATTERN; } | $VIS_MENU $VIS_MENU_ARGS)
+	SEL=$({ echo ..; ls -1 $PATTERN 2>/dev/null || echo $PATTERN; } | vis-menu $VIS_MENU_ARGS)
 	[ -z "$SEL" ] && exit 1
 	[ ! -z "$DIR" ] && SEL="$DIR/$SEL"
 	if [ -d "$SEL" ]; then
