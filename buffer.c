@@ -1,5 +1,7 @@
 #include <stdlib.h>
 #include <string.h>
+#include <stdarg.h>
+#include <stdio.h>
 
 #include "buffer.h"
 #include "util.h"
@@ -92,6 +94,27 @@ bool buffer_prepend(Buffer *buf, const void *data, size_t len) {
 
 bool buffer_prepend0(Buffer *buf, const char *data) {
 	return buffer_prepend(buf, data, strlen(data) + (buf->len == 0));
+}
+
+bool buffer_printf(Buffer *buf, const char *fmt, ...) {
+	va_list ap;
+	va_start(ap, fmt);
+	bool ret = buffer_vprintf(buf, fmt, ap);
+	va_end(ap);
+	return ret;
+}
+
+bool buffer_vprintf(Buffer *buf, const char *fmt, va_list ap) {
+	va_list ap_save;
+	va_copy(ap_save, ap);
+	int len = vsnprintf(NULL, 0, fmt, ap);
+	if (len == -1 || !buffer_grow(buf, len+1))
+		return false;
+	bool ret = vsnprintf(buf->data, len+1, fmt, ap_save) == len;
+	if (ret)
+		buf->len = len+1;
+	va_end(ap_save);
+	return ret;
 }
 
 size_t buffer_length0(Buffer *buf) {

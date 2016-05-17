@@ -40,6 +40,9 @@ bool buffer_append0(Buffer*, const char *data);
 bool buffer_prepend(Buffer*, const void *data, size_t len);
 /* prepend NUL-terminated data */
 bool buffer_prepend0(Buffer*, const char *data);
+
+bool buffer_printf(Buffer*, const char *fmt, ...);
+bool buffer_vprintf(Buffer*, const char *fmt, va_list);
 /* return length of a buffer without trailing NUL byte */
 size_t buffer_length0(Buffer*);
 /* return length of a buffer including possible NUL byte */
