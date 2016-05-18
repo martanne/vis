@@ -319,6 +319,7 @@ static const KeyBinding bindings_insert[] = {
 	{ "<C-d>",              ALIAS("<Escape><<i")                        },
 	{ "<C-i>",              ALIAS("<Tab>")                              },
 	{ "<C-j>",              ALIAS("<Enter>")                            },
+	{ "<C-n>",              ACTION(COMPLETE_WORD)                       },
 	{ "<C-m>",              ALIAS("<Enter>")                            },
 	{ "<C-o>",              ACTION(MODE_OPERATOR_PENDING)               },
 	{ "<C-r>",              ACTION(INSERT_REGISTER)                     },

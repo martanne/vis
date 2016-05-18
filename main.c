@@ -125,6 +125,8 @@ static const char *percent(Vis*, const char *keys, const Arg *arg);
 static const char *number_increment_decrement(Vis*, const char *keys, const Arg *arg);
 /* open a filename under cursor in same (!arg->b) or new (arg->b) window */
 static const char *open_file_under_cursor(Vis*, const char *keys, const Arg *arg);
+/* complete input text at cursor based on the words in the current file */
+static const char *complete_word(Vis*, const char *keys, const Arg *arg);
 
 enum {
 	VIS_ACTION_EDITOR_SUSPEND,
@@ -307,6 +309,7 @@ enum {
 	VIS_ACTION_NUMBER_DECREMENT,
 	VIS_ACTION_OPEN_FILE_UNDER_CURSOR,
 	VIS_ACTION_OPEN_FILE_UNDER_CURSOR_NEW_WINDOW,
+	VIS_ACTION_COMPLETE_WORD,
 	VIS_ACTION_NOP,
 };
 
@@ -1211,6 +1214,11 @@ static const KeyAction vis_action[] = {
 		"Open file under the cursor in a new window",
 		open_file_under_cursor, { .b = true }
 	},
+	[VIS_ACTION_COMPLETE_WORD] = {
+		"complete-word",
+		"Complete word in file",
+		complete_word,
+	},
 	[VIS_ACTION_NOP] = {
 		"nop",
 		"Ignore key, do nothing",
@@ -2090,6 +2098,54 @@ static const char *open_file_under_cursor(Vis *vis, const char *keys, const Arg 
 		free(name);
 	}
 
+	return keys;
+}
+
+static char *get_completion_prefix(Vis *vis) {
+	View *view = vis_view(vis);
+	Text *txt = vis_text(vis);
+
+	Filerange r = text_object_word(txt, view_cursor_get(view)-1);
+	r = text_range_inner(txt, &r);
+	size_t size = text_range_size(&r);
+	if (size == 0) {
+		vis_info_show(vis, "No valid prefix found for completion");
+		return NULL;
+	}
+
+	return text_bytes_alloc0(txt, r.start, size);
+}
+
+static void insert_dialog_selection(Vis *vis, Filerange *range, const char *argv[]) {
+	char *out = NULL, *err = NULL;
+	if (vis_pipe_collect(vis, range, true, argv, &out, &err) == 0) {
+		View *view = vis_view(vis);
+		size_t len = out ? strlen(out) : 0;
+		for (Cursor *c = view_cursors(view); c; c = view_cursors_next(c)) {
+			size_t pos = view_cursors_pos(c);
+			vis_insert(vis, pos, out, len);
+			view_cursors_scroll_to(c, pos + len);
+		}
+	} else {
+		vis_info_show(vis, "Completion command failed, is vis-menu in $PATH?");
+	}
+	vis_draw(vis);
+	free(out);
+	free(err);
+}
+
+static const char *complete_word(Vis *vis, const char *keys, const Arg *arg) {
+	Text *txt = vis_text(vis);
+	Buffer cmd;
+	buffer_init(&cmd);
+	char *prefix = get_completion_prefix(vis);
+	if (prefix && buffer_printf(&cmd, "tr \" ;:$<>#?{}()[],.'\" '\n' | "
+	    " grep '^%s' | sort | uniq | vis-menu | tr -d '\n' | sed 's/%s//'", prefix, prefix)) {
+		Filerange all = text_range_new(0, text_size(txt));
+		insert_dialog_selection(vis, &all, (const char*[]){ buffer_content0(&cmd), NULL });
+	}
+	buffer_release(&cmd);
+	free(prefix);
 	return keys;
 }
 
