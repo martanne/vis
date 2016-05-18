@@ -568,7 +568,7 @@ main(int argc, char **argv) {
 	for(i=0; i<argc; i++)
 		/* single flags */
 		if(!strcmp(argv[i], "-v")) {
-			puts("slmenu, © 2011 slmenu engineers, see LICENSE for details");
+			puts("vis-menu " VERSION);
 			exit(EXIT_SUCCESS);
 		}
 		else if(!strcmp(argv[i], "-i"))
