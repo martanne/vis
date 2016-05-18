@@ -42,7 +42,6 @@
 #include <termios.h>
 #include <unistd.h>
 
-#define XSEL          "xsel -ob 2>/dev/null || cat /tmp/.sandy.clipboard.$USER"
 #define CONTROL(ch)   (ch ^ 0x40)
 #define MIN(a,b)      ((a) < (b) ? (a) : (b))
 #define MAX(a,b)      ((a) > (b) ? (a) : (b))
@@ -497,11 +496,6 @@ run(void) {
 			sel = curr = prev;
 			calcoffsets();
 			break;
-		case CONTROL('Y'):
-			if((f=popen(XSEL, "r")) != NULL) {
-				while((n= fread(&buf, 1, sizeof buf, f)) > 0) insert(buf, n);
-				pclose(f);
-			}
 		default:
 			if(!iscntrl(*buf))
 				insert(buf, strlen(buf));
