@@ -37,8 +37,7 @@ DEBUG_CFLAGS_VIS = ${CFLAGS_VIS} -UNDEBUG -O0 -g -ggdb -Wall -Wextra -pedantic \
 
 STRIP?=strip
 
-
-all: vis
+all: vis vis-menu
 
 config.h:
 	cp config.def.h config.h
@@ -48,6 +47,9 @@ config.mk:
 
 vis: config.h config.mk *.c *.h
 	${CC} ${CFLAGS} ${CFLAGS_VIS} ${SRC} ${LDFLAGS} ${LDFLAGS_VIS} -o $@
+
+vis-menu: vis-menu.c
+	${CC} ${CFLAGS} ${CFLAGS_STD} ${CFLAGS_AUTO} $< ${LDFLAGS} ${LDFLAGS_STD} ${LDFLAGS_AUTO} -o $@
 
 debug: clean
 	@$(MAKE) CFLAGS_VIS='${DEBUG_CFLAGS_VIS}'
@@ -65,13 +67,13 @@ test:
 
 clean:
 	@echo cleaning
-	@rm -f vis vis-${VERSION}.tar.gz
+	@rm -f vis vis-menu vis-${VERSION}.tar.gz
 
 dist: clean
 	@echo creating dist tarball
 	@git archive --prefix=vis-${VERSION}/ -o vis-${VERSION}.tar.gz HEAD
 
-install: vis
+install: vis vis-menu
 	@echo stripping executable
 	@${STRIP} vis
 	@echo installing executable file to ${DESTDIR}${PREFIX}/bin
@@ -97,6 +99,7 @@ install: vis
 uninstall:
 	@echo removing executable file from ${DESTDIR}${PREFIX}/bin
 	@rm -f ${DESTDIR}${PREFIX}/bin/vis
+	@rm -f ${DESTDIR}${PREFIX}/bin/vis-menu
 	@rm -f ${DESTDIR}${PREFIX}/bin/vis-open
 	@rm -f ${DESTDIR}${PREFIX}/bin/vis-clipboard
 	@echo removing manual page from ${DESTDIR}${MANPREFIX}/man1
