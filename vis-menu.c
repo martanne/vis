@@ -565,7 +565,7 @@ int
 main(int argc, char **argv) {
 	int i;
 
-	for(i=0; i<argc; i++)
+	for(i=1; i<argc; i++)
 		/* single flags */
 		if(!strcmp(argv[i], "-v")) {
 			puts("vis-menu " VERSION);
@@ -582,6 +582,10 @@ main(int argc, char **argv) {
 			prompt=argv[++i];
 		else if(!strcmp(argv[i], "-l"))
 			lines = atoi(argv[++i]);
+		else {
+			strncpy(text, argv[i], sizeof(text)-1);
+			cursor = strlen(text);
+		}
 
 	readstdin();
 	setup();
