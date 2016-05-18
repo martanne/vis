@@ -6,10 +6,6 @@
 #include "util.h"
 #include "register.h"
 
-#ifndef VIS_CLIPBOARD
-#define VIS_CLIPBOARD "vis-clipboard"
-#endif
-
 static ssize_t read_buffer(void *context, char *data, size_t len) {
 	buffer_append(context, data, len);
 	return len;

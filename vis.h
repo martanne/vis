@@ -13,6 +13,17 @@ typedef struct Win Win;
 #include "view.h"
 #include "text-regex.h"
 
+/* simplify utility renames by distribution packagers */
+#ifndef VIS_MENU
+#define VIS_MENU "vis-menu"
+#endif
+#ifndef VIS_OPEN
+#define VIS_OPEN "vis-open"
+#endif
+#ifndef VIS_CLIPBOARD
+#define VIS_CLIPBOARD "vis-clipboard"
+#endif
+
 typedef struct {
 	void (*vis_init)(Vis*);
 	void (*vis_start)(Vis*);

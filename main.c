@@ -2140,7 +2140,7 @@ static const char *complete_word(Vis *vis, const char *keys, const Arg *arg) {
 	buffer_init(&cmd);
 	char *prefix = get_completion_prefix(vis);
 	if (prefix && buffer_printf(&cmd, "tr \" ;:$<>#?{}()[],.'\" '\n' | "
-	    " grep '^%s' | sort | uniq | vis-menu | tr -d '\n' | sed 's/%s//'", prefix, prefix)) {
+	    " grep '^%s' | sort | uniq | " VIS_MENU " | tr -d '\n' | sed 's/%s//'", prefix, prefix)) {
 		Filerange all = text_range_new(0, text_size(txt));
 		insert_dialog_selection(vis, &all, (const char*[]){ buffer_content0(&cmd), NULL });
 	}

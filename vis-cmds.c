@@ -3,10 +3,6 @@
 #include <termkey.h>
 #include "vis-lua.h"
 
-#ifndef VIS_OPEN
-#define VIS_OPEN "vis-open"
-#endif
-
 typedef struct {
 	CmdFunc func;
 	void *data;
