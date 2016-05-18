@@ -1178,7 +1178,8 @@ void vis_lua_init(Vis *vis) {
 
 	lua_getglobal(L, "require");
 	lua_pushstring(L, "visrc");
-	pcall(vis, L, 1, 0);
+	if (lua_pcall(L, 1, 0, 0))
+		vis_info_show(vis, "WARNING: failed to load visrc.lua");
 }
 
 void vis_lua_start(Vis *vis) {
