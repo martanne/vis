@@ -410,6 +410,10 @@ bool vis_prompt_cmd(Vis*, const char *cmd);
 
 /* pipe a given file range to an external process
  *
+ * in interactive mode stdin and stderr are not redirected, hence they
+ * can be used to read keyboard input and draw a user interface on top
+ * of vis. Attempting to pipe an invalid range enables interactive mode.
+ *
  * if argv contains only one non-NULL element the command is executed using
  * /bin/sh -c (i.e. argument expansion is performed by the shell). In contrast
  * if argv contains more than one non-NULL element execvp(argv[0], argv); will
@@ -418,14 +422,14 @@ bool vis_prompt_cmd(Vis*, const char *cmd);
  * if read_std{out,err} are non-NULL they will be called when output from
  * the forked process is available.
  */
-int vis_pipe(Vis *vis, Filerange *range, const char *argv[],
+int vis_pipe(Vis *vis, Filerange *range, bool interactive, const char *argv[],
 	void *stdout_context, ssize_t (*read_stdout)(void *stdout_context, char *data, size_t len),
 	void *stderr_context, ssize_t (*read_stderr)(void *stderr_context, char *data, size_t len));
 
 /* pipe a range to an external application, return its exit status and store
  * everything that is written to stdout/stderr in the gitven char pointers
  * which have to be free(3)-ed by the caller */
-int vis_pipe_collect(Vis *vis, Filerange *range, const char *argv[], char **out, char **err);
+int vis_pipe_collect(Vis *vis, Filerange *range, bool interactive, const char *argv[], char **out, char **err);
 
 /* given the start of a key, returns a pointer to the start of the one immediately
  * following as will be processed by the input system. skips over special keys
