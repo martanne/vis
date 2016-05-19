@@ -28,11 +28,12 @@ CFLAGS_VIS += -DVIS_PATH=\"${SHAREPREFIX}/vis\"
 CFLAGS_VIS += -DCONFIG_LUA=${CONFIG_LUA}
 CFLAGS_VIS += -DCONFIG_SELINUX=${CONFIG_SELINUX}
 CFLAGS_VIS += -DCONFIG_ACL=${CONFIG_ACL}
+CFLAGS_VIS += ${CFLAGS_DEBUG}
 
 LDFLAGS_VIS = $(LDFLAGS_AUTO) $(LDFLAGS_TERMKEY) $(LDFLAGS_CURSES) $(LDFLAGS_ACL) \
 	$(LDFLAGS_SELINUX) $(LDFLAGS_LUA) $(LDFLAGS_STD)
 
-DEBUG_CFLAGS_VIS = ${CFLAGS_VIS} -UNDEBUG -O0 -g -ggdb -Wall -Wextra -pedantic \
+CFLAGS_DEBUG_ENABLE = -UNDEBUG -O0 -g -ggdb -Wall -Wextra -pedantic \
 	-Wno-missing-field-initializers -Wno-unused-parameter
 
 STRIP?=strip
@@ -49,13 +50,13 @@ vis: config.h config.mk *.c *.h
 	${CC} ${CFLAGS} ${CFLAGS_VIS} ${SRC} ${LDFLAGS} ${LDFLAGS_VIS} -o $@
 
 vis-menu: vis-menu.c
-	${CC} ${CFLAGS} ${CFLAGS_STD} ${CFLAGS_AUTO} $< ${LDFLAGS} ${LDFLAGS_STD} ${LDFLAGS_AUTO} -o $@
+	${CC} ${CFLAGS} ${CFLAGS_STD} ${CFLAGS_AUTO} ${CFLAGS_DEBUG} $< ${LDFLAGS} ${LDFLAGS_STD} ${LDFLAGS_AUTO} -o $@
 
 debug: clean
-	@$(MAKE) CFLAGS_VIS='${DEBUG_CFLAGS_VIS}'
+	@$(MAKE) CFLAGS_DEBUG='${CFLAGS_DEBUG_ENABLE}'
 
 profile: clean
-	@$(MAKE) CFLAGS_VIS='${DEBUG_CFLAGS_VIS} -pg'
+	@$(MAKE) CFLAGS_DEBUG='${CFLAGS_DEBUG_ENABLE} -pg'
 
 test-update:
 	git submodule init
