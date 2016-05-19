@@ -354,11 +354,15 @@ CONFIG_LUA=0
 
 if test "$lua" != "no" ; then
 
-	printf "checking for liblua...\n"
+	printf "checking for liblua >= 5.2 ...\n"
 
 cat > "$tmpc" <<EOF
 #include <lua.h>
 #include <lauxlib.h>
+
+#if LUA_VERSION_NUM < 502
+#error "Need at least Lua 5.2"
+#endif
 
 int main(int argc, char *argv[]) {
 	lua_State *L = luaL_newstate();
