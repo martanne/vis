@@ -68,7 +68,7 @@ static void   drawtext(const char*, size_t, Color);
 static void   drawmenu(void);
 static char  *fstrstr(const char*, const char*);
 static void   insert(const char*, ssize_t);
-static void   match(int);
+static void   match();
 static size_t nextrune(int);
 static void   readstdin(void);
 static int    run(void);
@@ -222,43 +222,56 @@ insert(const char *str, ssize_t n) {
 	if(n > 0)
 		memcpy(&text[cursor], str, n);
 	cursor += n;
-	match(n > 0 && text[cursor] == '\0');
+	match();
 }
 
-void
-match(int sub) {
-	size_t len = strlen(text);
-	Item *lexact, *lprefix, *lsubstr, *exactend, *prefixend, *substrend;
-	Item *item, *lnext;
+static void
+match(void)
+{
+	static char **tokv = NULL;
+	static int tokn = 0;
 
-	lexact = lprefix = lsubstr = exactend = prefixend = substrend = NULL;
-	for(item = sub ? matches : items; item && item->text; item = lnext) {
-		lnext = sub ? item->right : item + 1;
-		if(!fstrncmp(text, item->text, len + 1))
-			appenditem(item, &lexact, &exactend);
-		else if(!fstrncmp(text, item->text, len))
+	char buf[sizeof text], *s;
+	int i, tokc = 0;
+	size_t len, textsize;
+	Item *item, *lprefix, *lsubstr, *prefixend, *substrend;
+
+	strcpy(buf, text);
+	/* separate input text into tokens to be matched individually */
+	for (s = strtok(buf, " "); s; tokv[tokc - 1] = s, s = strtok(NULL, " "))
+		if (++tokc > tokn && !(tokv = realloc(tokv, ++tokn * sizeof *tokv)))
+			die("Can't realloc.");
+	len = tokc ? strlen(tokv[0]) : 0;
+
+	matches = lprefix = lsubstr = matchend = prefixend = substrend = NULL;
+	textsize = strlen(text);
+	for (item = items; item && item->text; item++) {
+		for (i = 0; i < tokc; i++)
+			if (!fstrstr(item->text, tokv[i]))
+				break;
+		if (i != tokc) /* not all tokens match */
+			continue;
+		/* exact matches go first, then prefixes, then substrings */
+		if (!tokc || !fstrncmp(text, item->text, textsize))
+			appenditem(item, &matches, &matchend);
+		else if (!fstrncmp(tokv[0], item->text, len))
 			appenditem(item, &lprefix, &prefixend);
-		else if(fstrstr(item->text, text))
+		else
 			appenditem(item, &lsubstr, &substrend);
 	}
-	matches = lexact;
-	matchend = exactend;
-
-	if(lprefix) {
-		if(matchend) {
+	if (lprefix) {
+		if (matches) {
 			matchend->right = lprefix;
 			lprefix->left = matchend;
-		}
-		else
+		} else
 			matches = lprefix;
 		matchend = prefixend;
 	}
-	if(lsubstr) {
-		if(matchend) {
+	if (lsubstr) {
+		if (matches) {
 			matchend->right = lsubstr;
 			lsubstr->left = matchend;
-		}
-		else
+		} else
 			matches = lsubstr;
 		matchend = substrend;
 	}
@@ -405,7 +418,7 @@ run(void) {
 		case CONTROL('J'):
 			if(sel) strncpy(text, sel->text, sizeof text); /* Complete the input first, when hitting return */
 			cursor = strlen(text);
-			match(TRUE);
+			match();
 			drawmenu();
 			/* fallthrough */
 		case CONTROL(']'):
@@ -475,11 +488,11 @@ run(void) {
 				break;
 			strncpy(text, sel->text, sizeof text);
 			cursor = strlen(text);
-			match(TRUE);
+			match();
 			break;
 		case CONTROL('K'):
 			text[cursor] = '\0';
-			match(FALSE);
+			match();
 			break;
 		case CONTROL('U'):
 			insert(NULL, 0 - cursor);
@@ -543,7 +556,7 @@ setup(void) {
 	lines=MIN(MAX(lines, 0), mh);
 	promptw=(prompt?textw(prompt):0);
 	inputw=MIN(inputw, mw/3);
-	match(FALSE);
+	match();
 	if(barpos!=0) resetline();
 	drawmenu();
 }
