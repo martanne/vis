@@ -98,6 +98,7 @@ vis.filetypes =	{
 	[".cmake|.cmake.in|.ctest|.ctest.in"] = "cmake",
 	[".coffee"] = "coffeescript",
 	[".cpp|.cxx|.c++|.cc|.hh|.hpp|.hxx|.h++"] = "cpp",
+	[".cr"] = "crystal",
 	[".cs"] = "csharp",
 	[".css"] = "css",
 	[".cu|.cuh"] = "cuda",
