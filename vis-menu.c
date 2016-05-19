@@ -45,8 +45,6 @@
 #define CONTROL(ch)   (ch ^ 0x40)
 #define MIN(a,b)      ((a) < (b) ? (a) : (b))
 #define MAX(a,b)      ((a) > (b) ? (a) : (b))
-#define FALSE 0
-#define TRUE  1
 
 enum Color {
 	C_Normal,
@@ -318,8 +316,6 @@ int
 run(void) {
 	char buf[32];
 	char c;
-	FILE *f;
-	int n;
 
 	while(1) {
 		read(0, &c, 1);
