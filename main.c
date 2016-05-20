@@ -2188,6 +2188,8 @@ int main(int argc, char *argv[]) {
 		.file_close = vis_lua_file_close,
 		.win_open = vis_lua_win_open,
 		.win_close = vis_lua_win_close,
+		.win_highlight = vis_lua_win_highlight,
+		.win_syntax = vis_lua_win_syntax,
 	};
 
 	vis = vis_new(ui_curses_new(), &event);

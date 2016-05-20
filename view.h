@@ -3,18 +3,19 @@
 
 #include <stddef.h>
 #include <stdbool.h>
-#if CONFIG_LUA
-#include <lua.h>
-#else
-typedef struct lua_State lua_State;
-#endif
-#include "register.h"
-#include "text.h"
-#include "ui.h"
 
 typedef struct View View;
 typedef struct Cursor Cursor;
 typedef struct Selection Selection;
+
+#include "text.h"
+#include "ui.h"
+#include "register.h"
+
+typedef struct {
+	void *data;
+	void (*highlight)(void *data);
+} ViewEvent;
 
 typedef struct {
 	int width;          /* display width i.e. number of columns occupied by this character */
@@ -40,7 +41,7 @@ struct Line {               /* a line on the screen, *not* in the file */
 	Cell cells[];       /* win->width cells storing information about the displayed characters */
 };
 
-View *view_new(Text*, lua_State*);
+View *view_new(Text*, ViewEvent*);
 void view_ui(View*, UiWin*);
 /* change associated text displayed in this window */
 void view_reload(View*, Text*);
@@ -89,9 +90,6 @@ Filerange view_viewport_get(View*);
  */
 bool view_viewport_up(View *view, int n);
 bool view_viewport_down(View *view, int n);
-/* associate a set of syntax highlighting rules to this window. */
-bool view_syntax_set(View*, const char *name);
-const char *view_syntax_get(View*);
 
 void view_options_set(View*, enum UiOption options);
 enum UiOption view_options_get(View*);

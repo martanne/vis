@@ -33,6 +33,8 @@ typedef struct {
 	void (*file_close)(Vis*, File*);
 	void (*win_open)(Vis*, Win*);
 	void (*win_close)(Vis*, Win*);
+	void (*win_highlight)(Vis*, Win*);
+	bool (*win_syntax)(Vis*, Win*, const char *syntax);
 } VisEvent;
 
 typedef union { /* various types of arguments passed to key action functions */
@@ -98,6 +100,10 @@ void vis_window_prev(Vis*);
 void vis_window_focus(Win*);
 /* swap location of two windows */
 void vis_window_swap(Win*, Win*);
+
+const char *vis_window_syntax_get(Win*);
+bool vis_window_syntax_set(Win*, const char *name);
+
 /* display a user prompt with a certain title and default text */
 void vis_prompt_show(Vis*, const char *title);
 

@@ -28,6 +28,8 @@ void vis_lua_file_save(Vis *vis, File *file) { }
 void vis_lua_file_close(Vis *vis, File *file) { }
 void vis_lua_win_open(Vis *vis, Win *win) { }
 void vis_lua_win_close(Vis *vis, Win *win) { }
+void vis_lua_win_highlight(Vis *vis, Win *win) { }
+bool vis_lua_win_syntax(Vis *vis, Win *win, const char *syntax) { return true; }
 bool vis_theme_load(Vis *vis, const char *name) { return true; }
 
 #else
@@ -618,7 +620,7 @@ static int window_index(lua_State *L) {
 		}
 
 		if (strcmp(key, "syntax") == 0) {
-			const char *syntax = view_syntax_get(win->view);
+			const char *syntax = vis_window_syntax_get(win);
 			if (syntax)
 				lua_pushstring(L, syntax);
 			else
@@ -640,7 +642,7 @@ static int window_newindex(lua_State *L) {
 			const char *syntax = NULL;
 			if (!lua_isnil(L, 3))
 				syntax = luaL_checkstring(L, 3);
-			view_syntax_set(win->view, syntax);
+			vis_window_syntax_set(win, syntax);
 			return 0;
 		}
 	}
@@ -1272,6 +1274,34 @@ void vis_lua_win_close(Vis *vis, Win *win) {
 	obj_ref_free(L, win->view);
 	obj_ref_free(L, win);
 	lua_pop(L, 1);
+}
+
+void vis_lua_win_highlight(Vis *vis, Win *win) {
+	lua_State *L = vis->lua;
+	vis_lua_event_get(L, "win_highlight");
+	if (lua_isfunction(L, -1)) {
+		obj_ref_new(L, win, "vis.window");
+		pcall(vis, L, 1, 0);
+	}
+	lua_pop(L, 1);
+}
+
+bool vis_lua_win_syntax(Vis *vis, Win *win, const char *syntax) {
+	lua_State *L = vis->lua;
+	bool ret = false;
+	vis_lua_event_get(L, "win_syntax");
+	if (lua_isfunction(L, -1)) {
+		obj_ref_new(L, win, "vis.window");
+		if (syntax)
+			lua_pushstring(L, syntax);
+		else
+			lua_pushnil(L);
+		pcall(vis, L, 2, 1);
+		ret = lua_toboolean(L, -1);
+		lua_pop(L, 1);
+	}
+	lua_pop(L, 1);
+	return ret;
 }
 
 bool vis_theme_load(Vis *vis, const char *name) {

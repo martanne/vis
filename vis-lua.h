@@ -25,5 +25,7 @@ void vis_lua_file_save(Vis*, File*);
 void vis_lua_file_close(Vis*, File*);
 void vis_lua_win_open(Vis*, Win*);
 void vis_lua_win_close(Vis*, Win*);
+void vis_lua_win_highlight(Vis*, Win*);
+bool vis_lua_win_syntax(Vis*, Win*, const char *syntax);
 
 #endif

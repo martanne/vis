@@ -205,7 +205,7 @@ static bool cmd_set(Vis *vis, Win *win, Command *cmd, const char *argv[], Cursor
 		break;
 	case OPTION_SYNTAX:
 		if (!argv[2]) {
-			const char *syntax = view_syntax_get(win->view);
+			const char *syntax = vis_window_syntax_get(win);
 			if (syntax)
 				vis_info_show(vis, "Syntax definition in use: `%s'", syntax);
 			else
@@ -214,8 +214,8 @@ static bool cmd_set(Vis *vis, Win *win, Command *cmd, const char *argv[], Cursor
 		}
 
 		if (parse_bool(argv[2], &arg.b) && !arg.b)
-			return view_syntax_set(win->view, NULL);
-		if (!view_syntax_set(win->view, argv[2])) {
+			return vis_window_syntax_set(win, NULL);
+		if (!vis_window_syntax_set(win, argv[2])) {
 			vis_info_show(vis, "Unknown syntax definition: `%s'", argv[2]);
 			return false;
 		}

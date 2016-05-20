@@ -1590,8 +1590,4 @@ M.property_expanded = setmetatable({}, {
 local lexer
 ]]
 
-function M.get_style(lexer, lang, token_name)
-  return lexer['STYLE_'..string_upper(token_name)] or lang._EXTRASTYLES[token_name]
-end
-
 return M

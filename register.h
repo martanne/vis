@@ -3,12 +3,9 @@
 
 #include <stddef.h>
 #include <stdbool.h>
+#include "vis.h"
 #include "buffer.h"
 #include "text-util.h"
-
-#ifndef VIS_H
-typedef struct Vis Vis;
-#endif
 
 typedef struct {
 	Buffer buf;

@@ -149,7 +149,15 @@ static void window_free(Win *win) {
 	for (size_t i = 0; i < LENGTH(win->modes); i++)
 		map_free(win->modes[i].bindings);
 	ringbuf_free(win->jumplist);
+	free(win->lexer_name);
 	free(win);
+}
+
+static void window_highlight(void *ctx) {
+	Win *win = ctx;
+	Vis *vis = win->vis;
+	if (!win->file->internal && vis->event && vis->event->win_highlight)
+		vis->event->win_highlight(vis, win);
 }
 
 Win *window_new_file(Vis *vis, File *file) {
@@ -159,7 +167,8 @@ Win *window_new_file(Vis *vis, File *file) {
 	win->vis = vis;
 	win->file = file;
 	win->jumplist = ringbuf_alloc(31);
-	win->view = view_new(file->text, vis->lua);
+	win->event.data = win;
+	win->view = view_new(file->text, &win->event);
 	win->ui = vis->ui->window_new(vis->ui, win->view, file, UI_OPTION_STATUSBAR);
 	if (!win->jumplist || !win->view || !win->ui) {
 		window_free(win);
@@ -210,7 +219,7 @@ bool vis_window_split(Win *original) {
 	}
 	win->file = original->file;
 	win->file->refcount++;
-	view_syntax_set(win->view, view_syntax_get(original->view));
+	vis_window_syntax_set(win, vis_window_syntax_get(original));
 	view_options_set(win->view, view_options_get(original->view));
 	view_cursor_to(win->view, view_cursor_get(original->view));
 	vis_draw(win->vis);
@@ -240,6 +249,22 @@ void vis_window_prev(Vis *vis) {
 	if (!sel)
 		for (sel = vis->windows; sel->next; sel = sel->next);
 	vis_window_focus(sel);
+}
+
+const char *vis_window_syntax_get(Win *win) {
+	return win->lexer_name;
+}
+
+bool vis_window_syntax_set(Win *win, const char *syntax) {
+	Vis *vis = win->vis;
+	if (!win->file->internal && vis->event && vis->event->win_syntax) {
+		if (!vis->event->win_syntax(vis, win, syntax))
+			return false;
+	}
+	free(win->lexer_name);
+	win->lexer_name = syntax ? strdup(syntax) : NULL;
+	win->event.highlight = syntax ? window_highlight : NULL;
+	return !syntax || win->lexer_name;
 }
 
 void vis_draw(Vis *vis) {

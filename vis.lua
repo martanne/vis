@@ -222,3 +222,64 @@ vis.events.theme_change = function(name)
 	end
 end
 
+vis.events.win_syntax = function(win, name)
+	if name == nil then
+		return true
+	end
+	local lexers = vis.lexers
+	if lexers == nil then
+		return false
+	end
+	local lexer = lexers.load(name)
+	if not lexer then
+		return false
+	end
+
+	win:style_define(win.STYLE_DEFAULT, lexers.STYLE_DEFAULT)
+	win:style_define(win.STYLE_CURSOR, lexers.STYLE_CURSOR)
+	win:style_define(win.STYLE_CURSOR_PRIMARY, lexers.STYLE_CURSOR_PRIMARY)
+	win:style_define(win.STYLE_CURSOR_LINE, lexers.STYLE_CURSOR_LINE)
+	win:style_define(win.STYLE_SELECTION, lexers.STYLE_SELECTION)
+	win:style_define(win.STYLE_LINENUMBER, lexers.STYLE_LINENUMBER)
+	win:style_define(win.STYLE_COLOR_COLUMN, lexers.STYLE_COLOR_COLUMN)
+
+	for token_name, id in pairs(lexer._TOKENSTYLES) do
+		local style = lexers['STYLE_'..string.upper(token_name)] or lexer._EXTRASTYLES[token_name]
+		win:style_define(id, style)
+	end
+	return true
+end
+
+vis.events.win_highlight = function(win)
+	if win.syntax == nil or vis.lexers == nil then
+		return
+	end
+	local lexer = vis.lexers.load(win.syntax)
+	if lexer == nil then
+		return
+	end
+
+	-- TODO: improve heuristic for initial style
+	local viewport = win.viewport
+	local horizon_max = 32768
+	local horizon = viewport.start < horizon_max and viewport.start or horizon_max
+	local view_start = viewport.start
+	local lex_start = viewport.start - horizon
+	local token_start = lex_start
+	viewport.start = token_start
+	local data = win.file:content(viewport)
+	local token_styles = lexer._TOKENSTYLES
+	local tokens = lexer:lex(data, 1)
+
+	for i = 1, #tokens, 2 do
+		local token_end = lex_start + tokens[i+1] - 1
+		if token_end >= view_start then
+			local name = tokens[i]
+			local style = token_styles[name]
+			if style ~= nil then
+				win:style(style, token_start, token_end)
+			end
+		end
+		token_start = token_end
+	end
+end
