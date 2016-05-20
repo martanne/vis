@@ -617,6 +617,8 @@ At this time there exists no API stability guarantees.
    - `cursor` primary cursor
    - `syntax` lexer name used for syntax highlighting or `nil`
    - `map(mode, key, function)` map a Lua function to `key` in `mode`, local to the given window
+   - `style_define(id, style)` where `id` is a constant and `style` a string
+   - `style(id, start, end)` apply style to file range, will be cleared after every redraw
  - `cursor`
    - `line` (1 based), `col` (1 based)
    - `to(line, col)`

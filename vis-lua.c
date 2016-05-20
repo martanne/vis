@@ -672,11 +672,36 @@ static int window_map(lua_State *L) {
 	return keymap(L, win->vis, win);
 }
 
+static int window_style_define(lua_State *L) {
+	Win *win = obj_ref_check(L, 1, "vis.window");
+	bool ret = false;
+	if (win) {
+		enum UiStyle id = luaL_checkunsigned(L, 2);
+		const char *style = luaL_checkstring(L, 3);
+		ret = view_style_define(win->view, id, style);
+	}
+	lua_pushboolean(L, ret);
+	return 1;
+}
+
+static int window_style(lua_State *L) {
+	Win *win = obj_ref_check(L, 1, "vis.window");
+	if (win) {
+		enum UiStyle style = luaL_checkunsigned(L, 2);
+		size_t start = checkpos(L, 3);
+		size_t end = checkpos(L, 4);
+		view_style(win->view, style, start, end);
+	}
+	return 0;
+}
+
 static const struct luaL_Reg window_funcs[] = {
 	{ "__index", window_index },
 	{ "__newindex", window_newindex },
 	{ "cursors_iterator", window_cursors_iterator },
 	{ "map", window_map },
+	{ "style_define", window_style_define },
+	{ "style", window_style },
 	{ NULL, NULL },
 };
 
@@ -1138,6 +1163,25 @@ void vis_lua_init(Vis *vis) {
 	luaL_setfuncs(L, file_lines_funcs, 0);
 	luaL_newmetatable(L, "vis.window");
 	luaL_setfuncs(L, window_funcs, 0);
+
+	static const struct {
+		enum UiStyle id;
+		const char *name;
+	} styles[] = {
+		{ UI_STYLE_DEFAULT,        "STYLE_DEFAULT"        },
+		{ UI_STYLE_CURSOR,         "STYLE_CURSOR"         },
+		{ UI_STYLE_CURSOR_PRIMARY, "STYLE_CURSOR_PRIMARY" },
+		{ UI_STYLE_CURSOR_LINE,    "STYLE_CURSOR_LINE"    },
+		{ UI_STYLE_SELECTION,      "STYLE_SELECTION"      },
+		{ UI_STYLE_LINENUMBER,     "STYLE_LINENUMBER"     },
+		{ UI_STYLE_COLOR_COLUMN,   "STYLE_COLOR_COLUMN"   },
+	};
+
+	for (size_t i = 0; i < LENGTH(styles); i++) {
+		lua_pushunsigned(L, styles[i].id);
+		lua_setfield(L, -2, styles[i].name);
+	}
+
 	luaL_newmetatable(L, "vis.window.cursor");
 	luaL_setfuncs(L, window_cursor_funcs, 0);
 	luaL_newmetatable(L, "vis.window.cursors");
