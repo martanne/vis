@@ -1510,3 +1510,38 @@ void view_selections_set(Selection *s, const Filerange *r) {
 Text *view_text(View *view) {
 	return view->text;
 }
+
+bool view_style_define(View *view, enum UiStyle id, const char *style) {
+	return view->ui->syntax_style(view->ui, id, style);
+}
+
+void view_style(View *view, enum UiStyle style, size_t start, size_t end) {
+	if (end < view->start || start > view->end)
+		return;
+
+	size_t pos = view->start;
+	Line *line = view->topline;
+
+	/* skip lines before range to be styled */
+	while (line && pos + line->len <= start) {
+		pos += line->len;
+		line = line->next;
+	}
+
+	if (!line)
+		return;
+
+	int col = 0, width = view->width;
+
+	/* skip columns before range to be styled */
+	while (pos < start && col < width)
+		pos += line->cells[col++].len;
+
+	do {
+		while (pos <= end && col < width) {
+			pos += line->cells[col].len;
+			line->cells[col++].style = style;
+		}
+		col = 0;
+	} while (pos <= end && (line = line->next));
+}
