@@ -594,6 +594,13 @@ static int window_index(lua_State *L) {
 
 	if (lua_isstring(L, 2)) {
 		const char *key = lua_tostring(L, 2);
+
+		if (strcmp(key, "viewport") == 0) {
+			Filerange r = win ? view_viewport_get(win->view) : text_range_empty();
+			pushrange(L, &r);
+			return 1;
+		}
+
 		if (strcmp(key, "file") == 0) {
 			obj_ref_new(L, win->file, "vis.file");
 			return 1;
