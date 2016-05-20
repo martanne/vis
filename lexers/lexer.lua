@@ -1022,8 +1022,7 @@ function M.load(name, alt_name)
   local lexer_file, error = package.searchpath(name, M.LEXERPATH)
   local ok, lexer = pcall(dofile, lexer_file or '')
   if not ok then
-    _G.print(error or lexer) -- error message
-    lexer = {_NAME = alt_name or name}
+    return nil
   end
   if alt_name then lexer._NAME = alt_name end
 
