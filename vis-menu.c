@@ -74,6 +74,7 @@ static void   resetline(void);
 static void   setup(void);
 static size_t textw(const char*);
 static size_t textwn(const char*, int);
+static void   xread(int fildes, void *buf, size_t nbyte);
 
 static char   text[BUFSIZ] = "";
 static int    barpos = 0;
@@ -318,47 +319,47 @@ run(void) {
 	char c;
 
 	while(1) {
-		read(0, &c, 1);
+		xread(0, &c, 1);
 		memset(buf, '\0', sizeof buf);
 		buf[0]=c;
 		switch_top:
 		switch(c) {
 		case CONTROL('['):
-			read(0, &c, 1);
+			xread(0, &c, 1);
 			esc_switch_top:
 			switch(c) {
 				case CONTROL('['): /* ESC, need to press twice due to console limitations */
 					c=CONTROL('C');
 					goto switch_top;
 				case '[':
-					read(0, &c, 1);
+					xread(0, &c, 1);
 					switch(c) {
 						case '1': /* Home */
 						case '7':
 						case 'H':
-							if(c!='H') read(0, &c, 1); /* Remove trailing '~' from stdin */
+							if(c!='H') xread(0, &c, 1); /* Remove trailing '~' from stdin */
 							c=CONTROL('A');
 							goto switch_top;
 						case '2': /* Insert */
-							read(0, &c, 1); /* Remove trailing '~' from stdin */
+							xread(0, &c, 1); /* Remove trailing '~' from stdin */
 							c=CONTROL('Y');
 							goto switch_top;
 						case '3': /* Delete */
-							read(0, &c, 1); /* Remove trailing '~' from stdin */
+							xread(0, &c, 1); /* Remove trailing '~' from stdin */
 							c=CONTROL('D');
 							goto switch_top;
 						case '4': /* End */
 						case '8':
 						case 'F':
-							if(c!='F') read(0, &c, 1); /* Remove trailing '~' from stdin */
+							if(c!='F') xread(0, &c, 1); /* Remove trailing '~' from stdin */
 							c=CONTROL('E');
 							goto switch_top;
 						case '5': /* PageUp */
-							read(0, &c, 1); /* Remove trailing '~' from stdin */
+							xread(0, &c, 1); /* Remove trailing '~' from stdin */
 							c=CONTROL('V');
 							goto switch_top;
 						case '6': /* PageDown */
-							read(0, &c, 1); /* Remove trailing '~' from stdin */
+							xread(0, &c, 1); /* Remove trailing '~' from stdin */
 							c='v';
 							goto esc_switch_top;
 						case 'A': /* Up arrow */
@@ -568,6 +569,12 @@ textwn(const char *s, int l) {
 
 	for(b=c=0; s && s[b] && (l<0 || b<l); b++) if((s[b] & 0xc0) != 0x80) c++;
 	return c+4; /* Accomodate for the leading and trailing spaces */
+}
+
+void
+xread(int fildes, void *buf, size_t nbyte) {
+	if (read(fildes, buf, nbyte) < 0)
+		die("Can not read.");
 }
 
 int
