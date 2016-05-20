@@ -10,6 +10,7 @@
 #include "vis-lua.h"
 #include "vis-core.h"
 #include "text-motions.h"
+#include "util.h"
 
 #ifndef VIS_PATH
 #define VIS_PATH "/usr/local/share/vis"
@@ -553,35 +554,6 @@ static int vis_index(lua_State *L) {
 			return 1;
 		}
 
-		if (strcmp(key, "MODE_NORMAL") == 0) {
-			lua_pushunsigned(L, VIS_MODE_NORMAL);
-			return 1;
-		}
-
-		if (strcmp(key, "MODE_OPERATOR_PENDING") == 0) {
-			lua_pushunsigned(L, VIS_MODE_OPERATOR_PENDING);
-			return 1;
-		}
-
-		if (strcmp(key, "MODE_VISUAL") == 0) {
-			lua_pushunsigned(L, VIS_MODE_VISUAL);
-			return 1;
-		}
-
-		if (strcmp(key, "MODE_VISUAL_LINE") == 0) {
-			lua_pushunsigned(L, VIS_MODE_VISUAL_LINE);
-			return 1;
-		}
-
-		if (strcmp(key, "MODE_INSERT") == 0) {
-			lua_pushunsigned(L, VIS_MODE_INSERT);
-			return 1;
-		}
-
-		if (strcmp(key, "MODE_REPLACE") == 0) {
-			lua_pushunsigned(L, VIS_MODE_REPLACE);
-			return 1;
-		}
 	}
 
 	return index_common(L);
@@ -1170,9 +1142,26 @@ void vis_lua_init(Vis *vis) {
 	luaL_setfuncs(L, window_cursor_funcs, 0);
 	luaL_newmetatable(L, "vis.window.cursors");
 	luaL_setfuncs(L, window_cursors_funcs, 0);
-	/* vis module table with up value as the C pointer */
 	luaL_newmetatable(L, "vis");
 	luaL_setfuncs(L, vis_lua, 0);
+
+	static const struct {
+		enum VisMode id;
+		const char *name;
+	} modes[] = {
+		{ VIS_MODE_NORMAL,           "MODE_NORMAL"           },
+		{ VIS_MODE_OPERATOR_PENDING, "MODE_OPERATOR_PENDING" },
+		{ VIS_MODE_VISUAL,           "MODE_VISUAL"           },
+		{ VIS_MODE_VISUAL_LINE,      "MODE_VISUAL_LINE"      },
+		{ VIS_MODE_INSERT,           "MODE_INSERT"           },
+		{ VIS_MODE_REPLACE,          "MODE_REPLACE"          },
+	};
+
+	for (size_t i = 0; i < LENGTH(modes); i++) {
+		lua_pushunsigned(L, modes[i].id);
+		lua_setfield(L, -2, modes[i].name);
+	}
+
 	obj_ref_new(L, vis, "vis");
 	lua_setglobal(L, "vis");
 
