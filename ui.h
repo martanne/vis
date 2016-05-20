@@ -33,7 +33,7 @@ enum UiOption {
 	UI_OPTION_LARGE_FILE = 1 << 10,
 };
 
-enum UiStyles {
+enum UiStyle {
 	UI_STYLE_LEXER_MAX = 64,
 	UI_STYLE_DEFAULT,
 	UI_STYLE_CURSOR,

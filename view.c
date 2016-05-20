@@ -225,7 +225,7 @@ bool view_syntax_set(View *view, const char *name) {
 	lua_getfield(L, -1, "lexers");
 
 	static const struct {
-		enum UiStyles id;
+		enum UiStyle id;
 		const char *name;
 	} styles[] = {
 		{ UI_STYLE_DEFAULT,        "STYLE_DEFAULT"        },

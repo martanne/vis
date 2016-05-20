@@ -696,7 +696,7 @@ static void ui_window_draw(UiWin *w) {
 	for (const Line *l = view_lines_get(win->view); l; l = l->next) {
 		bool cursor_line = l->lineno == cursor_lineno;
 		for (int x = 0; x < width; x++) {
-			enum UiStyles style_id = l->cells[x].style;
+			enum UiStyle style_id = l->cells[x].style;
 			if (style_id == 0)
 				style_id = UI_STYLE_DEFAULT;
 			CellStyle *style = &win->styles[style_id];
