@@ -5,4 +5,5 @@ README.html
 *.swp
 *.o
 /vis
+/vis-menu
 /dependency
