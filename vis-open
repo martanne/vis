@@ -1,7 +1,7 @@
 #!/bin/sh
 
 PATTERN="."
-VIS_MENU_ARGS=""
+VIS_MENU_ARGS="-b"
 
 while [ $# -gt 0 ]; do
 	case "$1" in
