@@ -77,9 +77,9 @@ static size_t textwn(const char*, int);
 
 static char   text[BUFSIZ] = "";
 static int    barpos = 0;
-static int    mw, mh;
-static int    lines = 0;
-static int    inputw, promptw;
+static size_t mw, mh;
+static size_t lines = 0;
+static size_t inputw, promptw;
 static size_t cursor;
 static char  *prompt = NULL;
 static Item  *items = NULL;
@@ -101,7 +101,7 @@ appenditem(Item *item, Item **list, Item **last) {
 
 void
 calcoffsets(void) {
-        int i, n;
+	size_t i, n;
 
 	if(lines>0)
 		n = lines;
@@ -133,7 +133,7 @@ die(const char *s) {
 void
 drawtext(const char *t, size_t w, Color col) {
 	const char *prestr, *poststr;
-	int i, tw;
+	size_t i, tw;
 	char *buf;
 
 	if(w<5) return; /* This is the minimum size needed to write a label: 1 char + 4 padding spaces */
@@ -162,7 +162,7 @@ drawtext(const char *t, size_t w, Color col) {
 void
 drawmenu(void) {
 	Item *item;
-	int rw;
+	size_t rw;
 
 	/* use default colors */
 	fprintf(stderr, "\033[0m");
@@ -194,7 +194,7 @@ drawmenu(void) {
 			if((rw-= textw(item->text)) <= 0) break;
 		}
 		if(next) {
-			fprintf(stderr, "\033[%iG", mw-5);
+			fprintf(stderr, "\033[%ziG", mw-5);
 			drawtext(">", 5 /*textw(">")*/, C_Normal);
 		}
 
@@ -308,8 +308,8 @@ readstdin() {
 
 void
 resetline(void) {
-	if(barpos!=0) fprintf(stderr, "\033[%iH", (barpos>0)?0:(mh-lines));
-	else fprintf(stderr, "\033[%iF", lines);
+	if(barpos!=0) fprintf(stderr, "\033[%ziH", (barpos>0)?0:(mh-lines));
+	else fprintf(stderr, "\033[%ziF", lines);
 }
 
 int
@@ -596,9 +596,10 @@ main(int argc, char **argv) {
 			}
 		}
 		else if(!strcmp(argv[i], "-l")) {
-			if(argc > i+1)
-				lines = atoi(argv[++i]);
-			else {
+			if(argc > i+1) {
+				int maybe_lines = atoi(argv[++i]);
+				lines = maybe_lines > 0 ? maybe_lines : 0;
+			} else {
 				fprintf(stderr, "Must provide a line count\n");
 				exit(EXIT_FAILURE);
 			}
