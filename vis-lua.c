@@ -28,7 +28,7 @@ void vis_lua_file_save(Vis *vis, File *file) { }
 void vis_lua_file_close(Vis *vis, File *file) { }
 void vis_lua_win_open(Vis *vis, Win *win) { }
 void vis_lua_win_close(Vis *vis, Win *win) { }
-void vis_lua_win_highlight(Vis *vis, Win *win) { }
+void vis_lua_win_highlight(Vis *vis, Win *win, size_t horizon) { }
 bool vis_lua_win_syntax(Vis *vis, Win *win, const char *syntax) { return true; }
 bool vis_theme_load(Vis *vis, const char *name) { return true; }
 
@@ -1276,12 +1276,13 @@ void vis_lua_win_close(Vis *vis, Win *win) {
 	lua_pop(L, 1);
 }
 
-void vis_lua_win_highlight(Vis *vis, Win *win) {
+void vis_lua_win_highlight(Vis *vis, Win *win, size_t horizon) {
 	lua_State *L = vis->lua;
 	vis_lua_event_get(L, "win_highlight");
 	if (lua_isfunction(L, -1)) {
 		obj_ref_new(L, win, "vis.window");
-		pcall(vis, L, 1, 0);
+		lua_pushunsigned(L, horizon);
+		pcall(vis, L, 2, 0);
 	}
 	lua_pop(L, 1);
 }

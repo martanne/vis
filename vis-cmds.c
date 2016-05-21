@@ -291,7 +291,7 @@ static bool cmd_set(Vis *vis, Win *win, Command *cmd, const char *argv[], Cursor
 		view_colorcolumn_set(win->view, arg.i);
 		break;
 	case OPTION_HORIZON:
-		view_horizon_set(win->view, arg.u);
+		win->horizon = arg.u;
 		break;
 	}
 

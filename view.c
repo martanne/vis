@@ -88,8 +88,6 @@ struct View {
 	Cursor *cursors;    /* all cursors currently active */
 	Selection *selections; /* all selected regions */
 	int cursor_generation; /* used to filter out newly created cursors during iteration */
-	size_t horizon; /* maximal number of bytes to consider for syntax highlighting
-	                 * before the visible area */
 	bool need_update;   /* whether view has been redrawn */
 	bool large_file;    /* optimize for displaying large files */
 	int colorcolumn;
@@ -568,7 +566,6 @@ View *view_new(Text *text, ViewEvent *events) {
 
 	view->text = text;
 	view->tabwidth = 8;
-	view->horizon = 1 << 15;
 	view_options_set(view, 0);
 
 	if (!view_resize(view, 1, 1)) {
@@ -863,14 +860,6 @@ void view_colorcolumn_set(View *view, int col) {
 
 int view_colorcolumn_get(View *view) {
 	return view->colorcolumn;
-}
-
-void view_horizon_set(View *view, size_t bytes) {
-	view->horizon = bytes;
-}
-
-size_t view_horizon_get(View *view) {
-	return view->horizon;
 }
 
 size_t view_screenline_goto(View *view, int n) {

@@ -250,7 +250,7 @@ vis.events.win_syntax = function(win, name)
 	return true
 end
 
-vis.events.win_highlight = function(win)
+vis.events.win_highlight = function(win, horizon_max)
 	if win.syntax == nil or vis.lexers == nil then
 		return
 	end
@@ -261,7 +261,6 @@ vis.events.win_highlight = function(win)
 
 	-- TODO: improve heuristic for initial style
 	local viewport = win.viewport
-	local horizon_max = 32768
 	local horizon = viewport.start < horizon_max and viewport.start or horizon_max
 	local view_start = viewport.start
 	local lex_start = viewport.start - horizon

@@ -135,6 +135,7 @@ struct Win {
 	Mode *parent_mode;      /* mode which was active when showing the command prompt */
 	ViewEvent event;        /* callbacks from view.[ch] */
 	char *lexer_name;       /* corresponds to filename in lexers/ subdirectory */
+	size_t horizon;         /* max bytes to consider for syntax coloring before viewport */
 	Win *prev, *next;       /* neighbouring windows */
 };
 

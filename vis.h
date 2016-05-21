@@ -33,7 +33,7 @@ typedef struct {
 	void (*file_close)(Vis*, File*);
 	void (*win_open)(Vis*, Win*);
 	void (*win_close)(Vis*, Win*);
-	void (*win_highlight)(Vis*, Win*);
+	void (*win_highlight)(Vis*, Win*, size_t horizon);
 	bool (*win_syntax)(Vis*, Win*, const char *syntax);
 } VisEvent;
 
