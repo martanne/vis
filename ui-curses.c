@@ -669,6 +669,18 @@ static void ui_window_draw_status(UiWin *w) {
 		mvwaddstr(win->winstatus, 0, win->width - (msg - buf) - 1, buf);
 }
 
+static void ui_window_status(UiWin *w, const char *status) {
+	UiCursesWin *win = (UiCursesWin*)w;
+	if (!win->winstatus)
+		return;
+	UiCurses *uic = win->ui;
+	bool focused = uic->selwin == win;
+	wattrset(win->winstatus, focused ? A_REVERSE|A_BOLD : A_REVERSE);
+	mvwhline(win->winstatus, 0, 0, ' ', win->width);
+	if (status)
+		mvwprintw(win->winstatus, 0, 0, "%s", status);
+}
+
 static void ui_window_draw(UiWin *w) {
 	UiCursesWin *win = (UiCursesWin*)w;
 	if (!ui_window_draw_sidebar(win))
@@ -985,6 +997,7 @@ static UiWin *ui_window_new(Ui *ui, View *view, File *file, enum UiOption option
 	win->uiwin = (UiWin) {
 		.draw = ui_window_draw,
 		.draw_status = ui_window_draw_status,
+		.status = ui_window_status,
 		.options_set = ui_window_options_set,
 		.options_get = ui_window_options_get,
 		.reload = ui_window_reload,

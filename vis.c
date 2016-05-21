@@ -116,6 +116,10 @@ void vis_window_name(Win *win, const char *filename) {
 	}
 }
 
+void vis_window_status(Win *win, const char *status) {
+	win->ui->status(win->ui, status);
+}
+
 static void windows_invalidate(Vis *vis, size_t start, size_t end) {
 	for (Win *win = vis->windows; win; win = win->next) {
 		if (vis->win != win && vis->win->file == win->file) {

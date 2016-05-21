@@ -76,6 +76,7 @@ struct Ui {
 struct UiWin {
 	void (*draw)(UiWin*);
 	void (*draw_status)(UiWin*);
+	void (*status)(UiWin*, const char *txt);
 	void (*reload)(UiWin*, File*);
 	void (*options_set)(UiWin*, enum UiOption);
 	enum UiOption (*options_get)(UiWin*);
