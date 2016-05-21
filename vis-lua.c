@@ -718,6 +718,15 @@ static int window_style(lua_State *L) {
 	return 0;
 }
 
+static int window_status(lua_State *L) {
+	Win *win = obj_ref_check(L, 1, "vis.window");
+	if (win) {
+		const char *status = luaL_checkstring(L, 2);
+		vis_window_status(win, status);
+	}
+	return 0;
+}
+
 static const struct luaL_Reg window_funcs[] = {
 	{ "__index", window_index },
 	{ "__newindex", window_newindex },
@@ -725,6 +734,7 @@ static const struct luaL_Reg window_funcs[] = {
 	{ "map", window_map },
 	{ "style_define", window_style_define },
 	{ "style", window_style },
+	{ "status", window_status },
 	{ NULL, NULL },
 };
 

@@ -623,6 +623,7 @@ At this time there exists no API stability guarantees.
    - `style(id, start, end)` apply style to file range, will be cleared after every redraw
    - `viewport` a range denoting the currently visible area of the window
    - `width` and `height`, readonly, query window dimension
+   - `status(text)` set the content of the window status bar
  - `cursor`
    - `line` (1 based), `col` (1 based)
    - `to(line, col)`
