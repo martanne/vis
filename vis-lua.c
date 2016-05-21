@@ -603,6 +603,16 @@ static int window_index(lua_State *L) {
 			return 1;
 		}
 
+		if (strcmp(key, "width") == 0) {
+			lua_pushunsigned(L, vis_window_width_get(win));
+			return 1;
+		}
+
+		if (strcmp(key, "height") == 0) {
+			lua_pushunsigned(L, vis_window_height_get(win));
+			return 1;
+		}
+
 		if (strcmp(key, "file") == 0) {
 			obj_ref_new(L, win->file, "vis.file");
 			return 1;
