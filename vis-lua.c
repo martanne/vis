@@ -1198,6 +1198,9 @@ void vis_lua_init(Vis *vis) {
 	luaL_newmetatable(L, "vis");
 	luaL_setfuncs(L, vis_lua, 0);
 
+	lua_pushstring(L, VERSION);
+	lua_setfield(L, -2, "VERSION");
+
 	static const struct {
 		enum VisMode id;
 		const char *name;
