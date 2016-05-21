@@ -80,6 +80,8 @@ struct UiWin {
 	void (*options_set)(UiWin*, enum UiOption);
 	enum UiOption (*options_get)(UiWin*);
 	bool (*syntax_style)(UiWin*, int id, const char *style);
+	int (*window_width)(UiWin*);
+	int (*window_height)(UiWin*);
 };
 
 #endif

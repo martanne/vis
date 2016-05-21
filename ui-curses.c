@@ -938,6 +938,14 @@ static enum UiOption ui_window_options_get(UiWin *w) {
 	return win->options;
 }
 
+static int ui_window_width(UiWin *win) {
+	return ((UiCursesWin*)win)->width;
+}
+
+static int ui_window_height(UiWin *win) {
+	return ((UiCursesWin*)win)->height;
+}
+
 static void ui_window_swap(UiWin *aw, UiWin *bw) {
 	UiCursesWin *a = (UiCursesWin*)aw;
 	UiCursesWin *b = (UiCursesWin*)bw;
@@ -981,6 +989,8 @@ static UiWin *ui_window_new(Ui *ui, View *view, File *file, enum UiOption option
 		.options_get = ui_window_options_get,
 		.reload = ui_window_reload,
 		.syntax_style = ui_window_syntax_style,
+		.window_width = ui_window_width,
+		.window_height = ui_window_height,
 	};
 
 	if (!(win->win = newwin(0, 0, 0, 0))) {

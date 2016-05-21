@@ -104,6 +104,9 @@ void vis_window_swap(Win*, Win*);
 const char *vis_window_syntax_get(Win*);
 bool vis_window_syntax_set(Win*, const char *name);
 
+int vis_window_width_get(const Win*);
+int vis_window_height_get(const Win*);
+
 /* display a user prompt with a certain title and default text */
 void vis_prompt_show(Vis*, const char *title);
 

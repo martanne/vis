@@ -268,6 +268,14 @@ bool vis_window_syntax_set(Win *win, const char *syntax) {
 	return !syntax || win->lexer_name;
 }
 
+int vis_window_width_get(const Win *win) {
+	return win->ui->window_width(win->ui);
+}
+
+int vis_window_height_get(const Win *win) {
+	return win->ui->window_height(win->ui);
+}
+
 void vis_draw(Vis *vis) {
 	vis->ui->draw(vis->ui);
 }
