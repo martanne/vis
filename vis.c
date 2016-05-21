@@ -157,11 +157,17 @@ static void window_free(Win *win) {
 	free(win);
 }
 
-static void window_highlight(void *ctx) {
+static void window_draw(void *ctx) {
 	Win *win = ctx;
+	if (!win->ui)
+		return;
 	Vis *vis = win->vis;
-	if (!win->file->internal && vis->event && vis->event->win_highlight)
-		vis->event->win_highlight(vis, win, win->horizon);
+	if (!win->file->internal && vis->event) {
+		if (win->lexer_name && vis->event->win_highlight)
+			vis->event->win_highlight(vis, win, win->horizon);
+		if (vis->event->win_status)
+			vis->event->win_status(vis, win);
+	}
 }
 
 Win *window_new_file(Vis *vis, File *file) {
@@ -172,6 +178,7 @@ Win *window_new_file(Vis *vis, File *file) {
 	win->file = file;
 	win->jumplist = ringbuf_alloc(31);
 	win->event.data = win;
+	win->event.draw = window_draw;
 	win->horizon = 1 << 15;
 	win->view = view_new(file->text, &win->event);
 	win->ui = vis->ui->window_new(vis->ui, win->view, file, UI_OPTION_STATUSBAR);
@@ -268,7 +275,6 @@ bool vis_window_syntax_set(Win *win, const char *syntax) {
 	}
 	free(win->lexer_name);
 	win->lexer_name = syntax ? strdup(syntax) : NULL;
-	win->event.highlight = syntax ? window_highlight : NULL;
 	return !syntax || win->lexer_name;
 }
 
@@ -1131,10 +1137,6 @@ const char *vis_register_get(Vis *vis, enum VisRegister reg, size_t *len) {
 void vis_exit(Vis *vis, int status) {
 	vis->running = false;
 	vis->exit_status = status;
-}
-
-const char *vis_mode_status(Vis *vis) {
-	return vis->mode->status;
 }
 
 void vis_insert_tab(Vis *vis) {

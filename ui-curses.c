@@ -631,44 +631,6 @@ static bool ui_window_draw_sidebar(UiCursesWin *win) {
 	}
 }
 
-static void ui_window_draw_status(UiWin *w) {
-	UiCursesWin *win = (UiCursesWin*)w;
-	if (!win->winstatus)
-		return;
-	UiCurses *uic = win->ui;
-	Vis *vis = uic->vis;
-	bool focused = uic->selwin == win;
-	const char *filename = win->file->name;
-	const char *status = vis_mode_status(vis);
-	wattrset(win->winstatus, focused ? A_REVERSE|A_BOLD : A_REVERSE);
-	mvwhline(win->winstatus, 0, 0, ' ', win->width);
-	mvwprintw(win->winstatus, 0, 0, "%s %s %s %s",
-	          focused && status ? status : "",
-	          filename ? filename : "[No Name]",
-	          text_modified(win->file->text) ? "[+]" : "",
-	          vis_macro_recording(vis) ? "recording": "");
-
-	char buf[4*32] = "", *msg = buf;
-	int cursor_count = view_cursors_count(win->view);
-	if (cursor_count > 1) {
-		Cursor *c = view_cursors_primary_get(win->view);
-		int cursor_number = view_cursors_number(c) + 1;
-		msg += sprintf(msg, "[%d/%d] ", cursor_number, cursor_count);
-	}
-
-	if (!(win->options & UI_OPTION_LARGE_FILE)) {
-		Cursor *cur = view_cursors_primary_get(win->view);
-		size_t line = view_cursors_line(cur);
-		size_t col = view_cursors_col(cur);
-		if (col > UI_LARGE_FILE_LINE_SIZE)
-			win->options |= UI_OPTION_LARGE_FILE;
-		msg += sprintf(msg, "%zu, %zu", line, col);
-	}
-
-	if (buf[0])
-		mvwaddstr(win->winstatus, 0, win->width - (msg - buf) - 1, buf);
-}
-
 static void ui_window_status(UiWin *w, const char *status) {
 	UiCursesWin *win = (UiCursesWin*)w;
 	if (!win->winstatus)
@@ -745,9 +707,6 @@ static void ui_window_draw(UiWin *w) {
 	}
 
 	wclrtobot(win->win);
-
-	if (win->winstatus)
-		ui_window_draw_status(w);
 }
 
 static void ui_window_reload(UiWin *w, File *file) {
@@ -996,7 +955,6 @@ static UiWin *ui_window_new(Ui *ui, View *view, File *file, enum UiOption option
 
 	win->uiwin = (UiWin) {
 		.draw = ui_window_draw,
-		.draw_status = ui_window_draw_status,
 		.status = ui_window_status,
 		.options_set = ui_window_options_set,
 		.options_get = ui_window_options_get,

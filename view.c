@@ -439,8 +439,8 @@ void view_update(View *view) {
 	if (!view->need_update)
 		return;
 
-	if (view->events->highlight)
-		view->events->highlight(view->events->data);
+	if (view->events->draw)
+		view->events->draw(view->events->data);
 
 	if (view->colorcolumn > 0) {
 		size_t lineno = 0;

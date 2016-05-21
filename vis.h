@@ -35,6 +35,7 @@ typedef struct {
 	void (*win_close)(Vis*, Win*);
 	void (*win_highlight)(Vis*, Win*, size_t horizon);
 	bool (*win_syntax)(Vis*, Win*, const char *syntax);
+	void (*win_status)(Vis*, Win*);
 } VisEvent;
 
 typedef union { /* various types of arguments passed to key action functions */
@@ -162,8 +163,6 @@ bool vis_window_mode_map(Win*, enum VisMode, bool force, const char *key, const 
 /* in the specified mode: unmap a given key, fails if the key is not currently mapped */
 bool vis_mode_unmap(Vis*, enum VisMode, const char *key);
 bool vis_window_mode_unmap(Win*, enum VisMode, const char *key);
-/* get the current mode's status line indicator */
-const char *vis_mode_status(Vis*);
 /* associates the special pseudo key <keyaction->name> with the given key action.
  * after successfull registration the pseudo key can be used key binding aliases */
 bool vis_action_register(Vis*, const KeyAction*);

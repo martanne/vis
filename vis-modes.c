@@ -18,7 +18,8 @@ void mode_set(Vis *vis, Mode *new_mode) {
 	vis->mode = new_mode;
 	if (new_mode->enter)
 		new_mode->enter(vis, vis->mode_prev);
-	vis->win->ui->draw_status(vis->win->ui);
+	if (vis->event && vis->event->win_status)
+		vis->event->win_status(vis, vis->win);
 }
 
 void vis_mode_switch(Vis *vis, enum VisMode mode) {
@@ -166,13 +167,12 @@ Mode vis_modes[] = {
 	[VIS_MODE_NORMAL] = {
 		.id = VIS_MODE_NORMAL,
 		.name = "NORMAL",
-		.status = "",
 		.help = "",
 	},
 	[VIS_MODE_VISUAL] = {
 		.id = VIS_MODE_VISUAL,
 		.name = "VISUAL",
-		.status = "--VISUAL--",
+		.status = "VISUAL",
 		.help = "",
 		.enter = vis_mode_visual_enter,
 		.leave = vis_mode_visual_leave,
@@ -182,7 +182,7 @@ Mode vis_modes[] = {
 		.id = VIS_MODE_VISUAL_LINE,
 		.name = "VISUAL LINE",
 		.parent = &vis_modes[VIS_MODE_VISUAL],
-		.status = "--VISUAL LINE--",
+		.status = "VISUAL-LINE",
 		.help = "",
 		.enter = vis_mode_visual_line_enter,
 		.leave = vis_mode_visual_line_leave,
@@ -191,7 +191,7 @@ Mode vis_modes[] = {
 	[VIS_MODE_INSERT] = {
 		.id = VIS_MODE_INSERT,
 		.name = "INSERT",
-		.status = "--INSERT--",
+		.status = "INSERT",
 		.help = "",
 		.enter = vis_mode_insert_enter,
 		.leave = vis_mode_insert_leave,
@@ -203,7 +203,7 @@ Mode vis_modes[] = {
 		.id = VIS_MODE_REPLACE,
 		.name = "REPLACE",
 		.parent = &vis_modes[VIS_MODE_INSERT],
-		.status = "--REPLACE--",
+		.status = "REPLACE",
 		.help = "",
 		.enter = vis_mode_replace_enter,
 		.leave = vis_mode_replace_leave,

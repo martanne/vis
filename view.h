@@ -14,7 +14,7 @@ typedef struct Selection Selection;
 
 typedef struct {
 	void *data;
-	void (*highlight)(void *data);
+	void (*draw)(void *data);
 } ViewEvent;
 
 typedef struct {

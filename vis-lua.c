@@ -32,6 +32,48 @@ void vis_lua_win_highlight(Vis *vis, Win *win, size_t horizon) { }
 bool vis_lua_win_syntax(Vis *vis, Win *win, const char *syntax) { return true; }
 bool vis_theme_load(Vis *vis, const char *name) { return true; }
 
+void vis_lua_win_status(Vis *vis, Win *win) {
+	char status[1024], left[256], right[256], cursors[32] = "", pos[32] = "";
+	int width = vis_window_width_get(win);
+	int delim_len = 1, delim_count = 0;
+	enum UiOption options = view_options_get(win->view);
+	const char *filename = win->file->name;
+	const char *mode = vis->mode->status;
+
+	int left_len = snprintf(left, sizeof(left)-1, "%s%s%s%s%s",
+	          mode ? mode : "",
+	          mode && ++delim_count ? " » " : "",
+	          filename ? filename : "[No Name]",
+	          text_modified(win->file->text) ? " [+]" : "",
+	          vis_macro_recording(vis) ? " @": "");
+
+	int cursor_count = view_cursors_count(win->view);
+	if (cursor_count > 1) {
+		Cursor *c = view_cursors_primary_get(win->view);
+		int cursor_number = view_cursors_number(c) + 1;
+		snprintf(cursors, sizeof(cursors)-1, "%d/%d", cursor_number, cursor_count);
+	}
+
+	if (!(options & UI_OPTION_LARGE_FILE)) {
+		Cursor *cur = view_cursors_primary_get(win->view);
+		size_t line = view_cursors_line(cur);
+		size_t col = view_cursors_col(cur);
+		if (col > UI_LARGE_FILE_LINE_SIZE) {
+			options |= UI_OPTION_LARGE_FILE;
+			view_options_set(win->view, options);
+		}
+		snprintf(pos, sizeof(pos)-1, "%zu, %zu", line, col);
+	}
+
+	int right_len = snprintf(right, sizeof(right)-1, "%s%s%s",
+		cursors, cursors[0] && pos[0] && ++delim_count ? " « " : "", pos);
+	int spaces = width - left_len - right_len - 2 + delim_count*delim_len;
+	if (spaces < 1)
+		spaces = 1;
+	snprintf(status, sizeof(status)-1, " %s%*s%s ", left, spaces, " ", right);
+	vis_window_status(win, status);
+}
+
 #else
 
 #if 0
@@ -1330,6 +1372,16 @@ bool vis_lua_win_syntax(Vis *vis, Win *win, const char *syntax) {
 	}
 	lua_pop(L, 1);
 	return ret;
+}
+
+void vis_lua_win_status(Vis *vis, Win *win) {
+	lua_State *L = vis->lua;
+	vis_lua_event_get(L, "win_status");
+	if (lua_isfunction(L, -1)) {
+		obj_ref_new(L, win, "vis.window");
+		pcall(vis, L, 1, 0);
+	}
+	lua_pop(L, 1);
 }
 
 bool vis_theme_load(Vis *vis, const char *name) {
