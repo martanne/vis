@@ -594,10 +594,22 @@ main(int argc, char **argv) {
 		else if(!strcmp(argv[i], "-b"))
 			barpos=-1;
 		/* double flags */
-		else if(!strcmp(argv[i], "-p"))
-			prompt=argv[++i];
-		else if(!strcmp(argv[i], "-l"))
-			lines = atoi(argv[++i]);
+		else if(!strcmp(argv[i], "-p")) {
+			if(argc > i+1)
+				prompt=argv[++i];
+			else {
+				fprintf(stderr, "Must provide a prompt\n");
+				exit(EXIT_FAILURE);
+			}
+		}
+		else if(!strcmp(argv[i], "-l")) {
+			if(argc > i+1)
+				lines = atoi(argv[++i]);
+			else {
+				fprintf(stderr, "Must provide a line count\n");
+				exit(EXIT_FAILURE);
+			}
+		}
 		else {
 			strncpy(text, argv[i], sizeof(text)-1);
 			cursor = strlen(text);
