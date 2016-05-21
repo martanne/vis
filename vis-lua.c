@@ -556,6 +556,10 @@ static int vis_index(lua_State *L) {
 			return 1;
 		}
 
+		if (strcmp(key, "recording") == 0) {
+			lua_pushboolean(L, vis_macro_recording(vis));
+			return 1;
+		}
 	}
 
 	return index_common(L);
