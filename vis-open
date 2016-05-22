@@ -55,4 +55,4 @@ fi
 CHOICE=$(printf "%s\n" "$@" | vis-menu -b -p "$VIS_MENU_PROMPT")
 
 # Did they pick a file or directory? Who knows, let's let the next iteration figure it out.
-exec "$0" -p "$VIS_MENU_PROMPT" "$CHOICE"
+exec "$0" -p "$VIS_MENU_PROMPT" -- "$CHOICE"
