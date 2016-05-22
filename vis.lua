@@ -223,15 +223,8 @@ vis.events.theme_change = function(name)
 end
 
 vis.events.win_syntax = function(win, name)
-	if name == nil then
-		return true
-	end
 	local lexers = vis.lexers
-	if lexers == nil then
-		return false
-	end
-	local lexer = lexers.load(name)
-	if not lexer then
+	if not lexers.load then
 		return false
 	end
 
@@ -243,10 +236,20 @@ vis.events.win_syntax = function(win, name)
 	win:style_define(win.STYLE_LINENUMBER, lexers.STYLE_LINENUMBER)
 	win:style_define(win.STYLE_COLOR_COLUMN, lexers.STYLE_COLOR_COLUMN)
 
+	if name == nil then
+		return true
+	end
+
+	local lexer = lexers.load(name)
+	if not lexer then
+		return false
+	end
+
 	for token_name, id in pairs(lexer._TOKENSTYLES) do
 		local style = lexers['STYLE_'..string.upper(token_name)] or lexer._EXTRASTYLES[token_name]
 		win:style_define(id, style)
 	end
+
 	return true
 end
 
