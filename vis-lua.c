@@ -16,23 +16,7 @@
 #define VIS_PATH "/usr/local/share/vis"
 #endif
 
-#if !CONFIG_LUA
-
-bool vis_lua_path_add(Vis *vis, const char *path) { return true; }
-const char *vis_lua_paths_get(Vis *vis) { return NULL; }
-void vis_lua_init(Vis *vis) { }
-void vis_lua_start(Vis *vis) { }
-void vis_lua_quit(Vis *vis) { }
-void vis_lua_file_open(Vis *vis, File *file) { }
-void vis_lua_file_save(Vis *vis, File *file) { }
-void vis_lua_file_close(Vis *vis, File *file) { }
-void vis_lua_win_open(Vis *vis, Win *win) { }
-void vis_lua_win_close(Vis *vis, Win *win) { }
-void vis_lua_win_highlight(Vis *vis, Win *win, size_t horizon) { }
-bool vis_lua_win_syntax(Vis *vis, Win *win, const char *syntax) { return true; }
-bool vis_theme_load(Vis *vis, const char *name) { return true; }
-
-void vis_lua_win_status(Vis *vis, Win *win) {
+static void window_status_update(Vis *vis, Win *win) {
 	char status[1024], left[256], right[256], cursors[32] = "", pos[32] = "";
 	int width = vis_window_width_get(win);
 	int delim_len = 1, delim_count = 0;
@@ -73,6 +57,23 @@ void vis_lua_win_status(Vis *vis, Win *win) {
 	snprintf(status, sizeof(status)-1, " %s%*s%s ", left, spaces, " ", right);
 	vis_window_status(win, status);
 }
+
+#if !CONFIG_LUA
+
+bool vis_lua_path_add(Vis *vis, const char *path) { return true; }
+const char *vis_lua_paths_get(Vis *vis) { return NULL; }
+void vis_lua_init(Vis *vis) { }
+void vis_lua_start(Vis *vis) { }
+void vis_lua_quit(Vis *vis) { }
+void vis_lua_file_open(Vis *vis, File *file) { }
+void vis_lua_file_save(Vis *vis, File *file) { }
+void vis_lua_file_close(Vis *vis, File *file) { }
+void vis_lua_win_open(Vis *vis, Win *win) { }
+void vis_lua_win_close(Vis *vis, Win *win) { }
+void vis_lua_win_highlight(Vis *vis, Win *win, size_t horizon) { }
+bool vis_lua_win_syntax(Vis *vis, Win *win, const char *syntax) { return true; }
+bool vis_theme_load(Vis *vis, const char *name) { return true; }
+void vis_lua_win_status(Vis *vis, Win *win) { window_status_update(vis, win); }
 
 #else
 
@@ -1384,6 +1385,8 @@ void vis_lua_win_status(Vis *vis, Win *win) {
 	if (lua_isfunction(L, -1)) {
 		obj_ref_new(L, win, "vis.window");
 		pcall(vis, L, 1, 0);
+	} else {
+		window_status_update(vis, win);
 	}
 	lua_pop(L, 1);
 }
