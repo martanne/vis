@@ -303,7 +303,7 @@ vis.events.win_status = function(win)
 	local delim_len = 1
 
 	local mode = modes[vis.mode]
-	if mode ~= '' then
+	if mode ~= '' and vis.win == win then
 		table.insert(left, mode)
 	end
 

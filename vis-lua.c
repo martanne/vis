@@ -21,12 +21,13 @@ static void window_status_update(Vis *vis, Win *win) {
 	int width = vis_window_width_get(win);
 	int delim_len = 1, delim_count = 0;
 	enum UiOption options = view_options_get(win->view);
+	bool focused = vis->win == win;
 	const char *filename = win->file->name;
 	const char *mode = vis->mode->status;
 
 	int left_len = snprintf(left, sizeof(left)-1, "%s%s%s%s%s",
-	          mode ? mode : "",
-	          mode && ++delim_count ? " » " : "",
+	          focused && mode ? mode : "",
+	          focused && mode && ++delim_count ? " » " : "",
 	          filename ? filename : "[No Name]",
 	          text_modified(win->file->text) ? " [+]" : "",
 	          vis_macro_recording(vis) ? " @": "");
