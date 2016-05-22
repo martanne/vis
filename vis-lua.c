@@ -135,12 +135,16 @@ static void stack_dump(lua_State *L, const char *format, ...) {
 
 static int error_function(lua_State *L) {
 	Vis *vis = lua_touserdata(L, lua_upvalueindex(1));
+	if (vis->errorhandler)
+		return 1;
+	vis->errorhandler = true;
 	size_t len;
 	const char *msg = lua_tostring(L, 1);
 	if (msg)
 		luaL_traceback(L, L, msg, 1);
 	msg = lua_tolstring(L, 1, &len);
 	vis_message_show(vis, msg);
+	vis->errorhandler = false;
 	return 1;
 }
 
