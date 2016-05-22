@@ -264,6 +264,19 @@ static void *obj_ref_check(lua_State *L, int idx, const char *type) {
 	return obj;
 }
 
+static void *obj_lightref_new(lua_State *L, void *addr, const char *type) {
+	if (!addr)
+		return NULL;
+	void **handle = obj_new(L, sizeof(addr), type);
+	*handle = addr;
+	return addr;
+}
+
+static void *obj_lightref_check(lua_State *L, int idx, const char *type) {
+	void **addr = luaL_checkudata(L, idx, type);
+	return *addr;
+}
+
 static int index_common(lua_State *L) {
 	lua_getmetatable(L, 1);
 	lua_pushvalue(L, 2);
@@ -556,7 +569,7 @@ static bool command_lua(Vis *vis, Win *win, void *data, bool force, const char *
 		return false;
 	if (!cur)
 		cur = view_cursors_primary_get(win->view);
-	if (!obj_ref_new(L, cur, "vis.window.cursor"))
+	if (!obj_lightref_new(L, cur, "vis.window.cursor"))
 		return false;
 	pushrange(L, range);
 	if (pcall(vis, L, 5, 1) != 0)
@@ -671,7 +684,7 @@ static int window_index(lua_State *L) {
 
 		if (strcmp(key, "cursor") == 0) {
 			Cursor *cur = view_cursors_primary_get(win->view);
-			obj_ref_new(L, cur, "vis.window.cursor");
+			obj_lightref_new(L, cur, "vis.window.cursor");
 			return 1;
 		}
 
@@ -714,7 +727,7 @@ static int window_cursors_iterator_next(lua_State *L) {
 	Cursor **handle = lua_touserdata(L, lua_upvalueindex(1));
 	if (!*handle)
 		return 0;
-	Cursor *cur = obj_ref_new(L, *handle, "vis.window.cursor");
+	Cursor *cur = obj_lightref_new(L, *handle, "vis.window.cursor");
 	if (!cur)
 		return 0;
 	*handle = view_cursors_next(cur);
@@ -795,7 +808,7 @@ static int window_cursors_index(lua_State *L) {
 		goto err;
 	for (Cursor *c = view_cursors(view); c; c = view_cursors_next(c)) {
 		if (!--index) {
-			obj_ref_new(L, c, "vis.window.cursor");
+			obj_lightref_new(L, c, "vis.window.cursor");
 			return 1;
 		}
 	}
@@ -817,7 +830,7 @@ static const struct luaL_Reg window_cursors_funcs[] = {
 };
 
 static int window_cursor_index(lua_State *L) {
-	Cursor *cur = obj_ref_check(L, 1, "vis.window.cursor");
+	Cursor *cur = obj_lightref_check(L, 1, "vis.window.cursor");
 	if (!cur) {
 		lua_pushnil(L);
 		return 1;
@@ -856,7 +869,7 @@ static int window_cursor_index(lua_State *L) {
 }
 
 static int window_cursor_newindex(lua_State *L) {
-	Cursor *cur = obj_ref_check(L, 1, "vis.window.cursor");
+	Cursor *cur = obj_lightref_check(L, 1, "vis.window.cursor");
 	if (!cur)
 		return 0;
 	if (lua_isstring(L, 2)) {
@@ -880,7 +893,7 @@ static int window_cursor_newindex(lua_State *L) {
 }
 
 static int window_cursor_to(lua_State *L) {
-	Cursor *cur = obj_ref_check(L, 1, "vis.window.cursor");
+	Cursor *cur = obj_lightref_check(L, 1, "vis.window.cursor");
 	if (cur) {
 		size_t line = checkpos(L, 2);
 		size_t col = checkpos(L, 3);
