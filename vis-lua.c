@@ -27,27 +27,54 @@
 #endif
 
 static void window_status_update(Vis *vis, Win *win) {
-	char status[1024], left[256], right[256], cursors[32] = "", pos[32] = "";
+	char left_parts[4][255] = { "", "", "", "" };
+	char right_parts[4][32] = { "", "", "", "" };
+	char left[sizeof(left_parts)+LENGTH(left_parts)*8];
+	char right[sizeof(right_parts)+LENGTH(right_parts)*8];
+	char status[sizeof(left)+sizeof(right)+1];
+	size_t left_count = 0;
+	size_t right_count = 0;
+
+	View *view = win->view;
+	File *file = win->file;
+	Text *txt = file->text;
 	int width = vis_window_width_get(win);
-	int delim_len = 1, delim_count = 0;
-	enum UiOption options = view_options_get(win->view);
+	enum UiOption options = view_options_get(view);
 	bool focused = vis->win == win;
-	const char *filename = win->file->name;
+	const char *filename = file->name;
 	const char *mode = vis->mode->status;
 
-	int left_len = snprintf(left, sizeof(left)-1, "%s%s%s%s%s",
-	          focused && mode ? mode : "",
-	          focused && mode && ++delim_count ? " » " : "",
-	          filename ? filename : "[No Name]",
-	          text_modified(win->file->text) ? " [+]" : "",
-	          vis_macro_recording(vis) ? " @": "");
+	if (focused && mode)
+		strcpy(left_parts[left_count++], mode);
 
-	int cursor_count = view_cursors_count(win->view);
+	snprintf(left_parts[left_count], sizeof(left_parts[left_count])-1, "%s%s%s",
+	         filename ? filename : "[No Name]",
+	         text_modified(txt) ? " [+]" : "",
+	         vis_macro_recording(vis) ? " @": "");
+	left_count++;
+
+	if (text_newline_type(txt) != TEXT_NEWLINE_NL)
+		strcpy(right_parts[right_count++], "␊");
+
+	int cursor_count = view_cursors_count(view);
 	if (cursor_count > 1) {
-		Cursor *c = view_cursors_primary_get(win->view);
+		Cursor *c = view_cursors_primary_get(view);
 		int cursor_number = view_cursors_number(c) + 1;
-		snprintf(cursors, sizeof(cursors)-1, "%d/%d", cursor_number, cursor_count);
+		snprintf(right_parts[right_count], sizeof(right_parts[right_count])-1,
+		         "%d/%d", cursor_number, cursor_count);
+		right_count++;
 	}
+
+	size_t size = text_size(txt);
+	size_t pos = view_cursor_get(view);
+	size_t percent = 0;
+	if (size > 0) {
+		double tmp = ((double)pos/(double)size)*100;
+		percent = (size_t)(tmp+1);
+	}
+	snprintf(right_parts[right_count], sizeof(right_parts[right_count])-1,
+	         "%zu%%", percent);
+	right_count++;
 
 	if (!(options & UI_OPTION_LARGE_FILE)) {
 		Cursor *cur = view_cursors_primary_get(win->view);
@@ -57,15 +84,39 @@ static void window_status_update(Vis *vis, Win *win) {
 			options |= UI_OPTION_LARGE_FILE;
 			view_options_set(win->view, options);
 		}
-		snprintf(pos, sizeof(pos)-1, "%zu, %zu", line, col);
+		snprintf(right_parts[right_count], sizeof(right_parts[right_count])-1,
+		         "%zu, %zu", line, col);
+		right_count++;
 	}
 
-	int right_len = snprintf(right, sizeof(right)-1, "%s%s%s",
-		cursors, cursors[0] && pos[0] && ++delim_count ? " « " : "", pos);
-	int spaces = width - left_len - right_len - 2 + delim_count*delim_len;
+	int left_len = snprintf(left, sizeof(left)-1, " %s%s%s%s%s%s%s",
+	         left_parts[0],
+	         left_parts[1][0] ? " » " : "",
+	         left_parts[1],
+	         left_parts[2][0] ? " » " : "",
+	         left_parts[2],
+	         left_parts[3][0] ? " » " : "",
+	         left_parts[3]);
+
+	int right_len = snprintf(right, sizeof(right)-1, "%s%s%s%s%s%s%s ",
+	         right_parts[0],
+	         right_parts[1][0] ? " « " : "",
+	         right_parts[1],
+	         right_parts[2][0] ? " « " : "",
+	         right_parts[2],
+	         right_parts[3][0] ? " « " : "",
+	         right_parts[3]);
+
+	if (left_len < 0 || right_len < 0)
+		return;
+	int left_width = text_string_width(left, left_len);
+	int right_width = text_string_width(right, right_len);
+
+	int spaces = width - left_width - right_width;
 	if (spaces < 1)
 		spaces = 1;
-	snprintf(status, sizeof(status)-1, " %s%*s%s ", left, spaces, " ", right);
+
+	snprintf(status, sizeof(status)-1, "%s%*s%s", left, spaces, " ", right);
 	vis_window_status(win, status);
 }
 
