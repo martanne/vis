@@ -296,43 +296,39 @@ local modes = {
 }
 
 vis.events.win_status = function(win)
-	local left = {}
-	local right = {}
+	local left_parts = {}
+	local right_parts = {}
 	local file = win.file
 	local cursor = win.cursor
-	local delim_len = 1
 
 	local mode = modes[vis.mode]
 	if mode ~= '' and vis.win == win then
-		table.insert(left, mode)
+		table.insert(left_parts, mode)
 	end
 
-	table.insert(left, (file.name or '[No Name]') ..
+	table.insert(left_parts, (file.name or '[No Name]') ..
 		(file.modified and ' [+]' or '') .. (vis.recording and ' @' or ''))
 
 	if file.newlines ~= "nl" then
-		table.insert(right, "␊")
+		table.insert(right_parts, "␊")
 	end
 
 	if #win.cursors > 1 then
-		table.insert(right, cursor.number..'/'..#win.cursors)
+		table.insert(right_parts, cursor.number..'/'..#win.cursors)
 	end
 
 	local size = file.size
-	table.insert(right, (size == 0 and "0" or math.ceil(cursor.pos/size*100)).."%")
+	table.insert(right_parts, (size == 0 and "0" or math.ceil(cursor.pos/size*100)).."%")
 
 	if not win.large then
 		local col = cursor.col
-		table.insert(right, cursor.line..', '..col)
+		table.insert(right_parts, cursor.line..', '..col)
 		if size > 33554432 or col > 65536 then
 			win.large = true
 		end
 	end
 
-	local left_str = ' ' .. table.concat(left, " » ") .. ' '
-	local right_str = ' ' .. table.concat(right, " « ") .. ' '
-	local delim_count = math.max(#left-1, 0) + math.max(#right-1, 0)
-	local spaces = string.rep(' ', win.width - #left_str - #right_str + delim_count*delim_len)
-	local status = left_str .. spaces .. right_str
-	win:status(status)
+	local left = ' ' .. table.concat(left_parts, " » ") .. ' '
+	local right = ' ' .. table.concat(right_parts, " « ") .. ' '
+	win:status(left, right);
 end

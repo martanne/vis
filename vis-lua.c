@@ -919,7 +919,16 @@ static int window_style(lua_State *L) {
 static int window_status(lua_State *L) {
 	Win *win = obj_ref_check(L, 1, "vis.window");
 	if (win) {
-		const char *status = luaL_checkstring(L, 2);
+		char status[1024] = "";
+		int width = vis_window_width_get(win);
+		const char *left = luaL_checkstring(L, 2);
+		const char *right = luaL_optstring(L, 3, "");
+		int left_width = text_string_width(left, strlen(left));
+		int right_width = text_string_width(right, strlen(right));
+		int spaces = width - left_width - right_width;
+		if (spaces < 1)
+			spaces = 1;
+		snprintf(status, sizeof(status)-1, "%s%*s%s", left, spaces, " ", right);
 		vis_window_status(win, status);
 	}
 	return 0;
