@@ -16,6 +16,16 @@
 #define VIS_PATH "/usr/local/share/vis"
 #endif
 
+#ifndef DEBUG_LUA
+#define DEBUG_LUA 0
+#endif
+
+#if DEBUG_LUA
+#define debug(...) do { printf(__VA_ARGS__); fflush(stdout); } while (0)
+#else
+#define debug(...) do { } while (0)
+#endif
+
 static void window_status_update(Vis *vis, Win *win) {
 	char status[1024], left[256], right[256], cursors[32] = "", pos[32] = "";
 	int width = vis_window_width_get(win);
@@ -78,7 +88,7 @@ void vis_lua_win_status(Vis *vis, Win *win) { window_status_update(vis, win); }
 
 #else
 
-#if 0
+#if DEBUG_LUA
 static void stack_dump_entry(lua_State *L, int i) {
 	int t = lua_type(L, i);
 	switch (t) {
@@ -192,6 +202,37 @@ static bool func_ref_get(lua_State *L, const void *addr) {
 	return true;
 }
 
+/* creates a new metatable for a given type and stores a mapping:
+ *
+ *   registry["vis.types"][metatable] = type
+ *
+ * leaves the metatable at the top of the stack.
+ */
+static void obj_type_new(lua_State *L, const char *type) {
+	luaL_newmetatable(L, type);
+	lua_getfield(L, LUA_REGISTRYINDEX, "vis.types");
+	lua_pushvalue(L, -2);
+	lua_pushstring(L, type);
+	lua_settable(L, -3);
+	lua_pop(L, 1);
+}
+
+/* get type of userdatum at the top of the stack:
+ *
+ *   return registry["vis.types"][getmetatable(userdata)]
+ */
+const char *obj_type_get(lua_State *L) {
+	if (lua_isnil(L, -1))
+		return "nil";
+	lua_getfield(L, LUA_REGISTRYINDEX, "vis.types");
+	lua_getmetatable(L, -2);
+	lua_gettable(L, -2);
+	// XXX: in theory string might become invalid when poped from stack
+	const char *type = lua_tostring(L, -1);
+	lua_pop(L, 2);
+	return type;
+}
+
 static void *obj_new(lua_State *L, size_t size, const char *type) {
 	void *obj = lua_newuserdata(L, size);
 	luaL_getmetatable(L, type);
@@ -208,8 +249,19 @@ static void *obj_ref_get(lua_State *L, void *addr, const char *type) {
 	lua_gettable(L, -2);
 	lua_remove(L, -2);
 	if (lua_isnil(L, -1)) {
+		debug("get: vis.objects[%p] = nil\n", addr);
 		lua_pop(L, 1);
 		return NULL;
+	}
+	if (DEBUG_LUA) {
+		const char *actual_type = obj_type_get(L);
+		if (strcmp(type, actual_type) != 0)
+			debug("get: vis.objects[%p] = %s (BUG: expected %s)\n", addr, actual_type, type);
+		void **handle = luaL_checkudata(L, -1, type);
+		if (!handle)
+			debug("get: vis.objects[%p] = %s (BUG: invalid handle)\n", addr, type);
+		else if (*handle != addr)
+			debug("get: vis.objects[%p] = %s (BUG: handle mismatch %p)\n", addr, type, *handle);
 	}
 	return luaL_checkudata(L, -1, type);
 }
@@ -219,6 +271,7 @@ static void *obj_ref_get(lua_State *L, void *addr, const char *type) {
  *   registry["vis.objects"][addr] = userdata
  */
 static void obj_ref_set(lua_State *L, void *addr) {
+	//debug("set: vis.objects[%p] = %s\n", addr, obj_type_get(L));
 	lua_getfield(L, LUA_REGISTRYINDEX, "vis.objects");
 	lua_pushlightuserdata(L, addr);
 	lua_pushvalue(L, -3);
@@ -231,22 +284,55 @@ static void obj_ref_set(lua_State *L, void *addr) {
  *   registry["vis.objects"][addr] = nil
  */
 static void obj_ref_free(lua_State *L, void *addr) {
+	if (DEBUG_LUA) {
+		lua_getfield(L, LUA_REGISTRYINDEX, "vis.objects");
+		lua_pushlightuserdata(L, addr);
+		lua_gettable(L, -2);
+		lua_remove(L, -2);
+		if (lua_isnil(L, -1))
+			debug("free-unused: %p\n", addr);
+		else
+			debug("free: vis.objects[%p] = %s\n", addr, obj_type_get(L));
+		lua_pop(L, 1);
+	}
 	lua_pushnil(L);
 	obj_ref_set(L, addr);
 }
 
-/* creates a new object reference of given type if it does not
- * already exist in the registry */
+/* creates a new object reference of given type if it does not already exist in the registry:
+ *
+ *  if (registry["vis.types"][metatable(registry["vis.objects"][addr])] != type) {
+ *      // XXX: should not happen
+ *      registry["vis.objects"][addr] = new_obj(addr, type)
+ *  }
+ *  return registry["vis.objects"][addr];
+ */
 static void *obj_ref_new(lua_State *L, void *addr, const char *type) {
 	if (!addr)
 		return NULL;
-	void **handle = (void**)obj_ref_get(L, addr, type);
-	if (!handle) {
-		handle = obj_new(L, sizeof(addr), type);
-		obj_ref_set(L, addr);
-		*handle = addr;
+	lua_getfield(L, LUA_REGISTRYINDEX, "vis.objects");
+	lua_pushlightuserdata(L, addr);
+	lua_gettable(L, -2);
+	lua_remove(L, -2);
+	const char *old_type = obj_type_get(L);
+	if (strcmp(type, old_type) == 0) {
+		debug("new: vis.objects[%p] = %s (returning existing object)\n", addr, old_type);
+		void **handle = luaL_checkudata(L, -1, type);
+		if (!handle)
+			debug("new: vis.objects[%p] = %s (BUG: invalid handle)\n", addr, old_type);
+		else if (*handle != addr)
+			debug("new: vis.objects[%p] = %s (BUG: handle mismatch %p)\n", addr, old_type, *handle);
+		return addr;
 	}
-	return *handle;
+	if (!lua_isnil(L, -1))
+		debug("new: vis.objects[%p] = %s (WARNING: changing object type from %s)\n", addr, type, old_type);
+	else
+		debug("new: vis.objects[%p] = %s (creating new object)\n", addr, type);
+	lua_pop(L, 1);
+	void **handle = obj_new(L, sizeof(addr), type);
+	obj_ref_set(L, addr);
+	*handle = addr;
+	return addr;
 }
 
 /* retrieve object stored in reference at stack location `idx' */
@@ -1244,6 +1330,9 @@ void vis_lua_init(Vis *vis) {
 
 	vis_lua_path_add(vis, getenv("VIS_PATH"));
 
+	/* table in registry to lookup object type, stores metatable -> type mapping */
+	lua_newtable(L);
+	lua_setfield(L, LUA_REGISTRYINDEX, "vis.types");
 	/* table in registry to track lifetimes of C objects */
 	lua_newtable(L);
 	lua_setfield(L, LUA_REGISTRYINDEX, "vis.objects");
@@ -1251,11 +1340,11 @@ void vis_lua_init(Vis *vis) {
 	lua_newtable(L);
 	lua_setfield(L, LUA_REGISTRYINDEX, "vis.functions");
 	/* metatable used to type check user data */
-	luaL_newmetatable(L, "vis.file");
+	obj_type_new(L, "vis.file");
 	luaL_setfuncs(L, file_funcs, 0);
-	luaL_newmetatable(L, "vis.file.text");
+	obj_type_new(L, "vis.file.text");
 	luaL_setfuncs(L, file_lines_funcs, 0);
-	luaL_newmetatable(L, "vis.window");
+	obj_type_new(L, "vis.window");
 	luaL_setfuncs(L, window_funcs, 0);
 
 	static const struct {
@@ -1276,11 +1365,11 @@ void vis_lua_init(Vis *vis) {
 		lua_setfield(L, -2, styles[i].name);
 	}
 
-	luaL_newmetatable(L, "vis.window.cursor");
+	obj_type_new(L, "vis.window.cursor");
 	luaL_setfuncs(L, window_cursor_funcs, 0);
-	luaL_newmetatable(L, "vis.window.cursors");
+	obj_type_new(L, "vis.window.cursors");
 	luaL_setfuncs(L, window_cursors_funcs, 0);
-	luaL_newmetatable(L, "vis");
+	obj_type_new(L, "vis");
 	luaL_setfuncs(L, vis_lua, 0);
 
 	lua_pushstring(L, VERSION);
@@ -1323,7 +1412,7 @@ void vis_lua_quit(Vis *vis) {
 }
 
 void vis_lua_file_open(Vis *vis, File *file) {
-
+	debug("event: file-open: %s %p %p\n", file->name ? file->name : "unnamed", (void*)file, (void*)file->text);
 }
 
 void vis_lua_file_save(Vis *vis, File *file) {
@@ -1331,6 +1420,7 @@ void vis_lua_file_save(Vis *vis, File *file) {
 }
 
 void vis_lua_file_close(Vis *vis, File *file) {
+	debug("event: file-close: %s %p %p\n", file->name ? file->name : "unnamed", (void*)file, (void*)file->text);
 	lua_State *L = vis->lua;
 	vis_lua_event_get(L, "file_close");
 	if (lua_isfunction(L, -1)) {
@@ -1343,6 +1433,7 @@ void vis_lua_file_close(Vis *vis, File *file) {
 }
 
 void vis_lua_win_open(Vis *vis, Win *win) {
+	debug("event: win-open: %s %p %p\n", win->file->name ? win->file->name : "unnamed", (void*)win, (void*)win->view);
 	lua_State *L = vis->lua;
 	vis_lua_event_get(L, "win_open");
 	if (lua_isfunction(L, -1)) {
@@ -1353,6 +1444,7 @@ void vis_lua_win_open(Vis *vis, Win *win) {
 }
 
 void vis_lua_win_close(Vis *vis, Win *win) {
+	debug("event: win-close: %s %p %p\n", win->file->name ? win->file->name : "unnamed", (void*)win, (void*)win->view);
 	lua_State *L = vis->lua;
 	vis_lua_event_get(L, "win_close");
 	if (lua_isfunction(L, -1)) {
