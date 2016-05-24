@@ -2,6 +2,7 @@
 #include "util.h"
 #include <wchar.h>
 #include <errno.h>
+#include <stdlib.h>
 
 bool text_range_valid(const Filerange *r) {
 	return r->start != EPOS && r->end != EPOS && r->start <= r->end;
@@ -74,4 +75,41 @@ int text_char_count(const char *data, size_t len) {
                 }
 	}
 	return count;
+}
+
+int text_string_width(const char *data, size_t len) {
+
+	int width = 0;
+	mbstate_t ps = { 0 };
+	const char *s = data;
+
+	while (len > 0) {
+		char buf[MB_CUR_MAX];
+		wchar_t wc;
+		size_t wclen = mbrtowc(&wc, s, len, &ps);
+		if (wclen == (size_t)-1 && errno == EILSEQ) {
+			/* assume a replacement symbol will be displayed */
+			width++;
+			wclen = 1;
+		} else if (wclen == (size_t)-2) {
+			/* do nothing, advance to next character */
+			wclen = 1;
+		} else if (wclen == 0) {
+			/* assume NUL byte will be displayed as ^@ */
+			width += 2;
+			wclen = 1;
+		} else if (buf[0] == '\t') {
+			width++;
+			wclen = 1;
+		} else {
+			int w = wcwidth(wc);
+			if (w == -1)
+				w = 2; /* assume non-printable will be displayed as ^{char} */
+			width += w;
+		}
+		len -= wclen;
+		s += wclen;
+	}
+
+	return width;
 }

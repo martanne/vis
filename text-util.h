@@ -23,5 +23,7 @@ bool text_range_overlap(const Filerange*, const Filerange*);
 bool text_range_contains(const Filerange*, size_t pos);
 /* count the number of graphemes in data */
 int text_char_count(const char *data, size_t len);
+/* get the approximate display width of data */
+int text_string_width(const char *data, size_t len);
 
 #endif
