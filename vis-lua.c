@@ -1284,6 +1284,25 @@ const char *vis_lua_paths_get(Vis *vis) {
 	return lua_tostring(L, -1);
 }
 
+static bool package_exist(Vis *vis, lua_State *L, const char *name) {
+	const char lua[] =
+		"local name = ...\n"
+		"for _, searcher in ipairs(package.searchers or package.loaders) do\n"
+			"local loader = searcher(name)\n"
+			"if type(loader) == 'function' then\n"
+				"return true\n"
+			"end\n"
+		"end\n"
+		"return false\n";
+	if (luaL_loadstring(L, lua) != LUA_OK)
+		return false;
+	lua_pushstring(L, name);
+	/* an error indicates package exists */
+	bool ret = lua_pcall(L, 1, 1, 0) != LUA_OK || lua_toboolean(L, -1);
+	lua_pop(L, 1);
+	return ret;
+}
+
 void vis_lua_init(Vis *vis) {
 	lua_State *L = luaL_newstate();
 	if (!L)
@@ -1395,10 +1414,13 @@ void vis_lua_init(Vis *vis) {
 	obj_ref_new(L, vis, "vis");
 	lua_setglobal(L, "vis");
 
-	lua_getglobal(L, "require");
-	lua_pushstring(L, "visrc");
-	if (lua_pcall(L, 1, 0, 0))
+	if (!package_exist(vis, L, "visrc")) {
 		vis_info_show(vis, "WARNING: failed to load visrc.lua");
+	} else {
+		lua_getglobal(L, "require");
+		lua_pushstring(L, "visrc");
+		pcall(vis, L, 1, 0);
+	}
 }
 
 void vis_lua_start(Vis *vis) {
