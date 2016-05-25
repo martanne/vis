@@ -1,6 +1,10 @@
 #!/bin/sh
 set -e
 
+# Later, we're going to want to set $IFS to a single newline, so let's prepare one.
+NL='
+'
+
 VIS_MENU_PROMPT=""
 ALLOW_AUTO_SELECT=1
 
@@ -41,6 +45,7 @@ if [ $# -eq 1 -a "$ALLOW_AUTO_SELECT" = 1 ]; then
 		# We pass -f to force the next iteration to present the
 		# full list, even if it's just an empty directory.
 		cd "$1"
+		IFS=$NL  # Don't split ls output on tabs or spaces.
 		exec "$0" -p "$VIS_MENU_PROMPT" -f .. $(ls -1)
 	else
 		# We've found a single item, and it's not a directory,
