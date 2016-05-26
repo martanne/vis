@@ -92,8 +92,6 @@ void vis_window_close(Win*);
 /* split the given window. changes to the displayed text will be reflected
  * in both windows */
 bool vis_window_split(Win*);
-/* change file name associated with this window, affects syntax coloring */
-void vis_window_name(Win*, const char *filename);
 /* change status message of this window */
 void vis_window_status(Win*, const char *status);
 /* focus the next / previous window */

@@ -199,4 +199,7 @@ void mode_set(Vis *vis, Mode *new_mode);
 void window_selection_save(Win *win);
 Win *window_new_file(Vis *vis, File *file);
 
+const char *file_name_get(File*);
+void file_name_set(File*, const char *name);
+
 #endif

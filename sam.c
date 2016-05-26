@@ -1102,10 +1102,8 @@ static bool cmd_write(Vis *vis, Win *win, Command *cmd, const char *argv[], Curs
 			return false;
 		}
 
-		if (!file->name) {
-			vis_window_name(win, *name);
-			file->name = win->file->name;
-		}
+		if (!file->name)
+			file_name_set(file, *name);
 		if (strcmp(file->name, *name) == 0)
 			file->stat = text_stat(text);
 		if (vis->event && vis->event->file_save)

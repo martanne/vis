@@ -41,7 +41,7 @@ static void window_status_update(Vis *vis, Win *win) {
 	int width = vis_window_width_get(win);
 	enum UiOption options = view_options_get(view);
 	bool focused = vis->win == win;
-	const char *filename = file->name;
+	const char *filename = file_name_get(file);
 	const char *mode = vis->mode->status;
 
 	if (focused && mode)
@@ -1066,7 +1066,7 @@ static int file_index(lua_State *L) {
 	if (lua_isstring(L, 2)) {
 		const char *key = lua_tostring(L, 2);
 		if (strcmp(key, "name") == 0) {
-			lua_pushstring(L, file->name);
+			lua_pushstring(L, file_name_get(file));
 			return 1;
 		}
 

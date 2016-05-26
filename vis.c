@@ -18,6 +18,7 @@
 #include <sys/ioctl.h>
 #include <sys/mman.h>
 #include <pwd.h>
+#include <libgen.h>
 #include <termkey.h>
 
 #include "vis.h"
@@ -68,34 +69,68 @@ static File *file_new_text(Vis *vis, Text *text) {
 	return file;
 }
 
-static File *file_new(Vis *vis, const char *filename) {
-	if (filename) {
+static char *absolute_path(const char *name) {
+	if (!name)
+		return NULL;
+	char *copy1 = strdup(name);
+	char *copy2 = strdup(name);
+	char *path_absolute = NULL;
+	char path_normalized[PATH_MAX] = "";
+
+	if (!copy1 || !copy2)
+		goto err;
+
+	char *dir = dirname(copy1);
+	char *base = basename(copy2);
+	if (!(path_absolute = realpath(dir, NULL)))
+		goto err;
+
+	snprintf(path_normalized, sizeof(path_normalized)-1, "%s/%s",
+	         path_absolute, base);
+err:
+	free(copy1);
+	free(copy2);
+	free(path_absolute);
+	return path_normalized[0] ? strdup(path_normalized) : NULL;
+}
+
+static File *file_new(Vis *vis, const char *name) {
+	char *name_absolute = NULL;
+	if (name) {
+		if (!(name_absolute = absolute_path(name)))
+			return NULL;
+		File *existing = NULL;
 		/* try to detect whether the same file is already open in another window
 		 * TODO: do this based on inodes */
 		for (File *file = vis->files; file; file = file->next) {
-			if (file->name && strcmp(file->name, filename) == 0) {
-				return file;
+			if (file->name && strcmp(file->name, name_absolute) == 0) {
+				existing = file;
+				break;
 			}
+		}
+		if (existing) {
+			free(name_absolute);
+			return existing;
 		}
 	}
 
-	Text *text = text_load(filename);
-	if (!text && filename && errno == ENOENT)
+	File *file = NULL;
+	Text *text = text_load(name);
+	if (!text && name && errno == ENOENT)
 		text = text_load(NULL);
 	if (!text)
-		return NULL;
-
-	File *file = file_new_text(vis, text);
-	if (!file) {
-		text_free(text);
-		return NULL;
-	}
-
-	if (filename)
-		file->name = strdup(filename);
+		goto err;
+	if (!(file = file_new_text(vis, text)))
+		goto err;
+	file->name = name_absolute;
 	if (!file->internal && vis->event && vis->event->file_open)
 		vis->event->file_open(vis, file);
 	return file;
+err:
+	free(name_absolute);
+	text_free(text);
+	file_free(vis, file);
+	return NULL;
 }
 
 static File *file_new_internal(Vis *vis, const char *filename) {
@@ -107,12 +142,25 @@ static File *file_new_internal(Vis *vis, const char *filename) {
 	return file;
 }
 
-void vis_window_name(Win *win, const char *filename) {
-	File *file = win->file;
-	if (filename != file->name) {
-		free((char*)file->name);
-		file->name = filename ? strdup(filename) : NULL;
-	}
+void file_name_set(File *file, const char *name) {
+	if (name == file->name)
+		return;
+	free((char*)file->name);
+	file->name = absolute_path(name);
+}
+
+const char *file_name_get(File *file) {
+	/* TODO: calculate path relative to working directory, cache result */
+	if (!file->name)
+		return NULL;
+	char cwd[PATH_MAX];
+	if (!getcwd(cwd, sizeof cwd))
+		return file->name;
+	const char *path = strstr(file->name, cwd);
+	if (path != file->name)
+		return file->name;
+	size_t cwdlen = strlen(cwd);
+	return file->name[cwdlen] == '/' ? file->name+cwdlen+1 : file->name;
 }
 
 void vis_window_status(Win *win, const char *status) {
