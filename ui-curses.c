@@ -855,8 +855,11 @@ static void ui_window_focus(UiWin *w) {
 	UiCursesWin *win = (UiCursesWin*)w;
 	UiCursesWin *oldsel = win->ui->selwin;
 	win->ui->selwin = win;
-	if (oldsel)
+	if (oldsel) {
+		view_draw(oldsel->view);
 		ui_window_draw((UiWin*)oldsel);
+	}
+	view_draw(win->view);
 	ui_window_draw(w);
 }
 
