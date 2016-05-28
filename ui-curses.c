@@ -44,6 +44,16 @@ int ESCDELAY;
 
 #define CONTROL(k) ((k)&0x1F)
 
+#ifndef DEBUG_UI
+#define DEBUG_UI 0
+#endif
+
+#if DEBUG_UI
+#define debug(...) do { printf(__VA_ARGS__); fflush(stdout); } while (0)
+#else
+#define debug(...) do { } while (0)
+#endif
+
 #if 0
 #define wresize(win, y, x) do { \
 	if (wresize(win, y, x) == ERR) { \
@@ -572,6 +582,7 @@ static bool ui_window_syntax_style(UiWin *w, int id, const char *style) {
 }
 
 static void ui_window_resize(UiCursesWin *win, int width, int height) {
+	debug("ui-win-resize[%s]: %dx%d\n", win->file->name ? win->file->name : "noname", width, height);
 	win->width = width;
 	win->height = height;
 	if (win->winstatus)
@@ -580,10 +591,10 @@ static void ui_window_resize(UiCursesWin *win, int width, int height) {
 	if (win->winside)
 		wresize(win->winside, height-1, win->sidebar_width);
 	view_resize(win->view, width - win->sidebar_width, win->winstatus ? height - 1 : height);
-	view_update(win->view);
 }
 
 static void ui_window_move(UiCursesWin *win, int x, int y) {
+	debug("ui-win-move[%s]: (%d, %d)\n", win->file->name ? win->file->name : "noname", x, y);
 	win->x = x;
 	win->y = y;
 	mvwin(win->win, y, x + win->sidebar_width);
@@ -648,6 +659,7 @@ static void ui_window_draw(UiWin *w) {
 	if (!ui_window_draw_sidebar(win))
 		return;
 
+	debug("ui-win-draw[%s]\n", win->file->name ? win->file->name : "noname");
 	wbkgd(win->win, style_to_attr(&win->styles[UI_STYLE_DEFAULT]));
 	wmove(win->win, 0, 0);
 	int width = view_width_get(win->view);
@@ -718,6 +730,7 @@ static void ui_window_reload(UiWin *w, File *file) {
 }
 
 static void ui_window_update(UiCursesWin *win) {
+	debug("ui-win-update[%s]\n", win->file->name ? win->file->name : "noname");
 	if (win->winstatus)
 		wnoutrefresh(win->winstatus);
 	if (win->winside)
@@ -726,6 +739,7 @@ static void ui_window_update(UiCursesWin *win) {
 }
 
 static void ui_arrange(Ui *ui, enum UiLayout layout) {
+	debug("ui-arrange\n");
 	UiCurses *uic = (UiCurses*)ui;
 	uic->layout = layout;
 	int n = 0, m = !!uic->info[0], x = 0, y = 0;
@@ -769,6 +783,7 @@ static void ui_arrange(Ui *ui, enum UiLayout layout) {
 }
 
 static void ui_draw(Ui *ui) {
+	debug("ui-draw\n");
 	UiCurses *uic = (UiCurses*)ui;
 	erase();
 	ui_arrange(ui, uic->layout);
@@ -815,16 +830,14 @@ static void ui_resize(Ui *ui) {
 static void ui_update(Ui *ui) {
 	UiCurses *uic = (UiCurses*)ui;
 	if (need_resize) {
-		ui_resize(ui);
 		need_resize = false;
+		ui_resize(ui);
+		vis_update(uic->vis);
+		return;
 	}
-	for (UiCursesWin *win = uic->windows; win; win = win->next) {
-		if (win != uic->selwin)
-			ui_window_update(win);
-	}
-
-	if (uic->selwin)
-		ui_window_update(uic->selwin);
+	for (UiCursesWin *win = uic->windows; win; win = win->next)
+		ui_window_update(win);
+	debug("ui-doupdate\n");
 	doupdate();
 }
 

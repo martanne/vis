@@ -217,7 +217,7 @@ static void window_draw(void *ctx) {
 	}
 }
 
-Win *window_new_file(Vis *vis, File *file) {
+Win *window_new_file(Vis *vis, File *file, enum UiOption options) {
 	Win *win = calloc(1, sizeof(Win));
 	if (!win)
 		return NULL;
@@ -228,7 +228,7 @@ Win *window_new_file(Vis *vis, File *file) {
 	win->event.draw = window_draw;
 	win->horizon = 1 << 15;
 	win->view = view_new(file->text, &win->event);
-	win->ui = vis->ui->window_new(vis->ui, win->view, file, UI_OPTION_STATUSBAR);
+	win->ui = vis->ui->window_new(vis->ui, win->view, file, options);
 	if (!win->jumplist || !win->view || !win->ui) {
 		window_free(win);
 		return NULL;
@@ -267,7 +267,7 @@ bool vis_window_reload(Win *win) {
 }
 
 bool vis_window_split(Win *original) {
-	Win *win = window_new_file(original->vis, original->file);
+	Win *win = window_new_file(original->vis, original->file, UI_OPTION_STATUSBAR);
 	if (!win)
 		return false;
 	for (size_t i = 0; i < LENGTH(win->modes); i++) {
@@ -281,7 +281,6 @@ bool vis_window_split(Win *original) {
 	vis_window_syntax_set(win, vis_window_syntax_get(original));
 	view_options_set(win->view, view_options_get(original->view));
 	view_cursor_to(win->view, view_cursor_get(original->view));
-	vis_draw(win->vis);
 	return true;
 }
 
@@ -344,7 +343,6 @@ void vis_redraw(Vis *vis) {
 void vis_update(Vis *vis) {
 	for (Win *win = vis->windows; win; win = win->next)
 		view_update(win->view);
-	view_update(vis->win->view);
 	vis->ui->update(vis->ui);
 }
 
@@ -356,13 +354,11 @@ bool vis_window_new(Vis *vis, const char *filename) {
 	File *file = file_new(vis, filename);
 	if (!file)
 		return false;
-	Win *win = window_new_file(vis, file);
+	Win *win = window_new_file(vis, file, UI_OPTION_STATUSBAR);
 	if (!win) {
 		file_free(vis, file);
 		return false;
 	}
-
-	vis_draw(vis);
 
 	return true;
 }

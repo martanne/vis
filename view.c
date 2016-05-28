@@ -513,6 +513,8 @@ bool view_resize(View *view, int width, int height) {
 		width = 1;
 	if (height <= 0)
 		height = 1;
+	if (view->width == width && view->height == height)
+		return true;
 	size_t lines_size = height*(sizeof(Line) + width*sizeof(Cell));
 	if (lines_size > view->lines_size) {
 		Line *lines = realloc(view->lines, lines_size);
@@ -525,6 +527,8 @@ bool view_resize(View *view, int width, int height) {
 	view->height = height;
 	memset(view->lines, 0, view->lines_size);
 	view_draw(view);
+	if (view->ui)
+		view_update(view);
 	return true;
 }
 

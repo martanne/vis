@@ -152,17 +152,16 @@ static const KeyBinding prompt_backspace_binding = {
 
 void vis_prompt_show(Vis *vis, const char *title) {
 	Win *active = vis->win;
-	Win *prompt = window_new_file(vis, title[0] == ':' ? vis->command_file : vis->search_file);
+	Win *prompt = window_new_file(vis, title[0] == ':' ? vis->command_file : vis->search_file,
+		UI_OPTION_ONELINE);
 	if (!prompt)
 		return;
 	if (vis->mode->visual)
 		window_selection_save(active);
-	view_options_set(prompt->view, UI_OPTION_ONELINE);
 	Text *txt = prompt->file->text;
 	text_insert(txt, text_size(txt), title, strlen(title));
 	Cursor *cursor = view_cursors_primary_get(prompt->view);
 	view_cursors_scroll_to(cursor, text_size(txt));
-	view_draw(prompt->view);
 	prompt->parent = active;
 	prompt->parent_mode = vis->mode;
 	vis_window_mode_map(prompt, VIS_MODE_NORMAL, true, "<Enter>", &prompt_enter_binding);
@@ -172,7 +171,6 @@ void vis_prompt_show(Vis *vis, const char *title) {
 	vis_window_mode_map(prompt, VIS_MODE_INSERT, true, "<Up>", &prompt_up_binding);
 	vis_window_mode_map(prompt, VIS_MODE_INSERT, true, "<Backspace>", &prompt_backspace_binding);
 	vis_mode_switch(vis, VIS_MODE_INSERT);
-	vis_draw(vis);
 }
 
 void vis_info_show(Vis *vis, const char *msg, ...) {
@@ -190,7 +188,7 @@ void vis_message_show(Vis *vis, const char *msg) {
 	if (!msg)
 		return;
 	if (!vis->message_window)
-		vis->message_window = window_new_file(vis, vis->error_file);
+		vis->message_window = window_new_file(vis, vis->error_file, UI_OPTION_STATUSBAR);
 	Win *win = vis->message_window;
 	if (!win)
 		return;
