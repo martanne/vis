@@ -50,7 +50,8 @@ if [ $# -eq 1 -a "$ALLOW_AUTO_SELECT" = 1 ]; then
 	else
 		# We've found a single item, and it's not a directory,
 		# so it must be a filename (or file-like thing) to open.
-		echo $(realpath "$1")
+		cd "$(dirname "$1")"
+		echo "$(pwd -P)"/"$(basename "$1")"
 		exit 0
 	fi
 fi
