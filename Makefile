@@ -94,8 +94,10 @@ install: vis vis-menu
 	}
 	@echo installing manual page to ${DESTDIR}${MANPREFIX}/man1
 	@mkdir -p ${DESTDIR}${MANPREFIX}/man1
-	@sed "s/VERSION/${VERSION}/g" < vis.1 > ${DESTDIR}${MANPREFIX}/man1/vis.1
+	@sed -e "s/VERSION/${VERSION}/g" < vis.1 > ${DESTDIR}${MANPREFIX}/man1/vis.1
+	@sed -e "s/VERSION/${VERSION}/g" -e "s/MONTH DAY, YEAR/$(date +'%B %m, %Y')/g" < vis-menu.1 > ${DESTDIR}${MANPREFIX}/man1/vis-menu.1
 	@chmod 644 ${DESTDIR}${MANPREFIX}/man1/vis.1
+	@chmod 644 ${DESTDIR}${MANPREFIX}/man1/vis-menu.1
 
 uninstall:
 	@echo removing executable file from ${DESTDIR}${PREFIX}/bin
