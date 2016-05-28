@@ -12,6 +12,7 @@
 .Op Fl t | Fl b
 .Op Fl p Ar prompt
 .Op Fl l Ar lines
+.Op Ar initial
 .Nm vis-menu
 .Op Fl v
 
@@ -61,6 +62,13 @@ If there are more than
 items in the list,
 the user can scroll through them with the arrow keys,
 just like in the regular horizontal mode.
+.It Ar initial
+The user can type into a text field
+to filter the list of items
+as well as scrolling through them.
+If supplied,
+.Ar initial
+is used as the initial content of the text field.
 .It Fl v
 Instead of displaying an interactive menu,
 .Nm vis-menu
