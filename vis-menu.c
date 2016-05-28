@@ -340,10 +340,6 @@ run(void) {
 							if(c!='H') xread(0, &c, 1); /* Remove trailing '~' from stdin */
 							c=CONTROL('A');
 							goto switch_top;
-						case '2': /* Insert */
-							xread(0, &c, 1); /* Remove trailing '~' from stdin */
-							c=CONTROL('Y');
-							goto switch_top;
 						case '3': /* Delete */
 							xread(0, &c, 1); /* Remove trailing '~' from stdin */
 							c=CONTROL('D');
