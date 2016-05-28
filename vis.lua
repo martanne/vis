@@ -161,6 +161,7 @@ vis.filetypes =	{
 	[".po|.pot"] = "gettext",
 	[".prolog"] = "prolog",
 	[".props|.properties"] = "props",
+	[".proto"] = "protobuf",
 	[".ps1"] = "powershell",
 	[".pure"] = "pure",
 	[".Rakefile|.rake|.rb|.rbw"] = "ruby",
