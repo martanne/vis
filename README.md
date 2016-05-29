@@ -41,6 +41,50 @@ summarized as "80% of vim's features implemented in roughly 1% of the code".
 
 [![vis demo](https://asciinema.org/a/41361.png)](https://asciinema.org/a/41361)
 
+> - [Getting started / Build instructions](#getting-started--build-instructions)
+>
+> - [Editing Features](#editing-features)
+>
+>   - [Operators](#operators)
+>   - [Movements](#movements)
+>   - [Text Objects](#text-objects)
+>   - [Modes](#modes)
+>   - [Multiple Cursors / selections](#multiple-cursors--selections)
+>   - [Marks](#marks)
+>   - [Registers](#registers)
+>   - [Undo/Redo And Repeat](#undoredo-and-repeat)
+>   - [Macros](#macros)
+>   - [Structural Regular Expression based command language](#structural-regular-expression-based-command-language)
+>   - [Command Line Prompt](#command-line-prompt)
+>   - [Configuring vis: visrc.lua, and Environment Variables](#configuring-vis-visrclua-and-environment-variables)
+>   - [Runtime Configurable Key bindings](#runtime-configurable-key-bindings)
+>   - [Layout Specific Key Bindings](#layout-specific-key-bindings)
+>   - [Tab <-> Space conversion and Line endings \n vs \r\n](#tab---space-conversion-and-line-endings-n-vs-rn)
+>   - [Jump list and change list](#jump-list-and-change-list)
+>   - [Mouse Support](#mouse-support)
+>   - [Non Goals](#non-goals)
+>
+> - [Lua Api For In Process Extension](#lua-api-for-in-process-extension)
+>
+> - [Text Management Using a Piece Table/Chain](#text-management-using-a-piece-tablechain)
+>
+>   - [Insert](#insert)
+>   - [Delete](#delete)
+>   - [Cache](#cache)
+>   - [Undo/Redo](#undoredo)
+>   - [Marks](#marks-1)
+>   - [Properties](#properties)
+>
+> - [Syntax Highlighting Using Parsing Expression Grammars](#syntax-highlighting-using-parsing-expression-grammars)
+>
+> - [Future Plans / Ideas](#future-plans--ideas)
+>
+>   - [Event loop With Asynchronous I/O](#event-loop-with-asynchronous-io)
+>   - [Clientserver Architecture / Rpc Interface](#clientserver-architecture--rpc-interface)
+>   - [Efficient Search And Replace](#efficient-search-and-replace)
+>
+> - [Developer Overview](#developer-overview)
+
 Getting started / Build instructions
 ====================================
 
