@@ -493,8 +493,10 @@ static const CommandDef *command_lookup(Vis *vis, const char *name) {
 }
 
 static Command *command_parse(Vis *vis, const char **s, int level, enum SamError *err) {
-	if (!**s)
+	if (!**s) {
+		*err = SAM_ERR_COMMAND;
 		return NULL;
+	}
 	Command *cmd = command_new(NULL);
 	if (!cmd)
 		return NULL;
