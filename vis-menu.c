@@ -585,6 +585,8 @@ main(int argc, char **argv) {
 			usage();
 		} else if (!strcmp(argv[i], "-p")) {
 			prompt = argv[++i];
+			if (prompt && !prompt[0])
+				prompt = NULL;
 		} else if (!strcmp(argv[i], "-l")) {
 			lines = atoi(argv[++i]);
 		} else {
