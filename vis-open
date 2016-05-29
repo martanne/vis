@@ -1,38 +1,64 @@
 #!/bin/sh
+set -e
 
-PATTERN="."
-VIS_MENU_ARGS="-b"
+# Later, we're going to want to set $IFS to a single newline, so let's prepare one.
+NL='
+'
+
+VIS_MENU_PROMPT=""
+ALLOW_AUTO_SELECT=1
 
 while [ $# -gt 0 ]; do
 	case "$1" in
 	-h|--help)
-		echo "usage: $(basename $0) [-h] [-p prompt] [file-pattern]"
+		echo "usage: $(basename $0) [-h] [-p prompt] [-f] [--] [file-pattern]"
 		exit 0;
 		;;
 	-p)
-		VIS_MENU_ARGS="$VIS_MENU_ARGS -p $2"
+		VIS_MENU_PROMPT=$2
 		shift
 		shift
 		;;
+	-f)
+		ALLOW_AUTO_SELECT=""
+		shift
+		;;
+	--)
+		shift
+		break
+		;;
 	*)
-		PATTERN=$*
 		break
 		;;
 	esac
 done
 
-DIR=""
-[ ! -z "$PATTERN" -a "$PATTERN" != "." -a -d "$PATTERN" ] && DIR="$PATTERN"
+# At this point, all the remaining arguments should be the expansion of
+# any globs that were passed on the command line.
 
-while true; do
-	SEL=$({ echo ..; ls -1 $PATTERN 2>/dev/null || echo $PATTERN; } | vis-menu $VIS_MENU_ARGS)
-	[ -z "$SEL" ] && exit 1
-	[ ! -z "$DIR" ] && SEL="$DIR/$SEL"
-	if [ -d "$SEL" ]; then
-		DIR="$SEL"
-		PATTERN="$DIR"
+if [ $# -eq 1 -a "$ALLOW_AUTO_SELECT" = 1 ]; then
+	# If there were globs on the command-line, they've expanded to
+	# a single item, so we can just process it.
+
+	if [ -d "$1" ]; then
+		# Recurse and show the contents of the named directory,
+		# We pass -f to force the next iteration to present the
+		# full list, even if it's just an empty directory.
+		cd "$1"
+		IFS=$NL  # Don't split ls output on tabs or spaces.
+		exec "$0" -p "$VIS_MENU_PROMPT" -f .. $(ls -1)
 	else
-		echo "$SEL"
+		# We've found a single item, and it's not a directory,
+		# so it must be a filename (or file-like thing) to open.
+		cd "$(dirname "$1")"
+		echo "$(pwd -P)"/"$(basename "$1")"
 		exit 0
 	fi
-done
+fi
+
+# At this point, we have a bunch of options we need to present to the
+# user so they can pick one.
+CHOICE=$(printf "%s\n" "$@" | vis-menu -b -p "$VIS_MENU_PROMPT")
+
+# Did they pick a file or directory? Who knows, let's let the next iteration figure it out.
+exec "$0" -p "$VIS_MENU_PROMPT" -- "$CHOICE"
