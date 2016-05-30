@@ -1,5 +1,7 @@
-Vis a vim-like text editor
-==========================
+<h2 align="center">
+	<img alt="VIS" src="https://cloud.githubusercontent.com/assets/7250745/15652266/495904b6-2685-11e6-89ed-1703927fcfad.png"></img><br></br>
+	a vim-like text editor<br></br>
+</h2>
 
 [![Build status](https://travis-ci.org/martanne/vis.svg?branch=master)](https://travis-ci.org/martanne/vis)
 [![Coverity Scan Build Status](https://scan.coverity.com/projects/3939/badge.svg)](https://scan.coverity.com/projects/3939)
