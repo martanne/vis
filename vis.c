@@ -1043,6 +1043,8 @@ bool vis_macro_record(Vis *vis, enum VisRegister id) {
 	if (!(VIS_REG_A <= id && id <= VIS_REG_Z))
 		macro_reset(macro);
 	vis->recording = macro;
+	if (vis->event && vis->event->win_status)
+		vis->event->win_status(vis, vis->win);
 	return true;
 }
 
@@ -1057,6 +1059,8 @@ bool vis_macro_record_stop(Vis *vis) {
 	}
 	vis->last_recording = vis->recording;
 	vis->recording = NULL;
+	if (vis->event && vis->event->win_status)
+		vis->event->win_status(vis, vis->win);
 	return true;
 }
 
