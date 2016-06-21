@@ -1,0 +1,108 @@
+.Dd MONTH DAY, YEAR
+.Os Vis VERSION
+.Dt VIS-OPEN 1
+
+.Sh NAME
+.Nm vis-open
+.Nd Interactively select a file to open
+
+.Sh SYNOPSIS
+.Nm vis-open
+.Op Fl p Ar prompt
+.Op Fl f
+.Op Ar --
+.Op Ar files
+.Pp
+.Nm vis-open
+.Fl h |
+.Fl -help
+
+.Sh DESCRIPTION
+.Nm vis-open
+takes a list of filenames and directories on the command-line
+and displays them in a menu for the user to select one.
+If the user selects a directory
+(including
+.Li .. ) ,
+the directory contents are displayed as a fresh menu.
+Once the user has selected a filename,
+its absolute path is printed to standard output.
+.Pp
+.Nm vis-open
+uses
+.Xr vis-menu 1
+as its user-interface,
+so see that page for more details.
+
+.Bl -tag -width flag
+.It Fl p Ar prompt
+Display
+.Ar prompt
+before the list of items.
+This is passed straight through to
+.Xr vis-menu 1 .
+.It Fl f
+Normally,
+if
+.Nm vis-open
+is provided with a single filename or directory argument,
+it will automatically select it
+(printing the filename to standard output,
+or presenting a new menu with the contents of the directory).
+If
+.Fl f
+is provided,
+.Nm vis-open
+will always present the arguments it's given,
+even if there's only one.
+.It Fl -
+If this token is encountered before the first non-option argument,
+all following arguments will be treated as menu-items,
+even if they would otherwise be valid command-line options.
+.Pp
+If encountered after the first non-option argument,
+or after a previous instance of
+.Li --
+it is treated as a menu-item.
+.It Ar files
+File and directory names to be presented to the user.
+If a name does not exist on the filesystem
+and the user selects it,
+it is treated as a file.
+.It Fl h | Fl -help
+If present,
+.Nm vis-open
+prints a usage summary and exits,
+ignoring any other flag and arguments.
+.Sh EXIT STATUS
+.Ex -std vis-open
+.Pp
+In particular,
+like
+.Xr vis-menu 1 ,
+.Nm vis-open
+prints nothing and sets its exit status to 1
+if the user refused to select a file.
+.Sh EXAMPLES
+.Bd -literal -offset indent
+CHOICE=$(vis-open -p "Select a file to stat")
+if [ $? -gt 0 ]; then
+	echo "No selection was made, or an error occurred"
+else
+	stat "$CHOICE"
+fi
+.Ed
+.Sh SEE ALSO
+.Xr vis-menu 1 ,
+.Xr vis 1
+
+.Sh AUTHORS
+.An "Marc Andr\('e Tanner" Aq mat@brain-dump.org
+
+.Sh BUGS
+Because
+.Nm vis-open
+uses
+.Xr ls 1
+to obtain the contents of a directory,
+weird things might happen if you have control-characters in your filenames.
