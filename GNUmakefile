@@ -31,7 +31,7 @@ LIBLPEG_SHA1 = 64a0920c9243b624a277c987d2219b6c50c43971
 
 LIBNCURSES_CONFIG = --disable-database --with-fallbacks=st,st-256color,xterm,xterm-256color,vt100 \
 	--with-shared --enable-widec --enable-ext-colors --with-termlib=tinfo \
-	--without-ada --without-cxx --without-cxx-binding --without-manpages --without-progs \
+	--without-ada --without-cxx --without-cxx-binding --without-manpages \
 	--without-tests --without-progs --without-debug --without-profile \
 	--without-cxx-shared --without-termlib --without--ticlib
 
