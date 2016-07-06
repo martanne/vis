@@ -643,10 +643,10 @@ void action_do(Vis *vis, Action *a) {
 					r.end++;
 				}
 
-				if (a->textobj->type & SPLIT)
-					c.range = r;
-				else
+				if (vis->mode->visual)
 					c.range = text_range_union(&c.range, &r);
+				else
+					c.range = r;
 
 				if (i < count - 1)
 					pos = c.range.end + 1;
