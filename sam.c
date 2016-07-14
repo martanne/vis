@@ -1117,9 +1117,15 @@ static bool cmd_write(Vis *vis, Win *win, Command *cmd, const char *argv[], Curs
 static bool cmd_read(Vis *vis, Win *win, Command *cmd, const char *argv[], Cursor *cur, Filerange *range) {
 	Buffer buf;
 	buffer_init(&buf);
+	char *bang;
 	bool ret = false;
-	if (buffer_put0(&buf, "cat ") && buffer_append0(&buf, argv[1]))
+	if ((bang = strstr(argv[1], "!"))) {
+		while(isspace(*(++bang)))
+			;
+		ret = cmd_pipein(vis, win, cmd, (const char*[]){ argv[0], bang, NULL }, cur, range);
+	} else if (buffer_put0(&buf, "cat ") && buffer_append0(&buf, argv[1]))
 		ret = cmd_pipein(vis, win, cmd, (const char*[]){ argv[0], buf.data, NULL }, cur, range);
+
 	buffer_release(&buf);
 	return ret;
 }
