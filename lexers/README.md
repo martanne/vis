@@ -32,7 +32,7 @@ script as described in the
 
 To enable auto syntax highlighting when opening a file you can associate your
 new lexer with a set of file extensions by adding a corresponding entry into
-the table found at the end of the [lexer.lua](lexer.lua) file.
+the table found at the end of the [vis.lua](/vis.lua) file.
 
 Changes to existing lexers should also be sent upstream for consideration.
 
