@@ -1169,7 +1169,7 @@ static bool cmd_filter(Vis *vis, Win *win, Command *cmd, const char *argv[], Cur
 }
 
 static bool cmd_launch(Vis *vis, Win *win, Command *cmd, const char *argv[], Cursor *cur, Filerange *range) {
-	Filerange empty = text_range_new(range->start, EPOS);
+	Filerange empty = text_range_new(cur ? view_cursors_pos(cur) : range->start, EPOS);
 	return cmd_filter(vis, win, cmd, argv, cur, &empty);
 }
 
