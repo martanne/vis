@@ -213,16 +213,13 @@ static void skip_spaces(const char **s) {
 		(*s)++;
 }
 
-static char *parse_delimited_text(const char **s) {
+static char *parse_until(const char **s, const char *until, const char *escchars) {
 	Buffer buf;
-	bool escaped = false;
-	char delim = **s;
-
-	if (!delim)
-		return NULL;
 	buffer_init(&buf);
+	size_t len = strlen(until);
+	bool escaped = false;
 
-	for ((*s)++; **s && (**s != delim || escaped); (*s)++) {
+	for (; **s && (!memchr(until, **s, len) || escaped); (*s)++) {
 		if (!escaped && **s == '\\') {
 			escaped = true;
 			continue;
@@ -232,7 +229,7 @@ static char *parse_delimited_text(const char **s) {
 
 		if (escaped) {
 			escaped = false;
-			switch (**s) {
+			switch (c) {
 			case '\n':
 				continue;
 			case 'n':
@@ -241,10 +238,16 @@ static char *parse_delimited_text(const char **s) {
 			case 't':
 				c = '\t';
 				break;
+			case '\\':
+				break;
 			default:
-				if (**s != '\\' && **s != delim)
+			{
+				bool delim = memchr(until, c, len);
+				bool esc = escchars && memchr(escchars, c, strlen(escchars));
+				if (!delim && !esc)
 					buffer_append(&buf, "\\", 1);
 				break;
+			}
 			}
 		}
 
@@ -254,15 +257,21 @@ static char *parse_delimited_text(const char **s) {
 		}
 	}
 
-	if (**s == delim)
-		(*s)++;
-
-	if (!buffer_append(&buf, "\0", 1)) {
-		buffer_release(&buf);
-		return NULL;
-	}
+	if (buffer_length(&buf))
+	    buffer_append(&buf, "\0", 1);
 
 	return buf.data;
+}
+
+static char *parse_delimited_text(const char **s) {
+	char delim[2] = { **s, '\0' };
+	if (!delim[0])
+		return NULL;
+	(*s)++;
+	char *text = parse_until(s, delim, NULL);
+	if (**s == delim[0])
+		(*s)++;
+	return text;
 }
 
 static char *parse_text(const char **s) {
@@ -287,30 +296,16 @@ static char *parse_text(const char **s) {
 	return buf.data;
 }
 
-static char *parse_until(const char **s, const char *until) {
-	Buffer buf;
-	buffer_init(&buf);
-	size_t len = strlen(until);
-
-	while (**s && !memchr(until, **s, len))
-		buffer_append(&buf, (*s)++, 1);
-
-	if (buffer_length(&buf))
-	    buffer_append(&buf, "\0", 1);
-
-	return buf.data;
-}
-
 static char *parse_shellcmd(const char **s) {
 	skip_spaces(s);
-	return parse_until(s, "\n");
+	return parse_until(s, "\n", NULL);
 }
 
 static char *parse_filename(const char **s) {
 	skip_spaces(s);
 	if (**s == '"' || **s == '\'')
 		return parse_delimited_text(s);
-	return parse_until(s, "\n");
+	return parse_until(s, "\n", "\'\"");
 }
 
 static void parse_argv(const char **s, const char *argv[], size_t maxarg) {
@@ -319,7 +314,7 @@ static void parse_argv(const char **s, const char *argv[], size_t maxarg) {
 		if (**s == '"' || **s == '\'')
 			argv[i] = parse_delimited_text(s);
 		else
-			argv[i] = parse_until(s, " \t\n");
+			argv[i] = parse_until(s, " \t\n", "\'\"");
 	}
 }
 
