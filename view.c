@@ -772,6 +772,8 @@ size_t view_line_down(Cursor *cursor) {
 }
 
 size_t view_screenline_up(Cursor *cursor) {
+	if (!cursor->line)
+		return view_line_up(cursor);
 	int lastcol = cursor->lastcol;
 	if (!lastcol)
 		lastcol = cursor->col;
@@ -784,6 +786,8 @@ size_t view_screenline_up(Cursor *cursor) {
 }
 
 size_t view_screenline_down(Cursor *cursor) {
+	if (!cursor->line)
+		return view_line_down(cursor);
 	int lastcol = cursor->lastcol;
 	if (!lastcol)
 		lastcol = cursor->col;
