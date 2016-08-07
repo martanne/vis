@@ -38,13 +38,25 @@ int text_search_range_forward(Text *txt, size_t pos, size_t len, Regex *r, size_
 	char *buf = text_bytes_alloc0(txt, pos, len);
 	if (!buf)
 		return REG_NOMATCH;
+	char *cur = buf, *end = buf + len;
+	int ret = REG_NOMATCH;
 	regmatch_t match[nmatch];
-	int ret = regexec(&r->regex, buf, nmatch, match, eflags);
-	if (!ret) {
-		for (size_t i = 0; i < nmatch; i++) {
-			pmatch[i].start = match[i].rm_so == -1 ? EPOS : pos + match[i].rm_so;
-			pmatch[i].end = match[i].rm_eo == -1 ? EPOS : pos + match[i].rm_eo;
+	for (size_t junk = len; len > 0; len -= junk, pos += junk) {
+		ret = regexec(&r->regex, cur, nmatch, match, eflags);
+		if (!ret) {
+			for (size_t i = 0; i < nmatch; i++) {
+				pmatch[i].start = match[i].rm_so == -1 ? EPOS : pos + match[i].rm_so;
+				pmatch[i].end = match[i].rm_eo == -1 ? EPOS : pos + match[i].rm_eo;
+			}
+			break;
 		}
+		char *next = memchr(cur, 0, len);
+		if (!next)
+			break;
+		while (!*next && next != end)
+			next++;
+		junk = next - cur;
+		cur = next;
 	}
 	free(buf);
 	return ret;
@@ -54,25 +66,36 @@ int text_search_range_backward(Text *txt, size_t pos, size_t len, Regex *r, size
 	char *buf = text_bytes_alloc0(txt, pos, len);
 	if (!buf)
 		return REG_NOMATCH;
-	regmatch_t match[nmatch];
-	char *cur = buf;
+	char *cur = buf, *end = buf + len;
 	int ret = REG_NOMATCH;
-	while (!regexec(&r->regex, cur, nmatch, match, eflags)) {
-		ret = 0;
-		for (size_t i = 0; i < nmatch; i++) {
-			pmatch[i].start = match[i].rm_so == -1 ? EPOS : pos + (size_t)(cur - buf) + match[i].rm_so;
-			pmatch[i].end = match[i].rm_eo == -1 ? EPOS : pos + (size_t)(cur - buf) + match[i].rm_eo;
-		}
-		if (match[0].rm_so == 0 && match[0].rm_eo == 0) {
-			/* empty match at the beginning of cur, advance to next line */
-			if ((cur = strchr(cur, '\n')))
-				cur++;
-			else
-				break;
+	regmatch_t match[nmatch];
+	for (size_t junk = len; len > 0; len -= junk, pos += junk) {
+		char *next;
+		if (!regexec(&r->regex, cur, nmatch, match, eflags)) {
+			ret = 0;
+			for (size_t i = 0; i < nmatch; i++) {
+				pmatch[i].start = match[i].rm_so == -1 ? EPOS : pos + match[i].rm_so;
+				pmatch[i].end = match[i].rm_eo == -1 ? EPOS : pos + match[i].rm_eo;
+			}
 
+			if (match[0].rm_so == 0 && match[0].rm_eo == 0) {
+				/* empty match at the beginning of cur, advance to next line */
+				next = strchr(cur, '\n');
+				if (!next)
+					break;
+				next++;
+			} else {
+				next = cur + match[0].rm_eo;
+			}
 		} else {
-			cur += match[0].rm_eo;
+			next = memchr(cur, 0, len);
+			if (!next)
+				break;
+			while (!*next && next != end)
+				next++;
 		}
+		junk = next - cur;
+		cur = next;
 	}
 	free(buf);
 	return ret;
