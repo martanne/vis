@@ -324,7 +324,7 @@ Filerange text_object_number(Text *txt, size_t pos) {
 static int is_filename_boundary(int c) {
 	switch (c) {
 	case ';': case ':': case '|':
-	case '"': case '\'':
+	case '"': case '\'': case '`':
 	case '<': case '>':
 		return true;
 	default:
