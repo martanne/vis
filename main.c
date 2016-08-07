@@ -2069,41 +2069,22 @@ static const char *number_increment_decrement(Vis *vis, const char *keys, const 
 }
 
 static const char *open_file_under_cursor(Vis *vis, const char *keys, const Arg *arg) {
-	Win *win = vis_window(vis);
 	View *view = vis_view(vis);
 	Text *txt = vis_text(vis);
-
-	if (!arg->b && !vis_window_closable(win)) {
-		vis_info_show(vis, "No write since last change");
-		return keys;
-	}
+	char cmd[PATH_MAX], name[PATH_MAX];
 
 	for (Cursor *c = view_cursors(view); c; c = view_cursors_next(c)) {
 		Filerange r = text_object_filename(txt, view_cursors_pos(c));
 		if (!text_range_valid(&r))
 			continue;
-		char *name = text_bytes_alloc0(txt, r.start, text_range_size(&r));
-		if (!name)
+		size_t len = text_range_size(&r);
+		if (len >= sizeof(cmd)-10)
 			continue;
-
-		struct stat st;
-		if (stat(name, &st) == -1) {
-			vis_info_show(vis, "File `%s' not found", name);
-			free(name);
-			continue;
-		}
-
-		if (!vis_window_new(vis, name)) {
-			vis_info_show(vis, "Failed to open `%s': %s", name, strerror(errno));
-			free(name);
-			continue;
-		} else if (!arg->b) {
-			vis_window_close(win);
-			free(name);
-			return keys;
-		}
-
-		free(name);
+		len = text_bytes_get(txt, r.start, text_range_size(&r), name);
+		name[len] = '\0';
+		snprintf(cmd, sizeof cmd, "%s '%s'", arg->b ? "o" : "e", name);
+		if (vis_cmd(vis, cmd) && !arg->b)
+			break;
 	}
 
 	return keys;
