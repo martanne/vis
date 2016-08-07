@@ -44,9 +44,10 @@ summarized as "80% of vim's features implemented in roughly 1% of the code".
 Getting started / Build instructions
 ====================================
 
-In order to build vis you will need a C99 compiler as well as:
+In order to build vis you will need a [C99](http://www.open-std.org/jtc1/sc22/wg14/www/docs/n1256.pdf)
+compiler, a [POSIX.1-2008](http://pubs.opengroup.org/onlinepubs/9699919799/)
+compatible environment as well as:
 
- * a C library, we recommend [musl](http://www.musl-libc.org/)
  * [libcurses](http://www.gnu.org/software/ncurses/), preferably in the
    wide-character version
  * [libtermkey](http://www.leonerd.org.uk/code/libtermkey/)
