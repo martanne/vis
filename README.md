@@ -625,6 +625,7 @@ At this time there exists no API stability guarantees.
    - `viewport` a range denoting the currently visible area of the window
    - `width` and `height`, readonly, query window dimension
    - `status(left [,right])` set the content of the window status bar
+   - `draw()` redraw window content
  - `cursor`
    - `line` (1 based), `col` (1 based)
    - `to(line, col)`

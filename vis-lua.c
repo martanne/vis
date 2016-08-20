@@ -934,6 +934,13 @@ static int window_status(lua_State *L) {
 	return 0;
 }
 
+static int window_draw(lua_State *L) {
+	Win *win = obj_ref_check(L, 1, "vis.window");
+	if (win)
+		view_draw(win->view);
+	return 0;
+}
+
 static const struct luaL_Reg window_funcs[] = {
 	{ "__index", window_index },
 	{ "__newindex", window_newindex },
@@ -942,6 +949,7 @@ static const struct luaL_Reg window_funcs[] = {
 	{ "style_define", window_style_define },
 	{ "style", window_style },
 	{ "status", window_status },
+	{ "draw", window_draw },
 	{ NULL, NULL },
 };
 
