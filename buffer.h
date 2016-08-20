@@ -28,6 +28,8 @@ bool buffer_terminate(Buffer*);
 bool buffer_put(Buffer*, const void *data, size_t len);
 /* same but with NUL-terminated data */
 bool buffer_put0(Buffer*, const char *data);
+/* remove len bytes from the buffer starting at pos */
+bool buffer_remove(Buffer*, size_t pos, size_t len);
 /* insert arbitrary data of length len at pos (in [0, buf->len]) */
 bool buffer_insert(Buffer*, size_t pos, const void *data, size_t len);
 /* insert NUL-terminate data at pos (in [0, buf->len]) */

@@ -59,6 +59,16 @@ bool buffer_put0(Buffer *buf, const char *data) {
 	return buffer_put(buf, data, strlen(data)+1);
 }
 
+bool buffer_remove(Buffer *buf, size_t pos, size_t len) {
+	if (len == 0)
+		return true;
+	if (pos + len > buf->len)
+		return false;
+	memmove(buf->data + pos, buf->data + pos + len, buf->len - pos - len);
+	buf->len -= len;
+	return true;
+}
+
 bool buffer_insert(Buffer *buf, size_t pos, const void *data, size_t len) {
 	if (pos > buf->len)
 		return false;
