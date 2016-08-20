@@ -610,42 +610,13 @@ size_t text_bracket_match(Text *txt, size_t pos) {
 	return text_bracket_match_symbol(txt, pos, NULL);
 }
 
-size_t text_bracket_match_symbol(Text *txt, size_t pos, const char *symbols) {
-	int direction, count = 1;
-	char search, current, c;
+static size_t match_symbol(Text *txt, size_t pos, char search, int direction) {
+	char c, current;
+	int count = 1;
 	bool instring = false;
 	Iterator it = text_iterator_get(txt, pos);
 	if (!text_iterator_byte_get(&it, &current))
 		return pos;
-	if (symbols && !memchr(symbols, current, strlen(symbols)))
-		return pos;
-	switch (current) {
-	case '(': search = ')'; direction =  1; break;
-	case ')': search = '('; direction = -1; break;
-	case '{': search = '}'; direction =  1; break;
-	case '}': search = '{'; direction = -1; break;
-	case '[': search = ']'; direction =  1; break;
-	case ']': search = '['; direction = -1; break;
-	case '<': search = '>'; direction =  1; break;
-	case '>': search = '<'; direction = -1; break;
-	case '"':
-	case '`':
-	case '\'': {
-		char special[] = " \n)}]>.,:;";
-		search = current;
-		direction = 1;
-		if (text_iterator_byte_next(&it, &c)) {
-			/* if a single or double quote is followed by
-			 * a special character, search backwards */
-			if (memchr(special, c, sizeof(special)))
-				direction = -1;
-			text_iterator_byte_prev(&it, NULL);
-		}
-		break;
-	}
-	default: return pos;
-	}
-
 	if (direction >= 0) { /* forward search */
 		while (text_iterator_byte_next(&it, &c)) {
 			if (c != current && c == '"')
@@ -671,6 +642,58 @@ size_t text_bracket_match_symbol(Text *txt, size_t pos, const char *symbols) {
 	}
 
 	return pos; /* no match found */
+}
+
+size_t text_bracket_match_symbol(Text *txt, size_t pos, const char *symbols) {
+	int direction;
+	char search, current, c;
+	Iterator it = text_iterator_get(txt, pos);
+	if (!text_iterator_byte_get(&it, &current))
+		return pos;
+	if (symbols && !memchr(symbols, current, strlen(symbols)))
+		return pos;
+	switch (current) {
+	case '(': search = ')'; direction =  1; break;
+	case ')': search = '('; direction = -1; break;
+	case '{': search = '}'; direction =  1; break;
+	case '}': search = '{'; direction = -1; break;
+	case '[': search = ']'; direction =  1; break;
+	case ']': search = '['; direction = -1; break;
+	case '<': search = '>'; direction =  1; break;
+	case '>': search = '<'; direction = -1; break;
+	case '"':
+	case '`':
+	case '\'':
+	{
+		/* prefer matches on the same line */
+		size_t fw = match_symbol(txt, pos, current, +1);
+		size_t bw = match_symbol(txt, pos, current, -1);
+		if (fw == pos)
+			return bw;
+		if (bw == pos)
+			return fw;
+		size_t line = text_lineno_by_pos(txt, pos);
+		size_t line_fw = text_lineno_by_pos(txt, fw);
+		size_t line_bw = text_lineno_by_pos(txt, bw);
+		if (line != line_fw)
+			return bw;
+		if (line != line_bw)
+			return fw;
+		direction = +1;
+		if (text_iterator_byte_next(&it, &c)) {
+			/* if a single or double quote is followed by
+			 * a special character, search backwards */
+			char special[] = " \n)}]>.,:;";
+			if (memchr(special, c, sizeof(special)))
+				direction = -1;
+		}
+		return direction >= 0 ? fw : bw;
+	}
+	default:
+		return pos;
+	}
+
+	return match_symbol(txt, pos, search, direction);
 }
 
 size_t text_search_forward(Text *txt, size_t pos, Regex *regex) {
