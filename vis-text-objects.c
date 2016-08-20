@@ -48,6 +48,54 @@ static Filerange search_backward(Vis *vis, Text *txt, size_t pos) {
 	return range;
 }
 
+static Filerange object_unpaired(Text *txt, size_t pos, char obj) {
+	char c;
+	bool before = false;
+	Iterator it = text_iterator_get(txt, pos), rit = it;
+
+	while (text_iterator_byte_get(&rit, &c) && c != '\n') {
+		if (c == obj) {
+			before = true;
+			break;
+		}
+		text_iterator_byte_prev(&rit, NULL);
+	}
+
+	/* if there is no previous occurence on the same line, advance starting position */
+	if (!before) {
+		while (text_iterator_byte_get(&it, &c) && c != '\n') {
+			if (c == obj) {
+				pos = it.pos;
+				break;
+			}
+			text_iterator_byte_next(&it, NULL);
+		}
+	}
+
+	switch (obj) {
+	case '"':
+		return text_object_quote(txt, pos);
+	case '\'':
+		return text_object_single_quote(txt, pos);
+	case '`':
+		return text_object_backtick(txt, pos);
+	default:
+		return text_range_empty();
+	}
+}
+
+static Filerange object_quote(Text *txt, size_t pos) {
+	return object_unpaired(txt, pos, '"');
+}
+
+static Filerange object_single_quote(Text *txt, size_t pos) {
+	return object_unpaired(txt, pos, '\'');
+}
+
+static Filerange object_backtick(Text *txt, size_t pos) {
+	return object_unpaired(txt, pos, '`');
+}
+
 const TextObject vis_textobjects[] = {
 	[VIS_TEXTOBJECT_INNER_WORD]           = { .txt = text_object_word                          },
 	[VIS_TEXTOBJECT_OUTER_WORD]           = { .txt = text_object_word_outer                    },
@@ -63,12 +111,12 @@ const TextObject vis_textobjects[] = {
 	[VIS_TEXTOBJECT_INNER_ANGLE_BRACKET]  = { .txt = text_object_angle_bracket,  .type = INNER },
 	[VIS_TEXTOBJECT_OUTER_PARANTHESE]     = { .txt = text_object_paranthese,     .type = OUTER },
 	[VIS_TEXTOBJECT_INNER_PARANTHESE]     = { .txt = text_object_paranthese,     .type = INNER },
-	[VIS_TEXTOBJECT_OUTER_QUOTE]          = { .txt = text_object_quote,          .type = OUTER },
-	[VIS_TEXTOBJECT_INNER_QUOTE]          = { .txt = text_object_quote,          .type = INNER },
-	[VIS_TEXTOBJECT_OUTER_SINGLE_QUOTE]   = { .txt = text_object_single_quote,   .type = OUTER },
-	[VIS_TEXTOBJECT_INNER_SINGLE_QUOTE]   = { .txt = text_object_single_quote,   .type = INNER },
-	[VIS_TEXTOBJECT_OUTER_BACKTICK]       = { .txt = text_object_backtick,       .type = OUTER },
-	[VIS_TEXTOBJECT_INNER_BACKTICK]       = { .txt = text_object_backtick,       .type = INNER },
+	[VIS_TEXTOBJECT_OUTER_QUOTE]          = { .txt = object_quote,               .type = OUTER },
+	[VIS_TEXTOBJECT_INNER_QUOTE]          = { .txt = object_quote,               .type = INNER },
+	[VIS_TEXTOBJECT_OUTER_SINGLE_QUOTE]   = { .txt = object_single_quote,        .type = OUTER },
+	[VIS_TEXTOBJECT_INNER_SINGLE_QUOTE]   = { .txt = object_single_quote,        .type = INNER },
+	[VIS_TEXTOBJECT_OUTER_BACKTICK]       = { .txt = object_backtick,            .type = OUTER },
+	[VIS_TEXTOBJECT_INNER_BACKTICK]       = { .txt = object_backtick,            .type = INNER },
 	[VIS_TEXTOBJECT_OUTER_ENTIRE]         = { .txt = text_object_entire,                       },
 	[VIS_TEXTOBJECT_INNER_ENTIRE]         = { .txt = text_object_entire_inner,                 },
 	[VIS_TEXTOBJECT_OUTER_FUNCTION]       = { .txt = text_object_function,                     },
