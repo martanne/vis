@@ -458,10 +458,8 @@ const char *vis_keys_next(Vis*, const char *keys);
  * queue (or a previously recorded macro) to key handling functions (see struct
  * KeyAction) which consume the input.
  *
- * this functions pushes/appends further input to the end of the input queue.
- * if it is called from within a key handling function itself, the fed keys
- * will be interpreted once the key handler returns. otherwhise the keys are
- * immediately interpreted as if they were entered from a user. */
+ * this functions pushes/appends further input to the end of the input queue
+ * and immediately interprets them as if they were entered by a user. */
 void vis_keys_feed(Vis*, const char *keys);
 
 /* inform vis that a signal occured, the return value indicates whether the signal

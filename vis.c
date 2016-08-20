@@ -31,7 +31,7 @@
 
 static Macro *macro_get(Vis *vis, enum VisRegister);
 static void macro_replay(Vis *vis, const Macro *macro);
-static void vis_keys_process(Vis *vis);
+static void vis_keys_push(Vis *vis, const char *input, size_t pos, bool record);
 
 /** window / file handling */
 
@@ -770,18 +770,17 @@ const char *vis_keys_next(Vis *vis, const char *keys) {
 	return termkey_strpkey(termkey, keys, &key, TERMKEY_FORMAT_VIM);
 }
 
-static void vis_keys_process(Vis *vis) {
+static void vis_keys_process(Vis *vis, size_t pos) {
 	Buffer *buf = vis->keys;
-	char *keys = buf->data, *start = keys, *cur = keys, *end;
-	bool prefix = false, unknown_key = false;
+	char *keys = buf->data + pos, *start = keys, *cur = keys, *end = keys;
+	bool prefix = false;
 	KeyBinding *binding = NULL;
-	vis->keyhandler = true;
 
 	while (cur && *cur) {
 
 		if (!(end = (char*)vis_keys_next(vis, cur))) {
-			unknown_key = true;
-			goto out;
+			buffer_remove(buf, keys - buf->data, strlen(keys));
+			return;
 		}
 
 		char tmp = *end;
@@ -807,13 +806,15 @@ static void vis_keys_process(Vis *vis) {
 		if (binding) { /* exact match */
 			if (binding->action) {
 				end = (char*)binding->action->func(vis, end, &binding->action->arg);
-				if (!end)
+				if (!end) {
+					end = start;
 					break;
+				}
 				start = cur = end;
 			} else if (binding->alias) {
-				buffer_put0(buf, end);
-				buffer_prepend0(buf, binding->alias);
-				start = cur = buf->data;
+				buffer_remove(buf, start - buf->data, end - start);
+				buffer_insert0(buf, start - buf->data, binding->alias);
+				cur = start;
 			}
 		} else if (prefix) { /* incomplete key binding? */
 			cur = end;
@@ -827,8 +828,10 @@ static void vis_keys_process(Vis *vis) {
 				end[-1] = tmp;
 				if (action) {
 					end = (char*)action->func(vis, end, &action->arg);
-					if (!end)
+					if (!end) {
+						end = start;
 						break;
+					}
 				}
 			}
 			if (!action && vis->mode->input)
@@ -837,29 +840,23 @@ static void vis_keys_process(Vis *vis) {
 		}
 	}
 
-out:
-	if (unknown_key)
-		buffer_truncate(buf);
-	else
-		buffer_put0(buf, start);
-	vis->keyhandler = false;
+	if (!prefix)
+		buffer_remove(buf, keys - buf->data, end - keys);
 }
 
 void vis_keys_feed(Vis *vis, const char *input) {
+	vis_keys_push(vis, input, buffer_length0(vis->keys), false);
+}
+
+static void vis_keys_push(Vis *vis, const char *input, size_t pos, bool record) {
 	if (!input)
 		return;
-	if (vis->recording)
+	if (record && vis->recording)
 		macro_append(vis->recording, input);
 	if (vis->macro_operator)
 		macro_append(vis->macro_operator, input);
-	if (!buffer_append0(vis->keys, input))
-		buffer_truncate(vis->keys);
-	/* if we are being called from within a keyhandler then appending
-	 * the new keys to the end of the input queue is enough. they will
-	 * be interpreted once the key handler returns and control reaches
-	 * back to the vis_keys_process function. */
-	if (!vis->keyhandler)
-		vis_keys_process(vis);
+	if (buffer_append0(vis->keys, input))
+		vis_keys_process(vis, pos);
 }
 
 static const char *getkey(Vis *vis) {
@@ -1009,7 +1006,7 @@ int vis_run(Vis *vis, int argc, char *argv[]) {
 		const char *key;
 
 		while ((key = getkey(vis)))
-			vis_keys_feed(vis, key);
+			vis_keys_push(vis, key, 0, true);
 
 		if (vis->mode->idle)
 			timeout = &idle;
@@ -1069,9 +1066,7 @@ bool vis_macro_recording(Vis *vis) {
 }
 
 static void macro_replay(Vis *vis, const Macro *macro) {
-	Buffer buf, *input_queue = vis->keys;
-	buffer_init(&buf);
-	vis->keys = &buf;
+	size_t pos = buffer_length0(vis->keys);
 	for (char *key = macro->data, *next; key; key = next) {
 		char tmp;
 		next = (char*)vis_keys_next(vis, key);
@@ -1080,18 +1075,11 @@ static void macro_replay(Vis *vis, const Macro *macro) {
 			*next = '\0';
 		}
 
-		if (vis->macro_operator)
-			macro_append(vis->macro_operator, key);
-		if (!buffer_append0(&buf, key))
-			buffer_truncate(&buf);
-		vis_keys_process(vis);
+		vis_keys_push(vis, key, pos, false);
 
 		if (next)
 			*next = tmp;
 	}
-
-	buffer_release(&buf);
-	vis->keys = input_queue;
 }
 
 bool vis_macro_replay(Vis *vis, enum VisRegister id) {
