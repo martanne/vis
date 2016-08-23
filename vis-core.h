@@ -190,7 +190,7 @@ extern const TextObject vis_textobjects[VIS_TEXTOBJECT_INVALID];
 void macro_operator_stop(Vis *vis);
 void macro_operator_record(Vis *vis);
 
-void action_do(Vis *vis, Action *a);
+void vis_do(Vis *vis);
 void action_reset(Action*);
 
 void mode_set(Vis *vis, Mode *new_mode);

@@ -322,7 +322,7 @@ bool vis_motion(Vis *vis, enum VisMotion motion, ...) {
 		goto err;
 
 	va_end(ap);
-	action_do(vis, &vis->action);
+	vis_do(vis);
 	return true;
 err:
 	va_end(ap);

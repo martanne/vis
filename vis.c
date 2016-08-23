@@ -544,16 +544,17 @@ static void window_jumplist_invalidate(Win *win) {
 		ringbuf_invalidate(win->jumplist);
 }
 
-void action_do(Vis *vis, Action *a) {
+void vis_do(Vis *vis) {
 	Win *win = vis->win;
 	Text *txt = win->file->text;
 	View *view = win->view;
+	Action *a = &vis->action;
 
 	if (a->op == &vis_operators[VIS_OP_FILTER] && !vis->mode->visual)
 		vis_mode_switch(vis, VIS_MODE_VISUAL_LINE);
 
 	int count = MAX(a->count, 1);
-	bool repeatable = a->op && !vis->macro_operator;
+	bool repeatable = a->op && !vis->macro_operator && !vis->win->parent;
 	bool multiple_cursors = view_cursors_multiple(view);
 	bool linewise = !(a->type & CHARWISE) && (
 		a->type & LINEWISE || (a->movement && a->movement->type & LINEWISE) ||
@@ -1113,7 +1114,8 @@ void vis_repeat(Vis *vis) {
 	/* for some operators count should be applied only to the macro not the motion */
 	if (vis->action_prev.op == &vis_operators[VIS_OP_INSERT] || vis->action_prev.op == &vis_operators[VIS_OP_REPLACE])
 		vis->action_prev.count = 1;
-	action_do(vis, &vis->action_prev);
+	vis->action = vis->action_prev;
+	vis_do(vis);
 	vis->action_prev.count = count;
 	if (macro) {
 		Mode *mode = vis->mode;

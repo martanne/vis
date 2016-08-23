@@ -18,7 +18,6 @@ static size_t op_delete(Vis *vis, Text *txt, OperatorContext *c) {
 
 static size_t op_change(Vis *vis, Text *txt, OperatorContext *c) {
 	op_delete(vis, txt, c);
-	macro_operator_record(vis);
 	return c->range.start;
 }
 
@@ -213,18 +212,14 @@ static size_t op_join(Vis *vis, Text *txt, OperatorContext *c) {
 }
 
 static size_t op_insert(Vis *vis, Text *txt, OperatorContext *c) {
-	macro_operator_record(vis);
 	return c->newpos != EPOS ? c->newpos : c->pos;
 }
 
 static size_t op_replace(Vis *vis, Text *txt, OperatorContext *c) {
-	macro_operator_record(vis);
 	return c->newpos != EPOS ? c->newpos : c->pos;
 }
 
 static size_t op_filter(Vis *vis, Text *txt, OperatorContext *c) {
-	if (!c->arg->s)
-		macro_operator_record(vis);
 	return text_size(txt) + 1; /* do not change cursor position, would destroy selection */
 }
 
@@ -266,7 +261,7 @@ bool vis_operator(Vis *vis, enum VisOperator id, ...) {
 	const Operator *op = &vis_operators[id];
 	if (vis->mode->visual) {
 		vis->action.op = op;
-		action_do(vis, &vis->action);
+		vis_do(vis);
 		goto out;
 	}
 

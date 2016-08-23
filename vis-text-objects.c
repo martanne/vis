@@ -26,7 +26,7 @@ bool vis_textobject(Vis *vis, enum VisTextObject id) {
 		vis->action.textobj = array_get_ptr(&vis->textobjects, id - LENGTH(vis_textobjects));
 	if (!vis->action.textobj)
 		return false;
-	action_do(vis, &vis->action);
+	vis_do(vis);
 	return true;
 }
 
