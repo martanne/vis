@@ -239,8 +239,8 @@ enum {
 	VIS_ACTION_INSERT_LINE_START,
 	VIS_ACTION_OPEN_LINE_ABOVE,
 	VIS_ACTION_OPEN_LINE_BELOW,
-	VIS_ACTION_JOIN_LINE_BELOW,
 	VIS_ACTION_JOIN_LINES,
+	VIS_ACTION_JOIN_LINES_TRIM,
 	VIS_ACTION_PROMPT_SHOW,
 	VIS_ACTION_REPEAT,
 	VIS_ACTION_SELECTION_FLIP,
@@ -857,15 +857,15 @@ static const KeyAction vis_action[] = {
 		"Begin a new line below the cursor",
 		openline, { .i = +1 }
 	},
-	[VIS_ACTION_JOIN_LINE_BELOW] = {
-		"join-line-below",
-		"Join line(s)",
-		join, { .i = VIS_MOVE_LINE_NEXT },
-	},
 	[VIS_ACTION_JOIN_LINES] = {
 		"join-lines",
 		"Join selected lines",
-		operator, { .i = VIS_OP_JOIN }
+		join, { .s = " " }
+	},
+	[VIS_ACTION_JOIN_LINES_TRIM] = {
+		"join-lines-trim",
+		"Join selected lines, remove white space",
+		join, { .s = "" }
 	},
 	[VIS_ACTION_PROMPT_SHOW] = {
 		"prompt-show",
@@ -1973,11 +1973,14 @@ static const char *openline(Vis *vis, const char *keys, const Arg *arg) {
 }
 
 static const char *join(Vis *vis, const char *keys, const Arg *arg) {
-	int count = vis_count_get_default(vis, 0);
-	if (count)
-		vis_count_set(vis, count-1);
-	vis_operator(vis, VIS_OP_JOIN);
-	vis_motion(vis, arg->i);
+	bool normal = (vis_mode_get(vis) == VIS_MODE_NORMAL);
+	vis_operator(vis, VIS_OP_JOIN, arg->s);
+	if (normal) {
+		int count = vis_count_get_default(vis, 0);
+		if (count)
+			vis_count_set(vis, count-1);
+		vis_motion(vis, VIS_MOVE_LINE_NEXT);
+	}
 	return keys;
 }
 

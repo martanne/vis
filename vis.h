@@ -202,6 +202,7 @@ enum VisOperator {
  * the expected varying arguments are as follows:
  *
  *  - VIS_OP_FILTER     a char pointer referring to the command to run
+ *  - VIS_OP_JOIN       a char pointer referring to the text to insert between lines
  */
 bool vis_operator(Vis*, enum VisOperator, ...);
 

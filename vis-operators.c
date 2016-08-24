@@ -193,13 +193,15 @@ static size_t op_join(Vis *vis, Text *txt, OperatorContext *c) {
 			pos = line_prev;
 	}
 
+	size_t len = c->arg->s ? strlen(c->arg->s) : 0;
+
 	do {
 		prev_pos = pos;
 		size_t end = text_line_start(txt, pos);
 		pos = text_char_next(txt, text_line_finish(txt, text_line_prev(txt, end)));
 		if (pos >= c->range.start && end > pos) {
 			text_delete(txt, pos, end - pos);
-			text_insert(txt, pos, " ", 1);
+			text_insert(txt, pos, c->arg->s, len);
 			if (!mark)
 				mark = text_mark_set(txt, pos);
 		} else {
@@ -245,6 +247,9 @@ bool vis_operator(Vis *vis, enum VisOperator id, ...) {
 	case VIS_OP_PUT_BEFORE_END:
 		vis->action.arg.i = id;
 		id = VIS_OP_PUT_AFTER;
+		break;
+	case VIS_OP_JOIN:
+		vis->action.arg.s = va_arg(ap, char*);
 		break;
 	case VIS_OP_FILTER:
 		vis->action.arg.s = va_arg(ap, char*);
