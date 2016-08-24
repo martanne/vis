@@ -26,6 +26,10 @@ void vis_mode_switch(Vis *vis, enum VisMode mode) {
 	mode_set(vis, &vis_modes[mode]);
 }
 
+enum VisMode vis_mode_get(Vis *vis) {
+	return vis->mode->id;
+}
+
 static bool mode_unmap(Mode *mode, const char *key) {
 	return mode && mode->bindings && map_delete(mode->bindings, key);
 }
