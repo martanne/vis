@@ -156,6 +156,7 @@ static const CommandDef cmds[] = {
 	{ { "vnew"         }, CMD_ARGV|CMD_ONCE,                   NULL, cmd_vnew          },
 	{ { "vsplit"       }, CMD_ARGV|CMD_ONCE,                   NULL, cmd_vsplit        },
 	{ { "wq"           }, CMD_ARGV|CMD_FORCE|CMD_ADDRESS_NONE|CMD_ONCE, NULL, cmd_wq   },
+	{ { "x"            }, CMD_ARGV|CMD_FORCE|CMD_ADDRESS_NONE|CMD_ONCE, NULL, cmd_wq   },
 	{ { "earlier"      }, CMD_ARGV|CMD_ONCE,                   NULL, cmd_earlier_later },
 	{ { "later"        }, CMD_ARGV|CMD_ONCE,                   NULL, cmd_earlier_later },
 	{ { NULL           }, 0,                                   NULL, NULL              },
