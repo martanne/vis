@@ -53,8 +53,10 @@ struct Command {
 };
 
 struct CommandDef {
-	const char *name[3];                 /* name and optional alias for the command */
+	const char *name;                    /* command name */
+	const char *help;                    /* short, one-line help text */
 	enum {
+		CMD_NONE          = 0,       /* standalone command without any arguments */
 		CMD_CMD           = 1 << 0,  /* does the command take a sub/target command? */
 		CMD_REGEX         = 1 << 1,  /* regex after command? */
 		CMD_REGEX_DEFAULT = 1 << 2,  /* is the regex optional i.e. can we use a default? */
@@ -116,65 +118,63 @@ static bool cmd_user(Vis*, Win*, Command*, const char *argv[], Cursor*, Filerang
  * which is a prefix for another command it has to be added as an alias. the
  * long human readable name should always come first */
 static const CommandDef cmds[] = {
-	/* name(s),           flags,                    default command, implementation    */
-	{ { "a"            }, CMD_TEXT,                            NULL, cmd_append        },
-	{ { "c"            }, CMD_TEXT,                            NULL, cmd_change        },
-	{ { "d"            }, 0,                                   NULL, cmd_delete        },
-	{ { "g"            }, CMD_CMD|CMD_REGEX,                   "p",  cmd_guard         },
-	{ { "i"            }, CMD_TEXT,                            NULL, cmd_insert        },
-	{ { "p"            }, 0,                                   NULL, cmd_print         },
-	{ { "s"            }, CMD_SHELL,                           NULL, cmd_substitute    },
-	{ { "v"            }, CMD_CMD|CMD_REGEX,                   "p",  cmd_guard         },
-	{ { "x"            }, CMD_CMD|CMD_REGEX|CMD_REGEX_DEFAULT, "p",  cmd_extract       },
-	{ { "y"            }, CMD_CMD|CMD_REGEX,                   "p",  cmd_extract       },
-	{ { "X"            }, CMD_CMD|CMD_REGEX|CMD_REGEX_DEFAULT, NULL, cmd_files         },
-	{ { "Y"            }, CMD_CMD|CMD_REGEX,                   NULL, cmd_files         },
-	{ { ">"            }, CMD_SHELL|CMD_ADDRESS_LINE,          NULL, cmd_pipeout       },
-	{ { "<"            }, CMD_SHELL|CMD_ADDRESS_POS,           NULL, cmd_pipein        },
-	{ { "|"            }, CMD_SHELL|CMD_ADDRESS_POS,           NULL, cmd_filter        },
-	{ { "!"            }, CMD_SHELL|CMD_ONCE,                  NULL, cmd_launch        },
-	{ { "w"            }, CMD_ARGV|CMD_FORCE|CMD_ADDRESS_NONE|CMD_ONCE, NULL, cmd_write},
-	{ { "r"            }, CMD_FILE|CMD_ADDRESS_AFTER,          NULL, cmd_read          },
-	{ { "{"            }, 0,                                   NULL, NULL              },
-	{ { "}"            }, 0,                                   NULL, NULL              },
-	{ { "e"            }, CMD_FILE|CMD_FORCE|CMD_ONCE,         NULL, cmd_edit          },
-	{ { "q"            }, CMD_FORCE|CMD_ONCE,                  NULL, cmd_quit          },
-	{ { "cd"           }, CMD_ARGV|CMD_ONCE,                   NULL, cmd_cd            },
+	/* name,          help                         flags,                                             default command, implementation    */
+	{ "a",            "Append text after range",                                   CMD_TEXT,                            NULL, cmd_append        },
+	{ "c",            "Change text in range",                                      CMD_TEXT,                            NULL, cmd_change        },
+	{ "d",            "Delete text in range",                                      CMD_NONE,                            NULL, cmd_delete        },
+	{ "g",            "If range contains regexp, run command",                     CMD_CMD|CMD_REGEX,                   "p",  cmd_guard         },
+	{ "i",            "Insert text before range",                                  CMD_TEXT,                            NULL, cmd_insert        },
+	{ "p",            "Create selection covering range",                           CMD_NONE,                            NULL, cmd_print         },
+	{ "s",            "Substitute text for regexp in range",                       CMD_SHELL,                           NULL, cmd_substitute    },
+	{ "v",            "If range does not contain regexp, run command",             CMD_CMD|CMD_REGEX,                   "p",  cmd_guard         },
+	{ "x",            "Set range and run command on each match",                   CMD_CMD|CMD_REGEX|CMD_REGEX_DEFAULT, "p",  cmd_extract       },
+	{ "y",            "As `x` but select unmatched text",                          CMD_CMD|CMD_REGEX,                   "p",  cmd_extract       },
+	{ "X",            "Run command on files whose name matches",                   CMD_CMD|CMD_REGEX|CMD_REGEX_DEFAULT, NULL, cmd_files         },
+	{ "Y",            "As `X` but select unmatched files",                         CMD_CMD|CMD_REGEX,                   NULL, cmd_files         },
+	{ ">",            "Send range to stdin of command",                            CMD_SHELL|CMD_ADDRESS_LINE,          NULL, cmd_pipeout       },
+	{ "<",            "Replace range by stdout of command",                        CMD_SHELL|CMD_ADDRESS_POS,           NULL, cmd_pipein        },
+	{ "|",            "Pipe range through command",                                CMD_SHELL|CMD_ADDRESS_POS,           NULL, cmd_filter        },
+	{ "!",            "Run the command",                                           CMD_SHELL|CMD_ONCE,                  NULL, cmd_launch        },
+	{ "w",            "Write range to named file",                                 CMD_ARGV|CMD_FORCE|CMD_ADDRESS_NONE|CMD_ONCE, NULL, cmd_write},
+	{ "r",            "Replace range by contents of file",                         CMD_FILE|CMD_ADDRESS_AFTER,          NULL, cmd_read          },
+	{ "{",            "Start of command group",                                    CMD_NONE,                            NULL, NULL              },
+	{ "}",            "End of command group" ,                                     CMD_NONE,                            NULL, NULL              },
+	{ "e",            "Edit file",                                                 CMD_FILE|CMD_FORCE|CMD_ONCE,         NULL, cmd_edit          },
+	{ "q",            "Quit the current window",                                   CMD_FORCE|CMD_ONCE,                  NULL, cmd_quit          },
+	{ "cd",           "Change directory",                                          CMD_ARGV|CMD_ONCE,                   NULL, cmd_cd            },
 	/* vi(m) related commands */
-	{ { "bdelete"      }, CMD_FORCE|CMD_ONCE,                  NULL, cmd_bdelete       },
-	{ { "help"         }, CMD_ONCE,                            NULL, cmd_help          },
-	{ { "map"          }, CMD_ARGV|CMD_FORCE|CMD_ONCE,         NULL, cmd_map           },
-	{ { "map-window"   }, CMD_ARGV|CMD_FORCE|CMD_ONCE,         NULL, cmd_map           },
-	{ { "unmap"        }, CMD_ARGV|CMD_ONCE,                   NULL, cmd_unmap         },
-	{ { "unmap-window" }, CMD_ARGV|CMD_ONCE,                   NULL, cmd_unmap         },
-	{ { "langmap"      }, CMD_ARGV|CMD_FORCE|CMD_ONCE,         NULL, cmd_langmap       },
-	{ { "new"          }, CMD_ARGV|CMD_ONCE,                   NULL, cmd_new           },
-	{ { "open"         }, CMD_ARGV|CMD_ONCE,                   NULL, cmd_open          },
-	{ { "qall"         }, CMD_FORCE|CMD_ONCE,                  NULL, cmd_qall          },
-	{ { "set"          }, CMD_ARGV|CMD_ONCE,                   NULL, cmd_set           },
-	{ { "split"        }, CMD_ARGV|CMD_ONCE,                   NULL, cmd_split         },
-	{ { "vnew"         }, CMD_ARGV|CMD_ONCE,                   NULL, cmd_vnew          },
-	{ { "vsplit"       }, CMD_ARGV|CMD_ONCE,                   NULL, cmd_vsplit        },
-	{ { "wq"           }, CMD_ARGV|CMD_FORCE|CMD_ADDRESS_NONE|CMD_ONCE, NULL, cmd_wq   },
-	{ { "earlier"      }, CMD_ARGV|CMD_ONCE,                   NULL, cmd_earlier_later },
-	{ { "later"        }, CMD_ARGV|CMD_ONCE,                   NULL, cmd_earlier_later },
-	{ { NULL           }, 0,                                   NULL, NULL              },
+	{ "bdelete",      "Unload file",                                               CMD_FORCE|CMD_ONCE,                  NULL, cmd_bdelete       },
+	{ "help",         "Show this help",                                            CMD_ONCE,                            NULL, cmd_help          },
+	{ "map",          "Map key binding `:map <mode> <lhs> <rhs>`",                 CMD_ARGV|CMD_FORCE|CMD_ONCE,         NULL, cmd_map           },
+	{ "map-window",   "As `map` but window local",                                 CMD_ARGV|CMD_FORCE|CMD_ONCE,         NULL, cmd_map           },
+	{ "unmap",        "Unmap key binding `:unmap <mode> <lhs>`",                   CMD_ARGV|CMD_ONCE,                   NULL, cmd_unmap         },
+	{ "unmap-window", "As `unmap` but window local",                               CMD_ARGV|CMD_ONCE,                   NULL, cmd_unmap         },
+	{ "langmap",      "Map keyboard layout `:langmap <locale-keys> <latin-keys>`", CMD_ARGV|CMD_FORCE|CMD_ONCE,         NULL, cmd_langmap       },
+	{ "new",          "Create new window",                                         CMD_ARGV|CMD_ONCE,                   NULL, cmd_new           },
+	{ "open",         "Open file",                                                 CMD_ARGV|CMD_ONCE,                   NULL, cmd_open          },
+	{ "qall",         "Exit vis",                                                  CMD_FORCE|CMD_ONCE,                  NULL, cmd_qall          },
+	{ "set",          "Set option",                                                CMD_ARGV|CMD_ONCE,                   NULL, cmd_set           },
+	{ "split",        "Horizontally split window",                                 CMD_ARGV|CMD_ONCE,                   NULL, cmd_split         },
+	{ "vnew",         "As `:new` but split vertically",                            CMD_ARGV|CMD_ONCE,                   NULL, cmd_vnew          },
+	{ "vsplit",       "Vertically split window",                                   CMD_ARGV|CMD_ONCE,                   NULL, cmd_vsplit        },
+	{ "wq",           "Write file and quit",                                       CMD_ARGV|CMD_FORCE|CMD_ADDRESS_NONE|CMD_ONCE, NULL, cmd_wq   },
+	{ "earlier",      "Go to older text state",                                    CMD_ARGV|CMD_ONCE,                   NULL, cmd_earlier_later },
+	{ "later",        "Go to newer text state",                                    CMD_ARGV|CMD_ONCE,                   NULL, cmd_earlier_later },
+	{  NULL,          NULL,                                                        CMD_NONE,                            NULL, NULL              },
 };
 
 static const CommandDef cmddef_select =
-	{ { NULL           }, 0,                                   NULL, cmd_select        };
+	{ NULL,           NULL,                                                        CMD_NONE,                            NULL, cmd_select        };
 
 static const CommandDef cmddef_user =
-	{ { NULL           }, CMD_ARGV|CMD_FORCE|CMD_ONCE,         NULL, cmd_user          };
+	{ NULL,           NULL,                                                        CMD_ARGV|CMD_FORCE|CMD_ONCE,         NULL, cmd_user          };
 
 bool sam_init(Vis *vis) {
 	if (!(vis->cmds = map_new()))
 		return false;
 	bool ret = true;
-	for (const CommandDef *cmd = cmds; cmd && cmd->name[0]; cmd++) {
-		for (const char *const *name = cmd->name; *name; name++)
-			ret &= map_put(vis->cmds, *name, cmd);
-	}
+	for (const CommandDef *cmd = cmds; cmd && cmd->name; cmd++)
+		ret &= map_put(vis->cmds, cmd->name, cmd);
 	return ret;
 }
 

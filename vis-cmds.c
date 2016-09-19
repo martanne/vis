@@ -563,7 +563,18 @@ static bool print_action(const char *key, void *value, void *data) {
 }
 
 static bool print_cmd(const char *key, void *value, void *data) {
-	return text_appendf(data, "  %s\n", key);
+	char help[256];
+	CommandDef *cmd = value;
+	snprintf(help, sizeof help, "%s%s%s%s%s%s%s%s",
+	         cmd->name,
+	         (cmd->flags & CMD_FORCE) ? "[!]" : "",
+	         (cmd->flags & CMD_TEXT) ? "/text/" : "",
+	         (cmd->flags & CMD_REGEX) ? "/regexp/" : "",
+	         (cmd->flags & CMD_CMD) ? " command" : "",
+	         (cmd->flags & CMD_FILE) ? " file-name" : "",
+	         (cmd->flags & CMD_SHELL) ? (!strcmp(cmd->name, "s") ? "/regexp/text/" : " shell-command") : "",
+	         (cmd->flags & CMD_ARGV) ? " [args...]" : "");
+	return text_appendf(data, "  %-30s %s\n", help, cmd->help);
 }
 
 static void print_symbolic_keys(Vis *vis, Text *txt) {
