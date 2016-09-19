@@ -585,6 +585,7 @@ At this time there exists no API stability guarantees.
    - `events` hooks
      - `start()`
      - `quit()`
+     - `file_open(file)`
      - `win_open(win)`
      - `win_close(win)`
      - `theme_change(name)`

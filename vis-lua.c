@@ -1503,6 +1503,13 @@ void vis_lua_quit(Vis *vis) {
 
 void vis_lua_file_open(Vis *vis, File *file) {
 	debug("event: file-open: %s %p %p\n", file->name ? file->name : "unnamed", (void*)file, (void*)file->text);
+	lua_State *L = vis->lua;
+	vis_lua_event_get(L, "file_open");
+	if (lua_isfunction(L, -1)) {
+		obj_ref_new(L, file, "vis.file");
+		pcall(vis, L, 1, 0);
+	}
+	lua_pop(L, 1);
 }
 
 void vis_lua_file_save(Vis *vis, File *file) {
