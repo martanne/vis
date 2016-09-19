@@ -169,6 +169,50 @@ static const CommandDef cmddef_select =
 static const CommandDef cmddef_user =
 	{ NULL,           NULL,                                                        CMD_ARGV|CMD_FORCE|CMD_ONCE,         NULL, cmd_user          };
 
+/* :set command options */
+typedef struct {
+	const char *names[3];                  /* name and optional alias */
+	enum {
+		OPTION_TYPE_STRING,
+		OPTION_TYPE_BOOL,
+		OPTION_TYPE_NUMBER,
+		OPTION_TYPE_UNSIGNED,
+	} type;
+	enum {
+		OPTION_FLAG_OPTIONAL = 1 << 0, /* value is optional */
+		OPTION_FLAG_WINDOW = 1 << 1,   /* option requires an active window */
+	} flags;
+	const char *help;                      /* short, one line help text */
+} OptionDef;
+
+enum {
+	OPTION_AUTOINDENT,
+	OPTION_EXPANDTAB,
+	OPTION_TABWIDTH,
+	OPTION_THEME,
+	OPTION_SYNTAX,
+	OPTION_SHOW,
+	OPTION_NUMBER,
+	OPTION_NUMBER_RELATIVE,
+	OPTION_CURSOR_LINE,
+	OPTION_COLOR_COLUMN,
+	OPTION_HORIZON,
+};
+
+static const OptionDef options[] = {
+	[OPTION_AUTOINDENT]      = { { "autoindent", "ai"       }, OPTION_TYPE_BOOL                                              },
+	[OPTION_EXPANDTAB]       = { { "expandtab", "et"        }, OPTION_TYPE_BOOL                                              },
+	[OPTION_TABWIDTH]        = { { "tabwidth", "tw"         }, OPTION_TYPE_NUMBER                                            },
+	[OPTION_THEME]           = { { "theme"                  }, OPTION_TYPE_STRING,                                           },
+	[OPTION_SYNTAX]          = { { "syntax"                 }, OPTION_TYPE_STRING,   OPTION_FLAG_WINDOW|OPTION_FLAG_OPTIONAL },
+	[OPTION_SHOW]            = { { "show"                   }, OPTION_TYPE_STRING,   OPTION_FLAG_WINDOW                      },
+	[OPTION_NUMBER]          = { { "numbers", "nu"          }, OPTION_TYPE_BOOL,     OPTION_FLAG_WINDOW                      },
+	[OPTION_NUMBER_RELATIVE] = { { "relativenumbers", "rnu" }, OPTION_TYPE_BOOL,     OPTION_FLAG_WINDOW                      },
+	[OPTION_CURSOR_LINE]     = { { "cursorline", "cul"      }, OPTION_TYPE_BOOL,     OPTION_FLAG_WINDOW                      },
+	[OPTION_COLOR_COLUMN]    = { { "colorcolumn", "cc"      }, OPTION_TYPE_NUMBER,   OPTION_FLAG_WINDOW                      },
+	[OPTION_HORIZON]         = { { "horizon"                }, OPTION_TYPE_UNSIGNED, OPTION_FLAG_WINDOW                      },
+};
+
 bool sam_init(Vis *vis) {
 	if (!(vis->cmds = map_new()))
 		return false;

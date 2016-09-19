@@ -79,56 +79,11 @@ static bool parse_bool(const char *s, bool *outval) {
 
 static bool cmd_set(Vis *vis, Win *win, Command *cmd, const char *argv[], Cursor *cur, Filerange *range) {
 
-	typedef struct {
-		const char *names[3];
-		enum {
-			OPTION_TYPE_STRING,
-			OPTION_TYPE_BOOL,
-			OPTION_TYPE_NUMBER,
-			OPTION_TYPE_UNSIGNED,
-		} type;
-		enum {
-			OPTION_FLAG_OPTIONAL = 1 << 0,
-			OPTION_FLAG_WINDOW = 1 << 1,
-		} flags;
-		int index;
-	} OptionDef;
-
-	enum {
-		OPTION_AUTOINDENT,
-		OPTION_EXPANDTAB,
-		OPTION_TABWIDTH,
-		OPTION_THEME,
-		OPTION_SYNTAX,
-		OPTION_SHOW,
-		OPTION_NUMBER,
-		OPTION_NUMBER_RELATIVE,
-		OPTION_CURSOR_LINE,
-		OPTION_COLOR_COLUMN,
-		OPTION_HORIZON,
-	};
-
-	/* definitions have to be in the same order as the enum above */
-	static OptionDef options[] = {
-		[OPTION_AUTOINDENT]      = { { "autoindent", "ai"       }, OPTION_TYPE_BOOL                                              },
-		[OPTION_EXPANDTAB]       = { { "expandtab", "et"        }, OPTION_TYPE_BOOL                                              },
-		[OPTION_TABWIDTH]        = { { "tabwidth", "tw"         }, OPTION_TYPE_NUMBER                                            },
-		[OPTION_THEME]           = { { "theme"                  }, OPTION_TYPE_STRING,                                           },
-		[OPTION_SYNTAX]          = { { "syntax"                 }, OPTION_TYPE_STRING,   OPTION_FLAG_WINDOW|OPTION_FLAG_OPTIONAL },
-		[OPTION_SHOW]            = { { "show"                   }, OPTION_TYPE_STRING,   OPTION_FLAG_WINDOW                      },
-		[OPTION_NUMBER]          = { { "numbers", "nu"          }, OPTION_TYPE_BOOL,     OPTION_FLAG_WINDOW                      },
-		[OPTION_NUMBER_RELATIVE] = { { "relativenumbers", "rnu" }, OPTION_TYPE_BOOL,     OPTION_FLAG_WINDOW                      },
-		[OPTION_CURSOR_LINE]     = { { "cursorline", "cul"      }, OPTION_TYPE_BOOL,     OPTION_FLAG_WINDOW                      },
-		[OPTION_COLOR_COLUMN]    = { { "colorcolumn", "cc"      }, OPTION_TYPE_NUMBER,   OPTION_FLAG_WINDOW                      },
-		[OPTION_HORIZON]         = { { "horizon"                }, OPTION_TYPE_UNSIGNED, OPTION_FLAG_WINDOW                      },
-	};
-
 	if (!vis->options) {
 		if (!(vis->options = map_new()))
 			return false;
 		for (int i = 0; i < LENGTH(options); i++) {
-			options[i].index = i;
-			for (const char **name = options[i].names; *name; name++) {
+			for (const char *const *name = options[i].names; *name; name++) {
 				if (!map_put(vis->options, *name, &options[i]))
 					return false;
 			}
@@ -193,7 +148,7 @@ static bool cmd_set(Vis *vis, Win *win, Command *cmd, const char *argv[], Cursor
 		break;
 	}
 
-	switch (opt->index) {
+	switch (opt - options) {
 	case OPTION_EXPANDTAB:
 		vis->expandtab = arg.b;
 		break;
@@ -674,6 +629,19 @@ static bool cmd_help(Vis *vis, Win *win, Command *cmd, const char *argv[], Curso
 
 	text_appendf(txt, "\n :-Commands\n\n");
 	map_iterate(vis->cmds, print_cmd, txt);
+
+	text_appendf(txt, "\n :set command options\n\n");
+	for (int i = 0; i < LENGTH(options); i++) {
+		char names[256];
+		const OptionDef *opt = &options[i];
+		snprintf(names, sizeof names, "%s%s%s%s%s",
+		         opt->names[0],
+		         opt->names[1] ? "|" : "",
+		         opt->names[1] ? opt->names[1] : "",
+		         opt->type == OPTION_TYPE_BOOL ? " on|off" : "",
+		         opt->type == OPTION_TYPE_NUMBER || opt->type == OPTION_TYPE_UNSIGNED ? " nn" : "");
+		text_appendf(txt, "  %-30s %s\n", names, opt->help ? opt->help : "");
+	}
 
 	text_appendf(txt, "\n Key binding actions\n\n");
 	map_iterate(vis->actions, print_action, txt);
