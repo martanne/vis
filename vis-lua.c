@@ -1513,7 +1513,13 @@ void vis_lua_file_open(Vis *vis, File *file) {
 }
 
 void vis_lua_file_save(Vis *vis, File *file) {
-
+	lua_State *L = vis->lua;
+	vis_lua_event_get(L, "file_save");
+	if (lua_isfunction(L, -1)) {
+		obj_ref_new(L, file, "vis.file");
+		pcall(vis, L, 1, 0);
+	}
+	lua_pop(L, 1);
 }
 
 void vis_lua_file_close(Vis *vis, File *file) {
