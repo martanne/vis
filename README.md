@@ -587,6 +587,7 @@ At this time there exists no API stability guarantees.
      - `quit()`
      - `file_open(file)`
      - `file_save(file)`
+     - `file_close(file)`
      - `win_open(win)`
      - `win_close(win)`
      - `theme_change(name)`
