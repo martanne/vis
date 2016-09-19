@@ -277,7 +277,6 @@ bool vis_window_split(Win *original) {
 			map_copy(win->modes[i].bindings, original->modes[i].bindings);
 	}
 	win->file = original->file;
-	win->file->refcount++;
 	vis_window_syntax_set(win, vis_window_syntax_get(original));
 	view_options_set(win->view, view_options_get(original->view));
 	view_cursor_to(win->view, view_cursor_get(original->view));
