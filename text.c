@@ -84,21 +84,21 @@ struct Change {
 	Span old;               /* all pieces which are being modified/swapped out by the change */
 	Span new;               /* all pieces which are introduced/swapped in by the change */
 	size_t pos;             /* absolute position at which the change occured */
-	Change *next;           /* next change which is part of the same action */
-	Change *prev;           /* previous change which is part of the same action */
+	Change *next;           /* next change which is part of the same revision */
+	Change *prev;           /* previous change which is part of the same revision */
 };
 
-/* An Action is a list of Changes which are used to undo/redo all modifications
- * since the last snapshot operation. Actions are stored in a directed graph structure.
+/* A Revision is a list of Changes which are used to undo/redo all modifications
+ * since the last snapshot operation. Revisions are stored in a directed graph structure.
  */
-typedef struct Action Action;
-struct Action {
+typedef struct Revision Revision;
+struct Revision {
 	Change *change;         /* the most recent change */
-	Action *next;           /* the next (child) action in the undo tree */
-	Action *prev;           /* the previous (parent) operation in the undo tree */
-	Action *earlier;        /* the previous Action, chronologically */
-	Action *later;          /* the next Action, chronologically */
-	time_t time;            /* when the first change of this action was performed */
+	Revision *next;         /* the next (child) revision in the undo tree */
+	Revision *prev;         /* the previous (parent) revision in the undo tree */
+	Revision *earlier;      /* the previous Revision, chronologically */
+	Revision *later;        /* the next Revision, chronologically */
+	time_t time;            /* when the first change of this revision was performed */
 	size_t seq;             /* a unique, strictly increasing identifier */
 };
 
@@ -114,10 +114,10 @@ struct Text {
 	Piece *pieces;          /* all pieces which have been allocated, used to free them */
 	Piece *cache;           /* most recently modified piece */
 	Piece begin, end;       /* sentinel nodes which always exists but don't hold any data */
-	Action *history;        /* undo tree */
-	Action *current_action; /* action holding all file changes until a snapshot is performed */
-	Action *last_action;    /* the last action added to the tree, chronologically */
-	Action *saved_action;   /* the last action at the time of the save operation */
+	Revision *history;        /* undo tree */
+	Revision *current_revision; /* revision holding all file changes until a snapshot is performed */
+	Revision *last_revision;    /* the last revision added to the tree, chronologically */
+	Revision *saved_revision;   /* the last revision at the time of the save operation */
 	size_t size;            /* current file content size in bytes */
 	struct stat info;       /* stat as probed at load time */
 	LineCache lines;        /* mapping between absolute pos in bytes and logical line breaks */
@@ -163,9 +163,9 @@ static void span_swap(Text *txt, Span *old, Span *new);
 /* change management */
 static Change *change_alloc(Text *txt, size_t pos);
 static void change_free(Change *c);
-/* action management */
-static Action *action_alloc(Text *txt);
-static void action_free(Action *a);
+/* revision management */
+static Revision *revision_alloc(Text *txt);
+static void revision_free(Revision *rev);
 /* logical line counting cache */
 static void lineno_cache_invalidate(LineCache *cache);
 static size_t lines_skip_forward(Text *txt, size_t pos, size_t lines, size_t *lines_skiped);
@@ -317,12 +317,12 @@ static void cache_piece(Text *txt, Piece *p) {
 /* check whether the given piece was the most recently modified one */
 static bool cache_contains(Text *txt, Piece *p) {
 	Buffer *buf = txt->buffers;
-	Action *a = txt->current_action;
-	if (!buf || !txt->cache || txt->cache != p || !a || !a->change)
+	Revision *rev = txt->current_revision;
+	if (!buf || !txt->cache || txt->cache != p || !rev || !rev->change)
 		return false;
 
-	Piece *start = a->change->new.start;
-	Piece *end = a->change->new.end;
+	Piece *start = rev->change->new.start;
+	Piece *end = rev->change->new.end;
 	bool found = false;
 	for (Piece *cur = start; !found; cur = cur->next) {
 		if (cur == p)
@@ -345,7 +345,7 @@ static bool cache_insert(Text *txt, Piece *p, size_t off, const char *data, size
 	if (!buffer_insert(buf, bufpos, data, len))
 		return false;
 	p->len += len;
-	txt->current_action->change->new.len += len;
+	txt->current_revision->change->new.len += len;
 	txt->size += len;
 	return true;
 }
@@ -362,7 +362,7 @@ static bool cache_delete(Text *txt, Piece *p, size_t off, size_t len) {
 	if (off + len > p->len || !buffer_delete(buf, bufpos, len))
 		return false;
 	p->len -= len;
-	txt->current_action->change->new.len -= len;
+	txt->current_revision->change->new.len -= len;
 	txt->size -= len;
 	return true;
 }
@@ -407,46 +407,46 @@ static void span_swap(Text *txt, Span *old, Span *new) {
 	txt->size += new->len;
 }
 
-/* allocate a new action, set its pointers to the other actions in the history,
- * and set it as txt->history. All further changes will be associated with this action. */
-static Action *action_alloc(Text *txt) {
-	Action *new = calloc(1, sizeof(Action));
-	if (!new)
+/* Allocate a new revision and place it in the revision graph.
+ * All further changes will be associated with this revision. */
+static Revision *revision_alloc(Text *txt) {
+	Revision *rev = calloc(1, sizeof(Revision));
+	if (!rev)
 		return NULL;
-	new->time = time(NULL);
-	txt->current_action = new;
+	rev->time = time(NULL);
+	txt->current_revision = rev;
 
 	/* set sequence number */
-	if (!txt->last_action)
-		new->seq = 0;
+	if (!txt->last_revision)
+		rev->seq = 0;
 	else
-		new->seq = txt->last_action->seq + 1;
+		rev->seq = txt->last_revision->seq + 1;
 
 	/* set earlier, later pointers */
-	if (txt->last_action)
-		txt->last_action->later = new;
-	new->earlier = txt->last_action;
+	if (txt->last_revision)
+		txt->last_revision->later = rev;
+	rev->earlier = txt->last_revision;
 
 	if (!txt->history) {
-		txt->history = new;
-		return new;
+		txt->history = rev;
+		return rev;
 	}
 
 	/* set prev, next pointers */
-	new->prev = txt->history;
-	txt->history->next = new;
-	txt->history = new;
-	return new;
+	rev->prev = txt->history;
+	txt->history->next = rev;
+	txt->history = rev;
+	return rev;
 }
 
-static void action_free(Action *a) {
-	if (!a)
+static void revision_free(Revision *rev) {
+	if (!rev)
 		return;
-	for (Change *next, *c = a->change; c; c = next) {
+	for (Change *next, *c = rev->change; c; c = next) {
 		next = c->next;
 		change_free(c);
 	}
-	free(a);
+	free(rev);
 }
 
 static Piece *piece_alloc(Text *txt) {
@@ -525,23 +525,23 @@ static Location piece_get_extern(Text *txt, size_t pos) {
 	return (Location){ 0 };
 }
 
-/* allocate a new change, associate it with current action or a newly
+/* allocate a new change, associate it with current revision or a newly
  * allocated one if none exists. */
 static Change *change_alloc(Text *txt, size_t pos) {
-	Action *a = txt->current_action;
-	if (!a) {
-		a = action_alloc(txt);
-		if (!a)
+	Revision *rev = txt->current_revision;
+	if (!rev) {
+		rev = revision_alloc(txt);
+		if (!rev)
 			return NULL;
 	}
 	Change *c = calloc(1, sizeof(Change));
 	if (!c)
 		return NULL;
 	c->pos = pos;
-	c->next = a->change;
-	if (a->change)
-		a->change->prev = c;
-	a->change = c;
+	c->next = rev->change;
+	if (rev->change)
+		rev->change->prev = c;
+	rev->change = c;
 	return c;
 }
 
@@ -674,18 +674,18 @@ size_t text_insert_newline(Text *txt, size_t pos) {
 	return text_insert(txt, pos, data, len) ? len : 0;
 }
 
-static size_t action_undo(Text *txt, Action *a) {
+static size_t revision_undo(Text *txt, Revision *rev) {
 	size_t pos = EPOS;
-	for (Change *c = a->change; c; c = c->next) {
+	for (Change *c = rev->change; c; c = c->next) {
 		span_swap(txt, &c->new, &c->old);
 		pos = c->pos;
 	}
 	return pos;
 }
 
-static size_t action_redo(Text *txt, Action *a) {
+static size_t revision_redo(Text *txt, Revision *rev) {
 	size_t pos = EPOS;
-	Change *c = a->change;
+	Change *c = rev->change;
 	while (c->next)
 		c = c->next;
 	for ( ; c; c = c->prev) {
@@ -699,56 +699,56 @@ static size_t action_redo(Text *txt, Action *a) {
 
 size_t text_undo(Text *txt) {
 	size_t pos = EPOS;
-	/* taking a snapshot makes sure that txt->current_action is reset */
+	/* taking rev snapshot makes sure that txt->current_revision is reset */
 	text_snapshot(txt);
-	Action *a = txt->history->prev;
-	if (!a)
+	Revision *rev = txt->history->prev;
+	if (!rev)
 		return pos;
-	pos = action_undo(txt, txt->history);
-	txt->history = a;
+	pos = revision_undo(txt, txt->history);
+	txt->history = rev;
 	lineno_cache_invalidate(&txt->lines);
 	return pos;
 }
 
 size_t text_redo(Text *txt) {
 	size_t pos = EPOS;
-	/* taking a snapshot makes sure that txt->current_action is reset */
+	/* taking a snapshot makes sure that txt->current_revision is reset */
 	text_snapshot(txt);
-	Action *a = txt->history->next;
-	if (!a)
+	Revision *rev = txt->history->next;
+	if (!rev)
 		return pos;
-	pos = action_redo(txt, a);
-	txt->history = a;
+	pos = revision_redo(txt, rev);
+	txt->history = rev;
 	lineno_cache_invalidate(&txt->lines);
 	return pos;
 }
 
-static bool history_change_branch(Action *a) {
+static bool history_change_branch(Revision *rev) {
 	bool changed = false;
-	while (a->prev) {
-		if (a->prev->next != a) {
-			a->prev->next = a;
+	while (rev->prev) {
+		if (rev->prev->next != rev) {
+			rev->prev->next = rev;
 			changed = true;
 		}
-		a = a->prev;
+		rev = rev->prev;
 	}
 	return changed;
 }
 
-static size_t history_traverse_to(Text *txt, Action *a) {
+static size_t history_traverse_to(Text *txt, Revision *rev) {
 	size_t pos = EPOS;
-	if (!a)
+	if (!rev)
 		return pos;
-	bool changed = history_change_branch(a);
+	bool changed = history_change_branch(rev);
 	if (!changed) {
-		if (a->seq == txt->history->seq) {
+		if (rev->seq == txt->history->seq) {
 			return txt->lines.pos;
-		} else if (a->seq > txt->history->seq) {
-			while (txt->history != a)
+		} else if (rev->seq > txt->history->seq) {
+			while (txt->history != rev)
 				pos = text_redo(txt);
 			return pos;
-		} else if (a->seq < txt->history->seq) {
-			while (txt->history != a)
+		} else if (rev->seq < txt->history->seq) {
+			while (txt->history != rev)
 				pos = text_undo(txt);
 			return pos;
 		}
@@ -756,7 +756,7 @@ static size_t history_traverse_to(Text *txt, Action *a) {
 		while (txt->history->prev && txt->history->prev->next == txt->history)
 			text_undo(txt);
 		pos = text_undo(txt);
-		while (txt->history != a)
+		while (txt->history != rev)
 			pos = text_redo(txt);
 		return pos;
 	}
@@ -764,31 +764,31 @@ static size_t history_traverse_to(Text *txt, Action *a) {
 }
 
 size_t text_earlier(Text *txt, int count) {
-	Action *a = txt->history;
-	while (count-- > 0 && a->earlier)
-		a = a->earlier;
-	return history_traverse_to(txt, a);
+	Revision *rev = txt->history;
+	while (count-- > 0 && rev->earlier)
+		rev = rev->earlier;
+	return history_traverse_to(txt, rev);
 }
 
 size_t text_later(Text *txt, int count) {
-	Action *a = txt->history;
-	while (count-- > 0 && a->later)
-		a = a->later;
-	return history_traverse_to(txt, a);
+	Revision *rev = txt->history;
+	while (count-- > 0 && rev->later)
+		rev = rev->later;
+	return history_traverse_to(txt, rev);
 }
 
 size_t text_restore(Text *txt, time_t time) {
-	Action *a = txt->history;
-	while (time < a->time && a->earlier)
-		a = a->earlier;
-	while (time > a->time && a->later)
-		a = a->later;
-	time_t diff = labs(a->time - time);
-	if (a->earlier && a->earlier != txt->history && labs(a->earlier->time - time) < diff)
-		a = a->earlier;
-	if (a->later && a->later != txt->history && labs(a->later->time - time) < diff)
-		a = a->later;
-	return history_traverse_to(txt, a);
+	Revision *rev = txt->history;
+	while (time < rev->time && rev->earlier)
+		rev = rev->earlier;
+	while (time > rev->time && rev->later)
+		rev = rev->later;
+	time_t diff = labs(rev->time - time);
+	if (rev->earlier && rev->earlier != txt->history && labs(rev->earlier->time - time) < diff)
+		rev = rev->earlier;
+	if (rev->later && rev->later != txt->history && labs(rev->later->time - time) < diff)
+		rev = rev->later;
+	return history_traverse_to(txt, rev);
 }
 
 time_t text_state(Text *txt) {
@@ -1037,7 +1037,7 @@ bool text_save_commit(TextSave *ctx) {
 	}
 
 	if (ret) {
-		txt->saved_action = txt->history;
+		txt->saved_revision = txt->history;
 		text_snapshot(txt);
 	}
 	text_save_cancel(ctx);
@@ -1069,7 +1069,7 @@ bool text_save(Text *txt, const char *filename) {
  */
 bool text_save_range(Text *txt, Filerange *range, const char *filename) {
 	if (!filename) {
-		txt->saved_action = txt->history;
+		txt->saved_revision = txt->history;
 		text_snapshot(txt);
 		return true;
 	}
@@ -1146,10 +1146,10 @@ Text *text_load(const char *filename) {
 		piece_init(&txt->end, p, NULL, NULL, 0);
 		txt->size = txt->buf->len;
 	}
-	/* write an empty action */
+	/* write an empty revision */
 	change_alloc(txt, EPOS);
 	text_snapshot(txt);
-	txt->saved_action = txt->history;
+	txt->saved_revision = txt->history;
 
 	if (fd != -1)
 		close(fd);
@@ -1270,9 +1270,9 @@ bool text_delete_range(Text *txt, Filerange *r) {
 /* preserve the current text content such that it can be restored by
  * means of undo/redo operations */
 void text_snapshot(Text *txt) {
-	if (txt->current_action)
-		txt->last_action = txt->current_action;
-	txt->current_action = NULL;
+	if (txt->current_revision)
+		txt->last_revision = txt->current_revision;
+	txt->current_revision = NULL;
 	txt->cache = NULL;
 }
 
@@ -1282,12 +1282,12 @@ void text_free(Text *txt) {
 		return;
 
 	// free history
-	Action *hist = txt->history;
+	Revision *hist = txt->history;
 	while (hist && hist->prev)
 		hist = hist->prev;
 	while (hist) {
-		Action *later = hist->later;
-		action_free(hist);
+		Revision *later = hist->later;
+		revision_free(hist);
 		hist = later;
 	}
 
@@ -1305,7 +1305,7 @@ void text_free(Text *txt) {
 }
 
 bool text_modified(Text *txt) {
-	return txt->saved_action != txt->history;
+	return txt->saved_revision != txt->history;
 }
 
 bool text_sigbus(Text *txt, const char *addr) {
@@ -1659,9 +1659,9 @@ size_t text_mark_get(Text *txt, Mark mark) {
 }
 
 size_t text_history_get(Text *txt, size_t index) {
-	for (Action *a = txt->current_action ? txt->current_action : txt->history; a; a = a->prev) {
+	for (Revision *rev = txt->current_revision ? txt->current_revision : txt->history; rev; rev = rev->prev) {
 		if (index-- == 0) {
-			Change *c = a->change;
+			Change *c = rev->change;
 			while (c && c->next)
 				c = c->next;
 			return c ? c->pos : EPOS;
