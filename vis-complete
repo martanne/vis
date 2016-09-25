@@ -30,6 +30,6 @@ else
 	CMD=$(printf "find . ! -path '*/\.*' -a -path './%s*' | cut -b 3- | sort" "$PATTERN")
 fi
 
-CMD=$(printf "$CMD | vis-menu -b | sed 's/^%s//' | tr -d '\n'" "$PATTERN")
+CMD=$(printf "$CMD | vis-menu -b | sed 's|^%s||' | tr -d '\n'" "$PATTERN")
 
 exec /bin/sh -c "$CMD"
