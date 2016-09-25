@@ -23,6 +23,9 @@ typedef struct Win Win;
 #ifndef VIS_CLIPBOARD
 #define VIS_CLIPBOARD "vis-clipboard"
 #endif
+#ifndef VIS_COMPLETE
+#define VIS_COMPLETE "vis-complete"
+#endif
 
 typedef struct {
 	void (*vis_init)(Vis*);

@@ -87,6 +87,8 @@ install: vis vis-menu
 	@chmod 755 ${DESTDIR}${PREFIX}/bin/vis-open
 	@cp -f vis-clipboard ${DESTDIR}${PREFIX}/bin
 	@chmod 755 ${DESTDIR}${PREFIX}/bin/vis-clipboard
+	@cp -f vis-complete ${DESTDIR}${PREFIX}/bin
+	@chmod 755 ${DESTDIR}${PREFIX}/bin/vis-complete
 	@test ${CONFIG_LUA} -eq 0 || { \
 		echo installing support files to ${DESTDIR}${SHAREPREFIX}/vis; \
 		mkdir -p ${DESTDIR}${SHAREPREFIX}/vis; \

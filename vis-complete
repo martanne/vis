@@ -1,0 +1,35 @@
+#!/bin/sh
+set -e
+
+PATTERN=""
+COMPLETE_WORD=0
+
+while [ $# -gt 0 ]; do
+	case "$1" in
+	-h|--help)
+		echo "usage: $(basename "$0") [-h] [--file|--word] [pattern]"
+		exit 0;
+		;;
+	--file)
+		shift
+		;;
+	--word)
+		COMPLETE_WORD=1
+		shift
+		;;
+	*)
+		PATTERN="$1"
+		break
+		;;
+	esac
+done
+
+if [ $COMPLETE_WORD = 1 ]; then
+	CMD=$(printf "tr -cs '[:alnum:]_' '\n' | grep '^%s.' | sort -u" "$PATTERN")
+else
+	CMD=$(printf "find . ! -path '*/\.*' -a -path './%s*' | cut -b 3- | sort" "$PATTERN")
+fi
+
+CMD=$(printf "$CMD | vis-menu -b | sed 's/^%s//' | tr -d '\n'" "$PATTERN")
+
+exec /bin/sh -c "$CMD"

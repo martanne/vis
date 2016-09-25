@@ -2131,8 +2131,7 @@ static const char *complete_word(Vis *vis, const char *keys, const Arg *arg) {
 	Buffer cmd;
 	buffer_init(&cmd);
 	char *prefix = get_completion_prefix(vis);
-	if (prefix && buffer_printf(&cmd, "tr -cs '[:alnum:]_' '\n' | grep '^%s.' | sort -u | "
-	    VIS_MENU " -b | sed 's/^%s//' | tr -d '\n'", prefix, prefix)) {
+	if (prefix && buffer_printf(&cmd, VIS_COMPLETE " --word '%s'", prefix)) {
 		Filerange all = text_range_new(0, text_size(txt));
 		insert_dialog_selection(vis, &all, (const char*[]){ buffer_content0(&cmd), NULL });
 	}
@@ -2145,8 +2144,7 @@ static const char *complete_filename(Vis *vis, const char *keys, const Arg *arg)
 	Buffer cmd;
 	buffer_init(&cmd);
 	char *prefix = get_completion_prefix(vis);
-	if (prefix && buffer_printf(&cmd, "ls -1 | grep '^%s.' | sort | "
-	    VIS_MENU " -b | sed 's/^%s//' | tr -d '\n'", prefix, prefix)) {
+	if (prefix && buffer_printf(&cmd, VIS_COMPLETE " --file '%s'", prefix)) {
 		Filerange empty = text_range_new(0, 0);
 		insert_dialog_selection(vis, &empty, (const char*[]){ buffer_content0(&cmd), NULL });
 	}
