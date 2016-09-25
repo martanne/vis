@@ -171,6 +171,8 @@ bool vis_action_register(Vis*, const KeyAction*);
 /* add a key mapping which is applied for all modes except insert/replace
  * before any key bindings are evaluated */
 bool vis_keymap_add(Vis*, const char *key, const char *mapping);
+/* disable the keymap for the next key press */
+void vis_keymap_disable(Vis*);
 
 enum VisOperator {
 	VIS_OP_DELETE,

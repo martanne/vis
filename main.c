@@ -1630,8 +1630,10 @@ static const char *selections_trim(Vis *vis, const char *keys, const Arg *arg) {
 }
 
 static const char *replace(Vis *vis, const char *keys, const Arg *arg) {
-	if (!keys[0])
+	if (!keys[0]) {
+		vis_keymap_disable(vis);
 		return NULL;
+	}
 	const char *next = vis_keys_next(vis, keys);
 	if (!next)
 		return NULL;

@@ -161,6 +161,7 @@ struct Vis {
 	Map *usercmds;                       /* user registered ":"-commands */
 	Map *options;                        /* ":set"-options */
 	Map *keymap;                         /* key translation before any bindings are matched */
+	bool keymap_disabled;                /* ignore key map for next key press, gets automatically re-enabled */
 	Buffer input_queue;                  /* holds pending input keys */
 	Buffer *keys;                        /* currently active keys buffer (either the input_queue or a macro) */
 	bool errorhandler;                   /* whether we are currently in an error handler, used to avoid recursion */

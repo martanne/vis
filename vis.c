@@ -532,6 +532,10 @@ bool vis_keymap_add(Vis *vis, const char *key, const char *mapping) {
 	return map_put(vis->keymap, key, mapping);
 }
 
+void vis_keymap_disable(Vis *vis) {
+	vis->keymap_disabled = true;
+}
+
 static void window_jumplist_add(Win *win, size_t pos) {
 	Mark mark = text_mark_set(win->file->text, pos);
 	if (mark && win->jumplist)
@@ -864,7 +868,9 @@ static const char *getkey(Vis *vis) {
 	if (!key)
 		return NULL;
 	vis_info_hide(vis);
-	if (!vis->mode->input) {
+	bool use_keymap = !vis->mode->input && !vis->keymap_disabled;
+	vis->keymap_disabled = false;
+	if (use_keymap) {
 		const char *mapped = map_get(vis->keymap, key);
 		if (mapped)
 			return mapped;
