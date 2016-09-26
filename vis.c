@@ -868,7 +868,9 @@ static const char *getkey(Vis *vis) {
 	if (!key)
 		return NULL;
 	vis_info_hide(vis);
-	bool use_keymap = !vis->mode->input && !vis->keymap_disabled;
+	bool use_keymap = vis->mode->id != VIS_MODE_INSERT &&
+	                  vis->mode->id != VIS_MODE_REPLACE &&
+	                  !vis->keymap_disabled;
 	vis->keymap_disabled = false;
 	if (use_keymap) {
 		const char *mapped = map_get(vis->keymap, key);
