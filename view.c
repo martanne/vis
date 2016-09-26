@@ -750,10 +750,15 @@ size_t view_scroll_down(View *view, int lines) {
 }
 
 size_t view_line_up(Cursor *cursor) {
+	View *view = cursor->view;
 	int lastcol = cursor->lastcol;
 	if (!lastcol)
 		lastcol = cursor->col;
-	view_cursors_to(cursor, text_line_up(cursor->view->text, cursor->pos));
+	size_t pos = text_line_up(cursor->view->text, cursor->pos);
+	bool offscreen = view->cursor == cursor && pos < view->start;
+	view_cursors_to(cursor, pos);
+	if (offscreen)
+		view_redraw_top(view);
 	if (cursor->line)
 		cursor_set(cursor, cursor->line, lastcol);
 	cursor->lastcol = lastcol;
@@ -761,10 +766,15 @@ size_t view_line_up(Cursor *cursor) {
 }
 
 size_t view_line_down(Cursor *cursor) {
+	View *view = cursor->view;
 	int lastcol = cursor->lastcol;
 	if (!lastcol)
 		lastcol = cursor->col;
-	view_cursors_to(cursor, text_line_down(cursor->view->text, cursor->pos));
+	size_t pos = text_line_down(cursor->view->text, cursor->pos);
+	bool offscreen = view->cursor == cursor && pos > view->end;
+	view_cursors_to(cursor, pos);
+	if (offscreen)
+		view_redraw_bottom(view);
 	if (cursor->line)
 		cursor_set(cursor, cursor->line, lastcol);
 	cursor->lastcol = lastcol;
