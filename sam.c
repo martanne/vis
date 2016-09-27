@@ -378,7 +378,7 @@ static char *parse_cmdname(const char **s) {
 	Buffer buf;
 	buffer_init(&buf);
 
-	while (isalpha((unsigned char)**s) || **s == '-')
+	while (**s && **s != ' ' && (!ispunct((unsigned char)**s) || **s == '-'))
 		buffer_append(&buf, (*s)++, 1);
 
 	if (buffer_length(&buf))
