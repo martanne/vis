@@ -193,7 +193,7 @@ vis.ftdetect.filetypes = {
 -- array of filetype detecting functions (win, filename, shebang, app) -> string
 vis.ftdetect.customdetectors = {
 	function(win)
-		if win.file.lines[1] ~= nil and win.file.lines[1]:sub(1, 5) == '<?xml' then
+		if win.file:content(0, 5) == '<?xml' then
 			return 'xml'
 		end
 	end,
@@ -221,8 +221,8 @@ vis.filetype_detect = function(win)
 	-- find out via shebang which application would run our file
 	local shebang
 	local app
-	if win.file.lines[1] ~= nil and win.file.lines[1]:sub(1, 2) == '#!' then
-		shebang = win.file.lines[1]:gsub('^#!%s*', '')
+	if win.file:content(0, 2) == '#!' then
+		shebang = win.file:content(0, 256):gsub('^#!%s*', ''):gsub('\n.*$', '')
 		app = shebang:gsub('^/usr/bin/env%s*', ''):gsub('%s.*$', ''):gsub('^.*/', '')
 		if #app == 0 then
 			app = nil
