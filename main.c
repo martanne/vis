@@ -1250,7 +1250,7 @@ static const char *key2register(Vis *vis, const char *keys, enum VisRegister *re
 		*reg = keys[0] - 'a';
 	else if ('A' <= keys[0] && keys[0] <= 'Z')
 		*reg = VIS_REG_A + keys[0] - 'A';
-	else if (keys[0] == '*' || keys[0] == '+')
+	else if (keys[0] == '*' || keys[0] == '+' || keys[0] == '"')
 		*reg = VIS_REG_CLIPBOARD;
 	else if (keys[0] == '_')
 		*reg = VIS_REG_BLACKHOLE;
