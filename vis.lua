@@ -192,8 +192,8 @@ vis.ftdetect.filetypes = {
 
 -- array of filetype detecting functions (win, filename, shebang, app) -> string
 vis.ftdetect.customdetectors = {
-	function(win)
-		if win.file:content(0, 5) == '<?xml' then
+	function(file, data)
+		if data:sub(1, 5) == '<?xml' then
 			return 'xml'
 		end
 	end,
@@ -218,11 +218,13 @@ vis.filetype_detect = function(win)
 		until not changed
 	end
 
+	local data = win.file:content(0, 256);
+
 	-- find out via shebang which application would run our file
 	local shebang
 	local app
-	if win.file:content(0, 2) == '#!' then
-		shebang = win.file:content(0, 256):gsub('^#!%s*', ''):gsub('\n.*$', '')
+	if data:sub(1, 2) == '#!' then
+		shebang = data:gsub('^#!%s*', ''):gsub('\n.*$', '')
 		app = shebang:gsub('^/usr/bin/env%s*', ''):gsub('%s.*$', ''):gsub('^.*/', '')
 		if #app == 0 then
 			app = nil
@@ -231,7 +233,7 @@ vis.filetype_detect = function(win)
 
 	-- call custom detectors if any
 	for _, func in pairs(vis.ftdetect.customdetectors) do
-		local fres = func(win, sanitizedfn, shebang, app)
+		local fres = func(win.file, data, sanitizedfn, shebang, app)
 		if fres ~= nil then
 			win.syntax = fres
 			return
