@@ -69,135 +69,212 @@ vis:textobject_new("ii", function(win, pos)
 	return pos, pos
 end)
 
-vis.filetypes =	{
-	[".1|.2|.3|.4|.5|.6|.7|.8|.9|.1x|.2x|.3x|.4x|.5x|.6x|.7x|.8x|.9x"] = "man",
-	[".adb|.ads"] = "ada",
-	[".al|.perl|.pl|.pm|.pod"] = "perl",
-	[".ans|.inp|.mac"] = "apdl",
-	[".apl"] = "apl",
-	[".applescript"] = "applescript",
-	[".asa|.asp|.hta"] = "asp",
-	[".asa|.bas|.cls|.ctl|.dob|.dsm|.dsr|.frm|.pag|.vb|.vba|.vbs"] = "vb",
-	[".as|.asc"] = "actionscript",
-	[".asm|.ASM|.s|.S"] = "asm",
-	[".automount|.device|.mount|.path|.scope|.service|.slice|.socket|.swap|.target|.timer"] = "systemd",
-	[".au3|.a3x"] = "autoit",
-	[".awk"] = "awk",
-	[".bash|.bashrc|.bash_profile|.configure|.csh|.sh|.zsh"] = "bash",
-	[".bat|.cmd"] = "batch",
-	[".bbl|.dtx|.ins|.ltx|.tex|.sty"] = "latex",
-	[".bib"] = "bibtex",
-	[".boo"] = "boo",
-	[".bsh|.java"] = "java",
-	[".caml|.ml|.mli|.mll|.mly"] = "caml",
-	[".c|.C|.h"] = "ansi_c",
-	[".cfg|.cnf|.inf|.ini|.reg"] = "ini",
-	[".changes|.st|.sources"] = "smalltalk",
-	[".ck"] = "chuck",
-	[".cl|.el|.lisp|.lsp"] = "lisp",
-	[".cmake|.cmake.in|.ctest|.ctest.in"] = "cmake",
-	[".coffee"] = "coffeescript",
-	[".cpp|.cxx|.c++|.cc|.hh|.hpp|.hxx|.h++"] = "cpp",
-	[".cr"] = "crystal",
-	[".cs"] = "csharp",
-	[".css"] = "css",
-	[".cu|.cuh"] = "cuda",
-	[".dart"] = "dart",
-	[".d|.di"] = "dmd",
-	[".ddl|.sql"] = "sql",
-	[".dem|.plt"] = "gnuplot",
-	[".desktop"] = "desktop",
-	[".diff|.patch"] = "diff",
-	["Dockerfile"] = "dockerfile",
-	[".dot"] = "dot",
-	[".dpk|.dpr|.p|.pas"] = "pascal",
-	[".dsp"] = "faust",
-	[".dtd|.svg|.xml|.xsd|.xsl|.xslt|.xul"] = "xml",
-	[".e|.eif"] = "eiffel",
-	[".eps|.ps"] = "ps",
-	[".erb|.rhtml"] = "rhtml",
-	[".erl|.hrl"] = "erlang",
-	[".ex|.exs"] = "elixir",
-	[".feature"] = "gherkin",
-	[".f|.for|.ftn|.fpp|.f77|.f90|.f95|.f03|.f08"] = "fortran",
-	[".fish"] = "fish",
-	[".forth|.frt|.fs"] = "forth",
-	[".fs"] = "fsharp",
-	["fstab"] = "fstab",
-	[".g|.g4"] = "antlr",
-	[".g|.gd|.gi|.gap"] = "gap",
-	[".glslf|.glslv"] = "glsl",
-	["GNUmakefile|.iface|.mak|.mk|makefile|Makefile"] = "makefile",
-	[".go"] = "go",
-	[".groovy|.gvy"] = "groovy",
-	["group|gshadow|passwd|shadow"] = "dsv",
-	[".gtkrc"] = "gtkrc",
-	[".hs"] = "haskell",
-	[".htm|.html|.shtm|.shtml|.xhtml"] = "html",
-	[".icn"] = "icon",
-	[".idl|.odl"] = "idl",
-	[".inc|.php|.php3|.php4|.phtml"] = "php",
-	[".inf|.ni"] = "inform",
-	[".io"] = "io_lang",
-	[".js|.jsfl"] = "javascript",
-	[".json"] = "json",
-	[".jsp"] = "jsp",
-	[".ledger|.journal"] = "ledger",
-	[".less"] = "less",
-	[".lily|.ly"] = "lilypond",
-	[".link|.network|.netdev"] = "networkd",
-	[".litcoffee"] = "litcoffee",
-	[".lua"] = "lua",
-	[".md|.markdown"] = "markdown",
-	[".m|.mm|.objc"] = "objective_c",
-	[".moon"] = "moonscript",
-	[".nim"] = "nim",
-	[".n"] = "nemerle",
-	[".nsh|.nsi|.nsis"] = "nsis",
-	[".orx|.rex"] = "rexx",
-	[".p8"] = "pico8",
-	[".pike|.pmod"] = "pike",
-	["PKGBUILD"] = "pkgbuild",
-	[".po|.pot"] = "gettext",
-	[".prolog"] = "prolog",
-	[".props|.properties"] = "props",
-	[".proto"] = "protobuf",
-	[".ps1"] = "powershell",
-	[".pure"] = "pure",
-	[".Rakefile|.rake|.rb|.rbw"] = "ruby",
-	[".r|.reb"] = "rebol",
-	[".R|.Rout|.Rhistory|.Rt|Rout.save|Rout.fail"] = "rstats",
-	[".rs"] = "rust",
-	[".rst"] = "rest",
-	[".sass|.scss"] = "sass",
-	[".scala"] = "scala",
-	[".sch|.scm"] = "scheme",
-	[".sc|.py|.pyw"] = "python",
-	[".sno|.SNO"] = "snobol4",
-	[".tcl|.tk"] = "tcl",
-	[".texi"] = "texinfo",
-	[".toml"] = "toml",
-	[".vala"] = "vala",
-	[".vcf|.vcard"] = "vcard",
-	[".vh|.vhd|.vhdl"] = "vhdl",
-	[".v|.ver"] = "verilog",
-	[".wsf"] = "wsf",
-	[".xtend"] = "xtend",
-	[".yaml"] = "yaml",
+vis.ftdetect = {}
+
+vis.ftdetect.ignoresuffixes = "~|.orig|.bak|.old|.new|.dpkg-dist|.dpkg-old|.dpkg-new|.dpkg-bak|.pacsave|.pacnew"
+
+vis.ftdetect.filetypes = {
+	actionscript = { ext = ".as|.asc" },
+	ada          = { ext = ".adb|.ads" },
+	ansi_c       = { ext = ".c|.C|.h" },
+	antlr        = { ext = ".g|.g4" },
+	apdl         = { ext = ".ans|.inp|.mac" },
+	apl          = { ext = ".apl" },
+	applescript  = { ext = ".applescript" },
+	asm          = { ext = ".asm|.ASM|.s|.S" },
+	asp          = { ext = ".asa|.asp|.hta" },
+	autoit       = { ext = ".au3|.a3x" },
+	awk          = { ext = ".awk" },
+	bash         = { ext = ".bash|.csh|.sh|.zsh", name = "%.bashrc|%.bash_profile|%.configure", app = "bash|csh|sh|zsh|ash|dash|tcsh" },
+	batch        = { ext = ".bat|.cmd" },
+	bibtex       = { ext = ".bib" },
+	boo          = { ext = ".boo" },
+	caml         = { ext = ".caml|.ml|.mli|.mll|.mly" },
+	chuck        = { ext = ".ck" },
+	cmake        = { ext = ".cmake|.cmake.in|.ctest|.ctest.in" },
+	coffeescript = { ext = ".coffee", app = "coffee" },
+	cpp          = { ext = ".cpp|.cxx|.c++|.cc|.hh|.hpp|.hxx|.h++" },
+	crystal      = { ext = ".cr" },
+	csharp       = { ext = ".cs" },
+	css          = { ext = ".css" },
+	cuda         = { ext = ".cu|.cuh" },
+	dart         = { ext = ".dart", app = "dart" },
+	desktop      = { ext = ".desktop" },
+	diff         = { ext = ".diff|.patch" },
+	dmd          = { ext = ".d|.di", app = "rdmd" },
+	dockerfile   = { name = "Dockerfile" },
+	dot          = { ext = ".dot" },
+	dsv          = { name = "group|gshadow|passwd|shadow" },
+	eiffel       = { ext = ".e|.eif" },
+	elixir       = { ext = ".ex|.exs" },
+	erlang       = { ext = ".erl|.hrl", app = "escript" },
+	faust        = { ext = ".dsp" },
+	fish         = { ext = ".fish", app = "fish" },
+	forth        = { ext = ".forth|.frt|.fs", app = "gforth" },
+	fortran      = { ext = ".f|.for|.ftn|.fpp|.f77|.f90|.f95|.f03|.f08" },
+	fsharp       = { ext = ".fs" },
+	fstab        = { name = "fstab" },
+	gap          = { ext = ".g|.gd|.gi|.gap" },
+	gettext      = { ext = ".po|.pot" },
+	gherkin      = { ext = ".feature" },
+	glsl         = { ext = ".glslf|.glslv" },
+	gnuplot      = { ext = ".dem|.plt" },
+	go           = { ext = ".go" },
+	groovy       = { ext = ".groovy|.gvy", app = "groovy" },
+	gtkrc        = { name = "%.?gtkrc.*" },
+	haskell      = { ext = ".hs", app = "ghci" },
+	html         = { ext = ".htm|.html|.shtm|.shtml|.xhtml" },
+	icon         = { ext = ".icn" },
+	idl          = { ext = ".idl|.odl" },
+	inform       = { ext = ".inf|.ni" },
+	ini          = { ext = ".cfg|.cnf|.inf|.ini|.reg" },
+	io_lang      = { ext = ".io" },
+	java         = { ext = ".bsh|.java" },
+	javascript   = { ext = ".js|.jsfl", app = "jsc|node|rhino" },
+	json         = { ext = ".json" },
+	jsp          = { ext = ".jsp" },
+	latex        = { ext = ".bbl|.dtx|.ins|.ltx|.tex|.sty" },
+	ledger       = { ext = ".ledger|.journal" },
+	less         = { ext = ".less" },
+	lilypond     = { ext = ".lily|.ly" },
+	lisp         = { ext = ".cl|.el|.lisp|.lsp", app = "sbcl|clisp" },
+	litcoffee    = { ext = ".litcoffee" },
+	lua          = { ext = ".lua", app = "lua" },
+	makefile     = { ext = ".iface|.mak|.mk", name = "GNUmakefile|makefile|Makefile" },
+	man          = { ext = ".1|.2|.3|.4|.5|.6|.7|.8|.9|.1x|.2x|.3x|.4x|.5x|.6x|.7x|.8x|.9x" },
+	markdown     = { ext = ".md|.markdown" },
+	moonscript   = { ext = ".moon" },
+	nemerle      = { ext = ".n" },
+	networkd     = { ext = ".link|.network|.netdev" },
+	nim          = { ext = ".nim", app = "nim" },
+	nsis         = { ext = ".nsh|.nsi|.nsis" },
+	objective_c  = { ext = ".m|.mm|.objc" },
+	pascal       = { ext = ".dpk|.dpr|.p|.pas" },
+	perl         = { ext = ".al|.perl|.pl|.pm|.pod", app = "perl[%d.%a-]*|rakudo" },
+	php          = { ext = ".inc|.php|.php3|.php4|.phtml", app = "php[%d]*" },
+	pico8        = { ext = ".p8" },
+	pike         = { ext = ".pike|.pmod" },
+	pkgbuild     = { name = "PKGBUILD" },
+	powershell   = { ext = ".ps1" },
+	prolog       = { ext = ".prolog" },
+	props        = { ext = ".props|.properties" },
+	protobuf     = { ext = ".proto" },
+	ps           = { ext = ".eps|.ps" },
+	pure         = { ext = ".pure" },
+	python       = { ext = ".sc|.py|.pyw", app = "python[%d.]*" },
+	rebol        = { ext = ".r|.reb" },
+	rest         = { ext = ".rst" },
+	rexx         = { ext = ".orx|.rex" },
+	rhtml        = { ext = ".erb|.rhtml" },
+	rstats       = { ext = ".R|.Rout|.Rhistory|.Rt|Rout.save|Rout.fail" },
+	ruby         = { ext = ".Rakefile|.rake|.rb|.rbw", app = "ruby" },
+	rust         = { ext = ".rs" },
+	sass         = { ext = ".sass|.scss" },
+	scala        = { ext = ".scala" },
+	scheme       = { ext = ".sch|.scm" },
+	smalltalk    = { ext = ".changes|.st|.sources" },
+	snobol4      = { ext = ".sno|.SNO" },
+	sql          = { ext = ".ddl|.sql" },
+	systemd      = { ext = ".automount|.device|.mount|.path|.scope|.service|.slice|.socket|.swap|.target|.timer" },
+	tcl          = { ext = ".tcl|.tk" },
+	texinfo      = { ext = ".texi" },
+	toml         = { ext = ".toml" },
+	vala         = { ext = ".vala" },
+	vb           = { ext = ".asa|.bas|.cls|.ctl|.dob|.dsm|.dsr|.frm|.pag|.vb|.vba|.vbs" },
+	vcard        = { ext = ".vcf|.vcard" },
+	verilog      = { ext = ".v|.ver" },
+	vhdl         = { ext = ".vh|.vhd|.vhdl" },
+	wsf          = { ext = ".wsf" },
+	xml          = { ext = ".dtd|.svg|.xml|.xsd|.xsl|.xslt|.xul" },
+	xtend        = { ext = ".xtend" },
+	yaml         = { ext = ".yaml" },
+}
+
+-- array of filetype detecting functions (win, filename, shebang, app) -> string
+vis.ftdetect.customdetectors = {
+	function(win)
+		if win.file:content(0, 5) == '<?xml' then
+			return 'xml'
+		end
+	end,
 }
 
 vis.filetype_detect = function(win)
-	local filename = win.file.name
+	-- remove ignored suffixes from filename
+	local sanitizedfn = win.file.name
+	if sanitizedfn ~= nil then
+		sanitizedfn = sanitizedfn:gsub('^.*/', '')
+		repeat
+			local changed = false
+			for pattern in vis.ftdetect.ignoresuffixes:gmatch('[^|]+') do
+				if #sanitizedfn >= #pattern then
+					local s, e = sanitizedfn:find(pattern, -#pattern, true)
+					if e == #sanitizedfn then
+						sanitizedfn = sanitizedfn:sub(1, #sanitizedfn - #pattern)
+						changed = true
+					end
+				end
+			end
+		until not changed
+	end
 
-	if filename ~= nil then
-		-- filename = string.lower(filename)
-		for patterns, lang in pairs(vis.filetypes) do
-			for pattern in string.gmatch(patterns, '[^|]+') do
-				if #filename >= #pattern then
-					local s, e = string.find(filename, pattern, -#pattern, true)
-					if s ~= e and e == #filename then
+	-- find out via shebang which application would run our file
+	local shebang
+	local app
+	if win.file:content(0, 2) == '#!' then
+		shebang = win.file:content(0, 256):gsub('^#!%s*', ''):gsub('\n.*$', '')
+		app = shebang:gsub('^/usr/bin/env%s*', ''):gsub('%s.*$', ''):gsub('^.*/', '')
+		if #app == 0 then
+			app = nil
+		end
+	end
+
+	-- call custom detectors if any
+	for _, func in pairs(vis.ftdetect.customdetectors) do
+		local fres = func(win, sanitizedfn, shebang, app)
+		if fres ~= nil then
+			win.syntax = fres
+			return
+		end
+	end
+
+	-- detect filetype by application mentioned in the shebang
+	if app ~= nil then
+		for lang, ft in pairs(vis.ftdetect.filetypes) do
+			if ft.app ~= nil then
+				for pattern in ft.app:gmatch('[^|]+') do
+					if app:match('^'..pattern..'$') ~= nil then
 						win.syntax = lang
 						return
+					end
+				end
+			end
+		end
+	end
+
+	-- detect filetype by filename
+	if sanitizedfn ~= nil then
+		-- try filetypes recognizable by exact filename or filename pattern rather than extension
+		for lang, ft in pairs(vis.ftdetect.filetypes) do
+			if ft.name ~= nil then
+				for pattern in ft.name:gmatch('[^|]+') do
+					if sanitizedfn:match('^'..pattern..'$') ~= nil then
+						win.syntax = lang
+						return
+					end
+				end
+			end
+		end
+		-- then try to determine filetype by filename extention
+		for lang, ft in pairs(vis.ftdetect.filetypes) do
+			if ft.ext ~= nil then
+				for pattern in ft.ext:gmatch('[^|]+') do
+					if #sanitizedfn >= #pattern then
+						local s, e = sanitizedfn:find(pattern, -#pattern, true)
+						if e == #sanitizedfn then
+							win.syntax = lang
+							return
+						end
 					end
 				end
 			end
