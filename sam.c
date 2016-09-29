@@ -78,10 +78,9 @@ struct CommandDef {
 		CMD_ADDRESS_LINE  = 1 << 7,  /* if no address is given, use the current line */
 		CMD_ADDRESS_AFTER = 1 << 8,  /* if no address is given, begin at the start of the next line */
 		CMD_SHELL         = 1 << 9,  /* command needs a shell command as argument */
-		CMD_FILE          = 1 << 10, /* does the command take a file name */
-		CMD_FORCE         = 1 << 11, /* can the command be forced with ! */
-		CMD_ARGV          = 1 << 12, /* whether shell like argument splitted is desired */
-		CMD_ONCE          = 1 << 13, /* command should only be executed once, not for every selection */
+		CMD_FORCE         = 1 << 10, /* can the command be forced with ! */
+		CMD_ARGV          = 1 << 11, /* whether shell like argument splitted is desired */
+		CMD_ONCE          = 1 << 12, /* command should only be executed once, not for every selection */
 	} flags;
 	const char *defcmd;                  /* name of a default target command */
 	bool (*func)(Vis*, Win*, Command*, const char *argv[], Cursor*, Filerange*); /* command implementation */
@@ -147,10 +146,10 @@ static const CommandDef cmds[] = {
 	{ "|",            "Pipe range through command",                                CMD_SHELL|CMD_ADDRESS_POS,           NULL, cmd_filter        },
 	{ "!",            "Run the command",                                           CMD_SHELL|CMD_ONCE,                  NULL, cmd_launch        },
 	{ "w",            "Write range to named file",                                 CMD_ARGV|CMD_FORCE|CMD_ADDRESS_NONE|CMD_ONCE, NULL, cmd_write},
-	{ "r",            "Replace range by contents of file",                         CMD_FILE|CMD_ADDRESS_AFTER,          NULL, cmd_read          },
+	{ "r",            "Replace range by contents of file",                         CMD_ARGV|CMD_ADDRESS_AFTER,          NULL, cmd_read          },
 	{ "{",            "Start of command group",                                    CMD_NONE,                            NULL, NULL              },
 	{ "}",            "End of command group" ,                                     CMD_NONE,                            NULL, NULL              },
-	{ "e",            "Edit file",                                                 CMD_FILE|CMD_FORCE|CMD_ONCE,         NULL, cmd_edit          },
+	{ "e",            "Edit file",                                                 CMD_ARGV|CMD_FORCE|CMD_ONCE,         NULL, cmd_edit          },
 	{ "q",            "Quit the current window",                                   CMD_FORCE|CMD_ONCE,                  NULL, cmd_quit          },
 	{ "cd",           "Change directory",                                          CMD_ARGV|CMD_ONCE,                   NULL, cmd_cd            },
 	/* vi(m) related commands */
@@ -242,7 +241,6 @@ const char *sam_error(enum SamError err) {
 		[SAM_ERR_UNMATCHED_BRACE] = "Unmatched `}'",
 		[SAM_ERR_REGEX]           = "Bad regular expression",
 		[SAM_ERR_TEXT]            = "Bad text",
-		[SAM_ERR_FILENAME]        = "Filename expected",
 		[SAM_ERR_COMMAND]         = "Unknown command",
 		[SAM_ERR_EXECUTE]         = "Error executing command",
 	};
@@ -354,13 +352,6 @@ static char *parse_text(const char **s) {
 static char *parse_shellcmd(const char **s) {
 	skip_spaces(s);
 	return parse_until(s, "\n", NULL);
-}
-
-static char *parse_filename(const char **s) {
-	skip_spaces(s);
-	if (**s == '"' || **s == '\'')
-		return parse_delimited_text(s);
-	return parse_until(s, "\n", "\'\"");
 }
 
 static void parse_argv(const char **s, const char *argv[], size_t maxarg) {
@@ -604,13 +595,6 @@ static Command *command_parse(Vis *vis, const char **s, int level, enum SamError
 	if (cmddef->flags & CMD_FORCE && **s == '!') {
 		cmd->flags = '!';
 		(*s)++;
-	}
-
-	if (cmddef->flags & CMD_FILE) {
-		if (!(cmd->argv[1] = parse_filename(s)) && cmd->argv[0][0] != 'w') {
-			*err = SAM_ERR_FILENAME;
-			goto fail;
-		}
 	}
 
 	if (cmddef->flags & CMD_REGEX) {
@@ -1165,10 +1149,20 @@ static bool cmd_write(Vis *vis, Win *win, Command *cmd, const char *argv[], Curs
 }
 
 static bool cmd_read(Vis *vis, Win *win, Command *cmd, const char *argv[], Cursor *cur, Filerange *range) {
+	if (!argv[1]) {
+		vis_info_show(vis, "Filename expected");
+		return false;
+	}
+
 	Buffer buf;
 	buffer_init(&buf);
-	bool ret = false;
-	if (buffer_put0(&buf, "cat ") && buffer_append0(&buf, argv[1]))
+	bool ret = buffer_put0(&buf, "cat --");
+	for (const char **name = &argv[1]; *name; name++) {
+		ret &= buffer_append0(&buf, " '");
+		ret &= buffer_append0(&buf, *name);
+		ret &= buffer_append0(&buf, "'");
+	}
+	if (ret)
 		ret = cmd_pipein(vis, win, cmd, (const char*[]){ argv[0], buf.data, NULL }, cur, range);
 	buffer_release(&buf);
 	return ret;

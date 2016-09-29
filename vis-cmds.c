@@ -326,6 +326,10 @@ static void info_unsaved_changes(Vis *vis) {
 }
 
 static bool cmd_edit(Vis *vis, Win *win, Command *cmd, const char *argv[], Cursor *cur, Filerange *range) {
+	if (argv[2]) {
+		vis_info_show(vis, "Only 1 filename allowed");
+		return false;
+	}
 	Win *oldwin = win;
 	if (!oldwin)
 		return false;
@@ -520,13 +524,12 @@ static bool print_action(const char *key, void *value, void *data) {
 static bool print_cmd(const char *key, void *value, void *data) {
 	char help[256];
 	CommandDef *cmd = value;
-	snprintf(help, sizeof help, "%s%s%s%s%s%s%s%s",
+	snprintf(help, sizeof help, "%s%s%s%s%s%s%s",
 	         cmd->name,
 	         (cmd->flags & CMD_FORCE) ? "[!]" : "",
 	         (cmd->flags & CMD_TEXT) ? "/text/" : "",
 	         (cmd->flags & CMD_REGEX) ? "/regexp/" : "",
 	         (cmd->flags & CMD_CMD) ? " command" : "",
-	         (cmd->flags & CMD_FILE) ? " file-name" : "",
 	         (cmd->flags & CMD_SHELL) ? (!strcmp(cmd->name, "s") ? "/regexp/text/" : " shell-command") : "",
 	         (cmd->flags & CMD_ARGV) ? " [args...]" : "");
 	return text_appendf(data, "  %-30s %s\n", help, cmd->help);
