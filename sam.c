@@ -1154,18 +1154,11 @@ static bool cmd_read(Vis *vis, Win *win, Command *cmd, const char *argv[], Curso
 		return false;
 	}
 
-	Buffer buf;
-	buffer_init(&buf);
-	bool ret = buffer_put0(&buf, "cat --");
-	for (const char **name = &argv[1]; *name; name++) {
-		ret &= buffer_append0(&buf, " '");
-		ret &= buffer_append0(&buf, *name);
-		ret &= buffer_append0(&buf, "'");
-	}
-	if (ret)
-		ret = cmd_pipein(vis, win, cmd, (const char*[]){ argv[0], buf.data, NULL }, cur, range);
-	buffer_release(&buf);
-	return ret;
+	const char *args[MAX_ARGV] = { argv[0], "cat", "--" };
+	for (int i = 3; i < MAX_ARGV-2; i++)
+		args[i] = argv[i-2];
+	args[MAX_ARGV-1] = NULL;
+	return cmd_pipein(vis, win, cmd, (const char**)args, cur, range);
 }
 
 static ssize_t read_text(void *context, char *data, size_t len) {
@@ -1226,7 +1219,7 @@ static bool cmd_pipein(Vis *vis, Win *win, Command *cmd, const char *argv[], Cur
 	if (!win)
 		return false;
 	Filerange filter_range = text_range_new(range->end, range->end);
-	bool ret = cmd_filter(vis, win, cmd, (const char*[]){ argv[0], argv[1], NULL }, cur, &filter_range);
+	bool ret = cmd_filter(vis, win, cmd, argv, cur, &filter_range);
 	if (ret) {
 		text_delete_range(win->file->text, range);
 		range->end = range->start + text_range_size(&filter_range);
