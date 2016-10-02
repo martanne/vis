@@ -625,7 +625,7 @@ static const KeyAction vis_action[] = {
 	[VIS_ACTION_DELETE_WORD_PREV] = {
 		"delete-word-prev",
 		"Delete the previous WORD",
-		delete, { .i = VIS_MOVE_LONGWORD_START_PREV }
+		delete, { .i = VIS_MOVE_WORD_START_PREV }
 	},
 	[VIS_ACTION_JUMPLIST_PREV] = {
 		"jumplist-prev",
