@@ -73,6 +73,10 @@ size_t view_slide_down(View*, int lines);
  * visible line, try to preserve the column position */
 size_t view_scroll_up(View*, int lines);
 size_t view_scroll_down(View*, int lines);
+size_t view_scroll_page_up(View*);
+size_t view_scroll_page_down(View*);
+size_t view_scroll_halfpage_up(View*);
+size_t view_scroll_halfpage_down(View*);
 /* place the cursor at the start ot the n-th window line, counting from 1 */
 size_t view_screenline_goto(View*, int n);
 

@@ -738,6 +738,43 @@ size_t view_scroll_up(View *view, int lines) {
 	return cursor->pos;
 }
 
+size_t view_scroll_page_up(View *view) {
+	Cursor *cursor = view->cursor;
+	if (view->start == 0) {
+		view_cursor_to(view, 0);
+	} else {
+		view_cursor_to(view, view->start-1);
+		view_redraw_bottom(view);
+		view_screenline_begin(cursor);
+	}
+	return cursor->pos;
+}
+
+size_t view_scroll_page_down(View *view) {
+	view_scroll_down(view, view->height);
+	return view_screenline_begin(view->cursor);
+}
+
+size_t view_scroll_halfpage_up(View *view) {
+	Cursor *cursor = view->cursor;
+	if (view->start == 0) {
+		view_cursor_to(view, 0);
+	} else {
+		view_cursor_to(view, view->start-1);
+		view_redraw_center(view);
+		view_screenline_begin(cursor);
+	}
+	return cursor->pos;
+}
+
+size_t view_scroll_halfpage_down(View *view) {
+	size_t end = view->end;
+	size_t pos = view_scroll_down(view, view->height/2);
+	if (pos < text_size(view->text))
+		view_cursor_to(view, end);
+	return view->cursor->pos;
+}
+
 size_t view_scroll_down(View *view, int lines) {
 	Cursor *cursor = view->cursor;
 	if (view_viewport_down(view, lines)) {

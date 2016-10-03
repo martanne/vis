@@ -1916,35 +1916,43 @@ static const char *insert_verbatim(Vis *vis, const char *keys, const Arg *arg) {
 	return keys;
 }
 
-static int argi2lines(Vis *vis, const Arg *arg) {
+static const char *wscroll(Vis *vis, const char *keys, const Arg *arg) {
+	View *view = vis_view(vis);
 	int count = vis_count_get(vis);
 	switch (arg->i) {
 	case -PAGE:
+		view_scroll_page_up(view);
+		break;
 	case +PAGE:
-		return view_height_get(vis_view(vis));
+		view_scroll_page_down(view);
+		break;
 	case -PAGE_HALF:
+		view_scroll_halfpage_up(view);
+		break;
 	case +PAGE_HALF:
-		return view_height_get(vis_view(vis))/2;
+		view_scroll_halfpage_down(view);
+		break;
 	default:
-		if (count != VIS_COUNT_UNKNOWN)
-			return count;
-		return arg->i < 0 ? -arg->i : arg->i;
+		if (count == VIS_COUNT_UNKNOWN)
+			count = arg->i < 0 ? -arg->i : arg->i;
+		if (arg->i < 0)
+			view_scroll_up(view, count);
+		else
+			view_scroll_down(view, count);
+		break;
 	}
-}
-
-static const char *wscroll(Vis *vis, const char *keys, const Arg *arg) {
-	if (arg->i >= 0)
-		view_scroll_down(vis_view(vis), argi2lines(vis, arg));
-	else
-		view_scroll_up(vis_view(vis), argi2lines(vis, arg));
 	return keys;
 }
 
 static const char *wslide(Vis *vis, const char *keys, const Arg *arg) {
+	View *view = vis_view(vis);
+	int count = vis_count_get(vis);
+	if (count == VIS_COUNT_UNKNOWN)
+		count = arg->i < 0 ? -arg->i : arg->i;
 	if (arg->i >= 0)
-		view_slide_down(vis_view(vis), argi2lines(vis, arg));
+		view_slide_down(view, count);
 	else
-		view_slide_up(vis_view(vis), argi2lines(vis, arg));
+		view_slide_up(view, count);
 	return keys;
 }
 
