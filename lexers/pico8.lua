@@ -12,8 +12,7 @@ local M = {_NAME = 'pico8'}
 local ws = token(l.WHITESPACE, l.space^1)
 
 -- Comments
-local line_comment = '//' * l.nonnewline_esc^0
-local comment = token(l.COMMENT, line_comment)
+local comment = token(l.COMMENT, '//' * l.nonnewline_esc^0)
 
 -- Numbers
 local number = token(l.NUMBER, l.integer)
