@@ -3,6 +3,7 @@ set -e
 
 PATTERN=""
 COMPLETE_WORD=0
+FIND_FILE_LIMIT=1000
 
 while [ $# -gt 0 ]; do
 	case "$1" in
@@ -24,12 +25,16 @@ while [ $# -gt 0 ]; do
 	esac
 done
 
+PATTERN="$(echo "$PATTERN" | sed "s/'/'\\\\''/g")"
+
 if [ $COMPLETE_WORD = 1 ]; then
 	CMD=$(printf "tr -cs '[:alnum:]_' '\n' | grep '^%s.' | sort -u" "$PATTERN")
 else
-	CMD=$(printf "find . ! -path '*/\.*' -a -path './%s*' | cut -b 3- | sort" "$PATTERN")
+	CMD=$(printf "find . ! -path '*/\.*' -a -path './%s*' 2>/dev/null | head -n $FIND_FILE_LIMIT | cut -b 3- | sort" "$PATTERN")
 fi
 
-CMD=$(printf "$CMD | vis-menu -b | sed 's|^%s||' | tr -d '\n'" "$PATTERN")
+PATTERN="$(echo "$PATTERN" | sed 's:/:\\/:g')"
+
+CMD=$(printf "$CMD | vis-menu -b | sed 's/^%s//' | tr -d '\n'" "$PATTERN")
 
 exec /bin/sh -c "$CMD"
