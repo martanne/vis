@@ -1111,8 +1111,10 @@ static bool cmd_write(Vis *vis, Win *win, Command *cmd, const char *argv[], Curs
 		}
 
 		TextSave *ctx = text_save_begin(text, *name);
-		if (!ctx)
+		if (!ctx) {
+			vis_info_show(vis, "Can't write `%s': %s", *name, strerror(errno));
 			return false;
+		}
 
 		bool failure = false;
 
@@ -1134,7 +1136,7 @@ static bool cmd_write(Vis *vis, Win *win, Command *cmd, const char *argv[], Curs
 		}
 
 		if (failure || !text_save_commit(ctx)) {
-			vis_info_show(vis, "Can't write `%s'", *name);
+			vis_info_show(vis, "Can't write `%s': %s", *name, strerror(errno));
 			return false;
 		}
 
