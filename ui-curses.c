@@ -1103,8 +1103,10 @@ static const char *ui_getkey(Ui *ui) {
 		int tty = open("/dev/tty", O_RDWR);
 		if (tty == -1)
 			goto fatal;
-		if (tty != STDIN_FILENO && dup2(tty, STDIN_FILENO) == -1)
+		if (tty != STDIN_FILENO && dup2(tty, STDIN_FILENO) == -1) {
+			close(tty);
 			goto fatal;
+		}
 		close(tty);
 		termkey_destroy(uic->termkey);
 		if (!(uic->termkey = ui_termkey_new(STDIN_FILENO)))

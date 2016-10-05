@@ -800,7 +800,7 @@ static int window_index(lua_State *L) {
 		const char *key = lua_tostring(L, 2);
 
 		if (strcmp(key, "viewport") == 0) {
-			Filerange r = win ? view_viewport_get(win->view) : text_range_empty();
+			Filerange r = view_viewport_get(win->view);
 			pushrange(L, &r);
 			return 1;
 		}

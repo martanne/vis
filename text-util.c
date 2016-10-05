@@ -84,7 +84,6 @@ int text_string_width(const char *data, size_t len) {
 	const char *s = data;
 
 	while (len > 0) {
-		char buf[MB_CUR_MAX];
 		wchar_t wc;
 		size_t wclen = mbrtowc(&wc, s, len, &ps);
 		if (wclen == (size_t)-1 && errno == EILSEQ) {
@@ -98,7 +97,7 @@ int text_string_width(const char *data, size_t len) {
 			/* assume NUL byte will be displayed as ^@ */
 			width += 2;
 			wclen = 1;
-		} else if (buf[0] == '\t') {
+		} else if (wc == L'\t') {
 			width++;
 			wclen = 1;
 		} else {

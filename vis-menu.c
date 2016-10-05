@@ -458,7 +458,7 @@ run(void) {
 			return EXIT_FAILURE;
 		case CONTROL('M'): /* Return */
 		case CONTROL('J'):
-			if (sel) strncpy(text, sel->text, sizeof text); /* Complete the input first, when hitting return */
+			if (sel) strncpy(text, sel->text, sizeof(text)-1); /* Complete the input first, when hitting return */
 			cursor = strlen(text);
 			match();
 			drawmenu();
