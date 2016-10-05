@@ -1312,9 +1312,9 @@ int vis_pipe(Vis *vis, Filerange *range, bool interactive, const char *argv[],
 	close(pout[1]);
 	close(perr[1]);
 
-	fcntl(pout[0], F_SETFL, O_NONBLOCK);
-	fcntl(perr[0], F_SETFL, O_NONBLOCK);
-
+	if (fcntl(pout[0], F_SETFL, O_NONBLOCK) == -1 ||
+	    fcntl(perr[0], F_SETFL, O_NONBLOCK) == -1)
+		goto err;
 
 	fd_set rfds, wfds;
 
@@ -1393,6 +1393,7 @@ int vis_pipe(Vis *vis, Filerange *range, bool interactive, const char *argv[],
 
 	} while (pin[1] != -1 || pout[0] != -1 || perr[0] != -1);
 
+err:
 	if (pin[1] != -1)
 		close(pin[1]);
 	if (pout[0] != -1)
