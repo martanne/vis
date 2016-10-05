@@ -53,6 +53,8 @@ local func = token(l.FUNCTION, word_match{
 
 -- Constants.
 local constant = token(l.CONSTANT, word_match{
+  -- We do *not* list pkgver, srcdir and startdir here.
+  -- These are defined by makepkg but user should not alter them.
   'arch',
   'backup',
   'changelog',
