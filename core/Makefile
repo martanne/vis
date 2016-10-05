@@ -1,9 +1,10 @@
 -include ../../config.mk
 
+ALL = text buffer map array
 SRC = $(wildcard ccan/*/*.c)
 CFLAGS += -I. -I../..
 
-test: text buffer map array
+test: $(ALL)
 	@./text
 	@./buffer
 	@./map
@@ -35,6 +36,9 @@ debug: clean
 coverage: clean
 	$(MAKE) CFLAGS_EXTRA='--coverage'
 
+tis: clean
+	$(MAKE) CC="tis-interpreter.sh --cc" CFLAGS='"${CFLAGS} ${CFLAGS_STD} -DTIS_INTERPRETER=1"' CFLAGS_STD='' LDFLAGS='#' $(ALL)
+
 clean:
 	@echo cleaning
 	@rm -f text
@@ -43,4 +47,4 @@ clean:
 	@rm -f array
 	@rm -f *.gcov *.gcda *.gcno
 
-.PHONY: clean debug coverage
+.PHONY: clean debug coverage tis

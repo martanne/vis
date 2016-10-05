@@ -1,10 +1,10 @@
-#include <ccan/tap/tap.h>
 #include <stdlib.h>
 #include <stddef.h>
 #include <stdbool.h>
 #include <string.h>
 #include <stdio.h>
 #include <errno.h>
+#include "tap.h"
 #include "array.h"
 #include "../../util.h"
 

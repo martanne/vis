@@ -1,10 +1,10 @@
-#include <ccan/tap/tap.h>
 #include <stddef.h>
 #include <stdbool.h>
 #include <string.h>
 #include <errno.h>
 #include <stdio.h>
 #include <unistd.h>
+#include "tap.h"
 #include "text.h"
 #include "text-util.h"
 
@@ -32,12 +32,14 @@ int main(int argc, char *argv[]) {
 
 	plan_no_plan();
 
-	txt = text_load("/");
-	ok(txt == NULL && errno == EISDIR, "Opening directory");
+	skip_if(TIS_INTERPRETER, 2, "I/O related") {
+		txt = text_load("/");
+		ok(txt == NULL && errno == EISDIR, "Opening directory");
 
-	if (access("/etc/shadow", F_OK) == 0) {
-		txt = text_load("/etc/shadow");
-		ok(txt == NULL && errno == EACCES, "Opening file without sufficient permissions");
+		if (access("/etc/shadow", F_OK) == 0) {
+			txt = text_load("/etc/shadow");
+			ok(txt == NULL && errno == EACCES, "Opening file without sufficient permissions");
+		}
 	}
 
 	txt = text_load(NULL);

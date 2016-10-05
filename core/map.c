@@ -1,9 +1,9 @@
-#include <ccan/tap/tap.h>
 #include <stddef.h>
 #include <stdbool.h>
 #include <string.h>
 #include <stdio.h>
 #include <errno.h>
+#include "tap.h"
 #include "map.h"
 
 static bool get(Map *map, const char *key, const void *data) {

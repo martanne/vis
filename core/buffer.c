@@ -1,8 +1,8 @@
-#include <ccan/tap/tap.h>
 #include <stddef.h>
 #include <stdbool.h>
 #include <string.h>
 #include <stdio.h>
+#include "tap.h"
 #include "buffer.h"
 
 static bool compare(Buffer *buf, const char *data, size_t len) {
@@ -58,24 +58,27 @@ int main(int argc, char *argv[]) {
 	buffer_clear(&buf);
 	ok(buf.data && buffer_length(&buf) == 0 && buffer_capacity(&buf) == cap, "Clear");
 
-	ok(buffer_printf(&buf, "Test: %d\n", 42) && compare0(&buf, "Test: 42\n"), "Set formatted");
-	ok(buffer_printf(&buf, "%d\n", 42) && compare0(&buf, "42\n"), "Set formatted overwrite");
-	buffer_clear(&buf);
+	skip_if(TIS_INTERPRETER, 1, "vsnprintf not supported") {
 
-	ok(buffer_printf(&buf, "") && compare0(&buf, ""), "Set formatted empty string");
-	buffer_clear(&buf);
+		ok(buffer_printf(&buf, "Test: %d\n", 42) && compare0(&buf, "Test: 42\n"), "Set formatted");
+		ok(buffer_printf(&buf, "%d\n", 42) && compare0(&buf, "42\n"), "Set formatted overwrite");
+		buffer_clear(&buf);
 
-	bool append = true;
-	for (int i = 1; i <= 10; i++)
-		append &= buffer_appendf(&buf, "%d", i);
-	ok(append && compare0(&buf, "12345678910"), "Append formatted");
-	buffer_clear(&buf);
+		ok(buffer_printf(&buf, "") && compare0(&buf, ""), "Set formatted empty string");
+		buffer_clear(&buf);
 
-	append = true;
-	for (int i = 1; i <= 10; i++)
-		append &= buffer_appendf(&buf, "");
-	ok(append && compare0(&buf, ""), "Append formatted empty string");
-	buffer_clear(&buf);
+		bool append = true;
+		for (int i = 1; i <= 10; i++)
+			append &= buffer_appendf(&buf, "%d", i);
+		ok(append && compare0(&buf, "12345678910"), "Append formatted");
+		buffer_clear(&buf);
+
+		append = true;
+		for (int i = 1; i <= 10; i++)
+			append &= buffer_appendf(&buf, "");
+		ok(append && compare0(&buf, ""), "Append formatted empty string");
+		buffer_clear(&buf);
+	}
 
 	buffer_release(&buf);
 
