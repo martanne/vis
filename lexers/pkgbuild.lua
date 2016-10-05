@@ -49,7 +49,7 @@ local func = token(l.FUNCTION, word_match{
   'package',
   'pkgver',
   'prepare'
-})
+} * '()')
 
 -- Constants.
 local constant = token(l.CONSTANT, word_match{
