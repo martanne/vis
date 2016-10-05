@@ -1105,6 +1105,7 @@ static const char *ui_getkey(Ui *ui) {
 			goto fatal;
 		if (tty != STDIN_FILENO && dup2(tty, STDIN_FILENO) == -1)
 			goto fatal;
+		close(tty);
 		termkey_destroy(uic->termkey);
 		if (!(uic->termkey = ui_termkey_new(STDIN_FILENO)))
 			goto fatal;
