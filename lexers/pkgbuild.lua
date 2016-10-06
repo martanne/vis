@@ -52,39 +52,47 @@ local func = token(l.FUNCTION, word_match{
 } * '()')
 
 -- Constants.
-local constant = token(l.CONSTANT, word_match{
+local constants = {
   -- We do *not* list pkgver, srcdir and startdir here.
   -- These are defined by makepkg but user should not alter them.
   'arch',
   'backup',
   'changelog',
-  'checkdepends',
-  'conflicts',
-  'depends',
   'epoch',
   'groups',
   'install',
   'license',
-  'makedepends',
-  'md5sums',
   'noextract',
-  'optdepends',
   'options',
   'pkgbase',
   'pkgdesc',
   'pkgname',
   'pkgrel',
   'pkgver',
+  'url',
+  'validpgpkeys'
+}
+local arch_specific = {
+  'checkdepends',
+  'conflicts',
+  'depends',
+  'makedepends',
+  'md5sums',
+  'optdepends',
   'provides',
   'replaces',
   'sha1sums',
   'sha256sums',
   'sha384sums',
   'sha512sums',
-  'source',
-  'url',
-  'validpgpkeys'
-})
+  'source'
+}
+for _, field in ipairs(arch_specific) do
+  for _,arch in ipairs({ '', 'i686', 'x86_64' }) do
+    table.insert(constants, field..(arch ~= '' and '_'..arch or ''))
+  end
+end
+local constant = token(l.CONSTANT, word_match(constants))
 
 -- Identifiers.
 local identifier = token(l.IDENTIFIER, l.word)
