@@ -25,16 +25,8 @@ while [ $# -gt 0 ]; do
 	esac
 done
 
-PATTERN="$(echo "$PATTERN" | sed "s/'/'\\\\''/g")"
-
 if [ $COMPLETE_WORD = 1 ]; then
-	CMD=$(printf "tr -cs '[:alnum:]_' '\n' | grep '^%s.' | sort -u" "$PATTERN")
+	tr -cs '[:alnum:]_' '\n' | grep "^$PATTERN." | sort -u
 else
-	CMD=$(printf "find . ! -path '*/\.*' -a -path './%s*' 2>/dev/null | head -n $FIND_FILE_LIMIT | cut -b 3- | sort" "$PATTERN")
-fi
-
-PATTERN="$(echo "$PATTERN" | sed 's:/:\\/:g')"
-
-CMD=$(printf "$CMD | vis-menu -b | sed 's/^%s//' | tr -d '\n'" "$PATTERN")
-
-exec /bin/sh -c "$CMD"
+	find . ! -path '*/\.*' -a -path "./$PATTERN*" 2>/dev/null | head -n $FIND_FILE_LIMIT | cut -b 3- | sort
+fi | vis-menu -b | sed "s/^$(printf "%s" "$PATTERN" | sed 's:/:\\/:g' )//" | tr -d '\n'
