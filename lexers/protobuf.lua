@@ -1,5 +1,6 @@
--- Copyright 2016 David B. Lamkins <david@lamkins.net>
--- Protocol Buffer IDL <https://developers.google.com/protocol-buffers/>
+-- Copyright 2016 David B. Lamkins <david@lamkins.net>. See LICENSE.
+-- Protocol Buffer IDL LPeg lexer.
+-- <https://developers.google.com/protocol-buffers/>
 
 local l = require('lexer')
 local token, word_match = l.token, l.word_match

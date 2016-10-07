@@ -48,7 +48,8 @@ end)
 -- TODO: regex_str fails with `obj.method /patt/` syntax.
 local regex_str = #P('/') * l.last_char_includes('!%^&*([{-=+|:;,?<>~') *
                   l.delimited_range('/', true, false) * S('iomx')^0
-local string = token(l.STRING, (sq_str + dq_str + heredoc + cmd_str) * S('f')^-1) +
+local string = token(l.STRING, (sq_str + dq_str + heredoc + cmd_str) *
+                               S('f')^-1) +
                token(l.REGEX, regex_str)
 
 local word_char = l.alnum + S('_!?')
@@ -63,22 +64,20 @@ local number = token(l.NUMBER, l.float * S('ri')^-1 + integer + numeric_literal)
 
 -- Keywords.
 local keyword = token(l.KEYWORD, word_match({
-  'alias', 'begin', 'break', 'case', 'class', 'def', 'defined?',
-  'do', 'else', 'elsif', 'end', 'ensure', 'false', 'for', 'if',
-  'in', 'module', 'next', 'nil', 'not', 'redo', 'rescue', 'retry',
-  'return', 'self', 'super', 'then', 'true', 'undef', 'unless',
-  'until', 'when', 'while', 'yield', '__FILE__', '__LINE__'
+  'alias', 'begin', 'break', 'case', 'class', 'def', 'defined?', 'do', 'else',
+  'elsif', 'end', 'ensure', 'false', 'for', 'if', 'in', 'module', 'next', 'nil',
+  'not', 'redo', 'rescue', 'retry', 'return', 'self', 'super', 'then', 'true',
+  'undef', 'unless', 'until', 'when', 'while', 'yield', '__FILE__', '__LINE__'
 }, '?!'))
 
 -- Functions.
 local func = token(l.FUNCTION, word_match({
   'abort', 'at_exit', 'caller', 'delay', 'exit', 'fork', 'future',
-  'get_stack_top', 'gets', 'lazy', 'loop', 'main', 'p', 'print',
-  'printf', 'puts', 'raise', 'rand', 'read_line', 'require', 'sleep',
-  'spawn', 'sprintf', 'system', 'with_color',
+  'get_stack_top', 'gets', 'lazy', 'loop', 'main', 'p', 'print', 'printf',
+  'puts', 'raise', 'rand', 'read_line', 'require', 'sleep', 'spawn', 'sprintf',
+  'system', 'with_color',
   -- Macros
-  'assert_responds_to', 'debugger', 'parallel', 'pp', 'record',
-  'redefine_main'
+  'assert_responds_to', 'debugger', 'parallel', 'pp', 'record', 'redefine_main'
 }, '?!')) * -S('.:|')
 
 -- Identifiers.

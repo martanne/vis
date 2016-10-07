@@ -176,6 +176,7 @@ vis.ftdetect.filetypes = {
 	snobol4      = { ext = ".sno|.SNO" },
 	sql          = { ext = ".ddl|.sql" },
 	systemd      = { ext = ".automount|.device|.mount|.path|.scope|.service|.slice|.socket|.swap|.target|.timer" },
+	taskpaper    = { ext = ".taskpaper" },
 	tcl          = { ext = ".tcl|.tk" },
 	texinfo      = { ext = ".texi" },
 	toml         = { ext = ".toml" },
