@@ -28,5 +28,23 @@ done
 if [ $COMPLETE_WORD = 1 ]; then
 	tr -cs '[:alnum:]_' '\n' | grep "^$PATTERN." | sort -u
 else
-	find . ! -path '*/\.*' -a -path "./$PATTERN*" 2>/dev/null | head -n $FIND_FILE_LIMIT | cut -b 3- | sort
-fi | vis-menu -b | sed "s/^$(printf "%s" "$PATTERN" | sed 's:/:\\/:g' )//" | tr -d '\n'
+	case $PATTERN in
+		/*)
+			# An absolute path. This is fine.
+			;;
+		*)
+			# A relaive path. Let's make it absolute.
+			PATTERN=$PWD/$PATTERN
+			;;
+	esac
+
+	START=$(dirname "$PATTERN")
+	find "$START" \
+		! -path '*/\.*' \
+		-a -path "$PATTERN*" 2>/dev/null |
+		head -n $FIND_FILE_LIMIT |
+		sort
+fi |
+	vis-menu -b |
+	cut -b $(( ${#PATTERN} + 1 ))- |
+	tr -d '\n'
