@@ -44,9 +44,16 @@ else
 	esac
 
 	START=$(dirname "$PATTERN")
+	# The first path condition rules out paths that start with "." unless
+	# they start with "..". That way, hidden paths should stay hidden, but
+	# non-normalised paths should still show up.
 	find "$START" \
-		! -path '*/\.*' \
-		-a -path "$(glob_quote "$PATTERN")*" 2>/dev/null |
+		-name '.*' -prune \
+		-o \( \
+			! -name '.*' \
+			-a -path "$(glob_quote "$PATTERN")*" \
+			-print \
+		\) 2>/dev/null |
 		head -n $FIND_FILE_LIMIT |
 		sort
 fi |
