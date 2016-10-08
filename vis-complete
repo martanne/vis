@@ -1,6 +1,9 @@
 #!/bin/sh
 set -e
 
+basic_regex_quote() { printf "%s" "$1" | sed 's|[\\.*^$[]|\\&|g'; }
+glob_quote () { printf "%s" "$1" | sed 's|[\\?*[]]|\\&|g'; }
+
 PATTERN=""
 COMPLETE_WORD=0
 FIND_FILE_LIMIT=1000
@@ -26,7 +29,9 @@ while [ $# -gt 0 ]; do
 done
 
 if [ $COMPLETE_WORD = 1 ]; then
-	tr -cs '[:alnum:]_' '\n' | grep "^$PATTERN." | sort -u
+	tr -cs '[:alnum:]_' '\n' |
+		grep "^$(basic_regex_quote "$PATTERN")." |
+		sort -u
 else
 	case $PATTERN in
 		/*)
@@ -41,7 +46,7 @@ else
 	START=$(dirname "$PATTERN")
 	find "$START" \
 		! -path '*/\.*' \
-		-a -path "$PATTERN*" 2>/dev/null |
+		-a -path "$(glob_quote "$PATTERN")*" 2>/dev/null |
 		head -n $FIND_FILE_LIMIT |
 		sort
 fi |
