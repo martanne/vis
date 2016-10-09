@@ -191,6 +191,10 @@ static size_t op_join(Vis *vis, Text *txt, OperatorContext *c) {
 		size_t line_prev_prev = text_line_prev(txt, line_prev);
 		if (line_prev_prev >= c->range.start)
 			pos = line_prev;
+	} else {
+		size_t start = text_line_finish(txt, c->range.start);
+		if (start < c->range.start)
+			c->range.start = start;
 	}
 
 	size_t len = c->arg->s ? strlen(c->arg->s) : 0;
@@ -198,7 +202,10 @@ static size_t op_join(Vis *vis, Text *txt, OperatorContext *c) {
 	do {
 		prev_pos = pos;
 		size_t end = text_line_start(txt, pos);
-		pos = text_char_next(txt, text_line_finish(txt, text_line_prev(txt, end)));
+		size_t prev = text_line_prev(txt, end);
+		pos = text_line_finish(txt, prev);
+		if (pos != prev)
+			pos = text_char_next(txt, pos);
 		if (pos >= c->range.start && end > pos) {
 			text_delete(txt, pos, end - pos);
 			text_insert(txt, pos, c->arg->s, len);
