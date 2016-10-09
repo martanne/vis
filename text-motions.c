@@ -144,9 +144,17 @@ size_t text_line_start(Text *txt, size_t pos) {
 
 size_t text_line_finish(Text *txt, size_t pos) {
 	char c;
-	Iterator it = text_iterator_get(txt, text_line_end(txt, pos));
-	do text_iterator_char_prev(&it, NULL);
-	while (text_iterator_byte_get(&it, &c) && c != '\n' && space(c));
+	size_t end = text_line_end(txt, pos);
+	Iterator it = text_iterator_get(txt, end);
+	if (!text_iterator_char_prev(&it, &c) || c == '\n')
+		return end;
+	while (text_iterator_byte_get(&it, &c) && space(c)) {
+		if (c == '\n') {
+			it.pos++;
+			break;
+		}
+		text_iterator_char_prev(&it, NULL);
+	}
 	return it.pos;
 }
 
