@@ -28,21 +28,27 @@ while [ $# -gt 0 ]; do
 	esac
 done
 
-if [ $COMPLETE_WORD = 1 ]; then
-	tr -cs '[:alnum:]_' '\n' |
-		grep "^$(basic_regex_quote "$PATTERN")." |
-		sort -u
-else
+if [ $COMPLETE_WORD = 0 ]; then
 	case $PATTERN in
 		/*)
 			# An absolute path. This is fine.
+			;;
+		'~'|'~/'*)
+			# Expand tilde to $HOME
+			PATTERN=$HOME$(echo $PATTERN | tail -c +2)
 			;;
 		*)
 			# A relaive path. Let's make it absolute.
 			PATTERN=$PWD/$PATTERN
 			;;
 	esac
+fi
 
+if [ $COMPLETE_WORD = 1 ]; then
+	tr -cs '[:alnum:]_' '\n' |
+		grep "^$(basic_regex_quote "$PATTERN")." |
+		sort -u
+else
 	START=$(dirname "$PATTERN")
 	# The first path condition rules out paths that start with "." unless
 	# they start with "..". That way, hidden paths should stay hidden, but

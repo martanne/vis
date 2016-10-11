@@ -2103,11 +2103,11 @@ static const char *open_file_under_cursor(Vis *vis, const char *keys, const Arg 
 	return keys;
 }
 
-static char *get_completion_prefix(Vis *vis) {
+static char *get_completion_prefix(Vis *vis, Filerange (*text_object)(Text *, size_t)) {
 	View *view = vis_view(vis);
 	Text *txt = vis_text(vis);
 
-	Filerange r = text_object_word(txt, view_cursor_get(view)-1);
+	Filerange r = text_object(txt, view_cursor_get(view)-1);
 	r = text_range_inner(txt, &r);
 	size_t size = text_range_size(&r);
 	if (size == 0) {
@@ -2140,7 +2140,7 @@ static const char *complete_word(Vis *vis, const char *keys, const Arg *arg) {
 	Text *txt = vis_text(vis);
 	Buffer cmd;
 	buffer_init(&cmd);
-	char *prefix = get_completion_prefix(vis);
+	char *prefix = get_completion_prefix(vis, text_object_word);
 	if (prefix && buffer_printf(&cmd, VIS_COMPLETE " --word '%s'", prefix)) {
 		Filerange all = text_range_new(0, text_size(txt));
 		insert_dialog_selection(vis, &all, (const char*[]){ buffer_content0(&cmd), NULL });
@@ -2153,7 +2153,7 @@ static const char *complete_word(Vis *vis, const char *keys, const Arg *arg) {
 static const char *complete_filename(Vis *vis, const char *keys, const Arg *arg) {
 	Buffer cmd;
 	buffer_init(&cmd);
-	char *prefix = get_completion_prefix(vis);
+	char *prefix = get_completion_prefix(vis, text_object_filename);
 	if (prefix && buffer_printf(&cmd, VIS_COMPLETE " --file '%s'", prefix)) {
 		Filerange empty = text_range_new(0, 0);
 		insert_dialog_selection(vis, &empty, (const char*[]){ buffer_content0(&cmd), NULL });
