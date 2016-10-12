@@ -2106,9 +2106,11 @@ static const char *open_file_under_cursor(Vis *vis, const char *keys, const Arg 
 static char *get_completion_prefix(Vis *vis, Filerange (*text_object)(Text *, size_t)) {
 	View *view = vis_view(vis);
 	Text *txt = vis_text(vis);
-
-	Filerange r = text_object(txt, view_cursor_get(view)-1);
+	size_t pos = view_cursor_get(view);
+	Filerange r = text_object(txt, pos-1);
 	r = text_range_inner(txt, &r);
+	if (r.end > pos)
+		r.end = pos;
 	size_t size = text_range_size(&r);
 	if (size == 0) {
 		vis_info_show(vis, "No valid prefix found for completion");
