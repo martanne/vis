@@ -84,7 +84,7 @@ vis.ftdetect.filetypes = {
 	asm          = { ext = ".asm|.ASM|.s|.S" },
 	asp          = { ext = ".asa|.asp|.hta" },
 	autoit       = { ext = ".au3|.a3x" },
-	awk          = { ext = ".awk" },
+	awk          = { ext = ".awk", app = "awk|nawk|mawk|gawk" },
 	bash         = { ext = ".bash|.csh|.sh|.zsh", name = "%.bashrc|%.bash_profile|%.configure", app = "bash|csh|sh|zsh|ash|dash|tcsh" },
 	batch        = { ext = ".bat|.cmd" },
 	bibtex       = { ext = ".bib" },
