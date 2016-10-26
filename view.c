@@ -103,10 +103,10 @@ static const SyntaxSymbol symbols_none[] = {
 };
 
 static const SyntaxSymbol symbols_default[] = {
-	[SYNTAX_SYMBOL_SPACE]    = { "\xC2\xB7" },
-	[SYNTAX_SYMBOL_TAB]      = { "\xE2\x96\xB6" },
+	[SYNTAX_SYMBOL_SPACE]    = { "·" /* Middle Dot U+00B7 */ },
+	[SYNTAX_SYMBOL_TAB]      = { "›" /* Single Right-Pointing Angle Quotation Mark U+203A */ },
 	[SYNTAX_SYMBOL_TAB_FILL] = { " " },
-	[SYNTAX_SYMBOL_EOL]      = { "\xE2\x8F\x8E" },
+	[SYNTAX_SYMBOL_EOL]      = { "↵" /* Downwards Arrow with Corner Leftwards U+21B5 */ },
 	[SYNTAX_SYMBOL_EOF]      = { "~" },
 };
 
