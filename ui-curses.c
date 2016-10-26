@@ -91,7 +91,6 @@ typedef struct {
 	enum UiLayout layout;     /* whether windows are displayed horizontally or vertically */
 	TermKey *termkey;         /* libtermkey instance to handle keyboard input (stdin or /dev/tty) */
 	struct termios tio;       /* terminal state to restore before exiting */
-	char key[64];             /* string representation of last pressed key */
 } UiCurses;
 
 struct UiCursesWin {
@@ -1094,10 +1093,9 @@ static bool ui_haskey(Ui *ui) {
 	return c != ERR;
 }
 
-static const char *ui_getkey(Ui *ui) {
+static bool ui_getkey(Ui *ui, TermKeyKey *key) {
 	UiCurses *uic = (UiCurses*)ui;
-	TermKeyKey key;
-	TermKeyResult ret = termkey_getkey(uic->termkey, &key);
+	TermKeyResult ret = termkey_getkey(uic->termkey, key);
 
 	if (ret == TERMKEY_RES_EOF) {
 		int tty = open("/dev/tty", O_RDWR);
@@ -1119,17 +1117,13 @@ static const char *ui_getkey(Ui *ui) {
 		fd.fd = STDIN_FILENO;
 		fd.events = POLLIN;
 		if (poll(&fd, 1, termkey_get_waittime(uic->termkey)) == 0)
-			ret = termkey_getkey_force(uic->termkey, &key);
+			ret = termkey_getkey_force(uic->termkey, key);
 	}
 
-	if (ret != TERMKEY_RES_KEY)
-		return NULL;
-	termkey_strfkey(uic->termkey, uic->key, sizeof(uic->key), &key, TERMKEY_FORMAT_VIM);
-	return uic->key;
-
+	return ret == TERMKEY_RES_KEY;
 fatal:
 	ui_die_msg(ui, "Failed to re-open stdin as /dev/tty\n");
-	return NULL;
+	return false;
 }
 
 static void ui_terminal_save(Ui *ui) {

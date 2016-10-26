@@ -864,20 +864,26 @@ static void vis_keys_push(Vis *vis, const char *input, size_t pos, bool record) 
 }
 
 static const char *getkey(Vis *vis) {
-	const char *key = vis->ui->getkey(vis->ui);
-	if (!key)
+	TermKeyKey key = { 0 };
+	if (!vis->ui->getkey(vis->ui, &key))
 		return NULL;
 	vis_info_hide(vis);
 	bool use_keymap = vis->mode->id != VIS_MODE_INSERT &&
 	                  vis->mode->id != VIS_MODE_REPLACE &&
 	                  !vis->keymap_disabled;
 	vis->keymap_disabled = false;
-	if (use_keymap) {
-		const char *mapped = map_get(vis->keymap, key);
-		if (mapped)
-			return mapped;
+	if (key.type == TERMKEY_TYPE_UNICODE && use_keymap) {
+		const char *mapped = map_get(vis->keymap, key.utf8);
+		if (mapped) {
+			size_t len = strlen(mapped);
+			if (len < sizeof(key.utf8))
+				memcpy(key.utf8, mapped, len);
+		}
 	}
-	return key;
+
+	TermKey *termkey = vis->ui->termkey_get(vis->ui);
+	termkey_strfkey(termkey, vis->key, sizeof(vis->key), &key, TERMKEY_FORMAT_VIM);
+	return vis->key;
 }
 
 bool vis_signal_handler(Vis *vis, int signum, const siginfo_t *siginfo, const void *context) {

@@ -66,7 +66,7 @@ struct Ui {
 	void (*redraw)(Ui*);
 	void (*update)(Ui*);
 	void (*suspend)(Ui*);
-	const char* (*getkey)(Ui*);
+	bool (*getkey)(Ui*, TermKeyKey*);
 	bool (*haskey)(Ui*);
 	void (*terminal_save)(Ui*);
 	void (*terminal_restore)(Ui*);
