@@ -875,8 +875,8 @@ static const char *getkey(Vis *vis) {
 	if (key.type == TERMKEY_TYPE_UNICODE && use_keymap) {
 		const char *mapped = map_get(vis->keymap, key.utf8);
 		if (mapped) {
-			size_t len = strlen(mapped);
-			if (len < sizeof(key.utf8))
+			size_t len = strlen(mapped)+1;
+			if (len <= sizeof(key.utf8))
 				memcpy(key.utf8, mapped, len);
 		}
 	}
