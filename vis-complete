@@ -64,5 +64,5 @@ else
 		sort
 fi |
 	vis-menu -b |
-	cut -b $(( ${#PATTERN} + 1 ))- |
+	sed "s/^$(printf "%s" "$PATTERN" | sed 's:/:\\/:g' )//" |
 	tr -d '\n'
