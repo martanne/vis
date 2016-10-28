@@ -191,10 +191,6 @@ static size_t op_join(Vis *vis, Text *txt, OperatorContext *c) {
 		size_t line_prev_prev = text_line_prev(txt, line_prev);
 		if (line_prev_prev >= c->range.start)
 			pos = line_prev;
-	} else {
-		size_t start = text_line_finish(txt, c->range.start);
-		if (start < c->range.start)
-			c->range.start = start;
 	}
 
 	size_t len = c->arg->s ? strlen(c->arg->s) : 0;
@@ -202,18 +198,16 @@ static size_t op_join(Vis *vis, Text *txt, OperatorContext *c) {
 	do {
 		prev_pos = pos;
 		size_t end = text_line_start(txt, pos);
-		size_t prev = text_line_prev(txt, end);
-		pos = text_line_finish(txt, prev);
-		if (pos != prev)
-			pos = text_char_next(txt, pos);
-		if (pos >= c->range.start && end > pos) {
-			text_delete(txt, pos, end - pos);
-			text_insert(txt, pos, c->arg->s, len);
-			if (!mark)
-				mark = text_mark_set(txt, pos);
-		} else {
+		pos = text_line_prev(txt, end);
+		if (pos < c->range.start || end <= pos)
 			break;
-		}
+		text_delete(txt, pos, end - pos);
+		char prev, next;
+		if (text_byte_get(txt, pos-1, &prev) && !isspace((unsigned char)prev) &&
+		    text_byte_get(txt, pos, &next) && next != '\r' && next != '\n')
+			text_insert(txt, pos, c->arg->s, len);
+		if (!mark)
+			mark = text_mark_set(txt, pos);
 	} while (pos != prev_pos);
 
 	size_t newpos = text_mark_get(txt, mark);
