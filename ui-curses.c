@@ -674,7 +674,8 @@ static void ui_window_draw(UiWin *w) {
 	}
 
 	short selection_bg = win->styles[UI_STYLE_SELECTION].bg;
-	short cursor_line_bg = win->styles[UI_STYLE_CURSOR_LINE].bg;
+	short cul_bg = win->styles[UI_STYLE_CURSOR_LINE].bg;
+	attr_t cul_attr = win->styles[UI_STYLE_CURSOR_LINE].attr;
 	bool multiple_cursors = view_cursors_multiple(win->view);
 	attr_t attr = A_NORMAL;
 
@@ -699,7 +700,7 @@ static void ui_window_draw(UiWin *w) {
 					attr = style->attr | COLOR_PAIR(color_pair_get(style->fg, selection_bg));
 				prev_style = NULL;
 			} else if (cursor_line) {
-				attr = style->attr | COLOR_PAIR(color_pair_get(style->fg, cursor_line_bg));
+				attr = cul_attr | (style->attr & ~A_COLOR) | COLOR_PAIR(color_pair_get(style->fg, cul_bg));
 				prev_style = NULL;
 			} else if (style != prev_style) {
 				attr = style_to_attr(style);
