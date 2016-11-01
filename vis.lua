@@ -345,6 +345,9 @@ vis.events.win_highlight = function(win, horizon_max)
 
 	-- TODO: improve heuristic for initial style
 	local viewport = win.viewport
+	if not viewport then
+		return
+	end
 	local horizon = viewport.start < horizon_max and viewport.start or horizon_max
 	local view_start = viewport.start
 	local lex_start = viewport.start - horizon
