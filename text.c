@@ -23,27 +23,27 @@
 #include "text-motions.h"
 #include "util.h"
 
-/* Allocate buffers holding the actual file content in junks of size: */
-#define BUFFER_SIZE (1 << 20)
+/* Allocate blocks holding the actual file content in junks of size: */
+#define BLOCK_SIZE (1 << 20)
 /* Files smaller than this value are copied on load, larger ones are mmap(2)-ed
  * directely. Hence the former can be truncated, while doing so on the latter
  * results in havoc. */
-#define BUFFER_MMAP_SIZE (1 << 23)
+#define BLOCK_MMAP_SIZE (1 << 23)
 
-/* Buffer holding the file content, either readonly mmap(2)-ed from the original
+/* Block holding the file content, either readonly mmap(2)-ed from the original
  * file or heap allocated to store the modifications.
  */
-typedef struct Buffer Buffer;
-struct Buffer {
+typedef struct Block Block;
+struct Block {
 	size_t size;               /* maximal capacity */
 	size_t len;                /* current used length / insertion position */
 	char *data;                /* actual data */
 	enum {                     /* type of allocation */
 		MMAP_ORIG,         /* mmap(2)-ed from an external file */
 		MMAP,              /* mmap(2)-ed from a temporary file only known to this process */
-		MALLOC,            /* heap allocated buffer using malloc(3) */
+		MALLOC,            /* heap allocated block using malloc(3) */
 	} type;
-	Buffer *next;              /* next junk */
+	Block *next;               /* next junk */
 };
 
 /* A piece holds a reference (but doesn't itself store) a certain amount of data.
@@ -58,7 +58,7 @@ struct Piece {
 	Piece *prev, *next;     /* pointers to the logical predecessor/successor */
 	Piece *global_prev;     /* double linked list in order of allocation, */
 	Piece *global_next;     /* used to free individual pieces */
-	const char *data;       /* pointer into a Buffer holding the data */
+	const char *data;       /* pointer into a Block holding the data */
 	size_t len;             /* the length in number of bytes of the data */
 };
 
@@ -109,8 +109,8 @@ typedef struct {
 
 /* The main struct holding all information of a given file */
 struct Text {
-	Buffer *buf;            /* original file content at the time of load operation */
-	Buffer *buffers;        /* all buffers which have been allocated to hold insertion data */
+	Block *block;           /* original file content at the time of load operation */
+	Block *blocks;          /* all blocks which have been allocated to hold insertion data */
 	Piece *pieces;          /* all pieces which have been allocated, used to free them */
 	Piece *cache;           /* most recently modified piece */
 	Piece begin, end;       /* sentinel nodes which always exists but don't hold any data */
@@ -136,16 +136,16 @@ struct TextSave {                  /* used to hold context between text_save_{be
 	} type;
 };
 
-/* buffer management */
-static Buffer *buffer_alloc(Text *txt, size_t size);
-static Buffer *buffer_read(Text *txt, size_t size, int fd);
-static Buffer *buffer_mmap(Text *txt, size_t size, int fd, off_t offset);
-static void buffer_free(Buffer *buf);
-static bool buffer_capacity(Buffer *buf, size_t len);
-static const char *buffer_append(Buffer *buf, const char *data, size_t len);
-static bool buffer_insert(Buffer *buf, size_t pos, const char *data, size_t len);
-static bool buffer_delete(Buffer *buf, size_t pos, size_t len);
-static const char *buffer_store(Text *txt, const char *data, size_t len);
+/* block management */
+static Block *block_alloc(Text*, size_t size);
+static Block *block_read(Text*, size_t size, int fd);
+static Block *block_mmap(Text*, size_t size, int fd, off_t offset);
+static void block_free(Block*);
+static bool block_capacity(Block*, size_t len);
+static const char *block_append(Block*, const char *data, size_t len);
+static bool block_insert(Block*, size_t pos, const char *data, size_t len);
+static bool block_delete(Block*, size_t pos, size_t len);
+static const char *block_store(Text*, const char *data, size_t len);
 /* cache layer */
 static void cache_piece(Text *txt, Piece *p);
 static bool cache_contains(Text *txt, Piece *p);
@@ -188,137 +188,137 @@ static ssize_t write_all(int fd, const char *buf, size_t count) {
 	return count - rem;
 }
 
-/* allocate a new buffer of MAX(size, BUFFER_SIZE) bytes */
-static Buffer *buffer_alloc(Text *txt, size_t size) {
-	Buffer *buf = calloc(1, sizeof(Buffer));
-	if (!buf)
+/* allocate a new block of MAX(size, BLOCK_SIZE) bytes */
+static Block *block_alloc(Text *txt, size_t size) {
+	Block *blk = calloc(1, sizeof(Block));
+	if (!blk)
 		return NULL;
-	if (BUFFER_SIZE > size)
-		size = BUFFER_SIZE;
-	if (!(buf->data = malloc(size))) {
-		free(buf);
+	if (BLOCK_SIZE > size)
+		size = BLOCK_SIZE;
+	if (!(blk->data = malloc(size))) {
+		free(blk);
 		return NULL;
 	}
-	buf->type = MALLOC;
-	buf->size = size;
-	buf->next = txt->buffers;
-	txt->buffers = buf;
-	return buf;
+	blk->type = MALLOC;
+	blk->size = size;
+	blk->next = txt->blocks;
+	txt->blocks = blk;
+	return blk;
 }
 
-static Buffer *buffer_read(Text *txt, size_t size, int fd) {
-	Buffer *buf = buffer_alloc(txt, size);
-	if (!buf)
+static Block *block_read(Text *txt, size_t size, int fd) {
+	Block *blk = block_alloc(txt, size);
+	if (!blk)
 		return NULL;
 	while (size > 0) {
 		char data[4096];
 		ssize_t len = read(fd, data, MIN(sizeof(data), size));
 		if (len == -1) {
-			txt->buffers = buf->next;
-			buffer_free(buf);
+			txt->blocks = blk->next;
+			block_free(blk);
 			return NULL;
 		} else if (len == 0) {
 			break;
 		} else {
-			buffer_append(buf, data, len);
+			block_append(blk, data, len);
 			size -= len;
 		}
 	}
-	return buf;
+	return blk;
 }
 
-static Buffer *buffer_mmap(Text *txt, size_t size, int fd, off_t offset) {
-	Buffer *buf = calloc(1, sizeof(Buffer));
-	if (!buf)
+static Block *block_mmap(Text *txt, size_t size, int fd, off_t offset) {
+	Block *blk = calloc(1, sizeof(Block));
+	if (!blk)
 		return NULL;
 	if (size) {
-		buf->data = mmap(NULL, size, PROT_READ, MAP_SHARED, fd, offset);
-		if (buf->data == MAP_FAILED) {
-			free(buf);
+		blk->data = mmap(NULL, size, PROT_READ, MAP_SHARED, fd, offset);
+		if (blk->data == MAP_FAILED) {
+			free(blk);
 			return NULL;
 		}
 	}
-	buf->type = MMAP_ORIG;
-	buf->size = size;
-	buf->len = size;
-	buf->next = txt->buffers;
-	txt->buffers = buf;
-	return buf;
+	blk->type = MMAP_ORIG;
+	blk->size = size;
+	blk->len = size;
+	blk->next = txt->blocks;
+	txt->blocks = blk;
+	return blk;
 }
 
-static void buffer_free(Buffer *buf) {
-	if (!buf)
+static void block_free(Block *blk) {
+	if (!blk)
 		return;
-	if (buf->type == MALLOC)
-		free(buf->data);
-	else if ((buf->type == MMAP_ORIG || buf->type == MMAP) && buf->data)
-		munmap(buf->data, buf->size);
-	free(buf);
+	if (blk->type == MALLOC)
+		free(blk->data);
+	else if ((blk->type == MMAP_ORIG || blk->type == MMAP) && blk->data)
+		munmap(blk->data, blk->size);
+	free(blk);
 }
 
-/* check whether buffer has enough free space to store len bytes */
-static bool buffer_capacity(Buffer *buf, size_t len) {
-	return buf->size - buf->len >= len;
+/* check whether block has enough free space to store len bytes */
+static bool block_capacity(Block *blk, size_t len) {
+	return blk->size - blk->len >= len;
 }
 
-/* append data to buffer, assumes there is enough space available */
-static const char *buffer_append(Buffer *buf, const char *data, size_t len) {
-	char *dest = memcpy(buf->data + buf->len, data, len);
-	buf->len += len;
+/* append data to block, assumes there is enough space available */
+static const char *block_append(Block *blk, const char *data, size_t len) {
+	char *dest = memcpy(blk->data + blk->len, data, len);
+	blk->len += len;
 	return dest;
 }
 
-/* stores the given data in a buffer, allocates a new one if necessary. returns
+/* stores the given data in a block, allocates a new one if necessary. returns
  * a pointer to the storage location or NULL if allocation failed. */
-static const char *buffer_store(Text *txt, const char *data, size_t len) {
-	Buffer *buf = txt->buffers;
-	if ((!buf || !buffer_capacity(buf, len)) && !(buf = buffer_alloc(txt, len)))
+static const char *block_store(Text *txt, const char *data, size_t len) {
+	Block *blk = txt->blocks;
+	if ((!blk || !block_capacity(blk, len)) && !(blk = block_alloc(txt, len)))
 		return NULL;
-	return buffer_append(buf, data, len);
+	return block_append(blk, data, len);
 }
 
-/* insert data into buffer at an arbitrary position, this should only be used with
+/* insert data into block at an arbitrary position, this should only be used with
  * data of the most recently created piece. */
-static bool buffer_insert(Buffer *buf, size_t pos, const char *data, size_t len) {
-	if (pos > buf->len || !buffer_capacity(buf, len))
+static bool block_insert(Block *blk, size_t pos, const char *data, size_t len) {
+	if (pos > blk->len || !block_capacity(blk, len))
 		return false;
-	if (buf->len == pos)
-		return buffer_append(buf, data, len);
-	char *insert = buf->data + pos;
-	memmove(insert + len, insert, buf->len - pos);
+	if (blk->len == pos)
+		return block_append(blk, data, len);
+	char *insert = blk->data + pos;
+	memmove(insert + len, insert, blk->len - pos);
 	memcpy(insert, data, len);
-	buf->len += len;
+	blk->len += len;
 	return true;
 }
 
-/* delete data from a buffer at an arbitrary position, this should only be used with
+/* delete data from a block at an arbitrary position, this should only be used with
  * data of the most recently created piece. */
-static bool buffer_delete(Buffer *buf, size_t pos, size_t len) {
-	if (pos + len > buf->len)
+static bool block_delete(Block *blk, size_t pos, size_t len) {
+	if (pos + len > blk->len)
 		return false;
-	if (buf->len == pos) {
-		buf->len -= len;
+	if (blk->len == pos) {
+		blk->len -= len;
 		return true;
 	}
-	char *delete = buf->data + pos;
-	memmove(delete, delete + len, buf->len - pos - len);
-	buf->len -= len;
+	char *delete = blk->data + pos;
+	memmove(delete, delete + len, blk->len - pos - len);
+	blk->len -= len;
 	return true;
 }
 
 /* cache the given piece if it is the most recently changed one */
 static void cache_piece(Text *txt, Piece *p) {
-	Buffer *buf = txt->buffers;
-	if (!buf || p->data < buf->data || p->data + p->len != buf->data + buf->len)
+	Block *blk = txt->blocks;
+	if (!blk || p->data < blk->data || p->data + p->len != blk->data + blk->len)
 		return;
 	txt->cache = p;
 }
 
 /* check whether the given piece was the most recently modified one */
 static bool cache_contains(Text *txt, Piece *p) {
-	Buffer *buf = txt->buffers;
+	Block *blk = txt->blocks;
 	Revision *rev = txt->current_revision;
-	if (!buf || !txt->cache || txt->cache != p || !rev || !rev->change)
+	if (!blk || !txt->cache || txt->cache != p || !rev || !rev->change)
 		return false;
 
 	Piece *start = rev->change->new.start;
@@ -331,7 +331,7 @@ static bool cache_contains(Text *txt, Piece *p) {
 			break;
 	}
 
-	return found && p->data + p->len == buf->data + buf->len;
+	return found && p->data + p->len == blk->data + blk->len;
 }
 
 /* try to insert a junk of data at a given piece offset. the insertion is only
@@ -340,9 +340,9 @@ static bool cache_contains(Text *txt, Piece *p) {
 static bool cache_insert(Text *txt, Piece *p, size_t off, const char *data, size_t len) {
 	if (!cache_contains(txt, p))
 		return false;
-	Buffer *buf = txt->buffers;
-	size_t bufpos = p->data + off - buf->data;
-	if (!buffer_insert(buf, bufpos, data, len))
+	Block *blk = txt->blocks;
+	size_t bufpos = p->data + off - blk->data;
+	if (!block_insert(blk, bufpos, data, len))
 		return false;
 	p->len += len;
 	txt->current_revision->change->new.len += len;
@@ -357,9 +357,9 @@ static bool cache_insert(Text *txt, Piece *p, size_t off, const char *data, size
 static bool cache_delete(Text *txt, Piece *p, size_t off, size_t len) {
 	if (!cache_contains(txt, p))
 		return false;
-	Buffer *buf = txt->buffers;
-	size_t bufpos = p->data + off - buf->data;
-	if (off + len > p->len || !buffer_delete(buf, bufpos, len))
+	Block *blk = txt->blocks;
+	size_t bufpos = p->data + off - blk->data;
+	if (off + len > p->len || !block_delete(blk, bufpos, len))
 		return false;
 	p->len -= len;
 	txt->current_revision->change->new.len -= len;
@@ -602,7 +602,7 @@ bool text_insert(Text *txt, size_t pos, const char *data, size_t len) {
 	if (!c)
 		return false;
 
-	if (!(data = buffer_store(txt, data, len)))
+	if (!(data = block_store(txt, data, len)))
 		return false;
 
 	Piece *new = NULL;
@@ -932,13 +932,13 @@ static bool text_save_begin_inplace(TextSave *ctx) {
 	if (fstat(ctx->fd, &meta) == -1)
 		goto err;
 	if (meta.st_dev == txt->info.st_dev && meta.st_ino == txt->info.st_ino &&
-	    txt->buf && txt->buf->type == MMAP_ORIG && txt->buf->size) {
+	    txt->block && txt->block->type == MMAP_ORIG && txt->block->size) {
 		/* The file we are going to overwrite is currently mmap-ed from
-		 * text_load, therefore we copy the mmap-ed buffer to a temporary
+		 * text_load, therefore we copy the mmap-ed block to a temporary
 		 * file and remap it at the same position such that all pointers
 		 * from the various pieces are still valid.
 		 */
-		size_t size = txt->buf->size;
+		size_t size = txt->block->size;
 		char tmpname[32] = "/tmp/vis-XXXXXX";
 		mode_t mask = umask(S_IXUSR | S_IRWXG | S_IRWXO);
 		newfd = mkstemp(tmpname);
@@ -947,16 +947,16 @@ static bool text_save_begin_inplace(TextSave *ctx) {
 			goto err;
 		if (unlink(tmpname) == -1)
 			goto err;
-		ssize_t written = write_all(newfd, txt->buf->data, size);
+		ssize_t written = write_all(newfd, txt->block->data, size);
 		if (written == -1 || (size_t)written != size)
 			goto err;
-		if (munmap(txt->buf->data, size) == -1)
+		if (munmap(txt->block->data, size) == -1)
 			goto err;
 
-		void *data = mmap(txt->buf->data, size, PROT_READ, MAP_SHARED, newfd, 0);
+		void *data = mmap(txt->block->data, size, PROT_READ, MAP_SHARED, newfd, 0);
 		if (data == MAP_FAILED)
 			goto err;
-		if (data != txt->buf->data) {
+		if (data != txt->block->data) {
 			munmap(data, size);
 			goto err;
 		}
@@ -964,8 +964,8 @@ static bool text_save_begin_inplace(TextSave *ctx) {
 		newfd = -1;
 		if (close_failed)
 			goto err;
-		txt->buf->data = data;
-		txt->buf->type = MMAP;
+		txt->block->data = data;
+		txt->block->type = MMAP;
 		newfd = -1;
 	}
 	/* overwrite the exisiting file content, if somehting goes wrong
@@ -1132,19 +1132,19 @@ Text *text_load(const char *filename) {
 		}
 		// XXX: use lseek(fd, 0, SEEK_END); instead?
 		size_t size = txt->info.st_size;
-		if (size < BUFFER_MMAP_SIZE)
-			txt->buf = buffer_read(txt, size, fd);
+		if (size < BLOCK_MMAP_SIZE)
+			txt->block = block_read(txt, size, fd);
 		else
-			txt->buf = buffer_mmap(txt, size, fd, 0);
-		if (!txt->buf)
+			txt->block = block_mmap(txt, size, fd, 0);
+		if (!txt->block)
 			goto out;
 		Piece *p = piece_alloc(txt);
 		if (!p)
 			goto out;
 		piece_init(&txt->begin, NULL, p, NULL, 0);
-		piece_init(p, &txt->begin, &txt->end, txt->buf->data, txt->buf->len);
+		piece_init(p, &txt->begin, &txt->end, txt->block->data, txt->block->len);
 		piece_init(&txt->end, p, NULL, NULL, 0);
-		txt->size = txt->buf->len;
+		txt->size = txt->block->len;
 	}
 	/* write an empty revision */
 	change_alloc(txt, EPOS);
@@ -1296,9 +1296,9 @@ void text_free(Text *txt) {
 		piece_free(p);
 	}
 
-	for (Buffer *next, *buf = txt->buffers; buf; buf = next) {
-		next = buf->next;
-		buffer_free(buf);
+	for (Block *next, *blk = txt->blocks; blk; blk = next) {
+		next = blk->next;
+		block_free(blk);
 	}
 
 	free(txt);
@@ -1309,9 +1309,9 @@ bool text_modified(Text *txt) {
 }
 
 bool text_sigbus(Text *txt, const char *addr) {
-	for (Buffer *buf = txt->buffers; buf; buf = buf->next) {
-		if ((buf->type == MMAP_ORIG || buf->type == MMAP) &&
-		    buf->data <= addr && addr < buf->data + buf->size)
+	for (Block *blk = txt->blocks; blk; blk = blk->next) {
+		if ((blk->type == MMAP_ORIG || blk->type == MMAP) &&
+		    blk->data <= addr && addr < blk->data + blk->size)
 			return true;
 	}
 	return false;
@@ -1320,9 +1320,9 @@ bool text_sigbus(Text *txt, const char *addr) {
 enum TextNewLine text_newline_type(Text *txt){
 	if (!txt->newlines) {
 		txt->newlines = TEXT_NEWLINE_NL; /* default to UNIX style \n new lines */
-		const char *start = txt->buf ? txt->buf->data : NULL;
+		const char *start = txt->block ? txt->block->data : NULL;
 		if (start) {
-			const char *nl = memchr(start, '\n', txt->buf->len);
+			const char *nl = memchr(start, '\n', txt->block->len);
 			if (nl > start && nl[-1] == '\r')
 				txt->newlines = TEXT_NEWLINE_CRNL;
 		} else {
