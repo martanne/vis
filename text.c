@@ -190,7 +190,7 @@ static ssize_t write_all(int fd, const char *buf, size_t count) {
 
 /* allocate a new block of MAX(size, BLOCK_SIZE) bytes */
 static Block *block_alloc(Text *txt, size_t size) {
-	Block *blk = calloc(1, sizeof(Block));
+	Block *blk = calloc(1, sizeof *blk);
 	if (!blk)
 		return NULL;
 	if (BLOCK_SIZE > size)
@@ -228,7 +228,7 @@ static Block *block_read(Text *txt, size_t size, int fd) {
 }
 
 static Block *block_mmap(Text *txt, size_t size, int fd, off_t offset) {
-	Block *blk = calloc(1, sizeof(Block));
+	Block *blk = calloc(1, sizeof *blk);
 	if (!blk)
 		return NULL;
 	if (size) {
@@ -410,7 +410,7 @@ static void span_swap(Text *txt, Span *old, Span *new) {
 /* Allocate a new revision and place it in the revision graph.
  * All further changes will be associated with this revision. */
 static Revision *revision_alloc(Text *txt) {
-	Revision *rev = calloc(1, sizeof(Revision));
+	Revision *rev = calloc(1, sizeof *rev);
 	if (!rev)
 		return NULL;
 	rev->time = time(NULL);
@@ -450,7 +450,7 @@ static void revision_free(Revision *rev) {
 }
 
 static Piece *piece_alloc(Text *txt) {
-	Piece *p = calloc(1, sizeof(Piece));
+	Piece *p = calloc(1, sizeof *p);
 	if (!p)
 		return NULL;
 	p->text = txt;
@@ -534,7 +534,7 @@ static Change *change_alloc(Text *txt, size_t pos) {
 		if (!rev)
 			return NULL;
 	}
-	Change *c = calloc(1, sizeof(Change));
+	Change *c = calloc(1, sizeof *c);
 	if (!c)
 		return NULL;
 	c->pos = pos;
@@ -1114,7 +1114,7 @@ ssize_t text_write_range(Text *txt, Filerange *range, int fd) {
 /* load the given file as starting point for further editing operations.
  * to start with an empty document, pass NULL as filename. */
 Text *text_load(const char *filename) {
-	Text *txt = calloc(1, sizeof(Text));
+	Text *txt = calloc(1, sizeof *txt);
 	if (!txt)
 		return NULL;
 	int fd = -1;
