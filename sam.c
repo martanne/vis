@@ -266,14 +266,14 @@ static void skip_spaces(const char **s) {
 		(*s)++;
 }
 
-static char *parse_until(const char **s, const char *until, const char *escchars) {
+static char *parse_until(const char **s, const char *until, const char *escchars, int type){
 	Buffer buf;
 	buffer_init(&buf);
 	size_t len = strlen(until);
 	bool escaped = false;
 
 	for (; **s && (!memchr(until, **s, len) || escaped); (*s)++) {
-		if (!escaped && **s == '\\') {
+		if (type != CMD_SHELL && !escaped && **s == '\\') {
 			escaped = true;
 			continue;
 		}
@@ -282,25 +282,19 @@ static char *parse_until(const char **s, const char *until, const char *escchars
 
 		if (escaped) {
 			escaped = false;
-			switch (c) {
-			case '\n':
+			if (c == '\n')
 				continue;
-			case 'n':
+			if (c == 'n') {
 				c = '\n';
-				break;
-			case 't':
+			} else if (c == 't') {
 				c = '\t';
-				break;
-			case '\\':
-				break;
-			default:
-			{
+			} else if (type != CMD_REGEX && c == '\\') {
+				// ignore one of the back slashes
+			} else {
 				bool delim = memchr(until, c, len);
 				bool esc = escchars && memchr(escchars, c, strlen(escchars));
 				if (!delim && !esc)
 					buffer_append(&buf, "\\", 1);
-				break;
-			}
 			}
 		}
 
@@ -316,21 +310,21 @@ static char *parse_until(const char **s, const char *until, const char *escchars
 	return buf.data;
 }
 
-static char *parse_delimited_text(const char **s) {
+static char *parse_delimited(const char **s, int type) {
 	char delim[2] = { **s, '\0' };
 	if (!delim[0])
 		return NULL;
 	(*s)++;
-	char *text = parse_until(s, delim, NULL);
+	char *chunk = parse_until(s, delim, NULL, type);
 	if (**s == delim[0])
 		(*s)++;
-	return text;
+	return chunk;
 }
 
 static char *parse_text(const char **s) {
 	skip_spaces(s);
 	if (**s != '\n')
-		return parse_delimited_text(s);
+		return parse_delimited(s, CMD_TEXT);
 
 	Buffer buf;
 	buffer_init(&buf);
@@ -351,16 +345,16 @@ static char *parse_text(const char **s) {
 
 static char *parse_shellcmd(const char **s) {
 	skip_spaces(s);
-	return parse_until(s, "\n", NULL);
+	return parse_until(s, "\n", NULL, false);
 }
 
 static void parse_argv(const char **s, const char *argv[], size_t maxarg) {
 	for (size_t i = 0; i < maxarg; i++) {
 		skip_spaces(s);
 		if (**s == '"' || **s == '\'')
-			argv[i] = parse_delimited_text(s);
+			argv[i] = parse_delimited(s, CMD_ARGV);
 		else
-			argv[i] = parse_until(s, " \t\n", "\'\"");
+			argv[i] = parse_until(s, " \t\n", "\'\"", CMD_ARGV);
 	}
 }
 
@@ -379,7 +373,7 @@ static char *parse_cmdname(const char **s) {
 }
 
 static Regex *parse_regex(Vis *vis, const char **s) {
-	char *pattern = parse_delimited_text(s);
+	char *pattern = parse_delimited(s, CMD_REGEX);
 	if (!pattern)
 		return NULL;
 	Regex *regex = vis_regex(vis, *pattern ? pattern : NULL);
