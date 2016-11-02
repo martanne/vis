@@ -560,8 +560,7 @@ static Command *command_parse(Vis *vis, const char **s, int level, enum SamError
 	if (strcmp(cmd->argv[0], "{") == 0) {
 		Command *prev = NULL, *next;
 		do {
-			skip_spaces(s);
-			if (**s == '\n')
+			while (**s == ' ' || **s == '\t' || **s == '\n')
 				(*s)++;
 			next = command_parse(vis, s, level+1, err);
 			if (prev)
