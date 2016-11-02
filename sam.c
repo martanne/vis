@@ -359,11 +359,11 @@ static void parse_argv(const char **s, const char *argv[], size_t maxarg) {
 }
 
 static char *parse_cmdname(const char **s) {
-	skip_spaces(s);
 	Buffer buf;
 	buffer_init(&buf);
 
-	while (**s && **s != ' ' && (!ispunct((unsigned char)**s) || **s == '-'))
+	skip_spaces(s);
+	while (**s && !isspace((unsigned char)**s) && (!ispunct((unsigned char)**s) || **s == '-'))
 		buffer_append(&buf, (*s)++, 1);
 
 	if (buffer_length(&buf))
