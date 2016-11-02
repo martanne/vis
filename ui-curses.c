@@ -695,7 +695,7 @@ static void ui_window_draw(UiWin *w) {
 				prev_style = NULL;
 			} else if (l->cells[x].selected) {
 				if (style->fg == selection_bg)
-					attr |= A_REVERSE;
+					attr = style->attr | A_REVERSE;
 				else
 					attr = style->attr | COLOR_PAIR(color_pair_get(style->fg, selection_bg));
 				prev_style = NULL;
