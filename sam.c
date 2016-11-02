@@ -616,7 +616,7 @@ static Command *command_parse(Vis *vis, const char **s, int level, enum SamError
 
 	if (cmddef->flags & CMD_CMD) {
 		skip_spaces(s);
-		if (cmddef->defcmd && (**s == '\n' || **s == '\0')) {
+		if (cmddef->defcmd && (**s == '\n' || **s == '}' || **s == '\0')) {
 			if (**s == '\n')
 				(*s)++;
 			if (!(cmd->cmd = command_new(cmddef->defcmd)))
