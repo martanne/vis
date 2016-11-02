@@ -827,8 +827,11 @@ static bool cmd_insert(Vis *vis, Win *win, Command *cmd, const char *argv[], Cur
 		return false;
 	size_t len = strlen(argv[1]);
 	bool ret = text_insert(win->file->text, range->start, argv[1], len);
-	if (ret)
+	if (ret) {
 		*range = text_range_new(range->start, range->start + len);
+		if (cur)
+			view_cursors_to(cur, range->end);
+	}
 	return ret;
 }
 
@@ -837,8 +840,11 @@ static bool cmd_append(Vis *vis, Win *win, Command *cmd, const char *argv[], Cur
 		return false;
 	size_t len = strlen(argv[1]);
 	bool ret = text_insert(win->file->text, range->end, argv[1], len);
-	if (ret)
+	if (ret) {
 		*range = text_range_new(range->end, range->end + len);
+		if (cur)
+			view_cursors_to(cur, range->end);
+	}
 	return ret;
 }
 
@@ -849,8 +855,11 @@ static bool cmd_change(Vis *vis, Win *win, Command *cmd, const char *argv[], Cur
 	size_t len = strlen(argv[1]);
 	bool ret = text_delete(txt, range->start, text_range_size(range)) &&
 	      text_insert(txt, range->start, argv[1], len);
-	if (ret)
+	if (ret) {
 		*range = text_range_new(range->start, range->start + len);
+		if (cur)
+			view_cursors_to(cur, range->end);
+	}
 	return ret;
 }
 
@@ -858,8 +867,11 @@ static bool cmd_delete(Vis *vis, Win *win, Command *cmd, const char *argv[], Cur
 	if (!win)
 		return false;
 	bool ret = text_delete(win->file->text, range->start, text_range_size(range));
-	if (ret)
+	if (ret) {
 		*range = text_range_new(range->start, range->start);
+		if (cur)
+			view_cursors_to(cur, range->end);
+	}
 	return ret;
 }
 
@@ -870,7 +882,8 @@ static bool cmd_guard(Vis *vis, Win *win, Command *cmd, const char *argv[], Curs
 		text_range_size(range), cmd->regex, 0, NULL, 0);
 	if (match ^ (argv[0][0] == 'v'))
 		return sam_execute(vis, win, cmd->cmd, cur, range);
-	view_cursors_dispose(cur);
+	if (cur && !view_cursors_dispose(cur))
+		view_cursors_selection_clear(cur);
 	return true;
 }
 
@@ -878,6 +891,7 @@ static bool cmd_extract(Vis *vis, Win *win, Command *cmd, const char *argv[], Cu
 	if (!win)
 		return false;
 	bool ret = true;
+	size_t pos = EPOS;
 	Text *txt = win->file->text;
 
 	if (cmd->regex) {
@@ -918,8 +932,10 @@ static bool cmd_extract(Vis *vis, Win *win, Command *cmd, const char *argv[], Cu
 				Mark mark_end = text_mark_set(txt, end);
 				ret &= sam_execute(vis, win, cmd->cmd, NULL, &r);
 				last_start = start = text_mark_get(txt, mark_start);
-				if (start == EPOS && last_start != r.end)
+				if (start == EPOS)
 					last_start = start = r.end;
+				if (ret && pos == EPOS)
+					pos = start;
 				end = text_mark_get(txt, mark_end);
 				if (start == EPOS || end == EPOS) {
 					ret = false;
@@ -943,6 +959,8 @@ static bool cmd_extract(Vis *vis, Win *win, Command *cmd, const char *argv[], Cu
 			start = text_mark_get(txt, mark_start);
 			if (start == EPOS)
 				start = r.end;
+			if (ret && pos == EPOS)
+				pos = start;
 			end = text_mark_get(txt, mark_end);
 			if (end == EPOS) {
 				ret = false;
@@ -951,7 +969,10 @@ static bool cmd_extract(Vis *vis, Win *win, Command *cmd, const char *argv[], Cu
 		}
 	}
 
-	view_cursors_dispose(cur);
+	if (cur && !view_cursors_dispose(cur)) {
+		view_cursors_selection_clear(cur);
+		view_cursors_to(cur, pos != EPOS ? pos : range->start);
+	}
 	return ret;
 }
 
