@@ -1,0 +1,15 @@
+static int addi(int a, int b) {
+	return a+b;
+}
+
+static long addl(long a, long b) {
+	return a+b;
+}
+
+static int muli(int a, int b) {
+	return a*b;
+}
+
+static long mull(long a, long b) {
+	return a*b;
+}
