@@ -1,0 +1,43 @@
+environment:
+  global:
+    CYG_MIRROR: http://cygwin.mirror.constant.com
+
+  matrix:
+    - CYG_ARCH: cygwin
+      CYG_ROOT: C:\cygwin
+      CYG_SETUP: C:\cygwin\setup-x86.exe
+    - CYG_ARCH: cygwin64
+      CYG_ROOT: C:\cygwin64
+      CYG_SETUP: C:\cygwin64\setup-x86_64.exe
+
+clone_depth: 1
+
+init:
+  # do not convert new lines to CRLF
+  - git config --global core.autocrlf input
+  # print processor and OS architecture
+  - wmic computersystem get systemtype
+  - wmic OS get OSArchitecture
+
+cache:
+  - '%APPVEYOR_BUILD_FOLDER%\dependency\sources'
+  - '%CYG_ROOT%\var\cache\setup'
+
+install:
+  - '%CYG_SETUP% --quiet-mode --no-shortcuts --packages patch,lua,lua-devel,lua-lpeg,libncurses-devel'
+  - '%CYG_ROOT%\bin\cygcheck --check-setup --dump-only'
+
+before_build:
+  - '%CYG_ROOT%\bin\bash -lc "cd $APPVEYOR_BUILD_FOLDER && make clean"'
+
+build_script:
+  - '%CYG_ROOT%\bin\bash -lc "cd $APPVEYOR_BUILD_FOLDER && make local && file vis"'
+
+test_script:
+  - '%CYG_ROOT%\bin\bash -lc "cd $APPVEYOR_BUILD_FOLDER && make test"'
+
+after_test:
+  - 7z a -y vis-%CYG_ARCH%.zip vis.exe lexers *.lua
+
+artifacts:
+  - path: vis-%CYG_ARCH%.zip
