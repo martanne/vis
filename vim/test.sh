@@ -1,5 +1,10 @@
 #!/bin/sh
 
+[ ! -z "$CI" ] && {
+	echo "Skipping tests in CI environment"
+	exit 0
+}
+
 [ -z "$VIS" ] && VIS="../../vis"
 [ -z "$VIM" ] && VIM="vim"
 
