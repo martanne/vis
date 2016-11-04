@@ -895,9 +895,11 @@ static bool cmd_extract(Vis *vis, Win *win, Command *cmd, const char *argv[], Cu
 	Text *txt = win->file->text;
 
 	if (cmd->regex) {
+		bool trailing_match = false;
 		size_t start = range->start, end = range->end, last_start = EPOS;
 		RegexMatch match[1];
-		while (start < end) {
+		while (start < end || trailing_match) {
+			trailing_match = false;
 			bool found = text_search_range_forward(txt, start,
 				end - start, cmd->regex, 1, match,
 				start > range->start ? REG_NOTBOL : 0) == 0;
@@ -921,6 +923,8 @@ static bool cmd_extract(Vis *vis, Win *win, Command *cmd, const char *argv[], Cu
 						break;
 				}
 				start = match[0].end;
+				if (start == end)
+					trailing_match = true;
 			} else {
 				if (argv[0][0] == 'y')
 					r = text_range_new(start, end);
