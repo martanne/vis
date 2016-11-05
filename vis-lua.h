@@ -13,8 +13,10 @@ typedef struct lua_State lua_State;
 
 /* add a directory to consider when loading lua files */
 bool vis_lua_path_add(Vis*, const char *path);
-/* get semi colon separated list of paths to load lua files */
-const char *vis_lua_paths_get(Vis*);
+/* get semicolon separated list of paths to load lua files
+ * (*lpath = package.path) and Lua C modules (*cpath = package.cpath)
+ * both these pointers need to be free(3)-ed by the caller */
+bool vis_lua_paths_get(Vis*, char **lpath, char **cpath);
 
 /* various event handlers, triggered by the vis core */
 void vis_lua_init(Vis*);

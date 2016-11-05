@@ -653,18 +653,23 @@ static bool cmd_help(Vis *vis, Win *win, Command *cmd, const char *argv[], Curso
 		"(prefix with C-, S-, and M- for Ctrl, Shift and Alt respectively)\n\n");
 	print_symbolic_keys(vis, txt);
 
-	const char *paths = vis_lua_paths_get(vis);
-	if (paths) {
-		char *copy = strdup(paths);
-		text_appendf(txt, "\n Lua paths used to load runtime files "
-			"(? will be replaced by filename):\n\n");
-		for (char *elem = copy, *next; elem; elem = next) {
-			if ((next = strstr(elem, ";")))
-				*next++ = '\0';
-			if (*elem)
-				text_appendf(txt, "  %s\n", elem);
+	char *paths[] = { NULL, NULL };
+	char *paths_description[] = {
+		"Lua paths used to load runtime files (? will be replaced by filename):",
+		"Lua paths used to load C libraries (? will be replaced by filename):",
+	};
+
+	if (vis_lua_paths_get(vis, &paths[0], &paths[1])) {
+		for (size_t i = 0; i < LENGTH(paths); i++) {
+			text_appendf(txt, "\n %s\n\n", paths_description[i]);
+			for (char *elem = paths[i], *next; elem; elem = next) {
+				if ((next = strstr(elem, ";")))
+					*next++ = '\0';
+				if (*elem)
+					text_appendf(txt, "  %s\n", elem);
+			}
+			free(paths[i]);
 		}
-		free (copy);
 	}
 
 	text_save(txt, NULL);

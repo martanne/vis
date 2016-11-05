@@ -123,7 +123,7 @@ static void window_status_update(Vis *vis, Win *win) {
 #if !CONFIG_LUA
 
 bool vis_lua_path_add(Vis *vis, const char *path) { return true; }
-const char *vis_lua_paths_get(Vis *vis) { return NULL; }
+bool vis_lua_paths_get(Vis *vis, const char **lpath, const char **cpath) { return false; }
 void vis_lua_init(Vis *vis) { }
 void vis_lua_start(Vis *vis) { }
 void vis_lua_quit(Vis *vis) { }
@@ -1343,13 +1343,19 @@ bool vis_lua_path_add(Vis *vis, const char *path) {
 	return true;
 }
 
-const char *vis_lua_paths_get(Vis *vis) {
+bool vis_lua_paths_get(Vis *vis, char **lpath, char **cpath) {
 	lua_State *L = vis->lua;
 	if (!L)
-		return NULL;
+		return false;
+	const char *s;
 	lua_getglobal(L, "package");
 	lua_getfield(L, -1, "path");
-	return lua_tostring(L, -1);
+	s = lua_tostring(L, -1);
+	*lpath = s ? strdup(s) : NULL;
+	lua_getfield(L, -2, "cpath");
+	s = lua_tostring(L, -1);
+	*cpath = s ? strdup(s) : NULL;
+	return true;
 }
 
 static bool package_exist(Vis *vis, lua_State *L, const char *name) {
