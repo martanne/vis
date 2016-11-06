@@ -615,7 +615,7 @@ static size_t cursor_set(Cursor *cursor, Line *line, int col) {
 
 bool view_viewport_down(View *view, int n) {
 	Line *line;
-	if (view->end == text_size(view->text))
+	if (view->end >= text_size(view->text))
 		return false;
 	if (n >= view->height) {
 		view->start = view->end;
