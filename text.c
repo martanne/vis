@@ -1464,9 +1464,15 @@ bool text_iterator_codepoint_prev(Iterator *it, char *c) {
 	return false;
 }
 
-bool text_iterator_char_next(Iterator *it, char *c) {
-	if (!text_iterator_codepoint_next(it, c))
+bool text_iterator_char_next(Iterator *it, char *ret) {
+	char c;
+	if (!ret)
+		ret = &c;
+	bool cr = text_iterator_byte_get(it, &c) && c == '\r';
+	if (!text_iterator_codepoint_next(it, ret))
 		return false;
+	if (cr && *ret == '\n')
+		return text_iterator_byte_next(it, ret);
 	mbstate_t ps = { 0 };
 	for (;;) {
 		char buf[MB_CUR_MAX];
@@ -1483,16 +1489,25 @@ bool text_iterator_char_next(Iterator *it, char *c) {
 			int width = wcwidth(wc);
 			if (width != 0)
 				return true;
-			if (!text_iterator_codepoint_next(it, c))
+			if (!text_iterator_codepoint_next(it, ret))
 				return false;
 		}
 	}
 	return true;
 }
 
-bool text_iterator_char_prev(Iterator *it, char *c) {
-	if (!text_iterator_codepoint_prev(it, c))
+bool text_iterator_char_prev(Iterator *it, char *ret) {
+	char c;
+	if (!ret)
+		ret = &c;
+	if (!text_iterator_codepoint_prev(it, ret))
 		return false;
+	if (*ret == '\n') {
+		if (text_iterator_byte_prev(it, &c) && c != '\r')
+			text_iterator_byte_next(it, NULL);
+		return true;
+	}
+
 	for (;;) {
 		char buf[MB_CUR_MAX];
 		size_t len = text_bytes_get(it->piece->text, it->pos, sizeof buf, buf);
@@ -1509,7 +1524,7 @@ bool text_iterator_char_prev(Iterator *it, char *c) {
 			int width = wcwidth(wc);
 			if (width != 0)
 				return true;
-			if (!text_iterator_codepoint_prev(it, c))
+			if (!text_iterator_codepoint_prev(it, ret))
 				return false;
 		}
 	}
