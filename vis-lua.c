@@ -53,8 +53,8 @@ static void window_status_update(Vis *vis, Win *win) {
 	         vis_macro_recording(vis) ? " @": "");
 	left_count++;
 
-	if (text_newline_type(txt) != TEXT_NEWLINE_LF)
-		strcpy(right_parts[right_count++], "␊");
+	if (text_newline_type(txt) == TEXT_NEWLINE_CRLF)
+		strcpy(right_parts[right_count++], "␍␊");
 
 	int cursor_count = view_cursors_count(view);
 	if (cursor_count > 1) {
