@@ -783,6 +783,8 @@ static bool sam_execute(Vis *vis, Win *win, Command *cmd, Cursor *cur, Filerange
 				group.start = s;
 			group.end = text_mark_get(txt, end);
 		}
+
+		view_cursors_dispose(cur);
 		break;
 	}
 	default:
