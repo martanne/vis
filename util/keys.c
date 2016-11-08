@@ -1,8 +1,12 @@
 #include <stdio.h>
 #include <stdarg.h>
+#include <string.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <termkey.h>
+
+/* is c the start of a utf8 sequence? */
+#define ISUTF8(c)   (((c)&0xC0)!=0x80)
 
 static TermKey *termkey;
 
@@ -140,19 +144,30 @@ int main(int argc, char *argv[]) {
 	if (!(termkey = termkey_new_abstract(term, TERMKEY_FLAG_UTF8)))
 		die("Failed to initialize libtermkey\n");
 	while (fgets(buf, sizeof buf, file)) {
-		TermKeyKey key;
 		const char *keys = buf, *next;
 		while (*keys) {
+			TermKeyKey key = { 0 };
 			if (*keys == '\n') {
 				keys++;
 			} else if (*keys == '<' && (next = termkey_strpkey(termkey, keys+1, &key, TERMKEY_FORMAT_VIM)) && *next == '>') {
 				printkey(&key);
 				keys = next+1;
-			} else if ((next = termkey_strpkey(termkey, keys, &key, TERMKEY_FORMAT_VIM))) {
-				printkey(&key);
-				keys = next;
 			} else {
-				die("Failed to parse keys: %s\n", keys);
+				const char *start = keys;
+				if (ISUTF8(*keys))
+					keys++;
+				while (!ISUTF8(*keys))
+					keys++;
+				size_t len = keys - start;
+				if (len >= sizeof(key.utf8))
+					die("Too long UTF-8 sequence: %s\n", start);
+				// FIXME: not really correct, bug good enough for now
+				key.type = TERMKEY_TYPE_UNICODE;
+				key.modifiers = 0;
+				if (len > 0)
+					memcpy(key.utf8, start, len);
+				key.utf8[len] = '\0';
+				printkey(&key);
 			}
 		}
 	}
