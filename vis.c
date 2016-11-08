@@ -769,9 +769,11 @@ const char *vis_keys_next(Vis *vis, const char *keys) {
 				return end + 1;
 		}
 	}
+	if (ISUTF8(*keys))
+		keys++;
 	while (!ISUTF8(*keys))
 		keys++;
-	return termkey_strpkey(termkey, keys, &key, TERMKEY_FORMAT_VIM);
+	return keys;
 }
 
 static void vis_keys_process(Vis *vis, size_t pos) {
