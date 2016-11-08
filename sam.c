@@ -249,7 +249,10 @@ const char *sam_error(enum SamError err) {
 }
 
 static Address *address_new(void) {
-	return calloc(1, sizeof(Address));
+	Address *addr = calloc(1, sizeof *addr);
+	if (addr)
+		addr->number = EPOS;
+	return addr;
 }
 
 static void address_free(Address *addr) {
@@ -397,7 +400,7 @@ static Address *address_parse_simple(Vis *vis, const char **s, enum SamError *er
 	Address addr = {
 		.type = **s,
 		.regex = NULL,
-		.number = 0,
+		.number = EPOS,
 		.left = NULL,
 		.right = NULL,
 	};
@@ -659,7 +662,7 @@ static Command *sam_parse(Vis *vis, const char *cmd, enum SamError *err) {
 
 static Filerange address_line_evaluate(Address *addr, File *file, Filerange *range, int sign) {
 	Text *txt = file->text;
-	size_t offset = addr->number != 0 ? addr->number : 1;
+	size_t offset = addr->number != EPOS ? addr->number : 1;
 	size_t start = range->start, end = range->end, line;
 	if (sign > 0) {
 		char c;
