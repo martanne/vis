@@ -1647,6 +1647,9 @@ static const char *replace(Vis *vis, const char *keys, const Arg *arg) {
 	memcpy(replacement, keys, len);
 	replacement[len] = '\0';
 
+	if (strcmp("<Escape>", replacement) == 0)
+		return next;
+
 	if (vis_mode_get(vis) == VIS_MODE_NORMAL) {
 		int count = vis_count_get_default(vis, 1);
 		vis_operator(vis, VIS_OP_CHANGE);
