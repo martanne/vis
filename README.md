@@ -426,7 +426,7 @@ Operators can be forced to work line wise by specifying `V`.
 
      syntax      name           default yes
 
-       use syntax definition given (e.g. "c") or disable syntax
+       use syntax definition given (e.g. "ansi_c") or disable syntax
        highlighting if no such definition exists (e.g :set syntax off)
 
      show
@@ -449,7 +449,7 @@ Operators can be forced to work line wise by specifying `V`.
 
        how far back the lexer will look to synchronize parsing
 
-     theme      name            default dark-16.lua | solarized.lua (16 | 256 color)
+     theme      name            default dark-16 | solarized (16 | 256 color)
 
        use the given theme / color scheme for syntax highlighting
 
@@ -481,7 +481,7 @@ highlighting. `VIS_PATH` defaults (in this order) to
 The environment variable `VIS_THEME` can be set to specify the
 theme used by `vis` e.g.
 
-    VIS_THEME=/path/to/your/theme.lua
+    VIS_THEME=dark-16
     export VIS_THEME
 
 ### Runtime Configurable Key Bindings
