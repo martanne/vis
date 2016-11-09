@@ -218,6 +218,18 @@ static size_t op_modeswitch(Vis *vis, Text *txt, OperatorContext *c) {
 	return c->newpos != EPOS ? c->newpos : c->pos;
 }
 
+static size_t op_replace(Vis *vis, Text *txt, OperatorContext *c) {
+	size_t count = 0;
+	Iterator it = text_iterator_get(txt, c->range.start);
+	while (it. pos < c->range.end && text_iterator_char_next(&it, NULL))
+		count++;
+	op_delete(vis, txt, c);
+	size_t pos = c->range.start;
+	for (size_t len = strlen(c->arg->s); count > 0; pos += len, count--)
+		text_insert(txt, pos, c->arg->s, len);
+	return pos;
+}
+
 static size_t op_filter(Vis *vis, Text *txt, OperatorContext *c) {
 	return text_size(txt) + 1; /* do not change cursor position, would destroy selection */
 }
@@ -258,6 +270,14 @@ bool vis_operator(Vis *vis, enum VisOperator id, ...) {
 	case VIS_OP_SHIFT_RIGHT:
 		vis_motion_type(vis, VIS_MOTIONTYPE_LINEWISE);
 		break;
+	case VIS_OP_REPLACE:
+	{
+		Macro *macro = &vis->registers[VIS_MACRO_OPERATOR].buf;
+		macro_reset(macro);
+		macro_append(macro, va_arg(ap, char*));
+		vis->action.arg.s = macro->data;
+		break;
+	}
 	default:
 		break;
 	}
@@ -304,6 +324,7 @@ const Operator vis_operators[] = {
 	[VIS_OP_CASE_SWAP]   = { op_case_change },
 	[VIS_OP_JOIN]        = { op_join        },
 	[VIS_OP_MODESWITCH]  = { op_modeswitch  },
+	[VIS_OP_REPLACE]     = { op_replace     },
 	[VIS_OP_CURSOR_SOL]  = { op_cursor      },
 	[VIS_OP_FILTER]      = { op_filter      },
 };

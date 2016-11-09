@@ -183,6 +183,7 @@ enum VisOperator {
 	VIS_OP_SHIFT_LEFT,
 	VIS_OP_JOIN,
 	VIS_OP_MODESWITCH,
+	VIS_OP_REPLACE,
 	VIS_OP_CURSOR_SOL,
 	VIS_OP_CASE_SWAP,
 	VIS_OP_FILTER,
@@ -208,6 +209,7 @@ enum VisOperator {
  *  - VIS_OP_FILTER     a char pointer referring to the command to run
  *  - VIS_OP_JOIN       a char pointer referring to the text to insert between lines
  *  - VIS_OP_MODESWITCH a enum VisMode constant indicating the mode to switch to
+ *  - VIS_OP_REPLACE    a char pointer reffering to the replacement character
  */
 bool vis_operator(Vis*, enum VisOperator, ...);
 
