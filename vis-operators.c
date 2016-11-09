@@ -214,11 +214,7 @@ static size_t op_join(Vis *vis, Text *txt, OperatorContext *c) {
 	return newpos != EPOS ? newpos : c->range.start;
 }
 
-static size_t op_insert(Vis *vis, Text *txt, OperatorContext *c) {
-	return c->newpos != EPOS ? c->newpos : c->pos;
-}
-
-static size_t op_replace(Vis *vis, Text *txt, OperatorContext *c) {
+static size_t op_modeswitch(Vis *vis, Text *txt, OperatorContext *c) {
 	return c->newpos != EPOS ? c->newpos : c->pos;
 }
 
@@ -231,6 +227,9 @@ bool vis_operator(Vis *vis, enum VisOperator id, ...) {
 	va_start(ap, id);
 
 	switch (id) {
+	case VIS_OP_MODESWITCH:
+		vis->action.mode = va_arg(ap, int);
+		break;
 	case VIS_OP_CASE_LOWER:
 	case VIS_OP_CASE_UPPER:
 	case VIS_OP_CASE_SWAP:
@@ -304,8 +303,7 @@ const Operator vis_operators[] = {
 	[VIS_OP_SHIFT_LEFT]  = { op_shift_left  },
 	[VIS_OP_CASE_SWAP]   = { op_case_change },
 	[VIS_OP_JOIN]        = { op_join        },
-	[VIS_OP_INSERT]      = { op_insert      },
-	[VIS_OP_REPLACE]     = { op_replace     },
+	[VIS_OP_MODESWITCH]  = { op_modeswitch  },
 	[VIS_OP_CURSOR_SOL]  = { op_cursor      },
 	[VIS_OP_FILTER]      = { op_filter      },
 };

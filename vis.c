@@ -704,10 +704,10 @@ void vis_do(Vis *vis) {
 		/* operator implementations must not change the mode,
 		 * they might get called multiple times (once for every cursor)
 		 */
-		if (a->op == &vis_operators[VIS_OP_INSERT] || a->op == &vis_operators[VIS_OP_CHANGE]) {
+		if (a->op == &vis_operators[VIS_OP_CHANGE]) {
 			vis_mode_switch(vis, VIS_MODE_INSERT);
-		} else if (a->op == &vis_operators[VIS_OP_REPLACE]) {
-			vis_mode_switch(vis, VIS_MODE_REPLACE);
+		} else if (a->op == &vis_operators[VIS_OP_MODESWITCH]) {
+			vis_mode_switch(vis, a->mode);
 		} else if (a->op == &vis_operators[VIS_OP_FILTER]) {
 			if (a->arg.s)
 				vis_cmd(vis, a->arg.s);
@@ -1127,7 +1127,7 @@ void vis_repeat(Vis *vis) {
 		vis->action_prev.count = count;
 	count = vis->action_prev.count;
 	/* for some operators count should be applied only to the macro not the motion */
-	if (vis->action_prev.op == &vis_operators[VIS_OP_INSERT] || vis->action_prev.op == &vis_operators[VIS_OP_REPLACE])
+	if (vis->action_prev.op == &vis_operators[VIS_OP_MODESWITCH])
 		vis->action_prev.count = 1;
 	vis->action = vis->action_prev;
 	vis_do(vis);

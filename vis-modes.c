@@ -122,7 +122,8 @@ static void vis_mode_insert_enter(Vis *vis, Mode *old) {
 		return;
 	if (!vis->action.op) {
 		action_reset(&vis->action_prev);
-		vis->action_prev.op = &vis_operators[VIS_OP_INSERT];
+		vis->action_prev.op = &vis_operators[VIS_OP_MODESWITCH];
+		vis->action_prev.mode = VIS_MODE_INSERT;
 	}
 	if (!vis->macro_operator) {
 		macro_operator_record(vis);
@@ -150,7 +151,8 @@ static void vis_mode_replace_enter(Vis *vis, Mode *old) {
 		return;
 	if (!vis->action.op) {
 		action_reset(&vis->action_prev);
-		vis->action_prev.op = &vis_operators[VIS_OP_REPLACE];
+		vis->action_prev.op = &vis_operators[VIS_OP_MODESWITCH];
+		vis->action_prev.mode = VIS_MODE_REPLACE;
 	}
 	if (!vis->macro_operator) {
 		macro_operator_record(vis);

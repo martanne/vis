@@ -95,6 +95,7 @@ typedef Buffer Macro;
 
 typedef struct {             /** collects all information until an operator is executed */
 	int count;
+	enum VisMode mode;
 	enum VisMotionType type;
 	const Operator *op;
 	const Movement *movement;

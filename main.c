@@ -1637,7 +1637,7 @@ static const char *replace(Vis *vis, const char *keys, const Arg *arg) {
 	const char *next = vis_keys_next(vis, keys);
 	if (!next)
 		return NULL;
-	vis_operator(vis, VIS_OP_REPLACE);
+	vis_operator(vis, VIS_OP_MODESWITCH, VIS_MODE_REPLACE);
 	vis_motion(vis, VIS_MOVE_NOP);
 	vis_keys_feed(vis, keys);
 	vis_keys_feed(vis, "<Escape>");
@@ -1967,7 +1967,7 @@ static const char *window(Vis *vis, const char *keys, const Arg *arg) {
 }
 
 static const char *openline(Vis *vis, const char *keys, const Arg *arg) {
-	vis_operator(vis, VIS_OP_INSERT);
+	vis_operator(vis, VIS_OP_MODESWITCH, VIS_MODE_INSERT);
 	if (arg->i > 0) {
 		vis_motion(vis, VIS_MOVE_LINE_END);
 		vis_keys_feed(vis, "<insert-newline>");
@@ -2000,7 +2000,7 @@ static const char *switchmode(Vis *vis, const char *keys, const Arg *arg) {
 }
 
 static const char *insertmode(Vis *vis, const char *keys, const Arg *arg) {
-	vis_operator(vis, VIS_OP_INSERT);
+	vis_operator(vis, VIS_OP_MODESWITCH, VIS_MODE_INSERT);
 	vis_motion(vis, arg->i);
 	return keys;
 }
