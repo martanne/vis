@@ -3,6 +3,8 @@ t{r<Enter>           /* replace space with new line */
 3r=                  /* replace --- with === */
 n                    /* advance to next match */
 .                    /* repeat */
+r<Escape>            /* cancel, should not alter text */
 n                    /* advance to next match */
 v2e                  /* select something in visual mode */
+r<Escape>            /* cancel, should not alter text */
 r=                   /* replace selection */
