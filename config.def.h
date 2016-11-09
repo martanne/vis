@@ -288,7 +288,7 @@ static const KeyBinding bindings_visual[] = {
 	{ "J",                  ACTION(JOIN_LINES)                          },
 	{ "gJ",                 ACTION(JOIN_LINES_TRIM)                     },
 	{ "o",                  ACTION(SELECTION_FLIP)                      },
-	{ "r",                  ALIAS("c")                                  },
+	{ "r",                  ACTION(REPLACE_CHAR)                        },
 	{ "s",                  ALIAS("c")                                  },
 	{ "<S-Tab>",            ACTION(CURSORS_ALIGN_INDENT_RIGHT)          },
 	{ "<Tab>",              ACTION(CURSORS_ALIGN_INDENT_LEFT)           },
