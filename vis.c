@@ -718,7 +718,9 @@ void vis_do(Vis *vis) {
 		} else if (vis->mode->visual) {
 			vis_mode_switch(vis, VIS_MODE_NORMAL);
 		}
-		text_snapshot(txt);
+
+		if (vis->mode == &vis_modes[VIS_MODE_NORMAL])
+			text_snapshot(txt);
 		vis_draw(vis);
 	}
 
