@@ -4,7 +4,7 @@ Vis a vim-like text editor
 [![Linux Build Status](https://travis-ci.org/martanne/vis.svg?branch=master)](https://travis-ci.org/martanne/vis)
 [![Cygwin Build Status](https://ci.appveyor.com/api/projects/status/61059w4jpdnb77ft/branch/master?svg=true)](https://ci.appveyor.com/project/martanne/vis/branch/master)
 [![Coverity Scan Build Status](https://scan.coverity.com/projects/3939/badge.svg)](https://scan.coverity.com/projects/3939)
-[![#vis-editor on freenode](https://www.irccloud.com/invite-svg?channel=%23vis-editor&amp;hostname=irc.freenode.net&amp;port=6697&amp;ssl=1)](irc://irc.freenode.net/vis-editor)
+[![#vis-editor on freenode](https://img.shields.io/badge/IRC-%23vis--editor-blue.svg)](irc://irc.freenode.net/vis-editor)
 
 Vis aims to be a modern, legacy free, simple yet efficient vim-like editor.
 
