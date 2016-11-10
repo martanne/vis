@@ -123,7 +123,7 @@ static void window_status_update(Vis *vis, Win *win) {
 #if !CONFIG_LUA
 
 bool vis_lua_path_add(Vis *vis, const char *path) { return true; }
-bool vis_lua_paths_get(Vis *vis, const char **lpath, const char **cpath) { return false; }
+bool vis_lua_paths_get(Vis *vis, char **lpath, char **cpath) { return false; }
 void vis_lua_init(Vis *vis) { }
 void vis_lua_start(Vis *vis) { }
 void vis_lua_quit(Vis *vis) { }
