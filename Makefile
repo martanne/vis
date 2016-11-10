@@ -58,6 +58,9 @@ debug: clean
 profile: clean
 	@$(MAKE) CFLAGS_DEBUG='${CFLAGS_DEBUG_ENABLE} -pg'
 
+coverage: clean
+	@$(MAKE) CFLAGS_DEBUG='--coverage'
+
 test-update:
 	git submodule init
 	git submodule update --remote --rebase
@@ -68,7 +71,7 @@ test:
 
 clean:
 	@echo cleaning
-	@rm -f vis vis-menu vis-${VERSION}.tar.gz
+	@rm -f vis vis-menu vis-${VERSION}.tar.gz *.gcov *.gcda *.gcno
 
 dist: clean
 	@echo creating dist tarball
@@ -116,4 +119,4 @@ uninstall:
 	@echo removing support files from ${DESTDIR}${SHAREPREFIX}/vis
 	@rm -rf ${DESTDIR}${SHAREPREFIX}/vis
 
-.PHONY: all clean dist install uninstall debug profile test test-update
+.PHONY: all clean dist install uninstall debug profile coverage test test-update

@@ -4,6 +4,9 @@ README.html
 *.swo
 *.swp
 *.o
+*.gcov
+*.gcda
+*.gcno
 /vis
 /vis-menu
 /dependency
