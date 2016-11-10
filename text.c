@@ -1319,17 +1319,17 @@ bool text_sigbus(Text *txt, const char *addr) {
 
 enum TextNewLine text_newline_type(Text *txt){
 	if (!txt->newlines) {
-		txt->newlines = TEXT_NEWLINE_NL; /* default to UNIX style \n new lines */
+		txt->newlines = TEXT_NEWLINE_LF; /* default to UNIX style \n new lines */
 		const char *start = txt->block ? txt->block->data : NULL;
 		if (start) {
 			const char *nl = memchr(start, '\n', txt->block->len);
 			if (nl > start && nl[-1] == '\r')
-				txt->newlines = TEXT_NEWLINE_CRNL;
+				txt->newlines = TEXT_NEWLINE_CRLF;
 		} else {
 			char c;
 			size_t nl = lines_skip_forward(txt, 0, 1, NULL);
 			if (nl > 1 && text_byte_get(txt, nl-2, &c) && c == '\r')
-				txt->newlines = TEXT_NEWLINE_CRNL;
+				txt->newlines = TEXT_NEWLINE_CRLF;
 		}
 	}
 
@@ -1338,8 +1338,8 @@ enum TextNewLine text_newline_type(Text *txt){
 
 const char *text_newline_char(Text *txt) {
 	static const char *types[] = {
-		[TEXT_NEWLINE_NL] = "\n",
-		[TEXT_NEWLINE_CRNL] = "\r\n",
+		[TEXT_NEWLINE_LF] = "\n",
+		[TEXT_NEWLINE_CRLF] = "\r\n",
 	};
 	return types[text_newline_type(txt)];
 }

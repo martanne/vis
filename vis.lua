@@ -393,7 +393,7 @@ vis.events.win_status = function(win)
 	table.insert(left_parts, (file.name or '[No Name]') ..
 		(file.modified and ' [+]' or '') .. (vis.recording and ' @' or ''))
 
-	if file.newlines ~= "nl" then
+	if file.newlines ~= "lf" then
 		table.insert(right_parts, "␊")
 	end
 

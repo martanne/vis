@@ -53,7 +53,7 @@ static void window_status_update(Vis *vis, Win *win) {
 	         vis_macro_recording(vis) ? " @": "");
 	left_count++;
 
-	if (text_newline_type(txt) != TEXT_NEWLINE_NL)
+	if (text_newline_type(txt) != TEXT_NEWLINE_LF)
 		strcpy(right_parts[right_count++], "␊");
 
 	int cursor_count = view_cursors_count(view);
@@ -1085,11 +1085,11 @@ static int file_index(lua_State *L) {
 
 		if (strcmp(key, "newlines") == 0) {
 			switch (text_newline_type(file->text)) {
-			case TEXT_NEWLINE_NL:
-				lua_pushstring(L, "nl");
+			case TEXT_NEWLINE_LF:
+				lua_pushstring(L, "lf");
 				break;
-			case TEXT_NEWLINE_CRNL:
-				lua_pushstring(L, "crnl");
+			case TEXT_NEWLINE_CRLF:
+				lua_pushstring(L, "crlf");
 				break;
 			default:
 				lua_pushnil(L);

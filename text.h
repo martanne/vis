@@ -121,8 +121,8 @@ bool text_sigbus(Text*, const char *addr);
 
 /* which type of new lines does the text use? */
 enum TextNewLine {
-	TEXT_NEWLINE_NL = 1,
-	TEXT_NEWLINE_CRNL,
+	TEXT_NEWLINE_LF = 1,
+	TEXT_NEWLINE_CRLF,
 };
 
 enum TextNewLine text_newline_type(Text*);

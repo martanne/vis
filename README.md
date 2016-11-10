@@ -612,7 +612,7 @@ At this time there exists no API stability guarantees.
    - `lines_iterator()`
    - `name`
    - `lines[0..#lines+1]` array giving read/write access to lines
-   - `newlines` type of newlines either `"nl"` or `"crnl"`
+   - `newlines` type of newlines either `"lf"` or `"crlf"`
    - `size` current file size in bytes
    - `modified` whether the file contains unsaved changes
  - `window`
