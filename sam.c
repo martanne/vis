@@ -189,6 +189,7 @@ typedef struct {
 		OPTION_TYPE_UNSIGNED,
 	} type;
 	enum {
+		OPTION_FLAG_NONE = 0,
 		OPTION_FLAG_OPTIONAL = 1 << 0, /* value is optional */
 		OPTION_FLAG_WINDOW = 1 << 1,   /* option requires an active window */
 	} flags;
@@ -210,17 +211,61 @@ enum {
 };
 
 static const OptionDef options[] = {
-	[OPTION_AUTOINDENT]      = { { "autoindent", "ai"       }, OPTION_TYPE_BOOL                                              },
-	[OPTION_EXPANDTAB]       = { { "expandtab", "et"        }, OPTION_TYPE_BOOL                                              },
-	[OPTION_TABWIDTH]        = { { "tabwidth", "tw"         }, OPTION_TYPE_NUMBER                                            },
-	[OPTION_THEME]           = { { "theme"                  }, OPTION_TYPE_STRING,                                           },
-	[OPTION_SYNTAX]          = { { "syntax"                 }, OPTION_TYPE_STRING,   OPTION_FLAG_WINDOW|OPTION_FLAG_OPTIONAL },
-	[OPTION_SHOW]            = { { "show"                   }, OPTION_TYPE_STRING,   OPTION_FLAG_WINDOW                      },
-	[OPTION_NUMBER]          = { { "numbers", "nu"          }, OPTION_TYPE_BOOL,     OPTION_FLAG_WINDOW                      },
-	[OPTION_NUMBER_RELATIVE] = { { "relativenumbers", "rnu" }, OPTION_TYPE_BOOL,     OPTION_FLAG_WINDOW                      },
-	[OPTION_CURSOR_LINE]     = { { "cursorline", "cul"      }, OPTION_TYPE_BOOL,     OPTION_FLAG_WINDOW                      },
-	[OPTION_COLOR_COLUMN]    = { { "colorcolumn", "cc"      }, OPTION_TYPE_NUMBER,   OPTION_FLAG_WINDOW                      },
-	[OPTION_HORIZON]         = { { "horizon"                }, OPTION_TYPE_UNSIGNED, OPTION_FLAG_WINDOW                      },
+	[OPTION_AUTOINDENT] = {
+		{ "autoindent", "ai" },
+		OPTION_TYPE_BOOL, OPTION_FLAG_NONE,
+		"Copy leading white space from previous line",
+	},
+	[OPTION_EXPANDTAB] = {
+		{ "expandtab", "et" },
+		OPTION_TYPE_BOOL, OPTION_FLAG_NONE,
+		"Replace entered <Tab> with `tabwidth` spaces",
+	},
+	[OPTION_TABWIDTH] = {
+		{ "tabwidth", "tw" },
+		OPTION_TYPE_NUMBER, OPTION_FLAG_NONE,
+		"Number of spaces to display (and insert if `expandtab` is enabled) for a tab",
+	},
+	[OPTION_THEME] = {
+		{ "theme" },
+		OPTION_TYPE_STRING, OPTION_FLAG_NONE,
+		"Color theme to use filename without extension",
+	},
+	[OPTION_SYNTAX] = {
+		{ "syntax" },
+		OPTION_TYPE_STRING, OPTION_FLAG_WINDOW|OPTION_FLAG_OPTIONAL,
+		"Syntax highlighting lexer to use filename without extension",
+	},
+	[OPTION_SHOW] = {
+		{ "show" },
+		OPTION_TYPE_STRING, OPTION_FLAG_WINDOW,
+		"Show white space replacement symbols",
+	},
+	[OPTION_NUMBER] = {
+		{ "numbers", "nu" },
+		OPTION_TYPE_BOOL, OPTION_FLAG_WINDOW,
+		"Display absolute line numbers",
+	},
+	[OPTION_NUMBER_RELATIVE] = {
+		{ "relativenumbers", "rnu" },
+		OPTION_TYPE_BOOL, OPTION_FLAG_WINDOW,
+		"Display relative line numbers",
+	},
+	[OPTION_CURSOR_LINE] = {
+		{ "cursorline", "cul" },
+		OPTION_TYPE_BOOL, OPTION_FLAG_WINDOW,
+		"Highlight current cursor line",
+	},
+	[OPTION_COLOR_COLUMN] = {
+		{ "colorcolumn", "cc" },
+		OPTION_TYPE_NUMBER, OPTION_FLAG_WINDOW,
+		"Highlight a fixed column",
+	},
+	[OPTION_HORIZON] = {
+		{ "horizon" },
+		OPTION_TYPE_UNSIGNED, OPTION_FLAG_WINDOW,
+		"Number of bytes to consider for syntax highlighting",
+	},
 };
 
 bool sam_init(Vis *vis) {
