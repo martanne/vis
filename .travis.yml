@@ -1,16 +1,28 @@
 language: c
 
-os:
-  - linux
-  - osx
-
-compiler:
-  - gcc
-  - clang
-
-env:
-  - TARGET=
-  - TARGET=debug
+matrix:
+  include:
+    - os: linux
+      compiler: gcc
+      env: TARGET=
+    - os: linux
+      compiler: gcc
+      env: TARGET=debug
+    - os: linux
+      compiler: gcc
+      env: TARGET=coverage
+    - os: linux
+      compiler: clang
+      env: TARGET=
+    - os: linux
+      compiler: clang
+      env: TARGET=debug
+    - os: osx
+      compiler: clang
+      env: TARGET=
+    - os: osx
+      compiler: clang
+      env: TARGET=debug
 
 install:
   - if [ "$TRAVIS_OS_NAME" = "osx" ]; then
@@ -43,3 +55,8 @@ script:
   - LD_LIBRARY_PATH="$(pwd)/dependency/install/usr/lib" make -C test/vis
   - LD_LIBRARY_PATH="$(pwd)/dependency/install/usr/lib" make -C test/sam
   - LD_LIBRARY_PATH="$(pwd)/dependency/install/usr/lib" make -C test/vim
+
+after_success:
+  - if [ "$TARGET" = "coverage" ]; then
+      bash <(curl -s https://codecov.io/bash);
+    fi
