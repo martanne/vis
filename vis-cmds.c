@@ -148,7 +148,8 @@ static bool cmd_set(Vis *vis, Win *win, Command *cmd, const char *argv[], Cursor
 		break;
 	}
 
-	switch (opt - options) {
+	size_t opt_index = opt - options;
+	switch (opt_index) {
 	case OPTION_EXPANDTAB:
 		vis->expandtab = arg.b;
 		break;
@@ -175,36 +176,23 @@ static bool cmd_set(Vis *vis, Win *win, Command *cmd, const char *argv[], Cursor
 			return false;
 		}
 		break;
-	case OPTION_SHOW:
-		if (!argv[2]) {
-			vis_info_show(vis, "Expecting: spaces, tabs, newlines");
-			return false;
-		}
-		const char *keys[] = { "spaces", "tabs", "newlines" };
+	case OPTION_SHOW_SPACES:
+	case OPTION_SHOW_TABS:
+	case OPTION_SHOW_NEWLINES:
+	{
 		const int values[] = {
-			UI_OPTION_SYMBOL_SPACE,
-			UI_OPTION_SYMBOL_TAB|UI_OPTION_SYMBOL_TAB_FILL,
-			UI_OPTION_SYMBOL_EOL,
+			[OPTION_SHOW_SPACES] = UI_OPTION_SYMBOL_SPACE,
+			[OPTION_SHOW_TABS] = UI_OPTION_SYMBOL_TAB|UI_OPTION_SYMBOL_TAB_FILL,
+			[OPTION_SHOW_NEWLINES] = UI_OPTION_SYMBOL_EOL,
 		};
 		int flags = view_options_get(win->view);
-		for (const char **args = &argv[2]; *args; args++) {
-			for (int i = 0; i < LENGTH(keys); i++) {
-				if (strcmp(*args, keys[i]) == 0) {
-					flags |= values[i];
-				} else if (strstr(*args, keys[i]) == *args) {
-					bool show;
-					const char *v = *args + strlen(keys[i]);
-					if (*v == '=' && parse_bool(v+1, &show)) {
-						if (show)
-							flags |= values[i];
-						else
-							flags &= ~values[i];
-					}
-				}
-			}
-		}
+		if (arg.b)
+			flags |= values[opt_index];
+		else
+			flags &= ~values[opt_index];
 		view_options_set(win->view, flags);
 		break;
+	}
 	case OPTION_NUMBER: {
 		enum UiOption opt = view_options_get(win->view);
 		if (arg.b) {

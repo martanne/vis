@@ -429,13 +429,11 @@ Operators can be forced to work line wise by specifying `V`.
        use syntax definition given (e.g. "ansi_c") or disable syntax
        highlighting if no such definition exists (e.g :set syntax off)
 
-     show
+     show-spaces    (yes|no)    default no
+     show-tabs      (yes|no)    default no
+     show-newlines  (yes|no)    default no
 
        show/hide special white space replacement symbols
-
-       newlines = [0|1]         default 0
-       tabs     = [0|1]         default 0
-       spaces   = [0|1]         default 0
 
      cursorline (yes|no)        default no
 

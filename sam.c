@@ -202,7 +202,9 @@ enum {
 	OPTION_TABWIDTH,
 	OPTION_THEME,
 	OPTION_SYNTAX,
-	OPTION_SHOW,
+	OPTION_SHOW_SPACES,
+	OPTION_SHOW_TABS,
+	OPTION_SHOW_NEWLINES,
 	OPTION_NUMBER,
 	OPTION_NUMBER_RELATIVE,
 	OPTION_CURSOR_LINE,
@@ -236,10 +238,20 @@ static const OptionDef options[] = {
 		OPTION_TYPE_STRING, OPTION_FLAG_WINDOW|OPTION_FLAG_OPTIONAL,
 		"Syntax highlighting lexer to use filename without extension",
 	},
-	[OPTION_SHOW] = {
-		{ "show" },
-		OPTION_TYPE_STRING, OPTION_FLAG_WINDOW,
-		"Show white space replacement symbols",
+	[OPTION_SHOW_SPACES] = {
+		{ "show-spaces" },
+		OPTION_TYPE_BOOL, OPTION_FLAG_WINDOW,
+		"Display replacement symbol instead of a space",
+	},
+	[OPTION_SHOW_TABS] = {
+		{ "show-tabs" },
+		OPTION_TYPE_BOOL, OPTION_FLAG_WINDOW,
+		"Display replacement symbol for tabs",
+	},
+	[OPTION_SHOW_NEWLINES] = {
+		{ "show-newlines" },
+		OPTION_TYPE_BOOL, OPTION_FLAG_WINDOW,
+		"Display replacement symbol for newlines",
 	},
 	[OPTION_NUMBER] = {
 		{ "numbers", "nu" },
