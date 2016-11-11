@@ -731,6 +731,8 @@ static Filerange address_line_evaluate(Address *addr, File *file, Filerange *ran
 		line = text_lineno_by_pos(txt, start);
 		line = offset < line ? text_pos_by_lineno(txt, line - offset) : 0;
 	} else {
+		if (addr->number == 0)
+			return text_range_new(0, 0);
 		line = text_pos_by_lineno(txt, addr->number);
 	}
 
