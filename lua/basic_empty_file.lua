@@ -2,7 +2,7 @@
 local win = vis.win
 local results = {}
 results[1] = win.file.name == 'basic_empty_file.in'
-results[2] = win.file.newlines == 'nl'
+results[2] = win.file.newlines == 'lf'
 results[3] = win.file.size == 0
 results[4] = #win.file.lines == 0
 results[5] = win.file.lines[0] == ''
