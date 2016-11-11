@@ -451,6 +451,14 @@ Vis *vis_new(Ui *ui, VisEvent *event) {
 		goto err;
 	if (!sam_init(vis))
 		goto err;
+	struct passwd *pw;
+	char *shell = getenv("SHELL");
+	if ((!shell || !*shell) && (pw = getpwuid(getuid())))
+		shell = pw->pw_shell;
+	if (!shell || !*shell)
+		shell = "/bin/sh";
+	if (!(vis->shell = strdup(shell)))
+		goto err;
 	vis->mode_prev = vis->mode = &vis_modes[VIS_MODE_NORMAL];
 	vis->event = event;
 	if (event && event->vis_init)
@@ -486,6 +494,7 @@ void vis_free(Vis *vis) {
 		map_free(vis_modes[i].bindings);
 	array_release_full(&vis->motions);
 	array_release_full(&vis->textobjects);
+	free(vis->shell);
 	free(vis);
 }
 
@@ -1311,10 +1320,10 @@ int vis_pipe(Vis *vis, Filerange *range, bool interactive, const char *argv[],
 		close(perr[0]);
 		close(perr[1]);
 		if (!argv[1])
-			execl("/bin/sh", "sh", "-c", argv[0], NULL);
+			execlp(vis->shell, vis->shell, "-c", argv[0], (char*)NULL);
 		else
 			execvp(argv[0], (char* const*)argv);
-		vis_info_show(vis, "exec failure: %s", strerror(errno));
+		fprintf(stderr, "exec failure: %s", strerror(errno));
 		exit(EXIT_FAILURE);
 	}
 
