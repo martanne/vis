@@ -65,6 +65,15 @@ local keyword = token(l.KEYWORD, word_match({
   'user',
   'users',
 
+  -- mount options for systemd, see systemd.mount(5)
+  'x-systemd.automount',
+  'x-systemd.device-timeout',
+  'x-systemd.idle-timeout',
+  'x-systemd.mount-timeout',
+  'x-systemd.requires',
+  'x-systemd.requires-mounts-for',
+  'x-initrd.mount',
+
   -- mount options for adfs
   'uid',
   'gid',
