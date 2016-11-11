@@ -150,6 +150,17 @@ static bool cmd_set(Vis *vis, Win *win, Command *cmd, const char *argv[], Cursor
 
 	size_t opt_index = opt - options;
 	switch (opt_index) {
+	case OPTION_SHELL:
+	{
+		char *shell = strdup(arg.s);
+		if (!shell) {
+			vis_info_show(vis, "Failed to change shell");
+			return false;
+		}
+		free(vis->shell);
+		vis->shell = shell;
+		break;
+	}
 	case OPTION_EXPANDTAB:
 		vis->expandtab = arg.b;
 		break;

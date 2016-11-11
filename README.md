@@ -404,6 +404,10 @@ Operators can be forced to work line wise by specifying `V`.
     :wq           write changes then close window
     :w            write current buffer content to file
 
+     shell      path            default $SHELL, /etc/passwd, /bin/sh
+
+       set shell to use for external commands (e.g. <, >, |)
+
      tabwidth   [1-8]           default 8
 
        set display width of a tab and number of spaces to use if
