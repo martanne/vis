@@ -90,23 +90,12 @@ static bool cmd_set(Vis *vis, Win *win, Command *cmd, const char *argv[], Cursor
 		}
 	}
 
-	if (!argv[1]) {
+	if (!argv[1] || argv[3]) {
 		vis_info_show(vis, "Expecting: set option [value]");
 		return false;
 	}
 
-	Arg arg;
-	bool invert = false;
-	OptionDef *opt = NULL;
-
-	if (!strncasecmp(argv[1], "no", 2)) {
-		opt = map_closest(vis->options, argv[1]+2);
-		if (opt && opt->type == OPTION_TYPE_BOOL)
-			invert = true;
-		else
-			opt = NULL;
-	}
-
+	OptionDef *opt = map_closest(vis->options, argv[1]);
 	if (!opt)
 		opt = map_closest(vis->options, argv[1]);
 	if (!opt) {
@@ -119,6 +108,7 @@ static bool cmd_set(Vis *vis, Win *win, Command *cmd, const char *argv[], Cursor
 		return false;
 	}
 
+	Arg arg;
 	switch (opt->type) {
 	case OPTION_TYPE_STRING:
 		if (!(opt->flags & OPTION_FLAG_OPTIONAL) && !argv[2]) {
@@ -134,8 +124,6 @@ static bool cmd_set(Vis *vis, Win *win, Command *cmd, const char *argv[], Cursor
 			vis_info_show(vis, "Expecting boolean option value not: `%s'", argv[2]);
 			return false;
 		}
-		if (invert)
-			arg.b = !arg.b;
 		break;
 	case OPTION_TYPE_NUMBER:
 	case OPTION_TYPE_UNSIGNED:
@@ -146,6 +134,8 @@ static bool cmd_set(Vis *vis, Win *win, Command *cmd, const char *argv[], Cursor
 		/* TODO: error checking? long type */
 		arg.u = strtoul(argv[2], NULL, 10);
 		break;
+	default:
+		return false;
 	}
 
 	size_t opt_index = opt - options;
