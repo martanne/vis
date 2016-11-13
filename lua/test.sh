@@ -10,6 +10,7 @@ export VIS_PATH=.
 export VIS_THEME=theme
 
 if [ $# -gt 0 ]; then
+	printf ":help\n:w help\n:qall\n" $VIS && cat help
 	test_files=$*
 else
 	test_files="$(find . -type f -name "*.in") basic_empty_file.in"
@@ -31,7 +32,7 @@ for t in $test_files; do
 			diff -u "$t".ref "$t".out > "$t".err
 		fi
 	else
-		printf "FAIL\n"
+		printf "ERROR\n"
 	fi
 done
 
