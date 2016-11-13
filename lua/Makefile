@@ -1,4 +1,8 @@
-all: clean test
+all: clean ../../vis test
+
+../../vis: ../../*.[ch]
+	@echo Compiling vis
+	@$(MAKE) -C ../..
 
 clean:
 	@rm -f *.out *.err
