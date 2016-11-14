@@ -431,7 +431,7 @@ static bool cmd_wq(Vis *vis, Win *win, Command *cmd, const char *argv[], Cursor 
 	if (!win)
 		return false;
 	File *file = win->file;
-	bool unmodified = !file->is_stdin && !file->name && !text_modified(file->text);
+	bool unmodified = file->fd == -1 && !file->name && !text_modified(file->text);
 	if (unmodified || cmd_write(vis, win, cmd, argv, cur, range))
 		return cmd_quit(vis, win, cmd, argv, cur, range);
 	return false;

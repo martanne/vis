@@ -60,6 +60,7 @@ static File *file_new_text(Vis *vis, Text *text) {
 	File *file = calloc(1, sizeof(*file));
 	if (!file)
 		return NULL;
+	file->fd = -1;
 	file->text = text;
 	file->stat = text_stat(text);
 	if (vis->files)
@@ -361,6 +362,15 @@ bool vis_window_new(Vis *vis, const char *filename) {
 		return false;
 	}
 
+	return true;
+}
+
+bool vis_window_new_fd(Vis *vis, int fd) {
+	if (fd == -1)
+		return false;
+	if (!vis_window_new(vis, NULL))
+		return false;
+	vis->win->file->fd = fd;
 	return true;
 }
 
@@ -949,13 +959,11 @@ static void vis_args(Vis *vis, int argc, char *argv[]) {
 
 	if (!vis->windows && vis->running) {
 		if (!strcmp(argv[argc-1], "-")) {
-			if (!vis_window_new(vis, NULL))
+			if (!vis_window_new_fd(vis, STDOUT_FILENO))
 				vis_die(vis, "Can not create empty buffer\n");
 			ssize_t len = 0;
 			char buf[PIPE_BUF];
-			File *file = vis->win->file;
-			Text *txt = file->text;
-			file->is_stdin = true;
+			Text *txt = vis_text(vis);
 			while ((len = read(STDIN_FILENO, buf, sizeof buf)) > 0)
 				text_insert(txt, text_size(txt), buf, len);
 			if (len == -1)

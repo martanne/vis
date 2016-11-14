@@ -1157,7 +1157,7 @@ static bool cmd_write(Vis *vis, Win *win, Command *cmd, const char *argv[], Curs
 	if (!argv[1])
 		argv[1] = file->name ? strdup(file->name) : NULL;
 	if (!argv[1]) {
-		if (!file->is_stdin) {
+		if (file->fd == -1) {
 			vis_info_show(vis, "Filename expected");
 			return false;
 		}
@@ -1171,7 +1171,7 @@ static bool cmd_write(Vis *vis, Win *win, Command *cmd, const char *argv[], Curs
 			bool all = !text_range_valid(&range);
 			if (all)
 				range = text_range_new(0, text_size(text));
-			ssize_t written = text_write_range(text, &range, STDOUT_FILENO);
+			ssize_t written = text_write_range(text, &range, file->fd);
 			if (written == -1 || (size_t)written != text_range_size(&range)) {
 				vis_info_show(vis, "Can not write to stdout");
 				return false;

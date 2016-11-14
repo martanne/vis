@@ -110,7 +110,7 @@ struct File { /* shared state among windows displaying the same file */
 	Text *text;                      /* data structure holding the file content */
 	const char *name;                /* file name used when loading/saving */
 	volatile sig_atomic_t truncated; /* whether the underlying memory mapped region became invalid (SIGBUS) */
-	bool is_stdin;                   /* whether file content was read from stdin */
+	int fd;                          /* output file descriptor associated with this file or -1 if loaded by file name */
 	bool internal;                   /* whether it is an internal file (e.g. used for the prompt) */
 	struct stat stat;                /* filesystem information when loaded/saved, used to detect changes outside the editor */
 	int refcount;                    /* how many windows are displaying this file? (always >= 1) */
