@@ -1085,15 +1085,6 @@ static void ui_suspend(Ui *ui) {
 	raise(SIGSTOP);
 }
 
-static bool ui_haskey(Ui *ui) {
-	nodelay(stdscr, TRUE);
-	int c = getch();
-	if (c != ERR)
-		ungetch(c);
-	nodelay(stdscr, FALSE);
-	return c != ERR;
-}
-
 static bool ui_getkey(Ui *ui, TermKeyKey *key) {
 	UiCurses *uic = (UiCurses*)ui;
 	TermKeyResult ret = termkey_getkey(uic->termkey, key);
@@ -1192,7 +1183,6 @@ Ui *ui_curses_new(void) {
 		.die = ui_die,
 		.info = ui_info,
 		.info_hide = ui_info_hide,
-		.haskey = ui_haskey,
 		.getkey = ui_getkey,
 		.terminal_save = ui_terminal_save,
 		.terminal_restore = ui_terminal_restore,

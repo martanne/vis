@@ -67,7 +67,6 @@ struct Ui {
 	void (*update)(Ui*);
 	void (*suspend)(Ui*);
 	bool (*getkey)(Ui*, TermKeyKey*);
-	bool (*haskey)(Ui*);
 	void (*terminal_save)(Ui*);
 	void (*terminal_restore)(Ui*);
 	TermKey* (*termkey_get)(Ui*);
