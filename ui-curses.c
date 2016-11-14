@@ -1048,16 +1048,6 @@ static void ui_info_hide(Ui *ui) {
 	}
 }
 
-static bool ui_init(Ui *ui, Vis *vis) {
-	UiCurses *uic = (UiCurses*)ui;
-	uic->vis = vis;
-	return true;
-}
-
-static bool ui_start(Ui *ui) {
-	return true;
-}
-
 static TermKey *ui_termkey_new(int fd) {
 	TermKey *termkey = termkey_new(fd, TERMKEY_FLAG_UTF8);
 	if (termkey)
@@ -1127,12 +1117,9 @@ static int ui_colors(Ui *ui) {
 	return COLORS;
 }
 
-Ui *ui_curses_new(void) {
-
-	UiCurses *uic = calloc(1, sizeof(UiCurses));
-	Ui *ui = (Ui*)uic;
-	if (!uic)
-		return NULL;
+static bool ui_init(Ui *ui, Vis *vis) {
+	UiCurses *uic = (UiCurses*)ui;
+	uic->vis = vis;
 	tcgetattr(STDERR_FILENO, &uic->tio);
 	if (!(uic->termkey = ui_termkey_new(STDIN_FILENO)))
 		goto err;
@@ -1155,13 +1142,30 @@ Ui *ui_curses_new(void) {
 	keypad(stdscr, TRUE);
 	meta(stdscr, TRUE);
 	curs_set(0);
-	/* needed because we use getch() which implicitly calls refresh() which
-	   would clear the screen (overwrite it with an empty / unused stdscr */
-	refresh();
+
+	struct sigaction sa;
+	sa.sa_flags = 0;
+	sigemptyset(&sa.sa_mask);
+	sa.sa_handler = sigwinch_handler;
+	sigaction(SIGWINCH, &sa, NULL);
+	sigaction(SIGCONT, &sa, NULL);
+
+	ui_resize(ui);
+
+	return true;
+err:
+	ui_die_msg(ui, "Failed to start curses interface\n");
+	return false;
+}
+
+Ui *ui_curses_new(void) {
+
+	Ui *ui = calloc(1, sizeof(UiCurses));
+	if (!ui)
+		return NULL;
 
 	*ui = (Ui) {
 		.init = ui_init,
-		.start = ui_start,
 		.free = ui_curses_free,
 		.termkey_get = ui_termkey_get,
 		.suspend = ui_suspend,
@@ -1183,19 +1187,7 @@ Ui *ui_curses_new(void) {
 		.colors = ui_colors,
 	};
 
-	struct sigaction sa;
-	sa.sa_flags = 0;
-	sigemptyset(&sa.sa_mask);
-	sa.sa_handler = sigwinch_handler;
-	sigaction(SIGWINCH, &sa, NULL);
-	sigaction(SIGCONT, &sa, NULL);
-
-	ui_resize(ui);
-
 	return ui;
-err:
-	ui_curses_free(ui);
-	return NULL;
 }
 
 void ui_curses_free(Ui *ui) {

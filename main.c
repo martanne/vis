@@ -4,6 +4,9 @@
 #include <wchar.h>
 #include <ctype.h>
 #include <errno.h>
+#include <fcntl.h>
+#include <sys/stat.h>
+#include <sys/types.h>
 
 #include "ui-curses.h"
 #include "vis.h"
@@ -2241,6 +2244,67 @@ int main(int argc, char *argv[]) {
 	sigaddset(&blockset, SIGWINCH);
 	sigprocmask(SIG_BLOCK, &blockset, NULL);
 	signal(SIGPIPE, SIG_IGN);
+
+	for (int i = 1; i < argc; i++) {
+		if (argv[i][0] != '-') {
+			continue;
+		} else if (strcmp(argv[i], "-") == 0) {
+			continue;
+		} else if (strcmp(argv[i], "--") == 0) {
+			break;
+		} else if (strcmp(argv[i], "-v") == 0) {
+			puts("vis " VERSION);
+			return 0;
+		} else {
+			fprintf(stderr, "Unknown command option: %s\n", argv[i]);
+			return 1;
+		}
+	}
+
+	char *cmd = NULL;
+	bool end_of_options = false, win_created = false;
+
+	for (int i = 1; i < argc; i++) {
+		if (argv[i][0] == '-' && !end_of_options) {
+			if (strcmp(argv[i], "-") == 0) {
+				if (!vis_window_new_fd(vis, STDOUT_FILENO))
+					vis_die(vis, "Can not create empty buffer\n");
+				ssize_t len = 0;
+				char buf[PIPE_BUF];
+				Text *txt = vis_text(vis);
+				while ((len = read(STDIN_FILENO, buf, sizeof buf)) > 0)
+					text_insert(txt, text_size(txt), buf, len);
+				if (len == -1)
+					vis_die(vis, "Can not read from stdin\n");
+				text_snapshot(txt);
+				int fd = open("/dev/tty", O_RDONLY);
+				if (fd == -1)
+					vis_die(vis, "Can not reopen stdin\n");
+				dup2(fd, STDIN_FILENO);
+				close(fd);
+			} else if (strcmp(argv[i], "--") == 0) {
+				end_of_options = true;
+			}
+			end_of_options = !strcmp(argv[i], "--");
+		} else if (argv[i][0] == '+' && !end_of_options) {
+			cmd = argv[i] + (argv[i][1] == '/' || argv[i][1] == '?');
+		} else if (!vis_window_new(vis, argv[i])) {
+			vis_die(vis, "Can not load `%s': %s\n", argv[i], strerror(errno));
+		} else {
+			win_created = true;
+			if (cmd) {
+				vis_prompt_cmd(vis, cmd);
+				cmd = NULL;
+			}
+		}
+	}
+
+	if (!vis_window(vis) && !win_created) {
+		if (!vis_window_new(vis, NULL))
+			vis_die(vis, "Can not create empty buffer\n");
+		if (cmd)
+			vis_prompt_cmd(vis, cmd);
+	}
 
 	int status = vis_run(vis, argc, argv);
 	vis_free(vis);

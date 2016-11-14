@@ -37,6 +37,13 @@ bool vis_event_emit(Vis *vis, enum VisEvents id, ...) {
 	if (!vis->event)
 		return true;
 
+	if (!vis->initialized) {
+		vis->initialized = true;
+		vis->ui->init(vis->ui, vis);
+		if (vis->event && vis->event->vis_init)
+			vis->event->vis_init(vis);
+	}
+
 	va_list ap;
 	va_start(ap, id);
 	bool ret = true;
@@ -493,7 +500,6 @@ Vis *vis_new(Ui *ui, VisEvent *event) {
 	if (!vis)
 		return NULL;
 	vis->ui = ui;
-	vis->ui->init(vis->ui, vis);
 	vis->tabwidth = 8;
 	vis->expandtab = false;
 	vis->registers[VIS_REG_BLACKHOLE].type = REGISTER_BLACKHOLE;
@@ -525,9 +531,6 @@ Vis *vis_new(Ui *ui, VisEvent *event) {
 		goto err;
 	vis->mode_prev = vis->mode = &vis_modes[VIS_MODE_NORMAL];
 	vis->event = event;
-	if (event && event->vis_init)
-		event->vis_init(vis);
-	vis->ui->start(vis->ui);
 	return vis;
 err:
 	vis_free(vis);
@@ -982,62 +985,10 @@ bool vis_signal_handler(Vis *vis, int signum, const siginfo_t *siginfo, const vo
 	return false;
 }
 
-static void vis_args(Vis *vis, int argc, char *argv[]) {
-	char *cmd = NULL;
-	bool end_of_options = false;
-	for (int i = 1; i < argc; i++) {
-		if (argv[i][0] == '-' && !end_of_options) {
-			switch (argv[i][1]) {
-			case '-':
-				end_of_options = true;
-				break;
-			case 'v':
-				vis_die(vis, "vis %s\n", VERSION);
-				break;
-			case '\0':
-				break;
-			default:
-				vis_die(vis, "Unknown command option: %s\n", argv[i]);
-				break;
-			}
-		} else if (argv[i][0] == '+') {
-			cmd = argv[i] + (argv[i][1] == '/' || argv[i][1] == '?');
-		} else if (!vis_window_new(vis, argv[i])) {
-			vis_die(vis, "Can not load `%s': %s\n", argv[i], strerror(errno));
-		} else if (cmd) {
-			vis_prompt_cmd(vis, cmd);
-			cmd = NULL;
-		}
-	}
-
-	if (!vis->windows && vis->running) {
-		if (!strcmp(argv[argc-1], "-")) {
-			if (!vis_window_new_fd(vis, STDOUT_FILENO))
-				vis_die(vis, "Can not create empty buffer\n");
-			ssize_t len = 0;
-			char buf[PIPE_BUF];
-			Text *txt = vis_text(vis);
-			while ((len = read(STDIN_FILENO, buf, sizeof buf)) > 0)
-				text_insert(txt, text_size(txt), buf, len);
-			if (len == -1)
-				vis_die(vis, "Can not read from stdin\n");
-			text_snapshot(txt);
-			int fd = open("/dev/tty", O_RDONLY);
-			if (fd == -1)
-				vis_die(vis, "Can not reopen stdin\n");
-			dup2(fd, STDIN_FILENO);
-			close(fd);
-		} else if (!vis_window_new(vis, NULL)) {
-			vis_die(vis, "Can not create empty buffer\n");
-		}
-		if (cmd)
-			vis_prompt_cmd(vis, cmd);
-	}
-}
-
 int vis_run(Vis *vis, int argc, char *argv[]) {
+	if (!vis->windows)
+		return EXIT_SUCCESS;
 	vis->running = true;
-	vis_args(vis, argc, argv);
 
 	vis_event_emit(vis, VIS_EVENT_START);
 
