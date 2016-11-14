@@ -184,6 +184,22 @@ struct Vis {
 	Array textobjects;
 };
 
+enum VisEvents {
+	VIS_EVENT_INIT,
+	VIS_EVENT_START,
+	VIS_EVENT_QUIT,
+	VIS_EVENT_FILE_OPEN,
+	VIS_EVENT_FILE_SAVE,
+	VIS_EVENT_FILE_CLOSE,
+	VIS_EVENT_WIN_OPEN,
+	VIS_EVENT_WIN_CLOSE,
+	VIS_EVENT_WIN_HIGHLIGHT,
+	VIS_EVENT_WIN_SYNTAX,
+	VIS_EVENT_WIN_STATUS,
+};
+
+bool vis_event_emit(Vis*, enum VisEvents, ...);
+
 /** stuff used by multiple of the vis-* files */
 
 extern Mode vis_modes[VIS_MODE_INVALID];

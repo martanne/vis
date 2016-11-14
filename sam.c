@@ -1232,8 +1232,7 @@ static bool cmd_write(Vis *vis, Win *win, Command *cmd, const char *argv[], Curs
 			file_name_set(file, *name);
 		if (strcmp(file->name, *name) == 0)
 			file->stat = text_stat(text);
-		if (!file->internal && vis->event && vis->event->file_save)
-			vis->event->file_save(vis, file);
+		vis_event_emit(vis, VIS_EVENT_FILE_SAVE, file);
 	}
 	return true;
 }

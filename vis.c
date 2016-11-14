@@ -33,6 +33,71 @@ static Macro *macro_get(Vis *vis, enum VisRegister);
 static void macro_replay(Vis *vis, const Macro *macro);
 static void vis_keys_push(Vis *vis, const char *input, size_t pos, bool record);
 
+bool vis_event_emit(Vis *vis, enum VisEvents id, ...) {
+	if (!vis->event)
+		return true;
+
+	va_list ap;
+	va_start(ap, id);
+	bool ret = true;
+
+	switch (id) {
+	case VIS_EVENT_INIT:
+		if (vis->event->vis_init)
+			vis->event->vis_init(vis);
+		break;
+	case VIS_EVENT_START:
+		if (vis->event->vis_start)
+			vis->event->vis_start(vis);
+		break;
+	case VIS_EVENT_FILE_OPEN:
+	case VIS_EVENT_FILE_SAVE:
+	case VIS_EVENT_FILE_CLOSE:
+	{
+		File *file = va_arg(ap, File*);
+		if (file->internal)
+			break;
+		if (id == VIS_EVENT_FILE_OPEN && vis->event->file_open)
+			vis->event->file_open(vis, file);
+		else if (id == VIS_EVENT_FILE_SAVE && vis->event->file_save)
+			vis->event->file_save(vis, file);
+		else if (id == VIS_EVENT_FILE_CLOSE && vis->event->file_close)
+			vis->event->file_close(vis, file);
+		break;
+	}
+	case VIS_EVENT_WIN_OPEN:
+	case VIS_EVENT_WIN_CLOSE:
+	case VIS_EVENT_WIN_HIGHLIGHT:
+	case VIS_EVENT_WIN_SYNTAX:
+	case VIS_EVENT_WIN_STATUS:
+	{
+		Win *win = va_arg(ap, Win*);
+		if (win->file->internal)
+			break;
+		if (vis->event->win_open && id == VIS_EVENT_WIN_OPEN) {
+			vis->event->win_open(vis, win);
+		} else if (vis->event->win_close && id == VIS_EVENT_WIN_CLOSE) {
+			vis->event->win_close(vis, win);
+		} else if (vis->event->win_highlight && id == VIS_EVENT_WIN_HIGHLIGHT) {
+			vis->event->win_highlight(vis, win, win->horizon);
+		} else if (vis->event->win_syntax && id == VIS_EVENT_WIN_SYNTAX) {
+			const char *syntax = va_arg(ap, const char*);
+			ret = vis->event->win_syntax(vis, win, syntax);
+		} else if (vis->event->win_status && id == VIS_EVENT_WIN_STATUS) {
+			vis->event->win_status(vis, win);
+		}
+		break;
+	}
+	case VIS_EVENT_QUIT:
+		if (vis->event->vis_quit)
+			vis->event->vis_quit(vis);
+		break;
+	}
+
+	va_end(ap);
+	return ret;
+}
+
 /** window / file handling */
 
 static void file_free(Vis *vis, File *file) {
@@ -42,8 +107,7 @@ static void file_free(Vis *vis, File *file) {
 		--file->refcount;
 		return;
 	}
-	if (!file->internal && vis->event && vis->event->file_close)
-		vis->event->file_close(vis, file);
+	vis_event_emit(vis, VIS_EVENT_FILE_CLOSE, file);
 	text_free(file->text);
 	free((char*)file->name);
 
@@ -124,8 +188,7 @@ static File *file_new(Vis *vis, const char *name) {
 	if (!(file = file_new_text(vis, text)))
 		goto err;
 	file->name = name_absolute;
-	if (!file->internal && vis->event && vis->event->file_open)
-		vis->event->file_open(vis, file);
+	vis_event_emit(vis, VIS_EVENT_FILE_OPEN, file);
 	return file;
 err:
 	free(name_absolute);
@@ -210,12 +273,8 @@ static void window_draw(void *ctx) {
 	if (!win->ui)
 		return;
 	Vis *vis = win->vis;
-	if (!win->file->internal && vis->event) {
-		if (win->lexer_name && vis->event->win_highlight)
-			vis->event->win_highlight(vis, win, win->horizon);
-		if (vis->event->win_status)
-			vis->event->win_status(vis, win);
-	}
+	vis_event_emit(vis, VIS_EVENT_WIN_HIGHLIGHT, win);
+	vis_event_emit(vis, VIS_EVENT_WIN_STATUS, win);
 }
 
 Win *window_new_file(Vis *vis, File *file, enum UiOption options) {
@@ -245,8 +304,7 @@ Win *window_new_file(Vis *vis, File *file, enum UiOption options) {
 	vis->ui->window_focus(win->ui);
 	for (size_t i = 0; i < LENGTH(win->modes); i++)
 		win->modes[i].parent = &vis_modes[i];
-	if (!file->internal && vis->event && vis->event->win_open)
-		vis->event->win_open(vis, win);
+	vis_event_emit(vis, VIS_EVENT_WIN_OPEN, win);
 	return win;
 }
 
@@ -314,11 +372,8 @@ const char *vis_window_syntax_get(Win *win) {
 }
 
 bool vis_window_syntax_set(Win *win, const char *syntax) {
-	Vis *vis = win->vis;
-	if (!win->file->internal && vis->event && vis->event->win_syntax) {
-		if (!vis->event->win_syntax(vis, win, syntax))
-			return false;
-	}
+	if (!vis_event_emit(win->vis, VIS_EVENT_WIN_SYNTAX, win, syntax))
+		return false;
 	free(win->lexer_name);
 	win->lexer_name = syntax ? strdup(syntax) : NULL;
 	return !syntax || win->lexer_name;
@@ -413,8 +468,7 @@ void vis_window_close(Win *win) {
 	if (!win)
 		return;
 	Vis *vis = win->vis;
-	if (!win->file->internal && vis->event && vis->event->win_close)
-		vis->event->win_close(vis, win);
+	vis_event_emit(vis, VIS_EVENT_WIN_CLOSE, win);
 	file_free(vis, win->file);
 	if (win->prev)
 		win->prev->next = win->next;
@@ -483,8 +537,7 @@ err:
 void vis_free(Vis *vis) {
 	if (!vis)
 		return;
-	if (vis->event && vis->event->vis_quit)
-		vis->event->vis_quit(vis);
+	vis_event_emit(vis, VIS_EVENT_QUIT);
 	vis->event = NULL;
 	while (vis->windows)
 		vis_window_close(vis->windows);
@@ -986,8 +1039,8 @@ int vis_run(Vis *vis, int argc, char *argv[]) {
 	vis->running = true;
 	vis_args(vis, argc, argv);
 
-	if (vis->event && vis->event->vis_start)
-		vis->event->vis_start(vis);
+	vis_event_emit(vis, VIS_EVENT_START);
+
 	struct timespec idle = { .tv_nsec = 0 }, *timeout = NULL;
 
 	sigset_t emptyset;
@@ -1077,8 +1130,7 @@ bool vis_macro_record(Vis *vis, enum VisRegister id) {
 	if (!(VIS_REG_A <= id && id <= VIS_REG_Z))
 		macro_reset(macro);
 	vis->recording = macro;
-	if (vis->event && vis->event->win_status)
-		vis->event->win_status(vis, vis->win);
+	vis_event_emit(vis, VIS_EVENT_WIN_STATUS, vis->win);
 	return true;
 }
 
@@ -1093,8 +1145,7 @@ bool vis_macro_record_stop(Vis *vis) {
 	}
 	vis->last_recording = vis->recording;
 	vis->recording = NULL;
-	if (vis->event && vis->event->win_status)
-		vis->event->win_status(vis, vis->win);
+	vis_event_emit(vis, VIS_EVENT_WIN_STATUS, vis->win);
 	return true;
 }
 
