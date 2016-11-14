@@ -758,6 +758,11 @@ static int vis_index(lua_State *L) {
 			lua_pushboolean(L, vis_macro_recording(vis));
 			return 1;
 		}
+
+		if (strcmp(key, "ui") == 0) {
+			obj_ref_new(L, vis->ui, "vis.ui");
+			return 1;
+		}
 	}
 
 	return index_common(L);
@@ -786,6 +791,21 @@ static const struct luaL_Reg vis_lua[] = {
 	{ "feedkeys", feedkeys },
 	{ "__index", vis_index },
 	{ "__newindex", vis_newindex },
+	{ NULL, NULL },
+};
+
+static int ui_index(lua_State *L) {
+	Win *win = obj_ref_check(L, 1, "vis.ui");
+	if (!win) {
+		lua_pushnil(L);
+		return 1;
+	}
+
+	return index_common(L);
+}
+
+static const struct luaL_Reg ui_funcs[] = {
+	{ "__index", ui_index },
 	{ NULL, NULL },
 };
 
@@ -1462,6 +1482,12 @@ void vis_lua_init(Vis *vis) {
 	luaL_setfuncs(L, window_cursor_funcs, 0);
 	obj_type_new(L, "vis.window.cursors");
 	luaL_setfuncs(L, window_cursors_funcs, 0);
+
+	obj_type_new(L, "vis.ui");
+	luaL_setfuncs(L, ui_funcs, 0);
+	lua_pushunsigned(L, vis->ui->colors(vis->ui));
+	lua_setfield(L, -2, "colors");
+
 	obj_type_new(L, "vis");
 	luaL_setfuncs(L, vis_lua, 0);
 

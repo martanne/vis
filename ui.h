@@ -70,6 +70,7 @@ struct Ui {
 	void (*terminal_save)(Ui*);
 	void (*terminal_restore)(Ui*);
 	TermKey* (*termkey_get)(Ui*);
+	int (*colors)(Ui*);
 };
 
 struct UiWin {

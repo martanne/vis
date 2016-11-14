@@ -585,6 +585,8 @@ At this time there exists no API stability guarantees.
    - `MODE_NORMAL`, `MODE_OPERATOR_PENDING`, `MODE_INSERT`, `MODE_REPLACE`, `MODE_VISUAL`, `MODE_VISUAL_LINE` mode constants
    - `mode` current mode (one of the above constants)
    - `lexers` LPeg lexer support module
+   - `ui`
+     - `colors` number of colors available
    - `events` hooks
      - `start()`
      - `quit()`

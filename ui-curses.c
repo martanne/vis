@@ -1133,6 +1133,10 @@ static void ui_terminal_restore(Ui *ui) {
 	curs_set(0);
 }
 
+static int ui_colors(Ui *ui) {
+	return COLORS;
+}
+
 Ui *ui_curses_new(void) {
 
 	UiCurses *uic = calloc(1, sizeof(UiCurses));
@@ -1186,6 +1190,7 @@ Ui *ui_curses_new(void) {
 		.getkey = ui_getkey,
 		.terminal_save = ui_terminal_save,
 		.terminal_restore = ui_terminal_restore,
+		.colors = ui_colors,
 	};
 
 	struct sigaction sa;
