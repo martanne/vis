@@ -416,3 +416,5 @@ vis.events.win_status = function(win)
 	local right = ' ' .. table.concat(right_parts, " « ") .. ' '
 	win:status(left, right);
 end
+
+vis.events.theme_change((not vis.ui or vis.ui.colors <= 16) and "default-16" or "default-256")

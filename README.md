@@ -480,12 +480,6 @@ highlighting. `VIS_PATH` defaults (in this order) to
 - `/usr/local/share/vis`
 - `/usr/share/vis`
 
-The environment variable `VIS_THEME` can be set to specify the
-theme used by `vis` e.g.
-
-    VIS_THEME=dark-16
-    export VIS_THEME
-
 ### Runtime Configurable Key Bindings
 
 Vis supports run time key bindings via the `:{un,}map{,-window}` set of

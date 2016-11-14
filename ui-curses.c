@@ -1055,16 +1055,6 @@ static bool ui_init(Ui *ui, Vis *vis) {
 }
 
 static bool ui_start(Ui *ui) {
-	Vis *vis = ((UiCurses*)ui)->vis;
-	const char *theme = getenv("VIS_THEME");
-	if (theme && theme[0]) {
-		if (!vis_theme_load(vis, theme))
-			vis_info_show(vis, "Warning: failed to load theme `%s'", theme);
-	} else {
-		theme = COLORS <= 16 ? "default-16" : "default-256";
-		if (!vis_theme_load(vis, theme))
-			vis_info_show(vis, "Warning: failed to load theme `%s' set $VIS_PATH", theme);
-	}
 	return true;
 }
 
