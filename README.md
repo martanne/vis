@@ -477,8 +477,9 @@ highlighting. `VIS_PATH` defaults (in this order) to
 - The location of the `vis` binary
 - `$XDG_CONFIG_HOME/vis`, where `$XDG_CONFIG_HOME` refers to
 `$HOME/.config` if unset
-- `/usr/local/share/vis`
-- `/usr/share/vis`
+- `/usr/local/share/vis` or `/usr/share/vis` depending on the build configuration
+
+Use `:help` and search for "Lua paths" to get the actual paths being used.
 
 ### Runtime Configurable Key Bindings
 
