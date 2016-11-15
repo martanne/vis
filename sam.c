@@ -158,10 +158,10 @@ static const CommandDef cmds[] = {
 		CMD_CMD|CMD_REGEX, "p", cmd_extract
 	}, {
 		"X",            "Run command on files whose name matches",
-		CMD_CMD|CMD_REGEX|CMD_REGEX_DEFAULT, NULL, cmd_files
+		CMD_CMD|CMD_REGEX|CMD_REGEX_DEFAULT|CMD_ADDRESS_NONE, NULL, cmd_files
 	}, {
 		"Y",            "As `X` but select unmatched files",
-		CMD_CMD|CMD_REGEX, NULL, cmd_files
+		CMD_CMD|CMD_REGEX|CMD_ADDRESS_NONE, NULL, cmd_files
 	}, {
 		">",            "Send range to stdin of command",
 		CMD_SHELL|CMD_ADDRESS_LINE, NULL, cmd_pipeout
@@ -173,7 +173,7 @@ static const CommandDef cmds[] = {
 		CMD_SHELL|CMD_ADDRESS_POS, NULL, cmd_filter
 	}, {
 		"!",            "Run the command",
-		CMD_SHELL|CMD_ONCE, NULL, cmd_launch
+		CMD_SHELL|CMD_ONCE|CMD_ADDRESS_NONE, NULL, cmd_launch
 	}, {
 		"w",            "Write range to named file",
 		CMD_ARGV|CMD_FORCE|CMD_ADDRESS_NONE|CMD_ONCE, NULL, cmd_write
@@ -188,66 +188,66 @@ static const CommandDef cmds[] = {
 		CMD_NONE, NULL, NULL
 	}, {
 		"e",            "Edit file",
-		CMD_ARGV|CMD_FORCE|CMD_ONCE, NULL, cmd_edit
+		CMD_ARGV|CMD_FORCE|CMD_ONCE|CMD_ADDRESS_NONE, NULL, cmd_edit
 	}, {
 		"q",            "Quit the current window",
-		CMD_FORCE|CMD_ONCE, NULL, cmd_quit
+		CMD_FORCE|CMD_ONCE|CMD_ADDRESS_NONE, NULL, cmd_quit
 	}, {
 		"cd",           "Change directory",
-		CMD_ARGV|CMD_ONCE, NULL, cmd_cd
+		CMD_ARGV|CMD_ONCE|CMD_ADDRESS_NONE, NULL, cmd_cd
 	},
 	/* vi(m) related commands */
 	{
 		"bdelete",      "Unload file",
-		CMD_FORCE|CMD_ONCE, NULL, cmd_bdelete
+		CMD_FORCE|CMD_ONCE|CMD_ADDRESS_NONE, NULL, cmd_bdelete
 	}, {
 		"help",         "Show this help",
-		CMD_ONCE, NULL, cmd_help
+		CMD_ONCE|CMD_ADDRESS_NONE, NULL, cmd_help
 	}, {
 		"map",          "Map key binding `:map <mode> <lhs> <rhs>`",
-		CMD_ARGV|CMD_FORCE|CMD_ONCE, NULL, cmd_map
+		CMD_ARGV|CMD_FORCE|CMD_ONCE|CMD_ADDRESS_NONE, NULL, cmd_map
 	}, {
 		"map-window",   "As `map` but window local",
-		CMD_ARGV|CMD_FORCE|CMD_ONCE, NULL, cmd_map
+		CMD_ARGV|CMD_FORCE|CMD_ONCE|CMD_ADDRESS_NONE, NULL, cmd_map
 	}, {
 		"unmap",        "Unmap key binding `:unmap <mode> <lhs>`",
-		CMD_ARGV|CMD_ONCE, NULL, cmd_unmap
+		CMD_ARGV|CMD_ONCE|CMD_ADDRESS_NONE, NULL, cmd_unmap
 	}, {
 		"unmap-window", "As `unmap` but window local",
-		CMD_ARGV|CMD_ONCE, NULL, cmd_unmap
+		CMD_ARGV|CMD_ONCE|CMD_ADDRESS_NONE, NULL, cmd_unmap
 	}, {
 		"langmap",      "Map keyboard layout `:langmap <locale-keys> <latin-keys>`",
-		CMD_ARGV|CMD_FORCE|CMD_ONCE, NULL, cmd_langmap
+		CMD_ARGV|CMD_FORCE|CMD_ONCE|CMD_ADDRESS_NONE, NULL, cmd_langmap
 	}, {
 		"new",          "Create new window",
-		CMD_ARGV|CMD_ONCE, NULL, cmd_new
+		CMD_ARGV|CMD_ONCE|CMD_ADDRESS_NONE, NULL, cmd_new
 	}, {
 		"open",         "Open file",
-		CMD_ARGV|CMD_ONCE, NULL, cmd_open
+		CMD_ARGV|CMD_ONCE|CMD_ADDRESS_NONE, NULL, cmd_open
 	}, {
 		"qall",         "Exit vis",
-		CMD_FORCE|CMD_ONCE, NULL, cmd_qall
+		CMD_FORCE|CMD_ONCE|CMD_ADDRESS_NONE, NULL, cmd_qall
 	}, {
 		"set",          "Set option",
-		CMD_ARGV|CMD_ONCE, NULL, cmd_set
+		CMD_ARGV|CMD_ONCE|CMD_ADDRESS_NONE, NULL, cmd_set
 	}, {
 		"split",        "Horizontally split window",
-		CMD_ARGV|CMD_ONCE, NULL, cmd_split
+		CMD_ARGV|CMD_ONCE|CMD_ADDRESS_NONE, NULL, cmd_split
 	}, {
 		"vnew",         "As `:new` but split vertically",
-		CMD_ARGV|CMD_ONCE, NULL, cmd_vnew
+		CMD_ARGV|CMD_ONCE|CMD_ADDRESS_NONE, NULL, cmd_vnew
 	}, {
 		"vsplit",       "Vertically split window",
-		CMD_ARGV|CMD_ONCE, NULL, cmd_vsplit
+		CMD_ARGV|CMD_ONCE|CMD_ADDRESS_NONE, NULL, cmd_vsplit
 	}, {
 		"wq",           "Write file and quit",
-		CMD_ARGV|CMD_FORCE|CMD_ADDRESS_NONE|CMD_ONCE, NULL, cmd_wq
+		CMD_ARGV|CMD_FORCE|CMD_ADDRESS_NONE|CMD_ONCE|CMD_ADDRESS_NONE, NULL, cmd_wq
 	}, {
 		"earlier",      "Go to older text state",
-		CMD_ARGV|CMD_ONCE, NULL, cmd_earlier_later
+		CMD_ARGV|CMD_ONCE|CMD_ADDRESS_NONE, NULL, cmd_earlier_later
 	}, {
 		"later",        "Go to newer text state",
-		CMD_ARGV|CMD_ONCE, NULL, cmd_earlier_later
+		CMD_ARGV|CMD_ONCE|CMD_ADDRESS_NONE, NULL, cmd_earlier_later
 	},
 	{ NULL, NULL, CMD_NONE, NULL, NULL },
 };
