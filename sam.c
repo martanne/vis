@@ -77,10 +77,11 @@ struct CommandDef {
 		CMD_ADDRESS_POS   = 1 << 6,  /* no address implies an empty range at current cursor position */
 		CMD_ADDRESS_LINE  = 1 << 7,  /* if no address is given, use the current line */
 		CMD_ADDRESS_AFTER = 1 << 8,  /* if no address is given, begin at the start of the next line */
-		CMD_SHELL         = 1 << 9,  /* command needs a shell command as argument */
-		CMD_FORCE         = 1 << 10, /* can the command be forced with ! */
-		CMD_ARGV          = 1 << 11, /* whether shell like argument splitted is desired */
-		CMD_ONCE          = 1 << 12, /* command should only be executed once, not for every selection */
+		CMD_ADDRESS_ALL   = 1 << 9,  /* if no address is given, apply to whole file */
+		CMD_SHELL         = 1 << 10, /* command needs a shell command as argument */
+		CMD_FORCE         = 1 << 11, /* can the command be forced with ! */
+		CMD_ARGV          = 1 << 12, /* whether shell like argument splitted is desired */
+		CMD_ONCE          = 1 << 13, /* command should only be executed once, not for every selection */
 	} flags;
 	const char *defcmd;                  /* name of a default target command */
 	bool (*func)(Vis*, Win*, Command*, const char *argv[], Cursor*, Filerange*); /* command implementation */
@@ -176,7 +177,7 @@ static const CommandDef cmds[] = {
 		CMD_SHELL|CMD_ONCE|CMD_ADDRESS_NONE, NULL, cmd_launch
 	}, {
 		"w",            "Write range to named file",
-		CMD_ARGV|CMD_FORCE|CMD_ADDRESS_NONE|CMD_ONCE, NULL, cmd_write
+		CMD_ARGV|CMD_FORCE|CMD_ONCE|CMD_ADDRESS_ALL, NULL, cmd_write
 	}, {
 		"r",            "Replace range by contents of file",
 		CMD_ARGV|CMD_ADDRESS_AFTER, NULL, cmd_read
@@ -241,7 +242,7 @@ static const CommandDef cmds[] = {
 		CMD_ARGV|CMD_ONCE|CMD_ADDRESS_NONE, NULL, cmd_vsplit
 	}, {
 		"wq",           "Write file and quit",
-		CMD_ARGV|CMD_FORCE|CMD_ADDRESS_NONE|CMD_ONCE|CMD_ADDRESS_NONE, NULL, cmd_wq
+		CMD_ARGV|CMD_FORCE|CMD_ONCE|CMD_ADDRESS_ALL, NULL, cmd_wq
 	}, {
 		"earlier",      "Go to older text state",
 		CMD_ARGV|CMD_ONCE|CMD_ADDRESS_NONE, NULL, cmd_earlier_later
@@ -1169,6 +1170,8 @@ static bool cmd_select(Vis *vis, Win *win, Command *cmd, const char *argv[], Cur
 		} else if (cmd->cmd->cmddef->flags & CMD_ADDRESS_AFTER) {
 			size_t next_line = text_line_next(txt, pos);
 			sel = text_range_new(next_line, next_line);
+		} else if (cmd->cmd->cmddef->flags & CMD_ADDRESS_ALL) {
+			sel = text_range_new(0, text_size(txt));
 		} else if (multiple_cursors) {
 			sel = text_object_line(txt, pos);
 		} else {
@@ -1249,15 +1252,15 @@ static bool cmd_write(Vis *vis, Win *win, Command *cmd, const char *argv[], Curs
 
 		for (Cursor *c = view_cursors(win->view); c; c = view_cursors_next(c)) {
 			Filerange range = view_cursors_selection_get(c);
-			bool all = !text_range_valid(&range);
-			if (all)
-				range = text_range_new(0, text_size(text));
+			bool invalid_range = !text_range_valid(&range);
+			if (invalid_range)
+				range = *r;
 			ssize_t written = text_write_range(text, &range, file->fd);
 			if (written == -1 || (size_t)written != text_range_size(&range)) {
 				vis_info_show(vis, "Can not write to stdout");
 				return false;
 			}
-			if (all)
+			if (invalid_range)
 				break;
 		}
 
@@ -1266,9 +1269,16 @@ static bool cmd_write(Vis *vis, Win *win, Command *cmd, const char *argv[], Curs
 		return true;
 	}
 
-	if (noname && cmd->flags != '!' && vis->mode->visual) {
-		vis_info_show(vis, "WARNING: file will be reduced to active selection");
-		return false;
+	if (noname && cmd->flags != '!') {
+		if (vis->mode->visual) {
+			vis_info_show(vis, "WARNING: file will be reduced to active selection");
+			return false;
+		}
+		Filerange all = text_range_new(0, text_size(text));
+		if (!text_range_equal(r, &all)) {
+			vis_info_show(vis, "WARNING: file will be reduced to provided range");
+			return false;
+		}
 	}
 
 	for (const char **name = &argv[1]; *name; name++) {
@@ -1289,9 +1299,9 @@ static bool cmd_write(Vis *vis, Win *win, Command *cmd, const char *argv[], Curs
 
 		for (Cursor *c = view_cursors(win->view); c; c = view_cursors_next(c)) {
 			Filerange range = view_cursors_selection_get(c);
-			bool all = !text_range_valid(&range);
-			if (all)
-				range = text_range_new(0, text_size(text));
+			bool invalid_range = !text_range_valid(&range);
+			if (invalid_range)
+				range = *r;
 
 			ssize_t written = text_save_write_range(ctx, &range);
 			failure = (written == -1 || (size_t)written != text_range_size(&range));
@@ -1300,7 +1310,7 @@ static bool cmd_write(Vis *vis, Win *win, Command *cmd, const char *argv[], Curs
 				break;
 			}
 
-			if (all)
+			if (invalid_range)
 				break;
 		}
 
