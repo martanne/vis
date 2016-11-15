@@ -331,11 +331,14 @@ Operators can be forced to work line wise by specifying `V`.
 
       * if no address was supplied to the command then:
 
-         + if multiple cursors exist, the command is executed once for every
-           cursor with dot set to the current line of the cursor
+         + `w` and `wq` command are always applied to the whole file
 
-         + otherwise if there is only 1 cursor then the command is executed
-           with dot set to the whole file
+         + if multiple cursors exist, the command is executed once for every
+           cursor with dot set to the character the cursor is currently over
+
+         + otherwise if there is only 1 cursor then `x` and `y` commands are
+           applied to whole file whereas the other commands are executed
+           with an implicit selection matching the current character
 
   The command syntax was slightly tweaked to accept more terse commands.
 

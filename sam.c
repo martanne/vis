@@ -77,11 +77,12 @@ struct CommandDef {
 		CMD_ADDRESS_POS   = 1 << 6,  /* no address implies an empty range at current cursor position */
 		CMD_ADDRESS_LINE  = 1 << 7,  /* if no address is given, use the current line */
 		CMD_ADDRESS_AFTER = 1 << 8,  /* if no address is given, begin at the start of the next line */
-		CMD_ADDRESS_ALL   = 1 << 9,  /* if no address is given, apply to whole file */
-		CMD_SHELL         = 1 << 10, /* command needs a shell command as argument */
-		CMD_FORCE         = 1 << 11, /* can the command be forced with ! */
-		CMD_ARGV          = 1 << 12, /* whether shell like argument splitted is desired */
-		CMD_ONCE          = 1 << 13, /* command should only be executed once, not for every selection */
+		CMD_ADDRESS_ALL   = 1 << 9,  /* if no address is given, apply to whole file (independent of #cursors) */
+		CMD_ADDRESS_ALL_1CURSOR = 1 << 10, /* if no address is given and only 1 cursor exists, apply to whole file */
+		CMD_SHELL         = 1 << 11, /* command needs a shell command as argument */
+		CMD_FORCE         = 1 << 12, /* can the command be forced with ! */
+		CMD_ARGV          = 1 << 13, /* whether shell like argument splitting is desired */
+		CMD_ONCE          = 1 << 14, /* command should only be executed once, not for every selection */
 	} flags;
 	const char *defcmd;                  /* name of a default target command */
 	bool (*func)(Vis*, Win*, Command*, const char *argv[], Cursor*, Filerange*); /* command implementation */
@@ -153,10 +154,10 @@ static const CommandDef cmds[] = {
 		CMD_CMD|CMD_REGEX, "p", cmd_guard
 	}, {
 		"x",            "Set range and run command on each match",
-		CMD_CMD|CMD_REGEX|CMD_REGEX_DEFAULT, "p", cmd_extract
+		CMD_CMD|CMD_REGEX|CMD_REGEX_DEFAULT|CMD_ADDRESS_ALL_1CURSOR, "p", cmd_extract
 	}, {
 		"y",            "As `x` but select unmatched text",
-		CMD_CMD|CMD_REGEX, "p", cmd_extract
+		CMD_CMD|CMD_REGEX|CMD_ADDRESS_ALL_1CURSOR, "p", cmd_extract
 	}, {
 		"X",            "Run command on files whose name matches",
 		CMD_CMD|CMD_REGEX|CMD_REGEX_DEFAULT|CMD_ADDRESS_NONE, NULL, cmd_files
@@ -258,7 +259,7 @@ static const CommandDef cmddef_select = {
 };
 
 static const CommandDef cmddef_user = {
-	NULL, NULL, CMD_ARGV|CMD_FORCE|CMD_ONCE, NULL, cmd_user
+	NULL, NULL, CMD_ARGV|CMD_FORCE|CMD_ONCE|CMD_ADDRESS_ALL, NULL, cmd_user
 };
 
 /* :set command options */
@@ -1177,10 +1178,10 @@ static bool cmd_select(Vis *vis, Win *win, Command *cmd, const char *argv[], Cur
 			sel = text_range_new(next_line, next_line);
 		} else if (cmd->cmd->cmddef->flags & CMD_ADDRESS_ALL) {
 			sel = text_range_new(0, text_size(txt));
-		} else if (multiple_cursors) {
-			sel = text_object_line(txt, pos);
-		} else {
+		} else if (!multiple_cursors && (cmd->cmd->cmddef->flags & CMD_ADDRESS_ALL_1CURSOR)) {
 			sel = text_range_new(0, text_size(txt));
+		} else {
+			sel = text_range_new(pos, text_char_next(txt, pos));
 		}
 		if (text_range_valid(&sel))
 			ret &= sam_execute(vis, win, cmd->cmd, c, &sel);
