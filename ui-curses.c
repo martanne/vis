@@ -15,6 +15,7 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <termios.h>
+#include <errno.h>
 
 #include "ui-curses.h"
 #include "vis.h"
@@ -1055,6 +1056,18 @@ static TermKey *ui_termkey_new(int fd) {
 	return termkey;
 }
 
+static TermKey *ui_termkey_reopen(Ui *ui, int fd) {
+	int tty = open("/dev/tty", O_RDWR);
+	if (tty == -1)
+		return NULL;
+	if (tty != fd && dup2(tty, fd) == -1) {
+		close(tty);
+		return NULL;
+	}
+	close(tty);
+	return ui_termkey_new(fd);
+}
+
 static TermKey *ui_termkey_get(Ui *ui) {
 	UiCurses *uic = (UiCurses*)ui;
 	return uic->termkey;
@@ -1070,18 +1083,11 @@ static bool ui_getkey(Ui *ui, TermKeyKey *key) {
 	TermKeyResult ret = termkey_getkey(uic->termkey, key);
 
 	if (ret == TERMKEY_RES_EOF) {
-		int tty = open("/dev/tty", O_RDWR);
-		if (tty == -1)
-			goto fatal;
-		if (tty != STDIN_FILENO && dup2(tty, STDIN_FILENO) == -1) {
-			close(tty);
-			goto fatal;
-		}
-		close(tty);
 		termkey_destroy(uic->termkey);
-		if (!(uic->termkey = ui_termkey_new(STDIN_FILENO)))
-			goto fatal;
-		return NULL;
+		errno = 0;
+		if (!(uic->termkey = ui_termkey_reopen(ui, STDIN_FILENO)))
+			ui_die_msg(ui, "Failed to re-open stdin as /dev/tty: %s\n", errno != 0 ? strerror(errno) : "");
+		return false;
 	}
 
 	if (ret == TERMKEY_RES_AGAIN) {
@@ -1093,9 +1099,6 @@ static bool ui_getkey(Ui *ui, TermKeyKey *key) {
 	}
 
 	return ret == TERMKEY_RES_KEY;
-fatal:
-	ui_die_msg(ui, "Failed to re-open stdin as /dev/tty\n");
-	return false;
 }
 
 static void ui_terminal_save(Ui *ui) {
@@ -1120,15 +1123,28 @@ static int ui_colors(Ui *ui) {
 static bool ui_init(Ui *ui, Vis *vis) {
 	UiCurses *uic = (UiCurses*)ui;
 	uic->vis = vis;
-	tcgetattr(STDERR_FILENO, &uic->tio);
-	if (!(uic->termkey = ui_termkey_new(STDIN_FILENO)))
-		goto err;
+
 	setlocale(LC_CTYPE, "");
-	if (!getenv("ESCDELAY"))
-		set_escdelay(50);
+
 	char *term = getenv("TERM");
 	if (!term)
 		term = "xterm";
+
+	tcgetattr(STDERR_FILENO, &uic->tio);
+	errno = 0;
+	if (!(uic->termkey = ui_termkey_new(STDIN_FILENO))) {
+		/* work around libtermkey bug which fails if stdin is /dev/null */
+		if (errno == EBADF && !isatty(STDIN_FILENO)) {
+			errno = 0;
+			if (!(uic->termkey = ui_termkey_reopen(ui, STDIN_FILENO)) && errno == ENXIO)
+				uic->termkey = termkey_new_abstract(term, TERMKEY_FLAG_UTF8);
+		}
+		if (!uic->termkey)
+			goto err;
+	}
+
+	if (!getenv("ESCDELAY"))
+		set_escdelay(50);
 	if (!newterm(term, stderr, stdin)) {
 		snprintf(uic->info, sizeof(uic->info), "Warning: unknown term `%s'", term);
 		if (!newterm(strstr(term, "-256color") ? "xterm-256color" : "xterm", stderr, stdin))
@@ -1154,7 +1170,7 @@ static bool ui_init(Ui *ui, Vis *vis) {
 
 	return true;
 err:
-	ui_die_msg(ui, "Failed to start curses interface\n");
+	ui_die_msg(ui, "Failed to start curses interface: %s\n", errno != 0 ? strerror(errno) : "");
 	return false;
 }
 
