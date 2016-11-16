@@ -386,6 +386,7 @@ const char *sam_error(enum SamError err) {
 		[SAM_ERR_UNMATCHED_BRACE] = "Unmatched `}'",
 		[SAM_ERR_REGEX]           = "Bad regular expression",
 		[SAM_ERR_TEXT]            = "Bad text",
+		[SAM_ERR_SHELL]           = "Shell command expected",
 		[SAM_ERR_COMMAND]         = "Unknown command",
 		[SAM_ERR_EXECUTE]         = "Error executing command",
 	};
@@ -522,9 +523,7 @@ static char *parse_cmdname(const char **s) {
 
 static Regex *parse_regex(Vis *vis, const char **s) {
 	char *pattern = parse_delimited(s, CMD_REGEX);
-	if (!pattern)
-		return NULL;
-	Regex *regex = vis_regex(vis, *pattern ? pattern : NULL);
+	Regex *regex = vis_regex(vis, pattern);
 	free(pattern);
 	return regex;
 }
