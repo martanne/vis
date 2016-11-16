@@ -930,7 +930,14 @@ static void vis_keys_process(Vis *vis, size_t pos) {
 }
 
 void vis_keys_feed(Vis *vis, const char *input) {
-	vis_keys_push(vis, input, buffer_length0(vis->keys), false);
+	if (!input)
+		return;
+	Macro macro;
+	macro_init(&macro);
+	if (!macro_append(&macro, input))
+		return;
+	macro_replay(vis, &macro);
+	macro_release(&macro);
 }
 
 static void vis_keys_push(Vis *vis, const char *input, size_t pos, bool record) {
