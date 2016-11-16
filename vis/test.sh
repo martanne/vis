@@ -1,31 +1,37 @@
 #!/bin/sh
 
 [ -z "$VIS" ] && VIS="../../vis"
-
-TESTS=$1
-[ -z "$TESTS" ] && TESTS=$(find . -name '*.keys' | sed 's/\.keys$//g')
-
-TESTS_RUN=0
-TESTS_OK=0
-
 $VIS -v
 
-for t in $TESTS; do
-	ERR="$t.err"
-	OUT="$t.out"
-	REF="$t.ref"
-	printf "Running test %s ... " "$t"
-	rm -f "$OUT" "$ERR"
-	{ cat "$t.keys"; printf "<Escape>:wq! $OUT<Enter>"; } | cpp -P | ../util/keys | $VIS "$t.in" 2> /dev/null
-	if [ -e "$OUT" ]; then
-		if cmp -s "$REF" "$OUT"; then
-			printf "OK\n"
-			TESTS_OK=$((TESTS_OK+1))
+TESTS_OK=0
+TESTS_RUN=0
+
+if [ $# -gt 0 ]; then
+	test_files=$*
+else
+	printf ':help\n:/ Lua paths/,$ w help\n:qall\n' | $VIS 2> /dev/null && cat help && rm -f help
+	test_files="$(find . -type f -name '*.in')"
+fi
+
+export VIS_PATH=.
+
+for t in $test_files; do
+	TESTS_RUN=$((TESTS_RUN + 1))
+	t=${t%.in}
+	t=${t#./}
+	$VIS "$t".in < /dev/null 2> /dev/null
+
+	printf "%-50s" "$t"
+	if [ -e "$t".out ]; then
+		if cmp -s "$t".ref "$t".out 2> /dev/null; then
+			printf "PASS\n"
+			TESTS_OK=$((TESTS_OK + 1))
 		else
 			printf "FAIL\n"
-			diff -u "$REF" "$OUT" > "$ERR"
+			diff -u "$t".ref "$t".out > "$t".err
 		fi
-		TESTS_RUN=$((TESTS_RUN+1))
+	else
+		printf "ERROR\n"
 	fi
 done
 

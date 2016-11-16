@@ -1,12 +1,9 @@
-test: ../../vis ../util/keys
+test: ../../vis clean
 	@./test.sh
 
 ../../vis: ../../*.[ch]
 	@echo Compiling vis
 	@$(MAKE) -C ../..
-
-../util/keys: ../util/keys.c
-	@$(MAKE) -C ../util
 
 clean:
 	@echo cleaning
