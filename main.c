@@ -1265,6 +1265,8 @@ static const char *key2register(Vis *vis, const char *keys, enum VisRegister *re
 		*reg = VIS_REG_SEARCH;
 	else if (keys[0] == ':')
 		*reg = VIS_REG_COMMAND;
+	else if (keys[0] == '!')
+		*reg = VIS_REG_SHELL;
 	return keys+1;
 }
 

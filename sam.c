@@ -492,9 +492,15 @@ static char *parse_text(const char **s) {
 	return buf.data;
 }
 
-static char *parse_shellcmd(const char **s) {
+static char *parse_shellcmd(Vis *vis, const char **s) {
 	skip_spaces(s);
-	return parse_until(s, "\n", NULL, false);
+	char *cmd = parse_until(s, "\n", NULL, false);
+	if (!cmd) {
+		const char *last_cmd = register_get(vis, &vis->registers[VIS_REG_SHELL], NULL);
+		return last_cmd ? strdup(last_cmd) : NULL;
+	}
+	register_put0(vis, &vis->registers[VIS_REG_SHELL], cmd);
+	return cmd;
 }
 
 static void parse_argv(const char **s, const char *argv[], size_t maxarg) {
@@ -746,7 +752,7 @@ static Command *command_parse(Vis *vis, const char **s, int level, enum SamError
 		}
 	}
 
-	if (cmddef->flags & CMD_SHELL && !(cmd->argv[1] = parse_shellcmd(s))) {
+	if (cmddef->flags & CMD_SHELL && !(cmd->argv[1] = parse_shellcmd(vis, s))) {
 		*err = SAM_ERR_SHELL;
 		goto fail;
 	}
