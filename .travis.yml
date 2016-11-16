@@ -24,6 +24,13 @@ matrix:
       compiler: clang
       env: TARGET=debug
 
+cache:
+  directories:
+    - $HOME/.cache/vis
+
+before_install:
+  - mkdir -p "$HOME/.cache/vis/sources" && mkdir dependency && ln -s "$HOME/.cache/vis/sources" dependency/sources
+
 install:
   - if [ "$TRAVIS_OS_NAME" = "osx" ]; then
       brew update &&
