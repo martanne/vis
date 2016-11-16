@@ -38,4 +38,8 @@ script:
     fi
   - size vis
   - LD_LIBRARY_PATH="$(pwd)/dependency/install/usr/lib" ./vis -v
-  - LD_LIBRARY_PATH="$(pwd)/dependency/install/usr/lib" make test
+  - LD_LIBRARY_PATH="$(pwd)/dependency/install/usr/lib" make -C test/core
+  - LD_LIBRARY_PATH="$(pwd)/dependency/install/usr/lib" make -C test/lua
+  - LD_LIBRARY_PATH="$(pwd)/dependency/install/usr/lib" make -C test/vis
+  - LD_LIBRARY_PATH="$(pwd)/dependency/install/usr/lib" make -C test/sam
+  - LD_LIBRARY_PATH="$(pwd)/dependency/install/usr/lib" make -C test/vim
