@@ -9,5 +9,5 @@ vis.events.win_open = function(win)
 		lua_file = string.gsub(in_file, '%.in$', '.lua')
 		dofile(lua_file)
 	end
-	vis:command('q!')
+	vis:command('qall!')
 end
