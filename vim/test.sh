@@ -11,6 +11,8 @@ TESTS=$1
 TESTS_RUN=0
 TESTS_OK=0
 
+export VIS_PATH=.
+
 $VIM --version | head -1
 $VIS -v
 
