@@ -32,6 +32,7 @@ typedef struct {
 	void (*vis_start)(Vis*);
 	void (*vis_quit)(Vis*);
 	void (*file_open)(Vis*, File*);
+	void (*file_presave)(Vis*, File*);
 	void (*file_save)(Vis*, File*);
 	void (*file_close)(Vis*, File*);
 	void (*win_open)(Vis*, Win*);
