@@ -1238,7 +1238,7 @@ static bool cmd_substitute(Vis *vis, Win *win, Command *cmd, const char *argv[],
 }
 
 static bool cmd_write(Vis *vis, Win *win, Command *cmd, const char *argv[], Cursor *cur, Filerange *r) {
-    vis_event_emit(vis, VIS_EVENT_FILE_PRESAVE, win->file);
+	vis_event_emit(vis, VIS_EVENT_FILE_PRESAVE, win->file);
 	if (!win)
 		return false;
 	File *file = win->file;

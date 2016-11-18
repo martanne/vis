@@ -58,7 +58,7 @@ bool vis_event_emit(Vis *vis, enum VisEvents id, ...) {
 			vis->event->vis_start(vis);
 		break;
 	case VIS_EVENT_FILE_OPEN:
-    case VIS_EVENT_FILE_PRESAVE:
+	case VIS_EVENT_FILE_PRESAVE:
 	case VIS_EVENT_FILE_SAVE:
 	case VIS_EVENT_FILE_CLOSE:
 	{
