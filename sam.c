@@ -147,7 +147,7 @@ static const CommandDef cmds[] = {
 		CMD_NONE, NULL, cmd_print
 	}, {
 		"s",            "Substitute text for regexp in range",
-		CMD_SHELL, NULL, cmd_substitute
+		CMD_SHELL|CMD_ADDRESS_LINE, NULL, cmd_substitute
 	}, {
 		"v",            "If range does not contain regexp, run command",
 		CMD_CMD|CMD_REGEX, "p", cmd_guard
