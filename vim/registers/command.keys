@@ -1,0 +1,4 @@
+:s,command,COMMAND,<Enter>
+o<C-r>:<Escape>
+j
+@:

@@ -1,0 +1,5 @@
+Black hole register "_
+
+When writing to this register, nothing happens.  This can be used to delete
+text without affecting the normal registers.  When reading from this register,
+nothing is returned.  {not in Vi}
