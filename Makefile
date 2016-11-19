@@ -100,9 +100,9 @@ install: vis vis-menu
 	@echo installing manual page to ${DESTDIR}${MANPREFIX}/man1
 	@mkdir -p ${DESTDIR}${MANPREFIX}/man1
 	@sed -e "s/VERSION/${VERSION}/g" < vis.1 > ${DESTDIR}${MANPREFIX}/man1/vis.1
-	@sed -e "s/VERSION/${VERSION}/g" -e "s/MONTH DAY, YEAR/$(date +'%B %m, %Y')/g" < vis-menu.1 > ${DESTDIR}${MANPREFIX}/man1/vis-menu.1
-	@sed -e "s/VERSION/${VERSION}/g" -e "s/MONTH DAY, YEAR/$(date +'%B %m, %Y')/g" < vis-clipboard.1 > ${DESTDIR}${MANPREFIX}/man1/vis-clipboard.1
-	@sed -e "s/VERSION/${VERSION}/g" -e "s/MONTH DAY, YEAR/$(date +'%B %m, %Y')/g" < vis-open.1 > ${DESTDIR}${MANPREFIX}/man1/vis-open.1
+	@sed -e "s/VERSION/${VERSION}/g" -e "s/MONTH DAY, YEAR/$$(date +'%B %m, %Y')/g" < vis-menu.1 > ${DESTDIR}${MANPREFIX}/man1/vis-menu.1
+	@sed -e "s/VERSION/${VERSION}/g" -e "s/MONTH DAY, YEAR/$$(date +'%B %m, %Y')/g" < vis-clipboard.1 > ${DESTDIR}${MANPREFIX}/man1/vis-clipboard.1
+	@sed -e "s/VERSION/${VERSION}/g" -e "s/MONTH DAY, YEAR/$$(date +'%B %m, %Y')/g" < vis-open.1 > ${DESTDIR}${MANPREFIX}/man1/vis-open.1
 	@chmod 644 ${DESTDIR}${MANPREFIX}/man1/vis.1
 	@chmod 644 ${DESTDIR}${MANPREFIX}/man1/vis-menu.1
 	@chmod 644 ${DESTDIR}${MANPREFIX}/man1/vis-clipboard.1
