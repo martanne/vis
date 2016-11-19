@@ -97,8 +97,18 @@ static size_t till_left(Vis *vis, Text *txt, size_t pos) {
 	return pos;
 }
 
+static size_t firstline(Text *txt, size_t pos) {
+	return text_line_start(txt, 0);
+}
+
 static size_t line(Vis *vis, Text *txt, size_t pos) {
-	return text_pos_by_lineno(txt, vis_count_get_default(vis, 1));
+	int count = vis_count_get_default(vis, 1);
+	return text_line_start(txt, text_pos_by_lineno(txt, count));
+}
+
+static size_t lastline(Text *txt, size_t pos) {
+	pos = text_size(txt);
+	return text_line_start(txt, pos > 0 ? pos-1 : pos);
 }
 
 static size_t column(Vis *vis, Text *txt, size_t pos) {
@@ -486,12 +496,12 @@ const Movement vis_motions[] = {
 		.type = INCLUSIVE|JUMP,
 	},
 	[VIS_MOVE_FILE_BEGIN] = {
-		.txt = text_begin,
-		.type = LINEWISE|JUMP,
+		.txt = firstline,
+		.type = LINEWISE|LINEWISE_INCLUSIVE|JUMP|IDEMPOTENT,
 	},
 	[VIS_MOVE_FILE_END] = {
-		.txt = text_end,
-		.type = LINEWISE|JUMP,
+		.txt = lastline,
+		.type = LINEWISE|LINEWISE_INCLUSIVE|JUMP|IDEMPOTENT,
 	},
 	[VIS_MOVE_LEFT_TO] = {
 		.vis = to_left,
