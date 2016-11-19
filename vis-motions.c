@@ -7,8 +7,6 @@
 #include "text-util.h"
 #include "util.h"
 
-/** utility functions */
-
 static Regex *search_word(Vis *vis, Text *txt, size_t pos) {
 	char expr[512];
 	Filerange word = text_object_word(txt, pos);
@@ -26,8 +24,6 @@ static Regex *search_word(Vis *vis, Text *txt, size_t pos) {
 	free(buf);
 	return regex;
 }
-
-/** motion implementations */
 
 static size_t search_word_forward(Vis *vis, Text *txt, size_t pos) {
 	Regex *regex = search_word(vis, txt, pos);
@@ -332,67 +328,243 @@ err:
 }
 
 const Movement vis_motions[] = {
-	[VIS_MOVE_LINE_UP]             = { .cur = view_line_up,             .type = LINEWISE|LINEWISE_INCLUSIVE },
-	[VIS_MOVE_LINE_DOWN]           = { .cur = view_line_down,           .type = LINEWISE|LINEWISE_INCLUSIVE },
-	[VIS_MOVE_SCREEN_LINE_UP]      = { .cur = view_screenline_up,                                        },
-	[VIS_MOVE_SCREEN_LINE_DOWN]    = { .cur = view_screenline_down,                                      },
-	[VIS_MOVE_SCREEN_LINE_BEGIN]   = { .cur = view_screenline_begin,    .type = CHARWISE                 },
-	[VIS_MOVE_SCREEN_LINE_MIDDLE]  = { .cur = view_screenline_middle,   .type = CHARWISE                 },
-	[VIS_MOVE_SCREEN_LINE_END]     = { .cur = view_screenline_end,      .type = CHARWISE|INCLUSIVE       },
-	[VIS_MOVE_LINE_PREV]           = { .txt = text_line_prev,                                            },
-	[VIS_MOVE_LINE_BEGIN]          = { .txt = text_line_begin,                                           },
-	[VIS_MOVE_LINE_START]          = { .txt = text_line_start,                                           },
-	[VIS_MOVE_LINE_FINISH]         = { .txt = text_line_finish,         .type = INCLUSIVE                },
-	[VIS_MOVE_LINE_LASTCHAR]       = { .txt = text_line_lastchar,       .type = INCLUSIVE                },
-	[VIS_MOVE_LINE_END]            = { .txt = text_line_end,                                             },
-	[VIS_MOVE_LINE_NEXT]           = { .txt = text_line_next,                                            },
-	[VIS_MOVE_LINE]                = { .vis = line,                     .type = LINEWISE|IDEMPOTENT|JUMP },
-	[VIS_MOVE_COLUMN]              = { .vis = column,                   .type = CHARWISE|IDEMPOTENT      },
-	[VIS_MOVE_CHAR_PREV]           = { .txt = text_char_prev,           .type = CHARWISE                 },
-	[VIS_MOVE_CHAR_NEXT]           = { .txt = text_char_next,           .type = CHARWISE                 },
-	[VIS_MOVE_LINE_CHAR_PREV]      = { .txt = text_line_char_prev,      .type = CHARWISE                 },
-	[VIS_MOVE_LINE_CHAR_NEXT]      = { .txt = text_line_char_next,      .type = CHARWISE                 },
-	[VIS_MOVE_WORD_START_PREV]     = { .txt = text_word_start_prev,     .type = CHARWISE                 },
-	[VIS_MOVE_WORD_START_NEXT]     = { .txt = text_word_start_next,     .type = CHARWISE                 },
-	[VIS_MOVE_WORD_END_PREV]       = { .txt = text_word_end_prev,       .type = CHARWISE|INCLUSIVE       },
-	[VIS_MOVE_WORD_END_NEXT]       = { .txt = text_word_end_next,       .type = CHARWISE|INCLUSIVE       },
-	[VIS_MOVE_LONGWORD_START_PREV] = { .txt = text_longword_start_prev, .type = CHARWISE                 },
-	[VIS_MOVE_LONGWORD_START_NEXT] = { .txt = text_longword_start_next, .type = CHARWISE                 },
-	[VIS_MOVE_LONGWORD_END_PREV]   = { .txt = text_longword_end_prev,   .type = CHARWISE|INCLUSIVE       },
-	[VIS_MOVE_LONGWORD_END_NEXT]   = { .txt = text_longword_end_next,   .type = CHARWISE|INCLUSIVE       },
-	[VIS_MOVE_SENTENCE_PREV]       = { .txt = text_sentence_prev,       .type = CHARWISE                 },
-	[VIS_MOVE_SENTENCE_NEXT]       = { .txt = text_sentence_next,       .type = CHARWISE                 },
-	[VIS_MOVE_PARAGRAPH_PREV]      = { .txt = text_paragraph_prev,      .type = LINEWISE|JUMP            },
-	[VIS_MOVE_PARAGRAPH_NEXT]      = { .txt = text_paragraph_next,      .type = LINEWISE|JUMP            },
-	[VIS_MOVE_FUNCTION_START_PREV] = { .txt = text_function_start_prev, .type = LINEWISE|JUMP            },
-	[VIS_MOVE_FUNCTION_START_NEXT] = { .txt = text_function_start_next, .type = LINEWISE|JUMP            },
-	[VIS_MOVE_FUNCTION_END_PREV]   = { .txt = text_function_end_prev,   .type = LINEWISE|JUMP            },
-	[VIS_MOVE_FUNCTION_END_NEXT]   = { .txt = text_function_end_next,   .type = LINEWISE|JUMP            },
-	[VIS_MOVE_BLOCK_START]         = { .txt = text_block_start,         .type = JUMP                     },
-	[VIS_MOVE_BLOCK_END]           = { .txt = text_block_end,           .type = JUMP                     },
-	[VIS_MOVE_PARENTHESE_START]    = { .txt = text_parenthese_start,    .type = JUMP                     },
-	[VIS_MOVE_PARENTHESE_END]      = { .txt = text_parenthese_end,      .type = JUMP                     },
-	[VIS_MOVE_BRACKET_MATCH]       = { .txt = bracket_match,            .type = INCLUSIVE|JUMP           },
-	[VIS_MOVE_FILE_BEGIN]          = { .txt = text_begin,               .type = LINEWISE|JUMP            },
-	[VIS_MOVE_FILE_END]            = { .txt = text_end,                 .type = LINEWISE|JUMP            },
-	[VIS_MOVE_LEFT_TO]             = { .vis = to_left,                                                   },
-	[VIS_MOVE_RIGHT_TO]            = { .vis = to,                       .type = INCLUSIVE                },
-	[VIS_MOVE_LEFT_TILL]           = { .vis = till_left,                                                 },
-	[VIS_MOVE_RIGHT_TILL]          = { .vis = till,                     .type = INCLUSIVE                },
-	[VIS_MOVE_MARK]                = { .file = mark_goto,               .type = JUMP|IDEMPOTENT          },
-	[VIS_MOVE_MARK_LINE]           = { .file = mark_line_goto,          .type = LINEWISE|JUMP|IDEMPOTENT },
-	[VIS_MOVE_SEARCH_WORD_FORWARD] = { .vis = search_word_forward,      .type = JUMP                     },
-	[VIS_MOVE_SEARCH_WORD_BACKWARD]= { .vis = search_word_backward,     .type = JUMP                     },
-	[VIS_MOVE_SEARCH_NEXT]         = { .vis = search_forward,           .type = JUMP                     },
-	[VIS_MOVE_SEARCH_PREV]         = { .vis = search_backward,          .type = JUMP                     },
-	[VIS_MOVE_WINDOW_LINE_TOP]     = { .view = view_lines_top,          .type = LINEWISE|JUMP|IDEMPOTENT },
-	[VIS_MOVE_WINDOW_LINE_MIDDLE]  = { .view = view_lines_middle,       .type = LINEWISE|JUMP|IDEMPOTENT },
-	[VIS_MOVE_WINDOW_LINE_BOTTOM]  = { .view = view_lines_bottom,       .type = LINEWISE|JUMP|IDEMPOTENT },
-	[VIS_MOVE_CHANGELIST_NEXT]     = { .win = window_changelist_next,   .type = INCLUSIVE                },
-	[VIS_MOVE_CHANGELIST_PREV]     = { .win = window_changelist_prev,   .type = INCLUSIVE                },
-	[VIS_MOVE_JUMPLIST_NEXT]       = { .win = window_jumplist_next,     .type = INCLUSIVE                },
-	[VIS_MOVE_JUMPLIST_PREV]       = { .win = window_jumplist_prev,     .type = INCLUSIVE                },
-	[VIS_MOVE_NOP]                 = { .win = window_nop,               .type = IDEMPOTENT               },
-	[VIS_MOVE_PERCENT]             = { .vis = percent,                  .type = IDEMPOTENT               },
+	[VIS_MOVE_LINE_UP] = {
+		.cur = view_line_up,
+		.type = LINEWISE|LINEWISE_INCLUSIVE,
+	},
+	[VIS_MOVE_LINE_DOWN] = {
+		.cur = view_line_down,
+		.type = LINEWISE|LINEWISE_INCLUSIVE,
+	},
+	[VIS_MOVE_SCREEN_LINE_UP] = {
+		.cur = view_screenline_up,
+	},
+	[VIS_MOVE_SCREEN_LINE_DOWN] = {
+		.cur = view_screenline_down,
+	},
+	[VIS_MOVE_SCREEN_LINE_BEGIN] = {
+		.cur = view_screenline_begin,
+		.type = CHARWISE,
+	},
+	[VIS_MOVE_SCREEN_LINE_MIDDLE] = {
+		.cur = view_screenline_middle,
+		.type = CHARWISE,
+	},
+	[VIS_MOVE_SCREEN_LINE_END] = {
+		.cur = view_screenline_end,
+		.type = CHARWISE|INCLUSIVE,
+	},
+	[VIS_MOVE_LINE_PREV] = {
+		.txt = text_line_prev,
+	},
+	[VIS_MOVE_LINE_BEGIN] = {
+		.txt = text_line_begin,
+	},
+	[VIS_MOVE_LINE_START] = {
+		.txt = text_line_start,
+	},
+	[VIS_MOVE_LINE_FINISH] = {
+		.txt = text_line_finish,
+		.type = INCLUSIVE,
+	},
+	[VIS_MOVE_LINE_LASTCHAR] = {
+		.txt = text_line_lastchar,
+		.type = INCLUSIVE,
+	},
+	[VIS_MOVE_LINE_END] = {
+		.txt = text_line_end,
+	},
+	[VIS_MOVE_LINE_NEXT] = {
+		.txt = text_line_next,
+	},
+	[VIS_MOVE_LINE] = {
+		.vis = line,
+		.type = LINEWISE|IDEMPOTENT|JUMP,
+	},
+	[VIS_MOVE_COLUMN] = {
+		.vis = column,
+		.type = CHARWISE|IDEMPOTENT,
+	},
+	[VIS_MOVE_CHAR_PREV] = {
+		.txt = text_char_prev,
+		.type = CHARWISE,
+	},
+	[VIS_MOVE_CHAR_NEXT] = {
+		.txt = text_char_next,
+		.type = CHARWISE,
+	},
+	[VIS_MOVE_LINE_CHAR_PREV] = {
+		.txt = text_line_char_prev,
+		.type = CHARWISE,
+	},
+	[VIS_MOVE_LINE_CHAR_NEXT] = {
+		.txt = text_line_char_next,
+		.type = CHARWISE,
+	},
+	[VIS_MOVE_WORD_START_PREV] = {
+		.txt = text_word_start_prev,
+		.type = CHARWISE,
+	},
+	[VIS_MOVE_WORD_START_NEXT] = {
+		.txt = text_word_start_next,
+		.type = CHARWISE,
+	},
+	[VIS_MOVE_WORD_END_PREV] = {
+		.txt = text_word_end_prev,
+		.type = CHARWISE|INCLUSIVE,
+	},
+	[VIS_MOVE_WORD_END_NEXT] = {
+		.txt = text_word_end_next,
+		.type = CHARWISE|INCLUSIVE,
+	},
+	[VIS_MOVE_LONGWORD_START_PREV] = {
+		.txt = text_longword_start_prev,
+		.type = CHARWISE,
+	},
+	[VIS_MOVE_LONGWORD_START_NEXT] = {
+		.txt = text_longword_start_next,
+		.type = CHARWISE,
+	},
+	[VIS_MOVE_LONGWORD_END_PREV] = {
+		.txt = text_longword_end_prev,
+		.type = CHARWISE|INCLUSIVE,
+	},
+	[VIS_MOVE_LONGWORD_END_NEXT] = {
+		.txt = text_longword_end_next,
+		.type = CHARWISE|INCLUSIVE,
+	},
+	[VIS_MOVE_SENTENCE_PREV] = {
+		.txt = text_sentence_prev,
+		.type = CHARWISE,
+	},
+	[VIS_MOVE_SENTENCE_NEXT] = {
+		.txt = text_sentence_next,
+		.type = CHARWISE,
+	},
+	[VIS_MOVE_PARAGRAPH_PREV] = {
+		.txt = text_paragraph_prev,
+		.type = LINEWISE|JUMP,
+	},
+	[VIS_MOVE_PARAGRAPH_NEXT] = {
+		.txt = text_paragraph_next,
+		.type = LINEWISE|JUMP,
+	},
+	[VIS_MOVE_FUNCTION_START_PREV] = {
+		.txt = text_function_start_prev,
+		.type = LINEWISE|JUMP,
+	},
+	[VIS_MOVE_FUNCTION_START_NEXT] = {
+		.txt = text_function_start_next,
+		.type = LINEWISE|JUMP,
+	},
+	[VIS_MOVE_FUNCTION_END_PREV] = {
+		.txt = text_function_end_prev,
+		.type = LINEWISE|JUMP,
+	},
+	[VIS_MOVE_FUNCTION_END_NEXT] = {
+		.txt = text_function_end_next,
+		.type = LINEWISE|JUMP,
+	},
+	[VIS_MOVE_BLOCK_START] = {
+		.txt = text_block_start,
+		.type = JUMP,
+	},
+	[VIS_MOVE_BLOCK_END] = {
+		.txt = text_block_end,
+		.type = JUMP,
+	},
+	[VIS_MOVE_PARENTHESE_START] = {
+		.txt = text_parenthese_start,
+		.type = JUMP,
+	},
+	[VIS_MOVE_PARENTHESE_END] = {
+		.txt = text_parenthese_end,
+		.type = JUMP,
+	},
+	[VIS_MOVE_BRACKET_MATCH] = {
+		.txt = bracket_match,
+		.type = INCLUSIVE|JUMP,
+	},
+	[VIS_MOVE_FILE_BEGIN] = {
+		.txt = text_begin,
+		.type = LINEWISE|JUMP,
+	},
+	[VIS_MOVE_FILE_END] = {
+		.txt = text_end,
+		.type = LINEWISE|JUMP,
+	},
+	[VIS_MOVE_LEFT_TO] = {
+		.vis = to_left,
+	},
+	[VIS_MOVE_RIGHT_TO] = {
+		.vis = to,
+		.type = INCLUSIVE,
+	},
+	[VIS_MOVE_LEFT_TILL] = {
+		.vis = till_left,
+	},
+	[VIS_MOVE_RIGHT_TILL] = {
+		.vis = till,
+		.type = INCLUSIVE,
+	},
+	[VIS_MOVE_MARK] = {
+		.file = mark_goto,
+		.type = JUMP|IDEMPOTENT,
+	},
+	[VIS_MOVE_MARK_LINE] = {
+		.file = mark_line_goto,
+		.type = LINEWISE|JUMP|IDEMPOTENT,
+	},
+	[VIS_MOVE_SEARCH_WORD_FORWARD] = {
+		.vis = search_word_forward,
+		.type = JUMP,
+	},
+	[VIS_MOVE_SEARCH_WORD_BACKWARD] = {
+		.vis = search_word_backward,
+		.type = JUMP,
+	},
+	[VIS_MOVE_SEARCH_NEXT] = {
+		.vis = search_forward,
+		.type = JUMP,
+	},
+	[VIS_MOVE_SEARCH_PREV] = {
+		.vis = search_backward,
+		.type = JUMP,
+	},
+	[VIS_MOVE_WINDOW_LINE_TOP] = {
+		.view = view_lines_top,
+		.type = LINEWISE|JUMP|IDEMPOTENT,
+	},
+	[VIS_MOVE_WINDOW_LINE_MIDDLE] = {
+		.view = view_lines_middle,
+		.type = LINEWISE|JUMP|IDEMPOTENT,
+	},
+	[VIS_MOVE_WINDOW_LINE_BOTTOM] = {
+		.view = view_lines_bottom,
+		.type = LINEWISE|JUMP|IDEMPOTENT,
+	},
+	[VIS_MOVE_CHANGELIST_NEXT] = {
+		.win = window_changelist_next,
+		.type = INCLUSIVE,
+	},
+	[VIS_MOVE_CHANGELIST_PREV] = {
+		.win = window_changelist_prev,
+		.type = INCLUSIVE,
+	},
+	[VIS_MOVE_JUMPLIST_NEXT] = {
+		.win = window_jumplist_next,
+		.type = INCLUSIVE,
+	},
+	[VIS_MOVE_JUMPLIST_PREV] = {
+		.win = window_jumplist_prev,
+		.type = INCLUSIVE,
+	},
+	[VIS_MOVE_NOP] = {
+		.win = window_nop,
+		.type = IDEMPOTENT,
+	},
+	[VIS_MOVE_PERCENT] = {
+		.vis = percent,
+		.type = IDEMPOTENT,
+	},
 };
-
