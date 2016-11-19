@@ -5,12 +5,18 @@ NL='
 PLAN9="/usr/local/plan9/bin"
 
 [ -z "$VIS" ] && VIS="../../vis"
-[ -z "$SSAM" ] && SSAM="$PLAN9/ssam"
 
-type "$SSAM" >/dev/null 2>&1 || {
-	echo "ssam(1) not found, skipping tests"
-	exit 0
-}
+if [ -z "$SSAM" ] || ! type "$SSAM" >/dev/null 2>&1; then
+	SSAM="$PLAN9/ssam"
+	if ! type "$SSAM" >/dev/null 2>&1; then
+		if type 9 >/dev/null 2>&1; then
+			SSAM="9 ssam"
+		else
+			echo "ssam(1) not found, skipping tests"
+			exit 0
+		fi
+	fi
+fi
 
 TESTS=$1
 [ -z "$TESTS" ] && TESTS=$(find . -name '*.cmd' | sed 's/\.cmd$//g')
@@ -18,6 +24,7 @@ TESTS=$1
 TESTS_RUN=0
 TESTS_OK=0
 
+echo "$SSAM"
 $VIS -v
 
 for t in $TESTS; do
