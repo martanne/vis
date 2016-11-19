@@ -24,8 +24,10 @@ static size_t op_change(Vis *vis, Text *txt, OperatorContext *c) {
 static size_t op_yank(Vis *vis, Text *txt, OperatorContext *c) {
 	c->reg->linewise = c->linewise;
 	register_put_range(vis, c->reg, txt, &c->range);
-	if (c->reg == &vis->registers[VIS_REG_DEFAULT])
+	if (c->reg == &vis->registers[VIS_REG_DEFAULT]) {
+		vis->registers[VIS_REG_ZERO].linewise = c->reg->linewise;
 		register_put_range(vis, &vis->registers[VIS_REG_ZERO], txt, &c->range);
+	}
 	return c->linewise ? c->pos : c->range.start;
 }
 
