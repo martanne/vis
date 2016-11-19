@@ -13,9 +13,10 @@ cwvoid<Escape>
 n
 .
 n
-cwdouble<Escape> 
+cwdouble<Escape>
 gg
-/val
-idouble <Escape>
+/val<Enter>
+idouble <Escape>      /* in vim <Escape> moves the cursor 1 cell back, hence 2n will not do the right thing */
+fv                    /* accounts for this cursor is now at the start of "val" */
 2n.
-/><Enter>dd                                  /* TODO: Gdd does not work */
+Gdd
