@@ -23,6 +23,9 @@ matrix:
     - os: osx
       compiler: clang
       env: TARGET=debug
+    - os: osx
+      compiler: clang
+      env: TARGET=coverage
 
 cache:
   directories:
@@ -37,6 +40,9 @@ install:
       brew install libtermkey &&
       brew install lua &&
       luarocks install lpeg;
+      if [ "$TARGET" = "coverage" ]; then
+        brew install plan9port;
+      fi
     fi
 
 script:
