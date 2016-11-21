@@ -23,7 +23,7 @@ void vis_lua_init(Vis*);
 void vis_lua_start(Vis*);
 void vis_lua_quit(Vis*);
 void vis_lua_file_open(Vis*, File*);
-void vis_lua_file_save(Vis*, File*);
+void vis_lua_file_save_post(Vis*, File*);
 void vis_lua_file_close(Vis*, File*);
 void vis_lua_win_open(Vis*, Win*);
 void vis_lua_win_close(Vis*, Win*);

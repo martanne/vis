@@ -32,7 +32,7 @@ typedef struct {
 	void (*vis_start)(Vis*);
 	void (*vis_quit)(Vis*);
 	void (*file_open)(Vis*, File*);
-	void (*file_save)(Vis*, File*);
+	void (*file_save_post)(Vis*, File*);
 	void (*file_close)(Vis*, File*);
 	void (*win_open)(Vis*, Win*);
 	void (*win_close)(Vis*, Win*);

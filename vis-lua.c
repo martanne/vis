@@ -128,7 +128,7 @@ void vis_lua_init(Vis *vis) { }
 void vis_lua_start(Vis *vis) { }
 void vis_lua_quit(Vis *vis) { }
 void vis_lua_file_open(Vis *vis, File *file) { }
-void vis_lua_file_save(Vis *vis, File *file) { }
+void vis_lua_file_save_post(Vis *vis, File *file) { }
 void vis_lua_file_close(Vis *vis, File *file) { }
 void vis_lua_win_open(Vis *vis, Win *win) { }
 void vis_lua_win_close(Vis *vis, Win *win) { }
@@ -1544,9 +1544,9 @@ void vis_lua_file_open(Vis *vis, File *file) {
 	lua_pop(L, 1);
 }
 
-void vis_lua_file_save(Vis *vis, File *file) {
+void vis_lua_file_save_post(Vis *vis, File *file) {
 	lua_State *L = vis->lua;
-	vis_lua_event_get(L, "file_save");
+	vis_lua_event_get(L, "file_save_post");
 	if (lua_isfunction(L, -1)) {
 		obj_ref_new(L, file, "vis.file");
 		pcall(vis, L, 1, 0);
