@@ -64,12 +64,14 @@ bool vis_event_emit(Vis *vis, enum VisEvents id, ...) {
 		File *file = va_arg(ap, File*);
 		if (file->internal)
 			break;
-		if (id == VIS_EVENT_FILE_OPEN && vis->event->file_open)
+		if (id == VIS_EVENT_FILE_OPEN && vis->event->file_open) {
 			vis->event->file_open(vis, file);
-		else if (id == VIS_EVENT_FILE_SAVE_POST && vis->event->file_save_post)
-			vis->event->file_save_post(vis, file);
-		else if (id == VIS_EVENT_FILE_CLOSE && vis->event->file_close)
+		} else if (id == VIS_EVENT_FILE_SAVE_POST && vis->event->file_save_post) {
+			const char *path = va_arg(ap, const char*);
+			vis->event->file_save_post(vis, file, path);
+		} else if (id == VIS_EVENT_FILE_CLOSE && vis->event->file_close) {
 			vis->event->file_close(vis, file);
+		}
 		break;
 	}
 	case VIS_EVENT_WIN_OPEN:

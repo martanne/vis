@@ -1329,7 +1329,7 @@ static bool cmd_write(Vis *vis, Win *win, Command *cmd, const char *argv[], Curs
 			file_name_set(file, *name);
 		if (strcmp(file->name, *name) == 0)
 			file->stat = text_stat(text);
-		vis_event_emit(vis, VIS_EVENT_FILE_SAVE_POST, file);
+		vis_event_emit(vis, VIS_EVENT_FILE_SAVE_POST, file, *name);
 	}
 	return true;
 }
