@@ -2,30 +2,32 @@
 
 NL='
 '
-PLAN9="/usr/local/plan9/bin"
 
 [ -z "$VIS" ] && VIS="../../vis"
+[ -z "$SAM" ] && SAM="sam"
+[ -z "$PLAN9" ] && PLAN9="/usr/local/plan9/bin"
 
-if [ -z "$SSAM" ] || ! type "$SSAM" >/dev/null 2>&1; then
-	SSAM="$PLAN9/ssam"
-	if ! type "$SSAM" >/dev/null 2>&1; then
-		if type 9 >/dev/null 2>&1; then
-			SSAM="9 ssam"
-		else
-			echo "ssam(1) not found, skipping tests"
-			exit 0
-		fi
+for SAM in "$SAM" "$PLAN9/sam" /usr/lib/plan9/bin/sam 9; do
+	if type "$SAM" >/dev/null 2>&1; then
+		break
 	fi
-fi
+done
+
+type "$SAM" >/dev/null 2>&1 || {
+	echo "sam(1) not found, skipping tests"
+	exit 0
+}
+
+[ "$SAM" = "9" ] && SAM="9 sam"
+
+echo "$SAM"
+$VIS -v
 
 TESTS=$1
 [ -z "$TESTS" ] && TESTS=$(find . -name '*.cmd' | sed 's/\.cmd$//g')
 
 TESTS_RUN=0
 TESTS_OK=0
-
-echo "$SSAM"
-$VIS -v
 
 for t in $TESTS; do
 	IN="$t.in"
@@ -37,7 +39,16 @@ for t in $TESTS; do
 	REF="$t.ref"
 	rm -f "$SAM_OUT" "$SAM_ERR" "$VIS_OUT" "$VIS_ERR"
 	printf "Running test %s with sam ... " "$t"
-	cat "$IN" | PATH="$PLAN9:$PATH" $SSAM "$CMD" > "$SAM_OUT"
+
+	{
+		echo ',{'
+		echo k
+		echo '}'
+		echo 0k
+		cat "$t.cmd"
+		echo ,
+	} | $SAM -d "$IN" > "$SAM_OUT" 2>/dev/null
+
 	if [ $? -ne 0 ]; then
 		printf "ERROR\n"
 	elif [ -e "$REF" ]; then
