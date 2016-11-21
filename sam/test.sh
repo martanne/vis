@@ -61,7 +61,7 @@ for t in $TESTS; do
 
 	printf "Running test %s with vis ... " "$t"
 
-	$VIS "+{ $NL $CMD $NL wq! $VIS_OUT $NL }" "$IN" 2>/dev/null
+	$VIS "+,{ $NL $CMD $NL wq! $VIS_OUT $NL }" "$IN" 2>/dev/null
 	if [ $? -ne 0 -o ! -e "$VIS_OUT" ]; then
 		printf "ERROR\n"
 	elif cmp -s "$REF" "$VIS_OUT"; then
