@@ -58,6 +58,7 @@ bool vis_event_emit(Vis *vis, enum VisEvents id, ...) {
 			vis->event->vis_start(vis);
 		break;
 	case VIS_EVENT_FILE_OPEN:
+	case VIS_EVENT_FILE_SAVE_PRE:
 	case VIS_EVENT_FILE_SAVE_POST:
 	case VIS_EVENT_FILE_CLOSE:
 	{
@@ -66,6 +67,9 @@ bool vis_event_emit(Vis *vis, enum VisEvents id, ...) {
 			break;
 		if (id == VIS_EVENT_FILE_OPEN && vis->event->file_open) {
 			vis->event->file_open(vis, file);
+		} else if (id == VIS_EVENT_FILE_SAVE_PRE && vis->event->file_save_pre) {
+			const char *path = va_arg(ap, const char*);
+			ret = vis->event->file_save_pre(vis, file, path);
 		} else if (id == VIS_EVENT_FILE_SAVE_POST && vis->event->file_save_post) {
 			const char *path = va_arg(ap, const char*);
 			vis->event->file_save_post(vis, file, path);

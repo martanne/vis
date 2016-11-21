@@ -128,6 +128,7 @@ void vis_lua_init(Vis *vis) { }
 void vis_lua_start(Vis *vis) { }
 void vis_lua_quit(Vis *vis) { }
 void vis_lua_file_open(Vis *vis, File *file) { }
+bool vis_lua_file_save_pre(Vis *vis, File *file, const char *path) { return true; }
 void vis_lua_file_save_post(Vis *vis, File *file, const char *path) { }
 void vis_lua_file_close(Vis *vis, File *file) { }
 void vis_lua_win_open(Vis *vis, Win *win) { }
@@ -1542,6 +1543,23 @@ void vis_lua_file_open(Vis *vis, File *file) {
 		pcall(vis, L, 1, 0);
 	}
 	lua_pop(L, 1);
+}
+
+bool vis_lua_file_save_pre(Vis *vis, File *file, const char *path) {
+	lua_State *L = vis->lua;
+	vis_lua_event_get(L, "file_save_pre");
+	if (lua_isfunction(L, -1)) {
+		obj_ref_new(L, file, "vis.file");
+		if (path)
+			lua_pushstring(L, path);
+		else
+			lua_pushnil(L);
+		if (pcall(vis, L, 2, 1) != 0)
+			return false;
+		return lua_toboolean(L, -1);
+	}
+	lua_pop(L, 1);
+	return true;
 }
 
 void vis_lua_file_save_post(Vis *vis, File *file, const char *path) {

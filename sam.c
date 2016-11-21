@@ -1295,6 +1295,11 @@ static bool cmd_write(Vis *vis, Win *win, Command *cmd, const char *argv[], Curs
 			return false;
 		}
 
+		if (!vis_event_emit(vis, VIS_EVENT_FILE_SAVE_PRE, file, *name) && cmd->flags != '!') {
+			vis_info_show(vis, "Rejected write to `%s' by pre-save hook", *name);
+			return false;
+		}
+
 		TextSave *ctx = text_save_begin(text, *name);
 		if (!ctx) {
 			vis_info_show(vis, "Can't write `%s': %s", *name, strerror(errno));

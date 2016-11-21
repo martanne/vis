@@ -2203,6 +2203,7 @@ int main(int argc, char *argv[]) {
 		.vis_start = vis_lua_start,
 		.vis_quit = vis_lua_quit,
 		.file_open = vis_lua_file_open,
+		.file_save_pre = vis_lua_file_save_pre,
 		.file_save_post = vis_lua_file_save_post,
 		.file_close = vis_lua_file_close,
 		.win_open = vis_lua_win_open,

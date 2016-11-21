@@ -590,6 +590,7 @@ At this time there exists no API stability guarantees.
      - `start()`
      - `quit()`
      - `file_open(file)`
+     - `file_save_pre(file, path)` triggered *before* an attempted write to `path` boolean return value determines whether write will be proceeded
      - `file_save_post(file, path)` triggered *after* a successfull write to `path`
      - `file_close(file)`
      - `win_open(win)`
