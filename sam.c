@@ -1256,6 +1256,11 @@ static bool cmd_write(Vis *vis, Win *win, Command *cmd, const char *argv[], Curs
 			return false;
 		}
 
+		if (!vis_event_emit(vis, VIS_EVENT_FILE_SAVE_PRE, file, (char*)NULL) && cmd->flags != '!') {
+			vis_info_show(vis, "Rejected write to stdout by pre-save hook");
+			return false;
+		}
+
 		for (Cursor *c = view_cursors(win->view); c; c = view_cursors_next(c)) {
 			Filerange range = view_cursors_selection_get(c);
 			bool invalid_range = !text_range_valid(&range);
@@ -1272,6 +1277,7 @@ static bool cmd_write(Vis *vis, Win *win, Command *cmd, const char *argv[], Curs
 
 		/* make sure the file is marked as saved i.e. not modified */
 		text_save(text, NULL);
+		vis_event_emit(vis, VIS_EVENT_FILE_SAVE_POST, file, (char*)NULL);
 		return true;
 	}
 
