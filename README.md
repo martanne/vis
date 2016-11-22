@@ -412,6 +412,11 @@ Operators can be forced to work line wise by specifying `V`.
 
        set shell to use for external commands (e.g. <, >, |)
 
+     escdelay   number          default 50 (50ms)
+
+       miliseconds to wait to distinguish between an <Escape> key and other
+       terminal escape sequences
+
      tabwidth   [1-8]           default 8
 
        set display width of a tab and number of spaces to use if

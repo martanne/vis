@@ -140,6 +140,12 @@ static bool cmd_set(Vis *vis, Win *win, Command *cmd, const char *argv[], Cursor
 		vis->shell = shell;
 		break;
 	}
+	case OPTION_ESCDELAY:
+	{
+		TermKey *termkey = vis->ui->termkey_get(vis->ui);
+		termkey_set_waittime(termkey, arg.i);
+		break;
+	}
 	case OPTION_EXPANDTAB:
 		vis->expandtab = arg.b;
 		break;

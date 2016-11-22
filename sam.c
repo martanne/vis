@@ -281,6 +281,7 @@ typedef struct {
 
 enum {
 	OPTION_SHELL,
+	OPTION_ESCDELAY,
 	OPTION_AUTOINDENT,
 	OPTION_EXPANDTAB,
 	OPTION_TABWIDTH,
@@ -301,6 +302,11 @@ static const OptionDef options[] = {
 		{ "shell" },
 		OPTION_TYPE_STRING, OPTION_FLAG_NONE,
 		"Shell to use for external commands (default: $SHELL, /etc/passwd, /bin/sh)",
+	},
+	[OPTION_ESCDELAY] = {
+		{ "escdelay" },
+		OPTION_TYPE_NUMBER, OPTION_FLAG_NONE,
+		"Miliseconds to wait to distinguish <Escape> from terminal escape sequences",
 	},
 	[OPTION_AUTOINDENT] = {
 		{ "autoindent", "ai" },
