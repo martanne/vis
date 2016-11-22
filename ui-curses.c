@@ -36,13 +36,6 @@
 # define MAX_COLOR_PAIRS COLOR_PAIRS
 #endif
 
-#ifdef PDCURSES
-int ESCDELAY;
-#endif
-#ifndef NCURSES_REENTRANT
-# define set_escdelay(d) (ESCDELAY = (d))
-#endif
-
 #define CONTROL(k) ((k)&0x1F)
 
 #ifndef DEBUG_UI
@@ -1143,8 +1136,6 @@ static bool ui_init(Ui *ui, Vis *vis) {
 			goto err;
 	}
 
-	if (!getenv("ESCDELAY"))
-		set_escdelay(50);
 	if (!newterm(term, stderr, stdin)) {
 		snprintf(uic->info, sizeof(uic->info), "Warning: unknown term `%s'", term);
 		if (!newterm(strstr(term, "-256color") ? "xterm-256color" : "xterm", stderr, stdin))
