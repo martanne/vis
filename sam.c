@@ -375,6 +375,14 @@ bool sam_init(Vis *vis) {
 	bool ret = true;
 	for (const CommandDef *cmd = cmds; cmd && cmd->name; cmd++)
 		ret &= map_put(vis->cmds, cmd->name, cmd);
+
+	if (!(vis->options = map_new()))
+		return false;
+	for (int i = 0; i < LENGTH(options); i++) {
+		for (const char *const *name = options[i].names; *name; name++)
+			ret &= map_put(vis->options, *name, &options[i]);
+	}
+
 	return ret;
 }
 

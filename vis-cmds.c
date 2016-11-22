@@ -79,17 +79,6 @@ static bool parse_bool(const char *s, bool *outval) {
 
 static bool cmd_set(Vis *vis, Win *win, Command *cmd, const char *argv[], Cursor *cur, Filerange *range) {
 
-	if (!vis->options) {
-		if (!(vis->options = map_new()))
-			return false;
-		for (int i = 0; i < LENGTH(options); i++) {
-			for (const char *const *name = options[i].names; *name; name++) {
-				if (!map_put(vis->options, *name, &options[i]))
-					return false;
-			}
-		}
-	}
-
 	if (!argv[1] || argv[3]) {
 		vis_info_show(vis, "Expecting: set option [value]");
 		return false;
