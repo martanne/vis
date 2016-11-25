@@ -201,6 +201,7 @@ drawmenu(void) {
 
 	}
 	fprintf(stderr, "\033[%iG", (int)(promptw+textwn(text, cursor)-1));
+	fflush(stderr);
 }
 
 static char*
@@ -317,7 +318,8 @@ setup(void) {
 	struct winsize ws;
 
 	/* re-open stdin to read keyboard */
-	if (!freopen("/dev/tty", "r", stdin)) die("Can't reopen tty.");
+	if (!freopen("/dev/tty", "r", stdin)) die("Can't reopen tty as stdin.");
+	if (!freopen("/dev/tty", "w", stderr)) die("Can't reopen tty as stderr.");
 
 	/* ioctl() the tty to get size */
 	fd = open("/dev/tty", O_RDWR);
