@@ -1398,7 +1398,7 @@ static bool cmd_filter(Vis *vis, Win *win, Command *cmd, const char *argv[], Cur
 	Buffer buferr;
 	buffer_init(&buferr);
 
-	int status = vis_pipe(vis, range, false, &argv[1], &filter, read_text, &buferr, read_buffer);
+	int status = vis_pipe(vis, range, &argv[1], &filter, read_text, &buferr, read_buffer);
 
 	if (status == 0) {
 		text_delete_range(txt, range);
@@ -1422,8 +1422,8 @@ static bool cmd_filter(Vis *vis, Win *win, Command *cmd, const char *argv[], Cur
 }
 
 static bool cmd_launch(Vis *vis, Win *win, Command *cmd, const char *argv[], Cursor *cur, Filerange *range) {
-	Filerange empty = text_range_new(cur ? view_cursors_pos(cur) : range->start, EPOS);
-	return cmd_filter(vis, win, cmd, argv, cur, &empty);
+	Filerange invalid = text_range_new(cur ? view_cursors_pos(cur) : range->start, EPOS);
+	return cmd_filter(vis, win, cmd, argv, cur, &invalid);
 }
 
 static bool cmd_pipein(Vis *vis, Win *win, Command *cmd, const char *argv[], Cursor *cur, Filerange *range) {
@@ -1446,7 +1446,7 @@ static bool cmd_pipeout(Vis *vis, Win *win, Command *cmd, const char *argv[], Cu
 	Buffer buferr;
 	buffer_init(&buferr);
 
-	int status = vis_pipe(vis, range, false, (const char*[]){ argv[1], NULL }, NULL, NULL, &buferr, read_buffer);
+	int status = vis_pipe(vis, range, (const char*[]){ argv[1], NULL }, NULL, NULL, &buferr, read_buffer);
 
 	if (status == 0 && cur)
 		view_cursors_to(cur, range->start);

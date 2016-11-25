@@ -2147,7 +2147,7 @@ static char *get_completion_prefix(Vis *vis, Filerange (*text_object)(Text *, si
 
 static void insert_dialog_selection(Vis *vis, Filerange *range, const char *argv[]) {
 	char *out = NULL, *err = NULL;
-	if (vis_pipe_collect(vis, range, true, argv, &out, &err) == 0) {
+	if (vis_pipe_collect(vis, range, argv, &out, &err) == 0) {
 		View *view = vis_view(vis);
 		size_t len = out ? strlen(out) : 0;
 		for (Cursor *c = view_cursors(view); c; c = view_cursors_next(c)) {

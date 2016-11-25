@@ -1289,7 +1289,7 @@ Regex *vis_regex(Vis *vis, const char *pattern) {
 	return regex;
 }
 
-int vis_pipe(Vis *vis, Filerange *range, bool interactive, const char *argv[],
+int vis_pipe(Vis *vis, Filerange *range, const char *argv[],
 	void *stdout_context, ssize_t (*read_stdout)(void *stdout_context, char *data, size_t len),
 	void *stderr_context, ssize_t (*read_stderr)(void *stderr_context, char *data, size_t len)) {
 
@@ -1298,8 +1298,6 @@ int vis_pipe(Vis *vis, Filerange *range, bool interactive, const char *argv[],
 	Text *text = vis->win->file->text;
 	int pin[2], pout[2], perr[2], status = -1;
 	bool valid_range = text_range_valid(range);
-	if (!valid_range)
-		interactive = true;
 	Filerange rout = valid_range ? *range : text_range_new(0, 0);
 
 	if (pipe(pin) == -1)
@@ -1331,14 +1329,17 @@ int vis_pipe(Vis *vis, Filerange *range, bool interactive, const char *argv[],
 		vis_info_show(vis, "fork failure: %s", strerror(errno));
 		return -1;
 	} else if (pid == 0) { /* child i.e filter */
-		if (!interactive || valid_range)
+		if (valid_range)
 			dup2(pin[0], STDIN_FILENO);
 		close(pin[0]);
 		close(pin[1]);
-		dup2(pout[1], STDOUT_FILENO);
+		if (valid_range)
+			dup2(pout[1], STDOUT_FILENO);
+		else
+			dup2(STDERR_FILENO, STDOUT_FILENO);
 		close(pout[1]);
 		close(pout[0]);
-		if (!interactive)
+		if (valid_range)
 			dup2(perr[1], STDERR_FILENO);
 		close(perr[0]);
 		close(perr[1]);
@@ -1457,11 +1458,11 @@ static ssize_t read_buffer(void *context, char *data, size_t len) {
 	return len;
 }
 
-int vis_pipe_collect(Vis *vis, Filerange *range, bool interactive, const char *argv[], char **out, char **err) {
+int vis_pipe_collect(Vis *vis, Filerange *range, const char *argv[], char **out, char **err) {
 	Buffer bufout, buferr;
 	buffer_init(&bufout);
 	buffer_init(&buferr);
-	int status = vis_pipe(vis, range, interactive, argv, &bufout, read_buffer, &buferr, read_buffer);
+	int status = vis_pipe(vis, range, argv, &bufout, read_buffer, &buferr, read_buffer);
 	buffer_terminate(&bufout);
 	buffer_terminate(&buferr);
 	if (out)
