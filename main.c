@@ -2280,7 +2280,7 @@ int main(int argc, char *argv[]) {
 				if (len == -1)
 					vis_die(vis, "Can not read from stdin\n");
 				text_snapshot(txt);
-				int fd = open("/dev/tty", O_RDONLY);
+				int fd = open("/dev/tty", O_RDWR);
 				if (fd == -1)
 					vis_die(vis, "Can not reopen stdin\n");
 				dup2(fd, STDIN_FILENO);
