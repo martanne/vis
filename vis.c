@@ -1297,8 +1297,8 @@ int vis_pipe(Vis *vis, Filerange *range, const char *argv[],
 	 * through the external command. */
 	Text *text = vis->win->file->text;
 	int pin[2], pout[2], perr[2], status = -1;
-	bool valid_range = text_range_valid(range);
-	Filerange rout = valid_range ? *range : text_range_new(0, 0);
+	bool interactive = !text_range_valid(range);
+	Filerange rout = interactive ? text_range_new(0, 0) : *range;
 
 	if (pipe(pin) == -1)
 		return -1;
@@ -1329,20 +1329,32 @@ int vis_pipe(Vis *vis, Filerange *range, const char *argv[],
 		vis_info_show(vis, "fork failure: %s", strerror(errno));
 		return -1;
 	} else if (pid == 0) { /* child i.e filter */
-		if (valid_range)
+		int null = open("/dev/null", O_WRONLY);
+		if (null == -1) {
+			fprintf(stderr, "failed to open /dev/null");
+			exit(EXIT_FAILURE);
+		}
+		if (!interactive)
 			dup2(pin[0], STDIN_FILENO);
 		close(pin[0]);
 		close(pin[1]);
-		if (valid_range)
+		if (interactive)
+			dup2(STDERR_FILENO, STDOUT_FILENO);
+		else if (read_stdout)
 			dup2(pout[1], STDOUT_FILENO);
 		else
-			dup2(STDERR_FILENO, STDOUT_FILENO);
+			dup2(null, STDOUT_FILENO);
 		close(pout[1]);
 		close(pout[0]);
-		if (valid_range)
-			dup2(perr[1], STDERR_FILENO);
+		if (!interactive) {
+			if (read_stderr)
+				dup2(perr[1], STDERR_FILENO);
+			else
+				dup2(null, STDERR_FILENO);
+		}
 		close(perr[0]);
 		close(perr[1]);
+		close(null);
 		if (!argv[1])
 			execlp(vis->shell, vis->shell, "-c", argv[0], (char*)NULL);
 		else
