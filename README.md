@@ -358,6 +358,11 @@ Operators can be forced to work line wise by specifying `V`.
 
   Other differences compared to sam include:
 
+  - New addresses:
+
+     * `%` as an alias for `,` or `0,$`
+     * `` `m `` refers to mark `m`
+
   - The following commands are deliberately not implemented:
 
      * move `m`

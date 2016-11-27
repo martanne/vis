@@ -405,6 +405,7 @@ const char *sam_error(enum SamError err) {
 		[SAM_ERR_COMMAND]         = "Unknown command",
 		[SAM_ERR_EXECUTE]         = "Error executing command",
 		[SAM_ERR_NEWLINE]         = "Newline expected",
+		[SAM_ERR_MARK]            = "Invalid mark",
 	};
 
 	return err < LENGTH(error_msg) ? error_msg[err] : NULL;
@@ -580,6 +581,14 @@ static Address *address_parse_simple(Vis *vis, const char **s, enum SamError *er
 	case '5': case '6': case '7': case '8': case '9':
 		addr.type = 'l';
 		addr.number = parse_number(s);
+		break;
+	case '`':
+		(*s)++;
+		if ((addr.number = vis_mark_from(vis, **s)) == VIS_MARK_INVALID) {
+			*err = SAM_ERR_MARK;
+			return NULL;
+		}
+		(*s)++;
 		break;
 	case '/': /* regexp forwards */
 	case '?': /* regexp backwards */
@@ -882,6 +891,12 @@ static Filerange address_evaluate(Address *addr, File *file, Filerange *range, i
 		case 'g':
 			ret = address_line_evaluate(addr, file, range, sign);
 			break;
+		case '`':
+		{
+			size_t pos = text_mark_get(file->text, file->marks[addr->number]);
+			ret = text_range_new(pos, pos);
+			break;
+		}
 		case '?':
 			sign = sign == 0 ? -1 : -sign;
 			/* fall through */
