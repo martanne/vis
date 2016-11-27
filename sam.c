@@ -404,6 +404,7 @@ const char *sam_error(enum SamError err) {
 		[SAM_ERR_SHELL]           = "Shell command expected",
 		[SAM_ERR_COMMAND]         = "Unknown command",
 		[SAM_ERR_EXECUTE]         = "Error executing command",
+		[SAM_ERR_NEWLINE]         = "Newline expected",
 	};
 
 	return err < LENGTH(error_msg) ? error_msg[err] : NULL;
@@ -695,7 +696,7 @@ static const CommandDef *command_lookup(Vis *vis, const char *name) {
 	return map_closest(vis->cmds, name);
 }
 
-static Command *command_parse(Vis *vis, const char **s, int level, enum SamError *err) {
+static Command *command_parse(Vis *vis, const char **s, enum SamError *err) {
 	if (!**s) {
 		*err = SAM_ERR_COMMAND;
 		return NULL;
@@ -727,17 +728,22 @@ static Command *command_parse(Vis *vis, const char **s, int level, enum SamError
 
 	if (strcmp(cmd->argv[0], "{") == 0) {
 		Command *prev = NULL, *next;
+		int level = vis->nesting_level++;
 		do {
 			while (**s == ' ' || **s == '\t' || **s == '\n')
 				(*s)++;
-			next = command_parse(vis, s, level+1, err);
+			next = command_parse(vis, s, err);
 			if (prev)
 				prev->next = next;
 			else
 				cmd->cmd = next;
 		} while ((prev = next));
+		if (level != vis->nesting_level) {
+			*err = SAM_ERR_UNMATCHED_BRACE;
+			goto fail;
+		}
 	} else if (strcmp(cmd->argv[0], "}") == 0) {
-		if (level == 0) {
+		if (vis->nesting_level-- == 0) {
 			*err = SAM_ERR_UNMATCHED_BRACE;
 			goto fail;
 		}
@@ -791,7 +797,7 @@ static Command *command_parse(Vis *vis, const char **s, int level, enum SamError
 				goto fail;
 			cmd->cmd->cmddef = command_lookup(vis, cmddef->defcmd);
 		} else {
-			if (!(cmd->cmd = command_parse(vis, s, level, err)))
+			if (!(cmd->cmd = command_parse(vis, s, err)))
 				goto fail;
 			if (strcmp(cmd->argv[0], "X") == 0 || strcmp(cmd->argv[0], "Y") == 0) {
 				Command *sel = command_new("s");
@@ -811,10 +817,19 @@ fail:
 }
 
 static Command *sam_parse(Vis *vis, const char *cmd, enum SamError *err) {
+	vis->nesting_level = 0;
 	const char **s = &cmd;
-	Command *c = command_parse(vis, s, 0, err);
+	Command *c = command_parse(vis, s, err);
 	if (!c)
 		return NULL;
+	while (**s == ' ' || **s == '\t' || **s == '\n')
+		(*s)++;
+	if (**s) {
+		*err = SAM_ERR_NEWLINE;
+		command_free(c);
+		return NULL;
+	}
+
 	Command *sel = command_new("s");
 	if (!sel) {
 		command_free(c);

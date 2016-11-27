@@ -174,6 +174,7 @@ struct Vis {
 	Mode *mode;                          /* currently active mode, used to search for keybindings */
 	Mode *mode_prev;                     /* previsouly active user mode */
 	bool initialized;                    /* whether UI and Lua integration has been initialized */
+	int nesting_level;                   /* parsing state to hold keep track of { } nesting level */
 	volatile bool running;               /* exit main loop once this becomes false */
 	int exit_status;                     /* exit status when terminating main loop */
 	volatile sig_atomic_t cancel_filter; /* abort external command/filter (SIGINT occured) */
