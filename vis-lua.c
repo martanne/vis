@@ -854,10 +854,7 @@ static int window_index(lua_State *L) {
 
 		if (strcmp(key, "syntax") == 0) {
 			const char *syntax = vis_window_syntax_get(win);
-			if (syntax)
-				lua_pushstring(L, syntax);
-			else
-				lua_pushnil(L);
+			lua_pushstring(L, syntax);
 			return 1;
 		}
 	}
@@ -1550,10 +1547,7 @@ bool vis_lua_file_save_pre(Vis *vis, File *file, const char *path) {
 	vis_lua_event_get(L, "file_save_pre");
 	if (lua_isfunction(L, -1)) {
 		obj_ref_new(L, file, "vis.file");
-		if (path)
-			lua_pushstring(L, path);
-		else
-			lua_pushnil(L);
+		lua_pushstring(L, path);
 		if (pcall(vis, L, 2, 1) != 0)
 			return false;
 		return lua_toboolean(L, -1);
@@ -1567,10 +1561,7 @@ void vis_lua_file_save_post(Vis *vis, File *file, const char *path) {
 	vis_lua_event_get(L, "file_save_post");
 	if (lua_isfunction(L, -1)) {
 		obj_ref_new(L, file, "vis.file");
-		if (path)
-			lua_pushstring(L, path);
-		else
-			lua_pushnil(L);
+		lua_pushstring(L, path);
 		pcall(vis, L, 2, 0);
 	}
 	lua_pop(L, 1);
@@ -1658,10 +1649,7 @@ bool vis_theme_load(Vis *vis, const char *name) {
 	lua_State *L = vis->lua;
 	vis_lua_event_get(L, "theme_change");
 	if (lua_isfunction(L, -1)) {
-		if (name)
-			lua_pushstring(L, name);
-		else
-			lua_pushnil(L);
+		lua_pushstring(L, name);
 		pcall(vis, L, 1, 0);
 	}
 	lua_pop(L, 1);
