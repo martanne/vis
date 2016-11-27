@@ -381,6 +381,7 @@ enum VisMark {
 	VIS_MARK_INVALID,     /* has to be the last enum member */
 };
 
+enum VisMark vis_mark_from(Vis*, char mark);
 void vis_mark_set(Vis*, enum VisMark mark, size_t pos);
 
 enum VisRegister {

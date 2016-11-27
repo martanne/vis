@@ -1199,6 +1199,16 @@ void vis_repeat(Vis *vis) {
 	vis_cancel(vis);
 }
 
+enum VisMark vis_mark_from(Vis *vis, char mark) {
+	if (mark >= 'a' && mark <= 'z')
+		return VIS_MARK_a + mark - 'a';
+	else if (mark == '<')
+		return VIS_MARK_SELECTION_START;
+	else if (mark == '>')
+		return VIS_MARK_SELECTION_END;
+	return VIS_MARK_INVALID;
+}
+
 void vis_mark_set(Vis *vis, enum VisMark mark, size_t pos) {
 	File *file = vis->win->file;
 	if (mark < LENGTH(file->marks))

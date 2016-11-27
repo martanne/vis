@@ -1755,31 +1755,18 @@ static const char *reg(Vis *vis, const char *keys, const Arg *arg) {
 	return keys;
 }
 
-static const char *key2mark(Vis *vis, const char *keys, int *mark) {
-	*mark = VIS_MARK_INVALID;
+static const char *mark_set(Vis *vis, const char *keys, const Arg *arg) {
 	if (!keys[0])
 		return NULL;
-	if (keys[0] >= 'a' && keys[0] <= 'z')
-		*mark = keys[0] - 'a';
-	else if (keys[0] == '<')
-		*mark = VIS_MARK_SELECTION_START;
-	else if (keys[0] == '>')
-		*mark = VIS_MARK_SELECTION_END;
+	vis_mark_set(vis, vis_mark_from(vis, keys[0]), view_cursor_get(vis_view(vis)));
 	return keys+1;
 }
 
-static const char *mark_set(Vis *vis, const char *keys, const Arg *arg) {
-	int mark;
-	keys = key2mark(vis, keys, &mark);
-	vis_mark_set(vis, mark, view_cursor_get(vis_view(vis)));
-	return keys;
-}
-
 static const char *mark_motion(Vis *vis, const char *keys, const Arg *arg) {
-	int mark;
-	keys = key2mark(vis, keys, &mark);
-	vis_motion(vis, arg->i, mark);
-	return keys;
+	if (!keys[0])
+		return NULL;
+	vis_motion(vis, arg->i, vis_mark_from(vis, keys[0]));
+	return keys+1;
 }
 
 static const char *undo(Vis *vis, const char *keys, const Arg *arg) {
