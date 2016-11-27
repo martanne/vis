@@ -102,10 +102,31 @@ struct UiCursesWin {
 	CellStyle styles[UI_STYLE_MAX];
 };
 
-static volatile sig_atomic_t need_resize; /* TODO */
+static volatile sig_atomic_t need_resize; /* SIGWINCH received */
+static volatile sig_atomic_t terminate;   /* SIGTERM received */
 
 static void sigwinch_handler(int sig) {
 	need_resize = true;
+}
+
+static void sigterm_handler(int sig) {
+	terminate = true;
+}
+
+__attribute__((noreturn)) static void ui_die(Ui *ui, const char *msg, va_list ap) {
+	UiCurses *uic = (UiCurses*)ui;
+	endwin();
+	if (uic->termkey)
+		termkey_stop(uic->termkey);
+	vfprintf(stderr, msg, ap);
+	exit(EXIT_FAILURE);
+}
+
+__attribute__((noreturn)) static void ui_die_msg(Ui *ui, const char *msg, ...) {
+	va_list ap;
+	va_start(ap, msg);
+	ui_die(ui, msg, ap);
+	va_end(ap);
 }
 
 typedef struct {
@@ -828,6 +849,10 @@ static void ui_update(Ui *ui) {
 		vis_update(uic->vis);
 		return;
 	}
+
+	if (terminate)
+		ui_die_msg(ui, "Killed by SIGTERM\n");
+
 	for (UiCursesWin *win = uic->windows; win; win = win->next)
 		ui_window_update(win);
 	debug("ui-doupdate\n");
@@ -1010,22 +1035,6 @@ static UiWin *ui_window_new(Ui *ui, View *view, File *file, enum UiOption option
 	return &win->uiwin;
 }
 
-__attribute__((noreturn)) static void ui_die(Ui *ui, const char *msg, va_list ap) {
-	UiCurses *uic = (UiCurses*)ui;
-	endwin();
-	if (uic->termkey)
-		termkey_stop(uic->termkey);
-	vfprintf(stderr, msg, ap);
-	exit(EXIT_FAILURE);
-}
-
-__attribute__((noreturn)) static void ui_die_msg(Ui *ui, const char *msg, ...) {
-	va_list ap;
-	va_start(ap, msg);
-	ui_die(ui, msg, ap);
-	va_end(ap);
-}
-
 static void ui_info(Ui *ui, const char *msg, va_list ap) {
 	UiCurses *uic = (UiCurses*)ui;
 	vsnprintf(uic->info, sizeof(uic->info), msg, ap);
@@ -1151,8 +1160,13 @@ static bool ui_init(Ui *ui, Vis *vis) {
 	sa.sa_flags = 0;
 	sigemptyset(&sa.sa_mask);
 	sa.sa_handler = sigwinch_handler;
-	sigaction(SIGWINCH, &sa, NULL);
-	sigaction(SIGCONT, &sa, NULL);
+	if (sigaction(SIGWINCH, &sa, NULL) == -1)
+		goto err;
+	if (sigaction(SIGCONT, &sa, NULL) == -1)
+		goto err;
+	sa.sa_handler = sigterm_handler;
+	if (sigaction(SIGTERM, &sa, NULL) == -1)
+		goto err;
 
 	ui_resize(ui);
 
