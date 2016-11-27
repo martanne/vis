@@ -178,6 +178,8 @@ struct Vis {
 	int exit_status;                     /* exit status when terminating main loop */
 	volatile sig_atomic_t cancel_filter; /* abort external command/filter (SIGINT occured) */
 	volatile sig_atomic_t sigbus;        /* one of the memory mapped region became unavailable (SIGBUS) */
+	volatile sig_atomic_t need_resize;   /* need to resize UI (SIGWINCH occured) */
+	volatile sig_atomic_t terminate;     /* need to terminate we were being killed by SIGTERM */
 	sigjmp_buf sigbus_jmpbuf;            /* used to jump back to a known good state in the mainloop after (SIGBUS) */
 	Map *actions;                        /* registered editor actions / special keys commands */
 	lua_State *lua;                      /* lua context used for syntax highligthing */

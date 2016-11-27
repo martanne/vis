@@ -2237,16 +2237,32 @@ int main(int argc, char *argv[]) {
 	/* install signal handlers etc. */
 	struct sigaction sa;
 	memset(&sa, 0, sizeof sa);
+	sigfillset(&sa.sa_mask);
 	sa.sa_flags = SA_SIGINFO;
 	sa.sa_sigaction = signal_handler;
-	if (sigaction(SIGBUS, &sa, NULL) || sigaction(SIGINT, &sa, NULL))
-		vis_die(vis, "sigaction: %s", strerror(errno));
+	if (sigaction(SIGBUS, &sa, NULL) == -1 ||
+	    sigaction(SIGINT, &sa, NULL) == -1 ||
+	    sigaction(SIGCONT, &sa, NULL) == -1 ||
+	    sigaction(SIGWINCH, &sa, NULL) == -1 ||
+	    sigaction(SIGTERM, &sa, NULL) == -1 ||
+	    sigaction(SIGHUP, &sa, NULL) == -1) {
+		vis_die(vis, "Failed to set signal handler: %s\n", strerror(errno));
+	}
+
+	sa.sa_handler = SIG_IGN;
+	if (sigaction(SIGPIPE, &sa, NULL) == -1)
+		vis_die(vis, "Failed to ignore SIGPIPE\n");
 
 	sigset_t blockset;
 	sigemptyset(&blockset);
+	sigaddset(&blockset, SIGBUS);
+	sigaddset(&blockset, SIGINT);
+	sigaddset(&blockset, SIGCONT);
 	sigaddset(&blockset, SIGWINCH);
-	sigprocmask(SIG_BLOCK, &blockset, NULL);
-	signal(SIGPIPE, SIG_IGN);
+	sigaddset(&blockset, SIGTERM);
+	sigaddset(&blockset, SIGHUP);
+	if (sigprocmask(SIG_BLOCK, &blockset, NULL) == -1)
+		vis_die(vis, "Failed to block signals\n");
 
 	for (int i = 1; i < argc; i++) {
 		if (argv[i][0] != '-') {

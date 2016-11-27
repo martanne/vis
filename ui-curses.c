@@ -7,7 +7,6 @@
 #include <strings.h>
 #include <limits.h>
 #include <ctype.h>
-#include <signal.h>
 #include <locale.h>
 #include <poll.h>
 #include <sys/ioctl.h>
@@ -101,17 +100,6 @@ struct UiCursesWin {
 	enum UiOption options;    /* display settings for this window */
 	CellStyle styles[UI_STYLE_MAX];
 };
-
-static volatile sig_atomic_t need_resize; /* SIGWINCH received */
-static volatile sig_atomic_t terminate;   /* SIGTERM received */
-
-static void sigwinch_handler(int sig) {
-	need_resize = true;
-}
-
-static void sigterm_handler(int sig) {
-	terminate = true;
-}
 
 __attribute__((noreturn)) static void ui_die(Ui *ui, const char *msg, va_list ap) {
 	UiCurses *uic = (UiCurses*)ui;
@@ -843,16 +831,6 @@ static void ui_resize(Ui *ui) {
 
 static void ui_update(Ui *ui) {
 	UiCurses *uic = (UiCurses*)ui;
-	if (need_resize) {
-		need_resize = false;
-		ui_resize(ui);
-		vis_update(uic->vis);
-		return;
-	}
-
-	if (terminate)
-		ui_die_msg(ui, "Killed by SIGTERM\n");
-
 	for (UiCursesWin *win = uic->windows; win; win = win->next)
 		ui_window_update(win);
 	debug("ui-doupdate\n");
@@ -1156,20 +1134,7 @@ static bool ui_init(Ui *ui, Vis *vis) {
 	meta(stdscr, TRUE);
 	curs_set(0);
 
-	struct sigaction sa;
-	sa.sa_flags = 0;
-	sigemptyset(&sa.sa_mask);
-	sa.sa_handler = sigwinch_handler;
-	if (sigaction(SIGWINCH, &sa, NULL) == -1)
-		goto err;
-	if (sigaction(SIGCONT, &sa, NULL) == -1)
-		goto err;
-	sa.sa_handler = sigterm_handler;
-	if (sigaction(SIGTERM, &sa, NULL) == -1)
-		goto err;
-
 	ui_resize(ui);
-
 	return true;
 err:
 	ui_die_msg(ui, "Failed to start curses interface: %s\n", errno != 0 ? strerror(errno) : "");

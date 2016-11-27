@@ -994,6 +994,14 @@ bool vis_signal_handler(Vis *vis, int signum, const siginfo_t *siginfo, const vo
 	case SIGINT:
 		vis->cancel_filter = true;
 		return true;
+	case SIGCONT:
+	case SIGWINCH:
+		vis->need_resize = true;
+		return true;
+	case SIGTERM:
+	case SIGHUP:
+		vis->terminate = true;
+		return true;
 	}
 	return false;
 }
@@ -1035,6 +1043,14 @@ int vis_run(Vis *vis, int argc, char *argv[]) {
 				vis_info_show(vis, "WARNING: file `%s' truncated!\n", name ? name : "-");
 			vis->sigbus = false;
 			free(name);
+		}
+
+		if (vis->terminate)
+			vis_die(vis, "Killed by SIGTERM\n");
+
+		if (vis->need_resize) {
+			vis->ui->resize(vis->ui);
+			vis->need_resize = false;
 		}
 
 		vis_update(vis);
