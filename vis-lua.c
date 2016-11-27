@@ -1096,6 +1096,11 @@ static int file_index(lua_State *L) {
 			return 1;
 		}
 
+		if (strcmp(key, "path") == 0) {
+			lua_pushstring(L, file->name);
+			return 1;
+		}
+
 		if (strcmp(key, "lines") == 0) {
 			obj_ref_new(L, file->text, "vis.file.text");
 			return 1;

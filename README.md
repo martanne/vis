@@ -621,7 +621,8 @@ At this time there exists no API stability guarantees.
    - `insert(pos, data)`
    - `delete(pos, len)` or `delete({start, finish})`
    - `lines_iterator()`
-   - `name`
+   - `name` file path relative to current working directory or `nil` if not yet associated
+   - `path` absolute path or `nil` if not yet associated
    - `lines[0..#lines+1]` array giving read/write access to lines
    - `newlines` type of newlines either `"lf"` or `"crlf"`
    - `size` current file size in bytes
