@@ -84,7 +84,6 @@ typedef struct {
 	int width, height;        /* terminal dimensions available for all windows */
 	enum UiLayout layout;     /* whether windows are displayed horizontally or vertically */
 	TermKey *termkey;         /* libtermkey instance to handle keyboard input (stdin or /dev/tty) */
-	struct termios tio;       /* terminal state to restore before exiting */
 } UiCurses;
 
 struct UiCursesWin {
@@ -1016,7 +1015,6 @@ __attribute__((noreturn)) static void ui_die(Ui *ui, const char *msg, va_list ap
 	endwin();
 	if (uic->termkey)
 		termkey_stop(uic->termkey);
-	tcsetattr(STDERR_FILENO, TCSANOW, &uic->tio);
 	vfprintf(stderr, msg, ap);
 	exit(EXIT_FAILURE);
 }
@@ -1123,7 +1121,6 @@ static bool ui_init(Ui *ui, Vis *vis) {
 	if (!term)
 		term = "xterm";
 
-	tcgetattr(STDERR_FILENO, &uic->tio);
 	errno = 0;
 	if (!(uic->termkey = ui_termkey_new(STDIN_FILENO))) {
 		/* work around libtermkey bug which fails if stdin is /dev/null */
@@ -1206,6 +1203,5 @@ void ui_curses_free(Ui *ui) {
 	endwin();
 	if (uic->termkey)
 		termkey_destroy(uic->termkey);
-	tcsetattr(STDERR_FILENO, TCSANOW, &uic->tio);
 	free(uic);
 }
