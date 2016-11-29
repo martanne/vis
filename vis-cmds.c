@@ -120,8 +120,17 @@ static bool cmd_set(Vis *vis, Win *win, Command *cmd, const char *argv[], Cursor
 			vis_info_show(vis, "Expecting number");
 			return false;
 		}
-		/* TODO: error checking? long type */
-		arg.u = strtoul(argv[2], NULL, 10);
+		char* ep;
+		unsigned long parsedval = strtoul(argv[2], &ep, 10);
+		if (*ep != '\0') {
+			vis_info_show(vis, "Found unexpected character when parsing number: `%s'", argv[2]);
+			return false;
+		}
+		if (parsedval == ULONG_MAX && errno == ERANGE) {
+			vis_info_show(vis, "Number parsing overflow: `%s'", argv[2]);
+			return false;
+		}
+		arg.u = parsedval;
 		break;
 	default:
 		return false;
