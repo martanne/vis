@@ -321,8 +321,13 @@ static bool cmd_edit(Vis *vis, Win *win, Command *cmd, const char *argv[], Curso
 		info_unsaved_changes(vis);
 		return false;
 	}
-	if (!argv[1])
+	if (!argv[1]) {
+		if (oldwin->file->refcount > 1) {
+			vis_info_show(vis, "Can not reload file being opened multiple times");
+			return false;
+		}
 		return vis_window_reload(oldwin);
+	}
 	if (!openfiles(vis, &argv[1]))
 		return false;
 	if (vis->win != oldwin) {
