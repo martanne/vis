@@ -3,3 +3,9 @@ ignore:
  - "test"
 
 comment: off
+
+coverage:
+  status:
+    project:
+      default:
+        threshold: 1%
