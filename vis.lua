@@ -173,6 +173,7 @@ vis.ftdetect.filetypes = {
 	scala        = { ext = ".scala" },
 	scheme       = { ext = ".sch|.scm" },
 	smalltalk    = { ext = ".changes|.st|.sources" },
+	sml          = { ext = ".sml|.fun|.sig" },
 	snobol4      = { ext = ".sno|.SNO" },
 	sql          = { ext = ".ddl|.sql" },
 	systemd      = { ext = ".automount|.device|.mount|.path|.scope|.service|.slice|.socket|.swap|.target|.timer" },
