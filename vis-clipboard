@@ -19,10 +19,14 @@ vc_determine_command() {
 				return 0
 			fi
 		done
-	elif type pbcopy >/dev/null 2>&1; then
+	fi
+
+	if type pbcopy >/dev/null 2>&1; then
 		echo 'mac'
 		return 0
-	elif [ -c /dev/clipboard ]; then
+	fi
+
+	if [ -c /dev/clipboard ]; then
 		echo 'cygwin'
 		return 0
 	fi
