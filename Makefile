@@ -5,6 +5,8 @@ SRC = array.c buffer.c libutf.c main.c map.c register.c ring-buffer.c \
 	ui-curses.c view.c vis.c vis-lua.c vis-modes.c vis-motions.c \
 	vis-operators.c vis-prompt.c vis-text-objects.c
 
+MANUALS = vis.1 vis-clipboard.1 vis-menu.1 vis-open.1
+
 # conditionally initialized, this is needed for standalone build
 # with empty config.mk
 PREFIX ?= /usr/local
@@ -76,6 +78,12 @@ clean:
 dist: clean
 	@echo creating dist tarball
 	@git archive --prefix=vis-${VERSION}/ -o vis-${VERSION}.tar.gz HEAD
+
+man:
+	@for m in ${MANUALS}; do \
+		echo "Generating $$m"; \
+		sed -e "s/VERSION/${VERSION}/" "$$m" | mandoc -W warning -T utf8 -T xhtml -O man=%N.%S.html -O style=mandoc.css 1> "$$m".html || true; \
+	done
 
 install: vis vis-menu
 	@echo stripping executable
