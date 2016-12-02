@@ -1,6 +1,6 @@
 .Dd November 29, 2016
 .Dt VIS 1
-.Os
+.Os Vis VERSION
 .
 .Sh NAME
 .Nm vis
@@ -24,7 +24,7 @@ Anyone else should almost certainly read a good tutorial on
 either editor before this manual page.
 .
 The following options are available:
-.Bl -tag
+.Bl -tag -width indent
 .It Fl v
 Print version information and exit.
 .
@@ -35,11 +35,11 @@ file name.
 .El
 .Pp
 The special file
-.Sy -
+.Cm -
 instructs
 .Nm
 to read from standard input in which case
-.Cm :wq
+.Ic :wq
 will write to stdandard output, thereby enabling usage as an interactive filter.
 .Pp
 If standard input is redirected and all input is consumed,
@@ -66,18 +66,18 @@ variant of the structural regular expression based command language of
 .Ss Undo/Redo
 .Nm
 uses an undo tree to keep track of text revisions. The
-.Cm u
+.Ic u
 (undo) and
-.Aq Cm C-r
+.Aq Ic C-r
 (redo) commands can be used to traverse the tree along the main branch.
 Addionally
-.Cm g+
+.Ic g+
 and
-.Cm g-
+.Ic g-
 traverse the history in chronological order. Furthermore the
-.Cm :earlier
+.Ic :earlier
 and
-.Cm :later
+.Ic :later
 commands provide means to restore the text to an arbitrary state.
 .
 .Ss Marks
@@ -85,7 +85,7 @@ A mark associates a given file position to a symbolic name.
 A mark becomes invalid once the underlying file content changes (e.g. it
 being deleted or replaced). If said changes are later undone the mark becomes
 valid again.
-.Bl -tag
+.Bl -tag -width indent
 .It a-z
 general purpose marks
 .It <
@@ -99,7 +99,7 @@ No marks across files are supported. Marks are not preserved over editing sessio
 .Ss Registers
 Registers can hold arbitrary data which can later be re-inserted into
 the file or executed as a macro. Supported registers include:
-.Bl -tag
+.Bl -tag -width indent
 .It \(dqa-\(dqz
 general purpose registers
 .It \(dqA-\(dqZ
@@ -127,17 +127,17 @@ can be used to record macros. Use
 one of
 .Cm \(dqA-\(dqZ
 to append to an existing macro.
-.Cm q
+.Ic q
 starts a recording,
-.Cm @
+.Ic @
 plays it back.
-.Cm @@
+.Ic @@
 refers to the least recently recorded macro.
-.Cm @:
+.Ic @:
 repeats the last :-command.
-.Cm @/
+.Ic @/
 is equivalent to
-.Cm n
+.Ic n
 in normal mode.
 .
 .Ss Tab, Space and Newline handling
@@ -152,13 +152,13 @@ The first line ending in the file determines what will be inserted when pressing
 .Ss Jump list and Change list
 .
 A per window, fixed sized file local jump list (navigate with
-.Aq Cm C-O
+.Aq Ic C-O
 and
-.Aq Cm C-I )
+.Aq Ic C-I )
 and change list (navigate with
-.Cm g;
+.Ic g;
 and
-.Cm g, )
+.Ic g, )
 is supported.
 .
 .Ss Mouse support
@@ -181,7 +181,7 @@ as described in
 .
 Additonally \[rs]n and \[rs]t may be used to refer to newlines and tabs, respectively.
 The
-.Sy .
+.Cm "."
 atom matches any character except newline.
 .
 The empty regular expression stands for the last complete expression encountered.
@@ -210,7 +210,7 @@ All windows always have at least one current substring, called
 .Sy dot ","
 that is the default address.
 .Ss Simple addresses
-.Bl -tag -width Ds
+.Bl -tag -width indent
 .It Sy #n
 The empty string after character
 .Sy n ";"
@@ -219,8 +219,8 @@ is the beginning of the file.
 .It Sy n
 Line
 .Sy n "."
-.It Li / Sy regexp Li /
-.It Li ? Sy regexp Li ?
+.It Ic /regexp/
+.It Ic ?regexp?
 The substring that matches the regular expression, found by looking toward the end
 .Pq Li /
 or beginning
@@ -251,7 +251,7 @@ In the following,
 and
 .Sy a2
 are addresses.
-.Bl -tag -width Ds
+.Bl -tag -width indent
 .It Sy a1+a2
 The address
 .Sy a2
@@ -291,9 +291,9 @@ The operators
 and
 .Li -
 are high precedence, while
-.Li ,
+.Li ","
 and
-.Li ;
+.Li ";"
 are low precedence.
 .Pp
 In both
@@ -367,7 +367,7 @@ and
 commands
 .Pc "."
 .Ss Text commands
-.Bl -tag -width Ds
+.Bl -tag -width indent
 .It Sy a/text/
 Insert the text into the file after the range.
 Set dot.
@@ -402,7 +402,7 @@ Currently implemented in terms of
 .El
 .
 .Ss I/O commands
-.Bl -tag -width Ds
+.Bl -tag -width indent
 .It Sy "e[!] filename"
 Replace the file by the contents of the named external file.
 If no file name is given, reload file from disk.
@@ -418,32 +418,32 @@ default
 to the named external file.
 .It Sy "wq[!] filename"
 Same as
-.Cm w ","
+.Ic w ","
 but close file afterwards.
 .El
 .Pp
 If the file name argument is absent from any of these, the current file name is used.
-.Cm e
+.Ic e
 always sets the file name,
-.Cm w
+.Ic w
 will do so if the file has no name.
 Forcing the
-.Cm e
+.Ic e
 command with
-.Sy !
+.Cm "!"
 will discard any unsaved changes. Forcing
-.Cm w
+.Ic w
 will overwrite the file on disk even if it has been externally modified since loading it.
-.Bl -tag -width Ds
-.It Sy "< shell-command"
+.Bl -tag -width indent
+.It Ic "< shell-command"
 Replace the range by the standard output of the shell command.
-.It Sy "> shell-command"
+.It Ic "> shell-command"
 Sends the range to the standard input of the shell command.
-.It Sy "| shell-command"
+.It Ic "| shell-command"
 Send the range to the standard input, and replace it by the standard output, of the shell command.
-.It Sy "! shell-command"
+.It Ic "! shell-command"
 Run interactive shell command, redirect keyboard input to it.
-.It Sy "cd directory"
+.It Ic "cd directory"
 Change working directory.
 If no directory is specified,
 .Ev "$HOME"
@@ -451,62 +451,62 @@ is used.
 .El
 .Pp
 In any of
-.Sy "<" ","
-.Sy ">" ","
-.Sy "|" ","
+.Ic "<" ","
+.Ic ">" ","
+.Ic "|" ","
 or
-.Sy "!" ","
+.Ic "!" ","
 if the shell command is omitted, the last shell command
 .Pq "of any type"
 is substituted.
 .Ss Loops and conditionals
-.Bl -tag -width Ds
-.It Sy "x/regexp/ command"
+.Bl -tag -width indent
+.It Ic "x/regexp/ command"
 For each match of the regular expression in the range, run the command with dot set to the match.
 Set dot to the last match.
 If the regular expression and its slashes are omitted,
 .Li "/.*\[rs]n/"
 is assumed.
 Null string matches potentially occur before every character of the range and at the end of the range.
-.It Sy "y/regexp/ command"
+.It Ic "y/regexp/ command"
 Like
-.Sy x ","
+.Ic x ","
 but run the command for each substring that lies before, between, or after the matches that would be generated by
-.Sy x "."
+.Ic x "."
 There is no default behavior.
 Null substrings potentially occur before every character in the range.
-.It Sy "X/regexp/ command"
+.It Ic "X/regexp/ command"
 For each file whose file name matches the regular expression, make that the current file and run the command.
 If the expression is omitted, the command is run in every file.
-.It Sy "Y/regexp/ command"
+.It Ic "Y/regexp/ command"
 Same as
-.Sy X ","
+.Ic X ","
 but for files that do not match the regular expression, and the expression is required.
-.It Sy "g/regexp/ command"
-.It Sy "v/regexp/ command"
+.It Ic "g/regexp/ command"
+.It Ic "v/regexp/ command"
 If the range contains
 .Po
-.Sy g
+.Ic g
 .Pc
 or does not contain
 .Po
-.Sy v
+.Ic v
 .Pc
 a match for the expression, set dot to the range and run the command.
 .El
 .Pp
 These may be nested arbitrarily deeply.
 An empty command in an
-.Sy x
+.Ic x
 or
-.Sy y
+.Ic y
 defaults to
-.Sy p "."
-.Cm X ","
-.Cm Y ","
-.Cm g
+.Ic p "."
+.Ic X ","
+.Ic Y ","
+.Ic g
 and
-.Cm v
+.Ic v
 do not have defaults.
 .
 .Ss Grouping and multiple changes
@@ -541,7 +541,7 @@ command.
 Operators perform a certain operation an a text range indicated by either a
 motion, a text object or an existing selection.
 .
-.Bl -tag
+.Bl -tag -width indent
 .It c
 change, delete range and enter insert mode
 .It d
@@ -579,7 +579,7 @@ yank, copy range to register
 Motions take an initial file position and transform it to a destination file position,
 thereby defining a range.
 .
-.Bl -tag
+.Bl -tag -width indent
 .It 0
 start of line
 .
@@ -706,7 +706,7 @@ next start of parenthese pair
 .It {
 previous paragraph
 .
-.It (
+.It "("
 previous sentence
 .
 .It [[
@@ -755,7 +755,7 @@ where the surrounding whitespace or delimiting characters are not part
 of the resulting range and a normal variant (prefixed with
 .Cm a ")"
 where they are.
-.Bl -tag
+.Bl -tag -width indent
 .
 .It w
 word
@@ -774,7 +774,7 @@ block enclosed by these symbols
 .El
 .Pp
 Further available text objects include:
-.Bl -tag
+.Bl -tag -width indent
 .
 .It gn
 matches the last used search term in forward direction
@@ -810,7 +810,7 @@ cursors can be created as needed. If more than one cursor exists,
 the primary one is styled differently.
 .Pp
 To manipulate multiple cursors use in normal mode:
-.Bl -tag
+.Bl -tag -width indent
 .It Aq Cm C-k
 create count new cursors on the lines above
 .It Aq Cm C-M-k
@@ -838,7 +838,7 @@ dispose all but the primary cursor
 .El
 .Pp
 Visual mode was enhanced to recognize:
-.Bl -tag
+.Bl -tag -width indent
 .It I
 create a cursor at the start of every selected line
 .It A
@@ -874,7 +874,7 @@ clear all selections, switch to normal mode
 .El
 .Pp
 In insert and replace mode:
-.Bl -tag
+.Bl -tag -width indent
 .
 .It Aq Cm S-Tab
 align all cursors by inserting spaces
@@ -882,7 +882,6 @@ align all cursors by inserting spaces
 .
 .Sh VI(M) COMMANDS
 .
-.Pp
 Any unique prefix can be used to abbreviate a command.
 .
 .Ss File and Window management
@@ -890,7 +889,7 @@ Any unique prefix can be used to abbreviate a command.
 A file must be opened in at least one window. If the last window displaying a
 certain file is closed all unsaved changes are discareded. Windows are equally
 sized and can be displayed in either horizontal or vertical fahsion.
-.Bl -tag
+.Bl -tag -width indent
 .It Cm :new
 open an empty window, arrange horizontally
 .It Cm :vnew
@@ -918,7 +917,7 @@ utility, if given a file pattern or directory.
 supports global as well as window local run time key mappings which are
 always evaluated recursively.
 .
-.Bl -tag
+.Bl -tag -width indent
 .It Cm :map[!] <mode> <lhs> <rhs>
 add a global key mapping
 .It Cm :map-window[!] <mode> <lhs> <rhs>
@@ -929,7 +928,7 @@ remove a global key mapping
 remove a window local key mapping
 .El
 In the above
-.Sy <mode>
+.Cm <mode>
 refers to one of
 .Ql normal ,
 .Ql insert ,
@@ -938,17 +937,16 @@ refers to one of
 .Ql visual-line
 or
 .Ql operator-pending ;
-.Sy <lhs>
+.Cm <lhs>
 refers to the key to map and
-.Sy <rhs>
+.Cm <rhs>
 is a key action or alias. An existing mapping may be overridden by forcing
 the map command by specifying
-.Sy ! .
+.Cm "!" .
 .Pp
 Because key mappings are always recursive, doing something like:
 .Pp
-.\" TODO indent example
-.Ic :map! normal j 2j
+.Dl :map! normal j 2j
 .Pp
 will not work because it would enter an endless loop. Instead,
 .Nm
@@ -956,7 +954,6 @@ uses pseudo keys referred to as key actions which can be used to invoke a set
 of available (see
 .Ic :help
 for a list) editor functions.
-.Pp
 .
 .Ss Keyboard Layout Specific Mappings
 .
@@ -964,8 +961,7 @@ In order to facilate usage of non-latin keyboard layouts,
 .Nm
 allows to map locale specific keys to their latin equivalents by means of the
 .Pp
-.\" TODO indent example
-.Ic :langmap <locale-keys> <latin->keys>
+.Dl :langmap <locale-keys> <latin->keys>
 .Pp
 command.
 .Pp
@@ -976,13 +972,13 @@ The defined mappings take effect
 in all non-input modes, i.e. everywhere except in insert and replace mode.
 .
 .Ss Undo/Redo
-.Bl -tag
-.It Cm :earlier Bq count
+.Bl -tag -width indent
+.It Ic :earlier Bq count
 revert to older text state
-.It Cm :later Bq count
+.It Ic :later Bq count
 revert to newer text state
 .El
-.
+.Pp
 If count is suffixed by either of
 .Sy d
 .Pq days ,
@@ -1008,7 +1004,7 @@ default values.
 In each entry below, the first part of the tag line is the full name
 of the option, followed by any equivalent abbreviations.
 The part in square brackets is the default value of the option.
-.Bl -tag -width Ds
+.Bl -tag -width indent
 .It Cm shell Bq \&"/bin/sh\&"
 User shell to use for external commands, overrides
 .Cm $SHELL
@@ -1056,7 +1052,7 @@ Whether to display replacement symbol instead of blank cells.
 .El
 .
 .Sh ENVIRONMENT
-.Bl -tag -width Ds
+.Bl -tag -width indent
 .It Ev VIS_PATH
 The default path to use to load Lua support files.
 .It Ev HOME
@@ -1069,11 +1065,11 @@ The terminal type to use to initialize the curses interface, defaults to
 if unset.
 .It Ev SHELL
 The command shell to use for I/O related commands like
-.Cm ! ,
-.Cm > ,
-.Cm <
+.Ic "!" ,
+.Ic ">" ,
+.Ic "<"
 and
-.Cm | .
+.Ic "|" .
 .It Ev XDG_CONFIG_HOME
 The configuration directory to use, defaults to
 .Pa $HOME/.config
@@ -1081,7 +1077,7 @@ if unset.
 .El
 .
 .Sh ASYNCHRONOUS EVENTS
-.Bl -tag -width "SIGWINCH" -compact
+.Bl -tag -width indent
 .It Dv SIGSTOP
 Suspend editor.
 .It Dv SIGCONT
@@ -1093,16 +1089,13 @@ ed file got truncated, unsaved file contents will be lost.
 .It Dv SIGHUP
 .It Dv SIGTERM
 Restore initial terminal state. Unsaved file contents will be lost.
-.Pp
 .It Dv SIGINT
 When an interrupt occurs while an external command is being run it is terminated.
-.Pp
 .It Dv SIGWINCH
 The screen is resized.
 .El
 .
 .Sh FILES
-.Pp
 Upon startup
 .Nm
 will source the first
@@ -1131,7 +1124,6 @@ or
 .Pa /usr/share/vis
 depending on the build configuration.
 .El
-.Pp
 .
 .Sh EXIT STATUS
 .Ex -std
@@ -1142,32 +1134,33 @@ Use
 as an interactive filter as used by
 .Xr dvtm 1 :
 .Pp
-.Ic $ { echo Pick your number; seq 1 10; } | vis - > choice
+.Dl $ { echo Pick your number; seq 1 10; } | vis - > choice
 .Pp
 Use the
 .Xr vis-open 1
 based file browser to list all C language source files:
 .Pp
-.Ic :e *.c
+.Dl :e *.c
 .Pp
-.\" TODO add plumber example to start background process
-.\" :> { plumber <&3 3<&- & } 3<&0 1>&- 2>&-
+Spawn background process and pipe range to its standard input:
+.Pp
+.Dl :> { plumber <&3 3<&- & } 3<&0 1>&- 2>&-
 .Sh SEE ALSO
-.Xr vis-menu 1 ,
-.Xr vis-open 1 ,
 .Xr vis-clipboard 1 ,
 .Xr vis-complete 1 ,
+.Xr vis-menu 1 ,
+.Xr vis-open 1 ,
 .Xr vi 1
 and
 .Xr sam 1
 .Pp
-.Dq The Text Editor sam
-by Rob Pike
+.Lk http://doc.cat-v.org/bell_labs/sam_lang_tutorial/sam_tut.pdf "A Tutorial for the Sam Command Language by Rob Pike"
 .Pp
-.Dq A Tutorial for the Sam Command Language
-by Rob Pike
+.Lk http://doc.cat-v.org/plan_9/4th_edition/papers/sam/ "The Text Editor sam by Rob Pike"
 .Pp
-.Dq vi - screen-oriented (visual) display editor
+.Lk http://man.cat-v.org/plan_9/1/sam "Plan9 manual page for sam(1)"
+.Pp
+.Lk http://pubs.opengroup.org/onlinepubs/9699919799/utilities/vi.html "vi - screen-oriented (visual) display editor"
 .St -p1003.1-2013
 .
 .Sh STANDARDS
