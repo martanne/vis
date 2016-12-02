@@ -1,11 +1,11 @@
 .Dd November 29, 2016
-.Os Vis VERSION
 .Dt VIS-CLIPBOARD 1
-
+.Os Vis VERSION
+.
 .Sh NAME
 .Nm vis-clipboard
 .Nd Read from or write to the system clipboard
-
+.
 .Sh SYNOPSIS
 .Nm vis-clipboard
 .Fl -usable
@@ -15,7 +15,7 @@
 .Pp
 .Nm vis-clipboard
 .Fl -paste
-
+.
 .Sh DESCRIPTION
 .Nm vis-clipboard
 wraps various system-specific tools for interacting with a system clipboard,
@@ -51,30 +51,27 @@ In this mode,
 reads the content of the system clipboard,
 and writes it to standard output.
 .El
-
+.
 .Sh ENVIRONMENT
-
 The following environment variables affect the operation of
 .Nm vis-clipboard :
-
-.Bl -tag -width .Ev
+.Bl -tag -width Ev
 .It Ev DISPLAY
 If non-empty,
 .Nm vis-clipboard
 will prefer to access the X11 clipboard even if other options are available.
 .El
-
+.
 .Sh EXIT STATUS
 .Ex -std vis-clipboard
-
+.
 When run with the
 .Fl -usable
-flag, 
+flag,
 an exit status of 0 means that it found a supported system-specific tool,
 while 1 means that clipboard access is not available.
-
+.
 .Sh EXAMPLES
-
 Test whether clipboard access is available:
 .Bd -literal -offset indent
 if vis-clipboard --usable; then
@@ -83,23 +80,23 @@ else
 	echo "No clipboard"
 fi
 .Ed
-
+.Pp
 Copy a friendly greeting to the clipboard:
 .Bd -literal -offset indent
 echo "Hello, World" | vis-clipboard --copy
 .Ed
-
+.Pp
 Send the current contents of the system clipboard to be recorded and analyzed:
 .Bd -literal -offset indent
 vis-clipboard --paste | curl -d - https://www.nsa.gov/
 .Ed
-
+.
 .Sh SEE ALSO
 .Xr pbcopy 1 ,
 .Xr pbpaste 1 ,
+.Xr vis 1 ,
 .Xr xclip 1 ,
-.Xr xsel 1 ,
-.Xr vis 1
+.Xr xsel 1
+.
 .Sh AUTHORS
-
 .An "Marc Andr\('e Tanner" Aq mat@brain-dump.org

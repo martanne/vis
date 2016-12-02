@@ -1,11 +1,10 @@
 .Dd November 29, 2016
-.Os Vis VERSION
 .Dt VIS-MENU 1
-
+.Os Vis VERSION
 .Sh NAME
 .Nm vis-menu
 .Nd Interactively select an item from a list
-
+.
 .Sh SYNOPSIS
 .Nm vis-menu
 .Op Fl i
@@ -15,7 +14,7 @@
 .Op Ar initial
 .Nm vis-menu
 .Op Fl v
-
+.
 .Sh DESCRIPTION
 .Nm vis-menu
 allows a user to interactively select one item from a list of options.
@@ -74,7 +73,7 @@ Instead of displaying an interactive menu,
 .Nm vis-menu
 prints its version number to standard output and exits.
 .El
-
+.
 .Sh USAGE
 .Nm vis-menu
 displays the prompt (if any),
@@ -135,7 +134,7 @@ or
 .Sy Meta-v
 .Xc
 scrolls to show the next page of list items.
-.It Xo Sy Home 
+.It Xo Sy Home
 or
 .Sy Control-A
 .Xc
@@ -190,14 +189,12 @@ each space-delimited string is a separate filter
 and only items matching every filter will be shown.
 .Pp
 If the user filters out all the items from the list,
-then hits Enter to select the 
+then hits Enter to select the
 .Dq currently highlighted
 item,
 the text they typed will be returned instead.
-.Pp
-
+.
 .Sh EXAMPLES
-
 Here's a shell-script that allows the user to choose a number from one to 10:
 .Bd -literal -offset indent
 NUMBER=$(seq 1 10 | vis-menu -p "Choose a number")
@@ -207,7 +204,7 @@ else
 	echo "You refused to choose a number, or an error occurred."
 fi
 .Ed
-
+.
 .Sh DIAGNOSTICS
 The
 .Nm vis-menu
@@ -222,12 +219,12 @@ Potential error conditions include
 being unable to allocate memory,
 being unable to read from standard input,
 or being run without a controlling terminal.
-
+.
 .Sh SEE ALSO
 .Xr dmenu 1 ,
 .Xr slmenu 1 ,
 .Xr vis 1
-
+.
 .Sh HISTORY
 The original model for a single line menu reading items from standard input was
 .Xr dmenu 1
@@ -248,11 +245,9 @@ it was forked to become
 .Nm vis-menu
 to be distributed with
 .Xr vis 1 .
-
+.
 .Sh AUTHORS
-
 .An "Marc Andr\('e Tanner" Aq mat@brain-dump.org
-
 plus the
 .Nm slmenu
 and

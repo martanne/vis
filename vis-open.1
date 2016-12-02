@@ -1,11 +1,11 @@
 .Dd November 29, 2016
-.Os Vis VERSION
 .Dt VIS-OPEN 1
-
+.Os Vis VERSION
+.
 .Sh NAME
 .Nm vis-open
 .Nd Interactively select a file to open
-
+.
 .Sh SYNOPSIS
 .Nm vis-open
 .Op Fl p Ar prompt
@@ -16,7 +16,7 @@
 .Nm vis-open
 .Fl h |
 .Fl -help
-
+.
 .Sh DESCRIPTION
 .Nm vis-open
 takes a list of filenames and directories on the command-line
@@ -33,7 +33,7 @@ uses
 .Xr vis-menu 1
 as its user-interface,
 so see that page for more details.
-
+.
 .Bl -tag -width flag
 .It Fl p Ar prompt
 Display
@@ -74,6 +74,8 @@ If present,
 .Nm vis-open
 prints a usage summary and exits,
 ignoring any other flag and arguments.
+.El
+.
 .Sh EXIT STATUS
 .Ex -std vis-open
 .Pp
@@ -83,6 +85,7 @@ like
 .Nm vis-open
 prints nothing and sets its exit status to 1
 if the user refused to select a file.
+.
 .Sh EXAMPLES
 .Bd -literal -offset indent
 CHOICE=$(vis-open -p "Select a file to stat")
@@ -92,13 +95,14 @@ else
 	stat "$CHOICE"
 fi
 .Ed
+.
 .Sh SEE ALSO
-.Xr vis-menu 1 ,
-.Xr vis 1
-
+.Xr vis 1 ,
+.Xr vis-menu 1
+.
 .Sh AUTHORS
 .An "Marc Andr\('e Tanner" Aq mat@brain-dump.org
-
+.
 .Sh BUGS
 Because
 .Nm vis-open
