@@ -105,16 +105,12 @@ install: vis vis-menu
 		mkdir -p ${DESTDIR}${SHAREPREFIX}/vis; \
 		cp -r visrc.lua vis.lua lexers ${DESTDIR}${SHAREPREFIX}/vis; \
 	}
-	@echo installing manual page to ${DESTDIR}${MANPREFIX}/man1
+	@echo installing manual pages to ${DESTDIR}${MANPREFIX}/man1
 	@mkdir -p ${DESTDIR}${MANPREFIX}/man1
-	@sed -e "s/VERSION/${VERSION}/g" < vis.1 > ${DESTDIR}${MANPREFIX}/man1/vis.1
-	@sed -e "s/VERSION/${VERSION}/g" < vis-menu.1 > ${DESTDIR}${MANPREFIX}/man1/vis-menu.1
-	@sed -e "s/VERSION/${VERSION}/g" < vis-clipboard.1 > ${DESTDIR}${MANPREFIX}/man1/vis-clipboard.1
-	@sed -e "s/VERSION/${VERSION}/g" < vis-open.1 > ${DESTDIR}${MANPREFIX}/man1/vis-open.1
-	@chmod 644 ${DESTDIR}${MANPREFIX}/man1/vis.1
-	@chmod 644 ${DESTDIR}${MANPREFIX}/man1/vis-menu.1
-	@chmod 644 ${DESTDIR}${MANPREFIX}/man1/vis-clipboard.1
-	@chmod 644 ${DESTDIR}${MANPREFIX}/man1/vis-open.1
+	@for m in ${MANUALS}; do \
+		sed -e "s/VERSION/${VERSION}/" < "$$m" >  "${DESTDIR}${MANPREFIX}/man1/$$m" && \
+		chmod 644 "${DESTDIR}${MANPREFIX}/man1/$$m"; \
+	done
 
 uninstall:
 	@echo removing executable file from ${DESTDIR}${PREFIX}/bin
