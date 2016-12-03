@@ -35,7 +35,7 @@ CFLAGS_VIS += ${CFLAGS_DEBUG}
 LDFLAGS_VIS = $(LDFLAGS_AUTO) $(LDFLAGS_TERMKEY) $(LDFLAGS_CURSES) $(LDFLAGS_ACL) \
 	$(LDFLAGS_SELINUX) $(LDFLAGS_LUA) $(LDFLAGS_STD)
 
-CFLAGS_DEBUG_ENABLE = -UNDEBUG -O0 -g -ggdb -Wall -Wextra -pedantic \
+CFLAGS_DEBUG_ENABLE = -U_FORTIFY_SOURCE -UNDEBUG -O0 -g -ggdb -Wall -Wextra -pedantic \
 	-Wno-missing-field-initializers -Wno-unused-parameter
 
 STRIP?=strip
