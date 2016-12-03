@@ -115,13 +115,29 @@ static bool cmd_set(Vis *vis, Win *win, Command *cmd, const char *argv[], Cursor
 		}
 		break;
 	case OPTION_TYPE_NUMBER:
-	case OPTION_TYPE_UNSIGNED:
 		if (!argv[2]) {
 			vis_info_show(vis, "Expecting number");
 			return false;
 		}
-		/* TODO: error checking? long type */
-		arg.u = strtoul(argv[2], NULL, 10);
+		char *ep;
+		errno = 0;
+		long lval = strtol(argv[2], &ep, 10);
+		if (argv[2][0] == '\0' || *ep != '\0') {
+			vis_info_show(vis, "Invalid number");
+			return false;
+		}
+
+		if ((errno == ERANGE && (lval == LONG_MAX || lval == LONG_MIN)) ||
+		    (lval > INT_MAX || lval < INT_MIN)) {
+			vis_info_show(vis, "Number overflow");
+			return false;
+		}
+
+		if (lval < 0) {
+			vis_info_show(vis, "Expecting positive number");
+			return false;
+		}
+		arg.i = lval;
 		break;
 	default:
 		return false;
@@ -230,7 +246,7 @@ static bool cmd_set(Vis *vis, Win *win, Command *cmd, const char *argv[], Cursor
 		view_colorcolumn_set(win->view, arg.i);
 		break;
 	case OPTION_HORIZON:
-		win->horizon = arg.u;
+		win->horizon = arg.i;
 		break;
 	}
 
@@ -631,7 +647,7 @@ static bool cmd_help(Vis *vis, Win *win, Command *cmd, const char *argv[], Curso
 		         opt->names[1] ? "|" : "",
 		         opt->names[1] ? opt->names[1] : "",
 		         opt->type == OPTION_TYPE_BOOL ? " on|off" : "",
-		         opt->type == OPTION_TYPE_NUMBER || opt->type == OPTION_TYPE_UNSIGNED ? " nn" : "");
+		         opt->type == OPTION_TYPE_NUMBER ? " nn" : "");
 		text_appendf(txt, "  %-30s %s\n", names, opt->help ? opt->help : "");
 	}
 

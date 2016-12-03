@@ -269,7 +269,6 @@ typedef struct {
 		OPTION_TYPE_STRING,
 		OPTION_TYPE_BOOL,
 		OPTION_TYPE_NUMBER,
-		OPTION_TYPE_UNSIGNED,
 	} type;
 	enum {
 		OPTION_FLAG_NONE = 0,
@@ -370,7 +369,7 @@ static const OptionDef options[] = {
 	},
 	[OPTION_HORIZON] = {
 		{ "horizon" },
-		OPTION_TYPE_UNSIGNED, OPTION_FLAG_WINDOW,
+		OPTION_TYPE_NUMBER, OPTION_FLAG_WINDOW,
 		"Number of bytes to consider for syntax highlighting",
 	},
 };
