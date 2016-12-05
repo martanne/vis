@@ -464,19 +464,19 @@ vis.filetype_detect = function(win)
 
 	-- run file(1) to determine mime type
 	if name ~= nil then
-		local file = io.popen(string.format("file -bL --mime-type -- '%s'", name:gsub("'", "'\\''")))
-		if file then
-			local mime = file:read('*all')
-			if mime then
-				mime = mime:gsub('%s*$', '')
-			end
-			if mime and #mime > 0 then
-				for lang, ft in pairs(vis.ftdetect.filetypes) do
-					for _, ft_mime in pairs(ft.mime or {}) do
-						if mime == ft_mime then
-							win.syntax = lang
-							return
-						end
+		local magic = require('magic')
+		local mgc = magic.open(magic.MIME_TYPE, magic.NO_CHECK_COMPRESS)
+		mgc:load()
+		local mime = mgc:file(name:gsub("'", "'\\''"))
+		if mime then
+			mime = mime:gsub('%s*$', '')
+		end
+		if mime and #mime > 0 then
+			for lang, ft in pairs(vis.ftdetect.filetypes) do
+				for _, ft_mime in pairs(ft.mime or {}) do
+					if mime == ft_mime then
+						win.syntax = lang
+						return
 					end
 				end
 			end
