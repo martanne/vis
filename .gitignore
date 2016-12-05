@@ -3,7 +3,11 @@
 /dependency
 /README.html
 /vis
+/vis.1.html
+/vis-clipboard.1.html
 /vis-menu
+/vis-menu.1.html
+/vis-open.1.html
 *.gcda
 *.gcno
 *.gcov
