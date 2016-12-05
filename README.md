@@ -7,9 +7,10 @@ Vis a vim-like text editor
 [![codecov](https://codecov.io/gh/martanne/vis/branch/master/graph/badge.svg)](https://codecov.io/gh/martanne/vis)
 [![#vis-editor on freenode](https://img.shields.io/badge/IRC-%23vis--editor-blue.svg)](irc://irc.freenode.net/vis-editor)
 
-Vis aims to be a modern, legacy free, simple yet efficient vim-like editor.
+Vis aims to be a modern, legacy free, simple yet efficient editor
+combining the strengths of both vi(m) and sam.
 
-It extends vim's modal editing with built-in support for multiple
+It extends vi's modal editing with built-in support for multiple
 cursors/selections and combines it with [sam's](http://sam.cat-v.org/)
 [structural regular expression](http://doc.cat-v.org/bell_labs/structural_regexps/)
 based [command language](http://doc.cat-v.org/bell_labs/sam_lang_tutorial/).
@@ -23,37 +24,40 @@ and combining characters) and should cope with arbitrary files including:
  - single line ones e.g. minified JavaScript
  - binary ones e.g. ELF files
 
-Efficient syntax highlighting is provided using Parsing Expression Grammars
-which can be conveniently expressed using Lua in form of LPeg.
+Efficient syntax highlighting is provided using
+[Parsing Expression Grammars](https://en.wikipedia.org/wiki/Parsing_expression_grammar)
+which can be conveniently expressed using [Lua](http://www.lua.org/)
+in the form of [LPeg](http://www.inf.puc-rio.br/~roberto/lpeg/).
 
 The editor core is written in a reasonable amount of clean (your mileage
 may vary), modern and legacy free C code enabling it to run in resource
 constrained environments. The implementation should be easy to hack on
-and encourage experimentation (e.g. native built in support for multiple
-cursors). There also exists a Lua API for in process extensions.
+and encourage experimentation. There also exists a Lua API for in process
+extensions.
 
 Vis strives to be *simple* and focuses on its core task: efficient text
 management. As an example the file open dialog is provided by an independent
 utility. There exist plans to use a client/server architecture, delegating
 window management to your windowing system or favorite terminal multiplexer.
 
-The intention is *not* to be bug for bug compatible with vim, instead a
-similar editing experience should be provided. The goal could thus be
-summarized as "80% of vim's features implemented in roughly 1% of the code".
+The intention is *not* to be bug for bug compatible with vi(m), instead 
+we aim to provide more powerful editing features based on an elegant design
+and clean implementation.
 
 [![vis demo](https://asciinema.org/a/41361.png)](https://asciinema.org/a/41361)
 
 Getting started / Build instructions
 ====================================
 
-In order to build vis you will need a [C99](http://www.open-std.org/jtc1/sc22/wg14/www/docs/n1256.pdf)
+In order to build vis you will need a
+[C99](http://www.open-std.org/jtc1/sc22/wg14/www/docs/n1256.pdf)
 compiler, a [POSIX.1-2008](http://pubs.opengroup.org/onlinepubs/9699919799/)
 compatible environment as well as:
 
  * [libcurses](http://www.gnu.org/software/ncurses/), preferably in the
    wide-character version
  * [libtermkey](http://www.leonerd.org.uk/code/libtermkey/)
- * [lua](http://www.lua.org/) >= 5.2 (optional)
+ * [Lua](http://www.lua.org/) >= 5.2 (optional)
  * [LPeg](http://www.inf.puc-rio.br/~roberto/lpeg/) >= 0.12
    (optional runtime dependency required for syntax highlighting)
 
@@ -65,13 +69,6 @@ By default the `configure` script will try to auto detect support for
 Lua. See `configure --help` for a list of supported options. You can
 also manually tweak the generated `config.mk` file.
 
-On Linux based systems `make standalone` will attempt to download,
-compile and install all of the above dependencies into a subfolder
-inorder to build a self contained statically linked binary.
-
-`make local` will do the same but only for libtermkey, Lua and LPeg
-(i.e. the system C and curses libraries are used).
-
 Or simply use one of the distribution provided packages:
 
  * [ArchLinux](http://www.archlinux.org/packages/?q=vis)
@@ -81,485 +78,17 @@ Or simply use one of the distribution provided packages:
  * [Void Linux](https://github.com/voidlinux/void-packages/tree/master/srcpkgs/vis)
  * [pkgsrc](http://pkgsrc.se/wip/vis-editor)
 
-Editing Features
-================
+Documentation
+=============
 
-The following section gives a quick overview over the currently
-supported features.
+End user documentation can be found in the [`vis(1)` manual page](http://martanne.github.io/vis/man/vis.1.html).
 
-###  Operators
+[Lua API Documentation](http://martanne.github.io/vis/doc/) is also available.
 
-    c   (change)
-    d   (delete)
-    !   (filter)
-    =   (indent, currently an alias for gq)
-    gq  (format using fmt(1))
-    gu  (make lowercase)
-    gU  (make uppercase)
-    J   (join)
-    p   (put)
-    <   (shift-left)
-    >   (shift-right)
-    ~   (swap case)
-    y   (yank)
+Non Goals
+=========
 
-Operators can be forced to work line wise by specifying `V`.
-
-### Movements
-
-    0        (start of line)
-    b        (previous start of a word)
-    B        (previous start of a WORD)
-    $        (end of line)
-    e        (next end of a word)
-    E        (next end of a WORD)
-    F{char}  (to next occurrence of char to the left)
-    f{char}  (to next occurrence of char to the right)
-    ^        (first non-blank of line)
-    g0       (begin of display line)
-    g$       (end of display line)
-    ge       (previous end of a word)
-    gE       (previous end of a WORD)
-    gg       (begin of file)
-    G        (goto line or end of file)
-    gj       (display line down)
-    gk       (display line up)
-    g_       (last non-blank of line)
-    gm       (middle of display line)
-    |        (goto column)
-    h        (char left)
-    H        (goto top/home line of window)
-    j        (line down)
-    k        (line up)
-    l        (char right)
-    L        (goto bottom/last line of window)
-    `{mark}  (go to mark)
-    '{mark}  (go to start of line containing mark)
-    %        (match bracket)
-    M        (goto middle line of window)
-    ]]       (next end of C-like function)
-    }        (next paragraph)
-    )        (next sentence)
-    ][       (next start of C-like function)
-    N        (repeat last search backwards)
-    n        (repeat last search forward)
-    []       (previous end of C-like function)
-    [{       (previous start of block)
-    ]}       (next start of block)
-    [(       (previous start of parenthese pair)
-    ])       (next start of parenthese pair)
-    {        (previous paragraph)
-    (        (previous sentence)
-    [[       (previous start of C-like function)
-    ;        (repeat last to/till movement)
-    ,        (repeat last to/till movement but in opposite direction)
-    #        (search word under cursor backwards)
-    *        (search word under cursor forwards)
-    T{char}  (till before next occurrence of char to the left)
-    t{char}  (till before next occurrence of char to the right)
-    ?{text}  (to next match of text in backward direction)
-    /{text}  (to next match of text in forward direction)
-    w        (next start of a word)
-    W        (next start of a WORD)
-
-  An empty line is currently neither a word nor a WORD.
-
-  Some of these commands do not work as in vim when prefixed with a
-  digit i.e. a multiplier. As an example in vim `3$` moves to the end
-  of the 3rd line down. However vis treats it as a move to the end of
-  current line which is repeated 3 times where the last two have no
-  effect.
-
-### Text objects
-
-  All of the following text objects are implemented in an inner variant
-  (prefixed with `i`) and a normal variant (prefixed with `a`):
-
-    w  word
-    W  WORD
-    s  sentence
-    p  paragraph
-    [,], (,), {,}, <,>, ", ', `         block enclosed by these symbols
-
-  For sentence and paragraph there is no difference between the
-  inner and normal variants.
-
-    gn      matches the last used search term in forward direction
-    gN      matches the last used search term in backward direction
-
-  Additionally the following text objects, which are not part of stock vim
-  are also supported:
-
-    ae      entire file content
-    ie      entire file content except for leading and trailing empty lines
-    af      C-like function definition including immediately preceding comments
-    if      C-like function definition only function body
-    al      current line
-    il      current line without leading and trailing white spaces
-
-### Modes
-
-  Vis implements more or less functional normal, operator-pending, insert,
-  replace and visual (in both line and character wise variants) modes.
-
-  Visual block mode is not implemented and there exists no immediate
-  plan to do so. Instead vis has built in support for multiple cursors.
-
-  Command mode is implemented as a regular file. Use the full power of the
-  editor to edit your commands / search terms.
-
-  Ex mode is deliberately not implemented, instead a variant of the structural
-  regular expression based command language of `sam(1)` is supported.
-
-### Multiple Cursors / Selections
-
-  vis supports multiple cursors with immediate visual feedback (unlike
-  in the visual block mode of vim where for example inserts only become
-  visible upon exit). There always exists one primary cursor located
-  within the current view port. Additional cursors ones can be created
-  as needed. If more than one cursor exists, the primary one is styled 
-  differently (yellow by default).
-
-  To manipulate multiple cursors use in normal mode:
-  
-    Ctrl-K       create count new cursors on the lines above
-    Ctrl-Meta-K  create count new cursors on the lines above the first cursor
-    Ctrl-J       create count new cursors on the lines below
-    Ctrl-Meta-J  create count new cursors on the lines below the last cursor
-    Ctrl-P       remove primary cursor
-    Ctrl-N       select word the cursor is currently over, switch to visual mode
-    Ctrl-U       make the count previous cursor primary
-    Ctrl-D       make the count next cursor primary
-    Ctrl-C       remove the count cursor column
-    Ctrl-L       remove all but the count cursor column
-    Tab          try to align all cursor on the same column
-    Esc          dispose all but the primary cursor
-
-  Visual mode was enhanced to recognize:
-    
-    I            create a cursor at the start of every selected line
-    A            create a cursor at the end of every selected line
-    Tab          left align selections by inserting spaces
-    Shift-Tab    right align selections by inserting spaces
-    Ctrl-N       create new cursor and select next word matching current selection
-    Ctrl-X       clear (skip) current selection, but select next matching word
-    Ctrl-P       remove primary cursor
-    Ctrl-U/K     make the count previous cursor primary
-    Ctrl-D/J     make the count next cursor primary
-    Ctrl-C       remove the count cursor column
-    Ctrl-L       remove all but the count cursor column
-    +            rotates selections rightwards count times
-    -            rotates selections leftwards count times
-    \            trim selections, remove leading and trailing white space
-    Esc          clear all selections, switch to normal mode
-
-  In insert/replace mode
-
-    Shift-Tab    align all cursors by inserting spaces
-
-### Marks
-
-    [a-z] general purpose marks
-    <     start of the last selected visual area in current buffer
-    >     end of the last selected visual area in current buffer
-
-  No marks across files are supported. Marks are not preserved over
-  editing sessions.
-
-### Registers
-
-  Supported registers include:
-
-    "a-"z   general purpose registers
-    "A-"Z   append to corresponding general purpose register
-    "*, "+  system clipboard integration via shell script vis-clipboard
-    "0      yank register
-    "/      search register
-    ":      command register
-    "_      black hole (/dev/null) register
-
-  If no explicit register is specified a default register is used.
-
-### Undo/Redo and Repeat
-
-  The text is currently snapshotted whenever an operator is completed as
-  well as when insert or replace mode is left. Additionally a snapshot
-  is also taken if in insert or replace mode a certain idle time elapses.
-
-  Another idea is to snapshot based on the distance between two consecutive
-  editing operations (as they are likely unrelated and thus should be
-  individually reversible).
-
-  Besides the regular undo functionality, the key bindings `g+` and `g-`
-  traverse the history in chronological order. Further more the `:earlier`
-  and `:later` commands provide means to restore the text to an arbitrary
-  state.
-
-  The repeat command `.` works for all operators and is able to repeat
-  the last insertion or replacement.
-
-### Macros
-
-  The general purpose registers `[a-z]` can be used to record macros. Use
-  one of `[A-Z]` to append to an existing macro. `q` starts a recording,
-  `@` plays it back. `@@` refers to the least recently recorded macro.
-  `@:` repeats the last :-command. `@/` is equivalent to `n` in normal mode.
-
-### Structural Regular Expression based Command Language
-
-  Vis supports [sam's](http://sam.cat-v.org/)
-  [structural regular expression](http://doc.cat-v.org/bell_labs/structural_regexps/)
-  based [command language](http://doc.cat-v.org/bell_labs/sam_lang_tutorial/).
-
-  The basic command syntax supported is mostly compatible with the description
-  found in the [sam manual page](http://man.cat-v.org/plan_9/1/sam).
-  The [sam reference card](http://sam.cat-v.org/cheatsheet/) might also be useful.
-
-  Sam commands can be entered from the vis prompt as `:<cmd>`
-
-  A command behaves differently depending on the mode in which it is issued:
-
-   - in visual mode it behaves as if an implicit extract x command
-     matching the current selection(s) would be preceding it. That is
-     the command is executed once for each selection.
-
-   - in normal mode:
-
-      * if an address for the command was provided it is evaluated starting
-        from the current cursor position(s) i.e. dot is set to the current
-        cursor position.
-
-      * if no address was supplied to the command then:
-
-         + `w` and `wq` command are always applied to the whole file
-
-         + if multiple cursors exist, the command is executed once for every
-           cursor with dot set to the character the cursor is currently over
-
-         + otherwise if there is only 1 cursor then `x` and `y` commands are
-           applied to whole file whereas the other commands are executed
-           with an implicit selection matching the current character
-
-  The command syntax was slightly tweaked to accept more terse commands.
-
-  - When specifying text or regular expressions the trailing delimiter can
-    be elided if the meaning is unambiguous.
-
-  - If only an address is provided the print command will be executed.
-
-  - The print command creates a selection matching its range.
-
-  - In text entry `\t` inserts a literal tab character (sam only recognizes `\n`).
-
-  Hence the sam command `,x/pattern/` can be abbreviated to `x/pattern`
-
-  If after a command no selections remain, the editor will switch to normal
-  mode otherwise it remains in visual mode.
-
-  Other differences compared to sam include:
-
-  - New addresses:
-
-     * `%` as an alias for `,` or `0,$`
-     * `` `m `` refers to mark `m`
-
-  - The following commands are deliberately not implemented:
-
-     * move `m`
-     * copy `t`
-     * print line address `=`
-     * print character address `=#`
-     * set current file mark `k`
-     * undo `u`
-
-  - Multi file support is currently very primitive:
-
-     * the "regexp" construct to evaluate an address in a file matching
-       regexp is currently not supported.
-
-     * the following commands related to multiple file editing are not
-       supported: `b`, `B`, `n`, `D`, `f`.
-
-  - The special grouping semantics where all commands of a group operate
-    on the the same state is not implemented.
-
-  - The file mark address `'` (and corresponding `k` command) is not supported
-
-### Command line prompt
-
-  Besides the sam command language the following commands are also recognized
-  at the `:`-command prompt. Any unique prefix can be used.
-
-    :bdelete      close all windows which display the same file as the current one
-    :earlier      revert to older text state
-    :e            replace current file with a new one or reload it from disk
-    :langmap      set key equivalents for layout specific key mappings
-    :later        revert to newer text state
-    :!            launch external command, redirect keyboard input to it
-    :map          add a global key mapping
-    :map-window   add a window local key mapping
-    :new          open an empty window, arrange horizontally
-    :open         open a new window
-    :qall         close all windows, exit editor
-    :q            close currently focused window
-    :r            insert content of another file at current cursor position
-    :set          set the options below
-    :split        split window horizontally
-    :s            search and replace currently implemented in terms of `sed(1)`
-    :unmap        remove a global key mapping
-    :unmap-window remove a window local key mapping
-    :vnew         open an empty window, arrange vertically
-    :vsplit       split window vertically
-    :wq           write changes then close window
-    :w            write current buffer content to file
-
-     shell      path            default $SHELL, /etc/passwd, /bin/sh
-
-       set shell to use for external commands (e.g. <, >, |)
-
-     escdelay   number          default 50 (50ms)
-
-       miliseconds to wait to distinguish between an <Escape> key and other
-       terminal escape sequences
-
-     tabwidth   [1-8]           default 8
-
-       set display width of a tab and number of spaces to use if
-       expandtab is enabled
-
-     expandtab  (yes|no)        default no
-
-       whether typed in tabs should be expanded to tabwidth spaces
-
-     autoindent (yes|no)        default no
-
-       replicate spaces and tabs at the beginning of the line when
-       starting a new line.
-
-     number         (yes|no)    default no
-     relativenumber (yes|no)    default no
-
-       whether absolute or relative line numbers are printed alongside
-       the file content
-
-     syntax      name           default yes
-
-       use syntax definition given (e.g. "ansi_c") or disable syntax
-       highlighting if no such definition exists (e.g :set syntax off)
-
-     show-spaces    (yes|no)    default no
-     show-tabs      (yes|no)    default no
-     show-newlines  (yes|no)    default no
-
-       show/hide special white space replacement symbols
-
-     cursorline (yes|no)        default no
-
-       highlight the line on which the cursor currently resides
-
-     colorcolumn number         default 0
-
-       highlight the given column
-
-     horizon    number          default 32768 (32K)
-
-       how far back the lexer will look to synchronize parsing
-
-     theme      name            default dark-16 | solarized (16 | 256 color)
-
-       use the given theme / color scheme for syntax highlighting
-
-  Commands taking a file name will use a simple file open dialog based
-  on the included `vis-open` shell script and `vis-menu` utility, if
-  given a file pattern or directory.
-
-    :e *.c          # opens a menu with all C files
-    :e .            # opens a menu with all files of the current directory
-
-### Configuring vis: visrc.lua, and environment variables
-
-Settings and keymaps can be specified in a `visrc.lua` file, which will
-be read by `vis` at runtime. An example `visrc.lua` file is installed
-in `/usr/local/share/vis` by default. This file can be copied to
-`$XDG_CONFIG_HOME/vis` (which defaults to `$HOME/.config/vis`) for
-further configuration.
-
-The environment variable `VIS_PATH` can be set to override the path
-that `vis` will look for Lua support files as used for syntax
-highlighting. `VIS_PATH` defaults (in this order) to
-
-- The location of the `vis` binary
-- `$XDG_CONFIG_HOME/vis`, where `$XDG_CONFIG_HOME` refers to
-`$HOME/.config` if unset
-- `/usr/local/share/vis` or `/usr/share/vis` depending on the build configuration
-
-Use `:help` and search for "Lua paths" to get the actual paths being used.
-
-### Runtime Configurable Key Bindings
-
-Vis supports run time key bindings via the `:{un,}map{,-window}` set of
-commands. The basic syntax is:
-
-    :map <mode> <lhs> <rhs>
-
-where mode is one of `normal`, `insert`, `replace`, `visual`,
-`visual-line` or `operator-pending`. lhs refers to the key to map, rhs is
-a key action or alias. An existing mapping can be overridden by appending
-`!` to the map command.
-
-Key mappings are always recursive, this means doing something like:
-
-    :map! normal j 2j
-
-will not work because it will enter an endless loop. Instead vis uses
-pseudo keys referred to as key actions which can be used to invoke a set
-of available (see :help or <F1> for a list) editor functions. Hence the
-correct thing to do would be:
-
-    :map! normal j 2<cursor-line-down>
-
-Unmapping works as follows:
-
-    :unmap <mode> <lhs>
-
-The commands suffixed with `-window` only affect the currently active window.
-
-### Layout Specific Key Bindings
-
-Vis allows to set key equivalents for non-latin keyboard layouts. This
-facilitates editing non-latin texts. The defined mappings take effect
-in all non-input modes, i.e. everywhere except in insert and replace mode.
-
-For example, the following maps the movement keys in Russian layout:
-
-    :langmap ролд hjkl
-
-More generally the syntax of the `:langmap` command is:
-
-    :langmap <sequence of keys in your layout> <sequence of equivalent keys in latin layout>
-
-If the key sequences have not the same length, the rest of the longer
-sequence will be discarded.
-
-### Tab <-> Space conversion and Line endings \n vs \r\n
-
-  Tabs can optionally be expanded to a configurable number of spaces.
-  The first line ending in the file determines what will be inserted
-  upon a line break (defaults to \n).
-
-### Jump list and change list
-
-  A per window, file local jump list (navigate with `CTRL+O` and `CTRL+I`)
-  and change list (navigate with `g;` and `g,`) is supported. The jump
-  list is implemented as a fixed sized ring buffer.
-
-### Mouse support
-
-  The mouse is currently not used at all.
-
-### Non Goals
-
-  Some of the features of vim which will *not* be implemented:
+  Some features which will *not* be implemented:
 
    - tabs / multiple workspaces / advanced window management
    - file and directory browser
@@ -570,96 +99,12 @@ sequence will be discarded.
    - GUIs (neither x11, motif, gtk, win32 ...) although the codebase
      should make it easy to add them
    - VimL
-   - plugins (certainly not vimscript, if anything it should be lua based)
    - right-to-left text
-   - ex mode
+   - ex mode, we have more elegant structural regexp
    - diff mode
    - vimgrep
    - internal spell checker
-   - compile time configurable features / `#ifdef` mess
-
-Lua API for in process extension
-================================
-
-Vis provides a simple Lua API for in process extension. At startup the
-`visrc.lua` file is executed, this can be used to register a few event
-callbacks which will be invoked from the editor core. While executing
-these user scripts the editor core is blocked, hence it is intended for
-simple short lived (configuration) tasks.
-
-At this time there exists no API stability guarantees.
-
- - `vis`
-   - `VERSION` version information string in `git describe` format, same as reported by `vis -v`
-   - `MODE_NORMAL`, `MODE_OPERATOR_PENDING`, `MODE_INSERT`, `MODE_REPLACE`, `MODE_VISUAL`, `MODE_VISUAL_LINE` mode constants
-   - `mode` current mode (one of the above constants)
-   - `lexers` LPeg lexer support module
-   - `ui`
-     - `colors` number of colors available
-   - `events` hooks
-     - `start()`
-     - `quit()`
-     - `file_open(file)`
-     - `file_save_pre(file, path)` triggered *before* an attempted write to `path` boolean return value determines whether write will be proceeded
-     - `file_save_post(file, path)` triggered *after* a successfull write to `path`
-     - `file_close(file)`
-     - `win_open(win)`
-     - `win_close(win)`
-     - `theme_change(name)`
-   - `files()` iterator
-   - `win` currently focused window
-   - `windows()` iterator
-   - `command(cmd)`
-   - `info(msg)` display a single line message
-   - `message(msg)` display an arbitrarily long message
-   - `open(filename)`
-   - `textobject_register(function)` register a Lua function as a text object, returns associated `id` or `-1`
-   - `textobject(id)` select/execute a text object
-   - `motion_register(function)` register a Lua function as a motion, returns associated `id` or `-1`
-   - `motion(id)` select/execute a motion
-   - `command_register(name, function(argv, force, win, cursor, range))` hook up a Lua function to `:name` command
-   - `map(mode, key, function)` map a Lua function to `key` in `mode`
-   - `feedkeys(keys)` interpret `keys` as if they were read from the keyboard
-   - `recording` boolean property, indicates whether a macro is currently being recorded
- - `file`
-   - `content(pos, len)` or `content({start, finish})`
-   - `insert(pos, data)`
-   - `delete(pos, len)` or `delete({start, finish})`
-   - `lines_iterator()`
-   - `name` file path relative to current working directory or `nil` if not yet associated
-   - `path` absolute path or `nil` if not yet associated
-   - `lines[0..#lines+1]` array giving read/write access to lines
-   - `newlines` type of newlines either `"lf"` or `"crlf"`
-   - `size` current file size in bytes
-   - `modified` whether the file contains unsaved changes
- - `window`
-   - `file`
-   - `cursors_iterator()`
-   - `cursors[1..#cursors]` array giving read access to all cursors
-   - `cursor` primary cursor
-   - `syntax` lexer name used for syntax highlighting or `nil`
-   - `map(mode, key, function)` map a Lua function to `key` in `mode`, local to the given window
-   - `style_define(id, style)` where `id` is a constant and `style` a string
-   - `style(id, start, end)` apply style to file range, will be cleared after every redraw
-   - `viewport` a range denoting the currently visible area of the window
-   - `width` and `height`, readonly, query window dimension
-   - `status(left [,right])` set the content of the window status bar
-   - `draw()` redraw window content
- - `cursor`
-   - `line` (1 based), `col` (1 based)
-   - `to(line, col)`
-   - `pos` bytes from start of file (0 based)
-   - `number` one based index of cursor
-   - `selection` read/write access to selection represented as a `range`
- - `range` denoted by absolute postions in bytes from the start of the file,
-   an invalid range is represented as `nil`
-   - `start`
-   - `finish`
-
-Most of the exposed objects are managed by the C core. Allthough there
-is a simple object life time management mechanism in place, it is still
-recommended to *not* let the Lua objects escape from the event handlers
-(e.g. by assigning to global Lua variables).
+   - lots of compile time configurable features / `#ifdef` mess
 
 Text management using a piece table/chain
 =========================================
@@ -815,18 +260,6 @@ harder. This also implies that standard library calls like the `regex(3)`
 functions can not be used as is. However this is the case for all but
 the most simple data structures used in text editors.
 
-Syntax Highlighting using Parsing Expression Grammars
-=====================================================
-
-[Parsing Expression Grammars](https://en.wikipedia.org/wiki/Parsing_expression_grammar)
-(PEG) have the nice property that they are closed under composition.
-In the context of an editor this is useful because lexers can be
-embedded into each other, thus simplifying syntax highlighting
-definitions.
-
-Vis reuses the [Lua](http://www.lua.org/) [LPeg](http://www.inf.puc-rio.br/~roberto/lpeg/)
-based lexers from the [Scintillua](http://foicica.com/scintillua/) project.
-
 Future Plans / Ideas
 ====================
 
@@ -837,12 +270,8 @@ Event loop with asynchronous I/O
 
 The editor core should feature a proper main loop mechanism supporting
 asynchronous non-blocking and always cancelable tasks which could be
-used for all possibly long lived actions such as:
-
- - `!`, `=` operators
- - `:substitute` and `:write` commands
- - code completion
- - compiler integration (similar to vim's quick fix functionality)
+used for all possibly long lived actions. Ideally the editor core would
+never block and always remain responsive.
 
 Client/Server Architecture / RPC interface
 ------------------------------------------
@@ -921,6 +350,8 @@ A quick overview over the code structure to get you started:
 
 Testing infrastructure for the [low level core data structures]
 (https://github.com/martanne/vis-test/tree/master/core), [vim compatibility]
-(https://github.com/martanne/vis-test/tree/master/vim) and [vis specific features]
-(https://github.com/martanne/vis-test/tree/master/vis) is in place, but
+(https://github.com/martanne/vis-test/tree/master/vim), [sam compatibility]
+(https://github.com/martanne/vis-test/tree/master/sam), [vis specific features]
+(https://github.com/martanne/vis-test/tree/master/vis) and the [Lua API]
+(https://github.com/martanne/vis-test/tree/master/lua) is in place, but
 lacks proper test cases.
