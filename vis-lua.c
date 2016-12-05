@@ -1,3 +1,11 @@
+/***
+ * Lua API for [Vis Editor](https://github.com/martanne/vis).
+ *
+ * @module vis
+ * @author Marc André Tanner
+ * @license ISC
+ * @release RELEASE
+ */
 #include <stdarg.h>
 #include <stdio.h>
 #include <string.h>
@@ -481,8 +489,61 @@ static const char *keymapping(Vis *vis, const char *keys, const Arg *arg) {
 	return keys;
 }
 
-static int windows_iter(lua_State *L);
+/***
+ * The main editor object.
+ * @type Vis
+ */
 
+/***
+ * Version information.
+ * @tfield string VERSION
+ * version information in `git describe` format, same as reported by `vis -v`.
+ */
+// FIXME: resulting Lua documentation of these constants is suboptimal
+/***
+ * Normal mode.
+ * @tfield int MODE_NORMAL
+ */
+/***
+ * Oerator pending mode.
+ * @tfield int MODE_OPERATOR_PENDING
+ */
+/***
+ * Insert mode.
+ * @tfield int MODE_INSERT
+ */
+/***
+ * Replace mode.
+ * @tfield int MODE_REPLACE
+ */
+/***
+ * Characterwise visual mode.
+ * @tfield int MODE_VISUAL
+ */
+/***
+ * Linewise visual mode.
+ * @tfield int MODE_VISUAL_LINE
+ */
+
+/***
+ * Current mode.
+ * @tfield int mode
+ */
+
+/***
+ * LPeg lexer support module.
+ * @field lexers
+ * @ref{TODO|LPeg lexer} support module.
+ */
+
+// TODO vis.events
+
+/***
+ * Create an iterator over all windows.
+ * @function windows
+ * @return the new iterator
+ */
+static int windows_iter(lua_State *L);
 static int windows(lua_State *L) {
 	Vis *vis = obj_ref_check(L, 1, "vis");
 	if (!vis) {
@@ -506,8 +567,12 @@ static int windows_iter(lua_State *L) {
 	return 1;
 }
 
+/***
+ * Create an iterator over all files.
+ * @function files
+ * @return the new iterator
+ */
 static int files_iter(lua_State *L);
-
 static int files(lua_State *L) {
 	Vis *vis = obj_ref_check(L, 1, "vis");
 	if (!vis) {
@@ -531,6 +596,12 @@ static int files_iter(lua_State *L) {
 	return 1;
 }
 
+/***
+ * Execute an editor command.
+ * @function command
+ * @tparam string command the command to execute
+ * @treturn bool whether the command succeeded
+ */
 static int command(lua_State *L) {
 	Vis *vis = obj_ref_check(L, 1, "vis");
 	if (!vis) {
@@ -543,6 +614,15 @@ static int command(lua_State *L) {
 	return 1;
 }
 
+/***
+ * Display a short message.
+ *
+ * The single line message will be displayed at the bottom of
+ * the scren and automatically hidden once a key is pressed.
+ *
+ * @function info
+ * @tparam string message the message to display
+ */
 static int info(lua_State *L) {
 	Vis *vis = obj_ref_check(L, 1, "vis");
 	if (vis) {
@@ -553,6 +633,14 @@ static int info(lua_State *L) {
 	return 1;
 }
 
+/***
+ * Display a multi line message.
+ *
+ * Opens a new window and displays an arbitrarily long message.
+ *
+ * @function message
+ * @tparam string message the message to display
+ */
 static int message(lua_State *L) {
 	Vis *vis = obj_ref_check(L, 1, "vis");
 	if (vis) {
@@ -563,6 +651,15 @@ static int message(lua_State *L) {
 	return 1;
 }
 
+/***
+ * Open a file.
+ *
+ * Creates a new window and loads the given file.
+ *
+ * @function message
+ * @tparam string filename the file name to load
+ * @treturn File the file object representing the new file, or `nil` on failure
+ */
 static int open(lua_State *L) {
 	Vis *vis = obj_ref_check(L, 1, "vis");
 	if (!vis) {
@@ -624,6 +721,17 @@ err:
 	return 1;
 }
 
+/***
+ * Map a key to a Lua function.
+ *
+ * Creates a new key mapping in a given mode.
+ *
+ * @function map
+ * @tparam int mode the mode to which the mapping should be added
+ * @tparam function func the Lua function to handle the key mapping
+ * @treturn bool whether the mapping was successfully established
+ * @see Window:map
+ */
 static int map(lua_State *L) {
 	Vis *vis = obj_ref_check(L, 1, "vis");
 	if (!vis) {
@@ -633,6 +741,13 @@ static int map(lua_State *L) {
 	return keymap(L, vis, NULL);
 }
 
+/***
+ * Execute a motion.
+ *
+ * @function motion
+ * @tparam int id the id of the motion to execute
+ * @treturn bool whether the id was valid
+ */
 static int motion(lua_State *L) {
 	Vis *vis = obj_ref_check(L, 1, "vis");
 	enum VisMotion id = luaL_checkunsigned(L, 2);
@@ -652,6 +767,19 @@ static size_t motion_lua(Vis *vis, Win *win, void *data, size_t pos) {
 	return checkpos(L, -1);
 }
 
+/***
+ * Register a custom motion.
+ *
+ * @function motion_register
+ * @tparam function motion the Lua function implementing the motion
+ * @treturn int the associated motion id, or `-1` on failure
+ * @see motion
+ * @usage
+ * -- custom motion advancing to the next byte
+ * local id = vis:motion_register(function(win, pos)
+ * 	return pos+1
+ * end)
+ */
 static int motion_register(lua_State *L) {
 	int id = -1;
 	const void *func;
@@ -664,6 +792,13 @@ err:
 	return 1;
 }
 
+/***
+ * Execute a text object.
+ *
+ * @function textobject
+ * @tparam int id the id of the text object to execute
+ * @treturn bool whether the id was valid
+ */
 static int textobject(lua_State *L) {
 	Vis *vis = obj_ref_check(L, 1, "vis");
 	enum VisTextObject id = luaL_checkunsigned(L, 2);
@@ -681,6 +816,19 @@ static Filerange textobject_lua(Vis *vis, Win *win, void *data, size_t pos) {
 	return text_range_new(checkpos(L, -2), checkpos(L, -1));
 }
 
+/***
+ * Register a custom text object.
+ *
+ * @function textobject_register
+ * @tparam function textobject the Lua function implementing the text object
+ * @treturn int the associated text object id, or `-1` on failure
+ * @see textobject
+ * @usage
+ * -- custom text object covering the next byte
+ * local id = vis:textobject_register(function(win, pos)
+ * 	return pos, pos+1
+ * end)
+ */
 static int textobject_register(lua_State *L) {
 	int id = -1;
 	const void *func;
@@ -716,6 +864,16 @@ static bool command_lua(Vis *vis, Win *win, void *data, bool force, const char *
 	return lua_toboolean(L, -1);
 }
 
+/***
+ * Register a custom `:`-command.
+ *
+ * @function command_register
+ * @tparam string name the command name
+ * @tparam function command the Lua function implementing the command
+ * @treturn bool whether the command has been successfully registered
+ * @usage
+ * TODO
+ */
 static int command_register(lua_State *L) {
 	bool ret = false;
 	const void *func;
@@ -727,6 +885,14 @@ static int command_register(lua_State *L) {
 	return 1;
 }
 
+/***
+ * Push keys to input queue and interpret them.
+ *
+ * The keys are processed as if they were read from the keyboard.
+ *
+ * @function feedkeys
+ * @tparam string keys the keys to interpret
+ */
 static int feedkeys(lua_State *L) {
 	Vis *vis = obj_ref_check(L, 1, "vis");
 	const char *keys = luaL_checkstring(L, 2);
@@ -736,6 +902,19 @@ static int feedkeys(lua_State *L) {
 	return 1;
 }
 
+/***
+ * Currently active window.
+ * @tfield Window win
+ */
+/***
+ * Currently active mode.
+ * @tfield int mode
+ */
+/***
+ * Whether a macro is being recorded.
+ * @tfield bool recording
+ */
+// TODO vis.ui
 static int vis_index(lua_State *L) {
 	Vis *vis = obj_ref_check(L, 1, "vis");
 	if (!vis) {
@@ -810,6 +989,41 @@ static const struct luaL_Reg ui_funcs[] = {
 	{ NULL, NULL },
 };
 
+/***
+ * A window object.
+ * @type Window
+ */
+
+/***
+ * Viewport currently being displayed.
+ * @tfield range viewport
+ */
+/***
+ * The window width.
+ * @tfield int width
+ */
+/***
+ * The window height.
+ * @tfield int height
+ */
+/***
+ * The file being displayed in this window.
+ * @tfield File file
+ */
+/***
+ * The primary cursor of this window.
+ * @tfield Cursor cursor
+ */
+/***
+ * The cursors of this window.
+ * @tfield Array(Cursor) cursors
+ */
+/***
+ * The file type associated with this window.
+ *
+ * Setting this field to a valid lexer name will automatically active it.
+ * @tfield string syntax the syntax lexer name or `nil` if unset
+ */
 static int window_index(lua_State *L) {
 	Win *win = obj_ref_check(L, 1, "vis.window");
 	if (!win) {
@@ -890,6 +1104,11 @@ static int window_cursors_iterator_next(lua_State *L) {
 	return 1;
 }
 
+/***
+ * Create an iterator over all cursors of this window.
+ * @function cursors_iterator
+ * @return the new iterator
+ */
 static int window_cursors_iterator(lua_State *L) {
 	Win *win = obj_ref_check(L, 1, "vis.window");
 	if (!win) {
@@ -902,6 +1121,15 @@ static int window_cursors_iterator(lua_State *L) {
 	return 1;
 }
 
+/***
+ * Map a window local key to a Lua function.
+ *
+ * @function map
+ * @tparam int mode the mode to which the mapping should be added
+ * @tparam function func the Lua function to handle the key mapping
+ * @treturn bool whether the mapping was successfully established
+ * @see Vis:map
+ */
 static int window_map(lua_State *L) {
 	Win *win = obj_ref_check(L, 1, "vis.window");
 	if (!win) {
@@ -934,6 +1162,13 @@ static int window_style(lua_State *L) {
 	return 0;
 }
 
+/***
+ * Set window status line.
+ *
+ * @function status
+ * @tparam string left the left aligned part of the status line
+ * @tparam[opt] string right the right aligned part of the status line
+ */
 static int window_status(lua_State *L) {
 	Win *win = obj_ref_check(L, 1, "vis.window");
 	if (win) {
@@ -952,6 +1187,11 @@ static int window_status(lua_State *L) {
 	return 0;
 }
 
+/***
+ * Redraw window content.
+ *
+ * @function draw
+ */
 static int window_draw(lua_State *L) {
 	Win *win = obj_ref_check(L, 1, "vis.window");
 	if (win)
@@ -1002,6 +1242,36 @@ static const struct luaL_Reg window_cursors_funcs[] = {
 	{ NULL, NULL },
 };
 
+/***
+ * A cursor object.
+ * @type Cursor
+ */
+
+/***
+ * The zero based byte position in the file.
+ *
+ * Setting this field will move the cursor to the given position.
+ * @tfield int pos
+ */
+/***
+ * The 1-based line the cursor resides on.
+ *
+ * @tfield int line
+ * @see to
+ */
+/***
+ * The 1-based column position the cursor resides on.
+ * @tfield int col
+ * @see to
+ */
+/***
+ * The 1-based cursor index.
+ * @tfield int number
+ */
+/***
+ * The selection associated with this cursor.
+ * @tfield range selection the selection or `nil` if not in visual mode
+ */
 static int window_cursor_index(lua_State *L) {
 	Cursor *cur = obj_lightref_check(L, 1, "vis.window.cursor");
 	if (!cur) {
@@ -1065,6 +1335,12 @@ static int window_cursor_newindex(lua_State *L) {
 	return newindex_common(L);
 }
 
+/***
+ * Move cursor.
+ * @function to
+ * @tparam int line the 1-based line number
+ * @tparam int col the 1-based column number
+ */
 static int window_cursor_to(lua_State *L) {
 	Cursor *cur = obj_lightref_check(L, 1, "vis.window.cursor");
 	if (cur) {
@@ -1082,6 +1358,34 @@ static const struct luaL_Reg window_cursor_funcs[] = {
 	{ NULL, NULL },
 };
 
+/***
+ * A file object.
+ * @type File
+ */
+/***
+ * File name.
+ * @tfield string name the file name relative to current working directory or `nil` if not yet named
+ */
+/***
+ * File path.
+ * @tfield string path the absolute file path or `nil` if not yet named
+ */
+/***
+ * File content by logical lines.
+ * @tfield Array(string) lines the file content accessible as 1-based array
+ */
+/***
+ * Type of line endings.
+ * @tfield string newlines the type of line endings either `lf` (the default) or `crlf`
+ */
+/***
+ * File size in bytes.
+ * @tfield int size the current file size in bytes
+ */
+/***
+ * File state.
+ * @tfield bool modified whether the file contains unsaved changes
+ */
 static int file_index(lua_State *L) {
 	File *file = obj_ref_check(L, 1, "vis.file");
 	if (!file) {
@@ -1142,6 +1446,13 @@ static int file_newindex(lua_State *L) {
 	return newindex_common(L);
 }
 
+/***
+ * Insert data at position.
+ * @function insert
+ * @tparam int pos the 0-based file position in bytes
+ * @tparam string data the data to insert
+ * @treturn bool whether the file content was successfully changed
+ */
 static int file_insert(lua_State *L) {
 	File *file = obj_ref_check(L, 1, "vis.file");
 	if (file) {
@@ -1157,6 +1468,21 @@ static int file_insert(lua_State *L) {
 	return 1;
 }
 
+/***
+ * Delete data at position.
+ *
+ * @function delete
+ * @tparam int pos the 0-based file position in bytes
+ * @tparam int len the length in bytes to delete
+ * @treturn bool whether the file content was successfully changed
+ */
+/***
+ * Delete file range.
+ *
+ * @function delete
+ * @tparam Range range the range to delete
+ * @treturn bool whether the file content was successfully changed
+ */
 static int file_delete(lua_State *L) {
 	File *file = obj_ref_check(L, 1, "vis.file");
 	if (file) {
@@ -1168,8 +1494,12 @@ static int file_delete(lua_State *L) {
 	return 1;
 }
 
+/***
+ * Create an iterator over all lines of the file.
+ * @function lines_iterator
+ * @return the new iterator
+ */
 static int file_lines_iterator_it(lua_State *L);
-
 static int file_lines_iterator(lua_State *L) {
 	/* need to check second parameter first, because obj_ref_check_get
 	 * modifies the stack */
@@ -1198,6 +1528,21 @@ static int file_lines_iterator_it(lua_State *L) {
 	return 1;
 }
 
+/***
+ * Get file content of position and length.
+ *
+ * @function content
+ * @tparam int pos the 0-based file position in bytes
+ * @tparam int len the length in bytes to read
+ * @treturn string the file content corresponding to the range
+ */
+/***
+ * Get file content of range.
+ *
+ * @function content
+ * @tparam Range range the range to read
+ * @treturn string the file content corresponding to the range
+ */
 static int file_content(lua_State *L) {
 	File *file = obj_ref_check(L, 1, "vis.file");
 	if (!file)
@@ -1662,5 +2007,21 @@ bool vis_theme_load(Vis *vis, const char *name) {
 	 * require 'themes/'..name */
 	return true;
 }
+
+/***
+ * A file range.
+ *
+ * For a valid range `start <= finish` holds.
+ * An invalid range is represented as `nil`.
+ * @type Range
+ */
+/***
+ * The being of the range.
+ * @tfield int start
+ */
+/***
+ * The end of the range.
+ * @tfield int finish
+ */
 
 #endif

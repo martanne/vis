@@ -85,6 +85,10 @@ man:
 		sed -e "s/VERSION/${VERSION}/" "$$m" | mandoc -W warning -T utf8 -T xhtml -O man=%N.%S.html -O style=mandoc.css 1> "$$m".html || true; \
 	done
 
+luadoc:
+	@ldoc -p "Vis Editor" -f markdown -M vis-lua.c -s '!pale' && \
+	sed -e "s/RELEASE/${VERSION}/" -i doc/index.html
+
 install: vis vis-menu
 	@echo stripping executable
 	@${STRIP} vis
