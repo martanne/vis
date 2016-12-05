@@ -124,7 +124,7 @@ Filerange text_object_word_find_next(Text *txt, size_t pos, const char *word) {
 	size_t len = strlen(word);
 	for (;;) {
 		size_t match_pos = text_find_next(txt, pos, word);
-		if (match_pos != pos) {
+		if (match_pos != EPOS) {
 			Filerange match_word = text_object_word(txt, match_pos);
 			if (text_range_size(&match_word) == len)
 				return match_word;
@@ -139,7 +139,7 @@ Filerange text_object_word_find_prev(Text *txt, size_t pos, const char *word) {
 	size_t len = strlen(word);
 	for (;;) {
 		size_t match_pos = text_find_prev(txt, pos, word);
-		if (match_pos != pos) {
+		if (match_pos != EPOS) {
 			Filerange match_word = text_object_word(txt, match_pos);
 			if (text_range_size(&match_word) == len)
 				return match_word;
