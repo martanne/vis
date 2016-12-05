@@ -1164,6 +1164,11 @@ void view_cursors_scroll_to(Cursor *c, size_t pos) {
 
 void view_cursors_to(Cursor *c, size_t pos) {
 	View *view = c->view;
+	if (pos == EPOS)
+		return;
+	size_t size = text_size(view->text);
+	if (pos > size)
+		pos = size;
 	if (c->view->cursor == c) {
 		/* make sure we redraw changes to the very first character of the window */
 		if (view->start == pos)
