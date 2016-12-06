@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8"/>
+<style>
+table.head, table.foot { width: 100%; }
+td.head-rtitle, td.foot-os { text-align: right; }
+td.head-vol { text-align: center; }
+table.foot td { width: 50%; }
+table.head td { width: 33%; }
+div.spacer { margin: 1em 0; }
+</style>
+<link rel="stylesheet" href="mandoc.css" type="text/css" media="all"/>
+<title>
+VIS-CLIPBOARD(1)</title>
+</head>
+<body>
+<div class="mandoc">
+<table class="head">
+<tbody>
+<tr>
+<td class="head-ltitle">
+VIS-CLIPBOARD(1)</td>
+<td class="head-vol">
+General Commands Manual</td>
+<td class="head-rtitle">
+VIS-CLIPBOARD(1)</td>
+</tr>
+</tbody>
+</table>
+<div class="section">
+<h1 id="NAME">NAME</h1> <b class="name">vis-clipboard</b> &#8212; <span class="desc">Read from or write to the system clipboard</span></div>
+<div class="section">
+<h1 id="SYNOPSIS">SYNOPSIS</h1><table class="synopsis">
+<col style="width: 13.00ex;"/>
+<col/>
+<tbody>
+<tr>
+<td>
+<b class="name">vis-clipboard</b></td>
+<td>
+<b class="flag">--usable</b></td>
+</tr>
+</tbody>
+</table>
+<div class="spacer">
+</div>
+<br/>
+<table class="synopsis">
+<col style="width: 13.00ex;"/>
+<col/>
+<tbody>
+<tr>
+<td>
+<b class="name">vis-clipboard</b></td>
+<td>
+<b class="flag">--copy</b></td>
+</tr>
+</tbody>
+</table>
+<div class="spacer">
+</div>
+<br/>
+<table class="synopsis">
+<col style="width: 13.00ex;"/>
+<col/>
+<tbody>
+<tr>
+<td>
+<b class="name">vis-clipboard</b></td>
+<td>
+<b class="flag">--paste</b></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section">
+<h1 id="DESCRIPTION">DESCRIPTION</h1> <b class="name">vis-clipboard</b> wraps various system-specific tools for interacting with a system clipboard, like <a class="link-man" href="xsel.1.html">xsel(1)</a> for X11, <a class="link-man" href="pbcopy.1.html">pbcopy(1)</a> for Mac OS X, and <i class="file">/dev/clipboard</i> on Cygwin.<div class="spacer">
+</div>
+<b class="name">vis-clipboard</b> can run in three different ways, depending on the flag given on the command-line.<dl style="margin-top: 0.00em;margin-bottom: 0.00em;" class="list list-tag">
+<dt class="list-tag" style="margin-top: 1.00em;">
+<b class="flag">--usable</b></dt>
+<dd class="list-tag" style="margin-left: 4.00ex;">
+In this mode, <b class="name">vis-clipboard</b> looks for a way to interface with the system clipboard. If it finds one, it terminates with exit code 0. If no interface to the system clipboard is available, it terminates with exit code 1.</dd>
+<dt class="list-tag" style="margin-top: 1.00em;">
+<b class="flag">--copy</b></dt>
+<dd class="list-tag" style="margin-left: 4.00ex;">
+In this mode, <b class="name">vis-clipboard</b> reads the content of standard input, and stores it in the system clipboard.</dd>
+<dt class="list-tag" style="margin-top: 1.00em;">
+<b class="flag">--paste</b></dt>
+<dd class="list-tag" style="margin-left: 4.00ex;">
+In this mode, <b class="name">vis-clipboard</b> reads the content of the system clipboard, and writes it to standard output.</dd>
+</dl>
+</div>
+<div class="section">
+<h1 id="ENVIRONMENT">ENVIRONMENT</h1> The following environment variables affect the operation of <b class="name">vis-clipboard</b>:<dl style="margin-top: 0.00em;margin-bottom: 0.00em;" class="list list-tag">
+<dt class="list-tag" style="margin-top: 1.00em;">
+<span class="env">DISPLAY</span></dt>
+<dd class="list-tag" style="margin-left: 15.00ex;">
+If non-empty, <b class="name">vis-clipboard</b> will prefer to access the X11 clipboard even if other options are available.</dd>
+</dl>
+</div>
+<div class="section">
+<h1 id="EXIT_STATUS">EXIT STATUS</h1> The <b class="utility">vis-clipboard</b> utility exits&#160;0 on success, and&#160;&gt;0 if an error occurs. When run with the <b class="flag">--usable</b> flag, an exit status of 0 means that it found a supported system-specific tool, while 1 means that clipboard access is not available.</div>
+<div class="section">
+<h1 id="EXAMPLES">EXAMPLES</h1> Test whether clipboard access is available:<div class="spacer">
+</div>
+<pre style="margin-left: 5.00ex;" class="lit display">
+if vis-clipboard --usable; then 
+	echo &quot;Clipboard access available&quot; 
+else 
+	echo &quot;No clipboard&quot; 
+fi</pre>
+<div class="spacer">
+</div>
+Copy a friendly greeting to the clipboard:<div class="spacer">
+</div>
+<pre style="margin-left: 5.00ex;" class="lit display">
+echo &quot;Hello, World&quot; | vis-clipboard --copy</pre>
+<div class="spacer">
+</div>
+Send the current contents of the system clipboard to be recorded and analyzed:<div class="spacer">
+</div>
+<pre style="margin-left: 5.00ex;" class="lit display">
+vis-clipboard --paste | curl -d - https://www.nsa.gov/</pre>
+</div>
+<div class="section">
+<h1 id="SEE_ALSO">SEE ALSO</h1> <a class="link-man" href="pbcopy.1.html">pbcopy(1)</a>, <a class="link-man" href="pbpaste.1.html">pbpaste(1)</a>, <a class="link-man" href="vis.1.html">vis(1)</a>, <a class="link-man" href="xclip.1.html">xclip(1)</a>, <a class="link-man" href="xsel.1.html">xsel(1)</a></div>
+<div class="section">
+<h1 id="AUTHORS">AUTHORS</h1> <span class="author">Marc Andr&#233; Tanner</span> &#10216;mat@brain-dump.org&#10217;</div>
+<table class="foot">
+<tbody>
+<tr>
+<td class="foot-date">
+November 29, 2016</td>
+<td class="foot-os">
+Vis v0.2-520-ge552275</td>
+</tr>
+</tbody>
+</table>
+</div>
+</body>
+</html>
+

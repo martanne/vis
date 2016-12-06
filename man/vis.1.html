@@ -1,0 +1,1112 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8"/>
+<style>
+table.head, table.foot { width: 100%; }
+td.head-rtitle, td.foot-os { text-align: right; }
+td.head-vol { text-align: center; }
+table.foot td { width: 50%; }
+table.head td { width: 33%; }
+div.spacer { margin: 1em 0; }
+</style>
+<link rel="stylesheet" href="mandoc.css" type="text/css" media="all"/>
+<title>
+VIS(1)</title>
+</head>
+<body>
+<div class="mandoc">
+<table class="head">
+<tbody>
+<tr>
+<td class="head-ltitle">
+VIS(1)</td>
+<td class="head-vol">
+General Commands Manual</td>
+<td class="head-rtitle">
+VIS(1)</td>
+</tr>
+</tbody>
+</table>
+<div class="section">
+<h1 id="NAME">NAME</h1> <b class="name">vis</b> &#8212; <span class="desc">a highly efficient text editor</span></div>
+<div class="section">
+<h1 id="SYNOPSIS">SYNOPSIS</h1><table class="synopsis">
+<col style="width: 3.00ex;"/>
+<col/>
+<tbody>
+<tr>
+<td>
+<b class="name">vis</b></td>
+<td>
+[<span class="opt"><b class="flag">-v</b></span>] [<span class="opt"><b class="cmd">+command</b></span>] [<span class="opt"><b class="flag">--</b></span>] [<span class="opt"><i class="arg">files ...</i></span>]</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section">
+<h1 id="DESCRIPTION">DESCRIPTION</h1> <b class="name">vis</b> is a highly efficient screen-oriented text editor combining the strengths of both <b class="name">vi(m)</b> and <b class="name">sam</b>. This manual page is intended for users already familiar with <b class="name">vi</b>/<b class="name">sam</b>. Anyone else should almost certainly read a good tutorial on either editor before this manual page. The following options are available:<dl style="margin-top: 0.00em;margin-bottom: 0.00em;" class="list list-tag">
+<dt class="list-tag" style="margin-top: 1.00em;">
+<b class="flag">-v</b></dt>
+<dd class="list-tag" style="margin-left: 6.00ex;">
+Print version information and exit.</dd>
+<dt class="list-tag" style="margin-top: 1.00em;">
+<span class="symb">+command</span></dt>
+<dd class="list-tag" style="margin-left: 6.00ex;">
+Execute command after loading file.</dd>
+<dt class="list-tag" style="margin-top: 1.00em;">
+<b class="flag">--</b></dt>
+<dd class="list-tag" style="margin-left: 6.00ex;">
+Denotes  the  end  of the options. Arguments after this will be handled as a file name.</dd>
+</dl>
+<div class="spacer">
+</div>
+The special file <b class="flag">-</b> instructs <b class="name">vis</b> to read from standard input in which case <b class="cmd">:wq</b> will write to standard output, thereby enabling usage as an interactive filter.<div class="spacer">
+</div>
+If standard input is redirected and all input is consumed, <b class="name">vis</b> will open /dev/tty to gather further commands. Failure to do so results in program termination.<div class="subsection">
+<h2 id="Modes">Modes</h2> <b class="name">vis</b> employs the same <span class="emph">modal</span> editing approach as <b class="name">vi</b>. It supports a normal, operator pending, insert, replace and visual (in both line and character wise variants) mode.<div class="spacer">
+</div>
+The visual block and ex modes are deliberately not implemented, instead <b class="name">vis</b> has built in support for multiple cursors/selections and an <span class="emph">interactive</span> variant of the structural regular expression based command language of <b class="name">sam</b>.</div>
+<div class="subsection">
+<h2 id="Undo/Redo">Undo/Redo</h2> <b class="name">vis</b> uses an undo tree to keep track of text revisions. The <b class="cmd">u</b> (undo) and &#10216;<b class="cmd">C-r</b>&#10217; (redo) commands can be used to traverse the tree along the main branch. Additionally <b class="cmd">g+</b> and <b class="cmd">g-</b> traverse the history in chronological order. Furthermore the <b class="cmd">:earlier</b> and <b class="cmd">:later</b> commands provide means to restore the text to an arbitrary state.</div>
+<div class="subsection">
+<h2 id="Marks">Marks</h2> A mark associates a given file position to a symbolic name. A mark becomes invalid once the underlying file content changes (e.g. it being deleted or replaced). If said changes are later undone the mark becomes valid again.<dl style="margin-top: 0.00em;margin-bottom: 0.00em;" class="list list-tag">
+<dt class="list-tag" style="margin-top: 1.00em;">
+a-z</dt>
+<dd class="list-tag" style="margin-left: 6.00ex;">
+general purpose marks</dd>
+<dt class="list-tag" style="margin-top: 1.00em;">
+&lt;</dt>
+<dd class="list-tag" style="margin-left: 6.00ex;">
+start of the last selected visual area in current file</dd>
+<dt class="list-tag" style="margin-top: 1.00em;">
+&gt;</dt>
+<dd class="list-tag" style="margin-left: 6.00ex;">
+end of the last selected visual area in current file</dd>
+</dl>
+<div class="spacer">
+</div>
+No marks across files are supported. Marks are not preserved over editing sessions.</div>
+<div class="subsection">
+<h2 id="Registers">Registers</h2> Registers can hold arbitrary data which can later be re-inserted into the file or executed as a macro. Supported registers include:<dl style="margin-top: 0.00em;margin-bottom: 0.00em;" class="list list-tag">
+<dt class="list-tag" style="margin-top: 1.00em;">
+&quot;a-&quot;z</dt>
+<dd class="list-tag" style="margin-left: 6.00ex;">
+general purpose registers</dd>
+<dt class="list-tag" style="margin-top: 1.00em;">
+&quot;A-&quot;Z</dt>
+<dd class="list-tag" style="margin-left: 6.00ex;">
+append to corresponding general purpose register</dd>
+<dt class="list-tag" style="margin-top: 1.00em;">
+&quot;*, &quot;+</dt>
+<dd class="list-tag" style="margin-left: 6.00ex;">
+system clipboard integration via shell script <a class="link-man" href="vis-clipboard.1.html">vis-clipboard(1)</a></dd>
+<dt class="list-tag" style="margin-top: 1.00em;">
+&quot;0</dt>
+<dd class="list-tag" style="margin-left: 6.00ex;">
+yank register, least recently yanked range</dd>
+<dt class="list-tag" style="margin-top: 1.00em;">
+&quot;/</dt>
+<dd class="list-tag" style="margin-left: 6.00ex;">
+search register, least recently used search pattern</dd>
+<dt class="list-tag" style="margin-top: 1.00em;">
+&quot;:</dt>
+<dd class="list-tag" style="margin-left: 6.00ex;">
+command register, least recently executed command</dd>
+<dt class="list-tag" style="margin-top: 1.00em;">
+&quot;_</dt>
+<dd class="list-tag" style="margin-left: 6.00ex;">
+black hole (/dev/null) register, ignore content is always empty</dd>
+</dl>
+<div class="spacer">
+</div>
+If no explicit register is specified a default register is used.</div>
+<div class="subsection">
+<h2 id="Macros">Macros</h2> The general purpose registers <b class="flag">&quot;a-&quot;z</b> can be used to record macros. Use one of <b class="flag">&quot;A-&quot;Z</b> to append to an existing macro. <b class="cmd">q</b> starts a recording, <b class="cmd">@</b> plays it back. <b class="cmd">@@</b> refers to the least recently recorded macro. <b class="cmd">@:</b> repeats the last :-command. <b class="cmd">@/</b> is equivalent to <b class="cmd">n</b> in normal mode.</div>
+<div class="subsection">
+<h2 id="Jump_list_and_Change_list">Jump list and Change list</h2> A per window, fixed sized file local jump list (navigate with &#10216;<b class="cmd">C-O</b>&#10217; and &#10216;<b class="cmd">C-I</b>&#10217;) and change list (navigate with <b class="cmd">g;</b> and <b class="cmd">g,</b>) is supported.</div>
+<div class="subsection">
+<h2 id="Encoding,_Tab_and_Newline_handling">Encoding, Tab and Newline handling</h2> <b class="name">vis</b> always assumes the input file to be UTF-8 encoded. If you wish to edit files with legacy encodings, use <a class="link-man" href="iconv.1.html">iconv(1)</a> to convert them as needed. &#10216;Tab&#10217; can optionally be expanded to a configurable number of spaces (see <i class="link-sec"><a class="link-sec" href="#SET_OPTIONS">SET OPTIONS</a></i>). The first line ending in the file determines what will be inserted when pressing &#10216;Enter&#10217; (defaults to \n).</div>
+<div class="subsection">
+<h2 id="Mouse_support">Mouse support</h2> The mouse is currently not used at all.</div>
+</div>
+<div class="section">
+<h1 id="SAM_COMMANDS">SAM COMMANDS</h1> <b class="name">vis</b> supports an interactive variant of the structural regular expression based command language introduced by <a class="link-man" href="sam.1.html">sam(1)</a>.<div class="subsection">
+<h2 id="Regular_expressions">Regular expressions</h2> <b class="name">vis</b> currently defers regular expression matching to the underlying C library. It uses what POSIX refers to as &#8220;Extended Regular Expressions&#8221; as described in <a class="link-man" href="regex.7.html">regex(7)</a>. Additonally \n and \t may be used to refer to newlines and tabs, respectively. The <b class="flag">.</b> atom matches any character except newline. The empty regular expression stands for the last complete expression encountered.</div>
+<div class="subsection">
+<h2 id="Addresses">Addresses</h2> An address identifies a substring (or range) in a file. In the following &#8220;character <span class="symb">n</span>&#8221; means the null string after the <span class="symb">n-th</span> character in the file, with 1 the first character in the file. &#8220;Line <span class="symb">n</span>&#8221; means the <span class="symb">n-th</span> match, starting at the beginning of the file, of the regular expression <code class="lit">.*\n?</code>.<div class="spacer">
+</div>
+All windows always have at least one current substring which is the default address. In sam this is referred to as <span class="symb">dot</span>. In <b class="name">vis</b> multiple &#8220;dots&#8221; can exist at the same time. In normal mode each cursor induces such a range, representing the character it is currently over. Similarly, in visual mode each selection serves as a default address.</div>
+<div class="subsection">
+<h2 id="Simple_addresses">Simple addresses</h2><dl style="margin-top: 0.00em;margin-bottom: 0.00em;" class="list list-tag">
+<dt class="list-tag" style="margin-top: 1.00em;">
+<b class="cmd">#n</b></dt>
+<dd class="list-tag" style="margin-left: 6.00ex;">
+The empty string after character <span class="symb">n</span>; <code class="lit">#0</code> is the beginning of the file.</dd>
+<dt class="list-tag" style="margin-top: 1.00em;">
+<b class="cmd">n</b></dt>
+<dd class="list-tag" style="margin-left: 6.00ex;">
+Line <span class="symb">n</span>.</dd>
+<dt class="list-tag" style="margin-top: 1.00em;">
+<b class="cmd">/regexp/</b></dt>
+<dd class="list-tag" style="margin-left: 6.00ex;">
+</dd>
+<dt class="list-tag" style="margin-top: 1.00em;">
+<b class="cmd">?regexp?</b></dt>
+<dd class="list-tag" style="margin-left: 6.00ex;">
+The substring that matches the regular expression, found by looking towards the end (<code class="lit">/</code>) or beginning (<code class="lit">?</code>) of the file. The search does not wrap around when hitting the end (start) of the file.</dd>
+<dt class="list-tag" style="margin-top: 1.00em;">
+<b class="cmd">0</b></dt>
+<dd class="list-tag" style="margin-left: 6.00ex;">
+The string before the first full line. This is not necessarily the null string; see <code class="lit">+</code> and <code class="lit">-</code> below.</dd>
+<dt class="list-tag" style="margin-top: 1.00em;">
+<b class="cmd">$</b></dt>
+<dd class="list-tag" style="margin-left: 6.00ex;">
+The null string at the end of the file.</dd>
+<dt class="list-tag" style="margin-top: 1.00em;">
+<b class="cmd">.</b></dt>
+<dd class="list-tag" style="margin-left: 6.00ex;">
+Dot, the current range.</dd>
+<dt class="list-tag" style="margin-top: 1.00em;">
+<b class="cmd">'m</b></dt>
+<dd class="list-tag" style="margin-left: 6.00ex;">
+The mark <span class="symb">m</span> in the file.</dd>
+</dl>
+</div>
+<div class="subsection">
+<h2 id="Compound_addresses">Compound addresses</h2> In the following, <span class="symb">a1</span> and <span class="symb">a2</span> are addresses.<dl style="margin-top: 0.00em;margin-bottom: 0.00em;" class="list list-tag">
+<dt class="list-tag" style="margin-top: 1.00em;">
+<span class="symb">a1+a2</span></dt>
+<dd class="list-tag" style="margin-left: 6.00ex;">
+The address <span class="symb">a2</span> evaluated starting at the end of <span class="symb">a1</span>.</dd>
+<dt class="list-tag" style="margin-top: 1.00em;">
+<span class="symb">a1-a2</span></dt>
+<dd class="list-tag" style="margin-left: 6.00ex;">
+The address <span class="symb">a2</span> evaluated looking the reverse direction starting at the beginning of <span class="symb">a1</span>.</dd>
+<dt class="list-tag" style="margin-top: 1.00em;">
+<span class="symb">a1,a2</span></dt>
+<dd class="list-tag" style="margin-left: 6.00ex;">
+The substring from the beginning of <span class="symb">a1</span> to the end of <span class="symb">a2</span>. If <span class="symb">a1</span> is missing, <code class="lit">0</code> is substituted. If <span class="symb">a2</span> is missing, <code class="lit">$</code> is substituted.</dd>
+<dt class="list-tag" style="margin-top: 1.00em;">
+<span class="symb">a1;a2</span></dt>
+<dd class="list-tag" style="margin-left: 6.00ex;">
+Like &#8220;<span class="symb">a1,a2</span>&#8221; but with <span class="symb">a2</span> evaluated at the end of, and range set to, <span class="symb">a1</span>.</dd>
+</dl>
+<div class="spacer">
+</div>
+The operators <code class="lit">+</code> and <code class="lit">-</code> are high precedence, while <code class="lit">,</code> and <code class="lit">;</code> are low precedence.<div class="spacer">
+</div>
+In both <code class="lit">+</code> and <code class="lit">-</code> forms, if <span class="symb">a2</span> is a line or character address with a missing number, the number defaults to 1. If <span class="symb">a1</span> is missing, <code class="lit">.</code> is substituted. If both <span class="symb">a1</span> and <span class="symb">a2</span> are present and distinguishable, <code class="lit">+</code> may be elided. <span class="symb">a2</span> may be a regular expression; if it is delimited by &#8220;<code class="lit">?</code>&#8221; characters, the effect of the <code class="lit">+</code> or <code class="lit">-</code> is reversed. The <code class="lit">%</code> sign is an alias for <code class="lit">,</code> and hence <code class="lit">0,$</code>. It is an error for a compound address to represent a malformed substring.</div>
+<div class="subsection">
+<h2 id="Commands">Commands</h2> In the following, text demarcated by slashes represents text delimited by any printable ASCII character except alphanumerics. Any number of trailing delimiters may be elided, with multiple elisions then representing null strings, but the first delimiter must always be present. In any delimited text, newline may not appear literally; <code class="lit">\n</code> and <code class="lit">\t</code> may be typed for newline and tab; <code class="lit">\/</code> quotes the delimiter, here <code class="lit">/</code>. Backslash is otherwise interpreted literally.<div class="spacer">
+</div>
+Most commands may be prefixed with an address to indicate their range of operation.  If a command takes an address and none is supplied, a default address is used.  In normal mode this equates to the character the cursor is currently over. If only one cursor exists <b class="cmd">x</b> and <b class="cmd">y</b> default to the whole file <code class="lit">0,$</code>. In normal mode the write commands <b class="cmd">w</b> and <b class="cmd">wq</b> always apply to the whole file. Commands are executed once for every cursor. In visual mode the commands are applied to every selection as if an implicit <b class="cmd">x</b> command, matching the existing selections, was present.<div class="spacer">
+</div>
+In the description, &#8220;range&#8221; is used to represent whatever address is supplied.<div class="spacer">
+</div>
+If after a successful command execution no selections remain, the editor will switch to normal mode, otherwise it remains in visual mode. This allows <span class="emph">interactive</span> refinements of ranges.</div>
+<div class="subsection">
+<h2 id="Text_commands">Text commands</h2><dl style="margin-top: 0.00em;margin-bottom: 0.00em;" class="list list-tag">
+<dt class="list-tag" style="margin-top: 1.00em;">
+<b class="cmd">a/text/</b></dt>
+<dd class="list-tag" style="margin-left: 6.00ex;">
+Insert the text into the file after the range.<div class="spacer">
+</div>
+May also be written as<div class="spacer">
+</div>
+<pre style="margin-left: 5.00ex;" class="lit display">
+ a 
+ lines 
+ of 
+ text 
+ .</pre>
+</dd>
+<dt class="list-tag" style="margin-top: 1.00em;">
+<b class="cmd">c  or i</b></dt>
+<dd class="list-tag" style="margin-left: 6.00ex;">
+Same as <span class="symb">a</span>, but <span class="symb">c</span> replaces the text, while <span class="symb">i</span> inserts <span class="emph">before</span> the range.</dd>
+<dt class="list-tag" style="margin-top: 1.00em;">
+<span class="symb">d</span></dt>
+<dd class="list-tag" style="margin-left: 6.00ex;">
+Delete the text in range.</dd>
+<dt class="list-tag" style="margin-top: 1.00em;">
+<span class="symb">s/regexp/text/</span></dt>
+<dd class="list-tag" style="margin-left: 6.00ex;">
+Substitute <span class="symb">text</span> for the first match of the regular expression in the range. Currently implemented in terms of <a class="link-man" href="sed.1.html">sed(1)</a>.</dd>
+</dl>
+</div>
+<div class="subsection">
+<h2 id="Display_commands">Display commands</h2><dl style="margin-top: 0.00em;margin-bottom: 0.00em;" class="list list-tag">
+<dt class="list-tag" style="margin-top: 1.00em;">
+<b class="cmd">p</b></dt>
+<dd class="list-tag" style="margin-left: 6.00ex;">
+Create a new selection for the range. If empty, create a new cursor.</dd>
+</dl>
+</div>
+<div class="subsection">
+<h2 id="I/O_commands">I/O commands</h2><dl style="margin-top: 0.00em;margin-bottom: 0.00em;" class="list list-tag">
+<dt class="list-tag" style="margin-top: 1.00em;">
+<b class="cmd">e[!]</b> [file name]</dt>
+<dd class="list-tag" style="margin-left: 6.00ex;">
+Replace the file by the contents of the named external file. If no file name is given, reload file from disk.</dd>
+<dt class="list-tag" style="margin-top: 1.00em;">
+<b class="cmd">r file name</b></dt>
+<dd class="list-tag" style="margin-left: 6.00ex;">
+Replace the text in the range by the contents of the named external file.</dd>
+<dt class="list-tag" style="margin-top: 1.00em;">
+<b class="cmd">w[!]</b> [file name]</dt>
+<dd class="list-tag" style="margin-left: 6.00ex;">
+Write the range (default <code class="lit">0,$</code>) to the named external file.</dd>
+<dt class="list-tag" style="margin-top: 1.00em;">
+<b class="cmd">wq[!]</b> [file name]</dt>
+<dd class="list-tag" style="margin-left: 6.00ex;">
+Same as <b class="cmd">w</b>, but close file afterwards.</dd>
+</dl>
+<div class="spacer">
+</div>
+If the file name argument is absent from any of these, the current file name is used. <b class="cmd">e</b> always sets the file name, <b class="cmd">w</b> will do so if the file has no name. Forcing the <b class="cmd">e</b> command with <b class="flag">!</b> will discard any unsaved changes. Forcing <b class="cmd">w</b> will overwrite the file on disk even if it has been externally modified since loading it.  Write commands with a non-default addresses and no file name are destructive and need always to be forced.<dl style="margin-top: 0.00em;margin-bottom: 0.00em;" class="list list-tag">
+<dt class="list-tag" style="margin-top: 1.00em;">
+<b class="cmd">&lt; shell-command</b></dt>
+<dd class="list-tag" style="margin-left: 6.00ex;">
+Replace the range by the standard output of the shell command.</dd>
+<dt class="list-tag" style="margin-top: 1.00em;">
+<b class="cmd">&gt; shell-command</b></dt>
+<dd class="list-tag" style="margin-left: 6.00ex;">
+Sends the range to the standard input of the shell command.</dd>
+<dt class="list-tag" style="margin-top: 1.00em;">
+<b class="cmd">| shell-command</b></dt>
+<dd class="list-tag" style="margin-left: 6.00ex;">
+Send the range to the standard input, and replace it by the standard output, of the shell command.</dd>
+<dt class="list-tag" style="margin-top: 1.00em;">
+<b class="cmd">! shell-command</b></dt>
+<dd class="list-tag" style="margin-left: 6.00ex;">
+Run interactive shell command, redirect keyboard input to it.</dd>
+<dt class="list-tag" style="margin-top: 1.00em;">
+<b class="cmd">cd directory</b></dt>
+<dd class="list-tag" style="margin-left: 6.00ex;">
+Change working directory. If no directory is specified, <span class="env">$HOME</span> is used.</dd>
+</dl>
+<div class="spacer">
+</div>
+In any of <b class="cmd">&lt;</b>, <b class="cmd">&gt;</b>, <b class="cmd">|</b>, or <b class="cmd">!</b>, if the shell command is omitted, the last shell command (of any type) is substituted.</div>
+<div class="subsection">
+<h2 id="Loops_and_conditionals">Loops and conditionals</h2><dl style="margin-top: 0.00em;margin-bottom: 0.00em;" class="list list-tag">
+<dt class="list-tag" style="margin-top: 1.00em;">
+<b class="cmd">x/regexp/</b> [command]</dt>
+<dd class="list-tag" style="margin-left: 6.00ex;">
+For each match of the regular expression in the range, run the command with range set to the match. If the regular expression and its slashes are omitted, <code class="lit">/.*\n/</code> is assumed. Null string matches potentially occur before every character of the range and at the end of the range.</dd>
+<dt class="list-tag" style="margin-top: 1.00em;">
+<b class="cmd">y/regexp/</b> [command]</dt>
+<dd class="list-tag" style="margin-left: 6.00ex;">
+Like <b class="cmd">x</b>, but run the command for each substring that lies before, between, or after the matches that would be generated by <b class="cmd">x</b>. There is no default behavior. Null substrings potentially occur before every character in the range.</dd>
+<dt class="list-tag" style="margin-top: 1.00em;">
+<b class="cmd">X/regexp/ command</b></dt>
+<dd class="list-tag" style="margin-left: 6.00ex;">
+For each file whose file name matches the regular expression, make that the current file and run the command. If the expression is omitted, the command is run in every file.</dd>
+<dt class="list-tag" style="margin-top: 1.00em;">
+<b class="cmd">Y/regexp/ command</b></dt>
+<dd class="list-tag" style="margin-left: 6.00ex;">
+Same as <b class="cmd">X</b>, but for files that do not match the regular expression, and the expression is required.</dd>
+<dt class="list-tag" style="margin-top: 1.00em;">
+<b class="cmd">g/regexp/ command</b></dt>
+<dd class="list-tag" style="margin-left: 6.00ex;">
+</dd>
+<dt class="list-tag" style="margin-top: 1.00em;">
+<b class="cmd">v/regexp/ command</b></dt>
+<dd class="list-tag" style="margin-left: 6.00ex;">
+If the range contains (<b class="cmd">g</b>) or does not contain (<b class="cmd">v</b>) a match for the expression, run command on the range.</dd>
+</dl>
+<div class="spacer">
+</div>
+These may be nested arbitrarily deeply. An empty command in an <b class="cmd">x</b> or <b class="cmd">y</b> defaults to <b class="cmd">p</b>. <b class="cmd">X</b>, <b class="cmd">Y</b>, <b class="cmd">g</b> and <b class="cmd">v</b> do not have defaults.</div>
+<div class="subsection">
+<h2 id="Grouping_and_multiple_changes">Grouping and multiple changes</h2> Commands may be grouped by enclosing them in curly braces. Semantically, the opening brace is like a command: it takes an (optional) address and runs each sub-command on the range. Commands within the braces are executed sequentially, and changes made by one command are visible to other commands. Braces may be nested arbitrarily.</div>
+</div>
+<div class="section">
+<h1 id="VI(M)_KEY_BINDINGS">VI(M) KEY BINDINGS</h1> In the following sections angle brackets are used to denote special keys. The prefixes <b class="flag">C-</b>, <b class="flag">S-</b>, and <b class="flag">M-</b> are used to refer to the &#10216;Ctrl&#10217;, &#10216;Shift&#10217; and &#10216;Alt&#10217; modifiers, respectively.<div class="spacer">
+</div>
+All active key bindings can be listed at runtime using the <b class="flag">:help</b> command.<div class="subsection">
+<h2 id="Operators">Operators</h2> Operators perform a certain operation an a text range indicated by either a motion, a text object or an existing selection.<dl style="margin-top: 0.00em;margin-bottom: 0.00em;" class="list list-tag">
+<dt class="list-tag" style="margin-top: 1.00em;">
+c</dt>
+<dd class="list-tag" style="margin-left: 6.00ex;">
+change, delete range and enter insert mode</dd>
+<dt class="list-tag" style="margin-top: 1.00em;">
+d</dt>
+<dd class="list-tag" style="margin-left: 6.00ex;">
+delete range</dd>
+<dt class="list-tag" style="margin-top: 1.00em;">
+!</dt>
+<dd class="list-tag" style="margin-left: 6.00ex;">
+filter range through external shell command</dd>
+<dt class="list-tag" style="margin-top: 1.00em;">
+=</dt>
+<dd class="list-tag" style="margin-left: 6.00ex;">
+indent, currently an alias for gq</dd>
+<dt class="list-tag" style="margin-top: 1.00em;">
+gq</dt>
+<dd class="list-tag" style="margin-left: 6.00ex;">
+format, filter range through <a class="link-man" href="fmt.1.html">fmt(1)</a></dd>
+<dt class="list-tag" style="margin-top: 1.00em;">
+gu</dt>
+<dd class="list-tag" style="margin-left: 6.00ex;">
+make lowercase</dd>
+<dt class="list-tag" style="margin-top: 1.00em;">
+gU</dt>
+<dd class="list-tag" style="margin-left: 6.00ex;">
+make uppercase</dd>
+<dt class="list-tag" style="margin-top: 1.00em;">
+J</dt>
+<dd class="list-tag" style="margin-left: 6.00ex;">
+join lines, insert spaces in between</dd>
+<dt class="list-tag" style="margin-top: 1.00em;">
+gJ</dt>
+<dd class="list-tag" style="margin-left: 6.00ex;">
+join lines remove any delimiting white spaces</dd>
+<dt class="list-tag" style="margin-top: 1.00em;">
+p</dt>
+<dd class="list-tag" style="margin-left: 6.00ex;">
+put, insert register content</dd>
+<dt class="list-tag" style="margin-top: 1.00em;">
+&lt;</dt>
+<dd class="list-tag" style="margin-left: 6.00ex;">
+shift-left, decrease indent</dd>
+<dt class="list-tag" style="margin-top: 1.00em;">
+&gt;</dt>
+<dd class="list-tag" style="margin-left: 6.00ex;">
+shift-right, increase indent</dd>
+<dt class="list-tag" style="margin-top: 1.00em;">
+~</dt>
+<dd class="list-tag" style="margin-left: 6.00ex;">
+swap case</dd>
+<dt class="list-tag" style="margin-top: 1.00em;">
+y</dt>
+<dd class="list-tag" style="margin-left: 6.00ex;">
+yank, copy range to register</dd>
+</dl>
+<div class="spacer">
+</div>
+Operators can be forced to work line wise by specifying <b class="flag">V</b>.</div>
+<div class="subsection">
+<h2 id="Motions">Motions</h2> Motions take an initial file position and transform it to a destination file position, thereby defining a range.<dl style="margin-top: 0.00em;margin-bottom: 0.00em;" class="list list-tag">
+<dt class="list-tag" style="margin-top: 1.00em;">
+0</dt>
+<dd class="list-tag" style="margin-left: 6.00ex;">
+start of line</dd>
+<dt class="list-tag" style="margin-top: 1.00em;">
+b</dt>
+<dd class="list-tag" style="margin-left: 6.00ex;">
+previous start of a word</dd>
+<dt class="list-tag" style="margin-top: 1.00em;">
+B</dt>
+<dd class="list-tag" style="margin-left: 6.00ex;">
+previous start of a WORD</dd>
+<dt class="list-tag" style="margin-top: 1.00em;">
+$</dt>
+<dd class="list-tag" style="margin-left: 6.00ex;">
+end of line</dd>
+<dt class="list-tag" style="margin-top: 1.00em;">
+e</dt>
+<dd class="list-tag" style="margin-left: 6.00ex;">
+next end of a word</dd>
+<dt class="list-tag" style="margin-top: 1.00em;">
+E</dt>
+<dd class="list-tag" style="margin-left: 6.00ex;">
+next end of a WORD</dd>
+<dt class="list-tag" style="margin-top: 1.00em;">
+F &#10216;char&#10217;</dt>
+<dd class="list-tag" style="margin-left: 6.00ex;">
+to next occurrence of char to the left</dd>
+<dt class="list-tag" style="margin-top: 1.00em;">
+f &#10216;char&#10217;</dt>
+<dd class="list-tag" style="margin-left: 6.00ex;">
+to next occurrence of char to the right</dd>
+<dt class="list-tag" style="margin-top: 1.00em;">
+^</dt>
+<dd class="list-tag" style="margin-left: 6.00ex;">
+first non-blank of line</dd>
+<dt class="list-tag" style="margin-top: 1.00em;">
+g0</dt>
+<dd class="list-tag" style="margin-left: 6.00ex;">
+begin of display line</dd>
+<dt class="list-tag" style="margin-top: 1.00em;">
+g$</dt>
+<dd class="list-tag" style="margin-left: 6.00ex;">
+end of display line</dd>
+<dt class="list-tag" style="margin-top: 1.00em;">
+ge</dt>
+<dd class="list-tag" style="margin-left: 6.00ex;">
+previous end of a word</dd>
+<dt class="list-tag" style="margin-top: 1.00em;">
+gE</dt>
+<dd class="list-tag" style="margin-left: 6.00ex;">
+previous end of a WORD</dd>
+<dt class="list-tag" style="margin-top: 1.00em;">
+gg</dt>
+<dd class="list-tag" style="margin-left: 6.00ex;">
+begin of file</dd>
+<dt class="list-tag" style="margin-top: 1.00em;">
+G</dt>
+<dd class="list-tag" style="margin-left: 6.00ex;">
+goto line or end of file</dd>
+<dt class="list-tag" style="margin-top: 1.00em;">
+gj</dt>
+<dd class="list-tag" style="margin-left: 6.00ex;">
+display line down</dd>
+<dt class="list-tag" style="margin-top: 1.00em;">
+gk</dt>
+<dd class="list-tag" style="margin-left: 6.00ex;">
+display line up</dd>
+<dt class="list-tag" style="margin-top: 1.00em;">
+g_</dt>
+<dd class="list-tag" style="margin-left: 6.00ex;">
+last non-blank of line</dd>
+<dt class="list-tag" style="margin-top: 1.00em;">
+gm</dt>
+<dd class="list-tag" style="margin-left: 6.00ex;">
+middle of display line</dd>
+<dt class="list-tag" style="margin-top: 1.00em;">
+|</dt>
+<dd class="list-tag" style="margin-left: 6.00ex;">
+goto column</dd>
+<dt class="list-tag" style="margin-top: 1.00em;">
+h</dt>
+<dd class="list-tag" style="margin-left: 6.00ex;">
+char left</dd>
+<dt class="list-tag" style="margin-top: 1.00em;">
+H</dt>
+<dd class="list-tag" style="margin-left: 6.00ex;">
+goto top/home line of window</dd>
+<dt class="list-tag" style="margin-top: 1.00em;">
+j</dt>
+<dd class="list-tag" style="margin-left: 6.00ex;">
+line down</dd>
+<dt class="list-tag" style="margin-top: 1.00em;">
+k</dt>
+<dd class="list-tag" style="margin-left: 6.00ex;">
+line up</dd>
+<dt class="list-tag" style="margin-top: 1.00em;">
+l</dt>
+<dd class="list-tag" style="margin-left: 6.00ex;">
+char right</dd>
+<dt class="list-tag" style="margin-top: 1.00em;">
+L</dt>
+<dd class="list-tag" style="margin-left: 6.00ex;">
+goto bottom/last line of window</dd>
+<dt class="list-tag" style="margin-top: 1.00em;">
+` &#10216;mark&#10217;</dt>
+<dd class="list-tag" style="margin-left: 6.00ex;">
+go to mark</dd>
+<dt class="list-tag" style="margin-top: 1.00em;">
+' &#10216;mark&#10217;</dt>
+<dd class="list-tag" style="margin-left: 6.00ex;">
+go to start of line containing mark</dd>
+<dt class="list-tag" style="margin-top: 1.00em;">
+%</dt>
+<dd class="list-tag" style="margin-left: 6.00ex;">
+match bracket</dd>
+<dt class="list-tag" style="margin-top: 1.00em;">
+M</dt>
+<dd class="list-tag" style="margin-left: 6.00ex;">
+goto middle line of window</dd>
+<dt class="list-tag" style="margin-top: 1.00em;">
+]]</dt>
+<dd class="list-tag" style="margin-left: 6.00ex;">
+next end of C-like function</dd>
+<dt class="list-tag" style="margin-top: 1.00em;">
+}</dt>
+<dd class="list-tag" style="margin-left: 6.00ex;">
+next paragraph</dd>
+<dt class="list-tag" style="margin-top: 1.00em;">
+)</dt>
+<dd class="list-tag" style="margin-left: 6.00ex;">
+next sentence</dd>
+<dt class="list-tag" style="margin-top: 1.00em;">
+][</dt>
+<dd class="list-tag" style="margin-left: 6.00ex;">
+next start of C-like function</dd>
+<dt class="list-tag" style="margin-top: 1.00em;">
+N</dt>
+<dd class="list-tag" style="margin-left: 6.00ex;">
+repeat last search backwards</dd>
+<dt class="list-tag" style="margin-top: 1.00em;">
+n</dt>
+<dd class="list-tag" style="margin-left: 6.00ex;">
+repeat last search forward</dd>
+<dt class="list-tag" style="margin-top: 1.00em;">
+[]</dt>
+<dd class="list-tag" style="margin-left: 6.00ex;">
+previous end of C-like function</dd>
+<dt class="list-tag" style="margin-top: 1.00em;">
+[{</dt>
+<dd class="list-tag" style="margin-left: 6.00ex;">
+previous start of block</dd>
+<dt class="list-tag" style="margin-top: 1.00em;">
+]}</dt>
+<dd class="list-tag" style="margin-left: 6.00ex;">
+next start of block</dd>
+<dt class="list-tag" style="margin-top: 1.00em;">
+[(</dt>
+<dd class="list-tag" style="margin-left: 6.00ex;">
+previous start of parenthese pair</dd>
+<dt class="list-tag" style="margin-top: 1.00em;">
+])</dt>
+<dd class="list-tag" style="margin-left: 6.00ex;">
+next start of parenthese pair</dd>
+<dt class="list-tag" style="margin-top: 1.00em;">
+{</dt>
+<dd class="list-tag" style="margin-left: 6.00ex;">
+previous paragraph</dd>
+<dt class="list-tag" style="margin-top: 1.00em;">
+(</dt>
+<dd class="list-tag" style="margin-left: 6.00ex;">
+previous sentence</dd>
+<dt class="list-tag" style="margin-top: 1.00em;">
+[[</dt>
+<dd class="list-tag" style="margin-left: 6.00ex;">
+previous start of C-like function</dd>
+<dt class="list-tag" style="margin-top: 1.00em;">
+;</dt>
+<dd class="list-tag" style="margin-left: 6.00ex;">
+repeat last to/till movement</dd>
+<dt class="list-tag" style="margin-top: 1.00em;">
+,</dt>
+<dd class="list-tag" style="margin-left: 6.00ex;">
+repeat last to/till movement but in opposite direction</dd>
+<dt class="list-tag" style="margin-top: 1.00em;">
+#</dt>
+<dd class="list-tag" style="margin-left: 6.00ex;">
+search word under cursor backwards</dd>
+<dt class="list-tag" style="margin-top: 1.00em;">
+*</dt>
+<dd class="list-tag" style="margin-left: 6.00ex;">
+search word under cursor forwards</dd>
+<dt class="list-tag" style="margin-top: 1.00em;">
+T &#10216;char&#10217;</dt>
+<dd class="list-tag" style="margin-left: 6.00ex;">
+till before next occurrence of char to the left</dd>
+<dt class="list-tag" style="margin-top: 1.00em;">
+t &#10216;char&#10217;</dt>
+<dd class="list-tag" style="margin-left: 6.00ex;">
+till before next occurrence of char to the right</dd>
+<dt class="list-tag" style="margin-top: 1.00em;">
+? pattern</dt>
+<dd class="list-tag" style="margin-left: 6.00ex;">
+to next match of pattern in backward direction</dd>
+<dt class="list-tag" style="margin-top: 1.00em;">
+/ pattern</dt>
+<dd class="list-tag" style="margin-left: 6.00ex;">
+to next match of pattern in forward direction</dd>
+<dt class="list-tag" style="margin-top: 1.00em;">
+w</dt>
+<dd class="list-tag" style="margin-left: 6.00ex;">
+next start of a word</dd>
+<dt class="list-tag" style="margin-top: 1.00em;">
+W</dt>
+<dd class="list-tag" style="margin-left: 6.00ex;">
+next start of a WORD</dd>
+</dl>
+</div>
+<div class="subsection">
+<h2 id="Text_objects">Text objects</h2> Text objects take an initial file position and transform it to a range where the former does not necessarily have to be contained in the latter. All of the following text objects are implemented in an inner variant (prefixed with <b class="flag">i )</b> where the surrounding white space or delimiting characters are not part of the resulting range and a normal variant (prefixed with <b class="flag">a )</b> where they are.<dl style="margin-top: 0.00em;margin-bottom: 0.00em;" class="list list-tag">
+<dt class="list-tag" style="margin-top: 1.00em;">
+w</dt>
+<dd class="list-tag" style="margin-left: 6.00ex;">
+word</dd>
+<dt class="list-tag" style="margin-top: 1.00em;">
+W</dt>
+<dd class="list-tag" style="margin-left: 6.00ex;">
+WORD</dd>
+<dt class="list-tag" style="margin-top: 1.00em;">
+s</dt>
+<dd class="list-tag" style="margin-left: 6.00ex;">
+sentence</dd>
+<dt class="list-tag" style="margin-top: 1.00em;">
+p</dt>
+<dd class="list-tag" style="margin-left: 6.00ex;">
+paragraph</dd>
+<dt class="list-tag" style="margin-top: 1.00em;">
+[,], (,), {,}, &lt;,&gt;, &quot;, ', `</dt>
+<dd class="list-tag" style="margin-left: 6.00ex;">
+block enclosed by these symbols</dd>
+</dl>
+<div class="spacer">
+</div>
+Further available text objects include:<dl style="margin-top: 0.00em;margin-bottom: 0.00em;" class="list list-tag">
+<dt class="list-tag" style="margin-top: 1.00em;">
+gn</dt>
+<dd class="list-tag" style="margin-left: 6.00ex;">
+matches the last used search term in forward direction</dd>
+<dt class="list-tag" style="margin-top: 1.00em;">
+gN</dt>
+<dd class="list-tag" style="margin-left: 6.00ex;">
+matches the last used search term in backward direction</dd>
+<dt class="list-tag" style="margin-top: 1.00em;">
+ae</dt>
+<dd class="list-tag" style="margin-left: 6.00ex;">
+entire file content</dd>
+<dt class="list-tag" style="margin-top: 1.00em;">
+ie</dt>
+<dd class="list-tag" style="margin-left: 6.00ex;">
+entire file content except for leading and trailing empty lines</dd>
+<dt class="list-tag" style="margin-top: 1.00em;">
+af</dt>
+<dd class="list-tag" style="margin-left: 6.00ex;">
+C-like function definition including immediately preceding comments</dd>
+<dt class="list-tag" style="margin-top: 1.00em;">
+if</dt>
+<dd class="list-tag" style="margin-left: 6.00ex;">
+C-like function definition only function body</dd>
+<dt class="list-tag" style="margin-top: 1.00em;">
+al</dt>
+<dd class="list-tag" style="margin-left: 6.00ex;">
+current line</dd>
+<dt class="list-tag" style="margin-top: 1.00em;">
+il</dt>
+<dd class="list-tag" style="margin-left: 6.00ex;">
+current line without leading and trailing white spaces</dd>
+</dl>
+</div>
+<div class="subsection">
+<h2 id="Multiple_Cursors_and_Selections">Multiple Cursors and Selections</h2> <b class="name">vis</b> supports multiple cursors with immediate visual feedback. There always exists one primary cursor located within the current view port. Additional cursors can be created as needed. If more than one cursor exists, the primary one is styled differently.<div class="spacer">
+</div>
+To manipulate multiple cursors use in normal mode:<dl style="margin-top: 0.00em;margin-bottom: 0.00em;" class="list list-tag">
+<dt class="list-tag" style="margin-top: 1.00em;">
+&#10216;C-k&#10217;</dt>
+<dd class="list-tag" style="margin-left: 6.00ex;">
+create count new cursors on the lines above</dd>
+<dt class="list-tag" style="margin-top: 1.00em;">
+&#10216;C-M-k&#10217;</dt>
+<dd class="list-tag" style="margin-left: 6.00ex;">
+create count new cursors on the lines above the first cursor</dd>
+<dt class="list-tag" style="margin-top: 1.00em;">
+&#10216;C-j&#10217;</dt>
+<dd class="list-tag" style="margin-left: 6.00ex;">
+create count new cursors on the lines below</dd>
+<dt class="list-tag" style="margin-top: 1.00em;">
+&#10216;C-M-j&#10217;</dt>
+<dd class="list-tag" style="margin-left: 6.00ex;">
+create count new cursors on the lines below the last cursor</dd>
+<dt class="list-tag" style="margin-top: 1.00em;">
+&#10216;C-p&#10217;</dt>
+<dd class="list-tag" style="margin-left: 6.00ex;">
+remove primary cursor</dd>
+<dt class="list-tag" style="margin-top: 1.00em;">
+&#10216;C-n&#10217;</dt>
+<dd class="list-tag" style="margin-left: 6.00ex;">
+select word the cursor is currently over, switch to visual mode</dd>
+<dt class="list-tag" style="margin-top: 1.00em;">
+&#10216;C-u&#10217;</dt>
+<dd class="list-tag" style="margin-left: 6.00ex;">
+make the count previous cursor primary</dd>
+<dt class="list-tag" style="margin-top: 1.00em;">
+&#10216;C-d&#10217;</dt>
+<dd class="list-tag" style="margin-left: 6.00ex;">
+make the count next cursor primary</dd>
+<dt class="list-tag" style="margin-top: 1.00em;">
+&#10216;C-c&#10217;</dt>
+<dd class="list-tag" style="margin-left: 6.00ex;">
+remove the count cursor column</dd>
+<dt class="list-tag" style="margin-top: 1.00em;">
+&#10216;C-l&#10217;</dt>
+<dd class="list-tag" style="margin-left: 6.00ex;">
+remove all but the count cursor column</dd>
+<dt class="list-tag" style="margin-top: 1.00em;">
+&#10216;Tab&#10217;</dt>
+<dd class="list-tag" style="margin-left: 6.00ex;">
+try to align all cursor on the same column</dd>
+<dt class="list-tag" style="margin-top: 1.00em;">
+&#10216;Escape&#10217;</dt>
+<dd class="list-tag" style="margin-left: 6.00ex;">
+dispose all but the primary cursor</dd>
+</dl>
+<div class="spacer">
+</div>
+The visual modes were enhanced to recognize:<dl style="margin-top: 0.00em;margin-bottom: 0.00em;" class="list list-tag">
+<dt class="list-tag" style="margin-top: 1.00em;">
+I</dt>
+<dd class="list-tag" style="margin-left: 6.00ex;">
+create a cursor at the start of every selected line</dd>
+<dt class="list-tag" style="margin-top: 1.00em;">
+A</dt>
+<dd class="list-tag" style="margin-left: 6.00ex;">
+create a cursor at the end of every selected line</dd>
+<dt class="list-tag" style="margin-top: 1.00em;">
+&#10216;Tab&#10217;</dt>
+<dd class="list-tag" style="margin-left: 6.00ex;">
+left align selections by inserting spaces</dd>
+<dt class="list-tag" style="margin-top: 1.00em;">
+&#10216;S-Tab&#10217;</dt>
+<dd class="list-tag" style="margin-left: 6.00ex;">
+right align selections by inserting spaces</dd>
+<dt class="list-tag" style="margin-top: 1.00em;">
+&#10216;C-n&#10217;</dt>
+<dd class="list-tag" style="margin-left: 6.00ex;">
+create new cursor and select next word matching current selection</dd>
+<dt class="list-tag" style="margin-top: 1.00em;">
+&#10216;C-x&#10217;</dt>
+<dd class="list-tag" style="margin-left: 6.00ex;">
+clear (skip) current selection, but select next matching word</dd>
+<dt class="list-tag" style="margin-top: 1.00em;">
+&#10216;C-p&#10217;</dt>
+<dd class="list-tag" style="margin-left: 6.00ex;">
+remove primary cursor</dd>
+<dt class="list-tag" style="margin-top: 1.00em;">
+&#10216;C-u&#10217;</dt>
+<dd class="list-tag" style="margin-left: 6.00ex;">
+</dd>
+<dt class="list-tag" style="margin-top: 1.00em;">
+&#10216;C-k&#10217;</dt>
+<dd class="list-tag" style="margin-left: 6.00ex;">
+make the count previous cursor primary</dd>
+<dt class="list-tag" style="margin-top: 1.00em;">
+&#10216;C-d&#10217;</dt>
+<dd class="list-tag" style="margin-left: 6.00ex;">
+</dd>
+<dt class="list-tag" style="margin-top: 1.00em;">
+&#10216;C-j&#10217;</dt>
+<dd class="list-tag" style="margin-left: 6.00ex;">
+make the count next cursor primary</dd>
+<dt class="list-tag" style="margin-top: 1.00em;">
+&#10216;C-c&#10217;</dt>
+<dd class="list-tag" style="margin-left: 6.00ex;">
+remove the count cursor column</dd>
+<dt class="list-tag" style="margin-top: 1.00em;">
+&#10216;C-l&#10217;</dt>
+<dd class="list-tag" style="margin-left: 6.00ex;">
+remove all but the count cursor column</dd>
+<dt class="list-tag" style="margin-top: 1.00em;">
++</dt>
+<dd class="list-tag" style="margin-left: 6.00ex;">
+rotates selections rightwards count times</dd>
+<dt class="list-tag" style="margin-top: 1.00em;">
+-</dt>
+<dd class="list-tag" style="margin-left: 6.00ex;">
+rotates selections leftwards count times</dd>
+<dt class="list-tag" style="margin-top: 1.00em;">
+\</dt>
+<dd class="list-tag" style="margin-left: 6.00ex;">
+trim selections, remove leading and trailing white space</dd>
+<dt class="list-tag" style="margin-top: 1.00em;">
+&#10216;Escape&#10217;</dt>
+<dd class="list-tag" style="margin-left: 6.00ex;">
+clear all selections, switch to normal mode</dd>
+</dl>
+<div class="spacer">
+</div>
+In insert and replace mode:<dl style="margin-top: 0.00em;margin-bottom: 0.00em;" class="list list-tag">
+<dt class="list-tag" style="margin-top: 1.00em;">
+&#10216;S-Tab&#10217;</dt>
+<dd class="list-tag" style="margin-left: 6.00ex;">
+align all cursors by inserting spaces</dd>
+</dl>
+</div>
+</div>
+<div class="section">
+<h1 id="VI(M)_COMMANDS">VI(M) COMMANDS</h1> Any unique prefix can be used to abbreviate a command.<div class="subsection">
+<h2 id="File_and_Window_management">File and Window management</h2> A file must be opened in at least one window. If the last window displaying a certain file is closed all unsaved changes are discarded. Windows are equally sized and can be displayed in either horizontal or vertical fashion.<dl style="margin-top: 0.00em;margin-bottom: 0.00em;" class="list list-tag">
+<dt class="list-tag" style="margin-top: 1.00em;">
+<b class="flag">:new</b></dt>
+<dd class="list-tag" style="margin-left: 6.00ex;">
+open an empty window, arrange horizontally</dd>
+<dt class="list-tag" style="margin-top: 1.00em;">
+<b class="flag">:vnew</b></dt>
+<dd class="list-tag" style="margin-left: 6.00ex;">
+open an empty window, arrange vertically</dd>
+<dt class="list-tag" style="margin-top: 1.00em;">
+<b class="flag">:open[!]</b> [file name]</dt>
+<dd class="list-tag" style="margin-left: 6.00ex;">
+open a new window, displaying file name if given</dd>
+<dt class="list-tag" style="margin-top: 1.00em;">
+<b class="flag">:split</b> [file name]</dt>
+<dd class="list-tag" style="margin-left: 6.00ex;">
+split window horizontally</dd>
+<dt class="list-tag" style="margin-top: 1.00em;">
+<b class="flag">:vsplit</b> [file name]</dt>
+<dd class="list-tag" style="margin-left: 6.00ex;">
+split window vertically</dd>
+<dt class="list-tag" style="margin-top: 1.00em;">
+<b class="flag">:bdelete[!]</b></dt>
+<dd class="list-tag" style="margin-left: 6.00ex;">
+close all windows which display the same file as the current one</dd>
+<dt class="list-tag" style="margin-top: 1.00em;">
+<b class="flag">:q[!]</b></dt>
+<dd class="list-tag" style="margin-left: 6.00ex;">
+close currently focused window</dd>
+<dt class="list-tag" style="margin-top: 1.00em;">
+<b class="flag">:qall[!]</b></dt>
+<dd class="list-tag" style="margin-left: 6.00ex;">
+close all windows, exit editor</dd>
+</dl>
+<div class="spacer">
+</div>
+Commands taking a file name will invoke the <a class="link-man" href="vis-open.1.html">vis-open(1)</a> utility, if given a file pattern or directory.</div>
+<div class="subsection">
+<h2 id="Runtime_key_mappings">Runtime key mappings</h2> <b class="name">vis</b> supports global as well as window local run time key mappings which are always evaluated recursively.<dl style="margin-top: 0.00em;margin-bottom: 0.00em;" class="list list-tag">
+<dt class="list-tag" style="margin-top: 1.00em;">
+<b class="flag">:map[!] &lt;mode&gt; &lt;lhs&gt; &lt;rhs&gt;</b></dt>
+<dd class="list-tag" style="margin-left: 6.00ex;">
+add a global key mapping</dd>
+<dt class="list-tag" style="margin-top: 1.00em;">
+<b class="flag">:map-window[!] &lt;mode&gt; &lt;lhs&gt; &lt;rhs&gt;</b></dt>
+<dd class="list-tag" style="margin-left: 6.00ex;">
+add a window local key mapping</dd>
+<dt class="list-tag" style="margin-top: 1.00em;">
+<b class="flag">:unmap &lt;mode&gt; &lt;lhs&gt;</b></dt>
+<dd class="list-tag" style="margin-left: 6.00ex;">
+remove a global key mapping</dd>
+<dt class="list-tag" style="margin-top: 1.00em;">
+<b class="flag">:unmap-window &lt;mode&gt; &lt;lhs&gt;</b></dt>
+<dd class="list-tag" style="margin-left: 6.00ex;">
+remove a window local key mapping</dd>
+</dl>
+In the above <b class="flag">&lt;mode&gt;</b> refers to one of &#8216;<code class="lit">normal</code>&#8217;, &#8216;<code class="lit">insert</code>&#8217;, &#8216;<code class="lit">replace</code>&#8217;, &#8216;<code class="lit">visual</code>&#8217;, &#8216;<code class="lit">visual-line</code>&#8217; or &#8216;<code class="lit">operator-pending</code>&#8217;; <b class="flag">&lt;lhs&gt;</b> refers to the key to map and <b class="flag">&lt;rhs&gt;</b> is a key action or alias. An existing mapping may be overridden by forcing the map command by specifying <b class="flag">!</b>.<div class="spacer">
+</div>
+Because key mappings are always recursive, doing something like:<div class="spacer">
+</div>
+<blockquote style="margin-top: 0.00em;margin-bottom: 0.00em;">
+<div class="display">
+<code class="lit">:map! normal j 2j</code></div>
+</blockquote>
+<div class="spacer">
+</div>
+will not work because it would enter an endless loop. Instead, <b class="name">vis</b> uses pseudo keys referred to as key actions which can be used to invoke a set of available editor functions. <b class="cmd">:help</b> lists all currently active key bindings as well as all available symbolic keys.</div>
+<div class="subsection">
+<h2 id="Keyboard_Layout_Specific_Mappings">Keyboard Layout Specific Mappings</h2> In order to facilitate usage of non-latin keyboard layouts, <b class="name">vis</b> allows to map locale specific keys to their latin equivalents by means of the<div class="spacer">
+</div>
+<blockquote style="margin-top: 0.00em;margin-bottom: 0.00em;">
+<div class="display">
+<code class="lit">:langmap &lt;locale-keys&gt; &lt;latin-&gt;keys&gt;</code></div>
+</blockquote>
+<div class="spacer">
+</div>
+command. As an example, the following maps the movement keys in Russian layout:<div class="spacer">
+</div>
+<blockquote style="margin-top: 0.00em;margin-bottom: 0.00em;">
+<div class="display">
+<code class="lit">:langmap &#1088;&#1086;&#1083;&#1076; hjkl</code></div>
+</blockquote>
+<div class="spacer">
+</div>
+If the key sequences have not the same length, the remainder of the longer sequence will be discarded.<div class="spacer">
+</div>
+The defined mappings take effect in all non-input modes, i.e. everywhere except in insert and replace mode.</div>
+<div class="subsection">
+<h2 id="Undo/Redo">Undo/Redo</h2><dl style="margin-top: 0.00em;margin-bottom: 0.00em;" class="list list-tag">
+<dt class="list-tag" style="margin-top: 1.00em;">
+<b class="cmd">:earlier</b> [count]</dt>
+<dd class="list-tag" style="margin-left: 6.00ex;">
+revert to older text state</dd>
+<dt class="list-tag" style="margin-top: 1.00em;">
+<b class="cmd">:later</b> [count]</dt>
+<dd class="list-tag" style="margin-left: 6.00ex;">
+revert to newer text state</dd>
+</dl>
+<div class="spacer">
+</div>
+If count is suffixed by either of <span class="symb">d</span> (days), <span class="symb">h</span> (hours), <span class="symb">m</span> (minutes) or <span class="symb">s</span> (seconds) it is interpreted as an offset from the current system time and the closest available text state is restored.</div>
+</div>
+<div class="section">
+<h1 id="SET_OPTIONS">SET OPTIONS</h1> There are a small number of options that may be set (or unset) to change the editor's behavior using the <b class="flag">:set</b> command. This section describes the options, their abbreviations and their default values.<div class="spacer">
+</div>
+In each entry below, the first part of the tag line is the full name of the option, followed by any equivalent abbreviations. The part in square brackets is the default value of the option.<dl style="margin-top: 0.00em;margin-bottom: 0.00em;" class="list list-tag">
+<dt class="list-tag" style="margin-top: 1.00em;">
+<b class="flag">shell</b> [&quot;/bin/sh&quot;]</dt>
+<dd class="list-tag" style="margin-left: 6.00ex;">
+User shell to use for external commands, overrides <b class="flag">$SHELL</b> and shell field of password database <b class="flag">/etc/passwd</b></dd>
+<dt class="list-tag" style="margin-top: 1.00em;">
+<b class="flag">escdelay</b> [50]</dt>
+<dd class="list-tag" style="margin-left: 6.00ex;">
+Milliseconds to wait before deciding whether an escape sequence should be treated as an &#10216;<b class="flag">Escape</b>&#10217; key.</dd>
+<dt class="list-tag" style="margin-top: 1.00em;">
+<b class="flag">tabwidth</b>, <b class="flag">tw</b> [8]</dt>
+<dd class="list-tag" style="margin-left: 6.00ex;">
+Display width of a tab and number of spaces to use if <b class="flag">expandtab</b> is enabled.</dd>
+<dt class="list-tag" style="margin-top: 1.00em;">
+<b class="flag">autoindent</b>, <b class="flag">ai</b> [off]</dt>
+<dd class="list-tag" style="margin-left: 6.00ex;">
+Automatically indent new lines by copying white space from previous line.</dd>
+<dt class="list-tag" style="margin-top: 1.00em;">
+<b class="flag">expandtab</b>, <b class="flag">et</b> [off]</dt>
+<dd class="list-tag" style="margin-left: 6.00ex;">
+Whether &#10216;<b class="flag">Tab</b>&#10217; should be expanded to <b class="flag">tabwidth</b> spaces.</dd>
+<dt class="list-tag" style="margin-top: 1.00em;">
+<b class="flag">number</b>, <b class="flag">nu</b> [off]</dt>
+<dd class="list-tag" style="margin-left: 6.00ex;">
+Display absolute line numbers.</dd>
+<dt class="list-tag" style="margin-top: 1.00em;">
+<b class="flag">relativenumbers</b>, <b class="flag">rnu</b> [off]</dt>
+<dd class="list-tag" style="margin-left: 6.00ex;">
+Display relative line numbers.</dd>
+<dt class="list-tag" style="margin-top: 1.00em;">
+<b class="flag">cursorline</b>, <b class="flag">cul</b> [off]</dt>
+<dd class="list-tag" style="margin-left: 6.00ex;">
+Highlight line primary cursor resides on.</dd>
+<dt class="list-tag" style="margin-top: 1.00em;">
+<b class="flag">colorcolumn</b>, <b class="flag">cc</b> [0]</dt>
+<dd class="list-tag" style="margin-left: 6.00ex;">
+Highlight a fixed column.</dd>
+<dt class="list-tag" style="margin-top: 1.00em;">
+<b class="flag">horizon</b> [32768]</dt>
+<dd class="list-tag" style="margin-left: 6.00ex;">
+How many bytes back the lexer will look to synchronize parsing.</dd>
+<dt class="list-tag" style="margin-top: 1.00em;">
+<b class="flag">theme</b> [&quot;default-16&quot; or &quot;default-256&quot;]</dt>
+<dd class="list-tag" style="margin-left: 6.00ex;">
+Color theme to use, name without file extension.</dd>
+<dt class="list-tag" style="margin-top: 1.00em;">
+<b class="flag">syntax</b> [off]</dt>
+<dd class="list-tag" style="margin-left: 6.00ex;">
+Syntax highlighting lexer to use, name without file extension.</dd>
+<dt class="list-tag" style="margin-top: 1.00em;">
+<b class="flag">show-tabs</b> [off]</dt>
+<dd class="list-tag" style="margin-left: 6.00ex;">
+Whether to display replacement symbol instead of tabs.</dd>
+<dt class="list-tag" style="margin-top: 1.00em;">
+<b class="flag">show-newlines</b> [off]</dt>
+<dd class="list-tag" style="margin-left: 6.00ex;">
+Whether to display replacement symbol instead of newlines.</dd>
+<dt class="list-tag" style="margin-top: 1.00em;">
+<b class="flag">show-tabs</b> [off]</dt>
+<dd class="list-tag" style="margin-left: 6.00ex;">
+Whether to display replacement symbol instead of newlines.</dd>
+<dt class="list-tag" style="margin-top: 1.00em;">
+<b class="flag">show-spaces</b> [off]</dt>
+<dd class="list-tag" style="margin-left: 6.00ex;">
+Whether to display replacement symbol instead of blank cells.</dd>
+</dl>
+</div>
+<div class="section">
+<h1 id="CONFIGURATION">CONFIGURATION</h1> <b class="name">vis</b> uses Lua for configuration and scripting purposes. During startup <i class="file">visrc.lua</i> (see the <i class="link-sec"><a class="link-sec" href="#FILES">FILES</a></i> section) is sourced which can be used to set personal configuration options. As an example the following will enable the display of line numbers:<div class="spacer">
+</div>
+<blockquote style="margin-top: 0.00em;margin-bottom: 0.00em;">
+<div class="display">
+<code class="lit">vis:command('set number')</code></div>
+</blockquote>
+</div>
+<div class="section">
+<h1 id="ENVIRONMENT">ENVIRONMENT</h1><dl style="margin-top: 0.00em;margin-bottom: 0.00em;" class="list list-tag">
+<dt class="list-tag" style="margin-top: 1.00em;">
+<span class="env">VIS_PATH</span></dt>
+<dd class="list-tag" style="margin-left: 6.00ex;">
+The default path to use to load Lua support files.</dd>
+<dt class="list-tag" style="margin-top: 1.00em;">
+<span class="env">HOME</span></dt>
+<dd class="list-tag" style="margin-left: 6.00ex;">
+The home directory used for the <b class="cmd">cd</b> command if no argument is given.</dd>
+<dt class="list-tag" style="margin-top: 1.00em;">
+<span class="env">TERM</span></dt>
+<dd class="list-tag" style="margin-left: 6.00ex;">
+The terminal type to use to initialize the curses interface, defaults to <span class="symb">xterm</span> if unset.</dd>
+<dt class="list-tag" style="margin-top: 1.00em;">
+<span class="env">SHELL</span></dt>
+<dd class="list-tag" style="margin-left: 6.00ex;">
+The command shell to use for I/O related commands like <b class="cmd">!</b>, <b class="cmd">&gt;</b>, <b class="cmd">&lt;</b> and <b class="cmd">|</b>.</dd>
+<dt class="list-tag" style="margin-top: 1.00em;">
+<span class="env">XDG_CONFIG_HOME</span></dt>
+<dd class="list-tag" style="margin-left: 6.00ex;">
+The configuration directory to use, defaults to <i class="file">$HOME/.config</i> if unset.</dd>
+</dl>
+</div>
+<div class="section">
+<h1 id="ASYNCHRONOUS_EVENTS">ASYNCHRONOUS EVENTS</h1><dl style="margin-top: 0.00em;margin-bottom: 0.00em;" class="list list-tag">
+<dt class="list-tag" style="margin-top: 1.00em;">
+<span class="define">SIGSTOP</span></dt>
+<dd class="list-tag" style="margin-left: 6.00ex;">
+Suspend editor.</dd>
+<dt class="list-tag" style="margin-top: 1.00em;">
+<span class="define">SIGCONT</span></dt>
+<dd class="list-tag" style="margin-left: 6.00ex;">
+Resume editor.</dd>
+<dt class="list-tag" style="margin-top: 1.00em;">
+<span class="define">SIGBUS</span></dt>
+<dd class="list-tag" style="margin-left: 6.00ex;">
+An <a class="link-man" href="mmap.2.html">mmap(2)</a> ed file got truncated, unsaved file contents will be lost.</dd>
+<dt class="list-tag" style="margin-top: 1.00em;">
+<span class="define">SIGHUP</span></dt>
+<dd class="list-tag" style="margin-left: 6.00ex;">
+</dd>
+<dt class="list-tag" style="margin-top: 1.00em;">
+<span class="define">SIGTERM</span></dt>
+<dd class="list-tag" style="margin-left: 6.00ex;">
+Restore initial terminal state. Unsaved file contents will be lost.</dd>
+<dt class="list-tag" style="margin-top: 1.00em;">
+<span class="define">SIGINT</span></dt>
+<dd class="list-tag" style="margin-left: 6.00ex;">
+When an interrupt occurs while an external command is being run it is terminated.</dd>
+<dt class="list-tag" style="margin-top: 1.00em;">
+<span class="define">SIGWINCH</span></dt>
+<dd class="list-tag" style="margin-left: 6.00ex;">
+The screen is resized.</dd>
+</dl>
+</div>
+<div class="section">
+<h1 id="FILES">FILES</h1> Upon startup <b class="name">vis</b> will source the first <i class="file">visrc.lua</i> configuration file found from these locations:<ul style="margin-top: 0.00em;margin-bottom: 0.00em;" class="list list-bul">
+<li class="list-bul" style="margin-top: 1.00em;">
+<i class="file">$VIS_PATH</i></li>
+<li class="list-bul" style="margin-top: 1.00em;">
+The location of the <b class="name">vis</b> binary (on systems where <i class="file">/proc/self/exe</i> is available).</li>
+<li class="list-bul" style="margin-top: 1.00em;">
+<i class="file">$XDG_CONFIG_HOME/vis</i> where <i class="file">$XDG_CONFIG_HOME</i> refers to <i class="file">$HOME/.config</i> if unset.</li>
+<li class="list-bul" style="margin-top: 1.00em;">
+<i class="file">/usr/local/share/vis</i> or <i class="file">/usr/share/vis</i> depending on the build configuration.</li>
+</ul>
+</div>
+<div class="section">
+<h1 id="EXIT_STATUS">EXIT STATUS</h1> The <b class="utility">vis</b> utility exits&#160;0 on success, and&#160;&gt;0 if an error occurs.</div>
+<div class="section">
+<h1 id="EXAMPLES">EXAMPLES</h1> Use <b class="name">vis</b> as an interactive filter as used by <a class="link-man" href="dvtm.1.html">dvtm(1)</a>:<div class="spacer">
+</div>
+<blockquote style="margin-top: 0.00em;margin-bottom: 0.00em;">
+<div class="display">
+<code class="lit">$ { echo Pick your number; seq 1 10; } | vis - &gt; choice</code></div>
+</blockquote>
+<div class="spacer">
+</div>
+Use the <a class="link-man" href="vis-open.1.html">vis-open(1)</a> based file browser to list all C language source files:<div class="spacer">
+</div>
+<blockquote style="margin-top: 0.00em;margin-bottom: 0.00em;">
+<div class="display">
+<code class="lit">:e *.c</code></div>
+</blockquote>
+<div class="spacer">
+</div>
+Spawn background process and pipe range to its standard input:<div class="spacer">
+</div>
+<blockquote style="margin-top: 0.00em;margin-bottom: 0.00em;">
+<div class="display">
+<code class="lit">:&gt; { plumber &lt;&amp;3 3&lt;&amp;- &amp; } 3&lt;&amp;0 1&gt;&amp;- 2&gt;&amp;-</code></div>
+</blockquote>
+</div>
+<div class="section">
+<h1 id="SEE_ALSO">SEE ALSO</h1> <a class="link-man" href="vis-clipboard.1.html">vis-clipboard(1)</a>, <a class="link-man" href="vis-complete.1.html">vis-complete(1)</a>, <a class="link-man" href="vis-menu.1.html">vis-menu(1)</a>, <a class="link-man" href="vis-open.1.html">vis-open(1)</a>, <a class="link-man" href="vi.1.html">vi(1)</a> and <a class="link-man" href="sam.1.html">sam(1)</a><div class="spacer">
+</div>
+<a class="link-ext" href="http://doc.cat-v.org/bell_labs/sam_lang_tutorial/sam_tut.pdf">A Tutorial for the Sam Command Language</a> by Rob Pike<div class="spacer">
+</div>
+<a class="link-ext" href="http://doc.cat-v.org/plan_9/4th_edition/papers/sam/">The Text Editor sam</a> by Rob Pike<div class="spacer">
+</div>
+<a class="link-ext" href="http://man.cat-v.org/plan_9/1/sam">Plan9 manual page for sam(1)</a><div class="spacer">
+</div>
+<a class="link-ext" href="http://doc.cat-v.org/bell_labs/structural_regexps/se.pdf">Structural Regular Expressions</a> by Rob Pike<div class="spacer">
+</div>
+<a class="link-ext" href="http://pubs.opengroup.org/onlinepubs/9699919799/utilities/vi.html">vi - screen-oriented (visual) display editor</a> IEEE Std 1003.1-2008/Cor 1-2013 (&#8220;POSIX.1&#8221;)</div>
+<div class="section">
+<h1 id="STANDARDS">STANDARDS</h1> <b class="name">vis</b> does not strive to be IEEE Std 1003.1-2008/Cor 1-2013 (&#8220;POSIX.1&#8221;) compatible, but shares obvious similarities with the <b class="name">vi</b> utility.</div>
+<div class="section">
+<h1 id="AUTHORS">AUTHORS</h1> <b class="name">vis</b> is written by <span class="author">Marc Andr&#233; Tanner</span> &#10216;mat at brain-dump.org&#10217;</div>
+<div class="section">
+<h1 id="BUGS">BUGS</h1> On some systems there already exists a <b class="name">vis</b> binary, thus causing a name conflict.</div>
+<table class="foot">
+<tbody>
+<tr>
+<td class="foot-date">
+December 5, 2016</td>
+<td class="foot-os">
+Vis v0.2-520-ge552275</td>
+</tr>
+</tbody>
+</table>
+</div>
+</body>
+</html>
+

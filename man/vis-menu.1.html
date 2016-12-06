@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8"/>
+<style>
+table.head, table.foot { width: 100%; }
+td.head-rtitle, td.foot-os { text-align: right; }
+td.head-vol { text-align: center; }
+table.foot td { width: 50%; }
+table.head td { width: 33%; }
+div.spacer { margin: 1em 0; }
+</style>
+<link rel="stylesheet" href="mandoc.css" type="text/css" media="all"/>
+<title>
+VIS-MENU(1)</title>
+</head>
+<body>
+<div class="mandoc">
+<table class="head">
+<tbody>
+<tr>
+<td class="head-ltitle">
+VIS-MENU(1)</td>
+<td class="head-vol">
+General Commands Manual</td>
+<td class="head-rtitle">
+VIS-MENU(1)</td>
+</tr>
+</tbody>
+</table>
+<div class="section">
+<h1 id="NAME">NAME</h1> <b class="name">vis-menu</b> &#8212; <span class="desc">Interactively select an item from a list</span></div>
+<div class="section">
+<h1 id="SYNOPSIS">SYNOPSIS</h1><table class="synopsis">
+<col style="width: 8.00ex;"/>
+<col/>
+<tbody>
+<tr>
+<td>
+<b class="name">vis-menu</b></td>
+<td>
+[<span class="opt"><b class="flag">-i</b></span>] [<span class="opt"><b class="flag">-t</b> | <b class="flag">-b</b></span>] [<span class="opt"><b class="flag">-p</b> <i class="arg">prompt</i></span>] [<span class="opt"><b class="flag">-l</b> <i class="arg">lines</i></span>] [<span class="opt"><i class="arg">initial</i></span>]</td>
+</tr>
+</tbody>
+</table>
+<br/>
+<table class="synopsis">
+<col style="width: 8.00ex;"/>
+<col/>
+<tbody>
+<tr>
+<td>
+<b class="name">vis-menu</b></td>
+<td>
+[<span class="opt"><b class="flag">-v</b></span>]</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section">
+<h1 id="DESCRIPTION">DESCRIPTION</h1> <b class="name">vis-menu</b> allows a user to interactively select one item from a list of options. A newline-separated list of items is read from standard input, then the list of items is drawn directly onto the terminal so the user may select one. Finally, the selected item is printed to standard output.<div class="spacer">
+</div>
+For information on actually navigating the menu, see <i class="link-sec"><a class="link-sec" href="#USAGE">USAGE</a></i> below.<dl style="margin-top: 0.00em;margin-bottom: 0.00em;" class="list list-tag">
+<dt class="list-tag" style="margin-top: 1.00em;">
+<b class="flag">-i</b></dt>
+<dd class="list-tag" style="margin-left: 4.00ex;">
+Use case-insensitive comparison when filtering items.</dd>
+<dt class="list-tag" style="margin-top: 1.00em;">
+<b class="flag">-t</b> | <b class="flag">-b</b></dt>
+<dd class="list-tag" style="margin-left: 4.00ex;">
+Normally, the menu is displayed on the current line of the terminal. When <b class="flag">-t</b> is provided, the menu will always be drawn on the top line of the terminal. When <b class="flag">-b</b> is provided, the menu will always be drawn on the bottom line.</dd>
+<dt class="list-tag" style="margin-top: 1.00em;">
+<b class="flag">-p</b> <i class="arg">prompt</i></dt>
+<dd class="list-tag" style="margin-left: 4.00ex;">
+Display <i class="arg">prompt</i> before the list of items.</dd>
+<dt class="list-tag" style="margin-top: 1.00em;">
+<b class="flag">-l</b> <i class="arg">lines</i></dt>
+<dd class="list-tag" style="margin-left: 4.00ex;">
+Normally, the list is displayed with all the items side-by-side on a single line, which is space-efficient but does not show many items at a time, especially if some of them are long. When <b class="flag">-l</b> is provided, the list is displayed with each item on its own line, <i class="arg">lines</i> lines high. If there are more than <i class="arg">lines</i> items in the list, the user can scroll through them with the arrow keys, just like in the regular horizontal mode.</dd>
+<dt class="list-tag" style="margin-top: 1.00em;">
+<i class="arg">initial</i></dt>
+<dd class="list-tag" style="margin-left: 4.00ex;">
+The user can type into a text field to filter the list of items as well as scrolling through them. If supplied, <i class="arg">initial</i> is used as the initial content of the text field.</dd>
+<dt class="list-tag" style="margin-top: 1.00em;">
+<b class="flag">-v</b></dt>
+<dd class="list-tag" style="margin-left: 4.00ex;">
+Instead of displaying an interactive menu, <b class="name">vis-menu</b> prints its version number to standard output and exits.</dd>
+</dl>
+</div>
+<div class="section">
+<h1 id="USAGE">USAGE</h1> <b class="name">vis-menu</b> displays the prompt (if any), a text field, and a list of items. Normally these are presented side-by-side in a single line, but if the <b class="flag">-l</b> flag is given, the prompt and typing area will be on the first line, and list items on the following lines.<div class="spacer">
+</div>
+The following commands are available:<dl style="margin-top: 0.00em;margin-bottom: 0.00em;" class="list list-tag">
+<dt class="list-tag" style="margin-top: 1.00em;">
+<span class="symb">Enter</span></dt>
+<dd class="list-tag" style="margin-left: 13.00ex;">
+selects the currently-highlighted list item and exits.</dd>
+<dt class="list-tag" style="margin-top: 1.00em;">
+<span class="symb">Control-\</span> or <span class="symb">Control-]</span></dt>
+<dd class="list-tag" style="margin-left: 13.00ex;">
+selects the current contents of the text field (even if it does not appear in the list) and exits.</dd>
+<dt class="list-tag" style="margin-top: 1.00em;">
+<span class="symb">ESC ESC</span> or <span class="symb">Control-C</span></dt>
+<dd class="list-tag" style="margin-left: 13.00ex;">
+exit without selecting any item.</dd>
+<dt class="list-tag" style="margin-top: 1.00em;">
+<span class="symb">Down</span> or <span class="symb">Control-N</span></dt>
+<dd class="list-tag" style="margin-left: 13.00ex;">
+scroll forward through the available list items.</dd>
+<dt class="list-tag" style="margin-top: 1.00em;">
+<span class="symb">Up</span> or <span class="symb">Control-P</span></dt>
+<dd class="list-tag" style="margin-left: 13.00ex;">
+scroll backward through the available list items.</dd>
+<dt class="list-tag" style="margin-top: 1.00em;">
+<span class="symb">Right</span> or <span class="symb">Control-F</span></dt>
+<dd class="list-tag" style="margin-left: 13.00ex;">
+move the cursor forward through the typed text, and scroll through the available list items.</dd>
+<dt class="list-tag" style="margin-top: 1.00em;">
+<span class="symb">Left</span> or <span class="symb">Control-B</span></dt>
+<dd class="list-tag" style="margin-left: 13.00ex;">
+move the cursor backward through the typed text, and scroll through the available list items.</dd>
+<dt class="list-tag" style="margin-top: 1.00em;">
+<span class="symb">PageUp</span> or <span class="symb">Control-V</span></dt>
+<dd class="list-tag" style="margin-left: 13.00ex;">
+scrolls to show the previous page of list items.</dd>
+<dt class="list-tag" style="margin-top: 1.00em;">
+<span class="symb">PageDown</span> or <span class="symb">Meta-v</span></dt>
+<dd class="list-tag" style="margin-left: 13.00ex;">
+scrolls to show the next page of list items.</dd>
+<dt class="list-tag" style="margin-top: 1.00em;">
+<span class="symb">Home</span> or <span class="symb">Control-A</span></dt>
+<dd class="list-tag" style="margin-left: 13.00ex;">
+move the cursor to the beginning of the text field or scroll to the first item in the list.</dd>
+<dt class="list-tag" style="margin-top: 1.00em;">
+<span class="symb">End</span> or <span class="symb">Control-E</span></dt>
+<dd class="list-tag" style="margin-left: 13.00ex;">
+move the cursor to the end of the text field or scroll to the last item in the list.</dd>
+<dt class="list-tag" style="margin-top: 1.00em;">
+<span class="symb">Meta-b</span></dt>
+<dd class="list-tag" style="margin-left: 13.00ex;">
+moves the cursor to the beginning of the current word in the text field.</dd>
+<dt class="list-tag" style="margin-top: 1.00em;">
+<span class="symb">Meta-f</span></dt>
+<dd class="list-tag" style="margin-left: 13.00ex;">
+moves the cursor past the end of the current word in the text field.</dd>
+<dt class="list-tag" style="margin-top: 1.00em;">
+<span class="symb">Tab</span></dt>
+<dd class="list-tag" style="margin-left: 13.00ex;">
+copies the content of the selected list item into the text field. This is almost, but not quite, like tab completion.</dd>
+<dt class="list-tag" style="margin-top: 1.00em;">
+<span class="symb">Delete</span> or <span class="symb">Control-D</span></dt>
+<dd class="list-tag" style="margin-left: 13.00ex;">
+delete the character in the text field under the cursor.</dd>
+<dt class="list-tag" style="margin-top: 1.00em;">
+<span class="symb">Backspace</span></dt>
+<dd class="list-tag" style="margin-left: 13.00ex;">
+deletes the character in the text field to the left of the cursor.</dd>
+<dt class="list-tag" style="margin-top: 1.00em;">
+<span class="symb">Meta-d</span></dt>
+<dd class="list-tag" style="margin-left: 13.00ex;">
+deletes the characters in the text field from the character under the cursor to the next space.</dd>
+<dt class="list-tag" style="margin-top: 1.00em;">
+<span class="symb">Control-K</span></dt>
+<dd class="list-tag" style="margin-left: 13.00ex;">
+deletes the characters in the text field from the character under the cursor to the end.</dd>
+<dt class="list-tag" style="margin-top: 1.00em;">
+<span class="symb">Control-U</span></dt>
+<dd class="list-tag" style="margin-left: 13.00ex;">
+deletes the characters in the text field from the beginning up to (but not including) the character under the cursor.</dd>
+<dt class="list-tag" style="margin-top: 1.00em;">
+<span class="symb">Control-W</span></dt>
+<dd class="list-tag" style="margin-left: 13.00ex;">
+deletes the characters in the text field from the previous space up to (but not including) the character under the cursor.</dd>
+</dl>
+<div class="spacer">
+</div>
+All other non-control characters will be inserted into the text field at the current cursor position.<div class="spacer">
+</div>
+When there is text in the text field, only list items that include the given text will be shown. If the text contains one or more spaces, each space-delimited string is a separate filter and only items matching every filter will be shown.<div class="spacer">
+</div>
+If the user filters out all the items from the list, then hits Enter to select the &#8220;currently highlighted&#8221; item, the text they typed will be returned instead.</div>
+<div class="section">
+<h1 id="EXAMPLES">EXAMPLES</h1> Here's a shell-script that allows the user to choose a number from one to 10:<div class="spacer">
+</div>
+<pre style="margin-left: 5.00ex;" class="lit display">
+NUMBER=$(seq 1 10 | vis-menu -p &quot;Choose a number&quot;) 
+if [ $? -eq 0 ]; then 
+	echo &quot;You chose: $NUMBER&quot; 
+else 
+	echo &quot;You refused to choose a number, or an error occurred.&quot; 
+fi</pre>
+</div>
+<div class="section">
+<h1 id="DIAGNOSTICS">DIAGNOSTICS</h1> The <b class="name">vis-menu</b> utility exits 0 if the user successfully selected an item from the list, and 1 if the user cancelled.<div class="spacer">
+</div>
+If an internal error occurs, the <b class="name">vis-menu</b> utility prints a message to standard error and exits 1. Potential error conditions include being unable to allocate memory, being unable to read from standard input, or being run without a controlling terminal.</div>
+<div class="section">
+<h1 id="SEE_ALSO">SEE ALSO</h1> <a class="link-man" href="dmenu.1.html">dmenu(1)</a>, <a class="link-man" href="slmenu.1.html">slmenu(1)</a>, <a class="link-man" href="vis.1.html">vis(1)</a></div>
+<div class="section">
+<h1 id="HISTORY">HISTORY</h1> The original model for a single line menu reading items from standard input was <a class="link-man" href="dmenu.1.html">dmenu(1)</a> which implements the idea for X11. <b class="name">dmenu</b> is available from <code class="lit">http://tools.suckless.org/dmenu/</code><div class="spacer">
+</div>
+The code was subsequently re-worked for ANSI terminal output as <a class="link-man" href="slmenu.1.html">slmenu(1)</a> which is available from <code class="lit">https://bitbucket.org/rafaelgg/slmenu/</code><div class="spacer">
+</div>
+Since <b class="name">slmenu</b> did not appear to be maintained, it was forked to become <b class="name">vis-menu</b> to be distributed with <a class="link-man" href="vis.1.html">vis(1)</a>.</div>
+<div class="section">
+<h1 id="AUTHORS">AUTHORS</h1> <span class="author">Marc Andr&#233; Tanner</span> &#10216;mat@brain-dump.org&#10217; plus the <b class="name">slmenu</b> and <b class="name">dmenu</b> authors.</div>
+<table class="foot">
+<tbody>
+<tr>
+<td class="foot-date">
+November 29, 2016</td>
+<td class="foot-os">
+Vis v0.2-520-ge552275</td>
+</tr>
+</tbody>
+</table>
+</div>
+</body>
+</html>
+
