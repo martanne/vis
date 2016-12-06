@@ -1,0 +1,2183 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+   "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+<head>
+    <title>Vis Editor Lua API documentation</title>
+    <link rel="stylesheet" href="ldoc_fixed.css" type="text/css" />
+</head>
+<body>
+
+<div id="container">
+
+<div id="product">
+	<div id="product_logo"></div>
+	<div id="product_name"><big><b></b></big></div>
+	<div id="product_description"></div>
+</div> <!-- id="product" -->
+
+
+<div id="main">
+
+
+<!-- Menu -->
+
+<div id="navigation">
+<br/>
+<h1>Vis Editor</h1>
+
+
+<h2>Contents</h2>
+<ul>
+<li><a href="#Class_Vis">Class Vis </a></li>
+<li><a href="#Class_Window">Class Window </a></li>
+<li><a href="#Class_Cursor">Class Cursor </a></li>
+<li><a href="#Class_File">Class File </a></li>
+<li><a href="#Class_Ui">Class Ui </a></li>
+<li><a href="#Class_Range">Class Range </a></li>
+<li><a href="#Events">Events </a></li>
+</ul>
+
+
+<h2>Modules</h2>
+<ul class="nowrap">
+  <li><strong>vis</strong></li>
+</ul>
+
+</div>
+
+<div id="content">
+
+<h1>Module <code>vis</code></h1>
+<p>Lua Extension API for the <a href="https://github.com/martanne/vis">Vis Editor</a>.</p>
+<p> <em>WARNING:</em> there is no stability guarantee at this time, the API might
+ change without notice!</p>
+    <h3>Info:</h3>
+    <ul>
+        <li><strong>Release</strong>: v0.2-520-ge552275</li>
+        <li><strong>License</strong>: ISC</li>
+        <li><strong>Author</strong>: Marc André Tanner</li>
+    </ul>
+
+
+<h2><a href="#Class_Vis">Class Vis </a></h2>
+<table class="function_list">
+	<tr>
+	<td class="name" nowrap><a href="#Vis.MODE_INSERT">Vis.MODE_INSERT</a></td>
+	<td class="summary">Insert mode.</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#Vis.MODE_NORMAL">Vis.MODE_NORMAL</a></td>
+	<td class="summary">Normal mode.</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#Vis.MODE_OPERATOR_PENDING">Vis.MODE_OPERATOR_PENDING</a></td>
+	<td class="summary">Oerator pending mode.</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#Vis.MODE_REPLACE">Vis.MODE_REPLACE</a></td>
+	<td class="summary">Replace mode.</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#Vis.MODE_VISUAL">Vis.MODE_VISUAL</a></td>
+	<td class="summary">Characterwise visual mode.</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#Vis.MODE_VISUAL_LINE">Vis.MODE_VISUAL_LINE</a></td>
+	<td class="summary">Linewise visual mode.</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#Vis.VERSION">Vis.VERSION</a></td>
+	<td class="summary">Version information.</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#Vis.lexers">Vis.lexers</a></td>
+	<td class="summary">LPeg lexer support module.</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#Vis.mode">Vis.mode</a></td>
+	<td class="summary">Currently active mode.</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#Vis.recording">Vis.recording</a></td>
+	<td class="summary">Whether a macro is being recorded.</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#Vis.ui">Vis.ui</a></td>
+	<td class="summary">User interface.</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#Vis.win">Vis.win</a></td>
+	<td class="summary">Currently active window.</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#Vis:command">Vis:command(command)</a></td>
+	<td class="summary">Execute a <code>:</code>-command.</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#Vis:command_register">Vis:command_register(name, command)</a></td>
+	<td class="summary">Register a custom <code>:</code>-command.</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#Vis:feedkeys">Vis:feedkeys(keys)</a></td>
+	<td class="summary">Push keys to input queue and interpret them.</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#Vis:files">Vis:files()</a></td>
+	<td class="summary">Create an iterator over all files.</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#Vis:info">Vis:info(message)</a></td>
+	<td class="summary">Display a short message.</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#Vis:map">Vis:map(mode, func)</a></td>
+	<td class="summary">Map a key to a Lua function.</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#Vis:message">Vis:message(message)</a></td>
+	<td class="summary">Display a multi line message.</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#Vis:motion_new">Vis:motion_new(key, motion)</a></td>
+	<td class="summary">Map a new motion.</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#Vis:open">Vis:open(filename)</a></td>
+	<td class="summary">Open a file.</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#Vis:textobject_new">Vis:textobject_new(key, textobject)</a></td>
+	<td class="summary">Map a new text object.</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#Vis:windows">Vis:windows()</a></td>
+	<td class="summary">Create an iterator over all windows.</td>
+	</tr>
+</table>
+<h2><a href="#Class_Window">Class Window </a></h2>
+<table class="function_list">
+	<tr>
+	<td class="name" nowrap><a href="#Window.cursor">Window.cursor</a></td>
+	<td class="summary">The primary cursor of this window.</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#Window.cursors">Window.cursors</a></td>
+	<td class="summary">The cursors of this window.</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#Window.file">Window.file</a></td>
+	<td class="summary">The file being displayed in this window.</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#Window.height">Window.height</a></td>
+	<td class="summary">The window height.</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#Window.syntax">Window.syntax</a></td>
+	<td class="summary">The file type associated with this window.</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#Window.viewport">Window.viewport</a></td>
+	<td class="summary">Viewport currently being displayed.</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#Window.width">Window.width</a></td>
+	<td class="summary">The window width.</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#Window:cursors_iterator">Window:cursors_iterator()</a></td>
+	<td class="summary">Create an iterator over all cursors of this window.</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#Window:draw">Window:draw()</a></td>
+	<td class="summary">Redraw window content.</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#Window:map">Window:map(mode, func)</a></td>
+	<td class="summary">Map a window local key to a Lua function.</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#Window:status">Window:status(left[, right])</a></td>
+	<td class="summary">Set window status line.</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#Window:style">Window:style(id, start, len)</a></td>
+	<td class="summary">Style a window range.</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#Window:style_define">Window:style_define(id, style)</a></td>
+	<td class="summary">Define a display style.</td>
+	</tr>
+</table>
+<h2><a href="#Class_Cursor">Class Cursor </a></h2>
+<table class="function_list">
+	<tr>
+	<td class="name" nowrap><a href="#Cursor.col">Cursor.col</a></td>
+	<td class="summary">The 1-based column position the cursor resides on.</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#Cursor.line">Cursor.line</a></td>
+	<td class="summary">The 1-based line the cursor resides on.</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#Cursor.number">Cursor.number</a></td>
+	<td class="summary">The 1-based cursor index.</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#Cursor.pos">Cursor.pos</a></td>
+	<td class="summary">The zero based byte position in the file.</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#Cursor.selection">Cursor.selection</a></td>
+	<td class="summary">The selection associated with this cursor.</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#Cursor:to">Cursor:to(line, col)</a></td>
+	<td class="summary">Move cursor.</td>
+	</tr>
+</table>
+<h2><a href="#Class_File">Class File </a></h2>
+<table class="function_list">
+	<tr>
+	<td class="name" nowrap><a href="#File.lines">File.lines</a></td>
+	<td class="summary">File content by logical lines.</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#File.modified">File.modified</a></td>
+	<td class="summary">File state.</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#File.name">File.name</a></td>
+	<td class="summary">File name.</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#File.newlines">File.newlines</a></td>
+	<td class="summary">Type of line endings.</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#File.path">File.path</a></td>
+	<td class="summary">File path.</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#File.size">File.size</a></td>
+	<td class="summary">File size in bytes.</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#File:content">File:content(range)</a></td>
+	<td class="summary">Get file content of range.</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#File:content">File:content(pos, len)</a></td>
+	<td class="summary">Get file content of position and length.</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#File:delete">File:delete(range)</a></td>
+	<td class="summary">Delete file range.</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#File:delete">File:delete(pos, len)</a></td>
+	<td class="summary">Delete data at position.</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#File:insert">File:insert(pos, data)</a></td>
+	<td class="summary">Insert data at position.</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#File:lines_iterator">File:lines_iterator()</a></td>
+	<td class="summary">Create an iterator over all lines of the file.</td>
+	</tr>
+</table>
+<h2><a href="#Class_Ui">Class Ui </a></h2>
+<table class="function_list">
+	<tr>
+	<td class="name" nowrap><a href="#Ui.colors">Ui.colors</a></td>
+	<td class="summary">Number of available colors.</td>
+	</tr>
+</table>
+<h2><a href="#Class_Range">Class Range </a></h2>
+<table class="function_list">
+	<tr>
+	<td class="name" nowrap><a href="#Range.finish">Range.finish</a></td>
+	<td class="summary">The end of the range.</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#Range.start">Range.start</a></td>
+	<td class="summary">The being of the range.</td>
+	</tr>
+</table>
+<h2><a href="#Events">Events </a></h2>
+<table class="function_list">
+	<tr>
+	<td class="name" nowrap><a href="#file_close">file_close(file)</a></td>
+	<td class="summary">File close.</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#file_open">file_open(file)</a></td>
+	<td class="summary">File open.</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#file_save_post">file_save_post(file, path)</a></td>
+	<td class="summary">File post save.</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#file_save_pre">file_save_pre(file, path)</a></td>
+	<td class="summary">File pre save.</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#quit">quit()</a></td>
+	<td class="summary">Editor is about to terminate.</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#start">start()</a></td>
+	<td class="summary">Editor startup completed.</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#theme_change">theme_change(theme)</a></td>
+	<td class="summary">Theme change.</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#win_close">win_close(win)</a></td>
+	<td class="summary">Window close.</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#win_highlight">win_highlight(win, horizon)</a></td>
+	<td class="summary">Window highlight.</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#win_open">win_open(win)</a></td>
+	<td class="summary">Window open.</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#win_status">win_status(win)</a></td>
+	<td class="summary">Window status bar redraw.</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#win_syntax">win_syntax(win, syntax)</a></td>
+	<td class="summary">Window syntax/filetype change.</td>
+	</tr>
+</table>
+
+<br/>
+<br/>
+
+
+    <h2 class="section-header has-description"><a name="Class_Vis"></a>Class Vis </h2>
+
+          <div class="section-description">
+          The main editor object.
+          </div>
+    <dl class="function">
+    <dt>
+    <a name = "Vis.MODE_INSERT"></a>
+    <strong>Vis.MODE_INSERT</strong>
+    </dt>
+    <dd>
+    Insert mode.
+
+
+    <ul>
+        <li><span class="parameter">MODE_INSERT</span>
+            <span class="types"><span class="type">int</span></span>
+
+
+
+        </li>
+    </ul>
+
+
+
+
+
+</dd>
+    <dt>
+    <a name = "Vis.MODE_NORMAL"></a>
+    <strong>Vis.MODE_NORMAL</strong>
+    </dt>
+    <dd>
+    Normal mode.
+
+
+    <ul>
+        <li><span class="parameter">MODE_NORMAL</span>
+            <span class="types"><span class="type">int</span></span>
+
+
+
+        </li>
+    </ul>
+
+
+
+
+
+</dd>
+    <dt>
+    <a name = "Vis.MODE_OPERATOR_PENDING"></a>
+    <strong>Vis.MODE_OPERATOR_PENDING</strong>
+    </dt>
+    <dd>
+    Oerator pending mode.
+
+
+    <ul>
+        <li><span class="parameter">MODE_OPERATOR_PENDING</span>
+            <span class="types"><span class="type">int</span></span>
+
+
+
+        </li>
+    </ul>
+
+
+
+
+
+</dd>
+    <dt>
+    <a name = "Vis.MODE_REPLACE"></a>
+    <strong>Vis.MODE_REPLACE</strong>
+    </dt>
+    <dd>
+    Replace mode.
+
+
+    <ul>
+        <li><span class="parameter">MODE_REPLACE</span>
+            <span class="types"><span class="type">int</span></span>
+
+
+
+        </li>
+    </ul>
+
+
+
+
+
+</dd>
+    <dt>
+    <a name = "Vis.MODE_VISUAL"></a>
+    <strong>Vis.MODE_VISUAL</strong>
+    </dt>
+    <dd>
+    Characterwise visual mode.
+
+
+    <ul>
+        <li><span class="parameter">MODE_VISUAL</span>
+            <span class="types"><span class="type">int</span></span>
+
+
+
+        </li>
+    </ul>
+
+
+
+
+
+</dd>
+    <dt>
+    <a name = "Vis.MODE_VISUAL_LINE"></a>
+    <strong>Vis.MODE_VISUAL_LINE</strong>
+    </dt>
+    <dd>
+    Linewise visual mode.
+
+
+    <ul>
+        <li><span class="parameter">MODE_VISUAL_LINE</span>
+            <span class="types"><span class="type">int</span></span>
+
+
+
+        </li>
+    </ul>
+
+
+
+
+
+</dd>
+    <dt>
+    <a name = "Vis.VERSION"></a>
+    <strong>Vis.VERSION</strong>
+    </dt>
+    <dd>
+    Version information.
+
+
+    <ul>
+        <li><span class="parameter">VERSION</span>
+            <span class="types"><a class="type" href="https://www.lua.org/manual/5.1/manual.html#5.4">string</a></span>
+         version information in <code>git describe</code> format, same as reported by <code>vis -v</code>.
+        </li>
+    </ul>
+
+
+
+
+
+</dd>
+    <dt>
+    <a name = "Vis.lexers"></a>
+    <strong>Vis.lexers</strong>
+    </dt>
+    <dd>
+    LPeg lexer support module.
+
+
+    <ul>
+        <li><span class="parameter">lexers</span>
+
+
+
+        </li>
+    </ul>
+
+
+
+
+
+</dd>
+    <dt>
+    <a name = "Vis.mode"></a>
+    <strong>Vis.mode</strong>
+    </dt>
+    <dd>
+    Currently active mode.
+
+
+    <ul>
+        <li><span class="parameter">mode</span>
+            <span class="types"><span class="type">int</span></span>
+
+
+
+        </li>
+    </ul>
+
+
+
+    <h3>See also:</h3>
+    <ul>
+         <li><a href="index.html#Vis.MODE_NORMAL">MODE_NORMAL</a></li>
+         <li><a href="index.html#Vis.MODE_OPERATOR_PENDING">MODE_OPERATOR_PENDING</a></li>
+         <li><a href="index.html#Vis.MODE_INSERT">MODE_INSERT</a></li>
+         <li><a href="index.html#Vis.MODE_REPLACE">MODE_REPLACE</a></li>
+         <li><a href="index.html#Vis.MODE_VISUAL">MODE_VISUAL</a></li>
+         <li><a href="index.html#Vis.MODE_VISUAL_LINE">MODE_VISUAL_LINE</a></li>
+    </ul>
+
+
+</dd>
+    <dt>
+    <a name = "Vis.recording"></a>
+    <strong>Vis.recording</strong>
+    </dt>
+    <dd>
+    Whether a macro is being recorded.
+
+
+    <ul>
+        <li><span class="parameter">recording</span>
+            <span class="types"><span class="type">bool</span></span>
+
+
+
+        </li>
+    </ul>
+
+
+
+
+
+</dd>
+    <dt>
+    <a name = "Vis.ui"></a>
+    <strong>Vis.ui</strong>
+    </dt>
+    <dd>
+    User interface.
+
+
+    <ul>
+        <li><span class="parameter">ui</span>
+            <span class="types"><a class="type" href="index.html#Class_Ui">Ui</a></span>
+         the user interface being used
+        </li>
+    </ul>
+
+
+
+
+
+</dd>
+    <dt>
+    <a name = "Vis.win"></a>
+    <strong>Vis.win</strong>
+    </dt>
+    <dd>
+    Currently active window.
+
+
+    <ul>
+        <li><span class="parameter">win</span>
+            <span class="types"><a class="type" href="index.html#Class_Window">Window</a></span>
+
+
+
+        </li>
+    </ul>
+
+
+
+    <h3>See also:</h3>
+    <ul>
+         <a href="index.html#Vis:windows">windows</a>
+    </ul>
+
+
+</dd>
+    <dt>
+    <a name = "Vis:command"></a>
+    <strong>Vis:command(command)</strong>
+    </dt>
+    <dd>
+    Execute a <code>:</code>-command.
+
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">command</span>
+            <span class="types"><a class="type" href="https://www.lua.org/manual/5.1/manual.html#5.4">string</a></span>
+         the command to execute
+        </li>
+    </ul>
+
+    <h3>Returns:</h3>
+    <ol>
+
+           <span class="types"><span class="type">bool</span></span>
+        whether the command succeeded
+    </ol>
+
+
+
+    <h3>Usage:</h3>
+    <ul>
+        <pre class="example">vis:command(<span class="string">"set number"</span>)</pre>
+    </ul>
+
+</dd>
+    <dt>
+    <a name = "Vis:command_register"></a>
+    <strong>Vis:command_register(name, command)</strong>
+    </dt>
+    <dd>
+    Register a custom <code>:</code>-command.
+
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">name</span>
+            <span class="types"><a class="type" href="https://www.lua.org/manual/5.1/manual.html#5.4">string</a></span>
+         the command name
+        </li>
+        <li><span class="parameter">command</span>
+            <span class="types"><span class="type">function</span></span>
+         the Lua function implementing the command
+        </li>
+    </ul>
+
+    <h3>Returns:</h3>
+    <ol>
+
+           <span class="types"><span class="type">bool</span></span>
+        whether the command has been successfully registered
+    </ol>
+
+
+
+    <h3>Usage:</h3>
+    <ul>
+        <pre class="example">TODO</pre>
+    </ul>
+
+</dd>
+    <dt>
+    <a name = "Vis:feedkeys"></a>
+    <strong>Vis:feedkeys(keys)</strong>
+    </dt>
+    <dd>
+    Push keys to input queue and interpret them. </p>
+
+<p> The keys are processed as if they were read from the keyboard.
+
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">keys</span>
+            <span class="types"><a class="type" href="https://www.lua.org/manual/5.1/manual.html#5.4">string</a></span>
+         the keys to interpret
+        </li>
+    </ul>
+
+
+
+
+
+</dd>
+    <dt>
+    <a name = "Vis:files"></a>
+    <strong>Vis:files()</strong>
+    </dt>
+    <dd>
+    Create an iterator over all files.
+
+
+
+    <h3>Returns:</h3>
+    <ol>
+
+        the new iterator
+    </ol>
+
+
+
+    <h3>Usage:</h3>
+    <ul>
+        <pre class="example"><span class="keyword">for</span> file <span class="keyword">in</span> vis:files() <span class="keyword">do</span>
+	<span class="comment">-- do something with file
+</span><span class="keyword">end</span></pre>
+    </ul>
+
+</dd>
+    <dt>
+    <a name = "Vis:info"></a>
+    <strong>Vis:info(message)</strong>
+    </dt>
+    <dd>
+    Display a short message. </p>
+
+<p> The single line message will be displayed at the bottom of
+ the scren and automatically hidden once a key is pressed.
+
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">message</span>
+            <span class="types"><a class="type" href="https://www.lua.org/manual/5.1/manual.html#5.4">string</a></span>
+         the message to display
+        </li>
+    </ul>
+
+
+
+
+
+</dd>
+    <dt>
+    <a name = "Vis:map"></a>
+    <strong>Vis:map(mode, func)</strong>
+    </dt>
+    <dd>
+    Map a key to a Lua function. </p>
+
+<p> Creates a new key mapping in a given mode.
+
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">mode</span>
+            <span class="types"><span class="type">int</span></span>
+         the mode to which the mapping should be added
+        </li>
+        <li><span class="parameter">func</span>
+            <span class="types"><span class="type">function</span></span>
+         the Lua function to handle the key mapping
+        </li>
+    </ul>
+
+    <h3>Returns:</h3>
+    <ol>
+
+           <span class="types"><span class="type">bool</span></span>
+        whether the mapping was successfully established
+    </ol>
+
+
+    <h3>See also:</h3>
+    <ul>
+         <a href="index.html#Window:map">Window:map</a>
+    </ul>
+
+
+</dd>
+    <dt>
+    <a name = "Vis:message"></a>
+    <strong>Vis:message(message)</strong>
+    </dt>
+    <dd>
+    Display a multi line message. </p>
+
+<p> Opens a new window and displays an arbitrarily long message.
+
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">message</span>
+            <span class="types"><a class="type" href="https://www.lua.org/manual/5.1/manual.html#5.4">string</a></span>
+         the message to display
+        </li>
+    </ul>
+
+
+
+
+
+</dd>
+    <dt>
+    <a name = "Vis:motion_new"></a>
+    <strong>Vis:motion_new(key, motion)</strong>
+    </dt>
+    <dd>
+    Map a new motion. </p>
+
+<p> Sets up a mapping in normal, visual and operator pending mode.
+ The motion function will receive the <a href="index.html#Class_Window">Window</a> and an initial position
+ (in bytes from the start of the file) as argument and is expected to
+ return the resulting position.
+
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">key</span>
+            <span class="types"><a class="type" href="https://www.lua.org/manual/5.1/manual.html#5.4">string</a></span>
+         the key to associate with the new mption
+        </li>
+        <li><span class="parameter">motion</span>
+            <span class="types"><span class="type">function</span></span>
+         the motion logic implemented as Lua function
+        </li>
+    </ul>
+
+    <h3>Returns:</h3>
+    <ol>
+
+           <span class="types"><span class="type">bool</span></span>
+        whether the new motion could be installed
+    </ol>
+
+
+
+    <h3>Usage:</h3>
+    <ul>
+        <pre class="example">vis:motion_new(<span class="string">"&lt;C-l&gt;"</span>, <span class="keyword">function</span>(win, pos)
+	<span class="keyword">return</span> pos+<span class="number">1</span>
+<span class="keyword">end</span>)</pre>
+    </ul>
+
+</dd>
+    <dt>
+    <a name = "Vis:open"></a>
+    <strong>Vis:open(filename)</strong>
+    </dt>
+    <dd>
+    Open a file. </p>
+
+<p> Creates a new window and loads the given file.
+
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">filename</span>
+            <span class="types"><a class="type" href="https://www.lua.org/manual/5.1/manual.html#5.4">string</a></span>
+         the file name to load
+        </li>
+    </ul>
+
+    <h3>Returns:</h3>
+    <ol>
+
+           <span class="types"><a class="type" href="index.html#Class_File">File</a></span>
+        the file object representing the new file, or <code>nil</code> on failure
+    </ol>
+
+
+
+
+</dd>
+    <dt>
+    <a name = "Vis:textobject_new"></a>
+    <strong>Vis:textobject_new(key, textobject)</strong>
+    </dt>
+    <dd>
+    Map a new text object. </p>
+
+<p> Sets up a mapping in visual and operator pending mode.
+ The text object function will receive the <a href="index.html#Class_Window">Window</a> and an initial
+ position(in bytes from the start of the file) as argument and is
+ expected to return the resulting range or <code>nil</code>.
+
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">key</span>
+            <span class="types"><a class="type" href="https://www.lua.org/manual/5.1/manual.html#5.4">string</a></span>
+         the key associated with the new text object
+        </li>
+        <li><span class="parameter">textobject</span>
+            <span class="types"><span class="type">function</span></span>
+         the text object logic implemented as Lua function
+        </li>
+    </ul>
+
+    <h3>Returns:</h3>
+    <ol>
+
+           <span class="types"><span class="type">bool</span></span>
+        whether the new text object could be installed
+    </ol>
+
+
+
+    <h3>Usage:</h3>
+    <ul>
+        <pre class="example">vis:textobject_new(<span class="string">"&lt;C-l&gt;"</span>, <span class="keyword">function</span>(win, pos)
+	<span class="keyword">return</span> pos, pos+<span class="number">1</span>
+<span class="keyword">end</span>)</pre>
+    </ul>
+
+</dd>
+    <dt>
+    <a name = "Vis:windows"></a>
+    <strong>Vis:windows()</strong>
+    </dt>
+    <dd>
+    Create an iterator over all windows.
+
+
+
+    <h3>Returns:</h3>
+    <ol>
+
+        the new iterator
+    </ol>
+
+
+    <h3>See also:</h3>
+    <ul>
+         <a href="index.html#Vis.win">win</a>
+    </ul>
+
+    <h3>Usage:</h3>
+    <ul>
+        <pre class="example"><span class="keyword">for</span> win <span class="keyword">in</span> vis:windows() <span class="keyword">do</span>
+	<span class="comment">-- do something with win
+</span><span class="keyword">end</span></pre>
+    </ul>
+
+</dd>
+</dl>
+    <h2 class="section-header has-description"><a name="Class_Window"></a>Class Window </h2>
+
+          <div class="section-description">
+          A window object.
+          </div>
+    <dl class="function">
+    <dt>
+    <a name = "Window.cursor"></a>
+    <strong>Window.cursor</strong>
+    </dt>
+    <dd>
+    The primary cursor of this window.
+
+
+    <ul>
+        <li><span class="parameter">cursor</span>
+            <span class="types"><a class="type" href="index.html#Class_Cursor">Cursor</a></span>
+
+
+
+        </li>
+    </ul>
+
+
+
+
+
+</dd>
+    <dt>
+    <a name = "Window.cursors"></a>
+    <strong>Window.cursors</strong>
+    </dt>
+    <dd>
+    The cursors of this window.
+
+
+    <ul>
+        <li><span class="parameter">cursors</span>
+            <span class="types"><span class="type">Array(Cursor)</span></span>
+
+
+
+        </li>
+    </ul>
+
+
+
+
+
+</dd>
+    <dt>
+    <a name = "Window.file"></a>
+    <strong>Window.file</strong>
+    </dt>
+    <dd>
+    The file being displayed in this window.
+
+
+    <ul>
+        <li><span class="parameter">file</span>
+            <span class="types"><a class="type" href="index.html#Class_File">File</a></span>
+
+
+
+        </li>
+    </ul>
+
+
+
+
+
+</dd>
+    <dt>
+    <a name = "Window.height"></a>
+    <strong>Window.height</strong>
+    </dt>
+    <dd>
+    The window height.
+
+
+    <ul>
+        <li><span class="parameter">height</span>
+            <span class="types"><span class="type">int</span></span>
+
+
+
+        </li>
+    </ul>
+
+
+
+
+
+</dd>
+    <dt>
+    <a name = "Window.syntax"></a>
+    <strong>Window.syntax</strong>
+    </dt>
+    <dd>
+    The file type associated with this window. </p>
+
+<p> Setting this field to a valid lexer name will automatically active it.
+
+
+    <ul>
+        <li><span class="parameter">syntax</span>
+            <span class="types"><a class="type" href="https://www.lua.org/manual/5.1/manual.html#5.4">string</a></span>
+         the syntax lexer name or <code>nil</code> if unset
+        </li>
+    </ul>
+
+
+
+
+
+</dd>
+    <dt>
+    <a name = "Window.viewport"></a>
+    <strong>Window.viewport</strong>
+    </dt>
+    <dd>
+    Viewport currently being displayed.
+
+
+    <ul>
+        <li><span class="parameter">viewport</span>
+            <span class="types"><a class="type" href="index.html#Class_Range">Range</a></span>
+
+
+
+        </li>
+    </ul>
+
+
+
+
+
+</dd>
+    <dt>
+    <a name = "Window.width"></a>
+    <strong>Window.width</strong>
+    </dt>
+    <dd>
+    The window width.
+
+
+    <ul>
+        <li><span class="parameter">width</span>
+            <span class="types"><span class="type">int</span></span>
+
+
+
+        </li>
+    </ul>
+
+
+
+
+
+</dd>
+    <dt>
+    <a name = "Window:cursors_iterator"></a>
+    <strong>Window:cursors_iterator()</strong>
+    </dt>
+    <dd>
+    Create an iterator over all cursors of this window.
+
+
+
+    <h3>Returns:</h3>
+    <ol>
+
+        the new iterator
+    </ol>
+
+
+
+
+</dd>
+    <dt>
+    <a name = "Window:draw"></a>
+    <strong>Window:draw()</strong>
+    </dt>
+    <dd>
+    Redraw window content.
+
+
+
+
+
+
+
+</dd>
+    <dt>
+    <a name = "Window:map"></a>
+    <strong>Window:map(mode, func)</strong>
+    </dt>
+    <dd>
+    Map a window local key to a Lua function.
+
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">mode</span>
+            <span class="types"><span class="type">int</span></span>
+         the mode to which the mapping should be added
+        </li>
+        <li><span class="parameter">func</span>
+            <span class="types"><span class="type">function</span></span>
+         the Lua function to handle the key mapping
+        </li>
+    </ul>
+
+    <h3>Returns:</h3>
+    <ol>
+
+           <span class="types"><span class="type">bool</span></span>
+        whether the mapping was successfully established
+    </ol>
+
+
+    <h3>See also:</h3>
+    <ul>
+         <a href="index.html#Vis:map">Vis:map</a>
+    </ul>
+
+
+</dd>
+    <dt>
+    <a name = "Window:status"></a>
+    <strong>Window:status(left[, right])</strong>
+    </dt>
+    <dd>
+    Set window status line.
+
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">left</span>
+            <span class="types"><a class="type" href="https://www.lua.org/manual/5.1/manual.html#5.4">string</a></span>
+         the left aligned part of the status line
+        </li>
+        <li><span class="parameter">right</span>
+            <span class="types"><a class="type" href="https://www.lua.org/manual/5.1/manual.html#5.4">string</a></span>
+         the right aligned part of the status line
+         (<em>optional</em>)
+        </li>
+    </ul>
+
+
+
+
+
+</dd>
+    <dt>
+    <a name = "Window:style"></a>
+    <strong>Window:style(id, start, len)</strong>
+    </dt>
+    <dd>
+    Style a window range. </p>
+
+<p> The style will be cleared after every window redraw.
+
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">id</span>
+            <span class="types"><span class="type">int</span></span>
+         the display style as registered with <a href="index.html#Window:style_define">style_define</a>
+        </li>
+        <li><span class="parameter">start</span>
+            <span class="types"><span class="type">int</span></span>
+         the absolute file position in bytes
+        </li>
+        <li><span class="parameter">len</span>
+            <span class="types"><span class="type">int</span></span>
+         the length in bytes to style
+        </li>
+    </ul>
+
+
+
+    <h3>See also:</h3>
+    <ul>
+         <a href="index.html#Window:style_define">style_define</a>
+    </ul>
+
+    <h3>Usage:</h3>
+    <ul>
+        <pre class="example">win:style(win.STYLE_DEFAULT, <span class="number">0</span>, <span class="number">10</span>)</pre>
+    </ul>
+
+</dd>
+    <dt>
+    <a name = "Window:style_define"></a>
+    <strong>Window:style_define(id, style)</strong>
+    </dt>
+    <dd>
+    Define a display style.
+
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">id</span>
+            <span class="types"><span class="type">int</span></span>
+         the style id to use
+        </li>
+        <li><span class="parameter">style</span>
+            <span class="types"><a class="type" href="https://www.lua.org/manual/5.1/manual.html#5.4">string</a></span>
+         the style definition
+        </li>
+    </ul>
+
+    <h3>Returns:</h3>
+    <ol>
+
+           <span class="types"><span class="type">bool</span></span>
+        whether the style definition has been successfully
+  associated with the given id
+    </ol>
+
+
+    <h3>See also:</h3>
+    <ul>
+         <a href="index.html#Window:style">style</a>
+    </ul>
+
+    <h3>Usage:</h3>
+    <ul>
+        <pre class="example">win:style_define(win.STYLE_DEFAULT, <span class="string">"fore:red"</span>)</pre>
+    </ul>
+
+</dd>
+</dl>
+    <h2 class="section-header has-description"><a name="Class_Cursor"></a>Class Cursor </h2>
+
+          <div class="section-description">
+          A cursor object.
+          </div>
+    <dl class="function">
+    <dt>
+    <a name = "Cursor.col"></a>
+    <strong>Cursor.col</strong>
+    </dt>
+    <dd>
+    The 1-based column position the cursor resides on.
+
+
+    <ul>
+        <li><span class="parameter">col</span>
+            <span class="types"><span class="type">int</span></span>
+
+
+
+        </li>
+    </ul>
+
+
+
+    <h3>See also:</h3>
+    <ul>
+         <a href="index.html#Cursor:to">to</a>
+    </ul>
+
+
+</dd>
+    <dt>
+    <a name = "Cursor.line"></a>
+    <strong>Cursor.line</strong>
+    </dt>
+    <dd>
+    The 1-based line the cursor resides on.
+
+
+    <ul>
+        <li><span class="parameter">line</span>
+            <span class="types"><span class="type">int</span></span>
+
+
+
+        </li>
+    </ul>
+
+
+
+    <h3>See also:</h3>
+    <ul>
+         <a href="index.html#Cursor:to">to</a>
+    </ul>
+
+
+</dd>
+    <dt>
+    <a name = "Cursor.number"></a>
+    <strong>Cursor.number</strong>
+    </dt>
+    <dd>
+    The 1-based cursor index.
+
+
+    <ul>
+        <li><span class="parameter">number</span>
+            <span class="types"><span class="type">int</span></span>
+
+
+
+        </li>
+    </ul>
+
+
+
+
+
+</dd>
+    <dt>
+    <a name = "Cursor.pos"></a>
+    <strong>Cursor.pos</strong>
+    </dt>
+    <dd>
+    The zero based byte position in the file. </p>
+
+<p> Setting this field will move the cursor to the given position.
+
+
+    <ul>
+        <li><span class="parameter">pos</span>
+            <span class="types"><span class="type">int</span></span>
+
+
+
+        </li>
+    </ul>
+
+
+
+
+
+</dd>
+    <dt>
+    <a name = "Cursor.selection"></a>
+    <strong>Cursor.selection</strong>
+    </dt>
+    <dd>
+    The selection associated with this cursor.
+
+
+    <ul>
+        <li><span class="parameter">selection</span>
+            <span class="types"><a class="type" href="index.html#Class_Range">Range</a></span>
+         the selection or <code>nil</code> if not in visual mode
+        </li>
+    </ul>
+
+
+
+
+
+</dd>
+    <dt>
+    <a name = "Cursor:to"></a>
+    <strong>Cursor:to(line, col)</strong>
+    </dt>
+    <dd>
+    Move cursor.
+
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">line</span>
+            <span class="types"><span class="type">int</span></span>
+         the 1-based line number
+        </li>
+        <li><span class="parameter">col</span>
+            <span class="types"><span class="type">int</span></span>
+         the 1-based column number
+        </li>
+    </ul>
+
+
+
+
+
+</dd>
+</dl>
+    <h2 class="section-header has-description"><a name="Class_File"></a>Class File </h2>
+
+          <div class="section-description">
+          A file object.
+          </div>
+    <dl class="function">
+    <dt>
+    <a name = "File.lines"></a>
+    <strong>File.lines</strong>
+    </dt>
+    <dd>
+    File content by logical lines. </p>
+
+<p> Assigning to array element <code>0</code> (<code>#lines+1</code>) will insert a new line at
+ the beginning (end) of the file.
+
+
+    <ul>
+        <li><span class="parameter">lines</span>
+            <span class="types"><span class="type">Array(string)</span></span>
+         the file content accessible as 1-based array
+        </li>
+    </ul>
+
+
+
+    <h3>See also:</h3>
+    <ul>
+         <a href="index.html#File:content">content</a>
+    </ul>
+
+    <h3>Usage:</h3>
+    <ul>
+        <pre class="example"><span class="keyword">local</span> lines = vis.win.file.lines
+<span class="keyword">for</span> i=<span class="number">1</span>, #lines <span class="keyword">do</span>
+	lines[i] = i .. <span class="string">": "</span> .. lines[i]
+<span class="keyword">end</span></pre>
+    </ul>
+
+</dd>
+    <dt>
+    <a name = "File.modified"></a>
+    <strong>File.modified</strong>
+    </dt>
+    <dd>
+    File state.
+
+
+    <ul>
+        <li><span class="parameter">modified</span>
+            <span class="types"><span class="type">bool</span></span>
+         whether the file contains unsaved changes
+        </li>
+    </ul>
+
+
+
+
+
+</dd>
+    <dt>
+    <a name = "File.name"></a>
+    <strong>File.name</strong>
+    </dt>
+    <dd>
+    File name.
+
+
+    <ul>
+        <li><span class="parameter">name</span>
+            <span class="types"><a class="type" href="https://www.lua.org/manual/5.1/manual.html#5.4">string</a></span>
+         the file name relative to current working directory or <code>nil</code> if not yet named
+        </li>
+    </ul>
+
+
+
+
+
+</dd>
+    <dt>
+    <a name = "File.newlines"></a>
+    <strong>File.newlines</strong>
+    </dt>
+    <dd>
+    Type of line endings.
+
+
+    <ul>
+        <li><span class="parameter">newlines</span>
+            <span class="types"><a class="type" href="https://www.lua.org/manual/5.1/manual.html#5.4">string</a></span>
+         the type of line endings either <code>lf</code> (the default) or <code>crlf</code>
+        </li>
+    </ul>
+
+
+
+
+
+</dd>
+    <dt>
+    <a name = "File.path"></a>
+    <strong>File.path</strong>
+    </dt>
+    <dd>
+    File path.
+
+
+    <ul>
+        <li><span class="parameter">path</span>
+            <span class="types"><a class="type" href="https://www.lua.org/manual/5.1/manual.html#5.4">string</a></span>
+         the absolute file path or <code>nil</code> if not yet named
+        </li>
+    </ul>
+
+
+
+
+
+</dd>
+    <dt>
+    <a name = "File.size"></a>
+    <strong>File.size</strong>
+    </dt>
+    <dd>
+    File size in bytes.
+
+
+    <ul>
+        <li><span class="parameter">size</span>
+            <span class="types"><span class="type">int</span></span>
+         the current file size in bytes
+        </li>
+    </ul>
+
+
+
+
+
+</dd>
+    <dt>
+    <a name = "File:content"></a>
+    <strong>File:content(range)</strong>
+    </dt>
+    <dd>
+    Get file content of range.
+
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">range</span>
+            <span class="types"><a class="type" href="index.html#Class_Range">Range</a></span>
+         the range to read
+        </li>
+    </ul>
+
+    <h3>Returns:</h3>
+    <ol>
+
+           <span class="types"><a class="type" href="https://www.lua.org/manual/5.1/manual.html#5.4">string</a></span>
+        the file content corresponding to the range
+    </ol>
+
+
+
+
+</dd>
+    <dt>
+    <a name = "File:content"></a>
+    <strong>File:content(pos, len)</strong>
+    </dt>
+    <dd>
+    Get file content of position and length.
+
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">pos</span>
+            <span class="types"><span class="type">int</span></span>
+         the 0-based file position in bytes
+        </li>
+        <li><span class="parameter">len</span>
+            <span class="types"><span class="type">int</span></span>
+         the length in bytes to read
+        </li>
+    </ul>
+
+    <h3>Returns:</h3>
+    <ol>
+
+           <span class="types"><a class="type" href="https://www.lua.org/manual/5.1/manual.html#5.4">string</a></span>
+        the file content corresponding to the range
+    </ol>
+
+
+    <h3>See also:</h3>
+    <ul>
+         <a href="index.html#File.lines">lines</a>
+    </ul>
+
+    <h3>Usage:</h3>
+    <ul>
+        <pre class="example"><span class="keyword">local</span> file = vis.win.file
+<span class="keyword">local</span> text = file:content(<span class="number">0</span>, file.size)</pre>
+    </ul>
+
+</dd>
+    <dt>
+    <a name = "File:delete"></a>
+    <strong>File:delete(range)</strong>
+    </dt>
+    <dd>
+    Delete file range.
+
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">range</span>
+            <span class="types"><a class="type" href="index.html#Class_Range">Range</a></span>
+         the range to delete
+        </li>
+    </ul>
+
+    <h3>Returns:</h3>
+    <ol>
+
+           <span class="types"><span class="type">bool</span></span>
+        whether the file content was successfully changed
+    </ol>
+
+
+
+
+</dd>
+    <dt>
+    <a name = "File:delete"></a>
+    <strong>File:delete(pos, len)</strong>
+    </dt>
+    <dd>
+    Delete data at position.
+
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">pos</span>
+            <span class="types"><span class="type">int</span></span>
+         the 0-based file position in bytes
+        </li>
+        <li><span class="parameter">len</span>
+            <span class="types"><span class="type">int</span></span>
+         the length in bytes to delete
+        </li>
+    </ul>
+
+    <h3>Returns:</h3>
+    <ol>
+
+           <span class="types"><span class="type">bool</span></span>
+        whether the file content was successfully changed
+    </ol>
+
+
+
+
+</dd>
+    <dt>
+    <a name = "File:insert"></a>
+    <strong>File:insert(pos, data)</strong>
+    </dt>
+    <dd>
+    Insert data at position.
+
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">pos</span>
+            <span class="types"><span class="type">int</span></span>
+         the 0-based file position in bytes
+        </li>
+        <li><span class="parameter">data</span>
+            <span class="types"><a class="type" href="https://www.lua.org/manual/5.1/manual.html#5.4">string</a></span>
+         the data to insert
+        </li>
+    </ul>
+
+    <h3>Returns:</h3>
+    <ol>
+
+           <span class="types"><span class="type">bool</span></span>
+        whether the file content was successfully changed
+    </ol>
+
+
+
+
+</dd>
+    <dt>
+    <a name = "File:lines_iterator"></a>
+    <strong>File:lines_iterator()</strong>
+    </dt>
+    <dd>
+    Create an iterator over all lines of the file. </p>
+
+<p> For large files this is probably faster than <a href="index.html#File.lines">lines</a>.
+
+
+
+    <h3>Returns:</h3>
+    <ol>
+
+        the new iterator
+    </ol>
+
+
+    <h3>See also:</h3>
+    <ul>
+         <a href="index.html#File.lines">lines</a>
+    </ul>
+
+    <h3>Usage:</h3>
+    <ul>
+        <pre class="example"><span class="keyword">for</span> line <span class="keyword">in</span> file:lines_iterator() <span class="keyword">do</span>
+	<span class="comment">-- do something with line
+</span><span class="keyword">end</span></pre>
+    </ul>
+
+</dd>
+</dl>
+    <h2 class="section-header has-description"><a name="Class_Ui"></a>Class Ui </h2>
+
+          <div class="section-description">
+          The user interface.
+          </div>
+    <dl class="function">
+    <dt>
+    <a name = "Ui.colors"></a>
+    <strong>Ui.colors</strong>
+    </dt>
+    <dd>
+    Number of available colors.
+
+
+    <ul>
+        <li><span class="parameter">colors</span>
+            <span class="types"><span class="type">int</span></span>
+
+
+
+        </li>
+    </ul>
+
+
+
+
+
+</dd>
+</dl>
+    <h2 class="section-header has-description"><a name="Class_Range"></a>Class Range </h2>
+
+          <div class="section-description">
+          A file range. </p>
+
+<p> For a valid range <code>start &lt;= finish</code> holds.
+ An invalid range is represented as <code>nil</code>.
+          </div>
+    <dl class="function">
+    <dt>
+    <a name = "Range.finish"></a>
+    <strong>Range.finish</strong>
+    </dt>
+    <dd>
+    The end of the range.
+
+
+    <ul>
+        <li><span class="parameter">finish</span>
+            <span class="types"><span class="type">int</span></span>
+
+
+
+        </li>
+    </ul>
+
+
+
+
+
+</dd>
+    <dt>
+    <a name = "Range.start"></a>
+    <strong>Range.start</strong>
+    </dt>
+    <dd>
+    The being of the range.
+
+
+    <ul>
+        <li><span class="parameter">start</span>
+            <span class="types"><span class="type">int</span></span>
+
+
+
+        </li>
+    </ul>
+
+
+
+
+
+</dd>
+</dl>
+    <h2 class="section-header has-description"><a name="Events"></a>Events </h2>
+
+          <div class="section-description">
+           These events are invoked from the editor core.
+ The following functions are looked up in the <code>vis.events</code> table.
+ Keep in mind that the editor is blocked while the event handlers
+ are being executed, avoid long running tasks.
+          </div>
+    <dl class="function">
+    <dt>
+    <a name = "file_close"></a>
+    <strong>file_close(file)</strong>
+    </dt>
+    <dd>
+    File close.
+ The last window displaying the file has been closed.
+
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">file</span>
+            <span class="types"><a class="type" href="index.html#Class_File">File</a></span>
+         the file being closed
+        </li>
+    </ul>
+
+
+
+
+
+</dd>
+    <dt>
+    <a name = "file_open"></a>
+    <strong>file_open(file)</strong>
+    </dt>
+    <dd>
+    File open.
+
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">file</span>
+            <span class="types"><a class="type" href="index.html#Class_File">File</a></span>
+         the file to be opened
+        </li>
+    </ul>
+
+
+
+
+
+</dd>
+    <dt>
+    <a name = "file_save_post"></a>
+    <strong>file_save_post(file, path)</strong>
+    </dt>
+    <dd>
+    File post save.
+ Triggered <em>after</em> a successfull write operation.
+
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">file</span>
+            <span class="types"><a class="type" href="index.html#Class_File">File</a></span>
+         the file which was written
+        </li>
+        <li><span class="parameter">path</span>
+            <span class="types"><a class="type" href="https://www.lua.org/manual/5.1/manual.html#5.4">string</a></span>
+         the absolute path to which it was written, <code>nil</code> if standard output
+        </li>
+    </ul>
+
+
+
+
+
+</dd>
+    <dt>
+    <a name = "file_save_pre"></a>
+    <strong>file_save_pre(file, path)</strong>
+    </dt>
+    <dd>
+    File pre save.
+ Triggered <em>before</em> the file is being written.
+
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">file</span>
+            <span class="types"><a class="type" href="index.html#Class_File">File</a></span>
+         the file being written
+        </li>
+        <li><span class="parameter">path</span>
+            <span class="types"><a class="type" href="https://www.lua.org/manual/5.1/manual.html#5.4">string</a></span>
+         the absolute path to which the file will be written, <code>nil</code> if standard output
+        </li>
+    </ul>
+
+    <h3>Returns:</h3>
+    <ol>
+
+           <span class="types"><span class="type">bool</span></span>
+        whether the write operation should be proceeded
+    </ol>
+
+
+
+
+</dd>
+    <dt>
+    <a name = "quit"></a>
+    <strong>quit()</strong>
+    </dt>
+    <dd>
+    Editor is about to terminate.
+
+
+
+
+
+
+
+</dd>
+    <dt>
+    <a name = "start"></a>
+    <strong>start()</strong>
+    </dt>
+    <dd>
+    Editor startup completed.
+ This event is emitted immediately before the main loop starts.
+ At this point all files are loaded and corresponding windows are created.
+ We are about to process interactive keyboard input.
+ Can be used to set <em>global</em> configuration options.
+
+
+
+
+
+
+
+</dd>
+    <dt>
+    <a name = "theme_change"></a>
+    <strong>theme_change(theme)</strong>
+    </dt>
+    <dd>
+    Theme change.
+
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">theme</span>
+            <span class="types"><a class="type" href="https://www.lua.org/manual/5.1/manual.html#5.4">string</a></span>
+         the name of the new theme to load
+        </li>
+    </ul>
+
+
+
+
+
+</dd>
+    <dt>
+    <a name = "win_close"></a>
+    <strong>win_close(win)</strong>
+    </dt>
+    <dd>
+    Window close.
+ An window is being closed.
+
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">win</span>
+            <span class="types"><a class="type" href="index.html#Class_Window">Window</a></span>
+         the window being closed
+        </li>
+    </ul>
+
+
+
+
+
+</dd>
+    <dt>
+    <a name = "win_highlight"></a>
+    <strong>win_highlight(win, horizon)</strong>
+    </dt>
+    <dd>
+    Window highlight.
+ The window has been redrawn and the syntax highlighting needs to be performed.
+
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">win</span>
+            <span class="types"><a class="type" href="index.html#Class_Window">Window</a></span>
+         the window being redrawn
+        </li>
+        <li><span class="parameter">horizon</span>
+            <span class="types"><span class="type">int</span></span>
+         the maximal number of bytes the lexer should look behind to synchronize parsing state
+        </li>
+    </ul>
+
+
+
+    <h3>See also:</h3>
+    <ul>
+         <a href="index.html#Window:style">style</a>
+    </ul>
+
+
+</dd>
+    <dt>
+    <a name = "win_open"></a>
+    <strong>win_open(win)</strong>
+    </dt>
+    <dd>
+    Window open.
+ A new window has been created.
+
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">win</span>
+            <span class="types"><a class="type" href="index.html#Class_Window">Window</a></span>
+         the window being opened
+        </li>
+    </ul>
+
+
+
+
+
+</dd>
+    <dt>
+    <a name = "win_status"></a>
+    <strong>win_status(win)</strong>
+    </dt>
+    <dd>
+    Window status bar redraw.
+
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">win</span>
+            <span class="types"><a class="type" href="index.html#Class_Window">Window</a></span>
+         the affected window
+        </li>
+    </ul>
+
+
+
+    <h3>See also:</h3>
+    <ul>
+         <a href="index.html#Window:status">status</a>
+    </ul>
+
+
+</dd>
+    <dt>
+    <a name = "win_syntax"></a>
+    <strong>win_syntax(win, syntax)</strong>
+    </dt>
+    <dd>
+    Window syntax/filetype change.
+
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">win</span>
+            <span class="types"><a class="type" href="index.html#Class_Window">Window</a></span>
+         the affected window
+        </li>
+        <li><span class="parameter">syntax</span>
+            <span class="types"><a class="type" href="https://www.lua.org/manual/5.1/manual.html#5.4">string</a></span>
+         the lexer name or <code>nil</code> if syntax highlighting should be disabled for this window
+        </li>
+    </ul>
+
+    <h3>Returns:</h3>
+    <ol>
+
+           <span class="types"><span class="type">bool</span></span>
+        whether the syntax change was successful
+    </ol>
+
+
+
+
+</dd>
+</dl>
+
+
+</div> <!-- id="content" -->
+</div> <!-- id="main" -->
+<div id="about">
+<i>generated by <a href="http://github.com/stevedonovan/LDoc">LDoc 1.4.6</a></i>
+<i style="float:right;">Last updated 2016-12-06 20:12:06 </i>
+</div> <!-- id="about" -->
+</div> <!-- id="container" -->
+</body>
+</html>
