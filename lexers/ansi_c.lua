@@ -38,6 +38,22 @@ local keyword = token(l.KEYWORD, word_match{
   'sizeof', 'static', 'switch', 'typedef', 'volatile', 'while'
 })
 
+-- Constants.
+local constant = token(l.CONSTANT, word_match{
+  -- file descriptors
+  'stdin', 'stdout', 'stderr',
+  -- defines from stdlib.h
+  'EXIT_SUCCESS', 'EXIT_FAILURE', 'RAND_MAX', 'NULL',
+  -- error codes
+  'EPERM', 'ENOENT', 'ESRCH', 'EINTR', 'EIO', 'ENXIO', 'E2BIG', 'ENOEXEC',
+  'EBADF', 'ECHILD', 'EAGAIN', 'ENOMEM', 'EACCES', 'EFAULT', 'ENOTBLK',
+  'EBUSY', 'EEXIST', 'EXDEV', 'ENODEV', 'ENOTDIR', 'EISDIR', 'EINVAL',
+  'ENFILE', 'EMFILE', 'ENOTTY', 'ETXTBSY', 'EFBIG', 'ENOSPC', 'ESPIPE',
+  'EROFS', 'EMLINK', 'EPIPE', 'EDOM', 'ERANGE',
+  -- standard predefined macros
+  '__DATE__', '__FILE__', '__LINE__', '__TIME__'
+})
+
 -- Types.
 local type = token(l.TYPE, word_match{
   'char', 'double', 'enum', 'float', 'int', 'long', 'short', 'signed', 'struct',
@@ -54,6 +70,7 @@ M._rules = {
   {'whitespace', ws},
   {'keyword', keyword},
   {'type', type},
+  {'constant', constant},
   {'identifier', identifier},
   {'string', string},
   {'comment', comment},
