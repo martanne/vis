@@ -1,5 +1,8 @@
 /***
- * Lua API for [Vis Editor](https://github.com/martanne/vis).
+ * Lua Extension API for the [Vis Editor](https://github.com/martanne/vis).
+ *
+ * *WARNING:* there is no stability guarantee at this time, the API might
+ * change without notice!
  *
  * @module vis
  * @author Marc André Tanner
@@ -499,7 +502,10 @@ static const char *keymapping(Vis *vis, const char *keys, const Arg *arg) {
  * @tfield string VERSION
  * version information in `git describe` format, same as reported by `vis -v`.
  */
-// FIXME: resulting Lua documentation of these constants is suboptimal
+/***
+ * User interface.
+ * @tfield Ui ui the user interface being used
+ */
 /***
  * Normal mode.
  * @tfield int MODE_NORMAL
@@ -526,14 +532,8 @@ static const char *keymapping(Vis *vis, const char *keys, const Arg *arg) {
  */
 
 /***
- * Current mode.
- * @tfield int mode
- */
-
-/***
  * LPeg lexer support module.
  * @field lexers
- * @ref{TODO|LPeg lexer} support module.
  */
 
 // TODO vis.events
@@ -542,6 +542,11 @@ static const char *keymapping(Vis *vis, const char *keys, const Arg *arg) {
  * Create an iterator over all windows.
  * @function windows
  * @return the new iterator
+ * @see win
+ * @usage
+ * for win in vis:windows() do
+ * 	-- do something with win
+ * end
  */
 static int windows_iter(lua_State *L);
 static int windows(lua_State *L) {
@@ -571,6 +576,10 @@ static int windows_iter(lua_State *L) {
  * Create an iterator over all files.
  * @function files
  * @return the new iterator
+ * @usage
+ * for file in vis:files() do
+ * 	-- do something with file
+ * end
  */
 static int files_iter(lua_State *L);
 static int files(lua_State *L) {
@@ -597,10 +606,12 @@ static int files_iter(lua_State *L) {
 }
 
 /***
- * Execute an editor command.
+ * Execute a `:`-command.
  * @function command
  * @tparam string command the command to execute
  * @treturn bool whether the command succeeded
+ * @usage
+ * vis:command("set number")
  */
 static int command(lua_State *L) {
 	Vis *vis = obj_ref_check(L, 1, "vis");
@@ -656,7 +667,7 @@ static int message(lua_State *L) {
  *
  * Creates a new window and loads the given file.
  *
- * @function message
+ * @function open
  * @tparam string filename the file name to load
  * @treturn File the file object representing the new file, or `nil` on failure
  */
@@ -747,6 +758,7 @@ static int map(lua_State *L) {
  * @function motion
  * @tparam int id the id of the motion to execute
  * @treturn bool whether the id was valid
+ * @local
  */
 static int motion(lua_State *L) {
 	Vis *vis = obj_ref_check(L, 1, "vis");
@@ -773,7 +785,8 @@ static size_t motion_lua(Vis *vis, Win *win, void *data, size_t pos) {
  * @function motion_register
  * @tparam function motion the Lua function implementing the motion
  * @treturn int the associated motion id, or `-1` on failure
- * @see motion
+ * @see motion, motion_new
+ * @local
  * @usage
  * -- custom motion advancing to the next byte
  * local id = vis:motion_register(function(win, pos)
@@ -798,6 +811,8 @@ err:
  * @function textobject
  * @tparam int id the id of the text object to execute
  * @treturn bool whether the id was valid
+ * @see textobject_register, textobject_new
+ * @local
  */
 static int textobject(lua_State *L) {
 	Vis *vis = obj_ref_check(L, 1, "vis");
@@ -822,7 +837,8 @@ static Filerange textobject_lua(Vis *vis, Win *win, void *data, size_t pos) {
  * @function textobject_register
  * @tparam function textobject the Lua function implementing the text object
  * @treturn int the associated text object id, or `-1` on failure
- * @see textobject
+ * @see textobject, textobject_new
+ * @local
  * @usage
  * -- custom text object covering the next byte
  * local id = vis:textobject_register(function(win, pos)
@@ -905,10 +921,17 @@ static int feedkeys(lua_State *L) {
 /***
  * Currently active window.
  * @tfield Window win
+ * @see windows
  */
 /***
  * Currently active mode.
  * @tfield int mode
+ * @see MODE_NORMAL
+ * @see MODE_OPERATOR_PENDING
+ * @see MODE_INSERT
+ * @see MODE_REPLACE
+ * @see MODE_VISUAL
+ * @see MODE_VISUAL_LINE
  */
 /***
  * Whether a macro is being recorded.
@@ -996,7 +1019,7 @@ static const struct luaL_Reg ui_funcs[] = {
 
 /***
  * Viewport currently being displayed.
- * @tfield range viewport
+ * @tfield Range viewport
  */
 /***
  * The window width.
@@ -1139,6 +1162,17 @@ static int window_map(lua_State *L) {
 	return keymap(L, win->vis, win);
 }
 
+/***
+ * Define a display style.
+ * @function style_define
+ * @tparam int id the style id to use
+ * @tparam string style the style definition 
+ * @treturn bool whether the style definition has been successfully
+ *  associated with the given id
+ * @see style
+ * @usage
+ * win:style_define(win.STYLE_DEFAULT, "fore:red")
+ */
 static int window_style_define(lua_State *L) {
 	Win *win = obj_ref_check(L, 1, "vis.window");
 	bool ret = false;
@@ -1151,6 +1185,18 @@ static int window_style_define(lua_State *L) {
 	return 1;
 }
 
+/***
+ * Style a window range.
+ *
+ * The style will be cleared after every window redraw.
+ * @function style
+ * @tparam int id the display style as registered with @{style_define}
+ * @tparam int start the absolute file position in bytes
+ * @tparam int len the length in bytes to style
+ * @see style_define
+ * @usage
+ * win:style(win.STYLE_DEFAULT, 0, 10)
+ */
 static int window_style(lua_State *L) {
 	Win *win = obj_ref_check(L, 1, "vis.window");
 	if (win) {
@@ -1270,7 +1316,7 @@ static const struct luaL_Reg window_cursors_funcs[] = {
  */
 /***
  * The selection associated with this cursor.
- * @tfield range selection the selection or `nil` if not in visual mode
+ * @tfield Range selection the selection or `nil` if not in visual mode
  */
 static int window_cursor_index(lua_State *L) {
 	Cursor *cur = obj_lightref_check(L, 1, "vis.window.cursor");
@@ -1372,7 +1418,16 @@ static const struct luaL_Reg window_cursor_funcs[] = {
  */
 /***
  * File content by logical lines.
+ *
+ * Assigning to array element `0` (`#lines+1`) will insert a new line at
+ * the beginning (end) of the file.
  * @tfield Array(string) lines the file content accessible as 1-based array
+ * @see content
+ * @usage
+ * local lines = vis.win.file.lines
+ * for i=1, #lines do
+ * 	lines[i] = i .. ": " .. lines[i]
+ * end
  */
 /***
  * Type of line endings.
@@ -1496,8 +1551,15 @@ static int file_delete(lua_State *L) {
 
 /***
  * Create an iterator over all lines of the file.
+ *
+ * For large files this is probably faster than @{lines}.
  * @function lines_iterator
  * @return the new iterator
+ * @see lines
+ * @usage
+ * for line in file:lines_iterator() do
+ * 	-- do something with line
+ * end
  */
 static int file_lines_iterator_it(lua_State *L);
 static int file_lines_iterator(lua_State *L) {
@@ -1535,6 +1597,10 @@ static int file_lines_iterator_it(lua_State *L) {
  * @tparam int pos the 0-based file position in bytes
  * @tparam int len the length in bytes to read
  * @treturn string the file content corresponding to the range
+ * @see lines
+ * @usage
+ * local file = vis.win.file
+ * local text = file:content(0, file.size)
  */
 /***
  * Get file content of range.
@@ -1639,6 +1705,42 @@ static const struct luaL_Reg file_lines_funcs[] = {
 	{ "__len", file_lines_len },
 	{ NULL, NULL },
 };
+
+/***
+ * The user interface.
+ *
+ * @type Ui
+ */
+/***
+ * Number of available colors.
+ * @tfield int colors
+ */
+
+/***
+ * A file range.
+ *
+ * For a valid range `start <= finish` holds.
+ * An invalid range is represented as `nil`.
+ * @type Range
+ */
+/***
+ * The being of the range.
+ * @tfield int start
+ */
+/***
+ * The end of the range.
+ * @tfield int finish
+ */
+
+/***
+ * Events.
+ *
+ * These events are invoked from the editor core.
+ * The following functions are looked up in the `vis.events` table.
+ * Keep in mind that the editor is blocked while the event handlers
+ * are being executed, avoid long running tasks.
+ * @section Events
+ */
 
 static void vis_lua_event_get(lua_State *L, const char *name) {
 	lua_getglobal(L, "vis");
@@ -1871,16 +1973,33 @@ void vis_lua_init(Vis *vis) {
 	}
 }
 
+/***
+ * Editor startup completed.
+ * This event is emitted immediately before the main loop starts.
+ * At this point all files are loaded and corresponding windows are created.
+ * We are about to process interactive keyboard input.
+ * Can be used to set *global* configuration options.
+ * @function start
+ */
 void vis_lua_start(Vis *vis) {
 	vis_lua_event_call(vis, "start");
 }
 
+/**
+ * Editor is about to terminate.
+ * @function quit
+ */
 void vis_lua_quit(Vis *vis) {
 	vis_lua_event_call(vis, "quit");
 	lua_close(vis->lua);
 	vis->lua = NULL;
 }
 
+/***
+ * File open.
+ * @function file_open
+ * @tparam File file the file to be opened
+ */
 void vis_lua_file_open(Vis *vis, File *file) {
 	debug("event: file-open: %s %p %p\n", file->name ? file->name : "unnamed", (void*)file, (void*)file->text);
 	lua_State *L = vis->lua;
@@ -1892,6 +2011,14 @@ void vis_lua_file_open(Vis *vis, File *file) {
 	lua_pop(L, 1);
 }
 
+/***
+ * File pre save.
+ * Triggered *before* the file is being written.
+ * @function file_save_pre
+ * @tparam File file the file being written
+ * @tparam string path the absolute path to which the file will be written, `nil` if standard output
+ * @treturn bool whether the write operation should be proceeded
+ */
 bool vis_lua_file_save_pre(Vis *vis, File *file, const char *path) {
 	lua_State *L = vis->lua;
 	vis_lua_event_get(L, "file_save_pre");
@@ -1906,6 +2033,13 @@ bool vis_lua_file_save_pre(Vis *vis, File *file, const char *path) {
 	return true;
 }
 
+/***
+ * File post save.
+ * Triggered *after* a successfull write operation.
+ * @function file_save_post
+ * @tparam File file the file which was written
+ * @tparam string path the absolute path to which it was written, `nil` if standard output
+ */
 void vis_lua_file_save_post(Vis *vis, File *file, const char *path) {
 	lua_State *L = vis->lua;
 	vis_lua_event_get(L, "file_save_post");
@@ -1917,6 +2051,12 @@ void vis_lua_file_save_post(Vis *vis, File *file, const char *path) {
 	lua_pop(L, 1);
 }
 
+/***
+ * File close.
+ * The last window displaying the file has been closed.
+ * @function file_close
+ * @tparam File file the file being closed
+ */
 void vis_lua_file_close(Vis *vis, File *file) {
 	debug("event: file-close: %s %p %p\n", file->name ? file->name : "unnamed", (void*)file, (void*)file->text);
 	lua_State *L = vis->lua;
@@ -1930,6 +2070,12 @@ void vis_lua_file_close(Vis *vis, File *file) {
 	lua_pop(L, 1);
 }
 
+/***
+ * Window open.
+ * A new window has been created.
+ * @function win_open
+ * @tparam Window win the window being opened
+ */
 void vis_lua_win_open(Vis *vis, Win *win) {
 	debug("event: win-open: %s %p %p\n", win->file->name ? win->file->name : "unnamed", (void*)win, (void*)win->view);
 	lua_State *L = vis->lua;
@@ -1941,6 +2087,12 @@ void vis_lua_win_open(Vis *vis, Win *win) {
 	lua_pop(L, 1);
 }
 
+/***
+ * Window close.
+ * An window is being closed.
+ * @function win_close
+ * @tparam Window win the window being closed
+ */
 void vis_lua_win_close(Vis *vis, Win *win) {
 	debug("event: win-close: %s %p %p\n", win->file->name ? win->file->name : "unnamed", (void*)win, (void*)win->view);
 	lua_State *L = vis->lua;
@@ -1954,6 +2106,14 @@ void vis_lua_win_close(Vis *vis, Win *win) {
 	lua_pop(L, 1);
 }
 
+/**
+ * Window highlight.
+ * The window has been redrawn and the syntax highlighting needs to be performed.
+ * @function win_highlight
+ * @tparam Window win the window being redrawn
+ * @tparam int horizon the maximal number of bytes the lexer should look behind to synchronize parsing state
+ * @see style
+ */
 void vis_lua_win_highlight(Vis *vis, Win *win, size_t horizon) {
 	lua_State *L = vis->lua;
 	vis_lua_event_get(L, "win_highlight");
@@ -1965,6 +2125,13 @@ void vis_lua_win_highlight(Vis *vis, Win *win, size_t horizon) {
 	lua_pop(L, 1);
 }
 
+/***
+ * Window syntax/filetype change.
+ * @function win_syntax
+ * @tparam Window win the affected window
+ * @tparam string syntax the lexer name or `nil` if syntax highlighting should be disabled for this window
+ * @treturn bool whether the syntax change was successful
+ */
 bool vis_lua_win_syntax(Vis *vis, Win *win, const char *syntax) {
 	lua_State *L = vis->lua;
 	bool ret = false;
@@ -1983,6 +2150,12 @@ bool vis_lua_win_syntax(Vis *vis, Win *win, const char *syntax) {
 	return ret;
 }
 
+/***
+ * Window status bar redraw.
+ * @function win_status
+ * @tparam Window win the affected window
+ * @see status
+ */
 void vis_lua_win_status(Vis *vis, Win *win) {
 	lua_State *L = vis->lua;
 	vis_lua_event_get(L, "win_status");
@@ -1995,6 +2168,11 @@ void vis_lua_win_status(Vis *vis, Win *win) {
 	lua_pop(L, 1);
 }
 
+/***
+ * Theme change.
+ * @function theme_change
+ * @tparam string theme the name of the new theme to load
+ */
 bool vis_theme_load(Vis *vis, const char *name) {
 	lua_State *L = vis->lua;
 	vis_lua_event_get(L, "theme_change");
@@ -2007,21 +2185,5 @@ bool vis_theme_load(Vis *vis, const char *name) {
 	 * require 'themes/'..name */
 	return true;
 }
-
-/***
- * A file range.
- *
- * For a valid range `start <= finish` holds.
- * An invalid range is represented as `nil`.
- * @type Range
- */
-/***
- * The being of the range.
- * @tfield int start
- */
-/***
- * The end of the range.
- * @tfield int finish
- */
 
 #endif

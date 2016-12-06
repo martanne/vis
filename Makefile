@@ -86,8 +86,10 @@ man:
 	done
 
 luadoc:
-	@ldoc -p "Vis Editor" -f markdown -M vis-lua.c -s '!pale' && \
-	sed -e "s/RELEASE/${VERSION}/" -i doc/index.html
+	@cd luadoc && ldoc . && sed -e "s/RELEASE/${VERSION}/" -i index.html
+
+luadoc-all:
+	@cd luadoc && ldoc -a . && sed -e "s/RELEASE/${VERSION}/" -i index.html
 
 install: vis vis-menu
 	@echo stripping executable
@@ -127,4 +129,4 @@ uninstall:
 	@echo removing support files from ${DESTDIR}${SHAREPREFIX}/vis
 	@rm -rf ${DESTDIR}${SHAREPREFIX}/vis
 
-.PHONY: all clean dist install uninstall debug profile coverage test test-update
+.PHONY: all clean dist install uninstall debug profile coverage test test-update luadoc luadoc-all
