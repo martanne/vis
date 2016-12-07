@@ -86,10 +86,10 @@ man:
 	done
 
 luadoc:
-	@cd luadoc && ldoc . && sed -e "s/RELEASE/${VERSION}/" -i index.html
+	@cd lua/doc && ldoc . && sed -e "s/RELEASE/${VERSION}/" -i index.html
 
 luadoc-all:
-	@cd luadoc && ldoc -a . && sed -e "s/RELEASE/${VERSION}/" -i index.html
+	@cd lua/doc && ldoc -a . && sed -e "s/RELEASE/${VERSION}/" -i index.html
 
 install: vis vis-menu
 	@echo stripping executable
@@ -109,7 +109,7 @@ install: vis vis-menu
 	@test ${CONFIG_LUA} -eq 0 || { \
 		echo installing support files to ${DESTDIR}${SHAREPREFIX}/vis; \
 		mkdir -p ${DESTDIR}${SHAREPREFIX}/vis; \
-		cp -r visrc.lua vis.lua lexers ${DESTDIR}${SHAREPREFIX}/vis; \
+		cp -r lua/* ${DESTDIR}${SHAREPREFIX}/vis; \
 	}
 	@echo installing manual pages to ${DESTDIR}${MANPREFIX}/man1
 	@mkdir -p ${DESTDIR}${MANPREFIX}/man1

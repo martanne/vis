@@ -1039,7 +1039,7 @@ function M.load(name, alt_name)
 
   -- Load the language lexer with its rules, styles, etc.
   M.WHITESPACE = (alt_name or name)..'_whitespace'
-  local lexer_file, error = package.searchpath(name, M.LEXERPATH)
+  local lexer_file, error = package.searchpath('lexers/'..name, M.LEXERPATH)
   local ok, lexer = pcall(dofile, lexer_file or '')
   if not ok then
     return nil

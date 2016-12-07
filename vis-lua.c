@@ -1804,10 +1804,8 @@ bool vis_lua_path_add(Vis *vis, const char *path) {
 	lua_getglobal(L, "package");
 	lua_pushstring(L, path);
 	lua_pushstring(L, "/?.lua;");
-	lua_pushstring(L, path);
-	lua_pushstring(L, "/lexers/?.lua;");
-	lua_getfield(L, -5, "path");
-	lua_concat(L, 5);
+	lua_getfield(L, -3, "path");
+	lua_concat(L, 3);
 	lua_setfield(L, -2, "path");
 	lua_pop(L, 1); /* package */
 	return true;
@@ -1888,7 +1886,17 @@ void vis_lua_init(Vis *vis) {
 	ssize_t len = readlink("/proc/self/exe", path, sizeof(path)-1);
 	if (len > 0) {
 		path[len] = '\0';
-		vis_lua_path_add(vis, dirname(path));
+		/* some idotic dirname(3) implementations return pointers to statically
+		 * allocated memory, hence we use memmove to copy it back */
+		char *dir = dirname(path);
+		if (dir) {
+			size_t len = strlen(dir)+1;
+			if (len < sizeof(path) - sizeof("/lua")) {
+				memmove(path, dir, len);
+				strcat(path, "/lua");
+				vis_lua_path_add(vis, path);
+			}
+		}
 	}
 
 	vis_lua_path_add(vis, getenv("VIS_PATH"));

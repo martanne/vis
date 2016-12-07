@@ -9,7 +9,7 @@ based lexers from the [Scintillua](http://foicica.com/scintillua/) project.
 Vis searches the lexers in the following locations:
 
  * `$VIS_PATH/lexers`
- * `./lexers` relative to the binary location (using `/proc/self/exe`)
+ * `./lua/lexers` relative to the binary location (using `/proc/self/exe`)
  * `$XDG_CONFIG_HOME/vis/lexers`
  * `/usr/local/share/vis/lexers`
  * `/usr/share/vis/lexers`
@@ -36,9 +36,34 @@ the table found at the end of the [vis.lua](/vis.lua) file.
 
 Changes to existing lexers should also be sent upstream for consideration.
 
+A template for new lexers:
+
+```
+-- ? LPeg lexer.
+
+local l = require('lexer')
+local token, word_match = l.token, l.word_match
+local P, R, S = lpeg.P, lpeg.R, lpeg.S
+
+local M = {_NAME = '?'}
+
+-- Whitespace.
+local ws = token(l.WHITESPACE, l.space^1)
+
+M._rules = {
+  {'whitespace', ws},
+}
+
+M._tokenstyles = {
+
+}
+
+return M
+```
+
 # Color Themes
 
-The `themes` sub directory contains the color schemes. At startup the
+The `../themes` directory contains the color schemes. At startup the
 `default.lua` theme which should be a symlink to your prefered style is
 used. Themes can be changed at runtime via the `:set theme <name>`
 command where `<name>` does not include the `.lua` file extension.

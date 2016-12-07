@@ -8,7 +8,7 @@ sort=true
 merge=true
 no_space_before_args=true
 file={
-	"../vis-lua.c",
+	"../../vis-lua.c",
 	"../vis.lua",
 }
 	
