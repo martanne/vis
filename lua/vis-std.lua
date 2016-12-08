@@ -70,12 +70,12 @@ vis.events.subscribe(vis.events.WIN_HIGHLIGHT, function(win, horizon_max)
 end)
 
 local modes = {
-	[vis.MODE_NORMAL] = '',
-	[vis.MODE_OPERATOR_PENDING] = '',
-	[vis.MODE_VISUAL] = 'VISUAL',
-	[vis.MODE_VISUAL_LINE] = 'VISUAL-LINE',
-	[vis.MODE_INSERT] = 'INSERT',
-	[vis.MODE_REPLACE] = 'REPLACE',
+	[vis.modes.NORMAL] = '',
+	[vis.modes.OPERATOR_PENDING] = '',
+	[vis.modes.VISUAL] = 'VISUAL',
+	[vis.modes.VISUAL_LINE] = 'VISUAL-LINE',
+	[vis.modes.INSERT] = 'INSERT',
+	[vis.modes.REPLACE] = 'REPLACE',
 }
 
 vis.events.subscribe(vis.events.WIN_STATUS, function(win)

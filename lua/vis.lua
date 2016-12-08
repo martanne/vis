@@ -37,9 +37,9 @@ vis.motion_new = function(vis, key, motion, help)
 	local binding = function()
 		vis:motion(id)
 	end
-	vis:map(vis.MODE_NORMAL, key, binding, help)
-	vis:map(vis.MODE_VISUAL, key, binding, help)
-	vis:map(vis.MODE_OPERATOR_PENDING, key, binding, help)
+	vis:map(vis.modes.NORMAL, key, binding, help)
+	vis:map(vis.modes.VISUAL, key, binding, help)
+	vis:map(vis.modes.OPERATOR_PENDING, key, binding, help)
 	return true
 end
 
@@ -66,8 +66,8 @@ vis.textobject_new = function(vis, key, textobject, help)
 	local binding = function()
 		vis:textobject(id)
 	end
-	vis:map(vis.MODE_VISUAL, key, binding, help)
-	vis:map(vis.MODE_OPERATOR_PENDING, key, binding, help)
+	vis:map(vis.modes.VISUAL, key, binding, help)
+	vis:map(vis.modes.OPERATOR_PENDING, key, binding, help)
 	return true
 end
 

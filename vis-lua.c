@@ -507,28 +507,12 @@ static const char *keymapping(Vis *vis, const char *keys, const Arg *arg) {
  * @tfield Ui ui the user interface being used
  */
 /***
- * Normal mode.
- * @tfield int MODE_NORMAL
+ * Mode constants.
+ * @tfield modes modes
  */
 /***
- * Oerator pending mode.
- * @tfield int MODE_OPERATOR_PENDING
- */
-/***
- * Insert mode.
- * @tfield int MODE_INSERT
- */
-/***
- * Replace mode.
- * @tfield int MODE_REPLACE
- */
-/***
- * Characterwise visual mode.
- * @tfield int MODE_VISUAL
- */
-/***
- * Linewise visual mode.
- * @tfield int MODE_VISUAL_LINE
+ * Events.
+ * @tfield events events
  */
 
 /***
@@ -927,13 +911,7 @@ static int feedkeys(lua_State *L) {
  */
 /***
  * Currently active mode.
- * @tfield int mode
- * @see MODE_NORMAL
- * @see MODE_OPERATOR_PENDING
- * @see MODE_INSERT
- * @see MODE_REPLACE
- * @see MODE_VISUAL
- * @see MODE_VISUAL_LINE
+ * @tfield modes mode
  */
 /***
  * Whether a macro is being recorded.
@@ -1737,6 +1715,24 @@ static const struct luaL_Reg file_lines_funcs[] = {
  */
 
 /***
+ * Modes.
+ * @section Modes
+ */
+
+/***
+ * Mode constants.
+ * @table modes
+ * @tfield int NORMAL
+ * @tfield int OPERATOR_PENDING
+ * @tfield int INSERT
+ * @tfield int REPLACE
+ * @tfield int VISUAL
+ * @tfield int VISUAL_LINE
+ * @see Vis:map
+ * @see Window:map
+ */
+
+/***
  * Core Events.
  *
  * These events are invoked from the editor core.
@@ -1966,22 +1962,26 @@ void vis_lua_init(Vis *vis) {
 	lua_pushstring(L, VERSION);
 	lua_setfield(L, -2, "VERSION");
 
+	lua_newtable(L);
+
 	static const struct {
 		enum VisMode id;
 		const char *name;
 	} modes[] = {
-		{ VIS_MODE_NORMAL,           "MODE_NORMAL"           },
-		{ VIS_MODE_OPERATOR_PENDING, "MODE_OPERATOR_PENDING" },
-		{ VIS_MODE_VISUAL,           "MODE_VISUAL"           },
-		{ VIS_MODE_VISUAL_LINE,      "MODE_VISUAL_LINE"      },
-		{ VIS_MODE_INSERT,           "MODE_INSERT"           },
-		{ VIS_MODE_REPLACE,          "MODE_REPLACE"          },
+		{ VIS_MODE_NORMAL,           "NORMAL"           },
+		{ VIS_MODE_OPERATOR_PENDING, "OPERATOR_PENDING" },
+		{ VIS_MODE_VISUAL,           "VISUAL"           },
+		{ VIS_MODE_VISUAL_LINE,      "VISUAL_LINE"      },
+		{ VIS_MODE_INSERT,           "INSERT"           },
+		{ VIS_MODE_REPLACE,          "REPLACE"          },
 	};
 
 	for (size_t i = 0; i < LENGTH(modes); i++) {
 		lua_pushunsigned(L, modes[i].id);
 		lua_setfield(L, -2, modes[i].name);
 	}
+
+	lua_setfield(L, -2, "modes");
 
 	obj_ref_new(L, vis, "vis");
 	lua_setglobal(L, "vis");
