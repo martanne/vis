@@ -2049,7 +2049,7 @@ bool vis_lua_file_save_pre(Vis *vis, File *file, const char *path) {
 		lua_pushstring(L, path);
 		if (pcall(vis, L, 2, 1) != 0)
 			return false;
-		return lua_toboolean(L, -1);
+		return !lua_isboolean(L, -1) || lua_toboolean(L, -1);
 	}
 	lua_pop(L, 1);
 	return true;
