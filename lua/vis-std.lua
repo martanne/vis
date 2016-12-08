@@ -115,5 +115,3 @@ vis.events.subscribe(vis.events.WIN_STATUS, function(win)
 	local right = ' ' .. table.concat(right_parts, " « ") .. ' '
 	win:status(left, right);
 end)
-
-vis:command("set theme ".. (vis.ui.colors <= 16 and "default-16" or "default-256"))

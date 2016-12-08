@@ -1846,6 +1846,15 @@ static bool package_exist(Vis *vis, lua_State *L, const char *name) {
 	return ret;
 }
 
+/***
+ * Editor initialization completed.
+ * This event is emitted immediately after `visrc.lua` has been sourced, but
+ * before any other events have occured, in particular the command line arguments
+ * have not yet been processed.
+ *
+ * Can be used to set *global* configuration options.
+ * @function init
+ */
 void vis_lua_init(Vis *vis) {
 	lua_State *L = luaL_newstate();
 	if (!L)
@@ -1979,6 +1988,7 @@ void vis_lua_init(Vis *vis) {
 		lua_getglobal(L, "require");
 		lua_pushstring(L, "visrc");
 		pcall(vis, L, 1, 0);
+		vis_lua_event_call(vis, "init");
 	}
 }
 
@@ -1987,7 +1997,6 @@ void vis_lua_init(Vis *vis) {
  * This event is emitted immediately before the main loop starts.
  * At this point all files are loaded and corresponding windows are created.
  * We are about to process interactive keyboard input.
- * Can be used to set *global* configuration options.
  * @function start
  */
 void vis_lua_start(Vis *vis) {
