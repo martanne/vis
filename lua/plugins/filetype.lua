@@ -356,7 +356,7 @@ vis.ftdetect.filetypes = {
 	},
 }
 
-vis.filetype_detect = function(win)
+vis.events.subscribe(vis.events.WIN_OPEN, function(win)
 	local name = win.file.name
 	-- remove ignored suffixes from filename
 	local sanitizedfn = name
@@ -425,5 +425,5 @@ vis.filetype_detect = function(win)
 	end
 
 	win.syntax = nil
-end
+end)
 

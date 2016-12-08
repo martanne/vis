@@ -3,15 +3,12 @@ require('vis')
 require('plugins/filetype')
 require('plugins/textobject-lexer')
 
-vis.events.start = function()
+vis.events.subscribe(vis.events.START, function()
 	-- Your global configuration options e.g.
 	-- vis:command('map! normal j gj')
-end
+end)
 
-vis.events.win_open = function(win)
-	-- enable syntax highlighting for known file types
-	vis.filetype_detect(win)
-
+vis.events.subscribe(vis.events.WIN_OPEN, function(win)
 	-- Your per window configuration options e.g.
 	-- vis:command('set number')
-end
+end)

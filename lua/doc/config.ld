@@ -7,6 +7,7 @@ dir="."
 sort=true
 merge=true
 no_space_before_args=true
+not_luadoc=true
 file={
 	"../../vis-lua.c",
 	"../vis.lua",

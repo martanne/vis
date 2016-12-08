@@ -1,6 +1,6 @@
 -- standard vis event handlers
 
-vis.events.theme_change = function(name)
+vis.events.subscribe(vis.events.THEME_CHANGE, function(name)
 	if name ~= nil then
 		local theme = 'themes/'..name
 		package.loaded[theme] = nil
@@ -12,9 +12,9 @@ vis.events.theme_change = function(name)
 	for win in vis:windows() do
 		win.syntax = win.syntax;
 	end
-end
+end)
 
-vis.events.win_syntax = function(win, name)
+vis.events.subscribe(vis.events.WIN_SYNTAX, function(win, name)
 	local lexers = vis.lexers
 	if not lexers.load then return false end
 
@@ -37,9 +37,9 @@ vis.events.win_syntax = function(win, name)
 	end
 
 	return true
-end
+end)
 
-vis.events.win_highlight = function(win, horizon_max)
+vis.events.subscribe(vis.events.WIN_HIGHLIGHT, function(win, horizon_max)
 	if win.syntax == nil or vis.lexers == nil then return end
 	local lexer = vis.lexers.load(win.syntax)
 	if lexer == nil then return end
@@ -67,7 +67,7 @@ vis.events.win_highlight = function(win, horizon_max)
 		end
 		token_start = token_end
 	end
-end
+end)
 
 local modes = {
 	[vis.MODE_NORMAL] = '',
@@ -78,7 +78,7 @@ local modes = {
 	[vis.MODE_REPLACE] = 'REPLACE',
 }
 
-vis.events.win_status = function(win)
+vis.events.subscribe(vis.events.WIN_STATUS, function(win)
 	local left_parts = {}
 	local right_parts = {}
 	local file = win.file
@@ -114,6 +114,6 @@ vis.events.win_status = function(win)
 	local left = ' ' .. table.concat(left_parts, " » ") .. ' '
 	local right = ' ' .. table.concat(right_parts, " « ") .. ' '
 	win:status(left, right);
-end
+end)
 
 vis:command("set theme ".. (vis.ui.colors <= 16 and "default-16" or "default-256"))

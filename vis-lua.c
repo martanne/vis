@@ -1733,13 +1733,14 @@ static const struct luaL_Reg file_lines_funcs[] = {
  */
 
 /***
- * Events.
+ * Core Events.
  *
  * These events are invoked from the editor core.
- * The following functions are looked up in the `vis.events` table.
- * Keep in mind that the editor is blocked while the event handlers
- * are being executed, avoid long running tasks.
- * @section Events
+ * The following functions are invoked if they are registered in the
+ * `vis.events` table. Users scripts should generally use the [Events](#events)
+ * mechanism instead which multiplexes these core events.
+ *
+ * @section Core Events
  */
 
 static void vis_lua_event_get(lua_State *L, const char *name) {
