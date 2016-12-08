@@ -37,7 +37,7 @@ test_script:
   - '%CYG_ROOT%\bin\bash -lc "cd $APPVEYOR_BUILD_FOLDER && make test"'
 
 after_test:
-  - 7z a -y vis-%CYG_ARCH%.zip vis.exe lexers *.lua
+  - 7z a -y vis-%CYG_ARCH%.zip vis.exe lua
 
 artifacts:
   - path: vis-%CYG_ARCH%.zip
