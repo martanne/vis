@@ -2186,9 +2186,9 @@ static void signal_handler(int signum, siginfo_t *siginfo, void *context) {
 int main(int argc, char *argv[]) {
 
 	VisEvent event = {
-		.vis_init = vis_lua_init,
-		.vis_start = vis_lua_start,
-		.vis_quit = vis_lua_quit,
+		.init = vis_lua_init,
+		.start = vis_lua_start,
+		.quit = vis_lua_quit,
 		.file_open = vis_lua_file_open,
 		.file_save_pre = vis_lua_file_save_pre,
 		.file_save_post = vis_lua_file_save_post,

@@ -28,9 +28,9 @@ typedef struct Win Win;
 #endif
 
 typedef struct {
-	void (*vis_init)(Vis*);
-	void (*vis_start)(Vis*);
-	void (*vis_quit)(Vis*);
+	void (*init)(Vis*);
+	void (*start)(Vis*);
+	void (*quit)(Vis*);
 	void (*file_open)(Vis*, File*);
 	bool (*file_save_pre)(Vis*, File*, const char *path);
 	void (*file_save_post)(Vis*, File*, const char *path);

@@ -40,8 +40,8 @@ bool vis_event_emit(Vis *vis, enum VisEvents id, ...) {
 	if (!vis->initialized) {
 		vis->initialized = true;
 		vis->ui->init(vis->ui, vis);
-		if (vis->event && vis->event->vis_init)
-			vis->event->vis_init(vis);
+		if (vis->event && vis->event->init)
+			vis->event->init(vis);
 	}
 
 	va_list ap;
@@ -50,12 +50,10 @@ bool vis_event_emit(Vis *vis, enum VisEvents id, ...) {
 
 	switch (id) {
 	case VIS_EVENT_INIT:
-		if (vis->event->vis_init)
-			vis->event->vis_init(vis);
 		break;
 	case VIS_EVENT_START:
-		if (vis->event->vis_start)
-			vis->event->vis_start(vis);
+		if (vis->event->start)
+			vis->event->start(vis);
 		break;
 	case VIS_EVENT_FILE_OPEN:
 	case VIS_EVENT_FILE_SAVE_PRE:
@@ -102,8 +100,8 @@ bool vis_event_emit(Vis *vis, enum VisEvents id, ...) {
 		break;
 	}
 	case VIS_EVENT_QUIT:
-		if (vis->event->vis_quit)
-			vis->event->vis_quit(vis);
+		if (vis->event->quit)
+			vis->event->quit(vis);
 		break;
 	}
 
