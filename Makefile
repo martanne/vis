@@ -82,7 +82,7 @@ dist: clean
 man:
 	@for m in ${MANUALS}; do \
 		echo "Generating $$m"; \
-		sed -e "s/VERSION/${VERSION}/" "$$m" | mandoc -W warning -T utf8 -T xhtml -O man=%N.%S.html -O style=mandoc.css 1> "$$m".html || true; \
+		sed -e "s/VERSION/${VERSION}/" "man/$$m" | mandoc -W warning -T utf8 -T xhtml -O man=%N.%S.html -O style=mandoc.css 1> "man/$$m.html" || true; \
 	done
 
 luadoc:
@@ -114,7 +114,7 @@ install: vis vis-menu
 	@echo installing manual pages to ${DESTDIR}${MANPREFIX}/man1
 	@mkdir -p ${DESTDIR}${MANPREFIX}/man1
 	@for m in ${MANUALS}; do \
-		sed -e "s/VERSION/${VERSION}/" < "$$m" >  "${DESTDIR}${MANPREFIX}/man1/$$m" && \
+		sed -e "s/VERSION/${VERSION}/" < "man/$$m" >  "${DESTDIR}${MANPREFIX}/man1/$$m" && \
 		chmod 644 "${DESTDIR}${MANPREFIX}/man1/$$m"; \
 	done
 
@@ -129,4 +129,4 @@ uninstall:
 	@echo removing support files from ${DESTDIR}${SHAREPREFIX}/vis
 	@rm -rf ${DESTDIR}${SHAREPREFIX}/vis
 
-.PHONY: all clean dist install uninstall debug profile coverage test test-update luadoc luadoc-all
+.PHONY: all clean dist install uninstall debug profile coverage test test-update luadoc luadoc-all man
