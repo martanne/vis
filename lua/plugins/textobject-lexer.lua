@@ -31,4 +31,4 @@ vis:textobject_new("ii", function(win, pos)
 	end
 
 	return pos, pos
-end)
+end, "Current lexer token")

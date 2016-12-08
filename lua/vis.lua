@@ -22,13 +22,14 @@ end
 -- return the resulting position.
 -- @tparam string key the key to associate with the new mption
 -- @tparam function motion the motion logic implemented as Lua function
+-- @tparam[opt] string help the single line help text as displayed in `:help`
 -- @treturn bool whether the new motion could be installed
 -- @usage
 -- vis:motion_new("<C-l>", function(win, pos)
 -- 	return pos+1
--- end)
+-- end, "Advance to next byte")
 --
-vis.motion_new = function(vis, key, motion)
+vis.motion_new = function(vis, key, motion, help)
 	local id = vis:motion_register(motion)
 	if id < 0 then
 		return false
@@ -36,9 +37,9 @@ vis.motion_new = function(vis, key, motion)
 	local binding = function()
 		vis:motion(id)
 	end
-	vis:map(vis.MODE_NORMAL, key, binding)
-	vis:map(vis.MODE_VISUAL, key, binding)
-	vis:map(vis.MODE_OPERATOR_PENDING, key, binding)
+	vis:map(vis.MODE_NORMAL, key, binding, help)
+	vis:map(vis.MODE_VISUAL, key, binding, help)
+	vis:map(vis.MODE_OPERATOR_PENDING, key, binding, help)
 	return true
 end
 
@@ -50,13 +51,14 @@ end
 -- expected to return the resulting range or `nil`.
 -- @tparam string key the key associated with the new text object
 -- @tparam function textobject the text object logic implemented as Lua function
+-- @tparam[opt] string help the single line help text as displayed in `:help`
 -- @treturn bool whether the new text object could be installed
 -- @usage
 -- vis:textobject_new("<C-l>", function(win, pos)
 -- 	return pos, pos+1
--- end)
+-- end, "Single byte text object")
 --
-vis.textobject_new = function(vis, key, textobject)
+vis.textobject_new = function(vis, key, textobject, help)
 	local id = vis:textobject_register(textobject)
 	if id < 0 then
 		return false
@@ -64,8 +66,8 @@ vis.textobject_new = function(vis, key, textobject)
 	local binding = function()
 		vis:textobject(id)
 	end
-	vis:map(vis.MODE_VISUAL, key, binding)
-	vis:map(vis.MODE_OPERATOR_PENDING, key, binding)
+	vis:map(vis.MODE_VISUAL, key, binding, help)
+	vis:map(vis.MODE_OPERATOR_PENDING, key, binding, help)
 	return true
 end
 

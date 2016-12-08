@@ -692,9 +692,9 @@ static int keymap(lua_State *L, Vis *vis, Win *win) {
 
 	int mode = luaL_checkint(L, 2);
 	const char *key = luaL_checkstring(L, 3);
-
 	if (!key || !lua_isfunction(L, 4))
 		goto err;
+	const char *help = luaL_optstring(L, 5, NULL);
 	if (!(binding = calloc(1, sizeof *binding)) || !(action = calloc(1, sizeof *action)))
 		goto err;
 
@@ -706,7 +706,7 @@ static int keymap(lua_State *L, Vis *vis, Win *win) {
 
 	*action = (KeyAction){
 		.name = NULL,
-		.help = NULL,
+		.help = help ? strdup(help) : help,
 		.func = keymapping,
 		.arg = (const Arg){
 			.v = func,
@@ -739,7 +739,9 @@ err:
  *
  * @function map
  * @tparam int mode the mode to which the mapping should be added
+ * @tparam string key the key to map
  * @tparam function func the Lua function to handle the key mapping
+ * @tparam[opt] string help the single line help text as displayed in `:help`
  * @treturn bool whether the mapping was successfully established
  * @see Window:map
  */
@@ -1149,7 +1151,9 @@ static int window_cursors_iterator(lua_State *L) {
  *
  * @function map
  * @tparam int mode the mode to which the mapping should be added
+ * @tparam string key the key to map
  * @tparam function func the Lua function to handle the key mapping
+ * @tparam[opt] string help the single line help text as displayed in `:help`
  * @treturn bool whether the mapping was successfully established
  * @see Vis:map
  */
