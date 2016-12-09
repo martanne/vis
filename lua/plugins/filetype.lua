@@ -13,6 +13,7 @@ vis.ftdetect.filetypes = {
 	},
 	ansi_c = {
 		ext = { ".c", ".C", ".h" },
+		mime = { "text/x-c" },
 	},
 	antlr = {
 		ext = { ".g", ".g4" },
@@ -62,9 +63,11 @@ vis.ftdetect.filetypes = {
 	},
 	coffeescript = {
 		ext = { ".coffee" },
+		mime = { "text/x-coffee" },
 	},
 	cpp = {
 		ext = { ".cpp", ".cxx", ".c++", ".cc", ".hh", ".hpp", ".hxx", ".h++" },
+		mime = { "text/x-c++" },
 	},
 	crystal = {
 		ext = { ".cr" },
@@ -74,6 +77,7 @@ vis.ftdetect.filetypes = {
 	},
 	css = {
 		ext = { ".css" },
+		mime = { "text/x-css" },
 	},
 	cuda = {
 		ext = { ".cu", ".cuh" },
@@ -152,9 +156,11 @@ vis.ftdetect.filetypes = {
 	},
 	haskell = {
 		ext = { ".hs" },
+		mime = { "text/x-haskell" },
 	},
 	html = {
 		ext = { ".htm", ".html", ".shtm", ".shtml", ".xhtml" },
+		mime = { "text/x-html" },
 	},
 	icon = {
 		ext = { ".icn" },
@@ -179,12 +185,14 @@ vis.ftdetect.filetypes = {
 	},
 	json = {
 		ext = { ".json" },
+		mime = { "text/x-json" },
 	},
 	jsp = {
 		ext = { ".jsp" },
 	},
 	latex = {
 		ext = { ".bbl", ".dtx", ".ins", ".ltx", ".tex", ".sty" },
+		mime = { "text/x-tex" },
 	},
 	ledger = {
 		ext = { ".ledger", ".journal" },
@@ -197,24 +205,29 @@ vis.ftdetect.filetypes = {
 	},
 	lisp = {
 		ext = { ".cl", ".el", ".lisp", ".lsp" },
+		mime = { "text/x-lisp" },
 	},
 	litcoffee = {
 		ext = { ".litcoffee" },
 	},
 	lua = {
 		ext = { ".lua" },
+		mime = { "text/x-lua" },
 	},
 	makefile = {
 		ext = { ".iface", ".mak", ".mk", "GNUmakefile", "makefile", "Makefile" },
+		mime = { "text/x-makefile" },
 	},
 	man = {
 		ext = { ".1", ".2", ".3", ".4", ".5", ".6", ".7", ".8", ".9", ".1x", ".2x", ".3x", ".4x", ".5x", ".6x", ".7x", ".8x", ".9x" },
 	},
 	markdown = {
 		ext = { ".md", ".markdown" },
+		mime = { "text/x-markdown" },
 	},
 	moonscript = {
 		ext = { ".moon" },
+		mime = { "text/x-moon" },
 	},
 	nemerle = {
 		ext = { ".n" },
@@ -230,12 +243,14 @@ vis.ftdetect.filetypes = {
 	},
 	objective_c = {
 		ext = { ".m", ".mm", ".objc" },
+		mime = { "text/x-objc" },
 	},
 	pascal = {
 		ext = { ".dpk", ".dpr", ".p", ".pas" },
 	},
 	perl = {
 		ext = { ".al", ".perl", ".pl", ".pm", ".pod" },
+		mime = { "text/x-perl" },
 	},
 	php = {
 		ext = { ".inc", ".php", ".php3", ".php4", ".phtml" },
@@ -269,6 +284,7 @@ vis.ftdetect.filetypes = {
 	},
 	python = {
 		ext = { ".sc", ".py", ".pyw" },
+		mime = { "text/x-python" },
 	},
 	rebol = {
 		ext = { ".r", ".reb" },
@@ -287,15 +303,19 @@ vis.ftdetect.filetypes = {
 	},
 	ruby = {
 		ext = { ".Rakefile", ".rake", ".rb", ".rbw" },
+		mime = { "text/x-ruby" },
 	},
 	rust = {
 		ext = { ".rs" },
+		mime = { "text/x-rust" },
 	},
 	sass = {
 		ext = { ".sass", ".scss" },
+		mime = { "text/x-sass", "text/x-scss" },
 	},
 	scala = {
 		ext = { ".scala" },
+		mime = { "text/x-scala" },
 	},
 	scheme = {
 		ext = { ".sch", ".scm" },
@@ -353,6 +373,7 @@ vis.ftdetect.filetypes = {
 	},
 	yaml = {
 		ext = { ".yaml" },
+		mime = { "text/x-yaml" },
 	},
 }
 
