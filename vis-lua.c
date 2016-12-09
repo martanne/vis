@@ -1613,6 +1613,31 @@ err:
 	return 1;
 }
 
+/***
+ * Word text object.
+ *
+ * @function text_object_word
+ * @tparam int pos the position which must be part of the word
+ * @treturn Range range the range
+ */
+
+static int file_text_object(lua_State *L) {
+	Filerange range = text_range_empty();
+	File *file = obj_ref_check(L, 1, "vis.file");
+	if (!file)
+		goto err;
+	size_t pos = checkpos(L, 2);
+	size_t idx = lua_tointeger(L, lua_upvalueindex(1));
+	if (idx >= LENGTH(vis_textobjects))
+		goto err;
+	const TextObject *txtobj = &vis_textobjects[idx];
+	if (txtobj->txt)
+		range = txtobj->txt(file->text, pos);
+err:
+	pushrange(L, &range);
+	return 1;
+}
+
 static const struct luaL_Reg file_funcs[] = {
 	{ "__index", file_index },
 	{ "__newindex", file_newindex },
@@ -1924,13 +1949,28 @@ void vis_lua_init(Vis *vis) {
 	lua_setfield(L, LUA_REGISTRYINDEX, "vis.functions");
 	/* metatable used to type check user data */
 	obj_type_new(L, "vis.file");
+
+	const struct {
+		enum VisTextObject id;
+		const char *name;
+	} textobjects[] = {
+		{ VIS_TEXTOBJECT_INNER_WORD, "text_object_word" },
+	};
+
+	for (size_t i = 0; i < LENGTH(textobjects); i++) {
+		lua_pushunsigned(L, textobjects[i].id);
+		lua_pushcclosure(L, file_text_object, 1);
+		lua_setfield(L, -2, textobjects[i].name);
+	}
+
 	luaL_setfuncs(L, file_funcs, 0);
+
 	obj_type_new(L, "vis.file.text");
 	luaL_setfuncs(L, file_lines_funcs, 0);
 	obj_type_new(L, "vis.window");
 	luaL_setfuncs(L, window_funcs, 0);
 
-	static const struct {
+	const struct {
 		enum UiStyle id;
 		const char *name;
 	} styles[] = {
