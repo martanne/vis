@@ -104,15 +104,15 @@ system clipboard integration via shell script <a class="link-man" href="vis-clip
 <dt class="list-tag" style="margin-top: 1.00em;">
 &quot;0</dt>
 <dd class="list-tag" style="margin-left: 6.00ex;">
-yank register, least recently yanked range</dd>
+yank register, most recently yanked range</dd>
 <dt class="list-tag" style="margin-top: 1.00em;">
 &quot;/</dt>
 <dd class="list-tag" style="margin-left: 6.00ex;">
-search register, least recently used search pattern</dd>
+search register, most recently used search pattern</dd>
 <dt class="list-tag" style="margin-top: 1.00em;">
 &quot;:</dt>
 <dd class="list-tag" style="margin-left: 6.00ex;">
-command register, least recently executed command</dd>
+command register, most recently executed command</dd>
 <dt class="list-tag" style="margin-top: 1.00em;">
 &quot;_</dt>
 <dd class="list-tag" style="margin-left: 6.00ex;">
@@ -122,7 +122,7 @@ black hole (/dev/null) register, ignore content is always empty</dd>
 </div>
 If no explicit register is specified a default register is used.</div>
 <div class="subsection">
-<h2 id="Macros">Macros</h2> The general purpose registers <b class="flag">&quot;a-&quot;z</b> can be used to record macros. Use one of <b class="flag">&quot;A-&quot;Z</b> to append to an existing macro. <b class="cmd">q</b> starts a recording, <b class="cmd">@</b> plays it back. <b class="cmd">@@</b> refers to the least recently recorded macro. <b class="cmd">@:</b> repeats the last :-command. <b class="cmd">@/</b> is equivalent to <b class="cmd">n</b> in normal mode.</div>
+<h2 id="Macros">Macros</h2> The general purpose registers <b class="flag">&quot;a-&quot;z</b> can be used to record macros. Use one of <b class="flag">&quot;A-&quot;Z</b> to append to an existing macro. <b class="cmd">q</b> starts a recording, <b class="cmd">@</b> plays it back. <b class="cmd">@@</b> refers to the most recently recorded macro. <b class="cmd">@:</b> repeats the last :-command. <b class="cmd">@/</b> is equivalent to <b class="cmd">n</b> in normal mode.</div>
 <div class="subsection">
 <h2 id="Jump_list_and_Change_list">Jump list and Change list</h2> A per window, fixed sized file local jump list (navigate with &#10216;<b class="cmd">C-O</b>&#10217; and &#10216;<b class="cmd">C-I</b>&#10217;) and change list (navigate with <b class="cmd">g;</b> and <b class="cmd">g,</b>) is supported.</div>
 <div class="subsection">
@@ -804,7 +804,7 @@ align all cursors by inserting spaces</dd>
 </div>
 <div class="section">
 <h1 id="VI(M)_COMMANDS">VI(M) COMMANDS</h1> Any unique prefix can be used to abbreviate a command.<div class="subsection">
-<h2 id="File_and_Window_management">File and Window management</h2> A file must be opened in at least one window. If the last window displaying a certain file is closed all unsaved changes are discarded. Windows are equally sized and can be displayed in either horizontal or vertical fashion.<dl style="margin-top: 0.00em;margin-bottom: 0.00em;" class="list list-tag">
+<h2 id="File_and_Window_management">File and Window management</h2> A file must be opened in at least one window. If the last window displaying a certain file is closed all unsaved changes are discarded. Windows are equally sized and can be displayed in either horizontal or vertical fashion. The &#10216;C-w&#10217; h, &#10216;C-w&#10217; j, &#10216;C-w&#10217; k and &#10216;C-w&#10217; l key mappings can be used to switch between windows.<dl style="margin-top: 0.00em;margin-bottom: 0.00em;" class="list list-tag">
 <dt class="list-tag" style="margin-top: 1.00em;">
 <b class="flag">:new</b></dt>
 <dd class="list-tag" style="margin-left: 6.00ex;">
@@ -967,10 +967,6 @@ Whether to display replacement symbol instead of tabs.</dd>
 <dd class="list-tag" style="margin-left: 6.00ex;">
 Whether to display replacement symbol instead of newlines.</dd>
 <dt class="list-tag" style="margin-top: 1.00em;">
-<b class="flag">show-tabs</b> [off]</dt>
-<dd class="list-tag" style="margin-left: 6.00ex;">
-Whether to display replacement symbol instead of newlines.</dd>
-<dt class="list-tag" style="margin-top: 1.00em;">
 <b class="flag">show-spaces</b> [off]</dt>
 <dd class="list-tag" style="margin-left: 6.00ex;">
 Whether to display replacement symbol instead of blank cells.</dd>
@@ -1102,7 +1098,7 @@ Spawn background process and pipe range to its standard input:<div class="spacer
 <td class="foot-date">
 December 5, 2016</td>
 <td class="foot-os">
-Vis v0.2-520-ge552275</td>
+Vis v0.2-538-gc2bfd4b</td>
 </tr>
 </tbody>
 </table>

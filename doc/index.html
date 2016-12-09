@@ -35,6 +35,8 @@
 <li><a href="#Class_File">Class File </a></li>
 <li><a href="#Class_Ui">Class Ui </a></li>
 <li><a href="#Class_Range">Class Range </a></li>
+<li><a href="#Modes">Modes </a></li>
+<li><a href="#Core_Events">Core Events </a></li>
 <li><a href="#Events">Events </a></li>
 </ul>
 
@@ -52,9 +54,11 @@
 <p>Lua Extension API for the <a href="https://github.com/martanne/vis">Vis Editor</a>.</p>
 <p> <em>WARNING:</em> there is no stability guarantee at this time, the API might
  change without notice!</p>
+
+<p> This document might be out of date, run <code>make luadoc</code> to regenerate it.</p>
     <h3>Info:</h3>
     <ul>
-        <li><strong>Release</strong>: v0.2-520-ge552275</li>
+        <li><strong>Release</strong>: v0.2-538-gc2bfd4b</li>
         <li><strong>License</strong>: ISC</li>
         <li><strong>Author</strong>: Marc André Tanner</li>
     </ul>
@@ -63,32 +67,12 @@
 <h2><a href="#Class_Vis">Class Vis </a></h2>
 <table class="function_list">
 	<tr>
-	<td class="name" nowrap><a href="#Vis.MODE_INSERT">Vis.MODE_INSERT</a></td>
-	<td class="summary">Insert mode.</td>
-	</tr>
-	<tr>
-	<td class="name" nowrap><a href="#Vis.MODE_NORMAL">Vis.MODE_NORMAL</a></td>
-	<td class="summary">Normal mode.</td>
-	</tr>
-	<tr>
-	<td class="name" nowrap><a href="#Vis.MODE_OPERATOR_PENDING">Vis.MODE_OPERATOR_PENDING</a></td>
-	<td class="summary">Oerator pending mode.</td>
-	</tr>
-	<tr>
-	<td class="name" nowrap><a href="#Vis.MODE_REPLACE">Vis.MODE_REPLACE</a></td>
-	<td class="summary">Replace mode.</td>
-	</tr>
-	<tr>
-	<td class="name" nowrap><a href="#Vis.MODE_VISUAL">Vis.MODE_VISUAL</a></td>
-	<td class="summary">Characterwise visual mode.</td>
-	</tr>
-	<tr>
-	<td class="name" nowrap><a href="#Vis.MODE_VISUAL_LINE">Vis.MODE_VISUAL_LINE</a></td>
-	<td class="summary">Linewise visual mode.</td>
-	</tr>
-	<tr>
 	<td class="name" nowrap><a href="#Vis.VERSION">Vis.VERSION</a></td>
 	<td class="summary">Version information.</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#Vis.events">Vis.events</a></td>
+	<td class="summary">Events.</td>
 	</tr>
 	<tr>
 	<td class="name" nowrap><a href="#Vis.lexers">Vis.lexers</a></td>
@@ -97,6 +81,10 @@
 	<tr>
 	<td class="name" nowrap><a href="#Vis.mode">Vis.mode</a></td>
 	<td class="summary">Currently active mode.</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#Vis.modes">Vis.modes</a></td>
+	<td class="summary">Mode constants.</td>
 	</tr>
 	<tr>
 	<td class="name" nowrap><a href="#Vis.recording">Vis.recording</a></td>
@@ -131,7 +119,7 @@
 	<td class="summary">Display a short message.</td>
 	</tr>
 	<tr>
-	<td class="name" nowrap><a href="#Vis:map">Vis:map(mode, func)</a></td>
+	<td class="name" nowrap><a href="#Vis:map">Vis:map(mode, key, func[, help])</a></td>
 	<td class="summary">Map a key to a Lua function.</td>
 	</tr>
 	<tr>
@@ -139,7 +127,7 @@
 	<td class="summary">Display a multi line message.</td>
 	</tr>
 	<tr>
-	<td class="name" nowrap><a href="#Vis:motion_new">Vis:motion_new(key, motion)</a></td>
+	<td class="name" nowrap><a href="#Vis:motion_new">Vis:motion_new(key, motion[, help])</a></td>
 	<td class="summary">Map a new motion.</td>
 	</tr>
 	<tr>
@@ -147,7 +135,7 @@
 	<td class="summary">Open a file.</td>
 	</tr>
 	<tr>
-	<td class="name" nowrap><a href="#Vis:textobject_new">Vis:textobject_new(key, textobject)</a></td>
+	<td class="name" nowrap><a href="#Vis:textobject_new">Vis:textobject_new(key, textobject[, help])</a></td>
 	<td class="summary">Map a new text object.</td>
 	</tr>
 	<tr>
@@ -194,7 +182,7 @@
 	<td class="summary">Redraw window content.</td>
 	</tr>
 	<tr>
-	<td class="name" nowrap><a href="#Window:map">Window:map(mode, func)</a></td>
+	<td class="name" nowrap><a href="#Window:map">Window:map(mode, key, func[, help])</a></td>
 	<td class="summary">Map a window local key to a Lua function.</td>
 	</tr>
 	<tr>
@@ -287,6 +275,10 @@
 	<td class="name" nowrap><a href="#File:lines_iterator">File:lines_iterator()</a></td>
 	<td class="summary">Create an iterator over all lines of the file.</td>
 	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#File:text_object_word">File:text_object_word(pos)</a></td>
+	<td class="summary">Word text object.</td>
+	</tr>
 </table>
 <h2><a href="#Class_Ui">Class Ui </a></h2>
 <table class="function_list">
@@ -306,7 +298,14 @@
 	<td class="summary">The being of the range.</td>
 	</tr>
 </table>
-<h2><a href="#Events">Events </a></h2>
+<h2><a href="#Modes">Modes </a></h2>
+<table class="function_list">
+	<tr>
+	<td class="name" nowrap><a href="#modes">modes</a></td>
+	<td class="summary">Mode constants.</td>
+	</tr>
+</table>
+<h2><a href="#Core_Events">Core Events </a></h2>
 <table class="function_list">
 	<tr>
 	<td class="name" nowrap><a href="#file_close">file_close(file)</a></td>
@@ -323,6 +322,14 @@
 	<tr>
 	<td class="name" nowrap><a href="#file_save_pre">file_save_pre(file, path)</a></td>
 	<td class="summary">File pre save.</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#init">init()</a></td>
+	<td class="summary">Editor initialization completed.</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#input">input(key)</a></td>
+	<td class="summary">Input key event in either input or replace mode.</td>
 	</tr>
 	<tr>
 	<td class="name" nowrap><a href="#quit">quit()</a></td>
@@ -357,6 +364,25 @@
 	<td class="summary">Window syntax/filetype change.</td>
 	</tr>
 </table>
+<h2><a href="#Events">Events </a></h2>
+<table class="function_list">
+	<tr>
+	<td class="name" nowrap><a href="#events">events</a></td>
+	<td class="summary">Event names.</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#events.emit">events.emit(event, ...)</a></td>
+	<td class="summary">Generate event.</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#events.subscribe">events.subscribe(event, handler[, index])</a></td>
+	<td class="summary">Subscribe to an event.</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#events.unsubscribe">events.unsubscribe(event, handler)</a></td>
+	<td class="summary">Unsubscribe from an event.</td>
+	</tr>
+</table>
 
 <br/>
 <br/>
@@ -369,138 +395,6 @@
           </div>
     <dl class="function">
     <dt>
-    <a name = "Vis.MODE_INSERT"></a>
-    <strong>Vis.MODE_INSERT</strong>
-    </dt>
-    <dd>
-    Insert mode.
-
-
-    <ul>
-        <li><span class="parameter">MODE_INSERT</span>
-            <span class="types"><span class="type">int</span></span>
-
-
-
-        </li>
-    </ul>
-
-
-
-
-
-</dd>
-    <dt>
-    <a name = "Vis.MODE_NORMAL"></a>
-    <strong>Vis.MODE_NORMAL</strong>
-    </dt>
-    <dd>
-    Normal mode.
-
-
-    <ul>
-        <li><span class="parameter">MODE_NORMAL</span>
-            <span class="types"><span class="type">int</span></span>
-
-
-
-        </li>
-    </ul>
-
-
-
-
-
-</dd>
-    <dt>
-    <a name = "Vis.MODE_OPERATOR_PENDING"></a>
-    <strong>Vis.MODE_OPERATOR_PENDING</strong>
-    </dt>
-    <dd>
-    Oerator pending mode.
-
-
-    <ul>
-        <li><span class="parameter">MODE_OPERATOR_PENDING</span>
-            <span class="types"><span class="type">int</span></span>
-
-
-
-        </li>
-    </ul>
-
-
-
-
-
-</dd>
-    <dt>
-    <a name = "Vis.MODE_REPLACE"></a>
-    <strong>Vis.MODE_REPLACE</strong>
-    </dt>
-    <dd>
-    Replace mode.
-
-
-    <ul>
-        <li><span class="parameter">MODE_REPLACE</span>
-            <span class="types"><span class="type">int</span></span>
-
-
-
-        </li>
-    </ul>
-
-
-
-
-
-</dd>
-    <dt>
-    <a name = "Vis.MODE_VISUAL"></a>
-    <strong>Vis.MODE_VISUAL</strong>
-    </dt>
-    <dd>
-    Characterwise visual mode.
-
-
-    <ul>
-        <li><span class="parameter">MODE_VISUAL</span>
-            <span class="types"><span class="type">int</span></span>
-
-
-
-        </li>
-    </ul>
-
-
-
-
-
-</dd>
-    <dt>
-    <a name = "Vis.MODE_VISUAL_LINE"></a>
-    <strong>Vis.MODE_VISUAL_LINE</strong>
-    </dt>
-    <dd>
-    Linewise visual mode.
-
-
-    <ul>
-        <li><span class="parameter">MODE_VISUAL_LINE</span>
-            <span class="types"><span class="type">int</span></span>
-
-
-
-        </li>
-    </ul>
-
-
-
-
-
-</dd>
-    <dt>
     <a name = "Vis.VERSION"></a>
     <strong>Vis.VERSION</strong>
     </dt>
@@ -512,6 +406,28 @@
         <li><span class="parameter">VERSION</span>
             <span class="types"><a class="type" href="https://www.lua.org/manual/5.1/manual.html#5.4">string</a></span>
          version information in <code>git describe</code> format, same as reported by <code>vis -v</code>.
+        </li>
+    </ul>
+
+
+
+
+
+</dd>
+    <dt>
+    <a name = "Vis.events"></a>
+    <strong>Vis.events</strong>
+    </dt>
+    <dd>
+    Events.
+
+
+    <ul>
+        <li><span class="parameter">events</span>
+            <span class="types"><a class="type" href="index.html#events">events</a></span>
+
+
+
         </li>
     </ul>
 
@@ -551,7 +467,7 @@
 
     <ul>
         <li><span class="parameter">mode</span>
-            <span class="types"><span class="type">int</span></span>
+            <span class="types"><a class="type" href="index.html#modes">modes</a></span>
 
 
 
@@ -560,15 +476,28 @@
 
 
 
-    <h3>See also:</h3>
+
+
+</dd>
+    <dt>
+    <a name = "Vis.modes"></a>
+    <strong>Vis.modes</strong>
+    </dt>
+    <dd>
+    Mode constants.
+
+
     <ul>
-         <li><a href="index.html#Vis.MODE_NORMAL">MODE_NORMAL</a></li>
-         <li><a href="index.html#Vis.MODE_OPERATOR_PENDING">MODE_OPERATOR_PENDING</a></li>
-         <li><a href="index.html#Vis.MODE_INSERT">MODE_INSERT</a></li>
-         <li><a href="index.html#Vis.MODE_REPLACE">MODE_REPLACE</a></li>
-         <li><a href="index.html#Vis.MODE_VISUAL">MODE_VISUAL</a></li>
-         <li><a href="index.html#Vis.MODE_VISUAL_LINE">MODE_VISUAL_LINE</a></li>
+        <li><span class="parameter">modes</span>
+            <span class="types"><a class="type" href="index.html#modes">modes</a></span>
+
+
+
+        </li>
     </ul>
+
+
+
 
 
 </dd>
@@ -780,7 +709,7 @@
 </dd>
     <dt>
     <a name = "Vis:map"></a>
-    <strong>Vis:map(mode, func)</strong>
+    <strong>Vis:map(mode, key, func[, help])</strong>
     </dt>
     <dd>
     Map a key to a Lua function. </p>
@@ -794,9 +723,18 @@
             <span class="types"><span class="type">int</span></span>
          the mode to which the mapping should be added
         </li>
+        <li><span class="parameter">key</span>
+            <span class="types"><a class="type" href="https://www.lua.org/manual/5.1/manual.html#5.4">string</a></span>
+         the key to map
+        </li>
         <li><span class="parameter">func</span>
             <span class="types"><span class="type">function</span></span>
          the Lua function to handle the key mapping
+        </li>
+        <li><span class="parameter">help</span>
+            <span class="types"><a class="type" href="https://www.lua.org/manual/5.1/manual.html#5.4">string</a></span>
+         the single line help text as displayed in <code>:help</code>
+         (<em>optional</em>)
         </li>
     </ul>
 
@@ -840,7 +778,7 @@
 </dd>
     <dt>
     <a name = "Vis:motion_new"></a>
-    <strong>Vis:motion_new(key, motion)</strong>
+    <strong>Vis:motion_new(key, motion[, help])</strong>
     </dt>
     <dd>
     Map a new motion. </p>
@@ -861,6 +799,11 @@
             <span class="types"><span class="type">function</span></span>
          the motion logic implemented as Lua function
         </li>
+        <li><span class="parameter">help</span>
+            <span class="types"><a class="type" href="https://www.lua.org/manual/5.1/manual.html#5.4">string</a></span>
+         the single line help text as displayed in <code>:help</code>
+         (<em>optional</em>)
+        </li>
     </ul>
 
     <h3>Returns:</h3>
@@ -876,7 +819,7 @@
     <ul>
         <pre class="example">vis:motion_new(<span class="string">"&lt;C-l&gt;"</span>, <span class="keyword">function</span>(win, pos)
 	<span class="keyword">return</span> pos+<span class="number">1</span>
-<span class="keyword">end</span>)</pre>
+<span class="keyword">end</span>, <span class="string">"Advance to next byte"</span>)</pre>
     </ul>
 
 </dd>
@@ -911,7 +854,7 @@
 </dd>
     <dt>
     <a name = "Vis:textobject_new"></a>
-    <strong>Vis:textobject_new(key, textobject)</strong>
+    <strong>Vis:textobject_new(key, textobject[, help])</strong>
     </dt>
     <dd>
     Map a new text object. </p>
@@ -932,6 +875,11 @@
             <span class="types"><span class="type">function</span></span>
          the text object logic implemented as Lua function
         </li>
+        <li><span class="parameter">help</span>
+            <span class="types"><a class="type" href="https://www.lua.org/manual/5.1/manual.html#5.4">string</a></span>
+         the single line help text as displayed in <code>:help</code>
+         (<em>optional</em>)
+        </li>
     </ul>
 
     <h3>Returns:</h3>
@@ -947,7 +895,7 @@
     <ul>
         <pre class="example">vis:textobject_new(<span class="string">"&lt;C-l&gt;"</span>, <span class="keyword">function</span>(win, pos)
 	<span class="keyword">return</span> pos, pos+<span class="number">1</span>
-<span class="keyword">end</span>)</pre>
+<span class="keyword">end</span>, <span class="string">"Single byte text object"</span>)</pre>
     </ul>
 
 </dd>
@@ -1176,7 +1124,7 @@
 </dd>
     <dt>
     <a name = "Window:map"></a>
-    <strong>Window:map(mode, func)</strong>
+    <strong>Window:map(mode, key, func[, help])</strong>
     </dt>
     <dd>
     Map a window local key to a Lua function.
@@ -1188,9 +1136,18 @@
             <span class="types"><span class="type">int</span></span>
          the mode to which the mapping should be added
         </li>
+        <li><span class="parameter">key</span>
+            <span class="types"><a class="type" href="https://www.lua.org/manual/5.1/manual.html#5.4">string</a></span>
+         the key to map
+        </li>
         <li><span class="parameter">func</span>
             <span class="types"><span class="type">function</span></span>
          the Lua function to handle the key mapping
+        </li>
+        <li><span class="parameter">help</span>
+            <span class="types"><a class="type" href="https://www.lua.org/manual/5.1/manual.html#5.4">string</a></span>
+         the single line help text as displayed in <code>:help</code>
+         (<em>optional</em>)
         </li>
     </ul>
 
@@ -1792,6 +1749,33 @@
     </ul>
 
 </dd>
+    <dt>
+    <a name = "File:text_object_word"></a>
+    <strong>File:text_object_word(pos)</strong>
+    </dt>
+    <dd>
+    Word text object.
+
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">pos</span>
+            <span class="types"><span class="type">int</span></span>
+         the position which must be part of the word
+        </li>
+    </ul>
+
+    <h3>Returns:</h3>
+    <ol>
+
+           <span class="types"><a class="type" href="index.html#Class_Range">Range</a></span>
+        range the range
+    </ol>
+
+
+
+
+</dd>
 </dl>
     <h2 class="section-header has-description"><a name="Class_Ui"></a>Class Ui </h2>
 
@@ -1876,13 +1860,75 @@
 
 </dd>
 </dl>
-    <h2 class="section-header has-description"><a name="Events"></a>Events </h2>
+    <h2 class="section-header "><a name="Modes"></a>Modes </h2>
+
+    <dl class="function">
+    <dt>
+    <a name = "modes"></a>
+    <strong>modes</strong>
+    </dt>
+    <dd>
+    Mode constants.
+
+
+    <h3>Fields:</h3>
+    <ul>
+        <li><span class="parameter">NORMAL</span>
+            <span class="types"><span class="type">int</span></span>
+
+
+
+        </li>
+        <li><span class="parameter">OPERATOR_PENDING</span>
+            <span class="types"><span class="type">int</span></span>
+
+
+
+        </li>
+        <li><span class="parameter">INSERT</span>
+            <span class="types"><span class="type">int</span></span>
+
+
+
+        </li>
+        <li><span class="parameter">REPLACE</span>
+            <span class="types"><span class="type">int</span></span>
+
+
+
+        </li>
+        <li><span class="parameter">VISUAL</span>
+            <span class="types"><span class="type">int</span></span>
+
+
+
+        </li>
+        <li><span class="parameter">VISUAL_LINE</span>
+            <span class="types"><span class="type">int</span></span>
+
+
+
+        </li>
+    </ul>
+
+
+
+    <h3>See also:</h3>
+    <ul>
+         <li><a href="index.html#Vis:map">Vis:map</a></li>
+         <li><a href="index.html#Window:map">Window:map</a></li>
+    </ul>
+
+
+</dd>
+</dl>
+    <h2 class="section-header has-description"><a name="Core_Events"></a>Core Events </h2>
 
           <div class="section-description">
            These events are invoked from the editor core.
- The following functions are looked up in the <code>vis.events</code> table.
- Keep in mind that the editor is blocked while the event handlers
- are being executed, avoid long running tasks.
+ The following functions are invoked if they are registered in the
+ <a href="index.html#events">vis.events</a> table. Users scripts should generally use the <a href="#events">Events</a>
+ mechanism instead which multiplexes these core events.
           </div>
     <dl class="function">
     <dt>
@@ -1987,6 +2033,54 @@
 
 </dd>
     <dt>
+    <a name = "init"></a>
+    <strong>init()</strong>
+    </dt>
+    <dd>
+    Editor initialization completed.
+ This event is emitted immediately after <code>visrc.lua</code> has been sourced, but
+ before any other events have occured, in particular the command line arguments
+ have not yet been processed.</p>
+
+<p> Can be used to set <em>global</em> configuration options.
+
+
+
+
+
+
+
+</dd>
+    <dt>
+    <a name = "input"></a>
+    <strong>input(key)</strong>
+    </dt>
+    <dd>
+    Input key event in either input or replace mode.
+
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">key</span>
+            <span class="types"><a class="type" href="https://www.lua.org/manual/5.1/manual.html#5.4">string</a></span>
+
+
+
+        </li>
+    </ul>
+
+    <h3>Returns:</h3>
+    <ol>
+
+           <span class="types"><span class="type">bool</span></span>
+        whether the key was cosumed or not
+    </ol>
+
+
+
+
+</dd>
+    <dt>
     <a name = "quit"></a>
     <strong>quit()</strong>
     </dt>
@@ -2009,7 +2103,6 @@
  This event is emitted immediately before the main loop starts.
  At this point all files are loaded and corresponding windows are created.
  We are about to process interactive keyboard input.
- Can be used to set <em>global</em> configuration options.
 
 
 
@@ -2170,13 +2263,186 @@
 
 </dd>
 </dl>
+    <h2 class="section-header has-description"><a name="Events"></a>Events </h2>
+
+          <div class="section-description">
+           User scripts can subscribe Lua functions to certain events. Multiple functions
+ can be associated with the same event. They will be called in the order they were
+ registered. The first function which returns a non <code>nil</code> value terminates event
+ propagation. The remaining event handler will not be called.</p>
+
+<p> Keep in mind that the editor is blocked while the event handlers
+ are being executed, avoid long running tasks.
+          </div>
+    <dl class="function">
+    <dt>
+    <a name = "events"></a>
+    <strong>events</strong>
+    </dt>
+    <dd>
+    Event names.
+
+
+    <h3>Fields:</h3>
+    <ul>
+        <li><span class="parameter">FILE_CLOSE</span>
+        see <a href="index.html#file_close">file_close</a>
+        </li>
+        <li><span class="parameter">FILE_OPEN</span>
+        see <a href="index.html#file_open">file_open</a>
+        </li>
+        <li><span class="parameter">FILE_SAVE_POST</span>
+        see <a href="index.html#file_save_post">file_save_post</a>
+        </li>
+        <li><span class="parameter">FILE_SAVE_PRE</span>
+        see <a href="index.html#file_save_pre">file_save_pre</a>
+        </li>
+        <li><span class="parameter">INIT</span>
+        see <a href="index.html#init">init</a>
+        </li>
+        <li><span class="parameter">INPUT</span>
+        see <a href="index.html#input">input</a>
+        </li>
+        <li><span class="parameter">QUIT</span>
+        see <a href="index.html#quit">quit</a>
+        </li>
+        <li><span class="parameter">START</span>
+        see <a href="index.html#start">start</a>
+        </li>
+        <li><span class="parameter">THEME_CHANGE</span>
+        see <a href="index.html#theme_change">theme_change</a>
+        </li>
+        <li><span class="parameter">WIN_CLOSE</span>
+        see <a href="index.html#win_close">win_close</a>
+        </li>
+        <li><span class="parameter">WIN_HIGHLIGHT</span>
+        see <a href="index.html#win_highlight">win_highlight</a>
+        </li>
+        <li><span class="parameter">WIN_OPEN</span>
+        see <a href="index.html#win_open">win_open</a>
+        </li>
+        <li><span class="parameter">WIN_STATUS</span>
+        see <a href="index.html#win_status">win_status</a>
+        </li>
+        <li><span class="parameter">WIN_SYNTAX</span>
+        see <a href="index.html#win_syntax">win_syntax</a>
+        </li>
+    </ul>
+
+
+
+
+
+</dd>
+    <dt>
+    <a name = "events.emit"></a>
+    <strong>events.emit(event, ...)</strong>
+    </dt>
+    <dd>
+    Generate event. </p>
+
+<p> Invokes all event handlers in the order they were registered.
+ Passes all arguments to the handler. The first handler which returns a non <code>nil</code>
+ value terminates the event propagation. The other handlers will not be called.
+
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">event</span>
+            <span class="types"><a class="type" href="https://www.lua.org/manual/5.1/manual.html#5.4">string</a></span>
+         the event name
+        </li>
+        <li><span class="parameter">...</span>
+            <span class="types"><span class="type">...</span></span>
+         the remaining paramters are passed on to the handler
+        </li>
+    </ul>
+
+
+
+
+
+</dd>
+    <dt>
+    <a name = "events.subscribe"></a>
+    <strong>events.subscribe(event, handler[, index])</strong>
+    </dt>
+    <dd>
+    Subscribe to an event. </p>
+
+<p> Register an event handler.
+
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">event</span>
+            <span class="types"><a class="type" href="https://www.lua.org/manual/5.1/manual.html#5.4">string</a></span>
+         the event name
+        </li>
+        <li><span class="parameter">handler</span>
+            <span class="types"><span class="type">function</span></span>
+         the event handler
+        </li>
+        <li><span class="parameter">index</span>
+            <span class="types"><span class="type">int</span></span>
+         the index at which to insert the handler (1 is the highest priority)
+         (<em>optional</em>)
+        </li>
+    </ul>
+
+
+
+
+    <h3>Usage:</h3>
+    <ul>
+        <pre class="example">vis.events.subscribe(vis.events.FILE_SAVE_PRE, <span class="keyword">function</span>(file, path)
+	<span class="comment">-- do something useful
+</span>	<span class="keyword">return</span> <span class="keyword">true</span>
+<span class="keyword">end</span>)</pre>
+    </ul>
+
+</dd>
+    <dt>
+    <a name = "events.unsubscribe"></a>
+    <strong>events.unsubscribe(event, handler)</strong>
+    </dt>
+    <dd>
+    Unsubscribe from an event. </p>
+
+<p> Remove a registered event handler.
+
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">event</span>
+            <span class="types"><a class="type" href="https://www.lua.org/manual/5.1/manual.html#5.4">string</a></span>
+         the event name
+        </li>
+        <li><span class="parameter">handler</span>
+            <span class="types"><span class="type">function</span></span>
+         the event handler to unsubscribe
+        </li>
+    </ul>
+
+    <h3>Returns:</h3>
+    <ol>
+
+           <span class="types"><span class="type">bool</span></span>
+        whether the handler was successfully removed
+    </ol>
+
+
+
+
+</dd>
+</dl>
 
 
 </div> <!-- id="content" -->
 </div> <!-- id="main" -->
 <div id="about">
 <i>generated by <a href="http://github.com/stevedonovan/LDoc">LDoc 1.4.6</a></i>
-<i style="float:right;">Last updated 2016-12-06 20:12:06 </i>
+<i style="float:right;">Last updated 2016-12-09 20:22:24 </i>
 </div> <!-- id="about" -->
 </div> <!-- id="container" -->
 </body>
