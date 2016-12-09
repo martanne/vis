@@ -2293,7 +2293,6 @@ int main(int argc, char *argv[]) {
 			} else if (strcmp(argv[i], "--") == 0) {
 				end_of_options = true;
 			}
-			end_of_options = !strcmp(argv[i], "--");
 		} else if (argv[i][0] == '+' && !end_of_options) {
 			cmd = argv[i] + (argv[i][1] == '/' || argv[i][1] == '?');
 		} else if (!vis_window_new(vis, argv[i])) {
