@@ -141,7 +141,7 @@ end
 --- Unsubscribe from an event.
 --
 -- Remove a registered event handler.
--- @tparamm string event the event name
+-- @tparam string event the event name
 -- @tparam function handler the event handler to unsubscribe
 -- @treturn bool whether the handler was successfully removed
 events.unsubscribe = function(event, handler)

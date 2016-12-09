@@ -4,6 +4,8 @@
  * *WARNING:* there is no stability guarantee at this time, the API might
  * change without notice!
  *
+ * This document might be out of date, run `make luadoc` to regenerate it.
+ *
  * @module vis
  * @author Marc André Tanner
  * @license ISC
