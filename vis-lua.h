@@ -22,6 +22,13 @@ bool vis_lua_paths_get(Vis*, char **lpath, char **cpath);
 void vis_lua_init(Vis*);
 void vis_lua_start(Vis*);
 void vis_lua_quit(Vis*);
+#if !CONFIG_LUA
+#define vis_lua_mode_insert_input vis_insert_key
+#define vis_lua_mode_replace_input vis_replace_key
+#else
+void vis_lua_mode_insert_input(Vis*, const char *key, size_t len);
+void vis_lua_mode_replace_input(Vis*, const char *key, size_t len);
+#endif
 void vis_lua_file_open(Vis*, File*);
 bool vis_lua_file_save_pre(Vis*, File*, const char *path);
 void vis_lua_file_save_post(Vis*, File*, const char *path);

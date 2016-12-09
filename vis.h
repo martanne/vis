@@ -31,6 +31,8 @@ typedef struct {
 	void (*init)(Vis*);
 	void (*start)(Vis*);
 	void (*quit)(Vis*);
+	void (*mode_insert_input)(Vis*, const char *key, size_t len);
+	void (*mode_replace_input)(Vis*, const char *key, size_t len);
 	void (*file_open)(Vis*, File*);
 	bool (*file_save_pre)(Vis*, File*, const char *path);
 	void (*file_save_post)(Vis*, File*, const char *path);

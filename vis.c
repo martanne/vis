@@ -535,6 +535,12 @@ Vis *vis_new(Ui *ui, VisEvent *event) {
 		goto err;
 	vis->mode_prev = vis->mode = &vis_modes[VIS_MODE_NORMAL];
 	vis->event = event;
+	if (event) {
+		if (event->mode_insert_input)
+			vis_modes[VIS_MODE_INSERT].input = event->mode_insert_input;
+		if (event->mode_replace_input)
+			vis_modes[VIS_MODE_REPLACE].input = event->mode_replace_input;
+	}
 	return vis;
 err:
 	vis_free(vis);

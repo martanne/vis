@@ -2189,6 +2189,8 @@ int main(int argc, char *argv[]) {
 		.init = vis_lua_init,
 		.start = vis_lua_start,
 		.quit = vis_lua_quit,
+		.mode_insert_input = vis_lua_mode_insert_input,
+		.mode_replace_input = vis_lua_mode_replace_input,
 		.file_open = vis_lua_file_open,
 		.file_save_pre = vis_lua_file_save_pre,
 		.file_save_post = vis_lua_file_save_post,

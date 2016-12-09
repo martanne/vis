@@ -1740,7 +1740,7 @@ static const struct luaL_Reg file_lines_funcs[] = {
  * `vis.events` table. Users scripts should generally use the [Events](#events)
  * mechanism instead which multiplexes these core events.
  *
- * @section Core Events
+ * @section Core_Events
  */
 
 static void vis_lua_event_get(lua_State *L, const char *name) {
@@ -2015,6 +2015,39 @@ void vis_lua_quit(Vis *vis) {
 	vis_lua_event_call(vis, "quit");
 	lua_close(vis->lua);
 	vis->lua = NULL;
+}
+
+/***
+ * Input key event in either input or replace mode.
+ * @function input
+ * @tparam string key
+ * @treturn bool whether the key was cosumed or not
+ */
+static bool vis_lua_input(Vis *vis, const char *key, size_t len) {
+	if (vis->win->file->internal)
+		return false;
+	lua_State *L = vis->lua;
+	bool ret = false;
+	vis_lua_event_get(L, "input");
+	if (lua_isfunction(L, -1)) {
+		lua_pushlstring(L, key, len);
+		if (pcall(vis, L, 1, 1) != 0) {
+			ret = lua_isboolean(L, -1) && lua_toboolean(L, -1);
+			lua_pop(L, 1);
+		}
+	}
+	lua_pop(L, 1);
+	return ret;
+}
+
+void vis_lua_mode_insert_input(Vis *vis, const char *key, size_t len) {
+	if (!vis_lua_input(vis, key, len))
+		vis_insert_key(vis, key, len);
+}
+
+void vis_lua_mode_replace_input(Vis *vis, const char *key, size_t len) {
+	if (!vis_lua_input(vis, key, len))
+		vis_replace_key(vis, key, len);
 }
 
 /***
