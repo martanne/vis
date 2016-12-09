@@ -78,9 +78,11 @@ size_t text_bytes_get(Text*, size_t pos, size_t len, char *buf);
 char *text_bytes_alloc0(Text*, size_t pos, size_t len);
 
 Iterator text_iterator_get(Text*, size_t pos);
+bool text_iterator_at_end(const Iterator *);
 bool text_iterator_valid(const Iterator*);
 bool text_iterator_next(Iterator*);
 bool text_iterator_prev(Iterator*);
+bool text_iterator_skip_bytes(Iterator *, size_t count);
 
 /* get byte at current iterator position, if this is at EOF a NUL
  * byte (which is not actually part of the file) is read. */

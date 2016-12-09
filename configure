@@ -350,6 +350,33 @@ else
 	fail "$0: cannot find libtermkey"
 fi
 
+cat > "$tmpc" <<EOF
+#include <sregex.h>
+
+int main(int argc, char *argv[]) {
+    sre_pool_t *p = sre_create_pool(1024);
+    sre_destroy_pool(p);
+    return 0;
+}
+EOF
+
+CONFIG_SREGEX=0
+REGEX_SRC=text-regex.c
+
+printf "checking for sregex... "
+
+CFLAGS_SREGEX="-I${PREFIX}/include/sregex"
+LDFLAGS_SREGEX="-L${PREFIX}/lib -lsregex"
+
+if $CC $CFLAGS $CFLAGS_SREGEX "$tmpc" \
+        $LDFLAGS $LDFLAGS_SREGEX -o "$tmpo" >/dev/null 2>&1 ; then
+        CONFIG_SREGEX=1
+        REGEX_SRC=text-sregex.c
+        printf "yes\n"
+else
+        printf "no\n"
+fi
+
 CONFIG_LUA=0
 
 if test "$lua" != "no" ; then
@@ -489,6 +516,10 @@ CFLAGS_CURSES = $CFLAGS_CURSES
 LDFLAGS_CURSES = $LDFLAGS_CURSES
 CFLAGS_TERMKEY = $CFLAGS_TERMKEY
 LDFLAGS_TERMKEY = $LDFLAGS_TERMKEY
+CONFIG_SREGEX = $CONFIG_SREGEX
+CFLAGS_SREGEX = $CFLAGS_SREGEX
+REGEX_SRC = $REGEX_SRC
+LDFLAGS_SREGEX = $LDFLAGS_SREGEX
 CONFIG_LUA = $CONFIG_LUA
 CFLAGS_LUA = $CFLAGS_LUA
 LDFLAGS_LUA = $LDFLAGS_LUA
