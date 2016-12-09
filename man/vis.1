@@ -115,11 +115,11 @@ append to corresponding general purpose register
 system clipboard integration via shell script
 .Xr vis-clipboard 1
 .It \(dq0
-yank register, least recently yanked range
+yank register, most recently yanked range
 .It \(dq/
-search register, least recently used search pattern
+search register, most recently used search pattern
 .It \(dq:
-command register, least recently executed command
+command register, most recently executed command
 .It \(dq_
 black hole (/dev/null) register, ignore content is always empty
 .El
@@ -139,7 +139,7 @@ starts a recording,
 .Ic @
 plays it back.
 .Ic @@
-refers to the least recently recorded macro.
+refers to the most recently recorded macro.
 .Ic @:
 repeats the last :-command.
 .Ic @/
@@ -941,6 +941,15 @@ Any unique prefix can be used to abbreviate a command.
 A file must be opened in at least one window. If the last window displaying a
 certain file is closed all unsaved changes are discarded. Windows are equally
 sized and can be displayed in either horizontal or vertical fashion.
+The
+.Aq C-w
+h,
+.Aq C-w
+j,
+.Aq C-w
+k and
+.Aq C-w
+l key mappings can be used to switch between windows.
 .Bl -tag -width indent
 .It Cm :new
 open an empty window, arrange horizontally
@@ -1099,8 +1108,6 @@ Syntax highlighting lexer to use, name without file extension.
 .It Cm show-tabs Bq off
 Whether to display replacement symbol instead of tabs.
 .It Cm show-newlines Bq off
-Whether to display replacement symbol instead of newlines.
-.It Cm show-tabs Bq off
 Whether to display replacement symbol instead of newlines.
 .It Cm show-spaces Bq off
 Whether to display replacement symbol instead of blank cells.
