@@ -25,6 +25,7 @@ Fine tuning of the installation directories:
 Optional features:
   --enable-lua            build with Lua support [auto]
   --enable-lpeg           build with support for statically linking to LPeg [auto]
+  --enable-tre            build with TRE regex support [auto]
   --enable-selinux        build with SELinux support [auto]
   --enable-acl            build with POSIX ACL support [auto]
 
@@ -115,6 +116,7 @@ MANDIR='$(PREFIX)/share/man'
 
 lua=auto
 lpeg=auto
+tre=auto
 selinux=auto
 acl=auto
 
@@ -133,6 +135,8 @@ case "$arg" in
 --disable-lua|--enable-lua=no) lua=no ;;
 --enable-lpeg|--enable-lpeg=yes) lpeg=yes ;;
 --disable-lpeg|--enable-lpeg=no) lpeg=no ;;
+--enable-tre|--enable-tre=yes) tre=yes ;;
+--disable-tre|--enable-tre=no) tre=no ;;
 --enable-selinux|--enable-selinux=yes) selinux=yes ;;
 --disable-selinux|--enable-selinux=no) selinux=no ;;
 --enable-acl|--enable-acl=yes) acl=yes ;;
@@ -353,6 +357,50 @@ else
 	fail "$0: cannot find libtermkey"
 fi
 
+CONFIG_TRE=0
+REGEX_SRC=text-regex.c
+
+if test "$tre" != "no" ; then
+
+	printf "checking for libtre... "
+
+cat > "$tmpc" <<EOF
+#include <tre/tre.h>
+
+int main() {
+	regex_t preg;
+	tre_str_source *source = NULL;
+	regmatch_t pmatch[1];
+	tre_regcomp(&preg, "\0", REG_EXTENDED);
+	tre_reguexec(&preg, source, 1, pmatch, 0);
+	tre_regfree(&preg);
+	return 0;
+}
+EOF
+
+	if test "$have_pkgconfig" = "yes" ; then
+		CFLAGS_TRE=$(pkg-config --cflags tre 2>/dev/null)
+		LDFLAGS_TRE=$(pkg-config --libs tre 2>/dev/null)
+	fi
+
+	if test -z "$LDFLAGS_TRE"; then
+		CFLAGS_TRE=""
+		LDFLAGS_TRE="-ltre"
+	fi
+
+	if $CC $CFLAGS $CFLAGS_TRE "$tmpc" \
+		$LDFLAGS $LDFLAGS_TRE -o "$tmpo" >/dev/null 2>&1; then
+		CONFIG_TRE=1
+		REGEX_SRC=text-regex-tre.c
+		printf "%s\n" "yes"
+	else
+		printf "%s\n" "no"
+		CFLAGS_TRE=""
+		LDFLAGS_TRE=""
+		test "$tre" = "yes" && fail "$0: cannot find libtre"
+	fi
+fi
+
 CONFIG_LUA=0
 
 # enabling builtin lpeg requires lua support
@@ -537,6 +585,10 @@ CFLAGS_CURSES = $CFLAGS_CURSES
 LDFLAGS_CURSES = $LDFLAGS_CURSES
 CFLAGS_TERMKEY = $CFLAGS_TERMKEY
 LDFLAGS_TERMKEY = $LDFLAGS_TERMKEY
+REGEX_SRC = $REGEX_SRC
+CONFIG_TRE = $CONFIG_TRE
+CFLAGS_TRE = $CFLAGS_TRE
+LDFLAGS_TRE = $LDFLAGS_TRE
 CONFIG_LUA = $CONFIG_LUA
 CFLAGS_LUA = $CFLAGS_LUA
 LDFLAGS_LUA = $LDFLAGS_LUA

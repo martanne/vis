@@ -1,9 +1,11 @@
 -include config.mk
 
+REGEX_SRC ?= text-regex.c
+
 SRC = array.c buffer.c libutf.c main.c map.c register.c ring-buffer.c \
-	sam.c text.c text-motions.c text-objects.c text-regex.c text-util.c \
+	sam.c text.c text-motions.c text-objects.c text-util.c \
 	ui-curses.c view.c vis.c vis-lua.c vis-modes.c vis-motions.c \
-	vis-operators.c vis-prompt.c vis-text-objects.c
+	vis-operators.c vis-prompt.c vis-text-objects.c $(REGEX_SRC)
 
 EXECUTABLES = vis vis-clipboard vis-complete vis-menu vis-open
 
@@ -19,6 +21,7 @@ VERSION = $(shell git describe --always --dirty 2>/dev/null || echo "0.2-git")
 
 CONFIG_LUA ?= 1
 CONFIG_LPEG ?= 0
+CONFIG_TRE ?= 0
 CONFIG_ACL ?= 0
 CONFIG_SELINUX ?= 0
 
@@ -27,16 +30,17 @@ CFLAGS_STD += -DVERSION=\"${VERSION}\"
 LDFLAGS_STD ?= -lc
 
 CFLAGS_VIS = $(CFLAGS_AUTO) $(CFLAGS_TERMKEY) $(CFLAGS_CURSES) $(CFLAGS_ACL) \
-	$(CFLAGS_SELINUX) $(CFLAGS_LUA) $(CFLAGS_LPEG) $(CFLAGS_STD)
+	$(CFLAGS_SELINUX) $(CFLAGS_TRE) $(CFLAGS_LUA) $(CFLAGS_LPEG) $(CFLAGS_STD)
 
 CFLAGS_VIS += -DVIS_PATH=\"${SHAREPREFIX}/vis\"
 CFLAGS_VIS += -DCONFIG_LUA=${CONFIG_LUA}
 CFLAGS_VIS += -DCONFIG_LPEG=${CONFIG_LPEG}
+CFLAGS_VIS += -DCONFIG_TRE=${CONFIG_TRE}
 CFLAGS_VIS += -DCONFIG_SELINUX=${CONFIG_SELINUX}
 CFLAGS_VIS += -DCONFIG_ACL=${CONFIG_ACL}
 
 LDFLAGS_VIS = $(LDFLAGS_AUTO) $(LDFLAGS_TERMKEY) $(LDFLAGS_CURSES) $(LDFLAGS_ACL) \
-	$(LDFLAGS_SELINUX) $(LDFLAGS_LUA) $(LDFLAGS_LPEG) $(LDFLAGS_STD)
+	$(LDFLAGS_SELINUX) $(LDFLAGS_TRE) $(LDFLAGS_LUA) $(LDFLAGS_LPEG) $(LDFLAGS_STD)
 
 STRIP?=strip
 

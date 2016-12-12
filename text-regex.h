@@ -1,7 +1,12 @@
 #ifndef TEXT_REGEX_H
 #define TEXT_REGEX_H
 
+/* make the REG_* constants available */
+#if CONFIG_TRE
+#include <tre/tre.h>
+#else
 #include <regex.h>
+#endif
 #include "text.h"
 
 typedef struct Regex Regex;

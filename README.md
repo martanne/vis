@@ -60,6 +60,7 @@ compatible environment as well as:
  * [Lua](http://www.lua.org/) >= 5.2 (optional)
  * [LPeg](http://www.inf.puc-rio.br/~roberto/lpeg/) >= 0.12
    (optional runtime dependency required for syntax highlighting)
+ * [TRE](http://laurikari.net/tre/) (optional for more memory efficient regex search)
 
 Assuming these dependencies are met, execute:
 
