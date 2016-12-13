@@ -12,8 +12,6 @@ Defaults for the options are specified in brackets.
 
 Configuration:
   --srcdir=DIR            source directory [detected]
-  --environment-only      check environment only, no system libraries
-  --static                prepare for static build
 
 Installation directories:
   --prefix=PREFIX         main installation prefix [/usr/local]
