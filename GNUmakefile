@@ -130,7 +130,8 @@ dependency/build/liblpeg-extract: dependency/sources/$(LIBLPEG).tar.gz | depende
 	touch $@
 
 dependency/build/liblpeg-build: dependency/build/liblpeg-extract dependency/build/liblua-extract
-	cd $(dir $<)/$(LIBLPEG) && $(MAKE) LUADIR="../$(LIBLUA)/src"
+	# creating a shared object fails in Cygwin, we do not need it thus ignore the error
+	cd $(dir $<)/$(LIBLPEG) && $(MAKE) LUADIR="../$(LIBLUA)/src" || true
 	cd $(dir $<)/$(LIBLPEG) && ar rcu liblpeg.a lpvm.o lpcap.o lptree.o lpcode.o lpprint.o && ranlib liblpeg.a
 	touch $@
 
