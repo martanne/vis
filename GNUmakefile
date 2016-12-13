@@ -19,10 +19,8 @@ LIBTERMKEY_SHA1 = 0a78ba7aaa2f3b53f2273268366fef349c9be4ab
 
 #LIBLUA = lua-5.3.1
 #LIBLUA_SHA1 = 1676c6a041d90b6982db8cef1e5fb26000ab6dee
-#LIBLUA_LPEG_SHA1 = aaa6df78cf5e2e31d690d96c6cd9f960f80f4347
 LIBLUA = lua-5.2.4
 LIBLUA_SHA1 = ef15259421197e3d85b7d6e4871b8c26fd82c1cf
-LIBLUA_LPEG_SHA1 = 459d7cd7dd1e3096096d55ebd4475bc8f4da6927
 #LIBLUA = lua-5.1.5
 #LIBLUA_SHA1 = b3882111ad02ecc6b972f8c1241647905cb2e3fc
 
@@ -113,17 +111,7 @@ dependency/build/liblua-extract: dependency/sources/$(LIBLUA).tar.gz | dependenc
 	tar xzf $< -C $(dir $@)
 	touch $@
 
-dependency/sources/lua-%-lpeg.patch1: | dependency/sources
-	wget -c -O $@.part http://www.brain-dump.org/projects/vis/$(LIBLUA)-lpeg.patch1
-	mv $@.part $@
-	[ -z $(LIBLUA_LPEG_SHA1) ] || (echo '$(LIBLUA_LPEG_SHA1)  $@' | sha1sum -c)
-
-dependency/build/liblua-patch: dependency/build/liblua-extract dependency/sources/$(LIBLUA)-lpeg.patch1 dependency/build/liblpeg-extract
-	cd $(dir $<)/$(LIBLUA) && patch -p1 < ../../sources/$(LIBLUA)-lpeg.patch1
-	cp $(dir $<)/$(LIBLPEG)/*.[ch] $(dir $<)/$(LIBLUA)/src
-	touch $@
-
-dependency/build/liblua-build: dependency/build/liblua-patch
+dependency/build/liblua-build: dependency/build/liblua-extract
 	$(MAKE) -C $(dir $<)/$(LIBLUA)/src all CC=$(CC) MYCFLAGS="-DLUA_COMPAT_5_1 -DLUA_COMPAT_5_2 -DLUA_COMPAT_ALL -DLUA_USE_POSIX -DLUA_USE_DLOPEN -fPIC" MYLIBS="-Wl,-E -ldl -lm"
 	#$(MAKE) -C $(dir $<)/$(LIBLUA) posix CC=$(CC)
 	touch $@
@@ -141,7 +129,16 @@ dependency/build/liblpeg-extract: dependency/sources/$(LIBLPEG).tar.gz | depende
 	tar xzf $< -C $(dir $@)
 	touch $@
 
-dependencies-common: dependency/build/libtermkey-install dependency/build/liblua-install
+dependency/build/liblpeg-build: dependency/build/liblpeg-extract dependency/build/liblua-extract
+	cd $(dir $<)/$(LIBLPEG) && $(MAKE) LUADIR="../$(LIBLUA)/src"
+	cd $(dir $<)/$(LIBLPEG) && ar rcu liblpeg.a lpvm.o lpcap.o lptree.o lpcode.o lpprint.o && ranlib liblpeg.a
+	touch $@
+
+dependency/build/liblpeg-install: dependency/build/liblpeg-build
+	cd $(dir $<)/$(LIBLPEG) && cp liblpeg.a $(DEPS_LIB)
+	touch $@
+
+dependencies-common: dependency/build/libtermkey-install dependency/build/liblua-install dependency/build/liblpeg-install
 
 dependency/build/local: dependencies-common
 	touch $@

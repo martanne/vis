@@ -26,6 +26,7 @@ Fine tuning of the installation directories:
 
 Optional features:
   --enable-lua            build with Lua support [auto]
+  --enable-lpeg           build with built-in LPeg support [auto]
   --enable-selinux        build with SELinux support [auto]
   --enable-acl            build with POSIX ACL support [auto]
 
@@ -115,6 +116,7 @@ SHAREDIR='$(PREFIX)/share'
 MANDIR='$(PREFIX)/share/man'
 
 lua=auto
+lpeg=auto
 selinux=auto
 acl=auto
 
@@ -131,6 +133,8 @@ case "$arg" in
 --static) static=yes ;;
 --enable-lua|--enable-lua=yes) lua=yes ;;
 --disable-lua|--enable-lua=no) lua=no ;;
+--enable-lpeg|--enable-lpeg=yes) lpeg=yes ;;
+--disable-lpeg|--enable-lpeg=no) lpeg=no ;;
 --enable-selinux|--enable-selinux=yes) selinux=yes ;;
 --disable-selinux|--enable-selinux=no) selinux=no ;;
 --enable-acl|--enable-acl=yes) acl=yes ;;
@@ -352,6 +356,10 @@ fi
 
 CONFIG_LUA=0
 
+# enabling builtin lpeg requires lua support
+test "$lpeg" = "yes" -a "$lua" = "no" && fail "$0: need lua support for built-in lpeg"
+test "$lpeg" = "yes" && lua=yes
+
 if test "$lua" != "no" ; then
 
 	printf "checking for liblua >= 5.2 ...\n"
@@ -406,6 +414,47 @@ EOF
 	if test $CONFIG_LUA -eq 1; then
 		CFLAGS_LUA="$CFLAGS_LUA -DLUA_COMPAT_5_1 -DLUA_COMPAT_5_2 -DLUA_COMPAT_ALL"
 	fi
+fi
+
+CONFIG_LPEG=0
+
+if test "$lpeg" != "no" ; then
+
+	printf "checking for liblpeg ... "
+
+cat > "$tmpc" <<EOF
+#include <lua.h>
+#include <lauxlib.h>
+
+int main(int argc, char *argv[]) {
+	lua_State *L = luaL_newstate();
+	luaL_openlibs(L);
+	extern int luaopen_lpeg(lua_State *L);
+	lua_getglobal(L, "package");
+	lua_getfield(L, -1, "preload");
+	lua_pushcfunction(L, luaopen_lpeg);
+	lua_setfield(L, -2, "lpeg");
+	lua_pop(L, 2);
+	lua_close(L);
+	return 0;
+}
+EOF
+
+	CFLAGS_LPEG=""
+	LDFLAGS_LPEG="-llpeg"
+
+	if $CC $CFLAGS $CFLAGS_LUA $CFLAGS_LPEG "$tmpc" \
+		$LDFLAGS $LDFLAGS_LUA $LDFLAGS_LPEG -o "$tmpo" >/dev/null 2>&1 ; then
+		CONFIG_LPEG=1
+		printf "yes\n"
+		break
+	else
+		printf "no\n"
+		CFLAGS_LPEG=""
+		LDFLAGS_LPEG=""
+	fi
+
+	test "$lpeg" = "yes" -a $CONFIG_LPEG -ne 1 && fail "$0: cannot find liblpeg"
 fi
 
 CONFIG_ACL=0
@@ -492,6 +541,9 @@ LDFLAGS_TERMKEY = $LDFLAGS_TERMKEY
 CONFIG_LUA = $CONFIG_LUA
 CFLAGS_LUA = $CFLAGS_LUA
 LDFLAGS_LUA = $LDFLAGS_LUA
+CONFIG_LPEG = $CONFIG_LPEG
+CFLAGS_LPEG = $CFLAGS_LPEG
+LDFLAGS_LPEG = $LDFLAGS_LPEG
 CONFIG_ACL = $CONFIG_ACL
 CFLAGS_ACL = $CFLAGS_ACL
 LDFLAGS_ACL = $LDFLAGS_ACL

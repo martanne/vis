@@ -1889,7 +1889,7 @@ void vis_lua_init(Vis *vis) {
 	vis->lua = L;
 	luaL_openlibs(L);
 
-#if CONFIG_BUILTIN_LPEG
+#if CONFIG_LPEG
 	extern int luaopen_lpeg(lua_State *L);
 	lua_getglobal(L, "package");
 	lua_getfield(L, -1, "preload");
