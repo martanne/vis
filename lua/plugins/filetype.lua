@@ -1,378 +1,378 @@
 vis.ftdetect = {}
 
 vis.ftdetect.ignoresuffixes = {
-	"~", ".orig", ".bak", ".old", ".new"
+	"~$", "%.orig$", "%.bak$", "%.old$", "%.new$"
 }
 
 vis.ftdetect.filetypes = {
 	actionscript = {
-		ext = { ".as", ".asc" },
+		ext = { "%.as$", "%.asc$" },
 	},
 	ada = {
-		ext = { ".adb", ".ads" },
+		ext = { "%.adb$", "%.ads$" },
 	},
 	ansi_c = {
-		ext = { ".c", ".C", ".h" },
+		ext = { "%.c$", "%.C$", "%.h$" },
 		mime = { "text/x-c" },
 	},
 	antlr = {
-		ext = { ".g", ".g4" },
+		ext = { "%.g$", "%.g4$" },
 	},
 	apdl = {
-		ext = { ".ans", ".inp", ".mac" },
+		ext = { "%.ans$", "%.inp$", "%.mac$" },
 	},
 	apl = {
-		ext = { ".apl" }
+		ext = { "%.apl$" }
 	},
 	applescript = {
-		ext = { ".applescript" },
+		ext = { "%.applescript$" },
 	},
 	asm = {
-		ext = { ".asm", ".ASM", ".s", ".S" },
+		ext = { "%.asm$", "%.ASM$", "%.s$", "%.S$" },
 	},
 	asp = {
-		ext = { ".asa", ".asp", ".hta" },
+		ext = { "%.asa$", "%.asp$", "%.hta$" },
 	},
 	autoit = {
-		ext = { ".au3", ".a3x" },
+		ext = { "%.au3$", "%.a3x$" },
 	},
 	awk = {
-		ext = { ".awk" },
+		ext = { "%.awk$" },
 	},
 	bash = {
-		ext = { ".bash", ".csh", ".sh", ".zsh" },
+		ext = { "%.bash$", "%.csh$", "%.sh$", "%.zsh$" },
 		mime = { "text/x-shellscript" },
 	},
 	batch = {
-		ext = { ".bat", ".cmd" },
+		ext = { "%.bat$", "%.cmd$" },
 	},
 	bibtex = {
-		ext = { ".bib" },
+		ext = { "%.bib$" },
 	},
 	boo = {
-		ext = { ".boo" },
+		ext = { "%.boo$" },
 	},
 	caml = {
-		ext = { ".caml", ".ml", ".mli", ".mll", ".mly" },
+		ext = { "%.caml$", "%.ml$", "%.mli$", "%.mll$", "%.mly$" },
 	},
 	chuck = {
-		ext = { ".ck" },
+		ext = { "%.ck$" },
 	},
 	cmake = {
-		ext = { ".cmake", ".cmake.in", ".ctest", ".ctest.in" },
+		ext = { "%.cmake$", "%.cmake.in$", "%.ctest$", "%.ctest.in$" },
 	},
 	coffeescript = {
-		ext = { ".coffee" },
+		ext = { "%.coffee$" },
 		mime = { "text/x-coffee" },
 	},
 	cpp = {
-		ext = { ".cpp", ".cxx", ".c++", ".cc", ".hh", ".hpp", ".hxx", ".h++" },
+		ext = { "%.cpp$", "%.cxx$", "%.c++$", "%.cc$", "%.hh$", "%.hpp$", "%.hxx$", "%.h++$" },
 		mime = { "text/x-c++" },
 	},
 	crystal = {
-		ext = { ".cr" },
+		ext = { "%.cr$" },
 	},
 	csharp = {
-		ext = { ".cs" },
+		ext = { "%.cs$" },
 	},
 	css = {
-		ext = { ".css" },
+		ext = { "%.css$" },
 		mime = { "text/x-css" },
 	},
 	cuda = {
-		ext = { ".cu", ".cuh" },
+		ext = { "%.cu$", "%.cuh$" },
 	},
 	dart = {
-		ext = { ".dart" },
+		ext = { "%.dart$" },
 	},
 	desktop = {
-		ext = { ".desktop" },
+		ext = { "%.desktop$" },
 	},
 	diff = {
-		ext = { ".diff", ".patch" },
+		ext = { "%.diff$", "%.patch$" },
 	},
 	dmd = {
-		ext = { ".d", ".di" },
+		ext = { "%.d$", "%.di$" },
 	},
 	dockerfile = {
 		ext = { "Dockerfile" },
 	},
 	dot = {
-		ext = { ".dot" },
+		ext = { "%.dot$" },
 	},
 	dsv = {
 		ext = { "group", "gshadow", "passwd", "shadow" },
 	},
 	eiffel = {
-		ext = { ".e", ".eif" },
+		ext = { "%.e$", "%.eif$" },
 	},
 	elixir = {
-		ext = { ".ex", ".exs" },
+		ext = { "%.ex$", "%.exs$" },
 	},
 	erlang = {
-		ext = { ".erl", ".hrl" },
+		ext = { "%.erl$", "%.hrl$" },
 	},
 	faust = {
-		ext = { ".dsp" },
+		ext = { "%.dsp$" },
 	},
 	fish = {
-		ext = { ".fish" },
+		ext = { "%.fish$" },
 	},
 	forth = {
-		ext = { ".forth", ".frt", ".fs" },
+		ext = { "%.forth$", "%.frt$", "%.fs$" },
 	},
 	fortran = {
-		ext = { ".f", ".for", ".ftn", ".fpp", ".f77", ".f90", ".f95", ".f03", ".f08" },
+		ext = { "%.f$", "%.for$", "%.ftn$", "%.fpp$", "%.f77$", "%.f90$", "%.f95$", "%.f03$", "%.f08$" },
 	},
 	fsharp = {
-		ext = { ".fs" },
+		ext = { "%.fs$" },
 	},
 	fstab = {
 		ext = { "fstab" },
 	},
 	gap = {
-		ext = { ".g", ".gd", ".gi", ".gap" },
+		ext = { "%.g$", "%.gd$", "%.gi$", "%.gap$" },
 	},
 	gettext = {
-		ext = { ".po", ".pot" },
+		ext = { "%.po$", "%.pot$" },
 	},
 	gherkin = {
-		ext = { ".feature" },
+		ext = { "%.feature$" },
 	},
 	glsl = {
-		ext = { ".glslf", ".glslv" },
+		ext = { "%.glslf$", "%.glslv$" },
 	},
 	gnuplot = {
-		ext = { ".dem", ".plt" },
+		ext = { "%.dem$", "%.plt$" },
 	},
 	go = {
-		ext = { ".go" },
+		ext = { "%.go$" },
 	},
 	groovy = {
-		ext = { ".groovy", ".gvy" },
+		ext = { "%.groovy$", "%.gvy$" },
 	},
 	gtkrc = {
-		ext = { ".gtkrc" },
+		ext = { "%.gtkrc$" },
 	},
 	haskell = {
-		ext = { ".hs" },
+		ext = { "%.hs$" },
 		mime = { "text/x-haskell" },
 	},
 	html = {
-		ext = { ".htm", ".html", ".shtm", ".shtml", ".xhtml" },
+		ext = { "%.htm$", "%.html$", "%.shtm$", "%.shtml$", "%.xhtml$" },
 		mime = { "text/x-html" },
 	},
 	icon = {
-		ext = { ".icn" },
+		ext = { "%.icn$" },
 	},
 	idl = {
-		ext = { ".idl", ".odl" },
+		ext = { "%.idl$", "%.odl$" },
 	},
 	inform = {
-		ext = { ".inf", ".ni" },
+		ext = { "%.inf$", "%.ni$" },
 	},
 	ini = {
-		ext = { ".cfg", ".cnf", ".inf", ".ini", ".reg" },
+		ext = { "%.cfg$", "%.cnf$", "%.inf$", "%.ini$", "%.reg$" },
 	},
 	io_lang = {
-		ext = { ".io" },
+		ext = { "%.io$" },
 	},
 	java = {
-		ext = { ".bsh", ".java" },
+		ext = { "%.bsh$", "%.java$" },
 	},
 	javascript = {
-		ext = { ".js", ".jsfl" },
+		ext = { "%.js$", "%.jsfl$" },
 	},
 	json = {
-		ext = { ".json" },
+		ext = { "%.json$" },
 		mime = { "text/x-json" },
 	},
 	jsp = {
-		ext = { ".jsp" },
+		ext = { "%.jsp$" },
 	},
 	latex = {
-		ext = { ".bbl", ".dtx", ".ins", ".ltx", ".tex", ".sty" },
+		ext = { "%.bbl$", "%.dtx$", "%.ins$", "%.ltx$", "%.tex$", "%.sty$" },
 		mime = { "text/x-tex" },
 	},
 	ledger = {
-		ext = { ".ledger", ".journal" },
+		ext = { "%.ledger$", "%.journal$" },
 	},
 	less = {
-		ext = { ".less" },
+		ext = { "%.less$" },
 	},
 	lilypond = {
-		ext = { ".lily", ".ly" },
+		ext = { "%.lily$", "%.ly$" },
 	},
 	lisp = {
-		ext = { ".cl", ".el", ".lisp", ".lsp" },
+		ext = { "%.cl$", "%.el$", "%.lisp$", "%.lsp$" },
 		mime = { "text/x-lisp" },
 	},
 	litcoffee = {
-		ext = { ".litcoffee" },
+		ext = { "%.litcoffee$" },
 	},
 	lua = {
-		ext = { ".lua" },
+		ext = { "%.lua$" },
 		mime = { "text/x-lua" },
 	},
 	makefile = {
-		ext = { ".iface", ".mak", ".mk", "GNUmakefile", "makefile", "Makefile" },
+		ext = { "%.iface$", "%.mak$", "%.mk$", "GNUmakefile", "makefile", "Makefile" },
 		mime = { "text/x-makefile" },
 	},
 	man = {
-		ext = { ".1", ".2", ".3", ".4", ".5", ".6", ".7", ".8", ".9", ".1x", ".2x", ".3x", ".4x", ".5x", ".6x", ".7x", ".8x", ".9x" },
+		ext = { "%.1$", "%.2$", "%.3$", "%.4$", "%.5$", "%.6$", "%.7$", "%.8$", "%.9$", "%.1x$", "%.2x$", "%.3x$", "%.4x$", "%.5x$", "%.6x$", "%.7x$", "%.8x$", "%.9x$" },
 	},
 	markdown = {
-		ext = { ".md", ".markdown" },
+		ext = { "%.md$", "%.markdown$" },
 		mime = { "text/x-markdown" },
 	},
 	moonscript = {
-		ext = { ".moon" },
+		ext = { "%.moon$" },
 		mime = { "text/x-moon" },
 	},
 	nemerle = {
-		ext = { ".n" },
+		ext = { "%.n$" },
 	},
 	networkd = {
-		ext = { ".link", ".network", ".netdev" },
+		ext = { "%.link$", "%.network$", "%.netdev$" },
 	},
 	nim = {
-		ext = { ".nim" },
+		ext = { "%.nim$" },
 	},
 	nsis = {
-		ext = { ".nsh", ".nsi", ".nsis" },
+		ext = { "%.nsh$", "%.nsi$", "%.nsis$" },
 	},
 	objective_c = {
-		ext = { ".m", ".mm", ".objc" },
+		ext = { "%.m$", "%.mm$", "%.objc$" },
 		mime = { "text/x-objc" },
 	},
 	pascal = {
-		ext = { ".dpk", ".dpr", ".p", ".pas" },
+		ext = { "%.dpk$", "%.dpr$", "%.p$", "%.pas$" },
 	},
 	perl = {
-		ext = { ".al", ".perl", ".pl", ".pm", ".pod" },
+		ext = { "%.al$", "%.perl$", "%.pl$", "%.pm$", "%.pod$" },
 		mime = { "text/x-perl" },
 	},
 	php = {
-		ext = { ".inc", ".php", ".php3", ".php4", ".phtml" },
+		ext = { "%.inc$", "%.php$", "%.php3$", "%.php4$", "%.phtml$" },
 	},
 	pico8 = {
-		ext = { ".p8" },
+		ext = { "%.p8$" },
 	},
 	pike = {
-		ext = { ".pike", ".pmod" },
+		ext = { "%.pike$", "%.pmod$" },
 	},
 	pkgbuild = {
 		ext = { "PKGBUILD" },
 	},
 	powershell = {
-		ext = { ".ps1" },
+		ext = { "%.ps1$" },
 	},
 	prolog = {
-		ext = { ".prolog" },
+		ext = { "%.prolog$" },
 	},
 	props = {
-		ext = { ".props", ".properties" },
+		ext = { "%.props$", "%.properties$" },
 	},
 	protobuf = {
-		ext = { ".proto" },
+		ext = { "%.proto$" },
 	},
 	ps = {
-		ext = { ".eps", ".ps" },
+		ext = { "%.eps$", "%.ps$" },
 	},
 	pure = {
-		ext = { ".pure" },
+		ext = { "%.pure$" },
 	},
 	python = {
-		ext = { ".sc", ".py", ".pyw" },
+		ext = { "%.sc$", "%.py$", "%.pyw$" },
 		mime = { "text/x-python" },
 	},
 	rebol = {
-		ext = { ".r", ".reb" },
+		ext = { "%.r$", "%.reb$" },
 	},
 	rest = {
-		ext = { ".rst" },
+		ext = { "%.rst$" },
 	},
 	rexx = {
-		ext = { ".orx", ".rex" },
+		ext = { "%.orx$", "%.rex$" },
 	},
 	rhtml = {
-		ext = { ".erb", ".rhtml" },
+		ext = { "%.erb$", "%.rhtml$" },
 	},
 	rstats = {
-		ext = { ".R", ".Rout", ".Rhistory", ".Rt", "Rout.save", "Rout.fail" },
+		ext = { "%.R$", "%.Rout$", "%.Rhistory$", "%.Rt$", "Rout.save", "Rout.fail" },
 	},
 	ruby = {
-		ext = { ".Rakefile", ".rake", ".rb", ".rbw" },
+		ext = { "%.Rakefile$", "%.rake$", "%.rb$", "%.rbw$" },
 		mime = { "text/x-ruby" },
 	},
 	rust = {
-		ext = { ".rs" },
+		ext = { "%.rs$" },
 		mime = { "text/x-rust" },
 	},
 	sass = {
-		ext = { ".sass", ".scss" },
+		ext = { "%.sass$", "%.scss$" },
 		mime = { "text/x-sass", "text/x-scss" },
 	},
 	scala = {
-		ext = { ".scala" },
+		ext = { "%.scala$" },
 		mime = { "text/x-scala" },
 	},
 	scheme = {
-		ext = { ".sch", ".scm" },
+		ext = { "%.sch$", "%.scm$" },
 	},
 	smalltalk = {
-		ext = { ".changes", ".st", ".sources" },
+		ext = { "%.changes$", "%.st$", "%.sources$" },
 	},
 	sml = {
-		ext = { ".sml", ".fun", ".sig" },
+		ext = { "%.sml$", "%.fun$", "%.sig$" },
 	},
 	snobol4 = {
-		ext = { ".sno", ".SNO" },
+		ext = { "%.sno$", "%.SNO$" },
 	},
 	sql= {
-		ext = { ".ddl", ".sql" },
+		ext = { "%.ddl$", "%.sql$" },
 	},
 	systemd = {
-		ext = { ".automount", ".device", ".mount", ".path", ".scope", ".service", ".slice", ".socket", ".swap", ".target", ".timer" },
+		ext = { "%.automount$", "%.device$", "%.mount$", "%.path$", "%.scope$", "%.service$", "%.slice$", "%.socket$", "%.swap$", "%.target$", "%.timer$" },
 	},
 	taskpaper = {
-		ext = { ".taskpaper" },
+		ext = { "%.taskpaper$" },
 	},
 	tcl = {
-		ext = { ".tcl", ".tk" },
+		ext = { "%.tcl$", "%.tk$" },
 	},
 	texinfo = {
-		ext = { ".texi" },
+		ext = { "%.texi$" },
 	},
 	toml = {
-		ext = { ".toml" },
+		ext = { "%.toml$" },
 	},
 	vala = {
-		ext = { ".vala" }
+		ext = { "%.vala$" }
 	},
 	vb = {
-		ext = { ".asa", ".bas", ".cls", ".ctl", ".dob", ".dsm", ".dsr", ".frm", ".pag", ".vb", ".vba", ".vbs" },
+		ext = { "%.asa$", "%.bas$", "%.cls$", "%.ctl$", "%.dob$", "%.dsm$", "%.dsr$", "%.frm$", "%.pag$", "%.vb$", "%.vba$", "%.vbs$" },
 	},
 	vcard = {
-		ext = { ".vcf", ".vcard" },
+		ext = { "%.vcf$", "%.vcard$" },
 	},
 	verilog = {
-		ext = { ".v", ".ver" },
+		ext = { "%.v$", "%.ver$" },
 	},
 	vhdl = {
-		ext = { ".vh", ".vhd", ".vhdl" },
+		ext = { "%.vh$", "%.vhd$", "%.vhdl$" },
 	},
 	wsf = {
-		ext = { ".wsf" },
+		ext = { "%.wsf$" },
 	},
 	xml = {
-		ext = { ".dtd", ".svg", ".xml", ".xsd", ".xsl", ".xslt", ".xul" },
+		ext = { "%.dtd$", "%.svg$", "%.xml$", "%.xsd$", "%.xsl$", "%.xslt$", "%.xul$" },
 	},
 	xtend = {
-		ext = {".xtend" },
+		ext = {"%.xtend$" },
 	},
 	yaml = {
-		ext = { ".yaml" },
+		ext = { "%.yaml$" },
 		mime = { "text/x-yaml" },
 	},
 }
@@ -386,12 +386,10 @@ vis.events.subscribe(vis.events.WIN_OPEN, function(win)
 		repeat
 			local changed = false
 			for _, pattern in pairs(vis.ftdetect.ignoresuffixes) do
-				if #sanitizedfn >= #pattern then
-					local s, e = sanitizedfn:find(pattern, -#pattern, true)
-					if e == #sanitizedfn then
-						sanitizedfn = sanitizedfn:sub(1, #sanitizedfn - #pattern)
-						changed = true
-					end
+				local start = sanitizedfn:find(pattern)
+				if start then
+					sanitizedfn = sanitizedfn:sub(1, start-1)
+					changed = true
 				end
 			end
 		until not changed
@@ -401,12 +399,9 @@ vis.events.subscribe(vis.events.WIN_OPEN, function(win)
 	if sanitizedfn ~= nil then
 		for lang, ft in pairs(vis.ftdetect.filetypes) do
 			for _, pattern in pairs(ft.ext or {}) do
-				if #sanitizedfn >= #pattern then
-					local s, e = sanitizedfn:find(pattern, -#pattern, true)
-					if e == #sanitizedfn then
-						win.syntax = lang
-						return
-					end
+				if sanitizedfn:match(pattern) then
+					win.syntax = lang
+					return
 				end
 			end
 		end
