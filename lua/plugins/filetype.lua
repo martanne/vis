@@ -378,6 +378,14 @@ vis.ftdetect.filetypes = {
 }
 
 vis.events.subscribe(vis.events.WIN_OPEN, function(win)
+
+	local set_filetype = function(syntax, filetype)
+		for _, cmd in pairs(filetype.cmd or {}) do
+			vis:command(cmd)
+		end
+		win.syntax = syntax
+	end
+
 	local name = win.file.name
 	-- remove ignored suffixes from filename
 	local sanitizedfn = name
@@ -400,7 +408,7 @@ vis.events.subscribe(vis.events.WIN_OPEN, function(win)
 		for lang, ft in pairs(vis.ftdetect.filetypes) do
 			for _, pattern in pairs(ft.ext or {}) do
 				if sanitizedfn:match(pattern) then
-					win.syntax = lang
+					set_filetype(lang, ft)
 					return
 				end
 			end
@@ -419,7 +427,7 @@ vis.events.subscribe(vis.events.WIN_OPEN, function(win)
 				for lang, ft in pairs(vis.ftdetect.filetypes) do
 					for _, ft_mime in pairs(ft.mime or {}) do
 						if mime == ft_mime then
-							win.syntax = lang
+							set_filetype(lang, ft)
 							return
 						end
 					end
@@ -434,7 +442,7 @@ vis.events.subscribe(vis.events.WIN_OPEN, function(win)
 	if data and #data > 0 then
 		for lang, ft in pairs(vis.ftdetect.filetypes) do
 			if type(ft.detect) == 'function' and ft.detect(file, data) then
-				win.syntax = lang
+				set_filetype(lang, ft)
 				return
 			end
 		end
