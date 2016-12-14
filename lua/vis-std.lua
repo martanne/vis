@@ -1,5 +1,25 @@
 -- standard vis event handlers
 
+vis.events.subscribe(vis.events.INIT, function()
+	local package_exist = function(name)
+		for _, searcher in ipairs(package.searchers or package.loaders) do
+			local loader = searcher(name)
+			if type(loader) == 'function' then
+				return true
+			end
+		end
+		return false
+	end
+
+	if not package_exist('lpeg') then
+		vis:info('WARNING: could not find lpeg module')
+	elseif not package_exist('lexer') then
+		vis:info('WARNING: could not find lexer module')
+	else
+		vis.lexers = require('lexer')
+	end
+end)
+
 vis.events.subscribe(vis.events.THEME_CHANGE, function(name)
 	if name ~= nil then
 		local theme = 'themes/'..name
@@ -7,7 +27,7 @@ vis.events.subscribe(vis.events.THEME_CHANGE, function(name)
 		require(theme)
 	end
 
-	if vis.lexers ~= nil then vis.lexers.lexers = {} end
+	if vis.lexers then vis.lexers.lexers = {} end
 
 	for win in vis:windows() do
 		win.syntax = win.syntax;

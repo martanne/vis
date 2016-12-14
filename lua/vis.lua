@@ -5,14 +5,7 @@
 ---
 -- @type Vis
 
-local ok, msg = pcall(function()
-	vis.lexers = {}
-	vis.lexers = require('lexer')
-end)
-
-if not ok then
-	vis:info('WARNING: could not load lexer module, is lpeg installed?')
-end
+vis.lexers = {}
 
 --- Map a new motion.
 --
