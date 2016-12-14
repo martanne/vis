@@ -69,6 +69,10 @@ vis.ftdetect.filetypes = {
 		ext = { "%.cpp$", "%.cxx$", "%.c++$", "%.cc$", "%.hh$", "%.hpp$", "%.hxx$", "%.h++$" },
 		mime = { "text/x-c++" },
 	},
+	crontab = {
+		ext = { "^crontab.*$" },
+		cmd = { "set savemethod inplace" },
+	},
 	crystal = {
 		ext = { "%.cr$" },
 	},
