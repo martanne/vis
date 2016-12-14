@@ -18,13 +18,13 @@ vis.events.subscribe(vis.events.WIN_SYNTAX, function(win, name)
 	local lexers = vis.lexers
 	if not lexers.load then return false end
 
-	win:style_define(win.STYLE_DEFAULT, lexers.STYLE_DEFAULT)
-	win:style_define(win.STYLE_CURSOR, lexers.STYLE_CURSOR)
-	win:style_define(win.STYLE_CURSOR_PRIMARY, lexers.STYLE_CURSOR_PRIMARY)
-	win:style_define(win.STYLE_CURSOR_LINE, lexers.STYLE_CURSOR_LINE)
-	win:style_define(win.STYLE_SELECTION, lexers.STYLE_SELECTION)
-	win:style_define(win.STYLE_LINENUMBER, lexers.STYLE_LINENUMBER)
-	win:style_define(win.STYLE_COLOR_COLUMN, lexers.STYLE_COLOR_COLUMN)
+	win:style_define(win.STYLE_DEFAULT, lexers.STYLE_DEFAULT or '')
+	win:style_define(win.STYLE_CURSOR, lexers.STYLE_CURSOR or '')
+	win:style_define(win.STYLE_CURSOR_PRIMARY, lexers.STYLE_CURSOR_PRIMARY or '')
+	win:style_define(win.STYLE_CURSOR_LINE, lexers.STYLE_CURSOR_LINE or '')
+	win:style_define(win.STYLE_SELECTION, lexers.STYLE_SELECTION or '')
+	win:style_define(win.STYLE_LINENUMBER, lexers.STYLE_LINENUMBER or '')
+	win:style_define(win.STYLE_COLOR_COLUMN, lexers.STYLE_COLOR_COLUMN or '')
 
 	if name == nil then return true end
 
