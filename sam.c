@@ -294,6 +294,7 @@ enum {
 	OPTION_CURSOR_LINE,
 	OPTION_COLOR_COLUMN,
 	OPTION_HORIZON,
+	OPTION_SAVE_METHOD,
 };
 
 static const OptionDef options[] = {
@@ -371,6 +372,11 @@ static const OptionDef options[] = {
 		{ "horizon" },
 		OPTION_TYPE_NUMBER, OPTION_FLAG_WINDOW,
 		"Number of bytes to consider for syntax highlighting",
+	},
+	[OPTION_SAVE_METHOD] = {
+		{ "savemethod" },
+		OPTION_TYPE_STRING, OPTION_FLAG_WINDOW,
+		"Save method to use for current file 'auto', 'atomic' or 'inplace'",
 	},
 };
 
@@ -1349,9 +1355,10 @@ static bool cmd_write(Vis *vis, Win *win, Command *cmd, const char *argv[], Curs
 			return false;
 		}
 
-		TextSave *ctx = text_save_begin(text, *name, TEXT_SAVE_AUTO);
+		TextSave *ctx = text_save_begin(text, *name, file->save_method);
 		if (!ctx) {
-			vis_info_show(vis, "Can't write `%s': %s", *name, strerror(errno));
+			const char *msg = errno ? strerror(errno) : "try changing `:set savemethod`";
+			vis_info_show(vis, "Can't write `%s': %s", *name, msg);
 			return false;
 		}
 

@@ -116,6 +116,7 @@ struct File { /* shared state among windows displaying the same file */
 	struct stat stat;                /* filesystem information when loaded/saved, used to detect changes outside the editor */
 	int refcount;                    /* how many windows are displaying this file? (always >= 1) */
 	Mark marks[VIS_MARK_INVALID];    /* marks which are shared across windows */
+	enum TextSaveMethod save_method; /* whether the file is saved using rename(2) or overwritten */
 	File *next, *prev;
 };
 

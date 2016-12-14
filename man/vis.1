@@ -1111,6 +1111,19 @@ Whether to display replacement symbol instead of tabs.
 Whether to display replacement symbol instead of newlines.
 .It Cm show-spaces Bq off
 Whether to display replacement symbol instead of blank cells.
+.It Cm savemethod Bq auto
+How the current file should be saved,
+.Sy atomic
+which uses
+.Xr rename 2
+to atomically replace the file,
+.Sy inplace
+which truncates the file and then rewrites it or
+.Sy auto
+which tries the former before falling back to the latter. The rename
+method fails for symlinks, hardlinks, in case of insufficient directory
+permissions or when either the file owner, group, POSIX ACL or SELinux
+labels can not be restored.
 .El
 .
 .Sh CONFIGURATION
