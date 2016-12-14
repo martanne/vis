@@ -24,7 +24,7 @@ Fine tuning of the installation directories:
 
 Optional features:
   --enable-lua            build with Lua support [auto]
-  --enable-lpeg           build with built-in LPeg support [auto]
+  --enable-lpeg           build with support for statically linking to LPeg [auto]
   --enable-selinux        build with SELinux support [auto]
   --enable-acl            build with POSIX ACL support [auto]
 
