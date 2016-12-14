@@ -128,6 +128,12 @@ enum TextNewLine {
 enum TextNewLine text_newline_type(Text*);
 const char *text_newline_char(Text*);
 
+enum TextSaveMethod {
+	TEXT_SAVE_AUTO,    /* first try atomic, then fall back to inplace */
+	TEXT_SAVE_ATOMIC,  /* create a new file, write content, atomically rename(2) over old file */
+	TEXT_SAVE_INPLACE, /* truncate file, overwrite content (any error will result in data loss) */
+};
+
 /* save the whole text to the given `filename'. Return true if succesful.
  * In which case an implicit snapshot is taken. The save might associate a
  * new inode to file. */
@@ -138,7 +144,7 @@ bool text_save_range(Text*, Filerange*, const char *file);
  * file ranges. For every call to `text_save_begin` there must be exactly
  * one matching call to either `text_save_commit` or `text_save_cancel`
  * to release the underlying resources. */
-TextSave *text_save_begin(Text*, const char *filename);
+TextSave *text_save_begin(Text*, const char *filename, enum TextSaveMethod);
 ssize_t text_save_write_range(TextSave*, Filerange*);
 /* try committing the changes to disk */
 bool text_save_commit(TextSave*);

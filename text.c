@@ -129,11 +129,7 @@ struct TextSave {                  /* used to hold context between text_save_{be
 	char *filename;            /* filename to save to as given to text_save_begin */
 	char *tmpname;             /* temporary name used for atomic rename(2) */
 	int fd;                    /* file descriptor to write data to using text_save_write */
-	enum {
-		TEXT_SAVE_UNKNOWN,
-		TEXT_SAVE_ATOMIC,  /* create a new file, write content, atomically rename(2) over old file */
-		TEXT_SAVE_INPLACE, /* truncate file, overwrite content (any error will result in data loss) */
-	} type;
+	enum TextSaveMethod type;  /* method used to save file */
 };
 
 /* block management */
@@ -997,7 +993,7 @@ static bool text_save_commit_inplace(TextSave *ctx) {
 	return true;
 }
 
-TextSave *text_save_begin(Text *txt, const char *filename) {
+TextSave *text_save_begin(Text *txt, const char *filename, enum TextSaveMethod type) {
 	if (!filename)
 		return NULL;
 	TextSave *ctx = calloc(1, sizeof *ctx);
@@ -1008,11 +1004,11 @@ TextSave *text_save_begin(Text *txt, const char *filename) {
 	if (!(ctx->filename = strdup(filename)))
 		goto err;
 	errno = 0;
-	if (text_save_begin_atomic(ctx))
+	if ((type == TEXT_SAVE_AUTO || type == TEXT_SAVE_ATOMIC) && text_save_begin_atomic(ctx))
 		return ctx;
 	if (errno == ENOSPC)
 		goto err;
-	if (text_save_begin_inplace(ctx))
+	if ((type == TEXT_SAVE_AUTO || type == TEXT_SAVE_INPLACE) && text_save_begin_inplace(ctx))
 		return ctx;
 err:
 	text_save_cancel(ctx);
@@ -1073,7 +1069,7 @@ bool text_save_range(Text *txt, Filerange *range, const char *filename) {
 		text_snapshot(txt);
 		return true;
 	}
-	TextSave *ctx = text_save_begin(txt, filename);
+	TextSave *ctx = text_save_begin(txt, filename, TEXT_SAVE_AUTO);
 	if (!ctx)
 		return false;
 	ssize_t written = text_write_range(txt, range, ctx->fd);

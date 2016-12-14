@@ -1349,7 +1349,7 @@ static bool cmd_write(Vis *vis, Win *win, Command *cmd, const char *argv[], Curs
 			return false;
 		}
 
-		TextSave *ctx = text_save_begin(text, *name);
+		TextSave *ctx = text_save_begin(text, *name, TEXT_SAVE_AUTO);
 		if (!ctx) {
 			vis_info_show(vis, "Can't write `%s': %s", *name, strerror(errno));
 			return false;
