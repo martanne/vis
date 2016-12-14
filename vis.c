@@ -40,7 +40,7 @@ bool vis_event_emit(Vis *vis, enum VisEvents id, ...) {
 	if (!vis->initialized) {
 		vis->initialized = true;
 		vis->ui->init(vis->ui, vis);
-		if (vis->event && vis->event->init)
+		if (vis->event->init)
 			vis->event->init(vis);
 	}
 
