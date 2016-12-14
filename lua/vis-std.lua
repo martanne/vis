@@ -18,6 +18,8 @@ vis.events.subscribe(vis.events.INIT, function()
 	else
 		vis.lexers = require('lexer')
 	end
+
+	vis:command("set theme ".. (vis.ui.colors <= 16 and "default-16" or "default-256"))
 end)
 
 vis.events.subscribe(vis.events.THEME_CHANGE, function(name)
