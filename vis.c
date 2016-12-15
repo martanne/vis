@@ -844,7 +844,7 @@ const char *vis_keys_next(Vis *vis, const char *keys) {
 	TermKey *termkey = vis->ui->termkey_get(vis->ui);
 	const char *next = NULL;
 	/* first try to parse a special key of the form <Key> */
-	if (*keys == '<' && (next = termkey_strpkey(termkey, keys+1, &key, TERMKEY_FORMAT_VIM)) && *next == '>')
+	if (*keys == '<' && keys[1] && (next = termkey_strpkey(termkey, keys+1, &key, TERMKEY_FORMAT_VIM)) && *next == '>')
 		return next+1;
 	if (*keys == '<') {
 		const char *start = keys + 1, *end = start;
