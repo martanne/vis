@@ -20,13 +20,6 @@ static bool isempty(Text *txt) {
 	return text_size(txt) == 0;
 }
 
-static char *content(Text *txt) {
-	static char buf[BUFSIZ];
-	size_t len = text_bytes_get(txt, 0, sizeof(buf)-1, buf);
-	buf[len] = '\0';
-	return buf;
-}
-
 static bool compare(Text *txt, const char *data) {
 	char buf[BUFSIZ];
 	size_t len = text_bytes_get(txt, 0, sizeof(buf)-1, buf);

@@ -105,21 +105,21 @@ static void test_pointers(void) {
 		items[i]->value = values[i];
 		Item *item;
 		ok(array_add_ptr(&arr, items[i]) && array_length(&arr) == i+1,
-			"Add item: %zu = %p", i, items[i]);
+			"Add item: %zu = %p", i, (void*)items[i]);
 		ok((item = array_get_ptr(&arr, i)) && item == items[i],
-			"Get item: %zu = %p", i, item);
+			"Get item: %zu = %p", i, (void*)item);
 	}
 
 	for (size_t i = 0; i < len; i++) {
 		Item *item = items[len-i-1];
 		ok(array_set_ptr(&arr, i, item) && array_length(&arr) == len,
-			"Set item: %zu = %p", i, item);
+			"Set item: %zu = %p", i, (void*)item);
 	}
 
 	for (size_t i = 0; i < len; i++) {
 		Item *item;
 		ok((item = array_get_ptr(&arr, i)) && item == items[len-i-1],
-			"Get item: %zu = %p", i, item);
+			"Get item: %zu = %p", i, (void*)item);
 	}
 
 	array_clear(&arr);
