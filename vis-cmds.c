@@ -93,7 +93,7 @@ static bool cmd_set(Vis *vis, Win *win, Command *cmd, const char *argv[], Cursor
 	}
 
 	if (!win && (opt->flags & OPTION_FLAG_WINDOW)) {
-		vis_info_show(vis, "Need active window for :set command");
+		vis_info_show(vis, "Need active window for :set %s", argv[1]);
 		return false;
 	}
 
