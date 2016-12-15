@@ -32,13 +32,9 @@ CFLAGS_VIS += -DCONFIG_LUA=${CONFIG_LUA}
 CFLAGS_VIS += -DCONFIG_LPEG=${CONFIG_LPEG}
 CFLAGS_VIS += -DCONFIG_SELINUX=${CONFIG_SELINUX}
 CFLAGS_VIS += -DCONFIG_ACL=${CONFIG_ACL}
-CFLAGS_VIS += ${CFLAGS_DEBUG}
 
 LDFLAGS_VIS = $(LDFLAGS_AUTO) $(LDFLAGS_TERMKEY) $(LDFLAGS_CURSES) $(LDFLAGS_ACL) \
 	$(LDFLAGS_SELINUX) $(LDFLAGS_LUA) $(LDFLAGS_LPEG) $(LDFLAGS_STD)
-
-CFLAGS_DEBUG_ENABLE = -U_FORTIFY_SOURCE -UNDEBUG -O0 -g -ggdb -Wall -Wextra -pedantic \
-	-Wno-missing-field-initializers -Wno-unused-parameter
 
 STRIP?=strip
 
@@ -51,19 +47,19 @@ config.mk:
 	@touch $@
 
 vis: config.h config.mk *.c *.h
-	${CC} ${CFLAGS} ${CFLAGS_VIS} ${SRC} ${LDFLAGS} ${LDFLAGS_VIS} -o $@
+	${CC} ${CFLAGS} ${CFLAGS_VIS} ${CFLAGS_EXTRA} ${SRC} ${LDFLAGS} ${LDFLAGS_VIS} -o $@
 
 vis-menu: vis-menu.c
-	${CC} ${CFLAGS} ${CFLAGS_STD} ${CFLAGS_AUTO} ${CFLAGS_DEBUG} $< ${LDFLAGS} ${LDFLAGS_STD} ${LDFLAGS_AUTO} -o $@
+	${CC} ${CFLAGS} ${CFLAGS_AUTO} ${CFLAGS_STD} ${CFLAGS_EXTRA} $< ${LDFLAGS} ${LDFLAGS_STD} ${LDFLAGS_AUTO} -o $@
 
 debug: clean
-	@$(MAKE) CFLAGS_DEBUG='${CFLAGS_DEBUG_ENABLE}'
+	@$(MAKE) CFLAGS_EXTRA='${CFLAGS_DEBUG}'
 
 profile: clean
-	@$(MAKE) CFLAGS_DEBUG='${CFLAGS_DEBUG_ENABLE} -pg'
+	@$(MAKE) CFLAGS_EXTRA='${CFLAGS_DEBUG} -pg'
 
 coverage: clean
-	@$(MAKE) CFLAGS_DEBUG='--coverage'
+	@$(MAKE) CFLAGS_EXTRA='--coverage'
 
 test-update:
 	git submodule init
