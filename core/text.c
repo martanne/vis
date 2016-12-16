@@ -108,5 +108,30 @@ int main(int argc, char *argv[]) {
 	text_undo(txt);
 	ok(text_delete(txt, 5, 5) && compare(txt, "12345"), "Deleting at end");
 
+	ok(text_mark_get(txt, text_mark_set(txt, -1)) == EPOS, "Mark invalid 1");
+	ok(text_mark_get(txt, text_mark_set(txt, text_size(txt)+1)) == EPOS, "Mark invalid 2");
+	Mark bof = text_mark_set(txt, 0);
+	ok(text_mark_get(txt, bof) == 0, "Mark at beginning of file");
+	size_t pos = 3;
+	Mark mof = text_mark_set(txt, pos);
+	ok(text_mark_get(txt, mof) == pos, "Mark in the middle");
+	Mark eof = text_mark_set(txt, text_size(txt));
+	ok(text_mark_get(txt, eof) == text_size(txt), "Mark at end of file");
+	const char *chunk = "new content";
+	size_t newpos = pos+strlen(chunk);
+	ok(insert(txt, pos-1, chunk), "Insert before mark");
+	ok(text_mark_get(txt, bof) == 0, "Mark at beginning adjusted 1");
+	ok(text_mark_get(txt, mof) == newpos, "Mark in the middle adjusted 1");
+	ok(text_mark_get(txt, eof) == text_size(txt), "Mark at end adjusted 1");
+	ok(insert(txt, newpos+1, chunk), "Insert after mark");
+	ok(text_mark_get(txt, bof) == 0, "Mark at beginning adjusted 2");
+	ok(text_mark_get(txt, mof) == newpos, "Mark in the middle adjusted 2");
+	ok(text_mark_get(txt, eof) == text_size(txt), "Mark at end adjusted 2");
+	text_snapshot(txt);
+	ok(text_delete(txt, newpos, 1), "Deleting mark");
+	ok(text_mark_get(txt, mof) == EPOS, "Mark in the middle deleted");
+	text_undo(txt);
+	ok(text_mark_get(txt, mof) == newpos, "Mark restored");
+
 	return exit_status();
 }
