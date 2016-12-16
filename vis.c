@@ -946,7 +946,7 @@ long vis_keys_codepoint(Vis *vis, const char *keys) {
 
 static void vis_keys_process(Vis *vis, size_t pos) {
 	Buffer *buf = vis->keys;
-	char *keys = buf->data + pos, *start = keys, *cur = keys, *end = keys;
+	char *keys = buf->data + pos, *start = keys, *cur = keys, *end = keys, *binding_end = keys;;
 	bool prefix = false;
 	KeyBinding *binding = NULL;
 
@@ -960,39 +960,50 @@ static void vis_keys_process(Vis *vis, size_t pos) {
 		char tmp = *end;
 		*end = '\0';
 		prefix = false;
-		binding = NULL;
 
-		for (Mode *mode = vis->mode; mode && !binding && !prefix; mode = mode->parent) {
-			for (int global = 0; global < 2 && !binding && !prefix; global++) {
-				Mode *mode_local = global || !vis->win ? mode : &vis->win->modes[mode->id];
-				if (!mode_local->bindings)
+		for (Mode *global_mode = vis->mode; global_mode && !prefix; global_mode = global_mode->parent) {
+			for (int global = 0; global < 2 && !prefix; global++) {
+				Mode *mode = (global || !vis->win) ?
+					     global_mode :
+				             &vis->win->modes[global_mode->id];
+				if (!mode->bindings)
 					continue;
-				binding = map_get(mode_local->bindings, start);
-				/* "<" is never treated as a prefix because it is used to denote
-				 * special key symbols */
-				if (strcmp(cur, "<"))
-					prefix = !binding && map_contains(mode_local->bindings, start);
+				/* keep track of longest matching binding */
+				KeyBinding *match = map_get(mode->bindings, start);
+				if (match && end > binding_end) {
+					binding = match;
+					binding_end = end;
+				}
+				/* "<" is never treated as a prefix because it
+				 * is used to denote special key symbols */
+				if (strcmp(start, "<")) {
+					prefix = (!match && map_contains(mode->bindings, start)) ||
+					         (match && !map_leaf(mode->bindings, start));
+				}
 			}
 		}
 
 		*end = tmp;
 
-		if (binding) { /* exact match */
+		if (prefix) {
+			/* input sofar is ambigious, wait for more */
+			cur = end;
+			end = start;
+		} else if (binding) { /* exact match */
 			if (binding->action) {
-				end = (char*)binding->action->func(vis, end, &binding->action->arg);
+				end = (char*)binding->action->func(vis, binding_end, &binding->action->arg);
 				if (!end) {
 					end = start;
 					break;
 				}
 				start = cur = end;
 			} else if (binding->alias) {
-				buffer_remove(buf, start - buf->data, end - start);
+				buffer_remove(buf, start - buf->data, binding_end - start);
 				buffer_insert0(buf, start - buf->data, binding->alias);
 				cur = end = start;
 			}
-		} else if (prefix) { /* incomplete key binding? */
-			cur = end;
-			end = start;
+			binding = NULL;
+			binding_end = start;
 		} else { /* no keybinding */
 			KeyAction *action = NULL;
 			if (start[0] == '<' && end[-1] == '>') {

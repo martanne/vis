@@ -121,8 +121,8 @@ static bool mode_map(Vis *vis, Mode *mode, bool force, const char *key, const Ke
 	if (!mode->bindings && !(mode->bindings = map_new()))
 		return false;
 	if (force)
-		map_prefix_delete(mode->bindings, key);
-	return (strcmp(key, "<") == 0 || !map_contains(mode->bindings, key)) && map_put(mode->bindings, key, binding);
+		map_delete(mode->bindings, key);
+	return map_put(mode->bindings, key, binding);
 }
 
 bool vis_mode_map(Vis *vis, enum VisMode id, bool force, const char *key, const KeyBinding *binding) {
