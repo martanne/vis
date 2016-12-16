@@ -32,6 +32,9 @@ array: config.h array.c ../../array.c
 debug: clean
 	$(MAKE) CFLAGS_EXTRA='${CFLAGS_DEBUG}'
 
+coverage: clean
+	$(MAKE) CFLAGS_EXTRA='--coverage'
+
 clean:
 	@echo cleaning
 	@rm -f text
@@ -39,4 +42,4 @@ clean:
 	@rm -f map
 	@rm -f array
 
-.PHONY: clean debug
+.PHONY: clean debug coverage
