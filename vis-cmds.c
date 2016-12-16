@@ -692,6 +692,21 @@ static bool cmd_help(Vis *vis, Win *win, Command *cmd, const char *argv[], Curso
 		}
 	}
 
+	text_appendf(txt, "\n Compile time configuration\n\n");
+
+	const struct {
+		const char *name;
+		bool enabled;
+	} configs[] = {
+		{ "Lua support: ", CONFIG_LUA },
+		{ "Lua LPeg statically built-in: ", CONFIG_LPEG },
+		{ "POSIX ACL support: ", CONFIG_ACL },
+		{ "SELinux support: ", CONFIG_SELINUX },
+	};
+
+	for (size_t i = 0; i < LENGTH(configs); i++)
+		text_appendf(txt, "  %-32s\t%s\n", configs[i].name, configs[i].enabled ? "yes" : "no");
+
 	text_save(txt, NULL);
 	return true;
 }
