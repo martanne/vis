@@ -41,5 +41,6 @@ clean:
 	@rm -f buffer
 	@rm -f map
 	@rm -f array
+	@rm -f *.gcov *.gcda *.gcno
 
 .PHONY: clean debug coverage

@@ -4,3 +4,6 @@
 /map
 /array
 /ccan-config
+*.gcda
+*.gcno
+*.gcov
