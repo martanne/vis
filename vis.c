@@ -929,8 +929,10 @@ static void vis_keys_process(Vis *vis, size_t pos) {
 					}
 				}
 			}
-			if (!action && vis->mode->input)
+			if (!action && vis->mode->input) {
+				end = (char*)vis_keys_next(vis, start);
 				vis->mode->input(vis, start, end - start);
+			}
 			start = cur = end;
 		}
 	}
