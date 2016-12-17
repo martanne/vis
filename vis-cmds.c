@@ -79,22 +79,38 @@ static bool parse_bool(const char *s, bool *outval) {
 
 static bool cmd_set(Vis *vis, Win *win, Command *cmd, const char *argv[], Cursor *cur, Filerange *range) {
 
-	if (!argv[1] || argv[3]) {
+	if (!argv[1] || !argv[1][0] || argv[3]) {
 		vis_info_show(vis, "Expecting: set option [value]");
 		return false;
 	}
 
-	OptionDef *opt = map_closest(vis->options, argv[1]);
-	if (!opt)
-		opt = map_closest(vis->options, argv[1]);
+	char name[256];
+	strncpy(name, argv[1], sizeof(name)-1);
+	char *lastchar = &name[strlen(name)-1];
+	bool toggle = (*lastchar == '!');
+	if (toggle)
+		*lastchar = '\0';
+
+	OptionDef *opt = map_closest(vis->options, name);
 	if (!opt) {
-		vis_info_show(vis, "Unknown option: `%s'", argv[1]);
+		vis_info_show(vis, "Unknown option: `%s'", name);
 		return false;
 	}
 
 	if (!win && (opt->flags & OPTION_FLAG_WINDOW)) {
-		vis_info_show(vis, "Need active window for :set %s", argv[1]);
+		vis_info_show(vis, "Need active window for `:set %s'", name);
 		return false;
+	}
+
+	if (toggle) {
+		if (opt->type != OPTION_TYPE_BOOL) {
+			vis_info_show(vis, "Only boolean options can be toggled");
+			return false;
+		}
+		if (argv[2]) {
+			vis_info_show(vis, "Can not specify option value when toggling");
+			return false;
+		}
 	}
 
 	Arg arg;
@@ -108,7 +124,7 @@ static bool cmd_set(Vis *vis, Win *win, Command *cmd, const char *argv[], Cursor
 		break;
 	case OPTION_TYPE_BOOL:
 		if (!argv[2]) {
-			arg.b = true;
+			arg.b = !toggle;
 		} else if (!parse_bool(argv[2], &arg.b)) {
 			vis_info_show(vis, "Expecting boolean option value not: `%s'", argv[2]);
 			return false;
@@ -163,10 +179,10 @@ static bool cmd_set(Vis *vis, Win *win, Command *cmd, const char *argv[], Cursor
 		break;
 	}
 	case OPTION_EXPANDTAB:
-		vis->expandtab = arg.b;
+		vis->expandtab = toggle ? !vis->expandtab : arg.b;
 		break;
 	case OPTION_AUTOINDENT:
-		vis->autoindent = arg.b;
+		vis->autoindent = toggle ? !vis->autoindent : arg.b;
 		break;
 	case OPTION_TABWIDTH:
 		tabwidth_set(vis, arg.i);
@@ -198,7 +214,7 @@ static bool cmd_set(Vis *vis, Win *win, Command *cmd, const char *argv[], Cursor
 			[OPTION_SHOW_NEWLINES] = UI_OPTION_SYMBOL_EOL,
 		};
 		int flags = view_options_get(win->view);
-		if (arg.b)
+		if (arg.b || (toggle && !(flags & values[opt_index])))
 			flags |= values[opt_index];
 		else
 			flags &= ~values[opt_index];
@@ -207,7 +223,7 @@ static bool cmd_set(Vis *vis, Win *win, Command *cmd, const char *argv[], Cursor
 	}
 	case OPTION_NUMBER: {
 		enum UiOption opt = view_options_get(win->view);
-		if (arg.b) {
+		if (arg.b || (toggle && !(opt & UI_OPTION_LINE_NUMBERS_ABSOLUTE))) {
 			opt &= ~UI_OPTION_LINE_NUMBERS_RELATIVE;
 			opt |=  UI_OPTION_LINE_NUMBERS_ABSOLUTE;
 		} else {
@@ -218,7 +234,7 @@ static bool cmd_set(Vis *vis, Win *win, Command *cmd, const char *argv[], Cursor
 	}
 	case OPTION_NUMBER_RELATIVE: {
 		enum UiOption opt = view_options_get(win->view);
-		if (arg.b) {
+		if (arg.b || (toggle && !(opt & UI_OPTION_LINE_NUMBERS_RELATIVE))) {
 			opt &= ~UI_OPTION_LINE_NUMBERS_ABSOLUTE;
 			opt |=  UI_OPTION_LINE_NUMBERS_RELATIVE;
 		} else {
@@ -229,7 +245,7 @@ static bool cmd_set(Vis *vis, Win *win, Command *cmd, const char *argv[], Cursor
 	}
 	case OPTION_CURSOR_LINE: {
 		enum UiOption opt = view_options_get(win->view);
-		if (arg.b)
+		if (arg.b || (toggle && !(opt & UI_OPTION_CURSOR_LINE)))
 			opt |= UI_OPTION_CURSOR_LINE;
 		else
 			opt &= ~UI_OPTION_CURSOR_LINE;
