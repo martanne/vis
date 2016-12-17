@@ -1,0 +1,6 @@
+:map! insert jj <nop> <Enter>
+ij<Escape>
+:map! insert jj >< <Enter>
+Ojj<Escape>
+:map! insert >> ><>x> <Enter>
+o>><Escape>
