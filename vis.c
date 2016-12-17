@@ -909,10 +909,11 @@ static void vis_keys_process(Vis *vis, size_t pos) {
 			} else if (binding->alias) {
 				buffer_remove(buf, start - buf->data, end - start);
 				buffer_insert0(buf, start - buf->data, binding->alias);
-				cur = start;
+				cur = end = start;
 			}
 		} else if (prefix) { /* incomplete key binding? */
 			cur = end;
+			end = start;
 		} else { /* no keybinding */
 			KeyAction *action = NULL;
 			if (start[0] == '<' && end[-1] == '>') {
@@ -937,8 +938,7 @@ static void vis_keys_process(Vis *vis, size_t pos) {
 		}
 	}
 
-	if (!prefix)
-		buffer_remove(buf, keys - buf->data, end - keys);
+	buffer_remove(buf, keys - buf->data, end - keys);
 }
 
 void vis_keys_feed(Vis *vis, const char *input) {
