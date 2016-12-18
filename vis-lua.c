@@ -1614,6 +1614,40 @@ err:
 }
 
 /***
+ * Set mark.
+ * @function mark_set
+ * @tparam int pos the position to set the mark to, must be in [0, file.size]
+ * @treturn Mark mark the mark which can be looked up later
+ */
+static int file_mark_set(lua_State *L) {
+	File *file = obj_ref_check(L, 1, "vis.file");
+	size_t pos = checkpos(L, 2);
+	Mark mark = text_mark_set(file->text, pos);
+	if (mark)
+		obj_lightref_new(L, (void*)mark, "vis.file.mark");
+	else
+		lua_pushnil(L);
+	return 1;
+}
+
+/***
+ * Get position of mark.
+ * @function mark_get
+ * @tparam Mark mark the mark to look up
+ * @treturn int pos the position of the mark, or `nil` if invalid
+ */
+static int file_mark_get(lua_State *L) {
+	File *file = obj_ref_check(L, 1, "vis.file");
+	Mark mark = obj_lightref_check(L, 2, "vis.file.mark");
+	size_t pos = text_mark_get(file->text, mark);
+	if (pos == EPOS)
+		lua_pushnil(L);
+	else
+		lua_pushunsigned(L, pos);
+	return 1;
+}
+
+/***
  * Word text object.
  *
  * @function text_object_word
@@ -1645,6 +1679,8 @@ static const struct luaL_Reg file_funcs[] = {
 	{ "delete", file_delete },
 	{ "lines_iterator", file_lines_iterator },
 	{ "content", file_content },
+	{ "mark_set", file_mark_set },
+	{ "mark_get", file_mark_get },
 	{ NULL, NULL },
 };
 
@@ -1996,6 +2032,8 @@ void vis_lua_init(Vis *vis) {
 		lua_pushunsigned(L, styles[i].id);
 		lua_setfield(L, -2, styles[i].name);
 	}
+
+	obj_type_new(L, "vis.file.mark");
 
 	obj_type_new(L, "vis.window.cursor");
 	luaL_setfuncs(L, window_cursor_funcs, 0);
