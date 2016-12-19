@@ -414,6 +414,8 @@ static void *obj_ref_check(lua_State *L, int idx, const char *type) {
 	void *obj = obj_ref_check_get(L, idx, type);
 	if (obj)
 		lua_pop(L, 1);
+	else
+		luaL_argerror(L, idx, "invalid object reference");
 	return obj;
 }
 
@@ -543,10 +545,6 @@ static const char *keymapping(Vis *vis, const char *keys, const Arg *arg) {
 static int windows_iter(lua_State *L);
 static int windows(lua_State *L) {
 	Vis *vis = obj_ref_check(L, 1, "vis");
-	if (!vis) {
-		lua_pushnil(L);
-		return 1;
-	}
 	Win **handle = lua_newuserdata(L, sizeof *handle);
 	*handle = vis->windows;
 	lua_pushcclosure(L, windows_iter, 1);
@@ -576,10 +574,6 @@ static int windows_iter(lua_State *L) {
 static int files_iter(lua_State *L);
 static int files(lua_State *L) {
 	Vis *vis = obj_ref_check(L, 1, "vis");
-	if (!vis) {
-		lua_pushnil(L);
-		return 1;
-	}
 	File **handle = lua_newuserdata(L, sizeof *handle);
 	*handle = vis->files;
 	lua_pushcclosure(L, files_iter, 1);
@@ -607,10 +601,6 @@ static int files_iter(lua_State *L) {
  */
 static int command(lua_State *L) {
 	Vis *vis = obj_ref_check(L, 1, "vis");
-	if (!vis) {
-		lua_pushnil(L);
-		return 1;
-	}
 	const char *cmd = luaL_checkstring(L, 2);
 	bool ret = vis_cmd(vis, cmd);
 	lua_pushboolean(L, ret);
@@ -628,12 +618,9 @@ static int command(lua_State *L) {
  */
 static int info(lua_State *L) {
 	Vis *vis = obj_ref_check(L, 1, "vis");
-	if (vis) {
-		const char *msg = luaL_checkstring(L, 2);
-		vis_info_show(vis, "%s", msg);
-	}
-	lua_pushboolean(L, vis != NULL);
-	return 1;
+	const char *msg = luaL_checkstring(L, 2);
+	vis_info_show(vis, "%s", msg);
+	return 0;
 }
 
 /***
@@ -646,12 +633,9 @@ static int info(lua_State *L) {
  */
 static int message(lua_State *L) {
 	Vis *vis = obj_ref_check(L, 1, "vis");
-	if (vis) {
-		const char *msg = luaL_checkstring(L, 2);
-		vis_message_show(vis, msg);
-	}
-	lua_pushboolean(L, vis != NULL);
-	return 1;
+	const char *msg = luaL_checkstring(L, 2);
+	vis_message_show(vis, msg);
+	return 0;
 }
 
 /***
@@ -665,10 +649,6 @@ static int message(lua_State *L) {
  */
 static int open(lua_State *L) {
 	Vis *vis = obj_ref_check(L, 1, "vis");
-	if (!vis) {
-		lua_pushnil(L);
-		return 1;
-	}
 	const char *name = luaL_checkstring(L, 2);
 	File *file = NULL;
 	if (vis_window_new(vis, name))
@@ -739,10 +719,6 @@ err:
  */
 static int map(lua_State *L) {
 	Vis *vis = obj_ref_check(L, 1, "vis");
-	if (!vis) {
-		lua_pushboolean(L, false);
-		return 1;
-	}
 	return keymap(L, vis, NULL);
 }
 
@@ -791,10 +767,8 @@ static int motion_register(lua_State *L) {
 	int id = -1;
 	const void *func;
 	Vis *vis = obj_ref_check(L, 1, "vis");
-	if (!vis || !lua_isfunction(L, 2) || !(func = func_ref_new(L)))
-		goto err;
-	id = vis_motion_register(vis, 0, (void*)func, motion_lua);
-err:
+	if (lua_isfunction(L, 2) && (func = func_ref_new(L)))
+		id = vis_motion_register(vis, 0, (void*)func, motion_lua);
 	lua_pushinteger(L, id);
 	return 1;
 }
@@ -811,7 +785,7 @@ err:
 static int textobject(lua_State *L) {
 	Vis *vis = obj_ref_check(L, 1, "vis");
 	enum VisTextObject id = luaL_checkunsigned(L, 2);
-	lua_pushboolean(L, vis && vis_textobject(vis, id));
+	lua_pushboolean(L, vis_textobject(vis, id));
 	return 1;
 }
 
@@ -843,10 +817,8 @@ static int textobject_register(lua_State *L) {
 	int id = -1;
 	const void *func;
 	Vis *vis = obj_ref_check(L, 1, "vis");
-	if (!vis || !lua_isfunction(L, 2) || !(func = func_ref_new(L)))
-		goto err;
-	id = vis_textobject_register(vis, 0, (void*)func, textobject_lua);
-err:
+	if (lua_isfunction(L, 2) && (func = func_ref_new(L)))
+		id = vis_textobject_register(vis, 0, (void*)func, textobject_lua);
 	lua_pushinteger(L, id);
 	return 1;
 }
@@ -889,7 +861,7 @@ static int command_register(lua_State *L) {
 	const void *func;
 	Vis *vis = obj_ref_check(L, 1, "vis");
 	const char *name = luaL_checkstring(L, 2);
-	if (vis && lua_isfunction(L, 3) && (func = func_ref_new(L)))
+	if (lua_isfunction(L, 3) && (func = func_ref_new(L)))
 		ret = vis_cmd_register(vis, name, (void*)func, command_lua);
 	lua_pushboolean(L, ret);
 	return 1;
@@ -906,10 +878,8 @@ static int command_register(lua_State *L) {
 static int feedkeys(lua_State *L) {
 	Vis *vis = obj_ref_check(L, 1, "vis");
 	const char *keys = luaL_checkstring(L, 2);
-	if (vis)
-		vis_keys_feed(vis, keys);
-	lua_pushboolean(L, vis != NULL);
-	return 1;
+	vis_keys_feed(vis, keys);
+	return 0;
 }
 
 /***
@@ -928,10 +898,6 @@ static int feedkeys(lua_State *L) {
 // TODO vis.ui
 static int vis_index(lua_State *L) {
 	Vis *vis = obj_ref_check(L, 1, "vis");
-	if (!vis) {
-		lua_pushnil(L);
-		return 1;
-	}
 
 	if (lua_isstring(L, 2)) {
 		const char *key = lua_tostring(L, 2);
@@ -959,13 +925,6 @@ static int vis_index(lua_State *L) {
 	return index_common(L);
 }
 
-static int vis_newindex(lua_State *L) {
-	Vis *vis = obj_ref_check(L, 1, "vis");
-	if (!vis)
-		return 0;
-	return newindex_common(L);
-}
-
 static const struct luaL_Reg vis_lua[] = {
 	{ "files", files },
 	{ "windows", windows },
@@ -981,22 +940,12 @@ static const struct luaL_Reg vis_lua[] = {
 	{ "command_register", command_register },
 	{ "feedkeys", feedkeys },
 	{ "__index", vis_index },
-	{ "__newindex", vis_newindex },
+	{ "__newindex", newindex_common },
 	{ NULL, NULL },
 };
 
-static int ui_index(lua_State *L) {
-	Win *win = obj_ref_check(L, 1, "vis.ui");
-	if (!win) {
-		lua_pushnil(L);
-		return 1;
-	}
-
-	return index_common(L);
-}
-
 static const struct luaL_Reg ui_funcs[] = {
-	{ "__index", ui_index },
+	{ "__index", index_common },
 	{ NULL, NULL },
 };
 
@@ -1037,10 +986,6 @@ static const struct luaL_Reg ui_funcs[] = {
  */
 static int window_index(lua_State *L) {
 	Win *win = obj_ref_check(L, 1, "vis.window");
-	if (!win) {
-		lua_pushnil(L);
-		return 1;
-	}
 
 	if (lua_isstring(L, 2)) {
 		const char *key = lua_tostring(L, 2);
@@ -1089,8 +1034,7 @@ static int window_index(lua_State *L) {
 
 static int window_newindex(lua_State *L) {
 	Win *win = obj_ref_check(L, 1, "vis.window");
-	if (!win)
-		return 0;
+
 	if (lua_isstring(L, 2)) {
 		const char *key = lua_tostring(L, 2);
 		if (strcmp(key, "syntax") == 0) {
@@ -1122,10 +1066,6 @@ static int window_cursors_iterator_next(lua_State *L) {
  */
 static int window_cursors_iterator(lua_State *L) {
 	Win *win = obj_ref_check(L, 1, "vis.window");
-	if (!win) {
-		lua_pushnil(L);
-		return 1;
-	}
 	Cursor **handle = lua_newuserdata(L, sizeof *handle);
 	*handle = view_cursors(win->view);
 	lua_pushcclosure(L, window_cursors_iterator_next, 1);
@@ -1145,10 +1085,6 @@ static int window_cursors_iterator(lua_State *L) {
  */
 static int window_map(lua_State *L) {
 	Win *win = obj_ref_check(L, 1, "vis.window");
-	if (!win) {
-		lua_pushboolean(L, false);
-		return 1;
-	}
 	return keymap(L, win->vis, win);
 }
 
@@ -1165,12 +1101,9 @@ static int window_map(lua_State *L) {
  */
 static int window_style_define(lua_State *L) {
 	Win *win = obj_ref_check(L, 1, "vis.window");
-	bool ret = false;
-	if (win) {
-		enum UiStyle id = luaL_checkunsigned(L, 2);
-		const char *style = luaL_checkstring(L, 3);
-		ret = view_style_define(win->view, id, style);
-	}
+	enum UiStyle id = luaL_checkunsigned(L, 2);
+	const char *style = luaL_checkstring(L, 3);
+	bool ret = view_style_define(win->view, id, style);
 	lua_pushboolean(L, ret);
 	return 1;
 }
@@ -1189,12 +1122,10 @@ static int window_style_define(lua_State *L) {
  */
 static int window_style(lua_State *L) {
 	Win *win = obj_ref_check(L, 1, "vis.window");
-	if (win) {
-		enum UiStyle style = luaL_checkunsigned(L, 2);
-		size_t start = checkpos(L, 3);
-		size_t end = checkpos(L, 4);
-		view_style(win->view, style, start, end);
-	}
+	enum UiStyle style = luaL_checkunsigned(L, 2);
+	size_t start = checkpos(L, 3);
+	size_t end = checkpos(L, 4);
+	view_style(win->view, style, start, end);
 	return 0;
 }
 
@@ -1207,19 +1138,17 @@ static int window_style(lua_State *L) {
  */
 static int window_status(lua_State *L) {
 	Win *win = obj_ref_check(L, 1, "vis.window");
-	if (win) {
-		char status[1024] = "";
-		int width = vis_window_width_get(win);
-		const char *left = luaL_checkstring(L, 2);
-		const char *right = luaL_optstring(L, 3, "");
-		int left_width = text_string_width(left, strlen(left));
-		int right_width = text_string_width(right, strlen(right));
-		int spaces = width - left_width - right_width;
-		if (spaces < 1)
-			spaces = 1;
-		snprintf(status, sizeof(status)-1, "%s%*s%s", left, spaces, " ", right);
-		vis_window_status(win, status);
-	}
+	char status[1024] = "";
+	int width = vis_window_width_get(win);
+	const char *left = luaL_checkstring(L, 2);
+	const char *right = luaL_optstring(L, 3, "");
+	int left_width = text_string_width(left, strlen(left));
+	int right_width = text_string_width(right, strlen(right));
+	int spaces = width - left_width - right_width;
+	if (spaces < 1)
+		spaces = 1;
+	snprintf(status, sizeof(status)-1, "%s%*s%s", left, spaces, " ", right);
+	vis_window_status(win, status);
 	return 0;
 }
 
@@ -1230,8 +1159,7 @@ static int window_status(lua_State *L) {
  */
 static int window_draw(lua_State *L) {
 	Win *win = obj_ref_check(L, 1, "vis.window");
-	if (win)
-		view_draw(win->view);
+	view_draw(win->view);
 	return 0;
 }
 
@@ -1249,8 +1177,6 @@ static const struct luaL_Reg window_funcs[] = {
 
 static int window_cursors_index(lua_State *L) {
 	View *view = obj_ref_check(L, 1, "vis.window.cursors");
-	if (!view)
-		goto err;
 	size_t index = luaL_checkunsigned(L, 2);
 	size_t count = view_cursors_count(view);
 	if (index == 0 || index > count)
@@ -1268,7 +1194,7 @@ err:
 
 static int window_cursors_len(lua_State *L) {
 	View *view = obj_ref_check(L, 1, "vis.window.cursors");
-	lua_pushunsigned(L, view ? view_cursors_count(view) : 0);
+	lua_pushunsigned(L, view_cursors_count(view));
 	return 1;
 }
 
@@ -1437,10 +1363,6 @@ static const struct luaL_Reg window_cursor_funcs[] = {
  */
 static int file_index(lua_State *L) {
 	File *file = obj_ref_check(L, 1, "vis.file");
-	if (!file) {
-		lua_pushnil(L);
-		return 1;
-	}
 
 	if (lua_isstring(L, 2)) {
 		const char *key = lua_tostring(L, 2);
@@ -1493,13 +1415,6 @@ static int file_index(lua_State *L) {
 	return index_common(L);
 }
 
-static int file_newindex(lua_State *L) {
-	File *file = obj_ref_check(L, 1, "vis.file");
-	if (!file)
-		return 0;
-	return newindex_common(L);
-}
-
 /***
  * Insert data at position.
  * @function insert
@@ -1509,16 +1424,11 @@ static int file_newindex(lua_State *L) {
  */
 static int file_insert(lua_State *L) {
 	File *file = obj_ref_check(L, 1, "vis.file");
-	if (file) {
-		size_t pos = checkpos(L, 2);
-		size_t len;
-		luaL_checkstring(L, 3);
-		const char *data = lua_tolstring(L, 3, &len);
- 		bool ret = text_insert(file->text, pos, data, len);
-		lua_pushboolean(L, ret);
-	} else {
-		lua_pushboolean(L, false);
-	}
+	size_t pos = checkpos(L, 2);
+	size_t len;
+	luaL_checkstring(L, 3);
+	const char *data = lua_tolstring(L, 3, &len);
+	lua_pushboolean(L, text_insert(file->text, pos, data, len));
 	return 1;
 }
 
@@ -1539,12 +1449,8 @@ static int file_insert(lua_State *L) {
  */
 static int file_delete(lua_State *L) {
 	File *file = obj_ref_check(L, 1, "vis.file");
-	if (file) {
-		Filerange range = getrange(L, 2);
-		lua_pushboolean(L, text_delete_range(file->text, &range));
-	} else {
-		lua_pushboolean(L, false);
-	}
+	Filerange range = getrange(L, 2);
+	lua_pushboolean(L, text_delete_range(file->text, &range));
 	return 1;
 }
 
@@ -1610,8 +1516,6 @@ static int file_lines_iterator_it(lua_State *L) {
  */
 static int file_content(lua_State *L) {
 	File *file = obj_ref_check(L, 1, "vis.file");
-	if (!file)
-		goto err;
 	Filerange range = getrange(L, 2);
 	if (!text_range_valid(&range))
 		goto err;
@@ -1673,23 +1577,20 @@ static int file_mark_get(lua_State *L) {
 static int file_text_object(lua_State *L) {
 	Filerange range = text_range_empty();
 	File *file = obj_ref_check(L, 1, "vis.file");
-	if (!file)
-		goto err;
 	size_t pos = checkpos(L, 2);
 	size_t idx = lua_tointeger(L, lua_upvalueindex(1));
-	if (idx >= LENGTH(vis_textobjects))
-		goto err;
-	const TextObject *txtobj = &vis_textobjects[idx];
-	if (txtobj->txt)
-		range = txtobj->txt(file->text, pos);
-err:
+	if (idx < LENGTH(vis_textobjects)) {
+		const TextObject *txtobj = &vis_textobjects[idx];
+		if (txtobj->txt)
+			range = txtobj->txt(file->text, pos);
+	}
 	pushrange(L, &range);
 	return 1;
 }
 
 static const struct luaL_Reg file_funcs[] = {
 	{ "__index", file_index },
-	{ "__newindex", file_newindex },
+	{ "__newindex", newindex_common },
 	{ "insert", file_insert },
 	{ "delete", file_delete },
 	{ "lines_iterator", file_lines_iterator },
@@ -1701,8 +1602,6 @@ static const struct luaL_Reg file_funcs[] = {
 
 static int file_lines_index(lua_State *L) {
 	Text *txt = obj_ref_check(L, 1, "vis.file.text");
-	if (!txt)
-		goto err;
 	size_t line = luaL_checkunsigned(L, 2);
 	size_t start = text_pos_by_lineno(txt, line);
 	size_t end = text_line_end(txt, start);
@@ -1723,8 +1622,6 @@ err:
 
 static int file_lines_newindex(lua_State *L) {
 	Text *txt = obj_ref_check(L, 1, "vis.file.text");
-	if (!txt)
-		return 0;
 	size_t line = luaL_checkunsigned(L, 2);
 	size_t size;
 	const char *data = luaL_checklstring(L, 3, &size);
@@ -1747,14 +1644,12 @@ static int file_lines_newindex(lua_State *L) {
 static int file_lines_len(lua_State *L) {
 	Text *txt = obj_ref_check(L, 1, "vis.file.text");
 	size_t lines = 0;
-	if (txt) {
-		char lastchar;
-		size_t size = text_size(txt);
-		if (size > 0)
-			lines = text_lineno_by_pos(txt, size);
-		if (lines > 1 && text_byte_get(txt, size-1, &lastchar) && lastchar == '\n')
-			lines--;
-	}
+	char lastchar;
+	size_t size = text_size(txt);
+	if (size > 0)
+		lines = text_lineno_by_pos(txt, size);
+	if (lines > 1 && text_byte_get(txt, size-1, &lastchar) && lastchar == '\n')
+		lines--;
 	lua_pushunsigned(L, lines);
 	return 1;
 }
