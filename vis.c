@@ -1235,6 +1235,25 @@ void vis_count_set(Vis *vis, int count) {
 	vis->action.count = (count >= 0 ? count : VIS_COUNT_UNKNOWN);
 }
 
+enum VisRegister vis_register_from(Vis *vis, char reg) {
+	switch (reg) {
+	case '*': /* fall through */
+	case '+': return VIS_REG_CLIPBOARD;
+	case '_': return VIS_REG_BLACKHOLE;
+	case '0': return VIS_REG_ZERO;
+	case '@': return VIS_MACRO_LAST_RECORDED;
+	case '/': return VIS_REG_SEARCH;
+	case ':': return VIS_REG_COMMAND;
+	case '!': return VIS_REG_SHELL;
+	default:
+		if ('a' <= reg && reg <= 'z')
+			return VIS_REG_a + reg - 'a';
+		else if ('A' <= reg && reg <= 'Z')
+			return VIS_REG_A + reg - 'A';
+		return VIS_REG_INVALID;
+	}
+}
+
 void vis_register_set(Vis *vis, enum VisRegister reg) {
 	if (reg >= VIS_REG_A && reg <= VIS_REG_Z) {
 		vis->action.reg = &vis->registers[reg - VIS_REG_A];

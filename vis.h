@@ -412,6 +412,7 @@ enum VisRegister {
 	VIS_MACRO_LAST_RECORDED, /* pseudo macro referring to last recorded one */
 };
 
+enum VisRegister vis_register_from(Vis*, char reg);
 /* set the register to use, if none is given the DEFAULT register is used */
 void vis_register_set(Vis*, enum VisRegister);
 /* get register content */
