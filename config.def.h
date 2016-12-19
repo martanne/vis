@@ -301,6 +301,7 @@ static const KeyBinding bindings_visual[] = {
 static const KeyBinding bindings_visual_line[] = {
 	{ "v",                  ACTION(MODE_VISUAL)                         },
 	{ "V",                  ACTION(MODE_NORMAL)                         },
+	{ "s",                  ALIAS("dO")                                 },
 	{ 0 /* empty last element, array terminator */                      },
 };
 
