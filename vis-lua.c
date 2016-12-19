@@ -11,6 +11,7 @@
  * @license ISC
  * @release RELEASE
  */
+#include <stddef.h>
 #include <stdarg.h>
 #include <stdio.h>
 #include <string.h>
@@ -414,6 +415,11 @@ static void *obj_ref_check(lua_State *L, int idx, const char *type) {
 	if (obj)
 		lua_pop(L, 1);
 	return obj;
+}
+
+static void *obj_ref_check_containerof(lua_State *L, int idx, const char *type, size_t offset) {
+	void *obj = obj_ref_check(L, idx, type);
+	return obj ? ((char*)obj-offset) : obj;
 }
 
 static void *obj_lightref_new(lua_State *L, void *addr, const char *type) {
@@ -1425,6 +1431,10 @@ static const struct luaL_Reg window_cursor_funcs[] = {
  * File state.
  * @tfield bool modified whether the file contains unsaved changes
  */
+/***
+ * File marks.
+ * @field marks array to access the marks of this file by single letter name
+ */
 static int file_index(lua_State *L) {
 	File *file = obj_ref_check(L, 1, "vis.file");
 	if (!file) {
@@ -1471,6 +1481,11 @@ static int file_index(lua_State *L) {
 
 		if (strcmp(key, "modified") == 0) {
 			lua_pushboolean(L, text_modified(file->text));
+			return 1;
+		}
+
+		if (strcmp(key, "marks") == 0) {
+			obj_ref_new(L, file->marks, "vis.file.marks");
 			return 1;
 		}
 	}
@@ -1748,6 +1763,53 @@ static const struct luaL_Reg file_lines_funcs[] = {
 	{ "__index", file_lines_index },
 	{ "__newindex", file_lines_newindex },
 	{ "__len", file_lines_len },
+	{ NULL, NULL },
+};
+
+static int file_marks_index(lua_State *L) {
+	File *file = obj_ref_check_containerof(L, 1, "vis.file.marks", offsetof(File, marks));
+	if (!file)
+		goto err;
+	const char *symbol = luaL_checkstring(L, 2);
+	if (!symbol || strlen(symbol) != 1)
+		goto err;
+	enum VisMark mark = vis_mark_from(NULL /* XXX */, symbol[0]);
+	if (mark == VIS_MARK_INVALID)
+		goto err;
+	size_t pos = text_mark_get(file->text, file->marks[mark]);
+	if (pos == EPOS)
+		goto err;
+	lua_pushunsigned(L, pos);
+	return 1;
+err:
+	lua_pushnil(L);
+	return 1;
+}
+
+static int file_marks_newindex(lua_State *L) {
+	File *file = obj_ref_check_containerof(L, 1, "vis.file.marks", offsetof(File, marks));
+	if (!file)
+		return 0;
+	const char *symbol = luaL_checkstring(L, 2);
+	if (!symbol || strlen(symbol) != 1)
+		return 0;
+	enum VisMark mark = vis_mark_from(NULL /* XXX */, symbol[0]);
+	size_t pos = luaL_checkunsigned(L, 3);
+	if (mark < LENGTH(file->marks))
+		file->marks[mark] = text_mark_set(file->text, pos);
+	return 0;
+}
+
+static int file_marks_len(lua_State *L) {
+	File *file = obj_ref_check_containerof(L, 1, "vis.file.marks", offsetof(File, marks));
+	lua_pushunsigned(L, file ? LENGTH(file->marks) : 0);
+	return 1;
+}
+
+static const struct luaL_Reg file_marks_funcs[] = {
+	{ "__index", file_marks_index },
+	{ "__newindex", file_marks_newindex },
+	{ "__len", file_marks_len },
 	{ NULL, NULL },
 };
 
@@ -2034,6 +2096,8 @@ void vis_lua_init(Vis *vis) {
 	}
 
 	obj_type_new(L, "vis.file.mark");
+	obj_type_new(L, "vis.file.marks");
+	luaL_setfuncs(L, file_marks_funcs, 0);
 
 	obj_type_new(L, "vis.window.cursor");
 	luaL_setfuncs(L, window_cursor_funcs, 0);
@@ -2209,6 +2273,7 @@ void vis_lua_file_close(Vis *vis, File *file) {
 		obj_ref_new(L, file, "vis.file");
 		pcall(vis, L, 1, 0);
 	}
+	obj_ref_free(L, file->marks);
 	obj_ref_free(L, file->text);
 	obj_ref_free(L, file);
 	lua_pop(L, 1);
