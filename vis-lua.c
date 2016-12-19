@@ -526,7 +526,10 @@ static const char *keymapping(Vis *vis, const char *keys, const Arg *arg) {
  * Events.
  * @tfield events events
  */
-
+/***
+ * Registers.
+ * @field registers array to access the register by single letter name
+ */
 /***
  * LPeg lexer support module.
  * @field lexers
@@ -915,6 +918,11 @@ static int vis_index(lua_State *L) {
 			return 1;
 		}
 
+		if (strcmp(key, "registers") == 0) {
+			obj_ref_new(L, vis->ui, "vis.registers");
+			return 1;
+		}
+
 		if (strcmp(key, "ui") == 0) {
 			obj_ref_new(L, vis->ui, "vis.ui");
 			return 1;
@@ -945,6 +953,51 @@ static const struct luaL_Reg vis_lua[] = {
 
 static const struct luaL_Reg ui_funcs[] = {
 	{ "__index", index_common },
+	{ NULL, NULL },
+};
+
+static int registers_index(lua_State *L) {
+	Vis *vis = lua_touserdata(L, lua_upvalueindex(1));
+	const char *symbol = luaL_checkstring(L, 2);
+	if (!symbol || strlen(symbol) != 1)
+		goto err;
+	enum VisRegister reg = vis_register_from(NULL /* XXX */, symbol[0]);
+	if (reg >= VIS_REG_INVALID)
+		goto err;
+	size_t len;
+	const char *value = vis_register_get(vis, reg, &len);
+	lua_pushlstring(L, value, len);
+	return 1;
+err:
+	lua_pushnil(L);
+	return 1;
+}
+
+static int registers_newindex(lua_State *L) {
+	Vis *vis = lua_touserdata(L, lua_upvalueindex(1));
+	const char *symbol = luaL_checkstring(L, 2);
+	if (!symbol || strlen(symbol) != 1)
+		return 0;
+	enum VisRegister reg = vis_register_from(NULL /* XXX */, symbol[0]);
+	if (reg >= VIS_REG_INVALID)
+		return 0;
+	luaL_checkstring(L, 3);
+	size_t len;
+	const char *value = lua_tolstring(L, 3, &len);
+	register_put(vis, &vis->registers[reg], value, len+1);
+	return 0;
+}
+
+static int registers_len(lua_State *L) {
+	Vis *vis = lua_touserdata(L, lua_upvalueindex(1));
+	lua_pushunsigned(L, LENGTH(vis->registers));
+	return 1;
+}
+
+static const struct luaL_Reg registers_funcs[] = {
+	{ "__index", registers_index },
+	{ "__newindex", registers_newindex },
+	{ "__len", registers_len },
 	{ NULL, NULL },
 };
 
@@ -2002,6 +2055,10 @@ void vis_lua_init(Vis *vis) {
 	luaL_setfuncs(L, ui_funcs, 0);
 	lua_pushunsigned(L, vis->ui->colors(vis->ui));
 	lua_setfield(L, -2, "colors");
+
+	obj_type_new(L, "vis.registers");
+	lua_pushlightuserdata(L, vis);
+	luaL_setfuncs(L, registers_funcs, 1);
 
 	obj_type_new(L, "vis");
 	luaL_setfuncs(L, vis_lua, 0);
