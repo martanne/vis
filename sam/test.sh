@@ -3,6 +3,7 @@
 NL='
 '
 
+export VIS_PATH=.
 [ -z "$VIS" ] && VIS="../../vis"
 [ -z "$SAM" ] && SAM="sam"
 [ -z "$PLAN9" ] && PLAN9="/usr/local/plan9/bin"

@@ -1,5 +1,6 @@
 #!/bin/sh
 
+export VIS_PATH=.
 [ -z "$VIS" ] && VIS="../../vis"
 $VIS -v
 
@@ -12,8 +13,6 @@ else
 	printf ':help\n:/ Lua paths/,$ w help\n:qall\n' | $VIS 2> /dev/null && cat help && rm -f help
 	test_files="$(find . -type f -name '*.in')"
 fi
-
-export VIS_PATH=.
 
 for t in $test_files; do
 	TESTS_RUN=$((TESTS_RUN + 1))
