@@ -374,8 +374,10 @@ static void obj_ref_free(lua_State *L, void *addr) {
  *  return registry["vis.objects"][addr];
  */
 static void *obj_ref_new(lua_State *L, void *addr, const char *type) {
-	if (!addr)
+	if (!addr) {
+		lua_pushnil(L);
 		return NULL;
+	}
 	lua_getfield(L, LUA_REGISTRYINDEX, "vis.objects");
 	lua_pushlightuserdata(L, addr);
 	lua_gettable(L, -2);
@@ -556,9 +558,8 @@ static int windows_iter(lua_State *L) {
 	if (!*handle)
 		return 0;
 	Win *win = obj_ref_new(L, *handle, "vis.window");
-	if (!win)
-		return 0;
-	*handle = win->next;
+	if (win)
+		*handle = win->next;
 	return 1;
 }
 
@@ -585,9 +586,8 @@ static int files_iter(lua_State *L) {
 	if (!*handle)
 		return 0;
 	File *file = obj_ref_new(L, *handle, "vis.file");
-	if (!file)
-		return 0;
-	*handle = file->next;
+	if (file)
+		*handle = file->next;
 	return 1;
 }
 
@@ -650,10 +650,9 @@ static int message(lua_State *L) {
 static int open(lua_State *L) {
 	Vis *vis = obj_ref_check(L, 1, "vis");
 	const char *name = luaL_checkstring(L, 2);
-	File *file = NULL;
 	if (vis_window_new(vis, name))
-		file = obj_ref_new(L, vis->win->file, "vis.file");
-	if (!file)
+		obj_ref_new(L, vis->win->file, "vis.file");
+	else
 		lua_pushnil(L);
 	return 1;
 }
