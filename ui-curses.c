@@ -79,7 +79,7 @@ typedef struct {
 	Vis *vis;              /* editor instance to which this ui belongs */
 	UiCursesWin *windows;     /* all windows managed by this ui */
 	UiCursesWin *selwin;      /* the currently selected layout */
-	char info[255];           /* info message displayed at the bottom of the screen */
+	char info[512];           /* info message displayed at the bottom of the screen */
 	int width, height;        /* terminal dimensions available for all windows */
 	enum UiLayout layout;     /* whether windows are displayed horizontally or vertically */
 	TermKey *termkey;         /* libtermkey instance to handle keyboard input (stdin or /dev/tty) */
