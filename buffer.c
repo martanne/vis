@@ -109,26 +109,36 @@ bool buffer_prepend0(Buffer *buf, const char *data) {
 	return buffer_prepend(buf, data, strlen(data) + (buf->len == 0));
 }
 
-bool buffer_printf(Buffer *buf, const char *fmt, ...) {
+static bool buffer_vappendf(Buffer *buf, const char *fmt, va_list ap) {
+	va_list ap_save;
+	va_copy(ap_save, ap);
+	int len = vsnprintf(NULL, 0, fmt, ap);
+	if (len == -1 || !buffer_grow(buf, buf->len+len+1)) {
+		va_end(ap_save);
+		return false;
+	}
+	size_t nul = (buf->len > 0 && buf->data[buf->len-1] == '\0') ? 1 : 0;
+	buf->len -= nul;
+	bool ret = vsnprintf(buf->data+buf->len, len+1, fmt, ap_save) == len;
+	buf->len += ret ? (size_t)len+1 : nul;
+	va_end(ap_save);
+	return ret;
+}
+
+bool buffer_appendf(Buffer *buf, const char *fmt, ...) {
 	va_list ap;
 	va_start(ap, fmt);
-	bool ret = buffer_vprintf(buf, fmt, ap);
+	bool ret = buffer_vappendf(buf, fmt, ap);
 	va_end(ap);
 	return ret;
 }
 
-bool buffer_vprintf(Buffer *buf, const char *fmt, va_list ap) {
-	va_list ap_save;
-	va_copy(ap_save, ap);
-	int len = vsnprintf(NULL, 0, fmt, ap);
-	if (len == -1 || !buffer_grow(buf, len+1)) {
-		va_end(ap_save);
-		return false;
-	}
-	bool ret = vsnprintf(buf->data, len+1, fmt, ap_save) == len;
-	if (ret)
-		buf->len = len+1;
-	va_end(ap_save);
+bool buffer_printf(Buffer *buf, const char *fmt, ...) {
+	buffer_clear(buf);
+	va_list ap;
+	va_start(ap, fmt);
+	bool ret = buffer_vappendf(buf, fmt, ap);
+	va_end(ap);
 	return ret;
 }
 
