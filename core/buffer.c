@@ -19,7 +19,7 @@ int main(int argc, char *argv[]) {
 	plan_no_plan();
 
 	buffer_init(&buf);
-	ok(buf.data == NULL && buf.len == 0 && buf.size == 0, "Initialization");
+	ok(buf.data == NULL && buffer_length(&buf) == 0 && buffer_capacity(&buf) == 0, "Initialization");
 	ok(!buffer_insert0(&buf, 1, "foo"), "Insert string at invalid position");
 
 	ok(buffer_insert0(&buf, 0, "") && compare0(&buf, ""), "Insert empty string");
@@ -34,16 +34,16 @@ int main(int argc, char *argv[]) {
 	ok(buffer_append0(&buf, "baz") && compare0(&buf, "foobarbaz"), "Append string");
 
 	buffer_release(&buf);
-	ok(buf.data == NULL && buf.len == 0 && buf.size == 0, "Release");
+	ok(buf.data == NULL && buffer_length(&buf) == 0 && buffer_capacity(&buf) == 0, "Release");
 
 	ok(buffer_insert(&buf, 0, "foo", 0) && compare(&buf, "", 0), "Insert zero length data");
 	ok(buffer_insert(&buf, 0, "foo", 3) && compare(&buf, "foo", 3), "Insert data at start");
 	ok(buffer_insert(&buf, 1, "l", 1) && compare(&buf, "floo", 4), "Insert data in middle");
 	ok(buffer_insert(&buf, 4, "r", 1) && compare(&buf, "floor", 5), "Insert data at end");
 
-	size_t size = buf.size;
+	size_t cap = buffer_capacity(&buf);
 	buffer_truncate(&buf);
-	ok(buf.len == 0 && buf.data && buf.size == size, "Truncate");
+	ok(buf.data && buffer_length(&buf) == 0 && buffer_capacity(&buf) == cap, "Truncate");
 
 	ok(buffer_put(&buf, "foo", 0) && compare(&buf, "", 0), "Put zero length data");
 	ok(buffer_put(&buf, "bar", 3) && compare(&buf, "bar", 3), "Put data");
@@ -51,11 +51,30 @@ int main(int argc, char *argv[]) {
 	ok(buffer_prepend(&buf, "foo\0", 4) && compare(&buf, "foo\0bar", 7), "Prepend data");
 	ok(buffer_append(&buf, "\0baz", 4) && compare(&buf, "foo\0bar\0baz", 11), "Append data");
 
-	ok(buffer_grow(&buf, size+1) && compare(&buf, "foo\0bar\0baz", 11) && buf.size >= size+1, "Grow");
+	ok(buffer_grow(&buf, cap+1) && compare(&buf, "foo\0bar\0baz", 11) && buffer_capacity(&buf) >= cap+1, "Grow");
 
-	size = buf.size;
+	cap = buffer_capacity(&buf);
+	buffer_truncate(&buf);
 	buffer_clear(&buf);
-	ok(buf.len == 0 && buf.data && buf.size == size, "Clear");
+	ok(buf.data && buffer_length(&buf) == 0 && buffer_capacity(&buf) == cap, "Clear");
+
+	ok(buffer_printf(&buf, "Test: %d\n", 42) && compare0(&buf, "Test: 42\n"), "Set formatted");
+	ok(buffer_printf(&buf, "%d\n", 42) && compare0(&buf, "42\n"), "Set formatted overwrite");
+	buffer_clear(&buf);
+
+	ok(buffer_printf(&buf, "") && compare0(&buf, ""), "Set formatted empty string");
+	buffer_clear(&buf);
+
+	bool append = true;
+	for (int i = 1; i <= 10; i++)
+		append &= buffer_appendf(&buf, "%d", i);
+	ok(append && compare0(&buf, "12345678910"), "Append formatted");
+
+	buffer_clear(&buf);
+	append = true;
+	for (int i = 1; i <= 10; i++)
+		append &= buffer_appendf(&buf, "");
+	ok(append && compare0(&buf, ""), "Append formatted empty string");
 
 	return exit_status();
 }
