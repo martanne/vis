@@ -2002,21 +2002,32 @@ static const char *unicode_info(Vis *vis, const char *keys, const Arg *arg) {
 	Text *txt = vis_text(vis);
 	size_t start = view_cursor_get(view);
 	size_t end = text_char_next(txt, start);
-	char data[end-start], *data_cur = data;
-	text_bytes_get(txt, start, end - start, data);
+	char *grapheme = text_bytes_alloc0(txt, start, end-start), *codepoint = grapheme;
+	if (!grapheme)
+		return keys;
+	Buffer info;
+	buffer_init(&info);
+	mbstate_t ps = { 0 };
 	Iterator it = text_iterator_get(txt, start);
-	char info[255] = "", *info_cur = info;
 	for (size_t pos = start; it.pos < end; pos = it.pos) {
 		text_iterator_codepoint_next(&it, NULL);
 		size_t len = it.pos - pos;
 		wchar_t wc = 0xFFFD;
-		mbtowc(&wc, data_cur, len);
-		int width = wcwidth(wc);
-		info_cur += snprintf(info_cur, sizeof(info) - (info_cur - info) - 1,
-			"<%s%.*s> U+%04x ", width == 0 ? " " : "", (int)len, data_cur, wc);
-		data_cur += len;
+		size_t res = mbrtowc(&wc, codepoint, len, &ps);
+		bool combining = false;
+		if (res != (size_t)-1 && res != (size_t)-2)
+			combining = (wc != L'\0' && wcwidth(wc) == 0);
+		unsigned char ch = *codepoint;
+		if (ch < 128 && !isprint(ch))
+			buffer_appendf(&info, "<^%c>", ch == 127 ? '?' : ch + 64);
+		else
+			buffer_appendf(&info, "<%s%.*s>", combining ? " " : "", (int)len, codepoint);
+		buffer_appendf(&info, " U+%04x ", wc);
+		codepoint += len;
 	}
-	vis_info_show(vis, "%s", info);
+	vis_info_show(vis, "%s", buffer_content0(&info));
+	free(grapheme);
+	buffer_release(&info);
 	return keys;
 }
 
