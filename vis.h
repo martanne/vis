@@ -473,6 +473,8 @@ int vis_pipe_collect(Vis *vis, Filerange *range, const char *argv[], char **out,
  * following as will be processed by the input system. skips over special keys
  * such as <Enter> as well as pseudo keys registered via vis_action_register. */
 const char *vis_keys_next(Vis*, const char *keys);
+/* Tries to convert next symbolic key to a raw code point, returns -1 for unknown keys */
+long vis_keys_codepoint(Vis*, const char *keys);
 /* vis operates as a finite state machine (FSM), feeding keys from an input
  * queue (or a previously recorded macro) to key handling functions (see struct
  * KeyAction) which consume the input.

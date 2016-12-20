@@ -1879,28 +1879,13 @@ static const char *insert_verbatim(Vis *vis, const char *keys, const Arg *arg) {
 		const char *next = vis_keys_next(vis, keys);
 		if (!next)
 			return NULL;
-		size_t keylen = next - keys;
-		char key[keylen+1];
-		memcpy(key, keys, keylen);
-		key[keylen] = '\0';
-
-		static const char *keysym[] = {
-			"<Enter>", "\n",
-			"<Tab>", "\t",
-			"<Backspace>", "\b",
-			"<Escape>", "\x1b",
-			"<DEL>", "\x7f",
-			NULL,
-		};
-
-		for (const char **k = keysym; k[0]; k += 2) {
-			if (strcmp(k[0], key) == 0) {
-				data = k[1];
-				len = strlen(data);
-				keys = next;
-				break;
-			}
+		if ((rune = vis_keys_codepoint(vis, keys)) != (Rune)-1) {
+			len = runetochar(buf, &rune);
+			data = buf;
+		} else {
+			vis_info_show(vis, "Unknown key");
 		}
+		keys = next;
 	}
 
 	if (len > 0)

@@ -865,6 +865,48 @@ const char *vis_keys_next(Vis *vis, const char *keys) {
 	return keys;
 }
 
+long vis_keys_codepoint(Vis *vis, const char *keys) {
+	long codepoint = -1;
+	const char *next;
+	TermKeyKey key;
+	TermKey *termkey = vis->ui->termkey_get(vis->ui);
+
+	if (!keys[0])
+		return -1;
+	if (keys[0] == '<' && !keys[1])
+		return '<';
+
+	if (keys[0] == '<' && (next = termkey_strpkey(termkey, keys+1, &key, TERMKEY_FORMAT_VIM)) && *next == '>')
+		codepoint = (key.type == TERMKEY_TYPE_UNICODE) ? key.code.codepoint : -1;
+	else if ((next = termkey_strpkey(termkey, keys, &key, TERMKEY_FORMAT_VIM)))
+		codepoint = (key.type == TERMKEY_TYPE_UNICODE) ? key.code.codepoint : -1;
+
+	if (codepoint != -1) {
+		if (key.modifiers == TERMKEY_KEYMOD_CTRL)
+			codepoint &= 0x1f;
+		return codepoint;
+	}
+
+	if (!next || key.type != TERMKEY_TYPE_KEYSYM)
+		return -1;
+
+	const int keysym[] = {
+		TERMKEY_SYM_ENTER, '\n',
+		TERMKEY_SYM_TAB, '\t',
+		TERMKEY_SYM_BACKSPACE, '\b',
+		TERMKEY_SYM_ESCAPE, 0x1b,
+		TERMKEY_SYM_DELETE, 0x7f,
+		0,
+	};
+
+	for (const int *k = keysym; k[0]; k += 2) {
+		if (key.code.sym == k[0])
+			return k[1];
+	}
+
+	return -1;
+}
+
 static void vis_keys_process(Vis *vis, size_t pos) {
 	Buffer *buf = vis->keys;
 	char *keys = buf->data + pos, *start = keys, *cur = keys, *end = keys;
