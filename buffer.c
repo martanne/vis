@@ -153,6 +153,10 @@ size_t buffer_length(Buffer *buf) {
 	return buf->len;
 }
 
+size_t buffer_capacity(Buffer *buf) {
+	return buf->size;
+}
+
 const char *buffer_content(Buffer *buf) {
 	return buf->data;
 }

@@ -50,6 +50,8 @@ bool buffer_appendf(Buffer*, const char *fmt, ...);
 size_t buffer_length0(Buffer*);
 /* return length of a buffer including possible NUL byte */
 size_t buffer_length(Buffer*);
+/* return current maximal capacity in bytes of this buffer */
+size_t buffer_capacity(Buffer*);
 /* pointer to buffer data, guaranteed to return a NUL terminated
  * string even if buffer is empty */
 const char *buffer_content0(Buffer*);
