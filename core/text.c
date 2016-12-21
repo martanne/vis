@@ -132,6 +132,7 @@ int main(int argc, char *argv[]) {
 	ok(text_mark_get(txt, mof) == EPOS, "Mark in the middle deleted");
 	text_undo(txt);
 	ok(text_mark_get(txt, mof) == newpos, "Mark restored");
+	text_free(txt);
 
 	return exit_status();
 }

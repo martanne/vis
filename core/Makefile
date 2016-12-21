@@ -30,7 +30,7 @@ array: config.h array.c ../../array.c
 	@${CC} ${CFLAGS} ${CFLAGS_STD} ${CFLAGS_EXTRA} ${filter %.c, $^} ${SRC} ${LDFLAGS} -o $@
 
 debug: clean
-	$(MAKE) CFLAGS_EXTRA='${CFLAGS_DEBUG}'
+	$(MAKE) CFLAGS_EXTRA='${CFLAGS_EXTRA} ${CFLAGS_DEBUG}'
 
 coverage: clean
 	$(MAKE) CFLAGS_EXTRA='--coverage'

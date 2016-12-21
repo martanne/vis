@@ -69,12 +69,15 @@ int main(int argc, char *argv[]) {
 	for (int i = 1; i <= 10; i++)
 		append &= buffer_appendf(&buf, "%d", i);
 	ok(append && compare0(&buf, "12345678910"), "Append formatted");
-
 	buffer_clear(&buf);
+
 	append = true;
 	for (int i = 1; i <= 10; i++)
 		append &= buffer_appendf(&buf, "");
 	ok(append && compare0(&buf, ""), "Append formatted empty string");
+	buffer_clear(&buf);
+
+	buffer_release(&buf);
 
 	return exit_status();
 }

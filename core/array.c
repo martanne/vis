@@ -48,6 +48,8 @@ static void test_small_objects(void) {
 
 	array_clear(&arr);
 	ok(array_length(&arr) == 0 && array_get(&arr, 0) == NULL && errno == EINVAL, "Clear");
+
+	array_release(&arr);
 }
 
 static void test_large_objects(void) {
@@ -87,6 +89,8 @@ static void test_large_objects(void) {
 
 	array_clear(&arr);
 	ok(array_length(&arr) == 0 && array_get(&arr, 0) == NULL && errno == EINVAL, "Clear");
+
+	array_release(&arr);
 }
 
 static void test_pointers(void) {
@@ -100,9 +104,11 @@ static void test_pointers(void) {
 
 	for (size_t i = 0; i < len; i++) {
 		items[i] = malloc(sizeof(Item));
-
 		snprintf(items[i]->key, sizeof(items[i]->key), "key: %zu", i);
 		items[i]->value = values[i];
+	}
+
+	for (size_t i = 0; i < len; i++) {
 		Item *item;
 		ok(array_add_ptr(&arr, items[i]) && array_length(&arr) == i+1,
 			"Add item: %zu = %p", i, (void*)items[i]);
@@ -124,6 +130,12 @@ static void test_pointers(void) {
 
 	array_clear(&arr);
 	ok(array_length(&arr) == 0 && array_get_ptr(&arr, 0) == NULL && errno == EINVAL, "Clear");
+
+	for (size_t i = 0; i < len; i++) {
+		ok(array_add_ptr(&arr, items[i]) && array_length(&arr) == i+1,
+			"Re-add item: %zu = %p", i, (void*)items[i]);
+	}
+	array_release_full(&arr);
 }
 
 int main(int argc, char *argv[]) {
