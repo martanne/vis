@@ -161,6 +161,8 @@ enum {
 	VIS_ACTION_CURSOR_SCREEN_LINE_END,
 	VIS_ACTION_CURSOR_PERCENT,
 	VIS_ACTION_CURSOR_BYTE,
+	VIS_ACTION_CURSOR_BYTE_LEFT,
+	VIS_ACTION_CURSOR_BYTE_RIGHT,
 	VIS_ACTION_CURSOR_PARAGRAPH_PREV,
 	VIS_ACTION_CURSOR_PARAGRAPH_NEXT,
 	VIS_ACTION_CURSOR_SENTENCE_PREV,
@@ -456,6 +458,16 @@ static const KeyAction vis_action[] = {
 		"cursor-byte",
 		"Move to absolute byte position",
 		movement, { .i = VIS_MOVE_BYTE }
+	},
+	[VIS_ACTION_CURSOR_BYTE_LEFT] = {
+		"cursor-byte-left",
+		"Move count bytes to the left",
+		movement, { .i = VIS_MOVE_BYTE_LEFT }
+	},
+	[VIS_ACTION_CURSOR_BYTE_RIGHT] = {
+		"cursor-byte-right",
+		"Move count bytes to the right",
+		movement, { .i = VIS_MOVE_BYTE_RIGHT }
 	},
 	[VIS_ACTION_CURSOR_PARAGRAPH_PREV] = {
 		"cursor-paragraph-prev",

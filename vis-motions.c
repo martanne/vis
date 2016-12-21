@@ -227,6 +227,18 @@ static size_t byte(Vis *vis, Text *txt, size_t pos) {
 	return pos <= max ? pos : max;
 }
 
+static size_t byte_left(Vis *vis, Text *txt, size_t pos) {
+	size_t off = vis_count_get_default(vis, 1);
+	return off <= pos ? pos-off : 0;
+}
+
+static size_t byte_right(Vis *vis, Text *txt, size_t pos) {
+	size_t off = vis_count_get_default(vis, 1);
+	size_t new = pos + off;
+	size_t max = text_size(txt);
+	return new <= max && new > pos ? new : max;
+}
+
 void vis_motion_type(Vis *vis, enum VisMotionType type) {
 	vis->action.type = type;
 }
@@ -585,6 +597,14 @@ const Movement vis_motions[] = {
 	},
 	[VIS_MOVE_BYTE] = {
 		.vis = byte,
+		.type = IDEMPOTENT,
+	},
+	[VIS_MOVE_BYTE_LEFT] = {
+		.vis = byte_left,
+		.type = IDEMPOTENT,
+	},
+	[VIS_MOVE_BYTE_RIGHT] = {
+		.vis = byte_right,
 		.type = IDEMPOTENT,
 	},
 };

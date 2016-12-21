@@ -66,6 +66,8 @@ static const KeyBinding bindings_motions[] = {
 	{ "F",                  ACTION(TO_LEFT)                             },
 	{ "f",                  ACTION(TO_RIGHT)                            },
 	{ "go",                 ACTION(CURSOR_BYTE)                         },
+	{ "gh",                 ACTION(CURSOR_BYTE_LEFT)                    },
+	{ "gl",                 ACTION(CURSOR_BYTE_RIGHT)                   },
 	{ "g0",                 ACTION(CURSOR_SCREEN_LINE_BEGIN)            },
 	{ "g_",                 ACTION(CURSOR_LINE_FINISH)                  },
 	{ "G",                  ACTION(CURSOR_LINE_LAST)                    },

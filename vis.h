@@ -284,6 +284,8 @@ enum VisMotion {
 	VIS_MOVE_NOP,
 	VIS_MOVE_PERCENT,
 	VIS_MOVE_BYTE,
+	VIS_MOVE_BYTE_LEFT,
+	VIS_MOVE_BYTE_RIGHT,
 	VIS_MOVE_INVALID, /* denotes the end of the "real" motions */
 	/* pseudo motions: keep them at the end to save space in array definition */
 	VIS_MOVE_TOTILL_REPEAT,
