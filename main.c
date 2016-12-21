@@ -310,6 +310,7 @@ enum {
 	VIS_ACTION_MOTION_CHARWISE,
 	VIS_ACTION_MOTION_LINEWISE,
 	VIS_ACTION_UNICODE_INFO,
+	VIS_ACTION_UTF8_INFO,
 	VIS_ACTION_NUMBER_INCREMENT,
 	VIS_ACTION_NUMBER_DECREMENT,
 	VIS_ACTION_OPEN_FILE_UNDER_CURSOR,
@@ -1198,7 +1199,12 @@ static const KeyAction vis_action[] = {
 	[VIS_ACTION_UNICODE_INFO] = {
 		"unicode-info",
 		"Show Unicode codepoint(s) of character under cursor",
-		unicode_info,
+		unicode_info, { .i = VIS_ACTION_UNICODE_INFO  }
+	},
+	[VIS_ACTION_UTF8_INFO] = {
+		"utf8-info",
+		"Show UTF-8 encoded codepoint(s) of character under cursor",
+		unicode_info, { .i = VIS_ACTION_UTF8_INFO }
 	},
 	[VIS_ACTION_NUMBER_INCREMENT] = {
 		"number-increment",
@@ -2004,10 +2010,15 @@ static const char *unicode_info(Vis *vis, const char *keys, const Arg *arg) {
 			combining = (wc != L'\0' && wcwidth(wc) == 0);
 		unsigned char ch = *codepoint;
 		if (ch < 128 && !isprint(ch))
-			buffer_appendf(&info, "<^%c>", ch == 127 ? '?' : ch + 64);
+			buffer_appendf(&info, "<^%c> ", ch == 127 ? '?' : ch + 64);
 		else
-			buffer_appendf(&info, "<%s%.*s>", combining ? " " : "", (int)len, codepoint);
-		buffer_appendf(&info, " U+%04x ", wc);
+			buffer_appendf(&info, "<%s%.*s> ", combining ? " " : "", (int)len, codepoint);
+		if (arg->i == VIS_ACTION_UNICODE_INFO) {
+			buffer_appendf(&info, "U+%04x ", wc);
+		} else {
+			for (size_t i = 0; i < len; i++)
+				buffer_appendf(&info, "%02x ", (uint8_t)codepoint[i]);
+		}
 		codepoint += len;
 	}
 	vis_info_show(vis, "%s", buffer_content0(&info));
