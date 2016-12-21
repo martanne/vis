@@ -221,6 +221,12 @@ static size_t percent(Vis *vis, Text *txt, size_t pos) {
 	return text_size(txt) * ratio / 100;
 }
 
+static size_t byte(Vis *vis, Text *txt, size_t pos) {
+	pos = vis_count_get_default(vis, 0);
+	size_t max = text_size(txt);
+	return pos <= max ? pos : max;
+}
+
 void vis_motion_type(Vis *vis, enum VisMotionType type) {
 	vis->action.type = type;
 }
@@ -575,6 +581,10 @@ const Movement vis_motions[] = {
 	},
 	[VIS_MOVE_PERCENT] = {
 		.vis = percent,
+		.type = IDEMPOTENT,
+	},
+	[VIS_MOVE_BYTE] = {
+		.vis = byte,
 		.type = IDEMPOTENT,
 	},
 };

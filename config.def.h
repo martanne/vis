@@ -65,6 +65,7 @@ static const KeyBinding bindings_motions[] = {
 	{ "<Enter>",            ALIAS("j")                                  },
 	{ "F",                  ACTION(TO_LEFT)                             },
 	{ "f",                  ACTION(TO_RIGHT)                            },
+	{ "go",                 ACTION(CURSOR_BYTE)                         },
 	{ "g0",                 ACTION(CURSOR_SCREEN_LINE_BEGIN)            },
 	{ "g_",                 ACTION(CURSOR_LINE_FINISH)                  },
 	{ "G",                  ACTION(CURSOR_LINE_LAST)                    },

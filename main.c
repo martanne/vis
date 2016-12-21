@@ -160,6 +160,7 @@ enum {
 	VIS_ACTION_CURSOR_SCREEN_LINE_MIDDLE,
 	VIS_ACTION_CURSOR_SCREEN_LINE_END,
 	VIS_ACTION_CURSOR_PERCENT,
+	VIS_ACTION_CURSOR_BYTE,
 	VIS_ACTION_CURSOR_PARAGRAPH_PREV,
 	VIS_ACTION_CURSOR_PARAGRAPH_NEXT,
 	VIS_ACTION_CURSOR_SENTENCE_PREV,
@@ -450,6 +451,11 @@ static const KeyAction vis_action[] = {
 		"cursor-percent",
 		"Move to count % of file or matching item",
 		percent
+	},
+	[VIS_ACTION_CURSOR_BYTE] = {
+		"cursor-byte",
+		"Move to absolute byte position",
+		movement, { .i = VIS_MOVE_BYTE }
 	},
 	[VIS_ACTION_CURSOR_PARAGRAPH_PREV] = {
 		"cursor-paragraph-prev",
