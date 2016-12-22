@@ -185,7 +185,7 @@ static size_t op_cursor(Vis *vis, Text *txt, OperatorContext *c) {
 
 static size_t op_join(Vis *vis, Text *txt, OperatorContext *c) {
 	size_t pos = text_line_begin(txt, c->range.end), prev_pos;
-	Mark mark = NULL;
+	Mark mark = 0;
 
 	/* if operator and range are both linewise, skip last line break */
 	if (c->linewise && text_range_is_linewise(txt, &c->range)) {
