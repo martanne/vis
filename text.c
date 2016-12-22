@@ -545,9 +545,9 @@ static void change_free(Change *c) {
 	if (!c)
 		return;
 	/* only free the new part of the span, the old one is still in use */
-	piece_free(c->new.start);
 	if (c->new.start != c->new.end)
 		piece_free(c->new.end);
+	piece_free(c->new.start);
 	free(c);
 }
 
