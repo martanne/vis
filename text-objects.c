@@ -312,7 +312,7 @@ Filerange text_object_number(Text *txt, size_t pos) {
 	if (!(buf = text_bytes_alloc0(txt, r.start, text_range_size(&r))))
 		return text_range_empty();
 	errno = 0;
-	strtoll(buf, &err, 0);
+	(void)strtoll(buf, &err, 0);
 	if (errno || err == buf)
 		r = text_range_empty();
 	else
