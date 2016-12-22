@@ -6,7 +6,9 @@
 #include "buffer.h"
 #include "util.h"
 
-#define BUF_SIZE 1024
+#ifndef BUFFER_SIZE
+#define BUFFER_SIZE 1024
+#endif
 
 void buffer_init(Buffer *buf) {
 	memset(buf, 0, sizeof *buf);
@@ -14,8 +16,8 @@ void buffer_init(Buffer *buf) {
 
 bool buffer_grow(Buffer *buf, size_t size) {
 	/* ensure minimal buffer size, to avoid repeated realloc(3) calls */
-	if (size < BUF_SIZE)
-		size = BUF_SIZE;
+	if (size < BUFFER_SIZE)
+		size = BUFFER_SIZE;
 	if (buf->size < size) {
 		size = MAX(size, buf->size*2);
 		char *data = realloc(buf->data, size);
