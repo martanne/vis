@@ -108,6 +108,7 @@ install: vis vis-menu
 		echo installing support files to ${DESTDIR}${SHAREPREFIX}/vis; \
 		mkdir -p ${DESTDIR}${SHAREPREFIX}/vis; \
 		cp -r lua/* ${DESTDIR}${SHAREPREFIX}/vis; \
+		rm -rf "${DESTDIR}${SHAREPREFIX}/vis/doc"; \
 	}
 	@echo installing manual pages to ${DESTDIR}${MANPREFIX}/man1
 	@mkdir -p ${DESTDIR}${MANPREFIX}/man1
