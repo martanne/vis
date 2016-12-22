@@ -9,6 +9,9 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 
+typedef uintptr_t Mark;
+
+#define EMARK ((Mark)0)           /* invalid mark */
 #define EPOS ((size_t)-1)         /* invalid position */
 
 typedef size_t Filepos;
@@ -100,7 +103,6 @@ bool text_iterator_codepoint_prev(Iterator *it, char *c);
 bool text_iterator_char_next(Iterator*, char *c);
 bool text_iterator_char_prev(Iterator*, char *c);
 
-typedef uintptr_t Mark;
 /* mark position `pos', the returned mark can be used to later retrieve
  * the same text segment */
 Mark text_mark_set(Text*, size_t pos);

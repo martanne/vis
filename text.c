@@ -1634,14 +1634,14 @@ Mark text_mark_set(Text *txt, size_t pos) {
 		return (Mark)&txt->end;
 	Location loc = piece_get_extern(txt, pos);
 	if (!loc.piece)
-		return (Mark)NULL;
+		return EMARK;
 	return (Mark)(loc.piece->data + loc.off);
 }
 
 size_t text_mark_get(Text *txt, Mark mark) {
 	size_t cur = 0;
 
-	if (!mark)
+	if (mark == EMARK)
 		return EPOS;
 	if (mark == (Mark)&txt->begin)
 		return 0;
