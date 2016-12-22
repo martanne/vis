@@ -2,7 +2,7 @@
 
 ALL = text buffer map array
 SRC = $(wildcard ccan/*/*.c)
-CFLAGS += -I. -I../..
+CFLAGS += -I. -I../.. -DBUFFER_SIZE=4 -DBLOCK_SIZE=4
 
 test: $(ALL)
 	@./text
