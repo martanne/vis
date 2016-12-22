@@ -961,7 +961,7 @@ static int registers_index(lua_State *L) {
 	const char *symbol = luaL_checkstring(L, 2);
 	if (!symbol || strlen(symbol) != 1)
 		goto err;
-	enum VisRegister reg = vis_register_from(NULL /* XXX */, symbol[0]);
+	enum VisRegister reg = vis_register_from(vis, symbol[0]);
 	if (reg >= VIS_REG_INVALID)
 		goto err;
 	size_t len;
@@ -978,7 +978,7 @@ static int registers_newindex(lua_State *L) {
 	const char *symbol = luaL_checkstring(L, 2);
 	if (!symbol || strlen(symbol) != 1)
 		return 0;
-	enum VisRegister reg = vis_register_from(NULL /* XXX */, symbol[0]);
+	enum VisRegister reg = vis_register_from(vis, symbol[0]);
 	if (reg >= VIS_REG_INVALID)
 		return 0;
 	luaL_checkstring(L, 3);
@@ -1714,13 +1714,14 @@ static const struct luaL_Reg file_lines_funcs[] = {
 };
 
 static int file_marks_index(lua_State *L) {
+	Vis *vis = lua_touserdata(L, lua_upvalueindex(1));
 	File *file = obj_ref_check_containerof(L, 1, "vis.file.marks", offsetof(File, marks));
 	if (!file)
 		goto err;
 	const char *symbol = luaL_checkstring(L, 2);
 	if (!symbol || strlen(symbol) != 1)
 		goto err;
-	enum VisMark mark = vis_mark_from(NULL /* XXX */, symbol[0]);
+	enum VisMark mark = vis_mark_from(vis, symbol[0]);
 	if (mark == VIS_MARK_INVALID)
 		goto err;
 	size_t pos = text_mark_get(file->text, file->marks[mark]);
@@ -1734,13 +1735,14 @@ err:
 }
 
 static int file_marks_newindex(lua_State *L) {
+	Vis *vis = lua_touserdata(L, lua_upvalueindex(1));
 	File *file = obj_ref_check_containerof(L, 1, "vis.file.marks", offsetof(File, marks));
 	if (!file)
 		return 0;
 	const char *symbol = luaL_checkstring(L, 2);
 	if (!symbol || strlen(symbol) != 1)
 		return 0;
-	enum VisMark mark = vis_mark_from(NULL /* XXX */, symbol[0]);
+	enum VisMark mark = vis_mark_from(vis, symbol[0]);
 	size_t pos = luaL_checkunsigned(L, 3);
 	if (mark < LENGTH(file->marks))
 		file->marks[mark] = text_mark_set(file->text, pos);
@@ -2044,7 +2046,8 @@ void vis_lua_init(Vis *vis) {
 
 	obj_type_new(L, "vis.file.mark");
 	obj_type_new(L, "vis.file.marks");
-	luaL_setfuncs(L, file_marks_funcs, 0);
+	lua_pushlightuserdata(L, vis);
+	luaL_setfuncs(L, file_marks_funcs, 1);
 
 	obj_type_new(L, "vis.window.cursor");
 	luaL_setfuncs(L, window_cursor_funcs, 0);
