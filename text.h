@@ -14,8 +14,6 @@ typedef uintptr_t Mark;
 #define EMARK ((Mark)0)           /* invalid mark */
 #define EPOS ((size_t)-1)         /* invalid position */
 
-typedef size_t Filepos;
-
 typedef struct {
 	size_t start, end;        /* range in bytes from start of the file */
 } Filerange;

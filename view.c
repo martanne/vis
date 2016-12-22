@@ -48,7 +48,7 @@ struct Selection {
 };
 
 struct Cursor {             /* cursor position */
-	Filepos pos;        /* in bytes from the start of the file */
+	size_t pos;         /* in bytes from the start of the file */
 	int row, col;       /* in terms of zero based screen coordinates */
 	int lastcol;        /* remembered column used when moving across lines */
 	Line *line;         /* screen line on which cursor currently resides */
@@ -71,8 +71,8 @@ struct View {
 	Text *text;         /* underlying text management */
 	UiWin *ui;
 	int width, height;  /* size of display area */
-	Filepos start, end; /* currently displayed area [start, end] in bytes from the start of the file */
-	Filepos start_last; /* previously used start of visible area, used to update the mark */
+	size_t start, end;  /* currently displayed area [start, end] in bytes from the start of the file */
+	size_t start_last;  /* previously used start of visible area, used to update the mark */
 	Mark start_mark;    /* mark to keep track of the start of the visible area */
 	size_t lines_size;  /* number of allocated bytes for lines (grows only) */
 	Line *lines;        /* view->height number of lines representing view content */
