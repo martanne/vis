@@ -24,7 +24,9 @@
 #include "util.h"
 
 /* Allocate blocks holding the actual file content in junks of size: */
+#ifndef BLOCK_SIZE
 #define BLOCK_SIZE (1 << 20)
+#endif
 /* Files smaller than this value are copied on load, larger ones are mmap(2)-ed
  * directely. Hence the former can be truncated, while doing so on the latter
  * results in havoc. */
