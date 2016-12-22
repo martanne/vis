@@ -1609,7 +1609,7 @@ static int file_mark_set(lua_State *L) {
  */
 static int file_mark_get(lua_State *L) {
 	File *file = obj_ref_check(L, 1, "vis.file");
-	Mark mark = obj_lightref_check(L, 2, "vis.file.mark");
+	Mark mark = (Mark)obj_lightref_check(L, 2, "vis.file.mark");
 	size_t pos = text_mark_get(file->text, mark);
 	if (pos == EPOS)
 		lua_pushnil(L);

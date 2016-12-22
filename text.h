@@ -2,6 +2,7 @@
 #define TEXT_H
 
 #include <stdbool.h>
+#include <stdint.h>
 #include <time.h>
 #include <unistd.h>
 #include <stdarg.h>
@@ -99,7 +100,7 @@ bool text_iterator_codepoint_prev(Iterator *it, char *c);
 bool text_iterator_char_next(Iterator*, char *c);
 bool text_iterator_char_prev(Iterator*, char *c);
 
-typedef const char* Mark;
+typedef uintptr_t Mark;
 /* mark position `pos', the returned mark can be used to later retrieve
  * the same text segment */
 Mark text_mark_set(Text*, size_t pos);

@@ -1634,8 +1634,8 @@ Mark text_mark_set(Text *txt, size_t pos) {
 		return (Mark)&txt->end;
 	Location loc = piece_get_extern(txt, pos);
 	if (!loc.piece)
-		return NULL;
-	return loc.piece->data + loc.off;
+		return (Mark)NULL;
+	return (Mark)(loc.piece->data + loc.off);
 }
 
 size_t text_mark_get(Text *txt, Mark mark) {
@@ -1649,8 +1649,10 @@ size_t text_mark_get(Text *txt, Mark mark) {
 		return txt->size;
 
 	for (Piece *p = txt->begin.next; p->next; p = p->next) {
-		if (p->data <= mark && mark < p->data + p->len)
-			return cur + (mark - p->data);
+		Mark start = (Mark)(p->data);
+		Mark end = start + p->len;
+		if (start <= mark && mark < end)
+			return cur + (mark - start);
 		cur += p->len;
 	}
 

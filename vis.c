@@ -626,7 +626,7 @@ void vis_keymap_disable(Vis *vis) {
 static void window_jumplist_add(Win *win, size_t pos) {
 	Mark mark = text_mark_set(win->file->text, pos);
 	if (mark && win->jumplist)
-		ringbuf_add(win->jumplist, mark);
+		ringbuf_add(win->jumplist, (void*)mark);
 }
 
 static void window_jumplist_invalidate(Win *win) {
