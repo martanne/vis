@@ -36,6 +36,12 @@ debug: clean
 coverage: clean
 	$(MAKE) CFLAGS_EXTRA='--coverage'
 
+asan: clean
+	$(MAKE) CFLAGS_EXTRA='-fsanitize=address'
+
+ubsan: clean
+	$(MAKE) CFLAGS_EXTRA='-fsanitize=undefined'
+
 valgrind: clean ${ALL}
 	@for test in ${ALL}; do \
 		valgrind --leak-check=full --log-file="$$test.valgrind" "./$$test"; \
@@ -55,4 +61,4 @@ clean:
 	@rm -f *.gcov *.gcda *.gcno
 	@rm -f *.valgrind
 
-.PHONY: clean debug coverage tis valgrind
+.PHONY: clean debug coverage tis valgrind asan ubsan
