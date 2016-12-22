@@ -1341,13 +1341,14 @@ const char *text_newline_char(Text *txt) {
 }
 
 static bool text_iterator_init(Iterator *it, size_t pos, Piece *p, size_t off) {
-	*it = (Iterator){
+	Iterator iter = (Iterator){
 		.pos = pos,
 		.piece = p,
 		.start = p ? p->data : NULL,
 		.end = p ? p->data + p->len : NULL,
 		.text = p ? p->data + off : NULL,
 	};
+	*it = iter;
 	return text_iterator_valid(it);
 }
 
