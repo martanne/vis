@@ -13,7 +13,7 @@ PREFIX ?= /usr/local
 SHAREPREFIX ?= ${PREFIX}/share
 MANPREFIX ?= ${PREFIX}/man
 
-VERSION = $(shell git describe --always 2>/dev/null || echo "0.2")
+VERSION = $(shell git describe --always --dirty 2>/dev/null || echo "0.2-git")
 
 CONFIG_LUA ?= 1
 CONFIG_LPEG ?= 0
