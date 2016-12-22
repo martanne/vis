@@ -42,7 +42,6 @@ Text *text_load(const char *filename);
 struct stat text_stat(Text*);
 bool text_appendf(Text*, const char *format, ...);
 bool text_printf(Text*, size_t pos, const char *format, ...);
-bool text_vprintf(Text*, size_t pos, const char *format, va_list ap);
 /* inserts a line ending character (depending on file type) */
 size_t text_insert_newline(Text*, size_t pos);
 /* insert `len' bytes starting from `data' at `pos' which has to be
