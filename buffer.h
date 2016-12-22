@@ -43,9 +43,9 @@ bool buffer_prepend(Buffer*, const void *data, size_t len);
 /* prepend NUL-terminated data */
 bool buffer_prepend0(Buffer*, const char *data);
 /* set formatted buffer content, ensures NUL termination on success */
-bool buffer_printf(Buffer*, const char *fmt, ...);
+bool buffer_printf(Buffer*, const char *fmt, ...) __attribute__((format(printf, 2, 3)));
 /* append formatted buffer content, ensures NUL termination on success */
-bool buffer_appendf(Buffer*, const char *fmt, ...);
+bool buffer_appendf(Buffer*, const char *fmt, ...) __attribute__((format(printf, 2, 3)));
 /* return length of a buffer without trailing NUL byte */
 size_t buffer_length0(Buffer*);
 /* return length of a buffer including possible NUL byte */

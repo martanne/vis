@@ -122,7 +122,7 @@ int vis_window_height_get(const Win*);
 void vis_prompt_show(Vis*, const char *title);
 
 /* display a one line message to the user, will be hidden upon keypress */
-void vis_info_show(Vis*, const char *msg, ...);
+void vis_info_show(Vis*, const char *msg, ...) __attribute__((format(printf, 2, 3)));
 void vis_info_hide(Vis*);
 
 /* display an arbitrary long message in a special window/file */
@@ -150,7 +150,7 @@ int vis_run(Vis*, int argc, char *argv[]);
 /* terminate editing session, given status will be the return value of vis_run */
 void vis_exit(Vis*, int status);
 /* emergency exit, print given message, perform minimal ui cleanup and exit process */
-void vis_die(Vis*, const char *msg, ...) __attribute__((noreturn));
+void vis_die(Vis*, const char *msg, ...) __attribute__((noreturn,format(printf, 2, 3)));
 
 enum VisMode {
 	VIS_MODE_NORMAL,

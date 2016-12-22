@@ -40,8 +40,8 @@ typedef struct {
 Text *text_load(const char *filename);
 /* file information at time of load or last save */
 struct stat text_stat(Text*);
-bool text_appendf(Text*, const char *format, ...);
-bool text_printf(Text*, size_t pos, const char *format, ...);
+bool text_appendf(Text*, const char *format, ...) __attribute__((format(printf, 2, 3)));
+bool text_printf(Text*, size_t pos, const char *format, ...) __attribute__((format(printf, 3, 4)));
 /* inserts a line ending character (depending on file type) */
 size_t text_insert_newline(Text*, size_t pos);
 /* insert `len' bytes starting from `data' at `pos' which has to be
