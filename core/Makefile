@@ -36,6 +36,13 @@ debug: clean
 coverage: clean
 	$(MAKE) CFLAGS_EXTRA='--coverage'
 
+valgrind: clean ${ALL}
+	@for test in ${ALL}; do \
+		valgrind --leak-check=full --log-file="$$test.valgrind" "./$$test"; \
+		cat "$$test.valgrind"; \
+		grep LEAK "$$test.valgrind" >/dev/null && exit 1 || true; \
+	done
+
 tis: clean
 	$(MAKE) CC="tis-interpreter.sh --cc" CFLAGS='"${CFLAGS} ${CFLAGS_STD} -DTIS_INTERPRETER=1"' CFLAGS_STD='' LDFLAGS='#' $(ALL)
 
@@ -46,5 +53,6 @@ clean:
 	@rm -f map
 	@rm -f array
 	@rm -f *.gcov *.gcda *.gcno
+	@rm -f *.valgrind
 
-.PHONY: clean debug coverage tis
+.PHONY: clean debug coverage tis valgrind
