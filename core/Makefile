@@ -1,14 +1,14 @@
 -include ../../config.mk
 
-ALL = text buffer map array
+ALL = buffer map array text
 SRC = $(wildcard ccan/*/*.c)
 CFLAGS += -I. -I../.. -DBUFFER_SIZE=4 -DBLOCK_SIZE=4
 
 test: $(ALL)
-	@./text
 	@./buffer
 	@./map
 	@./array
+	@./text
 
 config.h:
 	@echo Generating ccan configuration header
@@ -54,10 +54,10 @@ tis: clean
 
 clean:
 	@echo cleaning
-	@rm -f text
 	@rm -f buffer
 	@rm -f map
 	@rm -f array
+	@rm -f text
 	@rm -f *.gcov *.gcda *.gcno
 	@rm -f *.valgrind
 
