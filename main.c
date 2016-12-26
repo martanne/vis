@@ -561,12 +561,12 @@ static const KeyAction vis_action[] = {
 	},
 	[VIS_ACTION_CURSOR_SEARCH_NEXT] = {
 		"cursor-search-forward",
-		"Move cursor to bottom line of the window",
+		"Move cursor to next match",
 		movement, { .i = VIS_MOVE_SEARCH_NEXT }
 	},
 	[VIS_ACTION_CURSOR_SEARCH_PREV] = {
 		"cursor-search-backward",
-		"Move cursor to bottom line of the window",
+		"Move cursor to previous match",
 		movement, { .i = VIS_MOVE_SEARCH_PREV }
 	},
 	[VIS_ACTION_CURSOR_SEARCH_WORD_FORWARD] = {
