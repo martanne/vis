@@ -108,6 +108,18 @@ bool array_add_ptr(Array *arr, void *item) {
 	return true;
 }
 
+bool array_remove(Array *arr, size_t idx) {
+	if (idx >= arr->len) {
+		errno = EINVAL;
+		return false;
+	}
+	char *dest = arr->items + idx * arr->elem_size;
+	char *src = arr->items + (idx + 1) * arr->elem_size;
+	memmove(dest, src, (arr->len - idx) * arr->elem_size);
+	arr->len--;
+	return true;
+}
+
 size_t array_length(Array *arr) {
 	return arr->len;
 }

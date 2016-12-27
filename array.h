@@ -50,6 +50,8 @@ bool array_set_ptr(Array*, size_t idx, void *item);
 /* add a new element to the end of the array */
 bool array_add(Array*, void *item);
 bool array_add_ptr(Array*, void *item);
+/* remove an element by index, might not shrink/release underlying memory */
+bool array_remove(Array*, size_t idx);
 /* return the number of elements currently stored in the array */
 size_t array_length(Array*);
 
