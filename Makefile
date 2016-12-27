@@ -53,7 +53,7 @@ vis-menu: vis-menu.c
 	${CC} ${CFLAGS} ${CFLAGS_AUTO} ${CFLAGS_STD} ${CFLAGS_EXTRA} $< ${LDFLAGS} ${LDFLAGS_STD} ${LDFLAGS_AUTO} -o $@
 
 debug: clean
-	@$(MAKE) CFLAGS_EXTRA='${CFLAGS_DEBUG}'
+	@$(MAKE) CFLAGS_EXTRA='${CFLAGS_EXTRA} ${CFLAGS_DEBUG}'
 
 profile: clean
 	@$(MAKE) CFLAGS_EXTRA='${CFLAGS_DEBUG} -pg'
