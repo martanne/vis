@@ -152,6 +152,9 @@ void vis_exit(Vis*, int status);
 /* emergency exit, print given message, perform minimal ui cleanup and exit process */
 void vis_die(Vis*, const char *msg, ...) __attribute__((noreturn,format(printf, 2, 3)));
 
+KeyBinding *vis_binding_new(Vis*);
+void vis_binding_free(Vis*, KeyBinding*);
+
 enum VisMode {
 	VIS_MODE_NORMAL,
 	VIS_MODE_OPERATOR_PENDING,

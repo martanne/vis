@@ -510,6 +510,7 @@ Vis *vis_new(Ui *ui, VisEvent *event) {
 	vis->registers[VIS_REG_CLIPBOARD].type = REGISTER_CLIPBOARD;
 	array_init(&vis->motions);
 	array_init(&vis->textobjects);
+	array_init(&vis->bindings);
 	action_reset(&vis->action);
 	buffer_init(&vis->input_queue);
 	vis->keys = &vis->input_queue;
@@ -570,6 +571,9 @@ void vis_free(Vis *vis) {
 		map_free(vis_modes[i].bindings);
 	array_release_full(&vis->motions);
 	array_release_full(&vis->textobjects);
+	while (array_length(&vis->bindings))
+		vis_binding_free(vis, array_get_ptr(&vis->bindings, 0));
+	array_release(&vis->bindings);
 	free(vis->shell);
 	free(vis);
 }

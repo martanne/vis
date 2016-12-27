@@ -2,6 +2,35 @@
 #include "vis-core.h"
 #include "util.h"
 
+KeyBinding *vis_binding_new(Vis *vis) {
+	KeyBinding *binding = calloc(1, sizeof *binding);
+	if (binding && array_add_ptr(&vis->bindings, binding))
+		return binding;
+	free(binding);
+	return NULL;
+}
+
+void vis_binding_free(Vis *vis, KeyBinding *binding) {
+	if (!binding)
+		return;
+	size_t len = array_length(&vis->bindings);
+	for (size_t i = 0; i < len; i++) {
+		if (binding == array_get_ptr(&vis->bindings, i)) {
+			if (binding->alias)
+				free((char*)binding->alias);
+			const KeyAction *action = binding->action;
+			if (action) {
+				free((char*)action->name);
+				free((char*)action->help);
+				free((KeyAction*)action);
+			}
+			free(binding);
+			array_remove(&vis->bindings, i);
+			break;
+		}
+	}
+}
+
 static Mode *mode_get(Vis *vis, enum VisMode mode) {
 	if (mode < LENGTH(vis_modes))
 		return &vis_modes[mode];

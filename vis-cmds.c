@@ -791,7 +791,7 @@ static bool cmd_map(Vis *vis, Win *win, Command *cmd, const char *argv[], Cursor
 
 	const char *lhs = argv[2];
 	char *rhs = strdup(argv[3]);
-	if (!rhs || !(binding = calloc(1, sizeof *binding)))
+	if (!rhs || !(binding = vis_binding_new(vis)))
 		goto err;
 
 	binding->alias = rhs;
@@ -804,7 +804,7 @@ static bool cmd_map(Vis *vis, Win *win, Command *cmd, const char *argv[], Cursor
 err:
 	if (!mapped) {
 		free(rhs);
-		free(binding);
+		vis_binding_free(vis, binding);
 	}
 	return mapped;
 }

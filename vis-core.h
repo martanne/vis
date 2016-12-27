@@ -188,6 +188,7 @@ struct Vis {
 	VisEvent *event;
 	Array motions;
 	Array textobjects;
+	Array bindings;
 };
 
 enum VisEvents {
