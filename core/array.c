@@ -49,6 +49,34 @@ static void test_small_objects(void) {
 	array_clear(&arr);
 	ok(array_length(&arr) == 0 && array_get(&arr, 0) == NULL && errno == EINVAL, "Clear");
 
+	for (size_t i = 0; i < len; i++) {
+		ok(array_add(&arr, &values[i]) && array_length(&arr) == i+1,
+			"Re-add integer: %zu = %d", i, values[i]);
+	}
+
+	int *v;
+
+	size_t len_before = array_length(&arr);
+	ok(array_remove(&arr, 2) && array_length(&arr) == len_before-1 &&
+	   (v = array_get(&arr, 0)) && *v == values[0] &&
+	   (v = array_get(&arr, 1)) && *v == values[1] &&
+	   (v = array_get(&arr, 2)) && *v == values[3] &&
+	   (v = array_get(&arr, 3)) && *v == values[4],
+	   "Remove element 2");
+
+	len_before = array_length(&arr);
+	ok(array_remove(&arr, 0) && array_length(&arr) == len_before-1 &&
+	   (v = array_get(&arr, 0)) && *v == values[1] &&
+	   (v = array_get(&arr, 1)) && *v == values[3] &&
+	   (v = array_get(&arr, 2)) && *v == values[4],
+	   "Remove first element");
+
+	len_before = array_length(&arr);
+	ok(array_remove(&arr, len_before-1) && array_length(&arr) == len_before-1 &&
+	   (v = array_get(&arr, 0)) && *v == values[1] &&
+	   (v = array_get(&arr, 1)) && *v == values[3],
+	   "Remove last element");
+
 	array_release(&arr);
 }
 
