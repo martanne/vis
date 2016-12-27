@@ -27,6 +27,11 @@ matrix:
       compiler: clang
       env: TARGET=coverage
 
+addons:
+  apt:
+    packages:
+    - 9base
+
 cache:
   directories:
     - $HOME/.cache/vis
