@@ -31,7 +31,7 @@ LIBNCURSES_CONFIG = --disable-database --with-fallbacks=st,st-256color,xterm,xte
 	--with-shared --enable-widec --enable-ext-colors --with-termlib=tinfo \
 	--without-ada --without-cxx --without-cxx-binding --without-manpages \
 	--without-tests --without-progs --without-debug --without-profile \
-	--without-cxx-shared --without-termlib --without--ticlib
+	--without-cxx-shared --without-termlib --without--ticlib --disable-leaks
 
 dependency/build:
 	mkdir -p "$@"
