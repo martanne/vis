@@ -776,7 +776,6 @@ static bool cmd_langmap(Vis *vis, Win *win, Command *cmd, const char *argv[], Cu
 }
 
 static bool cmd_map(Vis *vis, Win *win, Command *cmd, const char *argv[], Cursor *cur, Filerange *range) {
-	KeyBinding *binding = NULL;
 	bool mapped = false;
 	bool local = strstr(argv[0], "-") != NULL;
 	enum VisMode mode = str2vismode(argv[1]);
@@ -790,11 +789,9 @@ static bool cmd_map(Vis *vis, Win *win, Command *cmd, const char *argv[], Cursor
 	}
 
 	const char *lhs = argv[2];
-	char *rhs = strdup(argv[3]);
-	if (!rhs || !(binding = vis_binding_new(vis)))
+	KeyBinding *binding = vis_binding_new(vis);
+	if (!binding || !(binding->alias = strdup(argv[3])))
 		goto err;
-
-	binding->alias = rhs;
 
 	if (local)
 		mapped = vis_window_mode_map(win, mode, cmd->flags == '!', lhs, binding);
@@ -802,10 +799,8 @@ static bool cmd_map(Vis *vis, Win *win, Command *cmd, const char *argv[], Cursor
 		mapped = vis_mode_map(vis, mode, cmd->flags == '!', lhs, binding);
 
 err:
-	if (!mapped) {
-		free(rhs);
+	if (!mapped)
 		vis_binding_free(vis, binding);
-	}
 	return mapped;
 }
 
