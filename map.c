@@ -288,6 +288,19 @@ const Map *map_prefix(const Map *map, const char *prefix)
 	return top;
 }
 
+bool map_prefix_delete(Map *map, const char *prefix)
+{
+	bool ret = false;
+	do {
+		const char *conflict = NULL;
+		const Map *conflicts = map_prefix(map, prefix);
+		if (!map_first(conflicts, &conflict))
+			break;
+		ret = map_delete(map, conflict);
+	} while (ret);
+	return ret;
+}
+
 static void clear(Map n)
 {
 	if (!n.v) {

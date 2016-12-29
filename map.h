@@ -31,6 +31,8 @@ void map_iterate(const Map*, bool (*handle)(const char *key, void *value, void *
 /* Return a submap matching a prefix. This returns a pointer into the
  * original map, so don't alter the map while using the return value. */
 const Map *map_prefix(const Map*, const char *prefix);
+/* Delete all entries of the prefix map */
+bool map_prefix_delete(Map*, const char *prefix);
 /* Test whether the map is empty i.e. contains no elements */
 bool map_empty(const Map*);
 /* Remove every member from the map. The map will be empty after this. */
