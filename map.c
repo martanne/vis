@@ -232,6 +232,28 @@ void map_iterate(const Map *map, bool (*handle)(const char *, void *, void *), c
 	iterate(*map, handle, data);
 }
 
+typedef struct {
+	const char *key;
+	void *value;
+} KeyValue;
+
+static bool first(const char *key, void *value, void *data)
+{
+	KeyValue *kv = data;
+	kv->key = key;
+	kv->value = value;
+	return false;
+}
+
+void *map_first(const Map *map, const char **key)
+{
+	KeyValue kv = { 0 };
+	map_iterate(map, first, &kv);
+	if (key && kv.key)
+		*key = kv.key;
+	return kv.value;
+}
+
 const Map *map_prefix(const Map *map, const char *prefix)
 {
 	const Map *n, *top;

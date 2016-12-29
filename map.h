@@ -9,6 +9,8 @@ typedef struct Map Map;
 Map *map_new(void);
 /* Retrieves a value, or NULL if it isn't in the map */
 void *map_get(const Map*, const char *key);
+/* Get first element of the map, or NULL if empty */
+void *map_first(const Map*, const char **key);
 /* Returns the corresponding value if the given prefix is unique.
  * Otherwise NULL, if no such prefix exists then errno is set to ENOENT. */
 void *map_closest(const Map*, const char *prefix);
