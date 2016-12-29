@@ -39,6 +39,7 @@ static bool order(const char *key, void *value, void *data) {
 }
 
 int main(int argc, char *argv[]) {
+	const char *key = "404";
 	const int values[3] = { 0, 1, 2 };
 
 	plan_no_plan();
@@ -46,6 +47,8 @@ int main(int argc, char *argv[]) {
 	Map *map = map_new();
 
 	ok(map && map_empty(map), "Creation");
+	ok(map_first(map, &key) == NULL && strcmp(key, "404") == 0, "First on empty map");
+	ok(map_empty(map_prefix(map, "404")), "Empty prefix map");
 
 	ok(!map_get(map, "404"), "Get non-existing key");
 	ok(!map_contains(map, "404"), "Contains non-existing key");
@@ -53,11 +56,16 @@ int main(int argc, char *argv[]) {
 
 	ok(!map_put(map, "a", NULL) && errno == EINVAL && map_empty(map) && !map_get(map, "a"), "Put NULL value");
 	ok(map_put(map, "a", &values[0]) && !map_empty(map) && get(map, "a", &values[0]), "Put 1");
+	ok(map_first(map, &key) == &values[0] && strcmp(key, "a") == 0, "First on map with 1 value");
+	key = NULL;
+	ok(map_first(map_prefix(map, "a"), &key) == &values[0] && strcmp(key, "a") == 0, "First on prefix map");
 	ok(map_contains(map, "a"), "Contains existing key");
 	ok(map_closest(map, "a") == &values[0], "Closest match existing key");
 	ok(!map_put(map, "a", &values[1]) && errno == EEXIST && get(map, "a", &values[0]), "Put duplicate");
 	ok(map_put(map, "cafebabe", &values[2]) && get(map, "cafebabe", &values[2]), "Put 2");
 	ok(map_put(map, "cafe", &values[1]) && get(map, "cafe", &values[1]), "Put 3");
+	key = NULL;
+	ok(map_first(map_prefix(map, "cafe"), &key) == &values[1] && strcmp(key, "cafe") == 0, "First on prefix map with multiple suffixes");
 
 	Map *copy = map_new();
 	ok(map_copy(copy, map), "Copy");
@@ -95,6 +103,9 @@ int main(int argc, char *argv[]) {
 	ok(!map_delete(map, "404"), "Delete non-existing key");
 	ok(map_delete(map, "cafe") == &values[1] && !map_get(map, "cafe"), "Delete existing key");
 	ok(map_closest(map, "cafe") == &values[2], "Closest unambigious");
+	ok(map_put(map, "cafe", &values[1]) && get(map, "cafe", &values[1]), "Put 3 again");
+	ok(!map_prefix_delete(map, "404"), "Delete empty prefix map");
+	ok(map_prefix_delete(map, "caf") && !map_contains(map, "caf"), "Delete non-empty prefix map");
 
 	map_clear(map);
 	ok(map_empty(map), "Empty after clean");
