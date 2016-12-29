@@ -78,23 +78,8 @@ static bool mode_map(Vis *vis, Mode *mode, bool force, const char *key, const Ke
 		return false;
 	if (!mode->bindings && !(mode->bindings = map_new()))
 		return false;
-	if (force) {
-		char *lhs = strdup(key), *next = lhs;
-		if (!lhs)
-			return false;
-		while (next) {
-			char tmp;
-			next = (char*)vis_keys_next(vis, next);
-			if (next) {
-				tmp = *next;
-				*next = '\0';
-			}
-			mode_unmap(mode, lhs);
-			if (next)
-				*next = tmp;
-		}
-		free(lhs);
-	}
+	if (force)
+		map_prefix_delete(mode->bindings, key);
 	return (strcmp(key, "<") == 0 || !map_contains(mode->bindings, key)) && map_put(mode->bindings, key, binding);
 }
 
