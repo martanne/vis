@@ -2,6 +2,41 @@
 #include "vis-core.h"
 #include "util.h"
 
+KeyAction *vis_action_new(Vis *vis, const char *name, const char *help, KeyActionFunction *func, Arg arg) {
+	KeyAction *action = calloc(1, sizeof *action);
+	if (!action)
+		return NULL;
+	if (name && !(action->name = strdup(name)))
+		goto err;
+	if (help && !(action->help = strdup(help)))
+		goto err;
+	action->func = func;
+	action->arg = arg;
+	if (!array_add_ptr(&vis->actions_user, action))
+		goto err;
+	return action;
+err:
+	free((char*)action->name);
+	free((char*)action->help);
+	free(action);
+	return NULL;
+}
+
+void vis_action_free(Vis *vis, KeyAction *action) {
+	if (!action)
+		return;
+	size_t len = array_length(&vis->actions_user);
+	for (size_t i = 0; i < len; i++) {
+		if (action == array_get_ptr(&vis->actions_user, i)) {
+			free((char*)action->name);
+			free((char*)action->help);
+			free(action);
+			array_remove(&vis->actions_user, i);
+			return;
+		}
+	}
+}
+
 KeyBinding *vis_binding_new(Vis *vis) {
 	KeyBinding *binding = calloc(1, sizeof *binding);
 	if (binding && array_add_ptr(&vis->bindings, binding))
@@ -18,15 +53,11 @@ void vis_binding_free(Vis *vis, KeyBinding *binding) {
 		if (binding == array_get_ptr(&vis->bindings, i)) {
 			if (binding->alias)
 				free((char*)binding->alias);
-			const KeyAction *action = binding->action;
-			if (action) {
-				free((char*)action->name);
-				free((char*)action->help);
-				free((KeyAction*)action);
-			}
+			if (binding->action && !binding->action->name)
+				vis_action_free(vis, (KeyAction*)binding->action);
 			free(binding);
 			array_remove(&vis->bindings, i);
-			break;
+			return;
 		}
 	}
 }

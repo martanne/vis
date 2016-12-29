@@ -53,15 +53,17 @@ typedef union { /* various types of arguments passed to key action functions */
 	void (*f)(Vis*);
 } Arg;
 
+/* action handling function, keys refers to the next characters found in the input queue
+ * (an empty string "" indicates an empty queue). The return value of func has to point to
+ * the first non consumed key. Returning NULL indicates that not enough keys were available
+ * to complete the action. In this case the function will be called again when more input
+ * becomes available */
+typedef const char *KeyActionFunction(Vis*, const char *keys, const Arg*);
+
 typedef struct {             /* a KeyAction can be bound to a key binding */
 	const char *name;    /* aliases can refer to this action by means of a pseudo key <name> */
 	const char *help;    /* short (one line) human readable description, displayed by :help */
-	/* action handling function, keys refers to the next characters found in the input queue
-	 * (an empty string "" indicates an empty queue). The return value of func has to point to
-	 * the first non consumed key. Returning NULL indicates that not enough keys were available
-	 * to complete the action. In this case the function will be called again when more input
-	 * becomes available */
-	const char* (*func)(Vis*, const char *keys, const Arg*);
+	KeyActionFunction *func; /* action implementation */
 	Arg arg;       /* additional arguments which will be passed as to func */
 } KeyAction;
 
@@ -175,6 +177,9 @@ bool vis_window_mode_map(Win*, enum VisMode, bool force, const char *key, const 
 /* in the specified mode: unmap a given key, fails if the key is not currently mapped */
 bool vis_mode_unmap(Vis*, enum VisMode, const char *key);
 bool vis_window_mode_unmap(Win*, enum VisMode, const char *key);
+
+KeyAction *vis_action_new(Vis*, const char *name, const char *help, KeyActionFunction*, Arg);
+void vis_action_free(Vis*, KeyAction*);
 /* associates the special pseudo key <keyaction->name> with the given key action.
  * after successfull registration the pseudo key can be used key binding aliases */
 bool vis_action_register(Vis*, const KeyAction*);

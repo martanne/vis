@@ -665,22 +665,13 @@ static int keymap(lua_State *L, Vis *vis, Win *win) {
 	const char *key = luaL_checkstring(L, 3);
 	const void *func = func_ref_new(L, 4);
 	const char *help = luaL_optstring(L, 5, NULL);
-	KeyBinding *binding = vis_binding_new(vis);
-	if (!binding)
-		goto err;
-	KeyAction *action = calloc(1, sizeof *action);
+	KeyBinding *binding = NULL;
+	KeyAction *action = vis_action_new(vis, NULL, help, keymapping, (Arg){ .v = func });
 	if (!action)
 		goto err;
+	if (!(binding = vis_binding_new(vis)))
+		goto err;
 	binding->action = action;
-
-	*action = (KeyAction){
-		.name = NULL,
-		.help = help ? strdup(help) : help,
-		.func = keymapping,
-		.arg = (const Arg){
-			.v = func,
-		},
-	};
 
 	if (win) {
 		if (!vis_window_mode_map(win, mode, true, key, binding))
@@ -694,6 +685,7 @@ static int keymap(lua_State *L, Vis *vis, Win *win) {
 	return 1;
 err:
 	vis_binding_free(vis, binding);
+	vis_action_free(vis, action);
 	lua_pushboolean(L, false);
 	return 1;
 }

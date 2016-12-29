@@ -511,6 +511,7 @@ Vis *vis_new(Ui *ui, VisEvent *event) {
 	array_init(&vis->motions);
 	array_init(&vis->textobjects);
 	array_init(&vis->bindings);
+	array_init(&vis->actions_user);
 	action_reset(&vis->action);
 	buffer_init(&vis->input_queue);
 	vis->keys = &vis->input_queue;
@@ -574,6 +575,9 @@ void vis_free(Vis *vis) {
 	while (array_length(&vis->bindings))
 		vis_binding_free(vis, array_get_ptr(&vis->bindings, 0));
 	array_release(&vis->bindings);
+	while (array_length(&vis->actions_user))
+		vis_action_free(vis, array_get_ptr(&vis->actions_user, 0));
+	array_release(&vis->actions_user);
 	free(vis->shell);
 	free(vis);
 }
