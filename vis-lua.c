@@ -660,6 +660,35 @@ static int open(lua_State *L) {
 	return 1;
 }
 
+/***
+ * Register a Lua function as key action.
+ * @function action_register
+ * @tparam string name the name of the action, can be referred to in key bindings as `<name>` pseudo key
+ * @tparam Function func the lua function implementing the key action
+ * @tparam[opt] string help the single line help text as displayed in `:help`
+ * @treturn KeyAction action the registered key action
+ * @local
+ * @see Vis:map
+ * @see Window:map
+ */
+static int action_register(lua_State *L) {
+	Vis *vis = obj_ref_check(L, 1, "vis");
+	const char *name = luaL_checkstring(L, 2);
+	const void *func = func_ref_new(L, 3);
+	const char *help = luaL_optstring(L, 4, NULL);
+	KeyAction *action = vis_action_new(vis, name, help, keymapping, (Arg){ .v = func });
+	if (!action)
+		goto err;
+	if (!vis_action_register(vis, action))
+		goto err;
+	obj_ref_new(L, action, "vis.keyaction");
+	return 1;
+err:
+	vis_action_free(vis, action);
+	lua_pushnil(L);
+	return 1;
+}
+
 static int keymap(lua_State *L, Vis *vis, Win *win) {
 	int mode = luaL_checkint(L, 2);
 	const char *key = luaL_checkstring(L, 3);
@@ -924,6 +953,7 @@ static const struct luaL_Reg vis_lua[] = {
 	{ "textobject_register", textobject_register },
 	{ "command_register", command_register },
 	{ "feedkeys", feedkeys },
+	{ "action_register", action_register },
 	{ "__index", vis_index },
 	{ "__newindex", newindex_common },
 	{ NULL, NULL },
@@ -2039,6 +2069,8 @@ void vis_lua_init(Vis *vis) {
 	obj_type_new(L, "vis.registers");
 	lua_pushlightuserdata(L, vis);
 	luaL_setfuncs(L, registers_funcs, 1);
+
+	obj_type_new(L, "vis.keyaction");
 
 	obj_type_new(L, "vis");
 	luaL_setfuncs(L, vis_lua, 0);
