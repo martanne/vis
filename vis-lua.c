@@ -237,19 +237,19 @@ static int pcall(Vis *vis, lua_State *L, int nargs, int nresults) {
 	return ret;
 }
 
-/* expects a lua function at the top of the stack and stores a
+/* expects a lua function at stack position `narg` and stores a
  * reference to it in the registry. The return value can be used
  * to look it up.
  *
  *   registry["vis.functions"][(void*)(function)] = function
  */
-static const void *func_ref_new(lua_State *L) {
-	const void *addr = lua_topointer(L, -1);
-	if (!lua_isfunction(L, -1) || !addr)
-		return NULL;
+static const void *func_ref_new(lua_State *L, int narg) {
+	const void *addr = lua_topointer(L, narg);
+	if (!lua_isfunction(L, narg) || !addr)
+		luaL_argerror(L, narg, "function expected");
 	lua_getfield(L, LUA_REGISTRYINDEX, "vis.functions");
 	lua_pushlightuserdata(L, (void*)addr);
-	lua_pushvalue(L, -3);
+	lua_pushvalue(L, narg);
 	lua_settable(L, -3);
 	lua_pop(L, 1);
 	return addr;
@@ -661,25 +661,17 @@ static int open(lua_State *L) {
 }
 
 static int keymap(lua_State *L, Vis *vis, Win *win) {
-	KeyBinding *binding = NULL;
-	KeyAction *action = NULL;
-
 	int mode = luaL_checkint(L, 2);
 	const char *key = luaL_checkstring(L, 3);
-	if (!lua_isfunction(L, 4))
-		goto err;
+	const void *func = func_ref_new(L, 4);
 	const char *help = luaL_optstring(L, 5, NULL);
-	if (!(binding = vis_binding_new(vis)))
+	KeyBinding *binding = vis_binding_new(vis);
+	if (!binding)
 		goto err;
-	if (!(action = calloc(1, sizeof *action)))
+	KeyAction *action = calloc(1, sizeof *action);
+	if (!action)
 		goto err;
 	binding->action = action;
-
-	/* store reference to function in the registry */
-	lua_pushvalue(L, 4);
-	const void *func = func_ref_new(L);
-	if (!func)
-		goto err;
 
 	*action = (KeyAction){
 		.name = NULL,
@@ -766,11 +758,9 @@ static size_t motion_lua(Vis *vis, Win *win, void *data, size_t pos) {
  * end)
  */
 static int motion_register(lua_State *L) {
-	int id = -1;
-	const void *func;
 	Vis *vis = obj_ref_check(L, 1, "vis");
-	if (lua_isfunction(L, 2) && (func = func_ref_new(L)))
-		id = vis_motion_register(vis, 0, (void*)func, motion_lua);
+	const void *func = func_ref_new(L, 2);
+	int id = vis_motion_register(vis, 0, (void*)func, motion_lua);
 	lua_pushinteger(L, id);
 	return 1;
 }
@@ -816,11 +806,9 @@ static Filerange textobject_lua(Vis *vis, Win *win, void *data, size_t pos) {
  * end)
  */
 static int textobject_register(lua_State *L) {
-	int id = -1;
-	const void *func;
 	Vis *vis = obj_ref_check(L, 1, "vis");
-	if (lua_isfunction(L, 2) && (func = func_ref_new(L)))
-		id = vis_textobject_register(vis, 0, (void*)func, textobject_lua);
+	const void *func = func_ref_new(L, 2);
+	int id = vis_textobject_register(vis, 0, (void*)func, textobject_lua);
 	lua_pushinteger(L, id);
 	return 1;
 }
@@ -859,12 +847,10 @@ static bool command_lua(Vis *vis, Win *win, void *data, bool force, const char *
  * TODO
  */
 static int command_register(lua_State *L) {
-	bool ret = false;
-	const void *func;
 	Vis *vis = obj_ref_check(L, 1, "vis");
 	const char *name = luaL_checkstring(L, 2);
-	if (lua_isfunction(L, 3) && (func = func_ref_new(L)))
-		ret = vis_cmd_register(vis, name, (void*)func, command_lua);
+	const void *func = func_ref_new(L, 3);
+	bool ret = vis_cmd_register(vis, name, (void*)func, command_lua);
 	lua_pushboolean(L, ret);
 	return 1;
 }
