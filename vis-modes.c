@@ -190,13 +190,13 @@ static void vis_mode_insert_enter(Vis *vis, Mode *old) {
 static void vis_mode_insert_leave(Vis *vis, Mode *new) {
 	if (new == mode_get(vis, VIS_MODE_NORMAL)) {
 		/* make sure we can recover the current state after an editing operation */
-		text_snapshot(vis->win->file->text);
+		vis_file_snapshot(vis, vis->win->file);
 		macro_operator_stop(vis);
 	}
 }
 
 static void vis_mode_insert_idle(Vis *vis) {
-	text_snapshot(vis->win->file->text);
+	vis_file_snapshot(vis, vis->win->file);
 }
 
 static void vis_mode_insert_input(Vis *vis, const char *str, size_t len) {
@@ -220,7 +220,7 @@ static void vis_mode_replace_enter(Vis *vis, Mode *old) {
 static void vis_mode_replace_leave(Vis *vis, Mode *new) {
 	if (new == mode_get(vis, VIS_MODE_NORMAL)) {
 		/* make sure we can recover the current state after an editing operation */
-		text_snapshot(vis->win->file->text);
+		vis_file_snapshot(vis, vis->win->file);
 		macro_operator_stop(vis);
 	}
 }

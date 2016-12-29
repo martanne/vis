@@ -56,6 +56,7 @@ const RegisterDef vis_registers[] = {
 
 static Macro *macro_get(Vis *vis, enum VisRegister);
 static void macro_replay(Vis *vis, const Macro *macro);
+static void macro_replay_internal(Vis *vis, const Macro *macro);
 static void vis_keys_push(Vis *vis, const char *input, size_t pos, bool record);
 
 bool vis_event_emit(Vis *vis, enum VisEvents id, ...) {
@@ -673,7 +674,8 @@ static void window_jumplist_invalidate(Win *win) {
 
 void vis_do(Vis *vis) {
 	Win *win = vis->win;
-	Text *txt = win->file->text;
+	File *file = win->file;
+	Text *txt = file->text;
 	View *view = win->view;
 	Action *a = &vis->action;
 
@@ -693,7 +695,7 @@ void vis_do(Vis *vis) {
 		size_t pos = view_cursors_pos(cursor);
 		Register *reg = multiple_cursors ? view_cursors_register(cursor) : a->reg;
 		if (!reg)
-			reg = &vis->registers[win->file->internal ? VIS_REG_PROMPT : VIS_REG_DEFAULT];
+			reg = &vis->registers[file->internal ? VIS_REG_PROMPT : VIS_REG_DEFAULT];
 
 		OperatorContext c = {
 			.count = count,
@@ -714,7 +716,7 @@ void vis_do(Vis *vis) {
 				else if (a->movement->cur)
 					pos = a->movement->cur(cursor);
 				else if (a->movement->file)
-					pos = a->movement->file(vis, vis->win->file, pos);
+					pos = a->movement->file(vis, file, pos);
 				else if (a->movement->vis)
 					pos = a->movement->vis(vis, txt, pos);
 				else if (a->movement->view)
@@ -844,7 +846,7 @@ void vis_do(Vis *vis) {
 		}
 
 		if (vis->mode == &vis_modes[VIS_MODE_NORMAL])
-			text_snapshot(txt);
+			vis_file_snapshot(vis, file);
 		vis_draw(vis);
 	}
 
@@ -1038,7 +1040,8 @@ void vis_keys_feed(Vis *vis, const char *input) {
 	macro_init(&macro);
 	if (!macro_append(&macro, input))
 		return;
-	macro_replay(vis, &macro);
+	/* use internal function, to keep Lua based tests which use undo points working */
+	macro_replay_internal(vis, &macro);
 	macro_release(&macro);
 }
 
@@ -1230,6 +1233,13 @@ bool vis_macro_recording(Vis *vis) {
 }
 
 static void macro_replay(Vis *vis, const Macro *macro) {
+	const Macro *replaying = vis->replaying;
+	vis->replaying = macro;
+	macro_replay_internal(vis, macro);
+	vis->replaying = replaying;
+}
+
+static void macro_replay_internal(Vis *vis, const Macro *macro) {
 	size_t pos = buffer_length0(vis->keys);
 	for (char *key = macro->data, *next; key; key = next) {
 		char tmp;
@@ -1258,6 +1268,7 @@ bool vis_macro_replay(Vis *vis, enum VisRegister id) {
 	if (!macro || macro == vis->recording)
 		return false;
 	macro_replay(vis, macro);
+	vis_file_snapshot(vis, vis->win->file);
 	return true;
 }
 
@@ -1293,6 +1304,7 @@ void vis_repeat(Vis *vis) {
 		vis->action_prev = action_prev;
 	}
 	vis_cancel(vis);
+	vis_file_snapshot(vis, vis->win->file);
 }
 
 enum VisMark vis_mark_from(Vis *vis, char mark) {
@@ -1642,6 +1654,11 @@ bool vis_cmd(Vis *vis, const char *cmdline) {
 		vis_info_show(vis, "%s", sam_error(err));
 	free(line);
 	return err == SAM_ERR_OK;
+}
+
+void vis_file_snapshot(Vis *vis, File *file) {
+	if (!vis->replaying)
+		text_snapshot(file->text);
 }
 
 Text *vis_text(Vis *vis) {

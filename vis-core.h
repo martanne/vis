@@ -160,6 +160,7 @@ struct Vis {
 	Win *message_window;                 /* special window to display multi line messages */
 	Register registers[VIS_REG_INVALID]; /* registers used for text manipulations yank/put etc. and macros */
 	Macro *recording, *last_recording;   /* currently (if non NULL) and least recently recorded macro */
+	const Macro *replaying;              /* macro currently being replayed */
 	Macro *macro_operator;               /* special macro used to repeat certain operators */
 	Mode *mode_before_prompt;            /* user mode which was active before entering prompt */
 	char search_char[8];                 /* last used character to search for via 'f', 'F', 't', 'T' */

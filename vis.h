@@ -120,6 +120,9 @@ bool vis_window_syntax_set(Win*, const char *name);
 int vis_window_width_get(const Win*);
 int vis_window_height_get(const Win*);
 
+/* take an undo snaphost to which we can later revert to */
+void vis_file_snapshot(Vis*, File*);
+
 /* display a user prompt with a certain title and default text */
 void vis_prompt_show(Vis*, const char *title);
 
