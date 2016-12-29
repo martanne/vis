@@ -1267,7 +1267,10 @@ bool vis_macro_replay(Vis *vis, enum VisRegister id) {
 	Macro *macro = macro_get(vis, id);
 	if (!macro || macro == vis->recording)
 		return false;
-	macro_replay(vis, macro);
+	int count = vis_count_get_default(vis, 1);
+	vis_cancel(vis);
+	for (int i = 0; i < count; i++)
+		macro_replay(vis, macro);
 	vis_file_snapshot(vis, vis->win->file);
 	return true;
 }
