@@ -692,15 +692,21 @@ err:
 static int keymap(lua_State *L, Vis *vis, Win *win) {
 	int mode = luaL_checkint(L, 2);
 	const char *key = luaL_checkstring(L, 3);
-	const void *func = func_ref_new(L, 4);
 	const char *help = luaL_optstring(L, 5, NULL);
-	KeyBinding *binding = NULL;
-	KeyAction *action = vis_action_new(vis, NULL, help, keymapping, (Arg){ .v = func });
-	if (!action)
+	KeyBinding *binding = vis_binding_new(vis);
+	if (!binding)
 		goto err;
-	if (!(binding = vis_binding_new(vis)))
-		goto err;
-	binding->action = action;
+	if (lua_isstring(L, 4)) {
+		const char *alias = luaL_checkstring(L, 4);
+		if (!(binding->alias = strdup(alias)))
+			goto err;
+	} else if (lua_isfunction(L, 4)) {
+		const void *func = func_ref_new(L, 4);
+		if (!(binding->action = vis_action_new(vis, NULL, help, keymapping, (Arg){ .v = func })))
+			goto err;
+	} else if (lua_isuserdata(L, 4)) {
+		binding->action = obj_ref_check(L, 4, "vis.keyaction");
+	}
 
 	if (win) {
 		if (!vis_window_mode_map(win, mode, true, key, binding))
@@ -714,7 +720,6 @@ static int keymap(lua_State *L, Vis *vis, Win *win) {
 	return 1;
 err:
 	vis_binding_free(vis, binding);
-	vis_action_free(vis, action);
 	lua_pushboolean(L, false);
 	return 1;
 }
@@ -731,6 +736,41 @@ err:
  * @tparam[opt] string help the single line help text as displayed in `:help`
  * @treturn bool whether the mapping was successfully established
  * @see Window:map
+ * @usage
+ * vis:map(vis.modes.NORMAL, function()
+ *   vis:info("Mapping works!")
+ * end, "Info message help text")
+ */
+/***
+ * Setup a key alias.
+ *
+ * This is equivalent to `vis:command('map! mode key alias')`.
+ *
+ * Mappings are always recursive!
+ * @function map
+ * @tparam int mode the mode to which the mapping should be added
+ * @tparam string key the key to map
+ * @tparam string alias the key to map to
+ * @treturn bool whether the mapping was successfully established
+ * @see Window:map
+ * @usage
+ * vis:map(vis.modes.NORMAL, "j", "k")
+ */
+/***
+ * Map a key to a key action.
+ *
+ * @function map
+ * @tparam int mode the mode to which the mapping should be added
+ * @tparam string key the key to map
+ * @param action the action to map
+ * @treturn bool whether the mapping was successfully established
+ * @see Window:map
+ * @usage
+ * local action = vis:action_register("info", function()
+ *   vis:info("Mapping works!")
+ * end, "Info message help text")
+ * vis:map(vis.modes.NORMAL, "gh", action)
+ * vis:map(vis.modes.NORMAL, "gl", action)
  */
 static int map(lua_State *L) {
 	Vis *vis = obj_ref_check(L, 1, "vis");
@@ -1132,14 +1172,10 @@ static int window_cursors_iterator(lua_State *L) {
 }
 
 /***
- * Map a window local key to a Lua function.
- *
+ * Set up a window local key mapping.
+ * The function signatures are the same as for @{Vis:map}.
  * @function map
- * @tparam int mode the mode to which the mapping should be added
- * @tparam string key the key to map
- * @tparam function func the Lua function to handle the key mapping
- * @tparam[opt] string help the single line help text as displayed in `:help`
- * @treturn bool whether the mapping was successfully established
+ * @param ...
  * @see Vis:map
  */
 static int window_map(lua_State *L) {
