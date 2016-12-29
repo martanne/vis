@@ -666,7 +666,7 @@ static int keymap(lua_State *L, Vis *vis, Win *win) {
 
 	int mode = luaL_checkint(L, 2);
 	const char *key = luaL_checkstring(L, 3);
-	if (!key || !lua_isfunction(L, 4))
+	if (!lua_isfunction(L, 4))
 		goto err;
 	const char *help = luaL_optstring(L, 5, NULL);
 	if (!(binding = vis_binding_new(vis)))
@@ -959,7 +959,7 @@ static const struct luaL_Reg ui_funcs[] = {
 static int registers_index(lua_State *L) {
 	Vis *vis = lua_touserdata(L, lua_upvalueindex(1));
 	const char *symbol = luaL_checkstring(L, 2);
-	if (!symbol || strlen(symbol) != 1)
+	if (strlen(symbol) != 1)
 		goto err;
 	enum VisRegister reg = vis_register_from(vis, symbol[0]);
 	if (reg >= VIS_REG_INVALID)
@@ -976,14 +976,13 @@ err:
 static int registers_newindex(lua_State *L) {
 	Vis *vis = lua_touserdata(L, lua_upvalueindex(1));
 	const char *symbol = luaL_checkstring(L, 2);
-	if (!symbol || strlen(symbol) != 1)
+	if (strlen(symbol) != 1)
 		return 0;
 	enum VisRegister reg = vis_register_from(vis, symbol[0]);
 	if (reg >= VIS_REG_INVALID)
 		return 0;
-	luaL_checkstring(L, 3);
 	size_t len;
-	const char *value = lua_tolstring(L, 3, &len);
+	const char *value = luaL_checklstring(L, 3, &len);
 	register_put(vis, &vis->registers[reg], value, len+1);
 	return 0;
 }
@@ -1719,7 +1718,7 @@ static int file_marks_index(lua_State *L) {
 	if (!file)
 		goto err;
 	const char *symbol = luaL_checkstring(L, 2);
-	if (!symbol || strlen(symbol) != 1)
+	if (strlen(symbol) != 1)
 		goto err;
 	enum VisMark mark = vis_mark_from(vis, symbol[0]);
 	if (mark == VIS_MARK_INVALID)
@@ -1740,7 +1739,7 @@ static int file_marks_newindex(lua_State *L) {
 	if (!file)
 		return 0;
 	const char *symbol = luaL_checkstring(L, 2);
-	if (!symbol || strlen(symbol) != 1)
+	if (strlen(symbol) != 1)
 		return 0;
 	enum VisMark mark = vis_mark_from(vis, symbol[0]);
 	size_t pos = luaL_checkunsigned(L, 3);
