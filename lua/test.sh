@@ -18,10 +18,9 @@ for t in $test_files; do
 	TESTS_RUN=$((TESTS_RUN + 1))
 	t=${t%.in}
 	t=${t#./}
+	$VIS "$t".in < /dev/null 2> /dev/null
+
 	printf "%-30s" "$t"
-
-	$VIS "$t".in < /dev/null > /dev/null 2>&1
-
 	if [ -e "$t".out ]; then
 		if cmp -s "$t".ref "$t".out 2> /dev/null; then
 			printf "PASS\n"
