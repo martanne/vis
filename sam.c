@@ -814,7 +814,7 @@ static Command *command_parse(Vis *vis, const char **s, enum SamError *err) {
 			if (!(cmd->cmd = command_parse(vis, s, err)))
 				goto fail;
 			if (strcmp(cmd->argv[0], "X") == 0 || strcmp(cmd->argv[0], "Y") == 0) {
-				Command *sel = command_new("s");
+				Command *sel = command_new("select");
 				if (!sel)
 					goto fail;
 				sel->cmd = cmd->cmd;
@@ -844,7 +844,7 @@ static Command *sam_parse(Vis *vis, const char *cmd, enum SamError *err) {
 		return NULL;
 	}
 
-	Command *sel = command_new("s");
+	Command *sel = command_new("select");
 	if (!sel) {
 		command_free(c);
 		return NULL;
