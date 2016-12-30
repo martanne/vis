@@ -1292,10 +1292,10 @@ static bool cmd_write(Vis *vis, Win *win, Command *cmd, const char *argv[], Curs
 		return false;
 	File *file = win->file;
 	Text *text = file->text;
-	bool noname = !argv[1];
-	if (!argv[1])
-		argv[1] = file->name ? strdup(file->name) : NULL;
-	if (!argv[1]) {
+	const char *filename = argv[1];
+	if (!filename)
+		filename = file->name;
+	if (!filename) {
 		if (file->fd == -1) {
 			vis_info_show(vis, "Filename expected");
 			return false;
@@ -1330,7 +1330,7 @@ static bool cmd_write(Vis *vis, Win *win, Command *cmd, const char *argv[], Curs
 		return true;
 	}
 
-	if (noname && cmd->flags != '!') {
+	if (!argv[1] && cmd->flags != '!') {
 		if (vis->mode->visual) {
 			vis_info_show(vis, "WARNING: file will be reduced to active selection");
 			return false;
@@ -1342,7 +1342,7 @@ static bool cmd_write(Vis *vis, Win *win, Command *cmd, const char *argv[], Curs
 		}
 	}
 
-	for (const char **name = &argv[1]; *name; name++) {
+	for (const char **name = argv[1] ? &argv[1] : (const char*[]){ filename, NULL }; *name; name++) {
 		struct stat meta;
 		if (cmd->flags != '!' && file->stat.st_mtime && stat(*name, &meta) == 0 &&
 		    file->stat.st_mtime < meta.st_mtime) {
