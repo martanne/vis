@@ -160,10 +160,10 @@ static const CommandDef cmds[] = {
 		CMD_CMD|CMD_REGEX|CMD_ADDRESS_ALL_1CURSOR, "p", cmd_extract
 	}, {
 		"X",            "Run command on files whose name matches",
-		CMD_CMD|CMD_REGEX|CMD_REGEX_DEFAULT|CMD_ADDRESS_NONE, NULL, cmd_files
+		CMD_CMD|CMD_REGEX|CMD_REGEX_DEFAULT|CMD_ADDRESS_NONE|CMD_ONCE, NULL, cmd_files
 	}, {
 		"Y",            "As `X` but select unmatched files",
-		CMD_CMD|CMD_REGEX|CMD_ADDRESS_NONE, NULL, cmd_files
+		CMD_CMD|CMD_REGEX|CMD_ADDRESS_NONE|CMD_ONCE, NULL, cmd_files
 	}, {
 		">",            "Send range to stdin of command",
 		CMD_SHELL|CMD_ADDRESS_LINE, NULL, cmd_pipeout
