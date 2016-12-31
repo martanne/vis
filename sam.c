@@ -478,7 +478,7 @@ static char *parse_until(const char **s, const char *until, const char *escchars
 	if (buffer_length(&buf))
 	    buffer_append(&buf, "\0", 1);
 
-	return buf.data;
+	return buffer_move(&buf);
 }
 
 static char *parse_delimited(const char **s, int type) {
@@ -511,7 +511,7 @@ static char *parse_text(const char **s) {
 		return NULL;
 	}
 
-	return buf.data;
+	return buffer_move(&buf);
 }
 
 static char *parse_shellcmd(Vis *vis, const char **s) {
@@ -546,7 +546,7 @@ static char *parse_cmdname(const char **s) {
 	if (buffer_length(&buf))
 	    buffer_append(&buf, "\0", 1);
 
-	return buf.data;
+	return buffer_move(&buf);
 }
 
 static Regex *parse_regex(Vis *vis, const char **s) {
@@ -1282,7 +1282,7 @@ static bool cmd_substitute(Vis *vis, Win *win, Command *cmd, const char *argv[],
 	buffer_init(&buf);
 	bool ret = false;
 	if (buffer_put0(&buf, "s") && buffer_append0(&buf, argv[1]))
-		ret = cmd_filter(vis, win, cmd, (const char*[]){ argv[0], "sed", buf.data, NULL }, cur, range);
+		ret = cmd_filter(vis, win, cmd, (const char*[]){ argv[0], "sed", buffer_move(&buf), NULL }, cur, range);
 	buffer_release(&buf);
 	return ret;
 }
