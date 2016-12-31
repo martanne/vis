@@ -452,7 +452,7 @@ typedef bool (CmdFunc)(Vis*, Win*, void *data, bool force,
 	const char *argv[], Cursor*, Filerange*);
 /* the function will be invoked whenever a command which matches a
  * unique prefix of the given name is executed */
-bool vis_cmd_register(Vis*, const char *name, void *data, CmdFunc*);
+bool vis_cmd_register(Vis*, const char *name, const char *help, void *data, CmdFunc*);
 bool vis_cmd_unregister(Vis*, const char *name);
 /* execute any kind (:,?,/) of prompt command */
 bool vis_prompt_cmd(Vis*, const char *cmd);

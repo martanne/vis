@@ -562,8 +562,12 @@ void vis_free(Vis *vis) {
 	for (int i = 0; i < LENGTH(vis->registers); i++)
 		register_release(&vis->registers[i]);
 	vis->ui->free(vis->ui);
+	if (vis->usercmds) {
+		const char *name;
+		while (map_first(vis->usercmds, &name) && vis_cmd_unregister(vis, name));
+	}
+	map_free(vis->usercmds);
 	map_free(vis->cmds);
-	map_free_full(vis->usercmds);
 	map_free(vis->options);
 	map_free(vis->actions);
 	map_free(vis->keymap);

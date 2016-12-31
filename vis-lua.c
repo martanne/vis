@@ -903,6 +903,7 @@ static bool command_lua(Vis *vis, Win *win, void *data, bool force, const char *
  * @function command_register
  * @tparam string name the command name
  * @tparam function command the Lua function implementing the command
+ * @tparam[opt] string help the single line help text as displayed in `:help`
  * @treturn bool whether the command has been successfully registered
  * @usage
  * TODO
@@ -911,7 +912,8 @@ static int command_register(lua_State *L) {
 	Vis *vis = obj_ref_check(L, 1, "vis");
 	const char *name = luaL_checkstring(L, 2);
 	const void *func = func_ref_new(L, 3);
-	bool ret = vis_cmd_register(vis, name, (void*)func, command_lua);
+	const char *help = luaL_optstring(L, 4, "");
+	bool ret = vis_cmd_register(vis, name, help, (void*)func, command_lua);
 	lua_pushboolean(L, ret);
 	return 1;
 }

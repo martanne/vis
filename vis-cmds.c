@@ -3,12 +3,14 @@
 #include <termkey.h>
 #include "vis-lua.h"
 
+// FIXME: avoid this redirection?
 typedef struct {
+	CommandDef def;
 	CmdFunc *func;
 	void *data;
 } CmdUser;
 
-bool vis_cmd_register(Vis *vis, const char *name, void *data, CmdFunc *func) {
+bool vis_cmd_register(Vis *vis, const char *name, const char *help, void *data, CmdFunc *func) {
 	if (!name)
 		return false;
 	if (!vis->usercmds && !(vis->usercmds = map_new()))
@@ -16,9 +18,15 @@ bool vis_cmd_register(Vis *vis, const char *name, void *data, CmdFunc *func) {
 	CmdUser *cmd = calloc(1, sizeof *cmd);
 	if (!cmd)
 		return false;
+	if (!(cmd->def.name = strdup(name)))
+		goto err;
+	if (help && !(cmd->def.help = strdup(help)))
+		goto err;
+	cmd->def.flags = CMD_ARGV|CMD_FORCE|CMD_ONCE|CMD_ADDRESS_ALL;
+	cmd->def.func = cmd_user;
 	cmd->func = func;
 	cmd->data = data;
-	if (!map_put(vis->cmds, name, &cmddef_user))
+	if (!map_put(vis->cmds, name, &cmd->def))
 		goto err;
 	if (!map_put(vis->usercmds, name, cmd)) {
 		map_delete(vis->cmds, name);
@@ -26,6 +34,8 @@ bool vis_cmd_register(Vis *vis, const char *name, void *data, CmdFunc *func) {
 	}
 	return true;
 err:
+	free((char*)cmd->def.name);
+	free((char*)cmd->def.help);
 	free(cmd);
 	return false;
 }
@@ -33,11 +43,15 @@ err:
 bool vis_cmd_unregister(Vis *vis, const char *name) {
 	if (!name)
 		return true;
-	CmdUser *cmd = map_delete(vis->usercmds, name);
+	CmdUser *cmd = map_get(vis->usercmds, name);
 	if (!cmd)
 		return false;
 	if (!map_delete(vis->cmds, name))
 		return false;
+	if (!map_delete(vis->usercmds, name))
+		return false;
+	free((char*)cmd->def.name);
+	free((char*)cmd->def.help);
 	free(cmd);
 	return true;
 }

@@ -258,10 +258,6 @@ static const CommandDef cmddef_select = {
 	NULL, NULL, CMD_NONE, NULL, cmd_select
 };
 
-static const CommandDef cmddef_user = {
-	NULL, NULL, CMD_ARGV|CMD_FORCE|CMD_ONCE|CMD_ADDRESS_ALL, NULL, cmd_user
-};
-
 /* :set command options */
 typedef struct {
 	const char *names[3];                  /* name and optional alias */
