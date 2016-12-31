@@ -168,3 +168,10 @@ const char *buffer_content0(Buffer *buf) {
 		return "";
 	return buf->data;
 }
+
+char *buffer_move(Buffer *buf) {
+	char *data = buf->data;
+	buffer_clear(buf);
+	buf->data = NULL;
+	return data;
+}

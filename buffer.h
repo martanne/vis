@@ -57,5 +57,8 @@ size_t buffer_capacity(Buffer*);
 const char *buffer_content0(Buffer*);
 /* pointer to buffer data, might be NULL if empty, might not be NUL terminated */
 const char *buffer_content(Buffer*);
+/* steal underlying buffer data, caller is responsible to free(3) it,
+ * similar to move semantics in some programming languages */
+char *buffer_move(Buffer*);
 
 #endif
