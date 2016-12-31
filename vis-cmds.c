@@ -4,11 +4,11 @@
 #include "vis-lua.h"
 
 typedef struct {
-	CmdFunc func;
+	CmdFunc *func;
 	void *data;
 } CmdUser;
 
-bool vis_cmd_register(Vis *vis, const char *name, void *data, CmdFunc func) {
+bool vis_cmd_register(Vis *vis, const char *name, void *data, CmdFunc *func) {
 	if (!name)
 		return false;
 	if (!vis->usercmds && !(vis->usercmds = map_new()))
