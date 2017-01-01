@@ -247,6 +247,10 @@ static const Color color_from_256[] = {
 	{ 238, 0xe4, 0xe4, 0xe4 }, { 239, 0xee, 0xee, 0xee },
 };
 
+#define MAX_COLOR_CLOBBER (240)
+static short color_clobber_idx = 0;
+static uint32_t clobbering_colors[MAX_COLOR_CLOBBER];
+
 static int color_compare(const void *lhs0, const void *rhs0) {
 	const Color *lhs = lhs0, *rhs = rhs0;
 
@@ -268,9 +272,29 @@ static int color_compare(const void *lhs0, const void *rhs0) {
 	return 0;
 }
 
-/* Work out the nearest color from the 256 color set. */
+/* Work out the nearest color from the 256 color set, or perhaps exactly. */
 static int color_find_rgb(unsigned char r, unsigned char g, unsigned char b)
 {
+	if (can_change_color() && COLORS >= 256) {
+		uint32_t hexrep = ((r << 16) | (g << 8) | b) + 1;
+		for (short i = 0; i < MAX_COLOR_CLOBBER; ++i) {
+			if (clobbering_colors[i] == hexrep)
+				return i + 16;
+			else if (!clobbering_colors[i])
+				break;
+		}
+
+		short i = color_clobber_idx;
+		clobbering_colors[i] = hexrep;
+		init_color(i + 16, (r * 1000) / 0xff, (g * 1000) / 0xff,
+		           (b * 1000) / 0xff);
+
+		/* in the unlikely case a user requests this many colors, reuse old slots */
+		if (++color_clobber_idx >= MAX_COLOR_CLOBBER)
+			color_clobber_idx = 0;
+
+		return i + 16;
+	}
 
 	static const Color color_to_256[] = {
 		{   0, 0x00, 0x00, 0x00 }, {   1, 0x00, 0x00, 0x5f },
@@ -1180,6 +1204,25 @@ void ui_curses_free(Ui *ui) {
 		return;
 	while (uic->windows)
 		ui_window_free((UiWin*)uic->windows);
+
+	/* we must manually reset color palette, and flicker is undesirable */
+	if (can_change_color() && COLORS >= 256) {
+		clear();
+		refresh();
+		for (short i = 0; i < MAX_COLOR_CLOBBER; ++i) {
+			if (!clobbering_colors[i])
+				break;
+
+			/*
+			 * ncurses has no way of knowing what the color was;
+			 * color_content() is insufficient. This is the best guess.
+			 */
+			Color c = color_from_256[i];
+			init_color(i + 16, (c.r * 1000) / 0xff, (c.g * 1000) / 0xff,
+			           (c.b * 1000) / 0xff);
+		}
+	}
+
 	endwin();
 	if (uic->termkey)
 		termkey_destroy(uic->termkey);
