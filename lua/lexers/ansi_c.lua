@@ -39,10 +39,13 @@ local keyword = token(l.KEYWORD, word_match{
 })
 
 -- Types.
-local type = token(l.TYPE, word_match{
+local non_underscore_ts = word_match{
   'char', 'double', 'enum', 'float', 'int', 'long', 'short', 'signed', 'struct',
   'union', 'unsigned', 'void', '_Bool', '_Complex', '_Imaginary'
-})
+}
+local underscore_ts = (P('_t')^0 * (l.alnum + P('_')))^0 * P('_t')
+
+local type = token(l.TYPE, non_underscore_ts + underscore_ts)
 
 -- Identifiers.
 local identifier = token(l.IDENTIFIER, l.word)
@@ -50,7 +53,11 @@ local identifier = token(l.IDENTIFIER, l.word)
 -- Operators.
 local operator = token(l.OPERATOR, S('+-/*%<>~!=^&|?~:;,.()[]{}'))
 
+-- Labels.
+local label = token(l.LABEL, (l.alnum + P('_'))^1 * P(':'))
+
 M._rules = {
+  {'label', label},
   {'whitespace', ws},
   {'keyword', keyword},
   {'type', type},
