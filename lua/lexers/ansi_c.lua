@@ -40,9 +40,12 @@ local keyword = token(l.KEYWORD, word_match{
 
 -- Types.
 local type = token(l.TYPE, word_match{
-  'char', 'double', 'enum', 'float', 'int', 'long', 'short', 'signed', 'struct',
-  'union', 'unsigned', 'void', '_Bool', '_Complex', '_Imaginary'
-})
+  'bool', 'char', 'double', 'enum', 'float', 'int', 'long', 'short',
+  'signed', 'struct', 'union', 'unsigned', 'void', '_Bool', '_Complex',
+  '_Imaginary', 'ptrdiff_t', 'size_t', 'max_align_t', 'wchar_t',
+  'intptr_t', 'uintptr_t', 'intmax_t', 'uintmax_t'} +
+  (P('u')^-1 * P('int') * (P('_least') + P('_fast'))^-1 * l.dec_num^1 * P('_t'))
+)
 
 -- Identifiers.
 local identifier = token(l.IDENTIFIER, l.word)
