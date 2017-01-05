@@ -1,6 +1,3 @@
-/* parts of the color handling code originates from tmux/colour.c and is
- * Copyright (c) 2008 Nicholas Marriott <nicm@users.sourceforge.net>
- */
 #include <unistd.h>
 #include <stdlib.h>
 #include <string.h>
@@ -35,8 +32,6 @@
 # define MAX_COLOR_PAIRS COLOR_PAIRS
 #endif
 
-#define CONTROL(k) ((k)&0x1F)
-
 #ifndef DEBUG_UI
 #define DEBUG_UI 0
 #endif
@@ -66,6 +61,10 @@
 	fflush(stdout); \
 } while (0);
 #endif
+
+#define MAX_COLOR_CLOBBER 240
+static short color_clobber_idx = 0;
+static uint32_t clobbering_colors[MAX_COLOR_CLOBBER];
 
 typedef struct {
 	attr_t attr;
@@ -115,38 +114,6 @@ __attribute__((noreturn)) static void ui_die_msg(Ui *ui, const char *msg, ...) {
 	va_start(ap, msg);
 	ui_die(ui, msg, ap);
 	va_end(ap);
-}
-
-typedef struct {
-	unsigned char i;
-	unsigned char r;
-	unsigned char g;
-	unsigned char b;
-} Color;
-
-#define MAX_COLOR_CLOBBER (240)
-static short color_clobber_idx = 0;
-static uint32_t clobbering_colors[MAX_COLOR_CLOBBER];
-
-static int color_compare(const void *lhs0, const void *rhs0) {
-	const Color *lhs = lhs0, *rhs = rhs0;
-
-	if (lhs->r < rhs->r)
-		return -1;
-	if (lhs->r > rhs->r)
-		return 1;
-
-	if (lhs->g < rhs->g)
-		return -1;
-	if (lhs->g > rhs->g)
-		return 1;
-
-	if (lhs->b < rhs->b)
-		return -1;
-	if (lhs->b > rhs->b)
-		return 1;
-
-	return 0;
 }
 
 /* Calculate r,g,b components of one of the standard upper 240 colors */
