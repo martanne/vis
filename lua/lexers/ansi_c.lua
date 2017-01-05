@@ -3,7 +3,7 @@
 
 local l = require('lexer')
 local token, word_match = l.token, l.word_match
-local P, R, S = lpeg.P, lpeg.R, lpeg.S
+local P, R, S, B = lpeg.P, lpeg.R, lpeg.S, lpeg.B
 
 local M = {_NAME = 'ansi_c'}
 
@@ -39,13 +39,13 @@ local keyword = token(l.KEYWORD, word_match{
 })
 
 -- Types.
-local non_underscore_ts = word_match{
-  'char', 'double', 'enum', 'float', 'int', 'long', 'short', 'signed', 'struct',
-  'union', 'unsigned', 'void', '_Bool', '_Complex', '_Imaginary'
-}
-local underscore_ts = (P('_t')^0 * (l.alnum + P('_')))^0 * P('_t')
-
-local type = token(l.TYPE, non_underscore_ts + underscore_ts)
+ local type = token(l.TYPE, word_match{
+  'char', 'double', 'enum', 'float', 'int', 'long', 'short',
+  'signed', 'struct', 'union', 'unsigned', 'void', '_Bool', '_Complex',
+  '_Imaginary', 'bool', 'ptrdiff_t', 'size_t', 'max_align_t', 'wchar_t',
+  'intptr_t', 'uintptr_t', 'intmax_t', 'uintmax_t'} +
+  (P('u')^-1 * P('int') * (P('_least') + P('_fast'))^-1 * l.dec_num^1 * P('_t'))
+)
 
 -- Identifiers.
 local identifier = token(l.IDENTIFIER, l.word)
@@ -54,11 +54,11 @@ local identifier = token(l.IDENTIFIER, l.word)
 local operator = token(l.OPERATOR, S('+-/*%<>~!=^&|?~:;,.()[]{}'))
 
 -- Labels.
-local label = token(l.LABEL, (l.alnum + P('_'))^1 * P(':'))
+local label = token(l.LABEL, (-(B(P('case ')))) * (l.alnum + P('_'))^1 * P(':'))
 
 M._rules = {
-  {'label', label},
   {'whitespace', ws},
+  {'label', label},
   {'keyword', keyword},
   {'type', type},
   {'identifier', identifier},
