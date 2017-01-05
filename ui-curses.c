@@ -272,6 +272,47 @@ static int color_compare(const void *lhs0, const void *rhs0) {
 	return 0;
 }
 
+/* Reset color to xterm-style defaults via init_color and 6x6 cube */
+static void reset_color_by_6cube(unsigned int n)
+{
+	/* n should be in [0, 240) */
+	if (n >= MAX_COLOR_CLOBBER)
+		return;
+
+	unsigned int r6 = n / 36;
+	unsigned int g6 = (n / 6) % 6;
+	unsigned int b6 = n % 6;
+	unsigned int r = r6 ? (1000 * (r6 * 40 + 55)) / 0xff : 0;
+	unsigned int g = g6 ? (1000 * (g6 * 40 + 55)) / 0xff : 0;
+	unsigned int b = b6 ? (1000 * (b6 * 40 + 55)) / 0xff : 0;
+	init_color(16 + n, r, g, b);
+}
+
+/* Reset every overwritten color to the standard-ish color cube */
+static void undo_palette(void)
+{
+	for (short i = 0; i < MAX_COLOR_CLOBBER; ++i) {
+		if (!clobbering_colors[i])
+			break;
+		reset_color_by_6cube(i);
+	}
+}
+
+/* Re-overwrite the contents of clobbering_colors */
+static void redo_palette(void)
+{
+	for (short i = 0; i < MAX_COLOR_CLOBBER; ++i) {
+		if (!clobbering_colors[i])
+			break;
+		uint32_t c = clobbering_colors[i] - 1;
+		unsigned char r = (c >> 16) % 0x100;
+		unsigned char g = (c >> 8) % 0x100;
+		unsigned char b = c % 0x100;
+		init_color(16 + i, (r * 1000) / 0xff, (g * 1000) / 0xff,
+		           (b * 1000) / 0xff);
+	}
+}
+
 /* Work out the nearest color from the 256 color set, or perhaps exactly. */
 static int color_find_rgb(unsigned char r, unsigned char g, unsigned char b)
 {
@@ -1105,6 +1146,8 @@ static bool ui_getkey(Ui *ui, TermKeyKey *key) {
 }
 
 static void ui_terminal_save(Ui *ui) {
+	if (can_change_color() && COLORS >= 256)
+		undo_palette();
 	UiCurses *uic = (UiCurses*)ui;
 	curs_set(1);
 	reset_shell_mode();
@@ -1117,6 +1160,8 @@ static void ui_terminal_restore(Ui *ui) {
 	reset_prog_mode();
 	wclear(stdscr);
 	curs_set(0);
+	if (can_change_color() && COLORS >= 256)
+		redo_palette();
 }
 
 static int ui_colors(Ui *ui) {
@@ -1209,18 +1254,7 @@ void ui_curses_free(Ui *ui) {
 	if (can_change_color() && COLORS >= 256) {
 		clear();
 		refresh();
-		for (short i = 0; i < MAX_COLOR_CLOBBER; ++i) {
-			if (!clobbering_colors[i])
-				break;
-
-			/*
-			 * ncurses has no way of knowing what the color was;
-			 * color_content() is insufficient. This is the best guess.
-			 */
-			Color c = color_from_256[i];
-			init_color(i + 16, (c.r * 1000) / 0xff, (c.g * 1000) / 0xff,
-			           (c.b * 1000) / 0xff);
-		}
+		undo_palette();
 	}
 
 	endwin();
