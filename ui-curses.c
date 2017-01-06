@@ -65,6 +65,7 @@
 #define MAX_COLOR_CLOBBER 240
 static short color_clobber_idx = 0;
 static uint32_t clobbering_colors[MAX_COLOR_CLOBBER];
+static bool change_colors;
 
 typedef struct {
 	attr_t attr;
@@ -134,48 +135,17 @@ static void get_6cube_rgb(unsigned int n, int *r, int *g, int *b)
 	}
 }
 
-/* Reset color to xterm-style defaults via init_color and 6x6 cube */
-static void reset_color_by_6cube(unsigned int n)
-{
-	/* n should be in [16, 256) */
-	if (n >= MAX_COLOR_CLOBBER)
-		return;
-
-	int r = 0, g = 0, b = 0;
-	get_6cube_rgb(n, &r, &g, &b);
-	init_color(n, (r * 1000) / 0xff, (g * 1000) / 0xff,
-	           (b * 1000) / 0xff);
-}
-
-/* Reset every overwritten color to the standard-ish color cube */
+/* Reset color palette to default values using OSC 104 */
 static void undo_palette(void)
 {
-	for (short i = 0; i < MAX_COLOR_CLOBBER; ++i) {
-		if (!clobbering_colors[i])
-			break;
-		reset_color_by_6cube(i + 16);
-	}
-}
-
-/* Re-overwrite the contents of clobbering_colors */
-static void redo_palette(void)
-{
-	for (short i = 0; i < MAX_COLOR_CLOBBER; ++i) {
-		if (!clobbering_colors[i])
-			break;
-		uint32_t c = clobbering_colors[i] - 1;
-		unsigned char r = (c >> 16) % 0x100;
-		unsigned char g = (c >> 8) % 0x100;
-		unsigned char b = c % 0x100;
-		init_color(16 + i, (r * 1000) / 0xff, (g * 1000) / 0xff,
-		           (b * 1000) / 0xff);
-	}
+	fputs("\033]104;\a", stderr);
+	fflush(stderr);
 }
 
 /* Work out the nearest color from the 256 color set, or perhaps exactly. */
 static int color_find_rgb(unsigned char r, unsigned char g, unsigned char b)
 {
-	if (can_change_color() && COLORS >= 256) {
+	if (change_colors) {
 		uint32_t hexrep = ((r << 16) | (g << 8) | b) + 1;
 		for (short i = 0; i < MAX_COLOR_CLOBBER; ++i) {
 			if (clobbering_colors[i] == hexrep)
@@ -860,6 +830,8 @@ static TermKey *ui_termkey_get(Ui *ui) {
 }
 
 static void ui_suspend(Ui *ui) {
+	if (change_colors)
+		undo_palette();
 	endwin();
 	raise(SIGSTOP);
 }
@@ -888,8 +860,6 @@ static bool ui_getkey(Ui *ui, TermKeyKey *key) {
 }
 
 static void ui_terminal_save(Ui *ui) {
-	if (can_change_color() && COLORS >= 256)
-		undo_palette();
 	UiCurses *uic = (UiCurses*)ui;
 	curs_set(1);
 	reset_shell_mode();
@@ -902,8 +872,6 @@ static void ui_terminal_restore(Ui *ui) {
 	reset_prog_mode();
 	wclear(stdscr);
 	curs_set(0);
-	if (can_change_color() && COLORS >= 256)
-		redo_palette();
 }
 
 static int ui_colors(Ui *ui) {
@@ -945,6 +913,7 @@ static bool ui_init(Ui *ui, Vis *vis) {
 	keypad(stdscr, TRUE);
 	meta(stdscr, TRUE);
 	curs_set(0);
+	change_colors = can_change_color() && COLORS >= 256;
 
 	ui_resize(ui);
 	return true;
@@ -991,14 +960,8 @@ void ui_curses_free(Ui *ui) {
 		return;
 	while (uic->windows)
 		ui_window_free((UiWin*)uic->windows);
-
-	/* we must manually reset color palette, and flicker is undesirable */
-	if (can_change_color() && COLORS >= 256) {
-		clear();
-		refresh();
+	if (change_colors)
 		undo_palette();
-	}
-
 	endwin();
 	if (uic->termkey)
 		termkey_destroy(uic->termkey);
