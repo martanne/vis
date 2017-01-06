@@ -1,4 +1,5 @@
 #include <string.h>
+#include <strings.h>
 #include "vis-core.h"
 #include "util.h"
 
@@ -84,6 +85,15 @@ void mode_set(Vis *vis, Mode *new_mode) {
 
 void vis_mode_switch(Vis *vis, enum VisMode mode) {
 	mode_set(vis, &vis_modes[mode]);
+}
+
+enum VisMode vis_mode_from(Vis *vis, const char *name) {
+	for (size_t i = 0; i < LENGTH(vis_modes); i++) {
+		Mode *mode = &vis_modes[i];
+		if (!strcasecmp(mode->name, name))
+			return mode->id;
+	}
+	return VIS_MODE_INVALID;
 }
 
 enum VisMode vis_mode_get(Vis *vis) {
@@ -241,7 +251,7 @@ Mode vis_modes[] = {
 	},
 	[VIS_MODE_VISUAL_LINE] = {
 		.id = VIS_MODE_VISUAL_LINE,
-		.name = "VISUAL LINE",
+		.name = "VISUAL-LINE",
 		.parent = &vis_modes[VIS_MODE_VISUAL],
 		.status = "VISUAL-LINE",
 		.help = "",

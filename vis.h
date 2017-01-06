@@ -169,6 +169,7 @@ enum VisMode {
 
 void vis_mode_switch(Vis*, enum VisMode);
 enum VisMode vis_mode_get(Vis*);
+enum VisMode vis_mode_from(Vis*, const char *name);
 /* In the specified mode: map a given key to a binding (binding->key is ignored).
  * Fails if a prefix of `key' is already mapped and `force' is false. Otherwise
  * all such prefixes are unmapped. */

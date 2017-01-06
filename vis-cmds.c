@@ -741,23 +741,6 @@ static bool cmd_help(Vis *vis, Win *win, Command *cmd, const char *argv[], Curso
 	return true;
 }
 
-static enum VisMode str2vismode(const char *mode) {
-	const char *modes[] = {
-		[VIS_MODE_NORMAL] = "normal",
-		[VIS_MODE_OPERATOR_PENDING] = "operator-pending",
-		[VIS_MODE_VISUAL] = "visual",
-		[VIS_MODE_VISUAL_LINE] = "visual-line",
-		[VIS_MODE_INSERT] = "insert",
-		[VIS_MODE_REPLACE] = "replace",
-	};
-
-	for (size_t i = 0; i < LENGTH(modes); i++) {
-		if (mode && modes[i] && strcmp(mode, modes[i]) == 0)
-			return i;
-	}
-	return VIS_MODE_INVALID;
-}
-
 static bool cmd_langmap(Vis *vis, Win *win, Command *cmd, const char *argv[], Cursor *cur, Filerange *range) {
 	const char *nonlatin = argv[1];
 	const char *latin = argv[2];
@@ -792,7 +775,7 @@ static bool cmd_langmap(Vis *vis, Win *win, Command *cmd, const char *argv[], Cu
 static bool cmd_map(Vis *vis, Win *win, Command *cmd, const char *argv[], Cursor *cur, Filerange *range) {
 	bool mapped = false;
 	bool local = strstr(argv[0], "-") != NULL;
-	enum VisMode mode = str2vismode(argv[1]);
+	enum VisMode mode = vis_mode_from(vis, argv[1]);
 
 	if (local && !win)
 		return false;
@@ -820,7 +803,7 @@ err:
 
 static bool cmd_unmap(Vis *vis, Win *win, Command *cmd, const char *argv[], Cursor *cur, Filerange *range) {
 	bool local = strstr(argv[0], "-") != NULL;
-	enum VisMode mode = str2vismode(argv[1]);
+	enum VisMode mode = vis_mode_from(vis, argv[1]);
 	const char *lhs = argv[2];
 
 	if (local && !win)
