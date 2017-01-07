@@ -91,7 +91,7 @@ typedef struct {
 typedef Buffer Macro;
 #define macro_init buffer_init
 #define macro_release buffer_release
-#define macro_reset buffer_truncate
+#define macro_reset buffer_clear
 #define macro_append buffer_append0
 
 typedef struct {             /** collects all information until an operator is executed */

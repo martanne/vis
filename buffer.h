@@ -20,8 +20,6 @@ void buffer_release(Buffer*);
 void buffer_clear(Buffer*);
 /* reserve space to store at least size bytes in this buffer.*/
 bool buffer_grow(Buffer*, size_t size);
-/* truncate buffer, but keep associated memory region for further data */
-void buffer_truncate(Buffer*);
 /* if buffer is not empty, make sure it is NUL terminated */
 bool buffer_terminate(Buffer*);
 /* replace buffer content with given data, growing the buffer if needed */

@@ -29,10 +29,6 @@ bool buffer_grow(Buffer *buf, size_t size) {
 	return true;
 }
 
-void buffer_truncate(Buffer *buf) {
-	buf->len = 0;
-}
-
 bool buffer_terminate(Buffer *buf) {
 	return !buf->data || buf->len == 0 || buf->data[buf->len-1] == '\0' ||
 	        buffer_append(buf, "\0", 1);
