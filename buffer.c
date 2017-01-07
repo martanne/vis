@@ -70,9 +70,13 @@ bool buffer_remove(Buffer *buf, size_t pos, size_t len) {
 bool buffer_insert(Buffer *buf, size_t pos, const void *data, size_t len) {
 	if (pos > buf->len)
 		return false;
+	if (len == 0)
+		return true;
 	if (!buffer_grow(buf, buf->len + len))
 		return false;
-	memmove(buf->data + pos + len, buf->data + pos, buf->len - pos);
+	size_t move = buf->len - pos;
+	if (move > 0)
+		memmove(buf->data + pos + len, buf->data + pos, move);
 	memcpy(buf->data + pos, data, len);
 	buf->len += len;
 	return true;
