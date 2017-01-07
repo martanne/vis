@@ -1,12 +1,13 @@
-#include <stddef.h>
 #include <stdbool.h>
-#include <string.h>
+#include <stddef.h>
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 #include "tap.h"
 #include "buffer.h"
 
 static bool compare(Buffer *buf, const char *data, size_t len) {
-	return buf->len == len && memcmp(buf->data, data, buf->len) == 0;
+	return buf->len == len && (len == 0 || memcmp(buf->data, data, buf->len) == 0);
 }
 
 static bool compare0(Buffer *buf, const char *data) {
@@ -19,7 +20,9 @@ int main(int argc, char *argv[]) {
 	plan_no_plan();
 
 	buffer_init(&buf);
-	ok(buf.data == NULL && buffer_length(&buf) == 0 && buffer_capacity(&buf) == 0, "Initialization");
+	ok(buffer_content(&buf) == NULL && buffer_length(&buf) == 0 && buffer_capacity(&buf) == 0, "Initialization");
+	ok(buffer_insert(&buf, 0, "foo", 0) && buffer_content(&buf) == NULL &&
+	   buffer_length(&buf) == 0 && buffer_capacity(&buf) == 0, "Insert zero length data");
 	ok(!buffer_insert0(&buf, 1, "foo"), "Insert string at invalid position");
 
 	ok(buffer_insert0(&buf, 0, "") && compare0(&buf, ""), "Insert empty string");
@@ -42,8 +45,8 @@ int main(int argc, char *argv[]) {
 	ok(buffer_insert(&buf, 4, "r", 1) && compare(&buf, "floor", 5), "Insert data at end");
 
 	size_t cap = buffer_capacity(&buf);
-	buffer_truncate(&buf);
-	ok(buf.data && buffer_length(&buf) == 0 && buffer_capacity(&buf) == cap, "Truncate");
+	buffer_clear(&buf);
+	ok(buf.data && buffer_length(&buf) == 0 && buffer_capacity(&buf) == cap, "Clear");
 
 	ok(buffer_put(&buf, "foo", 0) && compare(&buf, "", 0), "Put zero length data");
 	ok(buffer_put(&buf, "bar", 3) && compare(&buf, "bar", 3), "Put data");
@@ -53,10 +56,11 @@ int main(int argc, char *argv[]) {
 
 	ok(buffer_grow(&buf, cap+1) && compare(&buf, "foo\0bar\0baz", 11) && buffer_capacity(&buf) >= cap+1, "Grow");
 
-	cap = buffer_capacity(&buf);
-	buffer_truncate(&buf);
-	buffer_clear(&buf);
-	ok(buf.data && buffer_length(&buf) == 0 && buffer_capacity(&buf) == cap, "Clear");
+	const char *content = buffer_content(&buf);
+	char *data = buffer_move(&buf);
+	ok(data == content && buffer_length(&buf) == 0 && buffer_capacity(&buf) == 0 && buffer_content(&buf) == NULL, "Move");
+	ok(buffer_append0(&buf, "foo") && buffer_content(&buf) != data, "Modify after move");
+	free(data);
 
 	skip_if(TIS_INTERPRETER, 1, "vsnprintf not supported") {
 
