@@ -1,1 +1,1 @@
-,x/[a-zA-Z]+/ | tr a-z A-Z
+,y/ / | tr a-z A-Z
