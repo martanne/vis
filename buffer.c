@@ -167,7 +167,6 @@ const char *buffer_content0(Buffer *buf) {
 
 char *buffer_move(Buffer *buf) {
 	char *data = buf->data;
-	buffer_clear(buf);
-	buf->data = NULL;
+	buffer_init(buf);
 	return data;
 }
