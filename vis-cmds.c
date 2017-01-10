@@ -661,7 +661,7 @@ static bool cmd_help(Vis *vis, Win *win, Command *cmd, const char *argv[], Curso
 
 	Text *txt = vis->win->file->text;
 
-	text_appendf(txt, "vis %s\n\n", VERSION);
+	text_appendf(txt, "vis %s (PID: %ld)\n\n", VERSION, (long)getpid());
 
 	text_appendf(txt, " Modes\n\n");
 	for (int i = 0; i < LENGTH(vis_modes); i++) {
