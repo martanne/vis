@@ -29,6 +29,11 @@
 #include "vis-core.h"
 #include "sam.h"
 
+const MarkDef vis_marks[] = {
+	[VIS_MARK_SELECTION_START] = { '<', "Last selection start" },
+	[VIS_MARK_SELECTION_END]   = { '>', "Last selection end" },
+};
+
 static Macro *macro_get(Vis *vis, enum VisRegister);
 static void macro_replay(Vis *vis, const Macro *macro);
 static void vis_keys_push(Vis *vis, const char *input, size_t pos, bool record);
@@ -1262,10 +1267,10 @@ void vis_repeat(Vis *vis) {
 enum VisMark vis_mark_from(Vis *vis, char mark) {
 	if (mark >= 'a' && mark <= 'z')
 		return VIS_MARK_a + mark - 'a';
-	else if (mark == '<')
-		return VIS_MARK_SELECTION_START;
-	else if (mark == '>')
-		return VIS_MARK_SELECTION_END;
+	for (size_t i = 0; i < LENGTH(vis_marks); i++) {
+		if (vis_marks[i].name == mark)
+			return i;
+	}
 	return VIS_MARK_INVALID;
 }
 

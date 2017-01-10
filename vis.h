@@ -383,14 +383,14 @@ int vis_textobject_register(Vis*, int type, void *data,
 
 
 enum VisMark {
+	VIS_MARK_SELECTION_START, /* '< */
+	VIS_MARK_SELECTION_END,   /* '> */
 	VIS_MARK_a, VIS_MARK_b, VIS_MARK_c, VIS_MARK_d, VIS_MARK_e,
 	VIS_MARK_f, VIS_MARK_g, VIS_MARK_h, VIS_MARK_i, VIS_MARK_j,
 	VIS_MARK_k, VIS_MARK_l, VIS_MARK_m, VIS_MARK_n, VIS_MARK_o,
 	VIS_MARK_p, VIS_MARK_q, VIS_MARK_r, VIS_MARK_s, VIS_MARK_t,
 	VIS_MARK_u, VIS_MARK_v, VIS_MARK_w, VIS_MARK_x, VIS_MARK_y,
 	VIS_MARK_z,
-	VIS_MARK_SELECTION_START, /* '< */
-	VIS_MARK_SELECTION_END,   /* '> */
 	VIS_MARK_INVALID,     /* has to be the last enum member */
 };
 

@@ -683,6 +683,11 @@ static bool cmd_help(Vis *vis, Win *win, Command *cmd, const char *argv[], Curso
 	text_appendf(txt, "\n :-Commands\n\n");
 	map_iterate(vis->cmds, print_cmd, txt);
 
+	text_appendf(txt, "\n Marks\n\n");
+	text_appendf(txt, "  a-z General purpose marks\n");
+	for (size_t i = 0; i < LENGTH(vis_marks); i++)
+		text_appendf(txt, "  %c   %s\n", vis_marks[i].name, vis_marks[i].help);
+
 	text_appendf(txt, "\n :set command options\n\n");
 	for (int i = 0; i < LENGTH(options); i++) {
 		char names[256];
