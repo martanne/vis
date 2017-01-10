@@ -16,6 +16,8 @@ enum SamError {
 	SAM_ERR_EXECUTE,
 	SAM_ERR_NEWLINE,
 	SAM_ERR_MARK,
+	SAM_ERR_CONFLICT,
+	SAM_ERR_WRITE_CONFLICT,
 };
 
 bool sam_init(Vis*);

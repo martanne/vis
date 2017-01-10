@@ -3,6 +3,7 @@
 
 #include <setjmp.h>
 #include "vis.h"
+#include "sam.h"
 #include "vis-lua.h"
 #include "register.h"
 #include "text.h"
@@ -107,6 +108,12 @@ typedef struct {             /** collects all information until an operator is e
 	Arg arg;
 } Action;
 
+typedef struct Change Change;
+typedef struct {
+	Change *changes;      /* all changes in monotonically increasing file position */
+	enum SamError error;  /* non-zero in case something went wrong */
+} Transcript;
+
 struct File { /* shared state among windows displaying the same file */
 	Text *text;                      /* data structure holding the file content */
 	const char *name;                /* file name used when loading/saving */
@@ -117,6 +124,7 @@ struct File { /* shared state among windows displaying the same file */
 	int refcount;                    /* how many windows are displaying this file? (always >= 1) */
 	Mark marks[VIS_MARK_INVALID];    /* marks which are shared across windows */
 	enum TextSaveMethod save_method; /* whether the file is saved using rename(2) or overwritten */
+	Transcript transcript;           /* keeps track of changes performed by sam commands */
 	File *next, *prev;
 };
 

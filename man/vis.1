@@ -561,8 +561,16 @@ Commands may be grouped by enclosing them in curly braces.
 Semantically, the opening brace is like a command: it takes an
 .Pq optional
 address and runs each sub-command on the range.
-Commands within the braces are executed sequentially, and changes made by one command are visible to other commands.
-.
+Commands within the braces are executed sequentially, but changes
+made by one command are not visible to other commands.
+.Pp
+When a command makes a number of changes to a file, as in
+.Ic x/re/c/text/ ,
+the addresses of all changes to the file are computed in the original
+file. If the changes are non-overlapping, they are applied to the file.
+Successive insertions at the same address are catenated into a single
+insertion composed of the several insertions in the order applied.
+.Pp
 Braces may be nested arbitrarily.
 .
 .Sh VI(M) KEY BINDINGS

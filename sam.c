@@ -38,11 +38,17 @@ typedef struct Address Address;
 typedef struct Command Command;
 typedef struct CommandDef CommandDef;
 
-typedef struct {        /* used to keep context when dealing with external proceses */
-	Vis *vis;       /* editor instance */
-	Text *txt;      /* text into which received data will be inserted */
-	size_t pos;     /* position at which to insert new data */
-} Filter;
+struct Change {
+	enum ChangeType {
+		TRANSCRIPT_INSERT = 1 << 0,
+		TRANSCRIPT_DELETE = 1 << 1,
+		TRANSCRIPT_CHANGE = TRANSCRIPT_INSERT|TRANSCRIPT_DELETE,
+	} type;
+	Filerange range;   /* inserts are denoted by zero sized range (same start/end) */
+	const char *data;  /* will be free(3)-ed after transcript has been processed */
+	size_t len;        /* size in bytes of the chunk pointed to by data */
+	Change *next;      /* modification position increase monotonically */
+};
 
 struct Address {
 	char type;      /* # (char) l (line) g (goto line) / ? . $ + - , ; % */
@@ -407,9 +413,100 @@ const char *sam_error(enum SamError err) {
 		[SAM_ERR_EXECUTE]         = "Error executing command",
 		[SAM_ERR_NEWLINE]         = "Newline expected",
 		[SAM_ERR_MARK]            = "Invalid mark",
+		[SAM_ERR_CONFLICT]        = "Conflicting changes",
+		[SAM_ERR_WRITE_CONFLICT]  = "Can not write while changing",
 	};
 
 	return err < LENGTH(error_msg) ? error_msg[err] : NULL;
+}
+
+static void change_free(Change *c) {
+	if (!c)
+		return;
+	free((char*)c->data);
+	free(c);
+}
+
+static Change *change_new(Transcript *t, enum ChangeType type, Filerange *range) {
+	if (!text_range_valid(range))
+		return NULL;
+	// TODO optimize for common case
+	Change **prev = &t->changes, *next = t->changes;
+	while (next && next->range.end <= range->start) {
+		prev = &next->next;
+		next = next->next;
+	}
+	if (next && next->range.start < range->end) {
+		t->error = SAM_ERR_CONFLICT;
+		return NULL;
+	}
+	Change *new = calloc(1, sizeof *new);
+	if (new) {
+		new->type = type;
+		new->range = *range;
+		new->next = next;
+		*prev = new;
+	}
+	return new;
+}
+
+static void sam_transcript_init(Transcript *t) {
+	memset(t, 0, sizeof *t);
+}
+
+static bool sam_transcript_error(Transcript *t, enum SamError error) {
+	if (t->changes)
+		t->error = error;
+	return t->error;
+}
+
+static void sam_transcript_free(Transcript *t) {
+	for (Change *c = t->changes, *next; c; c = next) {
+		next = c->next;
+		change_free(c);
+	}
+}
+
+static bool sam_transcript_apply(Transcript *t, File *file) {
+	ptrdiff_t delta = 0;
+	for (Change *c = t->changes; c; c = c->next) {
+		c->range.start += delta;
+		c->range.end += delta;
+		if (c->type & TRANSCRIPT_DELETE) {
+			if (!text_delete_range(file->text, &c->range))
+				return false;
+			delta -= text_range_size(&c->range);
+		}
+		if (c->type & TRANSCRIPT_INSERT) {
+			if (!text_insert(file->text, c->range.start, c->data, c->len))
+				return false;
+			delta += c->len;
+		}
+	}
+	return true;
+}
+
+static bool sam_insert(File *file, size_t pos, const char *data, size_t len) {
+	Filerange range = text_range_new(pos, pos);
+	Change *c = change_new(&file->transcript, TRANSCRIPT_INSERT, &range);
+	if (c) {
+		c->data = data;
+		c->len = len;
+	}
+	return c;
+}
+
+static bool sam_delete(File *file, Filerange *range) {
+	return change_new(&file->transcript, TRANSCRIPT_DELETE, range);
+}
+
+static bool sam_change(File *file, Filerange *range, const char *data, size_t len) {
+	Change *c = change_new(&file->transcript, TRANSCRIPT_CHANGE, range);
+	if (c) {
+		c->data = data;
+		c->len = len;
+	}
+	return c;
 }
 
 static Address *address_new(void) {
@@ -961,30 +1058,8 @@ static bool sam_execute(Vis *vis, Win *win, Command *cmd, Cursor *cur, Filerange
 	switch (cmd->argv[0][0]) {
 	case '{':
 	{
-		if (!win) {
-			ret = false;
-			break;
-		}
-		Text *txt = win->file->text;
-		Mark start, end;
-		Filerange group = *range;
-
-		for (Command *c = cmd->cmd; c && ret; c = c->next) {
-			if (!text_range_valid(&group))
-				return false;
-
-			start = text_mark_set(txt, group.start);
-			end = text_mark_set(txt, group.end);
-
-			ret &= sam_execute(vis, win, c, NULL, &group);
-
-			size_t s = text_mark_get(txt, start);
-			/* hack to make delete work, only update if still valid */
-			if (s != EPOS)
-				group.start = s;
-			group.end = text_mark_get(txt, end);
-		}
-
+		for (Command *c = cmd->cmd; c && ret; c = c->next)
+			ret &= sam_execute(vis, win, c, NULL, range);
 		view_cursors_dispose(cur);
 		break;
 	}
@@ -1007,8 +1082,24 @@ enum SamError sam_cmd(Vis *vis, const char *s) {
 		return err;
 	}
 
+	for (File *file = vis->files; file; file = file->next) {
+		if (file->internal)
+			continue;
+		sam_transcript_init(&file->transcript);
+	}
+
 	Filerange range = text_range_empty();
 	sam_execute(vis, vis->win, cmd, NULL, &range);
+
+	for (File *file = vis->files; file; file = file->next) {
+		if (file->internal)
+			continue;
+		if (file->transcript.error != SAM_ERR_OK)
+			err = file->transcript.error;
+		else
+			sam_transcript_apply(&file->transcript, file);
+		sam_transcript_free(&file->transcript);
+	}
 
 	if (vis->win) {
 		bool completed = true;
@@ -1026,56 +1117,19 @@ enum SamError sam_cmd(Vis *vis, const char *s) {
 }
 
 static bool cmd_insert(Vis *vis, Win *win, Command *cmd, const char *argv[], Cursor *cur, Filerange *range) {
-	if (!win)
-		return false;
-	size_t len = strlen(argv[1]);
-	bool ret = text_insert(win->file->text, range->start, argv[1], len);
-	if (ret) {
-		*range = text_range_new(range->start, range->start + len);
-		if (cur)
-			view_cursors_to(cur, range->end);
-	}
-	return ret;
+	return win && sam_insert(win->file, range->start, strdup(argv[1]), strlen(argv[1]));
 }
 
 static bool cmd_append(Vis *vis, Win *win, Command *cmd, const char *argv[], Cursor *cur, Filerange *range) {
-	if (!win)
-		return false;
-	size_t len = strlen(argv[1]);
-	bool ret = text_insert(win->file->text, range->end, argv[1], len);
-	if (ret) {
-		*range = text_range_new(range->end, range->end + len);
-		if (cur)
-			view_cursors_to(cur, range->end);
-	}
-	return ret;
+	return win && sam_insert(win->file, range->end, strdup(argv[1]), strlen(argv[1]));
 }
 
 static bool cmd_change(Vis *vis, Win *win, Command *cmd, const char *argv[], Cursor *cur, Filerange *range) {
-	if (!win)
-		return false;
-	Text *txt = win->file->text;
-	size_t len = strlen(argv[1]);
-	bool ret = text_delete(txt, range->start, text_range_size(range)) &&
-	      text_insert(txt, range->start, argv[1], len);
-	if (ret) {
-		*range = text_range_new(range->start, range->start + len);
-		if (cur)
-			view_cursors_to(cur, range->end);
-	}
-	return ret;
+	return win && sam_change(win->file, range, strdup(argv[1]), strlen(argv[1]));
 }
 
 static bool cmd_delete(Vis *vis, Win *win, Command *cmd, const char *argv[], Cursor *cur, Filerange *range) {
-	if (!win)
-		return false;
-	bool ret = text_delete(win->file->text, range->start, text_range_size(range));
-	if (ret) {
-		*range = text_range_new(range->start, range->start);
-		if (cur)
-			view_cursors_to(cur, range->end);
-	}
-	return ret;
+	return win && sam_delete(win->file, range);
 }
 
 static bool cmd_guard(Vis *vis, Win *win, Command *cmd, const char *argv[], Cursor *cur, Filerange *range) {
@@ -1135,19 +1189,8 @@ static bool cmd_extract(Vis *vis, Win *win, Command *cmd, const char *argv[], Cu
 			}
 
 			if (text_range_valid(&r)) {
-				Mark mark_start = text_mark_set(txt, start);
-				Mark mark_end = text_mark_set(txt, end);
 				ret &= sam_execute(vis, win, cmd->cmd, NULL, &r);
-				last_start = start = text_mark_get(txt, mark_start);
-				if (start == EPOS)
-					last_start = start = r.end;
-				if (ret && pos == EPOS)
-					pos = start;
-				end = text_mark_get(txt, mark_end);
-				if (start == EPOS || end == EPOS) {
-					ret = false;
-					break;
-				}
+				last_start = start;
 			}
 		}
 	} else {
@@ -1159,20 +1202,8 @@ static bool cmd_extract(Vis *vis, Win *win, Command *cmd, const char *argv[], Cu
 			Filerange r = text_range_new(start, next);
 			if (start == next || !text_range_valid(&r))
 				break;
-			start = next;
-			Mark mark_start = text_mark_set(txt, start);
-			Mark mark_end = text_mark_set(txt, end);
 			ret &= sam_execute(vis, win, cmd->cmd, NULL, &r);
-			start = text_mark_get(txt, mark_start);
-			if (start == EPOS)
-				start = r.end;
-			if (ret && pos == EPOS)
-				pos = start;
-			end = text_mark_get(txt, mark_end);
-			if (end == EPOS) {
-				ret = false;
-				break;
-			}
+			start = next;
 		}
 	}
 
@@ -1286,7 +1317,11 @@ static bool cmd_substitute(Vis *vis, Win *win, Command *cmd, const char *argv[],
 static bool cmd_write(Vis *vis, Win *win, Command *cmd, const char *argv[], Cursor *cur, Filerange *r) {
 	if (!win)
 		return false;
+
 	File *file = win->file;
+	if (sam_transcript_error(&file->transcript, SAM_ERR_WRITE_CONFLICT))
+		return false;
+
 	Text *text = file->text;
 	const char *filename = argv[1];
 	if (!filename)
@@ -1404,13 +1439,6 @@ static bool cmd_read(Vis *vis, Win *win, Command *cmd, const char *argv[], Curso
 	return cmd_pipein(vis, win, cmd, (const char**)args, cur, range);
 }
 
-static ssize_t read_text(void *context, char *data, size_t len) {
-	Filter *filter = context;
-	text_insert(filter->txt, filter->pos, data, len);
-	filter->pos += len;
-	return len;
-}
-
 static ssize_t read_buffer(void *context, char *data, size_t len) {
 	buffer_append(context, data, len);
 	return len;
@@ -1419,35 +1447,23 @@ static ssize_t read_buffer(void *context, char *data, size_t len) {
 static bool cmd_filter(Vis *vis, Win *win, Command *cmd, const char *argv[], Cursor *cur, Filerange *range) {
 	if (!win)
 		return false;
-	Text *txt = win->file->text;
 
-	Filter filter = {
-		.vis = vis,
-		.txt = txt,
-		.pos = range->end,
-	};
-
-	Buffer buferr;
+	Buffer bufout, buferr;
+	buffer_init(&bufout);
 	buffer_init(&buferr);
 
-	int status = vis_pipe(vis, range, &argv[1], &filter, read_text, &buferr, read_buffer);
+	int status = vis_pipe(vis, range, &argv[1], &bufout, read_buffer, &buferr, read_buffer);
 
-	if (status == 0) {
-		text_delete_range(txt, range);
-		range->end = filter.pos - text_range_size(range);
-		if (cur)
-			view_cursors_to(cur, range->start);
+	if (vis->cancel_filter) {
+		vis_info_show(vis, "Command cancelled");
+	} else if (status == 0) {
+		size_t len = buffer_length(&bufout);
+		sam_change(win->file, range, buffer_move(&bufout), len);
 	} else {
-		text_delete(txt, range->end, filter.pos - range->end);
+		vis_info_show(vis, "Command failed %s", buffer_content0(&buferr));
 	}
 
-	if (vis->cancel_filter)
-		vis_info_show(vis, "Command cancelled");
-	else if (status == 0)
-		; //vis_info_show(vis, "Command succeded");
-	else
-		vis_info_show(vis, "Command failed %s", buffer_content0(&buferr));
-
+	buffer_release(&bufout);
 	buffer_release(&buferr);
 
 	return !vis->cancel_filter && status == 0;
@@ -1463,12 +1479,8 @@ static bool cmd_pipein(Vis *vis, Win *win, Command *cmd, const char *argv[], Cur
 		return false;
 	Filerange filter_range = text_range_new(range->end, range->end);
 	bool ret = cmd_filter(vis, win, cmd, argv, cur, &filter_range);
-	if (ret) {
-		text_delete_range(win->file->text, range);
-		range->end = range->start + text_range_size(&filter_range);
-		if (cur)
-			view_cursors_to(cur, range->start);
-	}
+	if (ret)
+		ret = sam_delete(win->file, range);
 	return ret;
 }
 
