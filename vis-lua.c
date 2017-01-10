@@ -595,6 +595,43 @@ static int files_iter(lua_State *L) {
 }
 
 /***
+ * Create an iterator over all mark names.
+ * @function mark_names
+ * @return the new iterator
+ * @usage
+ * local marks = vis.win.file.marks;
+ * for mark in vis:mark_names() do
+ * 	local pos = marks[mark]
+ * 	if pos then
+ * 		-- do something with mark pos
+ * 	end
+ * end
+ */
+static int mark_names_iter(lua_State *L);
+static int mark_names(lua_State *L) {
+	enum VisMark *handle = lua_newuserdata(L, sizeof *handle);
+	*handle = 0;
+	lua_pushcclosure(L, mark_names_iter, 1);
+	return 1;
+}
+
+static int mark_names_iter(lua_State *L) {
+	char mark = '\0';
+	enum VisMark *handle = lua_touserdata(L, lua_upvalueindex(1));
+	if (*handle < LENGTH(vis_marks))
+		mark = vis_marks[*handle].name;
+	else if (VIS_MARK_a <= *handle && *handle <= VIS_MARK_z)
+		mark = 'a' + *handle - VIS_MARK_a;
+	if (mark) {
+		char name[2] = { mark, '\0' };
+		lua_pushstring(L, name);
+		(*handle)++;
+		return 1;
+	}
+	return 0;
+}
+
+/***
  * Execute a `:`-command.
  * @function command
  * @tparam string command the command to execute
@@ -984,6 +1021,7 @@ static int vis_index(lua_State *L) {
 static const struct luaL_Reg vis_lua[] = {
 	{ "files", files },
 	{ "windows", windows },
+	{ "mark_names", mark_names },
 	{ "command", command },
 	{ "info", info },
 	{ "message", message },
