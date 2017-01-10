@@ -34,6 +34,17 @@ const MarkDef vis_marks[] = {
 	[VIS_MARK_SELECTION_END]   = { '>', "Last selection end" },
 };
 
+const RegisterDef vis_registers[] = {
+	[VIS_REG_DEFAULT]    = { '"', "Unnamed register"                                 },
+	[VIS_REG_ZERO]       = { '0', "Yank register"                                    },
+	[VIS_REG_BLACKHOLE]  = { '_', "/dev/null register"                               },
+	[VIS_REG_CLIPBOARD]  = { '*', "System clipboard register, see vis-clipboard(1)"  },
+	[VIS_MACRO_REPEAT]   = { '.', "Last inserted text"                               },
+	[VIS_REG_SEARCH]     = { '/', "Last search pattern"                              },
+	[VIS_REG_COMMAND]    = { ':', "Last :-command"                                   },
+	[VIS_REG_SHELL]      = { '!', "Last shell command given to either <, >, |, or !" },
+};
+
 static Macro *macro_get(Vis *vis, enum VisRegister);
 static void macro_replay(Vis *vis, const Macro *macro);
 static void vis_keys_push(Vis *vis, const char *input, size_t pos, bool record);
@@ -1296,26 +1307,24 @@ void vis_count_set(Vis *vis, int count) {
 
 enum VisRegister vis_register_from(Vis *vis, char reg) {
 	switch (reg) {
-	case '*': /* fall through */
 	case '+': return VIS_REG_CLIPBOARD;
-	case '_': return VIS_REG_BLACKHOLE;
-	case '0': return VIS_REG_ZERO;
 	case '@': return VIS_MACRO_LAST_RECORDED;
-	case '/': return VIS_REG_SEARCH;
-	case ':': return VIS_REG_COMMAND;
-	case '!': return VIS_REG_SHELL;
-	default:
-		if ('a' <= reg && reg <= 'z')
-			return VIS_REG_a + reg - 'a';
-		else if ('A' <= reg && reg <= 'Z')
-			return VIS_REG_A + reg - 'A';
-		return VIS_REG_INVALID;
 	}
+
+	if ('a' <= reg && reg <= 'z')
+		return VIS_REG_a + reg - 'a';
+	if ('A' <= reg && reg <= 'Z')
+		return VIS_REG_A + reg - 'A';
+	for (size_t i = 0; i < LENGTH(vis_registers); i++) {
+		if (vis_registers[i].name == reg)
+			return i;
+	}
+	return VIS_REG_INVALID;
 }
 
 void vis_register_set(Vis *vis, enum VisRegister reg) {
-	if (reg >= VIS_REG_A && reg <= VIS_REG_Z) {
-		vis->action.reg = &vis->registers[reg - VIS_REG_A];
+	if (VIS_REG_A <= reg && reg <= VIS_REG_Z) {
+		vis->action.reg = &vis->registers[VIS_REG_a + reg - VIS_REG_A];
 		vis->action.reg->append = true;
 	} else if (reg < LENGTH(vis->registers)) {
 		vis->action.reg = &vis->registers[reg];
@@ -1325,7 +1334,7 @@ void vis_register_set(Vis *vis, enum VisRegister reg) {
 
 const char *vis_register_get(Vis *vis, enum VisRegister reg, size_t *len) {
 	if (VIS_REG_A <= reg && reg <= VIS_REG_Z)
-		reg -= VIS_REG_A;
+		reg = VIS_REG_a + reg - VIS_REG_A;
 	if (reg < LENGTH(vis->registers))
 		return register_get(vis, &vis->registers[reg], len);
 	*len = 0;

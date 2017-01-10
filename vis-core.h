@@ -214,6 +214,8 @@ typedef struct {
 	const char *help;
 } MarkDef;
 
+typedef MarkDef RegisterDef;
+
 /** stuff used by multiple of the vis-* files */
 
 extern Mode vis_modes[VIS_MODE_INVALID];
@@ -221,6 +223,7 @@ extern const Movement vis_motions[VIS_MOVE_INVALID];
 extern const Operator vis_operators[VIS_OP_INVALID];
 extern const TextObject vis_textobjects[VIS_TEXTOBJECT_INVALID];
 extern const MarkDef vis_marks[VIS_MARK_a];
+extern const RegisterDef vis_registers[VIS_REG_a];
 
 void macro_operator_stop(Vis *vis);
 void macro_operator_record(Vis *vis);

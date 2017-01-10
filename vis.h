@@ -398,22 +398,22 @@ enum VisMark vis_mark_from(Vis*, char mark);
 void vis_mark_set(Vis*, enum VisMark mark, size_t pos);
 
 enum VisRegister {
+	VIS_REG_DEFAULT,    /* used when no other register is specified */
+	VIS_REG_ZERO,       /* yank register */
+	VIS_REG_BLACKHOLE,  /* /dev/null register */
+	VIS_REG_CLIPBOARD,  /* system clipboard register */
+	VIS_MACRO_REPEAT,   /* copy of the above macro once the recording is finished */
+	VIS_REG_SEARCH,     /* last used search pattern "/ */
+	VIS_REG_COMMAND,    /* last used :-command ": */
+	VIS_REG_SHELL,      /* last used shell command given to either <, >, |, or ! */
 	VIS_REG_a, VIS_REG_b, VIS_REG_c, VIS_REG_d, VIS_REG_e,
 	VIS_REG_f, VIS_REG_g, VIS_REG_h, VIS_REG_i, VIS_REG_j,
 	VIS_REG_k, VIS_REG_l, VIS_REG_m, VIS_REG_n, VIS_REG_o,
 	VIS_REG_p, VIS_REG_q, VIS_REG_r, VIS_REG_s, VIS_REG_t,
 	VIS_REG_u, VIS_REG_v, VIS_REG_w, VIS_REG_x, VIS_REG_y,
 	VIS_REG_z,
-	VIS_REG_DEFAULT, /* used when no other register is specified */
-	VIS_REG_ZERO, /* yank register */
-	VIS_REG_BLACKHOLE, /* /dev/null register */
-	VIS_REG_CLIPBOARD, /* system clipboard register */
-	VIS_REG_PROMPT,  /* internal register which shadows DEFAULT in PROMPT mode */
-	VIS_MACRO_OPERATOR,      /* records entered keys after an operator */
-	VIS_MACRO_REPEAT,        /* copy of the above macro once the recording is finished */
-	VIS_REG_SEARCH,  /* last used search pattern "/ */
-	VIS_REG_COMMAND, /* last used :-command ": */
-	VIS_REG_SHELL, /* last used shell command given to either <, >, |, or ! */
+	VIS_MACRO_OPERATOR, /* records entered keys after an operator */
+	VIS_REG_PROMPT, /* internal register which shadows DEFAULT in PROMPT mode */
 	VIS_REG_INVALID, /* has to be the last 'real' register */
 	VIS_REG_A, VIS_REG_B, VIS_REG_C, VIS_REG_D, VIS_REG_E,
 	VIS_REG_F, VIS_REG_G, VIS_REG_H, VIS_REG_I, VIS_REG_J,

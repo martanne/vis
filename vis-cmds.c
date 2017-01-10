@@ -688,6 +688,12 @@ static bool cmd_help(Vis *vis, Win *win, Command *cmd, const char *argv[], Curso
 	for (size_t i = 0; i < LENGTH(vis_marks); i++)
 		text_appendf(txt, "  %c   %s\n", vis_marks[i].name, vis_marks[i].help);
 
+	text_appendf(txt, "\n Registers\n\n");
+	text_appendf(txt, "  a-z General purpose registers\n");
+	text_appendf(txt, "  A-Z Append to corresponding general purpose register\n");
+	for (size_t i = 0; i < LENGTH(vis_registers); i++)
+		text_appendf(txt, "  %c   %s\n", vis_registers[i].name, vis_registers[i].help);
+
 	text_appendf(txt, "\n :set command options\n\n");
 	for (int i = 0; i < LENGTH(options); i++) {
 		char names[256];
