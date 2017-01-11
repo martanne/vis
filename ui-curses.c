@@ -833,7 +833,7 @@ static void ui_suspend(Ui *ui) {
 	if (change_colors)
 		undo_palette();
 	endwin();
-	raise(SIGSTOP);
+	kill(0, SIGSTOP);
 }
 
 static bool ui_getkey(Ui *ui, TermKeyKey *key) {
