@@ -3,6 +3,7 @@
 /dependency
 /vis
 /vis-menu
+/vis-single
 *.css
 *.gcda
 *.gcno
