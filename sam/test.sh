@@ -32,7 +32,6 @@ TESTS_OK=0
 
 for t in $TESTS; do
 	IN="$t.in"
-	CMD="$(cat $t.cmd)"
 	SAM_OUT="$t.sam.out"
 	SAM_ERR="$t.sam.err"
 	VIS_OUT="$t.vis.out"
@@ -43,10 +42,8 @@ for t in $TESTS; do
 
 	{
 		echo ',{'
-		echo k
-		echo '}'
-		echo 0k
 		cat "$t.cmd"
+		echo '}'
 		echo ,
 	} | $SAM -d "$IN" > "$SAM_OUT" 2>/dev/null
 
@@ -71,7 +68,7 @@ for t in $TESTS; do
 
 	TESTS_RUN=$((TESTS_RUN+1))
 
-	$VIS "+,{ $NL $CMD $NL wq! $VIS_OUT $NL }" "$IN" 2>/dev/null
+	$VIS "$IN" </dev/null 2>/dev/null
 
 	printf "Running test %s with vis ... " "$t"
 	if [ $? -ne 0 -o ! -e "$VIS_OUT" ]; then
