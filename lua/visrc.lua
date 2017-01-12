@@ -8,6 +8,6 @@ vis.events.win_open = function(win)
 		-- use the corresponding test.lua file
 		lua_file = string.gsub(in_file, '%.in$', '.lua')
 		dofile(lua_file)
+		vis:command('qall!')
 	end
-	vis:command('qall!')
 end

@@ -12,6 +12,6 @@ vis.events.win_open = function(win)
 		file:close()
 		vis:feedkeys(keys..'<Escape>')
 		vis:command(string.format("w! '%s.out'", name))
+		vis:command('qall!')
 	end
-	vis:command('qall!')
 end
