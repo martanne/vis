@@ -1,4 +1,4 @@
-:s,command,COMMAND,<Enter>
+:s,command,COMMAND,g<Enter>
 o<C-r>:<Escape>
 j
 @:
