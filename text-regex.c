@@ -23,6 +23,12 @@ int text_regex_compile(Regex *regex, const char *string, int cflags) {
 	return r;
 }
 
+size_t text_regex_nsub(Regex *r) {
+	if (!r)
+		return 0;
+	return r->regex.re_nsub;
+}
+
 void text_regex_free(Regex *r) {
 	if (!r)
 		return;

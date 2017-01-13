@@ -9,6 +9,7 @@ typedef Filerange RegexMatch;
 
 Regex *text_regex_new(void);
 int text_regex_compile(Regex*, const char *pattern, int cflags);
+size_t text_regex_nsub(Regex*);
 void text_regex_free(Regex*);
 int text_regex_match(Regex*, const char *data, int eflags);
 int text_search_range_forward(Text*, size_t pos, size_t len, Regex *r, size_t nmatch, RegexMatch pmatch[], int eflags);
