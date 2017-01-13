@@ -572,8 +572,11 @@ static char *parse_delimited(const char **s, int type) {
 
 static char *parse_text(const char **s) {
 	skip_spaces(s);
-	if (**s != '\n')
-		return parse_delimited(s, CMD_TEXT);
+	if (**s != '\n') {
+		const char *before = *s;
+		char *text = parse_delimited(s, CMD_TEXT);
+		return (!text && *s != before) ? strdup("") : text;
+	}
 
 	Buffer buf;
 	buffer_init(&buf);
