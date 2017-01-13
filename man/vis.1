@@ -389,6 +389,9 @@ In the description,
 .Dq range
 is used to represent whatever address is supplied.
 .Pp
+Many commands create new selections as a side effect when issued from a visual mode.
+If so, it is always to the “result” of the change: the new text for an insertion, the
+empty string for a deletion, the command output of a filter etc.
 If after a successful command execution no selections remain,
 the editor will switch to normal mode, otherwise it remains in
 visual mode. This allows

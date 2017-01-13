@@ -44,6 +44,8 @@ struct Change {
 		TRANSCRIPT_DELETE = 1 << 1,
 		TRANSCRIPT_CHANGE = TRANSCRIPT_INSERT|TRANSCRIPT_DELETE,
 	} type;
+	Win *win;          /* window in which changed file is being displayed */
+	Cursor *cursor;    /* cursor associated with this change, might be NULL */
 	Filerange range;   /* inserts are denoted by zero sized range (same start/end) */
 	const char *data;  /* will be free(3)-ed after transcript has been processed */
 	size_t len;        /* size in bytes of the chunk pointed to by data */
@@ -427,7 +429,7 @@ static void change_free(Change *c) {
 	free(c);
 }
 
-static Change *change_new(Transcript *t, enum ChangeType type, Filerange *range) {
+static Change *change_new(Transcript *t, enum ChangeType type, Filerange *range, Win *win, Cursor *cur) {
 	if (!text_range_valid(range))
 		return NULL;
 	// TODO optimize for common case
@@ -444,6 +446,8 @@ static Change *change_new(Transcript *t, enum ChangeType type, Filerange *range)
 	if (new) {
 		new->type = type;
 		new->range = *range;
+		new->cursor = cur;
+		new->win = win;
 		new->next = next;
 		*prev = new;
 	}
@@ -467,28 +471,9 @@ static void sam_transcript_free(Transcript *t) {
 	}
 }
 
-static bool sam_transcript_apply(Transcript *t, File *file) {
-	ptrdiff_t delta = 0;
-	for (Change *c = t->changes; c; c = c->next) {
-		c->range.start += delta;
-		c->range.end += delta;
-		if (c->type & TRANSCRIPT_DELETE) {
-			if (!text_delete_range(file->text, &c->range))
-				return false;
-			delta -= text_range_size(&c->range);
-		}
-		if (c->type & TRANSCRIPT_INSERT) {
-			if (!text_insert(file->text, c->range.start, c->data, c->len))
-				return false;
-			delta += c->len;
-		}
-	}
-	return true;
-}
-
-static bool sam_insert(File *file, size_t pos, const char *data, size_t len) {
+static bool sam_insert(Win *win, Cursor *cur, size_t pos, const char *data, size_t len) {
 	Filerange range = text_range_new(pos, pos);
-	Change *c = change_new(&file->transcript, TRANSCRIPT_INSERT, &range);
+	Change *c = change_new(&win->file->transcript, TRANSCRIPT_INSERT, &range, win, cur);
 	if (c) {
 		c->data = data;
 		c->len = len;
@@ -496,12 +481,12 @@ static bool sam_insert(File *file, size_t pos, const char *data, size_t len) {
 	return c;
 }
 
-static bool sam_delete(File *file, Filerange *range) {
-	return change_new(&file->transcript, TRANSCRIPT_DELETE, range);
+static bool sam_delete(Win *win, Cursor *cur, Filerange *range) {
+	return change_new(&win->file->transcript, TRANSCRIPT_DELETE, range, win, cur);
 }
 
-static bool sam_change(File *file, Filerange *range, const char *data, size_t len) {
-	Change *c = change_new(&file->transcript, TRANSCRIPT_CHANGE, range);
+static bool sam_change(Win *win, Cursor *cur, Filerange *range, const char *data, size_t len) {
+	Change *c = change_new(&win->file->transcript, TRANSCRIPT_CHANGE, range, win, cur);
 	if (c) {
 		c->data = data;
 		c->len = len;
@@ -1060,7 +1045,7 @@ static bool sam_execute(Vis *vis, Win *win, Command *cmd, Cursor *cur, Filerange
 	{
 		for (Command *c = cmd->cmd; c && ret; c = c->next)
 			ret &= sam_execute(vis, win, c, NULL, range);
-		view_cursors_dispose(cur);
+		view_cursors_dispose_force(cur);
 		break;
 	}
 	default:
@@ -1088,20 +1073,64 @@ enum SamError sam_cmd(Vis *vis, const char *s) {
 		sam_transcript_init(&file->transcript);
 	}
 
+	bool visual = vis->mode->visual;
+	size_t primary_pos = vis->win ? view_cursor_get(vis->win->view) : EPOS;
 	Filerange range = text_range_empty();
 	sam_execute(vis, vis->win, cmd, NULL, &range);
 
 	for (File *file = vis->files; file; file = file->next) {
 		if (file->internal)
 			continue;
-		if (file->transcript.error != SAM_ERR_OK)
-			err = file->transcript.error;
-		else
-			sam_transcript_apply(&file->transcript, file);
+		Transcript *t = &file->transcript;
+		if (t->error != SAM_ERR_OK) {
+			err = t->error;
+		} else {
+			ptrdiff_t delta = 0;
+			for (Change *c = t->changes; c; c = c->next) {
+				c->range.start += delta;
+				c->range.end += delta;
+				if (c->type & TRANSCRIPT_DELETE) {
+					text_delete_range(file->text, &c->range);
+					delta -= text_range_size(&c->range);
+					if (c->cursor && c->type == TRANSCRIPT_DELETE) {
+						if (visual)
+							view_cursors_dispose_force(c->cursor);
+						else
+							view_cursors_to(c->cursor, c->range.start);
+					}
+				}
+				if (c->type & TRANSCRIPT_INSERT) {
+					text_insert(file->text, c->range.start, c->data, c->len);
+					delta += c->len;
+					Filerange sel = text_range_new(c->range.start,
+					                               c->range.start+c->len);
+					if (c->cursor) {
+						if (visual) {
+							view_cursors_selection_set(c->cursor, &sel);
+							view_cursors_selection_sync(c->cursor);
+						} else {
+							if (memchr(c->data, '\n', c->len))
+								view_cursors_to(c->cursor, sel.start);
+							else
+								view_cursors_to(c->cursor, sel.end);
+						}
+					} else if (visual) {
+						Cursor *cursor = view_cursors_new(c->win->view, sel.start);
+						if (cursor) {
+							view_cursors_selection_set(cursor, &sel);
+							view_cursors_selection_sync(cursor);
+						}
+					}
+				}
+			}
+		}
 		sam_transcript_free(&file->transcript);
 	}
 
 	if (vis->win) {
+		if (primary_pos != EPOS && view_cursor_disposed(vis->win->view))
+			view_cursor_to(vis->win->view, primary_pos);
+		view_cursors_primary_set(view_cursors(vis->win->view));
 		bool completed = true;
 		for (Cursor *c = view_cursors(vis->win->view); c; c = view_cursors_next(c)) {
 			Filerange sel = view_cursors_selection_get(c);
@@ -1117,19 +1146,19 @@ enum SamError sam_cmd(Vis *vis, const char *s) {
 }
 
 static bool cmd_insert(Vis *vis, Win *win, Command *cmd, const char *argv[], Cursor *cur, Filerange *range) {
-	return win && sam_insert(win->file, range->start, strdup(argv[1]), strlen(argv[1]));
+	return win && sam_insert(win, cur, range->start, strdup(argv[1]), strlen(argv[1]));
 }
 
 static bool cmd_append(Vis *vis, Win *win, Command *cmd, const char *argv[], Cursor *cur, Filerange *range) {
-	return win && sam_insert(win->file, range->end, strdup(argv[1]), strlen(argv[1]));
+	return win && sam_insert(win, cur, range->end, strdup(argv[1]), strlen(argv[1]));
 }
 
 static bool cmd_change(Vis *vis, Win *win, Command *cmd, const char *argv[], Cursor *cur, Filerange *range) {
-	return win && sam_change(win->file, range, strdup(argv[1]), strlen(argv[1]));
+	return win && sam_change(win, cur, range, strdup(argv[1]), strlen(argv[1]));
 }
 
 static bool cmd_delete(Vis *vis, Win *win, Command *cmd, const char *argv[], Cursor *cur, Filerange *range) {
-	return win && sam_delete(win->file, range);
+	return win && sam_delete(win, cur, range);
 }
 
 static bool cmd_guard(Vis *vis, Win *win, Command *cmd, const char *argv[], Cursor *cur, Filerange *range) {
@@ -1139,8 +1168,7 @@ static bool cmd_guard(Vis *vis, Win *win, Command *cmd, const char *argv[], Curs
 		text_range_size(range), cmd->regex, 0, NULL, 0);
 	if (match ^ (argv[0][0] == 'v'))
 		return sam_execute(vis, win, cmd->cmd, cur, range);
-	if (cur && !view_cursors_dispose(cur))
-		view_cursors_selection_clear(cur);
+	view_cursors_dispose_force(cur);
 	return true;
 }
 
@@ -1148,7 +1176,6 @@ static bool cmd_extract(Vis *vis, Win *win, Command *cmd, const char *argv[], Cu
 	if (!win)
 		return false;
 	bool ret = true;
-	size_t pos = EPOS;
 	Text *txt = win->file->text;
 
 	if (cmd->regex) {
@@ -1207,10 +1234,7 @@ static bool cmd_extract(Vis *vis, Win *win, Command *cmd, const char *argv[], Cu
 		}
 	}
 
-	if (cur && !view_cursors_dispose(cur)) {
-		view_cursors_selection_clear(cur);
-		view_cursors_to(cur, pos != EPOS ? pos : range->start);
-	}
+	view_cursors_dispose_force(cur);
 	return ret;
 }
 
@@ -1458,7 +1482,7 @@ static bool cmd_filter(Vis *vis, Win *win, Command *cmd, const char *argv[], Cur
 		vis_info_show(vis, "Command cancelled");
 	} else if (status == 0) {
 		size_t len = buffer_length(&bufout);
-		sam_change(win->file, range, buffer_move(&bufout), len);
+		sam_change(win, cur, range, buffer_move(&bufout), len);
 	} else {
 		vis_info_show(vis, "Command failed %s", buffer_content0(&buferr));
 	}
@@ -1480,7 +1504,7 @@ static bool cmd_pipein(Vis *vis, Win *win, Command *cmd, const char *argv[], Cur
 	Filerange filter_range = text_range_new(range->end, range->end);
 	bool ret = cmd_filter(vis, win, cmd, argv, cur, &filter_range);
 	if (ret)
-		ret = sam_delete(win->file, range);
+		ret = sam_delete(win, NULL, range);
 	return ret;
 }
 
