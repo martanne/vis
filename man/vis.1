@@ -359,8 +359,10 @@ and hence
 It is an error for a compound address to represent a malformed substring.
 .
 .Ss Commands
-In the following, text demarcated by slashes represents text delimited by any printable ASCII character except alphanumerics.
-Any number of trailing delimiters may be elided, with multiple elisions then representing null strings, but the first delimiter must always be present.
+In the following, text demarcated by slashes represents text delimited
+by any printable ASCII character except alphanumerics.  Any number
+of trailing delimiters may be elided, with multiple elisions then
+representing null strings, but the first delimiter must always be present.
 In any delimited text, newline may not appear literally;
 .Li \[rs]n
 and
@@ -369,6 +371,13 @@ may be typed for newline and tab;
 .Li \[rs]/
 quotes the delimiter, here
 .Li / .
+An ampersand
+.Li &
+and
+.Sy \[rs]n ,
+where
+.Sy n
+is a digit (1-9) are replaced by the corresponding register.
 Backslash is otherwise interpreted literally.
 .Pp
 Most commands may be prefixed with an address to indicate their range

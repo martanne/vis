@@ -537,7 +537,7 @@ static char *parse_until(const char **s, const char *until, const char *escchars
 				c = '\n';
 			} else if (c == 't') {
 				c = '\t';
-			} else if (type != CMD_REGEX && c == '\\') {
+			} else if (type != CMD_REGEX && type != CMD_TEXT && c == '\\') {
 				// ignore one of the back slashes
 			} else {
 				bool delim = memchr(until, c, len);
@@ -1145,16 +1145,66 @@ enum SamError sam_cmd(Vis *vis, const char *s) {
 	return err;
 }
 
+/* process text input, substitute register content for backreferences etc. */
+Buffer text(Vis *vis, const char *text) {
+	Buffer buf;
+	buffer_init(&buf);
+	for (size_t len = strcspn(text, "\\&"); *text; len = strcspn(++text, "\\&")) {
+		buffer_append(&buf, text, len);
+		text += len;
+		enum VisRegister regid = VIS_REG_INVALID;
+		switch (text[0]) {
+		case '&':
+			regid = VIS_REG_AMPERSAND;
+			break;
+		case '\\':
+			if ('1' <= text[1] && text[1] <= '9') {
+				regid = VIS_REG_1 + text[1] - '1';
+				text++;
+			} else if (text[1] == '\\' || text[1] == '&') {
+				text++;
+			}
+			break;
+		case '\0':
+			goto out;
+		}
+
+		const char *data;
+		size_t reglen = 0;
+		if (regid != VIS_REG_INVALID) {
+			data = register_get(vis, &vis->registers[regid], &reglen);
+		} else {
+			data = text;
+			reglen = 1;
+		}
+		buffer_append(&buf, data, reglen);
+	}
+out:
+	return buf;
+}
+
 static bool cmd_insert(Vis *vis, Win *win, Command *cmd, const char *argv[], Cursor *cur, Filerange *range) {
-	return win && sam_insert(win, cur, range->start, strdup(argv[1]), strlen(argv[1]));
+	if (!win)
+		return false;
+	Buffer buf = text(vis, argv[1]);
+	size_t len = buffer_length(&buf);
+	return sam_insert(win, cur, range->start, buffer_move(&buf), len);
 }
 
 static bool cmd_append(Vis *vis, Win *win, Command *cmd, const char *argv[], Cursor *cur, Filerange *range) {
-	return win && sam_insert(win, cur, range->end, strdup(argv[1]), strlen(argv[1]));
+	if (!win)
+		return false;
+	Buffer buf = text(vis, argv[1]);
+	size_t len = buffer_length(&buf);
+	return sam_insert(win, cur, range->end, buffer_move(&buf), len);
 }
 
 static bool cmd_change(Vis *vis, Win *win, Command *cmd, const char *argv[], Cursor *cur, Filerange *range) {
-	return win && sam_change(win, cur, range, strdup(argv[1]), strlen(argv[1]));
+	if (!win)
+		return false;
+	Buffer buf = text(vis, argv[1]);
+	size_t len = buffer_length(&buf);
+	return sam_change(win, cur, range, buffer_move(&buf), len);
 }
 
 static bool cmd_delete(Vis *vis, Win *win, Command *cmd, const char *argv[], Cursor *cur, Filerange *range) {
