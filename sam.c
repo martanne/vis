@@ -155,7 +155,7 @@ static const CommandDef cmds[] = {
 		"p",            "Create selection covering range",
 		CMD_NONE, NULL, cmd_print
 	}, {
-		"s",            "Substitute text for regexp in range",
+		"s",            "Substitute: use x/pattern/ c/replacement/ instead",
 		CMD_SHELL|CMD_ADDRESS_LINE, NULL, cmd_substitute
 	}, {
 		"v",            "If range does not contain regexp, run command",
@@ -1391,13 +1391,8 @@ static bool cmd_files(Vis *vis, Win *win, Command *cmd, const char *argv[], Curs
 }
 
 static bool cmd_substitute(Vis *vis, Win *win, Command *cmd, const char *argv[], Cursor *cur, Filerange *range) {
-	Buffer buf;
-	buffer_init(&buf);
-	bool ret = false;
-	if (buffer_put0(&buf, "s") && buffer_append0(&buf, argv[1]))
-		ret = cmd_filter(vis, win, cmd, (const char*[]){ argv[0], "sed", buffer_move(&buf), NULL }, cur, range);
-	buffer_release(&buf);
-	return ret;
+	vis_info_show(vis, "Use :x/pattern/ c/replacement/ instead");
+	return false;
 }
 
 static bool cmd_write(Vis *vis, Win *win, Command *cmd, const char *argv[], Cursor *cur, Filerange *r) {
