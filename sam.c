@@ -1181,11 +1181,14 @@ static bool cmd_extract(Vis *vis, Win *win, Command *cmd, const char *argv[], Cu
 	if (cmd->regex) {
 		bool trailing_match = false;
 		size_t start = range->start, end = range->end, last_start = EPOS;
-		RegexMatch match[1];
+		size_t nsub = 1 + text_regex_nsub(cmd->regex);
+		if (nsub > 10)
+			nsub = 10;
+		RegexMatch match[nsub];
 		while (start < end || trailing_match) {
 			trailing_match = false;
 			bool found = text_search_range_forward(txt, start,
-				end - start, cmd->regex, 1, match,
+				end - start, cmd->regex, nsub, match,
 				start > range->start ? REG_NOTBOL : 0) == 0;
 			Filerange r = text_range_empty();
 			if (found) {
@@ -1216,6 +1219,12 @@ static bool cmd_extract(Vis *vis, Win *win, Command *cmd, const char *argv[], Cu
 			}
 
 			if (text_range_valid(&r)) {
+				if (found) {
+					for (size_t i = 0; i < nsub; i++) {
+						Register *reg = &vis->registers[VIS_REG_AMPERSAND+i];
+						register_put_range(vis, reg, txt, &match[i]);
+					}
+				}
 				ret &= sam_execute(vis, win, cmd->cmd, NULL, &r);
 				last_start = start;
 			}

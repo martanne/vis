@@ -400,6 +400,16 @@ void vis_mark_set(Vis*, enum VisMark mark, size_t pos);
 enum VisRegister {
 	VIS_REG_DEFAULT,    /* used when no other register is specified */
 	VIS_REG_ZERO,       /* yank register */
+	VIS_REG_AMPERSAND,  /* last regex match */
+	VIS_REG_1,	    /* 1-9 last sub-expression matches */
+	VIS_REG_2,
+	VIS_REG_3,
+	VIS_REG_4,
+	VIS_REG_5,
+	VIS_REG_6,
+	VIS_REG_7,
+	VIS_REG_8,
+	VIS_REG_9,
 	VIS_REG_BLACKHOLE,  /* /dev/null register */
 	VIS_REG_CLIPBOARD,  /* system clipboard register */
 	VIS_MACRO_REPEAT,   /* copy of the above macro once the recording is finished */

@@ -116,6 +116,13 @@ system clipboard integration via shell script
 .Xr vis-clipboard 1
 .It \(dq0
 yank register, most recently yanked range
+.It \(dq1-\(dq9
+.It \(dq&
+sub expression matches of most recent
+.Ic x
+or
+.Ic y
+command
 .It \(dq/
 search register, most recently used search pattern
 .It \(dq:
@@ -518,6 +525,12 @@ If the regular expression and its slashes are omitted,
 .Li "/.*\[rs]n/"
 is assumed.
 Null string matches potentially occur before every character of the range and at the end of the range.
+.Pp
+The
+.Ic \(dq1-\(dq9
+and
+.Ic \(dq&
+registers are updated with the (sub) expression matches of the pattern.
 .It Ic y/regexp/ Bq command
 Like
 .Ic x ,
