@@ -80,6 +80,7 @@ struct View {
 	Line *lastline;     /* last currently used line, always <= bottomline */
 	Line *bottomline;   /* bottom of view, might be unused if lastline < bottomline */
 	Cursor *cursor;     /* main cursor, always placed within the visible viewport */
+	Cursor *cursor_dead;/* main cursor which was disposed, will be removed when another cursor is created */
 	int cursor_count;   /* how many cursors do currently exist */
 	Line *line;         /* used while drawing view content, line where next char will be drawn */
 	int col;            /* used while drawing view content, column where next char will be drawn */
@@ -972,7 +973,8 @@ static Cursor *cursors_new(View *view, size_t pos, bool force) {
 		view->cursors = c;
 	}
 	view->cursor = c;
-	view->cursor_count++;;
+	view->cursor_count++;
+	view_cursors_dispose(view->cursor_dead);
 	view_cursors_to(c, pos);
 	return c;
 err:
@@ -1067,13 +1069,15 @@ static void view_cursors_free(Cursor *c) {
 		c->view->cursors = c->next;
 	if (c->view->cursor == c)
 		c->view->cursor = c->next ? c->next : c->prev;
+	if (c->view->cursor_dead == c)
+		c->view->cursor_dead = NULL;
 	c->view->cursor_count--;
 	free(c);
 }
 
 bool view_cursors_dispose(Cursor *c) {
 	if (!c)
-		return false;
+		return true;
 	View *view = c->view;
 	if (!view->cursors || !view->cursors->next)
 		return false;
@@ -1081,6 +1085,23 @@ bool view_cursors_dispose(Cursor *c) {
 	view_cursors_free(c);
 	view_cursors_primary_set(view->cursor);
 	return true;
+}
+
+bool view_cursors_dispose_force(Cursor *c) {
+	if (view_cursors_dispose(c))
+		return true;
+	View *view = c->view;
+	if (view->cursor_dead)
+		return false;
+	view_cursors_selection_clear(c);
+	view->cursor_dead = c;
+	return true;
+}
+
+Cursor *view_cursor_disposed(View *view) {
+	Cursor *c = view->cursor_dead;
+	view->cursor_dead = NULL;
+	return c;
 }
 
 Cursor *view_cursors(View *view) {

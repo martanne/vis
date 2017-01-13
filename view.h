@@ -132,6 +132,13 @@ bool view_cursors_multiple(View*);
 /* dispose an existing cursor with its associated selection (if any),
  * not applicaple for the last existing cursor */
 bool view_cursors_dispose(Cursor*);
+/* if called for the last existing cursor its selection is destroyed
+ * and the cursor is marked for destruction and will be disposed as
+ * soon as a new cursor is created. */
+bool view_cursors_dispose_force(Cursor*);
+/* if the primary cursor was marked for destruction (by means of
+ * view_cursors_dispose_force) return it and clear descruction flag */
+Cursor *view_cursor_disposed(View*);
 /* only keep the main cursor, release all others together with their
  * selections (if any) */
 void view_cursors_clear(View*);
