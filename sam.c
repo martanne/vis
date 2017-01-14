@@ -828,6 +828,8 @@ static Command *command_parse(Vis *vis, const char **s, enum SamError *err) {
 			while (**s == ' ' || **s == '\t' || **s == '\n')
 				(*s)++;
 			next = command_parse(vis, s, err);
+			if (*err)
+				goto fail;
 			if (prev)
 				prev->next = next;
 			else
