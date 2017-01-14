@@ -58,7 +58,7 @@
 <p> This document might be out of date, run <code>make luadoc</code> to regenerate it.</p>
     <h3>Info:</h3>
     <ul>
-        <li><strong>Release</strong>: v0.2-538-gc2bfd4b</li>
+        <li><strong>Release</strong>: v0.2-659-ge86abf9-dirty</li>
         <li><strong>License</strong>: ISC</li>
         <li><strong>Author</strong>: Marc André Tanner</li>
     </ul>
@@ -91,6 +91,10 @@
 	<td class="summary">Whether a macro is being recorded.</td>
 	</tr>
 	<tr>
+	<td class="name" nowrap><a href="#Vis.registers">Vis.registers</a></td>
+	<td class="summary">Registers.</td>
+	</tr>
+	<tr>
 	<td class="name" nowrap><a href="#Vis.ui">Vis.ui</a></td>
 	<td class="summary">User interface.</td>
 	</tr>
@@ -103,7 +107,7 @@
 	<td class="summary">Execute a <code>:</code>-command.</td>
 	</tr>
 	<tr>
-	<td class="name" nowrap><a href="#Vis:command_register">Vis:command_register(name, command)</a></td>
+	<td class="name" nowrap><a href="#Vis:command_register">Vis:command_register(name, command[, help])</a></td>
 	<td class="summary">Register a custom <code>:</code>-command.</td>
 	</tr>
 	<tr>
@@ -123,6 +127,18 @@
 	<td class="summary">Map a key to a Lua function.</td>
 	</tr>
 	<tr>
+	<td class="name" nowrap><a href="#Vis:map">Vis:map(mode, key, alias)</a></td>
+	<td class="summary">Setup a key alias.</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#Vis:map">Vis:map(mode, key, action)</a></td>
+	<td class="summary">Map a key to a key action.</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#Vis:mark_names">Vis:mark_names()</a></td>
+	<td class="summary">Create an iterator over all mark names.</td>
+	</tr>
+	<tr>
 	<td class="name" nowrap><a href="#Vis:message">Vis:message(message)</a></td>
 	<td class="summary">Display a multi line message.</td>
 	</tr>
@@ -133,6 +149,10 @@
 	<tr>
 	<td class="name" nowrap><a href="#Vis:open">Vis:open(filename)</a></td>
 	<td class="summary">Open a file.</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#Vis:register_names">Vis:register_names()</a></td>
+	<td class="summary">Create an iterator over all register names.</td>
 	</tr>
 	<tr>
 	<td class="name" nowrap><a href="#Vis:textobject_new">Vis:textobject_new(key, textobject[, help])</a></td>
@@ -182,8 +202,8 @@
 	<td class="summary">Redraw window content.</td>
 	</tr>
 	<tr>
-	<td class="name" nowrap><a href="#Window:map">Window:map(mode, key, func[, help])</a></td>
-	<td class="summary">Map a window local key to a Lua function.</td>
+	<td class="name" nowrap><a href="#Window:map">Window:map(...)</a></td>
+	<td class="summary">Set up a window local key mapping.</td>
 	</tr>
 	<tr>
 	<td class="name" nowrap><a href="#Window:status">Window:status(left[, right])</a></td>
@@ -232,6 +252,10 @@
 	<td class="summary">File content by logical lines.</td>
 	</tr>
 	<tr>
+	<td class="name" nowrap><a href="#File.marks">File.marks</a></td>
+	<td class="summary">File marks.</td>
+	</tr>
+	<tr>
 	<td class="name" nowrap><a href="#File.modified">File.modified</a></td>
 	<td class="summary">File state.</td>
 	</tr>
@@ -274,6 +298,14 @@
 	<tr>
 	<td class="name" nowrap><a href="#File:lines_iterator">File:lines_iterator()</a></td>
 	<td class="summary">Create an iterator over all lines of the file.</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#File:mark_get">File:mark_get(mark)</a></td>
+	<td class="summary">Get position of mark.</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#File:mark_set">File:mark_set(pos)</a></td>
+	<td class="summary">Set mark.</td>
 	</tr>
 	<tr>
 	<td class="name" nowrap><a href="#File:text_object_word">File:text_object_word(pos)</a></td>
@@ -524,6 +556,25 @@
 
 </dd>
     <dt>
+    <a name = "Vis.registers"></a>
+    <strong>Vis.registers</strong>
+    </dt>
+    <dd>
+    Registers.
+
+
+    <ul>
+        <li><span class="parameter">registers</span>
+         array to access the register by single letter name
+        </li>
+    </ul>
+
+
+
+
+
+</dd>
+    <dt>
     <a name = "Vis.ui"></a>
     <strong>Vis.ui</strong>
     </dt>
@@ -602,7 +653,7 @@
 </dd>
     <dt>
     <a name = "Vis:command_register"></a>
-    <strong>Vis:command_register(name, command)</strong>
+    <strong>Vis:command_register(name, command[, help])</strong>
     </dt>
     <dd>
     Register a custom <code>:</code>-command.
@@ -617,6 +668,11 @@
         <li><span class="parameter">command</span>
             <span class="types"><span class="type">function</span></span>
          the Lua function implementing the command
+        </li>
+        <li><span class="parameter">help</span>
+            <span class="types"><a class="type" href="https://www.lua.org/manual/5.1/manual.html#5.4">string</a></span>
+         the single line help text as displayed in <code>:help</code>
+         (<em>optional</em>)
         </li>
     </ul>
 
@@ -751,6 +807,134 @@
          <a href="index.html#Window:map">Window:map</a>
     </ul>
 
+    <h3>Usage:</h3>
+    <ul>
+        <pre class="example">vis:map(vis.modes.NORMAL, <span class="keyword">function</span>()
+  vis:info(<span class="string">"Mapping works!"</span>)
+<span class="keyword">end</span>, <span class="string">"Info message help text"</span>)</pre>
+    </ul>
+
+</dd>
+    <dt>
+    <a name = "Vis:map"></a>
+    <strong>Vis:map(mode, key, alias)</strong>
+    </dt>
+    <dd>
+    Setup a key alias. </p>
+
+<p> This is equivalent to <code>vis:command(&apos;map! mode key alias&apos;)</code>.</p>
+
+<p> Mappings are always recursive!
+
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">mode</span>
+            <span class="types"><span class="type">int</span></span>
+         the mode to which the mapping should be added
+        </li>
+        <li><span class="parameter">key</span>
+            <span class="types"><a class="type" href="https://www.lua.org/manual/5.1/manual.html#5.4">string</a></span>
+         the key to map
+        </li>
+        <li><span class="parameter">alias</span>
+            <span class="types"><a class="type" href="https://www.lua.org/manual/5.1/manual.html#5.4">string</a></span>
+         the key to map to
+        </li>
+    </ul>
+
+    <h3>Returns:</h3>
+    <ol>
+
+           <span class="types"><span class="type">bool</span></span>
+        whether the mapping was successfully established
+    </ol>
+
+
+    <h3>See also:</h3>
+    <ul>
+         <a href="index.html#Window:map">Window:map</a>
+    </ul>
+
+    <h3>Usage:</h3>
+    <ul>
+        <pre class="example">vis:map(vis.modes.NORMAL, <span class="string">"j"</span>, <span class="string">"k"</span>)</pre>
+    </ul>
+
+</dd>
+    <dt>
+    <a name = "Vis:map"></a>
+    <strong>Vis:map(mode, key, action)</strong>
+    </dt>
+    <dd>
+    Map a key to a key action.
+
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">mode</span>
+            <span class="types"><span class="type">int</span></span>
+         the mode to which the mapping should be added
+        </li>
+        <li><span class="parameter">key</span>
+            <span class="types"><a class="type" href="https://www.lua.org/manual/5.1/manual.html#5.4">string</a></span>
+         the key to map
+        </li>
+        <li><span class="parameter">action</span>
+         the action to map
+        </li>
+    </ul>
+
+    <h3>Returns:</h3>
+    <ol>
+
+           <span class="types"><span class="type">bool</span></span>
+        whether the mapping was successfully established
+    </ol>
+
+
+    <h3>See also:</h3>
+    <ul>
+         <a href="index.html#Window:map">Window:map</a>
+    </ul>
+
+    <h3>Usage:</h3>
+    <ul>
+        <pre class="example"><span class="keyword">local</span> action = vis:action_register(<span class="string">"info"</span>, <span class="keyword">function</span>()
+  vis:info(<span class="string">"Mapping works!"</span>)
+<span class="keyword">end</span>, <span class="string">"Info message help text"</span>)
+vis:map(vis.modes.NORMAL, <span class="string">"gh"</span>, action)
+vis:map(vis.modes.NORMAL, <span class="string">"gl"</span>, action)</pre>
+    </ul>
+
+</dd>
+    <dt>
+    <a name = "Vis:mark_names"></a>
+    <strong>Vis:mark_names()</strong>
+    </dt>
+    <dd>
+    Create an iterator over all mark names.
+
+
+
+    <h3>Returns:</h3>
+    <ol>
+
+        the new iterator
+    </ol>
+
+
+
+    <h3>Usage:</h3>
+    <ul>
+        <pre class="example"><span class="keyword">local</span> marks = vis.win.file.marks;
+<span class="keyword">for</span> mark <span class="keyword">in</span> vis:mark_names() <span class="keyword">do</span>
+	<span class="keyword">local</span> pos = marks[mark]
+	<span class="keyword">if</span> pos <span class="keyword">then</span>
+		<span class="comment">-- do something with mark pos
+</span>	<span class="keyword">end</span>
+<span class="keyword">end</span></pre>
+    </ul>
 
 </dd>
     <dt>
@@ -850,6 +1034,34 @@
 
 
 
+
+</dd>
+    <dt>
+    <a name = "Vis:register_names"></a>
+    <strong>Vis:register_names()</strong>
+    </dt>
+    <dd>
+    Create an iterator over all register names.
+
+
+
+    <h3>Returns:</h3>
+    <ol>
+
+        the new iterator
+    </ol>
+
+
+
+    <h3>Usage:</h3>
+    <ul>
+        <pre class="example"><span class="keyword">for</span> reg <span class="keyword">in</span> vis:register_names() <span class="keyword">do</span>
+	<span class="keyword">local</span> value = vis.registers[reg]
+	<span class="keyword">if</span> value <span class="keyword">then</span>
+		<span class="comment">-- do something with register value
+</span>	<span class="keyword">end</span>
+<span class="keyword">end</span></pre>
+    </ul>
 
 </dd>
     <dt>
@@ -1124,39 +1336,22 @@
 </dd>
     <dt>
     <a name = "Window:map"></a>
-    <strong>Window:map(mode, key, func[, help])</strong>
+    <strong>Window:map(...)</strong>
     </dt>
     <dd>
-    Map a window local key to a Lua function.
+    Set up a window local key mapping.
+ The function signatures are the same as for <a href="index.html#Vis:map">Vis:map</a>.
 
 
     <h3>Parameters:</h3>
     <ul>
-        <li><span class="parameter">mode</span>
-            <span class="types"><span class="type">int</span></span>
-         the mode to which the mapping should be added
-        </li>
-        <li><span class="parameter">key</span>
-            <span class="types"><a class="type" href="https://www.lua.org/manual/5.1/manual.html#5.4">string</a></span>
-         the key to map
-        </li>
-        <li><span class="parameter">func</span>
-            <span class="types"><span class="type">function</span></span>
-         the Lua function to handle the key mapping
-        </li>
-        <li><span class="parameter">help</span>
-            <span class="types"><a class="type" href="https://www.lua.org/manual/5.1/manual.html#5.4">string</a></span>
-         the single line help text as displayed in <code>:help</code>
-         (<em>optional</em>)
+        <li><span class="parameter">...</span>
+
+
+
         </li>
     </ul>
 
-    <h3>Returns:</h3>
-    <ol>
-
-           <span class="types"><span class="type">bool</span></span>
-        whether the mapping was successfully established
-    </ol>
 
 
     <h3>See also:</h3>
@@ -1463,6 +1658,25 @@
 
 </dd>
     <dt>
+    <a name = "File.marks"></a>
+    <strong>File.marks</strong>
+    </dt>
+    <dd>
+    File marks.
+
+
+    <ul>
+        <li><span class="parameter">marks</span>
+         array to access the marks of this file by single letter name
+        </li>
+    </ul>
+
+
+
+
+
+</dd>
+    <dt>
     <a name = "File.modified"></a>
     <strong>File.modified</strong>
     </dt>
@@ -1747,6 +1961,60 @@
 	<span class="comment">-- do something with line
 </span><span class="keyword">end</span></pre>
     </ul>
+
+</dd>
+    <dt>
+    <a name = "File:mark_get"></a>
+    <strong>File:mark_get(mark)</strong>
+    </dt>
+    <dd>
+    Get position of mark.
+
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">mark</span>
+            <span class="types"><span class="type">Mark</span></span>
+         the mark to look up
+        </li>
+    </ul>
+
+    <h3>Returns:</h3>
+    <ol>
+
+           <span class="types"><span class="type">int</span></span>
+        pos the position of the mark, or <code>nil</code> if invalid
+    </ol>
+
+
+
+
+</dd>
+    <dt>
+    <a name = "File:mark_set"></a>
+    <strong>File:mark_set(pos)</strong>
+    </dt>
+    <dd>
+    Set mark.
+
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">pos</span>
+            <span class="types"><span class="type">int</span></span>
+         the position to set the mark to, must be in [0, file.size]
+        </li>
+    </ul>
+
+    <h3>Returns:</h3>
+    <ol>
+
+           <span class="types"><span class="type">Mark</span></span>
+        mark the mark which can be looked up later
+    </ol>
+
+
+
 
 </dd>
     <dt>
@@ -2442,7 +2710,7 @@
 </div> <!-- id="main" -->
 <div id="about">
 <i>generated by <a href="http://github.com/stevedonovan/LDoc">LDoc 1.4.6</a></i>
-<i style="float:right;">Last updated 2016-12-09 20:22:24 </i>
+<i style="float:right;">Last updated 2017-01-14 17:41:59 </i>
 </div> <!-- id="about" -->
 </div> <!-- id="container" -->
 </body>

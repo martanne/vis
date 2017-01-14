@@ -106,6 +106,14 @@ system clipboard integration via shell script <a class="link-man" href="vis-clip
 <dd class="list-tag" style="margin-left: 6.00ex;">
 yank register, most recently yanked range</dd>
 <dt class="list-tag" style="margin-top: 1.00em;">
+&quot;1-&quot;9</dt>
+<dd class="list-tag" style="margin-left: 6.00ex;">
+</dd>
+<dt class="list-tag" style="margin-top: 1.00em;">
+&quot;&amp;</dt>
+<dd class="list-tag" style="margin-left: 6.00ex;">
+sub expression matches of most recent <b class="cmd">x</b> or <b class="cmd">y</b> command</dd>
+<dt class="list-tag" style="margin-top: 1.00em;">
 &quot;/</dt>
 <dd class="list-tag" style="margin-left: 6.00ex;">
 search register, most recently used search pattern</dd>
@@ -198,13 +206,13 @@ The operators <code class="lit">+</code> and <code class="lit">-</code> are high
 </div>
 In both <code class="lit">+</code> and <code class="lit">-</code> forms, if <span class="symb">a2</span> is a line or character address with a missing number, the number defaults to 1. If <span class="symb">a1</span> is missing, <code class="lit">.</code> is substituted. If both <span class="symb">a1</span> and <span class="symb">a2</span> are present and distinguishable, <code class="lit">+</code> may be elided. <span class="symb">a2</span> may be a regular expression; if it is delimited by &#8220;<code class="lit">?</code>&#8221; characters, the effect of the <code class="lit">+</code> or <code class="lit">-</code> is reversed. The <code class="lit">%</code> sign is an alias for <code class="lit">,</code> and hence <code class="lit">0,$</code>. It is an error for a compound address to represent a malformed substring.</div>
 <div class="subsection">
-<h2 id="Commands">Commands</h2> In the following, text demarcated by slashes represents text delimited by any printable ASCII character except alphanumerics. Any number of trailing delimiters may be elided, with multiple elisions then representing null strings, but the first delimiter must always be present. In any delimited text, newline may not appear literally; <code class="lit">\n</code> and <code class="lit">\t</code> may be typed for newline and tab; <code class="lit">\/</code> quotes the delimiter, here <code class="lit">/</code>. Backslash is otherwise interpreted literally.<div class="spacer">
+<h2 id="Commands">Commands</h2> In the following, text demarcated by slashes represents text delimited by any printable ASCII character except alphanumerics.  Any number of trailing delimiters may be elided, with multiple elisions then representing null strings, but the first delimiter must always be present. In any delimited text, newline may not appear literally; <code class="lit">\n</code> and <code class="lit">\t</code> may be typed for newline and tab; <code class="lit">\/</code> quotes the delimiter, here <code class="lit">/</code>. An ampersand <code class="lit">&amp;</code> and <span class="symb">\n</span>, where <span class="symb">n</span> is a digit (1-9) are replaced by the corresponding register. Backslash is otherwise interpreted literally.<div class="spacer">
 </div>
 Most commands may be prefixed with an address to indicate their range of operation.  If a command takes an address and none is supplied, a default address is used.  In normal mode this equates to the character the cursor is currently over. If only one cursor exists <b class="cmd">x</b> and <b class="cmd">y</b> default to the whole file <code class="lit">0,$</code>. In normal mode the write commands <b class="cmd">w</b> and <b class="cmd">wq</b> always apply to the whole file. Commands are executed once for every cursor. In visual mode the commands are applied to every selection as if an implicit <b class="cmd">x</b> command, matching the existing selections, was present.<div class="spacer">
 </div>
 In the description, &#8220;range&#8221; is used to represent whatever address is supplied.<div class="spacer">
 </div>
-If after a successful command execution no selections remain, the editor will switch to normal mode, otherwise it remains in visual mode. This allows <span class="emph">interactive</span> refinements of ranges.</div>
+Many commands create new selections as a side effect when issued from a visual mode. If so, it is always to the &#8220;result&#8221; of the change: the new text for an insertion, the empty string for a deletion, the command output of a filter etc. If after a successful command execution no selections remain, the editor will switch to normal mode, otherwise it remains in visual mode. This allows <span class="emph">interactive</span> refinements of ranges.</div>
 <div class="subsection">
 <h2 id="Text_commands">Text commands</h2><dl style="margin-top: 0.00em;margin-bottom: 0.00em;" class="list list-tag">
 <dt class="list-tag" style="margin-top: 1.00em;">
@@ -229,10 +237,6 @@ Same as <span class="symb">a</span>, but <span class="symb">c</span> replaces th
 <span class="symb">d</span></dt>
 <dd class="list-tag" style="margin-left: 6.00ex;">
 Delete the text in range.</dd>
-<dt class="list-tag" style="margin-top: 1.00em;">
-<span class="symb">s/regexp/text/</span></dt>
-<dd class="list-tag" style="margin-left: 6.00ex;">
-Substitute <span class="symb">text</span> for the first match of the regular expression in the range. Currently implemented in terms of <a class="link-man" href="sed.1.html">sed(1)</a>.</dd>
 </dl>
 </div>
 <div class="subsection">
@@ -294,7 +298,9 @@ In any of <b class="cmd">&lt;</b>, <b class="cmd">&gt;</b>, <b class="cmd">|</b>
 <dt class="list-tag" style="margin-top: 1.00em;">
 <b class="cmd">x/regexp/</b> [command]</dt>
 <dd class="list-tag" style="margin-left: 6.00ex;">
-For each match of the regular expression in the range, run the command with range set to the match. If the regular expression and its slashes are omitted, <code class="lit">/.*\n/</code> is assumed. Null string matches potentially occur before every character of the range and at the end of the range.</dd>
+For each match of the regular expression in the range, run the command with range set to the match. If the regular expression and its slashes are omitted, <code class="lit">/.*\n/</code> is assumed. Null string matches potentially occur before every character of the range and at the end of the range.<div class="spacer">
+</div>
+The <b class="cmd">&quot;1-&quot;9</b> and <b class="cmd">&quot;&amp;</b> registers are updated with the (sub) expression matches of the pattern.</dd>
 <dt class="list-tag" style="margin-top: 1.00em;">
 <b class="cmd">y/regexp/</b> [command]</dt>
 <dd class="list-tag" style="margin-left: 6.00ex;">
@@ -320,7 +326,11 @@ If the range contains (<b class="cmd">g</b>) or does not contain (<b class="cmd"
 </div>
 These may be nested arbitrarily deeply. An empty command in an <b class="cmd">x</b> or <b class="cmd">y</b> defaults to <b class="cmd">p</b>. <b class="cmd">X</b>, <b class="cmd">Y</b>, <b class="cmd">g</b> and <b class="cmd">v</b> do not have defaults.</div>
 <div class="subsection">
-<h2 id="Grouping_and_multiple_changes">Grouping and multiple changes</h2> Commands may be grouped by enclosing them in curly braces. Semantically, the opening brace is like a command: it takes an (optional) address and runs each sub-command on the range. Commands within the braces are executed sequentially, and changes made by one command are visible to other commands. Braces may be nested arbitrarily.</div>
+<h2 id="Grouping_and_multiple_changes">Grouping and multiple changes</h2> Commands may be grouped by enclosing them in curly braces. Semantically, the opening brace is like a command: it takes an (optional) address and runs each sub-command on the range. Commands within the braces are executed sequentially, but changes made by one command are not visible to other commands.<div class="spacer">
+</div>
+When a command makes a number of changes to a file, as in <b class="cmd">x/re/c/text/</b>, the addresses of all changes to the file are computed in the original file. If the changes are non-overlapping, they are applied to the file. Successive insertions at the same address are catenated into a single insertion composed of the several insertions in the order applied.<div class="spacer">
+</div>
+Braces may be nested arbitrarily.</div>
 </div>
 <div class="section">
 <h1 id="VI(M)_KEY_BINDINGS">VI(M) KEY BINDINGS</h1> In the following sections angle brackets are used to denote special keys. The prefixes <b class="flag">C-</b>, <b class="flag">S-</b>, and <b class="flag">M-</b> are used to refer to the &#10216;Ctrl&#10217;, &#10216;Shift&#10217; and &#10216;Alt&#10217; modifiers, respectively.<div class="spacer">
@@ -907,7 +917,7 @@ revert to newer text state</dd>
 If count is suffixed by either of <span class="symb">d</span> (days), <span class="symb">h</span> (hours), <span class="symb">m</span> (minutes) or <span class="symb">s</span> (seconds) it is interpreted as an offset from the current system time and the closest available text state is restored.</div>
 </div>
 <div class="section">
-<h1 id="SET_OPTIONS">SET OPTIONS</h1> There are a small number of options that may be set (or unset) to change the editor's behavior using the <b class="flag">:set</b> command. This section describes the options, their abbreviations and their default values.<div class="spacer">
+<h1 id="SET_OPTIONS">SET OPTIONS</h1> There are a small number of options that may be set (or unset) to change the editor's behavior using the <b class="flag">:set</b> command. This section describes the options, their abbreviations and their default values. Boolean options can be toggled by appending <span class="symb">!</span> to the option name.<div class="spacer">
 </div>
 In each entry below, the first part of the tag line is the full name of the option, followed by any equivalent abbreviations. The part in square brackets is the default value of the option.<dl style="margin-top: 0.00em;margin-bottom: 0.00em;" class="list list-tag">
 <dt class="list-tag" style="margin-top: 1.00em;">
@@ -970,8 +980,14 @@ Whether to display replacement symbol instead of newlines.</dd>
 <b class="flag">show-spaces</b> [off]</dt>
 <dd class="list-tag" style="margin-left: 6.00ex;">
 Whether to display replacement symbol instead of blank cells.</dd>
+<dt class="list-tag" style="margin-top: 1.00em;">
+<b class="flag">savemethod</b> [auto]</dt>
+<dd class="list-tag" style="margin-left: 6.00ex;">
+How the current file should be saved, <span class="symb">atomic</span> which uses <a class="link-man" href="rename.2.html">rename(2)</a> to atomically replace the file, <span class="symb">inplace</span> which truncates the file and then rewrites it or <span class="symb">auto</span> which tries the former before falling back to the latter. The rename method fails for symlinks, hardlinks, in case of insufficient directory permissions or when either the file owner, group, POSIX ACL or SELinux labels can not be restored.</dd>
 </dl>
 </div>
+<div class="section">
+<h1 id="COMMAND_and_SEARCH_PROMPT">COMMAND and SEARCH PROMPT</h1> The command and search prompt as opened by <b class="cmd">:</b>, <b class="cmd">/</b>, or <b class="cmd">?</b> is implemented as a single line height window, displaying a regular file whose editing starts in insert mode. &#10216;Escape&#10217; switches to normal mode, a second &#10216;Escape&#10217; cancels the prompt. &#10216;Up&#10217; enlarges the window, giving access to the command history. &#10216;C-v&#10217; &#10216;Enter&#10217; inserts a literal new line thus enabling multiline commands. &#10216;Enter&#10217; executes the visual selection if present, or else everything in the region spawned by the cursor position and the delimiting prompt symbols at the start of adjacent lines.</div>
 <div class="section">
 <h1 id="CONFIGURATION">CONFIGURATION</h1> <b class="name">vis</b> uses Lua for configuration and scripting purposes. During startup <i class="file">visrc.lua</i> (see the <i class="link-sec"><a class="link-sec" href="#FILES">FILES</a></i> section) is sourced which can be used to set personal configuration options. As an example the following will enable the display of line numbers:<div class="spacer">
 </div>
@@ -1085,9 +1101,9 @@ Spawn background process and pipe range to its standard input:<div class="spacer
 </div>
 <a class="link-ext" href="http://doc.cat-v.org/bell_labs/structural_regexps/se.pdf">Structural Regular Expressions</a> by Rob Pike<div class="spacer">
 </div>
-<a class="link-ext" href="http://pubs.opengroup.org/onlinepubs/9699919799/utilities/vi.html">vi - screen-oriented (visual) display editor</a> IEEE Std 1003.1-2008/Cor 1-2013 (&#8220;POSIX.1&#8221;)</div>
+<a class="link-ext" href="http://pubs.opengroup.org/onlinepubs/9699919799/utilities/vi.html">vi - screen-oriented (visual) display editor</a> IEEE Std 1003.1 (&#8220;POSIX.1&#8221;)</div>
 <div class="section">
-<h1 id="STANDARDS">STANDARDS</h1> <b class="name">vis</b> does not strive to be IEEE Std 1003.1-2008/Cor 1-2013 (&#8220;POSIX.1&#8221;) compatible, but shares obvious similarities with the <b class="name">vi</b> utility.</div>
+<h1 id="STANDARDS">STANDARDS</h1> <b class="name">vis</b> does not strive to be IEEE Std 1003.1 (&#8220;POSIX.1&#8221;) compatible, but shares obvious similarities with the <b class="name">vi</b> utility.</div>
 <div class="section">
 <h1 id="AUTHORS">AUTHORS</h1> <b class="name">vis</b> is written by <span class="author">Marc Andr&#233; Tanner</span> &#10216;mat at brain-dump.org&#10217;</div>
 <div class="section">
@@ -1096,9 +1112,9 @@ Spawn background process and pipe range to its standard input:<div class="spacer
 <tbody>
 <tr>
 <td class="foot-date">
-December 5, 2016</td>
+January 14, 2017</td>
 <td class="foot-os">
-Vis v0.2-538-gc2bfd4b</td>
+Vis v0.2-659-ge86abf9</td>
 </tr>
 </tbody>
 </table>
