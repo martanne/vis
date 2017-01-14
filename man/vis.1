@@ -1,4 +1,4 @@
-.Dd December 5, 2016
+.Dd January 14, 2017
 .Dt VIS 1
 .Os Vis VERSION
 .
@@ -1155,6 +1155,29 @@ method fails for symlinks, hardlinks, in case of insufficient directory
 permissions or when either the file owner, group, POSIX ACL or SELinux
 labels can not be restored.
 .El
+.
+.Sh COMMAND and SEARCH PROMPT
+.
+The command and search prompt as opened by
+.Ic ":" ,
+.Ic "/" ,
+or
+.Ic "?"
+is implemented as a single line height window, displaying a regular file
+whose editing starts in insert mode.
+.Aq Escape
+switches to normal mode, a second
+.Aq Escape
+cancels the prompt.
+.Aq Up
+enlarges the window, giving access to the command history.
+.Aq C-v
+.Aq Enter
+inserts a literal new line thus enabling multiline commands.
+.Aq Enter
+executes the visual selection if present, or else everything in the
+region spawned by the cursor position and the delimiting prompt symbols
+at the start of adjacent lines.
 .
 .Sh CONFIGURATION
 .

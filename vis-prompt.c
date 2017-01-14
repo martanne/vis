@@ -1,5 +1,6 @@
 #include <string.h>
 #include "vis-core.h"
+#include "text-motions.h"
 #include "text-objects.h"
 #include "text-util.h"
 
@@ -24,13 +25,13 @@ static void prompt_hide(Win *win) {
 	Text *txt = win->file->text;
 	size_t size = text_size(txt);
 	/* make sure that file is new line terminated */
-	char lastchar;
+	char lastchar = '\0';
 	if (size > 1 && text_byte_get(txt, size-1, &lastchar) && lastchar != '\n')
 		text_insert(txt, size, "\n", 1);
 	/* remove empty entries */
 	Filerange line = text_object_line(txt, size);
 	size_t line_size = text_range_size(&line);
-	if (line_size <= 2)
+	if (line_size <= 2 && (lastchar == ':' || lastchar == '/' || lastchar == '?'))
 		text_delete(txt, line.start, line_size);
 	vis_window_close(win);
 }
@@ -53,13 +54,38 @@ static const char *prompt_enter(Vis *vis, const char *keys, const Arg *arg) {
 	char *cmd = NULL;
 
 	Filerange range = view_selection_get(view);
-	if (!text_range_valid(&range))
-		range = text_object_line(txt, view_cursor_get(view));
+	if (!text_range_valid(&range)) {
+		const char *pattern = NULL;
+		Regex *regex = text_regex_new();
+		size_t pos = view_cursor_get(view);
+		if (prompt->file == vis->command_file)
+			pattern = "^:";
+		else if (prompt->file == vis->search_file)
+			pattern = "^(/|\\?)";
+		if (pattern && regex && text_regex_compile(regex, pattern, REG_EXTENDED|REG_NEWLINE) == 0) {
+			char c;
+			size_t prev;
+			if (text_byte_get(txt, pos, &c) && (c == ':' || c == '/' || c == '?'))
+				prev = pos;
+			else
+				prev = text_search_backward(txt, pos, regex);
+			if (prev > pos)
+				prev = EPOS;
+			size_t next = text_search_forward(txt, pos, regex);
+			if (next < pos)
+				next = text_size(txt);
+			range = text_range_new(prev, next);
+		}
+		text_regex_free(regex);
+	}
 	if (text_range_valid(&range))
 		cmd = text_bytes_alloc0(txt, range.start, text_range_size(&range));
 
 	if (!win || !cmd) {
-		vis_info_show(vis, "Prompt window invalid\n");
+		if (!win)
+			vis_info_show(vis, "Prompt window invalid");
+		else if (!cmd)
+			vis_info_show(vis, "Failed to detect command");
 		prompt_restore(prompt);
 		prompt_hide(prompt);
 		free(cmd);
@@ -106,22 +132,6 @@ static const char *prompt_up(Vis *vis, const char *keys, const Arg *arg) {
 	return keys;
 }
 
-static const char *prompt_backspace(Vis *vis, const char *keys, const Arg *arg) {
-	Win *prompt = vis->win;
-	Text *txt = prompt->file->text;
-	size_t size = text_size(txt);
-	size_t pos = view_cursor_get(prompt->view);
-	char c;
-	if (pos == size && (pos == 1 || (size >= 2 && text_byte_get(txt, size-2, &c) && c == '\n'))) {
-		prompt_restore(prompt);
-		prompt_hide(prompt);
-	} else {
-		vis_operator(vis, VIS_OP_DELETE);
-		vis_motion(vis, VIS_MOVE_CHAR_PREV);
-	}
-	return keys;
-}
-
 static const KeyBinding prompt_enter_binding = {
 	.key = "<Enter>",
 	.action = &(KeyAction){
@@ -140,13 +150,6 @@ static const KeyBinding prompt_up_binding = {
 	.key = "<Up>",
 	.action = &(KeyAction){
 		.func = prompt_up,
-	},
-};
-
-static const KeyBinding prompt_backspace_binding = {
-	.key = "<Enter>",
-	.action = &(KeyAction){
-		.func = prompt_backspace,
 	},
 };
 
@@ -169,7 +172,6 @@ void vis_prompt_show(Vis *vis, const char *title) {
 	vis_window_mode_map(prompt, VIS_MODE_VISUAL, true, "<Enter>", &prompt_enter_binding);
 	vis_window_mode_map(prompt, VIS_MODE_NORMAL, true, "<Escape>", &prompt_esc_binding);
 	vis_window_mode_map(prompt, VIS_MODE_INSERT, true, "<Up>", &prompt_up_binding);
-	vis_window_mode_map(prompt, VIS_MODE_INSERT, true, "<Backspace>", &prompt_backspace_binding);
 	vis_mode_switch(vis, VIS_MODE_INSERT);
 }
 
