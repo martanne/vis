@@ -1276,8 +1276,8 @@ void view_cursors_selection_sync(Cursor *c) {
 	if (!c->sel)
 		return;
 	Text *txt = c->view->text;
-	size_t cursor = text_mark_get(txt, c->sel->cursor);
-	view_cursors_to(c, cursor);
+	size_t pos = text_mark_get(txt, c->sel->cursor);
+	view_cursors_to(c, pos);
 }
 
 Filerange view_cursors_selection_get(Cursor *c) {
@@ -1287,12 +1287,13 @@ Filerange view_cursors_selection_get(Cursor *c) {
 void view_cursors_selection_set(Cursor *c, const Filerange *r) {
 	if (!text_range_valid(r))
 		return;
-	if (!c->sel)
-		c->sel = view_selections_new(c->view);
-	if (!c->sel)
+	if (!c->sel && !(c->sel = view_selections_new(c->view)))
 		return;
 
 	view_selections_set(c->sel, r);
+	size_t pos = view_cursors_pos(c);
+	if (!text_range_contains(r, pos))
+		view_cursors_selection_sync(c);
 }
 
 Selection *view_selections_new(View *view) {
