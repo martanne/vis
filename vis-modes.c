@@ -84,7 +84,8 @@ void mode_set(Vis *vis, Mode *new_mode) {
 }
 
 void vis_mode_switch(Vis *vis, enum VisMode mode) {
-	mode_set(vis, &vis_modes[mode]);
+	if (mode < LENGTH(vis_modes))
+		mode_set(vis, &vis_modes[mode]);
 }
 
 enum VisMode vis_mode_from(Vis *vis, const char *name) {

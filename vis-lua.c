@@ -1054,6 +1054,19 @@ static int vis_index(lua_State *L) {
 	return index_common(L);
 }
 
+static int vis_newindex(lua_State *L) {
+	Vis *vis = obj_ref_check(L, 1, "vis");
+	if (lua_isstring(L, 2)) {
+		const char *key = lua_tostring(L, 2);
+		if (strcmp(key, "mode") == 0) {
+			enum VisMode mode = luaL_checkunsigned(L, 3);
+			vis_mode_switch(vis, mode);
+			return 0;
+		}
+	}
+	return newindex_common(L);
+}
+
 static const struct luaL_Reg vis_lua[] = {
 	{ "files", files },
 	{ "windows", windows },
@@ -1072,7 +1085,7 @@ static const struct luaL_Reg vis_lua[] = {
 	{ "feedkeys", feedkeys },
 	{ "action_register", action_register },
 	{ "__index", vis_index },
-	{ "__newindex", newindex_common },
+	{ "__newindex", vis_newindex },
 	{ NULL, NULL },
 };
 
