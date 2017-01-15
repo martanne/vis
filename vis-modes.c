@@ -89,7 +89,7 @@ void vis_mode_switch(Vis *vis, enum VisMode mode) {
 }
 
 enum VisMode vis_mode_from(Vis *vis, const char *name) {
-	for (size_t i = 0; i < LENGTH(vis_modes); i++) {
+	for (size_t i = 0; name && i < LENGTH(vis_modes); i++) {
 		Mode *mode = &vis_modes[i];
 		if (!strcasecmp(mode->name, name))
 			return mode->id;
