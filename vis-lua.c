@@ -500,8 +500,20 @@ static const char *keymapping(Vis *vis, const char *keys, const Arg *arg) {
 	lua_State *L = vis->lua;
 	if (!func_ref_get(L, arg->v))
 		return keys;
-	pcall(vis, L, 0, 0);
-	return keys;
+	lua_pushstring(L, keys);
+	if (pcall(vis, L, 1, 1) != 0)
+		return keys;
+	if (lua_type(L, -1) != LUA_TNUMBER)
+		return keys; /* invalid or no return value, assume zero */
+	lua_Number number = lua_tonumber(L, -1);
+	lua_Integer integer = lua_tointeger(L, -1);
+	if (number != integer)
+		return keys;
+	if (integer < 0)
+		return NULL; /* need more input */
+	size_t len = integer;
+	size_t max = strlen(keys);
+	return (len <= max) ? keys+len : keys;
 }
 
 /***
@@ -737,10 +749,9 @@ static int open(lua_State *L) {
  * Register a Lua function as key action.
  * @function action_register
  * @tparam string name the name of the action, can be referred to in key bindings as `<name>` pseudo key
- * @tparam Function func the lua function implementing the key action
+ * @tparam Function func the lua function implementing the key action (see @{keyhandler})
  * @tparam[opt] string help the single line help text as displayed in `:help`
  * @treturn KeyAction action the registered key action
- * @local
  * @see Vis:map
  * @see Window:map
  */
@@ -805,14 +816,21 @@ err:
  * @function map
  * @tparam int mode the mode to which the mapping should be added
  * @tparam string key the key to map
- * @tparam function func the Lua function to handle the key mapping
+ * @tparam function func the Lua function to handle the key mapping (see @{keyhandler})
  * @tparam[opt] string help the single line help text as displayed in `:help`
  * @treturn bool whether the mapping was successfully established
  * @see Window:map
  * @usage
- * vis:map(vis.modes.NORMAL, function()
- *   vis:info("Mapping works!")
- * end, "Info message help text")
+ * vis:map(vis.modes.INSERT, "<C-k>", function(keys)
+ * 	if #keys < 2 then
+ * 		return -1 -- need more input
+ * 	end
+ * 	local digraph = keys:sub(1, 2)
+ * 	if digraph == "l*" then
+ * 		vis:feedkeys('λ')
+ * 		return 2 -- consume 2 bytes of input
+ * 	end
+ * end, "Insert digraph")
  */
 /***
  * Setup a key alias.
@@ -1937,6 +1955,49 @@ static const struct luaL_Reg file_marks_funcs[] = {
  * @tfield int VISUAL_LINE
  * @see Vis:map
  * @see Window:map
+ */
+
+/***
+ * Key Handling.
+ *
+ * This section describes the contract between the editor core and Lua
+ * key handling functions mapped to symbolic keys using either @{Vis:map}
+ * or @{Window:map}.
+ *
+ * @section Key_Handling
+ */
+
+/***
+ * Example of a key handling function.
+ *
+ * The keyhandler is invoked with the pending content of the input queue
+ * given as argument. This might be the empty string if no further input
+ * is available.
+ *
+ * The function is expected to return the number of *bytes* it has
+ * consumed from the passed input keys. A negative return value is
+ * interpreted as an indication that not enough input was available. The
+ * function will be called again once the user has provided more input. A
+ * missing return value (i.e. `nil`) is interpreted as zero, meaning
+ * no further input was consumed but the function completed successfully.
+ *
+ * @function keyhandler
+ * @tparam string keys the keys following the mapping
+ * @treturn int the number of *bytes* being consumed by the function (see above)
+ * @see Vis:action_register
+ * @see Vis:map
+ * @see Window:map
+ * @usage
+ * vis:map(vis.modes.INSERT, "<C-k>", function(keys)
+ * 	if #keys < 2 then
+ * 		return -1 -- need more input
+ * 	end
+ * 	local digraph = keys:sub(1, 2)
+ * 	if digraph == "l*" then
+ * 		vis:feedkeys('λ')
+ * 		return 2 -- consume 2 bytes of input
+ * 	end
+ * end, "Insert digraph")
  */
 
 /***
