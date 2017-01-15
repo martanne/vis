@@ -940,7 +940,10 @@ static Cursor *cursors_new(View *view, size_t pos, bool force) {
 
 	Cursor *prev = NULL, *next = NULL;
 	size_t cur = view_cursors_pos(view->cursor);
-	if (pos >= cur) {
+	if (pos == cur) {
+		prev = view->cursor;
+		next = prev->next;
+	} else if (pos > cur) {
 		prev = view->cursor;
 		for (next = prev->next; next; prev = next, next = next->next) {
 			cur = view_cursors_pos(next);
