@@ -788,11 +788,13 @@ static bool cmd_map(Vis *vis, Win *win, Command *cmd, const char *argv[], Cursor
 	bool local = strstr(argv[0], "-") != NULL;
 	enum VisMode mode = vis_mode_from(vis, argv[1]);
 
-	if (local && !win)
+	if (local && !win) {
+		vis_info_show(vis, "Invalid window for :%s", argv[0]);
 		return false;
+	}
 
 	if (mode == VIS_MODE_INVALID || !argv[2] || !argv[3]) {
-		vis_info_show(vis, "usage: map mode lhs rhs\n");
+		vis_info_show(vis, "usage: %s mode lhs rhs", argv[0]);
 		return false;
 	}
 
@@ -807,26 +809,36 @@ static bool cmd_map(Vis *vis, Win *win, Command *cmd, const char *argv[], Cursor
 		mapped = vis_mode_map(vis, mode, cmd->flags == '!', lhs, binding);
 
 err:
-	if (!mapped)
+	if (!mapped) {
+		vis_info_show(vis, "Failed to map `%s' in %s mode%s", lhs, argv[1],
+		              cmd->flags != '!' ? ", mapping already exists, "
+		              "override with `!'" : "");
 		vis_binding_free(vis, binding);
+	}
 	return mapped;
 }
 
 static bool cmd_unmap(Vis *vis, Win *win, Command *cmd, const char *argv[], Cursor *cur, Filerange *range) {
+	bool unmapped = false;
 	bool local = strstr(argv[0], "-") != NULL;
 	enum VisMode mode = vis_mode_from(vis, argv[1]);
 	const char *lhs = argv[2];
 
-	if (local && !win)
+	if (local && !win) {
+		vis_info_show(vis, "Invalid window for :%s", argv[0]);
 		return false;
+	}
 
 	if (mode == VIS_MODE_INVALID || !lhs) {
-		vis_info_show(vis, "usage: unmap mode lhs\n");
+		vis_info_show(vis, "usage: %s mode lhs", argv[0]);
 		return false;
 	}
 
 	if (local)
-		return vis_window_mode_unmap(win, mode, lhs);
+		unmapped = vis_window_mode_unmap(win, mode, lhs);
 	else
-		return vis_mode_unmap(vis, mode, lhs);
+		unmapped = vis_mode_unmap(vis, mode, lhs);
+	if (!unmapped)
+		vis_info_show(vis, "Failed to unmap `%s' in %s mode", lhs, argv[1]);
+	return unmapped;
 }
