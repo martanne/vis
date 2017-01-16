@@ -1,6 +1,5 @@
 #include <stdio.h>
 #include <string.h>
-#include <regex.h>
 #include "vis-core.h"
 #include "text-motions.h"
 #include "text-objects.h"

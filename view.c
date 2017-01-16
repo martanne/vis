@@ -3,7 +3,6 @@
 #include <wchar.h>
 #include <ctype.h>
 #include <errno.h>
-#include <regex.h>
 #include <limits.h>
 #include "view.h"
 #include "text.h"

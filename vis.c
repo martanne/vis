@@ -10,7 +10,6 @@
 #include <limits.h>
 #include <ctype.h>
 #include <time.h>
-#include <regex.h>
 #include <sys/select.h>
 #include <sys/types.h>
 #include <sys/wait.h>

@@ -7,7 +7,6 @@
 #include "vis-lua.h"
 #include "register.h"
 #include "text.h"
-#include "text-regex.h"
 #include "map.h"
 #include "ring-buffer.h"
 #include "array.h"
