@@ -5,6 +5,8 @@ SRC = array.c buffer.c libutf.c main.c map.c register.c ring-buffer.c \
 	ui-curses.c view.c vis.c vis-lua.c vis-modes.c vis-motions.c \
 	vis-operators.c vis-prompt.c vis-text-objects.c
 
+EXECUTABLES = vis vis-clipboard vis-complete vis-menu vis-open
+
 MANUALS = vis.1 vis-clipboard.1 vis-menu.1 vis-open.1
 
 # conditionally initialized, this is needed for standalone build
@@ -92,18 +94,12 @@ luadoc-all:
 install: vis vis-menu
 	@echo stripping executable
 	@${STRIP} vis
-	@echo installing executable file to ${DESTDIR}${PREFIX}/bin
+	@echo installing executable files to ${DESTDIR}${PREFIX}/bin
 	@mkdir -p ${DESTDIR}${PREFIX}/bin
-	@cp -f vis ${DESTDIR}${PREFIX}/bin
-	@chmod 755 ${DESTDIR}${PREFIX}/bin/vis
-	@cp -f vis-menu ${DESTDIR}${PREFIX}/bin
-	@chmod 755 ${DESTDIR}${PREFIX}/bin/vis-menu
-	@cp -f vis-open ${DESTDIR}${PREFIX}/bin
-	@chmod 755 ${DESTDIR}${PREFIX}/bin/vis-open
-	@cp -f vis-clipboard ${DESTDIR}${PREFIX}/bin
-	@chmod 755 ${DESTDIR}${PREFIX}/bin/vis-clipboard
-	@cp -f vis-complete ${DESTDIR}${PREFIX}/bin
-	@chmod 755 ${DESTDIR}${PREFIX}/bin/vis-complete
+	@for e in ${EXECUTABLES}; do \
+		cp -f "$$e" ${DESTDIR}${PREFIX}/bin && \
+		chmod 755 ${DESTDIR}${PREFIX}/bin/"$$e"; \
+	done
 	@test ${CONFIG_LUA} -eq 0 || { \
 		echo installing support files to ${DESTDIR}${SHAREPREFIX}/vis; \
 		mkdir -p ${DESTDIR}${SHAREPREFIX}/vis; \
@@ -119,12 +115,13 @@ install: vis vis-menu
 
 uninstall:
 	@echo removing executable file from ${DESTDIR}${PREFIX}/bin
-	@rm -f ${DESTDIR}${PREFIX}/bin/vis
-	@rm -f ${DESTDIR}${PREFIX}/bin/vis-menu
-	@rm -f ${DESTDIR}${PREFIX}/bin/vis-open
-	@rm -f ${DESTDIR}${PREFIX}/bin/vis-clipboard
-	@echo removing manual page from ${DESTDIR}${MANPREFIX}/man1
-	@rm -f ${DESTDIR}${MANPREFIX}/man1/vis.1
+	@for e in ${EXECUTABLES}; do \
+		rm -f ${DESTDIR}${PREFIX}/bin/"$$e"; \
+	done
+	@echo removing manual pages from ${DESTDIR}${MANPREFIX}/man1
+	@for m in ${MANUALS}; do \
+		rm -f ${DESTDIR}${MANPREFIX}/man1/"$$m"; \
+	done
 	@echo removing support files from ${DESTDIR}${SHAREPREFIX}/vis
 	@rm -rf ${DESTDIR}${SHAREPREFIX}/vis
 
