@@ -188,6 +188,6 @@ standalone: clean
 single: standalone
 	cp vis-single.sh vis-single
 	strip vis
-	tar c vis lua/ | gzip -9 >> vis-single
+	tar c vis vis-clipboard vis-complete vis-menu vis-open lua/ | gzip -9 >> vis-single
 
 .PHONY: standalone local dependencies-common dependencies-local dependencies-clean
