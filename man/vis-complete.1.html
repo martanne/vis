@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8"/>
+<style>
+table.head, table.foot { width: 100%; }
+td.head-rtitle, td.foot-os { text-align: right; }
+td.head-vol { text-align: center; }
+table.foot td { width: 50%; }
+table.head td { width: 33%; }
+div.spacer { margin: 1em 0; }
+</style>
+<link rel="stylesheet" href="mandoc.css" type="text/css" media="all"/>
+<title>
+VIS-COMPLETE(1)</title>
+</head>
+<body>
+<div class="mandoc">
+<table class="head">
+<tbody>
+<tr>
+<td class="head-ltitle">
+VIS-COMPLETE(1)</td>
+<td class="head-vol">
+General Commands Manual</td>
+<td class="head-rtitle">
+VIS-COMPLETE(1)</td>
+</tr>
+</tbody>
+</table>
+<div class="section">
+<h1 id="NAME">NAME</h1> <b class="name">vis-complete</b> &#8212; <span class="desc">Interactively complete file or word</span></div>
+<div class="section">
+<h1 id="SYNOPSIS">SYNOPSIS</h1><table class="synopsis">
+<col style="width: 12.00ex;"/>
+<col/>
+<tbody>
+<tr>
+<td>
+<b class="name">vis-complete</b></td>
+<td>
+[<span class="opt"><b class="flag">--file</b></span>] [<span class="opt"><b class="flag">--word</b></span>] [<span class="opt"><i class="arg">--</i></span>] [<span class="opt"><i class="arg">pattern</i></span>]</td>
+</tr>
+</tbody>
+</table>
+<div class="spacer">
+</div>
+<br/>
+<table class="synopsis">
+<col style="width: 12.00ex;"/>
+<col/>
+<tbody>
+<tr>
+<td>
+<b class="name">vis-complete</b></td>
+<td>
+<b class="flag">-h</b> | <b class="flag">--help</b></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section">
+<h1 id="DESCRIPTION">DESCRIPTION</h1> <b class="name">vis-complete</b> takes a pattern on the command-line and completes file or word and displays them in a menu for the user to select one. Once the user has selected a completion, the completion (excluding the pattern) is printed to standard output.<div class="spacer">
+</div>
+<b class="name">vis-complete</b> uses <a class="link-man" href="vis-menu.1.html">vis-menu(1)</a> as its user-interface, so see that page for more details.<dl style="margin-top: 0.00em;margin-bottom: 0.00em;" class="list list-tag">
+<dt class="list-tag" style="margin-top: 1.00em;">
+<b class="flag">--file</b></dt>
+<dd class="list-tag" style="margin-left: 4.00ex;">
+This passes <i class="arg">pattern</i> to <b class="name">find</b> to obtain a list of matching file names.</dd>
+<dt class="list-tag" style="margin-top: 1.00em;">
+<b class="flag">--word</b></dt>
+<dd class="list-tag" style="margin-left: 4.00ex;">
+This reads standard input to obtain a list of lines matching <i class="arg">pattern</i>.</dd>
+<dt class="list-tag" style="margin-top: 1.00em;">
+<b class="flag">--</b></dt>
+<dd class="list-tag" style="margin-left: 4.00ex;">
+If this token is encountered before the first non-option argument, all following arguments will be treated as pattern, even if they would otherwise be valid command-line options.<div class="spacer">
+</div>
+If encountered after the first non-option argument, or after a previous instance of <code class="lit">--</code> it is treated as a pattern.</dd>
+<dt class="list-tag" style="margin-top: 1.00em;">
+<i class="arg">pattern</i></dt>
+<dd class="list-tag" style="margin-left: 4.00ex;">
+The pattern to be completed by file or word.</dd>
+<dt class="list-tag" style="margin-top: 1.00em;">
+<b class="flag">-h</b> | <b class="flag">--help</b></dt>
+<dd class="list-tag" style="margin-left: 4.00ex;">
+If present, <b class="name">vis-complete</b> prints a usage summary and exits, ignoring any other flag and arguments.</dd>
+</dl>
+</div>
+<div class="section">
+<h1 id="EXIT_STATUS">EXIT STATUS</h1> The <b class="utility">vis-complete</b> utility exits&#160;0 on success, and&#160;&gt;0 if an error occurs.<div class="spacer">
+</div>
+In particular, like <a class="link-man" href="vis-menu.1.html">vis-menu(1)</a>, <b class="name">vis-complete</b> prints nothing and sets its exit status to 1 if the user refused to select a file.</div>
+<div class="section">
+<h1 id="SEE_ALSO">SEE ALSO</h1> <a class="link-man" href="vis.1.html">vis(1)</a>, <a class="link-man" href="vis-menu.1.html">vis-menu(1)</a></div>
+<div class="section">
+<h1 id="BUGS">BUGS</h1> Because <b class="name">vis-complete</b> uses <a class="link-man" href="find.1.html">find(1)</a> to obtain the list of files, weird things might happen if you have control-characters in your filenames.</div>
+<table class="foot">
+<tbody>
+<tr>
+<td class="foot-date">
+January 15, 2017</td>
+<td class="foot-os">
+Vis v0.2-667-g9fd92b6</td>
+</tr>
+</tbody>
+</table>
+</div>
+</body>
+</html>
+

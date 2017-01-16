@@ -36,6 +36,7 @@
 <li><a href="#Class_Ui">Class Ui </a></li>
 <li><a href="#Class_Range">Class Range </a></li>
 <li><a href="#Modes">Modes </a></li>
+<li><a href="#Key_Handling">Key Handling </a></li>
 <li><a href="#Core_Events">Core Events </a></li>
 <li><a href="#Events">Events </a></li>
 </ul>
@@ -58,7 +59,7 @@
 <p> This document might be out of date, run <code>make luadoc</code> to regenerate it.</p>
     <h3>Info:</h3>
     <ul>
-        <li><strong>Release</strong>: v0.2-659-ge86abf9-dirty</li>
+        <li><strong>Release</strong>: v0.2-667-g9fd92b6</li>
         <li><strong>License</strong>: ISC</li>
         <li><strong>Author</strong>: Marc André Tanner</li>
     </ul>
@@ -103,6 +104,10 @@
 	<td class="summary">Currently active window.</td>
 	</tr>
 	<tr>
+	<td class="name" nowrap><a href="#Vis:action_register">Vis:action_register(name, func[, help])</a></td>
+	<td class="summary">Register a Lua function as key action.</td>
+	</tr>
+	<tr>
 	<td class="name" nowrap><a href="#Vis:command">Vis:command(command)</a></td>
 	<td class="summary">Execute a <code>:</code>-command.</td>
 	</tr>
@@ -123,12 +128,12 @@
 	<td class="summary">Display a short message.</td>
 	</tr>
 	<tr>
-	<td class="name" nowrap><a href="#Vis:map">Vis:map(mode, key, func[, help])</a></td>
-	<td class="summary">Map a key to a Lua function.</td>
-	</tr>
-	<tr>
 	<td class="name" nowrap><a href="#Vis:map">Vis:map(mode, key, alias)</a></td>
 	<td class="summary">Setup a key alias.</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#Vis:map">Vis:map(mode, key, func[, help])</a></td>
+	<td class="summary">Map a key to a Lua function.</td>
 	</tr>
 	<tr>
 	<td class="name" nowrap><a href="#Vis:map">Vis:map(mode, key, action)</a></td>
@@ -335,6 +340,13 @@
 	<tr>
 	<td class="name" nowrap><a href="#modes">modes</a></td>
 	<td class="summary">Mode constants.</td>
+	</tr>
+</table>
+<h2><a href="#Key_Handling">Key Handling </a></h2>
+<table class="function_list">
+	<tr>
+	<td class="name" nowrap><a href="#keyhandler">keyhandler(keys)</a></td>
+	<td class="summary">Example of a key handling function.</td>
 	</tr>
 </table>
 <h2><a href="#Core_Events">Core Events </a></h2>
@@ -621,6 +633,47 @@
 
 </dd>
     <dt>
+    <a name = "Vis:action_register"></a>
+    <strong>Vis:action_register(name, func[, help])</strong>
+    </dt>
+    <dd>
+    Register a Lua function as key action.
+
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">name</span>
+            <span class="types"><a class="type" href="https://www.lua.org/manual/5.1/manual.html#5.4">string</a></span>
+         the name of the action, can be referred to in key bindings as <code>&lt;name&gt;</code> pseudo key
+        </li>
+        <li><span class="parameter">func</span>
+            <span class="types"><span class="type">Function</span></span>
+         the lua function implementing the key action (see <a href="index.html#keyhandler">keyhandler</a>)
+        </li>
+        <li><span class="parameter">help</span>
+            <span class="types"><a class="type" href="https://www.lua.org/manual/5.1/manual.html#5.4">string</a></span>
+         the single line help text as displayed in <code>:help</code>
+         (<em>optional</em>)
+        </li>
+    </ul>
+
+    <h3>Returns:</h3>
+    <ol>
+
+           <span class="types"><span class="type">KeyAction</span></span>
+        action the registered key action
+    </ol>
+
+
+    <h3>See also:</h3>
+    <ul>
+         <li><a href="index.html#Vis:map">Vis:map</a></li>
+         <li><a href="index.html#Window:map">Window:map</a></li>
+    </ul>
+
+
+</dd>
+    <dt>
     <a name = "Vis:command"></a>
     <strong>Vis:command(command)</strong>
     </dt>
@@ -765,58 +818,6 @@
 </dd>
     <dt>
     <a name = "Vis:map"></a>
-    <strong>Vis:map(mode, key, func[, help])</strong>
-    </dt>
-    <dd>
-    Map a key to a Lua function. </p>
-
-<p> Creates a new key mapping in a given mode.
-
-
-    <h3>Parameters:</h3>
-    <ul>
-        <li><span class="parameter">mode</span>
-            <span class="types"><span class="type">int</span></span>
-         the mode to which the mapping should be added
-        </li>
-        <li><span class="parameter">key</span>
-            <span class="types"><a class="type" href="https://www.lua.org/manual/5.1/manual.html#5.4">string</a></span>
-         the key to map
-        </li>
-        <li><span class="parameter">func</span>
-            <span class="types"><span class="type">function</span></span>
-         the Lua function to handle the key mapping
-        </li>
-        <li><span class="parameter">help</span>
-            <span class="types"><a class="type" href="https://www.lua.org/manual/5.1/manual.html#5.4">string</a></span>
-         the single line help text as displayed in <code>:help</code>
-         (<em>optional</em>)
-        </li>
-    </ul>
-
-    <h3>Returns:</h3>
-    <ol>
-
-           <span class="types"><span class="type">bool</span></span>
-        whether the mapping was successfully established
-    </ol>
-
-
-    <h3>See also:</h3>
-    <ul>
-         <a href="index.html#Window:map">Window:map</a>
-    </ul>
-
-    <h3>Usage:</h3>
-    <ul>
-        <pre class="example">vis:map(vis.modes.NORMAL, <span class="keyword">function</span>()
-  vis:info(<span class="string">"Mapping works!"</span>)
-<span class="keyword">end</span>, <span class="string">"Info message help text"</span>)</pre>
-    </ul>
-
-</dd>
-    <dt>
-    <a name = "Vis:map"></a>
     <strong>Vis:map(mode, key, alias)</strong>
     </dt>
     <dd>
@@ -859,6 +860,65 @@
     <h3>Usage:</h3>
     <ul>
         <pre class="example">vis:map(vis.modes.NORMAL, <span class="string">"j"</span>, <span class="string">"k"</span>)</pre>
+    </ul>
+
+</dd>
+    <dt>
+    <a name = "Vis:map"></a>
+    <strong>Vis:map(mode, key, func[, help])</strong>
+    </dt>
+    <dd>
+    Map a key to a Lua function. </p>
+
+<p> Creates a new key mapping in a given mode.
+
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">mode</span>
+            <span class="types"><span class="type">int</span></span>
+         the mode to which the mapping should be added
+        </li>
+        <li><span class="parameter">key</span>
+            <span class="types"><a class="type" href="https://www.lua.org/manual/5.1/manual.html#5.4">string</a></span>
+         the key to map
+        </li>
+        <li><span class="parameter">func</span>
+            <span class="types"><span class="type">function</span></span>
+         the Lua function to handle the key mapping (see <a href="index.html#keyhandler">keyhandler</a>)
+        </li>
+        <li><span class="parameter">help</span>
+            <span class="types"><a class="type" href="https://www.lua.org/manual/5.1/manual.html#5.4">string</a></span>
+         the single line help text as displayed in <code>:help</code>
+         (<em>optional</em>)
+        </li>
+    </ul>
+
+    <h3>Returns:</h3>
+    <ol>
+
+           <span class="types"><span class="type">bool</span></span>
+        whether the mapping was successfully established
+    </ol>
+
+
+    <h3>See also:</h3>
+    <ul>
+         <a href="index.html#Window:map">Window:map</a>
+    </ul>
+
+    <h3>Usage:</h3>
+    <ul>
+        <pre class="example">vis:map(vis.modes.INSERT, <span class="string">"&lt;C-k&gt;"</span>, <span class="keyword">function</span>(keys)
+	<span class="keyword">if</span> #keys &lt; <span class="number">2</span> <span class="keyword">then</span>
+		<span class="keyword">return</span> -<span class="number">1</span> <span class="comment">-- need more input
+</span>	<span class="keyword">end</span>
+	<span class="keyword">local</span> digraph = keys:sub(<span class="number">1</span>, <span class="number">2</span>)
+	<span class="keyword">if</span> digraph == <span class="string">"l*"</span> <span class="keyword">then</span>
+		vis:feedkeys(<span class="string">'λ'</span>)
+		<span class="keyword">return</span> <span class="number">2</span> <span class="comment">-- consume 2 bytes of input
+</span>	<span class="keyword">end</span>
+<span class="keyword">end</span>, <span class="string">"Insert digraph"</span>)</pre>
     </ul>
 
 </dd>
@@ -2190,6 +2250,72 @@ vis:map(vis.modes.NORMAL, <span class="string">"gl"</span>, action)</pre>
 
 </dd>
 </dl>
+    <h2 class="section-header has-description"><a name="Key_Handling"></a>Key Handling </h2>
+
+          <div class="section-description">
+           This section describes the contract between the editor core and Lua
+ key handling functions mapped to symbolic keys using either <a href="index.html#Vis:map">Vis:map</a>
+ or <a href="index.html#Window:map">Window:map</a>.
+          </div>
+    <dl class="function">
+    <dt>
+    <a name = "keyhandler"></a>
+    <strong>keyhandler(keys)</strong>
+    </dt>
+    <dd>
+    Example of a key handling function. </p>
+
+<p> The keyhandler is invoked with the pending content of the input queue
+ given as argument. This might be the empty string if no further input
+ is available.</p>
+
+<p> The function is expected to return the number of <em>bytes</em> it has
+ consumed from the passed input keys. A negative return value is
+ interpreted as an indication that not enough input was available. The
+ function will be called again once the user has provided more input. A
+ missing return value (i.e. <code>nil</code>) is interpreted as zero, meaning
+ no further input was consumed but the function completed successfully.
+
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">keys</span>
+            <span class="types"><a class="type" href="https://www.lua.org/manual/5.1/manual.html#5.4">string</a></span>
+         the keys following the mapping
+        </li>
+    </ul>
+
+    <h3>Returns:</h3>
+    <ol>
+
+           <span class="types"><span class="type">int</span></span>
+        the number of <em>bytes</em> being consumed by the function (see above)
+    </ol>
+
+
+    <h3>See also:</h3>
+    <ul>
+         <li><a href="index.html#Vis:action_register">Vis:action_register</a></li>
+         <li><a href="index.html#Vis:map">Vis:map</a></li>
+         <li><a href="index.html#Window:map">Window:map</a></li>
+    </ul>
+
+    <h3>Usage:</h3>
+    <ul>
+        <pre class="example">vis:map(vis.modes.INSERT, <span class="string">"&lt;C-k&gt;"</span>, <span class="keyword">function</span>(keys)
+	<span class="keyword">if</span> #keys &lt; <span class="number">2</span> <span class="keyword">then</span>
+		<span class="keyword">return</span> -<span class="number">1</span> <span class="comment">-- need more input
+</span>	<span class="keyword">end</span>
+	<span class="keyword">local</span> digraph = keys:sub(<span class="number">1</span>, <span class="number">2</span>)
+	<span class="keyword">if</span> digraph == <span class="string">"l*"</span> <span class="keyword">then</span>
+		vis:feedkeys(<span class="string">'λ'</span>)
+		<span class="keyword">return</span> <span class="number">2</span> <span class="comment">-- consume 2 bytes of input
+</span>	<span class="keyword">end</span>
+<span class="keyword">end</span>, <span class="string">"Insert digraph"</span>)</pre>
+    </ul>
+
+</dd>
+</dl>
     <h2 class="section-header has-description"><a name="Core_Events"></a>Core Events </h2>
 
           <div class="section-description">
@@ -2710,7 +2836,7 @@ vis:map(vis.modes.NORMAL, <span class="string">"gl"</span>, action)</pre>
 </div> <!-- id="main" -->
 <div id="about">
 <i>generated by <a href="http://github.com/stevedonovan/LDoc">LDoc 1.4.6</a></i>
-<i style="float:right;">Last updated 2017-01-14 17:41:59 </i>
+<i style="float:right;">Last updated 2017-01-16 14:15:44 </i>
 </div> <!-- id="about" -->
 </div> <!-- id="container" -->
 </body>
