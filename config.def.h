@@ -267,6 +267,7 @@ static const KeyBinding bindings_normal[] = {
 
 static const KeyBinding bindings_visual[] = {
 	{ "A",                  ACTION(CURSORS_NEW_LINES_END)               },
+	{ "@",                  ACTION(MACRO_REPLAY)                        },
 	{ ":",                  ACTION(PROMPT_SHOW)                         },
 	{ "-",                  ACTION(SELECTIONS_ROTATE_LEFT)              },
 	{ "+",                  ACTION(SELECTIONS_ROTATE_RIGHT)             },
@@ -292,6 +293,7 @@ static const KeyBinding bindings_visual[] = {
 	{ "J",                  ACTION(JOIN_LINES)                          },
 	{ "gJ",                 ACTION(JOIN_LINES_TRIM)                     },
 	{ "o",                  ACTION(SELECTION_FLIP)                      },
+	{ "q",                  ACTION(MACRO_RECORD)                        },
 	{ "r",                  ACTION(REPLACE_CHAR)                        },
 	{ "s",                  ALIAS("c")                                  },
 	{ "<S-Tab>",            ACTION(CURSORS_ALIGN_INDENT_RIGHT)          },
