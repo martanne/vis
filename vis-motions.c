@@ -46,11 +46,16 @@ static size_t search_word_backward(Vis *vis, Text *txt, size_t pos) {
 }
 
 static size_t search_common(Vis *vis, Text *txt, size_t pos, bool backward) {
-	Regex *regex = vis_regex(vis, NULL);
-	if (regex)
-		pos = backward ?
+	const char *pattern = register_get(vis, &vis->registers[VIS_REG_SEARCH], NULL);
+	Regex *regex = vis_regex(vis, pattern);
+	if (regex) {
+		size_t newpos = backward ?
 			text_search_backward(txt, pos, regex) :
 			text_search_forward(txt, pos, regex);
+		if (newpos == pos)
+			vis_info_show(vis, "Pattern not found: `%s'", pattern);
+		pos = newpos;
+	}
 	text_regex_free(regex);
 	return pos;
 }
