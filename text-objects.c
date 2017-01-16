@@ -33,7 +33,7 @@ static Filerange text_object_customword(Text *txt, size_t pos, int (*isboundary)
 	Iterator it = text_iterator_get(txt, pos);
 	if (!text_iterator_byte_get(&it, &c))
 		return text_range_empty();
-	if (text_iterator_byte_prev(&it, &prev))
+	if (pos > 0 && text_iterator_byte_prev(&it, &prev))
 		text_iterator_byte_next(&it, NULL);
 	text_iterator_byte_next(&it, &next);
 	if (space(c)) {
@@ -79,7 +79,7 @@ static Filerange text_object_customword_outer(Text *txt, size_t pos, int (*isbou
 	Iterator it = text_iterator_get(txt, pos);
 	if (!text_iterator_byte_get(&it, &c))
 		return text_range_empty();
-	if (text_iterator_byte_prev(&it, &prev))
+	if (pos > 0 && text_iterator_byte_prev(&it, &prev))
 		text_iterator_byte_next(&it, NULL);
 	text_iterator_byte_next(&it, &next);
 	if (space(c)) {
