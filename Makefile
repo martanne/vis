@@ -7,7 +7,7 @@ SRC = array.c buffer.c libutf.c main.c map.c register.c ring-buffer.c \
 
 EXECUTABLES = vis vis-clipboard vis-complete vis-menu vis-open
 
-MANUALS = vis.1 vis-clipboard.1 vis-menu.1 vis-open.1
+MANUALS = $(EXECUTABLES:=.1)
 
 # conditionally initialized, this is needed for standalone build
 # with empty config.mk
