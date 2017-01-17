@@ -27,6 +27,12 @@ LIBLUA_SHA1 = a0341bc3d1415b814cc738b2ec01ae56045d64ef
 LIBLPEG = lpeg-1.0.0
 LIBLPEG_SHA1 = 64a0920c9243b624a277c987d2219b6c50c43971
 
+LIBACL = acl-2.2.52
+LIBACL_SHA1 = 537dddc0ee7b6aa67960a3de2d36f1e2ff2059d9
+
+LIBATTR = attr-2.4.47
+LIBATTR_SHA1 = 5060f0062baee6439f41a433325b8b3671f8d2d8
+
 LIBNCURSES_CONFIG = --disable-database --with-fallbacks=st,st-256color,xterm,xterm-256color,vt100 \
 	--with-shared --enable-widec --enable-ext-colors --with-termlib=tinfo \
 	--without-ada --without-cxx --without-cxx-binding --without-manpages \
@@ -38,6 +44,8 @@ dependency/build:
 
 dependency/sources:
 	mkdir -p "$@"
+
+# LIBMUSL
 
 dependency/sources/musl-%: | dependency/sources
 	wget -c -O $@.part http://www.musl-libc.org/releases/$(LIBMUSL).tar.gz
@@ -62,6 +70,8 @@ dependency/build/libmusl-install: dependency/build/libmusl-build
 	$(MAKE) -C $(dir $<)/$(LIBMUSL) install
 	touch $@
 
+# LIBNCURSES
+
 dependency/sources/ncurses-%: | dependency/sources
 	wget -c -O $@.part http://ftp.gnu.org/gnu/ncurses/$(LIBNCURSES).tar.gz
 	mv $@.part $@
@@ -83,6 +93,8 @@ dependency/build/libncurses-install: dependency/build/libncurses-build
 	$(MAKE) -C $(dir $<)/$(LIBNCURSES) install.libs DESTDIR=$(DEPS_ROOT)
 	touch $@
 
+# LIBTERMKEY
+
 dependency/sources/libtermkey-%: | dependency/sources
 	wget -c -O $@.part http://www.leonerd.org.uk/code/libtermkey/$(LIBTERMKEY).tar.gz
 	mv $@.part $@
@@ -102,6 +114,8 @@ dependency/build/libtermkey-install: dependency/build/libtermkey-build
 	$(MAKE) -C $(dir $<)/$(LIBTERMKEY) PREFIX=$(DEPS_PREFIX) install-inc install-lib
 	touch $@
 
+# LIBLUA
+
 dependency/sources/lua-%.tar.gz: | dependency/sources
 	wget -c -O $@.part http://www.lua.org/ftp/$(LIBLUA).tar.gz
 	mv $@.part $@
@@ -119,6 +133,8 @@ dependency/build/liblua-build: dependency/build/liblua-extract
 dependency/build/liblua-install: dependency/build/liblua-build
 	$(MAKE) -C $(dir $<)/$(LIBLUA) INSTALL_TOP=$(DEPS_PREFIX) install
 	touch $@
+
+# LIBLPEG
 
 dependency/sources/lpeg-%: | dependency/sources
 	wget -c -O $@.part http://www.inf.puc-rio.br/~roberto/lpeg/$(LIBLPEG).tar.gz
@@ -139,12 +155,65 @@ dependency/build/liblpeg-install: dependency/build/liblpeg-build
 	cd $(dir $<)/$(LIBLPEG) && cp liblpeg.a $(DEPS_LIB)
 	touch $@
 
+# LIBATTR
+
+dependency/sources/attr-%.tar.gz: | dependency/sources
+	wget -c -O $@.part https://download.savannah.gnu.org/releases/attr/$(LIBATTR).src.tar.gz
+	mv $@.part $@
+	[ -z $(LIBATTR_SHA1) ] || (echo '$(LIBATTR_SHA1)  $@' | sha1sum -c)
+
+dependency/build/libattr-extract: dependency/sources/$(LIBATTR).tar.gz | dependency/build
+	tar xzf $< -C $(dir $@)
+	touch $@
+
+dependency/build/libattr-configure: dependency/build/libattr-extract
+	cd $(dir $<)/$(LIBATTR) && ./configure --prefix=$(DEPS_PREFIX)
+	touch $@
+
+dependency/build/libattr-build: dependency/build/libattr-configure
+	sed -i -e '/__BEGIN_DECLS/ c #ifdef __cplusplus\nextern "C" {\n#endif' \
+		-e '/__END_DECLS/ c #ifdef __cplusplus\n}\n#endif' \
+		-e 's/__THROW//' $(dir $<)/$(LIBATTR)/include/xattr.h
+	$(MAKE) -C $(dir $<)/$(LIBATTR) libattr CC=$(CC)
+	touch $@
+
+dependency/build/libattr-install: dependency/build/libattr-build
+	$(MAKE) -C $(dir $<)/$(LIBATTR) INSTALL_TOP=$(DEPS_PREFIX) install-lib install-dev
+	touch $@
+
+# LIBACL
+
+dependency/sources/acl-%.tar.gz: | dependency/sources
+	wget -c -O $@.part https://download.savannah.gnu.org/releases/acl/$(LIBACL).src.tar.gz
+	mv $@.part $@
+	[ -z $(LIBACL_SHA1) ] || (echo '$(LIBACL_SHA1)  $@' | sha1sum -c)
+
+dependency/build/libacl-extract: dependency/sources/$(LIBACL).tar.gz | dependency/build
+	tar xzf $< -C $(dir $@)
+	touch $@
+
+dependency/build/libacl-configure: dependency/build/libacl-extract dependency/build/libattr-install
+	cd $(dir $<)/$(LIBACL) && ./configure --prefix=$(DEPS_PREFIX)
+	touch $@
+
+dependency/build/libacl-build: dependency/build/libacl-configure
+	sed -i -e 's|acl/libacl.h|libacl.h|' -e 's|sys/acl.h|acl.h|' \
+		$(dir $<)/$(LIBACL)/libacl/*.c $(dir $<)/$(LIBACL)/libacl/libacl.h $(dir $<)/$(LIBACL)/include/libacl.h
+	$(MAKE) -C $(dir $<)/$(LIBACL) libacl CC=$(CC)
+	touch $@
+
+dependency/build/libacl-install: dependency/build/libacl-build
+	$(MAKE) -C $(dir $<)/$(LIBACL) INSTALL_TOP=$(DEPS_PREFIX) install-lib install-dev
+	touch $@
+
+# COMMON
+
 dependencies-common: dependency/build/libtermkey-install dependency/build/liblua-install dependency/build/liblpeg-install
 
 dependency/build/local: dependencies-common
 	touch $@
 
-dependency/build/standalone: dependency/build/libncurses-install dependencies-common
+dependency/build/standalone: dependency/build/libncurses-install dependency/build/libacl-install dependencies-common
 	touch $@
 
 dependencies-clean:
@@ -153,6 +222,8 @@ dependencies-clean:
 	rm -rf dependency/build/libtermkey*
 	rm -rf dependency/build/*lua*
 	rm -rf dependency/build/*lpeg*
+	rm -rf dependency/build/*attr*
+	rm -rf dependency/build/*acl*
 	rm -f dependency/build/local
 	rm -f dependency/build/standalone
 	rm -rf dependency/install
