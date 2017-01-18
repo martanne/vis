@@ -135,6 +135,14 @@ bool vis_window_mode_map(Win *win, enum VisMode id, bool force, const char *key,
 
 /** mode switching event handlers */
 
+static void vis_mode_normal_enter(Vis *vis, Mode *old) {
+	if (old != mode_get(vis, VIS_MODE_INSERT) && old != mode_get(vis, VIS_MODE_REPLACE))
+		return;
+	/* make sure we can recover the current state after an editing operation */
+	vis_file_snapshot(vis, vis->win->file);
+	macro_operator_stop(vis);
+}
+
 static void vis_mode_operator_input(Vis *vis, const char *str, size_t len) {
 	/* invalid operator */
 	vis_cancel(vis);
@@ -187,14 +195,6 @@ static void vis_mode_insert_enter(Vis *vis, Mode *old) {
 	}
 }
 
-static void vis_mode_insert_leave(Vis *vis, Mode *new) {
-	if (new == mode_get(vis, VIS_MODE_NORMAL)) {
-		/* make sure we can recover the current state after an editing operation */
-		vis_file_snapshot(vis, vis->win->file);
-		macro_operator_stop(vis);
-	}
-}
-
 static void vis_mode_insert_idle(Vis *vis) {
 	vis_file_snapshot(vis, vis->win->file);
 }
@@ -217,14 +217,6 @@ static void vis_mode_replace_enter(Vis *vis, Mode *old) {
 	}
 }
 
-static void vis_mode_replace_leave(Vis *vis, Mode *new) {
-	if (new == mode_get(vis, VIS_MODE_NORMAL)) {
-		/* make sure we can recover the current state after an editing operation */
-		vis_file_snapshot(vis, vis->win->file);
-		macro_operator_stop(vis);
-	}
-}
-
 static void vis_mode_replace_input(Vis *vis, const char *str, size_t len) {
 	vis_replace_key(vis, str, len);
 }
@@ -240,6 +232,7 @@ Mode vis_modes[] = {
 		.id = VIS_MODE_NORMAL,
 		.name = "NORMAL",
 		.help = "",
+		.enter = vis_mode_normal_enter,
 	},
 	[VIS_MODE_VISUAL] = {
 		.id = VIS_MODE_VISUAL,
@@ -266,7 +259,6 @@ Mode vis_modes[] = {
 		.status = "INSERT",
 		.help = "",
 		.enter = vis_mode_insert_enter,
-		.leave = vis_mode_insert_leave,
 		.input = vis_mode_insert_input,
 		.idle = vis_mode_insert_idle,
 		.idle_timeout = 3,
@@ -278,7 +270,6 @@ Mode vis_modes[] = {
 		.status = "REPLACE",
 		.help = "",
 		.enter = vis_mode_replace_enter,
-		.leave = vis_mode_replace_leave,
 		.input = vis_mode_replace_input,
 		.idle = vis_mode_insert_idle,
 		.idle_timeout = 3,
