@@ -683,6 +683,8 @@ void vis_do(Vis *vis) {
 		vis_mode_switch(vis, VIS_MODE_VISUAL_LINE);
 
 	int count = MAX(a->count, 1);
+	if (a->op == &vis_operators[VIS_OP_MODESWITCH])
+		count = 1; /* count should apply to inserted text not motion */
 	bool repeatable = a->op && !vis->macro_operator && !vis->win->parent;
 	bool multiple_cursors = view_cursors_multiple(view);
 	bool linewise = !(a->type & CHARWISE) && (
@@ -1276,7 +1278,6 @@ bool vis_macro_replay(Vis *vis, enum VisRegister id) {
 }
 
 void vis_repeat(Vis *vis) {
-	int count = vis->action.count;
 	Macro *macro_operator = macro_get(vis, VIS_MACRO_OPERATOR);
 	Macro *macro_repeat = macro_get(vis, VIS_MACRO_REPEAT);
 	const Macro *macro = vis->action_prev.macro;
@@ -1285,21 +1286,22 @@ void vis_repeat(Vis *vis) {
 		macro = macro_repeat;
 		vis->action_prev.macro = macro;
 	}
+	int count = vis->action.count;
 	if (count != VIS_COUNT_UNKNOWN)
 		vis->action_prev.count = count;
-	count = vis->action_prev.count;
-	/* for some operators count should be applied only to the macro not the motion */
-	if (vis->action_prev.op == &vis_operators[VIS_OP_MODESWITCH])
-		vis->action_prev.count = 1;
+	else
+		count = vis->action_prev.count;
 	vis->action = vis->action_prev;
 	vis_do(vis);
-	vis->action_prev.count = count;
 	if (macro) {
 		Mode *mode = vis->mode;
 		Action action_prev = vis->action_prev;
-		count = action_prev.count;
-		if (count < 1 || action_prev.op == &vis_operators[VIS_OP_CHANGE] || action_prev.op == &vis_operators[VIS_OP_FILTER])
+		if (count < 1 ||
+		    action_prev.op == &vis_operators[VIS_OP_CHANGE] ||
+		    action_prev.op == &vis_operators[VIS_OP_FILTER])
 			count = 1;
+		if (vis->action_prev.op == &vis_operators[VIS_OP_MODESWITCH])
+			vis->action_prev.count = 1;
 		for (int i = 0; i < count; i++) {
 			mode_set(vis, mode);
 			macro_replay(vis, macro);
