@@ -7,10 +7,7 @@ t}a<Enter><Space><Space><Escape>
 e.x
 q
 @q
-@@
-@@
-@@
-@@
+4@@
 gg /* go to very first { of file */
 %  /* go to matching bracket at end of file */
 i<Enter><Escape> /* move it to a new line */

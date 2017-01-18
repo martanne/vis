@@ -3,4 +3,4 @@ qa          /* start macro recording */
 jyypjdd     /* move down, yank, put, delete line below */
 q           /* stop macro recording */
 @a          /* replay macro */
-@@          /* replay again (TODO: support count for macro replay) */
+@@          /* replay again */
