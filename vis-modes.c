@@ -181,13 +181,13 @@ static void vis_mode_visual_leave(Vis *vis, Mode *new) {
 	}
 }
 
-static void vis_mode_insert_enter(Vis *vis, Mode *old) {
+static void vis_mode_insert_replace_enter(Vis *vis, Mode *old) {
 	if (vis->win->parent)
 		return;
 	if (!vis->action.op) {
 		action_reset(&vis->action_prev);
 		vis->action_prev.op = &vis_operators[VIS_OP_MODESWITCH];
-		vis->action_prev.mode = VIS_MODE_INSERT;
+		vis->action_prev.mode = vis->mode->id;
 	}
 	if (!vis->macro_operator) {
 		macro_operator_record(vis);
@@ -201,20 +201,6 @@ static void vis_mode_insert_idle(Vis *vis) {
 
 static void vis_mode_insert_input(Vis *vis, const char *str, size_t len) {
 	vis_insert_key(vis, str, len);
-}
-
-static void vis_mode_replace_enter(Vis *vis, Mode *old) {
-	if (vis->win->parent)
-		return;
-	if (!vis->action.op) {
-		action_reset(&vis->action_prev);
-		vis->action_prev.op = &vis_operators[VIS_OP_MODESWITCH];
-		vis->action_prev.mode = VIS_MODE_REPLACE;
-	}
-	if (!vis->macro_operator) {
-		macro_operator_record(vis);
-		vis->action_prev.macro = vis->macro_operator;
-	}
 }
 
 static void vis_mode_replace_input(Vis *vis, const char *str, size_t len) {
@@ -258,7 +244,7 @@ Mode vis_modes[] = {
 		.name = "INSERT",
 		.status = "INSERT",
 		.help = "",
-		.enter = vis_mode_insert_enter,
+		.enter = vis_mode_insert_replace_enter,
 		.input = vis_mode_insert_input,
 		.idle = vis_mode_insert_idle,
 		.idle_timeout = 3,
@@ -269,7 +255,7 @@ Mode vis_modes[] = {
 		.parent = &vis_modes[VIS_MODE_INSERT],
 		.status = "REPLACE",
 		.help = "",
-		.enter = vis_mode_replace_enter,
+		.enter = vis_mode_insert_replace_enter,
 		.input = vis_mode_replace_input,
 		.idle = vis_mode_insert_idle,
 		.idle_timeout = 3,
