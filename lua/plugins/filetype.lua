@@ -333,6 +333,9 @@ vis.ftdetect.filetypes = {
 	snobol4 = {
 		ext = { "%.sno$", "%.SNO$" },
 	},
+	spin = {
+		ext = { "%.spin$" }
+	},
 	sql= {
 		ext = { "%.ddl$", "%.sql$" },
 	},
