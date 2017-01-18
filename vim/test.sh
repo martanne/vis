@@ -10,6 +10,7 @@ TESTS=$1
 
 TESTS_RUN=0
 TESTS_OK=0
+TESTS_SKIP=0
 
 export VIS_PATH=.
 
@@ -50,11 +51,13 @@ for t in $TESTS; do
 				diff -u "$REF" "$OUT" > "$ERR"
 			fi
 			TESTS_RUN=$((TESTS_RUN+1))
+		else
+			TESTS_SKIP=$((TESTS_SKIP+1))
 		fi
 	done
 done
 
-printf "Tests ok %d/%d\n" $TESTS_OK $TESTS_RUN
+printf "Tests ok %d/%d, skipped %d\n" $TESTS_OK $TESTS_RUN $TESTS_SKIP
 
 # set exit status
 [ $TESTS_OK -eq $TESTS_RUN ]
