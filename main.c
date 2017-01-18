@@ -628,7 +628,7 @@ static const KeyAction vis_action[] = {
 	},
 	[VIS_ACTION_MODE_OPERATOR_PENDING] = {
 		"vis-mode-operator-pending",
-		"Enter to operator pending mode",
+		"Enter operator pending mode",
 		switchmode, { .i = VIS_MODE_OPERATOR_PENDING }
 	},
 	[VIS_ACTION_DELETE_CHAR_PREV] = {
