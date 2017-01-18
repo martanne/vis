@@ -1660,7 +1660,7 @@ bool vis_cmd(Vis *vis, const char *cmdline) {
 }
 
 void vis_file_snapshot(Vis *vis, File *file) {
-	if (!vis->replaying)
+	if (!vis->replaying && !vis->repeat_input)
 		text_snapshot(file->text);
 }
 

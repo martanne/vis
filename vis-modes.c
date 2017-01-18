@@ -138,9 +138,18 @@ bool vis_window_mode_map(Win *win, enum VisMode id, bool force, const char *key,
 static void vis_mode_normal_enter(Vis *vis, Mode *old) {
 	if (old != mode_get(vis, VIS_MODE_INSERT) && old != mode_get(vis, VIS_MODE_REPLACE))
 		return;
+	macro_operator_stop(vis);
+	if (vis->action_prev.op == &vis_operators[VIS_OP_MODESWITCH] && !vis->repeat_input) {
+		vis->repeat_input = true;
+		if (vis->action_prev.count > 1) {
+			vis->action_prev.count--;
+			vis_repeat(vis);
+			vis->action_prev.count++;
+		}
+		vis->repeat_input = false;
+	}
 	/* make sure we can recover the current state after an editing operation */
 	vis_file_snapshot(vis, vis->win->file);
-	macro_operator_stop(vis);
 }
 
 static void vis_mode_operator_input(Vis *vis, const char *str, size_t len) {

@@ -33,6 +33,8 @@ static const char *suspend(Vis*, const char *keys, const Arg *arg);
 static const char *switchmode(Vis*, const char *keys, const Arg *arg);
 /* switch to insert mode after performing movement indicated by arg->i */
 static const char *insertmode(Vis*, const char *keys, const Arg *arg);
+/* switch to replace mode after performing movement indicated by arg->i */
+static const char *replacemode(Vis*, const char *keys, const Arg *arg);
 /* set mark indicated by keys to current cursor position */
 static const char *mark_set(Vis*, const char *keys, const Arg *arg);
 /* add a new line either before or after the one where the cursor currently is */
@@ -617,12 +619,12 @@ static const KeyAction vis_action[] = {
 	[VIS_ACTION_MODE_INSERT] = {
 		"vis-mode-insert",
 		"Enter insert mode",
-		switchmode, { .i = VIS_MODE_INSERT }
+		insertmode, { .i = VIS_MOVE_NOP }
 	},
 	[VIS_ACTION_MODE_REPLACE] = {
 		"vis-mode-replace",
 		"Enter replace mode",
-		switchmode, { .i = VIS_MODE_REPLACE }
+		replacemode, { .i = VIS_MOVE_NOP }
 	},
 	[VIS_ACTION_MODE_OPERATOR_PENDING] = {
 		"vis-mode-operator-pending",
@@ -2002,6 +2004,12 @@ static const char *switchmode(Vis *vis, const char *keys, const Arg *arg) {
 
 static const char *insertmode(Vis *vis, const char *keys, const Arg *arg) {
 	vis_operator(vis, VIS_OP_MODESWITCH, VIS_MODE_INSERT);
+	vis_motion(vis, arg->i);
+	return keys;
+}
+
+static const char *replacemode(Vis *vis, const char *keys, const Arg *arg) {
+	vis_operator(vis, VIS_OP_MODESWITCH, VIS_MODE_REPLACE);
 	vis_motion(vis, arg->i);
 	return keys;
 }
