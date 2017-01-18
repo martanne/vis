@@ -82,7 +82,7 @@ dependency/build/libncurses-extract: dependency/sources/$(LIBNCURSES).tar.gz | d
 	touch $@
 
 dependency/build/libncurses-configure: dependency/build/libncurses-extract
-	cd $(dir $<)/$(LIBNCURSES) && ./configure --prefix=/usr --libdir=/usr/lib $(LIBNCURSES_CONFIG)
+	cd $(dir $<)/$(LIBNCURSES) && ./configure --prefix=/usr $(LIBNCURSES_CONFIG)
 	touch $@
 
 dependency/build/libncurses-build: dependency/build/libncurses-configure
@@ -107,11 +107,11 @@ dependency/build/libtermkey-extract: dependency/sources/$(LIBTERMKEY).tar.gz | d
 dependency/build/libtermkey-build: dependency/build/libtermkey-extract dependency/build/libncurses-install
 	# TODO no sane way to avoid pkg-config and specify LDFLAGS?
 	sed -i 's/LDFLAGS+=-lncurses$$/LDFLAGS+=-lncursesw/g' $(dir $<)/$(LIBTERMKEY)/Makefile
-	$(MAKE) -C $(dir $<)/$(LIBTERMKEY) PREFIX=$(DEPS_PREFIX) termkey.h libtermkey.la
+	$(MAKE) -C $(dir $<)/$(LIBTERMKEY) PREFIX=/usr termkey.h libtermkey.la
 	touch $@
 
 dependency/build/libtermkey-install: dependency/build/libtermkey-build
-	$(MAKE) -C $(dir $<)/$(LIBTERMKEY) PREFIX=$(DEPS_PREFIX) install-inc install-lib
+	$(MAKE) -C $(dir $<)/$(LIBTERMKEY) PREFIX=/usr DESTDIR=$(DEPS_ROOT) install-inc install-lib
 	touch $@
 
 # LIBLUA
@@ -167,7 +167,7 @@ dependency/build/libattr-extract: dependency/sources/$(LIBATTR).tar.gz | depende
 	touch $@
 
 dependency/build/libattr-configure: dependency/build/libattr-extract
-	cd $(dir $<)/$(LIBATTR) && ./configure --prefix=$(DEPS_PREFIX)
+	cd $(dir $<)/$(LIBATTR) && ./configure --prefix=/usr
 	touch $@
 
 dependency/build/libattr-build: dependency/build/libattr-configure
@@ -178,7 +178,7 @@ dependency/build/libattr-build: dependency/build/libattr-configure
 	touch $@
 
 dependency/build/libattr-install: dependency/build/libattr-build
-	$(MAKE) -C $(dir $<)/$(LIBATTR) INSTALL_TOP=$(DEPS_PREFIX) install-lib install-dev
+	$(MAKE) -C $(dir $<)/$(LIBATTR) DESTDIR=$(DEPS_ROOT) install-lib install-dev
 	touch $@
 
 # LIBACL
@@ -193,17 +193,15 @@ dependency/build/libacl-extract: dependency/sources/$(LIBACL).tar.gz | dependenc
 	touch $@
 
 dependency/build/libacl-configure: dependency/build/libacl-extract dependency/build/libattr-install
-	cd $(dir $<)/$(LIBACL) && ./configure --prefix=$(DEPS_PREFIX)
+	cd $(dir $<)/$(LIBACL) && ./configure --prefix=/usr --libexecdir=/usr/lib
 	touch $@
 
 dependency/build/libacl-build: dependency/build/libacl-configure
-	sed -i -e 's|acl/libacl.h|libacl.h|' -e 's|sys/acl.h|acl.h|' \
-		$(dir $<)/$(LIBACL)/libacl/*.c $(dir $<)/$(LIBACL)/libacl/libacl.h $(dir $<)/$(LIBACL)/include/libacl.h
-	$(MAKE) -C $(dir $<)/$(LIBACL) libacl CC=$(CC)
+	$(MAKE) -C $(dir $<)/$(LIBACL) include libacl
 	touch $@
 
 dependency/build/libacl-install: dependency/build/libacl-build
-	$(MAKE) -C $(dir $<)/$(LIBACL) INSTALL_TOP=$(DEPS_PREFIX) install-lib install-dev
+	$(MAKE) -C $(dir $<)/$(LIBACL) DESTDIR=$(DEPS_ROOT) install-lib install-dev
 	touch $@
 
 # COMMON
