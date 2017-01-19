@@ -201,7 +201,8 @@ dependency/build/libacl-build: dependency/build/libacl-configure
 	touch $@
 
 dependency/build/libacl-install: dependency/build/libacl-build
-	$(MAKE) -C $(dir $<)/$(LIBACL) DESTDIR=$(DEPS_ROOT) install-lib install-dev
+	$(MAKE) -C $(dir $<)/$(LIBACL)/libacl DESTDIR=$(DEPS_ROOT) install-dev
+	$(MAKE) -C $(dir $<)/$(LIBACL)/include DESTDIR=$(DEPS_ROOT) install-dev
 	touch $@
 
 # COMMON
