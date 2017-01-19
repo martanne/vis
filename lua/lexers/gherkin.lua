@@ -1,4 +1,4 @@
--- Copyright 2015-2016 Jason Schindler. See LICENSE.
+-- Copyright 2015-2017 Jason Schindler. See LICENSE.
 -- Gherkin (https://github.com/cucumber/cucumber/wiki/Gherkin) LPeg lexer.
 
 local l = require('lexer')

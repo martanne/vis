@@ -1,4 +1,4 @@
--- Copyright 2014-2016 stef@ailleurs.land. See LICENSE.
+-- Copyright 2014-2017 stef@ailleurs.land. See LICENSE.
 -- Plain Texinfo version 5.2 LPeg lexer
 -- Freely inspired from Mitchell work and valuable help from him too !
 

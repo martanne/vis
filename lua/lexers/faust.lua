@@ -1,4 +1,4 @@
--- Copyright 2015-2016 David B. Lamkins <david@lamkins.net>. See LICENSE.
+-- Copyright 2015-2017 David B. Lamkins <david@lamkins.net>. See LICENSE.
 -- Faust LPeg lexer, see http://faust.grame.fr/
 
 local l = require('lexer')

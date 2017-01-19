@@ -1,4 +1,4 @@
--- Copyright 2015-2016 David B. Lamkins <david@lamkins.net>. See LICENSE.
+-- Copyright 2015-2017 David B. Lamkins <david@lamkins.net>. See LICENSE.
 -- man/roff LPeg lexer.
 
 local l = require('lexer')

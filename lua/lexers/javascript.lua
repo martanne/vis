@@ -1,4 +1,4 @@
--- Copyright 2006-2016 Mitchell mitchell.att.foicica.com. See LICENSE.
+-- Copyright 2006-2017 Mitchell mitchell.att.foicica.com. See LICENSE.
 -- JavaScript LPeg lexer.
 
 local l = require('lexer')
@@ -32,9 +32,9 @@ local keyword = token(l.KEYWORD, word_match{
   'abstract', 'boolean', 'break', 'byte', 'case', 'catch', 'char', 'class',
   'const', 'continue', 'debugger', 'default', 'delete', 'do', 'double', 'else',
   'enum', 'export', 'extends', 'false', 'final', 'finally', 'float', 'for',
-  'function', 'goto', 'if', 'implements', 'import', 'in', 'instanceof', 'int',
-  'interface', 'let', 'long', 'native', 'new', 'null', 'of', 'package',
-  'private', 'protected', 'public', 'return', 'short', 'static', 'super',
+  'function', 'get', 'goto', 'if', 'implements', 'import', 'in', 'instanceof',
+  'int', 'interface', 'let', 'long', 'native', 'new', 'null', 'of', 'package',
+  'private', 'protected', 'public', 'return', 'set', 'short', 'static', 'super',
   'switch', 'synchronized', 'this', 'throw', 'throws', 'transient', 'true',
   'try', 'typeof', 'var', 'void', 'volatile', 'while', 'with', 'yield'
 })

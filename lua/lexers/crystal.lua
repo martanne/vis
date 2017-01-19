@@ -1,5 +1,5 @@
--- Copyright 2006-2016 Mitchell mitchell.att.foicica.com. See LICENSE.
--- Copyright 2016 Michel Martens.
+-- Copyright 2006-2017 Mitchell mitchell.att.foicica.com. See LICENSE.
+-- Copyright 2017 Michel Martens.
 -- Crystal LPeg lexer (based on Ruby).
 
 local l = require('lexer')

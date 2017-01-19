@@ -1,4 +1,4 @@
--- Copyright 2006-2016 Mitchell mitchell.att.foicica.com. See LICENSE.
+-- Copyright 2006-2017 Mitchell mitchell.att.foicica.com. See LICENSE.
 -- Latex LPeg lexer.
 -- Modified by Brian Schott.
 -- Modified by Robert Gieseke.
