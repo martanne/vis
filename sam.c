@@ -53,7 +53,7 @@ struct Change {
 };
 
 struct Address {
-	char type;      /* # (char) l (line) g (goto line) / ? . $ + - , ; % */
+	char type;      /* # (char) l (line) g (goto line) / ? . $ + - , ; % ' */
 	Regex *regex;   /* NULL denotes default for x, y, X, and Y commands */
 	size_t number;  /* line or character number */
 	Address *left;  /* left hand side of a compound address , ; */
@@ -668,7 +668,7 @@ static Address *address_parse_simple(Vis *vis, const char **s, enum SamError *er
 		addr.type = 'l';
 		addr.number = parse_number(s);
 		break;
-	case '`':
+	case '\'':
 		(*s)++;
 		if ((addr.number = vis_mark_from(vis, **s)) == VIS_MARK_INVALID) {
 			*err = SAM_ERR_MARK;
@@ -979,7 +979,7 @@ static Filerange address_evaluate(Address *addr, File *file, Filerange *range, i
 		case 'g':
 			ret = address_line_evaluate(addr, file, range, sign);
 			break;
-		case '`':
+		case '\'':
 		{
 			size_t pos = text_mark_get(file->text, file->marks[addr->number]);
 			ret = text_range_new(pos, pos);
