@@ -193,7 +193,7 @@ dependency/build/libacl-extract: dependency/sources/$(LIBACL).tar.gz | dependenc
 	touch $@
 
 dependency/build/libacl-configure: dependency/build/libacl-extract dependency/build/libattr-install
-	cd $(dir $<)/$(LIBACL) && ./configure --prefix=/usr --libexecdir=/usr/lib
+	cd $(dir $<)/$(LIBACL) && ./configure --prefix=/usr --libdir=/usr/lib --libexecdir=/usr/lib
 	touch $@
 
 dependency/build/libacl-build: dependency/build/libacl-configure
