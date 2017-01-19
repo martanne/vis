@@ -139,21 +139,17 @@ static void vis_mode_normal_enter(Vis *vis, Mode *old) {
 	if (old != mode_get(vis, VIS_MODE_INSERT) && old != mode_get(vis, VIS_MODE_REPLACE))
 		return;
 	macro_operator_stop(vis);
-	if (vis->action_prev.op == &vis_operators[VIS_OP_MODESWITCH] && !vis->repeat_input) {
-		vis->repeat_input = true;
-		if (vis->action_prev.count > 1) {
-			/* temporarily disable motion, in something like `5atext`
-			 * we should only move the cursor once then insert the text */
-			const Movement *motion = vis->action_prev.movement;
-			if (motion)
-				vis->action_prev.movement = &vis_motions[VIS_MOVE_NOP];
-			/* we already inserted the text once, so temporarily decrease count */
-			vis->action_prev.count--;
-			vis_repeat(vis);
-			vis->action_prev.count++;
-			vis->action_prev.movement = motion;
-		}
-		vis->repeat_input = false;
+	if (vis->action_prev.op == &vis_operators[VIS_OP_MODESWITCH] && vis->action_prev.count > 1) {
+		/* temporarily disable motion, in something like `5atext`
+		 * we should only move the cursor once then insert the text */
+		const Movement *motion = vis->action_prev.movement;
+		if (motion)
+			vis->action_prev.movement = &vis_motions[VIS_MOVE_NOP];
+		/* we already inserted the text once, so temporarily decrease count */
+		vis->action_prev.count--;
+		vis_repeat(vis);
+		vis->action_prev.count++;
+		vis->action_prev.movement = motion;
 	}
 	/* make sure we can recover the current state after an editing operation */
 	vis_file_snapshot(vis, vis->win->file);
