@@ -196,7 +196,6 @@ enum {
 	VIS_ACTION_MODE_VISUAL_LINE,
 	VIS_ACTION_MODE_INSERT,
 	VIS_ACTION_MODE_REPLACE,
-	VIS_ACTION_MODE_OPERATOR_PENDING,
 	VIS_ACTION_DELETE_CHAR_PREV,
 	VIS_ACTION_DELETE_CHAR_NEXT,
 	VIS_ACTION_DELETE_LINE_BEGIN,
@@ -625,11 +624,6 @@ static const KeyAction vis_action[] = {
 		"vis-mode-replace",
 		"Enter replace mode",
 		replacemode, { .i = VIS_MOVE_NOP }
-	},
-	[VIS_ACTION_MODE_OPERATOR_PENDING] = {
-		"vis-mode-operator-pending",
-		"Enter to operator pending mode",
-		switchmode, { .i = VIS_MODE_OPERATOR_PENDING }
 	},
 	[VIS_ACTION_DELETE_CHAR_PREV] = {
 		"delete-char-prev",
