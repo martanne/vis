@@ -82,7 +82,7 @@ dependency/build/libncurses-extract: dependency/sources/$(LIBNCURSES).tar.gz | d
 	touch $@
 
 dependency/build/libncurses-configure: dependency/build/libncurses-extract
-	cd $(dir $<)/$(LIBNCURSES) && ./configure --prefix=/usr $(LIBNCURSES_CONFIG)
+	cd $(dir $<)/$(LIBNCURSES) && ./configure --prefix=/usr --libdir=/usr/lib $(LIBNCURSES_CONFIG)
 	touch $@
 
 dependency/build/libncurses-build: dependency/build/libncurses-configure
@@ -167,7 +167,7 @@ dependency/build/libattr-extract: dependency/sources/$(LIBATTR).tar.gz | depende
 	touch $@
 
 dependency/build/libattr-configure: dependency/build/libattr-extract
-	cd $(dir $<)/$(LIBATTR) && ./configure --prefix=/usr
+	cd $(dir $<)/$(LIBATTR) && ./configure --prefix=/usr --libdir=/usr/lib
 	touch $@
 
 dependency/build/libattr-build: dependency/build/libattr-configure
