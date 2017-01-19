@@ -25,18 +25,61 @@ local number = token(l.NUMBER, l.float + l.integer)
 
 -- Preprocessor.
 local preproc_word = word_match{
-  'define', 'elif', 'else', 'endif', 'if', 'ifdef', 'ifndef', 'include', 'line',
-  'pragma', 'undef'
+  'define', 'elif', 'else', 'endif', 'error', 'if', 'ifdef', 'ifndef',
+  'include', 'line', 'pragma', 'undef', 'warning',
 }
 local preproc = token(l.PREPROCESSOR,
                       l.starts_line('#') * S('\t ')^0 * preproc_word)
 
 -- Keywords.
+local storage_class = word_match{
+  -- C11 6.7.1
+  'typedef', 'extern', 'static', '_Thread_local', 'auto', 'register',
+}
+
+local type_qualifier = word_match{
+  -- C11 6.7.3
+  'const', 'restrict', 'volatile', '_Atomic',
+}
+
+local function_specifier = word_match{
+  -- C11 6.7.4
+  'inline', '_Noreturn',
+}
+
 local keyword = token(l.KEYWORD, word_match{
-  'auto', 'break', 'case', 'const', 'continue', 'default', 'do', 'else',
-  'extern', 'for', 'goto', 'if', 'inline', 'register', 'restrict', 'return',
-  'sizeof', 'static', 'switch', 'typedef', 'volatile', 'while'
-})
+  'break', 'case', 'continue', 'default', 'do', 'else', 'for', 'goto',
+  'if', 'return', 'sizeof', 'switch', 'while',
+  '_Alignas', '_Alignof', '_Generic', '_Static_assert',
+} + storage_class + type_qualifier + function_specifier)
+
+-- Constants.
+local errno = word_match{
+  -- http://pubs.opengroup.org/onlinepubs/9699919799/basedefs/errno.h.html
+  'E2BIG', 'EACCES', 'EADDRINUSE', 'EADDRNOTAVAIL', 'EAFNOSUPPORT', 
+  'EAGAIN', 'EALREADY', 'EBADF', 'EBADMSG', 'EBUSY', 'ECANCELED', 'ECHILD',
+  'ECONNABORTED', 'ECONNREFUSED', 'ECONNRESET', 'EDEADLK', 'EDESTADDRREQ',
+  'EDOM', 'EDQUOT', 'EEXIST', 'EFAULT', 'EFBIG', 'EHOSTUNREACH', 'EIDRM',
+  'EILSEQ', 'EINPROGRESS', 'EINTR', 'EINVAL', 'EIO', 'EISCONN', 'EISDIR',
+  'ELOOP', 'EMFILE', 'EMLINK', 'EMSGSIZE', 'EMULTIHOP', 'ENAMETOOLONG',
+  'ENETDOWN', 'ENETRESET', 'ENETUNREACH', 'ENFILE', 'ENOBUFS', 'ENODATA',
+  'ENODEV', 'ENOENT', 'ENOEXEC', 'ENOLCK', 'ENOLINK', 'ENOMEM',
+  'ENOMSG', 'ENOPROTOOPT', 'ENOSPC', 'ENOSR', 'ENOSTR', 'ENOSYS',
+  'ENOTCONN', 'ENOTDIR', 'ENOTEMPTY', 'ENOTRECOVERABLE', 'ENOTSOCK',
+  'ENOTSUP', 'ENOTTY', 'ENXIO', 'EOPNOTSUPP', 'EOVERFLOW', 'EOWNERDEAD',
+  'EPERM', 'EPIPE', 'EPROTO', 'EPROTONOSUPPORT', 'EPROTOTYPE', 'ERANGE',
+  'EROFS', 'ESPIPE', 'ESRCH', 'ESTALE', 'ETIME', 'ETIMEDOUT', 'ETXTBSY',
+  'EWOULDBLOCK', 'EXDEV',
+}
+
+local preproc_macros = word_match{
+  -- C11 6.10.8.1 Mandatory macros
+  '__DATE__', '__FILE__', '__LINE__', '__TIME__',
+  -- C11 6.4.2.2 Predefined identifiers
+  '__func__',
+}
+
+local constant = token(l.CONSTANT, word_match{ 'NULL' } + errno + preproc_macros)
 
 -- Types.
 local type = token(l.TYPE, word_match{
@@ -57,6 +100,7 @@ M._rules = {
   {'whitespace', ws},
   {'keyword', keyword},
   {'type', type},
+  {'constant', constant},
   {'identifier', identifier},
   {'string', string},
   {'comment', comment},
