@@ -328,11 +328,11 @@ void view_cursor_to(View *view, size_t pos) {
 void view_draw(View *view) {
 	view_clear(view);
 	/* read a screenful of text considering each character as 4-byte UTF character*/
-	const size_t text_size = view->width * view->height * 4;
+	const size_t size = view->width * view->height * 4;
 	/* current buffer to work with */
-	char text[text_size+1];
+	char text[size+1];
 	/* remaining bytes to process in buffer */
-	size_t rem = text_bytes_get(view->text, view->start, text_size, text);
+	size_t rem = text_bytes_get(view->text, view->start, size, text);
 	/* NUL terminate text section */
 	text[rem] = '\0';
 	/* absolute position of character currently being added to display */
@@ -361,7 +361,7 @@ void view_draw(View *view) {
 			 * wide character. advance file position and read
 			 * another junk into buffer.
 			 */
-			rem = text_bytes_get(view->text, pos, text_size, text);
+			rem = text_bytes_get(view->text, pos, size, text);
 			text[rem] = '\0';
 			cur = text;
 			continue;
@@ -404,7 +404,14 @@ void view_draw(View *view) {
 
 	/* set end of vieviewg region */
 	view->end = pos;
-	view->lastline = view->line ? view->line : view->bottomline;
+	if (view->line) {
+		if (view->line->len == 0 && view->end == text_size(view->text) && view->line->prev)
+			view->lastline = view->line->prev;
+		else
+			view->lastline = view->line;
+	} else {
+		view->lastline = view->bottomline;
+	}
 
 	/* clear remaining of line, important to show cursor at end of file */
 	if (view->line) {

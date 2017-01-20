@@ -1421,8 +1421,24 @@ static void copy_indent_from_previous_line(Win *win, Cursor *cur) {
 }
 
 void vis_insert_nl(Vis *vis) {
-	const char *nl = text_newline_char(vis->win->file->text);
-	vis_insert_key(vis, nl, strlen(nl));
+	Text *txt = vis->win->file->text;
+	const char *nl = text_newline_char(txt);
+	size_t len = strlen(nl);
+	for (Cursor *c = view_cursors(vis->win->view); c; c = view_cursors_next(c)) {
+		char byte;
+		size_t pos = view_cursors_pos(c);
+		/* insert second newline at end of file, except if there is already one */
+		bool eof = pos == text_size(txt);
+		bool nl2 = eof && !(pos > 0 && text_byte_get(txt, pos-1, &byte) && byte == '\n');
+		vis_insert(vis, pos, nl, len);
+		if (eof) {
+			if (nl2)
+				vis_insert(vis, pos, nl, len);
+			else
+				pos -= len; /* place cursor before, not after nl */
+		}
+		view_cursors_scroll_to(c, pos + len);
+	}
 
 	if (!vis->autoindent)
 		return;
