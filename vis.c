@@ -48,7 +48,7 @@ const RegisterDef vis_registers[] = {
 	[VIS_REG_AMPERSAND]  = { '&', "Last regex match"                                 },
 	[VIS_REG_BLACKHOLE]  = { '_', "/dev/null register"                               },
 	[VIS_REG_CLIPBOARD]  = { '*', "System clipboard register, see vis-clipboard(1)"  },
-	[VIS_MACRO_REPEAT]   = { '.', "Last inserted text"                               },
+	[VIS_REG_DOT]        = { '.', "Last inserted text"                               },
 	[VIS_REG_SEARCH]     = { '/', "Last search pattern"                              },
 	[VIS_REG_COMMAND]    = { ':', "Last :-command"                                   },
 	[VIS_REG_SHELL]      = { '!', "Last shell command given to either <, >, |, or !" },
@@ -1196,11 +1196,18 @@ static Macro *macro_get(Vis *vis, enum VisRegister id) {
 }
 
 void macro_operator_record(Vis *vis) {
+	if (vis->macro_operator)
+		return;
 	vis->macro_operator = macro_get(vis, VIS_MACRO_OPERATOR);
 	macro_reset(vis->macro_operator);
 }
 
 void macro_operator_stop(Vis *vis) {
+	if (!vis->macro_operator)
+		return;
+	Macro *dot = macro_get(vis, VIS_REG_DOT);
+	buffer_put(dot, vis->macro_operator->data, vis->macro_operator->len);
+	vis->action_prev.macro = dot;
 	vis->macro_operator = NULL;
 }
 
@@ -1278,14 +1285,7 @@ bool vis_macro_replay(Vis *vis, enum VisRegister id) {
 }
 
 void vis_repeat(Vis *vis) {
-	Macro *macro_operator = macro_get(vis, VIS_MACRO_OPERATOR);
-	Macro *macro_repeat = macro_get(vis, VIS_MACRO_REPEAT);
 	const Macro *macro = vis->action_prev.macro;
-	if (macro == macro_operator) {
-		buffer_put(macro_repeat, macro_operator->data, macro_operator->len);
-		macro = macro_repeat;
-		vis->action_prev.macro = macro;
-	}
 	int count = vis->action.count;
 	if (count != VIS_COUNT_UNKNOWN)
 		vis->action_prev.count = count;

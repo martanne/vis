@@ -201,10 +201,7 @@ static void vis_mode_insert_replace_enter(Vis *vis, Mode *old) {
 		vis->action_prev.op = &vis_operators[VIS_OP_MODESWITCH];
 		vis->action_prev.mode = vis->mode->id;
 	}
-	if (!vis->macro_operator) {
-		macro_operator_record(vis);
-		vis->action_prev.macro = vis->macro_operator;
-	}
+	macro_operator_record(vis);
 }
 
 static void vis_mode_insert_idle(Vis *vis) {

@@ -415,7 +415,7 @@ enum VisRegister {
 	VIS_REG_9,
 	VIS_REG_BLACKHOLE,  /* /dev/null register */
 	VIS_REG_CLIPBOARD,  /* system clipboard register */
-	VIS_MACRO_REPEAT,   /* copy of the above macro once the recording is finished */
+	VIS_REG_DOT,        /* last inserted text, copy of VIS_MACRO_OPERATOR */
 	VIS_REG_SEARCH,     /* last used search pattern "/ */
 	VIS_REG_COMMAND,    /* last used :-command ": */
 	VIS_REG_SHELL,      /* last used shell command given to either <, >, |, or ! */
