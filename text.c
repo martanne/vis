@@ -1392,7 +1392,7 @@ bool text_iterator_byte_next(Iterator *it, char *b) {
 		return false;
 	it->text++;
 	/* special case for advancement to EOF */
-	if (it->text == it->end && !it->piece->next->text) {
+	if (it->pos+1 == it->piece->text->size) {
 		it->pos++;
 		if (b)
 			*b = '\0';
