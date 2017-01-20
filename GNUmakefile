@@ -178,7 +178,8 @@ dependency/build/libattr-build: dependency/build/libattr-configure
 	touch $@
 
 dependency/build/libattr-install: dependency/build/libattr-build
-	$(MAKE) -C $(dir $<)/$(LIBATTR) DESTDIR=$(DEPS_ROOT) install-lib install-dev
+	$(MAKE) -C $(dir $<)/$(LIBATTR)/libattr DESTDIR=$(DEPS_ROOT) install-dev
+	$(MAKE) -C $(dir $<)/$(LIBATTR)/include DESTDIR=$(DEPS_ROOT) install-dev
 	touch $@
 
 # LIBACL
