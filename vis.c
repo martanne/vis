@@ -1410,12 +1410,17 @@ static void copy_indent_from_previous_line(Win *win, Cursor *cur) {
 		return;
 	size_t begin = text_line_begin(text, prev_line);
 	size_t start = text_line_start(text, begin);
+	size_t end = text_line_end(text, begin);
 	size_t len = start-begin;
 	char *buf = malloc(len);
 	if (!buf)
 		return;
 	len = text_bytes_get(text, begin, len, buf);
 	text_insert(text, pos, buf, len);
+	if (start == end) {
+		text_delete(text, begin, len);
+		pos -= len;
+	}
 	view_cursors_to(cur, pos + len);
 	free(buf);
 }
