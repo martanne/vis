@@ -91,6 +91,9 @@ struct CommandDef {
 		CMD_FORCE         = 1 << 12, /* can the command be forced with ! */
 		CMD_ARGV          = 1 << 13, /* whether shell like argument splitting is desired */
 		CMD_ONCE          = 1 << 14, /* command should only be executed once, not for every selection */
+		CMD_LOOP          = 1 << 15, /* a looping construct like `x`, `y` */
+		CMD_GROUP         = 1 << 16, /* a command group { ... } */
+		CMD_DESTRUCTIVE   = 1 << 17, /* command potentially destroys window */
 	} flags;
 	const char *defcmd;                  /* name of a default target command */
 	bool (*func)(Vis*, Win*, Command*, const char *argv[], Cursor*, Filerange*); /* command implementation */
@@ -162,10 +165,10 @@ static const CommandDef cmds[] = {
 		CMD_CMD|CMD_REGEX, "p", cmd_guard
 	}, {
 		"x",            "Set range and run command on each match",
-		CMD_CMD|CMD_REGEX|CMD_REGEX_DEFAULT|CMD_ADDRESS_ALL_1CURSOR, "p", cmd_extract
+		CMD_CMD|CMD_REGEX|CMD_REGEX_DEFAULT|CMD_ADDRESS_ALL_1CURSOR|CMD_LOOP, "p", cmd_extract
 	}, {
 		"y",            "As `x` but select unmatched text",
-		CMD_CMD|CMD_REGEX|CMD_ADDRESS_ALL_1CURSOR, "p", cmd_extract
+		CMD_CMD|CMD_REGEX|CMD_ADDRESS_ALL_1CURSOR|CMD_LOOP, "p", cmd_extract
 	}, {
 		"X",            "Run command on files whose name matches",
 		CMD_CMD|CMD_REGEX|CMD_REGEX_DEFAULT|CMD_ADDRESS_NONE|CMD_ONCE, NULL, cmd_files
@@ -192,16 +195,16 @@ static const CommandDef cmds[] = {
 		CMD_ARGV|CMD_ADDRESS_AFTER, NULL, cmd_read
 	}, {
 		"{",            "Start of command group",
-		CMD_NONE, NULL, NULL
+		CMD_GROUP, NULL, NULL
 	}, {
 		"}",            "End of command group" ,
 		CMD_NONE, NULL, NULL
 	}, {
 		"e",            "Edit file",
-		CMD_ARGV|CMD_FORCE|CMD_ONCE|CMD_ADDRESS_NONE, NULL, cmd_edit
+		CMD_ARGV|CMD_FORCE|CMD_ONCE|CMD_ADDRESS_NONE|CMD_DESTRUCTIVE, NULL, cmd_edit
 	}, {
 		"q",            "Quit the current window",
-		CMD_FORCE|CMD_ONCE|CMD_ADDRESS_NONE, NULL, cmd_quit
+		CMD_FORCE|CMD_ONCE|CMD_ADDRESS_NONE|CMD_DESTRUCTIVE, NULL, cmd_quit
 	}, {
 		"cd",           "Change directory",
 		CMD_ARGV|CMD_ONCE|CMD_ADDRESS_NONE, NULL, cmd_cd
@@ -209,7 +212,7 @@ static const CommandDef cmds[] = {
 	/* vi(m) related commands */
 	{
 		"bdelete",      "Unload file",
-		CMD_FORCE|CMD_ONCE|CMD_ADDRESS_NONE, NULL, cmd_bdelete
+		CMD_FORCE|CMD_ONCE|CMD_ADDRESS_NONE|CMD_DESTRUCTIVE, NULL, cmd_bdelete
 	}, {
 		"help",         "Show this help",
 		CMD_ONCE|CMD_ADDRESS_NONE, NULL, cmd_help
@@ -236,7 +239,7 @@ static const CommandDef cmds[] = {
 		CMD_ARGV|CMD_ONCE|CMD_ADDRESS_NONE, NULL, cmd_open
 	}, {
 		"qall",         "Exit vis",
-		CMD_FORCE|CMD_ONCE|CMD_ADDRESS_NONE, NULL, cmd_qall
+		CMD_FORCE|CMD_ONCE|CMD_ADDRESS_NONE|CMD_DESTRUCTIVE, NULL, cmd_qall
 	}, {
 		"set",          "Set option",
 		CMD_ARGV|CMD_ONCE|CMD_ADDRESS_NONE, NULL, cmd_set
@@ -251,7 +254,7 @@ static const CommandDef cmds[] = {
 		CMD_ARGV|CMD_ONCE|CMD_ADDRESS_NONE, NULL, cmd_vsplit
 	}, {
 		"wq",           "Write file and quit",
-		CMD_ARGV|CMD_FORCE|CMD_ONCE|CMD_ADDRESS_ALL, NULL, cmd_wq
+		CMD_ARGV|CMD_FORCE|CMD_ONCE|CMD_ADDRESS_ALL|CMD_DESTRUCTIVE, NULL, cmd_wq
 	}, {
 		"earlier",      "Go to older text state",
 		CMD_ARGV|CMD_ONCE|CMD_ADDRESS_NONE, NULL, cmd_earlier_later
@@ -417,6 +420,8 @@ const char *sam_error(enum SamError err) {
 		[SAM_ERR_MARK]            = "Invalid mark",
 		[SAM_ERR_CONFLICT]        = "Conflicting changes",
 		[SAM_ERR_WRITE_CONFLICT]  = "Can not write while changing",
+		[SAM_ERR_LOOP_INVALID_CMD]  = "Destructive command in looping construct",
+		[SAM_ERR_GROUP_INVALID_CMD] = "Destructive command in group",
 	};
 
 	return err < LENGTH(error_msg) ? error_msg[err] : NULL;
@@ -1060,6 +1065,28 @@ static bool sam_execute(Vis *vis, Win *win, Command *cmd, Cursor *cur, Filerange
 	return ret;
 }
 
+static enum SamError validate(Command *cmd, bool loop, bool group) {
+	if (cmd->cmddef->flags & CMD_DESTRUCTIVE) {
+		if (loop)
+			return SAM_ERR_LOOP_INVALID_CMD;
+		if (group)
+			return SAM_ERR_GROUP_INVALID_CMD;
+	}
+
+	group |= (cmd->cmddef->flags & CMD_GROUP);
+	loop  |= (cmd->cmddef->flags & CMD_LOOP);
+	for (Command *c = cmd->cmd; c; c = c->next) {
+		enum SamError err = validate(c, loop, group);
+		if (err != SAM_ERR_OK)
+			return err;
+	}
+	return SAM_ERR_OK;
+}
+
+static enum SamError command_validate(Command *cmd) {
+	return validate(cmd, false, false);
+}
+
 enum SamError sam_cmd(Vis *vis, const char *s) {
 	enum SamError err = SAM_ERR_OK;
 	if (!s)
@@ -1069,6 +1096,12 @@ enum SamError sam_cmd(Vis *vis, const char *s) {
 	if (!cmd) {
 		if (err == SAM_ERR_OK)
 			err = SAM_ERR_MEMORY;
+		return err;
+	}
+
+	err = command_validate(cmd);
+	if (err != SAM_ERR_OK) {
+		command_free(cmd);
 		return err;
 	}
 
