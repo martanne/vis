@@ -1680,7 +1680,8 @@ static const char *count(Vis *vis, const char *keys, const Arg *arg) {
 	if (0 <= digit && digit <= 9) {
 		if (digit == 0 && count == 0)
 			vis_motion(vis, VIS_MOVE_LINE_BEGIN);
-		vis_count_set(vis, count * 10 + digit);
+		else
+			vis_count_set(vis, count * 10 + digit);
 	}
 	return keys;
 }
