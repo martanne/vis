@@ -7,7 +7,7 @@ SRC = array.c buffer.c libutf.c main.c map.c register.c ring-buffer.c \
 	ui-curses.c view.c vis.c vis-lua.c vis-modes.c vis-motions.c \
 	vis-operators.c vis-prompt.c vis-text-objects.c $(REGEX_SRC)
 
-EXECUTABLES = vis vis-clipboard vis-complete vis-menu vis-open
+EXECUTABLES = vis vis-clipboard vis-complete vis-menu vis-digraph vis-open
 
 MANUALS = $(EXECUTABLES:=.1)
 
@@ -44,7 +44,7 @@ LDFLAGS_VIS = $(LDFLAGS_AUTO) $(LDFLAGS_TERMKEY) $(LDFLAGS_CURSES) $(LDFLAGS_ACL
 
 STRIP?=strip
 
-all: vis vis-menu
+all: vis vis-menu vis-digraph
 
 config.h:
 	cp config.def.h config.h
@@ -56,6 +56,9 @@ vis: config.h config.mk *.c *.h
 	${CC} ${CFLAGS} ${CFLAGS_VIS} ${CFLAGS_EXTRA} ${SRC} ${LDFLAGS} ${LDFLAGS_VIS} -o $@
 
 vis-menu: vis-menu.c
+	${CC} ${CFLAGS} ${CFLAGS_AUTO} ${CFLAGS_STD} ${CFLAGS_EXTRA} $< ${LDFLAGS} ${LDFLAGS_STD} ${LDFLAGS_AUTO} -o $@
+
+vis-digraph: vis-digraph.c
 	${CC} ${CFLAGS} ${CFLAGS_AUTO} ${CFLAGS_STD} ${CFLAGS_EXTRA} $< ${LDFLAGS} ${LDFLAGS_STD} ${LDFLAGS_AUTO} -o $@
 
 debug: clean
@@ -77,7 +80,7 @@ test:
 
 clean:
 	@echo cleaning
-	@rm -f vis vis-menu vis-${VERSION}.tar.gz *.gcov *.gcda *.gcno
+	@rm -f vis vis-menu vis-digraph vis-${VERSION}.tar.gz *.gcov *.gcda *.gcno
 
 dist: clean
 	@echo creating dist tarball
@@ -95,7 +98,7 @@ luadoc:
 luadoc-all:
 	@cd lua/doc && ldoc -a . && sed -e "s/RELEASE/${VERSION}/" -i index.html
 
-install: vis vis-menu
+install: vis vis-menu vis-digraph
 	@echo stripping executable
 	@${STRIP} vis
 	@echo installing executable files to ${DESTDIR}${PREFIX}/bin
