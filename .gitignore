@@ -4,6 +4,7 @@
 /vis
 /vis-menu
 /vis-single
+/vis-digraph
 *.css
 *.gcda
 *.gcno

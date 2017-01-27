@@ -1,0 +1,81 @@
+.Dd January 27, 2017
+.Dt VIS-DIGRAPH 1
+.Os Vis VERSION
+.Sh NAME
+.Nm vis-digraph
+.Nd print Unicode character using mnemonics
+.
+.
+.Sh SYNOPSIS
+.
+.Nm
+.Ar digraph ...
+.
+.Nm
+.Fl
+.
+.
+.Sh DESCRIPTION
+.
+.Nm vis-digraph
+read a digraph from command line argument or standard input and print
+a corresponding Unicode character to standard output, encoded in current
+locale.
+.
+.Bl -tag -width 8
+.It Ar digraph
+A set of two (or more) characters that get replaced by a single Unicode
+character.
+.It Fl
+Read digraph from standard input.
+.El
+.Pp
+Without argument,
+.Nm
+displays all available digraphs along with a description.
+.
+.
+.Sh ENVIRONMENT
+.
+.Bl -tag -width 8
+.
+.It Ev LC_CTYPE
+Locale definition, setting the encoding format of the Unicode character printed out.
+See
+.Xr locale 1
+for more information.
+.El
+.
+.
+.Sh EXIT STATUS
+.
+.Bl -tag -width 4
+.It 0
+Digraph correctly read recognised and printed out.
+.It 1
+Digraph not recognised.
+.It 2
+Digraph is the beginning of an existing digraph, but does not correspond to a full digraph.
+.It 3
+An error occured and digraph could not be read or printed.
+.El
+.
+.
+.Sh SEE ALSO
+.
+.Xr locale 1 ,
+.Xr vis 1
+.
+.
+.Sh STANDARDS
+.
+.Nm
+follows the digraph format from
+.Lk http://tools.ietf.org/rfc/rfc1345.txt "RFC 1345"
+.
+.
+.Sh AUTHORS
+.
+.Nm
+is written by
+.An Marc André Tanner Aq mat at brain-dump.org
