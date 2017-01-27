@@ -1044,6 +1044,25 @@ static int insert(lua_State *L) {
 }
 
 /***
+ * Replace keys at all cursor positions of active window.
+ *
+ * This function behaves as if the keys were entered in replace mode,
+ * but in contrast to @{Vis:feedkeys} it bypasses the input queue,
+ * meaning mappings do not apply and the keys will not be recorded in macros.
+ *
+ * @function replace
+ * @tparam string keys the keys to insert
+ * @see Vis:feedkeys
+ */
+static int replace(lua_State *L) {
+	Vis *vis = obj_ref_check(L, 1, "vis");
+	size_t len;
+	const char *keys = luaL_checklstring(L, 2, &len);
+	vis_replace_key(vis, keys, len);
+	return 0;
+}
+
+/***
  * Currently active window.
  * @tfield Window win
  * @see windows
@@ -1121,6 +1140,7 @@ static const struct luaL_Reg vis_lua[] = {
 	{ "command_register", command_register },
 	{ "feedkeys", feedkeys },
 	{ "insert", insert },
+	{ "replace", replace },
 	{ "action_register", action_register },
 	{ "__index", vis_index },
 	{ "__newindex", vis_newindex },
