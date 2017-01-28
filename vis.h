@@ -27,6 +27,9 @@ typedef struct Win Win;
 #define VIS_COMPLETE "vis-complete"
 #endif
 
+/* maximum bytes needed for string representation of a (pseudo) key */
+#define VIS_KEY_LENGTH_MAX 64
+
 typedef struct {
 	void (*init)(Vis*);
 	void (*start)(Vis*);

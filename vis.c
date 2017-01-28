@@ -995,6 +995,10 @@ static void vis_keys_process(Vis *vis, size_t pos) {
 			end = start;
 		} else if (binding) { /* exact match */
 			if (binding->action) {
+				size_t len = binding_end - start;
+				strcpy(vis->key_prev, vis->key_current);
+				strncpy(vis->key_current, start, len);
+				vis->key_current[len] = '\0';
 				end = (char*)binding->action->func(vis, binding_end, &binding->action->arg);
 				if (!end) {
 					end = start;
@@ -1017,6 +1021,10 @@ static void vis_keys_process(Vis *vis, size_t pos) {
 				action = map_get(vis->actions, start+1);
 				end[-1] = tmp;
 				if (action) {
+					size_t len = end - start;
+					strcpy(vis->key_prev, vis->key_current);
+					strncpy(vis->key_current, start, len);
+					vis->key_current[len] = '\0';
 					end = (char*)action->func(vis, end, &action->arg);
 					if (!end) {
 						end = start;
