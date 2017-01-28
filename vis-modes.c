@@ -1,6 +1,7 @@
 #include <string.h>
 #include <strings.h>
 #include "vis-core.h"
+#include "text-motions.h"
 #include "util.h"
 
 KeyAction *vis_action_new(Vis *vis, const char *name, const char *help, KeyActionFunction *func, Arg arg) {
@@ -138,6 +139,21 @@ bool vis_window_mode_map(Win *win, enum VisMode id, bool force, const char *key,
 static void vis_mode_normal_enter(Vis *vis, Mode *old) {
 	if (old != mode_get(vis, VIS_MODE_INSERT) && old != mode_get(vis, VIS_MODE_REPLACE))
 		return;
+	if (vis->autoindent && strcmp(vis->key_prev, "<Enter>") == 0) {
+		Text *txt = vis->win->file->text;
+		for (Cursor *c = view_cursors(vis->win->view); c; c = view_cursors_next(c)) {
+			size_t pos = view_cursors_pos(c);
+			size_t start = text_line_start(txt, pos);
+			if (start == pos) {
+				size_t begin = text_line_begin(txt, pos);
+				size_t len = start - begin;
+				if (len) {
+					text_delete(txt, begin, len);
+					view_cursors_to(c, pos-len);
+				}
+			}
+		}
+	}
 	macro_operator_stop(vis);
 	if (!vis->win->parent && vis->action_prev.op == &vis_operators[VIS_OP_MODESWITCH] &&
 	    vis->action_prev.count > 1) {

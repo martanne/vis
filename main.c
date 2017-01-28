@@ -1975,14 +1975,14 @@ static const char *openline(Vis *vis, const char *keys, const Arg *arg) {
 	vis_operator(vis, VIS_OP_MODESWITCH, VIS_MODE_INSERT);
 	if (arg->i > 0) {
 		vis_motion(vis, VIS_MOVE_LINE_END);
-		vis_keys_feed(vis, "<insert-newline>");
+		vis_keys_feed(vis, "<Enter>");
 	} else {
 		if (vis_get_autoindent(vis)) {
 			vis_motion(vis, VIS_MOVE_LINE_START);
 		} else {
 			vis_motion(vis, VIS_MOVE_LINE_BEGIN);
 		}
-		vis_keys_feed(vis, "<insert-newline><Up>");
+		vis_keys_feed(vis, "<Enter><Up>");
 	}
 	return keys;
 }
