@@ -215,7 +215,7 @@ static const CommandDef cmds[] = {
 		CMD_FORCE|CMD_ONCE|CMD_ADDRESS_NONE|CMD_DESTRUCTIVE, NULL, cmd_bdelete
 	}, {
 		"help",         "Show this help",
-		CMD_ONCE|CMD_ADDRESS_NONE, NULL, cmd_help
+		CMD_ARGV|CMD_ONCE|CMD_ADDRESS_NONE, NULL, cmd_help
 	}, {
 		"map",          "Map key binding `:map <mode> <lhs> <rhs>`",
 		CMD_ARGV|CMD_FORCE|CMD_ONCE|CMD_ADDRESS_NONE, NULL, cmd_map
