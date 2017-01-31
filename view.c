@@ -43,6 +43,7 @@ struct Selection {
 	Mark anchor;             /* position where the selection was created */
 	Mark cursor;             /* other selection endpoint where it changes */
 	View *view;              /* associated view to which this selection belongs */
+	Cursor *cur;             /* cursor whose movement will affect this selection */
 	Selection *prev, *next;  /* previsous/next selections in no particular order */
 };
 
@@ -264,9 +265,8 @@ static void cursor_to(Cursor *c, size_t pos) {
 	if (pos != c->pos)
 		c->lastcol = 0;
 	c->pos = pos;
-	if (c->sel) {
+	if (c->sel)
 		c->sel->cursor = text_mark_set(txt, pos);
-	}
 	if (!view_coord_get(c->view, pos, &c->line, &c->row, &c->col)) {
 		if (c->view->cursor == c) {
 			c->line = c->view->topline;
@@ -1239,7 +1239,7 @@ void view_cursors_selection_start(Cursor *c) {
 	if (c->sel)
 		return;
 	size_t pos = view_cursors_pos(c);
-	if (pos == EPOS || !(c->sel = view_selections_new(c->view)))
+	if (pos == EPOS || !(c->sel = view_selections_new(c->view, c)))
 		return;
 	Text *txt = c->view->text;
 	c->sel->anchor = text_mark_set(txt, pos);
@@ -1258,7 +1258,7 @@ void view_cursors_selection_restore(Cursor *c) {
 	if (!text_range_valid(&sel))
 		return;
 	sel.end = text_char_next(txt, sel.end);
-	if (!(c->sel = view_selections_new(c->view)))
+	if (!(c->sel = view_selections_new(c->view, c)))
 		return;
 	view_selections_set(c->sel, &sel);
 	view_cursors_selection_sync(c);
@@ -1296,7 +1296,7 @@ Filerange view_cursors_selection_get(Cursor *c) {
 void view_cursors_selection_set(Cursor *c, const Filerange *r) {
 	if (!text_range_valid(r))
 		return;
-	if (!c->sel && !(c->sel = view_selections_new(c->view)))
+	if (!c->sel && !(c->sel = view_selections_new(c->view, c)))
 		return;
 
 	view_selections_set(c->sel, r);
@@ -1305,16 +1305,16 @@ void view_cursors_selection_set(Cursor *c, const Filerange *r) {
 		view_cursors_selection_sync(c);
 }
 
-Selection *view_selections_new(View *view) {
+Selection *view_selections_new(View *view, Cursor *c) {
 	Selection *s = calloc(1, sizeof(*s));
 	if (!s)
 		return NULL;
-
 	s->view = view;
 	s->next = view->selections;
 	if (view->selections)
 		view->selections->prev = s;
 	view->selections = s;
+	s->cur = c;
 	return s;
 }
 
@@ -1327,13 +1327,11 @@ void view_selections_free(Selection *s) {
 		s->next->prev = s->prev;
 	if (s->view->selections == s)
 		s->view->selections = s->next;
-	// XXX: add backlink Selection->Cursor?
-	for (Cursor *c = s->view->cursors; c; c = c->next) {
-		if (c->sel == s) {
-			c->lastsel_anchor = s->anchor;
-			c->lastsel_cursor = s->cursor;
-			c->sel = NULL;
-		}
+	Cursor *c = s->cur;
+	if (c) {
+		c->lastsel_anchor = s->anchor;
+		c->lastsel_cursor = s->cursor;
+		c->sel = NULL;
 	}
 	free(s);
 }

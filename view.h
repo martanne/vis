@@ -185,7 +185,7 @@ void view_cursors_selection_restore(Cursor*);
 Filerange view_cursors_selection_get(Cursor*);
 void view_cursors_selection_set(Cursor*, const Filerange*);
 
-Selection *view_selections_new(View*);
+Selection *view_selections_new(View*, Cursor*);
 void view_selections_free(Selection*);
 void view_selections_clear(View*);
 void view_selections_swap(Selection*);
