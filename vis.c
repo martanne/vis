@@ -819,6 +819,10 @@ void vis_do(Vis *vis) {
 						sel = text_range_new(c.range.start, sel.start);
 					if (vis->mode == &vis_modes[VIS_MODE_VISUAL_LINE])
 						sel = text_range_linewise(txt, &sel);
+					if (!text_range_contains(&sel, pos)) {
+						Filerange cur = text_range_new(pos, pos);
+						sel = text_range_union(&sel, &cur);
+					}
 					view_cursors_selection_set(cursor, &sel);
 				}
 			}
