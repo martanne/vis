@@ -444,8 +444,14 @@ static void change_free(Change *c) {
 static Change *change_new(Transcript *t, enum ChangeType type, Filerange *range, Win *win, Cursor *cur) {
 	if (!text_range_valid(range))
 		return NULL;
-	// TODO optimize for common case
-	Change **prev = &t->changes, *next = t->changes;
+	Change **prev, *next;
+	if (t->latest && t->latest->range.end <= range->start) {
+		prev = &t->latest->next;
+		next = t->latest->next;
+	} else {
+		prev = &t->changes;
+		next = t->changes;
+	}
 	while (next && next->range.end <= range->start) {
 		prev = &next->next;
 		next = next->next;
@@ -462,6 +468,7 @@ static Change *change_new(Transcript *t, enum ChangeType type, Filerange *range,
 		new->win = win;
 		new->next = next;
 		*prev = new;
+		t->latest = new;
 	}
 	return new;
 }

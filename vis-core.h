@@ -110,6 +110,7 @@ typedef struct {             /** collects all information until an operator is e
 typedef struct Change Change;
 typedef struct {
 	Change *changes;      /* all changes in monotonically increasing file position */
+	Change *latest;       /* most recent change */
 	enum SamError error;  /* non-zero in case something went wrong */
 } Transcript;
 
