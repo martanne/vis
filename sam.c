@@ -302,6 +302,7 @@ enum {
 	OPTION_COLOR_COLUMN,
 	OPTION_HORIZON,
 	OPTION_SAVE_METHOD,
+	OPTION_CHANGE_256COLORS,
 };
 
 static const OptionDef options[] = {
@@ -385,6 +386,12 @@ static const OptionDef options[] = {
 		OPTION_TYPE_STRING, OPTION_FLAG_WINDOW,
 		"Save method to use for current file 'auto', 'atomic' or 'inplace'",
 	},
+	[OPTION_CHANGE_256COLORS] = {
+		{ "change-256colors" },
+		OPTION_TYPE_BOOL, OPTION_FLAG_NONE,
+		"Change 256 color palette to support 24bit colors",
+	},
+
 };
 
 bool sam_init(Vis *vis) {

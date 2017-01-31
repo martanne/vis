@@ -19,6 +19,9 @@ vis.events.subscribe(vis.events.INIT, function()
 		vis.lexers = require('lexer')
 	end
 
+	if os.getenv("TERM_PROGRAM") == "Apple_Terminal" then
+		vis:command("set change-256colors false");
+	end
 	vis:command("set theme ".. (vis.ui.colors <= 16 and "default-16" or "default-256"))
 end)
 

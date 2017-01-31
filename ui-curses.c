@@ -65,7 +65,7 @@
 #define MAX_COLOR_CLOBBER 240
 static short color_clobber_idx = 0;
 static uint32_t clobbering_colors[MAX_COLOR_CLOBBER];
-static bool change_colors;
+static int change_colors = -1;
 
 typedef struct {
 	attr_t attr;
@@ -143,8 +143,10 @@ static void undo_palette(void)
 }
 
 /* Work out the nearest color from the 256 color set, or perhaps exactly. */
-static int color_find_rgb(unsigned char r, unsigned char g, unsigned char b)
+static int color_find_rgb(UiCurses *ui, unsigned char r, unsigned char g, unsigned char b)
 {
+	if (change_colors == -1)
+		change_colors = ui->vis->change_colors && can_change_color() && COLORS >= 256;
 	if (change_colors) {
 		uint32_t hexrep = ((r << 16) | (g << 8) | b) + 1;
 		for (short i = 0; i < MAX_COLOR_CLOBBER; ++i) {
@@ -217,7 +219,7 @@ static int color_find_rgb(unsigned char r, unsigned char g, unsigned char b)
 }
 
 /* Convert color from string. */
-static int color_fromstring(const char *s)
+static int color_fromstring(UiCurses *ui, const char *s)
 {
 	if (!s)
 		return -1;
@@ -230,7 +232,7 @@ static int color_fromstring(const char *s)
 		int n = sscanf(s + 1, "%2hhx%2hhx%2hhx", &r, &g, &b);
 		if (n != 3)
 			return -1;
-		return color_find_rgb(r, g, b);
+		return color_find_rgb(ui, r, g, b);
 	} else if ('0' <= *s && *s <= '9') {
 		int col = atoi(s);
 		return (col <= 0 || col > 255) ? -1 : col;
@@ -349,9 +351,9 @@ static bool ui_window_syntax_style(UiWin *w, int id, const char *style) {
 		} else if (!strcasecmp(option, "notblink")) {
 			cell_style.attr &= ~A_BLINK;
 		} else if (!strcasecmp(option, "fore")) {
-			cell_style.fg = color_fromstring(p);
+			cell_style.fg = color_fromstring(win->ui, p);
 		} else if (!strcasecmp(option, "back")) {
-			cell_style.bg = color_fromstring(p);
+			cell_style.bg = color_fromstring(win->ui, p);
 		}
 		option = next;
 	}
@@ -830,7 +832,7 @@ static TermKey *ui_termkey_get(Ui *ui) {
 }
 
 static void ui_suspend(Ui *ui) {
-	if (change_colors)
+	if (change_colors == 1)
 		undo_palette();
 	endwin();
 	kill(0, SIGSTOP);
@@ -913,7 +915,6 @@ static bool ui_init(Ui *ui, Vis *vis) {
 	keypad(stdscr, TRUE);
 	meta(stdscr, TRUE);
 	curs_set(0);
-	change_colors = can_change_color() && COLORS >= 256;
 
 	ui_resize(ui);
 	return true;
@@ -960,7 +961,7 @@ void ui_curses_free(Ui *ui) {
 		return;
 	while (uic->windows)
 		ui_window_free((UiWin*)uic->windows);
-	if (change_colors)
+	if (change_colors == 1)
 		undo_palette();
 	endwin();
 	if (uic->termkey)

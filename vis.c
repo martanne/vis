@@ -532,6 +532,7 @@ Vis *vis_new(Ui *ui, VisEvent *event) {
 	vis->ui = ui;
 	vis->tabwidth = 8;
 	vis->expandtab = false;
+	vis->change_colors = true;
 	vis->registers[VIS_REG_BLACKHOLE].type = REGISTER_BLACKHOLE;
 	vis->registers[VIS_REG_CLIPBOARD].type = REGISTER_CLIPBOARD;
 	array_init(&vis->motions);

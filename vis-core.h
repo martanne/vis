@@ -168,6 +168,7 @@ struct Vis {
 	int tabwidth;                        /* how many spaces should be used to display a tab */
 	bool expandtab;                      /* whether typed tabs should be converted to spaces */
 	bool autoindent;                     /* whether indentation should be copied from previous line on newline */
+	bool change_colors;                  /* whether to adjust 256 color palette for true colors */
 	char *shell;                         /* shell used to launch external commands */
 	Map *cmds;                           /* ":"-commands, used for unique prefix queries */
 	Map *usercmds;                       /* user registered ":"-commands */

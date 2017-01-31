@@ -291,6 +291,9 @@ static bool cmd_set(Vis *vis, Win *win, Command *cmd, const char *argv[], Cursor
 			return false;
 		}
 		break;
+	case OPTION_CHANGE_256COLORS:
+		vis->change_colors = toggle ? !vis->change_colors : arg.b;
+		break;
 	default:
 		return false;
 	}
