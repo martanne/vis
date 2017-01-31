@@ -7,7 +7,8 @@ SRC = array.c buffer.c libutf.c main.c map.c register.c ring-buffer.c \
 	ui-curses.c view.c vis.c vis-lua.c vis-modes.c vis-motions.c \
 	vis-operators.c vis-prompt.c vis-text-objects.c $(REGEX_SRC)
 
-EXECUTABLES = vis vis-clipboard vis-complete vis-menu vis-digraph vis-open
+ELF = vis vis-menu vis-digraph
+EXECUTABLES = $(ELF) vis-clipboard vis-complete vis-open
 
 MANUALS = $(EXECUTABLES:=.1)
 
@@ -44,7 +45,7 @@ LDFLAGS_VIS = $(LDFLAGS_AUTO) $(LDFLAGS_TERMKEY) $(LDFLAGS_CURSES) $(LDFLAGS_ACL
 
 STRIP?=strip
 
-all: vis vis-menu vis-digraph
+all: $(ELF)
 
 config.h:
 	cp config.def.h config.h
@@ -80,7 +81,7 @@ test:
 
 clean:
 	@echo cleaning
-	@rm -f vis vis-menu vis-digraph vis-${VERSION}.tar.gz *.gcov *.gcda *.gcno
+	@rm -f $(ELF) vis-${VERSION}.tar.gz *.gcov *.gcda *.gcno
 
 dist: clean
 	@echo creating dist tarball
@@ -98,9 +99,11 @@ luadoc:
 luadoc-all:
 	@cd lua/doc && ldoc -a . && sed -e "s/RELEASE/${VERSION}/" -i index.html
 
-install: vis vis-menu vis-digraph
+install: $(ELF)
 	@echo stripping executable
-	@${STRIP} vis
+	@for e in $(ELF); do \
+		${STRIP} "$$e"; \
+	done
 	@echo installing executable files to ${DESTDIR}${PREFIX}/bin
 	@mkdir -p ${DESTDIR}${PREFIX}/bin
 	@for e in ${EXECUTABLES}; do \

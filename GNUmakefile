@@ -258,8 +258,9 @@ standalone: clean
 
 single: standalone
 	cp vis-single.sh vis-single
-	strip vis
-	strip vis-menu
+	for e in $(ELF); do \
+		${STRIP} "$$e"; \
+	done
 	tar c $(EXECUTABLES) lua/ | gzip -9 >> vis-single
 
 .PHONY: standalone local dependencies-common dependencies-local dependencies-clean
