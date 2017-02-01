@@ -18,7 +18,10 @@ static size_t op_delete(Vis *vis, Text *txt, OperatorContext *c) {
 
 static size_t op_change(Vis *vis, Text *txt, OperatorContext *c) {
 	op_delete(vis, txt, c);
-	return c->range.start;
+	size_t pos = c->range.start;
+	if (c->linewise)
+		pos = vis_text_insert_nl(vis, txt, pos > 0 ? pos-1 : pos);
+	return pos;
 }
 
 static size_t op_yank(Vis *vis, Text *txt, OperatorContext *c) {
