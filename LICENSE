@@ -1,6 +1,6 @@
 vis as a whole is licensed under the following standard ISC license:
 
- Copyright © 2014-2016 Marc André Tanner, et al.
+ Copyright © 2014-2017 Marc André Tanner, et al.
 
  Permission to use, copy, modify, and/or distribute this software for any
  purpose with or without fee is hereby granted, provided that the above
@@ -30,7 +30,7 @@ under terms compatible with the above ISC license:
    version of Rob Pike's sam text editor originally written for Plan 9
    and distributed under an ISC-like license
 
- - lexers/* the LPeg based lexers used for syntax highlighting are
+ - lua/lexers/* the LPeg based lexers used for syntax highlighting are
    imported from the Scintillua project licensed under the MIT license
 
 Check the individual source files for more specific copyright information.
