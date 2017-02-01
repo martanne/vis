@@ -1415,49 +1415,56 @@ void vis_insert_tab(Vis *vis) {
 	}
 }
 
-static void copy_indent_from_previous_line(Win *win, Cursor *cur) {
-	Text *text = win->file->text;
-	size_t pos = view_cursors_pos(cur);
-	size_t prev_line = text_line_prev(text, pos);
-	if (pos == prev_line)
-		return;
-	size_t begin = text_line_begin(text, prev_line);
-	size_t start = text_line_start(text, begin);
-	size_t len = start-begin;
-	char *buf = malloc(len);
-	if (!buf)
-		return;
-	len = text_bytes_get(text, begin, len, buf);
-	text_insert(text, pos, buf, len);
-	view_cursors_to(cur, pos + len);
-	free(buf);
+size_t vis_text_insert_nl(Vis *vis, Text *txt, size_t pos) {
+	const char *nl = text_newline_char(txt);
+	size_t nl_len = strlen(nl), indent_len = 0;
+	char byte, *indent = NULL;
+	/* insert second newline at end of file, except if there is already one */
+	bool eof = pos == text_size(txt);
+	bool nl2 = eof && !(pos > 0 && text_byte_get(txt, pos-1, &byte) && byte == '\n');
+
+	if (vis->autoindent) {
+		/* copy leading white space of current line */
+		size_t begin = text_line_begin(txt, pos);
+		size_t start = text_line_start(txt, begin);
+		size_t end = text_line_end(txt, start);
+		if (start > pos)
+			start = pos;
+		indent_len = start >= begin ? start-begin : 0;
+		if (start == end) {
+			pos = begin;
+		} else {
+			indent = malloc(indent_len+1);
+			if (indent)
+				indent_len = text_bytes_get(txt, begin, indent_len, indent);
+		}
+	}
+
+	text_insert(txt, pos, nl, nl_len);
+	if (eof) {
+		if (nl2)
+			text_insert(txt, pos, nl, nl_len);
+		else
+			pos -= nl_len; /* place cursor before, not after nl */
+	}
+	pos += nl_len;
+
+	if (indent)
+		text_insert(txt, pos, indent, indent_len);
+	free(indent);
+	return pos + indent_len;
 }
 
 void vis_insert_nl(Vis *vis) {
+	View *view = vis->win->view;
 	Text *txt = vis->win->file->text;
-	const char *nl = text_newline_char(txt);
-	size_t len = strlen(nl);
-	for (Cursor *c = view_cursors(vis->win->view); c; c = view_cursors_next(c)) {
-		char byte;
+	for (Cursor *c = view_cursors(view); c; c = view_cursors_next(c)) {
 		size_t pos = view_cursors_pos(c);
-		/* insert second newline at end of file, except if there is already one */
-		bool eof = pos == text_size(txt);
-		bool nl2 = eof && !(pos > 0 && text_byte_get(txt, pos-1, &byte) && byte == '\n');
-		vis_insert(vis, pos, nl, len);
-		if (eof) {
-			if (nl2)
-				vis_insert(vis, pos, nl, len);
-			else
-				pos -= len; /* place cursor before, not after nl */
-		}
-		view_cursors_scroll_to(c, pos + len);
+		pos = vis_text_insert_nl(vis, txt, pos);
+		view_cursors_scroll_to(c, pos);
 	}
-
-	if (!vis->autoindent)
-		return;
-
-	for (Cursor *c = view_cursors(vis->win->view); c; c = view_cursors_next(c))
-		copy_indent_from_previous_line(vis->win, c);
+	size_t pos = view_cursor_get(view);
+	windows_invalidate(vis, pos, pos-1);
 }
 
 Regex *vis_regex(Vis *vis, const char *pattern) {

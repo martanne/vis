@@ -242,6 +242,7 @@ void macro_operator_record(Vis *vis);
 
 void vis_do(Vis *vis);
 void action_reset(Action*);
+size_t vis_text_insert_nl(Vis*, Text*, size_t pos);
 
 void mode_set(Vis *vis, Mode *new_mode);
 
