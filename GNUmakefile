@@ -27,11 +27,11 @@ LIBLUA_SHA1 = 79790cfd40e09ba796b01a571d4d63b52b1cd950
 LIBLPEG = lpeg-1.0.1
 LIBLPEG_SHA1 = b2f81624e0ce9c99c0731287c3475fac1f1c0f50
 
-LIBACL = acl-2.2.52
-LIBACL_SHA1 = 537dddc0ee7b6aa67960a3de2d36f1e2ff2059d9
+LIBATTR = attr-c1a7b53073202c67becf4df36cadc32ef4759c8a
+LIBATTR_SHA1 = 77761b31d13d464e363621bba81835b25355f204
 
-LIBATTR = attr-2.4.47
-LIBATTR_SHA1 = 5060f0062baee6439f41a433325b8b3671f8d2d8
+LIBACL = acl-38f32ea1865bcc44185f4118fde469cb962cff68
+LIBACL_SHA1 = 5e6971c94bcc3803728d8eba1103f6ee4cb825d5
 
 LIBNCURSES_CONFIG = --disable-database --with-fallbacks=st,st-256color,xterm,xterm-256color,vt100 \
 	--with-shared --enable-widec --enable-ext-colors --with-termlib=tinfo \
@@ -158,52 +158,49 @@ dependency/build/liblpeg-install: dependency/build/liblpeg-build
 # LIBATTR
 
 dependency/sources/attr-%.tar.gz: | dependency/sources
-	wget -c -O $@.part https://download.savannah.gnu.org/releases/attr/$(LIBATTR).src.tar.gz
+	wget -c -O $@.part http://git.savannah.gnu.org/cgit/attr.git/snapshot/$(LIBATTR).tar.gz
 	mv $@.part $@
 	[ -z $(LIBATTR_SHA1) ] || (echo '$(LIBATTR_SHA1)  $@' | sha1sum -c)
 
 dependency/build/libattr-extract: dependency/sources/$(LIBATTR).tar.gz | dependency/build
 	tar xzf $< -C $(dir $@)
+	cd $(dir $@)/$(LIBATTR) && ./autogen.sh
 	touch $@
 
 dependency/build/libattr-configure: dependency/build/libattr-extract
-	cd $(dir $<)/$(LIBATTR) && ./configure --prefix=/usr --libdir=/usr/lib
+	cd $(dir $<)/$(LIBATTR) && ./configure --prefix=/usr --libdir=/usr/lib --with-sysroot=$(DEPS_ROOT)
 	touch $@
 
 dependency/build/libattr-build: dependency/build/libattr-configure
-	sed -i -e '/__BEGIN_DECLS/ c #ifdef __cplusplus\nextern "C" {\n#endif' \
-		-e '/__END_DECLS/ c #ifdef __cplusplus\n}\n#endif' \
-		-e 's/__THROW//' $(dir $<)/$(LIBATTR)/include/xattr.h
-	$(MAKE) -C $(dir $<)/$(LIBATTR) libattr CC=$(CC)
+	$(MAKE) -C $(dir $<)/$(LIBATTR)
 	touch $@
 
 dependency/build/libattr-install: dependency/build/libattr-build
-	$(MAKE) -C $(dir $<)/$(LIBATTR)/libattr DESTDIR=$(DEPS_ROOT) install-dev
-	$(MAKE) -C $(dir $<)/$(LIBATTR)/include DESTDIR=$(DEPS_ROOT) install-dev
+	$(MAKE) -C $(dir $<)/$(LIBATTR) DESTDIR=$(DEPS_ROOT) install
 	touch $@
 
 # LIBACL
 
 dependency/sources/acl-%.tar.gz: | dependency/sources
-	wget -c -O $@.part https://download.savannah.gnu.org/releases/acl/$(LIBACL).src.tar.gz
+	wget -c -O $@.part http://git.savannah.gnu.org/cgit/acl.git/snapshot/$(LIBACL).tar.gz
 	mv $@.part $@
 	[ -z $(LIBACL_SHA1) ] || (echo '$(LIBACL_SHA1)  $@' | sha1sum -c)
 
 dependency/build/libacl-extract: dependency/sources/$(LIBACL).tar.gz | dependency/build
 	tar xzf $< -C $(dir $@)
+	cd $(dir $@)/$(LIBACL) && ./autogen.sh
 	touch $@
 
 dependency/build/libacl-configure: dependency/build/libacl-extract dependency/build/libattr-install
-	cd $(dir $<)/$(LIBACL) && ./configure --prefix=/usr --libdir=/usr/lib --libexecdir=/usr/lib
+	cd $(dir $<)/$(LIBACL) && ./configure --prefix=/usr --libdir=/usr/lib --with-sysroot=$(DEPS_ROOT)
 	touch $@
 
 dependency/build/libacl-build: dependency/build/libacl-configure
-	$(MAKE) -C $(dir $<)/$(LIBACL) include libacl
+	$(MAKE) -C $(dir $<)/$(LIBACL)
 	touch $@
 
 dependency/build/libacl-install: dependency/build/libacl-build
-	$(MAKE) -C $(dir $<)/$(LIBACL)/libacl DESTDIR=$(DEPS_ROOT) install-dev
-	$(MAKE) -C $(dir $<)/$(LIBACL)/include DESTDIR=$(DEPS_ROOT) install-dev
+	$(MAKE) -C $(dir $<)/$(LIBACL) DESTDIR=$(DEPS_ROOT) install
 	touch $@
 
 # COMMON
