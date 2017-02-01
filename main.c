@@ -1979,8 +1979,10 @@ static const char *openline(Vis *vis, const char *keys, const Arg *arg) {
 	} else {
 		if (vis_get_autoindent(vis)) {
 			vis_motion(vis, VIS_MOVE_LINE_START);
+			vis_keys_feed(vis, "<cursor-line-start>");
 		} else {
 			vis_motion(vis, VIS_MOVE_LINE_BEGIN);
+			vis_keys_feed(vis, "<cursor-line-begin>");
 		}
 		vis_keys_feed(vis, "<Enter><Up>");
 	}
