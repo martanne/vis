@@ -572,8 +572,7 @@ static char *parse_until(const char **s, const char *until, const char *escchars
 		}
 	}
 
-	if (buffer_length(&buf))
-	    buffer_append(&buf, "\0", 1);
+	buffer_terminate(&buf);
 
 	return buffer_move(&buf);
 }
@@ -643,8 +642,7 @@ static char *parse_cmdname(const char **s) {
 	while (**s && !isspace((unsigned char)**s) && (!ispunct((unsigned char)**s) || **s == '-'))
 		buffer_append(&buf, (*s)++, 1);
 
-	if (buffer_length(&buf))
-	    buffer_append(&buf, "\0", 1);
+	buffer_terminate(&buf);
 
 	return buffer_move(&buf);
 }
@@ -1627,9 +1625,7 @@ static bool cmd_pipeout(Vis *vis, Win *win, Command *cmd, const char *argv[], Cu
 
 	if (vis->cancel_filter)
 		vis_info_show(vis, "Command cancelled");
-	else if (status == 0)
-		; //vis_info_show(vis, "Command succeded");
-	else
+	else if (status != 0)
 		vis_info_show(vis, "Command failed %s", buffer_content0(&buferr));
 
 	buffer_release(&buferr);

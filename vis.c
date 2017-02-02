@@ -1666,13 +1666,17 @@ int vis_pipe_collect(Vis *vis, Filerange *range, const char *argv[], char **out,
 	Buffer bufout, buferr;
 	buffer_init(&bufout);
 	buffer_init(&buferr);
-	int status = vis_pipe(vis, range, argv, &bufout, read_buffer, &buferr, read_buffer);
+	int status = vis_pipe(vis, range, argv,
+	                      &bufout, out ? read_buffer : NULL,
+	                      &buferr, err ? read_buffer : NULL);
 	buffer_terminate(&bufout);
 	buffer_terminate(&buferr);
 	if (out)
-		*out = bufout.data;
+		*out = buffer_move(&bufout);
 	if (err)
-		*err = buferr.data;
+		*err = buffer_move(&buferr);
+	buffer_release(&bufout);
+	buffer_release(&buferr);
 	return status;
 }
 
