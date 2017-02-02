@@ -79,9 +79,9 @@ local operator = token(l.OPERATOR, S('<>=*/+-`@%:()'))
 local entity = token('entity', '&' * word)
 
 M._rules = {
-  {'func', func},
   {'whitespace', ws},
   {'keyword', keyword},
+  {'func', func},
   {'identifier', identifier},
   {'string', string},
   {'comment', comment},
