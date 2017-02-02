@@ -13,9 +13,10 @@ Vis searches the lexers in the following locations (check the end of the
  * `./lua/lexers` relative to the binary location (using `/proc/self/exe`)
  * `$XDG_CONFIG_HOME/vis/lexers` where `$XDG_CONFIG_HOME` refers to
    `$HOME/.config` if unset.
+ * `/etc/vis/lexers`
  * `/usr/local/share/vis/lexers` or `/usr/share/vis/lexers` depending on
     the build configuration
- * `package.path` (standard lua search path)
+ * `package.path` the standard Lua search path is queried for `lexers/$name`
 
 At runtime a specific lexer can be loded by means of `:set syntax <name>`
 where `<name>` corresponds to the filename without the `.lua` extension.
