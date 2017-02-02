@@ -9,11 +9,11 @@ based lexers from the [Scintillua](http://foicica.com/scintillua/) project.
 Vis searches the lexers in the following locations (check the end of the
 `:help` output for the exact paths used by your binary):
 
- * `$VIS_PATH/lexers`
- * `./lua/lexers` relative to the binary location (using `/proc/self/exe`)
- * `$XDG_CONFIG_HOME/vis/lexers` where `$XDG_CONFIG_HOME` refers to
+ * `$VIS_PATH`
+ * `./lua` relative to the binary location (using `/proc/self/exe`)
+ * `$XDG_CONFIG_HOME/vis` where `$XDG_CONFIG_HOME` refers to
    `$HOME/.config` if unset.
- * `/usr/local/share/vis/lexers` or `/usr/share/vis/lexers` depending on
+ * `/usr/local/share/vis` or `/usr/share/vis` depending on
     the build configuration
  * `package.path` (standard lua search path)
 

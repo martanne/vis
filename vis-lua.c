@@ -2183,11 +2183,11 @@ void vis_lua_init(Vis *vis) {
 	vis_lua_path_strip(vis);
 
 	/* extends lua's package.path with:
-	 * - $VIS_PATH/{,lexers}
-	 * - {,lexers} relative to the binary location
-	 * - $XDG_CONFIG_HOME/vis/{,lexers} (defaulting to $HOME/.config/vis/{,lexers})
-	 * - /etc/vis/{,lexers} (for system-wide configuration provided by administrator)
-	 * - /usr/local/share/vis/{,lexers} (or whatever is specified during ./configure)
+	 * - $VIS_PATH
+	 * - ./lua (relative path to the binary location)
+	 * - $XDG_CONFIG_HOME/vis (defaulting to $HOME/.config/vis)
+	 * - /etc/vis (for system-wide configuration provided by administrator)
+	 * - /usr/(local/)?share/vis (or whatever is specified during ./configure)
 	 * - package.path (standard lua search path)
 	 */
 	char path[PATH_MAX];
