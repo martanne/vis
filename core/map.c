@@ -104,8 +104,6 @@ int main(int argc, char *argv[]) {
 	ok(map_delete(map, "cafe") == &values[1] && !map_get(map, "cafe"), "Delete existing key");
 	ok(map_closest(map, "cafe") == &values[2], "Closest unambigious");
 	ok(map_put(map, "cafe", &values[1]) && get(map, "cafe", &values[1]), "Put 3 again");
-	ok(!map_prefix_delete(map, "404"), "Delete empty prefix map");
-	ok(map_prefix_delete(map, "caf") && !map_contains(map, "caf"), "Delete non-empty prefix map");
 
 	map_clear(map);
 	ok(map_empty(map), "Empty after clean");
