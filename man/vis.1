@@ -1242,7 +1242,10 @@ Upon startup
 .Nm
 will source the first
 .Pa visrc.lua
-configuration file found from these locations:
+configuration file found from these locations. All actively used paths can
+be listed at runtime using the
+.Cm :help
+command.
 .Bl -bullet
 .It
 .Pa $VIS_PATH
@@ -1260,6 +1263,9 @@ refers to
 .Pa $HOME/.config
 if unset.
 .
+.It
+.Pa /etc/vis
+for a system-wide configuration provided by administrator.
 .It
 .Pa /usr/local/share/vis
 or

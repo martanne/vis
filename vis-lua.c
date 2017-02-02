@@ -2186,6 +2186,7 @@ void vis_lua_init(Vis *vis) {
 	 * - $VIS_PATH/{,lexers}
 	 * - {,lexers} relative to the binary location
 	 * - $XDG_CONFIG_HOME/vis/{,lexers} (defaulting to $HOME/.config/vis/{,lexers})
+	 * - /etc/vis/{,lexers} (for system-wide configuration provided by administrator)
 	 * - /usr/local/share/vis/{,lexers} (or whatever is specified during ./configure)
 	 * - package.path (standard lua search path)
 	 */
@@ -2200,6 +2201,8 @@ void vis_lua_init(Vis *vis) {
 		if (pw)
 			home = pw->pw_dir;
 	}
+
+	vis_lua_path_add(vis, "/etc/vis");
 
 	const char *xdg_config = getenv("XDG_CONFIG_HOME");
 	if (xdg_config) {
