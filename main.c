@@ -1321,14 +1321,15 @@ static const char *cursors_new(Vis *vis, const char *keys, const Arg *arg) {
 			view_line_up(cursor);
 		size_t newpos = view_cursors_pos(cursor);
 		view_cursors_to(cursor, oldpos);
-		if (!view_cursors_new(view, newpos)) {
-			if (arg->i == -1) {
-				cursor = view_cursors_prev(cursor);
-			} else if (arg->i == +1) {
-				cursor = view_cursors_next(cursor);
-			}
-			view_cursors_primary_set(cursor);
+		Cursor *cursor_new = view_cursors_new(view, newpos);
+		if (!cursor_new) {
+			if (arg->i == -1)
+				cursor_new = view_cursors_prev(cursor);
+			else if (arg->i == +1)
+				cursor_new = view_cursors_next(cursor);
 		}
+		if (cursor_new)
+			view_cursors_primary_set(cursor_new);
 	}
 	vis_count_set(vis, VIS_COUNT_UNKNOWN);
 	return keys;
@@ -1446,6 +1447,7 @@ static const char *cursors_select_next(Vis *vis, const char *keys, const Arg *ar
 		size_t pos = text_char_prev(txt, word.end);
 		if ((cursor = view_cursors_new(view, pos))) {
 			view_cursors_selection_set(cursor, &word);
+			view_cursors_primary_set(cursor);
 			goto out;
 		}
 	}
@@ -1453,8 +1455,10 @@ static const char *cursors_select_next(Vis *vis, const char *keys, const Arg *ar
 	sel = view_cursors_selection_get(view_cursors(view));
 	word = text_object_word_find_prev(txt, sel.start, buf);
 	size_t pos = text_char_prev(txt, word.end);
-	if ((cursor = view_cursors_new(view, pos)))
+	if ((cursor = view_cursors_new(view, pos))) {
 		view_cursors_selection_set(cursor, &word);
+		view_cursors_primary_set(cursor);
+	}
 
 out:
 	free(buf);

@@ -981,7 +981,6 @@ static Cursor *cursors_new(View *view, size_t pos, bool force) {
 	} else {
 		view->cursors = c;
 	}
-	view->cursor = c;
 	view->cursor_count++;
 	view_cursors_dispose(view->cursor_dead);
 	view_cursors_to(c, pos);
