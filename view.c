@@ -1249,7 +1249,7 @@ void view_cursors_selection_start(Cursor *c) {
 	Text *txt = c->view->text;
 	c->sel->anchor = text_mark_set(txt, pos);
 	c->sel->cursor = c->sel->anchor;
-	view_draw(c->view);
+	c->view->need_update = true;
 }
 
 void view_cursors_selection_restore(Cursor *c) {
@@ -1266,8 +1266,6 @@ void view_cursors_selection_restore(Cursor *c) {
 	if (!(c->sel = view_selections_new(c->view, c)))
 		return;
 	view_selections_set(c->sel, &sel);
-	view_cursors_selection_sync(c);
-	view_draw(c->view);
 }
 
 void view_cursors_selection_stop(Cursor *c) {
@@ -1276,7 +1274,7 @@ void view_cursors_selection_stop(Cursor *c) {
 
 void view_cursors_selection_clear(Cursor *c) {
 	view_selections_free(c->sel);
-	view_draw(c->view);
+	c->view->need_update = true;
 }
 
 void view_cursors_selection_swap(Cursor *c) {
@@ -1301,13 +1299,15 @@ Filerange view_cursors_selection_get(Cursor *c) {
 void view_cursors_selection_set(Cursor *c, const Filerange *r) {
 	if (!text_range_valid(r))
 		return;
-	if (!c->sel && !(c->sel = view_selections_new(c->view, c)))
+	bool new = !c->sel;
+	if (new && !(c->sel = view_selections_new(c->view, c)))
 		return;
-
 	view_selections_set(c->sel, r);
-	size_t pos = view_cursors_pos(c);
-	if (!text_range_contains(r, pos))
-		view_cursors_selection_sync(c);
+	if (!new) {
+		size_t pos = view_cursors_pos(c);
+		if (!text_range_contains(r, pos))
+			view_cursors_selection_sync(c);
+	}
 }
 
 Selection *view_selections_new(View *view, Cursor *c) {
@@ -1409,7 +1409,7 @@ void view_selections_set(Selection *s, const Filerange *r) {
 		s->anchor = text_mark_set(txt, r->start);
 		s->cursor = text_mark_set(txt, end);
 	}
-	view_draw(s->view);
+	s->view->need_update = true;
 }
 
 Text *view_text(View *view) {
