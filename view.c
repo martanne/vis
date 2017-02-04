@@ -80,6 +80,7 @@ struct View {
 	Line *lastline;     /* last currently used line, always <= bottomline */
 	Line *bottomline;   /* bottom of view, might be unused if lastline < bottomline */
 	Cursor *cursor;     /* main cursor, always placed within the visible viewport */
+	Cursor *cursor_latest; /* most recently created cursor */
 	Cursor *cursor_dead;/* main cursor which was disposed, will be removed when another cursor is created */
 	int cursor_count;   /* how many cursors do currently exist */
 	Line *line;         /* used while drawing view content, line where next char will be drawn */
@@ -939,25 +940,27 @@ static Cursor *cursors_new(View *view, size_t pos, bool force) {
 	c->generation = view->cursor_generation;
 	if (!view->cursors) {
 		view->cursor = c;
+		view->cursor_latest = c;
 		view->cursors = c;
 		view->cursor_count = 1;
 		return c;
 	}
 
 	Cursor *prev = NULL, *next = NULL;
-	size_t cur = view_cursors_pos(view->cursor);
+	Cursor *latest = view->cursor_latest ? view->cursor_latest : view->cursor;
+	size_t cur = view_cursors_pos(latest);
 	if (pos == cur) {
-		prev = view->cursor;
+		prev = latest;
 		next = prev->next;
 	} else if (pos > cur) {
-		prev = view->cursor;
+		prev = latest;
 		for (next = prev->next; next; prev = next, next = next->next) {
 			cur = view_cursors_pos(next);
 			if (pos <= cur)
 				break;
 		}
 	} else if (pos < cur) {
-		next = view->cursor;
+		next = latest;
 		for (prev = next->prev; prev; next = prev, prev = prev->prev) {
 			cur = view_cursors_pos(prev);
 			if (pos >= cur)
@@ -981,6 +984,7 @@ static Cursor *cursors_new(View *view, size_t pos, bool force) {
 	} else {
 		view->cursors = c;
 	}
+	view->cursor_latest = c;
 	view->cursor_count++;
 	view_cursors_dispose(view->cursor_dead);
 	view_cursors_to(c, pos);
@@ -1079,6 +1083,8 @@ static void view_cursors_free(Cursor *c) {
 		c->view->cursor = c->next ? c->next : c->prev;
 	if (c->view->cursor_dead == c)
 		c->view->cursor_dead = NULL;
+	if (c->view->cursor_latest == c)
+		c->view->cursor_latest = c->prev ? c->prev : c->next;
 	c->view->cursor_count--;
 	free(c);
 }
