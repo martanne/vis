@@ -520,6 +520,12 @@ or
 if the shell command is omitted, the last shell command
 .Pq "of any type"
 is substituted.
+Unless the file being edited is unnamed, all these external commands
+can refer to its absolute path and file name through the
+.Ic $vis_filepath
+and
+.Ic $vis_filename
+environment variables.
 .Ss Loops and conditionals
 .Bl -tag -width indent
 .It Ic x/regexp/ Bq command

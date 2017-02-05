@@ -1548,6 +1548,12 @@ int vis_pipe(Vis *vis, File *file, Filerange *range, const char *argv[],
 		close(perr[1]);
 		close(null);
 
+		if (file->name) {
+			char *name = strrchr(file->name, '/');
+			setenv("vis_filepath", file->name, 1);
+			setenv("vis_filename", name ? name+1 : file->name, 1);
+		}
+
 		if (!argv[1])
 			execlp(vis->shell, vis->shell, "-c", argv[0], (char*)NULL);
 		else
