@@ -488,7 +488,7 @@ bool vis_prompt_cmd(Vis*, const char *cmd);
  * if read_std{out,err} are non-NULL they will be called when output from
  * the forked process is available.
  */
-int vis_pipe(Vis *vis, Filerange *range, const char *argv[],
+int vis_pipe(Vis*, File*, Filerange*, const char *argv[],
 	void *stdout_context, ssize_t (*read_stdout)(void *stdout_context, char *data, size_t len),
 	void *stderr_context, ssize_t (*read_stderr)(void *stderr_context, char *data, size_t len));
 

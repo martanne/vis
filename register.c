@@ -1,7 +1,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "vis.h"
+#include "vis-core.h"
 #include "text.h"
 #include "util.h"
 #include "register.h"
@@ -29,7 +29,8 @@ const char *register_get(Vis *vis, Register *reg, size_t *len) {
 		buffer_init(&buferr);
 		buffer_clear(&reg->buf);
 
-		int status = vis_pipe(vis, &(Filerange){ .start = 0, .end = 0 },
+		int status = vis_pipe(vis, vis->win->file,
+			&(Filerange){ .start = 0, .end = 0 },
 			(const char*[]){ VIS_CLIPBOARD, "--paste", NULL },
 			&reg->buf, read_buffer, &buferr, read_buffer);
 
@@ -70,7 +71,8 @@ bool register_put_range(Vis *vis, Register *reg, Text *txt, Filerange *range) {
 		Buffer buferr;
 		buffer_init(&buferr);
 
-		int status = vis_pipe(vis, range, (const char*[]){ VIS_CLIPBOARD, "--copy", NULL },
+		int status = vis_pipe(vis, vis->win->file, range,
+			(const char*[]){ VIS_CLIPBOARD, "--copy", NULL },
 			NULL, NULL, &buferr, read_buffer);
 
 		if (status != 0)

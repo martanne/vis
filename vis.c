@@ -1481,13 +1481,13 @@ Regex *vis_regex(Vis *vis, const char *pattern) {
 	return regex;
 }
 
-int vis_pipe(Vis *vis, Filerange *range, const char *argv[],
+int vis_pipe(Vis *vis, File *file, Filerange *range, const char *argv[],
 	void *stdout_context, ssize_t (*read_stdout)(void *stdout_context, char *data, size_t len),
 	void *stderr_context, ssize_t (*read_stderr)(void *stderr_context, char *data, size_t len)) {
 
 	/* if an invalid range was given, stdin (i.e. key board input) is passed
 	 * through the external command. */
-	Text *text = vis->win->file->text;
+	Text *text = file->text;
 	int pin[2], pout[2], perr[2], status = -1;
 	bool interactive = !text_range_valid(range);
 	Filerange rout = interactive ? text_range_new(0, 0) : *range;
@@ -1547,6 +1547,7 @@ int vis_pipe(Vis *vis, Filerange *range, const char *argv[],
 		close(perr[0]);
 		close(perr[1]);
 		close(null);
+
 		if (!argv[1])
 			execlp(vis->shell, vis->shell, "-c", argv[0], (char*)NULL);
 		else
@@ -1666,7 +1667,7 @@ int vis_pipe_collect(Vis *vis, Filerange *range, const char *argv[], char **out,
 	Buffer bufout, buferr;
 	buffer_init(&bufout);
 	buffer_init(&buferr);
-	int status = vis_pipe(vis, range, argv,
+	int status = vis_pipe(vis, vis->win->file, range, argv,
 	                      &bufout, out ? read_buffer : NULL,
 	                      &buferr, err ? read_buffer : NULL);
 	buffer_terminate(&bufout);
