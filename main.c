@@ -1716,9 +1716,14 @@ static const char *operator_filter(Vis *vis, const char *keys, const Arg *arg) {
 }
 
 static const char *movement_key(Vis *vis, const char *keys, const Arg *arg) {
+	if (!keys[0]) {
+		vis_keymap_disable(vis);
+		return NULL;
+	}
+
 	char key[32];
 	const char *next;
-	if (!keys[0] || !(next = vis_keys_next(vis, keys)))
+	if (!(next = vis_keys_next(vis, keys)))
 		return NULL;
 	size_t len = next - keys;
 	if (len < sizeof key) {
