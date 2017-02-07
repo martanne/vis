@@ -80,9 +80,9 @@ typedef struct {
 	Filerange (*vis)(Vis*, Text*, size_t pos);
 	Filerange (*user)(Vis*, Win*, void *data, size_t pos);
 	enum {
-		INNER = 1 << 0, /* whether the object should include */
-		OUTER = 1 << 1, /* the delimiting symbols or not */
-		SPLIT = 1 << 2, /* whether multiple applications will yield a split range */
+		TEXTOBJECT_DELIMITED_INNER = 1 << 0, /* single byte delimited, inner variant */
+		TEXTOBJECT_DELIMITED_OUTER = 1 << 1, /* single byte delimited, outer variant */
+		TEXTOBJECT_NON_CONTIGUOUS  = 1 << 2, /* multiple applications yield a split range */
 	} type;
 	void *data;
 } TextObject;

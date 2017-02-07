@@ -771,7 +771,7 @@ void vis_do(Vis *vis) {
 					r = a->textobj->user(vis, win, a->textobj->data, pos);
 				if (!text_range_valid(&r))
 					break;
-				if (a->textobj->type & OUTER) {
+				if (a->textobj->type & TEXTOBJECT_DELIMITED_OUTER) {
 					r.start--;
 					r.end++;
 				}
