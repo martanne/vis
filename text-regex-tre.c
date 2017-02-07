@@ -20,8 +20,14 @@ size_t text_regex_nsub(Regex *r) {
 
 static int str_next_char(tre_char_t *c, unsigned int *pos_add, void *context) {
 	Regex *r = context;
-	text_iterator_byte_get(&r->it, (char*)c);
-	return r->it.pos < r->end && text_iterator_byte_next(&r->it, NULL) ? 0 : 1;
+	*pos_add = 1;
+	if (r->it.pos < r->end && text_iterator_byte_get(&r->it, (char*)c)) {
+		text_iterator_byte_next(&r->it, NULL);
+		return 0;
+	} else {
+		*c = '\0';
+		return 1;
+	}
 }
 
 static void str_rewind(size_t pos, void *context) {

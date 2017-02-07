@@ -506,19 +506,16 @@ static Location piece_get_intern(Text *txt, size_t pos) {
  */
 static Location piece_get_extern(Text *txt, size_t pos) {
 	size_t cur = 0;
+	Piece *p;
 
-	if (pos > 0 && pos == txt->size) {
-		Piece *p = txt->begin.next;
-		while (p->next->next)
-			p = p->next;
-		return (Location){ .piece = p, .off = p->len };
-	}
-
-	for (Piece *p = txt->begin.next; p->next; p = p->next) {
+	for (p = txt->begin.next; p->next; p = p->next) {
 		if (cur <= pos && pos < cur + p->len)
 			return (Location){ .piece = p, .off = pos - cur };
 		cur += p->len;
 	}
+
+	if (cur == pos)
+		return (Location){ .piece = p->prev, .off = p->prev->len };
 
 	return (Location){ 0 };
 }
@@ -1115,9 +1112,11 @@ Text *text_load(const char *filename) {
 	Text *txt = calloc(1, sizeof *txt);
 	if (!txt)
 		return NULL;
+	Piece *p = piece_alloc(txt);
+	if (!p)
+		goto out;
+	size_t size = 0;
 	int fd = -1;
-	piece_init(&txt->begin, NULL, &txt->end, NULL, 0);
-	piece_init(&txt->end, &txt->begin, NULL, NULL, 0);
 	lineno_cache_invalidate(&txt->lines);
 	if (filename) {
 		if ((fd = open(filename, O_RDONLY)) == -1)
@@ -1129,21 +1128,24 @@ Text *text_load(const char *filename) {
 			goto out;
 		}
 		// XXX: use lseek(fd, 0, SEEK_END); instead?
-		size_t size = txt->info.st_size;
-		if (size < BLOCK_MMAP_SIZE)
-			txt->block = block_read(txt, size, fd);
-		else
-			txt->block = block_mmap(txt, size, fd, 0);
-		if (!txt->block)
-			goto out;
-		Piece *p = piece_alloc(txt);
-		if (!p)
-			goto out;
-		piece_init(&txt->begin, NULL, p, NULL, 0);
-		piece_init(p, &txt->begin, &txt->end, txt->block->data, txt->block->len);
-		piece_init(&txt->end, p, NULL, NULL, 0);
-		txt->size = txt->block->len;
+		size = txt->info.st_size;
+		if (size > 0) {
+			if (size < BLOCK_MMAP_SIZE)
+				txt->block = block_read(txt, size, fd);
+			else
+				txt->block = block_mmap(txt, size, fd, 0);
+			if (!txt->block)
+				goto out;
+			piece_init(p, &txt->begin, &txt->end, txt->block->data, txt->block->len);
+		}
 	}
+
+	if (size == 0)
+		piece_init(p, &txt->begin, &txt->end, "\0", 0);
+
+	piece_init(&txt->begin, NULL, p, NULL, 0);
+	piece_init(&txt->end, p, NULL, NULL, 0);
+	txt->size = p->len;
 	/* write an empty revision */
 	change_alloc(txt, EPOS);
 	text_snapshot(txt);
@@ -1379,7 +1381,8 @@ bool text_iterator_next(Iterator *it) {
 }
 
 bool text_iterator_prev(Iterator *it) {
-	return text_iterator_init(it, it->pos, it->piece ? it->piece->prev : NULL, 0);
+	size_t len = it->piece && it->piece->prev ? it->piece->prev->len : 0;
+	return text_iterator_init(it, it->pos, it->piece ? it->piece->prev : NULL, len);
 }
 
 bool text_iterator_valid(const Iterator *it) {
@@ -1388,37 +1391,49 @@ bool text_iterator_valid(const Iterator *it) {
 }
 
 bool text_iterator_byte_next(Iterator *it, char *b) {
-	if (!text_iterator_valid(it))
+	if (!it->piece || !it->piece->next)
 		return false;
-	it->text++;
-	/* special case for advancement to EOF */
-	if (it->pos+1 == it->piece->text->size) {
+	bool eof = true;
+	if (it->text < it->end) {
+		it->text++;
 		it->pos++;
-		if (b)
-			*b = '\0';
-		return true;
+		eof = false;
+	} else if (!it->piece->prev) {
+		eof = false;
 	}
-	while (it->text >= it->end) {
-		if (!text_iterator_next(it))
-			return false;
-		it->text = it->start;
+
+	while (it->text == it->end) {
+		if (!text_iterator_next(it)) {
+			if (eof)
+				return false;
+			if (b)
+				*b = '\0';
+			return text_iterator_prev(it);
+		}
 	}
-	it->pos++;
+
 	if (b)
 		*b = *it->text;
 	return true;
 }
 
 bool text_iterator_byte_prev(Iterator *it, char *b) {
-	if (!text_iterator_valid(it))
+	if (!it->piece || !it->piece->prev)
 		return false;
+	bool eof = !it->piece->next;
 	while (it->text == it->start) {
-		if (!text_iterator_prev(it))
-			return false;
-		it->text = it->end;
+		if (!text_iterator_prev(it)) {
+			if (!eof)
+				return false;
+			if (b)
+				*b = '\0';
+			return text_iterator_next(it);
+		}
 	}
+
 	--it->text;
 	--it->pos;
+
 	if (b)
 		*b = *it->text;
 	return true;
@@ -1513,9 +1528,11 @@ size_t text_bytes_get(Text *txt, size_t pos, size_t len, char *buf) {
 		size_t piece_len = it.end - it.text;
 		if (piece_len > rem)
 			piece_len = rem;
-		memcpy(cur, it.text, piece_len);
-		cur += piece_len;
-		rem -= piece_len;
+		if (piece_len) {
+			memcpy(cur, it.text, piece_len);
+			cur += piece_len;
+			rem -= piece_len;
+		}
 	}
 	return len - rem;
 }
