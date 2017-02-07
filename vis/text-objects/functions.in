@@ -1,0 +1,26 @@
+static double pi = 3.14;
+
+/* addition */
+int add(int a, int b) {
+	return a+b;
+}
+
+static double e = 2.71;
+
+/* multiplication of
+ *
+ *  a*b
+ */
+int mul(int a, int b)
+{
+	return a*b;
+}
+
+static double sqrt2 = 1.41;
+
+int
+div(int a, int b)
+{
+	return a/b;
+}
+

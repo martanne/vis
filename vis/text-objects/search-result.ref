@@ -1,0 +1,8 @@
+// add static using gn
+static void f1(void);
+static void f2(void);
+static void f3(void);
+// add static using gN
+static void f4(void);
+static void f5(void);
+static void f6(void);

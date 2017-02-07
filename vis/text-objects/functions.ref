@@ -1,0 +1,12 @@
+static double pi = 3.14;
+
+// add
+
+static double e = 2.71;
+
+// mul
+
+static double sqrt2 = 1.41;
+
+// div
+

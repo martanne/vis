@@ -1,0 +1,4 @@
+/continue<Enter>
+3vi<Tab>
+:x/^/ c/\/\/<Enter>
+<Escape>
