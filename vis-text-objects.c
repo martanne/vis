@@ -194,11 +194,11 @@ const TextObject vis_textobjects[] = {
 	},
 	[VIS_TEXTOBJECT_SEARCH_FORWARD] = {
 		.vis = search_forward,
-		.type = TEXTOBJECT_NON_CONTIGUOUS,
+		.type = TEXTOBJECT_NON_CONTIGUOUS|TEXTOBJECT_EXTEND_FORWARD,
 	},
 	[VIS_TEXTOBJECT_SEARCH_BACKWARD] = {
 		.vis = search_backward,
-		.type = TEXTOBJECT_NON_CONTIGUOUS,
+		.type = TEXTOBJECT_NON_CONTIGUOUS|TEXTOBJECT_EXTEND_BACKWARD,
 	},
 };
 

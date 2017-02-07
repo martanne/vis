@@ -776,13 +776,22 @@ void vis_do(Vis *vis) {
 					r.end++;
 				}
 
-				if (vis->mode->visual)
+				if (vis->mode->visual || (i > 0 && !(a->textobj->type & TEXTOBJECT_NON_CONTIGUOUS)))
 					c.range = text_range_union(&c.range, &r);
 				else
 					c.range = r;
 
-				if (i < count - 1)
-					pos = c.range.end + 1;
+				if (i < count - 1) {
+					if (a->textobj->type & TEXTOBJECT_EXTEND_BACKWARD) {
+						pos = c.range.start;
+						if ((a->textobj->type & TEXTOBJECT_DELIMITED_INNER) && pos > 0)
+							pos--;
+					} else {
+						pos = c.range.end;
+						if (a->textobj->type & TEXTOBJECT_DELIMITED_INNER)
+							pos++;
+					}
+				}
 			}
 		} else if (vis->mode->visual) {
 			c.range = view_cursors_selection_get(cursor);

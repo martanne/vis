@@ -83,6 +83,8 @@ typedef struct {
 		TEXTOBJECT_DELIMITED_INNER = 1 << 0, /* single byte delimited, inner variant */
 		TEXTOBJECT_DELIMITED_OUTER = 1 << 1, /* single byte delimited, outer variant */
 		TEXTOBJECT_NON_CONTIGUOUS  = 1 << 2, /* multiple applications yield a split range */
+		TEXTOBJECT_EXTEND_FORWARD  = 1 << 3, /* multiple applications extend towards the end of file (default) */
+		TEXTOBJECT_EXTEND_BACKWARD = 1 << 4, /* multiple applications extend towards the begin of file */
 	} type;
 	void *data;
 } TextObject;
