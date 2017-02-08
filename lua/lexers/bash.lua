@@ -46,7 +46,7 @@ local identifier = token(l.IDENTIFIER, l.word)
 -- Variables.
 local variable = token(l.VARIABLE,
                        '$' * (S('!#?*@$') + l.digit^1 + l.word +
-                              l.delimited_range('{}', true, true)))
+                              l.delimited_range('{}', true, true, true)))
 
 -- Operators.
 local operator = token(l.OPERATOR, S('=!<>+-/*^&|~.,:;?()[]{}'))
