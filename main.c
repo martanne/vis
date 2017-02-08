@@ -2040,7 +2040,10 @@ static const char *unicode_info(Vis *vis, const char *keys, const Arg *arg) {
 	mbstate_t ps = { 0 };
 	Iterator it = text_iterator_get(txt, start);
 	for (size_t pos = start; it.pos < end; pos = it.pos) {
-		text_iterator_codepoint_next(&it, NULL);
+		if (!text_iterator_codepoint_next(&it, NULL)) {
+			vis_info_show(vis, "Failed to parse code point");
+			goto err;
+		}
 		size_t len = it.pos - pos;
 		wchar_t wc = 0xFFFD;
 		size_t res = mbrtowc(&wc, codepoint, len, &ps);
@@ -2061,6 +2064,7 @@ static const char *unicode_info(Vis *vis, const char *keys, const Arg *arg) {
 		codepoint += len;
 	}
 	vis_info_show(vis, "%s", buffer_content0(&info));
+err:
 	free(grapheme);
 	buffer_release(&info);
 	return keys;
