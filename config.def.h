@@ -324,14 +324,14 @@ static const KeyBinding bindings_readline[] = {
 };
 
 static const KeyBinding bindings_insert[] = {
-	{ "<C-d>",              ALIAS("<Escape><<i")                        },
+	{ "<C-d>",              ALIAS("<vis-operator-shift-left><vis-operator-shift-left>") },
 	{ "<C-i>",              ALIAS("<Tab>")                              },
 	{ "<C-j>",              ALIAS("<Enter>")                            },
 	{ "<C-n>",              ACTION(COMPLETE_WORD)                       },
 	{ "<C-x><C-f>",         ACTION(COMPLETE_FILENAME)                   },
 	{ "<C-m>",              ALIAS("<Enter>")                            },
 	{ "<C-r>",              ACTION(INSERT_REGISTER)                     },
-	{ "<C-t>",              ALIAS("<Escape>>>i")                        },
+	{ "<C-t>",              ALIAS("<vis-operator-shift-right><vis-operator-shift-right>") },
 	{ "<C-x><C-e>",         ACTION(WINDOW_SLIDE_UP)                     },
 	{ "<C-x><C-y>",         ACTION(WINDOW_SLIDE_DOWN)                   },
 	{ "<Enter>",            ACTION(INSERT_NEWLINE)                      },
