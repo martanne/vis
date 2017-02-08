@@ -20,11 +20,42 @@ static bool isempty(Text *txt) {
 	return text_size(txt) == 0;
 }
 
+static bool compare_iterator_forward(Iterator *it, const char *data) {
+	char buf[BUFSIZ] = "", b;
+	while (text_iterator_byte_get(it, &b)) {
+		buf[it->pos] = b;
+		text_iterator_byte_next(it, NULL);
+	}
+	return strcmp(data, buf) == 0;
+}
+
+static bool compare_iterator_backward(Iterator *it, const char *data) {
+	char buf[BUFSIZ] = "", b;
+	while (text_iterator_byte_get(it, &b)) {
+		buf[it->pos] = b;
+		text_iterator_byte_prev(it, NULL);
+	}
+	return strcmp(data, buf) == 0;
+}
+
+static bool compare_iterator_both(Text *txt, const char *data) {
+	Iterator it = text_iterator_get(txt, 0);
+	bool forward = compare_iterator_forward(&it, data);
+	text_iterator_byte_prev(&it, NULL);
+	bool forward_backward = compare_iterator_backward(&it, data);
+	it = text_iterator_get(txt, text_size(txt));
+	bool backward = compare_iterator_backward(&it, data);
+	text_iterator_byte_next(&it, NULL);
+	bool backward_forward = compare_iterator_forward(&it, data);
+	return forward && backward && forward_backward && backward_forward;
+}
+
 static bool compare(Text *txt, const char *data) {
 	char buf[BUFSIZ];
 	size_t len = text_bytes_get(txt, 0, sizeof(buf)-1, buf);
 	buf[len] = '\0';
-	return len == strlen(data) && strcmp(buf, data) == 0;
+	return len == strlen(data) && strcmp(buf, data) == 0 &&
+	       compare_iterator_both(txt, data);
 }
 
 int main(int argc, char *argv[]) {
@@ -44,6 +75,31 @@ int main(int argc, char *argv[]) {
 
 	txt = text_load(NULL);
 	ok(txt != NULL && isempty(txt), "Opening empty file");
+
+	Iterator it = text_iterator_get(txt, 0);
+	ok(text_iterator_valid(&it) && it.pos == 0, "Iterator on empty file");
+	char b = '_';
+	ok(text_iterator_byte_get(&it, &b) && b == '\0', "Read EOF from iterator of empty file");
+	b = '_';
+	ok(!text_iterator_byte_prev(&it, &b) && b == '_' &&
+	   !text_iterator_valid(&it), "Moving iterator beyond start of file");
+	ok(!text_iterator_byte_get(&it, &b) && b == '_' &&
+	   !text_iterator_valid(&it), "Access iterator beyond start of file");
+	ok(text_iterator_byte_next(&it, &b) && b == '\0' &&
+	   text_iterator_valid(&it), "Moving iterator back from beyond start of file");
+	b = '_';
+	ok(text_iterator_byte_get(&it, &b) && b == '\0' &&
+	   text_iterator_valid(&it), "Accessing iterator after moving back from beyond start of file");
+	b = '_';
+	ok(!text_iterator_byte_next(&it, &b) && b == '_' &&
+	   !text_iterator_valid(&it), "Moving iterator beyond end of file");
+	ok(!text_iterator_byte_get(&it, &b) && b == '_' &&
+	   !text_iterator_valid(&it), "Accessing iterator beyond end of file");
+	ok(text_iterator_byte_prev(&it, &b) && b == '\0' &&
+	   text_iterator_valid(&it), "Moving iterator back from beyond end of file");
+	b = '_';
+	ok(text_iterator_byte_get(&it, &b) && b == '\0' &&
+	   text_iterator_valid(&it), "Accessing iterator after moving back from beyond start of file");
 
 	ok(insert(txt, 1, "") && isempty(txt), "Inserting empty data");
 	ok(!insert(txt, 1, " ") && isempty(txt), "Inserting with invalid offset");
