@@ -26,13 +26,14 @@ static void prompt_hide(Win *win) {
 	size_t size = text_size(txt);
 	/* make sure that file is new line terminated */
 	char lastchar = '\0';
-	if (size > 1 && text_byte_get(txt, size-1, &lastchar) && lastchar != '\n')
+	if (size >= 1 && text_byte_get(txt, size-1, &lastchar) && lastchar != '\n')
 		text_insert(txt, size, "\n", 1);
 	/* remove empty entries */
-	Filerange line = text_object_line(txt, size);
-	size_t line_size = text_range_size(&line);
-	if (line_size <= 2 && (lastchar == ':' || lastchar == '/' || lastchar == '?'))
-		text_delete(txt, line.start, line_size);
+	Filerange line_range = text_object_line(txt, text_size(txt)-1);
+	char *line = text_bytes_alloc0(txt, line_range.start, text_range_size(&line_range));
+	if (line && (line[0] == '\n' || (strchr(":/?", line[0]) && (line[1] == '\n' || line[1] == '\0'))))
+		text_delete_range(txt, &line_range);
+	free(line);
 	vis_window_close(win);
 }
 
@@ -162,9 +163,9 @@ void vis_prompt_show(Vis *vis, const char *title) {
 	if (vis->mode->visual)
 		window_selection_save(active);
 	Text *txt = prompt->file->text;
-	text_insert(txt, text_size(txt), title, strlen(title));
+	text_appendf(txt, "%s\n", title);
 	Cursor *cursor = view_cursors_primary_get(prompt->view);
-	view_cursors_scroll_to(cursor, text_size(txt));
+	view_cursors_scroll_to(cursor, text_size(txt)-1);
 	prompt->parent = active;
 	prompt->parent_mode = vis->mode;
 	vis_window_mode_map(prompt, VIS_MODE_NORMAL, true, "<Enter>", &prompt_enter_binding);
