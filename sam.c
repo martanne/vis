@@ -1392,8 +1392,9 @@ static bool cmd_select(Vis *vis, Win *win, Command *cmd, const char *argv[], Cur
 		} else {
 			sel = text_range_new(pos, text_char_next(txt, pos));
 		}
-		if (text_range_valid(&sel))
-			ret &= sam_execute(vis, win, cmd->cmd, c, &sel);
+		if (!text_range_valid(&sel))
+			sel = text_range_new(0, 0);
+		ret &= sam_execute(vis, win, cmd->cmd, c, &sel);
 		if (cmd->cmd->cmddef->flags & CMD_ONCE)
 			break;
 	}
