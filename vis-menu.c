@@ -308,7 +308,8 @@ readstdin() {
 
 static void
 xread(int fd, void *buf, size_t nbyte) {
-	if (read(fd, buf, nbyte) < 0)
+	ssize_t r = read(fd, buf, nbyte);
+	if (r < 0 || (size_t)r != nbyte)
 		die("Can not read.");
 }
 
