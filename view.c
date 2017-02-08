@@ -1191,6 +1191,7 @@ Register *view_cursors_register(Cursor *c) {
 void view_cursors_scroll_to(Cursor *c, size_t pos) {
 	View *view = c->view;
 	if (view->cursor == c) {
+		view_draw(view);
 		while (pos < view->start && view_viewport_up(view, 1));
 		while (pos > view->end && view_viewport_down(view, 1));
 	}
