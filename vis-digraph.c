@@ -1968,7 +1968,7 @@ int main(int argc, char *argv[]) {
 
 	if (strcmp(argv[1], "-") == 0) {
 		setup();
-		char name[MAX_DIGRAPH_LENGTH+1];
+		char name[MAX_DIGRAPH_LENGTH+1] = "";
 		for (size_t i = 0; i < sizeof(name)-1; i++) {
 			ssize_t r = readc(name+i);
 			if (r == -1) {
