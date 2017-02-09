@@ -288,28 +288,6 @@ etc.
 
 This would also enable a language agnostic plugin system.
 
-Efficient Search and Replace
-----------------------------
-
-Currently the editor copies the whole text to a contiguous memory block
-and then uses the standard regex functions from libc. Clearly this is not
-a satisfactory solution for large files.
-
-The long term solution is to write our own regular expression engine or
-modify an existing one to make use of the iterator API. This would allow
-efficient search without having to double memory consumption.
-
-The used regex engine should use a non-backtracking algorithm. Useful
-resources include:
-
- - [Russ Cox's regex page](http://swtch.com/~rsc/regexp/)
- - [TRE](https://github.com/laurikari/tre) as
-   [used by musl](http://git.musl-libc.org/cgit/musl/tree/src/regex)
-   which uses a parallel [TNFA matcher](http://laurikari.net/ville/spire2000-tnfa.ps)
- - [Plan9's regex library](http://plan9.bell-labs.com/sources/plan9/sys/src/libregexp/)
-   which has its root in Rob Pike's sam text editor
- - [RE2](https://github.com/google/re2) C++ regex library
-
 Developer Overview
 ==================
 
