@@ -431,7 +431,8 @@ const char *sam_error(enum SamError err) {
 		[SAM_ERR_GROUP_INVALID_CMD] = "Destructive command in group",
 	};
 
-	return err < LENGTH(error_msg) ? error_msg[err] : NULL;
+	size_t idx = err;
+	return idx < LENGTH(error_msg) ? error_msg[idx] : NULL;
 }
 
 static void change_free(Change *c) {
