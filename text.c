@@ -1109,14 +1109,14 @@ ssize_t text_write_range(Text *txt, Filerange *range, int fd) {
 /* load the given file as starting point for further editing operations.
  * to start with an empty document, pass NULL as filename. */
 Text *text_load(const char *filename) {
+	int fd = -1;
+	size_t size = 0;
 	Text *txt = calloc(1, sizeof *txt);
 	if (!txt)
 		return NULL;
 	Piece *p = piece_alloc(txt);
 	if (!p)
 		goto out;
-	size_t size = 0;
-	int fd = -1;
 	lineno_cache_invalidate(&txt->lines);
 	if (filename) {
 		if ((fd = open(filename, O_RDONLY)) == -1)
