@@ -297,24 +297,26 @@ A quick overview over the code structure to get you started:
 
  File(s)             | Description
  ------------------- | -----------------------------------------------------
+ `configure`         | Handwritten, POSIX shell compliant configure script derived from musl
+ `Makefile`          | Standard make targets, BSD `make(1)` compatible
+ `GNUmakefile`       | Developer targets (e.g. for standalone builds)
+ `config.def.h`      | definition of default key bindings, will be copied to `config.h`
  `array.[ch]`        | dynamically growing array, can store arbitrarily sized objects
  `buffer.[ch]`       | dynamically growing buffer used for registers and macros
- `config.def.h`      | definition of default key bindings (mapping of key actions)
- `lexers/`           | Lua LPeg based lexers used for syntax highlighting
- `main.c`            | key action definitions, program entry point
- `map.[ch]`          | crit-bit tree based map supporting unique prefix lookups and ordered iteration, used to implement `:`-commands and run time key bindings
- `register.[ch]`     | register implementation, system clipboard integration via `vis-clipboard`
  `ring-buffer.[ch]`  | fixed size ring buffer used for the jump list
- `sam.[ch]`          | structural regular expression based command language
+ `map.[ch]`          | crit-bit tree based map supporting unique prefix lookups and ordered iteration
+ `register.[ch]`     | register implementation, system clipboard integration via `vis-clipboard`
  `text.[ch]`         | low level text / marks / {un,re}do tree / piece table implementation
  `text-motions.[ch]` | movement functions take a file position and return a new one
  `text-objects.[ch]` | functions take a file position and return a file range
- `text-regex.[ch]`   | text search functionality, designated place for regex engine
+ `text-regex.[ch]`   | text regex search functionality, based on libc `regex(3)`
+ `text-regex-tre.c`  | text regex search functionality, based on libtre
  `text-util.[ch]`    | text related utility functions mostly dealing with file ranges
- `ui-curses.[ch]`    | a terminal / curses based user interface implementation
  `ui.h`              | abstract interface which has to be implemented by ui backends
- `view.[ch]`         | ui-independent viewport, shows part of a file, syntax highlighting, cursor placement, selection handling
- `vis-cmds.c`        | vi(m) `:`-command implementation
+ `ui-curses.[ch]`    | a terminal / curses based user interface implementation
+ `view.[ch]`         | ui-independent viewport, shows part of a file, cursor placement, selection handling
+ `sam.[ch]`          | structural regular expression based command language
+ `vis-cmds.c`        | vi(m) `:`-command implementation, `#included` from sam.c
  `vis-core.h`        | internal header file, various structs for core editor primitives
  `vis.c`             | vi(m) specific editor frontend implementation
  `vis.h`             | vi(m) specific editor frontend library public API
@@ -324,8 +326,21 @@ A quick overview over the code structure to get you started:
  `vis-operators.c`   | vi(m) operator implementation
  `vis-prompt.c`      | `:`, `/` and `?` prompt implemented as a regular file/window with custom key bindings
  `vis-text-objects.c`| vi(m) text object implementations, uses `text-objects.h` internally
- `vis.lua`           | Lua library for vis, providing parts of the exposed API
- `visrc.lua`         | Lua startup and configuration script
+ `main.c`            | Key action definitions, program entry point
+ `lua/`              | Lua runtime files
+ `lua/visrc.lua`     | Lua startup and configuration script
+ `lua/*.lua`         | Lua library for vis, providing parts of the exposed API, syntax highlighting, status bar
+ `lua/lexers/`       | Lua LPeg based lexers used for syntax highlighting
+ `lua/themes/`       | Color themes as used by the lexers
+ `lua/plugins/`      | Non-essential functionality extending core editor primitives
+ `lua/doc/`          | LDoc generated Lua API documentation
+ `man/`              | Manual pages in `mdoc(7)` format
+ `vis-menu.c`        | Interactive menu utility used for file and word completion
+ `vis-open`          | Simple directory browser based on `vis-menu`
+ `vis-complete`      | Simple file and word completion wrapper based on `vis-menu`
+ `vis-digraph.c`     | Utility to print Unicode characters using mnemonics
+ `vis-clipboard`     | Shell script to abstract system clibpoard handling for X, macOS and Cygwin
+ `vis-single.sh`     | Shell script used to produce a self-extracting executable
 
 Testing infrastructure for the [low level core data structures]
 (https://github.com/martanne/vis-test/tree/master/core), [vim compatibility]
@@ -334,3 +349,5 @@ Testing infrastructure for the [low level core data structures]
 (https://github.com/martanne/vis-test/tree/master/vis) and the [Lua API]
 (https://github.com/martanne/vis-test/tree/master/lua) is in place, but
 lacks proper test cases.
+
+Run `make test` to check whether your changes broke something.
