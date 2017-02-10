@@ -12,6 +12,7 @@ typedef struct Win Win;
 #include "ui.h"
 #include "view.h"
 #include "text-regex.h"
+#include "libutf.h"
 
 /* simplify utility renames by distribution packagers */
 #ifndef VIS_MENU
@@ -503,6 +504,9 @@ int vis_pipe_collect(Vis *vis, Filerange *range, const char *argv[], char **out,
 const char *vis_keys_next(Vis*, const char *keys);
 /* Tries to convert next symbolic key to a raw code point, returns -1 for unknown keys */
 long vis_keys_codepoint(Vis*, const char *keys);
+/* Tries to convert next symbolic key to a UTF-8 sequence. Returns false for unknown keys
+ * and leaves `utf8` untouched. Guarantees that `utf8` is NUL terminated on success */
+bool vis_keys_utf8(Vis*, const char *keys, char utf8[static UTFmax+1]);
 /* vis operates as a finite state machine (FSM), feeding keys from an input
  * queue (or a previously recorded macro) to key handling functions (see struct
  * KeyAction) which consume the input.

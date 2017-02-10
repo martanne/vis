@@ -23,7 +23,7 @@ typedef unsigned long Rune;
 #endif
 #endif
 
-#define UTFmax 6 /* maximum bytes per rune */
+#define UTFmax 4 /* maximum bytes per rune */
 
 #define Runeself 0x80             /* rune and utf are equal (<) */
 #define Runemax  RUNE_C(0x10FFFF) /* maximum rune value */

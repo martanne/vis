@@ -962,6 +962,15 @@ long vis_keys_codepoint(Vis *vis, const char *keys) {
 	return -1;
 }
 
+bool vis_keys_utf8(Vis *vis, const char *keys, char utf8[static UTFmax+1]) {
+	Rune rune = vis_keys_codepoint(vis, keys);
+	if (rune == (Rune)-1)
+		return false;
+	size_t len = runetochar(utf8, &rune);
+	utf8[len] = '\0';
+	return true;
+}
+
 static void vis_keys_process(Vis *vis, size_t pos) {
 	Buffer *buf = vis->keys;
 	char *keys = buf->data + pos, *start = keys, *cur = keys, *end = keys, *binding_end = keys;;
