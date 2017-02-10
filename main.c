@@ -1721,16 +1721,12 @@ static const char *movement_key(Vis *vis, const char *keys, const Arg *arg) {
 		return NULL;
 	}
 
-	char key[32];
-	const char *next;
-	if (!(next = vis_keys_next(vis, keys)))
+	const char *next = vis_keys_next(vis, keys);
+	if (!next)
 		return NULL;
-	size_t len = next - keys;
-	if (len < sizeof key) {
-		strncpy(key, keys, len);
-		key[len] = '\0';
-		vis_motion(vis, arg->i, key);
-	}
+	char utf8[UTFmax+1];
+	if (vis_keys_utf8(vis, keys, utf8))
+		vis_motion(vis, arg->i, utf8);
 	return next;
 }
 
