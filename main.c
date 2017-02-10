@@ -1653,15 +1653,11 @@ static const char *replace(Vis *vis, const char *keys, const Arg *arg) {
 	if (!next)
 		return NULL;
 
-	char replacement[64];
-	size_t len = next - keys;
-	if (len >= sizeof(replacement))
+	char replacement[UTFmax+1];
+	if (!vis_keys_utf8(vis, keys, replacement))
 		return next;
 
-	memcpy(replacement, keys, len);
-	replacement[len] = '\0';
-
-	if (strcmp("<Escape>", replacement) == 0)
+	if (replacement[0] == 0x1b) /* <Escape> */
 		return next;
 
 	if (vis_mode_get(vis) == VIS_MODE_NORMAL) {
@@ -1669,7 +1665,7 @@ static const char *replace(Vis *vis, const char *keys, const Arg *arg) {
 		vis_operator(vis, VIS_OP_CHANGE);
 		vis_motion(vis, VIS_MOVE_CHAR_NEXT);
 		for (; count > 0; count--)
-			vis_keys_feed(vis, replacement);
+			vis_keys_feed(vis, replacement[0] == '\n' ? "<Enter>" : replacement);
 	} else {
 		vis_operator(vis, VIS_OP_REPLACE, replacement);
 	}
