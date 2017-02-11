@@ -1,4 +1,4 @@
-:x/\d+<Enter>
+:x/[0-9]+<Enter>
 2<C-l>
 :{ i/{/ a/}/ }<Enter>
 <Escape><Escape>
