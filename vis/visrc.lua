@@ -5,7 +5,7 @@ vis.events.win_open = function(win)
 	if name then
 		-- use the corresponding test.lua file
 		name = string.gsub(name, '%.in$', '')
-		local file = assert(io.popen(string.format("cpp -P '%s.keys'", name), 'r'))
+		local file = io.open(string.format("%s.keys", name))
 		local keys = file:read('*all')
 		keys = string.gsub(keys, '%s*\n', '')
 		keys = string.gsub(keys, '<Space>', ' ')

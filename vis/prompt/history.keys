@@ -1,6 +1,6 @@
-:-0+0x/line/c/word/<Enter>   /* replace something on first line */
-:2<Enter>l               /* select second line */
-:<Up><Up><Enter>         /* repeat replacement */
-:e<Backspace><Backspace> /* simulate a typo on the command line */
-:3<Enter>l               /* select third line */
-:<Up><Up><Enter>         /* repeat replacement */
+:-0+0x/line/c/word/<Enter>
+:2<Enter>l
+:<Up><Up><Enter>
+:e<Backspace><Backspace>
+:3<Enter>l
+:<Up><Up><Enter>

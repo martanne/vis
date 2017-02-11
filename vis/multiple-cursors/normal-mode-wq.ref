@@ -1,4 +1,8 @@
-1: first
-2: second
-3: third
-4: fourth
+make
+sure
+:wq
+works
+when
+multiple
+cursors
+exist
