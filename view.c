@@ -370,6 +370,8 @@ void view_draw(View *view) {
 			/* NUL byte encountered, store it and continue */
 			cell = (Cell){ .data = "\x00", .len = 1, .width = 2 };
 		} else {
+			if (len >= sizeof(cell.data))
+				len = sizeof(cell.data)-1;
 			for (size_t i = 0; i < len; i++)
 				cell.data[i] = cur[i];
 			cell.data[len] = '\0';
@@ -384,7 +386,7 @@ void view_draw(View *view) {
 			cell = (Cell){ .data = "\n", .len = 2, .width = 1 };
 		}
 
-		if (cell.width == 0 && prev_cell.len + cell.len < sizeof(cell.len)) {
+		if (cell.width == 0 && prev_cell.len + cell.len < sizeof(cell.data)) {
 			prev_cell.len += cell.len;
 			strcat(prev_cell.data, cell.data);
 		} else {
