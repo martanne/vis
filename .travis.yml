@@ -6,17 +6,17 @@ matrix:
       compiler: gcc
       env: TARGET=
     - os: linux
-      compiler: gcc
-      env: TARGET=debug
-    - os: linux
-      compiler: gcc
-      env: TARGET=coverage
-    - os: linux
       compiler: clang
       env: TARGET=
     - os: linux
+      compiler: gcc
+      env: TARGET=debug
+    - os: linux
       compiler: clang
       env: TARGET=debug
+    - os: linux
+      compiler: gcc
+      env: TARGET= CONFIG=--disable-lua
     - os: osx
       compiler: clang
       env: TARGET=
@@ -25,12 +25,16 @@ matrix:
       env: TARGET=debug
     - os: osx
       compiler: clang
-      env: TARGET=coverage
+      env: TARGET= CONFIG=--disable-lua
+    - os: osx
+      compiler: clang
+      env: TARGET= CONFIG=--disable-tre
 
 addons:
   apt:
     packages:
     - 9base
+    - libacl1-dev
 
 cache:
   directories:
@@ -42,12 +46,8 @@ before_install:
 install:
   - if [ "$TRAVIS_OS_NAME" = "osx" ]; then
       brew update &&
-      brew install libtermkey &&
-      brew install lua &&
+      brew install libtermkey lua tre plan9port &&
       luarocks install lpeg;
-      if [ "$TARGET" = "coverage" ]; then
-        brew install plan9port;
-      fi
     fi
 
 script:
@@ -55,11 +55,11 @@ script:
   - env
   - locale
   - tty || true
-  - if [ "$TRAVIS_OS_NAME" = "osx" ]; then
-      ./configure && make $TARGET;
-    else
-      make local && make clean && make $TARGET;
+  - if [ "$TRAVIS_OS_NAME" = "linux" ]; then
+      make local && make clean;
     fi
+  - ./configure CFLAGS=-Idependency/install/usr/include LDFLAGS=-Ldependency/install/usr/lib $CONFIG
+  - make $TARGET
   - file vis
   - if [ "$TRAVIS_OS_NAME" = "osx" ]; then
       otool -L vis;
@@ -68,13 +68,11 @@ script:
     fi
   - size vis
   - LD_LIBRARY_PATH="$(pwd)/dependency/install/usr/lib" ./vis -v
-  - LD_LIBRARY_PATH="$(pwd)/dependency/install/usr/lib" make -C test/core $TARGET
+  - LD_LIBRARY_PATH="$(pwd)/dependency/install/usr/lib" make -C test/core coverage
   - LD_LIBRARY_PATH="$(pwd)/dependency/install/usr/lib" make -C test/lua
   - LD_LIBRARY_PATH="$(pwd)/dependency/install/usr/lib" make -C test/vis
   - LD_LIBRARY_PATH="$(pwd)/dependency/install/usr/lib" make -C test/sam
   - LD_LIBRARY_PATH="$(pwd)/dependency/install/usr/lib" make -C test/vim
 
 after_success:
-  - if [ "$TARGET" = "coverage" ]; then
-      bash <(curl -s https://codecov.io/bash);
-    fi
+  - bash <(curl -s https://codecov.io/bash)
