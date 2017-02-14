@@ -2282,7 +2282,18 @@ int main(int argc, char *argv[]) {
 		} else if (strcmp(argv[i], "--") == 0) {
 			break;
 		} else if (strcmp(argv[i], "-v") == 0) {
-			puts("vis " VERSION);
+			fputs("vis " VERSION, stdout);
+			if (CONFIG_LUA)
+				fputs(" +lua", stdout);
+			if (CONFIG_LPEG)
+				fputs(" +lpeg", stdout);
+			if (CONFIG_TRE)
+				fputs(" +tre", stdout);
+			if (CONFIG_ACL)
+				fputs(" +acl", stdout);
+			if (CONFIG_SELINUX)
+				fputs(" +selinux", stdout);
+			fputs("\n", stdout);
 			return 0;
 		} else {
 			fprintf(stderr, "Unknown command option: %s\n", argv[i]);
