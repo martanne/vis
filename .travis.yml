@@ -59,7 +59,7 @@ script:
       make local && make clean;
     fi
   - ./configure CFLAGS="-I$(pwd)/dependency/install/usr/include" LDFLAGS="-L$(pwd)/dependency/install/usr/lib" $CONFIG
-  - make $TARGET
+  - make CFLAGS_EXTRA=--coverage $TARGET
   - file vis
   - if [ "$TRAVIS_OS_NAME" = "osx" ]; then
       otool -L vis;
