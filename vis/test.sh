@@ -4,6 +4,11 @@ export VIS_PATH=.
 [ -z "$VIS" ] && VIS="../../vis"
 $VIS -v
 
+if ! $VIS -v | grep '+lua' >/dev/null 2>&1; then
+	echo "vis compiled without lua support, skipping tests"
+	exit 0
+fi
+
 TESTS_OK=0
 TESTS_RUN=0
 

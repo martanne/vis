@@ -24,6 +24,11 @@ type "$SAM" >/dev/null 2>&1 || {
 echo "$SAM"
 $VIS -v
 
+if ! $VIS -v | grep '+lua' >/dev/null 2>&1; then
+	echo "vis compiled without lua support, skipping tests"
+	exit 0
+fi
+
 TESTS=$1
 [ -z "$TESTS" ] && TESTS=$(find . -name '*.cmd' | sed 's/\.cmd$//g')
 
