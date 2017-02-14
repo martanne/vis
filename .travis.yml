@@ -58,7 +58,7 @@ script:
   - if [ "$TRAVIS_OS_NAME" = "linux" ]; then
       make local && make clean;
     fi
-  - ./configure CFLAGS=-Idependency/install/usr/include LDFLAGS=-Ldependency/install/usr/lib $CONFIG
+  - ./configure CFLAGS="-I$(pwd)/dependency/install/usr/include" LDFLAGS="-L$(pwd)/dependency/install/usr/lib" $CONFIG
   - make $TARGET
   - file vis
   - if [ "$TRAVIS_OS_NAME" = "osx" ]; then
