@@ -1,0 +1,6 @@
+/*
+ * cafe or tea?
+ */
+void drink() {
+	printf("cafe: %d\n", 0xcafebeef);
+}
