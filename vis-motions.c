@@ -394,10 +394,6 @@ const Movement vis_motions[] = {
 		.txt = text_line_finish,
 		.type = INCLUSIVE,
 	},
-	[VIS_MOVE_LINE_LASTCHAR] = {
-		.txt = text_line_lastchar,
-		.type = INCLUSIVE,
-	},
 	[VIS_MOVE_LINE_END] = {
 		.txt = text_line_end,
 	},
