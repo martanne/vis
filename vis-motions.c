@@ -472,22 +472,6 @@ const Movement vis_motions[] = {
 		.txt = text_paragraph_next,
 		.type = LINEWISE|JUMP,
 	},
-	[VIS_MOVE_FUNCTION_START_PREV] = {
-		.txt = text_function_start_prev,
-		.type = LINEWISE|JUMP,
-	},
-	[VIS_MOVE_FUNCTION_START_NEXT] = {
-		.txt = text_function_start_next,
-		.type = LINEWISE|JUMP,
-	},
-	[VIS_MOVE_FUNCTION_END_PREV] = {
-		.txt = text_function_end_prev,
-		.type = LINEWISE|JUMP,
-	},
-	[VIS_MOVE_FUNCTION_END_NEXT] = {
-		.txt = text_function_end_next,
-		.type = LINEWISE|JUMP,
-	},
 	[VIS_MOVE_BLOCK_START] = {
 		.txt = text_block_start,
 		.type = JUMP,

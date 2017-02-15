@@ -168,10 +168,6 @@ enum {
 	VIS_ACTION_CURSOR_PARAGRAPH_NEXT,
 	VIS_ACTION_CURSOR_SENTENCE_PREV,
 	VIS_ACTION_CURSOR_SENTENCE_NEXT,
-	VIS_ACTION_CURSOR_FUNCTION_START_PREV,
-	VIS_ACTION_CURSOR_FUNCTION_END_PREV,
-	VIS_ACTION_CURSOR_FUNCTION_START_NEXT,
-	VIS_ACTION_CURSOR_FUNCTION_END_NEXT,
 	VIS_ACTION_CURSOR_BLOCK_START,
 	VIS_ACTION_CURSOR_BLOCK_END,
 	VIS_ACTION_CURSOR_PARENTHESE_START,
@@ -303,8 +299,6 @@ enum {
 	VIS_ACTION_TEXT_OBJECT_BACKTICK_INNER,
 	VIS_ACTION_TEXT_OBJECT_ENTIRE_OUTER,
 	VIS_ACTION_TEXT_OBJECT_ENTIRE_INNER,
-	VIS_ACTION_TEXT_OBJECT_FUNCTION_OUTER,
-	VIS_ACTION_TEXT_OBJECT_FUNCTION_INNER,
 	VIS_ACTION_TEXT_OBJECT_LINE_OUTER,
 	VIS_ACTION_TEXT_OBJECT_LINE_INNER,
 	VIS_ACTION_TEXT_OBJECT_INDENTATION,
@@ -483,26 +477,6 @@ static const KeyAction vis_action[] = {
 		"cursor-sentence-next",
 		"Move cursor sentence forward",
 		movement, { .i = VIS_MOVE_SENTENCE_NEXT }
-	},
-	[VIS_ACTION_CURSOR_FUNCTION_START_PREV] = {
-		"cursor-function-start-prev",
-		"Move cursor backwards to start of function",
-		movement, { .i = VIS_MOVE_FUNCTION_START_PREV }
-	},
-	[VIS_ACTION_CURSOR_FUNCTION_START_NEXT] = {
-		"cursor-function-start-next",
-		"Move cursor forwards to start of function",
-		movement, { .i = VIS_MOVE_FUNCTION_START_NEXT }
-	},
-	[VIS_ACTION_CURSOR_FUNCTION_END_PREV] = {
-		"cursor-function-end-prev",
-		"Move cursor backwards to end of function",
-		movement, { .i = VIS_MOVE_FUNCTION_END_PREV }
-	},
-	[VIS_ACTION_CURSOR_FUNCTION_END_NEXT] = {
-		"cursor-function-end-next",
-		"Move cursor forwards to end of function",
-		movement, { .i = VIS_MOVE_FUNCTION_END_NEXT }
 	},
 	[VIS_ACTION_CURSOR_BLOCK_START] = {
 		"cursor-block-start",
@@ -1158,16 +1132,6 @@ static const KeyAction vis_action[] = {
 		"text-object-entire-inner",
 		"The whole text content, except for leading and trailing empty lines",
 		textobj, { .i = VIS_TEXTOBJECT_INNER_ENTIRE }
-	},
-	[VIS_ACTION_TEXT_OBJECT_FUNCTION_OUTER] = {
-		"text-object-function-outer",
-		"A whole C-like function",
-		 textobj, { .i = VIS_TEXTOBJECT_OUTER_FUNCTION }
-	},
-	[VIS_ACTION_TEXT_OBJECT_FUNCTION_INNER] = {
-		"text-object-function-inner",
-		"A whole C-like function body",
-		 textobj, { .i = VIS_TEXTOBJECT_INNER_FUNCTION }
 	},
 	[VIS_ACTION_TEXT_OBJECT_LINE_OUTER] = {
 		"text-object-line-outer",

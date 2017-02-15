@@ -26,10 +26,6 @@ static const KeyBinding bindings_basic[] = {
 
 static const KeyBinding bindings_motions[] = {
 	{ "|",                  ACTION(CURSOR_COLUMN)                       },
-	{ "]]",                 ACTION(CURSOR_FUNCTION_END_NEXT)            },
-	{ "[]",                 ACTION(CURSOR_FUNCTION_END_PREV)            },
-	{ "][",                 ACTION(CURSOR_FUNCTION_START_NEXT)          },
-	{ "[[",                 ACTION(CURSOR_FUNCTION_START_PREV)          },
 	{ "[{",                 ACTION(CURSOR_BLOCK_START)                  },
 	{ "]}",                 ACTION(CURSOR_BLOCK_END)                    },
 	{ "[(",                 ACTION(CURSOR_PARENTHESE_START)             },
@@ -111,7 +107,6 @@ static const KeyBinding bindings_textobjects[] = {
 	{ "ab",                 ALIAS("a(")                                 },
 	{ "aB",                 ALIAS("a{")                                 },
 	{ "ae",                 ACTION(TEXT_OBJECT_ENTIRE_OUTER)            },
-	{ "af",                 ACTION(TEXT_OBJECT_FUNCTION_OUTER)          },
 	{ "al",                 ACTION(TEXT_OBJECT_LINE_OUTER)              },
 	{ "ap",                 ACTION(TEXT_OBJECT_PARAGRAPH)               },
 	{ "as",                 ACTION(TEXT_OBJECT_SENTENCE)                },
@@ -134,7 +129,6 @@ static const KeyBinding bindings_textobjects[] = {
 	{ "ib",                 ALIAS("i(")                                 },
 	{ "iB",                 ALIAS("i{")                                 },
 	{ "ie",                 ACTION(TEXT_OBJECT_ENTIRE_INNER)            },
-	{ "if",                 ACTION(TEXT_OBJECT_FUNCTION_INNER)          },
 	{ "il",                 ACTION(TEXT_OBJECT_LINE_INNER)              },
 	{ "ip",                 ACTION(TEXT_OBJECT_PARAGRAPH)               },
 	{ "is",                 ACTION(TEXT_OBJECT_SENTENCE)                },

@@ -30,10 +30,6 @@ Filerange text_object_line_inner(Text*, size_t pos);
 Filerange text_object_sentence(Text*, size_t pos);
 Filerange text_object_paragraph(Text*, size_t pos);
 
-/* C like function definition */
-Filerange text_object_function(Text*, size_t pos);
-/* inner variant only contains the function body */
-Filerange text_object_function_inner(Text*, size_t pos);
 /* these are inner text objects i.e. the delimiters themself are not
  * included in the range */
 Filerange text_object_square_bracket(Text*, size_t pos);

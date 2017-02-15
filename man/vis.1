@@ -755,26 +755,17 @@ match bracket
 .It M
 goto middle line of window
 .
-.It ]]
-next end of C-like function
-.
 .It }
 next paragraph
 .
 .It )
 next sentence
 .
-.It ][
-next start of C-like function
-.
 .It N
 repeat last search backwards
 .
 .It n
 repeat last search forward
-.
-.It []
-previous end of C-like function
 .
 .It [{
 previous start of block
@@ -793,9 +784,6 @@ previous paragraph
 .
 .It "("
 previous sentence
-.
-.It [[
-previous start of C-like function
 .
 .It ;
 repeat last to/till movement
@@ -872,12 +860,6 @@ entire file content
 .
 .It ie
 entire file content except for leading and trailing empty lines
-.
-.It af
-C-like function definition including immediately preceding comments
-.
-.It if
-C-like function definition only function body
 .
 .It al
 current line
