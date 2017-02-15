@@ -1,5 +1,6 @@
-vis.events = {}
-vis.events.win_open = function(win)
+dofile("../../lua/visrc.lua")
+
+vis.events.subscribe(vis.events.WIN_OPEN, function(win)
 	-- test.in file passed to vis
 	local name = win.file.name
 	if name then
@@ -14,4 +15,4 @@ vis.events.win_open = function(win)
 		vis:command(string.format("w! '%s.out'", name))
 		vis:command('qall!')
 	end
-end
+end)
