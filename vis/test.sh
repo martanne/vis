@@ -2,6 +2,7 @@
 
 export VIS_PATH=.
 export PATH="$(pwd)/../..:$PATH"
+export LANG="en_US.UTF-8"
 [ -z "$VIS" ] && VIS="../../vis"
 $VIS -v
 
