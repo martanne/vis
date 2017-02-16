@@ -82,7 +82,9 @@ Or simply use one of the distribution provided packages:
 Documentation
 =============
 
-End user documentation can be found in the [`vis(1)` manual page](http://martanne.github.io/vis/man/vis.1.html).
+End user documentation can be found in the [`vis(1)` manual page](http://martanne.github.io/vis/man/vis.1.html)
+and the [Wiki](https://github.com/martanne/vis/wiki). Read the [FAQ](https://github.com/martanne/vis/wiki/FAQ)
+for common questions.
 
 [Lua API Documentation](http://martanne.github.io/vis/doc/) is also available.
 
@@ -106,160 +108,6 @@ Non Goals
    - vimgrep
    - internal spell checker
    - lots of compile time configurable features / `#ifdef` mess
-
-Text management using a piece table/chain
-=========================================
-
-The core of this editor is a persistent data structure called a piece
-table which supports all modifications in `O(m)`, where `m` is the number
-of non-consecutive editing operations. This bound could be further
-improved to `O(log m)` by use of a balanced search tree, however the
-additional complexity doesn't seem to be worth it, for now.
-
-The actual data is stored in buffers which are strictly append only.
-There exist two types of buffers, one fixed-sized holding the original
-file content and multiple append-only ones storing the modifications.
-
-A text, i.e. a sequence of bytes, is represented as a double linked
-list of pieces each with a pointer into a buffer and an associated
-length. Pieces are never deleted but instead always kept around for
-redo/undo support. A span is a range of pieces, consisting of a start
-and end piece. Changes to the text are always performed by swapping
-out an existing, possibly empty, span with a new one.
-
-An empty document is represented by two special sentinel pieces which
-always exist:
-
-    /-+ --> +-\
-    | |     | |
-    \-+ <-- +-/
-     #1     #2
-
-Loading a file from disk is as simple as mmap(2)-ing it into a buffer,
-creating a corresponding piece and adding it to the double linked list.
-Hence loading a file is a constant time operation i.e. independent of
-the actual file size (assuming the operating system uses demand paging).
-
-    /-+ --> +-----------------+ --> +-\
-    | |     | I am an editor! |     | |
-    \-+ <-- +-----------------+ <-- +-/
-     #1             #3              #2
-
-Insert
-------
-
-Inserting a junk of data amounts to appending the new content to a
-modification buffer. Followed by the creation of new pieces. An insertion
-in the middle of an existing piece requires the creation of 3 new pieces.
-Two of them hold references to the text before respectively after the
-insertion point. While the third one points to the newly added text.
-
-    /-+ --> +---------------+ --> +----------------+ --> +--+ --> +-\
-    | |     | I am an editor|     |which sucks less|     |! |     | |
-    \-+ <-- +---------------+ <-- +----------------+ <-- +--+ <-- +-/
-     #1            #4                   #5                #6      #2
-
-           modification buffer content: "which sucks less"
-
-During this insertion operation the old span [3,3] has been replaced
-by the new span [4,6]. Notice that the pieces in the old span were not
-changed, therefore still point to their predecessors/successors, and can
-thus be swapped back in.
-
-If the insertion point happens to be at a piece boundary, the old span
-is empty, and the new span only consists of the newly allocated piece.
-
-Delete
-------
-
-Similarly a delete operation splits the pieces at appropriate places.
-
-    /-+ --> +-----+ --> +--+ --> +-\
-    | |     | I am|     |! |     | |
-    \-+ <-- +-----+ <-- +--+ <-- +-/
-     #1       #7         #6      #2
-
-Where the old span [4,5] got replaced by the new span [7,7]. The underlying
-buffers remain unchanged.
-
-Cache
------
-
-Notice that the common case of appending text to a given piece is fast
-since, the new data is simply appended to the buffer and the piece length
-is increased accordingly. In order to keep the number of pieces down,
-the least recently edited piece is cached and changes to it are done
-in place (this is the only time buffers are modified in a non-append
-only way). As a consequence they can not be undone.
-
-Undo/redo
----------
-
-Since the buffers are append only and the spans/pieces are never destroyed
-undo/redo functionality is implemented by swapping the required spans/pieces
-back in.
-
-As illustrated above, each change to the text is recorded by an old and
-a new span. An action consists of multiple changes which logically belong
-to each other and should thus also be reverted together. For example
-a search and replace operation is one action with possibly many changes
-all over the text.
-
-The text states can be marked by means of a snapshotting operation.
-Snapshotting saves a new node to the history graph and creates a fresh
-Action to which future changes will be appended until the next snapshot.
-
-Actions make up the nodes of a connected digraph, each representing a state
-of the file at some time during the current editing session. The edges of the
-digraph represent state transitions that are supported by the editor. The edges
-are implemented as four Action pointers (`prev`, `next`, `earlier`, and `later`).
-
-The editor operations that execute the four aforementioned transitions
-are `undo`, `redo`,`earlier`, and `later`, respectively. Undo and
-redo behave in the traditional manner, changing the state one Action
-at a time. Earlier and later, however, traverse the states in chronological
-order, which may occasionally involve undoing and redoing many Actions at once.
-
-Marks
------
-
-Because we are working with a persistent data structure marks can be
-represented as pointers into the underlying (append only) buffers.
-To get the position of an existing mark it suffices to traverse the
-list of pieces and perform a range query on the associated buffer
-segments. This also nicely integrates with the undo/redo mechanism.
-If a span is swapped out all contained marks (pointers) become invalid
-because they are no longer reachable from the piece chain. Once an
-action is undone, and the corresponding span swapped back in, the
-marks become visible again. No explicit mark management is necessary.
-
-Properties
-----------
-
-The main advantage of the piece chain as described above is that all
-operations are performed independent of the file size but instead linear
-in the number of pieces i.e. editing operations. The original file buffer
-never changes which means the `mmap(2)` can be performed read only which
-makes optimal use of the operating system's virtual memory / paging system.
-
-The maximum editable file size is limited by the amount of memory a process
-is allowed to map into its virtual address space, this shouldn't be a problem
-in practice. The whole process assumes that the file can be used as is.
-In particular the editor assumes all input and the file itself is encoded
-as UTF-8. Supporting other encodings would require conversion using `iconv(3)`
-or similar upon loading and saving the document.
-
-Similarly the editor has to cope with the fact that lines can be terminated
-either by `\n` or `\r\n`. There is no conversion to a line based structure in
-place. Instead the whole text is exposed as a sequence of bytes. All
-addressing happens by means of zero based byte offsets from the start of
-the file.
-
-The main disadvantage of the piece chain data structure is that the text
-is not stored contiguous in memory which makes seeking around somewhat
-harder. This also implies that standard library calls like the `regex(3)`
-functions can not be used as is. However this is the case for all but
-the most simple data structures used in text editors.
 
 Future Plans / Ideas
 ====================
@@ -288,66 +136,13 @@ etc.
 
 This would also enable a language agnostic plugin system.
 
-Developer Overview
-==================
+How to Help?
+============
 
-Feel free to join `#vis-editor` on freenode to discuss development related issues.
+There are plenty ways to contribute: writing core editor features using
+C or extension in Lua, improving documentation or tests, packaging for
+your favorite distribution, ...
 
-A quick overview over the code structure to get you started:
-
- File(s)             | Description
- ------------------- | -----------------------------------------------------
- `configure`         | Handwritten, POSIX shell compliant configure script derived from musl
- `Makefile`          | Standard make targets, BSD `make(1)` compatible
- `GNUmakefile`       | Developer targets (e.g. for standalone builds)
- `config.def.h`      | definition of default key bindings, will be copied to `config.h`
- `array.[ch]`        | dynamically growing array, can store arbitrarily sized objects
- `buffer.[ch]`       | dynamically growing buffer used for registers and macros
- `ring-buffer.[ch]`  | fixed size ring buffer used for the jump list
- `map.[ch]`          | crit-bit tree based map supporting unique prefix lookups and ordered iteration
- `register.[ch]`     | register implementation, system clipboard integration via `vis-clipboard`
- `text.[ch]`         | low level text / marks / {un,re}do tree / piece table implementation
- `text-motions.[ch]` | movement functions take a file position and return a new one
- `text-objects.[ch]` | functions take a file position and return a file range
- `text-regex.[ch]`   | text regex search functionality, based on libc `regex(3)`
- `text-regex-tre.c`  | text regex search functionality, based on libtre
- `text-util.[ch]`    | text related utility functions mostly dealing with file ranges
- `ui.h`              | abstract interface which has to be implemented by ui backends
- `ui-curses.[ch]`    | a terminal / curses based user interface implementation
- `view.[ch]`         | ui-independent viewport, shows part of a file, cursor placement, selection handling
- `sam.[ch]`          | structural regular expression based command language
- `vis-cmds.c`        | vi(m) `:`-command implementation, `#included` from sam.c
- `vis-core.h`        | internal header file, various structs for core editor primitives
- `vis.c`             | vi(m) specific editor frontend implementation
- `vis.h`             | vi(m) specific editor frontend library public API
- `vis-lua.[ch]`      | Lua bindings, exposing core vis APIs for in process extension
- `vis-modes.c`       | vi(m) mode switching, enter/leave event handling
- `vis-motions.c`     | vi(m) cursor motion implementations, uses `text-motions.h` internally
- `vis-operators.c`   | vi(m) operator implementation
- `vis-prompt.c`      | `:`, `/` and `?` prompt implemented as a regular file/window with custom key bindings
- `vis-text-objects.c`| vi(m) text object implementations, uses `text-objects.h` internally
- `main.c`            | Key action definitions, program entry point
- `lua/`              | Lua runtime files
- `lua/visrc.lua`     | Lua startup and configuration script
- `lua/*.lua`         | Lua library for vis, providing parts of the exposed API, syntax highlighting, status bar
- `lua/lexers/`       | Lua LPeg based lexers used for syntax highlighting
- `lua/themes/`       | Color themes as used by the lexers
- `lua/plugins/`      | Non-essential functionality extending core editor primitives
- `lua/doc/`          | LDoc generated Lua API documentation
- `man/`              | Manual pages in `mdoc(7)` format
- `vis-menu.c`        | Interactive menu utility used for file and word completion
- `vis-open`          | Simple directory browser based on `vis-menu`
- `vis-complete`      | Simple file and word completion wrapper based on `vis-menu`
- `vis-digraph.c`     | Utility to print Unicode characters using mnemonics
- `vis-clipboard`     | Shell script to abstract system clibpoard handling for X, macOS and Cygwin
- `vis-single.sh`     | Shell script used to produce a self-extracting executable
-
-Testing infrastructure for the [low level core data structures]
-(https://github.com/martanne/vis-test/tree/master/core), [vim compatibility]
-(https://github.com/martanne/vis-test/tree/master/vim), [sam compatibility]
-(https://github.com/martanne/vis-test/tree/master/sam), [vis specific features]
-(https://github.com/martanne/vis-test/tree/master/vis) and the [Lua API]
-(https://github.com/martanne/vis-test/tree/master/lua) is in place, but
-lacks proper test cases.
-
-Run `make test` to check whether your changes broke something.
+Checkout the [Developer Overview](https://github.com/martanne/vis/wiki/Developer-Overview)
+to get started and do not hesistate to ask question in the `#vis-editor`
+IRC channel on freenode.
