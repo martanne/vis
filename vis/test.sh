@@ -1,6 +1,7 @@
 #!/bin/sh
 
 export VIS_PATH=.
+export PATH="$(pwd)/../..:$PATH"
 [ -z "$VIS" ] && VIS="../../vis"
 $VIS -v
 
