@@ -16,6 +16,9 @@ matrix:
       env: TARGET=debug
     - os: linux
       compiler: gcc
+      env: TARGET=clean
+    - os: linux
+      compiler: gcc
       env: TARGET= CONFIG=--disable-lua
     - os: osx
       compiler: clang
@@ -60,19 +63,21 @@ script:
     fi
   - ./configure CFLAGS="-I$(pwd)/dependency/install/usr/include" LDFLAGS="-L$(pwd)/dependency/install/usr/lib" $CONFIG
   - make CFLAGS_EXTRA=--coverage $TARGET
-  - file vis
-  - if [ "$TRAVIS_OS_NAME" = "osx" ]; then
-      otool -L vis;
-    else
-      ldd vis;
+  - if [ -e vis ]; then
+      LD_LIBRARY_PATH="$(pwd)/dependency/install/usr/lib" ./vis -v;
+      file vis;
+      size vis;
+      if [ "$TRAVIS_OS_NAME" = "osx" ]; then
+        otool -L vis;
+      else
+        ldd vis;
+      fi
     fi
-  - size vis
-  - LD_LIBRARY_PATH="$(pwd)/dependency/install/usr/lib" ./vis -v
-  - LD_LIBRARY_PATH="$(pwd)/dependency/install/usr/lib" make -C test/core coverage
-  - LD_LIBRARY_PATH="$(pwd)/dependency/install/usr/lib" make -C test/lua
-  - LD_LIBRARY_PATH="$(pwd)/dependency/install/usr/lib" make -C test/vis
-  - LD_LIBRARY_PATH="$(pwd)/dependency/install/usr/lib" make -C test/sam
-  - LD_LIBRARY_PATH="$(pwd)/dependency/install/usr/lib" make -C test/vim
+  - make -C test/core coverage
+  - [ ! -e vis ] || LD_LIBRARY_PATH="$(pwd)/dependency/install/usr/lib" make -C test/lua
+  - [ ! -e vis ] || LD_LIBRARY_PATH="$(pwd)/dependency/install/usr/lib" make -C test/vis
+  - [ ! -e vis ] || LD_LIBRARY_PATH="$(pwd)/dependency/install/usr/lib" make -C test/sam
+  - [ ! -e vis ] || LD_LIBRARY_PATH="$(pwd)/dependency/install/usr/lib" make -C test/vim
 
 after_success:
   - bash <(curl -s https://codecov.io/bash)
