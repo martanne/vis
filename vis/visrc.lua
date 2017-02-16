@@ -1,3 +1,4 @@
+package.path = '../../lua/?.lua;'..package.path
 dofile("../../lua/visrc.lua")
 
 vis.events.subscribe(vis.events.WIN_OPEN, function(win)
