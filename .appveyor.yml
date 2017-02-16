@@ -13,6 +13,8 @@ environment:
 clone_depth: 1
 
 init:
+  # enable RDP access
+  - ps: iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
   # do not convert new lines to CRLF
   - git config --global core.autocrlf input
   # print processor and OS architecture
@@ -37,7 +39,7 @@ test_script:
   - '%CYG_ROOT%\bin\bash -lc "cd $APPVEYOR_BUILD_FOLDER && make test"'
 
 after_test:
-  - 7z a -y vis-%CYG_ARCH%.zip vis.exe lua
+  - 7z a -y vis-%CYG_ARCH%.zip *.exe lua
 
 artifacts:
   - path: vis-%CYG_ARCH%.zip
