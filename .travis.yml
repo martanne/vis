@@ -74,10 +74,10 @@ script:
       fi
     fi
   - make -C test/core coverage
-  - [ ! -e vis ] || LD_LIBRARY_PATH="$(pwd)/dependency/install/usr/lib" make -C test/lua
-  - [ ! -e vis ] || LD_LIBRARY_PATH="$(pwd)/dependency/install/usr/lib" make -C test/vis
-  - [ ! -e vis ] || LD_LIBRARY_PATH="$(pwd)/dependency/install/usr/lib" make -C test/sam
-  - [ ! -e vis ] || LD_LIBRARY_PATH="$(pwd)/dependency/install/usr/lib" make -C test/vim
+  - test ! -e vis || LD_LIBRARY_PATH="$(pwd)/dependency/install/usr/lib" make -C test/lua
+  - test ! -e vis || LD_LIBRARY_PATH="$(pwd)/dependency/install/usr/lib" make -C test/vis
+  - test ! -e vis || LD_LIBRARY_PATH="$(pwd)/dependency/install/usr/lib" make -C test/sam
+  - test ! -e vis || LD_LIBRARY_PATH="$(pwd)/dependency/install/usr/lib" make -C test/vim
 
 after_success:
   - bash <(curl -s https://codecov.io/bash)
