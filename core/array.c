@@ -54,6 +54,15 @@ static void test_small_objects(void) {
 			"Re-add integer: %zu = %d", i, values[i]);
 	}
 
+	int old, *tmp;
+	ok((tmp = array_get(&arr, 0)) && (old = *tmp) && array_set(&arr, 0, NULL) &&
+	    array_get(&arr, 0) == tmp && *tmp == 0 && array_set(&arr, 0, &old) &&
+	    array_get(&arr, 0) == tmp && *tmp == old, "Set array element NULL");
+	ok(!array_set(&arr, array_length(&arr), &values[0]) && errno == EINVAL, "Get past end of array");
+	ok(!array_get(&arr, array_length(&arr)) && errno == EINVAL, "Get past end of array");
+
+	ok(!array_remove(&arr, array_length(&arr)) && errno == EINVAL, "Remove past end of array");
+
 	int *v;
 
 	size_t len_before = array_length(&arr);
@@ -124,6 +133,20 @@ static void test_large_objects(void) {
 static void test_pointers(void) {
 
 	Array arr;
+
+	array_init_sized(&arr, 1);
+	ok(array_length(&arr) == 0 && array_get_ptr(&arr, 0) == NULL && errno == ENOTSUP,
+		"Initialization with size 1");
+
+	ok(!array_add_ptr(&arr, &arr) && errno == ENOTSUP && array_get_ptr(&arr, 0) == NULL,
+		"Add pointer to non-pointer array");
+
+	errno = 0;
+	char byte = '_', *ptr;
+	ok(array_add(&arr, &byte) && (ptr = array_get(&arr, 0)) && *ptr == byte,
+		"Add byte element");
+	ok(!array_get_ptr(&arr, 0) && errno == ENOTSUP, "Get pointer from non-pointer array");
+
 	array_init(&arr);
 	ok(array_length(&arr) == 0 && array_get_ptr(&arr, 0) == NULL && errno == EINVAL,
 		"Initialization");
@@ -155,6 +178,13 @@ static void test_pointers(void) {
 		ok((item = array_get_ptr(&arr, i)) && item == items[len-i-1],
 			"Get item: %zu = %p", i, (void*)item);
 	}
+
+	Item *tmp;
+	ok((tmp = array_get_ptr(&arr, 0)) && array_set_ptr(&arr, 0, NULL) &&
+	    array_get_ptr(&arr, 0) == NULL && array_set_ptr(&arr, 0, tmp) &&
+	    array_get_ptr(&arr, 0) == tmp, "Set pointer NULL");
+	ok(!array_set_ptr(&arr, array_length(&arr), items[0]) && errno == EINVAL, "Set pointer past end of array");
+	ok(!array_get_ptr(&arr, array_length(&arr)) && errno == EINVAL, "Get pointer past end of array");
 
 	array_clear(&arr);
 	ok(array_length(&arr) == 0 && array_get_ptr(&arr, 0) == NULL && errno == EINVAL, "Clear");
