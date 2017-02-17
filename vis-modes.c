@@ -4,6 +4,14 @@
 #include "text-motions.h"
 #include "util.h"
 
+static void keyaction_free(KeyAction *action) {
+	if (!action)
+		return;
+	free((char*)action->name);
+	free((char*)action->help);
+	free(action);
+}
+
 KeyAction *vis_action_new(Vis *vis, const char *name, const char *help, KeyActionFunction *func, Arg arg) {
 	KeyAction *action = calloc(1, sizeof *action);
 	if (!action)
@@ -18,9 +26,7 @@ KeyAction *vis_action_new(Vis *vis, const char *name, const char *help, KeyActio
 		goto err;
 	return action;
 err:
-	free((char*)action->name);
-	free((char*)action->help);
-	free(action);
+	keyaction_free(action);
 	return NULL;
 }
 
@@ -30,9 +36,7 @@ void vis_action_free(Vis *vis, KeyAction *action) {
 	size_t len = array_length(&vis->actions_user);
 	for (size_t i = 0; i < len; i++) {
 		if (action == array_get_ptr(&vis->actions_user, i)) {
-			free((char*)action->name);
-			free((char*)action->help);
-			free(action);
+			keyaction_free(action);
 			array_remove(&vis->actions_user, i);
 			return;
 		}
