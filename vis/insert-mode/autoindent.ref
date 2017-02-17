@@ -1,0 +1,21 @@
+int foo(int a) {
+
+	// optimized loop
+	for (;;) {
+
+		if (a > 0) {
+			// positive
+
+			return --a;
+		} else if (a < 0) {
+			// negative
+
+			return ++a;
+		} else {
+			// equal
+
+			return a;
+		}
+
+	}
+}

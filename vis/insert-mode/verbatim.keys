@@ -30,3 +30,12 @@ n
 a<Space><C-v>U0010FFFF<Escape>
 n
 a<Space><C-v>U00110000<Escape>
+n
+a<Space><C-v><Escape><Escape>
+n
+:set et<Enter>
+a<Space><C-v><Tab><Escape>
+n
+a<Space><C-v><Space><Escape>
+n
+a<Space><C-v><Enter><Escape>

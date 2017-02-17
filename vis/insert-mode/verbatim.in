@@ -18,3 +18,7 @@ U+FFFD =
 U+FFFF = /* not really correct */
 U+10FFFF =
 U+11000 = /* invalid */
+<Escape> =
+<Tab> =
+<Space> =
+<Enter> =
