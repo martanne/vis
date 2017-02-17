@@ -81,7 +81,7 @@ test:
 
 clean:
 	@echo cleaning
-	@rm -f $(ELF) vis-${VERSION}.tar.gz *.gcov *.gcda *.gcno
+	@rm -f $(ELF) vis-single vis-*.tar.gz *.gcov *.gcda *.gcno
 
 dist: clean
 	@echo creating dist tarball
