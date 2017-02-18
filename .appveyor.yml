@@ -31,6 +31,24 @@ install:
 
 before_build:
   - '%CYG_ROOT%\bin\bash -lc "cd $APPVEYOR_BUILD_FOLDER && make clean"'
+  - ps: >-
+      $BashPath = $env:CYG_ROOT + "\bin\bash"
+      $cmd = "cd " + $env:APPVEYOR_BUILD_FOLDER + " && "
+      $cmd +=
+      @'
+              for f in $(git ls-files -s | awk '$1 == 120000 {print $4}')
+              do
+                  # echo $f is a symlink pointing to $dir/$target
+                  dir=$(dirname "${f}")
+                  pushd "$dir" 2>&1 > /dev/null
+                  file=$(basename "$f")
+                  target=`cat "$file"`
+                  rm "$file"
+                  ln -s "$target" "$file"
+                  popd 2>&1 > /dev/null
+              done
+      '@
+      & $BashPath -lc $cmd
 
 build_script:
   - '%CYG_ROOT%\bin\bash -lc "cd $APPVEYOR_BUILD_FOLDER && make local && file vis"'
