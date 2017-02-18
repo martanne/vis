@@ -32,7 +32,7 @@ install:
 before_build:
   - ps: |
       $bash = $env:CYG_ROOT + "\bin\bash"
-      $cmd = "cd " + $env:APPVEYOR_BUILD_FOLDER + " && "
+      $cmd = "cd `$APPVEYOR_BUILD_FOLDER && "
       $cmd +=
       @'
         for f in $(git ls-files -s | awk '$1 == 120000 {print $4}')
