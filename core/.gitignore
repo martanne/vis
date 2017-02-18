@@ -1,8 +1,8 @@
 /config.h
-/text
-/buffer
-/map
-/array
+/text-test
+/buffer-test
+/map-test
+/array-test
 /ccan-config
 *.gcda
 *.gcno
