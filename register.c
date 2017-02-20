@@ -61,7 +61,7 @@ bool register_put_range(Vis *vis, Register *reg, Text *txt, Filerange *range) {
 	case REGISTER_NORMAL:
 	{
 		size_t len = text_range_size(range);
-		if (!buffer_grow(&reg->buf, len+1))
+		if (!buffer_reserve(&reg->buf, len+1))
 			return false;
 		reg->buf.len = text_bytes_get(txt, range->start, len, reg->buf.data);
 		return buffer_append(&reg->buf, "\0", 1);
@@ -91,7 +91,7 @@ bool register_append_range(Register *reg, Text *txt, Filerange *range) {
 	case REGISTER_NORMAL:
 	{
 		size_t len = text_range_size(range);
-		if (!buffer_grow(&reg->buf, reg->buf.len + len + 1))
+		if (!buffer_reserve(&reg->buf, reg->buf.len + len + 1))
 			return false;
 		if (reg->buf.len > 0 && reg->buf.data[reg->buf.len-1] == '\0')
 			reg->buf.len--;

@@ -14,7 +14,7 @@ void buffer_init(Buffer *buf) {
 	memset(buf, 0, sizeof *buf);
 }
 
-bool buffer_grow(Buffer *buf, size_t size) {
+bool buffer_reserve(Buffer *buf, size_t size) {
 	/* ensure minimal buffer size, to avoid repeated realloc(3) calls */
 	if (size < BUFFER_SIZE)
 		size = BUFFER_SIZE;
@@ -46,7 +46,7 @@ void buffer_clear(Buffer *buf) {
 }
 
 bool buffer_put(Buffer *buf, const void *data, size_t len) {
-	if (!buffer_grow(buf, len))
+	if (!buffer_reserve(buf, len))
 		return false;
 	memmove(buf->data, data, len);
 	buf->len = len;
@@ -72,7 +72,7 @@ bool buffer_insert(Buffer *buf, size_t pos, const void *data, size_t len) {
 		return false;
 	if (len == 0)
 		return true;
-	if (!buffer_grow(buf, buf->len + len))
+	if (!buffer_reserve(buf, buf->len + len))
 		return false;
 	size_t move = buf->len - pos;
 	if (move > 0)
@@ -115,7 +115,7 @@ static bool buffer_vappendf(Buffer *buf, const char *fmt, va_list ap) {
 	va_list ap_save;
 	va_copy(ap_save, ap);
 	int len = vsnprintf(NULL, 0, fmt, ap);
-	if (len == -1 || !buffer_grow(buf, buf->len+len+1)) {
+	if (len == -1 || !buffer_reserve(buf, buf->len+len+1)) {
 		va_end(ap_save);
 		return false;
 	}

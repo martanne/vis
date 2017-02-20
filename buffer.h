@@ -19,7 +19,7 @@ void buffer_release(Buffer*);
 /* set buffer size to zero, keep allocated memory */
 void buffer_clear(Buffer*);
 /* reserve space to store at least size bytes in this buffer.*/
-bool buffer_grow(Buffer*, size_t size);
+bool buffer_reserve(Buffer*, size_t size);
 /* if buffer is not empty, make sure it is NUL terminated */
 bool buffer_terminate(Buffer*);
 /* replace buffer content with given data, growing the buffer if needed */
