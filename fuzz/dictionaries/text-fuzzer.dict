@@ -1,0 +1,20 @@
+# AFL dictionary for text-fuzzer
+#
+# Not sure whether it makes sense to specify a dictionary,
+# the syntax is quite simple?
+#
+cmd_earlier="-"
+cmd_later="+"
+cmd_mark_get="?"
+# cmd_mark_set="= 0"
+cmd_mark_set="="
+cmd_size="#"
+# cmd_delete="d 0 1"
+cmd_delete="d"
+# cmd_insert="i 0 text"
+cmd_insert="i"
+cmd_print="p"
+cmd_quit="q"
+cmd_redo="r"
+cmd_snapshot="s"
+cmd_undo="u"
