@@ -1,0 +1,15 @@
+# AFL dictionary for buffer-fuzzer
+#
+# Not sure whether it makes sense to specify a dictionary,
+# the syntax is quite simple?
+#
+cmd_capacity="?"
+cmd_set="="
+cmd_size="#"
+cmd_clear="c"
+# cmd_delete="d 0 1"
+cmd_delete="d"
+# cmd_insert="i 0 text"
+cmd_insert="i"
+cmd_print="p"
+cmd_quit="q"
