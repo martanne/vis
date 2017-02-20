@@ -292,7 +292,8 @@ static bool block_insert(Block *blk, size_t pos, const char *data, size_t len) {
 /* delete data from a block at an arbitrary position, this should only be used with
  * data of the most recently created piece. */
 static bool block_delete(Block *blk, size_t pos, size_t len) {
-	if (pos + len > blk->len)
+	size_t end;
+	if (!addu(pos, len, &end) || end > blk->len)
 		return false;
 	if (blk->len == pos) {
 		blk->len -= len;
@@ -356,8 +357,9 @@ static bool cache_delete(Text *txt, Piece *p, size_t off, size_t len) {
 	if (!cache_contains(txt, p))
 		return false;
 	Block *blk = txt->blocks;
+	size_t end;
 	size_t bufpos = p->data + off - blk->data;
-	if (off + len > p->len || !block_delete(blk, bufpos, len))
+	if (!addu(off, len, &end) || end > p->len || !block_delete(blk, bufpos, len))
 		return false;
 	p->len -= len;
 	txt->current_revision->change->new.len -= len;
@@ -1182,7 +1184,8 @@ struct stat text_stat(Text *txt) {
 bool text_delete(Text *txt, size_t pos, size_t len) {
 	if (len == 0)
 		return true;
-	if (pos + len > txt->size)
+	size_t pos_end;
+	if (!addu(pos, len, &pos_end) || pos_end > txt->size)
 		return false;
 	if (pos < txt->lines.pos)
 		lineno_cache_invalidate(&txt->lines);
