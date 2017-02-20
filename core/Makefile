@@ -42,6 +42,9 @@ asan: clean
 ubsan: clean
 	$(MAKE) CFLAGS_EXTRA='-fsanitize=undefined'
 
+msan: clean
+	$(MAKE) CFLAGS_EXTRA='-g -fsanitize=memory'
+
 valgrind: clean ${ALL}
 	@for test in ${ALL}; do \
 		valgrind --leak-check=full --log-file="$$test.valgrind" "./$$test"; \
@@ -58,4 +61,4 @@ clean:
 	@rm -f *.gcov *.gcda *.gcno
 	@rm -f *.valgrind
 
-.PHONY: clean debug coverage tis valgrind asan ubsan
+.PHONY: clean debug coverage tis valgrind asan ubsan msan
