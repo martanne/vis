@@ -29,6 +29,13 @@ bool buffer_reserve(Buffer *buf, size_t size) {
 	return true;
 }
 
+bool buffer_grow(Buffer *buf, size_t len) {
+	size_t size;
+	if (!addu(buf->len, len, &size))
+		return false;
+	return buffer_reserve(buf, size);
+}
+
 bool buffer_terminate(Buffer *buf) {
 	return !buf->data || buf->len == 0 || buf->data[buf->len-1] == '\0' ||
 	        buffer_append(buf, "\0", 1);
@@ -72,7 +79,7 @@ bool buffer_insert(Buffer *buf, size_t pos, const void *data, size_t len) {
 		return false;
 	if (len == 0)
 		return true;
-	if (!buffer_reserve(buf, buf->len + len))
+	if (!buffer_grow(buf, len))
 		return false;
 	size_t move = buf->len - pos;
 	if (move > 0)
@@ -115,7 +122,7 @@ static bool buffer_vappendf(Buffer *buf, const char *fmt, va_list ap) {
 	va_list ap_save;
 	va_copy(ap_save, ap);
 	int len = vsnprintf(NULL, 0, fmt, ap);
-	if (len == -1 || !buffer_reserve(buf, buf->len+len+1)) {
+	if (len == -1 || !buffer_grow(buf, len+1)) {
 		va_end(ap_save);
 		return false;
 	}
