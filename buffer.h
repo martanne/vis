@@ -9,7 +9,7 @@
 typedef struct {
 	char *data;    /* NULL if empty */
 	size_t len;    /* current length of data */
-	size_t size;   /* maximal capacity of the buffer */
+	size_t capacity;   /* maximal capacity of the buffer */
 } Buffer;
 
 /* initalize a (stack allocated) Buffer instance */
@@ -19,7 +19,7 @@ void buffer_release(Buffer*);
 /* set buffer size to zero, keep allocated memory */
 void buffer_clear(Buffer*);
 /* reserve space to store at least size bytes in this buffer.*/
-bool buffer_reserve(Buffer*, size_t size);
+bool buffer_reserve(Buffer*, size_t capacity);
 /* reserve space for at least `len` more bytes in this buffer */
 bool buffer_grow(Buffer*, size_t len);
 /* if buffer is not empty, make sure it is NUL terminated */

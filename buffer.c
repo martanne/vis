@@ -14,26 +14,26 @@ void buffer_init(Buffer *buf) {
 	memset(buf, 0, sizeof *buf);
 }
 
-bool buffer_reserve(Buffer *buf, size_t size) {
-	/* ensure minimal buffer size, to avoid repeated realloc(3) calls */
-	if (size < BUFFER_SIZE)
-		size = BUFFER_SIZE;
-	if (buf->size < size) {
-		size = MAX(size, buf->size*2);
-		char *data = realloc(buf->data, size);
+bool buffer_reserve(Buffer *buf, size_t capacity) {
+	/* ensure minimal buffer capacity, to avoid repeated realloc(3) calls */
+	if (capacity < BUFFER_SIZE)
+		capacity = BUFFER_SIZE;
+	if (buf->capacity < capacity) {
+		capacity = MAX(capacity, buf->capacity*2);
+		char *data = realloc(buf->data, capacity);
 		if (!data)
 			return false;
-		buf->size = size;
+		buf->capacity = capacity;
 		buf->data = data;
 	}
 	return true;
 }
 
 bool buffer_grow(Buffer *buf, size_t len) {
-	size_t size;
-	if (!addu(buf->len, len, &size))
+	size_t capacity;
+	if (!addu(buf->len, len, &capacity))
 		return false;
-	return buffer_reserve(buf, size);
+	return buffer_reserve(buf, capacity);
 }
 
 bool buffer_terminate(Buffer *buf) {
@@ -164,7 +164,7 @@ size_t buffer_length(Buffer *buf) {
 }
 
 size_t buffer_capacity(Buffer *buf) {
-	return buf->size;
+	return buf->capacity;
 }
 
 const char *buffer_content(Buffer *buf) {
