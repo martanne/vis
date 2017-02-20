@@ -65,9 +65,10 @@ bool buffer_put0(Buffer *buf, const char *data) {
 }
 
 bool buffer_remove(Buffer *buf, size_t pos, size_t len) {
+	size_t end;
 	if (len == 0)
 		return true;
-	if (pos + len > buf->len)
+	if (!addu(pos, len, &end) || end > buf->len)
 		return false;
 	memmove(buf->data + pos, buf->data + pos + len, buf->len - pos - len);
 	buf->len -= len;
