@@ -1135,42 +1135,42 @@ enum SamError sam_cmd(Vis *vis, const char *s) {
 		Transcript *t = &file->transcript;
 		if (t->error != SAM_ERR_OK) {
 			err = t->error;
-		} else {
-			ptrdiff_t delta = 0;
-			for (Change *c = t->changes; c; c = c->next) {
-				c->range.start += delta;
-				c->range.end += delta;
-				if (c->type & TRANSCRIPT_DELETE) {
-					text_delete_range(file->text, &c->range);
-					delta -= text_range_size(&c->range);
-					if (c->cursor && c->type == TRANSCRIPT_DELETE) {
-						if (visual)
-							view_cursors_dispose_force(c->cursor);
-						else
-							view_cursors_to(c->cursor, c->range.start);
-					}
+			continue;
+		}
+		ptrdiff_t delta = 0;
+		for (Change *c = t->changes; c; c = c->next) {
+			c->range.start += delta;
+			c->range.end += delta;
+			if (c->type & TRANSCRIPT_DELETE) {
+				text_delete_range(file->text, &c->range);
+				delta -= text_range_size(&c->range);
+				if (c->cursor && c->type == TRANSCRIPT_DELETE) {
+					if (visual)
+						view_cursors_dispose_force(c->cursor);
+					else
+						view_cursors_to(c->cursor, c->range.start);
 				}
-				if (c->type & TRANSCRIPT_INSERT) {
-					text_insert(file->text, c->range.start, c->data, c->len);
-					delta += c->len;
-					Filerange sel = text_range_new(c->range.start,
-					                               c->range.start+c->len);
-					if (c->cursor) {
-						if (visual) {
-							view_cursors_selection_set(c->cursor, &sel);
-							view_cursors_selection_sync(c->cursor);
-						} else {
-							if (memchr(c->data, '\n', c->len))
-								view_cursors_to(c->cursor, sel.start);
-							else
-								view_cursors_to(c->cursor, sel.end);
-						}
-					} else if (visual) {
-						Cursor *cursor = view_cursors_new(c->win->view, sel.start);
-						if (cursor) {
-							view_cursors_selection_set(cursor, &sel);
-							view_cursors_selection_sync(cursor);
-						}
+			}
+			if (c->type & TRANSCRIPT_INSERT) {
+				text_insert(file->text, c->range.start, c->data, c->len);
+				delta += c->len;
+				Filerange sel = text_range_new(c->range.start,
+				                               c->range.start+c->len);
+				if (c->cursor) {
+					if (visual) {
+						view_cursors_selection_set(c->cursor, &sel);
+						view_cursors_selection_sync(c->cursor);
+					} else {
+						if (memchr(c->data, '\n', c->len))
+							view_cursors_to(c->cursor, sel.start);
+						else
+							view_cursors_to(c->cursor, sel.end);
+					}
+				} else if (visual) {
+					Cursor *cursor = view_cursors_new(c->win->view, sel.start);
+					if (cursor) {
+						view_cursors_selection_set(cursor, &sel);
+						view_cursors_selection_sync(cursor);
 					}
 				}
 			}
