@@ -1,5 +1,7 @@
-Vis a vim-like text editor
-==========================
+<h2 align="center">
+	<img alt="VIS" src="https://cloud.githubusercontent.com/assets/7250745/15652266/495904b6-2685-11e6-89ed-1703927fcfad.png"></img><br></br>
+	a vim-like text editor<br></br>
+</h2>
 
 [![Linux Build Status](https://travis-ci.org/martanne/vis.svg?branch=master)](https://travis-ci.org/martanne/vis)
 [![Cygwin Build Status](https://ci.appveyor.com/api/projects/status/61059w4jpdnb77ft/branch/master?svg=true)](https://ci.appveyor.com/project/martanne/vis/branch/master)
@@ -45,6 +47,50 @@ we aim to provide more powerful editing features based on an elegant design
 and clean implementation.
 
 [![vis demo](https://asciinema.org/a/41361.png)](https://asciinema.org/a/41361)
+
+> - [Getting started / Build instructions](#getting-started--build-instructions)
+>
+> - [Editing Features](#editing-features)
+>
+>   - [Operators](#operators)
+>   - [Movements](#movements)
+>   - [Text Objects](#text-objects)
+>   - [Modes](#modes)
+>   - [Multiple Cursors / selections](#multiple-cursors--selections)
+>   - [Marks](#marks)
+>   - [Registers](#registers)
+>   - [Undo/Redo And Repeat](#undoredo-and-repeat)
+>   - [Macros](#macros)
+>   - [Structural Regular Expression based command language](#structural-regular-expression-based-command-language)
+>   - [Command Line Prompt](#command-line-prompt)
+>   - [Configuring vis: visrc.lua, and Environment Variables](#configuring-vis-visrclua-and-environment-variables)
+>   - [Runtime Configurable Key bindings](#runtime-configurable-key-bindings)
+>   - [Layout Specific Key Bindings](#layout-specific-key-bindings)
+>   - [Tab <-> Space conversion and Line endings \n vs \r\n](#tab---space-conversion-and-line-endings-n-vs-rn)
+>   - [Jump list and change list](#jump-list-and-change-list)
+>   - [Mouse Support](#mouse-support)
+>   - [Non Goals](#non-goals)
+>
+> - [Lua Api For In Process Extension](#lua-api-for-in-process-extension)
+>
+> - [Text Management Using a Piece Table/Chain](#text-management-using-a-piece-tablechain)
+>
+>   - [Insert](#insert)
+>   - [Delete](#delete)
+>   - [Cache](#cache)
+>   - [Undo/Redo](#undoredo)
+>   - [Marks](#marks-1)
+>   - [Properties](#properties)
+>
+> - [Syntax Highlighting Using Parsing Expression Grammars](#syntax-highlighting-using-parsing-expression-grammars)
+>
+> - [Future Plans / Ideas](#future-plans--ideas)
+>
+>   - [Event loop With Asynchronous I/O](#event-loop-with-asynchronous-io)
+>   - [Clientserver Architecture / Rpc Interface](#clientserver-architecture--rpc-interface)
+>   - [Efficient Search And Replace](#efficient-search-and-replace)
+>
+> - [Developer Overview](#developer-overview)
 
 Getting started / Build instructions
 ====================================
