@@ -1137,6 +1137,7 @@ enum SamError sam_cmd(Vis *vis, const char *s) {
 			err = t->error;
 			continue;
 		}
+		vis_file_snapshot(vis, file);
 		ptrdiff_t delta = 0;
 		for (Change *c = t->changes; c; c = c->next) {
 			c->range.start += delta;
@@ -1176,6 +1177,7 @@ enum SamError sam_cmd(Vis *vis, const char *s) {
 			}
 		}
 		sam_transcript_free(&file->transcript);
+		vis_file_snapshot(vis, file);
 	}
 
 	if (vis->win) {
