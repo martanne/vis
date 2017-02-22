@@ -276,6 +276,14 @@ static bool func_ref_get(lua_State *L, const void *addr) {
  */
 static void obj_type_new(lua_State *L, const char *type) {
 	luaL_newmetatable(L, type);
+	lua_getglobal(L, "vis");
+	if (!lua_isnil(L, -1)) {
+		lua_getfield(L, -1, "types");
+		lua_pushvalue(L, -3);
+		lua_setfield(L, -2, type);
+		lua_pop(L, 1);
+	}
+	lua_pop(L, 1);
 	lua_getfield(L, LUA_REGISTRYINDEX, "vis.types");
 	lua_pushvalue(L, -2);
 	lua_pushstring(L, type);
@@ -525,6 +533,11 @@ static const char *keymapping(Vis *vis, const char *keys, const Arg *arg) {
  * Version information.
  * @tfield string VERSION
  * version information in `git describe` format, same as reported by `vis -v`.
+ */
+/***
+ * Lua API object types
+ * @field types meta tables of userdata objects used for type checking
+ * @internal
  */
 /***
  * User interface.
@@ -2243,6 +2256,16 @@ void vis_lua_init(Vis *vis) {
 	lua_newtable(L);
 	lua_setfield(L, LUA_REGISTRYINDEX, "vis.functions");
 	/* metatable used to type check user data */
+	obj_type_new(L, "vis");
+	luaL_setfuncs(L, vis_lua, 0);
+	lua_newtable(L);
+	lua_setfield(L, -2, "types");
+	/* create reference to main vis object, such that the further
+	 * calls to obj_type_new can register the type meta tables in
+	 * vis.types[name] */
+	obj_ref_new(L, vis, "vis");
+	lua_setglobal(L, "vis");
+
 	obj_type_new(L, "vis.file");
 
 	const struct {
@@ -2304,8 +2327,8 @@ void vis_lua_init(Vis *vis) {
 
 	obj_type_new(L, "vis.keyaction");
 
-	obj_type_new(L, "vis");
-	luaL_setfuncs(L, vis_lua, 0);
+	lua_getglobal(L, "vis");
+	lua_getmetatable(L, -1);
 
 	lua_pushstring(L, VERSION);
 	lua_setfield(L, -2, "VERSION");
@@ -2330,9 +2353,6 @@ void vis_lua_init(Vis *vis) {
 	}
 
 	lua_setfield(L, -2, "modes");
-
-	obj_ref_new(L, vis, "vis");
-	lua_setglobal(L, "vis");
 
 	if (!package_exist(vis, L, "visrc")) {
 		vis_info_show(vis, "WARNING: failed to load visrc.lua");
