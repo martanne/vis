@@ -1,0 +1,3 @@
+:,|sed -e 's/b/\\\\b/g'<Enter>
+:x/\\/<Enter>
+x
