@@ -938,7 +938,7 @@ static Filerange textobject_lua(Vis *vis, Win *win, void *data, size_t pos) {
 	if (!func_ref_get(L, data) || !obj_ref_new(L, win, "vis.window"))
 		return text_range_empty();
 	lua_pushunsigned(L, pos);
-	if (pcall(vis, L, 2, 2) != 0)
+	if (pcall(vis, L, 2, 2) != 0 || lua_isnil(L, -1))
 		return text_range_empty();
 	return text_range_new(checkpos(L, -2), checkpos(L, -1));
 }
