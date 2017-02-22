@@ -563,6 +563,10 @@ static const char *keymapping(Vis *vis, const char *keys, const Arg *arg) {
  * LPeg lexer module.
  * @field lpeg might be `nil` if module is not found
  */
+/***
+ * Current count.
+ * @tfield int count the specified count for the current command or `nil` if none was given
+ */
 
 /***
  * Create an iterator over all windows.
@@ -1108,6 +1112,15 @@ static int vis_index(lua_State *L) {
 
 		if (strcmp(key, "recording") == 0) {
 			lua_pushboolean(L, vis_macro_recording(vis));
+			return 1;
+		}
+
+		if (strcmp(key, "count") == 0) {
+			int count = vis_count_get(vis);
+			if (count == VIS_COUNT_UNKNOWN)
+				lua_pushnil(L);
+			else
+				lua_pushunsigned(L, count);
 			return 1;
 		}
 
