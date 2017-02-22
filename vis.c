@@ -710,6 +710,7 @@ void vis_do(Vis *vis) {
 			.arg = &a->arg,
 		};
 
+		bool err = false;
 		if (a->movement) {
 			size_t start = pos;
 			for (int i = 0; i < count; i++) {
@@ -728,8 +729,15 @@ void vis_do(Vis *vis) {
 					pos = a->movement->win(vis, win, pos);
 				else if (a->movement->user)
 					pos = a->movement->user(vis, win, a->movement->data, pos);
-				if (pos == EPOS || a->movement->type & IDEMPOTENT || pos == pos_prev)
+				if (pos == EPOS || a->movement->type & IDEMPOTENT || pos == pos_prev) {
+					err = a->movement->type & COUNT_EXACT;
 					break;
+				}
+			}
+
+			if (err) {
+				repeatable = false;
+				continue; // break?
 			}
 
 			if (pos == EPOS) {

@@ -502,17 +502,19 @@ const Movement vis_motions[] = {
 	},
 	[VIS_MOVE_LEFT_TO] = {
 		.vis = to_left,
+		.type = COUNT_EXACT,
 	},
 	[VIS_MOVE_RIGHT_TO] = {
 		.vis = to,
-		.type = INCLUSIVE,
+		.type = INCLUSIVE|COUNT_EXACT,
 	},
 	[VIS_MOVE_LEFT_TILL] = {
 		.vis = till_left,
+		.type = COUNT_EXACT,
 	},
 	[VIS_MOVE_RIGHT_TILL] = {
 		.vis = till,
-		.type = INCLUSIVE,
+		.type = INCLUSIVE|COUNT_EXACT,
 	},
 	[VIS_MOVE_MARK] = {
 		.file = mark_goto,

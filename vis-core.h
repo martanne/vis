@@ -69,6 +69,7 @@ typedef struct { /* Motion implementation, takes a cursor postion and returns a 
 		LINEWISE_INCLUSIVE = 1 << 3,  /* inclusive, but only if motion is linewise? */
 		IDEMPOTENT = 1 << 4, /* does the returned postion remain the same if called multiple times? */
 		JUMP = 1 << 5, /* should the resulting position of the motion be recorded in the jump list? */
+		COUNT_EXACT = 1 << 6, /* fail (keep initial position) if count can not be satisfied exactly */
 	} type;
 	void *data;
 } Movement;
