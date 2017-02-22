@@ -1618,17 +1618,9 @@ static const char *replace(Vis *vis, const char *keys, const Arg *arg) {
 	if (replacement[0] == 0x1b) /* <Escape> */
 		return next;
 
-	if (vis_mode_get(vis) == VIS_MODE_NORMAL) {
-		int count = vis_count_get_default(vis, 1);
-		vis_operator(vis, VIS_OP_CHANGE);
+	vis_operator(vis, VIS_OP_REPLACE, replacement);
+	if (vis_mode_get(vis) == VIS_MODE_OPERATOR_PENDING)
 		vis_motion(vis, VIS_MOVE_CHAR_NEXT);
-		for (; count > 0; count--)
-			vis_keys_feed(vis, replacement[0] == '\n' ? "<Enter>" : replacement);
-	} else {
-		vis_operator(vis, VIS_OP_REPLACE, replacement);
-	}
-
-	vis_keys_feed(vis, "<Escape>");
 	return next;
 }
 

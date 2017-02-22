@@ -232,7 +232,7 @@ static size_t op_replace(Vis *vis, Text *txt, OperatorContext *c) {
 	size_t pos = c->range.start;
 	for (size_t len = strlen(c->arg->s); count > 0; pos += len, count--)
 		text_insert(txt, pos, c->arg->s, len);
-	return pos;
+	return c->range.start;
 }
 
 static size_t op_filter(Vis *vis, Text *txt, OperatorContext *c) {
