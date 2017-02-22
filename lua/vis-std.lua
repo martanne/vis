@@ -1,24 +1,6 @@
 -- standard vis event handlers
 
 vis.events.subscribe(vis.events.INIT, function()
-	local package_exist = function(name)
-		for _, searcher in ipairs(package.searchers or package.loaders) do
-			local loader = searcher(name)
-			if type(loader) == 'function' then
-				return true
-			end
-		end
-		return false
-	end
-
-	if not package_exist('lpeg') then
-		vis:info('WARNING: could not find lpeg module')
-	elseif not package_exist('lexer') then
-		vis:info('WARNING: could not find lexer module')
-	else
-		vis.lexers = require('lexer')
-	end
-
 	if os.getenv("TERM_PROGRAM") == "Apple_Terminal" then
 		vis:command("set change-256colors false");
 	end
@@ -41,7 +23,7 @@ end)
 
 vis.events.subscribe(vis.events.WIN_SYNTAX, function(win, name)
 	local lexers = vis.lexers
-	if not lexers.load then return false end
+	if not lexers then return false end
 
 	win:style_define(win.STYLE_DEFAULT, lexers.STYLE_DEFAULT or '')
 	win:style_define(win.STYLE_CURSOR, lexers.STYLE_CURSOR or '')

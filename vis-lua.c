@@ -543,11 +543,13 @@ static const char *keymapping(Vis *vis, const char *keys, const Arg *arg) {
  * @field registers array to access the register by single letter name
  */
 /***
- * LPeg lexer support module.
- * @field lexers
+ * Scintillua lexer module.
+ * @field lexers might be `nil` if module is not found
  */
-
-// TODO vis.events
+/***
+ * LPeg lexer module.
+ * @field lpeg might be `nil` if module is not found
+ */
 
 /***
  * Create an iterator over all windows.

@@ -5,8 +5,6 @@
 ---
 -- @type Vis
 
-vis.lexers = {}
-
 --- Map a new motion.
 --
 -- Sets up a mapping in normal, visual and operator pending mode.
@@ -62,6 +60,30 @@ vis.textobject_new = function(vis, key, textobject, help)
 	vis:map(vis.modes.VISUAL, key, binding, help)
 	vis:map(vis.modes.OPERATOR_PENDING, key, binding, help)
 	return true
+end
+
+--- Check whether a Lua module exists
+--
+-- Checks whether a subsequent @{require} call will succeed.
+-- @tparam string name the module name to check
+-- @treturn bool whether the module was found
+vis.module_exist = function(vis, name)
+	for _, searcher in ipairs(package.searchers or package.loaders) do
+		local loader = searcher(name)
+		if type(loader) == 'function' then
+			return true
+		end
+	end
+	return false
+end
+
+if not vis:module_exist('lpeg') then
+	vis:info('WARNING: could not find lpeg module')
+elseif not vis:module_exist('lexer') then
+	vis:info('WARNING: could not find lexer module')
+else
+	vis.lexers = require('lexer')
+	vis.lpeg = require('lpeg')
 end
 
 --- Events.
