@@ -1147,6 +1147,16 @@ static int vis_newindex(lua_State *L) {
 			vis_mode_switch(vis, mode);
 			return 0;
 		}
+
+		if (strcmp(key, "count") == 0) {
+			int count;
+			if (lua_isnil(L, 3))
+				count = VIS_COUNT_UNKNOWN;
+			else
+				count = luaL_checkunsigned(L, 3);
+			vis_count_set(vis, count);
+			return 1;
+		}
 	}
 	return newindex_common(L);
 }
