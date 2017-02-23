@@ -1,0 +1,7 @@
+Till before count occurrence of char to the right.
+
+Consecutive:|_||_
+Separated:|_|_|_
+Invalid count: __
+Space:|#
+Tab:|#
