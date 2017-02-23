@@ -126,8 +126,6 @@ static const char *window(Vis*, const char *keys, const Arg *arg);
 static const char *unicode_info(Vis*, const char *keys, const Arg *arg);
 /* either go to count % of ile or to matching item */
 static const char *percent(Vis*, const char *keys, const Arg *arg);
-/* either increment (arg->i > 0) or decrement (arg->i < 0) number under cursor */
-static const char *number_increment_decrement(Vis*, const char *keys, const Arg *arg);
 /* open a filename under cursor in same (!arg->b) or new (arg->b) window */
 static const char *open_file_under_cursor(Vis*, const char *keys, const Arg *arg);
 /* complete input text at cursor based on the words in the current file */
@@ -308,8 +306,6 @@ enum {
 	VIS_ACTION_MOTION_LINEWISE,
 	VIS_ACTION_UNICODE_INFO,
 	VIS_ACTION_UTF8_INFO,
-	VIS_ACTION_NUMBER_INCREMENT,
-	VIS_ACTION_NUMBER_DECREMENT,
 	VIS_ACTION_OPEN_FILE_UNDER_CURSOR,
 	VIS_ACTION_OPEN_FILE_UNDER_CURSOR_NEW_WINDOW,
 	VIS_ACTION_COMPLETE_WORD,
@@ -1178,16 +1174,6 @@ static const KeyAction vis_action[] = {
 		"Show UTF-8 encoded codepoint(s) of character under cursor",
 		unicode_info, { .i = VIS_ACTION_UTF8_INFO }
 	},
-	[VIS_ACTION_NUMBER_INCREMENT] = {
-		"number-increment",
-		"Increment number under cursor",
-		number_increment_decrement, { .i = +1 }
-	},
-	[VIS_ACTION_NUMBER_DECREMENT] = {
-		"number-decrement",
-		"Decrement number under cursor",
-		number_increment_decrement, { .i = -1 }
-	},
 	[VIS_ACTION_OPEN_FILE_UNDER_CURSOR] = {
 		"open-file-under-cursor",
 		"Open file under the cursor",
@@ -2017,51 +2003,6 @@ static const char *percent(Vis *vis, const char *keys, const Arg *arg) {
 		vis_motion(vis, VIS_MOVE_BRACKET_MATCH);
 	else
 		vis_motion(vis, VIS_MOVE_PERCENT);
-	return keys;
-}
-
-static const char *number_increment_decrement(Vis *vis, const char *keys, const Arg *arg) {
-	View *view = vis_view(vis);
-	Text *txt = vis_text(vis);
-
-	int delta = arg->i;
-	int count = vis_count_get(vis);
-	if (count != 0 && count != VIS_COUNT_UNKNOWN)
-		delta *= count;
-
-	for (Cursor *c = view_cursors(view); c; c = view_cursors_next(c)) {
-		Filerange r = text_object_number(txt, view_cursors_pos(c));
-		if (!text_range_valid(&r))
-			continue;
-		char *buf = text_bytes_alloc0(txt, r.start, text_range_size(&r));
-		if (buf) {
-			char *number = buf, fmt[255];
-			if (number[0] == '-')
-				number++;
-			bool octal = number[0] == '0' && ('0' <= number[1] && number[1] <= '7');
-			bool hex = number[0] == '0' && (number[1] == 'x' || number[1] == 'X');
-			bool dec = !hex && !octal;
-
-			long long value = strtoll(buf, NULL, 0);
-			value += delta;
-			if (dec) {
-				snprintf(fmt, sizeof fmt, "%lld", value);
-			} else if (hex) {
-				size_t len = strlen(number) - 2;
-				snprintf(fmt, sizeof fmt, "0x%0*llx", (int)len, value);
-			} else {
-				size_t len = strlen(number) - 1;
-				snprintf(fmt, sizeof fmt, "0%0*llo", (int)len, value);
-			}
-			text_delete_range(txt, &r);
-			text_insert(txt, r.start, fmt, strlen(fmt));
-			view_cursors_to(c, r.start);
-		}
-		free(buf);
-	}
-
-	vis_cancel(vis);
-
 	return keys;
 }
 
