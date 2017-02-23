@@ -465,7 +465,7 @@ fi
 
 CONFIG_LPEG=0
 
-if test "$lpeg" != "no" ; then
+if test $CONFIG_LUA -eq 1 -a "$lpeg" != "no" ; then
 
 	printf "checking for liblpeg ... "
 
