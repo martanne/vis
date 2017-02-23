@@ -10,6 +10,14 @@ typedef struct {
 	void *data;
 } CmdUser;
 
+static void cmdfree(CmdUser *cmd) {
+	if (!cmd)
+		return;
+	free((char*)cmd->def.name);
+	free((char*)cmd->def.help);
+	free(cmd);
+}
+
 bool vis_cmd_register(Vis *vis, const char *name, const char *help, void *data, CmdFunc *func) {
 	if (!name)
 		return false;
@@ -34,9 +42,7 @@ bool vis_cmd_register(Vis *vis, const char *name, const char *help, void *data, 
 	}
 	return true;
 err:
-	free((char*)cmd->def.name);
-	free((char*)cmd->def.help);
-	free(cmd);
+	cmdfree(cmd);
 	return false;
 }
 
@@ -50,9 +56,7 @@ bool vis_cmd_unregister(Vis *vis, const char *name) {
 		return false;
 	if (!map_delete(vis->usercmds, name))
 		return false;
-	free((char*)cmd->def.name);
-	free((char*)cmd->def.help);
-	free(cmd);
+	cmdfree(cmd);
 	return true;
 }
 
