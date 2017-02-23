@@ -199,7 +199,7 @@ vis.events = events
 -- @tparam int the absolute position in bytes to test for a match
 -- @tparam[opt] int horizon the number of bytes around `pos` to consider (defaults to 1K)
 -- @treturn int start,end the range of the matched region or `nil`
-vis.types['vis.file'].match_at = function(file, pattern, pos, horizon)
+vis.types.file.match_at = function(file, pattern, pos, horizon)
 	horizon = horizon or 1024
 	local lpeg = vis.lpeg
 	if not lpeg then return nil end

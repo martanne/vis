@@ -31,16 +31,16 @@
 #endif
 
 #define VIS_LUA_TYPE_VIS "vis"
-#define VIS_LUA_TYPE_FILE "vis.file"
-#define VIS_LUA_TYPE_TEXT "vis.file.text"
-#define VIS_LUA_TYPE_MARK "vis.file.mark"
-#define VIS_LUA_TYPE_MARKS "vis.file.marks"
-#define VIS_LUA_TYPE_WINDOW "vis.window"
-#define VIS_LUA_TYPE_CURSOR "vis.window.cursor"
-#define VIS_LUA_TYPE_CURSORS "vis.window.cursors"
-#define VIS_LUA_TYPE_UI "vis.ui"
-#define VIS_LUA_TYPE_REGISTERS "vis.registers"
-#define VIS_LUA_TYPE_KEYACTION "vis.keyaction"
+#define VIS_LUA_TYPE_FILE "file"
+#define VIS_LUA_TYPE_TEXT "text"
+#define VIS_LUA_TYPE_MARK "mark"
+#define VIS_LUA_TYPE_MARKS "marks"
+#define VIS_LUA_TYPE_WINDOW "window"
+#define VIS_LUA_TYPE_CURSOR "cursor"
+#define VIS_LUA_TYPE_CURSORS "cursors"
+#define VIS_LUA_TYPE_UI "ui"
+#define VIS_LUA_TYPE_REGISTERS "registers"
+#define VIS_LUA_TYPE_KEYACTION "keyaction"
 
 #ifndef DEBUG_LUA
 #define DEBUG_LUA 0
