@@ -29,29 +29,29 @@
 #include "sam.h"
 
 const MarkDef vis_marks[] = {
-	[VIS_MARK_SELECTION_START] = { '<', "Last selection start" },
-	[VIS_MARK_SELECTION_END]   = { '>', "Last selection end" },
+	[VIS_MARK_SELECTION_START] = { '<', VIS_HELP("Last selection start") },
+	[VIS_MARK_SELECTION_END]   = { '>', VIS_HELP("Last selection end")   },
 };
 
 const RegisterDef vis_registers[] = {
-	[VIS_REG_DEFAULT]    = { '"', "Unnamed register"                                 },
-	[VIS_REG_ZERO]       = { '0', "Yank register"                                    },
-	[VIS_REG_1]          = { '1', "1st sub-expression match"                         },
-	[VIS_REG_2]          = { '2', "2nd sub-expression match"                         },
-	[VIS_REG_3]          = { '3', "3rd sub-expression match"                         },
-	[VIS_REG_4]          = { '4', "4th sub-expression match"                         },
-	[VIS_REG_5]          = { '5', "5th sub-expression match"                         },
-	[VIS_REG_6]          = { '6', "6th sub-expression match"                         },
-	[VIS_REG_7]          = { '7', "7th sub-expression match"                         },
-	[VIS_REG_8]          = { '8', "8th sub-expression match"                         },
-	[VIS_REG_9]          = { '9', "9th sub-expression match"                         },
-	[VIS_REG_AMPERSAND]  = { '&', "Last regex match"                                 },
-	[VIS_REG_BLACKHOLE]  = { '_', "/dev/null register"                               },
-	[VIS_REG_CLIPBOARD]  = { '*', "System clipboard register, see vis-clipboard(1)"  },
-	[VIS_REG_DOT]        = { '.', "Last inserted text"                               },
-	[VIS_REG_SEARCH]     = { '/', "Last search pattern"                              },
-	[VIS_REG_COMMAND]    = { ':', "Last :-command"                                   },
-	[VIS_REG_SHELL]      = { '!', "Last shell command given to either <, >, |, or !" },
+	[VIS_REG_DEFAULT]    = { '"', VIS_HELP("Unnamed register")                                 },
+	[VIS_REG_ZERO]       = { '0', VIS_HELP("Yank register")                                    },
+	[VIS_REG_1]          = { '1', VIS_HELP("1st sub-expression match")                         },
+	[VIS_REG_2]          = { '2', VIS_HELP("2nd sub-expression match")                         },
+	[VIS_REG_3]          = { '3', VIS_HELP("3rd sub-expression match")                         },
+	[VIS_REG_4]          = { '4', VIS_HELP("4th sub-expression match")                         },
+	[VIS_REG_5]          = { '5', VIS_HELP("5th sub-expression match")                         },
+	[VIS_REG_6]          = { '6', VIS_HELP("6th sub-expression match")                         },
+	[VIS_REG_7]          = { '7', VIS_HELP("7th sub-expression match")                         },
+	[VIS_REG_8]          = { '8', VIS_HELP("8th sub-expression match")                         },
+	[VIS_REG_9]          = { '9', VIS_HELP("9th sub-expression match")                         },
+	[VIS_REG_AMPERSAND]  = { '&', VIS_HELP("Last regex match")                                 },
+	[VIS_REG_BLACKHOLE]  = { '_', VIS_HELP("/dev/null register")                               },
+	[VIS_REG_CLIPBOARD]  = { '*', VIS_HELP("System clipboard register, see vis-clipboard(1)")  },
+	[VIS_REG_DOT]        = { '.', VIS_HELP("Last inserted text")                               },
+	[VIS_REG_SEARCH]     = { '/', VIS_HELP("Last search pattern")                              },
+	[VIS_REG_COMMAND]    = { ':', VIS_HELP("Last :-command")                                   },
+	[VIS_REG_SHELL]      = { '!', VIS_HELP("Last shell command given to either <, >, |, or !") },
 };
 
 static Macro *macro_get(Vis *vis, enum VisRegister);

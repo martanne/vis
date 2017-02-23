@@ -226,7 +226,7 @@ bool vis_event_emit(Vis*, enum VisEvents, ...);
 
 typedef struct {
 	char name;
-	const char *help;
+	VIS_HELP_DECL(const char *help;)
 } MarkDef;
 
 typedef MarkDef RegisterDef;

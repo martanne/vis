@@ -14,7 +14,7 @@ static void cmdfree(CmdUser *cmd) {
 	if (!cmd)
 		return;
 	free((char*)cmd->def.name);
-	free((char*)cmd->def.help);
+	free(VIS_HELP_USE((char*)cmd->def.help));
 	free(cmd);
 }
 
@@ -28,8 +28,10 @@ bool vis_cmd_register(Vis *vis, const char *name, const char *help, void *data, 
 		return false;
 	if (!(cmd->def.name = strdup(name)))
 		goto err;
+#if CONFIG_HELP
 	if (help && !(cmd->def.help = strdup(help)))
 		goto err;
+#endif
 	cmd->def.flags = CMD_ARGV|CMD_FORCE|CMD_ONCE|CMD_ADDRESS_ALL;
 	cmd->def.func = cmd_user;
 	cmd->func = func;
@@ -564,7 +566,7 @@ static bool print_keybinding(const char *key, void *value, void *data) {
 	KeyBinding *binding = value;
 	const char *desc = binding->alias;
 	if (!desc && binding->action)
-		desc = binding->action->help;
+		desc = VIS_HELP_USE(binding->action->help);
 	return text_appendf(data, "  %-18s\t%s\n", key[0] == ' ' ? "␣" : key, desc ? desc : "");
 }
 
@@ -575,14 +577,15 @@ static void print_mode(Mode *mode, Text *txt) {
 }
 
 static bool print_action(const char *key, void *value, void *data) {
-	KeyAction *action = value;
-	return text_appendf(data, "  %-30s\t%s\n", key, action->help);
+	const char *help = VIS_HELP_USE(((KeyAction*)value)->help);
+	return text_appendf(data, "  %-30s\t%s\n", key, help ? help : "");
 }
 
 static bool print_cmd(const char *key, void *value, void *data) {
-	char help[256];
 	CommandDef *cmd = value;
-	snprintf(help, sizeof help, "%s%s%s%s%s%s%s",
+	const char *help = VIS_HELP_USE(cmd->help);
+	char usage[256];
+	snprintf(usage, sizeof usage, "%s%s%s%s%s%s%s",
 	         cmd->name,
 	         (cmd->flags & CMD_FORCE) ? "[!]" : "",
 	         (cmd->flags & CMD_TEXT) ? "/text/" : "",
@@ -590,7 +593,7 @@ static bool print_cmd(const char *key, void *value, void *data) {
 	         (cmd->flags & CMD_CMD) ? " command" : "",
 	         (cmd->flags & CMD_SHELL) ? (!strcmp(cmd->name, "s") ? "/regexp/text/" : " shell-command") : "",
 	         (cmd->flags & CMD_ARGV) ? " [args...]" : "");
-	return text_appendf(data, "  %-30s %s\n", help, cmd->help);
+	return text_appendf(data, "  %-30s %s\n", usage, help ? help : "");
 }
 
 static void print_symbolic_keys(Vis *vis, Text *txt) {
@@ -693,26 +696,31 @@ static bool cmd_help(Vis *vis, Win *win, Command *cmd, const char *argv[], Curso
 
 	text_appendf(txt, "\n Marks\n\n");
 	text_appendf(txt, "  a-z General purpose marks\n");
-	for (size_t i = 0; i < LENGTH(vis_marks); i++)
-		text_appendf(txt, "  %c   %s\n", vis_marks[i].name, vis_marks[i].help);
+	for (size_t i = 0; i < LENGTH(vis_marks); i++) {
+		const char *help = VIS_HELP_USE(vis_marks[i].help);
+		text_appendf(txt, "  %c   %s\n", vis_marks[i].name, help ? help : "");
+	}
 
 	text_appendf(txt, "\n Registers\n\n");
 	text_appendf(txt, "  a-z General purpose registers\n");
 	text_appendf(txt, "  A-Z Append to corresponding general purpose register\n");
-	for (size_t i = 0; i < LENGTH(vis_registers); i++)
-		text_appendf(txt, "  %c   %s\n", vis_registers[i].name, vis_registers[i].help);
+	for (size_t i = 0; i < LENGTH(vis_registers); i++) {
+		const char *help = VIS_HELP_USE(vis_registers[i].help);
+		text_appendf(txt, "  %c   %s\n", vis_registers[i].name, help ? help : "");
+	}
 
 	text_appendf(txt, "\n :set command options\n\n");
 	for (int i = 0; i < LENGTH(options); i++) {
 		char names[256];
 		const OptionDef *opt = &options[i];
+		const char *help = VIS_HELP_USE(opt->help);
 		snprintf(names, sizeof names, "%s%s%s%s%s",
 		         opt->names[0],
 		         opt->names[1] ? "|" : "",
 		         opt->names[1] ? opt->names[1] : "",
 		         opt->type == OPTION_TYPE_BOOL ? " on|off" : "",
 		         opt->type == OPTION_TYPE_NUMBER ? " nn" : "");
-		text_appendf(txt, "  %-30s %s\n", names, opt->help ? opt->help : "");
+		text_appendf(txt, "  %-30s %s\n", names, help ? help : "");
 	}
 
 	text_appendf(txt, "\n Key binding actions\n\n");

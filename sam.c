@@ -73,7 +73,7 @@ struct Command {
 
 struct CommandDef {
 	const char *name;                    /* command name */
-	const char *help;                    /* short, one-line help text */
+	VIS_HELP_DECL(const char *help;)     /* short, one-line help text */
 	enum {
 		CMD_NONE          = 0,       /* standalone command without any arguments */
 		CMD_CMD           = 1 << 0,  /* does the command take a sub/target command? */
@@ -140,133 +140,133 @@ static const CommandDef cmds[] = {
 	//      name            help
 	//      flags, default command, implemenation
 	{
-		"a",            "Append text after range",
+		"a",            VIS_HELP("Append text after range")
 		CMD_TEXT, NULL, cmd_append
 	}, {
-		"c",            "Change text in range",
+		"c",            VIS_HELP("Change text in range")
 		CMD_TEXT, NULL, cmd_change
 	}, {
-		"d",            "Delete text in range",
+		"d",            VIS_HELP("Delete text in range")
 		CMD_NONE, NULL, cmd_delete
 	}, {
-		"g",            "If range contains regexp, run command",
+		"g",            VIS_HELP("If range contains regexp, run command")
 		CMD_CMD|CMD_REGEX, "p", cmd_guard
 	}, {
-		"i",            "Insert text before range",
+		"i",            VIS_HELP("Insert text before range")
 		CMD_TEXT, NULL, cmd_insert
 	}, {
-		"p",            "Create selection covering range",
+		"p",            VIS_HELP("Create selection covering range")
 		CMD_NONE, NULL, cmd_print
 	}, {
-		"s",            "Substitute: use x/pattern/ c/replacement/ instead",
+		"s",            VIS_HELP("Substitute: use x/pattern/ c/replacement/ instead")
 		CMD_SHELL|CMD_ADDRESS_LINE, NULL, cmd_substitute
 	}, {
-		"v",            "If range does not contain regexp, run command",
+		"v",            VIS_HELP("If range does not contain regexp, run command")
 		CMD_CMD|CMD_REGEX, "p", cmd_guard
 	}, {
-		"x",            "Set range and run command on each match",
+		"x",            VIS_HELP("Set range and run command on each match")
 		CMD_CMD|CMD_REGEX|CMD_REGEX_DEFAULT|CMD_ADDRESS_ALL_1CURSOR|CMD_LOOP, "p", cmd_extract
 	}, {
-		"y",            "As `x` but select unmatched text",
+		"y",            VIS_HELP("As `x` but select unmatched text")
 		CMD_CMD|CMD_REGEX|CMD_ADDRESS_ALL_1CURSOR|CMD_LOOP, "p", cmd_extract
 	}, {
-		"X",            "Run command on files whose name matches",
+		"X",            VIS_HELP("Run command on files whose name matches")
 		CMD_CMD|CMD_REGEX|CMD_REGEX_DEFAULT|CMD_ADDRESS_NONE|CMD_ONCE, NULL, cmd_files
 	}, {
-		"Y",            "As `X` but select unmatched files",
+		"Y",            VIS_HELP("As `X` but select unmatched files")
 		CMD_CMD|CMD_REGEX|CMD_ADDRESS_NONE|CMD_ONCE, NULL, cmd_files
 	}, {
-		">",            "Send range to stdin of command",
+		">",            VIS_HELP("Send range to stdin of command")
 		CMD_SHELL|CMD_ADDRESS_LINE, NULL, cmd_pipeout
 	}, {
-		"<",            "Replace range by stdout of command",
+		"<",            VIS_HELP("Replace range by stdout of command")
 		CMD_SHELL|CMD_ADDRESS_POS, NULL, cmd_pipein
 	}, {
-		"|",            "Pipe range through command",
+		"|",            VIS_HELP("Pipe range through command")
 		CMD_SHELL|CMD_ADDRESS_POS, NULL, cmd_filter
 	}, {
-		"!",            "Run the command",
+		"!",            VIS_HELP("Run the command")
 		CMD_SHELL|CMD_ONCE|CMD_ADDRESS_NONE, NULL, cmd_launch
 	}, {
-		"w",            "Write range to named file",
+		"w",            VIS_HELP("Write range to named file")
 		CMD_ARGV|CMD_FORCE|CMD_ONCE|CMD_ADDRESS_ALL, NULL, cmd_write
 	}, {
-		"r",            "Replace range by contents of file",
+		"r",            VIS_HELP("Replace range by contents of file")
 		CMD_ARGV|CMD_ADDRESS_AFTER, NULL, cmd_read
 	}, {
-		"{",            "Start of command group",
+		"{",            VIS_HELP("Start of command group")
 		CMD_GROUP, NULL, NULL
 	}, {
-		"}",            "End of command group" ,
+		"}",            VIS_HELP("End of command group" )
 		CMD_NONE, NULL, NULL
 	}, {
-		"e",            "Edit file",
+		"e",            VIS_HELP("Edit file")
 		CMD_ARGV|CMD_FORCE|CMD_ONCE|CMD_ADDRESS_NONE|CMD_DESTRUCTIVE, NULL, cmd_edit
 	}, {
-		"q",            "Quit the current window",
+		"q",            VIS_HELP("Quit the current window")
 		CMD_FORCE|CMD_ONCE|CMD_ADDRESS_NONE|CMD_DESTRUCTIVE, NULL, cmd_quit
 	}, {
-		"cd",           "Change directory",
+		"cd",           VIS_HELP("Change directory")
 		CMD_ARGV|CMD_ONCE|CMD_ADDRESS_NONE, NULL, cmd_cd
 	},
 	/* vi(m) related commands */
 	{
-		"bdelete",      "Unload file",
+		"bdelete",      VIS_HELP("Unload file")
 		CMD_FORCE|CMD_ONCE|CMD_ADDRESS_NONE|CMD_DESTRUCTIVE, NULL, cmd_bdelete
 	}, {
-		"help",         "Show this help",
+		"help",         VIS_HELP("Show this help")
 		CMD_ARGV|CMD_ONCE|CMD_ADDRESS_NONE, NULL, cmd_help
 	}, {
-		"map",          "Map key binding `:map <mode> <lhs> <rhs>`",
+		"map",          VIS_HELP("Map key binding `:map <mode> <lhs> <rhs>`")
 		CMD_ARGV|CMD_FORCE|CMD_ONCE|CMD_ADDRESS_NONE, NULL, cmd_map
 	}, {
-		"map-window",   "As `map` but window local",
+		"map-window",   VIS_HELP("As `map` but window local")
 		CMD_ARGV|CMD_FORCE|CMD_ONCE|CMD_ADDRESS_NONE, NULL, cmd_map
 	}, {
-		"unmap",        "Unmap key binding `:unmap <mode> <lhs>`",
+		"unmap",        VIS_HELP("Unmap key binding `:unmap <mode> <lhs>`")
 		CMD_ARGV|CMD_ONCE|CMD_ADDRESS_NONE, NULL, cmd_unmap
 	}, {
-		"unmap-window", "As `unmap` but window local",
+		"unmap-window", VIS_HELP("As `unmap` but window local")
 		CMD_ARGV|CMD_ONCE|CMD_ADDRESS_NONE, NULL, cmd_unmap
 	}, {
-		"langmap",      "Map keyboard layout `:langmap <locale-keys> <latin-keys>`",
+		"langmap",      VIS_HELP("Map keyboard layout `:langmap <locale-keys> <latin-keys>`")
 		CMD_ARGV|CMD_FORCE|CMD_ONCE|CMD_ADDRESS_NONE, NULL, cmd_langmap
 	}, {
-		"new",          "Create new window",
+		"new",          VIS_HELP("Create new window")
 		CMD_ARGV|CMD_ONCE|CMD_ADDRESS_NONE, NULL, cmd_new
 	}, {
-		"open",         "Open file",
+		"open",         VIS_HELP("Open file")
 		CMD_ARGV|CMD_ONCE|CMD_ADDRESS_NONE, NULL, cmd_open
 	}, {
-		"qall",         "Exit vis",
+		"qall",         VIS_HELP("Exit vis")
 		CMD_FORCE|CMD_ONCE|CMD_ADDRESS_NONE|CMD_DESTRUCTIVE, NULL, cmd_qall
 	}, {
-		"set",          "Set option",
+		"set",          VIS_HELP("Set option")
 		CMD_ARGV|CMD_ONCE|CMD_ADDRESS_NONE, NULL, cmd_set
 	}, {
-		"split",        "Horizontally split window",
+		"split",        VIS_HELP("Horizontally split window")
 		CMD_ARGV|CMD_ONCE|CMD_ADDRESS_NONE, NULL, cmd_split
 	}, {
-		"vnew",         "As `:new` but split vertically",
+		"vnew",         VIS_HELP("As `:new` but split vertically")
 		CMD_ARGV|CMD_ONCE|CMD_ADDRESS_NONE, NULL, cmd_vnew
 	}, {
-		"vsplit",       "Vertically split window",
+		"vsplit",       VIS_HELP("Vertically split window")
 		CMD_ARGV|CMD_ONCE|CMD_ADDRESS_NONE, NULL, cmd_vsplit
 	}, {
-		"wq",           "Write file and quit",
+		"wq",           VIS_HELP("Write file and quit")
 		CMD_ARGV|CMD_FORCE|CMD_ONCE|CMD_ADDRESS_ALL|CMD_DESTRUCTIVE, NULL, cmd_wq
 	}, {
-		"earlier",      "Go to older text state",
+		"earlier",      VIS_HELP("Go to older text state")
 		CMD_ARGV|CMD_ONCE|CMD_ADDRESS_NONE, NULL, cmd_earlier_later
 	}, {
-		"later",        "Go to newer text state",
+		"later",        VIS_HELP("Go to newer text state")
 		CMD_ARGV|CMD_ONCE|CMD_ADDRESS_NONE, NULL, cmd_earlier_later
 	},
-	{ NULL, NULL, CMD_NONE, NULL, NULL },
+	{ NULL, VIS_HELP(NULL) CMD_NONE, NULL, NULL },
 };
 
 static const CommandDef cmddef_select = {
-	NULL, NULL, CMD_NONE, NULL, cmd_select
+	NULL, VIS_HELP(NULL) CMD_NONE, NULL, cmd_select
 };
 
 /* :set command options */
@@ -282,7 +282,7 @@ typedef struct {
 		OPTION_FLAG_OPTIONAL = 1 << 0, /* value is optional */
 		OPTION_FLAG_WINDOW = 1 << 1,   /* option requires an active window */
 	} flags;
-	const char *help;                      /* short, one line help text */
+	VIS_HELP_DECL(const char *help;)       /* short, one line help text */
 } OptionDef;
 
 enum {
@@ -309,89 +309,88 @@ static const OptionDef options[] = {
 	[OPTION_SHELL] = {
 		{ "shell" },
 		OPTION_TYPE_STRING, OPTION_FLAG_NONE,
-		"Shell to use for external commands (default: $SHELL, /etc/passwd, /bin/sh)",
+		VIS_HELP("Shell to use for external commands (default: $SHELL, /etc/passwd, /bin/sh)")
 	},
 	[OPTION_ESCDELAY] = {
 		{ "escdelay" },
 		OPTION_TYPE_NUMBER, OPTION_FLAG_NONE,
-		"Miliseconds to wait to distinguish <Escape> from terminal escape sequences",
+		VIS_HELP("Miliseconds to wait to distinguish <Escape> from terminal escape sequences")
 	},
 	[OPTION_AUTOINDENT] = {
 		{ "autoindent", "ai" },
 		OPTION_TYPE_BOOL, OPTION_FLAG_NONE,
-		"Copy leading white space from previous line",
+		VIS_HELP("Copy leading white space from previous line")
 	},
 	[OPTION_EXPANDTAB] = {
 		{ "expandtab", "et" },
 		OPTION_TYPE_BOOL, OPTION_FLAG_NONE,
-		"Replace entered <Tab> with `tabwidth` spaces",
+		VIS_HELP("Replace entered <Tab> with `tabwidth` spaces")
 	},
 	[OPTION_TABWIDTH] = {
 		{ "tabwidth", "tw" },
 		OPTION_TYPE_NUMBER, OPTION_FLAG_NONE,
-		"Number of spaces to display (and insert if `expandtab` is enabled) for a tab",
+		VIS_HELP("Number of spaces to display (and insert if `expandtab` is enabled) for a tab")
 	},
 	[OPTION_THEME] = {
 		{ "theme" },
 		OPTION_TYPE_STRING, OPTION_FLAG_NONE,
-		"Color theme to use filename without extension",
+		VIS_HELP("Color theme to use filename without extension")
 	},
 	[OPTION_SYNTAX] = {
 		{ "syntax" },
 		OPTION_TYPE_STRING, OPTION_FLAG_WINDOW|OPTION_FLAG_OPTIONAL,
-		"Syntax highlighting lexer to use filename without extension",
+		VIS_HELP("Syntax highlighting lexer to use filename without extension")
 	},
 	[OPTION_SHOW_SPACES] = {
 		{ "show-spaces" },
 		OPTION_TYPE_BOOL, OPTION_FLAG_WINDOW,
-		"Display replacement symbol instead of a space",
+		VIS_HELP("Display replacement symbol instead of a space")
 	},
 	[OPTION_SHOW_TABS] = {
 		{ "show-tabs" },
 		OPTION_TYPE_BOOL, OPTION_FLAG_WINDOW,
-		"Display replacement symbol for tabs",
+		VIS_HELP("Display replacement symbol for tabs")
 	},
 	[OPTION_SHOW_NEWLINES] = {
 		{ "show-newlines" },
 		OPTION_TYPE_BOOL, OPTION_FLAG_WINDOW,
-		"Display replacement symbol for newlines",
+		VIS_HELP("Display replacement symbol for newlines")
 	},
 	[OPTION_NUMBER] = {
 		{ "numbers", "nu" },
 		OPTION_TYPE_BOOL, OPTION_FLAG_WINDOW,
-		"Display absolute line numbers",
+		VIS_HELP("Display absolute line numbers")
 	},
 	[OPTION_NUMBER_RELATIVE] = {
 		{ "relativenumbers", "rnu" },
 		OPTION_TYPE_BOOL, OPTION_FLAG_WINDOW,
-		"Display relative line numbers",
+		VIS_HELP("Display relative line numbers")
 	},
 	[OPTION_CURSOR_LINE] = {
 		{ "cursorline", "cul" },
 		OPTION_TYPE_BOOL, OPTION_FLAG_WINDOW,
-		"Highlight current cursor line",
+		VIS_HELP("Highlight current cursor line")
 	},
 	[OPTION_COLOR_COLUMN] = {
 		{ "colorcolumn", "cc" },
 		OPTION_TYPE_NUMBER, OPTION_FLAG_WINDOW,
-		"Highlight a fixed column",
+		VIS_HELP("Highlight a fixed column")
 	},
 	[OPTION_HORIZON] = {
 		{ "horizon" },
 		OPTION_TYPE_NUMBER, OPTION_FLAG_WINDOW,
-		"Number of bytes to consider for syntax highlighting",
+		VIS_HELP("Number of bytes to consider for syntax highlighting")
 	},
 	[OPTION_SAVE_METHOD] = {
 		{ "savemethod" },
 		OPTION_TYPE_STRING, OPTION_FLAG_WINDOW,
-		"Save method to use for current file 'auto', 'atomic' or 'inplace'",
+		VIS_HELP("Save method to use for current file 'auto', 'atomic' or 'inplace'")
 	},
 	[OPTION_CHANGE_256COLORS] = {
 		{ "change-256colors" },
 		OPTION_TYPE_BOOL, OPTION_FLAG_NONE,
-		"Change 256 color palette to support 24bit colors",
+		VIS_HELP("Change 256 color palette to support 24bit colors")
 	},
-
 };
 
 bool sam_init(Vis *vis) {

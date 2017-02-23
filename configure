@@ -28,6 +28,7 @@ Optional features:
   --enable-tre            build with TRE regex support [auto]
   --enable-selinux        build with SELinux support [auto]
   --enable-acl            build with POSIX ACL support [auto]
+  --enable-help           build with built-in help texts [yes]
 
 Some influential environment variables:
   CC                      C compiler command [detected]
@@ -114,6 +115,7 @@ BINDIR='$(EXEC_PREFIX)/bin'
 SHAREDIR='$(PREFIX)/share'
 MANDIR='$(PREFIX)/share/man'
 
+help=yes
 lua=auto
 lpeg=auto
 tre=auto
@@ -131,6 +133,8 @@ case "$arg" in
 --mandir=*) MANDIR=${arg#*=} ;;
 --environment-only) environmentonly=yes ;;
 --static) static=yes ;;
+--enable-help|--enable-help=yes) help=yes ;;
+--disable-help|--enable-help=no) help=no ;;
 --enable-lua|--enable-lua=yes) lua=yes ;;
 --disable-lua|--enable-lua=no) lua=no ;;
 --enable-lpeg|--enable-lpeg=yes) lpeg=yes ;;
@@ -282,6 +286,12 @@ have_pkgconfig=no
 printf "checking for pkg-config... "
 cmdexists pkg-config && have_pkgconfig=yes
 printf "%s\n" "$have_pkgconfig"
+
+if test "$help" = "yes" ; then
+	CONFIG_HELP=1
+else
+	CONFIG_HELP=0
+fi
 
 # libcurses is a mandatory dependency
 
@@ -585,6 +595,7 @@ CFLAGS_CURSES = $CFLAGS_CURSES
 LDFLAGS_CURSES = $LDFLAGS_CURSES
 CFLAGS_TERMKEY = $CFLAGS_TERMKEY
 LDFLAGS_TERMKEY = $LDFLAGS_TERMKEY
+CONFIG_HELP = $CONFIG_HELP
 REGEX_SRC = $REGEX_SRC
 CONFIG_TRE = $CONFIG_TRE
 CFLAGS_TRE = $CFLAGS_TRE

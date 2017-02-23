@@ -14,6 +14,20 @@ typedef struct Win Win;
 #include "text-regex.h"
 #include "libutf.h"
 
+#ifndef CONFIG_HELP
+#define CONFIG_HELP 1
+#endif
+
+#if CONFIG_HELP
+#define VIS_HELP_DECL(x) x
+#define VIS_HELP_USE(x) x
+#define VIS_HELP(x) (x),
+#else
+#define VIS_HELP_DECL(x)
+#define VIS_HELP_USE(x) NULL
+#define VIS_HELP(x)
+#endif
+
 /* simplify utility renames by distribution packagers */
 #ifndef VIS_MENU
 #define VIS_MENU "vis-menu"
@@ -66,7 +80,7 @@ typedef const char *KeyActionFunction(Vis*, const char *keys, const Arg*);
 
 typedef struct {             /* a KeyAction can be bound to a key binding */
 	const char *name;    /* aliases can refer to this action by means of a pseudo key <name> */
-	const char *help;    /* short (one line) human readable description, displayed by :help */
+	VIS_HELP_DECL(const char *help;)    /* short (one line) human readable description, displayed by :help */
 	KeyActionFunction *func; /* action implementation */
 	Arg arg;       /* additional arguments which will be passed as to func */
 } KeyAction;

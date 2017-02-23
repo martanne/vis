@@ -8,7 +8,7 @@ static void keyaction_free(KeyAction *action) {
 	if (!action)
 		return;
 	free((char*)action->name);
-	free((char*)action->help);
+	free(VIS_HELP_USE((char*)action->help));
 	free(action);
 }
 
@@ -18,8 +18,10 @@ KeyAction *vis_action_new(Vis *vis, const char *name, const char *help, KeyActio
 		return NULL;
 	if (name && !(action->name = strdup(name)))
 		goto err;
+#if CONFIG_HELP
 	if (help && !(action->help = strdup(help)))
 		goto err;
+#endif
 	action->func = func;
 	action->arg = arg;
 	if (!array_add_ptr(&vis->actions_user, action))
