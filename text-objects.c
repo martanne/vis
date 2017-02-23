@@ -267,29 +267,6 @@ Filerange text_object_range(Text *txt, size_t pos, int (*isboundary)(int)) {
 	return text_range_new(start, it.pos);
 }
 
-static int is_number(int c) {
-	return !(c == '-' || c == 'x' || c == 'X' ||
-	         ('0' <= c && c <= '9') ||
-	         ('a' <= c && c <= 'f') || ('A' <= c && c <= 'F'));
-}
-
-Filerange text_object_number(Text *txt, size_t pos) {
-	char *buf, *err = NULL;
-	Filerange r = text_object_range(txt, pos, is_number);
-	if (!text_range_valid(&r))
-		return r;
-	if (!(buf = text_bytes_alloc0(txt, r.start, text_range_size(&r))))
-		return text_range_empty();
-	errno = 0;
-	(void)strtoll(buf, &err, 0);
-	if (errno || err == buf)
-		r = text_range_empty();
-	else
-		r.end = r.start + (err - buf);
-	free(buf);
-	return r;
-}
-
 static int is_filename_boundary(int c) {
 	switch (c) {
 	case ';': case ':': case '|':

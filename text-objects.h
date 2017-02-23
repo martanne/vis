@@ -41,8 +41,6 @@ Filerange text_object_single_quote(Text*, size_t pos);
 Filerange text_object_backtick(Text*, size_t pos);
 /* text object delimited by arbitrary chars for which isboundary returns non-zero */
 Filerange text_object_range(Text*, size_t pos, int (*isboundary)(int));
-/* a number in either decimal, hex or octal format */
-Filerange text_object_number(Text*, size_t pos);
 Filerange text_object_filename(Text*, size_t pos);
 /* match a search term in either forward or backward direction */
 Filerange text_object_search_forward(Text*, size_t pos, Regex*);
