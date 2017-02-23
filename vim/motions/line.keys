@@ -1,0 +1,2 @@
+g_d0     /* move to last char on line ( $ fails ) delete to start of line */
+j$^dw    /* go to first non blank of next line and delete word */
