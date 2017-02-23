@@ -664,7 +664,7 @@ bool view_viewport_up(View *view, int n) {
 	} while (text_iterator_byte_prev(&it, &c));
 	if (c == '\r')
 		off++;
-	view->start -= off;
+	view->start -= MIN(view->start, off);
 	view_draw(view);
 	return true;
 }
