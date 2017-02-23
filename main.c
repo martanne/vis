@@ -126,8 +126,6 @@ static const char *window(Vis*, const char *keys, const Arg *arg);
 static const char *unicode_info(Vis*, const char *keys, const Arg *arg);
 /* either go to count % of ile or to matching item */
 static const char *percent(Vis*, const char *keys, const Arg *arg);
-/* open a filename under cursor in same (!arg->b) or new (arg->b) window */
-static const char *open_file_under_cursor(Vis*, const char *keys, const Arg *arg);
 /* complete input text at cursor based on the words in the current file */
 static const char *complete_word(Vis*, const char *keys, const Arg *arg);
 /* complete input text at cursor based on file names of the current directory */
@@ -306,8 +304,6 @@ enum {
 	VIS_ACTION_MOTION_LINEWISE,
 	VIS_ACTION_UNICODE_INFO,
 	VIS_ACTION_UTF8_INFO,
-	VIS_ACTION_OPEN_FILE_UNDER_CURSOR,
-	VIS_ACTION_OPEN_FILE_UNDER_CURSOR_NEW_WINDOW,
 	VIS_ACTION_COMPLETE_WORD,
 	VIS_ACTION_COMPLETE_FILENAME,
 	VIS_ACTION_NOP,
@@ -1174,16 +1170,6 @@ static const KeyAction vis_action[] = {
 		"Show UTF-8 encoded codepoint(s) of character under cursor",
 		unicode_info, { .i = VIS_ACTION_UTF8_INFO }
 	},
-	[VIS_ACTION_OPEN_FILE_UNDER_CURSOR] = {
-		"open-file-under-cursor",
-		"Open file under the cursor",
-		open_file_under_cursor, { .b = false }
-	},
-	[VIS_ACTION_OPEN_FILE_UNDER_CURSOR_NEW_WINDOW] = {
-		"open-file-under-cursor-new-window",
-		"Open file under the cursor in a new window",
-		open_file_under_cursor, { .b = true }
-	},
 	[VIS_ACTION_COMPLETE_WORD] = {
 		"complete-word",
 		"Complete word in file",
@@ -2003,28 +1989,6 @@ static const char *percent(Vis *vis, const char *keys, const Arg *arg) {
 		vis_motion(vis, VIS_MOVE_BRACKET_MATCH);
 	else
 		vis_motion(vis, VIS_MOVE_PERCENT);
-	return keys;
-}
-
-static const char *open_file_under_cursor(Vis *vis, const char *keys, const Arg *arg) {
-	View *view = vis_view(vis);
-	Text *txt = vis_text(vis);
-	char cmd[PATH_MAX], name[PATH_MAX];
-
-	for (Cursor *c = view_cursors(view); c; c = view_cursors_next(c)) {
-		Filerange r = text_object_filename(txt, view_cursors_pos(c));
-		if (!text_range_valid(&r))
-			continue;
-		size_t len = text_range_size(&r);
-		if (len >= sizeof(cmd)-10)
-			continue;
-		len = text_bytes_get(txt, r.start, text_range_size(&r), name);
-		name[len] = '\0';
-		snprintf(cmd, sizeof cmd, "%s '%s'", arg->b ? "o" : "e", name);
-		if (vis_cmd(vis, cmd) && !arg->b)
-			break;
-	}
-
 	return keys;
 }
 
