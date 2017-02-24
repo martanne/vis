@@ -1486,8 +1486,14 @@ void vis_insert_nl(Vis *vis) {
 	Text *txt = vis->win->file->text;
 	for (Cursor *c = view_cursors(view); c; c = view_cursors_next(c)) {
 		size_t pos = view_cursors_pos(c);
-		pos = vis_text_insert_nl(vis, txt, pos);
-		view_cursors_scroll_to(c, pos);
+		size_t newpos = vis_text_insert_nl(vis, txt, pos);
+		/* This is a bit of a hack to fix cursor positioning when
+		 * inserting a new line at the start of the view port.
+		 * It has the effect of reseting the mark used by the view
+		 * code to keep track of the start of the visible region.
+		 */
+		view_cursors_to(c, pos);
+		view_cursors_to(c, newpos);
 	}
 	size_t pos = view_cursor_get(view);
 	windows_invalidate(vis, pos, pos-1);
