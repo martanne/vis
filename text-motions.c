@@ -137,7 +137,7 @@ size_t text_line_begin(Text *txt, size_t pos) {
 size_t text_line_start(Text *txt, size_t pos) {
 	char c;
 	Iterator it = text_iterator_get(txt, text_line_begin(txt, pos));
-	while (text_iterator_byte_get(&it, &c) && c != '\n' && space(c))
+	while (text_iterator_byte_get(&it, &c) && c != '\r' && c != '\n' && space(c))
 		text_iterator_byte_next(&it, NULL);
 	return it.pos;
 }
