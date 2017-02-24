@@ -541,7 +541,6 @@ Vis *vis_new(Ui *ui, VisEvent *event) {
 	array_init(&vis->actions_user);
 	action_reset(&vis->action);
 	buffer_init(&vis->input_queue);
-	vis->keys = &vis->input_queue;
 	if (!(vis->command_file = file_new_internal(vis, NULL)))
 		goto err;
 	if (!(vis->search_file = file_new_internal(vis, NULL)))
@@ -980,7 +979,7 @@ bool vis_keys_utf8(Vis *vis, const char *keys, char utf8[static UTFmax+1]) {
 }
 
 static void vis_keys_process(Vis *vis, size_t pos) {
-	Buffer *buf = vis->keys;
+	Buffer *buf = &vis->input_queue;
 	char *keys = buf->data + pos, *start = keys, *cur = keys, *end = keys, *binding_end = keys;;
 	bool prefix = false;
 	KeyBinding *binding = NULL;
@@ -1093,7 +1092,7 @@ static void vis_keys_push(Vis *vis, const char *input, size_t pos, bool record) 
 		macro_append(vis->recording, input);
 	if (vis->macro_operator)
 		macro_append(vis->macro_operator, input);
-	if (buffer_append0(vis->keys, input))
+	if (buffer_append0(&vis->input_queue, input))
 		vis_keys_process(vis, pos);
 }
 
@@ -1288,7 +1287,7 @@ static void macro_replay(Vis *vis, const Macro *macro) {
 }
 
 static void macro_replay_internal(Vis *vis, const Macro *macro) {
-	size_t pos = buffer_length0(vis->keys);
+	size_t pos = buffer_length0(&vis->input_queue);
 	for (char *key = macro->data, *next; key; key = next) {
 		char tmp;
 		next = (char*)vis_keys_next(vis, key);
