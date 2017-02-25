@@ -229,9 +229,9 @@ tryflag CFLAGS -pipe
 
 # Try flags to optimize binary size
 tryflag CFLAGS -Os
-#tryflag CFLAGS -ffunction-sections
-#tryflag CFLAGS -fdata-sections
-#tryldflag LDFLAGS_AUTO -Wl,--gc-sections
+tryflag CFLAGS -ffunction-sections
+tryflag CFLAGS -fdata-sections
+tryldflag LDFLAGS_AUTO -Wl,--gc-sections
 
 # Try hardening flags
 tryflag CFLAGS -fPIE
