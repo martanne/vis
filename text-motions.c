@@ -8,6 +8,7 @@
 #include "util.h"
 #include "text-objects.h"
 
+#define blank(c) ((c) == ' ' || (c) == '\t')
 #define space(c) (isspace((unsigned char)c))
 #define boundary(c) (isboundary((unsigned char)c))
 
@@ -137,7 +138,7 @@ size_t text_line_begin(Text *txt, size_t pos) {
 size_t text_line_start(Text *txt, size_t pos) {
 	char c;
 	Iterator it = text_iterator_get(txt, text_line_begin(txt, pos));
-	while (text_iterator_byte_get(&it, &c) && c != '\r' && c != '\n' && space(c))
+	while (text_iterator_byte_get(&it, &c) && blank(c))
 		text_iterator_byte_next(&it, NULL);
 	return it.pos;
 }
@@ -148,7 +149,7 @@ size_t text_line_finish(Text *txt, size_t pos) {
 	Iterator it = text_iterator_get(txt, end);
 	if (!text_iterator_char_prev(&it, &c) || c == '\n')
 		return end;
-	while (text_iterator_byte_get(&it, &c) && space(c)) {
+	while (text_iterator_byte_get(&it, &c) && blank(c)) {
 		if (c == '\n') {
 			it.pos++;
 			break;
