@@ -1,4 +1,4 @@
-:map! insert jj <nop> <Enter>
+:map! insert jj <vis-nop> <Enter>
 ij<Escape>
 :map! insert jj >< <Enter>
 Ojj<Escape>
