@@ -908,12 +908,12 @@ const char *vis_keys_next(Vis *vis, const char *keys) {
 	/* first try to parse a special key of the form <Key> */
 	if (*keys == '<' && keys[1] && (next = termkey_strpkey(termkey, keys+1, &key, TERMKEY_FORMAT_VIM)) && *next == '>')
 		return next+1;
-	if (*keys == '<') {
+	if (strncmp(keys, "<vis-", 5) == 0) {
 		const char *start = keys + 1, *end = start;
 		while (*end && *end != '>')
 			end++;
-		if (end > start && end - start - 1 < 64 && *end == '>') {
-			char key[64];
+		if (end > start && end - start - 1 < VIS_KEY_LENGTH_MAX && *end == '>') {
+			char key[VIS_KEY_LENGTH_MAX];
 			memcpy(key, start, end - start);
 			key[end - start] = '\0';
 			if (map_get(vis->actions, key))
