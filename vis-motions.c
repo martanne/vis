@@ -386,16 +386,19 @@ const Movement vis_motions[] = {
 	},
 	[VIS_MOVE_LINE_BEGIN] = {
 		.txt = text_line_begin,
+		.type = IDEMPOTENT,
 	},
 	[VIS_MOVE_LINE_START] = {
 		.txt = text_line_start,
+		.type = IDEMPOTENT,
 	},
 	[VIS_MOVE_LINE_FINISH] = {
 		.txt = text_line_finish,
-		.type = INCLUSIVE,
+		.type = INCLUSIVE|IDEMPOTENT,
 	},
 	[VIS_MOVE_LINE_END] = {
 		.txt = text_line_end,
+		.type = IDEMPOTENT,
 	},
 	[VIS_MOVE_LINE_NEXT] = {
 		.txt = text_line_next,
