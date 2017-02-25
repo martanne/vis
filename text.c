@@ -1379,6 +1379,17 @@ bool text_iterator_byte_get(Iterator *it, char *b) {
 	return false;
 }
 
+bool text_iterator_char_get(Iterator *it, char *c) {
+	bool ret = text_iterator_byte_get(it, c);
+	if (ret && *c == '\r') {
+		char d;
+		if (text_iterator_byte_next(it, &d) && d == '\n')
+			*c = '\n';
+		return text_iterator_byte_prev(it, NULL);
+	}
+	return ret;
+}
+
 bool text_iterator_next(Iterator *it) {
 	return text_iterator_init(it, it->pos, it->piece ? it->piece->next : NULL, 0);
 }

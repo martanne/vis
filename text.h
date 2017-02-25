@@ -86,6 +86,9 @@ bool text_iterator_prev(Iterator*);
 /* get byte at current iterator position, if this is at EOF a NUL
  * byte (which is not actually part of the file) is read. */
 bool text_iterator_byte_get(Iterator*, char *b);
+/* same as byte get, but if a sequence of '\r\n' is read at the
+ * iterator position, *c is set to \n instead of \r. */
+bool text_iterator_char_get(Iterator*, char *c);
 /* advance iterator by one byte and get byte at new position. */
 bool text_iterator_byte_prev(Iterator*, char *b);
 /* if the new position is at EOF a NUL byte (which is not actually
