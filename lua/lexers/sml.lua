@@ -1,3 +1,6 @@
+-- Copyright 2017 Murray Calavera. See LICENSE.
+-- Standard ML LPeg lexer.
+
 local l = require('lexer')
 local token = l.token
 

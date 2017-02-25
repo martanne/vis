@@ -1,5 +1,5 @@
+-- Copyright 2013-2017 Brian Schott (@Hackerpilot on Github). See LICENSE.
 -- Dart LPeg lexer.
--- Written by Brian Schott (@Hackerpilot on Github).
 
 local l = require('lexer')
 local token, word_match = l.token, l.word_match

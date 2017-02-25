@@ -112,6 +112,13 @@ M._tokenstyles = {
   doctype = l.STYLE_COMMENT
 }
 
+M._foldsymbols = {
+  _patterns = {'</?', '/>', '<!%-%-', '%-%->'},
+  element = {['<'] = 1, ['/>'] = -1, ['</'] = -1},
+  unknown_element = {['<'] = 1, ['/>'] = -1, ['</'] = -1},
+  [l.COMMENT] = {['<!--'] = 1, ['-->'] = -1}
+}
+
 -- Tags that start embedded languages.
 M.embed_start_tag = element *
                     (ws^1 * attribute * ws^0 * equals * ws^0 * string)^0 *
@@ -142,6 +149,9 @@ local js_start_rule = #(P('<') * script_element *
 end))) * M.embed_start_tag -- <script type="text/javascript">
 local js_end_rule = #('</' * script_element * ws^0 * '>') *
                     M.embed_end_tag -- </script>
+local js_line_comment = '//' * (l.nonnewline_esc - js_end_rule)^0
+local js_block_comment = '/*' * (l.any - '*/' - js_end_rule)^0 * P('*/')^-1
+js._RULES['comment'] = token(l.COMMENT, js_line_comment + js_block_comment)
 l.embed_lexer(M, js, js_start_rule, js_end_rule)
 
 -- Embedded CoffeeScript.
@@ -155,12 +165,5 @@ end)) * M.embed_start_tag -- <script type="text/coffeescript">
 local cs_end_rule = #('</' * script_element * ws^0 * '>') *
                     M.embed_end_tag -- </script>
 l.embed_lexer(M, cs, cs_start_rule, cs_end_rule)
-
-M._foldsymbols = {
-  _patterns = {'</?', '/>', '<!%-%-', '%-%->'},
-  element = {['<'] = 1, ['/>'] = -1, ['</'] = -1},
-  unknown_element = {['<'] = 1, ['/>'] = -1, ['</'] = -1},
-  [l.COMMENT] = {['<!--'] = 1, ['-->'] = -1}
-}
 
 return M

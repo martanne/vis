@@ -1,4 +1,4 @@
--- Copyright 2017 David B. Lamkins <david@lamkins.net>. See LICENSE.
+-- Copyright 2016-2017 David B. Lamkins <david@lamkins.net>. See LICENSE.
 -- Protocol Buffer IDL LPeg lexer.
 -- <https://developers.google.com/protocol-buffers/>
 

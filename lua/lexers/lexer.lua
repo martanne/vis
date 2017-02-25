@@ -1510,6 +1510,20 @@ function M.embed_lexer(parent, child, start_rule, end_rule)
       tokenstyles[token] = style
     end
   end
+  -- Add child fold symbols.
+  if not parent._foldsymbols then parent._foldsymbols = {} end
+  if child._foldsymbols then
+    for token, symbols in pairs(child._foldsymbols) do
+      if not parent._foldsymbols[token] then parent._foldsymbols[token] = {} end
+      for k, v in pairs(symbols) do
+        if type(k) == 'number' then
+          parent._foldsymbols[token][#parent._foldsymbols[token] + 1] = v
+        elseif not parent._foldsymbols[token][k] then
+          parent._foldsymbols[token][k] = v
+        end
+      end
+    end
+  end
   child._lexer = parent -- use parent's tokens if child is embedding itself
   parent_lexer = parent -- use parent's tokens if the calling lexer is a proxy
 end

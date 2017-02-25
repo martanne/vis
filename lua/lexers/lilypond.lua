@@ -1,4 +1,4 @@
--- Copyright 2006-2013 Robert Gieseke. See LICENSE.
+-- Copyright 2006-2017 Robert Gieseke. See LICENSE.
 -- Lilypond LPeg lexer.
 -- TODO Embed Scheme; Notes?, Numbers?
 

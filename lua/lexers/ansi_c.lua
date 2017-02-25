@@ -12,7 +12,10 @@ local ws = token(l.WHITESPACE, l.space^1)
 
 -- Comments.
 local line_comment = '//' * l.nonnewline_esc^0
-local block_comment = '/*' * (l.any - '*/')^0 * P('*/')^-1
+local block_comment = '/*' * (l.any - '*/')^0 * P('*/')^-1 +
+                      l.starts_line('#if') * S(' \t')^0 * '0' * l.space *
+                      (l.any - l.starts_line('#endif'))^0 *
+                      (l.starts_line('#endif'))^-1
 local comment = token(l.COMMENT, line_comment + block_comment)
 
 -- Strings.
@@ -25,11 +28,14 @@ local number = token(l.NUMBER, l.float + l.integer)
 
 -- Preprocessor.
 local preproc_word = word_match{
-  'define', 'elif', 'else', 'endif', 'error', 'if', 'ifdef', 'ifndef',
-  'include', 'line', 'pragma', 'undef', 'warning',
+  'define', 'elif', 'else', 'endif', 'error', 'if', 'ifdef', 'ifndef', 'line',
+  'pragma', 'undef', 'warning'
 }
-local preproc = token(l.PREPROCESSOR,
-                      l.starts_line('#') * S('\t ')^0 * preproc_word)
+local preproc = #l.starts_line('#') *
+                (token(l.PREPROCESSOR, '#' * S('\t ')^0 * preproc_word) +
+                 token(l.PREPROCESSOR, '#' * S('\t ')^0 * 'include') *
+                 (token(l.WHITESPACE, S('\t ')^1) *
+                  token(l.STRING, l.delimited_range('<>', true, true)))^-1)
 
 -- Keywords.
 local storage_class = word_match{
@@ -110,10 +116,13 @@ M._rules = {
 }
 
 M._foldsymbols = {
-  _patterns = {'%l+', '[{}]', '/%*', '%*/', '//'},
+  _patterns = {'#?%l+', '[{}]', '/%*', '%*/', '//'},
   [l.PREPROCESSOR] = {['if'] = 1, ifdef = 1, ifndef = 1, endif = -1},
   [l.OPERATOR] = {['{'] = 1, ['}'] = -1},
-  [l.COMMENT] = {['/*'] = 1, ['*/'] = -1, ['//'] = l.fold_line_comments('//')}
+  [l.COMMENT] = {
+    ['/*'] = 1, ['*/'] = -1, ['//'] = l.fold_line_comments('//'),
+    ['#if'] = 1, ['#endif'] = -1
+  }
 }
 
 return M

@@ -1,4 +1,4 @@
--- Copyright 2006-2013 Martin Morawetz. See LICENSE.
+-- Copyright 2006-2017 Martin Morawetz. See LICENSE.
 -- Matlab LPeg lexer.
 -- Based off of lexer code by Mitchell.
 
