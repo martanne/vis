@@ -1,0 +1,13 @@
+^	To the first non-blank character of the line.
+1 From start to start
+_ to start
+
+
+
+6 Spaces
+7 Tabs
+  8 Backspace
+  9 Vertical tab
+  10 Form feed
+  11 Carriage return
+12 Idempotent (count has no effect)

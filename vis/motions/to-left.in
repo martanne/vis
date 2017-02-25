@@ -1,0 +1,15 @@
+F{char} To [count]'th occurrence of {char} to the left.
+1 find char c (F)
+2 find char c with count (2F)
+3 find char c using repeat and count (2;)
+4 find char c in reverse direction with count (^2,)
+5 find consecutive char ### with count (2F)
+6 find consecutive char ### using repeat (;;)
+7 find consecutive char ### using repeat and count (2;)
+8 find consecutive char ### in reverse direction with count ($2,)
+9 delete # found (d;)
+10 delete not found (d;)
+11 delete invalid count # (d2;)
+12 till æ unicode
+13 till space
+14 till 	 tab

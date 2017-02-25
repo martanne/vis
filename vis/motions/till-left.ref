@@ -1,0 +1,15 @@
+T{char}	Till after [count]'th occurrence of {char} to the left.
+1 till char c|(T)
+2 till char c|with count (2T)
+3 till char c|using repeat and count (2;)
+4 till char|c in reverse direction with count (^2,)
+5 till consecutive char #|# with count (3T)
+6 till consecutive char #|# using repeat (;;;)
+7 till consecutive char #|# using repeat and count (3;)
+8 till consecutive char #|# in reverse direction with count (^3,)
+9 delete #
+10 delete not found (d;)
+11 delete invalid count # (d2;)
+12 till æ|unicode
+13 till |pace
+14 till 	|tab

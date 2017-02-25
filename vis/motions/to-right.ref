@@ -1,0 +1,15 @@
+f{char}	To [count]'th occurrence of char to the right.
+1 find |har c (f)
+2 find char | with count (2f)
+3 find char | using repeat and count (2;)
+4 find char | in reverse direction with count ($3,)
+5 find consecutive char #|# with count (2f#)
+6 find consecutive char #|# using repeat (;;)
+7 find consecutive char #|# using repeat and count (2;)
+8 find consecutive char #|# in reverse direction with count ($2,)
+ found (d;)
+10 delete not found (d;)
+11 delete invalid count # (d2;)
+12 find unicode |
+13|find space
+14 find tab |

@@ -1,7 +1,15 @@
-Till before count occurrence of char to the right.
-
-Consecutive: ____
-Separated: _ _ _
-Invalid count: __
-Space: #
-Tab:	#
+t{char}	Till before [count]'th occurrence of {char} to the right.
+1 till char c (t)
+2 till char c with count (2t)
+3 till char c using repeat and count (2;)
+4 till char c in reverse direction with count ($3,)
+5 till consecutive char ### with count (3t#)
+6 till consecutive char ### using repeat (;;;)
+7 till consecutive char ### using repeat and count (3;)
+8 till consecutive char ### in reverse direction with count ($3,)
+9 delete # found (d;)
+10 delete not found (d;)
+11 delete invalid count # (d2;)
+12 till unicode æ
+13 till space
+14 till tab 	
