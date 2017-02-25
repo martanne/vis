@@ -759,8 +759,9 @@ void vis_do(Vis *vis) {
 					window_jumplist_add(win, pos);
 				else
 					window_jumplist_invalidate(win);
-			} else if (a->movement->type & INCLUSIVE ||
-			          (linewise && a->movement->type & LINEWISE_INCLUSIVE)) {
+			} else if (a->movement->type & INCLUSIVE && c.range.end > start) {
+				c.range.end = text_char_next(txt, c.range.end);
+			} else if (linewise && (a->movement->type & LINEWISE_INCLUSIVE)) {
 				c.range.end = text_char_next(txt, c.range.end);
 			}
 		} else if (a->textobj) {
