@@ -1,0 +1,6 @@
+prev WORD-end_
+prev WORD-mid_dle
+prev WORD-word _start
+prev WORD-space _
+prev WORD-tab	_
+prev WORD-word with count _

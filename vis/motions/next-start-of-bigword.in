@@ -1,0 +1,9 @@
+_start-word next
+mid_dle-word next
+end-word_ next
+space_ next
+tab_	next
+word-cap with!delims$and count
+
+next line
+word_at_end

@@ -1,0 +1,9 @@
+_start-wor| next
+mid_dle-wor| next
+end-word_ nex|
+space_ nex|
+tab_	nex|
+word-cap with!delims$an| count
+
+nex| line
+word_at_en|
