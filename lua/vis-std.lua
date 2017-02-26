@@ -144,3 +144,15 @@ require('plugins/digraph')
 require('plugins/number-inc-dec')
 require('plugins/complete-word')
 require('plugins/complete-filename')
+
+vis:map(vis.modes.NORMAL, "gf", function(keys)
+	local r = vis.win.file:text_object_longword(vis.win.cursor.pos)
+	local filename = vis.win.file:content(r)
+	local ok = vis:open(filename)
+	if not ok then
+		vis:info("Could not open file " .. filename .. " for reading.")
+	end
+	return #keys
+end, "Open file under cursor in a new window")
+
+vis:map(vis.modes.NORMAL, "<C-w>gf", "gf")
