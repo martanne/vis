@@ -146,3 +146,61 @@ vis:map(vis.modes.INSERT, "<C-k>", function(keys)
 	end
 	return #keys
 end, "Insert digraph")
+
+
+local change = function(delta)
+    local lexer = vis.lexers
+    local lpeg = vis.lpeg
+    if not lexer or not lpeg then return end
+
+    local win = vis.win
+    local file = win.file
+    local count = vis.count
+    if not count then count = 1 end
+
+    for cursor in win:cursors_iterator() do
+        local pos = cursor.pos
+        local word = file:text_object_word(pos);
+        local s,e = word.start , word.finish;
+        if s then
+            local data = file:content(s, e - s)
+            if data and #data > 0 then
+                    local base, format, padding = 10, 'd', 0
+                    local number_type = nil;
+                    if lexer.oct_num:match(data) then
+                            number_type = 1;
+                            base = 8
+                            format = 'o'
+                            padding = #data 
+                    elseif lexer.hex_num:match(data) then
+                            number_type=2
+                            base = 16
+                            format = 'x'
+                            padding = #data - #"0x"
+                    elseif lexer.float:match(data) then
+                            format = 'f'
+                    end
+                    local number =nil
+                    if number_type == 1 then
+                        number = tonumber(data,base)
+                    else 
+                        number = tonumber(data)
+                    end
+                    if number then
+                            number = string.format((base == 16 and "0x" or "") .. "%0"..padding..format, number+delta*count)
+                            if  ( number_type ==1 and string.sub(number,0,1) ~=  "0" ) then
+                                number = '0' .. number
+                            end
+                            file:delete(s, e - s)
+                            file:insert(s, number)
+                            cursor.pos = s
+                    else
+                            vis:info("Not a number")
+                    end
+                end
+        end
+    end
+end
+
+vis:map(vis.modes.NORMAL, "<C-a>", function() change( 1) end, "Increment number")
+vis:map(vis.modes.NORMAL, "<C-x>", function() change(-1) end, "Decrement number")
