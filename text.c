@@ -937,9 +937,7 @@ static bool text_save_begin_inplace(TextSave *ctx) {
 		 */
 		size_t size = txt->block->size;
 		char tmpname[32] = "/tmp/vis-XXXXXX";
-		mode_t mask = umask(S_IXUSR | S_IRWXG | S_IRWXO);
 		newfd = mkstemp(tmpname);
-		umask(mask);
 		if (newfd == -1)
 			goto err;
 		if (unlink(tmpname) == -1)
