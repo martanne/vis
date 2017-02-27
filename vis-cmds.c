@@ -410,6 +410,24 @@ static bool cmd_edit(Vis *vis, Win *win, Command *cmd, const char *argv[], Curso
 	return vis->win != oldwin;
 }
 
+static bool cmd_read(Vis *vis, Win *win, Command *cmd, const char *argv[], Cursor *cur, Filerange *range) {
+	bool ret = false;
+	const size_t first_file = 3;
+	const char *args[MAX_ARGV] = { argv[0], "cat", "--" };
+	const char **name = argv[1] ? &argv[1] : (const char*[]){ ".", NULL };
+	for (size_t i = first_file; *name && i < LENGTH(args)-1; name++, i++) {
+		const char *file = file_open_dialog(vis, *name);
+		if (!file || !(args[i] = strdup(file)))
+			goto err;
+	}
+	args[LENGTH(args)-1] = NULL;
+	ret = cmd_pipein(vis, win, cmd, args, cur, range);
+err:
+	for (size_t i = first_file; i < LENGTH(args); i++)
+		free((char*)args[i]);
+	return ret;
+}
+
 static bool has_windows(Vis *vis) {
 	for (Win *win = vis->windows; win; win = win->next) {
 		if (!win->file->internal)

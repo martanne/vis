@@ -1557,19 +1557,6 @@ static bool cmd_write(Vis *vis, Win *win, Command *cmd, const char *argv[], Curs
 	return true;
 }
 
-static bool cmd_read(Vis *vis, Win *win, Command *cmd, const char *argv[], Cursor *cur, Filerange *range) {
-	if (!argv[1]) {
-		vis_info_show(vis, "Filename expected");
-		return false;
-	}
-
-	const char *args[MAX_ARGV] = { argv[0], "cat", "--" };
-	for (int i = 3; i < MAX_ARGV-2; i++)
-		args[i] = argv[i-2];
-	args[MAX_ARGV-1] = NULL;
-	return cmd_pipein(vis, win, cmd, (const char**)args, cur, range);
-}
-
 static ssize_t read_buffer(void *context, char *data, size_t len) {
 	buffer_append(context, data, len);
 	return len;
