@@ -856,7 +856,7 @@ static bool text_save_begin_atomic(TextSave *ctx) {
 		goto err;
 	snprintf(ctx->tmpname, namelen, "%s~", ctx->filename);
 
-	if ((ctx->fd = open(ctx->tmpname, O_CREAT|O_WRONLY|O_TRUNC, oldfd == -1 ? S_IRUSR|S_IWUSR : oldmeta.st_mode)) == -1)
+	if ((ctx->fd = open(ctx->tmpname, O_CREAT|O_WRONLY|O_TRUNC, oldfd == -1 ? 0666 : oldmeta.st_mode)) == -1)
 		goto err;
 	if (oldfd != -1) {
 		if (!preserve_acl(oldfd, ctx->fd) || !preserve_selinux_context(oldfd, ctx->fd))
@@ -924,7 +924,7 @@ static bool text_save_begin_inplace(TextSave *ctx) {
 	Text *txt = ctx->txt;
 	struct stat meta = { 0 };
 	int newfd = -1, saved_errno;
-	if ((ctx->fd = open(ctx->filename, O_CREAT|O_WRONLY, S_IRUSR|S_IWUSR)) == -1)
+	if ((ctx->fd = open(ctx->filename, 0666, S_IRUSR|S_IWUSR)) == -1)
 		goto err;
 	if (fstat(ctx->fd, &meta) == -1)
 		goto err;
