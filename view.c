@@ -1265,6 +1265,7 @@ void view_cursors_selection_restore(Cursor *c) {
 	);
 	if (!text_range_valid(&sel))
 		return;
+	view_cursors_to(c, sel.end);
 	sel.end = text_char_next(txt, sel.end);
 	if (!(c->sel = view_selections_new(c->view, c)))
 		return;
