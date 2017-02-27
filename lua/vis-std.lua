@@ -172,11 +172,6 @@ local change = function(delta)
                             base = 8
                             format = 'o'
                             padding = #data 
-                            -- checking for i.e 077 0777 to increment the padding
-                            local lpeg_padding_check = lpeg.P '0' * lpeg.P '7' ^(#data-1)
-                            if lpeg_padding_check:match(data) then
-                                padding= padding +1
-                            end
                     elseif lexer.hex_num:match(data) then
                             number_type=2
                             base = 16
@@ -193,6 +188,9 @@ local change = function(delta)
                     end
                     if number then
                             number = string.format((base == 16 and "0x" or "") .. "%0"..padding..format, number+delta*count)
+                            if  ( number_type ==1 and string.sub(number,0,1) ~=  "0" ) then
+                                number = '0' .. number
+                            end
                             file:delete(s, e - s)
                             file:insert(s, number)
                             cursor.pos = s
