@@ -102,7 +102,7 @@ static size_t op_shift_right(Vis *vis, Text *txt, OperatorContext *c) {
 	const char *tab = vis->expandtab ? spaces : "\t";
 	size_t tablen = strlen(tab);
 	size_t pos = text_line_begin(txt, c->range.end), prev_pos;
-	size_t inserted = 0;
+	size_t newpos = c->pos;
 
 	/* if range ends at the begin of a line, skip line break */
 	if (pos == c->range.end)
@@ -110,41 +110,47 @@ static size_t op_shift_right(Vis *vis, Text *txt, OperatorContext *c) {
 
 	do {
 		prev_pos = pos = text_line_begin(txt, pos);
-		text_insert(txt, pos, tab, tablen);
+		if (text_insert(txt, pos, tab, tablen) && pos <= c->pos)
+			newpos += tablen;
 		pos = text_line_prev(txt, pos);
-		inserted += tablen;
 	}  while (pos >= c->range.start && pos != prev_pos);
 
-	return c->pos + inserted;
+	return newpos;
 }
 
 static size_t op_shift_left(Vis *vis, Text *txt, OperatorContext *c) {
 	size_t pos = text_line_begin(txt, c->range.end), prev_pos;
 	size_t tabwidth = vis->tabwidth, tablen;
-	size_t deleted = 0;
+	size_t newpos = c->pos;
 
 	/* if range ends at the begin of a line, skip line break */
 	if (pos == c->range.end)
 		pos = text_line_prev(txt, pos);
 
 	do {
-		char c;
+		char b;
 		size_t len = 0;
 		prev_pos = pos = text_line_begin(txt, pos);
 		Iterator it = text_iterator_get(txt, pos);
-		if (text_iterator_byte_get(&it, &c) && c == '\t') {
+		if (text_iterator_byte_get(&it, &b) && b == '\t') {
 			len = 1;
 		} else {
-			for (len = 0; text_iterator_byte_get(&it, &c) && c == ' '; len++)
+			for (len = 0; text_iterator_byte_get(&it, &b) && b == ' '; len++)
 				text_iterator_byte_next(&it, NULL);
 		}
 		tablen = MIN(len, tabwidth);
-		text_delete(txt, pos, tablen);
+		if (text_delete(txt, pos, tablen) && pos < c->pos) {
+			size_t delta = c->pos - pos;
+			if (delta > tablen)
+				delta = tablen;
+			if (delta > newpos)
+				delta = newpos;
+			newpos -= delta;
+		}
 		pos = text_line_prev(txt, pos);
-		deleted += tablen;
 	}  while (pos >= c->range.start && pos != prev_pos);
 
-	return c->pos - deleted;
+	return newpos;
 }
 
 static size_t op_case_change(Vis *vis, Text *txt, OperatorContext *c) {
