@@ -2439,7 +2439,7 @@ static bool vis_lua_input(Vis *vis, const char *key, size_t len) {
 	vis_lua_event_get(L, "input");
 	if (lua_isfunction(L, -1)) {
 		lua_pushlstring(L, key, len);
-		if (pcall(vis, L, 1, 1) != 0) {
+		if (pcall(vis, L, 1, 1) == 0) {
 			ret = lua_isboolean(L, -1) && lua_toboolean(L, -1);
 			lua_pop(L, 1);
 		}
