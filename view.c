@@ -131,9 +131,16 @@ void view_tabwidth_set(View *view, int tabwidth) {
 static void view_clear(View *view) {
 	memset(view->lines, 0, view->lines_size);
 	if (view->start != view->start_last) {
-		view->start_mark = text_mark_set(view->text, view->start);
+		if (view->start == 0)
+			view->start_mark = EMARK;
+		else
+			view->start_mark = text_mark_set(view->text, view->start);
 	} else {
-		size_t start = text_mark_get(view->text, view->start_mark);
+		size_t start;
+		if (view->start_mark == EMARK)
+			start = 0;
+		else
+			start = text_mark_get(view->text, view->start_mark);
 		if (start != EPOS)
 			view->start = start;
 	}
