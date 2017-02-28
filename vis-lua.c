@@ -1169,6 +1169,11 @@ static int vis_newindex(lua_State *L) {
 			vis_count_set(vis, count);
 			return 1;
 		}
+
+		if (strcmp(key, "win") == 0) {
+			vis_window_focus(obj_ref_check(L, 3, VIS_LUA_TYPE_WINDOW));
+			return 0;
+		}
 	}
 	return newindex_common(L);
 }
