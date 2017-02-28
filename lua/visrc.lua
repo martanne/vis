@@ -1,7 +1,5 @@
 -- load standard vis module, providing parts of the Lua API
 require('vis')
-require('plugins/filetype')
-require('plugins/textobject-lexer')
 
 vis.events.subscribe(vis.events.INIT, function()
 	-- Your global configuration options
