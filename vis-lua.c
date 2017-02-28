@@ -1167,7 +1167,7 @@ static int vis_newindex(lua_State *L) {
 			else
 				count = luaL_checkunsigned(L, 3);
 			vis_count_set(vis, count);
-			return 1;
+			return 0;
 		}
 
 		if (strcmp(key, "win") == 0) {
