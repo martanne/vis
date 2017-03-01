@@ -1504,7 +1504,57 @@ static const struct luaL_Reg window_cursors_funcs[] = {
 
 /***
  * A cursor object.
+ *
+ * Cursors are represented as absolute byte offsets from the start of the file.
+ * Valid cursor placements are within the closed interval `[0, file.size]`.
+ * Cursors are currently implemented using character marks into the underlying
+ * persistent [text management data structure](http://google.ch/).
+ * This has a few consequences you should be aware of:
+ *
+ *  - A cursor becomes invalid when the underlying text range it is referencing
+ *    is deleted:
+ *
+ *        -- leaves cursor in an invalid state
+ *        win.file:delete(win.cursor.pos, 1)
+ *        assert(win.cursor.pos == nil)
+ *
+ *    Like a regular mark it will become valid again when the text is reverted
+ *    to the state before the deletion.
+ *
+ *  - Inserts after the cursor position (`> cursor.pos`) will not affect the
+ *    cursor postion.
+ *
+ *        local pos = win.cursor.pos
+ *        win.file:insert(pos+1, "-")
+ *        assert(win.cursor.pos == pos)
+ *
+ *  - Non-cached inserts before the cursor position (`<= cursor.pos`) will
+ *    affect the mark and adjust the cursor postion by the number of bytes
+ *    which were inserted.
+ *
+ *        local pos = win.cursor.pos
+ *        win.file:insert(pos, "-")
+ *        assert(win.cursor.pos == pos+1)
+ *
+ *  - Cached inserts before the cursor position (`<= cursor.pos`) will
+ *    not affect the cursor position because the underlying text is replaced
+ *    inplace.
+ *
+ * For these reasons it is generally recommended to update the cursor position
+ * after a modification. The general procedure amounts to:
+ *
+ * 1. Read out the current cursor position
+ * 2. Perform text modifications
+ * 3. Update the cursor postion
+ *
+ * This is what @{Vis:insert} and @{Vis:replace} do internally.
+ *
  * @type Cursor
+ * @usage
+ * local data = "new text"
+ * local pos = win.cursor.pos
+ * win.file:insert(pos, data)
+ * win.cursor.pos = pos + #data
  */
 
 /***
