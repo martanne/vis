@@ -556,7 +556,7 @@ static const char *keymapping(Vis *vis, const char *keys, const Arg *arg) {
 /***
  * Lua API object types
  * @field types meta tables of userdata objects used for type checking
- * @internal
+ * @local
  */
 /***
  * User interface.
