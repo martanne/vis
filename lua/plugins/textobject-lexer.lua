@@ -5,7 +5,7 @@ local MAX_CONTEXT = 32768
 vis:textobject_new("ii", function(win, pos)
 
 	if win.syntax == nil or not vis.lexers then
-		return pos, pos
+		return nil
 	end
 
 	local before, after = pos - MAX_CONTEXT, pos + MAX_CONTEXT
@@ -30,5 +30,5 @@ vis:textobject_new("ii", function(win, pos)
 		cur = token_next
 	end
 
-	return pos, pos
+	return nil
 end, "Current lexer token")
