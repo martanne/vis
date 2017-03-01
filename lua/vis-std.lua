@@ -108,7 +108,9 @@ vis.events.subscribe(vis.events.WIN_STATUS, function(win)
 	end
 
 	local size = file.size
-	table.insert(right_parts, (size == 0 and "0" or math.ceil(cursor.pos/size*100)).."%")
+	local pos = cursor.pos
+	if not pos then pos = 0 end
+	table.insert(right_parts, (size == 0 and "0" or math.ceil(pos/size*100)).."%")
 
 	if not win.large then
 		local col = cursor.col

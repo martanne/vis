@@ -486,6 +486,13 @@ static size_t checkpos(lua_State *L, int narg) {
 	return luaL_argerror(L, narg, "expected position, got number");
 }
 
+static void pushpos(lua_State *L, size_t pos) {
+	if (pos == EPOS)
+		lua_pushnil(L);
+	else
+		lua_pushunsigned(L, pos);
+}
+
 static void pushrange(lua_State *L, Filerange *r) {
 	if (!text_range_valid(r)) {
 		lua_pushnil(L);
@@ -1560,6 +1567,7 @@ static const struct luaL_Reg window_cursors_funcs[] = {
 /***
  * The zero based byte position in the file.
  *
+ * Might be `nil` if the cursor is in an invalid state.
  * Setting this field will move the cursor to the given position.
  * @tfield int pos
  */
@@ -1592,7 +1600,7 @@ static int window_cursor_index(lua_State *L) {
 	if (lua_isstring(L, 2)) {
 		const char *key = lua_tostring(L, 2);
 		if (strcmp(key, "pos") == 0) {
-			lua_pushunsigned(L, view_cursors_pos(cur));
+			pushpos(L, view_cursors_pos(cur));
 			return 1;
 		}
 
@@ -2010,6 +2018,7 @@ static const struct luaL_Reg file_lines_funcs[] = {
 };
 
 static int file_marks_index(lua_State *L) {
+	size_t pos = EPOS;
 	Vis *vis = lua_touserdata(L, lua_upvalueindex(1));
 	File *file = obj_ref_check_containerof(L, 1, VIS_LUA_TYPE_MARKS, offsetof(File, marks));
 	if (!file)
@@ -2020,13 +2029,9 @@ static int file_marks_index(lua_State *L) {
 	enum VisMark mark = vis_mark_from(vis, symbol[0]);
 	if (mark == VIS_MARK_INVALID)
 		goto err;
-	size_t pos = text_mark_get(file->text, file->marks[mark]);
-	if (pos == EPOS)
-		goto err;
-	lua_pushunsigned(L, pos);
-	return 1;
+	pos = text_mark_get(file->text, file->marks[mark]);
 err:
-	lua_pushnil(L);
+	pushpos(L, pos);
 	return 1;
 }
 
