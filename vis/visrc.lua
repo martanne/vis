@@ -1,5 +1,5 @@
 package.path = '../../lua/?.lua;'..package.path
-dofile("../../lua/visrc.lua")
+dofile("../../lua/vis.lua")
 
 vis.events.subscribe(vis.events.WIN_OPEN, function(win)
 	-- test.in file passed to vis
