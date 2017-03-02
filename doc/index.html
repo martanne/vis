@@ -59,7 +59,7 @@
 <p> This document might be out of date, run <code>make luadoc</code> to regenerate it.</p>
     <h3>Info:</h3>
     <ul>
-        <li><strong>Release</strong>: v0.2-667-g9fd92b6</li>
+        <li><strong>Release</strong>: v0.2-842-g2d38e94-dirty</li>
         <li><strong>License</strong>: ISC</li>
         <li><strong>Author</strong>: Marc André Tanner</li>
     </ul>
@@ -72,12 +72,20 @@
 	<td class="summary">Version information.</td>
 	</tr>
 	<tr>
+	<td class="name" nowrap><a href="#Vis.count">Vis.count</a></td>
+	<td class="summary">Current count.</td>
+	</tr>
+	<tr>
 	<td class="name" nowrap><a href="#Vis.events">Vis.events</a></td>
 	<td class="summary">Events.</td>
 	</tr>
 	<tr>
 	<td class="name" nowrap><a href="#Vis.lexers">Vis.lexers</a></td>
-	<td class="summary">LPeg lexer support module.</td>
+	<td class="summary">Scintillua lexer module.</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#Vis.lpeg">Vis.lpeg</a></td>
+	<td class="summary">LPeg lexer module.</td>
 	</tr>
 	<tr>
 	<td class="name" nowrap><a href="#Vis.mode">Vis.mode</a></td>
@@ -128,6 +136,14 @@
 	<td class="summary">Display a short message.</td>
 	</tr>
 	<tr>
+	<td class="name" nowrap><a href="#Vis:insert">Vis:insert(keys)</a></td>
+	<td class="summary">Insert keys at all cursor positions of active window.</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#Vis:map">Vis:map(mode, key, action)</a></td>
+	<td class="summary">Map a key to a key action.</td>
+	</tr>
+	<tr>
 	<td class="name" nowrap><a href="#Vis:map">Vis:map(mode, key, alias)</a></td>
 	<td class="summary">Setup a key alias.</td>
 	</tr>
@@ -136,16 +152,16 @@
 	<td class="summary">Map a key to a Lua function.</td>
 	</tr>
 	<tr>
-	<td class="name" nowrap><a href="#Vis:map">Vis:map(mode, key, action)</a></td>
-	<td class="summary">Map a key to a key action.</td>
-	</tr>
-	<tr>
 	<td class="name" nowrap><a href="#Vis:mark_names">Vis:mark_names()</a></td>
 	<td class="summary">Create an iterator over all mark names.</td>
 	</tr>
 	<tr>
 	<td class="name" nowrap><a href="#Vis:message">Vis:message(message)</a></td>
 	<td class="summary">Display a multi line message.</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#Vis:module_exist">Vis:module_exist(name)</a></td>
+	<td class="summary">Check whether a Lua module exists</td>
 	</tr>
 	<tr>
 	<td class="name" nowrap><a href="#Vis:motion_new">Vis:motion_new(key, motion[, help])</a></td>
@@ -158,6 +174,10 @@
 	<tr>
 	<td class="name" nowrap><a href="#Vis:register_names">Vis:register_names()</a></td>
 	<td class="summary">Create an iterator over all register names.</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#Vis:replace">Vis:replace(keys)</a></td>
+	<td class="summary">Replace keys at all cursor positions of active window.</td>
 	</tr>
 	<tr>
 	<td class="name" nowrap><a href="#Vis:textobject_new">Vis:textobject_new(key, textobject[, help])</a></td>
@@ -313,6 +333,10 @@
 	<td class="summary">Set mark.</td>
 	</tr>
 	<tr>
+	<td class="name" nowrap><a href="#File:match_at">File:match_at(pattern, the[, horizon])</a></td>
+	<td class="summary">Check whether LPeg pattern matches at a given file position.</td>
+	</tr>
+	<tr>
 	<td class="name" nowrap><a href="#File:text_object_word">File:text_object_word(pos)</a></td>
 	<td class="summary">Word text object.</td>
 	</tr>
@@ -459,6 +483,26 @@
 
 </dd>
     <dt>
+    <a name = "Vis.count"></a>
+    <strong>Vis.count</strong>
+    </dt>
+    <dd>
+    Current count.
+
+
+    <ul>
+        <li><span class="parameter">count</span>
+            <span class="types"><span class="type">int</span></span>
+         the specified count for the current command or <code>nil</code> if none was given
+        </li>
+    </ul>
+
+
+
+
+
+</dd>
+    <dt>
     <a name = "Vis.events"></a>
     <strong>Vis.events</strong>
     </dt>
@@ -485,14 +529,31 @@
     <strong>Vis.lexers</strong>
     </dt>
     <dd>
-    LPeg lexer support module.
+    Scintillua lexer module.
 
 
     <ul>
         <li><span class="parameter">lexers</span>
+         might be <code>nil</code> if module is not found
+        </li>
+    </ul>
 
 
 
+
+
+</dd>
+    <dt>
+    <a name = "Vis.lpeg"></a>
+    <strong>Vis.lpeg</strong>
+    </dt>
+    <dd>
+    LPeg lexer module.
+
+
+    <ul>
+        <li><span class="parameter">lpeg</span>
+         might be <code>nil</code> if module is not found
         </li>
     </ul>
 
@@ -817,6 +878,81 @@
 
 </dd>
     <dt>
+    <a name = "Vis:insert"></a>
+    <strong>Vis:insert(keys)</strong>
+    </dt>
+    <dd>
+    Insert keys at all cursor positions of active window. </p>
+
+<p> This function behaves as if the keys were entered in insert mode,
+ but in contrast to <a href="index.html#Vis:feedkeys">Vis:feedkeys</a> it bypasses the input queue,
+ meaning mappings do not apply and the keys will not be recorded in macros.
+
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">keys</span>
+            <span class="types"><a class="type" href="https://www.lua.org/manual/5.1/manual.html#5.4">string</a></span>
+         the keys to insert
+        </li>
+    </ul>
+
+
+
+    <h3>See also:</h3>
+    <ul>
+         <a href="index.html#Vis:feedkeys">Vis:feedkeys</a>
+    </ul>
+
+
+</dd>
+    <dt>
+    <a name = "Vis:map"></a>
+    <strong>Vis:map(mode, key, action)</strong>
+    </dt>
+    <dd>
+    Map a key to a key action.
+
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">mode</span>
+            <span class="types"><span class="type">int</span></span>
+         the mode to which the mapping should be added
+        </li>
+        <li><span class="parameter">key</span>
+            <span class="types"><a class="type" href="https://www.lua.org/manual/5.1/manual.html#5.4">string</a></span>
+         the key to map
+        </li>
+        <li><span class="parameter">action</span>
+         the action to map
+        </li>
+    </ul>
+
+    <h3>Returns:</h3>
+    <ol>
+
+           <span class="types"><span class="type">bool</span></span>
+        whether the mapping was successfully established
+    </ol>
+
+
+    <h3>See also:</h3>
+    <ul>
+         <a href="index.html#Window:map">Window:map</a>
+    </ul>
+
+    <h3>Usage:</h3>
+    <ul>
+        <pre class="example"><span class="keyword">local</span> action = vis:action_register(<span class="string">"info"</span>, <span class="keyword">function</span>()
+  vis:info(<span class="string">"Mapping works!"</span>)
+<span class="keyword">end</span>, <span class="string">"Info message help text"</span>)
+vis:map(vis.modes.NORMAL, <span class="string">"gh"</span>, action)
+vis:map(vis.modes.NORMAL, <span class="string">"gl"</span>, action)</pre>
+    </ul>
+
+</dd>
+    <dt>
     <a name = "Vis:map"></a>
     <strong>Vis:map(mode, key, alias)</strong>
     </dt>
@@ -923,52 +1059,6 @@
 
 </dd>
     <dt>
-    <a name = "Vis:map"></a>
-    <strong>Vis:map(mode, key, action)</strong>
-    </dt>
-    <dd>
-    Map a key to a key action.
-
-
-    <h3>Parameters:</h3>
-    <ul>
-        <li><span class="parameter">mode</span>
-            <span class="types"><span class="type">int</span></span>
-         the mode to which the mapping should be added
-        </li>
-        <li><span class="parameter">key</span>
-            <span class="types"><a class="type" href="https://www.lua.org/manual/5.1/manual.html#5.4">string</a></span>
-         the key to map
-        </li>
-        <li><span class="parameter">action</span>
-         the action to map
-        </li>
-    </ul>
-
-    <h3>Returns:</h3>
-    <ol>
-
-           <span class="types"><span class="type">bool</span></span>
-        whether the mapping was successfully established
-    </ol>
-
-
-    <h3>See also:</h3>
-    <ul>
-         <a href="index.html#Window:map">Window:map</a>
-    </ul>
-
-    <h3>Usage:</h3>
-    <ul>
-        <pre class="example"><span class="keyword">local</span> action = vis:action_register(<span class="string">"info"</span>, <span class="keyword">function</span>()
-  vis:info(<span class="string">"Mapping works!"</span>)
-<span class="keyword">end</span>, <span class="string">"Info message help text"</span>)
-vis:map(vis.modes.NORMAL, <span class="string">"gh"</span>, action)
-vis:map(vis.modes.NORMAL, <span class="string">"gl"</span>, action)</pre>
-    </ul>
-
-</dd>
-    <dt>
     <a name = "Vis:mark_names"></a>
     <strong>Vis:mark_names()</strong>
     </dt>
@@ -1015,6 +1105,33 @@ vis:map(vis.modes.NORMAL, <span class="string">"gl"</span>, action)</pre>
         </li>
     </ul>
 
+
+
+
+
+</dd>
+    <dt>
+    <a name = "Vis:module_exist"></a>
+    <strong>Vis:module_exist(name)</strong>
+    </dt>
+    <dd>
+    Check whether a Lua module exists  Checks whether a subsequent <a href="https://www.lua.org/manual/5.1/manual.html#pdf-require">require</a> call will succeed.
+
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">name</span>
+            <span class="types"><a class="type" href="https://www.lua.org/manual/5.1/manual.html#5.4">string</a></span>
+         the module name to check
+        </li>
+    </ul>
+
+    <h3>Returns:</h3>
+    <ol>
+
+           <span class="types"><span class="type">bool</span></span>
+        whether the module was found
+    </ol>
 
 
 
@@ -1122,6 +1239,35 @@ vis:map(vis.modes.NORMAL, <span class="string">"gl"</span>, action)</pre>
 </span>	<span class="keyword">end</span>
 <span class="keyword">end</span></pre>
     </ul>
+
+</dd>
+    <dt>
+    <a name = "Vis:replace"></a>
+    <strong>Vis:replace(keys)</strong>
+    </dt>
+    <dd>
+    Replace keys at all cursor positions of active window. </p>
+
+<p> This function behaves as if the keys were entered in replace mode,
+ but in contrast to <a href="index.html#Vis:feedkeys">Vis:feedkeys</a> it bypasses the input queue,
+ meaning mappings do not apply and the keys will not be recorded in macros.
+
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">keys</span>
+            <span class="types"><a class="type" href="https://www.lua.org/manual/5.1/manual.html#5.4">string</a></span>
+         the keys to insert
+        </li>
+    </ul>
+
+
+
+    <h3>See also:</h3>
+    <ul>
+         <a href="index.html#Vis:feedkeys">Vis:feedkeys</a>
+    </ul>
+
 
 </dd>
     <dt>
@@ -1530,8 +1676,61 @@ vis:map(vis.modes.NORMAL, <span class="string">"gl"</span>, action)</pre>
     <h2 class="section-header has-description"><a name="Class_Cursor"></a>Class Cursor </h2>
 
           <div class="section-description">
-          A cursor object.
+          A cursor object. </p>
+
+<p> Cursors are represented as absolute byte offsets from the start of the file.
+ Valid cursor placements are within the closed interval <code>[0, file.size]</code>.
+ Cursors are currently implemented using character marks into the underlying
+ persistent <a href="http://google.ch/">text management data structure</a>.
+ This has a few consequences you should be aware of:</p>
+
+<ul>
+    <li><p>A cursor becomes invalid when the underlying text range it is referencing
+is deleted:</p>
+
+<pre><code>-- leaves cursor in an invalid state
+win.file:delete(win.cursor.pos, 1)
+assert(win.cursor.pos == nil)
+</code></pre>
+
+<p>Like a regular mark it will become valid again when the text is reverted
+to the state before the deletion.</p></li>
+    <li><p>Inserts after the cursor position (<code>&gt; cursor.pos</code>) will not affect the
+cursor postion.</p>
+
+<pre><code>local pos = win.cursor.pos
+win.file:insert(pos+1, "-")
+assert(win.cursor.pos == pos)
+</code></pre></li>
+    <li><p>Non-cached inserts before the cursor position (<code>&lt;= cursor.pos</code>) will
+affect the mark and adjust the cursor postion by the number of bytes
+which were inserted.</p>
+
+<pre><code>local pos = win.cursor.pos
+win.file:insert(pos, "-")
+assert(win.cursor.pos == pos+1)
+</code></pre></li>
+    <li><p>Cached inserts before the cursor position (<code>&lt;= cursor.pos</code>) will
+    not affect the cursor position because the underlying text is replaced
+    inplace.</p></li>
+</ul>
+
+<p> For these reasons it is generally recommended to update the cursor position
+ after a modification. The general procedure amounts to:</p>
+
+<ol>
+    <li>Read out the current cursor position</li>
+    <li>Perform text modifications</li>
+    <li>Update the cursor postion</li>
+</ol>
+
+<p> This is what <a href="index.html#Vis:insert">Vis:insert</a> and <a href="index.html#Vis:replace">Vis:replace</a> do internally.
           </div>
+            <h3>Usage:</h3>
+            <pre class="example"><span class="keyword">local</span> data = <span class="string">"new text"</span>
+<span class="keyword">local</span> pos = win.cursor.pos
+win.file:insert(pos, data)
+win.cursor.pos = pos + #data</pre>
     <dl class="function">
     <dt>
     <a name = "Cursor.col"></a>
@@ -1614,7 +1813,8 @@ vis:map(vis.modes.NORMAL, <span class="string">"gl"</span>, action)</pre>
     <dd>
     The zero based byte position in the file. </p>
 
-<p> Setting this field will move the cursor to the given position.
+<p> Might be <code>nil</code> if the cursor is in an invalid state.
+ Setting this field will move the cursor to the given position.
 
 
     <ul>
@@ -2071,6 +2271,41 @@ vis:map(vis.modes.NORMAL, <span class="string">"gl"</span>, action)</pre>
 
            <span class="types"><span class="type">Mark</span></span>
         mark the mark which can be looked up later
+    </ol>
+
+
+
+
+</dd>
+    <dt>
+    <a name = "File:match_at"></a>
+    <strong>File:match_at(pattern, the[, horizon])</strong>
+    </dt>
+    <dd>
+    Check whether LPeg pattern matches at a given file position.
+
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">pattern</span>
+         the LPeg pattern
+        </li>
+        <li><span class="parameter">the</span>
+            <span class="types"><span class="type">int</span></span>
+         absolute position in bytes to test for a match
+        </li>
+        <li><span class="parameter">horizon</span>
+            <span class="types"><span class="type">int</span></span>
+         the number of bytes around <a href="index.html#Cursor.pos">pos</a> to consider (defaults to 1K)
+         (<em>optional</em>)
+        </li>
+    </ul>
+
+    <h3>Returns:</h3>
+    <ol>
+
+           <span class="types"><span class="type">int</span></span>
+        start,end the range of the matched region or <code>nil</code>
     </ol>
 
 
@@ -2836,7 +3071,7 @@ vis:map(vis.modes.NORMAL, <span class="string">"gl"</span>, action)</pre>
 </div> <!-- id="main" -->
 <div id="about">
 <i>generated by <a href="http://github.com/stevedonovan/LDoc">LDoc 1.4.6</a></i>
-<i style="float:right;">Last updated 2017-01-16 14:15:44 </i>
+<i style="float:right;">Last updated 2017-03-02 12:20:55 </i>
 </div> <!-- id="about" -->
 </div> <!-- id="container" -->
 </body>

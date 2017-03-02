@@ -292,7 +292,7 @@ Change working directory. If no directory is specified, <span class="env">$HOME<
 </dl>
 <div class="spacer">
 </div>
-In any of <b class="cmd">&lt;</b>, <b class="cmd">&gt;</b>, <b class="cmd">|</b>, or <b class="cmd">!</b>, if the shell command is omitted, the last shell command (of any type) is substituted.</div>
+In any of <b class="cmd">&lt;</b>, <b class="cmd">&gt;</b>, <b class="cmd">|</b>, or <b class="cmd">!</b>, if the shell command is omitted, the last shell command (of any type) is substituted. Unless the file being edited is unnamed, all these external commands can refer to its absolute path and file name through the <b class="cmd">$vis_filepath</b> and <b class="cmd">$vis_filename</b> environment variables.</div>
 <div class="subsection">
 <h2 id="Loops_and_conditionals">Loops and conditionals</h2><dl style="margin-top: 0.00em;margin-bottom: 0.00em;" class="list list-tag">
 <dt class="list-tag" style="margin-top: 1.00em;">
@@ -520,10 +520,6 @@ M</dt>
 <dd class="list-tag" style="margin-left: 6.00ex;">
 goto middle line of window</dd>
 <dt class="list-tag" style="margin-top: 1.00em;">
-]]</dt>
-<dd class="list-tag" style="margin-left: 6.00ex;">
-next end of C-like function</dd>
-<dt class="list-tag" style="margin-top: 1.00em;">
 }</dt>
 <dd class="list-tag" style="margin-left: 6.00ex;">
 next paragraph</dd>
@@ -532,10 +528,6 @@ next paragraph</dd>
 <dd class="list-tag" style="margin-left: 6.00ex;">
 next sentence</dd>
 <dt class="list-tag" style="margin-top: 1.00em;">
-][</dt>
-<dd class="list-tag" style="margin-left: 6.00ex;">
-next start of C-like function</dd>
-<dt class="list-tag" style="margin-top: 1.00em;">
 N</dt>
 <dd class="list-tag" style="margin-left: 6.00ex;">
 repeat last search backwards</dd>
@@ -543,10 +535,6 @@ repeat last search backwards</dd>
 n</dt>
 <dd class="list-tag" style="margin-left: 6.00ex;">
 repeat last search forward</dd>
-<dt class="list-tag" style="margin-top: 1.00em;">
-[]</dt>
-<dd class="list-tag" style="margin-left: 6.00ex;">
-previous end of C-like function</dd>
 <dt class="list-tag" style="margin-top: 1.00em;">
 [{</dt>
 <dd class="list-tag" style="margin-left: 6.00ex;">
@@ -571,10 +559,6 @@ previous paragraph</dd>
 (</dt>
 <dd class="list-tag" style="margin-left: 6.00ex;">
 previous sentence</dd>
-<dt class="list-tag" style="margin-top: 1.00em;">
-[[</dt>
-<dd class="list-tag" style="margin-left: 6.00ex;">
-previous start of C-like function</dd>
 <dt class="list-tag" style="margin-top: 1.00em;">
 ;</dt>
 <dd class="list-tag" style="margin-left: 6.00ex;">
@@ -659,14 +643,6 @@ entire file content</dd>
 ie</dt>
 <dd class="list-tag" style="margin-left: 6.00ex;">
 entire file content except for leading and trailing empty lines</dd>
-<dt class="list-tag" style="margin-top: 1.00em;">
-af</dt>
-<dd class="list-tag" style="margin-left: 6.00ex;">
-C-like function definition including immediately preceding comments</dd>
-<dt class="list-tag" style="margin-top: 1.00em;">
-if</dt>
-<dd class="list-tag" style="margin-left: 6.00ex;">
-C-like function definition only function body</dd>
 <dt class="list-tag" style="margin-top: 1.00em;">
 al</dt>
 <dd class="list-tag" style="margin-left: 6.00ex;">
@@ -835,10 +811,6 @@ split window horizontally</dd>
 <b class="flag">:vsplit</b> [file name]</dt>
 <dd class="list-tag" style="margin-left: 6.00ex;">
 split window vertically</dd>
-<dt class="list-tag" style="margin-top: 1.00em;">
-<b class="flag">:bdelete[!]</b></dt>
-<dd class="list-tag" style="margin-left: 6.00ex;">
-close all windows which display the same file as the current one</dd>
 <dt class="list-tag" style="margin-top: 1.00em;">
 <b class="flag">:q[!]</b></dt>
 <dd class="list-tag" style="margin-left: 6.00ex;">
@@ -1053,13 +1025,15 @@ The screen is resized.</dd>
 </dl>
 </div>
 <div class="section">
-<h1 id="FILES">FILES</h1> Upon startup <b class="name">vis</b> will source the first <i class="file">visrc.lua</i> configuration file found from these locations:<ul style="margin-top: 0.00em;margin-bottom: 0.00em;" class="list list-bul">
+<h1 id="FILES">FILES</h1> Upon startup <b class="name">vis</b> will source the first <i class="file">visrc.lua</i> configuration file found from these locations. All actively used paths can be listed at runtime using the <b class="flag">:help</b> command.<ul style="margin-top: 0.00em;margin-bottom: 0.00em;" class="list list-bul">
 <li class="list-bul" style="margin-top: 1.00em;">
 <i class="file">$VIS_PATH</i></li>
 <li class="list-bul" style="margin-top: 1.00em;">
 The location of the <b class="name">vis</b> binary (on systems where <i class="file">/proc/self/exe</i> is available).</li>
 <li class="list-bul" style="margin-top: 1.00em;">
 <i class="file">$XDG_CONFIG_HOME/vis</i> where <i class="file">$XDG_CONFIG_HOME</i> refers to <i class="file">$HOME/.config</i> if unset.</li>
+<li class="list-bul" style="margin-top: 1.00em;">
+<i class="file">/etc/vis</i> for a system-wide configuration provided by administrator.</li>
 <li class="list-bul" style="margin-top: 1.00em;">
 <i class="file">/usr/local/share/vis</i> or <i class="file">/usr/share/vis</i> depending on the build configuration.</li>
 </ul>
@@ -1091,7 +1065,7 @@ Spawn background process and pipe range to its standard input:<div class="spacer
 </blockquote>
 </div>
 <div class="section">
-<h1 id="SEE_ALSO">SEE ALSO</h1> <a class="link-man" href="vis-clipboard.1.html">vis-clipboard(1)</a>, <a class="link-man" href="vis-complete.1.html">vis-complete(1)</a>, <a class="link-man" href="vis-menu.1.html">vis-menu(1)</a>, <a class="link-man" href="vis-open.1.html">vis-open(1)</a>, <a class="link-man" href="vi.1.html">vi(1)</a> and <a class="link-man" href="sam.1.html">sam(1)</a><div class="spacer">
+<h1 id="SEE_ALSO">SEE ALSO</h1> <a class="link-man" href="vis-clipboard.1.html">vis-clipboard(1)</a>, <a class="link-man" href="vis-complete.1.html">vis-complete(1)</a>, <a class="link-man" href="vis-digraph.1.html">vis-digraph(1)</a>, <a class="link-man" href="vis-menu.1.html">vis-menu(1)</a>, <a class="link-man" href="vis-open.1.html">vis-open(1)</a>, <a class="link-man" href="vi.1.html">vi(1)</a> and <a class="link-man" href="sam.1.html">sam(1)</a><div class="spacer">
 </div>
 <a class="link-ext" href="http://doc.cat-v.org/bell_labs/sam_lang_tutorial/sam_tut.pdf">A Tutorial for the Sam Command Language</a> by Rob Pike<div class="spacer">
 </div>
@@ -1114,7 +1088,7 @@ Spawn background process and pipe range to its standard input:<div class="spacer
 <td class="foot-date">
 January 14, 2017</td>
 <td class="foot-os">
-Vis v0.2-667-g9fd92b6</td>
+Vis v0.2-842-g2d38e94-dirty</td>
 </tr>
 </tbody>
 </table>
