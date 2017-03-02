@@ -122,7 +122,6 @@ static bool cmd_cd(Vis*, Win*, Command*, const char *argv[], Cursor*, Filerange*
 /* vi(m) commands */
 static bool cmd_set(Vis*, Win*, Command*, const char *argv[], Cursor*, Filerange*);
 static bool cmd_open(Vis*, Win*, Command*, const char *argv[], Cursor*, Filerange*);
-static bool cmd_bdelete(Vis*, Win*, Command*, const char *argv[], Cursor*, Filerange*);
 static bool cmd_qall(Vis*, Win*, Command*, const char *argv[], Cursor*, Filerange*);
 static bool cmd_split(Vis*, Win*, Command*, const char *argv[], Cursor*, Filerange*);
 static bool cmd_vsplit(Vis*, Win*, Command*, const char *argv[], Cursor*, Filerange*);
@@ -211,9 +210,6 @@ static const CommandDef cmds[] = {
 	},
 	/* vi(m) related commands */
 	{
-		"bdelete",      VIS_HELP("Unload file")
-		CMD_FORCE|CMD_ONCE|CMD_ADDRESS_NONE|CMD_DESTRUCTIVE, NULL, cmd_bdelete
-	}, {
 		"help",         VIS_HELP("Show this help")
 		CMD_ARGV|CMD_ONCE|CMD_ADDRESS_NONE, NULL, cmd_help
 	}, {

@@ -447,24 +447,6 @@ static bool cmd_quit(Vis *vis, Win *win, Command *cmd, const char *argv[], Curso
 	return true;
 }
 
-static bool cmd_bdelete(Vis *vis, Win *win, Command *cmd, const char *argv[], Cursor *cur, Filerange *range) {
-	if (!win)
-		return false;
-	Text *txt = win->file->text;
-	if (text_modified(txt) && cmd->flags != '!') {
-		info_unsaved_changes(vis);
-		return false;
-	}
-	for (Win *next, *win = vis->windows; win; win = next) {
-		next = win->next;
-		if (win->file->text == txt)
-			vis_window_close(win);
-	}
-	if (!has_windows(vis))
-		vis_exit(vis, EXIT_SUCCESS);
-	return true;
-}
-
 static bool cmd_qall(Vis *vis, Win *win, Command *cmd, const char *argv[], Cursor *cur, Filerange *range) {
 	for (Win *next, *win = vis->windows; win; win = next) {
 		next = win->next;
