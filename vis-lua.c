@@ -1515,7 +1515,7 @@ static const struct luaL_Reg window_cursors_funcs[] = {
  * Cursors are represented as absolute byte offsets from the start of the file.
  * Valid cursor placements are within the closed interval `[0, file.size]`.
  * Cursors are currently implemented using character marks into the underlying
- * persistent [text management data structure](http://google.ch/).
+ * persistent [text management data structure](https://github.com/martanne/vis/wiki/Text-management-using-a-piece-chain).
  * This has a few consequences you should be aware of:
  *
  *  - A cursor becomes invalid when the underlying text range it is referencing
