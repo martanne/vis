@@ -50,7 +50,8 @@ install:
   - if [ "$TRAVIS_OS_NAME" = "osx" ]; then
       brew update &&
       brew install libtermkey lua tre plan9port &&
-      luarocks install lpeg busted;
+      luarocks install lpeg &&
+      luarocks install busted;
     fi
 
 script:
