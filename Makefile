@@ -101,6 +101,9 @@ luadoc:
 luadoc-all:
 	@cd lua/doc && ldoc -a . && sed -e "s/RELEASE/${VERSION}/" -i index.html
 
+luacheck:
+	@luacheck --config .luacheckrc lua test/lua | less -R
+
 install: $(ELF)
 	@echo stripping executable
 	@for e in $(ELF); do \
@@ -137,4 +140,4 @@ uninstall:
 	@echo removing support files from ${DESTDIR}${SHAREPREFIX}/vis
 	@rm -rf ${DESTDIR}${SHAREPREFIX}/vis
 
-.PHONY: all clean dist install uninstall debug profile coverage test test-update luadoc luadoc-all man
+.PHONY: all clean dist install uninstall debug profile coverage test test-update luadoc luadoc-all luacheck man
