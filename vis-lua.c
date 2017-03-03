@@ -1101,6 +1101,26 @@ static int replace(lua_State *L) {
 }
 
 /***
+ * Terminate editor process.
+ *
+ * Termination happens upon the next iteration of the main event loop.
+ * This means the calling Lua code will be executed further until it
+ * eventually hands over control to the editor core. The exit status
+ * of the most recent call is used.
+ *
+ * All unsaved chanes will be lost!
+ *
+ * @function exit
+ * @tparam int code the exit status returned to the operating system
+ */
+static int exit_func(lua_State *L) {
+	Vis *vis = obj_ref_check(L, 1, "vis");
+	int code = luaL_checkint(L, 2);
+	vis_exit(vis, code);
+	return 0;
+}
+
+/***
  * Currently active window.
  * @tfield Window win
  * @see windows
@@ -1204,6 +1224,7 @@ static const struct luaL_Reg vis_lua[] = {
 	{ "insert", insert },
 	{ "replace", replace },
 	{ "action_register", action_register },
+	{ "exit", exit_func },
 	{ "__index", vis_index },
 	{ "__newindex", vis_newindex },
 	{ NULL, NULL },

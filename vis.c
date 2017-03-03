@@ -529,6 +529,7 @@ Vis *vis_new(Ui *ui, VisEvent *event) {
 	Vis *vis = calloc(1, sizeof(Vis));
 	if (!vis)
 		return NULL;
+	vis->exit_status = -1;
 	vis->ui = ui;
 	vis->tabwidth = 8;
 	vis->expandtab = false;
@@ -1149,6 +1150,8 @@ bool vis_signal_handler(Vis *vis, int signum, const siginfo_t *siginfo, const vo
 int vis_run(Vis *vis, int argc, char *argv[]) {
 	if (!vis->windows)
 		return EXIT_SUCCESS;
+	if (vis->exit_status != -1)
+		return vis->exit_status;
 	vis->running = true;
 
 	vis_event_emit(vis, VIS_EVENT_START);
