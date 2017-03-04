@@ -1,4 +1,6 @@
-1 Find prev start of _ord.
-2 Find prev start of _ord with count.
-3 Find prev _tart_of_WORD.
-4 Find prev _tart_of_WORD with count.
+prev word-end_
+prev word-mid_dle
+prev word-word _start
+prev word-space _
+prev word-tab	_
+prev word-word with count _
