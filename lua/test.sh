@@ -20,13 +20,12 @@ TESTS_RUN=0
 if [ $# -gt 0 ]; then
 	test_files=$*
 else
-	#test_files="$(find . -type f -name "*.in") basic_empty_file.in"
-	test_files="lines.in"
+	test_files="$(find . -type f -name '*.lua' -a ! -name visrc.lua)"
 fi
 
 for t in $test_files; do
 	TESTS_RUN=$((TESTS_RUN + 1))
-	t=${t%.in}
+	t=${t%.lua}
 	t=${t#./}
 	printf "%-30s" "$t"
 	$VIS "$t.in" < /dev/null 2> /dev/null > "$t.busted"
