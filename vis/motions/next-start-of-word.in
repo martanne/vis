@@ -1,8 +1,11 @@
 _start next
 mid_dle next
 end_ next
-space_ next
-tab_	next
+ starting from a space
+	starting from a tab
+a b c d : single letter words
+tab	next
++-*/\"'`^%&,;|_(){}<>[]=?! special symbols
 word with count
 
 next line

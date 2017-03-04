@@ -1,9 +1,11 @@
 _start-word next
 mid_dle-word next
 end-word_ next
-space_ next
-tab_	next
-word-cap with!delims$and count
+ starting from a space
+	starting from a tab
+a b c d : single letter words
+tab	next
++-*/\"'`^%&,;|_(){}<>[]=?! special symbols
 
 next line
 word_at_end

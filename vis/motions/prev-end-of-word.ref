@@ -2,6 +2,9 @@
 prev wor| end_
 prev wor| mid_dle
 prev wor| _start
-prev word spac| _
 prev word ta|	_
+starting from a spac| 
+starting from a ta|	
+single letter words | b c d _
+special +-*/\"'`^%&,;||(){}<>[]=?!
 prev wor| with count _

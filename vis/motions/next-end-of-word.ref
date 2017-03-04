@@ -1,9 +1,12 @@
 _star| next
 mid_dl| next
 end_ nex|
-space_ nex|
-tab_	nex|
+ startin| from a space
+	startin| from a tab
+a b c d | single letter words
+tab	nex|
 word wit| count
++-*/\"'`^%&,;|_(){}<>[]=?! special symbols
 
 nex| line
 word_at_en|

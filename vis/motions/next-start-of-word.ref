@@ -1,9 +1,13 @@
 _start |ext
 mid_dle |ext
 end_ |ext
-space_ |ext
-tab_	|ext
+ |tarting from a space
+	|tarting from a tab
+a b c d | single letter words
+tab	|ext
++-*/\"'`^%&,;||(){}<>[]=?! special symbols
 word with |ount
 
 |ext line
-word_at_en|
+word_at_end
+|

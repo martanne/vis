@@ -1,9 +1,12 @@
 _start-word |ext
 mid_dle-word |ext
 end-word_ |ext
-space_ |ext
-tab_	|ext
-word-cap with!delims$and |ount
+ |tarting from a space
+	|tarting from a tab
+a b c d | single letter words
+tab	|ext
++-*/\"'`^%&,;|_(){}<>[]=?! |pecial symbols
 
 |ext line
-word_at_en|
+word_at_end
+|

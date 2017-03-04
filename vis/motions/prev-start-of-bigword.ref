@@ -1,6 +1,9 @@
 prev |ORD-end_
 prev |ORD-mid_dle
 prev |ORD-word _start
-prev |ORD-space _
 prev |ORD-tab	_
+starting from |pace 
+starting from |ab	
+single letter words | b c d _
+special symbols |-*/\"'`^%&,;|_(){}<>[]=?!
 prev |ORD-word with count _
