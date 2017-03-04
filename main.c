@@ -2173,17 +2173,18 @@ int main(int argc, char *argv[]) {
 				close(fd);
 			} else if (strcmp(argv[i], "--") == 0) {
 				end_of_options = true;
+				continue;
 			}
 		} else if (argv[i][0] == '+' && !end_of_options) {
 			cmd = argv[i] + (argv[i][1] == '/' || argv[i][1] == '?');
+			continue;
 		} else if (!vis_window_new(vis, argv[i])) {
 			vis_die(vis, "Can not load `%s': %s\n", argv[i], strerror(errno));
-		} else {
-			win_created = true;
-			if (cmd) {
-				vis_prompt_cmd(vis, cmd);
-				cmd = NULL;
-			}
+		}
+		win_created = true;
+		if (cmd) {
+			vis_prompt_cmd(vis, cmd);
+			cmd = NULL;
 		}
 	}
 
