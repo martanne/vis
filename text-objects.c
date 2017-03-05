@@ -255,33 +255,6 @@ Filerange text_object_backtick(Text *txt, size_t pos) {
 	return text_object_bracket(txt, pos, '`');
 }
 
-Filerange text_object_range(Text *txt, size_t pos, int (*isboundary)(int)) {
-	char c;
-	size_t start;
-	Iterator it = text_iterator_get(txt, pos), rit = it;
-	if (!text_iterator_byte_get(&rit, &c) || boundary(c))
-		return text_range_empty();
-	char tmp = c;
-	do start = rit.pos; while (text_iterator_char_prev(&rit, &c) && !boundary(c));
-	for (c = tmp; !boundary(c) && text_iterator_byte_next(&it, &c););
-	return text_range_new(start, it.pos);
-}
-
-static int is_filename_boundary(int c) {
-	switch (c) {
-	case ';': case ':': case '|':
-	case '"': case '\'': case '`':
-	case '<': case '>':
-		return true;
-	default:
-		return isspace(c);
-	}
-}
-
-Filerange text_object_filename(Text *txt, size_t pos) {
-	return text_object_range(txt, pos, is_filename_boundary);
-}
-
 Filerange text_object_search_forward(Text *txt, size_t pos, Regex *regex) {
 	size_t start = pos;
 	size_t end = text_size(txt);
