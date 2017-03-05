@@ -126,10 +126,6 @@ static const char *window(Vis*, const char *keys, const Arg *arg);
 static const char *unicode_info(Vis*, const char *keys, const Arg *arg);
 /* either go to count % of ile or to matching item */
 static const char *percent(Vis*, const char *keys, const Arg *arg);
-/* complete input text at cursor based on the words in the current file */
-static const char *complete_word(Vis*, const char *keys, const Arg *arg);
-/* complete input text at cursor based on file names of the current directory */
-static const char *complete_filename(Vis*, const char *keys, const Arg *arg);
 
 enum {
 	VIS_ACTION_EDITOR_SUSPEND,
@@ -304,8 +300,6 @@ enum {
 	VIS_ACTION_MOTION_LINEWISE,
 	VIS_ACTION_UNICODE_INFO,
 	VIS_ACTION_UTF8_INFO,
-	VIS_ACTION_COMPLETE_WORD,
-	VIS_ACTION_COMPLETE_FILENAME,
 	VIS_ACTION_NOP,
 };
 
@@ -1170,16 +1164,6 @@ static const KeyAction vis_action[] = {
 		VIS_HELP("Show UTF-8 encoded codepoint(s) of character under cursor")
 		unicode_info, { .i = VIS_ACTION_UTF8_INFO }
 	},
-	[VIS_ACTION_COMPLETE_WORD] = {
-		"vis-complete-word",
-		VIS_HELP("Complete word in file")
-		complete_word,
-	},
-	[VIS_ACTION_COMPLETE_FILENAME] = {
-		"vis-complete-filename",
-		VIS_HELP("Complete file name")
-		complete_filename,
-	},
 	[VIS_ACTION_NOP] = {
 		"vis-nop",
 		VIS_HELP("Ignore key, do nothing")
@@ -1989,67 +1973,6 @@ static const char *percent(Vis *vis, const char *keys, const Arg *arg) {
 		vis_motion(vis, VIS_MOVE_BRACKET_MATCH);
 	else
 		vis_motion(vis, VIS_MOVE_PERCENT);
-	return keys;
-}
-
-static char *get_completion_prefix(Vis *vis, Filerange (*text_object)(Text *, size_t)) {
-	View *view = vis_view(vis);
-	Text *txt = vis_text(vis);
-	size_t pos = view_cursor_get(view);
-	Filerange r = text_object(txt, pos-1);
-	r = text_range_inner(txt, &r);
-	if (r.end > pos)
-		r.end = pos;
-	size_t size = text_range_size(&r);
-	if (size == 0) {
-		vis_info_show(vis, "No valid prefix found for completion");
-		return NULL;
-	}
-
-	return text_bytes_alloc0(txt, r.start, size);
-}
-
-static void insert_dialog_selection(Vis *vis, Filerange *range, const char *argv[]) {
-	char *out = NULL;
-	if (vis_pipe_collect(vis, range, argv, &out, NULL) == 0) {
-		View *view = vis_view(vis);
-		size_t len = out ? strlen(out) : 0;
-		for (Cursor *c = view_cursors(view); c; c = view_cursors_next(c)) {
-			size_t pos = view_cursors_pos(c);
-			vis_insert(vis, pos, out, len);
-			view_cursors_scroll_to(c, pos + len);
-		}
-	} else {
-		vis_info_show(vis, "Completion command failed, is vis-menu in $PATH?");
-	}
-	vis_draw(vis);
-	free(out);
-}
-
-static const char *complete_word(Vis *vis, const char *keys, const Arg *arg) {
-	Text *txt = vis_text(vis);
-	Buffer cmd;
-	buffer_init(&cmd);
-	char *prefix = get_completion_prefix(vis, text_object_word);
-	if (prefix && buffer_printf(&cmd, VIS_COMPLETE " --word '%s'", prefix)) {
-		Filerange all = text_range_new(0, text_size(txt));
-		insert_dialog_selection(vis, &all, (const char*[]){ buffer_content0(&cmd), NULL });
-	}
-	buffer_release(&cmd);
-	free(prefix);
-	return keys;
-}
-
-static const char *complete_filename(Vis *vis, const char *keys, const Arg *arg) {
-	Buffer cmd;
-	buffer_init(&cmd);
-	char *prefix = get_completion_prefix(vis, text_object_filename);
-	if (prefix && buffer_printf(&cmd, VIS_COMPLETE " --file '%s'", prefix)) {
-		Filerange empty = text_range_new(0, 0);
-		insert_dialog_selection(vis, &empty, (const char*[]){ buffer_content0(&cmd), NULL });
-	}
-	buffer_release(&cmd);
-	free(prefix);
 	return keys;
 }
 

@@ -317,8 +317,6 @@ static const KeyBinding bindings_insert[] = {
 	{ "<C-d>",              ALIAS("<vis-operator-shift-left><vis-operator-shift-left>") },
 	{ "<C-i>",              ALIAS("<Tab>")                              },
 	{ "<C-j>",              ALIAS("<Enter>")                            },
-	{ "<C-n>",              ACTION(COMPLETE_WORD)                       },
-	{ "<C-x><C-f>",         ACTION(COMPLETE_FILENAME)                   },
 	{ "<C-m>",              ALIAS("<Enter>")                            },
 	{ "<C-r>",              ACTION(INSERT_REGISTER)                     },
 	{ "<C-t>",              ALIAS("<vis-operator-shift-right><vis-operator-shift-right>") },
