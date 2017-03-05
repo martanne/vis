@@ -1,4 +1,4 @@
-local busted = require 'busted.runner'()
+require 'busted.runner'()
 
 local file = vis.win.file
 
@@ -12,8 +12,8 @@ describe("file.lines_iterator()", function()
 			i = i + 1
 		end
 		local array_lines = {}
-		for i = 1, #file.lines do
-			array_lines[i] = file.lines[i]
+		for j = 1, #file.lines do
+			array_lines[j] = file.lines[j]
 		end
 		assert.are.same(array_lines, iterator_lines)
 	end)

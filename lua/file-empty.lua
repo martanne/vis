@@ -1,4 +1,4 @@
-local busted = require 'busted.runner'()
+require 'busted.runner'()
 
 local file = vis.win.file
 

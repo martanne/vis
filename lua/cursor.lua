@@ -1,4 +1,4 @@
-local busted = require 'busted.runner'()
+require 'busted.runner'()
 
 local win = vis.win
 
@@ -30,7 +30,7 @@ describe("win.cursor", function()
 end)
 
 describe("win.cursor.pos", function()
-	
+
 	it("= 0", function()
 		win.cursor.pos = 0
 		assert.are.equal(0, win.cursor.pos)

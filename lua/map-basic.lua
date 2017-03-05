@@ -1,4 +1,4 @@
-local busted = require 'busted.runner'()
+require 'busted.runner'()
 
 vis:map(vis.modes.NORMAL, "K", function()
 	vis:feedkeys("iNormal Mode<Escape>")
