@@ -1121,6 +1121,40 @@ static int exit_func(lua_State *L) {
 }
 
 /***
+ * Pipe file range to external process and collect output.
+ *
+ * The editor core will be blocked while the external process is running.
+ *
+ * @function pipe
+ * @tparam File file the file to which the range applies
+ * @tparam Range range the range to pipe
+ * @tparam string command the command to execute
+ * @treturn int code the exit status of the executed command
+ * @treturn string stdout the data written to stdout
+ * @treturn string stderr the data written to stderr
+ */
+static int pipe_func(lua_State *L) {
+	Vis *vis = obj_ref_check(L, 1, "vis");
+	File *file = obj_ref_check(L, 2, VIS_LUA_TYPE_FILE);
+	Filerange range = getrange(L, 3);
+	const char *cmd = luaL_checkstring(L, 4);
+	char *out = NULL, *err = NULL;
+	int status = vis_pipe_collect(vis, file, &range, (const char*[]){ cmd, NULL }, &out, &err);
+	lua_pushinteger(L, status);
+	if (out)
+		lua_pushstring(L, out);
+	else
+		lua_pushnil(L);
+	free(out);
+	if (err)
+		lua_pushstring(L, err);
+	else
+		lua_pushnil(L);
+	free(err);
+	vis_draw(vis);
+	return 3;
+}
+/***
  * Currently active window.
  * @tfield Window win
  * @see windows
@@ -1225,6 +1259,7 @@ static const struct luaL_Reg vis_lua[] = {
 	{ "replace", replace },
 	{ "action_register", action_register },
 	{ "exit", exit_func },
+	{ "pipe", pipe_func },
 	{ "__index", vis_index },
 	{ "__newindex", vis_newindex },
 	{ NULL, NULL },
