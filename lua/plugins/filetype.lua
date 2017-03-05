@@ -223,7 +223,11 @@ vis.ftdetect.filetypes = {
 		mime = { "text/x-makefile" },
 	},
 	man = {
-		ext = { "%.1$", "%.2$", "%.3$", "%.4$", "%.5$", "%.6$", "%.7$", "%.8$", "%.9$", "%.1x$", "%.2x$", "%.3x$", "%.4x$", "%.5x$", "%.6x$", "%.7x$", "%.8x$", "%.9x$" },
+		ext = {
+			"%.1$", "%.2$", "%.3$", "%.4$", "%.5$", "%.6$", "%.7$",
+			"%.8$", "%.9$", "%.1x$", "%.2x$", "%.3x$", "%.4x$",
+			"%.5x$", "%.6x$", "%.7x$", "%.8x$", "%.9x$"
+		},
 	},
 	markdown = {
 		ext = { "%.md$", "%.markdown$" },
@@ -340,7 +344,11 @@ vis.ftdetect.filetypes = {
 		ext = { "%.ddl$", "%.sql$" },
 	},
 	systemd = {
-		ext = { "%.automount$", "%.device$", "%.mount$", "%.path$", "%.scope$", "%.service$", "%.slice$", "%.socket$", "%.swap$", "%.target$", "%.timer$" },
+		ext = {
+			"%.automount$", "%.device$", "%.mount$", "%.path$",
+			"%.scope$", "%.service$", "%.slice$", "%.socket$",
+			"%.swap$", "%.target$", "%.timer$"
+		},
 	},
 	taskpaper = {
 		ext = { "%.taskpaper$" },
@@ -358,7 +366,11 @@ vis.ftdetect.filetypes = {
 		ext = { "%.vala$" }
 	},
 	vb = {
-		ext = { "%.asa$", "%.bas$", "%.cls$", "%.ctl$", "%.dob$", "%.dsm$", "%.dsr$", "%.frm$", "%.pag$", "%.vb$", "%.vba$", "%.vbs$" },
+		ext = {
+			"%.asa$", "%.bas$", "%.cls$", "%.ctl$", "%.dob$",
+			"%.dsm$", "%.dsr$", "%.frm$", "%.pag$", "%.vb$",
+			"%.vba$", "%.vbs$"
+		},
 	},
 	vcard = {
 		ext = { "%.vcf$", "%.vcard$" },

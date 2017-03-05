@@ -102,7 +102,7 @@ luadoc-all:
 	@cd lua/doc && ldoc -a . && sed -e "s/RELEASE/${VERSION}/" -i index.html
 
 luacheck:
-	@luacheck --config .luacheckrc lua test/lua | less -R
+	@luacheck --config .luacheckrc lua test/lua | less -RFX
 
 install: $(ELF)
 	@echo stripping executable
