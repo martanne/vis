@@ -1704,11 +1704,11 @@ static ssize_t read_buffer(void *context, char *data, size_t len) {
 	return len;
 }
 
-int vis_pipe_collect(Vis *vis, Filerange *range, const char *argv[], char **out, char **err) {
+int vis_pipe_collect(Vis *vis, File *file, Filerange *range, const char *argv[], char **out, char **err) {
 	Buffer bufout, buferr;
 	buffer_init(&bufout);
 	buffer_init(&buferr);
-	int status = vis_pipe(vis, vis->win->file, range, argv,
+	int status = vis_pipe(vis, file, range, argv,
 	                      &bufout, out ? read_buffer : NULL,
 	                      &buferr, err ? read_buffer : NULL);
 	buffer_terminate(&bufout);

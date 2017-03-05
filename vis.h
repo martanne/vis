@@ -510,7 +510,7 @@ int vis_pipe(Vis*, File*, Filerange*, const char *argv[],
 /* pipe a range to an external application, return its exit status and store
  * everything that is written to stdout/stderr in the gitven char pointers
  * which have to be free(3)-ed by the caller */
-int vis_pipe_collect(Vis *vis, Filerange *range, const char *argv[], char **out, char **err);
+int vis_pipe_collect(Vis*, File*, Filerange*, const char *argv[], char **out, char **err);
 
 /* given the start of a key, returns a pointer to the start of the one immediately
  * following as will be processed by the input system. skips over special keys
