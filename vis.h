@@ -29,17 +29,11 @@ typedef struct Win Win;
 #endif
 
 /* simplify utility renames by distribution packagers */
-#ifndef VIS_MENU
-#define VIS_MENU "vis-menu"
-#endif
 #ifndef VIS_OPEN
 #define VIS_OPEN "vis-open"
 #endif
 #ifndef VIS_CLIPBOARD
 #define VIS_CLIPBOARD "vis-clipboard"
-#endif
-#ifndef VIS_COMPLETE
-#define VIS_COMPLETE "vis-complete"
 #endif
 
 /* maximum bytes needed for string representation of a (pseudo) key */
