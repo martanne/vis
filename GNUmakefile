@@ -9,29 +9,29 @@ DEPS_LIB = $(DEPS_PREFIX)/lib
 DEPS_INC = $(DEPS_PREFIX)/include
 
 LIBMUSL = musl-1.1.16
-LIBMUSL_SHA1 = 5c2204b31b1ee08a01d4d3e34c6e46f6256bdac8
+LIBMUSL_SHA256 = 937185a5e5d721050306cf106507a006c3f1f86d86cd550024ea7be909071011
 
 LIBNCURSES = ncurses-6.0
-LIBNCURSES_SHA1 = acd606135a5124905da770803c05f1f20dd3b21c
+LIBNCURSES_SHA256 = f551c24b30ce8bfb6e96d9f59b42fbea30fa3a6123384172f9e7284bcf647260
 
 LIBTERMKEY = libtermkey-0.19
-LIBTERMKEY_SHA1 = a6b55687db1c16b64f2587a81bde602e73007add
+LIBTERMKEY_SHA256 = c505aa4cb48c8fa59c526265576b97a19e6ebe7b7da20f4ecaae898b727b48b7
 
 LIBLUA = lua-5.3.4
-LIBLUA_SHA1 = 79790cfd40e09ba796b01a571d4d63b52b1cd950
+LIBLUA_SHA256 = f681aa518233bc407e23acf0f5887c884f17436f000d453b2491a9f11a52400c
 #LIBLUA = lua-5.2.4
-#LIBLUA_SHA1 = ef15259421197e3d85b7d6e4871b8c26fd82c1cf
+#LIBLUA_SHA256 = b9e2e4aad6789b3b63a056d442f7b39f0ecfca3ae0f1fc0ae4e9614401b69f4b
 #LIBLUA = lua-5.1.5
-#LIBLUA_SHA1 = b3882111ad02ecc6b972f8c1241647905cb2e3fc
+#LIBLUA_SHA256 = 2640fc56a795f29d28ef15e13c34a47e223960b0240e8cb0a82d9b0738695333
 
 LIBLPEG = lpeg-1.0.1
-LIBLPEG_SHA1 = b2f81624e0ce9c99c0731287c3475fac1f1c0f50
+LIBLPEG_SHA256 = 62d9f7a9ea3c1f215c77e0cadd8534c6ad9af0fb711c3f89188a8891c72f026b
 
 LIBATTR = attr-c1a7b53073202c67becf4df36cadc32ef4759c8a
-LIBATTR_SHA1 = 77761b31d13d464e363621bba81835b25355f204
+LIBATTR_SHA256 = faf6e5cbfa71153bd1049206ca70690c5dc96e2ec3db50eae107092c3de900ca
 
 LIBACL = acl-38f32ea1865bcc44185f4118fde469cb962cff68
-LIBACL_SHA1 = 5e6971c94bcc3803728d8eba1103f6ee4cb825d5
+LIBACL_SHA256 = 98598b0bb154ab294d9a695fd08b0e06516e770bbd1d78937905f0dd8ebe485c
 
 LIBNCURSES_CONFIG = --disable-database --with-fallbacks=st,st-256color,xterm,xterm-256color,vt100 \
 	--with-shared --enable-widec --enable-ext-colors --with-termlib=tinfo \
@@ -50,7 +50,7 @@ dependency/sources:
 dependency/sources/musl-%: | dependency/sources
 	wget -c -O $@.part http://www.musl-libc.org/releases/$(LIBMUSL).tar.gz
 	mv $@.part $@
-	[ -z $(LIBMUSL_SHA1) ] || (echo '$(LIBMUSL_SHA1)  $@' | sha1sum -c)
+	[ -z $(LIBMUSL_SHA256) ] || (echo '$(LIBMUSL_SHA256)  $@' | sha256sum -c)
 
 dependency/build/libmusl-extract: dependency/sources/$(LIBMUSL).tar.gz | dependency/build
 	tar xzf $< -C $(dir $@)
@@ -75,7 +75,7 @@ dependency/build/libmusl-install: dependency/build/libmusl-build
 dependency/sources/ncurses-%: | dependency/sources
 	wget -c -O $@.part http://ftp.gnu.org/gnu/ncurses/$(LIBNCURSES).tar.gz
 	mv $@.part $@
-	[ -z $(LIBNCURSES_SHA1) ] || (echo '$(LIBNCURSES_SHA1)  $@' | sha1sum -c)
+	[ -z $(LIBNCURSES_SHA256) ] || (echo '$(LIBNCURSES_SHA256)  $@' | sha256sum -c)
 
 dependency/build/libncurses-extract: dependency/sources/$(LIBNCURSES).tar.gz | dependency/build
 	tar xzf $< -C $(dir $@)
@@ -98,7 +98,7 @@ dependency/build/libncurses-install: dependency/build/libncurses-build
 dependency/sources/libtermkey-%: | dependency/sources
 	wget -c -O $@.part http://www.leonerd.org.uk/code/libtermkey/$(LIBTERMKEY).tar.gz
 	mv $@.part $@
-	[ -z $(LIBTERMKEY_SHA1) ] || (echo '$(LIBTERMKEY_SHA1)  $@' | sha1sum -c)
+	[ -z $(LIBTERMKEY_SHA256) ] || (echo '$(LIBTERMKEY_SHA256)  $@' | sha256sum -c)
 
 dependency/build/libtermkey-extract: dependency/sources/$(LIBTERMKEY).tar.gz | dependency/build
 	tar xzf $< -C $(dir $@)
@@ -119,7 +119,7 @@ dependency/build/libtermkey-install: dependency/build/libtermkey-build
 dependency/sources/lua-%.tar.gz: | dependency/sources
 	wget -c -O $@.part http://www.lua.org/ftp/$(LIBLUA).tar.gz
 	mv $@.part $@
-	[ -z $(LIBLUA_SHA1) ] || (echo '$(LIBLUA_SHA1)  $@' | sha1sum -c)
+	[ -z $(LIBLUA_SHA256) ] || (echo '$(LIBLUA_SHA256)  $@' | sha256sum -c)
 
 dependency/build/liblua-extract: dependency/sources/$(LIBLUA).tar.gz | dependency/build
 	tar xzf $< -C $(dir $@)
@@ -139,7 +139,7 @@ dependency/build/liblua-install: dependency/build/liblua-build
 dependency/sources/lpeg-%: | dependency/sources
 	wget -c -O $@.part http://www.inf.puc-rio.br/~roberto/lpeg/$(LIBLPEG).tar.gz
 	mv $@.part $@
-	[ -z $(LIBLPEG_SHA1) ] || (echo '$(LIBLPEG_SHA1)  $@' | sha1sum -c)
+	[ -z $(LIBLPEG_SHA256) ] || (echo '$(LIBLPEG_SHA256)  $@' | sha256sum -c)
 
 dependency/build/liblpeg-extract: dependency/sources/$(LIBLPEG).tar.gz | dependency/build
 	tar xzf $< -C $(dir $@)
@@ -160,7 +160,7 @@ dependency/build/liblpeg-install: dependency/build/liblpeg-build
 dependency/sources/attr-%.tar.gz: | dependency/sources
 	wget -c -O $@.part http://git.savannah.gnu.org/cgit/attr.git/snapshot/$(LIBATTR).tar.gz
 	mv $@.part $@
-	[ -z $(LIBATTR_SHA1) ] || (echo '$(LIBATTR_SHA1)  $@' | sha1sum -c)
+	[ -z $(LIBATTR_SHA256) ] || (echo '$(LIBATTR_SHA256)  $@' | sha256sum -c)
 
 dependency/build/libattr-extract: dependency/sources/$(LIBATTR).tar.gz | dependency/build
 	tar xzf $< -C $(dir $@)
@@ -184,7 +184,7 @@ dependency/build/libattr-install: dependency/build/libattr-build
 dependency/sources/acl-%.tar.gz: | dependency/sources
 	wget -c -O $@.part http://git.savannah.gnu.org/cgit/acl.git/snapshot/$(LIBACL).tar.gz
 	mv $@.part $@
-	[ -z $(LIBACL_SHA1) ] || (echo '$(LIBACL_SHA1)  $@' | sha1sum -c)
+	[ -z $(LIBACL_SHA256) ] || (echo '$(LIBACL_SHA256)  $@' | sha256sum -c)
 
 dependency/build/libacl-extract: dependency/sources/$(LIBACL).tar.gz | dependency/build
 	tar xzf $< -C $(dir $@)
