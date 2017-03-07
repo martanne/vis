@@ -765,25 +765,6 @@ static int message(lua_State *L) {
 }
 
 /***
- * Open a file.
- *
- * Creates a new window and loads the given file.
- *
- * @function open
- * @tparam string filename the file name to load
- * @treturn File the file object representing the new file, or `nil` on failure
- */
-static int open(lua_State *L) {
-	Vis *vis = obj_ref_check(L, 1, "vis");
-	const char *name = luaL_checkstring(L, 2);
-	if (vis_window_new(vis, name))
-		obj_ref_new(L, vis->win->file, VIS_LUA_TYPE_FILE);
-	else
-		lua_pushnil(L);
-	return 1;
-}
-
-/***
  * Register a Lua function as key action.
  * @function action_register
  * @tparam string name the name of the action, can be referred to in key bindings as `<name>` pseudo key
@@ -1247,7 +1228,6 @@ static const struct luaL_Reg vis_lua[] = {
 	{ "command", command },
 	{ "info", info },
 	{ "message", message },
-	{ "open", open },
 	{ "map", map },
 	{ "motion", motion },
 	{ "motion_register", motion_register },
