@@ -294,6 +294,9 @@ vis.ftdetect.filetypes = {
 		ext = { "%.sc$", "%.py$", "%.pyw$" },
 		mime = { "text/x-python" },
 	},
+	rc = {
+		ext = { "%.rc$", "%.es$", "%.xs" },
+	},
 	rebol = {
 		ext = { "%.r$", "%.reb$" },
 	},
