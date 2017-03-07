@@ -20,6 +20,9 @@ matrix:
     - os: linux
       compiler: gcc
       env: TARGET= CONFIG=--disable-lua
+    - os: linux
+      compiler: gcc
+      env: TARGET= CONFIG=--disable-tre
     - os: osx
       compiler: clang
       env: TARGET=
@@ -38,6 +41,7 @@ addons:
     packages:
     - 9base
     - libacl1-dev
+    - libtre-dev
 
 cache:
   directories:
