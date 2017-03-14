@@ -2430,6 +2430,11 @@ void vis_lua_init(Vis *vis) {
 		{ UI_STYLE_SELECTION,      "STYLE_SELECTION"      },
 		{ UI_STYLE_LINENUMBER,     "STYLE_LINENUMBER"     },
 		{ UI_STYLE_COLOR_COLUMN,   "STYLE_COLOR_COLUMN"   },
+		{ UI_STYLE_STATUS,         "STYLE_STATUS"         },
+		{ UI_STYLE_STATUS_FOCUSED, "STYLE_STATUS_FOCUSED" },
+		{ UI_STYLE_SEPARATOR,      "STYLE_SEPARATOR"      },
+		{ UI_STYLE_INFO,           "STYLE_INFO"           },
+		{ UI_STYLE_EOF,            "STYLE_EOF"            },
 	};
 
 	for (size_t i = 0; i < LENGTH(styles); i++) {

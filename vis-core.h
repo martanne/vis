@@ -147,7 +147,6 @@ struct Win {
 	Mode modes[VIS_MODE_INVALID]; /* overlay mods used for per window key bindings */
 	Win *parent;            /* window which was active when showing the command prompt */
 	Mode *parent_mode;      /* mode which was active when showing the command prompt */
-	ViewEvent event;        /* callbacks from view.[ch] */
 	char *lexer_name;       /* corresponds to filename in lexers/ subdirectory */
 	size_t horizon;         /* max bytes to consider for syntax coloring before viewport */
 	Win *prev, *next;       /* neighbouring windows */
@@ -195,6 +194,7 @@ struct Vis {
 	volatile sig_atomic_t cancel_filter; /* abort external command/filter (SIGINT occured) */
 	volatile sig_atomic_t sigbus;        /* one of the memory mapped region became unavailable (SIGBUS) */
 	volatile sig_atomic_t need_resize;   /* need to resize UI (SIGWINCH occured) */
+	volatile sig_atomic_t resume;        /* need to resume UI (SIGCONT occured) */
 	volatile sig_atomic_t terminate;     /* need to terminate we were being killed by SIGTERM */
 	sigjmp_buf sigbus_jmpbuf;            /* used to jump back to a known good state in the mainloop after (SIGBUS) */
 	Map *actions;                        /* registered editor actions / special keys commands */

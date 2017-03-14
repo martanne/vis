@@ -42,8 +42,25 @@ enum UiStyle {
 	UI_STYLE_SELECTION,
 	UI_STYLE_LINENUMBER,
 	UI_STYLE_COLOR_COLUMN,
+	UI_STYLE_STATUS,
+	UI_STYLE_STATUS_FOCUSED,
+	UI_STYLE_SEPARATOR,
+	UI_STYLE_INFO,
+	UI_STYLE_EOF,
 	UI_STYLE_MAX,
 };
+
+typedef uint64_t CellAttr;
+typedef short CellColor;
+
+static inline bool cell_color_equal(CellColor c1, CellColor c2) {
+	return c1 == c2;
+}
+
+typedef struct {
+	CellAttr attr;
+	CellColor fg, bg;
+} CellStyle;
 
 #include "vis.h"
 #include "text.h"
@@ -53,7 +70,7 @@ struct Ui {
 	bool (*init)(Ui*, Vis*);
 	void (*free)(Ui*);
 	void (*resize)(Ui*);
-	UiWin* (*window_new)(Ui*, View*, File*, enum UiOption);
+	UiWin* (*window_new)(Ui*, Win*, enum UiOption);
 	void (*window_free)(UiWin*);
 	void (*window_focus)(UiWin*);
 	void (*window_swap)(UiWin*, UiWin*);
@@ -65,6 +82,7 @@ struct Ui {
 	void (*redraw)(Ui*);
 	void (*update)(Ui*);
 	void (*suspend)(Ui*);
+	void (*resume)(Ui*);
 	bool (*getkey)(Ui*, TermKeyKey*);
 	void (*terminal_save)(Ui*);
 	void (*terminal_restore)(Ui*);
@@ -73,12 +91,11 @@ struct Ui {
 };
 
 struct UiWin {
-	void (*draw)(UiWin*);
+	CellStyle (*style_get)(UiWin*, enum UiStyle);
 	void (*status)(UiWin*, const char *txt);
-	void (*reload)(UiWin*, File*);
 	void (*options_set)(UiWin*, enum UiOption);
 	enum UiOption (*options_get)(UiWin*);
-	bool (*syntax_style)(UiWin*, int id, const char *style);
+	bool (*style_define)(UiWin*, int id, const char *style);
 	int (*window_width)(UiWin*);
 	int (*window_height)(UiWin*);
 };

@@ -305,12 +305,176 @@ static void window_free(Win *win) {
 	free(win);
 }
 
-static void window_draw(void *ctx) {
-	Win *win = ctx;
-	if (!win->ui)
+static void window_draw_colorcolumn(Win *win) {
+	View *view = win->view;
+	int cc = view_colorcolumn_get(view);
+	if (cc <= 0)
+		return;
+	CellStyle style = win->ui->style_get(win->ui, UI_STYLE_COLOR_COLUMN);
+	size_t lineno = 0;
+	int line_cols = 0; /* Track the number of columns we've passed on each line */
+	bool line_cc_set = false; /* Has the colorcolumn attribute been set for this line yet */
+	int width = view_width_get(view);
+
+	for (Line *l = view_lines_first(view); l; l = l->next) {
+		if (l->lineno != lineno) {
+			line_cols = 0;
+			line_cc_set = false;
+			lineno = l->lineno;
+		}
+
+		if (line_cc_set)
+			continue;
+		line_cols += width;
+
+		/* This screen line contains the cell we want to highlight */
+		if (line_cols >= cc) {
+			l->cells[(cc - 1) % width].style = style;
+			line_cc_set = true;
+		}
+	}
+}
+
+static void window_draw_cursorline(Win *win) {
+	Vis *vis = win->vis;
+	View *view = win->view;
+	enum UiOption options = view_options_get(view);
+	if (!(options & UI_OPTION_CURSOR_LINE))
+		return;
+	if (vis->mode->visual || vis->win != win)
+		return;
+	if (view_cursors_multiple(view))
+		return;
+	
+	int width = view_width_get(view);
+	CellStyle style = win->ui->style_get(win->ui, UI_STYLE_CURSOR_LINE);
+	Cursor *cursor = view_cursors_primary_get(view);
+	size_t lineno = view_cursors_line_get(cursor)->lineno;
+	for (Line *l = view_lines_first(view); l; l = l->next) {
+		if (l->lineno == lineno) {
+			for (int x = 0; x < width; x++) {
+				l->cells[x].style.attr |= style.attr;
+				l->cells[x].style.bg = style.bg;
+			}
+		} else if (l->lineno > lineno) {
+			break;
+		}
+	}
+}
+
+static void window_draw_selection(View *view, Cursor *cur, CellStyle *style) {
+	Filerange sel = view_cursors_selection_get(cur);
+	if (!text_range_valid(&sel))
+		return;
+	Line *start_line; int start_col;
+	Line *end_line; int end_col;
+	view_coord_get(view, sel.start, &start_line, NULL, &start_col);
+	view_coord_get(view, sel.end, &end_line, NULL, &end_col);
+	if (!start_line && !end_line)
+		return;
+	if (!start_line) {
+		start_line = view_lines_first(view);
+		start_col = 0;
+	}
+	if (!end_line) {
+		end_line = view_lines_last(view);
+		end_col = end_line->width;
+	}
+	for (Line *l = start_line; l != end_line->next; l = l->next) {
+		int col = (l == start_line) ? start_col : 0;
+		int end = (l == end_line) ? end_col : l->width;
+		while (col < end) {
+			if (cell_color_equal(l->cells[col].style.fg, style->fg)) {
+				CellStyle old = l->cells[col].style;
+				l->cells[col].style.fg = old.bg;
+				l->cells[col].style.bg = old.fg;
+			} else {
+				l->cells[col].style.bg = style->bg;
+			}
+			col++;
+		}
+	}
+}
+
+static void window_draw_cursor_matching(Win *win, Cursor *cur, CellStyle *style) {
+	if (win->vis->mode->visual)
+		return;
+	Line *line_match; int col_match;
+	size_t pos = view_cursors_pos(cur);
+	size_t pos_match = text_bracket_match_symbol(win->file->text, pos, "(){}[]\"'`");
+	if (pos == pos_match)
+		return;
+	if (!view_coord_get(win->view, pos_match, &line_match, NULL, &col_match))
+		return;
+	if (cell_color_equal(line_match->cells[col_match].style.fg, style->fg)) {
+		CellStyle old = line_match->cells[col_match].style;
+		line_match->cells[col_match].style.fg = old.bg;
+		line_match->cells[col_match].style.bg = old.fg;
+	} else {
+		line_match->cells[col_match].style.bg = style->bg;
+	}
+}
+
+static void window_draw_cursor(Win *win, Cursor *cur, CellStyle *style, CellStyle *sel_style) {
+	if (win->vis->win != win)
+		return;
+	Line *line = view_cursors_line_get(cur);
+	int col = view_cursors_cell_get(cur);
+	if (!line || col == -1)
+		return;
+	line->cells[col].style = *style;
+	window_draw_cursor_matching(win, cur, sel_style);
+	return;
+}
+
+static void window_draw_cursors(Win *win) {
+	View *view = win->view;
+	Filerange viewport = view_viewport_get(view);
+	bool multiple_cursors = view_cursors_multiple(view);
+	Cursor *cursor = view_cursors_primary_get(view);
+	CellStyle style_cursor = win->ui->style_get(win->ui, UI_STYLE_CURSOR);
+	CellStyle style_cursor_primary = win->ui->style_get(win->ui, UI_STYLE_CURSOR_PRIMARY);
+	CellStyle style_selection = win->ui->style_get(win->ui, UI_STYLE_SELECTION);
+	for (Cursor *c = view_cursors_prev(cursor); c; c = view_cursors_prev(c)) {
+		window_draw_selection(win->view, c, &style_selection);
+		size_t pos = view_cursors_pos(c);
+		if (pos < viewport.start)
+			break;
+		window_draw_cursor(win, c, &style_cursor, &style_selection);
+	}
+	window_draw_selection(win->view, cursor, &style_selection);
+	window_draw_cursor(win, cursor, multiple_cursors ? &style_cursor_primary : &style_cursor, &style_selection);
+	for (Cursor *c = view_cursors_next(cursor); c; c = view_cursors_next(c)) {
+		window_draw_selection(win->view, c, &style_selection);
+		size_t pos = view_cursors_pos(c);
+		if (pos > viewport.end)
+			break;
+		window_draw_cursor(win, c, &style_cursor, &style_selection);
+	}
+}
+
+static void window_draw_eof(Win *win) {
+	View *view = win->view;
+	if (view_width_get(view) == 0)
+		return;
+	CellStyle style = win->ui->style_get(win->ui, UI_STYLE_EOF);
+	for (Line *l = view_lines_last(view)->next; l; l = l->next) {
+		strcpy(l->cells[0].data, "~");
+		l->cells[0].style = style;
+	}
+}
+
+void vis_window_draw(Win *win) {
+	if (!win->ui || !view_update(win->view))
 		return;
 	Vis *vis = win->vis;
 	vis_event_emit(vis, VIS_EVENT_WIN_HIGHLIGHT, win);
+
+	window_draw_colorcolumn(win);
+	window_draw_cursorline(win);
+	window_draw_cursors(win);
+	window_draw_eof(win);
+
 	vis_event_emit(vis, VIS_EVENT_WIN_STATUS, win);
 }
 
@@ -321,11 +485,9 @@ Win *window_new_file(Vis *vis, File *file, enum UiOption options) {
 	win->vis = vis;
 	win->file = file;
 	win->jumplist = ringbuf_alloc(31);
-	win->event.data = win;
-	win->event.draw = window_draw;
 	win->horizon = 1 << 15;
-	win->view = view_new(file->text, &win->event);
-	win->ui = vis->ui->window_new(vis->ui, win->view, file, options);
+	win->view = view_new(file->text);
+	win->ui = vis->ui->window_new(vis->ui, win, options);
 	if (!win->jumplist || !win->view || !win->ui) {
 		window_free(win);
 		return NULL;
@@ -358,7 +520,7 @@ bool vis_window_reload(Win *win) {
 	file_free(win->vis, win->file);
 	file->refcount = 1;
 	win->file = file;
-	win->ui->reload(win->ui, file);
+	view_reload(win->view, file->text);
 	return true;
 }
 
@@ -411,6 +573,7 @@ const char *vis_window_syntax_get(Win *win) {
 bool vis_window_syntax_set(Win *win, const char *syntax) {
 	if (!vis_event_emit(win->vis, VIS_EVENT_WIN_SYNTAX, win, syntax))
 		return false;
+	view_options_set(win->view, view_options_get(win->view));
 	free(win->lexer_name);
 	win->lexer_name = syntax ? strdup(syntax) : NULL;
 	return !syntax || win->lexer_name;
@@ -435,8 +598,6 @@ void vis_redraw(Vis *vis) {
 }
 
 void vis_update(Vis *vis) {
-	for (Win *win = vis->windows; win; win = win->next)
-		view_update(win->view);
 	vis->ui->update(vis->ui);
 }
 
@@ -1136,6 +1297,8 @@ bool vis_signal_handler(Vis *vis, int signum, const siginfo_t *siginfo, const vo
 		vis->cancel_filter = true;
 		return true;
 	case SIGCONT:
+		vis->resume = true;
+		/* fall through */
 	case SIGWINCH:
 		vis->need_resize = true;
 		return true;
@@ -1191,6 +1354,10 @@ int vis_run(Vis *vis, int argc, char *argv[]) {
 		if (vis->terminate)
 			vis_die(vis, "Killed by SIGTERM\n");
 
+		if (vis->resume) {
+			vis->ui->resume(vis->ui);
+			vis->resume = false;
+		}
 		if (vis->need_resize) {
 			vis->ui->resize(vis->ui);
 			vis->need_resize = false;

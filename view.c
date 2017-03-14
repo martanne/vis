@@ -12,7 +12,6 @@
 
 typedef struct {
 	char *symbol;
-	int style;
 } SyntaxSymbol;
 
 enum {
@@ -20,7 +19,6 @@ enum {
 	SYNTAX_SYMBOL_TAB,
 	SYNTAX_SYMBOL_TAB_FILL,
 	SYNTAX_SYMBOL_EOL,
-	SYNTAX_SYMBOL_EOF,
 	SYNTAX_SYMBOL_LAST,
 };
 
@@ -70,6 +68,7 @@ struct Cursor {             /* cursor position */
 struct View {
 	Text *text;         /* underlying text management */
 	UiWin *ui;
+	Cell cell_blank;    /* used for empty/blank cells */
 	int width, height;  /* size of display area */
 	size_t start, end;  /* currently displayed area [start, end] in bytes from the start of the file */
 	size_t start_last;  /* previously used start of visible area, used to update the mark */
@@ -93,7 +92,6 @@ struct View {
 	bool need_update;   /* whether view has been redrawn */
 	bool large_file;    /* optimize for displaying large files */
 	int colorcolumn;
-	ViewEvent *events;
 };
 
 static const SyntaxSymbol symbols_none[] = {
@@ -101,7 +99,6 @@ static const SyntaxSymbol symbols_none[] = {
 	[SYNTAX_SYMBOL_TAB]      = { " " },
 	[SYNTAX_SYMBOL_TAB_FILL] = { " " },
 	[SYNTAX_SYMBOL_EOL]      = { " " },
-	[SYNTAX_SYMBOL_EOF]      = { "~" },
 };
 
 static const SyntaxSymbol symbols_default[] = {
@@ -109,15 +106,12 @@ static const SyntaxSymbol symbols_default[] = {
 	[SYNTAX_SYMBOL_TAB]      = { "›" /* Single Right-Pointing Angle Quotation Mark U+203A */ },
 	[SYNTAX_SYMBOL_TAB_FILL] = { " " },
 	[SYNTAX_SYMBOL_EOL]      = { "↵" /* Downwards Arrow with Corner Leftwards U+21B5 */ },
-	[SYNTAX_SYMBOL_EOF]      = { "~" },
 };
 
 static Cell cell_unused;
-static Cell cell_blank = { .data = " " };
 
 static void view_clear(View *view);
 static bool view_addch(View *view, Cell *cell);
-static bool view_coord_get(View *view, size_t pos, Line **retline, int *retrow, int *retcol);
 static void view_cursors_free(Cursor *c);
 /* set/move current cursor position to a given (line, column) pair */
 static size_t cursor_set(Cursor *cursor, Line *line, int col);
@@ -178,6 +172,7 @@ static bool view_addch(View *view, Cell *cell) {
 	int width;
 	size_t lineno = view->line->lineno;
 	unsigned char ch = (unsigned char)cell->data[0];
+	cell->style = view->cell_blank.style;
 
 	switch (ch) {
 	case '\t':
@@ -195,7 +190,6 @@ static bool view_addch(View *view, Cell *cell) {
 			cell->len = w == 0 ? 1 : 0;
 			int t = w == 0 ? SYNTAX_SYMBOL_TAB : SYNTAX_SYMBOL_TAB_FILL;
 			strncpy(cell->data, view->symbols[t]->symbol, sizeof(cell->data)-1);
-			cell->style = view->symbols[t]->style;
 			view->line->cells[view->col] = *cell;
 			view->line->len += cell->len;
 			view->line->width += cell->width;
@@ -214,13 +208,12 @@ static bool view_addch(View *view, Cell *cell) {
 		}
 
 		strncpy(cell->data, view->symbols[SYNTAX_SYMBOL_EOL]->symbol, sizeof(cell->data)-1);
-		cell->style = view->symbols[SYNTAX_SYMBOL_EOL]->style;
 
 		view->line->cells[view->col] = *cell;
 		view->line->len += cell->len;
 		view->line->width += cell->width;
 		for (int i = view->col + 1; i < view->width; i++)
-			view->line->cells[i] = cell_blank;
+			view->line->cells[i] = view->cell_blank;
 
 		view->line = view->line->next;
 		if (view->line)
@@ -240,13 +233,12 @@ static bool view_addch(View *view, Cell *cell) {
 
 		if (ch == ' ') {
 			strncpy(cell->data, view->symbols[SYNTAX_SYMBOL_SPACE]->symbol, sizeof(cell->data)-1);
-			cell->style = view->symbols[SYNTAX_SYMBOL_SPACE]->style;
 
 		}
 
 		if (view->col + cell->width > view->width) {
 			for (int i = view->col; i < view->width; i++)
-				view->line->cells[i] = cell_blank;
+				view->line->cells[i] = view->cell_blank;
 			view->line = view->line->next;
 			view->col = 0;
 		}
@@ -287,7 +279,7 @@ static void cursor_to(Cursor *c, size_t pos) {
 	view_draw(c->view);
 }
 
-static bool view_coord_get(View *view, size_t pos, Line **retline, int *retrow, int *retcol) {
+bool view_coord_get(View *view, size_t pos, Line **retline, int *retrow, int *retcol) {
 	int row = 0, col = 0;
 	size_t cur = view->start;
 	Line *line = view->topline;
@@ -350,7 +342,7 @@ void view_draw(View *view) {
 	/* start from known multibyte state */
 	mbstate_t mbstate = { 0 };
 
-	Cell cell = { 0 }, prev_cell = { 0 };
+	Cell cell = { .data = "", .len = 0, .width = 0, }, prev_cell = cell;
 
 	while (rem > 0) {
 
@@ -412,10 +404,11 @@ void view_draw(View *view) {
 	if (prev_cell.len && view_addch(view, &prev_cell))
 		pos += prev_cell.len;
 
-	/* set end of vieviewg region */
+	/* set end of viewing region */
 	view->end = pos;
 	if (view->line) {
-		if (view->line->len == 0 && view->end == text_size(view->text) && view->line->prev)
+		bool eof = view->end == text_size(view->text);
+		if (view->line->len == 0 && eof && view->line->prev)
 			view->lastline = view->line->prev;
 		else
 			view->lastline = view->line;
@@ -426,23 +419,14 @@ void view_draw(View *view) {
 	/* clear remaining of line, important to show cursor at end of file */
 	if (view->line) {
 		for (int x = view->col; x < view->width; x++)
-			view->line->cells[x] = cell_blank;
+			view->line->cells[x] = view->cell_blank;
 	}
 
 	/* resync position of cursors within visible area */
 	for (Cursor *c = view->cursors; c; c = c->next) {
 		size_t pos = view_cursors_pos(c);
-		if (view_coord_get(view, pos, &c->line, &c->row, &c->col)) {
-			c->line->cells[c->col].cursor = true;
-			c->line->cells[c->col].cursor_primary = (c == view->cursor);
-			if (view->ui && !c->sel) {
-				Line *line_match; int col_match;
-				size_t pos_match = text_bracket_match_symbol(view->text, pos, "(){}[]\"'`");
-				if (pos != pos_match && view_coord_get(view, pos_match, &line_match, NULL, &col_match)) {
-					line_match->cells[col_match].selected = true;
-				}
-			}
-		} else if (c == view->cursor) {
+		if (!view_coord_get(view, pos, &c->line, &c->row, &c->col) && 
+		    c == view->cursor) {
 			c->line = view->topline;
 			c->row = 0;
 			c->col = 0;
@@ -452,77 +436,19 @@ void view_draw(View *view) {
 	view->need_update = true;
 }
 
-void view_update(View *view) {
+void view_dirty(View *view) {
+	view->need_update = true;
+}
+
+bool view_update(View *view) {
 	if (!view->need_update)
-		return;
-
-	if (view->events->draw)
-		view->events->draw(view->events->data);
-
-	if (view->colorcolumn > 0) {
-		size_t lineno = 0;
-		int line_cols = 0; /* Track the number of columns we've passed on each line */
-		bool line_cc_set = false; /* Has the colorcolumn attribute been set for this line yet */
-
-		for (Line *l = view->topline; l; l = l->next) {
-			if (l->lineno != lineno) {
-				line_cols = 0;
-				line_cc_set = false;
-			}
-
-			if (!line_cc_set) {
-				line_cols += view->width;
-
-				/* This screen line contains the cell we want to highlight */
-				if (line_cols >= view->colorcolumn) {
-					l->cells[(view->colorcolumn - 1) % view->width].style = UI_STYLE_COLOR_COLUMN;
-					line_cc_set = true;
-				}
-			}
-
-			lineno = l->lineno;
-		}
-	}
-
+		return false;
 	for (Line *l = view->lastline->next; l; l = l->next) {
-		strncpy(l->cells[0].data, view->symbols[SYNTAX_SYMBOL_EOF]->symbol, sizeof(l->cells[0].data));
-		l->cells[0].style = view->symbols[SYNTAX_SYMBOL_EOF]->style;
-		for (int x = 1; x < view->width; x++)
-			l->cells[x] = cell_blank;
-		l->width = 1;
-		l->len = 0;
+		for (int x = 0; x < view->width; x++)
+			l->cells[x] = view->cell_blank;
 	}
-
-	for (Selection *s = view->selections; s; s = s->next) {
-		Filerange sel = view_selections_get(s);
-		if (text_range_valid(&sel)) {
-			Line *start_line; int start_col;
-			Line *end_line; int end_col;
-			view_coord_get(view, sel.start, &start_line, NULL, &start_col);
-			view_coord_get(view, sel.end, &end_line, NULL, &end_col);
-			if (start_line || end_line) {
-				if (!start_line) {
-					start_line = view->topline;
-					start_col = 0;
-				}
-				if (!end_line) {
-					end_line = view->lastline;
-					end_col = end_line->width;
-				}
-				for (Line *l = start_line; l != end_line->next; l = l->next) {
-					int col = (l == start_line) ? start_col : 0;
-					int end = (l == end_line) ? end_col : l->width;
-					while (col < end) {
-						l->cells[col++].selected = true;
-					}
-				}
-			}
-		}
-	}
-
-	if (view->ui)
-		view->ui->draw(view->ui);
 	view->need_update = false;
+	return true;
 }
 
 bool view_resize(View *view, int width, int height) {
@@ -544,8 +470,6 @@ bool view_resize(View *view, int width, int height) {
 	view->height = height;
 	memset(view->lines, 0, view->lines_size);
 	view_draw(view);
-	if (view->ui)
-		view_update(view);
 	return true;
 }
 
@@ -574,7 +498,7 @@ void view_reload(View *view, Text *text) {
 	view_cursor_to(view, 0);
 }
 
-View *view_new(Text *text, ViewEvent *events) {
+View *view_new(Text *text) {
 	if (!text)
 		return NULL;
 	View *view = calloc(1, sizeof(View));
@@ -585,6 +509,11 @@ View *view_new(Text *text, ViewEvent *events) {
 		return NULL;
 	}
 
+	view->cell_blank = (Cell) {
+		.width = 0,
+		.len = 0,
+		.data = " ",
+	};
 	view->text = text;
 	view->tabwidth = 8;
 	view_options_set(view, 0);
@@ -595,13 +524,13 @@ View *view_new(Text *text, ViewEvent *events) {
 	}
 
 	view_cursor_to(view, 0);
-	view->events = events;
 
 	return view;
 }
 
 void view_ui(View *view, UiWin* ui) {
 	view->ui = ui;
+	view->cell_blank.style = view->ui->style_get(view->ui, UI_STYLE_DEFAULT);
 }
 
 static size_t cursor_set(Cursor *cursor, Line *line, int col) {
@@ -886,12 +815,16 @@ size_t view_cursor_get(View *view) {
 	return view_cursors_pos(view->cursor);
 }
 
-const Line *view_lines_get(View *view) {
+Line *view_lines_first(View *view) {
 	return view->topline;
 }
 
-const Line *view_line_get(View *view) {
-	return view->cursor->line;
+Line *view_lines_last(View *view) {
+	return view->lastline;
+}
+
+Line *view_cursors_line_get(Cursor *c) {
+	return c->line;
 }
 
 void view_scroll_to(View *view, size_t pos) {
@@ -904,7 +837,6 @@ void view_options_set(View *view, enum UiOption options) {
 		[SYNTAX_SYMBOL_TAB]      = UI_OPTION_SYMBOL_TAB,
 		[SYNTAX_SYMBOL_TAB_FILL] = UI_OPTION_SYMBOL_TAB_FILL,
 		[SYNTAX_SYMBOL_EOL]      = UI_OPTION_SYMBOL_EOL,
-		[SYNTAX_SYMBOL_EOF]      = UI_OPTION_SYMBOL_EOF,
 	};
 
 	for (int i = 0; i < LENGTH(mapping); i++) {
@@ -917,8 +849,10 @@ void view_options_set(View *view, enum UiOption options) {
 
 	view->large_file = (options & UI_OPTION_LARGE_FILE);
 
-	if (view->ui)
+	if (view->ui) {
 		view->ui->options_set(view->ui, options);
+		view->cell_blank.style = view->ui->style_get(view->ui, UI_STYLE_DEFAULT);
+	}
 }
 
 enum UiOption view_options_get(View *view) {
@@ -1428,13 +1362,14 @@ Text *view_text(View *view) {
 }
 
 bool view_style_define(View *view, enum UiStyle id, const char *style) {
-	return view->ui->syntax_style(view->ui, id, style);
+	return view->ui->style_define(view->ui, id, style);
 }
 
-void view_style(View *view, enum UiStyle style, size_t start, size_t end) {
+void view_style(View *view, enum UiStyle style_id, size_t start, size_t end) {
 	if (end < view->start || start > view->end)
 		return;
 
+	CellStyle style = view->ui->style_get(view->ui, style_id);
 	size_t pos = view->start;
 	Line *line = view->topline;
 

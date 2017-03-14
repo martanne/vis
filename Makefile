@@ -4,7 +4,7 @@ REGEX_SRC ?= text-regex.c
 
 SRC = array.c buffer.c libutf.c main.c map.c register.c ring-buffer.c \
 	sam.c text.c text-motions.c text-objects.c text-util.c \
-	ui-curses.c view.c vis.c vis-lua.c vis-modes.c vis-motions.c \
+	ui-terminal.c view.c vis.c vis-lua.c vis-modes.c vis-motions.c \
 	vis-operators.c vis-prompt.c vis-text-objects.c $(REGEX_SRC)
 
 ELF = vis vis-menu vis-digraph

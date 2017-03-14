@@ -32,6 +32,11 @@ vis.events.subscribe(vis.events.WIN_SYNTAX, function(win, name)
 	win:style_define(win.STYLE_SELECTION, lexers.STYLE_SELECTION or '')
 	win:style_define(win.STYLE_LINENUMBER, lexers.STYLE_LINENUMBER or '')
 	win:style_define(win.STYLE_COLOR_COLUMN, lexers.STYLE_COLOR_COLUMN or '')
+	win:style_define(win.STYLE_STATUS, lexers.STYLE_STATUS or '')
+	win:style_define(win.STYLE_STATUS_FOCUSED, lexers.STYLE_STATUS_FOCUSED or '')
+	win:style_define(win.STYLE_SEPARATOR, lexers.STYLE_SEPARATOR or '')
+	win:style_define(win.STYLE_INFO, lexers.STYLE_INFO or '')
+	win:style_define(win.STYLE_EOF, lexers.STYLE_EOF or '')
 
 	if name == nil then return true end
 

@@ -13,23 +13,15 @@ typedef struct Selection Selection;
 #include "register.h"
 
 typedef struct {
-	void *data;
-	void (*draw)(void *data);
-} ViewEvent;
-
-typedef struct {
-	int width;          /* display width i.e. number of columns occupied by this character */
+	char data[16];      /* utf8 encoded character displayed in this cell (might be more than
+	                       one Unicode codepoint. might also not be the same as in the
+	                       underlying text, for example tabs get expanded */
 	size_t len;         /* number of bytes the character displayed in this cell uses, for
 	                       characters which use more than 1 column to display, their length
 	                       is stored in the leftmost cell whereas all following cells
 	                       occupied by the same character have a length of 0. */
-	char data[16];      /* utf8 encoded character displayed in this cell (might be more than
-	                       one Unicode codepoint. might also not be the same as in the
-	                       underlying text, for example tabs get expanded */
-	enum UiStyle style; /* style id used to display this cell */
-	bool selected;      /* whether this cell is part of a selected region */
-	bool cursor;        /* whether a cursor is currently located on the cell */
-	bool cursor_primary;/* whether it is the primary cursor located on the cell */
+	int width;          /* display width i.e. number of columns occupied by this character */
+	CellStyle style;    /* colors and attributes used to display this cell */
 } Cell;
 
 typedef struct Line Line;
@@ -41,7 +33,7 @@ struct Line {               /* a line on the screen, *not* in the file */
 	Cell cells[];       /* win->width cells storing information about the displayed characters */
 };
 
-View *view_new(Text*, ViewEvent*);
+View *view_new(Text*);
 void view_ui(View*, UiWin*);
 /* change associated text displayed in this window */
 void view_reload(View*, Text*);
@@ -50,8 +42,9 @@ void view_free(View*);
 bool view_resize(View*, int width, int height);
 int view_height_get(View*);
 int view_width_get(View*);
+void view_dirty(View*);
 void view_draw(View*);
-void view_update(View*);
+bool view_update(View*);
 /* changes how many spaces are used for one tab (must be >0), redraws the window */
 void view_tabwidth_set(View*, int tabwidth);
 
@@ -80,8 +73,9 @@ size_t view_scroll_halfpage_down(View*);
 /* place the cursor at the start ot the n-th window line, counting from 1 */
 size_t view_screenline_goto(View*, int n);
 
-const Line *view_lines_get(View*);
-const Line *view_line_get(View*);
+Line *view_lines_first(View*);
+Line *view_lines_last(View*);
+Line *view_cursors_line_get(Cursor*);
 /* redraw current cursor line at top/center/bottom of window */
 void view_redraw_top(View*);
 void view_redraw_center(View*);
@@ -100,6 +94,7 @@ enum UiOption view_options_get(View*);
 void view_colorcolumn_set(View*, int col);
 int view_colorcolumn_get(View*);
 
+bool view_coord_get(View*, size_t pos, Line **retline, int *retrow, int *retcol);
 /* A view can manage multiple cursors, one of which (the main cursor) is always
  * placed within the visible viewport. All functions named view_cursor_* operate
  * on this cursor. Additional cursor can be created and manipulated using the

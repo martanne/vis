@@ -1,6 +1,7 @@
 #include <signal.h>
 #include <limits.h>
 #include <string.h>
+#include <stdio.h>
 #include <wchar.h>
 #include <ctype.h>
 #include <errno.h>
@@ -8,7 +9,7 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 
-#include "ui-curses.h"
+#include "ui-terminal.h"
 #include "vis.h"
 #include "vis-lua.h"
 #include "text-util.h"
@@ -2001,7 +2002,7 @@ int main(int argc, char *argv[]) {
 		.win_status = vis_lua_win_status,
 	};
 
-	vis = vis_new(ui_curses_new(), &event);
+	vis = vis_new(ui_term_new(), &event);
 	if (!vis)
 		return EXIT_FAILURE;
 

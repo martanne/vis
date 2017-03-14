@@ -96,6 +96,7 @@ void vis_redraw(Vis*);
 void vis_update(Vis*);
 /* temporarily supsend the editor process, resumes upon receiving SIGCONT */
 void vis_suspend(Vis*);
+void vis_resume(Vis*);
 
 /* creates a new window, and loads the given file. if filename is NULL
  * an unamed / empty buffer is created. If the given file is already opened
@@ -118,6 +119,7 @@ void vis_window_close(Win*);
 bool vis_window_split(Win*);
 /* change status message of this window */
 void vis_window_status(Win*, const char *status);
+void vis_window_draw(Win*);
 /* focus the next / previous window */
 void vis_window_next(Vis*);
 void vis_window_prev(Vis*);
