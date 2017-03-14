@@ -755,6 +755,7 @@ static bool cmd_help(Vis *vis, Win *win, Command *cmd, const char *argv[], Curso
 		const char *name;
 		bool enabled;
 	} configs[] = {
+		{ "Curses support: ", CONFIG_CURSES },
 		{ "Lua support: ", CONFIG_LUA },
 		{ "Lua LPeg statically built-in: ", CONFIG_LPEG },
 		{ "TRE based regex support: ", CONFIG_TRE },

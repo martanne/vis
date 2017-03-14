@@ -23,6 +23,7 @@ Fine tuning of the installation directories:
   --mandir=DIR            man pages [PREFIX/share/man]
 
 Optional features:
+  --enable-curses         build with Curses terminal output [yes]
   --enable-lua            build with Lua support [auto]
   --enable-lpeg           build with support for statically linking to LPeg [auto]
   --enable-tre            build with TRE regex support [auto]
@@ -116,6 +117,7 @@ SHAREDIR='$(PREFIX)/share'
 MANDIR='$(PREFIX)/share/man'
 
 help=yes
+curses=yes
 lua=auto
 lpeg=auto
 tre=auto
@@ -135,6 +137,8 @@ case "$arg" in
 --static) static=yes ;;
 --enable-help|--enable-help=yes) help=yes ;;
 --disable-help|--enable-help=no) help=no ;;
+--enable-curses|--enable-curses=yes) curses=yes ;;
+--disable-curses|--enable-curses=no) curses=no ;;
 --enable-lua|--enable-lua=yes) lua=yes ;;
 --disable-lua|--enable-lua=no) lua=no ;;
 --enable-lpeg|--enable-lpeg=yes) lpeg=yes ;;
@@ -293,9 +297,12 @@ else
 	CONFIG_HELP=0
 fi
 
-# libcurses is a mandatory dependency
+CONFIG_CURSES=0
 
-printf "checking for libcurses...\n"
+if test "$curses" != "no" ; then
+
+	printf "checking for libcurses...\n"
+
 cat > "$tmpc" <<EOF
 #include <curses.h>
 
@@ -306,36 +313,37 @@ int main(int argc, char *argv[]) {
 }
 EOF
 
-CONFIG_CURSES=0
+	for libcurses in ncursesw ncurses libcurses; do
+		printf " checking for %s... " "$libcurses"
 
-for curses in ncursesw ncurses curses; do
-	printf " checking for %s... " "$curses"
+		if test "$have_pkgconfig" = "yes" ; then
+			CFLAGS_CURSES=$(pkg-config --cflags $libcurses 2>/dev/null)
+			LDFLAGS_CURSES=$(pkg-config --libs $libcurses 2>/dev/null)
+			if test $? -eq 0 && $CC $CFLAGS $CFLAGS_CURSES "$tmpc" \
+				$LDFLAGS $LDFLAGS_CURSES -o "$tmpo" >/dev/null 2>&1 ; then
+				CONFIG_CURSES=1
+				printf "yes\n"
+				break
+			fi
+		fi
 
-	if test "$have_pkgconfig" = "yes" ; then
-		CFLAGS_CURSES=$(pkg-config --cflags $curses 2>/dev/null)
-		LDFLAGS_CURSES=$(pkg-config --libs $curses 2>/dev/null)
-		if test $? -eq 0 && $CC $CFLAGS $CFLAGS_CURSES "$tmpc" \
+		CFLAGS_CURSES=""
+		LDFLAGS_CURSES="-l$libcurses"
+
+		if $CC $CFLAGS $CFLAGS_CURSES "$tmpc" \
 			$LDFLAGS $LDFLAGS_CURSES -o "$tmpo" >/dev/null 2>&1 ; then
 			CONFIG_CURSES=1
 			printf "yes\n"
 			break
+		else
+			CFLAGS_CURSES=""
+			LDFLAGS_CURSES=""
+			printf "no\n"
 		fi
-	fi
+	done
 
-	CFLAGS_CURSES=""
-	LDFLAGS_CURSES="-l$curses"
-
-	if $CC $CFLAGS $CFLAGS_CURSES "$tmpc" \
-		$LDFLAGS $LDFLAGS_CURSES -o "$tmpo" >/dev/null 2>&1 ; then
-		CONFIG_CURSES=1
-		printf "yes\n"
-		break
-	else
-		printf "no\n"
-	fi
-done
-
-test $CONFIG_CURSES -ne 1 && fail "$0: cannot find libcurses"
+	test "$curses" = "yes" -a $CONFIG_CURSES -ne 1 && fail "$0: cannot find libcurses"
+fi
 
 # libtermkey is a mandatory dependency
 
@@ -356,7 +364,7 @@ fi
 
 if test -z "$LDFLAGS_TERMKEY"; then
 	CFLAGS_TERMKEY=""
-	LDFLAGS_TERMKEY="-ltermkey"
+	LDFLAGS_TERMKEY="-ltermkey -lncursesw"
 fi
 
 if $CC $CFLAGS $CFLAGS_TERMKEY "$tmpc" $LDFLAGS $LDFLAGS_TERMKEY $LDFLAGS_CURSES \
@@ -591,11 +599,12 @@ printf "completing config.mk... "
 exec 3>&1 1>>config.mk
 
 cat << EOF
-CFLAGS_CURSES = $CFLAGS_CURSES
-LDFLAGS_CURSES = $LDFLAGS_CURSES
+CONFIG_HELP = $CONFIG_HELP
 CFLAGS_TERMKEY = $CFLAGS_TERMKEY
 LDFLAGS_TERMKEY = $LDFLAGS_TERMKEY
-CONFIG_HELP = $CONFIG_HELP
+CONFIG_CURSES = $CONFIG_CURSES
+CFLAGS_CURSES = $CFLAGS_CURSES
+LDFLAGS_CURSES = $LDFLAGS_CURSES
 REGEX_SRC = $REGEX_SRC
 CONFIG_TRE = $CONFIG_TRE
 CFLAGS_TRE = $CFLAGS_TRE

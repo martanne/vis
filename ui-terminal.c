@@ -62,7 +62,11 @@ struct UiTermWin {
 	enum UiOption options;    /* display settings for this window */
 };
 
+#if CONFIG_CURSES
 #include "ui-terminal-curses.c"
+#else
+#include "ui-terminal-vt100.c"
+#endif
 
 __attribute__((noreturn)) static void ui_die(Ui *ui, const char *msg, va_list ap) {
 	UiTerm *tui = (UiTerm*)ui;
