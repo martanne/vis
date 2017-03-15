@@ -255,7 +255,7 @@ static int ui_curses_colors(Ui *ui) {
 	return COLORS;
 }
 
-static bool ui_curses_init(UiTerm *tui, const char *term) {
+static bool ui_curses_init(UiTerm *tui, char *term) {
 	if (!newterm(term, stderr, stdin)) {
 		snprintf(tui->info, sizeof(tui->info), "Warning: unknown term `%s'", term);
 		if (!newterm(strstr(term, "-256color") ? "xterm-256color" : "xterm", stderr, stdin))

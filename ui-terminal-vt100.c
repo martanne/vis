@@ -191,7 +191,7 @@ static void ui_vt100_resume(UiTerm *term) {
 	cursor_visible(false);
 }
 
-static bool ui_vt100_init(UiTerm *tui, const char *term) {
+static bool ui_vt100_init(UiTerm *tui, char *term) {
 	ui_vt100_resume(tui);
 	return true;
 }
