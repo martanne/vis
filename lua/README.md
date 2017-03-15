@@ -1,13 +1,10 @@
-Tests for vis specific lua api
-------------------------------
+Unit Test for Vis' Lua API
+--------------------------
 
-Tests are formed from a `<test>.in`, `<test>.ref` and `<test>.out` triplet.  
-The `<test>.in` file is opened by vis, some operatations are performed and the 
-modified file is written to `<test>.out`. The new `<test>.out` is compared to 
-`<test>.ref` and the test passes if they are identical.
+The tests use the [busted unit testing framework](https://olivinelabs.com/busted/).
 
-The shell script `test.sh` looks for a file with extension `.in`, eg `test.in`,
-and opens it in vis. The corresponding lua file, `test.lua`, is executed and is 
-expected to create a `test.out` file.
+Each `*.lua` file is sourced from a new `vis` instance which loads the
+correspending `*.in` file.
 
-Type `make` to run all tests.
+Use the `test.sh` shell script to run an individual test or type `make`
+to run all tests.
