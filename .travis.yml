@@ -19,6 +19,9 @@ matrix:
       env: TARGET=clean
     - os: linux
       compiler: gcc
+      env: TARGET= CONFIG=--disable-curses
+    - os: linux
+      compiler: gcc
       env: TARGET= CONFIG=--disable-lua
     - os: linux
       compiler: gcc
@@ -29,6 +32,9 @@ matrix:
     - os: osx
       compiler: clang
       env: TARGET=debug
+    - os: osx
+      compiler: clang
+      env: TARGET= CONFIG=--disable-curses
     - os: osx
       compiler: clang
       env: TARGET= CONFIG=--disable-lua
