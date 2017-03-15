@@ -64,18 +64,18 @@ By default the `configure` script will try to auto detect support for
 Lua. See `configure --help` for a list of supported options. You can
 also manually tweak the generated `config.mk` file.
 
-Or simply use one of the [distribution provided packages]
-(https://github.com/martanne/vis/wiki/Distribution-Packages).
+Or simply use one of the
+[distribution provided packages](https://github.com/martanne/vis/wiki/Distribution-Packages).
 
 Documentation
 -------------
 
-End user documentation can be found in the [`vis(1)` manual page]
-(http://martanne.github.io/vis/man/vis.1.html) and the [Wiki]
-(https://github.com/martanne/vis/wiki). Read the [FAQ]
-(https://github.com/martanne/vis/wiki/FAQ) for common questions.
-Learn about some differences compared to [`sam(1)`]
-(https://github.com/martanne/vis/wiki/Differences-from-Sam) and
+End user documentation can be found in the
+[`vis(1)` manual page](http://martanne.github.io/vis/man/vis.1.html)
+and the [Wiki](https://github.com/martanne/vis/wiki). Read the
+[FAQ](https://github.com/martanne/vis/wiki/FAQ) for common questions.
+Learn about some differences compared to
+[`sam(1)`](https://github.com/martanne/vis/wiki/Differences-from-Sam) and
 [`vim(1)`](https://github.com/martanne/vis/wiki/Differences-from-Vi(m)),
 respectively.
 
@@ -106,9 +106,25 @@ Non Goals
 How to help?
 ------------
 
-There are plenty of ways to contribute: writing core editor features using
-C or extension in Lua, improving documentation or tests, packaging for
-your favorite distribution, ...
+There are plenty of ways to contribute, below are a few ideas:
+
+ * Artwork
+    - Color Themes
+    - [Name](https://github.com/martanne/vis/issues/338) +
+      [Logo](https://github.com/martanne/vis/issues/328)
+    - Homepage?
+ * Documentation
+    - [Manual Pages](https://github.com/martanne/vis/wiki/Developer-Overview#manual-pages)
+    - Improve `:help` output
+ * Lua
+    - [API Documentation](https://github.com/martanne/vis/wiki/Developer-Overview#api-documentation)
+      and Examples
+    - [Unit Tests](https://github.com/martanne/vis-test/tree/master/lua)
+    - Plugin Development
+    - [API Design](https://github.com/martanne/vis/issues/292)
+ * [Testing Infrastructure](https://github.com/martanne/vis-test)
+ * [Distribution Packaging](https://github.com/martanne/vis/wiki/Distribution-Packages)
+ * [Core Editor Design](https://github.com/martanne/vis/issues?q=is%3Aopen+is%3Aissue+label%3Adesign)
 
 Checkout the [Developer Overview](https://github.com/martanne/vis/wiki/Developer-Overview)
 to get started and do not hesitate to ask question in the `#vis-editor`
