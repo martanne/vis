@@ -192,6 +192,8 @@ static bool ui_style_define(UiWin *w, int id, const char *style) {
 }
 
 static void ui_style(UiTerm *tui, int x, int y, int len, UiTermWin *win, enum UiStyle style_id) {
+	if (x < 0 || x >= tui->width || y < 0 || y >= tui->height)
+		return;
 	CellStyle style = tui->styles[(win ? win->id : 0)*UI_STYLE_MAX + style_id];
 	Cell (*cells)[tui->width] = (void*)tui->cells;
 	int end = x + len;
@@ -203,6 +205,8 @@ static void ui_style(UiTerm *tui, int x, int y, int len, UiTermWin *win, enum Ui
 
 static void ui_draw_string(UiTerm *tui, int x, int y, const char *str, UiTermWin *win, enum UiStyle style_id) {
 	debug("draw-string: [%d][%d]\n", y, x);
+	if (x < 0 || x >= tui->width || y < 0 || y >= tui->height)
+		return;
 	CellStyle style = tui->styles[(win ? win->id : 0)*UI_STYLE_MAX + style_id];
 	// FIXME: does not handle double width characters etc, share code with view.c?
 	Cell (*cells)[tui->width] = (void*)tui->cells;
