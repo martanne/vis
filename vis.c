@@ -270,14 +270,13 @@ void vis_window_status(Win *win, const char *status) {
 
 static void windows_invalidate(Vis *vis, size_t start, size_t end) {
 	for (Win *win = vis->windows; win; win = win->next) {
-		if (vis->win != win && vis->win->file == win->file) {
+		if (vis->win->file == win->file) {
 			Filerange view = view_viewport_get(win->view);
 			if ((view.start <= start && start <= view.end) ||
 			    (view.start <= end && end <= view.end))
 				view_draw(win->view);
 		}
 	}
-	view_draw(vis->win->view);
 }
 
 void window_selection_save(Win *win) {
