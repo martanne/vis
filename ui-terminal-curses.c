@@ -235,9 +235,9 @@ static void ui_curses_clear(UiTerm *tui) {
 	clear();
 }
 
-static void ui_curses_resize(UiTerm *tui, int width, int height) {
-	resizeterm(height, width);
-	wresize(stdscr, height, width);
+static bool ui_curses_resize(UiTerm *tui, int width, int height) {
+	return resizeterm(height, width) == OK &&
+	       wresize(stdscr, height, width) == OK;
 }
 
 static void ui_curses_save(UiTerm *tui) {

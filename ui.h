@@ -95,7 +95,6 @@ struct Ui {
 	void (*arrange)(Ui*, enum UiLayout);
 	void (*draw)(Ui*);
 	void (*redraw)(Ui*);
-	void (*update)(Ui*);
 	void (*suspend)(Ui*);
 	void (*resume)(Ui*);
 	bool (*getkey)(Ui*, TermKeyKey*);

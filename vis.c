@@ -589,7 +589,6 @@ int vis_window_height_get(const Win *win) {
 void vis_draw(Vis *vis) {
 	for (Win *win = vis->windows; win; win = win->next)
 		view_draw(win->view);
-	vis->ui->draw(vis->ui);
 }
 
 void vis_redraw(Vis *vis) {
@@ -597,7 +596,7 @@ void vis_redraw(Vis *vis) {
 }
 
 void vis_update(Vis *vis) {
-	vis->ui->update(vis->ui);
+	vis->ui->draw(vis->ui);
 }
 
 void vis_suspend(Vis *vis) {

@@ -98,7 +98,6 @@ static void ui_window_move(UiTermWin *win, int x, int y) {
 	win->y = y;
 }
 
-/* Convert color from string. */
 static bool color_fromstring(UiTerm *ui, CellColor *color, const char *s)
 {
 	if (!s)
@@ -122,7 +121,7 @@ static bool color_fromstring(UiTerm *ui, CellColor *color, const char *s)
 		return true;
 	}
 
-	struct {
+	static const struct {
 		const char *name;
 		CellColor color;
 	} color_names[] = {
@@ -345,11 +344,11 @@ static void ui_draw(Ui *ui) {
 	debug("ui-draw\n");
 	UiTerm *tui = (UiTerm*)ui;
 	ui_arrange(ui, tui->layout);
-
 	for (UiTermWin *win = tui->windows; win; win = win->next)
 		ui_window_draw((UiWin*)win);
 	if (tui->info[0])
 		ui_draw_string(tui, 0, tui->height-1, tui->info, NULL, UI_STYLE_INFO);
+	ui_term_backend_blit(tui);
 }
 
 static void ui_redraw(Ui *ui) {
@@ -359,28 +358,8 @@ static void ui_redraw(Ui *ui) {
 		view_dirty(win->win->view);
 }
 
-static bool ui_resize_to(Ui *ui, int width, int height) {
-	UiTerm *tui = (UiTerm*)ui;
-	width = MAX(width, 1);
-	width = MIN(width, MAX_WIDTH);
-	height = MAX(height, 1);
-	height = MIN(height, MAX_HEIGHT);
-	ui_term_backend_resize(tui, width, height);
-	size_t size = width*height*sizeof(Cell);
-	if (size > tui->cells_size) {
-		Cell *cells = realloc(tui->cells, size);
-		if (!cells)
-			return false;
-		tui->cells_size = size;
-		tui->cells = cells;
-	}
-	tui->width = width;
-	tui->height = height;
-	ui_draw(ui);
-	return true;
-}
-
 static void ui_resize(Ui *ui) {
+	UiTerm *tui = (UiTerm*)ui;
 	struct winsize ws;
 	int width = 80, height = 24;
 
@@ -389,14 +368,23 @@ static void ui_resize(Ui *ui) {
 		height = ws.ws_row;
 	}
 
-	ui_resize_to(ui, width, height);
-}
+	width = MAX(width, 1);
+	width = MIN(width, MAX_WIDTH);
+	height = MAX(height, 1);
+	height = MIN(height, MAX_HEIGHT);
+	if (!ui_term_backend_resize(tui, width, height))
+		return;
 
-static void ui_update(Ui *ui) {
-	debug("ui-doupdate\n");
-	UiTerm *tui = (UiTerm*)ui;
-	ui_draw(ui);
-	ui_term_backend_blit(tui);
+	size_t size = width*height*sizeof(Cell);
+	if (size > tui->cells_size) {
+		Cell *cells = realloc(tui->cells, size);
+		if (!cells)
+			return;
+		tui->cells_size = size;
+		tui->cells = cells;
+	}
+	tui->width = width;
+	tui->height = height;
 }
 
 static void ui_window_free(UiWin *w) {
@@ -448,7 +436,6 @@ static void ui_window_options_set(UiWin *w, enum UiOption options) {
 			win->next = NULL;
 		}
 	}
-
 	ui_draw((Ui*)win->ui);
 }
 
@@ -566,15 +553,12 @@ static void ui_info(Ui *ui, const char *msg, va_list ap) {
 	UiTerm *tui = (UiTerm*)ui;
 	ui_draw_line(tui, 0, tui->height-1, ' ', UI_STYLE_INFO);
 	vsnprintf(tui->info, sizeof(tui->info), msg, ap);
-	ui_draw(ui);
 }
 
 static void ui_info_hide(Ui *ui) {
 	UiTerm *tui = (UiTerm*)ui;
-	if (tui->info[0]) {
+	if (tui->info[0])
 		tui->info[0] = '\0';
-		ui_draw(ui);
-	}
 }
 
 static TermKey *ui_termkey_new(int fd) {
@@ -700,7 +684,6 @@ Ui *ui_term_new(void) {
 		.suspend = ui_suspend,
 		.resume = ui_resume,
 		.resize = ui_resize,
-		.update = ui_update,
 		.window_new = ui_window_new,
 		.window_free = ui_window_free,
 		.window_focus = ui_window_focus,
