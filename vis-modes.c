@@ -86,8 +86,6 @@ void mode_set(Vis *vis, Mode *new_mode) {
 	vis->mode = new_mode;
 	if (new_mode->enter)
 		new_mode->enter(vis, vis->mode_prev);
-	if (vis->event && vis->event->win_status)
-		vis->event->win_status(vis, vis->win);
 }
 
 void vis_mode_switch(Vis *vis, enum VisMode mode) {
