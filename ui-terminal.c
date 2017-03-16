@@ -191,16 +191,17 @@ static bool ui_style_define(UiWin *w, int id, const char *style) {
 	return true;
 }
 
-static void ui_style(UiTerm *tui, int x, int y, int len, UiTermWin *win, enum UiStyle style_id) {
+static void ui_draw_line(UiTerm *tui, int x, int y, char c, enum UiStyle style_id) {
 	if (x < 0 || x >= tui->width || y < 0 || y >= tui->height)
 		return;
-	CellStyle style = tui->styles[(win ? win->id : 0)*UI_STYLE_MAX + style_id];
+	CellStyle style = tui->styles[style_id];
 	Cell (*cells)[tui->width] = (void*)tui->cells;
-	int end = x + len;
-	if (end > tui->width)
-		end = tui->width;
-	while (x < end)
-		cells[y][x++].style = style;
+	while (x < tui->width) {
+		cells[y][x].data[0] = c;
+		cells[y][x].data[1] = '\0';
+		cells[y][x].style = style;
+		x++;
+	}
 }
 
 static void ui_draw_string(UiTerm *tui, int x, int y, const char *str, UiTermWin *win, enum UiStyle style_id) {
@@ -347,10 +348,8 @@ static void ui_draw(Ui *ui) {
 
 	for (UiTermWin *win = tui->windows; win; win = win->next)
 		ui_window_draw((UiWin*)win);
-	if (tui->info[0]) {
+	if (tui->info[0])
 		ui_draw_string(tui, 0, tui->height-1, tui->info, NULL, UI_STYLE_INFO);
-		ui_style(tui, 0, tui->height-1, tui->width, NULL, UI_STYLE_INFO);
-	}
 }
 
 static void ui_redraw(Ui *ui) {
@@ -565,6 +564,7 @@ static UiWin *ui_window_new(Ui *ui, Win *w, enum UiOption options) {
 
 static void ui_info(Ui *ui, const char *msg, va_list ap) {
 	UiTerm *tui = (UiTerm*)ui;
+	ui_draw_line(tui, 0, tui->height-1, ' ', UI_STYLE_INFO);
 	vsnprintf(tui->info, sizeof(tui->info), msg, ap);
 	ui_draw(ui);
 }
