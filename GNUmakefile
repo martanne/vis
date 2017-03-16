@@ -1,12 +1,6 @@
 include Makefile
 
-SRCDIR = $(realpath $(dir $(firstword $(MAKEFILE_LIST))))
-
-DEPS_ROOT = $(SRCDIR)/dependency/install
-DEPS_PREFIX = $(DEPS_ROOT)/usr
-DEPS_BIN = $(DEPS_PREFIX)/bin
-DEPS_LIB = $(DEPS_PREFIX)/lib
-DEPS_INC = $(DEPS_PREFIX)/include
+TERMINFO_ENTRIES = st,st-256color,dvtm,dvtm-256color,xterm,xterm-256color,vt100,ansi
 
 LIBMUSL = musl-1.1.16
 LIBMUSL_SHA256 = 937185a5e5d721050306cf106507a006c3f1f86d86cd550024ea7be909071011
@@ -33,11 +27,19 @@ LIBATTR_SHA256 = faf6e5cbfa71153bd1049206ca70690c5dc96e2ec3db50eae107092c3de900c
 LIBACL = acl-38f32ea1865bcc44185f4118fde469cb962cff68
 LIBACL_SHA256 = 98598b0bb154ab294d9a695fd08b0e06516e770bbd1d78937905f0dd8ebe485c
 
-LIBNCURSES_CONFIG = --disable-database --with-fallbacks=st,st-256color,xterm,xterm-256color,vt100 \
+LIBNCURSES_CONFIG = --disable-database --with-fallbacks="$(TERMINFO_ENTRIES)" \
 	--with-shared --enable-widec --enable-ext-colors --with-termlib=tinfo \
 	--without-ada --without-cxx --without-cxx-binding --without-manpages \
 	--without-tests --without-progs --without-debug --without-profile \
 	--without-cxx-shared --without-termlib --without--ticlib --disable-leaks
+
+SRCDIR = $(realpath $(dir $(firstword $(MAKEFILE_LIST))))
+
+DEPS_ROOT = $(SRCDIR)/dependency/install
+DEPS_PREFIX = $(DEPS_ROOT)/usr
+DEPS_BIN = $(DEPS_PREFIX)/bin
+DEPS_LIB = $(DEPS_PREFIX)/lib
+DEPS_INC = $(DEPS_PREFIX)/include
 
 dependency/build:
 	mkdir -p "$@"
