@@ -383,7 +383,7 @@ static void window_draw_selection(View *view, Cursor *cur, CellStyle *style) {
 		int col = (l == start_line) ? start_col : 0;
 		int end = (l == end_line) ? end_col : l->width;
 		while (col < end) {
-			if (cell_color_equal(l->cells[col].style.fg, style->fg)) {
+			if (cell_color_equal(l->cells[col].style.fg, style->bg)) {
 				CellStyle old = l->cells[col].style;
 				l->cells[col].style.fg = old.bg;
 				l->cells[col].style.bg = old.fg;
