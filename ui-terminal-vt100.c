@@ -51,15 +51,15 @@
 #define ui_term_backend_new ui_vt100_new
 #define ui_term_backend_free ui_vt100_free
 
-#define CELL_COLOR_BLACK   (CellColor){ .index = 0 }
-#define CELL_COLOR_RED     (CellColor){ .index = 1 }
-#define CELL_COLOR_GREEN   (CellColor){ .index = 2 }
-#define CELL_COLOR_YELLOW  (CellColor){ .index = 3 }
-#define CELL_COLOR_BLUE    (CellColor){ .index = 4 }
-#define CELL_COLOR_MAGENTA (CellColor){ .index = 5 }
-#define CELL_COLOR_CYAN    (CellColor){ .index = 6 }
-#define CELL_COLOR_WHITE   (CellColor){ .index = 7 }
-#define CELL_COLOR_DEFAULT (CellColor){ .index = 9 }
+#define CELL_COLOR_BLACK   { .index = 0 }
+#define CELL_COLOR_RED     { .index = 1 }
+#define CELL_COLOR_GREEN   { .index = 2 }
+#define CELL_COLOR_YELLOW  { .index = 3 }
+#define CELL_COLOR_BLUE    { .index = 4 }
+#define CELL_COLOR_MAGENTA { .index = 5 }
+#define CELL_COLOR_CYAN    { .index = 6 }
+#define CELL_COLOR_WHITE   { .index = 7 }
+#define CELL_COLOR_DEFAULT { .index = 9 }
 
 #define CELL_ATTR_NORMAL    0
 #define CELL_ATTR_UNDERLINE (1 << 0)
@@ -113,7 +113,7 @@ static void ui_vt100_blit(UiTerm *tui) {
 			CellStyle *style = &cell->style;
 			if (style->attr != attr) {
 
-				static struct {
+				static const struct {
 					CellAttr attr;
 					char on[4], off[4];
 				} cell_attrs[] = {
