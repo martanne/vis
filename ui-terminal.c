@@ -380,6 +380,7 @@ static void ui_resize(Ui *ui) {
 		Cell *cells = realloc(tui->cells, size);
 		if (!cells)
 			return;
+		memset((char*)cells+tui->cells_size, 0, size - tui->cells_size);
 		tui->cells_size = size;
 		tui->cells = cells;
 	}
