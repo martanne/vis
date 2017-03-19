@@ -280,7 +280,6 @@ enum {
 	OPTION_AUTOINDENT,
 	OPTION_EXPANDTAB,
 	OPTION_TABWIDTH,
-	OPTION_THEME,
 	OPTION_SHOW_SPACES,
 	OPTION_SHOW_TABS,
 	OPTION_SHOW_NEWLINES,
@@ -318,11 +317,6 @@ static const OptionDef options[] = {
 		{ "tabwidth", "tw" },
 		VIS_OPTION_TYPE_NUMBER,
 		VIS_HELP("Number of spaces to display (and insert if `expandtab` is enabled) for a tab")
-	},
-	[OPTION_THEME] = {
-		{ "theme" },
-		VIS_OPTION_TYPE_STRING,
-		VIS_HELP("Color theme to use filename without extension")
 	},
 	[OPTION_SHOW_SPACES] = {
 		{ "show-spaces" },

@@ -7,7 +7,7 @@ vis.events.subscribe(vis.events.INIT, function()
 	vis:command("set theme ".. (vis.ui.colors <= 16 and "default-16" or "default-256"))
 end)
 
-vis.events.subscribe(vis.events.THEME_CHANGE, function(name)
+vis:option_register("theme", "string", function(name)
 	if name ~= nil then
 		local theme = 'themes/'..name
 		package.loaded[theme] = nil
@@ -19,7 +19,8 @@ vis.events.subscribe(vis.events.THEME_CHANGE, function(name)
 	for win in vis:windows() do
 		win:set_syntax(win.syntax)
 	end
-end)
+	return true
+end, "Color theme to use, filename without extension")
 
 vis:option_register("syntax", "string", function(name)
 	if not vis.win then return false end

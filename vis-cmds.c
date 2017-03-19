@@ -310,12 +310,6 @@ static bool cmd_set(Vis *vis, Win *win, Command *cmd, const char *argv[], Cursor
 		view_options_set(win->view, opt);
 		break;
 	}
-	case OPTION_THEME:
-		if (!vis_theme_load(vis, arg.s)) {
-			vis_info_show(vis, "Failed to load theme: `%s'", arg.s);
-			return false;
-		}
-		break;
 	case OPTION_COLOR_COLUMN:
 		view_colorcolumn_set(win->view, arg.i);
 		break;

@@ -160,7 +160,6 @@ void vis_lua_file_close(Vis *vis, File *file) { }
 void vis_lua_win_open(Vis *vis, Win *win) { }
 void vis_lua_win_close(Vis *vis, Win *win) { }
 void vis_lua_win_highlight(Vis *vis, Win *win, size_t horizon) { }
-bool vis_theme_load(Vis *vis, const char *name) { return true; }
 void vis_lua_win_status(Vis *vis, Win *win) { window_status_update(vis, win); }
 
 #else
@@ -2744,24 +2743,6 @@ void vis_lua_win_status(Vis *vis, Win *win) {
 		window_status_update(vis, win);
 	}
 	lua_pop(L, 1);
-}
-
-/***
- * Theme change.
- * @function theme_change
- * @tparam string theme the name of the new theme to load
- */
-bool vis_theme_load(Vis *vis, const char *name) {
-	lua_State *L = vis->lua;
-	vis_lua_event_get(L, "theme_change");
-	if (lua_isfunction(L, -1)) {
-		lua_pushstring(L, name);
-		pcall(vis, L, 1, 0);
-	}
-	lua_pop(L, 1);
-	/* package.loaded['themes/'..name] = nil
-	 * require 'themes/'..name */
-	return true;
 }
 
 #endif
