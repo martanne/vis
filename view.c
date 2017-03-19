@@ -158,6 +158,8 @@ static void view_clear(View *view) {
 	view->bottomline->next = NULL;
 	view->line = view->topline;
 	view->col = 0;
+	if (view->ui)
+		view->cell_blank.style = view->ui->style_get(view->ui, UI_STYLE_DEFAULT);
 }
 
 Filerange view_viewport_get(View *view) {
@@ -532,7 +534,6 @@ View *view_new(Text *text) {
 
 void view_ui(View *view, UiWin* ui) {
 	view->ui = ui;
-	view->cell_blank.style = view->ui->style_get(view->ui, UI_STYLE_DEFAULT);
 }
 
 static size_t cursor_set(Cursor *cursor, Line *line, int col) {
@@ -851,10 +852,8 @@ void view_options_set(View *view, enum UiOption options) {
 
 	view->large_file = (options & UI_OPTION_LARGE_FILE);
 
-	if (view->ui) {
+	if (view->ui)
 		view->ui->options_set(view->ui, options);
-		view->cell_blank.style = view->ui->style_get(view->ui, UI_STYLE_DEFAULT);
-	}
 }
 
 enum UiOption view_options_get(View *view) {
