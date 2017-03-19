@@ -123,7 +123,7 @@ vis.ftdetect.filetypes = {
 		ext = { "%.fish$" },
 	},
 	forth = {
-		ext = { "%.forth$", "%.frt$", "%.fs$" },
+		ext = { "%.forth$", "%.frt$", "%.fs$", "%.fth$" },
 	},
 	fortran = {
 		ext = { "%.f$", "%.for$", "%.ftn$", "%.fpp$", "%.f77$", "%.f90$", "%.f95$", "%.f03$", "%.f08$" },
