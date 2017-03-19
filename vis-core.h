@@ -148,7 +148,6 @@ struct Win {
 	Win *parent;            /* window which was active when showing the command prompt */
 	Mode *parent_mode;      /* mode which was active when showing the command prompt */
 	char *lexer_name;       /* corresponds to filename in lexers/ subdirectory */
-	size_t horizon;         /* max bytes to consider for syntax coloring before viewport */
 	Win *prev, *next;       /* neighbouring windows */
 };
 

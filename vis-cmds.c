@@ -313,9 +313,6 @@ static bool cmd_set(Vis *vis, Win *win, Command *cmd, const char *argv[], Cursor
 	case OPTION_COLOR_COLUMN:
 		view_colorcolumn_set(win->view, arg.i);
 		break;
-	case OPTION_HORIZON:
-		win->horizon = arg.i;
-		break;
 	case OPTION_SAVE_METHOD:
 		if (strcmp("auto", arg.s) == 0) {
 			win->file->save_method = TEXT_SAVE_AUTO;

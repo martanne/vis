@@ -31,7 +31,13 @@ vis:option_register("syntax", "string", function(name)
 	return true
 end, "Syntax highlighting lexer to use")
 
-vis.events.subscribe(vis.events.WIN_HIGHLIGHT, function(win, horizon_max)
+vis:option_register("horizon", "number", function(horizon)
+	if not vis.win then return false end
+	vis.win.horizon = horizon
+	return true
+end, "Number of bytes to consider for syntax highlighting")
+
+vis.events.subscribe(vis.events.WIN_HIGHLIGHT, function(win)
 	if win.syntax == nil or vis.lexers == nil then return end
 	local lexer = vis.lexers.load(win.syntax)
 	if lexer == nil then return end
@@ -39,6 +45,7 @@ vis.events.subscribe(vis.events.WIN_HIGHLIGHT, function(win, horizon_max)
 	-- TODO: improve heuristic for initial style
 	local viewport = win.viewport
 	if not viewport then return end
+	local horizon_max = win.horizon or 32768
 	local horizon = viewport.start < horizon_max and viewport.start or horizon_max
 	local view_start = viewport.start
 	local lex_start = viewport.start - horizon

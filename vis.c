@@ -115,7 +115,7 @@ bool vis_event_emit(Vis *vis, enum VisEvents id, ...) {
 		} else if (vis->event->win_close && id == VIS_EVENT_WIN_CLOSE) {
 			vis->event->win_close(vis, win);
 		} else if (vis->event->win_highlight && id == VIS_EVENT_WIN_HIGHLIGHT) {
-			vis->event->win_highlight(vis, win, win->horizon);
+			vis->event->win_highlight(vis, win);
 		} else if (vis->event->win_status && id == VIS_EVENT_WIN_STATUS) {
 			vis->event->win_status(vis, win);
 		}
@@ -480,7 +480,6 @@ Win *window_new_file(Vis *vis, File *file, enum UiOption options) {
 	win->vis = vis;
 	win->file = file;
 	win->jumplist = ringbuf_alloc(31);
-	win->horizon = 1 << 15;
 	win->view = view_new(file->text);
 	win->ui = vis->ui->window_new(vis->ui, win, options);
 	if (!win->jumplist || !win->view || !win->ui) {

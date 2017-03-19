@@ -287,7 +287,6 @@ enum {
 	OPTION_NUMBER_RELATIVE,
 	OPTION_CURSOR_LINE,
 	OPTION_COLOR_COLUMN,
-	OPTION_HORIZON,
 	OPTION_SAVE_METHOD,
 	OPTION_CHANGE_256COLORS,
 };
@@ -352,11 +351,6 @@ static const OptionDef options[] = {
 		{ "colorcolumn", "cc" },
 		VIS_OPTION_TYPE_NUMBER|VIS_OPTION_NEED_WINDOW,
 		VIS_HELP("Highlight a fixed column")
-	},
-	[OPTION_HORIZON] = {
-		{ "horizon" },
-		VIS_OPTION_TYPE_NUMBER|VIS_OPTION_NEED_WINDOW,
-		VIS_HELP("Number of bytes to consider for syntax highlighting")
 	},
 	[OPTION_SAVE_METHOD] = {
 		{ "savemethod" },

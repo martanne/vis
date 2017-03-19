@@ -159,7 +159,7 @@ void vis_lua_file_save_post(Vis *vis, File *file, const char *path) { }
 void vis_lua_file_close(Vis *vis, File *file) { }
 void vis_lua_win_open(Vis *vis, Win *win) { }
 void vis_lua_win_close(Vis *vis, Win *win) { }
-void vis_lua_win_highlight(Vis *vis, Win *win, size_t horizon) { }
+void vis_lua_win_highlight(Vis *vis, Win *win) { }
 void vis_lua_win_status(Vis *vis, Win *win) { window_status_update(vis, win); }
 
 #else
@@ -2713,16 +2713,14 @@ void vis_lua_win_close(Vis *vis, Win *win) {
  * The window has been redrawn and the syntax highlighting needs to be performed.
  * @function win_highlight
  * @tparam Window win the window being redrawn
- * @tparam int horizon the maximal number of bytes the lexer should look behind to synchronize parsing state
  * @see style
  */
-void vis_lua_win_highlight(Vis *vis, Win *win, size_t horizon) {
+void vis_lua_win_highlight(Vis *vis, Win *win) {
 	lua_State *L = vis->lua;
 	vis_lua_event_get(L, "win_highlight");
 	if (lua_isfunction(L, -1)) {
 		obj_ref_new(L, win, VIS_LUA_TYPE_WINDOW);
-		lua_pushunsigned(L, horizon);
-		pcall(vis, L, 2, 0);
+		pcall(vis, L, 1, 0);
 	}
 	lua_pop(L, 1);
 }
