@@ -262,23 +262,6 @@ static bool cmd_set(Vis *vis, Win *win, Command *cmd, const char *argv[], Cursor
 	case OPTION_TABWIDTH:
 		tabwidth_set(vis, arg.i);
 		break;
-	case OPTION_SYNTAX:
-		if (!argv[2]) {
-			const char *syntax = vis_window_syntax_get(win);
-			if (syntax)
-				vis_info_show(vis, "Syntax definition in use: `%s'", syntax);
-			else
-				vis_info_show(vis, "No syntax definition in use");
-			return true;
-		}
-
-		if (parse_bool(argv[2], &arg.b) && !arg.b)
-			return vis_window_syntax_set(win, NULL);
-		if (!vis_window_syntax_set(win, argv[2])) {
-			vis_info_show(vis, "Unknown syntax definition: `%s'", argv[2]);
-			return false;
-		}
-		break;
 	case OPTION_SHOW_SPACES:
 	case OPTION_SHOW_TABS:
 	case OPTION_SHOW_NEWLINES:

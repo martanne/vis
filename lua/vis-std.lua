@@ -17,39 +17,18 @@ vis.events.subscribe(vis.events.THEME_CHANGE, function(name)
 	if vis.lexers then vis.lexers.lexers = {} end
 
 	for win in vis:windows() do
-		win.syntax = win.syntax;
+		win:set_syntax(win.syntax)
 	end
 end)
 
-vis.events.subscribe(vis.events.WIN_SYNTAX, function(win, name)
-	local lexers = vis.lexers
-	if not lexers then return false end
-
-	win:style_define(win.STYLE_DEFAULT, lexers.STYLE_DEFAULT or '')
-	win:style_define(win.STYLE_CURSOR, lexers.STYLE_CURSOR or '')
-	win:style_define(win.STYLE_CURSOR_PRIMARY, lexers.STYLE_CURSOR_PRIMARY or '')
-	win:style_define(win.STYLE_CURSOR_LINE, lexers.STYLE_CURSOR_LINE or '')
-	win:style_define(win.STYLE_SELECTION, lexers.STYLE_SELECTION or '')
-	win:style_define(win.STYLE_LINENUMBER, lexers.STYLE_LINENUMBER or '')
-	win:style_define(win.STYLE_COLOR_COLUMN, lexers.STYLE_COLOR_COLUMN or '')
-	win:style_define(win.STYLE_STATUS, lexers.STYLE_STATUS or '')
-	win:style_define(win.STYLE_STATUS_FOCUSED, lexers.STYLE_STATUS_FOCUSED or '')
-	win:style_define(win.STYLE_SEPARATOR, lexers.STYLE_SEPARATOR or '')
-	win:style_define(win.STYLE_INFO, lexers.STYLE_INFO or '')
-	win:style_define(win.STYLE_EOF, lexers.STYLE_EOF or '')
-
-	if name == nil then return true end
-
-	local lexer = lexers.load(name)
-	if not lexer then return false end
-
-	for token_name, id in pairs(lexer._TOKENSTYLES) do
-		local style = lexers['STYLE_'..string.upper(token_name)] or lexer._EXTRASTYLES[token_name]
-		win:style_define(id, style)
+vis:option_register("syntax", "string", function(name)
+	if not vis.win then return false end
+	if not vis.win:set_syntax(name) then
+		vis:info(string.format("Unknown syntax definition: `%s'", name))
+		return false
 	end
-
 	return true
-end)
+end, "Syntax highlighting lexer to use")
 
 vis.events.subscribe(vis.events.WIN_HIGHLIGHT, function(win, horizon_max)
 	if win.syntax == nil or vis.lexers == nil then return end

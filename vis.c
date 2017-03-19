@@ -105,7 +105,6 @@ bool vis_event_emit(Vis *vis, enum VisEvents id, ...) {
 	case VIS_EVENT_WIN_OPEN:
 	case VIS_EVENT_WIN_CLOSE:
 	case VIS_EVENT_WIN_HIGHLIGHT:
-	case VIS_EVENT_WIN_SYNTAX:
 	case VIS_EVENT_WIN_STATUS:
 	{
 		Win *win = va_arg(ap, Win*);
@@ -117,9 +116,6 @@ bool vis_event_emit(Vis *vis, enum VisEvents id, ...) {
 			vis->event->win_close(vis, win);
 		} else if (vis->event->win_highlight && id == VIS_EVENT_WIN_HIGHLIGHT) {
 			vis->event->win_highlight(vis, win, win->horizon);
-		} else if (vis->event->win_syntax && id == VIS_EVENT_WIN_SYNTAX) {
-			const char *syntax = va_arg(ap, const char*);
-			ret = vis->event->win_syntax(vis, win, syntax);
 		} else if (vis->event->win_status && id == VIS_EVENT_WIN_STATUS) {
 			vis->event->win_status(vis, win);
 		}
@@ -534,7 +530,6 @@ bool vis_window_split(Win *original) {
 			map_copy(win->modes[i].bindings, original->modes[i].bindings);
 	}
 	win->file = original->file;
-	vis_window_syntax_set(win, vis_window_syntax_get(original));
 	view_options_set(win->view, view_options_get(original->view));
 	view_cursor_to(win->view, view_cursor_get(original->view));
 	return true;
@@ -563,19 +558,6 @@ void vis_window_prev(Vis *vis) {
 	if (!sel)
 		for (sel = vis->windows; sel->next; sel = sel->next);
 	vis_window_focus(sel);
-}
-
-const char *vis_window_syntax_get(Win *win) {
-	return win->lexer_name;
-}
-
-bool vis_window_syntax_set(Win *win, const char *syntax) {
-	if (!vis_event_emit(win->vis, VIS_EVENT_WIN_SYNTAX, win, syntax))
-		return false;
-	view_options_set(win->view, view_options_get(win->view));
-	free(win->lexer_name);
-	win->lexer_name = syntax ? strdup(syntax) : NULL;
-	return !syntax || win->lexer_name;
 }
 
 int vis_window_width_get(const Win *win) {

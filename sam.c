@@ -281,7 +281,6 @@ enum {
 	OPTION_EXPANDTAB,
 	OPTION_TABWIDTH,
 	OPTION_THEME,
-	OPTION_SYNTAX,
 	OPTION_SHOW_SPACES,
 	OPTION_SHOW_TABS,
 	OPTION_SHOW_NEWLINES,
@@ -324,11 +323,6 @@ static const OptionDef options[] = {
 		{ "theme" },
 		VIS_OPTION_TYPE_STRING,
 		VIS_HELP("Color theme to use filename without extension")
-	},
-	[OPTION_SYNTAX] = {
-		{ "syntax" },
-		VIS_OPTION_TYPE_STRING|VIS_OPTION_VALUE_OPTIONAL|VIS_OPTION_NEED_WINDOW,
-		VIS_HELP("Syntax highlighting lexer to use filename without extension")
 	},
 	[OPTION_SHOW_SPACES] = {
 		{ "show-spaces" },

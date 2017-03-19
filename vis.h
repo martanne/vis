@@ -52,7 +52,6 @@ typedef struct {
 	void (*win_open)(Vis*, Win*);
 	void (*win_close)(Vis*, Win*);
 	void (*win_highlight)(Vis*, Win*, size_t horizon);
-	bool (*win_syntax)(Vis*, Win*, const char *syntax);
 	void (*win_status)(Vis*, Win*);
 } VisEvent;
 
@@ -127,9 +126,6 @@ void vis_window_prev(Vis*);
 void vis_window_focus(Win*);
 /* swap location of two windows */
 void vis_window_swap(Win*, Win*);
-
-const char *vis_window_syntax_get(Win*);
-bool vis_window_syntax_set(Win*, const char *name);
 
 int vis_window_width_get(const Win*);
 int vis_window_height_get(const Win*);

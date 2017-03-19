@@ -160,7 +160,6 @@ void vis_lua_file_close(Vis *vis, File *file) { }
 void vis_lua_win_open(Vis *vis, Win *win) { }
 void vis_lua_win_close(Vis *vis, Win *win) { }
 void vis_lua_win_highlight(Vis *vis, Win *win, size_t horizon) { }
-bool vis_lua_win_syntax(Vis *vis, Win *win, const char *syntax) { return true; }
 bool vis_theme_load(Vis *vis, const char *name) { return true; }
 void vis_lua_win_status(Vis *vis, Win *win) { window_status_update(vis, win); }
 
@@ -1395,12 +1394,6 @@ static const struct luaL_Reg registers_funcs[] = {
  * The cursors of this window.
  * @tfield Array(Cursor) cursors
  */
-/***
- * The file type associated with this window.
- *
- * Setting this field to a valid lexer name will automatically active it.
- * @tfield string syntax the syntax lexer name or `nil` if unset
- */
 static int window_index(lua_State *L) {
 	Win *win = obj_ref_check(L, 1, VIS_LUA_TYPE_WINDOW);
 
@@ -1438,31 +1431,9 @@ static int window_index(lua_State *L) {
 			obj_ref_new(L, win->view, VIS_LUA_TYPE_CURSORS);
 			return 1;
 		}
-
-		if (strcmp(key, "syntax") == 0) {
-			const char *syntax = vis_window_syntax_get(win);
-			lua_pushstring(L, syntax);
-			return 1;
-		}
 	}
 
 	return index_common(L);
-}
-
-static int window_newindex(lua_State *L) {
-	Win *win = obj_ref_check(L, 1, VIS_LUA_TYPE_WINDOW);
-
-	if (lua_isstring(L, 2)) {
-		const char *key = lua_tostring(L, 2);
-		if (strcmp(key, "syntax") == 0) {
-			const char *syntax = NULL;
-			if (!lua_isnil(L, 3))
-				syntax = luaL_checkstring(L, 3);
-			vis_window_syntax_set(win, syntax);
-			return 0;
-		}
-	}
-	return newindex_common(L);
 }
 
 static int window_cursors_iterator_next(lua_State *L) {
@@ -1578,7 +1549,7 @@ static int window_draw(lua_State *L) {
 
 static const struct luaL_Reg window_funcs[] = {
 	{ "__index", window_index },
-	{ "__newindex", window_newindex },
+	{ "__newindex", newindex_common },
 	{ "cursors_iterator", window_cursors_iterator },
 	{ "map", window_map },
 	{ "style_define", window_style_define },
@@ -2755,31 +2726,6 @@ void vis_lua_win_highlight(Vis *vis, Win *win, size_t horizon) {
 		pcall(vis, L, 2, 0);
 	}
 	lua_pop(L, 1);
-}
-
-/***
- * Window syntax/filetype change.
- * @function win_syntax
- * @tparam Window win the affected window
- * @tparam string syntax the lexer name or `nil` if syntax highlighting should be disabled for this window
- * @treturn bool whether the syntax change was successful
- */
-bool vis_lua_win_syntax(Vis *vis, Win *win, const char *syntax) {
-	lua_State *L = vis->lua;
-	bool ret = false;
-	vis_lua_event_get(L, "win_syntax");
-	if (lua_isfunction(L, -1)) {
-		obj_ref_new(L, win, VIS_LUA_TYPE_WINDOW);
-		if (syntax)
-			lua_pushstring(L, syntax);
-		else
-			lua_pushnil(L);
-		pcall(vis, L, 2, 1);
-		ret = lua_toboolean(L, -1);
-		lua_pop(L, 1);
-	}
-	lua_pop(L, 1);
-	return ret;
 }
 
 /***

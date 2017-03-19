@@ -114,7 +114,6 @@ local events = {
 	WIN_HIGHLIGHT = "Event::WIN_HIGHLIGHT", -- see @{win_highlight}
 	WIN_OPEN = "Event::WIN_OPEN", -- see @{win_open}
 	WIN_STATUS = "Event::WIN_STATUS", -- see @{win_status}
-	WIN_SYNTAX = "Event::WIN_SYNTAX", -- see @{win_syntax}
 }
 
 events.file_close = function(...) events.emit(events.FILE_CLOSE, ...) end
@@ -130,7 +129,6 @@ events.win_close = function(...) events.emit(events.WIN_CLOSE, ...) end
 events.win_highlight = function(...) events.emit(events.WIN_HIGHLIGHT, ...) end
 events.win_open = function(...) events.emit(events.WIN_OPEN, ...) end
 events.win_status = function(...) events.emit(events.WIN_STATUS, ...) end
-events.win_syntax = function(...) return events.emit(events.WIN_SYNTAX, ...) end
 
 local handlers = {}
 
@@ -189,6 +187,51 @@ events.emit = function(event, ...)
 end
 
 vis.events = events
+
+---
+-- @type Window
+
+--- The file type associated with this window.
+-- @tfield string syntax the syntax lexer name or `nil` if unset
+
+--- Change syntax lexer to use for this window
+-- @function set_syntax
+-- @tparam string syntax the syntax lexer name or `nil` to disable syntax highlighting
+-- @treturn bool whether the lexer could be changed
+vis.types.window.set_syntax = function(win, syntax)
+
+	local lexers = vis.lexers
+	if not lexers then return false end
+
+	win:style_define(win.STYLE_DEFAULT, lexers.STYLE_DEFAULT or '')
+	win:style_define(win.STYLE_CURSOR, lexers.STYLE_CURSOR or '')
+	win:style_define(win.STYLE_CURSOR_PRIMARY, lexers.STYLE_CURSOR_PRIMARY or '')
+	win:style_define(win.STYLE_CURSOR_LINE, lexers.STYLE_CURSOR_LINE or '')
+	win:style_define(win.STYLE_SELECTION, lexers.STYLE_SELECTION or '')
+	win:style_define(win.STYLE_LINENUMBER, lexers.STYLE_LINENUMBER or '')
+	win:style_define(win.STYLE_COLOR_COLUMN, lexers.STYLE_COLOR_COLUMN or '')
+	win:style_define(win.STYLE_STATUS, lexers.STYLE_STATUS or '')
+	win:style_define(win.STYLE_STATUS_FOCUSED, lexers.STYLE_STATUS_FOCUSED or '')
+	win:style_define(win.STYLE_SEPARATOR, lexers.STYLE_SEPARATOR or '')
+	win:style_define(win.STYLE_INFO, lexers.STYLE_INFO or '')
+	win:style_define(win.STYLE_EOF, lexers.STYLE_EOF or '')
+
+	if syntax == nil or syntax == 'off' then
+		win.syntax = nil
+		return true
+	end
+
+	local lexer = lexers.load(syntax)
+	if not lexer then return false end
+
+	for token_name, id in pairs(lexer._TOKENSTYLES) do
+		local style = lexers['STYLE_'..string.upper(token_name)] or lexer._EXTRASTYLES[token_name]
+		win:style_define(id, style)
+	end
+
+	win.syntax = syntax
+	return true
+end
 
 ---
 -- @type File

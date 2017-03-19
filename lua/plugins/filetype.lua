@@ -405,7 +405,7 @@ vis.events.subscribe(vis.events.WIN_OPEN, function(win)
 		for _, cmd in pairs(filetype.cmd or {}) do
 			vis:command(cmd)
 		end
-		win.syntax = syntax
+		win:set_syntax(syntax)
 	end
 
 	local name = win.file.name
@@ -470,6 +470,6 @@ vis.events.subscribe(vis.events.WIN_OPEN, function(win)
 		end
 	end
 
-	win.syntax = nil
+	win:set_syntax(nil)
 end)
 
