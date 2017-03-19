@@ -984,6 +984,59 @@ static int textobject_register(lua_State *L) {
 	return 1;
 }
 
+static bool option_lua(Vis *vis, Win *win, void *context, bool toggle,
+                       enum VisOption flags, const char *name, Arg *value) {
+	lua_State *L = vis->lua;
+	if (!func_ref_get(L, context))
+		return false;
+	if (flags & VIS_OPTION_TYPE_BOOL)
+		lua_pushboolean(L, value->b);
+	else if (flags & VIS_OPTION_TYPE_STRING)
+		lua_pushstring(L, value->s);
+	else if (flags & VIS_OPTION_TYPE_NUMBER)
+		lua_pushnumber(L, value->i);
+	else
+		return false;
+	lua_pushboolean(L, toggle);
+	return pcall(vis, L, 2, 2) == 0 && (!lua_isboolean(L, -1) || lua_toboolean(L, -1));
+}
+
+/***
+ * Register a custom `:set` option.
+ *
+ * @function option_register
+ * @tparam string name the option name
+ * @tparam string type the option type (`bool`, `string` or `number`)
+ * @tparam function handler the Lua function being called when the option is changed
+ * @tparam[opt] string help the single line help text as displayed in `:help`
+ * @treturn bool whether the option was successfully registered
+ * @usage
+ * vis:option_register("foo", "bool", function(value, toogle)
+ * 	if not vis.win then return false end
+ * 	vis.win.foo = toogle and not vis.win.foo or value
+ * 	vis:info("Option foo = " .. tostring(vis.win.foo))
+ * 	return true
+ * end, "Foo enables superpowers")
+ */
+static int option_register(lua_State *L) {
+	Vis *vis = obj_ref_check(L, 1, "vis");
+	const char *name = luaL_checkstring(L, 2);
+	const char *type = luaL_checkstring(L, 3);
+	const void *func = func_ref_new(L, 4);
+	const char *help = luaL_optstring(L, 5, NULL);
+	const char *names[] = { name, NULL };
+	enum VisOption flags = 0;
+	if (strcmp(type, "string") == 0)
+		flags |= VIS_OPTION_TYPE_STRING;
+	else if (strcmp(type, "number") == 0)
+		flags |= VIS_OPTION_TYPE_NUMBER;
+	else
+		flags |= VIS_OPTION_TYPE_BOOL;
+	bool ret = vis_option_register(vis, names, flags, option_lua, (void*)func, help);
+	lua_pushboolean(L, ret);
+	return 1;
+}
+
 static bool command_lua(Vis *vis, Win *win, void *data, bool force, const char *argv[], Cursor *cur, Filerange *range) {
 	lua_State *L = vis->lua;
 	if (!func_ref_get(L, data))
@@ -1233,6 +1286,7 @@ static const struct luaL_Reg vis_lua[] = {
 	{ "motion_register", motion_register },
 	{ "textobject", textobject },
 	{ "textobject_register", textobject_register },
+	{ "option_register", option_register },
 	{ "command_register", command_register },
 	{ "feedkeys", feedkeys },
 	{ "insert", insert },
