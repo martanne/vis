@@ -267,6 +267,8 @@ static const void *func_ref_new(lua_State *L, int narg) {
 
 /* retrieve function from registry and place it at the top of the stack */
 static bool func_ref_get(lua_State *L, const void *addr) {
+	if (!addr)
+		return false;
 	lua_getfield(L, LUA_REGISTRYINDEX, "vis.functions");
 	lua_pushlightuserdata(L, (void*)addr);
 	lua_gettable(L, -2);
@@ -935,6 +937,64 @@ static int motion_register(lua_State *L) {
 }
 
 /***
+ * Execute an operator.
+ *
+ * @function operator
+ * @tparam int id the id of the operator to execute
+ * @treturn bool whether the id was valid
+ * @local
+ */
+static int operator(lua_State *L) {
+	Vis *vis = obj_ref_check(L, 1, "vis");
+	enum VisOperator id = luaL_checkunsigned(L, 2);
+	// TODO handle var args?
+	lua_pushboolean(L, vis && vis_operator(vis, id));
+	return 1;
+}
+
+static size_t operator_lua(Vis *vis, Text *text, OperatorContext *c) {
+	lua_State *L = vis->lua;
+	if (!func_ref_get(L, c->context))
+		return EPOS;
+	File *file = vis->files;
+	while (file && (file->internal || file->text != text))
+		file = file->next;
+	if (!file || !obj_ref_new(L, file, VIS_LUA_TYPE_FILE))
+		return EPOS;
+	pushrange(L, &c->range);
+	pushpos(L, c->pos);
+	if (pcall(vis, L, 3, 1) != 0)
+		return EPOS;
+	return checkpos(L, -1);
+}
+
+/***
+ * Register a custom operator.
+ *
+ * @function operator_register
+ * @tparam function operator the Lua function implementing the operator
+ * @treturn int the associated operator id, or `-1` on failure
+ * @see operator, operator_new
+ * @local
+ * @usage
+ * -- custom operator replacing every 'a' with 'b'
+ * local id = vis:operator_register(function(file, range, pos)
+ * 	local data = file:content(range)
+ * 	data = data:gsub("a", "b")
+ * 	file:delete(range)
+ * 	file:insert(range.start, data)
+ * 	return range.start -- new cursor location
+ * end)
+ */
+static int operator_register(lua_State *L) {
+	Vis *vis = obj_ref_check(L, 1, "vis");
+	const void *func = func_ref_new(L, 2);
+	int id = vis_operator_register(vis, operator_lua, (void*)func);
+	lua_pushinteger(L, id);
+	return 1;
+}
+
+/***
  * Execute a text object.
  *
  * @function textobject
@@ -1297,6 +1357,8 @@ static const struct luaL_Reg vis_lua[] = {
 	{ "info", info },
 	{ "message", message },
 	{ "map", map },
+	{ "operator", operator },
+	{ "operator_register", operator_register },
 	{ "motion", motion },
 	{ "motion_register", motion_register },
 	{ "textobject", textobject },

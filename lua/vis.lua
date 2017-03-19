@@ -5,6 +5,42 @@
 ---
 -- @type Vis
 
+--- Map a new operator.
+--
+-- Sets up a mapping in normal, visual and operator pending mode.
+-- The operator function will receive the @{File}, @{Range} and position
+-- to operate on and is expected to return the new cursor position.
+--
+-- @tparam string key the key to associate with the new operator
+-- @tparam function operator the operator logic implemented as Lua function
+-- @tparam[opt] string help the single line help text as displayed in `:help`
+-- @treturn bool whether the new operator could be installed
+-- @usage
+-- vis:operator_new("gq", function(file, range, pos)
+-- 	local status, out, err = vis:pipe(file, range, "fmt")
+-- 	if not status then
+-- 		vis:info(err)
+-- 	else
+-- 		file:delete(range)
+-- 		file:insert(range.start, out)
+-- 	end
+-- 	return range.start -- new cursor location
+-- end, "Formating operator, filter range through fmt(1)")
+--
+vis.operator_new = function(vis, key, operator, help)
+	local id = vis:operator_register(operator)
+	if id < 0 then
+		return false
+	end
+	local binding = function()
+		vis:operator(id)
+	end
+	vis:map(vis.modes.NORMAL, key, binding, help)
+	vis:map(vis.modes.VISUAL, key, binding, help)
+	vis:map(vis.modes.OPERATOR_PENDING, key, binding, help)
+	return true
+end
+
 --- Map a new motion.
 --
 -- Sets up a mapping in normal, visual and operator pending mode.
