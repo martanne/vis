@@ -1216,14 +1216,16 @@ static int pipe_func(lua_State *L) {
  * Whether a macro is being recorded.
  * @tfield bool recording
  */
-// TODO vis.ui
 static int vis_index(lua_State *L) {
 	Vis *vis = obj_ref_check(L, 1, "vis");
 
 	if (lua_isstring(L, 2)) {
 		const char *key = lua_tostring(L, 2);
 		if (strcmp(key, "win") == 0) {
-			obj_ref_new(L, vis->win, VIS_LUA_TYPE_WINDOW);
+			if (vis->win)
+				obj_ref_new(L, vis->win, VIS_LUA_TYPE_WINDOW);
+			else
+				lua_pushnil(L);
 			return 1;
 		}
 
