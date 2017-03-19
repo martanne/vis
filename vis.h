@@ -482,6 +482,21 @@ typedef bool (CmdFunc)(Vis*, Win*, void *data, bool force,
  * unique prefix of the given name is executed */
 bool vis_cmd_register(Vis*, const char *name, const char *help, void *data, CmdFunc*);
 bool vis_cmd_unregister(Vis*, const char *name);
+
+enum VisOption {
+	VIS_OPTION_TYPE_BOOL = 1 << 0,
+	VIS_OPTION_TYPE_STRING = 1 << 1,
+	VIS_OPTION_TYPE_NUMBER = 1 << 2,
+	VIS_OPTION_VALUE_OPTIONAL = 1 << 3,
+	VIS_OPTION_NEED_WINDOW = 1 << 4,
+};
+
+typedef bool (VisOptionFunction)(Vis*, Win*, void *context, bool toggle,
+                                 enum VisOption, const char *name, Arg *value);
+bool vis_option_register(Vis*, const char *names[], enum VisOption,
+                         VisOptionFunction*, void *context, const char *help);
+bool vis_option_unregister(Vis*, const char *name);
+
 /* execute any kind (:,?,/) of prompt command */
 bool vis_prompt_cmd(Vis*, const char *cmd);
 

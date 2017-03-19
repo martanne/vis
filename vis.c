@@ -754,6 +754,10 @@ void vis_free(Vis *vis) {
 	}
 	map_free(vis->usercmds);
 	map_free(vis->cmds);
+	if (vis->options) {
+		const char *name;
+		while (map_first(vis->options, &name) && vis_option_unregister(vis, name));
+	}
 	map_free(vis->options);
 	map_free(vis->actions);
 	map_free(vis->keymap);

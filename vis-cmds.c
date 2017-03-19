@@ -62,6 +62,60 @@ bool vis_cmd_unregister(Vis *vis, const char *name) {
 	return true;
 }
 
+static void option_free(OptionDef *opt) {
+	if (!opt)
+		return;
+	for (size_t i = 0; i < LENGTH(options); i++) {
+		if (opt == &options[i])
+			return;
+	}
+
+	for (const char **name = opt->names; *name; name++)
+		free((char*)*name);
+	free(VIS_HELP_USE((char*)opt->help));
+	free(opt);
+}
+
+bool vis_option_register(Vis *vis, const char *names[], enum VisOption flags,
+                         VisOptionFunction *func, void *context, const char *help) {
+	for (const char **name = names; *name; name++) {
+		if (map_get(vis->options, *name))
+			return false;
+	}
+	OptionDef *opt = calloc(1, sizeof *opt);
+	if (!opt)
+		return false;
+	for (size_t i = 0; i < LENGTH(opt->names)-1 && names[i]; i++) {
+		if (!(opt->names[i] = strdup(names[i])))
+			goto err;
+	}
+	opt->flags = flags;
+	opt->func = func;
+	opt->context = context;
+#if CONFIG_HELP
+	if (help && !(opt->help = strdup(help)))
+		goto err;
+#endif
+	for (const char **name = names; *name; name++)
+		map_put(vis->options, *name, opt);
+	return true;
+err:
+	option_free(opt);
+	return false;
+}
+
+bool vis_option_unregister(Vis *vis, const char *name) {
+	OptionDef *opt = map_get(vis->options, name);
+	if (!opt)
+		return false;
+	for (const char **alias = opt->names; *alias; alias++) {
+		if (!map_delete(vis->options, *alias))
+			return false;
+	}
+	option_free(opt);
+	return true;
+}
+
 static bool cmd_user(Vis *vis, Win *win, Command *cmd, const char *argv[], Cursor *cur, Filerange *range) {
 	CmdUser *user = map_get(vis->usercmds, argv[0]);
 	return user && user->func(vis, win, user->data, cmd->flags == '!', argv, cur, range);
@@ -117,13 +171,13 @@ static bool cmd_set(Vis *vis, Win *win, Command *cmd, const char *argv[], Cursor
 		return false;
 	}
 
-	if (!win && (opt->flags & OPTION_FLAG_WINDOW)) {
+	if (!win && (opt->flags & VIS_OPTION_NEED_WINDOW)) {
 		vis_info_show(vis, "Need active window for `:set %s'", name);
 		return false;
 	}
 
 	if (toggle) {
-		if (opt->type != OPTION_TYPE_BOOL) {
+		if (!(opt->flags & VIS_OPTION_TYPE_BOOL)) {
 			vis_info_show(vis, "Only boolean options can be toggled");
 			return false;
 		}
@@ -134,23 +188,20 @@ static bool cmd_set(Vis *vis, Win *win, Command *cmd, const char *argv[], Cursor
 	}
 
 	Arg arg;
-	switch (opt->type) {
-	case OPTION_TYPE_STRING:
-		if (!(opt->flags & OPTION_FLAG_OPTIONAL) && !argv[2]) {
+	if (opt->flags & VIS_OPTION_TYPE_STRING) {
+		if (!(opt->flags & VIS_OPTION_VALUE_OPTIONAL) && !argv[2]) {
 			vis_info_show(vis, "Expecting string option value");
 			return false;
 		}
 		arg.s = argv[2];
-		break;
-	case OPTION_TYPE_BOOL:
+	} else if (opt->flags & VIS_OPTION_TYPE_BOOL) {
 		if (!argv[2]) {
 			arg.b = !toggle;
 		} else if (!parse_bool(argv[2], &arg.b)) {
 			vis_info_show(vis, "Expecting boolean option value not: `%s'", argv[2]);
 			return false;
 		}
-		break;
-	case OPTION_TYPE_NUMBER:
+	} else if (opt->flags & VIS_OPTION_TYPE_NUMBER) {
 		if (!argv[2]) {
 			vis_info_show(vis, "Expecting number");
 			return false;
@@ -174,12 +225,16 @@ static bool cmd_set(Vis *vis, Win *win, Command *cmd, const char *argv[], Cursor
 			return false;
 		}
 		arg.i = lval;
-		break;
-	default:
+	} else {
 		return false;
 	}
 
-	size_t opt_index = opt - options;
+	size_t opt_index = 0;
+	for (; opt_index < LENGTH(options); opt_index++) {
+		if (opt == &options[opt_index])
+			break;
+	}
+
 	switch (opt_index) {
 	case OPTION_SHELL:
 	{
@@ -301,7 +356,9 @@ static bool cmd_set(Vis *vis, Win *win, Command *cmd, const char *argv[], Cursor
 		vis->change_colors = toggle ? !vis->change_colors : arg.b;
 		break;
 	default:
-		return false;
+		if (!opt->func)
+			return false;
+		return opt->func(vis, win, opt->context, toggle, opt->flags, name, &arg);
 	}
 
 	return true;
@@ -596,6 +653,21 @@ static bool print_cmd(const char *key, void *value, void *data) {
 	return text_appendf(data, "  %-30s %s\n", usage, help ? help : "");
 }
 
+static bool print_option(const char *key, void *value, void *txt) {
+	char desc[256];
+	const OptionDef *opt = value;
+	const char *help = VIS_HELP_USE(opt->help);
+	if (strcmp(key, opt->names[0]))
+		return true;
+	snprintf(desc, sizeof desc, "%s%s%s%s%s",
+	         opt->names[0],
+	         opt->names[1] ? "|" : "",
+	         opt->names[1] ? opt->names[1] : "",
+	         opt->flags & VIS_OPTION_TYPE_BOOL ? " on|off" : "",
+	         opt->flags & VIS_OPTION_TYPE_NUMBER ? " nn" : "");
+	return text_appendf(txt, "  %-30s %s\n", desc, help ? help : "");
+}
+
 static void print_symbolic_keys(Vis *vis, Text *txt) {
 	static const int keys[] = {
 		TERMKEY_SYM_BACKSPACE,
@@ -710,18 +782,7 @@ static bool cmd_help(Vis *vis, Win *win, Command *cmd, const char *argv[], Curso
 	}
 
 	text_appendf(txt, "\n :set command options\n\n");
-	for (int i = 0; i < LENGTH(options); i++) {
-		char names[256];
-		const OptionDef *opt = &options[i];
-		const char *help = VIS_HELP_USE(opt->help);
-		snprintf(names, sizeof names, "%s%s%s%s%s",
-		         opt->names[0],
-		         opt->names[1] ? "|" : "",
-		         opt->names[1] ? opt->names[1] : "",
-		         opt->type == OPTION_TYPE_BOOL ? " on|off" : "",
-		         opt->type == OPTION_TYPE_NUMBER ? " nn" : "");
-		text_appendf(txt, "  %-30s %s\n", names, help ? help : "");
-	}
+	map_iterate(vis->options, print_option, txt);
 
 	text_appendf(txt, "\n Key binding actions\n\n");
 	map_iterate(vis->actions, print_action, txt);

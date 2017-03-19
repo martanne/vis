@@ -267,18 +267,11 @@ static const CommandDef cmddef_select = {
 
 /* :set command options */
 typedef struct {
-	const char *names[3];                  /* name and optional alias */
-	enum {
-		OPTION_TYPE_STRING,
-		OPTION_TYPE_BOOL,
-		OPTION_TYPE_NUMBER,
-	} type;
-	enum {
-		OPTION_FLAG_NONE = 0,
-		OPTION_FLAG_OPTIONAL = 1 << 0, /* value is optional */
-		OPTION_FLAG_WINDOW = 1 << 1,   /* option requires an active window */
-	} flags;
-	VIS_HELP_DECL(const char *help;)       /* short, one line help text */
+	const char *names[3];            /* name and optional alias */
+	enum VisOption flags;            /* option type, etc. */
+	VIS_HELP_DECL(const char *help;) /* short, one line help text */
+	VisOptionFunction *func;         /* option handler, NULL for bulitins */
+	void *context;                   /* context passed to option handler function */
 } OptionDef;
 
 enum {
@@ -304,87 +297,87 @@ enum {
 static const OptionDef options[] = {
 	[OPTION_SHELL] = {
 		{ "shell" },
-		OPTION_TYPE_STRING, OPTION_FLAG_NONE,
+		VIS_OPTION_TYPE_STRING,
 		VIS_HELP("Shell to use for external commands (default: $SHELL, /etc/passwd, /bin/sh)")
 	},
 	[OPTION_ESCDELAY] = {
 		{ "escdelay" },
-		OPTION_TYPE_NUMBER, OPTION_FLAG_NONE,
+		VIS_OPTION_TYPE_NUMBER,
 		VIS_HELP("Miliseconds to wait to distinguish <Escape> from terminal escape sequences")
 	},
 	[OPTION_AUTOINDENT] = {
 		{ "autoindent", "ai" },
-		OPTION_TYPE_BOOL, OPTION_FLAG_NONE,
+		VIS_OPTION_TYPE_BOOL,
 		VIS_HELP("Copy leading white space from previous line")
 	},
 	[OPTION_EXPANDTAB] = {
 		{ "expandtab", "et" },
-		OPTION_TYPE_BOOL, OPTION_FLAG_NONE,
+		VIS_OPTION_TYPE_BOOL,
 		VIS_HELP("Replace entered <Tab> with `tabwidth` spaces")
 	},
 	[OPTION_TABWIDTH] = {
 		{ "tabwidth", "tw" },
-		OPTION_TYPE_NUMBER, OPTION_FLAG_NONE,
+		VIS_OPTION_TYPE_NUMBER,
 		VIS_HELP("Number of spaces to display (and insert if `expandtab` is enabled) for a tab")
 	},
 	[OPTION_THEME] = {
 		{ "theme" },
-		OPTION_TYPE_STRING, OPTION_FLAG_NONE,
+		VIS_OPTION_TYPE_STRING,
 		VIS_HELP("Color theme to use filename without extension")
 	},
 	[OPTION_SYNTAX] = {
 		{ "syntax" },
-		OPTION_TYPE_STRING, OPTION_FLAG_WINDOW|OPTION_FLAG_OPTIONAL,
+		VIS_OPTION_TYPE_STRING|VIS_OPTION_VALUE_OPTIONAL|VIS_OPTION_NEED_WINDOW,
 		VIS_HELP("Syntax highlighting lexer to use filename without extension")
 	},
 	[OPTION_SHOW_SPACES] = {
 		{ "show-spaces" },
-		OPTION_TYPE_BOOL, OPTION_FLAG_WINDOW,
+		VIS_OPTION_TYPE_BOOL|VIS_OPTION_NEED_WINDOW,
 		VIS_HELP("Display replacement symbol instead of a space")
 	},
 	[OPTION_SHOW_TABS] = {
 		{ "show-tabs" },
-		OPTION_TYPE_BOOL, OPTION_FLAG_WINDOW,
+		VIS_OPTION_TYPE_BOOL|VIS_OPTION_NEED_WINDOW,
 		VIS_HELP("Display replacement symbol for tabs")
 	},
 	[OPTION_SHOW_NEWLINES] = {
 		{ "show-newlines" },
-		OPTION_TYPE_BOOL, OPTION_FLAG_WINDOW,
+		VIS_OPTION_TYPE_BOOL|VIS_OPTION_NEED_WINDOW,
 		VIS_HELP("Display replacement symbol for newlines")
 	},
 	[OPTION_NUMBER] = {
 		{ "numbers", "nu" },
-		OPTION_TYPE_BOOL, OPTION_FLAG_WINDOW,
+		VIS_OPTION_TYPE_BOOL|VIS_OPTION_NEED_WINDOW,
 		VIS_HELP("Display absolute line numbers")
 	},
 	[OPTION_NUMBER_RELATIVE] = {
 		{ "relativenumbers", "rnu" },
-		OPTION_TYPE_BOOL, OPTION_FLAG_WINDOW,
+		VIS_OPTION_TYPE_BOOL|VIS_OPTION_NEED_WINDOW,
 		VIS_HELP("Display relative line numbers")
 	},
 	[OPTION_CURSOR_LINE] = {
 		{ "cursorline", "cul" },
-		OPTION_TYPE_BOOL, OPTION_FLAG_WINDOW,
+		VIS_OPTION_TYPE_BOOL|VIS_OPTION_NEED_WINDOW,
 		VIS_HELP("Highlight current cursor line")
 	},
 	[OPTION_COLOR_COLUMN] = {
 		{ "colorcolumn", "cc" },
-		OPTION_TYPE_NUMBER, OPTION_FLAG_WINDOW,
+		VIS_OPTION_TYPE_NUMBER|VIS_OPTION_NEED_WINDOW,
 		VIS_HELP("Highlight a fixed column")
 	},
 	[OPTION_HORIZON] = {
 		{ "horizon" },
-		OPTION_TYPE_NUMBER, OPTION_FLAG_WINDOW,
+		VIS_OPTION_TYPE_NUMBER|VIS_OPTION_NEED_WINDOW,
 		VIS_HELP("Number of bytes to consider for syntax highlighting")
 	},
 	[OPTION_SAVE_METHOD] = {
 		{ "savemethod" },
-		OPTION_TYPE_STRING, OPTION_FLAG_WINDOW,
+		VIS_OPTION_TYPE_STRING|VIS_OPTION_NEED_WINDOW,
 		VIS_HELP("Save method to use for current file 'auto', 'atomic' or 'inplace'")
 	},
 	[OPTION_CHANGE_256COLORS] = {
 		{ "change-256colors" },
-		OPTION_TYPE_BOOL, OPTION_FLAG_NONE,
+		VIS_OPTION_TYPE_BOOL,
 		VIS_HELP("Change 256 color palette to support 24bit colors")
 	},
 };
