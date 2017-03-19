@@ -1037,6 +1037,21 @@ static int option_register(lua_State *L) {
 	return 1;
 }
 
+/***
+ * Unregister a `:set` option.
+ *
+ * @function option_unregister
+ * @tparam string name the option name
+ * @treturn bool whether the option was successfully unregistered
+ */
+static int option_unregister(lua_State *L) {
+	Vis *vis = obj_ref_check(L, 1, "vis");
+	const char *name = luaL_checkstring(L, 2);
+	bool ret = vis_option_unregister(vis, name);
+	lua_pushboolean(L, ret);
+	return 1;
+}
+
 static bool command_lua(Vis *vis, Win *win, void *data, bool force, const char *argv[], Cursor *cur, Filerange *range) {
 	lua_State *L = vis->lua;
 	if (!func_ref_get(L, data))
@@ -1287,6 +1302,7 @@ static const struct luaL_Reg vis_lua[] = {
 	{ "textobject", textobject },
 	{ "textobject_register", textobject_register },
 	{ "option_register", option_register },
+	{ "option_unregister", option_unregister },
 	{ "command_register", command_register },
 	{ "feedkeys", feedkeys },
 	{ "insert", insert },
