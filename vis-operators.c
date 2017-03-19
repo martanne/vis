@@ -245,6 +245,18 @@ static size_t op_filter(Vis *vis, Text *txt, OperatorContext *c) {
 	return text_size(txt) + 1; /* do not change cursor position, would destroy selection */
 }
 
+int vis_operator_register(Vis *vis, VisOperatorFunction *func, void *context) {
+	Operator *op = calloc(1, sizeof *op);
+	if (!op)
+		return -1;
+	op->func = func;
+	op->context = context;
+	if (array_add_ptr(&vis->operators, op))
+		return VIS_OP_LAST + array_length(&vis->operators) - 1;
+	free(op);
+	return -1;
+}
+
 bool vis_operator(Vis *vis, enum VisOperator id, ...) {
 	va_list ap;
 	va_start(ap, id);
@@ -292,9 +304,16 @@ bool vis_operator(Vis *vis, enum VisOperator id, ...) {
 	default:
 		break;
 	}
-	if (id >= LENGTH(vis_operators))
+
+	const Operator *op = NULL;
+	if (id < LENGTH(vis_operators))
+		op = &vis_operators[id];
+	else
+		op = array_get_ptr(&vis->operators, id - VIS_OP_LAST);
+
+	if (!op)
 		goto err;
-	const Operator *op = &vis_operators[id];
+
 	if (vis->mode->visual) {
 		vis->action.op = op;
 		vis_do(vis);

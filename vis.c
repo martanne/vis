@@ -676,6 +676,7 @@ Vis *vis_new(Ui *ui, VisEvent *event) {
 	vis->change_colors = true;
 	vis->registers[VIS_REG_BLACKHOLE].type = REGISTER_BLACKHOLE;
 	vis->registers[VIS_REG_CLIPBOARD].type = REGISTER_CLIPBOARD;
+	array_init(&vis->operators);
 	array_init(&vis->motions);
 	array_init(&vis->textobjects);
 	array_init(&vis->bindings);
@@ -745,6 +746,7 @@ void vis_free(Vis *vis) {
 	buffer_release(&vis->input_queue);
 	for (int i = 0; i < VIS_MODE_INVALID; i++)
 		map_free(vis_modes[i].bindings);
+	array_release_full(&vis->operators);
 	array_release_full(&vis->motions);
 	array_release_full(&vis->textobjects);
 	while (array_length(&vis->bindings))
@@ -852,6 +854,7 @@ void vis_do(Vis *vis) {
 			.reg = reg,
 			.linewise = linewise,
 			.arg = &a->arg,
+			.context = a->op ? a->op->context : NULL,
 		};
 
 		bool err = false;

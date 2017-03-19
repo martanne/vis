@@ -224,6 +224,7 @@ enum VisOperator {
 	VIS_OP_PUT_AFTER_END,
 	VIS_OP_PUT_BEFORE,
 	VIS_OP_PUT_BEFORE_END,
+	VIS_OP_LAST, /* has to be last enum member */
 };
 
 /* set operator to execute, has immediate effect if
@@ -241,6 +242,10 @@ enum VisOperator {
  *  - VIS_OP_REPLACE    a char pointer reffering to the replacement character
  */
 bool vis_operator(Vis*, enum VisOperator, ...);
+
+typedef struct OperatorContext OperatorContext;
+typedef size_t (VisOperatorFunction)(Vis*, Text*, OperatorContext*);
+int vis_operator_register(Vis*, VisOperatorFunction*, void *context);
 
 enum VisMotion {
 	VIS_MOVE_LINE_DOWN,

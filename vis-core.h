@@ -37,7 +37,7 @@ struct Mode {
 	bool visual;                        /* whether text selection is possible in this mode */
 };
 
-typedef struct {
+struct OperatorContext {
 	int count;        /* how many times should the command be executed? */
 	Register *reg;    /* always non-NULL, set to a default register */
 	Filerange range;  /* which part of the file should be affected by the operator */
@@ -45,12 +45,14 @@ typedef struct {
 	size_t newpos;    /* new position after motion or EPOS if none given */
 	bool linewise;    /* should the changes always affect whole lines? */
 	const Arg *arg;   /* arbitrary arguments */
-} OperatorContext;
+	void *context;    /* used by user-registered operators */
+};
 
 typedef struct {
 	/* operator logic, returns new cursor position, if EPOS is
 	 * the cursor is disposed (except if it is the primary one) */
-	size_t (*func)(Vis*, Text*, OperatorContext*);
+	VisOperatorFunction *func;
+	void *context;
 } Operator;
 
 typedef struct { /* Motion implementation, takes a cursor postion and returns a new one */
@@ -200,6 +202,7 @@ struct Vis {
 	Array actions_user;                  /* dynamically allocated editor actions */
 	lua_State *lua;                      /* lua context used for syntax highligthing */
 	VisEvent *event;
+	Array operators;
 	Array motions;
 	Array textobjects;
 	Array bindings;
