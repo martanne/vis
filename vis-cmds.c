@@ -78,6 +78,10 @@ static void option_free(OptionDef *opt) {
 
 bool vis_option_register(Vis *vis, const char *names[], enum VisOption flags,
                          VisOptionFunction *func, void *context, const char *help) {
+
+	if (!names || !names[0])
+		return false;
+
 	for (const char **name = names; *name; name++) {
 		if (map_get(vis->options, *name))
 			return false;
