@@ -56,6 +56,51 @@ static size_t search_backward(Vis *vis, Text *txt, size_t pos) {
 	return pos;
 }
 
+static size_t common_word_next(Vis *vis, Text *txt, size_t pos, enum VisMotion end_next) {
+	char c;
+	Iterator it = text_iterator_get(txt, pos);
+	if (!text_iterator_byte_get(&it, &c))
+		return pos;
+	const Movement *motion = NULL;
+	int count = vis_count_get_default(vis, 1);
+	if (c == ' ' || c == '\t') {
+		motion = &vis_motions[VIS_MOVE_WORD_START_NEXT];
+	} else if (text_iterator_char_next(&it, &c) && (c == ' ' || c == '\t')) {
+		/* we are on the last character of a word */
+		if (count == 1) {
+			/* map `cw` to `cl` */
+			motion = &vis_motions[VIS_MOVE_CHAR_NEXT];
+		} else {
+			/* map `c{n}w` to `c{n-1}e` */
+			count--;
+			motion = &vis_motions[end_next];
+		}
+	} else {
+		/* map `cw` to `ce` */
+		motion = &vis_motions[end_next];
+	}
+
+	while (count--) {
+		size_t newpos = motion->txt(txt, pos);
+		if (newpos == pos)
+			break;
+		pos = newpos;
+	}
+
+	if (motion->type & INCLUSIVE)
+		pos = text_char_next(txt, pos);
+
+	return pos;
+}
+
+static size_t word_next(Vis *vis, Text *txt, size_t pos) {
+	return common_word_next(vis, txt, pos, VIS_MOVE_WORD_END_NEXT);
+}
+
+static size_t longword_next(Vis *vis, Text *txt, size_t pos) {
+	return common_word_next(vis, txt, pos, VIS_MOVE_LONGWORD_END_NEXT);
+}
+
 static size_t mark_goto(Vis *vis, File *file, size_t pos) {
 	return text_mark_get(file->text, file->marks[vis->action.mark]);
 }
@@ -266,11 +311,11 @@ bool vis_motion(Vis *vis, enum VisMotion motion, ...) {
 	switch (motion) {
 	case VIS_MOVE_WORD_START_NEXT:
 		if (vis->action.op == &vis_operators[VIS_OP_CHANGE])
-			motion = VIS_MOVE_WORD_END_NEXT;
+			motion = VIS_MOVE_WORD_NEXT;
 		break;
 	case VIS_MOVE_LONGWORD_START_NEXT:
 		if (vis->action.op == &vis_operators[VIS_OP_CHANGE])
-			motion = VIS_MOVE_LONGWORD_END_NEXT;
+			motion = VIS_MOVE_LONGWORD_NEXT;
 		break;
 	case VIS_MOVE_SEARCH_FORWARD:
 	case VIS_MOVE_SEARCH_BACKWARD:
@@ -427,6 +472,10 @@ const Movement vis_motions[] = {
 		.txt = text_line_char_next,
 		.type = CHARWISE,
 	},
+	[VIS_MOVE_WORD_NEXT] = {
+		.vis = word_next,
+		.type = CHARWISE|IDEMPOTENT,
+	},
 	[VIS_MOVE_WORD_START_PREV] = {
 		.txt = text_word_start_prev,
 		.type = CHARWISE,
@@ -442,6 +491,10 @@ const Movement vis_motions[] = {
 	[VIS_MOVE_WORD_END_NEXT] = {
 		.txt = text_word_end_next,
 		.type = CHARWISE|INCLUSIVE,
+	},
+	[VIS_MOVE_LONGWORD_NEXT] = {
+		.vis = longword_next,
+		.type = CHARWISE|IDEMPOTENT,
 	},
 	[VIS_MOVE_LONGWORD_START_PREV] = {
 		.txt = text_longword_start_prev,
