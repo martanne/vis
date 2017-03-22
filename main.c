@@ -1369,6 +1369,8 @@ static const char *cursors_select_next(Vis *vis, const char *keys, const Arg *ar
 
 	sel = view_cursors_selection_get(view_cursors(view));
 	word = text_object_word_find_prev(txt, sel.start, buf);
+	if (!text_range_valid(&word))
+		goto out;
 	size_t pos = text_char_prev(txt, word.end);
 	if ((cursor = view_cursors_new(view, pos))) {
 		view_cursors_selection_set(cursor, &word);
