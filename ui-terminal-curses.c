@@ -2,6 +2,8 @@
 #include <stdio.h>
 #include <curses.h>
 
+#define UI_TERMKEY_FLAGS (TERMKEY_FLAG_UTF8|TERMKEY_FLAG_NOTERMIOS)
+
 #define ui_term_backend_init ui_curses_init
 #define ui_term_backend_blit ui_curses_blit
 #define ui_term_backend_clear ui_curses_clear
@@ -12,7 +14,7 @@
 #define ui_term_backend_new ui_curses_new
 #define ui_term_backend_resume ui_curses_resume
 #define ui_term_backend_suspend ui_curses_suspend
-#define ui_term_backend_free ui_curses_suspend
+#define ui_term_backend_free ui_curses_free
 
 #define CELL_COLOR_BLACK   COLOR_BLACK
 #define CELL_COLOR_RED     COLOR_RED
@@ -281,6 +283,9 @@ static void ui_curses_resume(UiTerm *term) { }
 static void ui_curses_suspend(UiTerm *term) {
 	if (change_colors == 1)
 		undo_palette();
-	endwin();
 }
 
+static void ui_curses_free(UiTerm *term) {
+	ui_curses_suspend(term);
+	endwin();
+}

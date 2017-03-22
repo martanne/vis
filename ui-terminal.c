@@ -563,7 +563,7 @@ static void ui_info_hide(Ui *ui) {
 }
 
 static TermKey *ui_termkey_new(int fd) {
-	TermKey *termkey = termkey_new(fd, TERMKEY_FLAG_UTF8);
+	TermKey *termkey = termkey_new(fd, UI_TERMKEY_FLAGS);
 	if (termkey)
 		termkey_set_canonflags(termkey, TERMKEY_CANON_DELBS);
 	return termkey;
@@ -589,13 +589,11 @@ static TermKey *ui_termkey_get(Ui *ui) {
 static void ui_suspend(Ui *ui) {
 	UiTerm *tui = (UiTerm*)ui;
 	ui_term_backend_suspend(tui);
-	termkey_stop(tui->termkey);
-	kill(0, SIGSTOP);
+	kill(0, SIGTSTP);
 }
 
 static void ui_resume(Ui *ui) {
 	UiTerm *tui = (UiTerm*)ui;
-	termkey_start(tui->termkey);
 	ui_term_backend_resume(tui);
 }
 
@@ -650,7 +648,7 @@ static bool ui_init(Ui *ui, Vis *vis) {
 		if (errno == EBADF && !isatty(STDIN_FILENO)) {
 			errno = 0;
 			if (!(tui->termkey = ui_termkey_reopen(ui, STDIN_FILENO)) && errno == ENXIO)
-				tui->termkey = termkey_new_abstract(term, TERMKEY_FLAG_UTF8);
+				tui->termkey = termkey_new_abstract(term, UI_TERMKEY_FLAGS);
 		}
 		if (!tui->termkey)
 			goto err;

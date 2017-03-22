@@ -39,6 +39,8 @@
 #include <stdio.h>
 #include "buffer.h"
 
+#define UI_TERMKEY_FLAGS TERMKEY_FLAG_UTF8
+
 #define ui_term_backend_init ui_vt100_init
 #define ui_term_backend_blit ui_vt100_blit
 #define ui_term_backend_clear ui_vt100_clear
@@ -92,7 +94,7 @@ static void output_literal(const char *data) {
 }
 
 static void screen_alternate(bool alternate) {
-	output_literal(alternate ? "\x1b[?1049h" : "\x1b[0m" "\x1b[?1049l");
+	output_literal(alternate ? "\x1b[?1049h" : "\x1b[0m" "\x1b[?1049l" "\x1b[0m" );
 }
 
 static void cursor_visible(bool visible) {
@@ -183,14 +185,16 @@ static int ui_vt100_colors(Ui *ui) {
 	return (term && strstr(term, "-256color")) ? 256 : 16;
 }
 
-static void ui_vt100_suspend(UiTerm *term) {
+static void ui_vt100_suspend(UiTerm *tui) {
+	termkey_stop(tui->termkey);
 	cursor_visible(true);
 	screen_alternate(false);
 }
 
-static void ui_vt100_resume(UiTerm *term) {
+static void ui_vt100_resume(UiTerm *tui) {
 	screen_alternate(true);
 	cursor_visible(false);
+	termkey_start(tui->termkey);
 }
 
 static bool ui_vt100_init(UiTerm *tui, char *term) {
