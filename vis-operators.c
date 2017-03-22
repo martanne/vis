@@ -107,10 +107,13 @@ static size_t op_shift_right(Vis *vis, Text *txt, OperatorContext *c) {
 	/* if range ends at the begin of a line, skip line break */
 	if (pos == c->range.end)
 		pos = text_line_prev(txt, pos);
+	bool multiple_lines = text_line_prev(txt, pos) >= c->range.start;
 
 	do {
-		prev_pos = pos = text_line_begin(txt, pos);
-		if (text_insert(txt, pos, tab, tablen) && pos <= c->pos)
+		size_t end = text_line_end(txt, pos);
+		prev_pos = pos = text_line_begin(txt, end);
+		if ((!multiple_lines || pos != end) &&
+		    text_insert(txt, pos, tab, tablen) && pos <= c->pos)
 			newpos += tablen;
 		pos = text_line_prev(txt, pos);
 	}  while (pos >= c->range.start && pos != prev_pos);
