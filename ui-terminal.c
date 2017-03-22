@@ -355,7 +355,7 @@ static void ui_redraw(Ui *ui) {
 	UiTerm *tui = (UiTerm*)ui;
 	ui_term_backend_clear(tui);
 	for (UiTermWin *win = tui->windows; win; win = win->next)
-		view_dirty(win->win->view);
+		view_invalidate(win->win->view);
 }
 
 static void ui_resize(Ui *ui) {
@@ -412,8 +412,8 @@ static void ui_window_focus(UiWin *w) {
 	if (new->options & UI_OPTION_STATUSBAR)
 		new->ui->selwin = new;
 	if (old)
-		view_dirty(old->win->view);
-	view_dirty(new->win->view);
+		view_invalidate(old->win->view);
+	view_invalidate(new->win->view);
 }
 
 static void ui_window_options_set(UiWin *w, enum UiOption options) {

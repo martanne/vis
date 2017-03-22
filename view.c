@@ -438,7 +438,7 @@ void view_draw(View *view) {
 	view->need_update = true;
 }
 
-void view_dirty(View *view) {
+void view_invalidate(View *view) {
 	view->need_update = true;
 }
 
