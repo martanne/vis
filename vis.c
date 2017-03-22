@@ -264,17 +264,6 @@ void vis_window_status(Win *win, const char *status) {
 	win->ui->status(win->ui, status);
 }
 
-static void windows_invalidate(Vis *vis, size_t start, size_t end) {
-	for (Win *win = vis->windows; win; win = win->next) {
-		if (vis->win->file == win->file) {
-			Filerange view = view_viewport_get(win->view);
-			if ((view.start <= start && start <= view.end) ||
-			    (view.start <= end && end <= view.end))
-				view_draw(win->view);
-		}
-	}
-}
-
 void window_selection_save(Win *win) {
 	File *file = win->file;
 	Filerange sel = view_cursors_selection_get(view_cursors(win->view));
@@ -471,6 +460,14 @@ void vis_window_draw(Win *win) {
 	window_draw_eof(win);
 
 	vis_event_emit(vis, VIS_EVENT_WIN_STATUS, win);
+}
+
+
+void vis_window_invalidate(Win *win) {
+	for (Win *w = win->vis->windows; w; w = w->next) {
+		if (w->file == win->file)
+			view_draw(w->view);
+	}
 }
 
 Win *window_new_file(Vis *vis, File *file, enum UiOption options) {
@@ -761,7 +758,7 @@ void vis_free(Vis *vis) {
 
 void vis_insert(Vis *vis, size_t pos, const char *data, size_t len) {
 	text_insert(vis->win->file->text, pos, data, len);
-	windows_invalidate(vis, pos, pos + len);
+	vis_window_invalidate(vis->win);
 }
 
 void vis_insert_key(Vis *vis, const char *data, size_t len) {
@@ -793,7 +790,7 @@ void vis_replace_key(Vis *vis, const char *data, size_t len) {
 
 void vis_delete(Vis *vis, size_t pos, size_t len) {
 	text_delete(vis->win->file->text, pos, len);
-	windows_invalidate(vis, pos, pos + len);
+	vis_window_invalidate(vis->win);
 }
 
 bool vis_action_register(Vis *vis, const KeyAction *action) {
@@ -1638,8 +1635,9 @@ size_t vis_text_insert_nl(Vis *vis, Text *txt, size_t pos) {
 }
 
 void vis_insert_nl(Vis *vis) {
-	View *view = vis->win->view;
-	Text *txt = vis->win->file->text;
+	Win *win = vis->win;
+	View *view = win->view;
+	Text *txt = win->file->text;
 	for (Cursor *c = view_cursors(view); c; c = view_cursors_next(c)) {
 		size_t pos = view_cursors_pos(c);
 		size_t newpos = vis_text_insert_nl(vis, txt, pos);
@@ -1651,8 +1649,7 @@ void vis_insert_nl(Vis *vis) {
 		view_cursors_to(c, pos);
 		view_cursors_to(c, newpos);
 	}
-	size_t pos = view_cursor_get(view);
-	windows_invalidate(vis, pos, pos-1);
+	vis_window_invalidate(win);
 }
 
 Regex *vis_regex(Vis *vis, const char *pattern) {

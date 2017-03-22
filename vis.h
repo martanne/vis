@@ -119,6 +119,7 @@ bool vis_window_split(Win*);
 /* change status message of this window */
 void vis_window_status(Win*, const char *status);
 void vis_window_draw(Win*);
+void vis_window_invalidate(Win*);
 /* focus the next / previous window */
 void vis_window_next(Vis*);
 void vis_window_prev(Vis*);
