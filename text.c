@@ -924,7 +924,7 @@ static bool text_save_begin_inplace(TextSave *ctx) {
 	Text *txt = ctx->txt;
 	struct stat meta = { 0 };
 	int newfd = -1, saved_errno;
-	if ((ctx->fd = open(ctx->filename, 0666, S_IRUSR|S_IWUSR)) == -1)
+	if ((ctx->fd = open(ctx->filename, O_CREAT|O_WRONLY, 0666)) == -1)
 		goto err;
 	if (fstat(ctx->fd, &meta) == -1)
 		goto err;
