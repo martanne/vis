@@ -227,8 +227,6 @@ static int panic_handler(lua_State *L) {
 	if (ud) {
 		Vis *vis = ud;
 		vis->lua = NULL;
-		if (vis->event)
-			vis->event->win_status = window_status_update;
 		const char *msg = NULL;
 		if (lua_type(L, -1) == LUA_TSTRING)
 			msg = lua_tostring(L, -1);
@@ -2845,8 +2843,10 @@ void vis_lua_win_highlight(Vis *vis, Win *win) {
  */
 void vis_lua_win_status(Vis *vis, Win *win) {
 	lua_State *L = vis->lua;
-	if (!L)
+	if (!L || win->file->internal) {
+		window_status_update(vis, win);
 		return;
+	}
 	vis_lua_event_get(L, "win_status");
 	if (lua_isfunction(L, -1)) {
 		obj_ref_new(L, win, VIS_LUA_TYPE_WINDOW);

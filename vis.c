@@ -108,7 +108,7 @@ bool vis_event_emit(Vis *vis, enum VisEvents id, ...) {
 	case VIS_EVENT_WIN_STATUS:
 	{
 		Win *win = va_arg(ap, Win*);
-		if (win->file->internal)
+		if (win->file->internal && id != VIS_EVENT_WIN_STATUS)
 			break;
 		if (vis->event->win_open && id == VIS_EVENT_WIN_OPEN) {
 			vis->event->win_open(vis, win);
