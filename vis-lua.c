@@ -905,7 +905,7 @@ static int motion(lua_State *L) {
 
 static size_t motion_lua(Vis *vis, Win *win, void *data, size_t pos) {
 	lua_State *L = vis->lua;
-	if (!func_ref_get(L, data) || !obj_ref_new(L, win, VIS_LUA_TYPE_WINDOW))
+	if (!L || !func_ref_get(L, data) || !obj_ref_new(L, win, VIS_LUA_TYPE_WINDOW))
 		return EPOS;
 
 	lua_pushunsigned(L, pos);
@@ -954,7 +954,7 @@ static int operator(lua_State *L) {
 
 static size_t operator_lua(Vis *vis, Text *text, OperatorContext *c) {
 	lua_State *L = vis->lua;
-	if (!func_ref_get(L, c->context))
+	if (!L || !func_ref_get(L, c->context))
 		return EPOS;
 	File *file = vis->files;
 	while (file && (file->internal || file->text != text))
@@ -1012,7 +1012,7 @@ static int textobject(lua_State *L) {
 
 static Filerange textobject_lua(Vis *vis, Win *win, void *data, size_t pos) {
 	lua_State *L = vis->lua;
-	if (!func_ref_get(L, data) || !obj_ref_new(L, win, VIS_LUA_TYPE_WINDOW))
+	if (!L || !func_ref_get(L, data) || !obj_ref_new(L, win, VIS_LUA_TYPE_WINDOW))
 		return text_range_empty();
 	lua_pushunsigned(L, pos);
 	if (pcall(vis, L, 2, 2) != 0 || lua_isnil(L, -1))
@@ -1045,7 +1045,7 @@ static int textobject_register(lua_State *L) {
 static bool option_lua(Vis *vis, Win *win, void *context, bool toggle,
                        enum VisOption flags, const char *name, Arg *value) {
 	lua_State *L = vis->lua;
-	if (!func_ref_get(L, context))
+	if (!L || !func_ref_get(L, context))
 		return false;
 	if (flags & VIS_OPTION_TYPE_BOOL)
 		lua_pushboolean(L, value->b);
@@ -1112,7 +1112,7 @@ static int option_unregister(lua_State *L) {
 
 static bool command_lua(Vis *vis, Win *win, void *data, bool force, const char *argv[], Cursor *cur, Filerange *range) {
 	lua_State *L = vis->lua;
-	if (!func_ref_get(L, data))
+	if (!L || !func_ref_get(L, data))
 		return false;
 	lua_newtable(L);
 	for (size_t i = 0; argv[i]; i++) {
@@ -2357,9 +2357,9 @@ static bool vis_lua_path_strip(Vis *vis) {
 }
 
 bool vis_lua_path_add(Vis *vis, const char *path) {
-	if (!path)
-		return false;
 	lua_State *L = vis->lua;
+	if (!L || !path)
+		return false;
 	lua_getglobal(L, "package");
 	lua_pushstring(L, path);
 	lua_pushstring(L, "/?.lua;");
@@ -2620,6 +2620,8 @@ void vis_lua_start(Vis *vis) {
  * @function quit
  */
 void vis_lua_quit(Vis *vis) {
+	if (!vis->lua)
+		return;
 	vis_lua_event_call(vis, "quit");
 	lua_close(vis->lua);
 	vis->lua = NULL;
@@ -2632,9 +2634,9 @@ void vis_lua_quit(Vis *vis) {
  * @treturn bool whether the key was cosumed or not
  */
 static bool vis_lua_input(Vis *vis, const char *key, size_t len) {
-	if (vis->win->file->internal)
-		return false;
 	lua_State *L = vis->lua;
+	if (!L || vis->win->file->internal)
+		return false;
 	bool ret = false;
 	vis_lua_event_get(L, "input");
 	if (lua_isfunction(L, -1)) {
@@ -2666,6 +2668,8 @@ void vis_lua_mode_replace_input(Vis *vis, const char *key, size_t len) {
 void vis_lua_file_open(Vis *vis, File *file) {
 	debug("event: file-open: %s %p %p\n", file->name ? file->name : "unnamed", (void*)file, (void*)file->text);
 	lua_State *L = vis->lua;
+	if (!L)
+		return;
 	vis_lua_event_get(L, "file_open");
 	if (lua_isfunction(L, -1)) {
 		obj_ref_new(L, file, VIS_LUA_TYPE_FILE);
@@ -2684,6 +2688,8 @@ void vis_lua_file_open(Vis *vis, File *file) {
  */
 bool vis_lua_file_save_pre(Vis *vis, File *file, const char *path) {
 	lua_State *L = vis->lua;
+	if (!L)
+		return true;
 	vis_lua_event_get(L, "file_save_pre");
 	if (lua_isfunction(L, -1)) {
 		obj_ref_new(L, file, VIS_LUA_TYPE_FILE);
@@ -2705,6 +2711,8 @@ bool vis_lua_file_save_pre(Vis *vis, File *file, const char *path) {
  */
 void vis_lua_file_save_post(Vis *vis, File *file, const char *path) {
 	lua_State *L = vis->lua;
+	if (!L)
+		return;
 	vis_lua_event_get(L, "file_save_post");
 	if (lua_isfunction(L, -1)) {
 		obj_ref_new(L, file, VIS_LUA_TYPE_FILE);
@@ -2723,6 +2731,8 @@ void vis_lua_file_save_post(Vis *vis, File *file, const char *path) {
 void vis_lua_file_close(Vis *vis, File *file) {
 	debug("event: file-close: %s %p %p\n", file->name ? file->name : "unnamed", (void*)file, (void*)file->text);
 	lua_State *L = vis->lua;
+	if (!L)
+		return;
 	vis_lua_event_get(L, "file_close");
 	if (lua_isfunction(L, -1)) {
 		obj_ref_new(L, file, VIS_LUA_TYPE_FILE);
@@ -2743,6 +2753,8 @@ void vis_lua_file_close(Vis *vis, File *file) {
 void vis_lua_win_open(Vis *vis, Win *win) {
 	debug("event: win-open: %s %p %p\n", win->file->name ? win->file->name : "unnamed", (void*)win, (void*)win->view);
 	lua_State *L = vis->lua;
+	if (!L)
+		return;
 	vis_lua_event_get(L, "win_open");
 	if (lua_isfunction(L, -1)) {
 		obj_ref_new(L, win, VIS_LUA_TYPE_WINDOW);
@@ -2760,6 +2772,8 @@ void vis_lua_win_open(Vis *vis, Win *win) {
 void vis_lua_win_close(Vis *vis, Win *win) {
 	debug("event: win-close: %s %p %p\n", win->file->name ? win->file->name : "unnamed", (void*)win, (void*)win->view);
 	lua_State *L = vis->lua;
+	if (!L)
+		return;
 	vis_lua_event_get(L, "win_close");
 	if (lua_isfunction(L, -1)) {
 		obj_ref_new(L, win, VIS_LUA_TYPE_WINDOW);
@@ -2779,6 +2793,8 @@ void vis_lua_win_close(Vis *vis, Win *win) {
  */
 void vis_lua_win_highlight(Vis *vis, Win *win) {
 	lua_State *L = vis->lua;
+	if (!L)
+		return;
 	vis_lua_event_get(L, "win_highlight");
 	if (lua_isfunction(L, -1)) {
 		obj_ref_new(L, win, VIS_LUA_TYPE_WINDOW);
@@ -2795,6 +2811,8 @@ void vis_lua_win_highlight(Vis *vis, Win *win) {
  */
 void vis_lua_win_status(Vis *vis, Win *win) {
 	lua_State *L = vis->lua;
+	if (!L)
+		return;
 	vis_lua_event_get(L, "win_status");
 	if (lua_isfunction(L, -1)) {
 		obj_ref_new(L, win, VIS_LUA_TYPE_WINDOW);
