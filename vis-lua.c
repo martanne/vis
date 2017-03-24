@@ -221,6 +221,25 @@ static void stack_dump(lua_State *L, const char *format, ...) {
 
 #endif
 
+static int panic_handler(lua_State *L) {
+	void *ud = NULL;
+	lua_getallocf(L, &ud);
+	if (ud) {
+		Vis *vis = ud;
+		vis->lua = NULL;
+		if (vis->event)
+			vis->event->win_status = window_status_update;
+		const char *msg = NULL;
+		if (lua_type(L, -1) == LUA_TSTRING)
+			msg = lua_tostring(L, -1);
+		vis_info_show(vis, "Fatal Lua error: %s", msg ? msg : "unknown reason");
+		lua_close(L);
+		if (vis->running)
+			siglongjmp(vis->sigbus_jmpbuf, 1);
+	}
+	return 0;
+}
+
 static int error_handler(lua_State *L) {
 	Vis *vis = lua_touserdata(L, lua_upvalueindex(1));
 	if (vis->errorhandler)
@@ -2408,6 +2427,15 @@ static bool package_exist(Vis *vis, lua_State *L, const char *name) {
 	return ret;
 }
 
+static void *alloc_lua(void *ud, void *ptr, size_t osize, size_t nsize) {
+	if (nsize == 0) {
+		free(ptr);
+		return NULL;
+	} else {
+		return realloc(ptr, nsize);
+	}
+}
+
 /***
  * Editor initialization completed.
  * This event is emitted immediately after `visrc.lua` has been sourced, but
@@ -2418,10 +2446,12 @@ static bool package_exist(Vis *vis, lua_State *L, const char *name) {
  * @function init
  */
 void vis_lua_init(Vis *vis) {
-	lua_State *L = luaL_newstate();
+	lua_State *L = lua_newstate(alloc_lua, vis);
 	if (!L)
 		return;
 	vis->lua = L;
+	lua_atpanic(L, &panic_handler);
+
 	luaL_openlibs(L);
 
 #if CONFIG_LPEG
