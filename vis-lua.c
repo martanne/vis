@@ -479,6 +479,10 @@ static int newindex_common(lua_State *L) {
 	return 0;
 }
 
+static size_t getpos(lua_State *L, int narg) {
+	return lua_tounsigned(L, narg);
+}
+
 static size_t checkpos(lua_State *L, int narg) {
 	lua_Number n = luaL_checknumber(L, narg);
 	if (n >= 0 && n <= SIZE_MAX && n == (size_t)n)
@@ -911,7 +915,7 @@ static size_t motion_lua(Vis *vis, Win *win, void *data, size_t pos) {
 	lua_pushunsigned(L, pos);
 	if (pcall(vis, L, 2, 1) != 0)
 		return EPOS;
-	return checkpos(L, -1);
+	return getpos(L, -1);
 }
 
 /***
@@ -965,7 +969,7 @@ static size_t operator_lua(Vis *vis, Text *text, OperatorContext *c) {
 	pushpos(L, c->pos);
 	if (pcall(vis, L, 3, 1) != 0)
 		return EPOS;
-	return checkpos(L, -1);
+	return getpos(L, -1);
 }
 
 /***
@@ -1017,7 +1021,7 @@ static Filerange textobject_lua(Vis *vis, Win *win, void *data, size_t pos) {
 	lua_pushunsigned(L, pos);
 	if (pcall(vis, L, 2, 2) != 0 || lua_isnil(L, -1))
 		return text_range_empty();
-	return text_range_new(checkpos(L, -2), checkpos(L, -1));
+	return text_range_new(getpos(L, -2), getpos(L, -1));
 }
 
 /***
