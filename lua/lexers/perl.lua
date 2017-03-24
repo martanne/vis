@@ -46,6 +46,9 @@ local literal_delimitted2 = P(function(input, index) -- for 2 delimiter sets
       patt = l.delimited_range(delimiter)
     end
     first_match_pos = lpeg.match(patt, input, index)
+    if not first_match_pos then
+      return #input + 1
+    end
     final_match_pos = lpeg.match(patt, input, first_match_pos - 1)
     if not final_match_pos then -- using (), [], {}, or <> notation
       final_match_pos = lpeg.match(l.space^0 * patt, input, first_match_pos)
