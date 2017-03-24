@@ -221,7 +221,7 @@ static void stack_dump(lua_State *L, const char *format, ...) {
 
 #endif
 
-static int error_function(lua_State *L) {
+static int error_handler(lua_State *L) {
 	Vis *vis = lua_touserdata(L, lua_upvalueindex(1));
 	if (vis->errorhandler)
 		return 1;
@@ -240,7 +240,7 @@ static int pcall(Vis *vis, lua_State *L, int nargs, int nresults) {
 	/* insert a custom error function below all arguments */
 	int msgh = lua_gettop(L) - nargs;
 	lua_pushlightuserdata(L, vis);
-	lua_pushcclosure(L, error_function, 1);
+	lua_pushcclosure(L, error_handler, 1);
 	lua_insert(L, msgh);
 	int ret = lua_pcall(L, nargs, nresults, msgh);
 	lua_remove(L, msgh);
