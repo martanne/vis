@@ -1163,7 +1163,16 @@ static bool command_lua(Vis *vis, Win *win, void *data, bool force, const char *
  * @tparam[opt] string help the single line help text as displayed in `:help`
  * @treturn bool whether the command has been successfully registered
  * @usage
- * TODO
+ * vis:command_register("foo", function(argv, force, win, cursor, range)
+ * 	 for i,arg in ipairs(argv) do
+ * 		 print(i..": "..arg)
+ * 	 end
+ * 	 print("was command forced with ! "..(force and "yes" or "no"))
+ * 	 print(win.file.name)
+ * 	 print(cursor.pos)
+ * 	 print(range ~= nil and ('['..range.start..', '..range.finish..']') or "invalid range")
+ * 	 return true;
+ * end)
  */
 static int command_register(lua_State *L) {
 	Vis *vis = obj_ref_check(L, 1, "vis");
