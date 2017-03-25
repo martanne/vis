@@ -18,7 +18,7 @@ PREFIX ?= /usr/local
 SHAREPREFIX ?= ${PREFIX}/share
 MANPREFIX ?= ${PREFIX}/man
 
-VERSION = $(shell git describe --always --dirty 2>/dev/null || echo "0.2-git")
+VERSION = v0.3
 
 CONFIG_HELP ?= 1
 CONFIG_CURSES ?= 1
