@@ -256,10 +256,9 @@ standalone: clean
 	PATH=$(DEPS_BIN):$$PATH $(MAKE)
 
 single: standalone
-	cp vis-single.sh vis-single
 	for e in $(ELF); do \
 		${STRIP} "$$e"; \
 	done
-	tar c $(EXECUTABLES) lua/ | gzip -9 >> vis-single
+	./shar.sh vis-single $(EXECUTABLES) $$(find lua -name '*.lua')
 
 .PHONY: standalone local dependencies-common dependencies-local dependencies-clean
