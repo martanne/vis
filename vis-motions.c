@@ -328,9 +328,9 @@ bool vis_motion(Vis *vis, enum VisMotion motion, ...) {
 		}
 		text_regex_free(regex);
 		if (motion == VIS_MOVE_SEARCH_FORWARD)
-			motion = VIS_MOVE_SEARCH_NEXT;
+			motion = VIS_MOVE_SEARCH_REPEAT_FORWARD;
 		else
-			motion = VIS_MOVE_SEARCH_PREV;
+			motion = VIS_MOVE_SEARCH_REPEAT_BACKWARD;
 		break;
 	}
 	case VIS_MOVE_RIGHT_TO:
@@ -588,11 +588,11 @@ const Movement vis_motions[] = {
 		.vis = search_word_backward,
 		.type = JUMP,
 	},
-	[VIS_MOVE_SEARCH_NEXT] = {
+	[VIS_MOVE_SEARCH_REPEAT_FORWARD] = {
 		.vis = search_forward,
 		.type = JUMP,
 	},
-	[VIS_MOVE_SEARCH_PREV] = {
+	[VIS_MOVE_SEARCH_REPEAT_BACKWARD] = {
 		.vis = search_backward,
 		.type = JUMP,
 	},

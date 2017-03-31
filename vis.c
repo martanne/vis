@@ -1459,7 +1459,7 @@ static void macro_replay_internal(Vis *vis, const Macro *macro) {
 
 bool vis_macro_replay(Vis *vis, enum VisRegister id) {
 	if (id == VIS_REG_SEARCH)
-		return vis_motion(vis, VIS_MOVE_SEARCH_NEXT);
+		return vis_motion(vis, VIS_MOVE_SEARCH_REPEAT_FORWARD);
 	if (id == VIS_REG_COMMAND) {
 		const char *cmd = register_get(vis, &vis->registers[id], NULL);
 		return vis_cmd(vis, cmd);

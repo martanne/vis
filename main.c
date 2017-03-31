@@ -171,8 +171,8 @@ enum {
 	VIS_ACTION_CURSOR_WINDOW_LINE_TOP,
 	VIS_ACTION_CURSOR_WINDOW_LINE_MIDDLE,
 	VIS_ACTION_CURSOR_WINDOW_LINE_BOTTOM,
-	VIS_ACTION_CURSOR_SEARCH_NEXT,
-	VIS_ACTION_CURSOR_SEARCH_PREV,
+	VIS_ACTION_CURSOR_SEARCH_REPEAT_FORWARD,
+	VIS_ACTION_CURSOR_SEARCH_REPEAT_BACKWARD,
 	VIS_ACTION_CURSOR_SEARCH_WORD_FORWARD,
 	VIS_ACTION_CURSOR_SEARCH_WORD_BACKWARD,
 	VIS_ACTION_WINDOW_PAGE_UP,
@@ -515,15 +515,15 @@ static const KeyAction vis_action[] = {
 		VIS_HELP("Move cursor to bottom line of the window")
 		movement, { .i = VIS_MOVE_WINDOW_LINE_BOTTOM }
 	},
-	[VIS_ACTION_CURSOR_SEARCH_NEXT] = {
-		"vis-motion-search-forward",
-		VIS_HELP("Move cursor to next match")
-		movement, { .i = VIS_MOVE_SEARCH_NEXT }
+	[VIS_ACTION_CURSOR_SEARCH_REPEAT_FORWARD] = {
+		"vis-motion-search-repeat-forward",
+		VIS_HELP("Move cursor to next match in forward direction")
+		movement, { .i = VIS_MOVE_SEARCH_REPEAT_FORWARD }
 	},
-	[VIS_ACTION_CURSOR_SEARCH_PREV] = {
-		"vis-motion-search-backward",
-		VIS_HELP("Move cursor to previous match")
-		movement, { .i = VIS_MOVE_SEARCH_PREV }
+	[VIS_ACTION_CURSOR_SEARCH_REPEAT_BACKWARD] = {
+		"vis-motion-search-repeat-backward",
+		VIS_HELP("Move cursor to previous match in backward direction")
+		movement, { .i = VIS_MOVE_SEARCH_REPEAT_BACKWARD }
 	},
 	[VIS_ACTION_CURSOR_SEARCH_WORD_FORWARD] = {
 		"vis-motion-search-word-forward",
