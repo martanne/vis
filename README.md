@@ -109,7 +109,7 @@ How to help?
 There are plenty of ways to contribute, below are a few ideas:
 
  * Artwork
-    - Color Themes
+    - [Color Themes](https://github.com/martanne/vis/wiki/Themes)
     - [Name](https://github.com/martanne/vis/issues/338) +
       [Logo](https://github.com/martanne/vis/issues/328)
     - Homepage?
@@ -120,7 +120,7 @@ There are plenty of ways to contribute, below are a few ideas:
     - [API Documentation](https://github.com/martanne/vis/wiki/Developer-Overview#api-documentation)
       and Examples
     - [Unit Tests](https://github.com/martanne/vis-test/tree/master/lua)
-    - Plugin Development
+    - [Plugin Development](https://github.com/martanne/vis/wiki/Plugins)
     - [API Design](https://github.com/martanne/vis/issues/292)
  * [Testing Infrastructure](https://github.com/martanne/vis-test)
  * [Distribution Packaging](https://github.com/martanne/vis/wiki/Distribution-Packages)
