@@ -640,8 +640,10 @@ static bool text_vprintf(Text *txt, size_t pos, const char *format, va_list ap) 
 	va_list ap_save;
 	va_copy(ap_save, ap);
 	int len = vsnprintf(NULL, 0, format, ap);
-	if (len == -1)
+	if (len == -1) {
+		va_end(ap_save);
 		return false;
+	}
 	char *buf = malloc(len+1);
 	bool ret = buf && (vsnprintf(buf, len+1, format, ap_save) == len) && text_insert(txt, pos, buf, len);
 	free(buf);
