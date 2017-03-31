@@ -173,6 +173,8 @@ enum {
 	VIS_ACTION_CURSOR_WINDOW_LINE_BOTTOM,
 	VIS_ACTION_CURSOR_SEARCH_REPEAT_FORWARD,
 	VIS_ACTION_CURSOR_SEARCH_REPEAT_BACKWARD,
+	VIS_ACTION_CURSOR_SEARCH_REPEAT,
+	VIS_ACTION_CURSOR_SEARCH_REPEAT_REVERSE,
 	VIS_ACTION_CURSOR_SEARCH_WORD_FORWARD,
 	VIS_ACTION_CURSOR_SEARCH_WORD_BACKWARD,
 	VIS_ACTION_WINDOW_PAGE_UP,
@@ -524,6 +526,16 @@ static const KeyAction vis_action[] = {
 		"vis-motion-search-repeat-backward",
 		VIS_HELP("Move cursor to previous match in backward direction")
 		movement, { .i = VIS_MOVE_SEARCH_REPEAT_BACKWARD }
+	},
+	[VIS_ACTION_CURSOR_SEARCH_REPEAT] = {
+		"vis-motion-search-repeat",
+		VIS_HELP("Move cursor to next match")
+		movement, { .i = VIS_MOVE_SEARCH_REPEAT }
+	},
+	[VIS_ACTION_CURSOR_SEARCH_REPEAT_REVERSE] = {
+		"vis-motion-search-repeat-reverse",
+		VIS_HELP("Move cursor to next match in opposite direction")
+		movement, { .i = VIS_MOVE_SEARCH_REPEAT_REVERSE }
 	},
 	[VIS_ACTION_CURSOR_SEARCH_WORD_FORWARD] = {
 		"vis-motion-search-word-forward",

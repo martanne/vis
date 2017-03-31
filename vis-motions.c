@@ -26,16 +26,20 @@ static Regex *search_word(Vis *vis, Text *txt, size_t pos) {
 
 static size_t search_word_forward(Vis *vis, Text *txt, size_t pos) {
 	Regex *regex = search_word(vis, txt, pos);
-	if (regex)
+	if (regex) {
+		vis->search_direction = VIS_MOVE_SEARCH_REPEAT_FORWARD;
 		pos = text_search_forward(txt, pos, regex);
+	}
 	text_regex_free(regex);
 	return pos;
 }
 
 static size_t search_word_backward(Vis *vis, Text *txt, size_t pos) {
 	Regex *regex = search_word(vis, txt, pos);
-	if (regex)
+	if (regex) {
+		vis->search_direction = VIS_MOVE_SEARCH_REPEAT_BACKWARD;
 		pos = text_search_backward(txt, pos, regex);
+	}
 	text_regex_free(regex);
 	return pos;
 }
@@ -331,6 +335,21 @@ bool vis_motion(Vis *vis, enum VisMotion motion, ...) {
 			motion = VIS_MOVE_SEARCH_REPEAT_FORWARD;
 		else
 			motion = VIS_MOVE_SEARCH_REPEAT_BACKWARD;
+		vis->search_direction = motion;
+		break;
+	}
+	case VIS_MOVE_SEARCH_REPEAT:
+	case VIS_MOVE_SEARCH_REPEAT_REVERSE:
+	{
+		if (!vis->search_direction)
+			vis->search_direction = VIS_MOVE_SEARCH_REPEAT_FORWARD;
+		if (motion == VIS_MOVE_SEARCH_REPEAT) {
+			motion = vis->search_direction;
+		} else {
+			motion = vis->search_direction == VIS_MOVE_SEARCH_REPEAT_FORWARD ?
+			                                  VIS_MOVE_SEARCH_REPEAT_BACKWARD :
+			                                  VIS_MOVE_SEARCH_REPEAT_FORWARD;
+		}
 		break;
 	}
 	case VIS_MOVE_RIGHT_TO:
