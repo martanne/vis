@@ -154,6 +154,11 @@ static const KeyBinding prompt_up_binding = {
 	},
 };
 
+static const KeyBinding prompt_tab_binding = {
+	.key = "<Tab>",
+	.alias = "<C-x><C-o>",
+};
+
 void vis_prompt_show(Vis *vis, const char *title) {
 	Win *active = vis->win;
 	Win *prompt = window_new_file(vis, title[0] == ':' ? vis->command_file : vis->search_file,
@@ -173,6 +178,8 @@ void vis_prompt_show(Vis *vis, const char *title) {
 	vis_window_mode_map(prompt, VIS_MODE_VISUAL, true, "<Enter>", &prompt_enter_binding);
 	vis_window_mode_map(prompt, VIS_MODE_NORMAL, true, "<Escape>", &prompt_esc_binding);
 	vis_window_mode_map(prompt, VIS_MODE_INSERT, true, "<Up>", &prompt_up_binding);
+	if (CONFIG_LUA)
+		vis_window_mode_map(prompt, VIS_MODE_INSERT, true, "<Tab>", &prompt_tab_binding);
 	vis_mode_switch(vis, VIS_MODE_INSERT);
 }
 
