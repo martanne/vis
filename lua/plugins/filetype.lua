@@ -214,6 +214,9 @@ vis.ftdetect.filetypes = {
 	litcoffee = {
 		ext = { "%.litcoffee$" },
 	},
+	logtalk = {
+		ext = { "%.lgt$" },
+	},
 	lua = {
 		ext = { "%.lua$" },
 		mime = { "text/x-lua" },

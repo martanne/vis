@@ -39,7 +39,7 @@ end, "Number of bytes to consider for syntax highlighting")
 
 vis.events.subscribe(vis.events.WIN_HIGHLIGHT, function(win)
 	if win.syntax == nil or vis.lexers == nil then return end
-	local lexer = vis.lexers.load(win.syntax)
+	local lexer = vis.lexers.load(win.syntax, nil, true)
 	if lexer == nil then return end
 
 	-- TODO: improve heuristic for initial style

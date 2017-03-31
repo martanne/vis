@@ -14,7 +14,7 @@ vis:textobject_new("ii", function(win, pos)
 	end
 	-- TODO make sure we start at a line boundary?
 
-	local lexer = vis.lexers.load(win.syntax)
+	local lexer = vis.lexers.load(win.syntax, nil, true)
 	local data = win.file:content(before, after - before)
 	local tokens = lexer:lex(data)
 	local cur = before

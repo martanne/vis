@@ -1028,10 +1028,14 @@ end
 -- @param name The name of the lexing language.
 -- @param alt_name The alternate name of the lexing language. This is useful for
 --   embedding the same child lexer with multiple sets of start and end tokens.
+-- @param cache Flag indicating whether or not to load lexers from the cache.
+--   This should only be `true` when initially loading a lexer (e.g. not from
+--   within another lexer for embedding purposes).
+--   The default value is `false`.
 -- @return lexer object
 -- @name load
-function M.load(name, alt_name)
-  if M.lexers[alt_name or name] then return M.lexers[alt_name or name] end
+function M.load(name, alt_name, cache)
+  if cache and M.lexers[alt_name or name] then return M.lexers[alt_name or name] end
   parent_lexer = nil -- reset
 
   -- When using Scintillua as a stand-alone module, the `property` and

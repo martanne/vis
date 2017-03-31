@@ -163,7 +163,6 @@ M._tokenstyles = {
   fndef = l.STYLE_PREPROCESSOR,
   symbol = l.STYLE_EMBEDDED,
   tbl_key = l.STYLE_REGEX,
-  error = l.STYLE_ERROR,
 }
 
 M._FOLDBYINDENTATION = true
