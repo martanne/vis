@@ -61,7 +61,7 @@ static Filerange object_unpaired(Text *txt, size_t pos, char obj) {
 		text_iterator_byte_prev(&rit, NULL);
 	}
 
-	/* if there is no previous occurence on the same line, advance starting position */
+	/* if there is no previous occurrence on the same line, advance starting position */
 	if (!before) {
 		while (text_iterator_byte_get(&it, &c) && c != '\n') {
 			if (c == obj) {

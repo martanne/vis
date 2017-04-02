@@ -300,7 +300,7 @@ static const OptionDef options[] = {
 	[OPTION_ESCDELAY] = {
 		{ "escdelay" },
 		VIS_OPTION_TYPE_NUMBER,
-		VIS_HELP("Miliseconds to wait to distinguish <Escape> from terminal escape sequences")
+		VIS_HELP("Milliseconds to wait to distinguish <Escape> from terminal escape sequences")
 	},
 	[OPTION_AUTOINDENT] = {
 		{ "autoindent", "ai" },

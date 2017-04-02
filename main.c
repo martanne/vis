@@ -539,12 +539,12 @@ static const KeyAction vis_action[] = {
 	},
 	[VIS_ACTION_CURSOR_SEARCH_WORD_FORWARD] = {
 		"vis-motion-search-word-forward",
-		VIS_HELP("Move cursor to next occurence of the word under cursor")
+		VIS_HELP("Move cursor to next occurrence of the word under cursor")
 		movement, { .i = VIS_MOVE_SEARCH_WORD_FORWARD }
 	},
 	[VIS_ACTION_CURSOR_SEARCH_WORD_BACKWARD] = {
 		"vis-motion-search-word-backward",
-		VIS_HELP("Move cursor to previous occurence of the word under cursor")
+		VIS_HELP("Move cursor to previous occurrence of the word under cursor")
 		movement, { .i = VIS_MOVE_SEARCH_WORD_BACKWARD }
 	},
 	[VIS_ACTION_WINDOW_PAGE_UP] = {
@@ -779,7 +779,7 @@ static const KeyAction vis_action[] = {
 	},
 	[VIS_ACTION_OPERATOR_FILTER_FMT] = {
 		"vis-operator-filter-format",
-		VIS_HELP("Formating operator, filter range through fmt(1)")
+		VIS_HELP("Formatting operator, filter range through fmt(1)")
 		operator_filter, { .s = "|fmt" }
 	},
 	[VIS_ACTION_COUNT] = {
