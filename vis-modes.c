@@ -148,7 +148,8 @@ static void vis_mode_normal_enter(Vis *vis, Mode *old) {
 		for (Cursor *c = view_cursors(vis->win->view); c; c = view_cursors_next(c)) {
 			size_t pos = view_cursors_pos(c);
 			size_t start = text_line_start(txt, pos);
-			if (start == pos) {
+			size_t end = text_line_end(txt, pos);
+			if (start == pos && start == end) {
 				size_t begin = text_line_begin(txt, pos);
 				size_t len = start - begin;
 				if (len) {
