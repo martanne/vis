@@ -285,7 +285,6 @@ static void window_free(Win *win) {
 	for (size_t i = 0; i < LENGTH(win->modes); i++)
 		map_free(win->modes[i].bindings);
 	ringbuf_free(win->jumplist);
-	free(win->lexer_name);
 	free(win);
 }
 

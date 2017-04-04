@@ -149,7 +149,6 @@ struct Win {
 	Mode modes[VIS_MODE_INVALID]; /* overlay mods used for per window key bindings */
 	Win *parent;            /* window which was active when showing the command prompt */
 	Mode *parent_mode;      /* mode which was active when showing the command prompt */
-	char *lexer_name;       /* corresponds to filename in lexers/ subdirectory */
 	Win *prev, *next;       /* neighbouring windows */
 };
 
