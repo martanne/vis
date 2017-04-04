@@ -1207,6 +1207,8 @@ static const char *macro_record(Vis *vis, const char *keys, const Arg *arg) {
 static const char *macro_replay(Vis *vis, const char *keys, const Arg *arg) {
 	if (!keys[0])
 		return NULL;
+	if (keys[1])
+		return vis_keys_next(vis, keys);
 	enum VisRegister reg = vis_register_from(vis, keys[0]);
 	vis_macro_replay(vis, reg);
 	return keys+1;
@@ -1679,6 +1681,8 @@ static const char *selection_restore(Vis *vis, const char *keys, const Arg *arg)
 static const char *reg(Vis *vis, const char *keys, const Arg *arg) {
 	if (!keys[0])
 		return NULL;
+	if (keys[1])
+		return vis_keys_next(vis, keys);
 	enum VisRegister reg = vis_register_from(vis, keys[0]);
 	vis_register_set(vis, reg);
 	return keys+1;
@@ -1687,6 +1691,8 @@ static const char *reg(Vis *vis, const char *keys, const Arg *arg) {
 static const char *mark_set(Vis *vis, const char *keys, const Arg *arg) {
 	if (!keys[0])
 		return NULL;
+	if (keys[1])
+		return vis_keys_next(vis, keys);
 	vis_mark_set(vis, vis_mark_from(vis, keys[0]), view_cursor_get(vis_view(vis)));
 	return keys+1;
 }
@@ -1694,6 +1700,8 @@ static const char *mark_set(Vis *vis, const char *keys, const Arg *arg) {
 static const char *mark_motion(Vis *vis, const char *keys, const Arg *arg) {
 	if (!keys[0])
 		return NULL;
+	if (keys[1])
+		return vis_keys_next(vis, keys);
 	vis_motion(vis, arg->i, vis_mark_from(vis, keys[0]));
 	return keys+1;
 }
@@ -1751,6 +1759,8 @@ static const char *delete(Vis *vis, const char *keys, const Arg *arg) {
 static const char *insert_register(Vis *vis, const char *keys, const Arg *arg) {
 	if (!keys[0])
 		return NULL;
+	if (keys[1])
+		return vis_keys_next(vis, keys);
 	enum VisRegister reg = vis_register_from(vis, keys[0]);
 	size_t len;
 	const char *data = vis_register_get(vis, reg, &len);
