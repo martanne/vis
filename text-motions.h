@@ -16,6 +16,9 @@ size_t text_end(Text*, size_t pos);
 size_t text_char_next(Text*, size_t pos);
 size_t text_char_prev(Text*, size_t pos);
 
+size_t text_codepoint_next(Text*, size_t pos);
+size_t text_codepoint_prev(Text*, size_t pos);
+
 /* find the given substring either in forward or backward direction.
  * does not wrap around at file start / end. if no match is found return
  * original position */

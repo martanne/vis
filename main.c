@@ -134,6 +134,8 @@ enum {
 	VIS_ACTION_CURSOR_CHAR_NEXT,
 	VIS_ACTION_CURSOR_LINE_CHAR_PREV,
 	VIS_ACTION_CURSOR_LINE_CHAR_NEXT,
+	VIS_ACTION_CURSOR_CODEPOINT_PREV,
+	VIS_ACTION_CURSOR_CODEPOINT_NEXT,
 	VIS_ACTION_CURSOR_WORD_START_PREV,
 	VIS_ACTION_CURSOR_WORD_START_NEXT,
 	VIS_ACTION_CURSOR_WORD_END_PREV,
@@ -331,6 +333,16 @@ static const KeyAction vis_action[] = {
 		"vis-motion-line-char-next",
 		VIS_HELP("Move cursor right, to the next character on the same line")
 		movement, { .i = VIS_MOVE_LINE_CHAR_NEXT }
+	},
+	[VIS_ACTION_CURSOR_CODEPOINT_PREV] = {
+		"vis-motion-codepoint-prev",
+		VIS_HELP("Move to the previous Unicode codepoint")
+		movement, { .i = VIS_MOVE_CODEPOINT_PREV }
+	},
+	[VIS_ACTION_CURSOR_CODEPOINT_NEXT] = {
+		"vis-motion-codepoint-next",
+		VIS_HELP("Move to the next Unicode codepoint")
+		movement, { .i = VIS_MOVE_CODEPOINT_NEXT }
 	},
 	[VIS_ACTION_CURSOR_WORD_START_PREV] = {
 		"vis-motion-word-start-prev",

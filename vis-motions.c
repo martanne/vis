@@ -491,6 +491,14 @@ const Movement vis_motions[] = {
 		.txt = text_line_char_next,
 		.type = CHARWISE,
 	},
+	[VIS_MOVE_CODEPOINT_PREV] = {
+		.txt = text_codepoint_prev,
+		.type = CHARWISE,
+	},
+	[VIS_MOVE_CODEPOINT_NEXT] = {
+		.txt = text_codepoint_next,
+		.type = CHARWISE,
+	},
 	[VIS_MOVE_WORD_NEXT] = {
 		.vis = word_next,
 		.type = CHARWISE|IDEMPOTENT,

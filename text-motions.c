@@ -39,6 +39,18 @@ size_t text_char_prev(Text *txt, size_t pos) {
 	return it.pos;
 }
 
+size_t text_codepoint_next(Text *txt, size_t pos) {
+	Iterator it = text_iterator_get(txt, pos);
+	text_iterator_codepoint_next(&it, NULL);
+	return it.pos;
+}
+
+size_t text_codepoint_prev(Text *txt, size_t pos) {
+	Iterator it = text_iterator_get(txt, pos);
+	text_iterator_codepoint_prev(&it, NULL);
+	return it.pos;
+}
+
 static size_t find_next(Text *txt, size_t pos, const char *s, bool line) {
 	if (!s)
 		return pos;
