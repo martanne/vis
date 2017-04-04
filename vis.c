@@ -838,7 +838,14 @@ void vis_do(Vis *vis) {
 	for (Cursor *cursor = view_cursors(view), *next; cursor; cursor = next) {
 
 		next = view_cursors_next(cursor);
+
 		size_t pos = view_cursors_pos(cursor);
+		if (pos == EPOS) {
+			if (!view_cursors_dispose(cursor))
+				view_cursors_to(cursor, 0);
+			continue;
+		}
+
 		Register *reg = multiple_cursors ? view_cursors_register(cursor) : a->reg;
 		if (!reg)
 			reg = &vis->registers[file->internal ? VIS_REG_PROMPT : VIS_REG_DEFAULT];
