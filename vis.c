@@ -135,8 +135,14 @@ bool vis_event_emit(Vis *vis, enum VisEvents id, ...) {
 			vis->event->win_leave(vis, win);
 		break;
 	}
+	case VIS_EVENT_MODE_CHANGE:
+	{
+		if (vis->event->mode_change)
+		  vis->event->mode_change(vis);
+		break;
+	}
 	case VIS_EVENT_QUIT:
-		if (vis->event->quit)
+	if (vis->event->quit)
 			vis->event->quit(vis);
 		break;
 	}

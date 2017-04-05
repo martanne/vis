@@ -1164,7 +1164,8 @@ enum SamError sam_cmd(Vis *vis, Win *win, const char *s) {
 				break;
 			}
 		}
-		vis_mode_switch(vis, completed ? VIS_MODE_NORMAL : VIS_MODE_VISUAL);
+		if (!completed)
+			vis_mode_switch(vis, VIS_MODE_VISUAL);
 	}
 	command_free(cmd);
 	return err;

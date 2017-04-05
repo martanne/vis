@@ -70,15 +70,15 @@ void vis_binding_free(Vis *vis, KeyBinding *binding) {
 	}
 }
 
-static Mode *mode_get(Vis *vis, enum VisMode mode) {
+Mode *mode_get(Vis *vis, enum VisMode mode) {
 	if (mode < LENGTH(vis_modes))
 		return &vis_modes[mode];
 	return NULL;
 }
 
-void mode_set(Vis *vis, Mode *new_mode) {
+bool mode_set(Vis *vis, Mode *new_mode) {
 	if (vis->mode == new_mode)
-		return;
+		return false;
 	if (vis->mode->leave)
 		vis->mode->leave(vis, new_mode);
 	if (vis->mode != &vis_modes[VIS_MODE_OPERATOR_PENDING])
@@ -86,11 +86,13 @@ void mode_set(Vis *vis, Mode *new_mode) {
 	vis->mode = new_mode;
 	if (new_mode->enter)
 		new_mode->enter(vis, vis->mode_prev);
+	return true;
 }
 
 void vis_mode_switch(Vis *vis, enum VisMode mode) {
 	if (mode < LENGTH(vis_modes))
-		mode_set(vis, &vis_modes[mode]);
+		if (mode_set(vis, &vis_modes[mode]))
+			vis_event_emit(vis, VIS_EVENT_MODE_CHANGE);
 }
 
 enum VisMode vis_mode_from(Vis *vis, const char *name) {

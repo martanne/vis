@@ -163,6 +163,7 @@ void vis_lua_win_enter(Vis *vis, Win *win) { }
 void vis_lua_win_leave(Vis *vis, Win *win) { }
 void vis_lua_win_highlight(Vis *vis, Win *win) { }
 void vis_lua_win_status(Vis *vis, Win *win) { window_status_update(vis, win); }
+void vis_lua_mode_change(Vis *vis) { }
 
 #else
 
@@ -2900,6 +2901,17 @@ void vis_lua_win_status(Vis *vis, Win *win) {
 		window_status_update(vis, win);
 	}
 	lua_pop(L, 1);
+}
+
+/**
+ * Window mode change.
+ * The vis mode has changed.
+ * @function mode_change
+ * @see Vis.mode
+ * @see Vis.modes
+ */
+void vis_lua_mode_change(Vis *vis) {
+	vis_lua_event_call(vis, "mode_change");
 }
 
 #endif

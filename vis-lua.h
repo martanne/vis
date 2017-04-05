@@ -39,5 +39,6 @@ void vis_lua_win_enter(Vis*, Win*);
 void vis_lua_win_leave(Vis*, Win*);
 void vis_lua_win_highlight(Vis*, Win*);
 void vis_lua_win_status(Vis*, Win*);
+void vis_lua_mode_change(Vis*);
 
 #endif

@@ -2037,6 +2037,7 @@ int main(int argc, char *argv[]) {
 		.win_leave = vis_lua_win_leave,
 		.win_highlight = vis_lua_win_highlight,
 		.win_status = vis_lua_win_status,
+		.mode_change = vis_lua_mode_change,
 	};
 
 	vis = vis_new(ui_term_new(), &event);

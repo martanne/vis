@@ -222,6 +222,7 @@ enum VisEvents {
 	VIS_EVENT_WIN_LEAVE,
 	VIS_EVENT_WIN_HIGHLIGHT,
 	VIS_EVENT_WIN_STATUS,
+	VIS_EVENT_MODE_CHANGE,
 };
 
 bool vis_event_emit(Vis*, enum VisEvents, ...);
@@ -249,7 +250,9 @@ void vis_do(Vis *vis);
 void action_reset(Action*);
 size_t vis_text_insert_nl(Vis*, Text*, size_t pos);
 
-void mode_set(Vis *vis, Mode *new_mode);
+Mode *mode_get(Vis *vis, enum VisMode mode);
+/* Returns true if the mode actually changed. */
+bool mode_set(Vis *vis, Mode *new_mode);
 
 void window_selection_save(Win *win);
 Win *window_new_file(Vis*, File*, enum UiOption);
