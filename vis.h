@@ -101,7 +101,7 @@ void vis_resume(Vis*);
  * an unamed / empty buffer is created. If the given file is already opened
  * in another window, share the underlying text that is changes will be
  * visible in both windows */
-bool vis_window_new(Vis*, const char *filename);
+Win *vis_window_new(Vis*, const char *filename);
 /* Creates a new window and underlying file object associated with the
  * given output file descriptor. No data is read from `fd`, but write
  * commands without an explicit filename will instead write to the file

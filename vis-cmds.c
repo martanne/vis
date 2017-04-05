@@ -390,17 +390,19 @@ static const char *file_open_dialog(Vis *vis, const char *pattern) {
 	return name[0] ? name : NULL;
 }
 
-static bool openfiles(Vis *vis, const char **files) {
+static bool openfiles(Vis *vis, const char **files, enum UiOption options) {
 	for (; *files; files++) {
 		const char *file = file_open_dialog(vis, *files);
 		if (!file)
 			return false;
 		errno = 0;
-		if (!vis_window_new(vis, file)) {
+		Win *win = vis_window_new(vis, file);
+		if (!win) {
 			vis_info_show(vis, "Could not open `%s' %s", file,
 			                 errno ? strerror(errno) : "");
 			return false;
 		}
+		view_options_set(win->view, options);
 	}
 	return true;
 }
@@ -408,7 +410,7 @@ static bool openfiles(Vis *vis, const char **files) {
 static bool cmd_open(Vis *vis, Win *win, Command *cmd, const char *argv[], Cursor *cur, Filerange *range) {
 	if (!argv[1])
 		return vis_window_new(vis, NULL);
-	return openfiles(vis, &argv[1]);
+	return openfiles(vis, &argv[1], win ? view_options_get(win->view) : UI_OPTION_STATUSBAR);
 }
 
 static void info_unsaved_changes(Vis *vis) {
@@ -434,7 +436,7 @@ static bool cmd_edit(Vis *vis, Win *win, Command *cmd, const char *argv[], Curso
 		}
 		return vis_window_reload(oldwin);
 	}
-	if (!openfiles(vis, &argv[1]))
+	if (!openfiles(vis, &argv[1], view_options_get(oldwin->view)))
 		return false;
 	if (vis->win != oldwin) {
 		Win *newwin = vis->win;
@@ -500,27 +502,19 @@ static bool cmd_qall(Vis *vis, Win *win, Command *cmd, const char *argv[], Curso
 static bool cmd_split(Vis *vis, Win *win, Command *cmd, const char *argv[], Cursor *cur, Filerange *range) {
 	if (!win)
 		return false;
-	enum UiOption options = view_options_get(win->view);
 	windows_arrange(vis, UI_LAYOUT_HORIZONTAL);
 	if (!argv[1])
 		return vis_window_split(win);
-	bool ret = openfiles(vis, &argv[1]);
-	if (ret)
-		view_options_set(vis->win->view, options);
-	return ret;
+	return openfiles(vis, &argv[1], view_options_get(win->view));
 }
 
 static bool cmd_vsplit(Vis *vis, Win *win, Command *cmd, const char *argv[], Cursor *cur, Filerange *range) {
 	if (!win)
 		return false;
-	enum UiOption options = view_options_get(win->view);
 	windows_arrange(vis, UI_LAYOUT_VERTICAL);
 	if (!argv[1])
 		return vis_window_split(win);
-	bool ret = openfiles(vis, &argv[1]);
-	if (ret)
-		view_options_set(vis->win->view, options);
-	return ret;
+	return openfiles(vis, &argv[1], view_options_get(win->view));
 }
 
 static bool cmd_new(Vis *vis, Win *win, Command *cmd, const char *argv[], Cursor *cur, Filerange *range) {
