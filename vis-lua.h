@@ -35,6 +35,8 @@ void vis_lua_file_save_post(Vis*, File*, const char *path);
 void vis_lua_file_close(Vis*, File*);
 void vis_lua_win_open(Vis*, Win*);
 void vis_lua_win_close(Vis*, Win*);
+void vis_lua_win_enter(Vis*, Win*);
+void vis_lua_win_leave(Vis*, Win*);
 void vis_lua_win_highlight(Vis*, Win*);
 void vis_lua_win_status(Vis*, Win*);
 

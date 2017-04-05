@@ -146,7 +146,9 @@ local events = {
 	QUIT = "Event::QUIT", -- see @{quit}
 	START = "Event::START", -- see @{start}
 	WIN_CLOSE = "Event::WIN_CLOSE", -- see @{win_close}
+	WIN_ENTER = "Event::WIN_ENTER", -- see @{win_enter}
 	WIN_HIGHLIGHT = "Event::WIN_HIGHLIGHT", -- see @{win_highlight}
+	WIN_LEAVE = "Event::WIN_LEAVE", -- see @{win_leave}
 	WIN_OPEN = "Event::WIN_OPEN", -- see @{win_open}
 	WIN_STATUS = "Event::WIN_STATUS", -- see @{win_status}
 }
@@ -160,7 +162,9 @@ events.input = function(...) return events.emit(events.INPUT, ...) end
 events.quit = function(...) events.emit(events.QUIT, ...) end
 events.start = function(...) events.emit(events.START, ...) end
 events.win_close = function(...) events.emit(events.WIN_CLOSE, ...) end
+events.win_enter = function(...) events.emit(events.WIN_ENTER, ...) end
 events.win_highlight = function(...) events.emit(events.WIN_HIGHLIGHT, ...) end
+events.win_leave = function(...) events.emit(events.WIN_LEAVE, ...) end
 events.win_open = function(...) events.emit(events.WIN_OPEN, ...) end
 events.win_status = function(...) events.emit(events.WIN_STATUS, ...) end
 

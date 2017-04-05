@@ -51,6 +51,8 @@ typedef struct {
 	void (*file_close)(Vis*, File*);
 	void (*win_open)(Vis*, Win*);
 	void (*win_close)(Vis*, Win*);
+	void (*win_enter)(Vis*, Win*);
+	void (*win_leave)(Vis*, Win*);
 	void (*win_highlight)(Vis*, Win*);
 	void (*win_status)(Vis*, Win*);
 } VisEvent;

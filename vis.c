@@ -121,6 +121,20 @@ bool vis_event_emit(Vis *vis, enum VisEvents id, ...) {
 		}
 		break;
 	}
+	case VIS_EVENT_WIN_ENTER:
+	{
+		Win *win = va_arg(ap, Win*);
+		if (vis->event->win_enter)
+			vis->event->win_enter(vis, win);
+		break;
+	}
+	case VIS_EVENT_WIN_LEAVE:
+	{
+		Win *win = va_arg(ap, Win*);
+		if (vis->event->win_leave)
+			vis->event->win_leave(vis, win);
+		break;
+	}
 	case VIS_EVENT_QUIT:
 		if (vis->event->quit)
 			vis->event->quit(vis);
@@ -533,8 +547,13 @@ void vis_window_focus(Win *win) {
 	if (!win)
 		return;
 	Vis *vis = win->vis;
+	Win *previous_win = vis->win;
+	if (previous_win && win != previous_win)
+		vis_event_emit(vis, VIS_EVENT_WIN_LEAVE, previous_win);
 	vis->win = win;
 	vis->ui->window_focus(win->ui);
+	if (win != previous_win)
+		vis_event_emit(vis, VIS_EVENT_WIN_ENTER, win);
 }
 
 void vis_window_next(Vis *vis) {

@@ -159,6 +159,8 @@ void vis_lua_file_save_post(Vis *vis, File *file, const char *path) { }
 void vis_lua_file_close(Vis *vis, File *file) { }
 void vis_lua_win_open(Vis *vis, Win *win) { }
 void vis_lua_win_close(Vis *vis, Win *win) { }
+void vis_lua_win_enter(Vis *vis, Win *win) { }
+void vis_lua_win_leave(Vis *vis, Win *win) { }
 void vis_lua_win_highlight(Vis *vis, Win *win) { }
 void vis_lua_win_status(Vis *vis, Win *win) { window_status_update(vis, win); }
 
@@ -2808,7 +2810,7 @@ void vis_lua_win_open(Vis *vis, Win *win) {
 
 /***
  * Window close.
- * An window is being closed.
+ * A window is being closed.
  * @function win_close
  * @tparam Window win the window being closed
  */
@@ -2824,6 +2826,38 @@ void vis_lua_win_close(Vis *vis, Win *win) {
 	}
 	obj_ref_free(L, win->view);
 	obj_ref_free(L, win);
+	lua_pop(L, 1);
+}
+
+/***
+ * Window enter.
+ * A window is gaining focus.
+ * @function win_enter
+ * @tparam Window win the window that gains focus
+ */
+void vis_lua_win_enter(Vis *vis, Win *win) {
+	lua_State *L = vis->lua;
+	vis_lua_event_get(L, "win_enter");
+	if (lua_isfunction(L, -1)) {
+		obj_ref_new(L, win, VIS_LUA_TYPE_WINDOW);
+		pcall(vis, L, 1, 0);
+	}
+	lua_pop(L, 1);
+}
+
+/***
+ * Window leave.
+ * A window is losing focus.
+ * @function win_leave
+ * @tparam Window win the window that loses focus
+ */
+void vis_lua_win_leave(Vis *vis, Win *win) {
+	lua_State *L = vis->lua;
+	vis_lua_event_get(L, "win_leave");
+	if (lua_isfunction(L, -1)) {
+		obj_ref_new(L, win, VIS_LUA_TYPE_WINDOW);
+		pcall(vis, L, 1, 0);
+	}
 	lua_pop(L, 1);
 }
 
