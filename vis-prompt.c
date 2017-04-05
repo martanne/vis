@@ -43,7 +43,7 @@ static void prompt_restore(Win *win) {
 	 * we deliberately don't use vis_mode_switch because we do not want
 	 * to invoke the modes enter/leave functions */
 	if (win->parent)
-		vis->win = win->parent;
+		vis_window_focus(win->parent);
 	vis->mode = win->parent_mode;
 }
 

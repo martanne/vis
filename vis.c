@@ -106,6 +106,8 @@ bool vis_event_emit(Vis *vis, enum VisEvents id, ...) {
 	case VIS_EVENT_WIN_CLOSE:
 	case VIS_EVENT_WIN_HIGHLIGHT:
 	case VIS_EVENT_WIN_STATUS:
+	case VIS_EVENT_WIN_ENTER:
+	case VIS_EVENT_WIN_LEAVE:
 	{
 		Win *win = va_arg(ap, Win*);
 		if (win->file->internal && id != VIS_EVENT_WIN_STATUS)
@@ -118,6 +120,10 @@ bool vis_event_emit(Vis *vis, enum VisEvents id, ...) {
 			vis->event->win_highlight(vis, win);
 		} else if (vis->event->win_status && id == VIS_EVENT_WIN_STATUS) {
 			vis->event->win_status(vis, win);
+		} else if (vis->event->win_enter && id == VIS_EVENT_WIN_ENTER) {
+			vis->event->win_enter(vis, win);
+		} else if (vis->event->win_leave && id == VIS_EVENT_WIN_LEAVE) {
+			vis->event->win_leave(vis, win);
 		}
 		break;
 	}
@@ -489,10 +495,15 @@ Win *window_new_file(Vis *vis, File *file, enum UiOption options) {
 		vis->windows->prev = win;
 	win->next = vis->windows;
 	vis->windows = win;
-	vis_window_focus(win);
 	for (size_t i = 0; i < LENGTH(win->modes); i++)
 		win->modes[i].parent = &vis_modes[i];
+	Win *tmp = vis->win;
+	vis->win = win;
 	vis_event_emit(vis, VIS_EVENT_WIN_OPEN, win);
+	bool alive = vis->win == win;
+	vis->win = tmp;
+	if (alive)
+		vis_window_focus(win);
 	return win;
 }
 
@@ -533,8 +544,13 @@ void vis_window_focus(Win *win) {
 	if (!win)
 		return;
 	Vis *vis = win->vis;
+	Win *old = vis->win;
+	if (old && win != old)
+		vis_event_emit(vis, VIS_EVENT_WIN_LEAVE, old);
 	vis->win = win;
 	vis->ui->window_focus(win->ui);
+	if (win != old)
+		vis_event_emit(vis, VIS_EVENT_WIN_ENTER, win);
 }
 
 void vis_window_next(Vis *vis) {
@@ -638,6 +654,9 @@ void vis_window_close(Win *win) {
 	if (!win)
 		return;
 	Vis *vis = win->vis;
+	bool focused = vis->win == win;
+	if (focused)
+		vis_event_emit(vis, VIS_EVENT_WIN_LEAVE, win);
 	vis_event_emit(vis, VIS_EVENT_WIN_CLOSE, win);
 	file_free(vis, win->file);
 	if (win->prev)
@@ -651,7 +670,11 @@ void vis_window_close(Win *win) {
 	if (win == vis->message_window)
 		vis->message_window = NULL;
 	window_free(win);
-	vis_window_focus(vis->win);
+	if (focused) {
+		Win *new = vis->win;
+		vis->win = NULL;
+		vis_window_focus(new);
+	}
 	vis_draw(vis);
 }
 
