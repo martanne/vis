@@ -1483,7 +1483,7 @@ bool text_iterator_char_next(Iterator *it, char *ret) {
 	if (!text_iterator_codepoint_next(it, ret))
 		return false;
 	if (cr && *ret == '\n')
-		return text_iterator_byte_next(it, ret);
+		return text_iterator_byte_next(it, ret) && text_iterator_char_get(it, ret);
 	mbstate_t ps = { 0 };
 	for (;;) {
 		char buf[MB_CUR_MAX];
@@ -1496,6 +1496,8 @@ bool text_iterator_char_next(Iterator *it, char *ret) {
 			return false;
 		} else if (wclen == 0) {
 			return true;
+		} else if (wc == L'\r') {
+			return text_iterator_char_get(it, ret);
 		} else {
 			int width = wcwidth(wc);
 			if (width != 0)
@@ -1514,7 +1516,7 @@ bool text_iterator_char_prev(Iterator *it, char *ret) {
 	if (!text_iterator_codepoint_prev(it, ret))
 		return false;
 	if (*ret == '\n') {
-		if (text_iterator_byte_prev(it, &c) && c != '\r')
+		if (!text_iterator_byte_prev(it, &c) || c != '\r')
 			text_iterator_byte_next(it, NULL);
 		return true;
 	}
