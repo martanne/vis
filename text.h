@@ -70,6 +70,9 @@ size_t text_lineno_by_pos(Text*, size_t pos);
 /* set `buf' to the byte found at `pos' and return true, if `pos' is invalid
  * false is returned and `buf' is left unmodified */
 bool text_byte_get(Text*, size_t pos, char *buf);
+/* same as byte get, but if a sequence of '\r\n' is read at `pos',
+ * `buf` is set to \n instead of \r. */
+bool text_char_get(Text*, size_t pos, char *buf);
 /* store at most `len' bytes starting from `pos' into `buf', the return value
  * indicates how many bytes were copied into `buf'. WARNING buf will not be
  * NUL terminated. */
