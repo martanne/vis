@@ -579,17 +579,15 @@ void vis_suspend(Vis *vis) {
 	vis->ui->suspend(vis->ui);
 }
 
-bool vis_window_new(Vis *vis, const char *filename) {
+Win* vis_window_new(Vis *vis, const char *filename) {
 	File *file = file_new(vis, filename);
 	if (!file)
-		return false;
+		return NULL;
 	Win *win = window_new_file(vis, file, UI_OPTION_STATUSBAR);
-	if (!win) {
+	if (!win)
 		file_free(vis, file);
-		return false;
-	}
 
-	return true;
+	return win;
 }
 
 bool vis_window_new_fd(Vis *vis, int fd) {
