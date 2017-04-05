@@ -2112,11 +2112,12 @@ int main(int argc, char *argv[]) {
 
 	char *cmd = NULL;
 	bool end_of_options = false, win_created = false;
+	Win *win = NULL;
 
 	for (int i = 1; i < argc; i++) {
 		if (argv[i][0] == '-' && !end_of_options) {
 			if (strcmp(argv[i], "-") == 0) {
-				if (!vis_window_new_fd(vis, STDOUT_FILENO))
+				if (!(win = vis_window_new_fd(vis, STDOUT_FILENO)))
 					vis_die(vis, "Can not create empty buffer\n");
 				ssize_t len = 0;
 				char buf[PIPE_BUF];
@@ -2138,7 +2139,7 @@ int main(int argc, char *argv[]) {
 		} else if (argv[i][0] == '+' && !end_of_options) {
 			cmd = argv[i] + (argv[i][1] == '/' || argv[i][1] == '?');
 			continue;
-		} else if (!vis_window_new(vis, argv[i])) {
+		} else if (!(win = vis_window_new(vis, argv[i]))) {
 			vis_die(vis, "Can not load `%s': %s\n", argv[i], strerror(errno));
 		}
 		win_created = true;
@@ -2148,12 +2149,13 @@ int main(int argc, char *argv[]) {
 		}
 	}
 
-	if (!vis_window(vis) && !win_created) {
-		if (!vis_window_new(vis, NULL))
+	bool create_default_win = !vis_window(vis) && !win_created;
+	if (create_default_win)
+		if (!(win =vis_window_new(vis, NULL)))
 			vis_die(vis, "Can not create empty buffer\n");
-		if (cmd)
-			vis_prompt_cmd(vis, cmd);
-	}
+	vis_window_focus(win);
+	if (create_default_win && cmd)
+		vis_prompt_cmd(vis, cmd);
 
 	int status = vis_run(vis, argc, argv);
 	vis_free(vis);

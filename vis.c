@@ -489,7 +489,6 @@ Win *window_new_file(Vis *vis, File *file, enum UiOption options) {
 		vis->windows->prev = win;
 	win->next = vis->windows;
 	vis->windows = win;
-	vis_window_focus(win);
 	for (size_t i = 0; i < LENGTH(win->modes); i++)
 		win->modes[i].parent = &vis_modes[i];
 	vis_event_emit(vis, VIS_EVENT_WIN_OPEN, win);
@@ -526,6 +525,7 @@ bool vis_window_split(Win *original) {
 	win->file = original->file;
 	view_options_set(win->view, view_options_get(original->view));
 	view_cursor_to(win->view, view_cursor_get(original->view));
+	vis_window_focus(win);
 	return true;
 }
 
@@ -586,17 +586,23 @@ Win* vis_window_new(Vis *vis, const char *filename) {
 	Win *win = window_new_file(vis, file, UI_OPTION_STATUSBAR);
 	if (!win)
 		file_free(vis, file);
-
 	return win;
 }
 
-bool vis_window_new_fd(Vis *vis, int fd) {
+Win* vis_window_focus_new(Vis *vis, const char *filename) {
+	Win *win = vis_window_new(vis, filename);
+	if (win)
+		vis_window_focus(win);
+	return win;
+}
+
+Win *vis_window_new_fd(Vis *vis, int fd) {
 	if (fd == -1)
-		return false;
-	if (!vis_window_new(vis, NULL))
-		return false;
-	vis->win->file->fd = fd;
-	return true;
+		return NULL;
+	Win *win = vis_window_new(vis, NULL);
+	if (win)
+		win->file->fd = fd;
+	return win;
 }
 
 bool vis_window_closable(Win *win) {

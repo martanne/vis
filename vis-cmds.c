@@ -391,12 +391,13 @@ static const char *file_open_dialog(Vis *vis, const char *pattern) {
 }
 
 static bool openfiles(Vis *vis, const char **files, enum UiOption options) {
+	Win *win = NULL;
 	for (; *files; files++) {
 		const char *file = file_open_dialog(vis, *files);
 		if (!file)
 			return false;
 		errno = 0;
-		Win *win = vis_window_new(vis, file);
+		win = vis_window_new(vis, file);
 		if (!win) {
 			vis_info_show(vis, "Could not open `%s' %s", file,
 			                 errno ? strerror(errno) : "");
@@ -404,12 +405,14 @@ static bool openfiles(Vis *vis, const char **files, enum UiOption options) {
 		}
 		view_options_set(win->view, options);
 	}
+	if (win)
+		vis_window_focus(win);
 	return true;
 }
 
 static bool cmd_open(Vis *vis, Win *win, Command *cmd, const char *argv[], Cursor *cur, Filerange *range) {
 	if (!argv[1])
-		return vis_window_new(vis, NULL);
+		return vis_window_focus_new(vis, NULL);
 	return openfiles(vis, &argv[1], view_options_get(vis->win->view));
 }
 
@@ -521,12 +524,12 @@ static bool cmd_vsplit(Vis *vis, Win *win, Command *cmd, const char *argv[], Cur
 
 static bool cmd_new(Vis *vis, Win *win, Command *cmd, const char *argv[], Cursor *cur, Filerange *range) {
 	windows_arrange(vis, UI_LAYOUT_HORIZONTAL);
-	return vis_window_new(vis, NULL);
+	return vis_window_focus_new(vis, NULL);
 }
 
 static bool cmd_vnew(Vis *vis, Win *win, Command *cmd, const char *argv[], Cursor *cur, Filerange *range) {
 	windows_arrange(vis, UI_LAYOUT_VERTICAL);
-	return vis_window_new(vis, NULL);
+	return vis_window_focus_new(vis, NULL);
 }
 
 static bool cmd_wq(Vis *vis, Win *win, Command *cmd, const char *argv[], Cursor *cur, Filerange *range) {
@@ -713,7 +716,7 @@ static void print_symbolic_keys(Vis *vis, Text *txt) {
 }
 
 static bool cmd_help(Vis *vis, Win *win, Command *cmd, const char *argv[], Cursor *cur, Filerange *range) {
-	if (!vis_window_new(vis, NULL))
+	if (!vis_window_focus_new(vis, NULL))
 		return false;
 
 	Text *txt = vis->win->file->text;

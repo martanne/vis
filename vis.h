@@ -102,11 +102,13 @@ void vis_resume(Vis*);
  * in another window, share the underlying text that is changes will be
  * visible in both windows */
 Win *vis_window_new(Vis*, const char *filename);
+/* creates a new window with `vis_window_new` and focuses on it */
+Win *vis_window_focus_new(Vis*, const char *filename);
 /* Creates a new window and underlying file object associated with the
  * given output file descriptor. No data is read from `fd`, but write
  * commands without an explicit filename will instead write to the file
  * descriptor */
-bool vis_window_new_fd(Vis*, int fd);
+Win *vis_window_new_fd(Vis*, int fd);
 /* reload the file currently displayed in the window from disk */
 bool vis_window_reload(Win*);
 /* check whether closing the window would loose unsaved changes */
