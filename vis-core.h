@@ -222,6 +222,7 @@ enum VisEvents {
 	VIS_EVENT_WIN_LEAVE,
 	VIS_EVENT_WIN_HIGHLIGHT,
 	VIS_EVENT_WIN_STATUS,
+	VIS_EVENT_MODE_CHANGE,
 };
 
 bool vis_event_emit(Vis*, enum VisEvents, ...);

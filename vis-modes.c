@@ -86,6 +86,7 @@ void mode_set(Vis *vis, Mode *new_mode) {
 	vis->mode = new_mode;
 	if (new_mode->enter)
 		new_mode->enter(vis, vis->mode_prev);
+	vis_event_emit(vis, VIS_EVENT_MODE_CHANGE);
 }
 
 void vis_mode_switch(Vis *vis, enum VisMode mode) {

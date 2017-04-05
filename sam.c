@@ -1163,7 +1163,10 @@ enum SamError sam_cmd(Vis *vis, const char *s) {
 				break;
 			}
 		}
-		vis_mode_switch(vis, completed ? VIS_MODE_NORMAL : VIS_MODE_VISUAL);
+		if (!completed)
+			vis_mode_switch(vis, VIS_MODE_VISUAL);
+		else if (vis->mode->visual)
+			vis_mode_switch(vis, VIS_MODE_NORMAL);
 	}
 	command_free(cmd);
 	return err;

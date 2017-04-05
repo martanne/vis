@@ -127,6 +127,12 @@ bool vis_event_emit(Vis *vis, enum VisEvents id, ...) {
 		}
 		break;
 	}
+	case VIS_EVENT_MODE_CHANGE:
+	{
+		if (!vis->win->file->internal && vis->event->mode_change)
+			vis->event->mode_change(vis);
+		break;
+	}
 	case VIS_EVENT_QUIT:
 		if (vis->event->quit)
 			vis->event->quit(vis);
