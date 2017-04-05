@@ -489,8 +489,7 @@ Win *window_new_file(Vis *vis, File *file, enum UiOption options) {
 		vis->windows->prev = win;
 	win->next = vis->windows;
 	vis->windows = win;
-	vis->win = win;
-	vis->ui->window_focus(win->ui);
+	vis_window_focus(win);
 	for (size_t i = 0; i < LENGTH(win->modes); i++)
 		win->modes[i].parent = &vis_modes[i];
 	vis_event_emit(vis, VIS_EVENT_WIN_OPEN, win);
@@ -654,8 +653,7 @@ void vis_window_close(Win *win) {
 	if (win == vis->message_window)
 		vis->message_window = NULL;
 	window_free(win);
-	if (vis->win)
-		vis->ui->window_focus(vis->win->ui);
+	vis_window_focus(vis->win);
 	vis_draw(vis);
 }
 
