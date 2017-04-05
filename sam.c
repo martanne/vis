@@ -1070,7 +1070,9 @@ static enum SamError command_validate(Command *cmd) {
 	return validate(cmd, false, false);
 }
 
-enum SamError sam_cmd(Vis *vis, const char *s) {
+/* The window argument can be null, in which case the currently active window is
+ * used. */
+enum SamError sam_cmd(Vis *vis, Win *win, const char *s) {
 	enum SamError err = SAM_ERR_OK;
 	if (!s)
 		return err;
@@ -1097,7 +1099,7 @@ enum SamError sam_cmd(Vis *vis, const char *s) {
 	bool visual = vis->mode->visual;
 	size_t primary_pos = vis->win ? view_cursor_get(vis->win->view) : EPOS;
 	Filerange range = text_range_empty();
-	sam_execute(vis, vis->win, cmd, NULL, &range);
+	sam_execute(vis, win ? win : vis->win, cmd, NULL, &range);
 
 	for (File *file = vis->files; file; file = file->next) {
 		if (file->internal)

@@ -742,6 +742,7 @@ static int register_names_iter(lua_State *L) {
  * Execute a `:`-command.
  * @function command
  * @tparam string command the command to execute
+ * @tparam[opt] Window win the window to execute the command in
  * @treturn bool whether the command succeeded
  * @usage
  * vis:command("set number")
@@ -749,7 +750,8 @@ static int register_names_iter(lua_State *L) {
 static int command(lua_State *L) {
 	Vis *vis = obj_ref_check(L, 1, "vis");
 	const char *cmd = luaL_checkstring(L, 2);
-	bool ret = vis_cmd(vis, cmd);
+	Win *win = lua_gettop(L) > 2 ? obj_ref_check(L, 3, VIS_LUA_TYPE_WINDOW) : NULL;
+	bool ret = vis_win_cmd(vis, win, cmd);
 	lua_pushboolean(L, ret);
 	return 1;
 }

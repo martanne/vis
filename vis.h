@@ -480,8 +480,12 @@ void vis_repeat(Vis*);
 /* cancel pending operator, reset count, motion, text object, register etc. */
 void vis_cancel(Vis*);
 
-/* execute a :-command (including an optinal range specifier) */
-bool vis_cmd(Vis*, const char *cmd);
+/* execute a :-command (including an optional range specifier) in a window */
+bool vis_win_cmd(Vis*, Win*, const char *cmd);
+
+/* execute a :-command (including an optional range specifier) in the currently
+ * active window */
+bool vis_cmd(Vis* vis, const char *cmd);
 
 /* type of user defined function which can be registered */
 typedef bool (CmdFunc)(Vis*, Win*, void *data, bool force,

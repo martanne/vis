@@ -1878,7 +1878,7 @@ int vis_pipe_collect(Vis *vis, File *file, Filerange *range, const char *argv[],
 	return status;
 }
 
-bool vis_cmd(Vis *vis, const char *cmdline) {
+bool vis_win_cmd(Vis *vis, Win *win, const char *cmdline) {
 	if (!cmdline)
 		return true;
 	while (*cmdline == ':')
@@ -1892,11 +1892,15 @@ bool vis_cmd(Vis *vis, const char *cmdline) {
 	for (char *end = line + len - 1; end >= line && isspace((unsigned char)*end); end--)
 		*end = '\0';
 
-	enum SamError err = sam_cmd(vis, line);
+	enum SamError err = sam_cmd(vis, win, line);
 	if (err != SAM_ERR_OK)
 		vis_info_show(vis, "%s", sam_error(err));
 	free(line);
 	return err == SAM_ERR_OK;
+}
+
+bool vis_cmd(Vis* vis, const char *cmd) {
+	return vis_win_cmd(vis, NULL, cmd);
 }
 
 void vis_file_snapshot(Vis *vis, File *file) {
