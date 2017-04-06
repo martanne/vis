@@ -145,8 +145,18 @@ bool vis_event_emit(Vis *vis, enum VisEvents id, ...) {
 
 /** window / file handling */
 
-static void file_free(Vis *vis, File *file) {
+static bool file_valid(Vis *vis, File *file) {
 	if (!file)
+		return false;
+	for (File *f = vis->files; f; f = f->next) {
+		if (f == file)
+			return true;
+	}
+	return false;
+}
+
+static void file_free(Vis *vis, File *file) {
+	if (!file || !file_valid(vis, file))
 		return;
 	if (file->refcount > 1) {
 		--file->refcount;
@@ -234,7 +244,7 @@ static File *file_new(Vis *vis, const char *name) {
 		goto err;
 	file->name = name_absolute;
 	vis_event_emit(vis, VIS_EVENT_FILE_OPEN, file);
-	return file;
+	return file_valid(vis, file) ? file : NULL;
 err:
 	free(name_absolute);
 	text_free(text);
@@ -481,6 +491,16 @@ void vis_window_invalidate(Win *win) {
 	}
 }
 
+static bool window_valid(Vis *vis, Win *win) {
+	if (!win)
+		return false;
+	for (Win *w = vis->windows; w; w = w->next) {
+		if (w == win)
+			return true;
+	}
+	return false;
+}
+
 Win *window_new_file(Vis *vis, File *file, enum UiOption options) {
 	Win *win = calloc(1, sizeof(Win));
 	if (!win)
@@ -503,13 +523,22 @@ Win *window_new_file(Vis *vis, File *file, enum UiOption options) {
 	vis->windows = win;
 	for (size_t i = 0; i < LENGTH(win->modes); i++)
 		win->modes[i].parent = &vis_modes[i];
-	Win *tmp = vis->win;
+	/* WIN_OPEN should happen before WIN_ENTER, but vis.win
+	 * should already point to the new window. Also the event
+	 * handlers may destroy the window, hence we have to validate it.
+	 */
+	Win *old = vis->win;
 	vis->win = win;
 	vis_event_emit(vis, VIS_EVENT_WIN_OPEN, win);
-	bool alive = vis->win == win;
-	vis->win = tmp;
-	if (alive)
+	bool focused = vis->win == win;
+	if (!old || window_valid(vis, old))
+		vis->win = old;
+	if (!window_valid(vis, win))
+		win = NULL;
+	if (focused)
 		vis_window_focus(win);
+	if (!vis->win)
+		vis->win = vis->windows;
 	return win;
 }
 
