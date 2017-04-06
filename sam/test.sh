@@ -74,9 +74,10 @@ for t in $TESTS; do
 	TESTS_RUN=$((TESTS_RUN+1))
 
 	$VIS "$IN" </dev/null 2>/dev/null
+	RETURN_CODE=$?
 
 	printf "Running test %s with vis ... " "$t"
-	if [ $? -ne 0 -o ! -e "$VIS_OUT" ]; then
+	if [ $RETURN_CODE -ne 0 -o ! -e "$VIS_OUT" ]; then
 		printf "ERROR\n"
 	elif cmp -s "$REF" "$VIS_OUT"; then
 		printf "OK\n"
