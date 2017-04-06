@@ -9,7 +9,6 @@ vis.events.win_open = function(win)
 		local cmd = cmd_file:read('*all')
 		vis:command(string.format(",{\n %s\n }", cmd))
 		local out_file_name = string.gsub(in_file, '%.in$', '.vis.out')
-		vis:command(string.format("wq! %s", out_file_name))
+		vis:command(string.format("w! %s", out_file_name))
 	end
-	vis:command('qall!')
 end

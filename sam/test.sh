@@ -73,7 +73,7 @@ for t in $TESTS; do
 
 	TESTS_RUN=$((TESTS_RUN+1))
 
-	$VIS "$IN" </dev/null 2>/dev/null
+	$VIS '+qall!' "$IN" </dev/null 2>/dev/null
 	RETURN_CODE=$?
 
 	printf "Running test %s with vis ... " "$t"

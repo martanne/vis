@@ -25,7 +25,7 @@ for t in $test_files; do
 	TESTS_RUN=$((TESTS_RUN + 1))
 	t=${t%.in}
 	t=${t#./}
-	$VIS "$t".in < /dev/null 2> /dev/null
+	$VIS '+qall!' "$t".in < /dev/null 2> /dev/null
 	RETURN_CODE=$?
 
 	printf "%-50s" "$t"
