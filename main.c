@@ -1560,6 +1560,7 @@ static const char *selections_rotate(Vis *vis, const char *keys, const Arg *arg)
 		line = line_next;
 	}
 
+	array_release(&arr);
 	vis_count_set(vis, VIS_COUNT_UNKNOWN);
 	return keys;
 }
