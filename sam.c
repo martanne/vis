@@ -1105,6 +1105,7 @@ enum SamError sam_cmd(Vis *vis, const char *s) {
 		Transcript *t = &file->transcript;
 		if (t->error != SAM_ERR_OK) {
 			err = t->error;
+			sam_transcript_free(t);
 			continue;
 		}
 		vis_file_snapshot(vis, file);
@@ -1211,7 +1212,11 @@ static bool cmd_insert(Vis *vis, Win *win, Command *cmd, const char *argv[], Cur
 		return false;
 	Buffer buf = text(vis, argv[1]);
 	size_t len = buffer_length(&buf);
-	return sam_insert(win, cur, range->start, buffer_move(&buf), len);
+	char *data = buffer_move(&buf);
+	bool ret = sam_insert(win, cur, range->start, data, len);
+	if (!ret)
+		free(data);
+	return ret;
 }
 
 static bool cmd_append(Vis *vis, Win *win, Command *cmd, const char *argv[], Cursor *cur, Filerange *range) {
@@ -1219,7 +1224,11 @@ static bool cmd_append(Vis *vis, Win *win, Command *cmd, const char *argv[], Cur
 		return false;
 	Buffer buf = text(vis, argv[1]);
 	size_t len = buffer_length(&buf);
-	return sam_insert(win, cur, range->end, buffer_move(&buf), len);
+	char *data = buffer_move(&buf);
+	bool ret = sam_insert(win, cur, range->end, data, len);
+	if (!ret)
+		free(data);
+	return ret;
 }
 
 static bool cmd_change(Vis *vis, Win *win, Command *cmd, const char *argv[], Cursor *cur, Filerange *range) {
@@ -1227,7 +1236,11 @@ static bool cmd_change(Vis *vis, Win *win, Command *cmd, const char *argv[], Cur
 		return false;
 	Buffer buf = text(vis, argv[1]);
 	size_t len = buffer_length(&buf);
-	return sam_change(win, cur, range, buffer_move(&buf), len);
+	char *data = buffer_move(&buf);
+	bool ret = sam_change(win, cur, range, data, len);
+	if (!ret)
+		free(data);
+	return ret;
 }
 
 static bool cmd_delete(Vis *vis, Win *win, Command *cmd, const char *argv[], Cursor *cur, Filerange *range) {
@@ -1547,7 +1560,9 @@ static bool cmd_filter(Vis *vis, Win *win, Command *cmd, const char *argv[], Cur
 		vis_info_show(vis, "Command cancelled");
 	} else if (status == 0) {
 		size_t len = buffer_length(&bufout);
-		sam_change(win, cur, range, buffer_move(&bufout), len);
+		char *data = buffer_move(&bufout);
+		if (!sam_change(win, cur, range, data, len))
+			free(data);
 	} else {
 		vis_info_show(vis, "Command failed %s", buffer_content0(&buferr));
 	}
