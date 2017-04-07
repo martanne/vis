@@ -1391,12 +1391,14 @@ bool text_iterator_char_get(Iterator *it, char *c) {
 }
 
 bool text_iterator_next(Iterator *it) {
-	return text_iterator_init(it, it->pos, it->piece ? it->piece->next : NULL, 0);
+	size_t rem = it->end - it->text;
+	return text_iterator_init(it, it->pos+rem, it->piece ? it->piece->next : NULL, 0);
 }
 
 bool text_iterator_prev(Iterator *it) {
+	size_t off = it->text - it->start;
 	size_t len = it->piece && it->piece->prev ? it->piece->prev->len : 0;
-	return text_iterator_init(it, it->pos, it->piece ? it->piece->prev : NULL, len);
+	return text_iterator_init(it, it->pos-off, it->piece ? it->piece->prev : NULL, len);
 }
 
 bool text_iterator_valid(const Iterator *it) {
