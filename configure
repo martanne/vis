@@ -594,6 +594,25 @@ EOF
 	fi
 fi
 
+printf "checking for memrchr... "
+
+cat > "$tmpc" <<EOF
+#define _GNU_SOURCE
+#include <string.h>
+
+int main(int argc, char *argv[]) {
+        return !memrchr("\n", '\n', 1);
+}
+EOF
+
+if $CC $CFLAGS "$tmpc" $LDFLAGS -o "$tmpo" >/dev/null 2>&1; then
+	HAVE_MEMRCHR=1
+	printf "%s\n" "yes"
+else
+	HAVE_MEMRCHR=0
+	printf "%s\n" "no"
+fi
+
 printf "completing config.mk... "
 
 exec 3>&1 1>>config.mk
@@ -621,6 +640,7 @@ LDFLAGS_ACL = $LDFLAGS_ACL
 CONFIG_SELINUX = $CONFIG_SELINUX
 CFLAGS_SELINUX = $CFLAGS_SELINUX
 LDFLAGS_SELINUX = $LDFLAGS_SELINUX
+CFLAGS_LIBC = -DHAVE_MEMRCHR=$HAVE_MEMRCHR
 EOF
 exec 1>&3 3>&-
 

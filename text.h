@@ -97,6 +97,8 @@ bool text_iterator_byte_prev(Iterator*, char *b);
 /* if the new position is at EOF a NUL byte (which is not actually
  * part of the file) is read. */
 bool text_iterator_byte_next(Iterator*, char *b);
+bool text_iterator_byte_find_prev(Iterator*, char b);
+bool text_iterator_byte_find_next(Iterator*, char b);
 /* move to the next/previous UTF-8 encoded Unicode codepoint
  * and set c (if it is non NULL) to the first byte */
 bool text_iterator_codepoint_next(Iterator *it, char *c);

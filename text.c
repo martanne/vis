@@ -1,3 +1,4 @@
+#define _GNU_SOURCE // memrchr(3) is non-standard
 #include <unistd.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -1453,6 +1454,34 @@ bool text_iterator_byte_prev(Iterator *it, char *b) {
 	if (b)
 		*b = *it->text;
 	return true;
+}
+
+bool text_iterator_byte_find_prev(Iterator *it, char b) {
+	while (it->text) {
+		const char *match = memrchr(it->start, b, it->text - it->start);
+		if (match) {
+			it->pos -= it->text - match;
+			it->text = match;
+			return true;
+		}
+		text_iterator_prev(it);
+	}
+	text_iterator_next(it);
+	return false;
+}
+
+bool text_iterator_byte_find_next(Iterator *it, char b) {
+	while (it->text) {
+		const char *match = memchr(it->text, b, it->end - it->text);
+		if (match) {
+			it->pos += match - it->text;
+			it->text = match;
+			return true;
+		}
+		text_iterator_next(it);
+	}
+	text_iterator_prev(it);
+	return false;
 }
 
 bool text_iterator_codepoint_next(Iterator *it, char *c) {
