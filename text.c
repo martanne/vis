@@ -1380,17 +1380,6 @@ bool text_iterator_byte_get(Iterator *it, char *b) {
 	return false;
 }
 
-bool text_iterator_char_get(Iterator *it, char *c) {
-	bool ret = text_iterator_byte_get(it, c);
-	if (ret && *c == '\r') {
-		char d;
-		if (text_iterator_byte_next(it, &d) && d == '\n')
-			*c = '\n';
-		return text_iterator_byte_prev(it, NULL);
-	}
-	return ret;
-}
-
 bool text_iterator_next(Iterator *it) {
 	size_t rem = it->end - it->text;
 	return text_iterator_init(it, it->pos+rem, it->piece ? it->piece->next : NULL, 0);
@@ -1506,15 +1495,9 @@ bool text_iterator_codepoint_prev(Iterator *it, char *c) {
 	return false;
 }
 
-bool text_iterator_char_next(Iterator *it, char *ret) {
-	char c;
-	if (!ret)
-		ret = &c;
-	bool cr = text_iterator_byte_get(it, &c) && c == '\r';
-	if (!text_iterator_codepoint_next(it, ret))
+bool text_iterator_char_next(Iterator *it, char *c) {
+	if (!text_iterator_codepoint_next(it, c))
 		return false;
-	if (cr && *ret == '\n')
-		return text_iterator_byte_next(it, ret) && text_iterator_char_get(it, ret);
 	mbstate_t ps = { 0 };
 	for (;;) {
 		char buf[MB_CUR_MAX];
@@ -1527,31 +1510,20 @@ bool text_iterator_char_next(Iterator *it, char *ret) {
 			return false;
 		} else if (wclen == 0) {
 			return true;
-		} else if (wc == L'\r') {
-			return text_iterator_char_get(it, ret);
 		} else {
 			int width = wcwidth(wc);
 			if (width != 0)
 				return true;
-			if (!text_iterator_codepoint_next(it, ret))
+			if (!text_iterator_codepoint_next(it, c))
 				return false;
 		}
 	}
 	return true;
 }
 
-bool text_iterator_char_prev(Iterator *it, char *ret) {
-	char c;
-	if (!ret)
-		ret = &c;
-	if (!text_iterator_codepoint_prev(it, ret))
+bool text_iterator_char_prev(Iterator *it, char *c) {
+	if (!text_iterator_codepoint_prev(it, c))
 		return false;
-	if (*ret == '\n') {
-		if (!text_iterator_byte_prev(it, &c) || c != '\r')
-			text_iterator_byte_next(it, NULL);
-		return true;
-	}
-
 	for (;;) {
 		char buf[MB_CUR_MAX];
 		size_t len = text_bytes_get(it->piece->text, it->pos, sizeof buf, buf);
@@ -1568,7 +1540,7 @@ bool text_iterator_char_prev(Iterator *it, char *ret) {
 			int width = wcwidth(wc);
 			if (width != 0)
 				return true;
-			if (!text_iterator_codepoint_prev(it, ret))
+			if (!text_iterator_codepoint_prev(it, c))
 				return false;
 		}
 	}
@@ -1577,11 +1549,6 @@ bool text_iterator_char_prev(Iterator *it, char *ret) {
 
 bool text_byte_get(Text *txt, size_t pos, char *buf) {
 	return text_bytes_get(txt, pos, 1, buf);
-}
-
-bool text_char_get(Text *txt, size_t pos, char *buf) {
-	Iterator it = text_iterator_get(txt, pos);
-	return text_iterator_char_get(&it, buf);
 }
 
 size_t text_bytes_get(Text *txt, size_t pos, size_t len, char *buf) {

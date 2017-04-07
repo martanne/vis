@@ -18,8 +18,8 @@ Filerange text_object_entire_inner(Text *txt, size_t pos) {
 	char c;
 	Filerange r = text_object_entire(txt, pos);
 	Iterator it = text_iterator_get(txt, r.start);
-	if (text_iterator_char_get(&it, &c) && c == '\n')
-		while (text_iterator_char_next(&it, &c) && c == '\n');
+	if (text_iterator_byte_get(&it, &c) && c == '\n')
+		while (text_iterator_byte_next(&it, &c) && c == '\n');
 	r.start = it.pos;
 	it = text_iterator_get(txt, r.end);
 	while (text_iterator_char_prev(&it, &c) && c == '\n');
@@ -282,7 +282,7 @@ Filerange text_object_indentation(Text *txt, size_t pos) {
 	size_t start = bol;
 	size_t end = text_line_next(txt, bol);
 	size_t line_indent = sol - bol;
-	bool line_empty = text_char_get(txt, bol, &c) && c == '\n';
+	bool line_empty = text_byte_get(txt, bol, &c) && c == '\n';
 
 	char *buf = text_bytes_alloc0(txt, bol, line_indent);
 	char *tmp = malloc(line_indent);
@@ -298,7 +298,7 @@ Filerange text_object_indentation(Text *txt, size_t pos) {
 		size_t indent = sol - bol;
 		if (indent < line_indent)
 			break;
-		bool empty = text_char_get(txt, bol, &c) && c == '\n';
+		bool empty = text_byte_get(txt, bol, &c) && c == '\n';
 		if (line_empty && !empty)
 			break;
 		if (line_indent == 0 && empty)
@@ -315,7 +315,7 @@ Filerange text_object_indentation(Text *txt, size_t pos) {
 		size_t indent = sol - bol;
 		if (indent < line_indent)
 			break;
-		bool empty = text_char_get(txt, bol, &c) && c == '\n';
+		bool empty = text_byte_get(txt, bol, &c) && c == '\n';
 		if (line_empty && !empty)
 			break;
 		if (line_indent == 0 && empty)

@@ -113,34 +113,14 @@ size_t text_line_find_prev(Text *txt, size_t pos, const char *s) {
 }
 
 size_t text_line_prev(Text *txt, size_t pos) {
-	char c;
 	Iterator it = text_iterator_get(txt, pos);
-	if (!text_iterator_char_get(&it, &c))
-		return pos;
-	if (c == '\n')
-		text_iterator_char_prev(&it, &c);
-	while (text_iterator_byte_get(&it, &c) && c != '\n')
-		text_iterator_byte_prev(&it, NULL);
-	if (text_iterator_byte_prev(&it, &c) && c != '\r')
-		text_iterator_byte_next(&it, &c);
+	text_iterator_byte_find_prev(&it, '\n');
 	return it.pos;
 }
 
 size_t text_line_begin(Text *txt, size_t pos) {
-	char c;
 	Iterator it = text_iterator_get(txt, pos);
-	if (!text_iterator_char_get(&it, &c))
-		return pos;
-	if (c == '\n')
-		text_iterator_char_prev(&it, &c);
-	while (text_iterator_byte_get(&it, &c)) {
-		if (c == '\n') {
-			it.pos++;
-			break;
-		}
-		text_iterator_byte_prev(&it, NULL);
-	}
-	return it.pos;
+	return text_iterator_byte_find_prev(&it, '\n') ? it.pos+1 : it.pos;
 }
 
 size_t text_line_start(Text *txt, size_t pos) {
@@ -162,19 +142,15 @@ size_t text_line_finish(Text *txt, size_t pos) {
 }
 
 size_t text_line_end(Text *txt, size_t pos) {
-	char c;
 	Iterator it = text_iterator_get(txt, pos);
-	if (text_iterator_char_get(&it, &c) && c != '\n')
-		while (text_iterator_char_next(&it, &c) && c != '\n');
+	text_iterator_byte_find_next(&it, '\n');
 	return it.pos;
 }
 
 size_t text_line_next(Text *txt, size_t pos) {
-	char c;
 	Iterator it = text_iterator_get(txt, pos);
-	while (text_iterator_byte_get(&it, &c) && c != '\n')
+	if (text_iterator_byte_find_next(&it, '\n'))
 		text_iterator_byte_next(&it, NULL);
-	text_iterator_byte_next(&it, NULL);
 	return it.pos;
 }
 
@@ -182,7 +158,7 @@ size_t text_line_offset(Text *txt, size_t pos, size_t off) {
 	char c;
 	size_t bol = text_line_begin(txt, pos);
 	Iterator it = text_iterator_get(txt, bol);
-	while (off-- > 0 && text_iterator_char_get(&it, &c) && c != '\n')
+	while (off-- > 0 && text_iterator_byte_get(&it, &c) && c != '\n')
 		text_iterator_byte_next(&it, NULL);
 	return it.pos;
 }
@@ -191,7 +167,7 @@ size_t text_line_char_set(Text *txt, size_t pos, int count) {
 	char c;
 	size_t bol = text_line_begin(txt, pos);
 	Iterator it = text_iterator_get(txt, bol);
-	if (text_iterator_char_get(&it, &c) && c != '\n')
+	if (text_iterator_byte_get(&it, &c) && c != '\n')
 		while (count-- > 0 && text_iterator_char_next(&it, &c) && c != '\n');
 	return it.pos;
 }
@@ -201,7 +177,7 @@ int text_line_char_get(Text *txt, size_t pos) {
 	int count = 0;
 	size_t bol = text_line_begin(txt, pos);
 	Iterator it = text_iterator_get(txt, bol);
-	if (text_iterator_char_get(&it, &c) && c != '\n') {
+	if (text_iterator_byte_get(&it, &c) && c != '\n') {
 		while (it.pos < pos && c != '\n' && text_iterator_char_next(&it, &c))
 			count++;
 	}
@@ -217,7 +193,7 @@ int text_line_width_get(Text *txt, size_t pos) {
 	while (it.pos < pos) {
 		char buf[MB_CUR_MAX];
 		size_t len = text_bytes_get(txt, it.pos, sizeof buf, buf);
-		if (len == 0 || buf[0] == '\r' || buf[0] == '\n')
+		if (len == 0 || buf[0] == '\n')
 			break;
 		wchar_t wc;
 		size_t wclen = mbrtowc(&wc, buf, len, &ps);
@@ -254,7 +230,7 @@ size_t text_line_width_set(Text *txt, size_t pos, int width) {
 	for (;;) {
 		char buf[MB_CUR_MAX];
 		size_t len = text_bytes_get(txt, it.pos, sizeof buf, buf);
-		if (len == 0 || buf[0] == '\r' || buf[0] == '\n')
+		if (len == 0 || buf[0] == '\n')
 			break;
 		wchar_t wc;
 		size_t wclen = mbrtowc(&wc, buf, len, &ps);
@@ -285,7 +261,7 @@ size_t text_line_width_set(Text *txt, size_t pos, int width) {
 size_t text_line_char_next(Text *txt, size_t pos) {
 	char c;
 	Iterator it = text_iterator_get(txt, pos);
-	if (!text_iterator_char_get(&it, &c) || c == '\n')
+	if (!text_iterator_byte_get(&it, &c) || c == '\n')
 		return pos;
 	text_iterator_char_next(&it, NULL);
 	return it.pos;
@@ -425,7 +401,7 @@ size_t text_word_start_prev(Text *txt, size_t pos) {
 
 size_t text_sentence_next(Text *txt, size_t pos) {
 	char c, prev = 'X';
-	Iterator it = text_iterator_get(txt, pos), rev = text_iterator_get(txt, pos);
+	Iterator it = text_iterator_get(txt, pos), rev = it;
 
 	if (!text_iterator_byte_get(&it, &c))
 		return pos;
@@ -469,7 +445,7 @@ size_t text_paragraph_next(Text *txt, size_t pos) {
 	char c;
 	Iterator it = text_iterator_get(txt, pos);
 
-	while (text_iterator_char_get(&it, &c) && c == '\n')
+	while (text_iterator_byte_get(&it, &c) && c == '\n')
 		text_iterator_char_next(&it, NULL);
 	return text_line_empty_next(txt, it.pos);
 }
@@ -479,23 +455,17 @@ size_t text_paragraph_prev(Text *txt, size_t pos) {
 	Iterator it = text_iterator_get(txt, pos);
 
 	/* c == \0 catches starting the search at EOF */
-	while (text_iterator_char_get(&it, &c) && (c == '\n' || c == '\0'))
-		text_iterator_char_prev(&it, NULL);
+	while (text_iterator_byte_get(&it, &c) && (c == '\n' || c == '\0'))
+		text_iterator_byte_prev(&it, NULL);
 	return text_line_empty_prev(txt, it.pos);
 }
 
 size_t text_line_empty_next(Text *txt, size_t pos) {
 	char c;
 	Iterator it = text_iterator_get(txt, pos);
-	while (text_iterator_byte_get(&it, &c)) {
-		if (c == '\n' && text_iterator_byte_next(&it, &c)) {
-			size_t match = it.pos;
-			if (c == '\r')
-				text_iterator_byte_next(&it, &c);
-			if (c == '\n')
-				return match;
-		}
-		text_iterator_byte_next(&it, NULL);
+	while (text_iterator_byte_find_next(&it, '\n')) {
+		if (text_iterator_byte_next(&it, &c) && c == '\n')
+			return it.pos;
 	}
 	return it.pos;
 }
@@ -503,13 +473,9 @@ size_t text_line_empty_next(Text *txt, size_t pos) {
 size_t text_line_empty_prev(Text *txt, size_t pos) {
 	char c;
 	Iterator it = text_iterator_get(txt, pos);
-	while (text_iterator_byte_prev(&it, &c)) {
-		if (c == '\n' && text_iterator_byte_prev(&it, &c)) {
-			if (c == '\r')
-				text_iterator_byte_prev(&it, &c);
-			if (c == '\n')
-				return it.pos + 1;
-		}
+	while (text_iterator_byte_find_prev(&it, '\n')) {
+		if (text_iterator_byte_prev(&it, &c) && c == '\n')
+			return it.pos + 1;
 	}
 	return it.pos;
 }

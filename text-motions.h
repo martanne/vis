@@ -28,11 +28,11 @@ size_t text_find_prev(Text*, size_t pos, const char *s);
 size_t text_line_find_next(Text*, size_t pos, const char *s);
 size_t text_line_find_prev(Text*, size_t pos, const char *s);
 
-/*        begin            finish  end   next
- *        v                v       v     v
- *  [\r]\n      I am a line!       [\r]\n
- *  ^           ^
- *  prev        start
+/*    begin            finish    next
+ *    v                v         v
+ *  \n      I am a line!       \n
+ *  ^       ^                  ^
+ *  prev    start              end
  */
 size_t text_line_prev(Text*, size_t pos);
 size_t text_line_begin(Text*, size_t pos);
