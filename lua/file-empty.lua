@@ -8,10 +8,6 @@ describe("empty file", function()
 		assert.are.equal(0, file.size)
 	end)
 
-	it("has \\n line endings", function()
-		assert.are.equal("lf", file.newlines)
-	end)
-
 	it("has zero lines", function()
 		assert.are.equal(0, #file.lines)
 	end)

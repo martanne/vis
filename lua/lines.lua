@@ -39,7 +39,7 @@ describe("get file.lines[]", function()
 	end)
 
 	it("get empty \r\n line", function()
-		assert.are.equals("", file.lines[4])
+		assert.are.equals("\r", file.lines[4])
 	end)
 
 	it("get lines[#lines]", function()
