@@ -1208,6 +1208,8 @@ static const char *macro_record(Vis *vis, const char *keys, const Arg *arg) {
 	if (!vis_macro_record_stop(vis)) {
 		if (!keys[0])
 			return NULL;
+		if (keys[1])
+			return vis_keys_next(vis, keys);
 		enum VisRegister reg = vis_register_from(vis, keys[0]);
 		vis_macro_record(vis, reg);
 		keys++;
