@@ -48,7 +48,7 @@ static size_t op_put(Vis *vis, Text *txt, OperatorContext *c) {
 	case VIS_OP_PUT_AFTER_END:
 		if (c->reg->linewise && !sel_linewise)
 			pos = text_line_next(txt, pos);
-		else if (!sel && text_byte_get(txt, pos, &b) && b != '\r' && b != '\n')
+		else if (!sel && text_byte_get(txt, pos, &b) && b != '\n')
 			pos = text_char_next(txt, pos);
 		break;
 	case VIS_OP_PUT_BEFORE:
@@ -218,7 +218,7 @@ static size_t op_join(Vis *vis, Text *txt, OperatorContext *c) {
 		text_delete(txt, pos, end - pos);
 		char prev, next;
 		if (text_byte_get(txt, pos-1, &prev) && !isspace((unsigned char)prev) &&
-		    text_byte_get(txt, pos, &next) && next != '\r' && next != '\n')
+		    text_byte_get(txt, pos, &next) && next != '\n')
 			text_insert(txt, pos, c->arg->s, len);
 		if (mark == EMARK)
 			mark = text_mark_set(txt, pos);

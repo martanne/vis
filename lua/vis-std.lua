@@ -91,10 +91,6 @@ vis.events.subscribe(vis.events.WIN_STATUS, function(win)
 	table.insert(left_parts, (file.name or '[No Name]') ..
 		(file.modified and ' [+]' or '') .. (vis.recording and ' @' or ''))
 
-	if file.newlines == "crlf" then
-		table.insert(right_parts, "␍␊")
-	end
-
 	if #win.cursors > 1 then
 		table.insert(right_parts, cursor.number..'/'..#win.cursors)
 	end

@@ -79,9 +79,6 @@ static void window_status_update(Vis *vis, Win *win) {
 	         vis_macro_recording(vis) ? " @": "");
 	left_count++;
 
-	if (text_newline_type(txt) == TEXT_NEWLINE_CRLF)
-		strcpy(right_parts[right_count++], "␍␊");
-
 	int cursor_count = view_cursors_count(view);
 	if (cursor_count > 1) {
 		Cursor *c = view_cursors_primary_get(view);
@@ -1872,10 +1869,6 @@ static const struct luaL_Reg window_cursor_funcs[] = {
  * end
  */
 /***
- * Type of line endings.
- * @tfield string newlines the type of line endings either `lf` (the default) or `crlf`
- */
-/***
  * File size in bytes.
  * @tfield int size the current file size in bytes
  */
@@ -1904,21 +1897,6 @@ static int file_index(lua_State *L) {
 
 		if (strcmp(key, "lines") == 0) {
 			obj_ref_new(L, file->text, VIS_LUA_TYPE_TEXT);
-			return 1;
-		}
-
-		if (strcmp(key, "newlines") == 0) {
-			switch (text_newline_type(file->text)) {
-			case TEXT_NEWLINE_LF:
-				lua_pushstring(L, "lf");
-				break;
-			case TEXT_NEWLINE_CRLF:
-				lua_pushstring(L, "crlf");
-				break;
-			default:
-				lua_pushnil(L);
-				break;
-			}
 			return 1;
 		}
 

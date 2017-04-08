@@ -156,8 +156,7 @@ void vis_replace_key(Vis*, const char *data, size_t len);
 /* inserts a tab (peforms tab expansion based on current editing settings),
  * at all current cursor positions */
 void vis_insert_tab(Vis*);
-/* inserts a new line sequence (depending on the file type this might be \n or
- * \r\n) at all current cursor positions */
+/* inserts a \n character at every cursor position */
 void vis_insert_nl(Vis*);
 
 /* processes the given command line arguments and starts the main loop, won't

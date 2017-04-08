@@ -382,11 +382,6 @@ void view_draw(View *view) {
 				cell.width = 1;
 		}
 
-		if (cur[0] == '\r' && rem > 1 && cur[1] == '\n') {
-			/* convert views style newline \r\n into a single char with len = 2 */
-			cell = (Cell){ .data = "\n", .len = 2, .width = 1 };
-		}
-
 		if (cell.width == 0 && prev_cell.len + cell.len < sizeof(cell.data)) {
 			prev_cell.len += cell.len;
 			strcat(prev_cell.data, cell.data);
@@ -593,16 +588,12 @@ bool view_viewport_up(View *view, int n) {
 	/* skip newlines immediately before display area */
 	if (c == '\n' && text_iterator_byte_prev(&it, &c))
 		off++;
-	if (c == '\r' && text_iterator_byte_prev(&it, &c))
-		off++;
 	do {
 		if (c == '\n' && --n == 0)
 			break;
 		if (++off > max)
 			break;
 	} while (text_iterator_byte_prev(&it, &c));
-	if (c == '\r')
-		off++;
 	view->start -= MIN(view->start, off);
 	view_draw(view);
 	return true;

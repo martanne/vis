@@ -121,15 +121,6 @@ bool text_modified(Text*);
  * this text instance */
 bool text_sigbus(Text*, const char *addr);
 
-/* which type of new lines does the text use? */
-enum TextNewLine {
-	TEXT_NEWLINE_LF = 1,
-	TEXT_NEWLINE_CRLF,
-};
-
-enum TextNewLine text_newline_type(Text*);
-const char *text_newline_char(Text*);
-
 enum TextSaveMethod {
 	TEXT_SAVE_AUTO,    /* first try atomic, then fall back to inplace */
 	TEXT_SAVE_ATOMIC,  /* create a new file, write content, atomically rename(2) over old file */

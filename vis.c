@@ -772,7 +772,7 @@ void vis_replace(Vis *vis, size_t pos, const char *data, size_t len) {
 	Text *txt = vis->win->file->text;
 	Iterator it = text_iterator_get(txt, pos);
 	int chars = text_char_count(data, len);
-	for (char c; chars-- > 0 && text_iterator_byte_get(&it, &c) && c != '\r' && c != '\n'; )
+	for (char c; chars-- > 0 && text_iterator_byte_get(&it, &c) && c != '\n'; )
 		text_iterator_char_next(&it, NULL);
 
 	text_delete(txt, pos, it.pos - pos);
@@ -1601,8 +1601,7 @@ void vis_insert_tab(Vis *vis) {
 }
 
 size_t vis_text_insert_nl(Vis *vis, Text *txt, size_t pos) {
-	const char *nl = text_newline_char(txt);
-	size_t nl_len = strlen(nl), indent_len = 0;
+	size_t indent_len = 0;
 	char byte, *indent = NULL;
 	/* insert second newline at end of file, except if there is already one */
 	bool eof = pos == text_size(txt);
@@ -1625,14 +1624,14 @@ size_t vis_text_insert_nl(Vis *vis, Text *txt, size_t pos) {
 		}
 	}
 
-	text_insert(txt, pos, nl, nl_len);
+	text_insert(txt, pos, "\n", 1);
 	if (eof) {
 		if (nl2)
-			text_insert(txt, pos, nl, nl_len);
+			text_insert(txt, pos, "\n", 1);
 		else
-			pos -= nl_len; /* place cursor before, not after nl */
+			pos--; /* place cursor before, not after nl */
 	}
-	pos += nl_len;
+	pos++;
 
 	if (indent)
 		text_insert(txt, pos, indent, indent_len);
