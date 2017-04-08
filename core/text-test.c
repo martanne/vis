@@ -59,6 +59,35 @@ static bool compare(Text *txt, const char *data) {
 	       compare_iterator_both(txt, data);
 }
 
+static void iterator_find_everywhere(Text *txt, char *data) {
+	size_t len = strlen(data);
+
+	Iterator it = text_iterator_get(txt, 0);
+
+	for (size_t i = 0; i < len; i++) {
+		ok(text_iterator_byte_find_next(&it, data[i]) && it.pos == i && text_iterator_byte_next(&it, NULL) && it.pos == i+1, "Iterator find byte next at current position");
+	}
+	ok(!text_iterator_byte_find_next(&it, data[len-1]) && it.pos == len, "Iterator find byte next at EOF");
+
+	for (size_t i = len; i-- > 0;) {
+		ok(text_iterator_byte_find_prev(&it, data[i]) && it.pos == i, "Iterator find byte prev at current position");
+	}
+	ok(!text_iterator_byte_find_prev(&it, data[0]) && it.pos == 0, "Iterator find byte prev at BOF");
+
+}
+
+static void iterator_find_next(Text *txt, size_t start, char b, size_t match) {
+	Iterator it = text_iterator_get(txt, start);
+	bool found = text_iterator_byte_find_next(&it, b);
+	ok((found && it.pos == match) || (!found && it.pos == text_size(txt)),"Iterator byte find next (start: %zu, match: %zu)", start, match);
+}
+
+static void iterator_find_prev(Text *txt, size_t start, char b, size_t match) {
+	Iterator it = text_iterator_get(txt, start);
+	bool found = text_iterator_byte_find_prev(&it, b);
+	ok((found && it.pos == match) || (!found && it.pos == 0),"Iterator byte find prev (start: %zu, match: %zu)", start, match);
+}
+
 int main(int argc, char *argv[]) {
 	Text *txt;
 
@@ -101,6 +130,20 @@ int main(int argc, char *argv[]) {
 	b = '_';
 	ok(text_iterator_byte_get(&it, &b) && b == '\0' &&
 	   text_iterator_valid(&it), "Accessing iterator after moving back from beyond start of file");
+
+	char data[] = "a\nb\nc\n";
+	size_t data_len = strlen(data);
+	ok(insert(txt, 0, data), "Inserting new lines");
+	iterator_find_everywhere(txt, data);
+	iterator_find_next(txt, 0, 'a', 0);
+	iterator_find_next(txt, 0, 'b', 2);
+	iterator_find_next(txt, 0, 'c', 4);
+	iterator_find_next(txt, 0, 'e', EPOS);
+	iterator_find_prev(txt, data_len, 'a', 0);
+	iterator_find_prev(txt, data_len, 'b', 2);
+	iterator_find_prev(txt, data_len, 'c', 4);
+	iterator_find_prev(txt, data_len, 'e', EPOS);
+	ok(text_undo(txt) == 0 && isempty(txt), "Undo to empty document 1");
 
 	ok(insert(txt, 1, "") && isempty(txt), "Inserting empty data");
 	ok(!insert(txt, 1, " ") && isempty(txt), "Inserting with invalid offset");
