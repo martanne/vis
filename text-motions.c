@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <wchar.h>
 #include <errno.h>
+#include <limits.h>
 #include "text-motions.h"
 #include "text-util.h"
 #include "util.h"
@@ -191,7 +192,7 @@ int text_line_width_get(Text *txt, size_t pos) {
 	Iterator it = text_iterator_get(txt, bol);
 
 	while (it.pos < pos) {
-		char buf[MB_CUR_MAX];
+		char buf[MB_LEN_MAX];
 		size_t len = text_bytes_get(txt, it.pos, sizeof buf, buf);
 		if (len == 0 || buf[0] == '\n')
 			break;
@@ -228,7 +229,7 @@ size_t text_line_width_set(Text *txt, size_t pos, int width) {
 	Iterator it = text_iterator_get(txt, bol);
 
 	for (;;) {
-		char buf[MB_CUR_MAX];
+		char buf[MB_LEN_MAX];
 		size_t len = text_bytes_get(txt, it.pos, sizeof buf, buf);
 		if (len == 0 || buf[0] == '\n')
 			break;

@@ -9,6 +9,7 @@
 #include <wchar.h>
 #include <stdint.h>
 #include <libgen.h>
+#include <limits.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/mman.h>
@@ -1470,7 +1471,7 @@ bool text_iterator_char_next(Iterator *it, char *c) {
 		return false;
 	mbstate_t ps = { 0 };
 	for (;;) {
-		char buf[MB_CUR_MAX];
+		char buf[MB_LEN_MAX];
 		size_t len = text_bytes_get(it->piece->text, it->pos, sizeof buf, buf);
 		wchar_t wc;
 		size_t wclen = mbrtowc(&wc, buf, len, &ps);
@@ -1495,7 +1496,7 @@ bool text_iterator_char_prev(Iterator *it, char *c) {
 	if (!text_iterator_codepoint_prev(it, c))
 		return false;
 	for (;;) {
-		char buf[MB_CUR_MAX];
+		char buf[MB_LEN_MAX];
 		size_t len = text_bytes_get(it->piece->text, it->pos, sizeof buf, buf);
 		wchar_t wc;
 		mbstate_t ps = { 0 };
