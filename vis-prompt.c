@@ -163,6 +163,7 @@ void vis_prompt_show(Vis *vis, const char *title) {
 	Win *active = vis->win;
 	Win *prompt = window_new_file(vis, title[0] == ':' ? vis->command_file : vis->search_file,
 		UI_OPTION_ONELINE);
+	vis_window_focus(prompt);
 	if (!prompt)
 		return;
 	if (vis->mode->visual)

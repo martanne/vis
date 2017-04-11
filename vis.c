@@ -121,8 +121,28 @@ bool vis_event_emit(Vis *vis, enum VisEvents id, ...) {
 		}
 		break;
 	}
+	case VIS_EVENT_WIN_ENTER:
+	{
+		Win *win = va_arg(ap, Win*);
+		if (vis->event->win_enter)
+			vis->event->win_enter(vis, win);
+		break;
+	}
+	case VIS_EVENT_WIN_LEAVE:
+	{
+		Win *win = va_arg(ap, Win*);
+		if (vis->event->win_leave)
+			vis->event->win_leave(vis, win);
+		break;
+	}
+	case VIS_EVENT_MODE_CHANGE:
+	{
+		if (vis->event->mode_change)
+		  vis->event->mode_change(vis);
+		break;
+	}
 	case VIS_EVENT_QUIT:
-		if (vis->event->quit)
+	if (vis->event->quit)
 			vis->event->quit(vis);
 		break;
 	}
@@ -489,8 +509,6 @@ Win *window_new_file(Vis *vis, File *file, enum UiOption options) {
 		vis->windows->prev = win;
 	win->next = vis->windows;
 	vis->windows = win;
-	vis->win = win;
-	vis->ui->window_focus(win->ui);
 	for (size_t i = 0; i < LENGTH(win->modes); i++)
 		win->modes[i].parent = &vis_modes[i];
 	vis_event_emit(vis, VIS_EVENT_WIN_OPEN, win);
@@ -527,6 +545,7 @@ bool vis_window_split(Win *original) {
 	win->file = original->file;
 	view_options_set(win->view, view_options_get(original->view));
 	view_cursor_to(win->view, view_cursor_get(original->view));
+	vis_window_focus(win);
 	return true;
 }
 
@@ -534,8 +553,13 @@ void vis_window_focus(Win *win) {
 	if (!win)
 		return;
 	Vis *vis = win->vis;
+	Win *previous_win = vis->win;
+	if (previous_win && win != previous_win)
+		vis_event_emit(vis, VIS_EVENT_WIN_LEAVE, previous_win);
 	vis->win = win;
 	vis->ui->window_focus(win->ui);
+	if (win != previous_win)
+		vis_event_emit(vis, VIS_EVENT_WIN_ENTER, win);
 }
 
 void vis_window_next(Vis *vis) {
@@ -580,26 +604,30 @@ void vis_suspend(Vis *vis) {
 	vis->ui->suspend(vis->ui);
 }
 
-bool vis_window_new(Vis *vis, const char *filename) {
+Win* vis_window_new(Vis *vis, const char *filename) {
 	File *file = file_new(vis, filename);
 	if (!file)
-		return false;
+		return NULL;
 	Win *win = window_new_file(vis, file, UI_OPTION_STATUSBAR);
-	if (!win) {
+	if (!win)
 		file_free(vis, file);
-		return false;
-	}
-
-	return true;
+	return win;
 }
 
-bool vis_window_new_fd(Vis *vis, int fd) {
+Win* vis_window_focus_new(Vis *vis, const char *filename) {
+	Win *win = vis_window_new(vis, filename);
+	if (win)
+		vis_window_focus(win);
+	return win;
+}
+
+Win *vis_window_new_fd(Vis *vis, int fd) {
 	if (fd == -1)
-		return false;
-	if (!vis_window_new(vis, NULL))
-		return false;
-	vis->win->file->fd = fd;
-	return true;
+		return NULL;
+	Win *win = vis_window_new(vis, NULL);
+	if (win)
+		win->file->fd = fd;
+	return win;
 }
 
 bool vis_window_closable(Win *win) {
@@ -654,8 +682,7 @@ void vis_window_close(Win *win) {
 	if (win == vis->message_window)
 		vis->message_window = NULL;
 	window_free(win);
-	if (vis->win)
-		vis->ui->window_focus(vis->win->ui);
+	vis_window_focus(vis->win);
 	vis_draw(vis);
 }
 
@@ -1877,7 +1904,7 @@ int vis_pipe_collect(Vis *vis, File *file, Filerange *range, const char *argv[],
 	return status;
 }
 
-bool vis_cmd(Vis *vis, const char *cmdline) {
+bool vis_win_cmd(Vis *vis, Win *win, const char *cmdline) {
 	if (!cmdline)
 		return true;
 	while (*cmdline == ':')
@@ -1891,11 +1918,15 @@ bool vis_cmd(Vis *vis, const char *cmdline) {
 	for (char *end = line + len - 1; end >= line && isspace((unsigned char)*end); end--)
 		*end = '\0';
 
-	enum SamError err = sam_cmd(vis, line);
+	enum SamError err = sam_cmd(vis, win, line);
 	if (err != SAM_ERR_OK)
 		vis_info_show(vis, "%s", sam_error(err));
 	free(line);
 	return err == SAM_ERR_OK;
+}
+
+bool vis_cmd(Vis* vis, const char *cmd) {
+	return vis_win_cmd(vis, NULL, cmd);
 }
 
 void vis_file_snapshot(Vis *vis, File *file) {

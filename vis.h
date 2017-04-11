@@ -51,8 +51,11 @@ typedef struct {
 	void (*file_close)(Vis*, File*);
 	void (*win_open)(Vis*, Win*);
 	void (*win_close)(Vis*, Win*);
+	void (*win_enter)(Vis*, Win*);
+	void (*win_leave)(Vis*, Win*);
 	void (*win_highlight)(Vis*, Win*);
 	void (*win_status)(Vis*, Win*);
+	void (*mode_change)(Vis*);
 } VisEvent;
 
 typedef union { /* various types of arguments passed to key action functions */
@@ -101,12 +104,14 @@ void vis_resume(Vis*);
  * an unamed / empty buffer is created. If the given file is already opened
  * in another window, share the underlying text that is changes will be
  * visible in both windows */
-bool vis_window_new(Vis*, const char *filename);
+Win *vis_window_new(Vis*, const char *filename);
+/* creates a new window with `vis_window_new` and focuses on it */
+Win *vis_window_focus_new(Vis*, const char *filename);
 /* Creates a new window and underlying file object associated with the
  * given output file descriptor. No data is read from `fd`, but write
  * commands without an explicit filename will instead write to the file
  * descriptor */
-bool vis_window_new_fd(Vis*, int fd);
+Win *vis_window_new_fd(Vis*, int fd);
 /* reload the file currently displayed in the window from disk */
 bool vis_window_reload(Win*);
 /* check whether closing the window would loose unsaved changes */
@@ -479,8 +484,12 @@ void vis_repeat(Vis*);
 /* cancel pending operator, reset count, motion, text object, register etc. */
 void vis_cancel(Vis*);
 
-/* execute a :-command (including an optinal range specifier) */
-bool vis_cmd(Vis*, const char *cmd);
+/* execute a :-command (including an optional range specifier) in a window */
+bool vis_win_cmd(Vis*, Win*, const char *cmd);
+
+/* execute a :-command (including an optional range specifier) in the currently
+ * active window */
+bool vis_cmd(Vis* vis, const char *cmd);
 
 /* type of user defined function which can be registered */
 typedef bool (CmdFunc)(Vis*, Win*, void *data, bool force,
