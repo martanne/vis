@@ -1,4 +1,6 @@
-#define _GNU_SOURCE // memrchr(3) is non-standard
+#ifndef _GNU_SOURCE
+#define _GNU_SOURCE /* memrchr(3) is non-standard */
+#endif
 #include <unistd.h>
 #include <stdio.h>
 #include <stdlib.h>
