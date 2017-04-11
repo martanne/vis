@@ -73,7 +73,7 @@ debug: clean
 	@$(MAKE) CFLAGS_EXTRA='${CFLAGS_EXTRA} ${CFLAGS_DEBUG}'
 
 profile: clean
-	@$(MAKE) CFLAGS_EXTRA='${CFLAGS_DEBUG} -pg'
+	@$(MAKE) CFLAGS_AUTO='' LDFLAGS_AUTO='' CFLAGS_EXTRA='-pg -O2'
 
 coverage: clean
 	@$(MAKE) CFLAGS_EXTRA='--coverage'
