@@ -550,7 +550,7 @@ static char *parse_until(const char **s, const char *until, const char *escchars
 
 static char *parse_delimited(const char **s, int type) {
 	char delim[2] = { **s, '\0' };
-	if (!delim[0])
+	if (!delim[0] || isspace((unsigned char)delim[0]))
 		return NULL;
 	(*s)++;
 	char *chunk = parse_until(s, delim, NULL, type);
@@ -624,7 +624,10 @@ static char *parse_cmdname(const char **s) {
 }
 
 static Regex *parse_regex(Vis *vis, const char **s) {
+	const char *before = *s;
 	char *pattern = parse_delimited(s, CMD_REGEX);
+	if (!pattern && *s == before)
+		return NULL;
 	Regex *regex = vis_regex(vis, pattern);
 	free(pattern);
 	return regex;
