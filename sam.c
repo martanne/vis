@@ -1112,11 +1112,28 @@ static enum SamError command_validate(Command *cmd) {
 	return validate(cmd, false, false);
 }
 
-static void count_init(Command *cmd) {
+static bool count_negative(Command *cmd) {
+	if (cmd->count.start < 0 || cmd->count.end < 0)
+		return true;
+	for (Command *c = cmd->cmd; c; c = c->next) {
+		if (c->cmddef->func != cmd_extract) {
+			if (count_negative(c))
+				return true;
+		}
+	}
+	return false;
+}
+
+static void count_init(Command *cmd, int max) {
+	Count *count = &cmd->count;
 	cmd->iteration = 0;
+	if (count->start < 0)
+		count->start += max;
+	if (count->end < 0)
+		count->end += max;
 	for (Command *c = cmd->cmd; c; c = c->next) {
 		if (c->cmddef->func != cmd_extract)
-			count_init(c);
+			count_init(c, max);
 	}
 }
 
@@ -1308,12 +1325,10 @@ static bool cmd_guard(Vis *vis, Win *win, Command *cmd, const char *argv[], Curs
 	return true;
 }
 
-static bool cmd_extract(Vis *vis, Win *win, Command *cmd, const char *argv[], Cursor *cur, Filerange *range) {
-	if (!win)
-		return false;
+static int extract(Vis *vis, Win *win, Command *cmd, const char *argv[], Cursor *cur, Filerange *range, bool simulate) {
 	bool ret = true;
+	int count = 0;
 	Text *txt = win->file->text;
-	count_init(cmd->cmd);
 
 	if (cmd->regex) {
 		bool trailing_match = false;
@@ -1362,7 +1377,10 @@ static bool cmd_extract(Vis *vis, Win *win, Command *cmd, const char *argv[], Cu
 						register_put_range(vis, reg, txt, &match[i]);
 					}
 				}
-				ret &= sam_execute(vis, win, cmd->cmd, NULL, &r);
+				if (simulate)
+					count++;
+				else
+					ret &= sam_execute(vis, win, cmd->cmd, NULL, &r);
 				last_start = start;
 			}
 		}
@@ -1375,13 +1393,27 @@ static bool cmd_extract(Vis *vis, Win *win, Command *cmd, const char *argv[], Cu
 			Filerange r = text_range_new(start, next);
 			if (start == next || !text_range_valid(&r))
 				break;
-			ret &= sam_execute(vis, win, cmd->cmd, NULL, &r);
+			if (simulate)
+				count++;
+			else
+				ret &= sam_execute(vis, win, cmd->cmd, NULL, &r);
 			start = next;
 		}
 	}
 
-	view_cursors_dispose_force(cur);
-	return ret;
+	if (!simulate)
+		view_cursors_dispose_force(cur);
+	return simulate ? count : ret;
+}
+
+static bool cmd_extract(Vis *vis, Win *win, Command *cmd, const char *argv[], Cursor *cur, Filerange *range) {
+	if (!win)
+		return false;
+	int matches = 0;
+	if (count_negative(cmd->cmd))
+		matches = extract(vis, win, cmd, argv, cur, range, true);
+	count_init(cmd->cmd, matches+1);
+	return extract(vis, win, cmd, argv, cur, range, false);
 }
 
 static bool cmd_select(Vis *vis, Win *win, Command *cmd, const char *argv[], Cursor *cur, Filerange *range) {
