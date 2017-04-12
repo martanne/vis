@@ -20,6 +20,7 @@ enum SamError {
 	SAM_ERR_WRITE_CONFLICT,
 	SAM_ERR_LOOP_INVALID_CMD,
 	SAM_ERR_GROUP_INVALID_CMD,
+	SAM_ERR_COUNT,
 };
 
 bool sam_init(Vis*);

@@ -60,12 +60,17 @@ struct Address {
 	Address *right; /* either right hand side of a compound address or next address */
 };
 
+typedef struct {
+	int start, end; /* interval [n,m] */
+} Count;
+
 struct Command {
 	const char *argv[MAX_ARGV];/* [0]=cmd-name, [1..MAX_ARGV-2]=arguments, last element always NULL */
 	Address *address;         /* range of text for command */
 	Regex *regex;             /* regex to match, used by x, y, g, v, X, Y */
 	const CommandDef *cmddef; /* which command is this? */
-	int count;                /* command count if any */
+	Count count;              /* command count, defaults to [0,+inf] */
+	int iteration;            /* current command loop iteration */
 	char flags;               /* command specific flags */
 	Command *cmd;             /* target of x, y, g, v, X, Y, { */
 	Command *next;            /* next command in {} group */
@@ -149,7 +154,7 @@ static const CommandDef cmds[] = {
 		CMD_NONE, NULL, cmd_delete
 	}, {
 		"g",            VIS_HELP("If range contains regexp, run command")
-		CMD_CMD|CMD_REGEX, "p", cmd_guard
+		CMD_COUNT|CMD_REGEX|CMD_CMD, "p", cmd_guard
 	}, {
 		"i",            VIS_HELP("Insert text before range")
 		CMD_TEXT, NULL, cmd_insert
@@ -161,7 +166,7 @@ static const CommandDef cmds[] = {
 		CMD_SHELL|CMD_ADDRESS_LINE, NULL, cmd_substitute
 	}, {
 		"v",            VIS_HELP("If range does not contain regexp, run command")
-		CMD_CMD|CMD_REGEX, "p", cmd_guard
+		CMD_COUNT|CMD_REGEX|CMD_CMD, "p", cmd_guard
 	}, {
 		"x",            VIS_HELP("Set range and run command on each match")
 		CMD_CMD|CMD_REGEX|CMD_REGEX_DEFAULT|CMD_ADDRESS_ALL_1CURSOR|CMD_LOOP, "p", cmd_extract
@@ -399,6 +404,7 @@ const char *sam_error(enum SamError err) {
 		[SAM_ERR_WRITE_CONFLICT]  = "Can not write while changing",
 		[SAM_ERR_LOOP_INVALID_CMD]  = "Destructive command in looping construct",
 		[SAM_ERR_GROUP_INVALID_CMD] = "Destructive command in group",
+		[SAM_ERR_COUNT]           = "Invalid count",
 	};
 
 	size_t idx = err;
@@ -637,9 +643,27 @@ static int parse_number(const char **s) {
 	char *end = NULL;
 	int number = strtoull(*s, &end, 10);
 	if (end == *s)
-		return 1;
+		return 0;
 	*s = end;
 	return number;
+}
+
+static enum SamError parse_count(const char **s, Count *count) {
+	const char *before = *s;
+	if (!(count->start = parse_number(s)) && *s != before)
+		return SAM_ERR_COUNT;
+	if (**s != ',') {
+		count->end = count->start ? count->start : INT_MAX;
+		return SAM_ERR_OK;
+	} else {
+		(*s)++;
+	}
+	before = *s;
+	if (!(count->end = parse_number(s)) && *s != before)
+		return SAM_ERR_COUNT;
+	if (!count->end)
+		count->end = INT_MAX;
+	return SAM_ERR_OK;
 }
 
 static Address *address_parse_simple(Vis *vis, const char **s, enum SamError *err) {
@@ -849,20 +873,24 @@ static Command *command_parse(Vis *vis, const char **s, enum SamError *err) {
 		goto fail;
 	}
 
-	if (cmddef->flags & CMD_COUNT)
-		cmd->count = parse_number(s);
-
 	if (cmddef->flags & CMD_FORCE && **s == '!') {
 		cmd->flags = '!';
 		(*s)++;
 	}
 
+	if ((cmddef->flags & CMD_COUNT) && (*err = parse_count(s, &cmd->count)))
+		goto fail;
+
 	if (cmddef->flags & CMD_REGEX) {
 		if ((cmddef->flags & CMD_REGEX_DEFAULT) && (!**s || **s == ' ')) {
 			skip_spaces(s);
-		} else if (!(cmd->regex = parse_regex(vis, s))) {
-			*err = SAM_ERR_REGEX;
-			goto fail;
+		} else {
+			const char *before = *s;
+			cmd->regex = parse_regex(vis, s);
+			if (!cmd->regex && (*s != before || !(cmddef->flags & CMD_COUNT))) {
+				*err = SAM_ERR_REGEX;
+				goto fail;
+			}
 		}
 	}
 
@@ -1036,11 +1064,17 @@ static Filerange address_evaluate(Address *addr, File *file, Filerange *range, i
 	return ret;
 }
 
+static bool count_evaluate(Command *cmd) {
+	Count *count = &cmd->count;
+	return count->start <= cmd->iteration && cmd->iteration <= count->end;
+}
+
 static bool sam_execute(Vis *vis, Win *win, Command *cmd, Cursor *cur, Filerange *range) {
 	bool ret = true;
 	if (cmd->address && win)
 		*range = address_evaluate(cmd->address, win->file, range, 0);
 
+	cmd->iteration++;
 	switch (cmd->argv[0][0]) {
 	case '{':
 	{
@@ -1076,6 +1110,14 @@ static enum SamError validate(Command *cmd, bool loop, bool group) {
 
 static enum SamError command_validate(Command *cmd) {
 	return validate(cmd, false, false);
+}
+
+static void count_init(Command *cmd) {
+	cmd->iteration = 0;
+	for (Command *c = cmd->cmd; c; c = c->next) {
+		if (c->cmddef->func != cmd_extract)
+			count_init(c);
+	}
 }
 
 enum SamError sam_cmd(Vis *vis, const char *s) {
@@ -1258,9 +1300,9 @@ static bool cmd_delete(Vis *vis, Win *win, Command *cmd, const char *argv[], Cur
 static bool cmd_guard(Vis *vis, Win *win, Command *cmd, const char *argv[], Cursor *cur, Filerange *range) {
 	if (!win)
 		return false;
-	bool match = !text_search_range_forward(win->file->text, range->start,
+	bool match = !cmd->regex || !text_search_range_forward(win->file->text, range->start,
 		text_range_size(range), cmd->regex, 0, NULL, 0);
-	if (match ^ (argv[0][0] == 'v'))
+	if ((count_evaluate(cmd) && match) ^ (argv[0][0] == 'v'))
 		return sam_execute(vis, win, cmd->cmd, cur, range);
 	view_cursors_dispose_force(cur);
 	return true;
@@ -1271,6 +1313,7 @@ static bool cmd_extract(Vis *vis, Win *win, Command *cmd, const char *argv[], Cu
 		return false;
 	bool ret = true;
 	Text *txt = win->file->text;
+	count_init(cmd->cmd);
 
 	if (cmd->regex) {
 		bool trailing_match = false;
