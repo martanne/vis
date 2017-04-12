@@ -605,12 +605,17 @@ static void parse_argv(const char **s, const char *argv[], size_t maxarg) {
 	}
 }
 
+static bool valid_cmdname(const char *s) {
+	unsigned char c = (unsigned char)*s;
+	return c && !isspace(c) && !isdigit(c) && (!ispunct(c) || (c == '-' && valid_cmdname(s+1)));
+}
+
 static char *parse_cmdname(const char **s) {
 	Buffer buf;
 	buffer_init(&buf);
 
 	skip_spaces(s);
-	while (**s && !isspace((unsigned char)**s) && (!ispunct((unsigned char)**s) || **s == '-'))
+	while (valid_cmdname(*s))
 		buffer_append(&buf, (*s)++, 1);
 
 	buffer_terminate(&buf);
