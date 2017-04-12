@@ -1131,7 +1131,7 @@ static bool count_negative(Command *cmd) {
 	if (cmd->count.start < 0 || cmd->count.end < 0)
 		return true;
 	for (Command *c = cmd->cmd; c; c = c->next) {
-		if (c->cmddef->func != cmd_extract) {
+		if (c->cmddef->func != cmd_extract && c->cmddef->func != cmd_select) {
 			if (count_negative(c))
 				return true;
 		}
@@ -1147,7 +1147,7 @@ static void count_init(Command *cmd, int max) {
 	if (count->end < 0)
 		count->end += max;
 	for (Command *c = cmd->cmd; c; c = c->next) {
-		if (c->cmddef->func != cmd_extract)
+		if (c->cmddef->func != cmd_extract && c->cmddef->func != cmd_select)
 			count_init(c, max);
 	}
 }
@@ -1440,6 +1440,9 @@ static bool cmd_select(Vis *vis, Win *win, Command *cmd, const char *argv[], Cur
 	Text *txt = win->file->text;
 	bool multiple_cursors = view_cursors_multiple(view);
 	Cursor *primary = view_cursors_primary_get(view);
+
+	if (vis->mode->visual)
+		count_init(cmd->cmd, view_cursors_count(view)+1);
 
 	for (Cursor *c = view_cursors(view), *next; c && ret; c = next) {
 		next = view_cursors_next(c);
