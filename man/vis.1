@@ -627,10 +627,12 @@ Same as
 .Ic X ,
 but for files that do not match the regular expression, and the expression is
 required.
-.
-.It Ic g/ Ns Ar regexp Ns Ic / Ar command
-.It Ic v/ Ns Ar regexp Ns Ic / Ar command
-If the range contains
+.\" TODO improve markup, use Op macro, make it actually undertandable :/
+.It Ic g Ns [ Ar count ] Ns [ Ar /regexp/ ] Ar command
+.It Ic v Ns [ Ar count ] Ns [ Ar /regexp/ ] Ar command
+If the
+.Ar count
+range contains
 .Po
 .Ic g
 .Pc
@@ -639,6 +641,36 @@ or does not contain
 .Ic v
 .Pc
 a match for the expression, run command on the range.
+.Pp
+The
+.Ar count
+specifier has the following format, where
+.Ic n
+and
+.Ic m
+are integers denoting the ranges.
+.Bl -tag -width indent
+.It Ic n,m
+The closed interval from
+.Ic n
+to
+.Ic m .
+If
+.Ic n
+is missing,
+.Ic 1
+is substituted.
+If
+.Ic m
+is missing,
+.Ic ∞
+is substituted. Negative values are interpreted relative to the last range.
+.It Ic %n
+Matches every
+.Ic n Ns
+-th range.
+.El
+.
 .El
 .Pp
 These may be nested arbitrarily deeply.
