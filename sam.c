@@ -62,6 +62,7 @@ struct Address {
 
 typedef struct {
 	int start, end; /* interval [n,m] */
+	bool mod;       /* % every n-th match, implies n == m */
 } Count;
 
 struct Command {
@@ -649,6 +650,18 @@ static int parse_number(const char **s) {
 }
 
 static enum SamError parse_count(const char **s, Count *count) {
+	count->mod = **s == '%';
+
+	if (count->mod) {
+		(*s)++;
+		int n = parse_number(s);
+		if (!n)
+			return SAM_ERR_COUNT;
+		count->start = n;
+		count->end = n;
+		return SAM_ERR_OK;
+	}
+
 	const char *before = *s;
 	if (!(count->start = parse_number(s)) && *s != before)
 		return SAM_ERR_COUNT;
@@ -1066,6 +1079,8 @@ static Filerange address_evaluate(Address *addr, File *file, Filerange *range, i
 
 static bool count_evaluate(Command *cmd) {
 	Count *count = &cmd->count;
+	if (count->mod)
+		return count->start ? cmd->iteration % count->start == 0 : true;
 	return count->start <= cmd->iteration && cmd->iteration <= count->end;
 }
 
