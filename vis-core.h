@@ -192,7 +192,7 @@ struct Vis {
 	int nesting_level;                   /* parsing state to hold keep track of { } nesting level */
 	volatile bool running;               /* exit main loop once this becomes false */
 	int exit_status;                     /* exit status when terminating main loop */
-	volatile sig_atomic_t cancel_filter; /* abort external command/filter (SIGINT occured) */
+	volatile sig_atomic_t interrupted;   /* abort command (SIGINT occured) */
 	volatile sig_atomic_t sigbus;        /* one of the memory mapped region became unavailable (SIGBUS) */
 	volatile sig_atomic_t need_resize;   /* need to resize UI (SIGWINCH occured) */
 	volatile sig_atomic_t resume;        /* need to resume UI (SIGCONT occured) */

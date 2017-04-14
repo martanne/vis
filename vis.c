@@ -835,6 +835,8 @@ void vis_do(Vis *vis) {
 		vis->mode == &vis_modes[VIS_MODE_VISUAL_LINE]);
 
 	for (Cursor *cursor = view_cursors(view), *next; cursor; cursor = next) {
+		if (vis->interrupted)
+			break;
 
 		next = view_cursors_next(cursor);
 
@@ -1283,7 +1285,7 @@ bool vis_signal_handler(Vis *vis, int signum, const siginfo_t *siginfo, const vo
 			siglongjmp(vis->sigbus_jmpbuf, 1);
 		return true;
 	case SIGINT:
-		vis->cancel_filter = true;
+		vis->interrupted = true;
 		return true;
 	case SIGCONT:
 		vis->resume = true;
@@ -1342,6 +1344,10 @@ int vis_run(Vis *vis, int argc, char *argv[]) {
 
 		if (vis->terminate)
 			vis_die(vis, "Killed by SIGTERM\n");
+		if (vis->interrupted) {
+			vis->interrupted = false;
+			vis_keys_feed(vis, "<C-c>");
+		}
 
 		if (vis->resume) {
 			vis->ui->resume(vis->ui);
@@ -1501,6 +1507,8 @@ void vis_repeat(Vis *vis) {
 		if (vis->action_prev.op == &vis_operators[VIS_OP_MODESWITCH])
 			vis->action_prev.count = 1;
 		for (int i = 0; i < count; i++) {
+			if (vis->interrupted)
+				break;
 			mode_set(vis, mode);
 			macro_replay(vis, macro);
 		}
@@ -1752,7 +1760,7 @@ int vis_pipe(Vis *vis, File *file, Filerange *range, const char *argv[],
 		exit(EXIT_FAILURE);
 	}
 
-	vis->cancel_filter = false;
+	vis->interrupted = false;
 
 	close(pin[0]);
 	close(pout[1]);
@@ -1765,7 +1773,7 @@ int vis_pipe(Vis *vis, File *file, Filerange *range, const char *argv[],
 	fd_set rfds, wfds;
 
 	do {
-		if (vis->cancel_filter) {
+		if (vis->interrupted) {
 			kill(-pid, SIGTERM);
 			break;
 		}

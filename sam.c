@@ -1657,7 +1657,7 @@ static bool cmd_filter(Vis *vis, Win *win, Command *cmd, const char *argv[], Cur
 
 	int status = vis_pipe(vis, win->file, range, &argv[1], &bufout, read_buffer, &buferr, read_buffer);
 
-	if (vis->cancel_filter) {
+	if (vis->interrupted) {
 		vis_info_show(vis, "Command cancelled");
 	} else if (status == 0) {
 		size_t len = buffer_length(&bufout);
@@ -1671,7 +1671,7 @@ static bool cmd_filter(Vis *vis, Win *win, Command *cmd, const char *argv[], Cur
 	buffer_release(&bufout);
 	buffer_release(&buferr);
 
-	return !vis->cancel_filter && status == 0;
+	return !vis->interrupted && status == 0;
 }
 
 static bool cmd_launch(Vis *vis, Win *win, Command *cmd, const char *argv[], Cursor *cur, Filerange *range) {
@@ -1700,14 +1700,14 @@ static bool cmd_pipeout(Vis *vis, Win *win, Command *cmd, const char *argv[], Cu
 	if (status == 0 && cur)
 		view_cursors_to(cur, range->start);
 
-	if (vis->cancel_filter)
+	if (vis->interrupted)
 		vis_info_show(vis, "Command cancelled");
 	else if (status != 0)
 		vis_info_show(vis, "Command failed %s", buffer_content0(&buferr));
 
 	buffer_release(&buferr);
 
-	return !vis->cancel_filter && status == 0;
+	return !vis->interrupted && status == 0;
 }
 
 static bool cmd_cd(Vis *vis, Win *win, Command *cmd, const char *argv[], Cursor *cur, Filerange *range) {

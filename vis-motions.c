@@ -85,6 +85,8 @@ static size_t common_word_next(Vis *vis, Text *txt, size_t pos, enum VisMotion e
 	}
 
 	while (count--) {
+		if (vis->interrupted)
+			return pos;
 		size_t newpos = motion->txt(txt, pos);
 		if (newpos == pos)
 			break;

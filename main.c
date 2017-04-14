@@ -2083,7 +2083,6 @@ int main(int argc, char *argv[]) {
 	sigset_t blockset;
 	sigemptyset(&blockset);
 	sigaddset(&blockset, SIGBUS);
-	sigaddset(&blockset, SIGINT);
 	sigaddset(&blockset, SIGCONT);
 	sigaddset(&blockset, SIGWINCH);
 	sigaddset(&blockset, SIGTERM);

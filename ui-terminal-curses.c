@@ -265,7 +265,7 @@ static bool ui_curses_init(UiTerm *tui, char *term) {
 	}
 	start_color();
 	use_default_colors();
-	raw();
+	cbreak();
 	noecho();
 	nonl();
 	keypad(stdscr, TRUE);
