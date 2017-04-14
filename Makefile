@@ -12,10 +12,13 @@ EXECUTABLES = $(ELF) vis-clipboard vis-complete vis-open
 
 MANUALS = $(EXECUTABLES:=.1)
 
+DOCUMENTATION = LICENSE README.md
+
 # conditionally initialized, this is needed for standalone build
 # with empty config.mk
 PREFIX ?= /usr/local
 SHAREPREFIX ?= ${PREFIX}/share
+DOCPREFIX ?= ${SHAREPREFIX}/doc
 MANPREFIX ?= ${PREFIX}/man
 
 VERSION = $(shell git describe --always --dirty 2>/dev/null || echo "v0.3-git")
@@ -126,6 +129,12 @@ install: $(ELF)
 		cp -r lua/* ${DESTDIR}${SHAREPREFIX}/vis; \
 		rm -rf "${DESTDIR}${SHAREPREFIX}/vis/doc"; \
 	}
+	@echo installing documentation to ${DESTDIR}${DOCPREFIX}/vis
+	@mkdir -p ${DESTDIR}${DOCPREFIX}/vis
+	@for d in ${DOCUMENTATION}; do \
+		cp "$$d" ${DESTDIR}${DOCPREFIX}/vis && \
+		chmod 644 "${DESTDIR}${DOCPREFIX}/vis/$$d"; \
+	done
 	@echo installing manual pages to ${DESTDIR}${MANPREFIX}/man1
 	@mkdir -p ${DESTDIR}${MANPREFIX}/man1
 	@for m in ${MANUALS}; do \
@@ -137,6 +146,10 @@ uninstall:
 	@echo removing executable file from ${DESTDIR}${PREFIX}/bin
 	@for e in ${EXECUTABLES}; do \
 		rm -f ${DESTDIR}${PREFIX}/bin/"$$e"; \
+	done
+	@echo removing documentation from ${DESTDIR}${DOCPREFIX}/vis
+	@for d in ${DOCUMENTATION}; do \
+		rm -f ${DESTDIR}${DOCPREFIX}/vis/"$$d"; \
 	done
 	@echo removing manual pages from ${DESTDIR}${MANPREFIX}/man1
 	@for m in ${MANUALS}; do \

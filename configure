@@ -20,6 +20,7 @@ Installation directories:
 Fine tuning of the installation directories:
   --bindir=DIR            user executables [EPREFIX/bin]
   --sharedir=DIR          share directories [PREFIX/share]
+  --docdir=DIR            misc. documentation [PREFIX/share/doc]
   --mandir=DIR            man pages [PREFIX/share/man]
 
 Optional features:
@@ -114,6 +115,7 @@ PREFIX=/usr/local
 EXEC_PREFIX='$(PREFIX)'
 BINDIR='$(EXEC_PREFIX)/bin'
 SHAREDIR='$(PREFIX)/share'
+DOCDIR='$(PREFIX)/share/doc'
 MANDIR='$(PREFIX)/share/man'
 
 help=yes
@@ -132,6 +134,7 @@ case "$arg" in
 --exec-prefix=*) EXEC_PREFIX=${arg#*=} ;;
 --bindir=*) BINDIR=${arg#*=} ;;
 --sharedir=*) SHAREDIR=${arg#*=} ;;
+--docdir=*) DOCDIR=${arg#*=} ;;
 --mandir=*) MANDIR=${arg#*=} ;;
 --environment-only) environmentonly=yes ;;
 --static) static=yes ;;
@@ -160,7 +163,7 @@ LDFLAGS=*) LDFLAGS=${arg#*=} ;;
 esac
 done
 
-for i in SRCDIR PREFIX EXEC_PREFIX BINDIR SHAREDIR MANDIR ; do
+for i in SRCDIR PREFIX EXEC_PREFIX BINDIR SHAREDIR DOCDIR MANDIR ; do
 stripdir $i
 done
 
@@ -267,6 +270,7 @@ SRCDIR = $SRCDIR
 PREFIX = $PREFIX
 EXEC_PREFIX = $EXEC_PREFIX
 BINDIR = $BINDIR
+DOCPREFIX = $DOCDIR
 MANPREFIX = $MANDIR
 SHAREPREFIX = $SHAREDIR
 CC = $CC
