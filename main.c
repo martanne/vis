@@ -1699,7 +1699,7 @@ static const char *reg(Vis *vis, const char *keys, const Arg *arg) {
 	if (keys[1])
 		return vis_keys_next(vis, keys);
 	enum VisRegister reg = vis_register_from(vis, keys[0]);
-	vis_register_set(vis, reg);
+	vis_register(vis, reg);
 	return keys+1;
 }
 

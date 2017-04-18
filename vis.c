@@ -1565,7 +1565,7 @@ enum VisRegister vis_register_from(Vis *vis, char reg) {
 	return VIS_REG_INVALID;
 }
 
-void vis_register_set(Vis *vis, enum VisRegister reg) {
+void vis_register(Vis *vis, enum VisRegister reg) {
 	if (VIS_REG_A <= reg && reg <= VIS_REG_Z) {
 		vis->action.reg = &vis->registers[VIS_REG_a + reg - VIS_REG_A];
 		vis->action.reg->append = true;

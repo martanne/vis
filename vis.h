@@ -460,7 +460,7 @@ enum VisRegister {
 
 enum VisRegister vis_register_from(Vis*, char reg);
 /* set the register to use, if none is given the DEFAULT register is used */
-void vis_register_set(Vis*, enum VisRegister);
+void vis_register(Vis*, enum VisRegister);
 /* get register content */
 const char *vis_register_get(Vis*, enum VisRegister, size_t *len);
 
