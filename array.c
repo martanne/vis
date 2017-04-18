@@ -123,3 +123,7 @@ bool array_remove(Array *arr, size_t idx) {
 size_t array_length(Array *arr) {
 	return arr->len;
 }
+
+size_t array_capacity(Array *arr) {
+	return arr->count;
+}

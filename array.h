@@ -54,5 +54,7 @@ bool array_add_ptr(Array*, void *item);
 bool array_remove(Array*, size_t idx);
 /* return the number of elements currently stored in the array */
 size_t array_length(Array*);
+/* return the number of elements which can be stored without enlarging the array */
+size_t array_capacity(Array*);
 
 #endif
