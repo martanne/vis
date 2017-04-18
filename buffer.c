@@ -172,7 +172,7 @@ const char *buffer_content(Buffer *buf) {
 }
 
 const char *buffer_content0(Buffer *buf) {
-	if (buf->len == 0 || (buf->data[buf->len-1] != '\0' && !buffer_append(buf, "\0", 1)))
+	if (buf->len == 0 || !buffer_terminate(buf))
 		return "";
 	return buf->data;
 }
