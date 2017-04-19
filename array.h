@@ -56,5 +56,7 @@ bool array_remove(Array*, size_t idx);
 size_t array_length(Array*);
 /* return the number of elements which can be stored without enlarging the array */
 size_t array_capacity(Array*);
+/* remove all elements at index >= length, keep allocated memory */
+bool array_truncate(Array*, size_t length);
 
 #endif

@@ -127,3 +127,11 @@ size_t array_length(Array *arr) {
 size_t array_capacity(Array *arr) {
 	return arr->count;
 }
+
+bool array_truncate(Array *arr, size_t len) {
+	if (len <= arr->len) {
+		arr->len = len;
+		return true;
+	}
+	return false;
+}
