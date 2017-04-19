@@ -10,6 +10,7 @@
 #include "map.h"
 #include "ring-buffer.h"
 #include "array.h"
+#include "buffer.h"
 
 /* a mode contains a set of key bindings which are currently valid.
  *
@@ -40,6 +41,7 @@ struct Mode {
 struct OperatorContext {
 	int count;        /* how many times should the command be executed? */
 	Register *reg;    /* always non-NULL, set to a default register */
+	size_t reg_slot;  /* register slot to use */
 	Filerange range;  /* which part of the file should be affected by the operator */
 	size_t pos;       /* at which byte from the start of the file should the operation start? */
 	size_t newpos;    /* new position after motion or EPOS if none given */
@@ -248,6 +250,7 @@ void action_reset(Action*);
 size_t vis_text_insert_nl(Vis*, Text*, size_t pos);
 
 void mode_set(Vis *vis, Mode *new_mode);
+Macro *macro_get(Vis *vis, enum VisRegister);
 
 void window_selection_save(Win *win);
 Win *window_new_file(Vis*, File*, enum UiOption);

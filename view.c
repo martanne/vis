@@ -55,7 +55,6 @@ struct Cursor {             /* cursor position */
 	Selection *sel;     /* selection (if any) which folows the cursor upon movement */
 	Mark lastsel_anchor;/* previously used selection data, */
 	Mark lastsel_cursor;/* used to restore it */
-	Register reg;       /* per cursor register to support yank/put operation */
 	int generation;     /* used to filter out newly created cursors during iteration */
 	int number;         /* how many cursors are located before this one */
 	View *view;         /* associated view to which this cursor belongs */
@@ -1005,7 +1004,6 @@ bool view_cursors_multiple(View *view) {
 static void view_cursors_free(Cursor *c) {
 	if (!c)
 		return;
-	register_release(&c->reg);
 	for (Cursor *after = c->next; after; after = after->next)
 		after->number--;
 	if (c->prev)
@@ -1117,10 +1115,6 @@ int view_cursors_cell_set(Cursor *c, int cell) {
 		return -1;
 	cursor_set(c, c->line, cell);
 	return c->col;
-}
-
-Register *view_cursors_register(Cursor *c) {
-	return &c->reg;
 }
 
 void view_cursors_scroll_to(Cursor *c, size_t pos) {

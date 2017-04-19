@@ -160,8 +160,6 @@ void view_cursors_to(Cursor*, size_t pos);
 void view_cursors_scroll_to(Cursor*, size_t pos);
 /* place cursor on given (line, column) pair, both values are 1-based */
 void view_cursors_place(Cursor*, size_t line, size_t col);
-/* get register associated with this register */
-Register *view_cursors_register(Cursor*);
 /* start selected area at current cursor position. further cursor movements
  * will affect the selected region. */
 void view_cursors_selection_start(Cursor*);

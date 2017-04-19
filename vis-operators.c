@@ -8,7 +8,7 @@
 
 static size_t op_delete(Vis *vis, Text *txt, OperatorContext *c) {
 	c->reg->linewise = c->linewise;
-	register_put_range(vis, c->reg, txt, &c->range);
+	register_slot_put_range(vis, c->reg, c->reg_slot, txt, &c->range);
 	text_delete_range(txt, &c->range);
 	size_t pos = c->range.start;
 	if (c->linewise && pos == text_size(txt))
@@ -26,10 +26,10 @@ static size_t op_change(Vis *vis, Text *txt, OperatorContext *c) {
 
 static size_t op_yank(Vis *vis, Text *txt, OperatorContext *c) {
 	c->reg->linewise = c->linewise;
-	register_put_range(vis, c->reg, txt, &c->range);
+	register_slot_put_range(vis, c->reg, c->reg_slot, txt, &c->range);
 	if (c->reg == &vis->registers[VIS_REG_DEFAULT]) {
 		vis->registers[VIS_REG_ZERO].linewise = c->reg->linewise;
-		register_put_range(vis, &vis->registers[VIS_REG_ZERO], txt, &c->range);
+		register_slot_put_range(vis, &vis->registers[VIS_REG_ZERO], c->reg_slot, txt, &c->range);
 	}
 	return c->linewise ? c->pos : c->range.start;
 }
@@ -59,7 +59,7 @@ static size_t op_put(Vis *vis, Text *txt, OperatorContext *c) {
 	}
 
 	size_t len;
-	const char *data = register_get(vis, c->reg, &len);
+	const char *data = register_slot_get(vis, c->reg, c->reg_slot, &len);
 
 	for (int i = 0; i < c->count; i++) {
 		char nl;
@@ -298,7 +298,7 @@ bool vis_operator(Vis *vis, enum VisOperator id, ...) {
 		break;
 	case VIS_OP_REPLACE:
 	{
-		Macro *macro = &vis->registers[VIS_REG_DOT].buf;
+		Macro *macro = macro_get(vis, VIS_REG_DOT);
 		macro_reset(macro);
 		macro_append(macro, va_arg(ap, char*));
 		vis->action.arg.s = macro->data;

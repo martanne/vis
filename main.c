@@ -18,6 +18,7 @@
 #include "util.h"
 #include "libutf.h"
 #include "array.h"
+#include "buffer.h"
 
 #define PAGE      INT_MAX
 #define PAGE_HALF (INT_MAX-1)

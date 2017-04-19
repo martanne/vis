@@ -54,7 +54,6 @@ const RegisterDef vis_registers[] = {
 	[VIS_REG_SHELL]      = { '!', VIS_HELP("Last shell command given to either <, >, |, or !") },
 };
 
-static Macro *macro_get(Vis *vis, enum VisRegister);
 static void macro_replay(Vis *vis, const Macro *macro);
 static void macro_replay_internal(Vis *vis, const Macro *macro);
 static void vis_keys_push(Vis *vis, const char *input, size_t pos, bool record);
@@ -670,6 +669,8 @@ Vis *vis_new(Ui *ui, VisEvent *event) {
 	vis->tabwidth = 8;
 	vis->expandtab = false;
 	vis->change_colors = true;
+	for (size_t i = 0; i < LENGTH(vis->registers); i++)
+		register_init(&vis->registers[i]);
 	vis->registers[VIS_REG_BLACKHOLE].type = REGISTER_BLACKHOLE;
 	vis->registers[VIS_REG_CLIPBOARD].type = REGISTER_CLIPBOARD;
 	array_init(&vis->operators);
@@ -834,6 +835,15 @@ void vis_do(Vis *vis) {
 		a->type & LINEWISE || (a->movement && a->movement->type & LINEWISE) ||
 		vis->mode == &vis_modes[VIS_MODE_VISUAL_LINE]);
 
+
+	Register *reg = a->reg;
+	size_t reg_slot = multiple_cursors ? EPOS : 0;
+	size_t last_reg_slot = reg_slot;
+	if (!reg)
+		reg = &vis->registers[file->internal ? VIS_REG_PROMPT : VIS_REG_DEFAULT];
+	if (a->op == &vis_operators[VIS_OP_PUT_AFTER] && multiple_cursors && register_count(reg) == 1)
+		reg_slot = 0;
+
 	for (Cursor *cursor = view_cursors(view), *next; cursor; cursor = next) {
 		if (vis->interrupted)
 			break;
@@ -847,20 +857,19 @@ void vis_do(Vis *vis) {
 			continue;
 		}
 
-		Register *reg = multiple_cursors ? view_cursors_register(cursor) : a->reg;
-		if (!reg)
-			reg = &vis->registers[file->internal ? VIS_REG_PROMPT : VIS_REG_DEFAULT];
-
 		OperatorContext c = {
 			.count = count,
 			.pos = pos,
 			.newpos = EPOS,
 			.range = text_range_empty(),
 			.reg = reg,
+			.reg_slot = reg_slot == EPOS ? (size_t)view_cursors_number(cursor) : reg_slot,
 			.linewise = linewise,
 			.arg = &a->arg,
 			.context = a->op ? a->op->context : NULL,
 		};
+
+		last_reg_slot = c.reg_slot;
 
 		bool err = false;
 		if (a->movement) {
@@ -1000,6 +1009,14 @@ void vis_do(Vis *vis) {
 	}
 
 	if (a->op) {
+
+		if (a->op == &vis_operators[VIS_OP_YANK] ||
+		    a->op == &vis_operators[VIS_OP_DELETE] ||
+		    a->op == &vis_operators[VIS_OP_CHANGE] ||
+		    a->op == &vis_operators[VIS_OP_REPLACE]) {
+			register_resize(reg, last_reg_slot+1);
+		}
+
 		/* we do not support visual repeat, still do something resonable */
 		if (vis->mode->visual && !a->movement && !a->textobj)
 			a->movement = &vis_motions[VIS_MOVE_NOP];
@@ -1389,13 +1406,13 @@ int vis_run(Vis *vis, int argc, char *argv[]) {
 	return vis->exit_status;
 }
 
-static Macro *macro_get(Vis *vis, enum VisRegister id) {
+Macro *macro_get(Vis *vis, enum VisRegister id) {
 	if (id == VIS_MACRO_LAST_RECORDED)
 		return vis->last_recording;
 	if (VIS_REG_A <= id && id <= VIS_REG_Z)
 		id -= VIS_REG_A;
 	if (id < LENGTH(vis->registers))
-		return &vis->registers[id].buf;
+		return array_get(&vis->registers[id].values, 0);
 	return NULL;
 }
 
