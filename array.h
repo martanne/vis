@@ -58,5 +58,8 @@ size_t array_length(Array*);
 size_t array_capacity(Array*);
 /* remove all elements at index >= length, keep allocated memory */
 bool array_truncate(Array*, size_t length);
+/* change length if it is less than the current capacity, newly
+ * accesible elements preserve their previous values */
+bool array_resize(Array*, size_t length);
 
 #endif

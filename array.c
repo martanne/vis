@@ -135,3 +135,11 @@ bool array_truncate(Array *arr, size_t len) {
 	}
 	return false;
 }
+
+bool array_resize(Array *arr, size_t len) {
+	if (len <= arr->count) {
+		arr->len = len;
+		return true;
+	}
+	return false;
+}
