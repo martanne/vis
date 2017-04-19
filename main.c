@@ -1777,10 +1777,17 @@ static const char *insert_register(Vis *vis, const char *keys, const Arg *arg) {
 		return NULL;
 	if (keys[1])
 		return vis_keys_next(vis, keys);
+	View *view = vis_view(vis);
+	Text *txt = vis_text(vis);
 	enum VisRegister reg = vis_register_from(vis, keys[0]);
-	size_t len;
-	const char *data = vis_register_get(vis, reg, &len);
-	vis_insert_key(vis, data, len);
+	for (Cursor *c = view_cursors(view); c; c = view_cursors_next(c)) {
+		size_t len;
+		size_t slot = view_cursors_number(c);
+		const char *data = vis_register_slot_get(vis, reg, slot, &len);
+		size_t pos = view_cursors_pos(c);
+		text_insert(txt, pos, data, len);
+	}
+	vis_draw(vis);
 	return keys+1;
 }
 
