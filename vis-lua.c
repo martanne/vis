@@ -1432,11 +1432,9 @@ static int registers_newindex(lua_State *L) {
 	if (strlen(symbol) != 1)
 		return 0;
 	enum VisRegister reg = vis_register_from(vis, symbol[0]);
-	if (reg >= VIS_REG_INVALID)
-		return 0;
 	size_t len;
 	const char *value = luaL_checklstring(L, 3, &len);
-	register_put(vis, &vis->registers[reg], value, len+1);
+	vis_register_put(vis, reg, value, len+1);
 	return 0;
 }
 

@@ -463,6 +463,9 @@ enum VisRegister vis_register_from(Vis*, char reg);
 void vis_register(Vis*, enum VisRegister);
 /* get register content */
 const char *vis_register_get(Vis*, enum VisRegister, size_t *len);
+const char *vis_register_slot_get(Vis*, enum VisRegister, size_t slot, size_t *len);
+bool vis_register_put(Vis*, enum VisRegister, const char *data, size_t len);
+bool vis_register_slot_put(Vis*, enum VisRegister, size_t slot, const char *data, size_t len);
 
 /* start a macro recording, fails if a recording is already on going */
 bool vis_macro_record(Vis*, enum VisRegister);

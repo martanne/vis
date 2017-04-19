@@ -5,12 +5,13 @@
 #include "vis.h"
 #include "sam.h"
 #include "vis-lua.h"
-#include "register.h"
 #include "text.h"
+#include "text-util.h"
 #include "map.h"
 #include "ring-buffer.h"
 #include "array.h"
 #include "buffer.h"
+#include "util.h"
 
 /* a mode contains a set of key bindings which are currently valid.
  *
@@ -37,6 +38,17 @@ struct Mode {
 	time_t idle_timeout;                /* idle time in seconds after which the registered function will be called */
 	bool visual;                        /* whether text selection is possible in this mode */
 };
+
+typedef struct {
+	Array values;
+	bool linewise; /* place register content on a new line when inserting? */
+	bool append;
+	enum {
+		REGISTER_NORMAL,
+		REGISTER_BLACKHOLE,
+		REGISTER_CLIPBOARD,
+	} type;
+} Register;
 
 struct OperatorContext {
 	int count;        /* how many times should the command be executed? */
@@ -257,5 +269,21 @@ Win *window_new_file(Vis*, File*, enum UiOption);
 
 const char *file_name_get(File*);
 void file_name_set(File*, const char *name);
+
+bool register_init(Register*);
+void register_release(Register*);
+
+const char *register_get(Vis*, Register*, size_t *len);
+const char *register_slot_get(Vis*, Register*, size_t slot, size_t *len);
+
+bool register_put0(Vis*, Register*, const char *data);
+bool register_put(Vis*, Register*, const char *data, size_t len);
+bool register_slot_put(Vis*, Register*, size_t slot, const char *data, size_t len);
+
+bool register_put_range(Vis*, Register*, Text*, Filerange*);
+bool register_slot_put_range(Vis*, Register*, size_t slot, Text*, Filerange*);
+
+size_t register_count(Register*);
+bool register_resize(Register*, size_t count);
 
 #endif

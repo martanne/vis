@@ -33,27 +33,6 @@ const MarkDef vis_marks[] = {
 	[VIS_MARK_SELECTION_END]   = { '>', VIS_HELP("Last selection end")   },
 };
 
-const RegisterDef vis_registers[] = {
-	[VIS_REG_DEFAULT]    = { '"', VIS_HELP("Unnamed register")                                 },
-	[VIS_REG_ZERO]       = { '0', VIS_HELP("Yank register")                                    },
-	[VIS_REG_1]          = { '1', VIS_HELP("1st sub-expression match")                         },
-	[VIS_REG_2]          = { '2', VIS_HELP("2nd sub-expression match")                         },
-	[VIS_REG_3]          = { '3', VIS_HELP("3rd sub-expression match")                         },
-	[VIS_REG_4]          = { '4', VIS_HELP("4th sub-expression match")                         },
-	[VIS_REG_5]          = { '5', VIS_HELP("5th sub-expression match")                         },
-	[VIS_REG_6]          = { '6', VIS_HELP("6th sub-expression match")                         },
-	[VIS_REG_7]          = { '7', VIS_HELP("7th sub-expression match")                         },
-	[VIS_REG_8]          = { '8', VIS_HELP("8th sub-expression match")                         },
-	[VIS_REG_9]          = { '9', VIS_HELP("9th sub-expression match")                         },
-	[VIS_REG_AMPERSAND]  = { '&', VIS_HELP("Last regex match")                                 },
-	[VIS_REG_BLACKHOLE]  = { '_', VIS_HELP("/dev/null register")                               },
-	[VIS_REG_CLIPBOARD]  = { '*', VIS_HELP("System clipboard register, see vis-clipboard(1)")  },
-	[VIS_REG_DOT]        = { '.', VIS_HELP("Last inserted text")                               },
-	[VIS_REG_SEARCH]     = { '/', VIS_HELP("Last search pattern")                              },
-	[VIS_REG_COMMAND]    = { ':', VIS_HELP("Last :-command")                                   },
-	[VIS_REG_SHELL]      = { '!', VIS_HELP("Last shell command given to either <, >, |, or !") },
-};
-
 static void macro_replay(Vis *vis, const Macro *macro);
 static void macro_replay_internal(Vis *vis, const Macro *macro);
 static void vis_keys_push(Vis *vis, const char *input, size_t pos, bool record);
@@ -1563,42 +1542,6 @@ int vis_count_get_default(Vis *vis, int def) {
 
 void vis_count_set(Vis *vis, int count) {
 	vis->action.count = (count >= 0 ? count : VIS_COUNT_UNKNOWN);
-}
-
-enum VisRegister vis_register_from(Vis *vis, char reg) {
-	switch (reg) {
-	case '+': return VIS_REG_CLIPBOARD;
-	case '@': return VIS_MACRO_LAST_RECORDED;
-	}
-
-	if ('a' <= reg && reg <= 'z')
-		return VIS_REG_a + reg - 'a';
-	if ('A' <= reg && reg <= 'Z')
-		return VIS_REG_A + reg - 'A';
-	for (size_t i = 0; i < LENGTH(vis_registers); i++) {
-		if (vis_registers[i].name == reg)
-			return i;
-	}
-	return VIS_REG_INVALID;
-}
-
-void vis_register(Vis *vis, enum VisRegister reg) {
-	if (VIS_REG_A <= reg && reg <= VIS_REG_Z) {
-		vis->action.reg = &vis->registers[VIS_REG_a + reg - VIS_REG_A];
-		vis->action.reg->append = true;
-	} else if (reg < LENGTH(vis->registers)) {
-		vis->action.reg = &vis->registers[reg];
-		vis->action.reg->append = false;
-	}
-}
-
-const char *vis_register_get(Vis *vis, enum VisRegister reg, size_t *len) {
-	if (VIS_REG_A <= reg && reg <= VIS_REG_Z)
-		reg = VIS_REG_a + reg - VIS_REG_A;
-	if (reg < LENGTH(vis->registers))
-		return register_get(vis, &vis->registers[reg], len);
-	*len = 0;
-	return NULL;
 }
 
 void vis_exit(Vis *vis, int status) {

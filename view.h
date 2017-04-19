@@ -10,7 +10,6 @@ typedef struct Selection Selection;
 
 #include "text.h"
 #include "ui.h"
-#include "register.h"
 
 typedef struct {
 	char data[16];      /* utf8 encoded character displayed in this cell (might be more than
