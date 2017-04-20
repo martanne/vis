@@ -45,6 +45,7 @@ typedef struct {
 	bool append;
 	enum {
 		REGISTER_NORMAL,
+		REGISTER_NUMBER,
 		REGISTER_BLACKHOLE,
 		REGISTER_CLIPBOARD,
 	} type;

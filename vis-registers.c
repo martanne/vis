@@ -56,6 +56,16 @@ const char *register_slot_get(Vis *vis, Register *reg, size_t slot, size_t *len)
 			*len = buffer_length0(buf);
 		return buffer_content0(buf);
 	}
+	case REGISTER_NUMBER:
+	{
+		Buffer *buf = array_get(&reg->values, 0);
+		if (!buf)
+			return NULL;
+		buffer_printf(buf, "%zu", slot+1);
+		if (len)
+			*len = buffer_length0(buf);
+		return buffer_content0(buf);
+	}
 	case REGISTER_CLIPBOARD:
 	{
 		Buffer buferr;
@@ -246,4 +256,5 @@ const RegisterDef vis_registers[] = {
 	[VIS_REG_SEARCH]     = { '/', VIS_HELP("Last search pattern")                              },
 	[VIS_REG_COMMAND]    = { ':', VIS_HELP("Last :-command")                                   },
 	[VIS_REG_SHELL]      = { '!', VIS_HELP("Last shell command given to either <, >, |, or !") },
+	[VIS_REG_NUMBER]     = { '#', VIS_HELP("Cursor number")                                    },
 };

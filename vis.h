@@ -440,6 +440,7 @@ enum VisRegister {
 	VIS_REG_SEARCH,     /* last used search pattern "/ */
 	VIS_REG_COMMAND,    /* last used :-command ": */
 	VIS_REG_SHELL,      /* last used shell command given to either <, >, |, or ! */
+	VIS_REG_NUMBER,     /* cursor number */
 	VIS_REG_a, VIS_REG_b, VIS_REG_c, VIS_REG_d, VIS_REG_e,
 	VIS_REG_f, VIS_REG_g, VIS_REG_h, VIS_REG_i, VIS_REG_j,
 	VIS_REG_k, VIS_REG_l, VIS_REG_m, VIS_REG_n, VIS_REG_o,
