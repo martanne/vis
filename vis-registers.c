@@ -175,7 +175,9 @@ bool register_put_range(Vis *vis, Register *reg, Text *txt, Filerange *range) {
 	       register_resize(reg, 1);
 }
 
-size_t register_count(Register *reg) {
+size_t vis_register_count(Vis *vis, Register *reg) {
+	if (reg->type == REGISTER_NUMBER)
+		return vis->win ? view_cursors_count(vis->win->view) : 0;
 	return array_length(&reg->values);
 }
 

@@ -284,7 +284,7 @@ bool register_slot_put(Vis*, Register*, size_t slot, const char *data, size_t le
 bool register_put_range(Vis*, Register*, Text*, Filerange*);
 bool register_slot_put_range(Vis*, Register*, size_t slot, Text*, Filerange*);
 
-size_t register_count(Register*);
+size_t vis_register_count(Vis*, Register*);
 bool register_resize(Register*, size_t count);
 
 #endif

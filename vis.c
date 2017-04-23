@@ -821,7 +821,7 @@ void vis_do(Vis *vis) {
 	size_t last_reg_slot = reg_slot;
 	if (!reg)
 		reg = &vis->registers[file->internal ? VIS_REG_PROMPT : VIS_REG_DEFAULT];
-	if (a->op == &vis_operators[VIS_OP_PUT_AFTER] && multiple_cursors && register_count(reg) == 1)
+	if (a->op == &vis_operators[VIS_OP_PUT_AFTER] && multiple_cursors && vis_register_count(vis, reg) == 1)
 		reg_slot = 0;
 
 	for (Cursor *cursor = view_cursors(view), *next; cursor; cursor = next) {
