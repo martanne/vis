@@ -1596,7 +1596,7 @@ size_t vis_text_insert_nl(Vis *vis, Text *txt, size_t pos) {
 	text_insert(txt, pos, "\n", 1);
 	if (eof) {
 		if (nl2)
-			text_insert(txt, pos, "\n", 1);
+			text_insert(txt, text_size(txt), "\n", 1);
 		else
 			pos--; /* place cursor before, not after nl */
 	}
