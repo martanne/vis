@@ -154,12 +154,16 @@ static bool ui_style_define(UiWin *w, int id, const char *style) {
 	if (!style)
 		return true;
 	CellStyle cell_style = tui->styles[win->id * UI_STYLE_MAX + UI_STYLE_DEFAULT];
-	char *style_copy = strdup(style), *option = style_copy, *next, *p;
+	char *style_copy = strdup(style), *option = style_copy;
 	while (option) {
-		if ((next = strchr(option, ',')))
+		while (*option == ' ')
+			option++;
+		char *next = strchr(option, ',');
+		if (next)
 			*next++ = '\0';
-		if ((p = strchr(option, ':')))
-			*p++ = '\0';
+		char *value = strchr(option, ':');
+		if (value)
+			for (*value++ = '\0'; *value == ' '; value++);
 		if (!strcasecmp(option, "reverse")) {
 			cell_style.attr |= CELL_ATTR_REVERSE;
 		} else if (!strcasecmp(option, "bold")) {
@@ -179,9 +183,9 @@ static bool ui_style_define(UiWin *w, int id, const char *style) {
 		} else if (!strcasecmp(option, "notblink")) {
 			cell_style.attr &= ~CELL_ATTR_BLINK;
 		} else if (!strcasecmp(option, "fore")) {
-			color_fromstring(win->ui, &cell_style.fg, p);
+			color_fromstring(win->ui, &cell_style.fg, value);
 		} else if (!strcasecmp(option, "back")) {
-			color_fromstring(win->ui, &cell_style.bg, p);
+			color_fromstring(win->ui, &cell_style.bg, value);
 		}
 		option = next;
 	}
