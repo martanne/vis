@@ -1,0 +1,4 @@
+Array
+=====
+
+.. doxygenfile:: array.h

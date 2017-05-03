@@ -4,62 +4,103 @@
 #include <stddef.h>
 #include <stdbool.h>
 
-/* A dynamically growing array, there exist two typical ways to use it:
+/**
+ * @file
  *
- *  1) to hold pointers to externally allocated memory regions
+ * A dynamically growing array, there exist two typical ways to use it:
  *
- *     Use array_init(...) for initialization, an element has the
- *     size of a pointer. Use the functions suffixed with `_ptr'
- *     to manage your pointers. The cleanup function array_release_full
- *     must only be used with this type of array.
+ *  1. To hold pointers to externally allocated memory regions.
  *
- *  2) to hold arbitrary sized objects
+ *     Use `array_init` for initialization, an element has the size of a
+ *     pointer. Use the functions suffixed with ``_ptr`` to manage your
+ *     pointers. The cleanup function `array_release_full` must only be
+ *     used with this type of array.
  *
- *     Use array_init_sized(...) to specify the size of a single
- *     element. Use the regular (i.e. without the `_ptr' suffix)
- *     functions to manage your objects. array_{add,set} will copy
- *     the object into the array, array_get will return a pointer
- *     to the object stored within the array.
+ *  2. To hold arbitrary sized objects.
+ *
+ *     Use `array_init_sized` to specify the size of a single element.
+ *     Use the regular (i.e. without the ``_ptr`` suffix) functions to
+ *     manage your objects. Functions like `array_add` and `array_set`
+ *     will copy the object into the array, `array_get` will return a
+ *     pointer to the object stored within the array.
  */
-typedef struct {          /* a dynamically growing array */
-	char *items;      /* NULL if empty */
-	size_t elem_size; /* size of one array element */
-	size_t len;       /* number of currently stored items */
-	size_t count;     /* maximal capacity of the array */
+/** A dynamically growing array. */
+typedef struct {
+	char *items;      /** Data pointer, NULL if empty. */
+	size_t elem_size; /** Size of one array element. */
+	size_t len;       /** Number of currently stored items. */
+	size_t count;     /** Maximal capacity of the array. */
 } Array;
 
-/* initalize an already allocated Array instance, storing pointers
- * (elem_size == sizeof(void*)) */
+/**
+ * Initalize an Array object to store pointers.
+ * @rst
+ * .. note:: Is equivalent to ``array_init_sized(arr, sizeof(void*))``.
+ * @endrst
+ */
 void array_init(Array*);
-/* initalize an already allocated Array instance, storing arbitrary
- * sized objects */
+/**
+ * Initalize an Array object to store arbitrarily sized objects.
+ */
 void array_init_sized(Array*, size_t elem_size);
-/* release/free the storage space used to hold items, reset size to zero */
+/** Release storage space. Reinitializes Array object. */
 void array_release(Array*);
-/* like above but also call free(3) for each stored pointer */
+/**
+ * Release storage space and call `free(3)` for each stored pointer.
+ * @rst
+ * .. warning:: Assumes array elements to be pointers.
+ * @endrst
+ */
 void array_release_full(Array*);
-/* remove all elements, set array length to zero, keep allocated memory */
+/** Empty array, keep allocated memory. */
 void array_clear(Array*);
-/* reserve space to store at least `count' elements in this aray */
+/** Reserve memory to store at least ``count`` elements. */
 bool array_reserve(Array*, size_t count);
-/* get/set the i-th (zero based) element of the array */
+/**
+ * Get array element.
+ * @rst
+ * .. warning:: Returns a pointer to the allocated array region.
+ *              Operations which might cause reallocations (e.g. the insertion
+ *              of new elements) might invalidate the pointer.
+ * @endrst
+ */
 void *array_get(Array*, size_t idx);
-void *array_get_ptr(Array*, size_t idx);
+/**
+ * Set array element.
+ * @rst
+ * .. note:: Copies the ``item`` into the Array. If ``item`` is ``NULL``
+ *           the corresponding memory region will be cleared.
+ * @endrst
+ */
 bool array_set(Array*, size_t idx, void *item);
+/** Dereference pointer stored in array element. */
+void *array_get_ptr(Array*, size_t idx);
+/** Store the address to which ``item`` points to into the array. */
 bool array_set_ptr(Array*, size_t idx, void *item);
-/* add a new element to the end of the array */
+/** Add element to the end of the array. */
 bool array_add(Array*, void *item);
+/** Add pointer to the end of the array. */
 bool array_add_ptr(Array*, void *item);
-/* remove an element by index, might not shrink/release underlying memory */
+/**
+ * Remove an element by index.
+ * @rst
+ * .. note:: Might not shrink underlying memory region.
+ * @endrst
+ */
 bool array_remove(Array*, size_t idx);
-/* return the number of elements currently stored in the array */
+/** Number of elements currently stored in the array. */
 size_t array_length(Array*);
-/* return the number of elements which can be stored without enlarging the array */
+/** Number of elements which can be stored without enlarging the array. */
 size_t array_capacity(Array*);
-/* remove all elements at index >= length, keep allocated memory */
+/** Remove all elements with index greater or equal to ``length``, keep allocated memory. */
 bool array_truncate(Array*, size_t length);
-/* change length if it is less than the current capacity, newly
- * accesible elements preserve their previous values */
+/**
+ * Change length.
+ * @rst
+ * .. note:: Has to be less or equal than the capacity.
+ *           Newly accesible elements preserve their previous values.
+ * @endrst
+ */
 bool array_resize(Array*, size_t length);
 
 #endif
