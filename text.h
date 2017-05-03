@@ -254,9 +254,11 @@ Mark text_mark_set(Text*, size_t pos);
 size_t text_mark_get(Text*, Mark);
 /** @} */
 
-/* query whether `addr` is part of a memory mapped region associated with
- * this text instance */
-bool text_sigbus(Text*, const char *addr);
+/**
+ * Check whether ``ptr`` is part of a memory mapped region associated with
+ * this text instance.
+ */
+bool text_mmaped(Text*, const char *ptr);
 
 /**
  * @defgroup save

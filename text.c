@@ -1312,10 +1312,11 @@ bool text_modified(Text *txt) {
 	return txt->saved_revision != txt->history;
 }
 
-bool text_sigbus(Text *txt, const char *addr) {
+bool text_mmaped(Text *txt, const char *ptr) {
+	uintptr_t addr = (uintptr_t)ptr;
 	for (Block *blk = txt->blocks; blk; blk = blk->next) {
 		if ((blk->type == MMAP_ORIG || blk->type == MMAP) &&
-		    blk->data <= addr && addr < blk->data + blk->size)
+		    (uintptr_t)(blk->data) <= addr && addr < (uintptr_t)(blk->data + blk->size))
 			return true;
 	}
 	return false;

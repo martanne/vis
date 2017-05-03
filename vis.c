@@ -1274,7 +1274,7 @@ bool vis_signal_handler(Vis *vis, int signum, const siginfo_t *siginfo, const vo
 	switch (signum) {
 	case SIGBUS:
 		for (File *file = vis->files; file; file = file->next) {
-			if (text_sigbus(file->text, siginfo->si_addr))
+			if (text_mmaped(file->text, siginfo->si_addr))
 				file->truncated = true;
 		}
 		vis->sigbus = true;
