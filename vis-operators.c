@@ -64,11 +64,11 @@ static size_t op_put(Vis *vis, Text *txt, OperatorContext *c) {
 	for (int i = 0; i < c->count; i++) {
 		char nl;
 		if (c->reg->linewise && pos > 0 && text_byte_get(txt, pos-1, &nl) && nl != '\n')
-			pos += text_insert_newline(txt, pos);
+			pos += text_insert(txt, pos, "\n", 1);
 		text_insert(txt, pos, data, len);
 		pos += len;
 		if (c->reg->linewise && pos > 0 && text_byte_get(txt, pos-1, &nl) && nl != '\n')
-			pos += text_insert_newline(txt, pos);
+			pos += text_insert(txt, pos, "\n", 1);
 	}
 
 	if (c->reg->linewise) {

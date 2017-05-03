@@ -357,8 +357,6 @@ ssize_t text_write_range(Text*, Filerange*, int fd);
 bool text_mmaped(Text*, const char *ptr);
 /** @} */
 
-size_t text_insert_newline(Text*, size_t pos);
-
 #define text_iterate(txt, it, pos) \
 	for (Iterator it = text_iterator_get((txt), (pos)); \
 	     text_iterator_valid(&it); \

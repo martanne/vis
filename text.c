@@ -670,10 +670,6 @@ bool text_printf(Text *txt, size_t pos, const char *format, ...) {
 	return ret;
 }
 
-size_t text_insert_newline(Text *txt, size_t pos) {
-	return text_insert(txt, pos, "\n", 1) ? 1 : 0;
-}
-
 static size_t revision_undo(Text *txt, Revision *rev) {
 	size_t pos = EPOS;
 	for (Change *c = rev->change; c; c = c->next) {

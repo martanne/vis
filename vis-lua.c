@@ -2129,7 +2129,7 @@ static int file_lines_newindex(lua_State *L) {
 	const char *data = luaL_checklstring(L, 3, &size);
 	if (line == 0) {
 		text_insert(txt, 0, data, size);
-		text_insert_newline(txt, size);
+		text_insert(txt, size, "\n", 1);
 		return 0;
 	}
 	size_t start = text_pos_by_lineno(txt, line);
@@ -2138,7 +2138,7 @@ static int file_lines_newindex(lua_State *L) {
 		text_delete(txt, start, end - start);
 		text_insert(txt, start, data, size);
 		if (text_size(txt) == start + size)
-			text_insert_newline(txt, text_size(txt));
+			text_insert(txt, text_size(txt), "\n", 1);
 	}
 	return 0;
 }
