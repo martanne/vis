@@ -121,3 +121,9 @@ Save
 
 .. doxygengroup:: save
    :content-only:
+
+Miscellaneous
+-------------
+
+.. doxygengroup:: misc
+   :content-only:

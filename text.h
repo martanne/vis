@@ -252,15 +252,8 @@ Mark text_mark_set(Text*, size_t pos);
  * @return The byte position or `EPOS` for an invalid mark.
  */
 size_t text_mark_get(Text*, Mark);
-/** @} */
-
 /**
- * Check whether ``ptr`` is part of a memory mapped region associated with
- * this text instance.
- */
-bool text_mmaped(Text*, const char *ptr);
-
-/**
+ * @}
  * @defgroup save
  * @{
  */
@@ -352,6 +345,16 @@ ssize_t text_write(Text*, int fd);
  * @return The number of bytes written or ``-1`` in case of an error.
  */
 ssize_t text_write_range(Text*, Filerange*, int fd);
+/**
+ * @}
+ * @defgroup misc
+ * @{
+ */
+/**
+ * Check whether ``ptr`` is part of a memory mapped region associated with
+ * this text instance.
+ */
+bool text_mmaped(Text*, const char *ptr);
 /** @} */
 
 size_t text_insert_newline(Text*, size_t pos);
