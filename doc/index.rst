@@ -7,3 +7,4 @@ Vis Editor API Documenation
    text
    buffer
    array
+   map
