@@ -352,6 +352,16 @@ int vis_count_get(Vis*);
 int vis_count_get_default(Vis*, int def);
 void vis_count_set(Vis*, int count);
 
+typedef struct {
+	Vis *vis;
+	int iteration;
+	int count;
+} VisCountIterator;
+
+VisCountIterator vis_count_iterator_get(Vis*, int def);
+VisCountIterator vis_count_iterator_init(Vis*, int count);
+bool vis_count_iterator_next(VisCountIterator*);
+
 enum VisMotionType {
 	VIS_MOTIONTYPE_LINEWISE  = 1 << 0,
 	VIS_MOTIONTYPE_CHARWISE  = 1 << 1,

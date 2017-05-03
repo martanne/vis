@@ -1241,7 +1241,8 @@ static const char *repeat(Vis *vis, const char *keys, const Arg *arg) {
 
 static const char *cursors_new(Vis *vis, const char *keys, const Arg *arg) {
 	View *view = vis_view(vis);
-	for (int count = vis_count_get_default(vis, 1); count > 0; count--) {
+	VisCountIterator it = vis_count_iterator_get(vis, 1);
+	while (vis_count_iterator_next(&it)) {
 		Cursor *cursor = NULL;
 		switch (arg->i) {
 		case -1:
@@ -1481,7 +1482,8 @@ static const char *cursors_navigate(Vis *vis, const char *keys, const Arg *arg) 
 		return keys;
 	}
 	Cursor *c = view_cursors_primary_get(view);
-	for (int count = vis_count_get_default(vis, 1); count > 0; count--) {
+	VisCountIterator it = vis_count_iterator_get(vis, 1);
+	while (vis_count_iterator_next(&it)) {
 		if (arg->i > 0) {
 			c = view_cursors_next(c);
 			if (!c)

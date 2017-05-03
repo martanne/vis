@@ -1545,6 +1545,28 @@ void vis_count_set(Vis *vis, int count) {
 	vis->action.count = (count >= 0 ? count : VIS_COUNT_UNKNOWN);
 }
 
+VisCountIterator vis_count_iterator_get(Vis *vis, int def) {
+	return (VisCountIterator) {
+		.vis = vis,
+		.iteration = 0,
+		.count = vis_count_get_default(vis, def),
+	};
+}
+
+VisCountIterator vis_count_iterator_init(Vis *vis, int count) {
+	return (VisCountIterator) {
+		.vis = vis,
+		.iteration = 0,
+		.count = count,
+	};
+}
+
+bool vis_count_iterator_next(VisCountIterator *it) {
+	if (it->vis->interrupted)
+		return false;
+	return it->iteration++ < it->count;
+}
+
 void vis_exit(Vis *vis, int status) {
 	vis->running = false;
 	vis->exit_status = status;
