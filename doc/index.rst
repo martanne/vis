@@ -5,3 +5,4 @@ Vis Editor API Documenation
    :maxdepth: 2
 
    text
+   buffer

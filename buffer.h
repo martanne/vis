@@ -5,60 +5,79 @@
 #include <stdbool.h>
 #include "text.h"
 
-/* a dynamically growing buffer storing arbitrary data, used for registers/macros */
+/**
+ * @file
+ * A dynamically growing buffer storing arbitrary data.
+ * @rst
+ * .. note:: Used for Register, *not* Text content.
+ * @endrst
+ */
+
+/** A dynamically growing buffer storing arbitrary data. */
 typedef struct {
-	char *data;    /* NULL if empty */
-	size_t len;    /* current length of data */
-	size_t size;   /* maximal capacity of the buffer */
+	char *data;    /**< Data pointer, ``NULL`` if empty. */
+	size_t len;    /**< Current length of data. */
+	size_t size;   /**< Maximal capacity of the buffer. */
 } Buffer;
 
-/* initalize a (stack allocated) Buffer instance */
+/** Initalize a Buffer object. */
 void buffer_init(Buffer*);
-/* release/free all data stored in this buffer, reset size to zero */
+/** Release all resources, reinitialize buffer. */
 void buffer_release(Buffer*);
-/* set buffer size to zero, keep allocated memory */
+/** Set buffer length to zero, keep allocated memory. */
 void buffer_clear(Buffer*);
-/* reserve space to store at least size bytes in this buffer.*/
+/** Reserve space to store at least ``size`` bytes.*/
 bool buffer_reserve(Buffer*, size_t size);
-/* reserve space for at least `len` more bytes in this buffer */
+/** Reserve space for at least ``len`` *more* bytes. */
 bool buffer_grow(Buffer*, size_t len);
-/* if buffer is not empty, make sure it is NUL terminated */
+/** If buffer is non-empty, make sure it is ``NUL`` terminated. */
 bool buffer_terminate(Buffer*);
-/* replace buffer content with given data, growing the buffer if needed */
+/** Set buffer content, growing the buffer as needed. */
 bool buffer_put(Buffer*, const void *data, size_t len);
-/* same but with NUL-terminated data */
+/** Set buffer content to ``NUL`` terminated data. */
 bool buffer_put0(Buffer*, const char *data);
-/* remove len bytes from the buffer starting at pos */
+/** Remove ``len`` bytes starting at ``pos``. */
 bool buffer_remove(Buffer*, size_t pos, size_t len);
-/* insert arbitrary data of length len at pos (in [0, buf->len]) */
+/** Insert ``len`` bytes of ``data`` at ``pos``. */
 bool buffer_insert(Buffer*, size_t pos, const void *data, size_t len);
-/* insert NUL-terminate data at pos (in [0, buf->len]) */
+/** Insert NUL-terminated data at pos. */
 bool buffer_insert0(Buffer*, size_t pos, const char *data);
-/* append futher content to the end of the buffer data */
+/** Append further content to the end. */
 bool buffer_append(Buffer*, const void *data, size_t len);
-/* append NUl-terminated data */
+/** Append NUl-terminated data. */
 bool buffer_append0(Buffer*, const char *data);
-/* insert new data at the start of the buffer */
+/** Insert ``len`` bytes of ``data`` at the begin. */
 bool buffer_prepend(Buffer*, const void *data, size_t len);
-/* prepend NUL-terminated data */
+/** Insert NUL-terminated data at the begin. */
 bool buffer_prepend0(Buffer*, const char *data);
-/* set formatted buffer content, ensures NUL termination on success */
+/** Set formatted buffer content, ensures NUL termination on success. */
 bool buffer_printf(Buffer*, const char *fmt, ...) __attribute__((format(printf, 2, 3)));
-/* append formatted buffer content, ensures NUL termination on success */
+/** Append formatted buffer content, ensures NUL termination on success. */
 bool buffer_appendf(Buffer*, const char *fmt, ...) __attribute__((format(printf, 2, 3)));
-/* return length of a buffer without trailing NUL byte */
+/** Return length of a buffer without trailing NUL byte. */
 size_t buffer_length0(Buffer*);
-/* return length of a buffer including possible NUL byte */
+/** Return length of a buffer including possible NUL byte. */
 size_t buffer_length(Buffer*);
-/* return current maximal capacity in bytes of this buffer */
+/** Return current maximal capacity in bytes of this buffer. */
 size_t buffer_capacity(Buffer*);
-/* pointer to buffer data, guaranteed to return a NUL terminated
- * string even if buffer is empty */
+/**
+ * Get pointer to buffer data.
+ * Guaranteed to return a NUL terminated string even if buffer is empty.
+ */
 const char *buffer_content0(Buffer*);
-/* pointer to buffer data, might be NULL if empty, might not be NUL terminated */
+/**
+ * Get pointer to buffer data.
+ * @rst
+ * .. warning:: Might be NULL, if empty. Might not be NUL terminated.
+ * @endrst
+ */
 const char *buffer_content(Buffer*);
-/* steal underlying buffer data, caller is responsible to free(3) it,
- * similar to move semantics in some programming languages */
+/**
+ * Borrow underlying buffer data.
+ * @rst
+ * .. warning:: The caller is responsible to `free(3)` it.
+ * @endrst
+ */
 char *buffer_move(Buffer*);
 
 #endif
