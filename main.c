@@ -1749,7 +1749,10 @@ static const char *redo(Vis *vis, const char *keys, const Arg *arg) {
 }
 
 static const char *earlier(Vis *vis, const char *keys, const Arg *arg) {
-	size_t pos = text_earlier(vis_text(vis), vis_count_get_default(vis, 1));
+	size_t pos = EPOS;
+	VisCountIterator it = vis_count_iterator_get(vis, 1);
+	while (vis_count_iterator_next(&it))
+		pos = text_earlier(vis_text(vis));
 	if (pos != EPOS) {
 		view_cursor_to(vis_view(vis), pos);
 		/* redraw all windows in case some display the same file */
@@ -1759,7 +1762,10 @@ static const char *earlier(Vis *vis, const char *keys, const Arg *arg) {
 }
 
 static const char *later(Vis *vis, const char *keys, const Arg *arg) {
-	size_t pos = text_later(vis_text(vis), vis_count_get_default(vis, 1));
+	size_t pos = EPOS;
+	VisCountIterator it = vis_count_iterator_get(vis, 1);
+	while (vis_count_iterator_next(&it))
+		pos = text_later(vis_text(vis));
 	if (pos != EPOS) {
 		view_cursor_to(vis_view(vis), pos);
 		/* redraw all windows in case some display the same file */

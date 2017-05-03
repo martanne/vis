@@ -139,8 +139,8 @@ size_t text_undo(Text*);
  *         newest state i.e. there was nothing to redo.
  */
 size_t text_redo(Text*);
-size_t text_earlier(Text*, int count);
-size_t text_later(Text*, int count);
+size_t text_earlier(Text*);
+size_t text_later(Text*);
 /**
  * Restore the text to the state closest to the time given
  */

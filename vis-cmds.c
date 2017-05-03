@@ -579,10 +579,13 @@ static bool cmd_earlier_later(Vis *vis, Win *win, Command *cmd, const char *argv
 	}
 
 	if (!*unit) {
-		if (argv[0][0] == 'e')
-			pos = text_earlier(txt, count);
-		else
-			pos = text_later(txt, count);
+		VisCountIterator it = vis_count_iterator_init(vis, count);
+		while (vis_count_iterator_next(&it)) {
+			if (argv[0][0] == 'e')
+				pos = text_earlier(txt);
+			else
+				pos = text_later(txt);
+		}
 	}
 
 	time_t state = text_state(txt);

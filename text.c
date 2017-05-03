@@ -763,18 +763,12 @@ static size_t history_traverse_to(Text *txt, Revision *rev) {
 	return pos;
 }
 
-size_t text_earlier(Text *txt, int count) {
-	Revision *rev = txt->history;
-	while (count-- > 0 && rev->earlier)
-		rev = rev->earlier;
-	return history_traverse_to(txt, rev);
+size_t text_earlier(Text *txt) {
+	return history_traverse_to(txt, txt->history->earlier);
 }
 
-size_t text_later(Text *txt, int count) {
-	Revision *rev = txt->history;
-	while (count-- > 0 && rev->later)
-		rev = rev->later;
-	return history_traverse_to(txt, rev);
+size_t text_later(Text *txt) {
+	return history_traverse_to(txt, txt->history->later);
 }
 
 size_t text_restore(Text *txt, time_t time) {
