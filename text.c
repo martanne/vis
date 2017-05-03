@@ -1675,15 +1675,3 @@ size_t text_mark_get(Text *txt, Mark mark) {
 
 	return EPOS;
 }
-
-size_t text_history_get(Text *txt, size_t index) {
-	for (Revision *rev = txt->current_revision ? txt->current_revision : txt->history; rev; rev = rev->prev) {
-		if (index-- == 0) {
-			Change *c = rev->change;
-			while (c && c->next)
-				c = c->next;
-			return c ? c->pos : EPOS;
-		}
-	}
-	return EPOS;
-}

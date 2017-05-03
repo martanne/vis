@@ -357,7 +357,4 @@ ssize_t text_write_range(Text*, Filerange*, int fd);
 bool text_mmaped(Text*, const char *ptr);
 /** @} */
 
-/* get position of change denoted by index, where 0 indicates the most recent */
-size_t text_history_get(Text*, size_t index);
-
 #endif

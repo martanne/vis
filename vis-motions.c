@@ -187,7 +187,7 @@ static size_t window_changelist_next(Vis *vis, Win *win, size_t pos) {
 		cl->index = 0;
 	else if (cl->index > 0 && pos == cl->pos)
 		cl->index--;
-	size_t newpos = text_history_get(txt, cl->index);
+	size_t newpos = pos;
 	if (newpos == EPOS)
 		cl->index++;
 	else
@@ -204,7 +204,7 @@ static size_t window_changelist_prev(Vis *vis, Win *win, size_t pos) {
 		cl->index = 0;
 	else if (pos == cl->pos)
 		win->changelist.index++;
-	size_t newpos = text_history_get(txt, cl->index);
+	size_t newpos = pos;
 	if (newpos == EPOS)
 		cl->index--;
 	else
