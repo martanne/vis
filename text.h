@@ -357,11 +357,6 @@ ssize_t text_write_range(Text*, Filerange*, int fd);
 bool text_mmaped(Text*, const char *ptr);
 /** @} */
 
-#define text_iterate(txt, it, pos) \
-	for (Iterator it = text_iterator_get((txt), (pos)); \
-	     text_iterator_valid(&it); \
-	     text_iterator_next(&it))
-
 /* get position of change denoted by index, where 0 indicates the most recent */
 size_t text_history_get(Text*, size_t index);
 

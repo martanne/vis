@@ -1520,7 +1520,9 @@ size_t text_bytes_get(Text *txt, size_t pos, size_t len, char *buf) {
 		return 0;
 	char *cur = buf;
 	size_t rem = len;
-	text_iterate(txt, it, pos) {
+	for (Iterator it = text_iterator_get(txt, pos);
+	     text_iterator_valid(&it);
+	     text_iterator_next(&it)) {
 		if (rem == 0)
 			break;
 		size_t piece_len = it.end - it.text;
@@ -1553,7 +1555,9 @@ size_t text_size(Text *txt) {
 /* count the number of new lines '\n' in range [pos, pos+len) */
 static size_t lines_count(Text *txt, size_t pos, size_t len) {
 	size_t lines = 0;
-	text_iterate(txt, it, pos) {
+	for (Iterator it = text_iterator_get(txt, pos);
+	     text_iterator_valid(&it);
+	     text_iterator_next(&it)) {
 		const char *start = it.text;
 		while (len > 0 && start < it.end) {
 			size_t n = MIN(len, (size_t)(it.end - start));
@@ -1576,7 +1580,9 @@ static size_t lines_count(Text *txt, size_t pos, size_t len) {
 /* skip n lines forward and return position afterwards */
 static size_t lines_skip_forward(Text *txt, size_t pos, size_t lines, size_t *lines_skipped) {
 	size_t lines_old = lines;
-	text_iterate(txt, it, pos) {
+	for (Iterator it = text_iterator_get(txt, pos);
+	     text_iterator_valid(&it);
+	     text_iterator_next(&it)) {
 		const char *start = it.text;
 		while (lines > 0 && start < it.end) {
 			size_t n = it.end - start;
