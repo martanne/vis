@@ -1520,8 +1520,8 @@ bool text_iterator_char_prev(Iterator *it, char *c) {
 	return true;
 }
 
-bool text_byte_get(Text *txt, size_t pos, char *buf) {
-	return text_bytes_get(txt, pos, 1, buf);
+bool text_byte_get(Text *txt, size_t pos, char *byte) {
+	return text_bytes_get(txt, pos, 1, byte);
 }
 
 size_t text_bytes_get(Text *txt, size_t pos, size_t len, char *buf) {
