@@ -1702,11 +1702,20 @@ int vis_pipe(Vis *vis, File *file, Filerange *range, const char *argv[],
 		vis_info_show(vis, "fork failure: %s", strerror(errno));
 		return -1;
 	} else if (pid == 0) { /* child i.e filter */
+		sigset_t sigterm_mask;
+		sigemptyset(&sigterm_mask);
+		sigaddset(&sigterm_mask, SIGTERM);
+		if (sigprocmask(SIG_UNBLOCK, &sigterm_mask, NULL) == -1) {
+			fprintf(stderr, "failed to reset signal mask");
+			exit(EXIT_FAILURE);
+		}
+
 		int null = open("/dev/null", O_WRONLY);
 		if (null == -1) {
 			fprintf(stderr, "failed to open /dev/null");
 			exit(EXIT_FAILURE);
 		}
+
 		if (!interactive)
 			dup2(pin[0], STDIN_FILENO);
 		close(pin[0]);
@@ -1757,7 +1766,7 @@ int vis_pipe(Vis *vis, File *file, Filerange *range, const char *argv[],
 
 	do {
 		if (vis->interrupted) {
-			kill(-pid, SIGTERM);
+			kill(0, SIGTERM);
 			break;
 		}
 
@@ -1838,8 +1847,24 @@ err:
 	if (perr[0] != -1)
 		close(perr[0]);
 
-	for (pid_t died; (died = waitpid(pid, &status, 0)) != -1 && pid != died;);
+	for (;;) {
+		if (vis->interrupted)
+			kill(0, SIGTERM);
+		pid_t died = waitpid(pid, &status, 0);
+		if ((died == -1 && errno == ECHILD) || pid == died)
+			break;
+	}
 
+	/* clear any pending SIGTERM */
+	struct sigaction sigterm_ignore, sigterm_old;
+	sigterm_ignore.sa_handler = SIG_IGN;
+	sigterm_ignore.sa_flags = 0;
+	sigemptyset(&sigterm_ignore.sa_mask);
+
+	sigaction(SIGTERM, &sigterm_ignore, &sigterm_old);
+	sigaction(SIGTERM, &sigterm_old, NULL);
+
+	vis->interrupted = false;
 	vis->ui->terminal_restore(vis->ui);
 
 	return status;
