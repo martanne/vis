@@ -800,6 +800,14 @@ static void window_jumplist_invalidate(Win *win) {
 		ringbuf_invalidate(win->jumplist);
 }
 
+void vis_interrupt(Vis *vis) {
+	vis->interrupted = true;
+}
+
+bool vis_interrupt_requested(Vis *vis) {
+	return vis->interrupted;
+}
+
 void vis_do(Vis *vis) {
 	Win *win = vis->win;
 	File *file = win->file;

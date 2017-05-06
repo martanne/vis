@@ -153,6 +153,18 @@ void vis_resume(Vis*);
  */
 bool vis_signal_handler(Vis*, int signum, const siginfo_t *siginfo, const void *context);
 /**
+ * Interrupt long running operation.
+ * @rst
+ * .. warning:: There is no guarantee that a long running operation is actually
+ *              interrupted. It is analogous to cooperative multitasking where
+ *              the operation has to voluntarily yield control.
+ * .. note:: It is invoked from `vis_signal_handler` when receiving ``SIGINT``.
+ * @endrst
+ */
+void vis_interrupt(Vis*);
+/** Check whether interruption was requested. */
+bool vis_interrupt_requested(Vis*);
+/**
  * @}
  * @defgroup vis_draw
  * @{
