@@ -2,8 +2,7 @@
 #include "text-objects.h"
 #include "util.h"
 
-int vis_textobject_register(Vis *vis, int type, void *data,
-	Filerange (*textobject)(Vis*, Win*, void*, size_t pos)) {
+int vis_textobject_register(Vis *vis, int type, void *data, VisTextObjectFunction *textobject) {
 
 	TextObject *obj = calloc(1, sizeof *obj);
 	if (!obj)

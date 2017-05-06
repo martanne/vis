@@ -2167,7 +2167,7 @@ int main(int argc, char *argv[]) {
 			vis_prompt_cmd(vis, cmd);
 	}
 
-	int status = vis_run(vis, argc, argv);
+	int status = vis_run(vis);
 	vis_free(vis);
 	return status;
 }

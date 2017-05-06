@@ -6,7 +6,7 @@
 // FIXME: avoid this redirection?
 typedef struct {
 	CommandDef def;
-	CmdFunc *func;
+	VisCommandFunction *func;
 	void *data;
 } CmdUser;
 
@@ -18,7 +18,7 @@ static void cmdfree(CmdUser *cmd) {
 	free(cmd);
 }
 
-bool vis_cmd_register(Vis *vis, const char *name, const char *help, void *data, CmdFunc *func) {
+bool vis_cmd_register(Vis *vis, const char *name, const char *help, void *data, VisCommandFunction *func) {
 	if (!name)
 		return false;
 	if (!vis->usercmds && !(vis->usercmds = map_new()))

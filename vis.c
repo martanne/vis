@@ -558,6 +558,10 @@ void vis_suspend(Vis *vis) {
 	vis->ui->suspend(vis->ui);
 }
 
+void vis_resume(Vis *vis) {
+	vis->ui->resume(vis->ui);
+}
+
 bool vis_window_new(Vis *vis, const char *filename) {
 	File *file = file_new(vis, filename);
 	if (!file)
@@ -1298,7 +1302,7 @@ bool vis_signal_handler(Vis *vis, int signum, const siginfo_t *siginfo, const vo
 	return false;
 }
 
-int vis_run(Vis *vis, int argc, char *argv[]) {
+int vis_run(Vis *vis) {
 	if (!vis->windows)
 		return EXIT_SUCCESS;
 	if (vis->exit_status != -1)
@@ -1347,9 +1351,10 @@ int vis_run(Vis *vis, int argc, char *argv[]) {
 		}
 
 		if (vis->resume) {
-			vis->ui->resume(vis->ui);
+			vis_resume(vis);
 			vis->resume = false;
 		}
+
 		if (vis->need_resize) {
 			vis->ui->resize(vis->ui);
 			vis->need_resize = false;

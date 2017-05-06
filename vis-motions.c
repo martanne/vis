@@ -293,8 +293,7 @@ void vis_motion_type(Vis *vis, enum VisMotionType type) {
 	vis->action.type = type;
 }
 
-int vis_motion_register(Vis *vis, enum VisMotionType type, void *data,
-	size_t (*motion)(Vis*, Win*, void*, size_t pos)) {
+int vis_motion_register(Vis *vis, enum VisMotionType type, void *data, VisMotionFunction *motion) {
 
 	Movement *move = calloc(1, sizeof *move);
 	if (!move)
