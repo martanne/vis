@@ -5,7 +5,7 @@ Vis a vim-like text editor
 [![Cygwin Build Status](https://ci.appveyor.com/api/projects/status/61059w4jpdnb77ft/branch/master?svg=true)](https://ci.appveyor.com/project/martanne/vis/branch/master)
 [![Coverity Scan Build Status](https://scan.coverity.com/projects/3939/badge.svg)](https://scan.coverity.com/projects/3939)
 [![codecov](https://codecov.io/gh/martanne/vis/branch/master/graph/badge.svg)](https://codecov.io/gh/martanne/vis)
-[![Documentation Status](https://readthedocs.org/projects/vis/badge/?version=latest)](http://vis.readthedocs.io/en/latest/?badge=latest)
+[![Documentation Status](https://readthedocs.org/projects/vis/badge/?version=master)](http://vis.readthedocs.io/en/master/?badge=master)
 [![#vis-editor on freenode](https://img.shields.io/badge/IRC-%23vis--editor-blue.svg)](irc://irc.freenode.net/vis-editor)
 
 Vis aims to be a modern, legacy free, simple yet efficient editor
@@ -80,8 +80,8 @@ Learn about some differences compared to
 [`vim(1)`](https://github.com/martanne/vis/wiki/Differences-from-Vi(m)),
 respectively.
 
-[Lua API Documentation](http://martanne.github.io/vis/doc/) is also
-available.
+[C API](https://vis.readthedocs.io/) as well as [Lua API](http://martanne.github.io/vis/doc/)
+documentation is also available.
 
 Non Goals
 ---------
