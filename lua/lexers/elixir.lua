@@ -104,6 +104,7 @@ local operator2 = P('!==') + '!=' + '!' + '=~' + '===' + '==' + '=' + '<<<' +
 local operator_token = token(l.OPERATOR, operator1 + operator2)
 
 M._rules = {
+  {'whitespace', ws},
   {'sigil', sigil_token * sigiladdon_token},
   {'atom', atom_token},
   {'string', string},
