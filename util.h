@@ -35,3 +35,14 @@ static void *memrchr(const void *m, int c, size_t n)
 #endif
 
 #endif /* UTIL_H */
+
+
+/* Needed for building on Hurd */
+
+#ifndef PIPE_BUF
+#define PIPE_BUF 4096
+#endif
+
+#ifndef PATH_MAX
+#define PATH_MAX 4096
+#endif
