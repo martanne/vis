@@ -548,6 +548,7 @@ void vis_draw(Vis *vis) {
 
 void vis_redraw(Vis *vis) {
 	vis->ui->redraw(vis->ui);
+	vis_update(vis);
 }
 
 void vis_update(Vis *vis) {
