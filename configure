@@ -435,6 +435,7 @@ if test "$lua" != "no" ; then
 
 cat > "$tmpc" <<EOF
 #include <lua.h>
+#include <lualib.h>
 #include <lauxlib.h>
 
 #if LUA_VERSION_NUM < 502
@@ -493,6 +494,7 @@ if test $CONFIG_LUA -eq 1 -a "$lpeg" != "no" ; then
 
 cat > "$tmpc" <<EOF
 #include <lua.h>
+#include <lualib.h>
 #include <lauxlib.h>
 
 int main(int argc, char *argv[]) {
