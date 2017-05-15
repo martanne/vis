@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html>
+<head></head>
+<title>Terminal Color Degeneration (256 -> 16 color mode)</title>
+<!--
+/* C source to generate this page, written by S. Gilles */
+#include <stdint.h>
+#include <stdio.h>
+
+const unsigned char color_256_to_16[256] = {
+        /* */
+        0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 0, 4, 4, 4, 12,
+        12, 2, 6, 4, 4, 12, 12, 2, 2, 6, 4, 12, 12, 2, 2, 2, 6, 12, 12, 10, 10,
+        10, 10, 14, 12, 10, 10, 10, 10, 10, 14, 1, 5, 4, 4, 12, 12, 3, 8, 4, 4,
+        12, 12, 2, 2, 6, 4, 12, 12, 2, 2, 2, 6, 12, 12, 10, 10, 10, 10, 14, 12,
+        10, 10, 10, 10, 10, 14, 1, 1, 5, 4, 12, 12, 1, 1, 5, 4, 12, 12, 3, 3, 8,
+        4, 12, 12, 2, 2, 2, 6, 12, 12, 10, 10, 10, 10, 14, 12, 10, 10, 10, 10,
+        10, 14, 1, 1, 1, 5, 12, 12, 1, 1, 1, 5, 12, 12, 1, 1, 1, 5, 12, 12, 3,
+        3, 3, 7, 12, 12, 10, 10, 10, 10, 14, 12, 10, 10, 10, 10, 10, 14, 9, 9,
+        9, 9, 13, 12, 9, 9, 9, 9, 13, 12, 9, 9, 9, 9, 13, 12, 9, 9, 9, 9, 13,
+        12, 11, 11, 11, 11, 7, 12, 10, 10, 10, 10, 10, 14, 9, 9, 9, 9, 9, 13, 9,
+        9, 9, 9, 9, 13, 9, 9, 9, 9, 9, 13, 9, 9, 9, 9, 9, 13, 9, 9, 9, 9, 9, 13,
+        11, 11, 11, 11, 11, 15, 0, 0, 0, 0, 0, 0, 8, 8, 8, 8, 8, 8, 7, 7, 7, 7,
+        7, 7, 15, 15, 15, 15, 15, 15
+};
+uint32_t colors[256];
+static void fill_256_colors(void)
+{
+        colors[0] = 0x0;
+        colors[1] = 0x800000;
+        colors[2] = 0x008000;
+        colors[3] = 0x808000;
+        colors[4] = 0x000080;
+        colors[5] = 0x800080;
+        colors[6] = 0x008080;
+        colors[7] = 0xc0c0c0;
+        colors[8] = 0x808080;
+        colors[9] = 0xff0000;
+        colors[10] = 0x00ff00;
+        colors[11] = 0xffff00;
+        colors[12] = 0x0000ff;
+        colors[13] = 0xff00ff;
+        colors[14] = 0x00ffff;
+        colors[15] = 0xffffff;
+
+        for (int r = 0; r < 6; ++r) {
+                for (int g = 0; g < 6; ++g) {
+                        for (int b = 0; b < 6; ++b) {
+                                size_t j = r * 36 + g * 6 + b + 16;
+                                int rr = r ? r * 40 + 15 : 0;
+                                int gg = g ? g * 40 + 15 : 0;
+                                int bb = b ? b * 40 + 15 : 0;
+
+                                colors[j] = (rr << 16) | (gg << 8) | bb;
+                        }
+                }
+        }
+
+        for (size_t j = 0; j < 24; ++j) {
+                int g = 8 + 10 * (j);
+
+                colors[232 + j] = (g << 16) | (g << 8) | g;
+        }
+}
+
+int fg_for(uint32_t c)
+{
+        int r = (c & 0xff0000) >> 16;
+        int g = (c & 0x00ff00) >> 8;
+        int b = (c & 0x0000ff);
+
+        if (1.4 * r * r + g * g + (b * b / 1.7) > 40000) {
+                return 0x000000;
+        } else {
+                return 0xdddddd;
+        }
+}
+
+int main(void)
+{
+        fill_256_colors();
+        printf("<!DOCTYPE html>\n");
+        printf("<html>\n");
+        printf("<head></head>\n");
+        printf("<title>Terminal Color Degeneration (256 -> 16 color mode)</title>\n");
+        printf("<body style=\"background-color:#444444;"
+               "font-family:monospace\">\n");
+        printf("<table style=\"border-collapse:"
+               " collapse; border-spacing: 0px;\">\n");
+        printf("  <tr>\n");
+
+        for (size_t j = 16; j < 232; ++j) {
+                if ((j - 16) % 6 == 0 &&
+                    j != 16) {
+                        printf("  </tr>\n  <tr>\n");
+                }
+
+                if ((j - 16) % 36 == 0 &&
+                    j != 16) {
+                        printf("  <td>&nbsp;</td></tr>\n  <tr>\n");
+                }
+
+                printf("    <td style=\"background-color:#%06x;"
+                       "padding:6px;\">", colors[color_256_to_16[j]]);
+                printf("<span style=\"font-weight:bold;");
+
+                if (color_256_to_16[j] == 0 ||
+                    color_256_to_16[j] == 4 ||
+                    color_256_to_16[j] == 12) {
+                        printf("color:#dddddd;");
+                } else {
+                        printf("color:#000000;");
+                }
+
+                printf("\">");
+                char *lpad = "";
+
+                if (j < 10) {
+                        lpad = "&nbsp;&nbsp;";
+                } else if (j < 100) {
+                        lpad = "&nbsp;";
+                }
+
+                char *rpad = "";
+
+                if (color_256_to_16[j] < 10) {
+                        rpad = "&nbsp;";
+                }
+
+                printf("%s<span style=\"padding:3px;color:#%06x;"
+                       "background-color:#%06x;\">%zu</span> &#x2192; %s%zu",
+                       lpad,
+                       fg_for(colors[j]), colors[j], j, rpad,
+                       (size_t) color_256_to_16[j]);
+                printf("</span></td>\n");
+        }
+
+        printf("  </tr>\n</table>\n</body>\n</html>\n");
+
+        return 0;
+}
+-->
+<body style="background-color:#444444;font-family:monospace">
+<table style="border-collapse: collapse; border-spacing: 0px;">
+  <tr>
+    <td style="background-color:#000000;padding:6px;"><span style="font-weight:bold;color:#dddddd;">&nbsp;<span style="padding:3px;color:#dddddd;background-color:#000000;">16</span> &#x2192; &nbsp;0</span></td>
+    <td style="background-color:#000080;padding:6px;"><span style="font-weight:bold;color:#dddddd;">&nbsp;<span style="padding:3px;color:#dddddd;background-color:#000037;">17</span> &#x2192; &nbsp;4</span></td>
+    <td style="background-color:#000080;padding:6px;"><span style="font-weight:bold;color:#dddddd;">&nbsp;<span style="padding:3px;color:#dddddd;background-color:#00005f;">18</span> &#x2192; &nbsp;4</span></td>
+    <td style="background-color:#000080;padding:6px;"><span style="font-weight:bold;color:#dddddd;">&nbsp;<span style="padding:3px;color:#dddddd;background-color:#000087;">19</span> &#x2192; &nbsp;4</span></td>
+    <td style="background-color:#0000ff;padding:6px;"><span style="font-weight:bold;color:#dddddd;">&nbsp;<span style="padding:3px;color:#dddddd;background-color:#0000af;">20</span> &#x2192; 12</span></td>
+    <td style="background-color:#0000ff;padding:6px;"><span style="font-weight:bold;color:#dddddd;">&nbsp;<span style="padding:3px;color:#dddddd;background-color:#0000d7;">21</span> &#x2192; 12</span></td>
+  </tr>
+  <tr>
+    <td style="background-color:#008000;padding:6px;"><span style="font-weight:bold;color:#000000;">&nbsp;<span style="padding:3px;color:#dddddd;background-color:#003700;">22</span> &#x2192; &nbsp;2</span></td>
+    <td style="background-color:#008080;padding:6px;"><span style="font-weight:bold;color:#000000;">&nbsp;<span style="padding:3px;color:#dddddd;background-color:#003737;">23</span> &#x2192; &nbsp;6</span></td>
+    <td style="background-color:#000080;padding:6px;"><span style="font-weight:bold;color:#dddddd;">&nbsp;<span style="padding:3px;color:#dddddd;background-color:#00375f;">24</span> &#x2192; &nbsp;4</span></td>
+    <td style="background-color:#000080;padding:6px;"><span style="font-weight:bold;color:#dddddd;">&nbsp;<span style="padding:3px;color:#dddddd;background-color:#003787;">25</span> &#x2192; &nbsp;4</span></td>
+    <td style="background-color:#0000ff;padding:6px;"><span style="font-weight:bold;color:#dddddd;">&nbsp;<span style="padding:3px;color:#dddddd;background-color:#0037af;">26</span> &#x2192; 12</span></td>
+    <td style="background-color:#0000ff;padding:6px;"><span style="font-weight:bold;color:#dddddd;">&nbsp;<span style="padding:3px;color:#dddddd;background-color:#0037d7;">27</span> &#x2192; 12</span></td>
+  </tr>
+  <tr>
+    <td style="background-color:#008000;padding:6px;"><span style="font-weight:bold;color:#000000;">&nbsp;<span style="padding:3px;color:#dddddd;background-color:#005f00;">28</span> &#x2192; &nbsp;2</span></td>
+    <td style="background-color:#008000;padding:6px;"><span style="font-weight:bold;color:#000000;">&nbsp;<span style="padding:3px;color:#dddddd;background-color:#005f37;">29</span> &#x2192; &nbsp;2</span></td>
+    <td style="background-color:#008080;padding:6px;"><span style="font-weight:bold;color:#000000;">&nbsp;<span style="padding:3px;color:#dddddd;background-color:#005f5f;">30</span> &#x2192; &nbsp;6</span></td>
+    <td style="background-color:#000080;padding:6px;"><span style="font-weight:bold;color:#dddddd;">&nbsp;<span style="padding:3px;color:#dddddd;background-color:#005f87;">31</span> &#x2192; &nbsp;4</span></td>
+    <td style="background-color:#0000ff;padding:6px;"><span style="font-weight:bold;color:#dddddd;">&nbsp;<span style="padding:3px;color:#dddddd;background-color:#005faf;">32</span> &#x2192; 12</span></td>
+    <td style="background-color:#0000ff;padding:6px;"><span style="font-weight:bold;color:#dddddd;">&nbsp;<span style="padding:3px;color:#dddddd;background-color:#005fd7;">33</span> &#x2192; 12</span></td>
+  </tr>
+  <tr>
+    <td style="background-color:#008000;padding:6px;"><span style="font-weight:bold;color:#000000;">&nbsp;<span style="padding:3px;color:#dddddd;background-color:#008700;">34</span> &#x2192; &nbsp;2</span></td>
+    <td style="background-color:#008000;padding:6px;"><span style="font-weight:bold;color:#000000;">&nbsp;<span style="padding:3px;color:#dddddd;background-color:#008737;">35</span> &#x2192; &nbsp;2</span></td>
+    <td style="background-color:#008000;padding:6px;"><span style="font-weight:bold;color:#000000;">&nbsp;<span style="padding:3px;color:#dddddd;background-color:#00875f;">36</span> &#x2192; &nbsp;2</span></td>
+    <td style="background-color:#008080;padding:6px;"><span style="font-weight:bold;color:#000000;">&nbsp;<span style="padding:3px;color:#dddddd;background-color:#008787;">37</span> &#x2192; &nbsp;6</span></td>
+    <td style="background-color:#0000ff;padding:6px;"><span style="font-weight:bold;color:#dddddd;">&nbsp;<span style="padding:3px;color:#dddddd;background-color:#0087af;">38</span> &#x2192; 12</span></td>
+    <td style="background-color:#0000ff;padding:6px;"><span style="font-weight:bold;color:#dddddd;">&nbsp;<span style="padding:3px;color:#000000;background-color:#0087d7;">39</span> &#x2192; 12</span></td>
+  </tr>
+  <tr>
+    <td style="background-color:#00ff00;padding:6px;"><span style="font-weight:bold;color:#000000;">&nbsp;<span style="padding:3px;color:#dddddd;background-color:#00af00;">40</span> &#x2192; 10</span></td>
+    <td style="background-color:#00ff00;padding:6px;"><span style="font-weight:bold;color:#000000;">&nbsp;<span style="padding:3px;color:#dddddd;background-color:#00af37;">41</span> &#x2192; 10</span></td>
+    <td style="background-color:#00ff00;padding:6px;"><span style="font-weight:bold;color:#000000;">&nbsp;<span style="padding:3px;color:#dddddd;background-color:#00af5f;">42</span> &#x2192; 10</span></td>
+    <td style="background-color:#00ff00;padding:6px;"><span style="font-weight:bold;color:#000000;">&nbsp;<span style="padding:3px;color:#000000;background-color:#00af87;">43</span> &#x2192; 10</span></td>
+    <td style="background-color:#00ffff;padding:6px;"><span style="font-weight:bold;color:#000000;">&nbsp;<span style="padding:3px;color:#000000;background-color:#00afaf;">44</span> &#x2192; 14</span></td>
+    <td style="background-color:#0000ff;padding:6px;"><span style="font-weight:bold;color:#dddddd;">&nbsp;<span style="padding:3px;color:#000000;background-color:#00afd7;">45</span> &#x2192; 12</span></td>
+  </tr>
+  <tr>
+    <td style="background-color:#00ff00;padding:6px;"><span style="font-weight:bold;color:#000000;">&nbsp;<span style="padding:3px;color:#000000;background-color:#00d700;">46</span> &#x2192; 10</span></td>
+    <td style="background-color:#00ff00;padding:6px;"><span style="font-weight:bold;color:#000000;">&nbsp;<span style="padding:3px;color:#000000;background-color:#00d737;">47</span> &#x2192; 10</span></td>
+    <td style="background-color:#00ff00;padding:6px;"><span style="font-weight:bold;color:#000000;">&nbsp;<span style="padding:3px;color:#000000;background-color:#00d75f;">48</span> &#x2192; 10</span></td>
+    <td style="background-color:#00ff00;padding:6px;"><span style="font-weight:bold;color:#000000;">&nbsp;<span style="padding:3px;color:#000000;background-color:#00d787;">49</span> &#x2192; 10</span></td>
+    <td style="background-color:#00ff00;padding:6px;"><span style="font-weight:bold;color:#000000;">&nbsp;<span style="padding:3px;color:#000000;background-color:#00d7af;">50</span> &#x2192; 10</span></td>
+    <td style="background-color:#00ffff;padding:6px;"><span style="font-weight:bold;color:#000000;">&nbsp;<span style="padding:3px;color:#000000;background-color:#00d7d7;">51</span> &#x2192; 14</span></td>
+  </tr>
+  <tr>
+  <td>&nbsp;</td></tr>
+  <tr>
+    <td style="background-color:#800000;padding:6px;"><span style="font-weight:bold;color:#000000;">&nbsp;<span style="padding:3px;color:#dddddd;background-color:#370000;">52</span> &#x2192; &nbsp;1</span></td>
+    <td style="background-color:#800080;padding:6px;"><span style="font-weight:bold;color:#000000;">&nbsp;<span style="padding:3px;color:#dddddd;background-color:#370037;">53</span> &#x2192; &nbsp;5</span></td>
+    <td style="background-color:#000080;padding:6px;"><span style="font-weight:bold;color:#dddddd;">&nbsp;<span style="padding:3px;color:#dddddd;background-color:#37005f;">54</span> &#x2192; &nbsp;4</span></td>
+    <td style="background-color:#000080;padding:6px;"><span style="font-weight:bold;color:#dddddd;">&nbsp;<span style="padding:3px;color:#dddddd;background-color:#370087;">55</span> &#x2192; &nbsp;4</span></td>
+    <td style="background-color:#0000ff;padding:6px;"><span style="font-weight:bold;color:#dddddd;">&nbsp;<span style="padding:3px;color:#dddddd;background-color:#3700af;">56</span> &#x2192; 12</span></td>
+    <td style="background-color:#0000ff;padding:6px;"><span style="font-weight:bold;color:#dddddd;">&nbsp;<span style="padding:3px;color:#dddddd;background-color:#3700d7;">57</span> &#x2192; 12</span></td>
+  </tr>
+  <tr>
+    <td style="background-color:#808000;padding:6px;"><span style="font-weight:bold;color:#000000;">&nbsp;<span style="padding:3px;color:#dddddd;background-color:#373700;">58</span> &#x2192; &nbsp;3</span></td>
+    <td style="background-color:#808080;padding:6px;"><span style="font-weight:bold;color:#000000;">&nbsp;<span style="padding:3px;color:#dddddd;background-color:#373737;">59</span> &#x2192; &nbsp;8</span></td>
+    <td style="background-color:#000080;padding:6px;"><span style="font-weight:bold;color:#dddddd;">&nbsp;<span style="padding:3px;color:#dddddd;background-color:#37375f;">60</span> &#x2192; &nbsp;4</span></td>
+    <td style="background-color:#000080;padding:6px;"><span style="font-weight:bold;color:#dddddd;">&nbsp;<span style="padding:3px;color:#dddddd;background-color:#373787;">61</span> &#x2192; &nbsp;4</span></td>
+    <td style="background-color:#0000ff;padding:6px;"><span style="font-weight:bold;color:#dddddd;">&nbsp;<span style="padding:3px;color:#dddddd;background-color:#3737af;">62</span> &#x2192; 12</span></td>
+    <td style="background-color:#0000ff;padding:6px;"><span style="font-weight:bold;color:#dddddd;">&nbsp;<span style="padding:3px;color:#dddddd;background-color:#3737d7;">63</span> &#x2192; 12</span></td>
+  </tr>
+  <tr>
+    <td style="background-color:#008000;padding:6px;"><span style="font-weight:bold;color:#000000;">&nbsp;<span style="padding:3px;color:#dddddd;background-color:#375f00;">64</span> &#x2192; &nbsp;2</span></td>
+    <td style="background-color:#008000;padding:6px;"><span style="font-weight:bold;color:#000000;">&nbsp;<span style="padding:3px;color:#dddddd;background-color:#375f37;">65</span> &#x2192; &nbsp;2</span></td>
+    <td style="background-color:#008080;padding:6px;"><span style="font-weight:bold;color:#000000;">&nbsp;<span style="padding:3px;color:#dddddd;background-color:#375f5f;">66</span> &#x2192; &nbsp;6</span></td>
+    <td style="background-color:#000080;padding:6px;"><span style="font-weight:bold;color:#dddddd;">&nbsp;<span style="padding:3px;color:#dddddd;background-color:#375f87;">67</span> &#x2192; &nbsp;4</span></td>
+    <td style="background-color:#0000ff;padding:6px;"><span style="font-weight:bold;color:#dddddd;">&nbsp;<span style="padding:3px;color:#dddddd;background-color:#375faf;">68</span> &#x2192; 12</span></td>
+    <td style="background-color:#0000ff;padding:6px;"><span style="font-weight:bold;color:#dddddd;">&nbsp;<span style="padding:3px;color:#000000;background-color:#375fd7;">69</span> &#x2192; 12</span></td>
+  </tr>
+  <tr>
+    <td style="background-color:#008000;padding:6px;"><span style="font-weight:bold;color:#000000;">&nbsp;<span style="padding:3px;color:#dddddd;background-color:#378700;">70</span> &#x2192; &nbsp;2</span></td>
+    <td style="background-color:#008000;padding:6px;"><span style="font-weight:bold;color:#000000;">&nbsp;<span style="padding:3px;color:#dddddd;background-color:#378737;">71</span> &#x2192; &nbsp;2</span></td>
+    <td style="background-color:#008000;padding:6px;"><span style="font-weight:bold;color:#000000;">&nbsp;<span style="padding:3px;color:#dddddd;background-color:#37875f;">72</span> &#x2192; &nbsp;2</span></td>
+    <td style="background-color:#008080;padding:6px;"><span style="font-weight:bold;color:#000000;">&nbsp;<span style="padding:3px;color:#dddddd;background-color:#378787;">73</span> &#x2192; &nbsp;6</span></td>
+    <td style="background-color:#0000ff;padding:6px;"><span style="font-weight:bold;color:#dddddd;">&nbsp;<span style="padding:3px;color:#000000;background-color:#3787af;">74</span> &#x2192; 12</span></td>
+    <td style="background-color:#0000ff;padding:6px;"><span style="font-weight:bold;color:#dddddd;">&nbsp;<span style="padding:3px;color:#000000;background-color:#3787d7;">75</span> &#x2192; 12</span></td>
+  </tr>
+  <tr>
+    <td style="background-color:#00ff00;padding:6px;"><span style="font-weight:bold;color:#000000;">&nbsp;<span style="padding:3px;color:#dddddd;background-color:#37af00;">76</span> &#x2192; 10</span></td>
+    <td style="background-color:#00ff00;padding:6px;"><span style="font-weight:bold;color:#000000;">&nbsp;<span style="padding:3px;color:#dddddd;background-color:#37af37;">77</span> &#x2192; 10</span></td>
+    <td style="background-color:#00ff00;padding:6px;"><span style="font-weight:bold;color:#000000;">&nbsp;<span style="padding:3px;color:#000000;background-color:#37af5f;">78</span> &#x2192; 10</span></td>
+    <td style="background-color:#00ff00;padding:6px;"><span style="font-weight:bold;color:#000000;">&nbsp;<span style="padding:3px;color:#000000;background-color:#37af87;">79</span> &#x2192; 10</span></td>
+    <td style="background-color:#00ffff;padding:6px;"><span style="font-weight:bold;color:#000000;">&nbsp;<span style="padding:3px;color:#000000;background-color:#37afaf;">80</span> &#x2192; 14</span></td>
+    <td style="background-color:#0000ff;padding:6px;"><span style="font-weight:bold;color:#dddddd;">&nbsp;<span style="padding:3px;color:#000000;background-color:#37afd7;">81</span> &#x2192; 12</span></td>
+  </tr>
+  <tr>
+    <td style="background-color:#00ff00;padding:6px;"><span style="font-weight:bold;color:#000000;">&nbsp;<span style="padding:3px;color:#000000;background-color:#37d700;">82</span> &#x2192; 10</span></td>
+    <td style="background-color:#00ff00;padding:6px;"><span style="font-weight:bold;color:#000000;">&nbsp;<span style="padding:3px;color:#000000;background-color:#37d737;">83</span> &#x2192; 10</span></td>
+    <td style="background-color:#00ff00;padding:6px;"><span style="font-weight:bold;color:#000000;">&nbsp;<span style="padding:3px;color:#000000;background-color:#37d75f;">84</span> &#x2192; 10</span></td>
+    <td style="background-color:#00ff00;padding:6px;"><span style="font-weight:bold;color:#000000;">&nbsp;<span style="padding:3px;color:#000000;background-color:#37d787;">85</span> &#x2192; 10</span></td>
+    <td style="background-color:#00ff00;padding:6px;"><span style="font-weight:bold;color:#000000;">&nbsp;<span style="padding:3px;color:#000000;background-color:#37d7af;">86</span> &#x2192; 10</span></td>
+    <td style="background-color:#00ffff;padding:6px;"><span style="font-weight:bold;color:#000000;">&nbsp;<span style="padding:3px;color:#000000;background-color:#37d7d7;">87</span> &#x2192; 14</span></td>
+  </tr>
+  <tr>
+  <td>&nbsp;</td></tr>
+  <tr>
+    <td style="background-color:#800000;padding:6px;"><span style="font-weight:bold;color:#000000;">&nbsp;<span style="padding:3px;color:#dddddd;background-color:#5f0000;">88</span> &#x2192; &nbsp;1</span></td>
+    <td style="background-color:#800000;padding:6px;"><span style="font-weight:bold;color:#000000;">&nbsp;<span style="padding:3px;color:#dddddd;background-color:#5f0037;">89</span> &#x2192; &nbsp;1</span></td>
+    <td style="background-color:#800080;padding:6px;"><span style="font-weight:bold;color:#000000;">&nbsp;<span style="padding:3px;color:#dddddd;background-color:#5f005f;">90</span> &#x2192; &nbsp;5</span></td>
+    <td style="background-color:#000080;padding:6px;"><span style="font-weight:bold;color:#dddddd;">&nbsp;<span style="padding:3px;color:#dddddd;background-color:#5f0087;">91</span> &#x2192; &nbsp;4</span></td>
+    <td style="background-color:#0000ff;padding:6px;"><span style="font-weight:bold;color:#dddddd;">&nbsp;<span style="padding:3px;color:#dddddd;background-color:#5f00af;">92</span> &#x2192; 12</span></td>
+    <td style="background-color:#0000ff;padding:6px;"><span style="font-weight:bold;color:#dddddd;">&nbsp;<span style="padding:3px;color:#dddddd;background-color:#5f00d7;">93</span> &#x2192; 12</span></td>
+  </tr>
+  <tr>
+    <td style="background-color:#800000;padding:6px;"><span style="font-weight:bold;color:#000000;">&nbsp;<span style="padding:3px;color:#dddddd;background-color:#5f3700;">94</span> &#x2192; &nbsp;1</span></td>
+    <td style="background-color:#800000;padding:6px;"><span style="font-weight:bold;color:#000000;">&nbsp;<span style="padding:3px;color:#dddddd;background-color:#5f3737;">95</span> &#x2192; &nbsp;1</span></td>
+    <td style="background-color:#800080;padding:6px;"><span style="font-weight:bold;color:#000000;">&nbsp;<span style="padding:3px;color:#dddddd;background-color:#5f375f;">96</span> &#x2192; &nbsp;5</span></td>
+    <td style="background-color:#000080;padding:6px;"><span style="font-weight:bold;color:#dddddd;">&nbsp;<span style="padding:3px;color:#dddddd;background-color:#5f3787;">97</span> &#x2192; &nbsp;4</span></td>
+    <td style="background-color:#0000ff;padding:6px;"><span style="font-weight:bold;color:#dddddd;">&nbsp;<span style="padding:3px;color:#dddddd;background-color:#5f37af;">98</span> &#x2192; 12</span></td>
+    <td style="background-color:#0000ff;padding:6px;"><span style="font-weight:bold;color:#dddddd;">&nbsp;<span style="padding:3px;color:#000000;background-color:#5f37d7;">99</span> &#x2192; 12</span></td>
+  </tr>
+  <tr>
+    <td style="background-color:#808000;padding:6px;"><span style="font-weight:bold;color:#000000;"><span style="padding:3px;color:#dddddd;background-color:#5f5f00;">100</span> &#x2192; &nbsp;3</span></td>
+    <td style="background-color:#808000;padding:6px;"><span style="font-weight:bold;color:#000000;"><span style="padding:3px;color:#dddddd;background-color:#5f5f37;">101</span> &#x2192; &nbsp;3</span></td>
+    <td style="background-color:#808080;padding:6px;"><span style="font-weight:bold;color:#000000;"><span style="padding:3px;color:#dddddd;background-color:#5f5f5f;">102</span> &#x2192; &nbsp;8</span></td>
+    <td style="background-color:#000080;padding:6px;"><span style="font-weight:bold;color:#dddddd;"><span style="padding:3px;color:#dddddd;background-color:#5f5f87;">103</span> &#x2192; &nbsp;4</span></td>
+    <td style="background-color:#0000ff;padding:6px;"><span style="font-weight:bold;color:#dddddd;"><span style="padding:3px;color:#dddddd;background-color:#5f5faf;">104</span> &#x2192; 12</span></td>
+    <td style="background-color:#0000ff;padding:6px;"><span style="font-weight:bold;color:#dddddd;"><span style="padding:3px;color:#000000;background-color:#5f5fd7;">105</span> &#x2192; 12</span></td>
+  </tr>
+  <tr>
+    <td style="background-color:#008000;padding:6px;"><span style="font-weight:bold;color:#000000;"><span style="padding:3px;color:#dddddd;background-color:#5f8700;">106</span> &#x2192; &nbsp;2</span></td>
+    <td style="background-color:#008000;padding:6px;"><span style="font-weight:bold;color:#000000;"><span style="padding:3px;color:#dddddd;background-color:#5f8737;">107</span> &#x2192; &nbsp;2</span></td>
+    <td style="background-color:#008000;padding:6px;"><span style="font-weight:bold;color:#000000;"><span style="padding:3px;color:#dddddd;background-color:#5f875f;">108</span> &#x2192; &nbsp;2</span></td>
+    <td style="background-color:#008080;padding:6px;"><span style="font-weight:bold;color:#000000;"><span style="padding:3px;color:#000000;background-color:#5f8787;">109</span> &#x2192; &nbsp;6</span></td>
+    <td style="background-color:#0000ff;padding:6px;"><span style="font-weight:bold;color:#dddddd;"><span style="padding:3px;color:#000000;background-color:#5f87af;">110</span> &#x2192; 12</span></td>
+    <td style="background-color:#0000ff;padding:6px;"><span style="font-weight:bold;color:#dddddd;"><span style="padding:3px;color:#000000;background-color:#5f87d7;">111</span> &#x2192; 12</span></td>
+  </tr>
+  <tr>
+    <td style="background-color:#00ff00;padding:6px;"><span style="font-weight:bold;color:#000000;"><span style="padding:3px;color:#000000;background-color:#5faf00;">112</span> &#x2192; 10</span></td>
+    <td style="background-color:#00ff00;padding:6px;"><span style="font-weight:bold;color:#000000;"><span style="padding:3px;color:#000000;background-color:#5faf37;">113</span> &#x2192; 10</span></td>
+    <td style="background-color:#00ff00;padding:6px;"><span style="font-weight:bold;color:#000000;"><span style="padding:3px;color:#000000;background-color:#5faf5f;">114</span> &#x2192; 10</span></td>
+    <td style="background-color:#00ff00;padding:6px;"><span style="font-weight:bold;color:#000000;"><span style="padding:3px;color:#000000;background-color:#5faf87;">115</span> &#x2192; 10</span></td>
+    <td style="background-color:#00ffff;padding:6px;"><span style="font-weight:bold;color:#000000;"><span style="padding:3px;color:#000000;background-color:#5fafaf;">116</span> &#x2192; 14</span></td>
+    <td style="background-color:#0000ff;padding:6px;"><span style="font-weight:bold;color:#dddddd;"><span style="padding:3px;color:#000000;background-color:#5fafd7;">117</span> &#x2192; 12</span></td>
+  </tr>
+  <tr>
+    <td style="background-color:#00ff00;padding:6px;"><span style="font-weight:bold;color:#000000;"><span style="padding:3px;color:#000000;background-color:#5fd700;">118</span> &#x2192; 10</span></td>
+    <td style="background-color:#00ff00;padding:6px;"><span style="font-weight:bold;color:#000000;"><span style="padding:3px;color:#000000;background-color:#5fd737;">119</span> &#x2192; 10</span></td>
+    <td style="background-color:#00ff00;padding:6px;"><span style="font-weight:bold;color:#000000;"><span style="padding:3px;color:#000000;background-color:#5fd75f;">120</span> &#x2192; 10</span></td>
+    <td style="background-color:#00ff00;padding:6px;"><span style="font-weight:bold;color:#000000;"><span style="padding:3px;color:#000000;background-color:#5fd787;">121</span> &#x2192; 10</span></td>
+    <td style="background-color:#00ff00;padding:6px;"><span style="font-weight:bold;color:#000000;"><span style="padding:3px;color:#000000;background-color:#5fd7af;">122</span> &#x2192; 10</span></td>
+    <td style="background-color:#00ffff;padding:6px;"><span style="font-weight:bold;color:#000000;"><span style="padding:3px;color:#000000;background-color:#5fd7d7;">123</span> &#x2192; 14</span></td>
+  </tr>
+  <tr>
+  <td>&nbsp;</td></tr>
+  <tr>
+    <td style="background-color:#800000;padding:6px;"><span style="font-weight:bold;color:#000000;"><span style="padding:3px;color:#dddddd;background-color:#870000;">124</span> &#x2192; &nbsp;1</span></td>
+    <td style="background-color:#800000;padding:6px;"><span style="font-weight:bold;color:#000000;"><span style="padding:3px;color:#dddddd;background-color:#870037;">125</span> &#x2192; &nbsp;1</span></td>
+    <td style="background-color:#800000;padding:6px;"><span style="font-weight:bold;color:#000000;"><span style="padding:3px;color:#dddddd;background-color:#87005f;">126</span> &#x2192; &nbsp;1</span></td>
+    <td style="background-color:#800080;padding:6px;"><span style="font-weight:bold;color:#000000;"><span style="padding:3px;color:#dddddd;background-color:#870087;">127</span> &#x2192; &nbsp;5</span></td>
+    <td style="background-color:#0000ff;padding:6px;"><span style="font-weight:bold;color:#dddddd;"><span style="padding:3px;color:#000000;background-color:#8700af;">128</span> &#x2192; 12</span></td>
+    <td style="background-color:#0000ff;padding:6px;"><span style="font-weight:bold;color:#dddddd;"><span style="padding:3px;color:#000000;background-color:#8700d7;">129</span> &#x2192; 12</span></td>
+  </tr>
+  <tr>
+    <td style="background-color:#800000;padding:6px;"><span style="font-weight:bold;color:#000000;"><span style="padding:3px;color:#dddddd;background-color:#873700;">130</span> &#x2192; &nbsp;1</span></td>
+    <td style="background-color:#800000;padding:6px;"><span style="font-weight:bold;color:#000000;"><span style="padding:3px;color:#dddddd;background-color:#873737;">131</span> &#x2192; &nbsp;1</span></td>
+    <td style="background-color:#800000;padding:6px;"><span style="font-weight:bold;color:#000000;"><span style="padding:3px;color:#dddddd;background-color:#87375f;">132</span> &#x2192; &nbsp;1</span></td>
+    <td style="background-color:#800080;padding:6px;"><span style="font-weight:bold;color:#000000;"><span style="padding:3px;color:#dddddd;background-color:#873787;">133</span> &#x2192; &nbsp;5</span></td>
+    <td style="background-color:#0000ff;padding:6px;"><span style="font-weight:bold;color:#dddddd;"><span style="padding:3px;color:#000000;background-color:#8737af;">134</span> &#x2192; 12</span></td>
+    <td style="background-color:#0000ff;padding:6px;"><span style="font-weight:bold;color:#dddddd;"><span style="padding:3px;color:#000000;background-color:#8737d7;">135</span> &#x2192; 12</span></td>
+  </tr>
+  <tr>
+    <td style="background-color:#800000;padding:6px;"><span style="font-weight:bold;color:#000000;"><span style="padding:3px;color:#dddddd;background-color:#875f00;">136</span> &#x2192; &nbsp;1</span></td>
+    <td style="background-color:#800000;padding:6px;"><span style="font-weight:bold;color:#000000;"><span style="padding:3px;color:#dddddd;background-color:#875f37;">137</span> &#x2192; &nbsp;1</span></td>
+    <td style="background-color:#800000;padding:6px;"><span style="font-weight:bold;color:#000000;"><span style="padding:3px;color:#dddddd;background-color:#875f5f;">138</span> &#x2192; &nbsp;1</span></td>
+    <td style="background-color:#800080;padding:6px;"><span style="font-weight:bold;color:#000000;"><span style="padding:3px;color:#000000;background-color:#875f87;">139</span> &#x2192; &nbsp;5</span></td>
+    <td style="background-color:#0000ff;padding:6px;"><span style="font-weight:bold;color:#dddddd;"><span style="padding:3px;color:#000000;background-color:#875faf;">140</span> &#x2192; 12</span></td>
+    <td style="background-color:#0000ff;padding:6px;"><span style="font-weight:bold;color:#dddddd;"><span style="padding:3px;color:#000000;background-color:#875fd7;">141</span> &#x2192; 12</span></td>
+  </tr>
+  <tr>
+    <td style="background-color:#808000;padding:6px;"><span style="font-weight:bold;color:#000000;"><span style="padding:3px;color:#000000;background-color:#878700;">142</span> &#x2192; &nbsp;3</span></td>
+    <td style="background-color:#808000;padding:6px;"><span style="font-weight:bold;color:#000000;"><span style="padding:3px;color:#000000;background-color:#878737;">143</span> &#x2192; &nbsp;3</span></td>
+    <td style="background-color:#808000;padding:6px;"><span style="font-weight:bold;color:#000000;"><span style="padding:3px;color:#000000;background-color:#87875f;">144</span> &#x2192; &nbsp;3</span></td>
+    <td style="background-color:#c0c0c0;padding:6px;"><span style="font-weight:bold;color:#000000;"><span style="padding:3px;color:#000000;background-color:#878787;">145</span> &#x2192; &nbsp;7</span></td>
+    <td style="background-color:#0000ff;padding:6px;"><span style="font-weight:bold;color:#dddddd;"><span style="padding:3px;color:#000000;background-color:#8787af;">146</span> &#x2192; 12</span></td>
+    <td style="background-color:#0000ff;padding:6px;"><span style="font-weight:bold;color:#dddddd;"><span style="padding:3px;color:#000000;background-color:#8787d7;">147</span> &#x2192; 12</span></td>
+  </tr>
+  <tr>
+    <td style="background-color:#00ff00;padding:6px;"><span style="font-weight:bold;color:#000000;"><span style="padding:3px;color:#000000;background-color:#87af00;">148</span> &#x2192; 10</span></td>
+    <td style="background-color:#00ff00;padding:6px;"><span style="font-weight:bold;color:#000000;"><span style="padding:3px;color:#000000;background-color:#87af37;">149</span> &#x2192; 10</span></td>
+    <td style="background-color:#00ff00;padding:6px;"><span style="font-weight:bold;color:#000000;"><span style="padding:3px;color:#000000;background-color:#87af5f;">150</span> &#x2192; 10</span></td>
+    <td style="background-color:#00ff00;padding:6px;"><span style="font-weight:bold;color:#000000;"><span style="padding:3px;color:#000000;background-color:#87af87;">151</span> &#x2192; 10</span></td>
+    <td style="background-color:#00ffff;padding:6px;"><span style="font-weight:bold;color:#000000;"><span style="padding:3px;color:#000000;background-color:#87afaf;">152</span> &#x2192; 14</span></td>
+    <td style="background-color:#0000ff;padding:6px;"><span style="font-weight:bold;color:#dddddd;"><span style="padding:3px;color:#000000;background-color:#87afd7;">153</span> &#x2192; 12</span></td>
+  </tr>
+  <tr>
+    <td style="background-color:#00ff00;padding:6px;"><span style="font-weight:bold;color:#000000;"><span style="padding:3px;color:#000000;background-color:#87d700;">154</span> &#x2192; 10</span></td>
+    <td style="background-color:#00ff00;padding:6px;"><span style="font-weight:bold;color:#000000;"><span style="padding:3px;color:#000000;background-color:#87d737;">155</span> &#x2192; 10</span></td>
+    <td style="background-color:#00ff00;padding:6px;"><span style="font-weight:bold;color:#000000;"><span style="padding:3px;color:#000000;background-color:#87d75f;">156</span> &#x2192; 10</span></td>
+    <td style="background-color:#00ff00;padding:6px;"><span style="font-weight:bold;color:#000000;"><span style="padding:3px;color:#000000;background-color:#87d787;">157</span> &#x2192; 10</span></td>
+    <td style="background-color:#00ff00;padding:6px;"><span style="font-weight:bold;color:#000000;"><span style="padding:3px;color:#000000;background-color:#87d7af;">158</span> &#x2192; 10</span></td>
+    <td style="background-color:#00ffff;padding:6px;"><span style="font-weight:bold;color:#000000;"><span style="padding:3px;color:#000000;background-color:#87d7d7;">159</span> &#x2192; 14</span></td>
+  </tr>
+  <tr>
+  <td>&nbsp;</td></tr>
+  <tr>
+    <td style="background-color:#ff0000;padding:6px;"><span style="font-weight:bold;color:#000000;"><span style="padding:3px;color:#000000;background-color:#af0000;">160</span> &#x2192; &nbsp;9</span></td>
+    <td style="background-color:#ff0000;padding:6px;"><span style="font-weight:bold;color:#000000;"><span style="padding:3px;color:#000000;background-color:#af0037;">161</span> &#x2192; &nbsp;9</span></td>
+    <td style="background-color:#ff0000;padding:6px;"><span style="font-weight:bold;color:#000000;"><span style="padding:3px;color:#000000;background-color:#af005f;">162</span> &#x2192; &nbsp;9</span></td>
+    <td style="background-color:#ff0000;padding:6px;"><span style="font-weight:bold;color:#000000;"><span style="padding:3px;color:#000000;background-color:#af0087;">163</span> &#x2192; &nbsp;9</span></td>
+    <td style="background-color:#ff00ff;padding:6px;"><span style="font-weight:bold;color:#000000;"><span style="padding:3px;color:#000000;background-color:#af00af;">164</span> &#x2192; 13</span></td>
+    <td style="background-color:#0000ff;padding:6px;"><span style="font-weight:bold;color:#dddddd;"><span style="padding:3px;color:#000000;background-color:#af00d7;">165</span> &#x2192; 12</span></td>
+  </tr>
+  <tr>
+    <td style="background-color:#ff0000;padding:6px;"><span style="font-weight:bold;color:#000000;"><span style="padding:3px;color:#000000;background-color:#af3700;">166</span> &#x2192; &nbsp;9</span></td>
+    <td style="background-color:#ff0000;padding:6px;"><span style="font-weight:bold;color:#000000;"><span style="padding:3px;color:#000000;background-color:#af3737;">167</span> &#x2192; &nbsp;9</span></td>
+    <td style="background-color:#ff0000;padding:6px;"><span style="font-weight:bold;color:#000000;"><span style="padding:3px;color:#000000;background-color:#af375f;">168</span> &#x2192; &nbsp;9</span></td>
+    <td style="background-color:#ff0000;padding:6px;"><span style="font-weight:bold;color:#000000;"><span style="padding:3px;color:#000000;background-color:#af3787;">169</span> &#x2192; &nbsp;9</span></td>
+    <td style="background-color:#ff00ff;padding:6px;"><span style="font-weight:bold;color:#000000;"><span style="padding:3px;color:#000000;background-color:#af37af;">170</span> &#x2192; 13</span></td>
+    <td style="background-color:#0000ff;padding:6px;"><span style="font-weight:bold;color:#dddddd;"><span style="padding:3px;color:#000000;background-color:#af37d7;">171</span> &#x2192; 12</span></td>
+  </tr>
+  <tr>
+    <td style="background-color:#ff0000;padding:6px;"><span style="font-weight:bold;color:#000000;"><span style="padding:3px;color:#000000;background-color:#af5f00;">172</span> &#x2192; &nbsp;9</span></td>
+    <td style="background-color:#ff0000;padding:6px;"><span style="font-weight:bold;color:#000000;"><span style="padding:3px;color:#000000;background-color:#af5f37;">173</span> &#x2192; &nbsp;9</span></td>
+    <td style="background-color:#ff0000;padding:6px;"><span style="font-weight:bold;color:#000000;"><span style="padding:3px;color:#000000;background-color:#af5f5f;">174</span> &#x2192; &nbsp;9</span></td>
+    <td style="background-color:#ff0000;padding:6px;"><span style="font-weight:bold;color:#000000;"><span style="padding:3px;color:#000000;background-color:#af5f87;">175</span> &#x2192; &nbsp;9</span></td>
+    <td style="background-color:#ff00ff;padding:6px;"><span style="font-weight:bold;color:#000000;"><span style="padding:3px;color:#000000;background-color:#af5faf;">176</span> &#x2192; 13</span></td>
+    <td style="background-color:#0000ff;padding:6px;"><span style="font-weight:bold;color:#dddddd;"><span style="padding:3px;color:#000000;background-color:#af5fd7;">177</span> &#x2192; 12</span></td>
+  </tr>
+  <tr>
+    <td style="background-color:#ff0000;padding:6px;"><span style="font-weight:bold;color:#000000;"><span style="padding:3px;color:#000000;background-color:#af8700;">178</span> &#x2192; &nbsp;9</span></td>
+    <td style="background-color:#ff0000;padding:6px;"><span style="font-weight:bold;color:#000000;"><span style="padding:3px;color:#000000;background-color:#af8737;">179</span> &#x2192; &nbsp;9</span></td>
+    <td style="background-color:#ff0000;padding:6px;"><span style="font-weight:bold;color:#000000;"><span style="padding:3px;color:#000000;background-color:#af875f;">180</span> &#x2192; &nbsp;9</span></td>
+    <td style="background-color:#ff0000;padding:6px;"><span style="font-weight:bold;color:#000000;"><span style="padding:3px;color:#000000;background-color:#af8787;">181</span> &#x2192; &nbsp;9</span></td>
+    <td style="background-color:#ff00ff;padding:6px;"><span style="font-weight:bold;color:#000000;"><span style="padding:3px;color:#000000;background-color:#af87af;">182</span> &#x2192; 13</span></td>
+    <td style="background-color:#0000ff;padding:6px;"><span style="font-weight:bold;color:#dddddd;"><span style="padding:3px;color:#000000;background-color:#af87d7;">183</span> &#x2192; 12</span></td>
+  </tr>
+  <tr>
+    <td style="background-color:#ffff00;padding:6px;"><span style="font-weight:bold;color:#000000;"><span style="padding:3px;color:#000000;background-color:#afaf00;">184</span> &#x2192; 11</span></td>
+    <td style="background-color:#ffff00;padding:6px;"><span style="font-weight:bold;color:#000000;"><span style="padding:3px;color:#000000;background-color:#afaf37;">185</span> &#x2192; 11</span></td>
+    <td style="background-color:#ffff00;padding:6px;"><span style="font-weight:bold;color:#000000;"><span style="padding:3px;color:#000000;background-color:#afaf5f;">186</span> &#x2192; 11</span></td>
+    <td style="background-color:#ffff00;padding:6px;"><span style="font-weight:bold;color:#000000;"><span style="padding:3px;color:#000000;background-color:#afaf87;">187</span> &#x2192; 11</span></td>
+    <td style="background-color:#c0c0c0;padding:6px;"><span style="font-weight:bold;color:#000000;"><span style="padding:3px;color:#000000;background-color:#afafaf;">188</span> &#x2192; &nbsp;7</span></td>
+    <td style="background-color:#0000ff;padding:6px;"><span style="font-weight:bold;color:#dddddd;"><span style="padding:3px;color:#000000;background-color:#afafd7;">189</span> &#x2192; 12</span></td>
+  </tr>
+  <tr>
+    <td style="background-color:#00ff00;padding:6px;"><span style="font-weight:bold;color:#000000;"><span style="padding:3px;color:#000000;background-color:#afd700;">190</span> &#x2192; 10</span></td>
+    <td style="background-color:#00ff00;padding:6px;"><span style="font-weight:bold;color:#000000;"><span style="padding:3px;color:#000000;background-color:#afd737;">191</span> &#x2192; 10</span></td>
+    <td style="background-color:#00ff00;padding:6px;"><span style="font-weight:bold;color:#000000;"><span style="padding:3px;color:#000000;background-color:#afd75f;">192</span> &#x2192; 10</span></td>
+    <td style="background-color:#00ff00;padding:6px;"><span style="font-weight:bold;color:#000000;"><span style="padding:3px;color:#000000;background-color:#afd787;">193</span> &#x2192; 10</span></td>
+    <td style="background-color:#00ff00;padding:6px;"><span style="font-weight:bold;color:#000000;"><span style="padding:3px;color:#000000;background-color:#afd7af;">194</span> &#x2192; 10</span></td>
+    <td style="background-color:#00ffff;padding:6px;"><span style="font-weight:bold;color:#000000;"><span style="padding:3px;color:#000000;background-color:#afd7d7;">195</span> &#x2192; 14</span></td>
+  </tr>
+  <tr>
+  <td>&nbsp;</td></tr>
+  <tr>
+    <td style="background-color:#ff0000;padding:6px;"><span style="font-weight:bold;color:#000000;"><span style="padding:3px;color:#000000;background-color:#d70000;">196</span> &#x2192; &nbsp;9</span></td>
+    <td style="background-color:#ff0000;padding:6px;"><span style="font-weight:bold;color:#000000;"><span style="padding:3px;color:#000000;background-color:#d70037;">197</span> &#x2192; &nbsp;9</span></td>
+    <td style="background-color:#ff0000;padding:6px;"><span style="font-weight:bold;color:#000000;"><span style="padding:3px;color:#000000;background-color:#d7005f;">198</span> &#x2192; &nbsp;9</span></td>
+    <td style="background-color:#ff0000;padding:6px;"><span style="font-weight:bold;color:#000000;"><span style="padding:3px;color:#000000;background-color:#d70087;">199</span> &#x2192; &nbsp;9</span></td>
+    <td style="background-color:#ff0000;padding:6px;"><span style="font-weight:bold;color:#000000;"><span style="padding:3px;color:#000000;background-color:#d700af;">200</span> &#x2192; &nbsp;9</span></td>
+    <td style="background-color:#ff00ff;padding:6px;"><span style="font-weight:bold;color:#000000;"><span style="padding:3px;color:#000000;background-color:#d700d7;">201</span> &#x2192; 13</span></td>
+  </tr>
+  <tr>
+    <td style="background-color:#ff0000;padding:6px;"><span style="font-weight:bold;color:#000000;"><span style="padding:3px;color:#000000;background-color:#d73700;">202</span> &#x2192; &nbsp;9</span></td>
+    <td style="background-color:#ff0000;padding:6px;"><span style="font-weight:bold;color:#000000;"><span style="padding:3px;color:#000000;background-color:#d73737;">203</span> &#x2192; &nbsp;9</span></td>
+    <td style="background-color:#ff0000;padding:6px;"><span style="font-weight:bold;color:#000000;"><span style="padding:3px;color:#000000;background-color:#d7375f;">204</span> &#x2192; &nbsp;9</span></td>
+    <td style="background-color:#ff0000;padding:6px;"><span style="font-weight:bold;color:#000000;"><span style="padding:3px;color:#000000;background-color:#d73787;">205</span> &#x2192; &nbsp;9</span></td>
+    <td style="background-color:#ff0000;padding:6px;"><span style="font-weight:bold;color:#000000;"><span style="padding:3px;color:#000000;background-color:#d737af;">206</span> &#x2192; &nbsp;9</span></td>
+    <td style="background-color:#ff00ff;padding:6px;"><span style="font-weight:bold;color:#000000;"><span style="padding:3px;color:#000000;background-color:#d737d7;">207</span> &#x2192; 13</span></td>
+  </tr>
+  <tr>
+    <td style="background-color:#ff0000;padding:6px;"><span style="font-weight:bold;color:#000000;"><span style="padding:3px;color:#000000;background-color:#d75f00;">208</span> &#x2192; &nbsp;9</span></td>
+    <td style="background-color:#ff0000;padding:6px;"><span style="font-weight:bold;color:#000000;"><span style="padding:3px;color:#000000;background-color:#d75f37;">209</span> &#x2192; &nbsp;9</span></td>
+    <td style="background-color:#ff0000;padding:6px;"><span style="font-weight:bold;color:#000000;"><span style="padding:3px;color:#000000;background-color:#d75f5f;">210</span> &#x2192; &nbsp;9</span></td>
+    <td style="background-color:#ff0000;padding:6px;"><span style="font-weight:bold;color:#000000;"><span style="padding:3px;color:#000000;background-color:#d75f87;">211</span> &#x2192; &nbsp;9</span></td>
+    <td style="background-color:#ff0000;padding:6px;"><span style="font-weight:bold;color:#000000;"><span style="padding:3px;color:#000000;background-color:#d75faf;">212</span> &#x2192; &nbsp;9</span></td>
+    <td style="background-color:#ff00ff;padding:6px;"><span style="font-weight:bold;color:#000000;"><span style="padding:3px;color:#000000;background-color:#d75fd7;">213</span> &#x2192; 13</span></td>
+  </tr>
+  <tr>
+    <td style="background-color:#ff0000;padding:6px;"><span style="font-weight:bold;color:#000000;"><span style="padding:3px;color:#000000;background-color:#d78700;">214</span> &#x2192; &nbsp;9</span></td>
+    <td style="background-color:#ff0000;padding:6px;"><span style="font-weight:bold;color:#000000;"><span style="padding:3px;color:#000000;background-color:#d78737;">215</span> &#x2192; &nbsp;9</span></td>
+    <td style="background-color:#ff0000;padding:6px;"><span style="font-weight:bold;color:#000000;"><span style="padding:3px;color:#000000;background-color:#d7875f;">216</span> &#x2192; &nbsp;9</span></td>
+    <td style="background-color:#ff0000;padding:6px;"><span style="font-weight:bold;color:#000000;"><span style="padding:3px;color:#000000;background-color:#d78787;">217</span> &#x2192; &nbsp;9</span></td>
+    <td style="background-color:#ff0000;padding:6px;"><span style="font-weight:bold;color:#000000;"><span style="padding:3px;color:#000000;background-color:#d787af;">218</span> &#x2192; &nbsp;9</span></td>
+    <td style="background-color:#ff00ff;padding:6px;"><span style="font-weight:bold;color:#000000;"><span style="padding:3px;color:#000000;background-color:#d787d7;">219</span> &#x2192; 13</span></td>
+  </tr>
+  <tr>
+    <td style="background-color:#ff0000;padding:6px;"><span style="font-weight:bold;color:#000000;"><span style="padding:3px;color:#000000;background-color:#d7af00;">220</span> &#x2192; &nbsp;9</span></td>
+    <td style="background-color:#ff0000;padding:6px;"><span style="font-weight:bold;color:#000000;"><span style="padding:3px;color:#000000;background-color:#d7af37;">221</span> &#x2192; &nbsp;9</span></td>
+    <td style="background-color:#ff0000;padding:6px;"><span style="font-weight:bold;color:#000000;"><span style="padding:3px;color:#000000;background-color:#d7af5f;">222</span> &#x2192; &nbsp;9</span></td>
+    <td style="background-color:#ff0000;padding:6px;"><span style="font-weight:bold;color:#000000;"><span style="padding:3px;color:#000000;background-color:#d7af87;">223</span> &#x2192; &nbsp;9</span></td>
+    <td style="background-color:#ff0000;padding:6px;"><span style="font-weight:bold;color:#000000;"><span style="padding:3px;color:#000000;background-color:#d7afaf;">224</span> &#x2192; &nbsp;9</span></td>
+    <td style="background-color:#ff00ff;padding:6px;"><span style="font-weight:bold;color:#000000;"><span style="padding:3px;color:#000000;background-color:#d7afd7;">225</span> &#x2192; 13</span></td>
+  </tr>
+  <tr>
+    <td style="background-color:#ffff00;padding:6px;"><span style="font-weight:bold;color:#000000;"><span style="padding:3px;color:#000000;background-color:#d7d700;">226</span> &#x2192; 11</span></td>
+    <td style="background-color:#ffff00;padding:6px;"><span style="font-weight:bold;color:#000000;"><span style="padding:3px;color:#000000;background-color:#d7d737;">227</span> &#x2192; 11</span></td>
+    <td style="background-color:#ffff00;padding:6px;"><span style="font-weight:bold;color:#000000;"><span style="padding:3px;color:#000000;background-color:#d7d75f;">228</span> &#x2192; 11</span></td>
+    <td style="background-color:#ffff00;padding:6px;"><span style="font-weight:bold;color:#000000;"><span style="padding:3px;color:#000000;background-color:#d7d787;">229</span> &#x2192; 11</span></td>
+    <td style="background-color:#ffff00;padding:6px;"><span style="font-weight:bold;color:#000000;"><span style="padding:3px;color:#000000;background-color:#d7d7af;">230</span> &#x2192; 11</span></td>
+    <td style="background-color:#ffffff;padding:6px;"><span style="font-weight:bold;color:#000000;"><span style="padding:3px;color:#000000;background-color:#d7d7d7;">231</span> &#x2192; 15</span></td>
+  </tr>
+</table>
+</body>
+</html>
