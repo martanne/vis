@@ -1519,8 +1519,10 @@ static bool cmd_files(Vis *vis, Win *win, Command *cmd, const char *argv[], Curs
 			continue;
 		bool match = !cmd->regex || (win->file->name &&
 		             text_regex_match(cmd->regex, win->file->name, 0));
-		if (match ^ (argv[0][0] == 'Y'))
-			ret &= sam_execute(vis, win, cmd->cmd, NULL, NULL);
+		if (match ^ (argv[0][0] == 'Y')) {
+			Filerange def = text_range_new(0, 0);
+			ret &= sam_execute(vis, win, cmd->cmd, NULL, &def);
+		}
 	}
 	return ret;
 }
