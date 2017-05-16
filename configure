@@ -318,7 +318,7 @@ int main(int argc, char *argv[]) {
 EOF
 
 	for libcurses in ncursesw ncurses libcurses; do
-		printf " checking for %s... " "$libcurses"
+		printf "checking for %s... " "$libcurses"
 
 		if test "$have_pkgconfig" = "yes" ; then
 			CFLAGS_CURSES=$(pkg-config --cflags $libcurses 2>/dev/null)
