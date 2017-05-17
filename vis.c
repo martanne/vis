@@ -1734,12 +1734,20 @@ int vis_pipe(Vis *vis, File *file, Filerange *range, const char *argv[],
 			dup2(pin[0], STDIN_FILENO);
 		close(pin[0]);
 		close(pin[1]);
-		if (interactive)
+		if (interactive) {
 			dup2(STDERR_FILENO, STDOUT_FILENO);
-		else if (read_stdout)
+			/* For some reason the first byte written by the
+			 * interactive application is not being displayed.
+			 * It probably has something to do with the terminal
+			 * state change. By writing a dummy byte ourself we
+			 * ensure that the complete output is visible.
+			 */
+			write(STDOUT_FILENO, " ", 1);
+		} else if (read_stdout) {
 			dup2(pout[1], STDOUT_FILENO);
-		else
+		} else {
 			dup2(null, STDOUT_FILENO);
+		}
 		close(pout[1]);
 		close(pout[0]);
 		if (!interactive) {
