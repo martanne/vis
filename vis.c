@@ -1724,14 +1724,24 @@ int vis_pipe(Vis *vis, File *file, Filerange *range, const char *argv[],
 			exit(EXIT_FAILURE);
 		}
 
-		int null = open("/dev/null", O_WRONLY);
+		int null = open("/dev/null", O_RDWR);
 		if (null == -1) {
 			fprintf(stderr, "failed to open /dev/null");
 			exit(EXIT_FAILURE);
 		}
 
-		if (!interactive)
-			dup2(pin[0], STDIN_FILENO);
+		if (!interactive) {
+			/* If we have nothing to write, let stdin point to
+			 * /dev/null instead of a pipe which is immediately
+			 * closed. Some programs behave differently when used
+			 * in a pipeline.
+			 */
+			if (text_range_size(range) == 0)
+				dup2(null, STDIN_FILENO);
+			else
+				dup2(pin[0], STDIN_FILENO);
+		}
+
 		close(pin[0]);
 		close(pin[1]);
 		if (interactive) {
