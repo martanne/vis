@@ -906,6 +906,32 @@ static int map(lua_State *L) {
 }
 
 /***
+ * Unmap a global key binding.
+ *
+ * @function unmap
+ * @tparam int mode the mode from which the mapping should be removed
+ * @tparam string key the mapping to remove
+ * @treturn bool whether the mapping was successfully removed
+ * @see Window:unmap
+ */
+static int keyunmap(lua_State *L, Vis *vis, Win *win) {
+	enum VisMode mode = luaL_checkint(L, 2);
+	const char *key = luaL_checkstring(L, 3);
+	bool ret;
+	if (!win)
+		ret = vis_mode_unmap(vis, mode, key);
+	else
+		ret = vis_window_mode_unmap(win, mode, key);
+	lua_pushboolean(L, ret);
+	return 1;
+}
+
+static int unmap(lua_State *L) {
+	Vis *vis = obj_ref_check(L, 1, "vis");
+	return keyunmap(L, vis, NULL);
+}
+
+/***
  * Get all currently active mappings of a mode.
  *
  * @function mappings
@@ -1421,6 +1447,7 @@ static const struct luaL_Reg vis_lua[] = {
 	{ "info", info },
 	{ "message", message },
 	{ "map", map },
+	{ "unmap", unmap },
 	{ "mappings", mappings },
 	{ "operator", operator },
 	{ "operator_register", operator_register },
@@ -1597,6 +1624,18 @@ static int window_map(lua_State *L) {
 }
 
 /***
+ * Remove a window local key mapping.
+ * The function signature is the same as for @{Vis:unmap}.
+ * @function unmap
+ * @param ...
+ * @see Vis:unmap
+ */
+static int window_unmap(lua_State *L) {
+	Win *win = obj_ref_check(L, 1, VIS_LUA_TYPE_WINDOW);
+	return keyunmap(L, win->vis, win);
+}
+
+/***
  * Define a display style.
  * @function style_define
  * @tparam int id the style id to use
@@ -1676,6 +1715,7 @@ static const struct luaL_Reg window_funcs[] = {
 	{ "__newindex", newindex_common },
 	{ "cursors_iterator", window_cursors_iterator },
 	{ "map", window_map },
+	{ "unmap", window_unmap },
 	{ "style_define", window_style_define },
 	{ "style", window_style },
 	{ "status", window_status },
