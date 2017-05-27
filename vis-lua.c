@@ -951,7 +951,8 @@ static bool binding_collect(const char *key, void *value, void *ctx) {
 	bool new = lua_isnil(L, -1);
 	lua_pop(L, 1);
 	if (new) {
-		lua_pushstring(L, binding->alias ? binding->alias : binding->action->help);
+		const char *help = binding->alias ? binding->alias : VIS_HELP_USE(binding->action->help);
+		lua_pushstring(L, help ? help : "");
 		lua_setfield(L, -2, key);
 	}
 	return true;
