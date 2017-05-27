@@ -70,7 +70,7 @@ void vis_binding_free(Vis *vis, KeyBinding *binding) {
 	}
 }
 
-static Mode *mode_get(Vis *vis, enum VisMode mode) {
+Mode *mode_get(Vis *vis, enum VisMode mode) {
 	if (mode < LENGTH(vis_modes))
 		return &vis_modes[mode];
 	return NULL;

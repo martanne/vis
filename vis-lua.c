@@ -906,6 +906,43 @@ static int map(lua_State *L) {
 }
 
 /***
+ * Get all currently active mappings of a mode.
+ *
+ * @function mappings
+ * @tparam int mode the mode to query
+ * @treturn table the active mappings and their associated help texts
+ * @usage
+ * local bindings = vis:mappings(vis.modes.NORMAL)
+ * for key, help in pairs(bindings) do
+ * 	-- do something
+ * end
+ * @see Vis:map
+ */
+static bool binding_collect(const char *key, void *value, void *ctx) {
+	lua_State *L = ctx;
+	KeyBinding *binding = value;
+	lua_getfield(L, -1, key);
+	bool new = lua_isnil(L, -1);
+	lua_pop(L, 1);
+	if (new) {
+		lua_pushstring(L, binding->alias ? binding->alias : binding->action->help);
+		lua_setfield(L, -2, key);
+	}
+	return true;
+}
+
+static int mappings(lua_State *L) {
+	Vis *vis = obj_ref_check(L, 1, "vis");
+	lua_newtable(L);
+	for (Mode *mode = mode_get(vis, luaL_checkint(L, 2)); mode; mode = mode->parent) {
+		if (!mode->bindings)
+			continue;
+		map_iterate(mode->bindings, binding_collect, vis->lua);
+	}
+	return 1;
+}
+
+/***
  * Execute a motion.
  *
  * @function motion
@@ -1384,6 +1421,7 @@ static const struct luaL_Reg vis_lua[] = {
 	{ "info", info },
 	{ "message", message },
 	{ "map", map },
+	{ "mappings", mappings },
 	{ "operator", operator },
 	{ "operator_register", operator_register },
 	{ "motion", motion },
