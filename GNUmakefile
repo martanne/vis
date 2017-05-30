@@ -2,12 +2,6 @@ include Makefile
 
 TERMINFO_ENTRIES = st,st-256color,dvtm,dvtm-256color,xterm,xterm-256color,vt100,ansi
 
-LIBMUSL = musl-1.1.16
-LIBMUSL_SHA256 = 937185a5e5d721050306cf106507a006c3f1f86d86cd550024ea7be909071011
-
-LIBNCURSES = ncurses-6.0
-LIBNCURSES_SHA256 = f551c24b30ce8bfb6e96d9f59b42fbea30fa3a6123384172f9e7284bcf647260
-
 LIBTERMKEY = libtermkey-0.20
 LIBTERMKEY_SHA256 = 6c0d87c94ab9915e76ecd313baec08dedf3bd56de83743d9aa923a081935d2f5
 
@@ -20,18 +14,6 @@ LIBLUA_SHA256 = f681aa518233bc407e23acf0f5887c884f17436f000d453b2491a9f11a52400c
 
 LIBLPEG = lpeg-1.0.1
 LIBLPEG_SHA256 = 62d9f7a9ea3c1f215c77e0cadd8534c6ad9af0fb711c3f89188a8891c72f026b
-
-LIBATTR = attr-c1a7b53073202c67becf4df36cadc32ef4759c8a
-LIBATTR_SHA256 = faf6e5cbfa71153bd1049206ca70690c5dc96e2ec3db50eae107092c3de900ca
-
-LIBACL = acl-38f32ea1865bcc44185f4118fde469cb962cff68
-LIBACL_SHA256 = 98598b0bb154ab294d9a695fd08b0e06516e770bbd1d78937905f0dd8ebe485c
-
-LIBNCURSES_CONFIG = --disable-database --with-fallbacks="$(TERMINFO_ENTRIES)" \
-	--with-shared --enable-widec --enable-ext-colors --with-termlib=tinfo \
-	--without-ada --without-cxx --without-cxx-binding --without-manpages \
-	--without-tests --without-progs --without-debug --without-profile \
-	--without-cxx-shared --without-termlib --without--ticlib --disable-leaks
 
 SRCDIR = $(realpath $(dir $(firstword $(MAKEFILE_LIST))))
 
@@ -46,54 +28,6 @@ dependency/build:
 
 dependency/sources:
 	mkdir -p "$@"
-
-# LIBMUSL
-
-dependency/sources/musl-%: | dependency/sources
-	wget -c -O $@.part http://www.musl-libc.org/releases/$(LIBMUSL).tar.gz
-	mv $@.part $@
-	[ -z $(LIBMUSL_SHA256) ] || (echo '$(LIBMUSL_SHA256)  $@' | sha256sum -c)
-
-dependency/build/libmusl-extract: dependency/sources/$(LIBMUSL).tar.gz | dependency/build
-	tar xzf $< -C $(dir $@)
-	touch $@
-
-dependency/build/libmusl-configure: dependency/build/libmusl-extract
-	# tweak musl gcc wrapper/spec file to support static PIE linking
-	sed -i 's#%{pie:S}crt1.o#%{pie:%{static:rcrt1.o%s;:Scrt1.o%s};:crt1.o%s}#' $(dir $<)/$(LIBMUSL)/tools/musl-gcc.specs.sh
-	cd $(dir $<)/$(LIBMUSL) && ./configure --prefix=$(DEPS_PREFIX) --syslibdir=$(DEPS_PREFIX)/lib
-	touch $@
-
-dependency/build/libmusl-build: dependency/build/libmusl-configure
-	$(MAKE) -C $(dir $<)/$(LIBMUSL)
-	touch $@
-
-dependency/build/libmusl-install: dependency/build/libmusl-build
-	$(MAKE) -C $(dir $<)/$(LIBMUSL) install
-	touch $@
-
-# LIBNCURSES
-
-dependency/sources/ncurses-%: | dependency/sources
-	wget -c -O $@.part http://ftp.gnu.org/gnu/ncurses/$(LIBNCURSES).tar.gz
-	mv $@.part $@
-	[ -z $(LIBNCURSES_SHA256) ] || (echo '$(LIBNCURSES_SHA256)  $@' | sha256sum -c)
-
-dependency/build/libncurses-extract: dependency/sources/$(LIBNCURSES).tar.gz | dependency/build
-	tar xzf $< -C $(dir $@)
-	touch $@
-
-dependency/build/libncurses-configure: dependency/build/libncurses-extract
-	cd $(dir $<)/$(LIBNCURSES) && ./configure --prefix=/usr --libdir=/usr/lib $(LIBNCURSES_CONFIG)
-	touch $@
-
-dependency/build/libncurses-build: dependency/build/libncurses-configure
-	$(MAKE) -C $(dir $<)/$(LIBNCURSES)
-	touch $@
-
-dependency/build/libncurses-install: dependency/build/libncurses-build
-	$(MAKE) -C $(dir $<)/$(LIBNCURSES) install.libs DESTDIR=$(DEPS_ROOT)
-	touch $@
 
 # LIBTERMKEY
 
@@ -157,62 +91,11 @@ dependency/build/liblpeg-install: dependency/build/liblpeg-build
 	cd $(dir $<)/$(LIBLPEG) && cp liblpeg.a $(DEPS_LIB)
 	touch $@
 
-# LIBATTR
-
-dependency/sources/attr-%.tar.gz: | dependency/sources
-	wget -c -O $@.part http://git.savannah.gnu.org/cgit/attr.git/snapshot/$(LIBATTR).tar.gz
-	mv $@.part $@
-	[ -z $(LIBATTR_SHA256) ] || (echo '$(LIBATTR_SHA256)  $@' | sha256sum -c)
-
-dependency/build/libattr-extract: dependency/sources/$(LIBATTR).tar.gz | dependency/build
-	tar xzf $< -C $(dir $@)
-	cd $(dir $@)/$(LIBATTR) && ./autogen.sh
-	touch $@
-
-dependency/build/libattr-configure: dependency/build/libattr-extract
-	cd $(dir $<)/$(LIBATTR) && ./configure --prefix=/usr --libdir=/usr/lib --with-sysroot=$(DEPS_ROOT)
-	touch $@
-
-dependency/build/libattr-build: dependency/build/libattr-configure
-	$(MAKE) -C $(dir $<)/$(LIBATTR)
-	touch $@
-
-dependency/build/libattr-install: dependency/build/libattr-build
-	$(MAKE) -C $(dir $<)/$(LIBATTR) DESTDIR=$(DEPS_ROOT) install
-	touch $@
-
-# LIBACL
-
-dependency/sources/acl-%.tar.gz: | dependency/sources
-	wget -c -O $@.part http://git.savannah.gnu.org/cgit/acl.git/snapshot/$(LIBACL).tar.gz
-	mv $@.part $@
-	[ -z $(LIBACL_SHA256) ] || (echo '$(LIBACL_SHA256)  $@' | sha256sum -c)
-
-dependency/build/libacl-extract: dependency/sources/$(LIBACL).tar.gz | dependency/build
-	tar xzf $< -C $(dir $@)
-	cd $(dir $@)/$(LIBACL) && ./autogen.sh
-	touch $@
-
-dependency/build/libacl-configure: dependency/build/libacl-extract dependency/build/libattr-install
-	cd $(dir $<)/$(LIBACL) && ./configure --prefix=/usr --libdir=/usr/lib --with-sysroot=$(DEPS_ROOT)
-	touch $@
-
-dependency/build/libacl-build: dependency/build/libacl-configure
-	$(MAKE) -C $(dir $<)/$(LIBACL)
-	touch $@
-
-dependency/build/libacl-install: dependency/build/libacl-build
-	$(MAKE) -C $(dir $<)/$(LIBACL) DESTDIR=$(DEPS_ROOT) install
-	touch $@
-
 # COMMON
 
 dependencies-common: dependency/build/libtermkey-install dependency/build/liblua-install dependency/build/liblpeg-install
 
 dependency/build/local: dependencies-common
-	touch $@
-
-dependency/build/standalone: dependency/build/libncurses-install dependency/build/libacl-install dependencies-common
 	touch $@
 
 dependencies-clean:
@@ -244,15 +127,5 @@ local: clean
 	./configure CFLAGS="-I$(DEPS_INC)" LDFLAGS="-L$(DEPS_LIB)" LD_LIBRARY_PATH="$(DEPS_LIB)"
 	$(MAKE)
 	@echo Run with: LD_LIBRARY_PATH=$(DEPS_LIB) ./vis
-
-standalone: clean
-	[ ! -e dependency/build/local ] || $(MAKE) dependencies-clean
-	./configure CFLAGS="-I$(DEPS_INC)" LDFLAGS="-L$(DEPS_LIB)" --environment-only --static
-	CFLAGS="$(CFLAGS)" $(MAKE) dependency/build/libmusl-install
-	PATH=$(DEPS_BIN):$$PATH PKG_CONFIG_PATH= PKG_CONFIG_LIBDIR= CFLAGS="$(CFLAGS)" LDFLAGS="$(LDFLAGS)" $(MAKE) \
-		CC=musl-gcc dependency/build/standalone
-	PATH=$(DEPS_BIN):$$PATH PKG_CONFIG_PATH= PKG_CONFIG_LIBDIR= ./configure --static \
-		CFLAGS="-I$(DEPS_INC) --static -Wl,--as-needed" LDFLAGS="-L$(DEPS_LIB)" CC=musl-gcc
-	PATH=$(DEPS_BIN):$$PATH $(MAKE)
 
 .PHONY: standalone local dependencies-common dependencies-local dependencies-clean
