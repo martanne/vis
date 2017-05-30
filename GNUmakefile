@@ -255,10 +255,4 @@ standalone: clean
 		CFLAGS="-I$(DEPS_INC) --static -Wl,--as-needed" LDFLAGS="-L$(DEPS_LIB)" CC=musl-gcc
 	PATH=$(DEPS_BIN):$$PATH $(MAKE)
 
-single: standalone
-	for e in $(ELF); do \
-		${STRIP} "$$e"; \
-	done
-	./shar.sh vis-single $(EXECUTABLES) $$(find lua -name '*.lua')
-
 .PHONY: standalone local dependencies-common dependencies-local dependencies-clean
