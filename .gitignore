@@ -4,6 +4,7 @@
 /vis
 /vis-menu
 /vis-single
+/vis-single-payload.inc
 /vis-digraph
 *.css
 *.gcda
