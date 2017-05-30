@@ -349,6 +349,11 @@ vis.ftdetect.filetypes = {
 	sql= {
 		ext = { "%.ddl$", "%.sql$" },
 	},
+	strace = {
+		detect = function(file, data)
+			return data:match("^execve%(")
+		end
+	},
 	systemd = {
 		ext = {
 			"%.automount$", "%.device$", "%.mount$", "%.path$",
