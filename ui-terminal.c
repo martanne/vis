@@ -649,7 +649,7 @@ static bool ui_init(Ui *ui, Vis *vis) {
 	errno = 0;
 	if (!(tui->termkey = ui_termkey_new(STDIN_FILENO))) {
 		/* work around libtermkey bug which fails if stdin is /dev/null */
-		if (errno == EBADF && !isatty(STDIN_FILENO)) {
+		if (errno == EBADF) {
 			errno = 0;
 			if (!(tui->termkey = ui_termkey_reopen(ui, STDIN_FILENO)) && errno == ENXIO)
 				tui->termkey = termkey_new_abstract(term, UI_TERMKEY_FLAGS);
