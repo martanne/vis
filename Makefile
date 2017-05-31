@@ -92,6 +92,7 @@ docker: clean
 	docker build -t vis .
 	docker run --rm -d --name vis vis tail -f /dev/null
 	docker cp . vis:/tmp/vis
+	docker exec vis sed -i '/^VERSION/c VERSION = $(VERSION)' Makefile
 	docker exec vis ./configure CC='cc --static'
 	docker exec vis make clean vis-single
 	docker cp vis:/tmp/vis/vis-single vis
