@@ -1,7 +1,5 @@
 include Makefile
 
-TERMINFO_ENTRIES = st,st-256color,dvtm,dvtm-256color,xterm,xterm-256color,vt100,ansi
-
 LIBTERMKEY = libtermkey-0.20
 LIBTERMKEY_SHA256 = 6c0d87c94ab9915e76ecd313baec08dedf3bd56de83743d9aa923a081935d2f5
 
@@ -40,7 +38,7 @@ dependency/build/libtermkey-extract: dependency/sources/$(LIBTERMKEY).tar.gz | d
 	tar xzf $< -C $(dir $@)
 	touch $@
 
-dependency/build/libtermkey-build: dependency/build/libtermkey-extract dependency/build/libncurses-install
+dependency/build/libtermkey-build: dependency/build/libtermkey-extract
 	# TODO no sane way to avoid pkg-config and specify LDFLAGS?
 	sed -i 's/LDFLAGS+=-lncurses$$/LDFLAGS+=-lncursesw/g' $(dir $<)/$(LIBTERMKEY)/Makefile
 	$(MAKE) -C $(dir $<)/$(LIBTERMKEY) PREFIX=/usr termkey.h libtermkey.la
@@ -91,41 +89,14 @@ dependency/build/liblpeg-install: dependency/build/liblpeg-build
 	cd $(dir $<)/$(LIBLPEG) && cp liblpeg.a $(DEPS_LIB)
 	touch $@
 
-# COMMON
-
-dependencies-common: dependency/build/libtermkey-install dependency/build/liblua-install dependency/build/liblpeg-install
-
-dependency/build/local: dependencies-common
+dependency/build/local: dependency/build/libtermkey-install dependency/build/liblua-install dependency/build/liblpeg-install
 	touch $@
-
-dependencies-clean:
-	rm -f dependency/build/libmusl-install
-	rm -rf dependency/build/*curses*
-	rm -rf dependency/build/libtermkey*
-	rm -rf dependency/build/*lua*
-	rm -rf dependency/build/*lpeg*
-	rm -rf dependency/build/*attr*
-	rm -rf dependency/build/*acl*
-	rm -f dependency/build/local
-	rm -f dependency/build/standalone
-	rm -rf dependency/install
-	rm -f config.mk
-
-dependencies-local:
-	[ ! -e dependency/build/standalone ] || $(MAKE) dependencies-clean
-	mkdir -p dependency/build
-	[ -e dependency/build/libncurses-install ] || touch \
-		dependency/build/libncurses-extract \
-		dependency/build/libncurses-configure \
-		dependency/build/libncurses-build \
-		dependency/build/libncurses-install
-	$(MAKE) dependency/build/local
 
 local: clean
 	./configure --environment-only
-	$(MAKE) dependencies-local
+	$(MAKE) dependency/build/local
 	./configure CFLAGS="-I$(DEPS_INC)" LDFLAGS="-L$(DEPS_LIB)" LD_LIBRARY_PATH="$(DEPS_LIB)"
 	$(MAKE)
 	@echo Run with: LD_LIBRARY_PATH=$(DEPS_LIB) ./vis
 
-.PHONY: standalone local dependencies-common dependencies-local dependencies-clean
+.PHONY: local
