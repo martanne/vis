@@ -73,17 +73,17 @@ vis-digraph: vis-digraph.c
 	${CC} ${CFLAGS} ${CFLAGS_AUTO} ${CFLAGS_STD} ${CFLAGS_EXTRA} $< ${LDFLAGS} ${LDFLAGS_STD} ${LDFLAGS_AUTO} -o $@
 
 vis-single-payload.inc: $(EXECUTABLES) lua/*
-	echo '#ifndef VIS_SINGLE_PAYLOAD_H' > vis-single-payload.inc
-	echo '#define VIS_SINGLE_PAYLOAD_H' >> vis-single-payload.inc
-	echo 'unsigned char vis_single_payload[] = {' >> vis-single-payload.inc
-	tar c $(EXECUTABLES) $$(find lua -name '*.lua') | xz | od -t x1 -A none -v | \
-		sed 's/\([0-9a-f]\+\)/0x\1,/g;$$s/,$$/ };/' >> vis-single-payload.inc
-	echo '#endif' >> vis-single-payload.inc
-
-vis-single: vis-single.c vis-single-payload.inc
 	for e in $(ELF); do \
 		${STRIP} "$$e"; \
 	done
+	echo '#ifndef VIS_SINGLE_PAYLOAD_H' > $@
+	echo '#define VIS_SINGLE_PAYLOAD_H' >> $@
+	echo 'static unsigned char vis_single_payload[] = {' >> $@
+	tar c $(EXECUTABLES) $$(find lua -name '*.lua') | xz | od -t x1 -A none -v | \
+		sed 's/\([0-9a-f]\+\)/0x\1,/g;$$s/,$$/ };/' >> $@
+	echo '#endif' >> $@
+
+vis-single: vis-single.c vis-single-payload.inc
 	${CC} ${CFLAGS} ${CFLAGS_AUTO} ${CFLAGS_STD} ${CFLAGS_EXTRA} $< ${LDFLAGS} ${LDFLAGS_STD} ${LDFLAGS_AUTO} -larchive -lacl -lbz2 -llzma -o $@
 
 debug: clean

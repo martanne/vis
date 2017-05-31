@@ -6,7 +6,7 @@
 # docker cp vis:/tmp/vis/vis .
 # make vis-single
 # docker cp vis:/tmp/vis/vis-single .
-FROM alpine:edge
+FROM alpine:3.6
 ENV DIR /tmp/vis
 WORKDIR $DIR
 RUN apk update && apk add musl-dev fortify-headers gcc make libtermkey-dev ncurses-dev ncurses-static lua5.3-dev lua5.3-lpeg lua-lpeg-dev acl-dev libarchive-dev xz-dev xz bzip2-dev
