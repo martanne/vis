@@ -1752,7 +1752,7 @@ int vis_pipe(Vis *vis, File *file, Filerange *range, const char *argv[],
 			 * state change. By writing a dummy byte ourself we
 			 * ensure that the complete output is visible.
 			 */
-			write(STDOUT_FILENO, " ", 1);
+			while(write(STDOUT_FILENO, " ", 1) == -1 && errno == EINTR);
 		} else if (read_stdout) {
 			dup2(pout[1], STDOUT_FILENO);
 		} else {
