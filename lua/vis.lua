@@ -273,7 +273,7 @@ end
 --- Check whether LPeg pattern matches at a given file position.
 -- @function match_at
 -- @param pattern the LPeg pattern
--- @tparam int the absolute position in bytes to test for a match
+-- @tparam int pos the absolute file position which should be tested for a match
 -- @tparam[opt] int horizon the number of bytes around `pos` to consider (defaults to 1K)
 -- @treturn int start,end the range of the matched region or `nil`
 vis.types.file.match_at = function(file, pattern, pos, horizon)
