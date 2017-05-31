@@ -86,6 +86,16 @@ vis-single-payload.inc: $(EXECUTABLES) lua/*
 vis-single: vis-single.c vis-single-payload.inc
 	${CC} ${CFLAGS} ${CFLAGS_AUTO} ${CFLAGS_STD} ${CFLAGS_EXTRA} $< ${LDFLAGS} ${LDFLAGS_STD} ${LDFLAGS_AUTO} -larchive -lacl -lbz2 -llzma -o $@
 
+docker: clean
+	docker rm -f vis || true
+	docker build -t vis .
+	docker run --rm -d --name vis vis tail -f /dev/null
+	docker cp . vis:/tmp/vis
+	docker exec vis ./configure CC='cc --static'
+	docker exec vis make clean vis-single
+	docker cp vis:/tmp/vis/vis-single vis
+	docker kill vis
+
 debug: clean
 	@$(MAKE) CFLAGS_EXTRA='${CFLAGS_EXTRA} ${CFLAGS_DEBUG}'
 
@@ -172,4 +182,4 @@ uninstall:
 	@echo removing support files from ${DESTDIR}${SHAREPREFIX}/vis
 	@rm -rf ${DESTDIR}${SHAREPREFIX}/vis
 
-.PHONY: all clean dist install uninstall debug profile coverage test test-update luadoc luadoc-all luacheck man
+.PHONY: all clean dist install uninstall debug profile coverage test test-update luadoc luadoc-all luacheck man docker
