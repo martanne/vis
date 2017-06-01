@@ -86,6 +86,7 @@ vis-single-payload.inc: $(EXECUTABLES) lua/*
 
 vis-single: vis-single.c vis-single-payload.inc
 	${CC} ${CFLAGS} ${CFLAGS_AUTO} ${CFLAGS_STD} ${CFLAGS_EXTRA} $< ${LDFLAGS} ${LDFLAGS_STD} ${LDFLAGS_AUTO} -larchive -lacl -lbz2 -llzma -o $@
+	${STRIP} $@
 
 docker: clean
 	docker rm -f vis || true
