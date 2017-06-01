@@ -2157,12 +2157,11 @@ static int file_lines_iterator_it(lua_State *L) {
 		return 0;
 	size_t end = text_line_end(file->text, *start);
 	size_t len = end - *start;
-	char *buf = malloc(len);
+	char *buf = lua_newuserdata(L, len);
 	if (!buf && len)
 		return 0;
 	len = text_bytes_get(file->text, *start, len, buf);
 	lua_pushlstring(L, buf, len);
-	free(buf);
 	*start = text_line_next(file->text, end);
 	return 1;
 }
@@ -2192,12 +2191,11 @@ static int file_content(lua_State *L) {
 	if (!text_range_valid(&range))
 		goto err;
 	size_t len = text_range_size(&range);
-	char *data = malloc(len);
+	char *data = lua_newuserdata(L, len);
 	if (!data)
 		goto err;
 	len = text_bytes_get(file->text, range.start, len, data);
 	lua_pushlstring(L, data, len);
-	free(data);
 	return 1;
 err:
 	lua_pushnil(L);
@@ -2287,12 +2285,11 @@ static int file_lines_index(lua_State *L) {
 	size_t end = text_line_end(txt, start);
 	if (start != EPOS && end != EPOS) {
 		size_t size = end - start;
-		char *data = malloc(size);
+		char *data = lua_newuserdata(L, size);
 		if (!data && size)
 			goto err;
 		size = text_bytes_get(txt, start, size, data);
 		lua_pushlstring(L, data, size);
-		free(data);
 		return 1;
 	}
 err:
