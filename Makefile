@@ -80,7 +80,7 @@ vis-single-payload.inc: $(EXECUTABLES) lua/*
 	echo '#define VIS_SINGLE_PAYLOAD_H' >> $@
 	echo 'static unsigned char vis_single_payload[] = {' >> $@
 	tar --sort=name --mtime='2014-07-15 01:23Z' --owner=0 --group=0 --numeric-owner -c \
-		$(EXECUTABLES) $$(find lua -name '*.lua') | xz | od -t x1 -A none -v | \
+		$(EXECUTABLES) $$(find lua -name '*.lua' | sort) | xz | od -t x1 -A none -v | \
 		sed 's/\([0-9a-f]\+\)/0x\1,/g;$$s/,$$/ };/' >> $@
 	echo '#endif' >> $@
 
