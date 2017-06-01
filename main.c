@@ -6,6 +6,7 @@
 #include <ctype.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <inttypes.h>
 #include <sys/stat.h>
 #include <sys/types.h>
 
@@ -2004,7 +2005,7 @@ static const char *unicode_info(Vis *vis, const char *keys, const Arg *arg) {
 		else
 			buffer_appendf(&info, "<%s%.*s> ", combining ? " " : "", (int)len, codepoint);
 		if (arg->i == VIS_ACTION_UNICODE_INFO) {
-			buffer_appendf(&info, "U+%04x ", wc);
+			buffer_appendf(&info, "U+%04"PRIX32" ", (uint32_t)wc);
 		} else {
 			for (size_t i = 0; i < len; i++)
 				buffer_appendf(&info, "%02x ", (uint8_t)codepoint[i]);
