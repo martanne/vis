@@ -1,13 +1,16 @@
 #include <sys/wait.h>
+#include <errno.h>
+#include <fcntl.h>
 #include <ftw.h>
 #include <limits.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <unistd.h>
 
-#include <archive_entry.h>
-#include <archive.h>
+#include <lzma.h>
+#include <libtar.h>
 
 #ifndef PATH_MAX
 #define PATH_MAX 4096
@@ -24,81 +27,82 @@
 	"/usr/lib/terminfo:/usr/local/share/terminfo:/usr/local/lib/terminfo"
 #endif
 
-static int copy_data(struct archive *ar, struct archive *aw) {
-	int r;
-	const void *buff;
-	size_t size;
-	int64_t offset;
+lzma_stream strm = LZMA_STREAM_INIT;
 
-	for (;;) {
-		if ((r = archive_read_data_block(ar, &buff, &size, &offset)) == ARCHIVE_EOF)
-			return ARCHIVE_OK;
+static int libtar_xzopen(void* call_data, const char *pathname,
+		int oflags, mode_t mode) {
+	int ret = 0;
 
-		if (r != ARCHIVE_OK) {
-			fprintf(stderr, "archive_read_data_block() failed: %s\n", archive_error_string(ar));
-			return r;
-		}
-
-		if ((r = archive_write_data_block(aw, buff, size, offset)) != ARCHIVE_OK) {
-			fprintf(stderr, "archive_write_data_block() failed: %s\n", archive_error_string(aw));
-			return r;
-		}
+	if ((ret = lzma_stream_decoder (&strm, UINT64_MAX, LZMA_TELL_UNSUPPORTED_CHECK | LZMA_CONCATENATED)) != LZMA_OK) {
+		fprintf (stderr, "lzma_stream_decoder error: %d\n", (int) ret);
+		goto out;
 	}
 
-	return ARCHIVE_OK;
+	strm.next_in = vis_single_payload;
+	strm.avail_in = sizeof(vis_single_payload);
+
+out:
+	return (int)ret;
 }
 
-static int extract(void) {
-	struct archive *in = NULL, *out = NULL;
-	struct archive_entry *entry;
-	int r = ARCHIVE_FAILED;
+static int libtar_xzclose(void* call_data) {
+	lzma_end(&strm);
 
-	if (!(in = archive_read_new()))
-		return ARCHIVE_FAILED;
+	return 0;
+}
 
-	if ((r = archive_read_support_filter_xz(in)) != ARCHIVE_OK)
-		goto err;
+static ssize_t libtar_xzread(void* call_data, void* buf, size_t count) {
+	lzma_ret ret_xz;
+	int ret = count;
 
-	if ((r = archive_read_support_format_tar(in)) != ARCHIVE_OK)
-		goto err;
+	strm.next_out = buf;
+	strm.avail_out = count;
 
-	if (!(out = archive_write_disk_new())) {
-		r = ARCHIVE_FAILED;
-		goto err;
+	ret_xz = lzma_code(&strm, LZMA_FINISH);
+
+	if ((ret_xz != LZMA_OK) && (ret_xz != LZMA_STREAM_END)) {
+		fprintf (stderr, "lzma_code error: %d\n", (int)ret);
+		ret = -1;
+		goto out;
 	}
 
-	if ((r = archive_read_open_memory(in, vis_single_payload, sizeof(vis_single_payload))) != ARCHIVE_OK) {
-		fprintf(stderr, "archive_read_open_memory() failed: %s\n", archive_error_string(in));
-		goto err;
+	if (ret_xz == LZMA_STREAM_END)
+		ret = count - strm.avail_out;
+
+out:
+	return ret;
+}
+
+static ssize_t libtar_xzwrite(void* call_data, const void* buf, size_t count) {
+	return 0;
+}
+
+tartype_t xztype = {
+	(openfunc_t) libtar_xzopen,
+	(closefunc_t) libtar_xzclose,
+	(readfunc_t) libtar_xzread,
+	(writefunc_t) libtar_xzwrite
+};
+
+int extract(char *directory) {
+	TAR * tar;
+
+	if (tar_open(&tar, NULL, &xztype, O_RDONLY, 0, 0) == -1) {
+		fprintf(stderr, "tar_open(): %s\n", strerror(errno));
+		return -1;
 	}
 
-	while (archive_read_next_header(in, &entry) == ARCHIVE_OK) {
-		if ((r = archive_write_header(out, entry)) != ARCHIVE_OK) {
-			fprintf(stderr, "archive_write_header() failed: %s\n", archive_error_string(out));
-			goto err;
-		}
-
-		if ((r = copy_data(in, out)) != ARCHIVE_OK)
-			goto err;
-
-		if ((r = archive_write_finish_entry(out)) != ARCHIVE_OK) {
-			fprintf(stderr, "archive_write_finish_entry() failed: %s\n", archive_error_string(out));
-			goto err;
-		 }
+	if (tar_extract_all(tar, directory) != 0) {
+		fprintf(stderr, "tar_extract_all(): %s\n", strerror(errno));
+		return -1;
 	}
 
-err:
-	if (out) {
-		archive_write_close(out);
-		archive_write_free(out);
+	if (tar_close(tar) != 0) {
+		fprintf(stderr, "tar_close(): %s\n", strerror(errno));
+		return -1;
 	}
 
-	if (in) {
-		archive_read_close(in);
-		archive_read_free(in);
-	}
-
-	return r;
+	return 0;
 }
 
 static int unlink_cb(const char *path, const struct stat *sb, int typeflag, struct FTW *ftwbuf) {
@@ -115,7 +119,7 @@ int main(int argc, char **argv) {
 	}
 
 	char tmp_dirname_template[] = VIS_TMP;
-	const char *tmp_dirname = mkdtemp(tmp_dirname_template);
+	char *tmp_dirname = mkdtemp(tmp_dirname_template);
 
 	if (!tmp_dirname) {
 		perror("mkdtemp");
@@ -140,7 +144,7 @@ int main(int argc, char **argv) {
 		goto err;
 	}
 
-	if (extract() != ARCHIVE_OK)
+	if (extract(tmp_dirname) != 0)
 		goto err;
 
 	if (chdir(cwd) == -1) {

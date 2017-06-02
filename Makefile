@@ -85,7 +85,7 @@ vis-single-payload.inc: $(EXECUTABLES) lua/*
 	echo '#endif' >> $@
 
 vis-single: vis-single.c vis-single-payload.inc
-	${CC} ${CFLAGS} ${CFLAGS_AUTO} ${CFLAGS_STD} ${CFLAGS_EXTRA} $< ${LDFLAGS} ${LDFLAGS_STD} ${LDFLAGS_AUTO} -larchive -lacl -lbz2 -llzma -o $@
+	${CC} ${CFLAGS} ${CFLAGS_AUTO} ${CFLAGS_STD} ${CFLAGS_EXTRA} $< ${LDFLAGS} ${LDFLAGS_STD} ${LDFLAGS_AUTO} -ltar -llzma -o $@
 	${STRIP} $@
 
 docker: clean
