@@ -10,7 +10,7 @@
 #include <unistd.h>
 
 #include <lzma.h>
-#include <libtar.h>
+#include <libuntar.h>
 
 #ifndef PATH_MAX
 #define PATH_MAX 4096
@@ -27,78 +27,60 @@
 	"/usr/lib/terminfo:/usr/local/share/terminfo:/usr/local/lib/terminfo"
 #endif
 
-lzma_stream strm = LZMA_STREAM_INIT;
+static lzma_stream strm = LZMA_STREAM_INIT;
 
-static int libtar_xzopen(void* call_data, const char *pathname,
-		int oflags, mode_t mode) {
-	int ret = 0;
-
-	if ((ret = lzma_stream_decoder (&strm, UINT64_MAX, LZMA_TELL_UNSUPPORTED_CHECK | LZMA_CONCATENATED)) != LZMA_OK) {
-		fprintf (stderr, "lzma_stream_decoder error: %d\n", (int) ret);
-		goto out;
+static int libtar_xzopen(const char *pathname, int flags, ...) {
+	int ret = lzma_stream_decoder(&strm, UINT64_MAX, LZMA_TELL_UNSUPPORTED_CHECK | LZMA_CONCATENATED);
+	if (ret != LZMA_OK) {
+		fprintf(stderr, "lzma_stream_decoder error: %d\n", ret);
+		return ret;
 	}
 
 	strm.next_in = vis_single_payload;
 	strm.avail_in = sizeof(vis_single_payload);
 
-out:
-	return (int)ret;
-}
-
-static int libtar_xzclose(void* call_data) {
-	lzma_end(&strm);
-
-	return 0;
-}
-
-static ssize_t libtar_xzread(void* call_data, void* buf, size_t count) {
-	lzma_ret ret_xz;
-	int ret = count;
-
-	strm.next_out = buf;
-	strm.avail_out = count;
-
-	ret_xz = lzma_code(&strm, LZMA_FINISH);
-
-	if ((ret_xz != LZMA_OK) && (ret_xz != LZMA_STREAM_END)) {
-		fprintf (stderr, "lzma_code error: %d\n", (int)ret);
-		ret = -1;
-		goto out;
-	}
-
-	if (ret_xz == LZMA_STREAM_END)
-		ret = count - strm.avail_out;
-
-out:
 	return ret;
 }
 
-static ssize_t libtar_xzwrite(void* call_data, const void* buf, size_t count) {
+static int libtar_xzclose(int fd) {
+	lzma_end(&strm);
 	return 0;
 }
 
+static ssize_t libtar_xzread(int fd, void *buf, size_t count) {
+	strm.next_out = buf;
+	strm.avail_out = count;
+
+	int ret = lzma_code(&strm, LZMA_FINISH);
+	if (ret != LZMA_OK && ret != LZMA_STREAM_END) {
+		fprintf(stderr, "lzma_code error: %d\n", ret);
+		return -1;
+	}
+
+	return count - strm.avail_out;
+}
+
 tartype_t xztype = {
-	(openfunc_t) libtar_xzopen,
-	(closefunc_t) libtar_xzclose,
-	(readfunc_t) libtar_xzread,
-	(writefunc_t) libtar_xzwrite
+	libtar_xzopen,
+	libtar_xzclose,
+	libtar_xzread,
 };
 
 int extract(char *directory) {
-	TAR * tar;
+	TAR *tar;
 
 	if (tar_open(&tar, NULL, &xztype, O_RDONLY, 0, 0) == -1) {
-		fprintf(stderr, "tar_open(): %s\n", strerror(errno));
+		perror("tar_open");
 		return -1;
 	}
 
 	if (tar_extract_all(tar, directory) != 0) {
-		fprintf(stderr, "tar_extract_all(): %s\n", strerror(errno));
+		perror("tar_extract_all");
 		return -1;
 	}
 
 	if (tar_close(tar) != 0) {
-		fprintf(stderr, "tar_close(): %s\n", strerror(errno));
+		perror("tar_close");
 		return -1;
 	}
 
@@ -110,18 +92,11 @@ static int unlink_cb(const char *path, const struct stat *sb, int typeflag, stru
 }
 
 int main(int argc, char **argv) {
-	char exe[256], cwd[PATH_MAX], path[PATH_MAX];
 	int rc = EXIT_FAILURE;
+	char exe[256], path[PATH_MAX];
+	char tmp_dirname[] = VIS_TMP;
 
-	if (!getcwd(cwd, sizeof(cwd))) {
-		perror("getcwd");
-		return rc;
-	}
-
-	char tmp_dirname_template[] = VIS_TMP;
-	char *tmp_dirname = mkdtemp(tmp_dirname_template);
-
-	if (!tmp_dirname) {
+	if (!mkdtemp(tmp_dirname)) {
 		perror("mkdtemp");
 		return rc;
 	}
@@ -138,19 +113,8 @@ int main(int argc, char **argv) {
 		goto err;
 	}
 
-
-	if (chdir(tmp_dirname) == -1) {
-		perror("chdir");
-		goto err;
-	}
-
 	if (extract(tmp_dirname) != 0)
 		goto err;
-
-	if (chdir(cwd) == -1) {
-		perror("chdir");
-		goto err;
-	}
 
 	if (snprintf(exe, sizeof(exe), "%s/vis", tmp_dirname) < 0)
 		goto err;
