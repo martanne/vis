@@ -195,6 +195,8 @@ Cursor *view_cursors_column(View*, int column);
 /* get next cursor (i.e. on another line) in zero based column */
 Cursor *view_cursors_column_next(Cursor*, int column);
 
+char *view_symbol_eof_get(View*);
+
 bool view_style_define(View*, enum UiStyle, const char *style);
 void view_style(View*, enum UiStyle, size_t start, size_t end);
 

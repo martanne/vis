@@ -19,6 +19,7 @@ enum {
 	SYNTAX_SYMBOL_TAB,
 	SYNTAX_SYMBOL_TAB_FILL,
 	SYNTAX_SYMBOL_EOL,
+	SYNTAX_SYMBOL_EOF,
 	SYNTAX_SYMBOL_LAST,
 };
 
@@ -98,6 +99,7 @@ static const SyntaxSymbol symbols_none[] = {
 	[SYNTAX_SYMBOL_TAB]      = { " " },
 	[SYNTAX_SYMBOL_TAB_FILL] = { " " },
 	[SYNTAX_SYMBOL_EOL]      = { " " },
+	[SYNTAX_SYMBOL_EOF]      = { " " },
 };
 
 static const SyntaxSymbol symbols_default[] = {
@@ -105,6 +107,7 @@ static const SyntaxSymbol symbols_default[] = {
 	[SYNTAX_SYMBOL_TAB]      = { "›" /* Single Right-Pointing Angle Quotation Mark U+203A */ },
 	[SYNTAX_SYMBOL_TAB_FILL] = { " " },
 	[SYNTAX_SYMBOL_EOL]      = { "↵" /* Downwards Arrow with Corner Leftwards U+21B5 */ },
+	[SYNTAX_SYMBOL_EOF]      = { "~" },
 };
 
 static Cell cell_unused;
@@ -421,7 +424,7 @@ void view_draw(View *view) {
 	/* resync position of cursors within visible area */
 	for (Cursor *c = view->cursors; c; c = c->next) {
 		size_t pos = view_cursors_pos(c);
-		if (!view_coord_get(view, pos, &c->line, &c->row, &c->col) && 
+		if (!view_coord_get(view, pos, &c->line, &c->row, &c->col) &&
 		    c == view->cursor) {
 			c->line = view->topline;
 			c->row = 0;
@@ -514,7 +517,7 @@ View *view_new(Text *text) {
 	};
 	view->text = text;
 	view->tabwidth = 8;
-	view_options_set(view, 0);
+	view_options_set(view, UI_OPTION_SYMBOL_EOF);
 
 	if (!view_resize(view, 1, 1)) {
 		view_free(view);
@@ -830,6 +833,7 @@ void view_options_set(View *view, enum UiOption options) {
 		[SYNTAX_SYMBOL_TAB]      = UI_OPTION_SYMBOL_TAB,
 		[SYNTAX_SYMBOL_TAB_FILL] = UI_OPTION_SYMBOL_TAB_FILL,
 		[SYNTAX_SYMBOL_EOL]      = UI_OPTION_SYMBOL_EOL,
+		[SYNTAX_SYMBOL_EOF]      = UI_OPTION_SYMBOL_EOF,
 	};
 
 	for (int i = 0; i < LENGTH(mapping); i++) {
@@ -1345,6 +1349,10 @@ void view_selections_set(Selection *s, const Filerange *r) {
 
 Text *view_text(View *view) {
 	return view->text;
+}
+
+char *view_symbol_eof_get(View *view) {
+	return view->symbols[SYNTAX_SYMBOL_EOF]->symbol;
 }
 
 bool view_style_define(View *view, enum UiStyle id, const char *style) {

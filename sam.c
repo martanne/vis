@@ -289,6 +289,7 @@ enum {
 	OPTION_SHOW_SPACES,
 	OPTION_SHOW_TABS,
 	OPTION_SHOW_NEWLINES,
+	OPTION_SHOW_EOF,
 	OPTION_NUMBER,
 	OPTION_NUMBER_RELATIVE,
 	OPTION_CURSOR_LINE,
@@ -337,6 +338,11 @@ static const OptionDef options[] = {
 		{ "show-newlines" },
 		VIS_OPTION_TYPE_BOOL|VIS_OPTION_NEED_WINDOW,
 		VIS_HELP("Display replacement symbol for newlines")
+	},
+	[OPTION_SHOW_EOF] = {
+		{ "show-eof" },
+		VIS_OPTION_TYPE_BOOL|VIS_OPTION_NEED_WINDOW,
+		VIS_HELP("Display replacement symbol for lines after the end of the file")
 	},
 	[OPTION_NUMBER] = {
 		{ "numbers", "nu" },
