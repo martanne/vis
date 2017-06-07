@@ -160,8 +160,10 @@ static char *absolute_path(const char *name) {
 	char *base = basename(copy2);
 	if (!(path_absolute = realpath(dir, NULL)))
 		goto err;
+	if (strcmp(path_absolute, "/") == 0)
+		path_absolute[0] = '\0';
 
-	snprintf(path_normalized, sizeof(path_normalized)-1, "%s/%s",
+	snprintf(path_normalized, sizeof(path_normalized), "%s/%s",
 	         path_absolute, base);
 err:
 	free(copy1);
