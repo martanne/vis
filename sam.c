@@ -1213,7 +1213,7 @@ enum SamError sam_cmd(Vis *vis, const char *s) {
 				if (c->cursor) {
 					if (visual) {
 						view_cursors_selection_set(c->cursor, &sel);
-						view_cursors_selection_sync(c->cursor);
+						view_cursors_selection_start(c->cursor);
 					} else {
 						if (memchr(c->data, '\n', c->len))
 							view_cursors_to(c->cursor, sel.start);
@@ -1224,7 +1224,7 @@ enum SamError sam_cmd(Vis *vis, const char *s) {
 					Cursor *cursor = view_cursors_new(c->win->view, sel.start);
 					if (cursor) {
 						view_cursors_selection_set(cursor, &sel);
-						view_cursors_selection_sync(cursor);
+						view_cursors_selection_start(cursor);
 					}
 				}
 			}
@@ -1239,8 +1239,7 @@ enum SamError sam_cmd(Vis *vis, const char *s) {
 		view_cursors_primary_set(view_cursors(vis->win->view));
 		bool completed = true;
 		for (Cursor *c = view_cursors(vis->win->view); c; c = view_cursors_next(c)) {
-			Filerange sel = view_cursors_selection_get(c);
-			if (text_range_valid(&sel)) {
+			if (view_selection_anchored(c)) {
 				completed = false;
 				break;
 			}
@@ -1504,10 +1503,12 @@ static bool cmd_print(Vis *vis, Win *win, Command *cmd, const char *argv[], Curs
 	else
 		cur = view_cursors_new_force(view, pos);
 	if (cur) {
-		if (range->start != range->end)
+		if (range->start != range->end) {
 			view_cursors_selection_set(cur, range);
-		else
+			view_cursors_selection_start(cur);
+		} else {
 			view_cursors_selection_clear(cur);
+		}
 	}
 	return cur != NULL;
 }
@@ -1559,17 +1560,16 @@ static bool cmd_write(Vis *vis, Win *win, Command *cmd, const char *argv[], Curs
 			return false;
 		}
 
+		bool visual = vis->mode->visual;
+
 		for (Cursor *c = view_cursors(win->view); c; c = view_cursors_next(c)) {
-			Filerange range = view_cursors_selection_get(c);
-			bool invalid_range = !text_range_valid(&range);
-			if (invalid_range)
-				range = *r;
+			Filerange range = visual ? view_cursors_selection_get(c) : *r;
 			ssize_t written = text_write_range(text, &range, file->fd);
 			if (written == -1 || (size_t)written != text_range_size(&range)) {
 				vis_info_show(vis, "Can not write to stdout");
 				return false;
 			}
-			if (invalid_range)
+			if (!visual)
 				break;
 		}
 
@@ -1612,13 +1612,10 @@ static bool cmd_write(Vis *vis, Win *win, Command *cmd, const char *argv[], Curs
 		}
 
 		bool failure = false;
+		bool visual = vis->mode->visual;
 
 		for (Cursor *c = view_cursors(win->view); c; c = view_cursors_next(c)) {
-			Filerange range = view_cursors_selection_get(c);
-			bool invalid_range = !text_range_valid(&range);
-			if (invalid_range)
-				range = *r;
-
+			Filerange range = visual ? view_cursors_selection_get(c) : *r;
 			ssize_t written = text_save_write_range(ctx, &range);
 			failure = (written == -1 || (size_t)written != text_range_size(&range));
 			if (failure) {
@@ -1626,7 +1623,7 @@ static bool cmd_write(Vis *vis, Win *win, Command *cmd, const char *argv[], Curs
 				break;
 			}
 
-			if (invalid_range)
+			if (!visual)
 				break;
 		}
 

@@ -37,26 +37,23 @@ enum {
  * The view_selections_{get,set} functions take care of adding/removing
  * the necessary offset for the last character.
  */
-struct Selection {
-	Mark anchor;             /* position where the selection was created */
-	Mark cursor;             /* other selection endpoint where it changes */
-	View *view;              /* associated view to which this selection belongs */
-	Cursor *cur;             /* cursor whose movement will affect this selection */
-	Selection *prev, *next;  /* previsous/next selections in no particular order */
-};
+
+typedef struct {
+	Mark anchor;
+	Mark cursor;
+} SelectionRegion;
 
 struct Cursor {             /* cursor position */
+	Mark cursor;        /* other selection endpoint where it changes */
+	Mark anchor;        /* position where the selection was created */
+	bool anchored;      /* whether anchor remains fixed */
 	size_t pos;         /* in bytes from the start of the file */
 	int row, col;       /* in terms of zero based screen coordinates */
 	int lastcol;        /* remembered column used when moving across lines */
 	Line *line;         /* screen line on which cursor currently resides */
-	Mark mark;          /* mark used to keep track of current cursor position */
-	Mark mark_old;      /* previous value of the mark, used to recover cursor position */
-	Selection *sel;     /* selection (if any) which folows the cursor upon movement */
-	Mark lastsel_anchor;/* previously used selection data, */
-	Mark lastsel_cursor;/* used to restore it */
 	int generation;     /* used to filter out newly created cursors during iteration */
 	int number;         /* how many cursors are located before this one */
+	SelectionRegion region; /* saved selection region */
 	View *view;         /* associated view to which this cursor belongs */
 	Cursor *prev, *next;/* previous/next cursors ordered by location at creation time */
 };
@@ -86,7 +83,6 @@ struct View {
 	const SyntaxSymbol *symbols[SYNTAX_SYMBOL_LAST]; /* symbols to use for white spaces etc */
 	int tabwidth;       /* how many spaces should be used to display a tab character */
 	Cursor *cursors;    /* all cursors currently active */
-	Selection *selections; /* all selected regions */
 	int cursor_generation; /* used to filter out newly created cursors during iteration */
 	bool need_update;   /* whether view has been redrawn */
 	bool large_file;    /* optimize for displaying large files */
@@ -261,13 +257,12 @@ static bool view_addch(View *view, Cell *cell) {
 
 static void cursor_to(Cursor *c, size_t pos) {
 	Text *txt = c->view->text;
-	c->mark_old = c->mark;
-	c->mark = text_mark_set(txt, pos);
+	c->cursor = text_mark_set(txt, pos);
+	if (!c->anchored)
+		c->anchor = c->cursor;
 	if (pos != c->pos)
 		c->lastcol = 0;
 	c->pos = pos;
-	if (c->sel)
-		c->sel->cursor = text_mark_set(txt, pos);
 	if (!view_coord_get(c->view, pos, &c->line, &c->row, &c->col)) {
 		if (c->view->cursor == c) {
 			c->line = c->view->topline;
@@ -484,8 +479,6 @@ void view_free(View *view) {
 		return;
 	while (view->cursors)
 		view_cursors_free(view->cursors);
-	while (view->selections)
-		view_selections_free(view->selections);
 	free(view->lines);
 	free(view);
 }
@@ -1028,7 +1021,6 @@ bool view_cursors_dispose(Cursor *c) {
 	View *view = c->view;
 	if (!view->cursors || !view->cursors->next)
 		return false;
-	view_selections_free(c->sel);
 	view_cursors_free(c);
 	view_cursors_primary_set(view->cursor);
 	return true;
@@ -1064,11 +1056,7 @@ Cursor *view_cursors_primary_get(View *view) {
 void view_cursors_primary_set(Cursor *c) {
 	if (!c)
 		return;
-	View *view = c->view;
-	view->cursor = c;
-	Filerange sel = view_cursors_selection_get(c);
-	view_cursors_to(c, view_cursors_pos(c));
-	view_cursors_selection_set(c, &sel);
+	c->view->cursor = c;
 }
 
 Cursor *view_cursors_prev(Cursor *c) {
@@ -1092,8 +1080,7 @@ Cursor *view_cursors_next(Cursor *c) {
 }
 
 size_t view_cursors_pos(Cursor *c) {
-	size_t pos = text_mark_get(c->view->text, c->mark);
-	return pos != EPOS ? pos : text_mark_get(c->view->text, c->mark_old);
+	return text_mark_get(c->view->text, c->cursor);
 }
 
 size_t view_cursors_line(Cursor *c) {
@@ -1171,147 +1158,46 @@ void view_cursors_place(Cursor *c, size_t line, size_t col) {
 }
 
 void view_cursors_selection_start(Cursor *c) {
-	if (c->sel)
-		return;
-	size_t pos = view_cursors_pos(c);
-	if (pos == EPOS || !(c->sel = view_selections_new(c->view, c)))
-		return;
-	Text *txt = c->view->text;
-	c->sel->anchor = text_mark_set(txt, pos);
-	c->sel->cursor = c->sel->anchor;
-	c->view->need_update = true;
-}
-
-void view_cursors_selection_restore(Cursor *c) {
-	Text *txt = c->view->text;
-	if (c->sel)
-		return;
-	Filerange sel = text_range_new(
-		text_mark_get(txt, c->lastsel_anchor),
-		text_mark_get(txt, c->lastsel_cursor)
-	);
-	if (!text_range_valid(&sel))
-		return;
-	view_cursors_to(c, sel.end);
-	sel.end = text_char_next(txt, sel.end);
-	if (!(c->sel = view_selections_new(c->view, c)))
-		return;
-	view_selections_set(c->sel, &sel);
-}
-
-void view_cursors_selection_stop(Cursor *c) {
-	c->sel = NULL;
+	c->anchored = true;
 }
 
 void view_cursors_selection_clear(Cursor *c) {
-	view_selections_free(c->sel);
+	c->anchored = false;
+	c->anchor = c->cursor;
 	c->view->need_update = true;
 }
 
-void view_cursors_selection_swap(Cursor *c) {
-	if (!c->sel)
-		return;
-	view_selections_swap(c->sel);
-	view_cursors_selection_sync(c);
+void view_cursors_selection_swap(Cursor *s) {
+	Mark temp = s->anchor;
+	s->anchor = s->cursor;
+	s->cursor = temp;
+	view_cursors_to(s, text_mark_get(s->view->text, s->cursor));
 }
 
-void view_cursors_selection_sync(Cursor *c) {
-	if (!c->sel)
-		return;
-	Text *txt = c->view->text;
-	size_t pos = text_mark_get(txt, c->sel->cursor);
-	view_cursors_to(c, pos);
-}
-
-Filerange view_cursors_selection_get(Cursor *c) {
-	return view_selections_get(c->sel);
-}
-
-void view_cursors_selection_set(Cursor *c, const Filerange *r) {
-	if (!text_range_valid(r))
-		return;
-	bool new = !c->sel;
-	if (new && !(c->sel = view_selections_new(c->view, c)))
-		return;
-	view_selections_set(c->sel, r);
-	if (!new) {
-		size_t pos = view_cursors_pos(c);
-		if (!text_range_contains(r, pos))
-			view_cursors_selection_sync(c);
-	}
-}
-
-Selection *view_selections_new(View *view, Cursor *c) {
-	Selection *s = calloc(1, sizeof(*s));
-	if (!s)
-		return NULL;
-	s->view = view;
-	s->next = view->selections;
-	if (view->selections)
-		view->selections->prev = s;
-	view->selections = s;
-	s->cur = c;
-	return s;
-}
-
-void view_selections_free(Selection *s) {
-	if (!s)
-		return;
-	if (s->prev)
-		s->prev->next = s->next;
-	if (s->next)
-		s->next->prev = s->prev;
-	if (s->view->selections == s)
-		s->view->selections = s->next;
-	Cursor *c = s->cur;
-	if (c) {
-		c->lastsel_anchor = s->anchor;
-		c->lastsel_cursor = s->cursor;
-		c->sel = NULL;
-	}
-	free(s);
+bool view_selection_anchored(Selection *s) {
+	return s->anchored;
 }
 
 void view_selections_clear(View *view) {
-	while (view->selections)
-		view_selections_free(view->selections);
+	for (Cursor *c = view->cursors; c; c = c->next)
+		view_cursors_selection_clear(c);
 	view_draw(view);
 }
 
 void view_cursors_clear(View *view) {
 	for (Cursor *c = view->cursors, *next; c; c = next) {
 		next = c->next;
-		if (c != view->cursor) {
-			view_selections_free(c->sel);
+		if (c != view->cursor)
 			view_cursors_free(c);
-		}
 	}
 	view_draw(view);
 }
 
-void view_selections_swap(Selection *s) {
-	Mark temp = s->anchor;
-	s->anchor = s->cursor;
-	s->cursor = temp;
-}
-
-Selection *view_selections(View *view) {
-	return view->selections;
-}
-
-Selection *view_selections_prev(Selection *s) {
-	return s->prev;
-}
-
-Selection *view_selections_next(Selection *s) {
-	return s->next;
-}
-
 Filerange view_selection_get(View *view) {
-	return view_selections_get(view->cursor->sel);
+	return view_cursors_selection_get(view->cursor);
 }
 
-Filerange view_selections_get(Selection *s) {
+Filerange view_cursors_selection_get(Selection *s) {
 	if (!s)
 		return text_range_empty();
 	Text *txt = s->view->text;
@@ -1323,7 +1209,7 @@ Filerange view_selections_get(Selection *s) {
 	return sel;
 }
 
-void view_selections_set(Selection *s, const Filerange *r) {
+void view_cursors_selection_set(Selection *s, const Filerange *r) {
 	if (!text_range_valid(r))
 		return;
 	Text *txt = s->view->text;
@@ -1340,7 +1226,27 @@ void view_selections_set(Selection *s, const Filerange *r) {
 		s->anchor = text_mark_set(txt, r->start);
 		s->cursor = text_mark_set(txt, end);
 	}
-	s->view->need_update = true;
+	s->anchored = true;
+	view_cursors_to(s, text_mark_get(s->view->text, s->cursor));
+}
+
+void view_cursors_selection_save(Selection *s) {
+	s->region.cursor = s->cursor;
+	s->region.anchor = s->anchor;
+}
+
+bool view_cursors_selection_restore(Selection *s) {
+	Text *txt = s->view->text;
+	size_t pos = text_mark_get(txt, s->region.cursor);
+	if (pos == EPOS)
+		return false;
+	if (s->region.anchor != s->region.cursor && text_mark_get(txt, s->region.anchor) == EPOS)
+		return false;
+	s->cursor = s->region.cursor;
+	s->anchor = s->region.anchor;
+	s->anchored = true;
+	view_cursors_to(s, pos);
+	return true;
 }
 
 Text *view_text(View *view) {

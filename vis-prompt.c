@@ -55,7 +55,7 @@ static const char *prompt_enter(Vis *vis, const char *keys, const Arg *arg) {
 	char *cmd = NULL;
 
 	Filerange range = view_selection_get(view);
-	if (!text_range_valid(&range)) {
+	if (!vis->mode->visual) {
 		const char *pattern = NULL;
 		Regex *regex = text_regex_new();
 		size_t pos = view_cursor_get(view);

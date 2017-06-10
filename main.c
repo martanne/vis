@@ -1309,12 +1309,8 @@ static const char *cursors_align_indent(Vis *vis, const char *keys, const Arg *a
 	for (int i = 0; i < columns; i++) {
 		int mincol = INT_MAX, maxcol = 0;
 		for (Cursor *c = view_cursors_column(view, i); c; c = view_cursors_column_next(c, i)) {
-			size_t pos;
 			Filerange sel = view_cursors_selection_get(c);
-			if (text_range_valid(&sel))
-				pos = left_align ? sel.start : sel.end;
-			else
-				pos = view_cursors_pos(c);
+			size_t pos = left_align ? sel.start : sel.end;
 			int col = text_line_width_get(txt, pos);
 			if (col < mincol)
 				mincol = col;
@@ -1329,15 +1325,9 @@ static const char *cursors_align_indent(Vis *vis, const char *keys, const Arg *a
 		memset(buf, ' ', len);
 
 		for (Cursor *c = view_cursors_column(view, i); c; c = view_cursors_column_next(c, i)) {
-			size_t pos, ipos;
 			Filerange sel = view_cursors_selection_get(c);
-			if (text_range_valid(&sel)) {
-				pos = left_align ? sel.start : sel.end;
-				ipos = sel.start;
-			} else {
-				pos = view_cursors_pos(c);
-				ipos = pos;
-			}
+			size_t pos = left_align ? sel.start : sel.end;
+			size_t ipos = sel.start;
 			int col = text_line_width_get(txt, pos);
 			if (col < maxcol) {
 				size_t off = maxcol - col;
@@ -1366,12 +1356,9 @@ static const char *cursors_select(Vis *vis, const char *keys, const Arg *arg) {
 	Text *txt = vis_text(vis);
 	View *view = vis_view(vis);
 	for (Cursor *cursor = view_cursors(view); cursor; cursor = view_cursors_next(cursor)) {
-		Filerange sel = view_cursors_selection_get(cursor);
 		Filerange word = text_object_word(txt, view_cursors_pos(cursor));
-		if (!text_range_valid(&sel) && text_range_valid(&word)) {
+		if (text_range_valid(&word))
 			view_cursors_selection_set(cursor, &word);
-			view_cursors_to(cursor, text_char_prev(txt, word.end));
-		}
 	}
 	vis_mode_switch(vis, VIS_MODE_VISUAL);
 	return keys;
@@ -1476,12 +1463,8 @@ static const char *cursors_remove_column_except(Vis *vis, const char *keys, cons
 
 static const char *cursors_navigate(Vis *vis, const char *keys, const Arg *arg) {
 	View *view = vis_view(vis);
-	if (!view_cursors_multiple(view)) {
-		Filerange sel = view_selection_get(view);
-		if (!text_range_valid(&sel))
-			return wscroll(vis, keys, arg);
-		return keys;
-	}
+	if (!view_cursors_multiple(view))
+		return wscroll(vis, keys, arg);
 	Cursor *c = view_cursors_primary_get(view);
 	VisCountIterator it = vis_count_iterator_get(vis, 1);
 	while (vis_count_iterator_next(&it)) {
@@ -1558,7 +1541,6 @@ static const char *selections_rotate(Vis *vis, const char *keys, const Arg *arg)
 					continue;
 				newsel.end = newsel.start + oldrot->len;
 				view_cursors_selection_set(newrot->cursor, &newsel);
-				view_cursors_selection_sync(newrot->cursor);
 				free(oldrot->data);
 			}
 			array_clear(&arr);
@@ -1585,7 +1567,6 @@ static const char *selections_trim(Vis *vis, const char *keys, const Arg *arg) {
 			&& isspace((unsigned char)b); sel.start++);
 		if (sel.start < sel.end) {
 			view_cursors_selection_set(c, &sel);
-			view_cursors_selection_sync(c);
 		} else if (!view_cursors_dispose(c)) {
 			vis_mode_switch(vis, VIS_MODE_NORMAL);
 		}

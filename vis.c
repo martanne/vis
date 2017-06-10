@@ -245,10 +245,15 @@ void vis_window_status(Win *win, const char *status) {
 }
 
 void window_selection_save(Win *win) {
+	Vis *vis = win->vis;
 	File *file = win->file;
 	Filerange sel = view_cursors_selection_get(view_cursors(win->view));
 	file->marks[VIS_MARK_SELECTION_START] = text_mark_set(file->text, sel.start);
 	file->marks[VIS_MARK_SELECTION_END] = text_mark_set(file->text, sel.end);
+	if (!vis->action.op) {
+		for (Selection *s = view_cursors(win->view); s; s = view_cursors_next(s))
+			view_cursors_selection_save(s);
+	}
 }
 
 static void window_free(Win *win) {
@@ -966,39 +971,17 @@ void vis_do(Vis *vis) {
 
 		if (linewise && vis->mode != &vis_modes[VIS_MODE_VISUAL])
 			c.range = text_range_linewise(txt, &c.range);
-		if (vis->mode->visual) {
+		if (vis->mode->visual)
 			view_cursors_selection_set(cursor, &c.range);
-			if (vis->mode == &vis_modes[VIS_MODE_VISUAL] || a->textobj)
-				view_cursors_selection_sync(cursor);
-		}
 
 		if (a->op) {
 			size_t pos = a->op->func(vis, txt, &c);
 			if (pos == EPOS) {
 				view_cursors_dispose(cursor);
 			} else if (pos <= text_size(txt)) {
-				/* moving the cursor will affect the selection.
-				 * because we want to be able to later restore
-				 * the old selection we update it again before
-				 * leaving visual mode.
-				 */
-				Filerange sel = view_cursors_selection_get(cursor);
+				if (vis->mode->visual)
+					view_cursors_selection_save(cursor);
 				view_cursors_to(cursor, pos);
-				if (vis->mode->visual) {
-					if (sel.start == EPOS && sel.end == EPOS)
-						sel = c.range;
-					else if (sel.start == EPOS)
-						sel = text_range_new(c.range.start, sel.end);
-					else if (sel.end == EPOS)
-						sel = text_range_new(c.range.start, sel.start);
-					if (vis->mode == &vis_modes[VIS_MODE_VISUAL_LINE])
-						sel = text_range_linewise(txt, &sel);
-					if (!text_range_contains(&sel, pos)) {
-						Filerange cur = text_range_new(pos, pos);
-						sel = text_range_union(&sel, &cur);
-					}
-					view_cursors_selection_set(cursor, &sel);
-				}
 			}
 		}
 	}

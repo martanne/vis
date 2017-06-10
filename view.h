@@ -6,7 +6,7 @@
 
 typedef struct View View;
 typedef struct Cursor Cursor;
-typedef struct Selection Selection;
+typedef Cursor Selection;
 
 #include "text.h"
 #include "ui.h"
@@ -162,30 +162,20 @@ void view_cursors_place(Cursor*, size_t line, size_t col);
 /* start selected area at current cursor position. further cursor movements
  * will affect the selected region. */
 void view_cursors_selection_start(Cursor*);
-/* detach cursor from selection, further cursor movements will not affect
- * the selected region. */
-void view_cursors_selection_stop(Cursor*);
 /* clear selection associated with this cursor (if any) */
 void view_cursors_selection_clear(Cursor*);
 /* move cursor position from one end of the selection to the other */
 void view_cursors_selection_swap(Cursor*);
-/* move cursor to the end/boundary of the associated selection */
-void view_cursors_selection_sync(Cursor*);
-/* restore previous used selection of this cursor */
-void view_cursors_selection_restore(Cursor*);
 /* get/set the selected region associated with this cursor */
 Filerange view_cursors_selection_get(Cursor*);
 void view_cursors_selection_set(Cursor*, const Filerange*);
 
-Selection *view_selections_new(View*, Cursor*);
-void view_selections_free(Selection*);
+void view_cursors_selection_save(Selection*);
+bool view_cursors_selection_restore(Selection*);
+
+bool view_selection_anchored(Cursor*);
+
 void view_selections_clear(View*);
-void view_selections_swap(Selection*);
-Selection *view_selections(View*);
-Selection *view_selections_prev(Selection*);
-Selection *view_selections_next(Selection*);
-Filerange view_selections_get(Selection*);
-void view_selections_set(Selection*, const Filerange*);
 Text *view_text(View*);
 
 /* get number of columns, that is maximal number of cursors on a line */
