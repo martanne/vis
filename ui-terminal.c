@@ -271,7 +271,8 @@ static void ui_window_draw(UiWin *w) {
 				}
 				snprintf(buf, sizeof buf, "%*zu ", sidebar_width-1, number);
 			}
-			ui_draw_string(ui, x, y, buf, win, UI_STYLE_LINENUMBER);
+			ui_draw_string(ui, x, y, buf, win,
+				(l->lineno == cursor_lineno) ? UI_STYLE_LINENUMBER_CURSOR : UI_STYLE_LINENUMBER);
 			prev_lineno = l->lineno;
 		}
 		debug("draw-window: [%d][%d] ... cells[%d][%d]\n", y, x+sidebar_width, y, view_width);
