@@ -105,6 +105,14 @@ static const SyntaxSymbol symbols_default[] = {
 
 static Cell cell_unused;
 
+
+/* move visible viewport n-lines up/down, redraws the view but does not change
+ * cursor position which becomes invalid and should be corrected by calling
+ * view_cursor_to. the return value indicates wether the visible area changed.
+ */
+static bool view_viewport_up(View *view, int n);
+static bool view_viewport_down(View *view, int n);
+
 static void view_clear(View *view);
 static bool view_addch(View *view, Cell *cell);
 static void view_cursors_free(Cursor *c);
@@ -549,7 +557,7 @@ static size_t cursor_set(Cursor *cursor, Line *line, int col) {
 	return pos;
 }
 
-bool view_viewport_down(View *view, int n) {
+static bool view_viewport_down(View *view, int n) {
 	Line *line;
 	if (view->end >= text_size(view->text))
 		return false;
@@ -563,7 +571,7 @@ bool view_viewport_down(View *view, int n) {
 	return true;
 }
 
-bool view_viewport_up(View *view, int n) {
+static bool view_viewport_up(View *view, int n) {
 	/* scrolling up is somewhat tricky because we do not yet know where
 	 * the lines start, therefore scan backwards but stop at a reasonable
 	 * maximum in case we are dealing with a file without any newlines

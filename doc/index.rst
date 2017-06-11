@@ -6,6 +6,7 @@ Vis Editor API Documenation
 
    vis
    text
+   view
    buffer
    array
    map
