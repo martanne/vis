@@ -157,7 +157,7 @@ Cursor *view_selections_next(Cursor*);
  * .. note:: Is always at least 1.
  * @endrst
  */
-int view_cursors_count(View*);
+int view_selections_count(View*);
 /**
  * Get selection index.
  * @rst

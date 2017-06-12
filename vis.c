@@ -311,7 +311,7 @@ static void window_draw_cursorline(Win *win) {
 		return;
 	if (vis->mode->visual || vis->win != win)
 		return;
-	if (view_cursors_count(view) > 1)
+	if (view_selections_count(view) > 1)
 		return;
 	
 	int width = view_width_get(view);
@@ -398,7 +398,7 @@ static void window_draw_cursor(Win *win, Cursor *cur, CellStyle *style, CellStyl
 static void window_draw_cursors(Win *win) {
 	View *view = win->view;
 	Filerange viewport = view_viewport_get(view);
-	bool multiple_cursors = view_cursors_count(view) > 1;
+	bool multiple_cursors = view_selections_count(view) > 1;
 	Cursor *cursor = view_selections_primary_get(view);
 	CellStyle style_cursor = win->ui->style_get(win->ui, UI_STYLE_CURSOR);
 	CellStyle style_cursor_primary = win->ui->style_get(win->ui, UI_STYLE_CURSOR_PRIMARY);
@@ -830,7 +830,7 @@ void vis_do(Vis *vis) {
 	if (a->op == &vis_operators[VIS_OP_MODESWITCH])
 		count = 1; /* count should apply to inserted text not motion */
 	bool repeatable = a->op && !vis->macro_operator && !vis->win->parent;
-	bool multiple_cursors = view_cursors_count(view) > 1;
+	bool multiple_cursors = view_selections_count(view) > 1;
 	bool linewise = !(a->type & CHARWISE) && (
 		a->type & LINEWISE || (a->movement && a->movement->type & LINEWISE) ||
 		vis->mode == &vis_modes[VIS_MODE_VISUAL_LINE]);

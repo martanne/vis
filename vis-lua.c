@@ -79,7 +79,7 @@ static void window_status_update(Vis *vis, Win *win) {
 	         vis_macro_recording(vis) ? " @": "");
 	left_count++;
 
-	int cursor_count = view_cursors_count(view);
+	int cursor_count = view_selections_count(view);
 	if (cursor_count > 1) {
 		Cursor *c = view_selections_primary_get(view);
 		int cursor_number = view_cursors_number(c) + 1;
@@ -1727,7 +1727,7 @@ static const struct luaL_Reg window_funcs[] = {
 static int window_cursors_index(lua_State *L) {
 	View *view = obj_ref_check(L, 1, VIS_LUA_TYPE_CURSORS);
 	size_t index = luaL_checkunsigned(L, 2);
-	size_t count = view_cursors_count(view);
+	size_t count = view_selections_count(view);
 	if (index == 0 || index > count)
 		goto err;
 	for (Cursor *c = view_cursors(view); c; c = view_selections_next(c)) {
@@ -1743,7 +1743,7 @@ err:
 
 static int window_cursors_len(lua_State *L) {
 	View *view = obj_ref_check(L, 1, VIS_LUA_TYPE_CURSORS);
-	lua_pushunsigned(L, view_cursors_count(view));
+	lua_pushunsigned(L, view_selections_count(view));
 	return 1;
 }
 

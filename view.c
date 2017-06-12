@@ -937,7 +937,7 @@ Cursor *view_selections_new_force(View *view, size_t pos) {
 	return cursors_new(view, pos, true);
 }
 
-int view_cursors_count(View *view) {
+int view_selections_count(View *view) {
 	return view->cursor_count;
 }
 
