@@ -333,7 +333,7 @@ Filerange view_selection_get(View*);
  * @{
  */
 /** Save selection which can later be restored. */
-void view_cursors_selection_save(Selection*);
+void view_selections_save(Selection*);
 /**
  * Restore a previously active selection.
  * @rst

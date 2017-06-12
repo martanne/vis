@@ -1234,7 +1234,7 @@ void view_selections_set(Selection *s, const Filerange *r) {
 	view_cursors_to(s, text_mark_get(s->view->text, s->cursor));
 }
 
-void view_cursors_selection_save(Selection *s) {
+void view_selections_save(Selection *s) {
 	s->region.cursor = s->cursor;
 	s->region.anchor = s->anchor;
 }

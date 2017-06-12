@@ -252,7 +252,7 @@ void window_selection_save(Win *win) {
 	file->marks[VIS_MARK_SELECTION_END] = text_mark_set(file->text, sel.end);
 	if (!vis->action.op) {
 		for (Selection *s = view_cursors(win->view); s; s = view_cursors_next(s))
-			view_cursors_selection_save(s);
+			view_selections_save(s);
 	}
 }
 
@@ -980,7 +980,7 @@ void vis_do(Vis *vis) {
 				view_selections_dispose(cursor);
 			} else if (pos <= text_size(txt)) {
 				if (vis->mode->visual)
-					view_cursors_selection_save(cursor);
+					view_selections_save(cursor);
 				view_cursors_to(cursor, pos);
 			}
 		}
