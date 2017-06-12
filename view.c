@@ -1188,7 +1188,7 @@ void view_selections_clear(View *view) {
 	view_draw(view);
 }
 
-void view_cursors_clear(View *view) {
+void view_selections_dispose_all(View *view) {
 	for (Cursor *c = view->cursors, *next; c; c = next) {
 		next = c->next;
 		if (c != view->cursor)

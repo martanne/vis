@@ -137,7 +137,7 @@ bool view_selections_dispose_force(Cursor*);
  */
 Cursor *view_selection_disposed(View*);
 /** Dispose all but the primary selection. */
-void view_cursors_clear(View*);
+void view_selections_dispose_all(View*);
 /**
  * @}
  * @defgroup view_navigate

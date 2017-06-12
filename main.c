@@ -1346,7 +1346,7 @@ static const char *cursors_align_indent(Vis *vis, const char *keys, const Arg *a
 static const char *cursors_clear(Vis *vis, const char *keys, const Arg *arg) {
 	View *view = vis_view(vis);
 	if (view_cursors_count(view) > 1)
-		view_cursors_clear(view);
+		view_selections_dispose_all(view);
 	else
 		view_cursors_selection_clear(view_cursors_primary_get(view));
 	return keys;

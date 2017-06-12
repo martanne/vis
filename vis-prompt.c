@@ -118,7 +118,7 @@ static const char *prompt_enter(Vis *vis, const char *keys, const Arg *arg) {
 static const char *prompt_esc(Vis *vis, const char *keys, const Arg *arg) {
 	Win *prompt = vis->win;
 	if (view_cursors_count(prompt->view) > 1) {
-		view_cursors_clear(prompt->view);
+		view_selections_dispose_all(prompt->view);
 	} else {
 		prompt_restore(prompt);
 		prompt_hide(prompt);
