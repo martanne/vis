@@ -148,7 +148,7 @@ void view_selections_primary_set(Cursor*);
 /** Get first selection. */
 Cursor *view_cursors(View*);
 /** Get immediate predecessor of selection. */
-Cursor *view_cursors_prev(Cursor*);
+Cursor *view_selections_prev(Cursor*);
 /** Get immediate successor of selection. */
 Cursor *view_cursors_next(Cursor*);
 /**

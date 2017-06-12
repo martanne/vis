@@ -1063,7 +1063,7 @@ void view_selections_primary_set(Cursor *c) {
 	c->view->cursor = c;
 }
 
-Cursor *view_cursors_prev(Cursor *c) {
+Cursor *view_selections_prev(Cursor *c) {
 	View *view = c->view;
 	for (c = c->prev; c; c = c->prev) {
 		if (c->generation != view->cursor_generation)

@@ -403,7 +403,7 @@ static void window_draw_cursors(Win *win) {
 	CellStyle style_cursor = win->ui->style_get(win->ui, UI_STYLE_CURSOR);
 	CellStyle style_cursor_primary = win->ui->style_get(win->ui, UI_STYLE_CURSOR_PRIMARY);
 	CellStyle style_selection = win->ui->style_get(win->ui, UI_STYLE_SELECTION);
-	for (Cursor *c = view_cursors_prev(cursor); c; c = view_cursors_prev(c)) {
+	for (Cursor *c = view_selections_prev(cursor); c; c = view_selections_prev(c)) {
 		window_draw_selection(win->view, c, &style_selection);
 		size_t pos = view_cursors_pos(c);
 		if (pos < viewport.start)

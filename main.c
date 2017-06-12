@@ -1270,7 +1270,7 @@ static const char *cursors_new(Vis *vis, const char *keys, const Arg *arg) {
 		Cursor *cursor_new = view_selections_new(view, newpos);
 		if (!cursor_new) {
 			if (arg->i == -1)
-				cursor_new = view_cursors_prev(cursor);
+				cursor_new = view_selections_prev(cursor);
 			else if (arg->i == +1)
 				cursor_new = view_cursors_next(cursor);
 		}
@@ -1473,7 +1473,7 @@ static const char *cursors_navigate(Vis *vis, const char *keys, const Arg *arg) 
 			if (!c)
 				c = view_cursors(view);
 		} else {
-			c = view_cursors_prev(c);
+			c = view_selections_prev(c);
 			if (!c) {
 				c = view_cursors(view);
 				for (Cursor *n = c; n; n = view_cursors_next(n))
