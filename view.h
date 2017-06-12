@@ -120,7 +120,7 @@ Cursor *view_selections_new_force(View*, size_t pos);
  * .. warning:: Not applicaple for the last existing selection.
  * @endrst
  */
-bool view_cursors_dispose(Cursor*);
+bool view_selections_dispose(Cursor*);
 /**
  * Forcefully dispose an existing selection.
  *
@@ -128,7 +128,7 @@ bool view_cursors_dispose(Cursor*);
  * marked for destruction. As soon as a new selection is created this one
  * will be disposed.
  */
-bool view_cursors_dispose_force(Cursor*);
+bool view_selections_dispose_force(Cursor*);
 /**
  * Query state of primary selection.
  *

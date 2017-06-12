@@ -1095,7 +1095,7 @@ static bool sam_execute(Vis *vis, Win *win, Command *cmd, Cursor *cur, Filerange
 	{
 		for (Command *c = cmd->cmd; c && ret; c = c->next)
 			ret &= sam_execute(vis, win, c, NULL, range);
-		view_cursors_dispose_force(cur);
+		view_selections_dispose_force(cur);
 		break;
 	}
 	default:
@@ -1200,7 +1200,7 @@ enum SamError sam_cmd(Vis *vis, const char *s) {
 				delta -= text_range_size(&c->range);
 				if (c->cursor && c->type == TRANSCRIPT_DELETE) {
 					if (visual)
-						view_cursors_dispose_force(c->cursor);
+						view_selections_dispose_force(c->cursor);
 					else
 						view_cursors_to(c->cursor, c->range.start);
 				}
@@ -1335,7 +1335,7 @@ static bool cmd_guard(Vis *vis, Win *win, Command *cmd, const char *argv[], Curs
 		text_range_size(range), cmd->regex, 0, NULL, 0);
 	if ((count_evaluate(cmd) && match) ^ (argv[0][0] == 'v'))
 		return sam_execute(vis, win, cmd->cmd, cur, range);
-	view_cursors_dispose_force(cur);
+	view_selections_dispose_force(cur);
 	return true;
 }
 
@@ -1416,7 +1416,7 @@ static int extract(Vis *vis, Win *win, Command *cmd, const char *argv[], Cursor 
 	}
 
 	if (!simulate)
-		view_cursors_dispose_force(cur);
+		view_selections_dispose_force(cur);
 	return simulate ? count : ret;
 }
 

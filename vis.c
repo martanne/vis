@@ -852,7 +852,7 @@ void vis_do(Vis *vis) {
 
 		size_t pos = view_cursors_pos(cursor);
 		if (pos == EPOS) {
-			if (!view_cursors_dispose(cursor))
+			if (!view_selections_dispose(cursor))
 				view_cursors_to(cursor, 0);
 			continue;
 		}
@@ -977,7 +977,7 @@ void vis_do(Vis *vis) {
 		if (a->op) {
 			size_t pos = a->op->func(vis, txt, &c);
 			if (pos == EPOS) {
-				view_cursors_dispose(cursor);
+				view_selections_dispose(cursor);
 			} else if (pos <= text_size(txt)) {
 				if (vis->mode->visual)
 					view_cursors_selection_save(cursor);

@@ -921,7 +921,7 @@ static Cursor *cursors_new(View *view, size_t pos, bool force) {
 	}
 	view->cursor_latest = c;
 	view->cursor_count++;
-	view_cursors_dispose(view->cursor_dead);
+	view_selections_dispose(view->cursor_dead);
 	view_cursors_to(c, pos);
 	return c;
 err:
@@ -1019,7 +1019,7 @@ static void view_cursors_free(Cursor *c) {
 	free(c);
 }
 
-bool view_cursors_dispose(Cursor *c) {
+bool view_selections_dispose(Cursor *c) {
 	if (!c)
 		return true;
 	View *view = c->view;
@@ -1030,8 +1030,8 @@ bool view_cursors_dispose(Cursor *c) {
 	return true;
 }
 
-bool view_cursors_dispose_force(Cursor *c) {
-	if (view_cursors_dispose(c))
+bool view_selections_dispose_force(Cursor *c) {
+	if (view_selections_dispose(c))
 		return true;
 	View *view = c->view;
 	if (view->cursor_dead)

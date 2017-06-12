@@ -1405,13 +1405,13 @@ static const char *cursors_select_skip(Vis *vis, const char *keys, const Arg *ar
 	Cursor *cursor = view_cursors_primary_get(view);
 	keys = cursors_select_next(vis, keys, arg);
 	if (cursor != view_cursors_primary_get(view))
-		view_cursors_dispose(cursor);
+		view_selections_dispose(cursor);
 	return keys;
 }
 
 static const char *cursors_remove(Vis *vis, const char *keys, const Arg *arg) {
 	View *view = vis_view(vis);
-	view_cursors_dispose(view_cursors_primary_get(view));
+	view_selections_dispose(view_cursors_primary_get(view));
 	view_cursor_to(view, view_cursor_get(view));
 	return keys;
 }
@@ -1429,7 +1429,7 @@ static const char *cursors_remove_column(Vis *vis, const char *keys, const Arg *
 
 	for (Cursor *c = view_cursors_column(view, column), *next; c; c = next) {
 		next = view_cursors_column_next(c, column);
-		view_cursors_dispose(c);
+		view_selections_dispose(c);
 	}
 
 	vis_count_set(vis, VIS_COUNT_UNKNOWN);
@@ -1454,7 +1454,7 @@ static const char *cursors_remove_column_except(Vis *vis, const char *keys, cons
 		if (cur == col)
 			col = view_cursors_column_next(col, column);
 		else
-			view_cursors_dispose(cur);
+			view_selections_dispose(cur);
 	}
 
 	vis_count_set(vis, VIS_COUNT_UNKNOWN);
@@ -1567,7 +1567,7 @@ static const char *selections_trim(Vis *vis, const char *keys, const Arg *arg) {
 			&& isspace((unsigned char)b); sel.start++);
 		if (sel.start < sel.end) {
 			view_cursors_selection_set(c, &sel);
-		} else if (!view_cursors_dispose(c)) {
+		} else if (!view_selections_dispose(c)) {
 			vis_mode_switch(vis, VIS_MODE_NORMAL);
 		}
 	}
