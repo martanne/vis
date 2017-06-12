@@ -1041,7 +1041,7 @@ bool view_selections_dispose_force(Cursor *c) {
 	return true;
 }
 
-Cursor *view_cursor_disposed(View *view) {
+Cursor *view_selection_disposed(View *view) {
 	Cursor *c = view->cursor_dead;
 	view->cursor_dead = NULL;
 	return c;

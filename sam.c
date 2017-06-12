@@ -1234,7 +1234,7 @@ enum SamError sam_cmd(Vis *vis, const char *s) {
 	}
 
 	if (vis->win) {
-		if (primary_pos != EPOS && view_cursor_disposed(vis->win->view))
+		if (primary_pos != EPOS && view_selection_disposed(vis->win->view))
 			view_cursor_to(vis->win->view, primary_pos);
 		view_cursors_primary_set(view_cursors(vis->win->view));
 		bool completed = true;

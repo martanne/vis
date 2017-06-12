@@ -135,7 +135,7 @@ bool view_selections_dispose_force(Cursor*);
  * If the primary selection was marked for destruction, return it and
  * clear descruction flag.
  */
-Cursor *view_cursor_disposed(View*);
+Cursor *view_selection_disposed(View*);
 /** Dispose all but the primary selection. */
 void view_cursors_clear(View*);
 /**
