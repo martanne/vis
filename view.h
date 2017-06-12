@@ -104,7 +104,7 @@ bool view_update(View*);
  * .. warning:: Fails if position is already covered by a selection.
  * @endrst
  */
-Cursor *view_cursors_new(View*, size_t pos);
+Cursor *view_selections_new(View*, size_t pos);
 /**
  * Create a new selection even if position is already covered by an
  * existing selection. 
@@ -113,7 +113,7 @@ Cursor *view_cursors_new(View*, size_t pos);
  *           disposed.
  * @endrst
  */
-Cursor *view_cursors_new_force(View*, size_t pos);
+Cursor *view_selections_new_force(View*, size_t pos);
 /**
  * Dispose an existing selection.
  * @rst

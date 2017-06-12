@@ -1221,7 +1221,7 @@ enum SamError sam_cmd(Vis *vis, const char *s) {
 							view_cursors_to(c->cursor, sel.end);
 					}
 				} else if (visual) {
-					Cursor *cursor = view_cursors_new(c->win->view, sel.start);
+					Cursor *cursor = view_selections_new(c->win->view, sel.start);
 					if (cursor) {
 						view_cursors_selection_set(cursor, &sel);
 						view_cursors_selection_start(cursor);
@@ -1501,7 +1501,7 @@ static bool cmd_print(Vis *vis, Win *win, Command *cmd, const char *argv[], Curs
 	if (cur)
 		view_cursors_to(cur, pos);
 	else
-		cur = view_cursors_new_force(view, pos);
+		cur = view_selections_new_force(view, pos);
 	if (cur) {
 		if (range->start != range->end) {
 			view_cursors_selection_set(cur, range);

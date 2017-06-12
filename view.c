@@ -503,7 +503,7 @@ View *view_new(Text *text) {
 	View *view = calloc(1, sizeof(View));
 	if (!view)
 		return NULL;
-	if (!view_cursors_new(view, 0)) {
+	if (!view_selections_new(view, 0)) {
 		view_free(view);
 		return NULL;
 	}
@@ -929,11 +929,11 @@ err:
 	return NULL;
 }
 
-Cursor *view_cursors_new(View *view, size_t pos) {
+Cursor *view_selections_new(View *view, size_t pos) {
 	return cursors_new(view, pos, false);
 }
 
-Cursor *view_cursors_new_force(View *view, size_t pos) {
+Cursor *view_selections_new_force(View *view, size_t pos) {
 	return cursors_new(view, pos, true);
 }
 
