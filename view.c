@@ -990,7 +990,7 @@ static Cursor *cursors_column_next(View *view, Cursor *c, int column) {
 	return NULL;
 }
 
-Cursor *view_cursors_column(View *view, int column) {
+Cursor *view_selections_column(View *view, int column) {
 	return cursors_column_next(view, NULL, column);
 }
 

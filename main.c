@@ -1308,7 +1308,7 @@ static const char *cursors_align_indent(Vis *vis, const char *keys, const Arg *a
 
 	for (int i = 0; i < columns; i++) {
 		int mincol = INT_MAX, maxcol = 0;
-		for (Cursor *c = view_cursors_column(view, i); c; c = view_selections_column_next(c, i)) {
+		for (Cursor *c = view_selections_column(view, i); c; c = view_selections_column_next(c, i)) {
 			Filerange sel = view_selections_get(c);
 			size_t pos = left_align ? sel.start : sel.end;
 			int col = text_line_width_get(txt, pos);
@@ -1324,7 +1324,7 @@ static const char *cursors_align_indent(Vis *vis, const char *keys, const Arg *a
 			return keys;
 		memset(buf, ' ', len);
 
-		for (Cursor *c = view_cursors_column(view, i); c; c = view_selections_column_next(c, i)) {
+		for (Cursor *c = view_selections_column(view, i); c; c = view_selections_column_next(c, i)) {
 			Filerange sel = view_selections_get(c);
 			size_t pos = left_align ? sel.start : sel.end;
 			size_t ipos = sel.start;
@@ -1427,7 +1427,7 @@ static const char *cursors_remove_column(Vis *vis, const char *keys, const Arg *
 		return keys;
 	}
 
-	for (Cursor *c = view_cursors_column(view, column), *next; c; c = next) {
+	for (Cursor *c = view_selections_column(view, column), *next; c; c = next) {
 		next = view_selections_column_next(c, column);
 		view_selections_dispose(c);
 	}
@@ -1448,7 +1448,7 @@ static const char *cursors_remove_column_except(Vis *vis, const char *keys, cons
 	}
 
 	Cursor *cur = view_selections(view);
-	Cursor *col = view_cursors_column(view, column);
+	Cursor *col = view_selections_column(view, column);
 	for (Cursor *next; cur; cur = next) {
 		next = view_selections_next(cur);
 		if (cur == col)
