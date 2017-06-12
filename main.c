@@ -1661,7 +1661,7 @@ static const char *textobj(Vis *vis, const char *keys, const Arg *arg) {
 
 static const char *selection_end(Vis *vis, const char *keys, const Arg *arg) {
 	for (Cursor *c = view_cursors(vis_view(vis)); c; c = view_cursors_next(c))
-		view_cursors_selection_swap(c);
+		view_selections_flip(c);
 	return keys;
 }
 

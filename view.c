@@ -1171,7 +1171,7 @@ void view_selection_clear(Cursor *c) {
 	c->view->need_update = true;
 }
 
-void view_cursors_selection_swap(Cursor *s) {
+void view_selections_flip(Cursor *s) {
 	Mark temp = s->anchor;
 	s->anchor = s->cursor;
 	s->cursor = temp;

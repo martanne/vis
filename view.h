@@ -203,7 +203,7 @@ void view_selections_clear_all(View*);
  * .. note:: Has no effect on singleton selections.
  * @endrst
  */
-void view_cursors_selection_swap(Cursor*);
+void view_selections_flip(Cursor*);
 /**
  * @}
  * @defgroup view_anchor
