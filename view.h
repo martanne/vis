@@ -340,7 +340,7 @@ void view_selections_save(Selection*);
  * .. note:: Fails if selection boundaries no longer exist.
  * @endrst
  */
-bool view_cursors_selection_restore(Selection*);
+bool view_selections_restore(Selection*);
 /**
  * @}
  * @defgroup view_style

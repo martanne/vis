@@ -1239,7 +1239,7 @@ void view_selections_save(Selection *s) {
 	s->region.anchor = s->anchor;
 }
 
-bool view_cursors_selection_restore(Selection *s) {
+bool view_selections_restore(Selection *s) {
 	Text *txt = s->view->text;
 	size_t pos = text_mark_get(txt, s->region.cursor);
 	if (pos == EPOS)

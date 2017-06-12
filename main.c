@@ -1669,7 +1669,7 @@ static const char *selection_restore(Vis *vis, const char *keys, const Arg *arg)
 	Text *txt = vis_text(vis);
 	View *view = vis_view(vis);
 	for (Cursor *c = view_cursors(view); c; c = view_cursors_next(c))
-		view_cursors_selection_restore(c);
+		view_selections_restore(c);
 	Filerange sel = view_selection_get(view);
 	if (text_range_is_linewise(txt, &sel))
 		vis_mode_switch(vis, VIS_MODE_VISUAL_LINE);
