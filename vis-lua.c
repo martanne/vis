@@ -1864,7 +1864,7 @@ static int window_cursor_index(lua_State *L) {
 		}
 
 		if (strcmp(key, "selection") == 0) {
-			Filerange sel = view_cursors_selection_get(cur);
+			Filerange sel = view_selections_get(cur);
 			pushrange(L, &sel);
 			return 1;
 		}
@@ -1888,7 +1888,7 @@ static int window_cursor_newindex(lua_State *L) {
 		if (strcmp(key, "selection") == 0) {
 			Filerange sel = getrange(L, 3);
 			if (text_range_valid(&sel))
-				view_cursors_selection_set(cur, &sel);
+				view_selections_set(cur, &sel);
 			else
 				view_cursors_selection_clear(cur);
 			return 0;

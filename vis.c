@@ -247,7 +247,7 @@ void vis_window_status(Win *win, const char *status) {
 void window_selection_save(Win *win) {
 	Vis *vis = win->vis;
 	File *file = win->file;
-	Filerange sel = view_cursors_selection_get(view_cursors(win->view));
+	Filerange sel = view_selections_get(view_cursors(win->view));
 	file->marks[VIS_MARK_SELECTION_START] = text_mark_set(file->text, sel.start);
 	file->marks[VIS_MARK_SELECTION_END] = text_mark_set(file->text, sel.end);
 	if (!vis->action.op) {
@@ -331,7 +331,7 @@ static void window_draw_cursorline(Win *win) {
 }
 
 static void window_draw_selection(View *view, Cursor *cur, CellStyle *style) {
-	Filerange sel = view_cursors_selection_get(cur);
+	Filerange sel = view_selections_get(cur);
 	if (!text_range_valid(&sel))
 		return;
 	Line *start_line; int start_col;
@@ -916,7 +916,7 @@ void vis_do(Vis *vis) {
 				else
 					view_cursors_to(cursor, pos);
 				if (vis->mode->visual)
-					c.range = view_cursors_selection_get(cursor);
+					c.range = view_selections_get(cursor);
 				if (a->movement->type & JUMP)
 					window_jumplist_add(win, pos);
 				else
@@ -928,7 +928,7 @@ void vis_do(Vis *vis) {
 			}
 		} else if (a->textobj) {
 			if (vis->mode->visual)
-				c.range = view_cursors_selection_get(cursor);
+				c.range = view_selections_get(cursor);
 			else
 				c.range.start = c.range.end = pos;
 			for (int i = 0; i < count; i++) {
@@ -964,7 +964,7 @@ void vis_do(Vis *vis) {
 				}
 			}
 		} else if (vis->mode->visual) {
-			c.range = view_cursors_selection_get(cursor);
+			c.range = view_selections_get(cursor);
 			if (!text_range_valid(&c.range))
 				c.range.start = c.range.end = pos;
 		}
@@ -972,7 +972,7 @@ void vis_do(Vis *vis) {
 		if (linewise && vis->mode != &vis_modes[VIS_MODE_VISUAL])
 			c.range = text_range_linewise(txt, &c.range);
 		if (vis->mode->visual)
-			view_cursors_selection_set(cursor, &c.range);
+			view_selections_set(cursor, &c.range);
 
 		if (a->op) {
 			size_t pos = a->op->func(vis, txt, &c);

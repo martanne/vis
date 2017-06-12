@@ -1198,10 +1198,10 @@ void view_selections_dispose_all(View *view) {
 }
 
 Filerange view_selection_get(View *view) {
-	return view_cursors_selection_get(view->cursor);
+	return view_selections_get(view->cursor);
 }
 
-Filerange view_cursors_selection_get(Selection *s) {
+Filerange view_selections_get(Selection *s) {
 	if (!s)
 		return text_range_empty();
 	Text *txt = s->view->text;
@@ -1213,7 +1213,7 @@ Filerange view_cursors_selection_get(Selection *s) {
 	return sel;
 }
 
-void view_cursors_selection_set(Selection *s, const Filerange *r) {
+void view_selections_set(Selection *s, const Filerange *r) {
 	if (!text_range_valid(r))
 		return;
 	Text *txt = s->view->text;

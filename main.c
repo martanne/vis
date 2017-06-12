@@ -1309,7 +1309,7 @@ static const char *cursors_align_indent(Vis *vis, const char *keys, const Arg *a
 	for (int i = 0; i < columns; i++) {
 		int mincol = INT_MAX, maxcol = 0;
 		for (Cursor *c = view_cursors_column(view, i); c; c = view_cursors_column_next(c, i)) {
-			Filerange sel = view_cursors_selection_get(c);
+			Filerange sel = view_selections_get(c);
 			size_t pos = left_align ? sel.start : sel.end;
 			int col = text_line_width_get(txt, pos);
 			if (col < mincol)
@@ -1325,7 +1325,7 @@ static const char *cursors_align_indent(Vis *vis, const char *keys, const Arg *a
 		memset(buf, ' ', len);
 
 		for (Cursor *c = view_cursors_column(view, i); c; c = view_cursors_column_next(c, i)) {
-			Filerange sel = view_cursors_selection_get(c);
+			Filerange sel = view_selections_get(c);
 			size_t pos = left_align ? sel.start : sel.end;
 			size_t ipos = sel.start;
 			int col = text_line_width_get(txt, pos);
@@ -1358,7 +1358,7 @@ static const char *cursors_select(Vis *vis, const char *keys, const Arg *arg) {
 	for (Cursor *cursor = view_cursors(view); cursor; cursor = view_cursors_next(cursor)) {
 		Filerange word = text_object_word(txt, view_cursors_pos(cursor));
 		if (text_range_valid(&word))
-			view_cursors_selection_set(cursor, &word);
+			view_selections_set(cursor, &word);
 	}
 	vis_mode_switch(vis, VIS_MODE_VISUAL);
 	return keys;
@@ -1368,7 +1368,7 @@ static const char *cursors_select_next(Vis *vis, const char *keys, const Arg *ar
 	Text *txt = vis_text(vis);
 	View *view = vis_view(vis);
 	Cursor *cursor = view_selections_primary_get(view);
-	Filerange sel = view_cursors_selection_get(cursor);
+	Filerange sel = view_selections_get(cursor);
 	if (!text_range_valid(&sel))
 		return keys;
 
@@ -1379,19 +1379,19 @@ static const char *cursors_select_next(Vis *vis, const char *keys, const Arg *ar
 	if (text_range_valid(&word)) {
 		size_t pos = text_char_prev(txt, word.end);
 		if ((cursor = view_selections_new(view, pos))) {
-			view_cursors_selection_set(cursor, &word);
+			view_selections_set(cursor, &word);
 			view_selections_primary_set(cursor);
 			goto out;
 		}
 	}
 
-	sel = view_cursors_selection_get(view_cursors(view));
+	sel = view_selections_get(view_cursors(view));
 	word = text_object_word_find_prev(txt, sel.start, buf);
 	if (!text_range_valid(&word))
 		goto out;
 	size_t pos = text_char_prev(txt, word.end);
 	if ((cursor = view_selections_new(view, pos))) {
-		view_cursors_selection_set(cursor, &word);
+		view_selections_set(cursor, &word);
 		view_selections_primary_set(cursor);
 	}
 
@@ -1509,7 +1509,7 @@ static const char *selections_rotate(Vis *vis, const char *keys, const Arg *arg)
 		next = view_cursors_next(c);
 		size_t line_next = 0;
 
-		Filerange sel = view_cursors_selection_get(c);
+		Filerange sel = view_selections_get(c);
 		Rotate rot;
 		rot.cursor = c;
 		rot.len = text_range_size(&sel);
@@ -1532,7 +1532,7 @@ static const char *selections_rotate(Vis *vis, const char *keys, const Arg *arg)
 				Rotate *newrot = array_get(&arr, j);
 				if (!oldrot || !newrot || oldrot == newrot)
 					continue;
-				Filerange newsel = view_cursors_selection_get(newrot->cursor);
+				Filerange newsel = view_selections_get(newrot->cursor);
 				if (!text_range_valid(&newsel))
 					continue;
 				if (!text_delete_range(txt, &newsel))
@@ -1540,7 +1540,7 @@ static const char *selections_rotate(Vis *vis, const char *keys, const Arg *arg)
 				if (!text_insert(txt, newsel.start, oldrot->data, oldrot->len))
 					continue;
 				newsel.end = newsel.start + oldrot->len;
-				view_cursors_selection_set(newrot->cursor, &newsel);
+				view_selections_set(newrot->cursor, &newsel);
 				free(oldrot->data);
 			}
 			array_clear(&arr);
@@ -1558,7 +1558,7 @@ static const char *selections_trim(Vis *vis, const char *keys, const Arg *arg) {
 	View *view = vis_view(vis);
 	for (Cursor *c = view_cursors(view), *next; c; c = next) {
 		next = view_cursors_next(c);
-		Filerange sel = view_cursors_selection_get(c);
+		Filerange sel = view_selections_get(c);
 		if (!text_range_valid(&sel))
 			continue;
 		for (char b; sel.start < sel.end && text_byte_get(txt, sel.end-1, &b)
@@ -1566,7 +1566,7 @@ static const char *selections_trim(Vis *vis, const char *keys, const Arg *arg) {
 		for (char b; sel.start <= sel.end && text_byte_get(txt, sel.start, &b)
 			&& isspace((unsigned char)b); sel.start++);
 		if (sel.start < sel.end) {
-			view_cursors_selection_set(c, &sel);
+			view_selections_set(c, &sel);
 		} else if (!view_selections_dispose(c)) {
 			vis_mode_switch(vis, VIS_MODE_NORMAL);
 		}
