@@ -196,7 +196,7 @@ void view_selections_set(Cursor*, const Filerange*);
  */
 void view_cursors_selection_clear(Cursor*);
 /** Reduce *all* currently active selections. */
-void view_selections_clear(View*);
+void view_selections_clear_all(View*);
 /**
  * Flip selection orientation. Swap cursor and anchor.
  * @rst

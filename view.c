@@ -493,7 +493,7 @@ void view_free(View *view) {
 
 void view_reload(View *view, Text *text) {
 	view->text = text;
-	view_selections_clear(view);
+	view_selections_clear_all(view);
 	view_cursor_to(view, 0);
 }
 
@@ -1182,7 +1182,7 @@ bool view_selection_anchored(Selection *s) {
 	return s->anchored;
 }
 
-void view_selections_clear(View *view) {
+void view_selections_clear_all(View *view) {
 	for (Cursor *c = view->cursors; c; c = c->next)
 		view_cursors_selection_clear(c);
 	view_draw(view);
