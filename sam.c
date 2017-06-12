@@ -45,7 +45,7 @@ struct Change {
 		TRANSCRIPT_CHANGE = TRANSCRIPT_INSERT|TRANSCRIPT_DELETE,
 	} type;
 	Win *win;          /* window in which changed file is being displayed */
-	Cursor *cursor;    /* cursor associated with this change, might be NULL */
+	Selection *cursor;    /* cursor associated with this change, might be NULL */
 	Filerange range;   /* inserts are denoted by zero sized range (same start/end) */
 	const char *data;  /* will be free(3)-ed after transcript has been processed */
 	size_t len;        /* size in bytes of the chunk pointed to by data */
@@ -102,44 +102,44 @@ struct CommandDef {
 		CMD_DESTRUCTIVE   = 1 << 17, /* command potentially destroys window */
 	} flags;
 	const char *defcmd;                  /* name of a default target command */
-	bool (*func)(Vis*, Win*, Command*, const char *argv[], Cursor*, Filerange*); /* command implementation */
+	bool (*func)(Vis*, Win*, Command*, const char *argv[], Selection*, Filerange*); /* command implementation */
 };
 
 /* sam commands */
-static bool cmd_insert(Vis*, Win*, Command*, const char *argv[], Cursor*, Filerange*);
-static bool cmd_append(Vis*, Win*, Command*, const char *argv[], Cursor*, Filerange*);
-static bool cmd_change(Vis*, Win*, Command*, const char *argv[], Cursor*, Filerange*);
-static bool cmd_delete(Vis*, Win*, Command*, const char *argv[], Cursor*, Filerange*);
-static bool cmd_guard(Vis*, Win*, Command*, const char *argv[], Cursor*, Filerange*);
-static bool cmd_extract(Vis*, Win*, Command*, const char *argv[], Cursor*, Filerange*);
-static bool cmd_select(Vis*, Win*, Command*, const char *argv[], Cursor*, Filerange*);
-static bool cmd_print(Vis*, Win*, Command*, const char *argv[], Cursor*, Filerange*);
-static bool cmd_files(Vis*, Win*, Command*, const char *argv[], Cursor*, Filerange*);
-static bool cmd_pipein(Vis*, Win*, Command*, const char *argv[], Cursor*, Filerange*);
-static bool cmd_pipeout(Vis*, Win*, Command*, const char *argv[], Cursor*, Filerange*);
-static bool cmd_filter(Vis*, Win*, Command*, const char *argv[], Cursor*, Filerange*);
-static bool cmd_launch(Vis*, Win*, Command*, const char *argv[], Cursor*, Filerange*);
-static bool cmd_substitute(Vis*, Win*, Command*, const char *argv[], Cursor*, Filerange*);
-static bool cmd_write(Vis*, Win*, Command*, const char *argv[], Cursor*, Filerange*);
-static bool cmd_read(Vis*, Win*, Command*, const char *argv[], Cursor*, Filerange*);
-static bool cmd_edit(Vis*, Win*, Command*, const char *argv[], Cursor*, Filerange*);
-static bool cmd_quit(Vis*, Win*, Command*, const char *argv[], Cursor*, Filerange*);
-static bool cmd_cd(Vis*, Win*, Command*, const char *argv[], Cursor*, Filerange*);
+static bool cmd_insert(Vis*, Win*, Command*, const char *argv[], Selection*, Filerange*);
+static bool cmd_append(Vis*, Win*, Command*, const char *argv[], Selection*, Filerange*);
+static bool cmd_change(Vis*, Win*, Command*, const char *argv[], Selection*, Filerange*);
+static bool cmd_delete(Vis*, Win*, Command*, const char *argv[], Selection*, Filerange*);
+static bool cmd_guard(Vis*, Win*, Command*, const char *argv[], Selection*, Filerange*);
+static bool cmd_extract(Vis*, Win*, Command*, const char *argv[], Selection*, Filerange*);
+static bool cmd_select(Vis*, Win*, Command*, const char *argv[], Selection*, Filerange*);
+static bool cmd_print(Vis*, Win*, Command*, const char *argv[], Selection*, Filerange*);
+static bool cmd_files(Vis*, Win*, Command*, const char *argv[], Selection*, Filerange*);
+static bool cmd_pipein(Vis*, Win*, Command*, const char *argv[], Selection*, Filerange*);
+static bool cmd_pipeout(Vis*, Win*, Command*, const char *argv[], Selection*, Filerange*);
+static bool cmd_filter(Vis*, Win*, Command*, const char *argv[], Selection*, Filerange*);
+static bool cmd_launch(Vis*, Win*, Command*, const char *argv[], Selection*, Filerange*);
+static bool cmd_substitute(Vis*, Win*, Command*, const char *argv[], Selection*, Filerange*);
+static bool cmd_write(Vis*, Win*, Command*, const char *argv[], Selection*, Filerange*);
+static bool cmd_read(Vis*, Win*, Command*, const char *argv[], Selection*, Filerange*);
+static bool cmd_edit(Vis*, Win*, Command*, const char *argv[], Selection*, Filerange*);
+static bool cmd_quit(Vis*, Win*, Command*, const char *argv[], Selection*, Filerange*);
+static bool cmd_cd(Vis*, Win*, Command*, const char *argv[], Selection*, Filerange*);
 /* vi(m) commands */
-static bool cmd_set(Vis*, Win*, Command*, const char *argv[], Cursor*, Filerange*);
-static bool cmd_open(Vis*, Win*, Command*, const char *argv[], Cursor*, Filerange*);
-static bool cmd_qall(Vis*, Win*, Command*, const char *argv[], Cursor*, Filerange*);
-static bool cmd_split(Vis*, Win*, Command*, const char *argv[], Cursor*, Filerange*);
-static bool cmd_vsplit(Vis*, Win*, Command*, const char *argv[], Cursor*, Filerange*);
-static bool cmd_new(Vis*, Win*, Command*, const char *argv[], Cursor*, Filerange*);
-static bool cmd_vnew(Vis*, Win*, Command*, const char *argv[], Cursor*, Filerange*);
-static bool cmd_wq(Vis*, Win*, Command*, const char *argv[], Cursor*, Filerange*);
-static bool cmd_earlier_later(Vis*, Win*, Command*, const char *argv[], Cursor*, Filerange*);
-static bool cmd_help(Vis*, Win*, Command*, const char *argv[], Cursor*, Filerange*);
-static bool cmd_map(Vis*, Win*, Command*, const char *argv[], Cursor*, Filerange*);
-static bool cmd_unmap(Vis*, Win*, Command*, const char *argv[], Cursor*, Filerange*);
-static bool cmd_langmap(Vis*, Win*, Command*, const char *argv[], Cursor*, Filerange*);
-static bool cmd_user(Vis*, Win*, Command*, const char *argv[], Cursor*, Filerange*);
+static bool cmd_set(Vis*, Win*, Command*, const char *argv[], Selection*, Filerange*);
+static bool cmd_open(Vis*, Win*, Command*, const char *argv[], Selection*, Filerange*);
+static bool cmd_qall(Vis*, Win*, Command*, const char *argv[], Selection*, Filerange*);
+static bool cmd_split(Vis*, Win*, Command*, const char *argv[], Selection*, Filerange*);
+static bool cmd_vsplit(Vis*, Win*, Command*, const char *argv[], Selection*, Filerange*);
+static bool cmd_new(Vis*, Win*, Command*, const char *argv[], Selection*, Filerange*);
+static bool cmd_vnew(Vis*, Win*, Command*, const char *argv[], Selection*, Filerange*);
+static bool cmd_wq(Vis*, Win*, Command*, const char *argv[], Selection*, Filerange*);
+static bool cmd_earlier_later(Vis*, Win*, Command*, const char *argv[], Selection*, Filerange*);
+static bool cmd_help(Vis*, Win*, Command*, const char *argv[], Selection*, Filerange*);
+static bool cmd_map(Vis*, Win*, Command*, const char *argv[], Selection*, Filerange*);
+static bool cmd_unmap(Vis*, Win*, Command*, const char *argv[], Selection*, Filerange*);
+static bool cmd_langmap(Vis*, Win*, Command*, const char *argv[], Selection*, Filerange*);
+static bool cmd_user(Vis*, Win*, Command*, const char *argv[], Selection*, Filerange*);
 
 static const CommandDef cmds[] = {
 	//      name            help
@@ -419,7 +419,7 @@ static void change_free(Change *c) {
 	free(c);
 }
 
-static Change *change_new(Transcript *t, enum ChangeType type, Filerange *range, Win *win, Cursor *cur) {
+static Change *change_new(Transcript *t, enum ChangeType type, Filerange *range, Win *win, Selection *sel) {
 	if (!text_range_valid(range))
 		return NULL;
 	Change **prev, *next;
@@ -442,7 +442,7 @@ static Change *change_new(Transcript *t, enum ChangeType type, Filerange *range,
 	if (new) {
 		new->type = type;
 		new->range = *range;
-		new->cursor = cur;
+		new->cursor = sel;
 		new->win = win;
 		new->next = next;
 		*prev = new;
@@ -468,9 +468,9 @@ static void sam_transcript_free(Transcript *t) {
 	}
 }
 
-static bool sam_insert(Win *win, Cursor *cur, size_t pos, const char *data, size_t len) {
+static bool sam_insert(Win *win, Selection *sel, size_t pos, const char *data, size_t len) {
 	Filerange range = text_range_new(pos, pos);
-	Change *c = change_new(&win->file->transcript, TRANSCRIPT_INSERT, &range, win, cur);
+	Change *c = change_new(&win->file->transcript, TRANSCRIPT_INSERT, &range, win, sel);
 	if (c) {
 		c->data = data;
 		c->len = len;
@@ -478,12 +478,12 @@ static bool sam_insert(Win *win, Cursor *cur, size_t pos, const char *data, size
 	return c;
 }
 
-static bool sam_delete(Win *win, Cursor *cur, Filerange *range) {
-	return change_new(&win->file->transcript, TRANSCRIPT_DELETE, range, win, cur);
+static bool sam_delete(Win *win, Selection *sel, Filerange *range) {
+	return change_new(&win->file->transcript, TRANSCRIPT_DELETE, range, win, sel);
 }
 
-static bool sam_change(Win *win, Cursor *cur, Filerange *range, const char *data, size_t len) {
-	Change *c = change_new(&win->file->transcript, TRANSCRIPT_CHANGE, range, win, cur);
+static bool sam_change(Win *win, Selection *sel, Filerange *range, const char *data, size_t len) {
+	Change *c = change_new(&win->file->transcript, TRANSCRIPT_CHANGE, range, win, sel);
 	if (c) {
 		c->data = data;
 		c->len = len;
@@ -1084,7 +1084,7 @@ static bool count_evaluate(Command *cmd) {
 	return count->start <= cmd->iteration && cmd->iteration <= count->end;
 }
 
-static bool sam_execute(Vis *vis, Win *win, Command *cmd, Cursor *cur, Filerange *range) {
+static bool sam_execute(Vis *vis, Win *win, Command *cmd, Selection *sel, Filerange *range) {
 	bool ret = true;
 	if (cmd->address && win)
 		*range = address_evaluate(cmd->address, win->file, range, 0);
@@ -1095,11 +1095,11 @@ static bool sam_execute(Vis *vis, Win *win, Command *cmd, Cursor *cur, Filerange
 	{
 		for (Command *c = cmd->cmd; c && ret; c = c->next)
 			ret &= sam_execute(vis, win, c, NULL, range);
-		view_selections_dispose_force(cur);
+		view_selections_dispose_force(sel);
 		break;
 	}
 	default:
-		ret = cmd->cmddef->func(vis, win, cmd, cmd->argv, cur, range);
+		ret = cmd->cmddef->func(vis, win, cmd, cmd->argv, sel, range);
 		break;
 	}
 	return ret;
@@ -1221,7 +1221,7 @@ enum SamError sam_cmd(Vis *vis, const char *s) {
 							view_cursors_to(c->cursor, sel.end);
 					}
 				} else if (visual) {
-					Cursor *cursor = view_selections_new(c->win->view, sel.start);
+					Selection *cursor = view_selections_new(c->win->view, sel.start);
 					if (cursor) {
 						view_selections_set(cursor, &sel);
 						view_selections_anchor(cursor);
@@ -1238,8 +1238,8 @@ enum SamError sam_cmd(Vis *vis, const char *s) {
 			view_cursor_to(vis->win->view, primary_pos);
 		view_selections_primary_set(view_selections(vis->win->view));
 		bool completed = true;
-		for (Cursor *c = view_selections(vis->win->view); c; c = view_selections_next(c)) {
-			if (view_selections_anchored(c)) {
+		for (Selection *s = view_selections(vis->win->view); s; s = view_selections_next(s)) {
+			if (view_selections_anchored(s)) {
 				completed = false;
 				break;
 			}
@@ -1288,58 +1288,58 @@ out:
 	return buf;
 }
 
-static bool cmd_insert(Vis *vis, Win *win, Command *cmd, const char *argv[], Cursor *cur, Filerange *range) {
+static bool cmd_insert(Vis *vis, Win *win, Command *cmd, const char *argv[], Selection *sel, Filerange *range) {
 	if (!win)
 		return false;
 	Buffer buf = text(vis, argv[1]);
 	size_t len = buffer_length(&buf);
 	char *data = buffer_move(&buf);
-	bool ret = sam_insert(win, cur, range->start, data, len);
+	bool ret = sam_insert(win, sel, range->start, data, len);
 	if (!ret)
 		free(data);
 	return ret;
 }
 
-static bool cmd_append(Vis *vis, Win *win, Command *cmd, const char *argv[], Cursor *cur, Filerange *range) {
+static bool cmd_append(Vis *vis, Win *win, Command *cmd, const char *argv[], Selection *sel, Filerange *range) {
 	if (!win)
 		return false;
 	Buffer buf = text(vis, argv[1]);
 	size_t len = buffer_length(&buf);
 	char *data = buffer_move(&buf);
-	bool ret = sam_insert(win, cur, range->end, data, len);
+	bool ret = sam_insert(win, sel, range->end, data, len);
 	if (!ret)
 		free(data);
 	return ret;
 }
 
-static bool cmd_change(Vis *vis, Win *win, Command *cmd, const char *argv[], Cursor *cur, Filerange *range) {
+static bool cmd_change(Vis *vis, Win *win, Command *cmd, const char *argv[], Selection *sel, Filerange *range) {
 	if (!win)
 		return false;
 	Buffer buf = text(vis, argv[1]);
 	size_t len = buffer_length(&buf);
 	char *data = buffer_move(&buf);
-	bool ret = sam_change(win, cur, range, data, len);
+	bool ret = sam_change(win, sel, range, data, len);
 	if (!ret)
 		free(data);
 	return ret;
 }
 
-static bool cmd_delete(Vis *vis, Win *win, Command *cmd, const char *argv[], Cursor *cur, Filerange *range) {
-	return win && sam_delete(win, cur, range);
+static bool cmd_delete(Vis *vis, Win *win, Command *cmd, const char *argv[], Selection *sel, Filerange *range) {
+	return win && sam_delete(win, sel, range);
 }
 
-static bool cmd_guard(Vis *vis, Win *win, Command *cmd, const char *argv[], Cursor *cur, Filerange *range) {
+static bool cmd_guard(Vis *vis, Win *win, Command *cmd, const char *argv[], Selection *sel, Filerange *range) {
 	if (!win)
 		return false;
 	bool match = !cmd->regex || !text_search_range_forward(win->file->text, range->start,
 		text_range_size(range), cmd->regex, 0, NULL, 0);
 	if ((count_evaluate(cmd) && match) ^ (argv[0][0] == 'v'))
-		return sam_execute(vis, win, cmd->cmd, cur, range);
-	view_selections_dispose_force(cur);
+		return sam_execute(vis, win, cmd->cmd, sel, range);
+	view_selections_dispose_force(sel);
 	return true;
 }
 
-static int extract(Vis *vis, Win *win, Command *cmd, const char *argv[], Cursor *cur, Filerange *range, bool simulate) {
+static int extract(Vis *vis, Win *win, Command *cmd, const char *argv[], Selection *sel, Filerange *range, bool simulate) {
 	bool ret = true;
 	int count = 0;
 	Text *txt = win->file->text;
@@ -1416,38 +1416,38 @@ static int extract(Vis *vis, Win *win, Command *cmd, const char *argv[], Cursor 
 	}
 
 	if (!simulate)
-		view_selections_dispose_force(cur);
+		view_selections_dispose_force(sel);
 	return simulate ? count : ret;
 }
 
-static bool cmd_extract(Vis *vis, Win *win, Command *cmd, const char *argv[], Cursor *cur, Filerange *range) {
+static bool cmd_extract(Vis *vis, Win *win, Command *cmd, const char *argv[], Selection *sel, Filerange *range) {
 	if (!win)
 		return false;
 	int matches = 0;
 	if (count_negative(cmd->cmd))
-		matches = extract(vis, win, cmd, argv, cur, range, true);
+		matches = extract(vis, win, cmd, argv, sel, range, true);
 	count_init(cmd->cmd, matches+1);
-	return extract(vis, win, cmd, argv, cur, range, false);
+	return extract(vis, win, cmd, argv, sel, range, false);
 }
 
-static bool cmd_select(Vis *vis, Win *win, Command *cmd, const char *argv[], Cursor *cur, Filerange *range) {
-	Filerange sel = text_range_empty();
+static bool cmd_select(Vis *vis, Win *win, Command *cmd, const char *argv[], Selection *sel, Filerange *range) {
+	Filerange r = text_range_empty();
 	if (!win)
-		return sam_execute(vis, NULL, cmd->cmd, NULL, &sel);
+		return sam_execute(vis, NULL, cmd->cmd, NULL, &r);
 	bool ret = true;
 	View *view = win->view;
 	Text *txt = win->file->text;
 	bool multiple_cursors = view_selections_count(view) > 1;
-	Cursor *primary = view_selections_primary_get(view);
+	Selection *primary = view_selections_primary_get(view);
 
 	if (vis->mode->visual)
 		count_init(cmd->cmd, view_selections_count(view)+1);
 
-	for (Cursor *c = view_selections(view), *next; c && ret; c = next) {
-		next = view_selections_next(c);
-		size_t pos = view_cursors_pos(c);
+	for (Selection *s = view_selections(view), *next; s && ret; s = next) {
+		next = view_selections_next(s);
+		size_t pos = view_cursors_pos(s);
 		if (vis->mode->visual) {
-			sel = view_selections_get(c);
+			r = view_selections_get(s);
 		} else if (cmd->cmd->address) {
 			/* convert a single line range to a goto line motion */
 			if (!multiple_cursors && cmd->cmd->cmddef->func == cmd_print) {
@@ -1463,24 +1463,24 @@ static bool cmd_select(Vis *vis, Win *win, Command *cmd, const char *argv[], Cur
 					break;
 				}
 			}
-			sel = text_range_new(pos, pos);
+			r = text_range_new(pos, pos);
 		} else if (cmd->cmd->cmddef->flags & CMD_ADDRESS_POS) {
-			sel = text_range_new(pos, pos);
+			r = text_range_new(pos, pos);
 		} else if (cmd->cmd->cmddef->flags & CMD_ADDRESS_LINE) {
-			sel = text_object_line(txt, pos);
+			r = text_object_line(txt, pos);
 		} else if (cmd->cmd->cmddef->flags & CMD_ADDRESS_AFTER) {
 			size_t next_line = text_line_next(txt, pos);
-			sel = text_range_new(next_line, next_line);
+			r = text_range_new(next_line, next_line);
 		} else if (cmd->cmd->cmddef->flags & CMD_ADDRESS_ALL) {
-			sel = text_range_new(0, text_size(txt));
+			r = text_range_new(0, text_size(txt));
 		} else if (!multiple_cursors && (cmd->cmd->cmddef->flags & CMD_ADDRESS_ALL_1CURSOR)) {
-			sel = text_range_new(0, text_size(txt));
+			r = text_range_new(0, text_size(txt));
 		} else {
-			sel = text_range_new(pos, text_char_next(txt, pos));
+			r = text_range_new(pos, text_char_next(txt, pos));
 		}
-		if (!text_range_valid(&sel))
-			sel = text_range_new(0, 0);
-		ret &= sam_execute(vis, win, cmd->cmd, c, &sel);
+		if (!text_range_valid(&r))
+			r = text_range_new(0, 0);
+		ret &= sam_execute(vis, win, cmd->cmd, s, &r);
 		if (cmd->cmd->cmddef->flags & CMD_ONCE)
 			break;
 	}
@@ -1490,7 +1490,7 @@ static bool cmd_select(Vis *vis, Win *win, Command *cmd, const char *argv[], Cur
 	return ret;
 }
 
-static bool cmd_print(Vis *vis, Win *win, Command *cmd, const char *argv[], Cursor *cur, Filerange *range) {
+static bool cmd_print(Vis *vis, Win *win, Command *cmd, const char *argv[], Selection *sel, Filerange *range) {
 	if (!win || !text_range_valid(range))
 		return false;
 	View *view = win->view;
@@ -1498,22 +1498,22 @@ static bool cmd_print(Vis *vis, Win *win, Command *cmd, const char *argv[], Curs
 	size_t pos = range->end;
 	if (range->start != range->end)
 		pos = text_char_prev(txt, pos);
-	if (cur)
-		view_cursors_to(cur, pos);
+	if (sel)
+		view_cursors_to(sel, pos);
 	else
-		cur = view_selections_new_force(view, pos);
-	if (cur) {
+		sel = view_selections_new_force(view, pos);
+	if (sel) {
 		if (range->start != range->end) {
-			view_selections_set(cur, range);
-			view_selections_anchor(cur);
+			view_selections_set(sel, range);
+			view_selections_anchor(sel);
 		} else {
-			view_selection_clear(cur);
+			view_selection_clear(sel);
 		}
 	}
-	return cur != NULL;
+	return sel != NULL;
 }
 
-static bool cmd_files(Vis *vis, Win *win, Command *cmd, const char *argv[], Cursor *cur, Filerange *range) {
+static bool cmd_files(Vis *vis, Win *win, Command *cmd, const char *argv[], Selection *sel, Filerange *range) {
 	bool ret = true;
 	for (Win *win = vis->windows; win; win = win->next) {
 		if (win->file->internal)
@@ -1528,12 +1528,12 @@ static bool cmd_files(Vis *vis, Win *win, Command *cmd, const char *argv[], Curs
 	return ret;
 }
 
-static bool cmd_substitute(Vis *vis, Win *win, Command *cmd, const char *argv[], Cursor *cur, Filerange *range) {
+static bool cmd_substitute(Vis *vis, Win *win, Command *cmd, const char *argv[], Selection *sel, Filerange *range) {
 	vis_info_show(vis, "Use :x/pattern/ c/replacement/ instead");
 	return false;
 }
 
-static bool cmd_write(Vis *vis, Win *win, Command *cmd, const char *argv[], Cursor *cur, Filerange *r) {
+static bool cmd_write(Vis *vis, Win *win, Command *cmd, const char *argv[], Selection *sel, Filerange *r) {
 	if (!win)
 		return false;
 
@@ -1562,8 +1562,8 @@ static bool cmd_write(Vis *vis, Win *win, Command *cmd, const char *argv[], Curs
 
 		bool visual = vis->mode->visual;
 
-		for (Cursor *c = view_selections(win->view); c; c = view_selections_next(c)) {
-			Filerange range = visual ? view_selections_get(c) : *r;
+		for (Selection *s = view_selections(win->view); s; s = view_selections_next(s)) {
+			Filerange range = visual ? view_selections_get(s) : *r;
 			ssize_t written = text_write_range(text, &range, file->fd);
 			if (written == -1 || (size_t)written != text_range_size(&range)) {
 				vis_info_show(vis, "Can not write to stdout");
@@ -1614,8 +1614,8 @@ static bool cmd_write(Vis *vis, Win *win, Command *cmd, const char *argv[], Curs
 		bool failure = false;
 		bool visual = vis->mode->visual;
 
-		for (Cursor *c = view_selections(win->view); c; c = view_selections_next(c)) {
-			Filerange range = visual ? view_selections_get(c) : *r;
+		for (Selection *s = view_selections(win->view); s; s = view_selections_next(s)) {
+			Filerange range = visual ? view_selections_get(s) : *r;
 			ssize_t written = text_save_write_range(ctx, &range);
 			failure = (written == -1 || (size_t)written != text_range_size(&range));
 			if (failure) {
@@ -1646,7 +1646,7 @@ static ssize_t read_buffer(void *context, char *data, size_t len) {
 	return len;
 }
 
-static bool cmd_filter(Vis *vis, Win *win, Command *cmd, const char *argv[], Cursor *cur, Filerange *range) {
+static bool cmd_filter(Vis *vis, Win *win, Command *cmd, const char *argv[], Selection *sel, Filerange *range) {
 	if (!win)
 		return false;
 
@@ -1661,7 +1661,7 @@ static bool cmd_filter(Vis *vis, Win *win, Command *cmd, const char *argv[], Cur
 	} else if (status == 0) {
 		size_t len = buffer_length(&bufout);
 		char *data = buffer_move(&bufout);
-		if (!sam_change(win, cur, range, data, len))
+		if (!sam_change(win, sel, range, data, len))
 			free(data);
 	} else {
 		vis_info_show(vis, "Command failed %s", buffer_content0(&buferr));
@@ -1673,22 +1673,22 @@ static bool cmd_filter(Vis *vis, Win *win, Command *cmd, const char *argv[], Cur
 	return !vis->interrupted && status == 0;
 }
 
-static bool cmd_launch(Vis *vis, Win *win, Command *cmd, const char *argv[], Cursor *cur, Filerange *range) {
-	Filerange invalid = text_range_new(cur ? view_cursors_pos(cur) : range->start, EPOS);
-	return cmd_filter(vis, win, cmd, argv, cur, &invalid);
+static bool cmd_launch(Vis *vis, Win *win, Command *cmd, const char *argv[], Selection *sel, Filerange *range) {
+	Filerange invalid = text_range_new(sel ? view_cursors_pos(sel) : range->start, EPOS);
+	return cmd_filter(vis, win, cmd, argv, sel, &invalid);
 }
 
-static bool cmd_pipein(Vis *vis, Win *win, Command *cmd, const char *argv[], Cursor *cur, Filerange *range) {
+static bool cmd_pipein(Vis *vis, Win *win, Command *cmd, const char *argv[], Selection *sel, Filerange *range) {
 	if (!win)
 		return false;
 	Filerange filter_range = text_range_new(range->end, range->end);
-	bool ret = cmd_filter(vis, win, cmd, argv, cur, &filter_range);
+	bool ret = cmd_filter(vis, win, cmd, argv, sel, &filter_range);
 	if (ret)
 		ret = sam_delete(win, NULL, range);
 	return ret;
 }
 
-static bool cmd_pipeout(Vis *vis, Win *win, Command *cmd, const char *argv[], Cursor *cur, Filerange *range) {
+static bool cmd_pipeout(Vis *vis, Win *win, Command *cmd, const char *argv[], Selection *sel, Filerange *range) {
 	if (!win)
 		return false;
 	Buffer buferr;
@@ -1696,8 +1696,8 @@ static bool cmd_pipeout(Vis *vis, Win *win, Command *cmd, const char *argv[], Cu
 
 	int status = vis_pipe(vis, win->file, range, (const char*[]){ argv[1], NULL }, NULL, NULL, &buferr, read_buffer);
 
-	if (status == 0 && cur)
-		view_cursors_to(cur, range->start);
+	if (status == 0 && sel)
+		view_cursors_to(sel, range->start);
 
 	if (vis->interrupted)
 		vis_info_show(vis, "Command cancelled");
@@ -1709,7 +1709,7 @@ static bool cmd_pipeout(Vis *vis, Win *win, Command *cmd, const char *argv[], Cu
 	return !vis->interrupted && status == 0;
 }
 
-static bool cmd_cd(Vis *vis, Win *win, Command *cmd, const char *argv[], Cursor *cur, Filerange *range) {
+static bool cmd_cd(Vis *vis, Win *win, Command *cmd, const char *argv[], Selection *sel, Filerange *range) {
 	const char *dir = argv[1];
 	if (!dir)
 		dir = getenv("HOME");

@@ -169,8 +169,8 @@ void vis_prompt_show(Vis *vis, const char *title) {
 		window_selection_save(active);
 	Text *txt = prompt->file->text;
 	text_appendf(txt, "%s\n", title);
-	Cursor *cursor = view_selections_primary_get(prompt->view);
-	view_cursors_scroll_to(cursor, text_size(txt)-1);
+	Selection *sel = view_selections_primary_get(prompt->view);
+	view_cursors_scroll_to(sel, text_size(txt)-1);
 	prompt->parent = active;
 	prompt->parent_mode = vis->mode;
 	vis_window_mode_map(prompt, VIS_MODE_NORMAL, true, "<Enter>", &prompt_enter_binding);

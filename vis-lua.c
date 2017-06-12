@@ -81,8 +81,8 @@ static void window_status_update(Vis *vis, Win *win) {
 
 	int cursor_count = view_selections_count(view);
 	if (cursor_count > 1) {
-		Cursor *c = view_selections_primary_get(view);
-		int cursor_number = view_selections_number(c) + 1;
+		Selection *s = view_selections_primary_get(view);
+		int cursor_number = view_selections_number(s) + 1;
 		snprintf(right_parts[right_count], sizeof(right_parts[right_count])-1,
 		         "%d/%d", cursor_number, cursor_count);
 		right_count++;
@@ -100,9 +100,9 @@ static void window_status_update(Vis *vis, Win *win) {
 	right_count++;
 
 	if (!(options & UI_OPTION_LARGE_FILE)) {
-		Cursor *cur = view_selections_primary_get(win->view);
-		size_t line = view_cursors_line(cur);
-		size_t col = view_cursors_col(cur);
+		Selection *sel = view_selections_primary_get(win->view);
+		size_t line = view_cursors_line(sel);
+		size_t col = view_cursors_col(sel);
 		if (col > UI_LARGE_FILE_LINE_SIZE) {
 			options |= UI_OPTION_LARGE_FILE;
 			view_options_set(win->view, options);
@@ -1192,7 +1192,7 @@ static int option_unregister(lua_State *L) {
 	return 1;
 }
 
-static bool command_lua(Vis *vis, Win *win, void *data, bool force, const char *argv[], Cursor *cur, Filerange *range) {
+static bool command_lua(Vis *vis, Win *win, void *data, bool force, const char *argv[], Selection *sel, Filerange *range) {
 	lua_State *L = vis->lua;
 	if (!L || !func_ref_get(L, data))
 		return false;
@@ -1205,9 +1205,9 @@ static bool command_lua(Vis *vis, Win *win, void *data, bool force, const char *
 	lua_pushboolean(L, force);
 	if (!obj_ref_new(L, win, VIS_LUA_TYPE_WINDOW))
 		return false;
-	if (!cur)
-		cur = view_selections_primary_get(win->view);
-	if (!obj_lightref_new(L, cur, VIS_LUA_TYPE_CURSOR))
+	if (!sel)
+		sel = view_selections_primary_get(win->view);
+	if (!obj_lightref_new(L, sel, VIS_LUA_TYPE_CURSOR))
 		return false;
 	pushrange(L, range);
 	if (pcall(vis, L, 5, 1) != 0)
@@ -1574,8 +1574,8 @@ static int window_index(lua_State *L) {
 		}
 
 		if (strcmp(key, "cursor") == 0) {
-			Cursor *cur = view_selections_primary_get(win->view);
-			obj_lightref_new(L, cur, VIS_LUA_TYPE_CURSOR);
+			Selection *sel = view_selections_primary_get(win->view);
+			obj_lightref_new(L, sel, VIS_LUA_TYPE_CURSOR);
 			return 1;
 		}
 
@@ -1589,13 +1589,13 @@ static int window_index(lua_State *L) {
 }
 
 static int window_cursors_iterator_next(lua_State *L) {
-	Cursor **handle = lua_touserdata(L, lua_upvalueindex(1));
+	Selection **handle = lua_touserdata(L, lua_upvalueindex(1));
 	if (!*handle)
 		return 0;
-	Cursor *cur = obj_lightref_new(L, *handle, VIS_LUA_TYPE_CURSOR);
-	if (!cur)
+	Selection *sel = obj_lightref_new(L, *handle, VIS_LUA_TYPE_CURSOR);
+	if (!sel)
 		return 0;
-	*handle = view_selections_next(cur);
+	*handle = view_selections_next(sel);
 	return 1;
 }
 
@@ -1606,7 +1606,7 @@ static int window_cursors_iterator_next(lua_State *L) {
  */
 static int window_cursors_iterator(lua_State *L) {
 	Win *win = obj_ref_check(L, 1, VIS_LUA_TYPE_WINDOW);
-	Cursor **handle = lua_newuserdata(L, sizeof *handle);
+	Selection **handle = lua_newuserdata(L, sizeof *handle);
 	*handle = view_selections(win->view);
 	lua_pushcclosure(L, window_cursors_iterator_next, 1);
 	return 1;
@@ -1730,9 +1730,9 @@ static int window_cursors_index(lua_State *L) {
 	size_t count = view_selections_count(view);
 	if (index == 0 || index > count)
 		goto err;
-	for (Cursor *c = view_selections(view); c; c = view_selections_next(c)) {
+	for (Selection *s = view_selections(view); s; s = view_selections_next(s)) {
 		if (!--index) {
-			obj_lightref_new(L, c, VIS_LUA_TYPE_CURSOR);
+			obj_lightref_new(L, s, VIS_LUA_TYPE_CURSOR);
 			return 1;
 		}
 	}
@@ -1835,8 +1835,8 @@ static const struct luaL_Reg window_cursors_funcs[] = {
  * @tfield Range selection the selection or `nil` if not in visual mode
  */
 static int window_cursor_index(lua_State *L) {
-	Cursor *cur = obj_lightref_check(L, 1, VIS_LUA_TYPE_CURSOR);
-	if (!cur) {
+	Selection *sel = obj_lightref_check(L, 1, VIS_LUA_TYPE_CURSOR);
+	if (!sel) {
 		lua_pushnil(L);
 		return 1;
 	}
@@ -1844,28 +1844,28 @@ static int window_cursor_index(lua_State *L) {
 	if (lua_isstring(L, 2)) {
 		const char *key = lua_tostring(L, 2);
 		if (strcmp(key, "pos") == 0) {
-			pushpos(L, view_cursors_pos(cur));
+			pushpos(L, view_cursors_pos(sel));
 			return 1;
 		}
 
 		if (strcmp(key, "line") == 0) {
-			lua_pushunsigned(L, view_cursors_line(cur));
+			lua_pushunsigned(L, view_cursors_line(sel));
 			return 1;
 		}
 
 		if (strcmp(key, "col") == 0) {
-			lua_pushunsigned(L, view_cursors_col(cur));
+			lua_pushunsigned(L, view_cursors_col(sel));
 			return 1;
 		}
 
 		if (strcmp(key, "number") == 0) {
-			lua_pushunsigned(L, view_selections_number(cur)+1);
+			lua_pushunsigned(L, view_selections_number(sel)+1);
 			return 1;
 		}
 
 		if (strcmp(key, "selection") == 0) {
-			Filerange sel = view_selections_get(cur);
-			pushrange(L, &sel);
+			Filerange range = view_selections_get(sel);
+			pushrange(L, &range);
 			return 1;
 		}
 	}
@@ -1874,23 +1874,23 @@ static int window_cursor_index(lua_State *L) {
 }
 
 static int window_cursor_newindex(lua_State *L) {
-	Cursor *cur = obj_lightref_check(L, 1, VIS_LUA_TYPE_CURSOR);
-	if (!cur)
+	Selection *sel = obj_lightref_check(L, 1, VIS_LUA_TYPE_CURSOR);
+	if (!sel)
 		return 0;
 	if (lua_isstring(L, 2)) {
 		const char *key = lua_tostring(L, 2);
 		if (strcmp(key, "pos") == 0) {
 			size_t pos = checkpos(L, 3);
-			view_cursors_to(cur, pos);
+			view_cursors_to(sel, pos);
 			return 0;
 		}
 
 		if (strcmp(key, "selection") == 0) {
-			Filerange sel = getrange(L, 3);
-			if (text_range_valid(&sel))
-				view_selections_set(cur, &sel);
+			Filerange range = getrange(L, 3);
+			if (text_range_valid(&range))
+				view_selections_set(sel, &range);
 			else
-				view_selection_clear(cur);
+				view_selection_clear(sel);
 			return 0;
 		}
 	}
@@ -1904,11 +1904,11 @@ static int window_cursor_newindex(lua_State *L) {
  * @tparam int col the 1-based column number
  */
 static int window_cursor_to(lua_State *L) {
-	Cursor *cur = obj_lightref_check(L, 1, VIS_LUA_TYPE_CURSOR);
-	if (cur) {
+	Selection *sel = obj_lightref_check(L, 1, VIS_LUA_TYPE_CURSOR);
+	if (sel) {
 		size_t line = checkpos(L, 2);
 		size_t col = checkpos(L, 3);
-		view_cursors_place(cur, line, col);
+		view_cursors_place(sel, line, col);
 	}
 	return 0;
 }

@@ -316,8 +316,8 @@ static void window_draw_cursorline(Win *win) {
 	
 	int width = view_width_get(view);
 	CellStyle style = win->ui->style_get(win->ui, UI_STYLE_CURSOR_LINE);
-	Cursor *cursor = view_selections_primary_get(view);
-	size_t lineno = view_cursors_line_get(cursor)->lineno;
+	Selection *sel = view_selections_primary_get(view);
+	size_t lineno = view_cursors_line_get(sel)->lineno;
 	for (Line *l = view_lines_first(view); l; l = l->next) {
 		if (l->lineno == lineno) {
 			for (int x = 0; x < width; x++) {
@@ -330,7 +330,7 @@ static void window_draw_cursorline(Win *win) {
 	}
 }
 
-static void window_draw_selection(View *view, Cursor *cur, CellStyle *style) {
+static void window_draw_selection(View *view, Selection *cur, CellStyle *style) {
 	Filerange sel = view_selections_get(cur);
 	if (!text_range_valid(&sel))
 		return;
@@ -364,7 +364,7 @@ static void window_draw_selection(View *view, Cursor *cur, CellStyle *style) {
 	}
 }
 
-static void window_draw_cursor_matching(Win *win, Cursor *cur, CellStyle *style) {
+static void window_draw_cursor_matching(Win *win, Selection *cur, CellStyle *style) {
 	if (win->vis->mode->visual)
 		return;
 	Line *line_match; int col_match;
@@ -383,7 +383,7 @@ static void window_draw_cursor_matching(Win *win, Cursor *cur, CellStyle *style)
 	}
 }
 
-static void window_draw_cursor(Win *win, Cursor *cur, CellStyle *style, CellStyle *sel_style) {
+static void window_draw_cursor(Win *win, Selection *cur, CellStyle *style, CellStyle *sel_style) {
 	if (win->vis->win != win)
 		return;
 	Line *line = view_cursors_line_get(cur);
@@ -399,25 +399,25 @@ static void window_draw_cursors(Win *win) {
 	View *view = win->view;
 	Filerange viewport = view_viewport_get(view);
 	bool multiple_cursors = view_selections_count(view) > 1;
-	Cursor *cursor = view_selections_primary_get(view);
+	Selection *sel = view_selections_primary_get(view);
 	CellStyle style_cursor = win->ui->style_get(win->ui, UI_STYLE_CURSOR);
 	CellStyle style_cursor_primary = win->ui->style_get(win->ui, UI_STYLE_CURSOR_PRIMARY);
 	CellStyle style_selection = win->ui->style_get(win->ui, UI_STYLE_SELECTION);
-	for (Cursor *c = view_selections_prev(cursor); c; c = view_selections_prev(c)) {
-		window_draw_selection(win->view, c, &style_selection);
-		size_t pos = view_cursors_pos(c);
+	for (Selection *s = view_selections_prev(sel); s; s = view_selections_prev(s)) {
+		window_draw_selection(win->view, s, &style_selection);
+		size_t pos = view_cursors_pos(s);
 		if (pos < viewport.start)
 			break;
-		window_draw_cursor(win, c, &style_cursor, &style_selection);
+		window_draw_cursor(win, s, &style_cursor, &style_selection);
 	}
-	window_draw_selection(win->view, cursor, &style_selection);
-	window_draw_cursor(win, cursor, multiple_cursors ? &style_cursor_primary : &style_cursor, &style_selection);
-	for (Cursor *c = view_selections_next(cursor); c; c = view_selections_next(c)) {
-		window_draw_selection(win->view, c, &style_selection);
-		size_t pos = view_cursors_pos(c);
+	window_draw_selection(win->view, sel, &style_selection);
+	window_draw_cursor(win, sel, multiple_cursors ? &style_cursor_primary : &style_cursor, &style_selection);
+	for (Selection *s = view_selections_next(sel); s; s = view_selections_next(s)) {
+		window_draw_selection(win->view, s, &style_selection);
+		size_t pos = view_cursors_pos(s);
 		if (pos > viewport.end)
 			break;
-		window_draw_cursor(win, c, &style_cursor, &style_selection);
+		window_draw_cursor(win, s, &style_cursor, &style_selection);
 	}
 }
 
@@ -754,10 +754,10 @@ void vis_insert(Vis *vis, size_t pos, const char *data, size_t len) {
 }
 
 void vis_insert_key(Vis *vis, const char *data, size_t len) {
-	for (Cursor *c = view_selections(vis->win->view); c; c = view_selections_next(c)) {
-		size_t pos = view_cursors_pos(c);
+	for (Selection *s = view_selections(vis->win->view); s; s = view_selections_next(s)) {
+		size_t pos = view_cursors_pos(s);
 		vis_insert(vis, pos, data, len);
-		view_cursors_scroll_to(c, pos + len);
+		view_cursors_scroll_to(s, pos + len);
 	}
 }
 
@@ -773,10 +773,10 @@ void vis_replace(Vis *vis, size_t pos, const char *data, size_t len) {
 }
 
 void vis_replace_key(Vis *vis, const char *data, size_t len) {
-	for (Cursor *c = view_selections(vis->win->view); c; c = view_selections_next(c)) {
-		size_t pos = view_cursors_pos(c);
+	for (Selection *s = view_selections(vis->win->view); s; s = view_selections_next(s)) {
+		size_t pos = view_cursors_pos(s);
 		vis_replace(vis, pos, data, len);
-		view_cursors_scroll_to(c, pos + len);
+		view_cursors_scroll_to(s, pos + len);
 	}
 }
 
@@ -844,16 +844,16 @@ void vis_do(Vis *vis) {
 	if (a->op == &vis_operators[VIS_OP_PUT_AFTER] && multiple_cursors && vis_register_count(vis, reg) == 1)
 		reg_slot = 0;
 
-	for (Cursor *cursor = view_selections(view), *next; cursor; cursor = next) {
+	for (Selection *sel = view_selections(view), *next; sel; sel = next) {
 		if (vis->interrupted)
 			break;
 
-		next = view_selections_next(cursor);
+		next = view_selections_next(sel);
 
-		size_t pos = view_cursors_pos(cursor);
+		size_t pos = view_cursors_pos(sel);
 		if (pos == EPOS) {
-			if (!view_selections_dispose(cursor))
-				view_cursors_to(cursor, 0);
+			if (!view_selections_dispose(sel))
+				view_cursors_to(sel, 0);
 			continue;
 		}
 
@@ -863,7 +863,7 @@ void vis_do(Vis *vis) {
 			.newpos = EPOS,
 			.range = text_range_empty(),
 			.reg = reg,
-			.reg_slot = reg_slot == EPOS ? (size_t)view_selections_number(cursor) : reg_slot,
+			.reg_slot = reg_slot == EPOS ? (size_t)view_selections_number(sel) : reg_slot,
 			.linewise = linewise,
 			.arg = &a->arg,
 			.context = a->op ? a->op->context : NULL,
@@ -879,7 +879,7 @@ void vis_do(Vis *vis) {
 				if (a->movement->txt)
 					pos = a->movement->txt(txt, pos);
 				else if (a->movement->cur)
-					pos = a->movement->cur(cursor);
+					pos = a->movement->cur(sel);
 				else if (a->movement->file)
 					pos = a->movement->file(vis, file, pos);
 				else if (a->movement->vis)
@@ -912,11 +912,11 @@ void vis_do(Vis *vis) {
 
 			if (!a->op) {
 				if (a->movement->type & CHARWISE)
-					view_cursors_scroll_to(cursor, pos);
+					view_cursors_scroll_to(sel, pos);
 				else
-					view_cursors_to(cursor, pos);
+					view_cursors_to(sel, pos);
 				if (vis->mode->visual)
-					c.range = view_selections_get(cursor);
+					c.range = view_selections_get(sel);
 				if (a->movement->type & JUMP)
 					window_jumplist_add(win, pos);
 				else
@@ -928,7 +928,7 @@ void vis_do(Vis *vis) {
 			}
 		} else if (a->textobj) {
 			if (vis->mode->visual)
-				c.range = view_selections_get(cursor);
+				c.range = view_selections_get(sel);
 			else
 				c.range.start = c.range.end = pos;
 			for (int i = 0; i < count; i++) {
@@ -964,7 +964,7 @@ void vis_do(Vis *vis) {
 				}
 			}
 		} else if (vis->mode->visual) {
-			c.range = view_selections_get(cursor);
+			c.range = view_selections_get(sel);
 			if (!text_range_valid(&c.range))
 				c.range.start = c.range.end = pos;
 		}
@@ -972,16 +972,16 @@ void vis_do(Vis *vis) {
 		if (linewise && vis->mode != &vis_modes[VIS_MODE_VISUAL])
 			c.range = text_range_linewise(txt, &c.range);
 		if (vis->mode->visual)
-			view_selections_set(cursor, &c.range);
+			view_selections_set(sel, &c.range);
 
 		if (a->op) {
 			size_t pos = a->op->func(vis, txt, &c);
 			if (pos == EPOS) {
-				view_selections_dispose(cursor);
+				view_selections_dispose(sel);
 			} else if (pos <= text_size(txt)) {
 				if (vis->mode->visual)
-					view_selections_save(cursor);
-				view_cursors_to(cursor, pos);
+					view_selections_save(sel);
+				view_cursors_to(sel, pos);
 			}
 		}
 	}
@@ -1578,15 +1578,15 @@ void vis_insert_tab(Vis *vis) {
 	}
 	char spaces[9];
 	int tabwidth = MIN(vis->tabwidth, LENGTH(spaces) - 1);
-	for (Cursor *c = view_selections(vis->win->view); c; c = view_selections_next(c)) {
-		size_t pos = view_cursors_pos(c);
+	for (Selection *s = view_selections(vis->win->view); s; s = view_selections_next(s)) {
+		size_t pos = view_cursors_pos(s);
 		int width = text_line_width_get(vis->win->file->text, pos);
 		int count = tabwidth - (width % tabwidth);
 		for (int i = 0; i < count; i++)
 			spaces[i] = ' ';
 		spaces[count] = '\0';
 		vis_insert(vis, pos, spaces, count);
-		view_cursors_scroll_to(c, pos + count);
+		view_cursors_scroll_to(s, pos + count);
 	}
 }
 
@@ -1633,16 +1633,16 @@ void vis_insert_nl(Vis *vis) {
 	Win *win = vis->win;
 	View *view = win->view;
 	Text *txt = win->file->text;
-	for (Cursor *c = view_selections(view); c; c = view_selections_next(c)) {
-		size_t pos = view_cursors_pos(c);
+	for (Selection *s = view_selections(view); s; s = view_selections_next(s)) {
+		size_t pos = view_cursors_pos(s);
 		size_t newpos = vis_text_insert_nl(vis, txt, pos);
 		/* This is a bit of a hack to fix cursor positioning when
 		 * inserting a new line at the start of the view port.
 		 * It has the effect of reseting the mark used by the view
 		 * code to keep track of the start of the visible region.
 		 */
-		view_cursors_to(c, pos);
-		view_cursors_to(c, newpos);
+		view_cursors_to(s, pos);
+		view_cursors_to(s, newpos);
 	}
 	vis_window_invalidate(win);
 }

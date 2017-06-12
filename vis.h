@@ -789,7 +789,7 @@ bool vis_cmd(Vis*, const char *cmd);
 
 /** Command handler function. */
 typedef bool (VisCommandFunction)(Vis*, Win*, void *data, bool force,
-	const char *argv[], Cursor*, Filerange*);
+	const char *argv[], Selection*, Filerange*);
 /**
  * Register new ``:``-command.
  * @param name The command name.

@@ -43,27 +43,24 @@ typedef struct {
 	Mark cursor;
 } SelectionRegion;
 
-struct Cursor {             /* cursor position */
-	Mark cursor;        /* other selection endpoint where it changes */
-	Mark anchor;        /* position where the selection was created */
-	bool anchored;      /* whether anchor remains fixed */
-	size_t pos;         /* in bytes from the start of the file */
-	int row, col;       /* in terms of zero based screen coordinates */
-	int lastcol;        /* remembered column used when moving across lines */
-	Line *line;         /* screen line on which cursor currently resides */
-	int generation;     /* used to filter out newly created cursors during iteration */
-	int number;         /* how many cursors are located before this one */
+struct Selection {
+	Mark cursor;            /* other selection endpoint where it changes */
+	Mark anchor;            /* position where the selection was created */
+	bool anchored;          /* whether anchor remains fixed */
+	size_t pos;             /* in bytes from the start of the file */
+	int row, col;           /* in terms of zero based screen coordinates */
+	int lastcol;            /* remembered column used when moving across lines */
+	Line *line;             /* screen line on which cursor currently resides */
+	int generation;         /* used to filter out newly created cursors during iteration */
+	int number;             /* how many cursors are located before this one */
 	SelectionRegion region; /* saved selection region */
-	View *view;         /* associated view to which this cursor belongs */
-	Cursor *prev, *next;/* previous/next cursors ordered by location at creation time */
+	View *view;             /* associated view to which this cursor belongs */
+	Selection *prev, *next; /* previous/next cursors ordered by location at creation time */
 };
 
-/* Viewable area, showing part of a file. Keeps track of cursors and selections.
- * At all times there exists at least one cursor, which is placed in the visible viewport.
- * Additional cursors can be created and positioned anywhere in the file. */
 struct View {
 	Text *text;         /* underlying text management */
-	UiWin *ui;
+	UiWin *ui;          /* corresponding ui window */
 	Cell cell_blank;    /* used for empty/blank cells */
 	int width, height;  /* size of display area */
 	size_t start, end;  /* currently displayed area [start, end] in bytes from the start of the file */
@@ -74,16 +71,16 @@ struct View {
 	Line *topline;      /* top of the view, first line currently shown */
 	Line *lastline;     /* last currently used line, always <= bottomline */
 	Line *bottomline;   /* bottom of view, might be unused if lastline < bottomline */
-	Cursor *cursor;     /* main cursor, always placed within the visible viewport */
-	Cursor *cursor_latest; /* most recently created cursor */
-	Cursor *cursor_dead;/* main cursor which was disposed, will be removed when another cursor is created */
-	int cursor_count;   /* how many cursors do currently exist */
+	Selection *selection;    /* primary selection, always placed within the visible viewport */
+	Selection *selection_latest; /* most recently created cursor */
+	Selection *selection_dead;   /* primary cursor which was disposed, will be removed when another cursor is created */
+	int selection_count;   /* how many cursors do currently exist */
 	Line *line;         /* used while drawing view content, line where next char will be drawn */
 	int col;            /* used while drawing view content, column where next char will be drawn */
 	const SyntaxSymbol *symbols[SYNTAX_SYMBOL_LAST]; /* symbols to use for white spaces etc */
 	int tabwidth;       /* how many spaces should be used to display a tab character */
-	Cursor *cursors;    /* all cursors currently active */
-	int cursor_generation; /* used to filter out newly created cursors during iteration */
+	Selection *selections;    /* all cursors currently active */
+	int selection_generation; /* used to filter out newly created cursors during iteration */
 	bool need_update;   /* whether view has been redrawn */
 	bool large_file;    /* optimize for displaying large files */
 	int colorcolumn;
@@ -115,9 +112,9 @@ static bool view_viewport_down(View *view, int n);
 
 static void view_clear(View *view);
 static bool view_addch(View *view, Cell *cell);
-static void view_cursors_free(Cursor *c);
+static void selection_free(Selection*);
 /* set/move current cursor position to a given (line, column) pair */
-static size_t cursor_set(Cursor *cursor, Line *line, int col);
+static size_t cursor_set(Selection*, Line *line, int col);
 
 void view_tabwidth_set(View *view, int tabwidth) {
 	view->tabwidth = tabwidth;
@@ -263,24 +260,24 @@ static bool view_addch(View *view, Cell *cell) {
 	}
 }
 
-static void cursor_to(Cursor *c, size_t pos) {
-	Text *txt = c->view->text;
-	c->cursor = text_mark_set(txt, pos);
-	if (!c->anchored)
-		c->anchor = c->cursor;
-	if (pos != c->pos)
-		c->lastcol = 0;
-	c->pos = pos;
-	if (!view_coord_get(c->view, pos, &c->line, &c->row, &c->col)) {
-		if (c->view->cursor == c) {
-			c->line = c->view->topline;
-			c->row = 0;
-			c->col = 0;
+static void cursor_to(Selection *s, size_t pos) {
+	Text *txt = s->view->text;
+	s->cursor = text_mark_set(txt, pos);
+	if (!s->anchored)
+		s->anchor = s->cursor;
+	if (pos != s->pos)
+		s->lastcol = 0;
+	s->pos = pos;
+	if (!view_coord_get(s->view, pos, &s->line, &s->row, &s->col)) {
+		if (s->view->selection == s) {
+			s->line = s->view->topline;
+			s->row = 0;
+			s->col = 0;
 		}
 		return;
 	}
 	// TODO: minimize number of redraws
-	view_draw(c->view);
+	view_draw(s->view);
 }
 
 bool view_coord_get(View *view, size_t pos, Line **retline, int *retrow, int *retcol) {
@@ -324,7 +321,7 @@ bool view_coord_get(View *view, size_t pos, Line **retline, int *retrow, int *re
 /* move the cursor to the character at pos bytes from the begining of the file.
  * if pos is not in the current viewport, redraw the view to make it visible */
 void view_cursor_to(View *view, size_t pos) {
-	view_cursors_to(view->cursor, pos);
+	view_cursors_to(view->selection, pos);
 }
 
 /* redraw the complete with data starting from view->start bytes into the file.
@@ -422,13 +419,13 @@ void view_draw(View *view) {
 	}
 
 	/* resync position of cursors within visible area */
-	for (Cursor *c = view->cursors; c; c = c->next) {
-		size_t pos = view_cursors_pos(c);
-		if (!view_coord_get(view, pos, &c->line, &c->row, &c->col) && 
-		    c == view->cursor) {
-			c->line = view->topline;
-			c->row = 0;
-			c->col = 0;
+	for (Selection *s = view->selections; s; s = s->next) {
+		size_t pos = view_cursors_pos(s);
+		if (!view_coord_get(view, pos, &s->line, &s->row, &s->col) && 
+		    s == view->selection) {
+			s->line = view->topline;
+			s->row = 0;
+			s->col = 0;
 		}
 	}
 
@@ -485,8 +482,8 @@ int view_width_get(View *view) {
 void view_free(View *view) {
 	if (!view)
 		return;
-	while (view->cursors)
-		view_cursors_free(view->cursors);
+	while (view->selections)
+		selection_free(view->selections);
 	free(view->lines);
 	free(view);
 }
@@ -531,13 +528,13 @@ void view_ui(View *view, UiWin* ui) {
 	view->ui = ui;
 }
 
-static size_t cursor_set(Cursor *cursor, Line *line, int col) {
+static size_t cursor_set(Selection *sel, Line *line, int col) {
 	int row = 0;
-	View *view = cursor->view;
+	View *view = sel->view;
 	size_t pos = view->start;
 	/* get row number and file offset at start of the given line */
-	for (Line *cur = view->topline; cur && cur != line; cur = cur->next) {
-		pos += cur->len;
+	for (Line *l = view->topline; l && l != line; l = l->next) {
+		pos += l->len;
 		row++;
 	}
 
@@ -548,11 +545,11 @@ static size_t cursor_set(Cursor *cursor, Line *line, int col) {
 	for (int i = 0; i < col; i++)
 		pos += line->cells[i].len;
 
-	cursor->col = col;
-	cursor->row = row;
-	cursor->line = line;
+	sel->col = col;
+	sel->row = row;
+	sel->line = line;
 
-	cursor_to(cursor, pos);
+	cursor_to(sel, pos);
 
 	return pos;
 }
@@ -600,19 +597,19 @@ static bool view_viewport_up(View *view, int n) {
 }
 
 void view_redraw_top(View *view) {
-	Line *line = view->cursor->line;
+	Line *line = view->selection->line;
 	for (Line *cur = view->topline; cur && cur != line; cur = cur->next)
 		view->start += cur->len;
 	view_draw(view);
-	view_cursor_to(view, view->cursor->pos);
+	view_cursor_to(view, view->selection->pos);
 }
 
 void view_redraw_center(View *view) {
 	int center = view->height / 2;
-	size_t pos = view->cursor->pos;
+	size_t pos = view->selection->pos;
 	for (int i = 0; i < 2; i++) {
 		int linenr = 0;
-		Line *line = view->cursor->line;
+		Line *line = view->selection->line;
 		for (Line *cur = view->topline; cur && cur != line; cur = cur->next)
 			linenr++;
 		if (linenr < center) {
@@ -630,81 +627,81 @@ void view_redraw_center(View *view) {
 }
 
 void view_redraw_bottom(View *view) {
-	Line *line = view->cursor->line;
+	Line *line = view->selection->line;
 	if (line == view->lastline)
 		return;
-	size_t pos = view->cursor->pos;
+	size_t pos = view->selection->pos;
 	view_viewport_up(view, view->height);
 	while (pos >= view->end && view_viewport_down(view, 1));
-	cursor_to(view->cursor, pos);
+	cursor_to(view->selection, pos);
 }
 
 size_t view_slide_up(View *view, int lines) {
-	Cursor *cursor = view->cursor;
+	Selection *sel = view->selection;
 	if (view_viewport_down(view, lines)) {
-		if (cursor->line == view->topline)
-			cursor_set(cursor, view->topline, cursor->col);
+		if (sel->line == view->topline)
+			cursor_set(sel, view->topline, sel->col);
 		else
-			view_cursor_to(view, cursor->pos);
+			view_cursor_to(view, sel->pos);
 	} else {
-		view_screenline_down(cursor);
+		view_screenline_down(sel);
 	}
-	return cursor->pos;
+	return sel->pos;
 }
 
 size_t view_slide_down(View *view, int lines) {
-	Cursor *cursor = view->cursor;
-	bool lastline = cursor->line == view->lastline;
-	size_t col = cursor->col;
+	Selection *sel = view->selection;
+	bool lastline = sel->line == view->lastline;
+	size_t col = sel->col;
 	if (view_viewport_up(view, lines)) {
 		if (lastline)
-			cursor_set(cursor, view->lastline, col);
+			cursor_set(sel, view->lastline, col);
 		else
-			view_cursor_to(view, cursor->pos);
+			view_cursor_to(view, sel->pos);
 	} else {
-		view_screenline_up(cursor);
+		view_screenline_up(sel);
 	}
-	return cursor->pos;
+	return sel->pos;
 }
 
 size_t view_scroll_up(View *view, int lines) {
-	Cursor *cursor = view->cursor;
+	Selection *sel = view->selection;
 	if (view_viewport_up(view, lines)) {
-		Line *line = cursor->line < view->lastline ? cursor->line : view->lastline;
-		cursor_set(cursor, line, view->cursor->col);
+		Line *line = sel->line < view->lastline ? sel->line : view->lastline;
+		cursor_set(sel, line, view->selection->col);
 	} else {
 		view_cursor_to(view, 0);
 	}
-	return cursor->pos;
+	return sel->pos;
 }
 
 size_t view_scroll_page_up(View *view) {
-	Cursor *cursor = view->cursor;
+	Selection *sel = view->selection;
 	if (view->start == 0) {
 		view_cursor_to(view, 0);
 	} else {
 		view_cursor_to(view, view->start-1);
 		view_redraw_bottom(view);
-		view_screenline_begin(cursor);
+		view_screenline_begin(sel);
 	}
-	return cursor->pos;
+	return sel->pos;
 }
 
 size_t view_scroll_page_down(View *view) {
 	view_scroll_down(view, view->height);
-	return view_screenline_begin(view->cursor);
+	return view_screenline_begin(view->selection);
 }
 
 size_t view_scroll_halfpage_up(View *view) {
-	Cursor *cursor = view->cursor;
+	Selection *sel = view->selection;
 	if (view->start == 0) {
 		view_cursor_to(view, 0);
 	} else {
 		view_cursor_to(view, view->start-1);
 		view_redraw_center(view);
-		view_screenline_begin(cursor);
+		view_screenline_begin(sel);
 	}
-	return cursor->pos;
+	return sel->pos;
 }
 
 size_t view_scroll_halfpage_down(View *view) {
@@ -712,101 +709,101 @@ size_t view_scroll_halfpage_down(View *view) {
 	size_t pos = view_scroll_down(view, view->height/2);
 	if (pos < text_size(view->text))
 		view_cursor_to(view, end);
-	return view->cursor->pos;
+	return view->selection->pos;
 }
 
 size_t view_scroll_down(View *view, int lines) {
-	Cursor *cursor = view->cursor;
+	Selection *sel = view->selection;
 	if (view_viewport_down(view, lines)) {
-		Line *line = cursor->line > view->topline ? cursor->line : view->topline;
-		cursor_set(cursor, line, cursor->col);
+		Line *line = sel->line > view->topline ? sel->line : view->topline;
+		cursor_set(sel, line, sel->col);
 	} else {
 		view_cursor_to(view, text_size(view->text));
 	}
-	return cursor->pos;
+	return sel->pos;
 }
 
-size_t view_line_up(Cursor *cursor) {
-	View *view = cursor->view;
-	int lastcol = cursor->lastcol;
+size_t view_line_up(Selection *sel) {
+	View *view = sel->view;
+	int lastcol = sel->lastcol;
 	if (!lastcol)
-		lastcol = cursor->col;
-	size_t pos = text_line_up(cursor->view->text, cursor->pos);
-	bool offscreen = view->cursor == cursor && pos < view->start;
-	view_cursors_to(cursor, pos);
+		lastcol = sel->col;
+	size_t pos = text_line_up(sel->view->text, sel->pos);
+	bool offscreen = view->selection == sel && pos < view->start;
+	view_cursors_to(sel, pos);
 	if (offscreen)
 		view_redraw_top(view);
-	if (cursor->line)
-		cursor_set(cursor, cursor->line, lastcol);
-	cursor->lastcol = lastcol;
-	return cursor->pos;
+	if (sel->line)
+		cursor_set(sel, sel->line, lastcol);
+	sel->lastcol = lastcol;
+	return sel->pos;
 }
 
-size_t view_line_down(Cursor *cursor) {
-	View *view = cursor->view;
-	int lastcol = cursor->lastcol;
+size_t view_line_down(Selection *sel) {
+	View *view = sel->view;
+	int lastcol = sel->lastcol;
 	if (!lastcol)
-		lastcol = cursor->col;
-	size_t pos = text_line_down(cursor->view->text, cursor->pos);
-	bool offscreen = view->cursor == cursor && pos > view->end;
-	view_cursors_to(cursor, pos);
+		lastcol = sel->col;
+	size_t pos = text_line_down(sel->view->text, sel->pos);
+	bool offscreen = view->selection == sel && pos > view->end;
+	view_cursors_to(sel, pos);
 	if (offscreen)
 		view_redraw_bottom(view);
-	if (cursor->line)
-		cursor_set(cursor, cursor->line, lastcol);
-	cursor->lastcol = lastcol;
-	return cursor->pos;
+	if (sel->line)
+		cursor_set(sel, sel->line, lastcol);
+	sel->lastcol = lastcol;
+	return sel->pos;
 }
 
-size_t view_screenline_up(Cursor *cursor) {
-	if (!cursor->line)
-		return view_line_up(cursor);
-	int lastcol = cursor->lastcol;
+size_t view_screenline_up(Selection *sel) {
+	if (!sel->line)
+		return view_line_up(sel);
+	int lastcol = sel->lastcol;
 	if (!lastcol)
-		lastcol = cursor->col;
-	if (!cursor->line->prev)
-		view_scroll_up(cursor->view, 1);
-	if (cursor->line->prev)
-		cursor_set(cursor, cursor->line->prev, lastcol);
-	cursor->lastcol = lastcol;
-	return cursor->pos;
+		lastcol = sel->col;
+	if (!sel->line->prev)
+		view_scroll_up(sel->view, 1);
+	if (sel->line->prev)
+		cursor_set(sel, sel->line->prev, lastcol);
+	sel->lastcol = lastcol;
+	return sel->pos;
 }
 
-size_t view_screenline_down(Cursor *cursor) {
-	if (!cursor->line)
-		return view_line_down(cursor);
-	int lastcol = cursor->lastcol;
+size_t view_screenline_down(Selection *sel) {
+	if (!sel->line)
+		return view_line_down(sel);
+	int lastcol = sel->lastcol;
 	if (!lastcol)
-		lastcol = cursor->col;
-	if (!cursor->line->next && cursor->line == cursor->view->bottomline)
-		view_scroll_down(cursor->view, 1);
-	if (cursor->line->next)
-		cursor_set(cursor, cursor->line->next, lastcol);
-	cursor->lastcol = lastcol;
-	return cursor->pos;
+		lastcol = sel->col;
+	if (!sel->line->next && sel->line == sel->view->bottomline)
+		view_scroll_down(sel->view, 1);
+	if (sel->line->next)
+		cursor_set(sel, sel->line->next, lastcol);
+	sel->lastcol = lastcol;
+	return sel->pos;
 }
 
-size_t view_screenline_begin(Cursor *cursor) {
-	if (!cursor->line)
-		return cursor->pos;
-	return cursor_set(cursor, cursor->line, 0);
+size_t view_screenline_begin(Selection *sel) {
+	if (!sel->line)
+		return sel->pos;
+	return cursor_set(sel, sel->line, 0);
 }
 
-size_t view_screenline_middle(Cursor *cursor) {
-	if (!cursor->line)
-		return cursor->pos;
-	return cursor_set(cursor, cursor->line, cursor->line->width / 2);
+size_t view_screenline_middle(Selection *sel) {
+	if (!sel->line)
+		return sel->pos;
+	return cursor_set(sel, sel->line, sel->line->width / 2);
 }
 
-size_t view_screenline_end(Cursor *cursor) {
-	if (!cursor->line)
-		return cursor->pos;
-	int col = cursor->line->width - 1;
-	return cursor_set(cursor, cursor->line, col >= 0 ? col : 0);
+size_t view_screenline_end(Selection *sel) {
+	if (!sel->line)
+		return sel->pos;
+	int col = sel->line->width - 1;
+	return cursor_set(sel, sel->line, col >= 0 ? col : 0);
 }
 
 size_t view_cursor_get(View *view) {
-	return view_cursors_pos(view->cursor);
+	return view_cursors_pos(view->selection);
 }
 
 Line *view_lines_first(View *view) {
@@ -817,12 +814,12 @@ Line *view_lines_last(View *view) {
 	return view->lastline;
 }
 
-Line *view_cursors_line_get(Cursor *c) {
-	return c->line;
+Line *view_cursors_line_get(Selection *sel) {
+	return sel->line;
 }
 
 void view_scroll_to(View *view, size_t pos) {
-	view_cursors_scroll_to(view->cursor, pos);
+	view_cursors_scroll_to(view->selection, pos);
 }
 
 void view_options_set(View *view, enum UiOption options) {
@@ -867,22 +864,22 @@ size_t view_screenline_goto(View *view, int n) {
 	return pos;
 }
 
-static Cursor *cursors_new(View *view, size_t pos, bool force) {
-	Cursor *c = calloc(1, sizeof(*c));
-	if (!c)
+static Selection *selections_new(View *view, size_t pos, bool force) {
+	Selection *s = calloc(1, sizeof(*s));
+	if (!s)
 		return NULL;
-	c->view = view;
-	c->generation = view->cursor_generation;
-	if (!view->cursors) {
-		view->cursor = c;
-		view->cursor_latest = c;
-		view->cursors = c;
-		view->cursor_count = 1;
-		return c;
+	s->view = view;
+	s->generation = view->selection_generation;
+	if (!view->selections) {
+		view->selection = s;
+		view->selection_latest = s;
+		view->selections = s;
+		view->selection_count = 1;
+		return s;
 	}
 
-	Cursor *prev = NULL, *next = NULL;
-	Cursor *latest = view->cursor_latest ? view->cursor_latest : view->cursor;
+	Selection *prev = NULL, *next = NULL;
+	Selection *latest = view->selection_latest ? view->selection_latest : view->selection;
 	size_t cur = view_cursors_pos(latest);
 	if (pos == cur) {
 		prev = latest;
@@ -906,51 +903,51 @@ static Cursor *cursors_new(View *view, size_t pos, bool force) {
 	if (pos == cur && !force)
 		goto err;
 
-	for (Cursor *after = next; after; after = after->next)
+	for (Selection *after = next; after; after = after->next)
 		after->number++;
 
-	c->prev = prev;
-	c->next = next;
+	s->prev = prev;
+	s->next = next;
 	if (next)
-		next->prev = c;
+		next->prev = s;
 	if (prev) {
-		prev->next = c;
-		c->number = prev->number + 1;
+		prev->next = s;
+		s->number = prev->number + 1;
 	} else {
-		view->cursors = c;
+		view->selections = s;
 	}
-	view->cursor_latest = c;
-	view->cursor_count++;
-	view_selections_dispose(view->cursor_dead);
-	view_cursors_to(c, pos);
-	return c;
+	view->selection_latest = s;
+	view->selection_count++;
+	view_selections_dispose(view->selection_dead);
+	view_cursors_to(s, pos);
+	return s;
 err:
-	free(c);
+	free(s);
 	return NULL;
 }
 
-Cursor *view_selections_new(View *view, size_t pos) {
-	return cursors_new(view, pos, false);
+Selection *view_selections_new(View *view, size_t pos) {
+	return selections_new(view, pos, false);
 }
 
-Cursor *view_selections_new_force(View *view, size_t pos) {
-	return cursors_new(view, pos, true);
+Selection *view_selections_new_force(View *view, size_t pos) {
+	return selections_new(view, pos, true);
 }
 
 int view_selections_count(View *view) {
-	return view->cursor_count;
+	return view->selection_count;
 }
 
-int view_selections_number(Cursor *c) {
-	return c->number;
+int view_selections_number(Selection *sel) {
+	return sel->number;
 }
 
 int view_selections_column_count(View *view) {
 	Text *txt = view->text;
 	int cpl_max = 0, cpl = 0; /* cursors per line */
 	size_t line_prev = 0;
-	for (Cursor *c = view->cursors; c; c = c->next) {
-		size_t pos = view_cursors_pos(c);
+	for (Selection *sel = view->selections; sel; sel = sel->next) {
+		size_t pos = view_cursors_pos(sel);
 		size_t line = text_lineno_by_pos(txt, pos);
 		if (line == line_prev)
 			cpl++;
@@ -963,20 +960,20 @@ int view_selections_column_count(View *view) {
 	return cpl_max;
 }
 
-static Cursor *cursors_column_next(View *view, Cursor *c, int column) {
+static Selection *selections_column_next(View *view, Selection *sel, int column) {
 	size_t line_cur = 0;
 	int column_cur = 0;
 	Text *txt = view->text;
-	if (c) {
-		size_t pos = view_cursors_pos(c);
+	if (sel) {
+		size_t pos = view_cursors_pos(sel);
 		line_cur = text_lineno_by_pos(txt, pos);
 		column_cur = INT_MIN;
 	} else {
-		c = view->cursors;
+		sel = view->selections;
 	}
 
-	for (; c; c = c->next) {
-		size_t pos = view_cursors_pos(c);
+	for (; sel; sel = sel->next) {
+		size_t pos = view_cursors_pos(sel);
 		size_t line = text_lineno_by_pos(txt, pos);
 		if (line != line_cur) {
 			line_cur = line;
@@ -985,147 +982,147 @@ static Cursor *cursors_column_next(View *view, Cursor *c, int column) {
 			column_cur++;
 		}
 		if (column == column_cur)
-			return c;
+			return sel;
 	}
 	return NULL;
 }
 
-Cursor *view_selections_column(View *view, int column) {
-	return cursors_column_next(view, NULL, column);
+Selection *view_selections_column(View *view, int column) {
+	return selections_column_next(view, NULL, column);
 }
 
-Cursor *view_selections_column_next(Cursor *c, int column) {
-	return cursors_column_next(c->view, c, column);
+Selection *view_selections_column_next(Selection *sel, int column) {
+	return selections_column_next(sel->view, sel, column);
 }
 
-static void view_cursors_free(Cursor *c) {
-	if (!c)
+static void selection_free(Selection *s) {
+	if (!s)
 		return;
-	for (Cursor *after = c->next; after; after = after->next)
+	for (Selection *after = s->next; after; after = after->next)
 		after->number--;
-	if (c->prev)
-		c->prev->next = c->next;
-	if (c->next)
-		c->next->prev = c->prev;
-	if (c->view->cursors == c)
-		c->view->cursors = c->next;
-	if (c->view->cursor == c)
-		c->view->cursor = c->next ? c->next : c->prev;
-	if (c->view->cursor_dead == c)
-		c->view->cursor_dead = NULL;
-	if (c->view->cursor_latest == c)
-		c->view->cursor_latest = c->prev ? c->prev : c->next;
-	c->view->cursor_count--;
-	free(c);
+	if (s->prev)
+		s->prev->next = s->next;
+	if (s->next)
+		s->next->prev = s->prev;
+	if (s->view->selections == s)
+		s->view->selections = s->next;
+	if (s->view->selection == s)
+		s->view->selection = s->next ? s->next : s->prev;
+	if (s->view->selection_dead == s)
+		s->view->selection_dead = NULL;
+	if (s->view->selection_latest == s)
+		s->view->selection_latest = s->prev ? s->prev : s->next;
+	s->view->selection_count--;
+	free(s);
 }
 
-bool view_selections_dispose(Cursor *c) {
-	if (!c)
+bool view_selections_dispose(Selection *sel) {
+	if (!sel)
 		return true;
-	View *view = c->view;
-	if (!view->cursors || !view->cursors->next)
+	View *view = sel->view;
+	if (!view->selections || !view->selections->next)
 		return false;
-	view_cursors_free(c);
-	view_selections_primary_set(view->cursor);
+	selection_free(sel);
+	view_selections_primary_set(view->selection);
 	return true;
 }
 
-bool view_selections_dispose_force(Cursor *c) {
-	if (view_selections_dispose(c))
+bool view_selections_dispose_force(Selection *sel) {
+	if (view_selections_dispose(sel))
 		return true;
-	View *view = c->view;
-	if (view->cursor_dead)
+	View *view = sel->view;
+	if (view->selection_dead)
 		return false;
-	view_selection_clear(c);
-	view->cursor_dead = c;
+	view_selection_clear(sel);
+	view->selection_dead = sel;
 	return true;
 }
 
-Cursor *view_selection_disposed(View *view) {
-	Cursor *c = view->cursor_dead;
-	view->cursor_dead = NULL;
-	return c;
+Selection *view_selection_disposed(View *view) {
+	Selection *sel = view->selection_dead;
+	view->selection_dead = NULL;
+	return sel;
 }
 
-Cursor *view_selections(View *view) {
-	view->cursor_generation++;
-	return view->cursors;
+Selection *view_selections(View *view) {
+	view->selection_generation++;
+	return view->selections;
 }
 
-Cursor *view_selections_primary_get(View *view) {
-	view->cursor_generation++;
-	return view->cursor;
+Selection *view_selections_primary_get(View *view) {
+	view->selection_generation++;
+	return view->selection;
 }
 
-void view_selections_primary_set(Cursor *c) {
-	if (!c)
+void view_selections_primary_set(Selection *s) {
+	if (!s)
 		return;
-	c->view->cursor = c;
+	s->view->selection = s;
 }
 
-Cursor *view_selections_prev(Cursor *c) {
-	View *view = c->view;
-	for (c = c->prev; c; c = c->prev) {
-		if (c->generation != view->cursor_generation)
-			return c;
+Selection *view_selections_prev(Selection *s) {
+	View *view = s->view;
+	for (s = s->prev; s; s = s->prev) {
+		if (s->generation != view->selection_generation)
+			return s;
 	}
-	view->cursor_generation++;
+	view->selection_generation++;
 	return NULL;
 }
 
-Cursor *view_selections_next(Cursor *c) {
-	View *view = c->view;
-	for (c = c->next; c; c = c->next) {
-		if (c->generation != view->cursor_generation)
-			return c;
+Selection *view_selections_next(Selection *s) {
+	View *view = s->view;
+	for (s = s->next; s; s = s->next) {
+		if (s->generation != view->selection_generation)
+			return s;
 	}
-	view->cursor_generation++;
+	view->selection_generation++;
 	return NULL;
 }
 
-size_t view_cursors_pos(Cursor *c) {
-	return text_mark_get(c->view->text, c->cursor);
+size_t view_cursors_pos(Selection *s) {
+	return text_mark_get(s->view->text, s->cursor);
 }
 
-size_t view_cursors_line(Cursor *c) {
-	size_t pos = view_cursors_pos(c);
-	return text_lineno_by_pos(c->view->text, pos);
+size_t view_cursors_line(Selection *s) {
+	size_t pos = view_cursors_pos(s);
+	return text_lineno_by_pos(s->view->text, pos);
 }
 
-size_t view_cursors_col(Cursor *c) {
-	size_t pos = view_cursors_pos(c);
-	return text_line_char_get(c->view->text, pos) + 1;
+size_t view_cursors_col(Selection *s) {
+	size_t pos = view_cursors_pos(s);
+	return text_line_char_get(s->view->text, pos) + 1;
 }
 
-int view_cursors_cell_get(Cursor *c) {
-	return c->line ? c->col : -1;
+int view_cursors_cell_get(Selection *s) {
+	return s->line ? s->col : -1;
 }
 
-int view_cursors_cell_set(Cursor *c, int cell) {
-	if (!c->line || cell < 0)
+int view_cursors_cell_set(Selection *s, int cell) {
+	if (!s->line || cell < 0)
 		return -1;
-	cursor_set(c, c->line, cell);
-	return c->col;
+	cursor_set(s, s->line, cell);
+	return s->col;
 }
 
-void view_cursors_scroll_to(Cursor *c, size_t pos) {
-	View *view = c->view;
-	if (view->cursor == c) {
+void view_cursors_scroll_to(Selection *s, size_t pos) {
+	View *view = s->view;
+	if (view->selection == s) {
 		view_draw(view);
 		while (pos < view->start && view_viewport_up(view, 1));
 		while (pos > view->end && view_viewport_down(view, 1));
 	}
-	view_cursors_to(c, pos);
+	view_cursors_to(s, pos);
 }
 
-void view_cursors_to(Cursor *c, size_t pos) {
-	View *view = c->view;
+void view_cursors_to(Selection *s, size_t pos) {
+	View *view = s->view;
 	if (pos == EPOS)
 		return;
 	size_t size = text_size(view->text);
 	if (pos > size)
 		pos = size;
-	if (c->view->cursor == c) {
+	if (s->view->selection == s) {
 		/* make sure we redraw changes to the very first character of the window */
 		if (view->start == pos)
 			view->start_last = 0;
@@ -1151,27 +1148,27 @@ void view_cursors_to(Cursor *c, size_t pos) {
 		}
 	}
 
-	cursor_to(c, pos);
+	cursor_to(s, pos);
 }
 
-void view_cursors_place(Cursor *c, size_t line, size_t col) {
-	Text *txt = c->view->text;
+void view_cursors_place(Selection *s, size_t line, size_t col) {
+	Text *txt = s->view->text;
 	size_t pos = text_pos_by_lineno(txt, line);
 	pos = text_line_char_set(txt, pos, col > 0 ? col-1 : col);
-	view_cursors_to(c, pos);
+	view_cursors_to(s, pos);
 }
 
-void view_selections_anchor(Cursor *c) {
-	c->anchored = true;
+void view_selections_anchor(Selection *s) {
+	s->anchored = true;
 }
 
-void view_selection_clear(Cursor *c) {
-	c->anchored = false;
-	c->anchor = c->cursor;
-	c->view->need_update = true;
+void view_selection_clear(Selection *s) {
+	s->anchored = false;
+	s->anchor = s->cursor;
+	s->view->need_update = true;
 }
 
-void view_selections_flip(Cursor *s) {
+void view_selections_flip(Selection *s) {
 	Mark temp = s->anchor;
 	s->anchor = s->cursor;
 	s->cursor = temp;
@@ -1183,22 +1180,22 @@ bool view_selections_anchored(Selection *s) {
 }
 
 void view_selections_clear_all(View *view) {
-	for (Cursor *c = view->cursors; c; c = c->next)
-		view_selection_clear(c);
+	for (Selection *s = view->selections; s; s = s->next)
+		view_selection_clear(s);
 	view_draw(view);
 }
 
 void view_selections_dispose_all(View *view) {
-	for (Cursor *c = view->cursors, *next; c; c = next) {
-		next = c->next;
-		if (c != view->cursor)
-			view_cursors_free(c);
+	for (Selection *s = view->selections, *next; s; s = next) {
+		next = s->next;
+		if (s != view->selection)
+			selection_free(s);
 	}
 	view_draw(view);
 }
 
 Filerange view_selection_get(View *view) {
-	return view_selections_get(view->cursor);
+	return view_selections_get(view->selection);
 }
 
 Filerange view_selections_get(Selection *s) {

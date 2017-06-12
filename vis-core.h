@@ -72,7 +72,7 @@ typedef struct {
 
 typedef struct { /* Motion implementation, takes a cursor postion and returns a new one */
 	/* TODO: merge types / use union to save space */
-	size_t (*cur)(Cursor*);
+	size_t (*cur)(Selection*);
 	size_t (*txt)(Text*, size_t pos);
 	size_t (*file)(Vis*, File*, size_t pos);
 	size_t (*vis)(Vis*, Text*, size_t pos);

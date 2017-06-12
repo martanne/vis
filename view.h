@@ -5,8 +5,7 @@
 #include <stdbool.h>
 
 typedef struct View View;
-typedef struct Cursor Cursor;
-typedef Cursor Selection;
+typedef struct Selection Selection;
 
 #include "text.h"
 #include "ui.h"
@@ -104,7 +103,7 @@ bool view_update(View*);
  * .. warning:: Fails if position is already covered by a selection.
  * @endrst
  */
-Cursor *view_selections_new(View*, size_t pos);
+Selection *view_selections_new(View*, size_t pos);
 /**
  * Create a new selection even if position is already covered by an
  * existing selection. 
@@ -113,14 +112,14 @@ Cursor *view_selections_new(View*, size_t pos);
  *           disposed.
  * @endrst
  */
-Cursor *view_selections_new_force(View*, size_t pos);
+Selection *view_selections_new_force(View*, size_t pos);
 /**
  * Dispose an existing selection.
  * @rst
  * .. warning:: Not applicaple for the last existing selection.
  * @endrst
  */
-bool view_selections_dispose(Cursor*);
+bool view_selections_dispose(Selection*);
 /**
  * Forcefully dispose an existing selection.
  *
@@ -128,14 +127,14 @@ bool view_selections_dispose(Cursor*);
  * marked for destruction. As soon as a new selection is created this one
  * will be disposed.
  */
-bool view_selections_dispose_force(Cursor*);
+bool view_selections_dispose_force(Selection*);
 /**
  * Query state of primary selection.
  *
  * If the primary selection was marked for destruction, return it and
  * clear descruction flag.
  */
-Cursor *view_selection_disposed(View*);
+Selection *view_selection_disposed(View*);
 /** Dispose all but the primary selection. */
 void view_selections_dispose_all(View*);
 /**
@@ -143,14 +142,14 @@ void view_selections_dispose_all(View*);
  * @defgroup view_navigate
  * @{
  */
-Cursor *view_selections_primary_get(View*);
-void view_selections_primary_set(Cursor*);
+Selection *view_selections_primary_get(View*);
+void view_selections_primary_set(Selection*);
 /** Get first selection. */
-Cursor *view_selections(View*);
+Selection *view_selections(View*);
 /** Get immediate predecessor of selection. */
-Cursor *view_selections_prev(Cursor*);
+Selection *view_selections_prev(Selection*);
 /** Get immediate successor of selection. */
-Cursor *view_selections_next(Cursor*);
+Selection *view_selections_next(Selection*);
 /**
  * Get number of existing selections.
  * @rst
@@ -166,35 +165,35 @@ int view_selections_count(View*);
  *             to remain the same.
  * @endrst
  */
-int view_selections_number(Cursor*);
+int view_selections_number(Selection*);
 /** Get maximal number of selections on a single line. */
 int view_selections_column_count(View*);
 /**
  * Starting from the start of the text, get the `column`-th selection on a line.
  * @param column The zero based column index.
  */
-Cursor *view_selections_column(View*, int column);
+Selection *view_selections_column(View*, int column);
 /**
  * Get the next `column`-th selection on a line.
  * @param column The zero based column index.
  */
-Cursor *view_selections_column_next(Cursor*, int column);
+Selection *view_selections_column_next(Selection*, int column);
 /**
  * @}
  * @defgroup view_cover
  * @{
  */
 /** Get an inclusive range of the selection cover. */
-Filerange view_selections_get(Cursor*);
+Filerange view_selections_get(Selection*);
 /** Set selection cover. Updates both cursor and anchor. */
-void view_selections_set(Cursor*, const Filerange*);
+void view_selections_set(Selection*, const Filerange*);
 /**
  * Reduce selection to character currently covered by the cursor.
  * @rst
  * .. note:: Sets selection to non-anchored mode.
  * @endrst
  */
-void view_selection_clear(Cursor*);
+void view_selection_clear(Selection*);
 /** Reduce *all* currently active selections. */
 void view_selections_clear_all(View*);
 /**
@@ -203,7 +202,7 @@ void view_selections_clear_all(View*);
  * .. note:: Has no effect on singleton selections.
  * @endrst
  */
-void view_selections_flip(Cursor*);
+void view_selections_flip(Selection*);
 /**
  * @}
  * @defgroup view_anchor
@@ -213,9 +212,9 @@ void view_selections_flip(Cursor*);
  * Anchor selection.
  * Further updates will only update the cursor, the anchor will remain fixed.
  */
-void view_selections_anchor(Cursor*);
+void view_selections_anchor(Selection*);
 /** Check whether selection is anchored. */
-bool view_selections_anchored(Cursor*);
+bool view_selections_anchored(Selection*);
 /** Get position of selection cursor. */
 /**
  * @}
@@ -223,9 +222,9 @@ bool view_selections_anchored(Cursor*);
  * @{
  */
 /** Get position of selection cursor. */
-size_t view_cursors_pos(Cursor*);
+size_t view_cursors_pos(Selection*);
 /** Get 1-based line number of selection cursor. */
-size_t view_cursors_line(Cursor*);
+size_t view_cursors_line(Selection*);
 /**
  * Get 1-based column of selection cursor.
  * @rst
@@ -233,21 +232,21 @@ size_t view_cursors_line(Cursor*);
  *           position.
  * @endrst
  */
-size_t view_cursors_col(Cursor*);
+size_t view_cursors_col(Selection*);
 /**
  * Get screen line of selection cursor.
  * @rst
  * .. warning: Is `NULL` for non-visible selections.
  * @endrst
  */
-Line *view_cursors_line_get(Cursor*);
+Line *view_cursors_line_get(Selection*);
 /**
  * Get zero based index of screen cell on which selection cursor currently resides.
  * @rst
  * .. warning:: Returns `-1` if the selection cursor is currently not visible.
  * @endrst
  */
-int view_cursors_cell_get(Cursor*);
+int view_cursors_cell_get(Selection*);
 /**
  * @}
  * @defgroup view_place
@@ -262,7 +261,7 @@ int view_cursors_cell_get(Cursor*);
  *           cursor will be changed while the anchor remains fixed.
  * @endrst
  */
-void view_cursors_to(Cursor*, size_t pos);
+void view_cursors_to(Selection*, size_t pos);
 /**
  * Adjusts window viewport until the requested position becomes visible.
  * @rst
@@ -272,7 +271,7 @@ void view_cursors_to(Cursor*, size_t pos);
  *              short distances between current cursor position and destination.
  * @endrst
  */
-void view_cursors_scroll_to(Cursor*, size_t pos);
+void view_cursors_scroll_to(Selection*, size_t pos);
 /**
  * Place cursor on given (line, column) pair.
  * @param line the 1-based line number
@@ -282,26 +281,26 @@ void view_cursors_scroll_to(Cursor*, size_t pos);
  *           `view_selection_to`.
  * @endrst
  */
-void view_cursors_place(Cursor*, size_t line, size_t col);
+void view_cursors_place(Selection*, size_t line, size_t col);
 /**
  * Place selection cursor on zero based window cell index.
  * @rst
  * .. warning:: Fails if the selection cursor is currently not visible.
  * @endrst
  */
-int view_cursors_cell_set(Cursor*, int cell);
+int view_cursors_cell_set(Selection*, int cell);
 /**
  * @}
  * @defgroup view_motions
  * @{
  */
-size_t view_line_down(Cursor*);
-size_t view_line_up(Cursor*);
-size_t view_screenline_down(Cursor*);
-size_t view_screenline_up(Cursor*);
-size_t view_screenline_begin(Cursor*);
-size_t view_screenline_middle(Cursor*);
-size_t view_screenline_end(Cursor*);
+size_t view_line_down(Selection*);
+size_t view_line_up(Selection*);
+size_t view_screenline_down(Selection*);
+size_t view_screenline_up(Selection*);
+size_t view_screenline_begin(Selection*);
+size_t view_screenline_middle(Selection*);
+size_t view_screenline_end(Selection*);
 /**
  * @}
  * @defgroup view_primary

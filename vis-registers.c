@@ -258,5 +258,5 @@ const RegisterDef vis_registers[] = {
 	[VIS_REG_SEARCH]     = { '/', VIS_HELP("Last search pattern")                              },
 	[VIS_REG_COMMAND]    = { ':', VIS_HELP("Last :-command")                                   },
 	[VIS_REG_SHELL]      = { '!', VIS_HELP("Last shell command given to either <, >, |, or !") },
-	[VIS_REG_NUMBER]     = { '#', VIS_HELP("Cursor number")                                    },
+	[VIS_REG_NUMBER]     = { '#', VIS_HELP("Register number")                                  },
 };

@@ -145,8 +145,8 @@ static void vis_mode_normal_enter(Vis *vis, Mode *old) {
 		return;
 	if (vis->autoindent && strcmp(vis->key_prev, "<Enter>") == 0) {
 		Text *txt = vis->win->file->text;
-		for (Cursor *c = view_selections(vis->win->view); c; c = view_selections_next(c)) {
-			size_t pos = view_cursors_pos(c);
+		for (Selection *s = view_selections(vis->win->view); s; s = view_selections_next(s)) {
+			size_t pos = view_cursors_pos(s);
 			size_t start = text_line_start(txt, pos);
 			size_t end = text_line_end(txt, pos);
 			if (start == pos && start == end) {
@@ -154,7 +154,7 @@ static void vis_mode_normal_enter(Vis *vis, Mode *old) {
 				size_t len = start - begin;
 				if (len) {
 					text_delete(txt, begin, len);
-					view_cursors_to(c, pos-len);
+					view_cursors_to(s, pos-len);
 				}
 			}
 		}
@@ -185,15 +185,15 @@ static void vis_mode_operator_input(Vis *vis, const char *str, size_t len) {
 
 static void vis_mode_visual_enter(Vis *vis, Mode *old) {
 	if (!old->visual) {
-		for (Cursor *c = view_selections(vis->win->view); c; c = view_selections_next(c))
-			view_selections_anchor(c);
+		for (Selection *s = view_selections(vis->win->view); s; s = view_selections_next(s))
+			view_selections_anchor(s);
 	}
 }
 
 static void vis_mode_visual_line_enter(Vis *vis, Mode *old) {
 	if (!old->visual) {
-		for (Cursor *c = view_selections(vis->win->view); c; c = view_selections_next(c))
-			view_selections_anchor(c);
+		for (Selection *s = view_selections(vis->win->view); s; s = view_selections_next(s))
+			view_selections_anchor(s);
 	}
 	if (!vis->action.op)
 		vis_motion(vis, VIS_MOVE_NOP);

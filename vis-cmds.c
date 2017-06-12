@@ -120,9 +120,9 @@ bool vis_option_unregister(Vis *vis, const char *name) {
 	return true;
 }
 
-static bool cmd_user(Vis *vis, Win *win, Command *cmd, const char *argv[], Cursor *cur, Filerange *range) {
+static bool cmd_user(Vis *vis, Win *win, Command *cmd, const char *argv[], Selection *sel, Filerange *range) {
 	CmdUser *user = map_get(vis->usercmds, argv[0]);
-	return user && user->func(vis, win, user->data, cmd->flags == '!', argv, cur, range);
+	return user && user->func(vis, win, user->data, cmd->flags == '!', argv, sel, range);
 }
 
 static void windows_arrange(Vis *vis, enum UiLayout layout) {
@@ -155,7 +155,7 @@ static bool parse_bool(const char *s, bool *outval) {
 	return false;
 }
 
-static bool cmd_set(Vis *vis, Win *win, Command *cmd, const char *argv[], Cursor *cur, Filerange *range) {
+static bool cmd_set(Vis *vis, Win *win, Command *cmd, const char *argv[], Selection *sel, Filerange *range) {
 
 	if (!argv[1] || !argv[1][0] || argv[3]) {
 		vis_info_show(vis, "Expecting: set option [value]");
@@ -405,7 +405,7 @@ static bool openfiles(Vis *vis, const char **files) {
 	return true;
 }
 
-static bool cmd_open(Vis *vis, Win *win, Command *cmd, const char *argv[], Cursor *cur, Filerange *range) {
+static bool cmd_open(Vis *vis, Win *win, Command *cmd, const char *argv[], Selection *sel, Filerange *range) {
 	if (!argv[1])
 		return vis_window_new(vis, NULL);
 	return openfiles(vis, &argv[1]);
@@ -415,7 +415,7 @@ static void info_unsaved_changes(Vis *vis) {
 	vis_info_show(vis, "No write since last change (add ! to override)");
 }
 
-static bool cmd_edit(Vis *vis, Win *win, Command *cmd, const char *argv[], Cursor *cur, Filerange *range) {
+static bool cmd_edit(Vis *vis, Win *win, Command *cmd, const char *argv[], Selection *sel, Filerange *range) {
 	if (argv[2]) {
 		vis_info_show(vis, "Only 1 filename allowed");
 		return false;
@@ -445,7 +445,7 @@ static bool cmd_edit(Vis *vis, Win *win, Command *cmd, const char *argv[], Curso
 	return vis->win != oldwin;
 }
 
-static bool cmd_read(Vis *vis, Win *win, Command *cmd, const char *argv[], Cursor *cur, Filerange *range) {
+static bool cmd_read(Vis *vis, Win *win, Command *cmd, const char *argv[], Selection *sel, Filerange *range) {
 	bool ret = false;
 	const size_t first_file = 3;
 	const char *args[MAX_ARGV] = { argv[0], "cat", "--" };
@@ -456,7 +456,7 @@ static bool cmd_read(Vis *vis, Win *win, Command *cmd, const char *argv[], Curso
 			goto err;
 	}
 	args[LENGTH(args)-1] = NULL;
-	ret = cmd_pipein(vis, win, cmd, args, cur, range);
+	ret = cmd_pipein(vis, win, cmd, args, sel, range);
 err:
 	for (size_t i = first_file; i < LENGTH(args); i++)
 		free((char*)args[i]);
@@ -471,7 +471,7 @@ static bool has_windows(Vis *vis) {
 	return false;
 }
 
-static bool cmd_quit(Vis *vis, Win *win, Command *cmd, const char *argv[], Cursor *cur, Filerange *range) {
+static bool cmd_quit(Vis *vis, Win *win, Command *cmd, const char *argv[], Selection *sel, Filerange *range) {
 	if (cmd->flags != '!' && !vis_window_closable(win)) {
 		info_unsaved_changes(vis);
 		return false;
@@ -482,7 +482,7 @@ static bool cmd_quit(Vis *vis, Win *win, Command *cmd, const char *argv[], Curso
 	return true;
 }
 
-static bool cmd_qall(Vis *vis, Win *win, Command *cmd, const char *argv[], Cursor *cur, Filerange *range) {
+static bool cmd_qall(Vis *vis, Win *win, Command *cmd, const char *argv[], Selection *sel, Filerange *range) {
 	for (Win *next, *win = vis->windows; win; win = next) {
 		next = win->next;
 		if (!win->file->internal && (!text_modified(win->file->text) || cmd->flags == '!'))
@@ -497,7 +497,7 @@ static bool cmd_qall(Vis *vis, Win *win, Command *cmd, const char *argv[], Curso
 	}
 }
 
-static bool cmd_split(Vis *vis, Win *win, Command *cmd, const char *argv[], Cursor *cur, Filerange *range) {
+static bool cmd_split(Vis *vis, Win *win, Command *cmd, const char *argv[], Selection *sel, Filerange *range) {
 	if (!win)
 		return false;
 	enum UiOption options = view_options_get(win->view);
@@ -510,7 +510,7 @@ static bool cmd_split(Vis *vis, Win *win, Command *cmd, const char *argv[], Curs
 	return ret;
 }
 
-static bool cmd_vsplit(Vis *vis, Win *win, Command *cmd, const char *argv[], Cursor *cur, Filerange *range) {
+static bool cmd_vsplit(Vis *vis, Win *win, Command *cmd, const char *argv[], Selection *sel, Filerange *range) {
 	if (!win)
 		return false;
 	enum UiOption options = view_options_get(win->view);
@@ -523,27 +523,27 @@ static bool cmd_vsplit(Vis *vis, Win *win, Command *cmd, const char *argv[], Cur
 	return ret;
 }
 
-static bool cmd_new(Vis *vis, Win *win, Command *cmd, const char *argv[], Cursor *cur, Filerange *range) {
+static bool cmd_new(Vis *vis, Win *win, Command *cmd, const char *argv[], Selection *sel, Filerange *range) {
 	windows_arrange(vis, UI_LAYOUT_HORIZONTAL);
 	return vis_window_new(vis, NULL);
 }
 
-static bool cmd_vnew(Vis *vis, Win *win, Command *cmd, const char *argv[], Cursor *cur, Filerange *range) {
+static bool cmd_vnew(Vis *vis, Win *win, Command *cmd, const char *argv[], Selection *sel, Filerange *range) {
 	windows_arrange(vis, UI_LAYOUT_VERTICAL);
 	return vis_window_new(vis, NULL);
 }
 
-static bool cmd_wq(Vis *vis, Win *win, Command *cmd, const char *argv[], Cursor *cur, Filerange *range) {
+static bool cmd_wq(Vis *vis, Win *win, Command *cmd, const char *argv[], Selection *sel, Filerange *range) {
 	if (!win)
 		return false;
 	File *file = win->file;
 	bool unmodified = file->fd == -1 && !file->name && !text_modified(file->text);
-	if (unmodified || cmd_write(vis, win, cmd, argv, cur, range))
-		return cmd_quit(vis, win, cmd, argv, cur, range);
+	if (unmodified || cmd_write(vis, win, cmd, argv, sel, range))
+		return cmd_quit(vis, win, cmd, argv, sel, range);
 	return false;
 }
 
-static bool cmd_earlier_later(Vis *vis, Win *win, Command *cmd, const char *argv[], Cursor *cur, Filerange *range) {
+static bool cmd_earlier_later(Vis *vis, Win *win, Command *cmd, const char *argv[], Selection *sel, Filerange *range) {
 	if (!win)
 		return false;
 	Text *txt = win->file->text;
@@ -719,7 +719,7 @@ static void print_symbolic_keys(Vis *vis, Text *txt) {
 	}
 }
 
-static bool cmd_help(Vis *vis, Win *win, Command *cmd, const char *argv[], Cursor *cur, Filerange *range) {
+static bool cmd_help(Vis *vis, Win *win, Command *cmd, const char *argv[], Selection *sel, Filerange *range) {
 	if (!vis_window_new(vis, NULL))
 		return false;
 
@@ -816,7 +816,7 @@ static bool cmd_help(Vis *vis, Win *win, Command *cmd, const char *argv[], Curso
 	return true;
 }
 
-static bool cmd_langmap(Vis *vis, Win *win, Command *cmd, const char *argv[], Cursor *cur, Filerange *range) {
+static bool cmd_langmap(Vis *vis, Win *win, Command *cmd, const char *argv[], Selection *sel, Filerange *range) {
 	const char *nonlatin = argv[1];
 	const char *latin = argv[2];
 	bool mapped = true;
@@ -847,7 +847,7 @@ static bool cmd_langmap(Vis *vis, Win *win, Command *cmd, const char *argv[], Cu
 	return mapped;
 }
 
-static bool cmd_map(Vis *vis, Win *win, Command *cmd, const char *argv[], Cursor *cur, Filerange *range) {
+static bool cmd_map(Vis *vis, Win *win, Command *cmd, const char *argv[], Selection *sel, Filerange *range) {
 	bool mapped = false;
 	bool local = strstr(argv[0], "-") != NULL;
 	enum VisMode mode = vis_mode_from(vis, argv[1]);
@@ -882,7 +882,7 @@ err:
 	return mapped;
 }
 
-static bool cmd_unmap(Vis *vis, Win *win, Command *cmd, const char *argv[], Cursor *cur, Filerange *range) {
+static bool cmd_unmap(Vis *vis, Win *win, Command *cmd, const char *argv[], Selection *sel, Filerange *range) {
 	bool unmapped = false;
 	bool local = strstr(argv[0], "-") != NULL;
 	enum VisMode mode = vis_mode_from(vis, argv[1]);
