@@ -1890,7 +1890,7 @@ static int window_cursor_newindex(lua_State *L) {
 			if (text_range_valid(&sel))
 				view_selections_set(cur, &sel);
 			else
-				view_cursors_selection_clear(cur);
+				view_selection_clear(cur);
 			return 0;
 		}
 	}

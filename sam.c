@@ -1507,7 +1507,7 @@ static bool cmd_print(Vis *vis, Win *win, Command *cmd, const char *argv[], Curs
 			view_selections_set(cur, range);
 			view_cursors_selection_start(cur);
 		} else {
-			view_cursors_selection_clear(cur);
+			view_selection_clear(cur);
 		}
 	}
 	return cur != NULL;

@@ -194,7 +194,7 @@ void view_selections_set(Cursor*, const Filerange*);
  * .. note:: Sets selection to non-anchored mode.
  * @endrst
  */
-void view_cursors_selection_clear(Cursor*);
+void view_selection_clear(Cursor*);
 /** Reduce *all* currently active selections. */
 void view_selections_clear_all(View*);
 /**

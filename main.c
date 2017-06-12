@@ -1348,7 +1348,7 @@ static const char *cursors_clear(Vis *vis, const char *keys, const Arg *arg) {
 	if (view_cursors_count(view) > 1)
 		view_selections_dispose_all(view);
 	else
-		view_cursors_selection_clear(view_selections_primary_get(view));
+		view_selection_clear(view_selections_primary_get(view));
 	return keys;
 }
 

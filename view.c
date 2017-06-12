@@ -1036,7 +1036,7 @@ bool view_selections_dispose_force(Cursor *c) {
 	View *view = c->view;
 	if (view->cursor_dead)
 		return false;
-	view_cursors_selection_clear(c);
+	view_selection_clear(c);
 	view->cursor_dead = c;
 	return true;
 }
@@ -1165,7 +1165,7 @@ void view_cursors_selection_start(Cursor *c) {
 	c->anchored = true;
 }
 
-void view_cursors_selection_clear(Cursor *c) {
+void view_selection_clear(Cursor *c) {
 	c->anchored = false;
 	c->anchor = c->cursor;
 	c->view->need_update = true;
@@ -1184,7 +1184,7 @@ bool view_selection_anchored(Selection *s) {
 
 void view_selections_clear_all(View *view) {
 	for (Cursor *c = view->cursors; c; c = c->next)
-		view_cursors_selection_clear(c);
+		view_selection_clear(c);
 	view_draw(view);
 }
 
