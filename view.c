@@ -1047,7 +1047,7 @@ Cursor *view_selection_disposed(View *view) {
 	return c;
 }
 
-Cursor *view_cursors(View *view) {
+Cursor *view_selections(View *view) {
 	view->cursor_generation++;
 	return view->cursors;
 }

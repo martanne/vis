@@ -1236,9 +1236,9 @@ enum SamError sam_cmd(Vis *vis, const char *s) {
 	if (vis->win) {
 		if (primary_pos != EPOS && view_selection_disposed(vis->win->view))
 			view_cursor_to(vis->win->view, primary_pos);
-		view_selections_primary_set(view_cursors(vis->win->view));
+		view_selections_primary_set(view_selections(vis->win->view));
 		bool completed = true;
-		for (Cursor *c = view_cursors(vis->win->view); c; c = view_selections_next(c)) {
+		for (Cursor *c = view_selections(vis->win->view); c; c = view_selections_next(c)) {
 			if (view_selections_anchored(c)) {
 				completed = false;
 				break;
@@ -1443,7 +1443,7 @@ static bool cmd_select(Vis *vis, Win *win, Command *cmd, const char *argv[], Cur
 	if (vis->mode->visual)
 		count_init(cmd->cmd, view_selections_count(view)+1);
 
-	for (Cursor *c = view_cursors(view), *next; c && ret; c = next) {
+	for (Cursor *c = view_selections(view), *next; c && ret; c = next) {
 		next = view_selections_next(c);
 		size_t pos = view_cursors_pos(c);
 		if (vis->mode->visual) {
@@ -1486,7 +1486,7 @@ static bool cmd_select(Vis *vis, Win *win, Command *cmd, const char *argv[], Cur
 	}
 
 	if (vis->win && vis->win->view == view && primary != view_selections_primary_get(view))
-		view_selections_primary_set(view_cursors(view));
+		view_selections_primary_set(view_selections(view));
 	return ret;
 }
 
@@ -1562,7 +1562,7 @@ static bool cmd_write(Vis *vis, Win *win, Command *cmd, const char *argv[], Curs
 
 		bool visual = vis->mode->visual;
 
-		for (Cursor *c = view_cursors(win->view); c; c = view_selections_next(c)) {
+		for (Cursor *c = view_selections(win->view); c; c = view_selections_next(c)) {
 			Filerange range = visual ? view_selections_get(c) : *r;
 			ssize_t written = text_write_range(text, &range, file->fd);
 			if (written == -1 || (size_t)written != text_range_size(&range)) {
@@ -1614,7 +1614,7 @@ static bool cmd_write(Vis *vis, Win *win, Command *cmd, const char *argv[], Curs
 		bool failure = false;
 		bool visual = vis->mode->visual;
 
-		for (Cursor *c = view_cursors(win->view); c; c = view_selections_next(c)) {
+		for (Cursor *c = view_selections(win->view); c; c = view_selections_next(c)) {
 			Filerange range = visual ? view_selections_get(c) : *r;
 			ssize_t written = text_save_write_range(ctx, &range);
 			failure = (written == -1 || (size_t)written != text_range_size(&range));

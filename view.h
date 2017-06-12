@@ -146,7 +146,7 @@ void view_selections_dispose_all(View*);
 Cursor *view_selections_primary_get(View*);
 void view_selections_primary_set(Cursor*);
 /** Get first selection. */
-Cursor *view_cursors(View*);
+Cursor *view_selections(View*);
 /** Get immediate predecessor of selection. */
 Cursor *view_selections_prev(Cursor*);
 /** Get immediate successor of selection. */

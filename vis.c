@@ -247,11 +247,11 @@ void vis_window_status(Win *win, const char *status) {
 void window_selection_save(Win *win) {
 	Vis *vis = win->vis;
 	File *file = win->file;
-	Filerange sel = view_selections_get(view_cursors(win->view));
+	Filerange sel = view_selections_get(view_selections(win->view));
 	file->marks[VIS_MARK_SELECTION_START] = text_mark_set(file->text, sel.start);
 	file->marks[VIS_MARK_SELECTION_END] = text_mark_set(file->text, sel.end);
 	if (!vis->action.op) {
-		for (Selection *s = view_cursors(win->view); s; s = view_selections_next(s))
+		for (Selection *s = view_selections(win->view); s; s = view_selections_next(s))
 			view_selections_save(s);
 	}
 }
@@ -754,7 +754,7 @@ void vis_insert(Vis *vis, size_t pos, const char *data, size_t len) {
 }
 
 void vis_insert_key(Vis *vis, const char *data, size_t len) {
-	for (Cursor *c = view_cursors(vis->win->view); c; c = view_selections_next(c)) {
+	for (Cursor *c = view_selections(vis->win->view); c; c = view_selections_next(c)) {
 		size_t pos = view_cursors_pos(c);
 		vis_insert(vis, pos, data, len);
 		view_cursors_scroll_to(c, pos + len);
@@ -773,7 +773,7 @@ void vis_replace(Vis *vis, size_t pos, const char *data, size_t len) {
 }
 
 void vis_replace_key(Vis *vis, const char *data, size_t len) {
-	for (Cursor *c = view_cursors(vis->win->view); c; c = view_selections_next(c)) {
+	for (Cursor *c = view_selections(vis->win->view); c; c = view_selections_next(c)) {
 		size_t pos = view_cursors_pos(c);
 		vis_replace(vis, pos, data, len);
 		view_cursors_scroll_to(c, pos + len);
@@ -844,7 +844,7 @@ void vis_do(Vis *vis) {
 	if (a->op == &vis_operators[VIS_OP_PUT_AFTER] && multiple_cursors && vis_register_count(vis, reg) == 1)
 		reg_slot = 0;
 
-	for (Cursor *cursor = view_cursors(view), *next; cursor; cursor = next) {
+	for (Cursor *cursor = view_selections(view), *next; cursor; cursor = next) {
 		if (vis->interrupted)
 			break;
 
@@ -1578,7 +1578,7 @@ void vis_insert_tab(Vis *vis) {
 	}
 	char spaces[9];
 	int tabwidth = MIN(vis->tabwidth, LENGTH(spaces) - 1);
-	for (Cursor *c = view_cursors(vis->win->view); c; c = view_selections_next(c)) {
+	for (Cursor *c = view_selections(vis->win->view); c; c = view_selections_next(c)) {
 		size_t pos = view_cursors_pos(c);
 		int width = text_line_width_get(vis->win->file->text, pos);
 		int count = tabwidth - (width % tabwidth);
@@ -1633,7 +1633,7 @@ void vis_insert_nl(Vis *vis) {
 	Win *win = vis->win;
 	View *view = win->view;
 	Text *txt = win->file->text;
-	for (Cursor *c = view_cursors(view); c; c = view_selections_next(c)) {
+	for (Cursor *c = view_selections(view); c; c = view_selections_next(c)) {
 		size_t pos = view_cursors_pos(c);
 		size_t newpos = vis_text_insert_nl(vis, txt, pos);
 		/* This is a bit of a hack to fix cursor positioning when

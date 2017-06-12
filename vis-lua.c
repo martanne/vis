@@ -1607,7 +1607,7 @@ static int window_cursors_iterator_next(lua_State *L) {
 static int window_cursors_iterator(lua_State *L) {
 	Win *win = obj_ref_check(L, 1, VIS_LUA_TYPE_WINDOW);
 	Cursor **handle = lua_newuserdata(L, sizeof *handle);
-	*handle = view_cursors(win->view);
+	*handle = view_selections(win->view);
 	lua_pushcclosure(L, window_cursors_iterator_next, 1);
 	return 1;
 }
@@ -1730,7 +1730,7 @@ static int window_cursors_index(lua_State *L) {
 	size_t count = view_selections_count(view);
 	if (index == 0 || index > count)
 		goto err;
-	for (Cursor *c = view_cursors(view); c; c = view_selections_next(c)) {
+	for (Cursor *c = view_selections(view); c; c = view_selections_next(c)) {
 		if (!--index) {
 			obj_lightref_new(L, c, VIS_LUA_TYPE_CURSOR);
 			return 1;
