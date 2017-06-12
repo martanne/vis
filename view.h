@@ -143,8 +143,8 @@ void view_selections_dispose_all(View*);
  * @defgroup view_navigate
  * @{
  */
-Cursor *view_cursors_primary_get(View*);
-void view_cursors_primary_set(Cursor*);
+Cursor *view_selections_primary_get(View*);
+void view_selections_primary_set(Cursor*);
 /** Get first selection. */
 Cursor *view_cursors(View*);
 /** Get immediate predecessor of selection. */

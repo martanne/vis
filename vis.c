@@ -316,7 +316,7 @@ static void window_draw_cursorline(Win *win) {
 	
 	int width = view_width_get(view);
 	CellStyle style = win->ui->style_get(win->ui, UI_STYLE_CURSOR_LINE);
-	Cursor *cursor = view_cursors_primary_get(view);
+	Cursor *cursor = view_selections_primary_get(view);
 	size_t lineno = view_cursors_line_get(cursor)->lineno;
 	for (Line *l = view_lines_first(view); l; l = l->next) {
 		if (l->lineno == lineno) {
@@ -399,7 +399,7 @@ static void window_draw_cursors(Win *win) {
 	View *view = win->view;
 	Filerange viewport = view_viewport_get(view);
 	bool multiple_cursors = view_cursors_count(view) > 1;
-	Cursor *cursor = view_cursors_primary_get(view);
+	Cursor *cursor = view_selections_primary_get(view);
 	CellStyle style_cursor = win->ui->style_get(win->ui, UI_STYLE_CURSOR);
 	CellStyle style_cursor_primary = win->ui->style_get(win->ui, UI_STYLE_CURSOR_PRIMARY);
 	CellStyle style_selection = win->ui->style_get(win->ui, UI_STYLE_SELECTION);

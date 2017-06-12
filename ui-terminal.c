@@ -247,7 +247,7 @@ static void ui_window_draw(UiWin *w) {
 	vis_window_draw(win->win);
 	line = view_lines_first(view);
 	size_t prev_lineno = 0;
-	Cursor *cursor = view_cursors_primary_get(view);
+	Cursor *cursor = view_selections_primary_get(view);
 	const Line *cursor_line = view_cursors_line_get(cursor);
 	size_t cursor_lineno = cursor_line->lineno;
 	char buf[sidebar_width+1];

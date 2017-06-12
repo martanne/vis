@@ -1248,7 +1248,7 @@ static const char *cursors_new(Vis *vis, const char *keys, const Arg *arg) {
 		switch (arg->i) {
 		case -1:
 		case +1:
-			cursor = view_cursors_primary_get(view);
+			cursor = view_selections_primary_get(view);
 			break;
 		case INT_MIN:
 			cursor = view_cursors(view);
@@ -1275,7 +1275,7 @@ static const char *cursors_new(Vis *vis, const char *keys, const Arg *arg) {
 				cursor_new = view_cursors_next(cursor);
 		}
 		if (cursor_new)
-			view_cursors_primary_set(cursor_new);
+			view_selections_primary_set(cursor_new);
 	}
 	vis_count_set(vis, VIS_COUNT_UNKNOWN);
 	return keys;
@@ -1348,7 +1348,7 @@ static const char *cursors_clear(Vis *vis, const char *keys, const Arg *arg) {
 	if (view_cursors_count(view) > 1)
 		view_selections_dispose_all(view);
 	else
-		view_cursors_selection_clear(view_cursors_primary_get(view));
+		view_cursors_selection_clear(view_selections_primary_get(view));
 	return keys;
 }
 
@@ -1367,7 +1367,7 @@ static const char *cursors_select(Vis *vis, const char *keys, const Arg *arg) {
 static const char *cursors_select_next(Vis *vis, const char *keys, const Arg *arg) {
 	Text *txt = vis_text(vis);
 	View *view = vis_view(vis);
-	Cursor *cursor = view_cursors_primary_get(view);
+	Cursor *cursor = view_selections_primary_get(view);
 	Filerange sel = view_cursors_selection_get(cursor);
 	if (!text_range_valid(&sel))
 		return keys;
@@ -1380,7 +1380,7 @@ static const char *cursors_select_next(Vis *vis, const char *keys, const Arg *ar
 		size_t pos = text_char_prev(txt, word.end);
 		if ((cursor = view_selections_new(view, pos))) {
 			view_cursors_selection_set(cursor, &word);
-			view_cursors_primary_set(cursor);
+			view_selections_primary_set(cursor);
 			goto out;
 		}
 	}
@@ -1392,7 +1392,7 @@ static const char *cursors_select_next(Vis *vis, const char *keys, const Arg *ar
 	size_t pos = text_char_prev(txt, word.end);
 	if ((cursor = view_selections_new(view, pos))) {
 		view_cursors_selection_set(cursor, &word);
-		view_cursors_primary_set(cursor);
+		view_selections_primary_set(cursor);
 	}
 
 out:
@@ -1402,16 +1402,16 @@ out:
 
 static const char *cursors_select_skip(Vis *vis, const char *keys, const Arg *arg) {
 	View *view = vis_view(vis);
-	Cursor *cursor = view_cursors_primary_get(view);
+	Cursor *cursor = view_selections_primary_get(view);
 	keys = cursors_select_next(vis, keys, arg);
-	if (cursor != view_cursors_primary_get(view))
+	if (cursor != view_selections_primary_get(view))
 		view_selections_dispose(cursor);
 	return keys;
 }
 
 static const char *cursors_remove(Vis *vis, const char *keys, const Arg *arg) {
 	View *view = vis_view(vis);
-	view_selections_dispose(view_cursors_primary_get(view));
+	view_selections_dispose(view_selections_primary_get(view));
 	view_cursor_to(view, view_cursor_get(view));
 	return keys;
 }
@@ -1465,7 +1465,7 @@ static const char *cursors_navigate(Vis *vis, const char *keys, const Arg *arg) 
 	View *view = vis_view(vis);
 	if (view_cursors_count(view) == 1)
 		return wscroll(vis, keys, arg);
-	Cursor *c = view_cursors_primary_get(view);
+	Cursor *c = view_selections_primary_get(view);
 	VisCountIterator it = vis_count_iterator_get(vis, 1);
 	while (vis_count_iterator_next(&it)) {
 		if (arg->i > 0) {
@@ -1481,7 +1481,7 @@ static const char *cursors_navigate(Vis *vis, const char *keys, const Arg *arg) 
 			}
 		}
 	}
-	view_cursors_primary_set(c);
+	view_selections_primary_set(c);
 	vis_count_set(vis, VIS_COUNT_UNKNOWN);
 	return keys;
 }

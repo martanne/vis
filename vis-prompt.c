@@ -169,7 +169,7 @@ void vis_prompt_show(Vis *vis, const char *title) {
 		window_selection_save(active);
 	Text *txt = prompt->file->text;
 	text_appendf(txt, "%s\n", title);
-	Cursor *cursor = view_cursors_primary_get(prompt->view);
+	Cursor *cursor = view_selections_primary_get(prompt->view);
 	view_cursors_scroll_to(cursor, text_size(txt)-1);
 	prompt->parent = active;
 	prompt->parent_mode = vis->mode;

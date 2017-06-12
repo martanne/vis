@@ -81,7 +81,7 @@ static void window_status_update(Vis *vis, Win *win) {
 
 	int cursor_count = view_cursors_count(view);
 	if (cursor_count > 1) {
-		Cursor *c = view_cursors_primary_get(view);
+		Cursor *c = view_selections_primary_get(view);
 		int cursor_number = view_cursors_number(c) + 1;
 		snprintf(right_parts[right_count], sizeof(right_parts[right_count])-1,
 		         "%d/%d", cursor_number, cursor_count);
@@ -100,7 +100,7 @@ static void window_status_update(Vis *vis, Win *win) {
 	right_count++;
 
 	if (!(options & UI_OPTION_LARGE_FILE)) {
-		Cursor *cur = view_cursors_primary_get(win->view);
+		Cursor *cur = view_selections_primary_get(win->view);
 		size_t line = view_cursors_line(cur);
 		size_t col = view_cursors_col(cur);
 		if (col > UI_LARGE_FILE_LINE_SIZE) {
@@ -1206,7 +1206,7 @@ static bool command_lua(Vis *vis, Win *win, void *data, bool force, const char *
 	if (!obj_ref_new(L, win, VIS_LUA_TYPE_WINDOW))
 		return false;
 	if (!cur)
-		cur = view_cursors_primary_get(win->view);
+		cur = view_selections_primary_get(win->view);
 	if (!obj_lightref_new(L, cur, VIS_LUA_TYPE_CURSOR))
 		return false;
 	pushrange(L, range);
@@ -1574,7 +1574,7 @@ static int window_index(lua_State *L) {
 		}
 
 		if (strcmp(key, "cursor") == 0) {
-			Cursor *cur = view_cursors_primary_get(win->view);
+			Cursor *cur = view_selections_primary_get(win->view);
 			obj_lightref_new(L, cur, VIS_LUA_TYPE_CURSOR);
 			return 1;
 		}

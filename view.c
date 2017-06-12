@@ -1026,7 +1026,7 @@ bool view_selections_dispose(Cursor *c) {
 	if (!view->cursors || !view->cursors->next)
 		return false;
 	view_cursors_free(c);
-	view_cursors_primary_set(view->cursor);
+	view_selections_primary_set(view->cursor);
 	return true;
 }
 
@@ -1052,12 +1052,12 @@ Cursor *view_cursors(View *view) {
 	return view->cursors;
 }
 
-Cursor *view_cursors_primary_get(View *view) {
+Cursor *view_selections_primary_get(View *view) {
 	view->cursor_generation++;
 	return view->cursor;
 }
 
-void view_cursors_primary_set(Cursor *c) {
+void view_selections_primary_set(Cursor *c) {
 	if (!c)
 		return;
 	c->view->cursor = c;

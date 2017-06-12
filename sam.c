@@ -1236,7 +1236,7 @@ enum SamError sam_cmd(Vis *vis, const char *s) {
 	if (vis->win) {
 		if (primary_pos != EPOS && view_selection_disposed(vis->win->view))
 			view_cursor_to(vis->win->view, primary_pos);
-		view_cursors_primary_set(view_cursors(vis->win->view));
+		view_selections_primary_set(view_cursors(vis->win->view));
 		bool completed = true;
 		for (Cursor *c = view_cursors(vis->win->view); c; c = view_cursors_next(c)) {
 			if (view_selection_anchored(c)) {
@@ -1438,7 +1438,7 @@ static bool cmd_select(Vis *vis, Win *win, Command *cmd, const char *argv[], Cur
 	View *view = win->view;
 	Text *txt = win->file->text;
 	bool multiple_cursors = view_cursors_count(view) > 1;
-	Cursor *primary = view_cursors_primary_get(view);
+	Cursor *primary = view_selections_primary_get(view);
 
 	if (vis->mode->visual)
 		count_init(cmd->cmd, view_cursors_count(view)+1);
@@ -1485,8 +1485,8 @@ static bool cmd_select(Vis *vis, Win *win, Command *cmd, const char *argv[], Cur
 			break;
 	}
 
-	if (vis->win && vis->win->view == view && primary != view_cursors_primary_get(view))
-		view_cursors_primary_set(view_cursors(view));
+	if (vis->win && vis->win->view == view && primary != view_selections_primary_get(view))
+		view_selections_primary_set(view_cursors(view));
 	return ret;
 }
 
