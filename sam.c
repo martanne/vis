@@ -1239,7 +1239,7 @@ enum SamError sam_cmd(Vis *vis, const char *s) {
 		view_selections_primary_set(view_cursors(vis->win->view));
 		bool completed = true;
 		for (Cursor *c = view_cursors(vis->win->view); c; c = view_selections_next(c)) {
-			if (view_selection_anchored(c)) {
+			if (view_selections_anchored(c)) {
 				completed = false;
 				break;
 			}

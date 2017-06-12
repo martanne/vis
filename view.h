@@ -215,7 +215,7 @@ void view_selections_flip(Cursor*);
  */
 void view_selections_anchor(Cursor*);
 /** Check whether selection is anchored. */
-bool view_selection_anchored(Cursor*);
+bool view_selections_anchored(Cursor*);
 /** Get position of selection cursor. */
 /**
  * @}

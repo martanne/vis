@@ -1178,7 +1178,7 @@ void view_selections_flip(Cursor *s) {
 	view_cursors_to(s, text_mark_get(s->view->text, s->cursor));
 }
 
-bool view_selection_anchored(Selection *s) {
+bool view_selections_anchored(Selection *s) {
 	return s->anchored;
 }
 
