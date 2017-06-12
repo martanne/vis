@@ -945,7 +945,7 @@ int view_selections_number(Cursor *c) {
 	return c->number;
 }
 
-int view_cursors_column_count(View *view) {
+int view_selections_column_count(View *view) {
 	Text *txt = view->text;
 	int cpl_max = 0, cpl = 0; /* cursors per line */
 	size_t line_prev = 0;
@@ -994,7 +994,7 @@ Cursor *view_cursors_column(View *view, int column) {
 	return cursors_column_next(view, NULL, column);
 }
 
-Cursor *view_cursors_column_next(Cursor *c, int column) {
+Cursor *view_selections_column_next(Cursor *c, int column) {
 	return cursors_column_next(c->view, c, column);
 }
 

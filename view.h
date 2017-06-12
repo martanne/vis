@@ -168,7 +168,7 @@ int view_selections_count(View*);
  */
 int view_selections_number(Cursor*);
 /** Get maximal number of selections on a single line. */
-int view_cursors_column_count(View*);
+int view_selections_column_count(View*);
 /**
  * Starting from the start of the text, get the `column`-th selection on a line.
  * @param column The zero based column index.
@@ -178,7 +178,7 @@ Cursor *view_cursors_column(View*, int column);
  * Get the next `column`-th selection on a line.
  * @param column The zero based column index.
  */
-Cursor *view_cursors_column_next(Cursor*, int column);
+Cursor *view_selections_column_next(Cursor*, int column);
 /**
  * @}
  * @defgroup view_cover

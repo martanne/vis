@@ -1304,11 +1304,11 @@ static const char *cursors_align_indent(Vis *vis, const char *keys, const Arg *a
 	View *view = vis_view(vis);
 	Text *txt = vis_text(vis);
 	bool left_align = arg->i < 0;
-	int columns = view_cursors_column_count(view);
+	int columns = view_selections_column_count(view);
 
 	for (int i = 0; i < columns; i++) {
 		int mincol = INT_MAX, maxcol = 0;
-		for (Cursor *c = view_cursors_column(view, i); c; c = view_cursors_column_next(c, i)) {
+		for (Cursor *c = view_cursors_column(view, i); c; c = view_selections_column_next(c, i)) {
 			Filerange sel = view_selections_get(c);
 			size_t pos = left_align ? sel.start : sel.end;
 			int col = text_line_width_get(txt, pos);
@@ -1324,7 +1324,7 @@ static const char *cursors_align_indent(Vis *vis, const char *keys, const Arg *a
 			return keys;
 		memset(buf, ' ', len);
 
-		for (Cursor *c = view_cursors_column(view, i); c; c = view_cursors_column_next(c, i)) {
+		for (Cursor *c = view_cursors_column(view, i); c; c = view_selections_column_next(c, i)) {
 			Filerange sel = view_selections_get(c);
 			size_t pos = left_align ? sel.start : sel.end;
 			size_t ipos = sel.start;
@@ -1418,7 +1418,7 @@ static const char *cursors_remove(Vis *vis, const char *keys, const Arg *arg) {
 
 static const char *cursors_remove_column(Vis *vis, const char *keys, const Arg *arg) {
 	View *view = vis_view(vis);
-	int max = view_cursors_column_count(view);
+	int max = view_selections_column_count(view);
 	int column = vis_count_get_default(vis, arg->i) - 1;
 	if (column >= max)
 		column = max - 1;
@@ -1428,7 +1428,7 @@ static const char *cursors_remove_column(Vis *vis, const char *keys, const Arg *
 	}
 
 	for (Cursor *c = view_cursors_column(view, column), *next; c; c = next) {
-		next = view_cursors_column_next(c, column);
+		next = view_selections_column_next(c, column);
 		view_selections_dispose(c);
 	}
 
@@ -1438,7 +1438,7 @@ static const char *cursors_remove_column(Vis *vis, const char *keys, const Arg *
 
 static const char *cursors_remove_column_except(Vis *vis, const char *keys, const Arg *arg) {
 	View *view = vis_view(vis);
-	int max = view_cursors_column_count(view);
+	int max = view_selections_column_count(view);
 	int column = vis_count_get_default(vis, arg->i) - 1;
 	if (column >= max)
 		column = max - 1;
@@ -1452,7 +1452,7 @@ static const char *cursors_remove_column_except(Vis *vis, const char *keys, cons
 	for (Cursor *next; cur; cur = next) {
 		next = view_selections_next(cur);
 		if (cur == col)
-			col = view_cursors_column_next(col, column);
+			col = view_selections_column_next(col, column);
 		else
 			view_selections_dispose(cur);
 	}
@@ -1497,7 +1497,7 @@ static const char *selections_rotate(Vis *vis, const char *keys, const Arg *arg)
 	Array arr;
 	Text *txt = vis_text(vis);
 	View *view = vis_view(vis);
-	int columns = view_cursors_column_count(view);
+	int columns = view_selections_column_count(view);
 	int selections = columns == 1 ? view_selections_count(view) : columns;
 	int count = vis_count_get_default(vis, 1);
 	array_init_sized(&arr, sizeof(Rotate));
