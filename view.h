@@ -222,8 +222,6 @@ bool view_selection_anchored(Cursor*);
  * @defgroup view_props
  * @{
  */
-/** TODO remove */
-bool view_cursors_multiple(View*);
 /** Get position of selection cursor. */
 size_t view_cursors_pos(Cursor*);
 /** Get 1-based line number of selection cursor. */

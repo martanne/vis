@@ -1437,7 +1437,7 @@ static bool cmd_select(Vis *vis, Win *win, Command *cmd, const char *argv[], Cur
 	bool ret = true;
 	View *view = win->view;
 	Text *txt = win->file->text;
-	bool multiple_cursors = view_cursors_multiple(view);
+	bool multiple_cursors = view_cursors_count(view) > 1;
 	Cursor *primary = view_cursors_primary_get(view);
 
 	if (vis->mode->visual)
