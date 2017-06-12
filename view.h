@@ -166,7 +166,7 @@ int view_selections_count(View*);
  *             to remain the same.
  * @endrst
  */
-int view_cursors_number(Cursor*);
+int view_selections_number(Cursor*);
 /** Get maximal number of selections on a single line. */
 int view_cursors_column_count(View*);
 /**

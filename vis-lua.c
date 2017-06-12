@@ -82,7 +82,7 @@ static void window_status_update(Vis *vis, Win *win) {
 	int cursor_count = view_selections_count(view);
 	if (cursor_count > 1) {
 		Cursor *c = view_selections_primary_get(view);
-		int cursor_number = view_cursors_number(c) + 1;
+		int cursor_number = view_selections_number(c) + 1;
 		snprintf(right_parts[right_count], sizeof(right_parts[right_count])-1,
 		         "%d/%d", cursor_number, cursor_count);
 		right_count++;
@@ -1859,7 +1859,7 @@ static int window_cursor_index(lua_State *L) {
 		}
 
 		if (strcmp(key, "number") == 0) {
-			lua_pushunsigned(L, view_cursors_number(cur)+1);
+			lua_pushunsigned(L, view_selections_number(cur)+1);
 			return 1;
 		}
 

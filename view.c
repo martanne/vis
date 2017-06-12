@@ -941,7 +941,7 @@ int view_selections_count(View *view) {
 	return view->cursor_count;
 }
 
-int view_cursors_number(Cursor *c) {
+int view_selections_number(Cursor *c) {
 	return c->number;
 }
 

@@ -863,7 +863,7 @@ void vis_do(Vis *vis) {
 			.newpos = EPOS,
 			.range = text_range_empty(),
 			.reg = reg,
-			.reg_slot = reg_slot == EPOS ? (size_t)view_cursors_number(cursor) : reg_slot,
+			.reg_slot = reg_slot == EPOS ? (size_t)view_selections_number(cursor) : reg_slot,
 			.linewise = linewise,
 			.arg = &a->arg,
 			.context = a->op ? a->op->context : NULL,
