@@ -186,14 +186,14 @@ static void vis_mode_operator_input(Vis *vis, const char *str, size_t len) {
 static void vis_mode_visual_enter(Vis *vis, Mode *old) {
 	if (!old->visual) {
 		for (Cursor *c = view_cursors(vis->win->view); c; c = view_cursors_next(c))
-			view_cursors_selection_start(c);
+			view_selections_anchor(c);
 	}
 }
 
 static void vis_mode_visual_line_enter(Vis *vis, Mode *old) {
 	if (!old->visual) {
 		for (Cursor *c = view_cursors(vis->win->view); c; c = view_cursors_next(c))
-			view_cursors_selection_start(c);
+			view_selections_anchor(c);
 	}
 	if (!vis->action.op)
 		vis_motion(vis, VIS_MOVE_NOP);

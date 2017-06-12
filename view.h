@@ -213,7 +213,7 @@ void view_selections_flip(Cursor*);
  * Anchor selection.
  * Further updates will only update the cursor, the anchor will remain fixed.
  */
-void view_cursors_selection_start(Cursor*);
+void view_selections_anchor(Cursor*);
 /** Check whether selection is anchored. */
 bool view_selection_anchored(Cursor*);
 /** Get position of selection cursor. */
