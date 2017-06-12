@@ -1073,7 +1073,7 @@ Cursor *view_selections_prev(Cursor *c) {
 	return NULL;
 }
 
-Cursor *view_cursors_next(Cursor *c) {
+Cursor *view_selections_next(Cursor *c) {
 	View *view = c->view;
 	for (c = c->next; c; c = c->next) {
 		if (c->generation != view->cursor_generation)

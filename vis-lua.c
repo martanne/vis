@@ -1595,7 +1595,7 @@ static int window_cursors_iterator_next(lua_State *L) {
 	Cursor *cur = obj_lightref_new(L, *handle, VIS_LUA_TYPE_CURSOR);
 	if (!cur)
 		return 0;
-	*handle = view_cursors_next(cur);
+	*handle = view_selections_next(cur);
 	return 1;
 }
 
@@ -1730,7 +1730,7 @@ static int window_cursors_index(lua_State *L) {
 	size_t count = view_cursors_count(view);
 	if (index == 0 || index > count)
 		goto err;
-	for (Cursor *c = view_cursors(view); c; c = view_cursors_next(c)) {
+	for (Cursor *c = view_cursors(view); c; c = view_selections_next(c)) {
 		if (!--index) {
 			obj_lightref_new(L, c, VIS_LUA_TYPE_CURSOR);
 			return 1;

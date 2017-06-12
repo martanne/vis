@@ -1254,7 +1254,7 @@ static const char *cursors_new(Vis *vis, const char *keys, const Arg *arg) {
 			cursor = view_cursors(view);
 			break;
 		case INT_MAX:
-			for (Cursor *c = view_cursors(view); c; c = view_cursors_next(c))
+			for (Cursor *c = view_cursors(view); c; c = view_selections_next(c))
 				cursor = c;
 			break;
 		default:
@@ -1272,7 +1272,7 @@ static const char *cursors_new(Vis *vis, const char *keys, const Arg *arg) {
 			if (arg->i == -1)
 				cursor_new = view_selections_prev(cursor);
 			else if (arg->i == +1)
-				cursor_new = view_cursors_next(cursor);
+				cursor_new = view_selections_next(cursor);
 		}
 		if (cursor_new)
 			view_selections_primary_set(cursor_new);
@@ -1285,12 +1285,12 @@ static const char *cursors_align(Vis *vis, const char *keys, const Arg *arg) {
 	View *view = vis_view(vis);
 	Text *txt = vis_text(vis);
 	int mincol = INT_MAX;
-	for (Cursor *c = view_cursors(view); c; c = view_cursors_next(c)) {
+	for (Cursor *c = view_cursors(view); c; c = view_selections_next(c)) {
 		int col = view_cursors_cell_get(c);
 		if (col >= 0 && col < mincol)
 			mincol = col;
 	}
-	for (Cursor *c = view_cursors(view); c; c = view_cursors_next(c)) {
+	for (Cursor *c = view_cursors(view); c; c = view_selections_next(c)) {
 		if (view_cursors_cell_set(c, mincol) == -1) {
 			size_t pos = view_cursors_pos(c);
 			size_t col = text_line_width_set(txt, pos, mincol);
@@ -1355,7 +1355,7 @@ static const char *cursors_clear(Vis *vis, const char *keys, const Arg *arg) {
 static const char *cursors_select(Vis *vis, const char *keys, const Arg *arg) {
 	Text *txt = vis_text(vis);
 	View *view = vis_view(vis);
-	for (Cursor *cursor = view_cursors(view); cursor; cursor = view_cursors_next(cursor)) {
+	for (Cursor *cursor = view_cursors(view); cursor; cursor = view_selections_next(cursor)) {
 		Filerange word = text_object_word(txt, view_cursors_pos(cursor));
 		if (text_range_valid(&word))
 			view_selections_set(cursor, &word);
@@ -1450,7 +1450,7 @@ static const char *cursors_remove_column_except(Vis *vis, const char *keys, cons
 	Cursor *cur = view_cursors(view);
 	Cursor *col = view_cursors_column(view, column);
 	for (Cursor *next; cur; cur = next) {
-		next = view_cursors_next(cur);
+		next = view_selections_next(cur);
 		if (cur == col)
 			col = view_cursors_column_next(col, column);
 		else
@@ -1469,14 +1469,14 @@ static const char *cursors_navigate(Vis *vis, const char *keys, const Arg *arg) 
 	VisCountIterator it = vis_count_iterator_get(vis, 1);
 	while (vis_count_iterator_next(&it)) {
 		if (arg->i > 0) {
-			c = view_cursors_next(c);
+			c = view_selections_next(c);
 			if (!c)
 				c = view_cursors(view);
 		} else {
 			c = view_selections_prev(c);
 			if (!c) {
 				c = view_cursors(view);
-				for (Cursor *n = c; n; n = view_cursors_next(n))
+				for (Cursor *n = c; n; n = view_selections_next(n))
 					c = n;
 			}
 		}
@@ -1506,7 +1506,7 @@ static const char *selections_rotate(Vis *vis, const char *keys, const Arg *arg)
 	size_t line = 0;
 
 	for (Cursor *c = view_cursors(view), *next; c; c = next) {
-		next = view_cursors_next(c);
+		next = view_selections_next(c);
 		size_t line_next = 0;
 
 		Filerange sel = view_selections_get(c);
@@ -1557,7 +1557,7 @@ static const char *selections_trim(Vis *vis, const char *keys, const Arg *arg) {
 	Text *txt = vis_text(vis);
 	View *view = vis_view(vis);
 	for (Cursor *c = view_cursors(view), *next; c; c = next) {
-		next = view_cursors_next(c);
+		next = view_selections_next(c);
 		Filerange sel = view_selections_get(c);
 		if (!text_range_valid(&sel))
 			continue;
@@ -1660,7 +1660,7 @@ static const char *textobj(Vis *vis, const char *keys, const Arg *arg) {
 }
 
 static const char *selection_end(Vis *vis, const char *keys, const Arg *arg) {
-	for (Cursor *c = view_cursors(vis_view(vis)); c; c = view_cursors_next(c))
+	for (Cursor *c = view_cursors(vis_view(vis)); c; c = view_selections_next(c))
 		view_selections_flip(c);
 	return keys;
 }
@@ -1668,7 +1668,7 @@ static const char *selection_end(Vis *vis, const char *keys, const Arg *arg) {
 static const char *selection_restore(Vis *vis, const char *keys, const Arg *arg) {
 	Text *txt = vis_text(vis);
 	View *view = vis_view(vis);
-	for (Cursor *c = view_cursors(view); c; c = view_cursors_next(c))
+	for (Cursor *c = view_cursors(view); c; c = view_selections_next(c))
 		view_selections_restore(c);
 	Filerange sel = view_selection_get(view);
 	if (text_range_is_linewise(txt, &sel))

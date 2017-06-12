@@ -150,7 +150,7 @@ Cursor *view_cursors(View*);
 /** Get immediate predecessor of selection. */
 Cursor *view_selections_prev(Cursor*);
 /** Get immediate successor of selection. */
-Cursor *view_cursors_next(Cursor*);
+Cursor *view_selections_next(Cursor*);
 /**
  * Get number of existing selections.
  * @rst

@@ -145,7 +145,7 @@ static void vis_mode_normal_enter(Vis *vis, Mode *old) {
 		return;
 	if (vis->autoindent && strcmp(vis->key_prev, "<Enter>") == 0) {
 		Text *txt = vis->win->file->text;
-		for (Cursor *c = view_cursors(vis->win->view); c; c = view_cursors_next(c)) {
+		for (Cursor *c = view_cursors(vis->win->view); c; c = view_selections_next(c)) {
 			size_t pos = view_cursors_pos(c);
 			size_t start = text_line_start(txt, pos);
 			size_t end = text_line_end(txt, pos);
@@ -185,14 +185,14 @@ static void vis_mode_operator_input(Vis *vis, const char *str, size_t len) {
 
 static void vis_mode_visual_enter(Vis *vis, Mode *old) {
 	if (!old->visual) {
-		for (Cursor *c = view_cursors(vis->win->view); c; c = view_cursors_next(c))
+		for (Cursor *c = view_cursors(vis->win->view); c; c = view_selections_next(c))
 			view_selections_anchor(c);
 	}
 }
 
 static void vis_mode_visual_line_enter(Vis *vis, Mode *old) {
 	if (!old->visual) {
-		for (Cursor *c = view_cursors(vis->win->view); c; c = view_cursors_next(c))
+		for (Cursor *c = view_cursors(vis->win->view); c; c = view_selections_next(c))
 			view_selections_anchor(c);
 	}
 	if (!vis->action.op)
