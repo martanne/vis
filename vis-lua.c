@@ -1887,10 +1887,12 @@ static int window_cursor_newindex(lua_State *L) {
 
 		if (strcmp(key, "selection") == 0) {
 			Filerange range = getrange(L, 3);
-			if (text_range_valid(&range))
+			if (text_range_valid(&range)) {
 				view_selections_set(sel, &range);
-			else
+				view_selections_anchor(sel);
+			} else {
 				view_selection_clear(sel);
+			}
 			return 0;
 		}
 	}

@@ -971,8 +971,10 @@ void vis_do(Vis *vis) {
 
 		if (linewise && vis->mode != &vis_modes[VIS_MODE_VISUAL])
 			c.range = text_range_linewise(txt, &c.range);
-		if (vis->mode->visual)
+		if (vis->mode->visual) {
 			view_selections_set(sel, &c.range);
+			view_selections_anchor(sel);
+		}
 
 		if (a->op) {
 			size_t pos = a->op->func(vis, txt, &c);

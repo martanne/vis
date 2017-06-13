@@ -1380,6 +1380,7 @@ static const char *cursors_select_next(Vis *vis, const char *keys, const Arg *ar
 		size_t pos = text_char_prev(txt, word.end);
 		if ((s = view_selections_new(view, pos))) {
 			view_selections_set(s, &word);
+			view_selections_anchor(s);
 			view_selections_primary_set(s);
 			goto out;
 		}
@@ -1392,6 +1393,7 @@ static const char *cursors_select_next(Vis *vis, const char *keys, const Arg *ar
 	size_t pos = text_char_prev(txt, word.end);
 	if ((s = view_selections_new(view, pos))) {
 		view_selections_set(s, &word);
+		view_selections_anchor(s);
 		view_selections_primary_set(s);
 	}
 

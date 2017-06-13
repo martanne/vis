@@ -1227,7 +1227,6 @@ void view_selections_set(Selection *s, const Filerange *r) {
 		s->anchor = text_mark_set(txt, r->start);
 		s->cursor = text_mark_set(txt, end);
 	}
-	s->anchored = true;
 	view_cursors_to(s, text_mark_get(s->view->text, s->cursor));
 }
 
