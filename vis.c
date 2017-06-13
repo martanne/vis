@@ -984,9 +984,13 @@ void vis_do(Vis *vis) {
 				if (vis->mode->visual)
 					view_selections_save(sel);
 				view_cursors_to(sel, pos);
+				if (vis->mode->visual)
+					view_selection_clear(sel);
 			}
 		}
 	}
+
+	view_selections_normalize(view);
 
 	if (a->op) {
 
