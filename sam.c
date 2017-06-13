@@ -1494,23 +1494,18 @@ static bool cmd_print(Vis *vis, Win *win, Command *cmd, const char *argv[], Sele
 	if (!win || !text_range_valid(range))
 		return false;
 	View *view = win->view;
-	Text *txt = win->file->text;
-	size_t pos = range->end;
-	if (range->start != range->end)
-		pos = text_char_prev(txt, pos);
-	if (sel)
-		view_cursors_to(sel, pos);
-	else
-		sel = view_selections_new_force(view, pos);
-	if (sel) {
-		if (range->start != range->end) {
-			view_selections_set(sel, range);
-			view_selections_anchor(sel);
-		} else {
-			view_selection_clear(sel);
-		}
+	if (!sel)
+		sel = view_selections_new_force(view, range->start);
+	if (!sel)
+		return false;
+	if (range->start != range->end) {
+		view_selections_set(sel, range);
+		view_selections_anchor(sel);
+	} else {
+		view_cursors_to(sel, range->start);
+		view_selection_clear(sel);
 	}
-	return sel != NULL;
+	return true;
 }
 
 static bool cmd_files(Vis *vis, Win *win, Command *cmd, const char *argv[], Selection *sel, Filerange *range) {
