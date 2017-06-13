@@ -137,6 +137,8 @@ bool view_selections_dispose_force(Selection*);
 Selection *view_selection_disposed(View*);
 /** Dispose all but the primary selection. */
 void view_selections_dispose_all(View*);
+/** Dispose all invalid and merge all overlapping selections. */
+void view_selections_normalize(View*);
 /**
  * @}
  * @defgroup view_navigate

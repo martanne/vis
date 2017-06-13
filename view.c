@@ -1250,6 +1250,28 @@ bool view_selections_restore(Selection *s) {
 	return true;
 }
 
+void view_selections_normalize(View *view) {
+	Selection *prev = NULL;
+	Filerange range_prev = text_range_empty();
+	for (Selection *s = view->selections, *next; s; s = next) {
+		next = s->next;
+		Filerange range = view_selections_get(s);
+		if (!text_range_valid(&range)) {
+			view_selections_dispose(s);
+		} else if (prev && text_range_overlap(&range_prev, &range)) {
+			range_prev = text_range_union(&range_prev, &range);
+			view_selections_dispose(s);
+		} else {
+			if (prev)
+				view_selections_set(prev, &range_prev);
+			range_prev = range;
+			prev = s;
+		}
+	}
+	if (prev)
+		view_selections_set(prev, &range_prev);
+}
+
 Text *view_text(View *view) {
 	return view->text;
 }
