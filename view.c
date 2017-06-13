@@ -1220,14 +1220,8 @@ void view_selections_set(Selection *s, const Filerange *r) {
 	size_t end = r->end;
 	if (r->start != end)
 		end = text_char_prev(txt, end);
-	if (left_extending) {
-		s->anchor = text_mark_set(txt, end);
-		s->cursor = text_mark_set(txt, r->start);
-	} else {
-		s->anchor = text_mark_set(txt, r->start);
-		s->cursor = text_mark_set(txt, end);
-	}
-	view_cursors_to(s, text_mark_get(s->view->text, s->cursor));
+	view_cursors_to(s, left_extending ? r->start : end);
+	s->anchor = text_mark_set(txt, left_extending ? end : r->start);
 }
 
 void view_selections_save(Selection *s) {
