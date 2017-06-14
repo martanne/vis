@@ -13,6 +13,7 @@ typedef struct Win Win;
 #include "view.h"
 #include "text-regex.h"
 #include "libutf.h"
+#include "array.h"
 
 #ifndef CONFIG_HELP
 #define CONFIG_HELP 1
@@ -754,6 +755,23 @@ const char *vis_register_slot_get(Vis*, enum VisRegister, size_t slot, size_t *l
 /** Set register content. */
 bool vis_register_put(Vis*, enum VisRegister, const char *data, size_t len);
 bool vis_register_slot_put(Vis*, enum VisRegister, size_t slot, const char *data, size_t len);
+/**
+ * Store a set of ``Filerange``s in a register.
+ *
+ * @param id The register to use.
+ * @param sel The array containing the file ranges.
+ */
+void vis_register_selections_set(Vis*, enum VisRegister id, Array *sel);
+/**
+ * Get an array of file ranges stored in the register.
+ *
+ * @rst
+ * .. warning:: The caller must eventually free the Array by calling
+ *              ``array_release``.
+ * @endrst
+ */
+Array vis_register_selections_get(Vis*, enum VisRegister id);
+
 /**
  * @}
  * @defgroup vis_macros

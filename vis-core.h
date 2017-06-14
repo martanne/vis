@@ -40,6 +40,7 @@ struct Mode {
 };
 
 typedef struct {
+	Array selections;
 	Array values;
 	bool linewise; /* place register content on a new line when inserting? */
 	bool append;
