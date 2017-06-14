@@ -1228,6 +1228,29 @@ void view_selections_save(Selection *s) {
 	s->region.anchor = s->anchor;
 }
 
+Filerange view_regions_restore(View *view, SelectionRegion *s) {
+	Text *txt = view->text;
+	size_t anchor = text_mark_get(txt, s->anchor);
+	size_t cursor = text_mark_get(txt, s->cursor);
+	Filerange sel = text_range_new(anchor, cursor);
+	if (text_range_valid(&sel))
+		sel.end = text_char_next(txt, sel.end);
+	return sel;
+}
+
+bool view_regions_save(View *view, Filerange *r, SelectionRegion *s) {
+	Text *txt = view->text;
+	size_t max = text_size(txt);
+	if (!text_range_valid(r) || r->start >= max)
+		return false;
+	size_t end = r->end > max ? max : r->end;
+	if (r->start != end)
+		end = text_char_prev(txt, end);
+	s->anchor = text_mark_set(txt, r->start);
+	s->cursor = text_mark_set(txt, end);
+	return true;
+}
+
 bool view_selections_restore(Selection *s) {
 	Text *txt = s->view->text;
 	size_t pos = text_mark_get(txt, s->region.cursor);

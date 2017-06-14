@@ -355,6 +355,9 @@ void view_selections_save(Selection*);
  * @endrst
  */
 bool view_selections_restore(Selection*);
+
+Filerange view_regions_restore(View*, SelectionRegion*);
+bool view_regions_save(View*, Filerange*, SelectionRegion*);
 /**
  * @}
  * @defgroup view_style
