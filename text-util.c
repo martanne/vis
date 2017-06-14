@@ -43,7 +43,7 @@ bool text_range_equal(const Filerange *r1, const Filerange *r2) {
 bool text_range_overlap(const Filerange *r1, const Filerange *r2) {
 	if (!text_range_valid(r1) || !text_range_valid(r2))
 		return false;
-	return r1->start <= r2->end && r2->start <= r1->end;
+	return r1->start < r2->end && r2->start < r1->end;
 }
 
 bool text_range_contains(const Filerange *r, size_t pos) {
