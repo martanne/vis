@@ -102,5 +102,9 @@ bool array_truncate(Array*, size_t length);
  * @endrst
  */
 bool array_resize(Array*, size_t length);
+/**
+ * Sort array, the comparision function works as for `qsort(3)`.
+ */
+void array_sort(Array*, int (*compar)(const void*, const void*));
 
 #endif
