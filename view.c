@@ -500,6 +500,7 @@ View *view_new(Text *text) {
 	View *view = calloc(1, sizeof(View));
 	if (!view)
 		return NULL;
+	view->text = text;
 	if (!view_selections_new(view, 0)) {
 		view_free(view);
 		return NULL;
@@ -510,7 +511,6 @@ View *view_new(Text *text) {
 		.len = 0,
 		.data = " ",
 	};
-	view->text = text;
 	view->tabwidth = 8;
 	view_options_set(view, 0);
 
@@ -865,6 +865,8 @@ size_t view_screenline_goto(View *view, int n) {
 }
 
 static Selection *selections_new(View *view, size_t pos, bool force) {
+	if (pos > text_size(view->text))
+		return NULL;
 	Selection *s = calloc(1, sizeof(*s));
 	if (!s)
 		return NULL;
@@ -1210,18 +1212,20 @@ Filerange view_selections_get(Selection *s) {
 	return sel;
 }
 
-void view_selections_set(Selection *s, const Filerange *r) {
-	if (!text_range_valid(r))
-		return;
+bool view_selections_set(Selection *s, const Filerange *r) {
 	Text *txt = s->view->text;
+	size_t max = text_size(txt);
+	if (!text_range_valid(r) || r->start >= max)
+		return false;
 	size_t anchor = text_mark_get(txt, s->anchor);
 	size_t cursor = text_mark_get(txt, s->cursor);
 	bool left_extending = anchor != EPOS && anchor > cursor;
-	size_t end = r->end;
+	size_t end = r->end > max ? max : r->end;
 	if (r->start != end)
 		end = text_char_prev(txt, end);
 	view_cursors_to(s, left_extending ? r->start : end);
 	s->anchor = text_mark_set(txt, left_extending ? end : r->start);
+	return true;
 }
 
 void view_selections_save(Selection *s) {

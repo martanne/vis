@@ -188,7 +188,7 @@ Selection *view_selections_column_next(Selection*, int column);
 /** Get an inclusive range of the selection cover. */
 Filerange view_selections_get(Selection*);
 /** Set selection cover. Updates both cursor and anchor. */
-void view_selections_set(Selection*, const Filerange*);
+bool view_selections_set(Selection*, const Filerange*);
 /**
  * Reduce selection to character currently covered by the cursor.
  * @rst
