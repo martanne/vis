@@ -38,11 +38,6 @@ enum {
  * the necessary offset for the last character.
  */
 
-typedef struct {
-	Mark anchor;
-	Mark cursor;
-} SelectionRegion;
-
 struct Selection {
 	Mark cursor;            /* other selection endpoint where it changes */
 	Mark anchor;            /* position where the selection was created */
@@ -1245,6 +1240,40 @@ bool view_selections_restore(Selection *s) {
 	s->anchored = true;
 	view_cursors_to(s, pos);
 	return true;
+}
+
+void view_selections_set_all(View *view, Array *arr) {
+	Selection *s;
+	Filerange *r;
+	size_t i = 0;
+	for (s = view->selections; s; s = s->next) {
+		if (!(r = array_get(arr, i++)) || !view_selections_set(s, r)) {
+			for (Selection *next; s; s = next) {
+				next = view_selections_next(s);
+				view_selections_dispose(s);
+			}
+			break;
+		}
+	}
+	while ((r = array_get(arr, i++))) {
+		s = view_selections_new_force(view, r->start);
+		if (!s || !view_selections_set(s, r))
+			break;
+	}
+	view_selections_primary_set(view->selections);
+}
+
+Array view_selections_get_all(View *view) {
+	Array arr;
+	array_init_sized(&arr, sizeof(Filerange));
+	if (!array_reserve(&arr, view_selections_count(view)))
+		return arr;
+	for (Selection *s = view->selections; s; s = s->next) {
+		Filerange r = view_selections_get(s);
+		if (text_range_valid(&r))
+			array_add(&arr, &r);
+	}
+	return arr;
 }
 
 void view_selections_normalize(View *view) {

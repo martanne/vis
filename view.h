@@ -9,6 +9,12 @@ typedef struct Selection Selection;
 
 #include "text.h"
 #include "ui.h"
+#include "array.h"
+
+typedef struct {
+	Mark anchor;
+	Mark cursor;
+} SelectionRegion;
 
 typedef struct {
 	char data[16];      /* utf8 encoded character displayed in this cell (might be more than
@@ -139,6 +145,13 @@ Selection *view_selection_disposed(View*);
 void view_selections_dispose_all(View*);
 /** Dispose all invalid and merge all overlapping selections. */
 void view_selections_normalize(View*);
+/**
+ * Replace currently active selections.
+ * @param The array of ``Filerange``s.
+ */
+void view_selections_set_all(View*, Array*);
+/** Get array containing a ``Fileranges`` for each selection. */
+Array view_selections_get_all(View*);
 /**
  * @}
  * @defgroup view_navigate
