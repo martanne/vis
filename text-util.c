@@ -27,6 +27,12 @@ Filerange text_range_union(const Filerange *r1, const Filerange *r2) {
 	};
 }
 
+Filerange text_range_intersect(const Filerange *r1, const Filerange *r2) {
+	if (!text_range_overlap(r1, r2))
+		return text_range_empty();
+	return text_range_new(MAX(r1->start, r2->start), MIN(r1->end, r2->end));
+}
+
 Filerange text_range_new(size_t a, size_t b) {
 	return (Filerange) {
 		.start = MIN(a, b),

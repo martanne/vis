@@ -13,6 +13,8 @@ size_t text_range_size(const Filerange*);
 Filerange text_range_empty(void);
 /* merge two ranges into a new one which contains both of them */
 Filerange text_range_union(const Filerange*, const Filerange*);
+/* get intersection of two ranges */
+Filerange text_range_intersect(const Filerange*, const Filerange*);
 /* create new range [min(a,b), max(a,b)] */
 Filerange text_range_new(size_t a, size_t b);
 /* test whether two ranges are equal */
