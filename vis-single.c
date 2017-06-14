@@ -129,6 +129,8 @@ int main(int argc, char **argv) {
 		return EXIT_FAILURE;
 	}
 
+	signal(SIGINT, SIG_IGN);
+
 	for (;;) {
 		int status;
 		int w = waitpid(child_pid, &status, 0);
