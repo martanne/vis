@@ -218,10 +218,12 @@ fi
 #
 # Figure out options to force errors on unknown flags.
 #
-tryflag   CFLAGS_TRY  -Werror=unknown-warning-option
-tryflag   CFLAGS_TRY  -Werror=unused-command-line-argument
-tryldflag LDFLAGS_TRY -Werror=unknown-warning-option
-tryldflag LDFLAGS_TRY -Werror=unused-command-line-argument
+if test "$flags" = "yes"; then
+  tryflag   CFLAGS_TRY  -Werror=unknown-warning-option
+  tryflag   CFLAGS_TRY  -Werror=unused-command-line-argument
+  tryldflag LDFLAGS_TRY -Werror=unknown-warning-option
+  tryldflag LDFLAGS_TRY -Werror=unused-command-line-argument
+fi
 
 CFLAGS_STD="-std=c99 -D_POSIX_C_SOURCE=200809L -D_XOPEN_SOURCE=700 -DNDEBUG -D_FORTIFY_SOURCE=2"
 LDFLAGS_STD="-lc"
