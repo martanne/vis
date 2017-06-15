@@ -749,6 +749,7 @@ enum VisRegister vis_register_from(Vis*, char reg);
  * @endrst
  */
 void vis_register(Vis*, enum VisRegister);
+enum VisRegister vis_register_used(Vis*);
 /** Get register content. */
 const char *vis_register_get(Vis*, enum VisRegister, size_t *len);
 const char *vis_register_slot_get(Vis*, enum VisRegister, size_t slot, size_t *len);

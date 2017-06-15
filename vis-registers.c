@@ -214,6 +214,12 @@ void vis_register(Vis *vis, enum VisRegister reg) {
 	}
 }
 
+enum VisRegister vis_register_used(Vis *vis) {
+	if (!vis->action.reg)
+		return VIS_REG_DEFAULT;
+	return vis->action.reg - vis->registers;
+}
+
 static Register *register_from(Vis *vis, enum VisRegister id) {
 	if (VIS_REG_A <= id && id <= VIS_REG_Z)
 		id = VIS_REG_a + id - VIS_REG_A;
