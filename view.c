@@ -1055,6 +1055,9 @@ void view_selections_primary_set(Selection *s) {
 	if (!s)
 		return;
 	s->view->selection = s;
+	Mark anchor = s->anchor;
+	view_cursors_to(s, view_cursors_pos(s));
+	s->anchor = anchor;
 }
 
 Selection *view_selections_prev(Selection *s) {
