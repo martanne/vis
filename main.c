@@ -76,6 +76,8 @@ static const char *selections_rotate(Vis*, const char *keys, const Arg *arg);
 static const char *selections_trim(Vis*, const char *keys, const Arg *arg);
 /* save active selections to register */
 static const char *selections_save(Vis*, const char *keys, const Arg *arg);
+/* restore selections from register */
+static const char *selections_restore(Vis*, const char *keys, const Arg *arg);
 /* adjust current used count according to keys */
 static const char *count(Vis*, const char *keys, const Arg *arg);
 /* move to the count-th line or if not given either to the first (arg->i < 0)
@@ -279,6 +281,7 @@ enum {
 	VIS_ACTION_SELECTIONS_ROTATE_RIGHT,
 	VIS_ACTION_SELECTIONS_TRIM,
 	VIS_ACTION_SELECTIONS_SAVE,
+	VIS_ACTION_SELECTIONS_RESTORE,
 	VIS_ACTION_TEXT_OBJECT_WORD_OUTER,
 	VIS_ACTION_TEXT_OBJECT_WORD_INNER,
 	VIS_ACTION_TEXT_OBJECT_LONGWORD_OUTER,
@@ -1044,6 +1047,11 @@ static const KeyAction vis_action[] = {
 		VIS_HELP("Save currently active selections to register")
 		selections_save
 	},
+	[VIS_ACTION_SELECTIONS_RESTORE] = {
+		"vis-selections-restore",
+		VIS_HELP("Restore selections from register")
+		selections_restore
+	},
 	[VIS_ACTION_TEXT_OBJECT_WORD_OUTER] = {
 		"vis-textobject-word-outer",
 		VIS_HELP("A word leading and trailing whitespace included")
@@ -1589,6 +1597,16 @@ static const char *selections_save(Vis *vis, const char *keys, const Arg *arg) {
 	enum VisRegister reg = vis_register_used(vis);
 	Array sel = view_selections_get_all(view);
 	vis_register_selections_set(vis, reg, &sel);
+	array_release(&sel);
+	vis_cancel(vis);
+	return keys;
+}
+
+static const char *selections_restore(Vis *vis, const char *keys, const Arg *arg) {
+	View *view = vis_view(vis);
+	enum VisRegister reg = vis_register_used(vis);
+	Array sel = vis_register_selections_get(vis, reg);
+	view_selections_set_all(view, &sel);
 	array_release(&sel);
 	vis_cancel(vis);
 	return keys;
