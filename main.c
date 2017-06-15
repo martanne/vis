@@ -1688,6 +1688,31 @@ static const char *selections_restore(Vis *vis, const char *keys, const Arg *arg
 	return keys;
 }
 
+static int ranges_comparator(const void *a, const void *b) {
+	const Filerange *r1 = a, *r2 = b;
+	if (!text_range_valid(r1))
+		return text_range_valid(r2) ? 1 : 0;
+	if (!text_range_valid(r2))
+		return -1;
+	return (r1->start < r2->start || (r1->start == r2->start && r1->end < r2->end)) ? -1 : 1;
+}
+
+static void normalize(Array *a) {
+	array_sort(a, ranges_comparator);
+	Filerange *prev = NULL, *r = array_get(a, 0);
+	for (size_t i = 0; r; r = array_get(a, i)) {
+		if (text_range_size(r) == 0) {
+			array_remove(a, i);
+		} else if (prev && text_range_overlap(prev, r)) {
+			*prev = text_range_union(prev, r);
+			array_remove(a, i);
+		} else {
+			prev = r;
+			i++;
+		}
+	}
+}
+
 static const char *selections_union(Vis *vis, const char *keys, const Arg *arg) {
 	View *view = vis_view(vis);
 	enum VisRegister reg = vis_register_used(vis);
@@ -1898,6 +1923,7 @@ static const char *selections_combine(Vis *vis, const char *keys, const Arg *arg
 			array_add(&sel, &new);
 	}
 
+	normalize(&sel);
 	view_selections_set_all(view, &sel);
 	vis_cancel(vis);
 
