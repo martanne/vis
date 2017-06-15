@@ -25,7 +25,7 @@ static const KeyBinding bindings_basic[] = {
 };
 
 static const KeyBinding bindings_motions[] = {
-	{ "|",                  ACTION(CURSOR_COLUMN)                       },
+	{ "g|",                 ACTION(CURSOR_COLUMN)                       },
 	{ "[{",                 ACTION(CURSOR_BLOCK_START)                  },
 	{ "]}",                 ACTION(CURSOR_BLOCK_END)                    },
 	{ "[(",                 ACTION(CURSOR_PARENTHESE_START)             },
@@ -140,6 +140,27 @@ static const KeyBinding bindings_textobjects[] = {
 	{ 0 /* empty last element, array terminator */                      },
 };
 
+static const KeyBinding bindings_selections[] = {
+	{ "s",                  ACTION(SELECTIONS_SAVE)                     },
+	{ "S",                  ACTION(SELECTIONS_RESTORE)                  },
+	{ "|",                  ACTION(SELECTIONS_UNION)                    },
+	{ "&",                  ACTION(SELECTIONS_INTERSECT)                },
+	{ "!",                  ACTION(SELECTIONS_COMPLEMENT)               },
+	{ "\\",                 ACTION(SELECTIONS_MINUS)                    },
+	{ "z|",                 ACTION(SELECTIONS_COMBINE_UNION)            },
+	{ "z&",                 ACTION(SELECTIONS_COMBINE_INTERSECT)        },
+	{ "z+",                 ACTION(SELECTIONS_COMBINE_LONGER)           },
+	{ "z-",                 ACTION(SELECTIONS_COMBINE_SHORTER)          },
+	{ "z<",                 ACTION(SELECTIONS_COMBINE_LEFTMOST)         },
+	{ "z>",                 ACTION(SELECTIONS_COMBINE_RIGHTMOST)        },
+//	{ "-",                  ACTION(SELECTIONS_ROTATE_LEFT)              },
+//	{ "+",                  ACTION(SELECTIONS_ROTATE_RIGHT)             },
+	{ "_",                  ACTION(SELECTIONS_TRIM)                     },
+	{ "<S-Tab>",            ACTION(CURSORS_ALIGN_INDENT_RIGHT)          },
+	{ "<Tab>",              ACTION(CURSORS_ALIGN_INDENT_LEFT)           },
+	{ 0 /* empty last element, array terminator */                      },
+};
+
 static const KeyBinding bindings_operators[] = {
 	{ "0",                  ACTION(COUNT)                               },
 	{ "1",                  ACTION(COUNT)                               },
@@ -152,7 +173,6 @@ static const KeyBinding bindings_operators[] = {
 	{ "8",                  ACTION(COUNT)                               },
 	{ "9",                  ACTION(COUNT)                               },
 	{ "~",                  ACTION(OPERATOR_CASE_SWAP)                  },
-	{ "!",                  ACTION(OPERATOR_FILTER)                     },
 	{ "=",                  ALIAS("gq")                                 },
 	{ "<",                  ACTION(OPERATOR_SHIFT_LEFT)                 },
 	{ ">",                  ACTION(OPERATOR_SHIFT_RIGHT)                },
@@ -240,8 +260,6 @@ static const KeyBinding bindings_normal[] = {
 	{ "q",                  ACTION(MACRO_RECORD)                        },
 	{ "R",                  ACTION(MODE_REPLACE)                        },
 	{ "r",                  ACTION(REPLACE_CHAR)                        },
-	{ "S",                  ALIAS("^c$")                                },
-	{ "s",                  ALIAS("cl")                                 },
 	{ "<Tab>",              ACTION(CURSORS_ALIGN)                       },
 	{ "u",                  ACTION(UNDO)                                },
 	{ "v",                  ACTION(MODE_VISUAL)                         },
@@ -263,7 +281,6 @@ static const KeyBinding bindings_visual[] = {
 	{ ":",                  ACTION(PROMPT_SHOW)                         },
 	{ "-",                  ACTION(SELECTIONS_ROTATE_LEFT)              },
 	{ "+",                  ACTION(SELECTIONS_ROTATE_RIGHT)             },
-	{ "\\",                 ACTION(SELECTIONS_TRIM)                     },
 	{ "<",                  ALIAS("<vis-operator-shift-left>gv")        },
 	{ ">",                  ALIAS("<vis-operator-shift-right>gv")       },
 	{ "<Backspace>",        ALIAS("d")                                  },
@@ -287,9 +304,6 @@ static const KeyBinding bindings_visual[] = {
 	{ "o",                  ACTION(SELECTION_FLIP)                      },
 	{ "q",                  ACTION(MACRO_RECORD)                        },
 	{ "r",                  ACTION(REPLACE_CHAR)                        },
-	{ "s",                  ALIAS("c")                                  },
-	{ "<S-Tab>",            ACTION(CURSORS_ALIGN_INDENT_RIGHT)          },
-	{ "<Tab>",              ACTION(CURSORS_ALIGN_INDENT_LEFT)           },
 	{ "V",                  ACTION(MODE_VISUAL_LINE)                    },
 	{ "v",                  ALIAS("<Escape>")                           },
 	{ "x",                  ALIAS("d")                                  },
@@ -348,6 +362,7 @@ static const KeyBinding **default_bindings[] = {
 	},
 	[VIS_MODE_NORMAL] = (const KeyBinding*[]){
 		bindings_normal,
+		bindings_selections,
 		bindings_operators,
 		bindings_motions,
 		bindings_basic,
@@ -355,6 +370,7 @@ static const KeyBinding **default_bindings[] = {
 	},
 	[VIS_MODE_VISUAL] = (const KeyBinding*[]){
 		bindings_visual,
+		bindings_selections,
 		bindings_textobjects,
 		bindings_operators,
 		bindings_motions,
