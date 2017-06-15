@@ -84,6 +84,8 @@ static const char *selections_union(Vis*, const char *keys, const Arg *arg);
 static const char *selections_intersect(Vis*, const char *keys, const Arg *arg);
 /* perform complement of current active selections */
 static const char *selections_complement(Vis*, const char *keys, const Arg *arg);
+/* subtract selections from register */
+static const char *selections_minus(Vis*, const char *keys, const Arg *arg);
 /* adjust current used count according to keys */
 static const char *count(Vis*, const char *keys, const Arg *arg);
 /* move to the count-th line or if not given either to the first (arg->i < 0)
@@ -291,6 +293,7 @@ enum {
 	VIS_ACTION_SELECTIONS_UNION,
 	VIS_ACTION_SELECTIONS_INTERSECT,
 	VIS_ACTION_SELECTIONS_COMPLEMENT,
+	VIS_ACTION_SELECTIONS_MINUS,
 	VIS_ACTION_TEXT_OBJECT_WORD_OUTER,
 	VIS_ACTION_TEXT_OBJECT_WORD_INNER,
 	VIS_ACTION_TEXT_OBJECT_LONGWORD_OUTER,
@@ -1076,6 +1079,11 @@ static const KeyAction vis_action[] = {
 		VIS_HELP("Complement selections")
 		selections_complement
 	},
+	[VIS_ACTION_SELECTIONS_MINUS] = {
+		"vis-selections-minus",
+		VIS_HELP("Subtract selections from register")
+		selections_minus
+	},
 	[VIS_ACTION_TEXT_OBJECT_WORD_OUTER] = {
 		"vis-textobject-word-outer",
 		VIS_HELP("A word leading and trailing whitespace included")
@@ -1750,6 +1758,34 @@ static const char *selections_complement(Vis *vis, const char *keys, const Arg *
 	view_selections_set_all(view, &sel);
 	array_release(&a);
 	array_release(&sel);
+	return keys;
+}
+
+static const char *selections_minus(Vis *vis, const char *keys, const Arg *arg) {
+	View *view = vis_view(vis);
+	enum VisRegister reg = vis_register_used(vis);
+	Array a = view_selections_get_all(view);
+	Array b = vis_register_selections_get(vis, reg);
+	Array sel;
+	array_init_from(&sel, &a);
+	Array b_complement;
+	array_init_from(&b_complement, &b);
+
+	Filerange universe = text_range_new(0, 0);
+	Filerange *max = array_get(&a, array_length(&a)-1);
+	if (max)
+		universe = text_range_new(max->end, max->end);
+	complement(&b_complement, &b, &universe);
+	intersect(&sel, &a, &b_complement);
+
+	view_selections_set_all(view, &sel);
+	vis_cancel(vis);
+
+	array_release(&a);
+	array_release(&b);
+	array_release(&b_complement);
+	array_release(&sel);
+
 	return keys;
 }
 
