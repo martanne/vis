@@ -74,6 +74,8 @@ static const char *cursors_select_skip(Vis*, const char *keys, const Arg *arg);
 static const char *selections_rotate(Vis*, const char *keys, const Arg *arg);
 /* remove leading and trailing white spaces from selections */
 static const char *selections_trim(Vis*, const char *keys, const Arg *arg);
+/* save active selections to register */
+static const char *selections_save(Vis*, const char *keys, const Arg *arg);
 /* adjust current used count according to keys */
 static const char *count(Vis*, const char *keys, const Arg *arg);
 /* move to the count-th line or if not given either to the first (arg->i < 0)
@@ -276,6 +278,7 @@ enum {
 	VIS_ACTION_SELECTIONS_ROTATE_LEFT,
 	VIS_ACTION_SELECTIONS_ROTATE_RIGHT,
 	VIS_ACTION_SELECTIONS_TRIM,
+	VIS_ACTION_SELECTIONS_SAVE,
 	VIS_ACTION_TEXT_OBJECT_WORD_OUTER,
 	VIS_ACTION_TEXT_OBJECT_WORD_INNER,
 	VIS_ACTION_TEXT_OBJECT_LONGWORD_OUTER,
@@ -1036,6 +1039,11 @@ static const KeyAction vis_action[] = {
 		VIS_HELP("Remove leading and trailing white space from selections")
 		selections_trim
 	},
+	[VIS_ACTION_SELECTIONS_SAVE] = {
+		"vis-selections-save",
+		VIS_HELP("Save currently active selections to register")
+		selections_save
+	},
 	[VIS_ACTION_TEXT_OBJECT_WORD_OUTER] = {
 		"vis-textobject-word-outer",
 		VIS_HELP("A word leading and trailing whitespace included")
@@ -1573,6 +1581,16 @@ static const char *selections_trim(Vis *vis, const char *keys, const Arg *arg) {
 			vis_mode_switch(vis, VIS_MODE_NORMAL);
 		}
 	}
+	return keys;
+}
+
+static const char *selections_save(Vis *vis, const char *keys, const Arg *arg) {
+	View *view = vis_view(vis);
+	enum VisRegister reg = vis_register_used(vis);
+	Array sel = view_selections_get_all(view);
+	vis_register_selections_set(vis, reg, &sel);
+	array_release(&sel);
+	vis_cancel(vis);
 	return keys;
 }
 
