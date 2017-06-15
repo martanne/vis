@@ -11,6 +11,10 @@ void array_init(Array *arr) {
 	array_init_sized(arr, sizeof(void*));
 }
 
+void array_init_from(Array *arr, Array *from) {
+	array_init_sized(arr, from->elem_size);
+}
+
 void array_init_sized(Array *arr, size_t elem_size) {
 	memset(arr, 0, sizeof *arr);
 	arr->elem_size = elem_size;

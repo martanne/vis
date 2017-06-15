@@ -43,6 +43,8 @@ void array_init(Array*);
  * Initalize an Array object to store arbitrarily sized objects.
  */
 void array_init_sized(Array*, size_t elem_size);
+/** Initialize Array by using the same element size as in ``from``. */
+void array_init_from(Array*, Array *from);
 /** Release storage space. Reinitializes Array object. */
 void array_release(Array*);
 /**
