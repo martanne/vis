@@ -89,6 +89,7 @@ static const char *selections_minus(Vis*, const char *keys, const Arg *arg);
 /* pariwise combine selections */
 static const char *selections_combine(Vis*, const char *keys, const Arg *arg);
 static Filerange combine_union(const Filerange*, const Filerange*);
+static Filerange combine_intersect(const Filerange*, const Filerange*);
 /* adjust current used count according to keys */
 static const char *count(Vis*, const char *keys, const Arg *arg);
 /* move to the count-th line or if not given either to the first (arg->i < 0)
@@ -298,6 +299,7 @@ enum {
 	VIS_ACTION_SELECTIONS_COMPLEMENT,
 	VIS_ACTION_SELECTIONS_MINUS,
 	VIS_ACTION_SELECTIONS_COMBINE_UNION,
+	VIS_ACTION_SELECTIONS_COMBINE_INTERSECT,
 	VIS_ACTION_TEXT_OBJECT_WORD_OUTER,
 	VIS_ACTION_TEXT_OBJECT_WORD_INNER,
 	VIS_ACTION_TEXT_OBJECT_LONGWORD_OUTER,
@@ -1093,6 +1095,11 @@ static const KeyAction vis_action[] = {
 		VIS_HELP("Pairwise union with selection from register")
 		selections_combine, { .combine = combine_union }
 	},
+	[VIS_ACTION_SELECTIONS_COMBINE_INTERSECT] = {
+		"vis-selections-combine-intersect",
+		VIS_HELP("Pairwise intersect with selections from register")
+		selections_combine, { .combine = combine_intersect }
+	},
 	[VIS_ACTION_TEXT_OBJECT_WORD_OUTER] = {
 		"vis-textobject-word-outer",
 		VIS_HELP("A word leading and trailing whitespace included")
@@ -1804,6 +1811,12 @@ static Filerange combine_union(const Filerange *r1, const Filerange *r2) {
 	if (!r2)
 		return *r1;
 	return text_range_union(r1, r2);
+}
+
+static Filerange combine_intersect(const Filerange *r1, const Filerange *r2) {
+	if (!r1 || !r2)
+		return text_range_empty();
+	return text_range_new(MAX(r1->start, r2->start), MIN(r1->end, r2->end));
 }
 
 static const char *selections_combine(Vis *vis, const char *keys, const Arg *arg) {
