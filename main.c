@@ -78,6 +78,8 @@ static const char *selections_trim(Vis*, const char *keys, const Arg *arg);
 static const char *selections_save(Vis*, const char *keys, const Arg *arg);
 /* restore selections from register */
 static const char *selections_restore(Vis*, const char *keys, const Arg *arg);
+/* union selections */
+static const char *selections_union(Vis*, const char *keys, const Arg *arg);
 /* adjust current used count according to keys */
 static const char *count(Vis*, const char *keys, const Arg *arg);
 /* move to the count-th line or if not given either to the first (arg->i < 0)
@@ -282,6 +284,7 @@ enum {
 	VIS_ACTION_SELECTIONS_TRIM,
 	VIS_ACTION_SELECTIONS_SAVE,
 	VIS_ACTION_SELECTIONS_RESTORE,
+	VIS_ACTION_SELECTIONS_UNION,
 	VIS_ACTION_TEXT_OBJECT_WORD_OUTER,
 	VIS_ACTION_TEXT_OBJECT_WORD_INNER,
 	VIS_ACTION_TEXT_OBJECT_LONGWORD_OUTER,
@@ -1052,6 +1055,11 @@ static const KeyAction vis_action[] = {
 		VIS_HELP("Restore selections from register")
 		selections_restore
 	},
+	[VIS_ACTION_SELECTIONS_UNION] = {
+		"vis-selections-union",
+		VIS_HELP("Add selections from register")
+		selections_union
+	},
 	[VIS_ACTION_TEXT_OBJECT_WORD_OUTER] = {
 		"vis-textobject-word-outer",
 		VIS_HELP("A word leading and trailing whitespace included")
@@ -1609,6 +1617,57 @@ static const char *selections_restore(Vis *vis, const char *keys, const Arg *arg
 	view_selections_set_all(view, &sel);
 	array_release(&sel);
 	vis_cancel(vis);
+	return keys;
+}
+
+static const char *selections_union(Vis *vis, const char *keys, const Arg *arg) {
+	View *view = vis_view(vis);
+	enum VisRegister reg = vis_register_used(vis);
+	Array a = vis_register_selections_get(vis, reg);
+	Array b = view_selections_get_all(view);
+	Array sel;
+	array_init_from(&sel, &a);
+
+	size_t i = 0, j = 0;
+	Filerange *r1 = array_get(&a, i), *r2 = array_get(&b, j), cur = text_range_empty();
+	while (r1 || r2) {
+		if (r1 && text_range_overlap(r1, &cur)) {
+			cur = text_range_union(r1, &cur);
+			r1 = array_get(&a, ++i);
+		} else if (r2 && text_range_overlap(r2, &cur)) {
+			cur = text_range_union(r2, &cur);
+			r2 = array_get(&b, ++j);
+		} else {
+			if (text_range_valid(&cur))
+				array_add(&sel, &cur);
+			if (!r1) {
+				cur = *r2;
+				r2 = array_get(&b, ++j);
+			} else if (!r2) {
+				cur = *r1;
+				r1 = array_get(&a, ++i);
+			} else {
+				if (r1->start < r2->start) {
+					cur = *r1;
+					r1 = array_get(&a, ++i);
+				} else {
+					cur = *r2;
+					r2 = array_get(&b, ++j);
+				}
+			}
+		}
+	}
+
+	if (text_range_valid(&cur))
+		array_add(&sel, &cur);
+
+	view_selections_set_all(view, &sel);
+	vis_cancel(vis);
+
+	array_release(&a);
+	array_release(&b);
+	array_release(&sel);
+
 	return keys;
 }
 
