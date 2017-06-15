@@ -82,6 +82,8 @@ static const char *selections_restore(Vis*, const char *keys, const Arg *arg);
 static const char *selections_union(Vis*, const char *keys, const Arg *arg);
 /* intersect selections */
 static const char *selections_intersect(Vis*, const char *keys, const Arg *arg);
+/* perform complement of current active selections */
+static const char *selections_complement(Vis*, const char *keys, const Arg *arg);
 /* adjust current used count according to keys */
 static const char *count(Vis*, const char *keys, const Arg *arg);
 /* move to the count-th line or if not given either to the first (arg->i < 0)
@@ -288,6 +290,7 @@ enum {
 	VIS_ACTION_SELECTIONS_RESTORE,
 	VIS_ACTION_SELECTIONS_UNION,
 	VIS_ACTION_SELECTIONS_INTERSECT,
+	VIS_ACTION_SELECTIONS_COMPLEMENT,
 	VIS_ACTION_TEXT_OBJECT_WORD_OUTER,
 	VIS_ACTION_TEXT_OBJECT_WORD_INNER,
 	VIS_ACTION_TEXT_OBJECT_LONGWORD_OUTER,
@@ -1068,6 +1071,11 @@ static const KeyAction vis_action[] = {
 		VIS_HELP("Intersect selections with register")
 		selections_intersect
 	},
+	[VIS_ACTION_SELECTIONS_COMPLEMENT] = {
+		"vis-selections-complement",
+		VIS_HELP("Complement selections")
+		selections_complement
+	},
 	[VIS_ACTION_TEXT_OBJECT_WORD_OUTER] = {
 		"vis-textobject-word-outer",
 		VIS_HELP("A word leading and trailing whitespace included")
@@ -1710,6 +1718,38 @@ static const char *selections_intersect(Vis *vis, const char *keys, const Arg *a
 	array_release(&b);
 	array_release(&sel);
 
+	return keys;
+}
+
+static void complement(Array *ret, Array *a, Filerange *universe) {
+	size_t pos = 0;
+	for (size_t i = 0, len = array_length(a); i < len; i++) {
+		Filerange *r = array_get(a, i);
+		if (pos < r->start) {
+			Filerange new = text_range_new(pos, r->start);
+			array_add(ret, &new);
+		}
+		pos = r->end;
+	}
+	if (pos < universe->end) {
+		Filerange new = text_range_new(pos, universe->end);
+		array_add(ret, &new);
+	}
+}
+
+static const char *selections_complement(Vis *vis, const char *keys, const Arg *arg) {
+	Text *txt = vis_text(vis);
+	View *view = vis_view(vis);
+	Filerange universe = text_object_entire(txt, 0);
+	Array a = view_selections_get_all(view);
+	Array sel;
+	array_init_from(&sel, &a);
+
+	complement(&sel, &a, &universe);
+
+	view_selections_set_all(view, &sel);
+	array_release(&a);
+	array_release(&sel);
 	return keys;
 }
 
