@@ -67,6 +67,7 @@ typedef union {
 	const void *v;
 	void (*w)(View*);
 	void (*f)(Vis*);
+	Filerange (*combine)(const Filerange*, const Filerange*);
 } Arg;
 
 /**
