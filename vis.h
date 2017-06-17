@@ -58,6 +58,29 @@ typedef struct {
 	void (*win_status)(Vis*, Win*);
 } VisEvent;
 
+/** A string, to be rendered using a given style. */
+typedef struct {
+	const char *str;
+	enum UiStyle style_id;
+} StyledString;
+
+/**
+ * Line gutter column rendering function.
+ * @param win Window the gutter is being rendered in.
+ * @param line Number of the line that is being rendered.
+ * @param str Output of the rendering function.
+ * @ingroup vis_gutter
+ */
+typedef void GutterColumnFunction(Vis*, Win *win, void *data, int line, StyledString *str);
+
+/** Line gutter column definition. */
+typedef struct {
+	const char *name;           /**< Name of the column. Columns are displayed in alphabetic order. */
+	int width;                  /**< Width of the column in cells. */
+	GutterColumnFunction *func; /**< Column rendering function. */
+	void *data;                 /**< Lua function reference passed to ``func``. */
+} GutterColumn;
+
 /** Union used to pass arguments to key action functions. */
 typedef union {
 	bool b;
@@ -74,7 +97,7 @@ typedef union {
  * @rst
  * .. note:: An empty string ``""`` indicates that no further input is available.
  * @endrst
- * @return Pointer to first non-cosumed key.
+ * @return Pointer to first non-consumed key.
  * @rst
  * .. warning:: Must be in range ``[keys, keys+strlen(keys)]`` or ``NULL`` to
  *              indicate that not enough input was available. In the latter case
@@ -89,7 +112,7 @@ typedef struct {
 	const char *name;                /**< Name of a pseudo key ``<name>`` which can be used in mappings. */
 	VIS_HELP_DECL(const char *help;) /**< One line human readable description, displayed by ``:help``. */
 	KeyActionFunction *func;         /**< Key action implementation function. */
-	Arg arg;                         /**< Options passes as last argument to ``func``. */
+	Arg arg;                         /**< Options passed as last argument to ``func``. */
 } KeyAction;
 
 /**
@@ -113,7 +136,7 @@ Vis *vis_new(Ui*, VisEvent*);
 /** Free all resources associated with this editor instance, terminates UI. */
 void vis_free(Vis*);
 /**
- * Enter main loop, start processing user input. 
+ * Enter main loop, start processing user input.
  * @return The editor exit status code.
  */
 int vis_run(Vis*);
@@ -311,6 +334,14 @@ void vis_mode_switch(Vis*, enum VisMode);
 enum VisMode vis_mode_get(Vis*);
 /** Translate human readable mode name to constant. */
 enum VisMode vis_mode_from(Vis*, const char *name);
+
+/**
+ * @}
+ * @defgroup vis_gutter
+ * @{
+ */
+bool vis_gutter_column_add(Vis*, const char *name, int width, void *context, GutterColumnFunction*);
+bool vis_gutter_column_remove(Vis*, const char *name);
 
 /**
  * @}

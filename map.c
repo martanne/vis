@@ -373,3 +373,15 @@ void map_free_full(Map *map)
 	map_iterate(map, free_elem, NULL);
 	map_free(map);
 }
+
+static bool build_values(const char *key, void *value, void *data)
+{
+	Array *arr = data;
+	array_add_ptr(arr, value);
+	return true;
+}
+
+void map_get_values(Map *map, Array *arr)
+{
+	map_iterate(map, build_values, arr);
+}

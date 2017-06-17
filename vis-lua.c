@@ -782,6 +782,53 @@ static int message(lua_State *L) {
 	return 0;
 }
 
+static void gutter_column_lua(Vis *vis, Win *win, void *data, int line, StyledString *str) {
+	str->str = "";
+	str->style_id = UI_STYLE_DEFAULT;
+	lua_State *L = vis->lua;
+	if (!L || !func_ref_get(L, data))
+		return;
+	if (!obj_ref_new(L, win, VIS_LUA_TYPE_WINDOW))
+		return;
+	lua_pushunsigned(L, line);
+	if (pcall(vis, L, 2, 2) != 0)
+		return;
+	str->str = lua_tostring(L, -2);
+	str->style_id = lua_tounsigned(L, -1);
+}
+
+/***
+ * Add a new dynamic line gutter column.
+ * @function gutter_column_add
+ * @tparam string name the name of the column, columns are displayed in alphabetic order
+ * @tparam int width the width of the column in cells
+ * @tparam Function func the lua function generating the column content
+ * @treturn bool whether the column has been successfully added
+ */
+static int gutter_column_add(lua_State *L) {
+	Vis *vis = obj_ref_check(L, 1, "vis");
+	const char *name = luaL_checkstring(L, 2);
+	int width = luaL_checkunsigned(L, 3);
+	const void *func = func_ref_new(L, 4);
+	bool ret = vis_gutter_column_add(vis, name, width, (void*)func, gutter_column_lua);
+  lua_pushboolean(L, ret);
+	return 1;
+}
+
+/***
+ * Remove a dynamic line gutter column.
+ * @function gutter_column_remove
+ * @tparam string name the name of the column to remove
+ * @treturn bool whether the column has been successfully removed
+ */
+static int gutter_column_remove(lua_State *L) {
+	Vis *vis = obj_ref_check(L, 1, "vis");
+	const char *name = luaL_checkstring(L, 2);
+	bool ret = vis_gutter_column_remove(vis, name);
+  lua_pushboolean(L, ret);
+	return 1;
+}
+
 /***
  * Register a Lua function as key action.
  * @function action_register
@@ -1447,6 +1494,8 @@ static const struct luaL_Reg vis_lua[] = {
 	{ "command", command },
 	{ "info", info },
 	{ "message", message },
+	{ "gutter_column_add", gutter_column_add },
+	{ "gutter_column_remove", gutter_column_remove },
 	{ "map", map },
 	{ "unmap", unmap },
 	{ "mappings", mappings },
@@ -1640,7 +1689,7 @@ static int window_unmap(lua_State *L) {
  * Define a display style.
  * @function style_define
  * @tparam int id the style id to use
- * @tparam string style the style definition 
+ * @tparam string style the style definition
  * @treturn bool whether the style definition has been successfully
  *  associated with the given id
  * @see style

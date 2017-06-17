@@ -289,6 +289,7 @@ enum {
 	OPTION_SHOW_SPACES,
 	OPTION_SHOW_TABS,
 	OPTION_SHOW_NEWLINES,
+	OPTION_GUTTER,
 	OPTION_NUMBER,
 	OPTION_NUMBER_RELATIVE,
 	OPTION_CURSOR_LINE,
@@ -337,6 +338,11 @@ static const OptionDef options[] = {
 		{ "show-newlines" },
 		VIS_OPTION_TYPE_BOOL|VIS_OPTION_NEED_WINDOW,
 		VIS_HELP("Display replacement symbol for newlines")
+	},
+	[OPTION_GUTTER] = {
+		{ "gutter" },
+		VIS_OPTION_TYPE_BOOL|VIS_OPTION_NEED_WINDOW,
+		VIS_HELP("Display line gutter")
 	},
 	[OPTION_NUMBER] = {
 		{ "numbers", "nu" },

@@ -213,6 +213,7 @@ struct Vis {
 	volatile sig_atomic_t resume;        /* need to resume UI (SIGCONT occured) */
 	volatile sig_atomic_t terminate;     /* need to terminate we were being killed by SIGTERM */
 	sigjmp_buf sigbus_jmpbuf;            /* used to jump back to a known good state in the mainloop after (SIGBUS) */
+	Map *gutter_columns;                 /* dynamically rendered line gutter columns */
 	Map *actions;                        /* registered editor actions / special keys commands */
 	Array actions_user;                  /* dynamically allocated editor actions */
 	lua_State *lua;                      /* lua context used for syntax highligthing */
