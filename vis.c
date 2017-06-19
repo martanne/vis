@@ -313,7 +313,7 @@ static void window_draw_cursorline(Win *win) {
 		return;
 	if (view_selections_count(view) > 1)
 		return;
-	
+
 	int width = view_width_get(view);
 	CellStyle style = win->ui->style_get(win->ui, UI_STYLE_CURSOR_LINE);
 	Selection *sel = view_selections_primary_get(view);
@@ -678,6 +678,8 @@ Vis *vis_new(Ui *ui, VisEvent *event) {
 		goto err;
 	if (!(vis->error_file = file_new_internal(vis, NULL)))
 		goto err;
+	if (!(vis->gutter_columns = map_new()))
+		goto err;
 	if (!(vis->actions = map_new()))
 		goto err;
 	if (!(vis->keymap = map_new()))
@@ -730,6 +732,7 @@ void vis_free(Vis *vis) {
 		while (map_first(vis->options, &name) && vis_option_unregister(vis, name));
 	}
 	map_free(vis->options);
+	map_free(vis->gutter_columns);
 	map_free(vis->actions);
 	map_free(vis->keymap);
 	buffer_release(&vis->input_queue);
@@ -783,6 +786,40 @@ void vis_replace_key(Vis *vis, const char *data, size_t len) {
 void vis_delete(Vis *vis, size_t pos, size_t len) {
 	text_delete(vis->win->file->text, pos, len);
 	vis_window_invalidate(vis->win);
+}
+
+static void gutter_column_free(GutterColumn *column) {
+	if (!column)
+		return;
+	free((char*)column->name);
+	free(column);
+}
+
+bool vis_gutter_column_add(Vis *vis, const char *name, int width, void *data, GutterColumnFunction *func) {
+	GutterColumn *column = calloc(1, sizeof *column);
+	if (!column)
+		return false;
+	if (name && !(column->name = strdup(name)))
+		goto err;
+	column->width = width;
+	column->func = func;
+	column->data = data;
+	if (!map_put(vis->gutter_columns, column->name, column))
+		goto err;
+	return true;
+err:
+	gutter_column_free(column);
+	return false;
+}
+
+bool vis_gutter_column_remove(Vis *vis, const char *name) {
+	GutterColumn *column = map_get(vis->gutter_columns, name);
+	if (!column)
+		return false;
+	if (!map_delete(vis->gutter_columns, name))
+		return false;
+	gutter_column_free(column);
+	return true;
 }
 
 bool vis_action_register(Vis *vis, const KeyAction *action) {

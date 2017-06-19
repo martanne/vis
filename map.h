@@ -2,6 +2,7 @@
 #define MAP_H
 
 #include <stdbool.h>
+#include "array.h"
 
 /**
  * @file
@@ -81,5 +82,11 @@ void map_free(Map*);
  * @endrst
  */
 void map_free_full(Map*);
+/**
+ * Fill an Array with the values of the map.
+ * @param arr A pointer to the Array that will receive the values.
+ *            Must have been initialized by the caller with ``array_init``.
+ */
+void map_get_values(Map*, Array *arr);
 
 #endif

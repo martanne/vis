@@ -236,14 +236,29 @@ static void ui_window_draw(UiWin *w) {
 	int width = win->width, height = win->height;
 	const Line *line = view_lines_first(view);
 	bool status = win->options & UI_OPTION_STATUSBAR;
+	bool gutter = (win->options & UI_OPTION_GUTTER) && !map_empty(ui->vis->gutter_columns);
 	bool nu = win->options & UI_OPTION_LINE_NUMBERS_ABSOLUTE;
 	bool rnu = win->options & UI_OPTION_LINE_NUMBERS_RELATIVE;
-	bool sidebar = nu || rnu;
-	int sidebar_width = sidebar ? snprintf(NULL, 0, "%zd ", line->lineno + height - 2) : 0;
+	bool numbers = nu || rnu;
+	bool sidebar = gutter || numbers;
+
+	int gutter_width = 0;
+	Array columns;
+	if (gutter) {
+		array_init(&columns);
+		map_get_values(ui->vis->gutter_columns, &columns);
+		for (int i = 0; i < array_length(&columns); i++) {
+			GutterColumn *column = array_get_ptr(&columns, i);
+			gutter_width += column->width;
+		}
+	}
+	int numbers_width = numbers ? snprintf(NULL, 0, "%zd ", line->lineno + height - 2) : 0;
+	int sidebar_width = gutter_width + numbers_width;
 	if (sidebar_width != win->sidebar_width) {
 		view_resize(view, width - sidebar_width, status ? height - 1 : height);
 		win->sidebar_width = sidebar_width;
 	}
+
 	vis_window_draw(win->win);
 	line = view_lines_first(view);
 	size_t prev_lineno = 0;
@@ -255,28 +270,47 @@ static void ui_window_draw(UiWin *w) {
 	int view_width = view_width_get(view);
 	if (x + sidebar_width + view_width > ui->width)
 		view_width = ui->width - x - sidebar_width;
+
 	for (const Line *l = line; l; l = l->next) {
 		if (sidebar) {
-			if (!l->lineno || !l->len || l->lineno == prev_lineno) {
+			if (l->lineno && l->len && l->lineno != prev_lineno) {
+				if (gutter) {
+					int offset = 0;
+					for (int i = 0; i < array_length(&columns); i++) {
+						GutterColumn *column = array_get_ptr(&columns, i);
+						StyledString str;
+						column->func(ui->vis, win->win, column->data, l->lineno, &str);
+						snprintf(buf+offset, column->width+1, "%*s", column->width, str.str);
+						ui_draw_string(ui, x+offset, y, buf+offset, win, str.style_id);
+						offset += column->width;
+					}
+				}
+				if (numbers) {
+					size_t number = l->lineno;
+					if (rnu) {
+						number = (win->options & UI_OPTION_LARGE_FILE) ? 0 : l->lineno;
+						if (l->lineno > cursor_lineno)
+							number = l->lineno - cursor_lineno;
+						else if (l->lineno < cursor_lineno)
+							number = cursor_lineno - l->lineno;
+					}
+					snprintf(buf+gutter_width, (sizeof buf)-gutter_width, "%*zu ", numbers_width-1, number);
+					ui_draw_string(ui, x+gutter_width, y, buf+gutter_width, win, UI_STYLE_LINENUMBER);
+				}
+			} else {
 				memset(buf, ' ', sizeof(buf));
 				buf[sidebar_width] = '\0';
-			} else {
-				size_t number = l->lineno;
-				if (rnu) {
-					number = (win->options & UI_OPTION_LARGE_FILE) ? 0 : l->lineno;
-					if (l->lineno > cursor_lineno)
-						number = l->lineno - cursor_lineno;
-					else if (l->lineno < cursor_lineno)
-						number = cursor_lineno - l->lineno;
-				}
-				snprintf(buf, sizeof buf, "%*zu ", sidebar_width-1, number);
+				ui_draw_string(ui, x, y, buf, win, UI_STYLE_LINENUMBER);
 			}
-			ui_draw_string(ui, x, y, buf, win, UI_STYLE_LINENUMBER);
 			prev_lineno = l->lineno;
 		}
+
 		debug("draw-window: [%d][%d] ... cells[%d][%d]\n", y, x+sidebar_width, y, view_width);
 		memcpy(&cells[y++][x+sidebar_width], l->cells, sizeof(Cell) * view_width);
 	}
+
+	if (gutter)
+		array_release(&columns);
 }
 
 static CellStyle ui_window_style_get(UiWin *w, enum UiStyle style) {

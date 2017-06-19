@@ -283,6 +283,15 @@ static bool cmd_set(Vis *vis, Win *win, Command *cmd, const char *argv[], Select
 		view_options_set(win->view, flags);
 		break;
 	}
+	case OPTION_GUTTER: {
+		enum UiOption opt = view_options_get(win->view);
+		if (arg.b || (toggle && !(opt & UI_OPTION_GUTTER)))
+			opt |= UI_OPTION_GUTTER;
+		else
+			opt &= ~UI_OPTION_GUTTER;
+		view_options_set(win->view, opt);
+		break;
+	}
 	case OPTION_NUMBER: {
 		enum UiOption opt = view_options_get(win->view);
 		if (arg.b || (toggle && !(opt & UI_OPTION_LINE_NUMBERS_ABSOLUTE))) {
