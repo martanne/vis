@@ -52,9 +52,6 @@ vis.ftdetect.filetypes = {
 	boo = {
 		ext = { "%.boo$" },
 	},
-	caml = {
-		ext = { "%.caml$", "%.ml$", "%.mli$", "%.mll$", "%.mly$" },
-	},
 	chuck = {
 		ext = { "%.ck$" },
 	},
@@ -255,6 +252,9 @@ vis.ftdetect.filetypes = {
 	objective_c = {
 		ext = { "%.m$", "%.mm$", "%.objc$" },
 		mime = { "text/x-objc" },
+	},
+	ocaml = {
+		ext = { "%.ml$", "%.mli$", "%.mll$", "%.mly$" },
 	},
 	pascal = {
 		ext = { "%.dpk$", "%.dpr$", "%.p$", "%.pas$" },
