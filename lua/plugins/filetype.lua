@@ -236,6 +236,10 @@ vis.ftdetect.filetypes = {
 		ext = { "%.md$", "%.markdown$" },
 		mime = { "text/x-markdown" },
 	},
+	matlab = {
+		ext = { "%.m" },
+		mime = { "text/matlab" },
+	},
 	moonscript = {
 		ext = { "%.moon$" },
 		mime = { "text/x-moon" },
