@@ -31,6 +31,7 @@ Optional features:
   --enable-selinux        build with SELinux support [auto]
   --enable-acl            build with POSIX ACL support [auto]
   --enable-help           build with built-in help texts [yes]
+  --enable-default-flags  build with preferred compiler flags [yes]
 
 Some influential environment variables:
   CC                      C compiler command [detected]
@@ -125,6 +126,7 @@ lpeg=auto
 tre=auto
 selinux=auto
 acl=auto
+flags=yes
 
 for arg ; do
 case "$arg" in
@@ -151,6 +153,8 @@ case "$arg" in
 --disable-selinux|--enable-selinux=no) selinux=no ;;
 --enable-acl|--enable-acl=yes) acl=yes ;;
 --disable-acl|--enable-acl=no) acl=no ;;
+--enable-default-flags|--enable-default-flags=yes) flags=yes ;;
+--disable-default-flags|--enable-default-flags=no) flags=no ;;
 --enable-*|--disable-*|--with-*|--without-*|--*dir=*|--build=*) ;;
 -* ) echo "$0: unknown option $arg" ;;
 CC=*) CC=${arg#*=} ;;
@@ -214,10 +218,12 @@ fi
 #
 # Figure out options to force errors on unknown flags.
 #
-tryflag   CFLAGS_TRY  -Werror=unknown-warning-option
-tryflag   CFLAGS_TRY  -Werror=unused-command-line-argument
-tryldflag LDFLAGS_TRY -Werror=unknown-warning-option
-tryldflag LDFLAGS_TRY -Werror=unused-command-line-argument
+if test "$flags" = "yes"; then
+  tryflag   CFLAGS_TRY  -Werror=unknown-warning-option
+  tryflag   CFLAGS_TRY  -Werror=unused-command-line-argument
+  tryldflag LDFLAGS_TRY -Werror=unknown-warning-option
+  tryldflag LDFLAGS_TRY -Werror=unused-command-line-argument
+fi
 
 CFLAGS_STD="-std=c99 -D_POSIX_C_SOURCE=200809L -D_XOPEN_SOURCE=700 -DNDEBUG -D_FORTIFY_SOURCE=2"
 LDFLAGS_STD="-lc"
@@ -231,20 +237,22 @@ Darwin)  CFLAGS_STD="$CFLAGS_STD -D_DARWIN_C_SOURCE" ;;
 AIX)     CFLAGS_STD="$CFLAGS_STD -D_ALL_SOURCE" ;;
 esac
 
-tryflag CFLAGS -pipe
+if test "$flags" = "yes"; then
+  tryflag CFLAGS -pipe
 
-# Try flags to optimize binary size
-tryflag CFLAGS -Os
-tryflag CFLAGS -ffunction-sections
-tryflag CFLAGS -fdata-sections
-tryldflag LDFLAGS_AUTO -Wl,--gc-sections
+  # Try flags to optimize binary size
+  tryflag CFLAGS -Os
+  tryflag CFLAGS -ffunction-sections
+  tryflag CFLAGS -fdata-sections
+  tryldflag LDFLAGS_AUTO -Wl,--gc-sections
 
-# Try hardening flags
-tryflag CFLAGS -fPIE
-tryflag CFLAGS_AUTO -fstack-protector-all
-tryldflag LDFLAGS -Wl,-z,now
-tryldflag LDFLAGS -Wl,-z,relro
-tryldflag LDFLAGS_AUTO -pie
+  # Try hardening flags
+  tryflag CFLAGS -fPIE
+  tryflag CFLAGS_AUTO -fstack-protector-all
+  tryldflag LDFLAGS -Wl,-z,now
+  tryldflag LDFLAGS -Wl,-z,relro
+  tryldflag LDFLAGS_AUTO -pie
+fi
 
 printf "creating config.mk... "
 
