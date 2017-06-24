@@ -144,36 +144,5 @@ require('plugins/digraph')
 require('plugins/number-inc-dec')
 require('plugins/complete-word')
 require('plugins/complete-filename')
+require('plugins/open-file-under-cursor')
 
-local re = require "re"
-local lpeg = vis.lpeg
-
-local namepat = re.compile("[a-zA-Z0-9._-]+")
-local offsetpat = lpeg.S(":") * lpeg.C(lpeg.R("09")^1 + lpeg.S("/") * namepat)
-local fnoffset = lpeg.Ct(lpeg.C(namepat) * offsetpat^0)
-
-vis:map(vis.modes.NORMAL, "gf", function(keys)
-	local file = vis.win.file
-	local lpos = vis.win.cursor.pos
-	local searchrange = file:text_object_longword(lpos);
-	local contents = file:content(searchrange.start, 2048)
-	local matches = fnoffset:match(contents)
-	if not matches then
-		vis:info("No filename found under the cursor.")
-		return #keys
-	end
-	local fn = matches[1]
-	local offsetcmd = matches[2]
-	local cmd = string.format("open '%s'", fn)
-	local ok = vis:command(cmd)
-	if not ok then
-		vis:info("Could not open file " .. fn)
-		return #keys
-	end
-	if offsetcmd then
-		vis:command(offsetcmd)
-	end
-	return #keys
-end, "Open file under cursor in a new window")
-
-vis:map(vis.modes.NORMAL, "<C-w>gf", "gf")
