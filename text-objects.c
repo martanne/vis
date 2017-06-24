@@ -171,8 +171,8 @@ Filerange text_object_sentence(Text *txt, size_t pos) {
 
 Filerange text_object_paragraph(Text *txt, size_t pos) {
 	Filerange r;
-	r.start = text_paragraph_prev(txt, pos);
 	r.end = text_paragraph_next(txt, pos);
+	r.start = text_paragraph_prev(txt, r.end);
 	return r;
 }
 
