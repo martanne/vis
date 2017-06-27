@@ -427,7 +427,7 @@ static void window_draw_eof(Win *win) {
 		return;
 	CellStyle style = win->ui->style_get(win->ui, UI_STYLE_EOF);
 	for (Line *l = view_lines_last(view)->next; l; l = l->next) {
-		strcpy(l->cells[0].data, "~");
+		strcpy(l->cells[0].data, view_symbol_eof_get(view));
 		l->cells[0].style = style;
 	}
 }

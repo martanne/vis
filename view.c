@@ -19,6 +19,7 @@ enum {
 	SYNTAX_SYMBOL_TAB,
 	SYNTAX_SYMBOL_TAB_FILL,
 	SYNTAX_SYMBOL_EOL,
+	SYNTAX_SYMBOL_EOF,
 	SYNTAX_SYMBOL_LAST,
 };
 
@@ -86,6 +87,7 @@ static const SyntaxSymbol symbols_none[] = {
 	[SYNTAX_SYMBOL_TAB]      = { " " },
 	[SYNTAX_SYMBOL_TAB_FILL] = { " " },
 	[SYNTAX_SYMBOL_EOL]      = { " " },
+	[SYNTAX_SYMBOL_EOF]      = { " " },
 };
 
 static const SyntaxSymbol symbols_default[] = {
@@ -93,6 +95,7 @@ static const SyntaxSymbol symbols_default[] = {
 	[SYNTAX_SYMBOL_TAB]      = { "›" /* Single Right-Pointing Angle Quotation Mark U+203A */ },
 	[SYNTAX_SYMBOL_TAB_FILL] = { " " },
 	[SYNTAX_SYMBOL_EOL]      = { "↵" /* Downwards Arrow with Corner Leftwards U+21B5 */ },
+	[SYNTAX_SYMBOL_EOF]      = { "~" },
 };
 
 static Cell cell_unused;
@@ -507,7 +510,7 @@ View *view_new(Text *text) {
 		.data = " ",
 	};
 	view->tabwidth = 8;
-	view_options_set(view, 0);
+	view_options_set(view, UI_OPTION_SYMBOL_EOF);
 
 	if (!view_resize(view, 1, 1)) {
 		view_free(view);
@@ -823,6 +826,7 @@ void view_options_set(View *view, enum UiOption options) {
 		[SYNTAX_SYMBOL_TAB]      = UI_OPTION_SYMBOL_TAB,
 		[SYNTAX_SYMBOL_TAB_FILL] = UI_OPTION_SYMBOL_TAB_FILL,
 		[SYNTAX_SYMBOL_EOL]      = UI_OPTION_SYMBOL_EOL,
+		[SYNTAX_SYMBOL_EOF]      = UI_OPTION_SYMBOL_EOF,
 	};
 
 	for (int i = 0; i < LENGTH(mapping); i++) {
@@ -1326,6 +1330,10 @@ void view_selections_normalize(View *view) {
 
 Text *view_text(View *view) {
 	return view->text;
+}
+
+char *view_symbol_eof_get(View *view) {
+	return view->symbols[SYNTAX_SYMBOL_EOF]->symbol;
 }
 
 bool view_style_define(View *view, enum UiStyle id, const char *style) {

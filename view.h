@@ -375,6 +375,8 @@ bool view_style_define(View*, enum UiStyle, const char *style);
 /** Apply a style to a text range. */
 void view_style(View*, enum UiStyle, size_t start, size_t end);
 
+char *view_symbol_eof_get(View*);
+
 /** @} */
 
 #endif
