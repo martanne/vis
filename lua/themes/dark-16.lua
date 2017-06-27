@@ -24,6 +24,7 @@ lexers.STYLE_EMBEDDED = 'back:blue,bold'
 lexers.STYLE_IDENTIFIER = 'fore:white'
 
 lexers.STYLE_LINENUMBER = 'fore:white'
+lexers.STYLE_LINENUMBER_CURSOR = lexers.STYLE_LINENUMBER
 lexers.STYLE_CURSOR = 'reverse'
 lexers.STYLE_CURSOR_PRIMARY = lexers.STYLE_CURSOR..',fore:yellow'
 lexers.STYLE_CURSOR_LINE = 'underlined'

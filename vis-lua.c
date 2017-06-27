@@ -1640,7 +1640,7 @@ static int window_unmap(lua_State *L) {
  * Define a display style.
  * @function style_define
  * @tparam int id the style id to use
- * @tparam string style the style definition 
+ * @tparam string style the style definition
  * @treturn bool whether the style definition has been successfully
  *  associated with the given id
  * @see style
@@ -2625,18 +2625,19 @@ void vis_lua_init(Vis *vis) {
 		enum UiStyle id;
 		const char *name;
 	} styles[] = {
-		{ UI_STYLE_DEFAULT,        "STYLE_DEFAULT"        },
-		{ UI_STYLE_CURSOR,         "STYLE_CURSOR"         },
-		{ UI_STYLE_CURSOR_PRIMARY, "STYLE_CURSOR_PRIMARY" },
-		{ UI_STYLE_CURSOR_LINE,    "STYLE_CURSOR_LINE"    },
-		{ UI_STYLE_SELECTION,      "STYLE_SELECTION"      },
-		{ UI_STYLE_LINENUMBER,     "STYLE_LINENUMBER"     },
-		{ UI_STYLE_COLOR_COLUMN,   "STYLE_COLOR_COLUMN"   },
-		{ UI_STYLE_STATUS,         "STYLE_STATUS"         },
-		{ UI_STYLE_STATUS_FOCUSED, "STYLE_STATUS_FOCUSED" },
-		{ UI_STYLE_SEPARATOR,      "STYLE_SEPARATOR"      },
-		{ UI_STYLE_INFO,           "STYLE_INFO"           },
-		{ UI_STYLE_EOF,            "STYLE_EOF"            },
+		{ UI_STYLE_DEFAULT,           "STYLE_DEFAULT"           },
+		{ UI_STYLE_CURSOR,            "STYLE_CURSOR"            },
+		{ UI_STYLE_CURSOR_PRIMARY,    "STYLE_CURSOR_PRIMARY"    },
+		{ UI_STYLE_CURSOR_LINE,       "STYLE_CURSOR_LINE"       },
+		{ UI_STYLE_SELECTION,         "STYLE_SELECTION"         },
+		{ UI_STYLE_LINENUMBER,        "STYLE_LINENUMBER"        },
+		{ UI_STYLE_LINENUMBER_CURSOR, "STYLE_LINENUMBER_CURSOR" },
+		{ UI_STYLE_COLOR_COLUMN,      "STYLE_COLOR_COLUMN"      },
+		{ UI_STYLE_STATUS,            "STYLE_STATUS"            },
+		{ UI_STYLE_STATUS_FOCUSED,    "STYLE_STATUS_FOCUSED"    },
+		{ UI_STYLE_SEPARATOR,         "STYLE_SEPARATOR"         },
+		{ UI_STYLE_INFO,              "STYLE_INFO"              },
+		{ UI_STYLE_EOF,               "STYLE_EOF"               },
 	};
 
 	for (size_t i = 0; i < LENGTH(styles); i++) {

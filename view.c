@@ -416,7 +416,7 @@ void view_draw(View *view) {
 	/* resync position of cursors within visible area */
 	for (Selection *s = view->selections; s; s = s->next) {
 		size_t pos = view_cursors_pos(s);
-		if (!view_coord_get(view, pos, &s->line, &s->row, &s->col) && 
+		if (!view_coord_get(view, pos, &s->line, &s->row, &s->col) &&
 		    s == view->selection) {
 			s->line = view->topline;
 			s->row = 0;
