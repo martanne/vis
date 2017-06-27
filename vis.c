@@ -468,6 +468,7 @@ Win *window_new_file(Vis *vis, File *file, enum UiOption options) {
 		return NULL;
 	}
 	file->refcount++;
+	view_options_set(win->view, view_options_get(win->view));
 	view_tabwidth_set(win->view, vis->tabwidth);
 
 	if (vis->windows)
@@ -574,7 +575,7 @@ bool vis_window_new(Vis *vis, const char *filename) {
 	File *file = file_new(vis, filename);
 	if (!file)
 		return false;
-	Win *win = window_new_file(vis, file, UI_OPTION_STATUSBAR);
+	Win *win = window_new_file(vis, file, UI_OPTION_STATUSBAR|UI_OPTION_SYMBOL_EOF);
 	if (!win) {
 		file_free(vis, file);
 		return false;

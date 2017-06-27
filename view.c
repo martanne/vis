@@ -510,7 +510,7 @@ View *view_new(Text *text) {
 		.data = " ",
 	};
 	view->tabwidth = 8;
-	view_options_set(view, UI_OPTION_SYMBOL_EOF);
+	view_options_set(view, 0);
 
 	if (!view_resize(view, 1, 1)) {
 		view_free(view);
