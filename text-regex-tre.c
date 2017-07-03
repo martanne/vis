@@ -1,5 +1,7 @@
 #include <stdlib.h>
 #include <string.h>
+#include <wchar.h>
+#include <errno.h>
 
 #include "text-regex.h"
 #include "text-motions.h"
@@ -20,13 +22,60 @@ size_t text_regex_nsub(Regex *r) {
 
 static int str_next_char(tre_char_t *c, unsigned int *pos_add, void *context) {
 	Regex *r = context;
-	*pos_add = 1;
-	if (r->it.pos < r->end && text_iterator_byte_get(&r->it, (char*)c)) {
-		text_iterator_byte_next(&r->it, NULL);
-		return 0;
+	Iterator *it = &r->it;
+	if (TRE_WCHAR) {
+		mbstate_t ps = { 0 };
+		bool eof = false;
+		size_t start = it->pos;
+		for (;;) {
+			if (it->pos >= r->end) {
+				eof = true;
+				break;
+			}
+			size_t rem = r->end - it->pos;
+			size_t plen = it->end - it->text;
+			size_t len = rem < plen ? rem : plen;
+			size_t wclen = mbrtowc(c, it->text, len, &ps);
+			if (wclen == (size_t)-1 && errno == EILSEQ) {
+				*c = L'\0';
+				text_iterator_codepoint_next(it, NULL);
+				break;
+			} else if (wclen == (size_t)-2) {
+				if (!text_iterator_next(it)) {
+					eof = true;
+					break;
+				}
+			} else if (wclen == 0) {
+				text_iterator_byte_next(it, NULL);
+				break;
+			} else {
+				if (wclen < plen) {
+					it->text += wclen;
+					it->pos += wclen;
+				} else {
+					text_iterator_next(it);
+				}
+				break;
+			}
+		}
+
+		if (eof) {
+			*c = L'\0';
+			*pos_add = 1;
+			return 1;
+		} else {
+			*pos_add = it->pos - start;
+			return 0;
+		}
 	} else {
-		*c = '\0';
-		return 1;
+		*pos_add = 1;
+		if (it->pos < r->end && text_iterator_byte_get(it, (char*)c)) {
+			text_iterator_byte_next(it, NULL);
+			return 0;
+		} else {
+			*c = '\0';
+			return 1;
+		}
 	}
 }
 
