@@ -49,7 +49,6 @@ struct Selection {
 	Line *line;             /* screen line on which cursor currently resides */
 	int generation;         /* used to filter out newly created cursors during iteration */
 	int number;             /* how many cursors are located before this one */
-	SelectionRegion region; /* saved selection region */
 	View *view;             /* associated view to which this cursor belongs */
 	Selection *prev, *next; /* previous/next cursors ordered by location at creation time */
 };
@@ -1230,11 +1229,6 @@ bool view_selections_set(Selection *s, const Filerange *r) {
 	return true;
 }
 
-void view_selections_save(Selection *s) {
-	s->region.cursor = s->cursor;
-	s->region.anchor = s->anchor;
-}
-
 Filerange view_regions_restore(View *view, SelectionRegion *s) {
 	Text *txt = view->text;
 	size_t anchor = text_mark_get(txt, s->anchor);
@@ -1255,20 +1249,6 @@ bool view_regions_save(View *view, Filerange *r, SelectionRegion *s) {
 		end = text_char_prev(txt, end);
 	s->anchor = text_mark_set(txt, r->start);
 	s->cursor = text_mark_set(txt, end);
-	return true;
-}
-
-bool view_selections_restore(Selection *s) {
-	Text *txt = s->view->text;
-	size_t pos = text_mark_get(txt, s->region.cursor);
-	if (pos == EPOS)
-		return false;
-	if (s->region.anchor != s->region.cursor && text_mark_get(txt, s->region.anchor) == EPOS)
-		return false;
-	s->cursor = s->region.cursor;
-	s->anchor = s->region.anchor;
-	s->anchored = true;
-	view_cursors_to(s, pos);
 	return true;
 }
 

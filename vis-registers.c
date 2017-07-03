@@ -221,6 +221,8 @@ enum VisRegister vis_register_used(Vis *vis) {
 }
 
 static Register *register_from(Vis *vis, enum VisRegister id) {
+	if (id == VIS_REG_SELECTION && vis->win)
+		return &vis->win->reg_selections;
 	if (VIS_REG_A <= id && id <= VIS_REG_Z)
 		id = VIS_REG_a + id - VIS_REG_A;
 	if (id < LENGTH(vis->registers))
@@ -300,4 +302,5 @@ const RegisterDef vis_registers[] = {
 	[VIS_REG_COMMAND]    = { ':', VIS_HELP("Last :-command")                                   },
 	[VIS_REG_SHELL]      = { '!', VIS_HELP("Last shell command given to either <, >, |, or !") },
 	[VIS_REG_NUMBER]     = { '#', VIS_HELP("Register number")                                  },
+	[VIS_REG_SELECTION]  = { '^', VIS_HELP("Last selections")                                  },
 };

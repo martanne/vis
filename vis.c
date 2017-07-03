@@ -246,14 +246,10 @@ void vis_window_status(Win *win, const char *status) {
 
 void window_selection_save(Win *win) {
 	Vis *vis = win->vis;
-	File *file = win->file;
-	Filerange sel = view_selections_get(view_selections(win->view));
-	file->marks[VIS_MARK_SELECTION_START] = text_mark_set(file->text, sel.start);
-	file->marks[VIS_MARK_SELECTION_END] = text_mark_set(file->text, sel.end);
-	if (!vis->action.op) {
-		for (Selection *s = view_selections(win->view); s; s = view_selections_next(s))
-			view_selections_save(s);
-	}
+	View *view = win->view;
+	Array sel = view_selections_get_all(view);
+	vis_register_selections_set(vis, VIS_REG_SELECTION, &sel);
+	array_release(&sel);
 }
 
 static void window_free(Win *win) {
@@ -270,6 +266,7 @@ static void window_free(Win *win) {
 	for (size_t i = 0; i < LENGTH(win->modes); i++)
 		map_free(win->modes[i].bindings);
 	ringbuf_free(win->jumplist);
+	register_release(&win->reg_selections);
 	free(win);
 }
 
@@ -467,6 +464,7 @@ Win *window_new_file(Vis *vis, File *file, enum UiOption options) {
 		window_free(win);
 		return NULL;
 	}
+	register_init(&win->reg_selections);
 	file->refcount++;
 	view_options_set(win->view, view_options_get(win->view));
 	view_tabwidth_set(win->view, vis->tabwidth);
@@ -845,6 +843,9 @@ void vis_do(Vis *vis) {
 	if (a->op == &vis_operators[VIS_OP_PUT_AFTER] && multiple_cursors && vis_register_count(vis, reg) == 1)
 		reg_slot = 0;
 
+	if (vis->mode->visual && a->op)
+		window_selection_save(win);
+
 	for (Selection *sel = view_selections(view), *next; sel; sel = next) {
 		if (vis->interrupted)
 			break;
@@ -982,11 +983,8 @@ void vis_do(Vis *vis) {
 			if (pos == EPOS) {
 				view_selections_dispose(sel);
 			} else if (pos <= text_size(txt)) {
-				if (vis->mode->visual)
-					view_selections_save(sel);
+				view_selection_clear(sel);
 				view_cursors_to(sel, pos);
-				if (vis->mode->visual)
-					view_selection_clear(sel);
 			}
 		}
 	}

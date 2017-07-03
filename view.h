@@ -346,16 +346,6 @@ Filerange view_selection_get(View*);
  * @defgroup view_save
  * @{
  */
-/** Save selection which can later be restored. */
-void view_selections_save(Selection*);
-/**
- * Restore a previously active selection.
- * @rst
- * .. note:: Fails if selection boundaries no longer exist.
- * @endrst
- */
-bool view_selections_restore(Selection*);
-
 Filerange view_regions_restore(View*, SelectionRegion*);
 bool view_regions_save(View*, Filerange*, SelectionRegion*);
 /**

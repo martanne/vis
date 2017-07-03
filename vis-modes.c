@@ -201,7 +201,8 @@ static void vis_mode_visual_line_enter(Vis *vis, Mode *old) {
 
 static void vis_mode_visual_line_leave(Vis *vis, Mode *new) {
 	if (!new->visual) {
-		window_selection_save(vis->win);
+		if (!vis->action.op)
+			window_selection_save(vis->win);
 		view_selections_clear_all(vis->win->view);
 	} else {
 		view_cursor_to(vis->win->view, view_cursor_get(vis->win->view));
@@ -210,7 +211,8 @@ static void vis_mode_visual_line_leave(Vis *vis, Mode *new) {
 
 static void vis_mode_visual_leave(Vis *vis, Mode *new) {
 	if (!new->visual) {
-		window_selection_save(vis->win);
+		if (!vis->action.op)
+			window_selection_save(vis->win);
 		view_selections_clear_all(vis->win->view);
 	}
 }

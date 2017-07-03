@@ -114,8 +114,6 @@ static const char *movement(Vis*, const char *keys, const Arg *arg);
 static const char *textobj(Vis*, const char *keys, const Arg *arg);
 /* move to the other end of selected text */
 static const char *selection_end(Vis*, const char *keys, const Arg *arg);
-/* restore least recently used selection */
-static const char *selection_restore(Vis*, const char *keys, const Arg *arg);
 /* use register indicated by keys for the current operator */
 static const char *reg(Vis*, const char *keys, const Arg *arg);
 /* perform arg->i motion with a mark indicated by keys as argument */
@@ -265,7 +263,6 @@ enum {
 	VIS_ACTION_PROMPT_SHOW,
 	VIS_ACTION_REPEAT,
 	VIS_ACTION_SELECTION_FLIP,
-	VIS_ACTION_SELECTION_RESTORE,
 	VIS_ACTION_WINDOW_REDRAW_TOP,
 	VIS_ACTION_WINDOW_REDRAW_CENTER,
 	VIS_ACTION_WINDOW_REDRAW_BOTTOM,
@@ -912,11 +909,6 @@ static const KeyAction vis_action[] = {
 		"vis-selection-flip",
 		VIS_HELP("Flip selection, move cursor to other end")
 		selection_end,
-	},
-	[VIS_ACTION_SELECTION_RESTORE] = {
-		"vis-selection-restore",
-		VIS_HELP("Restore last selection")
-		selection_restore,
 	},
 	[VIS_ACTION_WINDOW_REDRAW_TOP] = {
 		"vis-window-redraw-top",
@@ -2022,19 +2014,6 @@ static const char *textobj(Vis *vis, const char *keys, const Arg *arg) {
 static const char *selection_end(Vis *vis, const char *keys, const Arg *arg) {
 	for (Selection *s = view_selections(vis_view(vis)); s; s = view_selections_next(s))
 		view_selections_flip(s);
-	return keys;
-}
-
-static const char *selection_restore(Vis *vis, const char *keys, const Arg *arg) {
-	Text *txt = vis_text(vis);
-	View *view = vis_view(vis);
-	for (Selection *s = view_selections(view); s; s = view_selections_next(s))
-		view_selections_restore(s);
-	Filerange sel = view_selection_get(view);
-	if (text_range_is_linewise(txt, &sel))
-		vis_mode_switch(vis, VIS_MODE_VISUAL_LINE);
-	else
-		vis_mode_switch(vis, VIS_MODE_VISUAL);
 	return keys;
 }
 

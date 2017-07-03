@@ -247,7 +247,7 @@ static const KeyBinding bindings_normal[] = {
 	{ "g+",                 ACTION(LATER)                               },
 	{ "gn",                 ALIAS("vgn")                                },
 	{ "gN",                 ALIAS("vgN")                                },
-	{ "gv",                 ACTION(SELECTION_RESTORE)                   },
+	{ "gv",                 ALIAS("\"^Sv")                              },
 	{ "I",                  ACTION(INSERT_LINE_START)                   },
 	{ "i",                  ACTION(MODE_INSERT)                         },
 	{ "J",                  ACTION(JOIN_LINES)                          },
