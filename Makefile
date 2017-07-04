@@ -14,13 +14,6 @@ MANUALS = $(EXECUTABLES:=.1)
 
 DOCUMENTATION = LICENSE README.md
 
-# conditionally initialized, this is needed for standalone build
-# with empty config.mk
-PREFIX ?= /usr/local
-SHAREPREFIX ?= ${PREFIX}/share
-DOCPREFIX ?= ${SHAREPREFIX}/doc
-MANPREFIX ?= ${PREFIX}/man
-
 VERSION = $(shell git describe --always --dirty 2>/dev/null || echo "v0.3-git")
 
 CONFIG_HELP ?= 1
