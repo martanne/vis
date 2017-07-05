@@ -175,7 +175,7 @@ static size_t lines_count(Text *txt, size_t pos, size_t len);
 static ssize_t write_all(int fd, const char *buf, size_t count) {
 	size_t rem = count;
 	while (rem > 0) {
-		ssize_t written = write(fd, buf, rem);
+		ssize_t written = write(fd, buf, rem > INT_MAX ? INT_MAX : rem);
 		if (written < 0) {
 			if (errno == EAGAIN || errno == EINTR)
 				continue;
