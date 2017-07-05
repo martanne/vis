@@ -1326,6 +1326,7 @@ static const char *repeat(Vis *vis, const char *keys, const Arg *arg) {
 
 static const char *cursors_new(Vis *vis, const char *keys, const Arg *arg) {
 	View *view = vis_view(vis);
+	bool anchored = view_selections_anchored(view_selections_primary_get(view));
 	VisCountIterator it = vis_count_iterator_get(vis, 1);
 	while (vis_count_iterator_next(&it)) {
 		Selection *sel = NULL;
@@ -1358,8 +1359,11 @@ static const char *cursors_new(Vis *vis, const char *keys, const Arg *arg) {
 			else if (arg->i == +1)
 				sel_new = view_selections_next(sel);
 		}
-		if (sel_new)
+		if (sel_new) {
 			view_selections_primary_set(sel_new);
+			if (anchored)
+				view_selections_anchor(sel_new);
+		}
 	}
 	vis_count_set(vis, VIS_COUNT_UNKNOWN);
 	return keys;
@@ -1672,9 +1676,10 @@ static const char *selections_save(Vis *vis, const char *keys, const Arg *arg) {
 
 static const char *selections_restore(Vis *vis, const char *keys, const Arg *arg) {
 	View *view = vis_view(vis);
+	bool anchored = view_selections_anchored(view_selections_primary_get(view));
 	enum VisRegister reg = vis_register_used(vis);
 	Array sel = vis_register_selections_get(vis, reg);
-	view_selections_set_all(view, &sel);
+	view_selections_set_all(view, &sel, anchored);
 	array_release(&sel);
 	vis_cancel(vis);
 	return keys;
@@ -1707,6 +1712,7 @@ static void normalize(Array *a) {
 
 static const char *selections_union(Vis *vis, const char *keys, const Arg *arg) {
 	View *view = vis_view(vis);
+	bool anchored = view_selections_anchored(view_selections_primary_get(view));
 	enum VisRegister reg = vis_register_used(vis);
 	Array a = vis_register_selections_get(vis, reg);
 	Array b = view_selections_get_all(view);
@@ -1746,7 +1752,7 @@ static const char *selections_union(Vis *vis, const char *keys, const Arg *arg) 
 	if (text_range_valid(&cur))
 		array_add(&sel, &cur);
 
-	view_selections_set_all(view, &sel);
+	view_selections_set_all(view, &sel, anchored);
 	vis_cancel(vis);
 
 	array_release(&a);
@@ -1773,6 +1779,7 @@ static void intersect(Array *ret, Array *a, Array *b) {
 
 static const char *selections_intersect(Vis *vis, const char *keys, const Arg *arg) {
 	View *view = vis_view(vis);
+	bool anchored = view_selections_anchored(view_selections_primary_get(view));
 	enum VisRegister reg = vis_register_used(vis);
 	Array a = vis_register_selections_get(vis, reg);
 	Array b = view_selections_get_all(view);
@@ -1780,7 +1787,7 @@ static const char *selections_intersect(Vis *vis, const char *keys, const Arg *a
 	array_init_from(&sel, &a);
 
 	intersect(&sel, &a, &b);
-	view_selections_set_all(view, &sel);
+	view_selections_set_all(view, &sel, anchored);
 	vis_cancel(vis);
 
 	array_release(&a);
@@ -1809,6 +1816,7 @@ static void complement(Array *ret, Array *a, Filerange *universe) {
 static const char *selections_complement(Vis *vis, const char *keys, const Arg *arg) {
 	Text *txt = vis_text(vis);
 	View *view = vis_view(vis);
+	bool anchored = view_selections_anchored(view_selections_primary_get(view));
 	Filerange universe = text_object_entire(txt, 0);
 	Array a = view_selections_get_all(view);
 	Array sel;
@@ -1816,7 +1824,7 @@ static const char *selections_complement(Vis *vis, const char *keys, const Arg *
 
 	complement(&sel, &a, &universe);
 
-	view_selections_set_all(view, &sel);
+	view_selections_set_all(view, &sel, anchored);
 	array_release(&a);
 	array_release(&sel);
 	return keys;
@@ -1824,6 +1832,7 @@ static const char *selections_complement(Vis *vis, const char *keys, const Arg *
 
 static const char *selections_minus(Vis *vis, const char *keys, const Arg *arg) {
 	View *view = vis_view(vis);
+	bool anchored = view_selections_anchored(view_selections_primary_get(view));
 	enum VisRegister reg = vis_register_used(vis);
 	Array a = view_selections_get_all(view);
 	Array b = vis_register_selections_get(vis, reg);
@@ -1839,7 +1848,7 @@ static const char *selections_minus(Vis *vis, const char *keys, const Arg *arg) 
 	complement(&b_complement, &b, &universe);
 	intersect(&sel, &a, &b_complement);
 
-	view_selections_set_all(view, &sel);
+	view_selections_set_all(view, &sel, anchored);
 	vis_cancel(vis);
 
 	array_release(&a);
@@ -1902,6 +1911,7 @@ static Filerange combine_rightmost(const Filerange *r1, const Filerange *r2) {
 
 static const char *selections_combine(Vis *vis, const char *keys, const Arg *arg) {
 	View *view = vis_view(vis);
+	bool anchored = view_selections_anchored(view_selections_primary_get(view));
 	enum VisRegister reg = vis_register_used(vis);
 	Array a = view_selections_get_all(view);
 	Array b = vis_register_selections_get(vis, reg);
@@ -1916,7 +1926,7 @@ static const char *selections_combine(Vis *vis, const char *keys, const Arg *arg
 	}
 
 	normalize(&sel);
-	view_selections_set_all(view, &sel);
+	view_selections_set_all(view, &sel, anchored);
 	vis_cancel(vis);
 
 	array_release(&a);

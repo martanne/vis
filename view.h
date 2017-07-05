@@ -147,9 +147,10 @@ void view_selections_dispose_all(View*);
 void view_selections_normalize(View*);
 /**
  * Replace currently active selections.
- * @param The array of ``Filerange``s.
+ * @param array The Array of ``Filerange``s.
+ * @param anchored Whether *all* selection should be anchored.
  */
-void view_selections_set_all(View*, Array*);
+void view_selections_set_all(View*, Array*, bool anchored);
 /** Get array containing a ``Fileranges`` for each selection. */
 Array view_selections_get_all(View*);
 /**

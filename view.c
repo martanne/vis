@@ -1252,7 +1252,7 @@ bool view_regions_save(View *view, Filerange *r, SelectionRegion *s) {
 	return true;
 }
 
-void view_selections_set_all(View *view, Array *arr) {
+void view_selections_set_all(View *view, Array *arr, bool anchored) {
 	Selection *s;
 	Filerange *r;
 	size_t i = 0;
@@ -1264,11 +1264,13 @@ void view_selections_set_all(View *view, Array *arr) {
 			}
 			break;
 		}
+		s->anchored = anchored;
 	}
 	while ((r = array_get(arr, i++))) {
 		s = view_selections_new_force(view, r->start);
 		if (!s || !view_selections_set(s, r))
 			break;
+		s->anchored = anchored;
 	}
 	view_selections_primary_set(view->selections);
 }
