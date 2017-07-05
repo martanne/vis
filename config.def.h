@@ -260,6 +260,8 @@ static const KeyBinding bindings_normal[] = {
 	{ "q",                  ACTION(MACRO_RECORD)                        },
 	{ "R",                  ACTION(MODE_REPLACE)                        },
 	{ "r",                  ACTION(REPLACE_CHAR)                        },
+	{ "s",                  ALIAS("cl")                                 },
+	{ "S",                  ALIAS("cc")                                 },
 	{ "<Tab>",              ACTION(CURSORS_ALIGN)                       },
 	{ "u",                  ACTION(UNDO)                                },
 	{ "v",                  ACTION(MODE_VISUAL)                         },
