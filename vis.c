@@ -29,8 +29,8 @@
 #include "sam.h"
 
 const MarkDef vis_marks[] = {
-	[VIS_MARK_SELECTION_START] = { '<', VIS_HELP("Last selection start") },
-	[VIS_MARK_SELECTION_END]   = { '>', VIS_HELP("Last selection end")   },
+	[VIS_MARK_DEFAULT]        = { '"', VIS_HELP("Default mark")    },
+	[VIS_MARK_SELECTION]      = { '^', VIS_HELP("Last selections") },
 };
 
 static void macro_replay(Vis *vis, const Macro *macro);
@@ -119,6 +119,8 @@ static void file_free(Vis *vis, File *file) {
 		return;
 	}
 	vis_event_emit(vis, VIS_EVENT_FILE_CLOSE, file);
+	for (size_t i = 0; i < LENGTH(file->marks); i++)
+		mark_release(&file->marks[i]);
 	text_free(file->text);
 	free((char*)file->name);
 
@@ -138,6 +140,8 @@ static File *file_new_text(Vis *vis, Text *text) {
 	file->fd = -1;
 	file->text = text;
 	file->stat = text_stat(text);
+	for (size_t i = 0; i < LENGTH(file->marks); i++)
+		marks_init(&file->marks[i]);
 	if (vis->files)
 		vis->files->prev = file;
 	file->next = vis->files;
@@ -266,7 +270,7 @@ static void window_free(Win *win) {
 	for (size_t i = 0; i < LENGTH(win->modes); i++)
 		map_free(win->modes[i].bindings);
 	ringbuf_free(win->jumplist);
-	register_release(&win->reg_selections);
+	mark_release(&win->saved_selections);
 	free(win);
 }
 
@@ -464,7 +468,7 @@ Win *window_new_file(Vis *vis, File *file, enum UiOption options) {
 		window_free(win);
 		return NULL;
 	}
-	register_init(&win->reg_selections);
+	marks_init(&win->saved_selections);
 	file->refcount++;
 	view_options_set(win->view, view_options_get(win->view));
 	view_tabwidth_set(win->view, vis->tabwidth);
@@ -883,7 +887,7 @@ void vis_do(Vis *vis) {
 				else if (a->movement->cur)
 					pos = a->movement->cur(sel);
 				else if (a->movement->file)
-					pos = a->movement->file(vis, file, pos);
+					pos = a->movement->file(vis, file, sel);
 				else if (a->movement->vis)
 					pos = a->movement->vis(vis, txt, pos);
 				else if (a->movement->view)
@@ -1537,12 +1541,6 @@ enum VisMark vis_mark_from(Vis *vis, char mark) {
 			return i;
 	}
 	return VIS_MARK_INVALID;
-}
-
-void vis_mark_set(Vis *vis, enum VisMark mark, size_t pos) {
-	File *file = vis->win->file;
-	if (mark < LENGTH(file->marks))
-		file->marks[mark] = text_mark_set(file->text, pos);
 }
 
 int vis_count_get(Vis *vis) {

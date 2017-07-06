@@ -512,7 +512,7 @@ static void pushpos(lua_State *L, size_t pos) {
 }
 
 static void pushrange(lua_State *L, Filerange *r) {
-	if (!text_range_valid(r)) {
+	if (!r || !text_range_valid(r)) {
 		lua_pushnil(L);
 		return;
 	}
@@ -2245,7 +2245,7 @@ static const struct luaL_Reg file_lines_funcs[] = {
 };
 
 static int file_marks_index(lua_State *L) {
-	size_t pos = EPOS;
+	Filerange *range = NULL;
 	Vis *vis = lua_touserdata(L, lua_upvalueindex(1));
 	File *file = obj_ref_check_containerof(L, 1, VIS_LUA_TYPE_MARKS, offsetof(File, marks));
 	if (!file)
@@ -2256,9 +2256,11 @@ static int file_marks_index(lua_State *L) {
 	enum VisMark mark = vis_mark_from(vis, symbol[0]);
 	if (mark == VIS_MARK_INVALID)
 		goto err;
-	pos = text_mark_get(file->text, file->marks[mark]);
+	Array arr = vis_register_selections_get(vis, mark);
+	range = array_get(&arr, 0);
+	array_release(&arr);
 err:
-	pushpos(L, pos);
+	pushrange(L, range);
 	return 1;
 }
 
@@ -2272,8 +2274,14 @@ static int file_marks_newindex(lua_State *L) {
 		return 0;
 	enum VisMark mark = vis_mark_from(vis, symbol[0]);
 	size_t pos = luaL_checkunsigned(L, 3);
-	if (mark < LENGTH(file->marks))
-		file->marks[mark] = text_mark_set(file->text, pos);
+	if (mark < LENGTH(file->marks)) {
+		Array arr;
+		array_init_sized(&arr, sizeof(Filerange));
+		Filerange range = text_range_new(pos, pos);
+		array_add(&arr, &range);
+		vis_register_selections_set(vis, mark, &arr);
+		array_release(&arr);
+	}
 	return 0;
 }
 

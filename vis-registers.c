@@ -29,7 +29,6 @@ static ssize_t read_buffer(void *context, char *data, size_t len) {
 bool register_init(Register *reg) {
 	Buffer buf;
 	buffer_init(&buf);
-	array_init_sized(&reg->selections, sizeof(SelectionRegion));
 	array_init_sized(&reg->values, sizeof(Buffer));
 	return array_add(&reg->values, &buf);
 }
@@ -37,11 +36,20 @@ bool register_init(Register *reg) {
 void register_release(Register *reg) {
 	if (!reg)
 		return;
-	array_release(&reg->selections);
 	size_t n = array_capacity(&reg->values);
 	for (size_t i = 0; i < n; i++)
 		buffer_release(array_get(&reg->values, i));
 	array_release(&reg->values);
+}
+
+void marks_init(Array *arr) {
+	array_init_sized(arr, sizeof(SelectionRegion));
+}
+
+void mark_release(Array *arr) {
+	if (!arr)
+		return;
+	array_release(arr);
 }
 
 const char *register_slot_get(Vis *vis, Register *reg, size_t slot, size_t *len) {
@@ -220,9 +228,16 @@ enum VisRegister vis_register_used(Vis *vis) {
 	return vis->action.reg - vis->registers;
 }
 
+static Array *mark_from(Vis *vis, enum VisMark id) {
+	if (id == VIS_MARK_SELECTION && vis->win)
+		return &vis->win->saved_selections;
+	File *file = vis->win->file;
+	if (id < LENGTH(file->marks))
+		return &file->marks[id];
+	return NULL;
+}
+
 static Register *register_from(Vis *vis, enum VisRegister id) {
-	if (id == VIS_REG_SELECTION && vis->win)
-		return &vis->win->reg_selections;
 	if (VIS_REG_A <= id && id <= VIS_REG_Z)
 		id = VIS_REG_a + id - VIS_REG_A;
 	if (id < LENGTH(vis->registers))
@@ -252,14 +267,14 @@ const char *vis_register_slot_get(Vis *vis, enum VisRegister id, size_t slot, si
 Array vis_register_selections_get(Vis *vis, enum VisRegister id) {
 	Array sel;
 	array_init_sized(&sel, sizeof(Filerange));
-	Register *reg = register_from(vis, id);
-	if (!reg)
+	Array *mark = mark_from(vis, id);
+	if (!mark)
 		return sel;
 	View *view = vis->win->view;
-	size_t len = array_length(&reg->selections);
+	size_t len = array_length(mark);
 	array_reserve(&sel, len);
 	for (size_t i = 0; i < len; i++) {
-		SelectionRegion *sr = array_get(&reg->selections, i);
+		SelectionRegion *sr = array_get(mark, i);
 		Filerange r = view_regions_restore(view, sr);
 		if (text_range_valid(&r))
 			array_add(&sel, &r);
@@ -269,16 +284,16 @@ Array vis_register_selections_get(Vis *vis, enum VisRegister id) {
 }
 
 void vis_register_selections_set(Vis *vis, enum VisRegister id, Array *sel) {
-	Register *reg = register_from(vis, id);
-	if (!reg)
+	Array *mark = mark_from(vis, id);
+	if (!mark)
 		return;
-	array_clear(&reg->selections);
+	array_clear(mark);
 	View *view = vis->win->view;
 	for (size_t i = 0, len = array_length(sel); i < len; i++) {
 		SelectionRegion ss;
 		Filerange *r = array_get(sel, i);
 		if (view_regions_save(view, r, &ss))
-			array_add(&reg->selections, &ss);
+			array_add(mark, &ss);
 	}
 }
 

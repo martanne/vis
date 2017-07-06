@@ -107,12 +107,17 @@ static size_t longword_next(Vis *vis, Text *txt, size_t pos) {
 	return common_word_next(vis, txt, pos, VIS_MOVE_LONGWORD_END_NEXT);
 }
 
-static size_t mark_goto(Vis *vis, File *file, size_t pos) {
-	return text_mark_get(file->text, file->marks[vis->action.mark]);
+static size_t mark_goto(Vis *vis, File *file, Selection *sel) {
+	Array *marks = &file->marks[vis->action.mark];
+	size_t idx = view_selections_number(sel);
+	SelectionRegion *sr = array_get(marks, idx);
+	if (!sr)
+		return EPOS;
+	return text_mark_get(file->text, sr->cursor);
 }
 
-static size_t mark_line_goto(Vis *vis, File *file, size_t pos) {
-	return text_line_start(file->text, mark_goto(vis, file, pos));
+static size_t mark_line_goto(Vis *vis, File *file, Selection *sel) {
+	return text_line_start(file->text, mark_goto(vis, file, sel));
 }
 
 static size_t to(Vis *vis, Text *txt, size_t pos) {

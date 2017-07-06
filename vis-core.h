@@ -40,7 +40,6 @@ struct Mode {
 };
 
 typedef struct {
-	Array selections;
 	Array values;
 	bool linewise; /* place register content on a new line when inserting? */
 	bool append;
@@ -75,7 +74,7 @@ typedef struct { /* Motion implementation, takes a cursor postion and returns a 
 	/* TODO: merge types / use union to save space */
 	size_t (*cur)(Selection*);
 	size_t (*txt)(Text*, size_t pos);
-	size_t (*file)(Vis*, File*, size_t pos);
+	size_t (*file)(Vis*, File*, Selection*);
 	size_t (*vis)(Vis*, Text*, size_t pos);
 	size_t (*view)(Vis*, View*);
 	size_t (*win)(Vis*, Win*, size_t pos);
@@ -143,7 +142,7 @@ struct File { /* shared state among windows displaying the same file */
 	bool internal;                   /* whether it is an internal file (e.g. used for the prompt) */
 	struct stat stat;                /* filesystem information when loaded/saved, used to detect changes outside the editor */
 	int refcount;                    /* how many windows are displaying this file? (always >= 1) */
-	Mark marks[VIS_MARK_INVALID];    /* marks which are shared across windows */
+	Array marks[VIS_MARK_INVALID];   /* marks which are shared across windows */
 	enum TextSaveMethod save_method; /* whether the file is saved using rename(2) or overwritten */
 	Transcript transcript;           /* keeps track of changes performed by sam commands */
 	File *next, *prev;
@@ -162,7 +161,7 @@ struct Win {
 	View *view;             /* currently displayed part of underlying text */
 	RingBuffer *jumplist;   /* LRU jump management */
 	ChangeList changelist;  /* state for iterating through least recently changes */
-	Register reg_selections;/* register used to store selections */
+	Array saved_selections; /* register used to store selections */
 	Mode modes[VIS_MODE_INVALID]; /* overlay mods used for per window key bindings */
 	Win *parent;            /* window which was active when showing the command prompt */
 	Mode *parent_mode;      /* mode which was active when showing the command prompt */
@@ -276,6 +275,9 @@ void file_name_set(File*, const char *name);
 
 bool register_init(Register*);
 void register_release(Register*);
+
+void marks_init(Array*);
+void mark_release(Array*);
 
 const char *register_get(Vis*, Register*, size_t *len);
 const char *register_slot_get(Vis*, Register*, size_t slot, size_t *len);

@@ -2042,7 +2042,10 @@ static const char *mark_set(Vis *vis, const char *keys, const Arg *arg) {
 		return NULL;
 	if (keys[1])
 		return vis_keys_next(vis, keys);
-	vis_mark_set(vis, vis_mark_from(vis, keys[0]), view_cursor_get(vis_view(vis)));
+	View *view = vis_view(vis);
+	Array sel = view_selections_get_all(view);
+	vis_register_selections_set(vis, vis_mark_from(vis, keys[0]), &sel);
+	array_release(&sel);
 	return keys+1;
 }
 

@@ -1005,7 +1005,7 @@ static Filerange address_line_evaluate(Address *addr, File *file, Filerange *ran
 		return text_range_new(line, text_line_next(txt, line));
 }
 
-static Filerange address_evaluate(Address *addr, File *file, Filerange *range, int sign) {
+static Filerange address_evaluate(Address *addr, File *file, Selection *sel, Filerange *range, int sign) {
 	Filerange ret = text_range_empty();
 
 	do {
@@ -1024,7 +1024,12 @@ static Filerange address_evaluate(Address *addr, File *file, Filerange *range, i
 			break;
 		case '\'':
 		{
-			size_t pos = text_mark_get(file->text, file->marks[addr->number]);
+			size_t pos = EPOS;
+			Array *marks = &file->marks[addr->number];
+			size_t idx = sel ? view_selections_number(sel) : 0;
+			SelectionRegion *sr = array_get(marks, idx);
+			if (sr)
+				pos = text_mark_get(file->text, sr->cursor);
 			ret = text_range_new(pos, pos);
 			break;
 		}
@@ -1057,7 +1062,7 @@ static Filerange address_evaluate(Address *addr, File *file, Filerange *range, i
 		{
 			Filerange left, right;
 			if (addr->left)
-				left = address_evaluate(addr->left, file, range, 0);
+				left = address_evaluate(addr->left, file, sel, range, 0);
 			else
 				left = text_range_new(0, 0);
 
@@ -1065,7 +1070,7 @@ static Filerange address_evaluate(Address *addr, File *file, Filerange *range, i
 				range = &left;
 
 			if (addr->right) {
-				right = address_evaluate(addr->right, file, range, 0);
+				right = address_evaluate(addr->right, file, sel, range, 0);
 			} else {
 				size_t size = text_size(file->text);
 				right = text_range_new(size, size);
@@ -1093,7 +1098,7 @@ static bool count_evaluate(Command *cmd) {
 static bool sam_execute(Vis *vis, Win *win, Command *cmd, Selection *sel, Filerange *range) {
 	bool ret = true;
 	if (cmd->address && win)
-		*range = address_evaluate(cmd->address, win->file, range, 0);
+		*range = address_evaluate(cmd->address, win->file, sel, range, 0);
 
 	cmd->iteration++;
 	switch (cmd->argv[0][0]) {
