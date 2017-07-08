@@ -28,11 +28,6 @@
 #include "vis-core.h"
 #include "sam.h"
 
-const MarkDef vis_marks[] = {
-	[VIS_MARK_DEFAULT]        = { '"', VIS_HELP("Default mark")    },
-	[VIS_MARK_SELECTION]      = { '^', VIS_HELP("Last selections") },
-};
-
 static void macro_replay(Vis *vis, const Macro *macro);
 static void macro_replay_internal(Vis *vis, const Macro *macro);
 static void vis_keys_push(Vis *vis, const char *input, size_t pos, bool record);
@@ -252,7 +247,7 @@ void window_selection_save(Win *win) {
 	Vis *vis = win->vis;
 	View *view = win->view;
 	Array sel = view_selections_get_all(view);
-	vis_register_selections_set(vis, VIS_REG_SELECTION, &sel);
+	vis_mark_set(vis, VIS_MARK_SELECTION, &sel);
 	array_release(&sel);
 }
 
@@ -1531,16 +1526,6 @@ void vis_repeat(Vis *vis) {
 	}
 	vis_cancel(vis);
 	vis_file_snapshot(vis, vis->win->file);
-}
-
-enum VisMark vis_mark_from(Vis *vis, char mark) {
-	if (mark >= 'a' && mark <= 'z')
-		return VIS_MARK_a + mark - 'a';
-	for (size_t i = 0; i < LENGTH(vis_marks); i++) {
-		if (vis_marks[i].name == mark)
-			return i;
-	}
-	return VIS_MARK_INVALID;
 }
 
 int vis_count_get(Vis *vis) {

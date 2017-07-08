@@ -501,8 +501,6 @@ enum VisMotion {
 	VIS_MOVE_RIGHT_TILL,
 	VIS_MOVE_FILE_BEGIN,
 	VIS_MOVE_FILE_END,
-	VIS_MOVE_MARK,
-	VIS_MOVE_MARK_LINE,
 	VIS_MOVE_SEARCH_WORD_FORWARD,
 	VIS_MOVE_SEARCH_WORD_BACKWARD,
 	VIS_MOVE_SEARCH_REPEAT_FORWARD,
@@ -546,10 +544,6 @@ enum VisMotion {
  *  - ``VIS_MOVE_{LEFT,RIGHT}_{TO,TILL}``
  *
  *     The character to search for as ``const char *``.
- *
- *  - `VIS_MOVE_MARK` and `VIS_MOVE_MARK_LINE`
- *
- *     A valid ``enum VisMark``.
  */
 bool vis_motion(Vis*, enum VisMotion, ...);
 
@@ -690,12 +684,36 @@ enum VisMark {
 /** Translate single character mark name to corresponding constant. */
 enum VisMark vis_mark_from(Vis*, char mark);
 /**
- * Set a mark.
+ * Specify mark to use.
  * @rst
- * .. note:: The same semantics as for `text_mark_set` apply.
+ * .. note:: If none is specified `VIS_MARK_DEFAULT` will be used.
  * @endrst
  */
-void vis_mark_set(Vis*, enum VisMark mark, size_t pos);
+void vis_mark(Vis*, enum VisMark);
+enum VisMark vis_mark_used(Vis*);
+/**
+ * Store a set of ``Filerange``s in a mark.
+ *
+ * @param id The register to use.
+ * @param sel The array containing the file ranges.
+ */
+void vis_mark_set(Vis*, enum VisMark id, Array *sel);
+/**
+ * Get an array of file ranges stored in the mark.
+ *
+ * @rst
+ * .. warning:: The caller must eventually free the Array by calling
+ *              ``array_release``.
+ * @endrst
+ */
+Array vis_mark_get(Vis*, enum VisMark id);
+/**
+ * Normalize an Array of Fileranges.
+ *
+ * Removes invalid ranges, merges overlapping ones and sorts
+ * according to the start position.
+ */
+void vis_mark_normalize(Array*);
 
 /** @} */
 /** Register specifiers. */
@@ -719,7 +737,6 @@ enum VisRegister {
 	VIS_REG_COMMAND,    /* last used :-command ": */
 	VIS_REG_SHELL,      /* last used shell command given to either <, >, |, or ! */
 	VIS_REG_NUMBER,     /* cursor number */
-	VIS_REG_SELECTION, /* last used selections */
 	VIS_REG_a, VIS_REG_b, VIS_REG_c, VIS_REG_d, VIS_REG_e,
 	VIS_REG_f, VIS_REG_g, VIS_REG_h, VIS_REG_i, VIS_REG_j,
 	VIS_REG_k, VIS_REG_l, VIS_REG_m, VIS_REG_n, VIS_REG_o,
@@ -758,22 +775,6 @@ const char *vis_register_slot_get(Vis*, enum VisRegister, size_t slot, size_t *l
 /** Set register content. */
 bool vis_register_put(Vis*, enum VisRegister, const char *data, size_t len);
 bool vis_register_slot_put(Vis*, enum VisRegister, size_t slot, const char *data, size_t len);
-/**
- * Store a set of ``Filerange``s in a register.
- *
- * @param id The register to use.
- * @param sel The array containing the file ranges.
- */
-void vis_register_selections_set(Vis*, enum VisRegister id, Array *sel);
-/**
- * Get an array of file ranges stored in the register.
- *
- * @rst
- * .. warning:: The caller must eventually free the Array by calling
- *              ``array_release``.
- * @endrst
- */
-Array vis_register_selections_get(Vis*, enum VisRegister id);
 
 /**
  * @}

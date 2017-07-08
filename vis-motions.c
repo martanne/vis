@@ -107,19 +107,6 @@ static size_t longword_next(Vis *vis, Text *txt, size_t pos) {
 	return common_word_next(vis, txt, pos, VIS_MOVE_LONGWORD_END_NEXT);
 }
 
-static size_t mark_goto(Vis *vis, File *file, Selection *sel) {
-	Array *marks = &file->marks[vis->action.mark];
-	size_t idx = view_selections_number(sel);
-	SelectionRegion *sr = array_get(marks, idx);
-	if (!sr)
-		return EPOS;
-	return text_mark_get(file->text, sr->cursor);
-}
-
-static size_t mark_line_goto(Vis *vis, File *file, Selection *sel) {
-	return text_line_start(file->text, mark_goto(vis, file, sel));
-}
-
 static size_t to(Vis *vis, Text *txt, size_t pos) {
 	char c;
 	if (pos == text_line_end(txt, pos))
@@ -394,16 +381,6 @@ bool vis_motion(Vis *vis, enum VisMotion motion, ...) {
 			goto err;
 		}
 		break;
-	case VIS_MOVE_MARK:
-	case VIS_MOVE_MARK_LINE:
-	{
-		int mark = va_arg(ap, int);
-		if (VIS_MARK_a <= mark && mark < VIS_MARK_INVALID)
-			vis->action.mark = mark;
-		else
-			goto err;
-		break;
-	}
 	default:
 		break;
 	}
@@ -604,14 +581,6 @@ const Movement vis_motions[] = {
 	[VIS_MOVE_RIGHT_TILL] = {
 		.vis = till,
 		.type = INCLUSIVE|COUNT_EXACT,
-	},
-	[VIS_MOVE_MARK] = {
-		.file = mark_goto,
-		.type = JUMP|IDEMPOTENT,
-	},
-	[VIS_MOVE_MARK_LINE] = {
-		.file = mark_line_goto,
-		.type = LINEWISE|JUMP|IDEMPOTENT,
 	},
 	[VIS_MOVE_SEARCH_WORD_FORWARD] = {
 		.vis = search_word_forward,

@@ -42,16 +42,6 @@ void register_release(Register *reg) {
 	array_release(&reg->values);
 }
 
-void marks_init(Array *arr) {
-	array_init_sized(arr, sizeof(SelectionRegion));
-}
-
-void mark_release(Array *arr) {
-	if (!arr)
-		return;
-	array_release(arr);
-}
-
 const char *register_slot_get(Vis *vis, Register *reg, size_t slot, size_t *len) {
 	if (len)
 		*len = 0;
@@ -228,15 +218,6 @@ enum VisRegister vis_register_used(Vis *vis) {
 	return vis->action.reg - vis->registers;
 }
 
-static Array *mark_from(Vis *vis, enum VisMark id) {
-	if (id == VIS_MARK_SELECTION && vis->win)
-		return &vis->win->saved_selections;
-	File *file = vis->win->file;
-	if (id < LENGTH(file->marks))
-		return &file->marks[id];
-	return NULL;
-}
-
 static Register *register_from(Vis *vis, enum VisRegister id) {
 	if (VIS_REG_A <= id && id <= VIS_REG_Z)
 		id = VIS_REG_a + id - VIS_REG_A;
@@ -264,39 +245,6 @@ const char *vis_register_slot_get(Vis *vis, enum VisRegister id, size_t slot, si
 	return NULL;
 }
 
-Array vis_register_selections_get(Vis *vis, enum VisRegister id) {
-	Array sel;
-	array_init_sized(&sel, sizeof(Filerange));
-	Array *mark = mark_from(vis, id);
-	if (!mark)
-		return sel;
-	View *view = vis->win->view;
-	size_t len = array_length(mark);
-	array_reserve(&sel, len);
-	for (size_t i = 0; i < len; i++) {
-		SelectionRegion *sr = array_get(mark, i);
-		Filerange r = view_regions_restore(view, sr);
-		if (text_range_valid(&r))
-			array_add(&sel, &r);
-	}
-	//selections_normalize(&sel);
-	return sel;
-}
-
-void vis_register_selections_set(Vis *vis, enum VisRegister id, Array *sel) {
-	Array *mark = mark_from(vis, id);
-	if (!mark)
-		return;
-	array_clear(mark);
-	View *view = vis->win->view;
-	for (size_t i = 0, len = array_length(sel); i < len; i++) {
-		SelectionRegion ss;
-		Filerange *r = array_get(sel, i);
-		if (view_regions_save(view, r, &ss))
-			array_add(mark, &ss);
-	}
-}
-
 const RegisterDef vis_registers[] = {
 	[VIS_REG_DEFAULT]    = { '"', VIS_HELP("Unnamed register")                                 },
 	[VIS_REG_ZERO]       = { '0', VIS_HELP("Yank register")                                    },
@@ -317,5 +265,4 @@ const RegisterDef vis_registers[] = {
 	[VIS_REG_COMMAND]    = { ':', VIS_HELP("Last :-command")                                   },
 	[VIS_REG_SHELL]      = { '!', VIS_HELP("Last shell command given to either <, >, |, or !") },
 	[VIS_REG_NUMBER]     = { '#', VIS_HELP("Register number")                                  },
-	[VIS_REG_SELECTION]  = { '^', VIS_HELP("Last selections")                                  },
 };

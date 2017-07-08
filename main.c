@@ -38,8 +38,6 @@ static const char *switchmode(Vis*, const char *keys, const Arg *arg);
 static const char *insertmode(Vis*, const char *keys, const Arg *arg);
 /* switch to replace mode after performing movement indicated by arg->i */
 static const char *replacemode(Vis*, const char *keys, const Arg *arg);
-/* set mark indicated by keys to current cursor position */
-static const char *mark_set(Vis*, const char *keys, const Arg *arg);
 /* add a new line either before or after the one where the cursor currently is */
 static const char *openline(Vis*, const char *keys, const Arg *arg);
 /* join lines from current cursor position to movement indicated by arg */
@@ -116,8 +114,8 @@ static const char *textobj(Vis*, const char *keys, const Arg *arg);
 static const char *selection_end(Vis*, const char *keys, const Arg *arg);
 /* use register indicated by keys for the current operator */
 static const char *reg(Vis*, const char *keys, const Arg *arg);
-/* perform arg->i motion with a mark indicated by keys as argument */
-static const char *mark_motion(Vis*, const char *keys, const Arg *arg);
+/* use mark indicated by keys for the current action */
+static const char *mark(Vis*, const char *keys, const Arg *arg);
 /* {un,re}do last action, redraw window */
 static const char *undo(Vis*, const char *keys, const Arg *arg);
 static const char *redo(Vis*, const char *keys, const Arg *arg);
@@ -222,9 +220,7 @@ enum {
 	VIS_ACTION_LATER,
 	VIS_ACTION_MACRO_RECORD,
 	VIS_ACTION_MACRO_REPLAY,
-	VIS_ACTION_MARK_SET,
-	VIS_ACTION_MARK_GOTO,
-	VIS_ACTION_MARK_GOTO_LINE,
+	VIS_ACTION_MARK,
 	VIS_ACTION_REDRAW,
 	VIS_ACTION_REPLACE_CHAR,
 	VIS_ACTION_TOTILL_REPEAT,
@@ -705,20 +701,10 @@ static const KeyAction vis_action[] = {
 		VIS_HELP("Replay macro, execute the content of the given register")
 		macro_replay,
 	},
-	[VIS_ACTION_MARK_SET] = {
-		"vis-mark-set",
-		VIS_HELP("Set given mark at current cursor position")
-		mark_set,
-	},
-	[VIS_ACTION_MARK_GOTO] = {
-		"vis-mark-goto",
-		VIS_HELP("Goto the position of the given mark")
-		mark_motion, { .i = VIS_MOVE_MARK }
-	},
-	[VIS_ACTION_MARK_GOTO_LINE] = {
-		"vis-mark-goto-line",
-		VIS_HELP("Goto first non-blank character of the line containing the given mark")
-		mark_motion, { .i = VIS_MOVE_MARK_LINE }
+	[VIS_ACTION_MARK] = {
+		"vis-mark",
+		VIS_HELP("Use given mark for next action")
+		mark,
 	},
 	[VIS_ACTION_REDRAW] = {
 		"vis-redraw",
@@ -1666,9 +1652,9 @@ static const char *selections_trim(Vis *vis, const char *keys, const Arg *arg) {
 
 static const char *selections_save(Vis *vis, const char *keys, const Arg *arg) {
 	View *view = vis_view(vis);
-	enum VisRegister reg = vis_register_used(vis);
+	enum VisMark mark = vis_mark_used(vis);
 	Array sel = view_selections_get_all(view);
-	vis_register_selections_set(vis, reg, &sel);
+	vis_mark_set(vis, mark, &sel);
 	array_release(&sel);
 	vis_cancel(vis);
 	return keys;
@@ -1677,44 +1663,19 @@ static const char *selections_save(Vis *vis, const char *keys, const Arg *arg) {
 static const char *selections_restore(Vis *vis, const char *keys, const Arg *arg) {
 	View *view = vis_view(vis);
 	bool anchored = view_selections_anchored(view_selections_primary_get(view));
-	enum VisRegister reg = vis_register_used(vis);
-	Array sel = vis_register_selections_get(vis, reg);
+	enum VisMark mark = vis_mark_used(vis);
+	Array sel = vis_mark_get(vis, mark);
 	view_selections_set_all(view, &sel, anchored);
 	array_release(&sel);
 	vis_cancel(vis);
 	return keys;
 }
 
-static int ranges_comparator(const void *a, const void *b) {
-	const Filerange *r1 = a, *r2 = b;
-	if (!text_range_valid(r1))
-		return text_range_valid(r2) ? 1 : 0;
-	if (!text_range_valid(r2))
-		return -1;
-	return (r1->start < r2->start || (r1->start == r2->start && r1->end < r2->end)) ? -1 : 1;
-}
-
-static void normalize(Array *a) {
-	array_sort(a, ranges_comparator);
-	Filerange *prev = NULL, *r = array_get(a, 0);
-	for (size_t i = 0; r; r = array_get(a, i)) {
-		if (text_range_size(r) == 0) {
-			array_remove(a, i);
-		} else if (prev && text_range_overlap(prev, r)) {
-			*prev = text_range_union(prev, r);
-			array_remove(a, i);
-		} else {
-			prev = r;
-			i++;
-		}
-	}
-}
-
 static const char *selections_union(Vis *vis, const char *keys, const Arg *arg) {
 	View *view = vis_view(vis);
 	bool anchored = view_selections_anchored(view_selections_primary_get(view));
-	enum VisRegister reg = vis_register_used(vis);
-	Array a = vis_register_selections_get(vis, reg);
+	enum VisMark mark = vis_mark_used(vis);
+	Array a = vis_mark_get(vis, mark);
 	Array b = view_selections_get_all(view);
 	Array sel;
 	array_init_from(&sel, &a);
@@ -1780,8 +1741,8 @@ static void intersect(Array *ret, Array *a, Array *b) {
 static const char *selections_intersect(Vis *vis, const char *keys, const Arg *arg) {
 	View *view = vis_view(vis);
 	bool anchored = view_selections_anchored(view_selections_primary_get(view));
-	enum VisRegister reg = vis_register_used(vis);
-	Array a = vis_register_selections_get(vis, reg);
+	enum VisMark mark = vis_mark_used(vis);
+	Array a = vis_mark_get(vis, mark);
 	Array b = view_selections_get_all(view);
 	Array sel;
 	array_init_from(&sel, &a);
@@ -1833,9 +1794,9 @@ static const char *selections_complement(Vis *vis, const char *keys, const Arg *
 static const char *selections_minus(Vis *vis, const char *keys, const Arg *arg) {
 	View *view = vis_view(vis);
 	bool anchored = view_selections_anchored(view_selections_primary_get(view));
-	enum VisRegister reg = vis_register_used(vis);
+	enum VisMark mark = vis_mark_used(vis);
 	Array a = view_selections_get_all(view);
-	Array b = vis_register_selections_get(vis, reg);
+	Array b = vis_mark_get(vis, mark);
 	Array sel;
 	array_init_from(&sel, &a);
 	Array b_complement;
@@ -1912,9 +1873,9 @@ static Filerange combine_rightmost(const Filerange *r1, const Filerange *r2) {
 static const char *selections_combine(Vis *vis, const char *keys, const Arg *arg) {
 	View *view = vis_view(vis);
 	bool anchored = view_selections_anchored(view_selections_primary_get(view));
-	enum VisRegister reg = vis_register_used(vis);
+	enum VisMark mark = vis_mark_used(vis);
 	Array a = view_selections_get_all(view);
-	Array b = vis_register_selections_get(vis, reg);
+	Array b = vis_mark_get(vis, mark);
 	Array sel;
 	array_init_from(&sel, &a);
 
@@ -1925,7 +1886,7 @@ static const char *selections_combine(Vis *vis, const char *keys, const Arg *arg
 			array_add(&sel, &new);
 	}
 
-	normalize(&sel);
+	vis_mark_normalize(&sel);
 	view_selections_set_all(view, &sel, anchored);
 	vis_cancel(vis);
 
@@ -2037,24 +1998,13 @@ static const char *reg(Vis *vis, const char *keys, const Arg *arg) {
 	return keys+1;
 }
 
-static const char *mark_set(Vis *vis, const char *keys, const Arg *arg) {
+static const char *mark(Vis *vis, const char *keys, const Arg *arg) {
 	if (!keys[0])
 		return NULL;
 	if (keys[1])
 		return vis_keys_next(vis, keys);
-	View *view = vis_view(vis);
-	Array sel = view_selections_get_all(view);
-	vis_register_selections_set(vis, vis_mark_from(vis, keys[0]), &sel);
-	array_release(&sel);
-	return keys+1;
-}
-
-static const char *mark_motion(Vis *vis, const char *keys, const Arg *arg) {
-	if (!keys[0])
-		return NULL;
-	if (keys[1])
-		return vis_keys_next(vis, keys);
-	vis_motion(vis, arg->i, vis_mark_from(vis, keys[0]));
+	enum VisMark mark = vis_mark_from(vis, keys[0]);
+	vis_mark(vis, mark);
 	return keys+1;
 }
 

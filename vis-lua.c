@@ -2256,7 +2256,7 @@ static int file_marks_index(lua_State *L) {
 	enum VisMark mark = vis_mark_from(vis, symbol[0]);
 	if (mark == VIS_MARK_INVALID)
 		goto err;
-	Array arr = vis_register_selections_get(vis, mark);
+	Array arr = vis_mark_get(vis, mark);
 	range = array_get(&arr, 0);
 	array_release(&arr);
 err:
@@ -2279,7 +2279,7 @@ static int file_marks_newindex(lua_State *L) {
 		array_init_sized(&arr, sizeof(Filerange));
 		Filerange range = text_range_new(pos, pos);
 		array_add(&arr, &range);
-		vis_register_selections_set(vis, mark, &arr);
+		vis_mark_set(vis, mark, &arr);
 		array_release(&arr);
 	}
 	return 0;
