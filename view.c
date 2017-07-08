@@ -1260,7 +1260,10 @@ void view_selections_set_all(View *view, Array *arr, bool anchored) {
 		if (!(r = array_get(arr, i++)) || !view_selections_set(s, r)) {
 			for (Selection *next; s; s = next) {
 				next = view_selections_next(s);
-				view_selections_dispose(s);
+				if (i == 1 && s == view->selection)
+					view_selection_clear(s);
+				else
+					view_selections_dispose(s);
 			}
 			break;
 		}
