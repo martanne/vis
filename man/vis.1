@@ -58,6 +58,21 @@ will open
 to gather further commands.
 Failure to do so results in program termination.
 .
+.Ss Selections
+.
+.Nm
+uses selections as core editing primitives.
+A selection is a non-empty, directed range with two endpoints called
+.Em cursor
+and
+.Em anchor .
+A selection can be anchored in which case
+the anchor remains fixed while only the position of the cursor is
+adjusted. For non-anchored selections both endpoints are updated. A
+singleton selection covers one character on which both cursor and
+anchor reside. There always exists a primary selection which remains
+visible (i.e. changes to its position will adjust the viewport).
+.
 .Ss Modes
 .
 .Nm
@@ -73,14 +88,15 @@ It supports a
 and
 .Sq visual
 (in both line and character wise variants) mode.
-.Pp
 The visual block and ex modes are deliberately not implemented,
 instead
 .Nm
-has built in support for multiple cursors/selections and an
+has built in support for multiple selections and an
 .Em interactive
 variant of the structural regular expression based command language of
 .Nm sam .
+.Pp
+In normal mode all selections are non-anchored and reduced to a single character.
 .
 .Ss Undo/Redo
 .
@@ -93,12 +109,11 @@ and
 .Aq Ic C-r
 .Pq redo
 commands can be used to traverse the tree along the main branch.
-Additionally
 .Ic g+
 and
 .Ic g-
 traverse the history in chronological order.
-Furthermore the
+The
 .Ic :earlier
 and
 .Ic :later
@@ -106,28 +121,48 @@ commands provide means to restore the text to an arbitrary state.
 .
 .Ss Marks
 .
-A mark associates a given file position to a symbolic name.
-A mark becomes invalid once the underlying file content changes
-.Pq e.g. it being deleted or replaced .
-If said changes are later undone the mark becomes valid again.
+A mark associates a symbolic name to a set of selections.  A stored
+selection becomes invalid when its delimiting boundaries changes in the
+underlying buffer.  If said changes are later undone the mark becomes
+valid again.
+.Ic m
+sets a mark,
+.Ic M
+restores it.
+.Pp
+Available marks are:
 .Bl -tag -width indent
-.It Ic a Ns -z
+.It Ic ''
+default mark
+.It Ic '^
+active selections when leaving visual mode
+.It Ic 'a Ns -'z
 general purpose marks
-.It Ic <
-start of the last selected visual area in current file
-.It Ic >
-end of the last selected visual area in current file
 .El
 .Pp
 No marks across files are supported.
 Marks are not preserved over editing sessions.
 .
+.Ss Jump list
+.
+A per window, fixed sized file local jump list exists which stores marks
+(i.e. set of selections).
+.Bl -tag -width indent
+.It Ic g<
+jump backward
+.It Ic g>
+jump forward
+.It Ic gs
+save currently active selections
+.El
+.
 .Ss Registers
 .
-Registers can hold arbitrary data which can later be re-inserted into
-the file or executed as a macro.
-Supported registers include:
+Registers are named lists of text. Uninitialized regiter slots default
+to the empty string. Available registers are:
 .Bl -tag -width indent
+.It Ic \(dq\(dq
+default register
 .It Ic \(dqa Ns - Ns Ic \(dqz
 general purpose registers
 .It Ic \(dqA Ns - Ns Ic \(dqZ
@@ -153,10 +188,10 @@ black hole
 .Pq Pa /dev/null
 register, ignore content is always empty
 .It Ic \(dq#
-cursor number (readonly)
+selection number (readonly)
 .El
 .Pp
-If no explicit register is specified a default register is used.
+If no explicit register is specified the default register is used.
 .
 .Ss Macros
 .
@@ -180,31 +215,21 @@ is equivalent to
 .Ic n
 in normal mode.
 .
-.Ss Jump list and Change list
-.
-A per window, fixed sized file local jump list (navigate with
-.Aq Ic C-O
-and
-.Aq Ic C-I )
-and change list (navigate with
-.Ic g;
-and
-.Ic g, )
-is supported.
+These operations always use the first register slot.
 .
 .Ss Encoding, Tab and Newline handling
 .
 .Nm
-always assumes the input file to be UTF-8 encoded.
-If you wish to edit files with legacy encodings, use
+always assumes the input file to be UTF-8 encoded with \[rs]n line endings.
+If you wish to edit files with legacy encodings or non-Unix line endings,
+use
 .Xr iconv 1
+and
+.Xr dos2unix 1
 to convert them as needed.
 .Aq Ic Tab
 can optionally be expanded to a configurable number of spaces (see
 .Sx "SET OPTIONS" ) .
-The first line ending in the file determines what will be inserted when pressing
-.Aq Enter
-.Pq defaults to Li \[rs]n Ns .
 .
 .Ss Mouse support
 .
@@ -270,10 +295,7 @@ In
 .Nm
 multiple
 .Dq dots
-can exist at the same time.
-In normal mode each cursor induces such a range, representing the
-character it is currently over.
-Similarly, in visual mode each selection serves as a default address.
+(or selections) can exist at the same time.
 .
 .Ss Simple addresses
 .
@@ -429,8 +451,8 @@ Backslash is otherwise interpreted literally.
 Most commands may be prefixed with an address to indicate their range of
 operation.
 If a command takes an address and none is supplied, a default address is used.
-In normal mode this equates to the character the cursor is currently over.
-If only one cursor exists
+In normal mode this equates to the character the selection is currently over.
+If only one selection exists
 .Ic x
 and
 .Ic y
@@ -441,7 +463,7 @@ In normal mode the write commands
 and
 .Ic wq
 always apply to the whole file.
-Commands are executed once for every cursor.
+Commands are executed once for every selection.
 In visual mode the commands are applied to every selection
 as if an implicit
 .Ic x
@@ -513,7 +535,6 @@ Delete the text in range.
 .Bl -tag -width Ds
 .It Ic p
 Create a new selection for the range.
-If empty, create a new cursor.
 .El
 .
 .Ss I/O commands
@@ -736,16 +757,13 @@ command.
 .
 Operators perform a certain operation an a text range indicated by either a
 motion, a text object or an existing selection.
-.
+.Pp
 .Bl -tag -width XXXXXXXXXX -compact
 .It Ic c
 change, delete range and enter insert mode
 .
 .It Ic d
 delete range
-.
-.It Ic "!"
-filter range through external shell command
 .
 .It Ic =
 indent, currently an alias for gq
@@ -792,7 +810,7 @@ Motions take an initial file position and transform it to a destination file
 position,
 thereby defining a range.
 .\" TODO define word/WORD
-.
+.Pp
 .Bl -tag -width XXXXXXXXXX -compact
 .It Ic 0
 start of line
@@ -845,13 +863,24 @@ display line down
 .It Ic gk
 display line up
 .
+.It Ic gh
+codepoint left
+.
+.It Ic gl
+codepoint right
+.
+.It Ic gH
+byte left
+.
+.It Ic gL
+byte right
 .It Ic g_
 last non-blank of line
 .
 .It Ic gm
 middle of display line
 .
-.It Ic "|"
+.It Ic "g|"
 goto column
 .
 .It Ic h
@@ -871,12 +900,6 @@ char right
 .
 .It Ic L
 goto bottom/last line of window
-.
-.It Ic ` Aq mark
-go to mark
-.
-.It Ic ' Aq mark
-go to start of line containing mark
 .
 .It Ic %
 match bracket
@@ -921,10 +944,10 @@ repeat last to/till movement
 repeat last to/till movement but in opposite direction
 .
 .It Ic #
-search word under cursor backwards
+search word under selection backwards
 .
 .It Ic *
-search word under cursor forwards
+search word under selection forwards
 .
 .It Ic T Aq char
 till before next occurrence of char to the left
@@ -958,6 +981,7 @@ where the surrounding white space or delimiting characters are not part
 of the resulting range and a normal variant (prefixed with
 .Ic a )
 where they are.
+.Pp
 .Bl -tag -width XXXXXXXXXX -compact
 .
 .It Ic w
@@ -998,60 +1022,62 @@ current line
 current line without leading and trailing white spaces
 .El
 .
-.Ss Multiple Cursors and Selections
+.Ss Multiple Selections
 .
 .Nm
-supports multiple cursors with immediate visual feedback.
-There always exists one primary cursor located within the current view port.
-Additional cursors can be created as needed.
-If more than one cursor exists, the primary one is styled differently.
+supports multiple selections with immediate visual feedback.
+There always exists one primary selection located within the current
+view port.  Additional selections can be created as needed.
+If more than one selection exists, the primary one is styled differently.
 .Pp
-To manipulate multiple cursors use in normal mode:
+To manipulate selections use in normal mode:
+.Pp
 .Bl -tag -width XXXXXXXXXX -compact
 .It Aq Ic C-k
-create count new cursors on the lines above
+create count new selections on the lines above
 .
 .It Aq Ic C-M-k
-create count new cursors on the lines above the first cursor
+create count new selections on the lines above the first selection
 .
 .It Aq Ic C-j
-create count new cursors on the lines below
+create count new selections on the lines below
 .
 .It Aq Ic C-M-j
-create count new cursors on the lines below the last cursor
+create count new selections on the lines below the last selection
 .
 .It Aq Ic C-p
-remove primary cursor
+remove primary selection
 .
 .It Aq Ic C-n
-select word the cursor is currently over, switch to visual mode
+select word the selection is currently over, switch to visual mode
 .
 .It Aq Ic C-u
-make the count previous cursor primary
+make the count previous selection primary
 .
 .It Aq Ic C-d
-make the count next cursor primary
+make the count next selection primary
 .
 .It Aq Ic C-c
-remove the count cursor column
+remove the count selection column
 .
 .It Aq Ic C-l
-remove all but the count cursor column
+remove all but the count selection column
 .
 .It Aq Ic Tab
-try to align all cursor on the same column
+try to align all selections on the same column
 .
 .It Aq Ic Escape
-dispose all but the primary cursor
+dispose all but the primary selection
 .El
 .Pp
 The visual modes were enhanced to recognize:
+.Pp
 .Bl -tag -width XXXXXXXXXX -compact
 .It I
-create a cursor at the start of every selected line
+create a selection at the start of every selected line
 .
 .It Ic A
-create a cursor at the end of every selected line
+create a selection at the end of every selected line
 .
 .It Aq Ic Tab
 left align selections by inserting spaces
@@ -1060,48 +1086,76 @@ left align selections by inserting spaces
 right align selections by inserting spaces
 .
 .It Aq Ic C-n
-create new cursor and select next word matching current selection
+create new selection and select next word matching current selection
 .
 .It Aq Ic C-x
 clear (skip) current selection, but select next matching word
 .
 .It Aq Ic C-p
-remove primary cursor
+remove primary selection
 .
 .It Aq Ic C-u
 .It Aq Ic C-k
-make the count previous cursor primary
+make the count previous selection primary
 .
 .It Aq Ic C-d
 .It Aq Ic C-j
-make the count next cursor primary
+make the count next selection primary
 .
 .It Aq Ic C-c
-remove the count cursor column
+remove the count selection column
 .
 .It Aq Ic C-l
-remove all but the count cursor column
+remove all but the count selection column
 .
 .It Ic +
-rotates selections rightwards count times
+rotate selections rightwards count times
 .
 .It Ic -
-rotates selections leftwards count times
+rotate selections leftwards count times
 .
-.It Ic \e
+.It Ic _
 trim selections, remove leading and trailing white space
 .
 .It Ic o
-flip selection direction, move cursor to other end
+flip selection direction, swap cursor and anchor
 .
 .It Aq Ic Escape
 clear all selections, switch to normal mode
 .El
 .Pp
 In insert and replace mode:
+.Pp
 .Bl -tag -width XXXXXXXXXX -compact
 .It Aq Ic S-Tab
-align all cursors by inserting spaces
+align all selections by inserting spaces
+.El
+.Pp
+Selections can be manipulated using set operations. The first operand
+is the currently active selections while the second can be
+specified as a mark.
+.Pp
+.Bl -tag -width XXXXXXXXXX -compact
+.It Ic "|"
+set union
+.It Ic &
+set intersection
+.It Ic \e
+set minus
+.It Ic "!"
+set complement
+.It Ic z|"
+pairwise union
+.It Ic z&
+pairwise intersection
+.It Ic z+
+pairwise combine, choose longer
+.It Ic z-
+pairwise combine, choose shorter
+.It Ic z<
+pairwise combine, choose leftmost
+.It Ic z>
+pairwise combine, choose rightmost
 .El
 .
 .Sh VI(M) COMMANDS
@@ -1353,7 +1407,7 @@ enlarges the window, giving access to the command history.
 inserts a literal new line thus enabling multiline commands.
 .Aq Ic Enter
 executes the visual selection if present, or else everything in the
-region spawned by the cursor position and the delimiting prompt symbols
+region spawned by the selection position and the delimiting prompt symbols
 at the start of adjacent lines.
 .
 .Sh CONFIGURATION
@@ -1493,7 +1547,7 @@ by
 by
 .An Rob Pike
 .Pp
-.Lk http://man.cat-v.org/plan_9/1/sam Plan9 manual page for sam(1)
+.Lk http://man.cat-v.org/plan_9/1/sam Plan 9 manual page for sam(1)
 .Pp
 .Lk http://doc.cat-v.org/bell_labs/structural_regexps/se.pdf Structural Regular Expressions
 by
