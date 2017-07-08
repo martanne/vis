@@ -47,27 +47,27 @@ static const char *repeat(Vis*, const char *keys, const Arg *arg);
 /* replace character at cursor with one from keys */
 static const char *replace(Vis*, const char *keys, const Arg *arg);
 /* create a new cursor on the previous (arg->i < 0) or next (arg->i > 0) line */
-static const char *cursors_new(Vis*, const char *keys, const Arg *arg);
-/* try to align all cursors on the same column */
-static const char *cursors_align(Vis*, const char *keys, const Arg *arg);
-/* try to align all cursors by inserting the correct amount of white spaces */
-static const char *cursors_align_indent(Vis*, const char *keys, const Arg *arg);
+static const char *selections_new(Vis*, const char *keys, const Arg *arg);
+/* try to align all selections on the same column */
+static const char *selections_align(Vis*, const char *keys, const Arg *arg);
+/* try to align all selections by inserting the correct amount of white spaces */
+static const char *selections_align_indent(Vis*, const char *keys, const Arg *arg);
 /* remove all but the primary cursor and their selections */
-static const char *cursors_clear(Vis*, const char *keys, const Arg *arg);
-/* remove the least recently added cursor */
-static const char *cursors_remove(Vis*, const char *keys, const Arg *arg);
-/* remove count (or arg->i)-th cursor column */
-static const char *cursors_remove_column(Vis*, const char *keys, const Arg *arg);
-/* remove all but the count (or arg->i)-th cursor column */
-static const char *cursors_remove_column_except(Vis*, const char *keys, const Arg *arg);
-/* move to the previous (arg->i < 0) or next (arg->i > 0) cursor */
-static const char *cursors_navigate(Vis*, const char *keys, const Arg *arg);
-/* select the word the cursor is currently over */
-static const char *cursors_select(Vis*, const char *keys, const Arg *arg);
+static const char *selections_clear(Vis*, const char *keys, const Arg *arg);
+/* remove the least recently added selection */
+static const char *selections_remove(Vis*, const char *keys, const Arg *arg);
+/* remove count (or arg->i)-th selection column */
+static const char *selections_remove_column(Vis*, const char *keys, const Arg *arg);
+/* remove all but the count (or arg->i)-th selection column */
+static const char *selections_remove_column_except(Vis*, const char *keys, const Arg *arg);
+/* move to the previous (arg->i < 0) or next (arg->i > 0) selection */
+static const char *selections_navigate(Vis*, const char *keys, const Arg *arg);
+/* select the word the selection is currently over */
+static const char *selections_match_word(Vis*, const char *keys, const Arg *arg);
 /* select the next region matching the current selection */
-static const char *cursors_select_next(Vis*, const char *keys, const Arg *arg);
+static const char *selections_match_next(Vis*, const char *keys, const Arg *arg);
 /* clear current selection but select next match */
-static const char *cursors_select_skip(Vis*, const char *keys, const Arg *arg);
+static const char *selections_match_skip(Vis*, const char *keys, const Arg *arg);
 /* rotate selection content count times left (arg->i < 0) or right (arg->i > 0) */
 static const char *selections_rotate(Vis*, const char *keys, const Arg *arg);
 /* remove leading and trailing white spaces from selections */
@@ -268,24 +268,24 @@ enum {
 	VIS_ACTION_PUT_BEFORE,
 	VIS_ACTION_PUT_AFTER_END,
 	VIS_ACTION_PUT_BEFORE_END,
-	VIS_ACTION_CURSOR_SELECT_WORD,
-	VIS_ACTION_CURSORS_NEW_LINE_ABOVE,
-	VIS_ACTION_CURSORS_NEW_LINE_ABOVE_FIRST,
-	VIS_ACTION_CURSORS_NEW_LINE_BELOW,
-	VIS_ACTION_CURSORS_NEW_LINE_BELOW_LAST,
-	VIS_ACTION_CURSORS_NEW_LINES_BEGIN,
-	VIS_ACTION_CURSORS_NEW_LINES_END,
-	VIS_ACTION_CURSORS_NEW_MATCH_NEXT,
-	VIS_ACTION_CURSORS_NEW_MATCH_SKIP,
-	VIS_ACTION_CURSORS_ALIGN,
-	VIS_ACTION_CURSORS_ALIGN_INDENT_LEFT,
-	VIS_ACTION_CURSORS_ALIGN_INDENT_RIGHT,
-	VIS_ACTION_CURSORS_REMOVE_ALL,
-	VIS_ACTION_CURSORS_REMOVE_LAST,
-	VIS_ACTION_CURSORS_REMOVE_COLUMN,
-	VIS_ACTION_CURSORS_REMOVE_COLUMN_EXCEPT,
-	VIS_ACTION_CURSORS_PREV,
-	VIS_ACTION_CURSORS_NEXT,
+	VIS_ACTION_SELECTIONS_MATCH_WORD,
+	VIS_ACTION_SELECTIONS_NEW_LINE_ABOVE,
+	VIS_ACTION_SELECTIONS_NEW_LINE_ABOVE_FIRST,
+	VIS_ACTION_SELECTIONS_NEW_LINE_BELOW,
+	VIS_ACTION_SELECTIONS_NEW_LINE_BELOW_LAST,
+	VIS_ACTION_SELECTIONS_NEW_LINES_BEGIN,
+	VIS_ACTION_SELECTIONS_NEW_LINES_END,
+	VIS_ACTION_SELECTIONS_NEW_MATCH_NEXT,
+	VIS_ACTION_SELECTIONS_NEW_MATCH_SKIP,
+	VIS_ACTION_SELECTIONS_ALIGN,
+	VIS_ACTION_SELECTIONS_ALIGN_INDENT_LEFT,
+	VIS_ACTION_SELECTIONS_ALIGN_INDENT_RIGHT,
+	VIS_ACTION_SELECTIONS_REMOVE_ALL,
+	VIS_ACTION_SELECTIONS_REMOVE_LAST,
+	VIS_ACTION_SELECTIONS_REMOVE_COLUMN,
+	VIS_ACTION_SELECTIONS_REMOVE_COLUMN_EXCEPT,
+	VIS_ACTION_SELECTIONS_PREV,
+	VIS_ACTION_SELECTIONS_NEXT,
 	VIS_ACTION_SELECTIONS_ROTATE_LEFT,
 	VIS_ACTION_SELECTIONS_ROTATE_RIGHT,
 	VIS_ACTION_SELECTIONS_TRIM,
@@ -941,95 +941,95 @@ static const KeyAction vis_action[] = {
 		VIS_HELP("Put text before the cursor, place cursor after new text")
 		operator, { .i = VIS_OP_PUT_BEFORE_END }
 	},
-	[VIS_ACTION_CURSOR_SELECT_WORD] = {
-		"vis-cursor-select-word",
+	[VIS_ACTION_SELECTIONS_MATCH_WORD] = {
+		"vis-selections-select-word",
 		VIS_HELP("Select word under cursor")
-		cursors_select,
+		selections_match_word,
 	},
-	[VIS_ACTION_CURSORS_NEW_LINE_ABOVE] = {
-		"vis-cursor-new-lines-above",
-		VIS_HELP("Create a new cursor on the line above")
-		cursors_new, { .i = -1 }
+	[VIS_ACTION_SELECTIONS_NEW_LINE_ABOVE] = {
+		"vis-selection-new-lines-above",
+		VIS_HELP("Create a new selection on the line above")
+		selections_new, { .i = -1 }
 	},
-	[VIS_ACTION_CURSORS_NEW_LINE_ABOVE_FIRST] = {
-		"vis-cursor-new-lines-above-first",
-		VIS_HELP("Create a new cursor on the line above the first cursor")
-		cursors_new, { .i = INT_MIN }
+	[VIS_ACTION_SELECTIONS_NEW_LINE_ABOVE_FIRST] = {
+		"vis-selection-new-lines-above-first",
+		VIS_HELP("Create a new selection on the line above the first selection")
+		selections_new, { .i = INT_MIN }
 	},
-	[VIS_ACTION_CURSORS_NEW_LINE_BELOW] = {
-		"vis-cursor-new-lines-below",
-		VIS_HELP("Create a new cursor on the line below")
-		cursors_new, { .i = +1 }
+	[VIS_ACTION_SELECTIONS_NEW_LINE_BELOW] = {
+		"vis-selection-new-lines-below",
+		VIS_HELP("Create a new selection on the line below")
+		selections_new, { .i = +1 }
 	},
-	[VIS_ACTION_CURSORS_NEW_LINE_BELOW_LAST] = {
-		"vis-cursor-new-lines-below-last",
-		VIS_HELP("Create a new cursor on the line below the last cursor")
-		cursors_new, { .i = INT_MAX }
+	[VIS_ACTION_SELECTIONS_NEW_LINE_BELOW_LAST] = {
+		"vis-selection-new-lines-below-last",
+		VIS_HELP("Create a new selection on the line below the last selection")
+		selections_new, { .i = INT_MAX }
 	},
-	[VIS_ACTION_CURSORS_NEW_LINES_BEGIN] = {
-		"vis-cursor-new-lines-begin",
-		VIS_HELP("Create a new cursor at the start of every line covered by selection")
+	[VIS_ACTION_SELECTIONS_NEW_LINES_BEGIN] = {
+		"vis-selection-new-lines-begin",
+		VIS_HELP("Create a new selection at the start of every line covered by selection")
 		operator, { .i = VIS_OP_CURSOR_SOL }
 	},
-	[VIS_ACTION_CURSORS_NEW_LINES_END] = {
-		"vis-cursor-new-lines-end",
-		VIS_HELP("Create a new cursor at the end of every line covered by selection")
+	[VIS_ACTION_SELECTIONS_NEW_LINES_END] = {
+		"vis-selection-new-lines-end",
+		VIS_HELP("Create a new selection at the end of every line covered by selection")
 		operator, { .i = VIS_OP_CURSOR_EOL }
 	},
-	[VIS_ACTION_CURSORS_NEW_MATCH_NEXT] = {
-		"vis-cursor-new-match-next",
+	[VIS_ACTION_SELECTIONS_NEW_MATCH_NEXT] = {
+		"vis-selection-new-match-next",
 		VIS_HELP("Select the next region matching the current selection")
-		cursors_select_next
+		selections_match_next,
 	},
-	[VIS_ACTION_CURSORS_NEW_MATCH_SKIP] = {
-		"vis-cursor-new-match-skip",
+	[VIS_ACTION_SELECTIONS_NEW_MATCH_SKIP] = {
+		"vis-selection-new-match-skip",
 		VIS_HELP("Clear current selection, but select next match")
-		cursors_select_skip,
+		selections_match_skip,
 	},
-	[VIS_ACTION_CURSORS_ALIGN] = {
-		"vis-cursors-align",
-		VIS_HELP("Try to align all cursors on the same column")
-		cursors_align,
+	[VIS_ACTION_SELECTIONS_ALIGN] = {
+		"vis-selections-align",
+		VIS_HELP("Try to align all selections on the same column")
+		selections_align,
 	},
-	[VIS_ACTION_CURSORS_ALIGN_INDENT_LEFT] = {
-		"vis-cursors-align-indent-left",
-		VIS_HELP("Left align all cursors/selections by inserting spaces")
-		cursors_align_indent, { .i = -1 }
+	[VIS_ACTION_SELECTIONS_ALIGN_INDENT_LEFT] = {
+		"vis-selections-align-indent-left",
+		VIS_HELP("Left align all selections/selections by inserting spaces")
+		selections_align_indent, { .i = -1 }
 	},
-	[VIS_ACTION_CURSORS_ALIGN_INDENT_RIGHT] = {
-		"vis-cursors-align-indent-right",
-		VIS_HELP("Right align all cursors/selections by inserting spaces")
-		cursors_align_indent, { .i = +1 }
+	[VIS_ACTION_SELECTIONS_ALIGN_INDENT_RIGHT] = {
+		"vis-selections-align-indent-right",
+		VIS_HELP("Right align all selections/selections by inserting spaces")
+		selections_align_indent, { .i = +1 }
 	},
-	[VIS_ACTION_CURSORS_REMOVE_ALL] = {
-		"vis-cursors-remove-all",
-		VIS_HELP("Remove all but the primary cursor")
-		cursors_clear,
+	[VIS_ACTION_SELECTIONS_REMOVE_ALL] = {
+		"vis-selections-remove-all",
+		VIS_HELP("Remove all but the primary selection")
+		selections_clear,
 	},
-	[VIS_ACTION_CURSORS_REMOVE_LAST] = {
-		"vis-cursors-remove-last",
-		VIS_HELP("Remove least recently created cursor")
-		cursors_remove,
+	[VIS_ACTION_SELECTIONS_REMOVE_LAST] = {
+		"vis-selections-remove-last",
+		VIS_HELP("Remove least recently created selection")
+		selections_remove,
 	},
-	[VIS_ACTION_CURSORS_REMOVE_COLUMN] = {
-		"vis-cursors-remove-column",
-		VIS_HELP("Remove count cursor column")
-		cursors_remove_column, { .i = 1 }
+	[VIS_ACTION_SELECTIONS_REMOVE_COLUMN] = {
+		"vis-selections-remove-column",
+		VIS_HELP("Remove count selection column")
+		selections_remove_column, { .i = 1 }
 	},
-	[VIS_ACTION_CURSORS_REMOVE_COLUMN_EXCEPT] = {
-		"vis-cursors-remove-column-except",
-		VIS_HELP("Remove all but the count cursor column")
-		cursors_remove_column_except, { .i = 1 }
+	[VIS_ACTION_SELECTIONS_REMOVE_COLUMN_EXCEPT] = {
+		"vis-selections-remove-column-except",
+		VIS_HELP("Remove all but the count selection column")
+		selections_remove_column_except, { .i = 1 }
 	},
-	[VIS_ACTION_CURSORS_PREV] = {
-		"vis-cursor-prev",
-		VIS_HELP("Move to the previous cursor")
-		cursors_navigate, { .i = -PAGE_HALF }
+	[VIS_ACTION_SELECTIONS_PREV] = {
+		"vis-selection-prev",
+		VIS_HELP("Move to the previous selection")
+		selections_navigate, { .i = -PAGE_HALF }
 	},
-	[VIS_ACTION_CURSORS_NEXT] = {
-		"vis-cursor-next",
-		VIS_HELP("Move to the next cursor")
-		cursors_navigate, { .i = +PAGE_HALF }
+	[VIS_ACTION_SELECTIONS_NEXT] = {
+		"vis-selection-next",
+		VIS_HELP("Move to the next selection")
+		selections_navigate, { .i = +PAGE_HALF }
 	},
 	[VIS_ACTION_SELECTIONS_ROTATE_LEFT] = {
 		"vis-selections-rotate-left",
@@ -1310,7 +1310,7 @@ static const char *repeat(Vis *vis, const char *keys, const Arg *arg) {
 	return keys;
 }
 
-static const char *cursors_new(Vis *vis, const char *keys, const Arg *arg) {
+static const char *selections_new(Vis *vis, const char *keys, const Arg *arg) {
 	View *view = vis_view(vis);
 	bool anchored = view_selections_anchored(view_selections_primary_get(view));
 	VisCountIterator it = vis_count_iterator_get(vis, 1);
@@ -1355,7 +1355,7 @@ static const char *cursors_new(Vis *vis, const char *keys, const Arg *arg) {
 	return keys;
 }
 
-static const char *cursors_align(Vis *vis, const char *keys, const Arg *arg) {
+static const char *selections_align(Vis *vis, const char *keys, const Arg *arg) {
 	View *view = vis_view(vis);
 	Text *txt = vis_text(vis);
 	int mincol = INT_MAX;
@@ -1374,7 +1374,7 @@ static const char *cursors_align(Vis *vis, const char *keys, const Arg *arg) {
 	return keys;
 }
 
-static const char *cursors_align_indent(Vis *vis, const char *keys, const Arg *arg) {
+static const char *selections_align_indent(Vis *vis, const char *keys, const Arg *arg) {
 	View *view = vis_view(vis);
 	Text *txt = vis_text(vis);
 	bool left_align = arg->i < 0;
@@ -1417,7 +1417,7 @@ static const char *cursors_align_indent(Vis *vis, const char *keys, const Arg *a
 	return keys;
 }
 
-static const char *cursors_clear(Vis *vis, const char *keys, const Arg *arg) {
+static const char *selections_clear(Vis *vis, const char *keys, const Arg *arg) {
 	View *view = vis_view(vis);
 	if (view_selections_count(view) > 1)
 		view_selections_dispose_all(view);
@@ -1426,7 +1426,7 @@ static const char *cursors_clear(Vis *vis, const char *keys, const Arg *arg) {
 	return keys;
 }
 
-static const char *cursors_select(Vis *vis, const char *keys, const Arg *arg) {
+static const char *selections_match_word(Vis *vis, const char *keys, const Arg *arg) {
 	Text *txt = vis_text(vis);
 	View *view = vis_view(vis);
 	for (Selection *s = view_selections(view); s; s = view_selections_next(s)) {
@@ -1438,7 +1438,7 @@ static const char *cursors_select(Vis *vis, const char *keys, const Arg *arg) {
 	return keys;
 }
 
-static const char *cursors_select_next(Vis *vis, const char *keys, const Arg *arg) {
+static const char *selections_match_next(Vis *vis, const char *keys, const Arg *arg) {
 	Text *txt = vis_text(vis);
 	View *view = vis_view(vis);
 	Selection *s = view_selections_primary_get(view);
@@ -1476,23 +1476,23 @@ out:
 	return keys;
 }
 
-static const char *cursors_select_skip(Vis *vis, const char *keys, const Arg *arg) {
+static const char *selections_match_skip(Vis *vis, const char *keys, const Arg *arg) {
 	View *view = vis_view(vis);
 	Selection *sel = view_selections_primary_get(view);
-	keys = cursors_select_next(vis, keys, arg);
+	keys = selections_match_next(vis, keys, arg);
 	if (sel != view_selections_primary_get(view))
 		view_selections_dispose(sel);
 	return keys;
 }
 
-static const char *cursors_remove(Vis *vis, const char *keys, const Arg *arg) {
+static const char *selections_remove(Vis *vis, const char *keys, const Arg *arg) {
 	View *view = vis_view(vis);
 	view_selections_dispose(view_selections_primary_get(view));
 	view_cursor_to(view, view_cursor_get(view));
 	return keys;
 }
 
-static const char *cursors_remove_column(Vis *vis, const char *keys, const Arg *arg) {
+static const char *selections_remove_column(Vis *vis, const char *keys, const Arg *arg) {
 	View *view = vis_view(vis);
 	int max = view_selections_column_count(view);
 	int column = vis_count_get_default(vis, arg->i) - 1;
@@ -1512,7 +1512,7 @@ static const char *cursors_remove_column(Vis *vis, const char *keys, const Arg *
 	return keys;
 }
 
-static const char *cursors_remove_column_except(Vis *vis, const char *keys, const Arg *arg) {
+static const char *selections_remove_column_except(Vis *vis, const char *keys, const Arg *arg) {
 	View *view = vis_view(vis);
 	int max = view_selections_column_count(view);
 	int column = vis_count_get_default(vis, arg->i) - 1;
@@ -1537,7 +1537,7 @@ static const char *cursors_remove_column_except(Vis *vis, const char *keys, cons
 	return keys;
 }
 
-static const char *cursors_navigate(Vis *vis, const char *keys, const Arg *arg) {
+static const char *selections_navigate(Vis *vis, const char *keys, const Arg *arg) {
 	View *view = vis_view(vis);
 	if (view_selections_count(view) == 1)
 		return wscroll(vis, keys, arg);
