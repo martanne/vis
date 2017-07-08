@@ -1,0 +1,5 @@
+:x/.*/ x/./ g2 <Enter>
+m <Escape><Escape>
+:x/.*/ g%2 <Enter>
+\
+:{ i/[/ a/]/ } <Enter>

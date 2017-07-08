@@ -1,0 +1,4 @@
+:x/.*/ x/./ g2 <Enter>
+!
+:y/\n/ <Enter>
+:v-1 { i/[/ a/]/ } <Enter>
