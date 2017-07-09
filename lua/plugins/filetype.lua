@@ -240,6 +240,9 @@ vis.ftdetect.filetypes = {
 		ext = { "%.moon$" },
 		mime = { "text/x-moon" },
 	},
+	myrddin = {
+		ext = { "%.myr$" },
+	},
 	nemerle = {
 		ext = { "%.n$" },
 	},
