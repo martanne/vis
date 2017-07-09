@@ -1759,7 +1759,7 @@ static const char *selections_intersect(Vis *vis, const char *keys, const Arg *a
 }
 
 static void complement(Array *ret, Array *a, Filerange *universe) {
-	size_t pos = 0;
+	size_t pos = universe->start;
 	for (size_t i = 0, len = array_length(a); i < len; i++) {
 		Filerange *r = array_get(a, i);
 		if (pos < r->start) {
@@ -1792,6 +1792,7 @@ static const char *selections_complement(Vis *vis, const char *keys, const Arg *
 }
 
 static const char *selections_minus(Vis *vis, const char *keys, const Arg *arg) {
+	Text *txt = vis_text(vis);
 	View *view = vis_view(vis);
 	bool anchored = view_selections_anchored(view_selections_primary_get(view));
 	enum VisMark mark = vis_mark_used(vis);
@@ -1802,10 +1803,7 @@ static const char *selections_minus(Vis *vis, const char *keys, const Arg *arg) 
 	Array b_complement;
 	array_init_from(&b_complement, &b);
 
-	Filerange universe = text_range_new(0, 0);
-	Filerange *max = array_get(&a, array_length(&a)-1);
-	if (max)
-		universe = text_range_new(max->end, max->end);
+	Filerange universe = text_object_entire(txt, 0);
 	complement(&b_complement, &b, &universe);
 	intersect(&sel, &a, &b_complement);
 
