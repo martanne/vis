@@ -1829,7 +1829,7 @@ static Filerange combine_union(const Filerange *r1, const Filerange *r2) {
 static Filerange combine_intersect(const Filerange *r1, const Filerange *r2) {
 	if (!r1 || !r2)
 		return text_range_empty();
-	return text_range_new(MAX(r1->start, r2->start), MIN(r1->end, r2->end));
+	return text_range_intersect(r1, r2);
 }
 
 static Filerange combine_longer(const Filerange *r1, const Filerange *r2) {
