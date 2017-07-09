@@ -98,6 +98,6 @@ enum VisMark vis_mark_from(Vis *vis, char mark) {
 }
 
 const MarkDef vis_marks[] = {
-	[VIS_MARK_DEFAULT]        = { '"', VIS_HELP("Default mark")    },
+	[VIS_MARK_DEFAULT]        = { '\'', VIS_HELP("Default mark")   },
 	[VIS_MARK_SELECTION]      = { '^', VIS_HELP("Last selections") },
 };
