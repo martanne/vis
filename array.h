@@ -108,5 +108,26 @@ bool array_resize(Array*, size_t length);
  * Sort array, the comparision function works as for `qsort(3)`.
  */
 void array_sort(Array*, int (*compar)(const void*, const void*));
+/**
+ * Push item onto the top of the stack.
+ * @rst
+ * .. note:: Is equivalent to ``array_add(arr, item)``.
+ * @endrst
+ */
+bool array_push(Array*, void *item);
+/**
+ * Get and remove item at the top of the stack.
+ * @rst
+ * .. warning:: The same ownership rules as for ``array_get`` apply.
+ * @endrst
+ */
+void *array_pop(Array*);
+/**
+ * Get item at the top of the stack without removing it.
+ * @rst
+ * .. warning:: The same ownership rules as for ``array_get`` apply.
+ * @endrst
+ */
+void *array_peek(Array*);
 
 #endif
