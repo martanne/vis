@@ -205,30 +205,6 @@ static size_t window_changelist_prev(Vis *vis, Win *win, size_t pos) {
 	return cl->pos;
 }
 
-static size_t window_jumplist_next(Vis *vis, Win *win, size_t cur) {
-	while (win->jumplist) {
-		Mark mark = (Mark)ringbuf_next(win->jumplist);
-		if (!mark)
-			return cur;
-		size_t pos = text_mark_get(win->file->text, mark);
-		if (pos != EPOS && pos != cur)
-			return pos;
-	}
-	return cur;
-}
-
-static size_t window_jumplist_prev(Vis *vis, Win *win, size_t cur) {
-	while (win->jumplist) {
-		Mark mark = (Mark)ringbuf_prev(win->jumplist);
-		if (!mark)
-			return cur;
-		size_t pos = text_mark_get(win->file->text, mark);
-		if (pos != EPOS && pos != cur)
-			return pos;
-	}
-	return cur;
-}
-
 static size_t window_nop(Vis *vis, Win *win, size_t pos) {
 	return pos;
 }
@@ -616,14 +592,6 @@ const Movement vis_motions[] = {
 	},
 	[VIS_MOVE_CHANGELIST_PREV] = {
 		.win = window_changelist_prev,
-		.type = INCLUSIVE,
-	},
-	[VIS_MOVE_JUMPLIST_NEXT] = {
-		.win = window_jumplist_next,
-		.type = INCLUSIVE,
-	},
-	[VIS_MOVE_JUMPLIST_PREV] = {
-		.win = window_jumplist_prev,
 		.type = INCLUSIVE,
 	},
 	[VIS_MOVE_NOP] = {

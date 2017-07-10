@@ -136,7 +136,7 @@ static File *file_new_text(Vis *vis, Text *text) {
 	file->text = text;
 	file->stat = text_stat(text);
 	for (size_t i = 0; i < LENGTH(file->marks); i++)
-		marks_init(&file->marks[i]);
+		mark_init(&file->marks[i]);
 	if (vis->files)
 		vis->files->prev = file;
 	file->next = vis->files;
@@ -264,7 +264,7 @@ static void window_free(Win *win) {
 	view_free(win->view);
 	for (size_t i = 0; i < LENGTH(win->modes); i++)
 		map_free(win->modes[i].bindings);
-	ringbuf_free(win->jumplist);
+	marklist_release(&win->jumplist);
 	mark_release(&win->saved_selections);
 	free(win);
 }
@@ -456,14 +456,14 @@ Win *window_new_file(Vis *vis, File *file, enum UiOption options) {
 		return NULL;
 	win->vis = vis;
 	win->file = file;
-	win->jumplist = ringbuf_alloc(31);
 	win->view = view_new(file->text);
 	win->ui = vis->ui->window_new(vis->ui, win, options);
-	if (!win->jumplist || !win->view || !win->ui) {
+	if (!win->view || !win->ui) {
 		window_free(win);
 		return NULL;
 	}
-	marks_init(&win->saved_selections);
+	marklist_init(&win->jumplist, 32);
+	mark_init(&win->saved_selections);
 	file->refcount++;
 	view_options_set(win->view, view_options_get(win->view));
 	view_tabwidth_set(win->view, vis->tabwidth);
@@ -795,17 +795,6 @@ void vis_keymap_disable(Vis *vis) {
 	vis->keymap_disabled = true;
 }
 
-static void window_jumplist_add(Win *win, size_t pos) {
-	Mark mark = text_mark_set(win->file->text, pos);
-	if (mark && win->jumplist)
-		ringbuf_add(win->jumplist, (void*)mark);
-}
-
-static void window_jumplist_invalidate(Win *win) {
-	if (win->jumplist)
-		ringbuf_invalidate(win->jumplist);
-}
-
 void vis_interrupt(Vis *vis) {
 	vis->interrupted = true;
 }
@@ -918,10 +907,6 @@ void vis_do(Vis *vis) {
 					view_cursors_to(sel, pos);
 				if (vis->mode->visual)
 					c.range = view_selections_get(sel);
-				if (a->movement->type & JUMP)
-					window_jumplist_add(win, pos);
-				else
-					window_jumplist_invalidate(win);
 			} else if (a->movement->type & INCLUSIVE && c.range.end > start) {
 				c.range.end = text_char_next(txt, c.range.end);
 			} else if (linewise && (a->movement->type & LINEWISE_INCLUSIVE)) {
@@ -989,6 +974,8 @@ void vis_do(Vis *vis) {
 	}
 
 	view_selections_normalize(view);
+	if (a->movement && (a->movement->type & JUMP))
+		vis_jumplist_save(vis);
 
 	if (a->op) {
 

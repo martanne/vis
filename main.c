@@ -145,6 +145,8 @@ static const char *window(Vis*, const char *keys, const Arg *arg);
 static const char *unicode_info(Vis*, const char *keys, const Arg *arg);
 /* either go to count % of ile or to matching item */
 static const char *percent(Vis*, const char *keys, const Arg *arg);
+/* navigate jumplist next (arg->i > 0), prev (arg->i < 0), save (arg->i = 0) */
+static const char *jumplist(Vis*, const char *keys, const Arg *arg);
 
 enum {
 	VIS_ACTION_EDITOR_SUSPEND,
@@ -212,6 +214,7 @@ enum {
 	VIS_ACTION_DELETE_WORD_PREV,
 	VIS_ACTION_JUMPLIST_PREV,
 	VIS_ACTION_JUMPLIST_NEXT,
+	VIS_ACTION_JUMPLIST_SAVE,
 	VIS_ACTION_CHANGELIST_PREV,
 	VIS_ACTION_CHANGELIST_NEXT,
 	VIS_ACTION_UNDO,
@@ -654,12 +657,17 @@ static const KeyAction vis_action[] = {
 	[VIS_ACTION_JUMPLIST_PREV] = {
 		"vis-jumplist-prev",
 		VIS_HELP("Go to older cursor position in jump list")
-		movement, { .i = VIS_MOVE_JUMPLIST_PREV }
+		jumplist, { .i = -1 }
 	},
 	[VIS_ACTION_JUMPLIST_NEXT] = {
 		"vis-jumplist-next",
 		VIS_HELP("Go to newer cursor position in jump list")
-		movement, { .i = VIS_MOVE_JUMPLIST_NEXT }
+		jumplist, { .i = +1 }
+	},
+	[VIS_ACTION_JUMPLIST_SAVE] = {
+		"vis-jumplist-save",
+		VIS_HELP("Save current selections in jump list")
+		jumplist, { .i = 0 }
 	},
 	[VIS_ACTION_CHANGELIST_PREV] = {
 		"vis-changelist-prev",
@@ -2305,6 +2313,16 @@ static const char *percent(Vis *vis, const char *keys, const Arg *arg) {
 		vis_motion(vis, VIS_MOVE_BRACKET_MATCH);
 	else
 		vis_motion(vis, VIS_MOVE_PERCENT);
+	return keys;
+}
+
+static const char *jumplist(Vis *vis, const char *keys, const Arg *arg) {
+	if (arg->i < 0)
+		vis_jumplist_prev(vis);
+	else if (arg->i > 0)
+		vis_jumplist_next(vis);
+	else
+		vis_jumplist_save(vis);
 	return keys;
 }
 

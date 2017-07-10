@@ -510,8 +510,6 @@ enum VisMotion {
 	VIS_MOVE_WINDOW_LINE_BOTTOM,
 	VIS_MOVE_CHANGELIST_NEXT,
 	VIS_MOVE_CHANGELIST_PREV,
-	VIS_MOVE_JUMPLIST_NEXT,
-	VIS_MOVE_JUMPLIST_PREV,
 	VIS_MOVE_NOP,
 	VIS_MOVE_PERCENT,
 	VIS_MOVE_BYTE,
@@ -714,7 +712,12 @@ Array vis_mark_get(Vis*, enum VisMark id);
  * according to the start position.
  */
 void vis_mark_normalize(Array*);
-
+/** Add selections of focused window to jump list. */
+bool vis_jumplist_save(Vis*);
+/** Navigate jump list backwards. */
+bool vis_jumplist_prev(Vis*);
+/** Navigate jump list forwards. */
+bool vis_jumplist_next(Vis*);
 /** @} */
 /** Register specifiers. */
 enum VisRegister {

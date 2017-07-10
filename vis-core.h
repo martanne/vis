@@ -8,7 +8,6 @@
 #include "text.h"
 #include "text-util.h"
 #include "map.h"
-#include "ring-buffer.h"
 #include "array.h"
 #include "buffer.h"
 #include "util.h"
@@ -134,6 +133,12 @@ typedef struct {
 	enum SamError error;  /* non-zero in case something went wrong */
 } Transcript;
 
+typedef struct {
+	Array prev;
+	Array next;
+	size_t max;
+} MarkList;
+
 struct File { /* shared state among windows displaying the same file */
 	Text *text;                      /* data structure holding the file content */
 	const char *name;                /* file name used when loading/saving */
@@ -159,7 +164,7 @@ struct Win {
 	UiWin *ui;              /* ui object handling visual appearance of this window */
 	File *file;             /* file being displayed in this window */
 	View *view;             /* currently displayed part of underlying text */
-	RingBuffer *jumplist;   /* LRU jump management */
+	MarkList jumplist;      /* LRU jump management */
 	ChangeList changelist;  /* state for iterating through least recently changes */
 	Array saved_selections; /* register used to store selections */
 	Mode modes[VIS_MODE_INVALID]; /* overlay mods used for per window key bindings */
@@ -276,8 +281,11 @@ void file_name_set(File*, const char *name);
 bool register_init(Register*);
 void register_release(Register*);
 
-void marks_init(Array*);
+void mark_init(Array*);
 void mark_release(Array*);
+
+void marklist_init(MarkList*, size_t max);
+void marklist_release(MarkList*);
 
 const char *register_get(Vis*, Register*, size_t *len);
 const char *register_slot_get(Vis*, Register*, size_t slot, size_t *len);

@@ -25,7 +25,19 @@ void vis_mark_normalize(Array *a) {
 	}
 }
 
-void marks_init(Array *arr) {
+bool vis_mark_equal(Array *a, Array *b) {
+	size_t len = array_length(a);
+	if (len != array_length(b))
+		return false;
+	for (size_t i = 0; i < len; i++) {
+		if (!text_range_equal(array_get(a, i), array_get(b, i)))
+			return false;
+	}
+
+	return true;
+}
+
+void mark_init(Array *arr) {
 	array_init_sized(arr, sizeof(SelectionRegion));
 }
 
@@ -34,7 +46,6 @@ void mark_release(Array *arr) {
 		return;
 	array_release(arr);
 }
-
 
 static Array *mark_from(Vis *vis, enum VisMark id) {
 	if (id == VIS_MARK_SELECTION && vis->win)
@@ -54,13 +65,12 @@ void vis_mark(Vis *vis, enum VisMark mark) {
 		vis->action.mark = mark;
 }
 
-Array vis_mark_get(Vis *vis, enum VisMark id) {
+static Array mark_get(Win *win, Array *mark) {
 	Array sel;
 	array_init_sized(&sel, sizeof(Filerange));
-	Array *mark = mark_from(vis, id);
 	if (!mark)
 		return sel;
-	View *view = vis->win->view;
+	View *view = win->view;
 	size_t len = array_length(mark);
 	array_reserve(&sel, len);
 	for (size_t i = 0; i < len; i++) {
@@ -73,18 +83,136 @@ Array vis_mark_get(Vis *vis, enum VisMark id) {
 	return sel;
 }
 
-void vis_mark_set(Vis *vis, enum VisMark id, Array *sel) {
-	Array *mark = mark_from(vis, id);
+Array vis_mark_get(Vis *vis, enum VisMark id) {
+	return mark_get(vis->win, mark_from(vis, id));
+}
+
+static void mark_set(Win *win, Array *mark, Array *sel) {
 	if (!mark)
 		return;
 	array_clear(mark);
-	View *view = vis->win->view;
+	View *view = win->view;
 	for (size_t i = 0, len = array_length(sel); i < len; i++) {
 		SelectionRegion ss;
 		Filerange *r = array_get(sel, i);
 		if (view_regions_save(view, r, &ss))
 			array_add(mark, &ss);
 	}
+}
+
+void vis_mark_set(Vis *vis, enum VisMark id, Array *sel) {
+	mark_set(vis->win, mark_from(vis, id), sel);
+}
+
+void marklist_init(MarkList *list, size_t max) {
+	array_init_sized(&list->prev, sizeof(Array));
+	array_reserve(&list->prev, max);
+	array_init_sized(&list->next, sizeof(Array));
+	array_reserve(&list->next, max);
+}
+
+void marklist_release(MarkList *list) {
+	for (size_t i = 0, len = array_length(&list->prev); i < len; i++)
+		array_release(array_get(&list->prev, i));
+	array_release(&list->prev);
+	for (size_t i = 0, len = array_length(&list->next); i < len; i++)
+		array_release(array_get(&list->next, i));
+	array_release(&list->next);
+}
+
+static bool marklist_push(Win *win, MarkList *list, Array *sel) {
+	Array *top = array_peek(&list->prev);
+	if (top) {
+		Array top_sel = mark_get(win, top);
+		bool eq = vis_mark_equal(&top_sel, sel);
+		array_release(&top_sel);
+		if (eq)
+			return true;
+	}
+
+	for (size_t i = 0, len = array_length(&list->next); i < len; i++)
+		array_release(array_get(&list->next, i));
+	array_clear(&list->next);
+	Array arr;
+	mark_init(&arr);
+	if (array_length(&list->prev) >= array_capacity(&list->prev)) {
+		Array *tmp = array_get(&list->prev, 0);
+		arr = *tmp;
+		array_remove(&list->prev, 0);
+	}
+	mark_set(win, &arr, sel);
+	return array_push(&list->prev, &arr);
+}
+
+bool vis_jumplist_save(Vis *vis) {
+	View *view = vis->win->view;
+	Array sel = view_selections_get_all(view);
+	bool ret = marklist_push(vis->win, &vis->win->jumplist, &sel);
+	array_release(&sel);
+	return ret;
+}
+
+static bool marklist_prev(Win *win, MarkList *list) {
+	View *view = win->view;
+	bool restore = false;
+	Array cur = view_selections_get_all(view);
+	bool anchored = view_selections_anchored(view_selections_primary_get(view));
+	Array *top = array_peek(&list->prev);
+	if (!top)
+		goto out;
+	Array top_sel = mark_get(win, top);
+	restore = !vis_mark_equal(&top_sel, &cur);
+	if (restore)
+		view_selections_set_all(view, &top_sel, anchored);
+	array_release(&top_sel);
+	if (restore)
+		goto out;
+
+	for (;;) {
+		Array *prev = array_pop(&list->prev);
+		if (!prev)
+			goto out;
+		array_push(&list->next, prev);
+		prev = array_peek(&list->prev);
+		if (!prev)
+			goto out;
+		Array sel = mark_get(win, prev);
+		restore = array_length(&sel) > 0;
+		if (restore)
+			view_selections_set_all(view, &sel, anchored);
+		array_release(&sel);
+		if (restore)
+			goto out;
+	}
+out:
+	array_release(&cur);
+	return restore;
+}
+
+static bool marklist_next(Win *win, MarkList *list) {
+	View *view = win->view;
+	bool anchored = view_selections_anchored(view_selections_primary_get(view));
+	for (;;) {
+		Array *next = array_pop(&list->next);
+		if (!next)
+			return false;
+		Array sel = mark_get(win, next);
+		if (array_length(&sel) > 0) {
+			view_selections_set_all(view, &sel, anchored);
+			array_release(&sel);
+			array_push(&list->prev, next);
+			return true;
+		}
+		array_release(next);
+	}
+}
+
+bool vis_jumplist_prev(Vis *vis) {
+	return marklist_prev(vis->win, &vis->win->jumplist);
+}
+
+bool vis_jumplist_next(Vis *vis) {
+	return marklist_next(vis->win, &vis->win->jumplist);
 }
 
 enum VisMark vis_mark_from(Vis *vis, char mark) {

@@ -1248,6 +1248,7 @@ enum SamError sam_cmd(Vis *vis, const char *s) {
 		if (primary_pos != EPOS && view_selection_disposed(vis->win->view))
 			view_cursor_to(vis->win->view, primary_pos);
 		view_selections_primary_set(view_selections(vis->win->view));
+		vis_jumplist_save(vis);
 		bool completed = true;
 		for (Selection *s = view_selections(vis->win->view); s; s = view_selections_next(s)) {
 			if (view_selections_anchored(s)) {
