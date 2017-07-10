@@ -215,8 +215,6 @@ enum {
 	VIS_ACTION_JUMPLIST_PREV,
 	VIS_ACTION_JUMPLIST_NEXT,
 	VIS_ACTION_JUMPLIST_SAVE,
-	VIS_ACTION_CHANGELIST_PREV,
-	VIS_ACTION_CHANGELIST_NEXT,
 	VIS_ACTION_UNDO,
 	VIS_ACTION_REDO,
 	VIS_ACTION_EARLIER,
@@ -668,16 +666,6 @@ static const KeyAction vis_action[] = {
 		"vis-jumplist-save",
 		VIS_HELP("Save current selections in jump list")
 		jumplist, { .i = 0 }
-	},
-	[VIS_ACTION_CHANGELIST_PREV] = {
-		"vis-changelist-prev",
-		VIS_HELP("Go to older cursor position in change list")
-		movement, { .i = VIS_MOVE_CHANGELIST_PREV }
-	},
-	[VIS_ACTION_CHANGELIST_NEXT] = {
-		"vis-changelist-next",
-		VIS_HELP("Go to newer cursor position in change list")
-		movement, { .i = VIS_MOVE_CHANGELIST_NEXT }
 	},
 	[VIS_ACTION_UNDO] = {
 		"vis-undo",

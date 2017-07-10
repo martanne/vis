@@ -171,40 +171,6 @@ static size_t view_lines_bottom(Vis *vis, View *view) {
 	return view_screenline_goto(vis->win->view, h - vis_count_get_default(vis, 0));
 }
 
-static size_t window_changelist_next(Vis *vis, Win *win, size_t pos) {
-	ChangeList *cl = &win->changelist;
-	Text *txt = win->file->text;
-	time_t state = text_state(txt);
-	if (cl->state != state)
-		cl->index = 0;
-	else if (cl->index > 0 && pos == cl->pos)
-		cl->index--;
-	size_t newpos = pos;
-	if (newpos == EPOS)
-		cl->index++;
-	else
-		cl->pos = newpos;
-	cl->state = state;
-	return cl->pos;
-}
-
-static size_t window_changelist_prev(Vis *vis, Win *win, size_t pos) {
-	ChangeList *cl = &win->changelist;
-	Text *txt = win->file->text;
-	time_t state = text_state(txt);
-	if (cl->state != state)
-		cl->index = 0;
-	else if (pos == cl->pos)
-		win->changelist.index++;
-	size_t newpos = pos;
-	if (newpos == EPOS)
-		cl->index--;
-	else
-		cl->pos = newpos;
-	cl->state = state;
-	return cl->pos;
-}
-
 static size_t window_nop(Vis *vis, Win *win, size_t pos) {
 	return pos;
 }
@@ -585,14 +551,6 @@ const Movement vis_motions[] = {
 	[VIS_MOVE_WINDOW_LINE_BOTTOM] = {
 		.view = view_lines_bottom,
 		.type = LINEWISE|JUMP|IDEMPOTENT,
-	},
-	[VIS_MOVE_CHANGELIST_NEXT] = {
-		.win = window_changelist_next,
-		.type = INCLUSIVE,
-	},
-	[VIS_MOVE_CHANGELIST_PREV] = {
-		.win = window_changelist_prev,
-		.type = INCLUSIVE,
 	},
 	[VIS_MOVE_NOP] = {
 		.win = window_nop,

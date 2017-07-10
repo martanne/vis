@@ -153,19 +153,12 @@ struct File { /* shared state among windows displaying the same file */
 	File *next, *prev;
 };
 
-typedef struct {
-	time_t state;           /* state of the text, used to invalidate change list */
-	size_t index;           /* #number of changes */
-	size_t pos;             /* where the current change occured */
-} ChangeList;
-
 struct Win {
 	Vis *vis;               /* editor instance to which this window belongs to */
 	UiWin *ui;              /* ui object handling visual appearance of this window */
 	File *file;             /* file being displayed in this window */
 	View *view;             /* currently displayed part of underlying text */
 	MarkList jumplist;      /* LRU jump management */
-	ChangeList changelist;  /* state for iterating through least recently changes */
 	Mode modes[VIS_MODE_INVALID]; /* overlay mods used for per window key bindings */
 	Win *parent;            /* window which was active when showing the command prompt */
 	Mode *parent_mode;      /* mode which was active when showing the command prompt */

@@ -241,8 +241,6 @@ static const KeyBinding bindings_normal[] = {
 	{ "<F1>",               ALIAS(":help<Enter>")                       },
 	{ "ga",                 ACTION(UNICODE_INFO)                        },
 	{ "g8",                 ACTION(UTF8_INFO)                           },
-	{ "g,",                 ACTION(CHANGELIST_NEXT)                     },
-	{ "g;",                 ACTION(CHANGELIST_PREV)                     },
 	{ "g-",                 ACTION(EARLIER)                             },
 	{ "g+",                 ACTION(LATER)                               },
 	{ "gn",                 ALIAS("vgn")                                },
