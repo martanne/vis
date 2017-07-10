@@ -165,8 +165,6 @@ void vis_prompt_show(Vis *vis, const char *title) {
 		UI_OPTION_ONELINE);
 	if (!prompt)
 		return;
-	if (vis->mode->visual)
-		window_selection_save(active);
 	Text *txt = prompt->file->text;
 	text_appendf(txt, "%s\n", title);
 	Selection *sel = view_selections_primary_get(prompt->view);

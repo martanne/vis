@@ -49,7 +49,7 @@ void mark_release(Array *arr) {
 
 static Array *mark_from(Vis *vis, enum VisMark id) {
 	if (id == VIS_MARK_SELECTION && vis->win)
-		return &vis->win->saved_selections;
+		return array_peek(&vis->win->jumplist.prev);
 	File *file = vis->win->file;
 	if (id < LENGTH(file->marks))
 		return &file->marks[id];
@@ -105,8 +105,11 @@ void vis_mark_set(Vis *vis, enum VisMark id, Array *sel) {
 }
 
 void marklist_init(MarkList *list, size_t max) {
+	Array mark;
+	mark_init(&mark);
 	array_init_sized(&list->prev, sizeof(Array));
 	array_reserve(&list->prev, max);
+	array_add(&list->prev, &mark);
 	array_init_sized(&list->next, sizeof(Array));
 	array_reserve(&list->next, max);
 }
@@ -168,14 +171,10 @@ static bool marklist_prev(Win *win, MarkList *list) {
 	if (restore)
 		goto out;
 
-	for (;;) {
+	while (array_length(&list->prev) > 1) {
 		Array *prev = array_pop(&list->prev);
-		if (!prev)
-			goto out;
 		array_push(&list->next, prev);
 		prev = array_peek(&list->prev);
-		if (!prev)
-			goto out;
 		Array sel = mark_get(win, prev);
 		restore = array_length(&sel) > 0;
 		if (restore)
@@ -226,6 +225,6 @@ enum VisMark vis_mark_from(Vis *vis, char mark) {
 }
 
 const MarkDef vis_marks[] = {
-	[VIS_MARK_DEFAULT]        = { '\'', VIS_HELP("Default mark")   },
-	[VIS_MARK_SELECTION]      = { '^', VIS_HELP("Last selections") },
+	[VIS_MARK_DEFAULT]        = { '\'', VIS_HELP("Default mark")    },
+	[VIS_MARK_SELECTION]      = { '^',  VIS_HELP("Last selections") },
 };
