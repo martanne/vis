@@ -1159,22 +1159,12 @@ static void vis_keys_process(Vis *vis, size_t pos) {
 				strcpy(vis->key_prev, vis->key_current);
 				strncpy(vis->key_current, start, len);
 				vis->key_current[len] = '\0';
-				char *params_end = binding_end;
-				while (params_end) {
-					tmp = *params_end;
-					*params_end = '\0';
-					end = (char*)binding->action->func(vis, binding_end, &binding->action->arg);
-					*params_end = tmp;
-					if (end) {
-						start = cur = end;
-						break;
-					}
-					params_end = (char*)vis_keys_next(vis, params_end);
-				}
+				end = (char*)binding->action->func(vis, binding_end, &binding->action->arg);
 				if (!end) {
 					end = start;
 					break;
 				}
+				start = cur = end;
 			} else if (binding->alias) {
 				buffer_remove(buf, start - buf->data, binding_end - start);
 				buffer_insert0(buf, start - buf->data, binding->alias);
