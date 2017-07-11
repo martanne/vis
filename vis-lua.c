@@ -667,12 +667,12 @@ static int files_iter(lua_State *L) {
  * @function mark_names
  * @return the new iterator
  * @usage
- * local marks = vis.win.file.marks;
- * for mark in vis:mark_names() do
- * 	local pos = marks[mark]
- * 	if pos then
- * 		-- do something with mark pos
- * 	end
+ * local marks = vis.win.file.marks
+ * for name in vis:mark_names() do
+ *	local mark = marks[name]
+ *	for i = 1, #mark do
+ * 		-- do somthing with: name, mark[i].start, mark[i].finish
+ *	end
  * end
  */
 static int mark_names_iter(lua_State *L);
@@ -2245,22 +2245,26 @@ static const struct luaL_Reg file_lines_funcs[] = {
 };
 
 static int file_marks_index(lua_State *L) {
-	Filerange *range = NULL;
+	lua_newtable(L);
 	Vis *vis = lua_touserdata(L, lua_upvalueindex(1));
 	File *file = obj_ref_check_containerof(L, 1, VIS_LUA_TYPE_MARKS, offsetof(File, marks));
 	if (!file)
-		goto err;
+		return 1;
 	const char *symbol = luaL_checkstring(L, 2);
 	if (strlen(symbol) != 1)
-		goto err;
+		return 1;
 	enum VisMark mark = vis_mark_from(vis, symbol[0]);
 	if (mark == VIS_MARK_INVALID)
-		goto err;
+		return 1;
+
 	Array arr = vis_mark_get(vis, mark);
-	range = array_get(&arr, 0);
+	for (size_t i = 0, len = array_length(&arr); i < len; i++) {
+		Filerange *range = array_get(&arr, i);
+		lua_pushunsigned(L, i+1);
+		pushrange(L, range);
+		lua_settable(L, -3);
+	}
 	array_release(&arr);
-err:
-	pushrange(L, range);
 	return 1;
 }
 
@@ -2273,15 +2277,24 @@ static int file_marks_newindex(lua_State *L) {
 	if (strlen(symbol) != 1)
 		return 0;
 	enum VisMark mark = vis_mark_from(vis, symbol[0]);
-	size_t pos = luaL_checkunsigned(L, 3);
-	if (mark < LENGTH(file->marks)) {
-		Array arr;
-		array_init_sized(&arr, sizeof(Filerange));
-		Filerange range = text_range_new(pos, pos);
-		array_add(&arr, &range);
-		vis_mark_set(vis, mark, &arr);
-		array_release(&arr);
+	if (mark >= LENGTH(file->marks))
+		return 0;
+
+	Array ranges;
+	array_init_sized(&ranges, sizeof(Filerange));
+
+	if (lua_istable(L, 3)) {
+		lua_pushnil(L);
+		while (lua_next(L, 3)) {
+			Filerange range = getrange(L, -1);
+			if (text_range_valid(&range))
+				array_add(&ranges, &range);
+			lua_pop(L, 1);
+		}
 	}
+
+	vis_mark_set(vis, mark, &ranges);
+	array_release(&ranges);
 	return 0;
 }
 
