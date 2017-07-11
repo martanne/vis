@@ -1276,8 +1276,9 @@ static const char *macro_record(Vis *vis, const char *keys, const Arg *arg) {
 	if (!vis_macro_record_stop(vis)) {
 		if (!keys[0])
 			return NULL;
-		if (keys[1])
-			return vis_keys_next(vis, keys);
+		const char *next = vis_keys_next(vis, keys);
+		if (next - keys > 1)
+			return next;
 		enum VisRegister reg = vis_register_from(vis, keys[0]);
 		vis_macro_record(vis, reg);
 		keys++;
@@ -1289,8 +1290,9 @@ static const char *macro_record(Vis *vis, const char *keys, const Arg *arg) {
 static const char *macro_replay(Vis *vis, const char *keys, const Arg *arg) {
 	if (!keys[0])
 		return NULL;
-	if (keys[1])
-		return vis_keys_next(vis, keys);
+	const char *next = vis_keys_next(vis, keys);
+	if (next - keys > 1)
+		return next;
 	enum VisRegister reg = vis_register_from(vis, keys[0]);
 	vis_macro_replay(vis, reg);
 	return keys+1;
@@ -1985,8 +1987,9 @@ static const char *selection_end(Vis *vis, const char *keys, const Arg *arg) {
 static const char *reg(Vis *vis, const char *keys, const Arg *arg) {
 	if (!keys[0])
 		return NULL;
-	if (keys[1])
-		return vis_keys_next(vis, keys);
+	const char *next = vis_keys_next(vis, keys);
+	if (next - keys > 1)
+		return next;
 	enum VisRegister reg = vis_register_from(vis, keys[0]);
 	vis_register(vis, reg);
 	return keys+1;
@@ -1995,8 +1998,9 @@ static const char *reg(Vis *vis, const char *keys, const Arg *arg) {
 static const char *mark(Vis *vis, const char *keys, const Arg *arg) {
 	if (!keys[0])
 		return NULL;
-	if (keys[1])
-		return vis_keys_next(vis, keys);
+	const char *next = vis_keys_next(vis, keys);
+	if (next - keys > 1)
+		return next;
 	enum VisMark mark = vis_mark_from(vis, keys[0]);
 	vis_mark(vis, mark);
 	return keys+1;
@@ -2061,8 +2065,9 @@ static const char *delete(Vis *vis, const char *keys, const Arg *arg) {
 static const char *insert_register(Vis *vis, const char *keys, const Arg *arg) {
 	if (!keys[0])
 		return NULL;
-	if (keys[1])
-		return vis_keys_next(vis, keys);
+	const char *next = vis_keys_next(vis, keys);
+	if (next - keys > 1)
+		return next;
 	enum VisRegister reg = vis_register_from(vis, keys[0]);
 	if (reg != VIS_REG_INVALID) {
 		vis_register(vis, reg);
