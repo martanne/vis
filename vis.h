@@ -772,13 +772,20 @@ enum VisRegister vis_register_from(Vis*, char reg);
  */
 void vis_register(Vis*, enum VisRegister);
 enum VisRegister vis_register_used(Vis*);
-/** Get register content. */
-const char *vis_register_get(Vis*, enum VisRegister, size_t *len);
-const char *vis_register_slot_get(Vis*, enum VisRegister, size_t slot, size_t *len);
-/** Set register content. */
-bool vis_register_put(Vis*, enum VisRegister, const char *data, size_t len);
-bool vis_register_slot_put(Vis*, enum VisRegister, size_t slot, const char *data, size_t len);
-
+/**
+ * Get register content.
+ * @return An array of ``TextString`` structs.
+ * @rst
+ * .. warning:: The caller must eventually free the array ressources using
+ *              ``array_release``.
+ * @endrst
+ */
+Array vis_register_get(Vis*, enum VisRegister);
+/**
+ * Set register content.
+ * @param data The array comprised of ``TextString`` structs.
+ */
+bool vis_register_set(Vis*, enum VisRegister, Array *data);
 /**
  * @}
  * @defgroup vis_macros

@@ -704,10 +704,10 @@ static int mark_names_iter(lua_State *L) {
  * @function register_names
  * @return the new iterator
  * @usage
- * for reg in vis:register_names() do
- * 	local value = vis.registers[reg]
- * 	if value then
- * 		-- do something with register value
+ * for name in vis:register_names() do
+ * 	local reg = vis.registers[name]
+ * 	for i = 1, #reg do
+ * 		-- do something with register value reg[i]
  * 	end
  * end
  */
@@ -1476,19 +1476,22 @@ static const struct luaL_Reg ui_funcs[] = {
 };
 
 static int registers_index(lua_State *L) {
+	lua_newtable(L);
 	Vis *vis = lua_touserdata(L, lua_upvalueindex(1));
 	const char *symbol = luaL_checkstring(L, 2);
 	if (strlen(symbol) != 1)
-		goto err;
+		return 1;
 	enum VisRegister reg = vis_register_from(vis, symbol[0]);
 	if (reg >= VIS_REG_INVALID)
-		goto err;
-	size_t len;
-	const char *value = vis_register_get(vis, reg, &len);
-	lua_pushlstring(L, value ? value : "" , len);
-	return 1;
-err:
-	lua_pushnil(L);
+		return 1;
+	Array data = vis_register_get(vis, reg);
+	for (size_t i = 0, len = array_length(&data); i < len; i++) {
+		TextString *string = array_get(&data, i);
+		lua_pushunsigned(L, i+1);
+		lua_pushlstring(L, string->data, string->len);
+		lua_settable(L, -3);
+	}
+	array_release(&data);
 	return 1;
 }
 
@@ -1498,9 +1501,21 @@ static int registers_newindex(lua_State *L) {
 	if (strlen(symbol) != 1)
 		return 0;
 	enum VisRegister reg = vis_register_from(vis, symbol[0]);
-	size_t len;
-	const char *value = luaL_checklstring(L, 3, &len);
-	vis_register_put(vis, reg, value, len+1);
+	Array data;
+	array_init_sized(&data, sizeof(TextString));
+
+	if (lua_istable(L, 3)) {
+		lua_pushnil(L);
+		while (lua_next(L, 3)) {
+			TextString string;
+			string.data = luaL_checklstring(L, -1, &string.len);
+			array_add(&data, &string);
+			lua_pop(L, 1);
+		}
+	}
+
+	vis_register_set(vis, reg, &data);
+	array_release(&data);
 	return 0;
 }
 

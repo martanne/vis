@@ -30,6 +30,12 @@ typedef struct Text Text;
 typedef struct Piece Piece;
 typedef struct TextSave TextSave;
 
+/** A contiguous part of the text. */
+typedef struct {
+	const char *data; /**< Content, might not be NUL-terminated. */
+	size_t len;       /**< Length in bytes. */
+} TextString;
+
 /**
  * Iterator used to navigate the buffer content.
  *

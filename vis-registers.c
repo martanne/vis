@@ -226,23 +226,39 @@ static Register *register_from(Vis *vis, enum VisRegister id) {
 	return NULL;
 }
 
-bool vis_register_put(Vis *vis, enum VisRegister id, const char *data, size_t len) {
+bool vis_register_set(Vis *vis, enum VisRegister id, Array *data) {
 	Register *reg = register_from(vis, id);
 	if (!reg)
 		return false;
-	return register_put(vis, reg, data, len);
+	size_t len = array_length(data);
+	for (size_t i = 0; i < len; i++) {
+		Buffer *buf = register_buffer(reg, i);
+		if (!buf)
+			return false;
+		TextString *string = array_get(data, i);
+		if (!buffer_put(buf, string->data, string->len))
+			return false;
+	}
+	return register_resize(reg, len);
 }
 
-const char *vis_register_get(Vis *vis, enum VisRegister id, size_t *len) {
-	return vis_register_slot_get(vis, id, 0, len);
-}
-
-const char *vis_register_slot_get(Vis *vis, enum VisRegister id, size_t slot, size_t *len) {
+Array vis_register_get(Vis *vis, enum VisRegister id) {
+	Array data;
+	array_init_sized(&data, sizeof(TextString));
 	Register *reg = register_from(vis, id);
-	if (reg)
-		return register_slot_get(vis, reg, slot, len);
-	*len = 0;
-	return NULL;
+	if (reg) {
+		size_t len = array_length(&reg->values);
+		array_reserve(&data, len);
+		for (size_t i = 0; i < len; i++) {
+			Buffer *buf = array_get(&reg->values, i);
+			TextString string = {
+				.data = buffer_content(buf),
+				.len = buffer_length(buf),
+			};
+			array_add(&data, &string);
+		}
+	}
+	return data;
 }
 
 const RegisterDef vis_registers[] = {
