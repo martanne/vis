@@ -1345,8 +1345,7 @@ static const char *selections_new(Vis *vis, const char *keys, const Arg *arg) {
 		}
 		if (sel_new) {
 			view_selections_primary_set(sel_new);
-			if (anchored)
-				view_selections_anchor(sel_new);
+			view_selections_anchor(sel_new, anchored);
 		}
 	}
 	vis_count_set(vis, VIS_COUNT_UNKNOWN);
@@ -1452,7 +1451,7 @@ static const char *selections_match_next(Vis *vis, const char *keys, const Arg *
 		size_t pos = text_char_prev(txt, word.end);
 		if ((s = view_selections_new(view, pos))) {
 			view_selections_set(s, &word);
-			view_selections_anchor(s);
+			view_selections_anchor(s, true);
 			view_selections_primary_set(s);
 			goto out;
 		}
@@ -1465,7 +1464,7 @@ static const char *selections_match_next(Vis *vis, const char *keys, const Arg *
 	size_t pos = text_char_prev(txt, word.end);
 	if ((s = view_selections_new(view, pos))) {
 		view_selections_set(s, &word);
-		view_selections_anchor(s);
+		view_selections_anchor(s, true);
 		view_selections_primary_set(s);
 	}
 

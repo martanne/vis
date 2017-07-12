@@ -1161,8 +1161,8 @@ void view_cursors_place(Selection *s, size_t line, size_t col) {
 	view_cursors_to(s, pos);
 }
 
-void view_selections_anchor(Selection *s) {
-	s->anchored = true;
+void view_selections_anchor(Selection *s, bool anchored) {
+	s->anchored = anchored;
 }
 
 void view_selection_clear(Selection *s) {

@@ -949,7 +949,7 @@ void vis_do(Vis *vis) {
 			c.range = text_range_linewise(txt, &c.range);
 		if (vis->mode->visual) {
 			view_selections_set(sel, &c.range);
-			view_selections_anchor(sel);
+			view_selections_anchor(sel, true);
 		}
 
 		if (a->op) {

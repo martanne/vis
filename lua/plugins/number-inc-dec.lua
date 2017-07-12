@@ -15,8 +15,8 @@ local change = function(delta)
 	if not count then count = 1 end
 	vis.count = nil -- reset count, otherwise it affects next motion
 
-	for cursor in win:cursors_iterator() do
-		local pos = cursor.pos
+	for selection in win:selections_iterator() do
+		local pos = selection.pos
 		if not pos then goto continue end
 		local word = file:text_object_word(pos);
 		if not word then goto continue end
@@ -50,7 +50,7 @@ local change = function(delta)
 		end
 		file:delete(s, e - s)
 		file:insert(s, number)
-		cursor.pos = s
+		selection.pos = s
 		::continue::
 	end
 end

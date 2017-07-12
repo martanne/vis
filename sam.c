@@ -1224,7 +1224,7 @@ enum SamError sam_cmd(Vis *vis, const char *s) {
 				if (c->cursor) {
 					if (visual) {
 						view_selections_set(c->cursor, &sel);
-						view_selections_anchor(c->cursor);
+						view_selections_anchor(c->cursor, true);
 					} else {
 						if (memchr(c->data, '\n', c->len))
 							view_cursors_to(c->cursor, sel.start);
@@ -1235,7 +1235,7 @@ enum SamError sam_cmd(Vis *vis, const char *s) {
 					Selection *cursor = view_selections_new(c->win->view, sel.start);
 					if (cursor) {
 						view_selections_set(cursor, &sel);
-						view_selections_anchor(cursor);
+						view_selections_anchor(cursor, true);
 					}
 				}
 			}
@@ -1512,7 +1512,7 @@ static bool cmd_print(Vis *vis, Win *win, Command *cmd, const char *argv[], Sele
 		return false;
 	if (range->start != range->end) {
 		view_selections_set(sel, range);
-		view_selections_anchor(sel);
+		view_selections_anchor(sel, true);
 	} else {
 		view_cursors_to(sel, range->start);
 		view_selection_clear(sel);

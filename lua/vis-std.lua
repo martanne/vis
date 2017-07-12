@@ -81,7 +81,7 @@ vis.events.subscribe(vis.events.WIN_STATUS, function(win)
 	local left_parts = {}
 	local right_parts = {}
 	local file = win.file
-	local cursor = win.cursor
+	local selection = win.selection
 
 	local mode = modes[vis.mode]
 	if mode ~= '' and vis.win == win then
@@ -91,18 +91,18 @@ vis.events.subscribe(vis.events.WIN_STATUS, function(win)
 	table.insert(left_parts, (file.name or '[No Name]') ..
 		(file.modified and ' [+]' or '') .. (vis.recording and ' @' or ''))
 
-	if #win.cursors > 1 then
-		table.insert(right_parts, cursor.number..'/'..#win.cursors)
+	if #win.selections > 1 then
+		table.insert(right_parts, selection.number..'/'..#win.selections)
 	end
 
 	local size = file.size
-	local pos = cursor.pos
+	local pos = selection.pos
 	if not pos then pos = 0 end
 	table.insert(right_parts, (size == 0 and "0" or math.ceil(pos/size*100)).."%")
 
 	if not win.large then
-		local col = cursor.col
-		table.insert(right_parts, cursor.line..', '..col)
+		local col = selection.col
+		table.insert(right_parts, selection.line..', '..col)
 		if size > 33554432 or col > 65536 then
 			win.large = true
 		end

@@ -36,8 +36,8 @@
 #define VIS_LUA_TYPE_MARK "mark"
 #define VIS_LUA_TYPE_MARKS "marks"
 #define VIS_LUA_TYPE_WINDOW "window"
-#define VIS_LUA_TYPE_CURSOR "cursor"
-#define VIS_LUA_TYPE_CURSORS "cursors"
+#define VIS_LUA_TYPE_SELECTION "selection"
+#define VIS_LUA_TYPE_SELECTIONS "selections"
 #define VIS_LUA_TYPE_UI "ui"
 #define VIS_LUA_TYPE_REGISTERS "registers"
 #define VIS_LUA_TYPE_KEYACTION "keyaction"
@@ -79,12 +79,12 @@ static void window_status_update(Vis *vis, Win *win) {
 	         vis_macro_recording(vis) ? " @": "");
 	left_count++;
 
-	int cursor_count = view_selections_count(view);
-	if (cursor_count > 1) {
+	int sel_count = view_selections_count(view);
+	if (sel_count > 1) {
 		Selection *s = view_selections_primary_get(view);
-		int cursor_number = view_selections_number(s) + 1;
+		int sel_number = view_selections_number(s) + 1;
 		snprintf(right_parts[right_count], sizeof(right_parts[right_count])-1,
-		         "%d/%d", cursor_number, cursor_count);
+		         "%d/%d", sel_number, sel_count);
 		right_count++;
 	}
 
@@ -1207,7 +1207,7 @@ static bool command_lua(Vis *vis, Win *win, void *data, bool force, const char *
 		return false;
 	if (!sel)
 		sel = view_selections_primary_get(win->view);
-	if (!obj_lightref_new(L, sel, VIS_LUA_TYPE_CURSOR))
+	if (!obj_lightref_new(L, sel, VIS_LUA_TYPE_SELECTION))
 		return false;
 	pushrange(L, range);
 	if (pcall(vis, L, 5, 1) != 0)
@@ -1224,13 +1224,13 @@ static bool command_lua(Vis *vis, Win *win, void *data, bool force, const char *
  * @tparam[opt] string help the single line help text as displayed in `:help`
  * @treturn bool whether the command has been successfully registered
  * @usage
- * vis:command_register("foo", function(argv, force, win, cursor, range)
+ * vis:command_register("foo", function(argv, force, win, selection, range)
  * 	 for i,arg in ipairs(argv) do
  * 		 print(i..": "..arg)
  * 	 end
  * 	 print("was command forced with ! "..(force and "yes" or "no"))
  * 	 print(win.file.name)
- * 	 print(cursor.pos)
+ * 	 print(selection.pos)
  * 	 print(range ~= nil and ('['..range.start..', '..range.finish..']') or "invalid range")
  * 	 return true;
  * end)
@@ -1554,12 +1554,12 @@ static const struct luaL_Reg registers_funcs[] = {
  * @tfield File file
  */
 /***
- * The primary cursor of this window.
- * @tfield Cursor cursor
+ * The primary selection of this window.
+ * @tfield Selection selection
  */
 /***
- * The cursors of this window.
- * @tfield Array(Cursor) cursors
+ * The selections of this window.
+ * @tfield Array(Selection) selections
  */
 static int window_index(lua_State *L) {
 	Win *win = obj_ref_check(L, 1, VIS_LUA_TYPE_WINDOW);
@@ -1588,14 +1588,14 @@ static int window_index(lua_State *L) {
 			return 1;
 		}
 
-		if (strcmp(key, "cursor") == 0) {
+		if (strcmp(key, "selection") == 0) {
 			Selection *sel = view_selections_primary_get(win->view);
-			obj_lightref_new(L, sel, VIS_LUA_TYPE_CURSOR);
+			obj_lightref_new(L, sel, VIS_LUA_TYPE_SELECTION);
 			return 1;
 		}
 
-		if (strcmp(key, "cursors") == 0) {
-			obj_ref_new(L, win->view, VIS_LUA_TYPE_CURSORS);
+		if (strcmp(key, "selections") == 0) {
+			obj_ref_new(L, win->view, VIS_LUA_TYPE_SELECTIONS);
 			return 1;
 		}
 	}
@@ -1603,11 +1603,11 @@ static int window_index(lua_State *L) {
 	return index_common(L);
 }
 
-static int window_cursors_iterator_next(lua_State *L) {
+static int window_selections_iterator_next(lua_State *L) {
 	Selection **handle = lua_touserdata(L, lua_upvalueindex(1));
 	if (!*handle)
 		return 0;
-	Selection *sel = obj_lightref_new(L, *handle, VIS_LUA_TYPE_CURSOR);
+	Selection *sel = obj_lightref_new(L, *handle, VIS_LUA_TYPE_SELECTION);
 	if (!sel)
 		return 0;
 	*handle = view_selections_next(sel);
@@ -1615,15 +1615,15 @@ static int window_cursors_iterator_next(lua_State *L) {
 }
 
 /***
- * Create an iterator over all cursors of this window.
- * @function cursors_iterator
+ * Create an iterator over all selections of this window.
+ * @function selections_iterator
  * @return the new iterator
  */
-static int window_cursors_iterator(lua_State *L) {
+static int window_selections_iterator(lua_State *L) {
 	Win *win = obj_ref_check(L, 1, VIS_LUA_TYPE_WINDOW);
 	Selection **handle = lua_newuserdata(L, sizeof *handle);
 	*handle = view_selections(win->view);
-	lua_pushcclosure(L, window_cursors_iterator_next, 1);
+	lua_pushcclosure(L, window_selections_iterator_next, 1);
 	return 1;
 }
 
@@ -1729,7 +1729,7 @@ static int window_draw(lua_State *L) {
 static const struct luaL_Reg window_funcs[] = {
 	{ "__index", window_index },
 	{ "__newindex", newindex_common },
-	{ "cursors_iterator", window_cursors_iterator },
+	{ "selections_iterator", window_selections_iterator },
 	{ "map", window_map },
 	{ "unmap", window_unmap },
 	{ "style_define", window_style_define },
@@ -1739,15 +1739,15 @@ static const struct luaL_Reg window_funcs[] = {
 	{ NULL, NULL },
 };
 
-static int window_cursors_index(lua_State *L) {
-	View *view = obj_ref_check(L, 1, VIS_LUA_TYPE_CURSORS);
+static int window_selections_index(lua_State *L) {
+	View *view = obj_ref_check(L, 1, VIS_LUA_TYPE_SELECTIONS);
 	size_t index = luaL_checkunsigned(L, 2);
 	size_t count = view_selections_count(view);
 	if (index == 0 || index > count)
 		goto err;
 	for (Selection *s = view_selections(view); s; s = view_selections_next(s)) {
 		if (!--index) {
-			obj_lightref_new(L, s, VIS_LUA_TYPE_CURSOR);
+			obj_lightref_new(L, s, VIS_LUA_TYPE_SELECTION);
 			return 1;
 		}
 	}
@@ -1756,101 +1756,118 @@ err:
 	return 1;
 }
 
-static int window_cursors_len(lua_State *L) {
-	View *view = obj_ref_check(L, 1, VIS_LUA_TYPE_CURSORS);
+static int window_selections_len(lua_State *L) {
+	View *view = obj_ref_check(L, 1, VIS_LUA_TYPE_SELECTIONS);
 	lua_pushunsigned(L, view_selections_count(view));
 	return 1;
 }
 
-static const struct luaL_Reg window_cursors_funcs[] = {
-	{ "__index", window_cursors_index },
-	{ "__len", window_cursors_len },
+static const struct luaL_Reg window_selections_funcs[] = {
+	{ "__index", window_selections_index },
+	{ "__len", window_selections_len },
 	{ NULL, NULL },
 };
 
 /***
- * A cursor object.
+ * A selection object.
  *
- * Cursors are represented as absolute byte offsets from the start of the file.
- * Valid cursor placements are within the closed interval `[0, file.size]`.
- * Cursors are currently implemented using character marks into the underlying
- * persistent [text management data structure](https://github.com/martanne/vis/wiki/Text-management-using-a-piece-chain).
+ * A selection is a non-empty, directed range with two endpoints called
+ * *cursor* and *anchor*. A selection can be anchored in which case
+ * the anchor remains fixed while only the position of the cursor is
+ * adjusted. For non-anchored selections both endpoints are updated. A
+ * singleton selection covers one character on which both cursor and
+ * anchor reside. There always exists a primary selection which remains
+ * visible (i.e. changes to its position will adjust the viewport).
+ *
+ * The range covered by a selection is represented as an interval whose
+ * endpoints are absolute byte offsets from the start of the file.
+ * Valid addresses are within the closed interval `[0, file.size]`.
+ *
+ * Selections are currently implemented using character marks into
+ * the underlying persistent
+ * [text management data structure](https://github.com/martanne/vis/wiki/Text-management-using-a-piece-chain).
+ *
  * This has a few consequences you should be aware of:
  *
- *  - A cursor becomes invalid when the underlying text range it is referencing
- *    is deleted:
+ *  - A selection becomes invalid when the delimiting boundaries of the underlying
+ *    text it is referencing is deleted:
  *
- *        -- leaves cursor in an invalid state
- *        win.file:delete(win.cursor.pos, 1)
- *        assert(win.cursor.pos == nil)
+ *        -- leaves selection in an invalid state
+ *        win.file:delete(win.selection.pos, 1)
+ *        assert(win.selection.pos == nil)
  *
  *    Like a regular mark it will become valid again when the text is reverted
  *    to the state before the deletion.
  *
- *  - Inserts after the cursor position (`> cursor.pos`) will not affect the
- *    cursor postion.
+ *  - Inserts after the selection position (`> selection.pos`) will not affect the
+ *    selection postion.
  *
- *        local pos = win.cursor.pos
+ *        local pos = win.selection.pos
  *        win.file:insert(pos+1, "-")
- *        assert(win.cursor.pos == pos)
+ *        assert(win.selection.pos == pos)
  *
- *  - Non-cached inserts before the cursor position (`<= cursor.pos`) will
- *    affect the mark and adjust the cursor postion by the number of bytes
+ *  - Non-cached inserts before the selection position (`<= selection.pos`) will
+ *    affect the mark and adjust the selection postion by the number of bytes
  *    which were inserted.
  *
- *        local pos = win.cursor.pos
+ *        local pos = win.selection.pos
  *        win.file:insert(pos, "-")
- *        assert(win.cursor.pos == pos+1)
+ *        assert(win.selection.pos == pos+1)
  *
- *  - Cached inserts before the cursor position (`<= cursor.pos`) will
- *    not affect the cursor position because the underlying text is replaced
+ *  - Cached inserts before the selection position (`<= selection.pos`) will
+ *    not affect the selection position because the underlying text is replaced
  *    inplace.
  *
- * For these reasons it is generally recommended to update the cursor position
+ * For these reasons it is generally recommended to update the selection position
  * after a modification. The general procedure amounts to:
  *
- * 1. Read out the current cursor position
+ * 1. Read out the current selection position
  * 2. Perform text modifications
- * 3. Update the cursor postion
+ * 3. Update the selection postion
  *
  * This is what @{Vis:insert} and @{Vis:replace} do internally.
  *
- * @type Cursor
+ * @type Selection
  * @usage
  * local data = "new text"
- * local pos = win.cursor.pos
+ * local pos = win.selection.pos
  * win.file:insert(pos, data)
- * win.cursor.pos = pos + #data
+ * win.selection.pos = pos + #data
  */
 
 /***
  * The zero based byte position in the file.
  *
- * Might be `nil` if the cursor is in an invalid state.
- * Setting this field will move the cursor to the given position.
+ * Might be `nil` if the selection is in an invalid state.
+ * Setting this field will move the cursor endpoint of the
+ * selection to the given position.
  * @tfield int pos
  */
 /***
- * The 1-based line the cursor resides on.
+ * The 1-based line the cursor of this selection resides on.
  *
  * @tfield int line
  * @see to
  */
 /***
- * The 1-based column position the cursor resides on.
+ * The 1-based column position the cursor of this selection resides on.
  * @tfield int col
  * @see to
  */
 /***
- * The 1-based cursor index.
+ * The 1-based selection index.
  * @tfield int number
  */
 /***
- * The selection associated with this cursor.
- * @tfield Range selection the selection or `nil` if not in visual mode
+ * The range covered by this selection.
+ * @tfield Range range
  */
-static int window_cursor_index(lua_State *L) {
-	Selection *sel = obj_lightref_check(L, 1, VIS_LUA_TYPE_CURSOR);
+/***
+ * Whether this selection is anchored.
+ * @tfield bool anchored
+ */
+static int window_selection_index(lua_State *L) {
+	Selection *sel = obj_lightref_check(L, 1, VIS_LUA_TYPE_SELECTION);
 	if (!sel) {
 		lua_pushnil(L);
 		return 1;
@@ -1878,18 +1895,24 @@ static int window_cursor_index(lua_State *L) {
 			return 1;
 		}
 
-		if (strcmp(key, "selection") == 0) {
+		if (strcmp(key, "range") == 0) {
 			Filerange range = view_selections_get(sel);
 			pushrange(L, &range);
 			return 1;
 		}
+
+		if (strcmp(key, "anchored") == 0) {
+			lua_pushboolean(L, view_selections_anchored(sel));
+			return 1;
+		}
+
 	}
 
 	return index_common(L);
 }
 
-static int window_cursor_newindex(lua_State *L) {
-	Selection *sel = obj_lightref_check(L, 1, VIS_LUA_TYPE_CURSOR);
+static int window_selection_newindex(lua_State *L) {
+	Selection *sel = obj_lightref_check(L, 1, VIS_LUA_TYPE_SELECTION);
 	if (!sel)
 		return 0;
 	if (lua_isstring(L, 2)) {
@@ -1900,14 +1923,19 @@ static int window_cursor_newindex(lua_State *L) {
 			return 0;
 		}
 
-		if (strcmp(key, "selection") == 0) {
+		if (strcmp(key, "range") == 0) {
 			Filerange range = getrange(L, 3);
 			if (text_range_valid(&range)) {
 				view_selections_set(sel, &range);
-				view_selections_anchor(sel);
+				view_selections_anchor(sel, true);
 			} else {
 				view_selection_clear(sel);
 			}
+			return 0;
+		}
+
+		if (strcmp(key, "anchored") == 0) {
+			view_selections_anchor(sel, lua_toboolean(L, 3));
 			return 0;
 		}
 	}
@@ -1915,13 +1943,13 @@ static int window_cursor_newindex(lua_State *L) {
 }
 
 /***
- * Move cursor.
+ * Move cursor of selection.
  * @function to
  * @tparam int line the 1-based line number
  * @tparam int col the 1-based column number
  */
-static int window_cursor_to(lua_State *L) {
-	Selection *sel = obj_lightref_check(L, 1, VIS_LUA_TYPE_CURSOR);
+static int window_selection_to(lua_State *L) {
+	Selection *sel = obj_lightref_check(L, 1, VIS_LUA_TYPE_SELECTION);
 	if (sel) {
 		size_t line = checkpos(L, 2);
 		size_t col = checkpos(L, 3);
@@ -1930,10 +1958,10 @@ static int window_cursor_to(lua_State *L) {
 	return 0;
 }
 
-static const struct luaL_Reg window_cursor_funcs[] = {
-	{ "__index", window_cursor_index },
-	{ "__newindex", window_cursor_newindex },
-	{ "to", window_cursor_to },
+static const struct luaL_Reg window_selection_funcs[] = {
+	{ "__index", window_selection_index },
+	{ "__newindex", window_selection_newindex },
+	{ "to", window_selection_to },
 	{ NULL, NULL },
 };
 
@@ -2686,10 +2714,10 @@ void vis_lua_init(Vis *vis) {
 	lua_pushlightuserdata(L, vis);
 	luaL_setfuncs(L, file_marks_funcs, 1);
 
-	obj_type_new(L, VIS_LUA_TYPE_CURSOR);
-	luaL_setfuncs(L, window_cursor_funcs, 0);
-	obj_type_new(L, VIS_LUA_TYPE_CURSORS);
-	luaL_setfuncs(L, window_cursors_funcs, 0);
+	obj_type_new(L, VIS_LUA_TYPE_SELECTION);
+	luaL_setfuncs(L, window_selection_funcs, 0);
+	obj_type_new(L, VIS_LUA_TYPE_SELECTIONS);
+	luaL_setfuncs(L, window_selections_funcs, 0);
 
 	obj_type_new(L, VIS_LUA_TYPE_UI);
 	luaL_setfuncs(L, ui_funcs, 0);
