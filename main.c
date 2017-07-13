@@ -1647,6 +1647,14 @@ static const char *selections_trim(Vis *vis, const char *keys, const Arg *arg) {
 	return keys;
 }
 
+static void selections_set(Vis *vis, View *view, Array *sel) {
+	enum VisMode mode = vis_mode_get(vis);
+	bool anchored = mode == VIS_MODE_VISUAL || mode == VIS_MODE_VISUAL_LINE;
+	view_selections_set_all(view, sel, anchored);
+	if (!anchored)
+		view_selections_clear_all(view);
+}
+
 static const char *selections_save(Vis *vis, const char *keys, const Arg *arg) {
 	View *view = vis_view(vis);
 	enum VisMark mark = vis_mark_used(vis);
@@ -1659,10 +1667,9 @@ static const char *selections_save(Vis *vis, const char *keys, const Arg *arg) {
 
 static const char *selections_restore(Vis *vis, const char *keys, const Arg *arg) {
 	View *view = vis_view(vis);
-	bool anchored = view_selections_anchored(view_selections_primary_get(view));
 	enum VisMark mark = vis_mark_used(vis);
 	Array sel = vis_mark_get(vis, mark);
-	view_selections_set_all(view, &sel, anchored);
+	selections_set(vis, view, &sel);
 	array_release(&sel);
 	vis_cancel(vis);
 	return keys;
@@ -1670,7 +1677,6 @@ static const char *selections_restore(Vis *vis, const char *keys, const Arg *arg
 
 static const char *selections_union(Vis *vis, const char *keys, const Arg *arg) {
 	View *view = vis_view(vis);
-	bool anchored = view_selections_anchored(view_selections_primary_get(view));
 	enum VisMark mark = vis_mark_used(vis);
 	Array a = vis_mark_get(vis, mark);
 	Array b = view_selections_get_all(view);
@@ -1710,7 +1716,7 @@ static const char *selections_union(Vis *vis, const char *keys, const Arg *arg) 
 	if (text_range_valid(&cur))
 		array_add(&sel, &cur);
 
-	view_selections_set_all(view, &sel, anchored);
+	selections_set(vis, view, &sel);
 	vis_cancel(vis);
 
 	array_release(&a);
@@ -1737,7 +1743,6 @@ static void intersect(Array *ret, Array *a, Array *b) {
 
 static const char *selections_intersect(Vis *vis, const char *keys, const Arg *arg) {
 	View *view = vis_view(vis);
-	bool anchored = view_selections_anchored(view_selections_primary_get(view));
 	enum VisMark mark = vis_mark_used(vis);
 	Array a = vis_mark_get(vis, mark);
 	Array b = view_selections_get_all(view);
@@ -1745,7 +1750,7 @@ static const char *selections_intersect(Vis *vis, const char *keys, const Arg *a
 	array_init_from(&sel, &a);
 
 	intersect(&sel, &a, &b);
-	view_selections_set_all(view, &sel, anchored);
+	selections_set(vis, view, &sel);
 	vis_cancel(vis);
 
 	array_release(&a);
@@ -1774,7 +1779,6 @@ static void complement(Array *ret, Array *a, Filerange *universe) {
 static const char *selections_complement(Vis *vis, const char *keys, const Arg *arg) {
 	Text *txt = vis_text(vis);
 	View *view = vis_view(vis);
-	bool anchored = view_selections_anchored(view_selections_primary_get(view));
 	Filerange universe = text_object_entire(txt, 0);
 	Array a = view_selections_get_all(view);
 	Array sel;
@@ -1782,7 +1786,7 @@ static const char *selections_complement(Vis *vis, const char *keys, const Arg *
 
 	complement(&sel, &a, &universe);
 
-	view_selections_set_all(view, &sel, anchored);
+	selections_set(vis, view, &sel);
 	array_release(&a);
 	array_release(&sel);
 	return keys;
@@ -1791,7 +1795,6 @@ static const char *selections_complement(Vis *vis, const char *keys, const Arg *
 static const char *selections_minus(Vis *vis, const char *keys, const Arg *arg) {
 	Text *txt = vis_text(vis);
 	View *view = vis_view(vis);
-	bool anchored = view_selections_anchored(view_selections_primary_get(view));
 	enum VisMark mark = vis_mark_used(vis);
 	Array a = view_selections_get_all(view);
 	Array b = vis_mark_get(vis, mark);
@@ -1804,7 +1807,7 @@ static const char *selections_minus(Vis *vis, const char *keys, const Arg *arg) 
 	complement(&b_complement, &b, &universe);
 	intersect(&sel, &a, &b_complement);
 
-	view_selections_set_all(view, &sel, anchored);
+	selections_set(vis, view, &sel);
 	vis_cancel(vis);
 
 	array_release(&a);
@@ -1867,7 +1870,6 @@ static Filerange combine_rightmost(const Filerange *r1, const Filerange *r2) {
 
 static const char *selections_combine(Vis *vis, const char *keys, const Arg *arg) {
 	View *view = vis_view(vis);
-	bool anchored = view_selections_anchored(view_selections_primary_get(view));
 	enum VisMark mark = vis_mark_used(vis);
 	Array a = view_selections_get_all(view);
 	Array b = vis_mark_get(vis, mark);
@@ -1882,7 +1884,7 @@ static const char *selections_combine(Vis *vis, const char *keys, const Arg *arg
 	}
 
 	vis_mark_normalize(&sel);
-	view_selections_set_all(view, &sel, anchored);
+	selections_set(vis, view, &sel);
 	vis_cancel(vis);
 
 	array_release(&a);
