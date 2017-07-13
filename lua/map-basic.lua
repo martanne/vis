@@ -26,7 +26,7 @@ local file = win.file
 describe("map", function()
 
 	before_each(function()
-		win.cursor.pos = 0
+		win.selection.pos = 0
 	end)
 
 	after_each(function()
