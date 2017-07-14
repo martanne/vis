@@ -49,7 +49,7 @@ void mark_release(Array *arr) {
 
 static Array *mark_from(Vis *vis, enum VisMark id) {
 	if (id == VIS_MARK_SELECTION && vis->win)
-		return array_peek(&vis->win->jumplist.prev);
+		return &vis->win->saved_selections;
 	File *file = vis->win->file;
 	if (id < LENGTH(file->marks))
 		return &file->marks[id];

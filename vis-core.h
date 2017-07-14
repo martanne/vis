@@ -159,6 +159,7 @@ struct Win {
 	File *file;             /* file being displayed in this window */
 	View *view;             /* currently displayed part of underlying text */
 	MarkList jumplist;      /* LRU jump management */
+	Array saved_selections; /* register used to store selections */
 	Mode modes[VIS_MODE_INVALID]; /* overlay mods used for per window key bindings */
 	Win *parent;            /* window which was active when showing the command prompt */
 	Mode *parent_mode;      /* mode which was active when showing the command prompt */
@@ -264,6 +265,7 @@ Mode *mode_get(Vis*, enum VisMode);
 void mode_set(Vis *vis, Mode *new_mode);
 Macro *macro_get(Vis *vis, enum VisRegister);
 
+void window_selection_save(Win *win);
 Win *window_new_file(Vis*, File*, enum UiOption);
 
 const char *file_name_get(File*);

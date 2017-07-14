@@ -243,6 +243,16 @@ void vis_window_status(Win *win, const char *status) {
 	win->ui->status(win->ui, status);
 }
 
+void window_selection_save(Win *win) {
+	Vis *vis = win->vis;
+	View *view = win->view;
+	Array sel = view_selections_get_all(view);
+	vis_mark_set(vis, VIS_MARK_SELECTION, &sel);
+	array_release(&sel);
+	vis_jumplist_save(vis);
+}
+
+
 static void window_free(Win *win) {
 	if (!win)
 		return;
@@ -257,6 +267,7 @@ static void window_free(Win *win) {
 	for (size_t i = 0; i < LENGTH(win->modes); i++)
 		map_free(win->modes[i].bindings);
 	marklist_release(&win->jumplist);
+	mark_release(&win->saved_selections);
 	free(win);
 }
 
@@ -454,6 +465,7 @@ Win *window_new_file(Vis *vis, File *file, enum UiOption options) {
 		return NULL;
 	}
 	marklist_init(&win->jumplist, 32);
+	mark_init(&win->saved_selections);
 	file->refcount++;
 	view_options_set(win->view, view_options_get(win->view));
 	view_tabwidth_set(win->view, vis->tabwidth);
@@ -822,7 +834,7 @@ void vis_do(Vis *vis) {
 		reg_slot = 0;
 
 	if (vis->mode->visual && a->op)
-		vis_jumplist_save(vis);
+		window_selection_save(win);
 
 	for (Selection *sel = view_selections(view), *next; sel; sel = next) {
 		if (vis->interrupted)
