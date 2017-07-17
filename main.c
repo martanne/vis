@@ -1326,9 +1326,11 @@ static const char *selections_new(Vis *vis, const char *keys, const Arg *arg) {
 			for (Selection *s = view_selections(view); s; s = view_selections_next(s))
 				sel = s;
 			break;
-		default:
-			return keys;
 		}
+
+		if (!sel)
+			return keys;
+
 		size_t oldpos = view_cursors_pos(sel);
 		if (arg->i > 0)
 			view_line_down(sel);
