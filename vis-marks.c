@@ -48,7 +48,9 @@ void mark_release(Array *arr) {
 }
 
 static Array *mark_from(Vis *vis, enum VisMark id) {
-	if (id == VIS_MARK_SELECTION && vis->win)
+	if (!vis->win)
+		return NULL;
+	if (id == VIS_MARK_SELECTION)
 		return &vis->win->saved_selections;
 	File *file = vis->win->file;
 	if (id < LENGTH(file->marks))
@@ -83,8 +85,8 @@ static Array mark_get(Win *win, Array *mark) {
 	return sel;
 }
 
-Array vis_mark_get(Vis *vis, enum VisMark id) {
-	return mark_get(vis->win, mark_from(vis, id));
+Array vis_mark_get(Win *win, enum VisMark id) {
+	return mark_get(win, mark_from(win->vis, id));
 }
 
 static void mark_set(Win *win, Array *mark, Array *sel) {
@@ -100,8 +102,8 @@ static void mark_set(Win *win, Array *mark, Array *sel) {
 	}
 }
 
-void vis_mark_set(Vis *vis, enum VisMark id, Array *sel) {
-	mark_set(vis->win, mark_from(vis, id), sel);
+void vis_mark_set(Win *win, enum VisMark id, Array *sel) {
+	mark_set(win, mark_from(win->vis, id), sel);
 }
 
 void marklist_init(MarkList *list, size_t max) {

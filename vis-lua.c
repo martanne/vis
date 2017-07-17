@@ -2300,7 +2300,7 @@ static int file_marks_index(lua_State *L) {
 	if (mark == VIS_MARK_INVALID)
 		return 1;
 
-	Array arr = vis_mark_get(vis, mark);
+	Array arr = vis_mark_get(vis->win, mark);
 	for (size_t i = 0, len = array_length(&arr); i < len; i++) {
 		Filerange *range = array_get(&arr, i);
 		lua_pushunsigned(L, i+1);
@@ -2336,7 +2336,7 @@ static int file_marks_newindex(lua_State *L) {
 		}
 	}
 
-	vis_mark_set(vis, mark, &ranges);
+	vis_mark_set(vis->win, mark, &ranges);
 	array_release(&ranges);
 	return 0;
 }

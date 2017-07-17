@@ -695,7 +695,7 @@ enum VisMark vis_mark_used(Vis*);
  * @param id The register to use.
  * @param sel The array containing the file ranges.
  */
-void vis_mark_set(Vis*, enum VisMark id, Array *sel);
+void vis_mark_set(Win*, enum VisMark id, Array *sel);
 /**
  * Get an array of file ranges stored in the mark.
  *
@@ -704,7 +704,7 @@ void vis_mark_set(Vis*, enum VisMark id, Array *sel);
  *              ``array_release``.
  * @endrst
  */
-Array vis_mark_get(Vis*, enum VisMark id);
+Array vis_mark_get(Win*, enum VisMark id);
 /**
  * Normalize an Array of Fileranges.
  *

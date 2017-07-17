@@ -1658,19 +1658,21 @@ static void selections_set(Vis *vis, View *view, Array *sel) {
 }
 
 static const char *selections_save(Vis *vis, const char *keys, const Arg *arg) {
+	Win *win = vis_window(vis);
 	View *view = vis_view(vis);
 	enum VisMark mark = vis_mark_used(vis);
 	Array sel = view_selections_get_all(view);
-	vis_mark_set(vis, mark, &sel);
+	vis_mark_set(win, mark, &sel);
 	array_release(&sel);
 	vis_cancel(vis);
 	return keys;
 }
 
 static const char *selections_restore(Vis *vis, const char *keys, const Arg *arg) {
+	Win *win = vis_window(vis);
 	View *view = vis_view(vis);
 	enum VisMark mark = vis_mark_used(vis);
-	Array sel = vis_mark_get(vis, mark);
+	Array sel = vis_mark_get(win, mark);
 	selections_set(vis, view, &sel);
 	array_release(&sel);
 	vis_cancel(vis);
@@ -1678,9 +1680,10 @@ static const char *selections_restore(Vis *vis, const char *keys, const Arg *arg
 }
 
 static const char *selections_union(Vis *vis, const char *keys, const Arg *arg) {
+	Win *win = vis_window(vis);
 	View *view = vis_view(vis);
 	enum VisMark mark = vis_mark_used(vis);
-	Array a = vis_mark_get(vis, mark);
+	Array a = vis_mark_get(win, mark);
 	Array b = view_selections_get_all(view);
 	Array sel;
 	array_init_from(&sel, &a);
@@ -1744,9 +1747,10 @@ static void intersect(Array *ret, Array *a, Array *b) {
 }
 
 static const char *selections_intersect(Vis *vis, const char *keys, const Arg *arg) {
+	Win *win = vis_window(vis);
 	View *view = vis_view(vis);
 	enum VisMark mark = vis_mark_used(vis);
-	Array a = vis_mark_get(vis, mark);
+	Array a = vis_mark_get(win, mark);
 	Array b = view_selections_get_all(view);
 	Array sel;
 	array_init_from(&sel, &a);
@@ -1796,10 +1800,11 @@ static const char *selections_complement(Vis *vis, const char *keys, const Arg *
 
 static const char *selections_minus(Vis *vis, const char *keys, const Arg *arg) {
 	Text *txt = vis_text(vis);
+	Win *win = vis_window(vis);
 	View *view = vis_view(vis);
 	enum VisMark mark = vis_mark_used(vis);
 	Array a = view_selections_get_all(view);
-	Array b = vis_mark_get(vis, mark);
+	Array b = vis_mark_get(win, mark);
 	Array sel;
 	array_init_from(&sel, &a);
 	Array b_complement;
@@ -1871,10 +1876,11 @@ static Filerange combine_rightmost(const Filerange *r1, const Filerange *r2) {
 }
 
 static const char *selections_combine(Vis *vis, const char *keys, const Arg *arg) {
+	Win *win = vis_window(vis);
 	View *view = vis_view(vis);
 	enum VisMark mark = vis_mark_used(vis);
 	Array a = view_selections_get_all(view);
-	Array b = vis_mark_get(vis, mark);
+	Array b = vis_mark_get(win, mark);
 	Array sel;
 	array_init_from(&sel, &a);
 
