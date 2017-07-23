@@ -667,7 +667,7 @@ static int files_iter(lua_State *L) {
  * @function mark_names
  * @return the new iterator
  * @usage
- * local marks = vis.win.file.marks
+ * local marks = vis.win.marks
  * for name in vis:mark_names() do
  *	local mark = marks[name]
  *	for i = 1, #mark do
@@ -1561,6 +1561,13 @@ static const struct luaL_Reg registers_funcs[] = {
  * The selections of this window.
  * @tfield Array(Selection) selections
  */
+/***
+ * Window marks.
+ * Most of these marks are stored in the associated File object, meaning they
+ * are the same in all windows displaying the same file.
+ * @field marks array to access the marks of this window by single letter name
+ * @see Vis:marks_names
+ */
 static int window_index(lua_State *L) {
 	Win *win = obj_ref_check(L, 1, VIS_LUA_TYPE_WINDOW);
 
@@ -1596,6 +1603,11 @@ static int window_index(lua_State *L) {
 
 		if (strcmp(key, "selections") == 0) {
 			obj_ref_new(L, win->view, VIS_LUA_TYPE_SELECTIONS);
+			return 1;
+		}
+
+		if (strcmp(key, "marks") == 0) {
+			obj_ref_new(L, &win->saved_selections, VIS_LUA_TYPE_MARKS);
 			return 1;
 		}
 	}
@@ -1998,10 +2010,6 @@ static const struct luaL_Reg window_selection_funcs[] = {
  * File state.
  * @tfield bool modified whether the file contains unsaved changes
  */
-/***
- * File marks.
- * @field marks array to access the marks of this file by single letter name
- */
 static int file_index(lua_State *L) {
 	File *file = obj_ref_check(L, 1, VIS_LUA_TYPE_FILE);
 
@@ -2029,11 +2037,6 @@ static int file_index(lua_State *L) {
 
 		if (strcmp(key, "modified") == 0) {
 			lua_pushboolean(L, text_modified(file->text));
-			return 1;
-		}
-
-		if (strcmp(key, "marks") == 0) {
-			obj_ref_new(L, file->marks, VIS_LUA_TYPE_MARKS);
 			return 1;
 		}
 	}
@@ -2287,11 +2290,11 @@ static const struct luaL_Reg file_lines_funcs[] = {
 	{ NULL, NULL },
 };
 
-static int file_marks_index(lua_State *L) {
+static int window_marks_index(lua_State *L) {
 	lua_newtable(L);
 	Vis *vis = lua_touserdata(L, lua_upvalueindex(1));
-	File *file = obj_ref_check_containerof(L, 1, VIS_LUA_TYPE_MARKS, offsetof(File, marks));
-	if (!file)
+	Win *win = obj_ref_check_containerof(L, 1, VIS_LUA_TYPE_MARKS, offsetof(Win, saved_selections));
+	if (!win)
 		return 1;
 	const char *symbol = luaL_checkstring(L, 2);
 	if (strlen(symbol) != 1)
@@ -2300,7 +2303,7 @@ static int file_marks_index(lua_State *L) {
 	if (mark == VIS_MARK_INVALID)
 		return 1;
 
-	Array arr = vis_mark_get(vis->win, mark);
+	Array arr = vis_mark_get(win, mark);
 	for (size_t i = 0, len = array_length(&arr); i < len; i++) {
 		Filerange *range = array_get(&arr, i);
 		lua_pushunsigned(L, i+1);
@@ -2311,16 +2314,16 @@ static int file_marks_index(lua_State *L) {
 	return 1;
 }
 
-static int file_marks_newindex(lua_State *L) {
+static int window_marks_newindex(lua_State *L) {
 	Vis *vis = lua_touserdata(L, lua_upvalueindex(1));
-	File *file = obj_ref_check_containerof(L, 1, VIS_LUA_TYPE_MARKS, offsetof(File, marks));
-	if (!file)
+	Win *win = obj_ref_check_containerof(L, 1, VIS_LUA_TYPE_MARKS, offsetof(Win, saved_selections));
+	if (!win)
 		return 0;
 	const char *symbol = luaL_checkstring(L, 2);
 	if (strlen(symbol) != 1)
 		return 0;
 	enum VisMark mark = vis_mark_from(vis, symbol[0]);
-	if (mark >= LENGTH(file->marks))
+	if (mark == VIS_MARK_INVALID)
 		return 0;
 
 	Array ranges;
@@ -2336,21 +2339,20 @@ static int file_marks_newindex(lua_State *L) {
 		}
 	}
 
-	vis_mark_set(vis->win, mark, &ranges);
+	vis_mark_set(win, mark, &ranges);
 	array_release(&ranges);
 	return 0;
 }
 
-static int file_marks_len(lua_State *L) {
-	File *file = obj_ref_check_containerof(L, 1, VIS_LUA_TYPE_MARKS, offsetof(File, marks));
-	lua_pushunsigned(L, file ? LENGTH(file->marks) : 0);
+static int window_marks_len(lua_State *L) {
+	lua_pushunsigned(L, VIS_MARK_INVALID);
 	return 1;
 }
 
-static const struct luaL_Reg file_marks_funcs[] = {
-	{ "__index", file_marks_index },
-	{ "__newindex", file_marks_newindex },
-	{ "__len", file_marks_len },
+static const struct luaL_Reg window_marks_funcs[] = {
+	{ "__index", window_marks_index },
+	{ "__newindex", window_marks_newindex },
+	{ "__len", window_marks_len },
 	{ NULL, NULL },
 };
 
@@ -2712,7 +2714,7 @@ void vis_lua_init(Vis *vis) {
 	obj_type_new(L, VIS_LUA_TYPE_MARK);
 	obj_type_new(L, VIS_LUA_TYPE_MARKS);
 	lua_pushlightuserdata(L, vis);
-	luaL_setfuncs(L, file_marks_funcs, 1);
+	luaL_setfuncs(L, window_marks_funcs, 1);
 
 	obj_type_new(L, VIS_LUA_TYPE_SELECTION);
 	luaL_setfuncs(L, window_selection_funcs, 0);
