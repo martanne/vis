@@ -310,7 +310,7 @@ int main(int argc, char *argv[]) {
 }
 EOF
 
-	for libcurses in ncursesw ncurses libcurses; do
+	for libcurses in ncursesw ncurses curses; do
 		printf " checking for %s... " "$libcurses"
 
 		if test "$have_pkgconfig" = "yes" ; then
