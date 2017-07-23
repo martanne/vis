@@ -31,7 +31,7 @@
 <ul>
 <li><a href="#Class_Vis">Class Vis </a></li>
 <li><a href="#Class_Window">Class Window </a></li>
-<li><a href="#Class_Cursor">Class Cursor </a></li>
+<li><a href="#Class_Selection">Class Selection </a></li>
 <li><a href="#Class_File">Class File </a></li>
 <li><a href="#Class_Ui">Class Ui </a></li>
 <li><a href="#Class_Range">Class Range </a></li>
@@ -59,7 +59,7 @@
 <p> This document might be out of date, run <code>make luadoc</code> to regenerate it.</p>
     <h3>Info:</h3>
     <ul>
-        <li><strong>Release</strong>: v0.3</li>
+        <li><strong>Release</strong>: v0.4</li>
         <li><strong>License</strong>: ISC</li>
         <li><strong>Author</strong>: Marc André Tanner</li>
     </ul>
@@ -144,16 +144,20 @@
 	<td class="summary">Insert keys at all cursor positions of active window.</td>
 	</tr>
 	<tr>
-	<td class="name" nowrap><a href="#Vis:map">Vis:map(mode, key, func[, help])</a></td>
-	<td class="summary">Map a key to a Lua function.</td>
+	<td class="name" nowrap><a href="#Vis:map">Vis:map(mode, key, alias)</a></td>
+	<td class="summary">Setup a key alias.</td>
 	</tr>
 	<tr>
 	<td class="name" nowrap><a href="#Vis:map">Vis:map(mode, key, action)</a></td>
 	<td class="summary">Map a key to a key action.</td>
 	</tr>
 	<tr>
-	<td class="name" nowrap><a href="#Vis:map">Vis:map(mode, key, alias)</a></td>
-	<td class="summary">Setup a key alias.</td>
+	<td class="name" nowrap><a href="#Vis:map">Vis:map(mode, key, func[, help])</a></td>
+	<td class="summary">Map a key to a Lua function.</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#Vis:mappings">Vis:mappings(mode)</a></td>
+	<td class="summary">Get all currently active mappings of a mode.</td>
 	</tr>
 	<tr>
 	<td class="name" nowrap><a href="#Vis:mark_names">Vis:mark_names()</a></td>
@@ -200,6 +204,10 @@
 	<td class="summary">Map a new text object.</td>
 	</tr>
 	<tr>
+	<td class="name" nowrap><a href="#Vis:unmap">Vis:unmap(mode, key)</a></td>
+	<td class="summary">Unmap a global key binding.</td>
+	</tr>
+	<tr>
 	<td class="name" nowrap><a href="#Vis:windows">Vis:windows()</a></td>
 	<td class="summary">Create an iterator over all windows.</td>
 	</tr>
@@ -207,20 +215,24 @@
 <h2><a href="#Class_Window">Class Window </a></h2>
 <table class="function_list">
 	<tr>
-	<td class="name" nowrap><a href="#Window.cursor">Window.cursor</a></td>
-	<td class="summary">The primary cursor of this window.</td>
-	</tr>
-	<tr>
-	<td class="name" nowrap><a href="#Window.cursors">Window.cursors</a></td>
-	<td class="summary">The cursors of this window.</td>
-	</tr>
-	<tr>
 	<td class="name" nowrap><a href="#Window.file">Window.file</a></td>
 	<td class="summary">The file being displayed in this window.</td>
 	</tr>
 	<tr>
 	<td class="name" nowrap><a href="#Window.height">Window.height</a></td>
 	<td class="summary">The window height.</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#Window.marks">Window.marks</a></td>
+	<td class="summary">Window marks.</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#Window.selection">Window.selection</a></td>
+	<td class="summary">The primary selection of this window.</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#Window.selections">Window.selections</a></td>
+	<td class="summary">The selections of this window.</td>
 	</tr>
 	<tr>
 	<td class="name" nowrap><a href="#Window.syntax">Window.syntax</a></td>
@@ -235,16 +247,16 @@
 	<td class="summary">The window width.</td>
 	</tr>
 	<tr>
-	<td class="name" nowrap><a href="#Window:cursors_iterator">Window:cursors_iterator()</a></td>
-	<td class="summary">Create an iterator over all cursors of this window.</td>
-	</tr>
-	<tr>
 	<td class="name" nowrap><a href="#Window:draw">Window:draw()</a></td>
 	<td class="summary">Redraw window content.</td>
 	</tr>
 	<tr>
 	<td class="name" nowrap><a href="#Window:map">Window:map(...)</a></td>
 	<td class="summary">Set up a window local key mapping.</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#Window:selections_iterator">Window:selections_iterator()</a></td>
+	<td class="summary">Create an iterator over all selections of this window.</td>
 	</tr>
 	<tr>
 	<td class="name" nowrap><a href="#Window:set_syntax">Window:set_syntax(syntax)</a></td>
@@ -262,32 +274,40 @@
 	<td class="name" nowrap><a href="#Window:style_define">Window:style_define(id, style)</a></td>
 	<td class="summary">Define a display style.</td>
 	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#Window:unmap">Window:unmap(...)</a></td>
+	<td class="summary">Remove a window local key mapping.</td>
+	</tr>
 </table>
-<h2><a href="#Class_Cursor">Class Cursor </a></h2>
+<h2><a href="#Class_Selection">Class Selection </a></h2>
 <table class="function_list">
 	<tr>
-	<td class="name" nowrap><a href="#Cursor.col">Cursor.col</a></td>
-	<td class="summary">The 1-based column position the cursor resides on.</td>
+	<td class="name" nowrap><a href="#Selection.anchored">Selection.anchored</a></td>
+	<td class="summary">Whether this selection is anchored.</td>
 	</tr>
 	<tr>
-	<td class="name" nowrap><a href="#Cursor.line">Cursor.line</a></td>
-	<td class="summary">The 1-based line the cursor resides on.</td>
+	<td class="name" nowrap><a href="#Selection.col">Selection.col</a></td>
+	<td class="summary">The 1-based column position the cursor of this selection resides on.</td>
 	</tr>
 	<tr>
-	<td class="name" nowrap><a href="#Cursor.number">Cursor.number</a></td>
-	<td class="summary">The 1-based cursor index.</td>
+	<td class="name" nowrap><a href="#Selection.line">Selection.line</a></td>
+	<td class="summary">The 1-based line the cursor of this selection resides on.</td>
 	</tr>
 	<tr>
-	<td class="name" nowrap><a href="#Cursor.pos">Cursor.pos</a></td>
+	<td class="name" nowrap><a href="#Selection.number">Selection.number</a></td>
+	<td class="summary">The 1-based selection index.</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#Selection.pos">Selection.pos</a></td>
 	<td class="summary">The zero based byte position in the file.</td>
 	</tr>
 	<tr>
-	<td class="name" nowrap><a href="#Cursor.selection">Cursor.selection</a></td>
-	<td class="summary">The selection associated with this cursor.</td>
+	<td class="name" nowrap><a href="#Selection.range">Selection.range</a></td>
+	<td class="summary">The range covered by this selection.</td>
 	</tr>
 	<tr>
-	<td class="name" nowrap><a href="#Cursor:to">Cursor:to(line, col)</a></td>
-	<td class="summary">Move cursor.</td>
+	<td class="name" nowrap><a href="#Selection:to">Selection:to(line, col)</a></td>
+	<td class="summary">Move cursor of selection.</td>
 	</tr>
 </table>
 <h2><a href="#Class_File">Class File </a></h2>
@@ -297,20 +317,12 @@
 	<td class="summary">File content by logical lines.</td>
 	</tr>
 	<tr>
-	<td class="name" nowrap><a href="#File.marks">File.marks</a></td>
-	<td class="summary">File marks.</td>
-	</tr>
-	<tr>
 	<td class="name" nowrap><a href="#File.modified">File.modified</a></td>
 	<td class="summary">File state.</td>
 	</tr>
 	<tr>
 	<td class="name" nowrap><a href="#File.name">File.name</a></td>
 	<td class="summary">File name.</td>
-	</tr>
-	<tr>
-	<td class="name" nowrap><a href="#File.newlines">File.newlines</a></td>
-	<td class="summary">Type of line endings.</td>
 	</tr>
 	<tr>
 	<td class="name" nowrap><a href="#File.path">File.path</a></td>
@@ -353,7 +365,7 @@
 	<td class="summary">Set mark.</td>
 	</tr>
 	<tr>
-	<td class="name" nowrap><a href="#File:match_at">File:match_at(pattern, the[, horizon])</a></td>
+	<td class="name" nowrap><a href="#File:match_at">File:match_at(pattern, pos[, horizon])</a></td>
 	<td class="summary">Check whether LPeg pattern matches at a given file position.</td>
 	</tr>
 	<tr>
@@ -813,13 +825,13 @@
 
     <h3>Usage:</h3>
     <ul>
-        <pre class="example">vis:command_register(<span class="string">"foo"</span>, <span class="keyword">function</span>(argv, force, win, cursor, range)
+        <pre class="example">vis:command_register(<span class="string">"foo"</span>, <span class="keyword">function</span>(argv, force, win, selection, range)
 	 <span class="keyword">for</span> i,arg <span class="keyword">in</span> <span class="global">ipairs</span>(argv) <span class="keyword">do</span>
 		 <span class="global">print</span>(i..<span class="string">": "</span>..arg)
 	 <span class="keyword">end</span>
 	 <span class="global">print</span>(<span class="string">"was command forced with ! "</span>..(force <span class="keyword">and</span> <span class="string">"yes"</span> <span class="keyword">or</span> <span class="string">"no"</span>))
 	 <span class="global">print</span>(win.file.name)
-	 <span class="global">print</span>(cursor.pos)
+	 <span class="global">print</span>(selection.pos)
 	 <span class="global">print</span>(range ~= <span class="keyword">nil</span> <span class="keyword">and</span> (<span class="string">'['</span>..range.start..<span class="string">', '</span>..range.finish..<span class="string">']'</span>) <span class="keyword">or</span> <span class="string">"invalid range"</span>)
 	 <span class="keyword">return</span> <span class="keyword">true</span>;
 <span class="keyword">end</span>)</pre>
@@ -957,6 +969,99 @@
 </dd>
     <dt>
     <a name = "Vis:map"></a>
+    <strong>Vis:map(mode, key, alias)</strong>
+    </dt>
+    <dd>
+    Setup a key alias. </p>
+
+<p> This is equivalent to <code>vis:command(&apos;map! mode key alias&apos;)</code>.</p>
+
+<p> Mappings are always recursive!
+
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">mode</span>
+            <span class="types"><span class="type">int</span></span>
+         the mode to which the mapping should be added
+        </li>
+        <li><span class="parameter">key</span>
+            <span class="types"><a class="type" href="https://www.lua.org/manual/5.1/manual.html#5.4">string</a></span>
+         the key to map
+        </li>
+        <li><span class="parameter">alias</span>
+            <span class="types"><a class="type" href="https://www.lua.org/manual/5.1/manual.html#5.4">string</a></span>
+         the key to map to
+        </li>
+    </ul>
+
+    <h3>Returns:</h3>
+    <ol>
+
+           <span class="types"><span class="type">bool</span></span>
+        whether the mapping was successfully established
+    </ol>
+
+
+    <h3>See also:</h3>
+    <ul>
+         <a href="index.html#Window:map">Window:map</a>
+    </ul>
+
+    <h3>Usage:</h3>
+    <ul>
+        <pre class="example">vis:map(vis.modes.NORMAL, <span class="string">"j"</span>, <span class="string">"k"</span>)</pre>
+    </ul>
+
+</dd>
+    <dt>
+    <a name = "Vis:map"></a>
+    <strong>Vis:map(mode, key, action)</strong>
+    </dt>
+    <dd>
+    Map a key to a key action.
+
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">mode</span>
+            <span class="types"><span class="type">int</span></span>
+         the mode to which the mapping should be added
+        </li>
+        <li><span class="parameter">key</span>
+            <span class="types"><a class="type" href="https://www.lua.org/manual/5.1/manual.html#5.4">string</a></span>
+         the key to map
+        </li>
+        <li><span class="parameter">action</span>
+         the action to map
+        </li>
+    </ul>
+
+    <h3>Returns:</h3>
+    <ol>
+
+           <span class="types"><span class="type">bool</span></span>
+        whether the mapping was successfully established
+    </ol>
+
+
+    <h3>See also:</h3>
+    <ul>
+         <a href="index.html#Window:map">Window:map</a>
+    </ul>
+
+    <h3>Usage:</h3>
+    <ul>
+        <pre class="example"><span class="keyword">local</span> action = vis:action_register(<span class="string">"info"</span>, <span class="keyword">function</span>()
+  vis:info(<span class="string">"Mapping works!"</span>)
+<span class="keyword">end</span>, <span class="string">"Info message help text"</span>)
+vis:map(vis.modes.NORMAL, <span class="string">"gh"</span>, action)
+vis:map(vis.modes.NORMAL, <span class="string">"gl"</span>, action)</pre>
+    </ul>
+
+</dd>
+    <dt>
+    <a name = "Vis:map"></a>
     <strong>Vis:map(mode, key, func[, help])</strong>
     </dt>
     <dd>
@@ -1015,95 +1120,40 @@
 
 </dd>
     <dt>
-    <a name = "Vis:map"></a>
-    <strong>Vis:map(mode, key, action)</strong>
+    <a name = "Vis:mappings"></a>
+    <strong>Vis:mappings(mode)</strong>
     </dt>
     <dd>
-    Map a key to a key action.
+    Get all currently active mappings of a mode.
 
 
     <h3>Parameters:</h3>
     <ul>
         <li><span class="parameter">mode</span>
             <span class="types"><span class="type">int</span></span>
-         the mode to which the mapping should be added
-        </li>
-        <li><span class="parameter">key</span>
-            <span class="types"><a class="type" href="https://www.lua.org/manual/5.1/manual.html#5.4">string</a></span>
-         the key to map
-        </li>
-        <li><span class="parameter">action</span>
-         the action to map
+         the mode to query
         </li>
     </ul>
 
     <h3>Returns:</h3>
     <ol>
 
-           <span class="types"><span class="type">bool</span></span>
-        whether the mapping was successfully established
+           <span class="types"><a class="type" href="https://www.lua.org/manual/5.1/manual.html#5.5">table</a></span>
+        the active mappings and their associated help texts
     </ol>
 
 
     <h3>See also:</h3>
     <ul>
-         <a href="index.html#Window:map">Window:map</a>
+         <a href="index.html#Vis:map">Vis:map</a>
     </ul>
 
     <h3>Usage:</h3>
     <ul>
-        <pre class="example"><span class="keyword">local</span> action = vis:action_register(<span class="string">"info"</span>, <span class="keyword">function</span>()
-  vis:info(<span class="string">"Mapping works!"</span>)
-<span class="keyword">end</span>, <span class="string">"Info message help text"</span>)
-vis:map(vis.modes.NORMAL, <span class="string">"gh"</span>, action)
-vis:map(vis.modes.NORMAL, <span class="string">"gl"</span>, action)</pre>
-    </ul>
-
-</dd>
-    <dt>
-    <a name = "Vis:map"></a>
-    <strong>Vis:map(mode, key, alias)</strong>
-    </dt>
-    <dd>
-    Setup a key alias. </p>
-
-<p> This is equivalent to <code>vis:command(&apos;map! mode key alias&apos;)</code>.</p>
-
-<p> Mappings are always recursive!
-
-
-    <h3>Parameters:</h3>
-    <ul>
-        <li><span class="parameter">mode</span>
-            <span class="types"><span class="type">int</span></span>
-         the mode to which the mapping should be added
-        </li>
-        <li><span class="parameter">key</span>
-            <span class="types"><a class="type" href="https://www.lua.org/manual/5.1/manual.html#5.4">string</a></span>
-         the key to map
-        </li>
-        <li><span class="parameter">alias</span>
-            <span class="types"><a class="type" href="https://www.lua.org/manual/5.1/manual.html#5.4">string</a></span>
-         the key to map to
-        </li>
-    </ul>
-
-    <h3>Returns:</h3>
-    <ol>
-
-           <span class="types"><span class="type">bool</span></span>
-        whether the mapping was successfully established
-    </ol>
-
-
-    <h3>See also:</h3>
-    <ul>
-         <a href="index.html#Window:map">Window:map</a>
-    </ul>
-
-    <h3>Usage:</h3>
-    <ul>
-        <pre class="example">vis:map(vis.modes.NORMAL, <span class="string">"j"</span>, <span class="string">"k"</span>)</pre>
+        <pre class="example"><span class="keyword">local</span> bindings = vis:mappings(vis.modes.NORMAL)
+<span class="keyword">for</span> key, help <span class="keyword">in</span> <span class="global">pairs</span>(bindings) <span class="keyword">do</span>
+	<span class="comment">-- do something
+</span><span class="keyword">end</span></pre>
     </ul>
 
 </dd>
@@ -1126,12 +1176,12 @@ vis:map(vis.modes.NORMAL, <span class="string">"gl"</span>, action)</pre>
 
     <h3>Usage:</h3>
     <ul>
-        <pre class="example"><span class="keyword">local</span> marks = vis.win.file.marks;
-<span class="keyword">for</span> mark <span class="keyword">in</span> vis:mark_names() <span class="keyword">do</span>
-	<span class="keyword">local</span> pos = marks[mark]
-	<span class="keyword">if</span> pos <span class="keyword">then</span>
-		<span class="comment">-- do something with mark pos
-</span>	<span class="keyword">end</span>
+        <pre class="example"><span class="keyword">local</span> marks = vis.win.marks
+<span class="keyword">for</span> name <span class="keyword">in</span> vis:mark_names() <span class="keyword">do</span>
+<span class="keyword">local</span> mark = marks[name]
+<span class="keyword">for</span> i = <span class="number">1</span>, #mark <span class="keyword">do</span>
+		<span class="comment">-- do somthing with: name, mark[i].start, mark[i].finish
+</span><span class="keyword">end</span>
 <span class="keyword">end</span></pre>
     </ul>
 
@@ -1302,7 +1352,7 @@ vis:map(vis.modes.NORMAL, <span class="string">"gl"</span>, action)</pre>
         </li>
         <li><span class="parameter">type</span>
             <span class="types"><a class="type" href="https://www.lua.org/manual/5.1/manual.html#5.4">string</a></span>
-         the option type (<code>bool</code>, <a href="https://www.lua.org/manual/5.1/manual.html#5.4">string</a> or <a href="index.html#Cursor.number">number</a>)
+         the option type (<code>bool</code>, <a href="https://www.lua.org/manual/5.1/manual.html#5.4">string</a> or <a href="index.html#Selection.number">number</a>)
         </li>
         <li><span class="parameter">handler</span>
             <span class="types"><span class="type">function</span></span>
@@ -1424,10 +1474,10 @@ vis:map(vis.modes.NORMAL, <span class="string">"gl"</span>, action)</pre>
 
     <h3>Usage:</h3>
     <ul>
-        <pre class="example"><span class="keyword">for</span> reg <span class="keyword">in</span> vis:register_names() <span class="keyword">do</span>
-	<span class="keyword">local</span> value = vis.registers[reg]
-	<span class="keyword">if</span> value <span class="keyword">then</span>
-		<span class="comment">-- do something with register value
+        <pre class="example"><span class="keyword">for</span> name <span class="keyword">in</span> vis:register_names() <span class="keyword">do</span>
+	<span class="keyword">local</span> reg = vis.registers[name]
+	<span class="keyword">for</span> i = <span class="number">1</span>, #reg <span class="keyword">do</span>
+		<span class="comment">-- do something with register value reg[i]
 </span>	<span class="keyword">end</span>
 <span class="keyword">end</span></pre>
     </ul>
@@ -1510,6 +1560,41 @@ vis:map(vis.modes.NORMAL, <span class="string">"gl"</span>, action)</pre>
 
 </dd>
     <dt>
+    <a name = "Vis:unmap"></a>
+    <strong>Vis:unmap(mode, key)</strong>
+    </dt>
+    <dd>
+    Unmap a global key binding.
+
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">mode</span>
+            <span class="types"><span class="type">int</span></span>
+         the mode from which the mapping should be removed
+        </li>
+        <li><span class="parameter">key</span>
+            <span class="types"><a class="type" href="https://www.lua.org/manual/5.1/manual.html#5.4">string</a></span>
+         the mapping to remove
+        </li>
+    </ul>
+
+    <h3>Returns:</h3>
+    <ol>
+
+           <span class="types"><span class="type">bool</span></span>
+        whether the mapping was successfully removed
+    </ol>
+
+
+    <h3>See also:</h3>
+    <ul>
+         <a href="index.html#Window:unmap">Window:unmap</a>
+    </ul>
+
+
+</dd>
+    <dt>
     <a name = "Vis:windows"></a>
     <strong>Vis:windows()</strong>
     </dt>
@@ -1546,50 +1631,6 @@ vis:map(vis.modes.NORMAL, <span class="string">"gl"</span>, action)</pre>
           </div>
     <dl class="function">
     <dt>
-    <a name = "Window.cursor"></a>
-    <strong>Window.cursor</strong>
-    </dt>
-    <dd>
-    The primary cursor of this window.
-
-
-    <ul>
-        <li><span class="parameter">cursor</span>
-            <span class="types"><a class="type" href="index.html#Class_Cursor">Cursor</a></span>
-
-
-
-        </li>
-    </ul>
-
-
-
-
-
-</dd>
-    <dt>
-    <a name = "Window.cursors"></a>
-    <strong>Window.cursors</strong>
-    </dt>
-    <dd>
-    The cursors of this window.
-
-
-    <ul>
-        <li><span class="parameter">cursors</span>
-            <span class="types"><span class="type">Array(Cursor)</span></span>
-
-
-
-        </li>
-    </ul>
-
-
-
-
-
-</dd>
-    <dt>
     <a name = "Window.file"></a>
     <strong>Window.file</strong>
     </dt>
@@ -1622,6 +1663,74 @@ vis:map(vis.modes.NORMAL, <span class="string">"gl"</span>, action)</pre>
     <ul>
         <li><span class="parameter">height</span>
             <span class="types"><span class="type">int</span></span>
+
+
+
+        </li>
+    </ul>
+
+
+
+
+
+</dd>
+    <dt>
+    <a name = "Window.marks"></a>
+    <strong>Window.marks</strong>
+    </dt>
+    <dd>
+    Window marks.
+ Most of these marks are stored in the associated File object, meaning they
+ are the same in all windows displaying the same file.
+
+
+    <ul>
+        <li><span class="parameter">marks</span>
+         array to access the marks of this window by single letter name
+        </li>
+    </ul>
+
+
+
+    <h3>See also:</h3>
+    <ul>
+    </ul>
+
+
+</dd>
+    <dt>
+    <a name = "Window.selection"></a>
+    <strong>Window.selection</strong>
+    </dt>
+    <dd>
+    The primary selection of this window.
+
+
+    <ul>
+        <li><span class="parameter">selection</span>
+            <span class="types"><a class="type" href="index.html#Class_Selection">Selection</a></span>
+
+
+
+        </li>
+    </ul>
+
+
+
+
+
+</dd>
+    <dt>
+    <a name = "Window.selections"></a>
+    <strong>Window.selections</strong>
+    </dt>
+    <dd>
+    The selections of this window.
+
+
+    <ul>
+        <li><span class="parameter">selections</span>
+            <span class="types"><span class="type">Array(Selection)</span></span>
 
 
 
@@ -1698,25 +1807,6 @@ vis:map(vis.modes.NORMAL, <span class="string">"gl"</span>, action)</pre>
 
 </dd>
     <dt>
-    <a name = "Window:cursors_iterator"></a>
-    <strong>Window:cursors_iterator()</strong>
-    </dt>
-    <dd>
-    Create an iterator over all cursors of this window.
-
-
-
-    <h3>Returns:</h3>
-    <ol>
-
-        the new iterator
-    </ol>
-
-
-
-
-</dd>
-    <dt>
     <a name = "Window:draw"></a>
     <strong>Window:draw()</strong>
     </dt>
@@ -1754,6 +1844,25 @@ vis:map(vis.modes.NORMAL, <span class="string">"gl"</span>, action)</pre>
     <ul>
          <a href="index.html#Vis:map">Vis:map</a>
     </ul>
+
+
+</dd>
+    <dt>
+    <a name = "Window:selections_iterator"></a>
+    <strong>Window:selections_iterator()</strong>
+    </dt>
+    <dd>
+    Create an iterator over all selections of this window.
+
+
+
+    <h3>Returns:</h3>
+    <ol>
+
+        the new iterator
+    </ol>
+
+
 
 
 </dd>
@@ -1889,72 +1998,133 @@ vis:map(vis.modes.NORMAL, <span class="string">"gl"</span>, action)</pre>
     </ul>
 
 </dd>
+    <dt>
+    <a name = "Window:unmap"></a>
+    <strong>Window:unmap(...)</strong>
+    </dt>
+    <dd>
+    Remove a window local key mapping.
+ The function signature is the same as for <a href="index.html#Vis:unmap">Vis:unmap</a>.
+
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">...</span>
+
+
+
+        </li>
+    </ul>
+
+
+
+    <h3>See also:</h3>
+    <ul>
+         <a href="index.html#Vis:unmap">Vis:unmap</a>
+    </ul>
+
+
+</dd>
 </dl>
-    <h2 class="section-header has-description"><a name="Class_Cursor"></a>Class Cursor </h2>
+    <h2 class="section-header has-description"><a name="Class_Selection"></a>Class Selection </h2>
 
           <div class="section-description">
-          A cursor object. </p>
+          A selection object. </p>
 
-<p> Cursors are represented as absolute byte offsets from the start of the file.
- Valid cursor placements are within the closed interval <code>[0, file.size]</code>.
- Cursors are currently implemented using character marks into the underlying
- persistent <a href="https://github.com/martanne/vis/wiki/Text-management-using-a-piece-chain">text management data structure</a>.
- This has a few consequences you should be aware of:</p>
+<p> A selection is a non-empty, directed range with two endpoints called
+ <em>cursor</em> and <em>anchor</em>. A selection can be anchored in which case
+ the anchor remains fixed while only the position of the cursor is
+ adjusted. For non-anchored selections both endpoints are updated. A
+ singleton selection covers one character on which both cursor and
+ anchor reside. There always exists a primary selection which remains
+ visible (i.e. changes to its position will adjust the viewport).</p>
+
+<p> The range covered by a selection is represented as an interval whose
+ endpoints are absolute byte offsets from the start of the file.
+ Valid addresses are within the closed interval <code>[0, file.size]</code>.</p>
+
+<p> Selections are currently implemented using character marks into
+ the underlying persistent
+ <a href="https://github.com/martanne/vis/wiki/Text-management-using-a-piece-chain">text management data structure</a>.</p>
+
+<p> This has a few consequences you should be aware of:</p>
 
 <ul>
-    <li><p>A cursor becomes invalid when the underlying text range it is referencing
-is deleted:</p>
+    <li><p>A selection becomes invalid when the delimiting boundaries of the underlying
+text it is referencing is deleted:</p>
 
-<pre><code>-- leaves cursor in an invalid state
-win.file:delete(win.cursor.pos, 1)
-assert(win.cursor.pos == nil)
+<pre><code>-- leaves selection in an invalid state
+win.file:delete(win.selection.pos, 1)
+assert(win.selection.pos == nil)
 </code></pre>
 
 <p>Like a regular mark it will become valid again when the text is reverted
 to the state before the deletion.</p></li>
-    <li><p>Inserts after the cursor position (<code>&gt; cursor.pos</code>) will not affect the
-cursor postion.</p>
+    <li><p>Inserts after the selection position (<code>&gt; selection.pos</code>) will not affect the
+selection postion.</p>
 
-<pre><code>local pos = win.cursor.pos
+<pre><code>local pos = win.selection.pos
 win.file:insert(pos+1, "-")
-assert(win.cursor.pos == pos)
+assert(win.selection.pos == pos)
 </code></pre></li>
-    <li><p>Non-cached inserts before the cursor position (<code>&lt;= cursor.pos</code>) will
-affect the mark and adjust the cursor postion by the number of bytes
+    <li><p>Non-cached inserts before the selection position (<code>&lt;= selection.pos</code>) will
+affect the mark and adjust the selection postion by the number of bytes
 which were inserted.</p>
 
-<pre><code>local pos = win.cursor.pos
+<pre><code>local pos = win.selection.pos
 win.file:insert(pos, "-")
-assert(win.cursor.pos == pos+1)
+assert(win.selection.pos == pos+1)
 </code></pre></li>
-    <li><p>Cached inserts before the cursor position (<code>&lt;= cursor.pos</code>) will
-    not affect the cursor position because the underlying text is replaced
+    <li><p>Cached inserts before the selection position (<code>&lt;= selection.pos</code>) will
+    not affect the selection position because the underlying text is replaced
     inplace.</p></li>
 </ul>
 
-<p> For these reasons it is generally recommended to update the cursor position
+<p> For these reasons it is generally recommended to update the selection position
  after a modification. The general procedure amounts to:</p>
 
 <ol>
-    <li>Read out the current cursor position</li>
+    <li>Read out the current selection position</li>
     <li>Perform text modifications</li>
-    <li>Update the cursor postion</li>
+    <li>Update the selection postion</li>
 </ol>
 
 <p> This is what <a href="index.html#Vis:insert">Vis:insert</a> and <a href="index.html#Vis:replace">Vis:replace</a> do internally.
           </div>
             <h3>Usage:</h3>
             <pre class="example"><span class="keyword">local</span> data = <span class="string">"new text"</span>
-<span class="keyword">local</span> pos = win.cursor.pos
+<span class="keyword">local</span> pos = win.selection.pos
 win.file:insert(pos, data)
-win.cursor.pos = pos + #data</pre>
+win.selection.pos = pos + #data</pre>
     <dl class="function">
     <dt>
-    <a name = "Cursor.col"></a>
-    <strong>Cursor.col</strong>
+    <a name = "Selection.anchored"></a>
+    <strong>Selection.anchored</strong>
     </dt>
     <dd>
-    The 1-based column position the cursor resides on.
+    Whether this selection is anchored.
+
+
+    <ul>
+        <li><span class="parameter">anchored</span>
+            <span class="types"><span class="type">bool</span></span>
+
+
+
+        </li>
+    </ul>
+
+
+
+
+
+</dd>
+    <dt>
+    <a name = "Selection.col"></a>
+    <strong>Selection.col</strong>
+    </dt>
+    <dd>
+    The 1-based column position the cursor of this selection resides on.
 
 
     <ul>
@@ -1970,17 +2140,17 @@ win.cursor.pos = pos + #data</pre>
 
     <h3>See also:</h3>
     <ul>
-         <a href="index.html#Cursor:to">to</a>
+         <a href="index.html#Selection:to">to</a>
     </ul>
 
 
 </dd>
     <dt>
-    <a name = "Cursor.line"></a>
-    <strong>Cursor.line</strong>
+    <a name = "Selection.line"></a>
+    <strong>Selection.line</strong>
     </dt>
     <dd>
-    The 1-based line the cursor resides on.
+    The 1-based line the cursor of this selection resides on.
 
 
     <ul>
@@ -1996,17 +2166,17 @@ win.cursor.pos = pos + #data</pre>
 
     <h3>See also:</h3>
     <ul>
-         <a href="index.html#Cursor:to">to</a>
+         <a href="index.html#Selection:to">to</a>
     </ul>
 
 
 </dd>
     <dt>
-    <a name = "Cursor.number"></a>
-    <strong>Cursor.number</strong>
+    <a name = "Selection.number"></a>
+    <strong>Selection.number</strong>
     </dt>
     <dd>
-    The 1-based cursor index.
+    The 1-based selection index.
 
 
     <ul>
@@ -2024,14 +2194,15 @@ win.cursor.pos = pos + #data</pre>
 
 </dd>
     <dt>
-    <a name = "Cursor.pos"></a>
-    <strong>Cursor.pos</strong>
+    <a name = "Selection.pos"></a>
+    <strong>Selection.pos</strong>
     </dt>
     <dd>
     The zero based byte position in the file. </p>
 
-<p> Might be <code>nil</code> if the cursor is in an invalid state.
- Setting this field will move the cursor to the given position.
+<p> Might be <code>nil</code> if the selection is in an invalid state.
+ Setting this field will move the cursor endpoint of the
+ selection to the given position.
 
 
     <ul>
@@ -2049,17 +2220,19 @@ win.cursor.pos = pos + #data</pre>
 
 </dd>
     <dt>
-    <a name = "Cursor.selection"></a>
-    <strong>Cursor.selection</strong>
+    <a name = "Selection.range"></a>
+    <strong>Selection.range</strong>
     </dt>
     <dd>
-    The selection associated with this cursor.
+    The range covered by this selection.
 
 
     <ul>
-        <li><span class="parameter">selection</span>
+        <li><span class="parameter">range</span>
             <span class="types"><a class="type" href="index.html#Class_Range">Range</a></span>
-         the selection or <code>nil</code> if not in visual mode
+
+
+
         </li>
     </ul>
 
@@ -2069,11 +2242,11 @@ win.cursor.pos = pos + #data</pre>
 
 </dd>
     <dt>
-    <a name = "Cursor:to"></a>
-    <strong>Cursor:to(line, col)</strong>
+    <a name = "Selection:to"></a>
+    <strong>Selection:to(line, col)</strong>
     </dt>
     <dd>
-    Move cursor.
+    Move cursor of selection.
 
 
     <h3>Parameters:</h3>
@@ -2135,25 +2308,6 @@ win.cursor.pos = pos + #data</pre>
 
 </dd>
     <dt>
-    <a name = "File.marks"></a>
-    <strong>File.marks</strong>
-    </dt>
-    <dd>
-    File marks.
-
-
-    <ul>
-        <li><span class="parameter">marks</span>
-         array to access the marks of this file by single letter name
-        </li>
-    </ul>
-
-
-
-
-
-</dd>
-    <dt>
     <a name = "File.modified"></a>
     <strong>File.modified</strong>
     </dt>
@@ -2185,26 +2339,6 @@ win.cursor.pos = pos + #data</pre>
         <li><span class="parameter">name</span>
             <span class="types"><a class="type" href="https://www.lua.org/manual/5.1/manual.html#5.4">string</a></span>
          the file name relative to current working directory or <code>nil</code> if not yet named
-        </li>
-    </ul>
-
-
-
-
-
-</dd>
-    <dt>
-    <a name = "File.newlines"></a>
-    <strong>File.newlines</strong>
-    </dt>
-    <dd>
-    Type of line endings.
-
-
-    <ul>
-        <li><span class="parameter">newlines</span>
-            <span class="types"><a class="type" href="https://www.lua.org/manual/5.1/manual.html#5.4">string</a></span>
-         the type of line endings either <code>lf</code> (the default) or <code>crlf</code>
         </li>
     </ul>
 
@@ -2496,7 +2630,7 @@ win.cursor.pos = pos + #data</pre>
 </dd>
     <dt>
     <a name = "File:match_at"></a>
-    <strong>File:match_at(pattern, the[, horizon])</strong>
+    <strong>File:match_at(pattern, pos[, horizon])</strong>
     </dt>
     <dd>
     Check whether LPeg pattern matches at a given file position.
@@ -2507,13 +2641,13 @@ win.cursor.pos = pos + #data</pre>
         <li><span class="parameter">pattern</span>
          the LPeg pattern
         </li>
-        <li><span class="parameter">the</span>
+        <li><span class="parameter">pos</span>
             <span class="types"><span class="type">int</span></span>
-         absolute position in bytes to test for a match
+         the absolute file position which should be tested for a match
         </li>
         <li><span class="parameter">horizon</span>
             <span class="types"><span class="type">int</span></span>
-         the number of bytes around <a href="index.html#Cursor.pos">pos</a> to consider (defaults to 1K)
+         the number of bytes around <a href="index.html#Selection.pos">pos</a> to consider (defaults to 1K)
          (<em>optional</em>)
         </li>
     </ul>
@@ -3226,7 +3360,7 @@ win.cursor.pos = pos + #data</pre>
 </div> <!-- id="main" -->
 <div id="about">
 <i>generated by <a href="http://github.com/stevedonovan/LDoc">LDoc 1.4.6</a></i>
-<i style="float:right;">Last updated 2017-03-25 21:58:56 </i>
+<i style="float:right;">Last updated 2017-07-23 21:15:28 </i>
 </div> <!-- id="about" -->
 </div> <!-- id="container" -->
 </body>
