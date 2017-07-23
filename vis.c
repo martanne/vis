@@ -393,7 +393,7 @@ static void window_draw_cursor(Win *win, Selection *cur, CellStyle *style, CellS
 	return;
 }
 
-static void window_draw_cursors(Win *win) {
+static void window_draw_selections(Win *win) {
 	View *view = win->view;
 	Filerange viewport = view_viewport_get(view);
 	bool multiple_cursors = view_selections_count(view) > 1;
@@ -438,7 +438,8 @@ void vis_window_draw(Win *win) {
 
 	window_draw_colorcolumn(win);
 	window_draw_cursorline(win);
-	window_draw_cursors(win);
+	if (!vis->win || vis->win == win || vis->win->parent == win)
+		window_draw_selections(win);
 	window_draw_eof(win);
 
 	vis_event_emit(vis, VIS_EVENT_WIN_STATUS, win);
