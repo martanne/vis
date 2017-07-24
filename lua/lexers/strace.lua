@@ -1,3 +1,4 @@
+-- Copyright 2017 Marc André Tanner. See LICENSE.
 -- strace(1) output lexer
 
 local l = require('lexer')
