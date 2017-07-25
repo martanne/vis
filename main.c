@@ -2389,8 +2389,8 @@ int main(int argc, char *argv[]) {
 	}
 
 	sa.sa_handler = SIG_IGN;
-	if (sigaction(SIGPIPE, &sa, NULL) == -1)
-		vis_die(vis, "Failed to ignore SIGPIPE\n");
+	if (sigaction(SIGPIPE, &sa, NULL) == -1 || sigaction(SIGQUIT, &sa, NULL) == -1)
+		vis_die(vis, "Failed to ignore signals\n");
 
 	sigset_t blockset;
 	sigemptyset(&blockset);
