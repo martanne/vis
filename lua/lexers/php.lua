@@ -34,18 +34,26 @@ local number = token(l.NUMBER, l.float + l.integer)
 
 -- Keywords.
 local keyword = token(l.KEYWORD, word_match{
-  'and', 'array', 'as', 'bool', 'boolean', 'break', 'case',
-  'cfunction', 'class', 'const', 'continue', 'declare', 'default',
-  'die', 'directory', 'do', 'double', 'echo', 'else', 'elseif',
-  'empty', 'enddeclare', 'endfor', 'endforeach', 'endif',
-  'endswitch', 'endwhile', 'eval', 'exit', 'extends', 'false',
-  'float', 'for', 'foreach', 'function', 'global', 'if', 'include',
-  'include_once', 'int', 'integer', 'isset', 'list', 'new', 'null',
-  'object', 'old_function', 'or', 'parent', 'print', 'real',
-  'require', 'require_once', 'resource', 'return', 'static',
-  'stdclass', 'string', 'switch', 'true', 'unset', 'use', 'var',
-  'while', 'xor', '__class__', '__file__', '__function__',
-  '__line__', '__sleep', '__wakeup'
+-- keywords
+-- http://php.net/manual/en/reserved.keywords.php
+	'__halt_compiler', 'abstract', 'and', 'array', 'as', 'break',
+	'callable', 'case', 'catch', 'class', 'clone', 'const', 'continue',
+	'declare', 'default', 'die', 'do', 'echo', 'else', 'elseif', 'empty',
+	'enddeclare', 'endfor', 'endforeach', 'endif', 'endswitch',
+	'endwhile', 'eval', 'exit', 'extends', 'final', 'for', 'foreach',
+	'function', 'global', 'goto', 'if', 'implements', 'include',
+	'list', 'namespace', 'new', 'or', 'print', 'private', 'protected',
+	'public', 'require', 'require_once', 'return', 'static',
+	'switch', 'throw', 'trait', 'try', 'unset', 'use', 'var', 'while', 'xor',
+-- predefined _classes 
+-- http://php.net/manual/en/reserved.classes.php
+	'directory', 'stdclass', '__php_incomplete_class', 'exception', 'errorexception',
+	'closure', 'generator', 'arithmeticerror', 'assertionerror', 'divisionbyzeroerror', 'error', 
+	'throwable', 'parseerror', 'typeerror', 'self', 'parent',
+-- other_reserved 
+-- http://php.net/manual/en/reserved.other-reserved-words.php
+	'int', 'float', 'bool', 'string', 'true', 'false', 'null', 'void', 'iterable', 'resource',
+	'object', 'mixed', 'numeric'
 })
 
 -- Variables.
