@@ -301,6 +301,7 @@ static const KeyBinding bindings_visual[] = {
 	{ "o",                  ACTION(SELECTION_FLIP)                      },
 	{ "q",                  ACTION(MACRO_RECORD)                        },
 	{ "r",                  ACTION(REPLACE_CHAR)                        },
+	{ "s",                  ALIAS("c")                                  },
 	{ "V",                  ACTION(MODE_VISUAL_LINE)                    },
 	{ "v",                  ALIAS("<Escape>")                           },
 	{ "x",                  ALIAS("d")                                  },
