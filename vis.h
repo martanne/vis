@@ -386,7 +386,6 @@ enum VisOperator {
 	VIS_OP_REPLACE,
 	VIS_OP_CURSOR_SOL,
 	VIS_OP_CASE_SWAP,
-	VIS_OP_FILTER,
 	VIS_OP_INVALID, /* denotes the end of the "real" operators */
 	/* pseudo operators: keep them at the end to save space in array definition */
 	VIS_OP_CASE_LOWER,
@@ -434,7 +433,6 @@ int vis_operator_register(Vis*, VisOperatorFunction*, void *context);
  *
  * The expected varying arguments are:
  *
- *  - `VIS_OP_FILTER`     a char pointer referring to the command to run.
  *  - `VIS_OP_JOIN`       a char pointer referring to the text to insert between lines.
  *  - `VIS_OP_MODESWITCH` an ``enum VisMode`` indicating the mode to switch to.
  *  - `VIS_OP_REPLACE`    a char pointer reffering to the replacement character.

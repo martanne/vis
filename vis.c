@@ -813,9 +813,6 @@ void vis_do(Vis *vis) {
 	View *view = win->view;
 	Action *a = &vis->action;
 
-	if (a->op == &vis_operators[VIS_OP_FILTER] && !vis->mode->visual)
-		vis_mode_switch(vis, VIS_MODE_VISUAL_LINE);
-
 	int count = MAX(a->count, 1);
 	if (a->op == &vis_operators[VIS_OP_MODESWITCH])
 		count = 1; /* count should apply to inserted text not motion */
@@ -1000,11 +997,6 @@ void vis_do(Vis *vis) {
 			vis_mode_switch(vis, VIS_MODE_INSERT);
 		} else if (a->op == &vis_operators[VIS_OP_MODESWITCH]) {
 			vis_mode_switch(vis, a->mode);
-		} else if (a->op == &vis_operators[VIS_OP_FILTER]) {
-			if (a->arg.s)
-				vis_cmd(vis, a->arg.s);
-			else
-				vis_prompt_show(vis, ":|");
 		} else if (vis->mode == &vis_modes[VIS_MODE_OPERATOR_PENDING]) {
 			mode_set(vis, vis->mode_prev);
 		} else if (vis->mode->visual) {
@@ -1490,9 +1482,7 @@ void vis_repeat(Vis *vis) {
 	if (macro) {
 		Mode *mode = vis->mode;
 		Action action_prev = vis->action_prev;
-		if (count < 1 ||
-		    action_prev.op == &vis_operators[VIS_OP_CHANGE] ||
-		    action_prev.op == &vis_operators[VIS_OP_FILTER])
+		if (count < 1 || action_prev.op == &vis_operators[VIS_OP_CHANGE])
 			count = 1;
 		if (vis->action_prev.op == &vis_operators[VIS_OP_MODESWITCH])
 			vis->action_prev.count = 1;

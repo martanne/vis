@@ -244,10 +244,6 @@ static size_t op_replace(Vis *vis, Text *txt, OperatorContext *c) {
 	return c->range.start;
 }
 
-static size_t op_filter(Vis *vis, Text *txt, OperatorContext *c) {
-	return text_size(txt) + 1; /* do not change cursor position, would destroy selection */
-}
-
 int vis_operator_register(Vis *vis, VisOperatorFunction *func, void *context) {
 	Operator *op = calloc(1, sizeof *op);
 	if (!op)
@@ -289,9 +285,6 @@ bool vis_operator(Vis *vis, enum VisOperator id, ...) {
 	case VIS_OP_JOIN:
 		vis->action.arg.s = va_arg(ap, char*);
 		break;
-	case VIS_OP_FILTER:
-		vis->action.arg.s = va_arg(ap, char*);
-		/* fall through */
 	case VIS_OP_SHIFT_LEFT:
 	case VIS_OP_SHIFT_RIGHT:
 		vis_motion_type(vis, VIS_MOTIONTYPE_LINEWISE);
@@ -359,5 +352,4 @@ const Operator vis_operators[] = {
 	[VIS_OP_MODESWITCH]  = { op_modeswitch  },
 	[VIS_OP_REPLACE]     = { op_replace     },
 	[VIS_OP_CURSOR_SOL]  = { op_cursor      },
-	[VIS_OP_FILTER]      = { op_filter      },
 };

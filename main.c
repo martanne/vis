@@ -101,8 +101,6 @@ static const char *gotoline(Vis*, const char *keys, const Arg *arg);
 static const char *motiontype(Vis*, const char *keys, const Arg *arg);
 /* make the current action use the operator indicated by arg->i */
 static const char *operator(Vis*, const char *keys, const Arg *arg);
-/* use arg->s as command for the filter operator */
-static const char *operator_filter(Vis*, const char *keys, const Arg *arg);
 /* blocks to read a key and performs movement indicated by arg->i which
  * should be one of VIS_MOVE_{RIGHT,LEFT}_{TO,TILL} */
 static const char *movement_key(Vis*, const char *keys, const Arg *arg);
@@ -241,8 +239,6 @@ enum {
 	VIS_ACTION_OPERATOR_CASE_LOWER,
 	VIS_ACTION_OPERATOR_CASE_UPPER,
 	VIS_ACTION_OPERATOR_CASE_SWAP,
-	VIS_ACTION_OPERATOR_FILTER,
-	VIS_ACTION_OPERATOR_FILTER_FMT,
 	VIS_ACTION_COUNT,
 	VIS_ACTION_INSERT_NEWLINE,
 	VIS_ACTION_INSERT_TAB,
@@ -796,16 +792,6 @@ static const KeyAction vis_action[] = {
 		"vis-operator-case-swap",
 		VIS_HELP("Swap case operator")
 		operator, { .i = VIS_OP_CASE_SWAP }
-	},
-	[VIS_ACTION_OPERATOR_FILTER] = {
-		"vis-operator-filter",
-		VIS_HELP("Filter operator")
-		operator_filter,
-	},
-	[VIS_ACTION_OPERATOR_FILTER_FMT] = {
-		"vis-operator-filter-format",
-		VIS_HELP("Formatting operator, filter range through fmt(1)")
-		operator_filter, { .s = "|fmt" }
 	},
 	[VIS_ACTION_COUNT] = {
 		"vis-count",
@@ -1954,11 +1940,6 @@ static const char *motiontype(Vis *vis, const char *keys, const Arg *arg) {
 
 static const char *operator(Vis *vis, const char *keys, const Arg *arg) {
 	vis_operator(vis, arg->i);
-	return keys;
-}
-
-static const char *operator_filter(Vis *vis, const char *keys, const Arg *arg) {
-	vis_operator(vis, VIS_OP_FILTER, arg->s);
 	return keys;
 }
 
