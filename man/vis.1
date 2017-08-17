@@ -158,7 +158,7 @@ save currently active selections
 .
 .Ss Registers
 .
-Registers are named lists of text. Uninitialized regiter slots default
+Registers are named lists of text. Uninitialized register slots default
 to the empty string. Available registers are:
 .Bl -tag -width indent
 .It Ic \(dq\(dq
@@ -655,7 +655,7 @@ Same as
 .Ic X ,
 but for files that do not match the regular expression, and the expression is
 required.
-.\" TODO improve markup, use Op macro, make it actually undertandable :/
+.\" TODO improve markup, use Op macro, make it actually understandable :/
 .It Ic g Ns [ Ar count ] Ns [ Ar /regexp/ ] Ar command
 .It Ic v Ns [ Ar count ] Ns [ Ar /regexp/ ] Ar command
 If the
@@ -726,11 +726,9 @@ made by one command are not visible to other commands.
 .Pp
 When a command makes a number of changes to a file, as in
 .Ic x/ Ns Ar re Ns Ic / Ic c/ Ns Ar text Ns Ic / ,
-the addresses of all changes to the file are computed in the original
-file.
-If the changes are non-overlapping, they are applied to the file.
-Successive insertions at the same address are catenated into a single
-insertion composed of the several insertions in the order applied.
+the addresses of all changes are computed based on the initial state.
+If the changes are non-overlapping, they are applied in the specified
+order. Conflicting changes are rejected.
 .Pp
 Braces may be nested arbitrarily.
 .
