@@ -195,7 +195,7 @@ vis.ftdetect.filetypes = {
 		ext = { "%.jsp$" },
 	},
 	latex = {
-		ext = { "%.bbl$", "%.dtx$", "%.ins$", "%.ltx$", "%.tex$", "%.sty$" },
+		ext = { "%.bbl$", "%.cls$", "%.dtx$", "%.ins$", "%.ltx$", "%.tex$", "%.sty$" },
 		mime = { "text/x-tex" },
 	},
 	ledger = {
@@ -381,7 +381,7 @@ vis.ftdetect.filetypes = {
 	},
 	vb = {
 		ext = {
-			"%.asa$", "%.bas$", "%.cls$", "%.ctl$", "%.dob$",
+			"%.asa$", "%.bas$", "%.ctl$", "%.dob$",
 			"%.dsm$", "%.dsr$", "%.frm$", "%.pag$", "%.vb$",
 			"%.vba$", "%.vbs$"
 		},
