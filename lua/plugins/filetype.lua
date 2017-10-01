@@ -301,7 +301,7 @@ vis.ftdetect.filetypes = {
 		mime = { "text/x-python" },
 	},
 	rc = {
-		ext = { "%.rc$", "%.es$", "%.xs" },
+		ext = { "%.rc$", "%.es$" },
 	},
 	rebol = {
 		ext = { "%.r$", "%.reb$" },
@@ -397,6 +397,9 @@ vis.ftdetect.filetypes = {
 	},
 	wsf = {
 		ext = { "%.wsf$" },
+	},
+	xs = {
+		ext = { "%.xs$", "%.xsin", "%.xsrc" },
 	},
 	xml = {
 		ext = { "%.dtd$", "%.svg$", "%.xml$", "%.xsd$", "%.xsl$", "%.xslt$", "%.xul$" },
