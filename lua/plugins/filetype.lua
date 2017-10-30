@@ -176,7 +176,7 @@ vis.ftdetect.filetypes = {
 		ext = { "%.inf$", "%.ni$" },
 	},
 	ini = {
-		ext = { "%.cfg$", "%.cnf$", "%.inf$", "%.ini$", "%.reg$" },
+		ext = { "%.cfg$", "%.cnf$", "%.conf$", "%.inf$", "%.ini$", "%.reg$" },
 	},
 	io_lang = {
 		ext = { "%.io$" },
