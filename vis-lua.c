@@ -618,8 +618,9 @@ static const char *keymapping(Vis *vis, const char *keys, const Arg *arg) {
 static int windows_iter(lua_State *L);
 static int windows(lua_State *L) {
 	Vis *vis = obj_ref_check(L, 1, "vis");
-	Win **handle = lua_newuserdata(L, sizeof *handle);
-	*handle = vis->windows;
+	Win **handle = lua_newuserdata(L, sizeof *handle), *next;
+	for (next = vis->windows; next && next->file->internal; next = next->next);
+	*handle = next;
 	lua_pushcclosure(L, windows_iter, 1);
 	return 1;
 }
@@ -628,9 +629,11 @@ static int windows_iter(lua_State *L) {
 	Win **handle = lua_touserdata(L, lua_upvalueindex(1));
 	if (!*handle)
 		return 0;
-	Win *win = obj_ref_new(L, *handle, VIS_LUA_TYPE_WINDOW);
-	if (win)
-		*handle = win->next;
+	Win *win = obj_ref_new(L, *handle, VIS_LUA_TYPE_WINDOW), *next;
+	if (win) {
+		for (next = win->next; next && next->file->internal; next = next->next);
+		*handle = next;
+	}
 	return 1;
 }
 
