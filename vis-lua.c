@@ -1741,6 +1741,33 @@ static int window_draw(lua_State *L) {
 	return 0;
 }
 
+/***
+ * Close window.
+ *
+ * After a successful call the Window reference becomes invalid and
+ * must no longer be used. Attempting to close the last window will
+ * always fail.
+ *
+ * @function close
+ * @see exit
+ * @tparam bool force whether unsaved changes should be discarded
+ * @treturn bool whether the window was closed
+ */
+static int window_close(lua_State *L) {
+	Win *win = obj_ref_check(L, 1, VIS_LUA_TYPE_WINDOW);
+	int count = 0;
+	for (Win *w = win->vis->windows; w; w = w->next) {
+		if (!w->file->internal)
+			count++;
+	}
+	bool force = lua_isboolean(L, 2) && lua_toboolean(L, 2);
+	bool close = count > 1 && (force || vis_window_closable(win));
+	if (close)
+		vis_window_close(win);
+	lua_pushboolean(L, close);
+	return 1;
+}
+
 static const struct luaL_Reg window_funcs[] = {
 	{ "__index", window_index },
 	{ "__newindex", newindex_common },
@@ -1751,6 +1778,7 @@ static const struct luaL_Reg window_funcs[] = {
 	{ "style", window_style },
 	{ "status", window_status },
 	{ "draw", window_draw },
+	{ "close", window_close },
 	{ NULL, NULL },
 };
 
