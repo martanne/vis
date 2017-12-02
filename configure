@@ -359,7 +359,7 @@ fi
 
 if test -z "$LDFLAGS_TERMKEY"; then
 	CFLAGS_TERMKEY=""
-	LDFLAGS_TERMKEY="-ltermkey -lncursesw"
+	LDFLAGS_TERMKEY="-ltermkey"
 fi
 
 if $CC $CFLAGS $CFLAGS_TERMKEY "$tmpc" $LDFLAGS $LDFLAGS_TERMKEY $LDFLAGS_CURSES \
