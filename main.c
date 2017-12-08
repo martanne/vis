@@ -1484,7 +1484,7 @@ static const char *selections_remove_column(Vis *vis, const char *keys, const Ar
 	if (column >= max)
 		column = max - 1;
 	if (view_selections_count(view) == 1) {
-		vis_mode_switch(vis, VIS_MODE_NORMAL);
+		vis_keys_feed(vis, "<Escape>");
 		return keys;
 	}
 
