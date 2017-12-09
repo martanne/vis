@@ -352,8 +352,12 @@ static void window_draw_selection(View *view, Selection *cur, CellStyle *style) 
 		while (col < end) {
 			if (cell_color_equal(l->cells[col].style.fg, style->bg)) {
 				CellStyle old = l->cells[col].style;
-				l->cells[col].style.fg = old.bg;
-				l->cells[col].style.bg = old.fg;
+				if (!cell_color_equal(old.fg, old.bg)) {
+					l->cells[col].style.fg = old.bg;
+					l->cells[col].style.bg = old.fg;
+				} else {
+					l->cells[col].style.attr = style->attr;
+				}
 			} else {
 				l->cells[col].style.bg = style->bg;
 			}
