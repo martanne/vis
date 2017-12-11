@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <string.h>
+#include <ctype.h>
 #include "vis-core.h"
 #include "text-motions.h"
 #include "text-objects.h"
@@ -60,16 +61,18 @@ static size_t search_backward(Vis *vis, Text *txt, size_t pos) {
 	return pos;
 }
 
-static size_t common_word_next(Vis *vis, Text *txt, size_t pos, enum VisMotion end_next) {
+static size_t common_word_next(Vis *vis, Text *txt, size_t pos,
+                               enum VisMotion start_next, enum VisMotion end_next,
+                               int (*isboundary)(int)) {
 	char c;
 	Iterator it = text_iterator_get(txt, pos);
 	if (!text_iterator_byte_get(&it, &c))
 		return pos;
 	const Movement *motion = NULL;
 	int count = vis_count_get_default(vis, 1);
-	if (c == ' ' || c == '\t') {
-		motion = &vis_motions[VIS_MOVE_WORD_START_NEXT];
-	} else if (text_iterator_char_next(&it, &c) && (c == ' ' || c == '\t')) {
+	if (isspace((unsigned char)c)) {
+		motion = &vis_motions[start_next];
+	} else if (!isboundary((unsigned char)c) && text_iterator_char_next(&it, &c) && isboundary((unsigned char)c)) {
 		/* we are on the last character of a word */
 		if (count == 1) {
 			/* map `cw` to `cl` */
@@ -100,11 +103,13 @@ static size_t common_word_next(Vis *vis, Text *txt, size_t pos, enum VisMotion e
 }
 
 static size_t word_next(Vis *vis, Text *txt, size_t pos) {
-	return common_word_next(vis, txt, pos, VIS_MOVE_WORD_END_NEXT);
+	return common_word_next(vis, txt, pos, VIS_MOVE_WORD_START_NEXT,
+	                        VIS_MOVE_WORD_END_NEXT, is_word_boundary);
 }
 
 static size_t longword_next(Vis *vis, Text *txt, size_t pos) {
-	return common_word_next(vis, txt, pos, VIS_MOVE_LONGWORD_END_NEXT);
+	return common_word_next(vis, txt, pos, VIS_MOVE_LONGWORD_START_NEXT,
+	                        VIS_MOVE_LONGWORD_END_NEXT, isspace);
 }
 
 static size_t to(Vis *vis, Text *txt, size_t pos) {
