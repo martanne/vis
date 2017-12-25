@@ -58,6 +58,9 @@ vis.ftdetect.filetypes = {
 	chuck = {
 		ext = { "%.ck$" },
 	},
+	clojure = {
+		ext = { "%.clj$", "%.cljc$",  "%.cljs$", "%.edn$" }
+	},
 	cmake = {
 		ext = { "%.cmake$", "%.cmake.in$", "%.ctest$", "%.ctest.in$" },
 	},
