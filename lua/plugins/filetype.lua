@@ -278,6 +278,9 @@ vis.ftdetect.filetypes = {
 	pkgbuild = {
 		ext = { "PKGBUILD" },
 	},
+	pony = {
+		ext = { "%.pony$" },
+	},
 	powershell = {
 		ext = { "%.ps1$" },
 	},
