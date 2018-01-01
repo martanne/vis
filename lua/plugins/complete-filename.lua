@@ -6,7 +6,7 @@ vis:map(vis.modes.INSERT, "<C-x><C-f>", function()
 	local pos = win.selection.pos
 	if not pos then return end
 	-- TODO do something clever here
-	local range = file:text_object_word(pos > 0 and pos-1 or pos);
+	local range = file:text_object_longword(pos > 0 and pos-1 or pos);
 	if not range then return end
 	if range.finish > pos then range.finish = pos end
 	if range.start == range.finish then return end
@@ -29,7 +29,8 @@ vis:map(vis.modes.INSERT, "<C-x><C-o>", function()
 	local file = win.file
 	local pos = win.selection.pos
 	if not pos then return end
-	local range = file:text_object_word(pos > 0 and pos-1 or pos);
+	-- TODO do something clever here
+	local range = file:text_object_longword(pos > 0 and pos-1 or pos);
 	if not range then return end
 	if range.finish > pos then range.finish = pos end
 	local prefix = file:content(range)

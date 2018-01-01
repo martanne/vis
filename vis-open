@@ -40,6 +40,11 @@ if [ $# -eq 1 -a "$ALLOW_AUTO_SELECT" = 1 ]; then
 	# If there were globs on the command-line, they've expanded to
 	# a single item, so we can just process it.
 
+	# If the file or directory does not exist, abort.
+	if [ ! -e "$1" ]; then
+		exit 1
+	fi
+
 	if [ -d "$1" ]; then
 		# Recurse and show the contents of the named directory,
 		# We pass -f to force the next iteration to present the
