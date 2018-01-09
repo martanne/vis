@@ -509,11 +509,25 @@ EOF
 		$LDFLAGS $LDFLAGS_LUA $LDFLAGS_LPEG -o "$tmpo" >/dev/null 2>&1 ; then
 		CONFIG_LPEG=1
 		printf "yes\n"
-		break
 	else
-		printf "no\n"
-		CFLAGS_LPEG=""
-		LDFLAGS_LPEG=""
+		for liblpeg in lua5.3-lpeg lua5.2-lpeg; do
+			printf "\n checking for %s... " "$liblpeg"
+			if test "$have_pkgconfig" = "yes" ; then
+				CFLAGS_LPEG=$(pkg-config --cflags $liblpeg 2>/dev/null)
+				LDFLAGS_LPEG=$(pkg-config --libs $liblpeg 2>/dev/null)
+			fi
+
+			if $CC $CFLAGS $CFLAGS_LUA $CFLAGS_LPEG "$tmpc" \
+				$LDFLAGS $LDFLAGS_LUA $LDFLAGS_LPEG -o "$tmpo" >/dev/null 2>&1 ; then
+				CONFIG_LPEG=1
+				printf "yes\n"
+				break
+			else
+				printf "no"
+				CFLAGS_LPEG=""
+				LDFLAGS_LPEG=""
+			fi
+		done
 	fi
 
 	test "$lpeg" = "yes" -a $CONFIG_LPEG -ne 1 && fail "$0: cannot find liblpeg"
