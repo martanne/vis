@@ -4,7 +4,7 @@ local MAX_CONTEXT = 32768
 
 vis:textobject_new("ii", function(win, pos)
 
-	if win.syntax == nil or not vis.lexers then
+	if not win.syntax or not vis.lexers.load then
 		return nil
 	end
 

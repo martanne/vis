@@ -1,7 +1,7 @@
 -- increment/decrement number in dec/hex/oct format
 local lexer = vis.lexers
 local lpeg = vis.lpeg
-if not lexer or not lpeg then return end
+if not lexer.load or not lpeg then return end
 
 local Cp = lpeg.Cp()
 local dec_num = lpeg.S('+-')^-1 * lexer.dec_num

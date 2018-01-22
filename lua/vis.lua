@@ -113,6 +113,8 @@ vis.module_exist = function(vis, name)
 	return false
 end
 
+vis.lexers = {}
+
 if not vis:module_exist('lpeg') then
 	vis:info('WARNING: could not find lpeg module')
 elseif not vis:module_exist('lexer') then
@@ -235,7 +237,6 @@ vis.events = events
 vis.types.window.set_syntax = function(win, syntax)
 
 	local lexers = vis.lexers
-	if not lexers then return false end
 
 	win:style_define(win.STYLE_DEFAULT, lexers.STYLE_DEFAULT or '')
 	win:style_define(win.STYLE_CURSOR, lexers.STYLE_CURSOR or '')
@@ -256,6 +257,7 @@ vis.types.window.set_syntax = function(win, syntax)
 		return true
 	end
 
+	if not lexers.load then return false end
 	local lexer = lexers.load(syntax)
 	if not lexer then return false end
 

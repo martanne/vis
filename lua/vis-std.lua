@@ -14,7 +14,7 @@ vis:option_register("theme", "string", function(name)
 		require(theme)
 	end
 
-	if vis.lexers then vis.lexers.lexers = {} end
+	vis.lexers.lexers = {}
 
 	for win in vis:windows() do
 		win:set_syntax(win.syntax)
@@ -38,9 +38,9 @@ vis:option_register("horizon", "number", function(horizon)
 end, "Number of bytes to consider for syntax highlighting")
 
 vis.events.subscribe(vis.events.WIN_HIGHLIGHT, function(win)
-	if win.syntax == nil or vis.lexers == nil then return end
+	if not win.syntax or not vis.lexers.load then return end
 	local lexer = vis.lexers.load(win.syntax, nil, true)
-	if lexer == nil then return end
+	if not lexer then return end
 
 	-- TODO: improve heuristic for initial style
 	local viewport = win.viewport
