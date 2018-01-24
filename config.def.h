@@ -330,7 +330,7 @@ static const KeyBinding bindings_readline[] = {
 static const KeyBinding bindings_insert[] = {
 	{ "<C-d>",              ALIAS("<vis-operator-shift-left><vis-operator-shift-left>") },
 	{ "<C-i>",              ALIAS("<Tab>")                              },
-	{ "<C-j>",              ALIAS("<Enter>")                            },
+	{ "<C-j>",              ALIAS("<vis-insert-verbatim>u000a")         },
 	{ "<C-m>",              ALIAS("<Enter>")                            },
 	{ "<C-r>",              ACTION(INSERT_REGISTER)                     },
 	{ "<C-t>",              ALIAS("<vis-operator-shift-right><vis-operator-shift-right>") },
