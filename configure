@@ -190,7 +190,8 @@ tmpo="./conf$$-$PPID-$i.o"
 test "$i" -gt 50 && fail "$0: cannot create temporary file $tmpc"
 done
 set +C
-trap 'rm -f "$tmpc" "$tmpo"' EXIT INT QUIT TERM HUP
+trap 'rm -f "$tmpc" "$tmpo"' EXIT QUIT TERM HUP
+trap 'rm -f "$tmpc" "$tmpo" && echo && fail "$0: interrupted"' INT
 
 #
 # Find a C compiler to use
