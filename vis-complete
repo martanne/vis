@@ -36,28 +36,30 @@ else
 	# Expand to absolute path because of the -path option below.
 	case $PATTERN in
 		/*)
+			XPATTERN=$PATTERN
 			;;
 		'~'|'~/'*)
-			PATTERN=$HOME$(echo $PATTERN | tail -c +2)
+			XPATTERN=$HOME$(echo $PATTERN | tail -c +2)
 			;;
 		*)
-			PATTERN=$PWD/$PATTERN
+			XPATTERN=$PWD/$PATTERN
 			;;
 	esac
 
 	# The first path condition rules out paths that start with "." unless
 	# they start with "..". That way, hidden paths should stay hidden, but
 	# non-normalised paths should still show up.
-	find $(dirname "$PATTERN") \
+	find $(dirname "$XPATTERN") \
 		-name '.*' -prune \
 		-o \( \
 			! -name '.*' \
-			-a -path "$(glob_quote "$PATTERN")*" \
+			-a -path "$(glob_quote "$XPATTERN")*" \
 			-print \
 		\) 2>/dev/null |
 		head -n $FIND_FILE_LIMIT |
-		sort
+		sort |
+		xargs -n1 basename
 fi |
 	vis-menu -b |
-	sed "s/^$(printf "%s" "$PATTERN" | sed 's:/:\\/:g' )//" |
+	sed "s/^$(basename $PATTERN)//" |
 	tr -d '\n'
