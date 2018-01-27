@@ -52,7 +52,7 @@ local qualifier = token(l.LABEL,
 
 local operator = token(l.OPERATOR,
   pword{'and', 'or', 'xor', 'not', 'addressof', 'digestof'}
-  + lpeg.Cmt(S('+-*/%<>=!')^1, function(input, index, op)
+  + lpeg.Cmt(S('+-*/%<>=!~')^1, function(input, index, op)
       local ops = {
         ['+'] = true, ['-'] = true, ['*'] = true, ['/'] = true, ['%'] = true,
         ['+~'] = true, ['-~'] = true, ['*~'] = true, ['/~'] = true,
