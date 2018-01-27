@@ -58,8 +58,8 @@ else
 		\) 2>/dev/null |
 		head -n $FIND_FILE_LIMIT |
 		sort |
-		xargs -n1 basename
+		sed "s|^$(dirname $XPATTERN)/||"
 fi |
 	vis-menu -b |
-	sed "s/^$(basename $PATTERN)//" |
+	sed "s|^$(basename $PATTERN)$(echo $PATTERN | tail -c 2 | fgrep /)||" |
 	tr -d '\n'
