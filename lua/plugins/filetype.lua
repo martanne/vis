@@ -344,7 +344,7 @@ vis.ftdetect.filetypes = {
 		mime = { "text/x-scala" },
 	},
 	scheme = {
-		ext = { "%.sch$", "%.scm$", "%.sld$" },
+		ext = { "%.sch$", "%.scm$", "%.sld$", "%.sls$", "%.ss$" },
 	},
 	smalltalk = {
 		ext = { "%.changes$", "%.st$", "%.sources$" },
