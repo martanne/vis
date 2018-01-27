@@ -141,12 +141,12 @@ const TextObject vis_textobjects[] = {
 		.txt = text_object_angle_bracket,
 		.type = TEXTOBJECT_DELIMITED_INNER,
 	},
-	[VIS_TEXTOBJECT_OUTER_PARANTHESE] = {
-		.txt = text_object_paranthese,
+	[VIS_TEXTOBJECT_OUTER_PARENTHESIS] = {
+		.txt = text_object_parenthesis,
 		.type = TEXTOBJECT_DELIMITED_OUTER,
 	},
-	[VIS_TEXTOBJECT_INNER_PARANTHESE] = {
-		.txt = text_object_paranthese,
+	[VIS_TEXTOBJECT_INNER_PARENTHESIS] = {
+		.txt = text_object_parenthesis,
 		.type = TEXTOBJECT_DELIMITED_INNER,
 	},
 	[VIS_TEXTOBJECT_OUTER_QUOTE] = {
