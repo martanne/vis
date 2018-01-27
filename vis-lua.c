@@ -2703,6 +2703,7 @@ void vis_lua_init(Vis *vis) {
 		const char *name;
 	} textobjects[] = {
 		{ VIS_TEXTOBJECT_INNER_WORD, "text_object_word" },
+		{ VIS_TEXTOBJECT_INNER_LONGWORD, "text_object_longword" },
 	};
 
 	for (size_t i = 0; i < LENGTH(textobjects); i++) {
