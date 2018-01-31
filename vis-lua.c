@@ -1359,6 +1359,18 @@ static int pipe_func(lua_State *L) {
 	return 3;
 }
 /***
+ * Redraw complete user interface.
+ *
+ * Will trigger redraw events, make sure to avoid recursive events.
+ *
+ * @function draw
+ */
+static int redraw(lua_State *L) {
+	Vis *vis = obj_ref_check(L, 1, "vis");
+	vis_redraw(vis);
+	return 0;
+}
+/***
  * Currently active window.
  * @tfield Window win
  * @see windows
@@ -1480,6 +1492,7 @@ static const struct luaL_Reg vis_lua[] = {
 	{ "action_register", action_register },
 	{ "exit", exit_func },
 	{ "pipe", pipe_func },
+	{ "redraw", redraw },
 	{ "__index", vis_index },
 	{ "__newindex", vis_newindex },
 	{ NULL, NULL },
