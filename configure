@@ -26,7 +26,7 @@ Fine tuning of the installation directories:
 Optional features:
   --enable-curses         build with Curses terminal output [yes]
   --enable-lua            build with Lua support [auto]
-  --enable-lpeg-static    build with support for statically linked LPeg [auto]
+  --enable-lpeg-static    build with LPeg static linking [auto]
   --enable-tre            build with TRE regex support [auto]
   --enable-selinux        build with SELinux support [auto]
   --enable-acl            build with POSIX ACL support [auto]
@@ -482,7 +482,7 @@ CONFIG_LPEG=0
 
 if test $CONFIG_LUA -eq 1 -a "$lpeg" != "no" ; then
 
-	printf "checking for statically linked liblpeg ... "
+	printf "checking for Lua statically linked liblpeg... "
 
 cat > "$tmpc" <<EOF
 #include <lua.h>
@@ -511,8 +511,9 @@ EOF
 		CONFIG_LPEG=1
 		printf "yes\n"
 	else
+		printf "no\n"
 		for liblpeg in lua5.3-lpeg lua5.2-lpeg; do
-			printf "\n checking for %s... " "$liblpeg"
+			printf " checking for static %s... " "$liblpeg"
 			if test "$have_pkgconfig" = "yes" ; then
 				CFLAGS_LPEG=$(pkg-config --cflags $liblpeg 2>/dev/null)
 				LDFLAGS_LPEG=$(pkg-config --libs $liblpeg 2>/dev/null)
@@ -524,7 +525,7 @@ EOF
 				printf "yes\n"
 				break
 			else
-				printf "no"
+				printf "no\n"
 				CFLAGS_LPEG=""
 				LDFLAGS_LPEG=""
 			fi
