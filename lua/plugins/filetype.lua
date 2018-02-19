@@ -303,6 +303,9 @@ vis.ftdetect.filetypes = {
 		ext = { "%.sc$", "%.py$", "%.pyw$" },
 		mime = { "text/x-python" },
 	},
+	reason = {
+		ext = { "%.re$" },
+	},
 	rc = {
 		ext = { "%.rc$", "%.es$" },
 	},
