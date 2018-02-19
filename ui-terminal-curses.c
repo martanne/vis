@@ -41,7 +41,7 @@
 #  define NCURSES_EXT_COLORS 0
 # endif
 # if !NCURSES_EXT_COLORS
-#  define MAX_COLOR_PAIRS 256
+#  define MAX_COLOR_PAIRS MIN(COLOR_PAIRS, 256)
 # endif
 #endif
 #ifndef MAX_COLOR_PAIRS
@@ -179,7 +179,7 @@ static short color_pair_get(short fg, short bg) {
 		if (default_bg == -1)
 			default_bg = CELL_COLOR_BLACK;
 		has_default_colors = (use_default_colors() == OK);
-		color_pairs_max = MIN(COLOR_PAIRS, MAX_COLOR_PAIRS);
+		color_pairs_max = MIN(MAX_COLOR_PAIRS, SHRT_MAX);
 		if (COLORS)
 			color2palette = calloc((COLORS + 2) * (COLORS + 2), sizeof(short));
 	}
