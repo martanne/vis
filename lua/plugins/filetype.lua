@@ -322,7 +322,7 @@ vis.ftdetect.filetypes = {
 		ext = { "%.R$", "%.Rout$", "%.Rhistory$", "%.Rt$", "Rout.save", "Rout.fail" },
 	},
 	ruby = {
-		ext = { "%.Rakefile$", "%.rake$", "%.rb$", "%.rbw$" },
+		ext = { "%.Rakefile$", "%.rake$", "%.rb$", "%.rbw$", "^Vagrantfile$" },
 		mime = { "text/x-ruby" },
 	},
 	rust = {
