@@ -411,7 +411,7 @@ vis.ftdetect.filetypes = {
 		ext = {"%.xtend$" },
 	},
 	yaml = {
-		ext = { "%.yaml$" },
+		ext = { "%.yaml$", "%.yml$" },
 		mime = { "text/x-yaml" },
 	},
 }
