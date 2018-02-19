@@ -1343,8 +1343,13 @@ static bool cmd_delete(Vis *vis, Win *win, Command *cmd, const char *argv[], Sel
 static bool cmd_guard(Vis *vis, Win *win, Command *cmd, const char *argv[], Selection *sel, Filerange *range) {
 	if (!win)
 		return false;
-	bool match = !cmd->regex || !text_search_range_forward(win->file->text, range->start,
-		text_range_size(range), cmd->regex, 0, NULL, 0);
+	bool match = false;
+	RegexMatch captures[1];
+	size_t len = text_range_size(range);
+	if (!cmd->regex)
+		match = true;
+	else if (!text_search_range_forward(win->file->text, range->start, len, cmd->regex, 1, captures, 0))
+		match = captures[0].start < range->end;
 	if ((count_evaluate(cmd) && match) ^ (argv[0][0] == 'v'))
 		return sam_execute(vis, win, cmd->cmd, sel, range);
 	view_selections_dispose_force(sel);
