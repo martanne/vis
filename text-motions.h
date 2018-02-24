@@ -55,6 +55,9 @@ size_t text_line_char_prev(Text*, size_t pos);
 /* move to the next/previous empty line */
 size_t text_line_empty_next(Text*, size_t pos);
 size_t text_line_empty_prev(Text*, size_t pos);
+/* move to start of next/previous blank line */
+size_t text_line_blank_next(Text*, size_t pos);
+size_t text_line_blank_prev(Text*, size_t pos);
 /* move to same offset in previous/next line */
 size_t text_line_up(Text*, size_t pos);
 size_t text_line_down(Text*, size_t pos);

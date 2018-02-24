@@ -481,6 +481,29 @@ size_t text_line_empty_prev(Text *txt, size_t pos) {
 	return it.pos;
 }
 
+size_t text_line_blank_next(Text *txt, size_t pos) {
+	char c;
+	Iterator it = text_iterator_get(txt, pos);
+	while (text_iterator_byte_find_next(&it, '\n')) {
+		size_t n = it.pos;
+		while (text_iterator_byte_next(&it, &c) && blank(c));
+		if (c == '\n')
+			return n + 1;
+	}
+	return it.pos;
+}
+
+size_t text_line_blank_prev(Text *txt, size_t pos) {
+	char c;
+	Iterator it = text_iterator_get(txt, pos);
+	while (text_iterator_byte_find_prev(&it, '\n')) {
+		while (text_iterator_byte_prev(&it, &c) && blank(c));
+		if (c == '\n')
+			return it.pos + 1;
+	}
+	return it.pos;
+}
+
 size_t text_block_start(Text *txt, size_t pos) {
 	Filerange r = text_object_curly_bracket(txt, pos-1);
 	return text_range_valid(&r) ? r.start-1 : pos;
