@@ -28,6 +28,7 @@
 #include "vis-core.h"
 #include "sam.h"
 #include "ui.h"
+#include "vis-subprocess.h"
 
 
 static void macro_replay(Vis *vis, const Macro *macro);
@@ -1429,7 +1430,8 @@ int vis_run(Vis *vis) {
 
 		vis_update(vis);
 		idle.tv_sec = vis->mode->idle_timeout;
-		int r = pselect(1, &fds, NULL, NULL, timeout, &emptyset);
+		int r = pselect(vis_process_before_tick(&fds) + 1, &fds, NULL, NULL,
+		                timeout, &emptyset);
 		if (r == -1 && errno == EINTR)
 			continue;
 
@@ -1437,6 +1439,7 @@ int vis_run(Vis *vis) {
 			/* TODO save all pending changes to a ~suffixed file */
 			vis_die(vis, "Error in mainloop: %s\n", strerror(errno));
 		}
+		vis_process_tick(vis, &fds);
 
 		if (!FD_ISSET(STDIN_FILENO, &fds)) {
 			if (vis->mode->idle)
