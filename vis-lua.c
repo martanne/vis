@@ -164,6 +164,9 @@ void vis_lua_win_close(Vis *vis, Win *win) { }
 void vis_lua_win_highlight(Vis *vis, Win *win) { }
 void vis_lua_win_status(Vis *vis, Win *win) { window_status_update(vis, win); }
 void vis_lua_term_csi(Vis *vis, const long *csi) { }
+void vis_lua_process_response(Vis *vis, const char *name,
+                              char *buffer, size_t len, ResponseType rtype) { }
+
 
 #else
 
@@ -1378,6 +1381,56 @@ static int redraw(lua_State *L) {
 	return 0;
 }
 /***
+ * Closes a stream returned by @{Vis:communicate}.
+ *
+ * @function close
+ * @tparam io.file inputfd the stream to be closed
+ * @treturn bool identical to @{io.close}
+ */
+static int close_subprocess(lua_State *L) {
+	luaL_Stream *file = luaL_checkudata(L, -1, "FILE*");
+	int result = fclose(file->f);
+	if (result == 0) {
+		file->f = NULL;
+		file->closef = NULL;
+	}
+	return luaL_fileresult(L, result == 0, NULL);
+}
+/***
+ * Open new process and return its input stream (stdin).
+ * If the stream is closed (by calling the close method or by being removed by a garbage collector)
+ * the spawned process will be killed by SIGTERM.
+ * When the process will quit or will output anything to stdout or stderr,
+ * the @{process_response} event will be fired.
+ *
+ * The editor core won't be blocked while the external process is running.
+ *
+ * @function communicate
+ * @tparam string name the name of subprocess (to distinguish processes in the @{process_response} event)
+ * @tparam string command the command to execute
+ * @return the file handle to write data to the process, in case of error the return values are equivalent to @{io.open} error values.
+ */
+static int communicate_func(lua_State *L) {
+
+	typedef struct {
+		/* Lua stream structure for the process input stream */
+		luaL_Stream stream;
+		Process *handler;
+	} ProcessStream;
+
+	Vis *vis = obj_ref_check(L, 1, "vis");
+	const char *name = luaL_checkstring(L, 2);
+	const char *cmd = luaL_checkstring(L, 3);
+	ProcessStream *inputfd = (ProcessStream *)lua_newuserdata(L, sizeof(ProcessStream));
+	luaL_setmetatable(L, LUA_FILEHANDLE);
+	inputfd->handler = vis_process_communicate(vis, name, cmd, &(inputfd->stream.closef));
+	if (inputfd->handler) {
+		inputfd->stream.f = fdopen(inputfd->handler->inpfd, "w");
+		inputfd->stream.closef = &close_subprocess;
+	}
+	return inputfd->stream.f ? 1 : luaL_fileresult(L, 0, name);
+}
+/***
  * Currently active window.
  * @tfield Window win
  * @see windows
@@ -1590,6 +1643,7 @@ static const struct luaL_Reg vis_lua[] = {
 	{ "exit", exit_func },
 	{ "pipe", pipe_func },
 	{ "redraw", redraw },
+	{ "communicate", communicate_func },
 	{ "__index", vis_index },
 	{ "__newindex", vis_newindex },
 	{ NULL, NULL },
@@ -3535,6 +3589,43 @@ void vis_lua_term_csi(Vis *vis, const long *csi) {
 		for (int i = 0; i < nargs; i++)
 			lua_pushinteger(L, csi[2 + i]);
 		pcall(vis, L, 1 + nargs, 0);
+	}
+	lua_pop(L, 1);
+}
+/***
+ * The response received from the process started via @{Vis:communicate}.
+ * @function process_response
+ * @tparam string name the name of process given to @{Vis:communicate}
+ * @tparam string response_type can be "STDOUT" or "STDERR" if new output was received in corresponding channel, "SIGNAL" if the process was terminated by a signal or "EXIT" when the process terminated normally
+ * @tparam int the exit code number if response\_type is "EXIT", or the signal number if response\_type is "SIGNAL"
+ * @tparam string buffer the available content sent by process
+ */
+void vis_lua_process_response(Vis *vis, const char *name,
+                              char *buffer, size_t len, ResponseType rtype) {
+	lua_State *L = vis->lua;
+	if (!L) {
+		return;
+	}
+	vis_lua_event_get(L, "process_response");
+	if (lua_isfunction(L, -1)) {
+		lua_pushstring(L, name);
+		switch (rtype) {
+		case STDOUT: lua_pushstring(L, "STDOUT"); break;
+		case STDERR: lua_pushstring(L, "STDERR"); break;
+		case SIGNAL: lua_pushstring(L, "SIGNAL"); break;
+		case EXIT: lua_pushstring(L, "EXIT"); break;
+		}
+		switch (rtype) {
+		case EXIT:
+		case SIGNAL:
+			lua_pushinteger(L, len);
+			lua_pushnil(L);
+			break;
+		default:
+			lua_pushnil(L);
+			lua_pushlstring(L, buffer, len);
+		}
+		pcall(vis, L, 4, 0);
 	}
 	lua_pop(L, 1);
 }
