@@ -446,19 +446,17 @@ size_t text_paragraph_next(Text *txt, size_t pos) {
 	char c;
 	Iterator it = text_iterator_get(txt, pos);
 
-	while (text_iterator_byte_get(&it, &c) && c == '\n')
+	while (text_iterator_byte_get(&it, &c) && (c == '\n' || blank(c)))
 		text_iterator_char_next(&it, NULL);
-	return text_line_empty_next(txt, it.pos);
+	return text_line_blank_next(txt, it.pos);
 }
 
 size_t text_paragraph_prev(Text *txt, size_t pos) {
 	char c;
 	Iterator it = text_iterator_get(txt, pos);
 
-	/* c == \0 catches starting the search at EOF */
-	while (text_iterator_byte_get(&it, &c) && (c == '\n' || c == '\0'))
-		text_iterator_byte_prev(&it, NULL);
-	return text_line_empty_prev(txt, it.pos);
+	while (text_iterator_byte_prev(&it, &c) && (c == '\n' || blank(c)));
+	return text_line_blank_prev(txt, it.pos);
 }
 
 size_t text_line_empty_next(Text *txt, size_t pos) {
