@@ -2176,6 +2176,7 @@ static const char *wscroll(Vis *vis, const char *keys, const Arg *arg) {
 			view_scroll_down(view, count);
 		break;
 	}
+	vis_count_set(vis, VIS_COUNT_UNKNOWN);
 	return keys;
 }
 
@@ -2188,6 +2189,7 @@ static const char *wslide(Vis *vis, const char *keys, const Arg *arg) {
 		view_slide_down(view, count);
 	else
 		view_slide_up(view, count);
+	vis_count_set(vis, VIS_COUNT_UNKNOWN);
 	return keys;
 }
 
