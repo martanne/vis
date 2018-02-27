@@ -304,6 +304,7 @@ enum {
 	VIS_ACTION_TEXT_OBJECT_LONGWORD_INNER,
 	VIS_ACTION_TEXT_OBJECT_SENTENCE,
 	VIS_ACTION_TEXT_OBJECT_PARAGRAPH,
+	VIS_ACTION_TEXT_OBJECT_PARAGRAPH_OUTER,
 	VIS_ACTION_TEXT_OBJECT_SQUARE_BRACKET_OUTER,
 	VIS_ACTION_TEXT_OBJECT_SQUARE_BRACKET_INNER,
 	VIS_ACTION_TEXT_OBJECT_PARANTHESE_OUTER,
@@ -1117,6 +1118,11 @@ static const KeyAction vis_action[] = {
 		"vis-textobject-paragraph",
 		VIS_HELP("A paragraph")
 		textobj, { .i = VIS_TEXTOBJECT_PARAGRAPH }
+	},
+	[VIS_ACTION_TEXT_OBJECT_PARAGRAPH_OUTER] = {
+		"vis-textobject-paragraph-outer",
+		VIS_HELP("A paragraph (outer variant)")
+		textobj, { .i = VIS_TEXTOBJECT_PARAGRAPH_OUTER }
 	},
 	[VIS_ACTION_TEXT_OBJECT_SQUARE_BRACKET_OUTER] = {
 		"vis-textobject-square-bracket-outer",

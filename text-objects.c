@@ -205,6 +205,12 @@ Filerange text_object_paragraph(Text *txt, size_t pos) {
 	return r;
 }
 
+Filerange text_object_paragraph_outer(Text *txt, size_t pos) {
+	Filerange p1 = text_object_paragraph(txt, pos);
+	Filerange p2 = text_object_paragraph(txt, p1.end);
+	return text_range_union(&p1, &p2);
+}
+
 static Filerange text_object_bracket(Text *txt, size_t pos, char type) {
 	char c, open, close;
 	int opened = 1, closed = 1;

@@ -114,6 +114,9 @@ const TextObject vis_textobjects[] = {
 	[VIS_TEXTOBJECT_PARAGRAPH] = {
 		.txt = text_object_paragraph,
 	},
+	[VIS_TEXTOBJECT_PARAGRAPH_OUTER] = {
+		.txt = text_object_paragraph_outer,
+	},
 	[VIS_TEXTOBJECT_OUTER_SQUARE_BRACKET] = {
 		.txt = text_object_square_bracket,
 		.type = TEXTOBJECT_DELIMITED_OUTER,

@@ -29,6 +29,7 @@ Filerange text_object_line(Text*, size_t pos);
 Filerange text_object_line_inner(Text*, size_t pos);
 Filerange text_object_sentence(Text*, size_t pos);
 Filerange text_object_paragraph(Text*, size_t pos);
+Filerange text_object_paragraph_outer(Text*, size_t pos);
 
 /* these are inner text objects i.e. the delimiters themself are not
  * included in the range */
