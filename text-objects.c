@@ -7,6 +7,7 @@
 #include "text-util.h"
 #include "util.h"
 
+#define blank(c) ((c) == ' ' || (c) == '\t')
 #define space(c) (isspace((unsigned char)c))
 #define boundary(c) (isboundary((unsigned char)c))
 
@@ -169,10 +170,38 @@ Filerange text_object_sentence(Text *txt, size_t pos) {
 	return r;
 }
 
+static bool text_line_blank(Text *txt, size_t pos) {
+	char c;
+	bool b = true;
+	Iterator it = text_iterator_get(txt, text_line_begin(txt, pos));
+	while (text_iterator_byte_get(&it, &c) && c != '\n' && (b = blank(c)))
+		text_iterator_char_next(&it, NULL);
+	return b;
+}
+
 Filerange text_object_paragraph(Text *txt, size_t pos) {
+	char c;
 	Filerange r;
-	r.start = text_paragraph_prev(txt, pos);
-	r.end = text_paragraph_next(txt, pos);
+	if (text_line_blank(txt, pos)) {
+		Iterator it = text_iterator_get(txt, pos), rit = it;
+		while (text_iterator_byte_get(&rit, &c) && (c == '\n' || blank(c)))
+			text_iterator_byte_prev(&rit, NULL);
+		if (c == '\n' || blank(c))
+			r.start = rit.pos;
+		else
+			r.start = text_line_next(txt, rit.pos);
+		while (text_iterator_byte_get(&it, &c) && (c == '\n' || blank(c)))
+			text_iterator_byte_next(&it, NULL);
+		if (it.pos == text_size(txt))
+			r.end = rit.pos;
+		else
+			r.end = text_line_begin(txt, it.pos);
+	} else {
+		r.start = text_line_blank_prev(txt, pos);
+		if (r.start > 0 || (text_byte_get(txt, r.start, &c) && c == '\n'))
+			r.start = text_line_next(txt, r.start);
+		r.end = text_line_blank_next(txt, pos);
+	}
 	return r;
 }
 
