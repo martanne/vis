@@ -1,5 +1,5 @@
 -- Copyright 2006-2017 Mitchell mitchell.att.foicica.com. See LICENSE.
--- Reason LPeg lexer.
+-- Reason (https://reasonml.github.io/) LPeg lexer.
 
 local l = require('lexer')
 local token, word_match = l.token, l.word_match
@@ -39,7 +39,6 @@ local type = token(l.TYPE, word_match{
 })
 
 -- Functions.
-
 local func = token(l.FUNCTION, word_match{
   'raise', 'invalid_arg', 'failwith', 'compare', 'min', 'max', 'succ', 'pred',
   'mod', 'abs', 'max_int', 'min_int', 'sqrt', 'exp', 'log', 'log10', 'cos',
