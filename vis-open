@@ -49,10 +49,15 @@ if [ $# -eq 1 -a "$ALLOW_AUTO_SELECT" = 1 ]; then
 		exec "$0" -p "$VIS_MENU_PROMPT" -f .. $(ls -1)
 	else
 		# We've found a single item, and it's not a directory,
-		# so it must be a filename (or file-like thing) to open.
-		cd "$(dirname "$1")"
-		echo "$(pwd -P)"/"$(basename "$1")"
-		exit 0
+		# so it must be a filename (or file-like thing) to open,
+		# unless the parent directory does not exist.
+		if [ -d "$(dirname "$1")" ]; then
+			cd "$(dirname "$1")"
+			echo "$(pwd -P)"/"$(basename "$1" | sed 's/\*$//')"
+			exit 0
+		else
+			exit 1
+		fi
 	fi
 fi
 

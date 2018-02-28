@@ -2234,6 +2234,14 @@ static int file_mark_get(lua_State *L) {
  * @treturn Range range the range
  */
 
+/***
+ * WORD text object.
+ *
+ * @function text_object_longword
+ * @tparam int pos the position which must be part of the word
+ * @treturn Range range the range
+ */
+
 static int file_text_object(lua_State *L) {
 	Filerange range = text_range_empty();
 	File *file = obj_ref_check(L, 1, VIS_LUA_TYPE_FILE);
