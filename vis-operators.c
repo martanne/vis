@@ -17,10 +17,14 @@ static size_t op_delete(Vis *vis, Text *txt, OperatorContext *c) {
 }
 
 static size_t op_change(Vis *vis, Text *txt, OperatorContext *c) {
+	bool linewise = c->linewise || text_range_is_linewise(txt, &c->range);
 	op_delete(vis, txt, c);
 	size_t pos = c->range.start;
-	if (c->linewise)
-		pos = vis_text_insert_nl(vis, txt, pos > 0 ? pos-1 : pos);
+	if (linewise) {
+		size_t newpos = vis_text_insert_nl(vis, txt, pos > 0 ? pos-1 : pos);
+		if (pos > 0)
+			pos = newpos;
+	}
 	return pos;
 }
 

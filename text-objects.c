@@ -375,7 +375,7 @@ Filerange text_range_linewise(Text *txt, Filerange *rin) {
 }
 
 bool text_range_is_linewise(Text *txt, Filerange *r) {
-	return text_range_valid(r) &&
+	return text_range_size(r) > 0 &&
 	       r->start == text_line_begin(txt, r->start) &&
 	       r->end == text_line_begin(txt, r->end);
 }
