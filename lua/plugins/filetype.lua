@@ -303,6 +303,9 @@ vis.ftdetect.filetypes = {
 		ext = { "%.sc$", "%.py$", "%.pyw$" },
 		mime = { "text/x-python" },
 	},
+	reason = {
+		ext = { "%.re$" },
+	},
 	rc = {
 		ext = { "%.rc$", "%.es$" },
 	},
@@ -322,7 +325,7 @@ vis.ftdetect.filetypes = {
 		ext = { "%.R$", "%.Rout$", "%.Rhistory$", "%.Rt$", "Rout.save", "Rout.fail" },
 	},
 	ruby = {
-		ext = { "%.Rakefile$", "%.rake$", "%.rb$", "%.rbw$" },
+		ext = { "%.Rakefile$", "%.rake$", "%.rb$", "%.rbw$", "^Vagrantfile$" },
 		mime = { "text/x-ruby" },
 	},
 	rust = {
@@ -411,7 +414,7 @@ vis.ftdetect.filetypes = {
 		ext = {"%.xtend$" },
 	},
 	yaml = {
-		ext = { "%.yaml$" },
+		ext = { "%.yaml$", "%.yml$" },
 		mime = { "text/x-yaml" },
 	},
 }
