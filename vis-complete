@@ -2,11 +2,10 @@
 set -e
 
 basic_regex_quote() { printf "%s" "$1" | sed 's|[\\.*^$[]|\\&|g'; }
-glob_quote () { printf "%s" "$1" | sed 's|[\\?*[]]|\\&|g'; }
+join_on_newlines_and_quote() { sed -e :a -e '$!N;s|\n\([^./]\)|\\n\1|;ta;P;D'; }
 
-PATTERN=""
+PREFIX=""
 COMPLETE_WORD=0
-FIND_FILE_LIMIT=1000
 
 while [ $# -gt 0 ]; do
 	case "$1" in
@@ -22,7 +21,17 @@ while [ $# -gt 0 ]; do
 		shift
 		;;
 	*)
-		PATTERN="$1"
+		PREFIX="$1"
+		BASENAME=$(basename "$PREFIX")
+		if [ "${PREFIX#\~}" != "$PREFIX" ]; then
+			PATHNAME=$HOME"${PREFIX#\~}"
+		else
+			PATHNAME="$PREFIX"
+			if [ "${PATHNAME#/}" = "$PATHNAME" ]; then
+				PATHNAME=./"$PATHNAME"
+				BASENAME="$PATHNAME"
+			fi
+		fi
 		break
 		;;
 	esac
@@ -30,36 +39,26 @@ done
 
 if [ $COMPLETE_WORD = 1 ]; then
 	tr -cs '[:alnum:]_' '\n' |
-		grep "^$(basic_regex_quote "$PATTERN")." |
+		grep "^$(basic_regex_quote "$PREFIX")." |
 		sort -u
 else
-	# Expand to absolute path because of the -path option below.
-	case $PATTERN in
-		/*)
-			XPATTERN=$PATTERN
-			;;
-		'~'|'~/'*)
-			XPATTERN=$HOME$(echo $PATTERN | tail -c +2)
-			;;
-		*)
-			XPATTERN=$PWD/$PATTERN
-			;;
-	esac
-
-	# The first path condition rules out paths that start with "." unless
-	# they start with "..". That way, hidden paths should stay hidden, but
-	# non-normalised paths should still show up.
-	find $(dirname "$XPATTERN") \
-		-name '.*' -prune \
-		-o \( \
-			! -name '.*' \
-			-a -path "$(glob_quote "$XPATTERN")*" \
-			-print \
-		\) 2>/dev/null |
-		head -n $FIND_FILE_LIMIT |
-		sort |
-		sed "s|^$(dirname $XPATTERN)/||"
+	if [ "${PATHNAME%/}" = "$PATHNAME" ]; then
+		DIR=$(dirname "$PATHNAME")
+	else
+		DIR="${PATHNAME%/}"
+	fi
+	if [ "${BASENAME#.}" = "$BASENAME" ]; then
+		# Prune dot files but allow prefixes to contain ./ and ../
+		find "$DIR" -maxdepth 1 -name '.[^.]*' -prune -o \( -path "$PATHNAME""*" -print \)
+	else
+		# Complete dot files
+		find "$DIR" -maxdepth 1 -path "$PATHNAME""*"
+	fi |
+	# Handle *accidental* matches with embedded newlines:
+	join_on_newlines_and_quote |
+	sort |
+	sed "s|$(basic_regex_quote $(echo ""$DIR""/ | tr -s / /))||"
 fi |
 	vis-menu -b |
-	sed "s|^$(basename $PATTERN)$(echo $PATTERN | tail -c 2 | fgrep /)||" |
+	sed "s|"$(basic_regex_quote $(basename "$PATHNAME"))"||" |
 	tr -d '\n'
