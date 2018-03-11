@@ -360,7 +360,7 @@ void view_draw(View *view) {
 			 * wide character. advance file position and read
 			 * another junk into buffer.
 			 */
-			rem = text_bytes_get(view->text, pos, size, text);
+			rem = text_bytes_get(view->text, pos+prev_cell.len, size, text);
 			text[rem] = '\0';
 			cur = text;
 			continue;
