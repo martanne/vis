@@ -37,6 +37,7 @@ static int str_next_char(tre_char_t *c, unsigned int *pos_add, void *context) {
 			size_t len = rem < plen ? rem : plen;
 			size_t wclen = mbrtowc(c, it->text, len, &ps);
 			if (wclen == (size_t)-1 && errno == EILSEQ) {
+				ps = (mbstate_t){0};
 				*c = L'\0';
 				text_iterator_codepoint_next(it, NULL);
 				break;

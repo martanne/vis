@@ -63,6 +63,7 @@ int text_char_count(const char *data, size_t len) {
 		wchar_t wc;
 		size_t wclen = mbrtowc(&wc, data, len, &ps);
 		if (wclen == (size_t)-1 && errno == EILSEQ) {
+			ps = (mbstate_t){0};
 			count++;
 			while (!ISUTF8(*data))
 				data++, len--;
@@ -93,6 +94,7 @@ int text_string_width(const char *data, size_t len) {
 		wchar_t wc;
 		size_t wclen = mbrtowc(&wc, s, len, &ps);
 		if (wclen == (size_t)-1 && errno == EILSEQ) {
+			ps = (mbstate_t){0};
 			/* assume a replacement symbol will be displayed */
 			width++;
 			wclen = 1;

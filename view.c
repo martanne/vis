@@ -352,6 +352,7 @@ void view_draw(View *view) {
 			/* ok, we encountered an invalid multibyte sequence,
 			 * replace it with the Unicode Replacement Character
 			 * (FFFD) and skip until the start of the next utf8 char */
+			mbstate = (mbstate_t){0};
 			for (len = 1; rem > len && !ISUTF8(cur[len]); len++);
 			cell = (Cell){ .data = "\xEF\xBF\xBD", .len = len, .width = 1 };
 		} else if (len == (size_t)-2) {

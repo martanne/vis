@@ -199,6 +199,7 @@ int text_line_width_get(Text *txt, size_t pos) {
 		wchar_t wc;
 		size_t wclen = mbrtowc(&wc, buf, len, &ps);
 		if (wclen == (size_t)-1 && errno == EILSEQ) {
+			ps = (mbstate_t){0};
 			/* assume a replacement symbol will be displayed */
 			width++;
 		} else if (wclen == (size_t)-2) {
@@ -236,6 +237,7 @@ size_t text_line_width_set(Text *txt, size_t pos, int width) {
 		wchar_t wc;
 		size_t wclen = mbrtowc(&wc, buf, len, &ps);
 		if (wclen == (size_t)-1 && errno == EILSEQ) {
+			ps = (mbstate_t){0};
 			/* assume a replacement symbol will be displayed */
 			cur_width++;
 		} else if (wclen == (size_t)-2) {
