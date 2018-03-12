@@ -72,9 +72,27 @@ vis-single-payload.inc: $(EXECUTABLES) lua/*
 	echo '#ifndef VIS_SINGLE_PAYLOAD_H' > $@
 	echo '#define VIS_SINGLE_PAYLOAD_H' >> $@
 	echo 'static unsigned char vis_single_payload[] = {' >> $@
-	tar --mtime='2014-07-15 01:23Z' --owner=0 --group=0 --numeric-owner --mode='a+rX-w' -c \
-		$(EXECUTABLES) $$(find lua -name '*.lua' | LC_ALL=C sort) | xz -T 1 | \
-		od -t x1 -A none -v | sed 's/\([0-9a-f]\+\)/0x\1,/g;$$s/,$$/ };/' >> $@
+	if [ "$$(uname)" = "Linux" ] ; then \
+		tar --mtime='2014-07-15 01:23Z' --owner=0 --group=0 --numeric-owner \
+			--mode='a+rX-w' \
+			-c $(EXECUTABLES) $$(find lua -name '*.lua' | LC_ALL=C sort) \
+			-f - \
+			| xz -T 1 \
+			| od -t x1 -A none -v \
+			| sed 's/\([0-9a-f]\+\)/0x\1,/g;$$s/,$$/ };/' >> $@ ; \
+	elif [ "$$(uname)" = "FreeBSD" ] ; then \
+		gtar --mtime='2014-07-15 01:23Z' --owner=0 --group=0 \
+			--numeric-owner --mode='a+rX-w' \
+			-c $(EXECUTABLES) $$(find lua -name '*.lua' | LC_ALL=C sort) \
+			-f - \
+			| xz -T 1 \
+			| od -t x1 -v \
+			| sed -Ee's/^[0-9a-fA-F]+//' \
+				-e's/([0-9a-f]+)/0x\1,/g' \
+				-e'/^[ ]*$$/d' \
+			| sed -Ee'$$ s/,[^0-9a-f]*$$/ };/' \
+					>> $@ ;\
+	fi
 	echo '#endif' >> $@
 
 vis-single: vis-single.c vis-single-payload.inc

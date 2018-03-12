@@ -9,6 +9,10 @@
 #include <string.h>
 #include <unistd.h>
 
+#ifdef __FreeBSD__
+#include <signal.h>
+#endif
+
 #include <lzma.h>
 #include <libuntar.h>
 
