@@ -380,10 +380,7 @@ void view_draw(View *view) {
 		}
 
 		if (cell.width == 0) {
-			size_t n = strlen(prev_cell.data), i = 0;
-			while (cell.data[i] && n < sizeof(cell.data)-1)
-				prev_cell.data[n++] = cell.data[i++];
-			prev_cell.data[n] = '\0';
+			strncat(prev_cell.data, cell.data, sizeof(prev_cell.data)-strlen(prev_cell.data)-1);
 			prev_cell.len += cell.len;
 		} else {
 			if (prev_cell.len && !view_addch(view, &prev_cell))
