@@ -22,16 +22,16 @@ while [ $# -gt 0 ]; do
 		;;
 	*)
 		PREFIX="$1"
-		BASENAME=$(basename "$PREFIX")
 		if [ $COMPLETE_WORD = 0 ]; then
+			BASENAME=$(basename "$PREFIX")
 			PREFIX=$(printf '%s' "$PREFIX" | tr -s / /)
-		fi
-		if [ "${PREFIX#\~}" != "$PREFIX" ]; then
-			PATHNAME=$HOME"${PREFIX#\~}"
-		else
-			PATHNAME="$PREFIX"
-			if [ "${PATHNAME#/}" = "$PATHNAME" ]; then
-				PATHNAME=./"$PATHNAME"
+			if [ "${PREFIX#\~}" != "$PREFIX" ]; then
+				PATHNAME=$HOME"${PREFIX#\~}"
+			else
+				PATHNAME=$PREFIX
+				if [ "${PATHNAME#/}" = "$PATHNAME" ]; then
+					PATHNAME=./"$PATHNAME"
+				fi
 			fi
 		fi
 		break
