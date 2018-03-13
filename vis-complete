@@ -26,11 +26,11 @@ while [ $# -gt 0 ]; do
 			BASENAME=$(basename "$PREFIX")
 			PREFIX=$(printf '%s' "$PREFIX" | tr -s / /)
 			if [ "${PREFIX#\~}" != "$PREFIX" ]; then
-				PATHNAME=$HOME"${PREFIX#\~}"
+				PATHNAME=$HOME${PREFIX#\~}
 			else
 				PATHNAME=$PREFIX
 				if [ "${PATHNAME#/}" = "$PATHNAME" ]; then
-					PATHNAME=./"$PATHNAME"
+					PATHNAME=./$PATHNAME
 				fi
 			fi
 		fi
@@ -47,21 +47,21 @@ else
 	if [ "${PATHNAME%/}" = "$PATHNAME" ]; then
 		DIR=$(dirname "$PATHNAME")
 	else
-		DIR="${PATHNAME%/}"
+		DIR=${PATHNAME%/}
 		BASENAME=$(printf '%s' "$BASENAME" | sed 's/^\.\{,2\}$//')
 	fi
 	if [ "${BASENAME#.}" = "$BASENAME" ]; then
 		# Prune dot files but allow prefixes to contain ./ and ../
-		find "$DIR" -maxdepth 1 -name '.[^.]*' -prune -o \( -path "$PATHNAME""*" -print \)
+		find "$DIR" -maxdepth 1 -name '.[^.]*' -prune -o \( -path "$PATHNAME*" -print \)
 	else
 		# Complete dot files
-		find "$DIR" -maxdepth 1 -path "$PATHNAME""*"
+		find "$DIR" -maxdepth 1 -path "$PATHNAME*"
 	fi |
 	# Handle *accidental* matches with embedded newlines:
 	join_on_newlines_and_quote |
 	sort |
-	sed "s|$(basic_regex_quote $(printf '%s' ""$DIR""/ | tr -s / /))||"
+	sed "s|$(basic_regex_quote "$(printf '%s' "$DIR"/ | tr -s / /)")||"
 fi |
 	vis-menu -b |
-	sed "s|"$(basic_regex_quote $(basename "$PATHNAME"))"||" |
+	sed "s|$(basic_regex_quote "$(basename "$PATHNAME")")||" |
 	tr -d '\n'
