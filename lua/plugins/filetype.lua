@@ -156,6 +156,9 @@ vis.ftdetect.filetypes = {
 		ext = { "^COMMIT_EDITMSG$" },
 		cmd = { "set colorcolumn 72" },
 	},
+	['git-rebase'] = {
+		ext = { "git%-rebase%-todo" },
+	},
 	glsl = {
 		ext = { "%.glslf$", "%.glslv$" },
 	},
