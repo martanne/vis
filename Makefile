@@ -47,6 +47,7 @@ LDFLAGS_VIS = $(LDFLAGS_AUTO) $(LDFLAGS_TERMKEY) $(LDFLAGS_CURSES) $(LDFLAGS_ACL
 	$(LDFLAGS_SELINUX) $(LDFLAGS_TRE) $(LDFLAGS_LUA) $(LDFLAGS_LPEG) $(LDFLAGS_STD)
 
 STRIP?=strip
+TAR?=tar
 
 all: $(ELF)
 
@@ -72,9 +73,10 @@ vis-single-payload.inc: $(EXECUTABLES) lua/*
 	echo '#ifndef VIS_SINGLE_PAYLOAD_H' > $@
 	echo '#define VIS_SINGLE_PAYLOAD_H' >> $@
 	echo 'static unsigned char vis_single_payload[] = {' >> $@
-	tar --mtime='2014-07-15 01:23Z' --owner=0 --group=0 --numeric-owner --mode='a+rX-w' -c \
+	$(TAR) --mtime='2014-07-15 01:23Z' --owner=0 --group=0 --numeric-owner --mode='a+rX-w' -c \
 		$(EXECUTABLES) $$(find lua -name '*.lua' | LC_ALL=C sort) | xz -T 1 | \
-		od -t x1 -A none -v | sed 's/\([0-9a-f]\+\)/0x\1,/g;$$s/,$$/ };/' >> $@
+		od -t x1 -v | sed -e 's/^[0-9a-fA-F]\{1,\}//g' -e 's/\([0-9a-f]\{2\}\)/0x\1,/g' >> $@
+	echo '};' >> $@
 	echo '#endif' >> $@
 
 vis-single: vis-single.c vis-single-payload.inc
