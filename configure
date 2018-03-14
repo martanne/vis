@@ -482,7 +482,7 @@ CONFIG_LPEG=0
 
 if test $CONFIG_LUA -eq 1 -a "$lpeg" != "no" ; then
 
-	printf "checking for Lua statically linked liblpeg... "
+	printf "checking for Lua statically linked liblpeg...\n"
 
 cat > "$tmpc" <<EOF
 #include <lua.h>
@@ -503,34 +503,34 @@ int main(int argc, char *argv[]) {
 }
 EOF
 
-	CFLAGS_LPEG=""
-	LDFLAGS_LPEG="-llpeg"
+	for liblpeg in lpeg lua5.3-lpeg lua5.2-lpeg; do
+		printf " checking for static %s... " "$liblpeg"
 
-	if $CC $CFLAGS $CFLAGS_LUA $CFLAGS_LPEG "$tmpc" \
-		$LDFLAGS $LDFLAGS_LUA $LDFLAGS_LPEG -o "$tmpo" >/dev/null 2>&1 ; then
-		CONFIG_LPEG=1
-		printf "yes\n"
-	else
-		printf "no\n"
-		for liblpeg in lua5.3-lpeg lua5.2-lpeg; do
-			printf " checking for static %s... " "$liblpeg"
-			if test "$have_pkgconfig" = "yes" ; then
-				CFLAGS_LPEG=$(pkg-config --cflags $liblpeg 2>/dev/null)
-				LDFLAGS_LPEG=$(pkg-config --libs $liblpeg 2>/dev/null)
-			fi
-
-			if $CC $CFLAGS $CFLAGS_LUA $CFLAGS_LPEG "$tmpc" \
+		if test "$have_pkgconfig" = "yes" ; then
+			CFLAGS_LPEG=$(pkg-config --cflags $liblpeg 2>/dev/null)
+			LDFLAGS_LPEG=$(pkg-config --libs $liblpeg 2>/dev/null)
+			if test $? -eq 0 && $CC $CFLAGS $CFLAGS_LUA $CFLAGS_LPEG "$tmpc" \
 				$LDFLAGS $LDFLAGS_LUA $LDFLAGS_LPEG -o "$tmpo" >/dev/null 2>&1 ; then
 				CONFIG_LPEG=1
 				printf "yes\n"
 				break
-			else
-				printf "no\n"
-				CFLAGS_LPEG=""
-				LDFLAGS_LPEG=""
 			fi
-		done
-	fi
+		fi
+
+		CFLAGS_LPEG=""
+		LDFLAGS_LPEG="-l$liblpeg"
+
+		if $CC $CFLAGS $CFLAGS_LUA $CFLAGS_LPEG "$tmpc" \
+			$LDFLAGS $LDFLAGS_LUA $LDFLAGS_LPEG -o "$tmpo" >/dev/null 2>&1 ; then
+			CONFIG_LPEG=1
+			printf "yes\n"
+			break
+		else
+			printf "no\n"
+			CFLAGS_LPEG=""
+			LDFLAGS_LPEG=""
+		fi
+	done
 
 	test "$lpeg" = "yes" -a $CONFIG_LPEG -ne 1 && fail "$0: cannot find liblpeg"
 fi
