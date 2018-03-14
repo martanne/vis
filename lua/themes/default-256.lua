@@ -1,1 +1,1 @@
-solarized.lua
+zenburn.lua
