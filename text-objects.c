@@ -274,7 +274,7 @@ Filerange text_object_angle_bracket(Text *txt, size_t pos) {
 	return text_object_bracket(txt, pos, '>');
 }
 
-Filerange text_object_paranthese(Text *txt, size_t pos) {
+Filerange text_object_parenthesis(Text *txt, size_t pos) {
 	return text_object_bracket(txt, pos, ')');
 }
 

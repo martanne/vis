@@ -36,7 +36,7 @@ Filerange text_object_paragraph_outer(Text*, size_t pos);
 Filerange text_object_square_bracket(Text*, size_t pos);
 Filerange text_object_curly_bracket(Text*, size_t pos);
 Filerange text_object_angle_bracket(Text*, size_t pos);
-Filerange text_object_paranthese(Text*, size_t pos);
+Filerange text_object_parenthesis(Text*, size_t pos);
 Filerange text_object_quote(Text*, size_t pos);
 Filerange text_object_single_quote(Text*, size_t pos);
 Filerange text_object_backtick(Text*, size_t pos);
