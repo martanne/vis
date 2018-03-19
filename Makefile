@@ -84,9 +84,10 @@ vis-single: vis-single.c vis-single-payload.inc
 	${STRIP} $@
 
 docker: clean
-	docker rm -f vis || true
 	docker build -t vis .
 	docker run --rm -d --name vis vis tail -f /dev/null
+	docker exec vis apk update
+	docker exec vis apk upgrade
 	docker cp . vis:/tmp/vis
 	docker exec vis sed -i '/^VERSION/c VERSION = $(VERSION)' Makefile
 	docker exec vis ./configure CC='cc --static'
