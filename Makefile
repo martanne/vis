@@ -14,7 +14,7 @@ MANUALS = $(EXECUTABLES:=.1)
 
 DOCUMENTATION = LICENSE README.md
 
-VERSION = $(shell git describe --always --dirty 2>/dev/null || echo "v0.4-git")
+VERSION = v0.5
 
 CONFIG_HELP ?= 1
 CONFIG_CURSES ?= 1
