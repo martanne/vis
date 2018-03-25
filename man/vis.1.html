@@ -72,7 +72,7 @@ In normal mode all selections are non-anchored and reduced to a single character
 <div class="subsection">
 <h2 id="Undo/Redo">Undo/Redo</h2> <b class="name">vis</b> uses an undo tree to keep track of text revisions. The <b class="cmd">u</b> (undo) and &#10216;<b class="cmd">C-r</b>&#10217; (redo) commands can be used to traverse the tree along the main branch. <b class="cmd">g+</b> and <b class="cmd">g-</b> traverse the history in chronological order. The <b class="cmd">:earlier</b> and <b class="cmd">:later</b> commands provide means to restore the text to an arbitrary state.</div>
 <div class="subsection">
-<h2 id="Marks">Marks</h2> A mark associates a symbolic name to a set of selections.  A stored selection becomes invalid when its delimiting boundaries changes in the underlying buffer.  If said changes are later undone the mark becomes valid again. <b class="cmd">m</b> sets a mark, <b class="cmd">M</b> restores it.<div class="spacer">
+<h2 id="Marks">Marks</h2> A mark associates a symbolic name to a set of selections.  A stored selection becomes invalid when its delimiting boundaries changes in the underlying buffer.  If said changes are later undone the mark becomes valid again. <b class="cmd">m</b> sets a mark, <b class="cmd">M</b> restores it. For example, <b class="cmd">'am</b> sets the mark <b class="cmd">a</b> while <b class="cmd">'aM</b> restores it.<div class="spacer">
 </div>
 Available marks are:<dl style="margin-top: 0.00em;margin-bottom: 0.00em;" class="list list-tag">
 <dt class="list-tag" style="margin-top: 1.00em;">
@@ -108,7 +108,7 @@ save currently active selections</dd>
 </dl>
 </div>
 <div class="subsection">
-<h2 id="Registers">Registers</h2> Registers are named lists of text. Uninitialized regiter slots default to the empty string. Available registers are:<dl style="margin-top: 0.00em;margin-bottom: 0.00em;" class="list list-tag">
+<h2 id="Registers">Registers</h2> Registers are named lists of text. Uninitialized register slots default to the empty string. Available registers are:<dl style="margin-top: 0.00em;margin-bottom: 0.00em;" class="list list-tag">
 <dt class="list-tag" style="margin-top: 1.00em;">
 <b class="cmd">&quot;&quot;</b></dt>
 <dd class="list-tag" style="margin-left: 6.00ex;">
@@ -366,7 +366,7 @@ These may be nested arbitrarily deeply. An empty command in an <b class="cmd">x<
 <div class="subsection">
 <h2 id="Grouping_and_multiple_changes">Grouping and multiple changes</h2> Commands may be grouped by enclosing them in curly braces. Semantically, the opening brace is like a command: it takes an (optional) address and runs each sub-command on the range. Commands within the braces are executed sequentially, but changes made by one command are not visible to other commands.<div class="spacer">
 </div>
-When a command makes a number of changes to a file, as in <b class="cmd">x/</b><i class="arg">re</i><b class="cmd">/</b> <b class="cmd">c/</b><i class="arg">text</i><b class="cmd">/</b>, the addresses of all changes to the file are computed in the original file. If the changes are non-overlapping, they are applied to the file. Successive insertions at the same address are catenated into a single insertion composed of the several insertions in the order applied.<div class="spacer">
+When a command makes a number of changes to a file, as in <b class="cmd">x/</b><i class="arg">re</i><b class="cmd">/</b> <b class="cmd">c/</b><i class="arg">text</i><b class="cmd">/</b>, the addresses of all changes are computed based on the initial state. If the changes are non-overlapping, they are applied in the specified order. Conflicting changes are rejected.<div class="spacer">
 </div>
 Braces may be nested arbitrarily.</div>
 </div>
@@ -561,10 +561,6 @@ goto bottom/last line of window</dd>
 <b class="cmd">%</b></dt>
 <dd class="list-tag" style="margin-left: 10.00ex;">
 match bracket</dd>
-<dt class="list-tag" style="margin-top: 0.00em;">
-<b class="cmd">M</b></dt>
-<dd class="list-tag" style="margin-left: 10.00ex;">
-goto middle line of window</dd>
 <dt class="list-tag" style="margin-top: 0.00em;">
 <b class="cmd">}</b></dt>
 <dd class="list-tag" style="margin-left: 10.00ex;">
@@ -1145,7 +1141,9 @@ The location of the <b class="name">vis</b> binary (on systems where <i class="f
 <li class="list-bul" style="margin-top: 1.00em;">
 <i class="file">/usr/local/share/vis</i> or <i class="file">/usr/share/vis</i> depending on the build configuration.</li>
 </ul>
+<div class="spacer">
 </div>
+When creating a new <i class="file">visrc.lua</i> be sure to copy the structure from here.</div>
 <div class="section">
 <h1 id="EXIT_STATUS">EXIT STATUS</h1> The <b class="utility">vis</b> utility exits&#160;0 on success, and&#160;&gt;0 if an error occurs.</div>
 <div class="section">
@@ -1183,7 +1181,7 @@ Spawn background process and pipe range to its standard input:<div class="spacer
 </div>
 <a class="link-ext" href="http://doc.cat-v.org/bell_labs/structural_regexps/se.pdf">Structural Regular Expressions</a> by <span class="author">Rob Pike</span><div class="spacer">
 </div>
-<a class="link-ext" href="http://pubs.opengroup.org/onlinepubs/9699919799/utilities/vi.html">vi - screen-oriented (visual) display editor</a> IEEE Std 1003.1 (&#8220;POSIX.1&#8221;)</div>
+<a class="link-ext" href="http://pubs.opengroup.org/onlinepubs/9699919799/utilities/vi.html">vi - screen-oriented (visual) display editor St -p1003.1</a></div>
 <div class="section">
 <h1 id="STANDARDS">STANDARDS</h1> <b class="name">vis</b> does not strive to be IEEE Std 1003.1 (&#8220;POSIX.1&#8221;) compatible, but shares obvious similarities with the <b class="name">vi</b> utility.</div>
 <div class="section">
@@ -1196,7 +1194,7 @@ Spawn background process and pipe range to its standard input:<div class="spacer
 <td class="foot-date">
 January 14, 2017</td>
 <td class="foot-os">
-Vis v0.4</td>
+Vis v0.5</td>
 </tr>
 </tbody>
 </table>
