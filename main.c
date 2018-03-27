@@ -84,7 +84,7 @@ static const char *selections_intersect(Vis*, const char *keys, const Arg *arg);
 static const char *selections_complement(Vis*, const char *keys, const Arg *arg);
 /* subtract selections from register */
 static const char *selections_minus(Vis*, const char *keys, const Arg *arg);
-/* pariwise combine selections */
+/* pairwise combine selections */
 static const char *selections_combine(Vis*, const char *keys, const Arg *arg);
 static Filerange combine_union(const Filerange*, const Filerange*);
 static Filerange combine_intersect(const Filerange*, const Filerange*);
@@ -141,7 +141,7 @@ static const char *call(Vis*, const char *keys, const Arg *arg);
 static const char *window(Vis*, const char *keys, const Arg *arg);
 /* show info about Unicode character at cursor position */
 static const char *unicode_info(Vis*, const char *keys, const Arg *arg);
-/* either go to count % of ile or to matching item */
+/* either go to count % of file or to matching item */
 static const char *percent(Vis*, const char *keys, const Arg *arg);
 /* navigate jumplist next (arg->i > 0), prev (arg->i < 0), save (arg->i = 0) */
 static const char *jumplist(Vis*, const char *keys, const Arg *arg);
