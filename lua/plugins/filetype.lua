@@ -96,7 +96,7 @@ vis.ftdetect.filetypes = {
 		ext = { "%.desktop$" },
 	},
 	diff = {
-		ext = { "%.diff$", "%.patch$" },
+		ext = { "%.diff$", "%.patch$", "%.rej$" },
 	},
 	dmd = {
 		ext = { "%.d$", "%.di$" },
