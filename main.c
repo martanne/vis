@@ -183,8 +183,8 @@ enum {
 	VIS_ACTION_CURSOR_SENTENCE_NEXT,
 	VIS_ACTION_CURSOR_BLOCK_START,
 	VIS_ACTION_CURSOR_BLOCK_END,
-	VIS_ACTION_CURSOR_PARENTHESE_START,
-	VIS_ACTION_CURSOR_PARENTHESE_END,
+	VIS_ACTION_CURSOR_PARENTHESIS_START,
+	VIS_ACTION_CURSOR_PARENTHESIS_END,
 	VIS_ACTION_CURSOR_COLUMN,
 	VIS_ACTION_CURSOR_LINE_FIRST,
 	VIS_ACTION_CURSOR_LINE_LAST,
@@ -514,15 +514,15 @@ static const KeyAction vis_action[] = {
 		VIS_HELP("Move cursor to the closing curly brace in a block")
 		movement, { .i = VIS_MOVE_BLOCK_END }
 	},
-	[VIS_ACTION_CURSOR_PARENTHESE_START] = {
-		"vis-motion-parenthese-start",
-		VIS_HELP("Move cursor to the opening parenthese inside a pair of parentheses")
-		movement, { .i = VIS_MOVE_PARENTHESE_START }
+	[VIS_ACTION_CURSOR_PARENTHESIS_START] = {
+		"vis-motion-parenthesis-start",
+		VIS_HELP("Move cursor to the opening parenthesis inside a pair of parentheses")
+		movement, { .i = VIS_MOVE_PARENTHESIS_START }
 	},
-	[VIS_ACTION_CURSOR_PARENTHESE_END] = {
-		"vis-motion-parenthese-end",
-		VIS_HELP("Move cursor to the closing parenthese inside a pair of parentheses")
-		movement, { .i = VIS_MOVE_PARENTHESE_END }
+	[VIS_ACTION_CURSOR_PARENTHESIS_END] = {
+		"vis-motion-parenthesis-end",
+		VIS_HELP("Move cursor to the closing parenthesis inside a pair of parentheses")
+		movement, { .i = VIS_MOVE_PARENTHESIS_END }
 	},
 	[VIS_ACTION_CURSOR_COLUMN] = {
 		"vis-motion-column",
@@ -1135,12 +1135,12 @@ static const KeyAction vis_action[] = {
 		textobj, { .i = VIS_TEXTOBJECT_INNER_SQUARE_BRACKET }
 	},
 	[VIS_ACTION_TEXT_OBJECT_PARENTHESIS_OUTER] = {
-		"vis-textobject-parentheses-outer",
+		"vis-textobject-parenthesis-outer",
 		VIS_HELP("() block (outer variant)")
 		textobj, { .i = VIS_TEXTOBJECT_OUTER_PARENTHESIS }
 	},
 	[VIS_ACTION_TEXT_OBJECT_PARENTHESIS_INNER] = {
-		"vis-textobject-parentheses-inner",
+		"vis-textobject-parenthesis-inner",
 		VIS_HELP("() block (inner variant)")
 		textobj, { .i = VIS_TEXTOBJECT_INNER_PARENTHESIS }
 	},
