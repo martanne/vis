@@ -79,10 +79,10 @@ local keyword = token(l.KEYWORD, word_match({
 -- Functions.
 local func = token(l.FUNCTION, word_match({
   'at_exit', 'autoload', 'binding', 'caller', 'catch', 'chop', 'chop!', 'chomp',
-  'chomp!', 'eval', 'exec', 'exit', 'exit!', 'fail', 'fork', 'format', 'gets',
-  'global_variables', 'gsub', 'gsub!', 'iterator?', 'lambda', 'load',
-  'local_variables', 'loop', 'open', 'p', 'print', 'printf', 'proc', 'putc',
-  'puts', 'raise', 'rand', 'readline', 'readlines', 'require', 'select',
+  'chomp!', 'eval', 'exec', 'exit', 'exit!', 'extend', 'fail', 'fork', 'format', 'gets',
+  'global_variables', 'gsub', 'gsub!', 'include', 'iterator?', 'lambda', 'load',
+  'local_variables', 'loop', 'module_function', 'open', 'p', 'print', 'printf', 'proc', 'putc',
+  'puts', 'raise', 'rand', 'readline', 'readlines', 'require', 'require_relative', 'select',
   'sleep', 'split', 'sprintf', 'srand', 'sub', 'sub!', 'syscall', 'system',
   'test', 'trace_var', 'trap', 'untrace_var'
 }, '?!')) * -S('.:|')
