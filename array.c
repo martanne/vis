@@ -119,7 +119,7 @@ bool array_remove(Array *arr, size_t idx) {
 	}
 	char *dest = arr->items + idx * arr->elem_size;
 	char *src = arr->items + (idx + 1) * arr->elem_size;
-	memmove(dest, src, (arr->len - idx) * arr->elem_size);
+	memmove(dest, src, (arr->len - idx - 1) * arr->elem_size);
 	arr->len--;
 	return true;
 }
