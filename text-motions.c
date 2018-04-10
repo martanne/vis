@@ -514,12 +514,12 @@ size_t text_block_end(Text *txt, size_t pos) {
 	return text_range_valid(&r) ? r.end : pos;
 }
 
-size_t text_parenthese_start(Text *txt, size_t pos) {
+size_t text_parenthesis_start(Text *txt, size_t pos) {
 	Filerange r = text_object_parenthesis(txt, pos-1);
 	return text_range_valid(&r) ? r.start-1 : pos;
 }
 
-size_t text_parenthese_end(Text *txt, size_t pos) {
+size_t text_parenthesis_end(Text *txt, size_t pos) {
 	Filerange r = text_object_parenthesis(txt, pos+1);
 	return text_range_valid(&r) ? r.end : pos;
 }

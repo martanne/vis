@@ -493,12 +493,12 @@ const Movement vis_motions[] = {
 		.txt = text_block_end,
 		.type = JUMP,
 	},
-	[VIS_MOVE_PARENTHESE_START] = {
-		.txt = text_parenthese_start,
+	[VIS_MOVE_PARENTHESIS_START] = {
+		.txt = text_parenthesis_start,
 		.type = JUMP,
 	},
-	[VIS_MOVE_PARENTHESE_END] = {
-		.txt = text_parenthese_end,
+	[VIS_MOVE_PARENTHESIS_END] = {
+		.txt = text_parenthesis_end,
 		.type = JUMP,
 	},
 	[VIS_MOVE_BRACKET_MATCH] = {
