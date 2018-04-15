@@ -57,6 +57,7 @@ tis: clean
 
 clean:
 	@echo cleaning
+	@rm -f ccan-config config.h
 	@rm -f $(ALL)
 	@rm -f *.gcov *.gcda *.gcno
 	@rm -f *.valgrind

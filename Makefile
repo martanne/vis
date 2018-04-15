@@ -11,5 +11,6 @@ clean:
 	@$(MAKE) -C vis clean
 	@$(MAKE) -C sam clean
 	@$(MAKE) -C vim clean
+	@$(MAKE) -C util clean
 
 .PHONY: test clean
