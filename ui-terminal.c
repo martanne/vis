@@ -644,8 +644,10 @@ static bool ui_init(Ui *ui, Vis *vis) {
 	setlocale(LC_CTYPE, "");
 
 	char *term = getenv("TERM");
-	if (!term)
+	if (!term) {
 		term = "xterm";
+		setenv("TERM", term, 1);
+	}
 
 	errno = 0;
 	if (!(tui->termkey = ui_termkey_new(STDIN_FILENO))) {
