@@ -123,7 +123,7 @@ static void
 die(const char *s) {
 	tcsetattr(0, TCSANOW, &tio_old);
 	fprintf(stderr, "%s\n", s);
-	exit(EXIT_FAILURE);
+	exit(2);
 }
 
 static void
@@ -459,7 +459,7 @@ run(void) {
 			}
 			break;
 		case CONTROL('C'):
-			return EXIT_FAILURE;
+			return 1;
 		case CONTROL('M'): /* Return */
 		case CONTROL('J'):
 			if (sel) strncpy(text, sel->text, sizeof(text)-1); /* Complete the input first, when hitting return */
@@ -470,7 +470,7 @@ run(void) {
 		case CONTROL(']'):
 		case CONTROL('\\'): /* These are usually close enough to RET to replace Shift+RET, again due to console limitations */
 			puts(text);
-			return EXIT_SUCCESS;
+			return 0;
 		case CONTROL('A'):
 			if (sel == matches) {
 				cursor = 0;
@@ -567,7 +567,7 @@ run(void) {
 static void
 usage(void) {
 	fputs("usage: vis-menu [-b|-t] [-i] [-l lines] [-p prompt] [initial selection]\n", stderr);
-	exit(EXIT_FAILURE);
+	exit(2);
 }
 
 int
@@ -575,7 +575,7 @@ main(int argc, char **argv) {
 	for (int i = 1; i < argc; i++) {
 		if (!strcmp(argv[i], "-v")) {
 			puts("vis-menu " VERSION);
-			exit(EXIT_SUCCESS);
+			exit(0);
 		} else if (!strcmp(argv[i], "-i")) {
 			fstrncmp = strncasecmp;
 		} else if (!strcmp(argv[i], "-t")) {

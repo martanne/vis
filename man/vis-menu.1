@@ -214,7 +214,8 @@ and 1 if the user cancelled.
 If an internal error occurs,
 the
 .Nm vis-menu
-utility prints a message to standard error and exits 1.
+utility prints a message to standard error and terminates with an exit
+status greater than 1.
 Potential error conditions include
 being unable to allocate memory,
 being unable to read from standard input,
