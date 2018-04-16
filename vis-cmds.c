@@ -405,7 +405,7 @@ static const char *file_open_dialog(Vis *vis, const char *pattern) {
 
 	if (status == 0)
 		strncpy(name, buffer_content0(&bufout), sizeof(name)-1);
-	else
+	else if (status != 1)
 		vis_info_show(vis, "Command failed %s", buffer_content0(&buferr));
 
 	buffer_release(&bufcmd);
