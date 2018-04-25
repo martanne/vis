@@ -849,7 +849,7 @@ static bool text_save_begin_atomic(TextSave *ctx) {
 		goto err;
 	snprintf(ctx->tmpname, namelen, "%s~", ctx->filename);
 
-	if ((ctx->fd = open(ctx->tmpname, O_CREAT|O_WRONLY|O_TRUNC, oldfd == -1 ? 0666 : oldmeta.st_mode)) == -1)
+	if ((ctx->fd = open(ctx->tmpname, O_CREAT|O_EXCL|O_WRONLY|O_TRUNC, oldfd == -1 ? 0666 : oldmeta.st_mode)) == -1)
 		goto err;
 	if (oldfd != -1) {
 		if (!preserve_acl(oldfd, ctx->fd) || !preserve_selinux_context(oldfd, ctx->fd))
@@ -873,6 +873,8 @@ err:
 	if (ctx->fd != -1)
 		close(ctx->fd);
 	ctx->fd = -1;
+	free(ctx->tmpname);
+	ctx->tmpname = NULL;
 	errno = saved_errno;
 	return false;
 }
