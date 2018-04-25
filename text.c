@@ -815,7 +815,8 @@ static bool preserve_selinux_context(int src, int dest) {
 	return true;
 }
 
-/* Create a new file named `filename~` and try to preserve all important
+/* Create a new file named `.filename.vis.XXXXXX` (where `XXXXXX` is a
+ * randomly generated, unique suffix) and try to preserve all important
  * meta data. After the file content has been written to this temporary
  * file, text_save_commit_atomic will atomically move it to  its final
  * (possibly already existing) destination using rename(2).
@@ -844,14 +845,32 @@ static bool text_save_begin_atomic(TextSave *ctx) {
 			goto err;
 	}
 
-	size_t namelen = strlen(ctx->filename) + 1 /* ~ */ + 1 /* \0 */;
-	if (!(ctx->tmpname = calloc(1, namelen)))
-		goto err;
-	snprintf(ctx->tmpname, namelen, "%s~", ctx->filename);
+	char suffix[] = ".vis.XXXXXX";
+	size_t len = strlen(ctx->filename) + sizeof("./.") + sizeof(suffix);
+	char *dir = strdup(ctx->filename);
+	char *base = strdup(ctx->filename);
 
-	if ((ctx->fd = open(ctx->tmpname, O_CREAT|O_EXCL|O_WRONLY|O_TRUNC, oldfd == -1 ? 0666 : oldmeta.st_mode)) == -1)
+	if (!(ctx->tmpname = malloc(len)) || !dir || !base) {
+		free(dir);
+		free(base);
 		goto err;
-	if (oldfd != -1) {
+	}
+
+	snprintf(ctx->tmpname, len, "%s/.%s%s", dirname(dir), basename(base), suffix);
+	free(dir);
+	free(base);
+
+	if ((ctx->fd = mkstemp(ctx->tmpname)) == -1)
+		goto err;
+
+	if (oldfd == -1) {
+		mode_t mask = umask(0);
+		umask(mask);
+		if (fchmod(ctx->fd, 0666 & ~mask) == -1)
+			goto err;
+	} else {
+		if (fchmod(ctx->fd, oldmeta.st_mode) == -1)
+			goto err;
 		if (!preserve_acl(oldfd, ctx->fd) || !preserve_selinux_context(oldfd, ctx->fd))
 			goto err;
 		/* change owner if necessary */

@@ -280,9 +280,10 @@ enum TextSaveMethod {
 	/**
 	 * Save file atomically using `rename(2)`.
 	 *
-	 * Creates a new file named `filename~` and tries to restore all important
-	 * meta data. After which it is atomically moved to its final
-	 * (possibly already existing) destination using `rename(2)`.
+	 * Creates a temporary file, restores all important meta data,
+	 * before moving it atomically to its final (possibly already
+	 * existing) destination using `rename(2)`. For new files,
+	 * permissions are set to `0666 & ~umask`.
 	 *
 	 * @rst
 	 * .. warning:: This approach does not work if:
