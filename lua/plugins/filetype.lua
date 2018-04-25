@@ -119,6 +119,9 @@ vis.ftdetect.filetypes = {
 	erlang = {
 		ext = { "%.erl$", "%.hrl$" },
 	},
+	fantom = {
+		ext = { "%.fan$" },
+	},
 	faust = {
 		ext = { "%.dsp$" },
 	},
