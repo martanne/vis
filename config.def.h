@@ -183,7 +183,7 @@ static const KeyBinding bindings_operators[] = {
 	{ "gp",                 ACTION(PUT_AFTER_END)                       },
 	{ "gP",                 ACTION(PUT_BEFORE_END)                      },
 	{ "gu",                 ALIAS(":|tr '[:upper:]' '[:lower:]'<Enter>")},
-	{ "gU",                 ACTION(OPERATOR_CASE_UPPER)                 },
+	{ "gU",                 ALIAS(":|tr '[:lower:]' '[:upper:]'<Enter>")},
 	{ "p",                  ACTION(PUT_AFTER)                           },
 	{ "P",                  ACTION(PUT_BEFORE)                          },
 	{ "y",                  ACTION(OPERATOR_YANK)                       },
