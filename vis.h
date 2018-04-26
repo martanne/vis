@@ -388,7 +388,6 @@ enum VisOperator {
 	VIS_OP_CASE_SWAP,
 	VIS_OP_INVALID, /* denotes the end of the "real" operators */
 	/* pseudo operators: keep them at the end to save space in array definition */
-	VIS_OP_CASE_LOWER,
 	VIS_OP_CASE_UPPER,
 	VIS_OP_CURSOR_EOL,
 	VIS_OP_PUT_AFTER_END,

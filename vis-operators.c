@@ -174,8 +174,6 @@ static size_t op_case_change(Vis *vis, Text *txt, OperatorContext *c) {
 				*cur = islower(ch) ? toupper(ch) : tolower(ch);
 			else if (c->arg->i == VIS_OP_CASE_UPPER)
 				*cur = toupper(ch);
-			else
-				*cur = tolower(ch);
 		}
 	}
 
@@ -268,7 +266,6 @@ bool vis_operator(Vis *vis, enum VisOperator id, ...) {
 	case VIS_OP_MODESWITCH:
 		vis->action.mode = va_arg(ap, int);
 		break;
-	case VIS_OP_CASE_LOWER:
 	case VIS_OP_CASE_UPPER:
 	case VIS_OP_CASE_SWAP:
 		vis->action.arg.i = id;

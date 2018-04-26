@@ -236,7 +236,6 @@ enum {
 	VIS_ACTION_OPERATOR_YANK,
 	VIS_ACTION_OPERATOR_SHIFT_LEFT,
 	VIS_ACTION_OPERATOR_SHIFT_RIGHT,
-	VIS_ACTION_OPERATOR_CASE_LOWER,
 	VIS_ACTION_OPERATOR_CASE_UPPER,
 	VIS_ACTION_OPERATOR_CASE_SWAP,
 	VIS_ACTION_COUNT,
@@ -778,11 +777,6 @@ static const KeyAction vis_action[] = {
 		"vis-operator-shift-right",
 		VIS_HELP("Shift right operator")
 		operator, { .i = VIS_OP_SHIFT_RIGHT }
-	},
-	[VIS_ACTION_OPERATOR_CASE_LOWER] = {
-		"vis-operator-case-lower",
-		VIS_HELP("Lowercase operator")
-		operator, { .i = VIS_OP_CASE_LOWER }
 	},
 	[VIS_ACTION_OPERATOR_CASE_UPPER] = {
 		"vis-operator-case-upper",
