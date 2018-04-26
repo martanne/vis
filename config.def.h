@@ -180,7 +180,6 @@ static const KeyBinding bindings_operators[] = {
 	{ "c",                  ACTION(OPERATOR_CHANGE)                     },
 	{ "d",                  ACTION(OPERATOR_DELETE)                     },
 	{ "g~",                 ALIAS(":|tr '[:lower:][:upper:]' '[:upper:][:lower:]'<Enter>") },
-	{ "gp",                 ACTION(PUT_AFTER_END)                       },
 	{ "gP",                 ACTION(PUT_BEFORE_END)                      },
 	{ "gu",                 ALIAS(":|tr '[:upper:]' '[:lower:]'<Enter>")},
 	{ "gU",                 ALIAS(":|tr '[:lower:]' '[:upper:]'<Enter>")},

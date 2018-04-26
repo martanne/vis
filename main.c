@@ -260,7 +260,6 @@ enum {
 	VIS_ACTION_WINDOW_SLIDE_DOWN,
 	VIS_ACTION_PUT_AFTER,
 	VIS_ACTION_PUT_BEFORE,
-	VIS_ACTION_PUT_AFTER_END,
 	VIS_ACTION_PUT_BEFORE_END,
 	VIS_ACTION_SELECTIONS_MATCH_WORD,
 	VIS_ACTION_SELECTIONS_NEW_LINE_ABOVE,
@@ -895,11 +894,6 @@ static const KeyAction vis_action[] = {
 		"vis-put-before",
 		VIS_HELP("Put text before the cursor")
 		operator, { .i = VIS_OP_PUT_BEFORE }
-	},
-	[VIS_ACTION_PUT_AFTER_END] = {
-		"vis-put-after-end",
-		VIS_HELP("Put text after the cursor, place cursor after new text")
-		operator, { .i = VIS_OP_PUT_AFTER_END }
 	},
 	[VIS_ACTION_PUT_BEFORE_END] = {
 		"vis-put-before-end",
