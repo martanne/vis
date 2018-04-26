@@ -160,27 +160,6 @@ static size_t op_shift_left(Vis *vis, Text *txt, OperatorContext *c) {
 	return newpos;
 }
 
-static size_t op_case_change(Vis *vis, Text *txt, OperatorContext *c) {
-	size_t len = text_range_size(&c->range);
-	char *buf = malloc(len);
-	if (!buf)
-		return c->pos;
-	len = text_bytes_get(txt, c->range.start, len, buf);
-	size_t rem = len;
-	for (char *cur = buf; rem > 0; cur++, rem--) {
-		int ch = (unsigned char)*cur;
-		if (isascii(ch)) {
-			if (c->arg->i == VIS_OP_CASE_SWAP)
-				*cur = islower(ch) ? toupper(ch) : tolower(ch);
-		}
-	}
-
-	text_delete(txt, c->range.start, len);
-	text_insert(txt, c->range.start, buf, len);
-	free(buf);
-	return c->pos;
-}
-
 static size_t op_cursor(Vis *vis, Text *txt, OperatorContext *c) {
 	View *view = vis->win->view;
 	Filerange r = text_range_linewise(txt, &c->range);
@@ -263,10 +242,6 @@ bool vis_operator(Vis *vis, enum VisOperator id, ...) {
 	switch (id) {
 	case VIS_OP_MODESWITCH:
 		vis->action.mode = va_arg(ap, int);
-		break;
-	case VIS_OP_CASE_SWAP:
-		vis->action.arg.i = id;
-		id = VIS_OP_CASE_SWAP;
 		break;
 	case VIS_OP_CURSOR_SOL:
 	case VIS_OP_CURSOR_EOL:
@@ -353,7 +328,6 @@ const Operator vis_operators[] = {
 	[VIS_OP_PUT_AFTER]   = { op_put         },
 	[VIS_OP_SHIFT_RIGHT] = { op_shift_right },
 	[VIS_OP_SHIFT_LEFT]  = { op_shift_left  },
-	[VIS_OP_CASE_SWAP]   = { op_case_change },
 	[VIS_OP_JOIN]        = { op_join        },
 	[VIS_OP_MODESWITCH]  = { op_modeswitch  },
 	[VIS_OP_REPLACE]     = { op_replace     },
