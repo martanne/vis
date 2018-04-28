@@ -1016,7 +1016,7 @@ static size_t motion_lua(Vis *vis, Win *win, void *data, size_t pos) {
 static int motion_register(lua_State *L) {
 	Vis *vis = obj_ref_check(L, 1, "vis");
 	const void *func = func_ref_new(L, 2);
-	int id = vis_motion_register(vis, 0, (void*)func, motion_lua);
+	int id = vis_motion_register(vis, (void*)func, motion_lua);
 	lua_pushinteger(L, id);
 	return 1;
 }

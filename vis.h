@@ -562,7 +562,7 @@ typedef size_t (VisMotionFunction)(Vis*, Win*, void *context, size_t pos);
  * @return Motion ID. Negative values indicate an error, positive ones can be
  *         used with `vis_motion`.
  */
-int vis_motion_register(Vis*, enum VisMotionType, void *context, VisMotionFunction*);
+int vis_motion_register(Vis*, void *context, VisMotionFunction*);
 
 /**
  * @}

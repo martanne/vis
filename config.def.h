@@ -188,12 +188,6 @@ static const KeyBinding bindings_operators[] = {
 	{ 0 /* empty last element, array terminator */                      },
 };
 
-static const KeyBinding bindings_operator_options[] = {
-	{ "v",                  ACTION(MOTION_CHARWISE)                     },
-	{ "V",                  ACTION(MOTION_LINEWISE)                     },
-	{ 0 /* empty last element, array terminator */                      },
-};
-
 static const KeyBinding bindings_normal[] = {
 	{ "a",                  ACTION(APPEND_CHAR_NEXT)                    },
 	{ "A",                  ACTION(APPEND_LINE_END)                     },
@@ -347,7 +341,6 @@ static const KeyBinding bindings_replace[] = {
  * one array the first definition is used and further ones are ignored. */
 static const KeyBinding **default_bindings[] = {
 	[VIS_MODE_OPERATOR_PENDING] = (const KeyBinding*[]){
-		bindings_operator_options,
 		bindings_operators,
 		bindings_textobjects,
 		bindings_motions,

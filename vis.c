@@ -822,10 +822,10 @@ void vis_do(Vis *vis) {
 		count = 1; /* count should apply to inserted text not motion */
 	bool repeatable = a->op && !vis->macro_operator && !vis->win->parent;
 	bool multiple_cursors = view_selections_count(view) > 1;
+
 	bool linewise = !(a->type & CHARWISE) && (
 		a->type & LINEWISE || (a->movement && a->movement->type & LINEWISE) ||
 		vis->mode == &vis_modes[VIS_MODE_VISUAL_LINE]);
-
 
 	Register *reg = a->reg;
 	size_t reg_slot = multiple_cursors ? EPOS : 0;

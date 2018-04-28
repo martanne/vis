@@ -232,14 +232,13 @@ void vis_motion_type(Vis *vis, enum VisMotionType type) {
 	vis->action.type = type;
 }
 
-int vis_motion_register(Vis *vis, enum VisMotionType type, void *data, VisMotionFunction *motion) {
+int vis_motion_register(Vis *vis, void *data, VisMotionFunction *motion) {
 
 	Movement *move = calloc(1, sizeof *move);
 	if (!move)
 		return -1;
 
 	move->user = motion;
-	move->type = type;
 	move->data = data;
 
 	if (array_add_ptr(&vis->motions, move))

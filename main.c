@@ -97,8 +97,6 @@ static const char *count(Vis*, const char *keys, const Arg *arg);
 /* move to the count-th line or if not given either to the first (arg->i < 0)
  *  or last (arg->i > 0) line of file */
 static const char *gotoline(Vis*, const char *keys, const Arg *arg);
-/* set motion type either LINEWISE or CHARWISE via arg->i */
-static const char *motiontype(Vis*, const char *keys, const Arg *arg);
 /* make the current action use the operator indicated by arg->i */
 static const char *operator(Vis*, const char *keys, const Arg *arg);
 /* blocks to read a key and performs movement indicated by arg->i which
@@ -321,8 +319,6 @@ enum {
 	VIS_ACTION_TEXT_OBJECT_INDENTATION,
 	VIS_ACTION_TEXT_OBJECT_SEARCH_FORWARD,
 	VIS_ACTION_TEXT_OBJECT_SEARCH_BACKWARD,
-	VIS_ACTION_MOTION_CHARWISE,
-	VIS_ACTION_MOTION_LINEWISE,
 	VIS_ACTION_UNICODE_INFO,
 	VIS_ACTION_UTF8_INFO,
 	VIS_ACTION_NOP,
@@ -1199,16 +1195,6 @@ static const KeyAction vis_action[] = {
 		VIS_HELP("The next search match in backward direction")
 		textobj, { .i = VIS_TEXTOBJECT_SEARCH_BACKWARD }
 	},
-	[VIS_ACTION_MOTION_CHARWISE] = {
-		"vis-motion-charwise",
-		VIS_HELP("Force motion to be charwise")
-		motiontype, { .i = VIS_MOTIONTYPE_CHARWISE }
-	},
-	[VIS_ACTION_MOTION_LINEWISE] = {
-		"vis-motion-linewise",
-		VIS_HELP("Force motion to be linewise")
-		motiontype, { .i = VIS_MOTIONTYPE_LINEWISE }
-	},
 	[VIS_ACTION_UNICODE_INFO] = {
 		"vis-unicode-info",
 		VIS_HELP("Show Unicode codepoint(s) of character under cursor")
@@ -1906,11 +1892,6 @@ static const char *gotoline(Vis *vis, const char *keys, const Arg *arg) {
 		vis_motion(vis, VIS_MOVE_FILE_BEGIN);
 	else
 		vis_motion(vis, VIS_MOVE_FILE_END);
-	return keys;
-}
-
-static const char *motiontype(Vis *vis, const char *keys, const Arg *arg) {
-	vis_motion_type(vis, arg->i);
 	return keys;
 }
 
