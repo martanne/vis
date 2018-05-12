@@ -19,8 +19,10 @@ local annotation = token(l.PREPROCESSOR, l.delimited_range('\\', false, true))
 
 local lit_bool = token(l.CONSTANT, pword{'true', 'false'})
 
+local nq = l.any - P'"'
 local lit_str = token(l.STRING,
-  l.delimited_range('"') -- this covers triple quoted strings
+  P'"""' * (nq + (P'"' * #(nq + (P'"' * nq))))^0 * P'"""'
+  + l.delimited_range('"')
   + l.delimited_range("'")
 )
 
