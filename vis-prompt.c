@@ -157,24 +157,26 @@ static const KeyBinding prompt_tab_binding = {
 
 void vis_prompt_show(Vis *vis, const char *title) {
 	Win *active = vis->win;
-	Win *prompt = window_new_file(vis, title[0] == ':' ? vis->command_file : vis->search_file,
-		UI_OPTION_ONELINE);
-	if (!prompt)
-		return;
-	Text *txt = prompt->file->text;
-	text_appendf(txt, "%s\n", title);
-	Selection *sel = view_selections_primary_get(prompt->view);
-	view_cursors_scroll_to(sel, text_size(txt)-1);
-	prompt->parent = active;
-	prompt->parent_mode = vis->mode;
-	vis_window_mode_map(prompt, VIS_MODE_NORMAL, true, "<Enter>", &prompt_enter_binding);
-	vis_window_mode_map(prompt, VIS_MODE_INSERT, true, "<Enter>", &prompt_enter_binding);
-	vis_window_mode_map(prompt, VIS_MODE_INSERT, true, "<C-j>", &prompt_enter_binding);
-	vis_window_mode_map(prompt, VIS_MODE_VISUAL, true, "<Enter>", &prompt_enter_binding);
-	vis_window_mode_map(prompt, VIS_MODE_NORMAL, true, "<Escape>", &prompt_esc_binding);
-	vis_window_mode_map(prompt, VIS_MODE_INSERT, true, "<Up>", &prompt_up_binding);
-	if (CONFIG_LUA)
-		vis_window_mode_map(prompt, VIS_MODE_INSERT, true, "<Tab>", &prompt_tab_binding);
+	if (active->file != vis->command_file && active->file != vis->search_file) {
+		Win *prompt = window_new_file(vis, title[0] == ':' ? vis->command_file : vis->search_file,
+			UI_OPTION_ONELINE);
+		if (!prompt)
+			return;
+		Text *txt = prompt->file->text;
+		text_appendf(txt, "%s\n", title);
+		Selection *sel = view_selections_primary_get(prompt->view);
+		view_cursors_scroll_to(sel, text_size(txt)-1);
+		prompt->parent = active;
+		prompt->parent_mode = vis->mode;
+		vis_window_mode_map(prompt, VIS_MODE_NORMAL, true, "<Enter>", &prompt_enter_binding);
+		vis_window_mode_map(prompt, VIS_MODE_INSERT, true, "<Enter>", &prompt_enter_binding);
+		vis_window_mode_map(prompt, VIS_MODE_INSERT, true, "<C-j>", &prompt_enter_binding);
+		vis_window_mode_map(prompt, VIS_MODE_VISUAL, true, "<Enter>", &prompt_enter_binding);
+		vis_window_mode_map(prompt, VIS_MODE_NORMAL, true, "<Escape>", &prompt_esc_binding);
+		vis_window_mode_map(prompt, VIS_MODE_INSERT, true, "<Up>", &prompt_up_binding);
+		if (CONFIG_LUA)
+			vis_window_mode_map(prompt, VIS_MODE_INSERT, true, "<Tab>", &prompt_tab_binding);
+	}
 	vis_mode_switch(vis, VIS_MODE_INSERT);
 }
 
