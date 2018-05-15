@@ -625,9 +625,6 @@ void view_redraw_center(View *view) {
 }
 
 void view_redraw_bottom(View *view) {
-	Line *line = view->selection->line;
-	if (line == view->lastline)
-		return;
 	size_t pos = view->selection->pos;
 	view_viewport_up(view, view->height);
 	while (pos >= view->end && view_viewport_down(view, 1));
