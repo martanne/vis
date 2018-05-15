@@ -1708,9 +1708,6 @@ static bool cmd_pipeout(Vis *vis, Win *win, Command *cmd, const char *argv[], Se
 
 	int status = vis_pipe(vis, win->file, range, (const char*[]){ argv[1], NULL }, NULL, NULL, &buferr, read_buffer);
 
-	if (status == 0 && sel)
-		view_cursors_to(sel, range->start);
-
 	if (vis->interrupted)
 		vis_info_show(vis, "Command cancelled");
 	else if (status != 0)
