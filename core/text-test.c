@@ -97,7 +97,7 @@ int main(int argc, char *argv[]) {
 		txt = text_load("/");
 		ok(txt == NULL && errno == EISDIR, "Opening directory");
 
-		if (access("/etc/shadow", F_OK) == 0) {
+		if (access("/etc/shadow", F_OK) == 0 && access("/etc/shadow", R_OK) != 0) {
 			txt = text_load("/etc/shadow");
 			ok(txt == NULL && errno == EACCES, "Opening file without sufficient permissions");
 		}
