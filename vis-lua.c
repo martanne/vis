@@ -1368,6 +1368,10 @@ static int pipe_func(lua_State *L) {
  * Whether a macro is being recorded.
  * @tfield bool recording
  */
+/***
+ * Currently unconsumed keys in the input queue.
+ * @tfield string input_queue
+ */
 static int vis_index(lua_State *L) {
 	Vis *vis = obj_ref_check(L, 1, "vis");
 
@@ -1383,6 +1387,11 @@ static int vis_index(lua_State *L) {
 
 		if (strcmp(key, "mode") == 0) {
 			lua_pushunsigned(L, vis->mode->id);
+			return 1;
+		}
+
+		if (strcmp(key, "input_queue") == 0) {
+			lua_pushstring(L, buffer_content0(&vis->input_queue));
 			return 1;
 		}
 
