@@ -9,7 +9,7 @@ local M = {_NAME = 'toml'}
 
 -- Whitespace
 local indent = #l.starts_line(S(' \t')) *
-               (token(l.WHITESPACE, ' ') + token('indent_error', '\t'))^1
+               (token(l.WHITESPACE, ' ')^1 + token(l.WHITESPACE, '\t'))^1
 local ws = token(l.WHITESPACE, S(' \t')^1 + l.newline^1)
 
 -- Comments.
@@ -59,7 +59,6 @@ M._rules = {
 }
 
 M._tokenstyles = {
-  indent_error = 'back:red',
   timestamp = l.STYLE_NUMBER,
 }
 
