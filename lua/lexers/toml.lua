@@ -44,7 +44,7 @@ local keyword = token(l.KEYWORD, word_match{
 local identifier = token(l.IDENTIFIER, l.word)
 
 -- Operators.
-local operator = token(l.OPERATOR, S('#=+-,.{}[]()'))
+local operator = token(l.OPERATOR, S('=+-,.{}[]()'))
 
 M._rules = {
   {'indent', indent},
