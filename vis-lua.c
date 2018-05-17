@@ -73,11 +73,10 @@ static void window_status_update(Vis *vis, Win *win) {
 	if (focused && mode)
 		strcpy(left_parts[left_count++], mode);
 
-	snprintf(left_parts[left_count], sizeof(left_parts[left_count])-1, "%s%s%s",
+	snprintf(left_parts[left_count++], sizeof(left_parts[0]), "%s%s%s",
 	         filename ? filename : "[No Name]",
 	         text_modified(txt) ? " [+]" : "",
 	         vis_macro_recording(vis) ? " @": "");
-	left_count++;
 
 	int count = vis_count_get(vis);
 	const char *keys = buffer_content0(&vis->input_queue);
@@ -90,9 +89,8 @@ static void window_status_update(Vis *vis, Win *win) {
 	if (sel_count > 1) {
 		Selection *s = view_selections_primary_get(view);
 		int sel_number = view_selections_number(s) + 1;
-		snprintf(right_parts[right_count], sizeof(right_parts[right_count])-1,
+		snprintf(right_parts[right_count++], sizeof(right_parts[0]),
 		         "%d/%d", sel_number, sel_count);
-		right_count++;
 	}
 
 	size_t size = text_size(txt);
@@ -102,9 +100,8 @@ static void window_status_update(Vis *vis, Win *win) {
 		double tmp = ((double)pos/(double)size)*100;
 		percent = (size_t)(tmp+1);
 	}
-	snprintf(right_parts[right_count], sizeof(right_parts[right_count])-1,
+	snprintf(right_parts[right_count++], sizeof(right_parts[0]),
 	         "%zu%%", percent);
-	right_count++;
 
 	if (!(options & UI_OPTION_LARGE_FILE)) {
 		Selection *sel = view_selections_primary_get(win->view);
@@ -114,12 +111,11 @@ static void window_status_update(Vis *vis, Win *win) {
 			options |= UI_OPTION_LARGE_FILE;
 			view_options_set(win->view, options);
 		}
-		snprintf(right_parts[right_count], sizeof(right_parts[right_count])-1,
+		snprintf(right_parts[right_count++], sizeof(right_parts[0]),
 		         "%zu, %zu", line, col);
-		right_count++;
 	}
 
-	int left_len = snprintf(left, sizeof(left)-1, " %s%s%s%s%s%s%s",
+	int left_len = snprintf(left, sizeof(left), " %s%s%s%s%s%s%s",
 	         left_parts[0],
 	         left_parts[1][0] ? " » " : "",
 	         left_parts[1],
@@ -128,7 +124,7 @@ static void window_status_update(Vis *vis, Win *win) {
 	         left_parts[3][0] ? " » " : "",
 	         left_parts[3]);
 
-	int right_len = snprintf(right, sizeof(right)-1, "%s%s%s%s%s%s%s ",
+	int right_len = snprintf(right, sizeof(right), "%s%s%s%s%s%s%s ",
 	         right_parts[0],
 	         right_parts[1][0] ? " « " : "",
 	         right_parts[1],
@@ -146,7 +142,7 @@ static void window_status_update(Vis *vis, Win *win) {
 	if (spaces < 1)
 		spaces = 1;
 
-	snprintf(status, sizeof(status)-1, "%s%*s%s", left, spaces, " ", right);
+	snprintf(status, sizeof(status), "%s%*s%s", left, spaces, " ", right);
 	vis_window_status(win, status);
 }
 
