@@ -181,7 +181,7 @@ static size_t window_nop(Vis *vis, Win *win, size_t pos) {
 }
 
 static size_t bracket_match(Text *txt, size_t pos) {
-	size_t hit = text_bracket_match_symbol(txt, pos, "(){}[]<>");
+	size_t hit = text_bracket_match_symbol(txt, pos, "(){}[]<>'\"`");
 	if (hit != pos)
 		return hit;
 	char current;
@@ -196,6 +196,9 @@ static size_t bracket_match(Text *txt, size_t pos) {
 		case ']':
 		case '<':
 		case '>':
+		case '"':
+		case '\'':
+		case '`':
 			return it.pos;
 		}
 		text_iterator_byte_next(&it, NULL);
