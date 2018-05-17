@@ -79,6 +79,13 @@ static void window_status_update(Vis *vis, Win *win) {
 	         vis_macro_recording(vis) ? " @": "");
 	left_count++;
 
+	int count = vis_count_get(vis);
+	const char *keys = buffer_content0(&vis->input_queue);
+	if (keys && keys[0])
+		snprintf(right_parts[right_count++], sizeof(right_parts[0]), "%s", keys);
+	else if (count != VIS_COUNT_UNKNOWN)
+		snprintf(right_parts[right_count++], sizeof(right_parts[0]), "%d", count);
+
 	int sel_count = view_selections_count(view);
 	if (sel_count > 1) {
 		Selection *s = view_selections_primary_get(view);

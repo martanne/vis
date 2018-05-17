@@ -91,6 +91,14 @@ vis.events.subscribe(vis.events.WIN_STATUS, function(win)
 	table.insert(left_parts, (file.name or '[No Name]') ..
 		(file.modified and ' [+]' or '') .. (vis.recording and ' @' or ''))
 
+	local count = vis.count
+	local keys = vis.input_queue
+	if keys ~= '' then
+		table.insert(right_parts, keys)
+	elseif count then
+		table.insert(right_parts, count)
+	end
+
 	if #win.selections > 1 then
 		table.insert(right_parts, selection.number..'/'..#win.selections)
 	end
