@@ -45,7 +45,7 @@ struct Change {
 		TRANSCRIPT_CHANGE = TRANSCRIPT_INSERT|TRANSCRIPT_DELETE,
 	} type;
 	Win *win;          /* window in which changed file is being displayed */
-	Selection *cursor;    /* cursor associated with this change, might be NULL */
+	Selection *sel;    /* selection associated with this change, might be NULL */
 	Filerange range;   /* inserts are denoted by zero sized range (same start/end) */
 	const char *data;  /* will be free(3)-ed after transcript has been processed */
 	size_t len;        /* size in bytes of the chunk pointed to by data */
@@ -448,7 +448,7 @@ static Change *change_new(Transcript *t, enum ChangeType type, Filerange *range,
 	if (new) {
 		new->type = type;
 		new->range = *range;
-		new->cursor = sel;
+		new->sel = sel;
 		new->win = win;
 		new->next = next;
 		*prev = new;
@@ -1209,33 +1209,33 @@ enum SamError sam_cmd(Vis *vis, const char *s) {
 			if (c->type & TRANSCRIPT_DELETE) {
 				text_delete_range(file->text, &c->range);
 				delta -= text_range_size(&c->range);
-				if (c->cursor && c->type == TRANSCRIPT_DELETE) {
+				if (c->sel && c->type == TRANSCRIPT_DELETE) {
 					if (visual)
-						view_selections_dispose_force(c->cursor);
+						view_selections_dispose_force(c->sel);
 					else
-						view_cursors_to(c->cursor, c->range.start);
+						view_cursors_to(c->sel, c->range.start);
 				}
 			}
 			if (c->type & TRANSCRIPT_INSERT) {
 				text_insert(file->text, c->range.start, c->data, c->len);
 				delta += c->len;
-				Filerange sel = text_range_new(c->range.start,
-				                               c->range.start+c->len);
-				if (c->cursor) {
+				Filerange r = text_range_new(c->range.start,
+				                             c->range.start+c->len);
+				if (c->sel) {
 					if (visual) {
-						view_selections_set(c->cursor, &sel);
-						view_selections_anchor(c->cursor, true);
+						view_selections_set(c->sel, &r);
+						view_selections_anchor(c->sel, true);
 					} else {
 						if (memchr(c->data, '\n', c->len))
-							view_cursors_to(c->cursor, sel.start);
+							view_cursors_to(c->sel, r.start);
 						else
-							view_cursors_to(c->cursor, sel.end);
+							view_cursors_to(c->sel, r.end);
 					}
 				} else if (visual) {
-					Selection *cursor = view_selections_new(c->win->view, sel.start);
-					if (cursor) {
-						view_selections_set(cursor, &sel);
-						view_selections_anchor(cursor, true);
+					Selection *sel = view_selections_new(c->win->view, r.start);
+					if (sel) {
+						view_selections_set(sel, &r);
+						view_selections_anchor(sel, true);
 					}
 				}
 			}
