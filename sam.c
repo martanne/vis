@@ -1244,6 +1244,9 @@ enum SamError sam_cmd(Vis *vis, const char *s) {
 		vis_file_snapshot(vis, file);
 	}
 
+	for (Win *win = vis->windows; win; win = win->next)
+		view_selections_normalize(win->view);
+
 	if (vis->win) {
 		if (primary_pos != EPOS && view_selection_disposed(vis->win->view))
 			view_cursor_to(vis->win->view, primary_pos);
