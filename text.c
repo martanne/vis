@@ -1120,9 +1120,11 @@ ssize_t text_write_range(Text *txt, Filerange *range, int fd) {
 	return size - rem;
 }
 
-/* load the given file as starting point for further editing operations.
- * to start with an empty document, pass NULL as filename. */
 Text *text_load(const char *filename) {
+	return text_load_method(filename, TEXT_LOAD_AUTO);
+}
+
+Text *text_load_method(const char *filename, enum TextLoadMethod method) {
 	int fd = -1;
 	size_t size = 0;
 	Text *txt = calloc(1, sizeof *txt);
@@ -1144,7 +1146,7 @@ Text *text_load(const char *filename) {
 		// XXX: use lseek(fd, 0, SEEK_END); instead?
 		size = txt->info.st_size;
 		if (size > 0) {
-			if (size < BLOCK_MMAP_SIZE)
+			if (method == TEXT_LOAD_READ || (method == TEXT_LOAD_AUTO && size < BLOCK_MMAP_SIZE))
 				txt->block = block_read(txt, size, fd);
 			else
 				txt->block = block_mmap(txt, size, fd, 0);

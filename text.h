@@ -59,9 +59,47 @@ typedef struct {
  * @{
  */
 /**
+ * Method used to load existing file content.
+ */
+enum TextLoadMethod {
+	/** Automatically chose best option. */
+	TEXT_LOAD_AUTO,
+	/**
+	 * Read file content and copy it to an in-memory buffer.
+	 * Subsequent changes to the underlying file will have no
+	 * effect on this text instance.
+	 *
+	 * @rst
+	 * .. note:: Load time is linear in the file size.
+	 * @endrst
+	 */
+	TEXT_LOAD_READ,
+	/**
+	 * Memory map the the file from disk. Use file system / virtual memory
+	 * subsystem as a caching layer.
+	 * @rst
+	 * .. note:: Load time is (almost) independent of the file size.
+	 * .. warning:: Inplace modifications of the underlying file
+	 *              will be reflected in the current text content.
+	 *              In particular, truncatenation will raise ``SIGBUS``
+	 *              and result in data loss.
+	 * @endrst
+	 */
+	TEXT_LOAD_MMAP,
+};
+/**
+ * Create a text instance populated with the given file content.
+ *
+ * @rst
+ * .. note:: Equivalent to ``text_load_method(filename, TEXT_LOAD_AUTO)``.
+ * @endrst
+ */
+Text *text_load(const char *filename);
+/**
  * Create a text instance populated with the given file content.
  *
  * @param filename The name of the file to load, if ``NULL`` an empty text is created.
+ * @param method How the file content should be loaded.
  * @return The new Text object or ``NULL`` in case of an error.
  * @rst
  * .. note:: When attempting to load a non-regular file, ``errno`` will be set to:
@@ -70,7 +108,7 @@ typedef struct {
  *    - ``ENOTSUP`` otherwise.
  * @endrst
  */
-Text *text_load(const char *filename);
+Text *text_load_method(const char *filename, enum TextLoadMethod);
 /** Release all ressources associated with this text instance. */
 void text_free(Text*);
 /**
