@@ -188,7 +188,7 @@ static const CommandDef cmds[] = {
 		CMD_SHELL|CMD_ADDRESS_POS, NULL, cmd_pipein
 	}, {
 		"|",            VIS_HELP("Pipe range through command")
-		CMD_SHELL|CMD_ADDRESS_POS, NULL, cmd_filter
+		CMD_SHELL, NULL, cmd_filter
 	}, {
 		"!",            VIS_HELP("Run the command")
 		CMD_SHELL|CMD_ONCE|CMD_ADDRESS_NONE, NULL, cmd_launch
