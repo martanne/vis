@@ -192,7 +192,7 @@ static File *file_new(Vis *vis, const char *name) {
 	}
 
 	File *file = NULL;
-	Text *text = text_load(name);
+	Text *text = text_load_method(name, vis->load_method);
 	if (!text && name && errno == ENOENT)
 		text = text_load(NULL);
 	if (!text)

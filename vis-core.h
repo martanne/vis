@@ -215,6 +215,7 @@ struct Vis {
 	Map *actions;                        /* registered editor actions / special keys commands */
 	Array actions_user;                  /* dynamically allocated editor actions */
 	lua_State *lua;                      /* lua context used for syntax highligthing */
+	enum TextLoadMethod load_method;     /* how existing files should be loaded */
 	VisEvent *event;
 	Array operators;
 	Array motions;

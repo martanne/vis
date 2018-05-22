@@ -295,6 +295,7 @@ enum {
 	OPTION_CURSOR_LINE,
 	OPTION_COLOR_COLUMN,
 	OPTION_SAVE_METHOD,
+	OPTION_LOAD_METHOD,
 	OPTION_CHANGE_256COLORS,
 };
 
@@ -368,6 +369,11 @@ static const OptionDef options[] = {
 		{ "savemethod" },
 		VIS_OPTION_TYPE_STRING|VIS_OPTION_NEED_WINDOW,
 		VIS_HELP("Save method to use for current file 'auto', 'atomic' or 'inplace'")
+	},
+	[OPTION_LOAD_METHOD] = {
+		{ "loadmethod" },
+		VIS_OPTION_TYPE_STRING,
+		VIS_HELP("How to load existing files 'auto', 'read' or 'mmap'")
 	},
 	[OPTION_CHANGE_256COLORS] = {
 		{ "change-256colors" },

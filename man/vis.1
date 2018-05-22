@@ -1398,6 +1398,17 @@ which tries the former before falling back to the latter.
 The rename method fails for symlinks, hardlinks, in case of insufficient
 directory permissions or when either the file owner, group, POSIX ACL or
 SELinux labels can not be restored.
+.It Cm loadmethod Op Ar auto
+How existing files should be loaded,
+.Ar read
+which copies the file content to an independent in-memory buffer,
+.Ar mmap
+which memory maps the file from disk and uses OS capabilities as
+caching layer or
+.Ar auto
+which tries the former for files smaller than 8Mb and the latter for
+lager ones. WARNING: modifying a memory mapped file in-place will
+cause data loss.
 .El
 .
 .Sh COMMAND and SEARCH PROMPT

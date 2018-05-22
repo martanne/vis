@@ -332,6 +332,19 @@ static bool cmd_set(Vis *vis, Win *win, Command *cmd, const char *argv[], Select
 			return false;
 		}
 		break;
+	case OPTION_LOAD_METHOD:
+		if (strcmp("auto", arg.s) == 0) {
+			vis->load_method = TEXT_LOAD_AUTO;
+		} else if (strcmp("read", arg.s) == 0) {
+			vis->load_method = TEXT_LOAD_READ;
+		} else if (strcmp("mmap", arg.s) == 0) {
+			vis->load_method = TEXT_LOAD_MMAP;
+		} else {
+			vis_info_show(vis, "Invalid load method `%s', expected "
+			              "'auto', 'read' or 'mmap'", arg.s);
+			return false;
+		}
+		break;
 	case OPTION_CHANGE_256COLORS:
 		vis->change_colors = toggle ? !vis->change_colors : arg.b;
 		break;
