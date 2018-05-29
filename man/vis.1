@@ -227,7 +227,9 @@ These operations always use the first register slot.
 .Ss Encoding, Tab and Newline handling
 .
 .Nm
-always assumes the input file to be UTF-8 encoded with \[rs]n line endings.
+always assumes the input file to be UTF-8 encoded with
+.Li \[rs]n
+line endings.
 If you wish to edit files with legacy encodings or non-Unix line endings,
 use
 .Xr iconv 1
@@ -445,7 +447,7 @@ and
 may be typed for newline and tab;
 .Li \[rs]/
 quotes the delimiter, here
-.Ic / .
+.Li / .
 An ampersand
 .Li &
 and
