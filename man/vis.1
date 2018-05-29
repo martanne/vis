@@ -130,11 +130,11 @@ sets a mark,
 .Ic M
 restores it.
 For example,
-.Ic 'am
+.Ic ' Ns Ar a Ns Ic m
 sets the mark
-.Ic a
+.Ar a
 while
-.Ic 'aM
+.Ic ' Ns Ar a Ns Ic M
 restores it.
 .Pp
 Available marks are:
@@ -282,17 +282,17 @@ An address identifies a substring (or range) in a file.
 In the following
 .Do
 character
-.Ic n
+.Ar n
 .Dc
 means the null string after the
-.Ic n Ns -th
+.Ar n Ns -th
 character in the file, with 1 the first character in the file.
 .Do
 Line
-.Ic n
+.Ar n
 .Dc
 means the
-.Ic n Ns -th
+.Ar n Ns -th
 match, starting at the beginning of the file, of the regular expression
 .Dq Li .*\[rs]n? .
 .Pp
@@ -309,14 +309,14 @@ multiple
 .Ss Simple addresses
 .
 .Bl -tag -width indent
-.It Ic #n
+.It Ic # Ns Ar n
 The empty string after character
-.Ic n ;
+.Ar n ;
 .Ic #0
 is the beginning of the file.
-.It Ic n
+.It Ar n
 Line
-.Ic n .
+.Ar n .
 .It Ic / Ns Ar regexp Ns Ic /
 .It Ic "?" Ns Ar regexp Ns Ic "?"
 The substring that matches the regular expression, found by looking
@@ -339,52 +339,52 @@ below.
 The null string at the end of the file.
 .It Ic "."
 Dot, the current range.
-.It Ic 'm
+.It Ic ' Ns Ar m
 The mark
-.Ic m
+.Ar m
 in the file.
 .El
 .
 .Ss Compound addresses
 .
 In the following,
-.Ic a1
+.Ar a1
 and
-.Ic a2
+.Ar a2
 are addresses.
 .Bl -tag -width indent
-.It Ic a1+a2
+.It Ar a1 Ns Ic + Ns Ar a2
 The address
-.Ic a2
+.Ar a2
 evaluated starting at the end of
-.Ic a1 .
-.It Ic a1-a2
+.Ar a1 .
+.It Ar a1 Ns Ic - Ns Ar a2
 The address
-.Ic a2
+.Ar a2
 evaluated looking the reverse direction starting at the beginning of
-.Ic a1 .
-.It Ic a1,a2
+.Ar a1 .
+.It Ar a1 Ns Ic "," Ns Ar a2
 The substring from the beginning of
-.Ic a1
+.Ar a1
 to the end of
-.Ic a2 .
+.Ar a2 .
 If
-.Ic a1
+.Ar a1
 is missing,
 .Ic 0
 is substituted.
 If
-.Ic a2
+.Ar a2
 is missing,
 .Ic $
 is substituted.
-.It Ic a1;a2
+.It Ar a1 Ns Ic ";" Ns Ar a2
 Like
-.Ic a1,a2
+.Ar a1 Ns Ic "," Ns Ar a2
 but with
-.Ic a2
+.Ar a2
 evaluated at the end of, and range set to,
-.Ic a1 .
+.Ar a1 .
 .El
 .Pp
 The operators
@@ -402,21 +402,21 @@ In both
 and
 .Ic -
 forms, if
-.Ic a2
+.Ar a2
 is a line or character address with a missing number, the number defaults to 1.
 If
-.Ic a1
+.Ar a1
 is missing,
 .Ic "."
 is substituted.
 If both
-.Ic a1
+.Ar a1
 and
-.Ic a2
+.Ar a2
 are present and distinguishable,
 .Ic +
 may be elided.
-.Ic a2
+.Ar a2
 may be a regular expression; if it is delimited by
 .Li "?"
 characters, the effect of the
@@ -451,9 +451,9 @@ quotes the delimiter, here
 An ampersand
 .Li &
 and
-.Li \[rs]n ,
+.Li \[rs] Ns Ar n ,
 where
-.Li n
+.Ar n
 is a digit (1-9) are replaced by the corresponding register.
 Backslash is otherwise interpreted literally.
 .Pp
@@ -591,17 +591,17 @@ Write commands with a non-default addresses and no file name are destructive
 and need always to be forced.
 .Bl -tag -width indent
 .
-.It Ic < Li shell command
+.It Ic < Ar shell command
 Replace the range by the standard output of the shell command.
 .
-.It Ic > Li shell command
+.It Ic > Ar shell command
 Sends the range to the standard input of the shell command.
 .
-.It Ic "|" Li shell command
+.It Ic "|" Ar shell command
 Send the range to the standard input, and replace it by the standard output, of
 the shell command.
 .
-.It Ic "!" Li shell command
+.It Ic "!" Ar shell command
 Run interactive shell command, redirect keyboard input to it.
 .
 .It Ic cd Ar directory
@@ -682,30 +682,30 @@ a match for the expression, run command on the range.
 The
 .Ar count
 specifier has the following format, where
-.Ic n
+.Ar n
 and
-.Ic m
+.Ar m
 are integers denoting the ranges.
 .Bl -tag -width indent
-.It Ic n,m
+.It Ar n Ns Ic "," Ns Ar m
 The closed interval from
-.Ic n
+.Ar n
 to
-.Ic m .
+.Ar m .
 If
-.Ic n
+.Ar n
 is missing,
 .Ic 1
 is substituted.
 If
-.Ic m
+.Ar m
 is missing,
 .Ic ∞
 is substituted. Negative values are interpreted relative to the last range.
-.It Ic %n
+.It Ic % Ns Ar n
 Matches every
-.Ic n Ns
--th range.
+.Ar n Ns -th
+range.
 .El
 .
 .El
@@ -831,11 +831,15 @@ next end of a word
 .It Ic E
 next end of a WORD
 .
-.It Ic F Aq char
-to next occurrence of char to the left
+.It Ic F Ns Aq Ar char
+to next occurrence of
+.Aq Ar char
+to the left
 .
-.It Ic f Aq char
-to next occurrence of char to the right
+.It Ic f Ns Aq Ar char
+to next occurrence of
+.Aq Ar char
+to the right
 .
 .It Ic ^
 first non-blank of line
@@ -947,17 +951,25 @@ search word under selection backwards
 .It Ic *
 search word under selection forwards
 .
-.It Ic T Aq char
-till before next occurrence of char to the left
+.It Ic T Ns Aq Ar char
+till before next occurrence of
+.Aq Ar char
+to the left
 .
-.It Ic t Aq char
-till before next occurrence of char to the right
+.It Ic t Ns Aq Ar char
+till before next occurrence of
+.Aq Ar char
+to the right
 .
-.It Ic "?" Ar pattern
-to next match of pattern in backward direction
+.It Ic "?" Ns Ar pattern
+to next match of
+.Ar pattern
+in backward direction
 .
-.It Ic / Ar pattern
-to next match of pattern in forward direction
+.It Ic / Ns Ar pattern
+to next match of
+.Ar pattern
+in forward direction
 .
 .It Ic w
 next start of a word
