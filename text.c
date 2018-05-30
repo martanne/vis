@@ -34,7 +34,7 @@
 /* Files smaller than this value are copied on load, larger ones are mmap(2)-ed
  * directely. Hence the former can be truncated, while doing so on the latter
  * results in havoc. */
-#define BLOCK_MMAP_SIZE (1 << 23)
+#define BLOCK_MMAP_SIZE (1 << 26)
 
 /* Block holding the file content, either readonly mmap(2)-ed from the original
  * file or heap allocated to store the modifications.
