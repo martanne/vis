@@ -143,7 +143,7 @@ Available marks are:
 default mark
 .It Ic '^
 active selections when leaving visual mode
-.It Ic 'a Ns - Ns Ic 'z
+.It Ic 'a Ns \(en Ns Ic 'z
 general purpose marks
 .El
 .Pp
@@ -170,16 +170,16 @@ to the empty string. Available registers are:
 .Bl -tag -width indent
 .It Ic \(dq\(dq
 default register
-.It Ic \(dqa Ns - Ns Ic \(dqz
+.It Ic \(dqa Ns \(en Ns Ic \(dqz
 general purpose registers
-.It Ic \(dqA Ns - Ns Ic \(dqZ
+.It Ic \(dqA Ns \(en Ns Ic \(dqZ
 append to corresponding general purpose register
 .It Ic \(dq* , Ic \(dq+
 system clipboard integration via shell script
 .Xr vis-clipboard 1
 .It Ic \(dq0
 yank register, most recently yanked range
-.It Ic \(dq1 Ns - Ns Ic \(dq9
+.It Ic \(dq1 Ns \(en Ns Ic \(dq9
 .It Ic \(dq&
 sub expression matches of most recent
 .Ic x
@@ -203,10 +203,10 @@ If no explicit register is specified the default register is used.
 .Ss Macros
 .
 The general purpose registers
-.Ic \(dqa Ns - Ns Ic \(dqz
+.Ic \(dqa Ns \(en Ns Ic \(dqz
 can be used to record macros.
 Use one of
-.Ic \(dqA Ns - Ns Ic \(dqZ
+.Ic \(dqA Ns \(en Ns Ic \(dqZ
 to append to an existing macro.
 .Ic q
 starts a recording,
@@ -454,7 +454,7 @@ and
 .Li \[rs] Ns Ar n ,
 where
 .Ar n
-is a digit (1-9) are replaced by the corresponding register.
+is a digit (1\(en9) are replaced by the corresponding register.
 Backslash is otherwise interpreted literally.
 .Pp
 Most commands may be prefixed with an address to indicate their range of
@@ -640,7 +640,7 @@ Null string matches potentially occur before every character of the range and
 at the end of the range.
 .Pp
 The
-.Ic \(dq1 Ns - Ns Ic \(dq9
+.Ic \(dq1 Ns \(en Ns Ic \(dq9
 and
 .Ic \(dq&
 registers are updated with the (sub) expression matches of the pattern.
