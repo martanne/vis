@@ -942,12 +942,12 @@ static const KeyAction vis_action[] = {
 	},
 	[VIS_ACTION_SELECTIONS_ALIGN_INDENT_LEFT] = {
 		"vis-selections-align-indent-left",
-		VIS_HELP("Left align all selections/selections by inserting spaces")
+		VIS_HELP("Left-align all selections by inserting spaces")
 		selections_align_indent, { .i = -1 }
 	},
 	[VIS_ACTION_SELECTIONS_ALIGN_INDENT_RIGHT] = {
 		"vis-selections-align-indent-right",
-		VIS_HELP("Right align all selections/selections by inserting spaces")
+		VIS_HELP("Right-align all selections by inserting spaces")
 		selections_align_indent, { .i = +1 }
 	},
 	[VIS_ACTION_SELECTIONS_REMOVE_ALL] = {
@@ -957,7 +957,7 @@ static const KeyAction vis_action[] = {
 	},
 	[VIS_ACTION_SELECTIONS_REMOVE_LAST] = {
 		"vis-selections-remove-last",
-		VIS_HELP("Remove least recently created selection")
+		VIS_HELP("Remove primary selection")
 		selections_remove,
 	},
 	[VIS_ACTION_SELECTIONS_REMOVE_COLUMN] = {
@@ -997,22 +997,22 @@ static const KeyAction vis_action[] = {
 	},
 	[VIS_ACTION_SELECTIONS_SAVE] = {
 		"vis-selections-save",
-		VIS_HELP("Save currently active selections to register")
+		VIS_HELP("Save currently active selections to mark")
 		selections_save
 	},
 	[VIS_ACTION_SELECTIONS_RESTORE] = {
 		"vis-selections-restore",
-		VIS_HELP("Restore selections from register")
+		VIS_HELP("Restore selections from mark")
 		selections_restore
 	},
 	[VIS_ACTION_SELECTIONS_UNION] = {
 		"vis-selections-union",
-		VIS_HELP("Add selections from register")
+		VIS_HELP("Add selections from mark")
 		selections_union
 	},
 	[VIS_ACTION_SELECTIONS_INTERSECT] = {
 		"vis-selections-intersect",
-		VIS_HELP("Intersect selections with register")
+		VIS_HELP("Intersect with selections from mark")
 		selections_intersect
 	},
 	[VIS_ACTION_SELECTIONS_COMPLEMENT] = {
@@ -1022,17 +1022,17 @@ static const KeyAction vis_action[] = {
 	},
 	[VIS_ACTION_SELECTIONS_MINUS] = {
 		"vis-selections-minus",
-		VIS_HELP("Subtract selections from register")
+		VIS_HELP("Subtract selections from mark")
 		selections_minus
 	},
 	[VIS_ACTION_SELECTIONS_COMBINE_UNION] = {
 		"vis-selections-combine-union",
-		VIS_HELP("Pairwise union with selection from register")
+		VIS_HELP("Pairwise union with selections from mark")
 		selections_combine, { .combine = combine_union }
 	},
 	[VIS_ACTION_SELECTIONS_COMBINE_INTERSECT] = {
 		"vis-selections-combine-intersect",
-		VIS_HELP("Pairwise intersect with selections from register")
+		VIS_HELP("Pairwise intersect with selections from mark")
 		selections_combine, { .combine = combine_intersect }
 	},
 	[VIS_ACTION_SELECTIONS_COMBINE_LONGER] = {
