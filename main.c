@@ -72,19 +72,19 @@ static const char *selections_match_skip(Vis*, const char *keys, const Arg *arg)
 static const char *selections_rotate(Vis*, const char *keys, const Arg *arg);
 /* remove leading and trailing white spaces from selections */
 static const char *selections_trim(Vis*, const char *keys, const Arg *arg);
-/* save active selections to register */
+/* save active selections to mark */
 static const char *selections_save(Vis*, const char *keys, const Arg *arg);
-/* restore selections from register */
+/* restore selections from mark */
 static const char *selections_restore(Vis*, const char *keys, const Arg *arg);
-/* union selections */
+/* union selections from mark */
 static const char *selections_union(Vis*, const char *keys, const Arg *arg);
-/* intersect selections */
+/* intersect selections from mark */
 static const char *selections_intersect(Vis*, const char *keys, const Arg *arg);
 /* perform complement of current active selections */
 static const char *selections_complement(Vis*, const char *keys, const Arg *arg);
-/* subtract selections from register */
+/* subtract selections from mark */
 static const char *selections_minus(Vis*, const char *keys, const Arg *arg);
-/* pairwise combine selections */
+/* pairwise combine selections from mark */
 static const char *selections_combine(Vis*, const char *keys, const Arg *arg);
 static Filerange combine_union(const Filerange*, const Filerange*);
 static Filerange combine_intersect(const Filerange*, const Filerange*);
