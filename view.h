@@ -58,7 +58,7 @@ Filerange view_viewport_get(View*);
  * @param pos The position to query.
  * @param line Will be updated with screen line on which `pos` resides.
  * @param row Will be updaded with zero based window row on which `pos` resides.
- * @param line Will be updated with zero based window column which `pos` resides.
+ * @param col Will be updated with zero based window column which `pos` resides.
  * @return Whether `pos` is visible. If not, the pointer arguments are left unmodified.
  */
 bool view_coord_get(View*, size_t pos, Line **line, int *row, int *col);
