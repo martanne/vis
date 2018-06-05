@@ -34,6 +34,12 @@ local ts = token('timestamp', l.digit * l.digit * l.digit * l.digit * -- year
                                 S(' \t')^0 * S('-+') * l.digit * l.digit^-1 *
                                 (':' * l.digit * l.digit)^-1)^-1)^-1)
 
+-- table.
+local table = token('table', ('[[' * l.word * ('.' * l.word)^0 * ']]') +
+                             -- TODO: add quoted string support
+                             -- TODO: don't match if brackets aren't matched
+                             ('[' * l.word * ('.' * l.word)^0 * ']'))
+
 -- kewwords.
 local keyword = token(l.KEYWORD, word_match{
   'true', 'false'
@@ -44,12 +50,13 @@ local keyword = token(l.KEYWORD, word_match{
 local identifier = token(l.IDENTIFIER, l.word)
 
 -- Operators.
-local operator = token(l.OPERATOR, S('=+-,.{}[]()'))
+local operator = token(l.OPERATOR, S('=+-,.{}()'))
 
 M._rules = {
   {'indent', indent},
   {'whitespace', ws},
   {'keyword', keyword},
+  {'table', table},
   {'identifier', identifier},
   {'operator', operator},
   {'string', string},
@@ -60,6 +67,7 @@ M._rules = {
 
 M._tokenstyles = {
   timestamp = l.STYLE_NUMBER,
+  table = l.STYLE_KEYWORD,
 }
 
 M._FOLDBYINDENTATION = true
