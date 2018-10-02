@@ -524,11 +524,11 @@ size_t text_parenthesis_end(Text *txt, size_t pos) {
 	return text_range_valid(&r) ? r.end : pos;
 }
 
-size_t text_bracket_match(Text *txt, size_t pos) {
-	return text_bracket_match_symbol(txt, pos, NULL);
+size_t text_bracket_match(Text *txt, size_t pos, const Filerange *limits) {
+	return text_bracket_match_symbol(txt, pos, NULL, limits);
 }
 
-static size_t match_symbol(Text *txt, size_t pos, char search, int direction) {
+static size_t match_symbol(Text *txt, size_t pos, char search, int direction, const Filerange *limits) {
 	char c, current;
 	int count = 1;
 	bool instring = false;
@@ -537,6 +537,8 @@ static size_t match_symbol(Text *txt, size_t pos, char search, int direction) {
 		return pos;
 	if (direction >= 0) { /* forward search */
 		while (text_iterator_byte_next(&it, &c)) {
+			if (limits && it.pos >= limits->end)
+				break;
 			if (c != current && c == '"')
 				instring = !instring;
 			if (!instring) {
@@ -548,6 +550,8 @@ static size_t match_symbol(Text *txt, size_t pos, char search, int direction) {
 		}
 	} else { /* backwards */
 		while (text_iterator_byte_prev(&it, &c)) {
+			if (limits && it.pos < limits->start)
+				break;
 			if (c != current && c == '"')
 				instring = !instring;
 			if (!instring) {
@@ -562,7 +566,7 @@ static size_t match_symbol(Text *txt, size_t pos, char search, int direction) {
 	return pos; /* no match found */
 }
 
-size_t text_bracket_match_symbol(Text *txt, size_t pos, const char *symbols) {
+size_t text_bracket_match_symbol(Text *txt, size_t pos, const char *symbols, const Filerange *limits) {
 	int direction;
 	char search, current, c;
 	Iterator it = text_iterator_get(txt, pos);
@@ -584,8 +588,8 @@ size_t text_bracket_match_symbol(Text *txt, size_t pos, const char *symbols) {
 	case '\'':
 	{
 		/* prefer matches on the same line */
-		size_t fw = match_symbol(txt, pos, current, +1);
-		size_t bw = match_symbol(txt, pos, current, -1);
+		size_t fw = match_symbol(txt, pos, current, +1, limits);
+		size_t bw = match_symbol(txt, pos, current, -1, limits);
 		if (fw == pos)
 			return bw;
 		if (bw == pos)
@@ -611,7 +615,7 @@ size_t text_bracket_match_symbol(Text *txt, size_t pos, const char *symbols) {
 		return pos;
 	}
 
-	return match_symbol(txt, pos, search, direction);
+	return match_symbol(txt, pos, search, direction, limits);
 }
 
 size_t text_search_forward(Text *txt, size_t pos, Regex *regex) {

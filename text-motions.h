@@ -117,9 +117,9 @@ size_t text_block_end(Text*, size_t pos);
 size_t text_parenthesis_start(Text*, size_t pos);
 size_t text_parenthesis_end(Text*, size_t pos);
 /* search coresponding '(', ')', '{', '}', '[', ']', '>', '<', '"', ''' */
-size_t text_bracket_match(Text*, size_t pos);
+size_t text_bracket_match(Text*, size_t pos, const Filerange *limits);
 /* same as above but explicitly specify symbols to match */
-size_t text_bracket_match_symbol(Text*, size_t pos, const char *symbols);
+size_t text_bracket_match_symbol(Text*, size_t pos, const char *symbols, const Filerange *limits);
 
 /* search the given regex pattern in either forward or backward direction,
  * starting from pos. does wrap around if no match was found. */
