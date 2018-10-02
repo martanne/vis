@@ -371,7 +371,8 @@ static void window_draw_cursor_matching(Win *win, Selection *cur, CellStyle *sty
 		return;
 	Line *line_match; int col_match;
 	size_t pos = view_cursors_pos(cur);
-	size_t pos_match = text_bracket_match_symbol(win->file->text, pos, "(){}[]\"'`");
+	Filerange limits = view_viewport_get(win->view);
+	size_t pos_match = text_bracket_match_symbol(win->file->text, pos, "(){}[]\"'`", &limits);
 	if (pos == pos_match)
 		return;
 	if (!view_coord_get(win->view, pos_match, &line_match, NULL, &col_match))

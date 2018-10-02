@@ -230,7 +230,7 @@ static Filerange text_object_bracket(Text *txt, size_t pos, char type) {
 	Iterator it = text_iterator_get(txt, pos);
 
 	if (open == close && text_iterator_byte_get(&it, &c) && (c == '"' || c == '`' || c == '\'')) {
-		size_t match = text_bracket_match(txt, pos);
+		size_t match = text_bracket_match(txt, pos, NULL);
 		r.start = MIN(pos, match) + 1;
 		r.end = MAX(pos, match);
 		return r;
