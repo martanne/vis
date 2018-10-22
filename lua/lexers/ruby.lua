@@ -42,7 +42,7 @@ local dq_str = l.delimited_range('"')
 local lit_str = '%' * S('qQ')^-1 * literal_delimitted
 local heredoc = '<<' * P(function(input, index)
   local s, e, indented, _, delimiter =
-    input:find('(%-?)(["`]?)([%a_][%w_]*)%2[\n\r\f;]+', index)
+    input:find('([%-~]?)(["`]?)([%a_][%w_]*)%2[\n\r\f;]+', index)
   if s == index and delimiter then
     local end_heredoc = (#indented > 0 and '[\n\r\f]+ *' or '[\n\r\f]+')
     local _, e = input:find(end_heredoc..delimiter, e)
