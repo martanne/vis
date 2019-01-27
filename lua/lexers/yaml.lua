@@ -60,12 +60,7 @@ local word = (l.alpha + '-' * -l.space) * (l.alnum + '-')^0
 
 -- Keys and literals.
 local colon = S(' \t')^0 * ':' * (l.space + -1)
-local key = token(l.KEYWORD,
-                  #word * (l.nonnewline - colon)^1 * #colon *
-                  P(function(input, index)
-                    local line = input:sub(1, index - 1):match('[^\r\n]+$')
-                    return not line:find('[%w-]+:') and index
-                  end))
+local key = token(l.KEYWORD, (l.alnum + '_' + '-')^1 * #(':' * l.space))
 local value = #word * (l.nonnewline - l.space^0 * S(',]}'))^1
 local block = S('|>') * S('+-')^-1 * (l.newline + -1) * function(input, index)
   local rest = input:sub(index)
