@@ -8,7 +8,7 @@ Vis a vim-like text editor
 [![Documentation Status](https://readthedocs.org/projects/vis/badge/?version=master)](http://vis.readthedocs.io/en/master/?badge=master)
 [![#vis-editor on freenode](https://img.shields.io/badge/IRC-%23vis--editor-blue.svg)](irc://irc.freenode.net/vis-editor)
 
-Vis aims to be a modern, legacy free, simple yet efficient editor
+Vis aims to be a modern, legacy-free, simple yet efficient editor,
 combining the strengths of both vi(m) and sam.
 
 It extends vi's modal editing with built-in support for multiple
@@ -16,18 +16,18 @@ cursors/selections and combines it with [sam's](http://sam.cat-v.org/)
 [structural regular expression](http://doc.cat-v.org/bell_labs/structural_regexps/)
 based [command language](http://doc.cat-v.org/bell_labs/sam_lang_tutorial/).
 
-As an universal editor it has decent Unicode support and should cope with arbitrary files
-including: large, binary or single-line ones.
+A universal editor, it has decent Unicode support and should cope with arbitrary
+files, including large, binary or single-line ones.
 
 Efficient syntax highlighting is provided using
-[Parsing Expression Grammars](https://en.wikipedia.org/wiki/Parsing_expression_grammar)
+[Parsing Expression Grammars](https://en.wikipedia.org/wiki/Parsing_expression_grammar),
 which can be conveniently expressed using [Lua](http://www.lua.org/)
 in the form of [LPeg](http://www.inf.puc-rio.br/~roberto/lpeg/).
 
 The editor core is written in a reasonable amount of clean (your mileage
-may vary), modern and legacy free C code, enabling it to run in resource
-constrained environments. The implementation should be easy to hack on
-and encourage experimentation. There also exists a Lua API for in process
+may vary), modern and legacy-free C code, enabling it to run in
+resource-constrained environments. The implementation should be easy to hack on
+and encourage experimentation. There is also a Lua API for in-process
 extensions.
 
 Vis strives to be *simple* and focuses on its core task: efficient text
@@ -36,7 +36,7 @@ dialog are all provided by independent utilities. There exist plans to use
 a client/server architecture, delegating window management to your windowing
 system or favorite terminal multiplexer.
 
-The intention is *not* to be bug for bug compatible with vi(m), instead 
+The intention is *not* to be bug-for-bug compatible with vi(m). Instead,  
 we aim to provide more powerful editing features based on an elegant design
 and clean implementation.
 
