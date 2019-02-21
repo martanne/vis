@@ -1,6 +1,6 @@
 include Makefile
 
-LIBTERMKEY = libtermkey-0.20
+LIBTERMKEY = libtermkey-0.21.1
 LIBTERMKEY_SHA256 = 6c0d87c94ab9915e76ecd313baec08dedf3bd56de83743d9aa923a081935d2f5
 
 LIBLUA = lua-5.3.4
