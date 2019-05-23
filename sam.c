@@ -297,6 +297,7 @@ enum {
 	OPTION_SAVE_METHOD,
 	OPTION_LOAD_METHOD,
 	OPTION_CHANGE_256COLORS,
+	OPTION_LAYOUT,
 };
 
 static const OptionDef options[] = {
@@ -379,6 +380,11 @@ static const OptionDef options[] = {
 		{ "change-256colors" },
 		VIS_OPTION_TYPE_BOOL,
 		VIS_HELP("Change 256 color palette to support 24bit colors")
+	},
+	[OPTION_LAYOUT] = {
+		{ "layout", "lay" },
+		VIS_OPTION_TYPE_STRING,
+		VIS_HELP("Vertical or horizontal window layout")
 	},
 };
 

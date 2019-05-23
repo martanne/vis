@@ -348,6 +348,19 @@ static bool cmd_set(Vis *vis, Win *win, Command *cmd, const char *argv[], Select
 	case OPTION_CHANGE_256COLORS:
 		vis->change_colors = toggle ? !vis->change_colors : arg.b;
 		break;
+	case OPTION_LAYOUT: {
+		enum UiLayout layout;
+		if (strcmp("h", arg.s) == 0) {
+			layout = UI_LAYOUT_HORIZONTAL;
+		} else if (strcmp("v", arg.s) == 0) {
+			layout = UI_LAYOUT_VERTICAL;
+		} else {
+			vis_info_show(vis, "Invalid layout `%s', expected 'h' or 'v'", arg.s);
+			return false;
+		}
+		windows_arrange(vis, layout);
+		break;
+	}
 	default:
 		if (!opt->func)
 			return false;
