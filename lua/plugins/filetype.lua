@@ -102,13 +102,13 @@ vis.ftdetect.filetypes = {
 		ext = { "%.d$", "%.di$" },
 	},
 	dockerfile = {
-		ext = { "Dockerfile" },
+		ext = { "^Dockerfile$", "%.Dockerfile$" },
 	},
 	dot = {
 		ext = { "%.dot$" },
 	},
 	dsv = {
-		ext = { "group", "gshadow", "passwd", "shadow" },
+		ext = { "^group$", "^gshadow$", "^passwd$", "^shadow$" },
 	},
 	eiffel = {
 		ext = { "%.e$", "%.eif$" },
@@ -282,7 +282,7 @@ vis.ftdetect.filetypes = {
 		ext = { "%.pike$", "%.pmod$" },
 	},
 	pkgbuild = {
-		ext = { "PKGBUILD" },
+		ext = { "^PKGBUILD$" },
 	},
 	pony = {
 		ext = { "%.pony$" },
