@@ -6,7 +6,7 @@
 # docker cp vis:/tmp/vis/vis .
 # make vis-single
 # docker cp vis:/tmp/vis/vis-single .
-FROM i386/alpine:3.9
+FROM i386/alpine:3.10
 ENV DIR /tmp/vis
 WORKDIR $DIR
 RUN apk update && apk add musl-dev fortify-headers gcc make libtermkey-dev \
