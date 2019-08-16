@@ -2192,6 +2192,7 @@ static const char *join(Vis *vis, const char *keys, const Arg *arg) {
 
 static const char *switchmode(Vis *vis, const char *keys, const Arg *arg) {
 	vis_mode_switch(vis, arg->i);
+	vis_draw(vis);
 	return keys;
 }
 
