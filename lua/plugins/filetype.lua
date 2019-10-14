@@ -125,6 +125,9 @@ vis.ftdetect.filetypes = {
 	faust = {
 		ext = { "%.dsp$" },
 	},
+	fennel = {
+		ext = { "%.fnl$" },
+	},
 	fish = {
 		ext = { "%.fish$" },
 	},
