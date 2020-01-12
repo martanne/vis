@@ -12,10 +12,9 @@ local ws = token(l.WHITESPACE, l.space^1)
 
 -- Comments.
 local line_comment = '//' * l.nonnewline_esc^0
-local block_comment = '/*' * (l.any - '*/')^0 * P('*/')^-1 +
-                      l.starts_line('#if') * S(' \t')^0 * '0' * l.space *
-                      (l.any - l.starts_line('#endif'))^0 *
-                      (l.starts_line('#endif'))^-1
+local block_comment = '/*' * (l.any - '*/')^0 * P('*/')^-1
+-- local preproc_ifzero = l.starts_line('#if') * S(' \t')^0 * '0' * l.space *
+--                       (l.starts_line('#endif'))
 local comment = token(l.COMMENT, line_comment + block_comment)
 
 -- Strings.
@@ -24,17 +23,22 @@ local dq_str = P('L')^-1 * l.delimited_range('"', true)
 local string = token(l.STRING, sq_str + dq_str)
 
 -- Numbers.
-local number = token(l.NUMBER, l.float + l.integer)
+local float_suffix = P('f')^-1
+local integer_suffix = (S('uU')^-1 * word_match{ 'l', 'L', 'll', 'LL' }^-1) +
+                       (word_match{ 'l', 'L', 'll', 'LL' }^-1 * S('uU')^-1)
+local number = token(l.NUMBER, (l.float * float_suffix) +
+                               (l.integer * integer_suffix))
 
 -- Preprocessor.
 local preproc_word = word_match{
   'define', 'elif', 'else', 'endif', 'error', 'if', 'ifdef', 'ifndef', 'line',
   'pragma', 'undef', 'warning'
 }
+
 local preproc = #l.starts_line('#') *
                 (token(l.PREPROCESSOR, '#' * S('\t ')^0 * preproc_word) +
                  token(l.PREPROCESSOR, '#' * S('\t ')^0 * 'include') *
-                 (token(l.WHITESPACE, S('\t ')^1) *
+                 (token(l.WHITESPACE, S('\t ')^0) *
                   token(l.STRING, l.delimited_range('<>', true, true)))^-1)
 
 -- Keywords.
@@ -53,11 +57,16 @@ local function_specifier = word_match{
   'inline', '_Noreturn',
 }
 
+local extra_keywords = word_match{
+   'asm', '__asm', '__asm__', '__restrict__', '__inline', '__inline__',
+   '__attribute__', '__declspec'
+}
+
 local keyword = token(l.KEYWORD, word_match{
-  'break', 'case', 'continue', 'default', 'do', 'else', 'for', 'goto',
-  'if', 'return', 'sizeof', 'switch', 'while',
-  '_Alignas', '_Alignof', '_Generic', '_Static_assert',
-} + storage_class + type_qualifier + function_specifier)
+  'break', 'case', 'continue', 'default', 'do', 'else', 'enum', 'for', 'goto',
+  'if', 'return', 'switch', 'while',
+  '_Alignas', '_Generic', '_Static_assert',
+} + storage_class + type_qualifier + function_specifier + extra_keywords)
 
 -- Constants.
 local errno = word_match{
@@ -85,34 +94,51 @@ local preproc_macros = word_match{
   '__func__',
 }
 
-local constant = token(l.CONSTANT, word_match{ 'NULL' } + errno + preproc_macros)
+local constant = token(l.CONSTANT, word_match{
+  'true', 'false',
+  'NULL', 'CHAR_BIT', 'SIZE_MAX', } +
+  ((P('WINT') + P('WCHAR') + P('SIG_ATOMIC') + P('PTRDIFF')) * (P('_MIN') + P('_MAX'))) +
+  ( P('INT') * (((P('_LEAST') + P('_FAST'))^-1 * l.dec_num^1) + P('MAX') + P('PTR')) * (P('_MIN') + P('_MAX'))) +
+  (P('UINT') * (((P('_LEAST') + P('_FAST'))^-1 * l.dec_num^1) + P('MAX') + P('PTR')) *  P('_MAX')) +
+  errno + preproc_macros
+)
 
 -- Types.
 local type = token(l.TYPE, word_match{
-  'bool', 'char', 'double', 'enum', 'float', 'int', 'long', 'short',
+  'bool', 'char', 'double', 'float', 'int', 'long', 'short',
   'signed', 'struct', 'union', 'unsigned', 'void', '_Bool', '_Complex',
   '_Imaginary', 'ptrdiff_t', 'size_t', 'max_align_t', 'wchar_t',
   'intptr_t', 'uintptr_t', 'intmax_t', 'uintmax_t'} +
-  (P('u')^-1 * P('int') * (P('_least') + P('_fast'))^-1 * l.dec_num^1 * P('_t'))
+  (P('u')^-1 * P('int') * (P('_least') + P('_fast'))^-1 * l.dec_num^1 * P('_t')) +
+  (S('usif') * l.dec_num^1 * P('_t')) +
+  (P('__')^-1 * S('usif') * l.dec_num^1)
 )
+
+-- Labels.
+-- FIXME: Accept whitespace before label.
+local label = token(l.LABEL, l.starts_line(l.word * ':'))
 
 -- Identifiers.
 local identifier = token(l.IDENTIFIER, l.word)
 
 -- Operators.
-local operator = token(l.OPERATOR, S('+-/*%<>~!=^&|?~:;,.()[]{}'))
+local operator = token(l.OPERATOR,
+  S('+-/*%<>~!=^&|?~:;,.()[]{}') +
+  word_match{ 'sizeof', '_Alignof' }
+)
 
 M._rules = {
   {'whitespace', ws},
+  {'comment', comment},
   {'keyword', keyword},
   {'type', type},
   {'constant', constant},
+  {'operator', operator},
+  {'label', label},
   {'identifier', identifier},
   {'string', string},
-  {'comment', comment},
   {'number', number},
   {'preproc', preproc},
-  {'operator', operator},
 }
 
 M._foldsymbols = {
