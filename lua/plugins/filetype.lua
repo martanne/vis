@@ -388,6 +388,10 @@ vis.ftdetect.filetypes = {
 	texinfo = {
 		ext = { "%.texi$" },
 	},
+	text = {
+		ext = { "%.txt$" },
+		mime = { "text/plain" },
+	},
 	toml = {
 		ext = { "%.toml$" },
 	},
@@ -498,6 +502,12 @@ vis.events.subscribe(vis.events.WIN_OPEN, function(win)
 				return
 			end
 		end
+	end
+
+	-- try text lexer as a last resort
+	if (mime or 'text/plain'):match('^text/.+$') then
+		set_filetype('text', vis.ftdetect.filetypes.text)
+		return
 	end
 
 	win:set_syntax(nil)
