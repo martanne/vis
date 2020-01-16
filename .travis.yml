@@ -48,6 +48,7 @@ addons:
     - 9base
     - libacl1-dev
     - libtre-dev
+    - libtool
 
 cache:
   directories:
