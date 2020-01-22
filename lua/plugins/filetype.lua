@@ -102,13 +102,13 @@ vis.ftdetect.filetypes = {
 		ext = { "%.d$", "%.di$" },
 	},
 	dockerfile = {
-		ext = { "Dockerfile" },
+		ext = { "^Dockerfile$", "%.Dockerfile$" },
 	},
 	dot = {
 		ext = { "%.dot$" },
 	},
 	dsv = {
-		ext = { "group", "gshadow", "passwd", "shadow" },
+		ext = { "^group$", "^gshadow$", "^passwd$", "^shadow$" },
 	},
 	eiffel = {
 		ext = { "%.e$", "%.eif$" },
@@ -124,6 +124,9 @@ vis.ftdetect.filetypes = {
 	},
 	faust = {
 		ext = { "%.dsp$" },
+	},
+	fennel = {
+		ext = { "%.fnl$" },
 	},
 	fish = {
 		ext = { "%.fish$" },
@@ -282,7 +285,7 @@ vis.ftdetect.filetypes = {
 		ext = { "%.pike$", "%.pmod$" },
 	},
 	pkgbuild = {
-		ext = { "PKGBUILD" },
+		ext = { "^PKGBUILD$" },
 	},
 	pony = {
 		ext = { "%.pony$" },
@@ -384,6 +387,10 @@ vis.ftdetect.filetypes = {
 	},
 	texinfo = {
 		ext = { "%.texi$" },
+	},
+	text = {
+		ext = { "%.txt$" },
+		mime = { "text/plain" },
 	},
 	toml = {
 		ext = { "%.toml$" },
@@ -495,6 +502,12 @@ vis.events.subscribe(vis.events.WIN_OPEN, function(win)
 				return
 			end
 		end
+	end
+
+	-- try text lexer as a last resort
+	if (mime or 'text/plain'):match('^text/.+$') then
+		set_filetype('text', vis.ftdetect.filetypes.text)
+		return
 	end
 
 	win:set_syntax(nil)

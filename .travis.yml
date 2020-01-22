@@ -48,6 +48,7 @@ addons:
     - 9base
     - libacl1-dev
     - libtre-dev
+    - libtool-bin
 
 cache:
   directories:
@@ -59,7 +60,7 @@ before_install:
 install:
   - if [ "$TRAVIS_OS_NAME" = "osx" ]; then
       brew update &&
-      brew install libtermkey lua luarocks tre plan9port &&
+      brew install libtermkey lua luarocks tre &&
       luarocks install lpeg &&
       luarocks install busted;
     fi

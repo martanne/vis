@@ -27,6 +27,10 @@ local bg = ',back:'..colors.base03..','
 -- light
 -- local fg = ',fore:'..colors.base03..','
 -- local bg = ',back:'..colors.base3..','
+-- solarized term
+-- local fg = ',fore:default,'
+-- local bg = ',back:default,'
+
 
 lexers.STYLE_DEFAULT = bg..fg
 lexers.STYLE_NOTHING = bg

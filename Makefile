@@ -90,7 +90,7 @@ docker: clean
 	docker exec vis apk upgrade
 	docker cp . vis:/tmp/vis
 	docker exec vis sed -i '/^VERSION/c VERSION = $(VERSION)' Makefile
-	docker exec vis ./configure CC='cc --static'
+	docker exec vis ./configure CC='cc --static' --enable-acl
 	docker exec vis make clean vis-single
 	docker cp vis:/tmp/vis/vis-single vis
 	docker kill vis

@@ -622,8 +622,7 @@ size_t text_search_forward(Text *txt, size_t pos, Regex *regex) {
 
 	if (!found) {
 		start = 0;
-		end = pos;
-		found = !text_search_range_forward(txt, start, end, regex, 1, match, 0);
+		found = !text_search_range_forward(txt, start, end - start, regex, 1, match, 0);
 	}
 
 	return found ? match[0].start : pos;
