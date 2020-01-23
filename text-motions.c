@@ -624,9 +624,7 @@ size_t text_search_forward(Text *txt, size_t pos, Regex *regex) {
 
 	if (!found) {
 		start = 0;
-		end = pos;
-		flags = text_byte_get(txt, end, &c) && c == '\n' ? 0 : REG_NOTEOL;
-		found = !text_search_range_forward(txt, start, end - start, regex, 1, match, flags);
+		found = !text_search_range_forward(txt, start, end - start, regex, 1, match, 0);
 	}
 
 	return found ? match[0].start : pos;
@@ -641,10 +639,8 @@ size_t text_search_backward(Text *txt, size_t pos, Regex *regex) {
 	bool found = !text_search_range_backward(txt, start, end, regex, 1, match, flags);
 
 	if (!found) {
-		start = pos + 1;
 		end = text_size(txt);
-		flags = text_byte_get(txt, pos, &c) && c == '\n' ? 0 : REG_NOTBOL;
-		found = start < end && !text_search_range_backward(txt, start, end - start, regex, 1, match, flags);
+		found = !text_search_range_backward(txt, start, end - start, regex, 1, match, 0);
 	}
 
 	return found ? match[0].start : pos;
