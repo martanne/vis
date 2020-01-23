@@ -618,11 +618,15 @@ size_t text_search_forward(Text *txt, size_t pos, Regex *regex) {
 	size_t start = pos + 1;
 	size_t end = text_size(txt);
 	RegexMatch match[1];
-	bool found = start < end && !text_search_range_forward(txt, start, end - start, regex, 1, match, 0);
+	char c;
+	int flags = text_byte_get(txt, pos, &c) && c == '\n' ? 0 : REG_NOTBOL;
+	bool found = start < end && !text_search_range_forward(txt, start, end - start, regex, 1, match, flags);
 
 	if (!found) {
 		start = 0;
-		found = !text_search_range_forward(txt, start, end - start, regex, 1, match, 0);
+		end = pos;
+		flags = text_byte_get(txt, end, &c) && c == '\n' ? 0 : REG_NOTEOL;
+		found = !text_search_range_forward(txt, start, end - start, regex, 1, match, flags);
 	}
 
 	return found ? match[0].start : pos;
@@ -632,12 +636,15 @@ size_t text_search_backward(Text *txt, size_t pos, Regex *regex) {
 	size_t start = 0;
 	size_t end = pos;
 	RegexMatch match[1];
-	bool found = !text_search_range_backward(txt, start, end, regex, 1, match, 0);
+	char c;
+	int flags = text_byte_get(txt, end, &c) && c == '\n' ? 0 : REG_NOTEOL;
+	bool found = !text_search_range_backward(txt, start, end, regex, 1, match, flags);
 
 	if (!found) {
 		start = pos + 1;
 		end = text_size(txt);
-		found = start < end && !text_search_range_backward(txt, start, end - start, regex, 1, match, 0);
+		flags = text_byte_get(txt, pos, &c) && c == '\n' ? 0 : REG_NOTBOL;
+		found = start < end && !text_search_range_backward(txt, start, end - start, regex, 1, match, flags);
 	}
 
 	return found ? match[0].start : pos;

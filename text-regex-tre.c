@@ -162,6 +162,12 @@ int text_search_range_backward(Text *txt, size_t pos, size_t len, Regex *r, size
 		}
 		pos = next;
 		len = end - pos;
+
+		char c;
+		if (text_byte_get(txt, pos-1, &c) && c == '\n')
+			eflags &= ~REG_NOTBOL;
+		else
+			eflags |= REG_NOTBOL;
 	}
 
 	return ret;

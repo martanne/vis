@@ -101,6 +101,10 @@ int text_search_range_backward(Text *txt, size_t pos, size_t len, Regex *r, size
 		}
 		junk = next - cur;
 		cur = next;
+		if (cur[-1] == '\n')
+			eflags &= ~REG_NOTBOL;
+		else
+			eflags |= REG_NOTBOL;
 	}
 	free(buf);
 	return ret;
