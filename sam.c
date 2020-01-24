@@ -1385,9 +1385,13 @@ static int extract(Vis *vis, Win *win, Command *cmd, const char *argv[], Selecti
 		RegexMatch match[nsub];
 		while (start < end || trailing_match) {
 			trailing_match = false;
-			bool found = text_search_range_forward(txt, start,
-				end - start, cmd->regex, nsub, match,
-				start > range->start ? REG_NOTBOL : 0) == 0;
+			char c;
+			int flags = start > range->start &&
+			            text_byte_get(txt, start - 1, &c) && c != '\n' ?
+			            REG_NOTBOL : 0;
+			bool found = !text_search_range_forward(txt, start, end - start,
+			                                        cmd->regex, nsub, match,
+			                                        flags);
 			Filerange r = text_range_empty();
 			if (found) {
 				if (argv[0][0] == 'x')
