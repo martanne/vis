@@ -634,9 +634,7 @@ size_t text_search_backward(Text *txt, size_t pos, Regex *regex) {
 	size_t start = 0;
 	size_t end = pos;
 	RegexMatch match[1];
-	char c;
-	int flags = text_byte_get(txt, end, &c) && c == '\n' ? 0 : REG_NOTEOL;
-	bool found = !text_search_range_backward(txt, start, end, regex, 1, match, flags);
+	bool found = !text_search_range_backward(txt, start, end, regex, 1, match, REG_NOTEOL);
 
 	if (!found) {
 		end = text_size(txt);
