@@ -382,7 +382,7 @@ static const OptionDef options[] = {
 		VIS_HELP("Change 256 color palette to support 24bit colors")
 	},
 	[OPTION_LAYOUT] = {
-		{ "layout", "lay" },
+		{ "layout" },
 		VIS_OPTION_TYPE_STRING,
 		VIS_HELP("Vertical or horizontal window layout")
 	},
