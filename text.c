@@ -921,7 +921,7 @@ static bool text_save_commit_atomic(TextSave *ctx) {
 	if (dir == -1)
 		return false;
 
-	if (fsync(dir) == -1) {
+	if (fsync(dir) == -1 && errno != EINVAL) {
 		close(dir);
 		return false;
 	}
