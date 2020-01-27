@@ -144,7 +144,7 @@ static File *file_new_text(Vis *vis, Text *text) {
 	return file;
 }
 
-static char *absolute_path(const char *name) {
+char *absolute_path(const char *name) {
 	if (!name)
 		return NULL;
 	char *copy1 = strdup(name);

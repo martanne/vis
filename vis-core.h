@@ -269,6 +269,8 @@ Macro *macro_get(Vis *vis, enum VisRegister);
 void window_selection_save(Win *win);
 Win *window_new_file(Vis*, File*, enum UiOption);
 
+char *absolute_path(const char *path);
+
 const char *file_name_get(File*);
 void file_name_set(File*, const char *name);
 
