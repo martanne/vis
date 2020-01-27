@@ -1093,7 +1093,7 @@ long vis_keys_codepoint(Vis *vis, const char *keys) {
 		return -1;
 
 	const int keysym[] = {
-		TERMKEY_SYM_ENTER, '\r',
+		TERMKEY_SYM_ENTER, '\n',
 		TERMKEY_SYM_TAB, '\t',
 		TERMKEY_SYM_BACKSPACE, '\b',
 		TERMKEY_SYM_ESCAPE, 0x1b,

@@ -2096,6 +2096,8 @@ static const char *insert_verbatim(Vis *vis, const char *keys, const Arg *arg) {
 			return NULL;
 		if ((rune = vis_keys_codepoint(vis, keys)) != (Rune)-1) {
 			len = runetochar(buf, &rune);
+			if (buf[0] == '\n')
+				buf[0] = '\r';
 			data = buf;
 		} else {
 			vis_info_show(vis, "Unknown key");
