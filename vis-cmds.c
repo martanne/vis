@@ -506,7 +506,7 @@ static bool cmd_quit(Vis *vis, Win *win, Command *cmd, const char *argv[], Selec
 	}
 	vis_window_close(win);
 	if (!has_windows(vis))
-		vis_exit(vis, EXIT_SUCCESS);
+		vis_exit(vis, argv[1] ? atoi(argv[1]) : EXIT_SUCCESS);
 	return true;
 }
 
@@ -517,7 +517,7 @@ static bool cmd_qall(Vis *vis, Win *win, Command *cmd, const char *argv[], Selec
 			vis_window_close(win);
 	}
 	if (!has_windows(vis)) {
-		vis_exit(vis, EXIT_SUCCESS);
+		vis_exit(vis, argv[1] ? atoi(argv[1]) : EXIT_SUCCESS);
 		return true;
 	} else {
 		info_unsaved_changes(vis);
@@ -567,7 +567,7 @@ static bool cmd_wq(Vis *vis, Win *win, Command *cmd, const char *argv[], Selecti
 	File *file = win->file;
 	bool unmodified = file->fd == -1 && !file->name && !text_modified(file->text);
 	if (unmodified || cmd_write(vis, win, cmd, argv, sel, range))
-		return cmd_quit(vis, win, cmd, argv, sel, range);
+		return cmd_quit(vis, win, cmd, (const char*[]){argv[0], NULL}, sel, range);
 	return false;
 }
 

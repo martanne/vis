@@ -1206,11 +1206,11 @@ split window horizontally
 .It Ic :vsplit Op Ar file name
 split window vertically
 .
-.It Ic :q Ns Op Cm "!"
+.It Ic :q Ns Oo Cm "!" Oc Op Ar exit code
 close currently focused window
 .
-.It Ic :qall Ns Op Cm "!"
-close all windows, exit editor
+.It Ic :qall Ns Oo Cm "!" Oc Op Ar exit code
+close all windows, terminate editor with exit code (defaults to 0)
 .El
 .Pp
 Commands taking a file name will invoke the

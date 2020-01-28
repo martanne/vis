@@ -209,7 +209,7 @@ static const CommandDef cmds[] = {
 		CMD_ARGV|CMD_FORCE|CMD_ONCE|CMD_ADDRESS_NONE|CMD_DESTRUCTIVE, NULL, cmd_edit
 	}, {
 		"q",            VIS_HELP("Quit the current window")
-		CMD_FORCE|CMD_ONCE|CMD_ADDRESS_NONE|CMD_DESTRUCTIVE, NULL, cmd_quit
+		CMD_ARGV|CMD_FORCE|CMD_ONCE|CMD_ADDRESS_NONE|CMD_DESTRUCTIVE, NULL, cmd_quit
 	}, {
 		"cd",           VIS_HELP("Change directory")
 		CMD_ARGV|CMD_ONCE|CMD_ADDRESS_NONE, NULL, cmd_cd
@@ -241,7 +241,7 @@ static const CommandDef cmds[] = {
 		CMD_ARGV|CMD_ONCE|CMD_ADDRESS_NONE, NULL, cmd_open
 	}, {
 		"qall",         VIS_HELP("Exit vis")
-		CMD_FORCE|CMD_ONCE|CMD_ADDRESS_NONE|CMD_DESTRUCTIVE, NULL, cmd_qall
+		CMD_ARGV|CMD_FORCE|CMD_ONCE|CMD_ADDRESS_NONE|CMD_DESTRUCTIVE, NULL, cmd_qall
 	}, {
 		"set",          VIS_HELP("Set option")
 		CMD_ARGV|CMD_ONCE|CMD_ADDRESS_NONE, NULL, cmd_set
