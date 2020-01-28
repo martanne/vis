@@ -88,11 +88,10 @@ docker: clean
 	docker run --rm -d --name vis vis tail -f /dev/null
 	docker exec vis apk update
 	docker exec vis apk upgrade
-	docker cp . vis:/tmp/vis
-	docker exec vis sed -i '/^VERSION/c VERSION = $(VERSION)' Makefile
-	docker exec vis ./configure CC='cc --static' --enable-acl
-	docker exec vis make clean vis-single
-	docker cp vis:/tmp/vis/vis-single vis
+	docker cp . vis:/build/vis
+	docker exec vis ./vis/configure CC='cc --static' --enable-acl
+	docker exec vis make -C vis VERSION="$(VERSION)" clean vis-single
+	docker cp vis:/build/vis/vis-single vis
 	docker kill vis
 
 debug: clean
