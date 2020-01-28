@@ -85,15 +85,12 @@ vis-single: vis-single.c vis-single-payload.inc
 
 docker: clean
 	docker build -t vis .
-	docker run --rm -d --name vis vis tail -f /dev/null
-	docker exec vis apk update
-	docker exec vis apk upgrade
-	docker cp . vis:/tmp/vis
-	docker exec vis sed -i '/^VERSION/c VERSION = $(VERSION)' Makefile
-	docker exec vis ./configure CC='cc --static' --enable-acl
-	docker exec vis make clean vis-single
-	docker cp vis:/tmp/vis/vis-single vis
-	docker kill vis
+	docker volume create --name vis
+	docker run --rm --name vis -v $(PWD):/vis:ro -v vis:/build vis rsync -a --delete /vis/ /build/
+	docker run --rm --name vis -v vis:/build vis ./configure CC='cc --static' --enable-acl
+	docker run --rm --name vis -v vis:/build vis make VERSION="$(VERSION)" clean vis-single
+	docker run --rm --name vis -v vis:/build vis cat vis-single > vis
+	chmod +x vis
 
 debug: clean
 	@$(MAKE) CFLAGS_EXTRA='${CFLAGS_EXTRA} ${CFLAGS_DEBUG}'
