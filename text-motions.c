@@ -605,7 +605,7 @@ size_t text_bracket_match_symbol(Text *txt, size_t pos, const char *symbols, con
 		if (text_iterator_byte_next(&it, &c)) {
 			/* if a single or double quote is followed by
 			 * a special character, search backwards */
-			char special[] = " \n)}]>.,:;";
+			char special[] = " \t\n)}]>.,:;";
 			if (memchr(special, c, sizeof(special)))
 				direction = -1;
 		}
