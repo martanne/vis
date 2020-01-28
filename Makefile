@@ -92,6 +92,10 @@ docker: clean
 	docker run --rm --name vis -v vis:/build vis cat vis-single > vis
 	chmod +x vis
 
+docker-clean: clean
+	-docker volume rm vis
+	-docker image rm vis
+
 debug: clean
 	@$(MAKE) CFLAGS_EXTRA='${CFLAGS_EXTRA} ${CFLAGS_DEBUG}'
 
@@ -178,4 +182,4 @@ uninstall:
 	@echo removing support files from ${DESTDIR}${SHAREPREFIX}/vis
 	@rm -rf ${DESTDIR}${SHAREPREFIX}/vis
 
-.PHONY: all clean dist install uninstall debug profile coverage test test-update luadoc luadoc-all luacheck man docker
+.PHONY: all clean dist install uninstall debug profile coverage test test-update luadoc luadoc-all luacheck man docker docker-clean
