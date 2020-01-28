@@ -31,7 +31,7 @@ local number = token(l.NUMBER, l.integer + l.float)
 
 -- Keywords.
 local keyword = token(l.KEYWORD, word_match({
-  'for', 'in', 'while', 'if', 'not', 'switch', 'fn',
+  'for', 'in', 'while', 'if', 'not', 'switch', 'case', 'fn',
   'builtin', 'cd', 'eval', 'exec', 'exit', 'flag', 'rfork', 'shift', 'ulimit',
   'umask', 'wait', 'whatis', '.', '~',
 }, '!"%*+,-./:?@[]~'))
