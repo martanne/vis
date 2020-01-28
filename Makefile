@@ -123,7 +123,7 @@ dist: clean
 man:
 	@for m in ${MANUALS}; do \
 		echo "Generating $$m"; \
-		sed -e "s/VERSION/${VERSION}/" "man/$$m" | mandoc -W warning -T utf8 -T xhtml -O man=%N.%S.html -O style=mandoc.css 1> "man/$$m.html" || true; \
+		sed -e "s/VERSION/${VERSION}/" "man/$$m" | mandoc -W warning -T utf8 -T html -O man=%N.%S.html -O style=mandoc.css 1> "man/$$m.html" || true; \
 	done
 
 luadoc:
