@@ -48,6 +48,7 @@ LDFLAGS_VIS = $(LDFLAGS_AUTO) $(LDFLAGS_TERMKEY) $(LDFLAGS_CURSES) $(LDFLAGS_ACL
 
 STRIP?=strip
 TAR?=tar
+DOCKER?=docker
 
 all: $(ELF)
 
@@ -84,18 +85,18 @@ vis-single: vis-single.c vis-single-payload.inc
 	${STRIP} $@
 
 docker: clean
-	docker build -t vis .
-	docker run --rm -d --name vis vis tail -f /dev/null
-	docker exec vis apk update
-	docker exec vis apk upgrade
-	docker cp . vis:/build/vis
-	docker exec vis ./vis/configure CC='cc --static' --enable-acl
-	docker exec vis make -C vis VERSION="$(VERSION)" clean vis-single
-	docker cp vis:/build/vis/vis-single vis
-	docker kill vis
+	$(DOCKER) build -t vis .
+	$(DOCKER) run --rm -d --name vis vis tail -f /dev/null
+	$(DOCKER) exec vis apk update
+	$(DOCKER) exec vis apk upgrade
+	$(DOCKER) cp . vis:/build/vis
+	$(DOCKER) exec vis ./vis/configure CC='cc --static' --enable-acl
+	$(DOCKER) exec vis make -C vis VERSION="$(VERSION)" clean vis-single
+	$(DOCKER) cp vis:/build/vis/vis-single vis
+	$(DOCKER) kill vis
 
 docker-clean: clean
-	-docker image rm vis
+	-$(DOCKER) image rm vis
 
 debug: clean
 	@$(MAKE) CFLAGS_EXTRA='${CFLAGS_EXTRA} ${CFLAGS_DEBUG}'
