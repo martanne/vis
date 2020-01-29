@@ -66,12 +66,13 @@ A selection is a non-empty, directed range with two endpoints called
 .Em cursor
 and
 .Em anchor .
-A selection can be anchored in which case
-the anchor remains fixed while only the position of the cursor is
-adjusted. For non-anchored selections both endpoints are updated. A
-singleton selection covers one character on which both cursor and
-anchor reside. There always exists a primary selection which remains
-visible (i.e. changes to its position will adjust the viewport).
+A selection can be anchored in which case the anchor remains fixed while
+only the position of the cursor is adjusted.
+For non-anchored selections both endpoints are updated.
+A singleton selection covers one character on which both cursor and
+anchor reside.
+There always exists a primary selection which remains visible
+(i.e. changes to its position will adjust the viewport).
 .
 .Ss Modes
 .
@@ -121,10 +122,10 @@ commands provide means to restore the text to an arbitrary state.
 .
 .Ss Marks
 .
-A mark associates a symbolic name to a set of selections.  A stored
-selection becomes invalid when its delimiting boundaries changes in the
-underlying buffer.  If said changes are later undone the mark becomes
-valid again.
+A mark associates a symbolic name to a set of selections.
+A stored selection becomes invalid when its delimiting boundaries changes
+in the underlying buffer.
+If said changes are later undone the mark becomes valid again.
 .Ic m
 sets a mark,
 .Ic M
@@ -165,8 +166,9 @@ save currently active selections
 .
 .Ss Registers
 .
-Registers are named lists of text. Uninitialized register slots default
-to the empty string. Available registers are:
+Registers are named lists of text.
+Uninitialized register slots default to the empty string.
+Available registers are:
 .Bl -tag -width indent
 .It Ic \(dq\(dq
 default register
@@ -701,7 +703,8 @@ If
 .Ar m
 is missing,
 .Ic ∞
-is substituted. Negative values are interpreted relative to the last range.
+is substituted.
+Negative values are interpreted relative to the last range.
 .It Ic % Ns Ar n
 Matches every
 .Ar n Ns -th
@@ -737,7 +740,8 @@ When a command makes a number of changes to a file, as in
 .Ic x/ Ns Ar re Ns Ic / Ic c/ Ns Ar text Ns Ic / ,
 the addresses of all changes are computed based on the initial state.
 If the changes are non-overlapping, they are applied in the specified
-order. Conflicting changes are rejected.
+order.
+Conflicting changes are rejected.
 .Pp
 Braces may be nested arbitrarily.
 .
@@ -1037,7 +1041,8 @@ current line without leading and trailing white spaces
 .Nm
 supports multiple selections with immediate visual feedback.
 There always exists one primary selection located within the current
-view port.  Additional selections can be created as needed.
+view port.
+Additional selections can be created as needed.
 If more than one selection exists, the primary one is styled differently.
 .Pp
 To manipulate selections use in normal mode:
@@ -1141,9 +1146,9 @@ In insert and replace mode:
 align all selections by inserting spaces
 .El
 .Pp
-Selections can be manipulated using set operations. The first operand
-is the currently active selections while the second can be
-specified as a mark.
+Selections can be manipulated using set operations.
+The first operand is the currently active selections while the second
+can be specified as a mark.
 .Pp
 .Bl -tag -width XXXXXXXXXX -compact
 .It Ic "|"
@@ -1154,7 +1159,7 @@ set intersection
 set minus
 .It Ic "!"
 set complement
-.It Ic z|"
+.It Ic "z|"
 pairwise union
 .It Ic z&
 pairwise intersection
@@ -1407,11 +1412,10 @@ which memory maps the file from disk and uses OS capabilities as
 caching layer or
 .Ar auto
 which tries the former for files smaller than 8Mb and the latter for
-lager ones. WARNING: modifying a memory mapped file in-place will
-cause data loss.
+lager ones.
+WARNING: modifying a memory mapped file in-place will cause data loss.
 .It Ic layout Op Do v Dc or Do h Dc
 Whether to use vertical or horizontal layout.
-
 .El
 .
 .Sh COMMAND and SEARCH PROMPT
