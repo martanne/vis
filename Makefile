@@ -90,7 +90,10 @@ docker: clean
 	$(DOCKER) exec vis apk update
 	$(DOCKER) exec vis apk upgrade
 	$(DOCKER) cp . vis:/build/vis
-	$(DOCKER) exec vis ./vis/configure CC='cc --static' --enable-acl
+	$(DOCKER) exec vis ./vis/configure CC='cc --static' \
+		--enable-acl \
+		--enable-lua \
+		--enable-lpeg-static
 	$(DOCKER) exec vis make -C vis VERSION="$(VERSION)" clean vis-single
 	$(DOCKER) cp vis:/build/vis/vis-single vis
 	$(DOCKER) kill vis
