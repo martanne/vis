@@ -218,7 +218,7 @@ plays it back.
 refers to the most recently recorded macro.
 .Ic @:
 repeats the last
-.Ic ":" Ns -command.
+.Ic \&: Ns -command.
 .Ic @/
 is equivalent to
 .Ic n
@@ -273,7 +273,7 @@ and
 may be used to refer to newlines and tabs,
 respectively.
 The
-.Ic "."
+.Ic \&.
 atom matches any character except newline.
 The empty regular expression stands for the last complete expression
 encountered.
@@ -320,7 +320,7 @@ is the beginning of the file.
 Line
 .Ar n .
 .It Ic / Ns Ar regexp Ns Ic /
-.It Ic "?" Ns Ar regexp Ns Ic "?"
+.It Ic \&? Ns Ar regexp Ns Ic \&?
 The substring that matches the regular expression, found by looking
 towards the end
 .Pq Ic /
@@ -339,7 +339,7 @@ and
 below.
 .It Ic $
 The null string at the end of the file.
-.It Ic "."
+.It Ic \&.
 Dot, the current range.
 .It Ic ' Ns Ar m
 The mark
@@ -365,7 +365,7 @@ The address
 .Ar a2
 evaluated looking the reverse direction starting at the beginning of
 .Ar a1 .
-.It Ar a1 Ns Ic "," Ns Ar a2
+.It Ar a1 Ns Ic \&, Ns Ar a2
 The substring from the beginning of
 .Ar a1
 to the end of
@@ -380,9 +380,9 @@ If
 is missing,
 .Ic $
 is substituted.
-.It Ar a1 Ns Ic ";" Ns Ar a2
+.It Ar a1 Ns Ic \&; Ns Ar a2
 Like
-.Ar a1 Ns Ic "," Ns Ar a2
+.Ar a1 Ns Ic \&, Ns Ar a2
 but with
 .Ar a2
 evaluated at the end of, and range set to,
@@ -394,9 +394,9 @@ The operators
 and
 .Ic -
 are high precedence, while
-.Ic ","
+.Ic \&,
 and
-.Ic ";"
+.Ic \&;
 are low precedence.
 .Pp
 In both
@@ -409,7 +409,7 @@ is a line or character address with a missing number, the number defaults to 1.
 If
 .Ar a1
 is missing,
-.Ic "."
+.Ic \&.
 is substituted.
 If both
 .Ar a1
@@ -420,7 +420,7 @@ are present and distinguishable,
 may be elided.
 .Ar a2
 may be a regular expression; if it is delimited by
-.Li "?"
+.Li \&?
 characters, the effect of the
 .Ic +
 or
@@ -430,7 +430,7 @@ is reversed.
 The
 .Ic %
 sign is an alias for
-.Ic ","
+.Ic \&,
 and hence
 .Ic 0,$ .
 .
@@ -551,7 +551,7 @@ Create a new selection for the range.
 .Ss I/O commands
 .
 .Bl -tag -width indent
-.It Ic e Ns Oo Cm "!" Oc Op Pa file name
+.It Ic e Ns Oo Cm \&! Oc Op Pa file name
 Replace the file by the contents of the named external file.
 If no file name is given, reload file from disk.
 .
@@ -559,7 +559,7 @@ If no file name is given, reload file from disk.
 Replace the text in the range by the contents of the named external file.
 .\" Set dot.
 .
-.It Ic w Ns Oo Cm "!" Oc Op Ar file name
+.It Ic w Ns Oo Cm \&! Oc Op Ar file name
 Write the range
 .Po
 default
@@ -567,7 +567,7 @@ default
 .Pc
 to the named external file.
 .
-.It Ic wq Ns Oo Cm "!" Oc Op Ar file name
+.It Ic wq Ns Oo Cm \&! Oc Op Ar file name
 Same as
 .Ic w ,
 but close file afterwards.
@@ -583,7 +583,7 @@ will do so if the file has no name.
 Forcing the
 .Ic e
 command with
-.Cm "!"
+.Cm \&!
 will discard any unsaved changes.
 Forcing
 .Ic w
@@ -599,11 +599,11 @@ Replace the range by the standard output of the shell command.
 .It Ic > Ar shell command
 Sends the range to the standard input of the shell command.
 .
-.It Ic "|" Ar shell command
+.It Ic \&| Ar shell command
 Send the range to the standard input, and replace it by the standard output, of
 the shell command.
 .
-.It Ic "!" Ar shell command
+.It Ic \&! Ar shell command
 Run interactive shell command, redirect keyboard input to it.
 .
 .It Ic cd Ar directory
@@ -616,9 +616,9 @@ is used.
 In any of
 .Ic < ,
 .Ic > ,
-.Ic "|" ,
+.Ic \&| ,
 or
-.Ic "!" ,
+.Ic \&! ,
 if the shell command is omitted, the last shell command
 .Pq of any type
 is substituted.
@@ -689,7 +689,7 @@ and
 .Ar m
 are integers denoting the ranges.
 .Bl -tag -width indent
-.It Ar n Ns Ic "," Ns Ar m
+.It Ar n Ns Ic \&, Ns Ar m
 The closed interval from
 .Ar n
 to
@@ -916,7 +916,7 @@ match bracket, quote or backtick
 .It Ic }
 next paragraph
 .
-.It Ic ")"
+.It Ic \&)
 next sentence
 .
 .It Ic N
@@ -940,13 +940,13 @@ next start of parentheses pair
 .It Ic {
 previous paragraph
 .
-.It Ic "("
+.It Ic \&(
 previous sentence
 .
-.It Ic ";"
+.It Ic \&;
 repeat last to/till movement
 .
-.It Ic ","
+.It Ic \&,
 repeat last to/till movement but in opposite direction
 .
 .It Ic #
@@ -965,7 +965,7 @@ till before next occurrence of
 .Aq Ar char
 to the right
 .
-.It Ic "?" Ns Ar pattern
+.It Ic \&? Ns Ar pattern
 to next match of
 .Ar pattern
 in backward direction
@@ -1151,15 +1151,15 @@ The first operand is the currently active selections while the second
 can be specified as a mark.
 .Pp
 .Bl -tag -width XXXXXXXXXX -compact
-.It Ic "|"
+.It Ic \&|
 set union
 .It Ic &
 set intersection
 .It Ic \e
 set minus
-.It Ic "!"
+.It Ic \&!
 set complement
-.It Ic "z|"
+.It Ic z|
 pairwise union
 .It Ic z&
 pairwise intersection
@@ -1202,7 +1202,7 @@ open an empty window, arrange horizontally
 .It Ic :vnew
 open an empty window, arrange vertically
 .
-.It Ic :open Ns Oo Cm "!" Oc Op Ar file name
+.It Ic :open Ns Oo Cm \&! Oc Op Ar file name
 open a new window, displaying file name if given
 .
 .It Ic :split Op Ar file name
@@ -1211,10 +1211,10 @@ split window horizontally
 .It Ic :vsplit Op Ar file name
 split window vertically
 .
-.It Ic :q Ns Oo Cm "!" Oc Op Ar exit code
+.It Ic :q Ns Oo Cm \&! Oc Op Ar exit code
 close currently focused window
 .
-.It Ic :qall Ns Oo Cm "!" Oc Op Ar exit code
+.It Ic :qall Ns Oo Cm \&! Oc Op Ar exit code
 close all windows, terminate editor with exit code (defaults to 0)
 .El
 .Pp
@@ -1229,10 +1229,10 @@ supports global as well as window local run time key mappings which are
 always evaluated recursively.
 .
 .Bl -tag -width indent
-.It Ic :map Ns Oo Cm "!" Oc Ar mode Ar lhs Ar rhs
+.It Ic :map Ns Oo Cm \&! Oc Ar mode Ar lhs Ar rhs
 add a global key mapping
 .
-.It Ic :map-window Oo Cm "!" Oc Ar mode Ar lhs Ar rhs
+.It Ic :map-window Ns Oo Cm \&! Oc Ar mode Ar lhs Ar rhs
 add a window local key mapping
 .
 .It Ic :unmap Ar mode Ar lhs
@@ -1257,7 +1257,7 @@ refers to the key to map and
 .Ar rhs
 is a key action or alias.
 An existing mapping may be overridden by forcing the map command by specifying
-.Cm "!" .
+.Cm \&! .
 .Pp
 Because key mappings are always recursive, doing something like:
 .Pp
@@ -1323,7 +1323,7 @@ command.
 This section describes the options, their abbreviations and their
 default values.
 Boolean options can be toggled by appending
-.Sy "!"
+.Sy \&!
 to the option name.
 .Pp
 In each entry below, the first part of the tag line is the full name
@@ -1421,10 +1421,10 @@ Whether to use vertical or horizontal layout.
 .Sh COMMAND and SEARCH PROMPT
 .
 The command and search prompt as opened by
-.Ic ":" ,
-.Ic "/" ,
+.Ic \&: ,
+.Ic / ,
 or
-.Ic "?"
+.Ic \&?
 is implemented as a single line height window, displaying a regular file
 whose editing starts in insert mode.
 .Aq Ic Escape
@@ -1469,11 +1469,11 @@ The terminal type to use to initialize the curses interface, defaults to
 if unset.
 .It Ev SHELL
 The command shell to use for I/O related commands like
-.Ic "!" ,
-.Ic ">" ,
-.Ic "<"
+.Ic \&! ,
+.Ic > ,
+.Ic <
 and
-.Ic "|" .
+.Ic \&| .
 .It Ev XDG_CONFIG_HOME
 The configuration directory to use, defaults to
 .Pa $HOME/.config
