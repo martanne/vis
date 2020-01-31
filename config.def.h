@@ -292,6 +292,8 @@ static const KeyBinding bindings_visual[] = {
 	{ "q",                  ACTION(MACRO_RECORD)                        },
 	{ "r",                  ACTION(REPLACE_CHAR)                        },
 	{ "s",                  ALIAS("c")                                  },
+	{ "u",                  ALIAS("gu<Escape>")                         },
+	{ "U",                  ALIAS("gU<Escape>")                         },
 	{ "V",                  ACTION(MODE_VISUAL_LINE)                    },
 	{ "v",                  ALIAS("<Escape>")                           },
 	{ "x",                  ALIAS("d")                                  },
