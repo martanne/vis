@@ -2,7 +2,8 @@ Lua LPeg lexers for vis
 =======================
 
 Vis reuses the [Lua](http://www.lua.org/) [LPeg](http://www.inf.puc-rio.br/~roberto/lpeg/)
-based lexers from the [Scintillua](http://foicica.com/scintillua/) project.
+based lexers from the [Scintillua](http://foicica.com/scintillua/) project
+which is now part of the [Scintilla 3.x branch](https://foicica.com/hg/scintilla/file/tip/lexlua).
 
 # Vis integration
 
