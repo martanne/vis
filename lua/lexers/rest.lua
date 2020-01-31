@@ -28,7 +28,7 @@ local overline = lpeg.Cmt(starts_line(adornment), function(input, index, adm, c)
   return #input + 1
 end)
 local underline = lpeg.Cmt(starts_line(adornment), function(_, index, adm, c)
-  local pos = adm:match('^%'..c..'+()%s*$')
+  local pos = adm:match('^%'..c..'+%s*()$')
   return pos and index - #adm + pos - 1 or nil
 end)
 -- Token needs to be a predefined one in order for folder to work.
