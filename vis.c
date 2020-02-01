@@ -1529,6 +1529,7 @@ void vis_repeat(Vis *vis) {
 	else
 		count = vis->action_prev.count;
 	vis->action = vis->action_prev;
+	vis_mode_switch(vis, VIS_MODE_OPERATOR_PENDING);
 	vis_do(vis);
 	if (macro) {
 		Mode *mode = vis->mode;
