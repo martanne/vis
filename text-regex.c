@@ -45,7 +45,7 @@ int text_search_range_forward(Text *txt, size_t pos, size_t len, Regex *r, size_
 		return REG_NOMATCH;
 	char *cur = buf, *end = buf + len;
 	int ret = REG_NOMATCH;
-	regmatch_t match[nmatch];
+	regmatch_t match[MAX_REGEX_SUB];
 	for (size_t junk = len; len > 0; len -= junk, pos += junk) {
 		ret = regexec(&r->regex, cur, nmatch, match, eflags);
 		if (!ret) {
@@ -73,7 +73,7 @@ int text_search_range_backward(Text *txt, size_t pos, size_t len, Regex *r, size
 		return REG_NOMATCH;
 	char *cur = buf, *end = buf + len;
 	int ret = REG_NOMATCH;
-	regmatch_t match[nmatch];
+	regmatch_t match[MAX_REGEX_SUB];
 	for (size_t junk = len; len > 0; len -= junk, pos += junk) {
 		char *next;
 		if (!regexec(&r->regex, cur, nmatch, match, eflags)) {

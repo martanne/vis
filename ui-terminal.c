@@ -198,11 +198,11 @@ static void ui_draw_line(UiTerm *tui, int x, int y, char c, enum UiStyle style_i
 	if (x < 0 || x >= tui->width || y < 0 || y >= tui->height)
 		return;
 	CellStyle style = tui->styles[style_id];
-	Cell (*cells)[tui->width] = (void*)tui->cells;
+	Cell *cells = tui->cells + y * tui->width;
 	while (x < tui->width) {
-		cells[y][x].data[0] = c;
-		cells[y][x].data[1] = '\0';
-		cells[y][x].style = style;
+		cells[x].data[0] = c;
+		cells[x].data[1] = '\0';
+		cells[x].style = style;
 		x++;
 	}
 }
@@ -213,17 +213,17 @@ static void ui_draw_string(UiTerm *tui, int x, int y, const char *str, UiTermWin
 		return;
 	CellStyle style = tui->styles[(win ? win->id : 0)*UI_STYLE_MAX + style_id];
 	// FIXME: does not handle double width characters etc, share code with view.c?
-	Cell (*cells)[tui->width] = (void*)tui->cells;
-	const size_t cell_size = sizeof(cells[0][0].data)-1;
+	Cell *cells = tui->cells + y * tui->width;
+	const size_t cell_size = sizeof(cells[0].data)-1;
 	for (const char *next = str; *str && x < tui->width; str = next) {
 		do next++; while (!ISUTF8(*next));
 		size_t len = next - str;
 		if (!len)
 			break;
 		len = MIN(len, cell_size);
-		strncpy(cells[y][x].data, str, len);
-		cells[y][x].data[len] = '\0';
-		cells[y][x].style = style;
+		strncpy(cells[x].data, str, len);
+		cells[x].data[len] = '\0';
+		cells[x].style = style;
 		x++;
 	}
 }
@@ -232,7 +232,6 @@ static void ui_window_draw(UiWin *w) {
 	UiTermWin *win = (UiTermWin*)w;
 	UiTerm *ui = win->ui;
 	View *view = win->win->view;
-	Cell (*cells)[ui->width] = (void*)ui->cells;
 	int width = win->width, height = win->height;
 	const Line *line = view_lines_first(view);
 	bool status = win->options & UI_OPTION_STATUSBAR;
@@ -250,9 +249,10 @@ static void ui_window_draw(UiWin *w) {
 	Selection *sel = view_selections_primary_get(view);
 	const Line *cursor_line = view_cursors_line_get(sel);
 	size_t cursor_lineno = cursor_line->lineno;
-	char buf[sidebar_width+1];
+	char buf[(sizeof(size_t) * CHAR_BIT + 2) / 3 + 1];
 	int x = win->x, y = win->y;
 	int view_width = view_width_get(view);
+	Cell *cells = ui->cells + y * ui->width;
 	if (x + sidebar_width + view_width > ui->width)
 		view_width = ui->width - x - sidebar_width;
 	for (const Line *l = line; l; l = l->next) {
@@ -276,7 +276,8 @@ static void ui_window_draw(UiWin *w) {
 			prev_lineno = l->lineno;
 		}
 		debug("draw-window: [%d][%d] ... cells[%d][%d]\n", y, x+sidebar_width, y, view_width);
-		memcpy(&cells[y++][x+sidebar_width], l->cells, sizeof(Cell) * view_width);
+		memcpy(&cells[x+sidebar_width], l->cells, sizeof(Cell) * view_width);
+		cells += ui->width;
 	}
 }
 
@@ -299,7 +300,6 @@ static void ui_arrange(Ui *ui, enum UiLayout layout) {
 	debug("ui-arrange\n");
 	UiTerm *tui = (UiTerm*)ui;
 	tui->layout = layout;
-	Cell (*cells)[tui->width] = (void*)tui->cells;
 	int n = 0, m = !!tui->info[0], x = 0, y = 0;
 	for (UiTermWin *win = tui->windows; win; win = win->next) {
 		if (win->options & UI_OPTION_ONELINE)
@@ -325,9 +325,11 @@ static void ui_arrange(Ui *ui, enum UiLayout layout) {
 			ui_window_move(win, x, y);
 			x += w;
 			if (n) {
+				Cell *cells = tui->cells;
 				for (int i = 0; i < max_height; i++) {
-					strcpy(cells[i][x].data,"│");
-					cells[i][x].style = tui->styles[UI_STYLE_SEPARATOR];
+					strcpy(cells[x].data,"│");
+					cells[x].style = tui->styles[UI_STYLE_SEPARATOR];
+					cells += tui->width;
 				}
 				x++;
 			}

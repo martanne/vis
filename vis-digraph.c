@@ -2,6 +2,7 @@
 #include <termios.h>
 #include <locale.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 #include <wchar.h>
@@ -1993,8 +1994,11 @@ int main(int argc, char *argv[]) {
 		return 1;
 	}
 
-	wchar_t runes[argc-1];
-	memset(runes, 0, sizeof(runes));
+	wchar_t *runes = calloc(argc-1, sizeof(runes[0]));
+	if (!runes) {
+		perror(NULL);
+		return 1;
+	}
 
 	for (int i = 1; i < argc; i++) {
 		int l = lookup(argv[i], &runes[i-1]);

@@ -55,6 +55,7 @@ struct Selection {
 
 struct View {
 	Text *text;         /* underlying text management */
+	char *textbuf;      /* scratch buffer used for drawing */
 	UiWin *ui;          /* corresponding ui window */
 	Cell cell_blank;    /* used for empty/blank cells */
 	int width, height;  /* size of display area */
@@ -328,7 +329,7 @@ void view_draw(View *view) {
 	/* read a screenful of text considering each character as 4-byte UTF character*/
 	const size_t size = view->width * view->height * 4;
 	/* current buffer to work with */
-	char text[size+1];
+	char *text = view->textbuf;
 	/* remaining bytes to process in buffer */
 	size_t rem = text_bytes_get(view->text, view->start, size, text);
 	/* NUL terminate text section */
@@ -454,14 +455,21 @@ bool view_resize(View *view, int width, int height) {
 		view->need_update = true;
 		return true;
 	}
+	char *textbuf = malloc(width * height * 4 + 1);
+	if (!textbuf)
+		return false;
 	size_t lines_size = height*(sizeof(Line) + width*sizeof(Cell));
 	if (lines_size > view->lines_size) {
 		Line *lines = realloc(view->lines, lines_size);
-		if (!lines)
+		if (!lines) {
+			free(textbuf);
 			return false;
+		}
 		view->lines = lines;
 		view->lines_size = lines_size;
 	}
+	free(view->textbuf);
+	view->textbuf = textbuf;
 	view->width = width;
 	view->height = height;
 	memset(view->lines, 0, view->lines_size);
@@ -482,6 +490,7 @@ void view_free(View *view) {
 		return;
 	while (view->selections)
 		selection_free(view->selections);
+	free(view->textbuf);
 	free(view->lines);
 	free(view);
 }

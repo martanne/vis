@@ -9,6 +9,8 @@
 #endif
 #include "text.h"
 
+#define MAX_REGEX_SUB 10
+
 typedef struct Regex Regex;
 typedef Filerange RegexMatch;
 

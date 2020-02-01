@@ -136,7 +136,7 @@ int text_search_range_forward(Text *txt, size_t pos, size_t len, Regex *r, size_
 	r->it = text_iterator_get(txt, pos);
 	r->end = pos+len;
 
-	regmatch_t match[nmatch];
+	regmatch_t match[MAX_REGEX_SUB];
 	int ret = tre_reguexec(&r->regex, &r->str_source, nmatch, match, eflags);
 	if (!ret) {
 		for (size_t i = 0; i < nmatch; i++) {
