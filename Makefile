@@ -84,7 +84,10 @@ vis-single: vis-single.c vis-single-payload.inc
 	${CC} ${CFLAGS} ${CFLAGS_AUTO} ${CFLAGS_STD} ${CFLAGS_EXTRA} $< ${LDFLAGS} ${LDFLAGS_STD} ${LDFLAGS_AUTO} -luntar -llzma -o $@
 	${STRIP} $@
 
-docker: clean
+docker-kill:
+	-$(DOCKER) kill vis && $(DOCKER) wait vis
+
+docker: docker-kill clean
 	$(DOCKER) build -t vis .
 	$(DOCKER) run --rm -d --name vis vis tail -f /dev/null
 	$(DOCKER) exec vis apk update
@@ -98,7 +101,7 @@ docker: clean
 	$(DOCKER) cp vis:/build/vis/vis-single vis
 	$(DOCKER) kill vis
 
-docker-clean: clean
+docker-clean: docker-kill clean
 	-$(DOCKER) image rm vis
 
 debug: clean
@@ -187,4 +190,4 @@ uninstall:
 	@echo removing support files from ${DESTDIR}${SHAREPREFIX}/vis
 	@rm -rf ${DESTDIR}${SHAREPREFIX}/vis
 
-.PHONY: all clean dist install uninstall debug profile coverage test test-update luadoc luadoc-all luacheck man docker docker-clean
+.PHONY: all clean dist install uninstall debug profile coverage test test-update luadoc luadoc-all luacheck man docker-kill docker docker-clean
