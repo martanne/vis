@@ -20,7 +20,7 @@ local dq_str = l.delimited_range('"', false, true)
 local string = #S('\'"') * l.last_char_includes('=') *
                token(l.STRING, sq_str + dq_str)
 
-local in_tag = #P((1 - S"><")^0 * ">")
+local in_tag = #P((1 - S'><')^0 * '>')
 
 -- Numbers.
 local number = #l.digit * l.last_char_includes('=') *

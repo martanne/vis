@@ -20,13 +20,7 @@ local dq_str = l.delimited_range('"', false, true)
 local string = #S('\'"') * l.last_char_includes('=') *
                token(l.STRING, sq_str + dq_str)
 
-local in_tag = P(function(input, index)
-  local before = input:sub(1, index - 1)
-  local s, e = before:find('<[^>]-$'), before:find('>[^<]-$')
-  if s and e then return s > e and index or nil end
-  if s then return index end
-  return input:find('^[^<]->', index) and index or nil
-end)
+local in_tag = #P((1 - S'><')^0 * '>')
 
 -- Numbers.
 local number = #l.digit * l.last_char_includes('=') *
