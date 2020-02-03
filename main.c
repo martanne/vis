@@ -1385,6 +1385,18 @@ static const char *selections_match_word(Vis *vis, const char *keys, const Arg *
 	return keys;
 }
 
+static const Selection *selection_new_primary(View *view, Filerange *r) {
+	Text *txt = view_text(view);
+	size_t pos = text_char_prev(txt, r->end);
+	Selection *s = view_selections_new(view, pos);
+	if (!s)
+		return NULL;
+	view_selections_set(s, r);
+	view_selections_anchor(s, true);
+	view_selections_primary_set(s);
+	return s;
+}
+
 static const char *selections_match_next(Vis *vis, const char *keys, const Arg *arg) {
 	Text *txt = vis_text(vis);
 	View *view = vis_view(vis);
@@ -1397,26 +1409,14 @@ static const char *selections_match_next(Vis *vis, const char *keys, const Arg *
 	if (!buf)
 		return keys;
 	Filerange word = text_object_word_find_next(txt, sel.end, buf);
-	if (text_range_valid(&word)) {
-		size_t pos = text_char_prev(txt, word.end);
-		if ((s = view_selections_new(view, pos))) {
-			view_selections_set(s, &word);
-			view_selections_anchor(s, true);
-			view_selections_primary_set(s);
-			goto out;
-		}
-	}
+	if (text_range_valid(&word) && selection_new_primary(view, &word))
+		goto out;
 
 	sel = view_selections_get(view_selections(view));
 	word = text_object_word_find_prev(txt, sel.start, buf);
 	if (!text_range_valid(&word))
 		goto out;
-	size_t pos = text_char_prev(txt, word.end);
-	if ((s = view_selections_new(view, pos))) {
-		view_selections_set(s, &word);
-		view_selections_anchor(s, true);
-		view_selections_primary_set(s);
-	}
+	selection_new_primary(view, &word);
 
 out:
 	free(buf);
