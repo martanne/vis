@@ -149,7 +149,8 @@ bool array_resize(Array *arr, size_t len) {
 }
 
 void array_sort(Array *arr, int (*compar)(const void*, const void*)) {
-	qsort(arr->items, arr->len, arr->elem_size, compar);
+	if (arr->items)
+		qsort(arr->items, arr->len, arr->elem_size, compar);
 }
 
 bool array_push(Array *arr, void *item) {
