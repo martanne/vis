@@ -755,12 +755,18 @@ void vis_free(Vis *vis) {
 }
 
 void vis_insert(Vis *vis, size_t pos, const char *data, size_t len) {
-	text_insert(vis->win->file->text, pos, data, len);
-	vis_window_invalidate(vis->win);
+	Win *win = vis->win;
+	if (!win)
+		return;
+	text_insert(win->file->text, pos, data, len);
+	vis_window_invalidate(win);
 }
 
 void vis_insert_key(Vis *vis, const char *data, size_t len) {
-	for (Selection *s = view_selections(vis->win->view); s; s = view_selections_next(s)) {
+	Win *win = vis->win;
+	if (!win)
+		return;
+	for (Selection *s = view_selections(win->view); s; s = view_selections_next(s)) {
 		size_t pos = view_cursors_pos(s);
 		vis_insert(vis, pos, data, len);
 		view_cursors_scroll_to(s, pos + len);
@@ -768,7 +774,10 @@ void vis_insert_key(Vis *vis, const char *data, size_t len) {
 }
 
 void vis_replace(Vis *vis, size_t pos, const char *data, size_t len) {
-	Text *txt = vis->win->file->text;
+	Win *win = vis->win;
+	if (!win)
+		return;
+	Text *txt = win->file->text;
 	Iterator it = text_iterator_get(txt, pos);
 	int chars = text_char_count(data, len);
 	for (char c; chars-- > 0 && text_iterator_byte_get(&it, &c) && c != '\n'; )
@@ -779,7 +788,10 @@ void vis_replace(Vis *vis, size_t pos, const char *data, size_t len) {
 }
 
 void vis_replace_key(Vis *vis, const char *data, size_t len) {
-	for (Selection *s = view_selections(vis->win->view); s; s = view_selections_next(s)) {
+	Win *win = vis->win;
+	if (!win)
+		return;
+	for (Selection *s = view_selections(win->view); s; s = view_selections_next(s)) {
 		size_t pos = view_cursors_pos(s);
 		vis_replace(vis, pos, data, len);
 		view_cursors_scroll_to(s, pos + len);
@@ -787,8 +799,11 @@ void vis_replace_key(Vis *vis, const char *data, size_t len) {
 }
 
 void vis_delete(Vis *vis, size_t pos, size_t len) {
-	text_delete(vis->win->file->text, pos, len);
-	vis_window_invalidate(vis->win);
+	Win *win = vis->win;
+	if (!win)
+		return;
+	text_delete(win->file->text, pos, len);
+	vis_window_invalidate(win);
 }
 
 bool vis_action_register(Vis *vis, const KeyAction *action) {
@@ -813,6 +828,8 @@ bool vis_interrupt_requested(Vis *vis) {
 
 void vis_do(Vis *vis) {
 	Win *win = vis->win;
+	if (!win)
+		return;
 	File *file = win->file;
 	Text *txt = file->text;
 	View *view = win->view;
@@ -1497,7 +1514,9 @@ bool vis_macro_replay(Vis *vis, enum VisRegister id) {
 	vis_cancel(vis);
 	for (int i = 0; i < count; i++)
 		macro_replay(vis, macro);
-	vis_file_snapshot(vis, vis->win->file);
+	Win *win = vis->win;
+	if (win)
+		vis_file_snapshot(vis, win->file);
 	return true;
 }
 
@@ -1526,7 +1545,9 @@ void vis_repeat(Vis *vis) {
 		vis->action_prev = action_prev;
 	}
 	vis_cancel(vis);
-	vis_file_snapshot(vis, vis->win->file);
+	Win *win = vis->win;
+	if (win)
+		vis_file_snapshot(vis, win->file);
 }
 
 int vis_count_get(Vis *vis) {
@@ -1571,15 +1592,18 @@ void vis_exit(Vis *vis, int status) {
 }
 
 void vis_insert_tab(Vis *vis) {
+	Win *win = vis->win;
+	if (!win)
+		return;
 	if (!vis->expandtab) {
 		vis_insert_key(vis, "\t", 1);
 		return;
 	}
 	char spaces[9];
 	int tabwidth = MIN(vis->tabwidth, LENGTH(spaces) - 1);
-	for (Selection *s = view_selections(vis->win->view); s; s = view_selections_next(s)) {
+	for (Selection *s = view_selections(win->view); s; s = view_selections_next(s)) {
 		size_t pos = view_cursors_pos(s);
-		int width = text_line_width_get(vis->win->file->text, pos);
+		int width = text_line_width_get(win->file->text, pos);
 		int count = tabwidth - (width % tabwidth);
 		for (int i = 0; i < count; i++)
 			spaces[i] = ' ';
@@ -1630,6 +1654,8 @@ size_t vis_text_insert_nl(Vis *vis, Text *txt, size_t pos) {
 
 void vis_insert_nl(Vis *vis) {
 	Win *win = vis->win;
+	if (!win)
+		return;
 	View *view = win->view;
 	Text *txt = win->file->text;
 	for (Selection *s = view_selections(view); s; s = view_selections_next(s)) {
@@ -1936,11 +1962,13 @@ void vis_file_snapshot(Vis *vis, File *file) {
 }
 
 Text *vis_text(Vis *vis) {
-	return vis->win->file->text;
+	Win *win = vis->win;
+	return win ? win->file->text : NULL;
 }
 
 View *vis_view(Vis *vis) {
-	return vis->win->view;
+	Win *win = vis->win;
+	return win ? win->view : NULL;
 }
 
 Win *vis_window(Vis *vis) {

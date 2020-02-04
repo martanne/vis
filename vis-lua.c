@@ -2852,7 +2852,7 @@ void vis_lua_quit(Vis *vis) {
  */
 static bool vis_lua_input(Vis *vis, const char *key, size_t len) {
 	lua_State *L = vis->lua;
-	if (!L || vis->win->file->internal)
+	if (!L || !vis->win || vis->win->file->internal)
 		return false;
 	bool ret = false;
 	vis_lua_event_get(L, "input");

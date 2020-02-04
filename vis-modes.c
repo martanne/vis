@@ -141,11 +141,14 @@ bool vis_window_mode_map(Win *win, enum VisMode id, bool force, const char *key,
 /** mode switching event handlers */
 
 static void vis_mode_normal_enter(Vis *vis, Mode *old) {
+	Win *win = vis->win;
+	if (!win)
+		return;
 	if (old != mode_get(vis, VIS_MODE_INSERT) && old != mode_get(vis, VIS_MODE_REPLACE))
 		return;
 	if (vis->autoindent && strcmp(vis->key_prev, "<Enter>") == 0) {
-		Text *txt = vis->win->file->text;
-		for (Selection *s = view_selections(vis->win->view); s; s = view_selections_next(s)) {
+		Text *txt = win->file->text;
+		for (Selection *s = view_selections(win->view); s; s = view_selections_next(s)) {
 			size_t pos = view_cursors_pos(s);
 			size_t start = text_line_start(txt, pos);
 			size_t end = text_line_end(txt, pos);
@@ -160,7 +163,7 @@ static void vis_mode_normal_enter(Vis *vis, Mode *old) {
 		}
 	}
 	macro_operator_stop(vis);
-	if (!vis->win->parent && vis->action_prev.op == &vis_operators[VIS_OP_MODESWITCH] &&
+	if (!win->parent && vis->action_prev.op == &vis_operators[VIS_OP_MODESWITCH] &&
 	    vis->action_prev.count > 1) {
 		/* temporarily disable motion, in something like `5atext`
 		 * we should only move the cursor once then insert the text */
@@ -174,7 +177,7 @@ static void vis_mode_normal_enter(Vis *vis, Mode *old) {
 		vis->action_prev.movement = motion;
 	}
 	/* make sure we can recover the current state after an editing operation */
-	vis_file_snapshot(vis, vis->win->file);
+	vis_file_snapshot(vis, win->file);
 }
 
 static void vis_mode_operator_input(Vis *vis, const char *str, size_t len) {
@@ -184,15 +187,17 @@ static void vis_mode_operator_input(Vis *vis, const char *str, size_t len) {
 }
 
 static void vis_mode_visual_enter(Vis *vis, Mode *old) {
-	if (!old->visual) {
-		for (Selection *s = view_selections(vis->win->view); s; s = view_selections_next(s))
+	Win *win = vis->win;
+	if (!old->visual && win) {
+		for (Selection *s = view_selections(win->view); s; s = view_selections_next(s))
 			view_selections_anchor(s, true);
 	}
 }
 
 static void vis_mode_visual_line_enter(Vis *vis, Mode *old) {
-	if (!old->visual) {
-		for (Selection *s = view_selections(vis->win->view); s; s = view_selections_next(s))
+	Win *win = vis->win;
+	if (!old->visual && win) {
+		for (Selection *s = view_selections(win->view); s; s = view_selections_next(s))
 			view_selections_anchor(s, true);
 	}
 	if (!vis->action.op)
@@ -200,25 +205,29 @@ static void vis_mode_visual_line_enter(Vis *vis, Mode *old) {
 }
 
 static void vis_mode_visual_line_leave(Vis *vis, Mode *new) {
+	Win *win = vis->win;
+	if (!win)
+		return;
 	if (!new->visual) {
 		if (!vis->action.op)
-			window_selection_save(vis->win);
-		view_selections_clear_all(vis->win->view);
+			window_selection_save(win);
+		view_selections_clear_all(win->view);
 	} else {
-		view_cursor_to(vis->win->view, view_cursor_get(vis->win->view));
+		view_cursor_to(win->view, view_cursor_get(win->view));
 	}
 }
 
 static void vis_mode_visual_leave(Vis *vis, Mode *new) {
-	if (!new->visual) {
+	Win *win = vis->win;
+	if (!new->visual && win) {
 		if (!vis->action.op)
-			window_selection_save(vis->win);
-		view_selections_clear_all(vis->win->view);
+			window_selection_save(win);
+		view_selections_clear_all(win->view);
 	}
 }
 
 static void vis_mode_insert_replace_enter(Vis *vis, Mode *old) {
-	if (vis->win->parent)
+	if (!vis->win || vis->win->parent)
 		return;
 	if (!vis->action.op) {
 		action_reset(&vis->action_prev);
@@ -229,7 +238,9 @@ static void vis_mode_insert_replace_enter(Vis *vis, Mode *old) {
 }
 
 static void vis_mode_insert_idle(Vis *vis) {
-	vis_file_snapshot(vis, vis->win->file);
+	Win *win = vis->win;
+	if (win)
+		vis_file_snapshot(vis, win->file);
 }
 
 static void vis_mode_insert_input(Vis *vis, const char *str, size_t len) {
