@@ -2567,8 +2567,10 @@ bool vis_lua_path_add(Vis *vis, const char *path) {
 	lua_getglobal(L, "package");
 	lua_pushstring(L, path);
 	lua_pushstring(L, "/?.lua;");
-	lua_getfield(L, -3, "path");
-	lua_concat(L, 3);
+	lua_pushstring(L, path);
+	lua_pushstring(L, "/?/init.lua;");
+	lua_getfield(L, -5, "path");
+	lua_concat(L, 5);
 	lua_setfield(L, -2, "path");
 	lua_pop(L, 1); /* package */
 	return true;
