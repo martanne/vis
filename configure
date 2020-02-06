@@ -272,7 +272,7 @@ CFLAGS_STD = $CFLAGS_STD
 LDFLAGS_STD = $LDFLAGS_STD
 CFLAGS_AUTO = $CFLAGS_AUTO
 LDFLAGS_AUTO = $LDFLAGS_AUTO
-CFLAGS_DEBUG = -U_FORTIFY_SOURCE -UNDEBUG -O0 -g -ggdb -Wall -Wextra -pedantic -Wno-missing-field-initializers -Wno-unused-parameter
+CFLAGS_DEBUG = -U_FORTIFY_SOURCE -UNDEBUG -O0 -g3 -ggdb -Wall -Wextra -pedantic -Wno-missing-field-initializers -Wno-unused-parameter
 EOF
 exec 1>&3 3>&-
 
