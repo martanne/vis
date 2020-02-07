@@ -286,17 +286,18 @@ static void window_draw_colorcolumn(Win *win) {
 		if (l->lineno != lineno) {
 			line_cols = 0;
 			line_cc_set = false;
-			lineno = l->lineno;
+			if (!(lineno = l->lineno))
+				break;
 		}
-
 		if (line_cc_set)
 			continue;
-		line_cols += width;
 
 		/* This screen line contains the cell we want to highlight */
-		if (line_cols >= cc) {
-			l->cells[(cc - 1) % width].style = style;
+		if (cc <= line_cols + width) {
+			l->cells[(cc - 1) - line_cols].style = style;
 			line_cc_set = true;
+		} else {
+			line_cols += width;
 		}
 	}
 }
