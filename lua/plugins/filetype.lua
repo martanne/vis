@@ -294,7 +294,7 @@ vis.ftdetect.filetypes = {
 		ext = { "%.ps1$" },
 	},
 	prolog = {
-		ext = { "%.prolog$" },
+		ext = { "%.pl$", "%.pro$", "%.prolog$" },
 	},
 	props = {
 		ext = { "%.props$", "%.properties$" },
