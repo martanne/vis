@@ -50,6 +50,7 @@ struct Change {
 	const char *data;  /* will be free(3)-ed after transcript has been processed */
 	size_t len;        /* size in bytes of the chunk pointed to by data */
 	Change *next;      /* modification position increase monotonically */
+	int count;         /* how often should data be inserted? */
 };
 
 struct Address {
@@ -486,12 +487,13 @@ static void sam_transcript_free(Transcript *t) {
 	}
 }
 
-static bool sam_insert(Win *win, Selection *sel, size_t pos, const char *data, size_t len) {
+static bool sam_insert(Win *win, Selection *sel, size_t pos, const char *data, size_t len, int count) {
 	Filerange range = text_range_new(pos, pos);
 	Change *c = change_new(&win->file->transcript, TRANSCRIPT_INSERT, &range, win, sel);
 	if (c) {
 		c->data = data;
 		c->len = len;
+		c->count = count;
 	}
 	return c;
 }
@@ -500,11 +502,12 @@ static bool sam_delete(Win *win, Selection *sel, Filerange *range) {
 	return change_new(&win->file->transcript, TRANSCRIPT_DELETE, range, win, sel);
 }
 
-static bool sam_change(Win *win, Selection *sel, Filerange *range, const char *data, size_t len) {
+static bool sam_change(Win *win, Selection *sel, Filerange *range, const char *data, size_t len, int count) {
 	Change *c = change_new(&win->file->transcript, TRANSCRIPT_CHANGE, range, win, sel);
 	if (c) {
 		c->data = data;
 		c->len = len;
+		c->count = count;
 	}
 	return c;
 }
@@ -593,10 +596,14 @@ static int parse_number(const char **s) {
 	return number;
 }
 
-static char *parse_text(const char **s) {
+static char *parse_text(const char **s, Count *count) {
 	skip_spaces(s);
+	const char *before = *s;
+	count->start = parse_number(s);
+	if (*s == before)
+		count->start = 1;
 	if (**s != '\n') {
-		const char *before = *s;
+		before = *s;
 		char *text = parse_delimited(s, CMD_TEXT);
 		return (!text && *s != before) ? strdup("") : text;
 	}
@@ -930,7 +937,7 @@ static Command *command_parse(Vis *vis, const char **s, enum SamError *err) {
 		goto fail;
 	}
 
-	if (cmddef->flags & CMD_TEXT && !(cmd->argv[1] = parse_text(s))) {
+	if (cmddef->flags & CMD_TEXT && !(cmd->argv[1] = parse_text(s, &cmd->count))) {
 		*err = SAM_ERR_TEXT;
 		goto fail;
 	}
@@ -1229,10 +1236,12 @@ enum SamError sam_cmd(Vis *vis, const char *s) {
 				}
 			}
 			if (c->type & TRANSCRIPT_INSERT) {
-				text_insert(file->text, c->range.start, c->data, c->len);
-				delta += c->len;
+				for (int i = 0; i < c->count; i++) {
+					text_insert(file->text, c->range.start, c->data, c->len);
+					delta += c->len;
+				}
 				Filerange r = text_range_new(c->range.start,
-				                             c->range.start+c->len);
+				                             c->range.start + c->len * c->count);
 				if (c->sel) {
 					if (visual) {
 						view_selections_set(c->sel, &r);
@@ -1321,7 +1330,7 @@ static bool cmd_insert(Vis *vis, Win *win, Command *cmd, const char *argv[], Sel
 	Buffer buf = text(vis, argv[1]);
 	size_t len = buffer_length(&buf);
 	char *data = buffer_move(&buf);
-	bool ret = sam_insert(win, sel, range->start, data, len);
+	bool ret = sam_insert(win, sel, range->start, data, len, cmd->count.start);
 	if (!ret)
 		free(data);
 	return ret;
@@ -1333,7 +1342,7 @@ static bool cmd_append(Vis *vis, Win *win, Command *cmd, const char *argv[], Sel
 	Buffer buf = text(vis, argv[1]);
 	size_t len = buffer_length(&buf);
 	char *data = buffer_move(&buf);
-	bool ret = sam_insert(win, sel, range->end, data, len);
+	bool ret = sam_insert(win, sel, range->end, data, len, cmd->count.start);
 	if (!ret)
 		free(data);
 	return ret;
@@ -1345,7 +1354,7 @@ static bool cmd_change(Vis *vis, Win *win, Command *cmd, const char *argv[], Sel
 	Buffer buf = text(vis, argv[1]);
 	size_t len = buffer_length(&buf);
 	char *data = buffer_move(&buf);
-	bool ret = sam_change(win, sel, range, data, len);
+	bool ret = sam_change(win, sel, range, data, len, cmd->count.start);
 	if (!ret)
 		free(data);
 	return ret;
@@ -1703,7 +1712,7 @@ static bool cmd_filter(Vis *vis, Win *win, Command *cmd, const char *argv[], Sel
 	} else if (status == 0) {
 		size_t len = buffer_length(&bufout);
 		char *data = buffer_move(&bufout);
-		if (!sam_change(win, sel, range, data, len))
+		if (!sam_change(win, sel, range, data, len, 1))
 			free(data);
 	} else {
 		vis_info_show(vis, "Command failed %s", buffer_content0(&buferr));

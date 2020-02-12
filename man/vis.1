@@ -512,8 +512,11 @@ refinements of ranges.
 .Ss Text commands
 .
 .Bl -tag -width indent
-.It Ic a/ Ns Ar text Ns Ic /
-Insert the text into the file after the range.
+.It Ic a Ns [ Ar count ] Ns / Ns Ar text Ns Ic /
+Insert the
+.Ar text
+.Ar count
+times into the file after the range.
 .\" Set dot.
 .Pp
 May also be written as
