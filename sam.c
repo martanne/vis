@@ -584,6 +584,15 @@ static char *parse_delimited(const char **s, int type) {
 	return chunk;
 }
 
+static int parse_number(const char **s) {
+	char *end = NULL;
+	int number = strtoull(*s, &end, 10);
+	if (end == *s)
+		return 0;
+	*s = end;
+	return number;
+}
+
 static char *parse_text(const char **s) {
 	skip_spaces(s);
 	if (**s != '\n') {
@@ -656,15 +665,6 @@ static Regex *parse_regex(Vis *vis, const char **s) {
 	Regex *regex = vis_regex(vis, pattern);
 	free(pattern);
 	return regex;
-}
-
-static int parse_number(const char **s) {
-	char *end = NULL;
-	int number = strtoull(*s, &end, 10);
-	if (end == *s)
-		return 0;
-	*s = end;
-	return number;
 }
 
 static enum SamError parse_count(const char **s, Count *count) {
