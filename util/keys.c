@@ -41,11 +41,6 @@ static void printkey(TermKeyKey *key) {
 			;
 		print("%s", key->utf8);
 		break;
-	case TERMKEY_TYPE_UNKNOWN_CSI:
-	case TERMKEY_TYPE_MOUSE:
-	case TERMKEY_TYPE_POSITION:
-	case TERMKEY_TYPE_FUNCTION:
-		break;
 	case TERMKEY_TYPE_KEYSYM:
 		switch (key->code.sym) {
 		case TERMKEY_SYM_UNKNOWN:
@@ -135,6 +130,14 @@ static void printkey(TermKeyKey *key) {
 		default:
 			break;
 		}
+		break;
+	case TERMKEY_TYPE_FUNCTION:
+	case TERMKEY_TYPE_MOUSE:
+	case TERMKEY_TYPE_POSITION:
+	case TERMKEY_TYPE_MODEREPORT:
+	case TERMKEY_TYPE_DCS:
+	case TERMKEY_TYPE_OSC:
+	case TERMKEY_TYPE_UNKNOWN_CSI:
 		break;
 	}
 }
