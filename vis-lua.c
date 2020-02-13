@@ -1705,7 +1705,7 @@ static int window_style_define(lua_State *L) {
  * @function style
  * @tparam int id the display style as registered with @{style_define}
  * @tparam int start the absolute file position in bytes
- * @tparam int len the length in bytes to style
+ * @tparam int finish the end position
  * @see style_define
  * @usage
  * win:style(win.STYLE_DEFAULT, 0, 10)
@@ -2422,7 +2422,7 @@ static const struct luaL_Reg window_marks_funcs[] = {
  * @type Range
  */
 /***
- * The being of the range.
+ * The beginning of the range.
  * @tfield int start
  */
 /***
