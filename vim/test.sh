@@ -3,8 +3,6 @@
 [ -z "$VIS" ] && VIS="../../vis"
 [ -z "$VIM" ] && VIM="vim"
 
-EDITORS="$VIM $VIS"
-
 TESTS=$1
 [ -z "$TESTS" ] && TESTS=$(find . -name '*.keys' | sed 's/\.keys$//g')
 
@@ -14,7 +12,13 @@ TESTS_SKIP=0
 
 export VIS_PATH=.
 
-$VIM --version | head -1
+if type "$VIM" >/dev/null 2>&1; then
+	EDITORS="$VIM $VIS"
+	$VIM --version | head -1
+else
+	EDITORS="$VIS"
+fi
+
 $VIS -v
 
 for t in $TESTS; do
