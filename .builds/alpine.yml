@@ -1,0 +1,17 @@
+image: alpine/edge
+packages:
+  - acl-dev
+  - libtermkey-dev
+  - lua5.3-dev
+  - lua5.3-lpeg
+  - ncurses-dev
+sources:
+  - https://github.com/martanne/vis
+tasks:
+  - build: |
+      cd vis
+      ./configure
+      make
+  - test: |
+      cd vis
+      make test

@@ -1,0 +1,16 @@
+image: openbsd/latest
+packages:
+  - gmake
+  - libtermkey
+  - lua-5.3.5
+  - lua53-lpeg
+sources:
+  - https://github.com/martanne/vis
+tasks:
+  - build: |
+      cd vis
+      ./configure
+      make
+  - test: |
+      cd vis
+      gmake test

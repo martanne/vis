@@ -1,0 +1,19 @@
+image: debian/stable
+packages:
+  - libacl1-dev
+  - liblua5.3-dev
+  - libncursesw5-dev
+  - libselinux1-dev
+  - libtermkey-dev
+  - libtre-dev
+  - lua-lpeg
+sources:
+  - https://github.com/martanne/vis
+tasks:
+  - build: |
+      cd vis
+      ./configure
+      make
+  - test: |
+      cd vis
+      make test
