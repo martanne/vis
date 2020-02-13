@@ -49,22 +49,23 @@ vis.events.subscribe(vis.events.WIN_HIGHLIGHT, function(win)
 	local horizon = viewport.start < horizon_max and viewport.start or horizon_max
 	local view_start = viewport.start
 	local lex_start = viewport.start - horizon
-	local token_start = lex_start
-	viewport.start = token_start
+	viewport.start = lex_start
 	local data = win.file:content(viewport)
 	local token_styles = lexer._TOKENSTYLES
 	local tokens = lexer:lex(data, 1)
+	local token_end = lex_start + (tokens[#tokens] or 1) - 1
 
-	for i = 1, #tokens, 2 do
-		local token_end = lex_start + tokens[i+1] - 1
-		if token_end >= view_start then
-			local name = tokens[i]
-			local style = token_styles[name]
-			if style ~= nil then
-				win:style(style, token_start, token_end)
-			end
+	for i = #tokens - 1, 1, -2 do
+		local token_start = lex_start + (tokens[i-1] or 1) - 1
+		if token_end < view_start then
+			break
 		end
-		token_start = token_end
+		local name = tokens[i]
+		local style = token_styles[name]
+		if style ~= nil then
+			win:style(style, token_start, token_end)
+		end
+		token_end = token_start - 1
 	end
 end)
 
