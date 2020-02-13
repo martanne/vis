@@ -41,6 +41,9 @@ static void printkey(TermKeyKey *key) {
 			;
 		print("%s", key->utf8);
 		break;
+	case TERMKEY_TYPE_UNKNOWN_CSI:
+	case TERMKEY_TYPE_MOUSE:
+	case TERMKEY_TYPE_POSITION:
 	case TERMKEY_TYPE_FUNCTION:
 		break;
 	case TERMKEY_TYPE_KEYSYM:
@@ -129,6 +132,7 @@ static void printkey(TermKeyKey *key) {
 		case TERMKEY_SYM_KPCOMMA:
 		case TERMKEY_SYM_KPPERIOD:
 		case TERMKEY_SYM_KPEQUALS:
+		default:
 			break;
 		}
 		break;
