@@ -68,7 +68,7 @@ int main(int argc, char *argv[]) {
 		ok(buffer_printf(&buf, "%d\n", 42) && compare0(&buf, "42\n"), "Set formatted overwrite");
 		buffer_clear(&buf);
 
-		ok(buffer_printf(&buf, "") && compare0(&buf, ""), "Set formatted empty string");
+		ok(buffer_printf(&buf, "%s", "") && compare0(&buf, ""), "Set formatted empty string");
 		buffer_clear(&buf);
 
 		bool append = true;
@@ -79,7 +79,7 @@ int main(int argc, char *argv[]) {
 
 		append = true;
 		for (int i = 1; i <= 10; i++)
-			append &= buffer_appendf(&buf, "");
+			append &= buffer_appendf(&buf, "%s", "");
 		ok(append && compare0(&buf, ""), "Append formatted empty string");
 		buffer_clear(&buf);
 	}
