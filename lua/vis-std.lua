@@ -37,6 +37,17 @@ vis:option_register("horizon", "number", function(horizon)
 	return true
 end, "Number of bytes to consider for syntax highlighting")
 
+vis:option_register("redrawtime", "string", function(redrawtime)
+	if not vis.win then return false end
+	local value = tonumber(redrawtime)
+	if not value or value <= 0 then
+		vis:info("A positive real number expected")
+		return false
+	end
+	vis.win.redrawtime = value
+	return true
+end, "Seconds to wait for syntax highlighting before aborting it")
+
 vis.events.subscribe(vis.events.WIN_HIGHLIGHT, function(win)
 	if not win.syntax or not vis.lexers.load then return end
 	local lexer = vis.lexers.load(win.syntax, nil, true)
@@ -45,6 +56,7 @@ vis.events.subscribe(vis.events.WIN_HIGHLIGHT, function(win)
 	-- TODO: improve heuristic for initial style
 	local viewport = win.viewport
 	if not viewport then return end
+	local redrawtime_max = win.redrawtime or 1.0
 	local horizon_max = win.horizon or 32768
 	local horizon = viewport.start < horizon_max and viewport.start or horizon_max
 	local view_start = viewport.start
@@ -52,8 +64,10 @@ vis.events.subscribe(vis.events.WIN_HIGHLIGHT, function(win)
 	viewport.start = lex_start
 	local data = win.file:content(viewport)
 	local token_styles = lexer._TOKENSTYLES
-	local tokens = lexer:lex(data, 1)
+	local tokens, timedout = lexer:lex(data, 1, redrawtime_max)
 	local token_end = lex_start + (tokens[#tokens] or 1) - 1
+
+	if timedout then return end
 
 	for i = #tokens - 1, 1, -2 do
 		local token_start = lex_start + (tokens[i-1] or 1) - 1

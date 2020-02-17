@@ -881,7 +881,7 @@ module('lexer')]=]
 lpeg = require('lpeg')
 local lpeg_P, lpeg_R, lpeg_S, lpeg_V = lpeg.P, lpeg.R, lpeg.S, lpeg.V
 local lpeg_Ct, lpeg_Cc, lpeg_Cp = lpeg.Ct, lpeg.Cc, lpeg.Cp
-local lpeg_Cmt, lpeg_C = lpeg.Cmt, lpeg.C
+local lpeg_Cmt, lpeg_C, lpeg_Carg = lpeg.Cmt, lpeg.C, lpeg.Carg
 local lpeg_match = lpeg.match
 
 M.LEXERPATH = package.path
@@ -988,7 +988,13 @@ local function build_grammar(lexer, initial_rule)
     lexer._INITIALRULE = initial_rule
     lexer._GRAMMAR = lpeg_Ct(lpeg_P(grammar))
   else
-    lexer._GRAMMAR = lpeg_Ct(join_tokens(lexer)^0)
+    local function tmout(_, _, t1, redrawtime_max, flag)
+	    if not redrawtime_max or os.clock() - t1 < redrawtime_max then return true end
+	    if flag then flag.timedout = true end
+    end
+    local tokens = join_tokens(lexer)
+    -- every 500 tokens (approx. a screenful), check whether we have exceeded the timeout
+    lexer._GRAMMAR = lpeg_Ct((tokens * tokens^-500 * lpeg_Cmt(lpeg_Carg(1) * lpeg_Carg(2) * lpeg_Carg(3), tmout))^0)
   end
 end
 
@@ -1120,9 +1126,12 @@ end
 -- @param text The text in the buffer to lex.
 -- @param init_style The current style. Multiple-language lexers use this to
 --   determine which language to start lexing in.
+-- @param redrawtime_max Stop lexing after that many seconds and set the second return value (timedout) to true.
+-- @param init Start lexing from this offset in *text* (default is 1).
 -- @return table of token names and positions.
+-- @return whether the lexing timed out.
 -- @name lex
-function M.lex(lexer, text, init_style)
+function M.lex(lexer, text, init_style, redrawtime_max, init)
   if not lexer._GRAMMAR then return {M.DEFAULT, #text + 1} end
   if not lexer._LEXBYLINE then
     -- For multilang lexers, build a new grammar whose initial_rule is the
@@ -1138,7 +1147,8 @@ function M.lex(lexer, text, init_style)
         end
       end
     end
-    return lpeg_match(lexer._GRAMMAR, text)
+    local flag = {}
+    return lpeg_match(lexer._GRAMMAR, text, init, os.clock(), redrawtime_max, flag), flag.timedout
   else
     local tokens = {}
     local function append(tokens, line_tokens, offset)
@@ -1149,8 +1159,9 @@ function M.lex(lexer, text, init_style)
     end
     local offset = 0
     local grammar = lexer._GRAMMAR
+    local flag = {}
     for line in text:gmatch('[^\r\n]*\r?\n?') do
-      local line_tokens = lpeg_match(grammar, line)
+      local line_tokens = lpeg_match(grammar, line, init, os.clock(), redrawtime_max, flag)
       if line_tokens then append(tokens, line_tokens, offset) end
       offset = offset + #line
       -- Use the default style to the end of the line if none was specified.
@@ -1158,7 +1169,7 @@ function M.lex(lexer, text, init_style)
         tokens[#tokens + 1], tokens[#tokens + 2] = 'default', offset + 1
       end
     end
-    return tokens
+    return tokens, flag.timedout
   end
 end
 
