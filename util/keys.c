@@ -135,9 +135,8 @@ static void printkey(TermKeyKey *key) {
 	case TERMKEY_TYPE_MOUSE:
 	case TERMKEY_TYPE_POSITION:
 	case TERMKEY_TYPE_MODEREPORT:
-	case TERMKEY_TYPE_DCS:
-	case TERMKEY_TYPE_OSC:
 	case TERMKEY_TYPE_UNKNOWN_CSI:
+	default:
 		break;
 	}
 }
