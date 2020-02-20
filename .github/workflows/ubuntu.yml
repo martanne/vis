@@ -1,0 +1,56 @@
+name: Ubuntu
+
+on: [push, pull_request]
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        os:
+          - ubuntu-16.04
+          - ubuntu-18.04
+        config:
+          - ""
+          - --disable-curses
+          - --disable-lua
+          - --disable-tre
+          - --disable-selinux
+          - --disable-acl
+          - --disable-help
+    runs-on: ${{ matrix.os }}
+    env:
+      CFLAGS_EXTRA: --coverage
+    steps:
+
+    - name: Checkout
+      uses: actions/checkout@v2
+
+    - name: Dependency
+      run: |
+        sudo apt install \
+          9base \
+          libacl1-dev \
+          liblua5.3-dev \
+          libncursesw5-dev \
+          libselinux1-dev \
+          libtermkey-dev \
+          libtre-dev \
+          lua-lpeg
+
+    - name: Dependency Ubuntu 18.04
+      if: matrix.os == 'ubuntu-18.04'
+      run: |
+        sudo apt install lua-busted
+
+    - name: Build
+      run: |
+        ./configure ${{ matrix.config }}
+        make
+
+    - name: Test
+      run: |
+        make test
+
+    - name: Upload Test Coverage
+      run: |
+        bash <(curl -s https://codecov.io/bash)
