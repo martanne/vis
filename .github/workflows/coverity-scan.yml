@@ -1,0 +1,53 @@
+name: Coverity Scan
+
+on:
+  schedule:
+    - cron: '0 0 * * 0' # once a week
+
+jobs:
+  scan:
+    runs-on: ubuntu-latest
+    steps:
+
+    - name: Checkout
+      uses: actions/checkout@v2
+
+    - name: Dependency
+      run: |
+        sudo apt install \
+          libacl1-dev \
+          liblua5.3-dev \
+          libncursesw5-dev \
+          libselinux1-dev \
+          libtermkey-dev \
+          libtre-dev
+
+    - name: Download Coverity Build Tool
+      run: |
+        wget -q https://scan.coverity.com/download/cxx/linux64 --post-data "token=$TOKEN&project=martanne/vis" -O cov-analysis-linux64.tar.gz
+        mkdir cov-analysis-linux64
+        tar xzf cov-analysis-linux64.tar.gz --strip 1 -C cov-analysis-linux64
+      env:
+        TOKEN: ${{ secrets.COVERITY_SCAN_TOKEN }}
+
+    - name: Configure
+      run: ./configure
+
+    - name: Build with cov-build
+      run: |
+        export PATH=$(pwd)/cov-analysis-linux64/bin:$PATH
+        cov-build --dir cov-int make
+
+    - name: Submit the result to Coverity Scan
+      run: |
+        tar czvf vis.tgz cov-int
+        curl \
+          --form project=martanne/vis \
+          --form token=$TOKEN \
+          --form email=mat@brain-dump.org \
+          --form file=@vis.tgz \
+          --form version=trunk \
+          --form description="`./vis -v`" \
+          https://scan.coverity.com/builds?project=martanne/vis
+      env:
+        TOKEN: ${{ secrets.COVERITY_SCAN_TOKEN }}
