@@ -1,0 +1,52 @@
+name: Windows
+
+on: [push, pull_request]
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        os:
+          - windows-2019
+        config:
+          - ""
+          - --disable-lua
+          - --disable-help
+    runs-on: ${{ matrix.os }}
+    env:
+      CFLAGS_EXTRA: --coverage
+    steps:
+
+    - name: Dependency
+      run: |
+        choco install --no-progress --yes --force --source=cygwin gcc-core,libtool,make,wget,pkg-config
+        choco install --no-progress --yes --force --source=cygwin lua,lua-devel,lua-lpeg,libncurses-devel
+        echo '::add-path::C:\tools\cygwin\bin'
+
+    - name: Git configuration
+      run: |
+        git config --global core.autocrlf input
+        git config --global core.symlinks true
+
+    - name: Checkout
+      uses: actions/checkout@v2
+
+    - name: Cygwin git configuration
+      shell: bash
+      run: mkdir $HOME && git config --global core.autocrlf input
+
+    - name: Libtermkey
+      shell: bash
+      run: make dependency/build/libtermkey-install
+
+    - name: Build
+      shell: bash
+      run: ./configure CFLAGS="-I$(pwd)/dependency/install/usr/include" LDFLAGS="-L$(pwd)/dependency/install/usr/lib" ${{ matrix.config }} && make
+
+    - name: Test
+      shell: bash
+      run: make test
+
+    - name: Upload Test Coverage
+      shell: bash
+      run: bash <(curl -s https://codecov.io/bash)
