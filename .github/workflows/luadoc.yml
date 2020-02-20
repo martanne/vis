@@ -1,0 +1,39 @@
+name: Lua API
+
+on:
+  push:
+    paths:
+    - 'vis-lua.c'
+    - 'lua/**'
+
+jobs:
+  luadoc:
+    runs-on: ubuntu-latest
+    steps:
+
+    - name: Checkout
+      uses: actions/checkout@v2
+
+    - name: Dependency
+      run: sudo apt install lua-ldoc
+
+    - name: LDoc patch
+      run: sudo patch -d /usr/share/lua/5.1 -p1 < lua/doc/README.md
+
+    - name: Documentation generation
+      run: make luadoc
+
+    - name: Upload
+      env:
+        DEPLOY_TOKEN: ${{ secrets.GITHUB_DEPLOY_TOKEN }}
+      run: |
+        git clone --depth=1 --single-branch --branch gh-pages "https://x-access-token:${DEPLOY_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" /tmp/gh-pages
+        git config --global user.name "${GITHUB_ACTOR}"
+        git config --global user.email "${GITHUB_ACTOR}@users.noreply.github.com"
+        mkdir -p /tmp/gh-pages/doc
+        rm -f /tmp/gh-pages/doc/*
+        cp -av lua/doc/*.html /tmp/gh-pages/doc/
+        cp -av lua/doc/*.css /tmp/gh-pages/doc/
+        cd /tmp/gh-pages
+        git add -A && git commit --allow-empty -am "Publishing from ${GITHUB_REPOSITORY} ${GITHUB_SHA}"
+        git push origin gh-pages
