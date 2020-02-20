@@ -1,0 +1,20 @@
+name: Lua Check
+
+on:
+  push:
+    paths:
+    - 'lua/**'
+
+jobs:
+  luacheck:
+    runs-on: ubuntu-latest
+    steps:
+
+    - name: Checkout
+      uses: actions/checkout@v2
+
+    - name: Dependency
+      run: sudo apt install lua-check
+
+    - name: Check
+      run: make luacheck
