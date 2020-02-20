@@ -1,0 +1,50 @@
+name: macOS
+
+on: [push, pull_request]
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        os:
+          - macos-10.15
+        config:
+          - ""
+          - --disable-curses
+          - --disable-lua
+          - --disable-tre
+          - --disable-help
+    runs-on: ${{ matrix.os }}
+    env:
+      CFLAGS_EXTRA: --coverage
+    steps:
+
+    - name: Checkout
+      uses: actions/checkout@v2
+
+    - name: Dependency Homebrew
+      run: |
+        brew install \
+          libtermkey \
+          lua \
+          luarocks \
+          tre \
+          pkg-config
+
+    - name: Dependency LuaRocks
+      run: |
+        luarocks install lpeg
+        luarocks install busted
+
+    - name: Build
+      run: |
+        ./configure ${{ matrix.config }}
+        make
+
+    - name: Test
+      run: |
+        make test
+
+    - name: Upload Test Coverage
+      run: |
+        bash <(curl -s https://codecov.io/bash)
