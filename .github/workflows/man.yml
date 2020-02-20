@@ -1,0 +1,38 @@
+name: Manual
+
+on:
+  push:
+    paths:
+    - 'man/**'
+
+jobs:
+  man:
+    runs-on: ubuntu-latest
+    steps:
+
+    - name: Checkout
+      uses: actions/checkout@v2
+
+    - name: Dependency
+      run: sudo apt install mandoc
+
+    - name: Manual generation
+      run: |
+        make man
+        wget 'https://cvsweb.bsd.lv/~checkout~/mandoc/mandoc.css?rev=1.46&content-type=text/plain' -O man/mandoc.css
+        ln -sf "${GITHUB_REPOSITORY#$GITHUB_ACTOR/}.1.html" man/index.html
+
+    - name: Upload
+      env:
+        DEPLOY_TOKEN: ${{ secrets.GITHUB_DEPLOY_TOKEN }}
+      run: |
+        git clone --depth=1 --single-branch --branch gh-pages "https://x-access-token:${DEPLOY_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" /tmp/gh-pages
+        git config --global user.name "${GITHUB_ACTOR}"
+        git config --global user.email "${GITHUB_ACTOR}@users.noreply.github.com"
+        mkdir -p /tmp/gh-pages/man
+        rm -f /tmp/gh-pages/man/*
+        cp -av man/*.html /tmp/gh-pages/man/
+        cp -av man/*.css /tmp/gh-pages/man/
+        cd /tmp/gh-pages
+        git add -A && git commit --allow-empty -am "Publishing from ${GITHUB_REPOSITORY} ${GITHUB_SHA}"
+        git push origin gh-pages
