@@ -1573,6 +1573,10 @@ static bool cmd_substitute(Vis *vis, Win *win, Command *cmd, const char *argv[],
 	return false;
 }
 
+/* cmd_write stores win->file's contents end emits pre/post events.
+ * If the range r covers the whole file, it is updated to account for
+ * potential file's text mutation by a FILE_SAVE_PRE callback.
+ */
 static bool cmd_write(Vis *vis, Win *win, Command *cmd, const char *argv[], Selection *sel, Filerange *r) {
 	if (!win)
 		return false;
@@ -1582,6 +1586,9 @@ static bool cmd_write(Vis *vis, Win *win, Command *cmd, const char *argv[], Sele
 		return false;
 
 	Text *text = file->text;
+	Filerange range_all = text_range_new(0, text_size(text));
+	bool write_entire_file = text_range_equal(r, &range_all);
+
 	const char *filename = argv[1];
 	if (!filename)
 		filename = file->name;
@@ -1599,6 +1606,9 @@ static bool cmd_write(Vis *vis, Win *win, Command *cmd, const char *argv[], Sele
 			vis_info_show(vis, "Rejected write to stdout by pre-save hook");
 			return false;
 		}
+		/* a pre-save hook may have changed the text; need to re-take the range */
+		if (write_entire_file)
+			*r = text_range_new(0, text_size(text));
 
 		bool visual = vis->mode->visual;
 
@@ -1624,8 +1634,7 @@ static bool cmd_write(Vis *vis, Win *win, Command *cmd, const char *argv[], Sele
 			vis_info_show(vis, "WARNING: file will be reduced to active selection");
 			return false;
 		}
-		Filerange all = text_range_new(0, text_size(text));
-		if (!text_range_equal(r, &all)) {
+		if (!write_entire_file) {
 			vis_info_show(vis, "WARNING: file will be reduced to provided range");
 			return false;
 		}
@@ -1648,6 +1657,9 @@ static bool cmd_write(Vis *vis, Win *win, Command *cmd, const char *argv[], Sele
 			vis_info_show(vis, "Rejected write to `%s' by pre-save hook", path);
 			goto err;
 		}
+		/* a pre-save hook may have changed the text; need to re-take the range */
+		if (write_entire_file)
+			*r = text_range_new(0, text_size(text));
 
 		TextSave *ctx = text_save_begin(text, path, file->save_method);
 		if (!ctx) {
