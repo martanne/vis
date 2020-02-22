@@ -57,6 +57,7 @@ for t in $TESTS; do
 			TESTS_RUN=$((TESTS_RUN+1))
 		else
 			TESTS_SKIP=$((TESTS_SKIP+1))
+			printf "SKIPPED\n"
 		fi
 	done
 done
