@@ -1656,6 +1656,10 @@ static bool cmd_write(Vis *vis, Win *win, Command *cmd, const char *argv[], Sele
 				vis_info_show(vis, "WARNING: file has been changed since reading it");
 				goto err;
 			}
+			if (existing_file && !same_file) {
+				vis_info_show(vis, "WARNING: file exists");
+				goto err;
+			}
 		}
 
 		if (!vis_event_emit(vis, VIS_EVENT_FILE_SAVE_PRE, file, path) && cmd->flags != '!') {
