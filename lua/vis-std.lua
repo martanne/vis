@@ -48,38 +48,56 @@ vis:option_register("redrawtime", "string", function(redrawtime)
 	return true
 end, "Seconds to wait for syntax highlighting before aborting it")
 
+local function make_highlighter()
+	return function(win)
+		if not win.syntax or not vis.lexers.load then return end
+		local lexer = vis.lexers.load(win.syntax, nil, true)
+		if not lexer then return end
+
+		-- TODO: improve heuristic for initial style
+		local viewport = win.viewport
+		if not viewport then return end
+		local redrawtime_max = win.redrawtime or 1.0
+		local horizon_max = win.horizon or 32768
+		local horizon = viewport.start < horizon_max and viewport.start or horizon_max
+		local view_start = viewport.start
+		local lex_start = viewport.start - horizon
+		viewport.start = lex_start
+		local data = win.file:content(viewport)
+		local token_styles = lexer._TOKENSTYLES
+		local tokens, timedout = lexer:lex(data, 1, redrawtime_max)
+		local token_end = lex_start + (tokens[#tokens] or 1) - 1
+
+		if timedout then return end
+
+		for i = #tokens - 1, 1, -2 do
+			local token_start = lex_start + (tokens[i-1] or 1) - 1
+			if token_end < view_start then
+				break
+			end
+			local name = tokens[i]
+			local style = token_styles[name]
+			if style ~= nil then
+				win:style(style, token_start, token_end)
+			end
+			token_end = token_start - 1
+		end
+	end
+end
+
+local highlight_func = {}
+
+vis.events.subscribe(vis.events.WIN_OPEN, function(win)
+	highlight_func[win] = make_highlighter()
+end)
+
+vis.events.subscribe(vis.events.WIN_CLOSE, function(win)
+	highlight_func[win] = nil
+end)
+
 vis.events.subscribe(vis.events.WIN_HIGHLIGHT, function(win)
-	if not win.syntax or not vis.lexers.load then return end
-	local lexer = vis.lexers.load(win.syntax, nil, true)
-	if not lexer then return end
-
-	-- TODO: improve heuristic for initial style
-	local viewport = win.viewport
-	if not viewport then return end
-	local redrawtime_max = win.redrawtime or 1.0
-	local horizon_max = win.horizon or 32768
-	local horizon = viewport.start < horizon_max and viewport.start or horizon_max
-	local view_start = viewport.start
-	local lex_start = viewport.start - horizon
-	viewport.start = lex_start
-	local data = win.file:content(viewport)
-	local token_styles = lexer._TOKENSTYLES
-	local tokens, timedout = lexer:lex(data, 1, redrawtime_max)
-	local token_end = lex_start + (tokens[#tokens] or 1) - 1
-
-	if timedout then return end
-
-	for i = #tokens - 1, 1, -2 do
-		local token_start = lex_start + (tokens[i-1] or 1) - 1
-		if token_end < view_start then
-			break
-		end
-		local name = tokens[i]
-		local style = token_styles[name]
-		if style ~= nil then
-			win:style(style, token_start, token_end)
-		end
-		token_end = token_start - 1
+	if highlight_func[win] then
+		highlight_func[win](win)
 	end
 end)
 
