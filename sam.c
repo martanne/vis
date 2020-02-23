@@ -1647,10 +1647,15 @@ static bool cmd_write(Vis *vis, Win *win, Command *cmd, const char *argv[], Sele
 			return false;
 
 		struct stat meta;
-		if (cmd->flags != '!' && file->stat.st_mtime && stat(path, &meta) == 0 &&
-		    file->stat.st_mtime < meta.st_mtime) {
-			vis_info_show(vis, "WARNING: file has been changed since reading it");
-			goto err;
+		bool existing_file = !stat(path, &meta);
+		bool same_file = existing_file && file->name &&
+		                 file->stat.st_dev == meta.st_dev && file->stat.st_ino == meta.st_ino;
+
+		if (cmd->flags != '!') {
+			if (same_file && file->stat.st_mtime && file->stat.st_mtime < meta.st_mtime) {
+				vis_info_show(vis, "WARNING: file has been changed since reading it");
+				goto err;
+			}
 		}
 
 		if (!vis_event_emit(vis, VIS_EVENT_FILE_SAVE_PRE, file, path) && cmd->flags != '!') {
@@ -1689,9 +1694,11 @@ static bool cmd_write(Vis *vis, Win *win, Command *cmd, const char *argv[], Sele
 			goto err;
 		}
 
-		if (!file->name)
+		if (!file->name) {
 			file_name_set(file, path);
-		if (strcmp(file->name, path) == 0)
+			same_file = true;
+		}
+		if (same_file)
 			file->stat = text_stat(text);
 		vis_event_emit(vis, VIS_EVENT_FILE_SAVE_POST, file, path);
 		free(path);
