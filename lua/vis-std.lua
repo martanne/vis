@@ -48,31 +48,65 @@ vis:option_register("redrawtime", "string", function(redrawtime)
 	return true
 end, "Seconds to wait for syntax highlighting before aborting it")
 
+local function populate(horizons, view_start, tokens, horizon_min)
+	for i = 2, #tokens, 2 do
+		if tokens[i] >= view_start then break end
+		if tokens[i] - horizons[#horizons] > horizon_min then
+			table.insert(horizons, tokens[i] - 1)
+		end
+	end
+end
+
+local function purge(list, base)
+	for i = #list, 1, -1 do
+		if list[i] > base then
+			table.remove(list)
+		else
+			break
+		end
+	end
+end
+
 local function make_highlighter()
+	local horizons = {0}
+	local last_view_start = 0
+	local last_view_len = 0
+	local redrawtime_exceeded
 	return function(win)
 		if not win.syntax or not vis.lexers.load then return end
 		local lexer = vis.lexers.load(win.syntax, nil, true)
 		if not lexer then return end
-
-		-- TODO: improve heuristic for initial style
 		local viewport = win.viewport
 		if not viewport then return end
 		local redrawtime_max = win.redrawtime or 1.0
 		local horizon_max = win.horizon or 32768
 		local horizon = viewport.start < horizon_max and viewport.start or horizon_max
 		local view_start = viewport.start
-		local lex_start = viewport.start - horizon
-		viewport.start = lex_start
-		local data = win.file:content(viewport)
-		local token_styles = lexer._TOKENSTYLES
+		local horizon_min = last_view_len  -- keeps horizon candidates one screenful apart. could be some constant as well
+		local leap = view_start - last_view_start
+		if leap <= last_view_len then
+			purge(horizons, view_start)
+		end
+		local lex_start = redrawtime_exceeded and viewport.start - horizon or horizons[#horizons]
+		local data = win.file:content({start = lex_start, finish = viewport.finish})
 		local tokens, timedout = lexer:lex(data, 1, redrawtime_max)
+		if not redrawtime_exceeded and timedout then
+			redrawtime_exceeded = timedout
+			tokens = lexer:lex(data, 1, redrawtime_max, viewport.start - horizon - lex_start)
+		elseif leap > last_view_len and not redrawtime_exceeded then
+			populate(horizons, view_start, tokens, horizon_min)
+		end
 		local token_end = lex_start + (tokens[#tokens] or 1) - 1
-
-		if timedout then return end
-
+		local token_styles = lexer._TOKENSTYLES
 		for i = #tokens - 1, 1, -2 do
 			local token_start = lex_start + (tokens[i-1] or 1) - 1
 			if token_end < view_start then
+				if leap > 0                                       -- we are scrolling forward
+					and view_start - lex_start > horizon_min  -- keep horizons not too close to each other
+					and token_start > lex_start               -- don't store duplicate values
+					and not redrawtime_exceeded then
+					table.insert(horizons, token_start)
+				end
 				break
 			end
 			local name = tokens[i]
@@ -82,6 +116,8 @@ local function make_highlighter()
 			end
 			token_end = token_start - 1
 		end
+		last_view_start = view_start
+		last_view_len = viewport.finish - view_start
 	end
 end
 
