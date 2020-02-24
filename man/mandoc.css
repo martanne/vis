@@ -1,159 +1,360 @@
-/* $Id: mandoc.css,v 1.2 2016/04/13 10:19:23 schwarze Exp $ */
-
+/* $Id: mandoc.css,v 1.46 2019/06/02 16:57:13 schwarze Exp $ */
 /*
- * This is an example style-sheet provided for mandoc(1) and the -Thtml
- * or -Txhtml output mode.
+ * Standard style sheet for mandoc(1) -Thtml and man.cgi(8).
  *
- * It mimics the appearance of the traditional cvsweb output.
- *
- * See mdoc(7) and man(7) for macro explanations.
+ * Written by Ingo Schwarze <schwarze@openbsd.org>.
+ * I place this file into the public domain.
+ * Permission to use, copy, modify, and distribute it for any purpose
+ * with or without fee is hereby granted, without any conditions.
  */
 
-html		{ max-width: 880px; margin-left: 1em; }
-body		{ font-size: smaller; font-family: Helvetica,Arial,sans-serif; }
-body > div			{ padding-left: 2em;
-				  padding-top: 1em; }
-body > div.mandoc,
-body > div#mancgi		{ padding-left: 0em;
-				  padding-top: 0em; }
-body > div.results		{ font-size: smaller; }
-#mancgi fieldset		{ text-align: center;
-				  border: thin solid silver;
-				  border-radius: 1em;
-			  	  font-size: small; }
-#mancgi input[name=expr] 	{ width: 25%; }
-.results td.title		{ vertical-align: top;
-				  padding-right: 1em; }
-h1		{ margin-bottom: 1ex; font-size: 110% } 
-div.section > h1 { margin-left: -4ex; } /* Section header (Sh, SH). */
-h2		{ margin-bottom: 1ex; font-size: 105%; margin-left: -2ex; } /* Sub-section header (Ss, SS). */
-table		{ width: 100%; margin-top: 0ex; margin-bottom: 0ex; } /* All tables. */
-td		{ vertical-align: top; } /* All table cells. */
-p		{ } /* Paragraph: Pp, Lp. */
-blockquote	{ margin-left: 5ex; margin-top: 0ex; margin-bottom: 0ex; } /* D1. */
-div.section	{ margin-bottom: 2ex; margin-left: 5ex; } /* Sections (Sh, SH). */
-div.subsection	{ } /* Sub-sections (Ss, SS). */
-table.synopsis	{ } /* SYNOPSIS section table. */
-div.spacer	{ margin: 1em 0; }
+/* Global defaults. */
 
-/* Preamble structure. */
+html {		max-width: 65em;
+		--bg: #FFFFFF;
+		--fg: #000000; }
+body {		background: var(--bg);
+		color: var(--fg);
+		font-family: Helvetica,Arial,sans-serif; }
+h1 {		font-size: 110%; }
+table {		margin-top: 0em;
+		margin-bottom: 0em;
+		border-collapse: collapse; }
+/* Some browsers set border-color in a browser style for tbody,
+ * but not for table, resulting in inconsistent border styling. */
+tbody {		border-color: inherit; }
+tr {		border-color: inherit; }
+td {		vertical-align: top;
+		padding-left: 0.2em;
+		padding-right: 0.2em;
+		border-color: inherit; }
+ul, ol, dl {	margin-top: 0em;
+		margin-bottom: 0em; }
+li, dt {	margin-top: 1em; }
 
-table.foot	{ font-size: smaller; margin-top: 1em; border-top: 1px dotted #dddddd; } /* Document footer. */
-td.foot-date	{ width: 50%; } /* Document footer: date. */
-td.foot-os	{ width: 50%; } /* Document footer: OS/source. */
-table.head	{ font-size: smaller; margin-bottom: 1em; border-bottom: 1px dotted #dddddd; } /* Document header. */
-td.head-ltitle	{ width: 10%; } /* Document header: left-title. */
-td.head-vol	{ width: 80%; } /* Document header: volume. */
-td.head-rtitle	{ width: 10%; } /* Document header: right-title. */
+.permalink {	border-bottom: thin dotted;
+		color: inherit;
+		font: inherit;
+		text-decoration: inherit; }
+* {		clear: both }
 
-/* General font modes. */
+/* Search form and search results. */
 
-i		{ } /* Italic: BI, IB, I, (implicit). */
-.emph		{ font-style: italic; font-weight: normal; } /* Emphasis: Em, Bl -emphasis. */
-b		{ } /* Bold: SB, BI, IB, BR, RB, B, (implicit). */
-.symb		{ font-style: normal; font-weight: bold; } /* Symbolic: Sy, Ms, Bf -symbolic. */
-small		{ } /* Small: SB, SM. */
-.lit		{ font-style: normal; font-weight: normal; font-family: monospace; } /* Literal: Dl, Li, Ql, Bf -literal, Bl -literal, Bl -unfilled. */
+fieldset {	border: thin solid silver;
+		border-radius: 1em;
+		text-align: center; }
+input[name=expr] {
+		width: 25%; }
 
-/* Block modes. */
+table.results {	margin-top: 1em;
+		margin-left: 2em;
+		font-size: smaller; }
 
-.display	{ } /* Top of all Bd, D1, Dl. */
-.list		{ } /* Top of all Bl. */
+/* Header and footer lines. */
 
-/* Context-specific modes. */
+table.head {	width: 100%;
+		border-bottom: 1px dotted #808080;
+		margin-bottom: 1em;
+		font-size: smaller; }
+td.head-vol {	text-align: center; }
+td.head-rtitle {
+		text-align: right; }
 
-i.addr		{ font-weight: normal; } /* Address (Ad). */
-i.arg		{ font-weight: normal; } /* Command argument (Ar). */
-span.author	{ } /* Author name (An). */
-b.cmd		{ font-style: normal; } /* Command (Cm). */
-b.config	{ font-style: normal; } /* Config statement (Cd). */
-span.define	{ } /* Defines (Dv). */
-span.desc	{ } /* Nd.  After em-dash. */
-b.diag		{ font-style: normal; } /* Diagnostic (Bl -diag). */
-span.env	{ } /* Environment variables (Ev). */
-span.errno	{ } /* Error string (Er). */
-i.farg		{ font-weight: normal; } /* Function argument (Fa, Fn). */
-i.file		{ font-weight: normal; } /* File (Pa). */
-b.flag		{ font-style: normal; } /* Flag (Fl, Cm). */
-b.fname		{ font-style: normal; } /* Function name (Fa, Fn, Rv). */
-i.ftype		{ font-weight: normal; } /* Function types (Ft, Fn). */
-b.includes	{ font-style: normal; } /* Header includes (In). */
-span.lib	{ } /* Library (Lb). */
-i.link-sec	{ font-weight: normal; } /* Section links (Sx). */
-b.macro		{ font-style: normal; } /* Macro-ish thing (Fd). */
-b.name		{ font-style: normal; } /* Name of utility (Nm). */
-span.opt	{ } /* Options (Op, Oo/Oc). */
-span.ref	{ } /* Citations (Rs). */
-span.ref-auth	{ } /* Reference author (%A). */
-i.ref-book	{ font-weight: normal; } /* Reference book (%B). */
-span.ref-city	{ } /* Reference city (%C). */
-span.ref-date	{ } /* Reference date (%D). */
-i.ref-issue	{ font-weight: normal; } /* Reference issuer/publisher (%I). */
-i.ref-jrnl	{ font-weight: normal; } /* Reference journal (%J). */
-span.ref-num	{ } /* Reference number (%N). */
-span.ref-opt	{ } /* Reference optionals (%O). */
-span.ref-page	{ } /* Reference page (%P). */
-span.ref-corp	{ } /* Reference corporate/foreign author (%Q). */
-span.ref-rep	{ } /* Reference report (%R). */
-span.ref-title	{ text-decoration: underline; } /* Reference title (%T). */
-span.ref-vol	{ } /* Reference volume (%V). */
-span.type	{ font-style: italic; font-weight: normal; } /* Variable types (Vt). */
-span.unix	{ } /* Unices (Ux, Ox, Nx, Fx, Bx, Bsx, Dx). */
-b.utility	{ font-style: normal; } /* Name of utility (Ex). */
-b.var		{ font-style: normal; } /* Variables (Rv). */
+table.foot {	width: 100%;
+		border-top: 1px dotted #808080;
+		margin-top: 1em;
+		font-size: smaller; }
+td.foot-os {	text-align: right; }
 
-a.link-ext	{ } /* Off-site link (Lk). */
-a.link-includes	{ } /* Include-file link (In). */
-a.link-mail	{ } /* Mailto links (Mt). */
-a.link-man	{ } /* Manual links (Xr). */
-a.link-ref	{ } /* Reference section links (%Q). */
-a.link-sec	{ } /* Section links (Sx). */
+/* Sections and paragraphs. */
 
-/* Formatting for lists.  See mdoc(7). */
+.manual-text {
+		margin-left: 3.8em; }
+.Nd { }
+section.Sh { }
+h1.Sh {		margin-top: 1.2em;
+		margin-bottom: 0.6em;
+		margin-left: -3.2em; }
+section.Ss { }
+h2.Ss {		margin-top: 1.2em;
+		margin-bottom: 0.6em;
+		margin-left: -1.2em;
+		font-size: 105%; }
+.Pp {		margin: 0.6em 0em; }
+.Sx { }
+.Xr { }
 
-dl.list-diag	{ }
-dt.list-diag	{ }
-dd.list-diag	{ }
+/* Displays and lists. */
 
-dl.list-hang	{ }
-dt.list-hang	{ }
-dd.list-hang	{ }
+.Bd { }
+.Bd-indent {	margin-left: 3.8em; }
 
-dl.list-inset	{ }
-dt.list-inset	{ }
-dd.list-inset	{ }
+.Bl-bullet {	list-style-type: disc;
+		padding-left: 1em; }
+.Bl-bullet > li { }
+.Bl-dash {	list-style-type: none;
+		padding-left: 0em; }
+.Bl-dash > li:before {
+		content: "\2014  "; }
+.Bl-item {	list-style-type: none;
+		padding-left: 0em; }
+.Bl-item > li { }
+.Bl-compact > li {
+		margin-top: 0em; }
 
-dl.list-ohang	{ }
-dt.list-ohang	{ }
-dd.list-ohang	{ margin-left: 0ex; }
+.Bl-enum {	padding-left: 2em; }
+.Bl-enum > li { }
+.Bl-compact > li {
+		margin-top: 0em; }
 
-dl.list-tag	{ }
-dt.list-tag	{ }
-dd.list-tag	{ }
+.Bl-diag { }
+.Bl-diag > dt {
+		font-style: normal;
+		font-weight: bold; }
+.Bl-diag > dd {
+		margin-left: 0em; }
+.Bl-hang { }
+.Bl-hang > dt { }
+.Bl-hang > dd {
+		margin-left: 5.5em; }
+.Bl-inset { }
+.Bl-inset > dt { }
+.Bl-inset > dd {
+		margin-left: 0em; }
+.Bl-ohang { }
+.Bl-ohang > dt { }
+.Bl-ohang > dd {
+		margin-left: 0em; }
+.Bl-tag {	margin-top: 0.6em;
+		margin-left: 5.5em; }
+.Bl-tag > dt {
+		float: left;
+		margin-top: 0em;
+		margin-left: -5.5em;
+		padding-right: 0.5em;
+		vertical-align: top; }
+.Bl-tag > dd {
+		clear: right;
+		width: 100%;
+		margin-top: 0em;
+		margin-left: 0em;
+		margin-bottom: 0.6em;
+		vertical-align: top;
+		overflow: auto; }
+.Bl-compact {	margin-top: 0em; }
+.Bl-compact > dd {
+		margin-bottom: 0em; }
+.Bl-compact > dt {
+		margin-top: 0em; }
 
-table.list-col	{ }
-tr.list-col	{ }
-td.list-col	{ }
+.Bl-column { }
+.Bl-column > tbody > tr { }
+.Bl-column > tbody > tr > td {
+		margin-top: 1em; }
+.Bl-compact > tbody > tr > td {
+		margin-top: 0em; }
 
-ul.list-bul	{ list-style-type: disc; padding-left: 1em; }
-li.list-bul	{ }
+.Rs {		font-style: normal;
+		font-weight: normal; }
+.RsA { }
+.RsB {		font-style: italic;
+		font-weight: normal; }
+.RsC { }
+.RsD { }
+.RsI {		font-style: italic;
+		font-weight: normal; }
+.RsJ {		font-style: italic;
+		font-weight: normal; }
+.RsN { }
+.RsO { }
+.RsP { }
+.RsQ { }
+.RsR { }
+.RsT {		text-decoration: underline; }
+.RsU { }
+.RsV { }
 
-ul.list-dash	{ list-style-type: none; padding-left: 0em; }
-li.list-dash:before { content: "\2014  "; }
+.eqn { }
+.tbl td {	vertical-align: middle; }
 
-ul.list-hyph	{ list-style-type: none; padding-left: 0em; }
-li.list-hyph:before { content: "\2013  "; }
+.HP {		margin-left: 3.8em;
+		text-indent: -3.8em; }
 
-ul.list-item	{ list-style-type: none; padding-left: 0em; }
-li.list-item	{ }
+/* Semantic markup for command line utilities. */
 
-ol.list-enum	{ padding-left: 2em; }
-li.list-enum	{ }
+table.Nm { }
+code.Nm {	font-style: normal;
+		font-weight: bold;
+		font-family: inherit; }
+.Fl {		font-style: normal;
+		font-weight: bold;
+		font-family: inherit; }
+.Cm {		font-style: normal;
+		font-weight: bold;
+		font-family: inherit; }
+.Ar {		font-style: italic;
+		font-weight: normal; }
+.Op {		display: inline; }
+.Ic {		font-style: normal;
+		font-weight: bold;
+		font-family: inherit; }
+.Ev {		font-style: normal;
+		font-weight: normal;
+		font-family: monospace; }
+.Pa {		font-style: italic;
+		font-weight: normal; }
 
-/* Equation modes.  See eqn(7). */
+/* Semantic markup for function libraries. */
 
-span.eqn	{ }
+.Lb { }
+code.In {	font-style: normal;
+		font-weight: bold;
+		font-family: inherit; }
+a.In { }
+.Fd {		font-style: normal;
+		font-weight: bold;
+		font-family: inherit; }
+.Ft {		font-style: italic;
+		font-weight: normal; }
+.Fn {		font-style: normal;
+		font-weight: bold;
+		font-family: inherit; }
+.Fa {		font-style: italic;
+		font-weight: normal; }
+.Vt {		font-style: italic;
+		font-weight: normal; }
+.Va {		font-style: italic;
+		font-weight: normal; }
+.Dv {		font-style: normal;
+		font-weight: normal;
+		font-family: monospace; }
+.Er {		font-style: normal;
+		font-weight: normal;
+		font-family: monospace; }
 
-/* Table modes.  See tbl(7). */
+/* Various semantic markup. */
 
-table.tbl	{ }
+.An { }
+.Lk { }
+.Mt { }
+.Cd {		font-style: normal;
+		font-weight: bold;
+		font-family: inherit; }
+.Ad {		font-style: italic;
+		font-weight: normal; }
+.Ms {		font-style: normal;
+		font-weight: bold; }
+.St { }
+.Ux { }
+
+/* Physical markup. */
+
+.Bf {		display: inline; }
+.No {		font-style: normal;
+		font-weight: normal; }
+.Em {		font-style: italic;
+		font-weight: normal; }
+.Sy {		font-style: normal;
+		font-weight: bold; }
+.Li {		font-style: normal;
+		font-weight: normal;
+		font-family: monospace; }
+
+/* Tooltip support. */
+
+h1.Sh, h2.Ss {	position: relative; }
+.An, .Ar, .Cd, .Cm, .Dv, .Em, .Er, .Ev, .Fa, .Fd, .Fl, .Fn, .Ft,
+.Ic, code.In, .Lb, .Lk, .Ms, .Mt, .Nd, code.Nm, .Pa, .Rs,
+.St, .Sx, .Sy, .Va, .Vt, .Xr {
+		display: inline-block;
+		position: relative; }
+
+.An::before {	content: "An"; }
+.Ar::before {	content: "Ar"; }
+.Cd::before {	content: "Cd"; }
+.Cm::before {	content: "Cm"; }
+.Dv::before {	content: "Dv"; }
+.Em::before {	content: "Em"; }
+.Er::before {	content: "Er"; }
+.Ev::before {	content: "Ev"; }
+.Fa::before {	content: "Fa"; }
+.Fd::before {	content: "Fd"; }
+.Fl::before {	content: "Fl"; }
+.Fn::before {	content: "Fn"; }
+.Ft::before {	content: "Ft"; }
+.Ic::before {	content: "Ic"; }
+code.In::before { content: "In"; }
+.Lb::before {	content: "Lb"; }
+.Lk::before {	content: "Lk"; }
+.Ms::before {	content: "Ms"; }
+.Mt::before {	content: "Mt"; }
+.Nd::before {	content: "Nd"; }
+code.Nm::before { content: "Nm"; }
+.Pa::before {	content: "Pa"; }
+.Rs::before {	content: "Rs"; }
+h1.Sh::before {	content: "Sh"; }
+h2.Ss::before {	content: "Ss"; }
+.St::before {	content: "St"; }
+.Sx::before {	content: "Sx"; }
+.Sy::before {	content: "Sy"; }
+.Va::before {	content: "Va"; }
+.Vt::before {	content: "Vt"; }
+.Xr::before {	content: "Xr"; }
+
+.An::before, .Ar::before, .Cd::before, .Cm::before,
+.Dv::before, .Em::before, .Er::before, .Ev::before,
+.Fa::before, .Fd::before, .Fl::before, .Fn::before, .Ft::before,
+.Ic::before, code.In::before, .Lb::before, .Lk::before,
+.Ms::before, .Mt::before, .Nd::before, code.Nm::before,
+.Pa::before, .Rs::before,
+h1.Sh::before, h2.Ss::before, .St::before, .Sx::before, .Sy::before,
+.Va::before, .Vt::before, .Xr::before {
+		opacity: 0;
+		transition: .15s ease opacity;
+		pointer-events: none;
+		position: absolute;
+		bottom: 100%;
+		box-shadow: 0 0 .35em var(--fg);
+		padding: .15em .25em;
+		white-space: nowrap;
+		font-family: Helvetica,Arial,sans-serif;
+		font-style: normal;
+		font-weight: bold;
+		background: var(--bg);
+		color: var(--fg); }
+.An:hover::before, .Ar:hover::before, .Cd:hover::before, .Cm:hover::before,
+.Dv:hover::before, .Em:hover::before, .Er:hover::before, .Ev:hover::before,
+.Fa:hover::before, .Fd:hover::before, .Fl:hover::before, .Fn:hover::before,
+.Ft:hover::before, .Ic:hover::before, code.In:hover::before,
+.Lb:hover::before, .Lk:hover::before, .Ms:hover::before, .Mt:hover::before,
+.Nd:hover::before, code.Nm:hover::before, .Pa:hover::before,
+.Rs:hover::before, h1.Sh:hover::before, h2.Ss:hover::before, .St:hover::before,
+.Sx:hover::before, .Sy:hover::before, .Va:hover::before, .Vt:hover::before,
+.Xr:hover::before {
+		opacity: 1;
+		pointer-events: inherit; }
+
+/* Overrides to avoid excessive margins on small devices. */
+
+@media (max-width: 37.5em) {
+.manual-text {
+		margin-left: 0.5em; }
+h1.Sh, h2.Ss {	margin-left: 0em; }
+.Bd-indent {	margin-left: 2em; }
+.Bl-hang > dd {
+		margin-left: 2em; }
+.Bl-tag {	margin-left: 2em; }
+.Bl-tag > dt {
+		margin-left: -2em; }
+.HP {		margin-left: 2em;
+		text-indent: -2em; }
+}
+
+/* Overrides for a dark color scheme for accessibility. */
+
+@media (prefers-color-scheme: dark) {
+html {		--bg: #1E1F21;
+		--fg: #EEEFF1; }
+:link {		color: #BAD7FF; }
+:visited {	color: #F6BAFF; }
+}
