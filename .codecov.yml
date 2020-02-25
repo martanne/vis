@@ -6,6 +6,5 @@ comment: off
 
 coverage:
   status:
-    project:
-      default:
-        threshold: 1%
+    project: off
+    patch: off
