@@ -5,6 +5,7 @@ packages:
   - lua5.3-dev
   - lua5.3-lpeg
   - ncurses-dev
+  - ncurses-terminfo
 sources:
   - https://github.com/martanne/vis
 tasks:
