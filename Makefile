@@ -145,10 +145,6 @@ luacheck:
 	@luacheck --config .luacheckrc lua test/lua | less -RFX
 
 install: $(ELF)
-	@echo stripping executable
-	@for e in $(ELF); do \
-		${STRIP} "$$e"; \
-	done
 	@echo installing executable files to ${DESTDIR}${PREFIX}/bin
 	@mkdir -p ${DESTDIR}${PREFIX}/bin
 	@for e in ${EXECUTABLES}; do \
@@ -174,6 +170,12 @@ install: $(ELF)
 		chmod 644 "${DESTDIR}${MANPREFIX}/man1/$$m"; \
 	done
 
+install-strip: install
+	@echo stripping executables
+	@for e in $(ELF); do \
+		${STRIP} ${DESTDIR}${PREFIX}/bin/"$$e"; \
+	done
+
 uninstall:
 	@echo removing executable file from ${DESTDIR}${PREFIX}/bin
 	@for e in ${EXECUTABLES}; do \
@@ -190,4 +192,4 @@ uninstall:
 	@echo removing support files from ${DESTDIR}${SHAREPREFIX}/vis
 	@rm -rf ${DESTDIR}${SHAREPREFIX}/vis
 
-.PHONY: all clean dist install uninstall debug profile coverage test test-update luadoc luadoc-all luacheck man docker-kill docker docker-clean
+.PHONY: all clean dist install install-strip uninstall debug profile coverage test test-update luadoc luadoc-all luacheck man docker-kill docker docker-clean
