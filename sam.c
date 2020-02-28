@@ -1646,7 +1646,7 @@ static bool cmd_write(Vis *vis, Win *win, Command *cmd, const char *argv[], Sele
 		if (!path)
 			return false;
 
-		struct stat meta;
+		struct stat meta = { 0 };
 		bool existing_file = !stat(path, &meta);
 		bool same_file = existing_file && file->name &&
 		                 file->stat.st_dev == meta.st_dev && file->stat.st_ino == meta.st_ino;
