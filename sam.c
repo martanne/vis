@@ -1702,7 +1702,7 @@ static bool cmd_write(Vis *vis, Win *win, Command *cmd, const char *argv[], Sele
 			file_name_set(file, path);
 			same_file = true;
 		}
-		if (same_file)
+		if (same_file || (!existing_file && strcmp(file->name, path) == 0))
 			file->stat = text_stat(text);
 		vis_event_emit(vis, VIS_EVENT_FILE_SAVE_POST, file, path);
 		free(path);
