@@ -116,6 +116,9 @@ vis.ftdetect.filetypes = {
 	elixir = {
 		ext = { "%.ex$", "%.exs$" },
 	},
+	elm = {
+		ext = { "%.elm$" },
+	},
 	erlang = {
 		ext = { "%.erl$", "%.hrl$" },
 	},
