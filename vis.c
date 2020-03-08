@@ -27,6 +27,8 @@
 #include "util.h"
 #include "vis-core.h"
 #include "sam.h"
+#include "ui.h"
+
 
 static void macro_replay(Vis *vis, const Macro *macro);
 static void macro_replay_internal(Vis *vis, const Macro *macro);
@@ -294,7 +296,10 @@ static void window_draw_colorcolumn(Win *win) {
 
 		/* This screen line contains the cell we want to highlight */
 		if (cc <= line_cols + width) {
-			l->cells[(cc - 1) - line_cols].style = style;
+			CellStyle *orig = &l->cells[cc - 1 - line_cols].style;
+			orig->attr = style.attr;
+			orig->fg = is_default_color(style.fg) ? orig->fg : style.fg;
+			orig->bg = is_default_color(style.bg) ? orig->bg : style.bg;
 			line_cc_set = true;
 		} else {
 			line_cols += width;

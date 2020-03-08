@@ -115,4 +115,6 @@ struct UiWin {
 	int (*window_height)(UiWin*);
 };
 
+bool is_default_color(CellColor c);
+
 #endif

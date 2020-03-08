@@ -289,3 +289,7 @@ static void ui_curses_free(UiTerm *term) {
 	ui_curses_suspend(term);
 	endwin();
 }
+
+bool is_default_color(CellColor c) {
+	return c == CELL_COLOR_DEFAULT;
+}

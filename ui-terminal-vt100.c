@@ -215,3 +215,7 @@ static void ui_vt100_free(UiTerm *tui) {
 	ui_vt100_suspend(tui);
 	buffer_release(&vtui->buf);
 }
+
+bool is_default_color(CellColor c) {
+	return c.index == ((CellColor) CELL_COLOR_DEFAULT).index;
+}
