@@ -1558,8 +1558,8 @@ static bool cmd_files(Vis *vis, Win *win, Command *cmd, const char *argv[], Sele
 	for (Win *win = vis->windows; win; win = win->next) {
 		if (win->file->internal)
 			continue;
-		bool match = !cmd->regex || (win->file->name &&
-		             text_regex_match(cmd->regex, win->file->name, 0));
+		bool match = !cmd->regex ||
+		             (win->file->name && text_regex_match(cmd->regex, win->file->name, 0) == 0);
 		if (match ^ (argv[0][0] == 'Y')) {
 			Filerange def = text_range_new(0, 0);
 			ret &= sam_execute(vis, win, cmd->cmd, NULL, &def);
