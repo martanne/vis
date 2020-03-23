@@ -213,6 +213,9 @@ vis.ftdetect.filetypes = {
 	jsp = {
 		ext = { "%.jsp$" },
 	},
+	julia = {
+		ext = { "%.jl$" },
+	},
 	latex = {
 		ext = { "%.bbl$", "%.cls$", "%.dtx$", "%.ins$", "%.ltx$", "%.tex$", "%.sty$" },
 		mime = { "text/x-tex" },
