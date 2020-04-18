@@ -8,7 +8,7 @@ local include = l.delimited_range("<>", true, true, true)
 local filename = dq_str + sq_str + include + (1 - lpeg.S('"\'\t\v\f\r()[]{} \n'))^1
 
 vis:map(vis.modes.NORMAL, "gf", function(keys)
-	local mstart, mend = vis.win.file:match_at(filename, vis.win.cursor.pos, 200)
+	local mstart, mend = vis.win.file:match_at(filename, vis.win.selection.pos, 200)
 	if not mstart or not mend then
 		vis:info("No filename found under the cursor.")
 		return #keys
