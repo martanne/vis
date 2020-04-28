@@ -68,10 +68,10 @@ local list = token('list',
 
 M._rules = {
   {'header', header},
+  {'list', list},
   {'blockquote', blockquote},
   {'blockcode', blockcode},
   {'hr', hr},
-  {'list', list},
   {'whitespace', ws},
   {'link_label', link_label},
   {'escape', escape},
