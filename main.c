@@ -32,6 +32,8 @@ static const char *macro_record(Vis*, const char *keys, const Arg *arg);
 static const char *macro_replay(Vis*, const char *keys, const Arg *arg);
 /* temporarily suspend the editor and return to the shell, type 'fg' to get back */
 static const char *suspend(Vis*, const char *keys, const Arg *arg);
+/* reset count if set, otherwise remove all but the primary selection */
+static const char *normalmode_escape(Vis*, const char *keys, const Arg *arg);
 /* switch to mode indicated by arg->i */
 static const char *switchmode(Vis*, const char *keys, const Arg *arg);
 /* switch to insert mode after performing movement indicated by arg->i */
@@ -200,6 +202,7 @@ enum {
 	VIS_ACTION_WINDOW_HALFPAGE_UP,
 	VIS_ACTION_WINDOW_HALFPAGE_DOWN,
 	VIS_ACTION_MODE_NORMAL,
+	VIS_ACTION_MODE_NORMAL_ESCAPE,
 	VIS_ACTION_MODE_VISUAL,
 	VIS_ACTION_MODE_VISUAL_LINE,
 	VIS_ACTION_MODE_INSERT,
@@ -599,6 +602,11 @@ static const KeyAction vis_action[] = {
 		"vis-mode-normal",
 		VIS_HELP("Enter normal mode")
 		switchmode, { .i = VIS_MODE_NORMAL }
+	},
+	[VIS_ACTION_MODE_NORMAL_ESCAPE] = {
+		"vis-mode-normal-escape",
+		VIS_HELP("Reset count or remove all non-primary selections")
+		normalmode_escape,
 	},
 	[VIS_ACTION_MODE_VISUAL] = {
 		"vis-mode-visual-charwise",
@@ -2225,6 +2233,14 @@ static const char *join(Vis *vis, const char *keys, const Arg *arg) {
 			vis_count_set(vis, count-1);
 		vis_motion(vis, VIS_MOVE_LINE_NEXT);
 	}
+	return keys;
+}
+
+static const char *normalmode_escape(Vis *vis, const char *keys, const Arg *arg) {
+	if (vis_count_get(vis) == VIS_COUNT_UNKNOWN)
+		selections_clear(vis, keys, arg);
+	else
+		vis_count_set(vis, VIS_COUNT_UNKNOWN);
 	return keys;
 }
 

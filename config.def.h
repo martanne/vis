@@ -225,7 +225,7 @@ static const KeyBinding bindings_normal[] = {
 	{ "<C-y>",              ACTION(WINDOW_SLIDE_DOWN)                   },
 	{ "D",                  ALIAS("d$")                                 },
 	{ "<Delete>",           ALIAS("x")                                  },
-	{ "<Escape>",           ACTION(SELECTIONS_REMOVE_ALL)               },
+	{ "<Escape>",           ACTION(MODE_NORMAL_ESCAPE)                  },
 	{ "<F1>",               ALIAS(":help<Enter>")                       },
 	{ "ga",                 ACTION(UNICODE_INFO)                        },
 	{ "g8",                 ACTION(UTF8_INFO)                           },
