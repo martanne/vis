@@ -34,6 +34,8 @@ static const char *macro_replay(Vis*, const char *keys, const Arg *arg);
 static const char *suspend(Vis*, const char *keys, const Arg *arg);
 /* reset count if set, otherwise remove all but the primary selection */
 static const char *normalmode_escape(Vis*, const char *keys, const Arg *arg);
+/* reset count if set, otherwise switch to normal mode */
+static const char *visualmode_escape(Vis*, const char *keys, const Arg *arg);
 /* switch to mode indicated by arg->i */
 static const char *switchmode(Vis*, const char *keys, const Arg *arg);
 /* switch to insert mode after performing movement indicated by arg->i */
@@ -204,6 +206,7 @@ enum {
 	VIS_ACTION_MODE_NORMAL,
 	VIS_ACTION_MODE_NORMAL_ESCAPE,
 	VIS_ACTION_MODE_VISUAL,
+	VIS_ACTION_MODE_VISUAL_ESCAPE,
 	VIS_ACTION_MODE_VISUAL_LINE,
 	VIS_ACTION_MODE_INSERT,
 	VIS_ACTION_MODE_REPLACE,
@@ -612,6 +615,11 @@ static const KeyAction vis_action[] = {
 		"vis-mode-visual-charwise",
 		VIS_HELP("Enter characterwise visual mode")
 		switchmode, { .i = VIS_MODE_VISUAL }
+	},
+	[VIS_ACTION_MODE_VISUAL_ESCAPE] = {
+		"vis-mode-visual-escape",
+		VIS_HELP("Reset count or switch to normal mode")
+		visualmode_escape,
 	},
 	[VIS_ACTION_MODE_VISUAL_LINE] = {
 		"vis-mode-visual-linewise",
@@ -2239,6 +2247,14 @@ static const char *join(Vis *vis, const char *keys, const Arg *arg) {
 static const char *normalmode_escape(Vis *vis, const char *keys, const Arg *arg) {
 	if (vis_count_get(vis) == VIS_COUNT_UNKNOWN)
 		selections_clear(vis, keys, arg);
+	else
+		vis_count_set(vis, VIS_COUNT_UNKNOWN);
+	return keys;
+}
+
+static const char *visualmode_escape(Vis *vis, const char *keys, const Arg *arg) {
+	if (vis_count_get(vis) == VIS_COUNT_UNKNOWN)
+		vis_mode_switch(vis, VIS_MODE_NORMAL);
 	else
 		vis_count_set(vis, VIS_COUNT_UNKNOWN);
 	return keys;

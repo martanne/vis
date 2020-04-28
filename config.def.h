@@ -284,7 +284,7 @@ static const KeyBinding bindings_visual[] = {
 	{ "<C-u>",              ACTION(SELECTIONS_PREV)                     },
 	{ "<C-x>",              ACTION(SELECTIONS_NEW_MATCH_SKIP)           },
 	{ "<Delete>",           ALIAS("<Backspace>")                        },
-	{ "<Escape>",           ACTION(MODE_NORMAL)                         },
+	{ "<Escape>",           ACTION(MODE_VISUAL_ESCAPE)                  },
 	{ "I",                  ACTION(SELECTIONS_NEW_LINES_BEGIN)          },
 	{ "J",                  ACTION(JOIN_LINES)                          },
 	{ "gJ",                 ACTION(JOIN_LINES_TRIM)                     },
