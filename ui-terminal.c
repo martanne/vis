@@ -249,13 +249,13 @@ static void ui_window_draw(UiWin *w) {
 	Selection *sel = view_selections_primary_get(view);
 	const Line *cursor_line = view_cursors_line_get(sel);
 	size_t cursor_lineno = cursor_line->lineno;
-	char buf[(sizeof(size_t) * CHAR_BIT + 2) / 3 + 1];
+	char buf[(sizeof(size_t) * CHAR_BIT + 2) / 3 + 1 + 1];
 	int x = win->x, y = win->y;
 	int view_width = view_width_get(view);
 	Cell *cells = ui->cells + y * ui->width;
 	if (x + sidebar_width + view_width > ui->width)
 		view_width = ui->width - x - sidebar_width;
-	for (const Line *l = line; l; l = l->next) {
+	for (const Line *l = line; l; l = l->next, y++) {
 		if (sidebar) {
 			if (!l->lineno || !l->len || l->lineno == prev_lineno) {
 				memset(buf, ' ', sizeof(buf));
