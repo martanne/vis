@@ -186,6 +186,7 @@ static int ui_vt100_colors(Ui *ui) {
 }
 
 static void ui_vt100_suspend(UiTerm *tui) {
+	if (!tui->termkey) return;
 	termkey_stop(tui->termkey);
 	cursor_visible(true);
 	screen_alternate(false);
