@@ -12,7 +12,7 @@ test: $(ALL)
 
 config.h:
 	@echo Generating ccan configuration header
-	@${CC} ccan-config.c -o ccan-config && ./ccan-config > config.h
+	@${CC} ccan-config.c -o ccan-config && ./ccan-config "${CC}" ${CFLAGS} > config.h
 
 text-test: config.h text-test.c ../../text.c ../../text-common.c ../../text-io.c ../../text-iterator.c ../../text-util.c ../../text-motions.c ../../text-objects.c ../../text-regex.c ../../array.c
 	@echo Compiling $@ binary
