@@ -246,6 +246,6 @@ void plan_skip_all(const char *reason);
  *
  * This can be used to ease debugging, or exit on the first failure.
  */
-void (*tap_fail_callback)(void);
+extern void (*tap_fail_callback)(void);
 
 #endif /* CCAN_TAP_H */

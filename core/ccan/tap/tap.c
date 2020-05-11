@@ -32,6 +32,8 @@
 
 #include "tap.h"
 
+void (*tap_fail_callback)(void) = NULL;
+
 static int no_plan = 0;
 static int skip_all = 0;
 static int have_plan = 0;
