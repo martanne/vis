@@ -1,5 +1,4 @@
-Vis a vim-like text editor
-==========================
+# Vis - Combining Modal Editing with Structural Regular Expressions
 
 [![builds.sr.ht status](https://builds.sr.ht/~martanne/vis.svg)](https://builds.sr.ht/~martanne/vis)
 [![Coverity Scan Build Status](https://scan.coverity.com/projects/3939/badge.svg)](https://scan.coverity.com/projects/3939)
