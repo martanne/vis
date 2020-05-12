@@ -235,7 +235,7 @@ esac
 tryflag CFLAGS -pipe
 
 # Try flags to optimize binary size
-tryflag CFLAGS -Os
+tryflag CFLAGS -O2
 tryflag CFLAGS -ffunction-sections
 tryflag CFLAGS -fdata-sections
 tryldflag LDFLAGS_AUTO -Wl,--gc-sections
