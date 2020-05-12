@@ -1946,14 +1946,14 @@ bool vis_cmd(Vis *vis, const char *cmdline) {
 		return true;
 	while (*cmdline == ':')
 		cmdline++;
-	size_t len = strlen(cmdline);
-	char *line = malloc(len+2);
+	char *line = strdup(cmdline);
 	if (!line)
 		return false;
-	strncpy(line, cmdline, len+1);
 
-	for (char *end = line + len - 1; end >= line && isspace((unsigned char)*end); end--)
-		*end = '\0';
+	size_t len = strlen(line);
+	while (len > 0 && isspace((unsigned char)line[len-1]))
+		len--;
+	line[len] = '\0';
 
 	enum SamError err = sam_cmd(vis, line);
 	if (err != SAM_ERR_OK)
