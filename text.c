@@ -1067,26 +1067,26 @@ void text_save_cancel(TextSave *ctx) {
 	errno = saved_errno;
 }
 
-bool text_save(Text *txt, const char *filename) {
-	Filerange r = (Filerange){ .start = 0, .end = text_size(txt) };
-	return text_save_range(txt, &r, filename);
-}
-
 /* First try to save the file atomically using rename(2) if this does not
  * work overwrite the file in place. However if something goes wrong during
  * this overwrite the original file is permanently damaged.
  */
-bool text_save_range(Text *txt, Filerange *range, const char *filename) {
+bool text_save(Text *txt, const char *filename) {
+	return text_save_method(txt, filename, TEXT_SAVE_AUTO);
+}
+
+bool text_save_method(Text *txt, const char *filename, enum TextSaveMethod method) {
 	if (!filename) {
 		txt->saved_revision = txt->history;
 		text_snapshot(txt);
 		return true;
 	}
-	TextSave *ctx = text_save_begin(txt, filename, TEXT_SAVE_AUTO);
+	TextSave *ctx = text_save_begin(txt, filename, method);
 	if (!ctx)
 		return false;
-	ssize_t written = text_write_range(txt, range, ctx->fd);
-	if (written == -1 || (size_t)written != text_range_size(range)) {
+	Filerange range = (Filerange){ .start = 0, .end = text_size(txt) };
+	ssize_t written = text_save_write_range(ctx, &range);
+	if (written == -1 || (size_t)written != text_range_size(&range)) {
 		text_save_cancel(ctx);
 		return false;
 	}

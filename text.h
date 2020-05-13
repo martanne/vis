@@ -302,14 +302,6 @@ size_t text_mark_get(Text*, Mark);
  * @{
  */
 /**
- * Save the whole text to the given file name.
- */
-bool text_save(Text*, const char *filename);
-/**
- * Save a file range to the given file name.
- */
-bool text_save_range(Text*, Filerange*, const char *filename);
-/**
  * Method used to save the text.
  */
 enum TextSaveMethod {
@@ -344,6 +336,19 @@ enum TextSaveMethod {
 	 */
 	TEXT_SAVE_INPLACE,
 };
+
+/**
+ * Save the whole text to the given file name.
+ */
+bool text_save(Text*, const char *filename);
+/**
+ * Save the whole text to the given file name, using the specified method.
+ *
+ * @rst
+ * .. note:: Equivalent to ``text_save_method(filename, TEXT_SAVE_AUTO)``.
+ * @endrst
+ */
+bool text_save_method(Text*, const char *filename, enum TextSaveMethod);
 
 /**
  * Setup a sequence of write operations.
