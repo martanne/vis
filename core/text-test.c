@@ -96,6 +96,7 @@ int main(int argc, char *argv[]) {
 	skip_if(TIS_INTERPRETER, 2, "I/O related") {
 
 		const char *filename = "data";
+		unlink(filename);
 
 		enum TextLoadMethod load_method[] = {
 			TEXT_LOAD_AUTO,
@@ -140,6 +141,27 @@ int main(int argc, char *argv[]) {
 
 			txt = text_load(filename);
 			ok(txt && compare(txt, buf), "Verify save (method %zu)", i);
+			text_free(txt);
+		}
+
+		int (*creation[])(const char*, const char*) = { symlink, link };
+		const char *names[] = { "symlink", "hardlink" };
+
+		for (size_t i = 0; i < LENGTH(names); i++) {
+			const char *linkname = names[i];
+			unlink(linkname);
+			ok(creation[i](filename, linkname) == 0, "%s creation", names[i]);
+
+			snprintf(buf, sizeof buf, "%s\n", names[i]);
+			txt = text_load(NULL);
+			ok(txt && insert(txt, 0, buf) && compare(txt, buf), "Preparing %s content", names[i]);
+			ok(txt && text_save(txt, linkname), "Text save %s", names[i]);
+			text_free(txt);
+
+			txt = text_load(linkname);
+			ok(txt && compare(txt, buf), "Load %s", names[i]);
+
+			ok(txt && !text_save_method(txt, linkname, TEXT_SAVE_ATOMIC), "Text save %s atomic", names[i]);
 			text_free(txt);
 		}
 	}
