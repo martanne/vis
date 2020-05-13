@@ -146,6 +146,7 @@ static void test_pointers(void) {
 	ok(array_add(&arr, &byte) && (ptr = array_get(&arr, 0)) && *ptr == byte,
 		"Add byte element");
 	ok(!array_get_ptr(&arr, 0) && errno == ENOTSUP, "Get pointer from non-pointer array");
+	array_release(&arr);
 
 	array_init(&arr);
 	ok(array_length(&arr) == 0 && array_get_ptr(&arr, 0) == NULL && errno == EINVAL,
