@@ -219,7 +219,6 @@ int main(int argc, char *argv[]) {
 	text_snapshot(txt);
 	for (size_t i = 0; i < LENGTH(positions); i++) {
 		size_t pos = positions[i];
-		size_t newpos = pos+delta;
 		Mark bof = text_mark_set(txt, 0);
 		ok(text_mark_get(txt, bof) == 0, "Mark at beginning of file");
 		Mark mof = text_mark_set(txt, pos);
