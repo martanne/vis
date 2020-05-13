@@ -43,7 +43,7 @@ ubsan: clean
 	$(MAKE) CFLAGS_EXTRA='-fsanitize=undefined'
 
 msan: clean
-	$(MAKE) CFLAGS_EXTRA='-g -fsanitize=memory'
+	$(MAKE) CFLAGS_EXTRA='-fsanitize=memory -fsanitize-memory-track-origins'
 
 valgrind: clean ${ALL}
 	@for test in ${ALL}; do \
