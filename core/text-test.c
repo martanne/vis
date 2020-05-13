@@ -94,12 +94,53 @@ int main(int argc, char *argv[]) {
 	plan_no_plan();
 
 	skip_if(TIS_INTERPRETER, 2, "I/O related") {
-		txt = text_load("/");
-		ok(txt == NULL && errno == EISDIR, "Opening directory");
 
-		if (access("/etc/shadow", F_OK) == 0 && access("/etc/shadow", R_OK) != 0) {
-			txt = text_load("/etc/shadow");
-			ok(txt == NULL && errno == EACCES, "Opening file without sufficient permissions");
+		const char *filename = "data";
+
+		enum TextLoadMethod load_method[] = {
+			TEXT_LOAD_AUTO,
+			TEXT_LOAD_READ,
+			TEXT_LOAD_MMAP,
+		};
+
+		for (size_t i = 0; i < LENGTH(load_method); i++) {
+			txt = text_load_method("/", load_method[i]);
+			ok(txt == NULL && errno == EISDIR, "Opening directory (method %zu)", i);
+
+			if (access("/etc/shadow", F_OK) == 0 && access("/etc/shadow", R_OK) != 0) {
+				txt = text_load_method("/etc/shadow", load_method[i]);
+				ok(txt == NULL && errno == EACCES, "Opening file without sufficient permissions (method %zu)", i);
+			}
+		}
+
+		char buf[BUFSIZ] = "Hello World!\n";
+		txt = text_load(NULL);
+		ok(txt && insert(txt, 0, buf) && compare(txt, buf), "Inserting into empty text");
+		ok(txt && text_save(txt, filename), "Text save");
+		text_free(txt);
+
+		for (size_t i = 0; i < LENGTH(load_method); i++) {
+			txt = text_load_method(filename, load_method[i]);
+			ok(txt && compare(txt, buf), "Load text (method %zu)", i);
+			text_free(txt);
+		}
+
+		enum TextSaveMethod save_method[] = {
+			TEXT_SAVE_AUTO,
+			TEXT_SAVE_ATOMIC,
+			TEXT_SAVE_INPLACE,
+		};
+
+		for (size_t i = 0; i < LENGTH(save_method); i++) {
+			snprintf(buf, sizeof buf, "Hello World: %zu\n", i);
+			txt = text_load(NULL);
+			ok(txt && insert(txt, 0, buf) && compare(txt, buf), "Preparing to save (method %zu)", i);
+			ok(txt && text_save_method(txt, filename, save_method[i]), "Text save (method %zu)", i);
+			text_free(txt);
+
+			txt = text_load(filename);
+			ok(txt && compare(txt, buf), "Verify save (method %zu)", i);
+			text_free(txt);
 		}
 	}
 
