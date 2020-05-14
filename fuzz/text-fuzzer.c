@@ -52,11 +52,11 @@ static enum CmdStatus cmd_redo(Text *txt, const char *cmd) {
 }
 
 static enum CmdStatus cmd_earlier(Text *txt, const char *cmd) {
-	return text_earlier(txt, 1) != EPOS;
+	return text_earlier(txt) != EPOS;
 }
 
 static enum CmdStatus cmd_later(Text *txt, const char *cmd) {
-	return text_later(txt, 1) != EPOS;
+	return text_later(txt) != EPOS;
 }
 
 static enum CmdStatus cmd_mark_set(Text *txt, const char *cmd) {
