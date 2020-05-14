@@ -1,5 +1,6 @@
 #include <stddef.h>
 #include <stdbool.h>
+#include <stdlib.h>
 #include <string.h>
 #include <errno.h>
 #include <stdio.h>
@@ -112,8 +113,7 @@ static Cmd commands[] = {
 	['u'] = cmd_undo,
 };
 
-int main(int argc, char *argv[]) {
-	char line[BUFSIZ], *name = (argc == 1) ? NULL : argv[1];
+static int repl(const char *name, FILE *input) {
 	Text *txt = text_load(name);
 	if (!name)
 		name = "-";
@@ -124,9 +124,10 @@ int main(int argc, char *argv[]) {
 
 	printf("Loaded %zu bytes from `%s'\n", text_size(txt), name);
 
+	char line[BUFSIZ];
 	for (;;) {
 		printf("> ");
-		if (!fgets(line, sizeof(line), stdin))
+		if (!fgets(line, sizeof(line), input))
 			break;
 		if (!isatty(0))
 			printf("%s", line);
@@ -147,3 +148,22 @@ int main(int argc, char *argv[]) {
 
 	return 0;
 }
+
+#ifdef LIBFUZZER
+
+int LLVMFuzzerTestOneInput(const uint8_t *data, size_t len) {
+	FILE *input = fmemopen((void*)data, len, "r");
+	if (!input)
+		return 1;
+	int r = repl(NULL, input);
+	fclose(input);
+	return r;
+}
+
+#else
+
+int main(int argc, char *argv[]) {
+	return repl(argc == 1 ? NULL : argv[1], stdin);
+}
+
+#endif /* LIBFUZZER */
