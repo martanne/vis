@@ -8,11 +8,11 @@ test: $(ALL)
 
 text-fuzzer: text-fuzzer.c fuzzer.h ../../text.c ../../text-util.c ../../text-motions.c ../../text-objects.c ../../text-regex.c
 	@echo Compiling $@ binary
-	${CC} ${CFLAGS} ${CFLAGS_STD} ${CFLAGS_EXTRA} ${filter %.c, $^} ${LDFLAGS} -o $@
+	${CC} ${CFLAGS} ${CFLAGS_STD} ${CFLAGS_LIBC} ${CFLAGS_EXTRA} ${filter %.c, $^} ${LDFLAGS} -o $@
 
 buffer-fuzzer: buffer-fuzzer.c fuzzer.h ../../buffer.c
 	@echo Compiling $@ binary
-	@${CC} ${CFLAGS} ${CFLAGS_STD} ${CFLAGS_EXTRA} ${filter %.c, $^} ${LDFLAGS} -o $@
+	@${CC} ${CFLAGS} ${CFLAGS_STD} ${CFLAGS_LIBC} ${CFLAGS_EXTRA} ${filter %.c, $^} ${LDFLAGS} -o $@
 
 debug: clean
 	$(MAKE) CFLAGS_EXTRA='${CFLAGS_EXTRA} ${CFLAGS_DEBUG}'
