@@ -4,13 +4,15 @@ ALL = text-fuzzer text-libfuzzer buffer-fuzzer
 CC = afl-gcc
 CFLAGS += -I. -I../.. -DBUFFER_SIZE=4 -DBLOCK_SIZE=4
 
+TEXT_SRC = ../../text.c ../../text-util.c ../../text-motions.c ../../text-objects.c ../../text-regex.c
+
 test: $(ALL)
 
-text-fuzzer: text-fuzzer.c fuzzer.h ../../text.c ../../text-util.c ../../text-motions.c ../../text-objects.c ../../text-regex.c
+text-fuzzer: text-fuzzer.c fuzzer.h $(TEXT_SRC)
 	@echo Compiling $@ binary
 	@${CC} ${CFLAGS} ${CFLAGS_STD} ${CFLAGS_LIBC} ${CFLAGS_EXTRA} ${filter %.c, $^} ${LDFLAGS} -o $@
 
-text-libfuzzer: text-fuzzer.c fuzzer.h ../../text.c ../../text-util.c ../../text-motions.c ../../text-objects.c ../../text-regex.c
+text-libfuzzer: text-fuzzer.c fuzzer.h $(TEXT_SRC)
 	@echo Compiling $@ binary
 	@${CC} ${CFLAGS} ${CFLAGS_STD} ${CFLAGS_LIBC} ${CFLAGS_EXTRA} -DLIBFUZZER ${filter %.c, $^} -fsanitize=fuzzer,address,undefined ${LDFLAGS} -o $@
 
