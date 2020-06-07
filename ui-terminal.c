@@ -371,13 +371,13 @@ static void ui_resize(Ui *ui) {
 	int width = 80, height = 24;
 
 	if (ioctl(STDERR_FILENO, TIOCGWINSZ, &ws) != -1) {
-		width = ws.ws_col;
-		height = ws.ws_row;
+		if (ws.ws_col > 0)
+			width = ws.ws_col;
+		if (ws.ws_row > 0)
+			height = ws.ws_row;
 	}
 
-	width = MAX(width, 1);
 	width = MIN(width, MAX_WIDTH);
-	height = MAX(height, 1);
 	height = MIN(height, MAX_HEIGHT);
 	if (!ui_term_backend_resize(tui, width, height))
 		return;
