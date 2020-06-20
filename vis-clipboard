@@ -12,6 +12,15 @@ vc_usage() {
 }
 
 vc_determine_command() {
+	if [ -n "$WAYLAND_DISPLAY" ]; then
+		for c in wl-copy wl-paste; do
+			if type "$c" >/dev/null 2>&1; then
+				echo "wlclipboard"
+				return 0
+			fi
+		done
+	fi
+	
 	if [ -n "$DISPLAY" ]; then
 		for c in xclip xsel; do
 			if type "$c" >/dev/null 2>&1; then
@@ -64,6 +73,14 @@ vc_paste() {
 	vc_${PASTE_CMD}_paste
 
 	exit $?
+}
+
+vc_wlclipboard_copy() {
+	wl-copy -t TEXT
+}
+
+vc_wlclipboard_paste() {
+	wl-paste -t text
 }
 
 vc_xsel_copy() {
