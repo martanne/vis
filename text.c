@@ -976,7 +976,6 @@ static bool text_save_begin_inplace(TextSave *ctx) {
 			goto err;
 		block->data = data;
 		block->type = MMAP;
-		newfd = -1;
 	}
 	/* overwrite the existing file content, if something goes wrong
 	 * here we are screwed, TODO: make a backup before? */
