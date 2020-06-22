@@ -27,7 +27,7 @@
 #include "text-motions.h"
 #include "util.h"
 
-/* Allocate blocks holding the actual file content in junks of size: */
+/* Allocate blocks holding the actual file content in chunks of size: */
 #ifndef BLOCK_SIZE
 #define BLOCK_SIZE (1 << 20)
 #endif
@@ -49,7 +49,7 @@ struct Block {
 		MMAP,              /* mmap(2)-ed from a temporary file only known to this process */
 		MALLOC,            /* heap allocated block using malloc(3) */
 	} type;
-	Block *next;               /* next junk */
+	Block *next;               /* next chunk */
 };
 
 /* A piece holds a reference (but doesn't itself store) a certain amount of data.
@@ -336,7 +336,7 @@ static bool cache_contains(Text *txt, Piece *p) {
 	return found && p->data + p->len == blk->data + blk->len;
 }
 
-/* try to insert a junk of data at a given piece offset. the insertion is only
+/* try to insert a chunk of data at a given piece offset. the insertion is only
  * performed if the piece is the most recenetly changed one. the legnth of the
  * piece, the span containing it and the whole text is adjusted accordingly */
 static bool cache_insert(Text *txt, Piece *p, size_t off, const char *data, size_t len) {
@@ -352,7 +352,7 @@ static bool cache_insert(Text *txt, Piece *p, size_t off, const char *data, size
 	return true;
 }
 
-/* try to delete a junk of data at a given piece offset. the deletion is only
+/* try to delete a chunk of data at a given piece offset. the deletion is only
  * performed if the piece is the most recenetly changed one and the whole
  * affected range lies within it. the legnth of the piece, the span containing it
  * and the whole text is adjusted accordingly */
