@@ -942,30 +942,31 @@ static bool text_save_begin_inplace(TextSave *ctx) {
 		goto err;
 	if (fstat(ctx->fd, &meta) == -1)
 		goto err;
+	Block *block = txt->block;
 	if (meta.st_dev == txt->info.st_dev && meta.st_ino == txt->info.st_ino &&
-	    txt->block && txt->block->type == MMAP_ORIG && txt->block->size) {
+	    block && block->type == MMAP_ORIG && block->size) {
 		/* The file we are going to overwrite is currently mmap-ed from
 		 * text_load, therefore we copy the mmap-ed block to a temporary
 		 * file and remap it at the same position such that all pointers
 		 * from the various pieces are still valid.
 		 */
-		size_t size = txt->block->size;
+		size_t size = block->size;
 		char tmpname[32] = "/tmp/vis-XXXXXX";
 		newfd = mkstemp(tmpname);
 		if (newfd == -1)
 			goto err;
 		if (unlink(tmpname) == -1)
 			goto err;
-		ssize_t written = write_all(newfd, txt->block->data, size);
+		ssize_t written = write_all(newfd, block->data, size);
 		if (written == -1 || (size_t)written != size)
 			goto err;
-		if (munmap(txt->block->data, size) == -1)
+		if (munmap(block->data, size) == -1)
 			goto err;
 
-		void *data = mmap(txt->block->data, size, PROT_READ, MAP_SHARED, newfd, 0);
+		void *data = mmap(block->data, size, PROT_READ, MAP_SHARED, newfd, 0);
 		if (data == MAP_FAILED)
 			goto err;
-		if (data != txt->block->data) {
+		if (data != block->data) {
 			munmap(data, size);
 			goto err;
 		}
@@ -973,8 +974,8 @@ static bool text_save_begin_inplace(TextSave *ctx) {
 		newfd = -1;
 		if (close_failed)
 			goto err;
-		txt->block->data = data;
-		txt->block->type = MMAP;
+		block->data = data;
+		block->type = MMAP;
 		newfd = -1;
 	}
 	/* overwrite the existing file content, if something goes wrong
