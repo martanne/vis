@@ -960,21 +960,13 @@ static bool text_save_begin_inplace(TextSave *ctx) {
 		ssize_t written = write_all(newfd, block->data, size);
 		if (written == -1 || (size_t)written != size)
 			goto err;
-		if (munmap(block->data, size) == -1)
-			goto err;
-
-		void *data = mmap(block->data, size, PROT_READ, MAP_SHARED, newfd, 0);
+		void *data = mmap(block->data, size, PROT_READ, MAP_SHARED|MAP_FIXED, newfd, 0);
 		if (data == MAP_FAILED)
 			goto err;
-		if (data != block->data) {
-			munmap(data, size);
-			goto err;
-		}
 		bool close_failed = (close(newfd) == -1);
 		newfd = -1;
 		if (close_failed)
 			goto err;
-		block->data = data;
 		block->type = MMAP;
 	}
 	/* overwrite the existing file content, if something goes wrong
