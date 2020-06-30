@@ -474,7 +474,7 @@ EOF
 	test "$lua" = "yes" -a $CONFIG_LUA -ne 1 && fail "$0: cannot find liblua"
 
 	if test $CONFIG_LUA -eq 1; then
-		CFLAGS_LUA="$CFLAGS_LUA -DLUA_COMPAT_5_1 -DLUA_COMPAT_5_2 -DLUA_COMPAT_ALL"
+		CFLAGS_LUA="$CFLAGS_LUA -DLUA_COMPAT_5_1 -DLUA_COMPAT_5_2 -DLUA_COMPAT_5_3 -DLUA_COMPAT_ALL"
 	fi
 fi
 
