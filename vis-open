@@ -46,7 +46,7 @@ if [ $# -eq 1 -a "$ALLOW_AUTO_SELECT" = 1 ]; then
 		# full list, even if it's just an empty directory.
 		cd "$1"
 		IFS=$NL  # Don't split ls output on tabs or spaces.
-		exec "$0" -p "$VIS_MENU_PROMPT" -f .. $(ls -1)
+		exec "$0" -p "$VIS_MENU_PROMPT" -f .. $(ls -1F)
 	else
 		# We've found a single item, and it's not a directory,
 		# so it must be a filename (or file-like thing) to open,
