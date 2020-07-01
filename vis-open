@@ -8,6 +8,15 @@ NL='
 VIS_MENU_PROMPT=""
 ALLOW_AUTO_SELECT=1
 
+wrap_dirs() {
+	local o
+
+	while read o
+	do
+		[ -d "$o" ] && printf "%s/\n" "$o" || printf "%s\n" "$o"
+	done
+}
+
 while [ $# -gt 0 ]; do
 	case "$1" in
 	-h|--help)
@@ -63,7 +72,7 @@ fi
 
 # At this point, we have a bunch of options we need to present to the
 # user so they can pick one.
-CHOICE=$(printf "%s\n" "$@" | vis-menu -b -p "$VIS_MENU_PROMPT")
+CHOICE=$(printf "%s\n" "$@" | wrap_dirs | vis-menu -b -p "$VIS_MENU_PROMPT")
 
 # Did they pick a file or directory? Who knows, let's let the next iteration figure it out.
 exec "$0" -p "$VIS_MENU_PROMPT" -- "$CHOICE"
