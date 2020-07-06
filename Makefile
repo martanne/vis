@@ -125,7 +125,11 @@ clean:
 	@echo cleaning
 	@rm -f $(ELF) vis-single vis-single-payload.inc vis-*.tar.gz *.gcov *.gcda *.gcno
 
-dist: clean
+distclean: clean
+	@echo cleaning build configuration
+	@rm -f config.h config.mk
+
+dist: distclean
 	@echo creating dist tarball
 	@git archive --prefix=vis-${VERSION}/ -o vis-${VERSION}.tar.gz HEAD
 
