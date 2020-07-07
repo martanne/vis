@@ -121,11 +121,15 @@ test:
 	[ -e test/Makefile ] || $(MAKE) test-update
 	@$(MAKE) -C test
 
+testclean:
+	@echo cleaning the test artifacts
+	[ ! -e test/Makefile ] || $(MAKE) -C test clean
+
 clean:
 	@echo cleaning
 	@rm -f $(ELF) vis-single vis-single-payload.inc vis-*.tar.gz *.gcov *.gcda *.gcno
 
-distclean: clean
+distclean: clean testclean
 	@echo cleaning build configuration
 	@rm -f config.h config.mk
 
