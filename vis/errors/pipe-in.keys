@@ -1,0 +1,1 @@
+:1 < echo FAILED && false<Enter>
