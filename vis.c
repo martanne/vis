@@ -675,6 +675,7 @@ Vis *vis_new(Ui *ui, VisEvent *event) {
 		register_init(&vis->registers[i]);
 	vis->registers[VIS_REG_BLACKHOLE].type = REGISTER_BLACKHOLE;
 	vis->registers[VIS_REG_CLIPBOARD].type = REGISTER_CLIPBOARD;
+	vis->registers[VIS_REG_PRIMARY].type = REGISTER_CLIPBOARD;
 	vis->registers[VIS_REG_NUMBER].type = REGISTER_NUMBER;
 	array_init(&vis->operators);
 	array_init(&vis->motions);

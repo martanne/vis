@@ -8,7 +8,7 @@ vc_fatal() {
 }
 
 vc_usage() {
-	vc_fatal "`basename $0` [--usable|--copy|--paste]"
+	vc_fatal "`basename $0` [--selection sel] [--usable|--copy|--paste]"
 }
 
 vc_determine_command() {
@@ -28,6 +28,10 @@ vc_determine_command() {
 				return 0
 			fi
 		done
+	fi
+
+	if [ "$sel" = "primary" ]; then
+		vc_fatal "clipboard primary selection is not supported on your platform"
 	fi
 
 	if type pbcopy >/dev/null 2>&1; then
@@ -76,27 +80,35 @@ vc_paste() {
 }
 
 vc_wlclipboard_copy() {
-	wl-copy -t TEXT
+	if [ "$sel" = "primary" ]; then
+		wl-copy --primary -t TEXT
+	else
+		wl-copy -t TEXT
+	fi
 }
 
 vc_wlclipboard_paste() {
-	wl-paste -t text
+	if [ "$sel" = "primary" ]; then
+		wl-paste --primary -t text
+	else
+		wl-paste -t text
+	fi
 }
 
 vc_xsel_copy() {
-	xsel -bi
+	xsel --"$sel" -bi
 }
 
 vc_xsel_paste() {
-	xsel -bo
+	xsel --"$sel" -bo
 }
 
 vc_xclip_copy() {
-	xclip -selection clipboard -i >/dev/null 2>&1
+	xclip -selection "$sel" -i >/dev/null 2>&1
 }
 
 vc_xclip_paste() {
-	xclip -selection clipboard -o
+	xclip -selection "$sel" -o
 }
 
 vc_mac_copy() {
@@ -115,11 +127,17 @@ vc_cygwin_paste() {
 	cat /dev/clipboard
 }
 
-case "$1" in
-	--usable) vc_usable;;
-	--copy) vc_copy;;
-	--paste) vc_paste;;
-	*) ;;
-esac
+while [ $# -gt 0 ]; do
+	case "$1" in
+		--usable) fn=vc_usable;;
+		--copy) fn=vc_copy;;
+		--paste) fn=vc_paste;;
+		--selection) shift; sel="$1";;
+		*) ;;
+	esac
+	shift
+done
+
+sel=${sel:-"clipboard"} $fn
 
 vc_usage

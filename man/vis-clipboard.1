@@ -12,9 +12,11 @@
 .Pp
 .Nm vis-clipboard
 .Fl -copy
+.Op Fl -selection Ar selection
 .Pp
 .Nm vis-clipboard
 .Fl -paste
+.Op Fl -selection Ar selection
 .
 .Sh DESCRIPTION
 .Nm vis-clipboard
@@ -50,6 +52,8 @@ In this mode,
 .Nm vis-clipboard
 reads the content of the system clipboard,
 and writes it to standard output.
+.It Fl -selection Ar selection
+specify which selection to use, options are "primary" or "clipboard"
 .El
 .
 .Sh ENVIRONMENT

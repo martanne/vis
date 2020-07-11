@@ -731,6 +731,7 @@ enum VisRegister {
 	VIS_REG_9,
 	VIS_REG_BLACKHOLE,  /* /dev/null register */
 	VIS_REG_CLIPBOARD,  /* system clipboard register */
+	VIS_REG_PRIMARY,    /* system primary clipboard register */
 	VIS_REG_DOT,        /* last inserted text, copy of VIS_MACRO_OPERATOR */
 	VIS_REG_SEARCH,     /* last used search pattern "/ */
 	VIS_REG_COMMAND,    /* last used :-command ": */
