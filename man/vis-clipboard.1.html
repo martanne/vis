@@ -35,7 +35,9 @@
 <table class="Nm">
   <tr>
     <td><b class="Nm" title="Nm">vis-clipboard</b></td>
-    <td><b class="Fl" title="Fl">--copy</b></td>
+    <td><b class="Fl" title="Fl">--copy</b>
+      [<span class="Op"><b class="Fl" title="Fl">--selection</b>
+      <var class="Ar" title="Ar">selection</var></span>]</td>
   </tr>
 </table>
 <div class="Pp"></div>
@@ -43,7 +45,9 @@
 <table class="Nm">
   <tr>
     <td><b class="Nm" title="Nm">vis-clipboard</b></td>
-    <td><b class="Fl" title="Fl">--paste</b></td>
+    <td><b class="Fl" title="Fl">--paste</b>
+      [<span class="Op"><b class="Fl" title="Fl">--selection</b>
+      <var class="Ar" title="Ar">selection</var></span>]</td>
   </tr>
 </table>
 <h1 class="Sh" title="Sh" id="DESCRIPTION"><a class="selflink" href="#DESCRIPTION">DESCRIPTION</a></h1>
@@ -75,6 +79,12 @@
   <dd class="It-tag">In this mode, <b class="Nm" title="Nm">vis-clipboard</b>
       reads the content of the system clipboard, and writes it to standard
       output.</dd>
+  <dt class="It-tag" style="margin-left: -7.80ex;">&#x00A0;</dt>
+  <dd class="It-tag">&#x00A0;</dd>
+  <dt class="It-tag" style="margin-left: -7.80ex;"><a class="selflink" href="#-selection"><b class="Fl" title="Fl" id="-selection">--selection</b></a>
+    <var class="Ar" title="Ar">selection</var></dt>
+  <dd class="It-tag">specify which selection to use, options are
+      &quot;primary&quot; or &quot;clipboard&quot;</dd>
 </dl>
 <h1 class="Sh" title="Sh" id="ENVIRONMENT"><a class="selflink" href="#ENVIRONMENT">ENVIRONMENT</a></h1>
 The following environment variables affect the operation of
@@ -130,7 +140,7 @@ vis-clipboard --paste | curl -d - https://www.nsa.gov/
 <table class="foot">
   <tr>
     <td class="foot-date">November 29, 2016</td>
-    <td class="foot-os">Vis a106a42</td>
+    <td class="foot-os">Vis 07ffa2e</td>
   </tr>
 </table>
 </body>
