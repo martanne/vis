@@ -232,12 +232,20 @@ static enum CmdStatus cmd_info(Text *txt, const char *cmd) {
 	return CMD_OK;
 }
 
+static enum CmdStatus cmd_dump(Text *txt, const char *cmd) {
+#ifdef text_dump
+	text_dump(txt, stdout);
+#endif
+	return CMD_OK;
+}
+
 static enum CmdStatus cmd_quit(Text *txt, const char *cmd) {
 	return CMD_QUIT;
 }
 
 static Cmd commands[] = {
 	['%'] = cmd_info,
+	['@'] = cmd_dump,
 	['-'] = cmd_earlier,
 	['+'] = cmd_later,
 	['?'] = cmd_mark_get,
