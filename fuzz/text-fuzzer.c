@@ -221,11 +221,23 @@ static enum CmdStatus cmd_print(Text *txt, const char *cmd) {
 	return rem == 0; 
 }
 
+static enum CmdStatus cmd_info(Text *txt, const char *cmd) {
+#ifdef text_info
+	TextInfo info = text_info(txt);
+	printf("meta data: %zu\nblocks: %zu\ndata: %zu\nrevisions: %zu\n"
+	       "changes: %zu\nchanges total: %zu\npieces: %zu\npieces total: %zu\n",
+	        info.metadata, info.blocks, info.data, info.revisions,
+	        info.changes, info.changes_total, info.pieces, info.pieces_total);
+#endif
+	return CMD_OK;
+}
+
 static enum CmdStatus cmd_quit(Text *txt, const char *cmd) {
 	return CMD_QUIT;
 }
 
 static Cmd commands[] = {
+	['%'] = cmd_info,
 	['-'] = cmd_earlier,
 	['+'] = cmd_later,
 	['?'] = cmd_mark_get,
