@@ -5,6 +5,7 @@
 #include <errno.h>
 #include <stdio.h>
 #include <unistd.h>
+#include <inttypes.h>
 #include "fuzzer.h"
 #include "text.h"
 #include "text-util.h"
@@ -17,6 +18,132 @@
 typedef enum CmdStatus (*Cmd)(Text *txt, const char *cmd);
 
 static Mark mark = EMARK;
+
+static char data[BUFSIZ];
+
+static uint64_t bench(void) {
+	struct timespec ts;
+
+	if (clock_gettime(CLOCK_MONOTONIC, &ts) == 0)
+		return (uint64_t)(ts.tv_sec * 1000000 + ts.tv_nsec / 1000);
+	else
+		return 0;
+}
+
+static size_t pos_start(Text *txt) {
+	return 0;
+}
+
+static size_t pos_middle(Text *txt) {
+	return text_size(txt) / 2;
+}
+
+static size_t pos_end(Text *txt) {
+	return text_size(txt);
+}
+
+static size_t pos_random(Text *txt) {
+	return rand() % (text_size(txt) + 1);
+}
+
+static size_t pos_prev(Text *txt) {
+	static size_t pos = EPOS;
+	size_t max = text_size(txt);
+	if (pos > max)
+		pos = max;
+	return pos-- % (max + 1);
+}
+
+static size_t pos_next(Text *txt) {
+	static size_t pos = 0;
+	return pos++ % (text_size(txt) + 1);
+}
+
+static size_t pos_stripe(Text *txt) {
+	static size_t pos = 0;
+	return pos+=1024 % (text_size(txt) + 1);
+}
+
+static enum CmdStatus bench_insert(Text *txt, size_t pos, const char *cmd) {
+	return text_insert(txt, pos, data, sizeof data);
+}
+
+static enum CmdStatus bench_delete(Text *txt, size_t pos, const char *cmd) {
+	return text_delete(txt, pos, 1);
+}
+
+static enum CmdStatus bench_replace(Text *txt, size_t pos, const char *cmd) {
+	text_delete(txt, pos, 1);
+	text_insert(txt, pos, "-", 1);
+	return CMD_OK;
+}
+
+static enum CmdStatus bench_mark(Text *txt, size_t pos, const char *cmd) {
+	Mark mark = text_mark_set(txt, pos);
+	if (mark == EMARK)
+		return CMD_FAIL;
+	if (text_mark_get(txt, mark) != pos)
+		return CMD_FAIL;
+	return CMD_OK;
+}
+
+static enum CmdStatus cmd_bench(Text *txt, const char *cmd) {
+
+	static enum CmdStatus (*bench_cmd[])(Text*, size_t, const char*) = {
+		['i'] = bench_insert,
+		['d'] = bench_delete,
+		['r'] = bench_replace,
+		['m'] = bench_mark,
+	};
+
+	static size_t (*bench_pos[])(Text*) = {
+		['^'] = pos_start,
+		['|'] = pos_middle,
+		['$'] = pos_end,
+		['%'] = pos_random,
+		['-'] = pos_prev,
+		['+'] = pos_next,
+		['~'] = pos_stripe,
+	};
+
+	if (!data[0]) {
+		// make `p` command output more readable
+		int len = snprintf(data, sizeof data, "[ ... %zu bytes ... ]\n", sizeof data);
+		memset(data+len, '\r', sizeof(data) - len);
+	}
+
+	const char *params = cmd;
+	while (*params == ' ')
+		params++;
+
+	size_t idx_cmd = params[0];
+	if (idx_cmd >= LENGTH(bench_cmd) || !bench_cmd[idx_cmd]) {
+		puts("Invalid bench command");
+		return CMD_ERR;
+	}
+
+	for (params++; *params == ' '; params++);
+
+	size_t idx_pos = params[0];
+	if (idx_pos >= LENGTH(bench_pos) || !bench_pos[idx_pos]) {
+		puts("Invalid bench position");
+		return CMD_ERR;
+	}
+
+	size_t iter = 1;
+	sscanf(params+1, "%zu\n", &iter);
+
+	for (size_t i = 1; i <= iter; i++) {
+		size_t pos = bench_pos[idx_pos](txt);
+		uint64_t s = bench();
+		enum CmdStatus ret = bench_cmd[idx_cmd](txt, pos, NULL);
+		uint64_t e = bench();
+		if (ret != CMD_OK)
+			return ret;
+		printf("%zu: %" PRIu64 "us\n", i, e-s);
+	}
+	return CMD_OK;
+}
 
 static enum CmdStatus cmd_insert(Text *txt, const char *cmd) {
 	char data[BUFSIZ];
@@ -104,6 +231,7 @@ static Cmd commands[] = {
 	['?'] = cmd_mark_get,
 	['='] = cmd_mark_set,
 	['#'] = cmd_size,
+	['b'] = cmd_bench,
 	['d'] = cmd_delete,
 	['i'] = cmd_insert,
 	['p'] = cmd_print,
