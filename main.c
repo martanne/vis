@@ -88,9 +88,6 @@ static const char *selections_intersect(Vis*, const char *keys, const Arg *arg);
 static const char *selections_complement(Vis*, const char *keys, const Arg *arg);
 /* subtract selections from mark */
 static const char *selections_minus(Vis*, const char *keys, const Arg *arg);
-/* pairwise combine selections from mark */
-static const char *selections_combine(Vis*, const char *keys, const Arg *arg);
-static Filerange combine_rightmost(const Filerange*, const Filerange*);
 /* adjust current used count according to keys */
 static const char *count(Vis*, const char *keys, const Arg *arg);
 /* move to the count-th line or if not given either to the first (arg->i < 0)
@@ -286,7 +283,6 @@ enum {
 	VIS_ACTION_SELECTIONS_INTERSECT,
 	VIS_ACTION_SELECTIONS_COMPLEMENT,
 	VIS_ACTION_SELECTIONS_MINUS,
-	VIS_ACTION_SELECTIONS_COMBINE_RIGHTMOST,
 	VIS_ACTION_TEXT_OBJECT_WORD_OUTER,
 	VIS_ACTION_TEXT_OBJECT_WORD_INNER,
 	VIS_ACTION_TEXT_OBJECT_LONGWORD_OUTER,
@@ -1030,11 +1026,6 @@ static const KeyAction vis_action[] = {
 		"vis-selections-minus",
 		VIS_HELP("Subtract selections from mark")
 		selections_minus
-	},
-	[VIS_ACTION_SELECTIONS_COMBINE_RIGHTMOST] = {
-		"vis-selections-combine-rightmost",
-		VIS_HELP("Pairwise combine: rightmost")
-		selections_combine, { .combine = combine_rightmost }
 	},
 	[VIS_ACTION_TEXT_OBJECT_WORD_OUTER] = {
 		"vis-textobject-word-outer",
@@ -1785,41 +1776,6 @@ static const char *selections_minus(Vis *vis, const char *keys, const Arg *arg) 
 	array_release(&a);
 	array_release(&b);
 	array_release(&b_complement);
-	array_release(&sel);
-
-	return keys;
-}
-
-static Filerange combine_rightmost(const Filerange *r1, const Filerange *r2) {
-	if (!r1)
-		return *r2;
-	if (!r2)
-		return *r1;
-	return r1->start < r2->start || (r1->start == r2->start && r1->end < r2->end) ? *r2 : *r1;
-}
-
-static const char *selections_combine(Vis *vis, const char *keys, const Arg *arg) {
-	Win *win = vis_window(vis);
-	View *view = vis_view(vis);
-	enum VisMark mark = vis_mark_used(vis);
-	Array a = view_selections_get_all(view);
-	Array b = vis_mark_get(win, mark);
-	Array sel;
-	array_init_from(&sel, &a);
-
-	Filerange *r1 = array_get(&a, 0), *r2 = array_get(&b, 0);
-	for (size_t i = 0, j = 0; r1 || r2; r1 = array_get(&a, ++i), r2 = array_get(&b, ++j)) {
-		Filerange new = arg->combine(r1, r2);
-		if (text_range_valid(&new))
-			array_add(&sel, &new);
-	}
-
-	vis_mark_normalize(&sel);
-	selections_set(vis, view, &sel);
-	vis_cancel(vis);
-
-	array_release(&a);
-	array_release(&b);
 	array_release(&sel);
 
 	return keys;
