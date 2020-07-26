@@ -133,7 +133,7 @@ static const KeyBinding bindings_selections[] = {
 	{ "M",                  ACTION(SELECTIONS_RESTORE)                  },
 	{ "|",                  ACTION(SELECTIONS_UNION)                    },
 	{ "&",                  ACTION(SELECTIONS_INTERSECT)                },
-	{ "!",                  ACTION(SELECTIONS_COMPLEMENT)               },
+	{ "~",                  ACTION(SELECTIONS_COMPLEMENT)               },
 	{ "\\",                 ACTION(SELECTIONS_MINUS)                    },
 	{ "z|",                 ACTION(SELECTIONS_COMBINE_UNION)            },
 	{ "z&",                 ACTION(SELECTIONS_COMBINE_INTERSECT)        },
