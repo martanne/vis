@@ -90,7 +90,6 @@ static const char *selections_complement(Vis*, const char *keys, const Arg *arg)
 static const char *selections_minus(Vis*, const char *keys, const Arg *arg);
 /* pairwise combine selections from mark */
 static const char *selections_combine(Vis*, const char *keys, const Arg *arg);
-static Filerange combine_union(const Filerange*, const Filerange*);
 static Filerange combine_intersect(const Filerange*, const Filerange*);
 static Filerange combine_longer(const Filerange*, const Filerange*);
 static Filerange combine_shorter(const Filerange*, const Filerange*);
@@ -291,7 +290,6 @@ enum {
 	VIS_ACTION_SELECTIONS_INTERSECT,
 	VIS_ACTION_SELECTIONS_COMPLEMENT,
 	VIS_ACTION_SELECTIONS_MINUS,
-	VIS_ACTION_SELECTIONS_COMBINE_UNION,
 	VIS_ACTION_SELECTIONS_COMBINE_INTERSECT,
 	VIS_ACTION_SELECTIONS_COMBINE_LONGER,
 	VIS_ACTION_SELECTIONS_COMBINE_SHORTER,
@@ -1040,11 +1038,6 @@ static const KeyAction vis_action[] = {
 		"vis-selections-minus",
 		VIS_HELP("Subtract selections from mark")
 		selections_minus
-	},
-	[VIS_ACTION_SELECTIONS_COMBINE_UNION] = {
-		"vis-selections-combine-union",
-		VIS_HELP("Pairwise union with selections from mark")
-		selections_combine, { .combine = combine_union }
 	},
 	[VIS_ACTION_SELECTIONS_COMBINE_INTERSECT] = {
 		"vis-selections-combine-intersect",
@@ -1823,14 +1816,6 @@ static const char *selections_minus(Vis *vis, const char *keys, const Arg *arg) 
 	array_release(&sel);
 
 	return keys;
-}
-
-static Filerange combine_union(const Filerange *r1, const Filerange *r2) {
-	if (!r1)
-		return *r2;
-	if (!r2)
-		return *r1;
-	return text_range_union(r1, r2);
 }
 
 static Filerange combine_intersect(const Filerange *r1, const Filerange *r2) {
