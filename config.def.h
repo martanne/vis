@@ -163,7 +163,6 @@ static const KeyBinding bindings_operators[] = {
 	{ "7",                  ACTION(COUNT)                               },
 	{ "8",                  ACTION(COUNT)                               },
 	{ "9",                  ACTION(COUNT)                               },
-	{ "~",                  ALIAS("g~")                                 },
 	{ "=",                  ALIAS(":|fmt<Enter>")                       },
 	{ "<",                  ACTION(OPERATOR_SHIFT_LEFT)                 },
 	{ ">",                  ACTION(OPERATOR_SHIFT_RIGHT)                },
