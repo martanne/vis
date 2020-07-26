@@ -176,9 +176,6 @@ const TextObject vis_textobjects[] = {
 	[VIS_TEXTOBJECT_OUTER_ENTIRE] = {
 		.txt = text_object_entire,
 	},
-	[VIS_TEXTOBJECT_INNER_ENTIRE] = {
-		.txt = text_object_entire_inner,
-        },
 	[VIS_TEXTOBJECT_OUTER_LINE] = {
 		.txt = text_object_line,
 	},

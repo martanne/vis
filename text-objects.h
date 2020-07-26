@@ -11,8 +11,6 @@
 
 /* return range covering the entire text */
 Filerange text_object_entire(Text*, size_t pos);
-/* entire document except leading and trailing empty lines */
-Filerange text_object_entire_inner(Text*, size_t pos);
 /* word which happens to be at pos without any neighbouring white spaces */
 Filerange text_object_word(Text*, size_t pos);
 /* includes trailing white spaces. if at pos happens to be a white space

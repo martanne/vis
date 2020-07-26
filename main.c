@@ -305,7 +305,6 @@ enum {
 	VIS_ACTION_TEXT_OBJECT_BACKTICK_OUTER,
 	VIS_ACTION_TEXT_OBJECT_BACKTICK_INNER,
 	VIS_ACTION_TEXT_OBJECT_ENTIRE_OUTER,
-	VIS_ACTION_TEXT_OBJECT_ENTIRE_INNER,
 	VIS_ACTION_TEXT_OBJECT_LINE_OUTER,
 	VIS_ACTION_TEXT_OBJECT_LINE_INNER,
 	VIS_ACTION_TEXT_OBJECT_INDENTATION,
@@ -1136,11 +1135,6 @@ static const KeyAction vis_action[] = {
 		"vis-textobject-entire-outer",
 		VIS_HELP("The whole text content")
 		textobj, { .i = VIS_TEXTOBJECT_OUTER_ENTIRE }
-	},
-	[VIS_ACTION_TEXT_OBJECT_ENTIRE_INNER] = {
-		"vis-textobject-entire-inner",
-		VIS_HELP("The whole text content, except for leading and trailing empty lines")
-		textobj, { .i = VIS_TEXTOBJECT_INNER_ENTIRE }
 	},
 	[VIS_ACTION_TEXT_OBJECT_LINE_OUTER] = {
 		"vis-textobject-line-outer",

@@ -15,19 +15,6 @@ Filerange text_object_entire(Text *txt, size_t pos) {
 	return text_range_new(0, text_size(txt));
 }
 
-Filerange text_object_entire_inner(Text *txt, size_t pos) {
-	char c;
-	Filerange r = text_object_entire(txt, pos);
-	Iterator it = text_iterator_get(txt, r.start);
-	if (text_iterator_byte_get(&it, &c) && c == '\n')
-		while (text_iterator_byte_next(&it, &c) && c == '\n');
-	r.start = it.pos;
-	it = text_iterator_get(txt, r.end);
-	while (text_iterator_char_prev(&it, &c) && c == '\n');
-	r.end = it.pos;
-	return text_range_linewise(txt, &r);
-}
-
 static Filerange text_object_customword(Text *txt, size_t pos, int (*isboundary)(int)) {
 	Filerange r;
 	char c, prev = '0', next = '0';

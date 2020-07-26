@@ -118,7 +118,6 @@ static const KeyBinding bindings_textobjects[] = {
 	{ "i}",                 ALIAS("i{")                                 },
 	{ "ib",                 ALIAS("i(")                                 },
 	{ "iB",                 ALIAS("i{")                                 },
-	{ "ie",                 ACTION(TEXT_OBJECT_ENTIRE_INNER)            },
 	{ "il",                 ACTION(TEXT_OBJECT_LINE_INNER)              },
 	{ "ip",                 ACTION(TEXT_OBJECT_PARAGRAPH)               },
 	{ "is",                 ACTION(TEXT_OBJECT_SENTENCE)                },
