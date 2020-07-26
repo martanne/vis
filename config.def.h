@@ -141,8 +141,6 @@ static const KeyBinding bindings_selections[] = {
 	{ "z-",                 ACTION(SELECTIONS_COMBINE_SHORTER)          },
 	{ "z<",                 ACTION(SELECTIONS_COMBINE_LEFTMOST)         },
 	{ "z>",                 ACTION(SELECTIONS_COMBINE_RIGHTMOST)        },
-//	{ "-",                  ACTION(SELECTIONS_ROTATE_LEFT)              },
-//	{ "+",                  ACTION(SELECTIONS_ROTATE_RIGHT)             },
 	{ "_",                  ACTION(SELECTIONS_TRIM)                     },
 	{ "<S-Tab>",            ACTION(SELECTIONS_ALIGN_INDENT_RIGHT)       },
 	{ "<Tab>",              ACTION(SELECTIONS_ALIGN_INDENT_LEFT)        },
