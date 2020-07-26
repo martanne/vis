@@ -96,7 +96,6 @@ static const KeyBinding bindings_textobjects[] = {
 	{ "a}",                 ALIAS("a{")                                 },
 	{ "ab",                 ALIAS("a(")                                 },
 	{ "aB",                 ALIAS("a{")                                 },
-	{ "ae",                 ACTION(TEXT_OBJECT_ENTIRE_OUTER)            },
 	{ "al",                 ACTION(TEXT_OBJECT_LINE_OUTER)              },
 	{ "ap",                 ACTION(TEXT_OBJECT_PARAGRAPH_OUTER)         },
 	{ "as",                 ACTION(TEXT_OBJECT_SENTENCE)                },

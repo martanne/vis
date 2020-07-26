@@ -304,7 +304,6 @@ enum {
 	VIS_ACTION_TEXT_OBJECT_SINGLE_QUOTE_INNER,
 	VIS_ACTION_TEXT_OBJECT_BACKTICK_OUTER,
 	VIS_ACTION_TEXT_OBJECT_BACKTICK_INNER,
-	VIS_ACTION_TEXT_OBJECT_ENTIRE_OUTER,
 	VIS_ACTION_TEXT_OBJECT_LINE_OUTER,
 	VIS_ACTION_TEXT_OBJECT_LINE_INNER,
 	VIS_ACTION_TEXT_OBJECT_INDENTATION,
@@ -1130,11 +1129,6 @@ static const KeyAction vis_action[] = {
 		"vis-textobject-backtick-inner",
 		VIS_HELP("A backtick delimited string (inner variant)")
 		textobj, { .i = VIS_TEXTOBJECT_INNER_BACKTICK }
-	},
-	[VIS_ACTION_TEXT_OBJECT_ENTIRE_OUTER] = {
-		"vis-textobject-entire-outer",
-		VIS_HELP("The whole text content")
-		textobj, { .i = VIS_TEXTOBJECT_OUTER_ENTIRE }
 	},
 	[VIS_ACTION_TEXT_OBJECT_LINE_OUTER] = {
 		"vis-textobject-line-outer",
