@@ -135,7 +135,6 @@ static const KeyBinding bindings_selections[] = {
 	{ "&",                  ACTION(SELECTIONS_INTERSECT)                },
 	{ "~",                  ACTION(SELECTIONS_COMPLEMENT)               },
 	{ "\\",                 ACTION(SELECTIONS_MINUS)                    },
-	{ "z&",                 ACTION(SELECTIONS_COMBINE_INTERSECT)        },
 	{ "z+",                 ACTION(SELECTIONS_COMBINE_LONGER)           },
 	{ "z-",                 ACTION(SELECTIONS_COMBINE_SHORTER)          },
 	{ "z<",                 ACTION(SELECTIONS_COMBINE_LEFTMOST)         },
