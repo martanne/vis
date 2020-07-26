@@ -1,5 +1,0 @@
-:x/.*/ x/^./ <Enter>
-m <Escape><Escape>
-:x/.*/ x/.$/ <Enter>
-z|
-:{ i/[/ a/]/ } <Enter>
