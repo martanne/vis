@@ -90,7 +90,6 @@ static const char *selections_complement(Vis*, const char *keys, const Arg *arg)
 static const char *selections_minus(Vis*, const char *keys, const Arg *arg);
 /* pairwise combine selections from mark */
 static const char *selections_combine(Vis*, const char *keys, const Arg *arg);
-static Filerange combine_shorter(const Filerange*, const Filerange*);
 static Filerange combine_leftmost(const Filerange*, const Filerange*);
 static Filerange combine_rightmost(const Filerange*, const Filerange*);
 /* adjust current used count according to keys */
@@ -288,7 +287,6 @@ enum {
 	VIS_ACTION_SELECTIONS_INTERSECT,
 	VIS_ACTION_SELECTIONS_COMPLEMENT,
 	VIS_ACTION_SELECTIONS_MINUS,
-	VIS_ACTION_SELECTIONS_COMBINE_SHORTER,
 	VIS_ACTION_SELECTIONS_COMBINE_LEFTMOST,
 	VIS_ACTION_SELECTIONS_COMBINE_RIGHTMOST,
 	VIS_ACTION_TEXT_OBJECT_WORD_OUTER,
@@ -1034,11 +1032,6 @@ static const KeyAction vis_action[] = {
 		"vis-selections-minus",
 		VIS_HELP("Subtract selections from mark")
 		selections_minus
-	},
-	[VIS_ACTION_SELECTIONS_COMBINE_SHORTER] = {
-		"vis-selections-combine-shorter",
-		VIS_HELP("Pairwise combine: take shorter")
-		selections_combine, { .combine = combine_shorter }
 	},
 	[VIS_ACTION_SELECTIONS_COMBINE_LEFTMOST] = {
 		"vis-selections-combine-leftmost",
@@ -1802,16 +1795,6 @@ static const char *selections_minus(Vis *vis, const char *keys, const Arg *arg) 
 	array_release(&sel);
 
 	return keys;
-}
-
-static Filerange combine_shorter(const Filerange *r1, const Filerange *r2) {
-	if (!r1)
-		return *r2;
-	if (!r2)
-		return *r1;
-	size_t l1 = text_range_size(r1);
-	size_t l2 = text_range_size(r2);
-	return l1 < l2 ? *r1 : *r2;
 }
 
 static Filerange combine_leftmost(const Filerange *r1, const Filerange *r2) {
