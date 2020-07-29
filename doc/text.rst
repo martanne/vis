@@ -4,7 +4,7 @@ Text
 The core text management data structure which supports efficient
 modifications and provides a byte string interface. Text positions
 are represented as ``size_t``.  Valid addresses are in range ``[0,
-text_size(txt)]``. An invalid position is denoted by `EPOS`. Access to
+text_size(txt)]``. An invalid position is denoted by ``EPOS``. Access to
 the non-contigiuos pieces is available by means of an iterator interface
 or a copy mechanism. Text revisions are tracked in an history graph.
 
@@ -77,7 +77,7 @@ These functions advance to the next/previous grapheme cluster.
 .. note:: The grapheme cluster boundaries are currently not implemented
           according to `UAX#29 rules <http://unicode.org/reports/tr29>`_.
           Instead a base character followed by arbitrarily many combining
-          character as reported by `wcwidth(3)` are skipped.
+          character as reported by ``wcwidth(3)`` are skipped.
 
 .. doxygengroup:: iterator_char
    :content-only:
@@ -105,7 +105,7 @@ A mark keeps track of a text position. Subsequent text changes will update
 all marks placed after the modification point. Reverting to an older text
 state will hide all affected marks, redoing the changes will restore them.
 
-.. warning:: Due to an optimization cached modifications (i.e. no `text_snaphot`
+.. warning:: Due to an optimization cached modifications (i.e. no ``text_snaphot``
              was performed between setting the mark and issuing the changes) might
              not adjust mark positions accurately.
 

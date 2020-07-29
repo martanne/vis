@@ -12,7 +12,7 @@
 /** A mark. */
 typedef uintptr_t Mark;
 
-/** An invalid mark, lookup of which will yield `EPOS`. */
+/** An invalid mark, lookup of which will yield ``EPOS``. */
 #define EMARK ((Mark)0)
 /** An invalid position. */
 #define EPOS ((size_t)-1)
@@ -221,7 +221,7 @@ size_t text_lineno_by_pos(Text*, size_t pos);
  */
 bool text_byte_get(Text*, size_t pos, char *byte);
 /**
- * Store at most `len` bytes starting from ``pos`` into ``buf``.
+ * Store at most ``len`` bytes starting from ``pos`` into ``buf``.
  * @param pos The absolute starting position.
  * @param len The length in bytes.
  * @param buf The destination buffer.
@@ -238,7 +238,7 @@ size_t text_bytes_get(Text*, size_t pos, size_t len, char *buf);
  * @return A contigious NUL terminated buffer holding the requested range, or
  *         ``NULL`` in error case.
  * @rst
- * .. warning:: The returned pointer must be `free(3)`-ed by the caller.
+ * .. warning:: The returned pointer must be freed by the caller.
  * @endrst
  */
 char *text_bytes_alloc0(Text*, size_t pos, size_t len);
@@ -283,17 +283,17 @@ bool text_iterator_char_prev(Iterator*, char *c);
 /**
  * Set a mark.
  * @rst
- * .. note:: Setting a mark to `text_size` will always return the current text
- *           size upon lookup.
+ * .. note:: Setting a mark to ``text_size`` will always return the
+ *           current text size upon lookup.
  * @endrst
  * @param pos The position at which to store the mark.
- * @return The mark or `EMARK` if an invalid position was given.
+ * @return The mark or ``EMARK`` if an invalid position was given.
  */
 Mark text_mark_set(Text*, size_t pos);
 /**
  * Lookup a mark.
  * @param mark The mark to look up.
- * @return The byte position or `EPOS` for an invalid mark.
+ * @return The byte position or ``EPOS`` for an invalid mark.
  */
 size_t text_mark_get(Text*, Mark);
 /**
@@ -308,12 +308,12 @@ enum TextSaveMethod {
 	/** Automatically chose best option. */
 	TEXT_SAVE_AUTO,
 	/**
-	 * Save file atomically using `rename(2)`.
+	 * Save file atomically using ``rename(2)``.
 	 *
 	 * Creates a temporary file, restores all important meta data,
 	 * before moving it atomically to its final (possibly already
-	 * existing) destination using `rename(2)`. For new files,
-	 * permissions are set to `0666 & ~umask`.
+	 * existing) destination using ``rename(2)``. For new files,
+	 * permissions are set to ``0666 & ~umask``.
 	 *
 	 * @rst
 	 * .. warning:: This approach does not work if:
@@ -353,12 +353,12 @@ bool text_save_method(Text*, const char *filename, enum TextSaveMethod);
 /**
  * Setup a sequence of write operations.
  *
- * The returned `TextSave` pointer can be used to write multiple, possibly
+ * The returned ``TextSave`` pointer can be used to write multiple, possibly
  * non-contigious, file ranges.
  * @rst
- * .. warning:: For every call to `text_save_begin` there must be exactly
- *              one matching call to either `text_save_commit` or
- *              `text_save_cancel` to release the underlying resources.
+ * .. warning:: For every call to ``text_save_begin`` there must be exactly
+ *              one matching call to either ``text_save_commit`` or
+ *              ``text_save_cancel`` to release the underlying resources.
  * @endrst
  */
 TextSave *text_save_begin(Text*, const char *filename, enum TextSaveMethod);
@@ -371,7 +371,7 @@ ssize_t text_save_write_range(TextSave*, Filerange*);
  * Commit changes to disk.
  * @return Whether changes have been saved.
  * @rst
- * .. note:: Releases the underlying resources and `free(3)`'s the given `TextSave`
+ * .. note:: Releases the underlying resources and frees the given ``TextSave``
  *           pointer which must no longer be used.
  * @endrst
  */
@@ -381,7 +381,7 @@ bool text_save_commit(TextSave*);
  * @rst
  * .. note:: Does not guarantee to undo the previous writes (they might have been
  *           performed in-place). However, it releases the underlying resources and
- *           `free(3)`'s the given `TextSave` pointer which must no longer be used.
+ *           frees the given ``TextSave`` pointer which must no longer be used.
  * @endrst
  */
 void text_save_cancel(TextSave*);
