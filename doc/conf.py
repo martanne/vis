@@ -92,7 +92,7 @@ highlight_language = 'c'
 # If true, `todo` and `todoList` produce output, else they produce nothing.
 todo_include_todos = False
 
-default_role = "any"
+default_role = "c"
 
 # -- Options for HTML output ----------------------------------------------
 
