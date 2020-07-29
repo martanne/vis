@@ -2,7 +2,7 @@
  * Heavily inspired (and partially based upon) the X11 version of
  * Rob Pike's sam text editor originally written for Plan 9.
  *
- *  Copyright © 2016-2018 Marc André Tanner <mat at brain-dump.org>
+ *  Copyright © 2016-2020 Marc André Tanner <mat at brain-dump.org>
  *  Copyright © 1998 by Lucent Technologies
  *
  * Permission to use, copy, modify, and distribute this software for any

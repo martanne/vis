@@ -59,7 +59,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = 'Vis Editor'
-copyright = '2017, Marc André Tanner'
+copyright = '2014-2020 Marc André Tanner, et al.'
 author = 'Marc André Tanner'
 
 # The version info for the project you're documenting, acts as replacement for
