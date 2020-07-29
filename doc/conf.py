@@ -86,6 +86,9 @@ exclude_patterns = []
 # The name of the Pygments (syntax highlighting) style to use.
 pygments_style = 'sphinx'
 
+primary_domain = 'c'
+highlight_language = 'c'
+
 # If true, `todo` and `todoList` produce output, else they produce nothing.
 todo_include_todos = False
 
