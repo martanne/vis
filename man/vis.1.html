@@ -624,6 +624,8 @@ Operators perform a certain operation an a text range indicated by either a
   <dd class="It-tag">make lowercase</dd>
   <dt class="It-tag" style="margin-left: -15.00ex;"><a class="selflink" href="#gU"><b class="Ic" title="Ic" id="gU">gU</b></a></dt>
   <dd class="It-tag">make uppercase</dd>
+  <dt class="It-tag" style="margin-left: -15.00ex;"><a class="selflink" href="#g~"><b class="Ic" title="Ic" id="g~">g~</b></a></dt>
+  <dd class="It-tag">swap case</dd>
   <dt class="It-tag" style="margin-left: -15.00ex;"><a class="selflink" href="#J"><b class="Ic" title="Ic" id="J">J</b></a></dt>
   <dd class="It-tag">join lines, insert spaces in between</dd>
   <dt class="It-tag" style="margin-left: -15.00ex;"><a class="selflink" href="#gJ"><b class="Ic" title="Ic" id="gJ">gJ</b></a></dt>
@@ -634,8 +636,6 @@ Operators perform a certain operation an a text range indicated by either a
   <dd class="It-tag">shift-left, decrease indent</dd>
   <dt class="It-tag" style="margin-left: -15.00ex;"><a class="selflink" href="#&gt;"><b class="Ic" title="Ic" id="&gt;">&gt;</b></a></dt>
   <dd class="It-tag">shift-right, increase indent</dd>
-  <dt class="It-tag" style="margin-left: -15.00ex;"><a class="selflink" href="#~"><b class="Ic" title="Ic" id="~">~</b></a></dt>
-  <dd class="It-tag">swap case</dd>
   <dt class="It-tag" style="margin-left: -15.00ex;"><a class="selflink" href="#y"><b class="Ic" title="Ic" id="y">y</b></a></dt>
   <dd class="It-tag">yank, copy range to register</dd>
 </dl>
@@ -783,11 +783,6 @@ Further available text objects include:
   <dt class="It-tag" style="margin-left: -15.00ex;"><a class="selflink" href="#gN"><b class="Ic" title="Ic" id="gN">gN</b></a></dt>
   <dd class="It-tag">matches the last used search term in backward
     direction</dd>
-  <dt class="It-tag" style="margin-left: -15.00ex;"><a class="selflink" href="#ae"><b class="Ic" title="Ic" id="ae">ae</b></a></dt>
-  <dd class="It-tag">entire file content</dd>
-  <dt class="It-tag" style="margin-left: -15.00ex;"><a class="selflink" href="#ie"><b class="Ic" title="Ic" id="ie">ie</b></a></dt>
-  <dd class="It-tag">entire file content except for leading and trailing empty
-      lines</dd>
   <dt class="It-tag" style="margin-left: -15.00ex;"><a class="selflink" href="#al"><b class="Ic" title="Ic" id="al">al</b></a></dt>
   <dd class="It-tag">current line</dd>
   <dt class="It-tag" style="margin-left: -15.00ex;"><a class="selflink" href="#il"><b class="Ic" title="Ic" id="il">il</b></a></dt>
@@ -893,20 +888,8 @@ Selections can be manipulated using set operations. The first operand is the
   <dd class="It-tag">set intersection</dd>
   <dt class="It-tag" style="margin-left: -15.00ex;"><a class="selflink" href="#\"><b class="Ic" title="Ic" id="\">\</b></a></dt>
   <dd class="It-tag">set minus</dd>
-  <dt class="It-tag" style="margin-left: -15.00ex;"><a class="selflink" href="#!"><b class="Ic" title="Ic" id="!">!</b></a></dt>
+  <dt class="It-tag" style="margin-left: -15.00ex;"><a class="selflink" href="#~"><b class="Ic" title="Ic" id="~">~</b></a></dt>
   <dd class="It-tag">set complement</dd>
-  <dt class="It-tag" style="margin-left: -15.00ex;"><a class="selflink" href="#z|"><b class="Ic" title="Ic" id="z|">z|</b></a></dt>
-  <dd class="It-tag">pairwise union</dd>
-  <dt class="It-tag" style="margin-left: -15.00ex;"><a class="selflink" href="#z&amp;"><b class="Ic" title="Ic" id="z&amp;">z&amp;</b></a></dt>
-  <dd class="It-tag">pairwise intersection</dd>
-  <dt class="It-tag" style="margin-left: -15.00ex;"><a class="selflink" href="#z+"><b class="Ic" title="Ic" id="z+">z+</b></a></dt>
-  <dd class="It-tag">pairwise combine, choose longer</dd>
-  <dt class="It-tag" style="margin-left: -15.00ex;"><a class="selflink" href="#z-"><b class="Ic" title="Ic" id="z-">z-</b></a></dt>
-  <dd class="It-tag">pairwise combine, choose shorter</dd>
-  <dt class="It-tag" style="margin-left: -15.00ex;"><a class="selflink" href="#z&lt;"><b class="Ic" title="Ic" id="z&lt;">z&lt;</b></a></dt>
-  <dd class="It-tag">pairwise combine, choose leftmost</dd>
-  <dt class="It-tag" style="margin-left: -15.00ex;"><a class="selflink" href="#z&gt;"><b class="Ic" title="Ic" id="z&gt;">z&gt;</b></a></dt>
-  <dd class="It-tag">pairwise combine, choose rightmost</dd>
 </dl>
 <h1 class="Sh" title="Sh" id="VI(M)_COMMANDS"><a class="selflink" href="#VI(M)_COMMANDS">VI(M)
   COMMANDS</a></h1>
@@ -1373,7 +1356,7 @@ On some systems there already exists a <b class="Nm" title="Nm">vis</b> binary,
 <table class="foot">
   <tr>
     <td class="foot-date">January 14, 2017</td>
-    <td class="foot-os">Vis 07ffa2e</td>
+    <td class="foot-os">Vis 84c2620</td>
   </tr>
 </table>
 </body>
