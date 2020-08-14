@@ -2100,6 +2100,27 @@ static int file_index(lua_State *L) {
 	return index_common(L);
 }
 
+static int file_newindex(lua_State *L) {
+	File *file = obj_ref_check(L, 1, VIS_LUA_TYPE_FILE);
+
+	if (lua_isstring(L, 2)) {
+		const char *key = lua_tostring(L, 2);
+
+		if (strcmp(key, "modified") == 0) {
+			bool modified = lua_isboolean(L, 3) && lua_toboolean(L, 3);
+			if (modified) {
+				text_insert(file->text, 0, " ", 1);
+				text_delete(file->text, 0, 1);
+			} else {
+				text_save(file->text, NULL);
+			}
+			return 0;
+		}
+	}
+
+	return newindex_common(L);
+}
+
 /***
  * Insert data at position.
  * @function insert
@@ -2281,7 +2302,7 @@ static int file_text_object(lua_State *L) {
 
 static const struct luaL_Reg file_funcs[] = {
 	{ "__index", file_index },
-	{ "__newindex", newindex_common },
+	{ "__newindex", file_newindex },
 	{ "insert", file_insert },
 	{ "delete", file_delete },
 	{ "lines_iterator", file_lines_iterator },
