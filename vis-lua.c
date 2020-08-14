@@ -1363,7 +1363,7 @@ static int pipe_func(lua_State *L) {
  *
  * Will trigger redraw events, make sure to avoid recursive events.
  *
- * @function draw
+ * @function redraw
  */
 static int redraw(lua_State *L) {
 	Vis *vis = obj_ref_check(L, 1, "vis");
