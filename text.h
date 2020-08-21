@@ -339,14 +339,14 @@ enum TextSaveMethod {
 
 /**
  * Save the whole text to the given file name.
- */
-bool text_save(Text*, const char *filename);
-/**
- * Save the whole text to the given file name, using the specified method.
  *
  * @rst
  * .. note:: Equivalent to ``text_save_method(filename, TEXT_SAVE_AUTO)``.
  * @endrst
+ */
+bool text_save(Text*, const char *filename);
+/**
+ * Save the whole text to the given file name, using the specified method.
  */
 bool text_save_method(Text*, const char *filename, enum TextSaveMethod);
 
