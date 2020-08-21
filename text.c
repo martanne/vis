@@ -1116,7 +1116,15 @@ Text *text_load(const char *filename) {
 	return text_load_method(filename, TEXT_LOAD_AUTO);
 }
 
+Text *text_loadat(int dirfd, const char *filename) {
+	return text_loadat_method(dirfd, filename, TEXT_LOAD_AUTO);
+}
+
 Text *text_load_method(const char *filename, enum TextLoadMethod method) {
+	return text_loadat_method(AT_FDCWD, filename, method);
+}
+
+Text *text_loadat_method(int dirfd, const char *filename, enum TextLoadMethod method) {
 	int fd = -1;
 	size_t size = 0;
 	Text *txt = calloc(1, sizeof *txt);
@@ -1127,7 +1135,7 @@ Text *text_load_method(const char *filename, enum TextLoadMethod method) {
 		goto out;
 	lineno_cache_invalidate(&txt->lines);
 	if (filename) {
-		if ((fd = open(filename, O_RDONLY)) == -1)
+		if ((fd = openat(dirfd, filename, O_RDONLY)) == -1)
 			goto out;
 		if (fstat(fd, &txt->info) == -1)
 			goto out;

@@ -95,6 +95,7 @@ enum TextLoadMethod {
  * @endrst
  */
 Text *text_load(const char *filename);
+Text *text_loadat(int dirfd, const char *filename);
 /**
  * Create a text instance populated with the given file content.
  *
@@ -109,6 +110,7 @@ Text *text_load(const char *filename);
  * @endrst
  */
 Text *text_load_method(const char *filename, enum TextLoadMethod);
+Text *text_loadat_method(int dirfd, const char *filename, enum TextLoadMethod);
 /** Release all ressources associated with this text instance. */
 void text_free(Text*);
 /**
