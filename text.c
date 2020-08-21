@@ -134,6 +134,7 @@ struct TextSave {                  /* used to hold context between text_save_{be
 	char *filename;            /* filename to save to as given to text_save_begin */
 	char *tmpname;             /* temporary name used for atomic rename(2) */
 	int fd;                    /* file descriptor to write data to using text_save_write */
+	int dirfd;                 /* directory file descriptor, relative to which we save */
 	enum TextSaveMethod type;  /* method used to save file */
 };
 
@@ -815,6 +816,25 @@ static bool preserve_selinux_context(int src, int dest) {
 	return true;
 }
 
+static int mkstempat(int dirfd, char *template) {
+	if (dirfd == AT_FDCWD)
+		return mkstemp(template);
+	// FIXME: not thread safe
+	int fd = -1;
+	int cwd = open(".", O_RDONLY|O_DIRECTORY);
+	if (cwd == -1)
+		goto err;
+	if (fchdir(dirfd) == -1)
+		goto err;
+	fd = mkstemp(template);
+err:
+	if (cwd != -1) {
+		fchdir(cwd);
+		close(cwd);
+	}
+	return fd;
+}
+
 /* Create a new file named `.filename.vis.XXXXXX` (where `XXXXXX` is a
  * randomly generated, unique suffix) and try to preserve all important
  * meta data. After the file content has been written to this temporary
@@ -833,10 +853,10 @@ static bool preserve_selinux_context(int src, int dest) {
  */
 static bool text_save_begin_atomic(TextSave *ctx) {
 	int oldfd, saved_errno;
-	if ((oldfd = open(ctx->filename, O_RDONLY)) == -1 && errno != ENOENT)
+	if ((oldfd = openat(ctx->dirfd, ctx->filename, O_RDONLY)) == -1 && errno != ENOENT)
 		goto err;
 	struct stat oldmeta = { 0 };
-	if (oldfd != -1 && lstat(ctx->filename, &oldmeta) == -1)
+	if (oldfd != -1 && fstatat(ctx->dirfd, ctx->filename, &oldmeta, AT_SYMLINK_NOFOLLOW) == -1)
 		goto err;
 	if (oldfd != -1) {
 		if (S_ISLNK(oldmeta.st_mode)) /* symbolic link */
@@ -860,7 +880,7 @@ static bool text_save_begin_atomic(TextSave *ctx) {
 	free(dir);
 	free(base);
 
-	if ((ctx->fd = mkstemp(ctx->tmpname)) == -1)
+	if ((ctx->fd = mkstempat(ctx->dirfd, ctx->tmpname)) == -1)
 		goto err;
 
 	if (oldfd == -1) {
@@ -911,13 +931,13 @@ static bool text_save_commit_atomic(TextSave *ctx) {
 	if (close_failed)
 		return false;
 
-	if (rename(ctx->tmpname, ctx->filename) == -1)
+	if (renameat(ctx->dirfd, ctx->tmpname, ctx->dirfd, ctx->filename) == -1)
 		return false;
 
 	free(ctx->tmpname);
 	ctx->tmpname = NULL;
 
-	int dir = open(dirname(ctx->filename), O_DIRECTORY|O_RDONLY);
+	int dir = openat(ctx->dirfd, dirname(ctx->filename), O_DIRECTORY|O_RDONLY);
 	if (dir == -1)
 		return false;
 
@@ -938,7 +958,7 @@ static bool text_save_begin_inplace(TextSave *ctx) {
 	Text *txt = ctx->txt;
 	struct stat meta = { 0 };
 	int newfd = -1, saved_errno;
-	if ((ctx->fd = open(ctx->filename, O_CREAT|O_WRONLY, 0666)) == -1)
+	if ((ctx->fd = openat(ctx->dirfd, ctx->filename, O_CREAT|O_WRONLY, 0666)) == -1)
 		goto err;
 	if (fstat(ctx->fd, &meta) == -1)
 		goto err;
@@ -998,7 +1018,7 @@ static bool text_save_commit_inplace(TextSave *ctx) {
 	return true;
 }
 
-TextSave *text_save_begin(Text *txt, const char *filename, enum TextSaveMethod type) {
+TextSave *text_save_begin(Text *txt, int dirfd, const char *filename, enum TextSaveMethod type) {
 	if (!filename)
 		return NULL;
 	TextSave *ctx = calloc(1, sizeof *ctx);
@@ -1006,6 +1026,7 @@ TextSave *text_save_begin(Text *txt, const char *filename, enum TextSaveMethod t
 		return NULL;
 	ctx->txt = txt;
 	ctx->fd = -1;
+	ctx->dirfd = dirfd;
 	if (!(ctx->filename = strdup(filename)))
 		goto err;
 	errno = 0;
@@ -1052,7 +1073,7 @@ void text_save_cancel(TextSave *ctx) {
 	if (ctx->fd != -1)
 		close(ctx->fd);
 	if (ctx->tmpname && ctx->tmpname[0])
-		unlink(ctx->tmpname);
+		unlinkat(ctx->dirfd, ctx->tmpname, 0);
 	free(ctx->tmpname);
 	free(ctx->filename);
 	free(ctx);
@@ -1064,16 +1085,24 @@ void text_save_cancel(TextSave *ctx) {
  * this overwrite the original file is permanently damaged.
  */
 bool text_save(Text *txt, const char *filename) {
-	return text_save_method(txt, filename, TEXT_SAVE_AUTO);
+	return text_saveat(txt, AT_FDCWD, filename);
+}
+
+bool text_saveat(Text *txt, int dirfd, const char *filename) {
+	return text_saveat_method(txt, dirfd, filename, TEXT_SAVE_AUTO);
 }
 
 bool text_save_method(Text *txt, const char *filename, enum TextSaveMethod method) {
+	return text_saveat_method(txt, AT_FDCWD, filename, method);
+}
+
+bool text_saveat_method(Text *txt, int dirfd, const char *filename, enum TextSaveMethod method) {
 	if (!filename) {
 		txt->saved_revision = txt->history;
 		text_snapshot(txt);
 		return true;
 	}
-	TextSave *ctx = text_save_begin(txt, filename, method);
+	TextSave *ctx = text_save_begin(txt, dirfd, filename, method);
 	if (!ctx)
 		return false;
 	Filerange range = (Filerange){ .start = 0, .end = text_size(txt) };

@@ -347,10 +347,12 @@ enum TextSaveMethod {
  * @endrst
  */
 bool text_save(Text*, const char *filename);
+bool text_saveat(Text*, int dirfd, const char *filename);
 /**
  * Save the whole text to the given file name, using the specified method.
  */
 bool text_save_method(Text*, const char *filename, enum TextSaveMethod);
+bool text_saveat_method(Text*, int dirfd, const char *filename, enum TextSaveMethod);
 
 /**
  * Setup a sequence of write operations.
@@ -363,7 +365,7 @@ bool text_save_method(Text*, const char *filename, enum TextSaveMethod);
  *              ``text_save_cancel`` to release the underlying resources.
  * @endrst
  */
-TextSave *text_save_begin(Text*, const char *filename, enum TextSaveMethod);
+TextSave *text_save_begin(Text*, int dirfd, const char *filename, enum TextSaveMethod);
 /**
  * Write file range.
  * @return The number of bytes written or ``-1`` in case of an error.

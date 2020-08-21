@@ -23,6 +23,7 @@
 #include <errno.h>
 #include <unistd.h>
 #include <limits.h>
+#include <fcntl.h>
 #include "sam.h"
 #include "vis-core.h"
 #include "buffer.h"
@@ -1670,7 +1671,7 @@ static bool cmd_write(Vis *vis, Win *win, Command *cmd, const char *argv[], Sele
 		if (write_entire_file)
 			*r = text_range_new(0, text_size(text));
 
-		TextSave *ctx = text_save_begin(text, path, file->save_method);
+		TextSave *ctx = text_save_begin(text, AT_FDCWD, path, file->save_method);
 		if (!ctx) {
 			const char *msg = errno ? strerror(errno) : "try changing `:set savemethod`";
 			vis_info_show(vis, "Can't write `%s': %s", path, msg);
