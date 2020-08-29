@@ -184,7 +184,7 @@ static const KeyBinding bindings_normal[] = {
 	{ "<C-j>",              ACTION(SELECTIONS_NEW_LINE_BELOW)           },
 	{ "<C-k>",              ACTION(SELECTIONS_NEW_LINE_ABOVE)           },
 	{ "<C-l>",              ACTION(SELECTIONS_REMOVE_COLUMN_EXCEPT)     },
-	{ "<C-n>",              ACTION(SELECTIONS_MATCH_WORD)               },
+	{ "<C-n>",              ALIAS("viw")                                },
 	{ "<C-p>",              ACTION(SELECTIONS_REMOVE_LAST)              },
 	{ "<C-r>",              ACTION(REDO)                                },
 	{ "<C-u>",              ACTION(SELECTIONS_PREV)                     },

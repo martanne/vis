@@ -66,8 +66,6 @@ static const char *selections_remove_column(Vis*, const char *keys, const Arg *a
 static const char *selections_remove_column_except(Vis*, const char *keys, const Arg *arg);
 /* move to the previous (arg->i < 0) or next (arg->i > 0) selection */
 static const char *selections_navigate(Vis*, const char *keys, const Arg *arg);
-/* select the word the selection is currently over */
-static const char *selections_match_word(Vis*, const char *keys, const Arg *arg);
 /* select the next region matching the current selection */
 static const char *selections_match_next(Vis*, const char *keys, const Arg *arg);
 /* clear current selection but select next match */
@@ -256,7 +254,6 @@ enum {
 	VIS_ACTION_WINDOW_SLIDE_DOWN,
 	VIS_ACTION_PUT_AFTER,
 	VIS_ACTION_PUT_BEFORE,
-	VIS_ACTION_SELECTIONS_MATCH_WORD,
 	VIS_ACTION_SELECTIONS_NEW_LINE_ABOVE,
 	VIS_ACTION_SELECTIONS_NEW_LINE_ABOVE_FIRST,
 	VIS_ACTION_SELECTIONS_NEW_LINE_BELOW,
@@ -890,11 +887,6 @@ static const KeyAction vis_action[] = {
 		VIS_HELP("Put text before the cursor")
 		operator, { .i = VIS_OP_PUT_BEFORE }
 	},
-	[VIS_ACTION_SELECTIONS_MATCH_WORD] = {
-		"vis-selections-select-word",
-		VIS_HELP("Select word under cursor")
-		selections_match_word,
-	},
 	[VIS_ACTION_SELECTIONS_NEW_LINE_ABOVE] = {
 		"vis-selection-new-lines-above",
 		VIS_HELP("Create a new selection on the line above")
@@ -1330,18 +1322,6 @@ static const char *selections_clear(Vis *vis, const char *keys, const Arg *arg) 
 		view_selections_dispose_all(view);
 	else
 		view_selection_clear(view_selections_primary_get(view));
-	return keys;
-}
-
-static const char *selections_match_word(Vis *vis, const char *keys, const Arg *arg) {
-	Text *txt = vis_text(vis);
-	View *view = vis_view(vis);
-	for (Selection *s = view_selections(view); s; s = view_selections_next(s)) {
-		Filerange word = text_object_word(txt, view_cursors_pos(s));
-		if (text_range_valid(&word))
-			view_selections_set(s, &word);
-	}
-	vis_mode_switch(vis, VIS_MODE_VISUAL);
 	return keys;
 }
 
