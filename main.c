@@ -1376,15 +1376,21 @@ static const char *selections_match_next(Vis *vis, const char *keys, const Arg *
 	if (!text_range_valid(&sel))
 		return keys;
 
-	Filerange word = text_object_word(txt, view_cursors_pos(s));
-	if (!text_range_equal(&sel, &word))
+	static bool match_word;
+
+	if (view_selections_count(view) == 1) {
+		Filerange word = text_object_word(txt, view_cursors_pos(s));
+		match_word = text_range_equal(&sel, &word);
+	}
+
+	if (!match_word)
 		return selections_match_next_literal(vis, keys, arg);
 
 	char *buf = text_bytes_alloc0(txt, sel.start, text_range_size(&sel));
 	if (!buf)
 		return keys;
 
-	word = text_object_word_find_next(txt, sel.end, buf);
+	Filerange word = text_object_word_find_next(txt, sel.end, buf);
 	if (text_range_valid(&word) && selection_new_primary(view, &word))
 		goto out;
 
