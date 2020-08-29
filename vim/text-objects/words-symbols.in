@@ -1,0 +1,14 @@
+spaces: # 
+tabs:	#	
+start:  #== 
+middle: =#= 
+end:    ==# 
+start:  #bc 
+middle: a#b 
+end:    ab# 
+start:  >#  <
+middle: > # <
+end:    >  #<
+start:  (_)
+middle: (o_o)
+end:    (Oo_)
