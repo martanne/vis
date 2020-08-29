@@ -28,13 +28,19 @@ static Filerange text_object_customword(Text *txt, size_t pos, int (*isboundary)
 		r.start = text_char_next(txt, text_customword_end_prev(txt, pos, isboundary));
 		r.end = text_customword_start_next(txt, pos, isboundary);
 	} else if (boundary(prev) && boundary(next)) {
-		if (boundary(c)) {
-			r.start = text_char_next(txt, text_customword_end_prev(txt, pos, isboundary));
-			r.end = text_char_next(txt, text_customword_end_next(txt, pos, isboundary));
-		} else {
+		if ((space(prev) && space(next)) || !boundary(c)) {
 			/* on a single character */
 			r.start = pos;
 			r.end = text_char_next(txt, pos);
+		} else if (space(prev)) {
+			r.start = pos;
+			r.end = text_char_next(txt, text_customword_end_next(txt, pos, isboundary));
+		} else if (space(next)) {
+			r.start = text_customword_start_prev(txt, pos, isboundary);
+			r.end = text_char_next(txt, pos);
+		} else {
+			r.start = text_customword_start_prev(txt, pos, isboundary);
+			r.end = text_char_next(txt, text_customword_end_next(txt, pos, isboundary));
 		}
 	} else if (boundary(prev)) {
 		/* at start of a word */
