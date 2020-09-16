@@ -2213,6 +2213,7 @@ int main(int argc, char *argv[]) {
 		.win_close = vis_lua_win_close,
 		.win_highlight = vis_lua_win_highlight,
 		.win_status = vis_lua_win_status,
+		.term_csi = vis_lua_term_csi,
 	};
 
 	vis = vis_new(ui_term_new(), &event);

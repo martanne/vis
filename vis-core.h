@@ -235,6 +235,7 @@ enum VisEvents {
 	VIS_EVENT_WIN_CLOSE,
 	VIS_EVENT_WIN_HIGHLIGHT,
 	VIS_EVENT_WIN_STATUS,
+	VIS_EVENT_TERM_CSI,
 };
 
 bool vis_event_emit(Vis*, enum VisEvents, ...);

@@ -100,6 +100,10 @@ bool vis_event_emit(Vis *vis, enum VisEvents id, ...) {
 		if (vis->event->quit)
 			vis->event->quit(vis);
 		break;
+	case VIS_EVENT_TERM_CSI:
+		if (vis->event->term_csi)
+			vis->event->term_csi(vis, va_arg(ap, const long *));
+		break;
 	}
 
 	va_end(ap);
@@ -1304,6 +1308,17 @@ static const char *getkey(Vis *vis) {
 	}
 
 	TermKey *termkey = vis->ui->termkey_get(vis->ui);
+	if (key.type == TERMKEY_TYPE_UNKNOWN_CSI) {
+		long args[18];
+		size_t nargs;
+		unsigned long cmd;
+		if (termkey_interpret_csi(termkey, &key, &args[2], &nargs, &cmd) == TERMKEY_RES_KEY) {
+			args[0] = (long)cmd;
+			args[1] = nargs;
+			vis_event_emit(vis, VIS_EVENT_TERM_CSI, args);
+		}
+		return getkey(vis);
+	}
 	termkey_strfkey(termkey, vis->key, sizeof(vis->key), &key, TERMKEY_FORMAT_VIM);
 	return vis->key;
 }

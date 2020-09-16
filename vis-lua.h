@@ -37,5 +37,6 @@ void vis_lua_win_open(Vis*, Win*);
 void vis_lua_win_close(Vis*, Win*);
 void vis_lua_win_highlight(Vis*, Win*);
 void vis_lua_win_status(Vis*, Win*);
+void vis_lua_term_csi(Vis*, const long *);
 
 #endif

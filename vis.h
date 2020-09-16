@@ -57,6 +57,7 @@ typedef struct {
 	void (*win_close)(Vis*, Win*);
 	void (*win_highlight)(Vis*, Win*);
 	void (*win_status)(Vis*, Win*);
+	void (*term_csi)(Vis*, const long *);
 } VisEvent;
 
 /** Union used to pass arguments to key action functions. */
