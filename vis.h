@@ -673,8 +673,9 @@ enum VisMark {
  * @defgroup vis_marks
  * @{
  */
-/** Translate single character mark name to corresponding constant. */
+/** Translate between single character mark name and corresponding constant. */
 enum VisMark vis_mark_from(Vis*, char mark);
+char vis_mark_to(Vis*, enum VisMark);
 /**
  * Specify mark to use.
  * @rst
