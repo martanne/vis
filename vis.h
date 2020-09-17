@@ -757,8 +757,9 @@ enum VisRegister {
  * @defgroup vis_registers
  * @{
  */
-/** Translate single character register name to corresponding constant. */
+/** Translate between single character register name and corresponding constant. */
 enum VisRegister vis_register_from(Vis*, char reg);
+char vis_register_to(Vis*, enum VisRegister);
 /**
  * Specify register to use.
  * @rst
