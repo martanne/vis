@@ -120,8 +120,11 @@ void text_regex_free(Regex *r) {
 	free(r);
 }
 
-int text_regex_compile(Regex *regex, const char *string, int cflags) {
-	int r = tre_regcomp(&regex->regex, string, cflags);
+int text_regex_compile(Regex *regex, const char *string, size_t len, int cflags) {
+	int r = len > 0
+	       ? tre_regncomp(&regex->regex, string, len, cflags)
+	       : tre_regcomp(&regex->regex, string, cflags);
+
 	if (r)
 		tre_regcomp(&regex->regex, "\0\0", 0);
 	return r;
