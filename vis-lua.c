@@ -675,10 +675,10 @@ static int files_iter(lua_State *L) {
  * @usage
  * local marks = vis.win.marks
  * for name in vis:mark_names() do
- *	local mark = marks[name]
- *	for i = 1, #mark do
+ * 	local mark = marks[name]
+ * 	for i = 1, #mark do
  * 		-- do somthing with: name, mark[i].start, mark[i].finish
- *	end
+ * 	end
  * end
  */
 static int mark_names_iter(lua_State *L);
