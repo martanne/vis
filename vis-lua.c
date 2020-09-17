@@ -719,22 +719,20 @@ static int mark_names_iter(lua_State *L) {
  */
 static int register_names_iter(lua_State *L);
 static int register_names(lua_State *L) {
+	Vis *vis = obj_ref_check(L, 1, "vis");
+	lua_pushlightuserdata(L, vis);
 	enum VisRegister *handle = lua_newuserdata(L, sizeof *handle);
 	*handle = 0;
-	lua_pushcclosure(L, register_names_iter, 1);
+	lua_pushcclosure(L, register_names_iter, 2);
 	return 1;
 }
 
 static int register_names_iter(lua_State *L) {
-	char reg = '\0';
-	enum VisRegister *handle = lua_touserdata(L, lua_upvalueindex(1));
-	if (*handle < LENGTH(vis_registers))
-		reg = vis_registers[*handle].name;
-	else if (VIS_REG_a <= *handle && *handle <= VIS_REG_z)
-		reg = 'a' + *handle - VIS_REG_a;
+	Vis *vis = lua_touserdata(L, lua_upvalueindex(1));
+	enum VisRegister *handle = lua_touserdata(L, lua_upvalueindex(2));
+	char reg = vis_register_to(vis, *handle);
 	if (reg) {
-		char name[2] = { reg, '\0' };
-		lua_pushstring(L, name);
+		lua_pushlstring(L, &reg, 1);
 		(*handle)++;
 		return 1;
 	}
