@@ -683,22 +683,20 @@ static int files_iter(lua_State *L) {
  */
 static int mark_names_iter(lua_State *L);
 static int mark_names(lua_State *L) {
+	Vis *vis = obj_ref_check(L, 1, "vis");
+	lua_pushlightuserdata(L, vis);
 	enum VisMark *handle = lua_newuserdata(L, sizeof *handle);
 	*handle = 0;
-	lua_pushcclosure(L, mark_names_iter, 1);
+	lua_pushcclosure(L, mark_names_iter, 2);
 	return 1;
 }
 
 static int mark_names_iter(lua_State *L) {
-	char mark = '\0';
-	enum VisMark *handle = lua_touserdata(L, lua_upvalueindex(1));
-	if (*handle < LENGTH(vis_marks))
-		mark = vis_marks[*handle].name;
-	else if (VIS_MARK_a <= *handle && *handle <= VIS_MARK_z)
-		mark = 'a' + *handle - VIS_MARK_a;
+	Vis *vis = lua_touserdata(L, lua_upvalueindex(1));
+	enum VisMark *handle = lua_touserdata(L, lua_upvalueindex(2));
+	char mark = vis_mark_to(vis, *handle);
 	if (mark) {
-		char name[2] = { mark, '\0' };
-		lua_pushstring(L, name);
+		lua_pushlstring(L, &mark, 1);
 		(*handle)++;
 		return 1;
 	}
