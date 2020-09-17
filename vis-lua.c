@@ -1385,6 +1385,10 @@ static int redraw(lua_State *L) {
  * Currently unconsumed keys in the input queue.
  * @tfield string input_queue
  */
+/***
+ * Register name in use.
+ * @tfield string register
+ */
 static int vis_index(lua_State *L) {
 	Vis *vis = obj_ref_check(L, 1, "vis");
 
@@ -1419,6 +1423,12 @@ static int vis_index(lua_State *L) {
 				lua_pushnil(L);
 			else
 				lua_pushunsigned(L, count);
+			return 1;
+		}
+
+		if (strcmp(key, "register") == 0) {
+			char name = vis_register_to(vis, vis_register_used(vis));
+			lua_pushlstring(L, &name, 1);
 			return 1;
 		}
 
@@ -1458,6 +1468,13 @@ static int vis_newindex(lua_State *L) {
 
 		if (strcmp(key, "win") == 0) {
 			vis_window_focus(obj_ref_check(L, 3, VIS_LUA_TYPE_WINDOW));
+			return 0;
+		}
+
+		if (strcmp(key, "register") == 0) {
+			const char *name = luaL_checkstring(L, 3);
+			if (strlen(name) == 1)
+				vis_register(vis, vis_register_from(vis, name[0]));
 			return 0;
 		}
 	}
