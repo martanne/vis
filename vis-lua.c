@@ -1387,6 +1387,10 @@ static int redraw(lua_State *L) {
  * Register name in use.
  * @tfield string register
  */
+/***
+ * Mark name in use.
+ * @tfield string mark
+ */
 static int vis_index(lua_State *L) {
 	Vis *vis = obj_ref_check(L, 1, "vis");
 
@@ -1435,6 +1439,12 @@ static int vis_index(lua_State *L) {
 			return 1;
 		}
 
+		if (strcmp(key, "mark") == 0) {
+			char name = vis_mark_to(vis, vis_mark_used(vis));
+			lua_pushlstring(L, &name, 1);
+			return 1;
+		}
+
 		if (strcmp(key, "ui") == 0) {
 			obj_ref_new(L, vis->ui, VIS_LUA_TYPE_UI);
 			return 1;
@@ -1473,6 +1483,13 @@ static int vis_newindex(lua_State *L) {
 			const char *name = luaL_checkstring(L, 3);
 			if (strlen(name) == 1)
 				vis_register(vis, vis_register_from(vis, name[0]));
+			return 0;
+		}
+
+		if (strcmp(key, "mark") == 0) {
+			const char *name = luaL_checkstring(L, 3);
+			if (strlen(name) == 1)
+				vis_mark(vis, vis_mark_from(vis, name[0]));
 			return 0;
 		}
 	}
