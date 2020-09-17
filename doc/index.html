@@ -60,7 +60,7 @@
 </p>
     <h3>Info:</h3>
     <ul>
-        <li><strong>Release</strong>: 6a569c8</li>
+        <li><strong>Release</strong>: 2290224</li>
         <li><strong>License</strong>: ISC</li>
         <li><strong>Author</strong>: Marc André Tanner</li>
     </ul>
@@ -93,6 +93,10 @@
 	<td class="summary">LPeg lexer module.</td>
 	</tr>
 	<tr>
+	<td class="name" nowrap><a href="#Vis.mark">Vis.mark</a></td>
+	<td class="summary">Mark name in use.</td>
+	</tr>
+	<tr>
 	<td class="name" nowrap><a href="#Vis.mode">Vis.mode</a></td>
 	<td class="summary">Currently active mode.</td>
 	</tr>
@@ -103,6 +107,10 @@
 	<tr>
 	<td class="name" nowrap><a href="#Vis.recording">Vis.recording</a></td>
 	<td class="summary">Whether a macro is being recorded.</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#Vis.register">Vis.register</a></td>
+	<td class="summary">Register name in use.</td>
 	</tr>
 	<tr>
 	<td class="name" nowrap><a href="#Vis.registers">Vis.registers</a></td>
@@ -149,16 +157,16 @@
 	<td class="summary">Insert keys at all cursor positions of active window.</td>
 	</tr>
 	<tr>
+	<td class="name" nowrap><a href="#Vis:map">Vis:map(mode, key, alias)</a></td>
+	<td class="summary">Setup a key alias.</td>
+	</tr>
+	<tr>
 	<td class="name" nowrap><a href="#Vis:map">Vis:map(mode, key, action)</a></td>
 	<td class="summary">Map a key to a key action.</td>
 	</tr>
 	<tr>
 	<td class="name" nowrap><a href="#Vis:map">Vis:map(mode, key, func[, help])</a></td>
 	<td class="summary">Map a key to a Lua function.</td>
-	</tr>
-	<tr>
-	<td class="name" nowrap><a href="#Vis:map">Vis:map(mode, key, alias)</a></td>
-	<td class="summary">Setup a key alias.</td>
 	</tr>
 	<tr>
 	<td class="name" nowrap><a href="#Vis:mappings">Vis:mappings(mode)</a></td>
@@ -623,6 +631,26 @@
 
 </dd>
     <dt>
+    <a name = "Vis.mark"></a>
+    <strong>Vis.mark</strong>
+    </dt>
+    <dd>
+    Mark name in use.
+
+
+    <ul>
+        <li><span class="parameter">mark</span>
+            <span class="types"><a class="type" href="https://www.lua.org/manual/5.1/manual.html#5.4">string</a></span>
+
+        </li>
+    </ul>
+
+
+
+
+
+</dd>
+    <dt>
     <a name = "Vis.mode"></a>
     <strong>Vis.mode</strong>
     </dt>
@@ -673,6 +701,26 @@
     <ul>
         <li><span class="parameter">recording</span>
             <span class="types"><span class="type">bool</span></span>
+
+        </li>
+    </ul>
+
+
+
+
+
+</dd>
+    <dt>
+    <a name = "Vis.register"></a>
+    <strong>Vis.register</strong>
+    </dt>
+    <dd>
+    Register name in use.
+
+
+    <ul>
+        <li><span class="parameter">register</span>
+            <span class="types"><a class="type" href="https://www.lua.org/manual/5.1/manual.html#5.4">string</a></span>
 
         </li>
     </ul>
@@ -996,6 +1044,51 @@
 </dd>
     <dt>
     <a name = "Vis:map"></a>
+    <strong>Vis:map(mode, key, alias)</strong>
+    </dt>
+    <dd>
+    Setup a key alias.
+<p> This is equivalent to `vis:command('map! mode key alias')`.
+<p> Mappings are always recursive!
+
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">mode</span>
+            <span class="types"><span class="type">int</span></span>
+         the mode to which the mapping should be added
+        </li>
+        <li><span class="parameter">key</span>
+            <span class="types"><a class="type" href="https://www.lua.org/manual/5.1/manual.html#5.4">string</a></span>
+         the key to map
+        </li>
+        <li><span class="parameter">alias</span>
+            <span class="types"><a class="type" href="https://www.lua.org/manual/5.1/manual.html#5.4">string</a></span>
+         the key to map to
+        </li>
+    </ul>
+
+    <h3>Returns:</h3>
+    <ol>
+
+           <span class="types"><span class="type">bool</span></span>
+        whether the mapping was successfully established
+    </ol>
+
+
+    <h3>See also:</h3>
+    <ul>
+         <a href="index.html#Window:map">Window:map</a>
+    </ul>
+
+    <h3>Usage:</h3>
+    <ul>
+        <pre class="example">vis:map(vis.modes.NORMAL, <span class="string">"j"</span>, <span class="string">"k"</span>)</pre>
+    </ul>
+
+</dd>
+    <dt>
+    <a name = "Vis:map"></a>
     <strong>Vis:map(mode, key, action)</strong>
     </dt>
     <dd>
@@ -1100,51 +1193,6 @@ vis:map(vis.modes.NORMAL, <span class="string">"gl"</span>, action)</pre>
 
 </dd>
     <dt>
-    <a name = "Vis:map"></a>
-    <strong>Vis:map(mode, key, alias)</strong>
-    </dt>
-    <dd>
-    Setup a key alias.
-<p> This is equivalent to `vis:command('map! mode key alias')`.
-<p> Mappings are always recursive!
-
-
-    <h3>Parameters:</h3>
-    <ul>
-        <li><span class="parameter">mode</span>
-            <span class="types"><span class="type">int</span></span>
-         the mode to which the mapping should be added
-        </li>
-        <li><span class="parameter">key</span>
-            <span class="types"><a class="type" href="https://www.lua.org/manual/5.1/manual.html#5.4">string</a></span>
-         the key to map
-        </li>
-        <li><span class="parameter">alias</span>
-            <span class="types"><a class="type" href="https://www.lua.org/manual/5.1/manual.html#5.4">string</a></span>
-         the key to map to
-        </li>
-    </ul>
-
-    <h3>Returns:</h3>
-    <ol>
-
-           <span class="types"><span class="type">bool</span></span>
-        whether the mapping was successfully established
-    </ol>
-
-
-    <h3>See also:</h3>
-    <ul>
-         <a href="index.html#Window:map">Window:map</a>
-    </ul>
-
-    <h3>Usage:</h3>
-    <ul>
-        <pre class="example">vis:map(vis.modes.NORMAL, <span class="string">"j"</span>, <span class="string">"k"</span>)</pre>
-    </ul>
-
-</dd>
-    <dt>
     <a name = "Vis:mappings"></a>
     <strong>Vis:mappings(mode)</strong>
     </dt>
@@ -1203,10 +1251,10 @@ vis:map(vis.modes.NORMAL, <span class="string">"gl"</span>, action)</pre>
     <ul>
         <pre class="example"><span class="keyword">local</span> marks = vis.win.marks
 <span class="keyword">for</span> name <span class="keyword">in</span> vis:mark_names() <span class="keyword">do</span>
-<span class="keyword">local</span> mark = marks[name]
-<span class="keyword">for</span> i = <span class="number">1</span>, #mark <span class="keyword">do</span>
+	<span class="keyword">local</span> mark = marks[name]
+	<span class="keyword">for</span> i = <span class="number">1</span>, #mark <span class="keyword">do</span>
 		<span class="comment">-- do somthing with: name, mark[i].start, mark[i].finish
-</span><span class="keyword">end</span>
+</span>	<span class="keyword">end</span>
 <span class="keyword">end</span></pre>
     </ul>
 
@@ -3391,7 +3439,7 @@ win.selection.pos = pos + #data</pre>
 </div> <!-- id="main" -->
 <div id="about">
 <i>generated by <a href="http://github.com/stevedonovan/LDoc">LDoc 1.4.6</a></i>
-<i style="float:right;">Last updated 2020-08-14 15:31:33 </i>
+<i style="float:right;">Last updated 2020-09-17 13:55:52 </i>
 </div> <!-- id="about" -->
 </div> <!-- id="container" -->
 </body>
