@@ -1685,7 +1685,8 @@ Regex *vis_regex(Vis *vis, const char *pattern) {
 	Regex *regex = text_regex_new();
 	if (!regex)
 		return NULL;
-	if (text_regex_compile(regex, pattern, REG_EXTENDED|REG_NEWLINE) != 0) {
+	int cflags = REG_EXTENDED|REG_NEWLINE|(REG_ICASE*vis->ignorecase);
+	if (text_regex_compile(regex, pattern, cflags) != 0) {
 		text_regex_free(regex);
 		return NULL;
 	}

@@ -221,6 +221,7 @@ struct Vis {
 	Array motions;
 	Array textobjects;
 	Array bindings;
+	bool ignorecase;                     /* whether to ignore case when searching */
 };
 
 enum VisEvents {
