@@ -10,6 +10,7 @@ TESTS_RUN=0
 TESTS_OK=0
 TESTS_SKIP=0
 
+export LANG="en_US.UTF-8"
 export VIS_PATH=.
 
 if type "$VIM" >/dev/null 2>&1; then
