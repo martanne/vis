@@ -161,6 +161,7 @@ void vis_lua_win_open(Vis *vis, Win *win) { }
 void vis_lua_win_close(Vis *vis, Win *win) { }
 void vis_lua_win_highlight(Vis *vis, Win *win) { }
 void vis_lua_win_status(Vis *vis, Win *win) { window_status_update(vis, win); }
+void vis_lua_term_csi(Vis *vis, const long *csi) { }
 
 #else
 
@@ -3101,6 +3102,26 @@ void vis_lua_win_status(Vis *vis, Win *win) {
 		pcall(vis, L, 1, 0);
 	} else {
 		window_status_update(vis, win);
+	}
+	lua_pop(L, 1);
+}
+
+/***
+ * CSI command received from terminal.
+ * @function term_csi
+ * @param List of CSI parameters
+ */
+void vis_lua_term_csi(Vis *vis, const long *csi) {
+	lua_State *L = vis->lua;
+	if (!L)
+		return;
+	vis_lua_event_get(L, "term_csi");
+	if (lua_isfunction(L, -1)) {
+		int nargs = csi[1];
+		lua_pushinteger(L, csi[0]);
+		for (int i = 0; i < nargs; i++)
+			lua_pushinteger(L, csi[2 + i]);
+		pcall(vis, L, 1 + nargs, 0);
 	}
 	lua_pop(L, 1);
 }
