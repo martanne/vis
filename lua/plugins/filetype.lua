@@ -343,6 +343,12 @@ vis.ftdetect.filetypes = {
 	rhtml = {
 		ext = { "%.erb$", "%.rhtml$" },
 	},
+	routeros = {
+		ext = { "%.rsc" },
+		detect = function(file, data)
+			return data:match("^#.* by RouterOS")
+		end
+	},
 	rstats = {
 		ext = { "%.R$", "%.Rout$", "%.Rhistory$", "%.Rt$", "Rout.save", "Rout.fail" },
 	},
