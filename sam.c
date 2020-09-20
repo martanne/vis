@@ -300,6 +300,7 @@ enum {
 	OPTION_LOAD_METHOD,
 	OPTION_CHANGE_256COLORS,
 	OPTION_LAYOUT,
+	OPTION_IGNORECASE,
 };
 
 static const OptionDef options[] = {
@@ -387,6 +388,11 @@ static const OptionDef options[] = {
 		{ "layout" },
 		VIS_OPTION_TYPE_STRING,
 		VIS_HELP("Vertical or horizontal window layout")
+	},
+	[OPTION_IGNORECASE] = {
+		{ "ignorecase", "ic" },
+		VIS_OPTION_TYPE_BOOL,
+		VIS_HELP("Ignore case when searching")
 	},
 };
 
