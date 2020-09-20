@@ -403,7 +403,8 @@ vis.ftdetect.filetypes = {
 	},
 	text = {
 		ext = { "%.txt$" },
-		mime = { "text/plain" },
+		-- Do *not* list mime "text/plain" here, it is covered below,
+		-- see 'try text lexer as a last resort'
 	},
 	toml = {
 		ext = { "%.toml$" },
