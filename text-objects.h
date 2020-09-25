@@ -19,6 +19,9 @@ Filerange text_object_word_outer(Text*, size_t pos);
 /* find next occurance of `word' (as word not substring) in forward/backward direction */
 Filerange text_object_word_find_next(Text*, size_t pos, const char *word);
 Filerange text_object_word_find_prev(Text*, size_t pos, const char *word);
+/* find next occurance of a literal string (not regex) in forward/backward direction */
+Filerange text_object_find_next(Text *txt, size_t pos, const char *search);
+Filerange text_object_find_prev(Text *txt, size_t pos, const char *search);
 /* same semantics as above but for a longword (i.e. delimited by white spaces) */
 Filerange text_object_longword(Text*, size_t pos);
 Filerange text_object_longword_outer(Text*, size_t pos);

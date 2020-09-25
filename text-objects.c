@@ -137,6 +137,20 @@ Filerange text_object_word_find_prev(Text *txt, size_t pos, const char *word) {
 	}
 }
 
+Filerange text_object_find_next(Text *txt, size_t pos, const char *search) {
+	size_t start = text_find_next(txt, pos, search);
+	if (start == pos)
+		return text_range_empty();
+	return text_range_new(start, start+strlen(search));
+}
+
+Filerange text_object_find_prev(Text *txt, size_t pos, const char *search) {
+	size_t start = text_find_prev(txt, pos, search);
+	if (start == pos)
+		return text_range_empty();
+	return text_range_new(start, start+strlen(search));
+}
+
 Filerange text_object_line(Text *txt, size_t pos) {
 	Filerange r;
 	r.start = text_line_begin(txt, pos);
