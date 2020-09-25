@@ -243,6 +243,7 @@ static const KeyBinding bindings_visual[] = {
 	{ "+",                  ACTION(SELECTIONS_ROTATE_RIGHT)             },
 	{ "<",                  ALIAS("<vis-operator-shift-left>gv")        },
 	{ ">",                  ALIAS("<vis-operator-shift-right>gv")       },
+	{ "<C-a>",              ACTION(SELECTIONS_NEW_MATCH_ALL)            },
 	{ "<C-b>",              ALIAS("<PageUp>")                           },
 	{ "<C-c>",              ACTION(SELECTIONS_REMOVE_COLUMN)            },
 	{ "<C-d>",              ACTION(SELECTIONS_NEXT)                     },

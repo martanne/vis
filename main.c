@@ -260,6 +260,7 @@ enum {
 	VIS_ACTION_SELECTIONS_NEW_LINE_BELOW_LAST,
 	VIS_ACTION_SELECTIONS_NEW_LINES_BEGIN,
 	VIS_ACTION_SELECTIONS_NEW_LINES_END,
+	VIS_ACTION_SELECTIONS_NEW_MATCH_ALL,
 	VIS_ACTION_SELECTIONS_NEW_MATCH_NEXT,
 	VIS_ACTION_SELECTIONS_NEW_MATCH_SKIP,
 	VIS_ACTION_SELECTIONS_ALIGN,
@@ -917,6 +918,11 @@ static const KeyAction vis_action[] = {
 		VIS_HELP("Create a new selection at the end of every line covered by selection")
 		operator, { .i = VIS_OP_CURSOR_EOL }
 	},
+	[VIS_ACTION_SELECTIONS_NEW_MATCH_ALL] = {
+		"vis-selection-new-match-all",
+		VIS_HELP("Select all regions matching the current selection")
+		selections_match_next, { .b = true }
+	},
 	[VIS_ACTION_SELECTIONS_NEW_MATCH_NEXT] = {
 		"vis-selection-new-match-next",
 		VIS_HELP("Select the next region matching the current selection")
@@ -1325,7 +1331,7 @@ static const char *selections_clear(Vis *vis, const char *keys, const Arg *arg) 
 	return keys;
 }
 
-static const Selection *selection_new_primary(View *view, Filerange *r) {
+static Selection *selection_new(View *view, Filerange *r, bool isprimary) {
 	Text *txt = view_text(view);
 	size_t pos = text_char_prev(txt, r->end);
 	Selection *s = view_selections_new(view, pos);
@@ -1333,7 +1339,8 @@ static const Selection *selection_new_primary(View *view, Filerange *r) {
 		return NULL;
 	view_selections_set(s, r);
 	view_selections_anchor(s, true);
-	view_selections_primary_set(s);
+	if (isprimary)
+		view_selections_primary_set(s);
 	return s;
 }
 
@@ -1363,15 +1370,26 @@ static const char *selections_match_next(Vis *vis, const char *keys, const Arg *
 	if (!buf)
 		return keys;
 
-	Filerange word = find_next(txt, sel.end, buf);
-	if (text_range_valid(&word) && selection_new_primary(view, &word))
-		goto out;
+	bool match_all = arg->b;
+	Filerange primary = sel;
 
-	sel = view_selections_get(view_selections(view));
-	word = find_prev(txt, sel.start, buf);
-	if (!text_range_valid(&word))
-		goto out;
-	selection_new_primary(view, &word);
+	for (;;) {
+		sel = find_next(txt, sel.end, buf);
+		if (!text_range_valid(&sel))
+			break;
+		if (selection_new(view, &sel, !match_all) && !match_all)
+			goto out;
+	}
+
+	sel = primary;
+
+	for (;;) {
+		sel = find_prev(txt, sel.start, buf);
+		if (!text_range_valid(&sel))
+			break;
+		if (selection_new(view, &sel, !match_all) && !match_all)
+			break;
+	}
 
 out:
 	free(buf);
