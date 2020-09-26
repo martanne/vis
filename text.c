@@ -1438,15 +1438,23 @@ bool text_iterator_valid(const Iterator *it) {
 	return it->piece && it->piece->text;
 }
 
+bool text_iterator_has_next(const Iterator *it) {
+	return it->piece && it->piece->next;
+}
+
+bool text_iterator_has_prev(const Iterator *it) {
+	return it->piece && it->piece->prev;
+}
+
 bool text_iterator_byte_next(Iterator *it, char *b) {
-	if (!it->piece || !it->piece->next)
+	if (!text_iterator_has_next(it))
 		return false;
 	bool eof = true;
 	if (it->text < it->end) {
 		it->text++;
 		it->pos++;
 		eof = false;
-	} else if (!it->piece->prev) {
+	} else if (!text_iterator_has_prev(it)) {
 		eof = false;
 	}
 
@@ -1466,9 +1474,9 @@ bool text_iterator_byte_next(Iterator *it, char *b) {
 }
 
 bool text_iterator_byte_prev(Iterator *it, char *b) {
-	if (!it->piece || !it->piece->prev)
+	if (!text_iterator_has_prev(it))
 		return false;
-	bool eof = !it->piece->next;
+	bool eof = !text_iterator_has_next(it);
 	while (it->text == it->start) {
 		if (!text_iterator_prev(it)) {
 			if (!eof)
