@@ -250,6 +250,7 @@ char *text_bytes_alloc0(Text*, size_t pos, size_t len);
  * @{
  */
 Iterator text_iterator_get(Text*, size_t pos);
+Text *text_iterator_text(const Iterator*);
 bool text_iterator_valid(const Iterator*);
 bool text_iterator_has_next(const Iterator*);
 bool text_iterator_has_prev(const Iterator*);

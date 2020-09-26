@@ -1411,10 +1411,11 @@ Iterator text_iterator_get(Text *txt, size_t pos) {
 
 bool text_iterator_byte_get(Iterator *it, char *b) {
 	if (text_iterator_valid(it)) {
+		Text *txt = text_iterator_text(it);
 		if (it->start <= it->text && it->text < it->end) {
 			*b = *it->text;
 			return true;
-		} else if (it->pos == it->piece->text->size) { /* EOF */
+		} else if (it->pos == text_size(txt)) {
 			*b = '\0';
 			return true;
 		}
@@ -1431,6 +1432,10 @@ bool text_iterator_prev(Iterator *it) {
 	size_t off = it->text - it->start;
 	size_t len = it->piece && it->piece->prev ? it->piece->prev->len : 0;
 	return text_iterator_init(it, it->pos-off, it->piece ? it->piece->prev : NULL, len);
+}
+
+Text *text_iterator_text(const Iterator *it) {
+	return it->piece ? it->piece->text : NULL;
 }
 
 bool text_iterator_valid(const Iterator *it) {
@@ -1549,9 +1554,10 @@ bool text_iterator_char_next(Iterator *it, char *c) {
 	if (!text_iterator_codepoint_next(it, c))
 		return false;
 	mbstate_t ps = { 0 };
+	Text *txt = text_iterator_text(it);
 	for (;;) {
 		char buf[MB_LEN_MAX];
-		size_t len = text_bytes_get(it->piece->text, it->pos, sizeof buf, buf);
+		size_t len = text_bytes_get(txt, it->pos, sizeof buf, buf);
 		wchar_t wc;
 		size_t wclen = mbrtowc(&wc, buf, len, &ps);
 		if (wclen == (size_t)-1 && errno == EILSEQ) {
@@ -1574,9 +1580,10 @@ bool text_iterator_char_next(Iterator *it, char *c) {
 bool text_iterator_char_prev(Iterator *it, char *c) {
 	if (!text_iterator_codepoint_prev(it, c))
 		return false;
+	Text *txt = text_iterator_text(it);
 	for (;;) {
 		char buf[MB_LEN_MAX];
-		size_t len = text_bytes_get(it->piece->text, it->pos, sizeof buf, buf);
+		size_t len = text_bytes_get(txt, it->pos, sizeof buf, buf);
 		wchar_t wc;
 		mbstate_t ps = { 0 };
 		size_t wclen = mbrtowc(&wc, buf, len, &ps);
