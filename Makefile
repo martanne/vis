@@ -10,6 +10,7 @@ SRC = array.c \
 	sam.c \
 	text.c \
 	text-io.c \
+	text-iterator.c \
 	text-motions.c \
 	text-objects.c \
 	text-util.c \
