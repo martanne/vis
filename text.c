@@ -141,6 +141,7 @@ struct TextSave {                  /* used to hold context between text_save_{be
 static Block *block_alloc(size_t size);
 static Block *block_read(size_t size, int fd);
 static Block *block_mmap(size_t size, int fd, off_t offset);
+static Block *block_load(int dirfd, const char *filename, enum TextLoadMethod method, struct stat *info);
 static void block_free(Block*);
 static bool block_capacity(Block*, size_t len);
 static const char *block_append(Block*, const char *data, size_t len);
@@ -242,6 +243,32 @@ static Block *block_mmap(size_t size, int fd, off_t offset) {
 	blk->size = size;
 	blk->len = size;
 	return blk;
+}
+
+static Block *block_load(int dirfd, const char *filename, enum TextLoadMethod method, struct stat *info) {
+	Block *block = NULL;
+	int fd = openat(dirfd, filename, O_RDONLY);
+	if (fd == -1)
+		goto out;
+	if (fstat(fd, info) == -1)
+		goto out;
+	if (!S_ISREG(info->st_mode)) {
+		errno = S_ISDIR(info->st_mode) ? EISDIR : ENOTSUP;
+		goto out;
+	}
+
+	// XXX: use lseek(fd, 0, SEEK_END); instead?
+	size_t size = info->st_size;
+	if (size == 0)
+		goto out;
+	if (method == TEXT_LOAD_READ || (method == TEXT_LOAD_AUTO && size < BLOCK_MMAP_SIZE))
+		block = block_read(size, fd);
+	else
+		block = block_mmap(size, fd, 0);
+out:
+	if (fd != -1)
+		close(fd);
+	return block;
 }
 
 static void block_free(Block *blk) {
@@ -1157,41 +1184,30 @@ Text *text_load_method(const char *filename, enum TextLoadMethod method) {
 }
 
 Text *text_loadat_method(int dirfd, const char *filename, enum TextLoadMethod method) {
-	int fd = -1;
-	size_t size = 0;
 	Text *txt = calloc(1, sizeof *txt);
 	if (!txt)
 		return NULL;
 	Piece *p = piece_alloc(txt);
 	if (!p)
 		goto out;
+	Block *block = NULL;
 	array_init(&txt->blocks);
 	lineno_cache_invalidate(&txt->lines);
 	if (filename) {
-		if ((fd = openat(dirfd, filename, O_RDONLY)) == -1)
+		errno = 0;
+		block = block_load(dirfd, filename, method, &txt->info);
+		if (!block && errno)
 			goto out;
-		if (fstat(fd, &txt->info) == -1)
+		if (block && !array_add_ptr(&txt->blocks, block)) {
+			block_free(block);
 			goto out;
-		if (!S_ISREG(txt->info.st_mode)) {
-			errno = S_ISDIR(txt->info.st_mode) ? EISDIR : ENOTSUP;
-			goto out;
-		}
-		// XXX: use lseek(fd, 0, SEEK_END); instead?
-		size = txt->info.st_size;
-		if (size > 0) {
-			Block *block;
-			if (method == TEXT_LOAD_READ || (method == TEXT_LOAD_AUTO && size < BLOCK_MMAP_SIZE))
-				block = block_read(size, fd);
-			else
-				block = block_mmap(size, fd, 0);
-			if (!block || !array_add_ptr(&txt->blocks, block))
-				goto out;
-			piece_init(p, &txt->begin, &txt->end, block->data, block->len);
 		}
 	}
 
-	if (size == 0)
+	if (!block)
 		piece_init(p, &txt->begin, &txt->end, "\0", 0);
+	else
+		piece_init(p, &txt->begin, &txt->end, block->data, block->len);
 
 	piece_init(&txt->begin, NULL, p, NULL, 0);
 	piece_init(&txt->end, p, NULL, NULL, 0);
@@ -1201,12 +1217,8 @@ Text *text_loadat_method(int dirfd, const char *filename, enum TextLoadMethod me
 	text_snapshot(txt);
 	txt->saved_revision = txt->history;
 
-	if (fd != -1)
-		close(fd);
 	return txt;
 out:
-	if (fd != -1)
-		close(fd);
 	text_free(txt);
 	return NULL;
 }
