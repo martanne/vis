@@ -212,20 +212,21 @@ static Block *block_read(Text *txt, size_t size, int fd) {
 	Block *blk = block_alloc(txt, size);
 	if (!blk)
 		return NULL;
-	while (size > 0) {
-		char data[4096];
-		ssize_t len = read(fd, data, MIN(sizeof(data), size));
+	char *data = blk->data;
+	size_t rem = size;
+	while (rem > 0) {
+		ssize_t len = read(fd, data, rem);
 		if (len == -1) {
-			txt->blocks = blk->next;
 			block_free(blk);
 			return NULL;
 		} else if (len == 0) {
 			break;
 		} else {
-			block_append(blk, data, len);
-			size -= len;
+			data += len;
+			rem -= len;
 		}
 	}
+	blk->len = size - rem;
 	return blk;
 }
 
