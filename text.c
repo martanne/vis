@@ -173,6 +173,7 @@ static void lineno_cache_invalidate(LineCache *cache);
 static size_t lines_skip_forward(Text *txt, size_t pos, size_t lines, size_t *lines_skiped);
 static size_t lines_count(Text *txt, size_t pos, size_t len);
 static void text_saved(Text*, struct stat *meta);
+static Block *text_block_mmaped(Text*);
 
 static ssize_t write_all(int fd, const char *buf, size_t count) {
 	size_t rem = count;
@@ -993,9 +994,8 @@ static bool text_save_begin_inplace(TextSave *ctx) {
 	if (fstat(ctx->fd, &now) == -1)
 		goto err;
 	struct stat loaded = text_stat(txt);
-	Block *block = array_get_ptr(&txt->blocks, 0);
-	if (now.st_dev == loaded.st_dev && now.st_ino == loaded.st_ino &&
-	    block && block->type == MMAP_ORIG && block->size) {
+	Block *block = text_block_mmaped(txt);
+	if (block && now.st_dev == loaded.st_dev && now.st_ino == loaded.st_ino) {
 		/* The file we are going to overwrite is currently mmap-ed from
 		 * text_load, therefore we copy the mmap-ed block to a temporary
 		 * file and remap it at the same position such that all pointers
@@ -1227,6 +1227,13 @@ static void text_saved(Text *txt, struct stat *meta) {
 		txt->info = *meta;
 	txt->saved_revision = txt->history;
 	text_snapshot(txt);
+}
+
+static Block *text_block_mmaped(Text *txt) {
+	Block *block = array_get_ptr(&txt->blocks, 0);
+	if (block && block->type == MMAP_ORIG && block->size)
+		return block;
+	return NULL;
 }
 
 /* A delete operation can either start/stop midway through a piece or at
