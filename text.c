@@ -986,14 +986,15 @@ static bool text_save_commit_atomic(TextSave *ctx) {
 
 static bool text_save_begin_inplace(TextSave *ctx) {
 	Text *txt = ctx->txt;
-	struct stat meta = { 0 };
+	struct stat now = { 0 };
 	int newfd = -1, saved_errno;
 	if ((ctx->fd = openat(ctx->dirfd, ctx->filename, O_CREAT|O_WRONLY, 0666)) == -1)
 		goto err;
-	if (fstat(ctx->fd, &meta) == -1)
+	if (fstat(ctx->fd, &now) == -1)
 		goto err;
+	struct stat loaded = text_stat(txt);
 	Block *block = array_get_ptr(&txt->blocks, 0);
-	if (meta.st_dev == txt->info.st_dev && meta.st_ino == txt->info.st_ino &&
+	if (now.st_dev == loaded.st_dev && now.st_ino == loaded.st_ino &&
 	    block && block->type == MMAP_ORIG && block->size) {
 		/* The file we are going to overwrite is currently mmap-ed from
 		 * text_load, therefore we copy the mmap-ed block to a temporary
