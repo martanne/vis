@@ -172,6 +172,7 @@ static void revision_free(Revision *rev);
 static void lineno_cache_invalidate(LineCache *cache);
 static size_t lines_skip_forward(Text *txt, size_t pos, size_t lines, size_t *lines_skiped);
 static size_t lines_count(Text *txt, size_t pos, size_t len);
+static void text_saved(Text*, struct stat *meta);
 
 static ssize_t write_all(int fd, const char *buf, size_t count) {
 	size_t rem = count;
@@ -979,8 +980,7 @@ static bool text_save_commit_atomic(TextSave *ctx) {
 	if (close(dir) == -1)
 		return false;
 
-	if (meta.st_mtime)
-		ctx->txt->info = meta;
+	text_saved(ctx->txt, &meta);
 	return true;
 }
 
@@ -1045,7 +1045,7 @@ static bool text_save_commit_inplace(TextSave *ctx) {
 		return false;
 	if (close(ctx->fd) == -1)
 		return false;
-	ctx->txt->info = meta;
+	text_saved(ctx->txt, &meta);
 	return true;
 }
 
@@ -1076,7 +1076,6 @@ bool text_save_commit(TextSave *ctx) {
 	if (!ctx)
 		return true;
 	bool ret;
-	Text *txt = ctx->txt;
 	switch (ctx->type) {
 	case TEXT_SAVE_ATOMIC:
 		ret = text_save_commit_atomic(ctx);
@@ -1089,10 +1088,6 @@ bool text_save_commit(TextSave *ctx) {
 		break;
 	}
 
-	if (ret) {
-		txt->saved_revision = txt->history;
-		text_snapshot(txt);
-	}
 	text_save_cancel(ctx);
 	return ret;
 }
@@ -1129,8 +1124,7 @@ bool text_save_method(Text *txt, const char *filename, enum TextSaveMethod metho
 
 bool text_saveat_method(Text *txt, int dirfd, const char *filename, enum TextSaveMethod method) {
 	if (!filename) {
-		txt->saved_revision = txt->history;
-		text_snapshot(txt);
+		text_saved(txt, NULL);
 		return true;
 	}
 	TextSave *ctx = text_save_begin(txt, dirfd, filename, method);
@@ -1226,6 +1220,13 @@ out:
 
 struct stat text_stat(Text *txt) {
 	return txt->info;
+}
+
+static void text_saved(Text *txt, struct stat *meta) {
+	if (meta)
+		txt->info = *meta;
+	txt->saved_revision = txt->history;
+	text_snapshot(txt);
 }
 
 /* A delete operation can either start/stop midway through a piece or at
