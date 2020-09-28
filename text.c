@@ -26,6 +26,7 @@
 #include "text-util.h"
 #include "text-motions.h"
 #include "util.h"
+#include "array.h"
 
 /* Allocate blocks holding the actual file content in chunks of size: */
 #ifndef BLOCK_SIZE
@@ -49,7 +50,6 @@ struct Block {
 		MMAP,              /* mmap(2)-ed from a temporary file only known to this process */
 		MALLOC,            /* heap allocated block using malloc(3) */
 	} type;
-	Block *next;               /* next chunk */
 };
 
 /* A piece holds a reference (but doesn't itself store) a certain amount of data.
@@ -115,8 +115,7 @@ typedef struct {
 
 /* The main struct holding all information of a given file */
 struct Text {
-	Block *block;           /* original file content at the time of load operation */
-	Block *blocks;          /* all blocks which have been allocated to hold insertion data */
+	Array blocks;           /* blocks which hold text content */
 	Piece *pieces;          /* all pieces which have been allocated, used to free them */
 	Piece *cache;           /* most recently modified piece */
 	Piece begin, end;       /* sentinel nodes which always exists but don't hold any data */
@@ -139,9 +138,9 @@ struct TextSave {                  /* used to hold context between text_save_{be
 };
 
 /* block management */
-static Block *block_alloc(Text*, size_t size);
-static Block *block_read(Text*, size_t size, int fd);
-static Block *block_mmap(Text*, size_t size, int fd, off_t offset);
+static Block *block_alloc(size_t size);
+static Block *block_read(size_t size, int fd);
+static Block *block_mmap(size_t size, int fd, off_t offset);
 static void block_free(Block*);
 static bool block_capacity(Block*, size_t len);
 static const char *block_append(Block*, const char *data, size_t len);
@@ -191,7 +190,7 @@ static ssize_t write_all(int fd, const char *buf, size_t count) {
 }
 
 /* allocate a new block of MAX(size, BLOCK_SIZE) bytes */
-static Block *block_alloc(Text *txt, size_t size) {
+static Block *block_alloc(size_t size) {
 	Block *blk = calloc(1, sizeof *blk);
 	if (!blk)
 		return NULL;
@@ -203,13 +202,11 @@ static Block *block_alloc(Text *txt, size_t size) {
 	}
 	blk->type = MALLOC;
 	blk->size = size;
-	blk->next = txt->blocks;
-	txt->blocks = blk;
 	return blk;
 }
 
-static Block *block_read(Text *txt, size_t size, int fd) {
-	Block *blk = block_alloc(txt, size);
+static Block *block_read(size_t size, int fd) {
+	Block *blk = block_alloc(size);
 	if (!blk)
 		return NULL;
 	char *data = blk->data;
@@ -230,7 +227,7 @@ static Block *block_read(Text *txt, size_t size, int fd) {
 	return blk;
 }
 
-static Block *block_mmap(Text *txt, size_t size, int fd, off_t offset) {
+static Block *block_mmap(size_t size, int fd, off_t offset) {
 	Block *blk = calloc(1, sizeof *blk);
 	if (!blk)
 		return NULL;
@@ -244,8 +241,6 @@ static Block *block_mmap(Text *txt, size_t size, int fd, off_t offset) {
 	blk->type = MMAP_ORIG;
 	blk->size = size;
 	blk->len = size;
-	blk->next = txt->blocks;
-	txt->blocks = blk;
 	return blk;
 }
 
@@ -274,9 +269,16 @@ static const char *block_append(Block *blk, const char *data, size_t len) {
 /* stores the given data in a block, allocates a new one if necessary. returns
  * a pointer to the storage location or NULL if allocation failed. */
 static const char *block_store(Text *txt, const char *data, size_t len) {
-	Block *blk = txt->blocks;
-	if ((!blk || !block_capacity(blk, len)) && !(blk = block_alloc(txt, len)))
-		return NULL;
+	Block *blk = array_get_ptr(&txt->blocks, array_length(&txt->blocks)-1);
+	if (!blk || !block_capacity(blk, len)) {
+		blk = block_alloc(len);
+		if (!blk)
+			return NULL;
+		if (!array_add_ptr(&txt->blocks, blk)) {
+			block_free(blk);
+			return NULL;
+		}
+	}
 	return block_append(blk, data, len);
 }
 
@@ -312,7 +314,7 @@ static bool block_delete(Block *blk, size_t pos, size_t len) {
 
 /* cache the given piece if it is the most recently changed one */
 static void cache_piece(Text *txt, Piece *p) {
-	Block *blk = txt->blocks;
+	Block *blk = array_get_ptr(&txt->blocks, array_length(&txt->blocks)-1);
 	if (!blk || p->data < blk->data || p->data + p->len != blk->data + blk->len)
 		return;
 	txt->cache = p;
@@ -320,7 +322,7 @@ static void cache_piece(Text *txt, Piece *p) {
 
 /* check whether the given piece was the most recently modified one */
 static bool cache_contains(Text *txt, Piece *p) {
-	Block *blk = txt->blocks;
+	Block *blk = array_get_ptr(&txt->blocks, array_length(&txt->blocks)-1);
 	Revision *rev = txt->current_revision;
 	if (!blk || !txt->cache || txt->cache != p || !rev || !rev->change)
 		return false;
@@ -344,7 +346,7 @@ static bool cache_contains(Text *txt, Piece *p) {
 static bool cache_insert(Text *txt, Piece *p, size_t off, const char *data, size_t len) {
 	if (!cache_contains(txt, p))
 		return false;
-	Block *blk = txt->blocks;
+	Block *blk = array_get_ptr(&txt->blocks, array_length(&txt->blocks)-1);
 	size_t bufpos = p->data + off - blk->data;
 	if (!block_insert(blk, bufpos, data, len))
 		return false;
@@ -361,7 +363,7 @@ static bool cache_insert(Text *txt, Piece *p, size_t off, const char *data, size
 static bool cache_delete(Text *txt, Piece *p, size_t off, size_t len) {
 	if (!cache_contains(txt, p))
 		return false;
-	Block *blk = txt->blocks;
+	Block *blk = array_get_ptr(&txt->blocks, array_length(&txt->blocks)-1);
 	size_t end;
 	size_t bufpos = p->data + off - blk->data;
 	if (!addu(off, len, &end) || end > p->len || !block_delete(blk, bufpos, len))
@@ -963,7 +965,7 @@ static bool text_save_begin_inplace(TextSave *ctx) {
 		goto err;
 	if (fstat(ctx->fd, &meta) == -1)
 		goto err;
-	Block *block = txt->block;
+	Block *block = array_get_ptr(&txt->blocks, 0);
 	if (meta.st_dev == txt->info.st_dev && meta.st_ino == txt->info.st_ino &&
 	    block && block->type == MMAP_ORIG && block->size) {
 		/* The file we are going to overwrite is currently mmap-ed from
@@ -1163,6 +1165,7 @@ Text *text_loadat_method(int dirfd, const char *filename, enum TextLoadMethod me
 	Piece *p = piece_alloc(txt);
 	if (!p)
 		goto out;
+	array_init(&txt->blocks);
 	lineno_cache_invalidate(&txt->lines);
 	if (filename) {
 		if ((fd = openat(dirfd, filename, O_RDONLY)) == -1)
@@ -1176,13 +1179,14 @@ Text *text_loadat_method(int dirfd, const char *filename, enum TextLoadMethod me
 		// XXX: use lseek(fd, 0, SEEK_END); instead?
 		size = txt->info.st_size;
 		if (size > 0) {
+			Block *block;
 			if (method == TEXT_LOAD_READ || (method == TEXT_LOAD_AUTO && size < BLOCK_MMAP_SIZE))
-				txt->block = block_read(txt, size, fd);
+				block = block_read(size, fd);
 			else
-				txt->block = block_mmap(txt, size, fd, 0);
-			if (!txt->block)
+				block = block_mmap(size, fd, 0);
+			if (!block || !array_add_ptr(&txt->blocks, block))
 				goto out;
-			piece_init(p, &txt->begin, &txt->end, txt->block->data, txt->block->len);
+			piece_init(p, &txt->begin, &txt->end, block->data, block->len);
 		}
 	}
 
@@ -1343,10 +1347,9 @@ void text_free(Text *txt) {
 		piece_free(p);
 	}
 
-	for (Block *next, *blk = txt->blocks; blk; blk = next) {
-		next = blk->next;
-		block_free(blk);
-	}
+	for (size_t i = 0, len = array_length(&txt->blocks); i < len; i++)
+		block_free(array_get_ptr(&txt->blocks, i));
+	array_release(&txt->blocks);
 
 	free(txt);
 }
@@ -1357,7 +1360,8 @@ bool text_modified(Text *txt) {
 
 bool text_mmaped(Text *txt, const char *ptr) {
 	uintptr_t addr = (uintptr_t)ptr;
-	for (Block *blk = txt->blocks; blk; blk = blk->next) {
+	for (size_t i = 0, len = array_length(&txt->blocks); i < len; i++) {
+		Block *blk = array_get_ptr(&txt->blocks, i);
 		if ((blk->type == MMAP_ORIG || blk->type == MMAP) &&
 		    (uintptr_t)(blk->data) <= addr && addr < (uintptr_t)(blk->data + blk->size))
 			return true;
