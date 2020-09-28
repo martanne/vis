@@ -46,9 +46,9 @@ struct Block {
 	size_t len;                /* current used length / insertion position */
 	char *data;                /* actual data */
 	enum {                     /* type of allocation */
-		MMAP_ORIG,         /* mmap(2)-ed from an external file */
-		MMAP,              /* mmap(2)-ed from a temporary file only known to this process */
-		MALLOC,            /* heap allocated block using malloc(3) */
+		BLOCK_TYPE_MMAP_ORIG, /* mmap(2)-ed from an external file */
+		BLOCK_TYPE_MMAP,      /* mmap(2)-ed from a temporary file only known to this process */
+		BLOCK_TYPE_MALLOC,    /* heap allocated block using malloc(3) */
 	} type;
 };
 
@@ -203,7 +203,7 @@ static Block *block_alloc(size_t size) {
 		free(blk);
 		return NULL;
 	}
-	blk->type = MALLOC;
+	blk->type = BLOCK_TYPE_MALLOC;
 	blk->size = size;
 	return blk;
 }
@@ -241,7 +241,7 @@ static Block *block_mmap(size_t size, int fd, off_t offset) {
 			return NULL;
 		}
 	}
-	blk->type = MMAP_ORIG;
+	blk->type = BLOCK_TYPE_MMAP_ORIG;
 	blk->size = size;
 	blk->len = size;
 	return blk;
@@ -276,9 +276,9 @@ out:
 static void block_free(Block *blk) {
 	if (!blk)
 		return;
-	if (blk->type == MALLOC)
+	if (blk->type == BLOCK_TYPE_MALLOC)
 		free(blk->data);
-	else if ((blk->type == MMAP_ORIG || blk->type == MMAP) && blk->data)
+	else if ((blk->type == BLOCK_TYPE_MMAP_ORIG || blk->type == BLOCK_TYPE_MMAP) && blk->data)
 		munmap(blk->data, blk->size);
 	free(blk);
 }
@@ -1018,7 +1018,7 @@ static bool text_save_begin_inplace(TextSave *ctx) {
 		newfd = -1;
 		if (close_failed)
 			goto err;
-		block->type = MMAP;
+		block->type = BLOCK_TYPE_MMAP;
 	}
 	/* overwrite the existing file content, if something goes wrong
 	 * here we are screwed, TODO: make a backup before? */
@@ -1231,7 +1231,7 @@ static void text_saved(Text *txt, struct stat *meta) {
 
 static Block *text_block_mmaped(Text *txt) {
 	Block *block = array_get_ptr(&txt->blocks, 0);
-	if (block && block->type == MMAP_ORIG && block->size)
+	if (block && block->type == BLOCK_TYPE_MMAP_ORIG && block->size)
 		return block;
 	return NULL;
 }
@@ -1383,7 +1383,7 @@ bool text_mmaped(Text *txt, const char *ptr) {
 	uintptr_t addr = (uintptr_t)ptr;
 	for (size_t i = 0, len = array_length(&txt->blocks); i < len; i++) {
 		Block *blk = array_get_ptr(&txt->blocks, i);
-		if ((blk->type == MMAP_ORIG || blk->type == MMAP) &&
+		if ((blk->type == BLOCK_TYPE_MMAP_ORIG || blk->type == BLOCK_TYPE_MMAP) &&
 		    (uintptr_t)(blk->data) <= addr && addr < (uintptr_t)(blk->data + blk->size))
 			return true;
 	}
