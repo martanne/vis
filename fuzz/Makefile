@@ -4,7 +4,7 @@ ALL = text-fuzzer text-libfuzzer buffer-fuzzer
 CC = afl-gcc
 CFLAGS += -I. -I../.. -DBUFFER_SIZE=4 -DBLOCK_SIZE=4
 
-TEXT_SRC = ../../text.c ../../text-util.c ../../text-motions.c ../../text-objects.c ../../text-regex.c
+TEXT_SRC = ../../text.c ../../text-util.c ../../text-motions.c ../../text-objects.c ../../text-regex.c ../../array.c
 
 test: $(ALL)
 

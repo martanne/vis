@@ -14,7 +14,7 @@ config.h:
 	@echo Generating ccan configuration header
 	@${CC} ccan-config.c -o ccan-config && ./ccan-config > config.h
 
-text-test: config.h text-test.c ../../text.c ../../text-util.c ../../text-motions.c ../../text-objects.c ../../text-regex.c
+text-test: config.h text-test.c ../../text.c ../../text-util.c ../../text-motions.c ../../text-objects.c ../../text-regex.c ../../array.c
 	@echo Compiling $@ binary
 	@${CC} ${CFLAGS} ${CFLAGS_STD} ${CFLAGS_LIBC} ${CFLAGS_EXTRA} ${filter %.c, $^} ${SRC} ${LDFLAGS} -o $@
 
