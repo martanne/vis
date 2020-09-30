@@ -128,7 +128,7 @@ size_t array_length(const Array *arr) {
 	return arr->len;
 }
 
-size_t array_capacity(Array *arr) {
+size_t array_capacity(const Array *arr) {
 	return arr->count;
 }
 
