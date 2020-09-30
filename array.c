@@ -11,7 +11,7 @@ void array_init(Array *arr) {
 	array_init_sized(arr, sizeof(void*));
 }
 
-void array_init_from(Array *arr, Array *from) {
+void array_init_from(Array *arr, const Array *from) {
 	array_init_sized(arr, from->elem_size);
 }
 

@@ -44,7 +44,7 @@ void array_init(Array*);
  */
 void array_init_sized(Array*, size_t elem_size);
 /** Initialize Array by using the same element size as in ``from``. */
-void array_init_from(Array*, Array *from);
+void array_init_from(Array*, const Array *from);
 /** Release storage space. Reinitializes Array object. */
 void array_release(Array*);
 /**
