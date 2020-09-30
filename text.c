@@ -1750,7 +1750,7 @@ Mark text_mark_set(Text *txt, size_t pos) {
 	return (Mark)(loc.piece->data + loc.off);
 }
 
-size_t text_mark_get(Text *txt, Mark mark) {
+size_t text_mark_get(const Text *txt, Mark mark) {
 	size_t cur = 0;
 
 	if (mark == EMARK)

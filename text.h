@@ -300,7 +300,7 @@ Mark text_mark_set(Text*, size_t pos);
  * @param mark The mark to look up.
  * @return The byte position or ``EPOS`` for an invalid mark.
  */
-size_t text_mark_get(Text*, Mark);
+size_t text_mark_get(const Text*, Mark);
 /**
  * @}
  * @defgroup save
