@@ -63,7 +63,7 @@ void *array_get(const Array *arr, size_t idx) {
 	return arr->items + (idx * arr->elem_size);
 }
 
-void *array_get_ptr(Array *arr, size_t idx) {
+void *array_get_ptr(const Array *arr, size_t idx) {
 	if (arr->elem_size != sizeof(void*)) {
 		errno = ENOTSUP;
 		return NULL;

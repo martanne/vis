@@ -76,7 +76,7 @@ void *array_get(const Array*, size_t idx);
  */
 bool array_set(Array*, size_t idx, void *item);
 /** Dereference pointer stored in array element. */
-void *array_get_ptr(Array*, size_t idx);
+void *array_get_ptr(const Array*, size_t idx);
 /** Store the address to which ``item`` points to into the array. */
 bool array_set_ptr(Array*, size_t idx, void *item);
 /** Add element to the end of the array. */
