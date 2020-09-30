@@ -128,6 +128,6 @@ void *array_pop(Array*);
  * .. warning:: The same ownership rules as for ``array_get`` apply.
  * @endrst
  */
-void *array_peek(Array*);
+void *array_peek(const Array*);
 
 #endif

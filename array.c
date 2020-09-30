@@ -165,7 +165,7 @@ void *array_pop(Array *arr) {
 	return item;
 }
 
-void *array_peek(Array *arr) {
+void *array_peek(const Array *arr) {
 	if (arr->len == 0)
 		return NULL;
 	return array_get(arr, arr->len - 1);
