@@ -411,7 +411,7 @@ ssize_t text_write_range(const Text*, const Filerange*, int fd);
  * Check whether ``ptr`` is part of a memory mapped region associated with
  * this text instance.
  */
-bool text_mmaped(Text*, const char *ptr);
+bool text_mmaped(const Text*, const char *ptr);
 /** @} */
 
 #endif

@@ -1379,7 +1379,7 @@ bool text_modified(const Text *txt) {
 	return txt->saved_revision != txt->history;
 }
 
-bool text_mmaped(Text *txt, const char *ptr) {
+bool text_mmaped(const Text *txt, const char *ptr) {
 	uintptr_t addr = (uintptr_t)ptr;
 	for (size_t i = 0, len = array_length(&txt->blocks); i < len; i++) {
 		Block *blk = array_get_ptr(&txt->blocks, i);
