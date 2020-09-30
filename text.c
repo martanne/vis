@@ -1375,7 +1375,7 @@ void text_free(Text *txt) {
 	free(txt);
 }
 
-bool text_modified(Text *txt) {
+bool text_modified(const Text *txt) {
 	return txt->saved_revision != txt->history;
 }
 

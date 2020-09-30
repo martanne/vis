@@ -132,7 +132,7 @@ size_t text_size(Text*);
  */
 struct stat text_stat(const Text*);
 /** Query whether the text contains any unsaved modifications. */
-bool text_modified(Text*);
+bool text_modified(const Text*);
 /**
  * @}
  * @defgroup modify
