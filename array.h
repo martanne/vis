@@ -66,7 +66,7 @@ bool array_reserve(Array*, size_t count);
  *              of new elements) might invalidate the pointer.
  * @endrst
  */
-void *array_get(Array*, size_t idx);
+void *array_get(const Array*, size_t idx);
 /**
  * Set array element.
  * @rst

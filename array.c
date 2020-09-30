@@ -55,7 +55,7 @@ void array_clear(Array *arr) {
 		memset(arr->items, 0, arr->count * arr->elem_size);
 }
 
-void *array_get(Array *arr, size_t idx) {
+void *array_get(const Array *arr, size_t idx) {
 	if (idx >= arr->len) {
 		errno = EINVAL;
 		return NULL;
