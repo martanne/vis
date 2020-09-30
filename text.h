@@ -221,7 +221,7 @@ size_t text_lineno_by_pos(Text*, size_t pos);
  *           return an artificial NUL byte at EOF.
  * @endrst
  */
-bool text_byte_get(Text*, size_t pos, char *byte);
+bool text_byte_get(const Text*, size_t pos, char *byte);
 /**
  * Store at most ``len`` bytes starting from ``pos`` into ``buf``.
  * @param pos The absolute starting position.
@@ -232,7 +232,7 @@ bool text_byte_get(Text*, size_t pos, char *byte);
  * .. warning:: ``buf`` will not be NUL terminated.
  * @endrst
  */
-size_t text_bytes_get(Text*, size_t pos, size_t len, char *buf);
+size_t text_bytes_get(const Text*, size_t pos, size_t len, char *buf);
 /**
  * Fetch text range into newly allocate memory region.
  * @param pos The absolute starting position.

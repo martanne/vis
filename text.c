@@ -1604,11 +1604,11 @@ bool text_iterator_char_prev(Iterator *it, char *c) {
 	return true;
 }
 
-bool text_byte_get(Text *txt, size_t pos, char *byte) {
+bool text_byte_get(const Text *txt, size_t pos, char *byte) {
 	return text_bytes_get(txt, pos, 1, byte);
 }
 
-size_t text_bytes_get(Text *txt, size_t pos, size_t len, char *buf) {
+size_t text_bytes_get(const Text *txt, size_t pos, size_t len, char *buf) {
 	if (!buf)
 		return 0;
 	char *cur = buf;
