@@ -197,7 +197,7 @@ size_t text_restore(Text*, time_t);
  * .. note:: TODO: This is currently not the same as the time of the last snapshot.
  * @endrst
  */
-time_t text_state(Text*);
+time_t text_state(const Text*);
 /**
  * @}
  * @defgroup lines

@@ -814,7 +814,7 @@ size_t text_restore(Text *txt, time_t time) {
 	return history_traverse_to(txt, rev);
 }
 
-time_t text_state(Text *txt) {
+time_t text_state(const Text *txt) {
 	return txt->history->time;
 }
 
