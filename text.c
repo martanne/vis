@@ -1641,7 +1641,7 @@ char *text_bytes_alloc0(const Text *txt, size_t pos, size_t len) {
 	return buf;
 }
 
-size_t text_size(Text *txt) {
+size_t text_size(const Text *txt) {
 	return txt->size;
 }
 

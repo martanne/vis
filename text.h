@@ -119,7 +119,7 @@ void text_free(Text*);
  * @{
  */
 /** Return the size in bytes of the whole text. */
-size_t text_size(Text*);
+size_t text_size(const Text*);
 /**
  * Get file information at time of load or last save, whichever happened more
  * recently.
