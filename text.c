@@ -1143,12 +1143,12 @@ ssize_t text_save_write_range(TextSave *ctx, Filerange *range) {
 	return text_write_range(ctx->txt, range, ctx->fd);
 }
 
-ssize_t text_write(Text *txt, int fd) {
+ssize_t text_write(const Text *txt, int fd) {
 	Filerange r = (Filerange){ .start = 0, .end = text_size(txt) };
 	return text_write_range(txt, &r, fd);
 }
 
-ssize_t text_write_range(Text *txt, Filerange *range, int fd) {
+ssize_t text_write_range(const Text *txt, const Filerange *range, int fd) {
 	size_t size = text_range_size(range), rem = size;
 	for (Iterator it = text_iterator_get(txt, range->start);
 	     rem > 0 && text_iterator_valid(&it);

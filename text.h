@@ -396,12 +396,12 @@ void text_save_cancel(TextSave*);
  * Write whole text content to file descriptor.
  * @return The number of bytes written or ``-1`` in case of an error.
  */
-ssize_t text_write(Text*, int fd);
+ssize_t text_write(const Text*, int fd);
 /**
  * Write file range to file descriptor.
  * @return The number of bytes written or ``-1`` in case of an error.
  */
-ssize_t text_write_range(Text*, Filerange*, int fd);
+ssize_t text_write_range(const Text*, const Filerange*, int fd);
 /**
  * @}
  * @defgroup misc
