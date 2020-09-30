@@ -158,7 +158,7 @@ static Piece *piece_alloc(Text *txt);
 static void piece_free(Piece *p);
 static void piece_init(Piece *p, Piece *prev, Piece *next, const char *data, size_t len);
 static Location piece_get_intern(Text *txt, size_t pos);
-static Location piece_get_extern(Text *txt, size_t pos);
+static Location piece_get_extern(const Text *txt, size_t pos);
 /* span management */
 static void span_init(Span *span, Piece *start, Piece *end);
 static void span_swap(Text *txt, Span *old, Span *new);
@@ -542,7 +542,7 @@ static Location piece_get_intern(Text *txt, size_t pos) {
  * it pos is the end of file (== text_size()) and the file is not empty then
  * the last piece holding data is returned.
  */
-static Location piece_get_extern(Text *txt, size_t pos) {
+static Location piece_get_extern(const Text *txt, size_t pos) {
 	size_t cur = 0;
 	Piece *p;
 
@@ -1402,7 +1402,7 @@ static bool text_iterator_init(Iterator *it, size_t pos, Piece *p, size_t off) {
 	return text_iterator_valid(it);
 }
 
-Iterator text_iterator_get(Text *txt, size_t pos) {
+Iterator text_iterator_get(const Text *txt, size_t pos) {
 	Iterator it;
 	Location loc = piece_get_extern(txt, pos);
 	text_iterator_init(&it, pos, loc.piece, loc.off);

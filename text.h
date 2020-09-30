@@ -249,7 +249,7 @@ char *text_bytes_alloc0(Text*, size_t pos, size_t len);
  * @defgroup iterator
  * @{
  */
-Iterator text_iterator_get(Text*, size_t pos);
+Iterator text_iterator_get(const Text*, size_t pos);
 Text *text_iterator_text(const Iterator*);
 bool text_iterator_valid(const Iterator*);
 bool text_iterator_has_next(const Iterator*);
