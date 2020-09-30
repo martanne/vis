@@ -1139,7 +1139,7 @@ bool text_saveat_method(Text *txt, int dirfd, const char *filename, enum TextSav
 	return text_save_commit(ctx);
 }
 
-ssize_t text_save_write_range(TextSave *ctx, Filerange *range) {
+ssize_t text_save_write_range(TextSave *ctx, const Filerange *range) {
 	return text_write_range(ctx->txt, range, ctx->fd);
 }
 

@@ -373,7 +373,7 @@ TextSave *text_save_begin(Text*, int dirfd, const char *filename, enum TextSaveM
  * Write file range.
  * @return The number of bytes written or ``-1`` in case of an error.
  */
-ssize_t text_save_write_range(TextSave*, Filerange*);
+ssize_t text_save_write_range(TextSave*, const Filerange*);
 /**
  * Commit changes to disk.
  * @return Whether changes have been saved.
