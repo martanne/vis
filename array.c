@@ -124,7 +124,7 @@ bool array_remove(Array *arr, size_t idx) {
 	return true;
 }
 
-size_t array_length(Array *arr) {
+size_t array_length(const Array *arr) {
 	return arr->len;
 }
 

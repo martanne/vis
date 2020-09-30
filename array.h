@@ -91,7 +91,7 @@ bool array_add_ptr(Array*, void *item);
  */
 bool array_remove(Array*, size_t idx);
 /** Number of elements currently stored in the array. */
-size_t array_length(Array*);
+size_t array_length(const Array*);
 /** Number of elements which can be stored without enlarging the array. */
 size_t array_capacity(Array*);
 /** Remove all elements with index greater or equal to ``length``, keep allocated memory. */
