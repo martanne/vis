@@ -1218,7 +1218,7 @@ out:
 	return NULL;
 }
 
-struct stat text_stat(Text *txt) {
+struct stat text_stat(const Text *txt) {
 	return txt->info;
 }
 

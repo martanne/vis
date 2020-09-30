@@ -130,7 +130,7 @@ size_t text_size(Text*);
  * @endrst
  * @return See ``stat(2)`` for details.
  */
-struct stat text_stat(Text*);
+struct stat text_stat(const Text*);
 /** Query whether the text contains any unsaved modifications. */
 bool text_modified(Text*);
 /**
