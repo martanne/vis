@@ -261,7 +261,7 @@ bool text_iterator_prev(Iterator*);
  * @defgroup iterator_byte
  * @{
  */
-bool text_iterator_byte_get(Iterator*, char *b);
+bool text_iterator_byte_get(const Iterator*, char *b);
 bool text_iterator_byte_prev(Iterator*, char *b);
 bool text_iterator_byte_next(Iterator*, char *b);
 bool text_iterator_byte_find_prev(Iterator*, char b);

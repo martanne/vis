@@ -1409,7 +1409,7 @@ Iterator text_iterator_get(const Text *txt, size_t pos) {
 	return it;
 }
 
-bool text_iterator_byte_get(Iterator *it, char *b) {
+bool text_iterator_byte_get(const Iterator *it, char *b) {
 	if (text_iterator_valid(it)) {
 		Text *txt = text_iterator_text(it);
 		if (it->start <= it->text && it->text < it->end) {
