@@ -1630,7 +1630,7 @@ size_t text_bytes_get(const Text *txt, size_t pos, size_t len, char *buf) {
 	return len - rem;
 }
 
-char *text_bytes_alloc0(Text *txt, size_t pos, size_t len) {
+char *text_bytes_alloc0(const Text *txt, size_t pos, size_t len) {
 	if (len == SIZE_MAX)
 		return NULL;
 	char *buf = malloc(len+1);

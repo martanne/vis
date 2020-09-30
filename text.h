@@ -243,7 +243,7 @@ size_t text_bytes_get(const Text*, size_t pos, size_t len, char *buf);
  * .. warning:: The returned pointer must be freed by the caller.
  * @endrst
  */
-char *text_bytes_alloc0(Text*, size_t pos, size_t len);
+char *text_bytes_alloc0(const Text*, size_t pos, size_t len);
 /**
  * @}
  * @defgroup iterator
