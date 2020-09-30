@@ -155,7 +155,7 @@ bool text_insert(Text*, size_t pos, const char *data, size_t len);
  * @return Whether the deletion succeeded.
  */
 bool text_delete(Text*, size_t pos, size_t len);
-bool text_delete_range(Text*, Filerange*);
+bool text_delete_range(Text*, const Filerange*);
 bool text_printf(Text*, size_t pos, const char *format, ...) __attribute__((format(printf, 3, 4)));
 bool text_appendf(Text*, const char *format, ...) __attribute__((format(printf, 2, 3)));
 /**
