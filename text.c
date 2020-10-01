@@ -1341,11 +1341,12 @@ bool text_delete_range(Text *txt, const Filerange *r) {
 
 /* preserve the current text content such that it can be restored by
  * means of undo/redo operations */
-void text_snapshot(Text *txt) {
+bool text_snapshot(Text *txt) {
 	if (txt->current_revision)
 		txt->last_revision = txt->current_revision;
 	txt->current_revision = NULL;
 	txt->cache = NULL;
+	return true;
 }
 
 

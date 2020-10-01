@@ -166,7 +166,7 @@ bool text_appendf(Text*, const char *format, ...) __attribute__((format(printf, 
 /**
  * Create a text snapshot, that is a vertice in the history graph.
  */
-void text_snapshot(Text*);
+bool text_snapshot(Text*);
 /**
  * Revert to previous snapshot along the main branch.
  * @rst
