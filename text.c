@@ -1412,7 +1412,7 @@ Iterator text_iterator_get(const Text *txt, size_t pos) {
 
 bool text_iterator_byte_get(const Iterator *it, char *b) {
 	if (text_iterator_valid(it)) {
-		Text *txt = text_iterator_text(it);
+		const Text *txt = text_iterator_text(it);
 		if (it->start <= it->text && it->text < it->end) {
 			*b = *it->text;
 			return true;
@@ -1435,7 +1435,7 @@ bool text_iterator_prev(Iterator *it) {
 	return text_iterator_init(it, it->pos-off, it->piece ? it->piece->prev : NULL, len);
 }
 
-Text *text_iterator_text(const Iterator *it) {
+const Text *text_iterator_text(const Iterator *it) {
 	return it->piece ? it->piece->text : NULL;
 }
 
@@ -1555,7 +1555,7 @@ bool text_iterator_char_next(Iterator *it, char *c) {
 	if (!text_iterator_codepoint_next(it, c))
 		return false;
 	mbstate_t ps = { 0 };
-	Text *txt = text_iterator_text(it);
+	const Text *txt = text_iterator_text(it);
 	for (;;) {
 		char buf[MB_LEN_MAX];
 		size_t len = text_bytes_get(txt, it->pos, sizeof buf, buf);
@@ -1581,7 +1581,7 @@ bool text_iterator_char_next(Iterator *it, char *c) {
 bool text_iterator_char_prev(Iterator *it, char *c) {
 	if (!text_iterator_codepoint_prev(it, c))
 		return false;
-	Text *txt = text_iterator_text(it);
+	const Text *txt = text_iterator_text(it);
 	for (;;) {
 		char buf[MB_LEN_MAX];
 		size_t len = text_bytes_get(txt, it->pos, sizeof buf, buf);
