@@ -9,6 +9,7 @@ SRC = array.c \
 	map.c \
 	sam.c \
 	text.c \
+	text-common.c \
 	text-io.c \
 	text-iterator.c \
 	text-motions.c \
