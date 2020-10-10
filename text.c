@@ -1391,7 +1391,7 @@ bool text_mmaped(const Text *txt, const char *ptr) {
 	return false;
 }
 
-static bool text_iterator_init(Iterator *it, size_t pos, Piece *p, size_t off) {
+static bool iterator_init(Iterator *it, size_t pos, Piece *p, size_t off) {
 	Iterator iter = (Iterator){
 		.pos = pos,
 		.piece = p,
@@ -1406,7 +1406,7 @@ static bool text_iterator_init(Iterator *it, size_t pos, Piece *p, size_t off) {
 Iterator text_iterator_get(const Text *txt, size_t pos) {
 	Iterator it;
 	Location loc = piece_get_extern(txt, pos);
-	text_iterator_init(&it, pos, loc.piece, loc.off);
+	iterator_init(&it, pos, loc.piece, loc.off);
 	return it;
 }
 
@@ -1426,13 +1426,13 @@ bool text_iterator_byte_get(const Iterator *it, char *b) {
 
 bool text_iterator_next(Iterator *it) {
 	size_t rem = it->end - it->text;
-	return text_iterator_init(it, it->pos+rem, it->piece ? it->piece->next : NULL, 0);
+	return iterator_init(it, it->pos+rem, it->piece ? it->piece->next : NULL, 0);
 }
 
 bool text_iterator_prev(Iterator *it) {
 	size_t off = it->text - it->start;
 	size_t len = it->piece && it->piece->prev ? it->piece->prev->len : 0;
-	return text_iterator_init(it, it->pos-off, it->piece ? it->piece->prev : NULL, len);
+	return iterator_init(it, it->pos-off, it->piece ? it->piece->prev : NULL, len);
 }
 
 const Text *text_iterator_text(const Iterator *it) {
