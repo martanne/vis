@@ -1403,10 +1403,14 @@ static bool iterator_init(Iterator *it, size_t pos, Piece *p, size_t off) {
 	return text_iterator_valid(it);
 }
 
+bool text_iterator_init(const Text *txt, Iterator *it, size_t pos) {
+	Location loc = piece_get_extern(txt, pos);
+	return iterator_init(it, pos, loc.piece, loc.off);
+}
+
 Iterator text_iterator_get(const Text *txt, size_t pos) {
 	Iterator it;
-	Location loc = piece_get_extern(txt, pos);
-	iterator_init(&it, pos, loc.piece, loc.off);
+	text_iterator_init(txt, &it, pos);
 	return it;
 }
 
