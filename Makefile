@@ -2,10 +2,28 @@
 
 REGEX_SRC ?= text-regex.c
 
-SRC = array.c buffer.c libutf.c main.c map.c \
-	sam.c text.c text-motions.c text-objects.c text-util.c \
-	ui-terminal.c view.c vis.c vis-lua.c vis-modes.c vis-motions.c \
-	vis-operators.c vis-registers.c vis-marks.c vis-prompt.c vis-text-objects.c $(REGEX_SRC)
+SRC = array.c \
+	buffer.c \
+	libutf.c \
+	main.c \
+	map.c \
+	sam.c \
+	text.c \
+	text-motions.c \
+	text-objects.c \
+	text-util.c \
+	ui-terminal.c \
+	view.c \
+	vis.c \
+	vis-lua.c \
+	vis-marks.c \
+	vis-modes.c \
+	vis-motions.c \
+	vis-operators.c \
+	vis-prompt.c \
+	vis-registers.c \
+	vis-text-objects.c \
+	$(REGEX_SRC)
 
 ELF = vis vis-menu vis-digraph
 EXECUTABLES = $(ELF) vis-clipboard vis-complete vis-open
