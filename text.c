@@ -803,8 +803,8 @@ static bool iterator_init(Iterator *it, size_t pos, Piece *p, size_t off) {
 		.pos = pos,
 		.piece = p,
 		.start = p ? p->data : NULL,
-		.end = p ? p->data + p->len : NULL,
-		.text = p ? p->data + off : NULL,
+		.end = p && p->data ? p->data + p->len : NULL,
+		.text = p && p->data ? p->data + off : NULL,
 	};
 	*it = iter;
 	return text_iterator_valid(it);
