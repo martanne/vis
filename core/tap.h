@@ -16,7 +16,7 @@ static int exit_status() {
 	bool _e = (e); \
 	printf("%sok %d - ", _e ? "" : "not ", ++test_count); \
 	printf(__VA_ARGS__); \
-	puts(""); \
+	printf("\n"); \
 	if (!_e) { \
 		failures++; \
 		printf(" Failed test (%s:%s() at line %d)\n", __FILE__, __func__, __LINE__); \
@@ -32,7 +32,7 @@ static int exit_status() {
 	while (_n--) { \
 		printf("ok %d # skip ", ++test_count); \
 		printf(__VA_ARGS__); \
-		puts(""); \
+		printf("\n"); \
 	} \
 } while (0)
 
