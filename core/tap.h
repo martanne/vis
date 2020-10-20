@@ -36,6 +36,15 @@ static int exit_status() {
 	} \
 } while (0)
 
+#include <time.h>
+time_t time(time_t *p)
+{
+	static time_t value;
+	value++;
+	if (p) *p = value;
+	return value;
+}
+
 #else
 #include <ccan/tap/tap.h>
 #define TIS_INTERPRETER 0
