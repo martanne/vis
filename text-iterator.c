@@ -27,7 +27,7 @@ bool text_iterator_byte_next(Iterator *it, char *b) {
 	if (!text_iterator_has_next(it))
 		return false;
 	bool eof = true;
-	if (it->text < it->end) {
+	if (it->text != it->end) {
 		it->text++;
 		it->pos++;
 		eof = false;
