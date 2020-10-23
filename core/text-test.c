@@ -194,6 +194,10 @@ int main(int argc, char *argv[]) {
 	ok(text_iterator_byte_get(&it, &b) && b == '\0' &&
 	   text_iterator_valid(&it), "Accessing iterator after moving back from beyond start of file");
 
+	ok(text_state(txt) > 0, "State on empty file");
+	ok(text_undo(txt) == EPOS && isempty(txt), "Undo on empty file");
+	ok(text_redo(txt) == EPOS && isempty(txt), "Redo on empty file");
+
 	char data[] = "a\nb\nc\n";
 	size_t data_len = strlen(data);
 	ok(insert(txt, 0, data), "Inserting new lines");
