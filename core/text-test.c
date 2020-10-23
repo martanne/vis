@@ -132,16 +132,20 @@ int main(int argc, char *argv[]) {
 			TEXT_SAVE_INPLACE,
 		};
 
-		for (size_t i = 0; i < LENGTH(save_method); i++) {
-			snprintf(buf, sizeof buf, "Hello World: %zu\n", i);
-			txt = text_load(NULL);
-			ok(txt && insert(txt, 0, buf) && compare(txt, buf), "Preparing to save (method %zu)", i);
-			ok(txt && text_save_method(txt, filename, save_method[i]), "Text save (method %zu)", i);
-			text_free(txt);
+		for (size_t l = 0; l < LENGTH(load_method); l++) {
+			for (size_t s = 0; s < LENGTH(save_method); s++) {
+				snprintf(buf, sizeof buf, "Hello World: (%zu, %zu)\n", l, s);
+				txt = text_load_method(filename, load_method[l]);
+				ok(txt, "Load (%zu, %zu)", l, s);
+				ok(txt && text_delete(txt, 0, text_size(txt)) && isempty(txt), "Empty (%zu, %zu)", l, s);
+				ok(txt && insert(txt, 0, buf) && compare(txt, buf), "Preparing to save (%zu, %zu)", l, s);
+				ok(txt && text_save_method(txt, filename, save_method[s]), "Text save (%zu, %zu)", l, s);
+				text_free(txt);
 
-			txt = text_load(filename);
-			ok(txt && compare(txt, buf), "Verify save (method %zu)", i);
-			text_free(txt);
+				txt = text_load(filename);
+				ok(txt && compare(txt, buf), "Verify save (%zu, %zu)", l, s);
+				text_free(txt);
+			}
 		}
 
 		int (*creation[])(const char*, const char*) = { symlink, link };
