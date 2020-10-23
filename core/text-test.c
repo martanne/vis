@@ -250,10 +250,10 @@ int main(int argc, char *argv[]) {
 	ok(text_undo(txt) != EPOS && compare(txt, "123456789"), "Undo 1");
 	ok(text_undo(txt) != EPOS && compare(txt, "123456"), "Undo 2");
 	ok(text_undo(txt) != EPOS && compare(txt, "12346"), "Undo 3");
-	ok(text_undo(txt) != EPOS && compare(txt, "123"), "Undo 3");
+	ok(text_undo(txt) != EPOS && compare(txt, "123"), "Undo 4");
 	ok(text_undo(txt) != EPOS && compare(txt, "13"), "Undo 5");
 	ok(text_undo(txt) != EPOS && compare(txt, "3"), "Undo 6");
-	ok(text_undo(txt) != EPOS && compare(txt, ""), "Undo 6");
+	ok(text_undo(txt) != EPOS && compare(txt, ""), "Undo 7");
 	ok(text_redo(txt) != EPOS && compare(txt, "3"), "Redo 1");
 	ok(text_redo(txt) != EPOS && compare(txt, "13"), "Redo 2");
 	ok(text_redo(txt) != EPOS && compare(txt, "123"), "Redo 3");
