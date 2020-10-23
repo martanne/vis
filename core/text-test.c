@@ -269,6 +269,20 @@ int main(int argc, char *argv[]) {
 	ok(text_redo(txt) != EPOS && compare(txt, "123456"), "Redo 5");
 	ok(text_redo(txt) != EPOS && compare(txt, "123456789"), "Redo 6");
 	ok(text_redo(txt) != EPOS && compare(txt, "1234567890"), "Redo 7");
+	ok(text_earlier(txt) != EPOS && compare(txt, "123456789"), "Earlier 1");
+	ok(text_earlier(txt) != EPOS && compare(txt, "123456"), "Earlier 2");
+	ok(text_earlier(txt) != EPOS && compare(txt, "12346"), "Earlier 3");
+	ok(text_earlier(txt) != EPOS && compare(txt, "123"), "Earlier 4");
+	ok(text_earlier(txt) != EPOS && compare(txt, "13"), "Earlier 5");
+	ok(text_earlier(txt) != EPOS && compare(txt, "3"), "Earlier 6");
+	ok(text_earlier(txt) != EPOS && compare(txt, ""), "Earlier 7");
+	ok(text_later(txt) != EPOS && compare(txt, "3"), "Later 1");
+	ok(text_later(txt) != EPOS && compare(txt, "13"), "Later 2");
+	ok(text_later(txt) != EPOS && compare(txt, "123"), "Later 3");
+	ok(text_later(txt) != EPOS && compare(txt, "12346"), "Later 4");
+	ok(text_later(txt) != EPOS && compare(txt, "123456"), "Later 5");
+	ok(text_later(txt) != EPOS && compare(txt, "123456789"), "Later 6");
+	ok(text_later(txt) != EPOS && compare(txt, "1234567890"), "Later 7");
 
 	/* test regular deletion (i.e. with multiple pieces) */
 	ok(text_delete(txt, 8, 2) && compare(txt, "12345678"), "Deleting midway start");
