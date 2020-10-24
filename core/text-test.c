@@ -134,6 +134,10 @@ int main(int argc, char *argv[]) {
 
 		for (size_t l = 0; l < LENGTH(load_method); l++) {
 			for (size_t s = 0; s < LENGTH(save_method); s++) {
+#ifdef __CYGWIN__
+				if (load_method[l] == TEXT_LOAD_MMAP && save_method[s] == TEXT_SAVE_INPLACE)
+					continue;
+#endif
 				snprintf(buf, sizeof buf, "Hello World: (%zu, %zu)\n", l, s);
 				txt = text_load_method(filename, load_method[l]);
 				ok(txt, "Load (%zu, %zu)", l, s);
