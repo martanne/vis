@@ -329,6 +329,74 @@ int main(int argc, char *argv[]) {
 		ok(text_mark_get(txt, mof) == pos+delta, "Mark restored");
 		text_undo(txt);
 	}
+
+	text_snapshot(txt);
+
+	/* Test branching of the revision tree:
+	 *
+	 *  0 -- 1 -- 2 -- 3
+	 *       \
+	 *        `-- 4 -- 5 -- 6 -- 7
+	 */
+	typedef struct {
+		time_t state;
+		char data[8];
+	} Rev;
+
+	Rev revs[8];
+	size_t rev = 0;
+
+	for (size_t i = 0; i < LENGTH(revs)/2; i++) {
+		snprintf(revs[i].data, sizeof revs[i].data, "%zu", i);
+		ok(text_delete(txt, 0, text_size(txt)) && text_size(txt) == 0, "Delete everything %zu", i);
+		ok(insert(txt, 0, revs[i].data) && compare(txt, revs[i].data), "Creating state %zu", i);
+		revs[i].state = text_state(txt);
+		text_snapshot(txt);
+		rev = i;
+	}
+
+	for (size_t i = 0; i < LENGTH(revs)/4; i++) {
+		rev--;
+		ok(text_undo(txt) != EPOS && compare(txt, revs[rev].data), "Undo to state %zu", rev);
+	}
+
+	for (size_t i = LENGTH(revs)/2; i < LENGTH(revs); i++) {
+		snprintf(revs[i].data, sizeof revs[i].data, "%zu", i);
+		ok(text_delete(txt, 0, text_size(txt)) && text_size(txt) == 0, "Delete everything %zu", i);
+		ok(insert(txt, 0, revs[i].data) && compare(txt, revs[i].data), "Creating state %zu", i);
+		revs[i].state = text_state(txt);
+		text_snapshot(txt);
+		rev++;
+	}
+
+	while (rev > 0) {
+		text_undo(txt);
+		rev--;
+	}
+
+	ok(compare(txt, revs[0].data), "Undo along main branch to state 0");
+
+	for (size_t i = 1; i < LENGTH(revs); i++) {
+		ok(text_later(txt) != EPOS && compare(txt, revs[i].data), "Advance to state %zu", i);
+	}
+
+	for (size_t i = 0; i < LENGTH(revs); i++) {
+		time_t state = revs[i].state;
+		ok(text_restore(txt, state) != EPOS && text_state(txt) == state, "Restore state %zu", i);
+	}
+
+	for (size_t i = LENGTH(revs)-1; i > 0; i--) {
+		ok(text_earlier(txt) != EPOS && compare(txt, revs[i-1].data), "Revert to state %zu", i-1);
+	}
+
+	for (size_t i = 1; i < LENGTH(revs)/2; i++) {
+		text_redo(txt);
+	}
+
+	rev = LENGTH(revs)/2-1;
+	ok(compare(txt, revs[rev].data), "Redo along main branch to state %zu", rev);
+	ok(text_redo(txt) == EPOS, "End of main branch");
+
 	text_free(txt);
 
 	return exit_status();
