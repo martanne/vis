@@ -45,6 +45,11 @@ time_t time(time_t *p)
 	return value;
 }
 
+long labs(long v)
+{
+	return v > 0 ? v : -v;
+}
+
 #else
 #include <ccan/tap/tap.h>
 #define TIS_INTERPRETER 0
