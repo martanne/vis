@@ -1012,7 +1012,7 @@ static Filerange address_line_evaluate(Address *addr, File *file, Filerange *ran
 	size_t start = range->start, end = range->end, line;
 	if (sign > 0) {
 		char c;
-		if (start < end && end > 0 && text_byte_get(txt, end-1, &c) && c == '\n')
+		if (start < end && text_byte_get(txt, end-1, &c) && c == '\n')
 			end--;
 		line = text_lineno_by_pos(txt, end);
 		line = text_pos_by_lineno(txt, line + offset);
