@@ -619,7 +619,7 @@ int main(int argc, char *argv[]) {
 }
 EOF
 
-if $CC $CFLAGS "$tmpc" $LDFLAGS -o "$tmpo" >/dev/null 2>&1; then
+if $CC $CFLAGS $CFLAGS_STD "$tmpc" $LDFLAGS -o "$tmpo" >/dev/null 2>&1; then
 	HAVE_MEMRCHR=1
 	printf "%s\n" "yes"
 else
