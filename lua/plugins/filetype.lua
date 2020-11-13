@@ -227,7 +227,7 @@ vis.ftdetect.filetypes = {
 		ext = { "%.less$" },
 	},
 	lilypond = {
-		ext = { "%.lily$", "%.ly$" },
+		ext = { "%.ily$", "%.ly$" },
 	},
 	lisp = {
 		ext = { "%.cl$", "%.el$", "%.lisp$", "%.lsp$" },
