@@ -21,8 +21,12 @@
 #include "array.h"
 #include "buffer.h"
 
-#define PAGE      INT_MAX
-#define PAGE_HALF (INT_MAX-1)
+enum ScrollType {
+	PAGE_UP,
+	PAGE_DOWN,
+	HALFPAGE_UP,
+	HALFPAGE_DOWN,
+};
 
 /** functions to be called from keybindings */
 /* ignore key, do nothing */
@@ -121,9 +125,7 @@ static const char *insert_register(Vis*, const char *keys, const Arg *arg);
 static const char *prompt_show(Vis*, const char *keys, const Arg *arg);
 /* blocks to read 3 consecutive digits and inserts the corresponding byte value */
 static const char *insert_verbatim(Vis*, const char *keys, const Arg *arg);
-/* scroll window content according to arg->i which can be either PAGE, PAGE_HALF,
- * or an arbitrary number of lines. a multiplier overrides what is given in arg->i.
- * negative values scroll back, positive forward. */
+/* scroll window content according to arg->i with a given ScrollType */
 static const char *wscroll(Vis*, const char *keys, const Arg *arg);
 /* similar to scroll, but do only move window content not cursor position */
 static const char *wslide(Vis*, const char *keys, const Arg *arg);
@@ -566,22 +568,22 @@ static const KeyAction vis_action[] = {
 	[VIS_ACTION_WINDOW_PAGE_UP] = {
 		"vis-window-page-up",
 		VIS_HELP("Scroll window pages backwards (upwards)")
-		wscroll, { .i = -PAGE }
+		wscroll, { .i = PAGE_UP }
 	},
 	[VIS_ACTION_WINDOW_HALFPAGE_UP] = {
 		"vis-window-halfpage-up",
 		VIS_HELP("Scroll window half pages backwards (upwards)")
-		wscroll, { .i = -PAGE_HALF }
+		wscroll, { .i = HALFPAGE_UP }
 	},
 	[VIS_ACTION_WINDOW_PAGE_DOWN] = {
 		"vis-window-page-down",
 		VIS_HELP("Scroll window pages forwards (downwards)")
-		wscroll, { .i = +PAGE }
+		wscroll, { .i = PAGE_DOWN }
 	},
 	[VIS_ACTION_WINDOW_HALFPAGE_DOWN] = {
 		"vis-window-halfpage-down",
 		VIS_HELP("Scroll window half pages forwards (downwards)")
-		wscroll, { .i = +PAGE_HALF }
+		wscroll, { .i = HALFPAGE_DOWN }
 	},
 	[VIS_ACTION_MODE_NORMAL] = {
 		"vis-mode-normal",
@@ -971,12 +973,12 @@ static const KeyAction vis_action[] = {
 	[VIS_ACTION_SELECTIONS_PREV] = {
 		"vis-selection-prev",
 		VIS_HELP("Move to the previous selection")
-		selections_navigate, { .i = -PAGE_HALF }
+		selections_navigate, { .i = HALFPAGE_UP }
 	},
 	[VIS_ACTION_SELECTIONS_NEXT] = {
 		"vis-selection-next",
 		VIS_HELP("Move to the next selection")
-		selections_navigate, { .i = +PAGE_HALF }
+		selections_navigate, { .i = HALFPAGE_DOWN }
 	},
 	[VIS_ACTION_SELECTIONS_ROTATE_LEFT] = {
 		"vis-selections-rotate-left",
@@ -2010,25 +2012,19 @@ static const char *wscroll(Vis *vis, const char *keys, const Arg *arg) {
 	View *view = vis_view(vis);
 	int count = vis_count_get(vis);
 	switch (arg->i) {
-	case -PAGE:
+	case PAGE_UP:
 		view_scroll_page_up(view);
 		break;
-	case +PAGE:
+	case PAGE_DOWN:
 		view_scroll_page_down(view);
 		break;
-	case -PAGE_HALF:
+	case HALFPAGE_UP:
 		view_scroll_halfpage_up(view);
 		break;
-	case +PAGE_HALF:
+	case HALFPAGE_DOWN:
 		view_scroll_halfpage_down(view);
 		break;
 	default:
-		if (count == VIS_COUNT_UNKNOWN)
-			count = arg->i < 0 ? -arg->i : arg->i;
-		if (arg->i < 0)
-			view_scroll_up(view, count);
-		else
-			view_scroll_down(view, count);
 		break;
 	}
 	vis_count_set(vis, VIS_COUNT_UNKNOWN);
