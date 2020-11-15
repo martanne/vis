@@ -1196,9 +1196,13 @@ void view_selections_clear_all(View *view) {
 }
 
 void view_selections_dispose_all(View *view) {
-	view->selection_count = 0;
-	for(Selection *s = view->selections; s; s = s->next) {
-		free(s);
+	Selection *last = view->selections;
+	while(last->next)
+		last = last->next;
+	for (Selection *s = last, *prev; s; s = prev) {
+		prev = s->prev;
+		if (s != view->selection)
+			selection_free(s);
 	}
 	view_draw(view);
 }
