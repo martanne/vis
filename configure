@@ -227,6 +227,7 @@ OS=$(uname)
 
 case "$OS" in
 FreeBSD|DragonFly) CFLAGS_STD="$CFLAGS_STD -D_BSD_SOURCE -D__BSD_VISIBLE=1" ;;
+NetBSD)  CFLAGS_STD="$CFLAGS_STD -D_NETBSD_SOURCE" ;;
 *BSD)    CFLAGS_STD="$CFLAGS_STD -D_BSD_SOURCE" ;;
 Darwin)  CFLAGS_STD="$CFLAGS_STD -D_DARWIN_C_SOURCE" ;;
 AIX)     CFLAGS_STD="$CFLAGS_STD -D_ALL_SOURCE" ;;
@@ -309,7 +310,7 @@ int main(int argc, char *argv[]) {
 }
 EOF
 
-	for libcurses in ncursesw ncurses libcurses; do
+	for libcurses in ncursesw ncurses curses; do
 		printf " checking for %s... " "$libcurses"
 
 		if test "$have_pkgconfig" = "yes" ; then
@@ -618,7 +619,7 @@ int main(int argc, char *argv[]) {
 }
 EOF
 
-if $CC $CFLAGS "$tmpc" $LDFLAGS -o "$tmpo" >/dev/null 2>&1; then
+if $CC $CFLAGS $CFLAGS_STD "$tmpc" $LDFLAGS -o "$tmpo" >/dev/null 2>&1; then
 	HAVE_MEMRCHR=1
 	printf "%s\n" "yes"
 else

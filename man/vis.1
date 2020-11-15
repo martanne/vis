@@ -789,6 +789,9 @@ make lowercase
 .It Ic gU
 make uppercase
 .
+.It Ic g~
+swap case
+.
 .It Ic J
 join lines, insert spaces in between
 .
@@ -803,9 +806,6 @@ shift-left, decrease indent
 .
 .It Ic >
 shift-right, increase indent
-.
-.It Ic ~
-swap case
 .
 .It Ic y
 yank, copy range to register
@@ -1026,12 +1026,6 @@ matches the last used search term in forward direction
 .It Ic gN
 matches the last used search term in backward direction
 .
-.It Ic ae
-entire file content
-.
-.It Ic ie
-entire file content except for leading and trailing empty lines
-.
 .It Ic al
 current line
 .
@@ -1103,6 +1097,9 @@ left align selections by inserting spaces
 .It Aq Ic S-Tab
 right align selections by inserting spaces
 .
+.It Aq Ic C-a
+create new selections everywhere matching current word or selection
+.
 .It Aq Ic C-n
 create new selection and select next word matching current selection
 .
@@ -1160,20 +1157,8 @@ set union
 set intersection
 .It Ic \e
 set minus
-.It Ic \&!
+.It Ic ~
 set complement
-.It Ic z\&|
-pairwise union
-.It Ic z&
-pairwise intersection
-.It Ic z+
-pairwise combine, choose longer
-.It Ic z-
-pairwise combine, choose shorter
-.It Ic z<
-pairwise combine, choose leftmost
-.It Ic z>
-pairwise combine, choose rightmost
 .El
 .
 .Sh VI(M) COMMANDS
@@ -1427,6 +1412,8 @@ lager ones.
 WARNING: modifying a memory mapped file in-place will cause data loss.
 .It Ic layout Op Do v Dc or Do h Dc
 Whether to use vertical or horizontal layout.
+.It Cm ignorecase , Cm ic Op Cm off
+Whether to ignore case when searching.
 .El
 .
 .Sh COMMAND and SEARCH PROMPT

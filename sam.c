@@ -2,7 +2,7 @@
  * Heavily inspired (and partially based upon) the X11 version of
  * Rob Pike's sam text editor originally written for Plan 9.
  *
- *  Copyright © 2016-2018 Marc André Tanner <mat at brain-dump.org>
+ *  Copyright © 2016-2020 Marc André Tanner <mat at brain-dump.org>
  *  Copyright © 1998 by Lucent Technologies
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -23,6 +23,7 @@
 #include <errno.h>
 #include <unistd.h>
 #include <limits.h>
+#include <fcntl.h>
 #include "sam.h"
 #include "vis-core.h"
 #include "buffer.h"
@@ -299,6 +300,7 @@ enum {
 	OPTION_LOAD_METHOD,
 	OPTION_CHANGE_256COLORS,
 	OPTION_LAYOUT,
+	OPTION_IGNORECASE,
 };
 
 static const OptionDef options[] = {
@@ -386,6 +388,11 @@ static const OptionDef options[] = {
 		{ "layout" },
 		VIS_OPTION_TYPE_STRING,
 		VIS_HELP("Vertical or horizontal window layout")
+	},
+	[OPTION_IGNORECASE] = {
+		{ "ignorecase", "ic" },
+		VIS_OPTION_TYPE_BOOL,
+		VIS_HELP("Ignore case when searching")
 	},
 };
 
@@ -1005,7 +1012,7 @@ static Filerange address_line_evaluate(Address *addr, File *file, Filerange *ran
 	size_t start = range->start, end = range->end, line;
 	if (sign > 0) {
 		char c;
-		if (start < end && end > 0 && text_byte_get(txt, end-1, &c) && c == '\n')
+		if (start < end && text_byte_get(txt, end-1, &c) && c == '\n')
 			end--;
 		line = text_lineno_by_pos(txt, end);
 		line = text_pos_by_lineno(txt, line + offset);
@@ -1670,7 +1677,7 @@ static bool cmd_write(Vis *vis, Win *win, Command *cmd, const char *argv[], Sele
 		if (write_entire_file)
 			*r = text_range_new(0, text_size(text));
 
-		TextSave *ctx = text_save_begin(text, path, file->save_method);
+		TextSave *ctx = text_save_begin(text, AT_FDCWD, path, file->save_method);
 		if (!ctx) {
 			const char *msg = errno ? strerror(errno) : "try changing `:set savemethod`";
 			vis_info_show(vis, "Can't write `%s': %s", path, msg);

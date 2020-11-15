@@ -226,6 +226,16 @@ enum VisMark vis_mark_from(Vis *vis, char mark) {
 	return VIS_MARK_INVALID;
 }
 
+char vis_mark_to(Vis *vis, enum VisMark mark) {
+	if (VIS_MARK_a <= mark && mark <= VIS_MARK_z)
+		return 'a' + mark - VIS_MARK_a;
+
+	if (mark < LENGTH(vis_marks))
+		return vis_marks[mark].name;
+
+	return '\0';
+}
+
 const MarkDef vis_marks[] = {
 	[VIS_MARK_DEFAULT]        = { '\'', VIS_HELP("Default mark")    },
 	[VIS_MARK_SELECTION]      = { '^',  VIS_HELP("Last selections") },

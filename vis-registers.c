@@ -197,19 +197,36 @@ bool register_resize(Register *reg, size_t count) {
 }
 
 enum VisRegister vis_register_from(Vis *vis, char reg) {
-	switch (reg) {
-	case '@': return VIS_MACRO_LAST_RECORDED;
-	}
+
+	if (reg == '@')
+		return VIS_MACRO_LAST_RECORDED;
 
 	if ('a' <= reg && reg <= 'z')
 		return VIS_REG_a + reg - 'a';
 	if ('A' <= reg && reg <= 'Z')
 		return VIS_REG_A + reg - 'A';
+
 	for (size_t i = 0; i < LENGTH(vis_registers); i++) {
 		if (vis_registers[i].name == reg)
 			return i;
 	}
 	return VIS_REG_INVALID;
+}
+
+char vis_register_to(Vis *vis, enum VisRegister reg) {
+
+	if (reg == VIS_MACRO_LAST_RECORDED)
+		return '@';
+
+	if (VIS_REG_a <= reg && reg <= VIS_REG_z)
+		return 'a' + reg - VIS_REG_a;
+	if (VIS_REG_A <= reg && reg <= VIS_REG_Z)
+		return 'A' + reg - VIS_REG_A;
+
+	if (reg < LENGTH(vis_registers))
+		return vis_registers[reg].name;
+
+	return '\0';
 }
 
 void vis_register(Vis *vis, enum VisRegister reg) {

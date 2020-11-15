@@ -12,7 +12,7 @@
 /** A mark. */
 typedef uintptr_t Mark;
 
-/** An invalid mark, lookup of which will yield `EPOS`. */
+/** An invalid mark, lookup of which will yield ``EPOS``. */
 #define EMARK ((Mark)0)
 /** An invalid position. */
 #define EPOS ((size_t)-1)
@@ -95,6 +95,7 @@ enum TextLoadMethod {
  * @endrst
  */
 Text *text_load(const char *filename);
+Text *text_loadat(int dirfd, const char *filename);
 /**
  * Create a text instance populated with the given file content.
  *
@@ -109,6 +110,7 @@ Text *text_load(const char *filename);
  * @endrst
  */
 Text *text_load_method(const char *filename, enum TextLoadMethod);
+Text *text_loadat_method(int dirfd, const char *filename, enum TextLoadMethod);
 /** Release all ressources associated with this text instance. */
 void text_free(Text*);
 /**
@@ -117,7 +119,7 @@ void text_free(Text*);
  * @{
  */
 /** Return the size in bytes of the whole text. */
-size_t text_size(Text*);
+size_t text_size(const Text*);
 /**
  * Get file information at time of load or last save, whichever happened more
  * recently.
@@ -128,9 +130,9 @@ size_t text_size(Text*);
  * @endrst
  * @return See ``stat(2)`` for details.
  */
-struct stat text_stat(Text*);
+struct stat text_stat(const Text*);
 /** Query whether the text contains any unsaved modifications. */
-bool text_modified(Text*);
+bool text_modified(const Text*);
 /**
  * @}
  * @defgroup modify
@@ -153,7 +155,7 @@ bool text_insert(Text*, size_t pos, const char *data, size_t len);
  * @return Whether the deletion succeeded.
  */
 bool text_delete(Text*, size_t pos, size_t len);
-bool text_delete_range(Text*, Filerange*);
+bool text_delete_range(Text*, const Filerange*);
 bool text_printf(Text*, size_t pos, const char *format, ...) __attribute__((format(printf, 3, 4)));
 bool text_appendf(Text*, const char *format, ...) __attribute__((format(printf, 2, 3)));
 /**
@@ -164,7 +166,7 @@ bool text_appendf(Text*, const char *format, ...) __attribute__((format(printf, 
 /**
  * Create a text snapshot, that is a vertice in the history graph.
  */
-void text_snapshot(Text*);
+bool text_snapshot(Text*);
 /**
  * Revert to previous snapshot along the main branch.
  * @rst
@@ -195,7 +197,7 @@ size_t text_restore(Text*, time_t);
  * .. note:: TODO: This is currently not the same as the time of the last snapshot.
  * @endrst
  */
-time_t text_state(Text*);
+time_t text_state(const Text*);
 /**
  * @}
  * @defgroup lines
@@ -219,9 +221,9 @@ size_t text_lineno_by_pos(Text*, size_t pos);
  *           return an artificial NUL byte at EOF.
  * @endrst
  */
-bool text_byte_get(Text*, size_t pos, char *byte);
+bool text_byte_get(const Text*, size_t pos, char *byte);
 /**
- * Store at most `len` bytes starting from ``pos`` into ``buf``.
+ * Store at most ``len`` bytes starting from ``pos`` into ``buf``.
  * @param pos The absolute starting position.
  * @param len The length in bytes.
  * @param buf The destination buffer.
@@ -230,7 +232,7 @@ bool text_byte_get(Text*, size_t pos, char *byte);
  * .. warning:: ``buf`` will not be NUL terminated.
  * @endrst
  */
-size_t text_bytes_get(Text*, size_t pos, size_t len, char *buf);
+size_t text_bytes_get(const Text*, size_t pos, size_t len, char *buf);
 /**
  * Fetch text range into newly allocate memory region.
  * @param pos The absolute starting position.
@@ -238,17 +240,21 @@ size_t text_bytes_get(Text*, size_t pos, size_t len, char *buf);
  * @return A contigious NUL terminated buffer holding the requested range, or
  *         ``NULL`` in error case.
  * @rst
- * .. warning:: The returned pointer must be `free(3)`-ed by the caller.
+ * .. warning:: The returned pointer must be freed by the caller.
  * @endrst
  */
-char *text_bytes_alloc0(Text*, size_t pos, size_t len);
+char *text_bytes_alloc0(const Text*, size_t pos, size_t len);
 /**
  * @}
  * @defgroup iterator
  * @{
  */
-Iterator text_iterator_get(Text*, size_t pos);
+Iterator text_iterator_get(const Text*, size_t pos);
+bool text_iterator_init(const Text*, Iterator*, size_t pos);
+const Text *text_iterator_text(const Iterator*);
 bool text_iterator_valid(const Iterator*);
+bool text_iterator_has_next(const Iterator*);
+bool text_iterator_has_prev(const Iterator*);
 bool text_iterator_next(Iterator*);
 bool text_iterator_prev(Iterator*);
 /**
@@ -256,7 +262,7 @@ bool text_iterator_prev(Iterator*);
  * @defgroup iterator_byte
  * @{
  */
-bool text_iterator_byte_get(Iterator*, char *b);
+bool text_iterator_byte_get(const Iterator*, char *b);
 bool text_iterator_byte_prev(Iterator*, char *b);
 bool text_iterator_byte_next(Iterator*, char *b);
 bool text_iterator_byte_find_prev(Iterator*, char b);
@@ -283,19 +289,19 @@ bool text_iterator_char_prev(Iterator*, char *c);
 /**
  * Set a mark.
  * @rst
- * .. note:: Setting a mark to `text_size` will always return the current text
- *           size upon lookup.
+ * .. note:: Setting a mark to ``text_size`` will always return the
+ *           current text size upon lookup.
  * @endrst
  * @param pos The position at which to store the mark.
- * @return The mark or `EMARK` if an invalid position was given.
+ * @return The mark or ``EMARK`` if an invalid position was given.
  */
 Mark text_mark_set(Text*, size_t pos);
 /**
  * Lookup a mark.
  * @param mark The mark to look up.
- * @return The byte position or `EPOS` for an invalid mark.
+ * @return The byte position or ``EPOS`` for an invalid mark.
  */
-size_t text_mark_get(Text*, Mark);
+size_t text_mark_get(const Text*, Mark);
 /**
  * @}
  * @defgroup save
@@ -308,12 +314,12 @@ enum TextSaveMethod {
 	/** Automatically chose best option. */
 	TEXT_SAVE_AUTO,
 	/**
-	 * Save file atomically using `rename(2)`.
+	 * Save file atomically using ``rename(2)``.
 	 *
 	 * Creates a temporary file, restores all important meta data,
 	 * before moving it atomically to its final (possibly already
-	 * existing) destination using `rename(2)`. For new files,
-	 * permissions are set to `0666 & ~umask`.
+	 * existing) destination using ``rename(2)``. For new files,
+	 * permissions are set to ``0666 & ~umask``.
 	 *
 	 * @rst
 	 * .. warning:: This approach does not work if:
@@ -339,39 +345,41 @@ enum TextSaveMethod {
 
 /**
  * Save the whole text to the given file name.
- */
-bool text_save(Text*, const char *filename);
-/**
- * Save the whole text to the given file name, using the specified method.
  *
  * @rst
  * .. note:: Equivalent to ``text_save_method(filename, TEXT_SAVE_AUTO)``.
  * @endrst
  */
+bool text_save(Text*, const char *filename);
+bool text_saveat(Text*, int dirfd, const char *filename);
+/**
+ * Save the whole text to the given file name, using the specified method.
+ */
 bool text_save_method(Text*, const char *filename, enum TextSaveMethod);
+bool text_saveat_method(Text*, int dirfd, const char *filename, enum TextSaveMethod);
 
 /**
  * Setup a sequence of write operations.
  *
- * The returned `TextSave` pointer can be used to write multiple, possibly
+ * The returned ``TextSave`` pointer can be used to write multiple, possibly
  * non-contigious, file ranges.
  * @rst
- * .. warning:: For every call to `text_save_begin` there must be exactly
- *              one matching call to either `text_save_commit` or
- *              `text_save_cancel` to release the underlying resources.
+ * .. warning:: For every call to ``text_save_begin`` there must be exactly
+ *              one matching call to either ``text_save_commit`` or
+ *              ``text_save_cancel`` to release the underlying resources.
  * @endrst
  */
-TextSave *text_save_begin(Text*, const char *filename, enum TextSaveMethod);
+TextSave *text_save_begin(Text*, int dirfd, const char *filename, enum TextSaveMethod);
 /**
  * Write file range.
  * @return The number of bytes written or ``-1`` in case of an error.
  */
-ssize_t text_save_write_range(TextSave*, Filerange*);
+ssize_t text_save_write_range(TextSave*, const Filerange*);
 /**
  * Commit changes to disk.
  * @return Whether changes have been saved.
  * @rst
- * .. note:: Releases the underlying resources and `free(3)`'s the given `TextSave`
+ * .. note:: Releases the underlying resources and frees the given ``TextSave``
  *           pointer which must no longer be used.
  * @endrst
  */
@@ -381,7 +389,7 @@ bool text_save_commit(TextSave*);
  * @rst
  * .. note:: Does not guarantee to undo the previous writes (they might have been
  *           performed in-place). However, it releases the underlying resources and
- *           `free(3)`'s the given `TextSave` pointer which must no longer be used.
+ *           frees the given ``TextSave`` pointer which must no longer be used.
  * @endrst
  */
 void text_save_cancel(TextSave*);
@@ -389,12 +397,12 @@ void text_save_cancel(TextSave*);
  * Write whole text content to file descriptor.
  * @return The number of bytes written or ``-1`` in case of an error.
  */
-ssize_t text_write(Text*, int fd);
+ssize_t text_write(const Text*, int fd);
 /**
  * Write file range to file descriptor.
  * @return The number of bytes written or ``-1`` in case of an error.
  */
-ssize_t text_write_range(Text*, Filerange*, int fd);
+ssize_t text_write_range(const Text*, const Filerange*, int fd);
 /**
  * @}
  * @defgroup misc
@@ -404,7 +412,7 @@ ssize_t text_write_range(Text*, Filerange*, int fd);
  * Check whether ``ptr`` is part of a memory mapped region associated with
  * this text instance.
  */
-bool text_mmaped(Text*, const char *ptr);
+bool text_mmaped(const Text*, const char *ptr);
 /** @} */
 
 #endif

@@ -66,8 +66,6 @@ static const char *selections_remove_column(Vis*, const char *keys, const Arg *a
 static const char *selections_remove_column_except(Vis*, const char *keys, const Arg *arg);
 /* move to the previous (arg->i < 0) or next (arg->i > 0) selection */
 static const char *selections_navigate(Vis*, const char *keys, const Arg *arg);
-/* select the word the selection is currently over */
-static const char *selections_match_word(Vis*, const char *keys, const Arg *arg);
 /* select the next region matching the current selection */
 static const char *selections_match_next(Vis*, const char *keys, const Arg *arg);
 /* clear current selection but select next match */
@@ -88,14 +86,6 @@ static const char *selections_intersect(Vis*, const char *keys, const Arg *arg);
 static const char *selections_complement(Vis*, const char *keys, const Arg *arg);
 /* subtract selections from mark */
 static const char *selections_minus(Vis*, const char *keys, const Arg *arg);
-/* pairwise combine selections from mark */
-static const char *selections_combine(Vis*, const char *keys, const Arg *arg);
-static Filerange combine_union(const Filerange*, const Filerange*);
-static Filerange combine_intersect(const Filerange*, const Filerange*);
-static Filerange combine_longer(const Filerange*, const Filerange*);
-static Filerange combine_shorter(const Filerange*, const Filerange*);
-static Filerange combine_leftmost(const Filerange*, const Filerange*);
-static Filerange combine_rightmost(const Filerange*, const Filerange*);
 /* adjust current used count according to keys */
 static const char *count(Vis*, const char *keys, const Arg *arg);
 /* move to the count-th line or if not given either to the first (arg->i < 0)
@@ -264,13 +254,13 @@ enum {
 	VIS_ACTION_WINDOW_SLIDE_DOWN,
 	VIS_ACTION_PUT_AFTER,
 	VIS_ACTION_PUT_BEFORE,
-	VIS_ACTION_SELECTIONS_MATCH_WORD,
 	VIS_ACTION_SELECTIONS_NEW_LINE_ABOVE,
 	VIS_ACTION_SELECTIONS_NEW_LINE_ABOVE_FIRST,
 	VIS_ACTION_SELECTIONS_NEW_LINE_BELOW,
 	VIS_ACTION_SELECTIONS_NEW_LINE_BELOW_LAST,
 	VIS_ACTION_SELECTIONS_NEW_LINES_BEGIN,
 	VIS_ACTION_SELECTIONS_NEW_LINES_END,
+	VIS_ACTION_SELECTIONS_NEW_MATCH_ALL,
 	VIS_ACTION_SELECTIONS_NEW_MATCH_NEXT,
 	VIS_ACTION_SELECTIONS_NEW_MATCH_SKIP,
 	VIS_ACTION_SELECTIONS_ALIGN,
@@ -291,12 +281,6 @@ enum {
 	VIS_ACTION_SELECTIONS_INTERSECT,
 	VIS_ACTION_SELECTIONS_COMPLEMENT,
 	VIS_ACTION_SELECTIONS_MINUS,
-	VIS_ACTION_SELECTIONS_COMBINE_UNION,
-	VIS_ACTION_SELECTIONS_COMBINE_INTERSECT,
-	VIS_ACTION_SELECTIONS_COMBINE_LONGER,
-	VIS_ACTION_SELECTIONS_COMBINE_SHORTER,
-	VIS_ACTION_SELECTIONS_COMBINE_LEFTMOST,
-	VIS_ACTION_SELECTIONS_COMBINE_RIGHTMOST,
 	VIS_ACTION_TEXT_OBJECT_WORD_OUTER,
 	VIS_ACTION_TEXT_OBJECT_WORD_INNER,
 	VIS_ACTION_TEXT_OBJECT_LONGWORD_OUTER,
@@ -318,8 +302,6 @@ enum {
 	VIS_ACTION_TEXT_OBJECT_SINGLE_QUOTE_INNER,
 	VIS_ACTION_TEXT_OBJECT_BACKTICK_OUTER,
 	VIS_ACTION_TEXT_OBJECT_BACKTICK_INNER,
-	VIS_ACTION_TEXT_OBJECT_ENTIRE_OUTER,
-	VIS_ACTION_TEXT_OBJECT_ENTIRE_INNER,
 	VIS_ACTION_TEXT_OBJECT_LINE_OUTER,
 	VIS_ACTION_TEXT_OBJECT_LINE_INNER,
 	VIS_ACTION_TEXT_OBJECT_INDENTATION,
@@ -906,11 +888,6 @@ static const KeyAction vis_action[] = {
 		VIS_HELP("Put text before the cursor")
 		operator, { .i = VIS_OP_PUT_BEFORE }
 	},
-	[VIS_ACTION_SELECTIONS_MATCH_WORD] = {
-		"vis-selections-select-word",
-		VIS_HELP("Select word under cursor")
-		selections_match_word,
-	},
 	[VIS_ACTION_SELECTIONS_NEW_LINE_ABOVE] = {
 		"vis-selection-new-lines-above",
 		VIS_HELP("Create a new selection on the line above")
@@ -940,6 +917,11 @@ static const KeyAction vis_action[] = {
 		"vis-selection-new-lines-end",
 		VIS_HELP("Create a new selection at the end of every line covered by selection")
 		operator, { .i = VIS_OP_CURSOR_EOL }
+	},
+	[VIS_ACTION_SELECTIONS_NEW_MATCH_ALL] = {
+		"vis-selection-new-match-all",
+		VIS_HELP("Select all regions matching the current selection")
+		selections_match_next, { .b = true }
 	},
 	[VIS_ACTION_SELECTIONS_NEW_MATCH_NEXT] = {
 		"vis-selection-new-match-next",
@@ -1040,36 +1022,6 @@ static const KeyAction vis_action[] = {
 		"vis-selections-minus",
 		VIS_HELP("Subtract selections from mark")
 		selections_minus
-	},
-	[VIS_ACTION_SELECTIONS_COMBINE_UNION] = {
-		"vis-selections-combine-union",
-		VIS_HELP("Pairwise union with selections from mark")
-		selections_combine, { .combine = combine_union }
-	},
-	[VIS_ACTION_SELECTIONS_COMBINE_INTERSECT] = {
-		"vis-selections-combine-intersect",
-		VIS_HELP("Pairwise intersect with selections from mark")
-		selections_combine, { .combine = combine_intersect }
-	},
-	[VIS_ACTION_SELECTIONS_COMBINE_LONGER] = {
-		"vis-selections-combine-longer",
-		VIS_HELP("Pairwise combine: take longer")
-		selections_combine, { .combine = combine_longer }
-	},
-	[VIS_ACTION_SELECTIONS_COMBINE_SHORTER] = {
-		"vis-selections-combine-shorter",
-		VIS_HELP("Pairwise combine: take shorter")
-		selections_combine, { .combine = combine_shorter }
-	},
-	[VIS_ACTION_SELECTIONS_COMBINE_LEFTMOST] = {
-		"vis-selections-combine-leftmost",
-		VIS_HELP("Pairwise combine: leftmost")
-		selections_combine, { .combine = combine_leftmost }
-	},
-	[VIS_ACTION_SELECTIONS_COMBINE_RIGHTMOST] = {
-		"vis-selections-combine-rightmost",
-		VIS_HELP("Pairwise combine: rightmost")
-		selections_combine, { .combine = combine_rightmost }
 	},
 	[VIS_ACTION_TEXT_OBJECT_WORD_OUTER] = {
 		"vis-textobject-word-outer",
@@ -1175,16 +1127,6 @@ static const KeyAction vis_action[] = {
 		"vis-textobject-backtick-inner",
 		VIS_HELP("A backtick delimited string (inner variant)")
 		textobj, { .i = VIS_TEXTOBJECT_INNER_BACKTICK }
-	},
-	[VIS_ACTION_TEXT_OBJECT_ENTIRE_OUTER] = {
-		"vis-textobject-entire-outer",
-		VIS_HELP("The whole text content")
-		textobj, { .i = VIS_TEXTOBJECT_OUTER_ENTIRE }
-	},
-	[VIS_ACTION_TEXT_OBJECT_ENTIRE_INNER] = {
-		"vis-textobject-entire-inner",
-		VIS_HELP("The whole text content, except for leading and trailing empty lines")
-		textobj, { .i = VIS_TEXTOBJECT_INNER_ENTIRE }
 	},
 	[VIS_ACTION_TEXT_OBJECT_LINE_OUTER] = {
 		"vis-textobject-line-outer",
@@ -1389,19 +1331,7 @@ static const char *selections_clear(Vis *vis, const char *keys, const Arg *arg) 
 	return keys;
 }
 
-static const char *selections_match_word(Vis *vis, const char *keys, const Arg *arg) {
-	Text *txt = vis_text(vis);
-	View *view = vis_view(vis);
-	for (Selection *s = view_selections(view); s; s = view_selections_next(s)) {
-		Filerange word = text_object_word(txt, view_cursors_pos(s));
-		if (text_range_valid(&word))
-			view_selections_set(s, &word);
-	}
-	vis_mode_switch(vis, VIS_MODE_VISUAL);
-	return keys;
-}
-
-static const Selection *selection_new_primary(View *view, Filerange *r) {
+static Selection *selection_new(View *view, Filerange *r, bool isprimary) {
 	Text *txt = view_text(view);
 	size_t pos = text_char_prev(txt, r->end);
 	Selection *s = view_selections_new(view, pos);
@@ -1409,39 +1339,9 @@ static const Selection *selection_new_primary(View *view, Filerange *r) {
 		return NULL;
 	view_selections_set(s, r);
 	view_selections_anchor(s, true);
-	view_selections_primary_set(s);
+	if (isprimary)
+		view_selections_primary_set(s);
 	return s;
-}
-
-static const char *selections_match_next_literal(Vis *vis, const char *keys, const Arg *arg) {
-	Text *txt = vis_text(vis);
-	View *view = vis_view(vis);
-	Selection *s = view_selections_primary_get(view);
-	Filerange sel = view_selections_get(s);
-	size_t len = text_range_size(&sel);
-	if (!len)
-		return keys;
-
-	char *buf = text_bytes_alloc0(txt, sel.start, len);
-	if (!buf)
-		return keys;
-
-	size_t start = text_find_next(txt, sel.end, buf);
-	Filerange match = text_range_new(start, start+len);
-	if (start != sel.end && selection_new_primary(view, &match))
-		goto out;
-
-	sel = view_selections_get(view_selections(view));
-	start = text_find_prev(txt, sel.start, buf);
-	if (start == sel.start)
-		goto out;
-
-	match = text_range_new(start, start+len);
-	selection_new_primary(view, &match);
-
-out:
-	free(buf);
-	return keys;
 }
 
 static const char *selections_match_next(Vis *vis, const char *keys, const Arg *arg) {
@@ -1452,23 +1352,44 @@ static const char *selections_match_next(Vis *vis, const char *keys, const Arg *
 	if (!text_range_valid(&sel))
 		return keys;
 
-	Filerange word = text_object_word(txt, view_cursors_pos(s));
-	if (!text_range_equal(&sel, &word))
-		return selections_match_next_literal(vis, keys, arg);
+	static bool match_word;
+
+	if (view_selections_count(view) == 1) {
+		Filerange word = text_object_word(txt, view_cursors_pos(s));
+		match_word = text_range_equal(&sel, &word);
+	}
+
+	Filerange (*find_next)(Text *, size_t, const char *) = text_object_word_find_next;
+	Filerange (*find_prev)(Text *, size_t, const char *) = text_object_word_find_prev;
+	if (!match_word) {
+		find_next = text_object_find_next;
+		find_prev = text_object_find_prev;
+	}
 
 	char *buf = text_bytes_alloc0(txt, sel.start, text_range_size(&sel));
 	if (!buf)
 		return keys;
 
-	word = text_object_word_find_next(txt, sel.end, buf);
-	if (text_range_valid(&word) && selection_new_primary(view, &word))
-		goto out;
+	bool match_all = arg->b;
+	Filerange primary = sel;
 
-	sel = view_selections_get(view_selections(view));
-	word = text_object_word_find_prev(txt, sel.start, buf);
-	if (!text_range_valid(&word))
-		goto out;
-	selection_new_primary(view, &word);
+	for (;;) {
+		sel = find_next(txt, sel.end, buf);
+		if (!text_range_valid(&sel))
+			break;
+		if (selection_new(view, &sel, !match_all) && !match_all)
+			goto out;
+	}
+
+	sel = primary;
+
+	for (;;) {
+		sel = find_prev(txt, sel.start, buf);
+		if (!text_range_valid(&sel))
+			break;
+		if (selection_new(view, &sel, !match_all) && !match_all)
+			break;
+	}
 
 out:
 	free(buf);
@@ -1820,83 +1741,6 @@ static const char *selections_minus(Vis *vis, const char *keys, const Arg *arg) 
 	array_release(&a);
 	array_release(&b);
 	array_release(&b_complement);
-	array_release(&sel);
-
-	return keys;
-}
-
-static Filerange combine_union(const Filerange *r1, const Filerange *r2) {
-	if (!r1)
-		return *r2;
-	if (!r2)
-		return *r1;
-	return text_range_union(r1, r2);
-}
-
-static Filerange combine_intersect(const Filerange *r1, const Filerange *r2) {
-	if (!r1 || !r2)
-		return text_range_empty();
-	return text_range_intersect(r1, r2);
-}
-
-static Filerange combine_longer(const Filerange *r1, const Filerange *r2) {
-	if (!r1)
-		return *r2;
-	if (!r2)
-		return *r1;
-	size_t l1 = text_range_size(r1);
-	size_t l2 = text_range_size(r2);
-	return l1 < l2 ? *r2 : *r1;
-}
-
-static Filerange combine_shorter(const Filerange *r1, const Filerange *r2) {
-	if (!r1)
-		return *r2;
-	if (!r2)
-		return *r1;
-	size_t l1 = text_range_size(r1);
-	size_t l2 = text_range_size(r2);
-	return l1 < l2 ? *r1 : *r2;
-}
-
-static Filerange combine_leftmost(const Filerange *r1, const Filerange *r2) {
-	if (!r1)
-		return *r2;
-	if (!r2)
-		return *r1;
-	return r1->start < r2->start || (r1->start == r2->start && r1->end < r2->end) ? *r1 : *r2;
-}
-
-static Filerange combine_rightmost(const Filerange *r1, const Filerange *r2) {
-	if (!r1)
-		return *r2;
-	if (!r2)
-		return *r1;
-	return r1->start < r2->start || (r1->start == r2->start && r1->end < r2->end) ? *r2 : *r1;
-}
-
-static const char *selections_combine(Vis *vis, const char *keys, const Arg *arg) {
-	Win *win = vis_window(vis);
-	View *view = vis_view(vis);
-	enum VisMark mark = vis_mark_used(vis);
-	Array a = view_selections_get_all(view);
-	Array b = vis_mark_get(win, mark);
-	Array sel;
-	array_init_from(&sel, &a);
-
-	Filerange *r1 = array_get(&a, 0), *r2 = array_get(&b, 0);
-	for (size_t i = 0, j = 0; r1 || r2; r1 = array_get(&a, ++i), r2 = array_get(&b, ++j)) {
-		Filerange new = arg->combine(r1, r2);
-		if (text_range_valid(&new))
-			array_add(&sel, &new);
-	}
-
-	vis_mark_normalize(&sel);
-	selections_set(vis, view, &sel);
-	vis_cancel(vis);
-
-	array_release(&a);
-	array_release(&b);
 	array_release(&sel);
 
 	return keys;
@@ -2360,6 +2204,7 @@ int main(int argc, char *argv[]) {
 		.win_close = vis_lua_win_close,
 		.win_highlight = vis_lua_win_highlight,
 		.win_status = vis_lua_win_status,
+		.term_csi = vis_lua_term_csi,
 	};
 
 	vis = vis_new(ui_term_new(), &event);

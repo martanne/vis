@@ -361,6 +361,9 @@ static bool cmd_set(Vis *vis, Win *win, Command *cmd, const char *argv[], Select
 		windows_arrange(vis, layout);
 		break;
 	}
+	case OPTION_IGNORECASE:
+		vis->ignorecase = toggle ? !vis->ignorecase : arg.b;
+		break;
 	default:
 		if (!opt->func)
 			return false;
@@ -616,9 +619,10 @@ static bool cmd_earlier_later(Vis *vis, Win *win, Command *cmd, const char *argv
 		}
 	}
 
+	struct tm tm;
 	time_t state = text_state(txt);
 	char buf[32];
-	strftime(buf, sizeof buf, "State from %H:%M", localtime(&state));
+	strftime(buf, sizeof buf, "State from %H:%M", localtime_r(&state, &tm));
 	vis_info_show(vis, "%s", buf);
 
 	return pos != EPOS;

@@ -15,19 +15,6 @@ Filerange text_object_entire(Text *txt, size_t pos) {
 	return text_range_new(0, text_size(txt));
 }
 
-Filerange text_object_entire_inner(Text *txt, size_t pos) {
-	char c;
-	Filerange r = text_object_entire(txt, pos);
-	Iterator it = text_iterator_get(txt, r.start);
-	if (text_iterator_byte_get(&it, &c) && c == '\n')
-		while (text_iterator_byte_next(&it, &c) && c == '\n');
-	r.start = it.pos;
-	it = text_iterator_get(txt, r.end);
-	while (text_iterator_char_prev(&it, &c) && c == '\n');
-	r.end = it.pos;
-	return text_range_linewise(txt, &r);
-}
-
 static Filerange text_object_customword(Text *txt, size_t pos, int (*isboundary)(int)) {
 	Filerange r;
 	char c, prev = '0', next = '0';
@@ -40,27 +27,26 @@ static Filerange text_object_customword(Text *txt, size_t pos, int (*isboundary)
 	if (space(c)) {
 		r.start = text_char_next(txt, text_customword_end_prev(txt, pos, isboundary));
 		r.end = text_customword_start_next(txt, pos, isboundary);
-	} else if (boundary(prev) && boundary(next)) {
-		if (boundary(c)) {
-			r.start = text_char_next(txt, text_customword_end_prev(txt, pos, isboundary));
-			r.end = text_char_next(txt, text_customword_end_next(txt, pos, isboundary));
-		} else {
-			/* on a single character */
+	} else if (boundary(c)) {
+		if (boundary(prev) && !space(prev))
+			r.start = text_customword_start_prev(txt, pos, isboundary);
+		else
 			r.start = pos;
+
+		if (boundary(next) && !space(next))
+			r.end = text_char_next(txt, text_customword_end_next(txt, pos, isboundary));
+		else
 			r.end = text_char_next(txt, pos);
-		}
-	} else if (boundary(prev)) {
-		/* at start of a word */
-		r.start = pos;
-		r.end = text_char_next(txt, text_customword_end_next(txt, pos, isboundary));
-	} else if (boundary(next)) {
-		/* at end of a word */
-		r.start = text_customword_start_prev(txt, pos, isboundary);
-		r.end = text_char_next(txt, pos);
 	} else {
-		/* in the middle of a word */
-		r.start = text_customword_start_prev(txt, pos, isboundary);
-		r.end = text_char_next(txt, text_customword_end_next(txt, pos, isboundary));
+		if (boundary(prev))
+			r.start = pos;
+		else
+			r.start = text_customword_start_prev(txt, pos, isboundary);
+
+		if (boundary(next))
+			r.end = text_char_next(txt, pos);
+		else
+			r.end = text_char_next(txt, text_customword_end_next(txt, pos, isboundary));
 	}
 
 	return r;
@@ -149,6 +135,20 @@ Filerange text_object_word_find_prev(Text *txt, size_t pos, const char *word) {
 			return text_range_empty();
 		}
 	}
+}
+
+Filerange text_object_find_next(Text *txt, size_t pos, const char *search) {
+	size_t start = text_find_next(txt, pos, search);
+	if (start == pos)
+		return text_range_empty();
+	return text_range_new(start, start+strlen(search));
+}
+
+Filerange text_object_find_prev(Text *txt, size_t pos, const char *search) {
+	size_t start = text_find_prev(txt, pos, search);
+	if (start == pos)
+		return text_range_empty();
+	return text_range_new(start, start+strlen(search));
 }
 
 Filerange text_object_line(Text *txt, size_t pos) {

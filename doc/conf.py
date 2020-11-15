@@ -59,7 +59,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = 'Vis Editor'
-copyright = '2017, Marc André Tanner'
+copyright = '2014-2020 Marc André Tanner, et al.'
 author = 'Marc André Tanner'
 
 # The version info for the project you're documenting, acts as replacement for
@@ -86,10 +86,13 @@ exclude_patterns = []
 # The name of the Pygments (syntax highlighting) style to use.
 pygments_style = 'sphinx'
 
+primary_domain = 'c'
+highlight_language = 'c'
+
 # If true, `todo` and `todoList` produce output, else they produce nothing.
 todo_include_todos = False
 
-default_role = "any"
+default_role = "c"
 
 # -- Options for HTML output ----------------------------------------------
 

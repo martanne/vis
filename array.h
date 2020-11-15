@@ -44,7 +44,7 @@ void array_init(Array*);
  */
 void array_init_sized(Array*, size_t elem_size);
 /** Initialize Array by using the same element size as in ``from``. */
-void array_init_from(Array*, Array *from);
+void array_init_from(Array*, const Array *from);
 /** Release storage space. Reinitializes Array object. */
 void array_release(Array*);
 /**
@@ -66,7 +66,7 @@ bool array_reserve(Array*, size_t count);
  *              of new elements) might invalidate the pointer.
  * @endrst
  */
-void *array_get(Array*, size_t idx);
+void *array_get(const Array*, size_t idx);
 /**
  * Set array element.
  * @rst
@@ -76,7 +76,7 @@ void *array_get(Array*, size_t idx);
  */
 bool array_set(Array*, size_t idx, void *item);
 /** Dereference pointer stored in array element. */
-void *array_get_ptr(Array*, size_t idx);
+void *array_get_ptr(const Array*, size_t idx);
 /** Store the address to which ``item`` points to into the array. */
 bool array_set_ptr(Array*, size_t idx, void *item);
 /** Add element to the end of the array. */
@@ -91,9 +91,9 @@ bool array_add_ptr(Array*, void *item);
  */
 bool array_remove(Array*, size_t idx);
 /** Number of elements currently stored in the array. */
-size_t array_length(Array*);
+size_t array_length(const Array*);
 /** Number of elements which can be stored without enlarging the array. */
-size_t array_capacity(Array*);
+size_t array_capacity(const Array*);
 /** Remove all elements with index greater or equal to ``length``, keep allocated memory. */
 bool array_truncate(Array*, size_t length);
 /**
@@ -128,6 +128,6 @@ void *array_pop(Array*);
  * .. warning:: The same ownership rules as for ``array_get`` apply.
  * @endrst
  */
-void *array_peek(Array*);
+void *array_peek(const Array*);
 
 #endif

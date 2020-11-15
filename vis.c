@@ -100,6 +100,10 @@ bool vis_event_emit(Vis *vis, enum VisEvents id, ...) {
 		if (vis->event->quit)
 			vis->event->quit(vis);
 		break;
+	case VIS_EVENT_TERM_CSI:
+		if (vis->event->term_csi)
+			vis->event->term_csi(vis, va_arg(ap, const long *));
+		break;
 	}
 
 	va_end(ap);
@@ -1304,6 +1308,17 @@ static const char *getkey(Vis *vis) {
 	}
 
 	TermKey *termkey = vis->ui->termkey_get(vis->ui);
+	if (key.type == TERMKEY_TYPE_UNKNOWN_CSI) {
+		long args[18];
+		size_t nargs;
+		unsigned long cmd;
+		if (termkey_interpret_csi(termkey, &key, &args[2], &nargs, &cmd) == TERMKEY_RES_KEY) {
+			args[0] = (long)cmd;
+			args[1] = nargs;
+			vis_event_emit(vis, VIS_EVENT_TERM_CSI, args);
+		}
+		return getkey(vis);
+	}
 	termkey_strfkey(termkey, vis->key, sizeof(vis->key), &key, TERMKEY_FORMAT_VIM);
 	return vis->key;
 }
@@ -1381,7 +1396,8 @@ int vis_run(Vis *vis) {
 			vis_die(vis, "Killed by SIGTERM\n");
 		if (vis->interrupted) {
 			vis->interrupted = false;
-			vis_keys_feed(vis, "<C-c>");
+			vis_keys_push(vis, "<C-c>", 0, true);
+			continue;
 		}
 
 		if (vis->resume) {
@@ -1685,7 +1701,8 @@ Regex *vis_regex(Vis *vis, const char *pattern) {
 	Regex *regex = text_regex_new();
 	if (!regex)
 		return NULL;
-	if (text_regex_compile(regex, pattern, REG_EXTENDED|REG_NEWLINE) != 0) {
+	int cflags = REG_EXTENDED|REG_NEWLINE|(REG_ICASE*vis->ignorecase);
+	if (text_regex_compile(regex, pattern, cflags) != 0) {
 		text_regex_free(regex);
 		return NULL;
 	}

@@ -57,6 +57,7 @@ typedef struct {
 	void (*win_close)(Vis*, Win*);
 	void (*win_highlight)(Vis*, Win*);
 	void (*win_status)(Vis*, Win*);
+	void (*term_csi)(Vis*, const long *);
 } VisEvent;
 
 /** Union used to pass arguments to key action functions. */
@@ -622,8 +623,6 @@ enum VisTextObject {
 	VIS_TEXTOBJECT_INNER_SINGLE_QUOTE,
 	VIS_TEXTOBJECT_OUTER_BACKTICK,
 	VIS_TEXTOBJECT_INNER_BACKTICK,
-	VIS_TEXTOBJECT_OUTER_ENTIRE,
-	VIS_TEXTOBJECT_INNER_ENTIRE,
 	VIS_TEXTOBJECT_OUTER_LINE,
 	VIS_TEXTOBJECT_INNER_LINE,
 	VIS_TEXTOBJECT_INDENTATION,
@@ -675,8 +674,9 @@ enum VisMark {
  * @defgroup vis_marks
  * @{
  */
-/** Translate single character mark name to corresponding constant. */
+/** Translate between single character mark name and corresponding constant. */
 enum VisMark vis_mark_from(Vis*, char mark);
+char vis_mark_to(Vis*, enum VisMark);
 /**
  * Specify mark to use.
  * @rst
@@ -759,8 +759,9 @@ enum VisRegister {
  * @defgroup vis_registers
  * @{
  */
-/** Translate single character register name to corresponding constant. */
+/** Translate between single character register name and corresponding constant. */
 enum VisRegister vis_register_from(Vis*, char reg);
+char vis_register_to(Vis*, enum VisRegister);
 /**
  * Specify register to use.
  * @rst

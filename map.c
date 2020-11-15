@@ -78,19 +78,6 @@ bool map_contains(const Map *map, const char *prefix)
 	return !map_empty(map_prefix(map, prefix));
 }
 
-static bool leaf(const char *key, void *value, void *data)
-{
-	int *nodes = data;
-	return (*nodes)++ < 1;
-}
-
-bool map_leaf(const Map *map, const char *prefix)
-{
-	int nodes = 0;
-	map_iterate(map_prefix(map, prefix), leaf, &nodes);
-	return nodes == 1;
-}
-
 bool map_put(Map *map, const char *k, const void *value)
 {
 	size_t len = strlen(k);

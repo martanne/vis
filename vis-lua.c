@@ -161,6 +161,7 @@ void vis_lua_win_open(Vis *vis, Win *win) { }
 void vis_lua_win_close(Vis *vis, Win *win) { }
 void vis_lua_win_highlight(Vis *vis, Win *win) { }
 void vis_lua_win_status(Vis *vis, Win *win) { window_status_update(vis, win); }
+void vis_lua_term_csi(Vis *vis, const long *csi) { }
 
 #else
 
@@ -675,30 +676,28 @@ static int files_iter(lua_State *L) {
  * @usage
  * local marks = vis.win.marks
  * for name in vis:mark_names() do
- *	local mark = marks[name]
- *	for i = 1, #mark do
+ * 	local mark = marks[name]
+ * 	for i = 1, #mark do
  * 		-- do somthing with: name, mark[i].start, mark[i].finish
- *	end
+ * 	end
  * end
  */
 static int mark_names_iter(lua_State *L);
 static int mark_names(lua_State *L) {
+	Vis *vis = obj_ref_check(L, 1, "vis");
+	lua_pushlightuserdata(L, vis);
 	enum VisMark *handle = lua_newuserdata(L, sizeof *handle);
 	*handle = 0;
-	lua_pushcclosure(L, mark_names_iter, 1);
+	lua_pushcclosure(L, mark_names_iter, 2);
 	return 1;
 }
 
 static int mark_names_iter(lua_State *L) {
-	char mark = '\0';
-	enum VisMark *handle = lua_touserdata(L, lua_upvalueindex(1));
-	if (*handle < LENGTH(vis_marks))
-		mark = vis_marks[*handle].name;
-	else if (VIS_MARK_a <= *handle && *handle <= VIS_MARK_z)
-		mark = 'a' + *handle - VIS_MARK_a;
+	Vis *vis = lua_touserdata(L, lua_upvalueindex(1));
+	enum VisMark *handle = lua_touserdata(L, lua_upvalueindex(2));
+	char mark = vis_mark_to(vis, *handle);
 	if (mark) {
-		char name[2] = { mark, '\0' };
-		lua_pushstring(L, name);
+		lua_pushlstring(L, &mark, 1);
 		(*handle)++;
 		return 1;
 	}
@@ -719,22 +718,20 @@ static int mark_names_iter(lua_State *L) {
  */
 static int register_names_iter(lua_State *L);
 static int register_names(lua_State *L) {
+	Vis *vis = obj_ref_check(L, 1, "vis");
+	lua_pushlightuserdata(L, vis);
 	enum VisRegister *handle = lua_newuserdata(L, sizeof *handle);
 	*handle = 0;
-	lua_pushcclosure(L, register_names_iter, 1);
+	lua_pushcclosure(L, register_names_iter, 2);
 	return 1;
 }
 
 static int register_names_iter(lua_State *L) {
-	char reg = '\0';
-	enum VisRegister *handle = lua_touserdata(L, lua_upvalueindex(1));
-	if (*handle < LENGTH(vis_registers))
-		reg = vis_registers[*handle].name;
-	else if (VIS_REG_a <= *handle && *handle <= VIS_REG_z)
-		reg = 'a' + *handle - VIS_REG_a;
+	Vis *vis = lua_touserdata(L, lua_upvalueindex(1));
+	enum VisRegister *handle = lua_touserdata(L, lua_upvalueindex(2));
+	char reg = vis_register_to(vis, *handle);
 	if (reg) {
-		char name[2] = { reg, '\0' };
-		lua_pushstring(L, name);
+		lua_pushlstring(L, &reg, 1);
 		(*handle)++;
 		return 1;
 	}
@@ -1363,7 +1360,7 @@ static int pipe_func(lua_State *L) {
  *
  * Will trigger redraw events, make sure to avoid recursive events.
  *
- * @function draw
+ * @function redraw
  */
 static int redraw(lua_State *L) {
 	Vis *vis = obj_ref_check(L, 1, "vis");
@@ -1386,6 +1383,14 @@ static int redraw(lua_State *L) {
 /***
  * Currently unconsumed keys in the input queue.
  * @tfield string input_queue
+ */
+/***
+ * Register name in use.
+ * @tfield string register
+ */
+/***
+ * Mark name in use.
+ * @tfield string mark
  */
 static int vis_index(lua_State *L) {
 	Vis *vis = obj_ref_check(L, 1, "vis");
@@ -1424,8 +1429,20 @@ static int vis_index(lua_State *L) {
 			return 1;
 		}
 
+		if (strcmp(key, "register") == 0) {
+			char name = vis_register_to(vis, vis_register_used(vis));
+			lua_pushlstring(L, &name, 1);
+			return 1;
+		}
+
 		if (strcmp(key, "registers") == 0) {
 			obj_ref_new(L, vis->ui, VIS_LUA_TYPE_REGISTERS);
+			return 1;
+		}
+
+		if (strcmp(key, "mark") == 0) {
+			char name = vis_mark_to(vis, vis_mark_used(vis));
+			lua_pushlstring(L, &name, 1);
 			return 1;
 		}
 
@@ -1460,6 +1477,20 @@ static int vis_newindex(lua_State *L) {
 
 		if (strcmp(key, "win") == 0) {
 			vis_window_focus(obj_ref_check(L, 3, VIS_LUA_TYPE_WINDOW));
+			return 0;
+		}
+
+		if (strcmp(key, "register") == 0) {
+			const char *name = luaL_checkstring(L, 3);
+			if (strlen(name) == 1)
+				vis_register(vis, vis_register_from(vis, name[0]));
+			return 0;
+		}
+
+		if (strcmp(key, "mark") == 0) {
+			const char *name = luaL_checkstring(L, 3);
+			if (strlen(name) == 1)
+				vis_mark(vis, vis_mark_from(vis, name[0]));
 			return 0;
 		}
 	}
@@ -2100,6 +2131,27 @@ static int file_index(lua_State *L) {
 	return index_common(L);
 }
 
+static int file_newindex(lua_State *L) {
+	File *file = obj_ref_check(L, 1, VIS_LUA_TYPE_FILE);
+
+	if (lua_isstring(L, 2)) {
+		const char *key = lua_tostring(L, 2);
+
+		if (strcmp(key, "modified") == 0) {
+			bool modified = lua_isboolean(L, 3) && lua_toboolean(L, 3);
+			if (modified) {
+				text_insert(file->text, 0, " ", 1);
+				text_delete(file->text, 0, 1);
+			} else {
+				text_save(file->text, NULL);
+			}
+			return 0;
+		}
+	}
+
+	return newindex_common(L);
+}
+
 /***
  * Insert data at position.
  * @function insert
@@ -2281,7 +2333,7 @@ static int file_text_object(lua_State *L) {
 
 static const struct luaL_Reg file_funcs[] = {
 	{ "__index", file_index },
-	{ "__newindex", newindex_common },
+	{ "__newindex", file_newindex },
 	{ "insert", file_insert },
 	{ "delete", file_delete },
 	{ "lines_iterator", file_lines_iterator },
@@ -3050,6 +3102,26 @@ void vis_lua_win_status(Vis *vis, Win *win) {
 		pcall(vis, L, 1, 0);
 	} else {
 		window_status_update(vis, win);
+	}
+	lua_pop(L, 1);
+}
+
+/***
+ * CSI command received from terminal.
+ * @function term_csi
+ * @param List of CSI parameters
+ */
+void vis_lua_term_csi(Vis *vis, const long *csi) {
+	lua_State *L = vis->lua;
+	if (!L)
+		return;
+	vis_lua_event_get(L, "term_csi");
+	if (lua_isfunction(L, -1)) {
+		int nargs = csi[1];
+		lua_pushinteger(L, csi[0]);
+		for (int i = 0; i < nargs; i++)
+			lua_pushinteger(L, csi[2 + i]);
+		pcall(vis, L, 1 + nargs, 0);
 	}
 	lua_pop(L, 1);
 }

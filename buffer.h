@@ -75,7 +75,7 @@ const char *buffer_content(Buffer*);
 /**
  * Borrow underlying buffer data.
  * @rst
- * .. warning:: The caller is responsible to `free(3)` it.
+ * .. warning:: The caller is responsible to ``free(3)`` it.
  * @endrst
  */
 char *buffer_move(Buffer*);

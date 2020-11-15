@@ -63,7 +63,8 @@ static const char *prompt_enter(Vis *vis, const char *keys, const Arg *arg) {
 			pattern = "^:";
 		else if (prompt->file == vis->search_file)
 			pattern = "^(/|\\?)";
-		if (pattern && regex && text_regex_compile(regex, pattern, REG_EXTENDED|REG_NEWLINE) == 0) {
+		int cflags = REG_EXTENDED|REG_NEWLINE|(REG_ICASE*vis->ignorecase);
+		if (pattern && regex && text_regex_compile(regex, pattern, cflags) == 0) {
 			size_t end = text_line_end(txt, pos);
 			size_t prev = text_search_backward(txt, end, regex);
 			if (prev > pos)

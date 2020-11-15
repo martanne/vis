@@ -35,11 +35,6 @@ void *map_closest(const Map*, const char *prefix);
  */
 bool map_contains(const Map*, const char *prefix);
 /**
- * Check whether the given prefix can be extended to exactly one map element.
- * True iff the prefix map contains exactly one element.
- */
-bool map_leaf(const Map*, const char *prefix);
-/**
  * Store a key value pair in the map.
  * @return False if we run out of memory (``errno = ENOMEM``), or if the key
  *         already appears in the map (``errno = EEXIST``).

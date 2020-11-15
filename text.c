@@ -1,6 +1,3 @@
-#ifndef _GNU_SOURCE
-#define _GNU_SOURCE /* memrchr(3) is non-standard */
-#endif
 #include <unistd.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -15,42 +12,13 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/mman.h>
-#if CONFIG_ACL
-#include <sys/acl.h>
-#endif
-#if CONFIG_SELINUX
-#include <selinux/selinux.h>
-#endif
 
 #include "text.h"
 #include "text-util.h"
 #include "text-motions.h"
 #include "util.h"
-
-/* Allocate blocks holding the actual file content in chunks of size: */
-#ifndef BLOCK_SIZE
-#define BLOCK_SIZE (1 << 20)
-#endif
-/* Files smaller than this value are copied on load, larger ones are mmap(2)-ed
- * directely. Hence the former can be truncated, while doing so on the latter
- * results in havoc. */
-#define BLOCK_MMAP_SIZE (1 << 26)
-
-/* Block holding the file content, either readonly mmap(2)-ed from the original
- * file or heap allocated to store the modifications.
- */
-typedef struct Block Block;
-struct Block {
-	size_t size;               /* maximal capacity */
-	size_t len;                /* current used length / insertion position */
-	char *data;                /* actual data */
-	enum {                     /* type of allocation */
-		MMAP_ORIG,         /* mmap(2)-ed from an external file */
-		MMAP,              /* mmap(2)-ed from a temporary file only known to this process */
-		MALLOC,            /* heap allocated block using malloc(3) */
-	} type;
-	Block *next;               /* next chunk */
-};
+#include "array.h"
+#include "text-internal.h"
 
 /* A piece holds a reference (but doesn't itself store) a certain amount of data.
  * All active pieces chained together form the whole content of the document.
@@ -115,8 +83,7 @@ typedef struct {
 
 /* The main struct holding all information of a given file */
 struct Text {
-	Block *block;           /* original file content at the time of load operation */
-	Block *blocks;          /* all blocks which have been allocated to hold insertion data */
+	Array blocks;           /* blocks which hold text content */
 	Piece *pieces;          /* all pieces which have been allocated, used to free them */
 	Piece *cache;           /* most recently modified piece */
 	Piece begin, end;       /* sentinel nodes which always exists but don't hold any data */
@@ -129,23 +96,7 @@ struct Text {
 	LineCache lines;        /* mapping between absolute pos in bytes and logical line breaks */
 };
 
-struct TextSave {                  /* used to hold context between text_save_{begin,commit} calls */
-	Text *txt;                 /* text to operate on */
-	char *filename;            /* filename to save to as given to text_save_begin */
-	char *tmpname;             /* temporary name used for atomic rename(2) */
-	int fd;                    /* file descriptor to write data to using text_save_write */
-	enum TextSaveMethod type;  /* method used to save file */
-};
-
 /* block management */
-static Block *block_alloc(Text*, size_t size);
-static Block *block_read(Text*, size_t size, int fd);
-static Block *block_mmap(Text*, size_t size, int fd, off_t offset);
-static void block_free(Block*);
-static bool block_capacity(Block*, size_t len);
-static const char *block_append(Block*, const char *data, size_t len);
-static bool block_insert(Block*, size_t pos, const char *data, size_t len);
-static bool block_delete(Block*, size_t pos, size_t len);
 static const char *block_store(Text*, const char *data, size_t len);
 /* cache layer */
 static void cache_piece(Text *txt, Piece *p);
@@ -157,7 +108,7 @@ static Piece *piece_alloc(Text *txt);
 static void piece_free(Piece *p);
 static void piece_init(Piece *p, Piece *prev, Piece *next, const char *data, size_t len);
 static Location piece_get_intern(Text *txt, size_t pos);
-static Location piece_get_extern(Text *txt, size_t pos);
+static Location piece_get_extern(const Text *txt, size_t pos);
 /* span management */
 static void span_init(Span *span, Piece *start, Piece *end);
 static void span_swap(Text *txt, Span *old, Span *new);
@@ -172,145 +123,25 @@ static void lineno_cache_invalidate(LineCache *cache);
 static size_t lines_skip_forward(Text *txt, size_t pos, size_t lines, size_t *lines_skiped);
 static size_t lines_count(Text *txt, size_t pos, size_t len);
 
-static ssize_t write_all(int fd, const char *buf, size_t count) {
-	size_t rem = count;
-	while (rem > 0) {
-		ssize_t written = write(fd, buf, rem > INT_MAX ? INT_MAX : rem);
-		if (written < 0) {
-			if (errno == EAGAIN || errno == EINTR)
-				continue;
-			return -1;
-		} else if (written == 0) {
-			break;
-		}
-		rem -= written;
-		buf += written;
-	}
-	return count - rem;
-}
-
-/* allocate a new block of MAX(size, BLOCK_SIZE) bytes */
-static Block *block_alloc(Text *txt, size_t size) {
-	Block *blk = calloc(1, sizeof *blk);
-	if (!blk)
-		return NULL;
-	if (BLOCK_SIZE > size)
-		size = BLOCK_SIZE;
-	if (!(blk->data = malloc(size))) {
-		free(blk);
-		return NULL;
-	}
-	blk->type = MALLOC;
-	blk->size = size;
-	blk->next = txt->blocks;
-	txt->blocks = blk;
-	return blk;
-}
-
-static Block *block_read(Text *txt, size_t size, int fd) {
-	Block *blk = block_alloc(txt, size);
-	if (!blk)
-		return NULL;
-	while (size > 0) {
-		char data[4096];
-		ssize_t len = read(fd, data, MIN(sizeof(data), size));
-		if (len == -1) {
-			txt->blocks = blk->next;
-			block_free(blk);
-			return NULL;
-		} else if (len == 0) {
-			break;
-		} else {
-			block_append(blk, data, len);
-			size -= len;
-		}
-	}
-	return blk;
-}
-
-static Block *block_mmap(Text *txt, size_t size, int fd, off_t offset) {
-	Block *blk = calloc(1, sizeof *blk);
-	if (!blk)
-		return NULL;
-	if (size) {
-		blk->data = mmap(NULL, size, PROT_READ, MAP_SHARED, fd, offset);
-		if (blk->data == MAP_FAILED) {
-			free(blk);
-			return NULL;
-		}
-	}
-	blk->type = MMAP_ORIG;
-	blk->size = size;
-	blk->len = size;
-	blk->next = txt->blocks;
-	txt->blocks = blk;
-	return blk;
-}
-
-static void block_free(Block *blk) {
-	if (!blk)
-		return;
-	if (blk->type == MALLOC)
-		free(blk->data);
-	else if ((blk->type == MMAP_ORIG || blk->type == MMAP) && blk->data)
-		munmap(blk->data, blk->size);
-	free(blk);
-}
-
-/* check whether block has enough free space to store len bytes */
-static bool block_capacity(Block *blk, size_t len) {
-	return blk->size - blk->len >= len;
-}
-
-/* append data to block, assumes there is enough space available */
-static const char *block_append(Block *blk, const char *data, size_t len) {
-	char *dest = memcpy(blk->data + blk->len, data, len);
-	blk->len += len;
-	return dest;
-}
-
 /* stores the given data in a block, allocates a new one if necessary. returns
  * a pointer to the storage location or NULL if allocation failed. */
 static const char *block_store(Text *txt, const char *data, size_t len) {
-	Block *blk = txt->blocks;
-	if ((!blk || !block_capacity(blk, len)) && !(blk = block_alloc(txt, len)))
-		return NULL;
-	return block_append(blk, data, len);
-}
-
-/* insert data into block at an arbitrary position, this should only be used with
- * data of the most recently created piece. */
-static bool block_insert(Block *blk, size_t pos, const char *data, size_t len) {
-	if (pos > blk->len || !block_capacity(blk, len))
-		return false;
-	if (blk->len == pos)
-		return block_append(blk, data, len);
-	char *insert = blk->data + pos;
-	memmove(insert + len, insert, blk->len - pos);
-	memcpy(insert, data, len);
-	blk->len += len;
-	return true;
-}
-
-/* delete data from a block at an arbitrary position, this should only be used with
- * data of the most recently created piece. */
-static bool block_delete(Block *blk, size_t pos, size_t len) {
-	size_t end;
-	if (!addu(pos, len, &end) || end > blk->len)
-		return false;
-	if (blk->len == pos) {
-		blk->len -= len;
-		return true;
+	Block *blk = array_get_ptr(&txt->blocks, array_length(&txt->blocks)-1);
+	if (!blk || !block_capacity(blk, len)) {
+		blk = block_alloc(len);
+		if (!blk)
+			return NULL;
+		if (!array_add_ptr(&txt->blocks, blk)) {
+			block_free(blk);
+			return NULL;
+		}
 	}
-	char *delete = blk->data + pos;
-	memmove(delete, delete + len, blk->len - pos - len);
-	blk->len -= len;
-	return true;
+	return block_append(blk, data, len);
 }
 
 /* cache the given piece if it is the most recently changed one */
 static void cache_piece(Text *txt, Piece *p) {
-	Block *blk = txt->blocks;
+	Block *blk = array_get_ptr(&txt->blocks, array_length(&txt->blocks)-1);
 	if (!blk || p->data < blk->data || p->data + p->len != blk->data + blk->len)
 		return;
 	txt->cache = p;
@@ -318,7 +149,7 @@ static void cache_piece(Text *txt, Piece *p) {
 
 /* check whether the given piece was the most recently modified one */
 static bool cache_contains(Text *txt, Piece *p) {
-	Block *blk = txt->blocks;
+	Block *blk = array_get_ptr(&txt->blocks, array_length(&txt->blocks)-1);
 	Revision *rev = txt->current_revision;
 	if (!blk || !txt->cache || txt->cache != p || !rev || !rev->change)
 		return false;
@@ -342,7 +173,7 @@ static bool cache_contains(Text *txt, Piece *p) {
 static bool cache_insert(Text *txt, Piece *p, size_t off, const char *data, size_t len) {
 	if (!cache_contains(txt, p))
 		return false;
-	Block *blk = txt->blocks;
+	Block *blk = array_get_ptr(&txt->blocks, array_length(&txt->blocks)-1);
 	size_t bufpos = p->data + off - blk->data;
 	if (!block_insert(blk, bufpos, data, len))
 		return false;
@@ -359,7 +190,7 @@ static bool cache_insert(Text *txt, Piece *p, size_t off, const char *data, size
 static bool cache_delete(Text *txt, Piece *p, size_t off, size_t len) {
 	if (!cache_contains(txt, p))
 		return false;
-	Block *blk = txt->blocks;
+	Block *blk = array_get_ptr(&txt->blocks, array_length(&txt->blocks)-1);
 	size_t end;
 	size_t bufpos = p->data + off - blk->data;
 	if (!addu(off, len, &end) || end > p->len || !block_delete(blk, bufpos, len))
@@ -509,7 +340,7 @@ static Location piece_get_intern(Text *txt, size_t pos) {
  * it pos is the end of file (== text_size()) and the file is not empty then
  * the last piece holding data is returned.
  */
-static Location piece_get_extern(Text *txt, size_t pos) {
+static Location piece_get_extern(const Text *txt, size_t pos) {
 	size_t cur = 0;
 	Piece *p;
 
@@ -639,37 +470,6 @@ bool text_insert(Text *txt, size_t pos, const char *data, size_t len) {
 	return true;
 }
 
-static bool text_vprintf(Text *txt, size_t pos, const char *format, va_list ap) {
-	va_list ap_save;
-	va_copy(ap_save, ap);
-	int len = vsnprintf(NULL, 0, format, ap);
-	if (len == -1) {
-		va_end(ap_save);
-		return false;
-	}
-	char *buf = malloc(len+1);
-	bool ret = buf && (vsnprintf(buf, len+1, format, ap_save) == len) && text_insert(txt, pos, buf, len);
-	free(buf);
-	va_end(ap_save);
-	return ret;
-}
-
-bool text_appendf(Text *txt, const char *format, ...) {
-	va_list ap;
-	va_start(ap, format);
-	bool ret = text_vprintf(txt, text_size(txt), format, ap);
-	va_end(ap);
-	return ret;
-}
-
-bool text_printf(Text *txt, size_t pos, const char *format, ...) {
-	va_list ap;
-	va_start(ap, format);
-	bool ret = text_vprintf(txt, pos, format, ap);
-	va_end(ap);
-	return ret;
-}
-
 static size_t revision_undo(Text *txt, Revision *rev) {
 	size_t pos = EPOS;
 	for (Change *c = rev->change; c; c = c->next) {
@@ -781,375 +581,35 @@ size_t text_restore(Text *txt, time_t time) {
 	return history_traverse_to(txt, rev);
 }
 
-time_t text_state(Text *txt) {
+time_t text_state(const Text *txt) {
 	return txt->history->time;
 }
 
-static bool preserve_acl(int src, int dest) {
-#if CONFIG_ACL
-	acl_t acl = acl_get_fd(src);
-	if (!acl)
-		return errno == ENOTSUP ? true : false;
-	if (acl_set_fd(dest, acl) == -1) {
-		acl_free(acl);
-		return false;
-	}
-	acl_free(acl);
-#endif /* CONFIG_ACL */
-	return true;
-}
-
-static bool preserve_selinux_context(int src, int dest) {
-#if CONFIG_SELINUX
-	char *context = NULL;
-	if (!is_selinux_enabled())
-		return true;
-	if (fgetfilecon(src, &context) == -1)
-		return errno == ENOTSUP ? true : false;
-	if (fsetfilecon(dest, context) == -1) {
-		freecon(context);
-		return false;
-	}
-	freecon(context);
-#endif /* CONFIG_SELINUX */
-	return true;
-}
-
-/* Create a new file named `.filename.vis.XXXXXX` (where `XXXXXX` is a
- * randomly generated, unique suffix) and try to preserve all important
- * meta data. After the file content has been written to this temporary
- * file, text_save_commit_atomic will atomically move it to  its final
- * (possibly already existing) destination using rename(2).
- *
- * This approach does not work if:
- *
- *   - the file is a symbolic link
- *   - the file is a hard link
- *   - file ownership can not be preserved
- *   - file group can not be preserved
- *   - directory permissions do not allow creation of a new file
- *   - POSXI ACL can not be preserved (if enabled)
- *   - SELinux security context can not be preserved (if enabled)
- */
-static bool text_save_begin_atomic(TextSave *ctx) {
-	int oldfd, saved_errno;
-	if ((oldfd = open(ctx->filename, O_RDONLY)) == -1 && errno != ENOENT)
-		goto err;
-	struct stat oldmeta = { 0 };
-	if (oldfd != -1 && lstat(ctx->filename, &oldmeta) == -1)
-		goto err;
-	if (oldfd != -1) {
-		if (S_ISLNK(oldmeta.st_mode)) /* symbolic link */
-			goto err;
-		if (oldmeta.st_nlink > 1) /* hard link */
-			goto err;
-	}
-
-	char suffix[] = ".vis.XXXXXX";
-	size_t len = strlen(ctx->filename) + sizeof("./.") + sizeof(suffix);
-	char *dir = strdup(ctx->filename);
-	char *base = strdup(ctx->filename);
-
-	if (!(ctx->tmpname = malloc(len)) || !dir || !base) {
-		free(dir);
-		free(base);
-		goto err;
-	}
-
-	snprintf(ctx->tmpname, len, "%s/.%s%s", dirname(dir), basename(base), suffix);
-	free(dir);
-	free(base);
-
-	if ((ctx->fd = mkstemp(ctx->tmpname)) == -1)
-		goto err;
-
-	if (oldfd == -1) {
-		mode_t mask = umask(0);
-		umask(mask);
-		if (fchmod(ctx->fd, 0666 & ~mask) == -1)
-			goto err;
-	} else {
-		if (fchmod(ctx->fd, oldmeta.st_mode) == -1)
-			goto err;
-		if (!preserve_acl(oldfd, ctx->fd) || !preserve_selinux_context(oldfd, ctx->fd))
-			goto err;
-		/* change owner if necessary */
-		if (oldmeta.st_uid != getuid() && fchown(ctx->fd, oldmeta.st_uid, (uid_t)-1) == -1)
-			goto err;
-		/* change group if necessary, in case of failure some editors reset
-		 * the group permissions to the same as for others */
-		if (oldmeta.st_gid != getgid() && fchown(ctx->fd, (uid_t)-1, oldmeta.st_gid) == -1)
-			goto err;
-		close(oldfd);
-	}
-
-	ctx->type = TEXT_SAVE_ATOMIC;
-	return true;
-err:
-	saved_errno = errno;
-	if (oldfd != -1)
-		close(oldfd);
-	if (ctx->fd != -1)
-		close(ctx->fd);
-	ctx->fd = -1;
-	free(ctx->tmpname);
-	ctx->tmpname = NULL;
-	errno = saved_errno;
-	return false;
-}
-
-static bool text_save_commit_atomic(TextSave *ctx) {
-	if (fsync(ctx->fd) == -1)
-		return false;
-
-	struct stat meta = { 0 };
-	if (fstat(ctx->fd, &meta) == -1)
-		return false;
-
-	bool close_failed = (close(ctx->fd) == -1);
-	ctx->fd = -1;
-	if (close_failed)
-		return false;
-
-	if (rename(ctx->tmpname, ctx->filename) == -1)
-		return false;
-
-	free(ctx->tmpname);
-	ctx->tmpname = NULL;
-
-	int dir = open(dirname(ctx->filename), O_DIRECTORY|O_RDONLY);
-	if (dir == -1)
-		return false;
-
-	if (fsync(dir) == -1 && errno != EINVAL) {
-		close(dir);
-		return false;
-	}
-
-	if (close(dir) == -1)
-		return false;
-
-	if (meta.st_mtime)
-		ctx->txt->info = meta;
-	return true;
-}
-
-static bool text_save_begin_inplace(TextSave *ctx) {
-	Text *txt = ctx->txt;
-	struct stat meta = { 0 };
-	int newfd = -1, saved_errno;
-	if ((ctx->fd = open(ctx->filename, O_CREAT|O_WRONLY, 0666)) == -1)
-		goto err;
-	if (fstat(ctx->fd, &meta) == -1)
-		goto err;
-	Block *block = txt->block;
-	if (meta.st_dev == txt->info.st_dev && meta.st_ino == txt->info.st_ino &&
-	    block && block->type == MMAP_ORIG && block->size) {
-		/* The file we are going to overwrite is currently mmap-ed from
-		 * text_load, therefore we copy the mmap-ed block to a temporary
-		 * file and remap it at the same position such that all pointers
-		 * from the various pieces are still valid.
-		 */
-		size_t size = block->size;
-		char tmpname[32] = "/tmp/vis-XXXXXX";
-		newfd = mkstemp(tmpname);
-		if (newfd == -1)
-			goto err;
-		if (unlink(tmpname) == -1)
-			goto err;
-		ssize_t written = write_all(newfd, block->data, size);
-		if (written == -1 || (size_t)written != size)
-			goto err;
-		void *data = mmap(block->data, size, PROT_READ, MAP_SHARED|MAP_FIXED, newfd, 0);
-		if (data == MAP_FAILED)
-			goto err;
-		bool close_failed = (close(newfd) == -1);
-		newfd = -1;
-		if (close_failed)
-			goto err;
-		block->type = MMAP;
-	}
-	/* overwrite the existing file content, if something goes wrong
-	 * here we are screwed, TODO: make a backup before? */
-	if (ftruncate(ctx->fd, 0) == -1)
-		goto err;
-	ctx->type = TEXT_SAVE_INPLACE;
-	return true;
-err:
-	saved_errno = errno;
-	if (newfd != -1)
-		close(newfd);
-	if (ctx->fd != -1)
-		close(ctx->fd);
-	ctx->fd = -1;
-	errno = saved_errno;
-	return false;
-}
-
-static bool text_save_commit_inplace(TextSave *ctx) {
-	if (fsync(ctx->fd) == -1)
-		return false;
-	struct stat meta = { 0 };
-	if (fstat(ctx->fd, &meta) == -1)
-		return false;
-	if (close(ctx->fd) == -1)
-		return false;
-	ctx->txt->info = meta;
-	return true;
-}
-
-TextSave *text_save_begin(Text *txt, const char *filename, enum TextSaveMethod type) {
-	if (!filename)
-		return NULL;
-	TextSave *ctx = calloc(1, sizeof *ctx);
-	if (!ctx)
-		return NULL;
-	ctx->txt = txt;
-	ctx->fd = -1;
-	if (!(ctx->filename = strdup(filename)))
-		goto err;
-	errno = 0;
-	if ((type == TEXT_SAVE_AUTO || type == TEXT_SAVE_ATOMIC) && text_save_begin_atomic(ctx))
-		return ctx;
-	if (errno == ENOSPC)
-		goto err;
-	if ((type == TEXT_SAVE_AUTO || type == TEXT_SAVE_INPLACE) && text_save_begin_inplace(ctx))
-		return ctx;
-err:
-	text_save_cancel(ctx);
-	return NULL;
-}
-
-bool text_save_commit(TextSave *ctx) {
-	if (!ctx)
-		return true;
-	bool ret;
-	Text *txt = ctx->txt;
-	switch (ctx->type) {
-	case TEXT_SAVE_ATOMIC:
-		ret = text_save_commit_atomic(ctx);
-		break;
-	case TEXT_SAVE_INPLACE:
-		ret = text_save_commit_inplace(ctx);
-		break;
-	default:
-		ret = false;
-		break;
-	}
-
-	if (ret) {
-		txt->saved_revision = txt->history;
-		text_snapshot(txt);
-	}
-	text_save_cancel(ctx);
-	return ret;
-}
-
-void text_save_cancel(TextSave *ctx) {
-	if (!ctx)
-		return;
-	int saved_errno = errno;
-	if (ctx->fd != -1)
-		close(ctx->fd);
-	if (ctx->tmpname && ctx->tmpname[0])
-		unlink(ctx->tmpname);
-	free(ctx->tmpname);
-	free(ctx->filename);
-	free(ctx);
-	errno = saved_errno;
-}
-
-/* First try to save the file atomically using rename(2) if this does not
- * work overwrite the file in place. However if something goes wrong during
- * this overwrite the original file is permanently damaged.
- */
-bool text_save(Text *txt, const char *filename) {
-	return text_save_method(txt, filename, TEXT_SAVE_AUTO);
-}
-
-bool text_save_method(Text *txt, const char *filename, enum TextSaveMethod method) {
-	if (!filename) {
-		txt->saved_revision = txt->history;
-		text_snapshot(txt);
-		return true;
-	}
-	TextSave *ctx = text_save_begin(txt, filename, method);
-	if (!ctx)
-		return false;
-	Filerange range = (Filerange){ .start = 0, .end = text_size(txt) };
-	ssize_t written = text_save_write_range(ctx, &range);
-	if (written == -1 || (size_t)written != text_range_size(&range)) {
-		text_save_cancel(ctx);
-		return false;
-	}
-	return text_save_commit(ctx);
-}
-
-ssize_t text_save_write_range(TextSave *ctx, Filerange *range) {
-	return text_write_range(ctx->txt, range, ctx->fd);
-}
-
-ssize_t text_write(Text *txt, int fd) {
-	Filerange r = (Filerange){ .start = 0, .end = text_size(txt) };
-	return text_write_range(txt, &r, fd);
-}
-
-ssize_t text_write_range(Text *txt, Filerange *range, int fd) {
-	size_t size = text_range_size(range), rem = size;
-	for (Iterator it = text_iterator_get(txt, range->start);
-	     rem > 0 && text_iterator_valid(&it);
-	     text_iterator_next(&it)) {
-		size_t prem = it.end - it.text;
-		if (prem > rem)
-			prem = rem;
-		ssize_t written = write_all(fd, it.text, prem);
-		if (written == -1)
-			return -1;
-		rem -= written;
-		if ((size_t)written != prem)
-			break;
-	}
-	return size - rem;
-}
-
-Text *text_load(const char *filename) {
-	return text_load_method(filename, TEXT_LOAD_AUTO);
-}
-
-Text *text_load_method(const char *filename, enum TextLoadMethod method) {
-	int fd = -1;
-	size_t size = 0;
+Text *text_loadat_method(int dirfd, const char *filename, enum TextLoadMethod method) {
 	Text *txt = calloc(1, sizeof *txt);
 	if (!txt)
 		return NULL;
 	Piece *p = piece_alloc(txt);
 	if (!p)
 		goto out;
+	Block *block = NULL;
+	array_init(&txt->blocks);
 	lineno_cache_invalidate(&txt->lines);
 	if (filename) {
-		if ((fd = open(filename, O_RDONLY)) == -1)
+		errno = 0;
+		block = block_load(dirfd, filename, method, &txt->info);
+		if (!block && errno)
 			goto out;
-		if (fstat(fd, &txt->info) == -1)
+		if (block && !array_add_ptr(&txt->blocks, block)) {
+			block_free(block);
 			goto out;
-		if (!S_ISREG(txt->info.st_mode)) {
-			errno = S_ISDIR(txt->info.st_mode) ? EISDIR : ENOTSUP;
-			goto out;
-		}
-		// XXX: use lseek(fd, 0, SEEK_END); instead?
-		size = txt->info.st_size;
-		if (size > 0) {
-			if (method == TEXT_LOAD_READ || (method == TEXT_LOAD_AUTO && size < BLOCK_MMAP_SIZE))
-				txt->block = block_read(txt, size, fd);
-			else
-				txt->block = block_mmap(txt, size, fd, 0);
-			if (!txt->block)
-				goto out;
-			piece_init(p, &txt->begin, &txt->end, txt->block->data, txt->block->len);
 		}
 	}
 
-	if (size == 0)
+	if (!block)
 		piece_init(p, &txt->begin, &txt->end, "\0", 0);
+	else
+		piece_init(p, &txt->begin, &txt->end, block->data, block->len);
 
 	piece_init(&txt->begin, NULL, p, NULL, 0);
 	piece_init(&txt->end, p, NULL, NULL, 0);
@@ -1159,18 +619,28 @@ Text *text_load_method(const char *filename, enum TextLoadMethod method) {
 	text_snapshot(txt);
 	txt->saved_revision = txt->history;
 
-	if (fd != -1)
-		close(fd);
 	return txt;
 out:
-	if (fd != -1)
-		close(fd);
 	text_free(txt);
 	return NULL;
 }
 
-struct stat text_stat(Text *txt) {
+struct stat text_stat(const Text *txt) {
 	return txt->info;
+}
+
+void text_saved(Text *txt, struct stat *meta) {
+	if (meta)
+		txt->info = *meta;
+	txt->saved_revision = txt->history;
+	text_snapshot(txt);
+}
+
+Block *text_block_mmaped(Text *txt) {
+	Block *block = array_get_ptr(&txt->blocks, 0);
+	if (block && block->type == BLOCK_TYPE_MMAP_ORIG && block->size)
+		return block;
+	return NULL;
 }
 
 /* A delete operation can either start/stop midway through a piece or at
@@ -1270,7 +740,7 @@ bool text_delete(Text *txt, size_t pos, size_t len) {
 	return true;
 }
 
-bool text_delete_range(Text *txt, Filerange *r) {
+bool text_delete_range(Text *txt, const Filerange *r) {
 	if (!text_range_valid(r))
 		return false;
 	return text_delete(txt, r->start, text_range_size(r));
@@ -1278,11 +748,12 @@ bool text_delete_range(Text *txt, Filerange *r) {
 
 /* preserve the current text content such that it can be restored by
  * means of undo/redo operations */
-void text_snapshot(Text *txt) {
+bool text_snapshot(Text *txt) {
 	if (txt->current_revision)
 		txt->last_revision = txt->current_revision;
 	txt->current_revision = NULL;
 	txt->cache = NULL;
+	return true;
 }
 
 
@@ -1305,69 +776,63 @@ void text_free(Text *txt) {
 		piece_free(p);
 	}
 
-	for (Block *next, *blk = txt->blocks; blk; blk = next) {
-		next = blk->next;
-		block_free(blk);
-	}
+	for (size_t i = 0, len = array_length(&txt->blocks); i < len; i++)
+		block_free(array_get_ptr(&txt->blocks, i));
+	array_release(&txt->blocks);
 
 	free(txt);
 }
 
-bool text_modified(Text *txt) {
+bool text_modified(const Text *txt) {
 	return txt->saved_revision != txt->history;
 }
 
-bool text_mmaped(Text *txt, const char *ptr) {
+bool text_mmaped(const Text *txt, const char *ptr) {
 	uintptr_t addr = (uintptr_t)ptr;
-	for (Block *blk = txt->blocks; blk; blk = blk->next) {
-		if ((blk->type == MMAP_ORIG || blk->type == MMAP) &&
+	for (size_t i = 0, len = array_length(&txt->blocks); i < len; i++) {
+		Block *blk = array_get_ptr(&txt->blocks, i);
+		if ((blk->type == BLOCK_TYPE_MMAP_ORIG || blk->type == BLOCK_TYPE_MMAP) &&
 		    (uintptr_t)(blk->data) <= addr && addr < (uintptr_t)(blk->data + blk->size))
 			return true;
 	}
 	return false;
 }
 
-static bool text_iterator_init(Iterator *it, size_t pos, Piece *p, size_t off) {
-	Iterator iter = (Iterator){
+static bool iterator_init(Iterator *it, size_t pos, Piece *p, size_t off) {
+	*it = (Iterator){
 		.pos = pos,
 		.piece = p,
 		.start = p ? p->data : NULL,
-		.end = p ? p->data + p->len : NULL,
-		.text = p ? p->data + off : NULL,
+		.end = p && p->data ? p->data + p->len : NULL,
+		.text = p && p->data ? p->data + off : NULL,
 	};
-	*it = iter;
 	return text_iterator_valid(it);
 }
 
-Iterator text_iterator_get(Text *txt, size_t pos) {
-	Iterator it;
+bool text_iterator_init(const Text *txt, Iterator *it, size_t pos) {
 	Location loc = piece_get_extern(txt, pos);
-	text_iterator_init(&it, pos, loc.piece, loc.off);
-	return it;
+	return iterator_init(it, pos, loc.piece, loc.off);
 }
 
-bool text_iterator_byte_get(Iterator *it, char *b) {
-	if (text_iterator_valid(it)) {
-		if (it->start <= it->text && it->text < it->end) {
-			*b = *it->text;
-			return true;
-		} else if (it->pos == it->piece->text->size) { /* EOF */
-			*b = '\0';
-			return true;
-		}
-	}
-	return false;
+Iterator text_iterator_get(const Text *txt, size_t pos) {
+	Iterator it;
+	text_iterator_init(txt, &it, pos);
+	return it;
 }
 
 bool text_iterator_next(Iterator *it) {
 	size_t rem = it->end - it->text;
-	return text_iterator_init(it, it->pos+rem, it->piece ? it->piece->next : NULL, 0);
+	return iterator_init(it, it->pos+rem, it->piece ? it->piece->next : NULL, 0);
 }
 
 bool text_iterator_prev(Iterator *it) {
 	size_t off = it->text - it->start;
 	size_t len = it->piece && it->piece->prev ? it->piece->prev->len : 0;
-	return text_iterator_init(it, it->pos-off, it->piece ? it->piece->prev : NULL, len);
+	return iterator_init(it, it->pos-off, it->piece ? it->piece->prev : NULL, len);
+}
+
+const Text *text_iterator_text(const Iterator *it) {
+	return it->piece ? it->piece->text : NULL;
 }
 
 bool text_iterator_valid(const Iterator *it) {
@@ -1375,195 +840,15 @@ bool text_iterator_valid(const Iterator *it) {
 	return it->piece && it->piece->text;
 }
 
-bool text_iterator_byte_next(Iterator *it, char *b) {
-	if (!it->piece || !it->piece->next)
-		return false;
-	bool eof = true;
-	if (it->text < it->end) {
-		it->text++;
-		it->pos++;
-		eof = false;
-	} else if (!it->piece->prev) {
-		eof = false;
-	}
-
-	while (it->text == it->end) {
-		if (!text_iterator_next(it)) {
-			if (eof)
-				return false;
-			if (b)
-				*b = '\0';
-			return text_iterator_prev(it);
-		}
-	}
-
-	if (b)
-		*b = *it->text;
-	return true;
+bool text_iterator_has_next(const Iterator *it) {
+	return it->piece && it->piece->next;
 }
 
-bool text_iterator_byte_prev(Iterator *it, char *b) {
-	if (!it->piece || !it->piece->prev)
-		return false;
-	bool eof = !it->piece->next;
-	while (it->text == it->start) {
-		if (!text_iterator_prev(it)) {
-			if (!eof)
-				return false;
-			if (b)
-				*b = '\0';
-			return text_iterator_next(it);
-		}
-	}
-
-	--it->text;
-	--it->pos;
-
-	if (b)
-		*b = *it->text;
-	return true;
+bool text_iterator_has_prev(const Iterator *it) {
+	return it->piece && it->piece->prev;
 }
 
-bool text_iterator_byte_find_prev(Iterator *it, char b) {
-	while (it->text) {
-		const char *match = memrchr(it->start, b, it->text - it->start);
-		if (match) {
-			it->pos -= it->text - match;
-			it->text = match;
-			return true;
-		}
-		text_iterator_prev(it);
-	}
-	text_iterator_next(it);
-	return false;
-}
-
-bool text_iterator_byte_find_next(Iterator *it, char b) {
-	while (it->text) {
-		const char *match = memchr(it->text, b, it->end - it->text);
-		if (match) {
-			it->pos += match - it->text;
-			it->text = match;
-			return true;
-		}
-		text_iterator_next(it);
-	}
-	text_iterator_prev(it);
-	return false;
-}
-
-bool text_iterator_codepoint_next(Iterator *it, char *c) {
-	while (text_iterator_byte_next(it, NULL)) {
-		if (ISUTF8(*it->text)) {
-			if (c)
-				*c = *it->text;
-			return true;
-		}
-	}
-	return false;
-}
-
-bool text_iterator_codepoint_prev(Iterator *it, char *c) {
-	while (text_iterator_byte_prev(it, NULL)) {
-		if (ISUTF8(*it->text)) {
-			if (c)
-				*c = *it->text;
-			return true;
-		}
-	}
-	return false;
-}
-
-bool text_iterator_char_next(Iterator *it, char *c) {
-	if (!text_iterator_codepoint_next(it, c))
-		return false;
-	mbstate_t ps = { 0 };
-	for (;;) {
-		char buf[MB_LEN_MAX];
-		size_t len = text_bytes_get(it->piece->text, it->pos, sizeof buf, buf);
-		wchar_t wc;
-		size_t wclen = mbrtowc(&wc, buf, len, &ps);
-		if (wclen == (size_t)-1 && errno == EILSEQ) {
-			return true;
-		} else if (wclen == (size_t)-2) {
-			return false;
-		} else if (wclen == 0) {
-			return true;
-		} else {
-			int width = wcwidth(wc);
-			if (width != 0)
-				return true;
-			if (!text_iterator_codepoint_next(it, c))
-				return false;
-		}
-	}
-	return true;
-}
-
-bool text_iterator_char_prev(Iterator *it, char *c) {
-	if (!text_iterator_codepoint_prev(it, c))
-		return false;
-	for (;;) {
-		char buf[MB_LEN_MAX];
-		size_t len = text_bytes_get(it->piece->text, it->pos, sizeof buf, buf);
-		wchar_t wc;
-		mbstate_t ps = { 0 };
-		size_t wclen = mbrtowc(&wc, buf, len, &ps);
-		if (wclen == (size_t)-1 && errno == EILSEQ) {
-			return true;
-		} else if (wclen == (size_t)-2) {
-			return false;
-		} else if (wclen == 0) {
-			return true;
-		} else {
-			int width = wcwidth(wc);
-			if (width != 0)
-				return true;
-			if (!text_iterator_codepoint_prev(it, c))
-				return false;
-		}
-	}
-	return true;
-}
-
-bool text_byte_get(Text *txt, size_t pos, char *byte) {
-	return text_bytes_get(txt, pos, 1, byte);
-}
-
-size_t text_bytes_get(Text *txt, size_t pos, size_t len, char *buf) {
-	if (!buf)
-		return 0;
-	char *cur = buf;
-	size_t rem = len;
-	for (Iterator it = text_iterator_get(txt, pos);
-	     text_iterator_valid(&it);
-	     text_iterator_next(&it)) {
-		if (rem == 0)
-			break;
-		size_t piece_len = it.end - it.text;
-		if (piece_len > rem)
-			piece_len = rem;
-		if (piece_len) {
-			memcpy(cur, it.text, piece_len);
-			cur += piece_len;
-			rem -= piece_len;
-		}
-	}
-	return len - rem;
-}
-
-char *text_bytes_alloc0(Text *txt, size_t pos, size_t len) {
-	if (len == SIZE_MAX)
-		return NULL;
-	char *buf = malloc(len+1);
-	if (!buf)
-		return NULL;
-	len = text_bytes_get(txt, pos, len, buf);
-	buf[len] = '\0';
-	return buf;
-}
-
-size_t text_size(Text *txt) {
+size_t text_size(const Text *txt) {
 	return txt->size;
 }
 
@@ -1672,7 +957,7 @@ Mark text_mark_set(Text *txt, size_t pos) {
 	return (Mark)(loc.piece->data + loc.off);
 }
 
-size_t text_mark_get(Text *txt, Mark mark) {
+size_t text_mark_get(const Text *txt, Mark mark) {
 	size_t cur = 0;
 
 	if (mark == EMARK)

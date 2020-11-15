@@ -11,7 +11,7 @@ void array_init(Array *arr) {
 	array_init_sized(arr, sizeof(void*));
 }
 
-void array_init_from(Array *arr, Array *from) {
+void array_init_from(Array *arr, const Array *from) {
 	array_init_sized(arr, from->elem_size);
 }
 
@@ -55,7 +55,7 @@ void array_clear(Array *arr) {
 		memset(arr->items, 0, arr->count * arr->elem_size);
 }
 
-void *array_get(Array *arr, size_t idx) {
+void *array_get(const Array *arr, size_t idx) {
 	if (idx >= arr->len) {
 		errno = EINVAL;
 		return NULL;
@@ -63,7 +63,7 @@ void *array_get(Array *arr, size_t idx) {
 	return arr->items + (idx * arr->elem_size);
 }
 
-void *array_get_ptr(Array *arr, size_t idx) {
+void *array_get_ptr(const Array *arr, size_t idx) {
 	if (arr->elem_size != sizeof(void*)) {
 		errno = ENOTSUP;
 		return NULL;
@@ -124,11 +124,11 @@ bool array_remove(Array *arr, size_t idx) {
 	return true;
 }
 
-size_t array_length(Array *arr) {
+size_t array_length(const Array *arr) {
 	return arr->len;
 }
 
-size_t array_capacity(Array *arr) {
+size_t array_capacity(const Array *arr) {
 	return arr->count;
 }
 
@@ -165,7 +165,7 @@ void *array_pop(Array *arr) {
 	return item;
 }
 
-void *array_peek(Array *arr) {
+void *array_peek(const Array *arr) {
 	if (arr->len == 0)
 		return NULL;
 	return array_get(arr, arr->len - 1);
