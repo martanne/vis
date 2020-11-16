@@ -1,6 +1,6 @@
 # Vis - Combining Modal Editing with Structural Regular Expressions
 
-[![builds.sr.ht status](https://builds.sr.ht/~martanne/vis.svg)](https://builds.sr.ht/~martanne/vis)
+[![builds.sr.ht status](https://builds.sr.ht/~martanne/vis/commits.svg)](https://builds.sr.ht/~martanne/vis/commits?)
 [![Coverity Scan Build Status](https://scan.coverity.com/projects/3939/badge.svg)](https://scan.coverity.com/projects/3939)
 [![codecov](https://codecov.io/gh/martanne/vis/branch/master/graph/badge.svg)](https://codecov.io/gh/martanne/vis)
 [![Documentation Status](https://readthedocs.org/projects/vis/badge/?version=master)](http://vis.readthedocs.io/en/master/?badge=master)
