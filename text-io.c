@@ -242,7 +242,10 @@ static int mkstempat(int dirfd, char *template) {
 	fd = mkstemp(template);
 err:
 	if (cwd != -1) {
+#pragma GCC diagnostic ignored "-Wunused-result"
+		/* we are in error path and there's nothing we can do */
 		fchdir(cwd);
+#pragma GCC diagnostic pop
 		close(cwd);
 	}
 	return fd;
