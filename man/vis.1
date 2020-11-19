@@ -123,7 +123,7 @@ commands provide means to restore the text to an arbitrary state.
 .Ss Marks
 .
 A mark associates a symbolic name to a set of selections.
-A stored selection becomes invalid when its delimiting boundaries changes
+A stored selection becomes invalid when its delimiting boundaries change
 in the underlying buffer.
 If said changes are later undone the mark becomes valid again.
 .Ic m
@@ -769,16 +769,30 @@ command.
 .
 .Ss Operators
 .
-Operators perform a certain operation an a text range indicated by either a
+Operators perform a certain operation on a text range indicated by either a
 motion, a text object or an existing selection.
 .Pp
+When used in normal mode, the following operators wait for a motion, putting
+vis into operator pending mode.
 .Bl -tag -width XXXXXXXXXX -compact
 .It Ic c
 change, delete range and enter insert mode
 .
 .It Ic d
-delete range
+delete, cut range to register
 .
+.It Ic <
+shift-left, decrease indent
+.
+.It Ic >
+shift-right, increase indent
+.
+.It Ic y
+yank, copy range to register
+.El
+.Pp
+When used in normal mode, the following actions take effect immediately.
+.Bl -tag -width XXXXXXXXXX -compact
 .It Ic =
 format, filter range through
 .Xr fmt 1
@@ -799,16 +813,11 @@ join lines, insert spaces in between
 join lines remove any delimiting white spaces
 .
 .It Ic p
-put, insert register content
+put register content after cursor
 .
-.It Ic <
-shift-left, decrease indent
+.It Ic P
+put register content before cursor
 .
-.It Ic >
-shift-right, increase indent
-.
-.It Ic y
-yank, copy range to register
 .El
 .
 .Ss Motions
