@@ -101,7 +101,7 @@ In normal mode all selections are non-anchored and reduced to a single
   to an arbitrary state.
 <h2 class="Ss" title="Ss" id="Marks"><a class="selflink" href="#Marks">Marks</a></h2>
 A mark associates a symbolic name to a set of selections. A stored selection
-  becomes invalid when its delimiting boundaries changes in the underlying
+  becomes invalid when its delimiting boundaries change in the underlying
   buffer. If said changes are later undone the mark becomes valid again.
   <b class="Ic" title="Ic">m</b> sets a mark, <b class="Ic" title="Ic">M</b>
   restores it. For example,
@@ -609,14 +609,26 @@ In the following sections angle brackets are used to denote special keys. The
 All active key bindings can be listed at runtime using the
   <b class="Ic" title="Ic">:help</b> command.
 <h2 class="Ss" title="Ss" id="Operators"><a class="selflink" href="#Operators">Operators</a></h2>
-Operators perform a certain operation an a text range indicated by either a
+Operators perform a certain operation on a text range indicated by either a
   motion, a text object or an existing selection.
 <div class="Pp"></div>
+When used in normal mode, the following operators wait for a motion, putting vis
+  into operator pending mode.
 <dl class="Bl-tag Bl-compact" style="margin-left: 15.00ex;">
   <dt class="It-tag" style="margin-left: -15.00ex;"><a class="selflink" href="#c"><b class="Ic" title="Ic" id="c">c</b></a></dt>
   <dd class="It-tag">change, delete range and enter insert mode</dd>
   <dt class="It-tag" style="margin-left: -15.00ex;"><a class="selflink" href="#d"><b class="Ic" title="Ic" id="d">d</b></a></dt>
-  <dd class="It-tag">delete range</dd>
+  <dd class="It-tag">delete, cut range to register</dd>
+  <dt class="It-tag" style="margin-left: -15.00ex;"><a class="selflink" href="#&lt;"><b class="Ic" title="Ic" id="&lt;">&lt;</b></a></dt>
+  <dd class="It-tag">shift-left, decrease indent</dd>
+  <dt class="It-tag" style="margin-left: -15.00ex;"><a class="selflink" href="#&gt;"><b class="Ic" title="Ic" id="&gt;">&gt;</b></a></dt>
+  <dd class="It-tag">shift-right, increase indent</dd>
+  <dt class="It-tag" style="margin-left: -15.00ex;"><a class="selflink" href="#y"><b class="Ic" title="Ic" id="y">y</b></a></dt>
+  <dd class="It-tag">yank, copy range to register</dd>
+</dl>
+<div class="Pp"></div>
+When used in normal mode, the following actions take effect immediately.
+<dl class="Bl-tag Bl-compact" style="margin-left: 15.00ex;">
   <dt class="It-tag" style="margin-left: -15.00ex;"><a class="selflink" href="#="><b class="Ic" title="Ic" id="=">=</b></a></dt>
   <dd class="It-tag">format, filter range through
       <a class="Xr" title="Xr">fmt(1)</a></dd>
@@ -631,13 +643,9 @@ Operators perform a certain operation an a text range indicated by either a
   <dt class="It-tag" style="margin-left: -15.00ex;"><a class="selflink" href="#gJ"><b class="Ic" title="Ic" id="gJ">gJ</b></a></dt>
   <dd class="It-tag">join lines remove any delimiting white spaces</dd>
   <dt class="It-tag" style="margin-left: -15.00ex;"><a class="selflink" href="#p"><b class="Ic" title="Ic" id="p">p</b></a></dt>
-  <dd class="It-tag">put, insert register content</dd>
-  <dt class="It-tag" style="margin-left: -15.00ex;"><a class="selflink" href="#&lt;"><b class="Ic" title="Ic" id="&lt;">&lt;</b></a></dt>
-  <dd class="It-tag">shift-left, decrease indent</dd>
-  <dt class="It-tag" style="margin-left: -15.00ex;"><a class="selflink" href="#&gt;"><b class="Ic" title="Ic" id="&gt;">&gt;</b></a></dt>
-  <dd class="It-tag">shift-right, increase indent</dd>
-  <dt class="It-tag" style="margin-left: -15.00ex;"><a class="selflink" href="#y"><b class="Ic" title="Ic" id="y">y</b></a></dt>
-  <dd class="It-tag">yank, copy range to register</dd>
+  <dd class="It-tag">put register content after cursor</dd>
+  <dt class="It-tag" style="margin-left: -15.00ex;"><a class="selflink" href="#P"><b class="Ic" title="Ic" id="P">P</b></a></dt>
+  <dd class="It-tag">put register content before cursor</dd>
 </dl>
 <h2 class="Ss" title="Ss" id="Motions"><a class="selflink" href="#Motions">Motions</a></h2>
 Motions take an initial file position and transform it to a destination file
@@ -1365,7 +1373,7 @@ On some systems there already exists a <b class="Nm" title="Nm">vis</b> binary,
 <table class="foot">
   <tr>
     <td class="foot-date">January 14, 2017</td>
-    <td class="foot-os">Vis 3fe8d2e</td>
+    <td class="foot-os">Vis 974564c</td>
   </tr>
 </table>
 </body>
