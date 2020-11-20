@@ -21,7 +21,10 @@ jobs:
       run: |
         choco install --no-progress --yes --force --source=cygwin gcc-core,libtool,make,wget,pkg-config
         choco install --no-progress --yes --force --source=cygwin lua,lua-devel,lua-lpeg,libncurses-devel
-        echo '::add-path::C:\tools\cygwin\bin'
+
+    - name: Setup $PATH
+      shell: bash
+      run: echo 'C:\tools\cygwin\bin' >> $GITHUB_PATH
 
     - name: Git configuration
       run: |
