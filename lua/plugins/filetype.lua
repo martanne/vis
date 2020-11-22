@@ -258,6 +258,9 @@ vis.ftdetect.filetypes = {
 		ext = { "%.md$", "%.markdown$" },
 		mime = { "text/x-markdown" },
 	},
+	meson = {
+		ext = { "^meson%.build$" },
+	},
 	moonscript = {
 		ext = { "%.moon$" },
 		mime = { "text/x-moon" },
