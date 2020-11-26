@@ -40,7 +40,7 @@ vis.ftdetect.filetypes = {
 		ext = { "%.awk$" },
 	},
 	bash = {
-		ext = { "%.bash$", "%.csh$", "%.sh$", "%.zsh$" },
+		ext = { "%.bash$", ".bashrc$", "%.csh$", "%.sh$", "%.zsh$" },
 		mime = { "text/x-shellscript", "application/x-shellscript" },
 	},
 	batch = {
