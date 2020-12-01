@@ -18,10 +18,18 @@ local sq_str = l.delimited_range("'", false, true)
 local dq_str = l.delimited_range('"')
 local ex_str = l.delimited_range('`')
 local heredoc = '<<' * P(function(input, index)
-  local s, e, _, delimiter =
-    input:find('%-?(["\']?)([%a_][%w_]*)%1[\n\r\f;]+', index)
+  local s, e, minus, _, delimiter =
+    input:find('(-?)(["\']?)([%a_][%w_]*)%2[\n\r\f;]+', index)
+  -- If the starting delimiter of a here-doc begins with "-", then
+  -- spaces are allowed to come before the closing delimiter.
+  local close_pattern
+  if minus == '-' then
+    close_pattern = '[\n\r\f%s]+'..delimiter..'\n'
+  else
+    close_pattern = '[\n\r\f]+'..delimiter..'\n'
+  end
   if s == index and delimiter then
-    local _, e = input:find('[\n\r\f]+'..delimiter..'\n', e)
+    local _, e = input:find(close_pattern, e)
     return e and e + 1 or #input + 1
   end
 end)
