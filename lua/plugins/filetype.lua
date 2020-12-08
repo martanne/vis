@@ -453,6 +453,9 @@ vis.ftdetect.filetypes = {
 		ext = { "%.yaml$", "%.yml$" },
 		mime = { "text/x-yaml" },
 	},
+	zig = {
+		ext = { "%.zig$" },
+	},
 }
 
 vis.events.subscribe(vis.events.WIN_OPEN, function(win)
