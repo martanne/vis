@@ -247,6 +247,13 @@ vis.ftdetect.filetypes = {
 		ext = { "%.lua$" },
 		mime = { "text/x-lua" },
 	},
+	mail = {
+		detect = function(file, data)
+			return data:match("^From:") or
+				data:match("^Return%-Path:") or
+				data:match("^Delivered%-To:")
+		end,
+	},
 	makefile = {
 		ext = { "%.iface$", "%.mak$", "%.mk$", "GNUmakefile", "makefile", "Makefile" },
 		mime = { "text/x-makefile" },
