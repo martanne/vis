@@ -2071,7 +2071,7 @@ static const char *openline(Vis *vis, const char *keys, const Arg *arg) {
 			vis_motion(vis, VIS_MOVE_LINE_BEGIN);
 			vis_keys_feed(vis, "<vis-motion-line-begin>");
 		}
-		vis_keys_feed(vis, "<Enter><Up>");
+		vis_keys_feed(vis, "<Enter><vis-motion-line-up>");
 	}
 	return keys;
 }
