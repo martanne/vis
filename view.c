@@ -358,7 +358,7 @@ void view_draw(View *view) {
 			cell = (Cell){ .data = "\xEF\xBF\xBD", .len = len, .width = 1 };
 		} else if (len == (size_t)-2) {
 			/* not enough bytes available to convert to a
-			 * wide character. advance file position and read
+			 * wide character. Advance file position and read
 			 * another junk into buffer.
 			 */
 			rem = text_bytes_get(view->text, pos+prev_cell.len, size, text);

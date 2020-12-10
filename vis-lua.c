@@ -331,7 +331,7 @@ const char *obj_type_get(lua_State *L) {
 	lua_getfield(L, LUA_REGISTRYINDEX, "vis.types");
 	lua_getmetatable(L, -2);
 	lua_gettable(L, -2);
-	// XXX: in theory string might become invalid when poped from stack
+	// XXX: in theory string might become invalid when popped from stack
 	const char *type = lua_tostring(L, -1);
 	lua_pop(L, 2);
 	return type;
@@ -758,7 +758,7 @@ static int command(lua_State *L) {
  * Display a short message.
  *
  * The single line message will be displayed at the bottom of
- * the scren and automatically hidden once a key is pressed.
+ * the screen and automatically hidden once a key is pressed.
  *
  * @function info
  * @tparam string message the message to display
@@ -1309,7 +1309,7 @@ static int replace(lua_State *L) {
  * eventually hands over control to the editor core. The exit status
  * of the most recent call is used.
  *
- * All unsaved chanes will be lost!
+ * All unsaved changes will be lost!
  *
  * @function exit
  * @tparam int code the exit status returned to the operating system
@@ -2912,7 +2912,7 @@ void vis_lua_quit(Vis *vis) {
  * Input key event in either input or replace mode.
  * @function input
  * @tparam string key
- * @treturn bool whether the key was cosumed or not
+ * @treturn bool whether the key was consumed or not
  */
 static bool vis_lua_input(Vis *vis, const char *key, size_t len) {
 	lua_State *L = vis->lua;

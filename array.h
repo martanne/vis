@@ -100,7 +100,7 @@ bool array_truncate(Array*, size_t length);
  * Change length.
  * @rst
  * .. note:: Has to be less or equal than the capacity.
- *           Newly accesible elements preserve their previous values.
+ *           Newly accessible elements preserve their previous values.
  * @endrst
  */
 bool array_resize(Array*, size_t length);
