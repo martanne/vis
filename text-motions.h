@@ -1,8 +1,8 @@
 #ifndef TEXT_MOTIONS_H
 #define TEXT_MOTIONS_H
 
-/* these function all take a position in bytes from the start of the file,
- * perform a certain movement and return the new postion. if the movement
+/* these functions all take a position in bytes from the start of the file,
+ * perform a certain movement and return the new postion. If the movement
  * is not possible the original position is returned unchanged. */
 
 #include <stddef.h>
@@ -20,7 +20,7 @@ size_t text_codepoint_next(Text*, size_t pos);
 size_t text_codepoint_prev(Text*, size_t pos);
 
 /* find the given substring either in forward or backward direction.
- * does not wrap around at file start / end. if no match is found return
+ * does not wrap around at file start / end. If no match is found return
  * original position */
 size_t text_find_next(Text*, size_t pos, const char *s);
 size_t text_find_prev(Text*, size_t pos, const char *s);
@@ -69,7 +69,7 @@ size_t text_range_line_prev(Text*, Filerange*, size_t pos);
 /*
  * A longword consists of a sequence of non-blank characters, separated with
  * white space. TODO?: An empty line is also considered to be a word.
- * This is equivalant to a WORD in vim terminology.
+ * This is equivalent to a WORD in vim terminology.
  */
 size_t text_longword_end_next(Text*, size_t pos);
 size_t text_longword_end_prev(Text*, size_t pos);
@@ -79,7 +79,7 @@ size_t text_longword_start_prev(Text*, size_t pos);
  * A word consists of a sequence of letters, digits and underscores, or a
  * sequence of other non-blank characters, separated with white space.
  * TODO?: An empty line is also considered to be a word.
- * This is equivalant to a word (lowercase) in vim terminology.
+ * This is equivalent to a word (lowercase) in vim terminology.
  */
 size_t text_word_end_next(Text*, size_t pos);
 size_t text_word_end_prev(Text*, size_t pos);
@@ -116,13 +116,13 @@ size_t text_block_start(Text*, size_t pos);
 size_t text_block_end(Text*, size_t pos);
 size_t text_parenthesis_start(Text*, size_t pos);
 size_t text_parenthesis_end(Text*, size_t pos);
-/* search coresponding '(', ')', '{', '}', '[', ']', '>', '<', '"', ''' */
+/* search corresponding '(', ')', '{', '}', '[', ']', '>', '<', '"', ''' */
 size_t text_bracket_match(Text*, size_t pos, const Filerange *limits);
 /* same as above but explicitly specify symbols to match */
 size_t text_bracket_match_symbol(Text*, size_t pos, const char *symbols, const Filerange *limits);
 
 /* search the given regex pattern in either forward or backward direction,
- * starting from pos. does wrap around if no match was found. */
+ * starting from pos. Does wrap around if no match was found. */
 size_t text_search_forward(Text *txt, size_t pos, Regex *regex);
 size_t text_search_backward(Text *txt, size_t pos, Regex *regex);
 

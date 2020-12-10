@@ -24,7 +24,7 @@
  * All active pieces chained together form the whole content of the document.
  * At the beginning there exists only one piece, spanning the whole document.
  * Upon insertion/deletion new pieces will be created to represent the changes.
- * Generally pieces are never destroyed, but kept around to peform undo/redo
+ * Generally pieces are never destroyed, but kept around to perform undo/redo
  * operations.
  */
 struct Piece {
@@ -123,7 +123,7 @@ static void lineno_cache_invalidate(LineCache *cache);
 static size_t lines_skip_forward(Text *txt, size_t pos, size_t lines, size_t *lines_skiped);
 static size_t lines_count(Text *txt, size_t pos, size_t len);
 
-/* stores the given data in a block, allocates a new one if necessary. returns
+/* stores the given data in a block, allocates a new one if necessary. Returns
  * a pointer to the storage location or NULL if allocation failed. */
 static const char *block_store(Text *txt, const char *data, size_t len) {
 	Block *blk = array_get_ptr(&txt->blocks, array_length(&txt->blocks)-1);
@@ -167,8 +167,8 @@ static bool cache_contains(Text *txt, Piece *p) {
 	return found && p->data + p->len == blk->data + blk->len;
 }
 
-/* try to insert a chunk of data at a given piece offset. the insertion is only
- * performed if the piece is the most recenetly changed one. the legnth of the
+/* try to insert a chunk of data at a given piece offset. The insertion is only
+ * performed if the piece is the most recently changed one. The length of the
  * piece, the span containing it and the whole text is adjusted accordingly */
 static bool cache_insert(Text *txt, Piece *p, size_t off, const char *data, size_t len) {
 	if (!cache_contains(txt, p))
@@ -183,9 +183,9 @@ static bool cache_insert(Text *txt, Piece *p, size_t off, const char *data, size
 	return true;
 }
 
-/* try to delete a chunk of data at a given piece offset. the deletion is only
- * performed if the piece is the most recenetly changed one and the whole
- * affected range lies within it. the legnth of the piece, the span containing it
+/* try to delete a chunk of data at a given piece offset. The deletion is only
+ * performed if the piece is the most recently changed one and the whole
+ * affected range lies within it. The length of the piece, the span containing it
  * and the whole text is adjusted accordingly */
 static bool cache_delete(Text *txt, Piece *p, size_t off, size_t len) {
 	if (!cache_contains(txt, p))
@@ -316,9 +316,9 @@ static void piece_init(Piece *p, Piece *prev, Piece *next, const char *data, siz
 	p->len = len;
 }
 
-/* returns the piece holding the text at byte offset pos. if pos happens to
- * be at a piece boundry i.e. the first byte of a piece then the previous piece
- * to the left is returned with an offset of piece->len. this is convenient for
+/* returns the piece holding the text at byte offset pos. If pos happens to
+ * be at a piece boundary i.e. the first byte of a piece then the previous piece
+ * to the left is returned with an offset of piece->len. This is convenient for
  * modifications to the piece chain where both pieces (the returned one and the
  * one following it) are needed, but unsuitable as a public interface.
  *
@@ -335,8 +335,8 @@ static Location piece_get_intern(Text *txt, size_t pos) {
 	return (Location){ 0 };
 }
 
-/* similiar to piece_get_intern but usable as a public API. returns the piece
- * holding the text at byte offset pos. never returns a sentinel piece.
+/* similiar to piece_get_intern but usable as a public API. Returns the piece
+ * holding the text at byte offset pos. Never returns a sentinel piece.
  * it pos is the end of file (== text_size()) and the file is not empty then
  * the last piece holding data is returned.
  */
@@ -447,8 +447,8 @@ bool text_insert(Text *txt, size_t pos, const char *data, size_t len) {
 		span_init(&c->new, new, new);
 		span_init(&c->old, NULL, NULL);
 	} else {
-		/* insert into middle of an existing piece, therfore split the old
-		 * piece. that is we have 3 new pieces one containing the content
+		/* insert into middle of an existing piece, therefore split the old
+		 * piece. That is we have 3 new pieces one containing the content
 		 * before the insertion point then one holding the newly inserted
 		 * text and one holding the content after the insertion point.
 		 */
@@ -644,7 +644,7 @@ Block *text_block_mmaped(Text *txt) {
 }
 
 /* A delete operation can either start/stop midway through a piece or at
- * a boundry. In the former case a new piece is created to represent the
+ * a boundary. In the former case a new piece is created to represent the
  * remaining text before/after the modification point.
  *
  *      /-+ --> +---------+ --> +-----+ --> +-----+ --> +-\
@@ -683,7 +683,7 @@ bool text_delete(Text *txt, size_t pos, size_t len) {
 	size_t cur;            /* how much has already been deleted */
 
 	if (off == p->len) {
-		/* deletion starts at a piece boundry */
+		/* deletion starts at a piece boundary */
 		cur = 0;
 		before = p;
 		start = p->next;
@@ -704,7 +704,7 @@ bool text_delete(Text *txt, size_t pos, size_t len) {
 	}
 
 	if (cur == len) {
-		/* deletion stops at a piece boundry */
+		/* deletion stops at a piece boundary */
 		end = p;
 		after = p->next;
 	} else {
