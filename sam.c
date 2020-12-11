@@ -145,7 +145,7 @@ static bool cmd_user(Vis*, Win*, Command*, const char *argv[], Selection*, Filer
 
 static const CommandDef cmds[] = {
 	//      name            help
-	//      flags, default command, implemenation
+	//      flags, default command, implementation
 	{
 		"a",            VIS_HELP("Append text after range")
 		CMD_TEXT, NULL, cmd_append
@@ -278,7 +278,7 @@ typedef struct {
 	const char *names[3];            /* name and optional alias */
 	enum VisOption flags;            /* option type, etc. */
 	VIS_HELP_DECL(const char *help;) /* short, one line help text */
-	VisOptionFunction *func;         /* option handler, NULL for bulitins */
+	VisOptionFunction *func;         /* option handler, NULL for builtins */
 	void *context;                   /* context passed to option handler function */
 } OptionDef;
 

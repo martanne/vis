@@ -33,7 +33,7 @@ struct TextSave {                  /* used to hold context between text_save_{be
 #define BLOCK_SIZE (1 << 20)
 #endif
 /* Files smaller than this value are copied on load, larger ones are mmap(2)-ed
- * directely. Hence the former can be truncated, while doing so on the latter
+ * directly. Hence the former can be truncated, while doing so on the latter
  * results in havoc. */
 #define BLOCK_MMAP_SIZE (1 << 26)
 
@@ -261,7 +261,7 @@ err:
  *   - file ownership can not be preserved
  *   - file group can not be preserved
  *   - directory permissions do not allow creation of a new file
- *   - POSXI ACL can not be preserved (if enabled)
+ *   - POSIX ACL can not be preserved (if enabled)
  *   - SELinux security context can not be preserved (if enabled)
  */
 static bool text_save_begin_atomic(TextSave *ctx) {

@@ -14,7 +14,7 @@
 
 /* a mode contains a set of key bindings which are currently valid.
  *
- * each mode can specify one parent mode which is consultated if a given key
+ * each mode can specify one parent mode which is consulted if a given key
  * is not found in the current mode. hence the modes form a tree which is
  * searched from the current mode up towards the root mode until a valid binding
  * is found.
@@ -63,13 +63,13 @@ struct OperatorContext {
 };
 
 typedef struct {
-	/* operator logic, returns new cursor position, if EPOS is
+	/* operator logic, returns new cursor position, if EPOS
 	 * the cursor is disposed (except if it is the primary one) */
 	VisOperatorFunction *func;
 	void *context;
 } Operator;
 
-typedef struct { /* Motion implementation, takes a cursor postion and returns a new one */
+typedef struct { /* Motion implementation, takes a cursor position and returns a new one */
 	/* TODO: merge types / use union to save space */
 	size_t (*cur)(Selection*);
 	size_t (*txt)(Text*, size_t pos);
@@ -154,7 +154,7 @@ struct File { /* shared state among windows displaying the same file */
 };
 
 struct Win {
-	Vis *vis;               /* editor instance to which this window belongs to */
+	Vis *vis;               /* editor instance to which this window belongs */
 	UiWin *ui;              /* ui object handling visual appearance of this window */
 	File *file;             /* file being displayed in this window */
 	View *view;             /* currently displayed part of underlying text */
@@ -167,7 +167,7 @@ struct Win {
 };
 
 struct Vis {
-	Ui *ui;                              /* user interface repsonsible for visual appearance */
+	Ui *ui;                              /* user interface responsible for visual appearance */
 	File *files;                         /* all files currently managed by this editor instance */
 	File *command_file;                  /* special internal file used to store :-command prompt */
 	File *search_file;                   /* special internal file used to store /,? search prompt */
@@ -201,20 +201,20 @@ struct Vis {
 	Action action;                       /* current action which is in progress */
 	Action action_prev;                  /* last operator action used by the repeat (dot) command */
 	Mode *mode;                          /* currently active mode, used to search for keybindings */
-	Mode *mode_prev;                     /* previsouly active user mode */
+	Mode *mode_prev;                     /* previously active user mode */
 	bool initialized;                    /* whether UI and Lua integration has been initialized */
 	int nesting_level;                   /* parsing state to hold keep track of { } nesting level */
 	volatile bool running;               /* exit main loop once this becomes false */
 	int exit_status;                     /* exit status when terminating main loop */
 	volatile sig_atomic_t interrupted;   /* abort command (SIGINT occured) */
-	volatile sig_atomic_t sigbus;        /* one of the memory mapped region became unavailable (SIGBUS) */
+	volatile sig_atomic_t sigbus;        /* one of the memory mapped regions became unavailable (SIGBUS) */
 	volatile sig_atomic_t need_resize;   /* need to resize UI (SIGWINCH occured) */
 	volatile sig_atomic_t resume;        /* need to resume UI (SIGCONT occured) */
 	volatile sig_atomic_t terminate;     /* need to terminate we were being killed by SIGTERM */
 	sigjmp_buf sigbus_jmpbuf;            /* used to jump back to a known good state in the mainloop after (SIGBUS) */
 	Map *actions;                        /* registered editor actions / special keys commands */
 	Array actions_user;                  /* dynamically allocated editor actions */
-	lua_State *lua;                      /* lua context used for syntax highligthing */
+	lua_State *lua;                      /* lua context used for syntax highlighting */
 	enum TextLoadMethod load_method;     /* how existing files should be loaded */
 	VisEvent *event;
 	Array operators;
@@ -248,7 +248,7 @@ typedef struct {
 
 typedef MarkDef RegisterDef;
 
-/** stuff used by multiple of the vis-* files */
+/** stuff used by several of the vis-* files */
 
 extern Mode vis_modes[VIS_MODE_INVALID];
 extern const Movement vis_motions[VIS_MOVE_INVALID];

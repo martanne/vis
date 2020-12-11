@@ -7,7 +7,7 @@
 
 /* enable large file optimization for files larger than: */
 #define UI_LARGE_FILE_SIZE (1 << 25)
-/* enable large file optimization fo files containing lines longer than: */
+/* enable large file optimization for files containing lines longer than: */
 #define UI_LARGE_FILE_LINE_SIZE (1 << 16)
 
 typedef struct Ui Ui;

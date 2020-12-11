@@ -1018,7 +1018,7 @@ void vis_do(Vis *vis) {
 			register_resize(reg, last_reg_slot+1);
 		}
 
-		/* we do not support visual repeat, still do something resonable */
+		/* we do not support visual repeat, still do something reasonable */
 		if (vis->mode->visual && !a->movement && !a->textobj)
 			a->movement = &vis_motions[VIS_MOVE_NOP];
 
@@ -1686,7 +1686,7 @@ void vis_insert_nl(Vis *vis) {
 		size_t newpos = vis_text_insert_nl(vis, txt, pos);
 		/* This is a bit of a hack to fix cursor positioning when
 		 * inserting a new line at the start of the view port.
-		 * It has the effect of reseting the mark used by the view
+		 * It has the effect of resetting the mark used by the view
 		 * code to keep track of the start of the visible region.
 		 */
 		view_cursors_to(s, pos);

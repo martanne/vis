@@ -77,7 +77,7 @@ typedef union {
  * @rst
  * .. note:: An empty string ``""`` indicates that no further input is available.
  * @endrst
- * @return Pointer to first non-cosumed key.
+ * @return Pointer to first non-consumed key.
  * @rst
  * .. warning:: Must be in range ``[keys, keys+strlen(keys)]`` or ``NULL`` to
  *              indicate that not enough input was available. In the latter case
@@ -131,7 +131,7 @@ void vis_exit(Vis*, int status);
 void vis_die(Vis*, const char *msg, ...) __attribute__((noreturn,format(printf, 2, 3)));
 
 /**
- * Temporarily supsend the editor process.
+ * Temporarily suspend the editor process.
  * @rst
  * .. note:: This function will generate a ``SIGTSTP`` signal.
  * @endrst
@@ -222,9 +222,9 @@ void vis_window_prev(Vis*);
 void vis_window_focus(Win*);
 /** Swap location of two windows. */
 void vis_window_swap(Win*, Win*);
-/** Query window dimension. */
+/** Query window width. */
 int vis_window_width_get(const Win*);
-/** Query window dimension. */
+/** Query window height. */
 int vis_window_height_get(const Win*);
 /**
  * @}
@@ -264,7 +264,7 @@ void vis_replace(Vis*, size_t pos, const char *data, size_t len);
 /** Perform insertion at all cursor positions. */
 void vis_insert_key(Vis*, const char *data, size_t len);
 /**
- * Perform character subsitution at all cursor positions.
+ * Perform character substitution at all cursor positions.
  * @rst
  * .. note:: Does not replace new line characters.
  * @endrst
@@ -433,7 +433,7 @@ int vis_operator_register(Vis*, VisOperatorFunction*, void *context);
  *
  *  - `VIS_OP_JOIN`       a char pointer referring to the text to insert between lines.
  *  - `VIS_OP_MODESWITCH` an ``enum VisMode`` indicating the mode to switch to.
- *  - `VIS_OP_REPLACE`    a char pointer reffering to the replacement character.
+ *  - `VIS_OP_REPLACE`    a char pointer referring to the replacement character.
  */
 bool vis_operator(Vis*, enum VisOperator, ...);
 
@@ -774,7 +774,7 @@ enum VisRegister vis_register_used(Vis*);
  * Get register content.
  * @return An array of ``TextString`` structs.
  * @rst
- * .. warning:: The caller must eventually free the array ressources using
+ * .. warning:: The caller must eventually free the array resources using
  *              ``array_release``.
  * @endrst
  */
@@ -853,7 +853,7 @@ enum VisOption {
  * Option handler function.
  * @param win The window to which option should apply, might be ``NULL``.
  * @param context User provided context pointer as given to `vis_option_register`.
- * @param force Whether the option was specfied with a bang ``!``.
+ * @param force Whether the option was specified with a bang ``!``.
  * @param name Name of option which was set.
  * @param arg The new option value.
  */
@@ -964,7 +964,7 @@ void vis_keys_feed(Vis*, const char *keys);
 Regex *vis_regex(Vis*, const char *pattern);
 
 /**
- * Take an undo snaphost to which we can later revert to.
+ * Take an undo snapshot to which we can later revert.
  * @rst
  * .. note:: Does nothing when invoked while replaying a macro.
  * @endrst

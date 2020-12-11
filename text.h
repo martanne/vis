@@ -75,13 +75,13 @@ enum TextLoadMethod {
 	 */
 	TEXT_LOAD_READ,
 	/**
-	 * Memory map the the file from disk. Use file system / virtual memory
+	 * Memory map the file from disk. Use file system / virtual memory
 	 * subsystem as a caching layer.
 	 * @rst
 	 * .. note:: Load time is (almost) independent of the file size.
 	 * .. warning:: Inplace modifications of the underlying file
 	 *              will be reflected in the current text content.
-	 *              In particular, truncatenation will raise ``SIGBUS``
+	 *              In particular, truncation will raise ``SIGBUS``
 	 *              and result in data loss.
 	 * @endrst
 	 */
@@ -111,7 +111,7 @@ Text *text_loadat(int dirfd, const char *filename);
  */
 Text *text_load_method(const char *filename, enum TextLoadMethod);
 Text *text_loadat_method(int dirfd, const char *filename, enum TextLoadMethod);
-/** Release all ressources associated with this text instance. */
+/** Release all resources associated with this text instance. */
 void text_free(Text*);
 /**
  * @}
@@ -164,7 +164,7 @@ bool text_appendf(Text*, const char *format, ...) __attribute__((format(printf, 
  * @{
  */
 /**
- * Create a text snapshot, that is a vertice in the history graph.
+ * Create a text snapshot, that is a vertex in the history graph.
  */
 bool text_snapshot(Text*);
 /**
@@ -237,7 +237,7 @@ size_t text_bytes_get(const Text*, size_t pos, size_t len, char *buf);
  * Fetch text range into newly allocate memory region.
  * @param pos The absolute starting position.
  * @param len The length in bytes.
- * @return A contigious NUL terminated buffer holding the requested range, or
+ * @return A contiguous NUL terminated buffer holding the requested range, or
  *         ``NULL`` in error case.
  * @rst
  * .. warning:: The returned pointer must be freed by the caller.
@@ -329,7 +329,7 @@ enum TextSaveMethod {
 	 *   - File ownership can not be preserved.
 	 *   - File group can not be preserved.
 	 *   - Directory permissions do not allow creation of a new file.
-	 *   - POSXI ACL can not be preserved (if enabled).
+	 *   - POSIX ACL can not be preserved (if enabled).
 	 *   - SELinux security context can not be preserved (if enabled).
 	 * @endrst
 	 */
@@ -362,7 +362,7 @@ bool text_saveat_method(Text*, int dirfd, const char *filename, enum TextSaveMet
  * Setup a sequence of write operations.
  *
  * The returned ``TextSave`` pointer can be used to write multiple, possibly
- * non-contigious, file ranges.
+ * non-contiguous, file ranges.
  * @rst
  * .. warning:: For every call to ``text_save_begin`` there must be exactly
  *              one matching call to either ``text_save_commit`` or
