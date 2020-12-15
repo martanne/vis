@@ -1613,7 +1613,7 @@ function M.load(name, alt_name, cache)
   -- later, do not reference the potentially incorrect value.
   M.WHITESPACE = (alt_name or name) .. '_whitespace'
   local path = M.property['lexer.lpeg.home']:gsub(';', '/?.lua;') .. '/?.lua'
-  local lexer = dofile(assert(searchpath(name, path)))
+  local lexer = dofile(assert(searchpath('lexers/'..name, path)))
   assert(lexer, string.format("'%s.lua' did not return a lexer", name))
   if alt_name then lexer._NAME = alt_name end
   if not getmetatable(lexer) or lexer._LEGACY then
