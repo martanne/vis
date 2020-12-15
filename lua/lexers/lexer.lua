@@ -897,6 +897,15 @@ if not require then
   function require(name) return name == 'lexer' and M or _G[name] end
 end
 
+local print = function(...)
+  local args = table.pack(...)
+  local msg = {}
+  for i = 1, args.n do
+    msg[#msg + 1] = tostring(args[i])
+  end
+  vis:info(table.concat(msg, ' '))
+end
+
 lpeg = require('lpeg')
 local lpeg_P, lpeg_R, lpeg_S, lpeg_V = lpeg.P, lpeg.R, lpeg.S, lpeg.V
 local lpeg_Ct, lpeg_Cc, lpeg_Cp = lpeg.Ct, lpeg.Cc, lpeg.Cp
