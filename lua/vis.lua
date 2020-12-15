@@ -265,6 +265,21 @@ vis.types.window.set_syntax = function(win, syntax)
 
 	for token_name, id in pairs(lexer._TOKENSTYLES) do
 		local style = lexers['STYLE_'..string.upper(token_name)] or lexer._EXTRASTYLES[token_name]
+		if type(style) == 'table' then
+			local s = ''
+			if style.bold then
+				s = string.format("%s,bold", s)
+			elseif style.italics then
+				s = string.format("%s,italics", s)
+			elseif style.underlined then
+				s = string.format("%s,underlined", s)
+			elseif style.fore then
+				s = string.format("%s,fore:%s", s, style.fore)
+			elseif style.back then
+				s = string.format("%s,back:%s", s, style.back)
+			end
+			style = s
+		end
 		win:style_define(id, style)
 	end
 
