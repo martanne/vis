@@ -114,9 +114,7 @@ static size_t longword_next(Vis *vis, Text *txt, size_t pos) {
 
 static size_t to(Vis *vis, Text *txt, size_t pos) {
 	char c;
-	if (pos == text_line_end(txt, pos))
-		return pos;
-	size_t hit = text_line_find_next(txt, pos+1, vis->search_char);
+	size_t hit = text_find_next(txt, pos+1, vis->search_char);
 	if (!text_byte_get(txt, hit, &c) || c != vis->search_char[0])
 		return pos;
 	return hit;
@@ -124,20 +122,16 @@ static size_t to(Vis *vis, Text *txt, size_t pos) {
 
 static size_t till(Vis *vis, Text *txt, size_t pos) {
 	size_t hit = to(vis, txt, pos+1);
-	if (pos == text_line_end(txt, pos))
-		return pos;
 	if (hit != pos)
 		return text_char_prev(txt, hit);
 	return pos;
 }
 
 static size_t to_left(Vis *vis, Text *txt, size_t pos) {
-	return text_line_find_prev(txt, pos, vis->search_char);
+	return text_find_prev(txt, pos, vis->search_char);
 }
 
 static size_t till_left(Vis *vis, Text *txt, size_t pos) {
-	if (pos == text_line_begin(txt, pos))
-		return pos;
 	size_t hit = to_left(vis, txt, pos-1);
 	if (hit != pos-1)
 		return text_char_next(txt, hit);
