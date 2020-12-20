@@ -1,47 +1,47 @@
--- Copyright 2006-2017 Mitchell mitchell.att.foicica.com. See LICENSE.
+-- Copyright 2006-2020 Mitchell. See LICENSE.
 -- D LPeg lexer.
 -- Heavily modified by Brian Schott (@Hackerpilot on Github).
 
-local l = require('lexer')
-local token, word_match = l.token, l.word_match
-local P, R, S = lpeg.P, lpeg.R, lpeg.S
+local lexer = require('lexer')
+local token, word_match = lexer.token, lexer.word_match
+local P, S = lpeg.P, lpeg.S
 
 local M = {_NAME = 'dmd'}
 
 -- Whitespace.
-local ws = token(l.WHITESPACE, l.space^1)
+local ws = token(lexer.WHITESPACE, lexer.space^1)
 
 -- Comments.
-local line_comment = '//' * l.nonnewline_esc^0
-local block_comment = '/*' * (l.any - '*/')^0 * P('*/')^-1
-local nested_comment = l.nested_pair('/+', '+/')
-local comment = token(l.COMMENT, line_comment + block_comment + nested_comment)
+local line_comment = lexer.to_eol('//', true)
+local block_comment = lexer.range('/*', '*/')
+local nested_comment = lexer.range('/+', '+/', false, false, true)
+local comment = token(lexer.COMMENT, line_comment + block_comment +
+  nested_comment)
 
 -- Strings.
-local sq_str = l.delimited_range("'", true) * S('cwd')^-1
-local dq_str = l.delimited_range('"') * S('cwd')^-1
-local lit_str = 'r' * l.delimited_range('"', false, true) * S('cwd')^-1
-local bt_str = l.delimited_range('`', false, true) * S('cwd')^-1
-local hex_str = 'x' * l.delimited_range('"') * S('cwd')^-1
-local other_hex_str = '\\x' * (l.xdigit * l.xdigit)^1
-local del_str = l.nested_pair('q"[', ']"') * S('cwd')^-1 +
-                l.nested_pair('q"(', ')"') * S('cwd')^-1 +
-                l.nested_pair('q"{', '}"') * S('cwd')^-1 +
-                l.nested_pair('q"<', '>"') * S('cwd')^-1 +
-                P('q') * l.nested_pair('{', '}') * S('cwd')^-1
-local string = token(l.STRING, del_str + sq_str + dq_str + lit_str + bt_str +
-                               hex_str + other_hex_str)
+local sq_str = lexer.range("'", true) * S('cwd')^-1
+local dq_str = lexer.range('"') * S('cwd')^-1
+local lit_str = 'r' * lexer.range('"', false, false) * S('cwd')^-1
+local bt_str = lexer.range('`', false, false) * S('cwd')^-1
+local hex_str = 'x' * lexer.range('"') * S('cwd')^-1
+local other_hex_str = '\\x' * (lexer.xdigit * lexer.xdigit)^1
+local str = sq_str + dq_str + lit_str + bt_str + hex_str + other_hex_str
+for left, right in pairs{['['] = ']', ['('] = ')', ['{'] = '}', ['<'] = '>'} do
+  str = str + lexer.range('q"' .. left, right .. '"', false, false, true) *
+    S('cwd')^-1
+end
+local string = token(lexer.STRING, str)
 
 -- Numbers.
-local dec = l.digit^1 * ('_' * l.digit^1)^0
-local hex_num = l.hex_num * ('_' * l.xdigit^1)^0
+local dec = lexer.digit^1 * ('_' * lexer.digit^1)^0
+local hex_num = lexer.hex_num * ('_' * lexer.xdigit^1)^0
 local bin_num = '0' * S('bB') * S('01_')^1
 local oct_num = '0' * S('01234567_')^1
 local integer = S('+-')^-1 * (hex_num + oct_num + bin_num + dec)
-local number = token(l.NUMBER, (l.float + integer) * S('uUlLdDfFi')^-1)
+local number = token(lexer.NUMBER, (lexer.float + integer) * S('uULdDfFi')^-1)
 
 -- Keywords.
-local keyword = token(l.KEYWORD, word_match{
+local keyword = token(lexer.KEYWORD, word_match{
   'abstract', 'align', 'asm', 'assert', 'auto', 'body', 'break', 'case', 'cast',
   'catch', 'const', 'continue', 'debug', 'default', 'delete',
   'deprecated', 'do', 'else', 'extern', 'export', 'false', 'final', 'finally',
@@ -55,7 +55,7 @@ local keyword = token(l.KEYWORD, word_match{
 })
 
 -- Types.
-local type = token(l.TYPE, word_match{
+local type = token(lexer.TYPE, word_match{
   'alias', 'bool', 'byte', 'cdouble', 'cent', 'cfloat', 'char', 'class',
   'creal', 'dchar', 'delegate', 'double', 'enum', 'float', 'function',
   'idouble', 'ifloat', 'int', 'interface', 'ireal', 'long', 'module', 'package',
@@ -65,24 +65,24 @@ local type = token(l.TYPE, word_match{
 })
 
 -- Constants.
-local constant = token(l.CONSTANT, word_match{
+local constant = token(lexer.CONSTANT, word_match{
   '__FILE__', '__LINE__', '__DATE__', '__EOF__', '__TIME__', '__TIMESTAMP__',
   '__VENDOR__', '__VERSION__', '__FUNCTION__', '__PRETTY_FUNCTION__',
   '__MODULE__',
 })
 
-local class_sequence = token(l.TYPE, P('class') + P('struct')) * ws^1 *
-                                     token(l.CLASS, l.word)
+local class_sequence = token(lexer.TYPE, P('class') + P('struct')) * ws^1 *
+  token(lexer.CLASS, lexer.word)
 
 -- Identifiers.
-local identifier = token(l.IDENTIFIER, l.word)
+local identifier = token(lexer.IDENTIFIER, lexer.word)
 
 -- Operators.
-local operator = token(l.OPERATOR, S('?=!<>+-*$/%&|^~.,;()[]{}'))
+local operator = token(lexer.OPERATOR, '..' + S('?=!<>+-*$/%&|^~.,;:()[]{}'))
 
 -- Properties.
-local properties = (type + identifier + operator) * token(l.OPERATOR, '.') *
-  token(l.VARIABLE, word_match{
+local properties = (type + identifier + operator) * token(lexer.OPERATOR, '.') *
+  token(lexer.VARIABLE, word_match{
     'alignof', 'dig', 'dup', 'epsilon', 'idup', 'im', 'init', 'infinity',
     'keys', 'length', 'mangleof', 'mant_dig', 'max', 'max_10_exp', 'max_exp',
     'min', 'min_normal', 'min_10_exp', 'min_exp', 'nan', 'offsetof', 'ptr',
@@ -91,8 +91,8 @@ local properties = (type + identifier + operator) * token(l.OPERATOR, '.') *
   })
 
 -- Preprocs.
-local annotation = token('annotation', '@' * l.word^1)
-local preproc = token(l.PREPROCESSOR, '#' * l.nonnewline^0)
+local annotation = token('annotation', '@' * lexer.word^1)
+local preproc = token(lexer.PREPROCESSOR, '#' * lexer.nonnewline^0)
 
 -- Traits.
 local traits_list = token('traits', word_match{
@@ -125,17 +125,18 @@ local versions_list = token('versions', word_match{
   'X86', 'X86_64'
 })
 
-local versions = token(l.KEYWORD, 'version') * l.space^0 *
-                 token(l.OPERATOR, '(') * l.space^0 * versions_list
+local versions = token(lexer.KEYWORD, 'version') * lexer.space^0 *
+  token(lexer.OPERATOR, '(') * lexer.space^0 * versions_list
 
-local scopes = token(l.KEYWORD, 'scope') * l.space^0 *
-               token(l.OPERATOR, '(') * l.space^0 * scopes_list
+local scopes = token(lexer.KEYWORD, 'scope') * lexer.space^0 *
+  token(lexer.OPERATOR, '(') * lexer.space^0 * scopes_list
 
-local traits = token(l.KEYWORD, '__traits') * l.space^0 *
-               token(l.OPERATOR, '(') * l.space^0 * traits_list
+local traits = token(lexer.KEYWORD, '__traits') * lexer.space^0 *
+  token(lexer.OPERATOR, '(') * lexer.space^0 * traits_list
 
-local func = token(l.FUNCTION, l.word) *
-             #(l.space^0 * (P('!') * l.word^-1 * l.space^-1)^-1 * P('('))
+local func = token(lexer.FUNCTION, lexer.word) * #(
+  lexer.space^0 * (P('!') * lexer.word^-1 * lexer.space^-1)^-1 * P('(')
+)
 
 M._rules = {
   {'whitespace', ws},
@@ -158,18 +159,18 @@ M._rules = {
 }
 
 M._tokenstyles = {
-  annotation = l.STYLE_PREPROCESSOR,
-  traits = l.STYLE_CLASS,
-  versions = l.STYLE_CONSTANT,
-  scopes = l.STYLE_CONSTANT
+  annotation = lexer.STYLE_PREPROCESSOR,
+  traits = 'fore:$(color.yellow)',
+  versions = lexer.STYLE_CONSTANT,
+  scopes = lexer.STYLE_CONSTANT
 }
 
 M._foldsymbols = {
   _patterns = {'[{}]', '/[*+]', '[*+]/', '//'},
-  [l.OPERATOR] = {['{'] = 1, ['}'] = -1},
-  [l.COMMENT] = {
+  [lexer.OPERATOR] = {['{'] = 1, ['}'] = -1},
+  [lexer.COMMENT] = {
     ['/*'] = 1, ['*/'] = -1, ['/+'] = 1, ['+/'] = -1,
-    ['//'] = l.fold_line_comments('//')
+    ['//'] = select(2, lexer.fold_consecutive_lines('//'))
   }
 }
 
