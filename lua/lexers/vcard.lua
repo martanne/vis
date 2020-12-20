@@ -1,22 +1,22 @@
--- Copyright (c) 2015-2017 Piotr Orzechowski [drzewo.org]. See LICENSE.
+-- Copyright (c) 2015-2020 Piotr Orzechowski [drzewo.org]. See LICENSE.
 -- vCard 2.1, 3.0 and 4.0 LPeg lexer.
 
-local l = require('lexer')
-local token, word_match = l.token, l.word_match
-local P, R, S = lpeg.P, lpeg.R, lpeg.S
+local lexer = require('lexer')
+local token, word_match = lexer.token, lexer.word_match
+local P, S = lpeg.P, lpeg.S
 
 local M = {_NAME = 'vcard'}
 
 -- Whitespace.
-local ws = token(l.WHITESPACE, l.space^1)
+local ws = token(lexer.WHITESPACE, lexer.space^1)
 
 -- Required properties.
-local required_property = token(l.KEYWORD, word_match({
+local required_property = token(lexer.KEYWORD, word_match({
   'BEGIN', 'END', 'FN', 'N' --[[ Not required in v4.0. ]], 'VERSION'
 }, nil, true)) * #P(':')
 
 -- Supported properties.
-local supported_property = token(l.TYPE, word_match({
+local supported_property = token(lexer.TYPE, word_match({
   'ADR', 'AGENT' --[[ Not supported in v4.0. ]],
   'ANNIVERSARY' --[[ Supported in v4.0 only. ]], 'BDAY',
   'CALADRURI' --[[ Supported in v4.0 only. ]],
@@ -40,38 +40,37 @@ local supported_property = token(l.TYPE, word_match({
   'TITLE', 'TZ', 'UID', 'URL', 'XML' --[[ Supported in v4.0 only. ]]
 }, nil, true)) * #S(':;')
 
-local identifier = l.alpha^1 * l.digit^0 * (P('-') * l.alnum^1)^0
+local identifier = lexer.alpha^1 * lexer.digit^0 * (P('-') * lexer.alnum^1)^0
 
 -- Extension.
-local extension = token(l.TYPE,
-                        l.starts_line(S('xX') * P('-') * identifier * #S(':;')))
+local extension = token(lexer.TYPE, lexer.starts_line(S('xX') * P('-') *
+  identifier * #S(':;')))
 
 -- Parameter.
-local parameter = token(l.IDENTIFIER, l.starts_line(identifier * #S(':='))) +
-                  token(l.STRING, identifier) * #S(':=')
+local parameter = token(lexer.IDENTIFIER,
+  lexer.starts_line(identifier * #S(':='))) + token(lexer.STRING, identifier) *
+  #S(':=')
 
 -- Operators.
-local operator = token(l.OPERATOR, S('.:;='))
+local operator = token(lexer.OPERATOR, S('.:;='))
 
 -- Group and property.
-local group_sequence = token(l.CONSTANT, l.starts_line(identifier)) *
-                       token(l.OPERATOR, P('.')) *
-                       (required_property + supported_property +
-                        l.token(l.TYPE, S('xX') * P('-') * identifier) *
-                       #S(':;'))
+local group_sequence = token(lexer.CONSTANT, lexer.starts_line(identifier)) *
+  token(lexer.OPERATOR, P('.')) * (required_property + supported_property +
+  lexer.token(lexer.TYPE, S('xX') * P('-') * identifier) * #S(':;'))
 -- Begin vCard, end vCard.
-local begin_sequence = token(l.KEYWORD, P('BEGIN')) *
-                       token(l.OPERATOR, P(':')) * token(l.COMMENT, P('VCARD'))
-local end_sequence = token(l.KEYWORD, P('END')) * token(l.OPERATOR, P(':')) *
-                     token(l.COMMENT, P('VCARD'))
+local begin_sequence = token(lexer.KEYWORD, P('BEGIN')) *
+  token(lexer.OPERATOR, P(':')) * token(lexer.COMMENT, P('VCARD'))
+local end_sequence = token(lexer.KEYWORD, P('END')) *
+  token(lexer.OPERATOR, P(':')) * token(lexer.COMMENT, P('VCARD'))
 
 -- vCard version (in v3.0 and v4.0 must appear immediately after BEGIN:VCARD).
-local version_sequence = token(l.KEYWORD, P('VERSION')) *
-                         token(l.OPERATOR, P(':')) *
-                         token(l.CONSTANT, l.digit^1 * (P('.') * l.digit^1)^-1)
+local version_sequence = token(lexer.KEYWORD, P('VERSION')) *
+  token(lexer.OPERATOR, P(':')) *
+  token(lexer.CONSTANT, lexer.digit^1 * (P('.') * lexer.digit^1)^-1)
 
 -- Data.
-local data = token(l.IDENTIFIER, l.any)
+local data = token(lexer.IDENTIFIER, lexer.any)
 
 -- Rules.
 M._rules = {
@@ -91,7 +90,7 @@ M._rules = {
 -- Folding.
 M._foldsymbols = {
   _patterns = {'BEGIN', 'END'},
-  [l.KEYWORD] = {['BEGIN'] = 1, ['END'] = -1}
+  [lexer.KEYWORD] = {['BEGIN'] = 1, ['END'] = -1}
 }
 
 return M
