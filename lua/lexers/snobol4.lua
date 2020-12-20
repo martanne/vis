@@ -1,25 +1,25 @@
--- Copyright 2013-2017 Michael T. Richter. See LICENSE.
+-- Copyright 2013-2020 Michael T. Richter. See LICENSE.
 -- SNOBOL4 lexer.
 -- This lexer works with classic SNOBOL4 as well as the CSNOBOL4 extensions.
 
-local l = require 'lexer'
-local token, word_match = l.token, l.word_match
-local B, P, R, S, V = lpeg.B, lpeg.P, lpeg.R, lpeg.S, lpeg.V
+local lexer = require 'lexer'
+local token, word_match = lexer.token, lexer.word_match
+local B, P, S, V = lpeg.B, lpeg.P, lpeg.S, lpeg.V
 
 local M = { _NAME = 'snobol4' }
 
 -- Helper patterns.
-local dotted_id = l.word * (P'.' * l.word)^0
+local dotted_id = lexer.word * (P'.' * lexer.word)^0
 
-local dq_str = l.delimited_range('"', true, true)
-local sq_str = l.delimited_range("'", true, true)
+local dq_str = lexer.range('"', true, false)
+local sq_str = lexer.range("'", true, false)
 
-local branch = B(l.space * P':(') * dotted_id * #P')'
-local sbranch = B(l.space * P':' * S'SF' * '(') * dotted_id * #P')'
+local branch = B(lexer.space * P':(') * dotted_id * #P')'
+local sbranch = B(lexer.space * P':' * S'SF' * '(') * dotted_id * #P')'
 local sbranchx = B(P')' * S'SF' * P'(') * dotted_id * #P')'
 
 -- Token definitions.
-local bif = token(l.FUNCTION, l.word_match({
+local bif = token(lexer.FUNCTION, word_match({
   'APPLY', 'ARRAY', 'CHAR', 'CONVERT', 'COPY', 'DATA', 'DATE', 'DIFFER', 'DUPL',
   'EQ', 'EVAL', 'FILE_ABSPATH', 'FILE_ISDIR', 'FREEZE', 'FUNCTION', 'GE', 'GT',
   'HOST', 'IDENT', 'INTEGER', 'IO_FINDUNIT', 'ITEM', 'LABEL', 'LOAD', 'LPAD',
@@ -27,24 +27,25 @@ local bif = token(l.FUNCTION, l.word_match({
   'REVERSE', 'RPAD', 'RSORT', 'SERV_LISTEN', 'SET', 'SETEXIT', 'SIZE', 'SORT',
   'SQRT', 'SSET', 'SUBSTR', 'TABLE', 'THAW', 'TIME', 'TRACE', 'TRIM', 'UNLOAD',
   'VALUE', 'VDIFFER',
-}, '', true) * #l.delimited_range('()', false, true, true))
-local comment = token(l.COMMENT, l.starts_line(S'*#|;!' * l.nonnewline^0))
-local control = token(l.PREPROCESSOR, l.starts_line(P'-' * l.word))
-local identifier = token(l.DEFAULT, dotted_id)
-local keyword = token(l.KEYWORD, l.word_match({
+}, '', true) * #lexer.range('(', ')', false, false, true))
+local comment = token(lexer.COMMENT, lexer.starts_line(S'*#|;!' *
+  lexer.nonnewline^0))
+local control = token(lexer.PREPROCESSOR, lexer.starts_line(P'-' * lexer.word))
+local identifier = token(lexer.DEFAULT, dotted_id)
+local keyword = token(lexer.KEYWORD, word_match({
   'ABORT', 'ARRAY', 'CONTINUE', 'DEFINE', 'END', 'FRETURN', 'INPUT', 'NRETURN',
   'OUTPUT', 'PUNCH', 'RETURN', 'SCONTINUE', 'TABLE',
-}, '', true) + P'&' * l.word)
-local label = token(l.LABEL, l.starts_line(dotted_id))
-local number = token(l.NUMBER, l.float + l.integer)
-local operator = token(l.OPERATOR, S'¬?$.!%*/#+-@⊥&^~\\=')
-local pattern = l.token(l.CLASS, l.word_match({ -- "class" to keep distinct
+}, '', true) + P'&' * lexer.word)
+local label = token(lexer.LABEL, lexer.starts_line(dotted_id))
+local number = token(lexer.NUMBER, lexer.float + lexer.integer)
+local operator = token(lexer.OPERATOR, S'¬?$.!%*/#+-@⊥&^~\\=')
+local pattern = lexer.token(lexer.CLASS, word_match({ -- keep distinct
   'ABORT', 'ANY', 'ARB', 'ARBNO', 'BAL', 'BREAK', 'BREAKX', 'FAIL', 'FENCE',
   'LEN', 'NOTANY', 'POS', 'REM', 'RPOS', 'RTAB', 'SPAN', 'SUCCEED', 'TAB',
-}, '', true) * #l.delimited_range('()', false, true, true))
-local str = token(l.STRING, sq_str + dq_str)
-local target = token(l.LABEL, branch + sbranch + sbranchx)
-local ws = token(l.WHITESPACE, l.space^1)
+}, '', true) * #lexer.range('(', ')', false, false, true))
+local str = token(lexer.STRING, sq_str + dq_str)
+local target = token(lexer.LABEL, branch + sbranch + sbranchx)
+local ws = token(lexer.WHITESPACE, lexer.space^1)
 
 M._rules = {
   { 'comment',    comment     },
