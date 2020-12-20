@@ -1,12 +1,12 @@
--- Copyright 2006-2017 Mitchell mitchell.att.foicica.com. See LICENSE.
+-- Copyright 2006-2020 Mitchell. See LICENSE.
 -- AWK LPeg lexer.
 -- Modified by Wolfgang Seeberg 2012, 2013.
 
-local l = require('lexer')
-local token, word_match = l.token, l.word_match
-local P, R, S = lpeg.P, lpeg.R, lpeg.S
+local lexer = require('lexer')
+local token, word_match = lexer.token, lexer.word_match
+local P, S = lpeg.P, lpeg.S
 
-local M = {_NAME = 'awk'}
+local lex = lexer.new('awk')
 
 local LEFTBRACKET = '['
 local RIGHTBRACKET = ']'
@@ -160,7 +160,7 @@ local function scanString(input, index)
       return i + 1
     elseif input:sub(i, i) == BACKSLASH then
       i = i + 1
-      -- l.delimited_range() doesn't handle CRLF.
+      -- lexer.range() doesn't handle CRLF.
       if input:sub(i, i + 1) == CRLF then i = i + 1 end
     end
     i = i + 1
@@ -220,13 +220,27 @@ local function scanFieldDelimiters(input, index)
 end
 
 -- Whitespace.
-local ws = token(l.WHITESPACE, l.space^1)
+lex:add_rule('whitespace', token(lexer.WHITESPACE, lexer.space^1))
 
 -- Comments.
-local comment = token(l.COMMENT, '#' * P(scanComment))
+lex:add_rule('comment', token(lexer.COMMENT, '#' * P(scanComment)))
 
 -- Strings.
-local string = token(l.STRING, DQUOTE * P(scanString))
+lex:add_rule('string', token(lexer.STRING, DQUOTE * P(scanString)))
+
+-- No leading sign because it might be binary.
+local float =
+  ((lexer.digit^1 * ('.' * lexer.digit^0)^-1) + ('.' * lexer.digit^1)) *
+  (S('eE') * S('+-')^-1 * lexer.digit^1)^-1
+
+-- Fields. E.g. $1, $a, $(x), $a(x), $a[x], $"1", $$a, etc.
+lex:add_rule('field', token('field', P('$') * S('$+-')^0 * (
+  float +
+  lexer.word^0 * '(' * P(scanFieldDelimiters) +
+  lexer.word^1 * ('[' * P(scanFieldDelimiters))^-1 +
+  '"' * P(scanString) +
+  '/' * P(eatRegex) * '/')))
+lex:add_style('field', lexer.styles.label)
 
 -- Regular expressions.
 -- Slash delimited regular expressions are preceded by most operators or
@@ -234,101 +248,50 @@ local string = token(l.STRING, DQUOTE * P(scanString))
 -- can contain unescaped slashes and brackets in brackets. Some escape
 -- sequences like '\S', '\s' have special meanings with Gawk. Tokens that
 -- contain them are displayed differently.
-local regex = token(l.REGEX, SLASH * P(scanRegex))
-local gawkRegex = token('gawkRegex', SLASH * P(scanGawkRegex))
-
--- no leading sign because it might be binary.
-local float = ((l.digit ^ 1 * ('.' * l.digit ^ 0) ^ -1) +
-    ('.' * l.digit ^ 1)) * (S('eE') * S('+-') ^ -1 * l.digit ^ 1) ^ -1
--- Numbers.
-local number = token(l.NUMBER, float)
-local gawkNumber = token('gawkNumber', l.hex_num + l.oct_num)
+lex:add_rule('gawkRegex', token('gawkRegex', SLASH * P(scanGawkRegex)))
+lex:add_style('gawkRegex', lexer.styles.preprocessor .. {underlined = true})
+lex:add_rule('regex', token(lexer.REGEX, SLASH * P(scanRegex)))
 
 -- Operators.
-local operator = token(l.OPERATOR, S('!%&()*+,-/:;<=>?[\\]^{|}~'))
-local gawkOperator = token('gawkOperator', P("|&") + "@" + "**=" + "**")
+lex:add_rule('gawkOperator', token('gawkOperator', P("|&") + "@" + "**=" +
+  "**"))
+lex:add_style('gawkOperator', lexer.styles.operator .. {underlined = true})
+lex:add_rule('operator', token(lexer.OPERATOR, S('!%&()*+,-/:;<=>?[\\]^{|}~')))
 
--- Fields. E.g. $1, $a, $(x), $a(x), $a[x], $"1", $$a, etc.
-local field = token('field', P('$') * S('$+-') ^ 0 *
-                    (float + (l.word ^ 0 * '(' * P(scanFieldDelimiters)) +
-                     (l.word ^ 1 * ('[' * P(scanFieldDelimiters)) ^ -1) +
-                     ('"' * P(scanString)) + ('/' * P(eatRegex) * '/')))
-
--- Functions.
-local func = token(l.FUNCTION, l.word * #P('('))
-
--- Identifiers.
-local identifier = token(l.IDENTIFIER, l.word)
+-- Numbers.
+lex:add_rule('gawkNumber', token('gawkNumber', lexer.hex_num + lexer.oct_num))
+lex:add_style('gawkNumber', lexer.styles.number .. {underlined = true})
+lex:add_rule('number', token(lexer.NUMBER, float))
 
 -- Keywords.
-local keyword = token(l.KEYWORD, word_match{
-  'BEGIN', 'END', 'atan2', 'break', 'close', 'continue', 'cos', 'delete', 'do',
-  'else', 'exit', 'exp', 'fflush', 'for', 'function', 'getline', 'gsub', 'if',
-  'in', 'index', 'int', 'length', 'log', 'match', 'next', 'nextfile', 'print',
-  'printf', 'rand', 'return', 'sin', 'split', 'sprintf', 'sqrt', 'srand', 'sub',
-  'substr', 'system', 'tolower', 'toupper', 'while'
-})
+lex:add_rule('keyword', token(lexer.KEYWORD, word_match[[
+  BEGIN END atan2 break close continue cos delete do else exit exp fflush for
+  function getline gsub if in index int length log match next nextfile print
+  printf rand return sin split sprintf sqrt srand sub substr system tolower
+  toupper while
+]]))
 
-local gawkKeyword = token('gawkKeyword', word_match{
-  'BEGINFILE', 'ENDFILE', 'adump', 'and', 'asort', 'asorti', 'bindtextdomain',
-  'case', 'compl', 'dcgettext', 'dcngettext', 'default', 'extension', 'func',
-  'gensub', 'include', 'isarray', 'load', 'lshift', 'mktime', 'or', 'patsplit',
-  'rshift', 'stopme', 'strftime', 'strtonum', 'switch', 'systime', 'xor'
-})
+lex:add_rule('builtInVariable', token('builtInVariable', word_match[[
+  ARGC ARGV CONVFMT ENVIRON FILENAME FNR FS NF NR OFMT OFS ORS RLENGTH RS RSTART
+  SUBSEP
+]]))
+lex:add_style('builtInVariable', lexer.styles.constant)
 
-local builtInVariable = token('builtInVariable', word_match{
-  'ARGC', 'ARGV', 'CONVFMT', 'ENVIRON', 'FILENAME', 'FNR', 'FS', 'NF', 'NR',
-  'OFMT', 'OFS', 'ORS', 'RLENGTH', 'RS', 'RSTART', 'SUBSEP'
-})
+lex:add_rule('gawkBuiltInVariable', token('gawkBuiltInVariable', word_match[[
+  ARGIND BINMODE ERRNO FIELDWIDTHS FPAT FUNCTAB IGNORECASE LINT PREC PROCINFO
+  ROUNDMODE RT SYMTAB TEXTDOMAIN
+]]))
+lex:add_style(
+  'gawkBuiltInVariable', lexer.styles.constant .. {underlined = true})
 
-local gawkBuiltInVariable = token('gawkBuiltInVariable', word_match {
-  'ARGIND', 'BINMODE', 'ERRNO', 'FIELDWIDTHS', 'FPAT', 'FUNCTAB', 'IGNORECASE',
-  'LINT', 'PREC', 'PROCINFO', 'ROUNDMODE', 'RT', 'SYMTAB', 'TEXTDOMAIN'
-})
+-- Functions.
+lex:add_rule('function', token(lexer.FUNCTION, lexer.word * #P('(')))
 
--- Within each group order matters, but the groups themselves (except the
--- last) can be in any order.
-M._rules = {
-  {'whitespace', ws},
+-- Identifiers.
+lex:add_rule('identifier', token(lexer.IDENTIFIER, lexer.word))
 
-  {'comment', comment},
+-- Fold points.
+lex:add_fold_point(lexer.OPERATOR, '{', '}')
+lex:add_fold_point(lexer.COMMENT, lexer.fold_consecutive_lines('#'))
 
-  {'string', string},
-
-  {'field', field},
-
-  {'gawkRegex', gawkRegex},
-  {'regex', regex},
-  {'gawkOperator', gawkOperator},
-  {'operator', operator},
-
-  {'gawkNumber', gawkNumber},
-  {'number', number},
-
-  {'keyword', keyword},
-  {'builtInVariable', builtInVariable},
-  {'gawkKeyword', gawkKeyword},
-  {'gawkBuiltInVariable', gawkBuiltInVariable},
-  {'function', func},
-  {'identifier', identifier},
-}
-
-M._tokenstyles = {
-  builtInVariable = l.STYLE_CONSTANT,
-  default = l.STYLE_ERROR,
-  field = l.STYLE_LABEL,
-  gawkBuiltInVariable = l.STYLE_CONSTANT..',underlined',
-  gawkKeyword = l.STYLE_KEYWORD..',underlined',
-  gawkNumber = l.STYLE_NUMBER..',underlined',
-  gawkOperator = l.STYLE_OPERATOR..',underlined',
-  gawkRegex = l.STYLE_PREPROCESSOR..',underlined',
-  regex = l.STYLE_PREPROCESSOR
-}
-
-M._foldsymbols = {
-  _patterns = {'[{}]', '#'},
-  [l.OPERATOR] = {['{'] = 1, ['}'] = -1},
-  [l.COMMENT] = {['#'] = l.fold_line_comments('#')}
-}
-
-return M
+return lex
