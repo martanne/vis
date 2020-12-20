@@ -1,63 +1,50 @@
--- Copyright 2006-2017 Mitchell mitchell.att.foicica.com. See LICENSE.
+-- Copyright 2006-2020 Mitchell. See LICENSE.
 -- VisualBasic LPeg lexer.
 
-local l = require('lexer')
-local token, word_match = l.token, l.word_match
-local P, R, S = lpeg.P, lpeg.R, lpeg.S
+local lexer = require('lexer')
+local token, word_match = lexer.token, lexer.word_match
+local P, S = lpeg.P, lpeg.S
 
-local M = {_NAME = 'vbscript'}
+local lex = lexer.new('vbscript')
 
 -- Whitespace.
-local ws = token(l.WHITESPACE, l.space^1)
-
--- Comments.
-local comment = token(l.COMMENT, (P("'") + word_match({'rem'}, nil, true)) * l.nonnewline^0)
-
--- Strings.
-local string = token(l.STRING, l.delimited_range('"', true, true))
-
--- Numbers.
-local number = token(l.NUMBER, (l.float + l.integer) * S('LlUuFf')^-2)
+lex:add_rule('whitespace', token(lexer.WHITESPACE, lexer.space^1))
 
 -- Keywords.
-local keyword = token(l.KEYWORD, word_match({
+lex:add_rule('keyword', token(lexer.KEYWORD, word_match([[
   -- Control.
-  'If', 'Then', 'Else', 'ElseIf', 'While', 'Wend', 'For', 'To', 'Each',
-  'In', 'Step', 'Case', 'Select', 'Return', 'Continue', 'Do',
-  'Until', 'Loop', 'Next', 'With', 'Exit',
+  If Then Else ElseIf While Wend For To Each In Step Case Select Return Continue
+  Do Until Loop Next With Exit
   -- Operators.
-  'Mod', 'And', 'Not', 'Or', 'Xor', 'Is',
+  Mod And Not Or Xor Is
   -- Storage types.
-  'Call', 'Class', 'Const', 'Dim', 'ReDim', 'Preserve', 'Function', 'Sub',
-  'Property', 'End', 'Set', 'Let', 'Get', 'New', 'Randomize', 'Option',
-  'Explicit', 'On', 'Error', 'Execute',
+  Call Class Const Dim ReDim Preserve Function Sub Property End Set Let Get New
+  Randomize Option Explicit On Error Execute
   -- Storage modifiers.
-  'Private', 'Public', 'Default',
+  Private Public Default
   -- Constants.
-  'Empty', 'False', 'Nothing', 'Null', 'True'
-}, nil, true))
+  Empty False Nothing Null True
+]], true)))
 
 -- Types.
-local type = token(l.TYPE, word_match({
-  'Boolean', 'Byte', 'Char', 'Date', 'Decimal', 'Double', 'Long', 'Object',
-  'Short', 'Single', 'String'
-}, nil, true))
+lex:add_rule('type', token(lexer.TYPE, word_match([[
+  Boolean Byte Char Date Decimal Double Long Object Short Single String
+]], true)))
+
+-- Comments.
+lex:add_rule('comment', token(lexer.COMMENT,
+  lexer.to_eol("'" + word_match([[rem]], true))))
 
 -- Identifiers.
-local identifier = token(l.IDENTIFIER, l.word)
+lex:add_rule('identifier', token(lexer.IDENTIFIER, lexer.word))
+
+-- Strings.
+lex:add_rule('string', token(lexer.STRING, lexer.range('"', true, false)))
+
+-- Numbers.
+lex:add_rule('number', token(lexer.NUMBER, lexer.number * S('LlUuFf')^-2))
 
 -- Operators.
-local operator = token(l.OPERATOR, S('=><+-*^&:.,_()'))
+lex:add_rule('operator', token(lexer.OPERATOR, S('=><+-*^&:.,_()')))
 
-M._rules = {
-  {'whitespace', ws},
-  {'keyword', keyword},
-  {'type', type},
-  {'comment', comment},
-  {'identifier', identifier},
-  {'string', string},
-  {'number', number},
-  {'operator', operator},
-}
-
-return M
+return lex
