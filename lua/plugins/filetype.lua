@@ -210,6 +210,9 @@ vis.ftdetect.filetypes = {
 	javascript = {
 		ext = { "%.cjs$", "%.js$", "%.jsfl$", "%.mjs$", "%.ts$" },
 	},
+	jq = {
+		ext = { "%.jq$" },
+	},
 	json = {
 		ext = { "%.json$" },
 		mime = { "text/x-json" },
