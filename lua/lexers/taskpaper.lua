@@ -1,37 +1,36 @@
--- Copyright (c) 2016-2017 Larry Hynes. See LICENSE.
+-- Copyright (c) 2016-2020 Larry Hynes. See LICENSE.
 -- Taskpaper LPeg lexer
 
-local l = require('lexer')
-local token = l.token
-local P, R, S = lpeg.P, lpeg.R, lpeg.S
+local lexer = require('lexer')
+local token = lexer.token
+local P, S = lpeg.P, lpeg.S
 
 local M = {_NAME = 'taskpaper'}
 
 local delimiter = P('    ') + P('\t')
 
 -- Whitespace
-local ws = token(l.WHITESPACE, l.space^1)
+local ws = token(lexer.WHITESPACE, lexer.space^1)
 
 -- Tags
 local day_tag = token('day_tag', (P('@today') + P('@tomorrow')))
 
 local overdue_tag = token('overdue_tag', P('@overdue'))
 
-local plain_tag = token('plain_tag', P('@') * l.word)
+local plain_tag = token('plain_tag', P('@') * lexer.word)
 
-local extended_tag = token('extended_tag',
-                           P('@') * l.word * P('(') *
-                           (l.word + R('09') + P('-'))^1 * P(')'))
+local extended_tag = token('extended_tag', P('@') * lexer.word * P('(') *
+  (lexer.word + lexer.digit + P('-'))^1 * P(')'))
 
 -- Projects
-local project = token('project',
-                      l.nested_pair(l.starts_line(l.alnum), ':') * l.newline)
+local project = token('project', lexer.range(lexer.starts_line(lexer.alnum),
+  ':', false, false, true) * lexer.newline)
 
 -- Notes
-local note = token('note', delimiter^1 * l.alnum * l.nonnewline^0)
+local note = token('note', delimiter^1 * lexer.alnum * lexer.nonnewline^0)
 
 -- Tasks
-local task = token('task', delimiter^1 * P('-') + l.newline)
+local task = token('task', delimiter^1 * P('-') + lexer.newline)
 
 M._rules = {
   {'note', note},
@@ -45,13 +44,13 @@ M._rules = {
 }
 
 M._tokenstyles = {
-  note = l.STYLE_CONSTANT,
-  task = l.STYLE_FUNCTION,
-  project = l.STYLE_TAG,
-  extended_tag = l.STYLE_COMMENT,
-  day_tag = l.STYLE_CLASS,
-  overdue_tag = l.STYLE_PREPROCESSOR,
-  plain_tag = l.STYLE_COMMENT,
+  note = lexer.STYLE_CONSTANT,
+  task = lexer.STYLE_FUNCTION,
+  project = lexer.STYLE_TAG,
+  extended_tag = lexer.STYLE_COMMENT,
+  day_tag = lexer.STYLE_CLASS,
+  overdue_tag = lexer.STYLE_PREPROCESSOR,
+  plain_tag = lexer.STYLE_COMMENT,
 }
 
 M._LEXBYLINE = true
