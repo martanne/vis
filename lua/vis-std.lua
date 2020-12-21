@@ -14,7 +14,17 @@ vis:option_register("theme", "string", function(name)
 		require(theme)
 	end
 
-	vis.lexers.lexers = {}
+	local lexers = vis.lexers
+	lexers.lexers = {}
+
+	if not lexers.property then lexers.load("text") end
+	local colors = lexers.colors
+	local default_colors = { "black", "red", "green", "yellow", "blue", "magenta", "cyan", "white" }
+	for _, c in ipairs(default_colors) do
+		if not colors[c] or colors[c] == '' then
+			colors[c] = c
+		end
+	end
 
 	for win in vis:windows() do
 		win:set_syntax(win.syntax)
