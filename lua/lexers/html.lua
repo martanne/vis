@@ -68,16 +68,10 @@ lex:add_style('attribute', lexer.styles.type)
 lex:add_style('unknown_attribute', lexer.styles.type .. {italics = true})
 
 -- TODO: performance is terrible on large files.
-local in_tag = P(function(input, index)
-  local before = input:sub(1, index - 1)
-  local s, e = before:find('<[^>]-$'), before:find('>[^<]-$')
-  if s and e then return s > e and index or nil end
-  if s then return index end
-  return input:find('^[^<]->', index) and index or nil
-end)
+local in_tag = #P((1 - S'><')^0 * '>')
 
 -- Equals.
-local equals = token(lexer.OPERATOR, '=') --* in_tag
+local equals = token(lexer.OPERATOR, '=') * in_tag
 --lex:add_rule('equals', equals)
 
 -- Strings.
@@ -87,7 +81,7 @@ lex:add_rule('string', string)
 
 -- Numbers.
 lex:add_rule('number', #lexer.digit * lexer.last_char_includes('=') *
-  token(lexer.NUMBER, lexer.dec_num * P('%')^-1))--*in_tag)
+  token(lexer.NUMBER, lexer.dec_num * P('%')^-1) * in_tag)
 
 -- Entities.
 lex:add_rule('entity', token('entity', '&' * (lexer.any - lexer.space - ';')^1 *
