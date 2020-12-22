@@ -65,11 +65,7 @@ local word = (lexer.alpha + '-' * -lexer.space) * (lexer.alnum + '-')^0
 
 -- Keys and literals.
 local colon = S(' \t')^0 * ':' * (lexer.space + -1)
-local key = token(lexer.KEYWORD, #word * (lexer.nonnewline - colon)^1 * #colon *
-  P(function(input, index)
-    local line = input:sub(1, index - 1):match('[^\r\n]+$')
-    return not line:find('[%w-]+:') and index
-  end))
+local key = token(l.KEYWORD, (l.alnum + '_' + '-')^1 * #(':' * l.space))
 local value = #word * (lexer.nonnewline - lexer.space^0 * S(',]}'))^1
 local block = S('|>') * S('+-')^-1 * (lexer.newline + -1) *
   function(input, index)
