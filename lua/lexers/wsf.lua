@@ -32,14 +32,7 @@ lex:add_rule('tag_close', tag_close)
 local attribute = token('attribute', identifier) * #(lexer.space^0 * '=')
 lex:add_rule('attribute', attribute)
 lex:add_style('attribute', lexer.styles.type)
-
-local in_tag = P(function(input, index)
-  local before = input:sub(1, index - 1)
-  local s, e = before:find('<[^>]-$'), before:find('>[^<]-$')
-  if s and e then return s > e and index or nil end
-  if s then return index end
-  return input:find('^[^<]->', index) and index or nil
-end)
+local in_tag = #P((1 - S'><')^0 * '>')
 
 -- Equals.
 local equals = token(lexer.OPERATOR, '=') * in_tag
