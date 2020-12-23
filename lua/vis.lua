@@ -98,6 +98,7 @@ vis.textobject_new = function(vis, key, textobject, help)
 	return true
 end
 
+-- luacheck: push ignore 212
 --- Check whether a Lua module exists
 --
 -- Checks whether a subsequent @{require} call will succeed.
@@ -112,6 +113,7 @@ vis.module_exist = function(vis, name)
 	end
 	return false
 end
+-- luacheck: pop
 
 vis.lexers = {}
 
