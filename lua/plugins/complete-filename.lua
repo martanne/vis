@@ -13,8 +13,8 @@ vis:map(vis.modes.INSERT, "<C-x><C-f>", function()
 	local prefix = file:content(range)
 	if not prefix then return end
 	-- Strip leading delimiters for some languages
-	i, j = string.find(prefix, "[[(<'\"]+")
-	if j then prefix = prefix:sub(j + 1) end
+	local i, j = string.find(prefix, "[[(<'\"]+")
+	if i then prefix = prefix:sub(j + 1) end
 	local cmd = string.format("vis-complete --file '%s'", prefix:gsub("'", "'\\''"))
 	local status, out, err = vis:pipe(file, { start = 0, finish = 0 }, cmd)
 	if status ~= 0 or not out then
