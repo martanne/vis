@@ -352,9 +352,11 @@ vis.ftdetect.filetypes = {
 	},
 	routeros = {
 		ext = { "%.rsc" },
+    -- luacheck: push ignore 212
 		detect = function(file, data)
 			return data:match("^#.* by RouterOS")
 		end
+    -- luacheck: pop
 	},
 	rstats = {
 		ext = { "%.R$", "%.Rout$", "%.Rhistory$", "%.Rt$", "Rout.save", "Rout.fail" },
@@ -394,9 +396,11 @@ vis.ftdetect.filetypes = {
 		ext = { "%.ddl$", "%.sql$" },
 	},
 	strace = {
+    -- luacheck: push ignore 212
 		detect = function(file, data)
 			return data:match("^execve%(")
 		end
+    -- luacheck: pop
 	},
 	systemd = {
 		ext = {
