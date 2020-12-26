@@ -26,6 +26,17 @@ vis:option_register("theme", "string", function(name)
 		end
 	end
 
+	local styles = lexers.styles
+	local default_styles = {
+		'nothing', 'whitespace', 'comment', 'string', 'number', 'keyword',
+		'identifier', 'operator', 'error', 'preprocessor', 'constant', 'variable',
+		'function', 'class', 'type', 'label', 'regex', 'embedded'
+	}
+
+	for _, s in ipairs(default_styles) do
+		styles[s] = lexers['STYLE_' .. s:upper()]
+	end
+
 	for win in vis:windows() do
 		win:set_syntax(win.syntax)
 	end
