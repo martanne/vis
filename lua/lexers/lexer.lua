@@ -961,7 +961,7 @@ style_obj.__index = style_obj
 function style_obj.new(name_or_props)
   local prop_string = tostring(name_or_props)
   if type(name_or_props) == 'string' and name_or_props:find('^[%w_]+$') then
-    prop_string = string.format('$(style.%s)', name_or_props)
+    prop_string = M.property and M.property['style.' .. name_or_props] or ''
   elseif type(name_or_props) == 'table' then
     local settings = {}
     for k, v in pairs(name_or_props) do
