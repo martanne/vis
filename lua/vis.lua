@@ -103,7 +103,7 @@ end
 -- Checks whether a subsequent @{require} call will succeed.
 -- @tparam string name the module name to check
 -- @treturn bool whether the module was found
-vis.module_exist = function(vis, name)
+vis.module_exist = function(_, name)
 	for _, searcher in ipairs(package.searchers or package.loaders) do
 		local loader = searcher(name)
 		if type(loader) == 'function' then

@@ -352,7 +352,7 @@ vis.ftdetect.filetypes = {
 	},
 	routeros = {
 		ext = { "%.rsc" },
-		detect = function(file, data)
+		detect = function(_, data)
 			return data:match("^#.* by RouterOS")
 		end
 	},
@@ -394,7 +394,7 @@ vis.ftdetect.filetypes = {
 		ext = { "%.ddl$", "%.sql$" },
 	},
 	strace = {
-		detect = function(file, data)
+		detect = function(_, data)
 			return data:match("^execve%(")
 		end
 	},
@@ -501,10 +501,11 @@ vis.events.subscribe(vis.events.WIN_OPEN, function(win)
 	end
 
 	-- run file(1) to determine mime type
+	local mime
 	if name ~= nil then
 		local file = io.popen(string.format("file -bL --mime-type -- '%s'", name:gsub("'", "'\\''")))
 		if file then
-			local mime = file:read('*all')
+			mime = file:read('*all')
 			file:close()
 			if mime then
 				mime = mime:gsub('%s*$', '')
