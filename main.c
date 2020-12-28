@@ -94,7 +94,7 @@ static const char *gotoline(Vis*, const char *keys, const Arg *arg);
 /* make the current action use the operator indicated by arg->i */
 static const char *operator(Vis*, const char *keys, const Arg *arg);
 /* blocks to read a key and performs movement indicated by arg->i which
- * should be one of VIS_MOVE_{RIGHT,LEFT}_{TO,TILL} */
+ * should be one of VIS_MOVE_{TO,TILL}_LINE_{RIGHT,LEFT}*/
 static const char *movement_key(Vis*, const char *keys, const Arg *arg);
 /* perform the movement as indicated by arg->i */
 static const char *movement(Vis*, const char *keys, const Arg *arg);
@@ -220,10 +220,10 @@ enum {
 	VIS_ACTION_TOTILL_REVERSE,
 	VIS_ACTION_PROMPT_SEARCH_FORWARD,
 	VIS_ACTION_PROMPT_SEARCH_BACKWARD,
-	VIS_ACTION_TILL_LEFT,
-	VIS_ACTION_TILL_RIGHT,
-	VIS_ACTION_TO_LEFT,
-	VIS_ACTION_TO_RIGHT,
+	VIS_ACTION_TILL_LINE_LEFT,
+	VIS_ACTION_TILL_LINE_RIGHT,
+	VIS_ACTION_TO_LINE_LEFT,
+	VIS_ACTION_TO_LINE_RIGHT,
 	VIS_ACTION_REGISTER,
 	VIS_ACTION_OPERATOR_CHANGE,
 	VIS_ACTION_OPERATOR_DELETE,
@@ -718,25 +718,25 @@ static const KeyAction vis_action[] = {
 		VIS_HELP("Search backward")
 		prompt_show, { .s = "?" }
 	},
-	[VIS_ACTION_TILL_LEFT] = {
-		"vis-motion-till-left",
-		VIS_HELP("Till after the occurrence of character to the left")
-		movement_key, { .i = VIS_MOVE_LEFT_TILL }
+	[VIS_ACTION_TILL_LINE_LEFT] = {
+		"vis-motion-till-line-left",
+		VIS_HELP("Till after the occurrence of character to the left on the current line")
+		movement_key, { .i = VIS_MOVE_TILL_LINE_LEFT }
 	},
-	[VIS_ACTION_TILL_RIGHT] = {
-		"vis-motion-till-right",
-		VIS_HELP("Till before the occurrence of character to the right")
-		movement_key, { .i = VIS_MOVE_RIGHT_TILL }
+	[VIS_ACTION_TILL_LINE_RIGHT] = {
+		"vis-motion-till-line-right",
+		VIS_HELP("Till before the occurrence of character to the right on the current line")
+		movement_key, { .i = VIS_MOVE_TILL_LINE_RIGHT }
 	},
-	[VIS_ACTION_TO_LEFT] = {
-		"vis-motion-to-left",
-		VIS_HELP("To the first occurrence of character to the left")
-		movement_key, { .i = VIS_MOVE_LEFT_TO }
+	[VIS_ACTION_TO_LINE_LEFT] = {
+		"vis-motion-to-line-left",
+		VIS_HELP("To the first occurrence of character to the left on the current line")
+		movement_key, { .i = VIS_MOVE_TO_LINE_LEFT }
 	},
-	[VIS_ACTION_TO_RIGHT] = {
-		"vis-motion-to-right",
-		VIS_HELP("To the first occurrence of character to the right")
-		movement_key, { .i = VIS_MOVE_RIGHT_TO }
+	[VIS_ACTION_TO_LINE_RIGHT] = {
+		"vis-motion-to-line-right",
+		VIS_HELP("To the first occurrence of character to the right on the current line")
+		movement_key, { .i = VIS_MOVE_TO_LINE_RIGHT }
 	},
 	[VIS_ACTION_REGISTER] = {
 		"vis-register",
