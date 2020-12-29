@@ -2097,6 +2097,10 @@ static const struct luaL_Reg window_selection_funcs[] = {
  * File state.
  * @tfield bool modified whether the file contains unsaved changes
  */
+/***
+ * File permission.
+ * @tfield int permission the file permission bits as of the most recent load/save
+ */
 static int file_index(lua_State *L) {
 	File *file = obj_ref_check(L, 1, VIS_LUA_TYPE_FILE);
 
@@ -2124,6 +2128,12 @@ static int file_index(lua_State *L) {
 
 		if (strcmp(key, "modified") == 0) {
 			lua_pushboolean(L, text_modified(file->text));
+			return 1;
+		}
+
+		if (strcmp(key, "permission") == 0) {
+			struct stat stat = text_stat(file->text);
+			lua_pushunsigned(L, stat.st_mode & 0777);
 			return 1;
 		}
 	}
