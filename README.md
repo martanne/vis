@@ -60,8 +60,8 @@ Assuming these dependencies are met, execute:
     $ ./configure && make && sudo make install
 
 By default the `configure` script will try to auto detect support for
-Lua. See `configure --help` for a list of supported options. You can
-also manually tweak the generated `config.mk` file.
+Lua using `pkg-config(1)`. See `configure --help` for a list of supported
+options. You can also manually tweak the generated `config.mk` file.
 
 Or simply use one of the
 [distribution provided packages](https://github.com/martanne/vis/wiki/Distribution-Packages).
