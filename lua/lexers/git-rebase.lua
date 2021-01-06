@@ -1,4 +1,4 @@
--- Copyright 2017 Marc André Tanner
+-- Copyright 2017-2021 Marc André Tanner
 -- git-rebase(1) LPeg lexer.
 
 local l = require('lexer')
@@ -22,6 +22,7 @@ local keywords = l.starts_line(word_match{
   'f', 'fixup',
   'x', 'exec',
   'd', 'drop',
+  'b', 'break',
   'l', 'label',
   't', 'reset',
   'm', 'merge',
