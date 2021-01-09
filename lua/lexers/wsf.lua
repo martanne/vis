@@ -81,7 +81,7 @@ local js_end_rule = #('</script' * ws^0 * '>') * embed_end_tag -- </script>
 lex:embed(js, js_start_rule, js_end_rule)
 
 -- Embedded VBScript.
-local vbs = lexer.load('vbscript')
+local vbs = lexer.load('vb', 'vbscript')
 local vbs_start_rule = #(P('<script') * (P(function(input, index)
   if input:find('^%s+language%s*=%s*(["\'])[vV][bB][sS]cript%1', index) then
     return index

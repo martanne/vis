@@ -9,7 +9,7 @@ local html = lexer.load('html')
 local lex = lexer.new('asp', {inherit = html}) -- proxy for HTML
 
 -- Embedded VB.
-local vb = lexer.load('vb')
+local vb = lexer.load('vb', 'vbscript')
 local vb_start_rule = token('asp_tag', '<%' * P('=')^-1)
 local vb_end_rule = token('asp_tag', '%>')
 lex:embed(vb, vb_start_rule, vb_end_rule)
