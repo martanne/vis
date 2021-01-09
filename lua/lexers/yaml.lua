@@ -4,27 +4,36 @@
 
 local lexer = require('lexer')
 local token, word_match = lexer.token, lexer.word_match
-local P, S = lpeg.P, lpeg.S
+local P, S, R, B = lpeg.P, lpeg.S, lpeg.R, lpeg.B
 
-local M = {_NAME = 'yaml'}
+local lex = lexer.new('yaml', {fold_by_indentation = true})
 
 -- Whitespace.
-local indent = #lexer.starts_line(S(' \t')) *
-  (token(lexer.WHITESPACE, ' ') + token('indent_error', '\t'))^1
-local ws = token(lexer.WHITESPACE, S(' \t')^1 + lexer.newline^1)
+local indent = #lexer.starts_line(S(' \t')) * (token(lexer.WHITESPACE, ' ') +
+  token('indent_error', '\t'))^1
+lex:add_rule('indent', indent)
+lex:add_style('indent_error', {back = lexer.colors.red})
+lex:add_rule('whitespace', token(lexer.WHITESPACE, S(' \t')^1 +
+  lexer.newline^1))
 
--- Comments.
-local comment = token(lexer.COMMENT, lexer.to_eol('#'))
+local word = (lexer.alpha + '-' * -lexer.space) * (lexer.alnum + '-')^0
+
+-- Keys.
+lex:add_rule('key', token(lexer.KEYWORD, word * (S(' \t_')^1 * word^-1)^0 *
+  #(':' * lexer.space)))
+
+-- Constants.
+lex:add_rule('constant', B(lexer.space) * token(lexer.CONSTANT,
+  word_match('null true false', true)))
 
 -- Strings.
 local sq_str = lexer.range("'")
 local dq_str = lexer.range('"')
-local string = token(lexer.STRING, sq_str + dq_str)
+lex:add_rule('string', token(lexer.STRING, sq_str + dq_str))
 
--- Numbers.
-local integer = lexer.dec_num + lexer.hex_num + '0' * S('oO') * lpeg.R('07')^1
-local special_num = '.' * word_match({'inf', 'nan'}, nil, true)
-local number = token(lexer.NUMBER, special_num + lexer.float + integer)
+-- Comments.
+lex:add_rule('comment', B(lexer.space) * token(lexer.COMMENT,
+  lexer.to_eol('#')))
 
 -- Timestamps.
 local year = lexer.digit * lexer.digit * lexer.digit * lexer.digit
@@ -38,80 +47,47 @@ local fraction = '.' * lexer.digit^0
 local time = hours * ':' * minutes * ':' * seconds * fraction^-1
 local T = S(' \t')^1 + S('tT')
 local zone = 'Z' + S(' \t')^0 * S('-+') * hours * (':' * minutes)^-1
-local ts = token('timestamp', date * (T * time * zone^-1))
+lex:add_rule('timestamp', token('timestamp', date * (T * time * zone^-1)^-1))
+lex:add_style('timestamp', lexer.styles.number)
 
--- Constants.
-local constant = token(lexer.CONSTANT, word_match({
-  'null', 'true', 'false'
-}, nil, true))
+-- Numbers.
+local dec = lexer.digit^1 * ('_' * lexer.digit^1)^0
+local hex = '0' * S('xX') * ('_' * lexer.xdigit^1)^1
+local bin = '0' * S('bB') * S('01')^1 * ('_' * S('01')^1)^0
+local integer = S('+-')^-1 * (hex + bin + dec)
+local float = S('+-')^-1 * (
+  (dec^-1 * '.' * dec + dec * '.' * dec^-1 * -P('.')) *
+  (S('eE') * S('+-')^-1 * dec)^-1 + (dec * S('eE') * S('+-')^-1 * dec))
+local special_num = S('+-')^-1 * '.' * word_match('inf nan', true)
+lex:add_rule('number', B(lexer.space) * token(lexer.NUMBER, special_num +
+  float + integer))
 
 -- Types.
-local type = token(lexer.TYPE, '!!' * word_match({
+lex:add_rule('type', token(lexer.TYPE, '!!' * word_match([[
   -- Collection types.
-  'map', 'omap', 'pairs', 'set', 'seq',
+  map omap pairs set seq
   -- Scalar types.
-  'binary', 'bool', 'float', 'int', 'merge', 'null', 'str', 'timestamp',
-  'value', 'yaml'
-}, nil, true) + '!' * lexer.range('<', '>', true))
+  binary bool float int merge null str timestamp
+  value yaml
+]], true) + '!' * lexer.range('<', '>', true)))
 
 -- Document boundaries.
-local doc_bounds = token('document', lexer.starts_line(P('---') + '...'))
+lex:add_rule('doc_bounds', token('document', lexer.starts_line(P('---') +
+  '...')))
+lex:add_style('document', lexer.styles.constant)
 
 -- Directives
-local directive = token('directive', lexer.starts_line('%') *
-  lexer.nonnewline^1)
-
-local word = (lexer.alpha + '-' * -lexer.space) * (lexer.alnum + '-')^0
-
--- Keys and literals.
-local colon = S(' \t')^0 * ':' * (lexer.space + -1)
-local key = token(l.KEYWORD, (l.alnum + '_' + '-')^1 * #(':' * l.space))
-local value = #word * (lexer.nonnewline - lexer.space^0 * S(',]}'))^1
-local block = S('|>') * S('+-')^-1 * (lexer.newline + -1) *
-  function(input, index)
-    local rest = input:sub(index)
-    local level = #rest:match('^( *)')
-    for pos, indent, line in rest:gmatch('() *()([^\r\n]+)') do
-      if indent - pos < level and line ~= ' ' or level == 0 and pos > 1 then
-        return index + pos - 1
-      end
-    end
-    return #input + 1
-  end
-local literal = token('literal', value + block)
+lex:add_rule('directive', token('directive',
+  lexer.starts_line(lexer.to_eol('%'))))
+lex:add_style('directive', lexer.styles.preprocessor)
 
 -- Indicators.
-local anchor = token(lexer.LABEL, '&' * word)
+local anchor = B(lexer.space) * token(lexer.LABEL, '&' * word)
 local alias = token(lexer.VARIABLE, '*' * word)
 local tag = token('tag', '!' * word * P('!')^-1)
 local reserved = token(lexer.ERROR, S('@`') * word)
-local indicator_chars = token(lexer.OPERATOR, S('-?:,[]{}!'))
+local indicator_chars = token(lexer.OPERATOR, S('-?:,>|[]{}!'))
+lex:add_rule('indicator', tag + indicator_chars + alias + anchor + reserved)
+lex:add_style('tag', lexer.styles.class)
 
-M._rules = {
-  {'indent', indent},
-  {'whitespace', ws},
-  {'comment', comment},
-  {'doc_bounds', doc_bounds},
-  {'key', key},
-  {'string', string},
-  {'literal', literal},
-  {'timestamp', ts},
-  {'number', number},
-  {'constant', constant},
-  {'type', type},
-  {'indicator', tag + indicator_chars + alias + anchor + reserved},
-  {'directive', directive},
-}
-
-M._tokenstyles = {
-  indent_error = 'back:%(color.red)',
-  document = lexer.STYLE_CONSTANT,
-  literal = lexer.STYLE_DEFAULT,
-  timestamp = lexer.STYLE_NUMBER,
-  tag = lexer.STYLE_CLASS,
-  directive = lexer.STYLE_PREPROCESSOR,
-}
-
-M._FOLDBYINDENTATION = true
-
-return M
+return lex
