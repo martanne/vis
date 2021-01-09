@@ -16,7 +16,7 @@ lex:embed(vb, vb_start_rule, vb_end_rule)
 lex:add_style('asp_tag', lexer.styles.embedded)
 
 -- Embedded VBScript.
-local vbs = lexer.load('vbscript')
+local vbs = lexer.load('vb', 'vbscript')
 local script_element = word_match('script', true)
 local vbs_start_rule = #(P('<') * script_element * (P(function(input, index)
   if input:find('^%s+language%s*=%s*(["\'])vbscript%1', index) or
