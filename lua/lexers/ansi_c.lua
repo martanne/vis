@@ -13,17 +13,19 @@ lex:add_rule('whitespace', ws)
 
 -- Keywords.
 lex:add_rule('keyword', token(lexer.KEYWORD, word_match[[
-  auto break case const continue default do else extern for goto if inline
+  auto break case const continue default do else enum extern for goto if inline
   register restrict return sizeof static switch typedef volatile while
   -- C99.
   false true
   -- C11.
   _Alignas _Alignof _Atomic _Generic _Noreturn _Static_assert _Thread_local
+  -- Compiler.
+  asm __asm __asm__ __restrict__ __inline __inline__ __attribute__ __declspec
 ]]))
 
 -- Types.
 lex:add_rule('type', token(lexer.TYPE, word_match[[
-  bool char double enum float int long short signed struct union unsigned void
+  bool char double float int long short signed struct union unsigned void
   _Bool _Complex _Imaginary
   -- Stdlib types.
   ptrdiff_t size_t max_align_t wchar_t intptr_t uintptr_t intmax_t uintmax_t
@@ -45,7 +47,14 @@ lex:add_rule('constants', token(lexer.CONSTANT, word_match[[
   ENOTTY ENXIO EOPNOTSUPP EOVERFLOW EOWNERDEAD EPERM EPIPE EPROTO
   EPROTONOSUPPORT EPROTOTYPE ERANGE EROFS ESPIPE ESRCH ESTALE ETIME ETIMEDOUT
   ETXTBSY EWOULDBLOCK EXDEV
-]]))
+  -- stdint.h.
+  PTRDIFF_MIN PTRDIFF_MAX SIZE_MAX SIG_ATOMIC_MIN SIG_ATOMIC_MAX WINT_MIN
+  WINT_MAX WCHAR_MIN WCHAR_MAX
+]] + P('U')^-1 * 'INT' * ((P('_LEAST') + '_FAST')^-1 * lexer.digit^1 + 'PTR' +
+  'MAX') * (P('_MIN') + '_MAX')))
+
+-- Labels.
+lex:add_rule('label', token(lexer.LABEL, lexer.starts_line(lexer.word * ':')))
 
 -- Identifiers.
 lex:add_rule('identifier', token(lexer.IDENTIFIER, lexer.word))
@@ -62,7 +71,9 @@ local block_comment = lexer.range('/*', '*/') +
 lex:add_rule('comment', token(lexer.COMMENT, line_comment + block_comment))
 
 -- Numbers.
-lex:add_rule('number', token(lexer.NUMBER, lexer.number))
+local integer = lexer.integer * word_match('u l ll ul ull lu llu', true)^-1
+local float = lexer.float * P('f')^-1
+lex:add_rule('number', token(lexer.NUMBER, float + integer))
 
 -- Preprocessor.
 local include = token(lexer.PREPROCESSOR, '#' * S('\t ')^0 * 'include') *
