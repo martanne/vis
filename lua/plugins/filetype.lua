@@ -40,7 +40,7 @@ vis.ftdetect.filetypes = {
 		ext = { "%.awk$" },
 	},
 	bash = {
-		ext = { "%.bash$", "%.csh$", "%.sh$", "%.zsh$" },
+		ext = { "%.bash$", "%.csh$", "%.sh$", "%.zsh$" ,"^APKBUILD$", "%.ebuild$"},
 		mime = { "text/x-shellscript", "application/x-shellscript" },
 	},
 	batch = {
