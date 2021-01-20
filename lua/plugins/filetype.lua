@@ -439,7 +439,7 @@ vis.ftdetect.filetypes = {
 		ext = { "%.vcf$", "%.vcard$" },
 	},
 	verilog = {
-		ext = { "%.v$", "%.ver$" },
+		ext = { "%.v$", "%.ver$", "%.sv$" },
 	},
 	vhdl = {
 		ext = { "%.vh$", "%.vhd$", "%.vhdl$" },
