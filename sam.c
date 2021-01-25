@@ -1417,6 +1417,7 @@ static int extract(Vis *vis, Win *win, Command *cmd, const char *argv[], Selecti
 				if (match[0].start == match[0].end) {
 					if (last_start == match[0].start) {
 						start++;
+						trailing_match = start == end;
 						continue;
 					}
 					/* in Plan 9's regexp library ^ matches the beginning
@@ -1429,8 +1430,7 @@ static int extract(Vis *vis, Win *win, Command *cmd, const char *argv[], Selecti
 						break;
 				}
 				start = match[0].end;
-				if (start == end)
-					trailing_match = true;
+				trailing_match = start == end;
 			} else {
 				if (argv[0][0] == 'y')
 					r = text_range_new(start, end);
