@@ -1424,7 +1424,8 @@ static int extract(Vis *vis, Win *win, Command *cmd, const char *argv[], Selecti
 					 * matches the zero-length string immediately after a
 					 * newline. Try filtering out the last such match at EOF.
 					 */
-					if (end == match[0].start && start > range->start)
+					if (end == match[0].start && start > range->start &&
+					    text_byte_get(txt, end-1, &c) && c == '\n')
 						break;
 				}
 				start = match[0].end;
