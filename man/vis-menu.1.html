@@ -2,12 +2,6 @@
 <html>
 <head>
   <meta charset="utf-8"/>
-  <style>
-    table.head, table.foot { width: 100%; }
-    td.head-rtitle, td.foot-os { text-align: right; }
-    td.head-vol { text-align: center; }
-    div.Pp { margin: 1ex 0ex; }
-  </style>
   <link rel="stylesheet" href="mandoc.css" type="text/css" media="all"/>
   <title>VIS-MENU(1)</title>
 </head>
@@ -20,200 +14,197 @@
   </tr>
 </table>
 <div class="manual-text">
-<h1 class="Sh" title="Sh" id="NAME"><a class="selflink" href="#NAME">NAME</a></h1>
-<b class="Nm" title="Nm">vis-menu</b> &#x2014;
-  <span class="Nd" title="Nd">Interactively select an item from a list</span>
-<h1 class="Sh" title="Sh" id="SYNOPSIS"><a class="selflink" href="#SYNOPSIS">SYNOPSIS</a></h1>
+<h1 class="Sh" title="Sh" id="NAME"><a class="permalink" href="#NAME">NAME</a></h1>
+<code class="Nm" title="Nm">vis-menu</code> &#x2014;
+<div class="Nd" title="Nd">Interactively select an item from a list</div>
+<h1 class="Sh" title="Sh" id="SYNOPSIS"><a class="permalink" href="#SYNOPSIS">SYNOPSIS</a></h1>
 <table class="Nm">
   <tr>
-    <td><b class="Nm" title="Nm">vis-menu</b></td>
-    <td>[<span class="Op"><b class="Fl" title="Fl">-i</b></span>]
-      [<span class="Op"><b class="Fl" title="Fl">-t</b> |
-      <b class="Fl" title="Fl">-b</b></span>]
-      [<span class="Op"><b class="Fl" title="Fl">-p</b>
-      <var class="Ar" title="Ar">prompt</var></span>]
-      [<span class="Op"><b class="Fl" title="Fl">-l</b>
-      <var class="Ar" title="Ar">lines</var></span>]
-      [<span class="Op"><var class="Ar" title="Ar">initial</var></span>]</td>
+    <td><code class="Nm" title="Nm">vis-menu</code></td>
+    <td>[<div class="Op"><code class="Fl" title="Fl">-i</code></div>]
+      [<div class="Op"><code class="Fl" title="Fl">-t</code> |
+      <code class="Fl" title="Fl">-b</code></div>]
+      [<div class="Op"><code class="Fl" title="Fl">-p</code>
+      <var class="Ar" title="Ar">prompt</var></div>]
+      [<div class="Op"><code class="Fl" title="Fl">-l</code>
+      <var class="Ar" title="Ar">lines</var></div>]
+      [<div class="Op"><var class="Ar" title="Ar">initial</var></div>]</td>
   </tr>
 </table>
 <br/>
 <table class="Nm">
   <tr>
-    <td><b class="Nm" title="Nm">vis-menu</b></td>
-    <td>[<span class="Op"><b class="Fl" title="Fl">-v</b></span>]</td>
+    <td><code class="Nm" title="Nm">vis-menu</code></td>
+    <td>[<div class="Op"><code class="Fl" title="Fl">-v</code></div>]</td>
   </tr>
 </table>
-<h1 class="Sh" title="Sh" id="DESCRIPTION"><a class="selflink" href="#DESCRIPTION">DESCRIPTION</a></h1>
-<b class="Nm" title="Nm">vis-menu</b> allows a user to interactively select one
-  item from a list of options. A newline-separated list of items is read from
-  standard input, then the list of items is drawn directly onto the terminal so
-  the user may select one. Finally, the selected item is printed to standard
-  output.
+<h1 class="Sh" title="Sh" id="DESCRIPTION"><a class="permalink" href="#DESCRIPTION">DESCRIPTION</a></h1>
+<code class="Nm" title="Nm">vis-menu</code> allows a user to interactively
+  select one item from a list of options. A newline-separated list of items is
+  read from standard input, then the list of items is drawn directly onto the
+  terminal so the user may select one. Finally, the selected item is printed to
+  standard output.
 <div class="Pp"></div>
 For information on actually navigating the menu, see
   <a class="Sx" title="Sx" href="#USAGE">USAGE</a> below.
-<dl class="Bl-tag" style="margin-left: 7.80ex;">
-  <dt class="It-tag" style="margin-left: -7.80ex;">&#x00A0;</dt>
-  <dd class="It-tag">&#x00A0;</dd>
-  <dt class="It-tag" style="margin-left: -7.80ex;"><a class="selflink" href="#i"><b class="Fl" title="Fl" id="i">-i</b></a></dt>
-  <dd class="It-tag">Use case-insensitive comparison when filtering items.</dd>
-  <dt class="It-tag" style="margin-left: -7.80ex;">&#x00A0;</dt>
-  <dd class="It-tag">&#x00A0;</dd>
-  <dt class="It-tag" style="margin-left: -7.80ex;"><a class="selflink" href="#t"><b class="Fl" title="Fl" id="t">-t</b></a>
+<dl class="Bl-tag">
+  <dt>&#x00A0;</dt>
+  <dd>&#x00A0;</dd>
+  <dt><a class="permalink" href="#i"><code class="Fl" title="Fl" id="i">-i</code></a></dt>
+  <dd>Use case-insensitive comparison when filtering items.</dd>
+  <dt>&#x00A0;</dt>
+  <dd>&#x00A0;</dd>
+  <dt><a class="permalink" href="#t"><code class="Fl" title="Fl" id="t">-t</code></a>
     |
-    <a class="selflink" href="#b"><b class="Fl" title="Fl" id="b">-b</b></a></dt>
-  <dd class="It-tag">Normally, the menu is displayed on the current line of the
-      terminal. When <b class="Fl" title="Fl">-t</b> is provided, the menu will
-      always be drawn on the top line of the terminal. When
-      <b class="Fl" title="Fl">-b</b> is provided, the menu will always be drawn
-      on the bottom line.</dd>
-  <dt class="It-tag" style="margin-left: -7.80ex;">&#x00A0;</dt>
-  <dd class="It-tag">&#x00A0;</dd>
-  <dt class="It-tag" style="margin-left: -7.80ex;"><a class="selflink" href="#p"><b class="Fl" title="Fl" id="p">-p</b></a>
+    <a class="permalink" href="#b"><code class="Fl" title="Fl" id="b">-b</code></a></dt>
+  <dd>Normally, the menu is displayed on the current line of the terminal. When
+      <code class="Fl" title="Fl">-t</code> is provided, the menu will always be
+      drawn on the top line of the terminal. When
+      <code class="Fl" title="Fl">-b</code> is provided, the menu will always be
+      drawn on the bottom line.</dd>
+  <dt>&#x00A0;</dt>
+  <dd>&#x00A0;</dd>
+  <dt><a class="permalink" href="#p"><code class="Fl" title="Fl" id="p">-p</code></a>
     <var class="Ar" title="Ar">prompt</var></dt>
-  <dd class="It-tag">Display <var class="Ar" title="Ar">prompt</var> before the
-      list of items.</dd>
-  <dt class="It-tag" style="margin-left: -7.80ex;">&#x00A0;</dt>
-  <dd class="It-tag">&#x00A0;</dd>
-  <dt class="It-tag" style="margin-left: -7.80ex;"><a class="selflink" href="#l"><b class="Fl" title="Fl" id="l">-l</b></a>
+  <dd>Display <var class="Ar" title="Ar">prompt</var> before the list of
+    items.</dd>
+  <dt>&#x00A0;</dt>
+  <dd>&#x00A0;</dd>
+  <dt><a class="permalink" href="#l"><code class="Fl" title="Fl" id="l">-l</code></a>
     <var class="Ar" title="Ar">lines</var></dt>
-  <dd class="It-tag">Normally, the list is displayed with all the items
-      side-by-side on a single line, which is space-efficient but does not show
-      many items at a time, especially if some of them are long. When
-      <b class="Fl" title="Fl">-l</b> is provided, the list is displayed with
-      each item on its own line, <var class="Ar" title="Ar">lines</var> lines
-      high. If there are more than <var class="Ar" title="Ar">lines</var> items
-      in the list, the user can scroll through them with the arrow keys, just
-      like in the regular horizontal mode.</dd>
-  <dt class="It-tag" style="margin-left: -7.80ex;">&#x00A0;</dt>
-  <dd class="It-tag">&#x00A0;</dd>
-  <dt class="It-tag" style="margin-left: -7.80ex;"><var class="Ar" title="Ar">initial</var></dt>
-  <dd class="It-tag">The user can type into a text field to filter the list of
-      items as well as scrolling through them. If supplied,
+  <dd>Normally, the list is displayed with all the items side-by-side on a
+      single line, which is space-efficient but does not show many items at a
+      time, especially if some of them are long. When
+      <code class="Fl" title="Fl">-l</code> is provided, the list is displayed
+      with each item on its own line, <var class="Ar" title="Ar">lines</var>
+      lines high. If there are more than <var class="Ar" title="Ar">lines</var>
+      items in the list, the user can scroll through them with the arrow keys,
+      just like in the regular horizontal mode.</dd>
+  <dt>&#x00A0;</dt>
+  <dd>&#x00A0;</dd>
+  <dt><var class="Ar" title="Ar">initial</var></dt>
+  <dd>The user can type into a text field to filter the list of items as well as
+      scrolling through them. If supplied,
       <var class="Ar" title="Ar">initial</var> is used as the initial content of
       the text field.</dd>
-  <dt class="It-tag" style="margin-left: -7.80ex;">&#x00A0;</dt>
-  <dd class="It-tag">&#x00A0;</dd>
-  <dt class="It-tag" style="margin-left: -7.80ex;"><a class="selflink" href="#v"><b class="Fl" title="Fl" id="v">-v</b></a></dt>
-  <dd class="It-tag">Instead of displaying an interactive menu,
-      <b class="Nm" title="Nm">vis-menu</b> prints its version number to
+  <dt>&#x00A0;</dt>
+  <dd>&#x00A0;</dd>
+  <dt><a class="permalink" href="#v"><code class="Fl" title="Fl" id="v">-v</code></a></dt>
+  <dd>Instead of displaying an interactive menu,
+      <code class="Nm" title="Nm">vis-menu</code> prints its version number to
       standard output and exits.</dd>
 </dl>
-<h1 class="Sh" title="Sh" id="USAGE"><a class="selflink" href="#USAGE">USAGE</a></h1>
-<b class="Nm" title="Nm">vis-menu</b> displays the prompt (if any), a text
+<h1 class="Sh" title="Sh" id="USAGE"><a class="permalink" href="#USAGE">USAGE</a></h1>
+<code class="Nm" title="Nm">vis-menu</code> displays the prompt (if any), a text
   field, and a list of items. Normally these are presented side-by-side in a
-  single line, but if the <b class="Fl" title="Fl">-l</b> flag is given, the
-  prompt and typing area will be on the first line, and list items on the
+  single line, but if the <code class="Fl" title="Fl">-l</code> flag is given,
+  the prompt and typing area will be on the first line, and list items on the
   following lines.
 <div class="Pp"></div>
 The following commands are available:
-<dl class="Bl-tag" style="margin-left: 18.60ex;">
-  <dt class="It-tag" style="margin-left: -18.60ex;">&#x00A0;</dt>
-  <dd class="It-tag">&#x00A0;</dd>
-  <dt class="It-tag" style="margin-left: -18.60ex;"><b class="Sy" title="Sy">Enter</b></dt>
-  <dd class="It-tag">selects the currently-highlighted list item and exits.</dd>
-  <dt class="It-tag" style="margin-left: -18.60ex;">&#x00A0;</dt>
-  <dd class="It-tag">&#x00A0;</dd>
-  <dt class="It-tag" style="margin-left: -18.60ex;"><b class="Sy" title="Sy">Control-\</b>
-    or <b class="Sy" title="Sy">Control-]</b></dt>
-  <dd class="It-tag">selects the current contents of the text field (even if it
-      does not appear in the list) and exits.</dd>
-  <dt class="It-tag" style="margin-left: -18.60ex;">&#x00A0;</dt>
-  <dd class="It-tag">&#x00A0;</dd>
-  <dt class="It-tag" style="margin-left: -18.60ex;"><b class="Sy" title="Sy">ESC
-    ESC</b> or <b class="Sy" title="Sy">Control-C</b></dt>
-  <dd class="It-tag">exit without selecting any item.</dd>
-  <dt class="It-tag" style="margin-left: -18.60ex;">&#x00A0;</dt>
-  <dd class="It-tag">&#x00A0;</dd>
-  <dt class="It-tag" style="margin-left: -18.60ex;"><b class="Sy" title="Sy">Down</b>
-    or <b class="Sy" title="Sy">Control-N</b></dt>
-  <dd class="It-tag">scroll forward through the available list items.</dd>
-  <dt class="It-tag" style="margin-left: -18.60ex;">&#x00A0;</dt>
-  <dd class="It-tag">&#x00A0;</dd>
-  <dt class="It-tag" style="margin-left: -18.60ex;"><b class="Sy" title="Sy">Up</b>
-    or <b class="Sy" title="Sy">Control-P</b></dt>
-  <dd class="It-tag">scroll backward through the available list items.</dd>
-  <dt class="It-tag" style="margin-left: -18.60ex;">&#x00A0;</dt>
-  <dd class="It-tag">&#x00A0;</dd>
-  <dt class="It-tag" style="margin-left: -18.60ex;"><b class="Sy" title="Sy">Right</b>
-    or <b class="Sy" title="Sy">Control-F</b></dt>
-  <dd class="It-tag">move the cursor forward through the typed text, and scroll
-      through the available list items.</dd>
-  <dt class="It-tag" style="margin-left: -18.60ex;">&#x00A0;</dt>
-  <dd class="It-tag">&#x00A0;</dd>
-  <dt class="It-tag" style="margin-left: -18.60ex;"><b class="Sy" title="Sy">Left</b>
-    or <b class="Sy" title="Sy">Control-B</b></dt>
-  <dd class="It-tag">move the cursor backward through the typed text, and scroll
-      through the available list items.</dd>
-  <dt class="It-tag" style="margin-left: -18.60ex;">&#x00A0;</dt>
-  <dd class="It-tag">&#x00A0;</dd>
-  <dt class="It-tag" style="margin-left: -18.60ex;"><b class="Sy" title="Sy">PageUp</b>
-    or <b class="Sy" title="Sy">Control-V</b></dt>
-  <dd class="It-tag">scrolls to show the previous page of list items.</dd>
-  <dt class="It-tag" style="margin-left: -18.60ex;">&#x00A0;</dt>
-  <dd class="It-tag">&#x00A0;</dd>
-  <dt class="It-tag" style="margin-left: -18.60ex;"><b class="Sy" title="Sy">PageDown</b>
-    or <b class="Sy" title="Sy">Meta-v</b></dt>
-  <dd class="It-tag">scrolls to show the next page of list items.</dd>
-  <dt class="It-tag" style="margin-left: -18.60ex;">&#x00A0;</dt>
-  <dd class="It-tag">&#x00A0;</dd>
-  <dt class="It-tag" style="margin-left: -18.60ex;"><b class="Sy" title="Sy">Home</b>
-    or <b class="Sy" title="Sy">Control-A</b></dt>
-  <dd class="It-tag">move the cursor to the beginning of the text field or
-      scroll to the first item in the list.</dd>
-  <dt class="It-tag" style="margin-left: -18.60ex;">&#x00A0;</dt>
-  <dd class="It-tag">&#x00A0;</dd>
-  <dt class="It-tag" style="margin-left: -18.60ex;"><b class="Sy" title="Sy">End</b>
-    or <b class="Sy" title="Sy">Control-E</b></dt>
-  <dd class="It-tag">move the cursor to the end of the text field or scroll to
-      the last item in the list.</dd>
-  <dt class="It-tag" style="margin-left: -18.60ex;">&#x00A0;</dt>
-  <dd class="It-tag">&#x00A0;</dd>
-  <dt class="It-tag" style="margin-left: -18.60ex;"><b class="Sy" title="Sy">Meta-b</b></dt>
-  <dd class="It-tag">moves the cursor to the beginning of the current word in
-      the text field.</dd>
-  <dt class="It-tag" style="margin-left: -18.60ex;">&#x00A0;</dt>
-  <dd class="It-tag">&#x00A0;</dd>
-  <dt class="It-tag" style="margin-left: -18.60ex;"><b class="Sy" title="Sy">Meta-f</b></dt>
-  <dd class="It-tag">moves the cursor past the end of the current word in the
-      text field.</dd>
-  <dt class="It-tag" style="margin-left: -18.60ex;">&#x00A0;</dt>
-  <dd class="It-tag">&#x00A0;</dd>
-  <dt class="It-tag" style="margin-left: -18.60ex;"><b class="Sy" title="Sy">Tab</b></dt>
-  <dd class="It-tag">copies the content of the selected list item into the text
-      field. This is almost, but not quite, like tab completion.</dd>
-  <dt class="It-tag" style="margin-left: -18.60ex;">&#x00A0;</dt>
-  <dd class="It-tag">&#x00A0;</dd>
-  <dt class="It-tag" style="margin-left: -18.60ex;"><b class="Sy" title="Sy">Delete</b>
-    or <b class="Sy" title="Sy">Control-D</b></dt>
-  <dd class="It-tag">delete the character in the text field under the
-    cursor.</dd>
-  <dt class="It-tag" style="margin-left: -18.60ex;">&#x00A0;</dt>
-  <dd class="It-tag">&#x00A0;</dd>
-  <dt class="It-tag" style="margin-left: -18.60ex;"><b class="Sy" title="Sy">Backspace</b></dt>
-  <dd class="It-tag">deletes the character in the text field to the left of the
-      cursor.</dd>
-  <dt class="It-tag" style="margin-left: -18.60ex;">&#x00A0;</dt>
-  <dd class="It-tag">&#x00A0;</dd>
-  <dt class="It-tag" style="margin-left: -18.60ex;"><b class="Sy" title="Sy">Meta-d</b></dt>
-  <dd class="It-tag">deletes the characters in the text field from the character
-      under the cursor to the next space.</dd>
-  <dt class="It-tag" style="margin-left: -18.60ex;">&#x00A0;</dt>
-  <dd class="It-tag">&#x00A0;</dd>
-  <dt class="It-tag" style="margin-left: -18.60ex;"><b class="Sy" title="Sy">Control-K</b></dt>
-  <dd class="It-tag">deletes the characters in the text field from the character
-      under the cursor to the end.</dd>
-  <dt class="It-tag" style="margin-left: -18.60ex;">&#x00A0;</dt>
-  <dd class="It-tag">&#x00A0;</dd>
-  <dt class="It-tag" style="margin-left: -18.60ex;"><b class="Sy" title="Sy">Control-U</b></dt>
-  <dd class="It-tag">deletes the characters in the text field from the beginning
-      up to (but not including) the character under the cursor.</dd>
-  <dt class="It-tag" style="margin-left: -18.60ex;">&#x00A0;</dt>
-  <dd class="It-tag">&#x00A0;</dd>
-  <dt class="It-tag" style="margin-left: -18.60ex;"><b class="Sy" title="Sy">Control-W</b></dt>
-  <dd class="It-tag">deletes the characters in the text field from the previous
-      space up to (but not including) the character under the cursor.</dd>
+<dl class="Bl-tag">
+  <dt>&#x00A0;</dt>
+  <dd>&#x00A0;</dd>
+  <dt><b class="Sy" title="Sy">Enter</b></dt>
+  <dd>selects the currently-highlighted list item and exits.</dd>
+  <dt>&#x00A0;</dt>
+  <dd>&#x00A0;</dd>
+  <dt><b class="Sy" title="Sy">Control-\</b> or
+    <b class="Sy" title="Sy">Control-]</b></dt>
+  <dd>selects the current contents of the text field (even if it does not appear
+      in the list) and exits.</dd>
+  <dt>&#x00A0;</dt>
+  <dd>&#x00A0;</dd>
+  <dt><b class="Sy" title="Sy">ESC ESC</b> or
+    <b class="Sy" title="Sy">Control-C</b></dt>
+  <dd>exit without selecting any item.</dd>
+  <dt>&#x00A0;</dt>
+  <dd>&#x00A0;</dd>
+  <dt><b class="Sy" title="Sy">Down</b> or
+    <b class="Sy" title="Sy">Control-N</b></dt>
+  <dd>scroll forward through the available list items.</dd>
+  <dt>&#x00A0;</dt>
+  <dd>&#x00A0;</dd>
+  <dt><b class="Sy" title="Sy">Up</b> or
+    <b class="Sy" title="Sy">Control-P</b></dt>
+  <dd>scroll backward through the available list items.</dd>
+  <dt>&#x00A0;</dt>
+  <dd>&#x00A0;</dd>
+  <dt><b class="Sy" title="Sy">Right</b> or
+    <b class="Sy" title="Sy">Control-F</b></dt>
+  <dd>move the cursor forward through the typed text, and scroll through the
+      available list items.</dd>
+  <dt>&#x00A0;</dt>
+  <dd>&#x00A0;</dd>
+  <dt><b class="Sy" title="Sy">Left</b> or
+    <b class="Sy" title="Sy">Control-B</b></dt>
+  <dd>move the cursor backward through the typed text, and scroll through the
+      available list items.</dd>
+  <dt>&#x00A0;</dt>
+  <dd>&#x00A0;</dd>
+  <dt><b class="Sy" title="Sy">PageUp</b> or
+    <b class="Sy" title="Sy">Control-V</b></dt>
+  <dd>scrolls to show the previous page of list items.</dd>
+  <dt>&#x00A0;</dt>
+  <dd>&#x00A0;</dd>
+  <dt><b class="Sy" title="Sy">PageDown</b> or
+    <b class="Sy" title="Sy">Meta-v</b></dt>
+  <dd>scrolls to show the next page of list items.</dd>
+  <dt>&#x00A0;</dt>
+  <dd>&#x00A0;</dd>
+  <dt><b class="Sy" title="Sy">Home</b> or
+    <b class="Sy" title="Sy">Control-A</b></dt>
+  <dd>move the cursor to the beginning of the text field or scroll to the first
+      item in the list.</dd>
+  <dt>&#x00A0;</dt>
+  <dd>&#x00A0;</dd>
+  <dt><b class="Sy" title="Sy">End</b> or
+    <b class="Sy" title="Sy">Control-E</b></dt>
+  <dd>move the cursor to the end of the text field or scroll to the last item in
+      the list.</dd>
+  <dt>&#x00A0;</dt>
+  <dd>&#x00A0;</dd>
+  <dt><b class="Sy" title="Sy">Meta-b</b></dt>
+  <dd>moves the cursor to the beginning of the current word in the text
+    field.</dd>
+  <dt>&#x00A0;</dt>
+  <dd>&#x00A0;</dd>
+  <dt><b class="Sy" title="Sy">Meta-f</b></dt>
+  <dd>moves the cursor past the end of the current word in the text field.</dd>
+  <dt>&#x00A0;</dt>
+  <dd>&#x00A0;</dd>
+  <dt><b class="Sy" title="Sy">Tab</b></dt>
+  <dd>copies the content of the selected list item into the text field. This is
+      almost, but not quite, like tab completion.</dd>
+  <dt>&#x00A0;</dt>
+  <dd>&#x00A0;</dd>
+  <dt><b class="Sy" title="Sy">Delete</b> or
+    <b class="Sy" title="Sy">Control-D</b></dt>
+  <dd>delete the character in the text field under the cursor.</dd>
+  <dt>&#x00A0;</dt>
+  <dd>&#x00A0;</dd>
+  <dt><b class="Sy" title="Sy">Backspace</b></dt>
+  <dd>deletes the character in the text field to the left of the cursor.</dd>
+  <dt>&#x00A0;</dt>
+  <dd>&#x00A0;</dd>
+  <dt><b class="Sy" title="Sy">Meta-d</b></dt>
+  <dd>deletes the characters in the text field from the character under the
+      cursor to the next space.</dd>
+  <dt>&#x00A0;</dt>
+  <dd>&#x00A0;</dd>
+  <dt><b class="Sy" title="Sy">Control-K</b></dt>
+  <dd>deletes the characters in the text field from the character under the
+      cursor to the end.</dd>
+  <dt>&#x00A0;</dt>
+  <dd>&#x00A0;</dd>
+  <dt><b class="Sy" title="Sy">Control-U</b></dt>
+  <dd>deletes the characters in the text field from the beginning up to (but not
+      including) the character under the cursor.</dd>
+  <dt>&#x00A0;</dt>
+  <dd>&#x00A0;</dd>
+  <dt><b class="Sy" title="Sy">Control-W</b></dt>
+  <dd>deletes the characters in the text field from the previous space up to
+      (but not including) the character under the cursor.</dd>
 </dl>
 <div class="Pp"></div>
 All other non-control characters will be inserted into the text field at the
@@ -227,10 +218,10 @@ When there is text in the text field, only list items that include the given
 If the user filters out all the items from the list, then hits Enter to select
   the &#x201C;currently highlighted&#x201D; item, the text they typed will be
   returned instead.
-<h1 class="Sh" title="Sh" id="EXAMPLES"><a class="selflink" href="#EXAMPLES">EXAMPLES</a></h1>
+<h1 class="Sh" title="Sh" id="EXAMPLES"><a class="permalink" href="#EXAMPLES">EXAMPLES</a></h1>
 Here's a shell-script that allows the user to choose a number from one to 10:
 <div class="Pp"></div>
-<div class="Bd" style="margin-left: 5.00ex;">
+<div class="Bd Bd-indent">
 <pre class="Li">
 NUMBER=$(seq 1 10 | vis-menu -p &quot;Choose a number&quot;) 
 if [ $? -eq 0 ]; then 
@@ -240,36 +231,36 @@ else
 fi
 </pre>
 </div>
-<h1 class="Sh" title="Sh" id="DIAGNOSTICS"><a class="selflink" href="#DIAGNOSTICS">DIAGNOSTICS</a></h1>
-The <b class="Nm" title="Nm">vis-menu</b> utility exits 0 if the user
+<h1 class="Sh" title="Sh" id="DIAGNOSTICS"><a class="permalink" href="#DIAGNOSTICS">DIAGNOSTICS</a></h1>
+The <code class="Nm" title="Nm">vis-menu</code> utility exits 0 if the user
   successfully selected an item from the list, and 1 if the user cancelled.
 <div class="Pp"></div>
-If an internal error occurs, the <b class="Nm" title="Nm">vis-menu</b> utility
-  prints a message to standard error and terminates with an exit status greater
-  than 1. Potential error conditions include being unable to allocate memory,
-  being unable to read from standard input, or being run without a controlling
-  terminal.
-<h1 class="Sh" title="Sh" id="SEE_ALSO"><a class="selflink" href="#SEE_ALSO">SEE
+If an internal error occurs, the <code class="Nm" title="Nm">vis-menu</code>
+  utility prints a message to standard error and terminates with an exit status
+  greater than 1. Potential error conditions include being unable to allocate
+  memory, being unable to read from standard input, or being run without a
+  controlling terminal.
+<h1 class="Sh" title="Sh" id="SEE_ALSO"><a class="permalink" href="#SEE_ALSO">SEE
   ALSO</a></h1>
 <a class="Xr" title="Xr">dmenu(1)</a>, <a class="Xr" title="Xr">slmenu(1)</a>,
   <a class="Xr" title="Xr">vis(1)</a>
-<h1 class="Sh" title="Sh" id="HISTORY"><a class="selflink" href="#HISTORY">HISTORY</a></h1>
+<h1 class="Sh" title="Sh" id="HISTORY"><a class="permalink" href="#HISTORY">HISTORY</a></h1>
 The original model for a single line menu reading items from standard input was
   <a class="Xr" title="Xr">dmenu(1)</a> which implements the idea for X11.
-  <b class="Nm" title="Nm">dmenu</b> is available from
+  <code class="Nm" title="Nm">dmenu</code> is available from
   <code class="Li">http://tools.suckless.org/dmenu/</code>
 <div class="Pp"></div>
 The code was subsequently re-worked for ANSI terminal output as
   <a class="Xr" title="Xr">slmenu(1)</a> which is available from
   <code class="Li">https://bitbucket.org/rafaelgg/slmenu/</code>
 <div class="Pp"></div>
-Since <b class="Nm" title="Nm">slmenu</b> did not appear to be maintained, it
-  was forked to become <b class="Nm" title="Nm">vis-menu</b> to be distributed
-  with <a class="Xr" title="Xr">vis(1)</a>.</div>
+Since <code class="Nm" title="Nm">slmenu</code> did not appear to be maintained,
+  it was forked to become <code class="Nm" title="Nm">vis-menu</code> to be
+  distributed with <a class="Xr" title="Xr">vis(1)</a>.</div>
 <table class="foot">
   <tr>
     <td class="foot-date">November 29, 2016</td>
-    <td class="foot-os">Vis v0.7</td>
+    <td class="foot-os">Vis f2b469c</td>
   </tr>
 </table>
 </body>
