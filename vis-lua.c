@@ -52,6 +52,61 @@
 #define debug(...) do { } while (0)
 #endif
 
+#if LUA_VERSION_NUM <= 501
+# define LUA_OK 0
+# define luaL_setfuncs(L,f,ups) luaL_register(L,NULL,f)
+# define lua_getuservalue       lua_getfenv
+# define lua_setuservalue       lua_setfenv
+
+/* LuaJIT has its own luaL_traceback(),
+ * so we do not export this, use static instead.  */
+#ifdef LUAI_BITSINT /* not LuaJIT */
+#define LEVELS1	12	/* size of the first part of the stack */
+#define LEVELS2	10	/* size of the second part of the stack */
+
+static void luaL_traceback(lua_State *L, lua_State *L1, const char *msg, int level) {
+	int top = lua_gettop(L);
+	int firstpart = 1;	/* still before eventual `...' */
+	lua_Debug ar;
+	if (msg) lua_pushfstring(L, "%s\n", msg);
+	lua_pushliteral(L, "stack traceback:");
+	while (lua_getstack(L1, level++, &ar)) {
+		if (level > LEVELS1 && firstpart) {
+			/* no more than `LEVELS2' more levels? */
+			if (!lua_getstack(L1, level+LEVELS2, &ar))
+				level--;	/* keep going */
+			else {
+				lua_pushliteral(L, "\n\t...");	/* too many levels */
+				while (lua_getstack(L1, level+LEVELS2, &ar))	/* find last levels */
+					level++;
+			}
+			firstpart = 0;
+			continue;
+		}
+		lua_pushliteral(L, "\n\t");
+		lua_getinfo(L1, "Snl", &ar);
+		lua_pushfstring(L, "%s:", ar.short_src);
+		if (ar.currentline > 0)
+			lua_pushfstring(L, "%d:", ar.currentline);
+		if (*ar.namewhat != '\0')	/* is there a name? */
+				lua_pushfstring(L, " in function " LUA_QS, ar.name);
+		else {
+			if (*ar.what == 'm')	/* main? */
+				lua_pushfstring(L, " in main chunk");
+			else if (*ar.what == 'C' || *ar.what == 't')
+				lua_pushliteral(L, " ?");	/* C function or tail call */
+			else
+				lua_pushfstring(L, " in function <%s:%d>",
+                ar.short_src, ar.linedefined);
+		}
+		lua_concat(L, lua_gettop(L) - top);
+	}
+	lua_concat(L, lua_gettop(L) - top);
+}
+#endif /* LUA_BITSINT */
+
+#endif
+
 static void window_status_update(Vis *vis, Win *win) {
 	char left_parts[4][255] = { "", "", "", "" };
 	char right_parts[4][32] = { "", "", "", "" };
@@ -2133,7 +2188,7 @@ static int file_index(lua_State *L) {
 
 		if (strcmp(key, "permission") == 0) {
 			struct stat stat = text_stat(file->text);
-			lua_pushunsigned(L, stat.st_mode & 0777);
+			lua_pushinteger(L, (unsigned)(stat.st_mode & 0777));
 			return 1;
 		}
 	}
