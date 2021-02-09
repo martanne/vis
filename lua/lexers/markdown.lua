@@ -73,7 +73,8 @@ local link_label = P('!')^-1 * lexer.range('[', ']', true)
 local link_target = '(' * (lexer.any - S(') \t'))^0 *
   (S(' \t')^1 * lexer.range('"', false, false))^-1 * ')'
 local link_ref = S(' \t')^0 * lexer.range('[', ']', true)
-local link_url = 'http' * P('s')^-1 * '://' * (lexer.any - lexer.space)^1
+local link_url = 'http' * P('s')^-1 * '://' * (lexer.any - lexer.space)^1 +
+  '<' * lexer.alpha^2 * ':' * (lexer.any - lexer.space - '>')^1 * '>'
 lex:add_rule('link', token('link', link_label * (link_target + link_ref) +
   link_url))
 lex:add_style('link', {underlined = true})

@@ -37,7 +37,7 @@ local paired_element = token('element', '<' * P('/')^-1 * word_match([[
 local known_element = single_element + paired_element
 local unknown_element = token('unknown_element', '<' * P('/')^-1 *
   (lexer.alnum + '-')^1)
-local element = known_element + unknown_element
+local element = (known_element + unknown_element) * -P(':')
 lex:add_rule('element', element)
 lex:add_style('single_element', lexer.styles.keyword)
 lex:add_style('element', lexer.styles.keyword)
