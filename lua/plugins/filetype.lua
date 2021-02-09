@@ -149,10 +149,6 @@ vis.ftdetect.filetypes = {
 	gap = {
 		ext = { "%.g$", "%.gd$", "%.gi$", "%.gap$" },
 	},
-	gemini = {
-		ext = { "%.gmi" },
-		mime = { "text/gemini" },
-	},
 	gettext = {
 		ext = { "%.po$", "%.pot$" },
 	},
