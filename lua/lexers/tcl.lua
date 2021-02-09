@@ -1,4 +1,4 @@
--- Copyright 2014-2020 Joshua Krämer. See LICENSE.
+-- Copyright 2014-2021 Joshua Krämer. See LICENSE.
 -- Tcl LPeg lexer.
 -- This lexer follows the TCL dodekalogue (http://wiki.tcl.tk/10259).
 -- It is based on the previous lexer by Mitchell.

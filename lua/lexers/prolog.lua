@@ -1,4 +1,4 @@
--- Copyright 2006-2020 Mitchell. See LICENSE.
+-- Copyright 2006-2021 Mitchell. See LICENSE.
 -- Lexer enhanced to conform to the realities of Prologs on the ground by
 -- Michael T. Richter.  Copyright is explicitly assigned back to Mitchell.
 -- Prolog LPeg lexer.

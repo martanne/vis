@@ -1,4 +1,4 @@
--- Copyright 2006-2020 Mitchell. See LICENSE.
+-- Copyright 2006-2021 Mitchell. See LICENSE.
 -- Lua LPeg lexer.
 -- Original written by Peter Odding, 2007/04/04.
 

@@ -1,4 +1,4 @@
--- Copyright 2020 Tobias Frilling. See LICENSE.
+-- Copyright 2020-2021 Tobias Frilling. See LICENSE.
 -- Julia lexer.
 
 local lexer = require('lexer')

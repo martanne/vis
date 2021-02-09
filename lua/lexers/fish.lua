@@ -1,4 +1,4 @@
--- Copyright 2015-2020 Jason Schindler. See LICENSE.
+-- Copyright 2015-2021 Jason Schindler. See LICENSE.
 -- Fish (http://fishshell.com/) script LPeg lexer.
 
 local lexer = require('lexer')

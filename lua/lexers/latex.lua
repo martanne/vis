@@ -1,4 +1,4 @@
--- Copyright 2006-2020 Mitchell. See LICENSE.
+-- Copyright 2006-2021 Mitchell. See LICENSE.
 -- Latex LPeg lexer.
 -- Modified by Brian Schott.
 -- Modified by Robert Gieseke.

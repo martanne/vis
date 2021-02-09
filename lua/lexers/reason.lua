@@ -1,4 +1,4 @@
--- Copyright 2018-2020 Hugo O. Rivera. See LICENSE.
+-- Copyright 2018-2021 Hugo O. Rivera. See LICENSE.
 -- Reason (https://reasonml.github.io/) LPeg lexer.
 
 local lexer = require('lexer')

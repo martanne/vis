@@ -1,4 +1,4 @@
--- Copyright (c) 2016-2020 Larry Hynes. See LICENSE.
+-- Copyright (c) 2016-2021 Larry Hynes. See LICENSE.
 -- Taskpaper LPeg lexer
 
 local lexer = require('lexer')

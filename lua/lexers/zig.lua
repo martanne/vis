@@ -1,4 +1,4 @@
--- Copyright 2020 Karchnu karchnu@karchnu.fr. See LICENSE.
+-- Copyright 2020-2021 Karchnu karchnu@karchnu.fr. See LICENSE.
 -- Zig LPeg lexer.
 -- (Based on the C++ LPeg lexer from Mitchell.)
 

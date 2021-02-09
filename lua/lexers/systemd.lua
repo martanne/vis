@@ -1,4 +1,4 @@
--- Copyright 2016-2020 Christian Hesse. See LICENSE.
+-- Copyright 2016-2021 Christian Hesse. See LICENSE.
 -- systemd unit file LPeg lexer.
 
 local lexer = require('lexer')

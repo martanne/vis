@@ -1,4 +1,4 @@
--- Copyright 2020 Christian Hesse. See LICENSE.
+-- Copyright 2020-2021 Christian Hesse. See LICENSE.
 -- Mikrotik RouterOS script LPeg lexer.
 
 local lexer = require('lexer')

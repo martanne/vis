@@ -1,4 +1,4 @@
--- Copyright 2006-2020 Robert Gieseke. See LICENSE.
+-- Copyright 2006-2021 Robert Gieseke. See LICENSE.
 -- Sass CSS preprocessor LPeg lexer.
 -- http://sass-lang.com
 

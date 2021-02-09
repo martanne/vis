@@ -1,4 +1,4 @@
--- Copyright 2019-2020 Julien L. See LICENSE.
+-- Copyright 2019-2021 Julien L. See LICENSE.
 -- txt2tags LPeg lexer.
 -- (developed and tested with Txt2tags Markup Rules
 -- [https://txt2tags.org/doc/english/rules.t2t])

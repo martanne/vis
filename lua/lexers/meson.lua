@@ -1,4 +1,4 @@
--- Copyright 2020 Florian Fischer. See LICENSE.
+-- Copyright 2020-2021 Florian Fischer. See LICENSE.
 -- Meson file LPeg lexer.
 
 local lexer = require('lexer')

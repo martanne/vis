@@ -1,4 +1,4 @@
--- Copyright 2020 Mitchell. See LICENSE.
+-- Copyright 2020-2021 Mitchell. See LICENSE.
 -- Elm LPeg lexer
 -- Adapted from Haskell LPeg lexer by Karl Schultheisz.
 

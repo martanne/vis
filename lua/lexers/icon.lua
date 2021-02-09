@@ -1,4 +1,4 @@
--- Copyright 2006-2020 Mitchell. See LICENSE.
+-- Copyright 2006-2021 Mitchell. See LICENSE.
 -- LPeg lexer for the Icon programming language.
 -- http://www.cs.arizona.edu/icon
 -- Contributed by Carl Sturtivant.

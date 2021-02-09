@@ -1,4 +1,4 @@
--- Copyright 2017-2020 Michael Forney. See LICENSE
+-- Copyright 2017-2021 Michael Forney. See LICENSE
 -- Myrddin LPeg lexer.
 
 local lexer = require('lexer')

@@ -1,4 +1,4 @@
--- Copyright 2015-2020 Mitchell. See LICENSE.
+-- Copyright 2015-2021 Mitchell. See LICENSE.
 -- Contributed by Richard Philips.
 -- Elixir LPeg lexer.
 

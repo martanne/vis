@@ -1,4 +1,4 @@
--- Copyright 2006-2020 Mitchell. See LICENSE.
+-- Copyright 2006-2021 Mitchell. See LICENSE.
 -- jq 1.6 Lua lexer -- https://stedolan.github.io/jq/wiki
 -- Anonymously contributed.
 

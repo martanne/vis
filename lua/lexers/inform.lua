@@ -1,4 +1,4 @@
--- Copyright 2010-2020 Jeff Stone. See LICENSE.
+-- Copyright 2010-2021 Jeff Stone. See LICENSE.
 -- Inform LPeg lexer for Scintillua.
 -- JMS 2010-04-25.
 

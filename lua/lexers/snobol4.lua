@@ -1,4 +1,4 @@
--- Copyright 2013-2020 Michael T. Richter. See LICENSE.
+-- Copyright 2013-2021 Michael T. Richter. See LICENSE.
 -- SNOBOL4 lexer.
 -- This lexer works with classic SNOBOL4 as well as the CSNOBOL4 extensions.
 

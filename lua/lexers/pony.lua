@@ -1,4 +1,4 @@
--- Copyright 2017-2020 Murray Calavera. See LICENSE.
+-- Copyright 2017-2021 Murray Calavera. See LICENSE.
 -- Pony LPeg lexer.
 
 local lexer = require('lexer')
