@@ -1394,7 +1394,8 @@ static int extract(Vis *vis, Win *win, Command *cmd, const char *argv[], Selecti
 
 	if (cmd->regex) {
 		bool trailing_match = false;
-		size_t start = range->start, end = range->end, last_start = EPOS;
+		size_t start = range->start, end = range->end;
+		size_t last_start = argv[0][0] == 'x' ? EPOS : start;
 		size_t nsub = 1 + text_regex_nsub(cmd->regex);
 		if (nsub > MAX_REGEX_SUB)
 			nsub = MAX_REGEX_SUB;
@@ -1413,7 +1414,7 @@ static int extract(Vis *vis, Win *win, Command *cmd, const char *argv[], Selecti
 				if (argv[0][0] == 'x')
 					r = text_range_new(match[0].start, match[0].end);
 				else
-					r = text_range_new(start, match[0].start);
+					r = text_range_new(last_start, match[0].start);
 				if (match[0].start == match[0].end) {
 					if (last_start == match[0].start) {
 						start++;
@@ -1428,8 +1429,10 @@ static int extract(Vis *vis, Win *win, Command *cmd, const char *argv[], Selecti
 					if (end == match[0].start && start > range->start &&
 					    text_byte_get(txt, end-1, &c) && c == '\n')
 						break;
+					start = match[0].end + 1;
+				} else {
+					start = match[0].end;
 				}
-				start = match[0].end;
 				trailing_match = start == end;
 			} else {
 				if (argv[0][0] == 'y')
@@ -1443,12 +1446,14 @@ static int extract(Vis *vis, Win *win, Command *cmd, const char *argv[], Selecti
 						Register *reg = &vis->registers[VIS_REG_AMPERSAND+i];
 						register_put_range(vis, reg, txt, &match[i]);
 					}
+					last_start = match[0].end;
+				} else {
+					last_start = start;
 				}
 				if (simulate)
 					count++;
 				else
 					ret &= sam_execute(vis, win, cmd->cmd, NULL, &r);
-				last_start = start;
 			}
 		}
 	} else {
