@@ -1393,15 +1393,13 @@ static int extract(Vis *vis, Win *win, Command *cmd, const char *argv[], Selecti
 	Text *txt = win->file->text;
 
 	if (cmd->regex) {
-		bool trailing_match = false;
 		size_t start = range->start, end = range->end;
 		size_t last_start = argv[0][0] == 'x' ? EPOS : start;
 		size_t nsub = 1 + text_regex_nsub(cmd->regex);
 		if (nsub > MAX_REGEX_SUB)
 			nsub = MAX_REGEX_SUB;
 		RegexMatch match[MAX_REGEX_SUB];
-		while (start < end || trailing_match) {
-			trailing_match = false;
+		while (start <= end) {
 			char c;
 			int flags = start > range->start &&
 			            text_byte_get(txt, start - 1, &c) && c != '\n' ?
@@ -1418,7 +1416,6 @@ static int extract(Vis *vis, Win *win, Command *cmd, const char *argv[], Selecti
 				if (match[0].start == match[0].end) {
 					if (last_start == match[0].start) {
 						start++;
-						trailing_match = start == end;
 						continue;
 					}
 					/* in Plan 9's regexp library ^ matches the beginning
@@ -1433,11 +1430,10 @@ static int extract(Vis *vis, Win *win, Command *cmd, const char *argv[], Selecti
 				} else {
 					start = match[0].end;
 				}
-				trailing_match = start == end;
 			} else {
 				if (argv[0][0] == 'y')
 					r = text_range_new(start, end);
-				start = end;
+				start = end + 1;
 			}
 
 			if (text_range_valid(&r)) {
