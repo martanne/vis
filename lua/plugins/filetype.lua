@@ -171,6 +171,9 @@ vis.ftdetect.filetypes = {
 	['git-rebase'] = {
 		ext = { "git%-rebase%-todo" },
 	},
+	gleam = {
+		ext = { "%.gleam$" },
+	},
 	glsl = {
 		ext = { "%.glslf$", "%.glslv$" },
 	},
