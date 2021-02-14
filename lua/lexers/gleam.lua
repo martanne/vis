@@ -66,7 +66,7 @@ local function can_neg(patt)
   return (B(l.space + S("+-/*%<>=&|:,.")) * "-")^-1 * patt
 end
 local function can_sep(patt)
-  return (P("_")^-1 * patt^1 + patt)^1
+  return (P("_")^-1 * patt^1)^1
 end
 local dec = l.digit * can_sep(l.digit)^0
 local float = dec * "." * dec^0
@@ -76,7 +76,7 @@ local hex = "0" * S("xX") * can_sep(l.xdigit)
 local num_tok = token(l.NUMBER, can_neg(float) + bin + oct + hex + can_neg(dec))
 
 -- Operators
-local op_tok = token(OP, S("+-*/%#!=<>&|;:,.{}[]()"))
+local op_tok = token(OP, S("+-*/%#!=<>&|.,:;{}[]()"))
 
 -- Errors
 local err_tok = token(l.ERROR, l.any)
