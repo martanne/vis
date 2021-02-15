@@ -1860,8 +1860,8 @@ int vis_pipe(Vis *vis, File *file, Filerange *range, const char *argv[],
 			if (len > 0) {
 				rout.start += len;
 				if (text_range_size(&rout) == 0) {
-					close(pout[1]);
-					pout[1] = -1;
+					close(pin[1]);
+					pin[1] = -1;
 				}
 			} else {
 				close(pin[1]);
