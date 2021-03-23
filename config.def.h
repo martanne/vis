@@ -285,6 +285,8 @@ static const KeyBinding bindings_readline[] = {
 	{ "<C-u>",              ACTION(DELETE_LINE_BEGIN)                   },
 	{ "<C-v>",              ACTION(INSERT_VERBATIM)                     },
 	{ "<C-w>",              ACTION(DELETE_WORD_PREV)                    },
+	{ "<C-e>",              ACTION(CURSOR_LINE_END)                     },
+	{ "<C-a>",              ACTION(CURSOR_LINE_START)                   },
 	{ "<Delete>",           ACTION(DELETE_CHAR_NEXT)                    },
 	{ "<Escape>",           ACTION(MODE_NORMAL)                         },
 	{ 0 /* empty last element, array terminator */                      },
