@@ -204,7 +204,7 @@ vis.ftdetect.filetypes = {
 		ext = { "%.bsh$", "%.java$" },
 	},
 	javascript = {
-		ext = { "%.cjs$", "%.js$", "%.jsfl$", "%.mjs$", "%.ts$" },
+		ext = { "%.cjs$", "%.js$", "%.jsfl$", "%.mjs$" },
 	},
 	jq = {
 		ext = { "%.jq$" },
@@ -423,6 +423,9 @@ vis.ftdetect.filetypes = {
 	},
 	toml = {
 		ext = { "%.toml$" },
+	},
+	typescript = {
+		ext = { "%.ts$" },
 	},
 	vala = {
 		ext = { "%.vala$" }
