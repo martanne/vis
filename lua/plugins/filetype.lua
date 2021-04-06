@@ -176,7 +176,7 @@ vis.ftdetect.filetypes = {
 		ext = { "%.go$" },
 	},
 	groovy = {
-		ext = { "%.groovy$", "%.gvy$" },
+		ext = { "%.groovy$", "%.gvy$", "^Jenkinsfile$" },
 	},
 	gtkrc = {
 		ext = { "%.gtkrc$" },
