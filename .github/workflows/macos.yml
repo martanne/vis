@@ -49,4 +49,10 @@ jobs:
       env:
         CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
       run: |
-        bash <(curl -s https://codecov.io/bash)
+        curl -s https://codecov.io/bash > codecov
+        curl -s https://raw.githubusercontent.com/codecov/codecov-bash/master/SHA256SUM > codecov.sha256
+        if ! sha256sum -c --ignore-missing --status codecov.sha256 ; then
+          echo "Download checksum verification failed"
+          exit 1
+        fi
+        bash < codecov
