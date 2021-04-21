@@ -374,6 +374,9 @@ vis.ftdetect.filetypes = {
 		ext = { "%.sass$", "%.scss$" },
 		mime = { "text/x-sass", "text/x-scss" },
 	},
+	scad = {
+	   ext = { "%.scad$", "%.csg$" },
+	},
 	scala = {
 		ext = { "%.scala$" },
 		mime = { "text/x-scala" },
