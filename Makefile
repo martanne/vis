@@ -26,6 +26,7 @@ SRC = array.c \
 	vis-prompt.c \
 	vis-registers.c \
 	vis-text-objects.c \
+	vis-subprocess.c \
 	$(REGEX_SRC)
 
 ELF = vis vis-menu vis-digraph

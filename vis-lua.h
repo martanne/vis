@@ -7,10 +7,11 @@
 #include <lauxlib.h>
 #else
 typedef struct lua_State lua_State;
+typedef void* lua_CFunction;
 #endif
 
 #include "vis.h"
-
+#include "vis-subprocess.h"
 /* add a directory to consider when loading lua files */
 bool vis_lua_path_add(Vis*, const char *path);
 /* get semicolon separated list of paths to load lua files
@@ -38,5 +39,6 @@ void vis_lua_win_close(Vis*, Win*);
 void vis_lua_win_highlight(Vis*, Win*);
 void vis_lua_win_status(Vis*, Win*);
 void vis_lua_term_csi(Vis*, const long *);
+void vis_lua_process_response(Vis *, const char *, char *, size_t, ResponseType);
 
 #endif
