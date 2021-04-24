@@ -1,0 +1,41 @@
+.Dd October 1, 2017
+.Dt VIS-HIGHLIGHT 1
+.Os Vis VERSION
+.
+.Sh NAME
+.Nm vis-highlight
+.Nd Highlight files using vis' lexers
+.
+.Sh SYNOPSIS
+.Nm vis-highlight
+.Ar lexer
+.Ar files
+.
+.Sh DESCRIPTION
+.Nm vis-highlight
+applies a vis lexer to highlight one or more files to standard output.
+.
+.Sh ENVIRONMENT
+.
+The following environment variables affect the operation of
+.Nm vis-highlight :
+.
+.Bl -tag -width Ev
+.It Ev VIS_PATH
+The default path to use to load Lua support files.
+.El
+.
+.Sh EXIT STATUS
+.Ex -std vis-highlight
+.
+.Sh EXAMPLES
+Highlight the visrc.lua file:
+.Bd -literal -offset indent
+vis-highlight lua ~/.config/vis/visrc.lua
+.Ed
+.
+.Sh BUGS
+An ANSI-compatible terminal is assumed.
+.
+.Sh SEE ALSO
+.Xr vis 1

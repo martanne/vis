@@ -1,0 +1,89 @@
+#! /usr/bin/env lua
+
+-- Standalone syntax highlighter uses the lexers provided by `vis`.
+
+if #arg < 2 then
+	print('usage: ' .. arg[0] .. ' LEXER-NAME FILE...')
+	return 1
+end
+
+vis_path = os.getenv('VIS_PATH')
+if vis_path ~= nil then
+	package.path = package.path .. ';' .. vis_path .. '/?.lua'
+end
+package.path = package.path .. ';/usr/local/share/vis/?.lua'
+package.path = package.path .. ';/usr/share/vis/?.lua'
+
+local syntax = arg[1]
+local lexers = require('lexer')
+local lexer = lexers.load(syntax)
+
+if not lexer then 
+	print(string.format('Failed to load lexer: `%s`', syntax))
+	return 1
+end
+
+local term = require('term')
+local colors = term.colors
+
+local token_styles = {
+	-- bold => bright
+	-- italics => underscore
+	['default'] = colors.default .. colors.onblack .. colors.white,
+	['nothing'] = colors.default .. colors.onblack,
+	['class'] = colors.default .. colors.yellow .. colors.bright,
+	['comment'] = colors.default .. colors.blue .. colors.bright,
+	['constant'] = colors.default .. colors.cyan .. colors.bright,
+	['definition'] = colors.default .. colors.blue .. colors.bright,
+	['error'] = colors.default .. colors.red .. colors.underscore,
+	['function'] = colors.default .. colors.blue .. colors.bright,
+	['keyword'] = colors.default .. colors.yellow .. colors.bright,
+	['label'] = colors.default .. colors.green .. colors.bright,
+	['number'] = colors.default .. colors.red .. colors.bright,
+	['operator'] = colors.default .. colors.cyan .. colors.bright,
+	['regex'] = colors.default .. colors.green .. colors.bright,
+	['string'] = colors.default .. colors.red .. colors.bright,
+	['preprocessor'] = colors.default .. colors.magenta .. colors.bright,
+	['tag'] = colors.default .. colors.red .. colors.bright,
+	['type'] = colors.default .. colors.green .. colors.bright,
+	['variable'] = colors.default .. colors.blue .. colors.bright,
+	['whitespace'] = '',
+	['embedded'] = colors.default .. colors.onblue .. colors.bright,
+	['identifier'] = colors.default .. colors.white,
+}
+
+for i = 2, #arg do
+	local filename = arg[i]
+	local file = assert(io.open(filename, 'r'))
+	local text = file:read('*all')
+	file:close()
+	local tokens = lexer:lex(text, 1)
+	local token_start = 1
+	local last = ''
+	
+	for i = 1, #tokens, 2 do
+		local token_end = tokens[i+1] - 1
+		local name = tokens[i]
+		local style = token_styles[name]
+		if style ~= nil then
+			-- Whereas the lexer reports all other syntaxes over
+			-- the entire span of a token, it reports 'default'
+			-- byte-by-byte. We emit only the first 'default' of
+			-- a series in order to properly display multibyte
+			-- UTF-8 characters.
+			if not (last == 'default' and name == 'default') then
+				io.write(tostring(style))
+			end
+			last = name
+		end
+		local token = text:sub(token_start, token_end)
+		if style ~= nil then
+			-- Replicate the style after every newline within
+			-- the token, because less -R forgets attributes
+			-- with each newline.
+			token = token:gsub("\n", "\n" .. tostring(style))
+		end
+		io.write(token)
+		token_start = token_end + 1
+	end
+end
