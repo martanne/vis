@@ -1373,6 +1373,10 @@ static int redraw(lua_State *L) {
  * @see windows
  */
 /***
+ * Current tabwidth.
+ * @tfield int tabwidth
+ */
+/***
  * Currently active mode.
  * @tfield modes mode
  */
@@ -1402,6 +1406,11 @@ static int vis_index(lua_State *L) {
 				obj_ref_new(L, vis->win, VIS_LUA_TYPE_WINDOW);
 			else
 				lua_pushnil(L);
+			return 1;
+		}
+
+		if (strcmp(key, "tabwidth") == 0) {
+			lua_pushunsigned(L, vis->tabwidth);
 			return 1;
 		}
 
