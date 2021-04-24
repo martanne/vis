@@ -85,6 +85,11 @@ __attribute__((noreturn)) static void ui_die_msg(Ui *ui, const char *msg, ...) {
 	va_end(ap);
 }
 
+static void ui_bell(Ui *ui) {
+	UiTerm *tui = (UiTerm*)ui;
+	ui_term_backend_bell(tui);
+}
+
 static void ui_window_resize(UiTermWin *win, int width, int height) {
 	debug("ui-win-resize[%s]: %dx%d\n", win->win->file->name ? win->win->file->name : "noname", width, height);
 	bool status = win->options & UI_OPTION_STATUSBAR;
@@ -711,6 +716,7 @@ Ui *ui_term_new(void) {
 		.draw = ui_draw,
 		.redraw = ui_redraw,
 		.arrange = ui_arrange,
+		.bell = ui_bell,
 		.doupdates = ui_doupdates,
 		.die = ui_die,
 		.info = ui_info,

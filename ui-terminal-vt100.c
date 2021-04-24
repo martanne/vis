@@ -43,6 +43,7 @@
 
 #define ui_term_backend_init ui_vt100_init
 #define ui_term_backend_blit ui_vt100_blit
+#define ui_term_backend_bell ui_vt100_bell
 #define ui_term_backend_clear ui_vt100_clear
 #define ui_term_backend_colors ui_vt100_colors
 #define ui_term_backend_resize ui_vt100_resize
@@ -164,6 +165,10 @@ static void ui_vt100_blit(UiTerm *tui) {
 		}
 	}
 	output(buffer_content(buf), buffer_length0(buf));
+}
+
+static void ui_vt100_bell(UiTerm *tui) {
+	output_literal("\a");
 }
 
 static void ui_vt100_clear(UiTerm *tui) { }

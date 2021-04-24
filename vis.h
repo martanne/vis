@@ -987,6 +987,12 @@ Regex *vis_regex(Vis*, const char *pattern);
  * @endrst
  */
 void vis_file_snapshot(Vis*, File*);
+
+/**
+ * Sound the bell and return ``false`` when the cursor position equals ``EPOS``
+ * and should thus be discarded.
+ */
+bool vis_verify_cursor(Vis*, const size_t pos);
 /** @} */
 
 /* TODO: expose proper API to iterate through files etc */

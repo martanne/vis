@@ -1875,7 +1875,7 @@ static const char *mark(Vis *vis, const char *keys, const Arg *arg) {
 
 static const char *undo(Vis *vis, const char *keys, const Arg *arg) {
 	size_t pos = text_undo(vis_text(vis));
-	if (pos != EPOS) {
+	if (vis_verify_cursor(vis, pos)) {
 		View *view = vis_view(vis);
 		if (view_selections_count(view) == 1)
 			view_cursor_to(view, pos);
@@ -1887,7 +1887,7 @@ static const char *undo(Vis *vis, const char *keys, const Arg *arg) {
 
 static const char *redo(Vis *vis, const char *keys, const Arg *arg) {
 	size_t pos = text_redo(vis_text(vis));
-	if (pos != EPOS) {
+	if (vis_verify_cursor(vis, pos)) {
 		View *view = vis_view(vis);
 		if (view_selections_count(view) == 1)
 			view_cursor_to(view, pos);
@@ -1902,7 +1902,7 @@ static const char *earlier(Vis *vis, const char *keys, const Arg *arg) {
 	VisCountIterator it = vis_count_iterator_get(vis, 1);
 	while (vis_count_iterator_next(&it))
 		pos = text_earlier(vis_text(vis));
-	if (pos != EPOS) {
+	if (vis_verify_cursor(vis, pos)) {
 		view_cursor_to(vis_view(vis), pos);
 		/* redraw all windows in case some display the same file */
 		vis_draw(vis);
@@ -1915,7 +1915,7 @@ static const char *later(Vis *vis, const char *keys, const Arg *arg) {
 	VisCountIterator it = vis_count_iterator_get(vis, 1);
 	while (vis_count_iterator_next(&it))
 		pos = text_later(vis_text(vis));
-	if (pos != EPOS) {
+	if (vis_verify_cursor(vis, pos)) {
 		view_cursor_to(vis_view(vis), pos);
 		/* redraw all windows in case some display the same file */
 		vis_draw(vis);

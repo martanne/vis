@@ -2013,6 +2013,14 @@ void vis_file_snapshot(Vis *vis, File *file) {
 		text_snapshot(file->text);
 }
 
+bool vis_verify_cursor(Vis *vis, const size_t pos) {
+	if (pos == EPOS) {
+		vis->ui->bell(vis->ui);
+		return false;
+	}
+	return true;
+}
+
 Text *vis_text(Vis *vis) {
 	Win *win = vis->win;
 	return win ? win->file->text : NULL;

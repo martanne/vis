@@ -6,6 +6,7 @@
 
 #define ui_term_backend_init ui_curses_init
 #define ui_term_backend_blit ui_curses_blit
+#define ui_term_backend_bell ui_curses_bell
 #define ui_term_backend_clear ui_curses_clear
 #define ui_term_backend_colors ui_curses_colors
 #define ui_term_backend_resize ui_curses_resize
@@ -55,8 +56,7 @@ static uint32_t clobbering_colors[MAX_COLOR_CLOBBER];
 static int change_colors = -1;
 
 /* Calculate r,g,b components of one of the standard upper 240 colors */
-static void get_6cube_rgb(unsigned int n, int *r, int *g, int *b)
-{
+static void get_6cube_rgb(unsigned int n, int *r, int *g, int *b) {
 	if (n < 16) {
 		return;
 	} else if (n < 232) {
@@ -72,16 +72,18 @@ static void get_6cube_rgb(unsigned int n, int *r, int *g, int *b)
 	}
 }
 
-/* Reset color palette to default values using OSC 104 */
-static void undo_palette(void)
-{
-	fputs("\033]104;\a", stderr);
+static void output_literal(const char *data) {
+	fputs(data, stderr);
 	fflush(stderr);
 }
 
+/* Reset color palette to default values using OSC 104 */
+static void undo_palette(void) {
+	output_literal("\033]104;\a");
+}
+
 /* Work out the nearest color from the 256 color set, or perhaps exactly. */
-static CellColor color_rgb(UiTerm *ui, uint8_t r, uint8_t g, uint8_t b)
-{
+static CellColor color_rgb(UiTerm *ui, uint8_t r, uint8_t g, uint8_t b) {
 	if (change_colors == -1)
 		change_colors = ui->vis->change_colors && can_change_color() && COLORS >= 256;
 	if (change_colors) {
@@ -232,6 +234,10 @@ static void ui_curses_blit(UiTerm *tui) {
 	wnoutrefresh(stdscr);
 	if (tui->doupdate)
 		doupdate();
+}
+
+static void ui_curses_bell(UiTerm *tui) {
+	output_literal("\a");
 }
 
 static void ui_curses_clear(UiTerm *tui) {

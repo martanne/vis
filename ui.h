@@ -98,6 +98,7 @@ struct Ui {
 	void (*redraw)(Ui*);
 	void (*suspend)(Ui*);
 	void (*resume)(Ui*);
+	void (*bell)(Ui*);
 	void (*doupdates)(Ui*, bool);
 	bool (*getkey)(Ui*, TermKeyKey*);
 	void (*terminal_save)(Ui*, bool fscr);
