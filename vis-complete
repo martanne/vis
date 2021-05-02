@@ -29,7 +29,7 @@ while [ $# -gt 0 ]; do
 done
 
 if [ $COMPLETE_WORD = 1 ]; then
-	tr -cs '[:alnum:]_' '\n' |
+	tr -s '[:blank:]_' '\n' |
 		grep "^$(basic_regex_quote "$PATTERN")." |
 		sort -u
 else

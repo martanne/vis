@@ -84,10 +84,44 @@ appenditem(Item *item, Item **list, Item **last) {
 
 static size_t
 textwn(const char *s, int l) {
-	int b, c; /* bytes and UTF-8 characters */
+	int c;
 
-	for(b=c=0; s && s[b] && (l<0 || b<l); b++) if((s[b] & 0xc0) != 0x80) c++;
+	for(c=0; s && s[c] && (l<0 || c<l); ) c++;
 	return c+4; /* Accomodate for the leading and trailing spaces */
+}
+
+/*
+ * textvalidn returns the highest amount of bytes <= l of string s that
+ * only contains valid Unicode points. This is used to make sure we don't
+ * cut off any valid UTF-8-encoded unicode point in case there is not
+ * enough space to render the whole text string.
+*/
+static ssize_t
+textvalidn(const char *s, int l) {
+  int c, utfcharbytes; /* byte count and UTF-8 codepoint length */
+
+  for (c=0; s && s[c] && (l<0 || c<l); ) {
+		utfcharbytes = 0;
+		if ((s[c] & 0x80) == 0) {
+			utfcharbytes = 1;
+		} else if ((s[c] & 0xf0) == 0xf0) {
+			utfcharbytes = 4;
+		} else if ((s[c] & 0xf0) == 0xe0) {
+			utfcharbytes = 3;
+		} else if ((s[c] & 0xe0) == 0xc0) {
+			utfcharbytes = 2;
+		} else {
+			return -1;
+		}
+
+		if ((l>0 && c + utfcharbytes >= l)) {
+			break;
+		}
+
+		c += utfcharbytes;
+  }
+
+	return c;
 }
 
 static size_t
@@ -130,6 +164,7 @@ static void
 drawtext(const char *t, size_t w, Color col) {
 	const char *prestr, *poststr;
 	size_t i, tw;
+	ssize_t valid;
 	char *buf;
 
 	if (w<5) return; /* This is the minimum size needed to write a label: 1 char + 4 padding spaces */
@@ -148,8 +183,12 @@ drawtext(const char *t, size_t w, Color col) {
 	memset(buf, ' ', tw);
 	buf[tw] = '\0';
 	memcpy(buf, t, MIN(strlen(t), tw));
-	if (textw(t) > w) /* Remember textw returns the width WITH padding */
-		for (i = MAX((tw-4), 0); i < tw; i++) buf[i] = '.';
+	if (textw(t) > w) {/* Remember textw returns the width WITH padding */
+		valid = textvalidn(t, w-4);
+		if (valid < 0)
+			die("invalid UTF-8 sequence");
+		for (i = MAX(valid, 0); i < tw; i++) buf[i] = '.';
+	}
 
 	fprintf(stderr, "%s  %s  %s", prestr, buf, poststr);
 	free(buf);
