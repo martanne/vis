@@ -301,6 +301,8 @@ enum {
 	OPTION_CHANGE_256COLORS,
 	OPTION_LAYOUT,
 	OPTION_IGNORECASE,
+	OPTION_BREAKAT,
+	OPTION_WRAP_COLUMN,
 };
 
 static const OptionDef options[] = {
@@ -393,6 +395,16 @@ static const OptionDef options[] = {
 		{ "ignorecase", "ic" },
 		VIS_OPTION_TYPE_BOOL,
 		VIS_HELP("Ignore case when searching")
+	},
+	[OPTION_BREAKAT] = {
+		{ "breakat", "brk" },
+		VIS_OPTION_TYPE_STRING|VIS_OPTION_NEED_WINDOW,
+		VIS_HELP("Characters which might cause a word wrap")
+	},
+	[OPTION_WRAP_COLUMN] = {
+		{ "wrapcolumn", "wc" },
+		VIS_OPTION_TYPE_NUMBER|VIS_OPTION_NEED_WINDOW,
+		VIS_HELP("Wrap lines at minimum of window width and wrapcolumn")
 	},
 };
 
