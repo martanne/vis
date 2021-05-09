@@ -144,3 +144,5 @@ require('plugins/digraph')
 require('plugins/number-inc-dec')
 require('plugins/complete-word')
 require('plugins/complete-filename')
+require('plugins/open-file-under-cursor')
+
