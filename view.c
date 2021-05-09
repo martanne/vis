@@ -164,98 +164,98 @@ Filerange view_viewport_get(View *view) {
 	return (Filerange){ .start = view->start, .end = view->end };
 }
 
+static bool view_add_cell(View *view, const Cell *cell) {
+	size_t lineno = view->line->lineno;
+
+	if (view->col + cell->width > view->width) {
+		for (int i = view->col; i < view->width; i++)
+			view->line->cells[i] = view->cell_blank;
+		view->line = view->line->next;
+		view->col = 0;
+	}
+
+	if (!view->line)
+		return false;
+
+	view->line->width += cell->width;
+	view->line->len += cell->len;
+	view->line->lineno = lineno;
+	view->line->cells[view->col] = *cell;
+	view->col++;
+	/* set cells of a character which uses multiple columns */
+	for (int i = 1; i < cell->width; i++)
+		view->line->cells[view->col++] = cell_unused;
+	return true;
+}
+
+static bool view_expand_tab(View *view, Cell *cell) {
+	cell->width = 1;
+
+	int displayed_width = view->tabwidth - (view->col % view->tabwidth);
+	for (int w = 0; w < displayed_width; ++w) {
+
+		int t = (w == 0) ? SYNTAX_SYMBOL_TAB : SYNTAX_SYMBOL_TAB_FILL;
+		const char *symbol = view->symbols[t]->symbol;
+		strncpy(cell->data, symbol, sizeof(cell->data) - 1);
+		cell->len = (w == 0) ? 1 : 0;
+
+		if (!view_add_cell(view, cell))
+			return false;
+	}
+
+	cell->len = 1;
+	return true;
+}
+
+static bool view_expand_newline(View *view, Cell *cell) {
+	const char *symbol = view->symbols[SYNTAX_SYMBOL_EOL]->symbol;
+	strncpy(cell->data, symbol, sizeof(cell->data) - 1);
+	cell->width = 1;
+
+	if (!view_add_cell(view, cell))
+		return false;
+
+	for (int i = view->col; i < view->width; ++i)
+		view->line->cells[i] = view->cell_blank;
+
+	size_t lineno = view->line->lineno;
+	view->line = view->line->next;
+	view->col = 0;
+	if (view->line)
+		view->line->lineno = lineno + 1;
+
+	return true;
+}
+
 /* try to add another character to the view, return whether there was space left */
 static bool view_addch(View *view, Cell *cell) {
 	if (!view->line)
 		return false;
 
-	int width;
-	size_t lineno = view->line->lineno;
 	unsigned char ch = (unsigned char)cell->data[0];
 	cell->style = view->cell_blank.style;
 
 	switch (ch) {
 	case '\t':
-		cell->width = 1;
-		width = view->tabwidth - (view->col % view->tabwidth);
-		for (int w = 0; w < width; w++) {
-			if (view->col + 1 > view->width) {
-				view->line = view->line->next;
-				view->col = 0;
-				if (!view->line)
-					return false;
-				view->line->lineno = lineno;
-			}
-
-			cell->len = w == 0 ? 1 : 0;
-			int t = w == 0 ? SYNTAX_SYMBOL_TAB : SYNTAX_SYMBOL_TAB_FILL;
-			strncpy(cell->data, view->symbols[t]->symbol, sizeof(cell->data)-1);
-			view->line->cells[view->col] = *cell;
-			view->line->len += cell->len;
-			view->line->width += cell->width;
-			view->col++;
-		}
-		cell->len = 1;
-		return true;
+		return view_expand_tab(view, cell);
 	case '\n':
-		cell->width = 1;
-		if (view->col + cell->width > view->width) {
-			view->line = view->line->next;
-			view->col = 0;
-			if (!view->line)
-				return false;
-			view->line->lineno = lineno;
-		}
+		return view_expand_newline(view, cell);
+	case ' ': {
+		const char *symbol = view->symbols[SYNTAX_SYMBOL_SPACE]->symbol;
+		strncpy(cell->data, symbol, sizeof(cell->data) - 1);
+		return view_add_cell(view, cell);
+	}}
 
-		strncpy(cell->data, view->symbols[SYNTAX_SYMBOL_EOL]->symbol, sizeof(cell->data)-1);
-
-		view->line->cells[view->col] = *cell;
-		view->line->len += cell->len;
-		view->line->width += cell->width;
-		for (int i = view->col + 1; i < view->width; i++)
-			view->line->cells[i] = view->cell_blank;
-
-		view->line = view->line->next;
-		if (view->line)
-			view->line->lineno = lineno + 1;
-		view->col = 0;
-		return true;
-	default:
-		if (ch < 128 && !isprint(ch)) {
-			/* non-printable ascii char, represent it as ^(char + 64) */
-			*cell = (Cell) {
-				.data = { '^', ch == 127 ? '?' : ch + 64, '\0' },
-				.len = 1,
-				.width = 2,
-				.style = cell->style,
-			};
-		}
-
-		if (ch == ' ') {
-			strncpy(cell->data, view->symbols[SYNTAX_SYMBOL_SPACE]->symbol, sizeof(cell->data)-1);
-
-		}
-
-		if (view->col + cell->width > view->width) {
-			for (int i = view->col; i < view->width; i++)
-				view->line->cells[i] = view->cell_blank;
-			view->line = view->line->next;
-			view->col = 0;
-		}
-
-		if (view->line) {
-			view->line->width += cell->width;
-			view->line->len += cell->len;
-			view->line->lineno = lineno;
-			view->line->cells[view->col] = *cell;
-			view->col++;
-			/* set cells of a character which uses multiple columns */
-			for (int i = 1; i < cell->width; i++)
-				view->line->cells[view->col++] = cell_unused;
-			return true;
-		}
-		return false;
+	if (ch < 128 && !isprint(ch)) {
+		/* non-printable ascii char, represent it as ^(char + 64) */
+		*cell = (Cell) {
+			.data = { '^', ch == 127 ? '?' : ch + 64, '\0' },
+			.len = 1,
+			.width = 2,
+			.style = cell->style,
+		};
 	}
+	return view_add_cell(view, cell);
 }
 
 static void cursor_to(Selection *s, size_t pos) {
