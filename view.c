@@ -80,6 +80,10 @@ struct View {
 	bool need_update;   /* whether view has been redrawn */
 	bool large_file;    /* optimize for displaying large files */
 	int colorcolumn;
+	char *breakat;  /* characters which might cause a word wrap */
+	int wrapcolumn; /* wrap lines at minimum of window width and wrapcolumn (if != 0) */
+	int wrapcol;    /* used while drawing view content, column where word wrap might happen */
+	bool prevch_breakat; /* used while drawing view content, previous char is part of breakat */
 };
 
 static const SyntaxSymbol symbols_none[] = {
@@ -109,6 +113,7 @@ static bool view_viewport_up(View *view, int n);
 static bool view_viewport_down(View *view, int n);
 
 static void view_clear(View *view);
+static bool view_add_cell(View *view, const Cell *cell);
 static bool view_addch(View *view, Cell *cell);
 static void selection_free(Selection*);
 /* set/move current cursor position to a given (line, column) pair */
@@ -156,6 +161,8 @@ static void view_clear(View *view) {
 	view->bottomline->next = NULL;
 	view->line = view->topline;
 	view->col = 0;
+	view->wrapcol = 0;
+	view->prevch_breakat = false;
 	if (view->ui)
 		view->cell_blank.style = view->ui->style_get(view->ui, UI_STYLE_DEFAULT);
 }
@@ -164,98 +171,124 @@ Filerange view_viewport_get(View *view) {
 	return (Filerange){ .start = view->start, .end = view->end };
 }
 
+static int view_max_text_width(const View *view) {
+	if (view->wrapcolumn > 0)
+		return MIN(view->wrapcolumn, view->width);
+	return view->width;
+}
+
+static void view_wrap_line(View *view) {
+	Line *cur_line = view->line;
+	int cur_col = view->col;
+	int wrapcol = (view->wrapcol > 0) ? view->wrapcol : cur_col;
+	
+	view->line = cur_line->next;
+	view->col = 0;
+	view->wrapcol = 0;
+	if (view->line) {
+		/* move extra cells to the next line */
+		for (int i = wrapcol; i < cur_col; ++i) {
+			const Cell *cell = &cur_line->cells[i];
+			view_add_cell(view, cell);
+			cur_line->width -= cell->width;
+			cur_line->len -= cell->len;
+		}
+	}
+	for (int i = wrapcol; i < view->width; ++i) {
+		/* clear remaining of line */
+		cur_line->cells[i] = view->cell_blank;
+	}
+}
+
+static bool view_add_cell(View *view, const Cell *cell) {
+	size_t lineno = view->line->lineno;
+	
+	if (view->col + cell->width > view_max_text_width(view))
+		view_wrap_line(view);
+
+	if (!view->line)
+		return false;
+	view->line->width += cell->width;
+	view->line->len += cell->len;
+	view->line->lineno = lineno;
+	view->line->cells[view->col] = *cell;
+	view->col++;
+	/* set cells of a character which uses multiple columns */
+	for (int i = 1; i < cell->width; i++)
+		view->line->cells[view->col++] = cell_unused;
+	return true;
+}
+
+static bool view_expand_tab(View *view, Cell *cell) {
+	cell->width = 1;
+	
+	int displayed_width = view->tabwidth - (view->col % view->tabwidth);
+	for (int w = 0; w < displayed_width; ++w) {
+	
+		int t = (w == 0) ? SYNTAX_SYMBOL_TAB : SYNTAX_SYMBOL_TAB_FILL;
+		const char *symbol = view->symbols[t]->symbol;
+		strncpy(cell->data, symbol, sizeof(cell->data) - 1);
+		cell->len = (w == 0) ? 1 : 0;
+		
+		if (!view_add_cell(view, cell))
+			return false;
+	}
+	
+	cell->len = 1;
+	return true;
+}
+
+static bool view_expand_newline(View *view, Cell *cell) {
+	size_t lineno = view->line->lineno;
+	const char *symbol = view->symbols[SYNTAX_SYMBOL_EOL]->symbol;
+	
+	strncpy(cell->data, symbol, sizeof(cell->data) - 1);
+	cell->width = 1;
+	if (!view_add_cell(view, cell))
+		return false;
+
+	view->wrapcol = 0;
+	view_wrap_line(view);
+	if (view->line)
+		view->line->lineno = lineno + 1;
+	return true;
+}
+
 /* try to add another character to the view, return whether there was space left */
 static bool view_addch(View *view, Cell *cell) {
 	if (!view->line)
 		return false;
 
-	int width;
-	size_t lineno = view->line->lineno;
 	unsigned char ch = (unsigned char)cell->data[0];
+	bool ch_breakat = strstr(view->breakat, cell->data);
+	if (view->prevch_breakat && !ch_breakat) {
+		/* this is a good place to wrap line if needed */
+		view->wrapcol = view->col;
+	}
+	view->prevch_breakat = ch_breakat;
 	cell->style = view->cell_blank.style;
-
+	
 	switch (ch) {
 	case '\t':
-		cell->width = 1;
-		width = view->tabwidth - (view->col % view->tabwidth);
-		for (int w = 0; w < width; w++) {
-			if (view->col + 1 > view->width) {
-				view->line = view->line->next;
-				view->col = 0;
-				if (!view->line)
-					return false;
-				view->line->lineno = lineno;
-			}
-
-			cell->len = w == 0 ? 1 : 0;
-			int t = w == 0 ? SYNTAX_SYMBOL_TAB : SYNTAX_SYMBOL_TAB_FILL;
-			strncpy(cell->data, view->symbols[t]->symbol, sizeof(cell->data)-1);
-			view->line->cells[view->col] = *cell;
-			view->line->len += cell->len;
-			view->line->width += cell->width;
-			view->col++;
-		}
-		cell->len = 1;
-		return true;
+		return view_expand_tab(view, cell);
 	case '\n':
-		cell->width = 1;
-		if (view->col + cell->width > view->width) {
-			view->line = view->line->next;
-			view->col = 0;
-			if (!view->line)
-				return false;
-			view->line->lineno = lineno;
-		}
+		return view_expand_newline(view, cell);
+	case ' ': {
+		const char *symbol = view->symbols[SYNTAX_SYMBOL_SPACE]->symbol;
+		strncpy(cell->data, symbol, sizeof(cell->data) - 1);
+		return view_add_cell(view, cell);
+	}}
 
-		strncpy(cell->data, view->symbols[SYNTAX_SYMBOL_EOL]->symbol, sizeof(cell->data)-1);
-
-		view->line->cells[view->col] = *cell;
-		view->line->len += cell->len;
-		view->line->width += cell->width;
-		for (int i = view->col + 1; i < view->width; i++)
-			view->line->cells[i] = view->cell_blank;
-
-		view->line = view->line->next;
-		if (view->line)
-			view->line->lineno = lineno + 1;
-		view->col = 0;
-		return true;
-	default:
-		if (ch < 128 && !isprint(ch)) {
-			/* non-printable ascii char, represent it as ^(char + 64) */
-			*cell = (Cell) {
-				.data = { '^', ch == 127 ? '?' : ch + 64, '\0' },
-				.len = 1,
-				.width = 2,
-				.style = cell->style,
-			};
-		}
-
-		if (ch == ' ') {
-			strncpy(cell->data, view->symbols[SYNTAX_SYMBOL_SPACE]->symbol, sizeof(cell->data)-1);
-
-		}
-
-		if (view->col + cell->width > view->width) {
-			for (int i = view->col; i < view->width; i++)
-				view->line->cells[i] = view->cell_blank;
-			view->line = view->line->next;
-			view->col = 0;
-		}
-
-		if (view->line) {
-			view->line->width += cell->width;
-			view->line->len += cell->len;
-			view->line->lineno = lineno;
-			view->line->cells[view->col] = *cell;
-			view->col++;
-			/* set cells of a character which uses multiple columns */
-			for (int i = 1; i < cell->width; i++)
-				view->line->cells[view->col++] = cell_unused;
-			return true;
-		}
-		return false;
+	if (ch < 128 && !isprint(ch)) {
+		/* non-printable ascii char, represent it as ^(char + 64) */
+		*cell = (Cell) {
+			.data = { '^', ch == 127 ? '?' : ch + 64, '\0' },
+			.len = 1,
+			.width = 2,
+			.style = cell->style,
+		};
 	}
+	return view_add_cell(view, cell);
 }
 
 static void cursor_to(Selection *s, size_t pos) {
@@ -492,6 +525,7 @@ void view_free(View *view) {
 		selection_free(view->selections);
 	free(view->textbuf);
 	free(view->lines);
+	free(view->breakat);
 	free(view);
 }
 
@@ -507,27 +541,27 @@ View *view_new(Text *text) {
 	View *view = calloc(1, sizeof(View));
 	if (!view)
 		return NULL;
-	view->text = text;
-	if (!view_selections_new(view, 0)) {
-		view_free(view);
-		return NULL;
-	}
 
+	view->text = text;
+	view->tabwidth = 8;
+	view->breakat = strdup("");
+	view->wrapcolumn = 0;
 	view->cell_blank = (Cell) {
 		.width = 0,
 		.len = 0,
 		.data = " ",
 	};
-	view->tabwidth = 8;
 	view_options_set(view, 0);
 
-	if (!view_resize(view, 1, 1)) {
+	if (!view->breakat ||
+	    !view_selections_new(view, 0) ||
+	    !view_resize(view, 1, 1))
+	{
 		view_free(view);
 		return NULL;
 	}
-
+	
 	view_cursor_to(view, 0);
-
 	return view;
 }
 
@@ -860,6 +894,20 @@ void view_colorcolumn_set(View *view, int col) {
 
 int view_colorcolumn_get(View *view) {
 	return view->colorcolumn;
+}
+
+void view_wrapcolumn_set(View *view, int col) {
+	if (col >= 0)
+		view->wrapcolumn = col;
+}
+
+bool view_breakat_set(View *view, const char *breakat) {
+	char *copy = strdup(breakat);
+	if (!copy)
+		return false;
+	free(view->breakat);
+	view->breakat = copy;
+	return true;
 }
 
 size_t view_screenline_goto(View *view, int n) {
