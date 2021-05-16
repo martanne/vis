@@ -962,6 +962,9 @@ void vis_do(Vis *vis) {
 				if (a->textobj->type & TEXTOBJECT_DELIMITED_OUTER) {
 					r.start--;
 					r.end++;
+				} else if (linewise && (a->textobj->type & TEXTOBJECT_DELIMITED_INNER)) {
+					r.start = text_line_next(txt, r.start);
+					r.end = text_line_prev(txt, r.end);
 				}
 
 				if (vis->mode->visual || (i > 0 && !(a->textobj->type & TEXTOBJECT_NON_CONTIGUOUS)))
