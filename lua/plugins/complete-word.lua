@@ -1,4 +1,6 @@
 -- complete word at primary selection location using vis-complete(1)
+-- all non-primary selections will be completed aswell if their cursor
+-- is located at the end of the same word
 
 vis:map(vis.modes.INSERT, "<C-n>", function()
 	local win = vis.win
@@ -17,6 +19,20 @@ vis:map(vis.modes.INSERT, "<C-n>", function()
 		if err then vis:info(err) end
 		return
 	end
-	file:insert(pos, out)
-	win.selection.pos = pos + #out
+	for selection in win:selections_iterator() do
+		local pos = selection.pos
+		if not pos then goto continue end
+
+		local range = file:text_object_word(pos > 0 and pos-1 or pos);
+		if not range then goto continue end
+		if range.finish > pos then range.finish = pos end
+		if range.start == range.finish then goto continue end
+		local localprefix = file:content(range)
+		if not localprefix then goto continue end
+		if localprefix ~= prefix then goto continue end
+
+		file:insert(pos, out)
+		selection.pos = pos + #out
+		::continue::
+	end
 end, "Complete word in file")
