@@ -229,6 +229,7 @@ static void ui_curses_blit(UiTerm *tui) {
 			cell++;
 		}
 	}
+	move(tui->row, tui->col);
 	wnoutrefresh(stdscr);
 	doupdate();
 }
@@ -243,14 +244,12 @@ static bool ui_curses_resize(UiTerm *tui, int width, int height) {
 }
 
 static void ui_curses_save(UiTerm *tui) {
-	curs_set(1);
 	reset_shell_mode();
 }
 
 static void ui_curses_restore(UiTerm *tui) {
 	reset_prog_mode();
 	wclear(stdscr);
-	curs_set(0);
 }
 
 static int ui_curses_colors(Ui *ui) {
@@ -270,7 +269,6 @@ static bool ui_curses_init(UiTerm *tui, char *term) {
 	nonl();
 	keypad(stdscr, TRUE);
 	meta(stdscr, TRUE);
-	curs_set(0);
 	return true;
 }
 
