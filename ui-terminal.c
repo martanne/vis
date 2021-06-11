@@ -559,7 +559,7 @@ static UiWin *ui_window_new(Ui *ui, Win *w, enum UiOption options) {
 	}
 
 	styles[UI_STYLE_CURSOR].attr |= CELL_ATTR_REVERSE;
-	styles[UI_STYLE_CURSOR_PRIMARY].attr |= CELL_ATTR_REVERSE|CELL_ATTR_BLINK;
+	styles[UI_STYLE_CURSOR_MATCHING].attr |= CELL_ATTR_REVERSE;
 	styles[UI_STYLE_SELECTION].attr |= CELL_ATTR_REVERSE;
 	styles[UI_STYLE_COLOR_COLUMN].attr |= CELL_ATTR_REVERSE;
 	styles[UI_STYLE_STATUS].attr |= CELL_ATTR_REVERSE;
