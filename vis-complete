@@ -6,6 +6,7 @@ usage() { echo "usage: $(basename "$0") [--word|--file] [pattern]"; }
 
 COMPLETE_WORD=0
 FIND_FILE_LIMIT=1000
+FIND_MAXDEPTH=3       # 4 levels - expanding "$1"* will give us another level
 
 while [ $# -gt 0 ]; do
 	case "$1" in
@@ -32,11 +33,12 @@ if [ $COMPLETE_WORD = 1 ]; then
 		sort -u |
 		print_completion "$1"
 else
-	# glob quoting
-	PATTERN=$(printf "%s" "$1" | sed 's|[\\?*[]]|\\&|g')
+	# Ignore hidden paths, unless pattern's "basename" starts with ".".
+	case "$(basename "$PATTERN")" in ([!.]*) FIND_PRUNE='.*'; esac
 
 	find "$PATTERN"* \
-		-name '.*' -prune \
+		-maxdepth $FIND_MAXDEPTH \
+		-name "${FIND_PRUNE-.git}" -prune \
 		-o -print 2>/dev/null |
 		head -n $FIND_FILE_LIMIT |
 		sort |
