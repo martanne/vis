@@ -49,7 +49,7 @@ vis:map(vis.modes.INSERT, "<C-x><C-o>", function()
 		if err then vis:info(err) end
 		return
 	end
-	out = out:gsub("\n$", "")
+	out = out:gsub("\n$", ""):gsub(" ", "\\ ")
 	file:delete(range)
 	file:insert(range.start, out)
 	win.selection.pos = range.start + #out
