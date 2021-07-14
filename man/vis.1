@@ -1189,8 +1189,8 @@ Any unique prefix can be used to abbreviate a command.
 A file must be opened in at least one window.
 If the last window displaying a certain file is closed all unsaved changes are
 discarded.
-Windows are equally sized and can be displayed in either horizontal or vertical
-fashion.
+Windows are equally sized and can be displayed in rows (horizontally)
+or in columns (vertically).
 The
 .Aq Ic C-w
 .Ic h ,
@@ -1204,19 +1204,19 @@ and
 key mappings can be used to switch between windows.
 .Bl -tag -width indent
 .It Ic :new
-open an empty window, arrange horizontally
+open an empty window, arranged as a new row (horizontally)
 .
 .It Ic :vnew
-open an empty window, arrange vertically
+open an empty window, arranged as a new column (vertically)
 .
 .It Ic :open Ns Oo Cm \&! Oc Op Ar file name
 open a new window, displaying file name if given
 .
 .It Ic :split Op Ar file name
-split window horizontally
+split window into rows (horizontally)
 .
 .It Ic :vsplit Op Ar file name
-split window vertically
+split window into columns (vertically)
 .
 .It Ic :q Ns Oo Cm \&! Oc Op Ar exit code
 close currently focused window
