@@ -136,7 +136,8 @@ local js = l.load('javascript')
 local script_element = word_match({'script'}, nil, case_insensitive_tags)
 local js_start_rule = #(P('<') * script_element *
                        ('>' + P(function(input, index)
-  if input:find('^%s+type%s*=%s*(["\'])text/javascript%1', index) then
+  if input:find('^%s+type%s*=%s*(["\'])text/javascript%1', index) or
+     input:find('^%s+type%s*=%s*(["\']?)module%1', index) then
     return index
   end
 end))) * M.embed_start_tag -- <script type="text/javascript">
