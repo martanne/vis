@@ -35,6 +35,7 @@
 #define CELL_ATTR_BLINK     A_BLINK
 #define CELL_ATTR_BOLD      A_BOLD
 #define CELL_ATTR_ITALIC    A_ITALIC
+#define CELL_ATTR_DIM       A_DIM
 
 #ifdef NCURSES_VERSION
 # ifndef NCURSES_EXT_COLORS

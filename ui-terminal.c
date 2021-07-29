@@ -170,6 +170,10 @@ static bool ui_style_define(UiWin *w, int id, const char *style) {
 			cell_style.attr |= CELL_ATTR_BOLD;
 		} else if (!strcasecmp(option, "notbold")) {
 			cell_style.attr &= ~CELL_ATTR_BOLD;
+		} else if (!strcasecmp(option, "dim")) {
+			cell_style.attr |= CELL_ATTR_DIM;
+		} else if (!strcasecmp(option, "notdim")) {
+			cell_style.attr &= ~CELL_ATTR_DIM;
 		} else if (!strcasecmp(option, "italics")) {
 			cell_style.attr |= CELL_ATTR_ITALIC;
 		} else if (!strcasecmp(option, "notitalics")) {
