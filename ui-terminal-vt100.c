@@ -69,6 +69,7 @@
 #define CELL_ATTR_BLINK     (1 << 2)
 #define CELL_ATTR_BOLD      (1 << 3)
 #define CELL_ATTR_ITALIC    (1 << 4)
+#define CELL_ATTR_DIM       (1 << 5)
 
 typedef struct {
 	UiTerm uiterm;
@@ -120,6 +121,7 @@ static void ui_vt100_blit(UiTerm *tui) {
 					char on[4], off[4];
 				} cell_attrs[] = {
 					{ CELL_ATTR_BOLD, "1", "22" },
+					{ CELL_ATTR_DIM, "2", "22" },
 					{ CELL_ATTR_ITALIC, "3", "23" },
 					{ CELL_ATTR_UNDERLINE, "4", "24" },
 					{ CELL_ATTR_BLINK, "5", "25" },
