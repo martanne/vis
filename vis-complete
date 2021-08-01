@@ -5,47 +5,57 @@ basic_regex_quote() { printf "%s" "$1" | sed 's/[|\\.*^$[]/\\&/g'; }
 
 print_completion() {
 	sort -u \
-		| vis-menu -b \
+		| vis-menu -b -i -l $VIS_MENU_LINES \
 		| sed "s|^$1||" \
 		| tr -d '\n'
 }
 
 PATTERN=""
-COMPLETE_WORD=0
+COMPLETE_MODE='-'     # -) stdin; w) split stdin in words; f) find(1) filenames
 FIND_FILE_LIMIT=1000
+VIS_MENU_LINES=0
 
 while [ $# -gt 0 ]; do
 	case "$1" in
 	-h|--help)
-		echo "usage: $(basename "$0") [-h] [--file|--word] [pattern]"
+		echo "usage: $(basename "$0") [-h] [-l lines] [--file|--word] [pattern]"
 		exit 0;
 		;;
 	--file)
+		COMPLETE_MODE='f'
 		shift
 		;;
 	--word)
-		COMPLETE_WORD=1
+		COMPLETE_MODE='w'
 		shift
+		;;
+	-l)
+		VIS_MENU_LINES=$2
+		shift 2
 		;;
 	*)
 		PATTERN="$1"
+		QPATTERN=$(basic_regex_quote "$PATTERN")    # Avoid problems with sed and grep.
 		break
 		;;
 	esac
 done
 
-if [ $COMPLETE_WORD = 1 ]; then
-	tr -cs '[:alnum:]_' '\n' \
-		| grep "^$PATTERN." \
-		| print_completion "$PATTERN"
-else
-	# Quote pattern to avoid problems with sed.
-	QPATTERN=$(basic_regex_quote "$PATTERN")
-
-	find "$PATTERN"* \
-		-name '.*' -prune \
-		-print 2>/dev/null \
-		| head -n $FIND_FILE_LIMIT \
-		| sed "s|^$(dirname "$QPATTERN".)/||" \
-		| print_completion "${QPATTERN##*/}"
-fi
+case $COMPLETE_MODE in
+	-)
+		grep "^$QPATTERN." | print_completion "$QPATTERN"
+		;;
+	w)
+		tr -cs '[:alnum:]_' '\n' \
+			| grep "^$PATTERN." \
+			| print_completion "$PATTERN"
+		;;
+	f)
+		find "$PATTERN"* \
+			-name ".*" -prune \
+			-o -print 2> /dev/null \
+			| head -n $FIND_FILE_LIMIT \
+			| sed "s|^$(dirname "$QPATTERN".)/||" \
+			| print_completion "${QPATTERN##*/}"
+		;;
+esac
