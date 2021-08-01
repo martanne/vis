@@ -15,7 +15,8 @@ vis:map(vis.modes.INSERT, "<C-x><C-f>", function()
 	-- Strip leading delimiters for some languages
 	local _, j = string.find(prefix, "[[(<'\"]+")
 	if j then prefix = prefix:sub(j + 1) end
-	local cmd = string.format("vis-complete --file '%s'", prefix:gsub("'", "'\\''"))
+	local cmd = string.format('vis-complete --file "%s"',
+		prefix:gsub("^~", "$HOME"):gsub("'", "'\\''"))
 	local status, out, err = vis:pipe(file, { start = 0, finish = 0 }, cmd)
 	if status ~= 0 or not out then
 		if err then vis:info(err) end
@@ -43,13 +44,14 @@ vis:map(vis.modes.INSERT, "<C-x><C-o>", function()
 		range.start = pos
 		range.finish = pos
 	end
-	local cmd = string.format("vis-open -- '%s'*", prefix:gsub("'", "'\\''"))
+	local cmd = string.format('vis-open -- "%s"*',
+		prefix:gsub("^~", "$HOME"):gsub("'", "'\\''"))
 	local status, out, err = vis:pipe(file, { start = 0, finish = 0 }, cmd)
 	if status ~= 0 or not out then
 		if err then vis:info(err) end
 		return
 	end
-	out = out:gsub("\n$", "")
+	out = out:gsub("\n$", ""):gsub(" ", "\\ ")
 	file:delete(range)
 	file:insert(range.start, out)
 	win.selection.pos = range.start + #out
