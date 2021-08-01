@@ -1,8 +1,14 @@
 #!/bin/sh
 set -e
 
-basic_regex_quote() { printf "%s" "$1" | sed 's|[\\.*^$[]|\\&|g'; }
-glob_quote () { printf "%s" "$1" | sed 's|[\\?*[]]|\\&|g'; }
+basic_regex_quote() { printf "%s" "$1" | sed 's/[|\\.*^$[]/\\&/g'; }
+
+print_completion() {
+	sort -u \
+		| vis-menu -b \
+		| sed "s|^$1||" \
+		| tr -d '\n'
+}
 
 PATTERN=""
 COMPLETE_WORD=0
@@ -29,37 +35,17 @@ while [ $# -gt 0 ]; do
 done
 
 if [ $COMPLETE_WORD = 1 ]; then
-	tr -cs '[:alnum:]_' '\n' |
-		grep "^$(basic_regex_quote "$PATTERN")." |
-		sort -u
+	tr -cs '[:alnum:]_' '\n' \
+		| grep "^$PATTERN." \
+		| print_completion "$PATTERN"
 else
-	# Expand to absolute path because of the -path option below.
-	case $PATTERN in
-		/*)
-			XPATTERN=$PATTERN
-			;;
-		'~'|'~/'*)
-			XPATTERN=$HOME$(echo $PATTERN | tail -c +2)
-			;;
-		*)
-			XPATTERN=$PWD/$PATTERN
-			;;
-	esac
+	# Quote pattern to avoid problems with sed.
+	QPATTERN=$(basic_regex_quote "$PATTERN")
 
-	# The first path condition rules out paths that start with "." unless
-	# they start with "..". That way, hidden paths should stay hidden, but
-	# non-normalised paths should still show up.
-	find $(dirname "$XPATTERN") \
+	find "$PATTERN"* \
 		-name '.*' -prune \
-		-o \( \
-			! -name '.*' \
-			-a -path "$(glob_quote "$XPATTERN")*" \
-			-print \
-		\) 2>/dev/null |
-		head -n $FIND_FILE_LIMIT |
-		sort |
-		sed "s|^$(dirname $XPATTERN)/||"
-fi |
-	vis-menu -b |
-	sed "s|^$(basename $PATTERN)$(echo $PATTERN | tail -c 2 | fgrep /)||" |
-	tr -d '\n'
+		-print 2>/dev/null \
+		| head -n $FIND_FILE_LIMIT \
+		| sed "s|^$(dirname "$QPATTERN".)/||" \
+		| print_completion "${QPATTERN##*/}"
+fi
