@@ -4,7 +4,7 @@
 [![Coverity Scan Build Status](https://scan.coverity.com/projects/3939/badge.svg)](https://scan.coverity.com/projects/3939)
 [![codecov](https://codecov.io/gh/martanne/vis/branch/master/graph/badge.svg)](https://codecov.io/gh/martanne/vis)
 [![Documentation Status](https://readthedocs.org/projects/vis/badge/?version=master)](http://vis.readthedocs.io/en/master/?badge=master)
-[![#vis-editor on freenode](https://img.shields.io/badge/IRC-%23vis--editor-blue.svg)](irc://irc.freenode.net/vis-editor)
+[![#vis-editor on libera](https://img.shields.io/badge/IRC-%23vis--editor-blue.svg)](ircs://irc.libera.chat:6697/vis-editor)
 
 Vis aims to be a modern, legacy-free, simple yet efficient editor,
 combining the strengths of both vi(m) and sam.
@@ -127,4 +127,4 @@ There are plenty of ways to contribute, below are a few ideas:
 
 Checkout the [Developer Overview](https://github.com/martanne/vis/wiki/Developer-Overview)
 to get started and do not hesitate to ask question in the `#vis-editor`
-IRC channel on freenode.
+IRC channel on libera ([join via your browser](https://web.libera.chat/#vis-editor)).
