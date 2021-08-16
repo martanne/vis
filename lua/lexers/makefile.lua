@@ -72,7 +72,8 @@ local special_target = token(l.CONSTANT, l.word_match({
   '.SILENT', '.EXPORT_ALL_VARIABLES', '.NOTPARALLEL', '.ONESHELL', '.POSIX'
 }, '.'))
 local normal_target = token('target', (l.any - l.space - S(':#='))^1)
-local target = l.starts_line((special_target + normal_target) * ws^0 *
+local target_list = normal_target * (ws * normal_target)^0
+local target = l.starts_line((special_target + target_list) * ws^0 *
                              #(':' * -P('=')))
 
 -- Identifiers.
