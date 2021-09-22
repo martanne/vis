@@ -137,6 +137,11 @@ sets the mark
 while
 .Ic ' Ns Ar a Ns Ic M
 restores it.
+Use of
+.Ic m
+or
+.Ic M
+without specifying a mark uses the default mark.
 .Pp
 Available marks are:
 .Bl -tag -width indent
@@ -1158,6 +1163,13 @@ align all selections by inserting spaces
 Selections can be manipulated using set operations.
 The first operand is the currently active selections while the second
 can be specified as a mark.
+For example,
+.Ic ' Ns Ar a Ns Ic \&|
+produces the union of the mark
+.Ar a
+and the current selection.
+Use of set operations without specifying a mark use the default mark as
+the first operand.
 .Pp
 .Bl -tag -width XXXXXXXXXX -compact
 .It Ic \&|
