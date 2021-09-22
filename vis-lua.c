@@ -781,7 +781,11 @@ static int info(lua_State *L) {
 static int message(lua_State *L) {
 	Vis *vis = obj_ref_check(L, 1, "vis");
 	const char *msg = luaL_checkstring(L, 2);
-	vis_message_show(vis, msg);
+	if (msg && vis_window_new(vis, NULL)) {
+		text_appendf(vis->win->file->text, "%s\n", msg);
+		text_save(vis->win->file->text, NULL);
+		view_cursor_to(vis->win->view, 0);
+	}
 	return 0;
 }
 
