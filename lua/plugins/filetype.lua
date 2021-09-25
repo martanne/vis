@@ -96,7 +96,8 @@ vis.ftdetect.filetypes = {
 		ext = { "%.desktop$" },
 	},
 	diff = {
-		ext = { "%.diff$", "%.patch$", "%.rej$" },
+		ext = { "%.diff$", "%.patch$", "%.rej$", "^COMMIT_EDITMSG$" },
+		cmd = { "set colorcolumn 72" },
 	},
 	dmd = {
 		ext = { "%.d$", "%.di$" },
@@ -158,10 +159,6 @@ vis.ftdetect.filetypes = {
 	},
 	gherkin = {
 		ext = { "%.feature$" },
-	},
-	['git-commit'] = {
-		ext = { "^COMMIT_EDITMSG$" },
-		cmd = { "set colorcolumn 72" },
 	},
 	['git-rebase'] = {
 		ext = { "git%-rebase%-todo" },
