@@ -308,7 +308,7 @@ vis.ftdetect.filetypes = {
 		ext = { "%.pike$", "%.pmod$" },
 	},
 	pkgbuild = {
-		ext = { "^PKGBUILD$" },
+		ext = { "^PKGBUILD$", "%.PKGBUILD$" },
 	},
 	pony = {
 		ext = { "%.pony$" },
