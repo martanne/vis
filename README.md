@@ -25,7 +25,7 @@ in the form of [LPeg](http://www.inf.puc-rio.br/~roberto/lpeg/).
 The editor core is written in a reasonable amount of clean (your mileage
 may vary), modern and legacy-free C code, enabling it to run in
 resource-constrained environments. The implementation should be easy to hack on
-and encourage experimentation. There is also a Lua API for in-process
+and encourages experimentation. There is also a Lua API for in-process
 extensions.
 
 Vis strives to be *simple* and focuses on its core task: efficient text
