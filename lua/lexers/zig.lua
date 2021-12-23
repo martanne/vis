@@ -22,7 +22,8 @@ local preprocessor = token(l.PREPROCESSOR, doc_comment)
 -- Strings.
 local sq_str = P('L')^-1 * l.delimited_range("'", true)
 local dq_str = P('L')^-1 * l.delimited_range('"', true)
-local string = token(l.STRING, sq_str + dq_str)
+local ml_str = '\\' * l.nonnewline_esc^0
+local string = token(l.STRING, sq_str + dq_str + ml_str)
 
 -- Numbers.
 local number = token(l.NUMBER, l.float + l.integer)
