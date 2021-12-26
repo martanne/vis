@@ -127,4 +127,4 @@ There are plenty of ways to contribute, below are a few ideas:
 
 Checkout the [Developer Overview](https://github.com/martanne/vis/wiki/Developer-Overview)
 to get started and do not hesitate to ask question in the `#vis-editor`
-IRC channel on freenode.
+IRC channel on Libera Chat.
