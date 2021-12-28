@@ -451,7 +451,10 @@ vis.ftdetect.filetypes = {
 		ext = { "%.xs$", "^%.xsin$", "^%.xsrc$" },
 	},
 	xml = {
-		ext = { "%.dtd$", "%.plist$", "%.svg$", "%.xml$", "%.xsd$", "%.xsl$", "%.xslt$", "%.xul$" },
+		ext = {
+			"%.dtd$", "%.glif$", "%.plist$", "%.svg$", "%.xml$",
+			"%.xsd$", "%.xsl$", "%.xslt$", "%.xul$"
+		},
 	},
 	xtend = {
 		ext = {"%.xtend$" },
