@@ -83,17 +83,17 @@ vc_paste() {
 
 vc_wlclipboard_copy() {
 	if [ "$sel" = "primary" ]; then
-		wl-copy --primary -t TEXT
+		wl-copy --trim-newline --primary -t TEXT
 	else
-		wl-copy -t TEXT
+		wl-copy --trim-newline -t TEXT
 	fi
 }
 
 vc_wlclipboard_paste() {
 	if [ "$sel" = "primary" ]; then
-		wl-paste --primary -t text
+		wl-paste --no-newline --primary -t text
 	else
-		wl-paste -t text
+		wl-paste --no-newline -t text
 	fi
 }
 
