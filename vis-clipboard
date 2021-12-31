@@ -91,9 +91,9 @@ vc_wlclipboard_copy() {
 
 vc_wlclipboard_paste() {
 	if [ "$sel" = "primary" ]; then
-		wl-paste --primary -t text
+		wl-paste --no-newline --primary -t text
 	else
-		wl-paste -t text
+		wl-paste --no-newline -t text
 	fi
 }
 
