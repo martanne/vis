@@ -380,6 +380,7 @@ if test "$tre" != "no" ; then
 	printf "checking for libtre... "
 
 cat > "$tmpc" <<EOF
+#include <stddef.h>
 #include <tre/tre.h>
 
 int main() {
