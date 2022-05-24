@@ -1,5 +1,5 @@
 # Run 'make docker' to build a statically linked vis executable!
-FROM i386/alpine:3.13
+FROM i386/alpine:3.16
 RUN apk update && apk add --upgrade --no-cache \
 	acl-dev \
 	acl-static \
