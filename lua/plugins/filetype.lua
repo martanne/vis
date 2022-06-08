@@ -182,6 +182,9 @@ vis.ftdetect.filetypes = {
 	gtkrc = {
 		ext = { "%.gtkrc$" },
 	},
+	hare = {
+		ext = { "%.ha$" }
+	},
 	haskell = {
 		ext = { "%.hs$" },
 		mime = { "text/x-haskell" },
