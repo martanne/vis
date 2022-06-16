@@ -1,64 +1,48 @@
--- Copyright 2015-2017 Alejandro Baez (https://keybase.io/baez). See LICENSE.
+-- Copyright 2015-2022 Alejandro Baez (https://keybase.io/baez). See LICENSE.
 -- TOML LPeg lexer.
 
-local l = require("lexer")
-local token, word_match = l.token, l.word_match
-local P, R, S = lpeg.P, lpeg.R, lpeg.S
+local lexer = require("lexer")
+local token, word_match = lexer.token, lexer.word_match
+local P, S = lpeg.P, lpeg.S
 
-local M = {_NAME = 'toml'}
+local lex = lexer.new('toml', {fold_by_indentation = true})
 
 -- Whitespace
-local ws = token(l.WHITESPACE, S(' \t')^1 + l.newline^1)
-
--- Comments.
-local comment = token(l.COMMENT, '#' * l.nonnewline^0)
-
--- Strings.
-local string = token(l.STRING, l.delimited_range("'") + l.delimited_range('"'))
-
--- Numbers.
-local number = token(l.NUMBER, l.float + l.integer)
-
--- Datetime.
-local ts = token('timestamp', l.digit * l.digit * l.digit * l.digit * -- year
-                              '-' * l.digit * l.digit^-1 * -- month
-                              '-' * l.digit * l.digit^-1 * -- day
-                              ((S(' \t')^1 + S('tT'))^-1 * -- separator
-                               l.digit * l.digit^-1 * -- hour
-                               ':' * l.digit * l.digit * -- minute
-                               ':' * l.digit * l.digit * -- second
-                               ('.' * l.digit^0)^-1 * -- fraction
-                               ('Z' + -- timezone
-                                S(' \t')^0 * S('-+') * l.digit * l.digit^-1 *
-                                (':' * l.digit * l.digit)^-1)^-1)^-1)
+lex:add_rule('whitespace', token(lexer.WHITESPACE, S(' \t')^1 + lexer.newline^1))
 
 -- kewwords.
-local keyword = token(l.KEYWORD, word_match{
-  'true', 'false'
-})
-
+lex:add_rule('keyword', token(lexer.KEYWORD, word_match('true false')))
 
 -- Identifiers.
-local identifier = token(l.IDENTIFIER, l.word)
+lex:add_rule('identifier', token(lexer.IDENTIFIER, lexer.word))
+
+-- Strings.
+local sq_str = lexer.range("'")
+local dq_str = lexer.range('"')
+lex:add_rule('string', token(lexer.STRING, sq_str + dq_str))
+
+-- Comments.
+lex:add_rule('comment', token(lexer.COMMENT, lexer.to_eol('#')))
 
 -- Operators.
-local operator = token(l.OPERATOR, S('=+-,.{}[]()'))
+lex:add_rule('operator', token(lexer.OPERATOR, S('=+-,.{}[]()')))
 
-M._rules = {
-  {'whitespace', ws},
-  {'keyword', keyword},
-  {'identifier', identifier},
-  {'operator', operator},
-  {'string', string},
-  {'comment', comment},
-  {'number', number},
-  {'timestamp', ts},
-}
+-- Datetime.
+local year = lexer.digit * lexer.digit * lexer.digit * lexer.digit
+local month = lexer.digit * lexer.digit^-1
+local day = lexer.digit * lexer.digit^-1
+local date = year * '-' * month * '-' * day
+local hours = lexer.digit * lexer.digit^-1
+local minutes = lexer.digit * lexer.digit
+local seconds = lexer.digit * lexer.digit
+local fraction = '.' * lexer.digit^0
+local time = hours * ':' * minutes * ':' * seconds * fraction^-1
+local T = S(' \t')^1 + S('tT')
+local zone = 'Z' + S(' \t')^0 * S('-+') * hours * (':' * minutes)^-1
+lex:add_rule('datetime', token('timestamp', date * (T * time * zone^-1)))
+lex:add_style('timestamp', lexer.styles.number)
 
-M._tokenstyles = {
-  timestamp = l.STYLE_NUMBER,
-}
+-- Numbers.
+lex:add_rule('number', token(lexer.NUMBER, lexer.number))
 
-M._FOLDBYINDENTATION = true
-
-return M
+return lex

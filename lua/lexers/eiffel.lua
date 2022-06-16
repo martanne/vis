@@ -1,69 +1,58 @@
--- Copyright 2006-2017 Mitchell mitchell.att.foicica.com. See LICENSE.
+-- Copyright 2006-2022 Mitchell. See LICENSE.
 -- Eiffel LPeg lexer.
 
-local l = require('lexer')
-local token, word_match = l.token, l.word_match
-local P, R, S = lpeg.P, lpeg.R, lpeg.S
+local lexer = require('lexer')
+local token, word_match = lexer.token, lexer.word_match
+local P, S = lpeg.P, lpeg.S
 
-local M = {_NAME = 'eiffel'}
+local lex = lexer.new('eiffel')
 
 -- Whitespace.
-local ws = token(l.WHITESPACE, l.space^1)
-
--- Comments.
-local comment = token(l.COMMENT, '--' * l.nonnewline^0)
-
--- Strings.
-local sq_str = l.delimited_range("'", true)
-local dq_str = l.delimited_range('"', true)
-local string = token(l.STRING, sq_str + dq_str)
-
--- Numbers.
-local number = token(l.NUMBER, l.float + l.integer)
+lex:add_rule('whitespace', token(lexer.WHITESPACE, lexer.space^1))
 
 -- Keywords.
-local keyword = token(l.KEYWORD, word_match{
-  'alias', 'all', 'and', 'as', 'check', 'class', 'creation', 'debug',
-  'deferred', 'do', 'else', 'elseif', 'end', 'ensure', 'expanded', 'export',
-  'external', 'feature', 'from', 'frozen', 'if', 'implies', 'indexing', 'infix',
-  'inherit', 'inspect', 'invariant', 'is', 'like', 'local', 'loop', 'not',
-  'obsolete', 'old', 'once', 'or', 'prefix', 'redefine', 'rename', 'require',
-  'rescue', 'retry', 'select', 'separate', 'then', 'undefine', 'until',
-  'variant', 'when', 'xor',
+lex:add_rule('keyword', token(lexer.KEYWORD, word_match{
+  'alias', 'all', 'and', 'as', 'check', 'class', 'creation', 'debug', 'deferred', 'do', 'else',
+  'elseif', 'end', 'ensure', 'expanded', 'export', 'external', 'feature', 'from', 'frozen', 'if',
+  'implies', 'indexing', 'infix', 'inherit', 'inspect', 'invariant', 'is', 'like', 'local', 'loop',
+  'not', 'obsolete', 'old', 'once', 'or', 'prefix', 'redefine', 'rename', 'require', 'rescue',
+  'retry', 'select', 'separate', 'then', 'undefine', 'until', 'variant', 'when', 'xor', --
   'current', 'false', 'precursor', 'result', 'strip', 'true', 'unique', 'void'
-})
+}))
 
 -- Types.
-local type = token(l.TYPE, word_match{
-  'character', 'string', 'bit', 'boolean', 'integer', 'real', 'none', 'any'
-})
+lex:add_rule('type',
+  token(lexer.TYPE, word_match('character string bit boolean integer real none any')))
 
 -- Identifiers.
-local identifier = token(l.IDENTIFIER, l.word)
+lex:add_rule('identifier', token(lexer.IDENTIFIER, lexer.word))
+
+-- Strings.
+local sq_str = lexer.range("'", true)
+local dq_str = lexer.range('"', true)
+lex:add_rule('string', token(lexer.STRING, sq_str + dq_str))
+
+-- Comments.
+lex:add_rule('comment', token(lexer.COMMENT, lexer.to_eol('--')))
+
+-- Numbers.
+lex:add_rule('number', token(lexer.NUMBER, lexer.number))
 
 -- Operators.
-local operator = token(l.OPERATOR, S('=!<>+-/*%&|^~.,:;?()[]{}'))
+lex:add_rule('operator', token(lexer.OPERATOR, S('=!<>+-/*%&|^~.,:;?()[]{}')))
 
-M._rules = {
-  {'whitespace', ws},
-  {'keyword', keyword},
-  {'type', type},
-  {'identifier', identifier},
-  {'string', string},
-  {'comment', comment},
-  {'number', number},
-  {'operator', operator},
-}
+-- Fold points.
+lex:add_fold_point(lexer.KEYWORD, 'check', 'end')
+lex:add_fold_point(lexer.KEYWORD, 'debug', 'end')
+lex:add_fold_point(lexer.KEYWORD, 'deferred',
+  function(text, pos, line, s) return line:find('deferred%s+class') and 0 or 1 end)
+lex:add_fold_point(lexer.KEYWORD, 'do', 'end')
+lex:add_fold_point(lexer.KEYWORD, 'from', 'end')
+lex:add_fold_point(lexer.KEYWORD, 'if', 'end')
+lex:add_fold_point(lexer.KEYWORD, 'inspect', 'end')
+lex:add_fold_point(lexer.KEYWORD, 'once', 'end')
+lex:add_fold_point(lexer.KEYWORD, 'class',
+  function(text, pos, line, s) return line:find('deferred%s+class') and 0 or 1 end)
+lex:add_fold_point(lexer.COMMENT, lexer.fold_consecutive_lines('--'))
 
-M._foldsymbols = {
-  _patterns = {'[a-z]+', '%-%-'},
-  [l.KEYWORD] = {
-    check = 1, debug = 1, deferred = 1, ['do'] = 1, from = 1, ['if'] = 1,
-    inspect = 1, once = 1, class = function(text, pos, line, s)
-      return line:find('deferred%s+class') and 0 or 1
-    end, ['end'] = -1
-  },
-  [l.COMMENT] = {['--'] = l.fold_line_comments('--')}
-}
-
-return M
+return lex

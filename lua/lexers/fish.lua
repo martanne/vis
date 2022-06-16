@@ -1,76 +1,57 @@
--- Copyright 2015-2017 Jason Schindler. See LICENSE.
+-- Copyright 2015-2022 Jason Schindler. See LICENSE.
 -- Fish (http://fishshell.com/) script LPeg lexer.
 
-local l = require('lexer')
-local token, word_match = l.token, l.word_match
-local P, R, S = lpeg.P, lpeg.R, lpeg.S
+local lexer = require('lexer')
+local token, word_match = lexer.token, lexer.word_match
+local P, S = lpeg.P, lpeg.S
 
-local M = {_NAME = 'fish'}
+local lex = lexer.new('fish')
 
 -- Whitespace.
-local ws = token(l.WHITESPACE, l.space^1)
-
--- shebang
-local shebang = token('shebang', '#!/' * l.nonnewline^0)
-
--- Comments.
-local comment = token(l.COMMENT, '#' * l.nonnewline^0)
-
--- Strings.
-local sq_str = l.delimited_range("'", false, true)
-local dq_str = l.delimited_range('"')
-
-local string = token(l.STRING, sq_str + dq_str)
-
--- Numbers.
-local number = token(l.NUMBER, l.float + l.integer)
+lex:add_rule('whitespace', token(lexer.WHITESPACE, lexer.space^1))
 
 -- Keywords.
-local keyword = token(l.KEYWORD, word_match{
-  'alias', 'and', 'begin', 'bg', 'bind', 'block', 'break', 'breakpoint',
-  'builtin', 'case', 'cd', 'command', 'commandline', 'complete', 'contains',
-  'continue', 'count', 'dirh', 'dirs', 'echo', 'else', 'emit', 'end', 'eval',
-  'exec', 'exit', 'fg', 'fish', 'fish_config', 'fish_indent', 'fish_pager',
-  'fish_prompt', 'fish_right_prompt', 'fish_update_completions', 'fishd', 'for',
-  'funced', 'funcsave', 'function', 'functions', 'help', 'history', 'if', 'in',
-  'isatty', 'jobs', 'math', 'mimedb', 'nextd', 'not', 'open', 'or', 'popd',
-  'prevd', 'psub', 'pushd', 'pwd', 'random', 'read', 'return', 'set',
-  'set_color', 'source', 'status', 'switch', 'test', 'trap', 'type', 'ulimit',
-  'umask', 'vared', 'while'
-})
+lex:add_rule('keyword', token(lexer.KEYWORD, word_match{
+  'alias', 'and', 'begin', 'bg', 'bind', 'block', 'break', 'breakpoint', 'builtin', 'case', 'cd',
+  'command', 'commandline', 'complete', 'contains', 'continue', 'count', 'dirh', 'dirs', 'echo',
+  'else', 'emit', 'end', 'eval', 'exec', 'exit', 'fg', 'fish', 'fish_config', 'fishd',
+  'fish_indent', 'fish_pager', 'fish_prompt', 'fish_right_prompt', 'fish_update_completions', 'for',
+  'funced', 'funcsave', 'function', 'functions', 'help', 'history', 'if', 'in', 'isatty', 'jobs',
+  'math', 'mimedb', 'nextd', 'not', 'open', 'or', 'popd', 'prevd', 'psub', 'pushd', 'pwd', 'random',
+  'read', 'return', 'set', 'set_color', 'source', 'status', 'switch', 'test', 'trap', 'type',
+  'ulimit', 'umask', 'vared', 'while'
+}))
 
 -- Identifiers.
-local identifier = token(l.IDENTIFIER, l.word)
+lex:add_rule('identifier', token(lexer.IDENTIFIER, lexer.word))
 
 -- Variables.
-local variable = token(l.VARIABLE,
-                       '$' * l.word + '$' * l.delimited_range('{}', true, true))
+lex:add_rule('variable', token(lexer.VARIABLE, '$' * (lexer.word + lexer.range('{', '}', true))))
+
+-- Strings.
+local sq_str = lexer.range("'", false, false)
+local dq_str = lexer.range('"')
+lex:add_rule('string', token(lexer.STRING, sq_str + dq_str))
+
+-- Shebang.
+lex:add_rule('shebang', token('shebang', lexer.to_eol('#!/')))
+lex:add_style('shebang', lexer.styles.label)
+
+-- Comments.
+lex:add_rule('comment', token(lexer.COMMENT, lexer.to_eol('#')))
+
+-- Numbers.
+lex:add_rule('number', token(lexer.NUMBER, lexer.number))
 
 -- Operators.
-local operator = token(l.OPERATOR, S('=!<>+-/*^&|~.,:;?()[]{}'))
+lex:add_rule('operator', token(lexer.OPERATOR, S('=!<>+-/*^&|~.,:;?()[]{}')))
 
-M._rules = {
-  {'whitespace', ws},
-  {'shebang', shebang},
-  {'keyword', keyword},
-  {'identifier', identifier},
-  {'variable', variable},
-  {'string', string},
-  {'comment', comment},
-  {'number', number},
-  {'operator', operator},
-}
+-- Fold points.
+lex:add_fold_point(lexer.KEYWORD, 'begin', 'end')
+lex:add_fold_point(lexer.KEYWORD, 'for', 'end')
+lex:add_fold_point(lexer.KEYWORD, 'function', 'end')
+lex:add_fold_point(lexer.KEYWORD, 'if', 'end')
+lex:add_fold_point(lexer.KEYWORD, 'switch', 'end')
+lex:add_fold_point(lexer.KEYWORD, 'while', 'end')
 
-M._tokenstyles = {
-  shebang = l.STYLE_LABEL
-}
-
-M._foldsymbols = {
-  _patterns = {'%l+'},
-  [l.KEYWORD] = {
-    begin = 1, ['for'] = 1, ['function'] = 1, ['if'] = 1, switch = 1,
-    ['while'] = 1, ['end'] = -1
-  }
-}
-
-return M
+return lex

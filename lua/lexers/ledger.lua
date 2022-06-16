@@ -1,57 +1,43 @@
--- Copyright 2015-2017 Charles Lehner. See LICENSE.
+-- Copyright 2015-2022 Charles Lehner. See LICENSE.
 -- ledger journal LPeg lexer, see http://www.ledger-cli.org/
 
-local l = require('lexer')
-local token, word_match = l.token, l.word_match
-local P, R, S = lpeg.P, lpeg.R, lpeg.S
+local lexer = require('lexer')
+local token, word_match = lexer.token, lexer.word_match
+local P, S = lpeg.P, lpeg.S
 
-local M = {_NAME = 'ledger'}
+local lex = lexer.new('ledger', {lex_by_line = true})
 
 local delim = P('\t') + P('  ')
 
--- Whitespace.
-local ws = token(l.WHITESPACE, l.space^1)
-
--- Comments.
-local comment = token(l.COMMENT, S(';#') * l.nonnewline^0)
-
--- Strings.
-local sq_str = l.delimited_range("'")
-local dq_str = l.delimited_range('"')
-local label = l.delimited_range('[]', true, true)
-local string = token(l.STRING, sq_str + dq_str + label)
-
--- Date.
-local date = token(l.CONSTANT, l.starts_line((l.digit + S('/-')) ^1))
-
 -- Account.
-local account = token(l.VARIABLE,
-                      l.starts_line(S(' \t')^1 * (l.print - delim)^1))
+lex:add_rule('account', token(lexer.VARIABLE, lexer.starts_line(S(' \t')^1 * lexer.graph^1)))
 
 -- Amount.
-local amount = token(l.NUMBER, delim * (1 - S(';\r\n'))^1)
+lex:add_rule('amount', token(lexer.NUMBER, delim * (1 - S(';\r\n'))^1))
+
+-- Comments.
+lex:add_rule('comment', token(lexer.COMMENT, lexer.to_eol(S(';#'))))
+
+-- Whitespace.
+lex:add_rule('whitespace', token(lexer.WHITESPACE, lexer.space^1))
+
+-- Strings.
+local sq_str = lexer.range("'")
+local dq_str = lexer.range('"')
+local label = lexer.range('[', ']', true)
+lex:add_rule('string', token(lexer.STRING, sq_str + dq_str + label))
+
+-- Date.
+lex:add_rule('date', token(lexer.CONSTANT, lexer.starts_line((lexer.digit + S('/-'))^1)))
 
 -- Automated transactions.
-local auto_tx = token(l.PREPROCESSOR, l.starts_line(S('=~') * l.nonnewline^0))
+lex:add_rule('auto_tx', token(lexer.PREPROCESSOR, lexer.to_eol(lexer.starts_line(S('=~')))))
 
 -- Directives.
 local directive_word = word_match{
-	'account', 'alias', 'assert', 'bucket', 'capture', 'check', 'comment',
-	'commodity', 'define', 'end', 'fixed', 'endfixed', 'include', 'payee',
-	'apply', 'tag', 'test', 'year'
+  '	account', 'alias', 'assert', 'bucket', 'capture', 'check', 'comment', 'commodity', 'define',
+  'end', 'fixed', 'endfixed', 'include', 'payee', 'apply', 'tag', 'test', 'year'
 } + S('AYNDCIiOobh')
-local directive = token(l.KEYWORD, l.starts_line(S('!@')^-1 * directive_word))
+lex:add_rule('directive', token(lexer.KEYWORD, lexer.starts_line(S('!@')^-1 * directive_word)))
 
-M._rules = {
-  {'account', account},
-  {'amount', amount},
-  {'comment', comment},
-  {'whitespace', ws},
-  {'date', date},
-  {'auto_tx', auto_tx},
-  {'directive', directive},
-}
-
-M._LEXBYLINE = true
-
-return M
+return lex

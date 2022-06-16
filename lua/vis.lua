@@ -264,8 +264,12 @@ vis.types.window.set_syntax = function(win, syntax)
 	if not lexer then return false end
 
 	for token_name, id in pairs(lexer._TOKENSTYLES) do
-		local style = lexers['STYLE_'..string.upper(token_name)] or lexer._EXTRASTYLES[token_name]
-		win:style_define(id, style)
+		local style = lexers['STYLE_'..string.upper(token_name)]
+			-- REMOVED extra lexers.
+			-- or lexers['STYLE_'..string.upper(token_name)]
+		if type(style)=="string" then
+			win:style_define(id,	style)
+		end
 	end
 
 	win.syntax = syntax

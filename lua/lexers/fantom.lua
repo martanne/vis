@@ -1,32 +1,27 @@
+-- Copyright 2018-2022 Simeon Maryasin (MarSoft). See LICENSE.
 -- Fantom LPeg lexer.
--- Based on Java LPeg lexer by Mitchell mitchell.att.foicica.com and Vim's Fantom syntax.
--- By MarSoft.
+-- Based on Java LPeg lexer by Mitchell and Vim's Fantom syntax.
 
-local l = require('lexer')
-local token, word_match = l.token, l.word_match
-local P, R, S = lpeg.P, lpeg.R, lpeg.S
+local lexer = require('lexer')
+local token, word_match = lexer.token, lexer.word_match
+local P, S = lpeg.P, lpeg.S
 
-local M = {_NAME = 'fantom'}
+local lex = lexer.new('fantom')
 
 -- Whitespace.
-local ws = token(l.WHITESPACE, l.space^2)
+local ws = token(lexer.WHITESPACE, lexer.space^1)
+lex:add_rule('whitespace', ws)
 
--- Comments.
-local line_comment = '//' * l.nonnewline_esc^0
-local block_comment = '/*' * (l.any - '*/')^0 * P('*/')^-1
-local doc_comment = '**' * l.nonnewline_esc^0
-local comment = token(l.COMMENT, line_comment + block_comment + doc_comment)
-
--- Strings.
-local sq_str = l.delimited_range("'", true)
-local dq_str = l.delimited_range('"', true)
-local string = token(l.STRING, sq_str + dq_str)
-
--- Numbers.
-local number = token(l.NUMBER, (l.float + l.integer) * S('LlFfDd')^-1)
+-- Classes.
+local type = token(lexer.TYPE, lexer.word)
+lex:add_rule('class_sequence',
+  token(lexer.KEYWORD, 'class') * ws * type * ( -- at most one inheritance spec
+  ws * token(lexer.OPERATOR, ':') * ws * type *
+    ( -- at least 0 (i.e. any number) of additional classes
+    ws^-1 * token(lexer.OPERATOR, ',') * ws^-1 * type)^0)^-1)
 
 -- Keywords.
-local keyword = token(l.KEYWORD, word_match{
+lex:add_rule('keyword', token(lexer.KEYWORD, word_match{
   'using', 'native', -- external
   'goto', 'void', 'serializable', 'volatile', -- error
   'if', 'else', 'switch', -- conditional
@@ -35,7 +30,9 @@ local keyword = token(l.KEYWORD, word_match{
   'null', -- constant
   'this', 'super', -- typedef
   'new', 'is', 'isnot', 'as', -- operator
-  'plus', 'minus', 'mult', 'div', 'mod', 'get', 'set', 'slice', 'lshift', 'rshift', 'and', 'or', 'xor', 'inverse', 'negate', 'increment', 'decrement', 'equals', 'compare', -- long operator
+  'plus', 'minus', 'mult', 'div', 'mod', 'get', 'set', 'slice', 'lshift', 'rshift', 'and', 'or',
+  'xor', 'inverse', 'negate', --
+  'increment', 'decrement', 'equals', 'compare', -- long operator
   'return', -- stmt
   'static', 'const', 'final', -- storage class
   'virtual', 'override', 'once', -- slot
@@ -44,62 +41,44 @@ local keyword = token(l.KEYWORD, word_match{
   'assert', -- assert
   'class', 'enum', 'mixin', -- typedef
   'break', 'continue', -- branch
-  'default', 'case',  -- labels
-  'public', 'internal', 'protected', 'private', 'abstract', -- scope decl
-})
+  'default', 'case', -- labels
+  'public', 'internal', 'protected', 'private', 'abstract' -- scope decl
+}))
 
 -- Types.
-local type = token(l.TYPE, word_match{
-  'Void', 'Bool', 'Int', 'Float', 'Decimal',
-  'Str', 'Duration', 'Uri', 'Type', 'Range',
-  'List', 'Map', 'Obj',
-  'Err', 'Env',
-})
-
--- Identifiers.
-local identifier = token(l.IDENTIFIER, l.word)
-
--- Operators.
-local operator = token(l.OPERATOR, S('+-/*%<>!=^&|?~:;.()[]{}#'))
-
--- Annotations.
-local facet = token('facet', '@' * l.word)
+lex:add_rule('type', token(lexer.TYPE, word_match(
+  'Void Bool Int Float Decimal Str Duration Uri Type Range List Map Obj Err Env')))
 
 -- Functions.
-local func = token(l.FUNCTION, l.word) * #P('(')
+-- lex:add_rule('function', token(lexer.FUNCTION, lexer.word) * #P('('))
 
--- Classes.
-local class_sequence = token(l.KEYWORD, P('class')) * ws^1 *
-                       token(l.TYPE, l.word) * ( -- at most one inheritance spec
-                         ws^1 * token(l.OPERATOR, P(':')) * ws^1 *
-                         token(l.TYPE, l.word) *
-                         ( -- at least 0 (i.e. any number) of additional classes
-                           ws^0 * token(l.OPERATOR, P(',')) * ws^0 * token(l.TYPE, l.word)
-                         )^0
-                       )^-1
+-- Identifiers.
+lex:add_rule('identifier', token(lexer.IDENTIFIER, lexer.word))
 
-M._rules = {
-  {'whitespace', ws},
-  {'class', class_sequence},
-  {'keyword', keyword},
-  {'type', type},
-  {'function', func},
-  {'identifier', identifier},
-  {'string', string},
-  {'comment', comment},
-  {'number', number},
-  {'facet', facet},
-  {'operator', operator},
-}
+-- Strings.
+local sq_str = lexer.range("'", true)
+local dq_str = lexer.range('"', true)
+local bq_str = lexer.range('`', true)
+lex:add_rule('string', token(lexer.STRING, sq_str + dq_str + bq_str))
 
-M._tokenstyles = {
-  facet = l.STYLE_PREPROCESSOR
-}
+-- Comments.
+local line_comment = lexer.to_eol('//', true)
+local block_comment = lexer.range('/*', '*/')
+lex:add_rule('comment', token(lexer.COMMENT, line_comment + block_comment))
 
-M._foldsymbols = {
-  _patterns = {'[{}]', '/%*', '%*/', '//'},
-  [l.OPERATOR] = {['{'] = 1, ['}'] = -1},
-  [l.COMMENT] = {['/*'] = 1, ['*/'] = -1, ['//'] = l.fold_line_comments('//')}
-}
+-- Numbers.
+lex:add_rule('number', token(lexer.NUMBER, lexer.number * S('LlFfDd')^-1))
 
-return M
+-- Operators.
+lex:add_rule('operator', token(lexer.OPERATOR, S('+-/*%<>!=^&|?~:;.()[]{}#')))
+
+-- Annotations.
+lex:add_rule('facet', token('facet', '@' * lexer.word))
+lex:add_style('facet', lexer.styles.preprocessor)
+
+-- Fold points.
+lex:add_fold_point(lexer.OPERATOR, '{', '}')
+lex:add_fold_point(lexer.COMMENT, '/*', '*/')
+lex:add_fold_point(lexer.COMMENT, lexer.fold_consecutive_lines('//'))
+
+return lex

@@ -1,37 +1,22 @@
--- Copyright 2015-2017 David B. Lamkins <david@lamkins.net>. See LICENSE.
+-- Copyright 2015-2022 David B. Lamkins <david@lamkins.net>. See LICENSE.
 -- man/roff LPeg lexer.
 
-local l = require('lexer')
-local token, word_match = l.token, l.word_match
-local P, R, S = lpeg.P, lpeg.R, lpeg.S
+local lexer = require('lexer')
+local token, word_match = lexer.token, lexer.word_match
+local P, S = lpeg.P, lpeg.S
 
-local M = {_NAME = 'man'}
+local lex = lexer.new('man')
 
 -- Whitespace.
-local ws = token(l.WHITESPACE, l.space^1)
+lex:add_rule('whitespace', token(lexer.WHITESPACE, lexer.space^1))
 
 -- Markup.
-local rule1 = token(l.STRING,
-                    P('.') * (P('B') * P('R')^-1 + P('I') * P('PR')^-1) *
-                    l.nonnewline^0)
-local rule2 = token(l.NUMBER, P('.') * S('ST') * P('H') * l.nonnewline^0)
-local rule3 = token(l.KEYWORD,
-                    P('.br') + P('.DS') + P('.RS') + P('.RE') + P('.PD'))
-local rule4 = token(l.LABEL, P('.') * (S('ST') * P('H') + P('.TP')))
-local rule5 = token(l.VARIABLE,
-                    P('.B') * P('R')^-1 + P('.I') * S('PR')^-1 + P('.PP'))
-local rule6 = token(l.TYPE, P('\\f') * S('BIPR'))
-local rule7 = token(l.PREPROCESSOR, l.starts_line('.') * l.alpha^1)
+lex:add_rule('rule1', token(lexer.STRING, '.' * lexer.to_eol('B' * P('R')^-1 + 'I' * P('PR')^-1)))
+lex:add_rule('rule2', token(lexer.NUMBER, lexer.to_eol('.' * S('ST') * 'H')))
+lex:add_rule('rule3', token(lexer.KEYWORD, P('.br') + '.DS' + '.RS' + '.RE' + '.PD'))
+lex:add_rule('rule4', token(lexer.LABEL, '.' * (S('ST') * 'H' + '.TP')))
+lex:add_rule('rule5', token(lexer.VARIABLE, '.B' * P('R')^-1 + '.I' * S('PR')^-1 + '.PP'))
+lex:add_rule('rule6', token(lexer.TYPE, '\\f' * S('BIPR')))
+lex:add_rule('rule7', token(lexer.PREPROCESSOR, lexer.starts_line('.') * lexer.alpha^1))
 
-M._rules = {
-  {'whitespace', ws},
-  {'rule1', rule1},
-  {'rule2', rule2},
-  {'rule3', rule3},
-  {'rule4', rule4},
-  {'rule5', rule5},
-  {'rule6', rule6},
-  {'rule7', rule7},
-}
-
-return M
+return lex

@@ -481,6 +481,15 @@ vis.events.subscribe(vis.events.WIN_OPEN, function(win)
 		for _, cmd in pairs(filetype.cmd or {}) do
 			vis:command(cmd)
 		end
+
+		-- filetypes without a lexer should set text lexer, else nil
+		if package.searchpath("lexers/" .. syntax, package.path) then
+		elseif package.searchpath("lexers/text", package.path) then
+			syntax = "text"
+		else
+			syntax = nil
+		end
+
 		win:set_syntax(syntax)
 	end
 

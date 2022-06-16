@@ -1,59 +1,39 @@
--- Copyright (c) 2016-2017 Larry Hynes. See LICENSE.
+-- Copyright (c) 2016-2022 Larry Hynes. See LICENSE.
 -- Taskpaper LPeg lexer
 
-local l = require('lexer')
-local token = l.token
-local P, R, S = lpeg.P, lpeg.R, lpeg.S
+local lexer = require('lexer')
+local token = lexer.token
+local P, S = lpeg.P, lpeg.S
 
-local M = {_NAME = 'taskpaper'}
+local lex = lexer.new('taskpaper', {lex_by_line = true})
 
 local delimiter = P('    ') + P('\t')
 
--- Whitespace
-local ws = token(l.WHITESPACE, l.space^1)
+-- Notes.
+lex:add_rule('note', token('note', delimiter^1 * lexer.to_eol(lexer.alnum)))
+lex:add_style('note', lexer.styles.constant)
 
--- Tags
-local day_tag = token('day_tag', (P('@today') + P('@tomorrow')))
+-- Tasks.
+lex:add_rule('task', token('task', delimiter^1 * '-' + lexer.newline))
+lex:add_style('task', lexer.styles['function'])
 
-local overdue_tag = token('overdue_tag', P('@overdue'))
+-- Whitespace.
+lex:add_rule('whitespace', token(lexer.WHITESPACE, lexer.space^1))
 
-local plain_tag = token('plain_tag', P('@') * l.word)
+-- Projects.
+lex:add_rule('project',
+  token('project', lexer.range(lexer.starts_line(lexer.alnum), ':') * lexer.newline))
+lex:add_style('project', lexer.styles.label)
 
-local extended_tag = token('extended_tag',
-                           P('@') * l.word * P('(') *
-                           (l.word + R('09') + P('-'))^1 * P(')'))
+-- Tags.
+lex:add_rule('extended_tag', token('extended_tag', '@' * lexer.word * '(' *
+  (lexer.word + lexer.digit + '-')^1 * ')'))
+lex:add_style('extended_tag', lexer.styles.comment)
+lex:add_rule('day_tag', token('day_tag', (P('@today') + '@tomorrow')))
+lex:add_style('day_tag', lexer.styles.class)
+lex:add_rule('overdue_tag', token('overdue_tag', '@overdue'))
+lex:add_style('overdue_tag', lexer.styles.preprocessor)
+lex:add_rule('plain_tag', token('plain_tag', '@' * lexer.word))
+lex:add_style('plain_tag', lexer.styles.comment)
 
--- Projects
-local project = token('project',
-                      l.nested_pair(l.starts_line(l.alnum), ':') * l.newline)
-
--- Notes
-local note = token('note', delimiter^1 * l.alnum * l.nonnewline^0)
-
--- Tasks
-local task = token('task', delimiter^1 * P('-') + l.newline)
-
-M._rules = {
-  {'note', note},
-  {'task', task},
-  {'project', project},
-  {'extended_tag', extended_tag},
-  {'day_tag', day_tag},
-  {'overdue_tag', overdue_tag},
-  {'plain_tag', plain_tag},
-  {'whitespace', ws},
-}
-
-M._tokenstyles = {
-  note = l.STYLE_CONSTANT,
-  task = l.STYLE_FUNCTION,
-  project = l.STYLE_TAG,
-  extended_tag = l.STYLE_COMMENT,
-  day_tag = l.STYLE_CLASS,
-  overdue_tag = l.STYLE_PREPROCESSOR,
-  plain_tag = l.STYLE_COMMENT,
-}
-
-M._LEXBYLINE = true
-
-return M
+return lex

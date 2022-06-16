@@ -1,53 +1,37 @@
--- Copyright 2016-2017 Alejandro Baez (https://keybase.io/baez). See LICENSE.
--- PICO-8 Lexer.
+-- Copyright 2016-2022 Alejandro Baez (https://keybase.io/baez). See LICENSE.
+-- PICO-8 lexer.
 -- http://www.lexaloffle.com/pico-8.php
 
-local l = require('lexer')
-local token, word_match = l.token, l.word_match
-local P, R, S = lpeg.P, lpeg.R, lpeg.S
+local lexer = require('lexer')
+local token, word_match = lexer.token, lexer.word_match
+local P, S = lpeg.P, lpeg.S
 
-local M = {_NAME = 'pico8'}
+local lex = lexer.new('pico8')
 
 -- Whitespace
-local ws = token(l.WHITESPACE, l.space^1)
-
--- Comments
-local comment = token(l.COMMENT, '//' * l.nonnewline_esc^0)
-
--- Numbers
-local number = token(l.NUMBER, l.integer)
+lex:add_rule('whitespace', token(lexer.WHITESPACE, lexer.space^1))
 
 -- Keywords
-local keyword = token(l.KEYWORD, word_match{
-  '__lua__', '__gfx__', '__gff__', '__map__', '__sfx__', '__music__'
-})
+lex:add_rule('keyword',
+  token(lexer.KEYWORD, word_match('__lua__ __gfx__ __gff__ __map__ __sfx__ __music__')))
 
 -- Identifiers
-local identifier = token(l.IDENTIFIER, l.word)
+lex:add_rule('identifier', token(lexer.IDENTIFIER, lexer.word))
+
+-- Comments
+lex:add_rule('comment', token(lexer.COMMENT, lexer.to_eol('//', true)))
+
+-- Numbers
+lex:add_rule('number', token(lexer.NUMBER, lexer.integer))
 
 -- Operators
-local operator = token(l.OPERATOR, S('_'))
-
-M._rules = {
-  {'whitespace', ws},
-  {'keyword', keyword},
-  {'identifier', identifier},
-  {'comment', comment},
-  {'number', number},
-  {'operator', operator},
-}
+lex:add_rule('operator', token(lexer.OPERATOR, '_'))
 
 -- Embed Lua into PICO-8.
-local lua = l.load('lua')
-
+local lua = lexer.load('lua')
 local lua_start_rule = token('pico8_tag', '__lua__')
-local lua_end_rule = token('pico8_tag', '__gfx__' )
-l.embed_lexer(M, lua, lua_start_rule, lua_end_rule)
+local lua_end_rule = token('pico8_tag', '__gfx__')
+lex:embed(lua, lua_start_rule, lua_end_rule)
+lex:add_style('pico8_tag', lexer.styles.embedded)
 
-M._tokenstyles = {
-  pico8_tag = l.STYLE_EMBEDDED
-}
-
-M._foldsymbols = lua._foldsymbols
-
-return M
+return lex

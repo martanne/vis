@@ -1,75 +1,59 @@
--- Copyright 2017 Michael Forney. See LICENSE.
--- Copyright 2017 David B. Lamkins. See LICENSE.
+-- Copyright 2017-2022 David B. Lamkins. See LICENSE.
 -- xs LPeg lexer.
+-- Adapted from rc lexer by Michael Forney.
 
-local l = require('lexer')
-local token, word_match = l.token, l.word_match
-local P, R, S = lpeg.P, lpeg.R, lpeg.S
+local lexer = require('lexer')
+local token, word_match = lexer.token, lexer.word_match
+local P, S = lpeg.P, lpeg.S
 
-local M = {_NAME = 'xs'}
+local lex = lexer.new('xs')
 
 -- Whitespace.
-local ws = token(l.WHITESPACE, l.space^1)
+lex:add_rule('whitespace', token(lexer.WHITESPACE, lexer.space^1))
 
--- Comments.
-local comment = token(l.COMMENT, '#' * l.nonnewline^0)
+-- Keywords.
+lex:add_rule('keyword', token(lexer.KEYWORD, word_match{
+  'access', 'alias', 'catch', 'cd', 'dirs', 'echo', 'else', 'escape', 'eval', 'exec', 'exit',
+  'false', 'fn-', 'fn', 'for', 'forever', 'fork', 'history', 'if', 'jobs', 'let', 'limit', 'local',
+  'map', 'omap', 'popd', 'printf', 'pushd', 'read', 'result', 'set-', 'switch', 'throw', 'time',
+  'true', 'umask', 'until', 'unwind-protect', 'var', 'vars', 'wait', 'whats', 'while', ':lt', ':le',
+  ':gt', ':ge', ':eq', ':ne', '~', '~~', '...', '.'
+}))
+
+-- Identifiers.
+lex:add_rule('identifier', token(lexer.IDENTIFIER, lexer.word))
 
 -- Strings.
-local str = l.delimited_range("'", false, true)
+local str = lexer.range("'", false, true)
 local herestr = '<<<' * str
 local heredoc = '<<' * P(function(input, index)
-  local s, e, _, delimiter =
-    input:find('[ \t]*(["\']?)([%w!"%%+,-./:?@_~]+)%1', index)
+  local s, e, _, delimiter = input:find('[ \t]*(["\']?)([%w!"%%+,-./:?@_~]+)%1', index)
   if s == index and delimiter then
     delimiter = delimiter:gsub('[%%+-.?]', '%%%1')
-    local _, e = input:find('[\n\r]'..delimiter..'[\n\r]', e)
+    e = select(2, input:find('[\n\r]' .. delimiter .. '[\n\r]', e))
     return e and e + 1 or #input + 1
   end
 end)
-local string = token(l.STRING, str + herestr + heredoc)
+lex:add_rule('string', token(lexer.STRING, str + herestr + heredoc))
+
+-- Comments.
+lex:add_rule('comment', token(lexer.COMMENT, lexer.to_eol('#')))
 
 -- Numbers.
-local number = token(l.NUMBER, l.integer + l.float)
-
--- Keywords.
-local keyword = token(l.KEYWORD, word_match({
-  'access', 'alias', 'catch', 'cd', 'dirs', 'echo', 'else', 'escape', 'eval',
-  'exec', 'exit', 'false', 'fn-', 'fn', 'for', 'forever', 'fork', 'history',
-  'if', 'jobs', 'let', 'limit', 'local', 'map', 'omap', 'popd', 'printf',
-  'pushd', 'read', 'result', 'set-', 'switch', 'throw', 'time', 'true',
-  'umask', 'until', 'unwind-protect', 'var', 'vars', 'wait', 'whats', 'while',
-  ':lt', ':le', ':gt', ':ge', ':eq', ':ne', '~', '~~', '...', '.',
-}, '!"%*+,-./:?@[]~'))
+-- lex:add_rule('number', token(lexer.NUMBER, lexer.number))
 
 -- Constants.
-local constant = token(l.CONSTANT, '$&' * l.word)
-
--- Identifiers.
-local identifier = token(l.IDENTIFIER, l.word)
+lex:add_rule('constant', token(lexer.CONSTANT, '$&' * lexer.word))
 
 -- Variables.
-local variable = token(l.VARIABLE,
-                       '$' * S('"#')^-1 * ('*' + l.digit^1 + l.word))
+lex:add_rule('variable',
+  token(lexer.VARIABLE, '$' * S('"#')^-1 * ('*' + lexer.digit^1 + lexer.word)))
 
 -- Operators.
-local operator = token(l.OPERATOR, S('@`=!<>*&^|;?()[]{}') + '\\\n')
+lex:add_rule('operator', token(lexer.OPERATOR, S('@`=!<>*&^|;?()[]{}') + '\\\n'))
 
-M._rules = {
-  {'whitespace', ws},
-  {'keyword', keyword},
-  {'constant', constant},
-  {'identifier', identifier},
-  {'string', string},
-  {'comment', comment},
-  {'number', number},
-  {'variable', variable},
-  {'operator', operator},
-}
+-- Fold points.
+lex:add_fold_point(lexer.OPERATOR, '{', '}')
+lex:add_fold_point(lexer.COMMENT, lexer.fold_consecutive_lines('#'))
 
-M._foldsymbols = {
-  _patterns = {'[{}]', '#'},
-  [l.OPERATOR] = {['{'] = 1, ['}'] = -1},
-  [l.COMMENT] = {['#'] = l.fold_line_comments('#')}
-}
-
-return M
+return lex

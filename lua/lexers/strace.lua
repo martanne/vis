@@ -8,12 +8,12 @@ local S, B = lpeg.S, lpeg.B
 local M = {_NAME = 'strace'}
 
 local ws = token(l.WHITESPACE, l.space^1)
-local string = token(l.STRING, l.delimited_range('"', true) + l.delimited_range("'", true))
+local string = token(l.STRING, l.range('"', true) + l.range("'", true))
 local number = token(l.NUMBER, l.float + l.integer)
 local constant = token(l.CONSTANT, (l.upper + '_') * (l.upper + l.digit + '_')^0)
 local syscall = token(l.KEYWORD, l.starts_line(l.word))
 local operator = token(l.OPERATOR, S('+-/*%<>~!=^&|?~:;,.()[]{}'))
-local comment = token(l.COMMENT, l.nested_pair('/*', '*/') + (l.delimited_range('()') * l.newline))
+local comment = token(l.COMMENT, l.nested_pair('/*', '*/') + (l.range('()') * l.newline))
 local result = token(l.TYPE, B(' = ') * l.integer)
 local identifier = token(l.IDENTIFIER, l.word)
 

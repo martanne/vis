@@ -1,116 +1,59 @@
--- Copyright 2020 Christian Hesse
+-- Copyright 2020-2022 Christian Hesse. See LICENSE.
 -- Mikrotik RouterOS script LPeg lexer.
 
-local l = require('lexer')
-local token, word_match = l.token, l.word_match
-local P, R, S = lpeg.P, lpeg.R, lpeg.S
+local lexer = require('lexer')
+local token, word_match = lexer.token, lexer.word_match
+local P, S = lpeg.P, lpeg.S
 
-local M = {_NAME = 'routeros'}
+local lex = lexer.new('routeros')
 
 -- Whitespace.
-local ws = token(l.WHITESPACE, l.space^1)
-
--- Comments.
-local comment = token(l.COMMENT, '#' * l.nonnewline^0)
-
--- Strings.
-local string = token(l.STRING, l.delimited_range('"'))
-
--- Numbers.
-local number = token(l.NUMBER, l.float + l.integer)
+lex:add_rule('whitespace', token(lexer.WHITESPACE, lexer.space^1))
 
 -- Keywords.
-local keyword = token(l.KEYWORD, word_match({
-  -- control
-  ':delay',
-  ':do', 'on-error', 'while',
-  ':error',
-  ':foreach', 'in', 'do',
-  ':for', 'from', 'to', 'step',
-  ':if', 'do', 'else',
-  ':return',
-  ':while', 'do',
-  -- menu specific commands
-  'add',
-  'disable',
-  'edit',
-  'enable',
-  'export',
-  'find',
-  'get',
-  'info',
-  'monitor',
-  'print', 'append', 'as-value', 'brief', 'count-only', 'detail', 'file',
-      'follow', 'follow-only', 'from', 'interval', 'terse', 'value-list',
-      'where', 'without-paging',
-  'remove',
-  'set',
-  -- output & string handling
-  ':beep',
-  ':blink',
-  ':environment',
-  ':execute',
-  ':find',
-  ':len',
-  ':log', 'alert', 'critical', 'debug', 'emergency', 'error', 'info',
-      'notice', 'warning',
-  ':parse',
-  ':pick',
-  ':put',
-  ':terminal',
-  ':time',
-  ':typeof',
-  -- variable declaration
-  ':global',
-  ':local',
-  ':set',
-  -- variable casting
-  ':toarray',
-  ':tobool',
-  ':toid',
-  ':toip',
-  ':toip6',
-  ':tonum',
-  ':tostr',
-  ':totime',
-  -- boolean values and logical operators
-  'false', 'no',
-  'true', 'yes',
-  'and',
-  'in',
-  'or',
-  -- networking
-  ':ping',
-  ':resolve'
-}, ':-'))
+lex:add_rule('keyword', token(lexer.KEYWORD, word_match{
+  -- Control.
+  ':delay', ':do', 'on-error', 'while', ':error', ':foreach', 'in', 'do', ':for', 'from', 'to',
+  'step', ':if', 'do', 'else', ':return', ':while', 'do',
+  -- Menu specific commands.
+  'add', 'disable', 'edit', 'enable', 'export', 'find', 'get', 'info', 'monitor', 'print', 'append',
+  'as-value', 'brief', 'count-only', 'detail', 'file', 'follow', 'follow-only', 'from', 'interval',
+  'terse', 'value-list', 'where', 'without-paging', 'remove', 'set',
+  -- Output & string handling.
+  ':beep', ':blink', ':environment', ':execute', ':find', ':len', ':log', 'alert', 'critical',
+  'debug', 'emergency', 'error', 'info', 'notice', 'warning', ':parse', ':pick', ':put',
+  ':terminal', ':time', ':typeof',
+  -- Variable declaration.
+  ':global', ':local', ':set',
+  -- Variable casting.
+  ':toarray', ':tobool', ':toid', ':toip', ':toip6', ':tonum', ':tostr', ':totime',
+  -- Boolean values and logical operators.
+  'false', 'no', 'true', 'yes', 'and', 'in', 'or',
+  -- Networking.
+  ':ping', ':resolve'
+}))
 
 -- Identifiers.
-local identifier = token(l.IDENTIFIER, l.word)
+lex:add_rule('identifier', token(lexer.IDENTIFIER, lexer.word))
+
+-- Comments.
+lex:add_rule('comment', token(lexer.COMMENT, lexer.to_eol('#')))
+
+-- Numbers.
+lex:add_rule('number', token(lexer.NUMBER, lexer.number))
+
+-- Strings.
+lex:add_rule('string', token(lexer.STRING, lexer.range('"')))
 
 -- Variables.
-local variable = token(l.VARIABLE,
-                       '$' * (S('!#?*@$') + l.digit^1 + l.word +
-                              l.delimited_range('{}', true, true, true)))
+lex:add_rule('variable', token(lexer.VARIABLE, '$' *
+  (S('!#?*@$') + lexer.digit^1 + lexer.word + lexer.range('{', '}', true, false, true))))
 
 -- Operators.
-local operator = token(l.OPERATOR, S('=!%<>+-/*&|~.,;()[]{}'))
+lex:add_rule('operator', token(lexer.OPERATOR, S('=!%<>+-/*&|~.,;()[]{}')))
 
-M._rules = {
-  {'whitespace', ws},
-  {'keyword', keyword},
-  {'identifier', identifier},
-  {'string', string},
-  {'comment', comment},
-  {'number', number},
-  {'variable', variable},
-  {'operator', operator},
-}
+-- Fold points.
+lex:add_fold_point(lexer.OPERATOR, '{', '}')
+lex:add_fold_point(lexer.COMMENT, lexer.fold_consecutive_lines('#'))
 
-M._foldsymbols = {
-  _patterns = {'[a-z]+', '[{}]', '#'},
-  [l.KEYWORD] = { },
-  [l.OPERATOR] = {['{'] = 1, ['}'] = -1},
-  [l.COMMENT] = {['#'] = l.fold_line_comments('#')}
-}
-
-return M
+return lex

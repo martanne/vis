@@ -15,7 +15,7 @@ local ws = token(l.WHITESPACE, S(' \t')^1 + S('\v\r\n')^1)
 local link = token('link', l.starts_line('=>') * l.nonnewline^0)
 
 -- Should only match ``` at start of line
-local pre = token('pre', l.delimited_range('```', false, true))
+local pre = token('pre', l.range('```', false, true))
 
 local header = token('h3', l.starts_line('###') * l.nonnewline^0) +
                token('h2', l.starts_line('##') * l.nonnewline^0) +
