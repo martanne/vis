@@ -1,7 +1,7 @@
 vis.ftdetect = {}
 
 vis.ftdetect.ignoresuffixes = {
-	"~$", "%.orig$", "%.bak$", "%.old$", "%.new$"
+	"~+$", "%.orig$", "%.bak$", "%.old$", "%.new$"
 }
 
 vis.ftdetect.filetypes = {
@@ -484,39 +484,35 @@ vis.events.subscribe(vis.events.WIN_OPEN, function(win)
 		win:set_syntax(syntax)
 	end
 
-	local name = win.file.name
-	-- remove ignored suffixes from filename
-	local sanitizedfn = name
-	if sanitizedfn ~= nil then
-		sanitizedfn = sanitizedfn:gsub('^.*/', '')
-		repeat
-			local changed = false
-			for _, pattern in pairs(vis.ftdetect.ignoresuffixes) do
-				local start = sanitizedfn:find(pattern)
-				if start then
-					sanitizedfn = sanitizedfn:sub(1, start-1)
-					changed = true
-				end
-			end
-		until not changed
-	end
+	local path = win.file.name -- filepath
+	local mime
 
-	-- detect filetype by filename ending with a configured extension
-	if sanitizedfn ~= nil then
-		for lang, ft in pairs(vis.ftdetect.filetypes) do
-			for _, pattern in pairs(ft.ext or {}) do
-				if sanitizedfn:match(pattern) then
-					set_filetype(lang, ft)
-					return
+	if path and #path > 0 then
+		local name = path:match("[^/]+") -- filename
+		if name then
+			local unchanged
+			while #name > 0 and name ~= unchanged do
+				unchanged = name
+				for _, pattern in ipairs(vis.ftdetect.ignoresuffixes) do
+					name = name:gsub(pattern, "")
 				end
 			end
 		end
-	end
 
-	-- run file(1) to determine mime type
-	local mime
-	if name ~= nil then
-		local file = io.popen(string.format("file -bL --mime-type -- '%s'", name:gsub("'", "'\\''")))
+		if name and #name > 0 then
+			-- detect filetype by filename ending with a configured extension
+			for lang, ft in pairs(vis.ftdetect.filetypes) do
+				for _, pattern in pairs(ft.ext or {}) do
+					if name:match(pattern) then
+						set_filetype(lang, ft)
+						return
+					end
+				end
+			end
+		end
+
+		-- run file(1) to determine mime type
+		local file = io.popen(string.format("file -bL --mime-type -- '%s'", path:gsub("'", "'\\''")))
 		if file then
 			mime = file:read('*all')
 			file:close()
