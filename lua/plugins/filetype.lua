@@ -1,7 +1,7 @@
 vis.ftdetect = {}
 
 vis.ftdetect.ignoresuffixes = {
-	"~$", "%.orig$", "%.bak$", "%.old$", "%.new$"
+	"~+$", "%.orig$", "%.bak$", "%.old$", "%.new$"
 }
 
 vis.ftdetect.filetypes = {
@@ -483,19 +483,14 @@ vis.events.subscribe(vis.events.WIN_OPEN, function(win)
 
 	local name = win.file.name
 	-- remove ignored suffixes from filename
-	local sanitizedfn = name
-	if sanitizedfn ~= nil then
-		sanitizedfn = sanitizedfn:gsub('^.*/', '')
+	local sanitizedfn = name and name:match"[^/]-$"
+	if sanitizedfn then
 		repeat
-			local changed = false
-			for _, pattern in pairs(vis.ftdetect.ignoresuffixes) do
-				local start = sanitizedfn:find(pattern)
-				if start then
-					sanitizedfn = sanitizedfn:sub(1, start-1)
-					changed = true
-				end
+			local changed = sanitizedfn
+			for _, pattern in ipairs(vis.ftdetect.ignoresuffixes) do
+				sanitizedfn = sanitizedfn:gsub(pattern,"")
 			end
-		until not changed
+		until #sanitizedfn==0 or sanitizedfn == changed
 	end
 
 	-- detect filetype by filename ending with a configured extension
