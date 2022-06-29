@@ -172,7 +172,7 @@ M._foldsymbols = {
   [l.OPERATOR] = {
     ['('] = 1, [')'] = -1, ['['] = 1, [']'] = -1, ['{'] = 1, ['}'] = -1
   },
-  [l.COMMENT] = {['#_('] = 1,  [';'] = l.fold_line_comments(';')}
+  [l.COMMENT] = {['#'] = l.fold_line_comments('#')}
 }
 
 return M
