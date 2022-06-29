@@ -365,6 +365,9 @@ vis.ftdetect.filetypes = {
 			return data:match("^#.* by RouterOS")
 		end
 	},
+	rpmspec = {
+		ext = { "%.spec$" },
+	},
 	rstats = {
 		ext = { "%.R$", "%.Rout$", "%.Rhistory$", "%.Rt$", "Rout.save", "Rout.fail" },
 	},
