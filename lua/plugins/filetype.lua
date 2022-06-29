@@ -208,6 +208,9 @@ vis.ftdetect.filetypes = {
 	io_lang = {
 		ext = { "%.io$" },
 	},
+	janet = {
+	  ext = { "%.janet$" }
+	},
 	java = {
 		ext = { "%.bsh$", "%.java$" },
 	},
