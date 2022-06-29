@@ -1,61 +1,47 @@
--- Copyright 2006-2017 Mitchell mitchell.att.foicica.com. See LICENSE.
+-- Copyright 2006-2022 Mitchell. See LICENSE.
 -- Postscript LPeg lexer.
 
-local l = require('lexer')
-local token, word_match = l.token, l.word_match
-local P, R, S = lpeg.P, lpeg.R, lpeg.S
+local lexer = require('lexer')
+local token, word_match = lexer.token, lexer.word_match
+local P, S = lpeg.P, lpeg.S
 
-local M = {_NAME = 'ps'}
+local lex = lexer.new('ps')
 
 -- Whitespace.
-local ws = token(l.WHITESPACE, l.space^1)
-
--- Comments.
-local comment = token(l.COMMENT, '%' * l.nonnewline^0)
-
--- Strings.
-local arrow_string = l.delimited_range('<>')
-local nested_string = l.delimited_range('()', false, false, true)
-local string = token(l.STRING, arrow_string + nested_string)
-
--- Numbers.
-local number = token(l.NUMBER, l.float + l.integer)
+lex:add_rule('whitespace', token(lexer.WHITESPACE, lexer.space^1))
 
 -- Keywords.
-local keyword = token(l.KEYWORD, word_match{
-  'pop', 'exch', 'dup', 'copy', 'roll', 'clear', 'count', 'mark', 'cleartomark',
-  'counttomark', 'exec', 'if', 'ifelse', 'for', 'repeat', 'loop', 'exit',
-  'stop', 'stopped', 'countexecstack', 'execstack', 'quit', 'start',
-  'true', 'false', 'NULL'
-})
+lex:add_rule('keyword', token(lexer.KEYWORD, word_match{
+  'pop', 'exch', 'dup', 'copy', 'roll', 'clear', 'count', 'mark', 'cleartomark', 'counttomark',
+  'exec', 'if', 'ifelse', 'for', 'repeat', 'loop', 'exit', 'stop', 'stopped', 'countexecstack',
+  'execstack', 'quit', 'start', 'true', 'false', 'NULL'
+}))
 
 -- Functions.
-local func = token(l.FUNCTION, word_match{
-  'add', 'div', 'idiv', 'mod', 'mul', 'sub', 'abs', 'ned', 'ceiling', 'floor',
-  'round', 'truncate', 'sqrt', 'atan', 'cos', 'sin', 'exp', 'ln', 'log', 'rand',
-  'srand', 'rrand'
-})
+lex:add_rule('function', token(lexer.FUNCTION, word_match{
+  'add', 'div', 'idiv', 'mod', 'mul', 'sub', 'abs', 'ned', 'ceiling', 'floor', 'round', 'truncate',
+  'sqrt', 'atan', 'cos', 'sin', 'exp', 'ln', 'log', 'rand', 'srand', 'rrand'
+}))
 
 -- Identifiers.
-local word = (l.alpha + '-') * (l.alnum + '-')^0
-local identifier = token(l.IDENTIFIER, word)
+local word = (lexer.alpha + '-') * (lexer.alnum + '-')^0
+lex:add_rule('identifier', token(lexer.IDENTIFIER, word))
 
--- Operators.
-local operator = token(l.OPERATOR, S('[]{}'))
+-- Strings.
+local arrow_string = lexer.range('<', '>')
+local nested_string = lexer.range('(', ')', false, false, true)
+lex:add_rule('string', token(lexer.STRING, arrow_string + nested_string))
+
+-- Comments.
+lex:add_rule('comment', token(lexer.COMMENT, lexer.to_eol('%')))
+
+-- Numbers.
+lex:add_rule('number', token(lexer.NUMBER, lexer.number))
 
 -- Labels.
-local label = token(l.LABEL, '/' * word)
+lex:add_rule('label', token(lexer.LABEL, '/' * word))
 
-M._rules = {
-  {'whitespace', ws},
-  {'keyword', keyword},
-  {'function', func},
-  {'identifier', identifier},
-  {'string', string},
-  {'comment', comment},
-  {'number', number},
-  {'label', label},
-  {'operator', operator},
-}
+-- Operators.
+lex:add_rule('operator', token(lexer.OPERATOR, S('[]{}')))
 
-return M
+return lex

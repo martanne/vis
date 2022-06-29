@@ -1,78 +1,60 @@
--- Copyright 2006-2017 Mitchell mitchell.att.foicica.com. See LICENSE.
+-- Copyright 2006-2022 Mitchell. See LICENSE.
 -- LPeg lexer for the Icon programming language.
 -- http://www.cs.arizona.edu/icon
 -- Contributed by Carl Sturtivant.
 
-local l = require('lexer')
-local token, word_match = l.token, l.word_match
-local P, R, S = lpeg.P, lpeg.R, lpeg.S
+local lexer = require('lexer')
+local token, word_match = lexer.token, lexer.word_match
+local P, S = lpeg.P, lpeg.S
 
-local M = {_NAME = 'icon'}
+local lex = lexer.new('icon')
 
 -- Whitespace.
-local ws = token(l.WHITESPACE, l.space^1)
-
---Comments
-local line_comment = '#' * l.nonnewline_esc^0
-local comment = token(l.COMMENT, line_comment)
-
--- Strings.
-local cset = l.delimited_range("'")
-local str = l.delimited_range('"')
-local string = token(l.STRING, cset + str)
-
--- Numbers.
-local radix_literal = P('-')^-1 * l.dec_num * S('rR') * l.alnum^1
-local number = token(l.NUMBER, radix_literal + l.float + l.integer)
-
--- Preprocessor.
-local preproc_word = word_match{
-  'include', 'line', 'define', 'undef', 'ifdef', 'ifndef', 'else', 'endif',
-  'error'
-}
-local preproc = token(l.PREPROCESSOR, S(' \t')^0 * P('$') * preproc_word)
+lex:add_rule('whitespace', token(lexer.WHITESPACE, lexer.space^1))
 
 -- Keywords.
-local keyword = token(l.KEYWORD, word_match{
-  'break', 'by', 'case', 'create', 'default', 'do', 'else', 'end', 'every',
-  'fail', 'global', 'if', 'initial', 'invocable', 'link', 'local', 'next',
-  'not', 'of', 'procedure', 'record', 'repeat', 'return', 'static', 'suspend',
-  'then', 'to', 'until', 'while'
-})
+lex:add_rule('keyword', token(lexer.KEYWORD, word_match{
+  'break', 'by', 'case', 'create', 'default', 'do', 'else', 'end', 'every', 'fail', 'global', 'if',
+  'initial', 'invocable', 'link', 'local', 'next', 'not', 'of', 'procedure', 'record', 'repeat',
+  'return', 'static', 'suspend', 'then', 'to', 'until', 'while'
+}))
 
--- Icon Keywords: unique to Icon; use l.TYPE, as Icon is dynamically typed
-local type = token(l.TYPE, P('&') * word_match{
-  'allocated', 'ascii', 'clock', 'collections', 'cset', 'current', 'date',
-  'dateline', 'digits', 'dump', 'e', 'error', 'errornumber', 'errortext',
-  'errorvalue', 'errout', 'fail', 'features', 'file', 'host', 'input', 'lcase',
-  'letters', 'level', 'line', 'main', 'null', 'output', 'phi', 'pi', 'pos',
-  'progname', 'random', 'regions', 'source', 'storage', 'subject', 'time',
-  'trace', 'ucase', 'version'
-})
+-- Icon Keywords: unique to Icon.
+lex:add_rule('special_keyword', token('special_keyword', '&' * word_match{
+  'allocated', 'ascii', 'clock', 'collections', 'cset', 'current', 'date', 'dateline', 'digits',
+  'dump', 'e', 'error', 'errornumber', 'errortext', 'errorvalue', 'errout', 'fail', 'features',
+  'file', 'host', 'input', 'lcase', 'letters', 'level', 'line', 'main', 'null', 'output', 'phi',
+  'pi', 'pos', 'progname', 'random', 'regions', 'source', 'storage', 'subject', 'time', 'trace',
+  'ucase', 'version'
+}))
+lex:add_style('special_keyword', lexer.styles.type)
 
 -- Identifiers.
-local identifier = token(l.IDENTIFIER, l.word)
+lex:add_rule('identifier', token(lexer.IDENTIFIER, lexer.word))
+
+-- Strings.
+local sq_str = lexer.range("'")
+local dq_str = lexer.range('"')
+lex:add_rule('string', token(lexer.STRING, sq_str + dq_str))
+
+-- Comments.
+lex:add_rule('comment', token(lexer.COMMENT, lexer.to_eol('#', true)))
+
+-- Numbers.
+local radix_literal = P('-')^-1 * lexer.dec_num * S('rR') * lexer.alnum^1
+lex:add_rule('number', token(lexer.NUMBER, radix_literal + lexer.number))
+
+-- Preprocessor.
+lex:add_rule('preproc', token(lexer.PREPROCESSOR, '$' *
+  word_match('define else endif error ifdef ifndef include line undef')))
 
 -- Operators.
-local operator = token(l.OPERATOR, S('+-/*%<>~!=^&|?~@:;,.()[]{}'))
+lex:add_rule('operator', token(lexer.OPERATOR, S('+-/*%<>~!=^&|?~@:;,.()[]{}')))
 
-M._rules = {
-  {'whitespace', ws},
-  {'keyword', keyword},
-  {'type', type},
-  {'identifier', identifier},
-  {'comment', comment},
-  {'string', string},
-  {'number', number},
-  {'preproc', preproc},
-  {'operator', operator},
-}
+-- Fold points.
+lex:add_fold_point(lexer.PREPROCESSOR, 'ifdef', 'endif')
+lex:add_fold_point(lexer.PREPROCESSOR, 'ifndef', 'endif')
+lex:add_fold_point(lexer.KEYWORD, 'procedure', 'end')
+lex:add_fold_point(lexer.COMMENT, lexer.fold_consecutive_lines('#'))
 
-M._foldsymbols = {
-  _patterns = {'%l+', '#'},
-  [l.PREPROCESSOR] = {ifdef = 1, ifndef = 1, endif = -1},
-  [l.KEYWORD] = { procedure = 1, ['end'] = -1},
-  [l.COMMENT] = {['#'] = l.fold_line_comments('#')}
-}
-
-return M
+return lex

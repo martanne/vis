@@ -14,7 +14,7 @@ local ws = token(l.WHITESPACE, l.space^1)
 local comment = token(l.COMMENT, (P("'") + word_match({'rem'}, nil, true)) * l.nonnewline^0)
 
 -- Strings.
-local string = token(l.STRING, l.delimited_range('"', true, true))
+local string = token(l.STRING, l.range('"', true, true))
 
 -- Numbers.
 local number = token(l.NUMBER, (l.float + l.integer) * S('LlUuFf')^-2)

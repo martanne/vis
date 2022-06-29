@@ -1,58 +1,46 @@
--- Copyright 2006-2017 Mitchell mitchell.att.foicica.com. See LICENSE.
+-- Copyright 2006-2022 Mitchell. See LICENSE.
 -- Bibtex LPeg lexer.
 
-local l = require('lexer')
-local token, word_match = l.token, l.word_match
-local P, R, S = lpeg.P, lpeg.R, lpeg.S
+local lexer = require('lexer')
+local token, word_match = lexer.token, lexer.word_match
+local P, S = lpeg.P, lpeg.S
 
-local M = {_NAME = 'bibtex'}
+local lex = lexer.new('bibtex')
 
 -- Whitespace.
-local ws = token(l.WHITESPACE, l.space^1)
-
--- Strings.
-local string = token(l.STRING, l.delimited_range('"') +
-                               l.delimited_range('{}', false, true, true))
+local ws = token(lexer.WHITESPACE, lexer.space^1)
 
 -- Fields.
-local field = token('field', word_match{
-  'author', 'title', 'journal', 'year', 'volume', 'number', 'pages', 'month',
-  'note', 'key', 'publisher', 'editor', 'series', 'address', 'edition',
-  'howpublished', 'booktitle', 'organization', 'chapter', 'school',
-  'institution', 'type', 'isbn', 'issn', 'affiliation', 'issue', 'keyword',
-  'url'
-})
+lex:add_rule('field', token('field', word_match{
+  'author', 'title', 'journal', 'year', 'volume', 'number', 'pages', 'month', 'note', 'key',
+  'publisher', 'editor', 'series', 'address', 'edition', 'howpublished', 'booktitle',
+  'organization', 'chapter', 'school', 'institution', 'type', 'isbn', 'issn', 'affiliation',
+  'issue', 'keyword', 'url'
+}))
+lex:add_style('field', lexer.styles.constant)
 
 -- Identifiers.
-local identifier = token(l.IDENTIFIER, l.word)
+lex:add_rule('identifier', token(lexer.IDENTIFIER, lexer.word))
+
+-- Strings.
+local dq_str = lexer.range('"')
+local br_str = lexer.range('{', '}', false, false, true)
+lex:add_rule('string', token(lexer.STRING, dq_str + br_str))
 
 -- Operators.
-local operator = token(l.OPERATOR, S(',='))
-
-M._rules = {
-  {'whitespace', ws},
-  {'field', field},
-  {'identifier', identifier},
-  {'string', string},
-  {'operator', operator},
-}
+lex:add_rule('operator', token(lexer.OPERATOR, S(',=')))
 
 -- Embedded in Latex.
-local latex = l.load('latex')
+local latex = lexer.load('latex')
 
 -- Embedded Bibtex.
-local entry = token('entry', P('@') * word_match({
-  'book', 'article', 'booklet', 'conference', 'inbook', 'incollection',
-  'inproceedings', 'manual', 'mastersthesis', 'lambda', 'misc', 'phdthesis',
-  'proceedings', 'techreport', 'unpublished'
-}, nil, true))
-local bibtex_start_rule = entry * ws^0 * token(l.OPERATOR, P('{'))
-local bibtex_end_rule = token(l.OPERATOR, P('}'))
-l.embed_lexer(latex, M, bibtex_start_rule, bibtex_end_rule)
+local entry = token('entry', '@' * word_match({
+  'book', 'article', 'booklet', 'conference', 'inbook', 'incollection', 'inproceedings', 'manual',
+  'mastersthesis', 'lambda', 'misc', 'phdthesis', 'proceedings', 'techreport', 'unpublished'
+}, true))
+lex:add_style('entry', lexer.styles.preprocessor)
+local bibtex_start_rule = entry * ws^0 * token(lexer.OPERATOR, '{')
+local bibtex_end_rule = token(lexer.OPERATOR, '}')
+latex:embed(lex, bibtex_start_rule, bibtex_end_rule)
 
-M._tokenstyles = {
-  field = l.STYLE_CONSTANT,
-  entry = l.STYLE_PREPROCESSOR
-}
-
-return M
+return lex

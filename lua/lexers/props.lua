@@ -1,47 +1,32 @@
--- Copyright 2006-2017 Mitchell mitchell.att.foicica.com. See LICENSE.
+-- Copyright 2006-2022 Mitchell. See LICENSE.
 -- Props LPeg lexer.
 
-local l = require('lexer')
-local token, word_match = l.token, l.word_match
-local P, R, S = lpeg.P, lpeg.R, lpeg.S
+local lexer = require('lexer')
+local token, word_match = lexer.token, lexer.word_match
+local P, S = lpeg.P, lpeg.S
 
-local M = {_NAME = 'props'}
+local lex = lexer.new('props', {lex_by_line = true})
 
 -- Whitespace.
-local ws = token(l.WHITESPACE, l.space^1)
-
--- Comments.
-local comment = token(l.COMMENT, '#' * l.nonnewline^0)
-
--- Equals.
-local equals = token(l.OPERATOR, '=')
-
--- Strings.
-local sq_str = l.delimited_range("'")
-local dq_str = l.delimited_range('"')
-local string = token(l.STRING, sq_str + dq_str)
-
--- Variables.
-local variable = token(l.VARIABLE, '$(' * (l.any - ')')^1 * ')')
+lex:add_rule('whitespace', token(lexer.WHITESPACE, lexer.space^1))
 
 -- Colors.
-local xdigit = l.xdigit
-local color = token('color', '#' * xdigit * xdigit * xdigit * xdigit * xdigit *
-                             xdigit)
+local xdigit = lexer.xdigit
+lex:add_rule('color', token('color', '#' * xdigit * xdigit * xdigit * xdigit * xdigit * xdigit))
+lex:add_style('color', lexer.styles.number)
 
-M._rules = {
-  {'whitespace', ws},
-  {'color', color},
-  {'comment', comment},
-  {'equals', equals},
-  {'string', string},
-  {'variable', variable},
-}
+-- Comments.
+lex:add_rule('comment', token(lexer.COMMENT, lexer.to_eol('#')))
 
-M._tokenstyles = {
-  color = l.STYLE_NUMBER
-}
+-- Equals.
+lex:add_rule('equals', token(lexer.OPERATOR, '='))
 
-M._LEXBYLINE = true
+-- Strings.
+local sq_str = lexer.range("'")
+local dq_str = lexer.range('"')
+lex:add_rule('string', token(lexer.STRING, sq_str + dq_str))
 
-return M
+-- Variables.
+lex:add_rule('variable', token(lexer.VARIABLE, '$' * lexer.range('(', ')', true)))
+
+return lex

@@ -1,39 +1,29 @@
--- Copyright 2006-2017 Mitchell mitchell.att.foicica.com. See LICENSE.
+-- Copyright 2006-2022 Mitchell. See LICENSE.
 -- Gettext LPeg lexer.
 
-local l = require('lexer')
-local token, word_match = l.token, l.word_match
-local P, R, S = lpeg.P, lpeg.R, lpeg.S
+local lexer = require('lexer')
+local token, word_match = lexer.token, lexer.word_match
+local P, S = lpeg.P, lpeg.S
 
-local M = {_NAME = 'gettext'}
+local lex = lexer.new('gettext')
 
 -- Whitespace.
-local ws = token(l.WHITESPACE, l.space^1)
-
--- Comments.
-local comment = token(l.COMMENT, '#' * S(': .~') * l.nonnewline^0)
-
--- Strings.
-local string = token(l.STRING, l.delimited_range('"', true))
+lex:add_rule('whitespace', token(lexer.WHITESPACE, lexer.space^1))
 
 -- Keywords.
-local keyword = token(l.KEYWORD, word_match({
-  'msgid', 'msgid_plural', 'msgstr', 'fuzzy', 'c-format', 'no-c-format'
-}, '-', true))
+lex:add_rule('keyword', token(lexer.KEYWORD, word_match(
+  'msgid msgid_plural msgstr fuzzy c-format no-c-format', true)))
 
 -- Identifiers.
-local identifier = token(l.IDENTIFIER, l.word)
+lex:add_rule('identifier', token(lexer.IDENTIFIER, lexer.word))
 
 -- Variables.
-local variable = token(l.VARIABLE, S('%$@') * l.word)
+lex:add_rule('variable', token(lexer.VARIABLE, S('%$@') * lexer.word))
 
-M._rules = {
-  {'whitespace', ws},
-  {'comment', comment},
-  {'string', string},
-  {'keyword', keyword},
-  {'identifier', identifier},
-  {'variable', variable},
-}
+-- Strings.
+lex:add_rule('string', token(lexer.STRING, lexer.range('"', true)))
 
-return M
+-- Comments.
+lex:add_rule('comment', token(lexer.COMMENT, lexer.to_eol('#' * S(': .~'))))
+
+return lex

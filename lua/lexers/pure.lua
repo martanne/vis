@@ -1,62 +1,48 @@
--- Copyright 2015-2017 David B. Lamkins <david@lamkins.net>. See LICENSE.
+-- Copyright 2015-2022 David B. Lamkins <david@lamkins.net>. See LICENSE.
 -- pure LPeg lexer, see http://purelang.bitbucket.org/
 
-local l = require('lexer')
-local token, word_match = l.token, l.word_match
-local P, R, S = lpeg.P, lpeg.R, lpeg.S
+local lexer = require('lexer')
+local token, word_match = lexer.token, lexer.word_match
+local P, S = lpeg.P, lpeg.S
 
-local M = {_NAME = 'pure'}
+local lex = lexer.new('pure')
 
 -- Whitespace.
-local ws = token(l.WHITESPACE, l.space^1)
+lex:add_rule('whitespace', token(lexer.WHITESPACE, lexer.space^1))
 
--- Comments.
-local line_comment = '//' * l.nonnewline^0
-local block_comment = '/*' * (l.any - '*/')^0 * P('*/')^-1
-local comment = token(l.COMMENT, line_comment + block_comment)
+-- Keywords.
+lex:add_rule('keyword', token(lexer.KEYWORD, word_match{
+  'namespace', 'with', 'end', 'using', 'interface', 'extern', 'let', 'const', 'def', 'type',
+  'public', 'private', 'nonfix', 'outfix', 'infix', 'infixl', 'infixr', 'prefix', 'postfix', 'if',
+  'otherwise', 'when', 'case', 'of', 'then', 'else'
+}))
+
+-- Identifiers.
+lex:add_rule('identifier', token(lexer.IDENTIFIER, lexer.word))
 
 -- Strings.
-local string = token(l.STRING, l.delimited_range('"', true))
+lex:add_rule('string', token(lexer.STRING, lexer.range('"', true)))
+
+-- Comments.
+local line_comment = lexer.to_eol('//')
+local block_comment = lexer.range('/*', '*/')
+lex:add_rule('comment', token(lexer.COMMENT, line_comment + block_comment))
 
 -- Numbers.
 local bin = '0' * S('Bb') * S('01')^1
-local hex = '0' * S('Xx') * (R('09') + R('af') + R('AF'))^1
-local dec = R('09')^1
+local hex = lexer.hex_num
+local dec = lexer.dec_num
 local int = (bin + hex + dec) * P('L')^-1
-local rad = P('.') - P('..')
+local rad = P('.') - '..'
 local exp = (S('Ee') * S('+-')^-1 * int)^-1
 local flt = int * (rad * dec)^-1 * exp + int^-1 * rad * dec * exp
-local number = token(l.NUMBER, flt + int)
-
--- Keywords.
-local keyword = token(l.KEYWORD, word_match{
-  'namespace', 'with', 'end', 'using', 'interface', 'extern', 'let', 'const',
-  'def', 'type', 'public', 'private', 'nonfix', 'outfix', 'infix', 'infixl',
-  'infixr', 'prefix', 'postfix', 'if', 'otherwise', 'when', 'case', 'of',
-  'then', 'else'
-})
-
--- Identifiers.
-local identifier = token(l.IDENTIFIER, l.word)
-
--- Operators.
-local punct = S('+-/*%<>~!=^&|?~:;,.()[]{}@#$`\\\'')
-local dots = P('..')
-local operator = token(l.OPERATOR, dots + punct)
+lex:add_rule('number', token(lexer.NUMBER, flt + int))
 
 -- Pragmas.
-local hashbang = l.starts_line('#!') * (l.nonnewline - P('//'))^0
-local pragma = token(l.PREPROCESSOR, hashbang)
+local hashbang = lexer.starts_line('#!') * (lexer.nonnewline - '//')^0
+lex:add_rule('pragma', token(lexer.PREPROCESSOR, hashbang))
 
-M._rules = {
-  {'whitespace', ws},
-  {'comment', comment},
-  {'pragma', pragma},
-  {'keyword', keyword},
-  {'number', number},
-  {'operator', operator},
-  {'identifier', identifier},
-  {'string', string},
-}
+-- Operators.
+lex:add_rule('operator', token(lexer.OPERATOR, '..' + S('+-/*%<>~!=^&|?~:;,.()[]{}@#$`\\\'')))
 
-return M
+return lex

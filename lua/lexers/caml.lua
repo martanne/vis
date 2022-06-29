@@ -1,83 +1,63 @@
--- Copyright 2006-2017 Mitchell mitchell.att.foicica.com. See LICENSE.
+-- Copyright 2006-2022 Mitchell. See LICENSE.
 -- OCaml LPeg lexer.
 
-local l = require('lexer')
-local token, word_match = l.token, l.word_match
-local P, R, S = lpeg.P, lpeg.R, lpeg.S
+local lexer = require('lexer')
+local token, word_match = lexer.token, lexer.word_match
+local P, S = lpeg.P, lpeg.S
 
-local M = {_NAME = 'caml'}
+local lex = lexer.new('caml')
 
 -- Whitespace.
-local ws = token(l.WHITESPACE, l.space^1)
-
--- Comments.
-local comment = token(l.COMMENT, l.nested_pair('(*', '*)'))
-
--- Strings.
-local sq_str = l.delimited_range("'", true)
-local dq_str = l.delimited_range('"', true)
-local string = token(l.STRING, sq_str + dq_str)
-
--- Numbers.
-local number = token(l.NUMBER, l.float + l.integer)
+lex:add_rule('whitespace', token(lexer.WHITESPACE, lexer.space^1))
 
 -- Keywords.
-local keyword = token(l.KEYWORD, word_match{
-  'and', 'as', 'asr', 'begin', 'class', 'closed', 'constraint', 'do', 'done',
-  'downto', 'else', 'end', 'exception', 'external', 'failwith', 'false',
-  'flush', 'for', 'fun', 'function', 'functor', 'if', 'in', 'include',
-  'inherit',  'incr', 'land', 'let', 'load', 'los', 'lsl', 'lsr', 'lxor',
-  'match', 'method', 'mod', 'module', 'mutable', 'new', 'not', 'of', 'open',
-  'option', 'or', 'parser', 'private', 'ref', 'rec', 'raise', 'regexp', 'sig',
-  'struct', 'stdout', 'stdin', 'stderr', 'then', 'to', 'true', 'try', 'type',
-  'val', 'virtual', 'when', 'while', 'with'
-})
+lex:add_rule('keyword', token(lexer.KEYWORD, word_match{
+  'and', 'as', 'asr', 'begin', 'class', 'closed', 'constraint', 'do', 'done', 'downto', 'else',
+  'end', 'exception', 'external', 'failwith', 'false', 'flush', 'for', 'fun', 'function', 'functor',
+  'if', 'in', 'include', 'incr', 'inherit', 'land', 'let', 'load', 'los', 'lsl', 'lsr', 'lxor',
+  'match', 'method', 'mod', 'module', 'mutable', 'new', 'not', 'of', 'open', 'option', 'or',
+  'parser', 'private', 'raise', 'rec', 'ref', 'regexp', 'sig', 'stderr', 'stdin', 'stdout',
+  'struct', 'then', 'to', 'true', 'try', 'type', 'val', 'virtual', 'when', 'while', 'with'
+}))
 
 -- Types.
-local type = token(l.TYPE, word_match{
-  'int', 'float', 'bool', 'char', 'string', 'unit'
-})
+lex:add_rule('type', token(lexer.TYPE, word_match('bool char float int string unit')))
 
 -- Functions.
-local func = token(l.FUNCTION, word_match{
-  'raise', 'invalid_arg', 'failwith', 'compare', 'min', 'max', 'succ', 'pred',
-  'mod', 'abs', 'max_int', 'min_int', 'sqrt', 'exp', 'log', 'log10', 'cos',
-  'sin', 'tan', 'acos', 'asin', 'atan', 'atan2', 'cosh', 'sinh', 'tanh', 'ceil',
-  'floor', 'abs_float', 'mod_float', 'frexp', 'ldexp', 'modf', 'float',
-  'float_of_int', 'truncate', 'int_of_float', 'infinity', 'nan', 'max_float',
-  'min_float', 'epsilon_float', 'classify_float', 'int_of_char', 'char_of_int',
-  'ignore', 'string_of_bool', 'bool_of_string', 'string_of_int',
-  'int_of_string', 'string_of_float', 'float_of_string', 'fst', 'snd', 'stdin',
-  'stdout', 'stderr', 'print_char', 'print_string', 'print_int', 'print_float',
-  'print_endline', 'print_newline', 'prerr_char', 'prerr_string', 'prerr_int',
-  'prerr_float', 'prerr_endline', 'prerr_newline', 'read_line', 'read_int',
-  'read_float', 'open_out', 'open_out_bin', 'open_out_gen', 'flush',
-  'flush_all', 'output_char', 'output_string', 'output', 'output_byte',
-  'output_binary_int', 'output_value', 'seek_out', 'pos_out',
-  'out_channel_length', 'close_out', 'close_out_noerr', 'set_binary_mode_out',
-  'open_in', 'open_in_bin', 'open_in_gen', 'input_char', 'input_line', 'input',
-  'really_input', 'input_byte', 'input_binary_int', 'input_value', 'seek_in',
-  'pos_in', 'in_channel_length', 'close_in', 'close_in_noerr',
-  'set_binary_mode_in', 'incr', 'decr', 'string_of_format', 'format_of_string',
-  'exit', 'at_exit'
-})
+lex:add_rule('function', token(lexer.FUNCTION, word_match{
+  'abs', 'abs_float', 'acos', 'asin', 'atan', 'atan2', 'at_exit', 'bool_of_string', 'ceil',
+  'char_of_int', 'classify_float', 'close_in', 'close_in_noerr', 'close_out', 'close_out_noerr',
+  'compare', 'cos', 'cosh', 'decr', 'epsilon_float', 'exit', 'exp', 'failwith', 'float',
+  'float_of_int', 'float_of_string', 'floor', 'flush', 'flush_all', 'format_of_string', 'frexp',
+  'fst', 'ignore', 'in_channel_length', 'incr', 'infinity', 'input', 'input_binary_int',
+  'input_byte', 'input_char', 'input_line', 'input_value', 'int_of_char', 'int_of_float',
+  'int_of_string', 'invalid_arg', 'ldexp', 'log', 'log10', 'max', 'max_float', 'max_int', 'min',
+  'min_float', 'min_int', 'mod', 'modf', 'mod_float', 'nan', 'open_in', 'open_in_bin',
+  'open_in_gen', 'open_out', 'open_out_bin', 'open_out_gen', 'out_channel_length', 'output',
+  'output_binary_int', 'output_byte', 'output_char', 'output_string', 'output_value', 'pos_in',
+  'pos_out', 'pred', 'prerr_char', 'prerr_endline', 'prerr_float', 'prerr_int', 'prerr_newline',
+  'prerr_string', 'print_char', 'print_endline', 'print_float', 'print_int', 'print_newline',
+  'print_string', 'raise', 'read_float', 'read_int', 'read_line', 'really_input', 'seek_in',
+  'seek_out', 'set_binary_mode_in', 'set_binary_mode_out', 'sin', 'sinh', 'snd', 'sqrt', 'stderr',
+  'stdin', 'stdout', 'string_of_bool', 'string_of_float', 'string_of_format', 'string_of_int',
+  'succ', 'tan', 'tanh', 'truncate'
+}))
 
 -- Identifiers.
-local identifier = token(l.IDENTIFIER, l.word)
+lex:add_rule('identifier', token(lexer.IDENTIFIER, lexer.word))
+
+-- Strings.
+local sq_str = lexer.range("'", true)
+local dq_str = lexer.range('"', true)
+lex:add_rule('string', token(lexer.STRING, sq_str + dq_str))
+
+-- Comments.
+lex:add_rule('comment', token(lexer.COMMENT, lexer.range('(*', '*)', false, false, true)))
+
+-- Numbers.
+lex:add_rule('number', token(lexer.NUMBER, lexer.number))
 
 -- Operators.
-local operator = token(l.OPERATOR, S('=<>+-*/.,:;~!#%^&|?[](){}'))
+lex:add_rule('operator', token(lexer.OPERATOR, S('=<>+-*/.,:;~!#%^&|?[](){}')))
 
-M._rules = {
-  {'whitespace', ws},
-  {'keyword', keyword},
-  {'type', type},
-  {'function', func},
-  {'identifier', identifier},
-  {'string', string},
-  {'comment', comment},
-  {'number', number},
-  {'operator', operator},
-}
-
-return M
+return lex

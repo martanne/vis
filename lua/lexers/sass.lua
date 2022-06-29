@@ -1,32 +1,24 @@
--- Copyright 2006-2017 Robert Gieseke. See LICENSE.
+-- Copyright 2006-2022 Robert Gieseke. See LICENSE.
 -- Sass CSS preprocessor LPeg lexer.
 -- http://sass-lang.com
 
-local l = require('lexer')
-local token = l.token
+local lexer = require('lexer')
+local token = lexer.token
 local P, S = lpeg.P, lpeg.S
 
-local M = {_NAME = 'sass'}
+local lex = lexer.new('sass', {inherit = lexer.load('css')})
 
 -- Line comments.
-local line_comment = token(l.COMMENT, '//' * l.nonnewline^0)
+lex:add_rule('line_comment', token(lexer.COMMENT, lexer.to_eol('//')))
 
 -- Variables.
-local variable = token(l.VARIABLE, '$' * (l.alnum + S('_-'))^1)
+lex:add_rule('variable', token(lexer.VARIABLE, '$' * (lexer.alnum + S('_-'))^1))
 
 -- Mixins.
-local mixin = token('mixin', P('@') * l.word)
+lex:add_rule('mixin', token('mixin', '@' * lexer.word))
+lex:add_style('mixin', lexer.styles['function'])
 
-local css = l.load('css')
-local _rules = css._rules
-table.insert(_rules, #_rules - 1, {'mixin', mixin})
-table.insert(_rules, #_rules - 1, {'line_comment', line_comment})
-table.insert(_rules, #_rules - 1, {'variable', variable})
-M._rules = _rules
+-- Fold points.
+lex:add_fold_point(lexer.COMMENT, lexer.fold_consecutive_lines('//'))
 
-M._tokenstyles = css._tokenstyles
-M._tokenstyles['mixin'] = l.STYLE_FUNCTION
-
-M._foldsymbols = css._foldsymbols
-
-return M
+return lex

@@ -1,92 +1,68 @@
--- Copyright 2010-2017 Martin Morawetz. See LICENSE.
+-- Copyright 2010-2022 Martin Morawetz. See LICENSE.
 -- ChucK LPeg lexer.
 
-local l = require('lexer')
-local token, word_match = l.token, l.word_match
-local P, R, S = lpeg.P, lpeg.R, lpeg.S
+local lexer = require('lexer')
+local token, word_match = lexer.token, lexer.word_match
+local P, S = lpeg.P, lpeg.S
 
-local M = {_NAME = 'chuck'}
+local lex = lexer.new('chuck')
 
 -- Whitespace.
-local ws = token(l.WHITESPACE, l.space^1)
-
--- Comments.
-local line_comment = '//' * l.nonnewline_esc^0
-local block_comment = '/*' * (l.any - '*/')^0 * P('*/')^-1
-local comment = token(l.COMMENT, line_comment + block_comment)
-
--- Strings.
-local sq_str = P('L')^-1 * l.delimited_range("'", true)
-local dq_str = P('L')^-1 * l.delimited_range('"', true)
-local string = token(l.STRING, sq_str + dq_str)
-
--- Numbers.
-local number = token(l.NUMBER, l.float + l.integer)
-
--- Constants.
-local constant = token(l.CONSTANT, word_match{
-  -- special values
-  'false', 'maybe', 'me', 'null', 'NULL', 'pi', 'true'
-})
-
--- Special special value.
-local now = token('now', P('now'))
-
--- Times.
-local time = token('time', word_match{
-  'samp', 'ms', 'second', 'minute', 'hour', 'day', 'week'
-})
+lex:add_rule('whitespace', token(lexer.WHITESPACE, lexer.space^1))
 
 -- Keywords.
-local keyword = token(l.KEYWORD, word_match{
+lex:add_rule('keyword', token(lexer.KEYWORD, word_match{
   -- Control structures.
-  'break', 'continue', 'else', 'for', 'if', 'repeat', 'return', 'switch',
-  'until', 'while',
+  'break', 'continue', 'else', 'for', 'if', 'repeat', 'return', 'switch', 'until', 'while',
   -- Other chuck keywords.
   'function', 'fun', 'spork', 'const', 'new'
-})
+}))
 
--- Classes.
-local class = token(l.CLASS, word_match{
-  -- Class keywords.
-  'class', 'extends', 'implements', 'interface', 'private', 'protected',
-  'public', 'pure', 'super', 'static', 'this'
-})
+-- Constants.
+lex:add_rule('constant', token(lexer.CONSTANT, word_match{
+  -- Special values.
+  'false', 'maybe', 'me', 'null', 'NULL', 'pi', 'true'
+}))
 
 -- Types.
-local types = token(l.TYPE, word_match{
-  'float', 'int', 'time', 'dur', 'void', 'same'
-})
+lex:add_rule('type', token(lexer.TYPE, word_match('float int time dur void same')))
+
+-- Classes.
+lex:add_rule('class', token(lexer.CLASS, word_match{
+  -- Class keywords.
+  'class', 'extends', 'implements', 'interface', 'private', 'protected', 'public', 'pure', 'static',
+  'super', 'this'
+}))
 
 -- Global ugens.
-local ugen = token('ugen', word_match{'dac', 'adc', 'blackhole'})
+lex:add_rule('ugen', token('ugen', word_match('dac adc blackhole')))
+lex:add_style('ugen', lexer.styles.constant)
+
+-- Times.
+lex:add_rule('time', token('time', word_match('samp ms second minute hour day week')))
+lex:add_style('time', lexer.styles.number)
+
+-- Special special value.
+lex:add_rule('now', token('now', 'now'))
+lex:add_style('now', lexer.styles.constant .. {bold = true})
+
+-- Strings.
+local sq_str = P('L')^-1 * lexer.range("'", true)
+local dq_str = P('L')^-1 * lexer.range('"', true)
+lex:add_rule('string', token(lexer.STRING, sq_str + dq_str))
 
 -- Identifiers.
-local identifier = token(l.IDENTIFIER, l.word)
+lex:add_rule('identifier', token(lexer.IDENTIFIER, lexer.word))
+
+-- Comments.
+local line_comment = lexer.to_eol('//', true)
+local block_comment = lexer.range('/*', '*/')
+lex:add_rule('comment', token(lexer.COMMENT, line_comment + block_comment))
+
+-- Numbers.
+lex:add_rule('number', token(lexer.NUMBER, lexer.number))
 
 -- Operators.
-local operator = token(l.OPERATOR, S('+-/*%<>!=^&|?~:;.()[]{}@'))
+lex:add_rule('operator', token(lexer.OPERATOR, S('+-/*%<>!=^&|?~:;.()[]{}@')))
 
-M._rules = {
-  {'whitespace', ws},
-  {'string', string},
-  {'keyword', keyword},
-  {'constant', constant},
-  {'type', types},
-  {'class', class},
-  {'ugen', ugen},
-  {'time', time},
-  {'now', now},
-  {'identifier', identifier},
-  {'comment', comment},
-  {'number', number},
-  {'operator', operator},
-}
-
-M._tokenstyles = {
-  ugen = l.STYLE_CONSTANT,
-  time = l.STYLE_NUMBER,
-  now = l.STYLE_CONSTANT..',bold'
-}
-
-return M
+return lex

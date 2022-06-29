@@ -1,21 +1,21 @@
--- Copyright 2006-2017 Robert Gieseke. See LICENSE.
+-- Copyright 2006-2022 Robert Gieseke. See LICENSE.
 -- Literate CoffeeScript LPeg lexer.
 -- http://coffeescript.org/#literate
 
-local l = require('lexer')
-local token = l.token
-local P = lpeg.P
+local lexer = require('lexer')
+local token = lexer.token
+local P, S = lpeg.P, lpeg.S
 
-local M = {_NAME = 'litcoffee'}
-
--- Embedded in Markdown.
-local markdown = l.load('markdown')
-M._lexer = markdown -- ensure markdown's rules are loaded, not HTML's
+local lex = lexer.new('litcoffee', {inherit = lexer.load('markdown')})
 
 -- Embedded CoffeeScript.
-local coffeescript = l.load('coffeescript')
-local coffee_start_rule = token(l.STYLE_EMBEDDED, (P(' ')^4 + P('\t')))
-local coffee_end_rule = token(l.STYLE_EMBEDDED, l.newline)
-l.embed_lexer(markdown, coffeescript, coffee_start_rule, coffee_end_rule)
+local coffeescript = lexer.load('coffeescript')
+local coffee_start_rule = token(lexer.STYLE_EMBEDDED, (P(' ')^4 + P('\t')))
+local coffee_end_rule = token(lexer.STYLE_EMBEDDED, lexer.newline)
+lex:embed(coffeescript, coffee_start_rule, coffee_end_rule)
 
-return M
+-- Use 'markdown_whitespace' instead of lexer.WHITESPACE since the latter would expand to
+-- 'litcoffee_whitespace'.
+lex:modify_rule('whitespace', token('markdown_whitespace', S(' \t')^1 + S('\r\n')^1))
+
+return lex

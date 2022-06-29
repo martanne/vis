@@ -1,274 +1,101 @@
--- Copyright 2016 Christian Hesse
+-- Copyright 2016-2022 Christian Hesse. See LICENSE.
 -- systemd networkd file LPeg lexer.
 
-local l = require('lexer')
-local token, word_match = l.token, l.word_match
-local P, R, S = lpeg.P, lpeg.R, lpeg.S
+local lexer = require('lexer')
+local token, word_match = lexer.token, lexer.word_match
+local P, S = lpeg.P, lpeg.S
 
-local M = {_NAME = 'networkd'}
+local lex = lexer.new('networkd', {lex_by_line = true})
 
 -- Whitespace.
-local ws = token(l.WHITESPACE, l.space^1)
-
--- Comments.
-local comment = token(l.COMMENT, l.starts_line(S(';#')) * l.nonnewline^0)
-
--- Strings.
-local sq_str = l.delimited_range("'")
-local dq_str = l.delimited_range('"')
-local section_word = word_match{
-  'Address',
-  'Link',
-  'Match',
-  'Network',
-  'Route',
-  'DHCP',
-  'DHCPServer',
-  'Bridge',
-  'BridgeFDB',
-  'NetDev',
-  'VLAN',
-  'MACVLAN',
-  'MACVTAP',
-  'IPVLAN',
-  'VXLAN',
-  'Tunnel',
-  'Peer',
-  'Tun',
-  'Tap',
-  'Bond'
-}
-local string = token(l.STRING, sq_str + dq_str + '[' * section_word * ']')
-
--- Numbers.
-local dec = l.digit^1 * ('_' * l.digit^1)^0
-local oct_num = '0' * S('01234567_')^1
-local integer = S('+-')^-1 * (l.hex_num + oct_num + dec)
-local number = token(l.NUMBER, (l.float + integer))
+lex:add_rule('whitespace', token(lexer.WHITESPACE, lexer.space^1))
 
 -- Keywords.
-local keyword = token(l.KEYWORD, word_match{
-  -- boolean values
-  'true',
-  'false',
-  'on',
-  'off',
-  'yes',
-  'no',
-})
+lex:add_rule('keyword', token(lexer.KEYWORD, word_match{
+  -- Boolean values.
+  'true', 'false', 'on', 'off', 'yes', 'no'
+}))
 
 -- Options.
-local option_word = word_match{
-  -- match section options
-  'MACAddress',
-  'OriginalName',
-  'Path',
-  'Driver',
-  'Type',
-  'Host',
-  'Name',
-  'Virtualization',
-  'KernelCommandLine',
-  'Architecture',
-
-  -- link section options
-  'Description',
-  'Alias',
-  'MACAddressPolicy',
-  'MACAddress',
-  'NamePolicy',
-  'Name',
-  'MTUBytes',
-  'BitsPerSecond',
-  'Duplex',
-  'WakeOnLan',
-
-  -- network section options
-  'Description',
-  'DHCP',
-  'DHCPServer',
-  'LinkLocalAddressing',
-  'IPv4LLRoute',
-  'IPv6Token',
-  'LLMNR',
-  'MulticastDNS',
-  'DNSSEC',
-  'DNSSECNegativeTrustAnchors',
-  'LLDP',
-  'BindCarrier',
-  'Address',
-  'Gateway',
-  'DNS',
-  'Domains',
-  'NTP',
-  'IPForward',
-  'IPMasquerade',
-  'IPv6PrivacyExtensions',
-  'IPv6AcceptRouterAdvertisements',
-  'IPv6DuplicateAddressDetection',
-  'IPv6HopLimit',
-  'Bridge',
-  'Bond',
-  'VLAN',
-  'MACVLAN',
-  'VXLAN',
-  'Tunnel',
-
-  -- address section options
-  'Address',
-  'Peer',
-  'Broadcast',
-  'Label',
-
-  -- route section options
-  'Gateway',
-  'Destination',
-  'Source',
-  'Metric',
-  'Scope',
-  'PreferredSource',
-
-  -- dhcp section options
-  'UseDNS',
-  'UseNTP',
-  'UseMTU',
-  'SendHostname',
-  'UseHostname',
-  'Hostname',
-  'UseDomains',
-  'UseRoutes',
-  'UseTimezone',
-  'CriticalConnection',
-  'ClientIdentifier',
-  'VendorClassIdentifier',
-  'RequestBroadcast',
-  'RouteMetric',
-
-  -- dhcpserver section options
-  'PoolOffset',
-  'PoolSize',
-  'DefaultLeaseTimeSec',
-  'MaxLeaseTimeSec',
-  'EmitDNS',
-  'DNS',
-  'EmitNTP',
-  'NTP',
-  'EmitTimezone',
-  'Timezone',
-
-  -- bridge section options
-  'UnicastFlood',
-  'HairPin',
-  'UseBPDU',
-  'FastLeave',
-  'AllowPortToBeRoot',
-  'Cost',
-
-  -- bridgefdb section options
-  'MACAddress',
-  'VLANId',
-
-  -- netdev section options
-  'Description',
-  'Name',
-  'Kind',
-  'MTUBytes',
-  'MACAddress',
-
-  -- bridge (netdev) section options
-  'HelloTimeSec',
-  'MaxAgeSec',
-  'ForwardDelaySec',
-
-  -- vlan section options
+lex:add_rule('option', token(lexer.PREPROCESSOR, word_match{
+  -- Match section.
+  'MACAddress', 'OriginalName', 'Path', 'Driver', 'Type', 'Host', 'Name', 'Virtualization',
+  'KernelCommandLine', 'Architecture',
+  -- Link section.
+  'Description', 'Alias', 'MACAddressPolicy', 'MACAddress', 'NamePolicy', 'Name', 'MTUBytes',
+  'BitsPerSecond', 'Duplex', 'WakeOnLan',
+  -- Network section.
+  'Description', 'DHCP', 'DHCPServer', 'LinkLocalAddressing', 'IPv4LLRoute', 'IPv6Token', 'LLMNR',
+  'MulticastDNS', 'DNSSEC', 'DNSSECNegativeTrustAnchors', 'LLDP', 'BindCarrier', 'Address',
+  'Gateway', 'DNS', 'Domains', 'NTP', 'IPForward', 'IPMasquerade', 'IPv6PrivacyExtensions',
+  'IPv6AcceptRouterAdvertisements', 'IPv6DuplicateAddressDetection', 'IPv6HopLimit', 'Bridge',
+  'Bond', 'VLAN', 'MACVLAN', 'VXLAN', 'Tunnel',
+  -- Address section.
+  'Address', 'Peer', 'Broadcast', 'Label',
+  -- Route section.
+  'Gateway', 'Destination', 'Source', 'Metric', 'Scope', 'PreferredSource',
+  -- DHCP section.
+  'UseDNS', 'UseNTP', 'UseMTU', 'SendHostname', 'UseHostname', 'Hostname', 'UseDomains',
+  'UseRoutes', 'UseTimezone', 'CriticalConnection', 'ClientIdentifier', 'VendorClassIdentifier',
+  'RequestBroadcast', 'RouteMetric',
+  -- DHCPServer section.
+  'PoolOffset', 'PoolSize', 'DefaultLeaseTimeSec', 'MaxLeaseTimeSec', 'EmitDNS', 'DNS', 'EmitNTP',
+  'NTP', 'EmitTimezone', 'Timezone',
+  -- Bridge section.
+  'UnicastFlood', 'HairPin', 'UseBPDU', 'FastLeave', 'AllowPortToBeRoot', 'Cost',
+  -- BridgeFDP section.
+  'MACAddress', 'VLANId',
+  -- NetDev section.
+  'Description', 'Name', 'Kind', 'MTUBytes', 'MACAddress',
+  -- Bridge (netdev) section.
+  'HelloTimeSec', 'MaxAgeSec', 'ForwardDelaySec',
+  -- VLAN section.
   'Id',
-
-  -- macvlan, macvtap and ipvlan section options
+  -- MACVLAN MACVTAP and IPVLAN section.
   'Mode',
-
-  -- vxlan section options
-  'Id',
-  'Group',
-  'TOS',
-  'TTL',
-  'MacLearning',
-  'FDBAgeingSec',
-  'MaximumFDBEntries',
-  'ARPProxy',
-  'L2MissNotification',
-  'L3MissNotification',
-  'RouteShortCircuit',
-  'UDPCheckSum',
-  'UDP6ZeroChecksumTx',
-  'UDP6ZeroCheckSumRx',
-  'GroupPolicyExtension',
-  'DestinationPort',
+  -- VXLAN section.
+  'Id', 'Group', 'TOS', 'TTL', 'MacLearning', 'FDBAgeingSec', 'MaximumFDBEntries', 'ARPProxy',
+  'L2MissNotification', 'L3MissNotification', 'RouteShortCircuit', 'UDPCheckSum',
+  'UDP6ZeroChecksumTx', 'UDP6ZeroCheckSumRx', 'GroupPolicyExtension', 'DestinationPort',
   'PortRange',
-
-  -- tunnel section options
-  'Local',
-  'Remote',
-  'TOS',
-  'TTL',
-  'DiscoverPathMTU',
-  'IPv6FlowLabel',
-  'CopyDSCP',
-  'EncapsulationLimit',
-  'Mode',
-
-  -- peer section options
-  'Name',
-  'MACAddress',
-
-  -- tun and tap section options
-  'OneQueue',
-  'MultiQueue',
-  'PacketInfo',
-  'VNetHeader',
-  'User',
-  'Group',
-
-  -- bond section options
-  'Mode',
-  'TransmitHashPolicy',
-  'LACPTransmitRate',
-  'MIIMonitorSec',
-  'UpDelaySec',
-  'DownDelaySec',
-  'LearnPacketIntervalSec',
-  'AdSelect',
-  'FailOverMACPolicy',
-  'ARPValidate',
-  'ARPIntervalSec',
-  'ARPIPTargets',
-  'ARPAllTargets',
-  'PrimaryReselectPolicy',
-  'ResendIGMP',
-  'PacketsPerSlave',
-  'GratuitousARP',
-  'AllSlavesActive',
-  'MinLinks',
-}
-local preproc = token(l.PREPROCESSOR, option_word)
+  -- Tunnel section.
+  'Local', 'Remote', 'TOS', 'TTL', 'DiscoverPathMTU', 'IPv6FlowLabel', 'CopyDSCP',
+  'EncapsulationLimit', 'Mode',
+  -- Peer section.
+  'Name', 'MACAddress',
+  -- Tun and Tap section.
+  'OneQueue', 'MultiQueue', 'PacketInfo', 'VNetHeader', 'User', 'Group',
+  -- Bond section.
+  'Mode', 'TransmitHashPolicy', 'LACPTransmitRate', 'MIIMonitorSec', 'UpDelaySec', 'DownDelaySec',
+  'LearnPacketIntervalSec', 'AdSelect', 'FailOverMACPolicy', 'ARPValidate', 'ARPIntervalSec',
+  'ARPIPTargets', 'ARPAllTargets', 'PrimaryReselectPolicy', 'ResendIGMP', 'PacketsPerSlave',
+  'GratuitousARP', 'AllSlavesActive', 'MinLinks'
+}))
 
 -- Identifiers.
-local word = (l.alpha + '_') * (l.alnum + S('_.'))^0
-local identifier = token(l.IDENTIFIER, word)
+lex:add_rule('identifier', token(lexer.IDENTIFIER, (lexer.alpha + '_') * (lexer.alnum + S('_.'))^0))
+
+-- Strings.
+local sq_str = lexer.range("'")
+local dq_str = lexer.range('"')
+lex:add_rule('string', token(lexer.STRING, sq_str + dq_str))
+
+-- Sections.
+lex:add_rule('section', token(lexer.LABEL, '[' * word_match{
+  'Address', 'Link', 'Match', 'Network', 'Route', 'DHCP', 'DHCPServer', 'Bridge', 'BridgeFDB',
+  'NetDev', 'VLAN', 'MACVLAN', 'MACVTAP', 'IPVLAN', 'VXLAN', 'Tunnel', 'Peer', 'Tun', 'Tap', 'Bond'
+} * ']'))
+
+-- Comments.
+lex:add_rule('comment', token(lexer.COMMENT, lexer.starts_line(lexer.to_eol(S(';#')))))
+
+-- Numbers.
+local dec = lexer.digit^1 * ('_' * lexer.digit^1)^0
+local oct_num = '0' * S('01234567_')^1
+local integer = S('+-')^-1 * (lexer.hex_num + oct_num + dec)
+lex:add_rule('number', token(lexer.NUMBER, lexer.float + integer))
 
 -- Operators.
-local operator = token(l.OPERATOR, '=')
+lex:add_rule('operator', token(lexer.OPERATOR, '='))
 
-M._rules = {
-  {'whitespace', ws},
-  {'keyword', keyword},
-  {'string', string},
-  {'preproc', preproc},
-  {'identifier', identifier},
-  {'comment', comment},
-  {'number', number},
-  {'operator', operator},
-}
-
-M._LEXBYLINE = true
-
-return M
+return lex

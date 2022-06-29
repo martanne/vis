@@ -1,81 +1,64 @@
--- Copyright 2006-2017 Mitchell mitchell.att.foicica.com. See LICENSE.
+-- Copyright 2006-2022 Mitchell. See LICENSE.
 -- Boo LPeg lexer.
 
-local l = require('lexer')
-local token, word_match = l.token, l.word_match
-local P, R, S = lpeg.P, lpeg.R, lpeg.S
+local lexer = require('lexer')
+local token, word_match = lexer.token, lexer.word_match
+local P, S = lpeg.P, lpeg.S
 
-local M = {_NAME = 'boo'}
+local lex = lexer.new('boo')
 
 -- Whitespace.
-local ws = token(l.WHITESPACE, l.space^1)
-
--- Comments.
-local line_comment = '#' * l.nonnewline_esc^0
-local block_comment = '/*' * (l.any - '*/')^0 * P('*/')^-1
-local comment = token(l.COMMENT, line_comment + block_comment)
-
--- Strings.
-local sq_str = l.delimited_range("'", true)
-local dq_str = l.delimited_range('"', true)
-local triple_dq_str = '"""' * (l.any - '"""')^0 * P('"""')^-1
-local regex_str = #('/') * l.last_char_includes('!%^&*([{-=+|:;,?<>~') *
-                  l.delimited_range('/', true)
-local string = token(l.STRING, triple_dq_str + sq_str + dq_str) +
-               token(l.REGEX, regex_str)
-
-
--- Numbers.
-local number = token(l.NUMBER, (l.float + l.integer) *
-                               (S('msdhsfFlL') + 'ms')^-1)
+lex:add_rule('whitespace', token(lexer.WHITESPACE, lexer.space^1))
 
 -- Keywords.
-local keyword = token(l.KEYWORD, word_match{
-  'and', 'break', 'cast', 'continue', 'elif', 'else', 'ensure', 'except', 'for',
-  'given', 'goto', 'if', 'in', 'isa', 'is', 'not', 'or', 'otherwise', 'pass',
-  'raise', 'ref', 'try', 'unless', 'when', 'while',
+lex:add_rule('keyword', token(lexer.KEYWORD, word_match{
+  'and', 'break', 'cast', 'continue', 'elif', 'else', 'ensure', 'except', 'for', 'given', 'goto',
+  'if', 'in', 'isa', 'is', 'not', 'or', 'otherwise', 'pass', 'raise', 'ref', 'try', 'unless',
+  'when', 'while',
   -- Definitions.
-  'abstract', 'callable', 'class', 'constructor', 'def', 'destructor', 'do',
-  'enum', 'event', 'final', 'get', 'interface', 'internal', 'of', 'override',
-  'partial', 'private', 'protected', 'public', 'return', 'set', 'static',
-  'struct', 'transient', 'virtual', 'yield',
+  'abstract', 'callable', 'class', 'constructor', 'def', 'destructor', 'do', 'enum', 'event',
+  'final', 'get', 'interface', 'internal', 'of', 'override', 'partial', 'private', 'protected',
+  'public', 'return', 'set', 'static', 'struct', 'transient', 'virtual', 'yield',
   -- Namespaces.
   'as', 'from', 'import', 'namespace',
   -- Other.
   'self', 'super', 'null', 'true', 'false'
-})
+}))
 
 -- Types.
-local type = token(l.TYPE, word_match{
-  'bool', 'byte', 'char', 'date', 'decimal', 'double', 'duck', 'float', 'int',
-  'long', 'object', 'operator', 'regex', 'sbyte', 'short', 'single', 'string',
-  'timespan', 'uint', 'ulong', 'ushort'
-})
+lex:add_rule('type', token(lexer.TYPE, word_match{
+  'bool', 'byte', 'char', 'date', 'decimal', 'double', 'duck', 'float', 'int', 'long', 'object',
+  'operator', 'regex', 'sbyte', 'short', 'single', 'string', 'timespan', 'uint', 'ulong', 'ushort'
+}))
 
 -- Functions.
-local func = token(l.FUNCTION, word_match{
-  'array', 'assert', 'checked', 'enumerate', '__eval__', 'filter', 'getter',
-  'len', 'lock', 'map', 'matrix', 'max', 'min', 'normalArrayIndexing', 'print',
-  'property', 'range', 'rawArrayIndexing', 'required', '__switch__', 'typeof',
-  'unchecked', 'using', 'yieldAll', 'zip'
-})
+lex:add_rule('function', token(lexer.FUNCTION, word_match{
+  'array', 'assert', 'checked', 'enumerate', '__eval__', 'filter', 'getter', 'len', 'lock', 'map',
+  'matrix', 'max', 'min', 'normalArrayIndexing', 'print', 'property', 'range', 'rawArrayIndexing',
+  'required', '__switch__', 'typeof', 'unchecked', 'using', 'yieldAll', 'zip'
+}))
 
 -- Identifiers.
-local identifier = token(l.IDENTIFIER, l.word)
+lex:add_rule('identifier', token(lexer.IDENTIFIER, lexer.word))
+
+-- Strings.
+local sq_str = lexer.range("'", true)
+local dq_str = lexer.range('"', true)
+local tq_str = lexer.range('"""')
+local string = token(lexer.STRING, tq_str + sq_str + dq_str)
+local regex_str = #P('/') * lexer.last_char_includes('!%^&*([{-=+|:;,?<>~') * lexer.range('/', true)
+local regex = token(lexer.REGEX, regex_str)
+lex:add_rule('string', string + regex)
+
+-- Comments.
+local line_comment = lexer.to_eol('#', true)
+local block_comment = lexer.range('/*', '*/')
+lex:add_rule('comment', token(lexer.COMMENT, line_comment + block_comment))
+
+-- Numbers.
+lex:add_rule('number', token(lexer.NUMBER, lexer.number * (S('msdhsfFlL') + 'ms')^-1))
 
 -- Operators.
-local operator = token(l.OPERATOR, S('!%^&*()[]{}-=+/|:;.,?<>~`'))
+lex:add_rule('operator', token(lexer.OPERATOR, S('!%^&*()[]{}-=+/|:;.,?<>~`')))
 
-M._rules = {
-  {'whitespace', ws},
-  {'keyword', keyword},
-  {'type', type},
-  {'function', func},
-  {'identifier', identifier},
-  {'string', string},
-  {'comment', comment},
-  {'number', number},
-  {'operator', operator},
-}
-
-return M
+return lex

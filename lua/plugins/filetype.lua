@@ -164,6 +164,10 @@ vis.ftdetect.filetypes = {
 	gherkin = {
 		ext = { "%.feature$" },
 	},
+	['git-commit'] = {
+		ext = { "^COMMIT_EDITMSG$" },
+		cmd = { "set colorcolumn 72" },
+	},
 	['git-rebase'] = {
 		ext = { "git%-rebase%-todo" },
 	},
@@ -212,7 +216,10 @@ vis.ftdetect.filetypes = {
 		ext = { "%.bsh$", "%.java$" },
 	},
 	javascript = {
-		ext = { "%.cjs$", "%.js$", "%.jsfl$", "%.mjs$", "%.ts$", "%.jsx$", "%.tsx$" },
+		ext = { "%.cjs$", "%.js$", "%.jsfl$", "%.mjs$" },
+	},
+	jq = {
+		ext = { "%.jq$" },
 	},
 	json = {
 		ext = { "%.json$" },
@@ -435,6 +442,9 @@ vis.ftdetect.filetypes = {
 	toml = {
 		ext = { "%.toml$" },
 	},
+	typescript = {
+		ext = { "%.ts$" },
+	},
 	vala = {
 		ext = { "%.vala$" }
 	},
@@ -484,7 +494,13 @@ vis.events.subscribe(vis.events.WIN_OPEN, function(win)
 		for _, cmd in pairs(filetype.cmd or {}) do
 			vis:command(cmd)
 		end
-		win:set_syntax(syntax)
+		local path = vis.lexers.property['lexer.lpeg.home']:gsub(';', '/?.lua;') .. '/?.lua'
+		local lexpath = package.searchpath('lexers/'..syntax, path)
+		if lexpath ~= nil then
+			win:set_syntax(syntax)
+		else
+			win:set_syntax(nil)
+		end
 	end
 
 	local path = win.file.name -- filepath

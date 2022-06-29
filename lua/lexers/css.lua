@@ -1,166 +1,168 @@
--- Copyright 2006-2017 Mitchell mitchell.att.foicica.com. See LICENSE.
+-- Copyright 2006-2022 Mitchell. See LICENSE.
 -- CSS LPeg lexer.
 
-local l = require('lexer')
-local token, word_match = l.token, l.word_match
-local P, R, S, V = lpeg.P, lpeg.R, lpeg.S, lpeg.V
+local lexer = require('lexer')
+local token, word_match = lexer.token, lexer.word_match
+local P, S = lpeg.P, lpeg.S
 
-local M = {_NAME = 'css'}
+local lex = lexer.new('css')
 
 -- Whitespace.
-local ws = token(l.WHITESPACE, l.space^1)
+lex:add_rule('whitespace', token(lexer.WHITESPACE, lexer.space^1))
 
--- Comments.
-local comment = token(l.COMMENT, '/*' * (l.any - '*/')^0 * P('*/')^-1)
+-- Properties.
+lex:add_rule('property', token('property', word_match{
+  -- CSS 1.
+  'color', 'background-color', 'background-image', 'background-repeat', 'background-attachment',
+  'background-position', 'background', 'font-family', 'font-style', 'font-variant', 'font-weight',
+  'font-size', 'font', 'word-spacing', 'letter-spacing', 'text-decoration', 'vertical-align',
+  'text-transform', 'text-align', 'text-indent', 'line-height', 'margin-top', 'margin-right',
+  'margin-bottom', 'margin-left', 'margin', 'padding-top', 'padding-right', 'padding-bottom',
+  'padding-left', 'padding', 'border-top-width', 'border-right-width', 'border-bottom-width',
+  'border-left-width', 'border-width', 'border-top', 'border-right', 'border-bottom', 'border-left',
+  'border', 'border-color', 'border-style', 'width', 'height', 'float', 'clear', 'display',
+  'white-space', 'list-style-type', 'list-style-image', 'list-style-position', 'list-style',
+  -- CSS 2.
+  'border-top-color', 'border-right-color', 'border-bottom-color', 'border-left-color',
+  'border-color', 'border-top-style', 'border-right-style', 'border-bottom-style',
+  'border-left-style', 'border-style', 'top', 'right', 'bottom', 'left', 'position', 'z-index',
+  'direction', 'unicode-bidi', 'min-width', 'max-width', 'min-height', 'max-height', 'overflow',
+  'clip', 'visibility', 'content', 'quotes', 'counter-reset', 'counter-increment', 'marker-offset',
+  'size', 'marks', 'page-break-before', 'page-break-after', 'page-break-inside', 'page', 'orphans',
+  'widows', 'font-stretch', 'font-size-adjust', 'unicode-range', 'units-per-em', 'src', 'panose-1',
+  'stemv', 'stemh', 'slope', 'cap-height', 'x-height', 'ascent', 'descent', 'widths', 'bbox',
+  'definition-src', 'baseline', 'centerline', 'mathline', 'topline', 'text-shadow', 'caption-side',
+  'table-layout', 'border-collapse', 'border-spacing', 'empty-cells', 'speak-header', 'cursor',
+  'outline', 'outline-width', 'outline-style', 'outline-color', 'volume', 'speak', 'pause-before',
+  'pause-after', 'pause', 'cue-before', 'cue-after', 'cue', 'play-during', 'azimuth', 'elevation',
+  'speech-rate', 'voice-family', 'pitch', 'pitch-range', 'stress', 'richness', 'speak-punctuation',
+  'speak-numeral',
+  -- CSS 3.
+  'flex', 'flex-basis', 'flex-direction', 'flex-flow', 'flex-grow', 'flex-shrink', 'flex-wrap',
+  'align-content', 'align-items', 'align-self', 'justify-content', 'order', 'border-radius',
+  'transition', 'transform', 'box-shadow', 'filter', 'opacity', 'resize', 'word-break', 'word-wrap',
+  'box-sizing', 'animation', 'text-overflow'
+}))
+lex:add_style('property', lexer.styles.keyword)
 
--- Strings.
-local sq_str = l.delimited_range("'")
-local dq_str = l.delimited_range('"')
-local string = token(l.STRING, sq_str + dq_str)
+-- Values.
+lex:add_rule('value', token('value', word_match{
+  -- CSS 1.
+  'auto', 'none', 'normal', 'italic', 'oblique', 'small-caps', 'bold', 'bolder', 'lighter',
+  'xx-small', 'x-small', 'small', 'medium', 'large', 'x-large', 'xx-large', 'larger', 'smaller',
+  'transparent', 'repeat', 'repeat-x', 'repeat-y', 'no-repeat', 'scroll', 'fixed', 'top', 'bottom',
+  'left', 'center', 'right', 'justify', 'both', 'underline', 'overline', 'line-through', 'blink',
+  'baseline', 'sub', 'super', 'text-top', 'middle', 'text-bottom', 'capitalize', 'uppercase',
+  'lowercase', 'thin', 'medium', 'thick', 'dotted', 'dashed', 'solid', 'double', 'groove', 'ridge',
+  'inset', 'outset', 'block', 'inline', 'list-item', 'pre', 'no-wrap', 'inside', 'outside', 'disc',
+  'circle', 'square', 'decimal', 'lower-roman', 'upper-roman', 'lower-alpha', 'upper-alpha', 'aqua',
+  'black', 'blue', 'fuchsia', 'gray', 'green', 'lime', 'maroon', 'navy', 'olive', 'purple', 'red',
+  'silver', 'teal', 'white', 'yellow',
+  -- CSS 2.
+  'inherit', 'run-in', 'compact', 'marker', 'table', 'inline-table', 'table-row-group',
+  'table-header-group', 'table-footer-group', 'table-row', 'table-column-group', 'table-column',
+  'table-cell', 'table-caption', 'static', 'relative', 'absolute', 'fixed', 'ltr', 'rtl', 'embed',
+  'bidi-override', 'visible', 'hidden', 'scroll', 'collapse', 'open-quote', 'close-quote',
+  'no-open-quote', 'no-close-quote', 'decimal-leading-zero', 'lower-greek', 'lower-latin',
+  'upper-latin', 'hebrew', 'armenian', 'georgian', 'cjk-ideographic', 'hiragana', 'katakana',
+  'hiragana-iroha', 'katakana-iroha', 'landscape', 'portrait', 'crop', 'cross', 'always', 'avoid',
+  'wider', 'narrower', 'ultra-condensed', 'extra-condensed', 'condensed', 'semi-condensed',
+  'semi-expanded', 'expanded', 'extra-expanded', 'ultra-expanded', 'caption', 'icon', 'menu',
+  'message-box', 'small-caption', 'status-bar', 'separate', 'show', 'hide', 'once', 'crosshair',
+  'default', 'pointer', 'move', 'text', 'wait', 'help', 'e-resize', 'ne-resize', 'nw-resize',
+  'n-resize', 'se-resize', 'sw-resize', 's-resize', 'w-resize', 'ActiveBorder', 'ActiveCaption',
+  'AppWorkspace', 'Background', 'ButtonFace', 'ButtonHighlight', 'ButtonShadow',
+  'InactiveCaptionText', 'ButtonText', 'CaptionText', 'GrayText', 'Highlight', 'HighlightText',
+  'InactiveBorder', 'InactiveCaption', 'InfoBackground', 'InfoText', 'Menu', 'MenuText',
+  'Scrollbar', 'ThreeDDarkShadow', 'ThreeDFace', 'ThreeDHighlight', 'ThreeDLightShadow',
+  'ThreeDShadow', 'Window', 'WindowFrame', 'WindowText', 'silent', 'x-soft', 'soft', 'medium',
+  'loud', 'x-loud', 'spell-out', 'mix', 'left-side', 'far-left', 'center-left', 'center-right',
+  'far-right', 'right-side', 'behind', 'leftwards', 'rightwards', 'below', 'level', 'above',
+  'higher', 'lower', 'x-slow', 'slow', 'medium', 'fast', 'x-fast', 'faster', 'slower', 'male',
+  'female', 'child', 'x-low', 'low', 'high', 'x-high', 'code', 'digits', 'continous',
+  -- CSS 3.
+  'flex', 'row', 'column', 'ellipsis', 'inline-block'
+}))
+lex:add_style('value', lexer.styles.constant)
 
--- Numbers.
-local number = token(l.NUMBER, l.digit^1)
-
--- Keywords.
-local css1_property = word_match({
-  'color', 'background-color', 'background-image', 'background-repeat',
-  'background-attachment', 'background-position', 'background', 'font-family',
-  'font-style', 'font-variant', 'font-weight', 'font-size', 'font',
-  'word-spacing', 'letter-spacing', 'text-decoration', 'vertical-align',
-  'text-transform', 'text-align', 'text-indent', 'line-height', 'margin-top',
-  'margin-right', 'margin-bottom', 'margin-left', 'margin', 'padding-top',
-  'padding-right', 'padding-bottom', 'padding-left', 'padding',
-  'border-top-width', 'border-right-width', 'border-bottom-width',
-  'border-left-width', 'border-width', 'border-top', 'border-right',
-  'border-bottom', 'border-left', 'border', 'border-color', 'border-style',
-  'width', 'height', 'float', 'clear', 'display', 'white-space',
-  'list-style-type', 'list-style-image', 'list-style-position', 'list-style'
-}, '-')
-local css1_value = word_match({
-  'auto', 'none', 'normal', 'italic', 'oblique', 'small-caps', 'bold', 'bolder',
-  'lighter', 'xx-small', 'x-small', 'small', 'medium', 'large', 'x-large',
-  'xx-large', 'larger', 'smaller', 'transparent', 'repeat', 'repeat-x',
-  'repeat-y', 'no-repeat', 'scroll', 'fixed', 'top', 'bottom', 'left', 'center',
-  'right', 'justify', 'both', 'underline', 'overline', 'line-through', 'blink',
-  'baseline', 'sub', 'super', 'text-top', 'middle', 'text-bottom', 'capitalize',
-  'uppercase', 'lowercase', 'thin', 'medium', 'thick', 'dotted', 'dashed',
-  'solid', 'double', 'groove', 'ridge', 'inset', 'outset', 'block', 'inline',
-  'list-item', 'pre', 'no-wrap', 'inside', 'outside', 'disc', 'circle',
-  'square', 'decimal', 'lower-roman', 'upper-roman', 'lower-alpha',
-  'upper-alpha', 'aqua', 'black', 'blue', 'fuchsia', 'gray', 'green', 'lime',
-  'maroon', 'navy', 'olive', 'purple', 'red', 'silver', 'teal', 'white',
-  'yellow'
-}, '-')
-local css2_property = word_match({
-  'border-top-color', 'border-right-color', 'border-bottom-color',
-  'border-left-color', 'border-color', 'border-top-style', 'border-right-style',
-  'border-bottom-style', 'border-left-style', 'border-style', 'top', 'right',
-  'bottom', 'left', 'position', 'z-index', 'direction', 'unicode-bidi',
-  'min-width', 'max-width', 'min-height', 'max-height', 'overflow', 'clip',
-  'visibility', 'content', 'quotes', 'counter-reset', 'counter-increment',
-  'marker-offset', 'size', 'marks', 'page-break-before', 'page-break-after',
-  'page-break-inside', 'page', 'orphans', 'widows', 'font-stretch',
-  'font-size-adjust', 'unicode-range', 'units-per-em', 'src', 'panose-1',
-  'stemv', 'stemh', 'slope', 'cap-height', 'x-height', 'ascent', 'descent',
-  'widths', 'bbox', 'definition-src', 'baseline', 'centerline', 'mathline',
-  'topline', 'text-shadow', 'caption-side', 'table-layout', 'border-collapse',
-  'border-spacing', 'empty-cells', 'speak-header', 'cursor', 'outline',
-  'outline-width', 'outline-style', 'outline-color', 'volume', 'speak',
-  'pause-before', 'pause-after', 'pause', 'cue-before', 'cue-after', 'cue',
-  'play-during', 'azimuth', 'elevation', 'speech-rate', 'voice-family', 'pitch',
-  'pitch-range', 'stress', 'richness', 'speak-punctuation', 'speak-numeral'
-}, '-')
-local css2_value = word_match({
-  'inherit', 'run-in', 'compact', 'marker', 'table', 'inline-table',
-  'table-row-group', 'table-header-group', 'table-footer-group', 'table-row',
-  'table-column-group', 'table-column', 'table-cell', 'table-caption', 'static',
-  'relative', 'absolute', 'fixed', 'ltr', 'rtl', 'embed', 'bidi-override',
-  'visible', 'hidden', 'scroll', 'collapse', 'open-quote', 'close-quote',
-  'no-open-quote', 'no-close-quote', 'decimal-leading-zero', 'lower-greek',
-  'lower-latin', 'upper-latin', 'hebrew', 'armenian', 'georgian',
-  'cjk-ideographic', 'hiragana', 'katakana', 'hiragana-iroha', 'katakana-iroha',
-  'landscape', 'portrait', 'crop', 'cross', 'always', 'avoid', 'wider',
-  'narrower', 'ultra-condensed', 'extra-condensed', 'condensed',
-  'semi-condensed', 'semi-expanded', 'expanded', 'extra-expanded',
-  'ultra-expanded', 'caption', 'icon', 'menu', 'message-box', 'small-caption',
-  'status-bar', 'separate', 'show', 'hide', 'once', 'crosshair', 'default',
-  'pointer', 'move', 'text', 'wait', 'help', 'e-resize', 'ne-resize',
-  'nw-resize', 'n-resize', 'se-resize', 'sw-resize', 's-resize', 'w-resize',
-  'ActiveBorder', 'ActiveCaption', 'AppWorkspace', 'Background', 'ButtonFace',
-  'ButtonHighlight', 'ButtonShadow', 'InactiveCaptionText', 'ButtonText',
-  'CaptionText', 'GrayText', 'Highlight', 'HighlightText', 'InactiveBorder',
-  'InactiveCaption', 'InfoBackground', 'InfoText', 'Menu', 'MenuText',
-  'Scrollbar', 'ThreeDDarkShadow', 'ThreeDFace', 'ThreeDHighlight',
-  'ThreeDLightShadow', 'ThreeDShadow', 'Window', 'WindowFrame', 'WindowText',
-  'silent', 'x-soft', 'soft', 'medium', 'loud', 'x-loud', 'spell-out', 'mix',
-  'left-side', 'far-left', 'center-left', 'center-right', 'far-right',
-  'right-side', 'behind', 'leftwards', 'rightwards', 'below', 'level', 'above',
-  'higher', 'lower', 'x-slow', 'slow', 'medium', 'fast', 'x-fast', 'faster',
-  'slower', 'male', 'female', 'child', 'x-low', 'low', 'high', 'x-high', 'code',
-  'digits', 'continous'
-}, '-')
-local property = token(l.KEYWORD, css1_property + css2_property)
-local value = token('value', css1_value + css2_value)
-local keyword = property + value
-
--- Identifiers.
-local identifier = token(l.IDENTIFIER, l.alpha * (l.alnum + S('_-'))^0)
-
--- Operators.
-local operator = token(l.OPERATOR, S('~!#*>+=|.,:;()[]{}'))
-
--- At rule.
-local at_rule = token('at_rule', P('@') * word_match{
-  'charset', 'font-face', 'media', 'page', 'import'
-})
+-- Functions.
+lex:add_rule('function', token(lexer.FUNCTION, word_match{
+  'attr', 'blackness', 'blend', 'blenda', 'blur', 'brightness', 'calc', 'circle', 'color-mod',
+  'contrast', 'counter', 'cubic-bezier', 'device-cmyk', 'drop-shadow', 'ellipse', 'gray',
+  'grayscale', 'hsl', 'hsla', 'hue', 'hue-rotate', 'hwb', 'image', 'inset', 'invert', 'lightness',
+  'linear-gradient', 'matrix', 'matrix3d', 'opacity', 'perspective', 'polygon', 'radial-gradient',
+  'rect', 'repeating-linear-gradient', 'repeating-radial-gradient', 'rgb', 'rgba', 'rotate',
+  'rotate3d', 'rotateX', 'rotateY', 'rotateZ', 'saturate', 'saturation', 'scale', 'scale3d',
+  'scaleX', 'scaleY', 'scaleZ', 'sepia', 'shade', 'skewX', 'skewY', 'steps', 'tint', 'toggle',
+  'translate', 'translate3d', 'translateX', 'translateY', 'translateZ', 'url', 'whiteness', 'var'
+}))
 
 -- Colors.
-local xdigit = l.xdigit
-local hex_color = '#' * xdigit * xdigit * xdigit * (xdigit * xdigit * xdigit)^-1
-local color_name = word_match{
-  'aqua', 'black', 'blue', 'fuchsia', 'gray', 'green', 'lime', 'maroon', 'navy',
-  'olive', 'orange', 'purple', 'red', 'silver', 'teal', 'white', 'yellow'
-}
-local color = token('color', hex_color + color_name)
+local xdigit = lexer.xdigit
+lex:add_rule('color', token('color', word_match{
+  'aliceblue', 'antiquewhite', 'aqua', 'aquamarine', 'azure', 'beige', 'bisque', 'black',
+  'blanchedalmond', 'blue', 'blueviolet', 'brown', 'burlywood', 'cadetblue', 'chartreuse',
+  'chocolate', 'coral', 'cornflowerblue', 'cornsilk', 'crimson', 'cyan', 'darkblue', 'darkcyan',
+  'darkgoldenrod', 'darkgray', 'darkgreen', 'darkgrey', 'darkkhaki', 'darkmagenta',
+  'darkolivegreen', 'darkorange', 'darkorchid', 'darkred', 'darksalmon', 'darkseagreen',
+  'darkslateblue', 'darkslategray', 'darkslategrey', 'darkturquoise', 'darkviolet', 'deeppink',
+  'deepskyblue', 'dimgray', 'dimgrey', 'dodgerblue', 'firebrick', 'floralwhite', 'forestgreen',
+  'fuchsia', 'gainsboro', 'ghostwhite', 'gold', 'goldenrod', 'gray', 'green', 'greenyellow', 'grey',
+  'honeydew', 'hotpink', 'indianred', 'indigo', 'ivory', 'khaki', 'lavender', 'lavenderblush',
+  'lawngreen', 'lemonchiffon', 'lightblue', 'lightcoral', 'lightcyan', 'lightgoldenrodyellow',
+  'lightgray', 'lightgreen', 'lightgrey', 'lightpink', 'lightsalmon', 'lightseagreen',
+  'lightskyblue', 'lightslategray', 'lightslategrey', 'lightsteelblue', 'lightyellow', 'lime',
+  'limegreen', 'linen', 'magenta', 'maroon', 'mediumaquamarine', 'mediumblue', 'mediumorchid',
+  'mediumpurple', 'mediumseagreen', 'mediumslateblue', 'mediumspringgreen', 'mediumturquoise',
+  'mediumvioletred', 'midnightblue', 'mintcream', 'mistyrose', 'moccasin', 'navajowhite', 'navy',
+  'oldlace', 'olive', 'olivedrab', 'orange', 'orangered', 'orchid', 'palegoldenrod', 'palegreen',
+  'paleturquoise', 'palevioletred', 'papayawhip', 'peachpuff', 'peru', 'pink', 'plum', 'powderblue',
+  'purple', 'rebeccapurple', 'red', 'rosybrown', 'royalblue', 'saddlebrown', 'salmon', 'sandybrown',
+  'seagreen', 'seashell', 'sienna', 'silver', 'skyblue', 'slateblue', 'slategray', 'slategrey',
+  'snow', 'springgreen', 'steelblue', 'tan', 'teal', 'thistle', 'tomato', 'transparent',
+  'turquoise', 'violet', 'wheat', 'white', 'whitesmoke', 'yellow', 'yellowgreen'
+} + '#' * xdigit * xdigit * xdigit * (xdigit * xdigit * xdigit)^-1))
+lex:add_style('color', lexer.styles.number)
 
--- Pseudo.
-local pseudo = token(l.CONSTANT, word_match({
-  -- Pseudo elements.
-  'first-line', 'first-letter', 'before', 'after',
-  -- Pseudo classes.
-  'first-child', 'link', 'visited', 'hover', 'active', 'focus', 'lang',
-}, '-'))
+-- Identifiers.
+lex:add_rule('identifier', token(lexer.IDENTIFIER, lexer.alpha * (lexer.alnum + S('_-'))^0))
 
--- Units.
-local unit = token('unit', word_match{
-  'em', 'ex', 'px', 'pt', 'pc', 'in', 'ft', 'mm', 'cm', 'kHz', 'Hz', 'deg',
-  'rad', 'grad', 'ms', 's'
-} + '%')
+-- Pseudo classes and pseudo elements.
+lex:add_rule('pseudoclass', ':' * token('pseudoclass', word_match{
+  'active', 'checked', 'disabled', 'empty', 'enabled', 'first-child', 'first-of-type', 'focus',
+  'hover', 'in-range', 'invalid', 'lang', 'last-child', 'last-of-type', 'link', 'not', 'nth-child',
+  'nth-last-child', 'nth-last-of-type', 'nth-of-type', 'only-of-type', 'only-child', 'optional',
+  'out-of-range', 'read-only', 'read-write', 'required', 'root', 'target', 'valid', 'visited'
+}))
+lex:add_style('pseudoclass', lexer.styles.constant)
+lex:add_rule('pseudoelement', '::' *
+  token('pseudoelement', word_match('after before first-letter first-line selection')))
+lex:add_style('pseudoelement', lexer.styles.constant)
 
-M._rules = {
-  {'whitespace', ws},
-  {'keyword', keyword},
-  {'pseudo', pseudo},
-  {'color', color},
-  {'identifier', identifier},
-  {'string', string},
-  {'comment', comment},
-  {'number', number * unit^-1},
-  {'operator', operator},
-  {'at_rule', at_rule},
-}
+-- Strings.
+local sq_str = lexer.range("'")
+local dq_str = lexer.range('"')
+lex:add_rule('string', token(lexer.STRING, sq_str + dq_str))
 
-M._tokenstyles = {
-  unit = l.STYLE_LABEL,
-  value = l.STYLE_CONSTANT,
-  color = l.STYLE_NUMBER,
-  at_rule = l.STYLE_PREPROCESSOR
-}
+-- Comments.
+lex:add_rule('comment', token(lexer.COMMENT, lexer.range('/*', '*/')))
 
-M._foldsymbols = {
-  _patterns = {'[{}]', '/%*', '%*/'},
-  [l.OPERATOR] = {['{'] = 1, ['}'] = -1},
-  [l.COMMENT] = {['/*'] = 1, ['*/'] = -1}
-}
+-- Numbers.
+local unit = token('unit', word_match(
+  'ch cm deg dpcm dpi dppx em ex grad Hz in kHz mm ms pc pt px q rad rem s turn vh vmax vmin vw'))
+lex:add_style('unit', lexer.styles.number)
+lex:add_rule('number', token(lexer.NUMBER, lexer.dec_num) * unit^-1)
 
-return M
+-- Operators.
+lex:add_rule('operator', token(lexer.OPERATOR, S('~!#*>+=|.,:;()[]{}')))
+
+-- At rule.
+lex:add_rule('at_rule', token('at_rule', '@' *
+  word_match('charset font-face media page import namespace keyframes')))
+lex:add_style('at_rule', lexer.styles.preprocessor)
+
+-- Fold points.
+lex:add_fold_point(lexer.OPERATOR, '{', '}')
+lex:add_fold_point(lexer.COMMENT, '/*', '*/')
+
+return lex

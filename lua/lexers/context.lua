@@ -1,59 +1,53 @@
--- Copyright 2006-2017 Robert Gieseke. See LICENSE.
+-- Copyright 2006-2022 Robert Gieseke, Lars Otter. See LICENSE.
 -- ConTeXt LPeg lexer.
 
-local l = require('lexer')
-local token, word_match = l.token, l.word_match
-local P, R, S = lpeg.P, lpeg.R, lpeg.S
+local lexer = require('lexer')
+local token, word_match = lexer.token, lexer.word_match
+local P, S = lpeg.P, lpeg.S
 
-local M = {_NAME = 'context'}
+local lex = lexer.new('context')
+
+-- TeX and ConTeXt mkiv environment definitions.
+local beginend = (P('begin') + 'end')
+local startstop = (P('start') + 'stop')
 
 -- Whitespace.
-local ws = token(l.WHITESPACE, l.space^1)
+lex:add_rule('whitespace', token(lexer.WHITESPACE, lexer.space^1))
 
 -- Comments.
-local comment = token(l.COMMENT, '%' * l.nonnewline^0)
-
--- Commands.
-local command = token(l.KEYWORD, '\\' * (l.alpha^1 + S('#$&~_^%{}')))
+lex:add_rule('comment', token(lexer.COMMENT, lexer.to_eol('%')))
 
 -- Sections.
-local section = token('section', '\\' * word_match{
-  'part', 'chapter', 'section', 'subsection', 'subsubsection', 'title',
-  'subject', 'subsubject', 'subsubsubject'
-})
+local wm_section = word_match{
+  'chapter', 'part', 'section', 'subject', 'subsection', 'subsubject', 'subsubsection',
+  'subsubsubject', 'subsubsubsection', 'subsubsubsubject', 'title'
+}
+local section = token(lexer.CLASS, '\\' * startstop^-1 * wm_section)
+lex:add_rule('section', section)
 
--- ConTeXt environments.
-local environment = token('environment', '\\' * (P('start') + 'stop') * l.word)
+-- TeX and ConTeXt mkiv environments.
+local environment = token(lexer.STRING, '\\' * (beginend + startstop) * lexer.alpha^1)
+lex:add_rule('environment', environment)
+
+-- Commands.
+local command = token(lexer.KEYWORD, '\\' *
+  (lexer.alpha^1 * P('\\') * lexer.space^1 + lexer.alpha^1 + S('!"#$%&\',./;=[\\]_{|}~`^-')))
+lex:add_rule('command', command)
 
 -- Operators.
-local operator = token(l.OPERATOR, S('$&#{}[]'))
+local operator = token(lexer.OPERATOR, S('#$_[]{}~^'))
+lex:add_rule('operator', operator)
 
-M._rules = {
-  {'whitespace', ws},
-  {'comment', comment},
-  {'environment', environment},
-  {'section', section},
-  {'keyword', command},
-  {'operator', operator},
-}
-
-M._tokenstyles = {
-  environment = l.STYLE_KEYWORD,
-  section = l.STYLE_CLASS
-}
-
-M._foldsymbols = {
-  _patterns = {'\\start', '\\stop', '[{}]', '%%'},
-  ['environment'] = {['\\start'] = 1, ['\\stop'] = -1},
-  [l.OPERATOR] = {['{'] = 1, ['}'] = -1},
-  [l.COMMENT] = {['%'] = l.fold_line_comments('%')}
-}
+-- Fold points.
+lex:add_fold_point('environment', '\\start', '\\stop')
+lex:add_fold_point('environment', '\\begin', '\\end')
+lex:add_fold_point(lexer.OPERATOR, '{', '}')
+lex:add_fold_point(lexer.COMMENT, lexer.fold_consecutive_lines('%'))
 
 -- Embedded Lua.
-local luatex = l.load('lua')
+local luatex = lexer.load('lua')
 local luatex_start_rule = #P('\\startluacode') * environment
 local luatex_end_rule = #P('\\stopluacode') * environment
-l.embed_lexer(M, luatex, luatex_start_rule, luatex_end_rule)
+lex:embed(luatex, luatex_start_rule, luatex_end_rule)
 
-
-return M
+return lex
