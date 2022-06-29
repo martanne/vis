@@ -1,86 +1,67 @@
--- Copyright 2006-2017 Mitchell mitchell.att.foicica.com. See LICENSE.
+-- Copyright 2006-2022 Mitchell. See LICENSE.
 -- Java LPeg lexer.
 -- Modified by Brian Schott.
 
-local l = require('lexer')
-local token, word_match = l.token, l.word_match
-local P, R, S = lpeg.P, lpeg.R, lpeg.S
+local lexer = require('lexer')
+local token, word_match = lexer.token, lexer.word_match
+local P, S = lpeg.P, lpeg.S
 
-local M = {_NAME = 'java'}
+local lex = lexer.new('java')
 
 -- Whitespace.
-local ws = token(l.WHITESPACE, l.space^1)
+local ws = token(lexer.WHITESPACE, lexer.space^1)
+lex:add_rule('whitespace', ws)
 
--- Comments.
-local line_comment = '//' * l.nonnewline_esc^0
-local block_comment = '/*' * (l.any - '*/')^0 * P('*/')^-1
-local comment = token(l.COMMENT, line_comment + block_comment)
-
--- Strings.
-local sq_str = l.delimited_range("'", true)
-local dq_str = l.delimited_range('"', true)
-local string = token(l.STRING, sq_str + dq_str)
-
--- Numbers.
-local number = token(l.NUMBER, (l.float + l.integer) * S('LlFfDd')^-1)
+-- Classes.
+lex:add_rule('classdef', token(lexer.KEYWORD, 'class') * ws * token(lexer.CLASS, lexer.word))
 
 -- Keywords.
-local keyword = token(l.KEYWORD, word_match{
-  'abstract', 'assert', 'break', 'case', 'catch', 'class', 'const', 'continue',
-  'default', 'do', 'else', 'enum', 'extends', 'final', 'finally', 'for', 'goto',
-  'if', 'implements', 'import', 'instanceof', 'interface', 'native', 'new',
-  'package', 'private', 'protected', 'public', 'return', 'static', 'strictfp',
-  'super', 'switch', 'synchronized', 'this', 'throw', 'throws', 'transient',
+lex:add_rule('keyword', token(lexer.KEYWORD, word_match{
+  'abstract', 'assert', 'break', 'case', 'catch', 'class', 'const', 'continue', 'default', 'do',
+  'else', 'enum', 'extends', 'final', 'finally', 'for', 'goto', 'if', 'implements', 'import',
+  'instanceof', 'interface', 'native', 'new', 'package', 'private', 'protected', 'public', 'return',
+  'static', 'strictfp', 'super', 'switch', 'synchronized', 'this', 'throw', 'throws', 'transient',
   'try', 'while', 'volatile',
   -- Literals.
   'true', 'false', 'null'
-})
+}))
 
 -- Types.
-local type = token(l.TYPE, word_match{
-  'boolean', 'byte', 'char', 'double', 'float', 'int', 'long', 'short', 'void',
-  'Boolean', 'Byte', 'Character', 'Double', 'Float', 'Integer', 'Long', 'Short',
-  'String'
-})
-
--- Identifiers.
-local identifier = token(l.IDENTIFIER, l.word)
-
--- Operators.
-local operator = token(l.OPERATOR, S('+-/*%<>!=^&|?~:;.()[]{}'))
-
--- Annotations.
-local annotation = token('annotation', '@' * l.word)
+lex:add_rule('type', token(lexer.TYPE, word_match{
+  'boolean', 'byte', 'char', 'double', 'float', 'int', 'long', 'short', 'void', 'Boolean', 'Byte',
+  'Character', 'Double', 'Float', 'Integer', 'Long', 'Short', 'String'
+}))
 
 -- Functions.
-local func = token(l.FUNCTION, l.word) * #P('(')
+lex:add_rule('function', token(lexer.FUNCTION, lexer.word) * #P('('))
 
--- Classes.
-local class_sequence = token(l.KEYWORD, P('class')) * ws^1 *
-                       token(l.CLASS, l.word)
+-- Identifiers.
+lex:add_rule('identifier', token(lexer.IDENTIFIER, lexer.word))
 
-M._rules = {
-  {'whitespace', ws},
-  {'class', class_sequence},
-  {'keyword', keyword},
-  {'type', type},
-  {'function', func},
-  {'identifier', identifier},
-  {'string', string},
-  {'comment', comment},
-  {'number', number},
-  {'annotation', annotation},
-  {'operator', operator},
-}
+-- Strings.
+local sq_str = lexer.range("'", true)
+local dq_str = lexer.range('"', true)
+lex:add_rule('string', token(lexer.STRING, sq_str + dq_str))
 
-M._tokenstyles = {
-  annotation = l.STYLE_PREPROCESSOR
-}
+-- Comments.
+local line_comment = lexer.to_eol('//', true)
+local block_comment = lexer.range('/*', '*/')
+lex:add_rule('comment', token(lexer.COMMENT, line_comment + block_comment))
 
-M._foldsymbols = {
-  _patterns = {'[{}]', '/%*', '%*/', '//'},
-  [l.OPERATOR] = {['{'] = 1, ['}'] = -1},
-  [l.COMMENT] = {['/*'] = 1, ['*/'] = -1, ['//'] = l.fold_line_comments('//')}
-}
+-- Numbers.
+lex:add_rule('number', token(lexer.NUMBER, lexer.number * S('LlFfDd')^-1))
 
-return M
+-- Annotations.
+lex:add_rule('annotation', token('annotation', '@' * lexer.word))
+lex:add_style('annotation', lexer.styles.preprocessor)
+
+-- Operators.
+lex:add_rule('operator', token(lexer.OPERATOR, S('+-/*%<>!=^&|?~:;.()[]{}')))
+
+-- Fold points.
+lex:add_fold_point(lexer.OPERATOR, '{', '}')
+lex:add_fold_point(lexer.COMMENT, '/*', '*/')
+lex:add_fold_point(lexer.COMMENT, lexer.fold_consecutive_lines('//'))
+lex:add_fold_point(lexer.KEYWORD, lexer.fold_consecutive_lines('import'))
+
+return lex

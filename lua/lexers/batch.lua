@@ -1,71 +1,53 @@
--- Copyright 2006-2017 Mitchell mitchell.att.foicica.com. See LICENSE.
+-- Copyright 2006-2022 Mitchell. See LICENSE.
 -- Batch LPeg lexer.
 
-local l = require('lexer')
-local token, word_match = l.token, l.word_match
-local P, R, S = lpeg.P, lpeg.R, lpeg.S
+local lexer = require('lexer')
+local token, word_match = lexer.token, lexer.word_match
+local P, S = lpeg.P, lpeg.S
 
-local M = {_NAME = 'batch'}
+local lex = lexer.new('batch', {case_insensitive_fold_points = true})
 
 -- Whitespace.
-local ws = token(l.WHITESPACE, l.space^1)
-
--- Comments.
-local rem = (P('REM') + 'rem') * l.space
-local comment = token(l.COMMENT, (rem + '::') * l.nonnewline^0)
-
--- Strings.
-local string = token(l.STRING, l.delimited_range('"', true))
+lex:add_rule('whitespace', token(lexer.WHITESPACE, lexer.space^1))
 
 -- Keywords.
-local keyword = token(l.KEYWORD, word_match({
-  'cd', 'chdir', 'md', 'mkdir', 'cls', 'for', 'if', 'echo', 'echo.', 'move',
-  'copy', 'ren', 'del', 'set', 'call', 'exit', 'setlocal', 'shift',
-  'endlocal', 'pause', 'defined', 'exist', 'errorlevel', 'else', 'in', 'do',
-  'NUL', 'AUX', 'PRN', 'not', 'goto', 'pushd', 'popd'
-}, nil, true))
+lex:add_rule('keyword', token(lexer.KEYWORD, word_match({
+  'cd', 'chdir', 'md', 'mkdir', 'cls', 'for', 'if', 'echo', 'echo.', 'move', 'copy', 'ren', 'del',
+  'set', 'call', 'exit', 'setlocal', 'shift', 'endlocal', 'pause', 'defined', 'exist', 'errorlevel',
+  'else', 'in', 'do', 'NUL', 'AUX', 'PRN', 'not', 'goto', 'pushd', 'popd'
+}, true)))
 
 -- Functions.
-local func = token(l.FUNCTION, word_match({
-  'APPEND', 'ATTRIB', 'CHKDSK', 'CHOICE', 'DEBUG', 'DEFRAG', 'DELTREE',
-  'DISKCOMP', 'DISKCOPY', 'DOSKEY', 'DRVSPACE', 'EMM386', 'EXPAND', 'FASTOPEN',
-  'FC', 'FDISK', 'FIND', 'FORMAT', 'GRAPHICS', 'KEYB', 'LABEL', 'LOADFIX',
-  'MEM', 'MODE', 'MORE', 'MOVE', 'MSCDEX', 'NLSFUNC', 'POWER', 'PRINT', 'RD',
-  'REPLACE', 'RESTORE', 'SETVER', 'SHARE', 'SORT', 'SUBST', 'SYS', 'TREE',
-  'UNDELETE', 'UNFORMAT', 'VSAFE', 'XCOPY'
-}, nil, true))
+lex:add_rule('function', token(lexer.FUNCTION, word_match({
+  'APPEND', 'ATTRIB', 'CHKDSK', 'CHOICE', 'DEBUG', 'DEFRAG', 'DELTREE', 'DISKCOMP', 'DISKCOPY',
+  'DOSKEY', 'DRVSPACE', 'EMM386', 'EXPAND', 'FASTOPEN', 'FC', 'FDISK', 'FIND', 'FORMAT', 'GRAPHICS',
+  'KEYB', 'LABEL', 'LOADFIX', 'MEM', 'MODE', 'MORE', 'MOVE', 'MSCDEX', 'NLSFUNC', 'POWER', 'PRINT',
+  'RD', 'REPLACE', 'RESTORE', 'SETVER', 'SHARE', 'SORT', 'SUBST', 'SYS', 'TREE', 'UNDELETE',
+  'UNFORMAT', 'VSAFE', 'XCOPY'
+}, true)))
+
+-- Comments.
+local rem = (P('REM') + 'rem') * #lexer.space
+lex:add_rule('comment', token(lexer.COMMENT, lexer.to_eol(rem + '::')))
 
 -- Identifiers.
-local identifier = token(l.IDENTIFIER, l.word)
+lex:add_rule('identifier', token(lexer.IDENTIFIER, lexer.word))
+
+-- Strings.
+lex:add_rule('string', token(lexer.STRING, lexer.range('"', true)))
 
 -- Variables.
-local variable = token(l.VARIABLE,
-                       '%' * (l.digit + '%' * l.alpha) +
-                       l.delimited_range('%', true, true))
-
--- Operators.
-local operator = token(l.OPERATOR, S('+|&!<>='))
+local arg = '%' * lexer.digit + '%~' * lexer.alnum^1
+local variable = lexer.range('%', true, false)
+lex:add_rule('variable', token(lexer.VARIABLE, arg + variable))
 
 -- Labels.
-local label = token(l.LABEL, ':' * l.word)
+lex:add_rule('label', token(lexer.LABEL, ':' * lexer.word))
 
-M._rules = {
-  {'whitespace', ws},
-  {'keyword', keyword},
-  {'function', func},
-  {'comment', comment},
-  {'identifier', identifier},
-  {'string', string},
-  {'variable', variable},
-  {'label', label},
-  {'operator', operator},
-}
+-- Operators.
+lex:add_rule('operator', token(lexer.OPERATOR, S('+|&!<>=')))
 
-M._LEXBYLINE = true
+-- Fold points.
+lex:add_fold_point(lexer.KEYWORD, 'setlocal', 'endlocal')
 
-M._foldsymbols = {
-  _patterns = {'[A-Za-z]+'},
-  [l.KEYWORD] = {setlocal = 1, endlocal = -1, SETLOCAL = 1, ENDLOCAL = -1}
-}
-
-return M
+return lex

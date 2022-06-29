@@ -1,58 +1,46 @@
--- Copyright 2016-2017 David B. Lamkins <david@lamkins.net>. See LICENSE.
+-- Copyright 2016-2022 David B. Lamkins <david@lamkins.net>. See LICENSE.
 -- Protocol Buffer IDL LPeg lexer.
 -- <https://developers.google.com/protocol-buffers/>
 
-local l = require('lexer')
-local token, word_match = l.token, l.word_match
-local P, R, S = lpeg.P, lpeg.R, lpeg.S
+local lexer = require('lexer')
+local token, word_match = lexer.token, lexer.word_match
+local P, S = lpeg.P, lpeg.S
 
-local M = {_NAME = 'protobuf'}
+local lex = lexer.new('protobuf')
 
 -- Whitespace.
-local ws = token(l.WHITESPACE, l.space^1)
-
--- Comments.
-local line_comment = '//' * l.nonnewline_esc^0
-local block_comment = '/*' * (l.any - '*/')^0 * P('*/')^-1
-local comment = token(l.COMMENT, line_comment + block_comment)
-
--- Strings.
-local sq_str = P('L')^-1 * l.delimited_range("'", true)
-local dq_str = P('L')^-1 * l.delimited_range('"', true)
-local string = token(l.STRING, sq_str + dq_str)
-
--- Numbers.
-local number = token(l.NUMBER, l.float + l.integer)
+lex:add_rule('whitespace', token(lexer.WHITESPACE, lexer.space^1))
 
 -- Keywords.
-local keyword = token(l.KEYWORD, word_match{
-  'contained', 'syntax', 'import', 'option', 'package', 'message', 'group',
-  'oneof', 'optional', 'required', 'repeated', 'default', 'extend',
-  'extensions', 'to', 'max', 'reserved', 'service', 'rpc', 'returns'
-})
+lex:add_rule('keyword', token(lexer.KEYWORD, word_match{
+  'contained', 'syntax', 'import', 'option', 'package', 'message', 'group', 'oneof', 'optional',
+  'required', 'repeated', 'default', 'extend', 'extensions', 'to', 'max', 'reserved', 'service',
+  'rpc', 'returns'
+}))
 
 -- Types.
-local type = token(l.TYPE, word_match{
-  'int32', 'int64', 'uint32', 'uint64', 'sint32', 'sint64', 'fixed32',
-  'fixed64', 'sfixed32', 'sfixed64', 'float', 'double', 'bool', 'string',
-  'bytes', 'enum', 'true', 'false'
-})
+lex:add_rule('type', token(lexer.TYPE, word_match{
+  'int32', 'int64', 'uint32', 'uint64', 'sint32', 'sint64', 'fixed32', 'fixed64', 'sfixed32',
+  'sfixed64', 'float', 'double', 'bool', 'string', 'bytes', 'enum', 'true', 'false'
+}))
+
+-- Strings.
+local sq_str = P('L')^-1 * lexer.range("'", true)
+local dq_str = P('L')^-1 * lexer.range('"', true)
+lex:add_rule('string', token(lexer.STRING, sq_str + dq_str))
 
 -- Identifiers.
-local identifier = token(l.IDENTIFIER, l.word)
+lex:add_rule('identifier', token(lexer.IDENTIFIER, lexer.word))
+
+-- Comments.
+local line_comment = lexer.to_eol('//', true)
+local block_comment = lexer.range('/*', '*/')
+lex:add_rule('comment', token(lexer.COMMENT, line_comment + block_comment))
+
+-- Numbers.
+lex:add_rule('number', token(lexer.NUMBER, lexer.number))
 
 -- Operators.
-local operator = token(l.OPERATOR, S('<>=|;,.()[]{}'))
+lex:add_rule('operator', token(lexer.OPERATOR, S('<>=|;,.()[]{}')))
 
-M._rules = {
-  {'whitespace', ws},
-  {'keyword', keyword},
-  {'type', type},
-  {'identifier', identifier},
-  {'string', string},
-  {'comment', comment},
-  {'number', number},
-  {'operator', operator},
-}
-
-return M
+return lex

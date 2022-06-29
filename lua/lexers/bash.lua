@@ -1,82 +1,58 @@
--- Copyright 2006-2017 Mitchell mitchell.att.foicica.com. See LICENSE.
+-- Copyright 2006-2022 Mitchell. See LICENSE.
 -- Shell LPeg lexer.
 
-local l = require('lexer')
-local token, word_match = l.token, l.word_match
-local P, R, S = lpeg.P, lpeg.R, lpeg.S
+local lexer = require('lexer')
+local token, word_match = lexer.token, lexer.word_match
+local P, S = lpeg.P, lpeg.S
 
-local M = {_NAME = 'bash'}
+local lex = lexer.new('bash')
 
 -- Whitespace.
-local ws = token(l.WHITESPACE, l.space^1)
-
--- Comments.
-local comment = token(l.COMMENT, '#' * l.nonnewline^0)
-
--- Strings.
-local sq_str = l.delimited_range("'", false, true)
-local dq_str = l.delimited_range('"')
-local ex_str = l.delimited_range('`')
-local heredoc = '<<' * P(function(input, index)
-  local s, e, minus, _, delimiter =
-    input:find('(-?)(["\']?)([%a_][%w_]*)%2[\n\r\f;]+', index)
-  if s == index and delimiter then
-    -- If the starting delimiter of a here-doc begins with "-", then
-    -- spaces are allowed to come before the closing delimiter.
-    local close_pattern
-    if minus == '-' then
-      close_pattern = '[\n\r\f%s]+'..delimiter..'\n'
-    else
-      close_pattern = '[\n\r\f]+'..delimiter..'\n'
-    end
-    local _, e = input:find(close_pattern, e)
-    return e and e + 1 or #input + 1
-  end
-end)
-local string = token(l.STRING, sq_str + dq_str + ex_str + heredoc)
-
--- Numbers.
-local number = token(l.NUMBER, l.float + l.integer)
+lex:add_rule('whitespace', token(lexer.WHITESPACE, lexer.space^1))
 
 -- Keywords.
-local keyword = token(l.KEYWORD, word_match({
-  'if', 'then', 'elif', 'else', 'fi', 'case', 'in', 'esac', 'while', 'for',
-  'do', 'done', 'continue', 'local', 'return', 'select',
+lex:add_rule('keyword', token(lexer.KEYWORD, word_match{
+  'if', 'then', 'elif', 'else', 'fi', 'case', 'in', 'esac', 'while', 'for', 'do', 'done',
+  'continue', 'local', 'return', 'select',
   -- Operators.
-  '-a', '-b', '-c', '-d', '-e', '-f', '-g', '-h', '-k', '-p', '-r', '-s', '-t',
-  '-u', '-w', '-x', '-O', '-G', '-L', '-S', '-N', '-nt', '-ot', '-ef', '-o',
-  '-z', '-n', '-eq', '-ne', '-lt', '-le', '-gt', '-ge'
-}, '-'))
+  '-a', '-b', '-c', '-d', '-e', '-f', '-g', '-h', '-k', '-p', '-r', '-s', '-t', '-u', '-w', '-x',
+  '-O', '-G', '-L', '-S', '-N', '-nt', '-ot', '-ef', '-o', '-z', '-n', '-eq', '-ne', '-lt', '-le',
+  '-gt', '-ge'
+}))
 
 -- Identifiers.
-local identifier = token(l.IDENTIFIER, l.word)
+lex:add_rule('identifier', token(lexer.IDENTIFIER, lexer.word))
+
+-- Strings.
+local sq_str = lexer.range("'", false, false)
+local dq_str = lexer.range('"')
+local ex_str = lexer.range('`')
+local heredoc = '<<' * P(function(input, index)
+  local _, e, _, delimiter = input:find('^%-?(["\']?)([%a_][%w_]*)%1[\n\r\f;]+', index)
+  if not delimiter then return end
+  _, e = input:find('[\n\r\f]+' .. delimiter, e)
+  return e and e + 1 or #input + 1
+end)
+lex:add_rule('string', token(lexer.STRING, sq_str + dq_str + ex_str + heredoc))
+
+-- Comments.
+lex:add_rule('comment', token(lexer.COMMENT, lexer.to_eol('#')))
+
+-- Numbers.
+lex:add_rule('number', token(lexer.NUMBER, lexer.number))
 
 -- Variables.
-local variable = token(l.VARIABLE,
-                       '$' * (S('!#?*@$') + l.digit^1 + l.word +
-                              l.delimited_range('{}', true, true, true)))
+lex:add_rule('variable', token(lexer.VARIABLE, '$' *
+  (S('!#?*@$') + lexer.digit^1 + lexer.word + lexer.range('{', '}', true, false, true))))
 
 -- Operators.
-local operator = token(l.OPERATOR, S('=!<>+-/*^&|~.,:;?()[]{}'))
+lex:add_rule('operator', token(lexer.OPERATOR, S('=!<>+-/*^&|~.,:;?()[]{}')))
 
-M._rules = {
-  {'whitespace', ws},
-  {'keyword', keyword},
-  {'identifier', identifier},
-  {'string', string},
-  {'comment', comment},
-  {'number', number},
-  {'variable', variable},
-  {'operator', operator},
-}
+-- Fold points.
+lex:add_fold_point(lexer.KEYWORD, 'if', 'fi')
+lex:add_fold_point(lexer.KEYWORD, 'case', 'esac')
+lex:add_fold_point(lexer.KEYWORD, 'do', 'done')
+lex:add_fold_point(lexer.OPERATOR, '{', '}')
+lex:add_fold_point(lexer.COMMENT, lexer.fold_consecutive_lines('#'))
 
-M._foldsymbols = {
-  _patterns = {'[a-z]+', '[{}]', '#'},
-  [l.KEYWORD] = {
-    ['if'] = 1, fi = -1, case = 1, esac = -1, ['do'] = 1, done = -1
-  },
-  [l.OPERATOR] = {['{'] = 1, ['}'] = -1},
-  [l.COMMENT] = {['#'] = l.fold_line_comments('#')}
-}
-
-return M
+return lex

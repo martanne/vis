@@ -1,77 +1,56 @@
--- Copyright 2013-2017 Brian Schott (@Hackerpilot on Github). See LICENSE.
+-- Copyright 2013-2022 Mitchell. See LICENSE.
 -- Dart LPeg lexer.
+-- Written by Brian Schott (@Hackerpilot on Github).
 
-local l = require('lexer')
-local token, word_match = l.token, l.word_match
-local P, R, S = lpeg.P, lpeg.R, lpeg.S
+local lexer = require('lexer')
+local token, word_match = lexer.token, lexer.word_match
+local P, S = lpeg.P, lpeg.S
 
-local M = {_NAME = 'dart'}
+local lex = lexer.new('dart')
 
 -- Whitespace.
-local ws = token(l.WHITESPACE, l.space^1)
-
--- Comments.
-local line_comment = '//' * l.nonnewline_esc^0
-local nested_comment = l.nested_pair('/*', '*/')
-local comment = token(l.COMMENT, line_comment + nested_comment)
-
--- Strings.
-local sq_str = S('r')^-1 * l.delimited_range("'", true)
-local dq_str = S('r')^-1 * l.delimited_range('"', true)
-local sq_str_multiline = S('r')^-1 * l.delimited_range('"""')
-local dq_str_multiline = S('r')^-1 * l.delimited_range("''' ")
-local string = token(l.STRING,
-                     sq_str + dq_str + sq_str_multiline + dq_str_multiline)
-
--- Numbers.
-local number = token(l.NUMBER, (l.float + l.hex_num))
+lex:add_rule('whitespace', token(lexer.WHITESPACE, lexer.space^1))
 
 -- Keywords.
-local keyword = token(l.KEYWORD, word_match{
-  'assert', 'break', 'case', 'catch', 'class', 'const', 'continue', 'default',
-  'do', 'else', 'enum', 'extends', 'false', 'final' , 'finally', 'for', 'if',
-  'in', 'is', 'new', 'null', 'rethrow', 'return', 'super', 'switch', 'this',
-  'throw', 'true', 'try', 'var', 'void', 'while', 'with',
-})
+lex:add_rule('keyword', token(lexer.KEYWORD, word_match{
+  'assert', 'break', 'case', 'catch', 'class', 'const', 'continue', 'default', 'do', 'else', 'enum',
+  'extends', 'false', 'final', 'finally', 'for', 'if', 'in', 'is', 'new', 'null', 'rethrow',
+  'return', 'super', 'switch', 'this', 'throw', 'true', 'try', 'var', 'void', 'while', 'with'
+}))
 
-local builtin_identifiers = token(l.CONSTANT, word_match{
-  'abstract', 'as', 'dynamic', 'export', 'external', 'factory', 'get',
-  'implements', 'import', 'library', 'operator', 'part', 'set', 'static',
-  'typedef'
-})
+-- Built-ins.
+lex:add_rule('builtin', token(lexer.CONSTANT, word_match{
+  'abstract', 'as', 'dynamic', 'export', 'external', 'factory', 'get', 'implements', 'import',
+  'library', 'operator', 'part', 'set', 'static', 'typedef'
+}))
+
+-- Strings.
+local sq_str = S('r')^-1 * lexer.range("'", true)
+local dq_str = S('r')^-1 * lexer.range('"', true)
+local tq_str = S('r')^-1 * (lexer.range("'''") + lexer.range('"""'))
+lex:add_rule('string', token(lexer.STRING, tq_str + sq_str + dq_str))
 
 -- Identifiers.
-local identifier = token(l.IDENTIFIER, l.word)
+lex:add_rule('identifier', token(lexer.IDENTIFIER, lexer.word))
+
+-- Comments.
+local line_comment = lexer.to_eol('//', true)
+local block_comment = lexer.range('/*', '*/', false, false, true)
+lex:add_rule('comment', token(lexer.COMMENT, line_comment + block_comment))
+
+-- Numbers.
+lex:add_rule('number', token(lexer.NUMBER, lexer.number))
 
 -- Operators.
-local operator = token(l.OPERATOR, S('#?=!<>+-*$/%&|^~.,;()[]{}'))
+lex:add_rule('operator', token(lexer.OPERATOR, S('#?=!<>+-*$/%&|^~.,;()[]{}')))
 
--- Preprocs.
-local annotation = token('annotation', '@' * l.word^1)
+-- Annotations.
+lex:add_rule('annotation', token('annotation', '@' * lexer.word^1))
+lex:add_style('annotation', lexer.styles.preprocessor)
 
-M._rules = {
-  {'whitespace', ws},
-  {'keyword', keyword},
-  {'constant', builtin_identifiers},
-  {'string', string},
-  {'identifier', identifier},
-  {'comment', comment},
-  {'number', number},
-  {'operator', operator},
-  {'annotation', annotation},
-}
+-- Fold points.
+lex:add_fold_point(lexer.OPERATOR, '{', '}')
+lex:add_fold_point(lexer.COMMENT, '/*', '*/')
+lex:add_fold_point(lexer.COMMENT, lexer.fold_consecutive_lines('//'))
 
-M._tokenstyles = {
-  annotation = l.STYLE_PREPROCESSOR,
-}
-
-M._foldsymbols = {
-  _patterns = {'[{}]', '/[*+]', '[*+]/', '//'},
-  [l.OPERATOR] = {['{'] = 1, ['}'] = -1},
-  [l.COMMENT] = {
-    ['/*'] = 1, ['*/'] = -1, ['/+'] = 1, ['+/'] = -1,
-    ['//'] = l.fold_line_comments('//')
-  }
-}
-
-return M
+return lex

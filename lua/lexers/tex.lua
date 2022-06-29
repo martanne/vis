@@ -1,45 +1,32 @@
--- Copyright 2006-2017 Mitchell mitchell.att.foicica.com. See LICENSE.
+-- Copyright 2006-2022 Mitchell. See LICENSE.
 -- Plain TeX LPeg lexer.
 -- Modified by Robert Gieseke.
 
-local l = require('lexer')
-local token, word_match = l.token, l.word_match
-local P, R, S = lpeg.P, lpeg.R, lpeg.S
+local lexer = require('lexer')
+local token, word_match = lexer.token, lexer.word_match
+local P, S = lpeg.P, lpeg.S
 
-local M = {_NAME = 'tex'}
+local lex = lexer.new('tex')
 
 -- Whitespace.
-local ws = token(l.WHITESPACE, l.space^1)
+lex:add_rule('whitespace', token(lexer.WHITESPACE, lexer.space^1))
 
 -- Comments.
-local comment = token(l.COMMENT, '%' * l.nonnewline^0)
+lex:add_rule('comment', token(lexer.COMMENT, lexer.to_eol('%')))
 
 -- TeX environments.
-local environment = token('environment', '\\' * (P('begin') + 'end') * l.word)
+lex:add_rule('environment', token('environment', '\\' * (P('begin') + 'end') * lexer.word))
+lex:add_style('environment', lexer.styles.keyword)
 
 -- Commands.
-local command = token(l.KEYWORD, '\\' * (l.alpha^1 + S('#$&~_^%{}')))
+lex:add_rule('command', token(lexer.KEYWORD, '\\' * (lexer.alpha^1 + S('#$&~_^%{}'))))
 
 -- Operators.
-local operator = token(l.OPERATOR, S('$&#{}[]'))
+lex:add_rule('operator', token(lexer.OPERATOR, S('$&#{}[]')))
 
-M._rules = {
-  {'whitespace', ws},
-  {'comment', comment},
-  {'environment', environment},
-  {'keyword', command},
-  {'operator', operator},
-}
+-- Fold points.
+lex:add_fold_point(lexer.COMMENT, lexer.fold_consecutive_lines('%'))
+lex:add_fold_point('environment', '\\begin', '\\end')
+lex:add_fold_point(lexer.OPERATOR, '{', '}')
 
-M._tokenstyles = {
-  environment = l.STYLE_KEYWORD
-}
-
-M._foldsymbols = {
-  _patterns = {'\\begin', '\\end', '[{}]', '%%'},
-  [l.COMMENT] = {['%'] = l.fold_line_comments('%')},
-  ['environment'] = {['\\begin'] = 1, ['\\end'] = -1},
-  [l.OPERATOR] = {['{'] = 1, ['}'] = -1}
-}
-
-return M
+return lex

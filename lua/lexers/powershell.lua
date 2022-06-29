@@ -1,82 +1,60 @@
--- Copyright 2015-2017 Mitchell mitchell.att.foicica.com. See LICENSE.
+-- Copyright 2015-2022 Mitchell. See LICENSE.
 -- PowerShell LPeg lexer.
 -- Contributed by Jeff Stone.
 
-local l = require('lexer')
-local token, word_match = l.token, l.word_match
-local P, R, S = lpeg.P, lpeg.R, lpeg.S
+local lexer = require('lexer')
+local token, word_match = lexer.token, lexer.word_match
+local P, S = lpeg.P, lpeg.S
 
-local M = {_NAME = 'powershell'}
+local lex = lexer.new('powershell')
 
 -- Whitespace.
-local ws = token(l.WHITESPACE, l.space^1)
+lex:add_rule('whitespace', token(lexer.WHITESPACE, lexer.space^1))
 
 -- Comments.
-local comment = token(l.COMMENT, '#' * l.nonnewline^0)
+lex:add_rule('comment', token(lexer.COMMENT, lexer.to_eol('#')))
 
 -- Keywords.
-local keyword = token(l.KEYWORD, word_match({
-  'Begin', 'Break', 'Continue', 'Do', 'Else', 'End', 'Exit', 'For', 'ForEach',
-  'ForEach-Object', 'Get-Date', 'Get-Random', 'If', 'Param', 'Pause',
-  'Powershell', 'Process', 'Read-Host', 'Return', 'Switch', 'While',
-  'Write-Host'
-}, '-', true))
+lex:add_rule('keyword', token(lexer.KEYWORD, word_match({
+  'Begin', 'Break', 'Continue', 'Do', 'Else', 'End', 'Exit', 'For', 'ForEach', 'ForEach-Object',
+  'Get-Date', 'Get-Random', 'If', 'Param', 'Pause', 'Powershell', 'Process', 'Read-Host', 'Return',
+  'Switch', 'While', 'Write-Host'
+}, true)))
 
 -- Comparison Operators.
-local comparison = token(l.KEYWORD, '-' * word_match({
-  'and', 'as', 'band', 'bor', 'contains', 'eq', 'ge', 'gt', 'is', 'isnot', 'le',
-  'like', 'lt', 'match', 'ne', 'nomatch', 'not', 'notcontains', 'notlike', 'or',
-  'replace'
-}, nil, true))
+lex:add_rule('comparison', token(lexer.KEYWORD, '-' * word_match({
+  'and', 'as', 'band', 'bor', 'contains', 'eq', 'ge', 'gt', 'is', 'isnot', 'le', 'like', 'lt',
+  'match', 'ne', 'nomatch', 'not', 'notcontains', 'notlike', 'or', 'replace'
+}, true)))
 
 -- Parameters.
-local parameter = token(l.KEYWORD, '-' * word_match({
-  'Confirm', 'Debug', 'ErrorAction', 'ErrorVariable', 'OutBuffer',
-  'OutVariable', 'Verbose', 'WhatIf'
-}, nil, true))
+lex:add_rule('parameter', token(lexer.KEYWORD, '-' *
+  word_match('Confirm Debug ErrorAction ErrorVariable OutBuffer OutVariable Verbose WhatIf', true)))
 
 -- Properties.
-local property = token(l.KEYWORD, '.' * word_match({
-  'day', 'dayofweek', 'dayofyear', 'hour', 'millisecond', 'minute', 'month',
-  'second', 'timeofday', 'year'
-}, nil, true))
+lex:add_rule('property', token(lexer.KEYWORD, '.' *
+  word_match('day dayofweek dayofyear hour millisecond minute month second timeofday year', true)))
 
 -- Types.
-local type = token(l.KEYWORD, '[' * word_match({
-  'array', 'boolean', 'byte', 'char', 'datetime', 'decimal', 'double',
-  'hashtable', 'int', 'long', 'single', 'string', 'xml'
-}, nil, true) * ']')
+lex:add_rule('type', token(lexer.KEYWORD, '[' * word_match({
+  'array', 'boolean', 'byte', 'char', 'datetime', 'decimal', 'double', 'hashtable', 'int', 'long',
+  'single', 'string', 'xml'
+}, true) * ']'))
 
 -- Variables.
-local variable = token(l.VARIABLE, '$' * (l.digit^1 + l.word +
-                                          l.delimited_range('{}', true, true)))
+lex:add_rule('variable', token(lexer.VARIABLE,
+  '$' * (lexer.digit^1 + lexer.word + lexer.range('{', '}', true))))
 
 -- Strings.
-local string = token(l.STRING, l.delimited_range('"', true))
+lex:add_rule('string', token(lexer.STRING, lexer.range('"', true)))
 
 -- Numbers.
-local number = token(l.NUMBER, l.float + l.integer)
+lex:add_rule('number', token(lexer.NUMBER, lexer.number))
 
 -- Operators.
-local operator = token(l.OPERATOR, S('=!<>+-/*^&|~.,:;?()[]{}%`'))
+lex:add_rule('operator', token(lexer.OPERATOR, S('=!<>+-/*^&|~.,:;?()[]{}%`')))
 
-M._rules = {
-  {'whitespace', ws},
-  {'comment', comment},
-  {'keyword', keyword},
-  {'comparison', comparison},
-  {'parameter', parameter},
-  {'property', property},
-  {'type', type},
-  {'variable', variable},
-  {'string', string},
-  {'number', number},
-  {'operator', operator},
-}
+-- Fold points.
+lex:add_fold_point(lexer.OPERATOR, '{', '}')
 
-M._foldsymbols = {
-  _patterns = {'[{}]'},
-  [l.OPERATOR] = {['{'] = 1, ['}'] = -1}
-}
-
-return M
+return lex

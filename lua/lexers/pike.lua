@@ -1,70 +1,53 @@
--- Copyright 2006-2017 Mitchell mitchell.att.foicica.com. See LICENSE.
+-- Copyright 2006-2022 Mitchell. See LICENSE.
 -- Pike LPeg lexer.
 
-local l = require('lexer')
-local token, word_match = l.token, l.word_match
-local P, R, S = lpeg.P, lpeg.R, lpeg.S
+local lexer = require('lexer')
+local token, word_match = lexer.token, lexer.word_match
+local P, S = lpeg.P, lpeg.S
 
-local M = {_NAME = 'pike'}
+local lex = lexer.new('pike')
 
 -- Whitespace.
-local ws = token(l.WHITESPACE, l.space^1)
-
--- Comments.
-local line_comment = '//' * l.nonnewline_esc^0
-local nested_comment = l.nested_pair('/*', '*/')
-local comment = token(l.COMMENT, line_comment + nested_comment)
-
--- Strings.
-local sq_str = l.delimited_range("'", true)
-local dq_str = l.delimited_range('"', true)
-local lit_str = '#' * l.delimited_range('"')
-local string = token(l.STRING, sq_str + dq_str + lit_str)
-
--- Numbers.
-local number = token(l.NUMBER, (l.float + l.integer) * S('lLdDfF')^-1)
-
--- Preprocessors.
-local preproc = token(l.PREPROCESSOR, l.starts_line('#') * l.nonnewline^0)
+lex:add_rule('whitespace', token(lexer.WHITESPACE, lexer.space^1))
 
 -- Keywords.
-local keyword = token(l.KEYWORD, word_match{
-  'break', 'case', 'catch', 'continue', 'default', 'do', 'else', 'for',
-  'foreach', 'gauge', 'if', 'lambda', 'return', 'sscanf', 'switch', 'while',
-  'import', 'inherit',
+lex:add_rule('keyword', token(lexer.KEYWORD, word_match{
+  'break', 'case', 'catch', 'continue', 'default', 'do', 'else', 'for', 'foreach', 'gauge', 'if',
+  'lambda', 'return', 'sscanf', 'switch', 'while', 'import', 'inherit',
   -- Type modifiers.
-  'constant', 'extern', 'final', 'inline', 'local', 'nomask', 'optional',
-  'private', 'protected', 'public', 'static', 'variant'
-})
+  'constant', 'extern', 'final', 'inline', 'local', 'nomask', 'optional', 'private', 'protected',
+  'public', 'static', 'variant'
+}))
 
 -- Types.
-local type = token(l.TYPE, word_match{
-  'array', 'class', 'float', 'function', 'int', 'mapping', 'mixed', 'multiset',
-  'object', 'program', 'string', 'void'
-})
+lex:add_rule('type', token(lexer.TYPE, word_match(
+  'array class float function int mapping mixed multiset object program string void')))
 
 -- Identifiers.
-local identifier = token(l.IDENTIFIER, l.word)
+lex:add_rule('identifier', token(lexer.IDENTIFIER, lexer.word))
+
+-- Strings.
+local sq_str = lexer.range("'", true)
+local dq_str = P('#')^-1 * lexer.range('"', true)
+lex:add_rule('string', token(lexer.STRING, sq_str + dq_str))
+
+-- Comments.
+local line_comment = lexer.to_eol('//', true)
+local block_comment = lexer.range('/*', '*/', false, false, true)
+lex:add_rule('comment', token(lexer.COMMENT, line_comment + block_comment))
+
+-- Numbers.
+lex:add_rule('number', token(lexer.NUMBER, lexer.number * S('lLdDfF')^-1))
+
+-- Preprocessors.
+lex:add_rule('preprocessor', token(lexer.PREPROCESSOR, lexer.to_eol(lexer.starts_line('#'))))
 
 -- Operators.
-local operator = token(l.OPERATOR, S('<>=!+-/*%&|^~@`.,:;()[]{}'))
+lex:add_rule('operator', token(lexer.OPERATOR, S('<>=!+-/*%&|^~@`.,:;()[]{}')))
 
-M._rules = {
-  {'whitespace', ws},
-  {'keyword', keyword},
-  {'type', type},
-  {'identifier', identifier},
-  {'string', string},
-  {'comment', comment},
-  {'number', number},
-  {'preproc', preproc},
-  {'operator', operator},
-}
+-- Fold points.
+lex:add_fold_point(lexer.OPERATOR, '{', '}')
+lex:add_fold_point(lexer.COMMENT, '/*', '*/')
+lex:add_fold_point(lexer.COMMENT, lexer.fold_consecutive_lines('//'))
 
-M._foldsymbols = {
-  _patterns = {'[{}]', '/%*', '%*/', '//'},
-  [l.OPERATOR] = {['{'] = 1, ['}'] = -1},
-  [l.COMMENT] = {['/*'] = 1, ['*/'] = -1, ['//'] = l.fold_line_comments('//')}
-}
-
-return M
+return lex
