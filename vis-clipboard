@@ -83,9 +83,9 @@ vc_paste() {
 
 vc_wlclipboard_copy() {
 	if [ "$sel" = "primary" ]; then
-		wl-copy --trim-newline --primary -t TEXT
+		wl-copy --primary -t TEXT
 	else
-		wl-copy --trim-newline -t TEXT
+		wl-copy -t TEXT
 	fi
 }
 
