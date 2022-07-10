@@ -189,8 +189,6 @@ void vis_update(Vis*);
  * @rst
  * .. note:: If the given file name is already opened in another window,
  *           the underlying File object is shared.
- * .. warning:: This duplication detection is currently based on normalized,
- *              absolute file names. TODO: compare inodes instead.
  * @endrst
  */
 bool vis_window_new(Vis*, const char *filename);
