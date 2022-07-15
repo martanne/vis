@@ -22,8 +22,9 @@ lex:add_rule('constant', token(lexer.CONSTANT, word_match('true false iota nil')
 
 -- Types.
 lex:add_rule('type', token(lexer.TYPE, word_match{
-  'bool', 'byte', 'complex64', 'complex128', 'error', 'float32', 'float64', 'int', 'int8', 'int16',
-  'int32', 'int64', 'rune', 'string', 'uint', 'uint8', 'uint16', 'uint32', 'uint64', 'uintptr'
+  'any', 'bool', 'byte', 'comparable', 'complex64', 'complex128', 'error', 'float32', 'float64',
+  'int', 'int8', 'int16', 'int32', 'int64', 'rune', 'string', 'uint', 'uint8', 'uint16', 'uint32',
+  'uint64', 'uintptr'
 }))
 
 -- Functions.
@@ -50,7 +51,7 @@ lex:add_rule('comment', token(lexer.COMMENT, line_comment + block_comment))
 lex:add_rule('number', token(lexer.NUMBER, lexer.number * P('i')^-1))
 
 -- Operators.
-lex:add_rule('operator', token(lexer.OPERATOR, S('+-*/%&|^<>=!:;.,()[]{}')))
+lex:add_rule('operator', token(lexer.OPERATOR, S('+-*/%&|^<>=!~:;.,()[]{}')))
 
 -- Fold points.
 lex:add_fold_point(lexer.OPERATOR, '{', '}')
