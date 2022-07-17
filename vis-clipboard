@@ -8,13 +8,13 @@ vc_fatal() {
 }
 
 vc_usage() {
-	vc_fatal "`basename $0` [--selection sel] [--usable|--copy|--paste]"
+	vc_fatal "$(basename "$0") [--selection sel] [--usable|--copy|--paste]"
 }
 
 vc_determine_command() {
 	if [ -n "$WAYLAND_DISPLAY" ]; then
 		for c in wl-copy wl-paste; do
-			if type "$c" >/dev/null 2>&1; then
+			if command -v "$c" >/dev/null 2>&1; then
 				echo "wlclipboard"
 				return 0
 			fi
@@ -23,7 +23,7 @@ vc_determine_command() {
 	
 	if [ -n "$DISPLAY" ]; then
 		for c in xclip xsel; do
-			if type "$c" >/dev/null 2>&1; then
+			if command -v "$c" >/dev/null 2>&1; then
 				echo "$c"
 				return 0
 			fi
@@ -34,7 +34,7 @@ vc_determine_command() {
 		vc_fatal "clipboard primary selection is not supported on your platform"
 	fi
 
-	if type pbcopy >/dev/null 2>&1; then
+	if command -v pbcopy >/dev/null 2>&1; then
 		echo 'mac'
 		return 0
 	fi
@@ -56,25 +56,27 @@ vc_usable() {
 }
 
 vc_copy() {
-	COPY_CMD="`vc_determine_command 2>/dev/null`"
+	COPY_CMD="$(vc_determine_command 2>/dev/null)"
 
+	# shellcheck disable=SC2181
 	if [ $? -ne 0 ] || [ -z "$COPY_CMD" ]; then
 		vc_fatal 'System clipboard not supported'
 	fi
 
-	vc_${COPY_CMD}_copy
+	"vc_${COPY_CMD}_copy"
 
 	exit $?
 }
 
 vc_paste() {
-	PASTE_CMD="`vc_determine_command 2>/dev/null`"
+	PASTE_CMD="$(vc_determine_command 2>/dev/null)"
 
+	# shellcheck disable=SC2181
 	if [ $? -ne 0 ] || [ -z "$PASTE_CMD" ]; then
 		vc_fatal 'System clipboard not supported'
 	fi
 
-	vc_${PASTE_CMD}_paste
+	"vc_${PASTE_CMD}_paste"
 
 	exit $?
 }
