@@ -179,19 +179,26 @@ err:
 
 static File *file_new(Vis *vis, const char *name) {
 	char *name_absolute = NULL;
+	bool cmp_names = 0;
 	struct stat new;
 
 	if (name) {
 		if (!(name_absolute = absolute_path(name)))
 			return NULL;
-		if (stat(name_absolute, &new) && errno != ENOENT)
-			return NULL;
+
+		if (stat(name_absolute, &new)) {
+			if (errno != ENOENT) {
+				free(name_absolute);
+				return NULL;
+			}
+			cmp_names = 1;
+		}
 
 		File *existing = NULL;
 		/* try to detect whether the same file is already open in another window */
-		for (File *file = vis->files; file; file = file->next) {
-			if (file->name && file->stat.st_dev == new.st_dev &&
-				file->stat.st_ino == new.st_ino) {
+		for (File *file = vis->files; file && file->name; file = file->next) {
+			if (cmp_names && strcmp(file->name, name_absolute) == 0 ||
+				file->stat.st_dev == new.st_dev && file->stat.st_ino == new.st_ino) {
 				existing = file;
 				break;
 			}
