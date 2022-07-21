@@ -9,7 +9,6 @@ jobs:
         os:
           - macos-12
           - macos-11 # latest
-          - macos-10.15
         config:
           - ""
           - --disable-curses
