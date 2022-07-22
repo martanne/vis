@@ -482,32 +482,33 @@ vis.events.subscribe(vis.events.WIN_OPEN, function(win)
 	end
 
 	local name = win.file.name
-	-- remove ignored suffixes from filename
-	local sanitizedfn = name and name:match"[^/]-$"
-	if sanitizedfn then
-		repeat
-			local changed = sanitizedfn
-			for _, pattern in ipairs(vis.ftdetect.ignoresuffixes) do
-				sanitizedfn = sanitizedfn:gsub(pattern,"")
-			end
-		until #sanitizedfn==0 or sanitizedfn == changed
-	end
+	local mime
 
-	-- detect filetype by filename ending with a configured extension
-	if sanitizedfn ~= nil then
-		for lang, ft in pairs(vis.ftdetect.filetypes) do
-			for _, pattern in pairs(ft.ext or {}) do
-				if sanitizedfn:match(pattern) then
-					set_filetype(lang, ft)
-					return
+	if name and #name>0 then
+		local sanitizedfn = name:match"[^/]+"
+		if sanitizedfn then
+			local changed
+			while #sanitizedfn>0 and sanitizedfn~=changed do
+				changed = sanitizedfn
+				for _, pattern in ipairs(vis.ftdetect.ignoresuffixes) do
+					sanitizedfn = sanitizedfn:gsub(pattern,"")
 				end
 			end
 		end
-	end
+
+		if sanitizedfn and #sanitizedfn>0 then
+			-- detect filetype by filename ending with a configured extension
+			for lang, ft in pairs(vis.ftdetect.filetypes) do
+				for _, pattern in pairs(ft.ext or {}) do
+					if sanitizedfn:match(pattern) then
+						set_filetype(lang, ft)
+						return
+					end
+				end
+			end
+		end
 
 	-- run file(1) to determine mime type
-	local mime
-	if name ~= nil then
 		local file = io.popen(string.format("file -bL --mime-type -- '%s'", name:gsub("'", "'\\''")))
 		if file then
 			mime = file:read('*all')
