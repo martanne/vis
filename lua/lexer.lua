@@ -1,7 +1,6 @@
 -- Copyright 2006-2022 Mitchell. See LICENSE.
 
 local M = {}
-lpeg = require'lpeg'
 -- html is broken
 -- probably all embedded lexers
 
@@ -807,7 +806,7 @@ lpeg = require'lpeg'
 --   This is an alias for `lexer.property['fold.line.groups'] = '1|0'`.
 module('lexer')]=]
 
-local lpeg = lpeg
+lpeg = require"lpeg"
 local lpeg_P, lpeg_R, lpeg_S, lpeg_V = lpeg.P, lpeg.R, lpeg.S, lpeg.V
 local lpeg_Ct, lpeg_Cc, lpeg_Cp = lpeg.Ct, lpeg.Cc, lpeg.Cp
 local lpeg_Cmt, lpeg_C = lpeg.Cmt, lpeg.C
