@@ -2,6 +2,8 @@
 
 local M = {}
 lpeg = require'lpeg'
+-- html is broken
+-- probably all embedded lexers
 
 --[=[ This comment is for LuaDoc.
 ---
@@ -805,7 +807,7 @@ lpeg = require'lpeg'
 --   This is an alias for `lexer.property['fold.line.groups'] = '1|0'`.
 module('lexer')]=]
 
-local lpeg = require('lpeg')
+local lpeg = lpeg
 local lpeg_P, lpeg_R, lpeg_S, lpeg_V = lpeg.P, lpeg.R, lpeg.S, lpeg.V
 local lpeg_Ct, lpeg_Cc, lpeg_Cp = lpeg.Ct, lpeg.Cc, lpeg.Cp
 local lpeg_Cmt, lpeg_C = lpeg.Cmt, lpeg.C
@@ -1002,7 +1004,7 @@ end
 function M.add_style(lexer, token_name, style)
   local num_styles = lexer._numstyles
   if num_styles == 33 then num_styles = num_styles + 8 end -- skip predefined
-  if num_styles >= 256 then print('Too many styles defined (256 MAX)') end
+  if num_styles >= 256 then vis:info('Too many styles defined (256 MAX)') end
   lexer._TOKENSTYLES[token_name], lexer._numstyles = num_styles, num_styles + 1
   if type(style) == 'table' and not getmetatable(style) then style = style_obj.new(style) end
   lexer._EXTRASTYLES[token_name] = tostring(style)
@@ -1430,11 +1432,6 @@ local lexers = {} -- cache of loaded lexers
 --   purposes). The default value is `false`.
 -- @return lexer object
 -- @name load
-
--- finds the vis installed lexer
--- TODO: include ~/.config/vis or ~/.vis
-local LEXERPATH1 = package.searchpath("lexers/null", package.path):gsub("/null%.lua$","")
-
 function M.load(name, alt_name, cache)
   if cache and lexers[alt_name or name] then return lexers[alt_name or name] end
 
@@ -1442,7 +1439,7 @@ function M.load(name, alt_name, cache)
   -- `property_expanded` tables do not exist (they are not useful). Create them in order prevent
   -- errors from occurring.
   if not M.property then
-    M.property = setmetatable( {['lexer.lpeg.home'] = LEXERPATH1 }, {
+    M.property = setmetatable( {}, {
       __index = function() return '' end,
       __newindex = function(t, k, v) rawset(t, k, tostring(v)) end
     })
@@ -1464,7 +1461,6 @@ function M.load(name, alt_name, cache)
   -- so when adding it later, do not reference the potentially incorrect value.
   M.WHITESPACE = (alt_name or name) .. '_whitespace'
   local lexer = require("lexers/" .. name)
-  -- local lexer = dofile(assert( package.searchpath(name, LEXERPATH2) ))
   assert(lexer, string.format("'%s.lua' did not return a lexer", name))
   if alt_name then lexer._NAME = alt_name end
   if not getmetatable(lexer) or lexer._LEGACY then
@@ -1619,7 +1615,7 @@ end
 -- @see range
 -- @name delimited_range
 function M.delimited_range(chars, single_line, no_escape, balanced)
-  print("lexer.delimited_range() is deprecated, use lexer.range()")
+  vis:info("lexer.delimited_range() is deprecated, use lexer.range()")
   local s = chars:sub(1, 1)
   local e = #chars == 2 and chars:sub(2, 2) or s
   local range
@@ -1683,7 +1679,7 @@ end
 -- @see range
 -- @name nested_pair
 function M.nested_pair(start_chars, end_chars)
-  print("lexer.nested_pair() is deprecated, use lexer.range()")
+  vis:info("lexer.nested_pair() is deprecated, use lexer.range()")
   local s, e = start_chars, lpeg_P(end_chars)^-1
   return lpeg_P{s * (M.any - s - end_chars + lpeg_V(1))^0 * e}
 end
@@ -1813,7 +1809,7 @@ end
 -- @usage lex:add_fold_point(lexer.COMMENT, '//', lexer.fold_line_comments('//'))
 -- @name fold_line_comments
 function M.fold_line_comments(prefix)
-  print('lexer.fold_line_comments() is deprecated, use lexer.fold_consecutive_lines()')
+  vis:info('lexer.fold_line_comments() is deprecated, use lexer.fold_consecutive_lines()')
   return select(2, M.fold_consecutive_lines(prefix))
 end
 
