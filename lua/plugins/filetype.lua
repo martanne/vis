@@ -481,26 +481,26 @@ vis.events.subscribe(vis.events.WIN_OPEN, function(win)
 		win:set_syntax(syntax)
 	end
 
-	local name = win.file.name
+	local path = win.file.name -- filepath
 	local mime
 
-	if name and #name>0 then
-		local sanitizedfn = name:match"[^/]+"
-		if sanitizedfn then
+	if path and #path>0 then
+		local name = path:match"[^/]+" -- filename
+		if name then
 			local changed
-			while #sanitizedfn>0 and sanitizedfn~=changed do
-				changed = sanitizedfn
+			while #name>0 and name~=changed do
+				changed = name
 				for _, pattern in ipairs(vis.ftdetect.ignoresuffixes) do
-					sanitizedfn = sanitizedfn:gsub(pattern,"")
+					name = name:gsub(pattern,"")
 				end
 			end
 		end
 
-		if sanitizedfn and #sanitizedfn>0 then
+		if name and #name>0 then
 			-- detect filetype by filename ending with a configured extension
 			for lang, ft in pairs(vis.ftdetect.filetypes) do
 				for _, pattern in pairs(ft.ext or {}) do
-					if sanitizedfn:match(pattern) then
+					if name:match(pattern) then
 						set_filetype(lang, ft)
 						return
 					end
@@ -509,7 +509,7 @@ vis.events.subscribe(vis.events.WIN_OPEN, function(win)
 		end
 
 	-- run file(1) to determine mime type
-		local file = io.popen(string.format("file -bL --mime-type -- '%s'", name:gsub("'", "'\\''")))
+		local file = io.popen(string.format("file -bL --mime-type -- '%s'", path:gsub("'", "'\\''")))
 		if file then
 			mime = file:read('*all')
 			file:close()
