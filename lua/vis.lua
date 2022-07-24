@@ -264,7 +264,7 @@ vis.types.window.set_syntax = function(win, syntax)
 	if not lexer then return false end
 
 	for token_name, id in pairs(lexer._TOKENSTYLES) do
-		local style = lexers['STYLE_'..string.upper(token_name)] or lexer._EXTRASTYLES[token_name]
+		local style = lexers['STYLE_' .. token_name:upper()] or lexer._EXTRASTYLES[token_name]
 		if type(style) == 'table' then
 			local s = ''
 			if style.bold then
@@ -280,7 +280,13 @@ vis.types.window.set_syntax = function(win, syntax)
 			end
 			style = s
 		end
-		win:style_define(id, style)
+		local pattern = "%$%(style%..*%)"
+		local prop_name = style:match(pattern)
+		if prop_name ~= nil then
+			local real_value = tostring(lexers["STYLE_" .. string.upper(prop_name:sub(9,string.len(prop_name)-1))])
+			style = string.gsub(style, pattern, real_value)
+		end
+		if style ~= nil then win:style_define(id, style) end
 	end
 
 	win.syntax = syntax
