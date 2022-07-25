@@ -488,7 +488,7 @@ vis.events.subscribe(vis.events.WIN_OPEN, function(win)
 	local mime
 
 	if path and #path > 0 then
-		local name = path:match("[^/]+") -- filename
+		local name = path:match("[^/]+$") -- filename
 		if name then
 			local unchanged
 			while #name > 0 and name ~= unchanged do
