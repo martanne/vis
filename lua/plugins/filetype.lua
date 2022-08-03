@@ -493,16 +493,6 @@ vis.ftdetect.filetypes = {
 	},
 }
 
-local function searchpath(name, path)
-	local tried = {}
-	for part in path:gmatch('[^;]+') do
-		local filename = part:gsub('%?', name)
-		local ok, errmsg = loadfile(filename)
-		if ok or not errmsg:find('cannot open') then return filename end
-	end
-	return nil
-end
-
 vis.events.subscribe(vis.events.WIN_OPEN, function(win)
 
 	local set_filetype = function(syntax, filetype)
@@ -510,7 +500,7 @@ vis.events.subscribe(vis.events.WIN_OPEN, function(win)
 			vis:command(cmd)
 		end
 		local path = vis.lexers.property['lexer.lpeg.home']:gsub(';', '/?.lua;') .. '/?.lua'
-		local lexpath = searchpath('lexers/'..syntax, path)
+		local lexpath = package.searchpath('lexers/'..syntax, path)
 		if lexpath ~= nil then
 			win:set_syntax(syntax)
 		else
