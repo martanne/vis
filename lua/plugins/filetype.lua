@@ -266,9 +266,6 @@ vis.ftdetect.filetypes = {
 		utility = {"^make$"},
 		ext = { "%.iface$", "%.mak$", "%.mk$", "GNUmakefile", "makefile", "Makefile" },
 		mime = { "text/x-makefile" },
-		detect = function(_, data)
-			return data:match("^#!/usr/bin/make")
-		end
 	},
 	man = {
 		ext = {
@@ -564,6 +561,56 @@ vis.events.subscribe(vis.events.WIN_OPEN, function(win)
 			if type(ft.detect) == 'function' and ft.detect(file, data) then
 				set_filetype(lang, ft)
 				return
+			end
+		end
+
+--[[ hashbang check
+	hashbangs only have command <SPACE> argument
+		if /env, find utility in args
+			discard first arg if /-[^S]*S/; and all subsequent /=/
+			NOTE: this means you can't have a command with /^-|=/
+	return first field, which should be the utility.
+	NOTE: long-options unsupported
+--]]
+		local fullhb, utility = data:match"^#![ \t]*(/+[^/\n]+[^\n]*)"
+		if fullhb then
+			local i, field = 1, {}
+			for m in fullhb:gmatch"%g+" do field[i],i = m,i+1 end
+			-- NOTE: executables should not have a space (or =, see below)
+			if field[1]:match"/env$" then
+				table.remove(field,1)
+				-- it is assumed that the first argument are short options, with -S inside
+				if string.match(field[1] or "", "^%-[^S-]*S") then -- -S found
+					table.remove(field,1)
+					-- skip all name=value
+					while string.match(field[1] or "","=") do
+						table.remove(field,1)
+					end
+					-- (hopefully) whatever is left in field[1] should be the utility or nil
+				end
+			end
+			utility = string.match(field[1] or "", "[^/]+$") -- remove filepath
+		end
+
+		local function searcher(tbl, subject)
+			for i, pattern in ipairs(tbl or {}) do
+				if string.match(subject, pattern) then
+					return true
+				end
+			end
+			return false
+		end
+
+		if utility or fullhb then
+			for lang, ft in pairs(vis.ftdetect.filetypes) do
+				if
+					utility and searcher(ft.utility, utility)
+					or
+					fullhb and searcher(ft.hashbang, fullhb)
+				then
+					set_filetype(lang, ft)
+					return
+				end
 			end
 		end
 	end
