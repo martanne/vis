@@ -32,7 +32,7 @@ for t in $TESTS; do
 		printf "Running test %s with %s ... " "$t" "$e"
 		rm -f "$OUT" "$ERR"
 		[ "$e" = "$VIM" ] && EDITOR="$VIM -u NONE -U NONE -N -i NONE"
-		{ cat "$t.keys"; printf "<Escape>:w! $OUT<Enter>:qall!<Enter>\n"; } | cpp -P 2>/dev/null | sed 's/[ \t]*$//' | ../util/keys | $EDITOR "$t.in" >/dev/null 2>&1
+		{ cat "$t.keys"; printf "<Escape>:w! $OUT<Enter>:qall!<Enter>\n"; } | ${CPP:-cpp} -P 2>/dev/null | sed 's/[ \t]*$//' | ../util/keys | $EDITOR "$t.in" >/dev/null 2>&1
 		if [ "$e" = "$VIM" ]; then
 			if [ -e "$REF" ]; then
 				if cmp -s "$REF" "$OUT"; then
