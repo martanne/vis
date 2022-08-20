@@ -9,9 +9,7 @@ VIS_MENU_PROMPT=""
 ALLOW_AUTO_SELECT=1
 
 wrap_dirs() {
-	local o
-
-	while read o
+	while read -r o
 	do
 		[ -d "$o" ] && printf "%s/\n" "$o" || printf "%s\n" "$o"
 	done
@@ -45,7 +43,7 @@ done
 # At this point, all the remaining arguments should be the expansion of
 # any globs that were passed on the command line.
 
-if [ $# -eq 1 -a "$ALLOW_AUTO_SELECT" = 1 ]; then
+if [ $# -eq 1 ] && [ "$ALLOW_AUTO_SELECT" = 1 ]; then
 	# If there were globs on the command-line, they've expanded to
 	# a single item, so we can just process it.
 
@@ -55,7 +53,7 @@ if [ $# -eq 1 -a "$ALLOW_AUTO_SELECT" = 1 ]; then
 		# full list, even if it's just an empty directory.
 		cd "$1"
 		IFS=$NL  # Don't split ls output on tabs or spaces.
-		exec "$0" -p "$VIS_MENU_PROMPT" -f .. $(ls -1)
+		exec "$0" -p "$VIS_MENU_PROMPT" -f .. "$(ls -1)"
 	else
 		# We've found a single item, and it's not a directory,
 		# so it must be a filename (or file-like thing) to open,

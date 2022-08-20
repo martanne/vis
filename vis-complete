@@ -61,5 +61,5 @@ else
 		sed "s|^$(dirname $XPATTERN)/||"
 fi |
 	vis-menu -b |
-	sed "s|^$(basename $PATTERN)$(echo $PATTERN | tail -c 2 | fgrep /)||" |
+	sed "s|^$(basename $PATTERN)$(echo $PATTERN | tail -c 2 | grep -F /)||" |
 	tr -d '\n'
