@@ -113,7 +113,7 @@ calcoffsets(void) {
 }
 
 static void
-cleanup() {
+cleanup(void) {
 	if (barpos == 0) fprintf(stderr, "\n");
 	else fprintf(stderr, "\033[G\033[K");
 	tcsetattr(0, TCSANOW, &tio_old);
@@ -287,7 +287,7 @@ nextrune(int inc) {
 }
 
 static void
-readstdin() {
+readstdin(void) {
 	char buf[sizeof text], *p, *maxstr = NULL;
 	size_t i, max = 0, size = 0;
 
