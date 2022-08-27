@@ -19,8 +19,15 @@ vc_determine_command() {
 				return 0
 			fi
 		done
+
+		for c in waycopy waypaste; do
+			if command -v "$c" >/dev/null 2>&1; then
+				echo "wayclip"
+				return 0
+			fi
+		done
 	fi
-	
+
 	if [ -n "$DISPLAY" ]; then
 		for c in xclip xsel; do
 			if command -v "$c" >/dev/null 2>&1; then
@@ -95,6 +102,14 @@ vc_wlclipboard_paste() {
 	else
 		wl-paste --no-newline -t text
 	fi
+}
+
+vc_wayclip_copy() {
+	waycopy
+}
+
+vc_wayclip_paste() {
+	waypaste
 }
 
 vc_xsel_copy() {
