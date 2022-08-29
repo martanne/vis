@@ -97,7 +97,7 @@ vis-single-payload.inc: $(EXECUTABLES) lua/*
 	echo 'static unsigned char vis_single_payload[] = {' >> $@
 	$(TAR) --mtime='2014-07-15 01:23Z' --owner=0 --group=0 --numeric-owner --mode='a+rX-w' -c \
 		$(EXECUTABLES) $$(find lua -name '*.lua' | LC_ALL=C sort) | xz -T 1 | \
-		od -t x1 -v | sed -e 's/^[0-9a-fA-F]\{1,\}//g' -e 's/\([0-9a-f]\{2\}\)/0x\1,/g' >> $@
+		od -t x1 -A n -v | sed 's/\([0-9a-f]\{2\}\)/0x\1,/g' >> $@
 	echo '};' >> $@
 	echo '#endif' >> $@
 
