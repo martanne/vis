@@ -18,7 +18,7 @@
 -- @usage
 -- vis:operator_new("gq", function(file, range, pos)
 -- 	local status, out, err = vis:pipe(file, range, "fmt")
--- 	if not status then
+-- 	if status ~= 0 then
 -- 		vis:info(err)
 -- 	else
 -- 		file:delete(range)
