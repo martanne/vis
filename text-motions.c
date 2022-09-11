@@ -459,7 +459,8 @@ size_t text_paragraph_prev(Text *txt, size_t pos) {
 	char c;
 	Iterator it = text_iterator_get(txt, pos);
 
-	while (text_iterator_byte_prev(&it, &c) && (c == '\n' || blank(c)));
+	while (text_iterator_byte_get(&it, &c) && (c == '\n' || blank(c)))
+		text_iterator_char_prev(&it, NULL);
 	return text_line_blank_prev(txt, it.pos);
 }
 
