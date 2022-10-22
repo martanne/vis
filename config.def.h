@@ -279,6 +279,7 @@ static const KeyBinding bindings_visual_line[] = {
 
 static const KeyBinding bindings_readline[] = {
 	{ "<Backspace>",        ACTION(DELETE_CHAR_PREV)                    },
+	{ "<C-g>",              ALIAS("<Escape>")                           },
 	{ "<C-c>",              ALIAS("<Escape>")                           },
 	{ "<C-d>",              ACTION(DELETE_CHAR_NEXT)                    },
 	{ "<C-h>",              ALIAS("<Backspace>")                        },

@@ -458,6 +458,7 @@ run(void) {
 				break;
 			}
 			break;
+		case CONTROL('G'):
 		case CONTROL('C'):
 			return 1;
 		case CONTROL('M'): /* Return */
