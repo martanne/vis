@@ -98,11 +98,11 @@ vc_wlclipboard_paste() {
 }
 
 vc_xsel_copy() {
-	xsel --"$sel" -bi
+	xsel --"$sel" -i
 }
 
 vc_xsel_paste() {
-	xsel --"$sel" -bo
+	xsel --"$sel" -o
 }
 
 vc_xclip_copy() {
