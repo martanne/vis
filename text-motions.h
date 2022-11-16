@@ -2,7 +2,7 @@
 #define TEXT_MOTIONS_H
 
 /* these functions all take a position in bytes from the start of the file,
- * perform a certain movement and return the new postion. If the movement
+ * perform a certain movement and return the new position. If the movement
  * is not possible the original position is returned unchanged. */
 
 #include <stddef.h>

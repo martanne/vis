@@ -33,14 +33,14 @@ typedef struct {
 } Array;
 
 /**
- * Initalize an Array object to store pointers.
+ * Initialize an Array object to store pointers.
  * @rst
  * .. note:: Is equivalent to ``array_init_sized(arr, sizeof(void*))``.
  * @endrst
  */
 void array_init(Array*);
 /**
- * Initalize an Array object to store arbitrarily sized objects.
+ * Initialize an Array object to store arbitrarily sized objects.
  */
 void array_init_sized(Array*, size_t elem_size);
 /** Initialize Array by using the same element size as in ``from``. */

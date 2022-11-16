@@ -105,7 +105,7 @@ A mark keeps track of a text position. Subsequent text changes will update
 all marks placed after the modification point. Reverting to an older text
 state will hide all affected marks, redoing the changes will restore them.
 
-.. warning:: Due to an optimization cached modifications (i.e. no ``text_snaphot``
+.. warning:: Due to an optimization cached modifications (i.e. no ``text_snapshot``
              was performed between setting the mark and issuing the changes) might
              not adjust mark positions accurately.
 

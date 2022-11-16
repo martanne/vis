@@ -25,7 +25,7 @@
 -- 		file:insert(range.start, out)
 -- 	end
 -- 	return range.start -- new cursor location
--- end, "Formating operator, filter range through fmt(1)")
+-- end, "Formatting operator, filter range through fmt(1)")
 --
 vis.operator_new = function(vis, key, operator, help)
 	local id = vis:operator_register(operator)
@@ -47,7 +47,7 @@ end
 -- The motion function will receive the @{Window} and an initial position
 -- (in bytes from the start of the file) as argument and is expected to
 -- return the resulting position.
--- @tparam string key the key to associate with the new mption
+-- @tparam string key the key to associate with the new option
 -- @tparam function motion the motion logic implemented as Lua function
 -- @tparam[opt] string help the single line help text as displayed in `:help`
 -- @treturn bool whether the new motion could be installed
@@ -214,7 +214,7 @@ end
 -- value terminates the event propagation. The other handlers will not be called.
 --
 -- @tparam string event the event name
--- @tparam ... ... the remaining paramters are passed on to the handler
+-- @tparam ... ... the remaining parameters are passed on to the handler
 events.emit = function(event, ...)
 	local h = handlers[event]
 	if not h then return end

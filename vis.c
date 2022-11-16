@@ -1227,7 +1227,7 @@ static void vis_keys_process(Vis *vis, size_t pos) {
 		*end = tmp;
 
 		if (prefix) {
-			/* input sofar is ambigious, wait for more */
+			/* input so far is ambiguous, wait for more */
 			cur = end;
 			end = start;
 		} else if (binding) { /* exact match */

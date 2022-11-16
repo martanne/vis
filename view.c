@@ -103,7 +103,7 @@ static Cell cell_unused;
 
 /* move visible viewport n-lines up/down, redraws the view but does not change
  * cursor position which becomes invalid and should be corrected by calling
- * view_cursor_to. the return value indicates wether the visible area changed.
+ * view_cursor_to. the return value indicates whether the visible area changed.
  */
 static bool view_viewport_up(View *view, int n);
 static bool view_viewport_down(View *view, int n);
@@ -316,7 +316,7 @@ bool view_coord_get(View *view, size_t pos, Line **retline, int *retrow, int *re
 	return true;
 }
 
-/* move the cursor to the character at pos bytes from the begining of the file.
+/* move the cursor to the character at pos bytes from the beginning of the file.
  * if pos is not in the current viewport, redraw the view to make it visible */
 void view_cursor_to(View *view, size_t pos) {
 	view_cursors_to(view->selection, pos);
