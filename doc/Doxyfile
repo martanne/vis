@@ -554,7 +554,7 @@ INTERNAL_DOCS          = NO
 # names in lower-case letters. If set to YES, upper-case letters are also
 # allowed. This is useful if you have classes or files whose names only differ
 # in case and if your file system supports case sensitive file names. Windows
-# (including Cygwin) ands Mac users are advised to set this option to NO.
+# (including Cygwin) and Mac users are advised to set this option to NO.
 # The default value is: system dependent.
 
 CASE_SENSE_NAMES       = YES
@@ -1223,7 +1223,7 @@ HTML_EXTRA_FILES       =
 
 # The HTML_COLORSTYLE_HUE tag controls the color of the HTML output. Doxygen
 # will adjust the colors in the style sheet and background images according to
-# this color. Hue is specified as an angle on a colorwheel, see
+# this color. Hue is specified as an angle on a color wheel, see
 # https://en.wikipedia.org/wiki/Hue for more information. For instance the value
 # 0 represents red, 60 is yellow, 120 is green, 180 is cyan, 240 is blue, 300
 # purple, and 360 is red again.

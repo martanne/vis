@@ -678,7 +678,7 @@ static int files_iter(lua_State *L) {
  * for name in vis:mark_names() do
  * 	local mark = marks[name]
  * 	for i = 1, #mark do
- * 		-- do somthing with: name, mark[i].start, mark[i].finish
+ * 		-- do something with: name, mark[i].start, mark[i].finish
  * 	end
  * end
  */
@@ -1154,9 +1154,9 @@ static bool option_lua(Vis *vis, Win *win, void *context, bool toggle,
  * @tparam[opt] string help the single line help text as displayed in `:help`
  * @treturn bool whether the option was successfully registered
  * @usage
- * vis:option_register("foo", "bool", function(value, toogle)
+ * vis:option_register("foo", "bool", function(value, toggle)
  * 	if not vis.win then return false end
- * 	vis.win.foo = toogle and not vis.win.foo or value
+ * 	vis.win.foo = toggle and not vis.win.foo or value
  * 	vis:info("Option foo = " .. tostring(vis.win.foo))
  * 	return true
  * end, "Foo enables superpowers")
@@ -1899,14 +1899,14 @@ static const struct luaL_Reg window_selections_funcs[] = {
  *    to the state before the deletion.
  *
  *  - Inserts after the selection position (`> selection.pos`) will not affect the
- *    selection postion.
+ *    selection position.
  *
  *        local pos = win.selection.pos
  *        win.file:insert(pos+1, "-")
  *        assert(win.selection.pos == pos)
  *
  *  - Non-cached inserts before the selection position (`<= selection.pos`) will
- *    affect the mark and adjust the selection postion by the number of bytes
+ *    affect the mark and adjust the selection position by the number of bytes
  *    which were inserted.
  *
  *        local pos = win.selection.pos
@@ -1922,7 +1922,7 @@ static const struct luaL_Reg window_selections_funcs[] = {
  *
  * 1. Read out the current selection position
  * 2. Perform text modifications
- * 3. Update the selection postion
+ * 3. Update the selection position
  *
  * This is what @{Vis:insert} and @{Vis:replace} do internally.
  *
@@ -2694,7 +2694,7 @@ static void *alloc_lua(void *ud, void *ptr, size_t osize, size_t nsize) {
 /***
  * Editor initialization completed.
  * This event is emitted immediately after `visrc.lua` has been sourced, but
- * before any other events have occured, in particular the command line arguments
+ * before any other events have occurred, in particular the command line arguments
  * have not yet been processed.
  *
  * Can be used to set *global* configuration options.
@@ -2755,7 +2755,7 @@ void vis_lua_init(Vis *vis) {
 	ssize_t len = readlink("/proc/self/exe", path, sizeof(path)-1);
 	if (len > 0) {
 		path[len] = '\0';
-		/* some idotic dirname(3) implementations return pointers to statically
+		/* some idiotic dirname(3) implementations return pointers to statically
 		 * allocated memory, hence we use memmove to copy it back */
 		char *dir = dirname(path);
 		if (dir) {
@@ -2995,7 +2995,7 @@ bool vis_lua_file_save_pre(Vis *vis, File *file, const char *path) {
 
 /***
  * File post save.
- * Triggered *after* a successfull write operation.
+ * Triggered *after* a successful write operation.
  * @function file_save_post
  * @tparam File file the file which was written
  * @tparam string path the absolute path to which it was written, `nil` if standard output

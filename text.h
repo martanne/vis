@@ -177,7 +177,7 @@ bool text_snapshot(Text*);
  */
 size_t text_undo(Text*);
 /**
- * Reapply an older change along the main brach.
+ * Reapply an older change along the main branch.
  * @rst
  * .. note:: Takes an implicit snapshot.
  * @endrst

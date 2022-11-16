@@ -20,7 +20,7 @@ typedef struct {
 	size_t size;   /**< Maximal capacity of the buffer. */
 } Buffer;
 
-/** Initalize a Buffer object. */
+/** Initialize a Buffer object. */
 void buffer_init(Buffer*);
 /** Release all resources, reinitialize buffer. */
 void buffer_release(Buffer*);

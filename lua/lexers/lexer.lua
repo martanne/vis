@@ -561,7 +561,7 @@ local M = {}
 -- match is a beginning fold point and `-1` indicates the match is an ending
 -- fold point. Likewise, the second assignment states that any "/\*" or "\*/"
 -- that the lexer recognizes as part of a `lexer.COMMENT` token is a fold point.
--- The lexer does not consider any occurences of these characters outside their
+-- The lexer does not consider any occurrences of these characters outside their
 -- defined tokens (such as in a string) as fold points. Finally, every
 -- `_foldsymbols` table must have a `_patterns` field that contains a list of
 -- [Lua patterns][] that match fold points. If the lexer encounters text that

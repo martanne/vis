@@ -83,7 +83,7 @@ typedef struct { /* Motion implementation, takes a cursor position and returns a
 		CHARWISE  = VIS_MOTIONTYPE_CHARWISE,  /* scrolls window content until position is visible */
 		INCLUSIVE = 1 << 2,  /* should new position be included in operator range? */
 		LINEWISE_INCLUSIVE = 1 << 3,  /* inclusive, but only if motion is linewise? */
-		IDEMPOTENT = 1 << 4, /* does the returned postion remain the same if called multiple times? */
+		IDEMPOTENT = 1 << 4, /* does the returned position remain the same if called multiple times? */
 		JUMP = 1 << 5, /* should the resulting position of the motion be recorded in the jump list? */
 		COUNT_EXACT = 1 << 6, /* fail (keep initial position) if count can not be satisfied exactly */
 	} type;
@@ -206,10 +206,10 @@ struct Vis {
 	int nesting_level;                   /* parsing state to hold keep track of { } nesting level */
 	volatile bool running;               /* exit main loop once this becomes false */
 	int exit_status;                     /* exit status when terminating main loop */
-	volatile sig_atomic_t interrupted;   /* abort command (SIGINT occured) */
+	volatile sig_atomic_t interrupted;   /* abort command (SIGINT occurred) */
 	volatile sig_atomic_t sigbus;        /* one of the memory mapped regions became unavailable (SIGBUS) */
-	volatile sig_atomic_t need_resize;   /* need to resize UI (SIGWINCH occured) */
-	volatile sig_atomic_t resume;        /* need to resume UI (SIGCONT occured) */
+	volatile sig_atomic_t need_resize;   /* need to resize UI (SIGWINCH occurred) */
+	volatile sig_atomic_t resume;        /* need to resume UI (SIGCONT occurred) */
 	volatile sig_atomic_t terminate;     /* need to terminate we were being killed by SIGTERM */
 	sigjmp_buf sigbus_jmpbuf;            /* used to jump back to a known good state in the mainloop after (SIGBUS) */
 	Map *actions;                        /* registered editor actions / special keys commands */

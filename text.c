@@ -57,7 +57,7 @@ typedef struct Change Change;
 struct Change {
 	Span old;               /* all pieces which are being modified/swapped out by the change */
 	Span new;               /* all pieces which are introduced/swapped in by the change */
-	size_t pos;             /* absolute position at which the change occured */
+	size_t pos;             /* absolute position at which the change occurred */
 	Change *next;           /* next change which is part of the same revision */
 	Change *prev;           /* previous change which is part of the same revision */
 };
@@ -120,7 +120,7 @@ static Revision *revision_alloc(Text *txt);
 static void revision_free(Revision *rev);
 /* logical line counting cache */
 static void lineno_cache_invalidate(LineCache *cache);
-static size_t lines_skip_forward(Text *txt, size_t pos, size_t lines, size_t *lines_skiped);
+static size_t lines_skip_forward(Text *txt, size_t pos, size_t lines, size_t *lines_skipped);
 static size_t lines_count(Text *txt, size_t pos, size_t len);
 
 /* stores the given data in a block, allocates a new one if necessary. Returns
@@ -335,7 +335,7 @@ static Location piece_get_intern(Text *txt, size_t pos) {
 	return (Location){ 0 };
 }
 
-/* similiar to piece_get_intern but usable as a public API. Returns the piece
+/* similar to piece_get_intern but usable as a public API. Returns the piece
  * holding the text at byte offset pos. Never returns a sentinel piece.
  * it pos is the end of file (== text_size()) and the file is not empty then
  * the last piece holding data is returned.
@@ -388,7 +388,7 @@ static void change_free(Change *c) {
 
 /* When inserting new data there are 2 cases to consider.
  *
- *  - in the first the insertion point falls into the middle of an exisiting
+ *  - in the first the insertion point falls into the middle of an existing
  *    piece which is replaced by three new pieces:
  *
  *      /-+ --> +---------------+ --> +-\
@@ -401,7 +401,7 @@ static void change_free(Change *c) {
  *      | |     | existing|     |demo |     |text |     | |
  *      \-+ <-- +---------+ <-- +-----+ <-- +-----+ <-- +-/
  *
- *  - the second case deals with an insertion point at a piece boundry:
+ *  - the second case deals with an insertion point at a piece boundary:
  *
  *      /-+ --> +---------------+ --> +-\
  *      | |     | existing text |     | |

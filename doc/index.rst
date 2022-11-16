@@ -1,5 +1,5 @@
-Vis Editor API Documenation
-===========================
+Vis Editor API Documentation
+============================
 
 .. toctree::
    :maxdepth: 2

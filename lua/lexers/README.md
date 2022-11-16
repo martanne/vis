@@ -25,7 +25,7 @@ where `<name>` corresponds to the filename without the `.lua` extension.
 # Adding new lexers
 
 To add a new lexer, start with the template quoted below or a lexer of a
-similiar language. Read the
+similar language. Read the
 [lexer module documentation](http://foicica.com/scintillua/api.html#lexer).
 The [LPeg](http://www.inf.puc-rio.br/~roberto/lpeg/) introduction might also
 be useful.
