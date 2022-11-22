@@ -1,5 +1,5 @@
 # Run 'make docker' to build a statically linked vis executable!
-FROM i386/alpine:3.16
+FROM i386/alpine:3.17
 RUN apk update && apk add --upgrade --no-cache \
 	acl-dev \
 	acl-static \
@@ -17,7 +17,8 @@ RUN apk update && apk add --upgrade --no-cache \
 	tar \
 	wget \
 	xz \
-	xz-dev
+	xz-dev \
+	xz-static
 RUN sed -i 's/Libs: /Libs: -L${INSTALL_CMOD} /' /usr/lib/pkgconfig/lua5.3.pc
 RUN mv /usr/lib/lua/5.3/lpeg.a /usr/lib/lua/5.3/liblpeg.a
 RUN sed -i 's/-ltermkey/-ltermkey -lunibilium/' /usr/lib/pkgconfig/termkey.pc
