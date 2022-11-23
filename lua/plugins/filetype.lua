@@ -258,11 +258,12 @@ vis.ftdetect.filetypes = {
 		ext = { "%.iface$", "%.mak$", "%.mk$", "GNUmakefile", "makefile", "Makefile" },
 		mime = { "text/x-makefile" },
 	},
-	man = {
+	troff = {
 		ext = {
 			"%.1$", "%.2$", "%.3$", "%.4$", "%.5$", "%.6$", "%.7$",
 			"%.8$", "%.9$", "%.1x$", "%.2x$", "%.3x$", "%.4x$",
-			"%.5x$", "%.6x$", "%.7x$", "%.8x$", "%.9x$"
+			"%.5x$", "%.6x$", "%.7x$", "%.8x$", "%.9x$",
+			"%.ms$", "%.tr", "%.mm$", "%.mom$", "%.me$"
 		},
 	},
 	markdown = {
