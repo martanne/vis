@@ -379,7 +379,11 @@ static bool is_file_pattern(const char *pattern) {
 	struct stat meta;
 	if (stat(pattern, &meta) == 0 && S_ISDIR(meta.st_mode))
 		return true;
-	for (char special[] = "*?[{$~", *s = special; *s; s++) {
+	/* tilde expansion is defined only for the tilde at the
+	   beginning of the pattern. */
+	if (pattern[0] == '~')
+		return true;
+	for (char special[] = "*?[{$", *s = special; *s; s++) {
 		if (strchr(pattern, *s))
 			return true;
 	}
