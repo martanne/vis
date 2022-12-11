@@ -242,9 +242,10 @@ static int mkstempat(int dirfd, char *template) {
 	fd = mkstemp(template);
 err:
 	if (cwd != -1) {
-		if (fchdir(cwd) != 0)
-		  return -1;
+		int ret = fchdir(cwd);
 		close(cwd);
+		if (ret != 0)
+		  return -1;
 	}
 	return fd;
 }
