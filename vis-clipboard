@@ -101,11 +101,19 @@ vc_wlclipboard_paste() {
 }
 
 vc_wayclip_copy() {
-	waycopy
+	if [ "$sel" = "primary" ]; then
+		waycopy -p
+	else
+		waycopy
+	fi
 }
 
 vc_wayclip_paste() {
-	waypaste
+	if [ "$sel" = "primary" ]; then
+		waypaste -p
+	else
+		waypaste
+	fi
 }
 
 vc_xsel_copy() {
