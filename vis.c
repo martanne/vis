@@ -529,6 +529,7 @@ bool vis_window_reload(Win *win) {
 }
 
 bool vis_window_split(Win *original) {
+	vis_doupdates(original->vis, false);
 	Win *win = window_new_file(original->vis, original->file, UI_OPTION_STATUSBAR);
 	if (!win)
 		return false;
@@ -541,6 +542,7 @@ bool vis_window_split(Win *original) {
 	win->file = original->file;
 	view_options_set(win->view, view_options_get(original->view));
 	view_cursor_to(win->view, view_cursor_get(original->view));
+	vis_doupdates(win->vis, true);
 	return true;
 }
 
@@ -599,15 +601,21 @@ void vis_resume(Vis *vis) {
 	vis->ui->resume(vis->ui);
 }
 
+void vis_doupdates(Vis *vis, bool doupdate) {
+	vis->ui->doupdates(vis->ui, doupdate);
+}
+
 bool vis_window_new(Vis *vis, const char *filename) {
 	File *file = file_new(vis, filename);
 	if (!file)
 		return false;
+	vis_doupdates(vis, false);
 	Win *win = window_new_file(vis, file, UI_OPTION_STATUSBAR|UI_OPTION_SYMBOL_EOF);
 	if (!win) {
 		file_free(vis, file);
 		return false;
 	}
+	vis_doupdates(vis, true);
 
 	return true;
 }

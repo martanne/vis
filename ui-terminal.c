@@ -48,6 +48,7 @@ typedef struct {
 	CellStyle *styles;        /* each window has UI_STYLE_MAX different style definitions */
 	size_t cells_size;        /* #bytes allocated for 2D grid (grows only) */
 	Cell *cells;              /* 2D grid of cells, at least as large as current terminal size */
+	bool doupdate;            /* Whether to update the screen after refreshing contents */
 } UiTerm;
 
 struct UiTermWin {
@@ -345,6 +346,11 @@ static void ui_arrange(Ui *ui, enum UiLayout layout) {
 		ui_window_resize(win, tui->width, 1);
 		ui_window_move(win, 0, y++);
 	}
+}
+
+static void ui_doupdates(Ui *ui, bool doupdate) {
+	UiTerm *tui = (UiTerm*)ui;
+	tui->doupdate = doupdate;
 }
 
 static void ui_draw(Ui *ui) {
@@ -684,6 +690,7 @@ Ui *ui_term_new(void) {
 	}
 	tui->styles_size = styles_size;
 	tui->styles = styles;
+	tui->doupdate = true;
 	Ui *ui = (Ui*)tui;
 	*ui = (Ui) {
 		.init = ui_init,
@@ -699,6 +706,7 @@ Ui *ui_term_new(void) {
 		.draw = ui_draw,
 		.redraw = ui_redraw,
 		.arrange = ui_arrange,
+		.doupdates = ui_doupdates,
 		.die = ui_die,
 		.info = ui_info,
 		.info_hide = ui_info_hide,

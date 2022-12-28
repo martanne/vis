@@ -230,7 +230,8 @@ static void ui_curses_blit(UiTerm *tui) {
 		}
 	}
 	wnoutrefresh(stdscr);
-	doupdate();
+	if (tui->doupdate)
+		doupdate();
 }
 
 static void ui_curses_clear(UiTerm *tui) {

@@ -144,6 +144,13 @@ void vis_suspend(Vis*);
  */
 void vis_resume(Vis*);
 /**
+ * Set doupdate flag.
+ * @rst
+ * .. note:: Prevent flickering in curses by delaying window updates.
+ * @endrst
+ */
+void vis_doupdates(Vis*, bool);
+/**
  * Inform the editor core that a signal occurred.
  * @return Whether the signal was handled.
  * @rst
