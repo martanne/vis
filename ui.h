@@ -116,5 +116,6 @@ struct UiWin {
 };
 
 bool is_default_color(CellColor c);
+enum UiLayout ui_layout_get(Ui *ui);
 
 #endif

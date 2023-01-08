@@ -1529,8 +1529,50 @@ static const struct luaL_Reg vis_lua[] = {
 	{ NULL, NULL },
 };
 
+/***
+ * The user interface.
+ *
+ * @type Ui
+ */
+/***
+ * Number of available colors.
+ * @tfield int colors
+ */
+/***
+ * Current layout.
+ * @tfield int layout
+ */
+static int ui_index(lua_State *L) {
+	Ui *ui = obj_ref_check(L, 1, VIS_LUA_TYPE_UI);
+
+	if (lua_isstring(L, 2)) {
+		const char *key = lua_tostring(L, 2);
+
+		if (strcmp(key, "layout") == 0) {
+			lua_pushunsigned(L, ui_layout_get(ui));
+			return 1;
+		}
+	}
+
+	return index_common(L);
+}
+
+/***
+ * Set the user interface layout.
+ * @function ui_arrange
+ * @tparam int layout the layout to set
+ * @usage
+ * ui:arrange(ui.layouts.VERTICAL)
+ */
+static int ui_arrange(lua_State *L) {
+	Ui *ui = obj_ref_check(L, 1, VIS_LUA_TYPE_UI);
+	ui->arrange(ui, luaL_checkint(L, 2));
+	return 1;
+}
+
 static const struct luaL_Reg ui_funcs[] = {
-	{ "__index", index_common },
+	{ "arrange", ui_arrange },
+	{ "__index", ui_index },
 	{ NULL, NULL },
 };
 
@@ -2480,16 +2522,6 @@ static const struct luaL_Reg window_marks_funcs[] = {
 };
 
 /***
- * The user interface.
- *
- * @type Ui
- */
-/***
- * Number of available colors.
- * @tfield int colors
- */
-
-/***
  * A file range.
  *
  * For a valid range `start <= finish` holds.
@@ -2503,6 +2535,19 @@ static const struct luaL_Reg window_marks_funcs[] = {
 /***
  * The end of the range.
  * @tfield int finish
+ */
+
+/***
+ * Layouts.
+ * @section Layouts
+ */
+
+/***
+ * Layouts constants.
+ * @table layouts
+ * @tfield int HORIZONTAL
+ * @tfield int VERTICAL
+ * @see Ui:arrange
  */
 
 /***
@@ -2851,6 +2896,23 @@ void vis_lua_init(Vis *vis) {
 	luaL_setfuncs(L, ui_funcs, 0);
 	lua_pushunsigned(L, vis->ui->colors(vis->ui));
 	lua_setfield(L, -2, "colors");
+
+	lua_newtable(L);
+
+	static const struct {
+		enum UiLayout id;
+		const char *name;
+	} layouts[] = {
+		{ UI_LAYOUT_HORIZONTAL, "HORIZONTAL" },
+		{ UI_LAYOUT_VERTICAL,   "VERTICAL"   },
+	};
+
+	for (size_t i = 0; i < LENGTH(layouts); i++) {
+		lua_pushunsigned(L, layouts[i].id);
+		lua_setfield(L, -2, layouts[i].name);
+	}
+
+	lua_setfield(L, -2, "layouts");
 
 	obj_type_new(L, VIS_LUA_TYPE_REGISTERS);
 	lua_pushlightuserdata(L, vis);
