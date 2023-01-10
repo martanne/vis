@@ -786,62 +786,7 @@ local M = {}
 --   Flag indicating that the line is blank.
 -- @field FOLD_HEADER (number)
 --   Flag indicating the line is fold point.
--- @field fold_level (table, Read-only)
---   Table of fold level bit-masks for line numbers starting from 1.
---   Fold level masks are composed of an integer level combined with any of the following bits:
---
---   * `lexer.FOLD_BASE`
---     The initial fold level.
---   * `lexer.FOLD_BLANK`
---     The line is blank.
---   * `lexer.FOLD_HEADER`
---     The line is a header, or fold point.
--- @field indent_amount (table, Read-only)
---   Table of indentation amounts in character columns, for line numbers starting from 1.
--- @field line_state (table)
---   Table of integer line states for line numbers starting from 1.
---   Line states can be used by lexers for keeping track of persistent states.
--- @field property (table)
---   Map of key-value string pairs.
--- @field property_expanded (table, Read-only)
---   Map of key-value string pairs with `$()` and `%()` variable replacement performed in values.
--- @field property_int (table, Read-only)
---   Map of key-value pairs with values interpreted as numbers, or `0` if not found.
--- @field style_at (table, Read-only)
---   Table of style names at positions in the buffer starting from 1.
--- @field folding (boolean)
---   Whether or not folding is enabled for the lexers that support it.
---   This option is disabled by default.
---   This is an alias for `lexer.property['fold'] = '1|0'`.
--- @field fold_on_zero_sum_lines (boolean)
---   Whether or not to mark as a fold point lines that contain both an ending and starting fold
---   point. For example, `} else {` would be marked as a fold point.
---   This option is disabled by default. This is an alias for
---   `lexer.property['fold.on.zero.sum.lines'] = '1|0'`.
--- @field fold_compact (boolean)
---   Whether or not blank lines after an ending fold point are included in that
---   fold.
---   This option is disabled by default.
---   This is an alias for `lexer.property['fold.compact'] = '1|0'`.
--- @field fold_by_indentation (boolean)
---   Whether or not to fold based on indentation level if a lexer does not have
---   a folder.
---   Some lexers automatically enable this option. It is disabled by default.
---   This is an alias for `lexer.property['fold.by.indentation'] = '1|0'`.
--- @field fold_line_groups (boolean)
---   Whether or not to fold multiple, consecutive line groups (such as line comments and import
---   statements) and only show the top line.
---   This option is disabled by default.
---   This is an alias for `lexer.property['fold.line.groups'] = '1|0'`.
 module('lexer')]=]
-
-if not require then
-  -- Substitute for Lua's require() function, which does not require the package module to
-  -- be loaded.
-  -- Note: all modules must be in the global namespace, which is the case in LexerLPeg's default
-  -- Lua State.
-  function require(name) return name == 'lexer' and M or _G[name] end
-end
 
 local print = function(...)
   local args = table.pack(...)
@@ -852,160 +797,193 @@ local print = function(...)
   vis:info(table.concat(msg, ' '))
 end
 
-lpeg = require('lpeg')
-local lpeg_P, lpeg_R, lpeg_S, lpeg_V = lpeg.P, lpeg.R, lpeg.S, lpeg.V
-local lpeg_Ct, lpeg_Cc, lpeg_Cp = lpeg.Ct, lpeg.Cc, lpeg.Cp
-local lpeg_Cmt, lpeg_C = lpeg.Cmt, lpeg.C
-local lpeg_match = lpeg.match
+local lpeg = _G.lpeg or require('lpeg') -- Scintillua's Lua environment defines _G.lpeg
+local P, R, S, V, B = lpeg.P, lpeg.R, lpeg.S, lpeg.V, lpeg.B
+local Ct, Cc, Cp, Cmt, C = lpeg.Ct, lpeg.Cc, lpeg.Cp, lpeg.Cmt, lpeg.C
 
--- Searches for the given *name* in the given *path*.
--- This is a safe implementation of Lua 5.2's `package.searchpath()` function that does not
--- require the package module to be loaded.
-local function searchpath(name, path)
-  local tried = {}
-  for part in path:gmatch('[^;]+') do
-    local filename = part:gsub('%?', name)
-    local ok, errmsg = loadfile(filename)
-    if ok or not errmsg:find('cannot open') then return filename end
-    tried[#tried + 1] = string.format("no file '%s'", filename)
-  end
-  return nil, table.concat(tried, '\n')
-end
-
----
--- Map of color name strings to color values in `0xBBGGRR` or `"#RRGGBB"` format.
--- Note: for applications running within a terminal emulator, only 16 color values are recognized,
--- regardless of how many colors a user's terminal actually supports. (A terminal emulator's
--- settings determines how to actually display these recognized color values, which may end up
--- being mapped to a completely different color set.) In order to use the light variant of a
--- color, some terminals require a style's `bold` attribute must be set along with that normal
--- color. Recognized color values are black (0x000000), red (0x000080), green (0x008000), yellow
--- (0x008080), blue (0x800000), magenta (0x800080), cyan (0x808000), white (0xC0C0C0), light black
--- (0x404040), light red (0x0000FF), light green (0x00FF00), light yellow (0x00FFFF), light blue
--- (0xFF0000), light magenta (0xFF00FF), light cyan (0xFFFF00), and light white (0xFFFFFF).
--- @name colors
--- @class table
-M.colors = setmetatable({}, {
-  __index = function(_, name)
-    local color = M.property['color.' .. name]
-    return tonumber(color) or color
-  end, __newindex = function(_, name, color) M.property['color.' .. name] = color end
-})
-
--- A style object that distills into a property string that can be read by the LPeg lexer.
-local style_obj = {}
-style_obj.__index = style_obj
-
--- Create a style object from a style name, property table, or legacy style string.
-function style_obj.new(name_or_props)
-  local prop_string = tostring(name_or_props)
-  if type(name_or_props) == 'string' and name_or_props:find('^[%w_]+$') then
-    prop_string = string.format('$(style.%s)', name_or_props)
-  elseif type(name_or_props) == 'table' then
-    local settings = {}
-    for k, v in pairs(name_or_props) do
-      settings[#settings + 1] = type(v) ~= 'boolean' and string.format('%s:%s', k, v) or
-        string.format('%s%s', v and '' or 'not', k)
-    end
-    prop_string = table.concat(settings, ',')
-  end
-  return setmetatable({prop_string = prop_string}, style_obj)
-end
-
--- Returns a new style based on this one with the properties defined in the given table or
--- legacy style string.
-function style_obj.__concat(self, props)
-  if type(props) == 'table' then props = tostring(style_obj.new(props)) end
-  return setmetatable({prop_string = string.format('%s,%s', self.prop_string, props)}, style_obj)
-end
-
--- Returns this style object as property string for use with the LPeg lexer.
-function style_obj.__tostring(self) return self.prop_string end
-
----
--- Map of style names to style definition tables.
---
--- Style names consist of the following default names as well as the token names defined by lexers.
---
--- * `default`: The default style all others are based on.
--- * `line_number`: The line number margin style.
--- * `control_char`: The style of control character blocks.
--- * `indent_guide`: The style of indentation guides.
--- * `call_tip`: The style of call tip text. Only the `font`, `size`, `fore`, and `back` style
---   definition fields are supported.
--- * `fold_display_text`: The style of text displayed next to folded lines.
--- * `class`, `comment`, `constant`, `embedded`, `error`, `function`, `identifier`, `keyword`,
---   `label`, `number`, `operator`, `preprocessor`, `regex`, `string`, `type`, `variable`,
---   `whitespace`: Some token names used by lexers. Some lexers may define more token names,
---   so this list is not exhaustive.
--- * *`lang`*`_whitespace`: A special style for whitespace tokens in lexer name *lang*. It
---   inherits from `whitespace`, and is used in place of it for all lexers.
---
--- Style definition tables may contain the following fields:
---
--- * `font`: String font name.
--- * `size`: Integer font size.
--- * `bold`: Whether or not the font face is bold. The default value is `false`.
--- * `weight`: Integer weight or boldness of a font, between 1 and 999.
--- * `italics`: Whether or not the font face is italic. The default value is `false`.
--- * `underlined`: Whether or not the font face is underlined. The default value is `false`.
--- * `fore`: Font face foreground color in `0xBBGGRR` or `"#RRGGBB"` format.
--- * `back`: Font face background color in `0xBBGGRR` or `"#RRGGBB"` format.
--- * `eolfilled`: Whether or not the background color extends to the end of the line. The
---   default value is `false`.
--- * `case`: Font case: `'u'` for upper, `'l'` for lower, and `'m'` for normal, mixed case. The
---   default value is `'m'`.
--- * `visible`: Whether or not the text is visible. The default value is `true`.
--- * `changeable`: Whether the text is changeable instead of read-only. The default value is
---   `true`.
--- @class table
--- @name styles
-M.styles = setmetatable({}, {
-  __index = function(_, name) return style_obj.new(name) end, __newindex = function(_, name, style)
-    if getmetatable(style) ~= style_obj then style = style_obj.new(style) end
-    M.property['style.' .. name] = tostring(style)
-  end
-})
-
--- Default styles.
+-- Default tags.
 local default = {
-  'nothing', 'whitespace', 'comment', 'string', 'number', 'keyword', 'identifier', 'operator',
-  'error', 'preprocessor', 'constant', 'variable', 'function', 'class', 'type', 'label', 'regex',
-  'embedded'
+  'whitespace', 'comment', 'string', 'number', 'keyword', 'identifier', 'operator', 'error',
+  'preprocessor', 'constant', 'variable', 'function', 'class', 'type', 'label', 'regex', 'embedded',
+  'function.builtin', 'constant.builtin', 'function.method', 'tag', 'attribute', 'variable.builtin',
+  'heading', 'bold', 'italic', 'underline', 'code', 'link', 'reference', 'annotation', 'list'
 }
-for _, name in ipairs(default) do
-  M[name:upper()] = name
-  M['STYLE_' .. name:upper()] = style_obj.new(name) -- backward compatibility
-end
--- Predefined styles.
+for _, name in ipairs(default) do M[name:upper():gsub('%.', '_')] = name end
+-- Names for predefined Scintilla styles.
+-- Having these here simplifies style number handling between Scintillua and Scintilla.
 local predefined = {
-  'default', 'line_number', 'brace_light', 'brace_bad', 'control_char', 'indent_guide', 'call_tip',
-  'fold_display_text'
+  'default', 'line.number', 'brace.light', 'brace.bad', 'control.char', 'indent.guide', 'call.tip',
+  'fold.display.text'
 }
-for _, name in ipairs(predefined) do
-  M[name:upper()] = name
-  M['STYLE_' .. name:upper()] = style_obj.new(name) -- backward compatibility
+for _, name in ipairs(predefined) do M[name:upper():gsub('%.', '_')] = name end
+
+---
+-- Creates and returns a pattern that tags pattern *patt* with name *name* in lexer *lexer*.
+-- If *name* is not a predefined tag name, its Scintilla style will likely need to be defined
+-- by the editor or theme using this lexer.
+-- @param lexer The lexer to tag the given pattern in.
+-- @param name The name to use.
+-- @param patt The LPeg pattern to tag.
+-- @return pattern
+-- @usage local number = lex:tag(lexer.NUMBER, lexer.number)
+-- @usage local addition = lex:tag('addition', '+' * lexer.word)
+-- @name tag
+function M.tag(lexer, name, patt)
+  if not lexer._TAGS then
+    -- Create the initial maps for tag names to style numbers and styles.
+    local tags = {}
+    for i = 1, #default do tags[default[i]] = i end
+    for i = 1, #predefined do tags[predefined[i]] = i + 32 end
+    lexer._TAGS, lexer._num_styles = tags, #default + 1
+    lexer._extra_tags = {}
+  end
+  if not assert(lexer._TAGS, 'not a lexer instance')[name] then
+    local num_styles = lexer._num_styles
+    if num_styles == 33 then num_styles = num_styles + 8 end -- skip predefined
+    assert(num_styles <= 256, 'too many styles defined (256 MAX)')
+    lexer._TAGS[name], lexer._num_styles = num_styles, num_styles + 1
+    lexer._extra_tags[name] = true
+    -- If the lexer is a proxy or a child that embedded itself, make this tag name known to
+    -- the parent lexer.
+    if lexer._lexer then lexer._lexer:tag(name, false) end
+  end
+  return Cc(name) * (P(patt) / 0) * Cp()
+end
+
+-- Returns a unique grammar rule name for the given lexer's i-th word list.
+local function word_list_id(lexer, i) return lexer._name .. '_wordlist' .. i end
+
+---
+-- Either returns a pattern for lexer *lexer* (if given) that matches one word in the word list
+-- identified by string *word_list*, ignoring case if *case_sensitive* is `true`, or, if *lexer*
+-- is not given, creates and returns a pattern that matches any single word in list or string
+-- *word_list*, ignoring case if *case_insensitive* is `true`.
+-- This is a convenience function for simplifying a set of ordered choice word patterns and
+-- potentially allowing downstream users to configure word lists.
+-- If there is ultimately no word list set via `set_word_list()`, no error will be raised,
+-- but the returned pattern will not match anything.
+-- @param lexer Optional lexer to match a word in a wordlist for. This parameter may be omitted
+--   for lexer-agnostic matching.
+-- @param word_list Either a string name of the word list to match from if *lexer* is given,
+--   or, if *lexer* is omitted, a list of words or a string list of words separated by spaces.
+-- @param case_insensitive Optional boolean flag indicating whether or not the word match is
+--   case-insensitive. The default value is `false`.
+-- @return pattern
+-- @usage lex:add_rule('keyword', lex:tag(lexer.KEYWORD, lex:word_match(lexer.KEYWORD)))
+-- @usage local keyword = lex:tag(lexer.KEYWORD, lexer.word_match{'foo', 'bar', 'baz'})
+-- @usage local keyword = lex:tag(lexer.KEYWORD, lexer.word_match({'foo-bar', 'foo-baz',
+--   'bar-foo', 'bar-baz', 'baz-foo', 'baz-bar'}, true))
+-- @usage local keyword = lex:tag(lexer.KEYWORD, lexer.word_match('foo bar baz'))
+-- @see set_word_list
+-- @name word_match
+function M.word_match(lexer, word_list, case_insensitive)
+  if type(lexer) == 'table' and getmetatable(lexer) then
+    if lexer._lexer then
+      -- If this lexer is a proxy (e.g. rails), get the true parent (ruby) in order to get the
+      -- parent's word list. If this lexer is a child embedding itself (e.g. php), continue
+      -- getting its word list, not the parent's (html).
+      local parent = lexer._lexer
+      if not parent._CHILDREN or not parent._CHILDREN[lexer] then lexer = parent end
+    end
+
+    if not lexer._WORDLISTS then lexer._WORDLISTS = {case_insensitive = {}} end
+    local i = lexer._WORDLISTS[word_list] or #lexer._WORDLISTS + 1
+    lexer._WORDLISTS[word_list], lexer._WORDLISTS[i] = i, '' -- empty placeholder word list
+    lexer._WORDLISTS.case_insensitive[i] = case_insensitive
+    return V(word_list_id(lexer, i))
+  end
+
+  -- Lexer-agnostic word match.
+  word_list, case_insensitive = lexer, word_list
+
+  if type(word_list) == 'string' then
+    local words = word_list -- space-separated list of words
+    word_list = {}
+    for word in words:gmatch('%S+') do word_list[#word_list + 1] = word end
+  end
+
+  local word_chars = M.alnum + '_'
+  local extra_chars = ''
+  for _, word in ipairs(word_list) do
+    word_list[case_insensitive and word:lower() or word] = true
+    for char in word:gmatch('[^%w_%s]') do
+      if not extra_chars:find(char, 1, true) then extra_chars = extra_chars .. char end
+    end
+  end
+  if extra_chars ~= '' then word_chars = word_chars + S(extra_chars) end
+
+  -- Optimize small word sets as ordered choice. "Small" is arbitrary.
+  if #word_list <= 6 and not case_insensitive then
+    local choice = P(false)
+    for _, word in ipairs(word_list) do choice = choice + word:match('%S+') end
+    return choice * -word_chars
+  end
+
+  return Cmt(word_chars^1, function(input, index, word)
+    if case_insensitive then word = word:lower() end
+    return word_list[word]
+  end)
+end
+
+---
+-- Sets in lexer *lexer* the word list identified by string or number *name* to string or
+-- list *word_list*, appending to any existing word list if *append* is `true`.
+-- This only has an effect if *lexer* uses `word_match()` to reference the given list.
+-- Case-insensitivity is specified by `word_match()`.
+-- @param lexer The lexer to add the given word list to.
+-- @param name The string name or number of the word list to set.
+-- @param word_list A list of words or a string list of words separated by spaces.
+-- @param append Whether or not to append *word_list* to the existing word list (if any). The
+--   default value is `false`.
+-- @see word_match
+-- @name set_word_list
+function M.set_word_list(lexer, name, word_list, append)
+  if word_list == 'scintillua' then return end -- for SciTE
+  if lexer._lexer then
+    -- If this lexer is a proxy (e.g. rails), get the true parent (ruby) in order to set the
+    -- parent's word list. If this lexer is a child embedding itself (e.g. php), continue
+    -- setting its word list, not the parent's (html).
+    local parent = lexer._lexer
+    if not parent._CHILDREN or not parent._CHILDREN[lexer] then lexer = parent end
+  end
+
+  assert(lexer._WORDLISTS, 'lexer has no word lists')
+  local i = tonumber(lexer._WORDLISTS[name]) or name -- lexer._WORDLISTS[name] --> i
+  if type(i) ~= 'number' or i > #lexer._WORDLISTS then return end -- silently return
+
+  if type(word_list) == 'string' then
+    local list = {}
+    for word in word_list:gmatch('%S+') do list[#list + 1] = word end
+    word_list = list
+  end
+
+  if not append or lexer._WORDLISTS[i] == '' then
+    lexer._WORDLISTS[i] = word_list
+  else
+    local list = lexer._WORDLISTS[i]
+    for _, word in ipairs(word_list) do list[#list + 1] = word end
+  end
+
+  lexer._grammar_table = nil -- invalidate
 end
 
 ---
 -- Adds pattern *rule* identified by string *id* to the ordered list of rules for lexer *lexer*.
 -- @param lexer The lexer to add the given rule to.
 -- @param id The id associated with this rule. It does not have to be the same as the name
---   passed to `token()`.
+--   passed to `tag()`.
 -- @param rule The LPeg pattern of the rule.
 -- @see modify_rule
 -- @name add_rule
 function M.add_rule(lexer, id, rule)
   if lexer._lexer then lexer = lexer._lexer end -- proxy; get true parent
-  if not lexer._RULES then
-    lexer._RULES = {}
-    -- Contains an ordered list (by numerical index) of rule names. This is used in conjunction
-    -- with lexer._RULES for building _TOKENRULE.
-    lexer._RULEORDER = {}
+  if not lexer._rules then lexer._rules = {} end
+  if id == 'whitespace' and lexer._rules[id] then -- legacy
+    lexer:modify_rule(id, rule)
+    return
   end
-  lexer._RULES[id] = rule
-  lexer._RULEORDER[#lexer._RULEORDER + 1] = id
-  lexer:build_grammar()
+  lexer._rules[#lexer._rules + 1], lexer._rules[id] = id, rule
+  lexer._grammar_table = nil -- invalidate
 end
 
 ---
@@ -1475,197 +1453,397 @@ end
 --     is `false`.
 --   * `case_insensitive_fold_points`: Whether or not fold points added via
 --     `lexer.add_fold_point()` ignore case. The default value is `false`.
+--   * `no_user_word_lists`: Does not automatically allocate word lists that can be set by
+--     users. This should really only be set by non-programming languages like markup languages.
 --   * `inherit`: Lexer to inherit from. The default value is `nil`.
 -- @usage lexer.new('rhtml', {inherit = lexer.load('html')})
 -- @name new
 function M.new(name, opts)
-  local lexer = {
-    _NAME = assert(name, 'lexer name expected'), _LEXBYLINE = opts and opts['lex_by_line'],
-    _FOLDBYINDENTATION = opts and opts['fold_by_indentation'],
-    _CASEINSENSITIVEFOLDPOINTS = opts and opts['case_insensitive_fold_points'],
-    _lexer = opts and opts['inherit']
-  }
-
-  -- Create the initial maps for token names to style numbers and styles.
-  local token_styles = {}
-  for i = 1, #default do token_styles[default[i]] = i end
-  for i = 1, #predefined do token_styles[predefined[i]] = i + 32 end
-  lexer._TOKENSTYLES, lexer._numstyles = token_styles, #default + 1
-  lexer._EXTRASTYLES = {}
-
-  return setmetatable(lexer, {
+  local lexer = setmetatable({
+    _name = assert(name, 'lexer name expected'), _lex_by_line = opts and opts['lex_by_line'],
+    _fold_by_indentation = opts and opts['fold_by_indentation'],
+    _case_insensitive_fold_points = opts and opts['case_insensitive_fold_points'],
+    _no_user_word_lists = opts and opts['no_user_word_lists'], _lexer = opts and opts['inherit']
+  }, {
     __index = {
+      tag = M.tag, word_match = M.word_match, set_word_list = M.set_word_list,
       add_rule = M.add_rule, modify_rule = M.modify_rule, get_rule = M.get_rule,
-      add_style = M.add_style, add_fold_point = M.add_fold_point, join_tokens = join_tokens,
-      build_grammar = build_grammar, embed = M.embed, lex = M.lex, fold = M.fold
+      add_fold_point = M.add_fold_point, embed = M.embed, lex = M.lex, fold = M.fold, --
+      add_style = function() end -- legacy
     }
   })
+
+  -- Add initial whitespace rule.
+  -- Use a unique whitespace tag name since embedded lexing relies on these unique names.
+  lexer:add_rule('whitespace', lexer:tag('whitespace.' .. name, M.space^1))
+
+  return lexer
 end
 
--- Legacy support for older lexers.
--- Processes the `lex._rules`, `lex._tokenstyles`, and `lex._foldsymbols` tables. Since legacy
--- lexers may be processed up to twice, ensure their default styles and rules are not processed
--- more than once.
-local function process_legacy_lexer(lexer)
-  local function warn(msg) --[[io.stderr:write(msg, "\n")]]end
-  if not lexer._LEGACY then
-    lexer._LEGACY = true
-    warn("lexers as tables are deprecated; use 'lexer.new()'")
-    local token_styles = {}
-    for i = 1, #default do token_styles[default[i]] = i end
-    for i = 1, #predefined do token_styles[predefined[i]] = i + 32 end
-    lexer._TOKENSTYLES, lexer._numstyles = token_styles, #default + 1
-    lexer._EXTRASTYLES = {}
-    setmetatable(lexer, getmetatable(M.new('')))
-    if lexer._rules then
-      warn("lexer '_rules' table is deprecated; use 'add_rule()'")
-      for _, rule in ipairs(lexer._rules) do lexer:add_rule(rule[1], rule[2]) end
+-- When using Scintillua as a standalone module, some tables and functions that depend on
+-- Scintilla do not exist. Create a substitute for them.
+local function initialize_standalone_library()
+  M.property = setmetatable({['scintillua.lexers'] = package.path:gsub('/%?%.lua', '')}, {
+    __index = function() return '' end, __newindex = function(t, k, v) rawset(t, k, tostring(v)) end
+  })
+  M.property_int = setmetatable({}, {
+    __index = function(t, k) return tonumber(M.property[k]) or 0 end,
+    __newindex = function() error('read-only property') end
+  })
+
+  M.line_from_position = function(pos)
+    local line = 1
+    for s in M._text:gmatch('[^\n]*()') do
+      if pos <= s then return line end
+      line = line + 1
     end
+    return line - 1 -- should not get to here
   end
-  if lexer._tokenstyles then
-    warn("lexer '_tokenstyles' table is deprecated; use 'add_style()'")
-    for token, style in pairs(lexer._tokenstyles) do
-      -- If this legacy lexer is being processed a second time, only add styles added since
-      -- the first processing.
-      if not lexer._TOKENSTYLES[token] then lexer:add_style(token, style) end
-    end
-  end
-  if lexer._foldsymbols then
-    warn("lexer '_foldsymbols' table is deprecated; use 'add_fold_point()'")
-    for token_name, symbols in pairs(lexer._foldsymbols) do
-      if type(symbols) == 'table' and token_name ~= '_patterns' then
-        for symbol, v in pairs(symbols) do lexer:add_fold_point(token_name, symbol, v) end
+
+  M.indent_amount = setmetatable({}, {
+    __index = function(_, line)
+      local current_line = 1
+      for s in M._text:gmatch('()[^\n]*') do
+        if current_line == line then
+          return #M._text:match('^[ \t]*', s):gsub('\t', string.rep(' ', 8))
+        end
+        current_line = current_line + 1
       end
     end
-    if lexer._foldsymbols._case_insensitive then lexer._CASEINSENSITIVEFOLDPOINTS = true end
-  elseif lexer._fold then
-    lexer.fold = function(self, ...) return lexer._fold(...) end
-  end
+  })
+
+  M._standalone = true
 end
 
-local lexers = {} -- cache of loaded lexers
+-- Searches for the given *name* in the given *path*.
+-- This is a safe implementation of Lua 5.2's `package.searchpath()` function that does not
+-- require the package module to be loaded.
+local function searchpath(name, path)
+  local tried = {}
+  for part in path:gmatch('[^;]+') do
+    local filename = part:gsub('%?', name)
+    local ok, errmsg = loadfile(filename)
+    if ok or not errmsg:find('cannot open') then return filename end
+    tried[#tried + 1] = string.format("no file '%s'", filename)
+  end
+  return nil, table.concat(tried, '\n')
+end
+
 ---
--- Initializes or loads and returns the lexer of string name *name*.
+-- Initializes or loads and then returns the lexer of string name *name*.
 -- Scintilla calls this function in order to load a lexer. Parent lexers also call this function
 -- in order to load child lexers and vice-versa. The user calls this function in order to load
 -- a lexer when using Scintillua as a Lua library.
 -- @param name The name of the lexing language.
 -- @param alt_name The alternate name of the lexing language. This is useful for embedding the
---   same child lexer with multiple sets of start and end tokens.
--- @param cache Flag indicating whether or not to load lexers from the cache. This should only
---   be `true` when initially loading a lexer (e.g. not from within another lexer for embedding
---   purposes). The default value is `false`.
+--   same child lexer with multiple sets of start and end tags.
 -- @return lexer object
 -- @name load
-function M.load(name, alt_name, cache)
-  if cache and lexers[alt_name or name] then return lexers[alt_name or name] end
+function M.load(name, alt_name)
+  assert(name, 'no lexer given')
+  if not M.property then initialize_standalone_library() end
 
-  -- When using Scintillua as a stand-alone module, the `property`, `property_int`, and
-  -- `property_expanded` tables do not exist (they are not useful). Create them in order prevent
-  -- errors from occurring.
-  if not M.property then
-    M.property = setmetatable({['lexer.lpeg.home'] = package.path:gsub('/%?%.lua', '')}, {
-      __index = function() return '' end,
-      __newindex = function(t, k, v) rawset(t, k, tostring(v)) end
-    })
-    M.property_int = setmetatable({}, {
-      __index = function(t, k) return tonumber(M.property[k]) or 0 end,
-      __newindex = function() error('read-only property') end
-    })
-    M.property_expanded = setmetatable({}, {
-      __index = function(t, key)
-        return M.property[key]:gsub('[$%%](%b())', function(key) return t[key:sub(2, -2)] end)
-      end, __newindex = function() error('read-only property') end
-    })
-  end
-
-  -- Load the language lexer with its rules, styles, etc.
-  -- However, replace the default `WHITESPACE` style name with a unique whitespace style name
-  -- (and then automatically add it afterwards), since embedded lexing relies on these unique
-  -- whitespace style names. Note that loading embedded lexers changes `WHITESPACE` again,
-  -- so when adding it later, do not reference the potentially incorrect value.
-  M.WHITESPACE = (alt_name or name) .. '_whitespace'
-  local path = M.property['lexer.lpeg.home']:gsub(';', '/?.lua;') .. '/?.lua'
-  local lexer = dofile(assert(searchpath('lexers/'..name, path)))
+  -- Load the language lexer with its rules, tags, etc.
+  local path = M.property['scintillua.lexers']:gsub(';', '/?.lua;') .. '/?.lua'
+  local ro_lexer = setmetatable({
+    WHITESPACE = 'whitespace.' .. (alt_name or name) -- legacy
+  }, {__index = M})
+  local env = {
+    'assert', 'error', 'ipairs', 'math', 'next', 'pairs', 'print', 'select', 'string', 'table',
+    'tonumber', 'tostring', 'type', 'utf8', '_VERSION', lexer = ro_lexer, lpeg = lpeg, --
+    require = function() return ro_lexer end -- legacy
+  }
+  for _, name in ipairs(env) do env[name] = _G[name] end
+  local lexer = assert(loadfile(assert(searchpath('lexers/'..name, path)), 't', env))(alt_name or name)
   assert(lexer, string.format("'%s.lua' did not return a lexer", name))
-  if alt_name then lexer._NAME = alt_name end
-  if not getmetatable(lexer) or lexer._LEGACY then
-    -- A legacy lexer may need to be processed a second time in order to pick up any `_tokenstyles`
-    -- or `_foldsymbols` added after `lexer.embed_lexer()`.
-    process_legacy_lexer(lexer)
-    if lexer._lexer and lexer._lexer._LEGACY then
-      process_legacy_lexer(lexer._lexer) -- mainly for `_foldsymbols` edits
-    end
-  end
-  lexer:add_style((alt_name or name) .. '_whitespace', M.styles.whitespace)
 
   -- If the lexer is a proxy or a child that embedded itself, set the parent to be the main
-  -- lexer. Keep a reference to the old parent name since embedded child rules reference and
-  -- use that name.
+  -- lexer. Keep a reference to the old parent name since embedded child start and end rules
+  -- reference and use that name.
   if lexer._lexer then
     lexer = lexer._lexer
-    lexer._PARENTNAME, lexer._NAME = lexer._NAME, alt_name or name
+    lexer._parent_name, lexer._name = lexer._name, alt_name or name
   end
 
-  if cache then lexers[alt_name or name] = lexer end
+  M.property['scintillua.comment.' .. (alt_name or name)] = M.property['scintillua.comment']
+
   return lexer
+end
+
+---
+-- Map of file extensions, without the '.' prefix, to their associated lexer names.
+-- This map has precedence over Scintillua's built-in map.
+-- @see detect
+-- @class table
+-- @name detect_extensions
+M.detect_extensions = {}
+
+---
+-- Map of line patterns to their associated lexer names.
+-- These are Lua string patterns, not LPeg patterns.
+-- This map has precedence over Scintillua's built-in map.
+-- @see detect
+-- @class table
+-- @name detect_patterns
+M.detect_patterns = {}
+
+---
+-- Returns the name of the lexer often associated with filename *filename* and/or content
+-- line *line*.
+-- @param filename Optional string filename. The default value is read from the
+--   'lexer.scintillua.filename' property.
+-- @param line Optional string first content line, such as a shebang line. The default value
+--   is read from the 'lexer.scintillua.line' property.
+-- @return string lexer name to pass to `load()`, or `nil` if none was detected
+-- @see detect_extensions
+-- @see detect_patterns
+-- @see load
+-- @name detect
+function M.detect(filename, line)
+  if not filename then filename = M.property and M.property['lexer.scintillua.filename'] or '' end
+  if not line then line = M.property and M.property['lexer.scintillua.line'] or '' end
+
+  -- Locally scoped in order to avoid persistence in memory.
+  local extensions = {
+    as = 'actionscript', asc = 'actionscript', --
+    adb = 'ada', ads = 'ada', --
+    g = 'antlr', g4 = 'antlr', --
+    ans = 'apdl', inp = 'apdl', mac = 'apdl', --
+    apl = 'apl', --
+    applescript = 'applescript', --
+    asm = 'asm', ASM = 'asm', s = 'asm', S = 'asm', --
+    asa = 'asp', asp = 'asp', hta = 'asp', --
+    ahk = 'autohotkey', --
+    au3 = 'autoit', a3x = 'autoit', --
+    awk = 'awk', --
+    bat = 'batch', cmd = 'batch', --
+    bib = 'bibtex', --
+    boo = 'boo', --
+    cs = 'csharp', --
+    c = 'ansi_c', C = 'ansi_c', cc = 'cpp', cpp = 'cpp', cxx = 'cpp', ['c++'] = 'cpp', h = 'cpp',
+    hh = 'cpp', hpp = 'cpp', hxx = 'cpp', ['h++'] = 'cpp', --
+    ck = 'chuck', --
+    clj = 'clojure', cljs = 'clojure', cljc = 'clojure', edn = 'clojure', --
+    ['CMakeLists.txt'] = 'cmake', cmake = 'cmake', ['cmake.in'] = 'cmake', ctest = 'cmake',
+    ['ctest.in'] = 'cmake', --
+    coffee = 'coffeescript', --
+    cr = 'crystal', --
+    css = 'css', --
+    cu = 'cuda', cuh = 'cuda', --
+    d = 'dmd', di = 'dmd', --
+    dart = 'dart', --
+    desktop = 'desktop', --
+    diff = 'diff', patch = 'diff', --
+    Dockerfile = 'dockerfile', --
+    dot = 'dot', --
+    e = 'eiffel', eif = 'eiffel', --
+    ex = 'elixir', exs = 'elixir', --
+    elm = 'elm', --
+    erl = 'erlang', hrl = 'erlang', --
+    fs = 'fsharp', --
+    fan = 'fantom', --
+    dsp = 'faust', --
+    fnl = 'fennel', --
+    fish = 'fish', --
+    forth = 'forth', frt = 'forth', --
+    f = 'fortran', ['for'] = 'fortran', ftn = 'fortran', fpp = 'fortran', f77 = 'fortran',
+    f90 = 'fortran', f95 = 'fortran', f03 = 'fortran', f08 = 'fortran', --
+    fstab = 'fstab', --
+    gd = 'gap', gi = 'gap', gap = 'gap', --
+    gmi = 'gemini', --
+    po = 'gettext', pot = 'gettext', --
+    feature = 'gherkin', --
+    gleam = 'gleam', --
+    glslf = 'glsl', glslv = 'glsl', --
+    dem = 'gnuplot', plt = 'gnuplot', --
+    go = 'go', --
+    groovy = 'groovy', gvy = 'groovy', --
+    gtkrc = 'gtkrc', --
+    ha = 'hare', --
+    hs = 'haskell', --
+    htm = 'html', html = 'html', shtm = 'html', shtml = 'html', xhtml = 'html', vue = 'html', --
+    icn = 'icon', --
+    idl = 'idl', odl = 'idl', --
+    ni = 'inform', --
+    cfg = 'ini', cnf = 'ini', inf = 'ini', ini = 'ini', reg = 'ini', --
+    io = 'io_lang', --
+    bsh = 'java', java = 'java', --
+    js = 'javascript', jsfl = 'javascript', --
+    jq = 'jq', --
+    json = 'json', --
+    jsp = 'jsp', --
+    jl = 'julia', --
+    bbl = 'latex', dtx = 'latex', ins = 'latex', ltx = 'latex', tex = 'latex', sty = 'latex', --
+    ledger = 'ledger', journal = 'ledger', --
+    less = 'less', --
+    lily = 'lilypond', ly = 'lilypond', --
+    cl = 'lisp', el = 'lisp', lisp = 'lisp', lsp = 'lisp', --
+    litcoffee = 'litcoffee', --
+    lgt = 'logtalk', --
+    lua = 'lua', --
+    GNUmakefile = 'makefile', iface = 'makefile', mak = 'makefile', makefile = 'makefile',
+    Makefile = 'makefile', --
+    ['1'] = 'man', ['2'] = 'man', ['3'] = 'man', ['4'] = 'man', ['5'] = 'man', ['6'] = 'man',
+    ['7'] = 'man', ['8'] = 'man', ['9'] = 'man', ['1x'] = 'man', ['2x'] = 'man', ['3x'] = 'man',
+    ['4x'] = 'man', ['5x'] = 'man', ['6x'] = 'man', ['7x'] = 'man', ['8x'] = 'man', ['9x'] = 'man', --
+    md = 'markdown', --
+    ['meson.build'] = 'meson', --
+    moon = 'moonscript', --
+    myr = 'myrddin', --
+    n = 'nemerle', --
+    link = 'networkd', network = 'networkd', netdev = 'networkd', --
+    nim = 'nim', --
+    nsh = 'nsis', nsi = 'nsis', nsis = 'nsis', --
+    m = 'objective_c', mm = 'objective_c', objc = 'objective_c', --
+    caml = 'caml', ml = 'caml', mli = 'caml', mll = 'caml', mly = 'caml', --
+    dpk = 'pascal', dpr = 'pascal', p = 'pascal', pas = 'pascal', --
+    al = 'perl', perl = 'perl', pl = 'perl', pm = 'perl', pod = 'perl', --
+    inc = 'php', php = 'php', php3 = 'php', php4 = 'php', phtml = 'php', --
+    p8 = 'pico8', --
+    pike = 'pike', pmod = 'pike', --
+    PKGBUILD = 'pkgbuild', --
+    pony = 'pony', --
+    eps = 'ps', ps = 'ps', --
+    ps1 = 'powershell', --
+    prolog = 'prolog', --
+    props = 'props', properties = 'props', --
+    proto = 'protobuf', --
+    pure = 'pure', --
+    sc = 'python', py = 'python', pyw = 'python', --
+    R = 'rstats', Rout = 'rstats', Rhistory = 'rstats', Rt = 'rstats', ['Rout.save'] = 'rstats',
+    ['Rout.fail'] = 'rstats', --
+    re = 'reason', --
+    r = 'rebol', reb = 'rebol', --
+    rst = 'rest', --
+    orx = 'rexx', rex = 'rexx', --
+    erb = 'rhtml', rhtml = 'rhtml', --
+    rsc = 'routeros', --
+    spec = 'rpmspec', --
+    Rakefile = 'ruby', rake = 'ruby', rb = 'ruby', rbw = 'ruby', --
+    rs = 'rust', --
+    sass = 'sass', scss = 'sass', --
+    scala = 'scala', --
+    sch = 'scheme', scm = 'scheme', --
+    bash = 'bash', bashrc = 'bash', bash_profile = 'bash', configure = 'bash', csh = 'bash',
+    ksh = 'bash', mksh = 'bash', sh = 'bash', zsh = 'bash', --
+    changes = 'smalltalk', st = 'smalltalk', sources = 'smalltalk', --
+    sml = 'sml', fun = 'sml', sig = 'sml', --
+    sno = 'snobol4', SNO = 'snobol4', --
+    spin = 'spin', --
+    ddl = 'sql', sql = 'sql', --
+    automount = 'systemd', device = 'systemd', mount = 'systemd', path = 'systemd',
+    scope = 'systemd', service = 'systemd', slice = 'systemd', socket = 'systemd', swap = 'systemd',
+    target = 'systemd', timer = 'systemd', --
+    taskpaper = 'taskpaper', --
+    tcl = 'tcl', tk = 'tcl', --
+    texi = 'texinfo', --
+    toml = 'toml', --
+    t2t = 'txt2tags', --
+    ts = 'typescript', --
+    vala = 'vala', --
+    vcf = 'vcard', vcard = 'vcard', --
+    v = 'verilog', ver = 'verilog', --
+    vh = 'vhdl', vhd = 'vhdl', vhdl = 'vhdl', --
+    bas = 'vb', cls = 'vb', ctl = 'vb', dob = 'vb', dsm = 'vb', dsr = 'vb', frm = 'vb', pag = 'vb',
+    vb = 'vb', vba = 'vb', vbs = 'vb', --
+    wsf = 'wsf', --
+    dtd = 'xml', svg = 'xml', xml = 'xml', xsd = 'xml', xsl = 'xml', xslt = 'xml', xul = 'xml', --
+    xs = 'xs', xsin = 'xs', xsrc = 'xs', --
+    xtend = 'xtend', --
+    yaml = 'yaml', yml = 'yaml', --
+    zig = 'zig'
+  }
+  local patterns = {
+    ['^#!.+[/ ][gm]?awk'] = 'awk', ['^#!.+[/ ]lua'] = 'lua', ['^#!.+[/ ]octave'] = 'matlab',
+    ['^#!.+[/ ]perl'] = 'perl', ['^#!.+[/ ]php'] = 'php', ['^#!.+[/ ]python'] = 'python',
+    ['^#!.+[/ ]ruby'] = 'ruby', ['^#!.+[/ ]bash'] = 'bash', ['^#!.+/m?ksh'] = 'bash',
+    ['^#!.+/sh'] = 'bash', ['^%s*class%s+%S+%s*<%s*ApplicationController'] = 'rails',
+    ['^%s*class%s+%S+%s*<%s*ActionController::Base'] = 'rails',
+    ['^%s*class%s+%S+%s*<%s*ActiveRecord::Base'] = 'rails',
+    ['^%s*class%s+%S+%s*<%s*ActiveRecord::Migration'] = 'rails', ['^%s*<%?xml%s'] = 'xml',
+    ['^#cloud%-config'] = 'yaml'
+  }
+
+  for patt, name in ipairs(M.detect_patterns) do if line:find(patt) then return name end end
+  for patt, name in pairs(patterns) do if line:find(patt) then return name end end
+  local name, ext = filename:match('[^/\\]+$'), filename:match('[^.]*$')
+  return M.detect_extensions[name] or extensions[name] or M.detect_extensions[ext] or
+    extensions[ext]
 end
 
 -- The following are utility functions lexers will have access to.
 
 -- Common patterns.
-M.any = lpeg_P(1)
-M.alpha = lpeg_R('AZ', 'az')
-M.digit = lpeg_R('09')
-M.alnum = lpeg_R('AZ', 'az', '09')
-M.lower = lpeg_R('az')
-M.upper = lpeg_R('AZ')
-M.xdigit = lpeg_R('09', 'AF', 'af')
-M.graph = lpeg_R('!~')
-M.punct = lpeg_R('!/', ':@', '[\'', '{~')
-M.space = lpeg_S('\t\v\f\n\r ')
+M.any = P(1)
+M.alpha = R('AZ', 'az')
+M.digit = R('09')
+M.alnum = R('AZ', 'az', '09')
+M.lower = R('az')
+M.upper = R('AZ')
+M.xdigit = R('09', 'AF', 'af')
+M.graph = R('!~')
+M.punct = R('!/', ':@', '[\'', '{~')
+M.space = S('\t\v\f\n\r ')
 
-M.newline = lpeg_P('\r')^-1 * '\n'
+M.newline = P('\r')^-1 * '\n'
 M.nonnewline = 1 - M.newline
 
-M.dec_num = M.digit^1
-M.hex_num = '0' * lpeg_S('xX') * M.xdigit^1
-M.oct_num = '0' * lpeg_R('07')^1
-M.integer = lpeg_S('+-')^-1 * (M.hex_num + M.oct_num + M.dec_num)
-M.float = lpeg_S('+-')^-1 *
-  ((M.digit^0 * '.' * M.digit^1 + M.digit^1 * '.' * M.digit^0 * -lpeg_P('.')) *
-    (lpeg_S('eE') * lpeg_S('+-')^-1 * M.digit^1)^-1 +
-    (M.digit^1 * lpeg_S('eE') * lpeg_S('+-')^-1 * M.digit^1))
-M.number = M.float + M.integer
+---
+-- Returns a pattern that matches a decimal number, whose digits may be separated by character *c*.
+-- @name dec_num_
+function M.dec_num_(c) return M.digit * (P(c)^-1 * M.digit)^0 end
+---
+-- Returns a pattern that matches a hexadecimal number, whose digits may be separated by
+-- character *c*.
+-- @name hex_num_
+function M.hex_num_(c) return '0' * S('xX') * (P(c)^-1 * M.xdigit)^1 end
+---
+-- Returns a pattern that matches an octal number, whose digits may be separated by character *c*.
+-- @name oct_num_
+function M.oct_num_(c) return '0' * (P(c)^-1 * R('07'))^1 * -M.xdigit end
+---
+-- Returns a pattern that matches a binary number, whose digits may be separated by character *c*.
+-- @name bin_num_
+function M.bin_num_(c) return '0' * S('bB') * (P(c)^-1 * S('01'))^1 * -M.xdigit end
+---
+-- Returns a pattern that matches either a decimal, hexadecimal, octal, or binary number,
+-- whose digits may be separated by character *c*.
+-- @name integer_
+function M.integer_(c)
+  return S('+-')^-1 * (M.hex_num_(c) + M.bin_num_(c) + M.oct_num_(c) + M.dec_num_(c))
+end
+local function exp_(c) return S('eE') * S('+-')^-1 * M.digit * (P(c)^-1 * M.digit)^0 end
+---
+-- Returns a pattern that matches a floating point number, whose digits may be separated by
+-- character *c*.
+-- @name float_
+function M.float_(c)
+  return S('+-')^-1 *
+    ((M.dec_num_(c)^-1 * '.' * M.dec_num_(c) + M.dec_num_(c) * '.' * M.dec_num_(c)^-1 * -P('.')) *
+      exp_(c)^-1 + (M.dec_num_(c) * exp_(c)))
+end
+---
+-- Returns a pattern that matches a typical number, either a floating point, decimal, hexadecimal,
+-- octal, or binary number, and whose digits may be separated by character *c*.
+-- @name number_
+function M.number_(c) return M.float_(c) + M.integer_(c) end
+
+M.dec_num = M.dec_num_(false)
+M.hex_num = M.hex_num_(false)
+M.oct_num = M.oct_num_(false)
+M.bin_num = M.bin_num_(false)
+M.integer = M.integer_(false)
+M.float = M.float_(false)
+M.number = M.number_(false)
 
 M.word = (M.alpha + '_') * (M.alnum + '_')^0
-
--- Deprecated.
-M.nonnewline_esc = 1 - (M.newline + '\\') + '\\' * M.any
-M.ascii = lpeg_R('\000\127')
-M.extend = lpeg_R('\000\255')
-M.cntrl = lpeg_R('\000\031')
-M.print = lpeg_R(' ~')
-
----
--- Creates and returns a token pattern with token name *name* and pattern *patt*.
--- If *name* is not a predefined token name, its style must be defined via `lexer.add_style()`.
--- @param name The name of token. If this name is not a predefined token name, then a style
---   needs to be assiciated with it via `lexer.add_style()`.
--- @param patt The LPeg pattern associated with the token.
--- @return pattern
--- @usage local ws = token(lexer.WHITESPACE, lexer.space^1)
--- @usage local annotation = token('annotation', '@' * lexer.word)
--- @name token
-function M.token(name, patt)
-  return lpeg_Cc(name) * patt * lpeg_Cp()
-end
 
 ---
 -- Creates and returns a pattern that matches from string or pattern *prefix* until the end of
 -- the line.
 -- *escape* indicates whether the end of the line can be escaped with a '\' character.
--- @param prefix String or pattern prefix to start matching at.
+-- @param prefix Optional string or pattern prefix to start matching at. The default value is
+--   any non-newline character.
 -- @param escape Optional flag indicating whether or not newlines can be escaped by a '\'
 --  character. The default value is `false`.
 -- @return pattern
