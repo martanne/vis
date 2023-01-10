@@ -106,9 +106,7 @@ lex:add_rule('keyword', token(lexer.KEYWORD, word_match{
 
 -- Numbers.
 local uuid = lexer.xdigit^8 * ('-' * lexer.xdigit^4)^-3 * '-' * lexer.xdigit^12
-local dec = lexer.digit^1 * ('_' * lexer.digit^1)^0
-local oct_num = '0' * S('01234567_')^1
-local integer = S('+-')^-1 * (lexer.hex_num + oct_num + dec)
+local integer = S('+-')^-1 * (lexer.hex_num + lexer.oct_num_('_') + lexer.dec_num_('_'))
 lex:add_rule('number', token(lexer.NUMBER, uuid + lexer.float + integer))
 
 -- Identifiers.
@@ -122,5 +120,7 @@ lex:add_rule('directory', token(lexer.VARIABLE, '/' * (1 - lexer.space)^0))
 
 -- Operators.
 lex:add_rule('operator', token(lexer.OPERATOR, S('=,')))
+
+lexer.property['scintillua.comment'] = '#'
 
 return lex

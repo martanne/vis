@@ -49,7 +49,7 @@ local sq_str = lexer.range("'")
 local dq_str = lexer.range('"')
 local tq_str = lexer.range("'''") + lexer.range('"""')
 local string = token(lexer.STRING, tq_str + sq_str + dq_str)
-local regex_str = #P('/') * lexer.last_char_includes('=~|!<>+-*?&,:;([{') * lexer.range('/', true)
+local regex_str = lexer.after_set('=~|!<>+-*?&,:;([{', lexer.range('/', true))
 local regex = token(lexer.REGEX, regex_str)
 lex:add_rule('string', string + regex)
 
@@ -62,6 +62,7 @@ lex:add_rule('operator', token(lexer.OPERATOR, S('=~|!<>+-/*?&.,:;()[]{}')))
 -- Fold points.
 lex:add_fold_point(lexer.OPERATOR, '{', '}')
 lex:add_fold_point(lexer.COMMENT, '/*', '*/')
-lex:add_fold_point(lexer.COMMENT, lexer.fold_consecutive_lines('//'))
+
+lexer.property['scintillua.comment'] = '//'
 
 return lex

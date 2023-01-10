@@ -43,4 +43,6 @@ lex:add_rule('number', token(lexer.NUMBER, lexer.number))
 -- Operators.
 lex:add_rule('operator', token(lexer.OPERATOR, S('<>=|;,.()[]{}')))
 
+lexer.property['scintillua.comment'] = '//'
+
 return lex

@@ -40,4 +40,6 @@ local directive_word = word_match{
 } + S('AYNDCIiOobh')
 lex:add_rule('directive', token(lexer.KEYWORD, lexer.starts_line(S('!@')^-1 * directive_word)))
 
+lexer.property['scintillua.comment'] = '#'
+
 return lex

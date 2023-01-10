@@ -66,4 +66,6 @@ lex:add_rule('operator', token(lexer.OPERATOR, S('+-^*/&<>=:,(){}')))
 -- Fold points.
 lex:add_fold_point(lexer.COMMENT, '(*', '*)')
 
+lexer.property['scintillua.comment'] = '--'
+
 return lex

@@ -53,12 +53,11 @@ lex:add_rule('type', token(lexer.TYPE,
     type_builtin_range + type_builtin_array))
 
 -- Macro
-lex:add_rule('macro', token('macro', '@' * (id + '.')))
-lex:add_style('macro', lexer.styles.preprocessor)
+lex:add_rule('macro', token(lexer.PREPROCESSOR, '@' * (id + '.')))
 
 -- Symbol
 lex:add_rule('symbol', token('symbol', -B(P(':') + '<') * ':' * id))
-lex:add_style('symbol', lexer.styles.constant)
+lex:add_style('symbol', lexer.styles.string)
 
 -- Function
 lex:add_rule('function', token(lexer.FUNCTION, id * #(P('.')^-1 * '(')))
@@ -106,5 +105,7 @@ lex:add_style('character', lexer.styles.constant)
 
 -- Operator
 lex:add_rule('operator', token(lexer.OPERATOR, S('+-*/÷<>=!≠≈≤≥%^&|⊻~\\\':?.√')))
+
+lexer.property['scintillua.comment'] = '#'
 
 return lex

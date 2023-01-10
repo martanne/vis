@@ -91,4 +91,6 @@ lex:add_rule('punctuation',
 -- Qualifiers.
 lex:add_rule('qualifier', token(lexer.LABEL, '#' * word_match('read send share any alias')))
 
+lexer.property['scintillua.comment'] = '//'
+
 return lex

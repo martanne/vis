@@ -52,4 +52,6 @@ lex:add_rule('special', token(lexer.TYPE, S('{}[]();') + '←' + '→' + '◊'))
 -- Nabla.
 lex:add_rule('nabla', token(lexer.PREPROCESSOR, P('∇') + '⍫'))
 
+lexer.property['scintillua.comment'] = '#'
+
 return lex

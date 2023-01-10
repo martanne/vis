@@ -59,4 +59,6 @@ local operators = {
 }
 lex:modify_rule('operator', token(lexer.OPERATOR, word_match(operators)) + lex:get_rule('operator'))
 
+lexer.property['scintillua.comment'] = '%'
+
 return lex

@@ -36,8 +36,10 @@ lex:modify_rule('string', token(lexer.STRING, dq_str + kw_str))
 lex:modify_rule('comment', token(lexer.COMMENT, lexer.to_eol(';')))
 
 -- Ignore these rules.
-lex:modify_rule('longstring', P(false))
+-- lex:modify_rule('longstring', P(false))
 lex:modify_rule('label', P(false))
 lex:modify_rule('operator', P(false))
+
+lexer.property['scintillua.comment'] = ';'
 
 return lex

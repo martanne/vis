@@ -45,4 +45,6 @@ lex:add_rule('pragma', token(lexer.PREPROCESSOR, hashbang))
 -- Operators.
 lex:add_rule('operator', token(lexer.OPERATOR, '..' + S('+-/*%<>~!=^&|?~:;,.()[]{}@#$`\\\'')))
 
+lexer.property['scintillua.comment'] = '//'
+
 return lex

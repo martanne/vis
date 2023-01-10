@@ -145,4 +145,6 @@ lex:add_rule('label', token(lexer.LABEL, lexer.word * ':'))
 -- Identifiers.
 lex:add_rule('identifier', token(lexer.IDENTIFIER, lexer.word))
 
+lexer.property['scintillua.comment'] = '#'
+
 return lex

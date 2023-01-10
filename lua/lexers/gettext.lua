@@ -26,4 +26,6 @@ lex:add_rule('string', token(lexer.STRING, lexer.range('"', true)))
 -- Comments.
 lex:add_rule('comment', token(lexer.COMMENT, lexer.to_eol('#' * S(': .~'))))
 
+lexer.property['scintillua.comment'] = '#'
+
 return lex

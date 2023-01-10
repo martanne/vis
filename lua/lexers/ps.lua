@@ -44,4 +44,6 @@ lex:add_rule('label', token(lexer.LABEL, '/' * word))
 -- Operators.
 lex:add_rule('operator', token(lexer.OPERATOR, S('[]{}')))
 
+lexer.property['scintillua.comment'] = '%'
+
 return lex

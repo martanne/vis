@@ -94,4 +94,6 @@ local float = lexer.digit^1 * '.' * lexer.digit^1 * S('eE') * (S('+-')^-1 * lexe
 lex:add_rule('number',
   B(1 - (lexer.alpha + '_')) * S('+-')^-1 * token(lexer.NUMBER, float + integer))
 
+lexer.property['scintillua.comment'] = '#'
+
 return lex

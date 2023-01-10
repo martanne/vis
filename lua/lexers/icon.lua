@@ -55,6 +55,7 @@ lex:add_rule('operator', token(lexer.OPERATOR, S('+-/*%<>~!=^&|?~@:;,.()[]{}')))
 lex:add_fold_point(lexer.PREPROCESSOR, 'ifdef', 'endif')
 lex:add_fold_point(lexer.PREPROCESSOR, 'ifndef', 'endif')
 lex:add_fold_point(lexer.KEYWORD, 'procedure', 'end')
-lex:add_fold_point(lexer.COMMENT, lexer.fold_consecutive_lines('#'))
+
+lexer.property['scintillua.comment'] = '#'
 
 return lex

@@ -65,4 +65,6 @@ lex:add_rule('operator', token(lexer.OPERATOR,
     '<-' + '<-=' + '->' + '->=' + '><' + '><=' + '&=' + '|=' + 'and=' + 'or=' + '==' + '===' + '<>' +
     '<>=' + '<=' + '>=' + '=<' + '=<=' + '=>' + '=>=' + '..' + S('+-/*<>~!&=^|?:.()[]@#\\')))
 
+lexer.property['scintillua.comment'] = "'"
+
 return lex

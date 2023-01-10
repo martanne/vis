@@ -41,4 +41,6 @@ lex:add_rule('pragma', token(lexer.PREPROCESSOR, lexer.range('<mdoc>', '</mdoc>'
 -- Operators.
 lex:add_rule('operator', token(lexer.OPERATOR, S('+-/*%<>~!=^&|?~:;,.()[]{}@#$`\\\'')))
 
+lexer.property['scintillua.comment'] = '//'
+
 return lex

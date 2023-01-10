@@ -82,4 +82,6 @@ lex:add_rule('string', token(lexer.STRING, sq_str + dq_str))
 -- Operators.
 lex:add_rule('operator', token(lexer.OPERATOR, S('<>=&+-/*,()')))
 
+lexer.property['scintillua.comment'] = '!'
+
 return lex

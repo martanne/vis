@@ -90,12 +90,12 @@ lex:add_rule('section', token(lexer.LABEL, '[' * word_match{
 lex:add_rule('comment', token(lexer.COMMENT, lexer.starts_line(lexer.to_eol(S(';#')))))
 
 -- Numbers.
-local dec = lexer.digit^1 * ('_' * lexer.digit^1)^0
-local oct_num = '0' * S('01234567_')^1
-local integer = S('+-')^-1 * (lexer.hex_num + oct_num + dec)
+local integer = S('+-')^-1 * (lexer.hex_num + lexer.oct_num_('_') + lexer.dec_num_('_'))
 lex:add_rule('number', token(lexer.NUMBER, lexer.float + integer))
 
 -- Operators.
 lex:add_rule('operator', token(lexer.OPERATOR, '='))
+
+lexer.property['scintillua.comment'] = '#'
 
 return lex

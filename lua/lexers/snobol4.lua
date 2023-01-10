@@ -66,4 +66,6 @@ lex:add_rule('control', token(lexer.PREPROCESSOR, lexer.starts_line('-' * lexer.
 -- Operators.
 lex:add_rule('operator', token(lexer.OPERATOR, S'¬?$.!%*/#+-@⊥&^~\\='))
 
+lexer.property['scintillua.comment'] = '#'
+
 return lex

@@ -88,4 +88,6 @@ lex:add_rule('typevar', token(lexer.VARIABLE, "'" * id))
 -- Operators.
 lex:add_rule('operator', token(lexer.OPERATOR, S('!*/+-^:@=<>()[]{},;._|#%&$?~`\\')))
 
+lexer.property['scintillua.comment'] = '(*)'
+
 return lex

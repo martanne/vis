@@ -14,7 +14,6 @@ lex:add_rule('line_comment', token(lexer.COMMENT, lexer.to_eol('//')))
 -- Variables.
 lex:add_rule('variable', token(lexer.VARIABLE, '@' * (lexer.alnum + S('_-{}'))^1))
 
--- Fold points.
-lex:add_fold_point(lexer.COMMENT, lexer.fold_consecutive_lines('//'))
+lexer.property['scintillua.comment'] = '//'
 
 return lex
