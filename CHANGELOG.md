@@ -7,6 +7,7 @@
 - improvements to and clean-up of vis-open
 - add Selection:remove() to lua API
 - fix bug where visual-line selections after view were considered visible
+- don't set `_FORTIFY_SOURCE` in configure
 
 
 ## [0.8] - 2022-11-01
