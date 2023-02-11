@@ -6,6 +6,7 @@
 - fix a ~ being considered a special character in path patterns (except at the start)
 - improvements to and clean-up of vis-open
 - add Selection:remove() to lua API
+- fix bug where visual-line selections after view were considered visible
 
 
 ## [0.8] - 2022-11-01
