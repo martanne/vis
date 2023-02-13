@@ -2,6 +2,10 @@
 
 - add a changelog
 - fix warning by dealing with error value from fchdir in text-io.c
+- fix documentation of initial value to 'syntax' option
+- fix a ~ being considered a special character in path patterns (except at the start)
+- improvements to and clean-up of vis-open
+
 
 ## [0.8] - 2022-11-01
 
