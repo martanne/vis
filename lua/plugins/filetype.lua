@@ -594,7 +594,7 @@ vis.events.subscribe(vis.events.WIN_OPEN, function(win)
 		end
 
 		local function searcher(tbl, subject)
-			for i, pattern in ipairs(tbl or {}) do
+			for _, pattern in ipairs(tbl or {}) do
 				if string.match(subject, pattern) then
 					return true
 				end
