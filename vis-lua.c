@@ -2057,10 +2057,23 @@ static int window_selection_to(lua_State *L) {
 	return 0;
 }
 
+/***
+ * Remove selection.
+ * @function remove
+ */
+static int window_selection_remove(lua_State *L) {
+	Selection *sel = obj_lightref_check(L, 1, VIS_LUA_TYPE_SELECTION);
+	if (sel) {
+		view_selections_dispose(sel);
+	}
+	return 0;
+}
+
 static const struct luaL_Reg window_selection_funcs[] = {
 	{ "__index", window_selection_index },
 	{ "__newindex", window_selection_newindex },
 	{ "to", window_selection_to },
+	{ "remove", window_selection_remove },
 	{ NULL, NULL },
 };
 
