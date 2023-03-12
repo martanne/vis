@@ -1395,25 +1395,37 @@ static const char *selections_match_next(Vis *vis, const char *keys, const Arg *
 	if (!buf)
 		return keys;
 
+	bool flip;
 	bool match_all = arg->b;
 	Filerange primary = range;
+	Selection *sel;
 
 	for (;;) {
+		flip = view_cursor_get(view) == primary.start;
 		range = find_next(txt, range.end, buf);
 		if (!text_range_valid(&range))
 			break;
-		if (selection_new(view, &range, !match_all) && !match_all)
-			goto out;
+		if (sel = selection_new(view, &range, !match_all)) {
+			if (flip)
+				view_selections_flip(sel);
+			if (!match_all)
+				goto out;
+		}
 	}
 
 	range = primary;
 
 	for (;;) {
+		flip = view_cursor_get(view) == primary.start;
 		range = find_prev(txt, range.start, buf);
 		if (!text_range_valid(&range))
 			break;
-		if (selection_new(view, &range, !match_all) && !match_all)
-			break;
+		if (sel = selection_new(view, &range, !match_all)) {
+			if (flip)
+				view_selections_flip(sel);
+			if (!match_all)
+				break;
+		}
 	}
 
 out:
