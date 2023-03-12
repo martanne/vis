@@ -1312,8 +1312,8 @@ static const char *selections_align_indent(Vis *vis, const char *keys, const Arg
 	for (int i = 0; i < columns; i++) {
 		int mincol = INT_MAX, maxcol = 0;
 		for (Selection *s = view_selections_column(view, i); s; s = view_selections_column_next(s, i)) {
-			Filerange sel = view_selections_get(s);
-			size_t pos = left_align ? sel.start : sel.end;
+			Filerange range = view_selections_get(s);
+			size_t pos = left_align ? range.start : range.end;
 			int col = text_line_width_get(txt, pos);
 			if (col < mincol)
 				mincol = col;
@@ -1328,9 +1328,9 @@ static const char *selections_align_indent(Vis *vis, const char *keys, const Arg
 		memset(buf, ' ', len);
 
 		for (Selection *s = view_selections_column(view, i); s; s = view_selections_column_next(s, i)) {
-			Filerange sel = view_selections_get(s);
-			size_t pos = left_align ? sel.start : sel.end;
-			size_t ipos = sel.start;
+			Filerange range = view_selections_get(s);
+			size_t pos = left_align ? range.start : range.end;
+			size_t ipos = range.start;
 			int col = text_line_width_get(txt, pos);
 			if (col < maxcol) {
 				size_t off = maxcol - col;
@@ -1372,15 +1372,15 @@ static const char *selections_match_next(Vis *vis, const char *keys, const Arg *
 	Text *txt = vis_text(vis);
 	View *view = vis_view(vis);
 	Selection *s = view_selections_primary_get(view);
-	Filerange sel = view_selections_get(s);
-	if (!text_range_valid(&sel))
+	Filerange range = view_selections_get(s);
+	if (!text_range_valid(&range))
 		return keys;
 
 	static bool match_word;
 
 	if (view_selections_count(view) == 1) {
 		Filerange word = text_object_word(txt, view_cursors_pos(s));
-		match_word = text_range_equal(&sel, &word);
+		match_word = text_range_equal(&range, &word);
 	}
 
 	Filerange (*find_next)(Text *, size_t, const char *) = text_object_word_find_next;
@@ -1390,28 +1390,28 @@ static const char *selections_match_next(Vis *vis, const char *keys, const Arg *
 		find_prev = text_object_find_prev;
 	}
 
-	char *buf = text_bytes_alloc0(txt, sel.start, text_range_size(&sel));
+	char *buf = text_bytes_alloc0(txt, range.start, text_range_size(&range));
 	if (!buf)
 		return keys;
 
 	bool match_all = arg->b;
-	Filerange primary = sel;
+	Filerange primary = range;
 
 	for (;;) {
-		sel = find_next(txt, sel.end, buf);
-		if (!text_range_valid(&sel))
+		range = find_next(txt, range.end, buf);
+		if (!text_range_valid(&range))
 			break;
-		if (selection_new(view, &sel, !match_all) && !match_all)
+		if (selection_new(view, &range, !match_all) && !match_all)
 			goto out;
 	}
 
-	sel = primary;
+	range = primary;
 
 	for (;;) {
-		sel = find_prev(txt, sel.start, buf);
-		if (!text_range_valid(&sel))
+		range = find_prev(txt, range.start, buf);
+		if (!text_range_valid(&range))
 			break;
-		if (selection_new(view, &sel, !match_all) && !match_all)
+		if (selection_new(view, &range, !match_all) && !match_all)
 			break;
 	}
 
@@ -1529,12 +1529,12 @@ static const char *selections_rotate(Vis *vis, const char *keys, const Arg *arg)
 		next = view_selections_next(s);
 		size_t line_next = 0;
 
-		Filerange sel = view_selections_get(s);
+		Filerange range = view_selections_get(s);
 		Rotate rot;
 		rot.sel = s;
-		rot.len = text_range_size(&sel);
+		rot.len = text_range_size(&range);
 		if ((rot.data = malloc(rot.len)))
-			rot.len = text_bytes_get(txt, sel.start, rot.len, rot.data);
+			rot.len = text_bytes_get(txt, range.start, rot.len, rot.data);
 		else
 			rot.len = 0;
 		array_add(&arr, &rot);
@@ -1552,15 +1552,15 @@ static const char *selections_rotate(Vis *vis, const char *keys, const Arg *arg)
 				Rotate *newrot = array_get(&arr, j);
 				if (!oldrot || !newrot || oldrot == newrot)
 					continue;
-				Filerange newsel = view_selections_get(newrot->sel);
-				if (!text_range_valid(&newsel))
+				Filerange newrange = view_selections_get(newrot->sel);
+				if (!text_range_valid(&newrange))
 					continue;
-				if (!text_delete_range(txt, &newsel))
+				if (!text_delete_range(txt, &newrange))
 					continue;
-				if (!text_insert(txt, newsel.start, oldrot->data, oldrot->len))
+				if (!text_insert(txt, newrange.start, oldrot->data, oldrot->len))
 					continue;
-				newsel.end = newsel.start + oldrot->len;
-				view_selections_set(newrot->sel, &newsel);
+				newrange.end = newrange.start + oldrot->len;
+				view_selections_set(newrot->sel, &newrange);
 				free(oldrot->data);
 			}
 			array_clear(&arr);
@@ -1578,15 +1578,15 @@ static const char *selections_trim(Vis *vis, const char *keys, const Arg *arg) {
 	View *view = vis_view(vis);
 	for (Selection *s = view_selections(view), *next; s; s = next) {
 		next = view_selections_next(s);
-		Filerange sel = view_selections_get(s);
-		if (!text_range_valid(&sel))
+		Filerange range = view_selections_get(s);
+		if (!text_range_valid(&range))
 			continue;
-		for (char b; sel.start < sel.end && text_byte_get(txt, sel.end-1, &b)
-			&& isspace((unsigned char)b); sel.end--);
-		for (char b; sel.start <= sel.end && text_byte_get(txt, sel.start, &b)
-			&& isspace((unsigned char)b); sel.start++);
-		if (sel.start < sel.end) {
-			view_selections_set(s, &sel);
+		for (char b; range.start < range.end && text_byte_get(txt, range.end-1, &b)
+			&& isspace((unsigned char)b); range.end--);
+		for (char b; range.start <= range.end && text_byte_get(txt, range.start, &b)
+			&& isspace((unsigned char)b); range.start++);
+		if (range.start < range.end) {
+			view_selections_set(s, &range);
 		} else if (!view_selections_dispose(s)) {
 			vis_mode_switch(vis, VIS_MODE_NORMAL);
 		}
