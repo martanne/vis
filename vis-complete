@@ -1,32 +1,51 @@
 #!/bin/sh
 set -e
 
+usage() {
+	printf '%s\n' "usage: $(basename "$0") [--file|--word] pattern" \
+	              "       $(basename "$0") -h|--help"
+}
+
 basic_regex_quote() { printf "%s" "$1" | sed 's|[\\.*^$[]|\\&|g'; }
 glob_quote () { printf "%s" "$1" | sed 's|[\\?*[]]|\\&|g'; }
 
-PATTERN=""
 COMPLETE_WORD=0
 FIND_FILE_LIMIT=1000
 
 while [ $# -gt 0 ]; do
 	case "$1" in
-	-h|--help)
-		echo "usage: $(basename "$0") [-h] [--file|--word] [pattern]"
-		exit 0;
-		;;
 	--file)
+		COMPLETE_WORD=0
 		shift
 		;;
 	--word)
 		COMPLETE_WORD=1
 		shift
 		;;
+	--)
+		shift
+		break
+		;;
+	-h|--help)
+		usage
+		exit 0
+		;;
+	-*)
+		usage
+		exit 1
+		;;
 	*)
-		PATTERN="$1"
 		break
 		;;
 	esac
 done
+
+if [ $# -ne 1 ]; then
+	usage
+	exit 1
+fi
+
+PATTERN="$1"
 
 if [ $COMPLETE_WORD = 1 ]; then
 	tr -cs '[:alnum:]_' '\n' |

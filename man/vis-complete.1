@@ -1,4 +1,4 @@
-.Dd January 15, 2017
+.Dd March 21, 2023
 .Dt VIS-COMPLETE 1
 .Os Vis VERSION
 .
@@ -8,14 +8,12 @@
 .
 .Sh SYNOPSIS
 .Nm vis-complete
-.Op Fl -file
-.Op Fl -word
+.Op Fl -file | -word
 .Op Ar --
-.Op Ar pattern
+.Ar pattern
 .Pp
 .Nm vis-complete
-.Fl h |
-.Fl -help
+.Fl h | -help
 .
 .Sh DESCRIPTION
 .Nm vis-complete
@@ -36,17 +34,16 @@ This passes
 .Ar pattern
 to
 .Nm find
-to obtain a list of matching file names.
+to obtain a list of matching file names
+(this is the default).
 .It Fl -word
 This reads standard input to obtain a list of lines matching
 .Ar pattern .
 .It Fl -
-If this token is encountered before the first non-option argument,
-all following arguments will be treated as pattern,
-even if they would otherwise be valid command-line options.
+An argument following this token will be treated as pattern,
+even if it would otherwise be a valid command-line option.
 .Pp
-If encountered after the first non-option argument,
-or after a previous instance of
+If encountered after a previous instance of
 .Li --
 it is treated as a pattern.
 .It Ar pattern
