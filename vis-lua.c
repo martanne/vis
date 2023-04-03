@@ -2765,7 +2765,13 @@ void vis_lua_init(Vis *vis) {
 		vis_lua_path_add(vis, path);
 	}
 
-	ssize_t len = readlink("/proc/self/exe", path, sizeof(path)-1);
+	ssize_t len = readlink(
+	   #if __BSD_VISIBLE
+	       "/proc/curproc/file"
+	   #else
+	       "/proc/self/exe"
+	   #endif
+	   , path, sizeof(path)-1);
 	if (len > 0) {
 		path[len] = '\0';
 		/* some idiotic dirname(3) implementations return pointers to statically
