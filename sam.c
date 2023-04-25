@@ -1564,14 +1564,16 @@ static bool cmd_print(Vis *vis, Win *win, Command *cmd, const char *argv[], Sele
 
 static bool cmd_files(Vis *vis, Win *win, Command *cmd, const char *argv[], Selection *sel, Filerange *range) {
 	bool ret = true;
-	for (Win *win = vis->windows; win; win = win->next) {
-		if (win->file->internal)
+	for (Win *wn, *w = vis->windows; w; w = wn) {
+		/* w can get freed by sam_execute() so store w->next early */
+		wn = w->next;
+		if (w->file->internal)
 			continue;
 		bool match = !cmd->regex ||
-		             (win->file->name && text_regex_match(cmd->regex, win->file->name, 0) == 0);
+		             (w->file->name && text_regex_match(cmd->regex, w->file->name, 0) == 0);
 		if (match ^ (argv[0][0] == 'Y')) {
 			Filerange def = text_range_new(0, 0);
-			ret &= sam_execute(vis, win, cmd->cmd, NULL, &def);
+			ret &= sam_execute(vis, w, cmd->cmd, NULL, &def);
 		}
 	}
 	return ret;
