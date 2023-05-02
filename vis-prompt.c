@@ -205,10 +205,3 @@ void vis_message_show(Vis *vis, const char *msg) {
 	view_cursor_to(win->view, pos);
 	vis_window_focus(win);
 }
-
-void vis_message_hide(Vis *vis) {
-	if (!vis->message_window)
-		return;
-	vis_window_close(vis->message_window);
-	vis->message_window = NULL;
-}

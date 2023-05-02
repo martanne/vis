@@ -248,8 +248,6 @@ void vis_info_hide(Vis*);
 
 /** Display arbitrary long message in a dedicated window. */
 void vis_message_show(Vis*, const char *msg);
-/** Close message window. */
-void vis_message_hide(Vis*);
 /**
  * @}
  * @defgroup vis_changes
