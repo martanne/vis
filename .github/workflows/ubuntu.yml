@@ -7,9 +7,8 @@ jobs:
     strategy:
       matrix:
         os:
-          - ubuntu-22.04 # should be latest, documentation is outdated
-          - ubuntu-20.04 # latest
-          - ubuntu-18.04
+          - ubuntu-latest
+          - ubuntu-20.04
         config:
           - ""
           - --disable-curses
@@ -37,11 +36,6 @@ jobs:
           libtermkey-dev \
           libtre-dev \
           lua-lpeg
-
-    - name: Dependency Ubuntu 18.04
-      if: matrix.os == 'ubuntu-18.04'
-      run: |
-        sudo apt install lua-busted
 
     - name: Build
       run: |
