@@ -8,7 +8,7 @@
 - add Selection:remove() to lua API
 - fix bug where visual-line selections after view were considered visible
 - don't set `_FORTIFY_SOURCE` in configure
-- update dockerfile to alpine 3.17
+- update dockerfile to alpine 3.18
 
 
 ## [0.8] - 2022-11-01
