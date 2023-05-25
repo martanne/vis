@@ -37,10 +37,6 @@ vc_determine_command() {
 		done
 	fi
 
-	if [ "$sel" = "primary" ]; then
-		vc_fatal "clipboard primary selection is not supported on your platform"
-	fi
-
 	if command -v pbcopy >/dev/null 2>&1; then
 		echo 'mac'
 		return 0
