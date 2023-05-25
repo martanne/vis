@@ -24,7 +24,7 @@ jobs:
 
     - name: Upload
       env:
-        DEPLOY_TOKEN: ${{ secrets.GITHUB_DEPLOY_TOKEN }}
+        DEPLOY_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: |
         git clone --depth=1 --single-branch --branch gh-pages "https://x-access-token:${DEPLOY_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" /tmp/gh-pages
         git config --global user.name "${GITHUB_ACTOR}"
