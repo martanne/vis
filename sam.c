@@ -655,7 +655,7 @@ static void parse_argv(const char **s, const char *argv[], size_t maxarg) {
 
 static bool valid_cmdname(const char *s) {
 	unsigned char c = (unsigned char)*s;
-	return c && !isspace(c) && !isdigit(c) && (!ispunct(c) || (c == '-' && valid_cmdname(s+1)));
+	return c && !isspace(c) && !isdigit(c) && (!ispunct(c) || c == '_' || (c == '-' && valid_cmdname(s+1)));
 }
 
 static char *parse_cmdname(const char **s) {
