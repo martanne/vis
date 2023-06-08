@@ -2,6 +2,7 @@
 <html>
 <head>
   <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <link rel="stylesheet" href="mandoc.css" type="text/css" media="all"/>
   <title>VIS-DIGRAPH(1)</title>
 </head>
@@ -14,82 +15,81 @@
   </tr>
 </table>
 <div class="manual-text">
-<h1 class="Sh" title="Sh" id="NAME"><a class="permalink" href="#NAME">NAME</a></h1>
-<code class="Nm" title="Nm">vis-digraph</code> &#x2014;
-<div class="Nd" title="Nd">print Unicode character using mnemonics</div>
-<h1 class="Sh" title="Sh" id="SYNOPSIS"><a class="permalink" href="#SYNOPSIS">SYNOPSIS</a></h1>
+<section class="Sh">
+<h1 class="Sh" id="NAME"><a class="permalink" href="#NAME">NAME</a></h1>
+<p class="Pp"><code class="Nm">vis-digraph</code> &#x2014;
+    <span class="Nd">print Unicode character using mnemonics</span></p>
+</section>
+<section class="Sh">
+<h1 class="Sh" id="SYNOPSIS"><a class="permalink" href="#SYNOPSIS">SYNOPSIS</a></h1>
 <table class="Nm">
   <tr>
-    <td><code class="Nm" title="Nm">vis-digraph</code></td>
-    <td><var class="Ar" title="Ar">digraph ...</var></td>
+    <td><code class="Nm">vis-digraph</code></td>
+    <td><var class="Ar">digraph ...</var></td>
   </tr>
 </table>
 <br/>
 <table class="Nm">
   <tr>
-    <td><code class="Nm" title="Nm">vis-digraph</code></td>
-    <td><code class="Fl" title="Fl">-</code></td>
+    <td><code class="Nm">vis-digraph</code></td>
+    <td><code class="Fl">-</code></td>
   </tr>
 </table>
-<h1 class="Sh" title="Sh" id="DESCRIPTION"><a class="permalink" href="#DESCRIPTION">DESCRIPTION</a></h1>
-<code class="Nm" title="Nm">vis-digraph</code> read a digraph from command line
-  argument or standard input and print a corresponding Unicode character to
-  standard output, encoded in current locale.
+</section>
+<section class="Sh">
+<h1 class="Sh" id="DESCRIPTION"><a class="permalink" href="#DESCRIPTION">DESCRIPTION</a></h1>
+<p class="Pp"><code class="Nm">vis-digraph</code> read a digraph from command
+    line argument or standard input and print a corresponding Unicode character
+    to standard output, encoded in current locale.</p>
 <dl class="Bl-tag">
-  <dt>&#x00A0;</dt>
-  <dd>&#x00A0;</dd>
-  <dt><var class="Ar" title="Ar">digraph</var></dt>
+  <dt><var class="Ar">digraph</var></dt>
   <dd>A set of two (or more) characters that get replaced by a single Unicode
       character.</dd>
-  <dt>&#x00A0;</dt>
-  <dd>&#x00A0;</dd>
-  <dt><code class="Fl" title="Fl">-</code></dt>
+  <dt><code class="Fl">-</code></dt>
   <dd>Read digraph from standard input.</dd>
 </dl>
-<div class="Pp"></div>
-Without argument, <code class="Nm" title="Nm">vis-digraph</code> displays all
-  available digraphs along with a description.
-<h1 class="Sh" title="Sh" id="ENVIRONMENT"><a class="permalink" href="#ENVIRONMENT">ENVIRONMENT</a></h1>
+<p class="Pp">Without argument, <code class="Nm">vis-digraph</code> displays all
+    available digraphs along with a description.</p>
+</section>
+<section class="Sh">
+<h1 class="Sh" id="ENVIRONMENT"><a class="permalink" href="#ENVIRONMENT">ENVIRONMENT</a></h1>
 <dl class="Bl-tag">
-  <dt>&#x00A0;</dt>
-  <dd>&#x00A0;</dd>
-  <dt><a class="permalink" href="#LC_CTYPE"><code class="Ev" title="Ev" id="LC_CTYPE">LC_CTYPE</code></a></dt>
+  <dt id="LC_CTYPE"><a class="permalink" href="#LC_CTYPE"><code class="Ev">LC_CTYPE</code></a></dt>
   <dd>Locale definition, setting the encoding format of the Unicode character
-      printed out. See <a class="Xr" title="Xr">locale(1)</a> for more
-      information.</dd>
+      printed out. See <a class="Xr">locale(1)</a> for more information.</dd>
 </dl>
-<h1 class="Sh" title="Sh" id="EXIT_STATUS"><a class="permalink" href="#EXIT_STATUS">EXIT
+</section>
+<section class="Sh">
+<h1 class="Sh" id="EXIT_STATUS"><a class="permalink" href="#EXIT_STATUS">EXIT
   STATUS</a></h1>
 <dl class="Bl-tag">
-  <dt>&#x00A0;</dt>
-  <dd>&#x00A0;</dd>
   <dt>0</dt>
   <dd>Digraph correctly read recognised and printed out.</dd>
-  <dt>&#x00A0;</dt>
-  <dd>&#x00A0;</dd>
   <dt>1</dt>
   <dd>Digraph not recognised.</dd>
-  <dt>&#x00A0;</dt>
-  <dd>&#x00A0;</dd>
   <dt>2</dt>
   <dd>Digraph is the beginning of an existing digraph, but does not correspond
       to a full digraph.</dd>
-  <dt>&#x00A0;</dt>
-  <dd>&#x00A0;</dd>
   <dt>3</dt>
   <dd>An error occurred and digraph could not be read or printed.</dd>
 </dl>
-<h1 class="Sh" title="Sh" id="SEE_ALSO"><a class="permalink" href="#SEE_ALSO">SEE
+</section>
+<section class="Sh">
+<h1 class="Sh" id="SEE_ALSO"><a class="permalink" href="#SEE_ALSO">SEE
   ALSO</a></h1>
-<a class="Xr" title="Xr">locale(1)</a>, <a class="Xr" title="Xr">vis(1)</a>
-<h1 class="Sh" title="Sh" id="STANDARDS"><a class="permalink" href="#STANDARDS">STANDARDS</a></h1>
-<code class="Nm" title="Nm">vis-digraph</code> follows the digraph format from
-  <a class="Lk" title="Lk" href="http://tools.ietf.org/rfc/rfc1345.txt">RFC
-  1345</a></div>
+<p class="Pp"><a class="Xr">locale(1)</a>, <a class="Xr">vis(1)</a></p>
+</section>
+<section class="Sh">
+<h1 class="Sh" id="STANDARDS"><a class="permalink" href="#STANDARDS">STANDARDS</a></h1>
+<p class="Pp"><code class="Nm">vis-digraph</code> follows the digraph format
+    from <a class="Lk" href="http://tools.ietf.org/rfc/rfc1345.txt">RFC
+  1345</a></p>
+</section>
+</div>
 <table class="foot">
   <tr>
     <td class="foot-date">January 27, 2017</td>
-    <td class="foot-os">Vis 7574a46</td>
+    <td class="foot-os">Vis 7a8dd7f</td>
   </tr>
 </table>
 </body>

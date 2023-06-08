@@ -2,6 +2,7 @@
 <html>
 <head>
   <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <link rel="stylesheet" href="mandoc.css" type="text/css" media="all"/>
   <title>VIS-CLIPBOARD(1)</title>
 </head>
@@ -14,124 +15,115 @@
   </tr>
 </table>
 <div class="manual-text">
-<h1 class="Sh" title="Sh" id="NAME"><a class="permalink" href="#NAME">NAME</a></h1>
-<code class="Nm" title="Nm">vis-clipboard</code> &#x2014;
-<div class="Nd" title="Nd">Read from or write to the system clipboard</div>
-<h1 class="Sh" title="Sh" id="SYNOPSIS"><a class="permalink" href="#SYNOPSIS">SYNOPSIS</a></h1>
+<section class="Sh">
+<h1 class="Sh" id="NAME"><a class="permalink" href="#NAME">NAME</a></h1>
+<p class="Pp"><code class="Nm">vis-clipboard</code> &#x2014;
+    <span class="Nd">Read from or write to the system clipboard</span></p>
+</section>
+<section class="Sh">
+<h1 class="Sh" id="SYNOPSIS"><a class="permalink" href="#SYNOPSIS">SYNOPSIS</a></h1>
 <table class="Nm">
   <tr>
-    <td><code class="Nm" title="Nm">vis-clipboard</code></td>
-    <td><code class="Fl" title="Fl">--usable</code></td>
+    <td><code class="Nm">vis-clipboard</code></td>
+    <td><code class="Fl">--usable</code></td>
   </tr>
 </table>
-<div class="Pp"></div>
+<p class="Pp"></p>
 <br/>
 <table class="Nm">
   <tr>
-    <td><code class="Nm" title="Nm">vis-clipboard</code></td>
-    <td><code class="Fl" title="Fl">--copy</code>
-      [<div class="Op"><code class="Fl" title="Fl">--selection</code>
-      <var class="Ar" title="Ar">selection</var></div>]</td>
+    <td><code class="Nm">vis-clipboard</code></td>
+    <td><code class="Fl">--copy</code> [<code class="Fl">--selection</code>
+      <var class="Ar">selection</var>]</td>
   </tr>
 </table>
-<div class="Pp"></div>
+<p class="Pp"></p>
 <br/>
 <table class="Nm">
   <tr>
-    <td><code class="Nm" title="Nm">vis-clipboard</code></td>
-    <td><code class="Fl" title="Fl">--paste</code>
-      [<div class="Op"><code class="Fl" title="Fl">--selection</code>
-      <var class="Ar" title="Ar">selection</var></div>]</td>
+    <td><code class="Nm">vis-clipboard</code></td>
+    <td><code class="Fl">--paste</code> [<code class="Fl">--selection</code>
+      <var class="Ar">selection</var>]</td>
   </tr>
 </table>
-<h1 class="Sh" title="Sh" id="DESCRIPTION"><a class="permalink" href="#DESCRIPTION">DESCRIPTION</a></h1>
-<code class="Nm" title="Nm">vis-clipboard</code> wraps various system-specific
-  tools for interacting with a system clipboard, like
-  <a class="Xr" title="Xr">xsel(1)</a> for X11,
-  <a class="Xr" title="Xr">pbcopy(1)</a> for Mac OS X, and
-  <span class="Pa" title="Pa">/dev/clipboard</span> on Cygwin.
-<div class="Pp"></div>
-<code class="Nm" title="Nm">vis-clipboard</code> can run in three different
-  ways, depending on the flag given on the command-line.
+</section>
+<section class="Sh">
+<h1 class="Sh" id="DESCRIPTION"><a class="permalink" href="#DESCRIPTION">DESCRIPTION</a></h1>
+<p class="Pp"><code class="Nm">vis-clipboard</code> wraps various
+    system-specific tools for interacting with a system clipboard, like
+    <a class="Xr">xsel(1)</a> for X11, <a class="Xr">pbcopy(1)</a> for Mac OS X,
+    and <span class="Pa">/dev/clipboard</span> on Cygwin.</p>
+<p class="Pp"><code class="Nm">vis-clipboard</code> can run in three different
+    ways, depending on the flag given on the command-line.</p>
 <dl class="Bl-tag">
-  <dt>&#x00A0;</dt>
-  <dd>&#x00A0;</dd>
-  <dt><a class="permalink" href="#-usable"><code class="Fl" title="Fl" id="-usable">--usable</code></a></dt>
-  <dd>In this mode, <code class="Nm" title="Nm">vis-clipboard</code> looks for a
-      way to interface with the system clipboard. If it finds one, it terminates
-      with exit code 0. If no interface to the system clipboard is available, it
+  <dt id="usable"><a class="permalink" href="#usable"><code class="Fl">--usable</code></a></dt>
+  <dd>In this mode, <code class="Nm">vis-clipboard</code> looks for a way to
+      interface with the system clipboard. If it finds one, it terminates with
+      exit code 0. If no interface to the system clipboard is available, it
       terminates with exit code 1.</dd>
-  <dt>&#x00A0;</dt>
-  <dd>&#x00A0;</dd>
-  <dt><a class="permalink" href="#-copy"><code class="Fl" title="Fl" id="-copy">--copy</code></a></dt>
-  <dd>In this mode, <code class="Nm" title="Nm">vis-clipboard</code> reads the
-      content of standard input, and stores it in the system clipboard.</dd>
-  <dt>&#x00A0;</dt>
-  <dd>&#x00A0;</dd>
-  <dt><a class="permalink" href="#-paste"><code class="Fl" title="Fl" id="-paste">--paste</code></a></dt>
-  <dd>In this mode, <code class="Nm" title="Nm">vis-clipboard</code> reads the
-      content of the system clipboard, and writes it to standard output.</dd>
-  <dt>&#x00A0;</dt>
-  <dd>&#x00A0;</dd>
-  <dt><a class="permalink" href="#-selection"><code class="Fl" title="Fl" id="-selection">--selection</code></a>
-    <var class="Ar" title="Ar">selection</var></dt>
+  <dt id="copy"><a class="permalink" href="#copy"><code class="Fl">--copy</code></a></dt>
+  <dd>In this mode, <code class="Nm">vis-clipboard</code> reads the content of
+      standard input, and stores it in the system clipboard.</dd>
+  <dt id="paste"><a class="permalink" href="#paste"><code class="Fl">--paste</code></a></dt>
+  <dd>In this mode, <code class="Nm">vis-clipboard</code> reads the content of
+      the system clipboard, and writes it to standard output.</dd>
+  <dt id="selection"><a class="permalink" href="#selection"><code class="Fl">--selection</code></a>
+    <var class="Ar">selection</var></dt>
   <dd>specify which selection to use, options are &quot;primary&quot; or
       &quot;clipboard&quot;</dd>
 </dl>
-<h1 class="Sh" title="Sh" id="ENVIRONMENT"><a class="permalink" href="#ENVIRONMENT">ENVIRONMENT</a></h1>
-The following environment variables affect the operation of
-  <code class="Nm" title="Nm">vis-clipboard</code>:
+</section>
+<section class="Sh">
+<h1 class="Sh" id="ENVIRONMENT"><a class="permalink" href="#ENVIRONMENT">ENVIRONMENT</a></h1>
+<p class="Pp">The following environment variables affect the operation of
+    <code class="Nm">vis-clipboard</code>:</p>
 <dl class="Bl-tag">
-  <dt>&#x00A0;</dt>
-  <dd>&#x00A0;</dd>
-  <dt><a class="permalink" href="#DISPLAY"><code class="Ev" title="Ev" id="DISPLAY">DISPLAY</code></a></dt>
-  <dd>If non-empty, <code class="Nm" title="Nm">vis-clipboard</code> will prefer
-      to access the X11 clipboard even if other options are available.</dd>
+  <dt id="DISPLAY"><a class="permalink" href="#DISPLAY"><code class="Ev">DISPLAY</code></a></dt>
+  <dd>If non-empty, <code class="Nm">vis-clipboard</code> will prefer to access
+      the X11 clipboard even if other options are available.</dd>
 </dl>
-<h1 class="Sh" title="Sh" id="EXIT_STATUS"><a class="permalink" href="#EXIT_STATUS">EXIT
+</section>
+<section class="Sh">
+<h1 class="Sh" id="EXIT_STATUS"><a class="permalink" href="#EXIT_STATUS">EXIT
   STATUS</a></h1>
-The <code class="Nm" title="Nm">vis-clipboard</code> utility exits&#x00A0;0 on
-  success, and&#x00A0;&gt;0 if an error occurs. When run with the
-  <code class="Fl" title="Fl">--usable</code> flag, an exit status of 0 means
-  that it found a supported system-specific tool, while 1 means that clipboard
-  access is not available.
-<h1 class="Sh" title="Sh" id="EXAMPLES"><a class="permalink" href="#EXAMPLES">EXAMPLES</a></h1>
-Test whether clipboard access is available:
-<div class="Pp"></div>
-<div class="Bd Bd-indent">
-<pre class="Li">
-if vis-clipboard --usable; then 
-	echo &quot;Clipboard access available&quot; 
-else 
-	echo &quot;No clipboard&quot; 
-fi
-</pre>
+<p class="Pp">The <code class="Nm">vis-clipboard</code> utility exits&#x00A0;0
+    on success, and&#x00A0;&gt;0 if an error occurs. When run with the
+    <code class="Fl">--usable</code> flag, an exit status of 0 means that it
+    found a supported system-specific tool, while 1 means that clipboard access
+    is not available.</p>
+</section>
+<section class="Sh">
+<h1 class="Sh" id="EXAMPLES"><a class="permalink" href="#EXAMPLES">EXAMPLES</a></h1>
+<p class="Pp">Test whether clipboard access is available:</p>
+<div class="Bd Pp Bd-indent Li">
+<pre>if vis-clipboard --usable; then
+	echo &quot;Clipboard access available&quot;
+else
+	echo &quot;No clipboard&quot;
+fi</pre>
 </div>
-<div class="Pp"></div>
-Copy a friendly greeting to the clipboard:
-<div class="Pp"></div>
-<div class="Bd Bd-indent">
-<pre class="Li">
-echo &quot;Hello, World&quot; | vis-clipboard --copy
-</pre>
+<p class="Pp">Copy a friendly greeting to the clipboard:</p>
+<div class="Bd Pp Bd-indent Li">
+<pre>echo &quot;Hello, World&quot; | vis-clipboard --copy</pre>
 </div>
-<div class="Pp"></div>
-Send the current contents of the system clipboard to be recorded and analyzed:
-<div class="Pp"></div>
-<div class="Bd Bd-indent">
-<pre class="Li">
-vis-clipboard --paste | curl -d - https://www.nsa.gov/
-</pre>
+<p class="Pp">Send the current contents of the system clipboard to be recorded
+    and analyzed:</p>
+<div class="Bd Pp Bd-indent Li">
+<pre>vis-clipboard --paste | curl -d - https://www.nsa.gov/</pre>
 </div>
-<h1 class="Sh" title="Sh" id="SEE_ALSO"><a class="permalink" href="#SEE_ALSO">SEE
+</section>
+<section class="Sh">
+<h1 class="Sh" id="SEE_ALSO"><a class="permalink" href="#SEE_ALSO">SEE
   ALSO</a></h1>
-<a class="Xr" title="Xr">pbcopy(1)</a>, <a class="Xr" title="Xr">pbpaste(1)</a>,
-  <a class="Xr" title="Xr">vis(1)</a>, <a class="Xr" title="Xr">xclip(1)</a>,
-  <a class="Xr" title="Xr">xsel(1)</a></div>
+<p class="Pp"><a class="Xr">pbcopy(1)</a>, <a class="Xr">pbpaste(1)</a>,
+    <a class="Xr">vis(1)</a>, <a class="Xr">xclip(1)</a>,
+    <a class="Xr">xsel(1)</a></p>
+</section>
+</div>
 <table class="foot">
   <tr>
     <td class="foot-date">November 29, 2016</td>
-    <td class="foot-os">Vis 7574a46</td>
+    <td class="foot-os">Vis 7a8dd7f</td>
   </tr>
 </table>
 </body>

@@ -2,6 +2,7 @@
 <html>
 <head>
   <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <link rel="stylesheet" href="mandoc.css" type="text/css" media="all"/>
   <title>VIS-OPEN(1)</title>
 </head>
@@ -14,111 +15,106 @@
   </tr>
 </table>
 <div class="manual-text">
-<h1 class="Sh" title="Sh" id="NAME"><a class="permalink" href="#NAME">NAME</a></h1>
-<code class="Nm" title="Nm">vis-open</code> &#x2014;
-<div class="Nd" title="Nd">Interactively select a file to open</div>
-<h1 class="Sh" title="Sh" id="SYNOPSIS"><a class="permalink" href="#SYNOPSIS">SYNOPSIS</a></h1>
+<section class="Sh">
+<h1 class="Sh" id="NAME"><a class="permalink" href="#NAME">NAME</a></h1>
+<p class="Pp"><code class="Nm">vis-open</code> &#x2014;
+    <span class="Nd">Interactively select a file to open</span></p>
+</section>
+<section class="Sh">
+<h1 class="Sh" id="SYNOPSIS"><a class="permalink" href="#SYNOPSIS">SYNOPSIS</a></h1>
 <table class="Nm">
   <tr>
-    <td><code class="Nm" title="Nm">vis-open</code></td>
-    <td>[<div class="Op"><code class="Fl" title="Fl">-p</code>
-      <var class="Ar" title="Ar">prompt</var></div>]
-      [<div class="Op"><code class="Fl" title="Fl">-f</code></div>]
-      [<div class="Op"><var class="Ar" title="Ar">--</var></div>]
-      [<div class="Op"><var class="Ar" title="Ar">files</var></div>]</td>
+    <td><code class="Nm">vis-open</code></td>
+    <td>[<code class="Fl">-p</code> <var class="Ar">prompt</var>]
+      [<code class="Fl">-f</code>] [<var class="Ar">--</var>]
+      [<var class="Ar">files</var>]</td>
   </tr>
 </table>
-<div class="Pp"></div>
+<p class="Pp"></p>
 <br/>
 <table class="Nm">
   <tr>
-    <td><code class="Nm" title="Nm">vis-open</code></td>
-    <td><code class="Fl" title="Fl">-h</code> |
-      <code class="Fl" title="Fl">--help</code></td>
+    <td><code class="Nm">vis-open</code></td>
+    <td><code class="Fl">-h</code></td>
   </tr>
 </table>
-<h1 class="Sh" title="Sh" id="DESCRIPTION"><a class="permalink" href="#DESCRIPTION">DESCRIPTION</a></h1>
-<code class="Nm" title="Nm">vis-open</code> takes a list of filenames and
-  directories on the command-line and displays them in a menu for the user to
-  select one. If the user selects a directory (including
-  <code class="Li">..</code>), the directory contents are displayed as a fresh
-  menu. Once the user has selected a filename, its absolute path is printed to
-  standard output.
-<div class="Pp"></div>
-<code class="Nm" title="Nm">vis-open</code> uses
-  <a class="Xr" title="Xr">vis-menu(1)</a> as its user-interface, so see that
-  page for more details.
+</section>
+<section class="Sh">
+<h1 class="Sh" id="DESCRIPTION"><a class="permalink" href="#DESCRIPTION">DESCRIPTION</a></h1>
+<p class="Pp"><code class="Nm">vis-open</code> takes a list of filenames and
+    directories on the command-line and displays them in a menu for the user to
+    select one. If the user selects a directory (including
+    <code class="Li">..</code>), the directory contents are displayed as a fresh
+    menu. Once the user has selected a filename, its absolute path is printed to
+    standard output.</p>
+<p class="Pp"><code class="Nm">vis-open</code> uses
+    <a class="Xr">vis-menu(1)</a> as its user-interface, so see that page for
+    more details.</p>
 <dl class="Bl-tag">
-  <dt>&#x00A0;</dt>
-  <dd>&#x00A0;</dd>
-  <dt><a class="permalink" href="#p"><code class="Fl" title="Fl" id="p">-p</code></a>
-    <var class="Ar" title="Ar">prompt</var></dt>
-  <dd>Display <var class="Ar" title="Ar">prompt</var> before the list of items.
-      This is passed straight through to
-      <a class="Xr" title="Xr">vis-menu(1)</a>.</dd>
-  <dt>&#x00A0;</dt>
-  <dd>&#x00A0;</dd>
-  <dt><a class="permalink" href="#f"><code class="Fl" title="Fl" id="f">-f</code></a></dt>
-  <dd>Normally, if <code class="Nm" title="Nm">vis-open</code> is provided with
-      a single filename or directory argument, it will automatically select it
-      (printing the filename to standard output, or presenting a new menu with
-      the contents of the directory). If <code class="Fl" title="Fl">-f</code>
-      is provided, <code class="Nm" title="Nm">vis-open</code> will always
-      present the arguments it's given, even if there's only one.</dd>
-  <dt>&#x00A0;</dt>
-  <dd>&#x00A0;</dd>
-  <dt><a class="permalink" href="#-"><code class="Fl" title="Fl" id="-">--</code></a></dt>
+  <dt id="p"><a class="permalink" href="#p"><code class="Fl">-p</code></a>
+    <var class="Ar">prompt</var></dt>
+  <dd>Display <var class="Ar">prompt</var> before the list of items. This is
+      passed straight through to <a class="Xr">vis-menu(1)</a>.</dd>
+  <dt id="f"><a class="permalink" href="#f"><code class="Fl">-f</code></a></dt>
+  <dd>Normally, if <code class="Nm">vis-open</code> is provided with a single
+      filename or directory argument, it will automatically select it (printing
+      the filename to standard output, or presenting a new menu with the
+      contents of the directory). If <code class="Fl">-f</code> is provided,
+      <code class="Nm">vis-open</code> will always present the arguments it's
+      given, even if there's only one.</dd>
+  <dt><code class="Fl">--</code></dt>
   <dd>If this token is encountered before the first non-option argument, all
       following arguments will be treated as menu-items, even if they would
       otherwise be valid command-line options.
-    <div class="Pp"></div>
-    If encountered after the first non-option argument, or after a previous
-      instance of <code class="Li">--</code> it is treated as a menu-item.</dd>
-  <dt>&#x00A0;</dt>
-  <dd>&#x00A0;</dd>
-  <dt><var class="Ar" title="Ar">files</var></dt>
+    <p class="Pp">If encountered after the first non-option argument, or after a
+        previous instance of <code class="Li">--</code> it is treated as a
+        menu-item.</p>
+  </dd>
+  <dt><var class="Ar">files</var></dt>
   <dd>File and directory names to be presented to the user. If a name does not
       exist on the filesystem and the user selects it, it is treated as a
     file.</dd>
-  <dt>&#x00A0;</dt>
-  <dd>&#x00A0;</dd>
-  <dt><a class="permalink" href="#h"><code class="Fl" title="Fl" id="h">-h</code></a>
-    |
-    <a class="permalink" href="#-help"><code class="Fl" title="Fl" id="-help">--help</code></a></dt>
-  <dd>If present, <code class="Nm" title="Nm">vis-open</code> prints a usage
-      summary and exits, ignoring any other flag and arguments.</dd>
+  <dt id="h"><a class="permalink" href="#h"><code class="Fl">-h</code></a></dt>
+  <dd>If present, <code class="Nm">vis-open</code> prints a usage summary and
+      exits, ignoring any other flag and arguments.</dd>
 </dl>
-<h1 class="Sh" title="Sh" id="EXIT_STATUS"><a class="permalink" href="#EXIT_STATUS">EXIT
+</section>
+<section class="Sh">
+<h1 class="Sh" id="EXIT_STATUS"><a class="permalink" href="#EXIT_STATUS">EXIT
   STATUS</a></h1>
-The <code class="Nm" title="Nm">vis-open</code> utility exits&#x00A0;0 on
-  success, and&#x00A0;&gt;0 if an error occurs.
-<div class="Pp"></div>
-In particular, like <a class="Xr" title="Xr">vis-menu(1)</a>,
-  <code class="Nm" title="Nm">vis-open</code> prints nothing and sets its exit
-  status to 1 if the user refused to select a file.
-<h1 class="Sh" title="Sh" id="EXAMPLES"><a class="permalink" href="#EXAMPLES">EXAMPLES</a></h1>
-<div class="Bd Bd-indent">
-<pre class="Li">
-CHOICE=$(vis-open -p &quot;Select a file to stat&quot;) 
-if [ $? -gt 0 ]; then 
-	echo &quot;No selection was made, or an error occurred&quot; 
-else 
-	stat &quot;$CHOICE&quot; 
-fi
-</pre>
+<p class="Pp">The <code class="Nm">vis-open</code> utility exits&#x00A0;0 on
+    success, and&#x00A0;&gt;0 if an error occurs.</p>
+<p class="Pp">In particular, like <a class="Xr">vis-menu(1)</a>,
+    <code class="Nm">vis-open</code> prints nothing and sets its exit status to
+    1 if the user refused to select a file.</p>
+</section>
+<section class="Sh">
+<h1 class="Sh" id="EXAMPLES"><a class="permalink" href="#EXAMPLES">EXAMPLES</a></h1>
+<div class="Bd Bd-indent Li">
+<pre>CHOICE=$(vis-open -p &quot;Select a file to stat&quot;)
+if [ $? -gt 0 ]; then
+	echo &quot;No selection was made, or an error occurred&quot;
+else
+	stat &quot;$CHOICE&quot;
+fi</pre>
 </div>
-<h1 class="Sh" title="Sh" id="SEE_ALSO"><a class="permalink" href="#SEE_ALSO">SEE
+</section>
+<section class="Sh">
+<h1 class="Sh" id="SEE_ALSO"><a class="permalink" href="#SEE_ALSO">SEE
   ALSO</a></h1>
-<a class="Xr" title="Xr">vis(1)</a>, <a class="Xr" title="Xr">vis-menu(1)</a>
-<h1 class="Sh" title="Sh" id="BUGS"><a class="permalink" href="#BUGS">BUGS</a></h1>
-Because <code class="Nm" title="Nm">vis-open</code> uses
-  <a class="Xr" title="Xr">ls(1)</a> to obtain the contents of a directory,
-  weird things might happen if you have control-characters in your
-  filenames.</div>
+<p class="Pp"><a class="Xr">vis(1)</a>, <a class="Xr">vis-menu(1)</a></p>
+</section>
+<section class="Sh">
+<h1 class="Sh" id="BUGS"><a class="permalink" href="#BUGS">BUGS</a></h1>
+<p class="Pp">Because <code class="Nm">vis-open</code> uses
+    <a class="Xr">ls(1)</a> to obtain the contents of a directory, weird things
+    might happen if you have control-characters in your filenames.</p>
+</section>
+</div>
 <table class="foot">
   <tr>
     <td class="foot-date">November 29, 2016</td>
-    <td class="foot-os">Vis 7574a46</td>
+    <td class="foot-os">Vis 7a8dd7f</td>
   </tr>
 </table>
 </body>

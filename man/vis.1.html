@@ -2,6 +2,7 @@
 <html>
 <head>
   <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <link rel="stylesheet" href="mandoc.css" type="text/css" media="all"/>
   <title>VIS(1)</title>
 </head>
@@ -14,1350 +15,1171 @@
   </tr>
 </table>
 <div class="manual-text">
-<h1 class="Sh" title="Sh" id="NAME"><a class="permalink" href="#NAME">NAME</a></h1>
-<code class="Nm" title="Nm">vis</code> &#x2014;
-<div class="Nd" title="Nd">a highly efficient text editor</div>
-<h1 class="Sh" title="Sh" id="SYNOPSIS"><a class="permalink" href="#SYNOPSIS">SYNOPSIS</a></h1>
+<section class="Sh">
+<h1 class="Sh" id="NAME"><a class="permalink" href="#NAME">NAME</a></h1>
+<p class="Pp"><code class="Nm">vis</code> &#x2014; <span class="Nd">a highly
+    efficient text editor</span></p>
+</section>
+<section class="Sh">
+<h1 class="Sh" id="SYNOPSIS"><a class="permalink" href="#SYNOPSIS">SYNOPSIS</a></h1>
 <table class="Nm">
   <tr>
-    <td><code class="Nm" title="Nm">vis</code></td>
-    <td>[<div class="Op"><code class="Fl" title="Fl">-v</code></div>]
-      [<div class="Op"><code class="Cm" title="Cm">+</code><var class="Ar" title="Ar">command</var></div>]
-      [<div class="Op"><code class="Fl" title="Fl">--</code></div>]
-      [<div class="Op"><var class="Ar" title="Ar">files ...</var></div>]</td>
+    <td><code class="Nm">vis</code></td>
+    <td>[<code class="Fl">-v</code>]
+      [<code class="Cm">+</code><var class="Ar">command</var>]
+      [<code class="Fl">--</code>] [<var class="Ar">files ...</var>]</td>
   </tr>
 </table>
-<h1 class="Sh" title="Sh" id="DESCRIPTION"><a class="permalink" href="#DESCRIPTION">DESCRIPTION</a></h1>
-<code class="Nm" title="Nm">vis</code> is a highly efficient screen-oriented
-  text editor combining the strengths of both
-  <code class="Nm" title="Nm">vi(m)</code> and
-  <code class="Nm" title="Nm">sam</code>. This manual page is intended for users
-  already familiar with
-  <code class="Nm" title="Nm">vi</code>/<code class="Nm" title="Nm">sam</code>.
-  Anyone else should almost certainly read a good tutorial on either editor
-  before this manual page. The following options are available:
+</section>
+<section class="Sh">
+<h1 class="Sh" id="DESCRIPTION"><a class="permalink" href="#DESCRIPTION">DESCRIPTION</a></h1>
+<p class="Pp"><code class="Nm">vis</code> is a highly efficient screen-oriented
+    text editor combining the strengths of both <code class="Nm">vi(m)</code>
+    and <code class="Nm">sam</code>. This manual page is intended for users
+    already familiar with
+    <code class="Nm">vi</code>/<code class="Nm">sam</code>. Anyone else should
+    almost certainly read a good tutorial on either editor before this manual
+    page. The following options are available:</p>
 <dl class="Bl-tag">
-  <dt>&#x00A0;</dt>
-  <dd>&#x00A0;</dd>
-  <dt><a class="permalink" href="#v"><code class="Fl" title="Fl" id="v">-v</code></a></dt>
+  <dt id="v"><a class="permalink" href="#v"><code class="Fl">-v</code></a></dt>
   <dd>Print version information and exit.</dd>
-  <dt>&#x00A0;</dt>
-  <dd>&#x00A0;</dd>
-  <dt><a class="permalink" href="#+"><code class="Cm" title="Cm" id="+">+</code></a><var class="Ar" title="Ar">command</var></dt>
-  <dd>Execute <var class="Ar" title="Ar">command</var> after loading file.</dd>
-  <dt>&#x00A0;</dt>
-  <dd>&#x00A0;</dd>
-  <dt><a class="permalink" href="#-"><code class="Fl" title="Fl" id="-">--</code></a></dt>
+  <dt id="+"><a class="permalink" href="#+"><code class="Cm">+</code></a><var class="Ar">command</var></dt>
+  <dd>Execute <var class="Ar">command</var> after loading file.</dd>
+  <dt><code class="Fl">--</code></dt>
   <dd>Denotes the end of the options. Arguments after this will be handled as a
       file name.</dd>
 </dl>
-<div class="Pp"></div>
-The special file <code class="Cm" title="Cm">-</code> instructs
-  <code class="Nm" title="Nm">vis</code> to read from standard input in which
-  case <code class="Ic" title="Ic">:wq</code> will write to standard output,
-  thereby enabling usage as an interactive filter.
-<div class="Pp"></div>
-If standard input is redirected and all input is consumed,
-  <code class="Nm" title="Nm">vis</code> will open
-  <span class="Pa" title="Pa">/dev/tty</span> to gather further commands.
-  Failure to do so results in program termination.
-<h2 class="Ss" title="Ss" id="Selections"><a class="permalink" href="#Selections">Selections</a></h2>
-<code class="Nm" title="Nm">vis</code> uses selections as core editing
-  primitives. A selection is a non-empty, directed range with two endpoints
-  called <i class="Em" title="Em">cursor</i> and
-  <i class="Em" title="Em">anchor</i>. A selection can be anchored in which case
-  the anchor remains fixed while only the position of the cursor is adjusted.
-  For non-anchored selections both endpoints are updated. A singleton selection
-  covers one character on which both cursor and anchor reside. There always
-  exists a primary selection which remains visible (i.e. changes to its position
-  will adjust the viewport).
-<h2 class="Ss" title="Ss" id="Modes"><a class="permalink" href="#Modes">Modes</a></h2>
-<code class="Nm" title="Nm">vis</code> employs the same
-  <i class="Em" title="Em">modal</i> editing approach as
-  <code class="Nm" title="Nm">vi</code>. It supports a &#x2018;normal&#x2019;,
-  &#x2018;operator pending&#x2019;, &#x2018;insert&#x2019;,
-  &#x2018;replace&#x2019; and &#x2018;visual&#x2019; (in both line and character
-  wise variants) mode. The visual block and ex modes are deliberately not
-  implemented, instead <code class="Nm" title="Nm">vis</code> has built in
-  support for multiple selections and an
-  <i class="Em" title="Em">interactive</i> variant of the structural regular
-  expression based command language of <code class="Nm" title="Nm">sam</code>.
-<div class="Pp"></div>
-In normal mode all selections are non-anchored and reduced to a single
-  character.
-<h2 class="Ss" title="Ss" id="Undo/Redo"><a class="permalink" href="#Undo/Redo">Undo/Redo</a></h2>
-<code class="Nm" title="Nm">vis</code> uses an undo tree to keep track of text
-  revisions. The <code class="Ic" title="Ic">u</code> (undo) and
-  &#x27E8;<code class="Ic" title="Ic">C-r</code>&#x27E9; (redo) commands can be
-  used to traverse the tree along the main branch.
-  <code class="Ic" title="Ic">g+</code> and
-  <code class="Ic" title="Ic">g-</code> traverse the history in chronological
-  order. The <code class="Ic" title="Ic">:earlier</code> and
-  <code class="Ic" title="Ic">:later</code> commands provide means to restore
-  the text to an arbitrary state.
-<h2 class="Ss" title="Ss" id="Marks"><a class="permalink" href="#Marks">Marks</a></h2>
-A mark associates a symbolic name to a set of selections. A stored selection
-  becomes invalid when its delimiting boundaries change in the underlying
-  buffer. If said changes are later undone the mark becomes valid again.
-  <code class="Ic" title="Ic">m</code> sets a mark,
-  <code class="Ic" title="Ic">M</code> restores it. For example,
-  <code class="Ic" title="Ic">'</code><var class="Ar" title="Ar">a</var><code class="Ic" title="Ic">m</code>
-  sets the mark <var class="Ar" title="Ar">a</var> while
-  <code class="Ic" title="Ic">'</code><var class="Ar" title="Ar">a</var><code class="Ic" title="Ic">M</code>
-  restores it.
-<div class="Pp"></div>
-Available marks are:
+<p class="Pp">The special file <code class="Cm">-</code> instructs
+    <code class="Nm">vis</code> to read from standard input in which case
+    <code class="Ic">:wq</code> will write to standard output, thereby enabling
+    usage as an interactive filter.</p>
+<p class="Pp">If standard input is redirected and all input is consumed,
+    <code class="Nm">vis</code> will open <span class="Pa">/dev/tty</span> to
+    gather further commands. Failure to do so results in program
+  termination.</p>
+<section class="Ss">
+<h2 class="Ss" id="Selections"><a class="permalink" href="#Selections">Selections</a></h2>
+<p class="Pp"><code class="Nm">vis</code> uses selections as core editing
+    primitives. A selection is a non-empty, directed range with two endpoints
+    called
+    <a class="permalink" href="#cursor"><i class="Em" id="cursor">cursor</i></a>
+    and
+    <a class="permalink" href="#anchor"><i class="Em" id="anchor">anchor</i></a>.
+    A selection can be anchored in which case the anchor remains fixed while
+    only the position of the cursor is adjusted. For non-anchored selections
+    both endpoints are updated. A singleton selection covers one character on
+    which both cursor and anchor reside. There always exists a primary selection
+    which remains visible (i.e. changes to its position will adjust the
+    viewport).</p>
+</section>
+<section class="Ss">
+<h2 class="Ss" id="Modes"><a class="permalink" href="#Modes">Modes</a></h2>
+<p class="Pp"><code class="Nm">vis</code> employs the same
+    <a class="permalink" href="#modal"><i class="Em" id="modal">modal</i></a>
+    editing approach as <code class="Nm">vi</code>. It supports a
+    &#x2018;normal&#x2019;, &#x2018;operator pending&#x2019;,
+    &#x2018;insert&#x2019;, &#x2018;replace&#x2019; and &#x2018;visual&#x2019;
+    (in both line and character wise variants) mode. The visual block and ex
+    modes are deliberately not implemented, instead <code class="Nm">vis</code>
+    has built in support for multiple selections and an
+    <i class="Em">interactive</i> variant of the structural regular expression
+    based command language of <code class="Nm">sam</code>.</p>
+<p class="Pp">In normal mode all selections are non-anchored and reduced to a
+    single character.</p>
+</section>
+<section class="Ss">
+<h2 class="Ss" id="Undo/Redo"><a class="permalink" href="#Undo/Redo">Undo/Redo</a></h2>
+<p class="Pp"><code class="Nm">vis</code> uses an undo tree to keep track of
+    text revisions. The <code class="Ic">u</code> (undo) and
+    &#x27E8;<code class="Ic">C-r</code>&#x27E9; (redo) commands can be used to
+    traverse the tree along the main branch. <code class="Ic">g+</code> and
+    <code class="Ic">g-</code> traverse the history in chronological order. The
+    <code class="Ic">:earlier</code> and <code class="Ic">:later</code> commands
+    provide means to restore the text to an arbitrary state.</p>
+</section>
+<section class="Ss">
+<h2 class="Ss" id="Marks"><a class="permalink" href="#Marks">Marks</a></h2>
+<p class="Pp">A mark associates a symbolic name to a set of selections. A stored
+    selection becomes invalid when its delimiting boundaries change in the
+    underlying buffer. If said changes are later undone the mark becomes valid
+    again. <code class="Ic">m</code> sets a mark, <code class="Ic">M</code>
+    restores it. For example,
+    <code class="Ic">'</code><var class="Ar">a</var><code class="Ic">m</code>
+    sets the mark <var class="Ar">a</var> while
+    <code class="Ic">'</code><var class="Ar">a</var><code class="Ic">M</code>
+    restores it. Use of <code class="Ic">m</code> or <code class="Ic">M</code>
+    without specifying a mark uses the default mark.</p>
+<p class="Pp">Available marks are:</p>
 <dl class="Bl-tag">
-  <dt>&#x00A0;</dt>
-  <dd>&#x00A0;</dd>
-  <dt><a class="permalink" href="#''"><code class="Ic" title="Ic" id="''">''</code></a></dt>
+  <dt id="''"><a class="permalink" href="#''"><code class="Ic">''</code></a></dt>
   <dd>default mark</dd>
-  <dt>&#x00A0;</dt>
-  <dd>&#x00A0;</dd>
-  <dt><a class="permalink" href="#'_"><code class="Ic" title="Ic" id="'_">'^</code></a></dt>
+  <dt id="'_"><a class="permalink" href="#'_"><code class="Ic">'^</code></a></dt>
   <dd>active selections when leaving visual mode</dd>
-  <dt>&#x00A0;</dt>
-  <dd>&#x00A0;</dd>
-  <dt><a class="permalink" href="#'a"><code class="Ic" title="Ic" id="'a">'a</code></a>&#x2013;<code class="Ic" title="Ic">'z</code></dt>
+  <dt id="'a"><a class="permalink" href="#'a"><code class="Ic">'a</code></a>&#x2013;<code class="Ic">'z</code></dt>
   <dd>general purpose marks</dd>
 </dl>
-<div class="Pp"></div>
-No marks across files are supported. Marks are not preserved over editing
-  sessions.
-<h2 class="Ss" title="Ss" id="Jump_list"><a class="permalink" href="#Jump_list">Jump
+<p class="Pp">No marks across files are supported. Marks are not preserved over
+    editing sessions.</p>
+</section>
+<section class="Ss">
+<h2 class="Ss" id="Jump_list"><a class="permalink" href="#Jump_list">Jump
   list</a></h2>
-A per window, fixed sized file local jump list exists which stores marks (i.e.
-  set of selections).
+<p class="Pp">A per window, fixed sized file local jump list exists which stores
+    marks (i.e. set of selections).</p>
 <dl class="Bl-tag">
-  <dt>&#x00A0;</dt>
-  <dd>&#x00A0;</dd>
-  <dt><a class="permalink" href="#g_"><code class="Ic" title="Ic" id="g_">g&lt;</code></a></dt>
+  <dt id="g_"><a class="permalink" href="#g_"><code class="Ic">g&lt;</code></a></dt>
   <dd>jump backward</dd>
-  <dt>&#x00A0;</dt>
-  <dd>&#x00A0;</dd>
-  <dt><a class="permalink" href="#g__2"><code class="Ic" title="Ic" id="g__2">g&gt;</code></a></dt>
+  <dt id="g_~2"><a class="permalink" href="#g_~2"><code class="Ic">g&gt;</code></a></dt>
   <dd>jump forward</dd>
-  <dt>&#x00A0;</dt>
-  <dd>&#x00A0;</dd>
-  <dt><a class="permalink" href="#gs"><code class="Ic" title="Ic" id="gs">gs</code></a></dt>
+  <dt id="gs"><a class="permalink" href="#gs"><code class="Ic">gs</code></a></dt>
   <dd>save currently active selections</dd>
 </dl>
-<h2 class="Ss" title="Ss" id="Registers"><a class="permalink" href="#Registers">Registers</a></h2>
-Registers are named lists of text. Uninitialized register slots default to the
-  empty string. Available registers are:
+</section>
+<section class="Ss">
+<h2 class="Ss" id="Registers"><a class="permalink" href="#Registers">Registers</a></h2>
+<p class="Pp">Registers are named lists of text. Uninitialized register slots
+    default to the empty string. Available registers are:</p>
 <dl class="Bl-tag">
-  <dt>&#x00A0;</dt>
-  <dd>&#x00A0;</dd>
-  <dt><a class="permalink" href="#_(dq_(dq"><code class="Ic" title="Ic" id="_(dq_(dq">&quot;&quot;</code></a></dt>
+  <dt><code class="Ic">&quot;&quot;</code></dt>
   <dd>default register</dd>
-  <dt>&#x00A0;</dt>
-  <dd>&#x00A0;</dd>
-  <dt><a class="permalink" href="#_(dqa"><code class="Ic" title="Ic" id="_(dqa">&quot;a</code></a>&#x2013;<code class="Ic" title="Ic">&quot;z</code></dt>
+  <dt><code class="Ic">&quot;a</code>&#x2013;<code class="Ic">&quot;z</code></dt>
   <dd>general purpose registers</dd>
-  <dt>&#x00A0;</dt>
-  <dd>&#x00A0;</dd>
-  <dt><a class="permalink" href="#_(dqA"><code class="Ic" title="Ic" id="_(dqA">&quot;A</code></a>&#x2013;<code class="Ic" title="Ic">&quot;Z</code></dt>
+  <dt><code class="Ic">&quot;A</code>&#x2013;<code class="Ic">&quot;Z</code></dt>
   <dd>append to corresponding general purpose register</dd>
-  <dt>&#x00A0;</dt>
-  <dd>&#x00A0;</dd>
-  <dt><a class="permalink" href="#_(dq*"><code class="Ic" title="Ic" id="_(dq*">&quot;*</code></a>,
-    <code class="Ic" title="Ic">&quot;+</code></dt>
+  <dt><code class="Ic">&quot;*</code>, <code class="Ic">&quot;+</code></dt>
   <dd>system clipboard integration via shell script
-      <a class="Xr" title="Xr">vis-clipboard(1)</a></dd>
-  <dt>&#x00A0;</dt>
-  <dd>&#x00A0;</dd>
-  <dt><a class="permalink" href="#_(dq0"><code class="Ic" title="Ic" id="_(dq0">&quot;0</code></a></dt>
+      <a class="Xr">vis-clipboard(1)</a></dd>
+  <dt><code class="Ic">&quot;0</code></dt>
   <dd>yank register, most recently yanked range</dd>
-  <dt>&#x00A0;</dt>
-  <dd>&#x00A0;</dd>
-  <dt><a class="permalink" href="#_(dq1"><code class="Ic" title="Ic" id="_(dq1">&quot;1</code></a>&#x2013;<code class="Ic" title="Ic">&quot;9</code></dt>
+  <dt><code class="Ic">&quot;1</code>&#x2013;<code class="Ic">&quot;9</code></dt>
   <dd style="width: auto;">&#x00A0;</dd>
-  <dt><a class="permalink" href="#_(dq&amp;"><code class="Ic" title="Ic" id="_(dq&amp;">&quot;&amp;</code></a></dt>
-  <dd>sub expression matches of most recent <code class="Ic" title="Ic">x</code>
-      or <code class="Ic" title="Ic">y</code> command</dd>
-  <dt>&#x00A0;</dt>
-  <dd>&#x00A0;</dd>
-  <dt><a class="permalink" href="#_(dq/"><code class="Ic" title="Ic" id="_(dq/">&quot;/</code></a></dt>
+  <dt><code class="Ic">&quot;&amp;</code></dt>
+  <dd>sub expression matches of most recent <code class="Ic">x</code> or
+      <code class="Ic">y</code> command</dd>
+  <dt><code class="Ic">&quot;/</code></dt>
   <dd>search register, most recently used search pattern</dd>
-  <dt>&#x00A0;</dt>
-  <dd>&#x00A0;</dd>
-  <dt><a class="permalink" href="#_(dq_&amp;:"><code class="Ic" title="Ic" id="_(dq_&amp;:">&quot;:</code></a></dt>
+  <dt><code class="Ic">&quot;:</code></dt>
   <dd>command register, most recently executed command</dd>
-  <dt>&#x00A0;</dt>
-  <dd>&#x00A0;</dd>
-  <dt><a class="permalink" href="#_(dq_"><code class="Ic" title="Ic" id="_(dq_">&quot;_</code></a></dt>
-  <dd>black hole (<span class="Pa" title="Pa">/dev/null</span>) register, ignore
-      content is always empty</dd>
-  <dt>&#x00A0;</dt>
-  <dd>&#x00A0;</dd>
-  <dt><a class="permalink" href="#_(dq__2"><code class="Ic" title="Ic" id="_(dq__2">&quot;#</code></a></dt>
+  <dt><code class="Ic">&quot;_</code></dt>
+  <dd>black hole (<span class="Pa">/dev/null</span>) register, ignore content is
+      always empty</dd>
+  <dt><code class="Ic">&quot;#</code></dt>
   <dd>selection number (readonly)</dd>
 </dl>
-<div class="Pp"></div>
-If no explicit register is specified the default register is used.
-<h2 class="Ss" title="Ss" id="Macros"><a class="permalink" href="#Macros">Macros</a></h2>
-The general purpose registers
-  <code class="Ic" title="Ic">&quot;a</code>&#x2013;<code class="Ic" title="Ic">&quot;z</code>
-  can be used to record macros. Use one of
-  <code class="Ic" title="Ic">&quot;A</code>&#x2013;<code class="Ic" title="Ic">&quot;Z</code>
-  to append to an existing macro. <code class="Ic" title="Ic">q</code> starts a
-  recording, <code class="Ic" title="Ic">@</code> plays it back.
-  <code class="Ic" title="Ic">@@</code> refers to the most recently recorded
-  macro. <code class="Ic" title="Ic">@:</code> repeats the last
-  <code class="Ic" title="Ic">:</code>-command.
-  <code class="Ic" title="Ic">@/</code> is equivalent to
-  <code class="Ic" title="Ic">n</code> in normal mode. These operations always
-  use the first register slot.
-<h2 class="Ss" title="Ss" id="Encoding,_Tab_and_Newline_handling"><a class="permalink" href="#Encoding,_Tab_and_Newline_handling">Encoding,
+<p class="Pp">If no explicit register is specified the default register is
+  used.</p>
+</section>
+<section class="Ss">
+<h2 class="Ss" id="Macros"><a class="permalink" href="#Macros">Macros</a></h2>
+<p class="Pp">The general purpose registers
+    <code class="Ic">&quot;a</code>&#x2013;<code class="Ic">&quot;z</code> can
+    be used to record macros. Use one of
+    <code class="Ic">&quot;A</code>&#x2013;<code class="Ic">&quot;Z</code> to
+    append to an existing macro. <code class="Ic">q</code> starts a recording,
+    <code class="Ic">@</code> plays it back. <code class="Ic">@@</code> refers
+    to the most recently recorded macro. <code class="Ic">@:</code> repeats the
+    last <code class="Ic">:</code>-command. <code class="Ic">@/</code> is
+    equivalent to <code class="Ic">n</code> in normal mode. These operations
+    always use the first register slot.</p>
+</section>
+<section class="Ss">
+<h2 class="Ss" id="Encoding,_Tab_and_Newline_handling"><a class="permalink" href="#Encoding,_Tab_and_Newline_handling">Encoding,
   Tab and Newline handling</a></h2>
-<code class="Nm" title="Nm">vis</code> always assumes the input file to be UTF-8
-  encoded with <code class="Li">\n</code> line endings. If you wish to edit
-  files with legacy encodings or non-Unix line endings, use
-  <a class="Xr" title="Xr">iconv(1)</a> and
-  <a class="Xr" title="Xr">dos2unix(1)</a> to convert them as needed.
-  &#x27E8;<code class="Ic" title="Ic">Tab</code>&#x27E9; can optionally be
-  expanded to a configurable number of spaces (see
-  <a class="Sx" title="Sx" href="#SET_OPTIONS">SET OPTIONS</a>).
-<h2 class="Ss" title="Ss" id="Mouse_support"><a class="permalink" href="#Mouse_support">Mouse
+<p class="Pp"><code class="Nm">vis</code> always assumes the input file to be
+    UTF-8 encoded with <code class="Li">\n</code> line endings. If you wish to
+    edit files with legacy encodings or non-Unix line endings, use
+    <a class="Xr">iconv(1)</a> and <a class="Xr">dos2unix(1)</a> to convert them
+    as needed. &#x27E8;<code class="Ic">Tab</code>&#x27E9; can optionally be
+    expanded to a configurable number of spaces (see
+    <a class="Sx" href="#SET_OPTIONS">SET OPTIONS</a>).</p>
+</section>
+<section class="Ss">
+<h2 class="Ss" id="Mouse_support"><a class="permalink" href="#Mouse_support">Mouse
   support</a></h2>
-The mouse is currently not used at all.
-<h1 class="Sh" title="Sh" id="SAM_COMMANDS"><a class="permalink" href="#SAM_COMMANDS">SAM
+<p class="Pp">The mouse is currently not used at all.</p>
+</section>
+</section>
+<section class="Sh">
+<h1 class="Sh" id="SAM_COMMANDS"><a class="permalink" href="#SAM_COMMANDS">SAM
   COMMANDS</a></h1>
-<code class="Nm" title="Nm">vis</code> supports an interactive variant of the
-  structural regular expression based command language introduced by
-  <a class="Xr" title="Xr">sam(1)</a>.
-<h2 class="Ss" title="Ss" id="Regular_expressions"><a class="permalink" href="#Regular_expressions">Regular
+<p class="Pp"><code class="Nm">vis</code> supports an interactive variant of the
+    structural regular expression based command language introduced by
+    <a class="Xr">sam(1)</a>.</p>
+<section class="Ss">
+<h2 class="Ss" id="Regular_expressions"><a class="permalink" href="#Regular_expressions">Regular
   expressions</a></h2>
-<code class="Nm" title="Nm">vis</code> currently defers regular expression
-  matching to the underlying C library. It uses what POSIX refers to as
-  &#x201C;Extended Regular Expressions&#x201D; as described in
-  <a class="Xr" title="Xr">regex(7)</a>. The anchors
-  <code class="Ic" title="Ic">^</code> and <code class="Ic" title="Ic">$</code>
-  match the beginning / end of the range they are applied to. Additionally
-  <code class="Li">\n</code> and <code class="Li">\t</code> may be used to refer
-  to newlines and tabs, respectively. The <code class="Ic" title="Ic">.</code>
-  atom matches any character except newline. The empty regular expression stands
-  for the last complete expression encountered.
-<h2 class="Ss" title="Ss" id="Addresses"><a class="permalink" href="#Addresses">Addresses</a></h2>
-An address identifies a substring (or range) in a file. In the following
-  &#x201C;character <var class="Ar" title="Ar">n</var>&#x201D; means the null
-  string after the <var class="Ar" title="Ar">n</var>-th character in the file,
-  with 1 the first character in the file. &#x201C;Line
-  <var class="Ar" title="Ar">n</var>&#x201D; means the
-  <var class="Ar" title="Ar">n</var>-th match, starting at the beginning of the
-  file, of the regular expression &#x201C;<code class="Li">.*\n?</code>&#x201D;.
-<div class="Pp"></div>
-All windows always have at least one current substring which is the default
-  address. In sam this is referred to as <b class="Sy" title="Sy">dot</b>. In
-  <code class="Nm" title="Nm">vis</code> multiple &#x201C;dots&#x201D; (or
-  selections) can exist at the same time.
-<h2 class="Ss" title="Ss" id="Simple_addresses"><a class="permalink" href="#Simple_addresses">Simple
+<p class="Pp"><code class="Nm">vis</code> currently defers regular expression
+    matching to the underlying C library. It uses what POSIX refers to as
+    &#x201C;Extended Regular Expressions&#x201D; as described in
+    <a class="Xr">regex(7)</a>. The anchors <code class="Ic">^</code> and
+    <code class="Ic">$</code> match the beginning / end of the range they are
+    applied to. Additionally <code class="Li">\n</code> and
+    <code class="Li">\t</code> may be used to refer to newlines and tabs,
+    respectively. The <code class="Ic">.</code> atom matches any character
+    except newline. The empty regular expression stands for the last complete
+    expression encountered.</p>
+</section>
+<section class="Ss">
+<h2 class="Ss" id="Addresses"><a class="permalink" href="#Addresses">Addresses</a></h2>
+<p class="Pp">An address identifies a substring (or range) in a file. In the
+    following &#x201C;character <var class="Ar">n</var>&#x201D; means the null
+    string after the <var class="Ar">n</var>-th character in the file, with 1
+    the first character in the file. &#x201C;Line
+    <var class="Ar">n</var>&#x201D; means the <var class="Ar">n</var>-th match,
+    starting at the beginning of the file, of the regular expression
+    &#x201C;<code class="Li">.*\n?</code>&#x201D;.</p>
+<p class="Pp" id="dot">All windows always have at least one current substring
+    which is the default address. In sam this is referred to as
+    <a class="permalink" href="#dot"><b class="Sy">dot</b></a>. In
+    <code class="Nm">vis</code> multiple &#x201C;dots&#x201D; (or selections)
+    can exist at the same time.</p>
+</section>
+<section class="Ss">
+<h2 class="Ss" id="Simple_addresses"><a class="permalink" href="#Simple_addresses">Simple
   addresses</a></h2>
 <dl class="Bl-tag">
-  <dt>&#x00A0;</dt>
-  <dd>&#x00A0;</dd>
-  <dt><a class="permalink" href="#_"><code class="Ic" title="Ic" id="_">#</code></a><var class="Ar" title="Ar">n</var></dt>
-  <dd>The empty string after character <var class="Ar" title="Ar">n</var>;
-      <code class="Ic" title="Ic">#0</code> is the beginning of the file.</dd>
-  <dt>&#x00A0;</dt>
-  <dd>&#x00A0;</dd>
-  <dt><var class="Ar" title="Ar">n</var></dt>
-  <dd>Line <var class="Ar" title="Ar">n</var>.</dd>
-  <dt>&#x00A0;</dt>
-  <dd>&#x00A0;</dd>
-  <dt><a class="permalink" href="#/"><code class="Ic" title="Ic" id="/">/</code></a><var class="Ar" title="Ar">regexp</var><code class="Ic" title="Ic">/</code></dt>
+  <dt id="_"><a class="permalink" href="#_"><code class="Ic">#</code></a><var class="Ar">n</var></dt>
+  <dd>The empty string after character <var class="Ar">n</var>;
+      <code class="Ic">#0</code> is the beginning of the file.</dd>
+  <dt><var class="Ar">n</var></dt>
+  <dd>Line <var class="Ar">n</var>.</dd>
+  <dt id="/"><a class="permalink" href="#/"><code class="Ic">/</code></a><var class="Ar">regexp</var><code class="Ic">/</code></dt>
   <dd style="width: auto;">&#x00A0;</dd>
-  <dt><a class="permalink" href="#?"><code class="Ic" title="Ic" id="?">?</code></a><var class="Ar" title="Ar">regexp</var><code class="Ic" title="Ic">?</code></dt>
+  <dt id="?"><a class="permalink" href="#?"><code class="Ic">?</code></a><var class="Ar">regexp</var><code class="Ic">?</code></dt>
   <dd>The substring that matches the regular expression, found by looking
-      towards the end (<code class="Ic" title="Ic">/</code>) or beginning
-      (<code class="Ic" title="Ic">?</code>) of the file. The search does not
-      wrap around when hitting the end (start) of the file.</dd>
-  <dt>&#x00A0;</dt>
-  <dd>&#x00A0;</dd>
-  <dt><a class="permalink" href="#0"><code class="Ic" title="Ic" id="0">0</code></a></dt>
+      towards the end (<code class="Ic">/</code>) or beginning
+      (<code class="Ic">?</code>) of the file. The search does not wrap around
+      when hitting the end (start) of the file.</dd>
+  <dt id="0"><a class="permalink" href="#0"><code class="Ic">0</code></a></dt>
   <dd>The string before the first full line. This is not necessarily the null
-      string; see <code class="Ic" title="Ic">+</code> and
-      <code class="Ic" title="Ic">-</code> below.</dd>
-  <dt>&#x00A0;</dt>
-  <dd>&#x00A0;</dd>
-  <dt><a class="permalink" href="#$"><code class="Ic" title="Ic" id="$">$</code></a></dt>
+      string; see <code class="Ic">+</code> and <code class="Ic">-</code>
+    below.</dd>
+  <dt id="$"><a class="permalink" href="#$"><code class="Ic">$</code></a></dt>
   <dd>The null string at the end of the file.</dd>
-  <dt>&#x00A0;</dt>
-  <dd>&#x00A0;</dd>
-  <dt><a class="permalink" href="#."><code class="Ic" title="Ic" id=".">.</code></a></dt>
+  <dt id="."><a class="permalink" href="#."><code class="Ic">.</code></a></dt>
   <dd>Dot, the current range.</dd>
-  <dt>&#x00A0;</dt>
-  <dd>&#x00A0;</dd>
-  <dt><a class="permalink" href="#'"><code class="Ic" title="Ic" id="'">'</code></a><var class="Ar" title="Ar">m</var></dt>
-  <dd>The mark <var class="Ar" title="Ar">m</var> in the file.</dd>
+  <dt id="'"><a class="permalink" href="#'"><code class="Ic">'</code></a><var class="Ar">m</var></dt>
+  <dd>The mark <var class="Ar">m</var> in the file.</dd>
 </dl>
-<h2 class="Ss" title="Ss" id="Compound_addresses"><a class="permalink" href="#Compound_addresses">Compound
+</section>
+<section class="Ss">
+<h2 class="Ss" id="Compound_addresses"><a class="permalink" href="#Compound_addresses">Compound
   addresses</a></h2>
-In the following, <var class="Ar" title="Ar">a1</var> and
-  <var class="Ar" title="Ar">a2</var> are addresses.
+<p class="Pp">In the following, <var class="Ar">a1</var> and
+    <var class="Ar">a2</var> are addresses.</p>
 <dl class="Bl-tag">
-  <dt>&#x00A0;</dt>
-  <dd>&#x00A0;</dd>
-  <dt><var class="Ar" title="Ar">a1</var><code class="Ic" title="Ic">+</code><var class="Ar" title="Ar">a2</var></dt>
-  <dd>The address <var class="Ar" title="Ar">a2</var> evaluated starting at the
-      end of <var class="Ar" title="Ar">a1</var>.</dd>
-  <dt>&#x00A0;</dt>
-  <dd>&#x00A0;</dd>
-  <dt><var class="Ar" title="Ar">a1</var><code class="Ic" title="Ic">-</code><var class="Ar" title="Ar">a2</var></dt>
-  <dd>The address <var class="Ar" title="Ar">a2</var> evaluated looking the
-      reverse direction starting at the beginning of
-      <var class="Ar" title="Ar">a1</var>.</dd>
-  <dt>&#x00A0;</dt>
-  <dd>&#x00A0;</dd>
-  <dt><var class="Ar" title="Ar">a1</var><code class="Ic" title="Ic">,</code><var class="Ar" title="Ar">a2</var></dt>
-  <dd>The substring from the beginning of <var class="Ar" title="Ar">a1</var> to
-      the end of <var class="Ar" title="Ar">a2</var>. If
-      <var class="Ar" title="Ar">a1</var> is missing,
-      <code class="Ic" title="Ic">0</code> is substituted. If
-      <var class="Ar" title="Ar">a2</var> is missing,
-      <code class="Ic" title="Ic">$</code> is substituted.</dd>
-  <dt>&#x00A0;</dt>
-  <dd>&#x00A0;</dd>
-  <dt><var class="Ar" title="Ar">a1</var><code class="Ic" title="Ic">;</code><var class="Ar" title="Ar">a2</var></dt>
+  <dt><var class="Ar">a1</var><code class="Ic">+</code><var class="Ar">a2</var></dt>
+  <dd>The address <var class="Ar">a2</var> evaluated starting at the end of
+      <var class="Ar">a1</var>.</dd>
+  <dt><var class="Ar">a1</var><code class="Ic">-</code><var class="Ar">a2</var></dt>
+  <dd>The address <var class="Ar">a2</var> evaluated looking the reverse
+      direction starting at the beginning of <var class="Ar">a1</var>.</dd>
+  <dt><var class="Ar">a1</var><code class="Ic">,</code><var class="Ar">a2</var></dt>
+  <dd>The substring from the beginning of <var class="Ar">a1</var> to the end of
+      <var class="Ar">a2</var>. If <var class="Ar">a1</var> is missing,
+      <code class="Ic">0</code> is substituted. If <var class="Ar">a2</var> is
+      missing, <code class="Ic">$</code> is substituted.</dd>
+  <dt><var class="Ar">a1</var><code class="Ic">;</code><var class="Ar">a2</var></dt>
   <dd>Like
-      <var class="Ar" title="Ar">a1</var><code class="Ic" title="Ic">,</code><var class="Ar" title="Ar">a2</var>
-      but with <var class="Ar" title="Ar">a2</var> evaluated at the end of, and
-      range set to, <var class="Ar" title="Ar">a1</var>.</dd>
+      <var class="Ar">a1</var><code class="Ic">,</code><var class="Ar">a2</var>
+      but with <var class="Ar">a2</var> evaluated at the end of, and range set
+      to, <var class="Ar">a1</var>.</dd>
 </dl>
-<div class="Pp"></div>
-The operators <code class="Ic" title="Ic">+</code> and
-  <code class="Ic" title="Ic">-</code> are high precedence, while
-  <code class="Ic" title="Ic">,</code> and <code class="Ic" title="Ic">;</code>
-  are low precedence.
-<div class="Pp"></div>
-In both <code class="Ic" title="Ic">+</code> and
-  <code class="Ic" title="Ic">-</code> forms, if
-  <var class="Ar" title="Ar">a2</var> is a line or character address with a
-  missing number, the number defaults to 1. If
-  <var class="Ar" title="Ar">a1</var> is missing,
-  <code class="Ic" title="Ic">.</code> is substituted. If both
-  <var class="Ar" title="Ar">a1</var> and <var class="Ar" title="Ar">a2</var>
-  are present and distinguishable, <code class="Ic" title="Ic">+</code> may be
-  elided. <var class="Ar" title="Ar">a2</var> may be a regular expression; if it
-  is delimited by <code class="Li">?</code> characters, the effect of the
-  <code class="Ic" title="Ic">+</code> or <code class="Ic" title="Ic">-</code>
-  is reversed. The <code class="Ic" title="Ic">%</code> sign is an alias for
-  <code class="Ic" title="Ic">,</code> and hence
-  <code class="Ic" title="Ic">0,$</code>. It is an error for a compound address
-  to represent a malformed substring.
-<h2 class="Ss" title="Ss" id="Commands"><a class="permalink" href="#Commands">Commands</a></h2>
-In the following, text demarcated by slashes represents text delimited by any
-  printable ASCII character except alphanumerics. Any number of trailing
-  delimiters may be elided, with multiple elisions then representing null
-  strings, but the first delimiter must always be present. In any delimited
-  text, newline may not appear literally; <code class="Li">\n</code> and
-  <code class="Li">\t</code> may be typed for newline and tab;
-  <code class="Li">\/</code> quotes the delimiter, here
-  <code class="Li">/</code>. An ampersand <code class="Li">&amp;</code> and
-  <code class="Li">\</code><var class="Ar" title="Ar">n</var>, where
-  <var class="Ar" title="Ar">n</var> is a digit (1&#x2013;9) are replaced by the
-  corresponding register. Backslash is otherwise interpreted literally.
-<div class="Pp"></div>
-Most commands may be prefixed with an address to indicate their range of
-  operation. If a command takes an address and none is supplied, a default
-  address is used. In normal mode this equates to the character the selection is
-  currently over. If only one selection exists
-  <code class="Ic" title="Ic">x</code> and <code class="Ic" title="Ic">y</code>
-  default to the whole file <code class="Ic" title="Ic">0,$</code>. In normal
-  mode the write commands <code class="Ic" title="Ic">w</code> and
-  <code class="Ic" title="Ic">wq</code> always apply to the whole file. Commands
-  are executed once for every selection. In visual mode the commands are applied
-  to every selection as if an implicit <code class="Ic" title="Ic">x</code>
-  command, matching the existing selections, was present.
-<div class="Pp"></div>
-In the description, &#x201C;range&#x201D; is used to represent whatever address
-  is supplied.
-<div class="Pp"></div>
-Many commands create new selections as a side effect when issued from a visual
-  mode. If so, it is always to the &#x201C;result&#x201D; of the change: the new
-  text for an insertion, the empty string for a deletion, the command output of
-  a filter etc. If after a successful command execution no selections remain,
-  the editor will switch to normal mode, otherwise it remains in visual mode.
-  This allows <i class="Em" title="Em">interactive</i> refinements of ranges.
-<h2 class="Ss" title="Ss" id="Text_commands"><a class="permalink" href="#Text_commands">Text
+<p class="Pp">The operators <code class="Ic">+</code> and
+    <code class="Ic">-</code> are high precedence, while
+    <code class="Ic">,</code> and <code class="Ic">;</code> are low
+  precedence.</p>
+<p class="Pp">In both <code class="Ic">+</code> and <code class="Ic">-</code>
+    forms, if <var class="Ar">a2</var> is a line or character address with a
+    missing number, the number defaults to 1. If <var class="Ar">a1</var> is
+    missing, <code class="Ic">.</code> is substituted. If both
+    <var class="Ar">a1</var> and <var class="Ar">a2</var> are present and
+    distinguishable, <code class="Ic">+</code> may be elided.
+    <var class="Ar">a2</var> may be a regular expression; if it is delimited by
+    <code class="Li">?</code> characters, the effect of the
+    <code class="Ic">+</code> or <code class="Ic">-</code> is reversed. The
+    <code class="Ic">%</code> sign is an alias for <code class="Ic">,</code> and
+    hence <code class="Ic">0,$</code>. It is an error for a compound address to
+    represent a malformed substring.</p>
+</section>
+<section class="Ss">
+<h2 class="Ss" id="Commands"><a class="permalink" href="#Commands">Commands</a></h2>
+<p class="Pp">In the following, text demarcated by slashes represents text
+    delimited by any printable ASCII character except alphanumerics. Any number
+    of trailing delimiters may be elided, with multiple elisions then
+    representing null strings, but the first delimiter must always be present.
+    In any delimited text, newline may not appear literally;
+    <code class="Li">\n</code> and <code class="Li">\t</code> may be typed for
+    newline and tab; <code class="Li">\/</code> quotes the delimiter, here
+    <code class="Li">/</code>. An ampersand <code class="Li">&amp;</code> and
+    <code class="Li">\</code><var class="Ar">n</var>, where
+    <var class="Ar">n</var> is a digit (1&#x2013;9) are replaced by the
+    corresponding register. Backslash is otherwise interpreted literally.</p>
+<p class="Pp">Most commands may be prefixed with an address to indicate their
+    range of operation. If a command takes an address and none is supplied, a
+    default address is used. In normal mode this equates to the character the
+    selection is currently over. If only one selection exists
+    <code class="Ic">x</code> and <code class="Ic">y</code> default to the whole
+    file <code class="Ic">0,$</code>. In normal mode the write commands
+    <code class="Ic">w</code> and <code class="Ic">wq</code> always apply to the
+    whole file. Commands are executed once for every selection. In visual mode
+    the commands are applied to every selection as if an implicit
+    <code class="Ic">x</code> command, matching the existing selections, was
+    present.</p>
+<p class="Pp">In the description, &#x201C;range&#x201D; is used to represent
+    whatever address is supplied.</p>
+<p class="Pp">Many commands create new selections as a side effect when issued
+    from a visual mode. If so, it is always to the &#x201C;result&#x201D; of the
+    change: the new text for an insertion, the empty string for a deletion, the
+    command output of a filter etc. If after a successful command execution no
+    selections remain, the editor will switch to normal mode, otherwise it
+    remains in visual mode. This allows <i class="Em">interactive</i>
+    refinements of ranges.</p>
+</section>
+<section class="Ss">
+<h2 class="Ss" id="Text_commands"><a class="permalink" href="#Text_commands">Text
   commands</a></h2>
 <dl class="Bl-tag">
-  <dt>&#x00A0;</dt>
-  <dd>&#x00A0;</dd>
-  <dt><a class="permalink" href="#a"><code class="Ic" title="Ic" id="a">a</code></a>[<var class="Ar" title="Ar">count</var>]/<var class="Ar" title="Ar">text</var><code class="Ic" title="Ic">/</code></dt>
-  <dd>Insert the <var class="Ar" title="Ar">text</var>
-      <var class="Ar" title="Ar">count</var> times into the file after the
-      range.
-    <div class="Pp"></div>
-    May also be written as
-    <div class="Pp"></div>
-    <div class="Bd Bd-indent">
-    <pre class="Li">
- a 
- lines 
- of 
- text 
- .
-    </pre>
+  <dt id="a"><a class="permalink" href="#a"><code class="Ic">a</code></a>[<var class="Ar">count</var>]/<var class="Ar">text</var><code class="Ic">/</code></dt>
+  <dd>Insert the <var class="Ar">text</var> <var class="Ar">count</var> times
+      into the file after the range.
+    <p class="Pp">May also be written as</p>
+    <div class="Bd Pp Bd-indent Li">
+    <pre> a
+ lines
+ of
+ text
+ .</pre>
     </div>
   </dd>
-  <dt>&#x00A0;</dt>
-  <dd>&#x00A0;</dd>
-  <dt><a class="permalink" href="#c"><code class="Ic" title="Ic" id="c">c</code></a>
-    <span class="No">or</span> <code class="Ic" title="Ic">i</code></dt>
-  <dd>Same as <code class="Ic" title="Ic">a</code>, but
-      <code class="Ic" title="Ic">c</code> replaces the text, while
-      <code class="Ic" title="Ic">i</code> inserts
-      <i class="Em" title="Em">before</i> the range.</dd>
-  <dt>&#x00A0;</dt>
-  <dd>&#x00A0;</dd>
-  <dt><a class="permalink" href="#d"><code class="Ic" title="Ic" id="d">d</code></a></dt>
+  <dt id="c"><a class="permalink" href="#c"><code class="Ic">c</code></a>
+    <span class="No">or</span> <code class="Ic">i</code></dt>
+  <dd>Same as <code class="Ic">a</code>, but <code class="Ic">c</code> replaces
+      the text, while <code class="Ic">i</code> inserts
+      <a class="permalink" href="#before"><i class="Em" id="before">before</i></a>
+      the range.</dd>
+  <dt id="d"><a class="permalink" href="#d"><code class="Ic">d</code></a></dt>
   <dd>Delete the text in range.</dd>
 </dl>
-<h2 class="Ss" title="Ss" id="Display_commands"><a class="permalink" href="#Display_commands">Display
+</section>
+<section class="Ss">
+<h2 class="Ss" id="Display_commands"><a class="permalink" href="#Display_commands">Display
   commands</a></h2>
 <dl class="Bl-tag">
-  <dt>&#x00A0;</dt>
-  <dd>&#x00A0;</dd>
-  <dt><a class="permalink" href="#p"><code class="Ic" title="Ic" id="p">p</code></a></dt>
+  <dt id="p"><a class="permalink" href="#p"><code class="Ic">p</code></a></dt>
   <dd>Create a new selection for the range.</dd>
 </dl>
-<h2 class="Ss" title="Ss" id="I/O_commands"><a class="permalink" href="#I/O_commands">I/O
+</section>
+<section class="Ss">
+<h2 class="Ss" id="I/O_commands"><a class="permalink" href="#I/O_commands">I/O
   commands</a></h2>
 <dl class="Bl-tag">
-  <dt>&#x00A0;</dt>
-  <dd>&#x00A0;</dd>
-  <dt><a class="permalink" href="#e"><code class="Ic" title="Ic" id="e">e</code></a>[<div class="Op"><code class="Cm" title="Cm">!</code></div>]
-    [<div class="Op"><span class="Pa" title="Pa">file name</span></div>]</dt>
+  <dt id="e"><a class="permalink" href="#e"><code class="Ic">e</code></a>[<code class="Cm">!</code>]
+    [<span class="Pa">file name</span>]</dt>
   <dd>Replace the file by the contents of the named external file. If no file
       name is given, reload file from disk.</dd>
-  <dt>&#x00A0;</dt>
-  <dd>&#x00A0;</dd>
-  <dt><a class="permalink" href="#r"><code class="Ic" title="Ic" id="r">r</code></a>
-    <var class="Ar" title="Ar">file name</var></dt>
+  <dt id="r"><a class="permalink" href="#r"><code class="Ic">r</code></a>
+    <var class="Ar">file name</var></dt>
   <dd>Replace the text in the range by the contents of the named external
     file.</dd>
-  <dt>&#x00A0;</dt>
-  <dd>&#x00A0;</dd>
-  <dt><a class="permalink" href="#w"><code class="Ic" title="Ic" id="w">w</code></a>[<div class="Op"><code class="Cm" title="Cm">!</code></div>]
-    [<div class="Op"><var class="Ar" title="Ar">file name</var></div>]</dt>
-  <dd>Write the range (default <code class="Ic" title="Ic">0,$</code>) to the
-      named external file.</dd>
-  <dt>&#x00A0;</dt>
-  <dd>&#x00A0;</dd>
-  <dt><a class="permalink" href="#wq"><code class="Ic" title="Ic" id="wq">wq</code></a>[<div class="Op"><code class="Cm" title="Cm">!</code></div>]
-    [<div class="Op"><var class="Ar" title="Ar">file name</var></div>]</dt>
-  <dd>Same as <code class="Ic" title="Ic">w</code>, but close file
-    afterwards.</dd>
+  <dt id="w"><a class="permalink" href="#w"><code class="Ic">w</code></a>[<code class="Cm">!</code>]
+    [<var class="Ar">file name</var>]</dt>
+  <dd>Write the range (default <code class="Ic">0,$</code>) to the named
+      external file.</dd>
+  <dt id="wq"><a class="permalink" href="#wq"><code class="Ic">wq</code></a>[<code class="Cm">!</code>]
+    [<var class="Ar">file name</var>]</dt>
+  <dd>Same as <code class="Ic">w</code>, but close file afterwards.</dd>
 </dl>
-<div class="Pp"></div>
-If the file name argument is absent from any of these, the current file name is
-  used. <code class="Ic" title="Ic">e</code> always sets the file name,
-  <code class="Ic" title="Ic">w</code> will do so if the file has no name.
-  Forcing the <code class="Ic" title="Ic">e</code> command with
-  <code class="Cm" title="Cm">!</code> will discard any unsaved changes. Forcing
-  <code class="Ic" title="Ic">w</code> will overwrite the file on disk even if
-  it has been externally modified since loading it. Write commands with a
-  non-default addresses and no file name are destructive and need always to be
-  forced.
+<p class="Pp">If the file name argument is absent from any of these, the current
+    file name is used. <code class="Ic">e</code> always sets the file name,
+    <code class="Ic">w</code> will do so if the file has no name. Forcing the
+    <code class="Ic">e</code> command with <code class="Cm">!</code> will
+    discard any unsaved changes. Forcing <code class="Ic">w</code> will
+    overwrite the file on disk even if it has been externally modified since
+    loading it. Write commands with a non-default addresses and no file name are
+    destructive and need always to be forced.</p>
 <dl class="Bl-tag">
-  <dt>&#x00A0;</dt>
-  <dd>&#x00A0;</dd>
-  <dt><a class="permalink" href="#__2"><code class="Ic" title="Ic" id="__2">&lt;</code></a>
-    <var class="Ar" title="Ar">shell command</var></dt>
+  <dt id="_~2"><a class="permalink" href="#_~2"><code class="Ic">&lt;</code></a>
+    <var class="Ar">shell command</var></dt>
   <dd>Replace the range by the standard output of the shell command.</dd>
-  <dt>&#x00A0;</dt>
-  <dd>&#x00A0;</dd>
-  <dt><a class="permalink" href="#__3"><code class="Ic" title="Ic" id="__3">&gt;</code></a>
-    <var class="Ar" title="Ar">shell command</var></dt>
+  <dt id="_~3"><a class="permalink" href="#_~3"><code class="Ic">&gt;</code></a>
+    <var class="Ar">shell command</var></dt>
   <dd>Sends the range to the standard input of the shell command.</dd>
-  <dt>&#x00A0;</dt>
-  <dd>&#x00A0;</dd>
-  <dt><a class="permalink" href="#__4"><code class="Ic" title="Ic" id="__4">|</code></a>
-    <var class="Ar" title="Ar">shell command</var></dt>
+  <dt id="_~4"><a class="permalink" href="#_~4"><code class="Ic">|</code></a>
+    <var class="Ar">shell command</var></dt>
   <dd>Send the range to the standard input, and replace it by the standard
       output, of the shell command.</dd>
-  <dt>&#x00A0;</dt>
-  <dd>&#x00A0;</dd>
-  <dt><a class="permalink" href="#!"><code class="Ic" title="Ic" id="!">!</code></a>
-    <var class="Ar" title="Ar">shell command</var></dt>
+  <dt id="!"><a class="permalink" href="#!"><code class="Ic">!</code></a>
+    <var class="Ar">shell command</var></dt>
   <dd>Run interactive shell command, redirect keyboard input to it.</dd>
-  <dt>&#x00A0;</dt>
-  <dd>&#x00A0;</dd>
-  <dt><a class="permalink" href="#cd"><code class="Ic" title="Ic" id="cd">cd</code></a>
-    <var class="Ar" title="Ar">directory</var></dt>
+  <dt id="cd"><a class="permalink" href="#cd"><code class="Ic">cd</code></a>
+    <var class="Ar">directory</var></dt>
   <dd>Change working directory. If no directory is specified,
-      <code class="Ev" title="Ev">$HOME</code> is used.</dd>
+      <code class="Ev">$HOME</code> is used.</dd>
 </dl>
-<div class="Pp"></div>
-In any of <code class="Ic" title="Ic">&lt;</code>,
-  <code class="Ic" title="Ic">&gt;</code>, <code class="Ic" title="Ic">|</code>,
-  or <code class="Ic" title="Ic">!</code>, if the shell command is omitted, the
-  last shell command (of any type) is substituted. Unless the file being edited
-  is unnamed, all these external commands can refer to its absolute path and
-  file name through the <code class="Ev" title="Ev">vis_filepath</code> and
-  <code class="Ev" title="Ev">vis_filename</code> environment variables.
-<h2 class="Ss" title="Ss" id="Loops_and_conditionals"><a class="permalink" href="#Loops_and_conditionals">Loops
+<p class="Pp">In any of <code class="Ic">&lt;</code>,
+    <code class="Ic">&gt;</code>, <code class="Ic">|</code>, or
+    <code class="Ic">!</code>, if the shell command is omitted, the last shell
+    command (of any type) is substituted. Unless the file being edited is
+    unnamed, all these external commands can refer to its absolute path and file
+    name through the <code class="Ev">vis_filepath</code> and
+    <code class="Ev">vis_filename</code> environment variables.</p>
+</section>
+<section class="Ss">
+<h2 class="Ss" id="Loops_and_conditionals"><a class="permalink" href="#Loops_and_conditionals">Loops
   and conditionals</a></h2>
 <dl class="Bl-tag">
-  <dt>&#x00A0;</dt>
-  <dd>&#x00A0;</dd>
-  <dt><a class="permalink" href="#x/"><code class="Ic" title="Ic" id="x/">x/</code></a><var class="Ar" title="Ar">regexp</var><code class="Ic" title="Ic">/</code>
-    [<div class="Op"><var class="Ar" title="Ar">command</var></div>]</dt>
+  <dt id="x/"><a class="permalink" href="#x/"><code class="Ic">x/</code></a><var class="Ar">regexp</var><code class="Ic">/</code>
+    [<var class="Ar">command</var>]</dt>
   <dd>For each match of the regular expression in the range, run the command
       with range set to the match. If the regular expression and its slashes are
-      omitted, <var class="Ar" title="Ar">/.*\n/</var> is assumed. Null string
-      matches potentially occur before every character of the range and at the
-      end of the range.
-    <div class="Pp"></div>
-    The
-      <code class="Ic" title="Ic">&quot;1</code>&#x2013;<code class="Ic" title="Ic">&quot;9</code>
-      and <code class="Ic" title="Ic">&quot;&amp;</code> registers are updated
-      with the (sub) expression matches of the pattern.</dd>
-  <dt>&#x00A0;</dt>
-  <dd>&#x00A0;</dd>
-  <dt><a class="permalink" href="#y/"><code class="Ic" title="Ic" id="y/">y/</code></a><var class="Ar" title="Ar">regexp</var><code class="Ic" title="Ic">/</code>
-    [<div class="Op"><var class="Ar" title="Ar">command</var></div>]</dt>
-  <dd>Like <code class="Ic" title="Ic">x</code>, but run the command for each
-      substring that lies before, between, or after the matches that would be
-      generated by <code class="Ic" title="Ic">x</code>. There is no default
-      behavior. Null substrings potentially occur before every character in the
-      range.</dd>
-  <dt>&#x00A0;</dt>
-  <dd>&#x00A0;</dd>
-  <dt><a class="permalink" href="#X/"><code class="Ic" title="Ic" id="X/">X/</code></a><var class="Ar" title="Ar">regexp</var><code class="Ic" title="Ic">/</code>
-    <var class="Ar" title="Ar">command</var></dt>
+      omitted, <var class="Ar">/.*\n/</var> is assumed. Null string matches
+      potentially occur before every character of the range and at the end of
+      the range.
+    <p class="Pp">The
+        <code class="Ic">&quot;1</code>&#x2013;<code class="Ic">&quot;9</code>
+        and <code class="Ic">&quot;&amp;</code> registers are updated with the
+        (sub) expression matches of the pattern.</p>
+  </dd>
+  <dt id="y/"><a class="permalink" href="#y/"><code class="Ic">y/</code></a><var class="Ar">regexp</var><code class="Ic">/</code>
+    [<var class="Ar">command</var>]</dt>
+  <dd>Like <code class="Ic">x</code>, but run the command for each substring
+      that lies before, between, or after the matches that would be generated by
+      <code class="Ic">x</code>. There is no default behavior. Null substrings
+      potentially occur before every character in the range.</dd>
+  <dt id="X/"><a class="permalink" href="#X/"><code class="Ic">X/</code></a><var class="Ar">regexp</var><code class="Ic">/</code>
+    <var class="Ar">command</var></dt>
   <dd>For each file whose file name matches the regular expression, make that
       the current file and run the command. If the expression is omitted, the
       command is run in every file.</dd>
-  <dt>&#x00A0;</dt>
-  <dd>&#x00A0;</dd>
-  <dt><a class="permalink" href="#Y/"><code class="Ic" title="Ic" id="Y/">Y/</code></a><var class="Ar" title="Ar">regexp</var><code class="Ic" title="Ic">/</code>
-    <var class="Ar" title="Ar">command</var></dt>
-  <dd>Same as <code class="Ic" title="Ic">X</code>, but for files that do not
-      match the regular expression, and the expression is required.</dd>
-  <dt>&#x00A0;</dt>
-  <dd>&#x00A0;</dd>
-  <dt><a class="permalink" href="#g"><code class="Ic" title="Ic" id="g">g</code></a>[<var class="Ar" title="Ar">count</var>][<var class="Ar" title="Ar">/regexp/</var>]
-    <var class="Ar" title="Ar">command</var></dt>
+  <dt id="Y/"><a class="permalink" href="#Y/"><code class="Ic">Y/</code></a><var class="Ar">regexp</var><code class="Ic">/</code>
+    <var class="Ar">command</var></dt>
+  <dd>Same as <code class="Ic">X</code>, but for files that do not match the
+      regular expression, and the expression is required.</dd>
+  <dt id="g"><a class="permalink" href="#g"><code class="Ic">g</code></a>[<var class="Ar">count</var>][<var class="Ar">/regexp/</var>]
+    <var class="Ar">command</var></dt>
   <dd style="width: auto;">&#x00A0;</dd>
-  <dt><a class="permalink" href="#v_2"><code class="Ic" title="Ic" id="v_2">v</code></a>[<var class="Ar" title="Ar">count</var>][<var class="Ar" title="Ar">/regexp/</var>]
-    <var class="Ar" title="Ar">command</var></dt>
-  <dd>If the <var class="Ar" title="Ar">count</var> range contains
-      (<code class="Ic" title="Ic">g</code>) or does not contain
-      (<code class="Ic" title="Ic">v</code>) a match for the expression, run
-      command on the range.
-    <div class="Pp"></div>
-    The <var class="Ar" title="Ar">count</var> specifier has the following
-      format, where <var class="Ar" title="Ar">n</var> and
-      <var class="Ar" title="Ar">m</var> are integers denoting the ranges.
+  <dt id="v~2"><a class="permalink" href="#v~2"><code class="Ic">v</code></a>[<var class="Ar">count</var>][<var class="Ar">/regexp/</var>]
+    <var class="Ar">command</var></dt>
+  <dd>If the <var class="Ar">count</var> range contains
+      (<code class="Ic">g</code>) or does not contain
+      (<code class="Ic">v</code>) a match for the expression, run command on the
+      range.
+    <p class="Pp">The <var class="Ar">count</var> specifier has the following
+        format, where <var class="Ar">n</var> and <var class="Ar">m</var> are
+        integers denoting the ranges.</p>
     <dl class="Bl-tag">
-      <dt>&#x00A0;</dt>
-      <dd>&#x00A0;</dd>
-      <dt><var class="Ar" title="Ar">n</var><code class="Ic" title="Ic">,</code><var class="Ar" title="Ar">m</var></dt>
-      <dd>The closed interval from <var class="Ar" title="Ar">n</var> to
-          <var class="Ar" title="Ar">m</var>. If
-          <var class="Ar" title="Ar">n</var> is missing,
-          <code class="Ic" title="Ic">1</code> is substituted. If
-          <var class="Ar" title="Ar">m</var> is missing,
-          <code class="Ic" title="Ic">&#x221E;</code> is substituted. Negative
+      <dt><var class="Ar">n</var><code class="Ic">,</code><var class="Ar">m</var></dt>
+      <dd>The closed interval from <var class="Ar">n</var> to
+          <var class="Ar">m</var>. If <var class="Ar">n</var> is missing,
+          <code class="Ic">1</code> is substituted. If <var class="Ar">m</var>
+          is missing, <code class="Ic">&#x221E;</code> is substituted. Negative
           values are interpreted relative to the last range.</dd>
-      <dt>&#x00A0;</dt>
-      <dd>&#x00A0;</dd>
-      <dt><a class="permalink" href="#__5"><code class="Ic" title="Ic" id="__5">%</code></a><var class="Ar" title="Ar">n</var></dt>
-      <dd>Matches every <var class="Ar" title="Ar">n</var>-th range.</dd>
+      <dt id="_~5"><a class="permalink" href="#_~5"><code class="Ic">%</code></a><var class="Ar">n</var></dt>
+      <dd>Matches every <var class="Ar">n</var>-th range.</dd>
     </dl>
   </dd>
 </dl>
-<div class="Pp"></div>
-These may be nested arbitrarily deeply. An empty command in an
-  <code class="Ic" title="Ic">x</code> or <code class="Ic" title="Ic">y</code>
-  defaults to <code class="Ic" title="Ic">p</code>.
-  <code class="Ic" title="Ic">X</code>, <code class="Ic" title="Ic">Y</code>,
-  <code class="Ic" title="Ic">g</code> and <code class="Ic" title="Ic">v</code>
-  do not have defaults.
-<h2 class="Ss" title="Ss" id="Grouping_and_multiple_changes"><a class="permalink" href="#Grouping_and_multiple_changes">Grouping
+<p class="Pp">These may be nested arbitrarily deeply. An empty command in an
+    <code class="Ic">x</code> or <code class="Ic">y</code> defaults to
+    <code class="Ic">p</code>. <code class="Ic">X</code>,
+    <code class="Ic">Y</code>, <code class="Ic">g</code> and
+    <code class="Ic">v</code> do not have defaults.</p>
+</section>
+<section class="Ss">
+<h2 class="Ss" id="Grouping_and_multiple_changes"><a class="permalink" href="#Grouping_and_multiple_changes">Grouping
   and multiple changes</a></h2>
-Commands may be grouped by enclosing them in curly braces. Semantically, the
-  opening brace is like a command: it takes an (optional) address and runs each
-  sub-command on the range. Commands within the braces are executed
-  sequentially, but changes made by one command are not visible to other
-  commands.
-<div class="Pp"></div>
-When a command makes a number of changes to a file, as in
-  <code class="Ic" title="Ic">x/</code><var class="Ar" title="Ar">re</var><code class="Ic" title="Ic">/</code>
-  <code class="Ic" title="Ic">c/</code><var class="Ar" title="Ar">text</var><code class="Ic" title="Ic">/</code>,
-  the addresses of all changes are computed based on the initial state. If the
-  changes are non-overlapping, they are applied in the specified order.
-  Conflicting changes are rejected.
-<div class="Pp"></div>
-Braces may be nested arbitrarily.
-<h1 class="Sh" title="Sh" id="VI(M)_KEY_BINDINGS"><a class="permalink" href="#VI(M)_KEY_BINDINGS">VI(M)
+<p class="Pp">Commands may be grouped by enclosing them in curly braces.
+    Semantically, the opening brace is like a command: it takes an (optional)
+    address and runs each sub-command on the range. Commands within the braces
+    are executed sequentially, but changes made by one command are not visible
+    to other commands.</p>
+<p class="Pp">When a command makes a number of changes to a file, as in
+    <code class="Ic">x/</code><var class="Ar">re</var><code class="Ic">/</code>
+    <code class="Ic">c/</code><var class="Ar">text</var><code class="Ic">/</code>,
+    the addresses of all changes are computed based on the initial state. If the
+    changes are non-overlapping, they are applied in the specified order.
+    Conflicting changes are rejected.</p>
+<p class="Pp">Braces may be nested arbitrarily.</p>
+</section>
+</section>
+<section class="Sh">
+<h1 class="Sh" id="VI(M)_KEY_BINDINGS"><a class="permalink" href="#VI(M)_KEY_BINDINGS">VI(M)
   KEY BINDINGS</a></h1>
-In the following sections angle brackets are used to denote special keys. The
-  prefixes <code class="Ic" title="Ic">C-</code>,
-  <code class="Ic" title="Ic">S-</code>, and
-  <code class="Ic" title="Ic">M-</code> are used to refer to the
-  &#x27E8;Ctrl&#x27E9;, &#x27E8;Shift&#x27E9; and &#x27E8;Alt&#x27E9; modifiers,
-  respectively.
-<div class="Pp"></div>
-All active key bindings can be listed at runtime using the
-  <code class="Ic" title="Ic">:help</code> command.
-<h2 class="Ss" title="Ss" id="Operators"><a class="permalink" href="#Operators">Operators</a></h2>
-Operators perform a certain operation on a text range indicated by either a
-  motion, a text object or an existing selection.
-<div class="Pp"></div>
-When used in normal mode, the following operators wait for a motion, putting vis
-  into operator pending mode.
+<p class="Pp">In the following sections angle brackets are used to denote
+    special keys. The prefixes <code class="Ic">C-</code>,
+    <code class="Ic">S-</code>, and <code class="Ic">M-</code> are used to refer
+    to the &#x27E8;Ctrl&#x27E9;, &#x27E8;Shift&#x27E9; and &#x27E8;Alt&#x27E9;
+    modifiers, respectively.</p>
+<p class="Pp">All active key bindings can be listed at runtime using the
+    <code class="Ic">:help</code> command.</p>
+<section class="Ss">
+<h2 class="Ss" id="Operators"><a class="permalink" href="#Operators">Operators</a></h2>
+<p class="Pp">Operators perform a certain operation on a text range indicated by
+    either a motion, a text object or an existing selection.</p>
+<p class="Pp">When used in normal mode, the following operators wait for a
+    motion, putting vis into operator pending mode.</p>
 <dl class="Bl-tag Bl-compact">
-  <dt><a class="permalink" href="#c_2"><code class="Ic" title="Ic" id="c_2">c</code></a></dt>
+  <dt id="c~2"><a class="permalink" href="#c~2"><code class="Ic">c</code></a></dt>
   <dd>change, delete range and enter insert mode</dd>
-  <dt><a class="permalink" href="#d_2"><code class="Ic" title="Ic" id="d_2">d</code></a></dt>
+  <dt id="d~2"><a class="permalink" href="#d~2"><code class="Ic">d</code></a></dt>
   <dd>delete, cut range to register</dd>
-  <dt><a class="permalink" href="#__6"><code class="Ic" title="Ic" id="__6">&lt;</code></a></dt>
+  <dt id="_~6"><a class="permalink" href="#_~6"><code class="Ic">&lt;</code></a></dt>
   <dd>shift-left, decrease indent</dd>
-  <dt><a class="permalink" href="#__7"><code class="Ic" title="Ic" id="__7">&gt;</code></a></dt>
+  <dt id="_~7"><a class="permalink" href="#_~7"><code class="Ic">&gt;</code></a></dt>
   <dd>shift-right, increase indent</dd>
-  <dt><a class="permalink" href="#y"><code class="Ic" title="Ic" id="y">y</code></a></dt>
+  <dt id="y"><a class="permalink" href="#y"><code class="Ic">y</code></a></dt>
   <dd>yank, copy range to register</dd>
 </dl>
-<div class="Pp"></div>
-When used in normal mode, the following actions take effect immediately.
+<p class="Pp">When used in normal mode, the following actions take effect
+    immediately.</p>
 <dl class="Bl-tag Bl-compact">
-  <dt><a class="permalink" href="#="><code class="Ic" title="Ic" id="=">=</code></a></dt>
-  <dd>format, filter range through <a class="Xr" title="Xr">fmt(1)</a></dd>
-  <dt><a class="permalink" href="#gu"><code class="Ic" title="Ic" id="gu">gu</code></a></dt>
+  <dt id="="><a class="permalink" href="#="><code class="Ic">=</code></a></dt>
+  <dd>format, filter range through <a class="Xr">fmt(1)</a></dd>
+  <dt id="gu"><a class="permalink" href="#gu"><code class="Ic">gu</code></a></dt>
   <dd>make lowercase</dd>
-  <dt><a class="permalink" href="#gU"><code class="Ic" title="Ic" id="gU">gU</code></a></dt>
+  <dt id="gU"><a class="permalink" href="#gU"><code class="Ic">gU</code></a></dt>
   <dd>make uppercase</dd>
-  <dt><a class="permalink" href="#g~"><code class="Ic" title="Ic" id="g~">g~</code></a></dt>
+  <dt id="g_~3"><a class="permalink" href="#g_~3"><code class="Ic">g~</code></a></dt>
   <dd>swap case</dd>
-  <dt><a class="permalink" href="#J"><code class="Ic" title="Ic" id="J">J</code></a></dt>
+  <dt id="J"><a class="permalink" href="#J"><code class="Ic">J</code></a></dt>
   <dd>join lines, insert spaces in between</dd>
-  <dt><a class="permalink" href="#gJ"><code class="Ic" title="Ic" id="gJ">gJ</code></a></dt>
+  <dt id="gJ"><a class="permalink" href="#gJ"><code class="Ic">gJ</code></a></dt>
   <dd>join lines remove any delimiting white spaces</dd>
-  <dt><a class="permalink" href="#p_2"><code class="Ic" title="Ic" id="p_2">p</code></a></dt>
+  <dt id="p~2"><a class="permalink" href="#p~2"><code class="Ic">p</code></a></dt>
   <dd>put register content after cursor</dd>
-  <dt><a class="permalink" href="#P"><code class="Ic" title="Ic" id="P">P</code></a></dt>
+  <dt id="P"><a class="permalink" href="#P"><code class="Ic">P</code></a></dt>
   <dd>put register content before cursor</dd>
 </dl>
-<h2 class="Ss" title="Ss" id="Motions"><a class="permalink" href="#Motions">Motions</a></h2>
-Motions take an initial file position and transform it to a destination file
-  position, thereby defining a range.
-<div class="Pp"></div>
+</section>
+<section class="Ss">
+<h2 class="Ss" id="Motions"><a class="permalink" href="#Motions">Motions</a></h2>
+<p class="Pp">Motions take an initial file position and transform it to a
+    destination file position, thereby defining a range.</p>
+<p class="Pp"></p>
 <dl class="Bl-tag Bl-compact">
-  <dt><a class="permalink" href="#0_2"><code class="Ic" title="Ic" id="0_2">0</code></a></dt>
+  <dt id="0~2"><a class="permalink" href="#0~2"><code class="Ic">0</code></a></dt>
   <dd>start of line</dd>
-  <dt><a class="permalink" href="#b"><code class="Ic" title="Ic" id="b">b</code></a></dt>
+  <dt id="b"><a class="permalink" href="#b"><code class="Ic">b</code></a></dt>
   <dd>previous start of a word</dd>
-  <dt><a class="permalink" href="#B"><code class="Ic" title="Ic" id="B">B</code></a></dt>
+  <dt id="B"><a class="permalink" href="#B"><code class="Ic">B</code></a></dt>
   <dd>previous start of a WORD</dd>
-  <dt><a class="permalink" href="#$_2"><code class="Ic" title="Ic" id="$_2">$</code></a></dt>
+  <dt id="$~2"><a class="permalink" href="#$~2"><code class="Ic">$</code></a></dt>
   <dd>end of line</dd>
-  <dt><a class="permalink" href="#e_2"><code class="Ic" title="Ic" id="e_2">e</code></a></dt>
+  <dt id="e~2"><a class="permalink" href="#e~2"><code class="Ic">e</code></a></dt>
   <dd>next end of a word</dd>
-  <dt><a class="permalink" href="#E"><code class="Ic" title="Ic" id="E">E</code></a></dt>
+  <dt id="E"><a class="permalink" href="#E"><code class="Ic">E</code></a></dt>
   <dd>next end of a WORD</dd>
-  <dt><a class="permalink" href="#F"><code class="Ic" title="Ic" id="F">F</code></a>&#x27E8;<var class="Ar" title="Ar">char</var>&#x27E9;</dt>
-  <dd>to next occurrence of
-      &#x27E8;<var class="Ar" title="Ar">char</var>&#x27E9; to the left</dd>
-  <dt><a class="permalink" href="#f"><code class="Ic" title="Ic" id="f">f</code></a>&#x27E8;<var class="Ar" title="Ar">char</var>&#x27E9;</dt>
-  <dd>to next occurrence of
-      &#x27E8;<var class="Ar" title="Ar">char</var>&#x27E9; to the right</dd>
-  <dt><a class="permalink" href="#__8"><code class="Ic" title="Ic" id="__8">^</code></a></dt>
+  <dt id="F"><a class="permalink" href="#F"><code class="Ic">F</code></a>&#x27E8;<var class="Ar">char</var>&#x27E9;</dt>
+  <dd>to next occurrence of &#x27E8;<var class="Ar">char</var>&#x27E9; to the
+      left</dd>
+  <dt id="f"><a class="permalink" href="#f"><code class="Ic">f</code></a>&#x27E8;<var class="Ar">char</var>&#x27E9;</dt>
+  <dd>to next occurrence of &#x27E8;<var class="Ar">char</var>&#x27E9; to the
+      right</dd>
+  <dt id="_~8"><a class="permalink" href="#_~8"><code class="Ic">^</code></a></dt>
   <dd>first non-blank of line</dd>
-  <dt><a class="permalink" href="#g0"><code class="Ic" title="Ic" id="g0">g0</code></a></dt>
+  <dt id="g0"><a class="permalink" href="#g0"><code class="Ic">g0</code></a></dt>
   <dd>begin of display line</dd>
-  <dt><a class="permalink" href="#g$"><code class="Ic" title="Ic" id="g$">g$</code></a></dt>
+  <dt id="g$"><a class="permalink" href="#g$"><code class="Ic">g$</code></a></dt>
   <dd>end of display line</dd>
-  <dt><a class="permalink" href="#ge"><code class="Ic" title="Ic" id="ge">ge</code></a></dt>
+  <dt id="ge"><a class="permalink" href="#ge"><code class="Ic">ge</code></a></dt>
   <dd>previous end of a word</dd>
-  <dt><a class="permalink" href="#gE"><code class="Ic" title="Ic" id="gE">gE</code></a></dt>
+  <dt id="gE"><a class="permalink" href="#gE"><code class="Ic">gE</code></a></dt>
   <dd>previous end of a WORD</dd>
-  <dt><a class="permalink" href="#gg"><code class="Ic" title="Ic" id="gg">gg</code></a></dt>
+  <dt id="gg"><a class="permalink" href="#gg"><code class="Ic">gg</code></a></dt>
   <dd>begin of file</dd>
-  <dt><a class="permalink" href="#G"><code class="Ic" title="Ic" id="G">G</code></a></dt>
+  <dt id="G"><a class="permalink" href="#G"><code class="Ic">G</code></a></dt>
   <dd>goto line or end of file</dd>
-  <dt><a class="permalink" href="#gj"><code class="Ic" title="Ic" id="gj">gj</code></a></dt>
+  <dt id="gj"><a class="permalink" href="#gj"><code class="Ic">gj</code></a></dt>
   <dd>display line down</dd>
-  <dt><a class="permalink" href="#gk"><code class="Ic" title="Ic" id="gk">gk</code></a></dt>
+  <dt id="gk"><a class="permalink" href="#gk"><code class="Ic">gk</code></a></dt>
   <dd>display line up</dd>
-  <dt><a class="permalink" href="#gh"><code class="Ic" title="Ic" id="gh">gh</code></a></dt>
+  <dt id="gh"><a class="permalink" href="#gh"><code class="Ic">gh</code></a></dt>
   <dd>codepoint left</dd>
-  <dt><a class="permalink" href="#gl"><code class="Ic" title="Ic" id="gl">gl</code></a></dt>
+  <dt id="gl"><a class="permalink" href="#gl"><code class="Ic">gl</code></a></dt>
   <dd>codepoint right</dd>
-  <dt><a class="permalink" href="#gH"><code class="Ic" title="Ic" id="gH">gH</code></a></dt>
+  <dt id="gH"><a class="permalink" href="#gH"><code class="Ic">gH</code></a></dt>
   <dd>byte left</dd>
-  <dt><a class="permalink" href="#gL"><code class="Ic" title="Ic" id="gL">gL</code></a></dt>
+  <dt id="gL"><a class="permalink" href="#gL"><code class="Ic">gL</code></a></dt>
   <dd>byte right</dd>
-  <dt><a class="permalink" href="#g__3"><code class="Ic" title="Ic" id="g__3">g_</code></a></dt>
+  <dt id="g_~4"><a class="permalink" href="#g_~4"><code class="Ic">g_</code></a></dt>
   <dd>last non-blank of line</dd>
-  <dt><a class="permalink" href="#gm"><code class="Ic" title="Ic" id="gm">gm</code></a></dt>
+  <dt id="gm"><a class="permalink" href="#gm"><code class="Ic">gm</code></a></dt>
   <dd>middle of display line</dd>
-  <dt><a class="permalink" href="#g_&amp;_"><code class="Ic" title="Ic" id="g_&amp;_">g|</code></a></dt>
+  <dt><code class="Ic">g|</code></dt>
   <dd>goto column</dd>
-  <dt><a class="permalink" href="#h"><code class="Ic" title="Ic" id="h">h</code></a></dt>
+  <dt id="h"><a class="permalink" href="#h"><code class="Ic">h</code></a></dt>
   <dd>char left</dd>
-  <dt><a class="permalink" href="#H"><code class="Ic" title="Ic" id="H">H</code></a></dt>
+  <dt id="H"><a class="permalink" href="#H"><code class="Ic">H</code></a></dt>
   <dd>goto top/home line of window</dd>
-  <dt><a class="permalink" href="#j"><code class="Ic" title="Ic" id="j">j</code></a></dt>
+  <dt id="j"><a class="permalink" href="#j"><code class="Ic">j</code></a></dt>
   <dd>line down</dd>
-  <dt><a class="permalink" href="#k"><code class="Ic" title="Ic" id="k">k</code></a></dt>
+  <dt id="k"><a class="permalink" href="#k"><code class="Ic">k</code></a></dt>
   <dd>line up</dd>
-  <dt><a class="permalink" href="#l"><code class="Ic" title="Ic" id="l">l</code></a></dt>
+  <dt id="l"><a class="permalink" href="#l"><code class="Ic">l</code></a></dt>
   <dd>char right</dd>
-  <dt><a class="permalink" href="#L"><code class="Ic" title="Ic" id="L">L</code></a></dt>
+  <dt id="L"><a class="permalink" href="#L"><code class="Ic">L</code></a></dt>
   <dd>goto bottom/last line of window</dd>
-  <dt><a class="permalink" href="#__9"><code class="Ic" title="Ic" id="__9">%</code></a></dt>
+  <dt id="_~9"><a class="permalink" href="#_~9"><code class="Ic">%</code></a></dt>
   <dd>match bracket, quote or backtick</dd>
-  <dt><a class="permalink" href="#__10"><code class="Ic" title="Ic" id="__10">}</code></a></dt>
+  <dt id="_~10"><a class="permalink" href="#_~10"><code class="Ic">}</code></a></dt>
   <dd>next paragraph</dd>
-  <dt><a class="permalink" href="#)"><code class="Ic" title="Ic" id=")">)</code></a></dt>
+  <dt id=")"><a class="permalink" href="#)"><code class="Ic">)</code></a></dt>
   <dd>next sentence</dd>
-  <dt><a class="permalink" href="#N"><code class="Ic" title="Ic" id="N">N</code></a></dt>
+  <dt id="N"><a class="permalink" href="#N"><code class="Ic">N</code></a></dt>
   <dd>repeat last search backwards</dd>
-  <dt><a class="permalink" href="#n"><code class="Ic" title="Ic" id="n">n</code></a></dt>
+  <dt id="n"><a class="permalink" href="#n"><code class="Ic">n</code></a></dt>
   <dd>repeat last search forward</dd>
-  <dt><a class="permalink" href="#__"><code class="Ic" title="Ic" id="__">[{</code></a></dt>
+  <dt id="__"><a class="permalink" href="#__"><code class="Ic">[{</code></a></dt>
   <dd>previous start of block</dd>
-  <dt><a class="permalink" href="#___2"><code class="Ic" title="Ic" id="___2">]}</code></a></dt>
+  <dt id="__~2"><a class="permalink" href="#__~2"><code class="Ic">]}</code></a></dt>
   <dd>next start of block</dd>
-  <dt><a class="permalink" href="#_("><code class="Ic" title="Ic" id="_(">[(</code></a></dt>
+  <dt id="_("><a class="permalink" href="#_("><code class="Ic">[(</code></a></dt>
   <dd>previous start of parentheses pair</dd>
-  <dt><a class="permalink" href="#_)"><code class="Ic" title="Ic" id="_)">])</code></a></dt>
+  <dt id="_)"><a class="permalink" href="#_)"><code class="Ic">])</code></a></dt>
   <dd>next start of parentheses pair</dd>
-  <dt><a class="permalink" href="#__11"><code class="Ic" title="Ic" id="__11">{</code></a></dt>
+  <dt id="_~11"><a class="permalink" href="#_~11"><code class="Ic">{</code></a></dt>
   <dd>previous paragraph</dd>
-  <dt><a class="permalink" href="#("><code class="Ic" title="Ic" id="(">(</code></a></dt>
+  <dt id="("><a class="permalink" href="#("><code class="Ic">(</code></a></dt>
   <dd>previous sentence</dd>
-  <dt><a class="permalink" href="#;"><code class="Ic" title="Ic" id=";">;</code></a></dt>
+  <dt id=";"><a class="permalink" href="#;"><code class="Ic">;</code></a></dt>
   <dd>repeat last to/till movement</dd>
-  <dt><a class="permalink" href="#,"><code class="Ic" title="Ic" id=",">,</code></a></dt>
+  <dt id=","><a class="permalink" href="#,"><code class="Ic">,</code></a></dt>
   <dd>repeat last to/till movement but in opposite direction</dd>
-  <dt><a class="permalink" href="#__12"><code class="Ic" title="Ic" id="__12">#</code></a></dt>
+  <dt id="_~12"><a class="permalink" href="#_~12"><code class="Ic">#</code></a></dt>
   <dd>search word under selection backwards</dd>
-  <dt><a class="permalink" href="#*"><code class="Ic" title="Ic" id="*">*</code></a></dt>
+  <dt id="*"><a class="permalink" href="#*"><code class="Ic">*</code></a></dt>
   <dd>search word under selection forwards</dd>
-  <dt><a class="permalink" href="#T"><code class="Ic" title="Ic" id="T">T</code></a>&#x27E8;<var class="Ar" title="Ar">char</var>&#x27E9;</dt>
-  <dd>till before next occurrence of
-      &#x27E8;<var class="Ar" title="Ar">char</var>&#x27E9; to the left</dd>
-  <dt><a class="permalink" href="#t"><code class="Ic" title="Ic" id="t">t</code></a>&#x27E8;<var class="Ar" title="Ar">char</var>&#x27E9;</dt>
-  <dd>till before next occurrence of
-      &#x27E8;<var class="Ar" title="Ar">char</var>&#x27E9; to the right</dd>
-  <dt><a class="permalink" href="#?_2"><code class="Ic" title="Ic" id="?_2">?</code></a><var class="Ar" title="Ar">pattern</var></dt>
-  <dd>to next match of <var class="Ar" title="Ar">pattern</var> in backward
-      direction</dd>
-  <dt><a class="permalink" href="#/_2"><code class="Ic" title="Ic" id="/_2">/</code></a><var class="Ar" title="Ar">pattern</var></dt>
-  <dd>to next match of <var class="Ar" title="Ar">pattern</var> in forward
-      direction</dd>
-  <dt><a class="permalink" href="#w_2"><code class="Ic" title="Ic" id="w_2">w</code></a></dt>
+  <dt id="T"><a class="permalink" href="#T"><code class="Ic">T</code></a>&#x27E8;<var class="Ar">char</var>&#x27E9;</dt>
+  <dd>till before next occurrence of &#x27E8;<var class="Ar">char</var>&#x27E9;
+      to the left</dd>
+  <dt id="t"><a class="permalink" href="#t"><code class="Ic">t</code></a>&#x27E8;<var class="Ar">char</var>&#x27E9;</dt>
+  <dd>till before next occurrence of &#x27E8;<var class="Ar">char</var>&#x27E9;
+      to the right</dd>
+  <dt id="?~2"><a class="permalink" href="#?~2"><code class="Ic">?</code></a><var class="Ar">pattern</var></dt>
+  <dd>to next match of <var class="Ar">pattern</var> in backward direction</dd>
+  <dt id="/~2"><a class="permalink" href="#/~2"><code class="Ic">/</code></a><var class="Ar">pattern</var></dt>
+  <dd>to next match of <var class="Ar">pattern</var> in forward direction</dd>
+  <dt id="w~2"><a class="permalink" href="#w~2"><code class="Ic">w</code></a></dt>
   <dd>next start of a word</dd>
-  <dt><a class="permalink" href="#W"><code class="Ic" title="Ic" id="W">W</code></a></dt>
+  <dt id="W"><a class="permalink" href="#W"><code class="Ic">W</code></a></dt>
   <dd>next start of a WORD</dd>
 </dl>
-<h2 class="Ss" title="Ss" id="Text_objects"><a class="permalink" href="#Text_objects">Text
+</section>
+<section class="Ss">
+<h2 class="Ss" id="Text_objects"><a class="permalink" href="#Text_objects">Text
   objects</a></h2>
-Text objects take an initial file position and transform it to a range where the
-  former does not necessarily have to be contained in the latter. All of the
-  following text objects are implemented in an inner variant (prefixed with
-  <code class="Ic" title="Ic">i</code>) where the surrounding white space or
-  delimiting characters are not part of the resulting range and a normal variant
-  (prefixed with <code class="Ic" title="Ic">a</code>) where they are.
-<div class="Pp"></div>
+<p class="Pp">Text objects take an initial file position and transform it to a
+    range where the former does not necessarily have to be contained in the
+    latter. All of the following text objects are implemented in an inner
+    variant (prefixed with <code class="Ic">i</code>) where the surrounding
+    white space or delimiting characters are not part of the resulting range and
+    a normal variant (prefixed with <code class="Ic">a</code>) where they
+  are.</p>
+<p class="Pp"></p>
 <dl class="Bl-tag Bl-compact">
-  <dt><a class="permalink" href="#w_3"><code class="Ic" title="Ic" id="w_3">w</code></a></dt>
+  <dt id="w~3"><a class="permalink" href="#w~3"><code class="Ic">w</code></a></dt>
   <dd>word</dd>
-  <dt><a class="permalink" href="#W_2"><code class="Ic" title="Ic" id="W_2">W</code></a></dt>
+  <dt id="W~2"><a class="permalink" href="#W~2"><code class="Ic">W</code></a></dt>
   <dd>WORD</dd>
-  <dt><a class="permalink" href="#s"><code class="Ic" title="Ic" id="s">s</code></a></dt>
+  <dt id="s"><a class="permalink" href="#s"><code class="Ic">s</code></a></dt>
   <dd>sentence</dd>
-  <dt><a class="permalink" href="#p_3"><code class="Ic" title="Ic" id="p_3">p</code></a></dt>
+  <dt id="p~3"><a class="permalink" href="#p~3"><code class="Ic">p</code></a></dt>
   <dd>paragraph</dd>
-  <dt><a class="permalink" href="#_,__,_(,_),__,__,__,__,__(dq,_',__"><code class="Ic" title="Ic" id="_,__,_(,_),__,__,__,__,__(dq,_',__">[,
-    ], (, ), {, }, &lt;, &gt;, &quot;, ', `</code></a></dt>
+  <dt id="_,"><a class="permalink" href="#_,"><code class="Ic">[, ], (, ), {, },
+    &lt;, &gt;, &quot;, ', `</code></a></dt>
   <dd>block enclosed by these symbols</dd>
 </dl>
-<div class="Pp"></div>
-Further available text objects include:
+<p class="Pp">Further available text objects include:</p>
 <dl class="Bl-tag Bl-compact">
-  <dt><a class="permalink" href="#gn"><code class="Ic" title="Ic" id="gn">gn</code></a></dt>
+  <dt id="gn"><a class="permalink" href="#gn"><code class="Ic">gn</code></a></dt>
   <dd>matches the last used search term in forward direction</dd>
-  <dt><a class="permalink" href="#gN"><code class="Ic" title="Ic" id="gN">gN</code></a></dt>
+  <dt id="gN"><a class="permalink" href="#gN"><code class="Ic">gN</code></a></dt>
   <dd>matches the last used search term in backward direction</dd>
-  <dt><a class="permalink" href="#al"><code class="Ic" title="Ic" id="al">al</code></a></dt>
+  <dt id="al"><a class="permalink" href="#al"><code class="Ic">al</code></a></dt>
   <dd>current line</dd>
-  <dt><a class="permalink" href="#il"><code class="Ic" title="Ic" id="il">il</code></a></dt>
+  <dt id="il"><a class="permalink" href="#il"><code class="Ic">il</code></a></dt>
   <dd>current line without leading and trailing white spaces</dd>
 </dl>
-<h2 class="Ss" title="Ss" id="Multiple_Selections"><a class="permalink" href="#Multiple_Selections">Multiple
+</section>
+<section class="Ss">
+<h2 class="Ss" id="Multiple_Selections"><a class="permalink" href="#Multiple_Selections">Multiple
   Selections</a></h2>
-<code class="Nm" title="Nm">vis</code> supports multiple selections with
-  immediate visual feedback. There always exists one primary selection located
-  within the current view port. Additional selections can be created as needed.
-  If more than one selection exists, the primary one is styled differently.
-<div class="Pp"></div>
-To manipulate selections use in normal mode:
-<div class="Pp"></div>
+<p class="Pp"><code class="Nm">vis</code> supports multiple selections with
+    immediate visual feedback. There always exists one primary selection located
+    within the current view port. Additional selections can be created as
+    needed. If more than one selection exists, the primary one is styled
+    differently.</p>
+<p class="Pp">To manipulate selections use in normal mode:</p>
+<p class="Pp"></p>
 <dl class="Bl-tag Bl-compact">
-  <dt>&#x27E8;<code class="Ic" title="Ic">C-k</code>&#x27E9;</dt>
+  <dt>&#x27E8;<code class="Ic">C-k</code>&#x27E9;</dt>
   <dd>create count new selections on the lines above</dd>
-  <dt>&#x27E8;<code class="Ic" title="Ic">C-M-k</code>&#x27E9;</dt>
+  <dt>&#x27E8;<code class="Ic">C-M-k</code>&#x27E9;</dt>
   <dd>create count new selections on the lines above the first selection</dd>
-  <dt>&#x27E8;<code class="Ic" title="Ic">C-j</code>&#x27E9;</dt>
+  <dt>&#x27E8;<code class="Ic">C-j</code>&#x27E9;</dt>
   <dd>create count new selections on the lines below</dd>
-  <dt>&#x27E8;<code class="Ic" title="Ic">C-M-j</code>&#x27E9;</dt>
+  <dt>&#x27E8;<code class="Ic">C-M-j</code>&#x27E9;</dt>
   <dd>create count new selections on the lines below the last selection</dd>
-  <dt>&#x27E8;<code class="Ic" title="Ic">C-p</code>&#x27E9;</dt>
+  <dt>&#x27E8;<code class="Ic">C-p</code>&#x27E9;</dt>
   <dd>remove primary selection</dd>
-  <dt>&#x27E8;<code class="Ic" title="Ic">C-n</code>&#x27E9;</dt>
+  <dt>&#x27E8;<code class="Ic">C-n</code>&#x27E9;</dt>
   <dd>select word the selection is currently over, switch to visual mode</dd>
-  <dt>&#x27E8;<code class="Ic" title="Ic">C-u</code>&#x27E9;</dt>
+  <dt>&#x27E8;<code class="Ic">C-u</code>&#x27E9;</dt>
   <dd>make the count previous selection primary</dd>
-  <dt>&#x27E8;<code class="Ic" title="Ic">C-d</code>&#x27E9;</dt>
+  <dt>&#x27E8;<code class="Ic">C-d</code>&#x27E9;</dt>
   <dd>make the count next selection primary</dd>
-  <dt>&#x27E8;<code class="Ic" title="Ic">C-c</code>&#x27E9;</dt>
+  <dt>&#x27E8;<code class="Ic">C-c</code>&#x27E9;</dt>
   <dd>remove the count selection column</dd>
-  <dt>&#x27E8;<code class="Ic" title="Ic">C-l</code>&#x27E9;</dt>
+  <dt>&#x27E8;<code class="Ic">C-l</code>&#x27E9;</dt>
   <dd>remove all but the count selection column</dd>
-  <dt>&#x27E8;<code class="Ic" title="Ic">Tab</code>&#x27E9;</dt>
+  <dt>&#x27E8;<code class="Ic">Tab</code>&#x27E9;</dt>
   <dd>try to align all selections on the same column</dd>
-  <dt>&#x27E8;<code class="Ic" title="Ic">Escape</code>&#x27E9;</dt>
+  <dt>&#x27E8;<code class="Ic">Escape</code>&#x27E9;</dt>
   <dd>dispose all but the primary selection</dd>
 </dl>
-<div class="Pp"></div>
-The visual modes were enhanced to recognize:
-<div class="Pp"></div>
+<p class="Pp">The visual modes were enhanced to recognize:</p>
+<p class="Pp"></p>
 <dl class="Bl-tag Bl-compact">
-  <dt><a class="permalink" href="#I"><code class="Ic" title="Ic" id="I">I</code></a></dt>
+  <dt id="I"><a class="permalink" href="#I"><code class="Ic">I</code></a></dt>
   <dd>create a selection at the start of every selected line</dd>
-  <dt><a class="permalink" href="#A"><code class="Ic" title="Ic" id="A">A</code></a></dt>
+  <dt id="A"><a class="permalink" href="#A"><code class="Ic">A</code></a></dt>
   <dd>create a selection at the end of every selected line</dd>
-  <dt>&#x27E8;<code class="Ic" title="Ic">Tab</code>&#x27E9;</dt>
+  <dt>&#x27E8;<code class="Ic">Tab</code>&#x27E9;</dt>
   <dd>left align selections by inserting spaces</dd>
-  <dt>&#x27E8;<code class="Ic" title="Ic">S-Tab</code>&#x27E9;</dt>
+  <dt>&#x27E8;<code class="Ic">S-Tab</code>&#x27E9;</dt>
   <dd>right align selections by inserting spaces</dd>
-  <dt>&#x27E8;<code class="Ic" title="Ic">C-a</code>&#x27E9;</dt>
+  <dt>&#x27E8;<code class="Ic">C-a</code>&#x27E9;</dt>
   <dd>create new selections everywhere matching current word or selection</dd>
-  <dt>&#x27E8;<code class="Ic" title="Ic">C-n</code>&#x27E9;</dt>
+  <dt>&#x27E8;<code class="Ic">C-n</code>&#x27E9;</dt>
   <dd>create new selection and select next word matching current selection</dd>
-  <dt>&#x27E8;<code class="Ic" title="Ic">C-x</code>&#x27E9;</dt>
+  <dt>&#x27E8;<code class="Ic">C-x</code>&#x27E9;</dt>
   <dd>clear (skip) current selection, but select next matching word</dd>
-  <dt>&#x27E8;<code class="Ic" title="Ic">C-p</code>&#x27E9;</dt>
+  <dt>&#x27E8;<code class="Ic">C-p</code>&#x27E9;</dt>
   <dd>remove primary selection</dd>
-  <dt>&#x27E8;<code class="Ic" title="Ic">C-u</code>&#x27E9;</dt>
-  <dd style="width: auto;">&#x00A0;</dd>
-  <dt>&#x27E8;<code class="Ic" title="Ic">C-k</code>&#x27E9;</dt>
+  <dt>&#x27E8;<code class="Ic">C-u</code>&#x27E9;
+    &#x27E8;<code class="Ic">C-k</code>&#x27E9;</dt>
   <dd>make the count previous selection primary</dd>
-  <dt>&#x27E8;<code class="Ic" title="Ic">C-d</code>&#x27E9;</dt>
-  <dd style="width: auto;">&#x00A0;</dd>
-  <dt>&#x27E8;<code class="Ic" title="Ic">C-j</code>&#x27E9;</dt>
+  <dt>&#x27E8;<code class="Ic">C-d</code>&#x27E9;
+    &#x27E8;<code class="Ic">C-j</code>&#x27E9;</dt>
   <dd>make the count next selection primary</dd>
-  <dt>&#x27E8;<code class="Ic" title="Ic">C-c</code>&#x27E9;</dt>
+  <dt>&#x27E8;<code class="Ic">C-c</code>&#x27E9;</dt>
   <dd>remove the count selection column</dd>
-  <dt>&#x27E8;<code class="Ic" title="Ic">C-l</code>&#x27E9;</dt>
+  <dt>&#x27E8;<code class="Ic">C-l</code>&#x27E9;</dt>
   <dd>remove all but the count selection column</dd>
-  <dt><a class="permalink" href="#+_2"><code class="Ic" title="Ic" id="+_2">+</code></a></dt>
+  <dt id="+~2"><a class="permalink" href="#+~2"><code class="Ic">+</code></a></dt>
   <dd>rotate selections rightwards count times</dd>
-  <dt><a class="permalink" href="#-_2"><code class="Ic" title="Ic" id="-_2">-</code></a></dt>
+  <dt><code class="Ic">-</code></dt>
   <dd>rotate selections leftwards count times</dd>
-  <dt><a class="permalink" href="#__13"><code class="Ic" title="Ic" id="__13">_</code></a></dt>
+  <dt id="_~13"><a class="permalink" href="#_~13"><code class="Ic">_</code></a></dt>
   <dd>trim selections, remove leading and trailing white space</dd>
-  <dt><a class="permalink" href="#o"><code class="Ic" title="Ic" id="o">o</code></a></dt>
+  <dt id="o"><a class="permalink" href="#o"><code class="Ic">o</code></a></dt>
   <dd>flip selection direction, swap cursor and anchor</dd>
-  <dt>&#x27E8;<code class="Ic" title="Ic">Escape</code>&#x27E9;</dt>
+  <dt>&#x27E8;<code class="Ic">Escape</code>&#x27E9;</dt>
   <dd>clear all selections, switch to normal mode</dd>
 </dl>
-<div class="Pp"></div>
-In insert and replace mode:
-<div class="Pp"></div>
+<p class="Pp">In insert and replace mode:</p>
+<p class="Pp"></p>
 <dl class="Bl-tag Bl-compact">
-  <dt>&#x27E8;<code class="Ic" title="Ic">S-Tab</code>&#x27E9;</dt>
+  <dt>&#x27E8;<code class="Ic">S-Tab</code>&#x27E9;</dt>
   <dd>align all selections by inserting spaces</dd>
 </dl>
-<div class="Pp"></div>
-Selections can be manipulated using set operations. The first operand is the
-  currently active selections while the second can be specified as a mark.
-<div class="Pp"></div>
+<p class="Pp">Selections can be manipulated using set operations. The first
+    operand is the currently active selections while the second can be specified
+    as a mark. For example,
+    <code class="Ic">'</code><var class="Ar">a</var><code class="Ic">|</code>
+    produces the union of the mark <var class="Ar">a</var> and the current
+    selection. Use of set operations without specifying a mark use the default
+    mark as the first operand.</p>
+<p class="Pp"></p>
 <dl class="Bl-tag Bl-compact">
-  <dt><a class="permalink" href="#__14"><code class="Ic" title="Ic" id="__14">|</code></a></dt>
+  <dt id="_~14"><a class="permalink" href="#_~14"><code class="Ic">|</code></a></dt>
   <dd>set union</dd>
-  <dt><a class="permalink" href="#&amp;"><code class="Ic" title="Ic" id="&amp;">&amp;</code></a></dt>
+  <dt id="&amp;"><a class="permalink" href="#&amp;"><code class="Ic">&amp;</code></a></dt>
   <dd>set intersection</dd>
-  <dt><a class="permalink" href="#_e"><code class="Ic" title="Ic" id="_e">\</code></a></dt>
+  <dt><code class="Ic">\</code></dt>
   <dd>set minus</dd>
-  <dt><a class="permalink" href="#~"><code class="Ic" title="Ic" id="~">~</code></a></dt>
+  <dt id="_~15"><a class="permalink" href="#_~15"><code class="Ic">~</code></a></dt>
   <dd>set complement</dd>
 </dl>
-<h1 class="Sh" title="Sh" id="VI(M)_COMMANDS"><a class="permalink" href="#VI(M)_COMMANDS">VI(M)
+</section>
+</section>
+<section class="Sh">
+<h1 class="Sh" id="VI(M)_COMMANDS"><a class="permalink" href="#VI(M)_COMMANDS">VI(M)
   COMMANDS</a></h1>
-Any unique prefix can be used to abbreviate a command.
-<h2 class="Ss" title="Ss" id="File_and_Window_management"><a class="permalink" href="#File_and_Window_management">File
+<p class="Pp">Any unique prefix can be used to abbreviate a command.</p>
+<section class="Ss">
+<h2 class="Ss" id="File_and_Window_management"><a class="permalink" href="#File_and_Window_management">File
   and Window management</a></h2>
-A file must be opened in at least one window. If the last window displaying a
-  certain file is closed all unsaved changes are discarded. Windows are equally
-  sized and can be displayed in either horizontal or vertical fashion. The
-  &#x27E8;<code class="Ic" title="Ic">C-w</code>&#x27E9;
-  <code class="Ic" title="Ic">h</code>,
-  &#x27E8;<code class="Ic" title="Ic">C-w</code>&#x27E9;
-  <code class="Ic" title="Ic">j</code>,
-  &#x27E8;<code class="Ic" title="Ic">C-w</code>&#x27E9;
-  <code class="Ic" title="Ic">k</code> and
-  &#x27E8;<code class="Ic" title="Ic">C-w</code>&#x27E9;
-  <code class="Ic" title="Ic">l</code> key mappings can be used to switch
-  between windows.
+<p class="Pp">A file must be opened in at least one window. If the last window
+    displaying a certain file is closed all unsaved changes are discarded.
+    Windows are equally sized and can be displayed in rows (horizontally) or in
+    columns (vertically). The &#x27E8;<code class="Ic">C-w</code>&#x27E9;
+    <code class="Ic">h</code>, &#x27E8;<code class="Ic">C-w</code>&#x27E9;
+    <code class="Ic">j</code>, &#x27E8;<code class="Ic">C-w</code>&#x27E9;
+    <code class="Ic">k</code> and &#x27E8;<code class="Ic">C-w</code>&#x27E9;
+    <code class="Ic">l</code> key mappings can be used to switch between
+    windows.</p>
 <dl class="Bl-tag">
-  <dt>&#x00A0;</dt>
-  <dd>&#x00A0;</dd>
-  <dt><a class="permalink" href="#:new"><code class="Ic" title="Ic" id=":new">:new</code></a></dt>
-  <dd>open an empty window, arrange horizontally</dd>
-  <dt>&#x00A0;</dt>
-  <dd>&#x00A0;</dd>
-  <dt><a class="permalink" href="#:vnew"><code class="Ic" title="Ic" id=":vnew">:vnew</code></a></dt>
-  <dd>open an empty window, arrange vertically</dd>
-  <dt>&#x00A0;</dt>
-  <dd>&#x00A0;</dd>
-  <dt><a class="permalink" href="#:open"><code class="Ic" title="Ic" id=":open">:open</code></a>[<div class="Op"><code class="Cm" title="Cm">!</code></div>]
-    [<div class="Op"><var class="Ar" title="Ar">file name</var></div>]</dt>
+  <dt id=":new"><a class="permalink" href="#:new"><code class="Ic">:new</code></a></dt>
+  <dd>open an empty window, arranged as a new row (horizontally)</dd>
+  <dt id=":vnew"><a class="permalink" href="#:vnew"><code class="Ic">:vnew</code></a></dt>
+  <dd>open an empty window, arranged as a new column (vertically)</dd>
+  <dt id=":open"><a class="permalink" href="#:open"><code class="Ic">:open</code></a>[<code class="Cm">!</code>]
+    [<var class="Ar">file name</var>]</dt>
   <dd>open a new window, displaying file name if given</dd>
-  <dt>&#x00A0;</dt>
-  <dd>&#x00A0;</dd>
-  <dt><a class="permalink" href="#:split"><code class="Ic" title="Ic" id=":split">:split</code></a>
-    [<div class="Op"><var class="Ar" title="Ar">file name</var></div>]</dt>
-  <dd>split window horizontally</dd>
-  <dt>&#x00A0;</dt>
-  <dd>&#x00A0;</dd>
-  <dt><a class="permalink" href="#:vsplit"><code class="Ic" title="Ic" id=":vsplit">:vsplit</code></a>
-    [<div class="Op"><var class="Ar" title="Ar">file name</var></div>]</dt>
-  <dd>split window vertically</dd>
-  <dt>&#x00A0;</dt>
-  <dd>&#x00A0;</dd>
-  <dt><a class="permalink" href="#:q"><code class="Ic" title="Ic" id=":q">:q</code></a>[<div class="Op"><code class="Cm" title="Cm">!</code></div>]
-    [<div class="Op"><var class="Ar" title="Ar">exit code</var></div>]</dt>
+  <dt id=":split"><a class="permalink" href="#:split"><code class="Ic">:split</code></a>
+    [<var class="Ar">file name</var>]</dt>
+  <dd>split window into rows (horizontally)</dd>
+  <dt id=":vsplit"><a class="permalink" href="#:vsplit"><code class="Ic">:vsplit</code></a>
+    [<var class="Ar">file name</var>]</dt>
+  <dd>split window into columns (vertically)</dd>
+  <dt id=":q"><a class="permalink" href="#:q"><code class="Ic">:q</code></a>[<code class="Cm">!</code>]
+    [<var class="Ar">exit code</var>]</dt>
   <dd>close currently focused window</dd>
-  <dt>&#x00A0;</dt>
-  <dd>&#x00A0;</dd>
-  <dt><a class="permalink" href="#:qall"><code class="Ic" title="Ic" id=":qall">:qall</code></a>[<div class="Op"><code class="Cm" title="Cm">!</code></div>]
-    [<div class="Op"><var class="Ar" title="Ar">exit code</var></div>]</dt>
+  <dt id=":qall"><a class="permalink" href="#:qall"><code class="Ic">:qall</code></a>[<code class="Cm">!</code>]
+    [<var class="Ar">exit code</var>]</dt>
   <dd>close all windows, terminate editor with exit code (defaults to 0)</dd>
 </dl>
-<div class="Pp"></div>
-Commands taking a file name will invoke the
-  <a class="Xr" title="Xr">vis-open(1)</a> utility, if given a file pattern or
-  directory.
-<h2 class="Ss" title="Ss" id="Runtime_key_mappings"><a class="permalink" href="#Runtime_key_mappings">Runtime
+<p class="Pp">Commands taking a file name will invoke the
+    <a class="Xr">vis-open(1)</a> utility, if given a file pattern or
+  directory.</p>
+</section>
+<section class="Ss">
+<h2 class="Ss" id="Runtime_key_mappings"><a class="permalink" href="#Runtime_key_mappings">Runtime
   key mappings</a></h2>
-<code class="Nm" title="Nm">vis</code> supports global as well as window local
-  run time key mappings which are always evaluated recursively.
+<p class="Pp"><code class="Nm">vis</code> supports global as well as window
+    local run time key mappings which are always evaluated recursively.</p>
 <dl class="Bl-tag">
-  <dt>&#x00A0;</dt>
-  <dd>&#x00A0;</dd>
-  <dt><a class="permalink" href="#:map"><code class="Ic" title="Ic" id=":map">:map</code></a>[<div class="Op"><code class="Cm" title="Cm">!</code></div>]
-    <var class="Ar" title="Ar">mode</var> <var class="Ar" title="Ar">lhs</var>
-    <var class="Ar" title="Ar">rhs</var></dt>
+  <dt id=":map"><a class="permalink" href="#:map"><code class="Ic">:map</code></a>[<code class="Cm">!</code>]
+    <var class="Ar">mode</var> <var class="Ar">lhs</var>
+    <var class="Ar">rhs</var></dt>
   <dd>add a global key mapping</dd>
-  <dt>&#x00A0;</dt>
-  <dd>&#x00A0;</dd>
-  <dt><a class="permalink" href="#:map-window"><code class="Ic" title="Ic" id=":map-window">:map-window</code></a>[<div class="Op"><code class="Cm" title="Cm">!</code></div>]
-    <var class="Ar" title="Ar">mode</var> <var class="Ar" title="Ar">lhs</var>
-    <var class="Ar" title="Ar">rhs</var></dt>
+  <dt id=":map-window"><a class="permalink" href="#:map-window"><code class="Ic">:map-window</code></a>[<code class="Cm">!</code>]
+    <var class="Ar">mode</var> <var class="Ar">lhs</var>
+    <var class="Ar">rhs</var></dt>
   <dd>add a window local key mapping</dd>
-  <dt>&#x00A0;</dt>
-  <dd>&#x00A0;</dd>
-  <dt><a class="permalink" href="#:unmap"><code class="Ic" title="Ic" id=":unmap">:unmap</code></a>
-    <var class="Ar" title="Ar">mode</var>
-    <var class="Ar" title="Ar">lhs</var></dt>
+  <dt id=":unmap"><a class="permalink" href="#:unmap"><code class="Ic">:unmap</code></a>
+    <var class="Ar">mode</var> <var class="Ar">lhs</var></dt>
   <dd>remove a global key mapping</dd>
-  <dt>&#x00A0;</dt>
-  <dd>&#x00A0;</dd>
-  <dt><a class="permalink" href="#:unmap-window"><code class="Ic" title="Ic" id=":unmap-window">:unmap-window</code></a>
-    <var class="Ar" title="Ar">mode</var>
-    <var class="Ar" title="Ar">lhs</var></dt>
+  <dt id=":unmap-window"><a class="permalink" href="#:unmap-window"><code class="Ic">:unmap-window</code></a>
+    <var class="Ar">mode</var> <var class="Ar">lhs</var></dt>
   <dd>remove a window local key mapping</dd>
 </dl>
-<div class="Pp"></div>
-In the above <var class="Ar" title="Ar">mode</var> refers to one of
-  &#x2018;<code class="Li">normal</code>&#x2019;,
-  &#x2018;<code class="Li">insert</code>&#x2019;,
-  &#x2018;<code class="Li">replace</code>&#x2019;,
-  &#x2018;<code class="Li">visual</code>&#x2019;,
-  &#x2018;<code class="Li">visual-line</code>&#x2019; or
-  &#x2018;<code class="Li">operator-pending</code>&#x2019;;
-  <var class="Ar" title="Ar">lhs</var> refers to the key to map and
-  <var class="Ar" title="Ar">rhs</var> is a key action or alias. An existing
-  mapping may be overridden by forcing the map command by specifying
-  <code class="Cm" title="Cm">!</code>.
-<div class="Pp"></div>
-Because key mappings are always recursive, doing something like:
-<div class="Pp"></div>
+<p class="Pp">In the above <var class="Ar">mode</var> refers to one of
+    &#x2018;<code class="Li">normal</code>&#x2019;,
+    &#x2018;<code class="Li">insert</code>&#x2019;,
+    &#x2018;<code class="Li">replace</code>&#x2019;,
+    &#x2018;<code class="Li">visual</code>&#x2019;,
+    &#x2018;<code class="Li">visual-line</code>&#x2019; or
+    &#x2018;<code class="Li">operator-pending</code>&#x2019;;
+    <var class="Ar">lhs</var> refers to the key to map and
+    <var class="Ar">rhs</var> is a key action or alias. An existing mapping may
+    be overridden by forcing the map command by specifying
+    <code class="Cm">!</code>.</p>
+<p class="Pp">Because key mappings are always recursive, doing something
+  like:</p>
+<p class="Pp"></p>
 <div class="Bd Bd-indent"><code class="Li">:map! normal j 2j</code></div>
-<div class="Pp"></div>
-will not work because it would enter an endless loop. Instead,
-  <code class="Nm" title="Nm">vis</code> uses pseudo keys referred to as key
-  actions which can be used to invoke a set of available editor functions.
-  <code class="Ic" title="Ic">:help</code> lists all currently active key
-  bindings as well as all available symbolic keys.
-<h2 class="Ss" title="Ss" id="Keyboard_Layout_Specific_Mappings"><a class="permalink" href="#Keyboard_Layout_Specific_Mappings">Keyboard
+<p class="Pp">will not work because it would enter an endless loop. Instead,
+    <code class="Nm">vis</code> uses pseudo keys referred to as key actions
+    which can be used to invoke a set of available editor functions.
+    <code class="Ic">:help</code> lists all currently active key bindings as
+    well as all available symbolic keys.</p>
+</section>
+<section class="Ss">
+<h2 class="Ss" id="Keyboard_Layout_Specific_Mappings"><a class="permalink" href="#Keyboard_Layout_Specific_Mappings">Keyboard
   Layout Specific Mappings</a></h2>
-In order to facilitate usage of non-latin keyboard layouts,
-  <code class="Nm" title="Nm">vis</code> allows one to map locale specific keys
-  to their latin equivalents by means of the
-<div class="Pp"></div>
-<div class="Bd Bd-indent"><code class="Ic" title="Ic">:langmap</code>
-  <var class="Ar" title="Ar">locale-keys</var>
-  <var class="Ar" title="Ar">latin-keys</var></div>
-<div class="Pp"></div>
-command. As an example, the following maps the movement keys in Russian layout:
-<div class="Pp"></div>
+<p class="Pp">In order to facilitate usage of non-latin keyboard layouts,
+    <code class="Nm">vis</code> allows one to map locale specific keys to their
+    latin equivalents by means of the</p>
+<p class="Pp"></p>
+<div class="Bd Bd-indent"><code class="Ic">:langmap</code>
+  <var class="Ar">locale-keys</var> <var class="Ar">latin-keys</var></div>
+<p class="Pp">command. As an example, the following maps the movement keys in
+    Russian layout:</p>
+<p class="Pp"></p>
 <div class="Bd Bd-indent"><code class="Li">:langmap
   &#x0440;&#x043E;&#x043B;&#x0434; hjkl</code></div>
-<div class="Pp"></div>
-If the key sequences have not the same length, the remainder of the longer
-  sequence will be discarded.
-<div class="Pp"></div>
-The defined mappings take effect in all non-input modes, i.e. everywhere except
-  in insert and replace mode.
-<h2 class="Ss" title="Ss" id="Undo/Redo_2"><a class="permalink" href="#Undo/Redo_2">Undo/Redo</a></h2>
+<p class="Pp">If the key sequences have not the same length, the remainder of
+    the longer sequence will be discarded.</p>
+<p class="Pp">The defined mappings take effect in all non-input modes, i.e.
+    everywhere except in insert and replace mode.</p>
+</section>
+<section class="Ss">
+<h2 class="Ss" id="Undo/Redo~2"><a class="permalink" href="#Undo/Redo~2">Undo/Redo</a></h2>
 <dl class="Bl-tag">
-  <dt>&#x00A0;</dt>
-  <dd>&#x00A0;</dd>
-  <dt><a class="permalink" href="#:earlier"><code class="Ic" title="Ic" id=":earlier">:earlier</code></a>
-    [<div class="Op"><var class="Ar" title="Ar">count</var></div>]</dt>
+  <dt id=":earlier"><a class="permalink" href="#:earlier"><code class="Ic">:earlier</code></a>
+    [<var class="Ar">count</var>]</dt>
   <dd>revert to older text state</dd>
-  <dt>&#x00A0;</dt>
-  <dd>&#x00A0;</dd>
-  <dt><a class="permalink" href="#:later"><code class="Ic" title="Ic" id=":later">:later</code></a>
-    [<div class="Op"><var class="Ar" title="Ar">count</var></div>]</dt>
+  <dt id=":later"><a class="permalink" href="#:later"><code class="Ic">:later</code></a>
+    [<var class="Ar">count</var>]</dt>
   <dd>revert to newer text state</dd>
 </dl>
-<div class="Pp"></div>
-If count is suffixed by either of <b class="Sy" title="Sy">d</b> (days),
-  <b class="Sy" title="Sy">h</b> (hours), <b class="Sy" title="Sy">m</b>
-  (minutes) or <b class="Sy" title="Sy">s</b> (seconds) it is interpreted as an
-  offset from the current system time and the closest available text state is
-  restored.
-<h1 class="Sh" title="Sh" id="SET_OPTIONS"><a class="permalink" href="#SET_OPTIONS">SET
+<p class="Pp" id="m">If count is suffixed by either of <b class="Sy">d</b>
+    (days), <b class="Sy">h</b> (hours),
+    <a class="permalink" href="#m"><b class="Sy">m</b></a> (minutes) or
+    <b class="Sy">s</b> (seconds) it is interpreted as an offset from the
+    current system time and the closest available text state is restored.</p>
+</section>
+</section>
+<section class="Sh">
+<h1 class="Sh" id="SET_OPTIONS"><a class="permalink" href="#SET_OPTIONS">SET
   OPTIONS</a></h1>
-There are a small number of options that may be set (or unset) to change the
-  editor's behavior using the <code class="Ic" title="Ic">:set</code> command.
-  This section describes the options, their abbreviations and their default
-  values. Boolean options can be toggled by appending
-  <b class="Sy" title="Sy">!</b> to the option name.
-<div class="Pp"></div>
-In each entry below, the first part of the tag line is the full name of the
-  option, followed by any equivalent abbreviations. The part in square brackets
-  is the default value of the option.
+<p class="Pp">There are a small number of options that may be set (or unset) to
+    change the editor's behavior using the <code class="Ic">:set</code> command.
+    This section describes the options, their abbreviations and their default
+    values. Boolean options can be toggled by appending <b class="Sy">!</b> to
+    the option name.</p>
+<p class="Pp">In each entry below, the first part of the tag line is the full
+    name of the option, followed by any equivalent abbreviations. The part in
+    square brackets is the default value of the option.</p>
 <dl class="Bl-tag">
-  <dt>&#x00A0;</dt>
-  <dd>&#x00A0;</dd>
-  <dt><a class="permalink" href="#shell"><code class="Ic" title="Ic" id="shell">shell</code></a>
-    [<div class="Op">&#x201C;<span class="Pa" title="Pa">/bin/sh</span>&#x201D;</div>]</dt>
+  <dt id="shell"><a class="permalink" href="#shell"><code class="Ic">shell</code></a>
+    [&#x201C;<span class="Pa">/bin/sh</span>&#x201D;]</dt>
   <dd>User shell to use for external commands, overrides
-      <code class="Ev" title="Ev">SHELL</code> and shell field of password
-      database <span class="Pa" title="Pa">/etc/passwd</span></dd>
-  <dt>&#x00A0;</dt>
-  <dd>&#x00A0;</dd>
-  <dt><a class="permalink" href="#escdelay"><code class="Ic" title="Ic" id="escdelay">escdelay</code></a>
-    [<div class="Op"><var class="Ar" title="Ar">50</var></div>]</dt>
+      <code class="Ev">SHELL</code> and shell field of password database
+      <span class="Pa">/etc/passwd</span></dd>
+  <dt id="escdelay"><a class="permalink" href="#escdelay"><code class="Ic">escdelay</code></a>
+    [<var class="Ar">50</var>]</dt>
   <dd>Milliseconds to wait before deciding whether an escape sequence should be
-      treated as an &#x27E8;<code class="Cm" title="Cm">Escape</code>&#x27E9;
-      key.</dd>
-  <dt>&#x00A0;</dt>
-  <dd>&#x00A0;</dd>
-  <dt><a class="permalink" href="#tabwidth"><code class="Ic" title="Ic" id="tabwidth">tabwidth</code></a>,
-    <code class="Ic" title="Ic">tw</code>
-    [<div class="Op"><var class="Ar" title="Ar">8</var></div>]</dt>
+      treated as an &#x27E8;<code class="Cm">Escape</code>&#x27E9; key.</dd>
+  <dt id="tabwidth"><a class="permalink" href="#tabwidth"><code class="Ic">tabwidth</code></a>,
+    <code class="Ic">tw</code> [<var class="Ar">8</var>]</dt>
   <dd>Display width of a tab and number of spaces to use if
-      <code class="Ic" title="Ic">expandtab</code> is enabled.</dd>
-  <dt>&#x00A0;</dt>
-  <dd>&#x00A0;</dd>
-  <dt><a class="permalink" href="#autoindent"><code class="Ic" title="Ic" id="autoindent">autoindent</code></a>,
-    <code class="Cm" title="Cm">ai</code>
-    [<div class="Op"><code class="Cm" title="Cm">off</code></div>]</dt>
+      <code class="Ic">expandtab</code> is enabled.</dd>
+  <dt id="autoindent"><a class="permalink" href="#autoindent"><code class="Ic">autoindent</code></a>,
+    <code class="Cm">ai</code> [<code class="Cm">off</code>]</dt>
   <dd>Automatically indent new lines by copying white space from previous
     line.</dd>
-  <dt>&#x00A0;</dt>
-  <dd>&#x00A0;</dd>
-  <dt><a class="permalink" href="#expandtab"><code class="Ic" title="Ic" id="expandtab">expandtab</code></a>,
-    <code class="Ic" title="Ic">et</code>
-    [<div class="Op"><code class="Cm" title="Cm">off</code></div>]</dt>
-  <dd>Whether &#x27E8;<code class="Ic" title="Ic">Tab</code>&#x27E9; should be
-      expanded to <code class="Ic" title="Ic">tabwidth</code> spaces.</dd>
-  <dt>&#x00A0;</dt>
-  <dd>&#x00A0;</dd>
-  <dt><a class="permalink" href="#number"><code class="Ic" title="Ic" id="number">number</code></a>,
-    <code class="Ic" title="Ic">nu</code>
-    [<div class="Op"><code class="Cm" title="Cm">off</code></div>]</dt>
+  <dt id="expandtab"><a class="permalink" href="#expandtab"><code class="Ic">expandtab</code></a>,
+    <code class="Ic">et</code> [<code class="Cm">off</code>]</dt>
+  <dd>Whether &#x27E8;<code class="Ic">Tab</code>&#x27E9; should be expanded to
+      <code class="Ic">tabwidth</code> spaces.</dd>
+  <dt id="number"><a class="permalink" href="#number"><code class="Ic">number</code></a>,
+    <code class="Ic">nu</code> [<code class="Cm">off</code>]</dt>
   <dd>Display absolute line numbers.</dd>
-  <dt>&#x00A0;</dt>
-  <dd>&#x00A0;</dd>
-  <dt><a class="permalink" href="#relativenumbers"><code class="Ic" title="Ic" id="relativenumbers">relativenumbers</code></a>,
-    <code class="Ic" title="Ic">rnu</code>
-    [<div class="Op"><code class="Cm" title="Cm">off</code></div>]</dt>
+  <dt id="relativenumbers"><a class="permalink" href="#relativenumbers"><code class="Ic">relativenumbers</code></a>,
+    <code class="Ic">rnu</code> [<code class="Cm">off</code>]</dt>
   <dd>Display relative line numbers.</dd>
-  <dt>&#x00A0;</dt>
-  <dd>&#x00A0;</dd>
-  <dt><a class="permalink" href="#cursorline"><code class="Ic" title="Ic" id="cursorline">cursorline</code></a>,
-    <code class="Ic" title="Ic">cul</code>
-    [<div class="Op"><code class="Cm" title="Cm">off</code></div>]</dt>
+  <dt id="cursorline"><a class="permalink" href="#cursorline"><code class="Ic">cursorline</code></a>,
+    <code class="Ic">cul</code> [<code class="Cm">off</code>]</dt>
   <dd>Highlight line primary cursor resides on.</dd>
-  <dt>&#x00A0;</dt>
-  <dd>&#x00A0;</dd>
-  <dt><a class="permalink" href="#colorcolumn"><code class="Ic" title="Ic" id="colorcolumn">colorcolumn</code></a>,
-    <code class="Ic" title="Ic">cc</code>
-    [<div class="Op"><var class="Ar" title="Ar">0</var></div>]</dt>
+  <dt id="colorcolumn"><a class="permalink" href="#colorcolumn"><code class="Ic">colorcolumn</code></a>,
+    <code class="Ic">cc</code> [<var class="Ar">0</var>]</dt>
   <dd>Highlight a fixed column.</dd>
-  <dt>&#x00A0;</dt>
-  <dd>&#x00A0;</dd>
-  <dt><a class="permalink" href="#horizon"><code class="Ic" title="Ic" id="horizon">horizon</code></a>
-    [<div class="Op"><var class="Ar" title="Ar">32768</var></div>]</dt>
+  <dt id="horizon"><a class="permalink" href="#horizon"><code class="Ic">horizon</code></a>
+    [<var class="Ar">32768</var>]</dt>
   <dd>How many bytes back the lexer will look to synchronize parsing.</dd>
-  <dt>&#x00A0;</dt>
-  <dd>&#x00A0;</dd>
-  <dt><a class="permalink" href="#redrawtime"><code class="Ic" title="Ic" id="redrawtime">redrawtime</code></a>
-    [<div class="Op"><var class="Ar" title="Ar">1.0</var></div>]</dt>
+  <dt id="redrawtime"><a class="permalink" href="#redrawtime"><code class="Ic">redrawtime</code></a>
+    [<var class="Ar">1.0</var>]</dt>
   <dd>Maximum time (in seconds) to wait for syntax highlighting before aborting
       it.</dd>
-  <dt>&#x00A0;</dt>
-  <dd>&#x00A0;</dd>
-  <dt><a class="permalink" href="#theme"><code class="Ic" title="Ic" id="theme">theme</code></a>
-    [<div class="Op">&#x201C;default-16&#x201D; or
-    &#x201C;default-256&#x201D;</div>]</dt>
+  <dt id="theme"><a class="permalink" href="#theme"><code class="Ic">theme</code></a>
+    [&#x201C;default-16&#x201D; or &#x201C;default-256&#x201D;]</dt>
   <dd>Color theme to use, name without file extension. Loaded from a
-      <span class="Pa" title="Pa">themes/</span> sub directory of the paths
-      listed in the <a class="Sx" title="Sx" href="#FILES">FILES</a>
-    section.</dd>
-  <dt>&#x00A0;</dt>
-  <dd>&#x00A0;</dd>
-  <dt><a class="permalink" href="#syntax"><code class="Cm" title="Cm" id="syntax">syntax</code></a>
-    [<div class="Op"><code class="Cm" title="Cm">off</code></div>]</dt>
+      <span class="Pa">themes/</span> sub directory of the paths listed in the
+      <a class="Sx" href="#FILES">FILES</a> section.</dd>
+  <dt id="syntax"><a class="permalink" href="#syntax"><code class="Cm">syntax</code></a>
+    [<code class="Cm">auto</code>]</dt>
   <dd>Syntax highlighting lexer to use, name without file extension.</dd>
-  <dt>&#x00A0;</dt>
-  <dd>&#x00A0;</dd>
-  <dt><a class="permalink" href="#show-tabs"><code class="Cm" title="Cm" id="show-tabs">show-tabs</code></a>
-    [<div class="Op"><code class="Cm" title="Cm">off</code></div>]</dt>
+  <dt id="show-tabs"><a class="permalink" href="#show-tabs"><code class="Cm">show-tabs</code></a>
+    [<code class="Cm">off</code>]</dt>
   <dd>Whether to display replacement symbol instead of tabs.</dd>
-  <dt>&#x00A0;</dt>
-  <dd>&#x00A0;</dd>
-  <dt><a class="permalink" href="#show-newlines"><code class="Cm" title="Cm" id="show-newlines">show-newlines</code></a>
-    [<div class="Op"><code class="Cm" title="Cm">off</code></div>]</dt>
+  <dt id="show-newlines"><a class="permalink" href="#show-newlines"><code class="Cm">show-newlines</code></a>
+    [<code class="Cm">off</code>]</dt>
   <dd>Whether to display replacement symbol instead of newlines.</dd>
-  <dt>&#x00A0;</dt>
-  <dd>&#x00A0;</dd>
-  <dt><a class="permalink" href="#show-spaces"><code class="Cm" title="Cm" id="show-spaces">show-spaces</code></a>
-    [<div class="Op"><code class="Cm" title="Cm">off</code></div>]</dt>
+  <dt id="show-spaces"><a class="permalink" href="#show-spaces"><code class="Cm">show-spaces</code></a>
+    [<code class="Cm">off</code>]</dt>
   <dd>Whether to display replacement symbol instead of blank cells.</dd>
-  <dt>&#x00A0;</dt>
-  <dd>&#x00A0;</dd>
-  <dt><a class="permalink" href="#show-eof"><code class="Cm" title="Cm" id="show-eof">show-eof</code></a>
-    [<div class="Op"><code class="Cm" title="Cm">on</code></div>]</dt>
+  <dt id="show-eof"><a class="permalink" href="#show-eof"><code class="Cm">show-eof</code></a>
+    [<code class="Cm">on</code>]</dt>
   <dd>Whether to display replacement symbol for lines after the end of the
     file.</dd>
-  <dt>&#x00A0;</dt>
-  <dd>&#x00A0;</dd>
-  <dt><a class="permalink" href="#savemethod"><code class="Cm" title="Cm" id="savemethod">savemethod</code></a>
-    [<div class="Op"><var class="Ar" title="Ar">auto</var></div>]</dt>
-  <dd>How the current file should be saved,
-      <var class="Ar" title="Ar">atomic</var> which uses
-      <a class="Xr" title="Xr">rename(2)</a> to atomically replace the file,
-      <var class="Ar" title="Ar">inplace</var> which truncates the file and then
-      rewrites it or <var class="Ar" title="Ar">auto</var> which tries the
-      former before falling back to the latter. The rename method fails for
-      symlinks, hardlinks, in case of insufficient directory permissions or when
-      either the file owner, group, POSIX ACL or SELinux labels can not be
-      restored.</dd>
-  <dt>&#x00A0;</dt>
-  <dd>&#x00A0;</dd>
-  <dt><a class="permalink" href="#loadmethod"><code class="Cm" title="Cm" id="loadmethod">loadmethod</code></a>
-    [<div class="Op"><var class="Ar" title="Ar">auto</var></div>]</dt>
-  <dd>How existing files should be loaded, <var class="Ar" title="Ar">read</var>
-      which copies the file content to an independent in-memory buffer,
-      <var class="Ar" title="Ar">mmap</var> which memory maps the file from disk
-      and uses OS capabilities as caching layer or
-      <var class="Ar" title="Ar">auto</var> which tries the former for files
-      smaller than 8Mb and the latter for lager ones. WARNING: modifying a
-      memory mapped file in-place will cause data loss.</dd>
-  <dt>&#x00A0;</dt>
-  <dd>&#x00A0;</dd>
-  <dt><a class="permalink" href="#layout"><code class="Ic" title="Ic" id="layout">layout</code></a>
-    [<div class="Op">&#x201C;v&#x201D; or &#x201C;h&#x201D;</div>]</dt>
+  <dt id="savemethod"><a class="permalink" href="#savemethod"><code class="Cm">savemethod</code></a>
+    [<var class="Ar">auto</var>]</dt>
+  <dd>How the current file should be saved, <var class="Ar">atomic</var> which
+      uses <a class="Xr">rename(2)</a> to atomically replace the file,
+      <var class="Ar">inplace</var> which truncates the file and then rewrites
+      it or <var class="Ar">auto</var> which tries the former before falling
+      back to the latter. The rename method fails for symlinks, hardlinks, in
+      case of insufficient directory permissions or when either the file owner,
+      group, POSIX ACL or SELinux labels can not be restored.</dd>
+  <dt id="loadmethod"><a class="permalink" href="#loadmethod"><code class="Cm">loadmethod</code></a>
+    [<var class="Ar">auto</var>]</dt>
+  <dd>How existing files should be loaded, <var class="Ar">read</var> which
+      copies the file content to an independent in-memory buffer,
+      <var class="Ar">mmap</var> which memory maps the file from disk and uses
+      OS capabilities as caching layer or <var class="Ar">auto</var> which tries
+      the former for files smaller than 8Mb and the latter for lager ones.
+      WARNING: modifying a memory mapped file in-place will cause data
+    loss.</dd>
+  <dt id="layout"><a class="permalink" href="#layout"><code class="Ic">layout</code></a>
+    [&#x201C;v&#x201D; or &#x201C;h&#x201D;]</dt>
   <dd>Whether to use vertical or horizontal layout.</dd>
-  <dt>&#x00A0;</dt>
-  <dd>&#x00A0;</dd>
-  <dt><a class="permalink" href="#ignorecase"><code class="Cm" title="Cm" id="ignorecase">ignorecase</code></a>,
-    <code class="Cm" title="Cm">ic</code>
-    [<div class="Op"><code class="Cm" title="Cm">off</code></div>]</dt>
+  <dt id="ignorecase"><a class="permalink" href="#ignorecase"><code class="Cm">ignorecase</code></a>,
+    <code class="Cm">ic</code> [<code class="Cm">off</code>]</dt>
   <dd>Whether to ignore case when searching.</dd>
 </dl>
-<h1 class="Sh" title="Sh" id="COMMAND_and_SEARCH_PROMPT"><a class="permalink" href="#COMMAND_and_SEARCH_PROMPT">COMMAND
+</section>
+<section class="Sh">
+<h1 class="Sh" id="COMMAND_and_SEARCH_PROMPT"><a class="permalink" href="#COMMAND_and_SEARCH_PROMPT">COMMAND
   and SEARCH PROMPT</a></h1>
-The command and search prompt as opened by <code class="Ic" title="Ic">:</code>,
-  <code class="Ic" title="Ic">/</code>, or <code class="Ic" title="Ic">?</code>
-  is implemented as a single line height window, displaying a regular file whose
-  editing starts in insert mode.
-  &#x27E8;<code class="Ic" title="Ic">Escape</code>&#x27E9; switches to normal
-  mode, a second &#x27E8;<code class="Ic" title="Ic">Escape</code>&#x27E9;
-  cancels the prompt. &#x27E8;<code class="Ic" title="Ic">Up</code>&#x27E9;
-  enlarges the window, giving access to the command history.
-  &#x27E8;<code class="Ic" title="Ic">C-v</code>&#x27E9;
-  &#x27E8;<code class="Ic" title="Ic">Enter</code>&#x27E9; inserts a literal new
-  line thus enabling multiline commands.
-  &#x27E8;<code class="Ic" title="Ic">Enter</code>&#x27E9; executes the visual
-  selection if present, or else everything in the region spawned by the
-  selection position and the delimiting prompt symbols at the start of adjacent
-  lines.
-<h1 class="Sh" title="Sh" id="CONFIGURATION"><a class="permalink" href="#CONFIGURATION">CONFIGURATION</a></h1>
-<code class="Nm" title="Nm">vis</code> uses Lua for configuration and scripting
-  purposes. During startup <span class="Pa" title="Pa">visrc.lua</span> (see the
-  <a class="Sx" title="Sx" href="#FILES">FILES</a> section) is sourced which can
-  be used to set personal configuration options. As an example the following
-  will enable the display of line numbers:
-<div class="Pp"></div>
+<p class="Pp">The command and search prompt as opened by
+    <code class="Ic">:</code>, <code class="Ic">/</code>, or
+    <code class="Ic">?</code> is implemented as a single line height window,
+    displaying a regular file whose editing starts in insert mode.
+    &#x27E8;<code class="Ic">Escape</code>&#x27E9; switches to normal mode, a
+    second &#x27E8;<code class="Ic">Escape</code>&#x27E9; cancels the prompt.
+    &#x27E8;<code class="Ic">Up</code>&#x27E9; enlarges the window, giving
+    access to the command history. &#x27E8;<code class="Ic">C-v</code>&#x27E9;
+    &#x27E8;<code class="Ic">Enter</code>&#x27E9; inserts a literal new line
+    thus enabling multiline commands.
+    &#x27E8;<code class="Ic">Enter</code>&#x27E9; executes the visual selection
+    if present, or else everything in the region spawned by the selection
+    position and the delimiting prompt symbols at the start of adjacent
+  lines.</p>
+</section>
+<section class="Sh">
+<h1 class="Sh" id="CONFIGURATION"><a class="permalink" href="#CONFIGURATION">CONFIGURATION</a></h1>
+<p class="Pp"><code class="Nm">vis</code> uses Lua for configuration and
+    scripting purposes. During startup <span class="Pa">visrc.lua</span> (see
+    the <a class="Sx" href="#FILES">FILES</a> section) is sourced which can be
+    used to set personal configuration options. As an example the following will
+    enable the display of line numbers:</p>
+<p class="Pp"></p>
 <div class="Bd Bd-indent"><code class="Li">vis:command('set
   number')</code></div>
-<h1 class="Sh" title="Sh" id="ENVIRONMENT"><a class="permalink" href="#ENVIRONMENT">ENVIRONMENT</a></h1>
+</section>
+<section class="Sh">
+<h1 class="Sh" id="ENVIRONMENT"><a class="permalink" href="#ENVIRONMENT">ENVIRONMENT</a></h1>
 <dl class="Bl-tag">
-  <dt>&#x00A0;</dt>
-  <dd>&#x00A0;</dd>
-  <dt><a class="permalink" href="#VIS_PATH"><code class="Ev" title="Ev" id="VIS_PATH">VIS_PATH</code></a></dt>
+  <dt id="VIS_PATH"><a class="permalink" href="#VIS_PATH"><code class="Ev">VIS_PATH</code></a></dt>
   <dd>The default path to use to load Lua support files.</dd>
-  <dt>&#x00A0;</dt>
-  <dd>&#x00A0;</dd>
-  <dt><a class="permalink" href="#HOME"><code class="Ev" title="Ev" id="HOME">HOME</code></a></dt>
-  <dd>The home directory used for the <code class="Ic" title="Ic">cd</code>
-      command if no argument is given.</dd>
-  <dt>&#x00A0;</dt>
-  <dd>&#x00A0;</dd>
-  <dt><a class="permalink" href="#TERM"><code class="Ev" title="Ev" id="TERM">TERM</code></a></dt>
+  <dt id="HOME"><a class="permalink" href="#HOME"><code class="Ev">HOME</code></a></dt>
+  <dd>The home directory used for the <code class="Ic">cd</code> command if no
+      argument is given.</dd>
+  <dt id="TERM"><a class="permalink" href="#TERM"><code class="Ev">TERM</code></a></dt>
   <dd>The terminal type to use to initialize the curses interface, defaults to
-      <b class="Sy" title="Sy">xterm</b> if unset.</dd>
-  <dt>&#x00A0;</dt>
-  <dd>&#x00A0;</dd>
-  <dt><a class="permalink" href="#SHELL"><code class="Ev" title="Ev" id="SHELL">SHELL</code></a></dt>
+      <a class="permalink" href="#xterm"><b class="Sy" id="xterm">xterm</b></a>
+      if unset.</dd>
+  <dt id="SHELL"><a class="permalink" href="#SHELL"><code class="Ev">SHELL</code></a></dt>
   <dd>The command shell to use for I/O related commands like
-      <code class="Ic" title="Ic">!</code>,
-      <code class="Ic" title="Ic">&gt;</code>,
-      <code class="Ic" title="Ic">&lt;</code> and
-      <code class="Ic" title="Ic">|</code>.</dd>
-  <dt>&#x00A0;</dt>
-  <dd>&#x00A0;</dd>
-  <dt><a class="permalink" href="#XDG_CONFIG_HOME"><code class="Ev" title="Ev" id="XDG_CONFIG_HOME">XDG_CONFIG_HOME</code></a></dt>
+      <code class="Ic">!</code>, <code class="Ic">&gt;</code>,
+      <code class="Ic">&lt;</code> and <code class="Ic">|</code>.</dd>
+  <dt id="XDG_CONFIG_HOME"><a class="permalink" href="#XDG_CONFIG_HOME"><code class="Ev">XDG_CONFIG_HOME</code></a></dt>
   <dd>The configuration directory to use, defaults to
-      <span class="Pa" title="Pa">$HOME/.config</span> if unset.</dd>
+      <span class="Pa">$HOME/.config</span> if unset.</dd>
 </dl>
-<h1 class="Sh" title="Sh" id="ASYNCHRONOUS_EVENTS"><a class="permalink" href="#ASYNCHRONOUS_EVENTS">ASYNCHRONOUS
+</section>
+<section class="Sh">
+<h1 class="Sh" id="ASYNCHRONOUS_EVENTS"><a class="permalink" href="#ASYNCHRONOUS_EVENTS">ASYNCHRONOUS
   EVENTS</a></h1>
 <dl class="Bl-tag">
-  <dt>&#x00A0;</dt>
-  <dd>&#x00A0;</dd>
-  <dt><a class="permalink" href="#SIGSTOP"><code class="Dv" title="Dv" id="SIGSTOP">SIGSTOP</code></a></dt>
+  <dt id="SIGSTOP"><a class="permalink" href="#SIGSTOP"><code class="Dv">SIGSTOP</code></a></dt>
   <dd>Suspend editor.</dd>
-  <dt>&#x00A0;</dt>
-  <dd>&#x00A0;</dd>
-  <dt><a class="permalink" href="#SIGCONT"><code class="Dv" title="Dv" id="SIGCONT">SIGCONT</code></a></dt>
+  <dt id="SIGCONT"><a class="permalink" href="#SIGCONT"><code class="Dv">SIGCONT</code></a></dt>
   <dd>Resume editor.</dd>
-  <dt>&#x00A0;</dt>
-  <dd>&#x00A0;</dd>
-  <dt><a class="permalink" href="#SIGBUS"><code class="Dv" title="Dv" id="SIGBUS">SIGBUS</code></a></dt>
-  <dd>An <a class="Xr" title="Xr">mmap(2)</a> ed file got truncated, unsaved
-      file contents will be lost.</dd>
-  <dt>&#x00A0;</dt>
-  <dd>&#x00A0;</dd>
-  <dt><a class="permalink" href="#SIGHUP"><code class="Dv" title="Dv" id="SIGHUP">SIGHUP</code></a></dt>
+  <dt id="SIGBUS"><a class="permalink" href="#SIGBUS"><code class="Dv">SIGBUS</code></a></dt>
+  <dd>An <a class="Xr">mmap(2)</a> ed file got truncated, unsaved file contents
+      will be lost.</dd>
+  <dt id="SIGHUP"><a class="permalink" href="#SIGHUP"><code class="Dv">SIGHUP</code></a></dt>
   <dd style="width: auto;">&#x00A0;</dd>
-  <dt><a class="permalink" href="#SIGTERM"><code class="Dv" title="Dv" id="SIGTERM">SIGTERM</code></a></dt>
+  <dt id="SIGTERM"><a class="permalink" href="#SIGTERM"><code class="Dv">SIGTERM</code></a></dt>
   <dd>Restore initial terminal state. Unsaved file contents will be lost.</dd>
-  <dt>&#x00A0;</dt>
-  <dd>&#x00A0;</dd>
-  <dt><a class="permalink" href="#SIGINT"><code class="Dv" title="Dv" id="SIGINT">SIGINT</code></a></dt>
+  <dt id="SIGINT"><a class="permalink" href="#SIGINT"><code class="Dv">SIGINT</code></a></dt>
   <dd>When an interrupt occurs while an external command is being run it is
       terminated.</dd>
-  <dt>&#x00A0;</dt>
-  <dd>&#x00A0;</dd>
-  <dt><a class="permalink" href="#SIGWINCH"><code class="Dv" title="Dv" id="SIGWINCH">SIGWINCH</code></a></dt>
+  <dt id="SIGWINCH"><a class="permalink" href="#SIGWINCH"><code class="Dv">SIGWINCH</code></a></dt>
   <dd>The screen is resized.</dd>
 </dl>
-<h1 class="Sh" title="Sh" id="FILES"><a class="permalink" href="#FILES">FILES</a></h1>
-Upon startup <code class="Nm" title="Nm">vis</code> will source the first
-  <span class="Pa" title="Pa">visrc.lua</span> configuration file found from
-  these locations. All actively used paths can be listed at runtime using the
-  <code class="Cm" title="Cm">:help</code> command.
+</section>
+<section class="Sh">
+<h1 class="Sh" id="FILES"><a class="permalink" href="#FILES">FILES</a></h1>
+<p class="Pp">Upon startup <code class="Nm">vis</code> will source the first
+    <span class="Pa">visrc.lua</span> configuration file found from these
+    locations. All actively used paths can be listed at runtime using the
+    <code class="Cm">:help</code> command.</p>
 <ul class="Bl-bullet">
-  <li><span class="Pa" title="Pa">$VIS_PATH</span></li>
-  <li>The location of the <code class="Nm" title="Nm">vis</code> binary (on
-      systems where <span class="Pa" title="Pa">/proc/self/exe</span> is
-      available).</li>
-  <li><span class="Pa" title="Pa">$XDG_CONFIG_HOME/vis</span> where
-      <code class="Ev" title="Ev">XDG_CONFIG_HOME</code> refers to
-      <span class="Pa" title="Pa">$HOME/.config</span> if unset.</li>
-  <li><span class="Pa" title="Pa">/etc/vis</span> for a system-wide
-      configuration provided by administrator.</li>
-  <li><span class="Pa" title="Pa">/usr/local/share/vis</span> or
-      <span class="Pa" title="Pa">/usr/share/vis</span> depending on the build
+  <li><span class="Pa">$VIS_PATH</span></li>
+  <li>The location of the <code class="Nm">vis</code> binary (on systems where
+      <span class="Pa">/proc/self/exe</span> is available).</li>
+  <li><span class="Pa">$XDG_CONFIG_HOME/vis</span> where
+      <code class="Ev">XDG_CONFIG_HOME</code> refers to
+      <span class="Pa">$HOME/.config</span> if unset.</li>
+  <li><span class="Pa">/etc/vis</span> for a system-wide configuration provided
+      by administrator.</li>
+  <li><span class="Pa">/usr/local/share/vis</span> or
+      <span class="Pa">/usr/share/vis</span> depending on the build
       configuration.
-    <div class="Pp"></div>
-    When creating a new <span class="Pa" title="Pa">visrc.lua</span> be sure to
-      copy the structure from here.</li>
+    <p class="Pp">When creating a new <span class="Pa">visrc.lua</span> be sure
+        to copy the structure from here.</p>
+  </li>
 </ul>
-<h1 class="Sh" title="Sh" id="EXIT_STATUS"><a class="permalink" href="#EXIT_STATUS">EXIT
+</section>
+<section class="Sh">
+<h1 class="Sh" id="EXIT_STATUS"><a class="permalink" href="#EXIT_STATUS">EXIT
   STATUS</a></h1>
-The <code class="Nm" title="Nm">vis</code> utility exits&#x00A0;0 on success,
-  and&#x00A0;&gt;0 if an error occurs.
-<h1 class="Sh" title="Sh" id="EXAMPLES"><a class="permalink" href="#EXAMPLES">EXAMPLES</a></h1>
-Use <code class="Nm" title="Nm">vis</code> as an interactive filter.
-<div class="Pp"></div>
+<p class="Pp">The <code class="Nm">vis</code> utility exits&#x00A0;0 on success,
+    and&#x00A0;&gt;0 if an error occurs.</p>
+</section>
+<section class="Sh">
+<h1 class="Sh" id="EXAMPLES"><a class="permalink" href="#EXAMPLES">EXAMPLES</a></h1>
+<p class="Pp">Use <code class="Nm">vis</code> as an interactive filter.</p>
+<p class="Pp"></p>
 <div class="Bd Bd-indent"><code class="Li">$ { echo Pick your number; seq 1 10;
   } | vis - &gt; choice</code></div>
-<div class="Pp"></div>
-Use the <a class="Xr" title="Xr">vis-open(1)</a> based file browser to list all
-  C language source files:
-<div class="Pp"></div>
+<p class="Pp">Use the <a class="Xr">vis-open(1)</a> based file browser to list
+    all C language source files:</p>
+<p class="Pp"></p>
 <div class="Bd Bd-indent"><code class="Li">:e *.c</code></div>
-<div class="Pp"></div>
-Spawn background process and pipe range to its standard input:
-<div class="Pp"></div>
+<p class="Pp">Spawn background process and pipe range to its standard input:</p>
+<p class="Pp"></p>
 <div class="Bd Bd-indent"><code class="Li">:&gt; { plumber &lt;&amp;3
   3&lt;&amp;- &amp; } 3&lt;&amp;0 1&gt;&amp;- 2&gt;&amp;-</code></div>
-<h1 class="Sh" title="Sh" id="SEE_ALSO"><a class="permalink" href="#SEE_ALSO">SEE
+</section>
+<section class="Sh">
+<h1 class="Sh" id="SEE_ALSO"><a class="permalink" href="#SEE_ALSO">SEE
   ALSO</a></h1>
-<a class="Xr" title="Xr">sam(1)</a>, <a class="Xr" title="Xr">vi(1)</a>,
-  <a class="Xr" title="Xr">vis-clipboard(1)</a>,
-  <a class="Xr" title="Xr">vis-complete(1)</a>,
-  <a class="Xr" title="Xr">vis-digraph(1)</a>,
-  <a class="Xr" title="Xr">vis-menu(1)</a>,
-  <a class="Xr" title="Xr">vis-open(1)</a>
-<div class="Pp"></div>
-<a class="Lk" title="Lk" href="http://doc.cat-v.org/bell_labs/sam_lang_tutorial/sam_tut.pdf">A
-  Tutorial for the Sam Command Language</a> by <span class="An" title="An">Rob
-  Pike</span>
-<div class="Pp"></div>
-<a class="Lk" title="Lk" href="http://doc.cat-v.org/plan_9/4th_edition/papers/sam/">The
-  Text Editor sam</a> by <span class="An" title="An">Rob Pike</span>
-<div class="Pp"></div>
-<a class="Lk" title="Lk" href="http://man.cat-v.org/plan_9/1/sam">Plan 9 manual
-  page for sam(1)</a>
-<div class="Pp"></div>
-<a class="Lk" title="Lk" href="http://doc.cat-v.org/bell_labs/structural_regexps/se.pdf">Structural
-  Regular Expressions</a> by <span class="An" title="An">Rob Pike</span>
-<div class="Pp"></div>
-<a class="Lk" title="Lk" href="http://pubs.opengroup.org/onlinepubs/9699919799/utilities/vi.html">vi
-  - screen-oriented (visual) display editor</a> <span class="St" title="St">IEEE
-  Std 1003.1 (&#x201C;POSIX.1&#x201D;)</span>
-<h1 class="Sh" title="Sh" id="STANDARDS"><a class="permalink" href="#STANDARDS">STANDARDS</a></h1>
-<code class="Nm" title="Nm">vis</code> does not strive to be
-  <span class="St" title="St">IEEE Std 1003.1 (&#x201C;POSIX.1&#x201D;)</span>
-  compatible, but shares obvious similarities with the
-  <code class="Nm" title="Nm">vi</code> utility.
-<h1 class="Sh" title="Sh" id="AUTHORS"><a class="permalink" href="#AUTHORS">AUTHORS</a></h1>
-<code class="Nm" title="Nm">vis</code> is written by
-  <span class="An" title="An">Marc Andr&#x00E9; Tanner</span> &#x27E8;mat at
-  brain-dump.org&#x27E9;
-<h1 class="Sh" title="Sh" id="BUGS"><a class="permalink" href="#BUGS">BUGS</a></h1>
-On some systems there already exists a <code class="Nm" title="Nm">vis</code>
-  binary, thus causing a name conflict.</div>
+<p class="Pp"><a class="Xr">sam(1)</a>, <a class="Xr">vi(1)</a>,
+    <a class="Xr">vis-clipboard(1)</a>, <a class="Xr">vis-complete(1)</a>,
+    <a class="Xr">vis-digraph(1)</a>, <a class="Xr">vis-menu(1)</a>,
+    <a class="Xr">vis-open(1)</a></p>
+<p class="Pp"><a class="Lk" href="http://doc.cat-v.org/bell_labs/sam_lang_tutorial/sam_tut.pdf">A
+    Tutorial for the Sam Command Language</a> by <span class="An">Rob
+    Pike</span></p>
+<p class="Pp"><a class="Lk" href="http://doc.cat-v.org/plan_9/4th_edition/papers/sam/">The
+    Text Editor sam</a> by <span class="An">Rob Pike</span></p>
+<p class="Pp"><a class="Lk" href="http://man.cat-v.org/plan_9/1/sam">Plan 9
+    manual page for sam(1)</a></p>
+<p class="Pp"><a class="Lk" href="http://doc.cat-v.org/bell_labs/structural_regexps/se.pdf">Structural
+    Regular Expressions</a> by <span class="An">Rob Pike</span></p>
+<p class="Pp"><a class="Lk" href="http://pubs.opengroup.org/onlinepubs/9699919799/utilities/vi.html">vi
+    - screen-oriented (visual) display editor</a> <span class="St">IEEE Std
+    1003.1 (&#x201C;POSIX.1&#x201D;)</span></p>
+</section>
+<section class="Sh">
+<h1 class="Sh" id="STANDARDS"><a class="permalink" href="#STANDARDS">STANDARDS</a></h1>
+<p class="Pp"><code class="Nm">vis</code> does not strive to be
+    <span class="St">IEEE Std 1003.1 (&#x201C;POSIX.1&#x201D;)</span>
+    compatible, but shares obvious similarities with the
+    <code class="Nm">vi</code> utility.</p>
+</section>
+<section class="Sh">
+<h1 class="Sh" id="AUTHORS"><a class="permalink" href="#AUTHORS">AUTHORS</a></h1>
+<p class="Pp"><code class="Nm">vis</code> is written by <span class="An">Marc
+    Andr&#x00E9; Tanner</span> &#x27E8;mat at brain-dump.org&#x27E9;</p>
+</section>
+<section class="Sh">
+<h1 class="Sh" id="BUGS"><a class="permalink" href="#BUGS">BUGS</a></h1>
+<p class="Pp">On some systems there already exists a <code class="Nm">vis</code>
+    binary, thus causing a name conflict.</p>
+</section>
+</div>
 <table class="foot">
   <tr>
     <td class="foot-date">January 14, 2017</td>
-    <td class="foot-os">Vis 7574a46</td>
+    <td class="foot-os">Vis 7a8dd7f</td>
   </tr>
 </table>
 </body>
