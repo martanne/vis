@@ -19,7 +19,7 @@ jobs:
     - name: Manual generation
       run: |
         make man
-        wget 'https://cvsweb.bsd.lv/~checkout~/mandoc/mandoc.css?rev=1.46&content-type=text/plain' -O man/mandoc.css
+        wget -O - https://mandoc.bsd.lv/snapshots/mandoc-1.14.6.tar.gz | tar -zxC man --strip-components 1 mandoc-1.14.6/mandoc.css
         ln -sf "${GITHUB_REPOSITORY#$GITHUB_ACTOR/}.1.html" man/index.html
 
     - name: Upload
