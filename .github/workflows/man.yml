@@ -20,7 +20,7 @@ jobs:
       run: |
         make man
         wget -O - https://mandoc.bsd.lv/snapshots/mandoc-1.14.6.tar.gz | tar -zxC man --strip-components 1 mandoc-1.14.6/mandoc.css
-        ln -sf "${GITHUB_REPOSITORY#$GITHUB_ACTOR/}.1.html" man/index.html
+        ln -sf "${GITHUB_REPOSITORY#*/}.1.html" man/index.html
 
     - name: Upload
       env:
