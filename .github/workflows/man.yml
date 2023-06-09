@@ -20,7 +20,6 @@ jobs:
       run: |
         make man
         wget -O - https://mandoc.bsd.lv/snapshots/mandoc-1.14.6.tar.gz | tar -zxC man --strip-components 1 mandoc-1.14.6/mandoc.css
-        ln -sf "${GITHUB_REPOSITORY#*/}.1.html" man/index.html
 
     - name: Upload
       env:
@@ -30,6 +29,7 @@ jobs:
         git config --global user.name "${GITHUB_ACTOR}"
         git config --global user.email "${GITHUB_ACTOR}@users.noreply.github.com"
         mkdir -p /tmp/gh-pages/man
+        cp -av /tmp/gh-pages/man/index.html man/
         rm -f /tmp/gh-pages/man/*
         cp -av man/*.html /tmp/gh-pages/man/
         cp -av man/*.css /tmp/gh-pages/man/
