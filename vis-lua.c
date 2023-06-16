@@ -1325,10 +1325,11 @@ static int exit_func(lua_State *L) {
  * Pipe file range to external process and collect output.
  *
  * The editor core will be blocked while the external process is running.
+ * File and Range can be omitted or nil to indicate empty input.
  *
  * @function pipe
- * @tparam File file the file to which the range applies
- * @tparam Range range the range to pipe
+ * @tparam[opt] File file the file to which the range applies
+ * @tparam[opt] Range range the range to pipe
  * @tparam string command the command to execute
  * @treturn int code the exit status of the executed command
  * @treturn string stdout the data written to stdout
@@ -1336,10 +1337,17 @@ static int exit_func(lua_State *L) {
  */
 static int pipe_func(lua_State *L) {
 	Vis *vis = obj_ref_check(L, 1, "vis");
-	File *file = obj_ref_check(L, 2, VIS_LUA_TYPE_FILE);
-	Filerange range = getrange(L, 3);
-	const char *cmd = luaL_checkstring(L, 4);
+	int cmd_idx = 4;
 	char *out = NULL, *err = NULL;
+	File *file = vis->win->file;
+	Filerange range = text_range_new(0, 0);
+	if (lua_gettop(L) <= 3) {
+		cmd_idx = 2;
+	} else if (!(lua_isnil(L, 2) && lua_isnil(L, 3))) {
+		file = obj_ref_check(L, 2, VIS_LUA_TYPE_FILE);
+		range = getrange(L, 3);
+	}
+	const char *cmd = luaL_checkstring(L, cmd_idx);
 	int status = vis_pipe_collect(vis, file, &range, (const char*[]){ cmd, NULL }, &out, &err);
 	lua_pushinteger(L, status);
 	if (out)
