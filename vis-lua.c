@@ -1331,6 +1331,7 @@ static int exit_func(lua_State *L) {
  * @tparam[opt] File file the file to which the range applies
  * @tparam[opt] Range range the range to pipe
  * @tparam string command the command to execute
+ * @tparam[opt] bool fullscreen whether command is a fullscreen program (e.g. curses based)
  * @treturn int code the exit status of the executed command
  * @treturn string stdout the data written to stdout
  * @treturn string stderr the data written to stderr
@@ -1348,7 +1349,8 @@ static int pipe_func(lua_State *L) {
 		range = getrange(L, 3);
 	}
 	const char *cmd = luaL_checkstring(L, cmd_idx);
-	int status = vis_pipe_collect(vis, file, &range, (const char*[]){ cmd, NULL }, &out, &err);
+	bool fullscreen = lua_isboolean(L, cmd_idx + 1) && lua_toboolean(L, cmd_idx + 1);
+	int status = vis_pipe_collect(vis, file, &range, (const char*[]){ cmd, NULL }, &out, &err, fullscreen);
 	lua_pushinteger(L, status);
 	if (out)
 		lua_pushstring(L, out);
@@ -1363,6 +1365,7 @@ static int pipe_func(lua_State *L) {
 	vis_draw(vis);
 	return 3;
 }
+
 /***
  * Redraw complete user interface.
  *

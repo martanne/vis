@@ -627,9 +627,9 @@ static bool ui_getkey(Ui *ui, TermKeyKey *key) {
 	return ret == TERMKEY_RES_KEY;
 }
 
-static void ui_terminal_save(Ui *ui) {
+static void ui_terminal_save(Ui *ui, bool fscr) {
 	UiTerm *tui = (UiTerm*)ui;
-	ui_term_backend_save(tui);
+	ui_term_backend_save(tui, fscr);
 	termkey_stop(tui->termkey);
 }
 

@@ -83,7 +83,7 @@ const char *register_slot_get(Vis *vis, Register *reg, size_t slot, size_t *len)
 			cmd[3] = "clipboard";
 		int status = vis_pipe(vis, vis->win->file,
 			&(Filerange){ .start = 0, .end = 0 },
-			cmd, buf, read_buffer, &buferr, read_buffer);
+			cmd, buf, read_buffer, &buferr, read_buffer, false);
 
 		if (status != 0)
 			vis_info_show(vis, "Command failed %s", buffer_content0(&buferr));
@@ -167,7 +167,7 @@ bool register_slot_put_range(Vis *vis, Register *reg, size_t slot, Text *txt, Fi
 			cmd[3] = "clipboard";
 
 		int status = vis_pipe(vis, vis->win->file, range,
-			cmd, NULL, NULL, &buferr, read_buffer);
+			cmd, NULL, NULL, &buferr, read_buffer, false);
 
 		if (status != 0)
 			vis_info_show(vis, "Command failed %s", buffer_content0(&buferr));

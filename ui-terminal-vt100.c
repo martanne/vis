@@ -172,7 +172,7 @@ static bool ui_vt100_resize(UiTerm *tui, int width, int height) {
 	return true;
 }
 
-static void ui_vt100_save(UiTerm *tui) {
+static void ui_vt100_save(UiTerm *tui, bool fscr) {
 	cursor_visible(true);
 }
 

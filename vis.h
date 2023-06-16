@@ -898,6 +898,10 @@ bool vis_prompt_cmd(Vis*, const char *cmd);
  * If the ``read_stdout`` and ``read_stderr`` callbacks are non-NULL they
  * will be invoked when output from the forked process is available.
  *
+ * If ``fullscreen`` is set to ``true`` the external process is assumed to
+ * be a fullscreen program (e.g. curses based) and the ui context is
+ * restored accordingly.
+ *
  * @rst
  * .. warning:: The editor core is blocked until this function returns.
  * @endrst
@@ -906,7 +910,8 @@ bool vis_prompt_cmd(Vis*, const char *cmd);
  */
 int vis_pipe(Vis*, File*, Filerange*, const char *argv[],
 	void *stdout_context, ssize_t (*read_stdout)(void *stdout_context, char *data, size_t len),
-	void *stderr_context, ssize_t (*read_stderr)(void *stderr_context, char *data, size_t len));
+	void *stderr_context, ssize_t (*read_stderr)(void *stderr_context, char *data, size_t len),
+	bool fullscreen);
 
 /**
  * Pipe a Filerange to an external process, return its exit status and capture
@@ -914,12 +919,13 @@ int vis_pipe(Vis*, File*, Filerange*, const char *argv[],
  * @param argv Argument list, must be ``NULL`` terminated.
  * @param out Data written to ``stdout``, will be ``NUL`` terminated.
  * @param err Data written to ``stderr``, will be ``NUL`` terminated.
+ * @param fullscreen Whether the external process is a fullscreen program (e.g. curses based)
  * @rst
  * .. warning:: The pointers stored in ``out`` and ``err`` need to be `free(3)`-ed
  *              by the caller.
  * @endrst
  */
-int vis_pipe_collect(Vis*, File*, Filerange*, const char *argv[], char **out, char **err);
+int vis_pipe_collect(Vis*, File*, Filerange*, const char *argv[], char **out, char **err, bool fullscreen);
 
 /**
  * @}

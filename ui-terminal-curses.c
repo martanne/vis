@@ -242,9 +242,14 @@ static bool ui_curses_resize(UiTerm *tui, int width, int height) {
 	       wresize(stdscr, height, width) == OK;
 }
 
-static void ui_curses_save(UiTerm *tui) {
+static void ui_curses_save(UiTerm *tui, bool fscr) {
 	curs_set(1);
-	reset_shell_mode();
+	if (fscr) {
+		def_prog_mode();
+		endwin();
+	} else {
+		reset_shell_mode();
+	}
 }
 
 static void ui_curses_restore(UiTerm *tui) {

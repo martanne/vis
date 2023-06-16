@@ -99,7 +99,7 @@ struct Ui {
 	void (*suspend)(Ui*);
 	void (*resume)(Ui*);
 	bool (*getkey)(Ui*, TermKeyKey*);
-	void (*terminal_save)(Ui*);
+	void (*terminal_save)(Ui*, bool fscr);
 	void (*terminal_restore)(Ui*);
 	TermKey* (*termkey_get)(Ui*);
 	int (*colors)(Ui*);

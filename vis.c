@@ -1729,7 +1729,8 @@ Regex *vis_regex(Vis *vis, const char *pattern) {
 
 int vis_pipe(Vis *vis, File *file, Filerange *range, const char *argv[],
 	void *stdout_context, ssize_t (*read_stdout)(void *stdout_context, char *data, size_t len),
-	void *stderr_context, ssize_t (*read_stderr)(void *stderr_context, char *data, size_t len)) {
+	void *stderr_context, ssize_t (*read_stderr)(void *stderr_context, char *data, size_t len),
+	bool fullscreen) {
 
 	/* if an invalid range was given, stdin (i.e. key board input) is passed
 	 * through the external command. */
@@ -1754,7 +1755,7 @@ int vis_pipe(Vis *vis, File *file, Filerange *range, const char *argv[],
 		return -1;
 	}
 
-	vis->ui->terminal_save(vis->ui);
+	vis->ui->terminal_save(vis->ui, fullscreen);
 	pid_t pid = fork();
 
 	if (pid == -1) {
@@ -1958,13 +1959,14 @@ static ssize_t read_buffer(void *context, char *data, size_t len) {
 	return len;
 }
 
-int vis_pipe_collect(Vis *vis, File *file, Filerange *range, const char *argv[], char **out, char **err) {
+int vis_pipe_collect(Vis *vis, File *file, Filerange *range, const char *argv[], char **out, char **err, bool fullscreen) {
 	Buffer bufout, buferr;
 	buffer_init(&bufout);
 	buffer_init(&buferr);
 	int status = vis_pipe(vis, file, range, argv,
 	                      &bufout, out ? read_buffer : NULL,
-	                      &buferr, err ? read_buffer : NULL);
+	                      &buferr, err ? read_buffer : NULL,
+	                      fullscreen);
 	buffer_terminate(&bufout);
 	buffer_terminate(&buferr);
 	if (out)
