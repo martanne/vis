@@ -11,7 +11,7 @@
 /* Pool of information about currently running subprocesses */
 static Process *process_pool;
 
-Process *new_in_pool() {
+static Process *new_process(void) {
 	/* Adds new empty process information structure to the process pool and
 	 * returns it */
 	Process *newprocess = malloc(sizeof(Process));
@@ -21,7 +21,7 @@ Process *new_in_pool() {
 	return newprocess;
 }
 
-void destroy(Process **pointer) {
+static void destroy_process(Process **pointer) {
 	/* Removes the subprocess information from the pool, sets invalidator to NULL
 	 * and frees resources. */
 	Process *target = *pointer;
@@ -33,6 +33,16 @@ void destroy(Process **pointer) {
 	if (target->name) free(target->name);
 	*pointer = target->next;
 	free(target);
+}
+
+static void read_and_fire_process_event(Vis* vis, int fd, const char *name, ResponseType rtype) {
+	/* Reads data from the given subprocess file descriptor `fd` and fires
+	 * the PROCESS_RESPONSE event in Lua with given subprocess `name`,
+	 * `rtype` and the read data as arguments. */
+	static char buffer[PIPE_BUF];
+	size_t obtained = read(fd, &buffer, PIPE_BUF-1);
+	if (obtained > 0)
+		vis_lua_process_response(vis, name, buffer, obtained, rtype);
 }
 
 Process *vis_process_communicate(Vis *vis, const char *name,
@@ -70,7 +80,7 @@ Process *vis_process_communicate(Vis *vis, const char *name,
 		dup2(perr[1], STDERR_FILENO);
 	}
 	else { /* main process */
-		Process *new = new_in_pool();
+		Process *new = new_process();
 		if (!new) {
 			vis_info_show(vis, "Can not create process: %s", strerror(errno));
 			goto closeall;
@@ -79,7 +89,7 @@ Process *vis_process_communicate(Vis *vis, const char *name,
 		if (!new->name) {
 			vis_info_show(vis, "Can not copy process name: %s", strerror(errno));
 			/* pop top element (which is `new`) from the pool */
-			destroy(&process_pool);
+			destroy_process(&process_pool);
 			goto closeall;
 		}
 		new->outfd = pout[0];
@@ -132,16 +142,6 @@ int vis_process_before_tick(fd_set *readfds) {
 	return maxfd;
 }
 
-void read_and_fire(Vis* vis, int fd, const char *name, ResponseType rtype) {
-	/* Reads data from the given subprocess file descriptor `fd` and fires
-	 * the PROCESS_RESPONSE event in Lua with given subprocess `name`,
-	 * `rtype` and the read data as arguments. */
-	static char buffer[PIPE_BUF];
-	size_t obtained = read(fd, &buffer, PIPE_BUF-1);
-	if (obtained > 0)
-		vis_lua_process_response(vis, name, buffer, obtained, rtype);
-}
-
 void vis_process_tick(Vis *vis, fd_set *readfds) {
 	/* Checks if `readfds` contains file discriptors of subprocesses from
 	 * the pool. If so, reads the data from them and fires corresponding events.
@@ -151,9 +151,9 @@ void vis_process_tick(Vis *vis, fd_set *readfds) {
 	while (*pointer) {
 		Process *current = *pointer;
 		if (current->outfd != -1 && FD_ISSET(current->outfd, readfds))
-			read_and_fire(vis, current->outfd, current->name, STDOUT);
+			read_and_fire_process_event(vis, current->outfd, current->name, STDOUT);
 		if (current->errfd != -1 && FD_ISSET(current->errfd, readfds))
-			read_and_fire(vis, current->errfd, current->name, STDERR);
+			read_and_fire_process_event(vis, current->errfd, current->name, STDERR);
 		int status;
 		pid_t wpid = waitpid(current->pid, &status, WNOHANG);
 		if (wpid == -1)	vis_message_show(vis, strerror(errno));
@@ -169,6 +169,6 @@ just_destroy:
 			vis_lua_process_response(vis, current->name, NULL, WTERMSIG(status), SIGNAL);
 		else
 			vis_lua_process_response(vis, current->name, NULL, WEXITSTATUS(status), EXIT);
-		destroy(pointer);
+		destroy_process(pointer);
 	}
 }
