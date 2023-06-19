@@ -14,7 +14,7 @@ static Process *process_pool;
 Process *new_in_pool() {
 	/* Adds new empty process information structure to the process pool and
 	 * returns it */
-	Process *newprocess = (Process *)malloc(sizeof(Process));
+	Process *newprocess = malloc(sizeof(Process));
 	if (!newprocess) return NULL;
 	newprocess->next = process_pool;
 	process_pool = newprocess;
