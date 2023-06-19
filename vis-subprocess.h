@@ -3,6 +3,8 @@
 #include "vis-core.h"
 #include <sys/select.h>
 
+typedef struct Process Process;
+
 struct Process {
 	char *name;
 	int outfd;
@@ -10,10 +12,9 @@ struct Process {
 	int inpfd;
 	pid_t pid;
 	void **invalidator;
-	struct Process *next;
+	Process *next;
 };
 
-typedef struct Process Process;
 typedef enum { STDOUT, STDERR, SIGNAL, EXIT } ResponseType;
 
 Process *vis_process_communicate(Vis *, const char *command, const char *name,
