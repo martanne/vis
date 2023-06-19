@@ -53,13 +53,6 @@
 #define debug(...) do { } while (0)
 #endif
 
-typedef struct {
-	/* Lua stream structure for the process input stream */
-	FILE *f;
-	lua_CFunction closef;
-	Process *handler;
-} ProcessStream;
-
 static void window_status_update(Vis *vis, Win *win) {
 	char left_parts[4][255] = { "", "", "", "" };
 	char right_parts[4][32] = { "", "", "", "" };
@@ -1407,6 +1400,14 @@ static int close_subprocess(lua_State *L) {
  * @return the file handle to write data to the process, in case of error the return values are equivalent to @{io.open} error values.
  */
 static int communicate_func(lua_State *L) {
+
+	typedef struct {
+		/* Lua stream structure for the process input stream */
+		FILE *f;
+		lua_CFunction closef;
+		Process *handler;
+	} ProcessStream;
+
 	Vis *vis = obj_ref_check(L, 1, "vis");
 	const char *name = luaL_checkstring(L, 2);
 	const char *cmd = luaL_checkstring(L, 3);
