@@ -6,9 +6,7 @@
 #include <sys/wait.h>
 #include "vis-lua.h"
 #include "vis-subprocess.h"
-
-/* Maximum amount of data what can be read from IPC pipe per event */
-#define MAXBUFFER 1024
+#include "util.h"
 
 /* Pool of information about currently running subprocesses */
 static Process *process_pool;
@@ -138,8 +136,8 @@ void read_and_fire(Vis* vis, int fd, const char *name, ResponseType rtype) {
 	/* Reads data from the given subprocess file descriptor `fd` and fires
 	 * the PROCESS_RESPONSE event in Lua with given subprocess `name`,
 	 * `rtype` and the read data as arguments. */
-	static char buffer[MAXBUFFER];
-	size_t obtained = read(fd, &buffer, MAXBUFFER-1);
+	static char buffer[PIPE_BUF];
+	size_t obtained = read(fd, &buffer, PIPE_BUF-1);
 	if (obtained > 0)
 		vis_lua_process_response(vis, name, buffer, obtained, rtype);
 }
