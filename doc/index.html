@@ -60,7 +60,7 @@
 </p>
     <h3>Info:</h3>
     <ul>
-        <li><strong>Release</strong>: 1a958f2</li>
+        <li><strong>Release</strong>: 424b219</li>
         <li><strong>License</strong>: ISC</li>
         <li><strong>Author</strong>: Marc André Tanner</li>
     </ul>
@@ -201,7 +201,7 @@
 	<td class="summary">Unregister a `:set` option.</td>
 	</tr>
 	<tr>
-	<td class="name" nowrap><a href="#Vis:pipe">Vis:pipe(file, range, command)</a></td>
+	<td class="name" nowrap><a href="#Vis:pipe">Vis:pipe([file][, range], command)</a></td>
 	<td class="summary">Pipe file range to external process and collect output.</td>
 	</tr>
 	<tr>
@@ -325,6 +325,10 @@
 	<tr>
 	<td class="name" nowrap><a href="#Selection.range">Selection.range</a></td>
 	<td class="summary">The range covered by this selection.</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#Selection:remove">Selection:remove()</a></td>
+	<td class="summary">Remove selection.</td>
 	</tr>
 	<tr>
 	<td class="name" nowrap><a href="#Selection:to">Selection:to(line, col)</a></td>
@@ -1261,7 +1265,7 @@ vis:map(vis.modes.NORMAL, <span class="string">"gl"</span>, action)</pre>
 <span class="keyword">for</span> name <span class="keyword">in</span> vis:mark_names() <span class="keyword">do</span>
 	<span class="keyword">local</span> mark = marks[name]
 	<span class="keyword">for</span> i = <span class="number">1</span>, #mark <span class="keyword">do</span>
-		<span class="comment">-- do somthing with: name, mark[i].start, mark[i].finish
+		<span class="comment">-- do something with: name, mark[i].start, mark[i].finish
 </span>	<span class="keyword">end</span>
 <span class="keyword">end</span></pre>
     </ul>
@@ -1333,7 +1337,7 @@ vis:map(vis.modes.NORMAL, <span class="string">"gl"</span>, action)</pre>
     <ul>
         <li><span class="parameter">key</span>
             <span class="types"><a class="type" href="https://www.lua.org/manual/5.1/manual.html#5.4">string</a></span>
-         the key to associate with the new mption
+         the key to associate with the new option
         </li>
         <li><span class="parameter">motion</span>
             <span class="types"><span class="type">function</span></span>
@@ -1405,14 +1409,14 @@ vis:map(vis.modes.NORMAL, <span class="string">"gl"</span>, action)</pre>
     <ul>
         <pre class="example">vis:operator_new(<span class="string">"gq"</span>, <span class="keyword">function</span>(file, range, pos)
 	<span class="keyword">local</span> status, out, err = vis:pipe(file, range, <span class="string">"fmt"</span>)
-	<span class="keyword">if</span> <span class="keyword">not</span> status <span class="keyword">then</span>
+	<span class="keyword">if</span> status ~= <span class="number">0</span> <span class="keyword">then</span>
 		vis:info(err)
 	<span class="keyword">else</span>
 		file:delete(range)
 		file:insert(range.start, out)
 	<span class="keyword">end</span>
 	<span class="keyword">return</span> range.start <span class="comment">-- new cursor location
-</span><span class="keyword">end</span>, <span class="string">"Formating operator, filter range through fmt(1)"</span>)</pre>
+</span><span class="keyword">end</span>, <span class="string">"Formatting operator, filter range through fmt(1)"</span>)</pre>
     </ul>
 
 </dd>
@@ -1456,9 +1460,9 @@ vis:map(vis.modes.NORMAL, <span class="string">"gl"</span>, action)</pre>
 
     <h3>Usage:</h3>
     <ul>
-        <pre class="example">vis:option_register(<span class="string">"foo"</span>, <span class="string">"bool"</span>, <span class="keyword">function</span>(value, toogle)
+        <pre class="example">vis:option_register(<span class="string">"foo"</span>, <span class="string">"bool"</span>, <span class="keyword">function</span>(value, toggle)
 	<span class="keyword">if</span> <span class="keyword">not</span> vis.win <span class="keyword">then</span> <span class="keyword">return</span> <span class="keyword">false</span> <span class="keyword">end</span>
-	vis.win.foo = toogle <span class="keyword">and</span> <span class="keyword">not</span> vis.win.foo <span class="keyword">or</span> value
+	vis.win.foo = toggle <span class="keyword">and</span> <span class="keyword">not</span> vis.win.foo <span class="keyword">or</span> value
 	vis:info(<span class="string">"Option foo = "</span> .. <span class="global">tostring</span>(vis.win.foo))
 	<span class="keyword">return</span> <span class="keyword">true</span>
 <span class="keyword">end</span>, <span class="string">"Foo enables superpowers"</span>)</pre>
@@ -1494,11 +1498,12 @@ vis:map(vis.modes.NORMAL, <span class="string">"gl"</span>, action)</pre>
 </dd>
     <dt>
     <a name = "Vis:pipe"></a>
-    <strong>Vis:pipe(file, range, command)</strong>
+    <strong>Vis:pipe([file][, range], command)</strong>
     </dt>
     <dd>
     Pipe file range to external process and collect output.
 <p> The editor core will be blocked while the external process is running.
+ File and Range can be omitted or nil to indicate empty input.
 
 
 
@@ -1507,10 +1512,12 @@ vis:map(vis.modes.NORMAL, <span class="string">"gl"</span>, action)</pre>
         <li><span class="parameter">file</span>
             <span class="types"><a class="type" href="index.html#Class_File">File</a></span>
          the file to which the range applies
+         (<em>optional</em>)
         </li>
         <li><span class="parameter">range</span>
             <span class="types"><a class="type" href="index.html#Class_Range">Range</a></span>
          the range to pipe
+         (<em>optional</em>)
         </li>
         <li><span class="parameter">command</span>
             <span class="types"><a class="type" href="https://www.lua.org/manual/5.1/manual.html#5.4">string</a></span>
@@ -2165,12 +2172,12 @@ vis:map(vis.modes.NORMAL, <span class="string">"gl"</span>, action)</pre>
 <p>    Like a regular mark it will become valid again when the text is reverted
     to the state before the deletion.
 <p>  - Inserts after the selection position (`> selection.pos`) will not affect the
-    selection postion.
+    selection position.
 <p>        local pos = win.selection.pos
         win.file:insert(pos+1, "-")
         assert(win.selection.pos == pos)
 <p>  - Non-cached inserts before the selection position (`<= selection.pos`) will
-    affect the mark and adjust the selection postion by the number of bytes
+    affect the mark and adjust the selection position by the number of bytes
     which were inserted.
 <p>        local pos = win.selection.pos
         win.file:insert(pos, "-")
@@ -2182,7 +2189,7 @@ vis:map(vis.modes.NORMAL, <span class="string">"gl"</span>, action)</pre>
  after a modification. The general procedure amounts to:
 <p> 1. Read out the current selection position
  2. Perform text modifications
- 3. Update the selection postion
+ 3. Update the selection position
 <p> This is what <a href="index.html#Vis:insert">Vis:insert</a> and <a href="index.html#Vis:replace">Vis:replace</a> do internally.
 
           </div>
@@ -2317,6 +2324,20 @@ win.selection.pos = pos + #data</pre>
 
         </li>
     </ul>
+
+
+
+
+
+</dd>
+    <dt>
+    <a name = "Selection:remove"></a>
+    <strong>Selection:remove()</strong>
+    </dt>
+    <dd>
+    Remove selection.
+
+
 
 
 
@@ -3071,7 +3092,7 @@ win.selection.pos = pos + #data</pre>
     </dt>
     <dd>
     File post save.
- Triggered *after* a successfull write operation.
+ Triggered *after* a successful write operation.
 
 
     <h3>Parameters:</h3>
@@ -3130,7 +3151,7 @@ win.selection.pos = pos + #data</pre>
     <dd>
     Editor initialization completed.
  This event is emitted immediately after `visrc.lua` has been sourced, but
- before any other events have occured, in particular the command line arguments
+ before any other events have occurred, in particular the command line arguments
  have not yet been processed.
 <p> Can be used to set *global* configuration options.
 
@@ -3404,7 +3425,7 @@ win.selection.pos = pos + #data</pre>
         </li>
         <li><span class="parameter">...</span>
             <span class="types"><span class="type">...</span></span>
-         the remaining paramters are passed on to the handler
+         the remaining parameters are passed on to the handler
         </li>
     </ul>
 
@@ -3490,7 +3511,7 @@ win.selection.pos = pos + #data</pre>
 </div> <!-- id="main" -->
 <div id="about">
 <i>generated by <a href="http://github.com/stevedonovan/LDoc">LDoc 1.4.6</a></i>
-<i style="float:right;">Last updated 2021-04-20 19:49:26 </i>
+<i style="float:right;">Last updated 2023-06-22 15:24:17 </i>
 </div> <!-- id="about" -->
 </div> <!-- id="container" -->
 </body>
