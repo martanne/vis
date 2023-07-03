@@ -1340,7 +1340,7 @@ static int pipe_func(lua_State *L) {
 	Vis *vis = obj_ref_check(L, 1, "vis");
 	int cmd_idx = 4;
 	char *out = NULL, *err = NULL;
-	File *file = vis->win->file;
+	File *file = vis->win ? vis->win->file : NULL;
 	Filerange range = text_range_new(0, 0);
 	if (lua_gettop(L) <= 3) {
 		cmd_idx = 2;
@@ -1350,6 +1350,10 @@ static int pipe_func(lua_State *L) {
 	}
 	const char *cmd = luaL_checkstring(L, cmd_idx);
 	bool fullscreen = lua_isboolean(L, cmd_idx + 1) && lua_toboolean(L, cmd_idx + 1);
+	
+	if (!file)
+		return luaL_error(L, "vis:pipe(cmd = '%s'): win not open, file can't be nil", cmd);
+
 	int status = vis_pipe_collect(vis, file, &range, (const char*[]){ cmd, NULL }, &out, &err, fullscreen);
 	lua_pushinteger(L, status);
 	if (out)
