@@ -632,8 +632,8 @@ static bool cmd_earlier_later(Vis *vis, Win *win, Command *cmd, const char *argv
 	return pos != EPOS;
 }
 
-static size_t space_replace(char *dest, const char *src, size_t dlen) {
-	size_t i, invisiblebytes = 0, size = strlen("␣");
+static int space_replace(char *dest, const char *src, size_t dlen) {
+	int i, invisiblebytes = 0, size = strlen("␣");
 	for (i = 0; *src && i < dlen; src++) {
 		if (*src == ' ' && i < dlen - size - 1) {
 			memcpy(&dest[i], "␣", size);
@@ -650,7 +650,7 @@ static size_t space_replace(char *dest, const char *src, size_t dlen) {
 
 static bool print_keylayout(const char *key, void *value, void *data) {
 	char buf[64];
-	size_t invisiblebytes = space_replace(buf, key, sizeof(buf));
+	int invisiblebytes = space_replace(buf, key, sizeof(buf));
 	return text_appendf(data, "  %-*s\t%s\n", 18+invisiblebytes, buf, (char*)value);
 }
 
@@ -660,7 +660,7 @@ static bool print_keybinding(const char *key, void *value, void *data) {
 	if (!desc && binding->action)
 		desc = VIS_HELP_USE(binding->action->help);
 	char buf[64];
-	size_t invisiblebytes = space_replace(buf, key, sizeof(buf));
+	int invisiblebytes = space_replace(buf, key, sizeof(buf));
 	return text_appendf(data, "  %-*s\t%s\n", 18+invisiblebytes, buf, desc ? desc : "");
 }
 
