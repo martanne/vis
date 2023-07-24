@@ -123,6 +123,9 @@ vis.ftdetect.filetypes = {
 	elm = {
 		ext = { "%.elm$" },
 	},
+	mail = {
+		ext = { "%.eml$" },
+	},
 	erlang = {
 		ext = { "%.erl$", "%.hrl$" },
 	},
