@@ -584,6 +584,10 @@ int vis_count_get(Vis*);
 int vis_count_get_default(Vis*, int def);
 /** Set a count. */
 void vis_count_set(Vis*, int count);
+/** Set the tabwidth */
+void vis_tabwidth_set(Vis*, int tw);
+/** Set the shell */
+void vis_shell_set(Vis*, const char *new_shell);
 
 typedef struct {
 	Vis *vis;

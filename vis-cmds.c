@@ -129,12 +129,22 @@ static void windows_arrange(Vis *vis, enum UiLayout layout) {
 	vis->ui->arrange(vis->ui, layout);
 }
 
-static void tabwidth_set(Vis *vis, int tabwidth) {
+void vis_tabwidth_set(Vis *vis, int tabwidth) {
 	if (tabwidth < 1 || tabwidth > 8)
 		return;
 	for (Win *win = vis->windows; win; win = win->next)
 		view_tabwidth_set(win->view, tabwidth);
 	vis->tabwidth = tabwidth;
+}
+
+void vis_shell_set(Vis *vis, const char *new_shell) {
+	char *shell =  strdup(new_shell);
+	if (!shell) {
+		vis_info_show(vis, "Failed to change shell");
+	} else {
+		free(vis->shell);
+		vis->shell = shell;
+	}
 }
 
 /* parse human-readable boolean value in s. If successful, store the result in
@@ -241,16 +251,8 @@ static bool cmd_set(Vis *vis, Win *win, Command *cmd, const char *argv[], Select
 
 	switch (opt_index) {
 	case OPTION_SHELL:
-	{
-		char *shell = strdup(arg.s);
-		if (!shell) {
-			vis_info_show(vis, "Failed to change shell");
-			return false;
-		}
-		free(vis->shell);
-		vis->shell = shell;
+		vis_shell_set(vis, arg.s);
 		break;
-	}
 	case OPTION_ESCDELAY:
 	{
 		TermKey *termkey = vis->ui->termkey_get(vis->ui);
@@ -264,7 +266,7 @@ static bool cmd_set(Vis *vis, Win *win, Command *cmd, const char *argv[], Select
 		vis->autoindent = toggle ? !vis->autoindent : arg.b;
 		break;
 	case OPTION_TABWIDTH:
-		tabwidth_set(vis, arg.i);
+		vis_tabwidth_set(vis, arg.i);
 		break;
 	case OPTION_SHOW_SPACES:
 	case OPTION_SHOW_TABS:

@@ -678,6 +678,11 @@ err:
 	return false;
 }
 
+enum UiLayout ui_layout_get(Ui *ui) {
+	UiTerm *tui = (UiTerm *)ui;
+	return tui->layout;
+}
+
 Ui *ui_term_new(void) {
 	size_t styles_size = UI_STYLE_MAX * sizeof(CellStyle);
 	CellStyle *styles = calloc(1, styles_size);

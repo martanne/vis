@@ -910,6 +910,10 @@ void view_wrapcolumn_set(View *view, int col) {
 		view->wrapcolumn = col;
 }
 
+int view_wrapcolumn_get(View *view) {
+	return view->wrapcolumn;
+}
+
 bool view_breakat_set(View *view, const char *breakat) {
 	char *copy = strdup(breakat);
 	if (!copy)
@@ -917,6 +921,10 @@ bool view_breakat_set(View *view, const char *breakat) {
 	free(view->breakat);
 	view->breakat = copy;
 	return true;
+}
+
+const char *view_breakat_get(View *view) {
+	return view->breakat;
 }
 
 size_t view_screenline_goto(View *view, int n) {

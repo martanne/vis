@@ -31,6 +31,8 @@
 #endif
 
 #define VIS_LUA_TYPE_VIS "vis"
+#define VIS_LUA_TYPE_WIN_OPTS "winoptions"
+#define VIS_LUA_TYPE_VIS_OPTS "visoptions"
 #define VIS_LUA_TYPE_FILE "file"
 #define VIS_LUA_TYPE_TEXT "text"
 #define VIS_LUA_TYPE_MARK "mark"
@@ -1343,7 +1345,7 @@ static int pipe_func(lua_State *L) {
 	}
 	const char *cmd = luaL_checkstring(L, cmd_idx);
 	bool fullscreen = lua_isboolean(L, cmd_idx + 1) && lua_toboolean(L, cmd_idx + 1);
-	
+
 	if (!file)
 		return luaL_error(L, "vis:pipe(cmd = '%s'): win not open, file can't be nil", cmd);
 
@@ -1454,6 +1456,11 @@ static int vis_index(lua_State *L) {
 			return 1;
 		}
 
+		if (strcmp(key, "options") == 0) {
+			obj_ref_new(L, &vis->options, VIS_LUA_TYPE_VIS_OPTS);
+			return 1;
+		}
+
 		if (strcmp(key, "ui") == 0) {
 			obj_ref_new(L, vis->ui, VIS_LUA_TYPE_UI);
 			return 1;
@@ -1461,6 +1468,38 @@ static int vis_index(lua_State *L) {
 	}
 
 	return index_common(L);
+}
+
+static int vis_options_assign(Vis *vis, lua_State *L, const char *key, int next) {
+	if (strcmp(key, "autoindent") == 0 || strcmp(key, "ai") == 0) {
+		vis->autoindent = lua_toboolean(L, next);
+	} else if (strcmp(key, "changecolors") == 0) {
+		vis->change_colors = lua_toboolean(L, next);
+	} else if (strcmp(key, "escdelay") == 0) {
+		TermKey *tk = vis->ui->termkey_get(vis->ui);
+		termkey_set_waittime(tk, luaL_checkint(L, next));
+	} else if (strcmp(key, "expandtab") == 0 || strcmp(key, "et") == 0) {
+		vis->expandtab = lua_toboolean(L, next);
+	} else if (strcmp(key, "ignorecase") == 0 || strcmp(key, "ic") == 0) {
+		vis->ignorecase = lua_toboolean(L, next);
+	} else if (strcmp(key, "loadmethod") == 0) {
+		if (!lua_isstring(L, next))
+			return newindex_common(L);
+		const char *lm = lua_tostring(L, next);
+		if (strcmp(lm, "auto") == 0)
+			vis->load_method = TEXT_LOAD_AUTO;
+		else if (strcmp(lm, "read") == 0)
+			vis->load_method = TEXT_LOAD_READ;
+		else if (strcmp(lm, "mmap") == 0)
+			vis->load_method = TEXT_LOAD_MMAP;
+	} else if (strcmp(key, "shell") == 0) {
+		if (!lua_isstring(L, next))
+			return newindex_common(L);
+		vis_shell_set(vis, lua_tostring(L, next));
+	} else if (strcmp(key, "tabwidth") == 0 || strcmp(key, "tw") == 0) {
+		vis_tabwidth_set(vis, luaL_checkint(L, next));
+	}
+	return 0;
 }
 
 static int vis_newindex(lua_State *L) {
@@ -1501,6 +1540,25 @@ static int vis_newindex(lua_State *L) {
 				vis_mark(vis, vis_mark_from(vis, name[0]));
 			return 0;
 		}
+
+		if (strcmp(key, "options") == 0 && lua_istable(L, 3)) {
+			int ret = 0;
+			/* since we don't know which keys are in the table we push
+			 * a nil then use lua_next() to remove it and push the
+			 * table's key-value pairs to the stack. these can then be
+			 * used to assign options
+			 */
+			lua_pushnil(L);
+			while (lua_next(L, 3)) {
+				if (lua_isstring(L, 4))
+					ret += vis_options_assign(vis, L, lua_tostring(L, 4), 5);
+				else
+					ret += newindex_common(L);
+				lua_pop(L, 1);
+			}
+			lua_pop(L, 1);
+			return ret;
+		}
 	}
 	return newindex_common(L);
 }
@@ -1537,8 +1595,126 @@ static const struct luaL_Reg vis_lua[] = {
 	{ NULL, NULL },
 };
 
+/***
+ * Vis Options
+ * @table options
+ * @tfield[opt=false] boolean autoindent {ai}
+ * @tfield[opt=false] boolean changecolors
+ * @tfield[opt=50] int escdelay
+ * @tfield[opt=false] boolean expandtab {et}
+ * @tfield[opt=false] boolean ignorecase {ic}
+ * @tfield[opt="auto"] string loadmethod `"auto"`, `"read"`, or `"mmap"`.
+ * @tfield[opt="/bin/sh"] string shell
+ * @tfield[opt=8] int tabwidth {tw}
+ */
+
+static int vis_options_index(lua_State *L) {
+	Vis *vis = obj_ref_check_containerof(L, 1, VIS_LUA_TYPE_VIS_OPTS, offsetof(Vis, options));
+	if (!vis)
+		return -1;
+	if (lua_isstring(L, 2)) {
+		const char *key = lua_tostring(L, 2);
+		if (strcmp(key, "autoindent") == 0 || strcmp(key, "ai") == 0) {
+			lua_pushboolean(L, vis->autoindent);
+			return 1;
+		} else if (strcmp(key, "changecolors") == 0) {
+			lua_pushboolean(L, vis->change_colors);
+			return 1;
+		} else if (strcmp(key, "escdelay") == 0) {
+			TermKey *tk = vis->ui->termkey_get(vis->ui);
+			lua_pushunsigned(L, termkey_get_waittime(tk));
+			return 1;
+		} else if (strcmp(key, "expandtab") == 0 || strcmp(key, "et") == 0) {
+			lua_pushboolean(L, vis->expandtab);
+			return 1;
+		} else if (strcmp(key, "ignorecase") == 0 || strcmp(key, "ic") == 0) {
+			lua_pushboolean(L, vis->ignorecase);
+			return 1;
+		} else if (strcmp(key, "loadmethod") == 0) {
+			switch (vis->load_method) {
+			case TEXT_LOAD_AUTO:
+				lua_pushstring(L, "auto");
+				break;
+			case TEXT_LOAD_READ:
+				lua_pushstring(L, "read");
+				break;
+			case TEXT_LOAD_MMAP:
+				lua_pushstring(L, "mmap");
+				break;
+			}
+			return 1;
+		} else if (strcmp(key, "shell") == 0) {
+			lua_pushstring(L, vis->shell);
+			return 1;
+		} else if (strcmp(key, "tabwidth") == 0 || strcmp(key, "tw") == 0) {
+			lua_pushinteger(L, vis->tabwidth);
+			return 1;
+		}
+	}
+	return index_common(L);
+}
+
+static int vis_options_newindex(lua_State *L) {
+	Vis *vis = obj_ref_check_containerof(L, 1, VIS_LUA_TYPE_VIS_OPTS, offsetof(Vis, options));
+	if (!vis)
+		return 0;
+	if (lua_isstring(L, 2))
+		return vis_options_assign(vis, L, lua_tostring(L, 2), 3);
+	return newindex_common(L);
+}
+
+static const struct luaL_Reg vis_option_funcs[] = {
+	{ "__index", vis_options_index },
+	{ "__newindex", vis_options_newindex},
+	{ NULL, NULL },
+};
+
+/***
+ * The user interface.
+ *
+ * @type Ui
+ */
+/***
+ * Number of available colors.
+ * @tfield int colors
+ */
+/***
+ * Current layout.
+ * @tfield layouts layout current window layout.
+ */
+
+static int ui_index(lua_State *L) {
+	Ui *ui = obj_ref_check(L, 1,  VIS_LUA_TYPE_UI);
+
+	if (lua_isstring(L, 2)) {
+		const char *key  = lua_tostring(L, 2);
+
+		if (strcmp(key, "layout") == 0) {
+			lua_pushunsigned(L, ui_layout_get(ui));
+			return 1;
+		}
+	}
+
+	return index_common(L);
+}
+
+static int ui_newindex(lua_State *L) {
+	Ui *ui = obj_ref_check(L, 1,  VIS_LUA_TYPE_UI);
+
+	if (lua_isstring(L, 2)) {
+		const char *key  = lua_tostring(L, 2);
+
+		if (strcmp(key, "layout") == 0) {
+			ui->arrange(ui, luaL_checkint(L, 3));
+			return 0;
+		}
+	}
+	return newindex_common(L);
+}
+
 static const struct luaL_Reg ui_funcs[] = {
-	{ "__index", index_common },
+	{ "__index", ui_index },
+	{ "__newindex", ui_newindex },
 	{ NULL, NULL },
 };
 
@@ -1677,9 +1853,96 @@ static int window_index(lua_State *L) {
 			obj_ref_new(L, &win->saved_selections, VIS_LUA_TYPE_MARKS);
 			return 1;
 		}
+		if (strcmp(key, "options") == 0) {
+			obj_ref_new(L, &win->view, VIS_LUA_TYPE_WIN_OPTS);
+			return 1;
+		}
 	}
 
 	return index_common(L);
+}
+
+static int window_options_assign(Win *win, lua_State *L, const char *key, int next) {
+	enum UiOption flags = view_options_get(win->view);
+	if (strcmp(key, "breakat") == 0 || strcmp(key, "brk") == 0) {
+		if (lua_isstring(L, next))
+			view_breakat_set(win->view, lua_tostring(L, next));
+	} else if (strcmp(key, "colorcolumn") == 0 || strcmp(key, "cc") == 0) {
+		view_colorcolumn_set(win->view, luaL_checkint(L, next));
+	} else if (strcmp(key, "cursorline") == 0 || strcmp(key, "cul") == 0) {
+		if (lua_toboolean(L, next))
+			flags |= UI_OPTION_CURSOR_LINE;
+		else
+			flags &= ~UI_OPTION_CURSOR_LINE;
+		view_options_set(win->view, flags);
+	} else if (strcmp(key, "numbers") == 0 || strcmp(key, "nu") == 0) {
+		if (lua_toboolean(L, next))
+			flags |= UI_OPTION_LINE_NUMBERS_ABSOLUTE;
+		else
+			flags &= ~UI_OPTION_LINE_NUMBERS_ABSOLUTE;
+		view_options_set(win->view, flags);
+	} else if (strcmp(key, "relativenumbers") == 0 || strcmp(key, "rnu") == 0) {
+		if (lua_toboolean(L, next))
+			flags |= UI_OPTION_LINE_NUMBERS_RELATIVE;
+		else
+			flags &= ~UI_OPTION_LINE_NUMBERS_RELATIVE;
+		view_options_set(win->view, flags);
+	} else if (strcmp(key, "showeof") == 0) {
+		if (lua_toboolean(L, next))
+			flags |= UI_OPTION_SYMBOL_EOF;
+		else
+			flags &= ~UI_OPTION_SYMBOL_EOF;
+		view_options_set(win->view, flags);
+	} else if (strcmp(key, "shownewlines") == 0) {
+		if (lua_toboolean(L, next))
+			flags |= UI_OPTION_SYMBOL_EOL;
+		else
+			flags &= ~UI_OPTION_SYMBOL_EOL;
+		view_options_set(win->view, flags);
+	} else if (strcmp(key, "showspaces") == 0) {
+		if (lua_toboolean(L, next))
+			flags |= UI_OPTION_SYMBOL_SPACE;
+		else
+			flags &= ~UI_OPTION_SYMBOL_SPACE;
+		view_options_set(win->view, flags);
+	} else if (strcmp(key, "showtabs") == 0) {
+		if (lua_toboolean(L, next))
+			flags |= UI_OPTION_SYMBOL_TAB;
+		else
+			flags &= ~UI_OPTION_SYMBOL_TAB;
+		view_options_set(win->view, flags);
+	} else if (strcmp(key, "wrapcolumn") == 0 || strcmp(key, "wc") == 0) {
+		view_wrapcolumn_set(win->view, luaL_checkint(L, next));
+	}
+	return 0;
+}
+
+static int window_newindex(lua_State *L) {
+	Win *win = obj_ref_check(L, 1, VIS_LUA_TYPE_WINDOW);
+
+	if (lua_isstring(L, 2)) {
+		const char *key = lua_tostring(L, 2);
+		if (strcmp(key, "options") == 0 && lua_istable(L, 3)) {
+			int ret = 0;
+			/* since we don't know which keys are in the table we push
+			 * a nil then use lua_next() to remove it and push the
+			 * table's key-value pairs to the stack. these can then be
+			 * used to assign options
+			 */
+			lua_pushnil(L);
+			while (lua_next(L, 3)) {
+				if (lua_isstring(L, 4))
+					ret += window_options_assign(win, L, lua_tostring(L, 4), 5);
+				else
+					ret += newindex_common(L);
+				lua_pop(L, 1);
+			}
+			lua_pop(L, 1);
+			return ret;
+		}
+	}
+
+	return newindex_common(L);
 }
 
 static int window_selections_iterator_next(lua_State *L) {
@@ -1834,7 +2097,7 @@ static int window_close(lua_State *L) {
 
 static const struct luaL_Reg window_funcs[] = {
 	{ "__index", window_index },
-	{ "__newindex", newindex_common },
+	{ "__newindex", window_newindex },
 	{ "selections_iterator", window_selections_iterator },
 	{ "map", window_map },
 	{ "unmap", window_unmap },
@@ -1843,6 +2106,77 @@ static const struct luaL_Reg window_funcs[] = {
 	{ "status", window_status },
 	{ "draw", window_draw },
 	{ "close", window_close },
+	{ NULL, NULL },
+};
+
+/***
+ * Window Options
+ * @table options
+ * @tfield[opt=""] string breakat {brk}
+ * @tfield[opt=0] int colorcolumn {cc}
+ * @tfield[opt=false] boolean cursorline {cul}
+ * @tfield[opt=false] boolean numbers {nu}
+ * @tfield[opt=false] boolean relativenumbers {rnu}
+ * @tfield[opt=true] boolean showeof
+ * @tfield[opt=false] boolean shownewlines
+ * @tfield[opt=false] boolean showspaces
+ * @tfield[opt=false] boolean showtabs
+ * @tfield[opt=0] int wrapcolumn {wc}
+ */
+
+static int window_options_index(lua_State *L) {
+	Win *win = obj_ref_check_containerof(L, 1, VIS_LUA_TYPE_WIN_OPTS, offsetof(Win, view));
+	if (!win)
+		return -1;
+	if (lua_isstring(L, 2)) {
+		const char *key = lua_tostring(L, 2);
+		if (strcmp(key, "breakat") == 0 || strcmp(key, "brk") == 0) {
+			lua_pushstring(L, view_breakat_get(win->view));
+			return 1;
+		} else if (strcmp(key, "colorcolumn") == 0 || strcmp(key, "cc") == 0) {
+			lua_pushunsigned(L, view_colorcolumn_get(win->view));
+			return 1;
+		} else if (strcmp(key, "cursorline") == 0 || strcmp(key, "cul") == 0) {
+			lua_pushboolean(L, view_options_get(win->view) & UI_OPTION_CURSOR_LINE);
+			return 1;
+		} else if (strcmp(key, "numbers") == 0 || strcmp(key, "nu") == 0) {
+			lua_pushboolean(L, view_options_get(win->view) & UI_OPTION_LINE_NUMBERS_ABSOLUTE);
+			return 1;
+		} else if (strcmp(key, "relativenumbers") == 0 || strcmp(key, "rnu") == 0) {
+			lua_pushboolean(L, view_options_get(win->view) & UI_OPTION_LINE_NUMBERS_RELATIVE);
+			return 1;
+		} else if (strcmp(key, "showeof") == 0) {
+			lua_pushboolean(L, view_options_get(win->view) & UI_OPTION_SYMBOL_EOF);
+			return 1;
+		} else if (strcmp(key, "shownewlines") == 0) {
+			lua_pushboolean(L, view_options_get(win->view) & UI_OPTION_SYMBOL_EOL);
+			return 1;
+		} else if (strcmp(key, "showspaces") == 0) {
+			lua_pushboolean(L, view_options_get(win->view) & UI_OPTION_SYMBOL_SPACE);
+			return 1;
+		} else if (strcmp(key, "showtabs") == 0) {
+			lua_pushboolean(L, view_options_get(win->view) & UI_OPTION_SYMBOL_TAB);
+			return 1;
+		} else if (strcmp(key, "wrapcolumn") == 0 || strcmp(key, "wc") == 0) {
+			lua_pushunsigned(L, view_wrapcolumn_get(win->view));
+			return 1;
+		}
+	}
+	return index_common(L);
+}
+
+static int window_options_newindex(lua_State *L) {
+	Win *win = obj_ref_check_containerof(L, 1, VIS_LUA_TYPE_WIN_OPTS, offsetof(Win, view));
+	if (!win)
+		return 0;
+	if (lua_isstring(L, 2))
+		return window_options_assign(win, L, lua_tostring(L, 2), 3);
+	return newindex_common(L);
+}
+
+static const struct luaL_Reg window_option_funcs[] = {
+	{ "__index", window_options_index },
+	{ "__newindex", window_options_newindex},
 	{ NULL, NULL },
 };
 
@@ -2111,6 +2445,10 @@ static const struct luaL_Reg window_selection_funcs[] = {
  * end
  */
 /***
+ * File save method
+ * @tfield[opt="auto"] string savemethod `"auto"`, `"atomic"`, or `"inplace"`.
+ */
+/***
  * File size in bytes.
  * @tfield int size the current file size in bytes
  */
@@ -2157,6 +2495,21 @@ static int file_index(lua_State *L) {
 			lua_pushunsigned(L, stat.st_mode & 0777);
 			return 1;
 		}
+
+		if (strcmp(key, "savemethod") == 0) {
+			switch (file->save_method) {
+			case TEXT_SAVE_AUTO:
+				lua_pushstring(L, "auto");
+				break;
+			case TEXT_SAVE_ATOMIC:
+				lua_pushstring(L, "atomic");
+				break;
+			case TEXT_SAVE_INPLACE:
+				lua_pushstring(L, "inplace");
+				break;
+			}
+			return 1;
+		}
 	}
 
 	return index_common(L);
@@ -2176,6 +2529,19 @@ static int file_newindex(lua_State *L) {
 			} else {
 				text_save(file->text, NULL);
 			}
+			return 0;
+		}
+
+		if (strcmp(key, "savemethod") == 0) {
+			if (!lua_isstring(L, 3))
+				return newindex_common(L);
+			const char *sm = lua_tostring(L, 3);
+			if (strcmp(sm, "auto") == 0)
+				file->save_method = TEXT_SAVE_AUTO;
+			else if (strcmp(sm, "atomic") == 0)
+				file->save_method = TEXT_SAVE_ATOMIC;
+			else if (strcmp(sm, "inplace") == 0)
+				file->save_method = TEXT_SAVE_INPLACE;
 			return 0;
 		}
 	}
@@ -2499,16 +2865,6 @@ static const struct luaL_Reg window_marks_funcs[] = {
 };
 
 /***
- * The user interface.
- *
- * @type Ui
- */
-/***
- * Number of available colors.
- * @tfield int colors
- */
-
-/***
  * A file range.
  *
  * For a valid range `start <= finish` holds.
@@ -2522,6 +2878,18 @@ static const struct luaL_Reg window_marks_funcs[] = {
 /***
  * The end of the range.
  * @tfield int finish
+ */
+
+/***
+ * Layouts.
+ * @section Layouts
+ */
+
+/***
+ * Layout Constants.
+ * @table layouts
+ * @tfield int HORIZONTAL
+ * @tfield int VERTICAL
  */
 
 /***
@@ -2856,6 +3224,9 @@ void vis_lua_init(Vis *vis) {
 		lua_setfield(L, -2, styles[i].name);
 	}
 
+	obj_type_new(L, VIS_LUA_TYPE_WIN_OPTS);
+	luaL_setfuncs(L, window_option_funcs, 0);
+
 	obj_type_new(L, VIS_LUA_TYPE_MARK);
 	obj_type_new(L, VIS_LUA_TYPE_MARKS);
 	lua_pushlightuserdata(L, vis);
@@ -2870,6 +3241,19 @@ void vis_lua_init(Vis *vis) {
 	luaL_setfuncs(L, ui_funcs, 0);
 	lua_pushunsigned(L, vis->ui->colors(vis->ui));
 	lua_setfield(L, -2, "colors");
+	lua_newtable(L);
+	static const struct {
+		enum UiLayout id;
+		const char *name;
+	} layouts[] = {
+		{ UI_LAYOUT_HORIZONTAL, "HORIZONTAL" },
+		{ UI_LAYOUT_VERTICAL, "VERTICAL" },
+	};
+	for (size_t i = 0; i <  LENGTH(layouts); i++) {
+		lua_pushunsigned(L, layouts[i].id);
+		lua_setfield(L, -2, layouts[i].name);
+	}
+	lua_setfield(L, -2, "layouts");
 
 	obj_type_new(L, VIS_LUA_TYPE_REGISTERS);
 	lua_pushlightuserdata(L, vis);
@@ -2884,7 +3268,6 @@ void vis_lua_init(Vis *vis) {
 	lua_setfield(L, -2, "VERSION");
 
 	lua_newtable(L);
-
 	static const struct {
 		enum VisMode id;
 		const char *name;
@@ -2896,13 +3279,14 @@ void vis_lua_init(Vis *vis) {
 		{ VIS_MODE_INSERT,           "INSERT"           },
 		{ VIS_MODE_REPLACE,          "REPLACE"          },
 	};
-
 	for (size_t i = 0; i < LENGTH(modes); i++) {
 		lua_pushunsigned(L, modes[i].id);
 		lua_setfield(L, -2, modes[i].name);
 	}
-
 	lua_setfield(L, -2, "modes");
+
+	obj_type_new(L, VIS_LUA_TYPE_VIS_OPTS);
+	luaL_setfuncs(L, vis_option_funcs, 0);
 
 	if (!package_exist(vis, L, "visrc")) {
 		vis_info_show(vis, "WARNING: failed to load visrc.lua");
