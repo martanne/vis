@@ -20,6 +20,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     env:
       CFLAGS_EXTRA: --coverage
+      LDFLAGS_EXTRA: --coverage
     steps:
 
     - name: Checkout

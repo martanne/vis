@@ -27,6 +27,7 @@ SRC = array.c \
 	vis-registers.c \
 	vis-text-objects.c \
 	$(REGEX_SRC)
+OBJ = $(SRC:.c=.o)
 
 ELF = vis vis-menu vis-digraph
 EXECUTABLES = $(ELF) vis-clipboard vis-complete vis-open
@@ -45,7 +46,7 @@ CONFIG_TRE ?= 0
 CONFIG_ACL ?= 0
 CONFIG_SELINUX ?= 0
 
-CFLAGS_STD ?= -std=c99 -D_POSIX_C_SOURCE=200809L -D_XOPEN_SOURCE=700 -DNDEBUG
+CFLAGS_STD ?= -std=c99 -D_POSIX_C_SOURCE=200809L -D_XOPEN_SOURCE=700 -DNDEBUG -MMD
 CFLAGS_STD += -DVERSION=\"${VERSION}\"
 LDFLAGS_STD ?= -lc
 
@@ -73,20 +74,29 @@ DOCKER?=docker
 
 all: $(ELF)
 
+.c.o:
+	${CC} ${CFLAGS} ${CFLAGS_VIS} ${CFLAGS_EXTRA} -o $@ -c $<
+
 config.h:
 	cp config.def.h config.h
 
 config.mk:
 	@touch $@
 
-vis: config.h config.mk *.c *.h
-	${CC} ${CFLAGS} ${CFLAGS_VIS} ${CFLAGS_EXTRA} ${SRC} ${LDFLAGS} ${LDFLAGS_VIS} -o $@
+main.o: config.h
+
+$(OBJ): config.mk
+
+-include *.d
+
+vis: ${OBJ}
+	${CC} -o $@ ${OBJ} ${LDFLAGS} ${LDFLAGS_VIS} ${LDFLAGS_EXTRA}
 
 vis-menu: vis-menu.c
-	${CC} ${CFLAGS} ${CFLAGS_AUTO} ${CFLAGS_STD} ${CFLAGS_EXTRA} $< ${LDFLAGS} ${LDFLAGS_STD} ${LDFLAGS_AUTO} -o $@
+	${CC} ${CFLAGS} ${CFLAGS_AUTO} ${CFLAGS_STD} ${CFLAGS_EXTRA} $< ${LDFLAGS} ${LDFLAGS_STD} ${LDFLAGS_AUTO} ${LDFLAGS_EXTRA} -o $@
 
 vis-digraph: vis-digraph.c
-	${CC} ${CFLAGS} ${CFLAGS_AUTO} ${CFLAGS_STD} ${CFLAGS_EXTRA} $< ${LDFLAGS} ${LDFLAGS_STD} ${LDFLAGS_AUTO} -o $@
+	${CC} ${CFLAGS} ${CFLAGS_AUTO} ${CFLAGS_STD} ${CFLAGS_EXTRA} $< ${LDFLAGS} ${LDFLAGS_STD} ${LDFLAGS_AUTO} ${LDFLAGS_EXTRA} -o $@
 
 vis-single-payload.inc: $(EXECUTABLES) lua/*
 	for e in $(ELF); do \
@@ -132,7 +142,7 @@ profile: clean
 	@$(MAKE) CFLAGS_AUTO='' LDFLAGS_AUTO='' CFLAGS_EXTRA='-pg -O2'
 
 coverage: clean
-	@$(MAKE) CFLAGS_EXTRA='--coverage'
+	@$(MAKE) CFLAGS_EXTRA='--coverage' LDFLAGS_EXTRA='--coverage'
 
 test-update:
 	git submodule init
@@ -148,7 +158,7 @@ testclean:
 
 clean:
 	@echo cleaning
-	@rm -f $(ELF) vis-single vis-single-payload.inc vis-*.tar.gz *.gcov *.gcda *.gcno
+	@rm -f $(ELF) $(OBJ) vis-single vis-single-payload.inc vis-*.tar.gz *.gcov *.gcda *.gcno *.d
 
 distclean: clean testclean
 	@echo cleaning build configuration
