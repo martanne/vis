@@ -18,7 +18,9 @@ static Process *process_pool;
  */
 Process *new_process_in_pool() {
 	Process *newprocess = malloc(sizeof(Process));
-	if (!newprocess) return NULL;
+	if (!newprocess) {
+		return NULL;
+	}
 	newprocess->next = process_pool;
 	process_pool = newprocess;
 	return newprocess;
@@ -32,12 +34,22 @@ Process *new_process_in_pool() {
  */
 static void destroy_process(Process **pointer) {
 	Process *target = *pointer;
-	if (target->outfd != -1) close(target->outfd);
-	if (target->errfd != -1) close(target->errfd);
-	if (target->inpfd != -1) close(target->inpfd);
+	if (target->outfd != -1) {
+		close(target->outfd);
+	}
+	if (target->errfd != -1) {
+		close(target->errfd);
+	}
+	if (target->inpfd != -1) {
+		close(target->inpfd);
+	}
 	/* marking stream as closed for lua */
-	if (target->invalidator) *(target->invalidator) = NULL;
-	if (target->name) free(target->name);
+	if (target->invalidator) {
+		*(target->invalidator) = NULL;
+	}
+	if (target->name) {
+		free(target->name);
+	}
 	*pointer = target->next;
 	free(target);
 }
@@ -61,13 +73,19 @@ Process *vis_process_communicate(Vis *vis, const char *name,
                                  const char *command, void **invalidator) {
 	int pin[2], pout[2], perr[2];
 	pid_t pid = (pid_t)-1;
-	if (pipe(perr) == -1) goto closeerr;
-	if (pipe(pout) == -1) goto closeouterr;
-	if (pipe(pin) == -1) goto closeall;
+	if (pipe(perr) == -1) {
+		goto closeerr;
+	}
+	if (pipe(pout) == -1) {
+		goto closeouterr;
+	}
+	if (pipe(pin) == -1) {
+		goto closeall;
+	}
 	pid = fork();
-	if (pid == -1)
+	if (pid == -1) {
 		vis_info_show(vis, "fork failed: %s", strerror(errno));
-	else if (pid == 0){ /* child process */
+	} else if (pid == 0) { /* child process */
 		sigset_t sigterm_mask;
 		sigemptyset(&sigterm_mask);
 		sigaddset(&sigterm_mask, SIGTERM);
@@ -78,9 +96,8 @@ Process *vis_process_communicate(Vis *vis, const char *name,
 		dup2(pin[0], STDIN_FILENO);
 		dup2(pout[1], STDOUT_FILENO);
 		dup2(perr[1], STDERR_FILENO);
-	}
-	else { /* main process */
-		Process *new = new_process();
+	} else { /* main process */
+		Process *new = new_process_in_pool();
 		if (!new) {
 			vis_info_show(vis, "Can not create process: %s", strerror(errno));
 			goto closeall;
@@ -115,9 +132,9 @@ closeerr:
 		execlp(vis->shell, vis->shell, "-c", command, (char*)NULL);
 		fprintf(stderr, "exec failed: %s(%d)\n", strerror(errno), errno);
 		exit(1);
-	}
-	else
+	} else {
 		vis_info_show(vis, "process creation failed: %s", strerror(errno));
+	}
 	return NULL;
 }
 
@@ -129,9 +146,8 @@ closeerr:
  * @return maxium file descriptor number in the readfds structure
  */
 int vis_process_before_tick(fd_set *readfds) {
-	Process **pointer = &process_pool;
 	int maxfd = 0;
-	while (*pointer) {
+	for (Process **pointer = &process_pool; *pointer; pointer = &((*pointer)->next)) {
 		Process *current = *pointer;
 		if (current->outfd != -1) {
 			FD_SET(current->outfd, readfds);
@@ -141,7 +157,6 @@ int vis_process_before_tick(fd_set *readfds) {
 			FD_SET(current->errfd, readfds);
 			maxfd = maxfd < current->errfd ? current->errfd : maxfd;
 		}
-		pointer = &current->next;
 	}
 	return maxfd;
 }
@@ -171,27 +186,34 @@ static void read_and_fire(Vis* vis, int fd, const char *name, ResponseType rtype
  */
 void vis_process_tick(Vis *vis, fd_set *readfds) {
 	Process **pointer = &process_pool;
-	while (*pointer) {
+	for (Process **pointer = &process_pool; *pointer; ) {
 		Process *current = *pointer;
-		if (current->outfd != -1 && FD_ISSET(current->outfd, readfds))
-			read_and_fire_process_event(vis, current->outfd, current->name, STDOUT);
-		if (current->errfd != -1 && FD_ISSET(current->errfd, readfds))
-			read_and_fire_process_event(vis, current->errfd, current->name, STDERR);
+		if (current->outfd != -1 && FD_ISSET(current->outfd, readfds)) {
+			read_and_fire(vis, current->outfd, current->name, STDOUT);
+		}
+		if (current->errfd != -1 && FD_ISSET(current->errfd, readfds)) {
+			read_and_fire(vis, current->errfd, current->name, STDERR);
+		}
 		int status;
 		pid_t wpid = waitpid(current->pid, &status, WNOHANG);
-		if (wpid == -1)	vis_message_show(vis, strerror(errno));
-		else if (wpid == current->pid) goto just_destroy;
-		else if(!*(current->invalidator)) goto kill_and_destroy;
+		if (wpid == -1)	{
+			vis_message_show(vis, strerror(errno));
+		} else if (wpid == current->pid) {
+			goto just_destroy;
+		} else if (!*(current->invalidator)) {
+			goto kill_and_destroy;
+		}
 		pointer = &current->next;
 		continue;
 kill_and_destroy:
 		kill(current->pid, SIGTERM);
 		waitpid(current->pid, &status, 0);
 just_destroy:
-		if (WIFSIGNALED(status))
+		if (WIFSIGNALED(status)) {
 			vis_lua_process_response(vis, current->name, NULL, WTERMSIG(status), SIGNAL);
-		else
+		} else {
 			vis_lua_process_response(vis, current->name, NULL, WEXITSTATUS(status), EXIT);
+		}
 		destroy_process(pointer);
 	}
 }

@@ -3213,15 +3213,19 @@ void vis_lua_term_csi(Vis *vis, const long *csi) {
 void vis_lua_process_response(Vis *vis, const char *name,
                               char *buffer, size_t len, ResponseType rtype) {
 	lua_State *L = vis->lua;
-	if (!L)
+	if (!L) {
 		return;
+	}
 	vis_lua_event_get(L, "process_response");
 	if (lua_isfunction(L, -1)) {
 		lua_pushstring(L, name);
-		if (rtype == EXIT || rtype == SIGNAL)
+		switch (rtype) {
+		case EXIT:
+		case SIGNAL:
 			lua_pushinteger(L, len);
-		else
-			lua_pushlstring(L, buffer, len);
+			break;
+		default: lua_pushlstring(L, buffer, len);
+		}
 		switch (rtype){
 		case STDOUT: lua_pushstring(L, "STDOUT"); break;
 		case STDERR: lua_pushstring(L, "STDERR"); break;
