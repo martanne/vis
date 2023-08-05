@@ -1405,8 +1405,7 @@ static int communicate_func(lua_State *L) {
 
 	typedef struct {
 		/* Lua stream structure for the process input stream */
-		FILE *f;
-		lua_CFunction closef;
+		luaL_Stream stream;
 		Process *handler;
 	} ProcessStream;
 
@@ -1415,12 +1414,12 @@ static int communicate_func(lua_State *L) {
 	const char *cmd = luaL_checkstring(L, 3);
 	ProcessStream *inputfd = (ProcessStream *)lua_newuserdata(L, sizeof(ProcessStream));
 	luaL_setmetatable(L, LUA_FILEHANDLE);
-	inputfd->handler = vis_process_communicate(vis, name, cmd, (void **)(&(inputfd->closef)));
+	inputfd->handler = vis_process_communicate(vis, name, cmd, (void**)(&(inputfd->stream.closef)));
 	if (inputfd->handler) {
-		inputfd->f = fdopen(inputfd->handler->inpfd, "w");
-		inputfd->closef = &close_subprocess;
+		inputfd->stream.f = fdopen(inputfd->handler->inpfd, "w");
+		inputfd->stream.closef = &close_subprocess;
 	}
-	return inputfd->f ? 1 : luaL_fileresult(L, inputfd->f != NULL, name);
+	return inputfd->stream.f ? 1 : luaL_fileresult(L, 0, name);
 }
 /***
  * Currently active window.
