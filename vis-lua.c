@@ -1372,11 +1372,11 @@ static int redraw(lua_State *L) {
 	return 0;
 }
 /***
- * Closes a stream returned by @{Vis.communicate}.
+ * Closes a stream returned by @{Vis:communicate}.
  *
  * @function close
  * @tparam io.file inputfd the stream to be closed
- * @treturn bool the same with @{io.close}
+ * @treturn bool identical to @{io.close}
  */
 static int close_subprocess(lua_State *L) {
 	luaL_Stream *file = luaL_checkudata(L, -1, "FILE*");
@@ -1388,7 +1388,9 @@ static int close_subprocess(lua_State *L) {
 	return luaL_fileresult(L, result == 0, NULL);
 }
 /***
- * Open new process and return its input handler.
+ * Open new process and return its input stream (stdin).
+ * If the stream is closed (by calling the close method or by being removed by a garbage collector)
+ * the spawned process will be killed by SIGTERM.
  * When the process will quit or will output anything to stdout or stderr,
  * the @{process_response} event will be fired.
  *
@@ -3206,8 +3208,8 @@ void vis_lua_term_csi(Vis *vis, const long *csi) {
  * The response received from the process started via @{Vis:communicate}.
  * @function process_response
  * @tparam string name the name of process given to @{Vis:communicate}
- * @tparam string response_type can be "STDOUT" or "STDERR" if new output was received in corresponding channel, "SIGNAL" if the process was terminated by a signal or "EXIT" when the process terminated normally
  * @tparam string|int buffer the available content sent by process; it becomes the exit code number if response\_type is "EXIT", or the signal number if response\_type is "SIGNAL"
+ * @tparam string response_type can be "STDOUT" or "STDERR" if new output was received in corresponding channel, "SIGNAL" if the process was terminated by a signal or "EXIT" when the process terminated normally
  */
 void vis_lua_process_response(Vis *vis, const char *name,
                               char *buffer, size_t len, ResponseType rtype) {

@@ -11,9 +11,12 @@
 /* Pool of information about currently running subprocesses */
 static Process *process_pool;
 
-/* Adds new empty process information structure to the process pool and
- * returns it */
-static Process *new_process(void) {
+/**
+ * Adds new empty process information structure to the process pool and
+ * returns it
+ * @return a new Process instance
+ */
+Process *new_process_in_pool() {
 	Process *newprocess = malloc(sizeof(Process));
 	if (!newprocess) return NULL;
 	newprocess->next = process_pool;
@@ -21,8 +24,12 @@ static Process *new_process(void) {
 	return newprocess;
 }
 
-/* Removes the subprocess information from the pool, sets invalidator to NULL
- * and frees resources. */
+/**
+ * Removes the subprocess information from the pool, sets invalidator to NULL
+ * and frees resources.
+ * @param a reference to a reference to the process to be removed
+ * @return the next process in the pool
+ */
 static void destroy_process(Process **pointer) {
 	Process *target = *pointer;
 	if (target->outfd != -1) close(target->outfd);
@@ -35,28 +42,21 @@ static void destroy_process(Process **pointer) {
 	free(target);
 }
 
-/* Reads data from the given subprocess file descriptor `fd` and fires
- * the PROCESS_RESPONSE event in Lua with given subprocess `name`,
- * `rtype` and the read data as arguments. */
-static void read_and_fire_process_event(Vis* vis, int fd, const char *name, ResponseType rtype) {
-	static char buffer[PIPE_BUF];
-	size_t obtained = read(fd, &buffer, PIPE_BUF-1);
-	if (obtained > 0)
-		vis_lua_process_response(vis, name, buffer, obtained, rtype);
-}
-
-/* Starts new subprocess by passing the `command` to the shell and
+/**
+ * Starts new subprocess by passing the `command` to the shell and
  * returns the subprocess information structure, containing file descriptors
  * of the process.
  * Also stores the subprocess information to the internal pool to track
  * its status and responses.
- * `name` - the string than should contain an unique name of the subprocess.
+ * @param name the string than should contain an unique name of the subprocess.
  * This name will be passed to the PROCESS_RESPONSE event handler
  * to distinguish running subprocesses.
- * `invalidator` - a pointer to the pointer which shows that the subprocess
+ * @param command a command to be executed to spawn a process
+ * @param invalidator a pointer to the pointer which shows that the subprocess
  * is invalid when set to NULL. When subprocess dies, it is being set to NULL.
  * If the pointer is set to NULL by an external code, the subprocess will be
- * killed on the next main loop iteration. */
+ * killed on the next main loop iteration.
+ */
 Process *vis_process_communicate(Vis *vis, const char *name,
                                  const char *command, void **invalidator) {
 	int pin[2], pout[2], perr[2];
@@ -121,9 +121,13 @@ closeerr:
 	return NULL;
 }
 
-/* Adds file descriptors of currently running subprocesses to the `readfds`
+/**
+ * Adds file descriptors of currently running subprocesses to the `readfds`
  * to track their readiness and returns maximum file descriptor value
- * to pass it to the `pselect` call */
+ * to pass it to the `pselect` call
+ * @param readfds the structure for `pselect` call to fill
+ * @return maxium file descriptor number in the readfds structure
+ */
 int vis_process_before_tick(fd_set *readfds) {
 	Process **pointer = &process_pool;
 	int maxfd = 0;
@@ -142,10 +146,29 @@ int vis_process_before_tick(fd_set *readfds) {
 	return maxfd;
 }
 
-/* Checks if `readfds` contains file discriptors of subprocesses from
+/**
+ * Reads data from the given subprocess file descriptor `fd` and fires
+ * the PROCESS_RESPONSE event in Lua with given subprocess `name`,
+ * `rtype` and the read data as arguments.
+ * @param fd the file descriptor to read data from
+ * @param name a name of the subprocess
+ * @param rtype a type of file descriptor where the new data is found
+ */
+static void read_and_fire(Vis* vis, int fd, const char *name, ResponseType rtype) {
+	static char buffer[PIPE_BUF];
+	size_t obtained = read(fd, &buffer, PIPE_BUF-1);
+	if (obtained > 0) {
+		vis_lua_process_response(vis, name, buffer, obtained, rtype);
+	}
+}
+
+/**
+ * Checks if `readfds` contains file discriptors of subprocesses from
  * the pool. If so, reads the data from them and fires corresponding events.
  * Also checks if subprocesses from pool is dead or need to be killed then
- * raises event or kills it if necessary. */
+ * raises event or kills it if necessary.
+ * @param readfds the structure for `pselect` call with file descriptors
+ */
 void vis_process_tick(Vis *vis, fd_set *readfds) {
 	Process **pointer = &process_pool;
 	while (*pointer) {
