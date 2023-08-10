@@ -1,4 +1,4 @@
--- Copyright 2018-2022 Mitchell. See LICENSE.
+-- Copyright 2018-2024 Mitchell. See LICENSE.
 -- Clojure LPeg lexer.
 -- Contributed by Christos Chatzifountas.
 
@@ -139,9 +139,10 @@ lex:add_style('clojure_symbol', lexer.styles.type .. {bold = true})
 
 -- Fold points.
 lex:add_fold_point(lexer.COMMENT, '#_(', ')')
-lex:add_fold_point(lexer.COMMENT, lexer.fold_consecutive_lines(';'))
 lex:add_fold_point(lexer.OPERATOR, '(', ')')
 lex:add_fold_point(lexer.OPERATOR, '[', ']')
 lex:add_fold_point(lexer.OPERATOR, '{', '}')
+
+lexer.property['scintillua.comment'] = ';'
 
 return lex

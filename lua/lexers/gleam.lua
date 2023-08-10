@@ -1,4 +1,4 @@
--- Copyright 2021-2022 Mitchell. See LICENSE.
+-- Copyright 2021-2024 Mitchell. See LICENSE.
 -- Gleam LPeg lexer
 -- https://gleam.run/
 -- Contributed by Tynan Beatty
@@ -88,17 +88,16 @@ local err_tok = token(lexer.ERROR, lexer.any)
 lex:add_rule('error', err_tok)
 
 -- Fold points.
-lex:add_fold_point(lexer.COMMENT, lexer.fold_consecutive_lines('//'))
 lex:add_fold_point(lexer.OPERATOR, '{', '}')
 lex:add_fold_point(lexer.OPERATOR, '[', ']')
 lex:add_fold_point(lexer.OPERATOR, '(', ')')
 
 -- Embedded Bit Strings.
 -- Mimic lexer.load() by creating a bitstring-specific whitespace style.
-local bitstring = lexer.new(lex._NAME .. '_bitstring')
-local bitstring_ws = token(bitstring._NAME .. '_whitespace', lexer.space^1)
+local bitstring = lexer.new(lex._name .. '_bitstring')
+local bitstring_ws = token(bitstring._name .. '_whitespace', lexer.space^1)
 bitstring:add_rule('whitespace', bitstring_ws)
-bitstring:add_style(bitstring._NAME .. '_whitespace', lexer.styles.whitespace)
+bitstring:add_style(bitstring._name .. '_whitespace', lexer.styles.whitespace)
 bitstring:add_rule('type', typ_tok)
 bitstring:add_rule('module', mod_tok(bitstring_ws))
 bitstring:add_rule('keyword', key_tok + token(KEY, word_match{
@@ -115,5 +114,7 @@ bitstring:add_rule('number', num_tok)
 bitstring:add_rule('operator', op_tok)
 bitstring:add_rule('error', err_tok)
 lex:embed(bitstring, token(OP, '<<'), token(OP, '>>'))
+
+lexer.property['scintillua.comment'] = '//'
 
 return lex

@@ -1,59 +1,81 @@
--- Copyright 2021-2022 Mitchell. See LICENSE.
+-- Copyright 2021-2024 Mitchell. See LICENSE.
 -- Hare LPeg lexer
--- https://harelang.org
--- Contributed by Qiu
 
-local lexer = require('lexer')
-local token, word_match = lexer.token, lexer.word_match
-local P, S = lpeg.P, lpeg.S
+local lexer = lexer
+local P, R, S = lpeg.P, lpeg.R, lpeg.S
 
-local lex = lexer.new('hare')
-
--- Whitespace.
-lex:add_rule('whitespace', token(lexer.WHITESPACE, lexer.space^1))
+local lex = lexer.new(...)
 
 -- Keywords.
-lex:add_rule('keyword', token(lexer.KEYWORD, word_match{
-  'as', 'break', 'case', 'const', 'continue', 'def', 'defer', 'else', 'export', 'false', 'fn',
-  'for', 'if', 'is', 'let', 'match', 'null', 'nullable', 'return', 'static', 'struct', 'switch',
-  'true', 'type', 'use', 'yield'
-}))
-
--- Functions.
-lex:add_rule('function', token(lexer.FUNCTION, word_match{
-  'len', 'alloc', 'free', 'assert', 'abort', 'size', 'append', 'insert', 'delete', 'vastart',
-  'vaarg', 'vaend'
-}))
+lex:add_rule('keyword', lex:tag(lexer.KEYWORD, lex:word_match(lexer.KEYWORD)))
 
 -- Types.
-lex:add_rule('type', token(lexer.TYPE, word_match{
-  'bool', 'enum', 'f32', 'f64', 'i16', 'i32', 'i64', 'i8', 'int', 'u16', 'u32', 'u64', 'u8', 'uint',
-  'uintptr', 'union', 'void', 'rune', 'str', 'char'
-}))
+lex:add_rule('type', lex:tag(lexer.TYPE, lex:word_match(lexer.TYPE)))
+
+-- Functions.
+local builtin_func = lex:tag(lexer.FUNCTION_BUILTIN,
+  lex:word_match(lexer.FUNCTION_BUILTIN) + 'size' * #(lexer.space^0 * '('))
+local func = lex:tag(lexer.FUNCTION, lex:tag(lexer.FUNCTION, lexer.word * ('::' * lexer.word)^0 *
+  #(lexer.space^0 * '(')))
+lex:add_rule('function', builtin_func + func)
+
+-- Constants.
+lex:add_rule('constant', lex:tag(lexer.CONSTANT_BUILTIN, lex:word_match(lexer.CONSTANT_BUILTIN)))
 
 -- Identifiers.
-lex:add_rule('identifier', token(lexer.IDENTIFIER, lexer.word))
+lex:add_rule('identifier', lex:tag(lexer.IDENTIFIER, lexer.word))
 
 -- Strings.
+local sq_str = lexer.range("'", true)
 local dq_str = lexer.range('"')
-local raw_str = lexer.range('`')
-lex:add_rule('string', token(lexer.STRING, dq_str + raw_str))
+local raw_str = lexer.range('`', false, false)
+lex:add_rule('string', lex:tag(lexer.STRING, sq_str + dq_str + raw_str))
 
 -- Comments.
-lex:add_rule('comment', token(lexer.COMMENT, lexer.to_eol('//')))
+lex:add_rule('comment', lex:tag(lexer.COMMENT, lexer.to_eol('//')))
 
 -- Numbers.
-lex:add_rule('number', token(lexer.NUMBER, lexer.number))
+local bin_num = '0b' * R('01')^1 * -lexer.xdigit
+local oct_num = '0o' * R('07')^1 * -lexer.xdigit
+local hex_num = '0x' * lexer.xdigit^1
+local int_suffix = lexer.word_match('i u z i8 i16 i32 i64 u8 u16 u32 u64')
+local float_suffix = lexer.word_match('f32 f64')
+local suffix = int_suffix + float_suffix
+local integer = S('+-')^-1 *
+  ((hex_num + oct_num + bin_num) * int_suffix^-1 + lexer.dec_num * suffix^-1)
+local float = lexer.float * float_suffix^-1
+lex:add_rule('number', lex:tag(lexer.NUMBER, integer + float))
+
+-- Error assertions
+lex:add_rule('error_assert', lex:tag(lexer.ERROR .. '.assert', lpeg.B(')') * P('!')))
 
 -- Operators.
-lex:add_rule('operator', token(lexer.OPERATOR, S('+-/*%^!=&|?:;,.()[]{}<>')))
+lex:add_rule('operator', lex:tag(lexer.OPERATOR, S('+-/*%^!=&|?~:;,.()[]{}<>')))
 
--- At rule.
-lex:add_rule('at_rule', token('at_rule', '@' * word_match('noreturn offset init fini test symbol')))
-lex:add_style('at_rule', lexer.styles.preprocessor)
+-- Attributes.
+lex:add_rule('attribute', lex:tag(lexer.ANNOTATION, '@' * lexer.word))
 
 -- Fold points.
 lex:add_fold_point(lexer.OPERATOR, '{', '}')
-lex:add_fold_point(lexer.COMMENT, lexer.fold_consecutive_lines('//'))
+
+-- Word lists.
+lex:set_word_list(lexer.KEYWORD, {
+  'as', 'break', 'case', 'const', 'continue', 'def', 'defer', 'else', 'export', 'fn', 'for', 'if',
+  'is', 'let', 'match', 'nullable', 'return', 'static', 'switch', 'type', 'use', 'yield', '_'
+})
+
+lex:set_word_list(lexer.TYPE, {
+  'bool', 'enum', 'f32', 'f64', 'i16', 'i32', 'i64', 'i8', 'int', 'opaque', 'never', 'rune', 'size',
+  'str', 'struct', 'u16', 'u32', 'u64', 'u8', 'uint', 'uintptr', 'union', 'valist'
+})
+
+lex:set_word_list(lexer.FUNCTION_BUILTIN, {
+  'abort', 'align', 'alloc', 'append', 'assert', 'delete', 'free', 'insert', 'len', 'offset',
+  'vaarg', 'vaend', 'vastart'
+})
+
+lex:set_word_list(lexer.CONSTANT_BUILTIN, 'false null true void')
+
+lexer.property['scintillua.comment'] = '//'
 
 return lex

@@ -1,4 +1,4 @@
--- Copyright 2015-2022 David B. Lamkins <david@lamkins.net>. See LICENSE.
+-- Copyright 2015-2024 David B. Lamkins <david@lamkins.net>. See LICENSE.
 -- pure LPeg lexer, see http://purelang.bitbucket.org/
 
 local lexer = require('lexer')
@@ -44,5 +44,7 @@ lex:add_rule('pragma', token(lexer.PREPROCESSOR, hashbang))
 
 -- Operators.
 lex:add_rule('operator', token(lexer.OPERATOR, '..' + S('+-/*%<>~!=^&|?~:;,.()[]{}@#$`\\\'')))
+
+lexer.property['scintillua.comment'] = '//'
 
 return lex

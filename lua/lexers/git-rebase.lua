@@ -1,20 +1,28 @@
--- Copyright 2017-2021 Marc André Tanner
+-- Copyright 2017-2024 Marc André Tanner. See LICENSE.
 -- git-rebase(1) LPeg lexer.
 
-local lexer = require('lexer')
-local token, word_match = lexer.token, lexer.word_match
+local lexer = lexer
 local P, R = lpeg.P, lpeg.R
 
-local lex = lexer.new('git-rebase', {lex_by_line = true})
-
--- Whitespace.
-lex:add_rule('whitespace', token(lexer.WHITESPACE, lexer.space^1))
+local lex = lexer.new(..., {lex_by_line = true})
 
 -- Comments.
-lex:add_rule('comment', token(lexer.COMMENT, lexer.starts_line('#') * lexer.nonnewline^0))
+lex:add_rule('comment', lex:tag(lexer.COMMENT, lexer.to_eol(lexer.starts_line('#'))))
 
 -- Keywords.
-local keywords = lexer.starts_line(word_match[[
+lex:add_rule('keyword', lex:tag(lexer.KEYWORD, lexer.starts_line(lex:word_match(lexer.KEYWORD))))
+
+-- Commit SHA1.
+local function patn(pat, min, max)
+  return -pat^(max + 1) * pat^min
+end
+
+lex:add_rule('commit', lex:tag(lexer.NUMBER, patn(R('09', 'af'), 7, 40)))
+
+lex:add_rule('message', lex:tag('message', lexer.to_eol()))
+
+-- Word lists.
+lex:set_word_list(lexer.KEYWORD, [[
   p pick
   r reword
   e edit
@@ -27,15 +35,5 @@ local keywords = lexer.starts_line(word_match[[
   t reset
   m merge
 ]])
-lex:add_rule('keyword', token(lexer.KEYWORD, keywords))
-
--- Commit SHA1.
-local function patn(pat, min, max)
-  return -pat^(max + 1) * pat^min
-end
-
-lex:add_rule('commit', token(lexer.NUMBER, patn(R('09', 'af'), 7, 40)))
-
-lex:add_rule('message', token(lexer.STRING, lexer.nonnewline^1))
 
 return lex

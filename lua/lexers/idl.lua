@@ -1,4 +1,4 @@
--- Copyright 2006-2022 Mitchell. See LICENSE.
+-- Copyright 2006-2024 Mitchell. See LICENSE.
 -- IDL LPeg lexer.
 
 local lexer = require('lexer')
@@ -46,5 +46,7 @@ lex:add_rule('preproc', token(lexer.PREPROCESSOR, lexer.starts_line('#') *
 
 -- Operators.
 lex:add_rule('operator', token(lexer.OPERATOR, S('!<>=+-/*%&|^~.,:;?()[]{}')))
+
+lexer.property['scintillua.comment'] = '//'
 
 return lex

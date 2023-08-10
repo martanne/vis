@@ -1,24 +1,21 @@
--- Copyright 2006-2022 Robert Gieseke. See LICENSE.
+-- Copyright 2006-2024 Robert Gieseke. See LICENSE.
 -- Sass CSS preprocessor LPeg lexer.
 -- http://sass-lang.com
 
-local lexer = require('lexer')
-local token = lexer.token
+local lexer = lexer
 local P, S = lpeg.P, lpeg.S
 
-local lex = lexer.new('sass', {inherit = lexer.load('css')})
+local lex = lexer.new(..., {inherit = lexer.load('css')})
 
 -- Line comments.
-lex:add_rule('line_comment', token(lexer.COMMENT, lexer.to_eol('//')))
+lex:add_rule('line_comment', lex:tag(lexer.COMMENT, lexer.to_eol('//')))
 
 -- Variables.
-lex:add_rule('variable', token(lexer.VARIABLE, '$' * (lexer.alnum + S('_-'))^1))
+lex:add_rule('variable', lex:tag(lexer.VARIABLE, '$' * (lexer.alnum + S('_-'))^1))
 
 -- Mixins.
-lex:add_rule('mixin', token('mixin', '@' * lexer.word))
-lex:add_style('mixin', lexer.styles['function'])
+lex:add_rule('mixin', lex:tag(lexer.PREPROCESSOR, '@' * lexer.word))
 
--- Fold points.
-lex:add_fold_point(lexer.COMMENT, lexer.fold_consecutive_lines('//'))
+lexer.property['scintillua.comment'] = '//'
 
 return lex

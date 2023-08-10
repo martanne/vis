@@ -1,0 +1,40 @@
+-- Copyright 2022-2024 Mitchell. See LICENSE.
+-- ? LPeg lexer.
+
+local lexer = lexer
+local P, S = lpeg.P, lpeg.S
+
+local lex = lexer.new(...)
+
+-- Keywords.
+lex:add_rule('keyword', lex:tag(lexer.KEYWORD, lex:word_match(lexer.KEYWORD)))
+
+-- Identifiers.
+lex:add_rule('identifier', lex:tag(lexer.IDENTIFIER, lexer.word))
+
+-- Strings.
+local sq_str = lexer.range("'")
+local dq_str = lexer.range('"')
+lex:add_rule('string', lex:tag(lexer.STRING, sq_str + dq_str))
+
+-- Comments.
+lex:add_rule('comment', lex:tag(lexer.COMMENT, lexer.to_eol('#')))
+
+-- Numbers.
+lex:add_rule('number', lex:tag(lexer.NUMBER, lexer.number))
+
+-- Operators.
+lex:add_rule('operator', lex:tag(lexer.OPERATOR, S('+-*/%^=<>,.{}[]()')))
+
+-- Fold points.
+lex:add_fold_point(lexer.KEYWORD, 'start', 'end')
+lex:add_fold_point(lexer.OPERATOR, '{', '}')
+
+-- Word lists.
+lex:set_word_list(lexer.KEYWORD, {
+  'keyword1', 'keyword2', 'keyword3'
+})
+
+lexer.property['scintillua.comment'] = '#'
+
+return lex

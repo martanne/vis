@@ -1,4 +1,4 @@
--- Copyright 2015-2022 Jason Schindler. See LICENSE.
+-- Copyright 2015-2024 Jason Schindler. See LICENSE.
 -- Fish (http://fishshell.com/) script LPeg lexer.
 
 local lexer = require('lexer')
@@ -34,8 +34,7 @@ local dq_str = lexer.range('"')
 lex:add_rule('string', token(lexer.STRING, sq_str + dq_str))
 
 -- Shebang.
-lex:add_rule('shebang', token('shebang', lexer.to_eol('#!/')))
-lex:add_style('shebang', lexer.styles.label)
+lex:add_rule('shebang', token(lexer.COMMENT, lexer.to_eol('#!/')))
 
 -- Comments.
 lex:add_rule('comment', token(lexer.COMMENT, lexer.to_eol('#')))
@@ -53,5 +52,7 @@ lex:add_fold_point(lexer.KEYWORD, 'function', 'end')
 lex:add_fold_point(lexer.KEYWORD, 'if', 'end')
 lex:add_fold_point(lexer.KEYWORD, 'switch', 'end')
 lex:add_fold_point(lexer.KEYWORD, 'while', 'end')
+
+lexer.property['scintillua.comment'] = '#'
 
 return lex

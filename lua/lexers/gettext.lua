@@ -1,4 +1,4 @@
--- Copyright 2006-2022 Mitchell. See LICENSE.
+-- Copyright 2006-2024 Mitchell. See LICENSE.
 -- Gettext LPeg lexer.
 
 local lexer = require('lexer')
@@ -25,5 +25,7 @@ lex:add_rule('string', token(lexer.STRING, lexer.range('"', true)))
 
 -- Comments.
 lex:add_rule('comment', token(lexer.COMMENT, lexer.to_eol('#' * S(': .~'))))
+
+lexer.property['scintillua.comment'] = '#'
 
 return lex

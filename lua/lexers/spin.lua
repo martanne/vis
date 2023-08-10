@@ -1,4 +1,4 @@
--- Copyright 2017-2022 David B. Lamkins <david@lamkins.net>. See LICENSE.
+-- Copyright 2017-2024 David B. Lamkins <david@lamkins.net>. See LICENSE.
 -- Spin LPeg lexer, see https://www.parallax.com/microcontrollers/propeller.
 
 local lexer = require('lexer')
@@ -64,5 +64,7 @@ lex:add_rule('operator', token(lexer.OPERATOR,
     '**=' + '//' + '//=' + '#>' + '#>=' + '<#' + '<#=' + '~>' + '~>=' + '<<' + '<<=' + '>>' + '>>=' +
     '<-' + '<-=' + '->' + '->=' + '><' + '><=' + '&=' + '|=' + 'and=' + 'or=' + '==' + '===' + '<>' +
     '<>=' + '<=' + '>=' + '=<' + '=<=' + '=>' + '=>=' + '..' + S('+-/*<>~!&=^|?:.()[]@#\\')))
+
+lexer.property['scintillua.comment'] = "'"
 
 return lex

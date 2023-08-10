@@ -1,4 +1,4 @@
--- Copyright 2006-2022 Mitchell. See LICENSE.
+-- Copyright 2006-2024 Mitchell. See LICENSE.
 -- jq 1.6 Lua lexer -- https://stedolan.github.io/jq/wiki
 -- Anonymously contributed.
 
@@ -78,6 +78,7 @@ lex:add_rule('variable', token(lexer.VARIABLE, '$' * lexer.word))
 lex:add_fold_point(lexer.KEYWORD, 'if', 'end')
 lex:add_fold_point(lexer.OPERATOR, '[', ']')
 lex:add_fold_point(lexer.OPERATOR, '{', '}')
-lex:add_fold_point(lexer.COMMENT, lexer.fold_consecutive_lines('#'))
+
+lexer.property['scintillua.comment'] = '#'
 
 return lex

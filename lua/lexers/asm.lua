@@ -1,17 +1,65 @@
--- Copyright 2006-2022 Mitchell. See LICENSE.
+-- Copyright 2006-2024 Mitchell. See LICENSE.
 -- NASM Assembly LPeg lexer.
 
-local lexer = require('lexer')
-local token, word_match = lexer.token, lexer.word_match
+local lexer = lexer
 local P, S = lpeg.P, lpeg.S
 
-local lex = lexer.new('asm')
-
--- Whitespace.
-lex:add_rule('whitespace', token(lexer.WHITESPACE, lexer.space^1))
+local lex = lexer.new(...)
 
 -- Keywords.
-lex:add_rule('keyword', token(lexer.KEYWORD, word_match{
+lex:add_rule('keyword', lex:tag(lexer.KEYWORD, lex:word_match(lexer.KEYWORD)))
+
+-- Instructions.
+lex:add_rule('instruction',
+  lex:tag(lexer.FUNCTION_BUILTIN .. '.instruction', lex:word_match('instruction')))
+
+-- Registers.
+lex:add_rule('register', lex:tag(lexer.CONSTANT_BUILTIN .. '.register', lex:word_match('register')))
+
+-- Types.
+local sizes = lex:word_match('size')
+local wrt_types = '..' * lex:word_match(lexer.TYPE .. '.wrt')
+lex:add_rule('type', lex:tag(lexer.TYPE, sizes + wrt_types))
+
+-- Constants.
+local word = (lexer.alpha + S('$._?')) * (lexer.alnum + S('$._?#@~'))^0
+lex:add_rule('constant', lex:tag(lexer.CONSTANT_BUILTIN,
+  lex:word_match(lexer.CONSTANT_BUILTIN) + '$' * P('$')^-1 * -word))
+
+-- Labels.
+lex:add_rule('label', lex:tag(lexer.LABEL, word * ':'))
+
+-- Identifiers.
+lex:add_rule('identifier', lex:tag(lexer.IDENTIFIER, word))
+
+-- Strings.
+local sq_str = lexer.range("'", true)
+local dq_str = lexer.range('"', true)
+lex:add_rule('string', lex:tag(lexer.STRING, sq_str + dq_str))
+
+-- Comments.
+lex:add_rule('comment', lex:tag(lexer.COMMENT, lexer.to_eol(';')))
+
+-- Numbers.
+lex:add_rule('number', lex:tag(lexer.NUMBER, lexer.number * S('hqb')^-1))
+
+-- Preprocessor.
+local pp_word = lex:word_match(lexer.PREPROCESSOR)
+local pp_symbol = '??' + S('!$+?') + '%' * -lexer.space + lexer.digit^1
+lex:add_rule('preproc', lex:tag(lexer.PREPROCESSOR, '%' * (pp_word + pp_symbol)))
+
+-- Operators.
+lex:add_rule('operator', lex:tag(lexer.OPERATOR, S('+-/*%<>!=^&|~:,()[]')))
+
+-- Fold points.
+lex:add_fold_point(lexer.PREPROCESSOR, '%if', '%endif')
+lex:add_fold_point(lexer.PREPROCESSOR, '%macro', '%endmacro')
+lex:add_fold_point(lexer.PREPROCESSOR, '%rep', '%endrep')
+lex:add_fold_point(lexer.PREPROCESSOR, '%while', '%endwhile')
+lex:add_fold_point(lexer.KEYWORD, 'struc', 'endstruc')
+
+-- Word lists.
+lex:set_word_list(lexer.KEYWORD, {
   -- Preprocessor macros.
   'struc', 'endstruc', 'istruc', 'at', 'iend', 'align', 'alignb', 'sectalign', '.nolist',
   -- Preprocessor Packages.
@@ -29,12 +77,11 @@ lex:add_rule('keyword', token(lexer.KEYWORD, word_match{
   -- Operators.
   'abs', 'rel', 'seg', 'wrt', 'strict', '__utf16__', '__utf16be__', '__utf16le__', '__utf32__',
   '__utf32be__', '__utf32le__'
-}))
+})
 
--- Instructions.
 -- awk '{print $1}'|uniq|tr '[:upper:]' '[:lower:]'|
 -- lua -e "for l in io.lines() do print(\"'\"..l..\"',\") end"|fmt -w 98
-lex:add_rule('instruction', token('instruction', word_match{
+lex:set_word_list('instruction', {
   -- Special Instructions.
   'db', 'dd', 'do', 'dq', 'dt', 'dw', 'dy', 'resb', 'resd', 'reso', 'resq', 'rest', 'resw', 'resy',
   -- Conventional Instructions.
@@ -304,11 +351,9 @@ lex:add_rule('instruction', token('instruction', word_match{
   'hint_nop49', 'hint_nop50', 'hint_nop51', 'hint_nop52', 'hint_nop53', 'hint_nop54', 'hint_nop55',
   'hint_nop56', 'hint_nop57', 'hint_nop58', 'hint_nop59', 'hint_nop60', 'hint_nop61', 'hint_nop62',
   'hint_nop63'
-}))
-lex:add_style('instruction', lexer.styles['function'])
+})
 
--- Registers.
-lex:add_rule('register', token('register', word_match{
+lex:set_word_list('register', {
   -- 32-bit registers.
   'ah', 'al', 'ax', 'bh', 'bl', 'bp', 'bx', 'ch', 'cl', 'cx', 'dh', 'di', 'dl', 'dx', 'eax', 'ebx',
   'ebx', 'ecx', 'edi', 'edx', 'esi', 'esp', 'fs', 'mm0', 'mm1', 'mm2', 'mm3', 'mm4', 'mm5', 'mm6',
@@ -321,45 +366,21 @@ lex:add_rule('register', token('register', word_match{
   'r15w', 'rax', 'rbp', 'rbx', 'rcx', 'rdi', 'rdx', 'rsi', 'rsp', 'sil', 'xmm8', 'xmm9', 'xmm10',
   'xmm11', 'xmm12', 'xmm13', 'xmm14', 'xmm15', 'ymm8', 'ymm9', 'ymm10', 'ymm11', 'ymm12', 'ymm13',
   'ymm14', 'ymm15'
-}))
-lex:add_style('register', lexer.styles.constant)
+})
 
--- Types.
-local sizes = word_match{
-  'byte', 'word', 'dword', 'qword', 'tword', 'oword', 'yword',
-  -- Instructions.
-  'a16', 'a32', 'a64', 'o16', 'o32', 'o64'
-}
-local wrt_types = '..' * word_match('start gotpc gotoff gottpoff got plt sym tlsie')
-lex:add_rule('type', token(lexer.TYPE, sizes + wrt_types))
+lex:set_word_list('size', {
+  'byte', 'word', 'dword', 'qword', 'tword', 'oword', 'yword', --
+  'a16', 'a32', 'a64', 'o16', 'o32', 'o64' -- instructions
+})
 
--- Constants.
-local word = (lexer.alpha + S('$._?')) * (lexer.alnum + S('$._?#@~'))^0
-local constants = word_match{
+lex:set_word_list(lexer.TYPE .. '.wrt', 'start gotpc gotoff gottpoff got plt sym tlsie')
+
+lex:set_word_list(lexer.CONSTANT_BUILTIN, {
   '__float128h__', '__float128l__', '__float16__', '__float32__', '__float64__', '__float8__',
   '__float80e__', '__float80m__', '__Infinity__', '__NaN__', '__QNaN__', '__SNaN__'
-}
-lex:add_rule('constant', token(lexer.CONSTANT, constants + '$' * P('$')^-1 * -word))
+})
 
--- Labels.
-lex:add_rule('label', token(lexer.LABEL, word * ':'))
-
--- Identifiers.
-lex:add_rule('identifier', token(lexer.IDENTIFIER, word))
-
--- Strings.
-local sq_str = lexer.range("'", true)
-local dq_str = lexer.range('"', true)
-lex:add_rule('string', token(lexer.STRING, sq_str + dq_str))
-
--- Comments.
-lex:add_rule('comment', token(lexer.COMMENT, lexer.to_eol(';')))
-
--- Numbers.
-lex:add_rule('number', token(lexer.NUMBER, lexer.number * S('hqb')^-1))
-
--- Preprocessor.
-local pp_word = word_match{
+lex:set_word_list(lexer.PREPROCESSOR, {
   'arg', 'assign', 'clear', 'define', 'defstr', 'deftok', 'depend', 'elif', 'elifctx', 'elifdef',
   'elifempty', 'elifenv', 'elifid', 'elifidn', 'elifidni', 'elifmacro', 'elifn', 'elifnctx',
   'elifndef', 'elifnempty', 'elifnenv', 'elifnid', 'elifnidn', 'elifnidni', 'elifnmacro',
@@ -371,19 +392,8 @@ local pp_word = word_match{
   'include', 'ixdefine', 'line', 'local', 'macro', 'pathsearch', 'pop', 'push', 'rep', 'repl',
   'rmacro', 'rotate', 'stacksize', 'strcat', 'strlen', 'substr', 'undef', 'unmacro', 'use',
   'warning', 'while', 'xdefine'
-}
-local pp_symbol = '??' + S('!$+?') + '%' * -lexer.space + lexer.digit^1
-lex:add_rule('preproc', token(lexer.PREPROCESSOR, '%' * (pp_word + pp_symbol)))
+})
 
--- Operators.
-lex:add_rule('operator', token(lexer.OPERATOR, S('+-/*%<>!=^&|~:,()[]')))
-
--- Fold points.
-lex:add_fold_point(lexer.PREPROCESSOR, '%if', '%endif')
-lex:add_fold_point(lexer.PREPROCESSOR, '%macro', '%endmacro')
-lex:add_fold_point(lexer.PREPROCESSOR, '%rep', '%endrep')
-lex:add_fold_point(lexer.PREPROCESSOR, '%while', '%endwhile')
-lex:add_fold_point(lexer.KEYWORD, 'struc', 'endstruc')
-lex:add_fold_point(lexer.COMMENT, lexer.fold_consecutive_lines(';'))
+lexer.property['scintillua.comment'] = ';'
 
 return lex

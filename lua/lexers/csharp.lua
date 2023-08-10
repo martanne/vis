@@ -1,4 +1,4 @@
--- Copyright 2006-2022 Mitchell. See LICENSE.
+-- Copyright 2006-2024 Mitchell. See LICENSE.
 -- C# LPeg lexer.
 
 local lexer = require('lexer')
@@ -59,6 +59,7 @@ lex:add_fold_point(lexer.PREPROCESSOR, 'ifndef', 'endif')
 lex:add_fold_point(lexer.PREPROCESSOR, 'region', 'endregion')
 lex:add_fold_point(lexer.OPERATOR, '{', '}')
 lex:add_fold_point(lexer.COMMENT, '/*', '*/')
-lex:add_fold_point(lexer.COMMENT, lexer.fold_consecutive_lines('//'))
+
+lexer.property['scintillua.comment'] = '//'
 
 return lex

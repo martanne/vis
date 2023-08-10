@@ -1,4 +1,4 @@
--- Copyright 2013-2022 Michael T. Richter. See LICENSE.
+-- Copyright 2013-2024 Michael T. Richter. See LICENSE.
 -- SNOBOL4 lexer.
 -- This lexer works with classic SNOBOL4 as well as the CSNOBOL4 extensions.
 
@@ -65,5 +65,7 @@ lex:add_rule('control', token(lexer.PREPROCESSOR, lexer.starts_line('-' * lexer.
 
 -- Operators.
 lex:add_rule('operator', token(lexer.OPERATOR, S'¬?$.!%*/#+-@⊥&^~\\='))
+
+lexer.property['scintillua.comment'] = '#'
 
 return lex

@@ -1,4 +1,4 @@
--- Copyright 2015-2022 Charles Lehner. See LICENSE.
+-- Copyright 2015-2024 Charles Lehner. See LICENSE.
 -- ledger journal LPeg lexer, see http://www.ledger-cli.org/
 
 local lexer = require('lexer')
@@ -39,5 +39,7 @@ local directive_word = word_match{
   'end', 'fixed', 'endfixed', 'include', 'payee', 'apply', 'tag', 'test', 'year'
 } + S('AYNDCIiOobh')
 lex:add_rule('directive', token(lexer.KEYWORD, lexer.starts_line(S('!@')^-1 * directive_word)))
+
+lexer.property['scintillua.comment'] = '#'
 
 return lex

@@ -1,4 +1,4 @@
--- Copyright 2006-2022 Mitchell. See LICENSE.
+-- Copyright 2006-2024 Mitchell. See LICENSE.
 -- Eiffel LPeg lexer.
 
 local lexer = require('lexer')
@@ -53,6 +53,7 @@ lex:add_fold_point(lexer.KEYWORD, 'inspect', 'end')
 lex:add_fold_point(lexer.KEYWORD, 'once', 'end')
 lex:add_fold_point(lexer.KEYWORD, 'class',
   function(text, pos, line, s) return line:find('deferred%s+class') and 0 or 1 end)
-lex:add_fold_point(lexer.COMMENT, lexer.fold_consecutive_lines('--'))
+
+lexer.property['scintillua.comment'] = '--'
 
 return lex

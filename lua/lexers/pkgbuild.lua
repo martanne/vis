@@ -1,4 +1,4 @@
--- Copyright 2006-2022 gwash. See LICENSE.
+-- Copyright 2006-2024 gwash. See LICENSE.
 -- Archlinux PKGBUILD LPeg lexer.
 
 local lexer = require('lexer')
@@ -73,6 +73,7 @@ lex:add_rule('operator', token(lexer.OPERATOR, S('=!<>+-/*^~.,:;?()[]{}')))
 -- Fold points.
 lex:add_fold_point(lexer.OPERATOR, '(', ')')
 lex:add_fold_point(lexer.OPERATOR, '{', '}')
-lex:add_fold_point(lexer.COMMENT, lexer.fold_consecutive_lines('#'))
+
+lexer.property['scintillua.comment'] = '#'
 
 return lex

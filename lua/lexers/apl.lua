@@ -1,4 +1,4 @@
--- Copyright 2015-2022 David B. Lamkins <david@lamkins.net>. See LICENSE.
+-- Copyright 2015-2024 David B. Lamkins <david@lamkins.net>. See LICENSE.
 -- APL LPeg lexer.
 
 local lexer = require('lexer')
@@ -51,5 +51,7 @@ lex:add_rule('special', token(lexer.TYPE, S('{}[]();') + '←' + '→' + '◊'))
 
 -- Nabla.
 lex:add_rule('nabla', token(lexer.PREPROCESSOR, P('∇') + '⍫'))
+
+lexer.property['scintillua.comment'] = '#'
 
 return lex

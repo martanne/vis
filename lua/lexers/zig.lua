@@ -1,4 +1,4 @@
--- Copyright 2020-2022 Karchnu karchnu@karchnu.fr. See LICENSE.
+-- Copyright 2020-2024 Karchnu karchnu@karchnu.fr. See LICENSE.
 -- Zig LPeg lexer.
 -- (Based on the C++ LPeg lexer from Mitchell.)
 
@@ -75,9 +75,9 @@ lex:add_rule('string', token(lexer.STRING, sq_str + dq_str))
 lex:add_rule('identifier', token(lexer.IDENTIFIER, lexer.word))
 
 -- Comments.
-lex:add_rule('doc_comment', token('doc_comment', lexer.to_eol('///', true)))
-lex:add_style('doc_comment', lexer.styles.comment)
-lex:add_rule('comment', token(lexer.COMMENT, lexer.to_eol('//', true)))
+local doc_comment = lexer.to_eol('///', true)
+local comment = lexer.to_eol('//', true)
+lex:add_rule('comment', token(lexer.COMMENT, doc_comment + comment))
 
 -- Numbers.
 lex:add_rule('number', token(lexer.NUMBER, lexer.number))
@@ -87,7 +87,7 @@ lex:add_rule('operator', token(lexer.OPERATOR, S('+-/*%<>!=^&|?~:;,.()[]{}')))
 
 -- Fold points.
 lex:add_fold_point(lexer.OPERATOR, '{', '}')
-lex:add_fold_point(lexer.COMMENT, lexer.fold_consecutive_lines('//'))
-lex:add_fold_point(lexer.PREPROCESSOR, lexer.fold_consecutive_lines('///'))
+
+lexer.property['scintillua.comment'] = '//'
 
 return lex

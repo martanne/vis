@@ -1,4 +1,4 @@
--- Copyright 2006-2022 Mitchell. See LICENSE.
+-- Copyright 2006-2024 Mitchell. See LICENSE.
 -- Lexer enhanced to conform to the realities of Prologs on the ground by
 -- Michael T. Richter.  Copyright is explicitly assigned back to Mitchell.
 -- Prolog LPeg lexer.
@@ -30,9 +30,8 @@ local P, S = lpeg.P, lpeg.S
 
 local lex = lexer.new('prolog')
 
-local dialects = setmetatable({gprolog = 'gprolog', swipl = 'swipl'},
-  {__index = function(_, _) return 'iso' end})
-local dialect = dialects[lexer.property['prolog.dialect']]
+local dialect = lexer.property['prolog.dialect']
+if dialect ~= 'gprolog' and dialog ~= 'swipl' then dialect = 'iso' end
 
 -- Directives.
 local directives = {}
@@ -349,5 +348,7 @@ lex:add_rule('identifier', token(lexer.IDENTIFIER, lexer.word))
 local sq_str = lexer.range("'", true)
 local dq_str = lexer.range('"', true)
 lex:add_rule('string', token(lexer.STRING, sq_str + dq_str))
+
+lexer.property['scintillua.comment'] = '%'
 
 return lex

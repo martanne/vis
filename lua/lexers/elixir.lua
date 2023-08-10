@@ -1,4 +1,4 @@
--- Copyright 2015-2022 Mitchell. See LICENSE.
+-- Copyright 2015-2024 Mitchell. See LICENSE.
 -- Contributed by Richard Philips.
 -- Elixir LPeg lexer.
 
@@ -93,5 +93,7 @@ local integer = bin + lexer.hex_num + oct + dec
 local float = lexer.digit^1 * '.' * lexer.digit^1 * S('eE') * (S('+-')^-1 * lexer.digit^1)^-1
 lex:add_rule('number',
   B(1 - (lexer.alpha + '_')) * S('+-')^-1 * token(lexer.NUMBER, float + integer))
+
+lexer.property['scintillua.comment'] = '#'
 
 return lex

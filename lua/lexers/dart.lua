@@ -1,4 +1,4 @@
--- Copyright 2013-2022 Mitchell. See LICENSE.
+-- Copyright 2013-2024 Mitchell. See LICENSE.
 -- Dart LPeg lexer.
 -- Written by Brian Schott (@Hackerpilot on Github).
 
@@ -45,12 +45,12 @@ lex:add_rule('number', token(lexer.NUMBER, lexer.number))
 lex:add_rule('operator', token(lexer.OPERATOR, S('#?=!<>+-*$/%&|^~.,;()[]{}')))
 
 -- Annotations.
-lex:add_rule('annotation', token('annotation', '@' * lexer.word^1))
-lex:add_style('annotation', lexer.styles.preprocessor)
+lex:add_rule('annotation', token(lexer.ANNOTATION, '@' * lexer.word^1))
 
 -- Fold points.
 lex:add_fold_point(lexer.OPERATOR, '{', '}')
 lex:add_fold_point(lexer.COMMENT, '/*', '*/')
-lex:add_fold_point(lexer.COMMENT, lexer.fold_consecutive_lines('//'))
+
+lexer.property['scintillua.comment'] = '//'
 
 return lex

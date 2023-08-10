@@ -1,4 +1,4 @@
--- Copyright 2020-2022 Christian Hesse. See LICENSE.
+-- Copyright 2020-2024 Christian Hesse. See LICENSE.
 -- Mikrotik RouterOS script LPeg lexer.
 
 local lexer = require('lexer')
@@ -54,6 +54,7 @@ lex:add_rule('operator', token(lexer.OPERATOR, S('=!%<>+-/*&|~.,;()[]{}')))
 
 -- Fold points.
 lex:add_fold_point(lexer.OPERATOR, '{', '}')
-lex:add_fold_point(lexer.COMMENT, lexer.fold_consecutive_lines('#'))
+
+lexer.property['scintillua.comment'] = '#'
 
 return lex

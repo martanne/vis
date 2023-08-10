@@ -1,4 +1,4 @@
--- Copyright 2006-2022 Mitchell. See LICENSE.
+-- Copyright 2006-2024 Mitchell. See LICENSE.
 -- Smalltalk LPeg lexer.
 
 local lexer = require('lexer')
@@ -40,5 +40,7 @@ lex:add_rule('label', token(lexer.LABEL, '#' * lexer.word))
 
 -- Fold points.
 lex:add_fold_point(lexer.OPERATOR, '[', ']')
+
+lexer.property['scintillua.comment'] = '"|"'
 
 return lex

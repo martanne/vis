@@ -1,4 +1,4 @@
--- Copyright 2006-2022 Mitchell. See LICENSE.
+-- Copyright 2006-2024 Mitchell. See LICENSE.
 -- Copyright 2017 Michel Martens.
 -- Crystal LPeg lexer (based on Ruby).
 
@@ -49,18 +49,13 @@ local heredoc = '<<' * P(function(input, index)
 end)
 local string = token(lexer.STRING, (sq_str + dq_str + heredoc + cmd_str) * S('f')^-1)
 -- TODO: regex_str fails with `obj.method /patt/` syntax.
-local regex_str =
-  #P('/') * lexer.last_char_includes('!%^&*([{-=+|:;,?<>~') * lexer.range('/', true) * S('iomx')^0
+local regex_str = lexer.after_set('!%^&*([{-=+|:;,?<>~', lexer.range('/', true) * S('iomx')^0)
 local regex = token(lexer.REGEX, regex_str)
 lex:add_rule('string', string + regex)
 
 -- Numbers.
-local dec = lexer.digit^1 * ('_' * lexer.digit^1)^0 * S('ri')^-1
-local bin = '0b' * S('01')^1 * ('_' * S('01')^1)^0
-local integer = S('+-')^-1 * (bin + lexer.hex_num + lexer.oct_num + dec)
--- TODO: meta, control, etc. for numeric_literal.
-local numeric_literal = '?' * (lexer.any - lexer.space) * -word_char
-lex:add_rule('number', token(lexer.NUMBER, lexer.float * S('ri')^-1 + integer + numeric_literal))
+local numeric_literal = '?' * (lexer.any - lexer.space) * -word_char -- TODO: meta, control, etc.
+lex:add_rule('number', token(lexer.NUMBER, lexer.number_('_') * S('ri')^-1 + numeric_literal))
 
 -- Variables.
 local global_var = '$' *
@@ -71,7 +66,7 @@ lex:add_rule('variable', token(lexer.VARIABLE, global_var + class_var + inst_var
 
 -- Symbols.
 lex:add_rule('symbol', token('symbol', ':' * P(function(input, index)
-  if input:sub(index - 2, index - 2) ~= ':' then return index end
+  if input:sub(index - 2, index - 2) ~= ':' then return true end
 end) * (word_char^1 + sq_str + dq_str)))
 lex:add_style('symbol', lexer.styles.constant)
 
@@ -97,6 +92,7 @@ lex:add_fold_point(lexer.KEYWORD, 'until', disambiguate)
 lex:add_fold_point(lexer.OPERATOR, '(', ')')
 lex:add_fold_point(lexer.OPERATOR, '[', ']')
 lex:add_fold_point(lexer.OPERATOR, '{', '}')
-lex:add_fold_point(lexer.COMMENT, lexer.fold_consecutive_lines('#'))
+
+lexer.property['scintillua.comment'] = '#'
 
 return lex

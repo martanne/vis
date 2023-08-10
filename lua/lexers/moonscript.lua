@@ -1,4 +1,4 @@
--- Copyright 2016-2022 Alejandro Baez (https://keybase.io/baez). See LICENSE.
+-- Copyright 2016-2024 Alejandro Baez (https://keybase.io/baez). See LICENSE.
 -- Moonscript LPeg lexer.
 
 local lexer = require('lexer')
@@ -12,7 +12,7 @@ lex:add_rule('whitspace', token(lexer.WHITESPACE, lexer.space^1))
 
 -- Table keys.
 lex:add_rule('tbl_key', token('tbl_key', lexer.word * ':' + ':' * lexer.word))
-lex:add_style('tbl_key', lexer.STYLE_REGEX)
+lex:add_style('tbl_key', lexer.styles.regex)
 
 -- Keywords.
 lex:add_rule('keyword', token(lexer.KEYWORD, word_match{
@@ -48,7 +48,7 @@ lex:add_rule('constant', token(lexer.CONSTANT, word_match{
 }))
 
 -- Libraries.
-lex:add_rule('library', token('library', word_match{
+lex:add_rule('library', token(lexer.FUNCTION_BUILTIN, word_match{
   -- Coroutine.
   'coroutine', 'coroutine.create', 'coroutine.resume', 'coroutine.running', 'coroutine.status',
   'coroutine.wrap', 'coroutine.yield',
@@ -94,7 +94,7 @@ lex:add_rule('library', token('library', word_match{
   -- Debug added in 5.2.
   'debug.getuservalue', 'debug.setuservalue', 'debug.upvalueid', 'debug.upvaluejoin',
 
-  --- MoonScript 0.3.1 standard library.
+  -- MoonScript 0.3.1 standard library.
   -- Printing functions.
   'p',
   -- Table functions.
@@ -106,7 +106,6 @@ lex:add_rule('library', token('library', word_match{
   -- Debug functions.
   'debug.upvalue'
 }))
-lex:add_style('library', lexer.styles.type)
 
 -- Identifiers.
 local identifier = token(lexer.IDENTIFIER, lexer.word)
@@ -121,8 +120,7 @@ local longstring = lpeg.Cmt('[' * lpeg.C(P('=')^0) * '[', function(input, index,
   local _, e = input:find(']' .. eq .. ']', index, true)
   return (e or #input) + 1
 end)
-lex:add_rule('string', token(lexer.STRING, sq_str + dq_str) + token('longstring', longstring))
-lex:add_style('longstring', lexer.styles.string)
+lex:add_rule('string', token(lexer.STRING, sq_str + dq_str) + token(lexer.STRING, longstring))
 
 -- Comments.
 local line_comment = lexer.to_eol('--')
@@ -140,5 +138,7 @@ lex:add_style('fndef', lexer.styles.preprocessor)
 lex:add_rule('operator', token(lexer.OPERATOR, S('+-*!\\/%^#=<>;:,.')))
 lex:add_rule('symbol', token('symbol', S('(){}[]')))
 lex:add_style('symbol', lexer.styles.embedded)
+
+lexer.property['scintillua.comment'] = '--'
 
 return lex

@@ -1,4 +1,4 @@
--- Copyright 2017-2022 David B. Lamkins. See LICENSE.
+-- Copyright 2017-2024 David B. Lamkins. See LICENSE.
 -- xs LPeg lexer.
 -- Adapted from rc lexer by Michael Forney.
 
@@ -54,6 +54,7 @@ lex:add_rule('operator', token(lexer.OPERATOR, S('@`=!<>*&^|;?()[]{}') + '\\\n')
 
 -- Fold points.
 lex:add_fold_point(lexer.OPERATOR, '{', '}')
-lex:add_fold_point(lexer.COMMENT, lexer.fold_consecutive_lines('#'))
+
+lexer.property['scintillua.comment'] = '#'
 
 return lex

@@ -1,4 +1,4 @@
--- Copyright 2006-2022 Robert Gieseke, Lars Otter. See LICENSE.
+-- Copyright 2006-2024 Robert Gieseke, Lars Otter. See LICENSE.
 -- ConTeXt LPeg lexer.
 
 local lexer = require('lexer')
@@ -42,12 +42,13 @@ lex:add_rule('operator', operator)
 lex:add_fold_point('environment', '\\start', '\\stop')
 lex:add_fold_point('environment', '\\begin', '\\end')
 lex:add_fold_point(lexer.OPERATOR, '{', '}')
-lex:add_fold_point(lexer.COMMENT, lexer.fold_consecutive_lines('%'))
 
 -- Embedded Lua.
 local luatex = lexer.load('lua')
 local luatex_start_rule = #P('\\startluacode') * environment
 local luatex_end_rule = #P('\\stopluacode') * environment
 lex:embed(luatex, luatex_start_rule, luatex_end_rule)
+
+lexer.property['scintillua.comment'] = '%'
 
 return lex

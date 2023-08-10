@@ -1,40 +1,47 @@
--- Copyright 2016-2022 Alejandro Baez (https://keybase.io/baez). See LICENSE.
+-- Copyright 2016-2024 Alejandro Baez (https://keybase.io/baez). See LICENSE.
 -- Dockerfile LPeg lexer.
 
-local lexer = require('lexer')
-local token, word_match = lexer.token, lexer.word_match
-local P, S = lpeg.P, lpeg.S
+local lexer = lexer
+local P, S, B = lpeg.P, lpeg.S, lpeg.B
 
-local lex = lexer.new('dockerfile', {fold_by_indentation = true})
-
--- Whitespace
-lex:add_rule('whitespace', token(lexer.WHITESPACE, lexer.space^1))
+local lex = lexer.new(..., {fold_by_indentation = true})
 
 -- Keywords.
-lex:add_rule('keyword', token(lexer.KEYWORD, word_match{
-  'ADD', 'ARG', 'CMD', 'COPY', 'ENTRYPOINT', 'ENV', 'EXPOSE', 'FROM', 'LABEL', 'MAINTAINER',
-  'ONBUILD', 'RUN', 'STOPSIGNAL', 'USER', 'VOLUME', 'WORKDIR'
-}))
+local keyword = lex:tag(lexer.KEYWORD, lex:word_match(lexer.KEYWORD))
+lex:add_rule('keyword', keyword)
 
 -- Identifiers.
-lex:add_rule('identifier', token(lexer.IDENTIFIER, lexer.word))
+lex:add_rule('identifier', lex:tag(lexer.IDENTIFIER, lexer.word))
 
 -- Variable.
 lex:add_rule('variable',
-  token(lexer.VARIABLE, S('$')^1 * (P('{')^1 * lexer.word * P('}')^1 + lexer.word)))
+-B('\\') * lex:tag(lexer.OPERATOR, '$' * P('{')^-1) * lex:tag(lexer.VARIABLE, lexer.word))
 
 -- Strings.
 local sq_str = lexer.range("'", false, false)
 local dq_str = lexer.range('"')
-lex:add_rule('string', token(lexer.STRING, sq_str + dq_str))
+lex:add_rule('string', lex:tag(lexer.STRING, sq_str + dq_str))
 
 -- Comments.
-lex:add_rule('comment', token(lexer.COMMENT, lexer.to_eol('#')))
+lex:add_rule('comment', lex:tag(lexer.COMMENT, lexer.to_eol('#')))
 
 -- Numbers.
-lex:add_rule('number', token(lexer.NUMBER, lexer.number))
+lex:add_rule('number', lex:tag(lexer.NUMBER, lexer.number))
 
 -- Operators.
-lex:add_rule('operator', token(lexer.OPERATOR, S('\\[],=:{}')))
+lex:add_rule('operator', lex:tag(lexer.OPERATOR, S('\\[],=:{}')))
+
+local bash = lexer.load('bash')
+local start_rule = #P('RUN') * keyword * bash:get_rule('whitespace')
+local end_rule = -B('\\') * #lexer.newline * lex:get_rule('whitespace')
+lex:embed(bash, start_rule, end_rule)
+
+-- Word lists.
+lex:set_word_list(lexer.KEYWORD, {
+  'ADD', 'ARG', 'CMD', 'COPY', 'ENTRYPOINT', 'ENV', 'EXPOSE', 'FROM', 'LABEL', 'MAINTAINER',
+  'ONBUILD', 'RUN', 'STOPSIGNAL', 'USER', 'VOLUME', 'WORKDIR'
+})
+
+lexer.property['scintillua.comment'] = '#'
 
 return lex

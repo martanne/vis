@@ -1,4 +1,4 @@
--- Copyright 2014-2022 stef@ailleurs.land. See LICENSE.
+-- Copyright 2014-2024 stef@ailleurs.land. See LICENSE.
 -- Plain Texinfo version 5.2 LPeg lexer
 -- Freely inspired from Mitchell work and valuable help from him too !
 
@@ -24,17 +24,61 @@ With the use of Scintilla's `SCI_FOLDALL(SC_FOLDACTION_TOGGLE)` or Textadept's
 large documents.
 ]]
 
-local lexer = require('lexer')
+local lexer = lexer
 local token, word_match = lexer.token, lexer.word_match
 local P, S = lpeg.P, lpeg.S
 
-local lex = lexer.new('texinfo')
-
--- Whitespace.
-lex:add_rule('whitespace', token(lexer.WHITESPACE, lexer.space^1))
+local lex = lexer.new(...)
 
 -- Directives.
-local directives_base = word_match({
+lex:add_rule('directive',
+  lex:tag('command', ('@end' * lexer.space^1 + '@') * lex:word_match('directive', true)))
+
+-- Chapters.
+lex:add_rule('chapter', lex:tag('command.section',
+  ('@end' * lexer.space^1 + '@') * lex:word_match('chapter', true)))
+
+-- Common keywords.
+lex:add_rule('keyword', lex:tag(lexer.KEYWORD, ('@end' * lexer.space^1 + '@') *
+  lex:word_match(lexer.KEYWORD, true)))
+
+-- Italics
+local nested_braces = lexer.range('{', '}', false, false, true)
+lex:add_rule('emph', lex:tag(lexer.ITALIC, '@emph' * nested_braces))
+
+-- Bold
+lex:add_rule('strong', lex:tag(lexer.BOLD, '@strong' * nested_braces))
+
+-- Identifiers
+lex:add_rule('identifier', lex:tag(lexer.IDENTIFIER, lexer.word))
+
+-- Strings.
+lex:add_rule('string', lex:tag(lexer.STRING, nested_braces))
+
+-- Numbers.
+lex:add_rule('number', lex:tag(lexer.NUMBER, lexer.number))
+
+-- Comments.
+local line_comment = lexer.to_eol('@c', true)
+-- local line_comment_long = lexer.to_eol('@comment', true)
+local block_comment = lexer.range('@ignore', '@end ignore')
+lex:add_rule('comment', lex:tag(lexer.COMMENT, line_comment + block_comment))
+
+-- Fold points.
+lex:add_fold_point('command', '@titlepage', '@end titlepage')
+lex:add_fold_point('command', '@copying', '@end copying')
+lex:add_fold_point('command', '@ifset', '@end ifset')
+lex:add_fold_point('command', '@tex', '@end tex')
+lex:add_fold_point('command', '@itemize', '@end itemize')
+lex:add_fold_point('command', '@enumerate', '@end enumerate')
+lex:add_fold_point('command', '@multitable', '@end multitable')
+lex:add_fold_point('command', '@example', '@end example')
+lex:add_fold_point('command', '@smallexample', '@end smallexample')
+lex:add_fold_point('command', '@cartouche', '@end cartouche')
+lex:add_fold_point('command', '@startchapter', '@end startchapter')
+
+-- Word lists.
+lex:set_word_list('directive', {
   'end',
   -- Custom keywords for chapter folding
   'startchapter', 'endchapter',
@@ -75,12 +119,9 @@ local directives_base = word_match({
   -- not implemented
   -- Ending a Texinfo document (page 4, column 2)
   'bye'
-}, true)
-lex:add_rule('directive', token('directives', ('@end' * lexer.space^1 + '@') * directives_base))
-lex:add_style('directives', lexer.styles['function'])
+})
 
--- Chapters.
-local chapters_base = word_match({
+lex:set_word_list('chapter', {
   -- Chapter structuring (page 1, column 2)
   'lowersections', 'raisesections', 'part',
   -- Chapter structuring > Numbered, included in contents (page 1, column 2)
@@ -95,12 +136,9 @@ local chapters_base = word_match({
   'appendixsubsubsec', 'appendixsubsubsection',
   -- Chapter structuring > Unumbered, not included in contents, no new page (page 1, column 3)
   'chapheading', 'majorheading', 'heading', 'subheading', 'subsubheading'
-}, true)
-lex:add_rule('chapter', token('chapters', ('@end' * lexer.space^1 + '@') * chapters_base))
-lex:add_style('chapters', lexer.styles.class)
+})
 
--- Common keywords.
-local keyword_base = word_match({
+lex:set_word_list(lexer.KEYWORD, {
   'end',
   -- Beginning a Texinfo document (page 1, column 1)
   'setfilename', 'settitle', 'insertcopying',
@@ -162,44 +200,8 @@ local keyword_base = word_match({
   'sp', 'page', 'need', 'group', 'vskip'
   -- Definition commands (page 3, column 2)
   -- not implemented
-}, true)
-lex:add_rule('keyword', token(lexer.KEYWORD, ('@end' * lexer.space^1 + '@') * keyword_base))
+})
 
--- Italics
-local nested_braces = lexer.range('{', '}', false, false, true)
-lex:add_rule('emph', token('emph', '@emph' * nested_braces))
-lex:add_style('emph', lexer.styles.string .. {italics = true})
-
--- Bold
-lex:add_rule('strong', token('strong', '@strong' * nested_braces))
-lex:add_style('strong', lexer.styles.string .. {bold = true})
-
--- Identifiers
-lex:add_rule('identifier', token(lexer.IDENTIFIER, lexer.word))
-
--- Strings.
-lex:add_rule('string', token(lexer.STRING, nested_braces))
-
--- Numbers.
-lex:add_rule('number', token(lexer.NUMBER, lexer.number))
-
--- Comments.
-local line_comment = lexer.to_eol('@c', true)
--- local line_comment_long = lexer.to_eol('@comment', true)
-local block_comment = lexer.range('@ignore', '@end ignore')
-lex:add_rule('comment', token(lexer.COMMENT, line_comment + block_comment))
-
--- Fold points.
-lex:add_fold_point('directives', '@titlepage', '@end titlepage')
-lex:add_fold_point('directives', '@copying', '@end copying')
-lex:add_fold_point('directives', '@ifset', '@end ifset')
-lex:add_fold_point('directives', '@tex', '@end tex')
-lex:add_fold_point('directives', '@itemize', '@end itemize')
-lex:add_fold_point('directives', '@enumerate', '@end enumerate')
-lex:add_fold_point('directives', '@multitable', '@end multitable')
-lex:add_fold_point('directives', '@example', '@end example')
-lex:add_fold_point('directives', '@smallexample', '@end smallexample')
-lex:add_fold_point('directives', '@cartouche', '@end cartouche')
-lex:add_fold_point('directives', '@startchapter', '@end startchapter')
+lexer.property['scintillua.comment'] = '@c'
 
 return lex

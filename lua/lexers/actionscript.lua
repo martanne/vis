@@ -1,4 +1,4 @@
--- Copyright 2006-2022 Mitchell. See LICENSE.
+-- Copyright 2006-2024 Mitchell. See LICENSE.
 -- Actionscript LPeg lexer.
 
 local lexer = require('lexer')
@@ -53,7 +53,8 @@ lex:add_rule('operator', token(lexer.OPERATOR, S('=!<>+-/*%&|^~.,;?()[]{}')))
 -- Fold points.
 lex:add_fold_point(lexer.OPERATOR, '{', '}')
 lex:add_fold_point(lexer.COMMENT, '/*', '*/')
-lex:add_fold_point(lexer.COMMENT, lexer.fold_consecutive_lines('//'))
 lex:add_fold_point(lexer.STRING, '<![CDATA[', ']]>')
+
+lexer.property['scintillua.comment'] = '//'
 
 return lex

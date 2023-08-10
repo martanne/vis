@@ -1,4 +1,4 @@
--- Copyright (c) 2014-2022 Piotr Orzechowski [drzewo.org]. See LICENSE.
+-- Copyright (c) 2014-2024 Piotr Orzechowski [drzewo.org]. See LICENSE.
 -- Xtend LPeg lexer.
 
 local lexer = require('lexer')
@@ -41,8 +41,7 @@ lex:add_rule('function', token(lexer.FUNCTION, lexer.word) * #P('('))
 lex:add_rule('identifier', token(lexer.IDENTIFIER, lexer.word))
 
 -- Templates.
-lex:add_rule('template', token('template', lexer.range("'''")))
-lex:add_style('template', lexer.styles.embedded)
+lex:add_rule('template', token(lexer.EMBEDDED, lexer.range("'''")))
 
 -- Strings.
 local sq_str = lexer.range("'", true)
@@ -72,8 +71,7 @@ local float = float_pref * dec_inf * float_suff
 lex:add_rule('number', token(lexer.NUMBER, float + hex + dec))
 
 -- Annotations.
-lex:add_rule('annotation', token('annotation', '@' * lexer.word))
-lex:add_style('annotation', lexer.styles.preprocessor)
+lex:add_rule('annotation', token(lexer.ANNOTATION, '@' * lexer.word))
 
 -- Operators.
 lex:add_rule('operator', token(lexer.OPERATOR, S('+-/*%<>!=^&|?~:;.()[]{}#')))
@@ -84,7 +82,7 @@ lex:add_rule('error', token(lexer.ERROR, lexer.any))
 -- Fold points.
 lex:add_fold_point(lexer.OPERATOR, '{', '}')
 lex:add_fold_point(lexer.COMMENT, '/*', '*/')
-lex:add_fold_point(lexer.COMMENT, lexer.fold_consecutive_lines('//'))
-lex:add_fold_point(lexer.KEYWORD, lexer.fold_consecutive_lines('import'))
+
+lexer.property['scintillua.comment'] = '//'
 
 return lex

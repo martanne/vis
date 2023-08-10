@@ -1,29 +1,21 @@
--- Copyright 2006-2022 Mitchell. See LICENSE.
+-- Copyright 2006-2024 Mitchell. See LICENSE.
 -- CUDA LPeg lexer.
 
-local lexer = require('lexer')
-local token, word_match = lexer.token, lexer.word_match
+local lexer = lexer
 local P, S = lpeg.P, lpeg.S
 
-local lex = lexer.new('cuda', {inherit = lexer.load('cpp')})
+local lex = lexer.new(..., {inherit = lexer.load('cpp')})
 
--- Whitespace
-lex:modify_rule('whitespace', token(lexer.WHITESPACE, lexer.space^1))
+-- Word lists.
+lex:set_word_list(lexer.KEYWORD, '__global__ __host__ __device__ __constant__ __shared__', true)
 
--- Keywords.
-local keyword = token(lexer.KEYWORD,
-  word_match('__global__ __host__ __device__ __constant__ __shared__'))
-lex:modify_rule('keyword', keyword + lex:get_rule('keyword'))
-
--- Types.
-lex:modify_rule('type', token(lexer.TYPE, word_match{
+lex:set_word_list(lexer.TYPE, {
   'uint', 'int1', 'uint1', 'int2', 'uint2', 'int3', 'uint3', 'int4', 'uint4', 'float1', 'float2',
   'float3', 'float4', 'char1', 'char2', 'char3', 'char4', 'uchar1', 'uchar2', 'uchar3', 'uchar4',
   'short1', 'short2', 'short3', 'short4', 'dim1', 'dim2', 'dim3', 'dim4'
-}) + lex:get_rule('type') +
+}, true)
 
--- Functions.
-token(lexer.FUNCTION, word_match{
+lex:set_word_list(lexer.FUNCTION_BUILTIN, {
   -- Atom.
   'atomicAdd', 'atomicAnd', 'atomicCAS', 'atomicDec', 'atomicExch', 'atomicInc', 'atomicMax',
   'atomicMin', 'atomicOr', 'atomicSub', 'atomicXor', --
@@ -61,9 +53,10 @@ token(lexer.FUNCTION, word_match{
   'cudaMemcpyToSymbol', 'cudaMemset', 'cudaMemset2D', 'cudaMemset3D', 'cudaSetDevice',
   'cudaSetupArgument', 'cudaStreamCreate', 'cudaStreamDestroy', 'cudaStreamQuery',
   'cudaStreamSynchronize', 'cudaThreadExit', 'cudaThreadSynchronize', 'cudaUnbindTexture'
-}) +
+}, true)
 
--- Variables.
-token(lexer.VARIABLE, word_match('gridDim blockIdx blockDim threadIdx')))
+lex:set_word_list(lexer.CONSTANT_BUILTIN, 'gridDim blockIdx blockDim threadIdx', true)
+
+lexer.property['scintillua.comment'] = '//'
 
 return lex

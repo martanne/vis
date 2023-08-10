@@ -1,4 +1,4 @@
--- Copyright 2018-2022 Hugo O. Rivera. See LICENSE.
+-- Copyright 2018-2024 Hugo O. Rivera. See LICENSE.
 -- Reason (https://reasonml.github.io/) LPeg lexer.
 
 local lexer = require('lexer')
@@ -61,5 +61,7 @@ lex:add_rule('number', token(lexer.NUMBER, lexer.number))
 
 -- Operators.
 lex:add_rule('operator', token(lexer.OPERATOR, S('=<>+-*/.,:;~!#%^&|?[](){}')))
+
+lexer.property['scintillua.comment'] = '//'
 
 return lex

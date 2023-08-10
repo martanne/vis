@@ -1,4 +1,4 @@
--- Copyright 2006-2022 Brian "Sir Alaran" Schott. See LICENSE.
+-- Copyright 2006-2024 Brian "Sir Alaran" Schott. See LICENSE.
 -- Dot LPeg lexer.
 -- Based off of lexer code by Mitchell.
 
@@ -51,6 +51,7 @@ lex:add_rule('operator', token(lexer.OPERATOR, S('->()[]{};')))
 -- Fold points.
 lex:add_fold_point(lexer.OPERATOR, '{', '}')
 lex:add_fold_point(lexer.COMMENT, '/*', '*/')
-lex:add_fold_point(lexer.COMMENT, lexer.fold_consecutive_lines('//'))
+
+lexer.property['scintillua.comment'] = '//'
 
 return lex

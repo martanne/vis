@@ -1,4 +1,4 @@
--- Copyright 2006-2022 Mitchell. See LICENSE.
+-- Copyright 2006-2024 Mitchell. See LICENSE.
 -- Pascal LPeg lexer.
 
 local lexer = require('lexer')
@@ -24,7 +24,7 @@ lex:add_rule('keyword', token(lexer.KEYWORD, word_match({
   'message', 'name', 'namespaces', 'near', 'nodefault', 'overload', 'override', 'package', 'pascal',
   'platform', 'private', 'protected', 'public', 'published', 'read', 'readonly', 'register',
   'reintroduce', 'requires', 'resident', 'safecall', 'stdcall', 'stored', 'varargs', 'virtual',
-  'write', 'writeln', 'writeonly', --
+  'write', 'writeonly', --
   'false', 'nil', 'self', 'true'
 }, true)))
 
@@ -58,5 +58,7 @@ lex:add_rule('number', token(lexer.NUMBER, lexer.number * S('LlDdFf')^-1))
 
 -- Operators.
 lex:add_rule('operator', token(lexer.OPERATOR, S('.,;^@:=<>+-/*()[]')))
+
+lexer.property['scintillua.comment'] = '//'
 
 return lex

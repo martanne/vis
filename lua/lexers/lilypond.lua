@@ -1,4 +1,4 @@
--- Copyright 2006-2022 Robert Gieseke. See LICENSE.
+-- Copyright 2006-2024 Robert Gieseke. See LICENSE.
 -- Lilypond LPeg lexer.
 -- TODO Embed Scheme; Notes?, Numbers?
 
@@ -26,5 +26,7 @@ lex:add_rule('comment', token(lexer.COMMENT, lexer.to_eol('%')))
 
 -- Operators.
 lex:add_rule('operator', token(lexer.OPERATOR, S("{}'~<>|")))
+
+lexer.property['scintillua.comment'] = '%'
 
 return lex

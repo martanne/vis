@@ -1,4 +1,4 @@
--- Copyright 2017-2022 Michael Forney. See LICENSE.
+-- Copyright 2017-2024 Michael Forney. See LICENSE.
 -- rc LPeg lexer.
 
 local lexer = require('lexer')
@@ -46,6 +46,7 @@ lex:add_rule('operator', token(lexer.OPERATOR, S('@`=!<>*&^|;?()[]{}') + '\\\n')
 
 -- Fold points.
 lex:add_fold_point(lexer.OPERATOR, '{', '}')
-lex:add_fold_point(lexer.COMMENT, lexer.fold_consecutive_lines('#'))
+
+lexer.property['scintillua.comment'] = '#'
 
 return lex

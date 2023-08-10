@@ -1,17 +1,33 @@
--- Copyright 2016-2022 Christian Hesse. See LICENSE.
+-- Copyright 2016-2024 Christian Hesse. See LICENSE.
 -- fstab LPeg lexer.
 
-local lexer = require('lexer')
-local token, word_match = lexer.token, lexer.word_match
+local lexer = lexer
 local P, S = lpeg.P, lpeg.S
 
-local lex = lexer.new('fstab', {lex_by_line = true})
-
--- Whitespace.
-lex:add_rule('whitespace', token(lexer.WHITESPACE, lexer.space^1))
+local lex = lexer.new(..., {lex_by_line = true})
 
 -- Keywords.
-lex:add_rule('keyword', token(lexer.KEYWORD, word_match{
+lex:add_rule('keyword', lex:tag(lexer.KEYWORD, lex:word_match(lexer.KEYWORD)))
+
+-- Numbers.
+local uuid = lexer.xdigit^8 * ('-' * lexer.xdigit^4)^-3 * '-' * lexer.xdigit^12
+local integer = S('+-')^-1 * (lexer.hex_num + lexer.oct_num_('_') + lexer.dec_num_('_'))
+lex:add_rule('number', lex:tag(lexer.NUMBER, uuid + lexer.float + integer))
+
+-- Identifiers.
+lex:add_rule('identifier',
+  lex:tag(lexer.IDENTIFIER, (lexer.alpha + '_') * (lexer.alnum + S('_.'))^0))
+
+-- Comments.
+lex:add_rule('comment', lex:tag(lexer.COMMENT, lexer.starts_line(lexer.to_eol('#'))))
+
+-- Directories.
+lex:add_rule('directory', lex:tag(lexer.VARIABLE, '/' * (1 - lexer.space)^0))
+
+-- Operators.
+lex:add_rule('operator', lex:tag(lexer.OPERATOR, S('=,')))
+
+lex:set_word_list(lexer.KEYWORD, {
   -- Basic filesystem-independent mount options.
   'async', 'atime', 'auto', 'comment', 'context', 'defaults', 'defcontext', 'dev', 'dirsync',
   'exec', 'fscontext', 'group', 'iversion', 'lazytime', 'loud', 'mand', '_netdev', 'noatime',
@@ -32,8 +48,8 @@ lex:add_rule('keyword', token(lexer.KEYWORD, word_match{
   'compress', 'zlib', 'lzo', 'no', 'compress-force', 'degraded', 'device', 'discard',
   'enospc_debug', 'fatal_errors', 'bug', 'panic', 'flushoncommit', 'inode_cache', 'max_inline',
   'metadata_ratio', 'noacl', 'nobarrier', 'nodatacow', 'nodatasum', 'notreelog', 'recovery',
-  'rescan_uuid_tree', 'skip_balance', 'nospace_cache', 'clear_cache', 'ssd', 'nossd', 'ssd_spread',
-  'subvol', 'subvolid', 'subvolrootid', 'thread_pool', 'user_subvol_rm_allowed',
+  'rescan_uuid_tree', 'skip_balance', 'space_cache', 'nospace_cache', 'clear_cache', 'ssd', 'nossd',
+  'ssd_spread', 'subvol', 'subvolid', 'subvolrootid', 'thread_pool', 'user_subvol_rm_allowed',
   -- Mount options for devpts.
   'uid', 'gid', 'mode', 'newinstance', 'ptmxmode',
   -- Mount options for ext2.
@@ -91,6 +107,8 @@ lex:add_rule('keyword', token(lexer.KEYWORD, word_match{
   'uni_xlate', 'posix', 'nonumtail', 'utf8', 'shortname', 'lower', 'win95', 'winnt', 'mixed',
   -- Mount options for usbfs.
   'devuid', 'devgid', 'devmode', 'busuid', 'busgid', 'busmode', 'listuid', 'listgid', 'listmode',
+  -- Mount options for proc.
+  'hidepid',
   -- Filesystems.
   'adfs', 'ados', 'affs', 'anon_inodefs', 'atfs', 'audiofs', 'auto', 'autofs', 'bdev', 'befs',
   'bfs', 'btrfs', 'binfmt_misc', 'cd9660', 'cfs', 'cgroup', 'cifs', 'coda', 'configfs', 'cpuset',
@@ -102,25 +120,8 @@ lex:add_rule('keyword', token(lexer.KEYWORD, word_match{
   'smbfs', 'squashfs', 'sockfs', 'sshfs', 'std', 'subfs', 'swap', 'sysfs', 'sysv', 'tcfs', 'tmpfs',
   'udf', 'ufs', 'umap', 'umsdos', 'union', 'usbfs', 'userfs', 'vfat', 'vs3fs', 'vxfs', 'wrapfs',
   'wvfs', 'xenfs', 'xfs', 'zisofs'
-}))
+})
 
--- Numbers.
-local uuid = lexer.xdigit^8 * ('-' * lexer.xdigit^4)^-3 * '-' * lexer.xdigit^12
-local dec = lexer.digit^1 * ('_' * lexer.digit^1)^0
-local oct_num = '0' * S('01234567_')^1
-local integer = S('+-')^-1 * (lexer.hex_num + oct_num + dec)
-lex:add_rule('number', token(lexer.NUMBER, uuid + lexer.float + integer))
-
--- Identifiers.
-lex:add_rule('identifier', token(lexer.IDENTIFIER, (lexer.alpha + '_') * (lexer.alnum + S('_.'))^0))
-
--- Comments.
-lex:add_rule('comment', token(lexer.COMMENT, lexer.starts_line(lexer.to_eol('#'))))
-
--- Directories.
-lex:add_rule('directory', token(lexer.VARIABLE, '/' * (1 - lexer.space)^0))
-
--- Operators.
-lex:add_rule('operator', token(lexer.OPERATOR, S('=,')))
+lexer.property['scintillua.comment'] = '#'
 
 return lex

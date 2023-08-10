@@ -1,4 +1,4 @@
--- Copyright 2015-2022 Jason Schindler. See LICENSE.
+-- Copyright 2015-2024 Jason Schindler. See LICENSE.
 -- Gherkin (https://github.com/cucumber/cucumber/wiki/Gherkin) LPeg lexer.
 
 local lexer = require('lexer')
@@ -26,15 +26,14 @@ lex:add_rule('comment', token(lexer.COMMENT, lexer.to_eol('#')))
 -- lex:add_rule('number', token(lexer.NUMBER, lexer.number))
 
 -- Tags.
-lex:add_rule('tag', token('tag', '@' * lexer.word^0))
-lex:add_style('tag', lexer.styles.label)
+lex:add_rule('tag', token(lexer.LABEL, '@' * lexer.word^0))
 
 -- Placeholders.
-lex:add_rule('placeholder', token('placeholder', lexer.range('<', '>', false, false, true)))
-lex:add_style('placeholder', lexer.styles.variable)
+lex:add_rule('placeholder', token(lexer.VARIABLE, lexer.range('<', '>', false, false, true)))
 
 -- Examples.
-lex:add_rule('example', token('example', lexer.to_eol('|')))
-lex:add_style('example', lexer.styles.number)
+lex:add_rule('example', token(lexer.DEFAULT, lexer.to_eol('|')))
+
+lexer.property['scintillua.comment'] = '#'
 
 return lex

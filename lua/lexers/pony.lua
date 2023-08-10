@@ -1,4 +1,4 @@
--- Copyright 2017-2022 Murray Calavera. See LICENSE.
+-- Copyright 2017-2024 Murray Calavera. See LICENSE.
 -- Pony LPeg lexer.
 
 local lexer = require('lexer')
@@ -90,5 +90,7 @@ lex:add_rule('punctuation',
 
 -- Qualifiers.
 lex:add_rule('qualifier', token(lexer.LABEL, '#' * word_match('read send share any alias')))
+
+lexer.property['scintillua.comment'] = '//'
 
 return lex

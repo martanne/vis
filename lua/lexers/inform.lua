@@ -1,5 +1,5 @@
--- Copyright 2010-2022 Jeff Stone. See LICENSE.
--- Inform LPeg lexer for Scintillua.
+-- Copyright 2010-2024 Jeff Stone. See LICENSE.
+-- Inform 6 LPeg lexer for Scintillua.
 -- JMS 2010-04-25.
 
 local lexer = require('lexer')
@@ -39,7 +39,7 @@ lex:add_rule('keyword', token(lexer.KEYWORD, word_match{
 }))
 
 -- Library actions.
-lex:add_rule('action', token('action', word_match{
+lex:add_rule('action', token(lexer.FUNCTION_BUILTIN, word_match{
   'Answer', 'Ask', 'AskFor', 'Attack', 'Blow', 'Burn', 'Buy', 'Climb', 'Close', 'Consult', 'Cut',
   'Dig', 'Disrobe', 'Drink', 'Drop', 'Eat', 'Empty', 'EmptyT', 'Enter', 'Examine', 'Exit', 'Fill',
   'FullScore', 'GetOff', 'Give', 'Go', 'GoIn', 'Insert', 'Inv', 'InvTall', 'InvWide', 'Jump',
@@ -51,7 +51,6 @@ lex:add_rule('action', token('action', word_match{
   'Tell', 'Think', 'ThrowAt', 'ThrownAt', 'Tie', 'Touch', 'Transfer', 'Turn', 'Unlock', 'VagueGo',
   'Verify', 'Version', 'Wait', 'Wake', 'WakeOther', 'Wave', 'WaveHands', 'Wear', 'Yes'
 }))
-lex:add_style('action', lexer.styles.variable)
 
 -- Identifiers.
 lex:add_rule('identifier', token(lexer.IDENTIFIER, lexer.word))
@@ -71,5 +70,7 @@ lex:add_rule('number', token(lexer.NUMBER, lexer.integer + inform_hex + inform_b
 
 -- Operators.
 lex:add_rule('operator', token(lexer.OPERATOR, S('@~=+-*/%^#=<>;:,.{}[]()&|?')))
+
+lexer.property['scintillua.comment'] = '!'
 
 return lex

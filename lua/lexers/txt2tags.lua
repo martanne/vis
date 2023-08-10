@@ -1,4 +1,4 @@
--- Copyright 2019-2022 Julien L. See LICENSE.
+-- Copyright 2019-2024 Julien L. See LICENSE.
 -- txt2tags LPeg lexer.
 -- (developed and tested with Txt2tags Markup Rules
 -- [https://txt2tags.org/doc/english/rules.t2t])
@@ -16,7 +16,7 @@ local ws = token(lexer.WHITESPACE, (lexer.space - lexer.newline)^1)
 
 -- Titles
 local alphanumeric = lexer.alnum + S('_-')
-local header_label = token('header_label_start', '[') * token('header_label', alphanumeric^1) *
+local header_label = token('header_label_start', '[') * token(lexer.LABEL, alphanumeric^1) *
   token('header_label_end', ']')
 local function h(level)
   local equal = string.rep('=', level) * (lexer.nonnewline - '=')^1 * string.rep('=', level)
@@ -36,29 +36,29 @@ local function span(name, delimiter)
     (delimiter * nonspace * (lexer.nonnewline - nonspace * delimiter)^0 * nonspace * delimiter *
       S(delimiter)^0))
 end
-local bold = span('bold', '**')
-local italic = span('italic', '//')
-local underline = span('underline', '__')
+local bold = span(lexer.BOLD, '**')
+local italic = span(lexer.ITALIC, '//')
+local underline = span(lexer.UNDERLINE, '__')
 local strike = span('strike', '--')
-local mono = span('mono', '``')
-local raw = span('raw', '""')
+local mono = span(lexer.CODE, '``')
+local raw = span(lexer.DEFAULT, '""')
 local tagged = span('tagged', "''")
 local inline = bold + italic + underline + strike + mono + raw + tagged
 
 -- Link.
-local email = token('email',
+local email = token(lexer.LINK,
   (nonspace - '@')^1 * '@' * (nonspace - '.')^1 * ('.' * (nonspace - S('.?'))^1)^1 *
     ('?' * nonspace^1)^-1)
-local host = token('host',
+local host = token(lexer.LINK,
   word_match('www ftp', true) * (nonspace - '.')^0 * '.' * (nonspace - '.')^1 * '.' *
     (nonspace - S(',.'))^1)
-local url = token('url',
+local url = token(lexer.LINK,
   (nonspace - '://')^1 * '://' * (nonspace - ',' - '.')^1 * ('.' * (nonspace - S(',./?#'))^1)^1 *
     ('/' * (nonspace - S('./?#'))^0 * ('.' * (nonspace - S(',.?#'))^1)^0)^0 *
     ('?' * (nonspace - '#')^1)^-1 * ('#' * nonspace^0)^-1)
-local label_with_address = token('label_start', '[') * lexer.space^0 *
-  token('address_label', ((nonspace - ']')^1 * lexer.space^1)^1) *
-  token('address', (nonspace - ']')^1) * token('label_end', ']')
+local label_with_address = token(lexer.LABEL, '[') * lexer.space^0 *
+  token(lexer.LABEL, ((nonspace - ']')^1 * lexer.space^1)^1) * token(lexer.LINK, (nonspace - ']')^1) *
+  token(lexer.LABEL, ']')
 local link = label_with_address + url + host + email
 
 -- Line.
@@ -68,22 +68,22 @@ local line = token('line', S('-=_')^20)
 local image_only = token('image_start', '[') * token('image', (nonspace - ']')^1) *
   token('image_end', ']')
 local image_link = token('image_link_start', '[') * image_only *
-  token('image_link_sep', lexer.space^1) * token('image_link', (nonspace - ']')^1) *
+  token('image_link_sep', lexer.space^1) * token(lexer.LINK, (nonspace - ']')^1) *
   token('image_link_end', ']')
 local image = image_link + image_only
 
 -- Macro.
-local macro = token('macro', '%%' * (nonspace - '(')^1 * lexer.range('(', ')', true)^-1)
+local macro = token(lexer.PREPROCESSOR, '%%' * (nonspace - '(')^1 * lexer.range('(', ')', true)^-1)
 
 -- Verbatim.
 local verbatim_line = lexer.to_eol(lexer.starts_line('```') * S(' \t'))
 local verbatim_block = lexer.range(lexer.starts_line('```'))
-local verbatim_area = token('verbatim_area', verbatim_block + verbatim_line)
+local verbatim_area = token(lexer.CODE, verbatim_block + verbatim_line)
 
 -- Raw.
 local raw_line = lexer.to_eol(lexer.starts_line('"""') * S(' \t'))
 local raw_block = lexer.range(lexer.starts_line('"""'))
-local raw_area = token('raw_area', raw_block + raw_line)
+local raw_area = token(lexer.DEFAULT, raw_block + raw_line)
 
 -- Tagged.
 local tagged_line = lexer.to_eol(lexer.starts_line('\'\'\'') * S(' \t'))
@@ -121,24 +121,9 @@ local font_size = tonumber(lexer.property_expanded['style.default']:match('size:
 for n = 5, 1, -1 do
   lex:add_style('h' .. n, {fore = lexer.colors.red, size = font_size + (6 - n)})
 end
-lex:add_style('header_label', lexer.styles.label)
-lex:add_style('email', {underlined = true})
-lex:add_style('host', {underlined = true})
-lex:add_style('url', {underlined = true})
-lex:add_style('address_label', lexer.styles.label)
-lex:add_style('address', {underlined = true})
 lex:add_style('image', {fore = lexer.colors.green})
-lex:add_style('image_link', {underlined = true})
-lex:add_style('macro', lexer.styles.preprocessor)
-lex:add_style('bold', {bold = true})
-lex:add_style('italic', {italics = true})
-lex:add_style('underline', {underlined = true})
 lex:add_style('strike', {italics = true}) -- a strike style is not available
-lex:add_style('mono', {font = 'mono'})
-lex:add_style('raw', {back = lexer.colors.grey})
 lex:add_style('tagged', lexer.styles.embedded)
-lex:add_style('verbatim_area', {font = 'mono'}) -- in consistency with mono
-lex:add_style('raw_area', {back = lexer.colors.grey}) -- in consistency with raw
 lex:add_style('tagged_area', lexer.styles.embedded) -- in consistency with tagged
 lex:add_style('table_sep', {fore = lexer.colors.green})
 lex:add_style('header_cell_content', {fore = lexer.colors.green})

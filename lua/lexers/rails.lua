@@ -1,17 +1,13 @@
--- Copyright 2006-2022 Mitchell. See LICENSE.
+-- Copyright 2006-2024 Mitchell. See LICENSE.
 -- Ruby on Rails LPeg lexer.
 
-local lexer = require('lexer')
-local token, word_match = lexer.token, lexer.word_match
+local lexer = lexer
 local P, S = lpeg.P, lpeg.S
 
-local lex = lexer.new('rails', {inherit = lexer.load('ruby')})
+local lex = lexer.new(..., {inherit = lexer.load('ruby')})
 
--- Whitespace
-lex:modify_rule('whitespace', token(lexer.WHITESPACE, lexer.space^1))
-
--- Functions.
-lex:modify_rule('function', token(lexer.FUNCTION, word_match{
+-- Word lists.
+lex:set_word_list(lexer.FUNCTION_BUILTIN, {
   -- ActionPack.
   'before_filter', 'skip_before_filter', 'skip_after_filter', 'after_filter', 'around_filter',
   'filter', 'filter_parameter_logging', 'layout', 'require_dependency', 'render', 'render_action',
@@ -38,6 +34,8 @@ lex:modify_rule('function', token(lexer.FUNCTION, word_match{
   -- ActiveSupport.
   'alias_method_chain', 'alias_attribute', 'delegate', 'cattr_accessor', 'mattr_accessor',
   'returning', 'memoize'
-}) + lex:get_rule('function'))
+}, true)
+
+lexer.property['scintillua.comment'] = '#'
 
 return lex

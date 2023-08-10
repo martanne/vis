@@ -1,4 +1,4 @@
--- Copyright 2006-2022 Mitchell. See LICENSE.
+-- Copyright 2006-2024 Mitchell. See LICENSE.
 -- Gap LPeg lexer.
 
 local lexer = require('lexer')
@@ -39,6 +39,7 @@ lex:add_fold_point(lexer.KEYWORD, 'function', 'end')
 lex:add_fold_point(lexer.KEYWORD, 'do', 'od')
 lex:add_fold_point(lexer.KEYWORD, 'if', 'fi')
 lex:add_fold_point(lexer.KEYWORD, 'repeat', 'until')
-lex:add_fold_point(lexer.COMMENT, lexer.fold_consecutive_lines('#'))
+
+lexer.property['scintillua.comment'] = '#'
 
 return lex

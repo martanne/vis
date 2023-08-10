@@ -1,4 +1,4 @@
--- Copyright 2006-2022 Mitchell. See LICENSE.
+-- Copyright 2006-2024 Mitchell. See LICENSE.
 -- Nim LPeg lexer.
 
 local lexer = require('lexer')
@@ -86,17 +86,12 @@ local block_comment = lexer.range('#[', ']#')
 lex:add_rule('comment', token(lexer.COMMENT, block_comment + line_comment))
 
 -- Numbers.
-local dec = lexer.digit^1 * ('_' * lexer.digit^1)^0
-local hex = '0' * S('xX') * lexer.xdigit^1 * ('_' * lexer.xdigit^1)^0
-local bin = '0' * S('bB') * S('01')^1 * ('_' * S('01')^1)^0 * -lexer.xdigit
-local oct = '0o' * lpeg.R('07')^1
-local integer = S('+-')^-1 * (bin + hex + oct + dec) *
-  ("'" * S('iIuUfF') * (P('8') + '16' + '32' + '64'))^-1
-local float = lexer.digit^1 * ('_' * lexer.digit^1)^0 * ('.' * ('_' * lexer.digit)^0)^-1 * S('eE') *
-  S('+-')^-1 * lexer.digit^1 * ('_' * lexer.digit^1)^0
-lex:add_rule('number', token(lexer.NUMBER, float + integer))
+lex:add_rule('number', token(lexer.NUMBER, lexer.float_('_') + lexer.integer_('_') *
+  ("'" * S('iIuUfF') * (P('8') + '16' + '32' + '64'))^-1))
 
 -- Operators.
 lex:add_rule('operator', token(lexer.OPERATOR, S('=+-*/<>@$~&%|!?^.:\\`()[]{},;')))
+
+lexer.property['scintillua.comment'] = '#'
 
 return lex

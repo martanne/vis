@@ -1,4 +1,4 @@
--- Copyright 2016-2022 David B. Lamkins <david@lamkins.net>. See LICENSE.
+-- Copyright 2016-2024 David B. Lamkins <david@lamkins.net>. See LICENSE.
 -- Protocol Buffer IDL LPeg lexer.
 -- <https://developers.google.com/protocol-buffers/>
 
@@ -42,5 +42,7 @@ lex:add_rule('number', token(lexer.NUMBER, lexer.number))
 
 -- Operators.
 lex:add_rule('operator', token(lexer.OPERATOR, S('<>=|;,.()[]{}')))
+
+lexer.property['scintillua.comment'] = '//'
 
 return lex

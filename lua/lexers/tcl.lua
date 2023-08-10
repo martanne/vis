@@ -1,4 +1,4 @@
--- Copyright 2014-2022 Joshua Krämer. See LICENSE.
+-- Copyright 2014-2024 Joshua Krämer. See LICENSE.
 -- Tcl LPeg lexer.
 -- This lexer follows the TCL dodekalogue (http://wiki.tcl.tk/10259).
 -- It is based on the previous lexer by Mitchell.
@@ -16,7 +16,7 @@ lex:add_rule('whitespace', token(lexer.WHITESPACE, lexer.space^1))
 lex:add_rule('comment', token(lexer.COMMENT, lexer.to_eol('#' * P(function(input, index)
   local i = index - 2
   while i > 0 and input:find('^[ \t]', i) do i = i - 1 end
-  if i < 1 or input:find('^[\r\n;]', i) then return index end
+  if i < 1 or input:find('^[\r\n;]', i) then return true end
 end))))
 
 -- Separator (semicolon).
@@ -41,6 +41,7 @@ lex:add_rule('backslash', token(lexer.TYPE, '\\' * (oct + hex + unicode + 1)))
 
 -- Fold points.
 lex:add_fold_point(lexer.KEYWORD, '{', '}')
-lex:add_fold_point(lexer.COMMENT, lexer.fold_consecutive_lines('#'))
+
+lexer.property['scintillua.comment'] = '#'
 
 return lex

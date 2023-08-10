@@ -1,4 +1,4 @@
--- Copyright 2017-2022 Murray Calavera. See LICENSE.
+-- Copyright 2017-2024 Murray Calavera. See LICENSE.
 -- Standard ML LPeg lexer.
 
 local lexer = require('lexer')
@@ -87,5 +87,7 @@ lex:add_rule('typevar', token(lexer.VARIABLE, "'" * id))
 
 -- Operators.
 lex:add_rule('operator', token(lexer.OPERATOR, S('!*/+-^:@=<>()[]{},;._|#%&$?~`\\')))
+
+lexer.property['scintillua.comment'] = '(*)'
 
 return lex

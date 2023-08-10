@@ -1,20 +1,20 @@
--- Copyright 2006-2022 Mitchell. See LICENSE.
+-- Copyright 2006-2024 Mitchell. See LICENSE.
 -- JSP LPeg lexer.
 
-local lexer = require('lexer')
-local token, word_match = lexer.token, lexer.word_match
+local lexer = lexer
 local P, S = lpeg.P, lpeg.S
 
-local lex = lexer.new('jsp', {inherit = lexer.load('html')})
+local lex = lexer.new(..., {inherit = lexer.load('html')})
 
 -- Embedded Java.
 local java = lexer.load('java')
-local java_start_rule = token('jsp_tag', '<%' * P('=')^-1)
-local java_end_rule = token('jsp_tag', '%>')
+local java_start_rule = lex:tag(lexer.PREPROCESSOR, '<%' * P('=')^-1)
+local java_end_rule = lex:tag(lexer.PREPROCESSOR, '%>')
 lex:embed(java, java_start_rule, java_end_rule, true)
-lex:add_style('jsp_tag', lexer.styles.embedded)
 
 -- Fold points.
-lex:add_fold_point('jsp_tag', '<%', '%>')
+lex:add_fold_point(lexer.PREPROCESSOR, '<%', '%>')
+
+lexer.property['scintillua.comment'] = '<!--|-->'
 
 return lex

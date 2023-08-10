@@ -1,4 +1,4 @@
--- Copyright 2020-2022 Mitchell. See LICENSE.
+-- Copyright 2020-2024 Mitchell. See LICENSE.
 -- Elm LPeg lexer
 -- Adapted from Haskell LPeg lexer by Karl Schultheisz.
 
@@ -39,5 +39,7 @@ lex:add_rule('number', token(lexer.NUMBER, lexer.number))
 
 -- Operators.
 lex:add_rule('operator', token(lexer.OPERATOR, op))
+
+lexer.property['scintillua.comment'] = '--'
 
 return lex

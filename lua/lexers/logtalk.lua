@@ -1,4 +1,4 @@
--- Copyright © 2017-2022 Michael T. Richter <ttmrichter@gmail.com>. See LICENSE.
+-- Copyright © 2017-2024 Michael T. Richter <ttmrichter@gmail.com>. See LICENSE.
 -- Logtalk LPeg lexer.
 
 local lexer = require('lexer')
@@ -58,5 +58,7 @@ local operators = {
   'as'
 }
 lex:modify_rule('operator', token(lexer.OPERATOR, word_match(operators)) + lex:get_rule('operator'))
+
+lexer.property['scintillua.comment'] = '%'
 
 return lex

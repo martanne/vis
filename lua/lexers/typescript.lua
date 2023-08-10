@@ -1,23 +1,18 @@
--- Copyright 2021-2022 Mitchell. See LICENSE.
+-- Copyright 2021-2024 Mitchell. See LICENSE.
 -- TypeScript LPeg lexer.
 
-local lexer = require('lexer')
-local token, word_match = lexer.token, lexer.word_match
+local lexer = lexer
 local P, S = lpeg.P, lpeg.S
 
-local lex = lexer.new('typescript', {inherit = lexer.load('javascript')})
+local lex = lexer.new(..., {inherit = lexer.load('javascript')})
 
--- Whitespace
-lex:modify_rule('whitespace', token(lexer.WHITESPACE, lexer.space^1))
+-- Word lists.
+lex:set_word_list(lexer.KEYWORD, 'abstract as constructor declare is module namespace require type',
+  true)
 
--- Keywords.
-lex:modify_rule('keyword', token(lexer.KEYWORD, word_match[[
-  abstract as constructor declare is module namespace require type
-]]) + lex:get_rule('keyword'))
+lex:set_word_list(lexer.TYPE, 'boolean number bigint string unknown any void never symbol object',
+  true)
 
--- Types.
-lex:modify_rule('type', token(lexer.TYPE, word_match[[
-  boolean number bigint string unknown any void never symbol object
-]]) + lex:get_rule('type'))
+lexer.property['scintillua.comment'] = '//'
 
 return lex

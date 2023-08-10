@@ -1,4 +1,4 @@
--- Copyright 2017-2022 Michael Forney. See LICENSE
+-- Copyright 2017-2024 Michael Forney. See LICENSE
 -- Myrddin LPeg lexer.
 
 local lexer = require('lexer')
@@ -48,5 +48,7 @@ lex:add_rule('number', token(lexer.NUMBER, float + integer))
 
 -- Operators.
 lex:add_rule('operator', token(lexer.OPERATOR, S('`#_+-/*%<>~!=^&|~:;,.()[]{}')))
+
+lexer.property['scintillua.comment'] = '//'
 
 return lex

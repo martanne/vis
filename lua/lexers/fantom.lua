@@ -1,4 +1,4 @@
--- Copyright 2018-2022 Simeon Maryasin (MarSoft). See LICENSE.
+-- Copyright 2018-2024 Simeon Maryasin (MarSoft). See LICENSE.
 -- Fantom LPeg lexer.
 -- Based on Java LPeg lexer by Mitchell and Vim's Fantom syntax.
 
@@ -73,12 +73,12 @@ lex:add_rule('number', token(lexer.NUMBER, lexer.number * S('LlFfDd')^-1))
 lex:add_rule('operator', token(lexer.OPERATOR, S('+-/*%<>!=^&|?~:;.()[]{}#')))
 
 -- Annotations.
-lex:add_rule('facet', token('facet', '@' * lexer.word))
-lex:add_style('facet', lexer.styles.preprocessor)
+lex:add_rule('facet', token(lexer.ANNOTATION, '@' * lexer.word))
 
 -- Fold points.
 lex:add_fold_point(lexer.OPERATOR, '{', '}')
 lex:add_fold_point(lexer.COMMENT, '/*', '*/')
-lex:add_fold_point(lexer.COMMENT, lexer.fold_consecutive_lines('//'))
+
+lexer.property['scintillua.comment'] = '//'
 
 return lex

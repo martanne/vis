@@ -1,78 +1,75 @@
--- Copyright 2006-2022 Mitchell. See LICENSE.
+-- Copyright 2006-2024 Mitchell. See LICENSE.
 -- XML LPeg lexer.
 
-local lexer = require('lexer')
-local token, word_match = lexer.token, lexer.word_match
+local lexer = lexer
 local P, S = lpeg.P, lpeg.S
 
-local lex = lexer.new('xml')
-
--- Whitespace.
-local ws = token(lexer.WHITESPACE, lexer.space^1)
-lex:add_rule('whitespace', ws)
+local lex = lexer.new(...)
 
 -- Comments and CDATA.
-lex:add_rule('comment', token(lexer.COMMENT, lexer.range('<!--', '-->')))
-lex:add_rule('cdata', token('cdata', lexer.range('<![CDATA[', ']]>')))
-lex:add_style('cdata', lexer.styles.comment)
+lex:add_rule('comment', lex:tag(lexer.COMMENT, lexer.range('<!--', '-->')))
+lex:add_rule('cdata', lex:tag('cdata', lexer.range('<![CDATA[', ']]>')))
 
--- Doctypes and other markup tags.
-local alpha = lpeg.R('az', 'AZ', '\127\255')
-local word_char = lexer.alnum + S('_-:.??')
-local identifier = (alpha + S('_-:.?')) * word_char^0
-local doctype = token('doctype', '<!DOCTYPE') * ws * token('doctype', identifier) *
-  (ws * identifier)^-1 * (1 - P('>'))^0 * token('doctype', '>')
+-- Doctype.
+local ws = lex:get_rule('whitespace')
+local identifier = (lexer.alpha + S('_-')) * (lexer.alnum + S('_-'))^0
+local doctype = lex:tag(lexer.TAG .. '.doctype', '<!DOCTYPE') * ws *
+  lex:tag(lexer.TAG .. '.doctype', identifier) * (ws * identifier)^-1 * (1 - P('>'))^0 *
+  lex:tag(lexer.TAG .. '.doctype', '>')
 lex:add_rule('doctype', doctype)
-lex:add_style('doctype', lexer.styles.comment)
 
 -- Processing instructions.
-lex:add_rule('proc_insn', token('proc_insn', '<?' * (1 - P('?>'))^0 * P('?>')^-1))
-lex:add_style('proc_insn', lexer.styles.comment)
+lex:add_rule('proc_insn', lex:tag(lexer.TAG .. '.pi', '<?' * identifier + '?>'))
 
--- Elements.
-local namespace = token(lexer.OPERATOR, ':') * token('namespace', identifier)
-lex:add_rule('element', token('element', '<' * P('/')^-1 * identifier) * namespace^-1)
-lex:add_style('element', lexer.styles.keyword)
-lex:add_style('namespace', lexer.styles.class)
+-- Tags.
+local namespace = lex:tag(lexer.OPERATOR, ':') * lex:tag(lexer.LABEL, identifier)
+lex:add_rule('element', lex:tag(lexer.TAG, '<' * P('/')^-1 * identifier) * namespace^-1)
 
 -- Closing tags.
-lex:add_rule('close_tag', token('element', P('/')^-1 * '>'))
-
--- Attributes.
-lex:add_rule('attribute', token('attribute', identifier) * namespace^-1 * #(lexer.space^0 * '='))
-lex:add_style('attribute', lexer.styles.type)
+lex:add_rule('close_tag', lex:tag(lexer.TAG, P('/')^-1 * '>'))
 
 -- Equals.
 -- TODO: performance is terrible on large files.
 local in_tag = P(function(input, index)
   local before = input:sub(1, index - 1)
   local s, e = before:find('<[^>]-$'), before:find('>[^<]-$')
-  if s and e then return s > e and index or nil end
-  if s then return index end
-  return input:find('^[^<]->', index) and index or nil
+  if s and e then return s > e end
+  if s then return true end
+  return input:find('^[^<]->', index) ~= nil
 end)
 
--- lex:add_rule('equal', token(lexer.OPERATOR, '=')) -- * in_tag
+local equals = lex:tag(lexer.OPERATOR, '=') -- * in_tag
+-- lex:add_rule('equal', equals)
+
+-- Attributes.
+local attribute_eq = lex:tag(lexer.ATTRIBUTE, identifier) * namespace^-1 * ws^-1 * equals
+lex:add_rule('attribute', attribute_eq)
 
 -- Strings.
 local sq_str = lexer.range("'", false, false)
 local dq_str = lexer.range('"', false, false)
-lex:add_rule('string',
-  #S('\'"') * lexer.last_char_includes('=') * token(lexer.STRING, sq_str + dq_str))
+lex:add_rule('string', lex:tag(lexer.STRING, lexer.after_set('=', sq_str + dq_str)))
 
 -- Numbers.
-local number = token(lexer.NUMBER, lexer.dec_num * P('%')^-1)
-lex:add_rule('number', #lexer.digit * lexer.last_char_includes('=') * number) -- *in_tag)
+local number = lex:tag(lexer.NUMBER, lexer.dec_num * P('%')^-1)
+lex:add_rule('number', lexer.after_set('=', number)) -- *in_tag)
 
 -- Entities.
-lex:add_rule('entity', token('entity', '&' * word_match('lt gt amp apos quot') * ';'))
-lex:add_style('entity', lexer.styles.operator)
+local predefined = lex:tag(lexer.CONSTANT_BUILTIN .. '.entity',
+  '&' * lexer.word_match('lt gt amp apos quot') * ';')
+local general = lex:tag(lexer.CONSTANT .. '.entity', '&' * identifier * ';')
+lex:add_rule('entity', predefined + general)
 
 -- Fold Points.
 local function disambiguate_lt(text, pos, line, s) return not line:find('^</', s) and 1 or -1 end
-lex:add_fold_point('element', '<', disambiguate_lt)
-lex:add_fold_point('element', '/>', -1)
+lex:add_fold_point(lexer.TAG, '<', disambiguate_lt)
+lex:add_fold_point(lexer.TAG, '/>', -1)
 lex:add_fold_point(lexer.COMMENT, '<!--', '-->')
 lex:add_fold_point('cdata', '<![CDATA[', ']]>')
+
+lexer.property['scintillua.comment'] = '<!--|-->'
+lexer.property['scintillua.angle.braces'] = '1'
+lexer.property['scintillua.word.chars'] =
+  'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-'
 
 return lex

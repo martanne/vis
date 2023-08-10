@@ -1,4 +1,4 @@
--- Copyright 2006-2022 Mitchell. See LICENSE.
+-- Copyright 2006-2024 Mitchell. See LICENSE.
 -- Forth LPeg lexer.
 -- Contributions from Joseph Eib.
 
@@ -52,5 +52,7 @@ lex:add_rule('number', token(lexer.NUMBER, P('-')^-1 * lexer.digit^1 * (S('./') 
 
 -- Operators.
 lex:add_rule('operator', token(lexer.OPERATOR, S(':;<>+*-/[]#')))
+
+lexer.property['scintillua.comment'] = '\\'
 
 return lex

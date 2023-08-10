@@ -1,4 +1,4 @@
--- Copyright 2006-2022 Mitchell. See LICENSE.
+-- Copyright 2006-2024 Mitchell. See LICENSE.
 -- Lisp LPeg lexer.
 
 local lexer = require('lexer')
@@ -31,7 +31,7 @@ lex:add_rule('keyword', token(lexer.KEYWORD, word_match{
 }))
 
 -- Identifiers.
-local word = lexer.alpha * (lexer.alnum + '_' + '-')^0
+local word = lexer.alpha * (lexer.alnum + S('_-'))^0
 lex:add_rule('identifier', token(lexer.IDENTIFIER, word))
 
 -- Strings.
@@ -45,10 +45,6 @@ lex:add_rule('comment', token(lexer.COMMENT, line_comment + block_comment))
 -- Numbers.
 lex:add_rule('number', token(lexer.NUMBER, P('-')^-1 * lexer.digit^1 * (S('./') * lexer.digit^1)^-1))
 
--- Entities.
-lex:add_rule('entity', token('entity', '&' * word))
-lex:add_style('entity', lexer.styles.variable)
-
 -- Operators.
 lex:add_rule('operator', token(lexer.OPERATOR, S('<>=*/+-`@%()')))
 
@@ -57,6 +53,7 @@ lex:add_fold_point(lexer.OPERATOR, '(', ')')
 lex:add_fold_point(lexer.OPERATOR, '[', ']')
 lex:add_fold_point(lexer.OPERATOR, '{', '}')
 lex:add_fold_point(lexer.COMMENT, '#|', '|#')
-lex:add_fold_point(lexer.COMMENT, lexer.fold_consecutive_lines(';'))
+
+lexer.property['scintillua.comment'] = ';'
 
 return lex

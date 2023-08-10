@@ -1,4 +1,4 @@
--- Copyright 2006-2022 Mitchell. See LICENSE.
+-- Copyright 2006-2024 Mitchell. See LICENSE.
 -- VHDL LPeg lexer.
 
 local lexer = require('lexer')
@@ -66,5 +66,7 @@ lex:add_rule('number', token(lexer.NUMBER, lexer.number))
 
 -- Operators.
 lex:add_rule('operator', token(lexer.OPERATOR, S('=/!:;<>+-/*%&|^~()')))
+
+lexer.property['scintillua.comment'] = '--'
 
 return lex

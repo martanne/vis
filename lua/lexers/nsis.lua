@@ -1,4 +1,4 @@
--- Copyright 2006-2022 Robert Gieseke. See LICENSE.
+-- Copyright 2006-2024 Robert Gieseke. See LICENSE.
 -- NSIS LPeg lexer
 -- Based on NSIS 2.46 docs: http://nsis.sourceforge.net/Docs/.
 
@@ -144,5 +144,7 @@ lex:add_rule('label', token(lexer.LABEL, lexer.word * ':'))
 
 -- Identifiers.
 lex:add_rule('identifier', token(lexer.IDENTIFIER, lexer.word))
+
+lexer.property['scintillua.comment'] = '#'
 
 return lex

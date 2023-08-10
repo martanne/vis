@@ -1,17 +1,78 @@
--- Copyright 2006-2022 Mitchell. See LICENSE.
+-- Copyright 2006-2024 Mitchell. See LICENSE.
 -- CSS LPeg lexer.
 
-local lexer = require('lexer')
-local token, word_match = lexer.token, lexer.word_match
-local P, S = lpeg.P, lpeg.S
+local lexer = lexer
+local P, S, B = lpeg.P, lpeg.S, lpeg.B
 
-local lex = lexer.new('css')
+local lex = lexer.new(..., {no_user_word_lists = true})
 
--- Whitespace.
-lex:add_rule('whitespace', token(lexer.WHITESPACE, lexer.space^1))
+-- Tags.
+local sel_prefix = B(S('#.'))
+local sel_suffix = lexer.space^0 * S('!>+.,:[{')
+lex:add_rule('tag', -sel_prefix * lex:tag(lexer.TAG, lex:word_match(lexer.TAG) * #sel_suffix))
 
 -- Properties.
-lex:add_rule('property', token('property', word_match{
+lex:add_rule('property', lex:tag('property', lex:word_match('property')) * #P(':'))
+
+-- Values.
+lex:add_rule('value',
+  -sel_prefix * lex:tag(lexer.CONSTANT_BUILTIN, lex:word_match('value')) * -sel_suffix)
+
+-- Functions.
+lex:add_rule('function', lex:tag(lexer.FUNCTION_BUILTIN, lex:word_match(lexer.FUNCTION_BUILTIN)))
+
+-- Colors.
+local color_name = lex:tag(lexer.CONSTANT_BUILTIN, lex:word_match('color'))
+local xdigit = lexer.xdigit
+local color_value = lex:tag(lexer.NUMBER,
+  '#' * xdigit * xdigit * xdigit * (xdigit * xdigit * xdigit)^-1)
+lex:add_rule('color', color_name + color_value)
+
+-- Identifiers.
+lex:add_rule('identifier', lex:tag(lexer.IDENTIFIER, lexer.alpha * (lexer.alnum + S('_-'))^0))
+
+-- Pseudo classes and pseudo elements.
+lex:add_rule('pseudoclass', ':' * lex:tag('pseudoclass', lex:word_match('pseudoclass')))
+lex:add_rule('pseudoelement', '::' * lex:tag('pseudoelement', lex:word_match('pseudoelement')))
+
+-- Strings.
+local sq_str = lexer.range("'")
+local dq_str = lexer.range('"')
+lex:add_rule('string', lex:tag(lexer.STRING, sq_str + dq_str))
+
+-- Comments.
+lex:add_rule('comment', lex:tag(lexer.COMMENT, lexer.range('/*', '*/')))
+
+-- Numbers.
+local unit = lex:word_match('unit') + '%'
+lex:add_rule('number', lex:tag(lexer.NUMBER, lexer.number * unit^-1))
+
+-- Operators.
+lex:add_rule('operator', lex:tag(lexer.OPERATOR, S('~!#*>+=|.,:;()[]{}')))
+
+-- At rule.
+lex:add_rule('at_rule', lex:tag(lexer.PREPROCESSOR, '@' * lex:word_match('at_rule')))
+
+-- Fold points.
+lex:add_fold_point(lexer.OPERATOR, '{', '}')
+lex:add_fold_point(lexer.COMMENT, '/*', '*/')
+
+-- Word lists.
+lex:set_word_list(lexer.TAG, {
+  'a', 'abbr', 'address', 'article', 'aside', 'audio', 'b', 'bdi', 'bdo', 'blockquote', 'body',
+  'button', 'canvas', 'caption', 'cite', 'code', 'colgroup', 'content', 'data', 'datalist', 'dd',
+  'decorator', 'del', 'details', 'dfn', 'div', 'dl', 'dt', 'element', 'em', 'fieldset',
+  'figcaption', 'figure', 'footer', 'form', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'head', 'header',
+  'html', 'i', 'iframe', 'ins', 'kbd', 'label', 'legend', 'li', 'main', 'map', 'mark', 'menu',
+  'menuitem', 'meter', 'nav', 'noscript', 'object', 'ol', 'optgroup', 'option', 'output', 'p',
+  'pre', 'progress', 'q', 'rp', 'rt', 'ruby', 's', 'samp', 'script', 'section', 'select', 'shadow',
+  'small', 'spacer', 'span', 'strong', 'style', 'sub', 'summary', 'sup', 'table', 'tbody', 'td',
+  'template', 'textarea', 'tfoot', 'th', 'thead', 'time', 'title', 'tr', 'u', 'ul', 'var', 'video', --
+  'area', 'base', 'br', 'col', 'command', 'embed', 'hr', 'img', 'input', 'keygen', 'link', 'meta',
+  'param', 'source', 'track', 'wbr'
+})
+
+lex:set_word_list('property', {
   -- CSS 1.
   'color', 'background-color', 'background-image', 'background-repeat', 'background-attachment',
   'background-position', 'background', 'font-family', 'font-style', 'font-variant', 'font-weight',
@@ -42,11 +103,9 @@ lex:add_rule('property', token('property', word_match{
   'align-content', 'align-items', 'align-self', 'justify-content', 'order', 'border-radius',
   'transition', 'transform', 'box-shadow', 'filter', 'opacity', 'resize', 'word-break', 'word-wrap',
   'box-sizing', 'animation', 'text-overflow'
-}))
-lex:add_style('property', lexer.styles.keyword)
+})
 
--- Values.
-lex:add_rule('value', token('value', word_match{
+lex:set_word_list('value', {
   -- CSS 1.
   'auto', 'none', 'normal', 'italic', 'oblique', 'small-caps', 'bold', 'bolder', 'lighter',
   'xx-small', 'x-small', 'small', 'medium', 'large', 'x-large', 'xx-large', 'larger', 'smaller',
@@ -82,11 +141,9 @@ lex:add_rule('value', token('value', word_match{
   'female', 'child', 'x-low', 'low', 'high', 'x-high', 'code', 'digits', 'continous',
   -- CSS 3.
   'flex', 'row', 'column', 'ellipsis', 'inline-block'
-}))
-lex:add_style('value', lexer.styles.constant)
+})
 
--- Functions.
-lex:add_rule('function', token(lexer.FUNCTION, word_match{
+lex:set_word_list(lexer.FUNCTION_BUILTIN, {
   'attr', 'blackness', 'blend', 'blenda', 'blur', 'brightness', 'calc', 'circle', 'color-mod',
   'contrast', 'counter', 'cubic-bezier', 'device-cmyk', 'drop-shadow', 'ellipse', 'gray',
   'grayscale', 'hsl', 'hsla', 'hue', 'hue-rotate', 'hwb', 'image', 'inset', 'invert', 'lightness',
@@ -95,11 +152,9 @@ lex:add_rule('function', token(lexer.FUNCTION, word_match{
   'rotate3d', 'rotateX', 'rotateY', 'rotateZ', 'saturate', 'saturation', 'scale', 'scale3d',
   'scaleX', 'scaleY', 'scaleZ', 'sepia', 'shade', 'skewX', 'skewY', 'steps', 'tint', 'toggle',
   'translate', 'translate3d', 'translateX', 'translateY', 'translateZ', 'url', 'whiteness', 'var'
-}))
+})
 
--- Colors.
-local xdigit = lexer.xdigit
-lex:add_rule('color', token('color', word_match{
+lex:set_word_list('color', {
   'aliceblue', 'antiquewhite', 'aqua', 'aquamarine', 'azure', 'beige', 'bisque', 'black',
   'blanchedalmond', 'blue', 'blueviolet', 'brown', 'burlywood', 'cadetblue', 'chartreuse',
   'chocolate', 'coral', 'cornflowerblue', 'cornsilk', 'crimson', 'cyan', 'darkblue', 'darkcyan',
@@ -121,48 +176,26 @@ lex:add_rule('color', token('color', word_match{
   'seagreen', 'seashell', 'sienna', 'silver', 'skyblue', 'slateblue', 'slategray', 'slategrey',
   'snow', 'springgreen', 'steelblue', 'tan', 'teal', 'thistle', 'tomato', 'transparent',
   'turquoise', 'violet', 'wheat', 'white', 'whitesmoke', 'yellow', 'yellowgreen'
-} + '#' * xdigit * xdigit * xdigit * (xdigit * xdigit * xdigit)^-1))
-lex:add_style('color', lexer.styles.number)
+})
 
--- Identifiers.
-lex:add_rule('identifier', token(lexer.IDENTIFIER, lexer.alpha * (lexer.alnum + S('_-'))^0))
-
--- Pseudo classes and pseudo elements.
-lex:add_rule('pseudoclass', ':' * token('pseudoclass', word_match{
+lex:set_word_list('pseudoclass', {
   'active', 'checked', 'disabled', 'empty', 'enabled', 'first-child', 'first-of-type', 'focus',
   'hover', 'in-range', 'invalid', 'lang', 'last-child', 'last-of-type', 'link', 'not', 'nth-child',
   'nth-last-child', 'nth-last-of-type', 'nth-of-type', 'only-of-type', 'only-child', 'optional',
   'out-of-range', 'read-only', 'read-write', 'required', 'root', 'target', 'valid', 'visited'
-}))
-lex:add_style('pseudoclass', lexer.styles.constant)
-lex:add_rule('pseudoelement', '::' *
-  token('pseudoelement', word_match('after before first-letter first-line selection')))
-lex:add_style('pseudoelement', lexer.styles.constant)
+})
 
--- Strings.
-local sq_str = lexer.range("'")
-local dq_str = lexer.range('"')
-lex:add_rule('string', token(lexer.STRING, sq_str + dq_str))
+lex:set_word_list('pseudoelement', 'after before first-letter first-line selection')
 
--- Comments.
-lex:add_rule('comment', token(lexer.COMMENT, lexer.range('/*', '*/')))
+lex:set_word_list('unit', {
+  'ch', 'cm', 'deg', 'dpcm', 'dpi', 'dppx', 'em', 'ex', 'grad', 'Hz', 'in', 'kHz', 'mm', 'ms', 'pc',
+  'pt', 'px', 'q', 'rad', 'rem', 's', 'turn', 'vh', 'vmax', 'vmin', 'vw'
+})
 
--- Numbers.
-local unit = token('unit', word_match(
-  'ch cm deg dpcm dpi dppx em ex grad Hz in kHz mm ms pc pt px q rad rem s turn vh vmax vmin vw'))
-lex:add_style('unit', lexer.styles.number)
-lex:add_rule('number', token(lexer.NUMBER, lexer.dec_num) * unit^-1)
+lex:set_word_list('at_rule', 'charset font-face media page import namespace keyframes')
 
--- Operators.
-lex:add_rule('operator', token(lexer.OPERATOR, S('~!#*>+=|.,:;()[]{}')))
-
--- At rule.
-lex:add_rule('at_rule', token('at_rule', '@' *
-  word_match('charset font-face media page import namespace keyframes')))
-lex:add_style('at_rule', lexer.styles.preprocessor)
-
--- Fold points.
-lex:add_fold_point(lexer.OPERATOR, '{', '}')
-lex:add_fold_point(lexer.COMMENT, '/*', '*/')
+lexer.property['scintillua.comment'] = '/*|*/'
+lexer.property['scintillua.word.chars'] =
+  'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-'
 
 return lex

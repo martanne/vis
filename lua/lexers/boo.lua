@@ -1,4 +1,4 @@
--- Copyright 2006-2022 Mitchell. See LICENSE.
+-- Copyright 2006-2024 Mitchell. See LICENSE.
 -- Boo LPeg lexer.
 
 local lexer = require('lexer')
@@ -46,7 +46,7 @@ local sq_str = lexer.range("'", true)
 local dq_str = lexer.range('"', true)
 local tq_str = lexer.range('"""')
 local string = token(lexer.STRING, tq_str + sq_str + dq_str)
-local regex_str = #P('/') * lexer.last_char_includes('!%^&*([{-=+|:;,?<>~') * lexer.range('/', true)
+local regex_str = lexer.after_set('!%^&*([{-=+|:;,?<>~', lexer.range('/', true))
 local regex = token(lexer.REGEX, regex_str)
 lex:add_rule('string', string + regex)
 
@@ -60,5 +60,7 @@ lex:add_rule('number', token(lexer.NUMBER, lexer.number * (S('msdhsfFlL') + 'ms'
 
 -- Operators.
 lex:add_rule('operator', token(lexer.OPERATOR, S('!%^&*()[]{}-=+/|:;.,?<>~`')))
+
+lexer.property['scintillua.comment'] = '#'
 
 return lex

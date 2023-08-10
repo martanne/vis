@@ -1,4 +1,4 @@
--- Copyright 2006-2022 Mitchell. See LICENSE.
+-- Copyright 2006-2024 Mitchell. See LICENSE.
 -- Erlang LPeg lexer.
 
 local lexer = require('lexer')
@@ -49,12 +49,11 @@ lex:add_rule('identifier', token(lexer.IDENTIFIER, lexer.lower * ('_' + lexer.al
 lex:add_rule('variable', token(lexer.VARIABLE, P('_')^0 * lexer.upper * ('_' + lexer.alnum)^0))
 
 -- Directives.
-lex:add_rule('directive', token('directive', '-' * word_match{
+lex:add_rule('directive', token(lexer.PREPROCESSOR, '-' * word_match{
   'author', 'behaviour', 'behavior', 'compile', 'copyright', 'define', 'doc', 'else', 'endif',
   'export', 'file', 'ifdef', 'ifndef', 'import', 'include', 'include_lib', 'module', 'record',
   'spec', 'type', 'undef'
 }))
-lex:add_style('directive', lexer.styles.preprocessor)
 
 -- Strings.
 local sq_str = lexer.range("'", true)
@@ -85,6 +84,7 @@ lex:add_fold_point(lexer.KEYWORD, 'receive', 'end')
 lex:add_fold_point(lexer.OPERATOR, '(', ')')
 lex:add_fold_point(lexer.OPERATOR, '[', ']')
 lex:add_fold_point(lexer.OPERATOR, '{', '}')
-lex:add_fold_point(lexer.COMMENT, lexer.fold_consecutive_lines('%'))
+
+lexer.property['scintillua.comment'] = '%'
 
 return lex
