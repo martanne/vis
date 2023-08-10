@@ -367,7 +367,10 @@ static void *obj_ref_get(lua_State *L, void *addr, const char *type) {
 		else if (*handle != addr)
 			debug("get: vis.objects[%p] = %s (BUG: handle mismatch %p)\n", addr, type, *handle);
 	}
-	return luaL_checkudata(L, -1, type);
+	/* verify that obj is correct type then unmodify the stack */
+	luaL_checkudata(L, -1, type);
+	lua_pop(L, 1);
+	return addr;
 }
 
 /* expects a userdatum at the top of the stack and sets
@@ -441,22 +444,12 @@ static void *obj_ref_new(lua_State *L, void *addr, const char *type) {
 	return addr;
 }
 
-/* retrieve object stored in reference at stack location `idx' */
-static void *obj_ref_check_get(lua_State *L, int idx, const char *type) {
+/* (type) check validity of object reference at stack location `idx' and retrieve it */
+static void *obj_ref_check(lua_State *L, int idx, const char *type) {
 	void **addr = luaL_checkudata(L, idx, type);
 	if (!obj_ref_get(L, *addr, type))
-		return NULL;
-	return *addr;
-}
-
-/* (type) check validity of object reference at stack location `idx' */
-static void *obj_ref_check(lua_State *L, int idx, const char *type) {
-	void *obj = obj_ref_check_get(L, idx, type);
-	if (obj)
-		lua_pop(L, 1);
-	else
 		luaL_argerror(L, idx, "invalid object reference");
-	return obj;
+	return *addr;
 }
 
 static void *obj_ref_check_containerof(lua_State *L, int idx, const char *type, size_t offset) {
@@ -2243,10 +2236,8 @@ static int file_delete(lua_State *L) {
  */
 static int file_lines_iterator_it(lua_State *L);
 static int file_lines_iterator(lua_State *L) {
-	/* need to check second parameter first, because obj_ref_check_get
-	 * modifies the stack */
+	File *file = obj_ref_check(L, 1, VIS_LUA_TYPE_FILE);
 	size_t line = luaL_optunsigned(L, 2, 1);
-	File *file = obj_ref_check_get(L, 1, VIS_LUA_TYPE_FILE);
 	size_t *pos = lua_newuserdata(L, sizeof *pos);
 	*pos = text_pos_by_lineno(file->text, line);
 	lua_pushcclosure(L, file_lines_iterator_it, 2);
