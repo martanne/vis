@@ -1446,7 +1446,7 @@ end
 --- Creates a substitute for some Scintilla tables and functions that Scintillua depends on
 -- when using it as a standalone module.
 local function initialize_standalone_library()
-  M.property = setmetatable({['scintillua.lexers'] = package.path:gsub('/%?%.lua', '')}, {
+  M.property = setmetatable({['scintillua.lexers'] = package.path:gsub('/%?%.lua', '/lexers')}, {
     __index = function() return '' end, __newindex = function(t, k, v) rawset(t, k, tostring(v)) end
   })
 
