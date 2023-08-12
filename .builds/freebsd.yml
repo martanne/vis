@@ -2,8 +2,8 @@ image: freebsd/latest
 packages:
   - gmake
   - libtermkey
-  - lua52
-  - lua52-lpeg
+  - lua53
+  - lua53-lpeg
   - pkgconf
 sources:
   - https://github.com/martanne/vis
