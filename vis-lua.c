@@ -3207,8 +3207,9 @@ void vis_lua_term_csi(Vis *vis, const long *csi) {
  * The response received from the process started via @{Vis:communicate}.
  * @function process_response
  * @tparam string name the name of process given to @{Vis:communicate}
- * @tparam string|int buffer the available content sent by process; it becomes the exit code number if response\_type is "EXIT", or the signal number if response\_type is "SIGNAL"
  * @tparam string response_type can be "STDOUT" or "STDERR" if new output was received in corresponding channel, "SIGNAL" if the process was terminated by a signal or "EXIT" when the process terminated normally
+ * @tparam int the exit code number if response\_type is "EXIT", or the signal number if response\_type is "SIGNAL"
+ * @tparam string buffer the available content sent by process
  */
 void vis_lua_process_response(Vis *vis, const char *name,
                               char *buffer, size_t len, ResponseType rtype) {
@@ -3219,20 +3220,23 @@ void vis_lua_process_response(Vis *vis, const char *name,
 	vis_lua_event_get(L, "process_response");
 	if (lua_isfunction(L, -1)) {
 		lua_pushstring(L, name);
-		switch (rtype) {
-		case EXIT:
-		case SIGNAL:
-			lua_pushinteger(L, len);
-			break;
-		default: lua_pushlstring(L, buffer, len);
-		}
 		switch (rtype){
 		case STDOUT: lua_pushstring(L, "STDOUT"); break;
 		case STDERR: lua_pushstring(L, "STDERR"); break;
 		case SIGNAL: lua_pushstring(L, "SIGNAL"); break;
 		case EXIT: lua_pushstring(L, "EXIT"); break;
 		}
-		pcall(vis, L, 3, 0);
+		switch (rtype) {
+		case EXIT:
+		case SIGNAL:
+			lua_pushinteger(L, len);
+			lua_pushlstring(L, buffer, 0);
+			break;
+		default:
+			lua_pushinteger(L, 0);
+			lua_pushlstring(L, buffer, len);
+		}
+		pcall(vis, L, 4, 0);
 	}
 	lua_pop(L, 1);
 }
