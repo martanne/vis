@@ -27,7 +27,7 @@ SRC = array.c \
 	vis-registers.c \
 	vis-text-objects.c \
 	$(REGEX_SRC)
-OBJ = $(SRC:.c=.o)
+OBJ = $(SRC:%.c=obj/%.o)
 
 ELF = vis vis-menu vis-digraph
 EXECUTABLES = $(ELF) vis-clipboard vis-complete vis-open
@@ -74,20 +74,21 @@ DOCKER?=docker
 
 all: $(ELF)
 
-.c.o:
-	${CC} ${CFLAGS} ${CFLAGS_VIS} ${CFLAGS_EXTRA} -o $@ -c $<
-
 config.h:
 	cp config.def.h config.h
 
 config.mk:
 	@touch $@
 
-main.o: config.h
+obj:
+	mkdir obj
 
-$(OBJ): config.mk
+obj/main.o: config.h | obj
 
--include *.d
+$(OBJ): config.mk | obj
+	${CC} ${CFLAGS} ${CFLAGS_VIS} ${CFLAGS_EXTRA} -o $@ -c $(@:obj/%.o=%.c)
+
+-include obj/*.d
 
 vis: ${OBJ}
 	${CC} -o $@ ${OBJ} ${LDFLAGS} ${LDFLAGS_VIS} ${LDFLAGS_EXTRA}
@@ -158,7 +159,8 @@ testclean:
 
 clean:
 	@echo cleaning
-	@rm -f $(ELF) $(OBJ) vis-single vis-single-payload.inc vis-*.tar.gz *.gcov *.gcda *.gcno *.d
+	@rm -rf obj
+	@rm -f $(ELF) vis-single vis-single-payload.inc vis-*.tar.gz *.gcov *.gcda *.gcno *.d
 
 distclean: clean testclean
 	@echo cleaning build configuration
