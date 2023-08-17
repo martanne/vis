@@ -80,12 +80,13 @@ config.h:
 config.mk:
 	@touch $@
 
-obj:
+obj/.tstamp:
 	mkdir obj
+	touch obj/.tstamp
 
-obj/main.o: config.h | obj
+obj/main.o: config.h
 
-$(OBJ): config.mk | obj
+$(OBJ): config.mk obj/.tstamp
 	${CC} ${CFLAGS} ${CFLAGS_VIS} ${CFLAGS_EXTRA} -o $@ -c $(@:obj/%.o=%.c)
 
 -include obj/*.d
