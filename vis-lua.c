@@ -23,7 +23,6 @@
 
 #include "vis-lua.h"
 #include "vis-core.h"
-#include "vis-subprocess.h"
 #include "text-motions.h"
 #include "util.h"
 
@@ -1414,7 +1413,7 @@ static int communicate_func(lua_State *L) {
 	const char *cmd = luaL_checkstring(L, 3);
 	ProcessStream *inputfd = (ProcessStream *)lua_newuserdata(L, sizeof(ProcessStream));
 	luaL_setmetatable(L, LUA_FILEHANDLE);
-	inputfd->handler = vis_process_communicate(vis, name, cmd, (void**)(&(inputfd->stream.closef)));
+	inputfd->handler = vis_process_communicate(vis, name, cmd, &(inputfd->stream.closef));
 	if (inputfd->handler) {
 		inputfd->stream.f = fdopen(inputfd->handler->inpfd, "w");
 		inputfd->stream.closef = &close_subprocess;

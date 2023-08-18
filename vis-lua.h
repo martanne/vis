@@ -5,6 +5,7 @@
 #include <lua.h>
 #include <lualib.h>
 #include <lauxlib.h>
+
 #else
 typedef struct lua_State lua_State;
 typedef void* lua_CFunction;

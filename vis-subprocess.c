@@ -70,7 +70,7 @@ static void destroy_process(Process **pointer) {
  * killed on the next main loop iteration.
  */
 Process *vis_process_communicate(Vis *vis, const char *name,
-                                 const char *command, void **invalidator) {
+                                 const char *command, Invalidator **invalidator) {
 	int pin[2], pout[2], perr[2];
 	pid_t pid = (pid_t)-1;
 	if (pipe(perr) == -1) {
