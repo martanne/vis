@@ -3229,10 +3229,10 @@ void vis_lua_process_response(Vis *vis, const char *name,
 		case EXIT:
 		case SIGNAL:
 			lua_pushinteger(L, len);
-			lua_pushlstring(L, buffer, 0);
+			lua_pushnil(L);
 			break;
 		default:
-			lua_pushinteger(L, 0);
+			lua_pushnil(L);
 			lua_pushlstring(L, buffer, len);
 		}
 		pcall(vis, L, 4, 0);
