@@ -496,7 +496,7 @@ static size_t getpos(lua_State *L, int narg) {
 
 static size_t checkpos(lua_State *L, int narg) {
 	lua_Number n = luaL_checknumber(L, narg);
-	if (n >= 0 && n <= SIZE_MAX && n == (size_t)n)
+	if (n >= 0 && n <= (lua_Number) SIZE_MAX && n == (size_t)n)
 		return n;
 	return luaL_argerror(L, narg, "expected position, got number");
 }
@@ -1343,7 +1343,7 @@ static int pipe_func(lua_State *L) {
 	}
 	const char *cmd = luaL_checkstring(L, cmd_idx);
 	bool fullscreen = lua_isboolean(L, cmd_idx + 1) && lua_toboolean(L, cmd_idx + 1);
-	
+
 	if (!file)
 		return luaL_error(L, "vis:pipe(cmd = '%s'): win not open, file can't be nil", cmd);
 
