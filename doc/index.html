@@ -61,7 +61,7 @@
 </p>
     <h3>Info:</h3>
     <ul>
-        <li><strong>Release</strong>: a35e7ea</li>
+        <li><strong>Release</strong>: 0b01532</li>
         <li><strong>License</strong>: ISC</li>
         <li><strong>Author</strong>: Marc André Tanner</li>
     </ul>
@@ -134,12 +134,20 @@
 	<td class="summary">Register a Lua function as key action.</td>
 	</tr>
 	<tr>
+	<td class="name" nowrap><a href="#Vis:close">Vis:close(inputfd)</a></td>
+	<td class="summary">Closes a stream returned by <a href="index.html#Vis:communicate">Vis:communicate</a>.</td>
+	</tr>
+	<tr>
 	<td class="name" nowrap><a href="#Vis:command">Vis:command(command)</a></td>
 	<td class="summary">Execute a `:`-command.</td>
 	</tr>
 	<tr>
 	<td class="name" nowrap><a href="#Vis:command_register">Vis:command_register(name, command[, help])</a></td>
 	<td class="summary">Register a custom `:`-command.</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#Vis:communicate">Vis:communicate(name, command)</a></td>
+	<td class="summary">Open new process and return its input stream (stdin).</td>
 	</tr>
 	<tr>
 	<td class="name" nowrap><a href="#Vis:exit">Vis:exit(code)</a></td>
@@ -162,12 +170,12 @@
 	<td class="summary">Insert keys at all cursor positions of active window.</td>
 	</tr>
 	<tr>
-	<td class="name" nowrap><a href="#Vis:map">Vis:map(mode, key, action)</a></td>
-	<td class="summary">Map a key to a key action.</td>
-	</tr>
-	<tr>
 	<td class="name" nowrap><a href="#Vis:map">Vis:map(mode, key, func[, help])</a></td>
 	<td class="summary">Map a key to a Lua function.</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#Vis:map">Vis:map(mode, key, action)</a></td>
+	<td class="summary">Map a key to a key action.</td>
 	</tr>
 	<tr>
 	<td class="name" nowrap><a href="#Vis:map">Vis:map(mode, key, alias)</a></td>
@@ -487,6 +495,10 @@
 	<tr>
 	<td class="name" nowrap><a href="#input">input(key)</a></td>
 	<td class="summary">Input key event in either input or replace mode.</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#process_response">process_response(name, response_type, the, buffer)</a></td>
+	<td class="summary">The response received from the process started via <a href="index.html#Vis:communicate">Vis:communicate</a>.</td>
 	</tr>
 	<tr>
 	<td class="name" nowrap><a href="#quit">quit()</a></td>
@@ -928,6 +940,33 @@
 
 </dd>
     <dt>
+    <a name = "Vis:close"></a>
+    <strong>Vis:close(inputfd)</strong>
+    </dt>
+    <dd>
+    Closes a stream returned by <a href="index.html#Vis:communicate">Vis:communicate</a>.
+
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">inputfd</span>
+            <span class="types"><span class="type">io.file</span></span>
+         the stream to be closed
+        </li>
+    </ul>
+
+    <h3>Returns:</h3>
+    <ol>
+
+           <span class="types"><span class="type">bool</span></span>
+        identical to <a href="https://www.lua.org/manual/5.1/manual.html#pdf-io.close">io.close</a>
+    </ol>
+
+
+
+
+</dd>
+    <dt>
     <a name = "Vis:command"></a>
     <strong>Vis:command(command)</strong>
     </dt>
@@ -1005,6 +1044,42 @@
 	 <span class="keyword">return</span> <span class="keyword">true</span>;
 <span class="keyword">end</span>)</pre>
     </ul>
+
+</dd>
+    <dt>
+    <a name = "Vis:communicate"></a>
+    <strong>Vis:communicate(name, command)</strong>
+    </dt>
+    <dd>
+    Open new process and return its input stream (stdin).
+ If the stream is closed (by calling the close method or by being removed by a garbage collector)
+ the spawned process will be killed by SIGTERM.
+ When the process will quit or will output anything to stdout or stderr,
+ the <a href="index.html#process_response">process_response</a> event will be fired.
+<p> The editor core won't be blocked while the external process is running.
+
+
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">name</span>
+            <span class="types"><a class="type" href="https://www.lua.org/manual/5.1/manual.html#5.4">string</a></span>
+         the name of subprocess (to distinguish processes in the <a href="index.html#process_response">process_response</a> event)
+        </li>
+        <li><span class="parameter">command</span>
+            <span class="types"><a class="type" href="https://www.lua.org/manual/5.1/manual.html#5.4">string</a></span>
+         the command to execute
+        </li>
+    </ul>
+
+    <h3>Returns:</h3>
+    <ol>
+
+        the file handle to write data to the process, in case of error the return values are equivalent to <a href="https://www.lua.org/manual/5.1/manual.html#pdf-io.open">io.open</a> error values.
+    </ol>
+
+
+
 
 </dd>
     <dt>
@@ -1137,52 +1212,6 @@
 </dd>
     <dt>
     <a name = "Vis:map"></a>
-    <strong>Vis:map(mode, key, action)</strong>
-    </dt>
-    <dd>
-    Map a key to a key action.
-
-
-    <h3>Parameters:</h3>
-    <ul>
-        <li><span class="parameter">mode</span>
-            <span class="types"><span class="type">int</span></span>
-         the mode to which the mapping should be added
-        </li>
-        <li><span class="parameter">key</span>
-            <span class="types"><a class="type" href="https://www.lua.org/manual/5.1/manual.html#5.4">string</a></span>
-         the key to map
-        </li>
-        <li><span class="parameter">action</span>
-         the action to map
-        </li>
-    </ul>
-
-    <h3>Returns:</h3>
-    <ol>
-
-           <span class="types"><span class="type">bool</span></span>
-        whether the mapping was successfully established
-    </ol>
-
-
-    <h3>See also:</h3>
-    <ul>
-         <a href="index.html#Window:map">Window:map</a>
-    </ul>
-
-    <h3>Usage:</h3>
-    <ul>
-        <pre class="example"><span class="keyword">local</span> action = vis:action_register(<span class="string">"info"</span>, <span class="keyword">function</span>()
-  vis:info(<span class="string">"Mapping works!"</span>)
-<span class="keyword">end</span>, <span class="string">"Info message help text"</span>)
-vis:map(vis.modes.NORMAL, <span class="string">"gh"</span>, action)
-vis:map(vis.modes.NORMAL, <span class="string">"gl"</span>, action)</pre>
-    </ul>
-
-</dd>
-    <dt>
-    <a name = "Vis:map"></a>
     <strong>Vis:map(mode, key, func[, help])</strong>
     </dt>
     <dd>
@@ -1237,6 +1266,52 @@ vis:map(vis.modes.NORMAL, <span class="string">"gl"</span>, action)</pre>
 		<span class="keyword">return</span> <span class="number">2</span> <span class="comment">-- consume 2 bytes of input
 </span>	<span class="keyword">end</span>
 <span class="keyword">end</span>, <span class="string">"Insert digraph"</span>)</pre>
+    </ul>
+
+</dd>
+    <dt>
+    <a name = "Vis:map"></a>
+    <strong>Vis:map(mode, key, action)</strong>
+    </dt>
+    <dd>
+    Map a key to a key action.
+
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">mode</span>
+            <span class="types"><span class="type">int</span></span>
+         the mode to which the mapping should be added
+        </li>
+        <li><span class="parameter">key</span>
+            <span class="types"><a class="type" href="https://www.lua.org/manual/5.1/manual.html#5.4">string</a></span>
+         the key to map
+        </li>
+        <li><span class="parameter">action</span>
+         the action to map
+        </li>
+    </ul>
+
+    <h3>Returns:</h3>
+    <ol>
+
+           <span class="types"><span class="type">bool</span></span>
+        whether the mapping was successfully established
+    </ol>
+
+
+    <h3>See also:</h3>
+    <ul>
+         <a href="index.html#Window:map">Window:map</a>
+    </ul>
+
+    <h3>Usage:</h3>
+    <ul>
+        <pre class="example"><span class="keyword">local</span> action = vis:action_register(<span class="string">"info"</span>, <span class="keyword">function</span>()
+  vis:info(<span class="string">"Mapping works!"</span>)
+<span class="keyword">end</span>, <span class="string">"Info message help text"</span>)
+vis:map(vis.modes.NORMAL, <span class="string">"gh"</span>, action)
+vis:map(vis.modes.NORMAL, <span class="string">"gl"</span>, action)</pre>
     </ul>
 
 </dd>
@@ -3413,6 +3488,39 @@ win.selection.pos = pos + #data</pre>
 
 </dd>
     <dt>
+    <a name = "process_response"></a>
+    <strong>process_response(name, response_type, the, buffer)</strong>
+    </dt>
+    <dd>
+    The response received from the process started via <a href="index.html#Vis:communicate">Vis:communicate</a>.
+
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">name</span>
+            <span class="types"><a class="type" href="https://www.lua.org/manual/5.1/manual.html#5.4">string</a></span>
+         the name of process given to <a href="index.html#Vis:communicate">Vis:communicate</a>
+        </li>
+        <li><span class="parameter">response_type</span>
+            <span class="types"><a class="type" href="https://www.lua.org/manual/5.1/manual.html#5.4">string</a></span>
+         can be "STDOUT" or "STDERR" if new output was received in corresponding channel, "SIGNAL" if the process was terminated by a signal or "EXIT" when the process terminated normally
+        </li>
+        <li><span class="parameter">the</span>
+            <span class="types"><span class="type">int</span></span>
+         exit code number if response\_type is "EXIT", or the signal number if response\_type is "SIGNAL"
+        </li>
+        <li><span class="parameter">buffer</span>
+            <span class="types"><a class="type" href="https://www.lua.org/manual/5.1/manual.html#5.4">string</a></span>
+         the available content sent by process
+        </li>
+    </ul>
+
+
+
+
+
+</dd>
+    <dt>
     <a name = "quit"></a>
     <strong>quit()</strong>
     </dt>
@@ -3621,6 +3729,9 @@ win.selection.pos = pos + #data</pre>
         <li><span class="parameter">TERM_CSI</span>
         see <a href="index.html#term_csi">term_csi</a>
         </li>
+        <li><span class="parameter">PROCESS_RESPONSE</span>
+        see <a href="index.html#process_response">process_response</a>
+        </li>
     </ul>
 
 
@@ -3734,7 +3845,7 @@ win.selection.pos = pos + #data</pre>
 </div> <!-- id="main" -->
 <div id="about">
 <i>generated by <a href="http://github.com/stevedonovan/LDoc">LDoc 1.4.6</a></i>
-<i style="float:right;">Last updated 2023-08-25 02:45:25 </i>
+<i style="float:right;">Last updated 2023-08-25 02:55:40 </i>
 </div> <!-- id="about" -->
 </div> <!-- id="container" -->
 </body>
