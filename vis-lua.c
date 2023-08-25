@@ -3597,8 +3597,8 @@ void vis_lua_term_csi(Vis *vis, const long *csi) {
  * @function process_response
  * @tparam string name the name of process given to @{Vis:communicate}
  * @tparam string response_type can be "STDOUT" or "STDERR" if new output was received in corresponding channel, "SIGNAL" if the process was terminated by a signal or "EXIT" when the process terminated normally
- * @tparam int the exit code number if response\_type is "EXIT", or the signal number if response\_type is "SIGNAL"
- * @tparam string buffer the available content sent by process
+ * @tparam int code the exit code number if response_type is "EXIT", or the signal number if response_type is "SIGNAL"
+ * @tparam string buffer the available content sent by the process
  */
 void vis_lua_process_response(Vis *vis, const char *name,
                               char *buffer, size_t len, ResponseType rtype) {
