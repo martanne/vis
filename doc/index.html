@@ -30,11 +30,12 @@
 <h2>Contents</h2>
 <ul>
 <li><a href="#Class_Vis">Class Vis </a></li>
+<li><a href="#Class_Ui">Class Ui </a></li>
 <li><a href="#Class_Window">Class Window </a></li>
 <li><a href="#Class_Selection">Class Selection </a></li>
 <li><a href="#Class_File">Class File </a></li>
-<li><a href="#Class_Ui">Class Ui </a></li>
 <li><a href="#Class_Range">Class Range </a></li>
+<li><a href="#Layouts">Layouts </a></li>
 <li><a href="#Modes">Modes </a></li>
 <li><a href="#Key_Handling">Key Handling </a></li>
 <li><a href="#Core_Events">Core Events </a></li>
@@ -60,7 +61,7 @@
 </p>
     <h3>Info:</h3>
     <ul>
-        <li><strong>Release</strong>: f4840ed</li>
+        <li><strong>Release</strong>: a35e7ea</li>
         <li><strong>License</strong>: ISC</li>
         <li><strong>Author</strong>: Marc André Tanner</li>
     </ul>
@@ -103,6 +104,10 @@
 	<tr>
 	<td class="name" nowrap><a href="#Vis.modes">Vis.modes</a></td>
 	<td class="summary">Mode constants.</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#Vis.options">Vis.options</a></td>
+	<td class="summary">Vis Options</td>
 	</tr>
 	<tr>
 	<td class="name" nowrap><a href="#Vis.recording">Vis.recording</a></td>
@@ -157,16 +162,16 @@
 	<td class="summary">Insert keys at all cursor positions of active window.</td>
 	</tr>
 	<tr>
-	<td class="name" nowrap><a href="#Vis:map">Vis:map(mode, key, alias)</a></td>
-	<td class="summary">Setup a key alias.</td>
-	</tr>
-	<tr>
 	<td class="name" nowrap><a href="#Vis:map">Vis:map(mode, key, action)</a></td>
 	<td class="summary">Map a key to a key action.</td>
 	</tr>
 	<tr>
 	<td class="name" nowrap><a href="#Vis:map">Vis:map(mode, key, func[, help])</a></td>
 	<td class="summary">Map a key to a Lua function.</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#Vis:map">Vis:map(mode, key, alias)</a></td>
+	<td class="summary">Setup a key alias.</td>
 	</tr>
 	<tr>
 	<td class="name" nowrap><a href="#Vis:mappings">Vis:mappings(mode)</a></td>
@@ -229,6 +234,17 @@
 	<td class="summary">Create an iterator over all windows.</td>
 	</tr>
 </table>
+<h2><a href="#Class_Ui">Class Ui </a></h2>
+<table class="function_list">
+	<tr>
+	<td class="name" nowrap><a href="#Ui.colors">Ui.colors</a></td>
+	<td class="summary">Number of available colors.</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#Ui.layout">Ui.layout</a></td>
+	<td class="summary">Current layout.</td>
+	</tr>
+</table>
 <h2><a href="#Class_Window">Class Window </a></h2>
 <table class="function_list">
 	<tr>
@@ -242,6 +258,10 @@
 	<tr>
 	<td class="name" nowrap><a href="#Window.marks">Window.marks</a></td>
 	<td class="summary">Window marks.</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#Window.options">Window.options</a></td>
+	<td class="summary">Window Options</td>
 	</tr>
 	<tr>
 	<td class="name" nowrap><a href="#Window.selection">Window.selection</a></td>
@@ -358,6 +378,10 @@
 	<td class="summary">File permission.</td>
 	</tr>
 	<tr>
+	<td class="name" nowrap><a href="#File.savemethod">File.savemethod</a></td>
+	<td class="summary">File save method</td>
+	</tr>
+	<tr>
 	<td class="name" nowrap><a href="#File.size">File.size</a></td>
 	<td class="summary">File size in bytes.</td>
 	</tr>
@@ -406,13 +430,6 @@
 	<td class="summary">Word text object.</td>
 	</tr>
 </table>
-<h2><a href="#Class_Ui">Class Ui </a></h2>
-<table class="function_list">
-	<tr>
-	<td class="name" nowrap><a href="#Ui.colors">Ui.colors</a></td>
-	<td class="summary">Number of available colors.</td>
-	</tr>
-</table>
 <h2><a href="#Class_Range">Class Range </a></h2>
 <table class="function_list">
 	<tr>
@@ -422,6 +439,13 @@
 	<tr>
 	<td class="name" nowrap><a href="#Range.start">Range.start</a></td>
 	<td class="summary">The beginning of the range.</td>
+	</tr>
+</table>
+<h2><a href="#Layouts">Layouts </a></h2>
+<table class="function_list">
+	<tr>
+	<td class="name" nowrap><a href="#layouts">layouts</a></td>
+	<td class="summary">Layout Constants.</td>
 	</tr>
 </table>
 <h2><a href="#Modes">Modes </a></h2>
@@ -694,6 +718,63 @@
         <li><span class="parameter">modes</span>
             <span class="types"><a class="type" href="index.html#modes">modes</a></span>
 
+        </li>
+    </ul>
+
+
+
+
+
+</dd>
+    <dt>
+    <a name = "Vis.options"></a>
+    <strong>Vis.options</strong>
+    </dt>
+    <dd>
+    Vis Options
+
+
+    <h3>Fields:</h3>
+    <ul>
+        <li><span class="parameter">autoindent</span>
+            <span class="types"><span class="type">boolean</span></span>
+         {ai}
+         (<em>default</em> false)
+        </li>
+        <li><span class="parameter">changecolors</span>
+            <span class="types"><span class="type">boolean</span></span>
+
+         (<em>default</em> false)
+        </li>
+        <li><span class="parameter">escdelay</span>
+            <span class="types"><span class="type">int</span></span>
+
+         (<em>default</em> 50)
+        </li>
+        <li><span class="parameter">expandtab</span>
+            <span class="types"><span class="type">boolean</span></span>
+         {et}
+         (<em>default</em> false)
+        </li>
+        <li><span class="parameter">ignorecase</span>
+            <span class="types"><span class="type">boolean</span></span>
+         {ic}
+         (<em>default</em> false)
+        </li>
+        <li><span class="parameter">loadmethod</span>
+            <span class="types"><a class="type" href="https://www.lua.org/manual/5.1/manual.html#5.4">string</a></span>
+         `"auto"`, `"read"`, or `"mmap"`.
+         (<em>default</em> "auto")
+        </li>
+        <li><span class="parameter">shell</span>
+            <span class="types"><a class="type" href="https://www.lua.org/manual/5.1/manual.html#5.4">string</a></span>
+
+         (<em>default</em> "/bin/sh")
+        </li>
+        <li><span class="parameter">tabwidth</span>
+            <span class="types"><span class="type">int</span></span>
+         {tw}
+         (<em>default</em> 8)
         </li>
     </ul>
 
@@ -1056,51 +1137,6 @@
 </dd>
     <dt>
     <a name = "Vis:map"></a>
-    <strong>Vis:map(mode, key, alias)</strong>
-    </dt>
-    <dd>
-    Setup a key alias.
-<p> This is equivalent to `vis:command('map! mode key alias')`.
-<p> Mappings are always recursive!
-
-
-    <h3>Parameters:</h3>
-    <ul>
-        <li><span class="parameter">mode</span>
-            <span class="types"><span class="type">int</span></span>
-         the mode to which the mapping should be added
-        </li>
-        <li><span class="parameter">key</span>
-            <span class="types"><a class="type" href="https://www.lua.org/manual/5.1/manual.html#5.4">string</a></span>
-         the key to map
-        </li>
-        <li><span class="parameter">alias</span>
-            <span class="types"><a class="type" href="https://www.lua.org/manual/5.1/manual.html#5.4">string</a></span>
-         the key to map to
-        </li>
-    </ul>
-
-    <h3>Returns:</h3>
-    <ol>
-
-           <span class="types"><span class="type">bool</span></span>
-        whether the mapping was successfully established
-    </ol>
-
-
-    <h3>See also:</h3>
-    <ul>
-         <a href="index.html#Window:map">Window:map</a>
-    </ul>
-
-    <h3>Usage:</h3>
-    <ul>
-        <pre class="example">vis:map(vis.modes.NORMAL, <span class="string">"j"</span>, <span class="string">"k"</span>)</pre>
-    </ul>
-
-</dd>
-    <dt>
-    <a name = "Vis:map"></a>
     <strong>Vis:map(mode, key, action)</strong>
     </dt>
     <dd>
@@ -1201,6 +1237,51 @@ vis:map(vis.modes.NORMAL, <span class="string">"gl"</span>, action)</pre>
 		<span class="keyword">return</span> <span class="number">2</span> <span class="comment">-- consume 2 bytes of input
 </span>	<span class="keyword">end</span>
 <span class="keyword">end</span>, <span class="string">"Insert digraph"</span>)</pre>
+    </ul>
+
+</dd>
+    <dt>
+    <a name = "Vis:map"></a>
+    <strong>Vis:map(mode, key, alias)</strong>
+    </dt>
+    <dd>
+    Setup a key alias.
+<p> This is equivalent to `vis:command('map! mode key alias')`.
+<p> Mappings are always recursive!
+
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">mode</span>
+            <span class="types"><span class="type">int</span></span>
+         the mode to which the mapping should be added
+        </li>
+        <li><span class="parameter">key</span>
+            <span class="types"><a class="type" href="https://www.lua.org/manual/5.1/manual.html#5.4">string</a></span>
+         the key to map
+        </li>
+        <li><span class="parameter">alias</span>
+            <span class="types"><a class="type" href="https://www.lua.org/manual/5.1/manual.html#5.4">string</a></span>
+         the key to map to
+        </li>
+    </ul>
+
+    <h3>Returns:</h3>
+    <ol>
+
+           <span class="types"><span class="type">bool</span></span>
+        whether the mapping was successfully established
+    </ol>
+
+
+    <h3>See also:</h3>
+    <ul>
+         <a href="index.html#Window:map">Window:map</a>
+    </ul>
+
+    <h3>Usage:</h3>
+    <ul>
+        <pre class="example">vis:map(vis.modes.NORMAL, <span class="string">"j"</span>, <span class="string">"k"</span>)</pre>
     </ul>
 
 </dd>
@@ -1731,6 +1812,53 @@ vis:map(vis.modes.NORMAL, <span class="string">"gl"</span>, action)</pre>
 
 </dd>
 </dl>
+    <h2 class="section-header has-description"><a name="Class_Ui"></a>Class Ui </h2>
+
+          <div class="section-description">
+          The user interface.
+          </div>
+    <dl class="function">
+    <dt>
+    <a name = "Ui.colors"></a>
+    <strong>Ui.colors</strong>
+    </dt>
+    <dd>
+    Number of available colors.
+
+
+    <ul>
+        <li><span class="parameter">colors</span>
+            <span class="types"><span class="type">int</span></span>
+
+        </li>
+    </ul>
+
+
+
+
+
+</dd>
+    <dt>
+    <a name = "Ui.layout"></a>
+    <strong>Ui.layout</strong>
+    </dt>
+    <dd>
+    Current layout.
+
+
+    <ul>
+        <li><span class="parameter">layout</span>
+            <span class="types"><a class="type" href="index.html#layouts">layouts</a></span>
+         current window layout.
+        </li>
+    </ul>
+
+
+
+
+
+</dd>
+</dl>
     <h2 class="section-header has-description"><a name="Class_Window"></a>Class Window </h2>
 
           <div class="section-description">
@@ -1798,6 +1926,73 @@ vis:map(vis.modes.NORMAL, <span class="string">"gl"</span>, action)</pre>
     <h3>See also:</h3>
     <ul>
     </ul>
+
+
+</dd>
+    <dt>
+    <a name = "Window.options"></a>
+    <strong>Window.options</strong>
+    </dt>
+    <dd>
+    Window Options
+
+
+    <h3>Fields:</h3>
+    <ul>
+        <li><span class="parameter">breakat</span>
+            <span class="types"><a class="type" href="https://www.lua.org/manual/5.1/manual.html#5.4">string</a></span>
+         {brk}
+         (<em>default</em> "")
+        </li>
+        <li><span class="parameter">colorcolumn</span>
+            <span class="types"><span class="type">int</span></span>
+         {cc}
+         (<em>default</em> 0)
+        </li>
+        <li><span class="parameter">cursorline</span>
+            <span class="types"><span class="type">boolean</span></span>
+         {cul}
+         (<em>default</em> false)
+        </li>
+        <li><span class="parameter">numbers</span>
+            <span class="types"><span class="type">boolean</span></span>
+         {nu}
+         (<em>default</em> false)
+        </li>
+        <li><span class="parameter">relativenumbers</span>
+            <span class="types"><span class="type">boolean</span></span>
+         {rnu}
+         (<em>default</em> false)
+        </li>
+        <li><span class="parameter">showeof</span>
+            <span class="types"><span class="type">boolean</span></span>
+
+         (<em>default</em> true)
+        </li>
+        <li><span class="parameter">shownewlines</span>
+            <span class="types"><span class="type">boolean</span></span>
+
+         (<em>default</em> false)
+        </li>
+        <li><span class="parameter">showspaces</span>
+            <span class="types"><span class="type">boolean</span></span>
+
+         (<em>default</em> false)
+        </li>
+        <li><span class="parameter">showtabs</span>
+            <span class="types"><span class="type">boolean</span></span>
+
+         (<em>default</em> false)
+        </li>
+        <li><span class="parameter">wrapcolumn</span>
+            <span class="types"><span class="type">int</span></span>
+         {wc}
+         (<em>default</em> 0)
+        </li>
+    </ul>
+
+
+
 
 
 </dd>
@@ -2495,6 +2690,27 @@ win.selection.pos = pos + #data</pre>
 
 </dd>
     <dt>
+    <a name = "File.savemethod"></a>
+    <strong>File.savemethod</strong>
+    </dt>
+    <dd>
+    File save method
+
+
+    <ul>
+        <li><span class="parameter">savemethod</span>
+            <span class="types"><a class="type" href="https://www.lua.org/manual/5.1/manual.html#5.4">string</a></span>
+         `"auto"`, `"atomic"`, or `"inplace"`.
+         (<em>default</em> "auto")
+        </li>
+    </ul>
+
+
+
+
+
+</dd>
+    <dt>
     <a name = "File.size"></a>
     <strong>File.size</strong>
     </dt>
@@ -2844,33 +3060,6 @@ win.selection.pos = pos + #data</pre>
 
 </dd>
 </dl>
-    <h2 class="section-header has-description"><a name="Class_Ui"></a>Class Ui </h2>
-
-          <div class="section-description">
-          The user interface.
-          </div>
-    <dl class="function">
-    <dt>
-    <a name = "Ui.colors"></a>
-    <strong>Ui.colors</strong>
-    </dt>
-    <dd>
-    Number of available colors.
-
-
-    <ul>
-        <li><span class="parameter">colors</span>
-            <span class="types"><span class="type">int</span></span>
-
-        </li>
-    </ul>
-
-
-
-
-
-</dd>
-</dl>
     <h2 class="section-header has-description"><a name="Class_Range"></a>Class Range </h2>
 
           <div class="section-description">
@@ -2909,6 +3098,35 @@ win.selection.pos = pos + #data</pre>
 
     <ul>
         <li><span class="parameter">start</span>
+            <span class="types"><span class="type">int</span></span>
+
+        </li>
+    </ul>
+
+
+
+
+
+</dd>
+</dl>
+    <h2 class="section-header "><a name="Layouts"></a>Layouts </h2>
+
+    <dl class="function">
+    <dt>
+    <a name = "layouts"></a>
+    <strong>layouts</strong>
+    </dt>
+    <dd>
+    Layout Constants.
+
+
+    <h3>Fields:</h3>
+    <ul>
+        <li><span class="parameter">HORIZONTAL</span>
+            <span class="types"><span class="type">int</span></span>
+
+        </li>
+        <li><span class="parameter">VERTICAL</span>
             <span class="types"><span class="type">int</span></span>
 
         </li>
@@ -3516,7 +3734,7 @@ win.selection.pos = pos + #data</pre>
 </div> <!-- id="main" -->
 <div id="about">
 <i>generated by <a href="http://github.com/stevedonovan/LDoc">LDoc 1.4.6</a></i>
-<i style="float:right;">Last updated 2023-08-10 15:25:45 </i>
+<i style="float:right;">Last updated 2023-08-25 02:45:25 </i>
 </div> <!-- id="about" -->
 </div> <!-- id="container" -->
 </body>
