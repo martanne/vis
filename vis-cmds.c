@@ -185,6 +185,9 @@ static bool cmd_set(Vis *vis, Win *win, Command *cmd, const char *argv[], Select
 		return false;
 	}
 
+	if (opt->flags & VIS_OPTION_DEPRECATED && strcmp(opt->context, name) == 0)
+		vis_info_show(vis, "%s is deprecated and will be removed in the next release", name);
+
 	if (!win && (opt->flags & VIS_OPTION_NEED_WINDOW)) {
 		vis_info_show(vis, "Need active window for `:set %s'", name);
 		return false;

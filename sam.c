@@ -332,24 +332,32 @@ static const OptionDef options[] = {
 		VIS_HELP("Number of spaces to display (and insert if `expandtab` is enabled) for a tab")
 	},
 	[OPTION_SHOW_SPACES] = {
-		{ "showspaces" },
-		VIS_OPTION_TYPE_BOOL|VIS_OPTION_NEED_WINDOW,
+		{ "showspaces", "show-spaces" },
+		VIS_OPTION_TYPE_BOOL|VIS_OPTION_NEED_WINDOW|VIS_OPTION_DEPRECATED,
 		VIS_HELP("Display replacement symbol instead of a space")
+		NULL,
+		"show-spaces"
 	},
 	[OPTION_SHOW_TABS] = {
-		{ "showtabs" },
-		VIS_OPTION_TYPE_BOOL|VIS_OPTION_NEED_WINDOW,
+		{ "showtabs", "show-tabs" },
+		VIS_OPTION_TYPE_BOOL|VIS_OPTION_NEED_WINDOW|VIS_OPTION_DEPRECATED,
 		VIS_HELP("Display replacement symbol for tabs")
+		NULL,
+		"show-tabs"
 	},
 	[OPTION_SHOW_NEWLINES] = {
-		{ "shownewlines" },
-		VIS_OPTION_TYPE_BOOL|VIS_OPTION_NEED_WINDOW,
+		{ "shownewlines", "show-newlines" },
+		VIS_OPTION_TYPE_BOOL|VIS_OPTION_NEED_WINDOW|VIS_OPTION_DEPRECATED,
 		VIS_HELP("Display replacement symbol for newlines")
+		NULL,
+		"show-newlines"
 	},
 	[OPTION_SHOW_EOF] = {
-		{ "showeof" },
-		VIS_OPTION_TYPE_BOOL|VIS_OPTION_NEED_WINDOW,
+		{ "showeof", "show-eof" },
+		VIS_OPTION_TYPE_BOOL|VIS_OPTION_NEED_WINDOW|VIS_OPTION_DEPRECATED,
 		VIS_HELP("Display replacement symbol for lines after the end of the file")
+		NULL,
+		"show-eof"
 	},
 	[OPTION_NUMBER] = {
 		{ "numbers", "nu" },
@@ -382,9 +390,11 @@ static const OptionDef options[] = {
 		VIS_HELP("How to load existing files 'auto', 'read' or 'mmap'")
 	},
 	[OPTION_CHANGE_256COLORS] = {
-		{ "change256colors" },
-		VIS_OPTION_TYPE_BOOL,
+		{ "change256colors", "change-256colors" },
+		VIS_OPTION_TYPE_BOOL|VIS_OPTION_DEPRECATED,
 		VIS_HELP("Change 256 color palette to support 24bit colors")
+		NULL,
+		"change-256colors"
 	},
 	[OPTION_LAYOUT] = {
 		{ "layout" },
