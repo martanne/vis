@@ -328,7 +328,7 @@ static const OptionDef options[] = {
 	},
 	[OPTION_TABWIDTH] = {
 		{ "tabwidth", "tw" },
-		VIS_OPTION_TYPE_NUMBER,
+		VIS_OPTION_TYPE_NUMBER|VIS_OPTION_NEED_WINDOW,
 		VIS_HELP("Number of spaces to display (and insert if `expandtab` is enabled) for a tab")
 	},
 	[OPTION_SHOW_SPACES] = {

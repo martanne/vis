@@ -129,14 +129,6 @@ static void windows_arrange(Vis *vis, enum UiLayout layout) {
 	vis->ui->arrange(vis->ui, layout);
 }
 
-void vis_tabwidth_set(Vis *vis, int tabwidth) {
-	if (tabwidth < 1 || tabwidth > 8)
-		return;
-	for (Win *win = vis->windows; win; win = win->next)
-		view_tabwidth_set(win->view, tabwidth);
-	vis->tabwidth = tabwidth;
-}
-
 void vis_shell_set(Vis *vis, const char *new_shell) {
 	char *shell =  strdup(new_shell);
 	if (!shell) {
@@ -269,7 +261,7 @@ static bool cmd_set(Vis *vis, Win *win, Command *cmd, const char *argv[], Select
 		vis->autoindent = toggle ? !vis->autoindent : arg.b;
 		break;
 	case OPTION_TABWIDTH:
-		vis_tabwidth_set(vis, arg.i);
+		view_tabwidth_set(vis->win->view, arg.i);
 		break;
 	case OPTION_SHOW_SPACES:
 	case OPTION_SHOW_TABS:

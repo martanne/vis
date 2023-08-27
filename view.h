@@ -365,6 +365,8 @@ const char *view_breakat_get(View*);
 
 /** Set how many spaces are used to display a tab `\t` character. */
 void view_tabwidth_set(View*, int tabwidth);
+/** Get how many spaces are used to display a tab `\t` character. */
+int view_tabwidth_get(View*);
 /** Define a display style. */
 bool view_style_define(View*, enum UiStyle, const char *style);
 /** Apply a style to a text range. */

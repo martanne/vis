@@ -1553,8 +1553,6 @@ static int vis_options_assign(Vis *vis, lua_State *L, const char *key, int next)
 		if (!lua_isstring(L, next))
 			return newindex_common(L);
 		vis_shell_set(vis, lua_tostring(L, next));
-	} else if (strcmp(key, "tabwidth") == 0 || strcmp(key, "tw") == 0) {
-		vis_tabwidth_set(vis, luaL_checkint(L, next));
 	}
 	return 0;
 }
@@ -1663,7 +1661,6 @@ static const struct luaL_Reg vis_lua[] = {
  * @tfield[opt=false] boolean ignorecase {ic}
  * @tfield[opt="auto"] string loadmethod `"auto"`, `"read"`, or `"mmap"`.
  * @tfield[opt="/bin/sh"] string shell
- * @tfield[opt=8] int tabwidth {tw}
  */
 
 static int vis_options_index(lua_State *L) {
@@ -1703,9 +1700,6 @@ static int vis_options_index(lua_State *L) {
 			return 1;
 		} else if (strcmp(key, "shell") == 0) {
 			lua_pushstring(L, vis->shell);
-			return 1;
-		} else if (strcmp(key, "tabwidth") == 0 || strcmp(key, "tw") == 0) {
-			lua_pushinteger(L, vis->tabwidth);
 			return 1;
 		}
 	}
@@ -1971,6 +1965,8 @@ static int window_options_assign(Win *win, lua_State *L, const char *key, int ne
 		view_options_set(win->view, flags);
 	} else if (strcmp(key, "wrapcolumn") == 0 || strcmp(key, "wc") == 0) {
 		view_wrapcolumn_set(win->view, luaL_checkint(L, next));
+	} else if (strcmp(key, "tabwidth") == 0 || strcmp(key, "tw") == 0) {
+		view_tabwidth_set(win->view, luaL_checkint(L, next));
 	}
 	return 0;
 }
@@ -2180,6 +2176,7 @@ static const struct luaL_Reg window_funcs[] = {
  * @tfield[opt=false] boolean showspaces
  * @tfield[opt=false] boolean showtabs
  * @tfield[opt=0] int wrapcolumn {wc}
+ * @tfield[opt=8] int tabwidth {tw}
  */
 
 static int window_options_index(lua_State *L) {
@@ -2217,6 +2214,9 @@ static int window_options_index(lua_State *L) {
 			return 1;
 		} else if (strcmp(key, "wrapcolumn") == 0 || strcmp(key, "wc") == 0) {
 			lua_pushunsigned(L, view_wrapcolumn_get(win->view));
+			return 1;
+		} else if (strcmp(key, "tabwidth") == 0 || strcmp(key, "tw") == 0) {
+			lua_pushinteger(L, view_tabwidth_get(win->view));
 			return 1;
 		}
 	}

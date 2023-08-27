@@ -498,7 +498,6 @@ Win *window_new_file(Vis *vis, File *file, enum UiOption options) {
 	mark_init(&win->saved_selections);
 	file->refcount++;
 	view_options_set(win->view, view_options_get(win->view));
-	view_tabwidth_set(win->view, vis->tabwidth);
 
 	if (vis->windows)
 		vis->windows->prev = win;
@@ -695,7 +694,6 @@ Vis *vis_new(Ui *ui, VisEvent *event) {
 		return NULL;
 	vis->exit_status = -1;
 	vis->ui = ui;
-	vis->tabwidth = 8;
 	vis->expandtab = false;
 	vis->change_colors = true;
 	for (size_t i = 0; i < LENGTH(vis->registers); i++)
@@ -1651,7 +1649,7 @@ void vis_insert_tab(Vis *vis) {
 		return;
 	}
 	char spaces[9];
-	int tabwidth = MIN(vis->tabwidth, LENGTH(spaces) - 1);
+	int tabwidth = MIN(view_tabwidth_get(vis->win->view), LENGTH(spaces) - 1);
 	for (Selection *s = view_selections(win->view); s; s = view_selections_next(s)) {
 		size_t pos = view_cursors_pos(s);
 		int width = text_line_width_get(win->file->text, pos);

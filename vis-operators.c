@@ -102,7 +102,7 @@ static size_t op_put(Vis *vis, Text *txt, OperatorContext *c) {
 
 static size_t op_shift_right(Vis *vis, Text *txt, OperatorContext *c) {
 	char spaces[9] = "         ";
-	spaces[MIN(vis->tabwidth, LENGTH(spaces) - 1)] = '\0';
+	spaces[MIN(view_tabwidth_get(vis->win->view), LENGTH(spaces) - 1)] = '\0';
 	const char *tab = vis->expandtab ? spaces : "\t";
 	size_t tablen = strlen(tab);
 	size_t pos = text_line_begin(txt, c->range.end), prev_pos;
@@ -127,7 +127,7 @@ static size_t op_shift_right(Vis *vis, Text *txt, OperatorContext *c) {
 
 static size_t op_shift_left(Vis *vis, Text *txt, OperatorContext *c) {
 	size_t pos = text_line_begin(txt, c->range.end), prev_pos;
-	size_t tabwidth = vis->tabwidth, tablen;
+	size_t tabwidth = view_tabwidth_get(vis->win->view), tablen;
 	size_t newpos = c->pos;
 
 	/* if range ends at the begin of a line, skip line break */

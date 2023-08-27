@@ -120,8 +120,14 @@ static void selection_free(Selection*);
 static size_t cursor_set(Selection*, Line *line, int col);
 
 void view_tabwidth_set(View *view, int tabwidth) {
+	if (tabwidth < 1 || tabwidth > 8)
+		return;
 	view->tabwidth = tabwidth;
 	view_draw(view);
+}
+
+int view_tabwidth_get(View *view) {
+	return view->tabwidth;
 }
 
 /* reset internal view data structures (cell matrix, line offsets etc.) */
