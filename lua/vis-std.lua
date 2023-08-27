@@ -17,6 +17,7 @@ vis:option_register("theme", "string", function(name)
 	local lexers = vis.lexers
 	lexers.lexers = {}
 
+	if not lexers.load then return false end
 	if not lexers.property then lexers.load("text") end
 	local colors = lexers.colors
 	local default_colors = { "black", "red", "green", "yellow", "blue", "magenta", "cyan", "white" }
