@@ -501,7 +501,11 @@ static size_t getpos(lua_State *L, int narg) {
 
 static size_t checkpos(lua_State *L, int narg) {
 	lua_Number n = luaL_checknumber(L, narg);
-	if (n >= 0 && n <= SIZE_MAX && n == (size_t)n)
+	/* on most systems SIZE_MAX can't be represented in lua_Number.
+	 * using < avoids undefined behaviour when n == SIZE_MAX+1
+	 * which can be represented in lua_Number
+	 */
+	if (n >= 0 && n < (lua_Number)SIZE_MAX && n == (size_t)n)
 		return n;
 	return luaL_argerror(L, narg, "expected position, got number");
 }
