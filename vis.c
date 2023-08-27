@@ -489,6 +489,7 @@ Win *window_new_file(Vis *vis, File *file, enum UiOption options) {
 	win->vis = vis;
 	win->file = file;
 	win->view = view_new(file->text);
+	win->expandtab = false;
 	win->ui = vis->ui->window_new(vis->ui, win, options);
 	if (!win->view || !win->ui) {
 		window_free(win);
@@ -694,7 +695,6 @@ Vis *vis_new(Ui *ui, VisEvent *event) {
 		return NULL;
 	vis->exit_status = -1;
 	vis->ui = ui;
-	vis->expandtab = false;
 	vis->change_colors = true;
 	for (size_t i = 0; i < LENGTH(vis->registers); i++)
 		register_init(&vis->registers[i]);
@@ -1644,7 +1644,7 @@ void vis_insert_tab(Vis *vis) {
 	Win *win = vis->win;
 	if (!win)
 		return;
-	if (!vis->expandtab) {
+	if (!win->expandtab) {
 		vis_insert_key(vis, "\t", 1);
 		return;
 	}

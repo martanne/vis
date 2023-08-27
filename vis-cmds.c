@@ -255,7 +255,7 @@ static bool cmd_set(Vis *vis, Win *win, Command *cmd, const char *argv[], Select
 		break;
 	}
 	case OPTION_EXPANDTAB:
-		vis->expandtab = toggle ? !vis->expandtab : arg.b;
+		vis->win->expandtab = toggle ? !vis->win->expandtab : arg.b;
 		break;
 	case OPTION_AUTOINDENT:
 		vis->autoindent = toggle ? !vis->autoindent : arg.b;

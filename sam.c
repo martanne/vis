@@ -323,7 +323,7 @@ static const OptionDef options[] = {
 	},
 	[OPTION_EXPANDTAB] = {
 		{ "expandtab", "et" },
-		VIS_OPTION_TYPE_BOOL,
+		VIS_OPTION_TYPE_BOOL|VIS_OPTION_NEED_WINDOW,
 		VIS_HELP("Replace entered <Tab> with `tabwidth` spaces")
 	},
 	[OPTION_TABWIDTH] = {

@@ -1535,8 +1535,6 @@ static int vis_options_assign(Vis *vis, lua_State *L, const char *key, int next)
 	} else if (strcmp(key, "escdelay") == 0) {
 		TermKey *tk = vis->ui->termkey_get(vis->ui);
 		termkey_set_waittime(tk, luaL_checkint(L, next));
-	} else if (strcmp(key, "expandtab") == 0 || strcmp(key, "et") == 0) {
-		vis->expandtab = lua_toboolean(L, next);
 	} else if (strcmp(key, "ignorecase") == 0 || strcmp(key, "ic") == 0) {
 		vis->ignorecase = lua_toboolean(L, next);
 	} else if (strcmp(key, "loadmethod") == 0) {
@@ -1657,7 +1655,6 @@ static const struct luaL_Reg vis_lua[] = {
  * @tfield[opt=false] boolean autoindent {ai}
  * @tfield[opt=false] boolean changecolors
  * @tfield[opt=50] int escdelay
- * @tfield[opt=false] boolean expandtab {et}
  * @tfield[opt=false] boolean ignorecase {ic}
  * @tfield[opt="auto"] string loadmethod `"auto"`, `"read"`, or `"mmap"`.
  * @tfield[opt="/bin/sh"] string shell
@@ -1678,9 +1675,6 @@ static int vis_options_index(lua_State *L) {
 		} else if (strcmp(key, "escdelay") == 0) {
 			TermKey *tk = vis->ui->termkey_get(vis->ui);
 			lua_pushunsigned(L, termkey_get_waittime(tk));
-			return 1;
-		} else if (strcmp(key, "expandtab") == 0 || strcmp(key, "et") == 0) {
-			lua_pushboolean(L, vis->expandtab);
 			return 1;
 		} else if (strcmp(key, "ignorecase") == 0 || strcmp(key, "ic") == 0) {
 			lua_pushboolean(L, vis->ignorecase);
@@ -1967,6 +1961,8 @@ static int window_options_assign(Win *win, lua_State *L, const char *key, int ne
 		view_wrapcolumn_set(win->view, luaL_checkint(L, next));
 	} else if (strcmp(key, "tabwidth") == 0 || strcmp(key, "tw") == 0) {
 		view_tabwidth_set(win->view, luaL_checkint(L, next));
+	} else if (strcmp(key, "expandtab") == 0 || strcmp(key, "et") == 0) {
+		win->expandtab = lua_toboolean(L, next);
 	}
 	return 0;
 }
@@ -2169,14 +2165,15 @@ static const struct luaL_Reg window_funcs[] = {
  * @tfield[opt=""] string breakat {brk}
  * @tfield[opt=0] int colorcolumn {cc}
  * @tfield[opt=false] boolean cursorline {cul}
+ * @tfield[opt=false] boolean expandtab {et}
  * @tfield[opt=false] boolean numbers {nu}
  * @tfield[opt=false] boolean relativenumbers {rnu}
  * @tfield[opt=true] boolean showeof
  * @tfield[opt=false] boolean shownewlines
  * @tfield[opt=false] boolean showspaces
  * @tfield[opt=false] boolean showtabs
- * @tfield[opt=0] int wrapcolumn {wc}
  * @tfield[opt=8] int tabwidth {tw}
+ * @tfield[opt=0] int wrapcolumn {wc}
  */
 
 static int window_options_index(lua_State *L) {
@@ -2193,6 +2190,9 @@ static int window_options_index(lua_State *L) {
 			return 1;
 		} else if (strcmp(key, "cursorline") == 0 || strcmp(key, "cul") == 0) {
 			lua_pushboolean(L, view_options_get(win->view) & UI_OPTION_CURSOR_LINE);
+			return 1;
+		} else if (strcmp(key, "expandtab") == 0 || strcmp(key, "et") == 0) {
+			lua_pushboolean(L, win->expandtab);
 			return 1;
 		} else if (strcmp(key, "numbers") == 0 || strcmp(key, "nu") == 0) {
 			lua_pushboolean(L, view_options_get(win->view) & UI_OPTION_LINE_NUMBERS_ABSOLUTE);
@@ -2212,11 +2212,11 @@ static int window_options_index(lua_State *L) {
 		} else if (strcmp(key, "showtabs") == 0) {
 			lua_pushboolean(L, view_options_get(win->view) & UI_OPTION_SYMBOL_TAB);
 			return 1;
-		} else if (strcmp(key, "wrapcolumn") == 0 || strcmp(key, "wc") == 0) {
-			lua_pushunsigned(L, view_wrapcolumn_get(win->view));
-			return 1;
 		} else if (strcmp(key, "tabwidth") == 0 || strcmp(key, "tw") == 0) {
 			lua_pushinteger(L, view_tabwidth_get(win->view));
+			return 1;
+		} else if (strcmp(key, "wrapcolumn") == 0 || strcmp(key, "wc") == 0) {
+			lua_pushunsigned(L, view_wrapcolumn_get(win->view));
 			return 1;
 		}
 	}

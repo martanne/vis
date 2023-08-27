@@ -158,6 +158,7 @@ struct Win {
 	UiWin *ui;              /* ui object handling visual appearance of this window */
 	File *file;             /* file being displayed in this window */
 	View *view;             /* currently displayed part of underlying text */
+	bool expandtab;         /* whether typed tabs should be converted to spaces in this window*/
 	MarkList jumplist;      /* LRU jump management */
 	Array saved_selections; /* register used to store selections */
 	Mode modes[VIS_MODE_INVALID]; /* overlay mods used for per window key bindings */
@@ -183,7 +184,6 @@ struct Vis {
 	char search_char[8];                 /* last used character to search for via 'f', 'F', 't', 'T' */
 	int last_totill;                     /* last to/till movement used for ';' and ',' */
 	int search_direction;                /* used for `n` and `N` */
-	bool expandtab;                      /* whether typed tabs should be converted to spaces */
 	bool autoindent;                     /* whether indentation should be copied from previous line on newline */
 	bool change_colors;                  /* whether to adjust 256 color palette for true colors */
 	char *shell;                         /* shell used to launch external commands */
