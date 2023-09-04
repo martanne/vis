@@ -832,6 +832,8 @@ static int keymap(lua_State *L, Vis *vis, Win *win) {
 			goto err;
 	} else if (lua_isuserdata(L, 4)) {
 		binding->action = obj_ref_check(L, 4, VIS_LUA_TYPE_KEYACTION);
+	} else {
+		goto err;
 	}
 
 	if (win) {
