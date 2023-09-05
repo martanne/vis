@@ -160,7 +160,7 @@ bool block_delete(Block *blk, size_t pos, size_t len) {
 	size_t end;
 	if (!addu(pos, len, &end) || end > blk->len)
 		return false;
-	if (blk->len == pos) {
+	if (blk->len == pos + len) {
 		blk->len -= len;
 		return true;
 	}
