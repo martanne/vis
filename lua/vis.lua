@@ -121,6 +121,20 @@ elseif not vis:module_exist('lexer') then
 	vis:info('WARNING: could not find lexer module')
 else
 	vis.lexers = require('lexer')
+
+	--- Cache of loaded lexers
+	--
+	-- Caching lexers causes lexer tables to be constructed once and reused
+	-- during each HIGHLIGHT event. Additionally it allows to modify the lexer
+	-- used for syntax highlighting from Lua code.
+	local lexers = {}
+	local load_lexer = vis.lexers.load
+	vis.lexers.load = function (name, alt_name, cache)
+		if cache and lexers[alt_name or name] then return lexers[alt_name or name] end
+		local lexer = load_lexer(name, alt_name)
+		if cache then lexers[alt_name or name] = lexer end
+		return lexer
+	end
 	vis.lpeg = require('lpeg')
 end
 
