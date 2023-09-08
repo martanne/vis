@@ -332,22 +332,22 @@ static const OptionDef options[] = {
 		VIS_HELP("Number of spaces to display (and insert if `expandtab` is enabled) for a tab")
 	},
 	[OPTION_SHOW_SPACES] = {
-		{ "showspaces" },
+		{ "showspaces", "show-spaces" },
 		VIS_OPTION_TYPE_BOOL|VIS_OPTION_NEED_WINDOW,
 		VIS_HELP("Display replacement symbol instead of a space")
 	},
 	[OPTION_SHOW_TABS] = {
-		{ "showtabs" },
+		{ "showtabs", "show-tabs" },
 		VIS_OPTION_TYPE_BOOL|VIS_OPTION_NEED_WINDOW,
 		VIS_HELP("Display replacement symbol for tabs")
 	},
 	[OPTION_SHOW_NEWLINES] = {
-		{ "shownewlines" },
+		{ "shownewlines", "show-newlines" },
 		VIS_OPTION_TYPE_BOOL|VIS_OPTION_NEED_WINDOW,
 		VIS_HELP("Display replacement symbol for newlines")
 	},
 	[OPTION_SHOW_EOF] = {
-		{ "showeof" },
+		{ "showeof", "show-eof" },
 		VIS_OPTION_TYPE_BOOL|VIS_OPTION_NEED_WINDOW,
 		VIS_HELP("Display replacement symbol for lines after the end of the file")
 	},
@@ -382,7 +382,7 @@ static const OptionDef options[] = {
 		VIS_HELP("How to load existing files 'auto', 'read' or 'mmap'")
 	},
 	[OPTION_CHANGE_256COLORS] = {
-		{ "change256colors" },
+		{ "change256colors", "change-256colors" },
 		VIS_OPTION_TYPE_BOOL,
 		VIS_HELP("Change 256 color palette to support 24bit colors")
 	},
