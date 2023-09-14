@@ -99,8 +99,7 @@ vis.ftdetect.filetypes = {
 		ext = { "%.desktop$" },
 	},
 	diff = {
-		ext = { "%.diff$", "%.patch$", "%.rej$", "^COMMIT_EDITMSG$" },
-		cmd = { "set colorcolumn 72" },
+		ext = { "%.diff$", "%.patch$", "%.rej$" },
 	},
 	dmd = {
 		ext = { "%.d$", "%.di$" },
@@ -168,6 +167,7 @@ vis.ftdetect.filetypes = {
 		ext = { "%.feature$" },
 	},
 	['git-commit'] = {
+		alt_name = "diff",
 		ext = { "^COMMIT_EDITMSG$" },
 		cmd = { "set colorcolumn 72" },
 	},
@@ -504,9 +504,10 @@ vis.events.subscribe(vis.events.WIN_OPEN, function(win)
 		end
 		if not vis.lexers.property then return end
 		local path = vis.lexers.property['lexer.lpeg.home']:gsub(';', '/?.lua;') .. '/?.lua'
-		local lexpath = package.searchpath('lexers/'..syntax, path)
+		local lexname = filetype.alt_name or syntax
+		local lexpath = package.searchpath('lexers/'..lexname, path)
 		if lexpath ~= nil then
-			win:set_syntax(syntax)
+			win:set_syntax(lexname)
 		else
 			win:set_syntax(nil)
 		end
