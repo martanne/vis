@@ -16,7 +16,7 @@ static Process *process_pool;
  * returns it
  * @return a new Process instance
  */
-Process *new_process_in_pool() {
+static Process *new_process_in_pool(void) {
 	Process *newprocess = malloc(sizeof(Process));
 	if (!newprocess) {
 		return NULL;
