@@ -331,7 +331,7 @@ vis.ftdetect.filetypes = {
 		ext = { "%.pony$" },
 	},
 	powershell = {
-		ext = { "%.ps1$" },
+		ext = { "%.ps1$", "%.psm1$" },
 	},
 	prolog = {
 		ext = { "%.pl$", "%.pro$", "%.prolog$" },
@@ -478,8 +478,8 @@ vis.ftdetect.filetypes = {
 	},
 	xml = {
 		ext = {
-			"%.dtd$", "%.glif$", "%.plist$", "%.svg$", "%.xml$",
-			"%.xsd$", "%.xsl$", "%.xslt$", "%.xul$"
+			"%.csproj$", "%.dtd$", "%.glif$", "%.plist$", "%.svg$",
+			"%.xml$", "%.xsd$", "%.xsl$", "%.xslt$", "%.xul$"
 		},
 	},
 	xtend = {
