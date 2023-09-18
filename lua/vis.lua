@@ -280,7 +280,7 @@ vis.types.window.set_syntax = function(win, syntax)
 	if not lexer then return false end
 
 	for id, token_name in ipairs(lexer._TAGS) do
-		local style = lexers['STYLE_' .. token_name:upper()] or ''
+		local style = lexers['STYLE_' .. token_name:upper():gsub("%.", "_")] or ''
 		if type(style) == 'table' then
 			local s = ''
 			if style.bold then
