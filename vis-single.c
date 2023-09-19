@@ -19,8 +19,12 @@
 
 #include "vis-single-payload.inc"
 
+#ifndef VIS_TMP_DIR
+#define VIS_TMP_DIR "/tmp"
+#endif
+
 #ifndef VIS_TMP
-#define VIS_TMP "/tmp/.vis-single-XXXXXX"
+#define VIS_TMP ".vis-single-XXXXXX"
 #endif
 
 #ifndef VIS_TERMINFO
@@ -94,8 +98,14 @@ static int unlink_cb(const char *path, const struct stat *sb, int typeflag, stru
 
 int main(int argc, char **argv) {
 	int rc = EXIT_FAILURE;
-	char exe[256], path[PATH_MAX];
-	char tmp_dirname[] = VIS_TMP;
+	char exe[256], path[PATH_MAX], tmp_dirname[PATH_MAX];
+
+	char *tmpdir = getenv("TMPDIR");
+	if (snprintf(tmp_dirname, sizeof(tmp_dirname), "%s/%s",
+	             tmpdir ? tmpdir : VIS_TMP_DIR, VIS_TMP) < 0) {
+		perror("snprintf");
+		return rc;
+	}
 
 	if (!mkdtemp(tmp_dirname)) {
 		perror("mkdtemp");
