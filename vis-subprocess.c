@@ -47,10 +47,8 @@ static void destroy_process(Process **pointer) {
 	if (target->invalidator) {
 		*(target->invalidator) = NULL;
 	}
-	if (target->name) {
-		free(target->name);
-	}
 	*pointer = target->next;
+	free(target->name);
 	free(target);
 }
 
