@@ -566,7 +566,7 @@ run(void) {
 		case CONTROL('I'): /* TAB */
 			if (!sel)
 				break;
-			strncpy(text, sel->text, sizeof text);
+			strncpy(text, sel->text, sizeof(text)-1);
 			cursor = strlen(text);
 			match();
 			break;
