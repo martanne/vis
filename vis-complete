@@ -48,7 +48,7 @@ fi
 PATTERN="$1"
 
 if [ $COMPLETE_WORD = 1 ]; then
-	tr -s '\t {}()[],<>%^&.' '\n' |
+	tr -s '\t {}()[],<>%^&.\\' '\n' |
 		grep "^$(basic_regex_quote "$PATTERN")." |
 		sort -u
 else
