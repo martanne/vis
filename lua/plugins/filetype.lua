@@ -152,7 +152,7 @@ vis.ftdetect.filetypes = {
 		ext = { "%.fs$" },
 	},
 	fstab = {
-		ext = { "fstab" },
+		ext = { "^fstab$" },
 	},
 	gap = {
 		ext = { "%.g$", "%.gd$", "%.gi$", "%.gap$" },
