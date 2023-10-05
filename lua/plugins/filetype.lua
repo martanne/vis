@@ -268,7 +268,7 @@ vis.ftdetect.filetypes = {
 	makefile = {
 		hashbang = {"^#!/usr/bin/make"},
 		utility = {"^make$"},
-		ext = { "%.iface$", "%.mak$", "%.mk$", "GNUmakefile", "makefile", "Makefile" },
+		ext = { "%.iface$", "%.mak$", "%.mk$", "^GNUmakefile$", "^makefile$", "^Makefile$" },
 		mime = { "text/x-makefile" },
 	},
 	man = {
