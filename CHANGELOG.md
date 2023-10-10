@@ -6,7 +6,6 @@
 - fix a ~ being considered a special character in path patterns (except at the start)
 - improvements to and clean-up of vis-open
 - add Selection:remove() to lua API
-- fix bug where visual-line selections after view were considered visible
 - don't set `_FORTIFY_SOURCE` in configure
 - update dockerfile to alpine 3.18
 

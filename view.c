@@ -330,8 +330,7 @@ bool view_coord_get(View *view, size_t pos, Line **retline, int *retrow, int *re
 	size_t cur = view->start;
 	Line *line = view->topline;
 
-	bool eof = view->end == text_size(view->text);
-	if (pos < view->start || (pos >= view->end && !eof)) {
+	if (pos < view->start || pos > view->end) {
 		if (retline) *retline = NULL;
 		if (retrow) *retrow = -1;
 		if (retcol) *retcol = -1;
