@@ -1960,7 +1960,10 @@ err:
 	vis->interrupted = false;
 	vis->ui->terminal_restore(vis->ui);
 
-	return status;
+	if (WIFEXITED(status))
+		return WEXITSTATUS(status);
+
+	return -1;
 }
 
 static ssize_t read_buffer(void *context, char *data, size_t len) {
