@@ -1428,6 +1428,10 @@ void view_style(View *view, enum UiStyle style_id, size_t start, size_t end) {
 	while (pos < start && col < width)
 		pos += line->cells[col++].len;
 
+	/* skip empty columns */
+	while (!line->cells[col].len && col < width)
+		col++;
+
 	do {
 		while (pos <= end && col < width) {
 			pos += line->cells[col].len;
