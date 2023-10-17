@@ -385,6 +385,7 @@ static void window_draw_selection(View *view, Selection *cur, CellStyle *style) 
 				}
 			} else {
 				l->cells[col].style.bg = style->bg;
+				l->cells[col].style.fg = style->fg;
 			}
 			col++;
 		}
