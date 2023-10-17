@@ -409,6 +409,7 @@ static void window_draw_cursor_matching(Win *win, Selection *cur, CellStyle *sty
 		line_match->cells[col_match].style.bg = old.fg;
 	} else {
 		line_match->cells[col_match].style.bg = style->bg;
+		line_match->cells[col_match].style.fg = style->fg;
 	}
 }
 
