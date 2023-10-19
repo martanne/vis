@@ -170,7 +170,7 @@ static void view_clear(View *view) {
 	view->wrapcol = 0;
 	view->prevch_breakat = false;
 	if (view->ui)
-		view->cell_blank.style = view->ui->style_get(view->ui, UI_STYLE_DEFAULT);
+		view->ui->style_set(view->ui, &view->cell_blank, UI_STYLE_DEFAULT);
 }
 
 Filerange view_viewport_get(View *view) {
@@ -1405,11 +1405,10 @@ bool view_style_define(View *view, enum UiStyle id, const char *style) {
 	return view->ui->style_define(view->ui, id, style);
 }
 
-void view_style(View *view, enum UiStyle style_id, size_t start, size_t end) {
+void view_style(View *view, enum UiStyle style, size_t start, size_t end) {
 	if (end < view->start || start > view->end)
 		return;
 
-	CellStyle style = view->ui->style_get(view->ui, style_id);
 	size_t pos = view->start;
 	Line *line = view->topline;
 
@@ -1435,7 +1434,7 @@ void view_style(View *view, enum UiStyle style_id, size_t start, size_t end) {
 	do {
 		while (pos <= end && col < width) {
 			pos += line->cells[col].len;
-			line->cells[col++].style = style;
+			view->ui->style_set(view->ui, &line->cells[col++], style);
 		}
 		col = 0;
 	} while (pos <= end && (line = line->next));

@@ -6,6 +6,7 @@
 
 typedef struct View View;
 typedef struct Selection Selection;
+typedef struct Cell Cell;
 
 #include "text.h"
 #include "ui.h"
@@ -16,7 +17,7 @@ typedef struct {
 	Mark cursor;
 } SelectionRegion;
 
-typedef struct {
+struct Cell {
 	char data[16];      /* utf8 encoded character displayed in this cell (might be more than
 	                       one Unicode codepoint. might also not be the same as in the
 	                       underlying text, for example tabs get expanded */
@@ -26,7 +27,7 @@ typedef struct {
 	                       occupied by the same character have a length of 0. */
 	int width;          /* display width i.e. number of columns occupied by this character */
 	CellStyle style;    /* colors and attributes used to display this cell */
-} Cell;
+};
 
 typedef struct Line Line;
 struct Line {               /* a line on the screen, *not* in the file */

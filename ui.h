@@ -54,23 +54,12 @@ enum UiStyle {
 #if CONFIG_CURSES
 typedef uint64_t CellAttr;
 typedef short CellColor;
-
-static inline bool cell_color_equal(CellColor c1, CellColor c2) {
-	return c1 == c2;
-}
 #else
 typedef uint8_t CellAttr;
 typedef struct {
 	uint8_t r, g, b;
 	uint8_t index;
 } CellColor;
-
-static inline bool cell_color_equal(CellColor c1, CellColor c2) {
-	if (c1.index != (uint8_t)-1 || c2.index != (uint8_t)-1)
-		return c1.index == c2.index;
-	return c1.r == c2.r && c1.g == c2.g && c1.b == c2.b;
-}
-
 #endif
 
 typedef struct {
@@ -107,7 +96,7 @@ struct Ui {
 };
 
 struct UiWin {
-	CellStyle (*style_get)(UiWin*, enum UiStyle);
+	void (*style_set)(UiWin*, Cell*, enum UiStyle);
 	void (*status)(UiWin*, const char *txt);
 	void (*options_set)(UiWin*, enum UiOption);
 	enum UiOption (*options_get)(UiWin*);
@@ -116,7 +105,6 @@ struct UiWin {
 	int (*window_height)(UiWin*);
 };
 
-bool is_default_color(CellColor c);
 enum UiLayout ui_layout_get(Ui *ui);
 
 #endif

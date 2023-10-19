@@ -75,7 +75,13 @@ typedef struct {
 	UiTerm uiterm;
 	Buffer buf;
 } UiVt100;
-	
+
+static inline bool cell_color_equal(CellColor c1, CellColor c2) {
+	if (c1.index != (uint8_t)-1 || c2.index != (uint8_t)-1)
+		return c1.index == c2.index;
+	return c1.r == c2.r && c1.g == c2.g && c1.b == c2.b;
+}
+
 static CellColor color_rgb(UiTerm *ui, uint8_t r, uint8_t g, uint8_t b) {
 	return (CellColor){ .r = r, .g = g, .b = b, .index = (uint8_t)-1 };
 }
@@ -219,6 +225,14 @@ static void ui_vt100_free(UiTerm *tui) {
 	buffer_release(&vtui->buf);
 }
 
-bool is_default_color(CellColor c) {
+static bool is_default_color(CellColor c) {
 	return c.index == ((CellColor) CELL_COLOR_DEFAULT).index;
+}
+
+static bool is_default_fg(CellColor c) {
+	return is_default_color(c);
+}
+
+static bool is_default_bg(CellColor c) {
+	return is_default_color(c);
 }

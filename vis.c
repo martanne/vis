@@ -297,7 +297,6 @@ static void window_draw_colorcolumn(Win *win) {
 	int cc = view_colorcolumn_get(view);
 	if (cc <= 0)
 		return;
-	CellStyle style = win->ui->style_get(win->ui, UI_STYLE_COLOR_COLUMN);
 	size_t lineno = 0;
 	int line_cols = 0; /* Track the number of columns we've passed on each line */
 	bool line_cc_set = false; /* Has the colorcolumn attribute been set for this line yet */
@@ -315,10 +314,7 @@ static void window_draw_colorcolumn(Win *win) {
 
 		/* This screen line contains the cell we want to highlight */
 		if (cc <= line_cols + width) {
-			CellStyle *orig = &l->cells[cc - 1 - line_cols].style;
-			orig->attr = style.attr;
-			orig->fg = is_default_color(style.fg) ? orig->fg : style.fg;
-			orig->bg = is_default_color(style.bg) ? orig->bg : style.bg;
+			win->ui->style_set(win->ui, &l->cells[cc - 1 - line_cols], UI_STYLE_COLOR_COLUMN);
 			line_cc_set = true;
 		} else {
 			line_cols += width;
@@ -338,22 +334,20 @@ static void window_draw_cursorline(Win *win) {
 		return;
 
 	int width = view_width_get(view);
-	CellStyle style = win->ui->style_get(win->ui, UI_STYLE_CURSOR_LINE);
 	Selection *sel = view_selections_primary_get(view);
 	size_t lineno = view_cursors_line_get(sel)->lineno;
 	for (Line *l = view_lines_first(view); l; l = l->next) {
 		if (l->lineno == lineno) {
-			for (int x = 0; x < width; x++) {
-				l->cells[x].style.attr |= style.attr;
-				l->cells[x].style.bg = style.bg;
-			}
+			for (int x = 0; x < width; x++)
+				win->ui->style_set(win->ui, &l->cells[x], UI_STYLE_CURSOR_LINE);
 		} else if (l->lineno > lineno) {
 			break;
 		}
 	}
 }
 
-static void window_draw_selection(View *view, Selection *cur, CellStyle *style) {
+static void window_draw_selection(Win *win, Selection *cur) {
+	View *view = win->view;
 	Filerange sel = view_selections_get(cur);
 	if (!text_range_valid(&sel))
 		return;
@@ -374,25 +368,12 @@ static void window_draw_selection(View *view, Selection *cur, CellStyle *style) 
 	for (Line *l = start_line; l != end_line->next; l = l->next) {
 		int col = (l == start_line) ? start_col : 0;
 		int end = (l == end_line) ? end_col : l->width;
-		while (col < end) {
-			if (cell_color_equal(l->cells[col].style.fg, style->bg)) {
-				CellStyle old = l->cells[col].style;
-				if (!cell_color_equal(old.fg, old.bg)) {
-					l->cells[col].style.fg = old.bg;
-					l->cells[col].style.bg = old.fg;
-				} else {
-					l->cells[col].style.attr = style->attr;
-				}
-			} else {
-				l->cells[col].style.bg = style->bg;
-				l->cells[col].style.fg = style->fg;
-			}
-			col++;
-		}
+		while (col < end)
+			win->ui->style_set(win->ui, &l->cells[col++], UI_STYLE_SELECTION);
 	}
 }
 
-static void window_draw_cursor_matching(Win *win, Selection *cur, CellStyle *style) {
+static void window_draw_cursor_matching(Win *win, Selection *cur) {
 	if (win->vis->mode->visual)
 		return;
 	Line *line_match; int col_match;
@@ -403,25 +384,18 @@ static void window_draw_cursor_matching(Win *win, Selection *cur, CellStyle *sty
 		return;
 	if (!view_coord_get(win->view, pos_match, &line_match, NULL, &col_match))
 		return;
-	if (cell_color_equal(line_match->cells[col_match].style.fg, style->fg)) {
-		CellStyle old = line_match->cells[col_match].style;
-		line_match->cells[col_match].style.fg = old.bg;
-		line_match->cells[col_match].style.bg = old.fg;
-	} else {
-		line_match->cells[col_match].style.bg = style->bg;
-		line_match->cells[col_match].style.fg = style->fg;
-	}
+	win->ui->style_set(win->ui, &line_match->cells[col_match], UI_STYLE_SELECTION);
 }
 
-static void window_draw_cursor(Win *win, Selection *cur, CellStyle *style, CellStyle *sel_style) {
+static void window_draw_cursor(Win *win, Selection *cur) {
 	if (win->vis->win != win)
 		return;
 	Line *line = view_cursors_line_get(cur);
 	int col = view_cursors_cell_get(cur);
 	if (!line || col == -1)
 		return;
-	line->cells[col].style = *style;
-	window_draw_cursor_matching(win, cur, sel_style);
+	win->ui->style_set(win->ui, &line->cells[col], UI_STYLE_CURSOR);
+	window_draw_cursor_matching(win, cur);
 	return;
 }
 
@@ -429,24 +403,21 @@ static void window_draw_selections(Win *win) {
 	View *view = win->view;
 	Filerange viewport = view_viewport_get(view);
 	Selection *sel = view_selections_primary_get(view);
-	CellStyle style_cursor = win->ui->style_get(win->ui, UI_STYLE_CURSOR);
-	CellStyle style_cursor_primary = win->ui->style_get(win->ui, UI_STYLE_CURSOR_PRIMARY);
-	CellStyle style_selection = win->ui->style_get(win->ui, UI_STYLE_SELECTION);
 	for (Selection *s = view_selections_prev(sel); s; s = view_selections_prev(s)) {
-		window_draw_selection(win->view, s, &style_selection);
+		window_draw_selection(win, s);
 		size_t pos = view_cursors_pos(s);
 		if (pos < viewport.start)
 			break;
-		window_draw_cursor(win, s, &style_cursor, &style_selection);
+		window_draw_cursor(win, s);
 	}
-	window_draw_selection(win->view, sel, &style_selection);
-	window_draw_cursor(win, sel, &style_cursor_primary, &style_selection);
+	window_draw_selection(win, sel);
+	window_draw_cursor(win, sel);
 	for (Selection *s = view_selections_next(sel); s; s = view_selections_next(s)) {
-		window_draw_selection(win->view, s, &style_selection);
+		window_draw_selection(win, s);
 		size_t pos = view_cursors_pos(s);
 		if (pos > viewport.end)
 			break;
-		window_draw_cursor(win, s, &style_cursor, &style_selection);
+		window_draw_cursor(win, s);
 	}
 }
 
@@ -454,10 +425,9 @@ static void window_draw_eof(Win *win) {
 	View *view = win->view;
 	if (view_width_get(view) == 0)
 		return;
-	CellStyle style = win->ui->style_get(win->ui, UI_STYLE_EOF);
 	for (Line *l = view_lines_last(view)->next; l; l = l->next) {
 		strncpy(l->cells[0].data, view_symbol_eof_get(view), sizeof(l->cells[0].data)-1);
-		l->cells[0].style = style;
+		win->ui->style_set(win->ui, &l->cells[0], UI_STYLE_EOF);
 	}
 }
 

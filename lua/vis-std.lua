@@ -2,9 +2,9 @@
 
 vis.events.subscribe(vis.events.INIT, function()
 	if os.getenv("TERM_PROGRAM") == "Apple_Terminal" then
-		vis:command("set change256colors false");
+		vis:command("set change256colors false")
 	end
-	vis:command("set theme ".. (vis.ui.colors <= 16 and "default-16" or "default-256"))
+	vis:command("set theme default")
 end)
 
 vis:option_register("theme", "string", function(name)

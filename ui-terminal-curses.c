@@ -51,9 +51,13 @@
 
 #define MAX_COLOR_CLOBBER 240
 
-static short color_clobber_idx = 0;
-static uint32_t clobbering_colors[MAX_COLOR_CLOBBER];
 static int change_colors = -1;
+static short default_fg = -1;
+static short default_bg = -1;
+
+static inline bool cell_color_equal(CellColor c1, CellColor c2) {
+	return c1 == c2;
+}
 
 /* Calculate r,g,b components of one of the standard upper 240 colors */
 static void get_6cube_rgb(unsigned int n, int *r, int *g, int *b)
@@ -83,10 +87,13 @@ static void undo_palette(void)
 /* Work out the nearest color from the 256 color set, or perhaps exactly. */
 static CellColor color_rgb(UiTerm *ui, uint8_t r, uint8_t g, uint8_t b)
 {
+	static short color_clobber_idx = 0;
+	static uint32_t clobbering_colors[MAX_COLOR_CLOBBER];
+
 	if (change_colors == -1)
 		change_colors = ui->vis->change_colors && can_change_color() && COLORS >= 256;
 	if (change_colors) {
-		uint32_t hexrep = ((r << 16) | (g << 8) | b) + 1;
+		uint32_t hexrep = (r << 16) | (g << 8) | b;
 		for (short i = 0; i < MAX_COLOR_CLOBBER; ++i) {
 			if (clobbering_colors[i] == hexrep)
 				return i + 16;
@@ -170,7 +177,7 @@ static inline unsigned int color_pair_hash(short fg, short bg) {
 
 static short color_pair_get(short fg, short bg) {
 	static bool has_default_colors;
-	static short *color2palette, default_fg, default_bg;
+	static short *color2palette;
 	static short color_pairs_max, color_pair_current;
 
 	if (!color2palette) {
@@ -299,4 +306,16 @@ static void ui_curses_free(UiTerm *term) {
 
 bool is_default_color(CellColor c) {
 	return c == CELL_COLOR_DEFAULT;
+}
+
+static bool is_default_bg(CellColor c) {
+	if (change_colors == 1)
+		return c == default_bg;
+	return is_default_color(c);
+}
+
+static bool is_default_fg(CellColor c) {
+	if (change_colors == 1)
+		return c == default_fg;
+	return is_default_color(c);
 }

@@ -286,10 +286,21 @@ static void ui_window_draw(UiWin *w) {
 	}
 }
 
-static CellStyle ui_window_style_get(UiWin *w, enum UiStyle style) {
+static void ui_window_style_set(UiWin *w, Cell *cell, enum UiStyle id) {
 	UiTermWin *win = (UiTermWin*)w;
 	UiTerm *tui = win->ui;
-	return tui->styles[win->id * UI_STYLE_MAX + style];
+	CellStyle set, style = tui->styles[win->id * UI_STYLE_MAX + id];
+
+	if (id == UI_STYLE_DEFAULT) {
+		memcpy(&cell->style, &style, sizeof(CellStyle));
+		return;
+	}
+
+	set.fg = is_default_fg(style.fg)? cell->style.fg : style.fg;
+	set.bg = is_default_bg(style.bg)? cell->style.bg : style.bg;
+	set.attr = cell->style.attr | style.attr;
+
+	memcpy(&cell->style, &set, sizeof(CellStyle));
 }
 
 static void ui_window_status(UiWin *w, const char *status) {
@@ -520,7 +531,7 @@ static UiWin *ui_window_new(Ui *ui, Win *w, enum UiOption options) {
 		return NULL;
 
 	win->uiwin = (UiWin) {
-		.style_get = ui_window_style_get,
+		.style_set = ui_window_style_set,
 		.status = ui_window_status,
 		.options_set = ui_window_options_set,
 		.options_get = ui_window_options_get,
