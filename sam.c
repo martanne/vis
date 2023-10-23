@@ -1497,7 +1497,7 @@ static int extract(Vis *vis, Win *win, Command *cmd, const char *argv[], Selecti
 }
 
 static bool cmd_extract(Vis *vis, Win *win, Command *cmd, const char *argv[], Selection *sel, Filerange *range) {
-	if (!win)
+	if (!win || !text_range_valid(range))
 		return false;
 	int matches = 0;
 	if (count_negative(cmd->cmd))
