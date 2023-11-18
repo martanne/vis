@@ -29,11 +29,10 @@ static Process *new_process_in_pool(void) {
 /**
  * Removes the subprocess information from the pool, sets invalidator to NULL
  * and frees resources.
- * @param a reference to a reference to the process to be removed
+ * @param a reference to the process to be removed
  * @return the next process in the pool
  */
-static void destroy_process(Process **pointer) {
-	Process *target = *pointer;
+static Process *destroy_process(Process *target) {
 	if (target->outfd != -1) {
 		close(target->outfd);
 	}
@@ -47,9 +46,11 @@ static void destroy_process(Process **pointer) {
 	if (target->invalidator) {
 		*(target->invalidator) = NULL;
 	}
-	*pointer = target->next;
+	Process *next = target->next;
 	free(target->name);
 	free(target);
+
+	return next;
 }
 
 /**
@@ -104,7 +105,7 @@ Process *vis_process_communicate(Vis *vis, const char *name,
 		if (!new->name) {
 			vis_info_show(vis, "Cannot copy process name: %s", strerror(errno));
 			/* pop top element (which is `new`) from the pool */
-			destroy_process(&process_pool);
+			process_pool = destroy_process(process_pool);
 			goto closeall;
 		}
 		new->outfd = pout[0];
@@ -211,6 +212,7 @@ just_destroy:
 		} else {
 			vis_lua_process_response(vis, current->name, NULL, WEXITSTATUS(status), EXIT);
 		}
-		destroy_process(pointer);
+		/* update our iteration pointer */
+		*pointer = destroy_process(current);
 	}
 }
