@@ -1660,6 +1660,7 @@ static const struct luaL_Reg vis_lua[] = {
  * @tfield[opt=false] boolean ignorecase {ic}
  * @tfield[opt="auto"] string loadmethod `"auto"`, `"read"`, or `"mmap"`.
  * @tfield[opt="/bin/sh"] string shell
+ * @see Window.options
  */
 
 static int vis_options_index(lua_State *L) {
@@ -1857,7 +1858,7 @@ static const struct luaL_Reg registers_funcs[] = {
  * Most of these marks are stored in the associated File object, meaning they
  * are the same in all windows displaying the same file.
  * @field marks array to access the marks of this window by single letter name
- * @see Vis:marks_names
+ * @see Vis:mark_names
  */
 static int window_index(lua_State *L) {
 	Win *win = obj_ref_check(L, 1, VIS_LUA_TYPE_WINDOW);
@@ -2176,6 +2177,7 @@ static const struct luaL_Reg window_funcs[] = {
  * @tfield[opt=false] boolean showtabs
  * @tfield[opt=8] int tabwidth {tw}
  * @tfield[opt=0] int wrapcolumn {wc}
+ * @see Vis.options
  */
 
 static int window_options_index(lua_State *L) {
