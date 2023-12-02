@@ -351,7 +351,7 @@ vis.ftdetect.filetypes = {
 	},
 	python = {
 		utility = { "^python%d?" },
-		ext = { "%.sc$", "%.py$", "%.pyw$" },
+		ext = { "%.sc$", "%.py[iw]?$" },
 		mime = { "text/x-python", "text/x-script.python" },
 	},
 	reason = {
