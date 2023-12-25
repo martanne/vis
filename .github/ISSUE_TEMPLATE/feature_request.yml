@@ -1,0 +1,13 @@
+name: Feature Request
+description: Thank you for your interest in improving vis.
+title: "[Feature Request]:"
+labels: [meta:feature-request]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ### The current practice and preferred location for large feature requests and general design discussion is the vis [mailing list](https://lists.sr.ht/~martanne/devel).
+
+  - type: textarea
+    attributes:
+      label: What feature would you like to see?

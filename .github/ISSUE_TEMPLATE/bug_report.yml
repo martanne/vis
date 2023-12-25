@@ -1,0 +1,36 @@
+name: Bug Report
+labels: ''
+description: Report a problem with vis.
+body:
+
+  - type: markdown
+    attributes:
+      value: |
+        ***Before reporting***, search [existing issues.](https://github.com/martanne/vis/issues?q=type%3Aissue)
+
+  - type: textarea
+    attributes:
+      label: "Problem"
+      description: "Describe the current behavior."
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: "Steps to reproduce"
+      placeholder: |
+        :,
+        :y/regex/
+  - type: input
+    attributes:
+      label: "vis version (vis -v)"
+      placeholder: "vis v0.7-151-g8ff0bea-dirty +curses +lua +tre +acl"
+    validations:
+      required: true
+  - type: input
+    attributes:
+      label: "Terminal name/version"
+      placeholder: "st 0.8.2"
+  - type: input
+    attributes:
+      label: "$TERM environment variable"
+      placeholder: "st-256color"
