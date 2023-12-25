@@ -1,0 +1,8 @@
+blank_issues_enabled: true
+contact_links:
+  - name: IRC Channel
+    url: https://web.libera.chat/#vis-editor
+    about: "Join the IRC channel #vis-editor on libera."
+  - name: Mailing List
+    url: https://lists.sr.ht/~martanne/devel
+    about: The vis Mailing List.
