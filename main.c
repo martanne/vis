@@ -2332,7 +2332,7 @@ int main(int argc, char *argv[]) {
 			cmd = argv[i] + (argv[i][1] == '/' || argv[i][1] == '?');
 			continue;
 		} else if (!vis_window_new(vis, argv[i])) {
-			vis_die(vis, "Can not load `%s': %s\n", argv[i], strerror(errno));
+			vis_die(vis, "Can not load '%s': %s\n", argv[i], strerror(errno));
 		}
 		win_created = true;
 		if (cmd) {
