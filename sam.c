@@ -292,6 +292,7 @@ enum {
 	OPTION_SHOW_TABS,
 	OPTION_SHOW_NEWLINES,
 	OPTION_SHOW_EOF,
+	OPTION_STATUSBAR,
 	OPTION_NUMBER,
 	OPTION_NUMBER_RELATIVE,
 	OPTION_CURSOR_LINE,
@@ -358,6 +359,11 @@ static const OptionDef options[] = {
 		VIS_HELP("Display replacement symbol for lines after the end of the file")
 		NULL,
 		"show-eof"
+	},
+	[OPTION_STATUSBAR] = {
+		{ "statusbar", "sb" },
+		VIS_OPTION_TYPE_BOOL|VIS_OPTION_NEED_WINDOW,
+		VIS_HELP("Display status bar")
 	},
 	[OPTION_NUMBER] = {
 		{ "numbers", "nu" },

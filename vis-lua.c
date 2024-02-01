@@ -1960,6 +1960,12 @@ static int window_options_assign(Win *win, lua_State *L, const char *key, int ne
 		else
 			flags &= ~UI_OPTION_SYMBOL_TAB;
 		view_options_set(win->view, flags);
+	} else if (strcmp(key, "statusbar") == 0) {
+		if (lua_toboolean(L, next))
+			flags |= UI_OPTION_STATUSBAR;
+		else
+			flags &= ~UI_OPTION_STATUSBAR;
+		view_options_set(win->view, flags);
 	} else if (strcmp(key, "wrapcolumn") == 0 || strcmp(key, "wc") == 0) {
 		view_wrapcolumn_set(win->view, luaL_checkint(L, next));
 	} else if (strcmp(key, "tabwidth") == 0 || strcmp(key, "tw") == 0) {
@@ -2175,6 +2181,7 @@ static const struct luaL_Reg window_funcs[] = {
  * @tfield[opt=false] boolean shownewlines
  * @tfield[opt=false] boolean showspaces
  * @tfield[opt=false] boolean showtabs
+ * @tfield[opt=true] boolean statusbar
  * @tfield[opt=8] int tabwidth {tw}
  * @tfield[opt=0] int wrapcolumn {wc}
  * @see Vis.options
@@ -2215,6 +2222,9 @@ static int window_options_index(lua_State *L) {
 			return 1;
 		} else if (strcmp(key, "showtabs") == 0) {
 			lua_pushboolean(L, view_options_get(win->view) & UI_OPTION_SYMBOL_TAB);
+			return 1;
+		} else if (strcmp(key, "statusbar") == 0) {
+			lua_pushboolean(L, view_options_get(win->view) & UI_OPTION_STATUSBAR);
 			return 1;
 		} else if (strcmp(key, "tabwidth") == 0 || strcmp(key, "tw") == 0) {
 			lua_pushinteger(L, view_tabwidth_get(win->view));

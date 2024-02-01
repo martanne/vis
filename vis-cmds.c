@@ -267,12 +267,14 @@ static bool cmd_set(Vis *vis, Win *win, Command *cmd, const char *argv[], Select
 	case OPTION_SHOW_TABS:
 	case OPTION_SHOW_NEWLINES:
 	case OPTION_SHOW_EOF:
+	case OPTION_STATUSBAR:
 	{
 		const int values[] = {
 			[OPTION_SHOW_SPACES] = UI_OPTION_SYMBOL_SPACE,
 			[OPTION_SHOW_TABS] = UI_OPTION_SYMBOL_TAB|UI_OPTION_SYMBOL_TAB_FILL,
 			[OPTION_SHOW_NEWLINES] = UI_OPTION_SYMBOL_EOL,
 			[OPTION_SHOW_EOF] = UI_OPTION_SYMBOL_EOF,
+			[OPTION_STATUSBAR] = UI_OPTION_STATUSBAR,
 		};
 		int flags = view_options_get(win->view);
 		if (arg.b || (toggle && !(flags & values[opt_index])))
