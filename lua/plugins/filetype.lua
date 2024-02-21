@@ -286,6 +286,12 @@ vis.ftdetect.filetypes = {
 	meson = {
 		ext = { "^meson%.build$" },
 	},
+	modula2 = {
+		ext = { "%.mod$", "%.def$" },
+	},
+	modula3 = {
+		ext = { "%.mg$", "%.ig$", "%.i3$", "%.m3$" },
+	},
 	moonscript = {
 		ext = { "%.moon$" },
 		mime = { "text/x-moon" },
