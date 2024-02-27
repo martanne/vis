@@ -14,21 +14,21 @@ lex:add_rule('whitespace', token(lexer.WHITESPACE, lexer.space^1))
 
 -- Keywords.
 lex:add_rule('keyword', token(lexer.KEYWORD, word_match{
-  'as', 'break', 'case', 'const', 'continue', 'def', 'defer', 'else', 'export', 'false', 'fn',
-  'for', 'if', 'is', 'let', 'match', 'null', 'nullable', 'return', 'static', 'struct', 'switch',
-  'true', 'type', 'use', 'yield'
+	'as', 'break', 'case', 'const', 'continue', 'def', 'defer', 'else', 'enum', 'export', 'false',
+	'fn', 'for', 'if', 'is', 'let', 'match', 'null', 'nullable', 'return', 'static', 'struct',
+	'switch', 'true', 'type', 'union', 'use', 'void', 'yield'
 }))
 
 -- Functions.
 lex:add_rule('function', token(lexer.FUNCTION, word_match{
-  'len', 'alloc', 'free', 'assert', 'abort', 'size', 'append', 'insert', 'delete', 'vastart',
-  'vaarg', 'vaend'
+	'abort', 'align', 'alloc', 'append', 'assert', 'delete', 'free', 'insert', 'len', 'offset',
+	'size', 'vaarg', 'vaend', 'vastart'
 }))
 
 -- Types.
 lex:add_rule('type', token(lexer.TYPE, word_match{
-  'bool', 'enum', 'f32', 'f64', 'i16', 'i32', 'i64', 'i8', 'int', 'u16', 'u32', 'u64', 'u8', 'uint',
-  'uintptr', 'union', 'void', 'rune', 'str', 'char'
+	'bool', 'f32', 'f64', 'i16', 'i32', 'i64', 'i8', 'int', 'never', 'nullable', 'opaque', 'rune',
+	'str', 'u16', 'u32', 'u64', 'u8', 'uint', 'uintptr', 'valist'
 }))
 
 -- Identifiers.
@@ -48,9 +48,10 @@ lex:add_rule('number', token(lexer.NUMBER, lexer.number))
 -- Operators.
 lex:add_rule('operator', token(lexer.OPERATOR, S('+-/*%^!=&|?:;,.()[]{}<>')))
 
--- At rule.
-lex:add_rule('at_rule', token('at_rule', '@' * word_match('noreturn offset init fini test symbol')))
-lex:add_style('at_rule', lexer.styles.preprocessor)
+-- Attributes.
+lex:add_rule('attribute', token('attribute', '@' *
+	word_match('fini init offset packed symbol test threadlocal')))
+lex:add_style('attribute', lexer.styles.preprocessor)
 
 -- Fold points.
 lex:add_fold_point(lexer.OPERATOR, '{', '}')
