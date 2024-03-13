@@ -458,6 +458,9 @@ vis.ftdetect.filetypes = {
 	typescript = {
 		ext = { "%.ts$" },
 	},
+	typst = {
+		ext = { "%.typ$", "%.typst$" },
+	},
 	vala = {
 		ext = { "%.vala$" }
 	},
