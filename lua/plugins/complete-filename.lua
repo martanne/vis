@@ -12,7 +12,7 @@ local complete_filename = function(expand)
 	local prefix = file:content(range)
 	if not prefix then return end
 
-	-- Strip leading delimiters for some progamming languages
+	-- Strip leading delimiters for some programming languages
 	local _, j = prefix:find("[{[(<'\"]+")
 	if not expand and j then prefix = prefix:sub(j + 1) end
 

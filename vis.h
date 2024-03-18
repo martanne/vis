@@ -115,7 +115,7 @@ Vis *vis_new(Ui*, VisEvent*);
 /** Free all resources associated with this editor instance, terminates UI. */
 void vis_free(Vis*);
 /**
- * Enter main loop, start processing user input. 
+ * Enter main loop, start processing user input.
  * @return The editor exit status code.
  */
 int vis_run(Vis*);
@@ -191,7 +191,7 @@ void vis_update(Vis*);
  */
 /**
  * Create a new window and load the given file.
- * @param filename If ``NULL`` a unamed, empty buffer is created.
+ * @param filename If ``NULL`` an unnamed, empty buffer is created.
  * @rst
  * .. note:: If the given file name is already opened in another window,
  *           the underlying File object is shared.
