@@ -693,6 +693,15 @@ static bool print_cmd(const char *key, void *value, void *data) {
 	return text_appendf(data, "  %-30s %s\n", usage, help ? help : "");
 }
 
+static bool print_cmd_name(const char *key, void *value, void *data) {
+	CommandDef *cmd = value;
+	return buffer_appendf(data, "%s\n", cmd->name);
+}
+
+void vis_print_cmds(Vis *vis, Buffer *buf) {
+	map_iterate(vis->cmds, print_cmd_name, buf);
+}
+
 static bool print_option(const char *key, void *value, void *txt) {
 	char desc[256];
 	const OptionDef *opt = value;

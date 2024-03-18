@@ -14,6 +14,7 @@ typedef struct Win Win;
 #include "text-regex.h"
 #include "libutf.h"
 #include "array.h"
+#include "buffer.h"
 
 #ifndef CONFIG_HELP
 #define CONFIG_HELP 1
@@ -1228,6 +1229,13 @@ bool vis_option_unregister(Vis *vis, const char *name);
  * @param cmd The command string.
  */
 bool vis_prompt_cmd(Vis *vis, const char *cmd);
+
+/**
+ * Write newline separated list of available commands to ``buf``
+ * @param vis The editor instance.
+ * @param buf The buffer to write to.
+ */
+void vis_print_cmds(Vis*, Buffer *buf);
 
 /**
  * Pipe a given file range to an external process.
