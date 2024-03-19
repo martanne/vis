@@ -1287,10 +1287,10 @@ Filerange view_selections_get(Selection *s) {
 	Text *txt = s->view->text;
 	size_t anchor = text_mark_get(txt, s->anchor);
 	size_t cursor = text_mark_get(txt, s->cursor);
-	Filerange sel = text_range_new(anchor, cursor);
-	if (text_range_valid(&sel))
-		sel.end = text_char_next(txt, sel.end);
-	return sel;
+	Filerange range = text_range_new(anchor, cursor);
+	if (text_range_valid(&range))
+		range.end = text_char_next(txt, range.end);
+	return range;
 }
 
 bool view_selections_set(Selection *s, const Filerange *r) {
@@ -1313,10 +1313,10 @@ Filerange view_regions_restore(View *view, SelectionRegion *s) {
 	Text *txt = view->text;
 	size_t anchor = text_mark_get(txt, s->anchor);
 	size_t cursor = text_mark_get(txt, s->cursor);
-	Filerange sel = text_range_new(anchor, cursor);
-	if (text_range_valid(&sel))
-		sel.end = text_char_next(txt, sel.end);
-	return sel;
+	Filerange range = text_range_new(anchor, cursor);
+	if (text_range_valid(&range))
+		range.end = text_char_next(txt, range.end);
+	return range;
 }
 
 bool view_regions_save(View *view, Filerange *r, SelectionRegion *s) {
