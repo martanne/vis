@@ -199,8 +199,8 @@ static File *file_new(Vis *vis, const char *name) {
 		/* try to detect whether the same file is already open in another window */
 		for (File *file = vis->files; file; file = file->next) {
 			if (file->name) {
-				if (cmp_names && strcmp(file->name, name_absolute) == 0 ||
-					file->stat.st_dev == new.st_dev && file->stat.st_ino == new.st_ino) {
+				if ((cmp_names && strcmp(file->name, name_absolute) == 0) ||
+				    (file->stat.st_dev == new.st_dev && file->stat.st_ino == new.st_ino)) {
 					existing = file;
 					break;
 				}
