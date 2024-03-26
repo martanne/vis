@@ -33,4 +33,6 @@ vis:map(vis.modes.INSERT, "<C-n>", function()
 	out = out:sub(#prefix + 1, #out - 1)
 	file:insert(pos, out)
 	win.selection.pos = pos + #out
+	-- restore mode to what it was on entry
+	vis.mode = vis.modes.INSERT
 end, "Complete word in file")
