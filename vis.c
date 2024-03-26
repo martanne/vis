@@ -363,6 +363,8 @@ static void window_draw_selection(View *view, Selection *cur, CellStyle *style) 
 	view_coord_get(view, sel.end, &end_line, NULL, &end_col);
 	if (!start_line && !end_line)
 		return;
+	if (end_col - start_col <= 1 && !view_selections_anchored(cur))
+		return;
 	if (!start_line) {
 		start_line = view_lines_first(view);
 		start_col = 0;
@@ -421,8 +423,6 @@ static void window_draw_cursor(Win *win, Selection *cur, CellStyle *style, CellS
 	if (!line || col == -1)
 		return;
 	line->cells[col].style = *style;
-	window_draw_cursor_matching(win, cur, sel_style);
-	return;
 }
 
 static void window_draw_selections(Win *win) {
@@ -430,7 +430,7 @@ static void window_draw_selections(Win *win) {
 	Filerange viewport = view_viewport_get(view);
 	Selection *sel = view_selections_primary_get(view);
 	CellStyle style_cursor = win->ui->style_get(win->ui, UI_STYLE_CURSOR);
-	CellStyle style_cursor_primary = win->ui->style_get(win->ui, UI_STYLE_CURSOR_PRIMARY);
+	CellStyle style_cursor_matching = win->ui->style_get(win->ui, UI_STYLE_CURSOR_MATCHING);
 	CellStyle style_selection = win->ui->style_get(win->ui, UI_STYLE_SELECTION);
 	for (Selection *s = view_selections_prev(sel); s; s = view_selections_prev(s)) {
 		window_draw_selection(win->view, s, &style_selection);
@@ -438,9 +438,10 @@ static void window_draw_selections(Win *win) {
 		if (pos < viewport.start)
 			break;
 		window_draw_cursor(win, s, &style_cursor, &style_selection);
+		window_draw_cursor_matching(win, s, &style_cursor_matching);
 	}
 	window_draw_selection(win->view, sel, &style_selection);
-	window_draw_cursor(win, sel, &style_cursor_primary, &style_selection);
+	window_draw_cursor_matching(win, sel, &style_cursor_matching);
 	for (Selection *s = view_selections_next(sel); s; s = view_selections_next(s)) {
 		window_draw_selection(win->view, s, &style_selection);
 		size_t pos = view_cursors_pos(s);

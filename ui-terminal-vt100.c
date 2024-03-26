@@ -12,8 +12,6 @@
  *
  *  - CSI ? 1049 h             Save cursor and use Alternate Screen Buffer (DECSET)
  *  - CSI ? 1049 l             Use Normal Screen Buffer and restore cursor (DECRST)
- *  - CSI ? 25 l               Hide Cursor (DECTCEM)
- *  - CSI ? 25 h               Show Cursor (DECTCEM)
  *  - CSI 2 J                  Erase in Display (ED)
  *  - CSI row ; column H       Cursor Position (CUP)
  *  - CSI ... m                Character Attributes (SGR)
@@ -98,10 +96,6 @@ static void screen_alternate(bool alternate) {
 	output_literal(alternate ? "\x1b[?1049h" : "\x1b[0m" "\x1b[?1049l" "\x1b[0m" );
 }
 
-static void cursor_visible(bool visible) {
-	output_literal(visible ? "\x1b[?25h" : "\x1b[?25l");
-}
-
 static void ui_vt100_blit(UiTerm *tui) {
 	Buffer *buf = &((UiVt100*)tui)->buf;
 	buffer_clear(buf);
@@ -165,6 +159,8 @@ static void ui_vt100_blit(UiTerm *tui) {
 			cell++;
 		}
 	}
+	/* move cursor to the expected location */
+	buffer_appendf(buf, "\x1b[%d;%dH", tui->row + 1, tui->col + 1);
 	output(buffer_content(buf), buffer_length0(buf));
 }
 
@@ -175,11 +171,9 @@ static bool ui_vt100_resize(UiTerm *tui, int width, int height) {
 }
 
 static void ui_vt100_save(UiTerm *tui, bool fscr) {
-	cursor_visible(true);
 }
 
 static void ui_vt100_restore(UiTerm *tui) {
-	cursor_visible(false);
 }
 
 static int ui_vt100_colors(Ui *ui) {
@@ -190,13 +184,11 @@ static int ui_vt100_colors(Ui *ui) {
 static void ui_vt100_suspend(UiTerm *tui) {
 	if (!tui->termkey) return;
 	termkey_stop(tui->termkey);
-	cursor_visible(true);
 	screen_alternate(false);
 }
 
 static void ui_vt100_resume(UiTerm *tui) {
 	screen_alternate(true);
-	cursor_visible(false);
 	termkey_start(tui->termkey);
 }
 
