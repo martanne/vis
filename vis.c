@@ -384,17 +384,18 @@ static void window_draw_cursor_matching(Win *win, Selection *cur) {
 		return;
 	if (!view_coord_get(win->view, pos_match, &line_match, NULL, &col_match))
 		return;
-	win->ui->style_set(win->ui, &line_match->cells[col_match], UI_STYLE_SELECTION);
+	win->ui->style_set(win->ui, &line_match->cells[col_match], UI_STYLE_CURSOR_MATCHING);
 }
 
-static void window_draw_cursor(Win *win, Selection *cur) {
+static void window_draw_cursor(Win *win, Selection *cur, bool isprimary) {
 	if (win->vis->win != win)
 		return;
 	Line *line = view_cursors_line_get(cur);
 	int col = view_cursors_cell_get(cur);
 	if (!line || col == -1)
 		return;
-	win->ui->style_set(win->ui, &line->cells[col], UI_STYLE_CURSOR);
+	win->ui->style_set(win->ui, &line->cells[col],
+		isprimary ? UI_STYLE_CURSOR_PRIMARY : UI_STYLE_CURSOR);
 	window_draw_cursor_matching(win, cur);
 	return;
 }
@@ -408,16 +409,16 @@ static void window_draw_selections(Win *win) {
 		size_t pos = view_cursors_pos(s);
 		if (pos < viewport.start)
 			break;
-		window_draw_cursor(win, s);
+		window_draw_cursor(win, s, false);
 	}
 	window_draw_selection(win, sel);
-	window_draw_cursor(win, sel);
+	window_draw_cursor(win, sel, true);
 	for (Selection *s = view_selections_next(sel); s; s = view_selections_next(s)) {
 		window_draw_selection(win, s);
 		size_t pos = view_cursors_pos(s);
 		if (pos > viewport.end)
 			break;
-		window_draw_cursor(win, s);
+		window_draw_cursor(win, s, false);
 	}
 }
 
