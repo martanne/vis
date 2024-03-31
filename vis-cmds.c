@@ -641,7 +641,8 @@ static bool cmd_earlier_later(Vis *vis, Win *win, Command *cmd, const char *argv
 }
 
 static int space_replace(char *dest, const char *src, size_t dlen) {
-	int i, invisiblebytes = 0, size = strlen("␣");
+	int invisiblebytes = 0;
+	size_t i, size = LENGTH("␣") - 1;
 	for (i = 0; *src && i < dlen; src++) {
 		if (*src == ' ' && i < dlen - size - 1) {
 			memcpy(&dest[i], "␣", size);
