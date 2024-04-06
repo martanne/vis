@@ -414,7 +414,7 @@ static const char *file_open_dialog(Vis *vis, const char *pattern) {
 		return NULL;
 
 	Filerange empty = text_range_new(0,0);
-	int status = vis_pipe(vis, vis->win->file, &empty,
+	int status = vis_pipe(vis, vis->win->file->text, vis->win->file->name, &empty,
 		(const char*[]){ buffer_content0(&bufcmd), NULL },
 		&bufout, read_buffer, &buferr, read_buffer, false);
 

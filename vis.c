@@ -1708,14 +1708,13 @@ Regex *vis_regex(Vis *vis, const char *pattern) {
 	return regex;
 }
 
-int vis_pipe(Vis *vis, File *file, Filerange *range, const char *argv[],
+int vis_pipe(Vis *vis, Text *text, const char *file_name, Filerange *range, const char *argv[],
 	void *stdout_context, ssize_t (*read_stdout)(void *stdout_context, char *data, size_t len),
 	void *stderr_context, ssize_t (*read_stderr)(void *stderr_context, char *data, size_t len),
 	bool fullscreen) {
 
 	/* if an invalid range was given, stdin (i.e. key board input) is passed
 	 * through the external command. */
-	Text *text = file->text;
 	int pin[2], pout[2], perr[2], status = -1;
 	bool interactive = !text_range_valid(range);
 	Filerange rout = interactive ? text_range_new(0, 0) : *range;
@@ -1803,10 +1802,10 @@ int vis_pipe(Vis *vis, File *file, Filerange *range, const char *argv[],
 		close(perr[1]);
 		close(null);
 
-		if (file->name) {
-			char *name = strrchr(file->name, '/');
-			setenv("vis_filepath", file->name, 1);
-			setenv("vis_filename", name ? name+1 : file->name, 1);
+		if (file_name) {
+			char *name = strrchr(file_name, '/');
+			setenv("vis_filepath", file_name, 1);
+			setenv("vis_filename", name ? name+1 : file_name, 1);
 		}
 
 		if (!argv[1])
@@ -1943,11 +1942,11 @@ static ssize_t read_buffer(void *context, char *data, size_t len) {
 	return len;
 }
 
-int vis_pipe_collect(Vis *vis, File *file, Filerange *range, const char *argv[], char **out, char **err, bool fullscreen) {
+int vis_pipe_collect(Vis *vis, Text *text, const char *file_name, Filerange *range, const char *argv[], char **out, char **err, bool fullscreen) {
 	Buffer bufout, buferr;
 	buffer_init(&bufout);
 	buffer_init(&buferr);
-	int status = vis_pipe(vis, file, range, argv,
+	int status = vis_pipe(vis, text, file_name, range, argv,
 	                      &bufout, out ? read_buffer : NULL,
 	                      &buferr, err ? read_buffer : NULL,
 	                      fullscreen);

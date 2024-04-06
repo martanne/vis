@@ -1358,7 +1358,48 @@ static int pipe_func(lua_State *L) {
 	if (!file)
 		return luaL_error(L, "vis:pipe(cmd = '%s'): win not open, file can't be nil", cmd);
 
-	int status = vis_pipe_collect(vis, file, &range, (const char*[]){ cmd, NULL }, &out, &err, fullscreen);
+	int status = vis_pipe_collect(vis, file->text, file->name, &range, (const char*[]){ cmd, NULL }, &out, &err, fullscreen);
+	lua_pushinteger(L, status);
+	if (out)
+		lua_pushstring(L, out);
+	else
+		lua_pushnil(L);
+	free(out);
+	if (err)
+		lua_pushstring(L, err);
+	else
+		lua_pushnil(L);
+	free(err);
+	vis_draw(vis);
+	return 3;
+}
+
+/***
+ * Pipe a buffer to external process and collect output.
+ *
+ * The editor core will be blocked while the external process is running.
+ * File and Range can be omitted or nil to indicate empty input.
+ *
+ * @function pipe
+ * @tparam string Buffer to pipe
+ * @tparam string command the command to execute
+ * @tparam[opt] bool fullscreen whether command is a fullscreen program (e.g. curses based)
+ * @treturn int code the exit status of the executed command
+ * @treturn string stdout the data written to stdout
+ * @treturn string stderr the data written to stderr
+ */
+static int pipe_buffer_func(lua_State *L) {
+	Vis *vis = obj_ref_check(L, 1, "vis");
+	char *out = NULL, *err = NULL;
+	const char *buffer = luaL_checkstring(L, 2);
+	const char *cmd = luaL_checkstring(L, 3);
+	bool fullscreen = lua_isboolean(L, 4) && lua_toboolean(L, 4);
+
+	Text *text = text_load(NULL);
+	text_insert(text, 0, buffer, strlen(buffer));
+	Filerange range = text_range_new(0, text_size(text));
+	int status = vis_pipe_collect(vis, text, NULL, &range, (const char*[]){ cmd, NULL }, &out, &err, fullscreen);
+	text_free(text);
 	lua_pushinteger(L, status);
 	if (out)
 		lua_pushstring(L, out);
@@ -1644,6 +1685,7 @@ static const struct luaL_Reg vis_lua[] = {
 	{ "action_register", action_register },
 	{ "exit", exit_func },
 	{ "pipe", pipe_func },
+	{ "pipe_buffer", pipe_buffer_func },
 	{ "redraw", redraw },
 	{ "communicate", communicate_func },
 	{ "__index", vis_index },

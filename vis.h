@@ -920,7 +920,7 @@ bool vis_prompt_cmd(Vis*, const char *cmd);
  *
  * @return The exit status of the forked process.
  */
-int vis_pipe(Vis*, File*, Filerange*, const char *argv[],
+int vis_pipe(Vis*, Text*, const char *, Filerange*, const char *argv[],
 	void *stdout_context, ssize_t (*read_stdout)(void *stdout_context, char *data, size_t len),
 	void *stderr_context, ssize_t (*read_stderr)(void *stderr_context, char *data, size_t len),
 	bool fullscreen);
@@ -937,7 +937,7 @@ int vis_pipe(Vis*, File*, Filerange*, const char *argv[],
  *              by the caller.
  * @endrst
  */
-int vis_pipe_collect(Vis*, File*, Filerange*, const char *argv[], char **out, char **err, bool fullscreen);
+int vis_pipe_collect(Vis*, Text*, const char *, Filerange*, const char *argv[], char **out, char **err, bool fullscreen);
 
 /**
  * @}

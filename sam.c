@@ -1767,7 +1767,7 @@ static bool cmd_filter(Vis *vis, Win *win, Command *cmd, const char *argv[], Sel
 	buffer_init(&bufout);
 	buffer_init(&buferr);
 
-	int status = vis_pipe(vis, win->file, range, &argv[1], &bufout, read_buffer, &buferr, read_buffer, false);
+	int status = vis_pipe(vis, win->file->text, win->file->name, range, &argv[1], &bufout, read_buffer, &buferr, read_buffer, false);
 
 	if (vis->interrupted) {
 		vis_info_show(vis, "Command cancelled");
@@ -1807,7 +1807,7 @@ static bool cmd_pipeout(Vis *vis, Win *win, Command *cmd, const char *argv[], Se
 	Buffer buferr;
 	buffer_init(&buferr);
 
-	int status = vis_pipe(vis, win->file, range, (const char*[]){ argv[1], NULL }, NULL, NULL, &buferr, read_buffer, false);
+	int status = vis_pipe(vis, win->file->text, win->file->name, range, (const char*[]){ argv[1], NULL }, NULL, NULL, &buferr, read_buffer, false);
 
 	if (vis->interrupted)
 		vis_info_show(vis, "Command cancelled");
