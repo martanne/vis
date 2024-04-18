@@ -3276,6 +3276,7 @@ void vis_lua_init(Vis *vis) {
 		enum UiStyle id;
 		const char *name;
 	} styles[] = {
+		{ UI_STYLE_LEXER_MAX,         "STYLE_LEXER_MAX"         },
 		{ UI_STYLE_DEFAULT,           "STYLE_DEFAULT"           },
 		{ UI_STYLE_CURSOR,            "STYLE_CURSOR"            },
 		{ UI_STYLE_CURSOR_PRIMARY,    "STYLE_CURSOR_PRIMARY"    },
