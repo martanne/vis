@@ -167,6 +167,8 @@ static bool ui_style_define(UiWin *w, int id, const char *style) {
 			for (*value++ = '\0'; *value == ' '; value++);
 		if (!strcasecmp(option, "reverse")) {
 			cell_style.attr |= CELL_ATTR_REVERSE;
+		} else if (!strcasecmp(option, "notreverse")) {
+			cell_style.attr &= CELL_ATTR_REVERSE;
 		} else if (!strcasecmp(option, "bold")) {
 			cell_style.attr |= CELL_ATTR_BOLD;
 		} else if (!strcasecmp(option, "notbold")) {
