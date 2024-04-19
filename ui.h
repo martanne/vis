@@ -97,6 +97,7 @@ struct Ui {
 
 struct UiWin {
 	void (*style_set)(UiWin*, Cell*, enum UiStyle);
+	bool (*style_set_pos)(UiWin*, int x, int y, enum UiStyle);
 	void (*status)(UiWin*, const char *txt);
 	void (*options_set)(UiWin*, enum UiOption);
 	enum UiOption (*options_get)(UiWin*);

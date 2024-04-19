@@ -2107,6 +2107,32 @@ static int window_style(lua_State *L) {
 }
 
 /***
+ * Style the single terminal cell at the given coordinates, relative to this window.
+ *
+ * Completely independent of the file buffer, and can be used to style UI elements,
+ * such as the status bar.
+ * The style will be cleared after every window redraw.
+ * @function style_pos
+ * @tparam int id display style registered with @{style_define}
+ * @tparam int x 0-based x coordinate within Win, where (0,0) is the top left corner
+ * @tparam int y See above
+ * @treturn bool false if the coordinates would be outside the window's dimensions
+ * @see style_define
+ * @usage
+ * win:style_pos(win.STYLE_COLOR_COLUMN, 0, win.height - 1)
+ * -- Styles the first character of the status bar (or the last line, if disabled)
+ */
+static int window_style_pos(lua_State *L) {
+	Win *win = obj_ref_check(L, 1, VIS_LUA_TYPE_WINDOW);
+	enum UiStyle style = luaL_checkunsigned(L, 2);
+	size_t x = checkpos(L, 3);
+	size_t y = checkpos(L, 4);
+	bool ret = win->ui->style_set_pos(win->ui, (int)x, (int)y, style);
+	lua_pushboolean(L, ret);
+	return 1;
+}
+
+/***
  * Set window status line.
  *
  * @function status
@@ -2175,6 +2201,7 @@ static const struct luaL_Reg window_funcs[] = {
 	{ "unmap", window_unmap },
 	{ "style_define", window_style_define },
 	{ "style", window_style },
+	{ "style_pos", window_style_pos },
 	{ "status", window_status },
 	{ "draw", window_draw },
 	{ "close", window_close },
