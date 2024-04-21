@@ -392,6 +392,7 @@ static void ui_draw(Ui *ui) {
 		ui_window_draw((UiWin*)win);
 	if (tui->info[0])
 		ui_draw_string(tui, 0, tui->height-1, tui->info, NULL, UI_STYLE_INFO);
+	vis_event_emit(tui->vis, VIS_EVENT_UI_DRAW);
 	ui_term_backend_blit(tui);
 }
 

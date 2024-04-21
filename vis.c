@@ -105,6 +105,10 @@ bool vis_event_emit(Vis *vis, enum VisEvents id, ...) {
 		if (vis->event->term_csi)
 			vis->event->term_csi(vis, va_arg(ap, const long *));
 		break;
+	case VIS_EVENT_UI_DRAW:
+		if (vis->event->ui_draw)
+			vis->event->ui_draw(vis);
+		break;
 	}
 
 	va_end(ap);

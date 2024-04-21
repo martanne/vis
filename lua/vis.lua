@@ -167,6 +167,7 @@ local events = {
 	WIN_STATUS = "Event::WIN_STATUS", -- see @{win_status}
 	TERM_CSI = "Event::TERM_CSI", -- see @{term_csi}
 	PROCESS_RESPONSE = "Event::PROCESS_RESPONSE", -- see @{process_response}
+	UI_DRAW = "Event::UI_DRAW", -- see @{ui_draw}
 }
 
 events.file_close = function(...) events.emit(events.FILE_CLOSE, ...) end
@@ -183,6 +184,7 @@ events.win_open = function(...) events.emit(events.WIN_OPEN, ...) end
 events.win_status = function(...) events.emit(events.WIN_STATUS, ...) end
 events.term_csi = function(...) events.emit(events.TERM_CSI, ...) end
 events.process_response = function(...) events.emit(events.PROCESS_RESPONSE, ...) end
+events.ui_draw = function(...) events.emit(events.UI_DRAW, ...) end
 
 local handlers = {}
 

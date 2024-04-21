@@ -166,7 +166,7 @@ void vis_lua_win_status(Vis *vis, Win *win) { window_status_update(vis, win); }
 void vis_lua_term_csi(Vis *vis, const long *csi) { }
 void vis_lua_process_response(Vis *vis, const char *name,
                               char *buffer, size_t len, ResponseType rtype) { }
-
+void vis_lua_ui_draw(Vis *vis) { }
 
 #else
 
@@ -3687,6 +3687,18 @@ void vis_lua_process_response(Vis *vis, const char *name,
 		pcall(vis, L, 4, 0);
 	}
 	lua_pop(L, 1);
+}
+
+/***
+ * Emitted immediately before the UI is drawn to the screen.
+ * Allows last-minute overrides to the styling of UI elements.
+ *
+ * *WARNING:* This is emitted every screen draw!
+ * Use sparingly and check for `nil` values!
+ * @function ui_draw
+ */
+void vis_lua_ui_draw(Vis *vis) {
+	vis_lua_event_call(vis, "ui_draw");
 }
 
 #endif
