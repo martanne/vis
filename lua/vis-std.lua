@@ -54,7 +54,7 @@ vis.events.subscribe(vis.events.WIN_HIGHLIGHT, function(win)
 	if not lexer then return end
 
 	-- TODO: improve heuristic for initial style
-	local viewport = win.viewport
+	local viewport = win.viewport.bytes
 	if not viewport then return end
 	local horizon_max = win.horizon or 32768
 	local horizon = viewport.start < horizon_max and viewport.start or horizon_max
