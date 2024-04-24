@@ -1833,8 +1833,10 @@ static const struct luaL_Reg registers_funcs[] = {
  * Viewport currently being displayed.
  * Changing these values will not move the viewport.
  * @table viewport
- * @tfield Range bytes
- * @tfield Range lines
+ * @tfield Range bytes file bytes, from 0, at the start and end of the viewport
+ * @tfield Range lines file lines, from 1, at the top and bottom of the viewport
+ * @tfield int height lines in viewport, accounting for window decoration
+ * @tfield int width columns in viewport, accounting for window decoration
  */
 /***
  * The window width.
@@ -1875,12 +1877,18 @@ static int window_index(lua_State *L) {
 			l.start = view_lines_first(win->view)->lineno;
 			l.end = view_lines_last(win->view)->lineno;
 
-			lua_createtable(L, 0, 2);
+			lua_createtable(L, 0, 4);
 			lua_pushstring(L, "bytes");
 			pushrange(L, &b);
 			lua_settable(L, -3);
 			lua_pushstring(L, "lines");
 			pushrange(L, &l);
+			lua_settable(L, -3);
+			lua_pushstring(L, "width");
+			lua_pushunsigned(L, view_width_get(win->view));
+			lua_settable(L, -3);
+			lua_pushstring(L, "height");
+			lua_pushunsigned(L, view_height_get(win->view));
 			lua_settable(L, -3);
 			return 1;
 		}
