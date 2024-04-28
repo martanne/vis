@@ -178,7 +178,7 @@ vis.ftdetect.filetypes = {
 		ext = { "%.gleam$" },
 	},
 	glsl = {
-		ext = { "%.glslf$", "%.glslv$" },
+		ext = { "%.glsl[fv]?$" },
 	},
 	gnuplot = {
 		ext = { "%.dem$", "%.plt$" },
@@ -200,7 +200,7 @@ vis.ftdetect.filetypes = {
 		mime = { "text/x-haskell" },
 	},
 	html = {
-		ext = { "%.htm$", "%.html$", "%.shtm$", "%.shtml$", "%.xhtml$" },
+		ext = { "%.[sx]?htm[l]?$" },
 		mime = { "text/x-html" },
 	},
 	icon = {
@@ -272,12 +272,7 @@ vis.ftdetect.filetypes = {
 		mime = { "text/x-makefile" },
 	},
 	man = {
-		ext = {
-			"%.1$", "%.2$", "%.3$", "%.4$", "%.5$", "%.6$", "%.7$",
-			"%.8$", "%.9$", "%.1x$", "%.2x$", "%.3x$", "%.4x$",
-			"%.5x$", "%.6x$", "%.7x$", "%.8x$", "%.9x$",
-			"%.ms$", "%.me$", "%.mom$", "%.mm$", "%.tmac$"
-		},
+		ext = { "%.[1-9][xp]?$", "%.ms$", "%.me$", "%.mom$", "%.mm$", "%.tmac$" },
 	},
 	markdown = {
 		ext = { "%.md$", "%.markdown$" },
