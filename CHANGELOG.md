@@ -1,14 +1,85 @@
-## Unreleased
+## [0.9] - 2024-05-01
 
-- add a changelog
+This release has been long in the works but its time now. There
+have been many additions and bugfixes since 0.8. In particular
+changes to the Lua API have made it easier to extend `vis` in all
+sorts of ways that were previously difficult or impossible. As
+always the appreciation towards contributors new and old can not
+be understated; thanks goes out to everyone for their efforts!
+
+A summary of changes follows:
+
+### Core
+
+- Compare non-existing files by name and existing files by inode
+- Do tilde expansion only for the tilde character at the beginning of the pattern.
+- Add word wrapping via breakat and wrapcolumn options
+- Add ansi escaping values and theming keyword for dimmed text
+- Allow statusbar to disabled
+- Default theme was changed to one that uses the terminal colors directly.
+
+### Lua
+
+- filetype: support filetype detection via hashbang
+- filetype: many new file extensions are covered
+- Resync the lexers with Scintillua
+- Implement Selection:remove()
+- Allow underscore (_) in command names
+- Allow nil in vis:pipe() File and Range parameters
+- Add fullscreen param to vis_pipe_collect() and vis:pipe()
+- Access and set all available editor options
+- Implementation of the non-blocking process running Lua API
+- Make expandtab and tabwidth options window-local
+- Drop redrawtime option
+- Add a Lua constant for UI_STYLE_LEXER_MAX
+- Report viewport as lines in addition to bytes
+- Add `win:style_pos()` for styling a specific window cell.
+- Add `UI_DRAW` event for last minute changes to the drawn window.
+- Report viewport dimensions
+
+### Misc
+
+- Add a basic .editorconfig file
+- Don't set _FORTIFY_SOURCE in configure
+- Many documentation improvements.
+- Make vis-open and vis-complete more POSIX compliant
+- vis-clipboard: clean up bashisms and make shellcheck happy.
+- vis-clipboard: add support for wayclip
+- vis-open: allow to show files vertically
+
+### Bugfixes
+
 - fix warning by dealing with error value from fchdir in text-io.c
-- fix documentation of initial value to 'syntax' option
-- fix a ~ being considered a special character in path patterns (except at the start)
-- improvements to and clean-up of vis-open
-- add Selection:remove() to lua API
-- don't set `_FORTIFY_SOURCE` in configure
-- update dockerfile to alpine 3.18
+- text-io: close "cwd" in all cases
+- vis-complete: Fix commandline options handling
+- vis-clipboard: make xsel honor --selection
+- wl-paste and wl-copy should not add \n to the end of the clipboard.
+- fix a bug with using regex to close windows (i.e. `:X/re/q`)
+- Limit to lines within range for inner text objects
+- vis-clipboard: don't fail when sel is primary on unsupported platforms
+- fix { moving back too much if cursor is at start of a line
+- Print keybindings containing space correctly in help window
+- Prevent flickering in curses
+- vis-menu: try to preserve valid Unicode points
+- lua: make sure lpeg is in fact optional
+- vis-single: respect TMPDIR
+- lua: fail when mapping a key to an invalid handler type
+- vis_pipe: correctly return non-zero exit status
+- view: skip empty cells before applying a style
+- sam: reject invalid ranges for cmd_extract ("x"/"y")
+- Fix upper/lower case conversions with `gU` and `gu`.
+- lua: complete-word: use internal regex for splitting words
+- Theme application was refactored and should be more consistent now.
 
+### Deprecation Notices
+
+The option names `show-spaces`, `show-tabs`, `show-newlines`,
+`show-eof`, and `change-256colors` are all deprecated and will be
+removed for the next release, use the name without the `-` instead
+(e.g. showeof). This was done to avoid inconsistencies between the
+lua option names and the `:set option` names.
+
+The complete changelog can be viewed using `git log v0.8..v0.9`.
 
 ## [0.8] - 2022-11-01
 

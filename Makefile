@@ -37,7 +37,7 @@ MANUALS = $(EXECUTABLES:=.1)
 
 DOCUMENTATION = LICENSE README.md
 
-VERSION = $(shell git describe --always --dirty 2>/dev/null || echo "v0.8-git")
+VERSION = 0.9
 
 CONFIG_HELP ?= 1
 CONFIG_CURSES ?= 1
