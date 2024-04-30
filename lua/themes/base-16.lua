@@ -44,7 +44,6 @@ lexers.STYLE_ADDITION = 'fore:green'
 lexers.STYLE_DELETION = 'fore:red'
 lexers.STYLE_CHANGE = 'fore:yellow'
 
---[[
 -- CSS
 lexers.STYLE_PROPERTY = lexers.STYLE_ATTRIBUTE
 lexers.STYLE_PSEUDOCLASS = ''
@@ -154,4 +153,3 @@ lexers.STYLE_TAGGED = lexers.STYLE_EMBEDDED
 lexers.STYLE_TAGGED_AREA = lexers.STYLE_EMBEDDED
 lexers.STYLE_TABLE_SEP = 'fore:green'
 lexers.STYLE_HEADER_CELL_CONTENT = 'fore:green'
---]]
