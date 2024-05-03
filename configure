@@ -505,7 +505,7 @@ int main(int argc, char *argv[]) {
 }
 EOF
 
-	for liblpeg in lpeg lua5.3-lpeg lua5.2-lpeg; do
+	for liblpeg in lpeg lua5.4-lpeg lua5.3-lpeg lua5.2-lpeg; do
 		printf " checking for static %s... " "$liblpeg"
 
 		if test "$have_pkgconfig" = "yes" ; then
