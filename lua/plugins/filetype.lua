@@ -507,9 +507,9 @@ vis.events.subscribe(vis.events.WIN_OPEN, function(win)
 			vis:command(cmd)
 		end
 		if not vis.lexers.property then return end
-		local path = vis.lexers.property['scintillua.lexers']
+		local path = vis.lexers.property['scintillua.lexers']:gsub(';', '/?.lua;')
 		local lexname = filetype.alt_name or syntax
-		local lexpath = package.searchpath('lexers/'..lexname, path)
+		local lexpath = package.searchpath(lexname, path)
 		if lexpath ~= nil then
 			win:set_syntax(lexname)
 		else
