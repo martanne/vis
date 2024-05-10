@@ -209,6 +209,8 @@ bool vis_window_new(Vis*, const char *filename);
 bool vis_window_new_fd(Vis*, int fd);
 /** Reload the file currently displayed in the window from disk. */
 bool vis_window_reload(Win*);
+/** Change the file currently displayed in the window. */
+bool vis_window_change_file(Win*, const char *filename);
 /** Check whether closing the window would loose unsaved changes. */
 bool vis_window_closable(Win*);
 /** Close window, redraw user interface. */

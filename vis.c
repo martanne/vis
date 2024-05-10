@@ -505,6 +505,18 @@ bool vis_window_reload(Win *win) {
 	return true;
 }
 
+bool vis_window_change_file(Win *win, const char* filename) {
+	File *file = file_new(win->vis, filename);
+	if (!file)
+		return false;
+	file->refcount++;
+	if (win->file)
+		file_free(win->vis, win->file);
+	win->file = file;
+	view_reload(win->view, file->text);
+	return true;
+}
+
 bool vis_window_split(Win *original) {
 	vis_doupdates(original->vis, false);
 	Win *win = window_new_file(original->vis, original->file, UI_OPTION_STATUSBAR);
