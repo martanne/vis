@@ -4,20 +4,20 @@ REGEX_SRC ?= text-regex.c
 
 SRC = array.c \
 	buffer.c \
+	event-basic.c \
 	libutf.c \
 	main.c \
 	map.c \
 	sam.c \
-	text.c \
 	text-common.c \
 	text-io.c \
 	text-iterator.c \
 	text-motions.c \
 	text-objects.c \
 	text-util.c \
+	text.c \
 	ui-terminal.c \
 	view.c \
-	vis.c \
 	vis-lua.c \
 	vis-marks.c \
 	vis-modes.c \
@@ -25,8 +25,9 @@ SRC = array.c \
 	vis-operators.c \
 	vis-prompt.c \
 	vis-registers.c \
-	vis-text-objects.c \
 	vis-subprocess.c \
+	vis-text-objects.c \
+	vis.c \
 	$(REGEX_SRC)
 OBJ = $(SRC:%.c=obj/%.o)
 

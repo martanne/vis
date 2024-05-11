@@ -54,119 +54,13 @@
 #define debug(...) do { } while (0)
 #endif
 
-static void window_status_update(Vis *vis, Win *win) {
-	char left_parts[4][255] = { "", "", "", "" };
-	char right_parts[4][32] = { "", "", "", "" };
-	char left[sizeof(left_parts)+LENGTH(left_parts)*8];
-	char right[sizeof(right_parts)+LENGTH(right_parts)*8];
-	char status[sizeof(left)+sizeof(right)+1];
-	size_t left_count = 0;
-	size_t right_count = 0;
-
-	View *view = win->view;
-	File *file = win->file;
-	Text *txt = file->text;
-	int width = vis_window_width_get(win);
-	enum UiOption options = view_options_get(view);
-	bool focused = vis->win == win;
-	const char *filename = file_name_get(file);
-	const char *mode = vis->mode->status;
-
-	if (focused && mode)
-		strcpy(left_parts[left_count++], mode);
-
-	snprintf(left_parts[left_count++], sizeof(left_parts[0]), "%s%s%s",
-	         filename ? filename : "[No Name]",
-	         text_modified(txt) ? " [+]" : "",
-	         vis_macro_recording(vis) ? " @": "");
-
-	int count = vis_count_get(vis);
-	const char *keys = buffer_content0(&vis->input_queue);
-	if (keys && keys[0])
-		snprintf(right_parts[right_count++], sizeof(right_parts[0]), "%s", keys);
-	else if (count != VIS_COUNT_UNKNOWN)
-		snprintf(right_parts[right_count++], sizeof(right_parts[0]), "%d", count);
-
-	int sel_count = view_selections_count(view);
-	if (sel_count > 1) {
-		Selection *s = view_selections_primary_get(view);
-		int sel_number = view_selections_number(s) + 1;
-		snprintf(right_parts[right_count++], sizeof(right_parts[0]),
-		         "%d/%d", sel_number, sel_count);
-	}
-
-	size_t size = text_size(txt);
-	size_t pos = view_cursor_get(view);
-	size_t percent = 0;
-	if (size > 0) {
-		double tmp = ((double)pos/(double)size)*100;
-		percent = (size_t)(tmp+1);
-	}
-	snprintf(right_parts[right_count++], sizeof(right_parts[0]),
-	         "%zu%%", percent);
-
-	if (!(options & UI_OPTION_LARGE_FILE)) {
-		Selection *sel = view_selections_primary_get(win->view);
-		size_t line = view_cursors_line(sel);
-		size_t col = view_cursors_col(sel);
-		if (col > UI_LARGE_FILE_LINE_SIZE) {
-			options |= UI_OPTION_LARGE_FILE;
-			view_options_set(win->view, options);
-		}
-		snprintf(right_parts[right_count++], sizeof(right_parts[0]),
-		         "%zu, %zu", line, col);
-	}
-
-	int left_len = snprintf(left, sizeof(left), " %s%s%s%s%s%s%s",
-	         left_parts[0],
-	         left_parts[1][0] ? " » " : "",
-	         left_parts[1],
-	         left_parts[2][0] ? " » " : "",
-	         left_parts[2],
-	         left_parts[3][0] ? " » " : "",
-	         left_parts[3]);
-
-	int right_len = snprintf(right, sizeof(right), "%s%s%s%s%s%s%s ",
-	         right_parts[0],
-	         right_parts[1][0] ? " « " : "",
-	         right_parts[1],
-	         right_parts[2][0] ? " « " : "",
-	         right_parts[2],
-	         right_parts[3][0] ? " « " : "",
-	         right_parts[3]);
-
-	if (left_len < 0 || right_len < 0)
-		return;
-	int left_width = text_string_width(left, left_len);
-	int right_width = text_string_width(right, right_len);
-
-	int spaces = width - left_width - right_width;
-	if (spaces < 1)
-		spaces = 1;
-
-	snprintf(status, sizeof(status), "%s%*s%s", left, spaces, " ", right);
-	vis_window_status(win, status);
-}
 
 #if !CONFIG_LUA
 
 bool vis_lua_path_add(Vis *vis, const char *path) { return true; }
 bool vis_lua_paths_get(Vis *vis, char **lpath, char **cpath) { return false; }
-void vis_lua_init(Vis *vis) { }
-void vis_lua_start(Vis *vis) { }
-void vis_lua_quit(Vis *vis) { }
-void vis_lua_file_open(Vis *vis, File *file) { }
-bool vis_lua_file_save_pre(Vis *vis, File *file, const char *path) { return true; }
-void vis_lua_file_save_post(Vis *vis, File *file, const char *path) { }
-void vis_lua_file_close(Vis *vis, File *file) { }
-void vis_lua_win_open(Vis *vis, Win *win) { }
-void vis_lua_win_close(Vis *vis, Win *win) { }
-void vis_lua_win_highlight(Vis *vis, Win *win) { }
-void vis_lua_win_status(Vis *vis, Win *win) { window_status_update(vis, win); }
-void vis_lua_term_csi(Vis *vis, const long *csi) { }
 void vis_lua_process_response(Vis *vis, const char *name,
                               char *buffer, size_t len, ResponseType rtype) { }
-void vis_lua_ui_draw(Vis *vis) { }
 
 #else
 
@@ -3213,7 +3107,7 @@ static void *alloc_lua(void *ud, void *ptr, size_t osize, size_t nsize) {
  * Can be used to set *global* configuration options.
  * @function init
  */
-void vis_lua_init(Vis *vis) {
+static void vis_lua_init(Vis *vis) {
 	lua_State *L = lua_newstate(alloc_lua, vis);
 	if (!L)
 		return;
@@ -3432,7 +3326,7 @@ void vis_lua_init(Vis *vis) {
  * We are about to process interactive keyboard input.
  * @function start
  */
-void vis_lua_start(Vis *vis) {
+static void vis_lua_start(Vis *vis) {
 	vis_lua_event_call(vis, "start");
 }
 
@@ -3440,7 +3334,7 @@ void vis_lua_start(Vis *vis) {
  * Editor is about to terminate.
  * @function quit
  */
-void vis_lua_quit(Vis *vis) {
+static void vis_lua_quit(Vis *vis) {
 	if (!vis->lua)
 		return;
 	vis_lua_event_call(vis, "quit");
@@ -3471,12 +3365,12 @@ static bool vis_lua_input(Vis *vis, const char *key, size_t len) {
 	return ret;
 }
 
-void vis_lua_mode_insert_input(Vis *vis, const char *key, size_t len) {
+void vis_event_mode_insert_input(Vis *vis, const char *key, size_t len) {
 	if (!vis_lua_input(vis, key, len))
 		vis_insert_key(vis, key, len);
 }
 
-void vis_lua_mode_replace_input(Vis *vis, const char *key, size_t len) {
+void vis_event_mode_replace_input(Vis *vis, const char *key, size_t len) {
 	if (!vis_lua_input(vis, key, len))
 		vis_replace_key(vis, key, len);
 }
@@ -3486,7 +3380,7 @@ void vis_lua_mode_replace_input(Vis *vis, const char *key, size_t len) {
  * @function file_open
  * @tparam File file the file to be opened
  */
-void vis_lua_file_open(Vis *vis, File *file) {
+static void vis_lua_file_open(Vis *vis, File *file) {
 	debug("event: file-open: %s %p %p\n", file->name ? file->name : "unnamed", (void*)file, (void*)file->text);
 	lua_State *L = vis->lua;
 	if (!L)
@@ -3507,7 +3401,7 @@ void vis_lua_file_open(Vis *vis, File *file) {
  * @tparam string path the absolute path to which the file will be written, `nil` if standard output
  * @treturn bool whether the write operation should be proceeded
  */
-bool vis_lua_file_save_pre(Vis *vis, File *file, const char *path) {
+static bool vis_lua_file_save_pre(Vis *vis, File *file, const char *path) {
 	lua_State *L = vis->lua;
 	if (!L)
 		return true;
@@ -3530,7 +3424,7 @@ bool vis_lua_file_save_pre(Vis *vis, File *file, const char *path) {
  * @tparam File file the file which was written
  * @tparam string path the absolute path to which it was written, `nil` if standard output
  */
-void vis_lua_file_save_post(Vis *vis, File *file, const char *path) {
+static void vis_lua_file_save_post(Vis *vis, File *file, const char *path) {
 	lua_State *L = vis->lua;
 	if (!L)
 		return;
@@ -3549,7 +3443,7 @@ void vis_lua_file_save_post(Vis *vis, File *file, const char *path) {
  * @function file_close
  * @tparam File file the file being closed
  */
-void vis_lua_file_close(Vis *vis, File *file) {
+static void vis_lua_file_close(Vis *vis, File *file) {
 	debug("event: file-close: %s %p %p\n", file->name ? file->name : "unnamed", (void*)file, (void*)file->text);
 	lua_State *L = vis->lua;
 	if (!L)
@@ -3571,7 +3465,7 @@ void vis_lua_file_close(Vis *vis, File *file) {
  * @function win_open
  * @tparam Window win the window being opened
  */
-void vis_lua_win_open(Vis *vis, Win *win) {
+static void vis_lua_win_open(Vis *vis, Win *win) {
 	debug("event: win-open: %s %p %p\n", win->file->name ? win->file->name : "unnamed", (void*)win, (void*)win->view);
 	lua_State *L = vis->lua;
 	if (!L)
@@ -3590,7 +3484,7 @@ void vis_lua_win_open(Vis *vis, Win *win) {
  * @function win_close
  * @tparam Window win the window being closed
  */
-void vis_lua_win_close(Vis *vis, Win *win) {
+static void vis_lua_win_close(Vis *vis, Win *win) {
 	debug("event: win-close: %s %p %p\n", win->file->name ? win->file->name : "unnamed", (void*)win, (void*)win->view);
 	lua_State *L = vis->lua;
 	if (!L)
@@ -3612,7 +3506,7 @@ void vis_lua_win_close(Vis *vis, Win *win) {
  * @tparam Window win the window being redrawn
  * @see style
  */
-void vis_lua_win_highlight(Vis *vis, Win *win) {
+static void vis_lua_win_highlight(Vis *vis, Win *win) {
 	lua_State *L = vis->lua;
 	if (!L)
 		return;
@@ -3630,7 +3524,7 @@ void vis_lua_win_highlight(Vis *vis, Win *win) {
  * @tparam Window win the affected window
  * @see status
  */
-void vis_lua_win_status(Vis *vis, Win *win) {
+static void vis_lua_win_status(Vis *vis, Win *win) {
 	lua_State *L = vis->lua;
 	if (!L || win->file->internal) {
 		window_status_update(vis, win);
@@ -3651,7 +3545,7 @@ void vis_lua_win_status(Vis *vis, Win *win) {
  * @function term_csi
  * @param List of CSI parameters
  */
-void vis_lua_term_csi(Vis *vis, const long *csi) {
+static void vis_lua_term_csi(Vis *vis, const long *csi) {
 	lua_State *L = vis->lua;
 	if (!L)
 		return;
@@ -3711,8 +3605,80 @@ void vis_lua_process_response(Vis *vis, const char *name,
  * Use sparingly and check for `nil` values!
  * @function ui_draw
  */
-void vis_lua_ui_draw(Vis *vis) {
+static void vis_lua_ui_draw(Vis *vis) {
 	vis_lua_event_call(vis, "ui_draw");
+}
+
+bool vis_event_emit(Vis *vis, enum VisEvents id, ...) {
+	if (!vis->initialized) {
+		vis->initialized = true;
+		vis->ui->init(vis->ui, vis);
+		vis_lua_init(vis);
+	}
+
+	va_list ap;
+	va_start(ap, id);
+	bool ret = true;
+
+	switch (id) {
+	case VIS_EVENT_INIT:
+		break;
+	case VIS_EVENT_START:
+		vis_lua_start(vis);
+		break;
+	case VIS_EVENT_FILE_OPEN:
+	case VIS_EVENT_FILE_SAVE_PRE:
+	case VIS_EVENT_FILE_SAVE_POST:
+	case VIS_EVENT_FILE_CLOSE:
+	{
+		File *file = va_arg(ap, File*);
+		if (file->internal)
+			break;
+		if (id == VIS_EVENT_FILE_OPEN) {
+			vis_lua_file_open(vis, file);
+		} else if (id == VIS_EVENT_FILE_SAVE_PRE) {
+			const char *path = va_arg(ap, const char*);
+			ret = vis_lua_file_save_pre(vis, file, path);
+		} else if (id == VIS_EVENT_FILE_SAVE_POST) {
+			const char *path = va_arg(ap, const char*);
+			vis_lua_file_save_post(vis, file, path);
+		} else if (id == VIS_EVENT_FILE_CLOSE) {
+			vis_lua_file_close(vis, file);
+		}
+		break;
+	}
+	case VIS_EVENT_WIN_OPEN:
+	case VIS_EVENT_WIN_CLOSE:
+	case VIS_EVENT_WIN_HIGHLIGHT:
+	case VIS_EVENT_WIN_STATUS:
+	{
+		Win *win = va_arg(ap, Win*);
+		if (win->file->internal && id != VIS_EVENT_WIN_STATUS)
+			break;
+		if (id == VIS_EVENT_WIN_OPEN) {
+			vis_lua_win_open(vis, win);
+		} else if (id == VIS_EVENT_WIN_CLOSE) {
+			vis_lua_win_close(vis, win);
+		} else if (id == VIS_EVENT_WIN_HIGHLIGHT) {
+			vis_lua_win_highlight(vis, win);
+		} else if (id == VIS_EVENT_WIN_STATUS) {
+			vis_lua_win_status(vis, win);
+		}
+		break;
+	}
+	case VIS_EVENT_QUIT:
+		vis_lua_quit(vis);
+		break;
+	case VIS_EVENT_TERM_CSI:
+		vis_lua_term_csi(vis, va_arg(ap, const long *));
+		break;
+	case VIS_EVENT_UI_DRAW:
+		vis_lua_ui_draw(vis);
+		break;
+	}
+
+	va_end(ap);
+	return ret;
 }
 
 #endif

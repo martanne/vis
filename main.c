@@ -2213,26 +2213,7 @@ static void signal_handler(int signum, siginfo_t *siginfo, void *context) {
 }
 
 int main(int argc, char *argv[]) {
-
-	VisEvent event = {
-		.init = vis_lua_init,
-		.start = vis_lua_start,
-		.quit = vis_lua_quit,
-		.mode_insert_input = vis_lua_mode_insert_input,
-		.mode_replace_input = vis_lua_mode_replace_input,
-		.file_open = vis_lua_file_open,
-		.file_save_pre = vis_lua_file_save_pre,
-		.file_save_post = vis_lua_file_save_post,
-		.file_close = vis_lua_file_close,
-		.win_open = vis_lua_win_open,
-		.win_close = vis_lua_win_close,
-		.win_highlight = vis_lua_win_highlight,
-		.win_status = vis_lua_win_status,
-		.term_csi = vis_lua_term_csi,
-		.ui_draw = vis_lua_ui_draw,
-	};
-
-	vis = vis_new(ui_term_new(), &event);
+	vis = vis_new(ui_term_new());
 	if (!vis)
 		return EXIT_FAILURE;
 

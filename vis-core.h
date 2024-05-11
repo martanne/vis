@@ -215,7 +215,6 @@ struct Vis {
 	Array actions_user;                  /* dynamically allocated editor actions */
 	lua_State *lua;                      /* lua context used for syntax highlighting */
 	enum TextLoadMethod load_method;     /* how existing files should be loaded */
-	VisEvent *event;
 	Array operators;
 	Array motions;
 	Array textobjects;
@@ -268,8 +267,9 @@ Mode *mode_get(Vis*, enum VisMode);
 void mode_set(Vis *vis, Mode *new_mode);
 Macro *macro_get(Vis *vis, enum VisRegister);
 
-void window_selection_save(Win *win);
 Win *window_new_file(Vis*, File*, enum UiOption);
+void window_selection_save(Win *win);
+void window_status_update(Vis *vis, Win *win);
 
 char *absolute_path(const char *path);
 

@@ -40,27 +40,6 @@ typedef struct Win Win;
 /* maximum bytes needed for string representation of a (pseudo) key */
 #define VIS_KEY_LENGTH_MAX 64
 
-/**
- * Editor event handlers.
- */
-typedef struct {
-	void (*init)(Vis*);
-	void (*start)(Vis*);
-	void (*quit)(Vis*);
-	void (*mode_insert_input)(Vis*, const char *key, size_t len);
-	void (*mode_replace_input)(Vis*, const char *key, size_t len);
-	void (*file_open)(Vis*, File*);
-	bool (*file_save_pre)(Vis*, File*, const char *path);
-	void (*file_save_post)(Vis*, File*, const char *path);
-	void (*file_close)(Vis*, File*);
-	void (*win_open)(Vis*, Win*);
-	void (*win_close)(Vis*, Win*);
-	void (*win_highlight)(Vis*, Win*);
-	void (*win_status)(Vis*, Win*);
-	void (*term_csi)(Vis*, const long *);
-	void (*ui_draw)(Vis*);
-} VisEvent;
-
 /** Union used to pass arguments to key action functions. */
 typedef union {
 	bool b;
@@ -111,8 +90,8 @@ typedef struct {
  * @defgroup vis_lifecycle
  * @{
  */
-/** Create a new editor instance using the given user interface and event handlers. */
-Vis *vis_new(Ui*, VisEvent*);
+/** Create a new editor instance using the given user interface. */
+Vis *vis_new(Ui*);
 /** Free all resources associated with this editor instance, terminates UI. */
 void vis_free(Vis*);
 /**

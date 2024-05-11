@@ -35,86 +35,6 @@ static void macro_replay(Vis *vis, const Macro *macro);
 static void macro_replay_internal(Vis *vis, const Macro *macro);
 static void vis_keys_push(Vis *vis, const char *input, size_t pos, bool record);
 
-bool vis_event_emit(Vis *vis, enum VisEvents id, ...) {
-	if (!vis->event)
-		return true;
-
-	if (!vis->initialized) {
-		vis->initialized = true;
-		vis->ui->init(vis->ui, vis);
-		if (vis->event->init)
-			vis->event->init(vis);
-	}
-
-	va_list ap;
-	va_start(ap, id);
-	bool ret = true;
-
-	switch (id) {
-	case VIS_EVENT_INIT:
-		break;
-	case VIS_EVENT_START:
-		if (vis->event->start)
-			vis->event->start(vis);
-		break;
-	case VIS_EVENT_FILE_OPEN:
-	case VIS_EVENT_FILE_SAVE_PRE:
-	case VIS_EVENT_FILE_SAVE_POST:
-	case VIS_EVENT_FILE_CLOSE:
-	{
-		File *file = va_arg(ap, File*);
-		if (file->internal)
-			break;
-		if (id == VIS_EVENT_FILE_OPEN && vis->event->file_open) {
-			vis->event->file_open(vis, file);
-		} else if (id == VIS_EVENT_FILE_SAVE_PRE && vis->event->file_save_pre) {
-			const char *path = va_arg(ap, const char*);
-			ret = vis->event->file_save_pre(vis, file, path);
-		} else if (id == VIS_EVENT_FILE_SAVE_POST && vis->event->file_save_post) {
-			const char *path = va_arg(ap, const char*);
-			vis->event->file_save_post(vis, file, path);
-		} else if (id == VIS_EVENT_FILE_CLOSE && vis->event->file_close) {
-			vis->event->file_close(vis, file);
-		}
-		break;
-	}
-	case VIS_EVENT_WIN_OPEN:
-	case VIS_EVENT_WIN_CLOSE:
-	case VIS_EVENT_WIN_HIGHLIGHT:
-	case VIS_EVENT_WIN_STATUS:
-	{
-		Win *win = va_arg(ap, Win*);
-		if (win->file->internal && id != VIS_EVENT_WIN_STATUS)
-			break;
-		if (vis->event->win_open && id == VIS_EVENT_WIN_OPEN) {
-			vis->event->win_open(vis, win);
-		} else if (vis->event->win_close && id == VIS_EVENT_WIN_CLOSE) {
-			vis->event->win_close(vis, win);
-		} else if (vis->event->win_highlight && id == VIS_EVENT_WIN_HIGHLIGHT) {
-			vis->event->win_highlight(vis, win);
-		} else if (vis->event->win_status && id == VIS_EVENT_WIN_STATUS) {
-			vis->event->win_status(vis, win);
-		}
-		break;
-	}
-	case VIS_EVENT_QUIT:
-		if (vis->event->quit)
-			vis->event->quit(vis);
-		break;
-	case VIS_EVENT_TERM_CSI:
-		if (vis->event->term_csi)
-			vis->event->term_csi(vis, va_arg(ap, const long *));
-		break;
-	case VIS_EVENT_UI_DRAW:
-		if (vis->event->ui_draw)
-			vis->event->ui_draw(vis);
-		break;
-	}
-
-	va_end(ap);
-	return ret;
-}
-
 /** window / file handling */
 
 static void file_free(Vis *vis, File *file) {
@@ -182,7 +102,7 @@ err:
 	return path_normalized[0] ? strdup(path_normalized) : NULL;
 }
 
-static File *file_new(Vis *vis, const char *name) {
+static File *file_new(Vis *vis, const char *name, bool internal) {
 	char *name_absolute = NULL;
 	bool cmp_names = 0;
 	struct stat new;
@@ -225,7 +145,9 @@ static File *file_new(Vis *vis, const char *name) {
 	if (!(file = file_new_text(vis, text)))
 		goto err;
 	file->name = name_absolute;
-	vis_event_emit(vis, VIS_EVENT_FILE_OPEN, file);
+	file->internal = internal;
+	if (!internal)
+		vis_event_emit(vis, VIS_EVENT_FILE_OPEN, file);
 	return file;
 err:
 	free(name_absolute);
@@ -235,11 +157,9 @@ err:
 }
 
 static File *file_new_internal(Vis *vis, const char *filename) {
-	File *file = file_new(vis, filename);
-	if (file) {
+	File *file = file_new(vis, filename, true);
+	if (file)
 		file->refcount = 1;
-		file->internal = true;
-	}
 	return file;
 }
 
@@ -495,7 +415,7 @@ bool vis_window_reload(Win *win) {
 		return false; /* can't reload unsaved file */
 	/* temporarily unset file name, otherwise file_new returns the same File */
 	win->file->name = NULL;
-	File *file = file_new(win->vis, name);
+	File *file = file_new(win->vis, name, false);
 	win->file->name = name;
 	if (!file)
 		return false;
@@ -507,7 +427,7 @@ bool vis_window_reload(Win *win) {
 }
 
 bool vis_window_change_file(Win *win, const char* filename) {
-	File *file = file_new(win->vis, filename);
+	File *file = file_new(win->vis, filename, false);
 	if (!file)
 		return false;
 	file->refcount++;
@@ -596,7 +516,7 @@ void vis_doupdates(Vis *vis, bool doupdate) {
 }
 
 bool vis_window_new(Vis *vis, const char *filename) {
-	File *file = file_new(vis, filename);
+	File *file = file_new(vis, filename, false);
 	if (!file)
 		return false;
 	vis_doupdates(vis, false);
@@ -676,7 +596,7 @@ void vis_window_close(Win *win) {
 	vis_draw(vis);
 }
 
-Vis *vis_new(Ui *ui, VisEvent *event) {
+Vis *vis_new(Ui *ui) {
 	if (!ui)
 		return NULL;
 	Vis *vis = calloc(1, sizeof(Vis));
@@ -719,13 +639,8 @@ Vis *vis_new(Ui *ui, VisEvent *event) {
 	if (!(vis->shell = strdup(shell)))
 		goto err;
 	vis->mode_prev = vis->mode = &vis_modes[VIS_MODE_NORMAL];
-	vis->event = event;
-	if (event) {
-		if (event->mode_insert_input)
-			vis_modes[VIS_MODE_INSERT].input = event->mode_insert_input;
-		if (event->mode_replace_input)
-			vis_modes[VIS_MODE_REPLACE].input = event->mode_replace_input;
-	}
+	vis_modes[VIS_MODE_INSERT].input  = vis_event_mode_insert_input;
+	vis_modes[VIS_MODE_REPLACE].input = vis_event_mode_replace_input;
 	return vis;
 err:
 	vis_free(vis);
@@ -735,10 +650,9 @@ err:
 void vis_free(Vis *vis) {
 	if (!vis)
 		return;
-	vis_event_emit(vis, VIS_EVENT_QUIT);
-	vis->event = NULL;
 	while (vis->windows)
 		vis_window_close(vis->windows);
+	vis_event_emit(vis, VIS_EVENT_QUIT);
 	file_free(vis, vis->command_file);
 	file_free(vis, vis->search_file);
 	file_free(vis, vis->error_file);
