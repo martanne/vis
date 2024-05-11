@@ -208,10 +208,6 @@ void vis_window_prev(Vis*);
 void vis_window_focus(Win*);
 /** Swap location of two windows. */
 void vis_window_swap(Win*, Win*);
-/** Query window width. */
-int vis_window_width_get(const Win*);
-/** Query window height. */
-int vis_window_height_get(const Win*);
 /**
  * @}
  * @defgroup vis_info
@@ -294,8 +290,6 @@ enum VisMode {
  * @endrst
  */
 void vis_mode_switch(Vis*, enum VisMode);
-/** Get currently active mode. */
-enum VisMode vis_mode_get(Vis*);
 /** Translate human readable mode name to constant. */
 enum VisMode vis_mode_from(Vis*, const char *name);
 
@@ -560,14 +554,8 @@ int vis_motion_register(Vis*, void *context, VisMotionFunction*);
  */
 /** No count was specified. */
 #define VIS_COUNT_UNKNOWN (-1)
-/** Get count, might return `VIS_COUNT_UNKNOWN`. */
-int vis_count_get(Vis*);
-/** Get count, if none was specified, return ``def``. */
-int vis_count_get_default(Vis*, int def);
-/** Set a count. */
-void vis_count_set(Vis*, int count);
-/** Set the tabwidth */
-void vis_tabwidth_set(Vis*, int tw);
+#define VIS_COUNT_DEFAULT(count, def) ((count) == VIS_COUNT_UNKNOWN ? (def) : (count))
+#define VIS_COUNT_NORMALIZE(count)    ((count) < 0 ? VIS_COUNT_UNKNOWN : (count))
 /** Set the shell */
 void vis_shell_set(Vis*, const char *new_shell);
 
@@ -974,9 +962,5 @@ void vis_file_snapshot(Vis*, File*);
 /* TODO: expose proper API to iterate through files etc */
 Text *vis_text(Vis*);
 View *vis_view(Vis*);
-Win *vis_window(Vis*);
-
-/* Get value of autoindent */
-bool vis_get_autoindent(const Vis*);
 
 #endif

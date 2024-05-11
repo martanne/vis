@@ -69,7 +69,7 @@ static size_t common_word_next(Vis *vis, Text *txt, size_t pos,
 	if (!text_iterator_byte_get(&it, &c))
 		return pos;
 	const Movement *motion = NULL;
-	int count = vis_count_get_default(vis, 1);
+	int count = VIS_COUNT_DEFAULT(vis->action.count, 1);
 	if (isspace((unsigned char)c)) {
 		motion = &vis_motions[start_next];
 	} else if (!isboundary((unsigned char)c) && text_iterator_char_next(&it, &c) && isboundary((unsigned char)c)) {
@@ -175,7 +175,7 @@ static size_t firstline(Text *txt, size_t pos) {
 }
 
 static size_t line(Vis *vis, Text *txt, size_t pos) {
-	int count = vis_count_get_default(vis, 1);
+	int count = VIS_COUNT_DEFAULT(vis->action.count, 1);
 	return text_line_start(txt, text_pos_by_lineno(txt, count));
 }
 
@@ -185,11 +185,11 @@ static size_t lastline(Text *txt, size_t pos) {
 }
 
 static size_t column(Vis *vis, Text *txt, size_t pos) {
-	return text_line_offset(txt, pos, vis_count_get_default(vis, 0));
+	return text_line_offset(txt, pos, VIS_COUNT_DEFAULT(vis->action.count, 0));
 }
 
 static size_t view_lines_top(Vis *vis, View *view) {
-	return view_screenline_goto(view, vis_count_get_default(vis, 1));
+	return view_screenline_goto(view, VIS_COUNT_DEFAULT(vis->action.count, 1));
 }
 
 static size_t view_lines_middle(Vis *vis, View *view) {
@@ -199,7 +199,7 @@ static size_t view_lines_middle(Vis *vis, View *view) {
 
 static size_t view_lines_bottom(Vis *vis, View *view) {
 	int h = view_height_get(vis->win->view);
-	return view_screenline_goto(vis->win->view, h - vis_count_get_default(vis, 0));
+	return view_screenline_goto(vis->win->view, h - VIS_COUNT_DEFAULT(vis->action.count, 0));
 }
 
 static size_t window_nop(Vis *vis, Win *win, size_t pos) {
@@ -233,25 +233,25 @@ static size_t bracket_match(Text *txt, size_t pos) {
 }
 
 static size_t percent(Vis *vis, Text *txt, size_t pos) {
-	int ratio = vis_count_get_default(vis, 0);
+	int ratio = VIS_COUNT_DEFAULT(vis->action.count, 0);
 	if (ratio > 100)
 		ratio = 100;
 	return text_size(txt) * ratio / 100;
 }
 
 static size_t byte(Vis *vis, Text *txt, size_t pos) {
-	pos = vis_count_get_default(vis, 0);
+	pos = VIS_COUNT_DEFAULT(vis->action.count, 0);
 	size_t max = text_size(txt);
 	return pos <= max ? pos : max;
 }
 
 static size_t byte_left(Vis *vis, Text *txt, size_t pos) {
-	size_t off = vis_count_get_default(vis, 1);
+	size_t off = VIS_COUNT_DEFAULT(vis->action.count, 1);
 	return off <= pos ? pos-off : 0;
 }
 
 static size_t byte_right(Vis *vis, Text *txt, size_t pos) {
-	size_t off = vis_count_get_default(vis, 1);
+	size_t off = VIS_COUNT_DEFAULT(vis->action.count, 1);
 	size_t new = pos + off;
 	size_t max = text_size(txt);
 	return new <= max && new > pos ? new : max;

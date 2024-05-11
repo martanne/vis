@@ -272,7 +272,7 @@ bool vis_operator(Vis *vis, enum VisOperator id, ...) {
 	}
 	case VIS_OP_DELETE:
 	{
-		enum VisMode mode = vis_mode_get(vis);
+		enum VisMode mode = vis->mode->id;
 		enum VisRegister reg = vis_register_used(vis);
 		if (reg == VIS_REG_DEFAULT && (mode == VIS_MODE_INSERT || mode == VIS_MODE_REPLACE))
 			vis_register(vis, VIS_REG_BLACKHOLE);

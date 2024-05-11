@@ -134,7 +134,7 @@ void window_status_update(Vis *vis, Win *win) {
 	View *view = win->view;
 	File *file = win->file;
 	Text *txt = file->text;
-	int width = vis_window_width_get(win);
+	int width = win->ui->window_width(win->ui);
 	enum UiOption options = view_options_get(view);
 	bool focused = vis->win == win;
 	const char *filename = file_name_get(file);
@@ -148,7 +148,7 @@ void window_status_update(Vis *vis, Win *win) {
 	         text_modified(txt) ? " [+]" : "",
 	         vis_macro_recording(vis) ? " @": "");
 
-	int count = vis_count_get(vis);
+	int count = vis->action.count;
 	const char *keys = buffer_content0(&vis->input_queue);
 	if (keys && keys[0])
 		snprintf(right_parts[right_count++], sizeof(right_parts[0]), "%s", keys);

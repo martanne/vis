@@ -1384,7 +1384,7 @@ static int vis_index(lua_State *L) {
 		}
 
 		if (strcmp(key, "count") == 0) {
-			int count = vis_count_get(vis);
+			int count = vis->action.count;
 			if (count == VIS_COUNT_UNKNOWN)
 				lua_pushnil(L);
 			else
@@ -1467,7 +1467,7 @@ static int vis_newindex(lua_State *L) {
 				count = VIS_COUNT_UNKNOWN;
 			else
 				count = luaL_checkunsigned(L, 3);
-			vis_count_set(vis, count);
+			vis->action.count = count;
 			return 0;
 		}
 
@@ -1788,12 +1788,12 @@ static int window_index(lua_State *L) {
 		}
 
 		if (strcmp(key, "width") == 0) {
-			lua_pushunsigned(L, vis_window_width_get(win));
+			lua_pushunsigned(L, win->ui->window_width(win->ui));
 			return 1;
 		}
 
 		if (strcmp(key, "height") == 0) {
-			lua_pushunsigned(L, vis_window_height_get(win));
+			lua_pushunsigned(L, win->ui->window_height(win->ui));
 			return 1;
 		}
 
@@ -2050,7 +2050,7 @@ static int window_style_pos(lua_State *L) {
 static int window_status(lua_State *L) {
 	Win *win = obj_ref_check(L, 1, VIS_LUA_TYPE_WINDOW);
 	char status[1024] = "";
-	int width = vis_window_width_get(win);
+	int width = win->ui->window_width(win->ui);
 	const char *left = luaL_checkstring(L, 2);
 	const char *right = luaL_optstring(L, 3, "");
 	int left_width = text_string_width(left, strlen(left));

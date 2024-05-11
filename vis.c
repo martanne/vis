@@ -481,14 +481,6 @@ void vis_window_prev(Vis *vis) {
 	vis_window_focus(sel);
 }
 
-int vis_window_width_get(const Win *win) {
-	return win->ui->window_width(win->ui);
-}
-
-int vis_window_height_get(const Win *win) {
-	return win->ui->window_height(win->ui);
-}
-
 void vis_draw(Vis *vis) {
 	for (Win *win = vis->windows; win; win = win->next)
 		view_draw(win->view);
@@ -1461,7 +1453,7 @@ bool vis_macro_replay(Vis *vis, enum VisRegister id) {
 	Macro *macro = macro_get(vis, id);
 	if (!macro || macro == vis->recording)
 		return false;
-	int count = vis_count_get_default(vis, 1);
+	int count = VIS_COUNT_DEFAULT(vis->action.count, 1);
 	vis_cancel(vis);
 	for (int i = 0; i < count; i++)
 		macro_replay(vis, macro);
@@ -1502,25 +1494,11 @@ void vis_repeat(Vis *vis) {
 		vis_file_snapshot(vis, win->file);
 }
 
-int vis_count_get(Vis *vis) {
-	return vis->action.count;
-}
-
-int vis_count_get_default(Vis *vis, int def) {
-	if (vis->action.count == VIS_COUNT_UNKNOWN)
-		return def;
-	return vis->action.count;
-}
-
-void vis_count_set(Vis *vis, int count) {
-	vis->action.count = (count >= 0 ? count : VIS_COUNT_UNKNOWN);
-}
-
 VisCountIterator vis_count_iterator_get(Vis *vis, int def) {
 	return (VisCountIterator) {
 		.vis = vis,
 		.iteration = 0,
-		.count = vis_count_get_default(vis, def),
+		.count = VIS_COUNT_DEFAULT(vis->action.count, def),
 	};
 }
 
@@ -1927,12 +1905,4 @@ Text *vis_text(Vis *vis) {
 View *vis_view(Vis *vis) {
 	Win *win = vis->win;
 	return win ? win->view : NULL;
-}
-
-Win *vis_window(Vis *vis) {
-	return vis->win;
-}
-
-bool vis_get_autoindent(const Vis *vis) {
-	return vis->autoindent;
 }

@@ -1280,7 +1280,7 @@ static const char *selections_new(Vis *vis, const char *keys, const Arg *arg) {
 			view_selections_anchor(sel_new, anchored);
 		}
 	}
-	vis_count_set(vis, VIS_COUNT_UNKNOWN);
+	vis->action.count = VIS_COUNT_UNKNOWN;
 	return keys;
 }
 
@@ -1439,7 +1439,7 @@ static const char *selections_remove(Vis *vis, const char *keys, const Arg *arg)
 static const char *selections_remove_column(Vis *vis, const char *keys, const Arg *arg) {
 	View *view = vis_view(vis);
 	int max = view_selections_column_count(view);
-	int column = vis_count_get_default(vis, arg->i) - 1;
+	int column = VIS_COUNT_DEFAULT(vis->action.count, arg->i) - 1;
 	if (column >= max)
 		column = max - 1;
 	if (view_selections_count(view) == 1) {
@@ -1452,14 +1452,14 @@ static const char *selections_remove_column(Vis *vis, const char *keys, const Ar
 		view_selections_dispose(s);
 	}
 
-	vis_count_set(vis, VIS_COUNT_UNKNOWN);
+	vis->action.count = VIS_COUNT_UNKNOWN;
 	return keys;
 }
 
 static const char *selections_remove_column_except(Vis *vis, const char *keys, const Arg *arg) {
 	View *view = vis_view(vis);
 	int max = view_selections_column_count(view);
-	int column = vis_count_get_default(vis, arg->i) - 1;
+	int column = VIS_COUNT_DEFAULT(vis->action.count, arg->i) - 1;
 	if (column >= max)
 		column = max - 1;
 	if (view_selections_count(view) == 1) {
@@ -1477,7 +1477,7 @@ static const char *selections_remove_column_except(Vis *vis, const char *keys, c
 			view_selections_dispose(sel);
 	}
 
-	vis_count_set(vis, VIS_COUNT_UNKNOWN);
+	vis->action.count = VIS_COUNT_UNKNOWN;
 	return keys;
 }
 
@@ -1502,7 +1502,7 @@ static const char *selections_navigate(Vis *vis, const char *keys, const Arg *ar
 		}
 	}
 	view_selections_primary_set(s);
-	vis_count_set(vis, VIS_COUNT_UNKNOWN);
+	vis->action.count = VIS_COUNT_UNKNOWN;
 	return keys;
 }
 
@@ -1519,7 +1519,7 @@ static const char *selections_rotate(Vis *vis, const char *keys, const Arg *arg)
 	View *view = vis_view(vis);
 	int columns = view_selections_column_count(view);
 	int selections = columns == 1 ? view_selections_count(view) : columns;
-	int count = vis_count_get_default(vis, 1);
+	int count = VIS_COUNT_DEFAULT(vis->action.count, 1);
 	array_init_sized(&arr, sizeof(Rotate));
 	if (!array_reserve(&arr, selections))
 		return keys;
@@ -1569,7 +1569,7 @@ static const char *selections_rotate(Vis *vis, const char *keys, const Arg *arg)
 	}
 
 	array_release(&arr);
-	vis_count_set(vis, VIS_COUNT_UNKNOWN);
+	vis->action.count = VIS_COUNT_UNKNOWN;
 	return keys;
 }
 
@@ -1595,7 +1595,7 @@ static const char *selections_trim(Vis *vis, const char *keys, const Arg *arg) {
 }
 
 static void selections_set(Vis *vis, View *view, Array *sel) {
-	enum VisMode mode = vis_mode_get(vis);
+	enum VisMode mode = vis->mode->id;
 	bool anchored = mode == VIS_MODE_VISUAL || mode == VIS_MODE_VISUAL_LINE;
 	view_selections_set_all(view, sel, anchored);
 	if (!anchored)
@@ -1603,7 +1603,7 @@ static void selections_set(Vis *vis, View *view, Array *sel) {
 }
 
 static const char *selections_save(Vis *vis, const char *keys, const Arg *arg) {
-	Win *win = vis_window(vis);
+	Win *win = vis->win;
 	View *view = vis_view(vis);
 	enum VisMark mark = vis_mark_used(vis);
 	Array sel = view_selections_get_all(view);
@@ -1614,7 +1614,7 @@ static const char *selections_save(Vis *vis, const char *keys, const Arg *arg) {
 }
 
 static const char *selections_restore(Vis *vis, const char *keys, const Arg *arg) {
-	Win *win = vis_window(vis);
+	Win *win = vis->win;
 	View *view = vis_view(vis);
 	enum VisMark mark = vis_mark_used(vis);
 	Array sel = vis_mark_get(win, mark);
@@ -1625,7 +1625,7 @@ static const char *selections_restore(Vis *vis, const char *keys, const Arg *arg
 }
 
 static const char *selections_union(Vis *vis, const char *keys, const Arg *arg) {
-	Win *win = vis_window(vis);
+	Win *win = vis->win;
 	View *view = vis_view(vis);
 	enum VisMark mark = vis_mark_used(vis);
 	Array a = vis_mark_get(win, mark);
@@ -1692,7 +1692,7 @@ static void intersect(Array *ret, Array *a, Array *b) {
 }
 
 static const char *selections_intersect(Vis *vis, const char *keys, const Arg *arg) {
-	Win *win = vis_window(vis);
+	Win *win = vis->win;
 	View *view = vis_view(vis);
 	enum VisMark mark = vis_mark_used(vis);
 	Array a = vis_mark_get(win, mark);
@@ -1745,7 +1745,7 @@ static const char *selections_complement(Vis *vis, const char *keys, const Arg *
 
 static const char *selections_minus(Vis *vis, const char *keys, const Arg *arg) {
 	Text *txt = vis_text(vis);
-	Win *win = vis_window(vis);
+	Win *win = vis->win;
 	View *view = vis_view(vis);
 	enum VisMark mark = vis_mark_used(vis);
 	Array a = view_selections_get_all(view);
@@ -1788,25 +1788,25 @@ static const char *replace(Vis *vis, const char *keys, const Arg *arg) {
 		return next;
 
 	vis_operator(vis, VIS_OP_REPLACE, replacement);
-	if (vis_mode_get(vis) == VIS_MODE_OPERATOR_PENDING)
+	if (vis->mode->id == VIS_MODE_OPERATOR_PENDING)
 		vis_motion(vis, VIS_MOVE_CHAR_NEXT);
 	return next;
 }
 
 static const char *count(Vis *vis, const char *keys, const Arg *arg) {
 	int digit = keys[-1] - '0';
-	int count = vis_count_get_default(vis, 0);
+	int count = VIS_COUNT_DEFAULT(vis->action.count, 0);
 	if (0 <= digit && digit <= 9) {
 		if (digit == 0 && count == 0)
 			vis_motion(vis, VIS_MOVE_LINE_BEGIN);
 		else
-			vis_count_set(vis, count * 10 + digit);
+			vis->action.count = VIS_COUNT_NORMALIZE(count * 10 + digit);
 	}
 	return keys;
 }
 
 static const char *gotoline(Vis *vis, const char *keys, const Arg *arg) {
-	if (vis_count_get(vis) != VIS_COUNT_UNKNOWN)
+	if (vis->action.count != VIS_COUNT_UNKNOWN)
 		vis_motion(vis, VIS_MOVE_LINE);
 	else if (arg->i < 0)
 		vis_motion(vis, VIS_MOVE_FILE_BEGIN);
@@ -2032,7 +2032,7 @@ static const char *insert_verbatim(Vis *vis, const char *keys, const Arg *arg) {
 
 static const char *wscroll(Vis *vis, const char *keys, const Arg *arg) {
 	View *view = vis_view(vis);
-	int count = vis_count_get(vis);
+	int count = vis->action.count;
 	switch (arg->i) {
 	case -PAGE:
 		view_scroll_page_up(view);
@@ -2055,20 +2055,20 @@ static const char *wscroll(Vis *vis, const char *keys, const Arg *arg) {
 			view_scroll_down(view, count);
 		break;
 	}
-	vis_count_set(vis, VIS_COUNT_UNKNOWN);
+	vis->action.count = VIS_COUNT_UNKNOWN;
 	return keys;
 }
 
 static const char *wslide(Vis *vis, const char *keys, const Arg *arg) {
 	View *view = vis_view(vis);
-	int count = vis_count_get(vis);
+	int count = vis->action.count;
 	if (count == VIS_COUNT_UNKNOWN)
 		count = arg->i < 0 ? -arg->i : arg->i;
 	if (arg->i >= 0)
 		view_slide_down(view, count);
 	else
 		view_slide_up(view, count);
-	vis_count_set(vis, VIS_COUNT_UNKNOWN);
+	vis->action.count = VIS_COUNT_UNKNOWN;
 	return keys;
 }
 
@@ -2088,7 +2088,7 @@ static const char *openline(Vis *vis, const char *keys, const Arg *arg) {
 		vis_motion(vis, VIS_MOVE_LINE_END);
 		vis_keys_feed(vis, "<Enter>");
 	} else {
-		if (vis_get_autoindent(vis)) {
+		if (vis->autoindent) {
 			vis_motion(vis, VIS_MOVE_LINE_START);
 			vis_keys_feed(vis, "<vis-motion-line-start>");
 		} else {
@@ -2101,30 +2101,30 @@ static const char *openline(Vis *vis, const char *keys, const Arg *arg) {
 }
 
 static const char *join(Vis *vis, const char *keys, const Arg *arg) {
-	bool normal = (vis_mode_get(vis) == VIS_MODE_NORMAL);
+	bool normal = (vis->mode->id == VIS_MODE_NORMAL);
 	vis_operator(vis, VIS_OP_JOIN, arg->s);
 	if (normal) {
-		int count = vis_count_get_default(vis, 0);
-		if (count)
-			vis_count_set(vis, count-1);
+		vis->action.count = VIS_COUNT_DEFAULT(vis->action.count, 0);
+		if (vis->action.count > 0)
+			vis->action.count -= 1;
 		vis_motion(vis, VIS_MOVE_LINE_NEXT);
 	}
 	return keys;
 }
 
 static const char *normalmode_escape(Vis *vis, const char *keys, const Arg *arg) {
-	if (vis_count_get(vis) == VIS_COUNT_UNKNOWN)
+	if (vis->action.count == VIS_COUNT_UNKNOWN)
 		selections_clear(vis, keys, arg);
 	else
-		vis_count_set(vis, VIS_COUNT_UNKNOWN);
+		vis->action.count = VIS_COUNT_UNKNOWN;
 	return keys;
 }
 
 static const char *visualmode_escape(Vis *vis, const char *keys, const Arg *arg) {
-	if (vis_count_get(vis) == VIS_COUNT_UNKNOWN)
+	if (vis->action.count == VIS_COUNT_UNKNOWN)
 		vis_mode_switch(vis, VIS_MODE_NORMAL);
 	else
-		vis_count_set(vis, VIS_COUNT_UNKNOWN);
+		vis->action.count = VIS_COUNT_UNKNOWN;
 	return keys;
 }
 
@@ -2189,7 +2189,7 @@ err:
 }
 
 static const char *percent(Vis *vis, const char *keys, const Arg *arg) {
-	if (vis_count_get(vis) == VIS_COUNT_UNKNOWN)
+	if (vis->action.count == VIS_COUNT_UNKNOWN)
 		vis_motion(vis, VIS_MOVE_BRACKET_MATCH);
 	else
 		vis_motion(vis, VIS_MOVE_PERCENT);
@@ -2323,7 +2323,7 @@ int main(int argc, char *argv[]) {
 		}
 	}
 
-	if (!vis_window(vis) && !win_created) {
+	if (!vis->win && !win_created) {
 		if (!vis_window_new(vis, NULL))
 			vis_die(vis, "Can not create empty buffer\n");
 		if (cmd)
