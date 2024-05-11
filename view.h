@@ -4,10 +4,8 @@
 #include <stddef.h>
 #include <stdbool.h>
 
-typedef struct Selection Selection;
-
-#include "text.h"
 #include "ui.h"
+#include "text.h"
 #include "array.h"
 
 typedef struct {
@@ -49,7 +47,22 @@ struct Line {               /* a line on the screen, *not* in the file */
 	Cell cells[];       /* win->width cells storing information about the displayed characters */
 };
 
-typedef struct {
+struct View;
+typedef struct Selection {
+	Mark cursor;            /* other selection endpoint where it changes */
+	Mark anchor;            /* position where the selection was created */
+	bool anchored;          /* whether anchor remains fixed */
+	size_t pos;             /* in bytes from the start of the file */
+	int row, col;           /* in terms of zero based screen coordinates */
+	int lastcol;            /* remembered column used when moving across lines */
+	Line *line;             /* screen line on which cursor currently resides */
+	int generation;         /* used to filter out newly created cursors during iteration */
+	int number;             /* how many cursors are located before this one */
+	struct View *view;      /* associated view to which this cursor belongs */
+	struct Selection *prev, *next; /* previous/next cursors ordered by location at creation time */
+} Selection;
+
+typedef struct View {
 	Text *text;         /* underlying text management */
 	char *textbuf;      /* scratch buffer used for drawing */
 	UiWin *ui;          /* corresponding ui window */
@@ -250,19 +263,6 @@ void view_selections_clear_all(View*);
 void view_selections_flip(Selection*);
 /**
  * @}
- * @defgroup view_anchor
- * @{
- */
-/**
- * Anchor selection.
- * Further updates will only update the cursor, the anchor will remain fixed.
- */
-void view_selections_anchor(Selection*, bool anchored);
-/** Check whether selection is anchored. */
-bool view_selections_anchored(Selection*);
-/** Get position of selection cursor. */
-/**
- * @}
  * @defgroup view_props
  * @{
  */
@@ -279,20 +279,6 @@ size_t view_cursors_line(Selection*);
  */
 size_t view_cursors_col(Selection*);
 /**
- * Get screen line of selection cursor.
- * @rst
- * .. warning: Is `NULL` for non-visible selections.
- * @endrst
- */
-Line *view_cursors_line_get(Selection*);
-/**
- * Get zero based index of screen cell on which selection cursor currently resides.
- * @rst
- * .. warning:: Returns ``-1`` if the selection cursor is currently not visible.
- * @endrst
- */
-int view_cursors_cell_get(Selection*);
-/**
  * @}
  * @defgroup view_place
  * @{
@@ -304,6 +290,11 @@ int view_cursors_cell_get(Selection*);
  *           will be adjusted to form a singleton selection covering one
  *           character starting at `pos`. Otherwise only the selection
  *           cursor will be changed while the anchor remains fixed.
+ *
+ *           If primary position was not visible before, we attempt to show
+ *           the surrounding context. The viewport will be adjusted such
+ *           that the line holding the primary cursor is shown in the middle
+ *           of the window.
  * @endrst
  */
 void view_cursors_to(Selection*, size_t pos);
@@ -351,26 +342,8 @@ size_t view_screenline_end(Selection*);
  * @defgroup view_primary
  * @{
  */
-/**
- * Move primary selection cursor to the given position.
- * Makes sure that position is visible.
- * @rst
- * .. note:: If position was not visible before, we attempt to show
- *           surrounding context. The viewport will be adjusted such
- *           that the line holding the cursor is shown in the middle
- *           of the window.
- * @endrst
- */
-void view_cursor_to(View*, size_t pos);
 /** Get cursor position of primary selection. */
 size_t view_cursor_get(View*);
-/**
- * Get primary selection.
- * @rst
- * .. note:: Is always a non-empty range.
- * @endrst
- */
-Filerange view_selection_get(View*);
 /**
  * @}
  * @defgroup view_save

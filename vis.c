@@ -259,7 +259,7 @@ static void window_draw_cursorline(Win *win) {
 
 	int width = view->width;
 	Selection *sel = view_selections_primary_get(view);
-	size_t lineno = view_cursors_line_get(sel)->lineno;
+	size_t lineno = sel->line->lineno;
 	for (Line *l = view->topline; l; l = l->next) {
 		if (l->lineno == lineno) {
 			for (int x = 0; x < width; x++)
@@ -314,12 +314,11 @@ static void window_draw_cursor_matching(Win *win, Selection *cur) {
 static void window_draw_cursor(Win *win, Selection *cur) {
 	if (win->vis->win != win)
 		return;
-	Line *line = view_cursors_line_get(cur);
-	int col = view_cursors_cell_get(cur);
-	if (!line || col == -1)
+	Line *line = cur->line;
+	if (!line)
 		return;
 	Selection *primary = view_selections_primary_get(win->view);
-	win->ui->style_set(win->ui, &line->cells[col], primary == cur ? UI_STYLE_CURSOR_PRIMARY : UI_STYLE_CURSOR);
+	win->ui->style_set(win->ui, &line->cells[cur->col], primary == cur ? UI_STYLE_CURSOR_PRIMARY : UI_STYLE_CURSOR);
 	window_draw_cursor_matching(win, cur);
 	return;
 }
@@ -451,7 +450,7 @@ bool vis_window_split(Win *original) {
 	}
 	win->file = original->file;
 	view_options_set(win->view, view_options_get(original->view));
-	view_cursor_to(win->view, view_cursor_get(original->view));
+	view_cursors_to(win->view->selection, view_cursor_get(original->view));
 	vis_doupdates(win->vis, true);
 	return true;
 }
@@ -910,7 +909,7 @@ void vis_do(Vis *vis) {
 			c.range = text_range_linewise(txt, &c.range);
 		if (vis->mode->visual) {
 			view_selections_set(sel, &c.range);
-			view_selections_anchor(sel, true);
+			sel->anchored = true;
 		}
 
 		if (a->op) {

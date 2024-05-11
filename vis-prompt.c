@@ -54,7 +54,7 @@ static const char *prompt_enter(Vis *vis, const char *keys, const Arg *arg) {
 	Win *win = prompt->parent;
 	char *cmd = NULL;
 
-	Filerange range = view_selection_get(view);
+	Filerange range = view_selections_get(view->selection);
 	if (!vis->mode->visual) {
 		const char *pattern = NULL;
 		Regex *regex = text_regex_new();
@@ -202,6 +202,6 @@ void vis_message_show(Vis *vis, const char *msg) {
 	size_t pos = text_size(txt);
 	text_appendf(txt, "%s\n", msg);
 	text_save(txt, NULL);
-	view_cursor_to(win->view, pos);
+	view_cursors_to(win->view->selection, pos);
 	vis_window_focus(win);
 }

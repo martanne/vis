@@ -29,20 +29,6 @@
  * the necessary offset for the last character.
  */
 
-struct Selection {
-	Mark cursor;            /* other selection endpoint where it changes */
-	Mark anchor;            /* position where the selection was created */
-	bool anchored;          /* whether anchor remains fixed */
-	size_t pos;             /* in bytes from the start of the file */
-	int row, col;           /* in terms of zero based screen coordinates */
-	int lastcol;            /* remembered column used when moving across lines */
-	Line *line;             /* screen line on which cursor currently resides */
-	int generation;         /* used to filter out newly created cursors during iteration */
-	int number;             /* how many cursors are located before this one */
-	View *view;             /* associated view to which this cursor belongs */
-	Selection *prev, *next; /* previous/next cursors ordered by location at creation time */
-};
-
 static const SyntaxSymbol symbols_none[] = {
 	[SYNTAX_SYMBOL_SPACE]    = { " " },
 	[SYNTAX_SYMBOL_TAB]      = { " " },
@@ -64,7 +50,7 @@ static Cell cell_unused;
 
 /* move visible viewport n-lines up/down, redraws the view but does not change
  * cursor position which becomes invalid and should be corrected by calling
- * view_cursor_to. the return value indicates whether the visible area changed.
+ * view_cursors_to. the return value indicates whether the visible area changed.
  */
 static bool view_viewport_up(View *view, int n);
 static bool view_viewport_down(View *view, int n);
@@ -406,12 +392,6 @@ bool view_coord_get(View *view, size_t pos, Line **retline, int *retrow, int *re
 	return true;
 }
 
-/* move the cursor to the character at pos bytes from the beginning of the file.
- * if pos is not in the current viewport, redraw the view to make it visible */
-void view_cursor_to(View *view, size_t pos) {
-	view_cursors_to(view->selection, pos);
-}
-
 /* redraw the complete with data starting from view->start bytes into the file.
  * stop once the screen is full, update view->end, view->lastline */
 void view_draw(View *view) {
@@ -577,7 +557,7 @@ void view_free(View *view) {
 void view_reload(View *view, Text *text) {
 	view->text = text;
 	view_selections_clear_all(view);
-	view_cursor_to(view, 0);
+	view_cursors_to(view->selection, 0);
 }
 
 View *view_new(Text *text) {
@@ -606,7 +586,7 @@ View *view_new(Text *text) {
 		return NULL;
 	}
 
-	view_cursor_to(view, 0);
+	view_cursors_to(view->selection, 0);
 	return view;
 }
 
@@ -683,7 +663,8 @@ void view_redraw_top(View *view) {
 	for (Line *cur = view->topline; cur && cur != line; cur = cur->next)
 		view->start += cur->len;
 	view_draw(view);
-	view_cursor_to(view, view->selection->pos);
+	/* FIXME: does this logic make sense */
+	view_cursors_to(view->selection, view->selection->pos);
 }
 
 void view_redraw_center(View *view) {
@@ -705,7 +686,7 @@ void view_redraw_center(View *view) {
 		break;
 	}
 	view_draw(view);
-	view_cursor_to(view, pos);
+	view_cursors_to(view->selection, pos);
 }
 
 void view_redraw_bottom(View *view) {
@@ -721,7 +702,7 @@ size_t view_slide_up(View *view, int lines) {
 		if (sel->line == view->topline)
 			cursor_set(sel, view->topline, sel->col);
 		else
-			view_cursor_to(view, sel->pos);
+			view_cursors_to(view->selection, sel->pos);
 	} else {
 		view_screenline_down(sel);
 	}
@@ -736,7 +717,7 @@ size_t view_slide_down(View *view, int lines) {
 		if (lastline)
 			cursor_set(sel, view->lastline, col);
 		else
-			view_cursor_to(view, sel->pos);
+			view_cursors_to(view->selection, sel->pos);
 	} else {
 		view_screenline_up(sel);
 	}
@@ -749,7 +730,7 @@ size_t view_scroll_up(View *view, int lines) {
 		Line *line = sel->line < view->lastline ? sel->line : view->lastline;
 		cursor_set(sel, line, view->selection->col);
 	} else {
-		view_cursor_to(view, 0);
+		view_cursors_to(view->selection, 0);
 	}
 	return sel->pos;
 }
@@ -757,9 +738,9 @@ size_t view_scroll_up(View *view, int lines) {
 size_t view_scroll_page_up(View *view) {
 	Selection *sel = view->selection;
 	if (view->start == 0) {
-		view_cursor_to(view, 0);
+		view_cursors_to(view->selection, 0);
 	} else {
-		view_cursor_to(view, view->start-1);
+		view_cursors_to(view->selection, view->start-1);
 		view_redraw_bottom(view);
 		view_screenline_begin(sel);
 	}
@@ -774,9 +755,9 @@ size_t view_scroll_page_down(View *view) {
 size_t view_scroll_halfpage_up(View *view) {
 	Selection *sel = view->selection;
 	if (view->start == 0) {
-		view_cursor_to(view, 0);
+		view_cursors_to(view->selection, 0);
 	} else {
-		view_cursor_to(view, view->start-1);
+		view_cursors_to(view->selection, view->start-1);
 		view_redraw_center(view);
 		view_screenline_begin(sel);
 	}
@@ -787,7 +768,7 @@ size_t view_scroll_halfpage_down(View *view) {
 	size_t end = view->end;
 	size_t pos = view_scroll_down(view, view->height/2);
 	if (pos < text_size(view->text))
-		view_cursor_to(view, end);
+		view_cursors_to(view->selection, end);
 	return view->selection->pos;
 }
 
@@ -797,7 +778,7 @@ size_t view_scroll_down(View *view, int lines) {
 		Line *line = sel->line > view->topline ? sel->line : view->topline;
 		cursor_set(sel, line, sel->col);
 	} else {
-		view_cursor_to(view, text_size(view->text));
+		view_cursors_to(view->selection, text_size(view->text));
 	}
 	return sel->pos;
 }
@@ -883,10 +864,6 @@ size_t view_screenline_end(Selection *sel) {
 
 size_t view_cursor_get(View *view) {
 	return view_cursors_pos(view->selection);
-}
-
-Line *view_cursors_line_get(Selection *sel) {
-	return sel->line;
 }
 
 void view_scroll_to(View *view, size_t pos) {
@@ -1167,10 +1144,6 @@ size_t view_cursors_col(Selection *s) {
 	return text_line_char_get(s->view->text, pos) + 1;
 }
 
-int view_cursors_cell_get(Selection *s) {
-	return s->line ? s->col : -1;
-}
-
 int view_cursors_cell_set(Selection *s, int cell) {
 	if (!s->line || cell < 0)
 		return -1;
@@ -1231,10 +1204,6 @@ void view_cursors_place(Selection *s, size_t line, size_t col) {
 	view_cursors_to(s, pos);
 }
 
-void view_selections_anchor(Selection *s, bool anchored) {
-	s->anchored = anchored;
-}
-
 void view_selection_clear(Selection *s) {
 	s->anchored = false;
 	s->anchor = s->cursor;
@@ -1246,10 +1215,6 @@ void view_selections_flip(Selection *s) {
 	s->anchor = s->cursor;
 	s->cursor = temp;
 	view_cursors_to(s, text_mark_get(s->view->text, s->cursor));
-}
-
-bool view_selections_anchored(Selection *s) {
-	return s->anchored;
 }
 
 void view_selections_clear_all(View *view) {
@@ -1268,10 +1233,6 @@ void view_selections_dispose_all(View *view) {
 			selection_free(s);
 	}
 	view_draw(view);
-}
-
-Filerange view_selection_get(View *view) {
-	return view_selections_get(view->selection);
 }
 
 Filerange view_selections_get(Selection *s) {

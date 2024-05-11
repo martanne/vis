@@ -1270,7 +1270,7 @@ enum SamError sam_cmd(Vis *vis, const char *s) {
 				if (c->sel) {
 					if (visual) {
 						view_selections_set(c->sel, &r);
-						view_selections_anchor(c->sel, true);
+						c->sel->anchored = true;
 					} else {
 						if (memchr(c->data, '\n', c->len))
 							view_cursors_to(c->sel, r.start);
@@ -1281,7 +1281,7 @@ enum SamError sam_cmd(Vis *vis, const char *s) {
 					Selection *sel = view_selections_new(c->win->view, r.start);
 					if (sel) {
 						view_selections_set(sel, &r);
-						view_selections_anchor(sel, true);
+						sel->anchored = true;
 					}
 				}
 			}
@@ -1295,12 +1295,12 @@ enum SamError sam_cmd(Vis *vis, const char *s) {
 
 	if (vis->win) {
 		if (primary_pos != EPOS && view_selection_disposed(vis->win->view))
-			view_cursor_to(vis->win->view, primary_pos);
+			view_cursors_to(vis->win->view->selection, primary_pos);
 		view_selections_primary_set(view_selections(vis->win->view));
 		vis_jumplist_save(vis);
 		bool completed = true;
 		for (Selection *s = view_selections(vis->win->view); s; s = view_selections_next(s)) {
-			if (view_selections_anchored(s)) {
+			if (s->anchored) {
 				completed = false;
 				break;
 			}
@@ -1572,7 +1572,7 @@ static bool cmd_print(Vis *vis, Win *win, Command *cmd, const char *argv[], Sele
 		return false;
 	if (range->start != range->end) {
 		view_selections_set(sel, range);
-		view_selections_anchor(sel, true);
+		sel->anchored = true;
 	} else {
 		view_cursors_to(sel, range->start);
 		view_selection_clear(sel);

@@ -876,7 +876,7 @@ static bool cmd_help(Vis *vis, Win *win, Command *cmd, const char *argv[], Selec
 		text_appendf(txt, "  %-32s\t%s\n", configs[i].name, configs[i].enabled ? "yes" : "no");
 
 	text_save(txt, NULL);
-	view_cursor_to(vis->win->view, 0);
+	view_cursors_to(vis->win->view->selection, 0);
 
 	if (argv[1])
 		vis_motion(vis, VIS_MOVE_SEARCH_FORWARD, argv[1]);

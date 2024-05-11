@@ -2363,7 +2363,7 @@ static int window_selection_index(lua_State *L) {
 		}
 
 		if (strcmp(key, "anchored") == 0) {
-			lua_pushboolean(L, view_selections_anchored(sel));
+			lua_pushboolean(L, sel->anchored);
 			return 1;
 		}
 
@@ -2388,7 +2388,7 @@ static int window_selection_newindex(lua_State *L) {
 			Filerange range = getrange(L, 3);
 			if (text_range_valid(&range)) {
 				view_selections_set(sel, &range);
-				view_selections_anchor(sel, true);
+				sel->anchored = true;
 			} else {
 				view_selection_clear(sel);
 			}
@@ -2396,7 +2396,7 @@ static int window_selection_newindex(lua_State *L) {
 		}
 
 		if (strcmp(key, "anchored") == 0) {
-			view_selections_anchor(sel, lua_toboolean(L, 3));
+			sel->anchored = lua_toboolean(L, 3);
 			return 0;
 		}
 	}

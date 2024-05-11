@@ -257,8 +257,7 @@ static void ui_window_draw(UiWin *w) {
 	line = view->topline;
 	size_t prev_lineno = 0;
 	Selection *sel = view_selections_primary_get(view);
-	const Line *cursor_line = view_cursors_line_get(sel);
-	size_t cursor_lineno = cursor_line->lineno;
+	size_t cursor_lineno = sel->line->lineno;
 	char buf[(sizeof(size_t) * CHAR_BIT + 2) / 3 + 1 + 1];
 	int x = win->x, y = win->y;
 	int view_width = view->width;

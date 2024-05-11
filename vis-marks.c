@@ -161,7 +161,7 @@ static bool marklist_prev(Win *win, MarkList *list) {
 	View *view = win->view;
 	bool restore = false;
 	Array cur = view_selections_get_all(view);
-	bool anchored = view_selections_anchored(view_selections_primary_get(view));
+	bool anchored = view_selections_primary_get(view)->anchored;
 	Array *top = array_peek(&list->prev);
 	if (!top)
 		goto out;
@@ -192,7 +192,7 @@ out:
 
 static bool marklist_next(Win *win, MarkList *list) {
 	View *view = win->view;
-	bool anchored = view_selections_anchored(view_selections_primary_get(view));
+	bool anchored = view_selections_primary_get(view)->anchored;
 	for (;;) {
 		Array *next = array_pop(&list->next);
 		if (!next)

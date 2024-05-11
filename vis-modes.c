@@ -190,7 +190,7 @@ static void vis_mode_visual_enter(Vis *vis, Mode *old) {
 	Win *win = vis->win;
 	if (!old->visual && win) {
 		for (Selection *s = view_selections(win->view); s; s = view_selections_next(s))
-			view_selections_anchor(s, true);
+			s->anchored = true;
 	}
 }
 
@@ -198,7 +198,7 @@ static void vis_mode_visual_line_enter(Vis *vis, Mode *old) {
 	Win *win = vis->win;
 	if (!old->visual && win) {
 		for (Selection *s = view_selections(win->view); s; s = view_selections_next(s))
-			view_selections_anchor(s, true);
+			s->anchored = true;
 	}
 	if (!vis->action.op)
 		vis_motion(vis, VIS_MOVE_NOP);
@@ -213,7 +213,7 @@ static void vis_mode_visual_line_leave(Vis *vis, Mode *new) {
 			window_selection_save(win);
 		view_selections_clear_all(win->view);
 	} else {
-		view_cursor_to(win->view, view_cursor_get(win->view));
+		view_cursors_to(win->view->selection, view_cursor_get(win->view));
 	}
 }
 

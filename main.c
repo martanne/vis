@@ -1240,7 +1240,7 @@ static const char *repeat(Vis *vis, const char *keys, const Arg *arg) {
 
 static const char *selections_new(Vis *vis, const char *keys, const Arg *arg) {
 	View *view = vis_view(vis);
-	bool anchored = view_selections_anchored(view_selections_primary_get(view));
+	bool anchored = view_selections_primary_get(view)->anchored;
 	VisCountIterator it = vis_count_iterator_get(vis, 1);
 	while (vis_count_iterator_next(&it)) {
 		Selection *sel = NULL;
@@ -1277,7 +1277,7 @@ static const char *selections_new(Vis *vis, const char *keys, const Arg *arg) {
 		}
 		if (sel_new) {
 			view_selections_primary_set(sel_new);
-			view_selections_anchor(sel_new, anchored);
+			sel_new->anchored = anchored;
 		}
 	}
 	vis->action.count = VIS_COUNT_UNKNOWN;
@@ -1289,9 +1289,10 @@ static const char *selections_align(Vis *vis, const char *keys, const Arg *arg) 
 	Text *txt = vis_text(vis);
 	int mincol = INT_MAX;
 	for (Selection *s = view_selections(view); s; s = view_selections_next(s)) {
-		int col = view_cursors_cell_get(s);
-		if (col >= 0 && col < mincol)
-			mincol = col;
+		if (!s->line)
+			continue;
+		if (s->col >= 0 && s->col < mincol)
+			mincol = s->col;
 	}
 	for (Selection *s = view_selections(view); s; s = view_selections_next(s)) {
 		if (view_cursors_cell_set(s, mincol) == -1) {
@@ -1362,7 +1363,7 @@ static Selection *selection_new(View *view, Filerange *r, bool isprimary) {
 	if (!s)
 		return NULL;
 	view_selections_set(s, r);
-	view_selections_anchor(s, true);
+	s->anchored = true;
 	if (isprimary)
 		view_selections_primary_set(s);
 	return s;
@@ -1432,7 +1433,7 @@ static const char *selections_match_skip(Vis *vis, const char *keys, const Arg *
 static const char *selections_remove(Vis *vis, const char *keys, const Arg *arg) {
 	View *view = vis_view(vis);
 	view_selections_dispose(view_selections_primary_get(view));
-	view_cursor_to(view, view_cursor_get(view));
+	view_cursors_to(view->selection, view_cursor_get(view));
 	return keys;
 }
 
@@ -1878,7 +1879,7 @@ static const char *undo(Vis *vis, const char *keys, const Arg *arg) {
 	if (pos != EPOS) {
 		View *view = vis_view(vis);
 		if (view->selection_count == 1)
-			view_cursor_to(view, pos);
+			view_cursors_to(view->selection, pos);
 		/* redraw all windows in case some display the same file */
 		vis_draw(vis);
 	}
@@ -1890,7 +1891,7 @@ static const char *redo(Vis *vis, const char *keys, const Arg *arg) {
 	if (pos != EPOS) {
 		View *view = vis_view(vis);
 		if (view->selection_count == 1)
-			view_cursor_to(view, pos);
+			view_cursors_to(view->selection, pos);
 		/* redraw all windows in case some display the same file */
 		vis_draw(vis);
 	}
@@ -1903,7 +1904,7 @@ static const char *earlier(Vis *vis, const char *keys, const Arg *arg) {
 	while (vis_count_iterator_next(&it))
 		pos = text_earlier(vis_text(vis));
 	if (pos != EPOS) {
-		view_cursor_to(vis_view(vis), pos);
+		view_cursors_to(vis_view(vis)->selection, pos);
 		/* redraw all windows in case some display the same file */
 		vis_draw(vis);
 	}
@@ -1916,7 +1917,7 @@ static const char *later(Vis *vis, const char *keys, const Arg *arg) {
 	while (vis_count_iterator_next(&it))
 		pos = text_later(vis_text(vis));
 	if (pos != EPOS) {
-		view_cursor_to(vis_view(vis), pos);
+		view_cursors_to(vis_view(vis)->selection, pos);
 		/* redraw all windows in case some display the same file */
 		vis_draw(vis);
 	}
