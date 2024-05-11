@@ -193,13 +193,13 @@ static size_t view_lines_top(Vis *vis, View *view) {
 }
 
 static size_t view_lines_middle(Vis *vis, View *view) {
-	int h = view_height_get(view);
+	int h = view->height;
 	return view_screenline_goto(view, h/2);
 }
 
 static size_t view_lines_bottom(Vis *vis, View *view) {
-	int h = view_height_get(vis->win->view);
-	return view_screenline_goto(vis->win->view, h - VIS_COUNT_DEFAULT(vis->action.count, 0));
+	int h = view->height;
+	return view_screenline_goto(view, h - VIS_COUNT_DEFAULT(vis->action.count, 0));
 }
 
 static size_t window_nop(Vis *vis, Win *win, size_t pos) {

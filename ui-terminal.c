@@ -243,7 +243,7 @@ static void ui_window_draw(UiWin *w) {
 	UiTerm *ui = win->ui;
 	View *view = win->win->view;
 	int width = win->width, height = win->height;
-	const Line *line = view_lines_first(view);
+	const Line *line = view->topline;
 	bool status = win->options & UI_OPTION_STATUSBAR;
 	bool nu = win->options & UI_OPTION_LINE_NUMBERS_ABSOLUTE;
 	bool rnu = win->options & UI_OPTION_LINE_NUMBERS_RELATIVE;
@@ -254,14 +254,14 @@ static void ui_window_draw(UiWin *w) {
 		win->sidebar_width = sidebar_width;
 	}
 	vis_window_draw(win->win);
-	line = view_lines_first(view);
+	line = view->topline;
 	size_t prev_lineno = 0;
 	Selection *sel = view_selections_primary_get(view);
 	const Line *cursor_line = view_cursors_line_get(sel);
 	size_t cursor_lineno = cursor_line->lineno;
 	char buf[(sizeof(size_t) * CHAR_BIT + 2) / 3 + 1 + 1];
 	int x = win->x, y = win->y;
-	int view_width = view_width_get(view);
+	int view_width = view->width;
 	Cell *cells = ui->cells + y * ui->width;
 	if (x + sidebar_width + view_width > ui->width)
 		view_width = ui->width - x - sidebar_width;
@@ -400,7 +400,7 @@ static void ui_redraw(Ui *ui) {
 	UiTerm *tui = (UiTerm*)ui;
 	ui_term_backend_clear(tui);
 	for (UiTermWin *win = tui->windows; win; win = win->next)
-		view_invalidate(win->win->view);
+		win->win->view->need_update = true;
 }
 
 static void ui_resize(Ui *ui) {
@@ -457,8 +457,8 @@ static void ui_window_focus(UiWin *w) {
 	if (new->options & UI_OPTION_STATUSBAR)
 		new->ui->selwin = new;
 	if (old)
-		view_invalidate(old->win->view);
-	view_invalidate(new->win->view);
+		old->win->view->need_update = true;
+	new->win->view->need_update = true;
 }
 
 static void ui_window_options_set(UiWin *w, enum UiOption options) {
@@ -579,7 +579,7 @@ static UiWin *ui_window_new(Ui *ui, Win *w, enum UiOption options) {
 	styles[UI_STYLE_STATUS].attr |= CELL_ATTR_REVERSE;
 	styles[UI_STYLE_STATUS_FOCUSED].attr |= CELL_ATTR_REVERSE|CELL_ATTR_BOLD;
 	styles[UI_STYLE_INFO].attr |= CELL_ATTR_BOLD;
-	view_ui(w->view, &win->uiwin);
+	w->view->ui = &win->uiwin;
 
 	if (tui->windows)
 		tui->windows->prev = win;

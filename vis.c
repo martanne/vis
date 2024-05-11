@@ -218,15 +218,15 @@ static void window_free(Win *win) {
 
 static void window_draw_colorcolumn(Win *win) {
 	View *view = win->view;
-	int cc = view_colorcolumn_get(view);
+	int cc = view->colorcolumn;
 	if (cc <= 0)
 		return;
 	size_t lineno = 0;
 	int line_cols = 0; /* Track the number of columns we've passed on each line */
 	bool line_cc_set = false; /* Has the colorcolumn attribute been set for this line yet */
-	int width = view_width_get(view);
+	int width = view->width;
 
-	for (Line *l = view_lines_first(view); l; l = l->next) {
+	for (Line *l = view->topline; l; l = l->next) {
 		if (l->lineno != lineno) {
 			line_cols = 0;
 			line_cc_set = false;
@@ -254,13 +254,13 @@ static void window_draw_cursorline(Win *win) {
 		return;
 	if (vis->mode->visual || vis->win != win)
 		return;
-	if (view_selections_count(view) > 1)
+	if (view->selection_count > 1)
 		return;
 
-	int width = view_width_get(view);
+	int width = view->width;
 	Selection *sel = view_selections_primary_get(view);
 	size_t lineno = view_cursors_line_get(sel)->lineno;
-	for (Line *l = view_lines_first(view); l; l = l->next) {
+	for (Line *l = view->topline; l; l = l->next) {
 		if (l->lineno == lineno) {
 			for (int x = 0; x < width; x++)
 				win->ui->style_set(win->ui, &l->cells[x], UI_STYLE_CURSOR_LINE);
@@ -282,11 +282,11 @@ static void window_draw_selection(Win *win, Selection *cur) {
 	if (!start_line && !end_line)
 		return;
 	if (!start_line) {
-		start_line = view_lines_first(view);
+		start_line = view->topline;
 		start_col = 0;
 	}
 	if (!end_line) {
-		end_line = view_lines_last(view);
+		end_line = view->lastline;
 		end_col = end_line->width;
 	}
 	for (Line *l = start_line; l != end_line->next; l = l->next) {
@@ -302,7 +302,7 @@ static void window_draw_cursor_matching(Win *win, Selection *cur) {
 		return;
 	Line *line_match; int col_match;
 	size_t pos = view_cursors_pos(cur);
-	Filerange limits = view_viewport_get(win->view);
+	Filerange limits = VIEW_VIEWPORT_GET(win->view);
 	size_t pos_match = text_bracket_match_symbol(win->file->text, pos, "(){}[]\"'`", &limits);
 	if (pos == pos_match)
 		return;
@@ -326,7 +326,7 @@ static void window_draw_cursor(Win *win, Selection *cur) {
 
 static void window_draw_selections(Win *win) {
 	View *view = win->view;
-	Filerange viewport = view_viewport_get(view);
+	Filerange viewport = VIEW_VIEWPORT_GET(view);
 	Selection *sel = view_selections_primary_get(view);
 	for (Selection *s = view_selections_prev(sel); s; s = view_selections_prev(s)) {
 		window_draw_selection(win, s);
@@ -348,9 +348,9 @@ static void window_draw_selections(Win *win) {
 
 static void window_draw_eof(Win *win) {
 	View *view = win->view;
-	if (view_width_get(view) == 0)
+	if (view->width == 0)
 		return;
-	for (Line *l = view_lines_last(view)->next; l; l = l->next) {
+	for (Line *l = view->lastline->next; l; l = l->next) {
 		strncpy(l->cells[0].data, view_symbol_eof_get(view), sizeof(l->cells[0].data)-1);
 		win->ui->style_set(win->ui, &l->cells[0], UI_STYLE_EOF);
 	}
@@ -765,7 +765,7 @@ void vis_do(Vis *vis) {
 	if (a->op == &vis_operators[VIS_OP_MODESWITCH])
 		count = 1; /* count should apply to inserted text not motion */
 	bool repeatable = a->op && !vis->macro_operator && !vis->win->parent;
-	bool multiple_cursors = view_selections_count(view) > 1;
+	bool multiple_cursors = view->selection_count > 1;
 
 	bool linewise = !(a->type & CHARWISE) && (
 		a->type & LINEWISE || (a->movement && a->movement->type & LINEWISE) ||
@@ -1530,7 +1530,7 @@ void vis_insert_tab(Vis *vis) {
 		return;
 	}
 	char spaces[9];
-	int tabwidth = MIN(view_tabwidth_get(vis->win->view), LENGTH(spaces) - 1);
+	int tabwidth = MIN(vis->win->view->tabwidth, LENGTH(spaces) - 1);
 	for (Selection *s = view_selections(win->view); s; s = view_selections_next(s)) {
 		size_t pos = view_cursors_pos(s);
 		int width = text_line_width_get(win->file->text, pos);

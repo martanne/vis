@@ -4,20 +4,31 @@
 #include <stddef.h>
 #include <stdbool.h>
 
-typedef struct View View;
 typedef struct Selection Selection;
-typedef struct Cell Cell;
 
 #include "text.h"
 #include "ui.h"
 #include "array.h"
 
 typedef struct {
+	char *symbol;
+} SyntaxSymbol;
+
+enum {
+	SYNTAX_SYMBOL_SPACE,
+	SYNTAX_SYMBOL_TAB,
+	SYNTAX_SYMBOL_TAB_FILL,
+	SYNTAX_SYMBOL_EOL,
+	SYNTAX_SYMBOL_EOF,
+	SYNTAX_SYMBOL_LAST,
+};
+
+typedef struct {
 	Mark anchor;
 	Mark cursor;
 } SelectionRegion;
 
-struct Cell {
+typedef struct {
 	char data[16];      /* utf8 encoded character displayed in this cell (might be more than
 	                       one Unicode codepoint. might also not be the same as in the
 	                       underlying text, for example tabs get expanded */
@@ -27,7 +38,7 @@ struct Cell {
 	                       occupied by the same character have a length of 0. */
 	int width;          /* display width i.e. number of columns occupied by this character */
 	CellStyle style;    /* colors and attributes used to display this cell */
-};
+} Cell;
 
 typedef struct Line Line;
 struct Line {               /* a line on the screen, *not* in the file */
@@ -38,14 +49,45 @@ struct Line {               /* a line on the screen, *not* in the file */
 	Cell cells[];       /* win->width cells storing information about the displayed characters */
 };
 
+typedef struct {
+	Text *text;         /* underlying text management */
+	char *textbuf;      /* scratch buffer used for drawing */
+	UiWin *ui;          /* corresponding ui window */
+	Cell cell_blank;    /* used for empty/blank cells */
+	int width, height;  /* size of display area */
+	size_t start, end;  /* currently displayed area [start, end] in bytes from the start of the file */
+	size_t start_last;  /* previously used start of visible area, used to update the mark */
+	Mark start_mark;    /* mark to keep track of the start of the visible area */
+	size_t lines_size;  /* number of allocated bytes for lines (grows only) */
+	Line *lines;        /* view->height number of lines representing view content */
+	Line *topline;      /* top of the view, first line currently shown */
+	Line *lastline;     /* last currently used line, always <= bottomline */
+	Line *bottomline;   /* bottom of view, might be unused if lastline < bottomline */
+	Selection *selection;    /* primary selection, always placed within the visible viewport */
+	Selection *selection_latest; /* most recently created cursor */
+	Selection *selection_dead;   /* primary cursor which was disposed, will be removed when another cursor is created */
+	int selection_count;   /* how many cursors do currently exist */
+	Line *line;         /* used while drawing view content, line where next char will be drawn */
+	int col;            /* used while drawing view content, column where next char will be drawn */
+	const SyntaxSymbol *symbols[SYNTAX_SYMBOL_LAST]; /* symbols to use for white spaces etc */
+	int tabwidth;       /* how many spaces should be used to display a tab character */
+	Selection *selections;    /* all cursors currently active */
+	int selection_generation; /* used to filter out newly created cursors during iteration */
+	bool need_update;   /* whether view has been redrawn */
+	bool large_file;    /* optimize for displaying large files */
+	int colorcolumn;
+	char *breakat;  /* characters which might cause a word wrap */
+	int wrapcolumn; /* wrap lines at minimum of window width and wrapcolumn (if != 0) */
+	int wrapcol;    /* used while drawing view content, column where word wrap might happen */
+	bool prevch_breakat; /* used while drawing view content, previous char is part of breakat */
+} View;
+
 /**
  * @defgroup view_life
  * @{
  */
 View *view_new(Text*);
 void view_free(View*);
-void view_ui(View*, UiWin*);
-Text *view_text(View*);
 void view_reload(View*, Text*);
 /**
  * @}
@@ -53,7 +95,7 @@ void view_reload(View*, Text*);
  * @{
  */
 /** Get the currently displayed text range. */
-Filerange view_viewport_get(View*);
+#define VIEW_VIEWPORT_GET(v) (Filerange){ .start = v->start, .end = v->end }
 /**
  * Get window coordinate of text position.
  * @param pos The position to query.
@@ -65,10 +107,6 @@ Filerange view_viewport_get(View*);
 bool view_coord_get(View*, size_t pos, Line **line, int *row, int *col);
 /** Get position at the start of the ``n``-th window line, counting from 1. */
 size_t view_screenline_goto(View*, int n);
-/** Get first screen line. */
-Line *view_lines_first(View*);
-/** Get last non-empty screen line. */
-Line *view_lines_last(View*);
 size_t view_slide_up(View*, int lines);
 size_t view_slide_down(View*, int lines);
 size_t view_scroll_up(View*, int lines);
@@ -87,14 +125,11 @@ void view_scroll_to(View*, size_t pos);
  * @{
  */
 bool view_resize(View*, int width, int height);
-int view_height_get(View*);
-int view_width_get(View*);
 /**
  * @}
  * @defgroup view_draw
  * @{
  */
-void view_invalidate(View*);
 void view_draw(View*);
 bool view_update(View*);
 
@@ -113,7 +148,7 @@ bool view_update(View*);
 Selection *view_selections_new(View*, size_t pos);
 /**
  * Create a new selection even if position is already covered by an
- * existing selection. 
+ * existing selection.
  * @rst
  * .. note:: This should only be used if the old selection is eventually
  *           disposed.
@@ -167,13 +202,6 @@ Selection *view_selections(View*);
 Selection *view_selections_prev(Selection*);
 /** Get immediate successor of selection. */
 Selection *view_selections_next(Selection*);
-/**
- * Get number of existing selections.
- * @rst
- * .. note:: Is always at least 1.
- * @endrst
- */
-int view_selections_count(View*);
 /**
  * Get selection index.
  * @rst
@@ -357,17 +385,10 @@ bool view_regions_save(View*, Filerange*, SelectionRegion*);
  */
 void view_options_set(View*, enum UiOption options);
 enum UiOption view_options_get(View*);
-void view_colorcolumn_set(View*, int col);
-int view_colorcolumn_get(View*);
-void view_wrapcolumn_set(View*, int col);
-int view_wrapcolumn_get(View*);
 bool view_breakat_set(View*, const char *breakat);
-const char *view_breakat_get(View*);
 
 /** Set how many spaces are used to display a tab `\t` character. */
 void view_tabwidth_set(View*, int tabwidth);
-/** Get how many spaces are used to display a tab `\t` character. */
-int view_tabwidth_get(View*);
 /** Define a display style. */
 bool view_style_define(View*, enum UiStyle, const char *style);
 /** Apply a style to a text range. */

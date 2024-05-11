@@ -1766,10 +1766,10 @@ static int window_index(lua_State *L) {
 		const char *key = lua_tostring(L, 2);
 
 		if (strcmp(key, "viewport") == 0) {
-			Filerange b = view_viewport_get(win->view);
+			Filerange b = VIEW_VIEWPORT_GET(win->view);
 			Filerange l;
-			l.start = view_lines_first(win->view)->lineno;
-			l.end = view_lines_last(win->view)->lineno;
+			l.start = win->view->topline->lineno;
+			l.end   = win->view->lastline->lineno;
 
 			lua_createtable(L, 0, 4);
 			lua_pushstring(L, "bytes");
@@ -1779,10 +1779,10 @@ static int window_index(lua_State *L) {
 			pushrange(L, &l);
 			lua_settable(L, -3);
 			lua_pushstring(L, "width");
-			lua_pushunsigned(L, view_width_get(win->view));
+			lua_pushunsigned(L, win->view->width);
 			lua_settable(L, -3);
 			lua_pushstring(L, "height");
-			lua_pushunsigned(L, view_height_get(win->view));
+			lua_pushunsigned(L, win->view->height);
 			lua_settable(L, -3);
 			return 1;
 		}
@@ -1832,7 +1832,7 @@ static int window_options_assign(Win *win, lua_State *L, const char *key, int ne
 		if (lua_isstring(L, next))
 			view_breakat_set(win->view, lua_tostring(L, next));
 	} else if (strcmp(key, "colorcolumn") == 0 || strcmp(key, "cc") == 0) {
-		view_colorcolumn_set(win->view, luaL_checkint(L, next));
+		win->view->colorcolumn = luaL_checkunsigned(L, next);
 	} else if (strcmp(key, "cursorline") == 0 || strcmp(key, "cul") == 0) {
 		if (lua_toboolean(L, next))
 			flags |= UI_OPTION_CURSOR_LINE;
@@ -1882,7 +1882,7 @@ static int window_options_assign(Win *win, lua_State *L, const char *key, int ne
 			flags &= ~UI_OPTION_STATUSBAR;
 		view_options_set(win->view, flags);
 	} else if (strcmp(key, "wrapcolumn") == 0 || strcmp(key, "wc") == 0) {
-		view_wrapcolumn_set(win->view, luaL_checkint(L, next));
+		win->view->wrapcolumn = luaL_checkunsigned(L, next);
 	} else if (strcmp(key, "tabwidth") == 0 || strcmp(key, "tw") == 0) {
 		view_tabwidth_set(win->view, luaL_checkint(L, next));
 	} else if (strcmp(key, "expandtab") == 0 || strcmp(key, "et") == 0) {
@@ -2142,10 +2142,10 @@ static int window_options_index(lua_State *L) {
 	if (lua_isstring(L, 2)) {
 		const char *key = lua_tostring(L, 2);
 		if (strcmp(key, "breakat") == 0 || strcmp(key, "brk") == 0) {
-			lua_pushstring(L, view_breakat_get(win->view));
+			lua_pushstring(L, win->view->breakat);
 			return 1;
 		} else if (strcmp(key, "colorcolumn") == 0 || strcmp(key, "cc") == 0) {
-			lua_pushunsigned(L, view_colorcolumn_get(win->view));
+			lua_pushunsigned(L, win->view->colorcolumn);
 			return 1;
 		} else if (strcmp(key, "cursorline") == 0 || strcmp(key, "cul") == 0) {
 			lua_pushboolean(L, view_options_get(win->view) & UI_OPTION_CURSOR_LINE);
@@ -2175,10 +2175,10 @@ static int window_options_index(lua_State *L) {
 			lua_pushboolean(L, view_options_get(win->view) & UI_OPTION_STATUSBAR);
 			return 1;
 		} else if (strcmp(key, "tabwidth") == 0 || strcmp(key, "tw") == 0) {
-			lua_pushinteger(L, view_tabwidth_get(win->view));
+			lua_pushinteger(L, win->view->tabwidth);
 			return 1;
 		} else if (strcmp(key, "wrapcolumn") == 0 || strcmp(key, "wc") == 0) {
-			lua_pushunsigned(L, view_wrapcolumn_get(win->view));
+			lua_pushunsigned(L, win->view->wrapcolumn);
 			return 1;
 		}
 	}
@@ -2203,7 +2203,7 @@ static const struct luaL_Reg window_option_funcs[] = {
 static int window_selections_index(lua_State *L) {
 	View *view = obj_ref_check(L, 1, VIS_LUA_TYPE_SELECTIONS);
 	size_t index = luaL_checkunsigned(L, 2);
-	size_t count = view_selections_count(view);
+	size_t count = view->selection_count;
 	if (index == 0 || index > count)
 		goto err;
 	for (Selection *s = view_selections(view); s; s = view_selections_next(s)) {
@@ -2219,7 +2219,7 @@ err:
 
 static int window_selections_len(lua_State *L) {
 	View *view = obj_ref_check(L, 1, VIS_LUA_TYPE_SELECTIONS);
-	lua_pushunsigned(L, view_selections_count(view));
+	lua_pushunsigned(L, view->selection_count);
 	return 1;
 }
 

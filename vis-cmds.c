@@ -316,7 +316,8 @@ static bool cmd_set(Vis *vis, Win *win, Command *cmd, const char *argv[], Select
 		break;
 	}
 	case OPTION_COLOR_COLUMN:
-		view_colorcolumn_set(win->view, arg.i);
+		if (arg.i >= 0)
+			win->view->colorcolumn = arg.i;
 		break;
 	case OPTION_SAVE_METHOD:
 		if (strcmp("auto", arg.s) == 0) {
@@ -370,7 +371,8 @@ static bool cmd_set(Vis *vis, Win *win, Command *cmd, const char *argv[], Select
 		}
 		break;
 	case OPTION_WRAP_COLUMN:
-		view_wrapcolumn_set(win->view, arg.i);
+		if (arg.i >= 0)
+			win->view->wrapcolumn = arg.i;
 		break;
 	default:
 		if (!opt->func)

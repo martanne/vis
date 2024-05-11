@@ -1509,11 +1509,11 @@ static bool cmd_select(Vis *vis, Win *win, Command *cmd, const char *argv[], Sel
 	bool ret = true;
 	View *view = win->view;
 	Text *txt = win->file->text;
-	bool multiple_cursors = view_selections_count(view) > 1;
+	bool multiple_cursors = view->selection_count > 1;
 	Selection *primary = view_selections_primary_get(view);
 
 	if (vis->mode->visual)
-		count_init(cmd->cmd, view_selections_count(view)+1);
+		count_init(cmd->cmd, view->selection_count + 1);
 
 	for (Selection *s = view_selections(view), *next; s && ret; s = next) {
 		next = view_selections_next(s);

@@ -13,19 +13,6 @@
 #include "text-util.h"
 #include "util.h"
 
-typedef struct {
-	char *symbol;
-} SyntaxSymbol;
-
-enum {
-	SYNTAX_SYMBOL_SPACE,
-	SYNTAX_SYMBOL_TAB,
-	SYNTAX_SYMBOL_TAB_FILL,
-	SYNTAX_SYMBOL_EOL,
-	SYNTAX_SYMBOL_EOF,
-	SYNTAX_SYMBOL_LAST,
-};
-
 /* A selection is made up of two marks named cursor and anchor.
  * While the anchor remains fixed the cursor mark follows cursor motions.
  * For a selection (indicated by []), the marks (^) are placed as follows:
@@ -54,39 +41,6 @@ struct Selection {
 	int number;             /* how many cursors are located before this one */
 	View *view;             /* associated view to which this cursor belongs */
 	Selection *prev, *next; /* previous/next cursors ordered by location at creation time */
-};
-
-struct View {
-	Text *text;         /* underlying text management */
-	char *textbuf;      /* scratch buffer used for drawing */
-	UiWin *ui;          /* corresponding ui window */
-	Cell cell_blank;    /* used for empty/blank cells */
-	int width, height;  /* size of display area */
-	size_t start, end;  /* currently displayed area [start, end] in bytes from the start of the file */
-	size_t start_last;  /* previously used start of visible area, used to update the mark */
-	Mark start_mark;    /* mark to keep track of the start of the visible area */
-	size_t lines_size;  /* number of allocated bytes for lines (grows only) */
-	Line *lines;        /* view->height number of lines representing view content */
-	Line *topline;      /* top of the view, first line currently shown */
-	Line *lastline;     /* last currently used line, always <= bottomline */
-	Line *bottomline;   /* bottom of view, might be unused if lastline < bottomline */
-	Selection *selection;    /* primary selection, always placed within the visible viewport */
-	Selection *selection_latest; /* most recently created cursor */
-	Selection *selection_dead;   /* primary cursor which was disposed, will be removed when another cursor is created */
-	int selection_count;   /* how many cursors do currently exist */
-	Line *line;         /* used while drawing view content, line where next char will be drawn */
-	int col;            /* used while drawing view content, column where next char will be drawn */
-	const SyntaxSymbol *symbols[SYNTAX_SYMBOL_LAST]; /* symbols to use for white spaces etc */
-	int tabwidth;       /* how many spaces should be used to display a tab character */
-	Selection *selections;    /* all cursors currently active */
-	int selection_generation; /* used to filter out newly created cursors during iteration */
-	bool need_update;   /* whether view has been redrawn */
-	bool large_file;    /* optimize for displaying large files */
-	int colorcolumn;
-	char *breakat;  /* characters which might cause a word wrap */
-	int wrapcolumn; /* wrap lines at minimum of window width and wrapcolumn (if != 0) */
-	int wrapcol;    /* used while drawing view content, column where word wrap might happen */
-	bool prevch_breakat; /* used while drawing view content, previous char is part of breakat */
 };
 
 static const SyntaxSymbol symbols_none[] = {
@@ -155,7 +109,7 @@ void window_status_update(Vis *vis, Win *win) {
 	else if (count != VIS_COUNT_UNKNOWN)
 		snprintf(right_parts[right_count++], sizeof(right_parts[0]), "%d", count);
 
-	int sel_count = view_selections_count(view);
+	int sel_count = view->selection_count;
 	if (sel_count > 1) {
 		Selection *s = view_selections_primary_get(view);
 		int sel_number = view_selections_number(s) + 1;
@@ -223,10 +177,6 @@ void view_tabwidth_set(View *view, int tabwidth) {
 	view_draw(view);
 }
 
-int view_tabwidth_get(View *view) {
-	return view->tabwidth;
-}
-
 /* reset internal view data structures (cell matrix, line offsets etc.) */
 static void view_clear(View *view) {
 	memset(view->lines, 0, view->lines_size);
@@ -268,10 +218,6 @@ static void view_clear(View *view) {
 	view->prevch_breakat = false;
 	if (view->ui)
 		view->ui->style_set(view->ui, &view->cell_blank, UI_STYLE_DEFAULT);
-}
-
-Filerange view_viewport_get(View *view) {
-	return (Filerange){ .start = view->start, .end = view->end };
 }
 
 static int view_max_text_width(const View *view) {
@@ -575,10 +521,6 @@ void view_draw(View *view) {
 	view->need_update = true;
 }
 
-void view_invalidate(View *view) {
-	view->need_update = true;
-}
-
 bool view_update(View *view) {
 	if (!view->need_update)
 		return false;
@@ -619,14 +561,6 @@ bool view_resize(View *view, int width, int height) {
 	memset(view->lines, 0, view->lines_size);
 	view_draw(view);
 	return true;
-}
-
-int view_height_get(View *view) {
-	return view->height;
-}
-
-int view_width_get(View *view) {
-	return view->width;
 }
 
 void view_free(View *view) {
@@ -674,10 +608,6 @@ View *view_new(Text *text) {
 
 	view_cursor_to(view, 0);
 	return view;
-}
-
-void view_ui(View *view, UiWin* ui) {
-	view->ui = ui;
 }
 
 static size_t cursor_set(Selection *sel, Line *line, int col) {
@@ -955,14 +885,6 @@ size_t view_cursor_get(View *view) {
 	return view_cursors_pos(view->selection);
 }
 
-Line *view_lines_first(View *view) {
-	return view->topline;
-}
-
-Line *view_lines_last(View *view) {
-	return view->lastline;
-}
-
 Line *view_cursors_line_get(Selection *sel) {
 	return sel->line;
 }
@@ -998,24 +920,6 @@ enum UiOption view_options_get(View *view) {
 	return view->ui ? view->ui->options_get(view->ui) : 0;
 }
 
-void view_colorcolumn_set(View *view, int col) {
-	if (col >= 0)
-		view->colorcolumn = col;
-}
-
-int view_colorcolumn_get(View *view) {
-	return view->colorcolumn;
-}
-
-void view_wrapcolumn_set(View *view, int col) {
-	if (col >= 0)
-		view->wrapcolumn = col;
-}
-
-int view_wrapcolumn_get(View *view) {
-	return view->wrapcolumn;
-}
-
 bool view_breakat_set(View *view, const char *breakat) {
 	char *copy = strdup(breakat);
 	if (!copy)
@@ -1023,10 +927,6 @@ bool view_breakat_set(View *view, const char *breakat) {
 	free(view->breakat);
 	view->breakat = copy;
 	return true;
-}
-
-const char *view_breakat_get(View *view) {
-	return view->breakat;
 }
 
 size_t view_screenline_goto(View *view, int n) {
@@ -1106,10 +1006,6 @@ Selection *view_selections_new(View *view, size_t pos) {
 
 Selection *view_selections_new_force(View *view, size_t pos) {
 	return selections_new(view, pos, true);
-}
-
-int view_selections_count(View *view) {
-	return view->selection_count;
 }
 
 int view_selections_number(Selection *sel) {
@@ -1458,7 +1354,7 @@ void view_selections_set_all(View *view, Array *arr, bool anchored) {
 Array view_selections_get_all(View *view) {
 	Array arr;
 	array_init_sized(&arr, sizeof(Filerange));
-	if (!array_reserve(&arr, view_selections_count(view)))
+	if (!array_reserve(&arr, view->selection_count))
 		return arr;
 	for (Selection *s = view->selections; s; s = s->next) {
 		Filerange r = view_selections_get(s);
@@ -1488,10 +1384,6 @@ void view_selections_normalize(View *view) {
 	}
 	if (prev)
 		view_selections_set(prev, &range_prev);
-}
-
-Text *view_text(View *view) {
-	return view->text;
 }
 
 char *view_symbol_eof_get(View *view) {

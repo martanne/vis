@@ -188,7 +188,7 @@ bool register_put_range(Vis *vis, Register *reg, Text *txt, Filerange *range) {
 
 size_t vis_register_count(Vis *vis, Register *reg) {
 	if (reg->type == REGISTER_NUMBER)
-		return vis->win ? view_selections_count(vis->win->view) : 0;
+		return vis->win ? vis->win->view->selection_count : 0;
 	return array_length(&reg->values);
 }
 

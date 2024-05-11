@@ -1348,7 +1348,7 @@ static const char *selections_align_indent(Vis *vis, const char *keys, const Arg
 
 static const char *selections_clear(Vis *vis, const char *keys, const Arg *arg) {
 	View *view = vis_view(vis);
-	if (view_selections_count(view) > 1)
+	if (view->selection_count > 1)
 		view_selections_dispose_all(view);
 	else
 		view_selection_clear(view_selections_primary_get(view));
@@ -1356,7 +1356,7 @@ static const char *selections_clear(Vis *vis, const char *keys, const Arg *arg) 
 }
 
 static Selection *selection_new(View *view, Filerange *r, bool isprimary) {
-	Text *txt = view_text(view);
+	Text *txt = view->text;
 	size_t pos = text_char_prev(txt, r->end);
 	Selection *s = view_selections_new(view, pos);
 	if (!s)
@@ -1378,7 +1378,7 @@ static const char *selections_match_next(Vis *vis, const char *keys, const Arg *
 
 	static bool match_word;
 
-	if (view_selections_count(view) == 1) {
+	if (view->selection_count == 1) {
 		Filerange word = text_object_word(txt, view_cursors_pos(s));
 		match_word = text_range_equal(&sel, &word);
 	}
@@ -1442,7 +1442,7 @@ static const char *selections_remove_column(Vis *vis, const char *keys, const Ar
 	int column = VIS_COUNT_DEFAULT(vis->action.count, arg->i) - 1;
 	if (column >= max)
 		column = max - 1;
-	if (view_selections_count(view) == 1) {
+	if (view->selection_count == 1) {
 		vis_keys_feed(vis, "<Escape>");
 		return keys;
 	}
@@ -1462,7 +1462,7 @@ static const char *selections_remove_column_except(Vis *vis, const char *keys, c
 	int column = VIS_COUNT_DEFAULT(vis->action.count, arg->i) - 1;
 	if (column >= max)
 		column = max - 1;
-	if (view_selections_count(view) == 1) {
+	if (view->selection_count == 1) {
 		vis_redraw(vis);
 		return keys;
 	}
@@ -1483,7 +1483,7 @@ static const char *selections_remove_column_except(Vis *vis, const char *keys, c
 
 static const char *selections_navigate(Vis *vis, const char *keys, const Arg *arg) {
 	View *view = vis_view(vis);
-	if (view_selections_count(view) == 1)
+	if (view->selection_count == 1)
 		return wscroll(vis, keys, arg);
 	Selection *s = view_selections_primary_get(view);
 	VisCountIterator it = vis_count_iterator_get(vis, 1);
@@ -1518,7 +1518,7 @@ static const char *selections_rotate(Vis *vis, const char *keys, const Arg *arg)
 	Text *txt = vis_text(vis);
 	View *view = vis_view(vis);
 	int columns = view_selections_column_count(view);
-	int selections = columns == 1 ? view_selections_count(view) : columns;
+	int selections = columns == 1 ? view->selection_count : columns;
 	int count = VIS_COUNT_DEFAULT(vis->action.count, 1);
 	array_init_sized(&arr, sizeof(Rotate));
 	if (!array_reserve(&arr, selections))
@@ -1877,7 +1877,7 @@ static const char *undo(Vis *vis, const char *keys, const Arg *arg) {
 	size_t pos = text_undo(vis_text(vis));
 	if (pos != EPOS) {
 		View *view = vis_view(vis);
-		if (view_selections_count(view) == 1)
+		if (view->selection_count == 1)
 			view_cursor_to(view, pos);
 		/* redraw all windows in case some display the same file */
 		vis_draw(vis);
@@ -1889,7 +1889,7 @@ static const char *redo(Vis *vis, const char *keys, const Arg *arg) {
 	size_t pos = text_redo(vis_text(vis));
 	if (pos != EPOS) {
 		View *view = vis_view(vis);
-		if (view_selections_count(view) == 1)
+		if (view->selection_count == 1)
 			view_cursor_to(view, pos);
 		/* redraw all windows in case some display the same file */
 		vis_draw(vis);
