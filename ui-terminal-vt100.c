@@ -41,18 +41,6 @@
 
 #define UI_TERMKEY_FLAGS TERMKEY_FLAG_UTF8
 
-#define ui_term_backend_init ui_vt100_init
-#define ui_term_backend_blit ui_vt100_blit
-#define ui_term_backend_clear ui_vt100_clear
-#define ui_term_backend_colors ui_vt100_colors
-#define ui_term_backend_resize ui_vt100_resize
-#define ui_term_backend_save ui_vt100_save
-#define ui_term_backend_restore ui_vt100_restore
-#define ui_term_backend_suspend ui_vt100_suspend
-#define ui_term_backend_resume ui_vt100_resume
-#define ui_term_backend_new ui_vt100_new
-#define ui_term_backend_free ui_vt100_free
-
 #define CELL_COLOR_BLACK   { .index = 0 }
 #define CELL_COLOR_RED     { .index = 1 }
 #define CELL_COLOR_GREEN   { .index = 2 }
@@ -72,7 +60,7 @@
 #define CELL_ATTR_DIM       (1 << 5)
 
 typedef struct {
-	UiTerm uiterm;
+	Ui uiterm;
 	Buffer buf;
 } UiVt100;
 
@@ -82,11 +70,11 @@ static inline bool cell_color_equal(CellColor c1, CellColor c2) {
 	return c1.r == c2.r && c1.g == c2.g && c1.b == c2.b;
 }
 
-static CellColor color_rgb(UiTerm *ui, uint8_t r, uint8_t g, uint8_t b) {
+static CellColor color_rgb(Ui *ui, uint8_t r, uint8_t g, uint8_t b) {
 	return (CellColor){ .r = r, .g = g, .b = b, .index = (uint8_t)-1 };
 }
 
-static CellColor color_terminal(UiTerm *ui, uint8_t index) {
+static CellColor color_terminal(Ui *ui, uint8_t index) {
 	return (CellColor){ .r = 0, .g = 0, .b = 0, .index = index };
 }
 
@@ -108,7 +96,7 @@ static void cursor_visible(bool visible) {
 	output_literal(visible ? "\x1b[?25h" : "\x1b[?25l");
 }
 
-static void ui_vt100_blit(UiTerm *tui) {
+static void ui_term_backend_blit(Ui *tui) {
 	Buffer *buf = &((UiVt100*)tui)->buf;
 	buffer_clear(buf);
 	CellAttr attr = CELL_ATTR_NORMAL;
@@ -174,54 +162,54 @@ static void ui_vt100_blit(UiTerm *tui) {
 	output(buffer_content(buf), buffer_length0(buf));
 }
 
-static void ui_vt100_clear(UiTerm *tui) { }
+static void ui_term_backend_clear(Ui *tui) { }
 
-static bool ui_vt100_resize(UiTerm *tui, int width, int height) {
+static bool ui_term_backend_resize(Ui *tui, int width, int height) {
 	return true;
 }
 
-static void ui_vt100_save(UiTerm *tui, bool fscr) {
+static void ui_term_backend_save(Ui *tui, bool fscr) {
 	cursor_visible(true);
 }
 
-static void ui_vt100_restore(UiTerm *tui) {
+static void ui_term_backend_restore(Ui *tui) {
 	cursor_visible(false);
 }
 
-static int ui_vt100_colors(Ui *ui) {
+int ui_terminal_colors(void) {
 	char *term = getenv("TERM");
 	return (term && strstr(term, "-256color")) ? 256 : 16;
 }
 
-static void ui_vt100_suspend(UiTerm *tui) {
+static void ui_term_backend_suspend(Ui *tui) {
 	if (!tui->termkey) return;
 	termkey_stop(tui->termkey);
 	cursor_visible(true);
 	screen_alternate(false);
 }
 
-static void ui_vt100_resume(UiTerm *tui) {
+void ui_terminal_resume(Ui *tui) {
 	screen_alternate(true);
 	cursor_visible(false);
 	termkey_start(tui->termkey);
 }
 
-static bool ui_vt100_init(UiTerm *tui, char *term) {
-	ui_vt100_resume(tui);
+static bool ui_term_backend_init(Ui *tui, char *term) {
+	ui_terminal_resume(tui);
 	return true;
 }
 
-static UiTerm *ui_vt100_new(void) {
+static Ui *ui_term_backend_new(void) {
 	UiVt100 *vtui = calloc(1, sizeof *vtui);
 	if (!vtui)
 		return NULL;
 	buffer_init(&vtui->buf);
-	return (UiTerm*)vtui;
+	return (Ui*)vtui;
 }
 
-static void ui_vt100_free(UiTerm *tui) {
+static void ui_term_backend_free(Ui *tui) {
 	UiVt100 *vtui = (UiVt100*)tui;
-	ui_vt100_suspend(tui);
+	ui_term_backend_suspend(tui);
 	buffer_release(&vtui->buf);
 }
 

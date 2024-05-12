@@ -1429,7 +1429,7 @@ static int vis_options_assign(Vis *vis, lua_State *L, const char *key, int next)
 	} else if (strcmp(key, "changecolors") == 0) {
 		vis->change_colors = lua_toboolean(L, next);
 	} else if (strcmp(key, "escdelay") == 0) {
-		TermKey *tk = vis->ui->termkey_get(vis->ui);
+		TermKey *tk = vis->ui->termkey;
 		termkey_set_waittime(tk, luaL_checkint(L, next));
 	} else if (strcmp(key, "ignorecase") == 0 || strcmp(key, "ic") == 0) {
 		vis->ignorecase = lua_toboolean(L, next);
@@ -1570,7 +1570,7 @@ static int vis_options_index(lua_State *L) {
 			lua_pushboolean(L, vis->change_colors);
 			return 1;
 		} else if (strcmp(key, "escdelay") == 0) {
-			TermKey *tk = vis->ui->termkey_get(vis->ui);
+			TermKey *tk = vis->ui->termkey;
 			lua_pushunsigned(L, termkey_get_waittime(tk));
 			return 1;
 		} else if (strcmp(key, "ignorecase") == 0 || strcmp(key, "ic") == 0) {
@@ -1633,7 +1633,7 @@ static int ui_index(lua_State *L) {
 		const char *key  = lua_tostring(L, 2);
 
 		if (strcmp(key, "layout") == 0) {
-			lua_pushunsigned(L, ui_layout_get(ui));
+			lua_pushunsigned(L, ui->layout);
 			return 1;
 		}
 	}
@@ -1648,7 +1648,7 @@ static int ui_newindex(lua_State *L) {
 		const char *key  = lua_tostring(L, 2);
 
 		if (strcmp(key, "layout") == 0) {
-			ui->arrange(ui, luaL_checkint(L, 3));
+			ui_arrange(ui, luaL_checkint(L, 3));
 			return 0;
 		}
 	}
@@ -3260,7 +3260,7 @@ static void vis_lua_init(Vis *vis) {
 
 	obj_type_new(L, VIS_LUA_TYPE_UI);
 	luaL_setfuncs(L, ui_funcs, 0);
-	lua_pushunsigned(L, vis->ui->colors(vis->ui));
+	lua_pushunsigned(L, ui_terminal_colors());
 	lua_setfield(L, -2, "colors");
 	lua_newtable(L);
 	static const struct {
@@ -3612,7 +3612,7 @@ static void vis_lua_ui_draw(Vis *vis) {
 bool vis_event_emit(Vis *vis, enum VisEvents id, ...) {
 	if (!vis->initialized) {
 		vis->initialized = true;
-		vis->ui->init(vis->ui, vis);
+		ui_init(vis->ui, vis);
 		vis_lua_init(vis);
 	}
 

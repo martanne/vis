@@ -4,18 +4,6 @@
 
 #define UI_TERMKEY_FLAGS (TERMKEY_FLAG_UTF8|TERMKEY_FLAG_NOTERMIOS)
 
-#define ui_term_backend_init ui_curses_init
-#define ui_term_backend_blit ui_curses_blit
-#define ui_term_backend_clear ui_curses_clear
-#define ui_term_backend_colors ui_curses_colors
-#define ui_term_backend_resize ui_curses_resize
-#define ui_term_backend_restore ui_curses_restore
-#define ui_term_backend_save ui_curses_save
-#define ui_term_backend_new ui_curses_new
-#define ui_term_backend_resume ui_curses_resume
-#define ui_term_backend_suspend ui_curses_suspend
-#define ui_term_backend_free ui_curses_free
-
 #define CELL_COLOR_BLACK   COLOR_BLACK
 #define CELL_COLOR_RED     COLOR_RED
 #define CELL_COLOR_GREEN   COLOR_GREEN
@@ -85,7 +73,7 @@ static void undo_palette(void)
 }
 
 /* Work out the nearest color from the 256 color set, or perhaps exactly. */
-static CellColor color_rgb(UiTerm *ui, uint8_t r, uint8_t g, uint8_t b)
+static CellColor color_rgb(Ui *ui, uint8_t r, uint8_t g, uint8_t b)
 {
 	static short color_clobber_idx = 0;
 	static uint32_t clobbering_colors[MAX_COLOR_CLOBBER];
@@ -163,7 +151,7 @@ static CellColor color_rgb(UiTerm *ui, uint8_t r, uint8_t g, uint8_t b)
 	return i;
 }
 
-static CellColor color_terminal(UiTerm *ui, uint8_t index) {
+static CellColor color_terminal(Ui *ui, uint8_t index) {
 	return index;
 }
 
@@ -227,7 +215,7 @@ static inline attr_t style_to_attr(CellStyle *style) {
 	return style->attr | COLOR_PAIR(color_pair_get(style->fg, style->bg));
 }
 
-static void ui_curses_blit(UiTerm *tui) {
+static void ui_term_backend_blit(Ui *tui) {
 	int w = tui->width, h = tui->height;
 	Cell *cell = tui->cells;
 	for (int y = 0; y < h; y++) {
@@ -242,16 +230,16 @@ static void ui_curses_blit(UiTerm *tui) {
 		doupdate();
 }
 
-static void ui_curses_clear(UiTerm *tui) {
+static void ui_term_backend_clear(Ui *tui) {
 	clear();
 }
 
-static bool ui_curses_resize(UiTerm *tui, int width, int height) {
+static bool ui_term_backend_resize(Ui *tui, int width, int height) {
 	return resizeterm(height, width) == OK &&
 	       wresize(stdscr, height, width) == OK;
 }
 
-static void ui_curses_save(UiTerm *tui, bool fscr) {
+static void ui_term_backend_save(Ui *tui, bool fscr) {
 	curs_set(1);
 	if (fscr) {
 		def_prog_mode();
@@ -261,17 +249,17 @@ static void ui_curses_save(UiTerm *tui, bool fscr) {
 	}
 }
 
-static void ui_curses_restore(UiTerm *tui) {
+static void ui_term_backend_restore(Ui *tui) {
 	reset_prog_mode();
 	wclear(stdscr);
 	curs_set(0);
 }
 
-static int ui_curses_colors(Ui *ui) {
+int ui_terminal_colors(void) {
 	return COLORS;
 }
 
-static bool ui_curses_init(UiTerm *tui, char *term) {
+static bool ui_term_backend_init(Ui *tui, char *term) {
 	if (!newterm(term, stderr, stdin)) {
 		snprintf(tui->info, sizeof(tui->info), "Warning: unknown term `%s'", term);
 		if (!newterm(strstr(term, "-256color") ? "xterm-256color" : "xterm", stderr, stdin))
@@ -288,19 +276,19 @@ static bool ui_curses_init(UiTerm *tui, char *term) {
 	return true;
 }
 
-static UiTerm *ui_curses_new(void) {
-	return calloc(1, sizeof(UiTerm));
+static Ui *ui_term_backend_new(void) {
+	return calloc(1, sizeof(Ui));
 }
 
-static void ui_curses_resume(UiTerm *term) { }
+void ui_terminal_resume(Ui *term) { }
 
-static void ui_curses_suspend(UiTerm *term) {
+static void ui_term_backend_suspend(Ui *term) {
 	if (change_colors == 1)
 		undo_palette();
 }
 
-static void ui_curses_free(UiTerm *term) {
-	ui_curses_suspend(term);
+static void ui_term_backend_free(Ui *term) {
+	ui_term_backend_suspend(term);
 	endwin();
 }
 

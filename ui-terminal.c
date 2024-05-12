@@ -13,7 +13,6 @@
 #include <termios.h>
 #include <errno.h>
 
-#include "ui-terminal.h"
 #include "vis.h"
 #include "vis-core.h"
 #include "text.h"
@@ -30,26 +29,6 @@
 #define debug(...) do { } while (0)
 #endif
 
-#define MAX_WIDTH 1024
-#define MAX_HEIGHT 1024
-
-struct UiTerm {
-	Ui ui;                    /* generic ui interface, has to be the first struct member */
-	Vis *vis;                 /* editor instance to which this ui belongs */
-	UiWin *windows;           /* all windows managed by this ui */
-	UiWin *selwin;            /* the currently selected layout */
-	char info[MAX_WIDTH];     /* info message displayed at the bottom of the screen */
-	int width, height;        /* terminal dimensions available for all windows */
-	enum UiLayout layout;     /* whether windows are displayed horizontally or vertically */
-	TermKey *termkey;         /* libtermkey instance to handle keyboard input (stdin or /dev/tty) */
-	size_t ids;               /* bit mask of in use window ids */
-	size_t styles_size;       /* #bytes allocated for styles array */
-	CellStyle *styles;        /* each window has UI_STYLE_MAX different style definitions */
-	size_t cells_size;        /* #bytes allocated for 2D grid (grows only) */
-	Cell *cells;              /* 2D grid of cells, at least as large as current terminal size */
-	bool doupdate;            /* Whether to update the screen after refreshing contents */
-};
-
 #if CONFIG_CURSES
 #include "ui-terminal-curses.c"
 #else
@@ -59,16 +38,15 @@ struct UiTerm {
 /* helper macro for handling UiTerm.cells */
 #define CELL_AT_POS(UI, X, Y) (((UI)->cells) + (X) + ((Y) * (UI)->width));
 
-__attribute__((noreturn)) static void ui_die(Ui *ui, const char *msg, va_list ap) {
-	UiTerm *tui = (UiTerm*)ui;
-	ui_term_backend_free(tui);
+void ui_die(Ui *tui, const char *msg, va_list ap) {
+	ui_terminal_free(tui);
 	if (tui->termkey)
 		termkey_stop(tui->termkey);
 	vfprintf(stderr, msg, ap);
 	exit(EXIT_FAILURE);
 }
 
-__attribute__((noreturn)) static void ui_die_msg(Ui *ui, const char *msg, ...) {
+static void ui_die_msg(Ui *ui, const char *msg, ...) {
 	va_list ap;
 	va_start(ap, msg);
 	ui_die(ui, msg, ap);
@@ -89,7 +67,7 @@ static void ui_window_move(UiWin *win, int x, int y) {
 	win->y = y;
 }
 
-static bool color_fromstring(UiTerm *ui, CellColor *color, const char *s)
+static bool color_fromstring(Ui *ui, CellColor *color, const char *s)
 {
 	if (!s)
 		return false;
@@ -138,7 +116,7 @@ static bool color_fromstring(UiTerm *ui, CellColor *color, const char *s)
 }
 
 bool ui_style_define(UiWin *win, int id, const char *style) {
-	UiTerm *tui = win->ui;
+	Ui *tui = win->ui;
 	if (id >= UI_STYLE_MAX)
 		return false;
 	if (!style)
@@ -190,7 +168,7 @@ bool ui_style_define(UiWin *win, int id, const char *style) {
 	return true;
 }
 
-static void ui_draw_line(UiTerm *tui, int x, int y, char c, enum UiStyle style_id) {
+static void ui_draw_line(Ui *tui, int x, int y, char c, enum UiStyle style_id) {
 	if (x < 0 || x >= tui->width || y < 0 || y >= tui->height)
 		return;
 	CellStyle style = tui->styles[style_id];
@@ -203,7 +181,7 @@ static void ui_draw_line(UiTerm *tui, int x, int y, char c, enum UiStyle style_i
 	}
 }
 
-static void ui_draw_string(UiTerm *tui, int x, int y, const char *str, UiWin *win, enum UiStyle style_id) {
+static void ui_draw_string(Ui *tui, int x, int y, const char *str, UiWin *win, enum UiStyle style_id) {
 	debug("draw-string: [%d][%d]\n", y, x);
 	if (x < 0 || x >= tui->width || y < 0 || y >= tui->height)
 		return;
@@ -225,7 +203,7 @@ static void ui_draw_string(UiTerm *tui, int x, int y, const char *str, UiWin *wi
 }
 
 static void ui_window_draw(UiWin *win) {
-	UiTerm *ui = win->ui;
+	Ui *ui = win->ui;
 	View *view = win->win->view;
 	int width = win->width, height = win->height;
 	const Line *line = view->topline;
@@ -276,7 +254,7 @@ static void ui_window_draw(UiWin *win) {
 }
 
 void ui_window_style_set(UiWin *win, Cell *cell, enum UiStyle id) {
-	UiTerm *tui = win->ui;
+	Ui *tui = win->ui;
 	CellStyle set, style = tui->styles[win->id * UI_STYLE_MAX + id];
 
 	if (id == UI_STYLE_DEFAULT) {
@@ -292,7 +270,7 @@ void ui_window_style_set(UiWin *win, Cell *cell, enum UiStyle id) {
 }
 
 bool ui_window_style_set_pos(UiWin *win, int x, int y, enum UiStyle id) {
-	UiTerm *tui = win->ui;
+	Ui *tui = win->ui;
 	if (x < 0 || y < 0 || y >= win->height || x >= win->width) {
 		return false;
 	}
@@ -304,14 +282,13 @@ bool ui_window_style_set_pos(UiWin *win, int x, int y, enum UiStyle id) {
 void ui_window_status(UiWin *win, const char *status) {
 	if (!(win->options & UI_OPTION_STATUSBAR))
 		return;
-	UiTerm *ui = win->ui;
+	Ui *ui = win->ui;
 	enum UiStyle style = ui->selwin == win ? UI_STYLE_STATUS_FOCUSED : UI_STYLE_STATUS;
 	ui_draw_string(ui, win->x, win->y + win->height - 1, status, win, style);
 }
 
-static void ui_arrange(Ui *ui, enum UiLayout layout) {
+void ui_arrange(Ui *tui, enum UiLayout layout) {
 	debug("ui-arrange\n");
-	UiTerm *tui = (UiTerm*)ui;
 	tui->layout = layout;
 	int n = 0, m = !!tui->info[0], x = 0, y = 0;
 	for (UiWin *win = tui->windows; win; win = win->next) {
@@ -360,32 +337,24 @@ static void ui_arrange(Ui *ui, enum UiLayout layout) {
 	}
 }
 
-static void ui_doupdates(Ui *ui, bool doupdate) {
-	UiTerm *tui = (UiTerm*)ui;
-	tui->doupdate = doupdate;
-}
-
-static void ui_draw(Ui *ui) {
+void ui_draw(Ui *tui) {
 	debug("ui-draw\n");
-	UiTerm *tui = (UiTerm*)ui;
-	ui_arrange(ui, tui->layout);
+	ui_arrange(tui, tui->layout);
 	for (UiWin *win = tui->windows; win; win = win->next)
-		ui_window_draw((UiWin*)win);
+		ui_window_draw(win);
 	if (tui->info[0])
 		ui_draw_string(tui, 0, tui->height-1, tui->info, NULL, UI_STYLE_INFO);
 	vis_event_emit(tui->vis, VIS_EVENT_UI_DRAW);
 	ui_term_backend_blit(tui);
 }
 
-static void ui_redraw(Ui *ui) {
-	UiTerm *tui = (UiTerm*)ui;
+void ui_redraw(Ui *tui) {
 	ui_term_backend_clear(tui);
 	for (UiWin *win = tui->windows; win; win = win->next)
 		win->win->view->need_update = true;
 }
 
-static void ui_resize(Ui *ui) {
-	UiTerm *tui = (UiTerm*)ui;
+void ui_resize(Ui *tui) {
 	struct winsize ws;
 	int width = 80, height = 24;
 
@@ -396,8 +365,8 @@ static void ui_resize(Ui *ui) {
 			height = ws.ws_row;
 	}
 
-	width = MIN(width, MAX_WIDTH);
-	height = MIN(height, MAX_HEIGHT);
+	width  = MIN(width,  UI_MAX_WIDTH);
+	height = MIN(height, UI_MAX_HEIGHT);
 	if (!ui_term_backend_resize(tui, width, height))
 		return;
 
@@ -414,10 +383,10 @@ static void ui_resize(Ui *ui) {
 	tui->height = height;
 }
 
-static void ui_window_free(UiWin *win) {
+void ui_window_free(UiWin *win) {
 	if (!win)
 		return;
-	UiTerm *tui = win->ui;
+	Ui *tui = win->ui;
 	if (win->prev)
 		win->prev->next = win->next;
 	if (win->next)
@@ -431,7 +400,7 @@ static void ui_window_free(UiWin *win) {
 	free(win);
 }
 
-static void ui_window_focus(UiWin *new) {
+void ui_window_focus(UiWin *new) {
 	UiWin *old = new->ui->selwin;
 	if (new->options & UI_OPTION_STATUSBAR)
 		new->ui->selwin = new;
@@ -444,7 +413,7 @@ void ui_window_options_set(UiWin *win, enum UiOption options) {
 	win->options = options;
 	if (options & UI_OPTION_ONELINE) {
 		/* move the new window to the end of the list */
-		UiTerm *tui = win->ui;
+		Ui *tui = win->ui;
 		UiWin *last = tui->windows;
 		while (last->next)
 			last = last->next;
@@ -460,13 +429,13 @@ void ui_window_options_set(UiWin *win, enum UiOption options) {
 			win->next = NULL;
 		}
 	}
-	ui_draw((Ui*)win->ui);
+	ui_draw(win->ui);
 }
 
-static void ui_window_swap(UiWin *a, UiWin *b) {
+void ui_window_swap(UiWin *a, UiWin *b) {
 	if (a == b || !a || !b)
 		return;
-	UiTerm *tui = a->ui;
+	Ui *tui = a->ui;
 	UiWin *tmp = a->next;
 	a->next = b->next;
 	b->next = tmp;
@@ -491,8 +460,7 @@ static void ui_window_swap(UiWin *a, UiWin *b) {
 		ui_window_focus(a);
 }
 
-static UiWin *ui_window_new(Ui *ui, Win *w, enum UiOption options) {
-	UiTerm *tui = (UiTerm*)ui;
+UiWin *ui_window_new(Ui *tui, Win *w, enum UiOption options) {
 	/* get rightmost zero bit, i.e. highest available id */
 	size_t bit = ~tui->ids & (tui->ids + 1);
 	size_t id = 0;
@@ -544,19 +512,17 @@ static UiWin *ui_window_new(Ui *ui, Win *w, enum UiOption options) {
 		options &= ~UI_OPTION_LINE_NUMBERS_ABSOLUTE;
 	}
 
-	ui_window_options_set((UiWin*)win, options);
+	ui_window_options_set(win, options);
 
 	return win;
 }
 
-static void ui_info(Ui *ui, const char *msg, va_list ap) {
-	UiTerm *tui = (UiTerm*)ui;
+void ui_info_show(Ui *tui, const char *msg, va_list ap) {
 	ui_draw_line(tui, 0, tui->height-1, ' ', UI_STYLE_INFO);
 	vsnprintf(tui->info, sizeof(tui->info), msg, ap);
 }
 
-static void ui_info_hide(Ui *ui) {
-	UiTerm *tui = (UiTerm*)ui;
+void ui_info_hide(Ui *tui) {
 	if (tui->info[0])
 		tui->info[0] = '\0';
 }
@@ -580,31 +546,19 @@ static TermKey *ui_termkey_reopen(Ui *ui, int fd) {
 	return ui_termkey_new(fd);
 }
 
-static TermKey *ui_termkey_get(Ui *ui) {
-	UiTerm *tui = (UiTerm*)ui;
-	return tui->termkey;
-}
-
-static void ui_suspend(Ui *ui) {
-	UiTerm *tui = (UiTerm*)ui;
+void ui_terminal_suspend(Ui *tui) {
 	ui_term_backend_suspend(tui);
 	kill(0, SIGTSTP);
 }
 
-static void ui_resume(Ui *ui) {
-	UiTerm *tui = (UiTerm*)ui;
-	ui_term_backend_resume(tui);
-}
-
-static bool ui_getkey(Ui *ui, TermKeyKey *key) {
-	UiTerm *tui = (UiTerm*)ui;
+bool ui_getkey(Ui *tui, TermKeyKey *key) {
 	TermKeyResult ret = termkey_getkey(tui->termkey, key);
 
 	if (ret == TERMKEY_RES_EOF) {
 		termkey_destroy(tui->termkey);
 		errno = 0;
-		if (!(tui->termkey = ui_termkey_reopen(ui, STDIN_FILENO)))
-			ui_die_msg(ui, "Failed to re-open stdin as /dev/tty: %s\n", errno != 0 ? strerror(errno) : "");
+		if (!(tui->termkey = ui_termkey_reopen(tui, STDIN_FILENO)))
+			ui_die_msg(tui, "Failed to re-open stdin as /dev/tty: %s\n", errno != 0 ? strerror(errno) : "");
 		return false;
 	}
 
@@ -619,20 +573,17 @@ static bool ui_getkey(Ui *ui, TermKeyKey *key) {
 	return ret == TERMKEY_RES_KEY;
 }
 
-static void ui_terminal_save(Ui *ui, bool fscr) {
-	UiTerm *tui = (UiTerm*)ui;
+void ui_terminal_save(Ui *tui, bool fscr) {
 	ui_term_backend_save(tui, fscr);
 	termkey_stop(tui->termkey);
 }
 
-static void ui_terminal_restore(Ui *ui) {
-	UiTerm *tui = (UiTerm*)ui;
+void ui_terminal_restore(Ui *tui) {
 	termkey_start(tui->termkey);
 	ui_term_backend_restore(tui);
 }
 
-static bool ui_init(Ui *ui, Vis *vis) {
-	UiTerm *tui = (UiTerm*)ui;
+bool ui_init(Ui *tui, Vis *vis) {
 	tui->vis = vis;
 
 	setlocale(LC_CTYPE, "");
@@ -648,7 +599,7 @@ static bool ui_init(Ui *ui, Vis *vis) {
 		/* work around libtermkey bug which fails if stdin is /dev/null */
 		if (errno == EBADF) {
 			errno = 0;
-			if (!(tui->termkey = ui_termkey_reopen(ui, STDIN_FILENO)) && errno == ENXIO)
+			if (!(tui->termkey = ui_termkey_reopen(tui, STDIN_FILENO)) && errno == ENXIO)
 				tui->termkey = termkey_new_abstract(term, UI_TERMKEY_FLAGS);
 		}
 		if (!tui->termkey)
@@ -657,24 +608,19 @@ static bool ui_init(Ui *ui, Vis *vis) {
 
 	if (!ui_term_backend_init(tui, term))
 		goto err;
-	ui_resize(ui);
+	ui_resize(tui);
 	return true;
 err:
-	ui_die_msg(ui, "Failed to start curses interface: %s\n", errno != 0 ? strerror(errno) : "");
+	ui_die_msg(tui, "Failed to start curses interface: %s\n", errno != 0 ? strerror(errno) : "");
 	return false;
 }
 
-enum UiLayout ui_layout_get(Ui *ui) {
-	UiTerm *tui = (UiTerm *)ui;
-	return tui->layout;
-}
-
-Ui *ui_term_new(void) {
+Ui *ui_terminal_new(void) {
 	size_t styles_size = UI_STYLE_MAX * sizeof(CellStyle);
 	CellStyle *styles = calloc(1, styles_size);
 	if (!styles)
 		return NULL;
-	UiTerm *tui = ui_term_backend_new();
+	Ui *tui = ui_term_backend_new();
 	if (!tui) {
 		free(styles);
 		return NULL;
@@ -682,40 +628,14 @@ Ui *ui_term_new(void) {
 	tui->styles_size = styles_size;
 	tui->styles = styles;
 	tui->doupdate = true;
-	Ui *ui = (Ui*)tui;
-	*ui = (Ui) {
-		.init = ui_init,
-		.free = ui_term_free,
-		.termkey_get = ui_termkey_get,
-		.suspend = ui_suspend,
-		.resume = ui_resume,
-		.resize = ui_resize,
-		.window_new = ui_window_new,
-		.window_free = ui_window_free,
-		.window_focus = ui_window_focus,
-		.window_swap = ui_window_swap,
-		.draw = ui_draw,
-		.redraw = ui_redraw,
-		.arrange = ui_arrange,
-		.doupdates = ui_doupdates,
-		.die = ui_die,
-		.info = ui_info,
-		.info_hide = ui_info_hide,
-		.getkey = ui_getkey,
-		.terminal_save = ui_terminal_save,
-		.terminal_restore = ui_terminal_restore,
-		.colors = ui_term_backend_colors,
-	};
-
-	return ui;
+	return tui;
 }
 
-void ui_term_free(Ui *ui) {
-	UiTerm *tui = (UiTerm*)ui;
+void ui_terminal_free(Ui *tui) {
 	if (!tui)
 		return;
 	while (tui->windows)
-		ui_window_free((UiWin*)tui->windows);
+		ui_window_free(tui->windows);
 	ui_term_backend_free(tui);
 	if (tui->termkey)
 		termkey_destroy(tui->termkey);

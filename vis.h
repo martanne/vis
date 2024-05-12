@@ -110,27 +110,6 @@ void vis_exit(Vis*, int status);
 void vis_die(Vis*, const char *msg, ...) __attribute__((noreturn,format(printf, 2, 3)));
 
 /**
- * Temporarily suspend the editor process.
- * @rst
- * .. note:: This function will generate a ``SIGTSTP`` signal.
- * @endrst
- **/
-void vis_suspend(Vis*);
-/**
- * Resume editor process.
- * @rst
- * .. note:: This function is usually called in response to a ``SIGCONT`` signal.
- * @endrst
- */
-void vis_resume(Vis*);
-/**
- * Set doupdate flag.
- * @rst
- * .. note:: Prevent flickering in curses by delaying window updates.
- * @endrst
- */
-void vis_doupdates(Vis*, bool);
-/**
  * Inform the editor core that a signal occurred.
  * @return Whether the signal was handled.
  * @rst
@@ -162,8 +141,6 @@ bool vis_interrupt_requested(Vis*);
 void vis_draw(Vis*);
 /** Completely redraw user interface. */
 void vis_redraw(Vis*);
-/** Blit user interface state to output device. */
-void vis_update(Vis*);
 /**
  * @}
  * @defgroup vis_windows
@@ -226,8 +203,6 @@ void vis_prompt_show(Vis*, const char *title);
  * @endrst
  */
 void vis_info_show(Vis*, const char *msg, ...) __attribute__((format(printf, 2, 3)));
-/** Hide informational message. */
-void vis_info_hide(Vis*);
 
 /** Display arbitrary long message in a dedicated window. */
 void vis_message_show(Vis*, const char *msg);

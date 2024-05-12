@@ -10,9 +10,8 @@
 /* enable large file optimization for files containing lines longer than: */
 #define UI_LARGE_FILE_LINE_SIZE (1 << 16)
 
-typedef struct Ui Ui;
-typedef struct UiWin UiWin;
-typedef struct UiTerm UiTerm;
+#define UI_MAX_WIDTH  1024
+#define UI_MAX_HEIGHT 1024
 
 enum UiLayout {
 	UI_LAYOUT_HORIZONTAL,
@@ -68,52 +67,82 @@ typedef struct {
 	CellColor fg, bg;
 } CellStyle;
 
+typedef struct {
+	char data[16];      /* utf8 encoded character displayed in this cell (might be more than
+	                       one Unicode codepoint. might also not be the same as in the
+	                       underlying text, for example tabs get expanded */
+	size_t len;         /* number of bytes the character displayed in this cell uses, for
+	                       characters which use more than 1 column to display, their length
+	                       is stored in the leftmost cell whereas all following cells
+	                       occupied by the same character have a length of 0. */
+	int width;          /* display width i.e. number of columns occupied by this character */
+	CellStyle style;    /* colors and attributes used to display this cell */
+} Cell;
+
+struct Ui;
+struct Win;
+typedef struct UiWin {
+	struct Ui *ui;             /* ui which manages this window */
+	struct Win *win;           /* editor window being displayed */
+	int id;                    /* unique identifier for this window */
+	int width, height;         /* window dimension including status bar */
+	int x, y;                  /* window position */
+	int sidebar_width;         /* width of the sidebar showing line numbers etc. */
+	struct UiWin *next, *prev; /* pointers to neighbouring windows */
+	enum UiOption options;     /* display settings for this window */
+} UiWin;
+
+struct Vis;
+typedef struct Ui {
+	struct Vis *vis;          /* editor instance to which this ui belongs */
+	UiWin *windows;           /* all windows managed by this ui */
+	UiWin *selwin;            /* the currently selected layout */
+	char info[UI_MAX_WIDTH];  /* info message displayed at the bottom of the screen */
+	int width, height;        /* terminal dimensions available for all windows */
+	enum UiLayout layout;     /* whether windows are displayed horizontally or vertically */
+	TermKey *termkey;         /* libtermkey instance to handle keyboard input (stdin or /dev/tty) */
+	size_t ids;               /* bit mask of in use window ids */
+	size_t styles_size;       /* #bytes allocated for styles array */
+	CellStyle *styles;        /* each window has UI_STYLE_MAX different style definitions */
+	size_t cells_size;        /* #bytes allocated for 2D grid (grows only) */
+	Cell *cells;              /* 2D grid of cells, at least as large as current terminal size */
+	bool doupdate;            /* Whether to update the screen after refreshing contents */
+} Ui;
+
+#include "view.h"
 #include "vis.h"
 #include "text.h"
-#include "view.h"
-
-struct Ui {
-	bool (*init)(Ui*, Vis*);
-	void (*free)(Ui*);
-	void (*resize)(Ui*);
-	UiWin* (*window_new)(Ui*, Win*, enum UiOption);
-	void (*window_free)(UiWin*);
-	void (*window_focus)(UiWin*);
-	void (*window_swap)(UiWin*, UiWin*);
-	void (*die)(Ui*, const char *msg, va_list ap) __attribute__((noreturn));
-	void (*info)(Ui*, const char *msg, va_list ap);
-	void (*info_hide)(Ui*);
-	void (*arrange)(Ui*, enum UiLayout);
-	void (*draw)(Ui*);
-	void (*redraw)(Ui*);
-	void (*suspend)(Ui*);
-	void (*resume)(Ui*);
-	void (*doupdates)(Ui*, bool);
-	bool (*getkey)(Ui*, TermKeyKey*);
-	void (*terminal_save)(Ui*, bool fscr);
-	void (*terminal_restore)(Ui*);
-	TermKey* (*termkey_get)(Ui*);
-	int (*colors)(Ui*);
-};
-
-struct UiWin {
-	UiTerm *ui;               /* ui which manages this window */
-	Win *win;                 /* editor window being displayed */
-	int id;                   /* unique identifier for this window */
-	int width, height;        /* window dimension including status bar */
-	int x, y;                 /* window position */
-	int sidebar_width;        /* width of the sidebar showing line numbers etc. */
-	UiWin *next, *prev;       /* pointers to neighbouring windows */
-	enum UiOption options;    /* display settings for this window */
-};
 
 #define UI_OPTIONS_GET(ui) ((ui) ? (ui)->options : 0)
+
+Ui *ui_terminal_new(void);
+int  ui_terminal_colors(void);
+void ui_terminal_free(Ui*);
+void ui_terminal_restore(Ui*);
+void ui_terminal_resume(Ui*);
+void ui_terminal_save(Ui*, bool fscr);
+void ui_terminal_suspend(Ui*);
+
+__attribute__((noreturn)) void ui_die(Ui *, const char *, va_list);
+bool ui_init(Ui *, Vis *);
+void ui_arrange(Ui*, enum UiLayout);
+void ui_draw(Ui*);
+void ui_info_hide(Ui *);
+void ui_info_show(Ui *, const char *, va_list);
+void ui_redraw(Ui*);
+void ui_resize(Ui*);
+
+UiWin *ui_window_new(Ui *, Win *, enum UiOption);
+void ui_window_focus(UiWin *);
+void ui_window_free(UiWin *);
+void ui_window_swap(UiWin *, UiWin *);
+
+bool ui_getkey(Ui *, TermKeyKey *);
 
 bool ui_style_define(UiWin *win, int id, const char *style);
 bool ui_window_style_set_pos(UiWin *win, int x, int y, enum UiStyle id);
 void ui_window_style_set(UiWin *win, Cell *cell, enum UiStyle id);
 
-enum UiLayout ui_layout_get(Ui *ui);
 void ui_window_options_set(UiWin *win, enum UiOption options);
 void ui_window_status(UiWin *win, const char *status);
 

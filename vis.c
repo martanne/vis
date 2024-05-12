@@ -203,7 +203,7 @@ static void window_free(Win *win) {
 			other->parent = NULL;
 	}
 	if (vis->ui)
-		vis->ui->window_free(win->ui);
+		ui_window_free(win->ui);
 	view_free(win->view);
 	for (size_t i = 0; i < LENGTH(win->modes); i++)
 		map_free(win->modes[i].bindings);
@@ -382,7 +382,7 @@ Win *window_new_file(Vis *vis, File *file, enum UiOption options) {
 	win->file = file;
 	win->view = view_new(file->text);
 	win->expandtab = false;
-	win->ui = vis->ui->window_new(vis->ui, win, options);
+	win->ui = ui_window_new(vis->ui, win, options);
 	if (!win->view || !win->ui) {
 		window_free(win);
 		return NULL;
@@ -397,7 +397,7 @@ Win *window_new_file(Vis *vis, File *file, enum UiOption options) {
 	win->next = vis->windows;
 	vis->windows = win;
 	vis->win = win;
-	vis->ui->window_focus(win->ui);
+	ui_window_focus(win->ui);
 	for (size_t i = 0; i < LENGTH(win->modes); i++)
 		win->modes[i].parent = &vis_modes[i];
 	vis_event_emit(vis, VIS_EVENT_WIN_OPEN, win);
@@ -434,7 +434,7 @@ bool vis_window_change_file(Win *win, const char* filename) {
 }
 
 bool vis_window_split(Win *original) {
-	vis_doupdates(original->vis, false);
+	original->vis->ui->doupdate = false;
 	Win *win = window_new_file(original->vis, original->file, UI_OPTION_STATUSBAR);
 	if (!win)
 		return false;
@@ -447,7 +447,7 @@ bool vis_window_split(Win *original) {
 	win->file = original->file;
 	view_options_set(win->view, UI_OPTIONS_GET(original->view->ui));
 	view_cursors_to(win->view->selection, view_cursor_get(original->view));
-	vis_doupdates(win->vis, true);
+	win->vis->ui->doupdate = true;
 	return true;
 }
 
@@ -456,7 +456,7 @@ void vis_window_focus(Win *win) {
 		return;
 	Vis *vis = win->vis;
 	vis->win = win;
-	vis->ui->window_focus(win->ui);
+	ui_window_focus(win->ui);
 }
 
 void vis_window_next(Vis *vis) {
@@ -482,37 +482,21 @@ void vis_draw(Vis *vis) {
 }
 
 void vis_redraw(Vis *vis) {
-	vis->ui->redraw(vis->ui);
-	vis_update(vis);
-}
-
-void vis_update(Vis *vis) {
-	vis->ui->draw(vis->ui);
-}
-
-void vis_suspend(Vis *vis) {
-	vis->ui->suspend(vis->ui);
-}
-
-void vis_resume(Vis *vis) {
-	vis->ui->resume(vis->ui);
-}
-
-void vis_doupdates(Vis *vis, bool doupdate) {
-	vis->ui->doupdates(vis->ui, doupdate);
+	ui_redraw(vis->ui);
+	ui_draw(vis->ui);
 }
 
 bool vis_window_new(Vis *vis, const char *filename) {
 	File *file = file_new(vis, filename, false);
 	if (!file)
 		return false;
-	vis_doupdates(vis, false);
+	vis->ui->doupdate = false;
 	Win *win = window_new_file(vis, file, UI_OPTION_STATUSBAR|UI_OPTION_SYMBOL_EOF);
 	if (!win) {
 		file_free(vis, file);
 		return false;
 	}
-	vis_doupdates(vis, true);
+	vis->ui->doupdate = true;
 
 	return true;
 }
@@ -554,7 +538,7 @@ void vis_window_swap(Win *a, Win *b) {
 		vis->windows = b;
 	else if (vis->windows == b)
 		vis->windows = a;
-	vis->ui->window_swap(a->ui, b->ui);
+	ui_window_swap(a->ui, b->ui);
 	if (vis->win == a)
 		vis_window_focus(b);
 	else if (vis->win == b)
@@ -579,7 +563,7 @@ void vis_window_close(Win *win) {
 		vis->message_window = NULL;
 	window_free(win);
 	if (vis->win)
-		vis->ui->window_focus(vis->win->ui);
+		ui_window_focus(vis->win->ui);
 	vis_draw(vis);
 }
 
@@ -645,7 +629,7 @@ void vis_free(Vis *vis) {
 	file_free(vis, vis->error_file);
 	for (int i = 0; i < LENGTH(vis->registers); i++)
 		register_release(&vis->registers[i]);
-	vis->ui->free(vis->ui);
+	ui_terminal_free(vis->ui);
 	if (vis->usercmds) {
 		const char *name;
 		while (map_first(vis->usercmds, &name) && vis_cmd_unregister(vis, name));
@@ -976,7 +960,7 @@ void vis_cancel(Vis *vis) {
 void vis_die(Vis *vis, const char *msg, ...) {
 	va_list ap;
 	va_start(ap, msg);
-	vis->ui->die(vis->ui, msg, ap);
+	ui_die(vis->ui, msg, ap);
 	va_end(ap);
 }
 
@@ -984,7 +968,7 @@ const char *vis_keys_next(Vis *vis, const char *keys) {
 	if (!keys || !*keys)
 		return NULL;
 	TermKeyKey key;
-	TermKey *termkey = vis->ui->termkey_get(vis->ui);
+	TermKey *termkey = vis->ui->termkey;
 	const char *next = NULL;
 	/* first try to parse a special key of the form <Key> */
 	if (*keys == '<' && keys[1] && (next = termkey_strpkey(termkey, keys+1, &key, TERMKEY_FORMAT_VIM)) && *next == '>')
@@ -1012,7 +996,7 @@ long vis_keys_codepoint(Vis *vis, const char *keys) {
 	long codepoint = -1;
 	const char *next;
 	TermKeyKey key;
-	TermKey *termkey = vis->ui->termkey_get(vis->ui);
+	TermKey *termkey = vis->ui->termkey;
 
 	if (!keys[0])
 		return -1;
@@ -1205,9 +1189,9 @@ static void vis_keys_push(Vis *vis, const char *input, size_t pos, bool record) 
 
 static const char *getkey(Vis *vis) {
 	TermKeyKey key = { 0 };
-	if (!vis->ui->getkey(vis->ui, &key))
+	if (!ui_getkey(vis->ui, &key))
 		return NULL;
-	vis_info_hide(vis);
+	ui_info_hide(vis->ui);
 	bool use_keymap = vis->mode->id != VIS_MODE_INSERT &&
 	                  vis->mode->id != VIS_MODE_REPLACE &&
 	                  !vis->keymap_disabled;
@@ -1221,7 +1205,7 @@ static const char *getkey(Vis *vis) {
 		}
 	}
 
-	TermKey *termkey = vis->ui->termkey_get(vis->ui);
+	TermKey *termkey = vis->ui->termkey;
 	if (key.type == TERMKEY_TYPE_UNKNOWN_CSI) {
 		long args[18];
 		size_t nargs;
@@ -1315,16 +1299,16 @@ int vis_run(Vis *vis) {
 		}
 
 		if (vis->resume) {
-			vis_resume(vis);
+			ui_terminal_resume(vis->ui);
 			vis->resume = false;
 		}
 
 		if (vis->need_resize) {
-			vis->ui->resize(vis->ui);
+			ui_resize(vis->ui);
 			vis->need_resize = false;
 		}
 
-		vis_update(vis);
+		ui_draw(vis->ui);
 		idle.tv_sec = vis->mode->idle_timeout;
 		int r = pselect(vis_process_before_tick(&fds) + 1, &fds, NULL, NULL,
 		                timeout, &emptyset);
@@ -1344,7 +1328,7 @@ int vis_run(Vis *vis) {
 			continue;
 		}
 
-		TermKey *termkey = vis->ui->termkey_get(vis->ui);
+		TermKey *termkey = vis->ui->termkey;
 		termkey_advisereadable(termkey);
 		const char *key;
 
@@ -1640,7 +1624,7 @@ int vis_pipe(Vis *vis, File *file, Filerange *range, const char *argv[],
 		return -1;
 	}
 
-	vis->ui->terminal_save(vis->ui, fullscreen);
+	ui_terminal_save(vis->ui, fullscreen);
 	pid_t pid = fork();
 
 	if (pid == -1) {
@@ -1834,7 +1818,7 @@ err:
 	sigaction(SIGTERM, &sigterm_old, NULL);
 
 	vis->interrupted = false;
-	vis->ui->terminal_restore(vis->ui);
+	ui_terminal_restore(vis->ui);
 
 	if (WIFEXITED(status))
 		return WEXITSTATUS(status);

@@ -182,12 +182,8 @@ void vis_prompt_show(Vis *vis, const char *title) {
 void vis_info_show(Vis *vis, const char *msg, ...) {
 	va_list ap;
 	va_start(ap, msg);
-	vis->ui->info(vis->ui, msg, ap);
+	ui_info_show(vis->ui, msg, ap);
 	va_end(ap);
-}
-
-void vis_info_hide(Vis *vis) {
-	vis->ui->info_hide(vis->ui);
 }
 
 void vis_message_show(Vis *vis, const char *msg) {
