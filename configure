@@ -233,6 +233,7 @@ Darwin)  CFLAGS_STD="$CFLAGS_STD -D_DARWIN_C_SOURCE" ;;
 AIX)     CFLAGS_STD="$CFLAGS_STD -D_ALL_SOURCE" ;;
 esac
 
+tryflag CFLAGS -Wall
 tryflag CFLAGS -pipe
 
 # Try flags to optimize binary size
