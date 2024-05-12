@@ -196,8 +196,6 @@ bool vis_window_closable(Win*);
 void vis_window_close(Win*);
 /** Split the window, shares the underlying file object. */
 bool vis_window_split(Win*);
-/** Change status message of this window. */
-void vis_window_status(Win*, const char *status);
 void vis_window_draw(Win*);
 void vis_window_invalidate(Win*);
 /** Focus next window. */

@@ -32,13 +32,12 @@
 
 #define MAX_WIDTH 1024
 #define MAX_HEIGHT 1024
-typedef struct UiTermWin UiTermWin;
 
-typedef struct {
+struct UiTerm {
 	Ui ui;                    /* generic ui interface, has to be the first struct member */
 	Vis *vis;                 /* editor instance to which this ui belongs */
-	UiTermWin *windows;       /* all windows managed by this ui */
-	UiTermWin *selwin;        /* the currently selected layout */
+	UiWin *windows;           /* all windows managed by this ui */
+	UiWin *selwin;            /* the currently selected layout */
 	char info[MAX_WIDTH];     /* info message displayed at the bottom of the screen */
 	int width, height;        /* terminal dimensions available for all windows */
 	enum UiLayout layout;     /* whether windows are displayed horizontally or vertically */
@@ -49,18 +48,6 @@ typedef struct {
 	size_t cells_size;        /* #bytes allocated for 2D grid (grows only) */
 	Cell *cells;              /* 2D grid of cells, at least as large as current terminal size */
 	bool doupdate;            /* Whether to update the screen after refreshing contents */
-} UiTerm;
-
-struct UiTermWin {
-	UiWin uiwin;              /* generic interface, has to be the first struct member */
-	UiTerm *ui;               /* ui which manages this window */
-	Win *win;                 /* editor window being displayed */
-	int id;                   /* unique identifier for this window */
-	int width, height;        /* window dimension including status bar */
-	int x, y;                 /* window position */
-	int sidebar_width;        /* width of the sidebar showing line numbers etc. */
-	UiTermWin *next, *prev;   /* pointers to neighbouring windows */
-	enum UiOption options;    /* display settings for this window */
 };
 
 #if CONFIG_CURSES
@@ -88,7 +75,7 @@ __attribute__((noreturn)) static void ui_die_msg(Ui *ui, const char *msg, ...) {
 	va_end(ap);
 }
 
-static void ui_window_resize(UiTermWin *win, int width, int height) {
+static void ui_window_resize(UiWin *win, int width, int height) {
 	debug("ui-win-resize[%s]: %dx%d\n", win->win->file->name ? win->win->file->name : "noname", width, height);
 	bool status = win->options & UI_OPTION_STATUSBAR;
 	win->width = width;
@@ -96,7 +83,7 @@ static void ui_window_resize(UiTermWin *win, int width, int height) {
 	view_resize(win->win->view, width - win->sidebar_width, status ? height - 1 : height);
 }
 
-static void ui_window_move(UiTermWin *win, int x, int y) {
+static void ui_window_move(UiWin *win, int x, int y) {
 	debug("ui-win-move[%s]: (%d, %d)\n", win->win->file->name ? win->win->file->name : "noname", x, y);
 	win->x = x;
 	win->y = y;
@@ -150,8 +137,7 @@ static bool color_fromstring(UiTerm *ui, CellColor *color, const char *s)
 	return false;
 }
 
-static bool ui_style_define(UiWin *w, int id, const char *style) {
-	UiTermWin *win = (UiTermWin*)w;
+bool ui_style_define(UiWin *win, int id, const char *style) {
 	UiTerm *tui = win->ui;
 	if (id >= UI_STYLE_MAX)
 		return false;
@@ -217,7 +203,7 @@ static void ui_draw_line(UiTerm *tui, int x, int y, char c, enum UiStyle style_i
 	}
 }
 
-static void ui_draw_string(UiTerm *tui, int x, int y, const char *str, UiTermWin *win, enum UiStyle style_id) {
+static void ui_draw_string(UiTerm *tui, int x, int y, const char *str, UiWin *win, enum UiStyle style_id) {
 	debug("draw-string: [%d][%d]\n", y, x);
 	if (x < 0 || x >= tui->width || y < 0 || y >= tui->height)
 		return;
@@ -238,8 +224,7 @@ static void ui_draw_string(UiTerm *tui, int x, int y, const char *str, UiTermWin
 	}
 }
 
-static void ui_window_draw(UiWin *w) {
-	UiTermWin *win = (UiTermWin*)w;
+static void ui_window_draw(UiWin *win) {
 	UiTerm *ui = win->ui;
 	View *view = win->win->view;
 	int width = win->width, height = win->height;
@@ -290,8 +275,7 @@ static void ui_window_draw(UiWin *w) {
 	}
 }
 
-static void ui_window_style_set(UiWin *w, Cell *cell, enum UiStyle id) {
-	UiTermWin *win = (UiTermWin*)w;
+void ui_window_style_set(UiWin *win, Cell *cell, enum UiStyle id) {
 	UiTerm *tui = win->ui;
 	CellStyle set, style = tui->styles[win->id * UI_STYLE_MAX + id];
 
@@ -307,19 +291,17 @@ static void ui_window_style_set(UiWin *w, Cell *cell, enum UiStyle id) {
 	memcpy(&cell->style, &set, sizeof(CellStyle));
 }
 
-static bool ui_window_style_set_pos(UiWin *w, int x, int y, enum UiStyle id) {
-	UiTermWin *win = (UiTermWin*)w;
+bool ui_window_style_set_pos(UiWin *win, int x, int y, enum UiStyle id) {
 	UiTerm *tui = win->ui;
 	if (x < 0 || y < 0 || y >= win->height || x >= win->width) {
 		return false;
 	}
 	Cell *cell = CELL_AT_POS(tui, win->x + x, win->y + y)
-	ui_window_style_set(w, cell, id);
+	ui_window_style_set(win, cell, id);
 	return true;
 }
 
-static void ui_window_status(UiWin *w, const char *status) {
-	UiTermWin *win = (UiTermWin*)w;
+void ui_window_status(UiWin *win, const char *status) {
 	if (!(win->options & UI_OPTION_STATUSBAR))
 		return;
 	UiTerm *ui = win->ui;
@@ -332,7 +314,7 @@ static void ui_arrange(Ui *ui, enum UiLayout layout) {
 	UiTerm *tui = (UiTerm*)ui;
 	tui->layout = layout;
 	int n = 0, m = !!tui->info[0], x = 0, y = 0;
-	for (UiTermWin *win = tui->windows; win; win = win->next) {
+	for (UiWin *win = tui->windows; win; win = win->next) {
 		if (win->options & UI_OPTION_ONELINE)
 			m++;
 		else
@@ -341,7 +323,7 @@ static void ui_arrange(Ui *ui, enum UiLayout layout) {
 	int max_height = tui->height - m;
 	int width = (tui->width / MAX(1, n)) - 1;
 	int height = max_height / MAX(1, n);
-	for (UiTermWin *win = tui->windows; win; win = win->next) {
+	for (UiWin *win = tui->windows; win; win = win->next) {
 		if (win->options & UI_OPTION_ONELINE)
 			continue;
 		n--;
@@ -370,7 +352,7 @@ static void ui_arrange(Ui *ui, enum UiLayout layout) {
 	if (layout == UI_LAYOUT_VERTICAL)
 		y = max_height;
 
-	for (UiTermWin *win = tui->windows; win; win = win->next) {
+	for (UiWin *win = tui->windows; win; win = win->next) {
 		if (!(win->options & UI_OPTION_ONELINE))
 			continue;
 		ui_window_resize(win, tui->width, 1);
@@ -387,7 +369,7 @@ static void ui_draw(Ui *ui) {
 	debug("ui-draw\n");
 	UiTerm *tui = (UiTerm*)ui;
 	ui_arrange(ui, tui->layout);
-	for (UiTermWin *win = tui->windows; win; win = win->next)
+	for (UiWin *win = tui->windows; win; win = win->next)
 		ui_window_draw((UiWin*)win);
 	if (tui->info[0])
 		ui_draw_string(tui, 0, tui->height-1, tui->info, NULL, UI_STYLE_INFO);
@@ -398,7 +380,7 @@ static void ui_draw(Ui *ui) {
 static void ui_redraw(Ui *ui) {
 	UiTerm *tui = (UiTerm*)ui;
 	ui_term_backend_clear(tui);
-	for (UiTermWin *win = tui->windows; win; win = win->next)
+	for (UiWin *win = tui->windows; win; win = win->next)
 		win->win->view->need_update = true;
 }
 
@@ -432,8 +414,7 @@ static void ui_resize(Ui *ui) {
 	tui->height = height;
 }
 
-static void ui_window_free(UiWin *w) {
-	UiTermWin *win = (UiTermWin*)w;
+static void ui_window_free(UiWin *win) {
 	if (!win)
 		return;
 	UiTerm *tui = win->ui;
@@ -450,9 +431,8 @@ static void ui_window_free(UiWin *w) {
 	free(win);
 }
 
-static void ui_window_focus(UiWin *w) {
-	UiTermWin *new = (UiTermWin*)w;
-	UiTermWin *old = new->ui->selwin;
+static void ui_window_focus(UiWin *new) {
+	UiWin *old = new->ui->selwin;
 	if (new->options & UI_OPTION_STATUSBAR)
 		new->ui->selwin = new;
 	if (old)
@@ -460,13 +440,12 @@ static void ui_window_focus(UiWin *w) {
 	new->win->view->need_update = true;
 }
 
-static void ui_window_options_set(UiWin *w, enum UiOption options) {
-	UiTermWin *win = (UiTermWin*)w;
+void ui_window_options_set(UiWin *win, enum UiOption options) {
 	win->options = options;
 	if (options & UI_OPTION_ONELINE) {
 		/* move the new window to the end of the list */
 		UiTerm *tui = win->ui;
-		UiTermWin *last = tui->windows;
+		UiWin *last = tui->windows;
 		while (last->next)
 			last = last->next;
 		if (last != win) {
@@ -484,25 +463,11 @@ static void ui_window_options_set(UiWin *w, enum UiOption options) {
 	ui_draw((Ui*)win->ui);
 }
 
-static enum UiOption ui_window_options_get(UiWin *win) {
-	return ((UiTermWin*)win)->options;
-}
-
-static int ui_window_width(UiWin *win) {
-	return ((UiTermWin*)win)->width;
-}
-
-static int ui_window_height(UiWin *win) {
-	return ((UiTermWin*)win)->height;
-}
-
-static void ui_window_swap(UiWin *aw, UiWin *bw) {
-	UiTermWin *a = (UiTermWin*)aw;
-	UiTermWin *b = (UiTermWin*)bw;
+static void ui_window_swap(UiWin *a, UiWin *b) {
 	if (a == b || !a || !b)
 		return;
 	UiTerm *tui = a->ui;
-	UiTermWin *tmp = a->next;
+	UiWin *tmp = a->next;
 	a->next = b->next;
 	b->next = tmp;
 	if (a->next)
@@ -521,9 +486,9 @@ static void ui_window_swap(UiWin *aw, UiWin *bw) {
 	else if (tui->windows == b)
 		tui->windows = a;
 	if (tui->selwin == a)
-		ui_window_focus(bw);
+		ui_window_focus(b);
 	else if (tui->selwin == b)
-		ui_window_focus(aw);
+		ui_window_focus(a);
 }
 
 static UiWin *ui_window_new(Ui *ui, Win *w, enum UiOption options) {
@@ -542,20 +507,9 @@ static UiWin *ui_window_new(Ui *ui, Win *w, enum UiOption options) {
 		tui->styles = styles;
 		tui->styles_size = styles_size;
 	}
-	UiTermWin *win = calloc(1, sizeof(UiTermWin));
+	UiWin *win = calloc(1, sizeof(UiWin));
 	if (!win)
 		return NULL;
-
-	win->uiwin = (UiWin) {
-		.style_set = ui_window_style_set,
-		.style_set_pos = ui_window_style_set_pos,
-		.status = ui_window_status,
-		.options_set = ui_window_options_set,
-		.options_get = ui_window_options_get,
-		.style_define = ui_style_define,
-		.window_width = ui_window_width,
-		.window_height = ui_window_height,
-	};
 
 	tui->ids |= bit;
 	win->id = id;
@@ -578,7 +532,7 @@ static UiWin *ui_window_new(Ui *ui, Win *w, enum UiOption options) {
 	styles[UI_STYLE_STATUS].attr |= CELL_ATTR_REVERSE;
 	styles[UI_STYLE_STATUS_FOCUSED].attr |= CELL_ATTR_REVERSE|CELL_ATTR_BOLD;
 	styles[UI_STYLE_INFO].attr |= CELL_ATTR_BOLD;
-	w->view->ui = &win->uiwin;
+	w->view->ui = win;
 
 	if (tui->windows)
 		tui->windows->prev = win;
@@ -592,7 +546,7 @@ static UiWin *ui_window_new(Ui *ui, Win *w, enum UiOption options) {
 
 	ui_window_options_set((UiWin*)win, options);
 
-	return &win->uiwin;
+	return win;
 }
 
 static void ui_info(Ui *ui, const char *msg, va_list ap) {

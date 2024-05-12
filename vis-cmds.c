@@ -276,7 +276,7 @@ static bool cmd_set(Vis *vis, Win *win, Command *cmd, const char *argv[], Select
 			[OPTION_SHOW_EOF] = UI_OPTION_SYMBOL_EOF,
 			[OPTION_STATUSBAR] = UI_OPTION_STATUSBAR,
 		};
-		int flags = view_options_get(win->view);
+		int flags = UI_OPTIONS_GET(win->view->ui);
 		if (arg.b || (toggle && !(flags & values[opt_index])))
 			flags |= values[opt_index];
 		else
@@ -285,7 +285,7 @@ static bool cmd_set(Vis *vis, Win *win, Command *cmd, const char *argv[], Select
 		break;
 	}
 	case OPTION_NUMBER: {
-		enum UiOption opt = view_options_get(win->view);
+		enum UiOption opt = UI_OPTIONS_GET(win->view->ui);
 		if (arg.b || (toggle && !(opt & UI_OPTION_LINE_NUMBERS_ABSOLUTE))) {
 			opt &= ~UI_OPTION_LINE_NUMBERS_RELATIVE;
 			opt |=  UI_OPTION_LINE_NUMBERS_ABSOLUTE;
@@ -296,7 +296,7 @@ static bool cmd_set(Vis *vis, Win *win, Command *cmd, const char *argv[], Select
 		break;
 	}
 	case OPTION_NUMBER_RELATIVE: {
-		enum UiOption opt = view_options_get(win->view);
+		enum UiOption opt = UI_OPTIONS_GET(win->view->ui);
 		if (arg.b || (toggle && !(opt & UI_OPTION_LINE_NUMBERS_RELATIVE))) {
 			opt &= ~UI_OPTION_LINE_NUMBERS_ABSOLUTE;
 			opt |=  UI_OPTION_LINE_NUMBERS_RELATIVE;
@@ -307,7 +307,7 @@ static bool cmd_set(Vis *vis, Win *win, Command *cmd, const char *argv[], Select
 		break;
 	}
 	case OPTION_CURSOR_LINE: {
-		enum UiOption opt = view_options_get(win->view);
+		enum UiOption opt = UI_OPTIONS_GET(win->view->ui);
 		if (arg.b || (toggle && !(opt & UI_OPTION_CURSOR_LINE)))
 			opt |= UI_OPTION_CURSOR_LINE;
 		else
@@ -545,7 +545,7 @@ static bool cmd_qall(Vis *vis, Win *win, Command *cmd, const char *argv[], Selec
 static bool cmd_split(Vis *vis, Win *win, Command *cmd, const char *argv[], Selection *sel, Filerange *range) {
 	if (!win)
 		return false;
-	enum UiOption options = view_options_get(win->view);
+	enum UiOption options = UI_OPTIONS_GET(win->view->ui);
 	windows_arrange(vis, UI_LAYOUT_HORIZONTAL);
 	if (!argv[1])
 		return vis_window_split(win);
@@ -558,7 +558,7 @@ static bool cmd_split(Vis *vis, Win *win, Command *cmd, const char *argv[], Sele
 static bool cmd_vsplit(Vis *vis, Win *win, Command *cmd, const char *argv[], Selection *sel, Filerange *range) {
 	if (!win)
 		return false;
-	enum UiOption options = view_options_get(win->view);
+	enum UiOption options = UI_OPTIONS_GET(win->view->ui);
 	windows_arrange(vis, UI_LAYOUT_VERTICAL);
 	if (!argv[1])
 		return vis_window_split(win);

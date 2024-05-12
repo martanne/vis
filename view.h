@@ -357,13 +357,10 @@ bool view_regions_save(View*, Filerange*, SelectionRegion*);
  * @{
  */
 void view_options_set(View*, enum UiOption options);
-enum UiOption view_options_get(View*);
 bool view_breakat_set(View*, const char *breakat);
 
 /** Set how many spaces are used to display a tab `\t` character. */
 void view_tabwidth_set(View*, int tabwidth);
-/** Define a display style. */
-bool view_style_define(View*, enum UiStyle, const char *style);
 /** Apply a style to a text range. */
 void view_style(View*, enum UiStyle, size_t start, size_t end);
 

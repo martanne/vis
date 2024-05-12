@@ -12,6 +12,7 @@
 
 typedef struct Ui Ui;
 typedef struct UiWin UiWin;
+typedef struct UiTerm UiTerm;
 
 enum UiLayout {
 	UI_LAYOUT_HORIZONTAL,
@@ -96,16 +97,24 @@ struct Ui {
 };
 
 struct UiWin {
-	void (*style_set)(UiWin*, Cell*, enum UiStyle);
-	bool (*style_set_pos)(UiWin*, int x, int y, enum UiStyle);
-	void (*status)(UiWin*, const char *txt);
-	void (*options_set)(UiWin*, enum UiOption);
-	enum UiOption (*options_get)(UiWin*);
-	bool (*style_define)(UiWin*, int id, const char *style);
-	int (*window_width)(UiWin*);
-	int (*window_height)(UiWin*);
+	UiTerm *ui;               /* ui which manages this window */
+	Win *win;                 /* editor window being displayed */
+	int id;                   /* unique identifier for this window */
+	int width, height;        /* window dimension including status bar */
+	int x, y;                 /* window position */
+	int sidebar_width;        /* width of the sidebar showing line numbers etc. */
+	UiWin *next, *prev;       /* pointers to neighbouring windows */
+	enum UiOption options;    /* display settings for this window */
 };
 
+#define UI_OPTIONS_GET(ui) ((ui) ? (ui)->options : 0)
+
+bool ui_style_define(UiWin *win, int id, const char *style);
+bool ui_window_style_set_pos(UiWin *win, int x, int y, enum UiStyle id);
+void ui_window_style_set(UiWin *win, Cell *cell, enum UiStyle id);
+
 enum UiLayout ui_layout_get(Ui *ui);
+void ui_window_options_set(UiWin *win, enum UiOption options);
+void ui_window_status(UiWin *win, const char *status);
 
 #endif

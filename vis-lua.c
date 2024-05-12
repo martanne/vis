@@ -1788,12 +1788,12 @@ static int window_index(lua_State *L) {
 		}
 
 		if (strcmp(key, "width") == 0) {
-			lua_pushunsigned(L, win->ui->window_width(win->ui));
+			lua_pushunsigned(L, win->ui->width);
 			return 1;
 		}
 
 		if (strcmp(key, "height") == 0) {
-			lua_pushunsigned(L, win->ui->window_height(win->ui));
+			lua_pushunsigned(L, win->ui->height);
 			return 1;
 		}
 
@@ -1827,7 +1827,7 @@ static int window_index(lua_State *L) {
 }
 
 static int window_options_assign(Win *win, lua_State *L, const char *key, int next) {
-	enum UiOption flags = view_options_get(win->view);
+	enum UiOption flags = UI_OPTIONS_GET(win->view->ui);
 	if (strcmp(key, "breakat") == 0 || strcmp(key, "brk") == 0) {
 		if (lua_isstring(L, next))
 			view_breakat_set(win->view, lua_tostring(L, next));
@@ -1988,7 +1988,7 @@ static int window_style_define(lua_State *L) {
 	Win *win = obj_ref_check(L, 1, VIS_LUA_TYPE_WINDOW);
 	enum UiStyle id = luaL_checkunsigned(L, 2);
 	const char *style = luaL_checkstring(L, 3);
-	bool ret = view_style_define(win->view, id, style);
+	bool ret = ui_style_define(win->view->ui, id, style);
 	lua_pushboolean(L, ret);
 	return 1;
 }
@@ -2035,7 +2035,7 @@ static int window_style_pos(lua_State *L) {
 	enum UiStyle style = luaL_checkunsigned(L, 2);
 	size_t x = checkpos(L, 3);
 	size_t y = checkpos(L, 4);
-	bool ret = win->ui->style_set_pos(win->ui, (int)x, (int)y, style);
+	bool ret = ui_window_style_set_pos(win->ui, (int)x, (int)y, style);
 	lua_pushboolean(L, ret);
 	return 1;
 }
@@ -2050,7 +2050,7 @@ static int window_style_pos(lua_State *L) {
 static int window_status(lua_State *L) {
 	Win *win = obj_ref_check(L, 1, VIS_LUA_TYPE_WINDOW);
 	char status[1024] = "";
-	int width = win->ui->window_width(win->ui);
+	int width = win->ui->width;
 	const char *left = luaL_checkstring(L, 2);
 	const char *right = luaL_optstring(L, 3, "");
 	int left_width = text_string_width(left, strlen(left));
@@ -2059,7 +2059,7 @@ static int window_status(lua_State *L) {
 	if (spaces < 1)
 		spaces = 1;
 	snprintf(status, sizeof(status)-1, "%s%*s%s", left, spaces, " ", right);
-	vis_window_status(win, status);
+	ui_window_status(win->ui, status);
 	return 0;
 }
 
@@ -2148,31 +2148,31 @@ static int window_options_index(lua_State *L) {
 			lua_pushunsigned(L, win->view->colorcolumn);
 			return 1;
 		} else if (strcmp(key, "cursorline") == 0 || strcmp(key, "cul") == 0) {
-			lua_pushboolean(L, view_options_get(win->view) & UI_OPTION_CURSOR_LINE);
+			lua_pushboolean(L, UI_OPTIONS_GET(win->view->ui) & UI_OPTION_CURSOR_LINE);
 			return 1;
 		} else if (strcmp(key, "expandtab") == 0 || strcmp(key, "et") == 0) {
 			lua_pushboolean(L, win->expandtab);
 			return 1;
 		} else if (strcmp(key, "numbers") == 0 || strcmp(key, "nu") == 0) {
-			lua_pushboolean(L, view_options_get(win->view) & UI_OPTION_LINE_NUMBERS_ABSOLUTE);
+			lua_pushboolean(L, UI_OPTIONS_GET(win->view->ui) & UI_OPTION_LINE_NUMBERS_ABSOLUTE);
 			return 1;
 		} else if (strcmp(key, "relativenumbers") == 0 || strcmp(key, "rnu") == 0) {
-			lua_pushboolean(L, view_options_get(win->view) & UI_OPTION_LINE_NUMBERS_RELATIVE);
+			lua_pushboolean(L, UI_OPTIONS_GET(win->view->ui) & UI_OPTION_LINE_NUMBERS_RELATIVE);
 			return 1;
 		} else if (strcmp(key, "showeof") == 0) {
-			lua_pushboolean(L, view_options_get(win->view) & UI_OPTION_SYMBOL_EOF);
+			lua_pushboolean(L, UI_OPTIONS_GET(win->view->ui) & UI_OPTION_SYMBOL_EOF);
 			return 1;
 		} else if (strcmp(key, "shownewlines") == 0) {
-			lua_pushboolean(L, view_options_get(win->view) & UI_OPTION_SYMBOL_EOL);
+			lua_pushboolean(L, UI_OPTIONS_GET(win->view->ui) & UI_OPTION_SYMBOL_EOL);
 			return 1;
 		} else if (strcmp(key, "showspaces") == 0) {
-			lua_pushboolean(L, view_options_get(win->view) & UI_OPTION_SYMBOL_SPACE);
+			lua_pushboolean(L, UI_OPTIONS_GET(win->view->ui) & UI_OPTION_SYMBOL_SPACE);
 			return 1;
 		} else if (strcmp(key, "showtabs") == 0) {
-			lua_pushboolean(L, view_options_get(win->view) & UI_OPTION_SYMBOL_TAB);
+			lua_pushboolean(L, UI_OPTIONS_GET(win->view->ui) & UI_OPTION_SYMBOL_TAB);
 			return 1;
 		} else if (strcmp(key, "statusbar") == 0) {
-			lua_pushboolean(L, view_options_get(win->view) & UI_OPTION_STATUSBAR);
+			lua_pushboolean(L, UI_OPTIONS_GET(win->view->ui) & UI_OPTION_STATUSBAR);
 			return 1;
 		} else if (strcmp(key, "tabwidth") == 0 || strcmp(key, "tw") == 0) {
 			lua_pushinteger(L, win->view->tabwidth);

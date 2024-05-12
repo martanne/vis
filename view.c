@@ -74,8 +74,8 @@ void window_status_update(Vis *vis, Win *win) {
 	View *view = win->view;
 	File *file = win->file;
 	Text *txt = file->text;
-	int width = win->ui->window_width(win->ui);
-	enum UiOption options = view_options_get(view);
+	int width = win->ui->width;
+	enum UiOption options = UI_OPTIONS_GET(view->ui);
 	bool focused = vis->win == win;
 	const char *filename = file_name_get(file);
 	const char *mode = vis->mode->status;
@@ -153,7 +153,7 @@ void window_status_update(Vis *vis, Win *win) {
 		spaces = 1;
 
 	snprintf(status, sizeof(status), "%s%*s%s", left, spaces, " ", right);
-	vis_window_status(win, status);
+	ui_window_status(win->ui, status);
 }
 
 void view_tabwidth_set(View *view, int tabwidth) {
@@ -203,7 +203,7 @@ static void view_clear(View *view) {
 	view->wrapcol = 0;
 	view->prevch_breakat = false;
 	if (view->ui)
-		view->ui->style_set(view->ui, &view->cell_blank, UI_STYLE_DEFAULT);
+		ui_window_style_set(view->ui, &view->cell_blank, UI_STYLE_DEFAULT);
 }
 
 static int view_max_text_width(const View *view) {
@@ -890,11 +890,7 @@ void view_options_set(View *view, enum UiOption options) {
 	view->large_file = (options & UI_OPTION_LARGE_FILE);
 
 	if (view->ui)
-		view->ui->options_set(view->ui, options);
-}
-
-enum UiOption view_options_get(View *view) {
-	return view->ui ? view->ui->options_get(view->ui) : 0;
+		ui_window_options_set(view->ui, options);
 }
 
 bool view_breakat_set(View *view, const char *breakat) {
@@ -1351,10 +1347,6 @@ char *view_symbol_eof_get(View *view) {
 	return view->symbols[SYNTAX_SYMBOL_EOF]->symbol;
 }
 
-bool view_style_define(View *view, enum UiStyle id, const char *style) {
-	return view->ui->style_define(view->ui, id, style);
-}
-
 void view_style(View *view, enum UiStyle style, size_t start, size_t end) {
 	if (end < view->start || start > view->end)
 		return;
@@ -1384,7 +1376,7 @@ void view_style(View *view, enum UiStyle style, size_t start, size_t end) {
 	do {
 		while (pos <= end && col < width) {
 			pos += line->cells[col].len;
-			view->ui->style_set(view->ui, &line->cells[col++], style);
+			ui_window_style_set(view->ui, &line->cells[col++], style);
 		}
 		col = 0;
 	} while (pos <= end && (line = line->next));
