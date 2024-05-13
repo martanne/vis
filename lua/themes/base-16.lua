@@ -28,6 +28,7 @@ lexers.STYLE_LINENUMBER = ''
 lexers.STYLE_LINENUMBER_CURSOR = lexers.STYLE_LINENUMBER
 lexers.STYLE_CURSOR = 'back:white,fore:black'
 lexers.STYLE_CURSOR_PRIMARY = lexers.STYLE_CURSOR..',fore:yellow'
+lexers.STYLE_CURSOR_MATCHING = lexers.STYLE_CURSOR..',fore:yellow'
 lexers.STYLE_CURSOR_LINE = 'underlined'
 lexers.STYLE_COLOR_COLUMN = 'back:red'
 lexers.STYLE_SELECTION = 'back:white,bold'

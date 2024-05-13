@@ -58,6 +58,7 @@ lexers.STYLE_LINENUMBER = 'fore:'..colors.base00..',back:'..colors.base02
 lexers.STYLE_LINENUMBER_CURSOR = 'back:'..colors.base00..',fore:'..colors.base02
 lexers.STYLE_CURSOR = 'fore:'..colors.base03..',back:'..colors.base0
 lexers.STYLE_CURSOR_PRIMARY = lexers.STYLE_CURSOR..',back:yellow'
+lexers.STYLE_CURSOR_MATCHING = lexers.STYLE_CURSOR..',back:yellow'
 lexers.STYLE_CURSOR_LINE = 'back:'..colors.base02
 lexers.STYLE_COLOR_COLUMN = 'back:'..colors.base02
 -- lexers.STYLE_SELECTION = 'back:'..colors.base02

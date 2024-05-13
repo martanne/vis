@@ -3334,6 +3334,7 @@ void vis_lua_init(Vis *vis) {
 		{ UI_STYLE_DEFAULT,           "STYLE_DEFAULT"           },
 		{ UI_STYLE_CURSOR,            "STYLE_CURSOR"            },
 		{ UI_STYLE_CURSOR_PRIMARY,    "STYLE_CURSOR_PRIMARY"    },
+		{ UI_STYLE_CURSOR_MATCHING,   "STYLE_CURSOR_MATCHING"   },
 		{ UI_STYLE_CURSOR_LINE,       "STYLE_CURSOR_LINE"       },
 		{ UI_STYLE_SELECTION,         "STYLE_SELECTION"         },
 		{ UI_STYLE_LINENUMBER,        "STYLE_LINENUMBER"        },

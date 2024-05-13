@@ -41,6 +41,7 @@ typedef struct {
 	UiTermWin *selwin;        /* the currently selected layout */
 	char info[MAX_WIDTH];     /* info message displayed at the bottom of the screen */
 	int width, height;        /* terminal dimensions available for all windows */
+	int row, col;             /* active cursor's (0-based) position in the terminal */
 	enum UiLayout layout;     /* whether windows are displayed horizontally or vertically */
 	TermKey *termkey;         /* libtermkey instance to handle keyboard input (stdin or /dev/tty) */
 	size_t ids;               /* bit mask of in use window ids */
@@ -388,8 +389,26 @@ static void ui_draw(Ui *ui) {
 	debug("ui-draw\n");
 	UiTerm *tui = (UiTerm*)ui;
 	ui_arrange(ui, tui->layout);
-	for (UiTermWin *win = tui->windows; win; win = win->next)
+	int dx = 0, dy = 0;
+	for (UiTermWin *win = tui->windows; win; win = win->next) {
 		ui_window_draw((UiWin*)win);
+		if (win == tui->selwin || win->win->parent) {
+			View *view = win->win->view;
+			view_coord_get(view, view_cursor_get(view), NULL, &tui->row, &tui->col);
+			tui->col += win->sidebar_width;
+			tui->row += dy;
+			if (!win->win->parent)
+				tui->col += dx;
+			else if (tui->layout == UI_LAYOUT_VERTICAL)
+				tui->row += win->prev->height;
+		}
+		if (tui->layout == UI_LAYOUT_HORIZONTAL)
+			dy += win->height;
+		else if (win->win->parent)
+			dy += win->prev->height;
+		else
+			dx += win->width + 1; /* +1 for the |'s */
+	}
 	if (tui->info[0])
 		ui_draw_string(tui, 0, tui->height-1, tui->info, NULL, UI_STYLE_INFO);
 	vis_event_emit(tui->vis, VIS_EVENT_UI_DRAW);
@@ -574,6 +593,7 @@ static UiWin *ui_window_new(Ui *ui, Win *w, enum UiOption options) {
 
 	styles[UI_STYLE_CURSOR].attr |= CELL_ATTR_REVERSE;
 	styles[UI_STYLE_CURSOR_PRIMARY].attr |= CELL_ATTR_REVERSE|CELL_ATTR_BLINK;
+	styles[UI_STYLE_CURSOR_MATCHING].attr |= CELL_ATTR_REVERSE;
 	styles[UI_STYLE_SELECTION].attr |= CELL_ATTR_REVERSE;
 	styles[UI_STYLE_COLOR_COLUMN].attr |= CELL_ATTR_REVERSE;
 	styles[UI_STYLE_STATUS].attr |= CELL_ATTR_REVERSE;
