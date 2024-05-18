@@ -281,7 +281,7 @@ static struct test tests[] = {
 	  "#include <string.h>\n"
 	  "int main(int argc, char *argv[]) {\n"
 	  "     char pad[sizeof(int *) * 1];\n"
-	  "	strncpy(pad, argv[0], sizeof(pad));\n"
+	  "	memcpy(pad, argv[0], sizeof(pad));\n"
 	  "	return *(int *)(pad) == *(int *)(pad + 1);\n"
 	  "}\n" },
 	{ "HAVE_UTIME", DEFINES_FUNC, NULL, NULL,
