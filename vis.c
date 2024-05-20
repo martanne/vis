@@ -398,7 +398,8 @@ static void window_draw_cursor(Win *win, Selection *cur) {
 	int col = view_cursors_cell_get(cur);
 	if (!line || col == -1)
 		return;
-	win->ui->style_set(win->ui, &line->cells[col], UI_STYLE_CURSOR);
+	Selection *primary = view_selections_primary_get(win->view);
+	win->ui->style_set(win->ui, &line->cells[col], primary == cur ? UI_STYLE_CURSOR_PRIMARY : UI_STYLE_CURSOR);
 	window_draw_cursor_matching(win, cur);
 	return;
 }
