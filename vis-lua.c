@@ -1253,6 +1253,44 @@ static int command_register(lua_State *L) {
 }
 
 /***
+ * Let user pick a command matching the given prefix.
+ *
+ * The editor core will be blocked while the external process is running.
+ *
+ * @function complete_command
+ * @tparam string prefix the prefix of the command to be completed
+ * @treturn int code the exit status of the executed command
+ * @treturn string stdout the data written to stdout
+ * @treturn string stderr the data written to stderr
+ */
+static int complete_command(lua_State *L) {
+	Vis *vis = obj_ref_check(L, 1, "vis");
+	const char *prefix = luaL_checkstring(L, 2);
+	char *out = NULL, *err = NULL;
+	File *file = vis->win ? vis->win->file : NULL;
+	Filerange range = text_range_new(0, 0);
+
+	char cmd_list[VIS_COMMAND_BUFFER_MAX] = {0};
+	vis_print_cmds(vis, cmd_list);
+	char cmd[VIS_COMMAND_BUFFER_MAX + 32] = {0}; /* 32 for echo/grep/vis-menu */
+	sprintf(cmd, "echo '%s' | grep '^%s' | vis-menu -b", cmd_list, prefix);
+
+	int status = vis_pipe_collect(vis, file, &range, (const char*[]){ cmd, NULL }, &out, &err, false);
+	lua_pushinteger(L, status);
+	if (out)
+		lua_pushstring(L, out);
+	else
+		lua_pushnil(L);
+	free(out);
+	if (err)
+		lua_pushstring(L, err);
+	else
+		lua_pushnil(L);
+	free(err);
+	return 3;
+}
+
+/***
  * Push keys to input queue and interpret them.
  *
  * The keys are processed as if they were read from the keyboard.
@@ -1638,6 +1676,7 @@ static const struct luaL_Reg vis_lua[] = {
 	{ "option_register", option_register },
 	{ "option_unregister", option_unregister },
 	{ "command_register", command_register },
+	{ "complete_command", complete_command },
 	{ "feedkeys", feedkeys },
 	{ "insert", insert },
 	{ "replace", replace },
