@@ -168,7 +168,6 @@ struct Win {
 };
 
 struct Vis {
-	Ui *ui;                              /* user interface responsible for visual appearance */
 	File *files;                         /* all files currently managed by this editor instance */
 	File *command_file;                  /* special internal file used to store :-command prompt */
 	File *search_file;                   /* special internal file used to store /,? search prompt */
@@ -176,6 +175,7 @@ struct Vis {
 	Win *windows;                        /* all windows currently managed by this editor instance */
 	Win *win;                            /* currently active/focused window */
 	Win *message_window;                 /* special window to display multi line messages */
+	Ui ui;                               /* user interface responsible for visual appearance */
 	Register registers[VIS_REG_INVALID]; /* registers used for text manipulations yank/put etc. and macros */
 	Macro *recording, *last_recording;   /* currently (if non NULL) and least recently recorded macro */
 	const Macro *replaying;              /* macro currently being replayed */

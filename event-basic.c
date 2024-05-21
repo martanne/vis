@@ -6,7 +6,7 @@
 bool vis_event_emit(Vis *vis, enum VisEvents id, ...) {
 	if (!vis->initialized) {
 		vis->initialized = true;
-		ui_init(vis->ui, vis);
+		ui_init(&vis->ui, vis);
 	}
 
 	va_list ap;

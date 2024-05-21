@@ -59,11 +59,6 @@
 #define CELL_ATTR_ITALIC    (1 << 4)
 #define CELL_ATTR_DIM       (1 << 5)
 
-typedef struct {
-	Ui uiterm;
-	Buffer buf;
-} UiVt100;
-
 static inline bool cell_color_equal(CellColor c1, CellColor c2) {
 	if (c1.index != (uint8_t)-1 || c2.index != (uint8_t)-1)
 		return c1.index == c2.index;
@@ -97,7 +92,7 @@ static void cursor_visible(bool visible) {
 }
 
 static void ui_term_backend_blit(Ui *tui) {
-	Buffer *buf = &((UiVt100*)tui)->buf;
+	Buffer *buf = tui->ctx;
 	buffer_clear(buf);
 	CellAttr attr = CELL_ATTR_NORMAL;
 	CellColor fg = CELL_COLOR_DEFAULT, bg = CELL_COLOR_DEFAULT;
@@ -199,18 +194,20 @@ static bool ui_term_backend_init(Ui *tui, char *term) {
 	return true;
 }
 
-static Ui *ui_term_backend_new(void) {
-	UiVt100 *vtui = calloc(1, sizeof *vtui);
-	if (!vtui)
-		return NULL;
-	buffer_init(&vtui->buf);
-	return (Ui*)vtui;
+static bool ui_backend_init(Ui *ui) {
+	Buffer *buf = calloc(1, sizeof(Buffer));
+	if (!buf)
+		return false;
+	buffer_init(buf);
+	ui->ctx = buf;
+	return true;
 }
 
 static void ui_term_backend_free(Ui *tui) {
-	UiVt100 *vtui = (UiVt100*)tui;
+	Buffer *buf = tui->ctx;
 	ui_term_backend_suspend(tui);
-	buffer_release(&vtui->buf);
+	buffer_release(buf);
+	free(buf);
 }
 
 static bool is_default_color(CellColor c) {

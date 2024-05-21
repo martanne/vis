@@ -182,7 +182,7 @@ void vis_prompt_show(Vis *vis, const char *title) {
 void vis_info_show(Vis *vis, const char *msg, ...) {
 	va_list ap;
 	va_start(ap, msg);
-	ui_info_show(vis->ui, msg, ap);
+	ui_info_show(&vis->ui, msg, ap);
 	va_end(ap);
 }
 

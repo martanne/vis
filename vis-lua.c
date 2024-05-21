@@ -1399,7 +1399,7 @@ static int vis_index(lua_State *L) {
 		}
 
 		if (strcmp(key, "registers") == 0) {
-			obj_ref_new(L, vis->ui, VIS_LUA_TYPE_REGISTERS);
+			obj_ref_new(L, &vis->ui, VIS_LUA_TYPE_REGISTERS);
 			return 1;
 		}
 
@@ -1415,7 +1415,7 @@ static int vis_index(lua_State *L) {
 		}
 
 		if (strcmp(key, "ui") == 0) {
-			obj_ref_new(L, vis->ui, VIS_LUA_TYPE_UI);
+			obj_ref_new(L, &vis->ui, VIS_LUA_TYPE_UI);
 			return 1;
 		}
 	}
@@ -1429,8 +1429,7 @@ static int vis_options_assign(Vis *vis, lua_State *L, const char *key, int next)
 	} else if (strcmp(key, "changecolors") == 0) {
 		vis->change_colors = lua_toboolean(L, next);
 	} else if (strcmp(key, "escdelay") == 0) {
-		TermKey *tk = vis->ui->termkey;
-		termkey_set_waittime(tk, luaL_checkint(L, next));
+		termkey_set_waittime(vis->ui.termkey, luaL_checkint(L, next));
 	} else if (strcmp(key, "ignorecase") == 0 || strcmp(key, "ic") == 0) {
 		vis->ignorecase = lua_toboolean(L, next);
 	} else if (strcmp(key, "loadmethod") == 0) {
@@ -1570,8 +1569,7 @@ static int vis_options_index(lua_State *L) {
 			lua_pushboolean(L, vis->change_colors);
 			return 1;
 		} else if (strcmp(key, "escdelay") == 0) {
-			TermKey *tk = vis->ui->termkey;
-			lua_pushunsigned(L, termkey_get_waittime(tk));
+			lua_pushunsigned(L, termkey_get_waittime(vis->ui.termkey));
 			return 1;
 		} else if (strcmp(key, "ignorecase") == 0 || strcmp(key, "ic") == 0) {
 			lua_pushboolean(L, vis->ignorecase);
@@ -3612,7 +3610,7 @@ static void vis_lua_ui_draw(Vis *vis) {
 bool vis_event_emit(Vis *vis, enum VisEvents id, ...) {
 	if (!vis->initialized) {
 		vis->initialized = true;
-		ui_init(vis->ui, vis);
+		ui_init(&vis->ui, vis);
 		vis_lua_init(vis);
 	}
 

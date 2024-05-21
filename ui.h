@@ -107,6 +107,7 @@ typedef struct Ui {
 	size_t cells_size;        /* #bytes allocated for 2D grid (grows only) */
 	Cell *cells;              /* 2D grid of cells, at least as large as current terminal size */
 	bool doupdate;            /* Whether to update the screen after refreshing contents */
+	void *ctx;                /* Any additional data needed by the backend */
 } Ui;
 
 #include "view.h"
@@ -115,7 +116,7 @@ typedef struct Ui {
 
 #define UI_OPTIONS_GET(ui) ((ui) ? (ui)->options : 0)
 
-Ui *ui_terminal_new(void);
+bool ui_terminal_init(Ui*);
 int  ui_terminal_colors(void);
 void ui_terminal_free(Ui*);
 void ui_terminal_restore(Ui*);

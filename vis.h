@@ -90,8 +90,8 @@ typedef struct {
  * @defgroup vis_lifecycle
  * @{
  */
-/** Create a new editor instance using the given user interface. */
-Vis *vis_new(Ui*);
+/** Create a new editor instance. */
+Vis *vis_new(void);
 /** Free all resources associated with this editor instance, terminates UI. */
 void vis_free(Vis*);
 /**

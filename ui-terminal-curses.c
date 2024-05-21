@@ -276,8 +276,8 @@ static bool ui_term_backend_init(Ui *tui, char *term) {
 	return true;
 }
 
-static Ui *ui_term_backend_new(void) {
-	return calloc(1, sizeof(Ui));
+static bool ui_backend_init(Ui *ui) {
+	return true;
 }
 
 void ui_terminal_resume(Ui *term) { }

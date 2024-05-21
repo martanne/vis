@@ -246,8 +246,7 @@ static bool cmd_set(Vis *vis, Win *win, Command *cmd, const char *argv[], Select
 		break;
 	case OPTION_ESCDELAY:
 	{
-		TermKey *termkey = vis->ui->termkey;
-		termkey_set_waittime(termkey, arg.i);
+		termkey_set_waittime(vis->ui.termkey, arg.i);
 		break;
 	}
 	case OPTION_EXPANDTAB:
@@ -354,7 +353,7 @@ static bool cmd_set(Vis *vis, Win *win, Command *cmd, const char *argv[], Select
 			vis_info_show(vis, "Invalid layout `%s', expected 'h' or 'v'", arg.s);
 			return false;
 		}
-		ui_arrange(vis->ui, layout);
+		ui_arrange(&vis->ui, layout);
 		break;
 	}
 	case OPTION_IGNORECASE:
@@ -542,7 +541,7 @@ static bool cmd_split(Vis *vis, Win *win, Command *cmd, const char *argv[], Sele
 	if (!win)
 		return false;
 	enum UiOption options = UI_OPTIONS_GET(win->view->ui);
-	ui_arrange(vis->ui, UI_LAYOUT_HORIZONTAL);
+	ui_arrange(&vis->ui, UI_LAYOUT_HORIZONTAL);
 	if (!argv[1])
 		return vis_window_split(win);
 	bool ret = openfiles(vis, &argv[1]);
@@ -555,7 +554,7 @@ static bool cmd_vsplit(Vis *vis, Win *win, Command *cmd, const char *argv[], Sel
 	if (!win)
 		return false;
 	enum UiOption options = UI_OPTIONS_GET(win->view->ui);
-	ui_arrange(vis->ui, UI_LAYOUT_VERTICAL);
+	ui_arrange(&vis->ui, UI_LAYOUT_VERTICAL);
 	if (!argv[1])
 		return vis_window_split(win);
 	bool ret = openfiles(vis, &argv[1]);
@@ -565,12 +564,12 @@ static bool cmd_vsplit(Vis *vis, Win *win, Command *cmd, const char *argv[], Sel
 }
 
 static bool cmd_new(Vis *vis, Win *win, Command *cmd, const char *argv[], Selection *sel, Filerange *range) {
-	ui_arrange(vis->ui, UI_LAYOUT_HORIZONTAL);
+	ui_arrange(&vis->ui, UI_LAYOUT_HORIZONTAL);
 	return vis_window_new(vis, NULL);
 }
 
 static bool cmd_vnew(Vis *vis, Win *win, Command *cmd, const char *argv[], Selection *sel, Filerange *range) {
-	ui_arrange(vis->ui, UI_LAYOUT_VERTICAL);
+	ui_arrange(&vis->ui, UI_LAYOUT_VERTICAL);
 	return vis_window_new(vis, NULL);
 }
 
@@ -775,7 +774,7 @@ static void print_symbolic_keys(Vis *vis, Text *txt) {
 		TERMKEY_SYM_KPEQUALS,
 	};
 
-	TermKey *termkey = vis->ui->termkey;
+	TermKey *termkey = vis->ui.termkey;
 	text_appendf(txt, "  ␣ (a literal \" \" space symbol must be used to refer to <Space>)\n");
 	for (size_t i = 0; i < LENGTH(keys); i++) {
 		text_appendf(txt, "  <%s>\n", termkey_get_keyname(termkey, keys[i]));

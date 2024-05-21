@@ -1229,7 +1229,7 @@ static const char *macro_replay(Vis *vis, const char *keys, const Arg *arg) {
 }
 
 static const char *suspend(Vis *vis, const char *keys, const Arg *arg) {
-	ui_terminal_suspend(vis->ui);
+	ui_terminal_suspend(&vis->ui);
 	return keys;
 }
 
@@ -2214,7 +2214,7 @@ static void signal_handler(int signum, siginfo_t *siginfo, void *context) {
 }
 
 int main(int argc, char *argv[]) {
-	vis = vis_new(ui_terminal_new());
+	vis = vis_new();
 	if (!vis)
 		return EXIT_FAILURE;
 

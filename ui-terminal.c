@@ -615,20 +615,19 @@ err:
 	return false;
 }
 
-Ui *ui_terminal_new(void) {
+bool ui_terminal_init(Ui *tui) {
 	size_t styles_size = UI_STYLE_MAX * sizeof(CellStyle);
 	CellStyle *styles = calloc(1, styles_size);
 	if (!styles)
-		return NULL;
-	Ui *tui = ui_term_backend_new();
-	if (!tui) {
+		return false;
+	if (!ui_backend_init(tui)) {
 		free(styles);
-		return NULL;
+		return false;
 	}
 	tui->styles_size = styles_size;
 	tui->styles = styles;
 	tui->doupdate = true;
-	return tui;
+	return true;
 }
 
 void ui_terminal_free(Ui *tui) {
@@ -641,5 +640,4 @@ void ui_terminal_free(Ui *tui) {
 		termkey_destroy(tui->termkey);
 	free(tui->cells);
 	free(tui->styles);
-	free(tui);
 }
