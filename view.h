@@ -87,7 +87,7 @@ typedef struct View {
  * @defgroup view_life
  * @{
  */
-View *view_new(Text*);
+bool view_init(View*, Text*);
 void view_free(View*);
 void view_reload(View*, Text*);
 /**
@@ -96,7 +96,7 @@ void view_reload(View*, Text*);
  * @{
  */
 /** Get the currently displayed text range. */
-#define VIEW_VIEWPORT_GET(v) (Filerange){ .start = v->start, .end = v->end }
+#define VIEW_VIEWPORT_GET(v) (Filerange){ .start = v.start, .end = v.end }
 /**
  * Get window coordinate of text position.
  * @param pos The position to query.

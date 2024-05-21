@@ -58,7 +58,7 @@ static void ui_window_resize(UiWin *win, int width, int height) {
 	bool status = win->options & UI_OPTION_STATUSBAR;
 	win->width = width;
 	win->height = height;
-	view_resize(win->win->view, width - win->sidebar_width, status ? height - 1 : height);
+	view_resize(&win->win->view, width - win->sidebar_width, status ? height - 1 : height);
 }
 
 static void ui_window_move(UiWin *win, int x, int y) {
@@ -204,7 +204,7 @@ static void ui_draw_string(Ui *tui, int x, int y, const char *str, UiWin *win, e
 
 static void ui_window_draw(UiWin *win) {
 	Ui *ui = win->ui;
-	View *view = win->win->view;
+	View *view = &win->win->view;
 	int width = win->width, height = win->height;
 	const Line *line = view->topline;
 	bool status = win->options & UI_OPTION_STATUSBAR;
@@ -351,7 +351,7 @@ void ui_draw(Ui *tui) {
 void ui_redraw(Ui *tui) {
 	ui_term_backend_clear(tui);
 	for (UiWin *win = tui->windows; win; win = win->next)
-		win->win->view->need_update = true;
+		win->win->view.need_update = true;
 }
 
 void ui_resize(Ui *tui) {
@@ -405,8 +405,8 @@ void ui_window_focus(UiWin *new) {
 	if (new->options & UI_OPTION_STATUSBAR)
 		new->ui->selwin = new;
 	if (old)
-		old->win->view->need_update = true;
-	new->win->view->need_update = true;
+		old->win->view.need_update = true;
+	new->win->view.need_update = true;
 }
 
 void ui_window_options_set(UiWin *win, enum UiOption options) {
@@ -500,7 +500,7 @@ UiWin *ui_window_new(Ui *tui, Win *w, enum UiOption options) {
 	styles[UI_STYLE_STATUS].attr |= CELL_ATTR_REVERSE;
 	styles[UI_STYLE_STATUS_FOCUSED].attr |= CELL_ATTR_REVERSE|CELL_ATTR_BOLD;
 	styles[UI_STYLE_INFO].attr |= CELL_ATTR_BOLD;
-	w->view->ui = win;
+	w->view.ui = win;
 
 	if (tui->windows)
 		tui->windows->prev = win;

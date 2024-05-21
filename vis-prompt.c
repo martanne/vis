@@ -49,7 +49,7 @@ static void prompt_restore(Win *win) {
 
 static const char *prompt_enter(Vis *vis, const char *keys, const Arg *arg) {
 	Win *prompt = vis->win;
-	View *view = prompt->view;
+	View *view = &prompt->view;
 	Text *txt = prompt->file->text;
 	Win *win = prompt->parent;
 	char *cmd = NULL;
@@ -114,8 +114,8 @@ static const char *prompt_enter(Vis *vis, const char *keys, const Arg *arg) {
 
 static const char *prompt_esc(Vis *vis, const char *keys, const Arg *arg) {
 	Win *prompt = vis->win;
-	if (prompt->view->selection_count > 1) {
-		view_selections_dispose_all(prompt->view);
+	if (prompt->view.selection_count > 1) {
+		view_selections_dispose_all(&prompt->view);
 	} else {
 		prompt_restore(prompt);
 		prompt_hide(prompt);
@@ -126,7 +126,7 @@ static const char *prompt_esc(Vis *vis, const char *keys, const Arg *arg) {
 static const char *prompt_up(Vis *vis, const char *keys, const Arg *arg) {
 	vis_motion(vis, VIS_MOVE_LINE_UP);
 	vis_window_mode_unmap(vis->win, VIS_MODE_INSERT, "<Up>");
-	view_options_set(vis->win->view, UI_OPTION_SYMBOL_EOF);
+	view_options_set(&vis->win->view, UI_OPTION_SYMBOL_EOF);
 	return keys;
 }
 
@@ -164,7 +164,7 @@ void vis_prompt_show(Vis *vis, const char *title) {
 		return;
 	Text *txt = prompt->file->text;
 	text_appendf(txt, "%s\n", title);
-	Selection *sel = view_selections_primary_get(prompt->view);
+	Selection *sel = view_selections_primary_get(&prompt->view);
 	view_cursors_scroll_to(sel, text_size(txt)-1);
 	prompt->parent = active;
 	prompt->parent_mode = vis->mode;
@@ -198,6 +198,6 @@ void vis_message_show(Vis *vis, const char *msg) {
 	size_t pos = text_size(txt);
 	text_appendf(txt, "%s\n", msg);
 	text_save(txt, NULL);
-	view_cursors_to(win->view->selection, pos);
+	view_cursors_to(win->view.selection, pos);
 	vis_window_focus(win);
 }

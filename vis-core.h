@@ -157,7 +157,7 @@ struct Win {
 	Vis *vis;               /* editor instance to which this window belongs */
 	UiWin *ui;              /* ui object handling visual appearance of this window */
 	File *file;             /* file being displayed in this window */
-	View *view;             /* currently displayed part of underlying text */
+	View view;              /* currently displayed part of underlying text */
 	bool expandtab;         /* whether typed tabs should be converted to spaces in this window*/
 	MarkList jumplist;      /* LRU jump management */
 	Array saved_selections; /* register used to store selections */

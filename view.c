@@ -71,7 +71,7 @@ void window_status_update(Vis *vis, Win *win) {
 	size_t left_count = 0;
 	size_t right_count = 0;
 
-	View *view = win->view;
+	View *view = &win->view;
 	File *file = win->file;
 	Text *txt = file->text;
 	int width = win->ui->width;
@@ -114,12 +114,12 @@ void window_status_update(Vis *vis, Win *win) {
 	         "%zu%%", percent);
 
 	if (!(options & UI_OPTION_LARGE_FILE)) {
-		Selection *sel = view_selections_primary_get(win->view);
+		Selection *sel = view_selections_primary_get(&win->view);
 		size_t line = view_cursors_line(sel);
 		size_t col = view_cursors_col(sel);
 		if (col > UI_LARGE_FILE_LINE_SIZE) {
 			options |= UI_OPTION_LARGE_FILE;
-			view_options_set(win->view, options);
+			view_options_set(&win->view, options);
 		}
 		snprintf(right_parts[right_count++], sizeof(right_parts[0]),
 		         "%zu, %zu", line, col);
@@ -551,7 +551,6 @@ void view_free(View *view) {
 	free(view->textbuf);
 	free(view->lines);
 	free(view->breakat);
-	free(view);
 }
 
 void view_reload(View *view, Text *text) {
@@ -560,12 +559,9 @@ void view_reload(View *view, Text *text) {
 	view_cursors_to(view->selection, 0);
 }
 
-View *view_new(Text *text) {
+bool view_init(View *view, Text *text) {
 	if (!text)
-		return NULL;
-	View *view = calloc(1, sizeof(View));
-	if (!view)
-		return NULL;
+		return false;
 
 	view->text = text;
 	view->tabwidth = 8;
@@ -582,12 +578,11 @@ View *view_new(Text *text) {
 	    !view_selections_new(view, 0) ||
 	    !view_resize(view, 1, 1))
 	{
-		view_free(view);
-		return NULL;
+		return false;
 	}
 
 	view_cursors_to(view->selection, 0);
-	return view;
+	return true;
 }
 
 static size_t cursor_set(Selection *sel, Line *line, int col) {

@@ -1232,7 +1232,7 @@ enum SamError sam_cmd(Vis *vis, const char *s) {
 	}
 
 	bool visual = vis->mode->visual;
-	size_t primary_pos = vis->win ? view_cursor_get(vis->win->view) : EPOS;
+	size_t primary_pos = vis->win ? view_cursor_get(&vis->win->view) : EPOS;
 	Filerange range = text_range_empty();
 	sam_execute(vis, vis->win, cmd, NULL, &range);
 
@@ -1278,7 +1278,7 @@ enum SamError sam_cmd(Vis *vis, const char *s) {
 							view_cursors_to(c->sel, r.end);
 					}
 				} else if (visual) {
-					Selection *sel = view_selections_new(c->win->view, r.start);
+					Selection *sel = view_selections_new(&c->win->view, r.start);
 					if (sel) {
 						view_selections_set(sel, &r);
 						sel->anchored = true;
@@ -1291,15 +1291,15 @@ enum SamError sam_cmd(Vis *vis, const char *s) {
 	}
 
 	for (Win *win = vis->windows; win; win = win->next)
-		view_selections_normalize(win->view);
+		view_selections_normalize(&win->view);
 
 	if (vis->win) {
-		if (primary_pos != EPOS && view_selection_disposed(vis->win->view))
-			view_cursors_to(vis->win->view->selection, primary_pos);
-		view_selections_primary_set(view_selections(vis->win->view));
+		if (primary_pos != EPOS && view_selection_disposed(&vis->win->view))
+			view_cursors_to(vis->win->view.selection, primary_pos);
+		view_selections_primary_set(view_selections(&vis->win->view));
 		vis_jumplist_save(vis);
 		bool completed = true;
-		for (Selection *s = view_selections(vis->win->view); s; s = view_selections_next(s)) {
+		for (Selection *s = view_selections(&vis->win->view); s; s = view_selections_next(s)) {
 			if (s->anchored) {
 				completed = false;
 				break;
@@ -1507,7 +1507,7 @@ static bool cmd_select(Vis *vis, Win *win, Command *cmd, const char *argv[], Sel
 	if (!win)
 		return sam_execute(vis, NULL, cmd->cmd, NULL, &r);
 	bool ret = true;
-	View *view = win->view;
+	View *view = &win->view;
 	Text *txt = win->file->text;
 	bool multiple_cursors = view->selection_count > 1;
 	Selection *primary = view_selections_primary_get(view);
@@ -1557,7 +1557,7 @@ static bool cmd_select(Vis *vis, Win *win, Command *cmd, const char *argv[], Sel
 			break;
 	}
 
-	if (vis->win && vis->win->view == view && primary != view_selections_primary_get(view))
+	if (vis->win && &vis->win->view == view && primary != view_selections_primary_get(view))
 		view_selections_primary_set(view_selections(view));
 	return ret;
 }
@@ -1565,9 +1565,8 @@ static bool cmd_select(Vis *vis, Win *win, Command *cmd, const char *argv[], Sel
 static bool cmd_print(Vis *vis, Win *win, Command *cmd, const char *argv[], Selection *sel, Filerange *range) {
 	if (!win || !text_range_valid(range))
 		return false;
-	View *view = win->view;
 	if (!sel)
-		sel = view_selections_new_force(view, range->start);
+		sel = view_selections_new_force(&win->view, range->start);
 	if (!sel)
 		return false;
 	if (range->start != range->end) {
@@ -1641,7 +1640,7 @@ static bool cmd_write(Vis *vis, Win *win, Command *cmd, const char *argv[], Sele
 
 		bool visual = vis->mode->visual;
 
-		for (Selection *s = view_selections(win->view); s; s = view_selections_next(s)) {
+		for (Selection *s = view_selections(&win->view); s; s = view_selections_next(s)) {
 			Filerange range = visual ? view_selections_get(s) : *r;
 			ssize_t written = text_write_range(text, &range, file->fd);
 			if (written == -1 || (size_t)written != text_range_size(&range)) {
@@ -1709,7 +1708,7 @@ static bool cmd_write(Vis *vis, Win *win, Command *cmd, const char *argv[], Sele
 		bool failure = false;
 		bool visual = vis->mode->visual;
 
-		for (Selection *s = view_selections(win->view); s; s = view_selections_next(s)) {
+		for (Selection *s = view_selections(&win->view); s; s = view_selections_next(s)) {
 			Filerange range = visual ? view_selections_get(s) : *r;
 			ssize_t written = text_save_write_range(ctx, &range);
 			failure = (written == -1 || (size_t)written != text_range_size(&range));

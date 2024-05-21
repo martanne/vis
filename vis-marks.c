@@ -72,12 +72,11 @@ static Array mark_get(Win *win, Array *mark) {
 	array_init_sized(&sel, sizeof(Filerange));
 	if (!mark)
 		return sel;
-	View *view = win->view;
 	size_t len = array_length(mark);
 	array_reserve(&sel, len);
 	for (size_t i = 0; i < len; i++) {
 		SelectionRegion *sr = array_get(mark, i);
-		Filerange r = view_regions_restore(view, sr);
+		Filerange r = view_regions_restore(&win->view, sr);
 		if (text_range_valid(&r))
 			array_add(&sel, &r);
 	}
@@ -93,11 +92,10 @@ static void mark_set(Win *win, Array *mark, Array *sel) {
 	if (!mark)
 		return;
 	array_clear(mark);
-	View *view = win->view;
 	for (size_t i = 0, len = array_length(sel); i < len; i++) {
 		SelectionRegion ss;
 		Filerange *r = array_get(sel, i);
-		if (view_regions_save(view, r, &ss))
+		if (view_regions_save(&win->view, r, &ss))
 			array_add(mark, &ss);
 	}
 }
@@ -150,15 +148,14 @@ static bool marklist_push(Win *win, MarkList *list, Array *sel) {
 }
 
 bool vis_jumplist_save(Vis *vis) {
-	View *view = vis->win->view;
-	Array sel = view_selections_get_all(view);
+	Array sel = view_selections_get_all(&vis->win->view);
 	bool ret = marklist_push(vis->win, &vis->win->jumplist, &sel);
 	array_release(&sel);
 	return ret;
 }
 
 static bool marklist_prev(Win *win, MarkList *list) {
-	View *view = win->view;
+	View *view = &win->view;
 	bool restore = false;
 	Array cur = view_selections_get_all(view);
 	bool anchored = view_selections_primary_get(view)->anchored;
@@ -191,7 +188,7 @@ out:
 }
 
 static bool marklist_next(Win *win, MarkList *list) {
-	View *view = win->view;
+	View *view = &win->view;
 	bool anchored = view_selections_primary_get(view)->anchored;
 	for (;;) {
 		Array *next = array_pop(&list->next);

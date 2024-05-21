@@ -102,7 +102,7 @@ static size_t op_put(Vis *vis, Text *txt, OperatorContext *c) {
 
 static size_t op_shift_right(Vis *vis, Text *txt, OperatorContext *c) {
 	char spaces[9] = "         ";
-	spaces[MIN(vis->win->view->tabwidth, LENGTH(spaces) - 1)] = '\0';
+	spaces[MIN(vis->win->view.tabwidth, LENGTH(spaces) - 1)] = '\0';
 	const char *tab = vis->win->expandtab ? spaces : "\t";
 	size_t tablen = strlen(tab);
 	size_t pos = text_line_begin(txt, c->range.end), prev_pos;
@@ -127,7 +127,7 @@ static size_t op_shift_right(Vis *vis, Text *txt, OperatorContext *c) {
 
 static size_t op_shift_left(Vis *vis, Text *txt, OperatorContext *c) {
 	size_t pos = text_line_begin(txt, c->range.end), prev_pos;
-	size_t tabwidth = vis->win->view->tabwidth, tablen;
+	size_t tabwidth = vis->win->view.tabwidth, tablen;
 	size_t newpos = c->pos;
 
 	/* if range ends at the begin of a line, skip line break */
@@ -161,7 +161,6 @@ static size_t op_shift_left(Vis *vis, Text *txt, OperatorContext *c) {
 }
 
 static size_t op_cursor(Vis *vis, Text *txt, OperatorContext *c) {
-	View *view = vis->win->view;
 	Filerange r = text_range_linewise(txt, &c->range);
 	for (size_t line = text_range_line_first(txt, &r); line != EPOS; line = text_range_line_next(txt, &r, line)) {
 		size_t pos;
@@ -169,7 +168,7 @@ static size_t op_cursor(Vis *vis, Text *txt, OperatorContext *c) {
 			pos = text_line_finish(txt, line);
 		else
 			pos = text_line_start(txt, line);
-		view_selections_new_force(view, pos);
+		view_selections_new_force(&vis->win->view, pos);
 	}
 	return EPOS;
 }

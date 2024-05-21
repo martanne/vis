@@ -186,8 +186,7 @@ const char *file_name_get(File *file) {
 
 void window_selection_save(Win *win) {
 	Vis *vis = win->vis;
-	View *view = win->view;
-	Array sel = view_selections_get_all(view);
+	Array sel = view_selections_get_all(&win->view);
 	vis_mark_set(win, VIS_MARK_SELECTION, &sel);
 	array_release(&sel);
 	vis_jumplist_save(vis);
@@ -203,7 +202,7 @@ static void window_free(Win *win) {
 			other->parent = NULL;
 	}
 	ui_window_free(win->ui);
-	view_free(win->view);
+	view_free(&win->view);
 	for (size_t i = 0; i < LENGTH(win->modes); i++)
 		map_free(win->modes[i].bindings);
 	marklist_release(&win->jumplist);
@@ -212,16 +211,15 @@ static void window_free(Win *win) {
 }
 
 static void window_draw_colorcolumn(Win *win) {
-	View *view = win->view;
-	int cc = view->colorcolumn;
+	int cc = win->view.colorcolumn;
 	if (cc <= 0)
 		return;
 	size_t lineno = 0;
 	int line_cols = 0; /* Track the number of columns we've passed on each line */
 	bool line_cc_set = false; /* Has the colorcolumn attribute been set for this line yet */
-	int width = view->width;
+	int width = win->view.width;
 
-	for (Line *l = view->topline; l; l = l->next) {
+	for (Line *l = win->view.topline; l; l = l->next) {
 		if (l->lineno != lineno) {
 			line_cols = 0;
 			line_cc_set = false;
@@ -243,19 +241,18 @@ static void window_draw_colorcolumn(Win *win) {
 
 static void window_draw_cursorline(Win *win) {
 	Vis *vis = win->vis;
-	View *view = win->view;
-	enum UiOption options = UI_OPTIONS_GET(view->ui);
+	enum UiOption options = UI_OPTIONS_GET(win->view.ui);
 	if (!(options & UI_OPTION_CURSOR_LINE))
 		return;
 	if (vis->mode->visual || vis->win != win)
 		return;
-	if (view->selection_count > 1)
+	if (win->view.selection_count > 1)
 		return;
 
-	int width = view->width;
-	Selection *sel = view_selections_primary_get(view);
+	int width = win->view.width;
+	Selection *sel = view_selections_primary_get(&win->view);
 	size_t lineno = sel->line->lineno;
-	for (Line *l = view->topline; l; l = l->next) {
+	for (Line *l = win->view.topline; l; l = l->next) {
 		if (l->lineno == lineno) {
 			for (int x = 0; x < width; x++)
 				ui_window_style_set(win->ui, &l->cells[x], UI_STYLE_CURSOR_LINE);
@@ -266,7 +263,7 @@ static void window_draw_cursorline(Win *win) {
 }
 
 static void window_draw_selection(Win *win, Selection *cur) {
-	View *view = win->view;
+	View *view = &win->view;
 	Filerange sel = view_selections_get(cur);
 	if (!text_range_valid(&sel))
 		return;
@@ -301,7 +298,7 @@ static void window_draw_cursor_matching(Win *win, Selection *cur) {
 	size_t pos_match = text_bracket_match_symbol(win->file->text, pos, "(){}[]\"'`", &limits);
 	if (pos == pos_match)
 		return;
-	if (!view_coord_get(win->view, pos_match, &line_match, NULL, &col_match))
+	if (!view_coord_get(&win->view, pos_match, &line_match, NULL, &col_match))
 		return;
 	ui_window_style_set(win->ui, &line_match->cells[col_match], UI_STYLE_SELECTION);
 }
@@ -312,16 +309,15 @@ static void window_draw_cursor(Win *win, Selection *cur) {
 	Line *line = cur->line;
 	if (!line)
 		return;
-	Selection *primary = view_selections_primary_get(win->view);
+	Selection *primary = view_selections_primary_get(&win->view);
 	ui_window_style_set(win->ui, &line->cells[cur->col], primary == cur ? UI_STYLE_CURSOR_PRIMARY : UI_STYLE_CURSOR);
 	window_draw_cursor_matching(win, cur);
 	return;
 }
 
 static void window_draw_selections(Win *win) {
-	View *view = win->view;
-	Filerange viewport = VIEW_VIEWPORT_GET(view);
-	Selection *sel = view_selections_primary_get(view);
+	Filerange viewport = VIEW_VIEWPORT_GET(win->view);
+	Selection *sel = view_selections_primary_get(&win->view);
 	for (Selection *s = view_selections_prev(sel); s; s = view_selections_prev(s)) {
 		window_draw_selection(win, s);
 		size_t pos = view_cursors_pos(s);
@@ -341,7 +337,7 @@ static void window_draw_selections(Win *win) {
 }
 
 static void window_draw_eof(Win *win) {
-	View *view = win->view;
+	View *view = &win->view;
 	if (view->width == 0)
 		return;
 	for (Line *l = view->lastline->next; l; l = l->next) {
@@ -351,7 +347,7 @@ static void window_draw_eof(Win *win) {
 }
 
 void vis_window_draw(Win *win) {
-	if (!win->ui || !view_update(win->view))
+	if (!win->ui || !view_update(&win->view))
 		return;
 	Vis *vis = win->vis;
 	vis_event_emit(vis, VIS_EVENT_WIN_HIGHLIGHT, win);
@@ -369,7 +365,7 @@ void vis_window_draw(Win *win) {
 void vis_window_invalidate(Win *win) {
 	for (Win *w = win->vis->windows; w; w = w->next) {
 		if (w->file == win->file)
-			view_draw(w->view);
+			view_draw(&w->view);
 	}
 }
 
@@ -379,17 +375,20 @@ Win *window_new_file(Vis *vis, File *file, enum UiOption options) {
 		return NULL;
 	win->vis = vis;
 	win->file = file;
-	win->view = view_new(file->text);
+	if (!view_init(&win->view, file->text)) {
+		free(win);
+		return NULL;
+	}
 	win->expandtab = false;
 	win->ui = ui_window_new(&vis->ui, win, options);
-	if (!win->view || !win->ui) {
+	if (!win->ui) {
 		window_free(win);
 		return NULL;
 	}
 	marklist_init(&win->jumplist, 32);
 	mark_init(&win->saved_selections);
 	file->refcount++;
-	view_options_set(win->view, UI_OPTIONS_GET(win->view->ui));
+	view_options_set(&win->view, UI_OPTIONS_GET(win->view.ui));
 
 	if (vis->windows)
 		vis->windows->prev = win;
@@ -416,7 +415,7 @@ bool vis_window_reload(Win *win) {
 	file_free(win->vis, win->file);
 	file->refcount = 1;
 	win->file = file;
-	view_reload(win->view, file->text);
+	view_reload(&win->view, file->text);
 	return true;
 }
 
@@ -428,7 +427,7 @@ bool vis_window_change_file(Win *win, const char* filename) {
 	if (win->file)
 		file_free(win->vis, win->file);
 	win->file = file;
-	view_reload(win->view, file->text);
+	view_reload(&win->view, file->text);
 	return true;
 }
 
@@ -444,8 +443,8 @@ bool vis_window_split(Win *original) {
 			map_copy(win->modes[i].bindings, original->modes[i].bindings);
 	}
 	win->file = original->file;
-	view_options_set(win->view, UI_OPTIONS_GET(original->view->ui));
-	view_cursors_to(win->view->selection, view_cursor_get(original->view));
+	view_options_set(&win->view, UI_OPTIONS_GET(original->view.ui));
+	view_cursors_to(win->view.selection, view_cursor_get(&original->view));
 	win->vis->ui.doupdate = true;
 	return true;
 }
@@ -477,7 +476,7 @@ void vis_window_prev(Vis *vis) {
 
 void vis_draw(Vis *vis) {
 	for (Win *win = vis->windows; win; win = win->next)
-		view_draw(win->view);
+		view_draw(&win->view);
 }
 
 void vis_redraw(Vis *vis) {
@@ -671,7 +670,7 @@ void vis_insert_key(Vis *vis, const char *data, size_t len) {
 	Win *win = vis->win;
 	if (!win)
 		return;
-	for (Selection *s = view_selections(win->view); s; s = view_selections_next(s)) {
+	for (Selection *s = view_selections(&win->view); s; s = view_selections_next(s)) {
 		size_t pos = view_cursors_pos(s);
 		vis_insert(vis, pos, data, len);
 		view_cursors_scroll_to(s, pos + len);
@@ -696,7 +695,7 @@ void vis_replace_key(Vis *vis, const char *data, size_t len) {
 	Win *win = vis->win;
 	if (!win)
 		return;
-	for (Selection *s = view_selections(win->view); s; s = view_selections_next(s)) {
+	for (Selection *s = view_selections(&win->view); s; s = view_selections_next(s)) {
 		size_t pos = view_cursors_pos(s);
 		vis_replace(vis, pos, data, len);
 		view_cursors_scroll_to(s, pos + len);
@@ -737,7 +736,7 @@ void vis_do(Vis *vis) {
 		return;
 	File *file = win->file;
 	Text *txt = file->text;
-	View *view = win->view;
+	View *view = &win->view;
 	Action *a = &vis->action;
 
 	int count = MAX(a->count, 1);
@@ -1508,8 +1507,8 @@ void vis_insert_tab(Vis *vis) {
 		return;
 	}
 	char spaces[9];
-	int tabwidth = MIN(vis->win->view->tabwidth, LENGTH(spaces) - 1);
-	for (Selection *s = view_selections(win->view); s; s = view_selections_next(s)) {
+	int tabwidth = MIN(vis->win->view.tabwidth, LENGTH(spaces) - 1);
+	for (Selection *s = view_selections(&win->view); s; s = view_selections_next(s)) {
 		size_t pos = view_cursors_pos(s);
 		int width = text_line_width_get(win->file->text, pos);
 		int count = tabwidth - (width % tabwidth);
@@ -1564,9 +1563,8 @@ void vis_insert_nl(Vis *vis) {
 	Win *win = vis->win;
 	if (!win)
 		return;
-	View *view = win->view;
 	Text *txt = win->file->text;
-	for (Selection *s = view_selections(view); s; s = view_selections_next(s)) {
+	for (Selection *s = view_selections(&win->view); s; s = view_selections_next(s)) {
 		size_t pos = view_cursors_pos(s);
 		size_t newpos = vis_text_insert_nl(vis, txt, pos);
 		/* This is a bit of a hack to fix cursor positioning when
@@ -1882,5 +1880,5 @@ Text *vis_text(Vis *vis) {
 
 View *vis_view(Vis *vis) {
 	Win *win = vis->win;
-	return win ? win->view : NULL;
+	return win ? &win->view : NULL;
 }

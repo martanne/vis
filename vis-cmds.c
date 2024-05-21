@@ -256,7 +256,7 @@ static bool cmd_set(Vis *vis, Win *win, Command *cmd, const char *argv[], Select
 		vis->autoindent = toggle ? !vis->autoindent : arg.b;
 		break;
 	case OPTION_TABWIDTH:
-		view_tabwidth_set(vis->win->view, arg.i);
+		view_tabwidth_set(&vis->win->view, arg.i);
 		break;
 	case OPTION_SHOW_SPACES:
 	case OPTION_SHOW_TABS:
@@ -271,48 +271,48 @@ static bool cmd_set(Vis *vis, Win *win, Command *cmd, const char *argv[], Select
 			[OPTION_SHOW_EOF] = UI_OPTION_SYMBOL_EOF,
 			[OPTION_STATUSBAR] = UI_OPTION_STATUSBAR,
 		};
-		int flags = UI_OPTIONS_GET(win->view->ui);
+		int flags = UI_OPTIONS_GET(win->view.ui);
 		if (arg.b || (toggle && !(flags & values[opt_index])))
 			flags |= values[opt_index];
 		else
 			flags &= ~values[opt_index];
-		view_options_set(win->view, flags);
+		view_options_set(&win->view, flags);
 		break;
 	}
 	case OPTION_NUMBER: {
-		enum UiOption opt = UI_OPTIONS_GET(win->view->ui);
+		enum UiOption opt = UI_OPTIONS_GET(win->view.ui);
 		if (arg.b || (toggle && !(opt & UI_OPTION_LINE_NUMBERS_ABSOLUTE))) {
 			opt &= ~UI_OPTION_LINE_NUMBERS_RELATIVE;
 			opt |=  UI_OPTION_LINE_NUMBERS_ABSOLUTE;
 		} else {
 			opt &= ~UI_OPTION_LINE_NUMBERS_ABSOLUTE;
 		}
-		view_options_set(win->view, opt);
+		view_options_set(&win->view, opt);
 		break;
 	}
 	case OPTION_NUMBER_RELATIVE: {
-		enum UiOption opt = UI_OPTIONS_GET(win->view->ui);
+		enum UiOption opt = UI_OPTIONS_GET(win->view.ui);
 		if (arg.b || (toggle && !(opt & UI_OPTION_LINE_NUMBERS_RELATIVE))) {
 			opt &= ~UI_OPTION_LINE_NUMBERS_ABSOLUTE;
 			opt |=  UI_OPTION_LINE_NUMBERS_RELATIVE;
 		} else {
 			opt &= ~UI_OPTION_LINE_NUMBERS_RELATIVE;
 		}
-		view_options_set(win->view, opt);
+		view_options_set(&win->view, opt);
 		break;
 	}
 	case OPTION_CURSOR_LINE: {
-		enum UiOption opt = UI_OPTIONS_GET(win->view->ui);
+		enum UiOption opt = UI_OPTIONS_GET(win->view.ui);
 		if (arg.b || (toggle && !(opt & UI_OPTION_CURSOR_LINE)))
 			opt |= UI_OPTION_CURSOR_LINE;
 		else
 			opt &= ~UI_OPTION_CURSOR_LINE;
-		view_options_set(win->view, opt);
+		view_options_set(&win->view, opt);
 		break;
 	}
 	case OPTION_COLOR_COLUMN:
 		if (arg.i >= 0)
-			win->view->colorcolumn = arg.i;
+			win->view.colorcolumn = arg.i;
 		break;
 	case OPTION_SAVE_METHOD:
 		if (strcmp("auto", arg.s) == 0) {
@@ -360,14 +360,14 @@ static bool cmd_set(Vis *vis, Win *win, Command *cmd, const char *argv[], Select
 		vis->ignorecase = toggle ? !vis->ignorecase : arg.b;
 		break;
 	case OPTION_BREAKAT:
-		if (!view_breakat_set(win->view, arg.s)) {
+		if (!view_breakat_set(&win->view, arg.s)) {
 			vis_info_show(vis, "Failed to set breakat");
 			return false;
 		}
 		break;
 	case OPTION_WRAP_COLUMN:
 		if (arg.i >= 0)
-			win->view->wrapcolumn = arg.i;
+			win->view.wrapcolumn = arg.i;
 		break;
 	default:
 		if (!opt->func)
@@ -540,26 +540,26 @@ static bool cmd_qall(Vis *vis, Win *win, Command *cmd, const char *argv[], Selec
 static bool cmd_split(Vis *vis, Win *win, Command *cmd, const char *argv[], Selection *sel, Filerange *range) {
 	if (!win)
 		return false;
-	enum UiOption options = UI_OPTIONS_GET(win->view->ui);
+	enum UiOption options = UI_OPTIONS_GET(win->view.ui);
 	ui_arrange(&vis->ui, UI_LAYOUT_HORIZONTAL);
 	if (!argv[1])
 		return vis_window_split(win);
 	bool ret = openfiles(vis, &argv[1]);
 	if (ret)
-		view_options_set(vis->win->view, options);
+		view_options_set(&vis->win->view, options);
 	return ret;
 }
 
 static bool cmd_vsplit(Vis *vis, Win *win, Command *cmd, const char *argv[], Selection *sel, Filerange *range) {
 	if (!win)
 		return false;
-	enum UiOption options = UI_OPTIONS_GET(win->view->ui);
+	enum UiOption options = UI_OPTIONS_GET(win->view.ui);
 	ui_arrange(&vis->ui, UI_LAYOUT_VERTICAL);
 	if (!argv[1])
 		return vis_window_split(win);
 	bool ret = openfiles(vis, &argv[1]);
 	if (ret)
-		view_options_set(vis->win->view, options);
+		view_options_set(&vis->win->view, options);
 	return ret;
 }
 
@@ -871,7 +871,7 @@ static bool cmd_help(Vis *vis, Win *win, Command *cmd, const char *argv[], Selec
 		text_appendf(txt, "  %-32s\t%s\n", configs[i].name, configs[i].enabled ? "yes" : "no");
 
 	text_save(txt, NULL);
-	view_cursors_to(vis->win->view->selection, 0);
+	view_cursors_to(vis->win->view.selection, 0);
 
 	if (argv[1])
 		vis_motion(vis, VIS_MOVE_SEARCH_FORWARD, argv[1]);
