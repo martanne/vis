@@ -147,12 +147,7 @@ profile: clean
 coverage: clean
 	@$(MAKE) CFLAGS_EXTRA='--coverage' LDFLAGS_EXTRA='--coverage'
 
-test-update:
-	git submodule init
-	git submodule update --remote --rebase
-
 test:
-	[ -e test/Makefile ] || $(MAKE) test-update
 	@$(MAKE) -C test
 
 testclean:
