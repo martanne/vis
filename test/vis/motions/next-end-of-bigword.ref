@@ -1,0 +1,11 @@
+_start-wor| next
+mid_dle-wor| next
+end-word_ nex|
+ startin| from a space
+	startin| from a tab
+a b c d | single letter words
+skipping-tab	nex|
++-*/\"'`^%&,;|_(){}<>[]=?| special symbols
+
+nex| line
+word_at_en|

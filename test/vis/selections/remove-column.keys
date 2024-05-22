@@ -1,0 +1,8 @@
+:x/[0-9]+<Enter>
+2<C-l>
+:{ i/{/ a/}/ }<Enter>
+<Escape><Escape>
+:<Up><Up><Enter>
+2<C-c>
+:{ i/>/ a/</ }<Enter>
+<Escape><Escape>

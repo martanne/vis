@@ -1,0 +1,22 @@
+dd
+ipublic <Escape>
+:%s,\$this->,,g<Enter>                       /* we use , as delimiter because // interferes with the CPP */
+:%s,\$,,g<Enter>
+:%s,private var,private double var,<Enter>
+/sqrt<Enter>
+iMath.<Escape>
+gg
+/function<Enter>
+dw
+n
+cwvoid<Escape>
+n
+.
+n
+cwdouble<Escape>
+gg
+/val<Enter>
+idouble <Escape>      /* in vim <Escape> moves the cursor 1 cell back, hence 2n will not do the right thing */
+fv                    /* accounts for this cursor is now at the start of "val" */
+2n.
+Gdd

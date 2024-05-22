@@ -1,0 +1,17 @@
+:set ai<Enter>
+/for<Enter>
+o<Enter>
+<C-t>
+if (a > 0) {<Enter>
+<C-t>// positive<Enter><Enter>
+return --a;<Enter>
+<C-d>} else if (a < 0) {<Enter>
+<C-t>// negative<Enter><Enter>
+return ++a;<Enter>
+<C-d>} else {<Enter>
+<C-t>// equal<Enter><Enter>
+return a;<Enter>
+<C-d>}<Enter>
+<Escape>
+n
+O<Enter>// optimized loop

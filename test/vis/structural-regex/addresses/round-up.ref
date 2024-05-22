@@ -1,0 +1,18 @@
+static const KeyBinding bindings_basic[] = {
+	{ "<C-z>",              ACTION(EDITOR_SUSPEND)                      },
+	{ "<Down>",             ACTION(CURSOR_LINE_DOWN)                    },
+	{ "<End>",              ACTION(CURSOR_LINE_END)                     },
+	{ "<Home>",             ACTION(CURSOR_LINE_BEGIN)                   },
+>>
+	{ "<|Left>",             ACTION(CURSOR_CHAR_PREV)                    },
+	{ "<PageDown>",         ACTION(WINDOW_PAGE_DOWN)                    },
+	{ "<PageUp>",           ACTION(WINDOW_PAGE_UP)                      },
+	{ "<Right|>",            ACTION(CURSOR_CHAR_NEXT)                    },
+<<
+	{ "<S-Left>",           ACTION(CURSOR_LONGWORD_START_PREV)          },
+	{ "<S-PageDown>",       ACTION(WINDOW_HALFPAGE_DOWN)                },
+	{ "<S-PageUp>",         ACTION(WINDOW_HALFPAGE_UP)                  },
+	{ "<S-Right>",          ACTION(CURSOR_LONGWORD_START_NEXT)          },
+	{ "<Up>",               ACTION(CURSOR_LINE_UP)                      },
+	{ 0 /* empty last element, array terminator */                      },
+};

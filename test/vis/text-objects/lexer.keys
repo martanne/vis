@@ -1,0 +1,5 @@
+:set syntax ansi_c<Enter>
+:x/cafe<Enter>
+ii
+:{ i/>/ a/</ }<Enter>
+<Escape>

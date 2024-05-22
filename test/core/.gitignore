@@ -1,0 +1,10 @@
+/config.h
+/text-test
+/buffer-test
+/map-test
+/array-test
+/ccan-config
+*.gcda
+*.gcno
+*.gcov
+*.valgrind

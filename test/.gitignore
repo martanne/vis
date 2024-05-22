@@ -1,0 +1,4 @@
+*.out
+*.err
+*.status
+*.busted

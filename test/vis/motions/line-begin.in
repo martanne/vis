@@ -1,0 +1,13 @@
+0	To the first character of the line.
+1 From start to start
+2 From _ to start
+3 From end to start 4 empty line \n 5 empty line \r\n
+
+
+        6 Spaces
+	7 Tabs
+      8 Backspace
+      9 Vertical tab
+      10 Form feed
+      11 Carriage return
+        12 Idempotent (count has no effect)

@@ -1,0 +1,16 @@
+static ssize_t write_all(int fd, const char *buf, size_t count) {
+	size_t rem = count;
+	while (rem > 0) {
+//		ssize_t written = write(fd, buf, rem);
+//		if (written < 0) {
+//			if (errno == EAGAIN || errno == EINTR)
+//				continue;
+//			return -1;
+//		} else if (written == 0) {
+//			break;
+//		}
+//		rem -= written;
+//		buf += written;
+	}
+	return count - rem;
+}

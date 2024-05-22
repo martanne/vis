@@ -1,0 +1,5 @@
+Named registers "a to "z or "A to "Z
+
+Vim fills these registers only when you say so.  Specify them as lowercase
+letters to replace their previous contents or as uppercase letters to append
+to their previous contents.

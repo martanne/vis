@@ -1,0 +1,5 @@
+Register "0
+
+Numbered register 0 contains the text from the most recent yank command,
+unless the command specified another register with ["x].
+

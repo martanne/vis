@@ -1,0 +1,16 @@
+iList<<Escape>                   /* insert List< */
+~                                /* upper case d to D */
+yiw                              /* yank Double */
+wx                               /* delete [ */
+r>                               /* overwrite ] with > */
+A new ArrayList<>();<Escape>     /* append text */
+F<                               /* find backwards */
+"0p
+                                 /* paste from yank register */
+jdd                              /* delete { line */
+3J                               /* join data on single line */
+qa                               /* start macro recording */
+f,i)<Escape>                     /* insert ) before comma */
+q                                /* stop macro recording */
+@a                               /* replay macro */
+@@@@@@@@@@@@@@                   /* again (TODO: count for macro replay, make @ repeatable) */

@@ -1,0 +1,6 @@
+qa          /* start macro recording */
+/#<Enter>   /* search for # */
+jyypjdd     /* move down, yank, put, delete line below */
+q           /* stop macro recording */
+@a          /* replay macro */
+@@          /* replay again */

@@ -1,0 +1,4 @@
+/results
+/text-fuzzer
+/text-libfuzzer
+/buffer-fuzzer

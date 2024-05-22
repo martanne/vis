@@ -1,0 +1,5 @@
+:/Left/,/Right/<Enter>
+:{ i/|/ a/|/ }<Enter><Escape><Escape>
+:0/Left/,0/Right/<Enter>
+:-0+,+0-<Enter>
+:{ i/>>\n/ a/<<\n/ }<Enter>

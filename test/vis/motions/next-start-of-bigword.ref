@@ -1,0 +1,12 @@
+_start-word |ext
+mid_dle-word |ext
+end-word_ |ext
+ |tarting from a space
+	|tarting from a tab
+a b c d | single letter words
+tab	|ext
++-*/\"'`^%&,;|_(){}<>[]=?! |pecial symbols
+
+|ext line
+word_at_end
+|
