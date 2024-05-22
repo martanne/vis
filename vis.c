@@ -1593,17 +1593,17 @@ Regex *vis_regex(Vis *vis, const char *pattern) {
 	return regex;
 }
 
-int vis_pipe(Vis *vis, File *file, Filerange *range, const char *argv[],
+static int _vis_pipe(Vis *vis, File *file, Filerange *range, const char* buf, const char *argv[],
 	void *stdout_context, ssize_t (*read_stdout)(void *stdout_context, char *data, size_t len),
 	void *stderr_context, ssize_t (*read_stderr)(void *stderr_context, char *data, size_t len),
 	bool fullscreen) {
 
 	/* if an invalid range was given, stdin (i.e. key board input) is passed
 	 * through the external command. */
-	Text *text = file->text;
+	Text *text = file != NULL ? file->text : NULL;
 	int pin[2], pout[2], perr[2], status = -1;
-	bool interactive = !text_range_valid(range);
-	Filerange rout = interactive ? text_range_new(0, 0) : *range;
+	bool interactive = buf == NULL && (range == NULL || !text_range_valid(range));
+	Filerange rout = (interactive  || buf != NULL) ? text_range_new(0, 0) : *range;
 
 	if (pipe(pin) == -1)
 		return -1;
@@ -1654,7 +1654,7 @@ int vis_pipe(Vis *vis, File *file, Filerange *range, const char *argv[],
 			 * closed. Some programs behave differently when used
 			 * in a pipeline.
 			 */
-			if (text_range_size(range) == 0)
+			if (range && text_range_size(range) == 0)
 				dup2(null, STDIN_FILENO);
 			else
 				dup2(pin[0], STDIN_FILENO);
@@ -1688,7 +1688,7 @@ int vis_pipe(Vis *vis, File *file, Filerange *range, const char *argv[],
 		close(perr[1]);
 		close(null);
 
-		if (file->name) {
+		if (file != NULL && file->name) {
 			char *name = strrchr(file->name, '/');
 			setenv("vis_filepath", file->name, 1);
 			setenv("vis_filename", name ? name+1 : file->name, 1);
@@ -1737,20 +1737,36 @@ int vis_pipe(Vis *vis, File *file, Filerange *range, const char *argv[],
 		}
 
 		if (pin[1] != -1 && FD_ISSET(pin[1], &wfds)) {
+			ssize_t written = 0;
 			Filerange junk = rout;
-			if (junk.end > junk.start + PIPE_BUF)
-				junk.end = junk.start + PIPE_BUF;
-			ssize_t len = text_write_range(text, &junk, pin[1]);
-			if (len > 0) {
-				rout.start += len;
-				if (text_range_size(&rout) == 0) {
-					close(pin[1]);
-					pin[1] = -1;
+			if (text_range_size(&rout)) {
+				if (junk.end > junk.start + PIPE_BUF)
+					junk.end = junk.start + PIPE_BUF;
+				written = text_write_range(text, &junk, pin[1]);
+				if (written > 0) {
+					rout.start += written;
+					if (text_range_size(&rout) == 0) {
+						close(pin[1]);
+						pin[1] = -1;
+					}
 				}
-			} else {
+			} else if (buf != NULL) {
+				size_t len = strlen(buf);
+				if (len > 0) {
+					if (len > PIPE_BUF)
+						len = PIPE_BUF;
+
+					written = write_all(pin[1], buf, len);
+					if (written > 0) {
+						buf += written;
+					}
+				}
+			}
+
+			if (written <= 0) {
 				close(pin[1]);
 				pin[1] = -1;
-				if (len == -1)
+				if (written == -1)
 					vis_info_show(vis, "Error writing to external command");
 			}
 		}
@@ -1823,16 +1839,30 @@ err:
 	return -1;
 }
 
+int vis_pipe(Vis *vis, File *file, Filerange *range, const char *argv[],
+	void *stdout_context, ssize_t (*read_stdout)(void *stdout_context, char *data, size_t len),
+	void *stderr_context, ssize_t (*read_stderr)(void *stderr_context, char *data, size_t len),
+	bool fullscreen) {
+	return _vis_pipe(vis, file, range, NULL, argv, stdout_context, read_stdout, stderr_context, read_stderr, fullscreen);
+}
+
+int vis_pipe_buf(Vis *vis, const char* buf, const char *argv[],
+	void *stdout_context, ssize_t (*read_stdout)(void *stdout_context, char *data, size_t len),
+	void *stderr_context, ssize_t (*read_stderr)(void *stderr_context, char *data, size_t len),
+	bool fullscreen) {
+	return _vis_pipe(vis, NULL, NULL, buf, argv, stdout_context, read_stdout, stderr_context, read_stderr, fullscreen);
+}
+
 static ssize_t read_buffer(void *context, char *data, size_t len) {
 	buffer_append(context, data, len);
 	return len;
 }
 
-int vis_pipe_collect(Vis *vis, File *file, Filerange *range, const char *argv[], char **out, char **err, bool fullscreen) {
+static int _vis_pipe_collect(Vis *vis, File *file, Filerange *range, const char* buf, const char *argv[], char **out, char **err, bool fullscreen) {
 	Buffer bufout, buferr;
 	buffer_init(&bufout);
 	buffer_init(&buferr);
-	int status = vis_pipe(vis, file, range, argv,
+	int status = _vis_pipe(vis, file, range, buf, argv,
 	                      &bufout, out ? read_buffer : NULL,
 	                      &buferr, err ? read_buffer : NULL,
 	                      fullscreen);
@@ -1845,6 +1875,14 @@ int vis_pipe_collect(Vis *vis, File *file, Filerange *range, const char *argv[],
 	buffer_release(&bufout);
 	buffer_release(&buferr);
 	return status;
+}
+
+int vis_pipe_collect(Vis *vis, File *file, Filerange *range, const char *argv[], char **out, char **err, bool fullscreen) {
+	return _vis_pipe_collect(vis, file, range, NULL, argv, out, err, fullscreen);
+}
+
+int vis_pipe_buf_collect(Vis *vis, const char* buf, const char *argv[], char **out, char **err, bool fullscreen) {
+	return _vis_pipe_collect(vis, NULL, NULL, buf, argv, out, err, fullscreen);
 }
 
 bool vis_cmd(Vis *vis, const char *cmdline) {

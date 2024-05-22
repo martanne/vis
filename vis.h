@@ -883,6 +883,20 @@ int vis_pipe(Vis*, File*, Filerange*, const char *argv[],
 int vis_pipe_collect(Vis*, File*, Filerange*, const char *argv[], char **out, char **err, bool fullscreen);
 
 /**
+ * Pipe a buffer to an external process, return its exit status and capture
+ * everything that is written to stdout/stderr.
+ * @param argv Argument list, must be ``NULL`` terminated.
+ * @param out Data written to ``stdout``, will be ``NUL`` terminated.
+ * @param err Data written to ``stderr``, will be ``NUL`` terminated.
+ * @param fullscreen Whether the external process is a fullscreen program (e.g. curses based)
+ * @rst
+ * .. warning:: The pointers stored in ``out`` and ``err`` need to be `free(3)`-ed
+ *              by the caller.
+ * @endrst
+ */
+int vis_pipe_buf_collect(Vis*, const char*, const char *argv[], char **out, char **err, bool fullscreen);
+
+/**
  * @}
  * @defgroup vis_keys
  * @{

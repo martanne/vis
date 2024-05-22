@@ -182,7 +182,7 @@ Text *text_load_method(const char *filename, enum TextLoadMethod method) {
 	return text_loadat_method(AT_FDCWD, filename, method);
 }
 
-static ssize_t write_all(int fd, const char *buf, size_t count) {
+ssize_t write_all(int fd, const char *buf, size_t count) {
 	size_t rem = count;
 	while (rem > 0) {
 		ssize_t written = write(fd, buf, rem > INT_MAX ? INT_MAX : rem);
