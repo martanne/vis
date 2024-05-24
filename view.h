@@ -54,7 +54,6 @@ typedef struct View {
 	Text *text;         /* underlying text management */
 	char *textbuf;      /* scratch buffer used for drawing */
 	UiWin *ui;          /* corresponding ui window */
-	Cell cell_blank;    /* used for empty/blank cells */
 	int width, height;  /* size of display area */
 	size_t start, end;  /* currently displayed area [start, end] in bytes from the start of the file */
 	size_t start_last;  /* previously used start of visible area, used to update the mark */

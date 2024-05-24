@@ -45,8 +45,7 @@ static const SyntaxSymbol symbols_default[] = {
 	[SYNTAX_SYMBOL_EOF]      = { "~" },
 };
 
-static Cell cell_unused;
-
+static Cell cell_blank = { .width = 0, .len = 0, .data = " ", };
 
 /* move visible viewport n-lines up/down, redraws the view but does not change
  * cursor position which becomes invalid and should be corrected by calling
@@ -203,7 +202,7 @@ static void view_clear(View *view) {
 	view->wrapcol = 0;
 	view->prevch_breakat = false;
 	if (view->ui)
-		ui_window_style_set(view->ui, &view->cell_blank, UI_STYLE_DEFAULT);
+		ui_window_style_set(view->ui, &cell_blank, UI_STYLE_DEFAULT);
 }
 
 static int view_max_text_width(const View *view) {
@@ -238,7 +237,7 @@ static void view_wrap_line(View *view) {
 			wrapped_line->width -= wrapped_line->cells[i].width;
 			wrapped_line->len -= wrapped_line->cells[i].len;
 		}
-		wrapped_line->cells[i] = view->cell_blank;
+		wrapped_line->cells[i] = cell_blank;
 	}
 }
 
@@ -259,7 +258,7 @@ static bool view_add_cell(View *view, const Cell *cell) {
 	view->line->cells[view->col++] = *cell;
 	/* set cells of a character which uses multiple columns */
 	for (int i = 1; i < cell->width; i++)
-		view->line->cells[view->col++] = cell_unused;
+		view->line->cells[view->col++] = (Cell){0};
 	return true;
 }
 
@@ -308,7 +307,7 @@ static bool view_addch(View *view, Cell *cell) {
 		view->wrapcol = view->col;
 	}
 	view->prevch_breakat = ch_breakat;
-	cell->style = view->cell_blank.style;
+	cell->style = cell_blank.style;
 
 	unsigned char ch = (unsigned char)cell->data[0];
 	switch (ch) {
@@ -484,7 +483,7 @@ void view_draw(View *view) {
 	/* clear remaining of line, important to show cursor at end of file */
 	if (view->line) {
 		for (int x = view->col; x < view->width; x++)
-			view->line->cells[x] = view->cell_blank;
+			view->line->cells[x] = cell_blank;
 	}
 
 	/* resync position of cursors within visible area */
@@ -506,7 +505,7 @@ bool view_update(View *view) {
 		return false;
 	for (Line *l = view->lastline->next; l; l = l->next) {
 		for (int x = 0; x < view->width; x++)
-			l->cells[x] = view->cell_blank;
+			l->cells[x] = cell_blank;
 	}
 	view->need_update = false;
 	return true;
@@ -567,11 +566,6 @@ bool view_init(View *view, Text *text) {
 	view->tabwidth = 8;
 	view->breakat = strdup("");
 	view->wrapcolumn = 0;
-	view->cell_blank = (Cell) {
-		.width = 0,
-		.len = 0,
-		.data = " ",
-	};
 	view_options_set(view, 0);
 
 	if (!view->breakat ||
