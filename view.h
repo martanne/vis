@@ -8,10 +8,6 @@
 #include "text.h"
 #include "array.h"
 
-typedef struct {
-	char *symbol;
-} SyntaxSymbol;
-
 enum {
 	SYNTAX_SYMBOL_SPACE,
 	SYNTAX_SYMBOL_TAB,
@@ -69,7 +65,7 @@ typedef struct View {
 	int selection_count;   /* how many cursors do currently exist */
 	Line *line;         /* used while drawing view content, line where next char will be drawn */
 	int col;            /* used while drawing view content, column where next char will be drawn */
-	const SyntaxSymbol *symbols[SYNTAX_SYMBOL_LAST]; /* symbols to use for white spaces etc */
+	const char *symbols[SYNTAX_SYMBOL_LAST]; /* symbols to use for white spaces etc */
 	int tabwidth;       /* how many spaces should be used to display a tab character */
 	Selection *selections;    /* all cursors currently active */
 	int selection_generation; /* used to filter out newly created cursors during iteration */
@@ -350,8 +346,6 @@ bool view_breakat_set(View*, const char *breakat);
 void view_tabwidth_set(View*, int tabwidth);
 /** Apply a style to a text range. */
 void view_style(View*, enum UiStyle, size_t start, size_t end);
-
-char *view_symbol_eof_get(View*);
 
 /** @} */
 

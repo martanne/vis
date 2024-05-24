@@ -29,20 +29,20 @@
  * the necessary offset for the last character.
  */
 
-static const SyntaxSymbol symbols_none[] = {
-	[SYNTAX_SYMBOL_SPACE]    = { " " },
-	[SYNTAX_SYMBOL_TAB]      = { " " },
-	[SYNTAX_SYMBOL_TAB_FILL] = { " " },
-	[SYNTAX_SYMBOL_EOL]      = { " " },
-	[SYNTAX_SYMBOL_EOF]      = { " " },
+static const char *symbols_none[] = {
+	[SYNTAX_SYMBOL_SPACE]    = " ",
+	[SYNTAX_SYMBOL_TAB]      = " ",
+	[SYNTAX_SYMBOL_TAB_FILL] = " ",
+	[SYNTAX_SYMBOL_EOL]      = " ",
+	[SYNTAX_SYMBOL_EOF]      = " ",
 };
 
-static const SyntaxSymbol symbols_default[] = {
-	[SYNTAX_SYMBOL_SPACE]    = { "·" /* Middle Dot U+00B7 */ },
-	[SYNTAX_SYMBOL_TAB]      = { "›" /* Single Right-Pointing Angle Quotation Mark U+203A */ },
-	[SYNTAX_SYMBOL_TAB_FILL] = { " " },
-	[SYNTAX_SYMBOL_EOL]      = { "↵" /* Downwards Arrow with Corner Leftwards U+21B5 */ },
-	[SYNTAX_SYMBOL_EOF]      = { "~" },
+static const char *symbols_default[] = {
+	[SYNTAX_SYMBOL_SPACE]    = "·", /* Middle Dot U+00B7 */
+	[SYNTAX_SYMBOL_TAB]      = "›", /* Single Right-Pointing Angle Quotation Mark U+203A */
+	[SYNTAX_SYMBOL_TAB_FILL] = " ",
+	[SYNTAX_SYMBOL_EOL]      = "↵", /* Downwards Arrow with Corner Leftwards U+21B5 */
+	[SYNTAX_SYMBOL_EOF]      = "~",
 };
 
 static Cell cell_blank = { .width = 0, .len = 0, .data = " ", };
@@ -268,7 +268,7 @@ static bool view_expand_tab(View *view, Cell *cell) {
 	int displayed_width = view->tabwidth - (view->col % view->tabwidth);
 	for (int w = 0; w < displayed_width; ++w) {
 		int t = (w == 0) ? SYNTAX_SYMBOL_TAB : SYNTAX_SYMBOL_TAB_FILL;
-		const char *symbol = view->symbols[t]->symbol;
+		const char *symbol = view->symbols[t];
 		strncpy(cell->data, symbol, sizeof(cell->data) - 1);
 		cell->len = (w == 0) ? 1 : 0;
 
@@ -282,7 +282,7 @@ static bool view_expand_tab(View *view, Cell *cell) {
 
 static bool view_expand_newline(View *view, Cell *cell) {
 	size_t lineno = view->line->lineno;
-	const char *symbol = view->symbols[SYNTAX_SYMBOL_EOL]->symbol;
+	const char *symbol = view->symbols[SYNTAX_SYMBOL_EOL];
 
 	strncpy(cell->data, symbol, sizeof(cell->data) - 1);
 	cell->width = 1;
@@ -316,7 +316,7 @@ static bool view_addch(View *view, Cell *cell) {
 	case '\n':
 		return view_expand_newline(view, cell);
 	case ' ': {
-		const char *symbol = view->symbols[SYNTAX_SYMBOL_SPACE]->symbol;
+		const char *symbol = view->symbols[SYNTAX_SYMBOL_SPACE];
 		strncpy(cell->data, symbol, sizeof(cell->data) - 1);
 		return view_add_cell(view, cell);
 	}}
@@ -869,8 +869,8 @@ void view_options_set(View *view, enum UiOption options) {
 	};
 
 	for (int i = 0; i < LENGTH(mapping); i++) {
-		view->symbols[i] = (options & mapping[i]) ? &symbols_default[i] :
-			&symbols_none[i];
+		view->symbols[i] = (options & mapping[i]) ? symbols_default[i] :
+			symbols_none[i];
 	}
 
 	if (options & UI_OPTION_LINE_NUMBERS_ABSOLUTE)
@@ -1330,10 +1330,6 @@ void view_selections_normalize(View *view) {
 	}
 	if (prev)
 		view_selections_set(prev, &range_prev);
-}
-
-char *view_symbol_eof_get(View *view) {
-	return view->symbols[SYNTAX_SYMBOL_EOF]->symbol;
 }
 
 void view_style(View *view, enum UiStyle style, size_t start, size_t end) {

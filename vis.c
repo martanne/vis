@@ -341,7 +341,7 @@ static void window_draw_eof(Win *win) {
 	if (view->width == 0)
 		return;
 	for (Line *l = view->lastline->next; l; l = l->next) {
-		strncpy(l->cells[0].data, view_symbol_eof_get(view), sizeof(l->cells[0].data)-1);
+		strncpy(l->cells[0].data, view->symbols[SYNTAX_SYMBOL_EOF], sizeof(l->cells[0].data)-1);
 		ui_window_style_set(win->ui, &l->cells[0], UI_STYLE_EOF);
 	}
 }
