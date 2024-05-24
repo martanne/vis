@@ -201,7 +201,7 @@ static void window_free(Win *win) {
 		if (other->parent == win)
 			other->parent = NULL;
 	}
-	ui_window_free(win->ui);
+	ui_window_release(&vis->ui, win);
 	view_free(&win->view);
 	for (size_t i = 0; i < LENGTH(win->modes); i++)
 		map_free(win->modes[i].bindings);
@@ -231,7 +231,7 @@ static void window_draw_colorcolumn(Win *win) {
 
 		/* This screen line contains the cell we want to highlight */
 		if (cc <= line_cols + width) {
-			ui_window_style_set(win->ui, &l->cells[cc - 1 - line_cols], UI_STYLE_COLOR_COLUMN);
+			ui_window_style_set(win, &l->cells[cc - 1 - line_cols], UI_STYLE_COLOR_COLUMN);
 			line_cc_set = true;
 		} else {
 			line_cols += width;
@@ -241,7 +241,7 @@ static void window_draw_colorcolumn(Win *win) {
 
 static void window_draw_cursorline(Win *win) {
 	Vis *vis = win->vis;
-	enum UiOption options = UI_OPTIONS_GET(win->view.ui);
+	enum UiOption options = win->options;
 	if (!(options & UI_OPTION_CURSOR_LINE))
 		return;
 	if (vis->mode->visual || vis->win != win)
@@ -255,7 +255,7 @@ static void window_draw_cursorline(Win *win) {
 	for (Line *l = win->view.topline; l; l = l->next) {
 		if (l->lineno == lineno) {
 			for (int x = 0; x < width; x++)
-				ui_window_style_set(win->ui, &l->cells[x], UI_STYLE_CURSOR_LINE);
+				ui_window_style_set(win, &l->cells[x], UI_STYLE_CURSOR_LINE);
 		} else if (l->lineno > lineno) {
 			break;
 		}
@@ -285,7 +285,7 @@ static void window_draw_selection(Win *win, Selection *cur) {
 		int col = (l == start_line) ? start_col : 0;
 		int end = (l == end_line) ? end_col : l->width;
 		while (col < end)
-			ui_window_style_set(win->ui, &l->cells[col++], UI_STYLE_SELECTION);
+			ui_window_style_set(win, &l->cells[col++], UI_STYLE_SELECTION);
 	}
 }
 
@@ -300,7 +300,7 @@ static void window_draw_cursor_matching(Win *win, Selection *cur) {
 		return;
 	if (!view_coord_get(&win->view, pos_match, &line_match, NULL, &col_match))
 		return;
-	ui_window_style_set(win->ui, &line_match->cells[col_match], UI_STYLE_SELECTION);
+	ui_window_style_set(win, &line_match->cells[col_match], UI_STYLE_SELECTION);
 }
 
 static void window_draw_cursor(Win *win, Selection *cur) {
@@ -310,7 +310,7 @@ static void window_draw_cursor(Win *win, Selection *cur) {
 	if (!line)
 		return;
 	Selection *primary = view_selections_primary_get(&win->view);
-	ui_window_style_set(win->ui, &line->cells[cur->col], primary == cur ? UI_STYLE_CURSOR_PRIMARY : UI_STYLE_CURSOR);
+	ui_window_style_set(win, &line->cells[cur->col], primary == cur ? UI_STYLE_CURSOR_PRIMARY : UI_STYLE_CURSOR);
 	window_draw_cursor_matching(win, cur);
 	return;
 }
@@ -342,12 +342,12 @@ static void window_draw_eof(Win *win) {
 		return;
 	for (Line *l = view->lastline->next; l; l = l->next) {
 		strncpy(l->cells[0].data, view->symbols[SYNTAX_SYMBOL_EOF], sizeof(l->cells[0].data)-1);
-		ui_window_style_set(win->ui, &l->cells[0], UI_STYLE_EOF);
+		ui_window_style_set(win, &l->cells[0], UI_STYLE_EOF);
 	}
 }
 
 void vis_window_draw(Win *win) {
-	if (!win->ui || !view_update(&win->view))
+	if (!view_update(&win->view))
 		return;
 	Vis *vis = win->vis;
 	vis_event_emit(vis, VIS_EVENT_WIN_HIGHLIGHT, win);
@@ -375,27 +375,26 @@ Win *window_new_file(Vis *vis, File *file, enum UiOption options) {
 		return NULL;
 	win->vis = vis;
 	win->file = file;
-	if (!view_init(&win->view, file->text)) {
+	if (!view_init(win, file->text)) {
 		free(win);
 		return NULL;
 	}
 	win->expandtab = false;
-	win->ui = ui_window_new(&vis->ui, win, options);
-	if (!win->ui) {
+	if (!ui_window_init(&vis->ui, win, options)) {
 		window_free(win);
 		return NULL;
 	}
 	marklist_init(&win->jumplist, 32);
 	mark_init(&win->saved_selections);
 	file->refcount++;
-	view_options_set(&win->view, UI_OPTIONS_GET(win->view.ui));
+	win_options_set(win, win->options);
 
 	if (vis->windows)
 		vis->windows->prev = win;
 	win->next = vis->windows;
 	vis->windows = win;
 	vis->win = win;
-	ui_window_focus(win->ui);
+	ui_window_focus(win);
 	for (size_t i = 0; i < LENGTH(win->modes); i++)
 		win->modes[i].parent = &vis_modes[i];
 	vis_event_emit(vis, VIS_EVENT_WIN_OPEN, win);
@@ -443,7 +442,7 @@ bool vis_window_split(Win *original) {
 			map_copy(win->modes[i].bindings, original->modes[i].bindings);
 	}
 	win->file = original->file;
-	view_options_set(&win->view, UI_OPTIONS_GET(original->view.ui));
+	win_options_set(win, original->options);
 	view_cursors_to(win->view.selection, view_cursor_get(&original->view));
 	win->vis->ui.doupdate = true;
 	return true;
@@ -454,7 +453,7 @@ void vis_window_focus(Win *win) {
 		return;
 	Vis *vis = win->vis;
 	vis->win = win;
-	ui_window_focus(win->ui);
+	ui_window_focus(win);
 }
 
 void vis_window_next(Vis *vis) {
@@ -536,7 +535,7 @@ void vis_window_swap(Win *a, Win *b) {
 		vis->windows = b;
 	else if (vis->windows == b)
 		vis->windows = a;
-	ui_window_swap(a->ui, b->ui);
+	ui_window_swap(a, b);
 	if (vis->win == a)
 		vis_window_focus(b);
 	else if (vis->win == b)
@@ -561,7 +560,7 @@ void vis_window_close(Win *win) {
 		vis->message_window = NULL;
 	window_free(win);
 	if (vis->win)
-		ui_window_focus(vis->win->ui);
+		ui_window_focus(vis->win);
 	vis_draw(vis);
 }
 

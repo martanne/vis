@@ -126,7 +126,7 @@ static const char *prompt_esc(Vis *vis, const char *keys, const Arg *arg) {
 static const char *prompt_up(Vis *vis, const char *keys, const Arg *arg) {
 	vis_motion(vis, VIS_MOVE_LINE_UP);
 	vis_window_mode_unmap(vis->win, VIS_MODE_INSERT, "<Up>");
-	view_options_set(&vis->win->view, UI_OPTION_SYMBOL_EOF);
+	win_options_set(vis->win, UI_OPTION_SYMBOL_EOF);
 	return keys;
 }
 

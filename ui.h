@@ -79,24 +79,12 @@ typedef struct {
 	CellStyle style;    /* colors and attributes used to display this cell */
 } Cell;
 
-struct Ui;
 struct Win;
-typedef struct UiWin {
-	struct Ui *ui;             /* ui which manages this window */
-	struct Win *win;           /* editor window being displayed */
-	int id;                    /* unique identifier for this window */
-	int width, height;         /* window dimension including status bar */
-	int x, y;                  /* window position */
-	int sidebar_width;         /* width of the sidebar showing line numbers etc. */
-	struct UiWin *next, *prev; /* pointers to neighbouring windows */
-	enum UiOption options;     /* display settings for this window */
-} UiWin;
-
 struct Vis;
-typedef struct Ui {
+typedef struct {
 	struct Vis *vis;          /* editor instance to which this ui belongs */
-	UiWin *windows;           /* all windows managed by this ui */
-	UiWin *selwin;            /* the currently selected layout */
+	struct Win *windows;      /* all windows managed by this ui */
+	struct Win *selwin;       /* the currently selected layout */
 	char info[UI_MAX_WIDTH];  /* info message displayed at the bottom of the screen */
 	int width, height;        /* terminal dimensions available for all windows */
 	enum UiLayout layout;     /* whether windows are displayed horizontally or vertically */
@@ -113,8 +101,6 @@ typedef struct Ui {
 #include "view.h"
 #include "vis.h"
 #include "text.h"
-
-#define UI_OPTIONS_GET(ui) ((ui) ? (ui)->options : 0)
 
 bool ui_terminal_init(Ui*);
 int  ui_terminal_colors(void);
@@ -133,18 +119,19 @@ void ui_info_show(Ui *, const char *, va_list);
 void ui_redraw(Ui*);
 void ui_resize(Ui*);
 
-UiWin *ui_window_new(Ui *, Win *, enum UiOption);
-void ui_window_focus(UiWin *);
-void ui_window_free(UiWin *);
-void ui_window_swap(UiWin *, UiWin *);
+bool ui_window_init(Ui *, Win *, enum UiOption);
+void ui_window_focus(Win *);
+/* removes a window from the list of open windows */
+void ui_window_release(Ui *, Win *);
+void ui_window_swap(Win *, Win *);
 
 bool ui_getkey(Ui *, TermKeyKey *);
 
-bool ui_style_define(UiWin *win, int id, const char *style);
-bool ui_window_style_set_pos(UiWin *win, int x, int y, enum UiStyle id);
-void ui_window_style_set(UiWin *win, Cell *cell, enum UiStyle id);
+bool ui_style_define(Win *win, int id, const char *style);
+bool ui_window_style_set_pos(Win *win, int x, int y, enum UiStyle id);
+void ui_window_style_set(Win *win, Cell *cell, enum UiStyle id);
 
-void ui_window_options_set(UiWin *win, enum UiOption options);
-void ui_window_status(UiWin *win, const char *status);
+void ui_window_options_set(Win *win, enum UiOption options);
+void ui_window_status(Win *win, const char *status);
 
 #endif

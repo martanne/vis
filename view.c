@@ -73,8 +73,8 @@ void window_status_update(Vis *vis, Win *win) {
 	View *view = &win->view;
 	File *file = win->file;
 	Text *txt = file->text;
-	int width = win->ui->width;
-	enum UiOption options = UI_OPTIONS_GET(view->ui);
+	int width = win->width;
+	enum UiOption options = win->options;
 	bool focused = vis->win == win;
 	const char *filename = file_name_get(file);
 	const char *mode = vis->mode->status;
@@ -118,7 +118,7 @@ void window_status_update(Vis *vis, Win *win) {
 		size_t col = view_cursors_col(sel);
 		if (col > UI_LARGE_FILE_LINE_SIZE) {
 			options |= UI_OPTION_LARGE_FILE;
-			view_options_set(&win->view, options);
+			win_options_set(win, options);
 		}
 		snprintf(right_parts[right_count++], sizeof(right_parts[0]),
 		         "%zu, %zu", line, col);
@@ -152,7 +152,7 @@ void window_status_update(Vis *vis, Win *win) {
 		spaces = 1;
 
 	snprintf(status, sizeof(status), "%s%*s%s", left, spaces, " ", right);
-	ui_window_status(win->ui, status);
+	ui_window_status(win, status);
 }
 
 void view_tabwidth_set(View *view, int tabwidth) {
@@ -201,8 +201,11 @@ static void view_clear(View *view) {
 	view->col = 0;
 	view->wrapcol = 0;
 	view->prevch_breakat = false;
-	if (view->ui)
-		ui_window_style_set(view->ui, &cell_blank, UI_STYLE_DEFAULT);
+
+	/* FIXME: awful garbage that only exists because every
+	 * struct in this program is an interdependent hellscape */
+	Win *win = (Win *)((char *)view - offsetof(Win, view));
+	ui_window_style_set(win, &cell_blank, UI_STYLE_DEFAULT);
 }
 
 static int view_max_text_width(const View *view) {
@@ -558,7 +561,8 @@ void view_reload(View *view, Text *text) {
 	view_cursors_to(view->selection, 0);
 }
 
-bool view_init(View *view, Text *text) {
+bool view_init(Win *win, Text *text) {
+	View *view = &win->view;
 	if (!text)
 		return false;
 
@@ -566,7 +570,7 @@ bool view_init(View *view, Text *text) {
 	view->tabwidth = 8;
 	view->breakat = strdup("");
 	view->wrapcolumn = 0;
-	view_options_set(view, 0);
+	win_options_set(win, 0);
 
 	if (!view->breakat ||
 	    !view_selections_new(view, 0) ||
@@ -859,7 +863,7 @@ void view_scroll_to(View *view, size_t pos) {
 	view_cursors_scroll_to(view->selection, pos);
 }
 
-void view_options_set(View *view, enum UiOption options) {
+void win_options_set(Win *win, enum UiOption options) {
 	const int mapping[] = {
 		[SYNTAX_SYMBOL_SPACE]    = UI_OPTION_SYMBOL_SPACE,
 		[SYNTAX_SYMBOL_TAB]      = UI_OPTION_SYMBOL_TAB,
@@ -869,17 +873,16 @@ void view_options_set(View *view, enum UiOption options) {
 	};
 
 	for (int i = 0; i < LENGTH(mapping); i++) {
-		view->symbols[i] = (options & mapping[i]) ? symbols_default[i] :
+		win->view.symbols[i] = (options & mapping[i]) ? symbols_default[i] :
 			symbols_none[i];
 	}
 
 	if (options & UI_OPTION_LINE_NUMBERS_ABSOLUTE)
 		options &= ~UI_OPTION_LARGE_FILE;
 
-	view->large_file = (options & UI_OPTION_LARGE_FILE);
+	win->view.large_file = (options & UI_OPTION_LARGE_FILE);
 
-	if (view->ui)
-		ui_window_options_set(view->ui, options);
+	ui_window_options_set(win, options);
 }
 
 bool view_breakat_set(View *view, const char *breakat) {
@@ -1332,7 +1335,8 @@ void view_selections_normalize(View *view) {
 		view_selections_set(prev, &range_prev);
 }
 
-void view_style(View *view, enum UiStyle style, size_t start, size_t end) {
+void win_style(Win *win, enum UiStyle style, size_t start, size_t end) {
+	View *view = &win->view;
 	if (end < view->start || start > view->end)
 		return;
 
@@ -1361,7 +1365,7 @@ void view_style(View *view, enum UiStyle style, size_t start, size_t end) {
 	do {
 		while (pos <= end && col < width) {
 			pos += line->cells[col].len;
-			ui_window_style_set(view->ui, &line->cells[col++], style);
+			ui_window_style_set(win, &line->cells[col++], style);
 		}
 		col = 0;
 	} while (pos <= end && (line = line->next));

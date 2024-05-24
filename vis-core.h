@@ -154,11 +154,15 @@ struct File { /* shared state among windows displaying the same file */
 };
 
 struct Win {
-	Vis *vis;               /* editor instance to which this window belongs */
-	UiWin *ui;              /* ui object handling visual appearance of this window */
-	File *file;             /* file being displayed in this window */
+	int id;                 /* unique identifier for this window */
+	int width, height;      /* window dimension including status bar */
+	int x, y;               /* window position */
+	int sidebar_width;      /* width of the sidebar showing line numbers etc. */
+	enum UiOption options;  /* display settings for this window */
 	View view;              /* currently displayed part of underlying text */
 	bool expandtab;         /* whether typed tabs should be converted to spaces in this window*/
+	Vis *vis;               /* editor instance to which this window belongs */
+	File *file;             /* file being displayed in this window */
 	MarkList jumplist;      /* LRU jump management */
 	Array saved_selections; /* register used to store selections */
 	Mode modes[VIS_MODE_INVALID]; /* overlay mods used for per window key bindings */

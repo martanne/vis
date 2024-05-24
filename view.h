@@ -49,7 +49,6 @@ typedef struct Selection {
 typedef struct View {
 	Text *text;         /* underlying text management */
 	char *textbuf;      /* scratch buffer used for drawing */
-	UiWin *ui;          /* corresponding ui window */
 	int width, height;  /* size of display area */
 	size_t start, end;  /* currently displayed area [start, end] in bytes from the start of the file */
 	size_t start_last;  /* previously used start of visible area, used to update the mark */
@@ -82,7 +81,7 @@ typedef struct View {
  * @defgroup view_life
  * @{
  */
-bool view_init(View*, Text*);
+bool view_init(struct Win*, Text*);
 void view_free(View*);
 void view_reload(View*, Text*);
 /**
@@ -339,13 +338,13 @@ bool view_regions_save(View*, Filerange*, SelectionRegion*);
  * @defgroup view_style
  * @{
  */
-void view_options_set(View*, enum UiOption options);
+void win_options_set(struct Win *, enum UiOption);
 bool view_breakat_set(View*, const char *breakat);
 
 /** Set how many spaces are used to display a tab `\t` character. */
 void view_tabwidth_set(View*, int tabwidth);
 /** Apply a style to a text range. */
-void view_style(View*, enum UiStyle, size_t start, size_t end);
+void win_style(struct Win*, enum UiStyle, size_t start, size_t end);
 
 /** @} */
 
