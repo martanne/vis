@@ -2214,9 +2214,33 @@ static void signal_handler(int signum, siginfo_t *siginfo, void *context) {
 }
 
 int main(int argc, char *argv[]) {
+	for (int i = 1; i < argc; i++) {
+		if (argv[i][0] != '-') {
+			continue;
+		} else if (strcmp(argv[i], "-") == 0) {
+			continue;
+		} else if (strcmp(argv[i], "--") == 0) {
+			break;
+		} else if (strcmp(argv[i], "-v") == 0) {
+			printf("vis %s%s%s%s%s%s%s\n", VERSION,
+			       CONFIG_CURSES  ? " +curses"  : "",
+			       CONFIG_LUA     ? " +lua"     : "",
+			       CONFIG_LPEG    ? " +lpeg"    : "",
+			       CONFIG_TRE     ? " +tre"     : "",
+			       CONFIG_ACL     ? " +acl"     : "",
+			       CONFIG_SELINUX ? " +selinux" : "");
+			return 0;
+		} else {
+			fprintf(stderr, "Unknown command option: %s\n", argv[i]);
+			return 1;
+		}
+	}
+
 	vis = vis_new();
 	if (!vis)
 		return EXIT_FAILURE;
+
+	vis_event_emit(vis, VIS_EVENT_INIT);
 
 	for (int i = 0; i < LENGTH(vis_action); i++) {
 		const KeyAction *action = &vis_action[i];
@@ -2263,28 +2287,6 @@ int main(int argc, char *argv[]) {
 	sigaddset(&blockset, SIGHUP);
 	if (sigprocmask(SIG_BLOCK, &blockset, NULL) == -1)
 		vis_die(vis, "Failed to block signals\n");
-
-	for (int i = 1; i < argc; i++) {
-		if (argv[i][0] != '-') {
-			continue;
-		} else if (strcmp(argv[i], "-") == 0) {
-			continue;
-		} else if (strcmp(argv[i], "--") == 0) {
-			break;
-		} else if (strcmp(argv[i], "-v") == 0) {
-			printf("vis %s%s%s%s%s%s%s\n", VERSION,
-			       CONFIG_CURSES ? " +curses" : "",
-			       CONFIG_LUA ? " +lua" : "",
-			       CONFIG_LPEG ? " +lpeg" : "",
-			       CONFIG_TRE ? " +tre" : "",
-			       CONFIG_ACL ? " +acl" : "",
-			       CONFIG_SELINUX ? " +selinux" : "");
-			return 0;
-		} else {
-			fprintf(stderr, "Unknown command option: %s\n", argv[i]);
-			return 1;
-		}
-	}
 
 	char *cmd = NULL;
 	bool end_of_options = false, win_created = false;

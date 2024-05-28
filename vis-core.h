@@ -205,7 +205,6 @@ struct Vis {
 	Action action_prev;                  /* last operator action used by the repeat (dot) command */
 	Mode *mode;                          /* currently active mode, used to search for keybindings */
 	Mode *mode_prev;                     /* previously active user mode */
-	bool initialized;                    /* whether UI and Lua integration has been initialized */
 	int nesting_level;                   /* parsing state to hold keep track of { } nesting level */
 	volatile bool running;               /* exit main loop once this becomes false */
 	int exit_status;                     /* exit status when terminating main loop */

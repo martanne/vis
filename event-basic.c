@@ -4,11 +4,6 @@
 
 #if !CONFIG_LUA
 bool vis_event_emit(Vis *vis, enum VisEvents id, ...) {
-	if (!vis->initialized) {
-		vis->initialized = true;
-		ui_init(&vis->ui, vis);
-	}
-
 	va_list ap;
 	va_start(ap, id);
 

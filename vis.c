@@ -573,6 +573,7 @@ Vis *vis_new(void) {
 		free(vis);
 		return NULL;
 	}
+	ui_init(&vis->ui, vis);
 	vis->change_colors = true;
 	for (size_t i = 0; i < LENGTH(vis->registers); i++)
 		register_init(&vis->registers[i]);

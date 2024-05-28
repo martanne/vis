@@ -3608,18 +3608,13 @@ static void vis_lua_ui_draw(Vis *vis) {
 }
 
 bool vis_event_emit(Vis *vis, enum VisEvents id, ...) {
-	if (!vis->initialized) {
-		vis->initialized = true;
-		ui_init(&vis->ui, vis);
-		vis_lua_init(vis);
-	}
-
 	va_list ap;
 	va_start(ap, id);
 	bool ret = true;
 
 	switch (id) {
 	case VIS_EVENT_INIT:
+		vis_lua_init(vis);
 		break;
 	case VIS_EVENT_START:
 		vis_lua_start(vis);
