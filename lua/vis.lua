@@ -131,7 +131,8 @@ else
 	local load_lexer = vis.lexers.load
 	vis.lexers.load = function (name, alt_name, cache)
 		if cache and lexers[alt_name or name] then return lexers[alt_name or name] end
-		local lexer = load_lexer(name, alt_name)
+		local status, lexer = pcall(load_lexer, name, alt_name)
+		if not status then return nil end
 		if cache then lexers[alt_name or name] = lexer end
 		return lexer
 	end
@@ -276,6 +277,7 @@ vis.types.window.set_syntax = function(win, syntax)
 		win.syntax = nil
 		return true
 	end
+	win.syntax = syntax
 
 	if not lexers.load then return false end
 	local lexer = lexers.load(syntax)
@@ -297,7 +299,6 @@ vis.types.window.set_syntax = function(win, syntax)
 		if style ~= nil then win:style_define(id, style) end
 	end
 
-	win.syntax = syntax
 	return true
 end
 

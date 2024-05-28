@@ -8,13 +8,17 @@ vis:textobject_new("ii", function(win, pos)
 		return nil
 	end
 
+	local lexer = vis.lexers.load(win.syntax, nil, true)
+	if not lexer then
+		return nil
+	end
+
 	local before, after = pos - MAX_CONTEXT, pos + MAX_CONTEXT
 	if before < 0 then
 		before = 0
 	end
 	-- TODO make sure we start at a line boundary?
 
-	local lexer = vis.lexers.load(win.syntax, nil, true)
 	local data = win.file:content(before, after - before)
 	local tokens = lexer:lex(data)
 	local cur = before
