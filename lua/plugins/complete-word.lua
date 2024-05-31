@@ -24,8 +24,7 @@ vis:map(vis.modes.INSERT, "<C-n>", function()
 	if #candidates == 1 and candidates[1] == "\n" then return end
 	candidates = table.concat(candidates, "\n")
 
-	local cmd = "printf '" .. candidates .. "' | sort -u | vis-menu"
-	local status, out, err = vis:pipe(cmd)
+	local status, out, err = vis:pipe_buffer(candidates, "sort -u | vis-menu")
 	if status ~= 0 or not out then
 		if err then vis:info(err) end
 		return
