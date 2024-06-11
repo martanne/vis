@@ -29,7 +29,7 @@ SRC = array.c \
 	vis-text-objects.c \
 	vis.c \
 	$(REGEX_SRC)
-OBJ = $(SRC:%.c=obj/%.o)
+OBJ = $(SRC:%.c=%.o)
 
 ELF = vis vis-menu vis-digraph
 EXECUTABLES = $(ELF) vis-clipboard vis-complete vis-open
@@ -82,16 +82,11 @@ config.h:
 config.mk:
 	@touch $@
 
-obj/.tstamp:
-	mkdir obj
-	touch obj/.tstamp
+.c.o:
+	${CC} ${CFLAGS} ${CFLAGS_VIS} ${CFLAGS_EXTRA} -o $@ -c $<
 
-obj/main.o: config.h
-
-$(OBJ): config.mk obj/.tstamp
-	${CC} ${CFLAGS} ${CFLAGS_VIS} ${CFLAGS_EXTRA} -o $@ -c $(@:obj/%.o=%.c)
-
--include obj/*.d
+-include *.d
+${OBJ}: config.mk config.h
 
 vis: ${OBJ}
 	${CC} -o $@ ${OBJ} ${LDFLAGS} ${LDFLAGS_VIS} ${LDFLAGS_EXTRA}
@@ -157,8 +152,7 @@ testclean:
 
 clean:
 	@echo cleaning
-	@rm -rf obj
-	@rm -f $(ELF) vis-single vis-single-payload.inc vis-*.tar.gz *.gcov *.gcda *.gcno *.d
+	@rm -f $(ELF) $(OBJ) vis-single vis-single-payload.inc vis-*.tar.gz *.gcov *.gcda *.gcno *.d
 
 distclean: clean testclean
 	@echo cleaning build configuration
