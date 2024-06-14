@@ -874,7 +874,7 @@ static bool cmd_help(Vis *vis, Win *win, Command *cmd, const char *argv[], Selec
 	view_cursors_to(vis->win->view.selection, 0);
 
 	if (argv[1])
-		vis_motion(vis, VIS_MOVE_SEARCH_FORWARD, argv[1]);
+		vis_motion(vis, VIS_MOVE_SEARCH_FORWARD, argv[1], strlen(argv[1]));
 	return true;
 }
 

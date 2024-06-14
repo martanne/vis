@@ -4,17 +4,17 @@
 #include "text-objects.h"
 #include "text-util.h"
 
-bool vis_prompt_cmd(Vis *vis, const char *cmd) {
-	if (!cmd || !cmd[0] || !cmd[1])
+bool vis_prompt_cmd(Vis *vis, const char *cmd, size_t len) {
+	if (!cmd || len < 2)
 		return true;
 	switch (cmd[0]) {
 	case '/':
-		return vis_motion(vis, VIS_MOVE_SEARCH_FORWARD, cmd+1);
+		return vis_motion(vis, VIS_MOVE_SEARCH_FORWARD, cmd+1, len-1);
 	case '?':
-		return vis_motion(vis, VIS_MOVE_SEARCH_BACKWARD, cmd+1);
+		return vis_motion(vis, VIS_MOVE_SEARCH_BACKWARD, cmd+1, len-1);
 	case '+':
 	case ':':
-		register_put0(vis, &vis->registers[VIS_REG_COMMAND], cmd+1);
+		register_put(vis, &vis->registers[VIS_REG_COMMAND], cmd+1, len-1);
 		return vis_cmd(vis, cmd+1);
 	default:
 		return false;
@@ -53,6 +53,7 @@ static const char *prompt_enter(Vis *vis, const char *keys, const Arg *arg) {
 	Text *txt = prompt->file->text;
 	Win *win = prompt->parent;
 	char *cmd = NULL;
+	size_t len = 0;
 
 	Filerange range = view_selections_get(view->selection);
 	if (!vis->mode->visual) {
@@ -64,7 +65,7 @@ static const char *prompt_enter(Vis *vis, const char *keys, const Arg *arg) {
 		else if (prompt->file == vis->search_file)
 			pattern = "^(/|\\?)";
 		int cflags = REG_EXTENDED|REG_NEWLINE|(REG_ICASE*vis->ignorecase);
-		if (pattern && regex && text_regex_compile(regex, pattern, 0, cflags) == 0) {
+		if (pattern && regex && text_regex_compile(regex, pattern, strlen(pattern), cflags) == 0) {
 			size_t end = text_line_end(txt, pos);
 			size_t prev = text_search_backward(txt, end, regex);
 			if (prev > pos)
@@ -76,8 +77,10 @@ static const char *prompt_enter(Vis *vis, const char *keys, const Arg *arg) {
 		}
 		text_regex_free(regex);
 	}
-	if (text_range_valid(&range))
-		cmd = text_bytes_alloc0(txt, range.start, text_range_size(&range));
+	if (text_range_valid(&range)) {
+		len = text_range_size(&range);
+		cmd = text_bytes_alloc0(txt, range.start, len);
+	}
 
 	if (!win || !cmd) {
 		if (!win)
@@ -90,14 +93,14 @@ static const char *prompt_enter(Vis *vis, const char *keys, const Arg *arg) {
 		return keys;
 	}
 
-	size_t len = strlen(cmd);
-	if (len > 0 && cmd[len-1] == '\n')
-		cmd[len-1] = '\0';
+	if (len > 0 && cmd[len-1] == '\n') {
+		cmd[--len] = '\0';
+	}
 
 	bool lastline = (range.end == text_size(txt));
 
 	prompt_restore(prompt);
-	if (vis_prompt_cmd(vis, cmd)) {
+	if (vis_prompt_cmd(vis, cmd, len)) {
 		prompt_hide(prompt);
 		if (!lastline) {
 			text_delete(txt, range.start, text_range_size(&range));

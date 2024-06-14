@@ -16,10 +16,10 @@ static Regex *search_word(Vis *vis, Text *txt, size_t pos) {
 	if (!buf)
 		return NULL;
 	snprintf(expr, sizeof(expr), "[[:<:]]%s[[:>:]]", buf);
-	Regex *regex = vis_regex(vis, expr);
+	Regex *regex = vis_regex(vis, expr, strlen(expr));
 	if (!regex) {
 		snprintf(expr, sizeof(expr), "\\<%s\\>", buf);
-		regex = vis_regex(vis, expr);
+		regex = vis_regex(vis, expr, strlen(expr));
 	}
 	free(buf);
 	return regex;
@@ -46,7 +46,7 @@ static size_t search_word_backward(Vis *vis, Text *txt, size_t pos) {
 }
 
 static size_t search_forward(Vis *vis, Text *txt, size_t pos) {
-	Regex *regex = vis_regex(vis, NULL);
+	Regex *regex = vis_regex(vis, NULL, 0);
 	if (regex)
 		pos = text_search_forward(txt, pos, regex);
 	text_regex_free(regex);
@@ -54,7 +54,7 @@ static size_t search_forward(Vis *vis, Text *txt, size_t pos) {
 }
 
 static size_t search_backward(Vis *vis, Text *txt, size_t pos) {
-	Regex *regex = vis_regex(vis, NULL);
+	Regex *regex = vis_regex(vis, NULL, 0);
 	if (regex)
 		pos = text_search_backward(txt, pos, regex);
 	text_regex_free(regex);
@@ -293,7 +293,8 @@ bool vis_motion(Vis *vis, enum VisMotion motion, ...) {
 	case VIS_MOVE_SEARCH_BACKWARD:
 	{
 		const char *pattern = va_arg(ap, char*);
-		Regex *regex = vis_regex(vis, pattern);
+		size_t len = va_arg(ap, size_t);
+		Regex *regex = vis_regex(vis, pattern, len);
 		if (!regex) {
 			vis_cancel(vis);
 			goto err;

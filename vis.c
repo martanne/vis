@@ -1578,8 +1578,7 @@ void vis_insert_nl(Vis *vis) {
 	vis_window_invalidate(win);
 }
 
-Regex *vis_regex(Vis *vis, const char *pattern) {
-	size_t len = 0;
+Regex *vis_regex(Vis *vis, const char *pattern, size_t len) {
 	if (!pattern && !(pattern = register_get(vis, &vis->registers[VIS_REG_SEARCH], &len)))
 		return NULL;
 	Regex *regex = text_regex_new();
@@ -1590,8 +1589,7 @@ Regex *vis_regex(Vis *vis, const char *pattern) {
 		text_regex_free(regex);
 		return NULL;
 	}
-	if (len == 0)
-		register_put0(vis, &vis->registers[VIS_REG_SEARCH], pattern);
+	register_put(vis, &vis->registers[VIS_REG_SEARCH], pattern, len+1);
 	return regex;
 }
 
