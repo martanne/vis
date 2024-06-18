@@ -74,7 +74,7 @@ lex:set_word_list(lexer.FUNCTION_BUILTIN, {
   'vaarg', 'vaend', 'vastart'
 })
 
-lex:set_word_list(lexer.CONSTANT_BUILTIN, 'false null true void')
+lex:set_word_list(lexer.CONSTANT_BUILTIN, 'done false null true void')
 
 lexer.property['scintillua.comment'] = '//'
 

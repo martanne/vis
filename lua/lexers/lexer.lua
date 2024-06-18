@@ -1269,8 +1269,7 @@ function M.fold(lexer, text, start_line, start_level)
   local folds = {}
   if text == '' then return folds end
   local fold = M.property_int['fold'] > 0
-  local FOLD_BASE = M.FOLD_BASE or 0x400
-  local FOLD_HEADER, FOLD_BLANK = M.FOLD_HEADER or 0x2000, M.FOLD_BLANK or 0x1000
+  local FOLD_BASE, FOLD_HEADER, FOLD_BLANK = M.FOLD_BASE, M.FOLD_HEADER, M.FOLD_BLANK
   if M._standalone then M._text, M.line_state = text, {} end
   if fold and lexer._fold_points then
     local lines = {}
@@ -1443,8 +1442,8 @@ function M.new(name, opts)
   return lexer
 end
 
---- Creates a substitute for some Scintilla tables and functions that Scintillua depends on
--- when using it as a standalone module.
+--- Creates a substitute for some Scintilla tables, functions, and fields that Scintillua
+-- depends on when using it as a standalone module.
 local function initialize_standalone_library()
   M.property = setmetatable({['scintillua.lexers'] = package.path:gsub('/%?%.lua', '/lexers')}, {
     __index = function() return '' end, __newindex = function(t, k, v) rawset(t, k, tostring(v)) end
@@ -1470,6 +1469,8 @@ local function initialize_standalone_library()
       end
     end
   })
+
+  M.FOLD_BASE, M.FOLD_HEADER, M.FOLD_BLANK = 0x400, 0x2000, 0x1000
 
   M._standalone = true
 end
