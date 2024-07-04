@@ -8,19 +8,24 @@
 #include "util.h"
 
 static Regex *search_word(Vis *vis, Text *txt, size_t pos) {
-	char expr[512];
 	Filerange word = text_object_word(txt, pos);
 	if (!text_range_valid(&word))
 		return NULL;
-	char *buf = text_bytes_alloc0(txt, word.start, text_range_size(&word));
+	size_t word_len = text_range_size(&word);
+	char *buf = text_bytes_alloc0(txt, word.start, word_len);
 	if (!buf)
 		return NULL;
-	snprintf(expr, sizeof(expr), "[[:<:]]%s[[:>:]]", buf);
-	Regex *regex = vis_regex(vis, expr, strlen(expr));
+	size_t max_len = word_len + 15;
+	char *expr = malloc(max_len);
+	if (!expr)
+		return NULL;
+	size_t expr_len = snprintf(expr, max_len, "[[:<:]]%s[[:>:]]", buf);
+	Regex *regex = vis_regex(vis, expr, expr_len);
 	if (!regex) {
-		snprintf(expr, sizeof(expr), "\\<%s\\>", buf);
-		regex = vis_regex(vis, expr, strlen(expr));
+		expr_len = snprintf(expr, max_len, "\\<%s\\>", buf);
+		regex = vis_regex(vis, expr, expr_len);
 	}
+	free(expr);
 	free(buf);
 	return regex;
 }
