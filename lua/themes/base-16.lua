@@ -51,6 +51,8 @@ lexers.STYLE_PSEUDOELEMENT = ''
 
 -- HTML
 lexers.STYLE_TAG_UNKNOWN = lexers.STYLE_TAG .. ',italics'
+lexers.STYLE_TAG_SINGLE = lexers.STYLE_TAG
+lexers.STYLE_TAG_DOCTYPE = lexers.STYLE_TAG .. ',bold'
 lexers.STYLE_ATTRIBUTE_UNKNOWN = lexers.STYLE_ATTRIBUTE .. ',italics'
 
 -- Latex, TeX, and Texinfo
