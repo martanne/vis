@@ -836,7 +836,7 @@ bool vis_option_register(Vis*, const char *names[], enum VisOption,
 bool vis_option_unregister(Vis*, const char *name);
 
 /** Execute any kind (``:``, ``?``, ``/``) of prompt command */
-bool vis_prompt_cmd(Vis*, const char *cmd);
+bool vis_prompt_cmd(Vis*, const char *cmd, size_t len);
 
 /**
  * Pipe a given file range to an external process.
@@ -921,7 +921,7 @@ void vis_keys_feed(Vis*, const char *keys);
  * .. warning:: The caller must free the regex object using `text_regex_free`.
  * @endrst
  */
-Regex *vis_regex(Vis*, const char *pattern);
+Regex *vis_regex(Vis*, const char *pattern, size_t len);
 
 /**
  * Take an undo snapshot to which we can later revert.
