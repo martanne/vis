@@ -1,98 +1,93 @@
--- Copyright 2006-2024 Mitchell. See LICENSE.
--- Copyright 2017 Michel Martens.
--- Crystal LPeg lexer (based on Ruby).
+-- Copyright 2006-2024 Mitchell. See LICENSE. 
+-- Copyright 2024 Brett Mahar. See LICENSE.
+-- Odin LPeg lexer.
 
-local lexer = require('lexer')
-local token, word_match = lexer.token, lexer.word_match
+local lexer = lexer
 local P, S = lpeg.P, lpeg.S
 
-local lex = lexer.new('crystal')
-
--- Whitespace.
-lex:add_rule('whitespace', token(lexer.WHITESPACE, lexer.space^1))
+local lex = lexer.new(...)
 
 -- Keywords.
-lex:add_rule('keyword', token(lexer.KEYWORD, word_match{
-  'alias', 'begin', 'break', 'case', 'class', 'def', 'defined?', 'do', 'else', 'elsif', 'end',
-  'ensure', 'false', 'for', 'if', 'in', 'module', 'next', 'nil', 'not', 'redo', 'rescue', 'retry',
-  'return', 'self', 'super', 'then', 'true', 'undef', 'unless', 'until', 'when', 'while', 'yield',
-  '__FILE__', '__LINE__'
-}))
+lex:add_rule('keyword', lex:tag(lexer.KEYWORD, lex:word_match(lexer.KEYWORD)))
+
+-- Constants.
+lex:add_rule('constant', lex:tag(lexer.CONSTANT_BUILTIN, lex:word_match(lexer.CONSTANT_BUILTIN)))
+
+-- Types.
+lex:add_rule('type', lex:tag(lexer.TYPE, lex:word_match(lexer.TYPE)))
 
 -- Functions.
-lex:add_rule('function', token(lexer.FUNCTION, word_match{
-  'abort', 'at_exit', 'caller', 'delay', 'exit', 'fork', 'future', 'get_stack_top', 'gets', 'lazy',
-  'loop', 'main', 'p', 'print', 'printf', 'puts', 'raise', 'rand', 'read_line', 'require', 'sleep',
-  'spawn', 'sprintf', 'system', 'with_color',
-  -- Macros.
-  'assert_responds_to', 'debugger', 'parallel', 'pp', 'record', 'redefine_main'
-}) * -S('.:|'))
+local builtin_func = -lpeg.B('.') *
+  lex:tag(lexer.FUNCTION_BUILTIN, lex:word_match(lexer.FUNCTION_BUILTIN))
+local func = lex:tag(lexer.FUNCTION, lexer.word)
+local method = lpeg.B('.') * lex:tag(lexer.FUNCTION_METHOD, lexer.word)
+lex:add_rule('function', (builtin_func + method + func) * #(lexer.space^0 * '('))
 
 -- Identifiers.
-local word_char = lexer.alnum + S('_!?')
-local word = (lexer.alpha + '_') * word_char^0
-lex:add_rule('identifier', token(lexer.IDENTIFIER, word))
-
--- Comments.
-lex:add_rule('comment', token(lexer.COMMENT, lexer.to_eol('#', true)))
+lex:add_rule('identifier', lex:tag(lexer.IDENTIFIER, lexer.word))
 
 -- Strings.
-local cmd_str = lexer.range('`')
-local sq_str = lexer.range("'")
-local dq_str = lexer.range('"')
-local heredoc = '<<' * P(function(input, index)
-  local _, e, indented, _, delimiter = input:find('^(%-?)(["`]?)([%a_][%w_]*)%2[\n\r\f;]+', index)
-  if not delimiter then return end
-  local end_heredoc = (#indented > 0 and '[\n\r\f]+ *' or '[\n\r\f]+')
-  _, e = input:find(end_heredoc .. delimiter, e)
-  return e and e + 1 or #input + 1
-end)
-local string = token(lexer.STRING, (sq_str + dq_str + heredoc + cmd_str) * S('f')^-1)
--- TODO: regex_str fails with `obj.method /patt/` syntax.
-local regex_str = lexer.after_set('!%^&*([{-=+|:;,?<>~', lexer.range('/', true) * S('iomx')^0)
-local regex = token(lexer.REGEX, regex_str)
-lex:add_rule('string', string + regex)
+local sq_str = lexer.range("'", true)
+local dq_str = lexer.range('"', true)
+local raw_str = lexer.range('`', false, false)
+lex:add_rule('string', lex:tag(lexer.STRING, sq_str + dq_str + raw_str))
+
+-- Comments.
+local line_comment = lexer.to_eol('//')
+local block_comment = lexer.range('/*', '*/')
+lex:add_rule('comment', lex:tag(lexer.COMMENT, line_comment + block_comment))
 
 -- Numbers.
-local numeric_literal = '?' * (lexer.any - lexer.space) * -word_char -- TODO: meta, control, etc.
-lex:add_rule('number', token(lexer.NUMBER, lexer.number_('_') * S('ri')^-1 + numeric_literal))
-
--- Variables.
-local global_var = '$' *
-  (word + S('!@L+`\'=~/\\,.;<>_*"$?:') + lexer.digit + '-' * S('0FadiIKlpvw'))
-local class_var = '@@' * word
-local inst_var = '@' * word
-lex:add_rule('variable', token(lexer.VARIABLE, global_var + class_var + inst_var))
-
--- Symbols.
-lex:add_rule('symbol', token('symbol', ':' * P(function(input, index)
-  if input:sub(index - 2, index - 2) ~= ':' then return true end
-end) * (word_char^1 + sq_str + dq_str)))
-lex:add_style('symbol', lexer.styles.constant)
+lex:add_rule('number', lex:tag(lexer.NUMBER, lexer.number * P('i')^-1))
 
 -- Operators.
-lex:add_rule('operator', token(lexer.OPERATOR, S('!%^&*()[]{}-=+/|:;.,?<>~')))
+lex:add_rule('operator', lex:tag(lexer.OPERATOR, S('@?+-#*/$%&|^<>=!~:;.,()[]{}')))
 
 -- Fold points.
-local function disambiguate(text, pos, line, s)
-  return line:sub(1, s - 1):match('^%s*$') and not text:sub(1, pos - 1):match('\\[ \t]*\r?\n$') and
-    1 or 0
-end
-lex:add_fold_point(lexer.KEYWORD, 'begin', 'end')
-lex:add_fold_point(lexer.KEYWORD, 'case', 'end')
-lex:add_fold_point(lexer.KEYWORD, 'class', 'end')
-lex:add_fold_point(lexer.KEYWORD, 'def', 'end')
-lex:add_fold_point(lexer.KEYWORD, 'do', 'end')
-lex:add_fold_point(lexer.KEYWORD, 'for', 'end')
-lex:add_fold_point(lexer.KEYWORD, 'module', 'end')
-lex:add_fold_point(lexer.KEYWORD, 'if', disambiguate)
-lex:add_fold_point(lexer.KEYWORD, 'while', disambiguate)
-lex:add_fold_point(lexer.KEYWORD, 'unless', disambiguate)
-lex:add_fold_point(lexer.KEYWORD, 'until', disambiguate)
-lex:add_fold_point(lexer.OPERATOR, '(', ')')
-lex:add_fold_point(lexer.OPERATOR, '[', ']')
 lex:add_fold_point(lexer.OPERATOR, '{', '}')
+lex:add_fold_point(lexer.COMMENT, '/*', '*/')
 
-lexer.property['scintillua.comment'] = '#'
+-- Word lists.
+lex:set_word_list(lexer.KEYWORD, {
+  -- keyword control
+  'asm', 'yield', 'await', 'using', 'do', 'inline', 'no_inline', 'fallthrough', 'break', 'continue', 
+  'case', 'vector', 'static', 'dynamic', 'atomic', 'push_allocator', 'push_context', 'if', 'else', 
+  'when', 'for', 'in', 'not_in', 'defer', 'switch', 'return', 'const', 'import', 'export', 'foreign', 
+  'package', 'import_load', 'foreign_library', 'foreign_system_library', 'or_else', 'or_return',
+  'or_break','or_continue', 'where', 'expect', 'syscall',
+  -- keyword operator
+  'distinct', 'context',
+  -- keyword function
+  'size_of', 'align_of', 'offset_of', 'type_of', 'type_info', 'type_info_of', 'typeid_of', 'identifier', 
+  'cast', 'transmute', 'auto_cast', 'down_cast', 'union_cast', 'accumulator', 'offset_of_selector',
+  'offset_of_member', 'offset_of_by_string', 'swizzle', 'min', 'max', 'abs', 'clamp', 
+  'is_package_imported', 'sqrt', 'valgrind_client_request'  
+})
+
+lex:set_word_list(lexer.CONSTANT_BUILTIN, 'true false nil iota')
+
+lex:set_word_list(lexer.TYPE, {
+  -- type
+  'i8', 'i16', 'i32', 'i64', 'i128', 'int', 'u8', 'u32', 'u64', 'u128', 'uint', 'uintptr', 
+  'f16', 'f32', 'f64', 'complex32', 'complex64', 'complex128', 'bool', 'b8', 'b16', 'b32', 'b64',
+  'string', 'rune', 'rawptr', 'any', 'byte', 'cstring', 'complex', 'quaternion', 'real', 'imag',
+  'jmag', 'kmag', 'conj', 
+  -- storage type 
+  'type', 'var', 'dynamic', 'struct', 'enum', 'union', 'map', 'set', 'bit_set', 'bit_field', 'typeid', 
+  'matrix', 'rawunion', 'proc', 'macro', 'soa_struct' 
+})
+
+lex:set_word_list(lexer.FUNCTION_BUILTIN, {
+  'len', 'cap', 'make', 'resize', 'reserve', 'append', 'delete', 'assertf?', 'panicf?', 
+  -- package annotations
+  'thread_local', 'test', 'static', 'require_target_feature', 'require_results', 'require', 'private', 
+  'optimization_mode', 'objc_type', 'objc_name', 'objc_is_class_method', 'objc_class', 
+  'no_instrumentation', 'linkage', 'link_prefix', 'link_name', 'instrumentation_enter', 
+  'instrumentation_exit', 'init', 'fini', 'extra_linker_flags', 'disabled', 'entry_point_only', 
+  'enable_target_feature', 'enable_target_features', 'deprecated', 'deferred_out', 'deferred_in_out', 
+  'deferred_in', 'builtin', 'cold', 'default_calling_convention'  
+})
+
+lexer.property['scintillua.comment'] = '//'
 
 return lex
