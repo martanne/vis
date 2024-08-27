@@ -278,6 +278,9 @@ vis.ftdetect.filetypes = {
 		ext = { "%.md$", "%.markdown$" },
 		mime = { "text/x-markdown" },
 	},
+	mediawiki = {
+		ext = { "%.wiki$" },
+	},
 	meson = {
 		ext = { "^meson%.build$" },
 	},
