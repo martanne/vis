@@ -24,6 +24,7 @@ jobs:
     - name: Dependency Homebrew
       run: |
         brew install \
+          busted \
           coreutils \
           libtermkey \
           lua \
