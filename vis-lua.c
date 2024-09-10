@@ -1254,15 +1254,19 @@ static int pipe_func(lua_State *L) {
 	const char *text = NULL;
 	File *file = vis->win ? vis->win->file : NULL;
 	Filerange range = text_range_new(0, 0);
-	if (lua_gettop(L) == 2) {
+	if (lua_gettop(L) == 2) { // vis:pipe(cmd)
 		cmd_idx = 2;
 	} else if (lua_gettop(L) == 3) {
-		text = luaL_checkstring(L, 2);
-		if (text != NULL)
-			cmd_idx = 3;
-		else
+		if (lua_isboolean(L, 3)) { // vis:pipe(cmd, fullscreen)
 			cmd_idx = 2;
-	} else if (!(lua_isnil(L, 2) && lua_isnil(L, 3))) {
+		} else { // vis:pipe(text, cmd)
+			text = luaL_checkstring(L, 2);
+			cmd_idx = 3;
+		}
+	} else if (lua_isboolean(L, 4)) { // vis:pipe(text, cmd, fullscreen)
+		text = luaL_checkstring(L, 2);
+		cmd_idx = 3;
+	} else if (!(lua_isnil(L, 2) && lua_isnil(L, 3))) { // vis:pipe(file, range, cmd, [fullscreen])
 		file = obj_ref_check(L, 2, VIS_LUA_TYPE_FILE);
 		range = getrange(L, 3);
 	}
