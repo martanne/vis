@@ -51,6 +51,9 @@ local include = lex:tag(lexer.PREPROCESSOR, '#' * S('\t ')^0 * 'include') *
 local preproc = lex:tag(lexer.PREPROCESSOR, '#' * S('\t ')^0 * lex:word_match(lexer.PREPROCESSOR))
 lex:add_rule('preprocessor', include + preproc)
 
+-- Attributes.
+lex:add_rule('attribute', lex:tag(lexer.ATTRIBUTE, '[[' * (lex:word_match(lexer.ATTRIBUTE)+ (lexer.word * ':' * lexer.word)) * ']]'))
+
 -- Operators.
 lex:add_rule('operator', lex:tag(lexer.OPERATOR, S('+-/*%<>~!=^&|?~:;,.()[]{}')))
 
@@ -192,6 +195,11 @@ lex:set_word_list(lexer.CONSTANT_BUILTIN, {
 lex:set_word_list(lexer.PREPROCESSOR, {
   'define', 'defined', 'elif', 'else', 'endif', 'error', 'if', 'ifdef', 'ifndef', 'line', 'pragma',
   'undef'
+})
+
+lex:set_word_list(lexer.ATTRIBUTE, { -- C23
+  'depreciated', 'fallthrough', 'maybe_unused',
+  'nodiscard', 'noreturn', '_Noreturn', 'unsequenced', 'reproducible'
 })
 
 lexer.property['scintillua.comment'] = '//'
