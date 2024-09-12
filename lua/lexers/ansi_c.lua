@@ -36,8 +36,9 @@ lex:add_rule('identifier', lex:tag(lexer.IDENTIFIER, lexer.word))
 
 -- Comments.
 local line_comment = lexer.to_eol('//', true)
+local ws = S(' \t')^0
 local block_comment = lexer.range('/*', '*/') +
-  lexer.range('#if' * S(' \t')^0 * '0' * lexer.space, '#endif')
+  lexer.range('#if' * ws * '0' * lexer.space, '#endif')
 lex:add_rule('comment', lex:tag(lexer.COMMENT, line_comment + block_comment))
 
 -- Numbers.
@@ -46,10 +47,17 @@ local float = lexer.float * P('f')^-1
 lex:add_rule('number', lex:tag(lexer.NUMBER, float + integer))
 
 -- Preprocessor.
-local include = lex:tag(lexer.PREPROCESSOR, '#' * S('\t ')^0 * 'include') *
+local include = lex:tag(lexer.PREPROCESSOR, '#' * ws * 'include') *
   (lex:get_rule('whitespace') * lex:tag(lexer.STRING, lexer.range('<', '>', true)))^-1
-local preproc = lex:tag(lexer.PREPROCESSOR, '#' * S('\t ')^0 * lex:word_match(lexer.PREPROCESSOR))
+local preproc = lex:tag(lexer.PREPROCESSOR, '#' * ws * lex:word_match(lexer.PREPROCESSOR))
 lex:add_rule('preprocessor', include + preproc)
+
+-- Attributes.
+local standard_attr = lex:word_match(lexer.ATTRIBUTE)
+local non_standard_attr = lexer.word * '::' * lexer.word
+local attr_args = lexer.range('(', ')')
+local attr = (non_standard_attr + standard_attr) * attr_args^-1
+lex:add_rule('attribute', lex:tag(lexer.ATTRIBUTE, '[[' * attr * (ws * ',' * ws * attr)^0 * ']]'))
 
 -- Operators.
 lex:add_rule('operator', lex:tag(lexer.OPERATOR, S('+-/*%<>~!=^&|?~:;,.()[]{}')))
@@ -192,6 +200,12 @@ lex:set_word_list(lexer.CONSTANT_BUILTIN, {
 lex:set_word_list(lexer.PREPROCESSOR, {
   'define', 'defined', 'elif', 'else', 'endif', 'error', 'if', 'ifdef', 'ifndef', 'line', 'pragma',
   'undef'
+})
+
+lex:set_word_list(lexer.ATTRIBUTE, {
+  -- C23
+  'deprecated', 'fallthrough', 'nodiscard', 'maybe_unused', 'noreturn', '_Noreturn', 'unsequenced',
+  'reproducible'
 })
 
 lexer.property['scintillua.comment'] = '//'
