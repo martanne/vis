@@ -781,6 +781,8 @@ local lpeg = lpeg
 local P, R, S, V, B = lpeg.P, lpeg.R, lpeg.S, lpeg.V, lpeg.B
 local Ct, Cc, Cp, Cmt, C = lpeg.Ct, lpeg.Cc, lpeg.Cp, lpeg.Cmt, lpeg.C
 
+lpeg.setmaxstack(2048) -- the default of 400 is too low for complex grammars
+
 --- Default tags.
 local default = {
   'whitespace', 'comment', 'string', 'number', 'keyword', 'identifier', 'operator', 'error',
