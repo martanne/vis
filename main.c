@@ -2321,7 +2321,7 @@ int main(int argc, char *argv[]) {
 		}
 		win_created = true;
 		if (cmd) {
-			vis_prompt_cmd(vis, cmd);
+			vis_prompt_cmd(vis, cmd, strlen(cmd));
 			cmd = NULL;
 		}
 	}
@@ -2330,7 +2330,7 @@ int main(int argc, char *argv[]) {
 		if (!vis_window_new(vis, NULL))
 			vis_die(vis, "Can not create empty buffer\n");
 		if (cmd)
-			vis_prompt_cmd(vis, cmd);
+			vis_prompt_cmd(vis, cmd, strlen(cmd));
 	}
 
 	int status = vis_run(vis);
