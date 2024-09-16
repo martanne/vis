@@ -66,8 +66,8 @@ lex:set_word_list(lexer.KEYWORD, {
   'altreg', 'smartalign', 'fp', 'ifunc',
   -- Directives.
   'absolute', 'bits', 'class', 'common', 'common', 'cpu', 'default', 'export', 'extern', 'float',
-  'global', 'group', 'import', 'osabi', 'overlay', 'private', 'public', '__SECT__', 'section',
-  'segment', 'stack', 'use16', 'use32', 'use64',
+  'global', 'group', 'import', 'org', 'osabi', 'overlay', 'private', 'public', '__SECT__',
+  'section', 'segment', 'stack', 'use16', 'use32', 'use64',
   -- Section Names.
   '.bss', '.comment', '.data', '.lbss', '.ldata', '.lrodata', '.rdata', '.rodata', '.tbss',
   '.tdata', '.text',
