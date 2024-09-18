@@ -2,20 +2,18 @@
 -- Literate CoffeeScript LPeg lexer.
 -- http://coffeescript.org/#literate
 
-local lexer = require('lexer')
-local token = lexer.token
+local lexer = lexer
 local P, S = lpeg.P, lpeg.S
 
-local lex = lexer.new('litcoffee', {inherit = lexer.load('markdown')})
+local lex = lexer.new(..., {inherit = lexer.load('markdown')})
+
+-- Distinguish between horizontal and vertical space so coffee_start_rule has a chance to match.
+lex:modify_rule('whitespace', lex:tag(lexer.WHITESPACE, S(' \t')^1 + S('\r\n')^1))
 
 -- Embedded CoffeeScript.
 local coffeescript = lexer.load('coffeescript')
-local coffee_start_rule = token(lexer.EMBEDDED, (P(' ')^4 + P('\t')))
-local coffee_end_rule = token(lexer.EMBEDDED, lexer.newline)
+local coffee_start_rule = #(P(' ')^4 + P('\t')) * lex:get_rule('whitespace')
+local coffee_end_rule = #lexer.newline * lex:get_rule('whitespace')
 lex:embed(coffeescript, coffee_start_rule, coffee_end_rule)
-
--- Use 'markdown_whitespace' instead of lexer.WHITESPACE since the latter would expand to
--- 'litcoffee_whitespace'.
-lex:modify_rule('whitespace', token('markdown_whitespace', S(' \t')^1 + S('\r\n')^1))
 
 return lex
