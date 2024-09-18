@@ -52,8 +52,10 @@ lex:add_rule('common', starts_line(c_filename) * colon * line * colon * (column 
   (warning + note + error))
 
 -- prog: filename:line: message (awk, lua)
-lex:add_rule('prog', starts_line(text(lexer.word)) * colon * c_filename * colon * line * colon *
-  (warning + error))
+-- /usr/bin/prog: filename:line: message
+lex:add_rule('prog',
+  starts_line(text(lexer.word + '/' * (lexer.any - ':')^1)) * colon * c_filename * colon * line *
+    colon * (warning + error))
 
 -- File "filename", line X (python)
 local py_filename = filename((lexer.nonnewline - '"')^1)
