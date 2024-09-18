@@ -173,7 +173,7 @@ local sphinx_levels = {
   ['#'] = 0, ['*'] = 1, ['='] = 2, ['-'] = 3, ['^'] = 4, ['"'] = 5
 }
 
-function lex:fold(text, start_pos, start_line, start_level)
+function lex:fold(text, start_line, start_level)
   local folds, line_starts = {}, {}
   for pos in (text .. '\n'):gmatch('().-\r?\n') do line_starts[#line_starts + 1] = pos end
   local style_at, CONSTANT, level = lexer.style_at, lexer.CONSTANT, start_level
@@ -185,7 +185,7 @@ function lex:fold(text, start_pos, start_line, start_level)
     local c = text:sub(pos, pos)
     local line_num = start_line + i - 1
     folds[line_num] = level
-    if style_at[start_pos + pos - 1] == CONSTANT and c:find('^[^%w%s]') then
+    if style_at[pos - 1] == CONSTANT and c:find('^[^%w%s]') then
       local sphinx_level = FOLD_BASE + (sphinx_levels[c] or #sphinx_levels)
       level = not sphinx and level - 1 or sphinx_level
       if level < FOLD_BASE then level = FOLD_BASE end
