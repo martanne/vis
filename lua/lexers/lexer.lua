@@ -845,8 +845,8 @@ local function word_list_id(lexer, i) return lexer._name .. '_wordlist' .. i end
 --   omitted for lexer-agnostic matching.
 -- @param word_list Either a string name of the word list to match from if *lexer* is given,
 --   or, if *lexer* is omitted, a list of words or a string list of words separated by spaces.
--- @param[opt] case_insensitive Optional boolean flag indicating whether or not the word match
---   is case-insensitive. The default value is `false`.
+-- @param[opt=false] case_insensitive Optional boolean flag indicating whether or not the word
+--   match is case-insensitive.
 -- @return pattern
 -- @usage lex:add_rule('keyword', lex:tag(lexer.KEYWORD, lex:word_match(lexer.KEYWORD)))
 -- @usage local keyword = lex:tag(lexer.KEYWORD, lexer.word_match{'foo', 'bar', 'baz'})
@@ -1586,7 +1586,7 @@ M.detect_patterns = {}
 -- line *line*.
 -- @param[opt] filename Optional string filename. The default value is read from the
 --   'lexer.scintillua.filename' property.
--- @param[opt] line Optional string first content line, such as a shebang line. The default
+-- @param[optchain] line Optional string first content line, such as a shebang line. The default
 --   value is read from the 'lexer.scintillua.line' property.
 -- @return string lexer name to pass to `load()`, or `nil` if none was detected
 -- @see detect_extensions
@@ -1848,8 +1848,8 @@ M.word = (M.alpha + '_') * (M.alnum + '_')^0
 -- *escape* indicates whether the end of the line can be escaped with a '\' character.
 -- @param[opt] prefix Optional string or pattern prefix to start matching at. The default value
 --   is any non-newline character.
--- @param[opt] escape Optional flag indicating whether or not newlines can be escaped by a '\'
---  character. The default value is `false`.
+-- @param[optchain=false] escape Optional flag indicating whether or not newlines can be escaped
+--  by a '\' character.
 -- @return pattern
 -- @usage local line_comment = lexer.to_eol('//')
 -- @usage local line_comment = lexer.to_eol(S('#;'))
@@ -1867,14 +1867,14 @@ end
 -- indicates whether or not to handle balanced ranges like parentheses, and requires *s* and *e*
 -- to be different.
 -- @param s String or pattern start of a range.
--- @param[opt] e Optional string or pattern end of a range. The default value is *s*.
--- @param[opt] single_line Optional flag indicating whether or not the range must be on a single
---   line. The default value is `false`.
--- @param[opt] escapes Optional flag indicating whether or not the range end may be escaped
---   by a '\' character. The default value is `false` unless *s* and *e* are identical,
+-- @param[opt=s] e Optional string or pattern end of a range. The default value is *s*.
+-- @param[optchain=false] single_line Optional flag indicating whether or not the range must
+--   be on a single line.
+-- @param[optchain] escapes Optional flag indicating whether or not the range end may be
+--   escaped by a '\' character. The default value is `false` unless *s* and *e* are identical,
 --   single-character strings. In that case, the default value is `true`.
--- @param[opt] balanced Optional flag indicating whether or not to match a balanced range,
---   like the "%b" Lua pattern. This flag only applies if *s* and *e* are different.
+-- @param[optchain=false] balanced Optional flag indicating whether or not to match a balanced
+--   range, like the "%b" Lua pattern. This flag only applies if *s* and *e* are different.
 -- @return pattern
 -- @usage local dq_str_escapes = lexer.range('"')
 -- @usage local dq_str_noescapes = lexer.range('"', false, false)
