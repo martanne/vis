@@ -14,18 +14,18 @@ lex:add_rule('whitespace', token(lexer.WHITESPACE, lexer.space^1))
 
 -- Keywords.
 lex:add_rule('keyword', token(lexer.KEYWORD, word_match{
-  'break', 'by', 'case', 'create', 'default', 'do', 'else', 'end', 'every', 'fail', 'global', 'if',
-  'initial', 'invocable', 'link', 'local', 'next', 'not', 'of', 'procedure', 'record', 'repeat',
-  'return', 'static', 'suspend', 'then', 'to', 'until', 'while'
+	'break', 'by', 'case', 'create', 'default', 'do', 'else', 'end', 'every', 'fail', 'global', 'if',
+	'initial', 'invocable', 'link', 'local', 'next', 'not', 'of', 'procedure', 'record', 'repeat',
+	'return', 'static', 'suspend', 'then', 'to', 'until', 'while'
 }))
 
 -- Icon Keywords: unique to Icon.
 lex:add_rule('special_keyword', token('special_keyword', '&' * word_match{
-  'allocated', 'ascii', 'clock', 'collections', 'cset', 'current', 'date', 'dateline', 'digits',
-  'dump', 'e', 'error', 'errornumber', 'errortext', 'errorvalue', 'errout', 'fail', 'features',
-  'file', 'host', 'input', 'lcase', 'letters', 'level', 'line', 'main', 'null', 'output', 'phi',
-  'pi', 'pos', 'progname', 'random', 'regions', 'source', 'storage', 'subject', 'time', 'trace',
-  'ucase', 'version'
+	'allocated', 'ascii', 'clock', 'collections', 'cset', 'current', 'date', 'dateline', 'digits',
+	'dump', 'e', 'error', 'errornumber', 'errortext', 'errorvalue', 'errout', 'fail', 'features',
+	'file', 'host', 'input', 'lcase', 'letters', 'level', 'line', 'main', 'null', 'output', 'phi',
+	'pi', 'pos', 'progname', 'random', 'regions', 'source', 'storage', 'subject', 'time', 'trace',
+	'ucase', 'version'
 }))
 lex:add_style('special_keyword', lexer.styles.type)
 
@@ -46,7 +46,7 @@ lex:add_rule('number', token(lexer.NUMBER, radix_literal + lexer.number))
 
 -- Preprocessor.
 lex:add_rule('preproc', token(lexer.PREPROCESSOR, '$' *
-  word_match('define else endif error ifdef ifndef include line undef')))
+	word_match('define else endif error ifdef ifndef include line undef')))
 
 -- Operators.
 lex:add_rule('operator', token(lexer.OPERATOR, S('+-/*%<>~!=^&|?~@:;,.()[]{}')))

@@ -12,33 +12,33 @@ lex:add_rule('whitespace', token(lexer.WHITESPACE, lexer.space^1))
 
 -- Keywords.
 lex:add_rule('keyword', token(lexer.KEYWORD, word_match({
-  'and', 'array', 'as', 'at', 'asm', 'begin', 'case', 'class', 'const', 'constructor', 'destructor',
-  'dispinterface', 'div', 'do', 'downto', 'else', 'end', 'except', 'exports', 'file', 'final',
-  'finalization', 'finally', 'for', 'function', 'goto', 'if', 'implementation', 'in', 'inherited',
-  'initialization', 'inline', 'interface', 'is', 'label', 'mod', 'not', 'object', 'of', 'on', 'or',
-  'out', 'packed', 'procedure', 'program', 'property', 'raise', 'record', 'repeat',
-  'resourcestring', 'set', 'sealed', 'shl', 'shr', 'static', 'string', 'then', 'threadvar', 'to',
-  'try', 'type', 'unit', 'unsafe', 'until', 'uses', 'var', 'while', 'with', 'xor', 'absolute',
-  'abstract', 'assembler', 'automated', 'cdecl', 'contains', 'default', 'deprecated', 'dispid',
-  'dynamic', 'export', 'external', 'far', 'forward', 'implements', 'index', 'library', 'local',
-  'message', 'name', 'namespaces', 'near', 'nodefault', 'overload', 'override', 'package', 'pascal',
-  'platform', 'private', 'protected', 'public', 'published', 'read', 'readonly', 'register',
-  'reintroduce', 'requires', 'resident', 'safecall', 'stdcall', 'stored', 'varargs', 'virtual',
-  'write', 'writeonly', --
-  'false', 'nil', 'self', 'true'
+	'and', 'array', 'as', 'at', 'asm', 'begin', 'case', 'class', 'const', 'constructor', 'destructor',
+	'dispinterface', 'div', 'do', 'downto', 'else', 'end', 'except', 'exports', 'file', 'final',
+	'finalization', 'finally', 'for', 'function', 'goto', 'if', 'implementation', 'in', 'inherited',
+	'initialization', 'inline', 'interface', 'is', 'label', 'mod', 'not', 'object', 'of', 'on', 'or',
+	'out', 'packed', 'procedure', 'program', 'property', 'raise', 'record', 'repeat',
+	'resourcestring', 'set', 'sealed', 'shl', 'shr', 'static', 'string', 'then', 'threadvar', 'to',
+	'try', 'type', 'unit', 'unsafe', 'until', 'uses', 'var', 'while', 'with', 'xor', 'absolute',
+	'abstract', 'assembler', 'automated', 'cdecl', 'contains', 'default', 'deprecated', 'dispid',
+	'dynamic', 'export', 'external', 'far', 'forward', 'implements', 'index', 'library', 'local',
+	'message', 'name', 'namespaces', 'near', 'nodefault', 'overload', 'override', 'package', 'pascal',
+	'platform', 'private', 'protected', 'public', 'published', 'read', 'readonly', 'register',
+	'reintroduce', 'requires', 'resident', 'safecall', 'stdcall', 'stored', 'varargs', 'virtual',
+	'write', 'writeonly', --
+	'false', 'nil', 'self', 'true'
 }, true)))
 
 -- Functions.
 lex:add_rule('function', token(lexer.FUNCTION, word_match({
-  'chr', 'ord', 'succ', 'pred', 'abs', 'round', 'trunc', 'sqr', 'sqrt', 'arctan', 'cos', 'sin',
-  'exp', 'ln', 'odd', 'eof', 'eoln'
+	'chr', 'ord', 'succ', 'pred', 'abs', 'round', 'trunc', 'sqr', 'sqrt', 'arctan', 'cos', 'sin',
+	'exp', 'ln', 'odd', 'eof', 'eoln'
 }, true)))
 
 -- Types.
 lex:add_rule('type', token(lexer.TYPE, word_match({
-  'shortint', 'byte', 'char', 'smallint', 'integer', 'word', 'longint', 'cardinal', 'boolean',
-  'bytebool', 'wordbool', 'longbool', 'real', 'single', 'double', 'extended', 'comp', 'currency',
-  'pointer'
+	'shortint', 'byte', 'char', 'smallint', 'integer', 'word', 'longint', 'cardinal', 'boolean',
+	'bytebool', 'wordbool', 'longbool', 'real', 'single', 'double', 'extended', 'comp', 'currency',
+	'pointer'
 }, true)))
 
 -- Strings.

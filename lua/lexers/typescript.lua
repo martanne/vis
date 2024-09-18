@@ -8,10 +8,10 @@ local lex = lexer.new(..., {inherit = lexer.load('javascript')})
 
 -- Word lists.
 lex:set_word_list(lexer.KEYWORD, 'abstract as constructor declare is module namespace require type',
-  true)
+	true)
 
 lex:set_word_list(lexer.TYPE, 'boolean number bigint string unknown any void never symbol object',
-  true)
+	true)
 
 lexer.property['scintillua.comment'] = '//'
 

@@ -13,13 +13,13 @@ lex:add_rule('whitespace', token(lexer.WHITESPACE, lexer.space^1))
 
 -- Keywords.
 lex:modify_rule('keyword', token(lexer.KEYWORD, word_match{
-  '#', '%', '*', '+', '-', '->>', '->', '-?>>', '-?>', '..', '.', '//', '/', ':', '<=', '<', '=',
-  '>=', '>', '?.', '^', '~=', 'λ', 'accumulate', 'and', 'band', 'bnot', 'bor', 'bxor', 'collect',
-  'comment', 'do', 'doto', 'each', 'eval-compiler', 'fn', 'for', 'global', 'hashfn', 'icollect',
-  'if', 'import-macros', 'include', 'lambda', 'length', 'let', 'local', 'lshift', 'lua', 'macro',
-  'macrodebug', 'macros', 'match', 'not', 'not=', 'or', 'partial', 'pick-args', 'pick-values',
-  'quote', 'require-macros', 'rshift', 'set', 'set-forcibly!', 'tset', 'values', 'var', 'when',
-  'while', 'with-open'
+	'#', '%', '*', '+', '-', '->>', '->', '-?>>', '-?>', '..', '.', '//', '/', ':', '<=', '<', '=',
+	'>=', '>', '?.', '^', '~=', 'λ', 'accumulate', 'and', 'band', 'bnot', 'bor', 'bxor', 'collect',
+	'comment', 'do', 'doto', 'each', 'eval-compiler', 'fn', 'for', 'global', 'hashfn', 'icollect',
+	'if', 'import-macros', 'include', 'lambda', 'length', 'let', 'local', 'lshift', 'lua', 'macro',
+	'macrodebug', 'macros', 'match', 'not', 'not=', 'or', 'partial', 'pick-args', 'pick-values',
+	'quote', 'require-macros', 'rshift', 'set', 'set-forcibly!', 'tset', 'values', 'var', 'when',
+	'while', 'with-open'
 }))
 
 -- Identifiers.

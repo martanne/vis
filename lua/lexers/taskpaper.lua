@@ -15,11 +15,11 @@ lex:add_rule('task', delimiter * lex:tag(lexer.LIST, '-'))
 
 -- Projects.
 lex:add_rule('project', lex:tag(lexer.HEADING,
-  lexer.range(lexer.starts_line(lexer.alnum), ':') * lexer.newline))
+	lexer.range(lexer.starts_line(lexer.alnum), ':') * lexer.newline))
 
 -- Tags.
 lex:add_rule('extended_tag', lex:tag(lexer.TAG .. '.extended', '@' * lexer.word * '(' *
-  (lexer.word + lexer.digit + '-')^1 * ')'))
+	(lexer.word + lexer.digit + '-')^1 * ')'))
 lex:add_rule('day_tag', lex:tag(lexer.TAG .. '.day', (P('@today') + '@tomorrow')))
 lex:add_rule('overdue_tag', lex:tag(lexer.TAG .. '.overdue', '@overdue'))
 lex:add_rule('plain_tag', lex:tag(lexer.TAG .. '.plain', '@' * lexer.word))

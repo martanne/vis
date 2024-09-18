@@ -12,25 +12,25 @@ lex:add_rule('whitespace', token(lexer.WHITESPACE, lexer.space^1))
 
 -- Keywords.
 lex:add_rule('keyword', token(lexer.KEYWORD, word_match{
-  -- Control.
-  ':delay', ':do', 'on-error', 'while', ':error', ':foreach', 'in', 'do', ':for', 'from', 'to',
-  'step', ':if', 'do', 'else', ':return', ':while', 'do',
-  -- Menu specific commands.
-  'add', 'disable', 'edit', 'enable', 'export', 'find', 'get', 'info', 'monitor', 'print', 'append',
-  'as-value', 'brief', 'count-only', 'detail', 'file', 'follow', 'follow-only', 'from', 'interval',
-  'terse', 'value-list', 'where', 'without-paging', 'remove', 'set',
-  -- Output & string handling.
-  ':beep', ':blink', ':environment', ':execute', ':find', ':len', ':log', 'alert', 'critical',
-  'debug', 'emergency', 'error', 'info', 'notice', 'warning', ':parse', ':pick', ':put',
-  ':terminal', ':time', ':typeof',
-  -- Variable declaration.
-  ':global', ':local', ':set',
-  -- Variable casting.
-  ':toarray', ':tobool', ':toid', ':toip', ':toip6', ':tonum', ':tostr', ':totime',
-  -- Boolean values and logical operators.
-  'false', 'no', 'true', 'yes', 'and', 'in', 'or',
-  -- Networking.
-  ':ping', ':resolve'
+	-- Control.
+	':delay', ':do', 'on-error', 'while', ':error', ':foreach', 'in', 'do', ':for', 'from', 'to',
+	'step', ':if', 'do', 'else', ':return', ':while', 'do',
+	-- Menu specific commands.
+	'add', 'disable', 'edit', 'enable', 'export', 'find', 'get', 'info', 'monitor', 'print', 'append',
+	'as-value', 'brief', 'count-only', 'detail', 'file', 'follow', 'follow-only', 'from', 'interval',
+	'terse', 'value-list', 'where', 'without-paging', 'remove', 'set',
+	-- Output & string handling.
+	':beep', ':blink', ':environment', ':execute', ':find', ':len', ':log', 'alert', 'critical',
+	'debug', 'emergency', 'error', 'info', 'notice', 'warning', ':parse', ':pick', ':put',
+	':terminal', ':time', ':typeof',
+	-- Variable declaration.
+	':global', ':local', ':set',
+	-- Variable casting.
+	':toarray', ':tobool', ':toid', ':toip', ':toip6', ':tonum', ':tostr', ':totime',
+	-- Boolean values and logical operators.
+	'false', 'no', 'true', 'yes', 'and', 'in', 'or',
+	-- Networking.
+	':ping', ':resolve'
 }))
 
 -- Identifiers.
@@ -47,7 +47,7 @@ lex:add_rule('string', token(lexer.STRING, lexer.range('"')))
 
 -- Variables.
 lex:add_rule('variable', token(lexer.VARIABLE, '$' *
-  (S('!#?*@$') + lexer.digit^1 + lexer.word + lexer.range('{', '}', true, false, true))))
+	(S('!#?*@$') + lexer.digit^1 + lexer.word + lexer.range('{', '}', true, false, true))))
 
 -- Operators.
 lex:add_rule('operator', token(lexer.OPERATOR, S('=!%<>+-/*&|~.,;()[]{}')))

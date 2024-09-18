@@ -12,16 +12,16 @@ lex:add_rule('whitespace', token(lexer.WHITESPACE, lexer.space^1))
 
 -- Keywords.
 lex:add_rule('keyword', token(lexer.KEYWORD, word_match{
-  'abstract', 'attribute', 'case', 'const', 'context', 'custom', 'default', 'enum', 'exception',
-  'factory', 'FALSE', 'in', 'inout', 'interface', 'local', 'module', 'native', 'oneway', 'out',
-  'private', 'public', 'raises', 'readonly', 'struct', 'support', 'switch', 'TRUE', 'truncatable',
-  'typedef', 'union', 'valuetype'
+	'abstract', 'attribute', 'case', 'const', 'context', 'custom', 'default', 'enum', 'exception',
+	'factory', 'FALSE', 'in', 'inout', 'interface', 'local', 'module', 'native', 'oneway', 'out',
+	'private', 'public', 'raises', 'readonly', 'struct', 'support', 'switch', 'TRUE', 'truncatable',
+	'typedef', 'union', 'valuetype'
 }))
 
 -- Types.
 lex:add_rule('type', token(lexer.TYPE, word_match{
-  'any', 'boolean', 'char', 'double', 'fixed', 'float', 'long', 'Object', 'octet', 'sequence',
-  'short', 'string', 'unsigned', 'ValueBase', 'void', 'wchar', 'wstring'
+	'any', 'boolean', 'char', 'double', 'fixed', 'float', 'long', 'Object', 'octet', 'sequence',
+	'short', 'string', 'unsigned', 'ValueBase', 'void', 'wchar', 'wstring'
 }))
 
 -- Identifiers.
@@ -42,7 +42,7 @@ lex:add_rule('number', token(lexer.NUMBER, lexer.number))
 
 -- Preprocessor.
 lex:add_rule('preproc', token(lexer.PREPROCESSOR, lexer.starts_line('#') *
-  word_match('define undef ifdef ifndef if elif else endif include warning pragma')))
+	word_match('define undef ifdef ifndef if elif else endif include warning pragma')))
 
 -- Operators.
 lex:add_rule('operator', token(lexer.OPERATOR, S('!<>=+-/*%&|^~.,:;?()[]{}')))

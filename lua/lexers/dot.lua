@@ -13,20 +13,20 @@ lex:add_rule('whitespace', token(lexer.WHITESPACE, lexer.space^1))
 
 -- Keywords.
 lex:add_rule('keyword', token(lexer.KEYWORD, word_match{
-  'graph', 'node', 'edge', 'digraph', 'fontsize', 'rankdir', 'fontname', 'shape', 'label',
-  'arrowhead', 'arrowtail', 'arrowsize', 'color', 'comment', 'constraint', 'decorate', 'dir',
-  'headlabel', 'headport', 'headURL', 'labelangle', 'labeldistance', 'labelfloat', 'labelfontcolor',
-  'labelfontname', 'labelfontsize', 'layer', 'lhead', 'ltail', 'minlen', 'samehead', 'sametail',
-  'style', 'taillabel', 'tailport', 'tailURL', 'weight', 'subgraph'
+	'graph', 'node', 'edge', 'digraph', 'fontsize', 'rankdir', 'fontname', 'shape', 'label',
+	'arrowhead', 'arrowtail', 'arrowsize', 'color', 'comment', 'constraint', 'decorate', 'dir',
+	'headlabel', 'headport', 'headURL', 'labelangle', 'labeldistance', 'labelfloat', 'labelfontcolor',
+	'labelfontname', 'labelfontsize', 'layer', 'lhead', 'ltail', 'minlen', 'samehead', 'sametail',
+	'style', 'taillabel', 'tailport', 'tailURL', 'weight', 'subgraph'
 }))
 
 -- Types.
 lex:add_rule('type', token(lexer.TYPE, word_match{
-  '	box', 'polygon', 'ellipse', 'circle', 'point', 'egg', 'triangle', 'plaintext', 'diamond',
-  'trapezium', 'parallelogram', 'house', 'pentagon', 'hexagon', 'septagon', 'octagon',
-  'doublecircle', 'doubleoctagon', 'tripleoctagon', 'invtriangle', 'invtrapezium', 'invhouse',
-  'Mdiamond', 'Msquare', 'Mcircle', 'rect', 'rectangle', 'none', 'note', 'tab', 'folder', 'box3d',
-  'record'
+	'	box', 'polygon', 'ellipse', 'circle', 'point', 'egg', 'triangle', 'plaintext', 'diamond',
+	'trapezium', 'parallelogram', 'house', 'pentagon', 'hexagon', 'septagon', 'octagon',
+	'doublecircle', 'doubleoctagon', 'tripleoctagon', 'invtriangle', 'invtrapezium', 'invhouse',
+	'Mdiamond', 'Msquare', 'Mcircle', 'rect', 'rectangle', 'none', 'note', 'tab', 'folder', 'box3d',
+	'record'
 }))
 
 -- Identifiers.

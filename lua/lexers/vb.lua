@@ -44,23 +44,23 @@ lex:add_fold_point(lexer.KEYWORD, 'Try', 'End Try')
 
 -- Word lists.
 lex:set_word_list(lexer.KEYWORD, {
-  -- Control.
-  'If', 'Then', 'Else', 'ElseIf', 'While', 'Wend', 'For', 'To', 'Each', 'In', 'Step', 'Case',
-  'Select', 'Return', 'Continue', 'Do', 'Until', 'Loop', 'Next', 'With', 'Exit',
-  -- Operators.
-  'Mod', 'And', 'Not', 'Or', 'Xor', 'Is',
-  -- Storage types.
-  'Call', 'Class', 'Const', 'Dim', 'ReDim', 'Preserve', 'Function', 'Sub', 'Property', 'End', 'Set',
-  'Let', 'Get', 'New', 'Randomize', 'Option', 'Explicit', 'On', 'Error', 'Execute', 'Module',
-  -- Storage modifiers.
-  'Private', 'Public', 'Default',
-  -- Constants.
-  'Empty', 'False', 'Nothing', 'Null', 'True'
+	-- Control.
+	'If', 'Then', 'Else', 'ElseIf', 'While', 'Wend', 'For', 'To', 'Each', 'In', 'Step', 'Case',
+	'Select', 'Return', 'Continue', 'Do', 'Until', 'Loop', 'Next', 'With', 'Exit',
+	-- Operators.
+	'Mod', 'And', 'Not', 'Or', 'Xor', 'Is',
+	-- Storage types.
+	'Call', 'Class', 'Const', 'Dim', 'ReDim', 'Preserve', 'Function', 'Sub', 'Property', 'End', 'Set',
+	'Let', 'Get', 'New', 'Randomize', 'Option', 'Explicit', 'On', 'Error', 'Execute', 'Module',
+	-- Storage modifiers.
+	'Private', 'Public', 'Default',
+	-- Constants.
+	'Empty', 'False', 'Nothing', 'Null', 'True'
 })
 
 lex:set_word_list(lexer.TYPE, {
-  'Boolean', 'Byte', 'Char', 'Date', 'Decimal', 'Double', 'Long', 'Object', 'Short', 'Single',
-  'String'
+	'Boolean', 'Byte', 'Char', 'Date', 'Decimal', 'Double', 'Long', 'Object', 'Short', 'Single',
+	'String'
 })
 
 lexer.property['scintillua.comment'] = "'"

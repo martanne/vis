@@ -38,8 +38,8 @@ lex:embed(bash, start_rule, end_rule)
 
 -- Word lists.
 lex:set_word_list(lexer.KEYWORD, {
-  'ADD', 'ARG', 'CMD', 'COPY', 'ENTRYPOINT', 'ENV', 'EXPOSE', 'FROM', 'LABEL', 'MAINTAINER',
-  'ONBUILD', 'RUN', 'STOPSIGNAL', 'USER', 'VOLUME', 'WORKDIR'
+	'ADD', 'ARG', 'CMD', 'COPY', 'ENTRYPOINT', 'ENV', 'EXPOSE', 'FROM', 'LABEL', 'MAINTAINER',
+	'ONBUILD', 'RUN', 'STOPSIGNAL', 'USER', 'VOLUME', 'WORKDIR'
 })
 
 lexer.property['scintillua.comment'] = '#'

@@ -39,9 +39,9 @@ lex:add_rule('operator', lex:tag(lexer.OPERATOR, S('=')))
 
 -- Word lists.
 lex:set_word_list(lexer.VARIABLE_BUILTIN, {
-  'Type', 'Version', 'Name', 'GenericName', 'NoDisplay', 'Comment', 'Icon', 'Hidden', 'OnlyShowIn',
-  'NotShowIn', 'TryExec', 'Exec', 'Exec', 'Path', 'Terminal', 'MimeType', 'Categories',
-  'StartupNotify', 'StartupWMClass', 'URL'
+	'Type', 'Version', 'Name', 'GenericName', 'NoDisplay', 'Comment', 'Icon', 'Hidden', 'OnlyShowIn',
+	'NotShowIn', 'TryExec', 'Exec', 'Exec', 'Path', 'Terminal', 'MimeType', 'Categories',
+	'StartupNotify', 'StartupWMClass', 'URL'
 })
 
 lexer.property['scintillua.comment'] = '#'

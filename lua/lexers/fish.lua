@@ -12,14 +12,14 @@ lex:add_rule('whitespace', token(lexer.WHITESPACE, lexer.space^1))
 
 -- Keywords.
 lex:add_rule('keyword', token(lexer.KEYWORD, word_match{
-  'alias', 'and', 'begin', 'bg', 'bind', 'block', 'break', 'breakpoint', 'builtin', 'case', 'cd',
-  'command', 'commandline', 'complete', 'contains', 'continue', 'count', 'dirh', 'dirs', 'echo',
-  'else', 'emit', 'end', 'eval', 'exec', 'exit', 'fg', 'fish', 'fish_config', 'fishd',
-  'fish_indent', 'fish_pager', 'fish_prompt', 'fish_right_prompt', 'fish_update_completions', 'for',
-  'funced', 'funcsave', 'function', 'functions', 'help', 'history', 'if', 'in', 'isatty', 'jobs',
-  'math', 'mimedb', 'nextd', 'not', 'open', 'or', 'popd', 'prevd', 'psub', 'pushd', 'pwd', 'random',
-  'read', 'return', 'set', 'set_color', 'source', 'status', 'switch', 'test', 'trap', 'type',
-  'ulimit', 'umask', 'vared', 'while'
+	'alias', 'and', 'begin', 'bg', 'bind', 'block', 'break', 'breakpoint', 'builtin', 'case', 'cd',
+	'command', 'commandline', 'complete', 'contains', 'continue', 'count', 'dirh', 'dirs', 'echo',
+	'else', 'emit', 'end', 'eval', 'exec', 'exit', 'fg', 'fish', 'fish_config', 'fishd',
+	'fish_indent', 'fish_pager', 'fish_prompt', 'fish_right_prompt', 'fish_update_completions', 'for',
+	'funced', 'funcsave', 'function', 'functions', 'help', 'history', 'if', 'in', 'isatty', 'jobs',
+	'math', 'mimedb', 'nextd', 'not', 'open', 'or', 'popd', 'prevd', 'psub', 'pushd', 'pwd', 'random',
+	'read', 'return', 'set', 'set_color', 'source', 'status', 'switch', 'test', 'trap', 'type',
+	'ulimit', 'umask', 'vared', 'while'
 }))
 
 -- Identifiers.

@@ -12,14 +12,14 @@ lex:add_rule('whitespace', token(lexer.WHITESPACE, lexer.space^1))
 
 -- Keywords.
 lex:add_rule('keyword', token(lexer.KEYWORD, word_match{
-  'block', 'method', 'while', 'foreach', 'if', 'else', 'do', 'super', 'self', 'clone', 'proto',
-  'setSlot', 'hasSlot', 'type', 'write', 'print', 'forward'
+	'block', 'method', 'while', 'foreach', 'if', 'else', 'do', 'super', 'self', 'clone', 'proto',
+	'setSlot', 'hasSlot', 'type', 'write', 'print', 'forward'
 }))
 
 -- Types.
 lex:add_rule('type', token(lexer.TYPE, word_match{
-  'Block', 'Buffer', 'CFunction', 'Date', 'Duration', 'File', 'Future', 'LinkedList', 'List', 'Map',
-  'Message', 'Nil', 'Nop', 'Number', 'Object', 'String', 'WeakLink'
+	'Block', 'Buffer', 'CFunction', 'Date', 'Duration', 'File', 'Future', 'LinkedList', 'List', 'Map',
+	'Message', 'Nil', 'Nop', 'Number', 'Object', 'String', 'WeakLink'
 }))
 
 -- Identifiers.

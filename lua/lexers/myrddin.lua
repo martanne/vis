@@ -12,15 +12,15 @@ lex:add_rule('whitespace', token(lexer.WHITESPACE, lexer.space^1))
 
 -- Keywords.
 lex:add_rule('keyword', token(lexer.KEYWORD, word_match{
-  'break', 'const', 'continue', 'elif', 'else', 'extern', 'false', 'for', 'generic', 'goto', 'if',
-  'impl', 'in', 'match', 'pkg', 'pkglocal', 'sizeof', 'struct', 'trait', 'true', 'type', 'union',
-  'use', 'var', 'while'
+	'break', 'const', 'continue', 'elif', 'else', 'extern', 'false', 'for', 'generic', 'goto', 'if',
+	'impl', 'in', 'match', 'pkg', 'pkglocal', 'sizeof', 'struct', 'trait', 'true', 'type', 'union',
+	'use', 'var', 'while'
 }))
 
 -- Types.
 lex:add_rule('type', token(lexer.TYPE, word_match{
-  'void', 'bool', 'char', 'byte', 'int', 'uint', 'int8', 'uint8', 'int16', 'uint16', 'int32',
-  'uint32', 'int64', 'uint64', 'flt32', 'flt64'
+	'void', 'bool', 'char', 'byte', 'int', 'uint', 'int8', 'uint8', 'int16', 'uint16', 'int32',
+	'uint32', 'int64', 'uint64', 'flt32', 'flt64'
 } + '@' * lexer.word))
 
 -- Identifiers.
@@ -43,7 +43,7 @@ local xdigit = lexer.xdigit + '_'
 local odigit = lpeg.R('07') + '_'
 local integer = '0x' * xdigit^1 + '0o' * odigit^1 + '0b' * bdigit^1 + digit^1
 local float = digit^1 * ((('.' * digit^1) * (S('eE') * S('+-')^-1 * digit^1)^-1) +
-  (('.' * digit^1)^-1 * S('eE') * S('+-')^-1 * digit^1))
+	(('.' * digit^1)^-1 * S('eE') * S('+-')^-1 * digit^1))
 lex:add_rule('number', token(lexer.NUMBER, float + integer))
 
 -- Operators.

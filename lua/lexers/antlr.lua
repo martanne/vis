@@ -12,16 +12,16 @@ lex:add_rule('whitespace', token(lexer.WHITESPACE, lexer.space^1))
 
 -- Keywords.
 lex:add_rule('keyword', token(lexer.KEYWORD, word_match{
-  'abstract', 'break', 'case', 'catch', 'continue', 'default', 'do', 'else', 'extends', 'final',
-  'finally', 'for', 'if', 'implements', 'instanceof', 'native', 'new', 'private', 'protected',
-  'public', 'return', 'static', 'switch', 'synchronized', 'throw', 'throws', 'transient', 'try',
-  'volatile', 'while', 'package', 'import', 'header', 'options', 'tokens', 'strictfp', 'false',
-  'null', 'super', 'this', 'true'
+	'abstract', 'break', 'case', 'catch', 'continue', 'default', 'do', 'else', 'extends', 'final',
+	'finally', 'for', 'if', 'implements', 'instanceof', 'native', 'new', 'private', 'protected',
+	'public', 'return', 'static', 'switch', 'synchronized', 'throw', 'throws', 'transient', 'try',
+	'volatile', 'while', 'package', 'import', 'header', 'options', 'tokens', 'strictfp', 'false',
+	'null', 'super', 'this', 'true'
 }))
 
 -- Types.
 lex:add_rule('type', token(lexer.TYPE, word_match(
-  'boolean byte char class double float int interface long short void')))
+	'boolean byte char class double float int interface long short void')))
 
 -- Functions.
 lex:add_rule('func', token(lexer.FUNCTION, 'assert'))

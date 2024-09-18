@@ -19,8 +19,8 @@ lex:add_rule('comment', token(lexer.COMMENT, lexer.to_eol('%')))
 
 -- Sections.
 local wm_section = word_match{
-  'chapter', 'part', 'section', 'subject', 'subsection', 'subsubject', 'subsubsection',
-  'subsubsubject', 'subsubsubsection', 'subsubsubsubject', 'title'
+	'chapter', 'part', 'section', 'subject', 'subsection', 'subsubject', 'subsubsection',
+	'subsubsubject', 'subsubsubsection', 'subsubsubsubject', 'title'
 }
 local section = token(lexer.CLASS, '\\' * startstop^-1 * wm_section)
 lex:add_rule('section', section)
@@ -31,7 +31,7 @@ lex:add_rule('environment', environment)
 
 -- Commands.
 local command = token(lexer.KEYWORD, '\\' *
-  (lexer.alpha^1 * P('\\') * lexer.space^1 + lexer.alpha^1 + S('!"#$%&\',./;=[\\]_{|}~`^-')))
+	(lexer.alpha^1 * P('\\') * lexer.space^1 + lexer.alpha^1 + S('!"#$%&\',./;=[\\]_{|}~`^-')))
 lex:add_rule('command', command)
 
 -- Operators.

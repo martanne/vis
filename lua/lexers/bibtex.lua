@@ -31,16 +31,16 @@ latex:embed(lex, bibtex_start_rule, bibtex_end_rule)
 
 -- Word lists.
 lex:set_word_list(lexer.VARIABLE_BUILTIN, {
-  'author', 'title', 'journal', 'year', 'volume', 'number', 'pages', 'month', 'note', 'key',
-  'publisher', 'editor', 'series', 'address', 'edition', 'howpublished', 'booktitle',
-  'organization', 'chapter', 'school', 'institution', 'type', 'isbn', 'issn', 'affiliation',
-  'issue', 'keyword', 'url'
+	'author', 'title', 'journal', 'year', 'volume', 'number', 'pages', 'month', 'note', 'key',
+	'publisher', 'editor', 'series', 'address', 'edition', 'howpublished', 'booktitle',
+	'organization', 'chapter', 'school', 'institution', 'type', 'isbn', 'issn', 'affiliation',
+	'issue', 'keyword', 'url'
 })
 
 lex:set_word_list('entry', {
-  'string', --
-  'book', 'article', 'booklet', 'conference', 'inbook', 'incollection', 'inproceedings', 'manual',
-  'mastersthesis', 'lambda', 'misc', 'phdthesis', 'proceedings', 'techreport', 'unpublished'
+	'string', --
+	'book', 'article', 'booklet', 'conference', 'inbook', 'incollection', 'inproceedings', 'manual',
+	'mastersthesis', 'lambda', 'misc', 'phdthesis', 'proceedings', 'techreport', 'unpublished'
 })
 
 lexer.property['scintillua.comment'] = '%'

@@ -12,22 +12,22 @@ lex:add_rule('whitespace', token(lexer.WHITESPACE, lexer.space^1))
 
 -- Keywords.
 lex:add_rule('keyword', token(lexer.KEYWORD, word_match{
-  'break', 'continue', 'delete', 'do', 'else', 'for', 'function', 'if', 'in', 'new', 'on', 'return',
-  'this', 'typeof', 'var', 'void', 'while', 'with', 'NaN', 'Infinity', 'false', 'null', 'true',
-  'undefined',
-  -- Reserved for future use.
-  'abstract', 'case', 'catch', 'class', 'const', 'debugger', 'default', 'export', 'extends',
-  'final', 'finally', 'goto', 'implements', 'import', 'instanceof', 'interface', 'native',
-  'package', 'private', 'Void', 'protected', 'public', 'dynamic', 'static', 'super', 'switch',
-  'synchonized', 'throw', 'throws', 'transient', 'try', 'volatile'
+	'break', 'continue', 'delete', 'do', 'else', 'for', 'function', 'if', 'in', 'new', 'on', 'return',
+	'this', 'typeof', 'var', 'void', 'while', 'with', 'NaN', 'Infinity', 'false', 'null', 'true',
+	'undefined',
+	-- Reserved for future use.
+	'abstract', 'case', 'catch', 'class', 'const', 'debugger', 'default', 'export', 'extends',
+	'final', 'finally', 'goto', 'implements', 'import', 'instanceof', 'interface', 'native',
+	'package', 'private', 'Void', 'protected', 'public', 'dynamic', 'static', 'super', 'switch',
+	'synchonized', 'throw', 'throws', 'transient', 'try', 'volatile'
 }))
 
 -- Types.
 lex:add_rule('type', token(lexer.TYPE, word_match{
-  'Array', 'Boolean', 'Color', 'Date', 'Function', 'Key', 'MovieClip', 'Math', 'Mouse', 'Number',
-  'Object', 'Selection', 'Sound', 'String', 'XML', 'XMLNode', 'XMLSocket',
-  -- Reserved for future use.
-  'boolean', 'byte', 'char', 'double', 'enum', 'float', 'int', 'long', 'short'
+	'Array', 'Boolean', 'Color', 'Date', 'Function', 'Key', 'MovieClip', 'Math', 'Mouse', 'Number',
+	'Object', 'Selection', 'Sound', 'String', 'XML', 'XMLNode', 'XMLSocket',
+	-- Reserved for future use.
+	'boolean', 'byte', 'char', 'double', 'enum', 'float', 'int', 'long', 'short'
 }))
 
 -- Identifiers.

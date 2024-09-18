@@ -41,17 +41,17 @@ lex:add_fold_point(lexer.COMMENT, '#~', '~#')
 
 -- Word lists.
 lex:set_word_list(lexer.KEYWORD, {
-  'class', 'method', 'function', 'public', 'abstract', 'private', 'static', 'native', 'virtual',
-  'Parent', 'As', 'from', 'implements', 'interface', 'enum', 'alias', 'consts', 'bundle', 'use',
-  'leaving', 'if', 'else', 'do', 'while', 'select', 'break', 'continue', 'other', 'for', 'each',
-  'reverse', 'label', 'return', 'critical', 'New', 'and', 'or', 'xor', 'true', 'false' -- , 'Nil'
+	'class', 'method', 'function', 'public', 'abstract', 'private', 'static', 'native', 'virtual',
+	'Parent', 'As', 'from', 'implements', 'interface', 'enum', 'alias', 'consts', 'bundle', 'use',
+	'leaving', 'if', 'else', 'do', 'while', 'select', 'break', 'continue', 'other', 'for', 'each',
+	'reverse', 'label', 'return', 'critical', 'New', 'and', 'or', 'xor', 'true', 'false' -- , 'Nil'
 })
 
 lex:set_word_list(lexer.TYPE, {
-  'Nil', 'Byte', 'ByteHolder', 'Int', 'IntHolder', 'Float', 'FloatHolder', 'Char', 'CharHolder',
-  'Bool', 'BoolHolder', 'String', 'BaseArrayHolder', 'BoolArrayHolder', 'ByteArrayHolder',
-  'CharArrayHolder', 'FloatArrayHolder', 'IntArrayHolder', 'StringArrayHolder', 'Func2Holder',
-  'Func3Holder', 'Func4Holder', 'FuncHolder'
+	'Nil', 'Byte', 'ByteHolder', 'Int', 'IntHolder', 'Float', 'FloatHolder', 'Char', 'CharHolder',
+	'Bool', 'BoolHolder', 'String', 'BaseArrayHolder', 'BoolArrayHolder', 'ByteArrayHolder',
+	'CharArrayHolder', 'FloatArrayHolder', 'IntArrayHolder', 'StringArrayHolder', 'Func2Holder',
+	'Func3Holder', 'Func4Holder', 'FuncHolder'
 })
 
 lexer.property['scintillua.comment'] = '#'

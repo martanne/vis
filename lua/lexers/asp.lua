@@ -17,8 +17,8 @@ lex:embed(vb, vb_start_rule, vb_end_rule)
 local vbs = lexer.load('vb', 'vbscript')
 local script_element = lexer.word_match('script', true)
 local vbs_start_rule = #('<' * script_element * (P(function(input, index)
-  if input:find('^%s+language%s*=%s*(["\'])vbscript%1', index) or
-    input:find('^%s+type%s*=%s*(["\'])text/vbscript%1', index) then return true end
+	if input:find('^%s+language%s*=%s*(["\'])vbscript%1', index) or
+		input:find('^%s+type%s*=%s*(["\'])text/vbscript%1', index) then return true end
 end) + '>')) * html.embed_start_tag -- <script language="vbscript">
 local vbs_end_rule = #('</' * script_element * '>') * html.embed_end_tag -- </script>
 lex:embed(vbs, vbs_start_rule, vbs_end_rule)

@@ -28,7 +28,7 @@ lex:add_rule('function', lex:tag(lexer.FUNCTION_BUILTIN, std + machine + math) +
 
 -- Constants.
 lex:add_rule('constant', lex:tag(lexer.CONSTANT_BUILTIN,
-  'Math.' * lex:word_match(lexer.CONSTANT_BUILTIN .. '.math')))
+	'Math.' * lex:word_match(lexer.CONSTANT_BUILTIN .. '.math')))
 
 -- Global ugens.
 lex:add_rule('ugen', lex:tag(lexer.CONSTANT_BUILTIN .. '.ugen', word_match('dac adc blackhole')))
@@ -60,41 +60,41 @@ lex:add_rule('operator', lex:tag(lexer.OPERATOR, S('+-/*%<>!=^&|?~:;.()[]{}@')))
 
 -- Word lists.
 lex:set_word_list(lexer.KEYWORD, {
-  -- Control structures.
-  'break', 'continue', 'else', 'for', 'if', 'repeat', 'return', 'switch', 'until', 'while',
-  -- Other chuck keywords.
-  'function', 'fun', 'spork', 'const', 'new'
+	-- Control structures.
+	'break', 'continue', 'else', 'for', 'if', 'repeat', 'return', 'switch', 'until', 'while',
+	-- Other chuck keywords.
+	'function', 'fun', 'spork', 'const', 'new'
 })
 
 lex:set_word_list(lexer.CONSTANT_BUILTIN, {
-  'false', 'maybe', 'me', 'null', 'NULL', 'pi', 'true' -- special values
+	'false', 'maybe', 'me', 'null', 'NULL', 'pi', 'true' -- special values
 })
 
 lex:set_word_list(lexer.TYPE, 'float int time dur void same')
 
 -- Class keywords.
 lex:set_word_list(lexer.CLASS, {
-  'class', 'extends', 'implements', 'interface', 'private', 'protected', 'public', 'pure', 'static',
-  'super', 'this'
+	'class', 'extends', 'implements', 'interface', 'private', 'protected', 'public', 'pure', 'static',
+	'super', 'this'
 })
 
 lex:set_word_list(lexer.FUNCTION_BUILTIN, {
-  'abs', 'fabs', 'sgn', 'system', 'atoi', 'atof', 'getenv', 'setenv', 'mtof', 'ftom', 'powtodb',
-  'rmstodb', 'dbtopow', 'dbtorms'
+	'abs', 'fabs', 'sgn', 'system', 'atoi', 'atof', 'getenv', 'setenv', 'mtof', 'ftom', 'powtodb',
+	'rmstodb', 'dbtopow', 'dbtorms'
 })
 
 lex:set_word_list(lexer.FUNCTION_BUILTIN .. '.machine', {
-  'add', 'spork', 'remove', 'replace', 'status', 'crash'
+	'add', 'spork', 'remove', 'replace', 'status', 'crash'
 })
 
 lex:set_word_list(lexer.FUNCTION_BUILTIN .. '.math', {
-  'sin', 'cos', 'tan', 'asin', 'acos', 'atan', 'atan2', 'sinh', 'cosh', 'tanh', 'hypot', 'pow',
-  'sqrt', 'exp', 'log', 'log2', 'log10', 'random', 'random2', 'randomf', 'random2f', 'srandom',
-  'floor', 'ceil', 'round', 'trunc', 'fmod', 'remainder', 'min', 'max', 'nextpow2', 'isinf', 'isnan'
+	'sin', 'cos', 'tan', 'asin', 'acos', 'atan', 'atan2', 'sinh', 'cosh', 'tanh', 'hypot', 'pow',
+	'sqrt', 'exp', 'log', 'log2', 'log10', 'random', 'random2', 'randomf', 'random2f', 'srandom',
+	'floor', 'ceil', 'round', 'trunc', 'fmod', 'remainder', 'min', 'max', 'nextpow2', 'isinf', 'isnan'
 })
 
 lex:set_word_list(lexer.CONSTANT_BUILTIN .. '.math', {
-  'PI', 'TWO_PI', 'e', 'E', 'i', 'I', 'j', 'J', 'RANDOM_MAX'
+	'PI', 'TWO_PI', 'e', 'E', 'i', 'I', 'j', 'J', 'RANDOM_MAX'
 })
 
 lexer.property['scintillua.comment'] = '//'

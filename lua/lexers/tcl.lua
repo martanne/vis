@@ -14,9 +14,9 @@ lex:add_rule('whitespace', token(lexer.WHITESPACE, lexer.space^1))
 
 -- Comment.
 lex:add_rule('comment', token(lexer.COMMENT, lexer.to_eol('#' * P(function(input, index)
-  local i = index - 2
-  while i > 0 and input:find('^[ \t]', i) do i = i - 1 end
-  if i < 1 or input:find('^[\r\n;]', i) then return true end
+	local i = index - 2
+	while i > 0 and input:find('^[ \t]', i) do i = i - 1 end
+	if i < 1 or input:find('^[\r\n;]', i) then return true end
 end))))
 
 -- Separator (semicolon).

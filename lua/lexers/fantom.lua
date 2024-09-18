@@ -15,39 +15,39 @@ lex:add_rule('whitespace', ws)
 -- Classes.
 local type = token(lexer.TYPE, lexer.word)
 lex:add_rule('class_sequence',
-  token(lexer.KEYWORD, 'class') * ws * type * ( -- at most one inheritance spec
-  ws * token(lexer.OPERATOR, ':') * ws * type *
-    ( -- at least 0 (i.e. any number) of additional classes
-    ws^-1 * token(lexer.OPERATOR, ',') * ws^-1 * type)^0)^-1)
+	token(lexer.KEYWORD, 'class') * ws * type * ( -- at most one inheritance spec
+	ws * token(lexer.OPERATOR, ':') * ws * type *
+		( -- at least 0 (i.e. any number) of additional classes
+		ws^-1 * token(lexer.OPERATOR, ',') * ws^-1 * type)^0)^-1)
 
 -- Keywords.
 lex:add_rule('keyword', token(lexer.KEYWORD, word_match{
-  'using', 'native', -- external
-  'goto', 'void', 'serializable', 'volatile', -- error
-  'if', 'else', 'switch', -- conditional
-  'do', 'while', 'for', 'foreach', 'each', -- repeat
-  'true', 'false', -- boolean
-  'null', -- constant
-  'this', 'super', -- typedef
-  'new', 'is', 'isnot', 'as', -- operator
-  'plus', 'minus', 'mult', 'div', 'mod', 'get', 'set', 'slice', 'lshift', 'rshift', 'and', 'or',
-  'xor', 'inverse', 'negate', --
-  'increment', 'decrement', 'equals', 'compare', -- long operator
-  'return', -- stmt
-  'static', 'const', 'final', -- storage class
-  'virtual', 'override', 'once', -- slot
-  'readonly', -- field
-  'throw', 'try', 'catch', 'finally', -- exceptions
-  'assert', -- assert
-  'class', 'enum', 'mixin', -- typedef
-  'break', 'continue', -- branch
-  'default', 'case', -- labels
-  'public', 'internal', 'protected', 'private', 'abstract' -- scope decl
+	'using', 'native', -- external
+	'goto', 'void', 'serializable', 'volatile', -- error
+	'if', 'else', 'switch', -- conditional
+	'do', 'while', 'for', 'foreach', 'each', -- repeat
+	'true', 'false', -- boolean
+	'null', -- constant
+	'this', 'super', -- typedef
+	'new', 'is', 'isnot', 'as', -- operator
+	'plus', 'minus', 'mult', 'div', 'mod', 'get', 'set', 'slice', 'lshift', 'rshift', 'and', 'or',
+	'xor', 'inverse', 'negate', --
+	'increment', 'decrement', 'equals', 'compare', -- long operator
+	'return', -- stmt
+	'static', 'const', 'final', -- storage class
+	'virtual', 'override', 'once', -- slot
+	'readonly', -- field
+	'throw', 'try', 'catch', 'finally', -- exceptions
+	'assert', -- assert
+	'class', 'enum', 'mixin', -- typedef
+	'break', 'continue', -- branch
+	'default', 'case', -- labels
+	'public', 'internal', 'protected', 'private', 'abstract' -- scope decl
 }))
 
 -- Types.
 lex:add_rule('type', token(lexer.TYPE, word_match(
-  'Void Bool Int Float Decimal Str Duration Uri Type Range List Map Obj Err Env')))
+	'Void Bool Int Float Decimal Str Duration Uri Type Range List Map Obj Err Env')))
 
 -- Functions.
 -- lex:add_rule('function', token(lexer.FUNCTION, lexer.word) * #P('('))

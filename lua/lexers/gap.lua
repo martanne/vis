@@ -12,9 +12,9 @@ lex:add_rule('whitespace', token(lexer.WHITESPACE, lexer.space^1))
 
 -- Keywords.
 lex:add_rule('keyword', token(lexer.KEYWORD, word_match{
-  'and', 'break', 'continue', 'do', 'elif', 'else', 'end', 'fail', 'false', 'fi', 'for', 'function',
-  'if', 'in', 'infinity', 'local', 'not', 'od', 'or', 'rec', 'repeat', 'return', 'then', 'true',
-  'until', 'while'
+	'and', 'break', 'continue', 'do', 'elif', 'else', 'end', 'fail', 'false', 'fi', 'for', 'function',
+	'if', 'in', 'infinity', 'local', 'not', 'od', 'or', 'rec', 'repeat', 'return', 'then', 'true',
+	'until', 'while'
 }))
 
 -- Identifiers.

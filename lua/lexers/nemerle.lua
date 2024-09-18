@@ -12,20 +12,20 @@ lex:add_rule('whitespace', token(lexer.WHITESPACE, lexer.space^1))
 
 -- Keywords.
 lex:add_rule('keyword', token(lexer.KEYWORD, word_match{
-  '_', 'abstract', 'and', 'array', 'as', 'base', 'catch', 'class', 'def', 'do', 'else', 'extends',
-  'extern', 'finally', 'foreach', 'for', 'fun', 'if', 'implements', 'in', 'interface', 'internal',
-  'lock', 'macro', 'match', 'module', 'mutable', 'namespace', 'new', 'out', 'override', 'params',
-  'private', 'protected', 'public', 'ref', 'repeat', 'sealed', 'static', 'struct', 'syntax', 'this',
-  'throw', 'try', 'type', 'typeof', 'unless', 'until', 'using', 'variant', 'virtual', 'when',
-  'where', 'while',
-  -- Values.
-  'null', 'true', 'false'
+	'_', 'abstract', 'and', 'array', 'as', 'base', 'catch', 'class', 'def', 'do', 'else', 'extends',
+	'extern', 'finally', 'foreach', 'for', 'fun', 'if', 'implements', 'in', 'interface', 'internal',
+	'lock', 'macro', 'match', 'module', 'mutable', 'namespace', 'new', 'out', 'override', 'params',
+	'private', 'protected', 'public', 'ref', 'repeat', 'sealed', 'static', 'struct', 'syntax', 'this',
+	'throw', 'try', 'type', 'typeof', 'unless', 'until', 'using', 'variant', 'virtual', 'when',
+	'where', 'while',
+	-- Values.
+	'null', 'true', 'false'
 }))
 
 -- Types.
 lex:add_rule('type', token(lexer.TYPE, word_match{
-  'bool', 'byte', 'char', 'decimal', 'double', 'float', 'int', 'list', 'long', 'object', 'sbyte',
-  'short', 'string', 'uint', 'ulong', 'ushort', 'void'
+	'bool', 'byte', 'char', 'decimal', 'double', 'float', 'int', 'list', 'long', 'object', 'sbyte',
+	'short', 'string', 'uint', 'ulong', 'ushort', 'void'
 }))
 
 -- Strings.
@@ -46,8 +46,8 @@ lex:add_rule('number', token(lexer.NUMBER, lexer.number))
 
 -- Preprocessor.
 lex:add_rule('preproc', token(lexer.PREPROCESSOR, lexer.starts_line('#') * S('\t ')^0 * word_match{
-  'define', 'elif', 'else', 'endif', 'endregion', 'error', 'if', 'ifdef', 'ifndef', 'line',
-  'pragma', 'region', 'undef', 'using', 'warning'
+	'define', 'elif', 'else', 'endif', 'endregion', 'error', 'if', 'ifdef', 'ifndef', 'line',
+	'pragma', 'region', 'undef', 'using', 'warning'
 }))
 
 -- Operators.

@@ -12,30 +12,30 @@ lex:add_rule('whitespace', token(lexer.WHITESPACE, lexer.space^1))
 
 -- Keywords.
 lex:add_rule('keyword', token(lexer.KEYWORD, word_match{
-  'and', 'break', 'cast', 'continue', 'elif', 'else', 'ensure', 'except', 'for', 'given', 'goto',
-  'if', 'in', 'isa', 'is', 'not', 'or', 'otherwise', 'pass', 'raise', 'ref', 'try', 'unless',
-  'when', 'while',
-  -- Definitions.
-  'abstract', 'callable', 'class', 'constructor', 'def', 'destructor', 'do', 'enum', 'event',
-  'final', 'get', 'interface', 'internal', 'of', 'override', 'partial', 'private', 'protected',
-  'public', 'return', 'set', 'static', 'struct', 'transient', 'virtual', 'yield',
-  -- Namespaces.
-  'as', 'from', 'import', 'namespace',
-  -- Other.
-  'self', 'super', 'null', 'true', 'false'
+	'and', 'break', 'cast', 'continue', 'elif', 'else', 'ensure', 'except', 'for', 'given', 'goto',
+	'if', 'in', 'isa', 'is', 'not', 'or', 'otherwise', 'pass', 'raise', 'ref', 'try', 'unless',
+	'when', 'while',
+	-- Definitions.
+	'abstract', 'callable', 'class', 'constructor', 'def', 'destructor', 'do', 'enum', 'event',
+	'final', 'get', 'interface', 'internal', 'of', 'override', 'partial', 'private', 'protected',
+	'public', 'return', 'set', 'static', 'struct', 'transient', 'virtual', 'yield',
+	-- Namespaces.
+	'as', 'from', 'import', 'namespace',
+	-- Other.
+	'self', 'super', 'null', 'true', 'false'
 }))
 
 -- Types.
 lex:add_rule('type', token(lexer.TYPE, word_match{
-  'bool', 'byte', 'char', 'date', 'decimal', 'double', 'duck', 'float', 'int', 'long', 'object',
-  'operator', 'regex', 'sbyte', 'short', 'single', 'string', 'timespan', 'uint', 'ulong', 'ushort'
+	'bool', 'byte', 'char', 'date', 'decimal', 'double', 'duck', 'float', 'int', 'long', 'object',
+	'operator', 'regex', 'sbyte', 'short', 'single', 'string', 'timespan', 'uint', 'ulong', 'ushort'
 }))
 
 -- Functions.
 lex:add_rule('function', token(lexer.FUNCTION, word_match{
-  'array', 'assert', 'checked', 'enumerate', '__eval__', 'filter', 'getter', 'len', 'lock', 'map',
-  'matrix', 'max', 'min', 'normalArrayIndexing', 'print', 'property', 'range', 'rawArrayIndexing',
-  'required', '__switch__', 'typeof', 'unchecked', 'using', 'yieldAll', 'zip'
+	'array', 'assert', 'checked', 'enumerate', '__eval__', 'filter', 'getter', 'len', 'lock', 'map',
+	'matrix', 'max', 'min', 'normalArrayIndexing', 'print', 'property', 'range', 'rawArrayIndexing',
+	'required', '__switch__', 'typeof', 'unchecked', 'using', 'yieldAll', 'zip'
 }))
 
 -- Identifiers.

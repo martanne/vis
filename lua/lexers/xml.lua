@@ -14,8 +14,8 @@ lex:add_rule('cdata', lex:tag('cdata', lexer.range('<![CDATA[', ']]>')))
 local ws = lex:get_rule('whitespace')
 local identifier = (lexer.alpha + S('_-')) * (lexer.alnum + S('_-'))^0
 local doctype = lex:tag(lexer.TAG .. '.doctype', '<!DOCTYPE') * ws *
-  lex:tag(lexer.TAG .. '.doctype', identifier) * (ws * identifier)^-1 * (1 - P('>'))^0 *
-  lex:tag(lexer.TAG .. '.doctype', '>')
+	lex:tag(lexer.TAG .. '.doctype', identifier) * (ws * identifier)^-1 * (1 - P('>'))^0 *
+	lex:tag(lexer.TAG .. '.doctype', '>')
 lex:add_rule('doctype', doctype)
 
 -- Processing instructions.
@@ -31,11 +31,11 @@ lex:add_rule('close_tag', lex:tag(lexer.TAG, P('/')^-1 * '>'))
 -- Equals.
 -- TODO: performance is terrible on large files.
 local in_tag = P(function(input, index)
-  local before = input:sub(1, index - 1)
-  local s, e = before:find('<[^>]-$'), before:find('>[^<]-$')
-  if s and e then return s > e end
-  if s then return true end
-  return input:find('^[^<]->', index) ~= nil
+	local before = input:sub(1, index - 1)
+	local s, e = before:find('<[^>]-$'), before:find('>[^<]-$')
+	if s and e then return s > e end
+	if s then return true end
+	return input:find('^[^<]->', index) ~= nil
 end)
 
 local equals = lex:tag(lexer.OPERATOR, '=') -- * in_tag
@@ -56,7 +56,7 @@ lex:add_rule('number', lexer.after_set('=', number)) -- *in_tag)
 
 -- Entities.
 local predefined = lex:tag(lexer.CONSTANT_BUILTIN .. '.entity',
-  '&' * lexer.word_match('lt gt amp apos quot') * ';')
+	'&' * lexer.word_match('lt gt amp apos quot') * ';')
 local general = lex:tag(lexer.CONSTANT .. '.entity', '&' * identifier * ';')
 lex:add_rule('entity', predefined + general)
 
@@ -70,6 +70,6 @@ lex:add_fold_point('cdata', '<![CDATA[', ']]>')
 lexer.property['scintillua.comment'] = '<!--|-->'
 lexer.property['scintillua.angle.braces'] = '1'
 lexer.property['scintillua.word.chars'] =
-  'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-'
+	'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-'
 
 return lex

@@ -13,8 +13,8 @@ lex:add_rule('whitespace', token(lexer.WHITESPACE, lexer.space^1))
 
 -- Keywords.
 lex:add_rule('keyword', token(lexer.KEYWORD, word_match({
-  'ABORT', 'ARRAY', 'CONTINUE', 'DEFINE', 'END', 'FRETURN', 'INPUT', 'NRETURN', 'OUTPUT', 'PUNCH',
-  'RETURN', 'SCONTINUE', 'TABLE'
+	'ABORT', 'ARRAY', 'CONTINUE', 'DEFINE', 'END', 'FRETURN', 'INPUT', 'NRETURN', 'OUTPUT', 'PUNCH',
+	'RETURN', 'SCONTINUE', 'TABLE'
 }, true) + '&' * lexer.word))
 
 -- Helper patterns.
@@ -31,19 +31,19 @@ lex:add_rule('target', token(lexer.LABEL, branch + sbranch + sbranchx))
 
 -- Patterns.
 lex:add_rule('pattern', lexer.token(lexer.CLASS, word_match({
-  -- Keep distinct.
-  'ABORT', 'ANY', 'ARB', 'ARBNO', 'BAL', 'BREAK', 'BREAKX', 'FAIL', 'FENCE', 'LEN', 'NOTANY', 'POS',
-  'REM', 'RPOS', 'RTAB', 'SPAN', 'SUCCEED', 'TAB'
+	-- Keep distinct.
+	'ABORT', 'ANY', 'ARB', 'ARBNO', 'BAL', 'BREAK', 'BREAKX', 'FAIL', 'FENCE', 'LEN', 'NOTANY', 'POS',
+	'REM', 'RPOS', 'RTAB', 'SPAN', 'SUCCEED', 'TAB'
 }, true) * #P('(')))
 
 -- Token definitions.
 lex:add_rule('built-in', token(lexer.FUNCTION, word_match({
-  'APPLY', 'ARRAY', 'CHAR', 'CONVERT', 'COPY', 'DATA', 'DATE', 'DIFFER', 'DUPL', 'EQ', 'EVAL',
-  'FILE_ABSPATH', 'FILE_ISDIR', 'FREEZE', 'FUNCTION', 'GE', 'GT', 'HOST', 'IDENT', 'INTEGER',
-  'IO_FINDUNIT', 'ITEM', 'LABEL', 'LOAD', 'LPAD', 'LE', 'LGT', 'LT', 'NE', 'OPSYN', 'ORD',
-  'PROTOTYPE', 'REMDR', 'REPLACE', 'REVERSE', 'RPAD', 'RSORT', 'SERV_LISTEN', 'SET', 'SETEXIT',
-  'SIZE', 'SORT', 'SQRT', 'SSET', 'SUBSTR', 'TABLE', 'THAW', 'TIME', 'TRACE', 'TRIM', 'UNLOAD',
-  'VALUE', 'VDIFFER'
+	'APPLY', 'ARRAY', 'CHAR', 'CONVERT', 'COPY', 'DATA', 'DATE', 'DIFFER', 'DUPL', 'EQ', 'EVAL',
+	'FILE_ABSPATH', 'FILE_ISDIR', 'FREEZE', 'FUNCTION', 'GE', 'GT', 'HOST', 'IDENT', 'INTEGER',
+	'IO_FINDUNIT', 'ITEM', 'LABEL', 'LOAD', 'LPAD', 'LE', 'LGT', 'LT', 'NE', 'OPSYN', 'ORD',
+	'PROTOTYPE', 'REMDR', 'REPLACE', 'REVERSE', 'RPAD', 'RSORT', 'SERV_LISTEN', 'SET', 'SETEXIT',
+	'SIZE', 'SORT', 'SQRT', 'SSET', 'SUBSTR', 'TABLE', 'THAW', 'TIME', 'TRACE', 'TRIM', 'UNLOAD',
+	'VALUE', 'VDIFFER'
 }, true) * #P('(')))
 
 -- Identifiers.

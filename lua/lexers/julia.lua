@@ -14,9 +14,9 @@ local id = lexer.word * P('!')^0
 
 -- Keyword
 lex:add_rule('keyword', token(lexer.KEYWORD, word_match{
-  'baremodule', 'begin', 'break', 'catch', 'const', 'continue', 'do', 'else', 'elseif', 'end',
-  'export', 'finally', 'for', 'function', 'global', 'if', 'in', 'isa', 'import', 'let', 'local',
-  'macro', 'module', 'quote', 'return', 'struct', 'try', 'using', 'where', 'while'
+	'baremodule', 'begin', 'break', 'catch', 'const', 'continue', 'do', 'else', 'elseif', 'end',
+	'export', 'finally', 'for', 'function', 'global', 'if', 'in', 'isa', 'import', 'let', 'local',
+	'macro', 'module', 'quote', 'return', 'struct', 'try', 'using', 'where', 'while'
 } + 'abstract type' + 'mutable struct' + 'primitive type'))
 
 -- Constant
@@ -26,7 +26,7 @@ local const_special = word_match('nothing undef missing')
 local const_env = word_match('ARGS ENV ENDIAN_BOM LOAD_PATH VERSION PROGRAM_FILE DEPOT_PATH')
 local const_io = word_match('stdout stdin stderr devnull')
 lex:add_rule('constant', token(lexer.CONSTANT,
-  const_bool + const_numerical + const_special + const_env + const_io))
+	const_bool + const_numerical + const_special + const_env + const_io))
 
 -- Type
 local type_annotated = (B('::') + B(':: ')) * id
@@ -41,16 +41,16 @@ local type_builtin_numerical = ((P('Abstract') + 'Big') * 'Float' +
 ) * -lexer.alnum + word_match('Number Complex Real Integer Bool Signed Unsigned Rational')
 -- LuaFormatter on
 local type_builtin_range = ((P('Lin') + 'Ordinal' + (P('Abstract')^-1 * P('Unit')^-1)) * 'Range' +
-  'StepRange' * P('Len')^-1 - 'Range'
+	'StepRange' * P('Len')^-1 - 'Range'
 ) * -lexer.alnum
 local type_builtin_array = ((P('Abstract') + 'Bit' + 'Dense' + 'PermutedDims' + 'Sub')^-1 *
-  word_match('Array Vector Matrix VecOrMat') +
-  (P('Abstract') + 'Sym' + (P('Unit')^-1 * (P('Lower') + 'Upper')))^-1 * 'Triangular'
+	word_match('Array Vector Matrix VecOrMat') +
+	(P('Abstract') + 'Sym' + (P('Unit')^-1 * (P('Lower') + 'Upper')))^-1 * 'Triangular'
 ) * -lexer.alnum +
-  word_match('Adjoint Bidiagonal Diagonal Hermitian LQPackedQ Symmetric Transpose UpperHessenberg')
+	word_match('Adjoint Bidiagonal Diagonal Hermitian LQPackedQ Symmetric Transpose UpperHessenberg')
 lex:add_rule('type', token(lexer.TYPE,
-  type_para + type_annotated + type_subtyping + type_struct + type_builtin_numerical +
-    type_builtin_range + type_builtin_array))
+	type_para + type_annotated + type_subtyping + type_struct + type_builtin_numerical +
+		type_builtin_range + type_builtin_array))
 
 -- Macro
 lex:add_rule('macro', token(lexer.PREPROCESSOR, '@' * (id + '.')))
@@ -90,7 +90,7 @@ local float = float_dec + float_hex
 local imaginary = (float_dec + decimal) * 'im'
 
 lex:add_rule('number',
-  token(lexer.NUMBER, S('+-')^-1 * (imaginary + float + integer) * -lexer.alpha))
+	token(lexer.NUMBER, S('+-')^-1 * (imaginary + float + integer) * -lexer.alpha))
 
 -- String & Character
 local doc_str = lexer.range('"""')
@@ -105,7 +105,7 @@ lex:add_style('character', lexer.styles.constant)
 
 -- Operator
 lex:add_rule('operator', token(lexer.OPERATOR, S('+-*/<>=!%^&|~\\\':?.') + '÷' + '≠' + '≈' +
-  '≤' + '≥' + '⊻' + '√'))
+	'≤' + '≥' + '⊻' + '√'))
 
 lexer.property['scintillua.comment'] = '#'
 

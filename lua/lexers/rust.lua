@@ -23,8 +23,8 @@ lex:add_rule('lifetime', lex:tag(lexer.OPERATOR, S('<&') * P("'")))
 local sq_str = P('b')^-1 * lexer.range("'", true)
 local dq_str = P('b')^-1 * lexer.range('"')
 local raw_str = Cmt(P('b')^-1 * P('r') * C(P('#')^0) * '"', function(input, index, hashes)
-  local _, e = input:find('"' .. hashes, index, true)
-  return (e or #input) + 1
+	local _, e = input:find('"' .. hashes, index, true)
+	return (e or #input) + 1
 end)
 lex:add_rule('string', lex:tag(lexer.STRING, sq_str + dq_str + raw_str))
 
@@ -59,30 +59,30 @@ lex:add_fold_point(lexer.OPERATOR, '{', '}')
 
 -- https://doc.rust-lang.org/std/#keywords
 lex:set_word_list(lexer.KEYWORD, {
-  'SelfTy', 'as', 'async', 'await', 'break', 'const', 'continue', 'crate', 'dyn', 'else', 'enum',
-  'extern', 'false', 'fn', 'for', 'if', 'impl', 'in', 'let', 'loop', 'match', 'mod', 'move', 'mut',
-  'pub', 'ref', 'return', 'self', 'static', 'struct', 'super', 'trait', 'true', 'type', 'union',
-  'unsafe', 'use', 'where', 'while'
+	'SelfTy', 'as', 'async', 'await', 'break', 'const', 'continue', 'crate', 'dyn', 'else', 'enum',
+	'extern', 'false', 'fn', 'for', 'if', 'impl', 'in', 'let', 'loop', 'match', 'mod', 'move', 'mut',
+	'pub', 'ref', 'return', 'self', 'static', 'struct', 'super', 'trait', 'true', 'type', 'union',
+	'unsafe', 'use', 'where', 'while'
 })
 
 -- https://doc.rust-lang.org/std/#primitives
 lex:set_word_list(lexer.TYPE, {
-  'never', 'array', 'bool', 'char', 'f32', 'f64', 'fn', 'i8', 'i16', 'i32', 'i64', 'i128', 'isize',
-  'pointer', 'reference', 'slice', 'str', 'tuple', 'u8', 'u16', 'u32', 'u64', 'u128', 'unit',
-  'usize'
+	'never', 'array', 'bool', 'char', 'f32', 'f64', 'fn', 'i8', 'i16', 'i32', 'i64', 'i128', 'isize',
+	'pointer', 'reference', 'slice', 'str', 'tuple', 'u8', 'u16', 'u32', 'u64', 'u128', 'unit',
+	'usize'
 })
 
 lex:set_word_list(lexer.FUNCTION_BUILTIN, {
-  'assert', 'assert_eq', 'assert_ne', 'cfg', 'column', 'compile_error', 'concat', 'dbg',
-  'debug_assert', 'debug_assert_eq', 'debug_assert_ne', 'env', 'eprint', 'eprintln', 'file',
-  'format', 'format_args', 'include', 'include_bytes', 'include_str', 'line', 'matches',
-  'module_path', 'option_env', 'panic', 'print', 'println', 'stringify', 'thread_local', 'todo',
-  'unimplemented', 'unreachable', 'vec', 'write', 'writeln',
-  -- Experimental
-  'concat_bytes', 'concat_idents', 'const_format_args', 'format_args_nl', 'log_syntax',
-  'trace_macros',
-  -- Deprecated
-  'try'
+	'assert', 'assert_eq', 'assert_ne', 'cfg', 'column', 'compile_error', 'concat', 'dbg',
+	'debug_assert', 'debug_assert_eq', 'debug_assert_ne', 'env', 'eprint', 'eprintln', 'file',
+	'format', 'format_args', 'include', 'include_bytes', 'include_str', 'line', 'matches',
+	'module_path', 'option_env', 'panic', 'print', 'println', 'stringify', 'thread_local', 'todo',
+	'unimplemented', 'unreachable', 'vec', 'write', 'writeln',
+	-- Experimental
+	'concat_bytes', 'concat_idents', 'const_format_args', 'format_args_nl', 'log_syntax',
+	'trace_macros',
+	-- Deprecated
+	'try'
 })
 
 lexer.property['scintillua.comment'] = '//'

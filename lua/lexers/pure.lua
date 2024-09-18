@@ -12,9 +12,9 @@ lex:add_rule('whitespace', token(lexer.WHITESPACE, lexer.space^1))
 
 -- Keywords.
 lex:add_rule('keyword', token(lexer.KEYWORD, word_match{
-  'namespace', 'with', 'end', 'using', 'interface', 'extern', 'let', 'const', 'def', 'type',
-  'public', 'private', 'nonfix', 'outfix', 'infix', 'infixl', 'infixr', 'prefix', 'postfix', 'if',
-  'otherwise', 'when', 'case', 'of', 'then', 'else'
+	'namespace', 'with', 'end', 'using', 'interface', 'extern', 'let', 'const', 'def', 'type',
+	'public', 'private', 'nonfix', 'outfix', 'infix', 'infixl', 'infixr', 'prefix', 'postfix', 'if',
+	'otherwise', 'when', 'case', 'of', 'then', 'else'
 }))
 
 -- Identifiers.

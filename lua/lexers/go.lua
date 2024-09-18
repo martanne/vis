@@ -17,7 +17,7 @@ lex:add_rule('type', lex:tag(lexer.TYPE, lex:word_match(lexer.TYPE)))
 
 -- Functions.
 local builtin_func = -lpeg.B('.') *
-  lex:tag(lexer.FUNCTION_BUILTIN, lex:word_match(lexer.FUNCTION_BUILTIN))
+	lex:tag(lexer.FUNCTION_BUILTIN, lex:word_match(lexer.FUNCTION_BUILTIN))
 local func = lex:tag(lexer.FUNCTION, lexer.word)
 local method = lpeg.B('.') * lex:tag(lexer.FUNCTION_METHOD, lexer.word)
 lex:add_rule('function', (builtin_func + method + func) * #(lexer.space^0 * '('))
@@ -48,22 +48,22 @@ lex:add_fold_point(lexer.COMMENT, '/*', '*/')
 
 -- Word lists.
 lex:set_word_list(lexer.KEYWORD, {
-  'break', 'case', 'chan', 'const', 'continue', 'default', 'defer', 'else', 'fallthrough', 'for',
-  'func', 'go', 'goto', 'if', 'import', 'interface', 'map', 'package', 'range', 'return', 'select',
-  'struct', 'switch', 'type', 'var'
+	'break', 'case', 'chan', 'const', 'continue', 'default', 'defer', 'else', 'fallthrough', 'for',
+	'func', 'go', 'goto', 'if', 'import', 'interface', 'map', 'package', 'range', 'return', 'select',
+	'struct', 'switch', 'type', 'var'
 })
 
 lex:set_word_list(lexer.CONSTANT_BUILTIN, 'true false iota nil')
 
 lex:set_word_list(lexer.TYPE, {
-  'any', 'bool', 'byte', 'comparable', 'complex64', 'complex128', 'error', 'float32', 'float64',
-  'int', 'int8', 'int16', 'int32', 'int64', 'rune', 'string', 'uint', 'uint8', 'uint16', 'uint32',
-  'uint64', 'uintptr'
+	'any', 'bool', 'byte', 'comparable', 'complex64', 'complex128', 'error', 'float32', 'float64',
+	'int', 'int8', 'int16', 'int32', 'int64', 'rune', 'string', 'uint', 'uint8', 'uint16', 'uint32',
+	'uint64', 'uintptr'
 })
 
 lex:set_word_list(lexer.FUNCTION_BUILTIN, {
-  'append', 'cap', 'close', 'complex', 'copy', 'delete', 'imag', 'len', 'make', 'new', 'panic',
-  'print', 'println', 'real', 'recover'
+	'append', 'cap', 'close', 'complex', 'copy', 'delete', 'imag', 'len', 'make', 'new', 'panic',
+	'print', 'println', 'real', 'recover'
 })
 
 lexer.property['scintillua.comment'] = '//'

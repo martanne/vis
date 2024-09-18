@@ -25,32 +25,32 @@ local fn_name = token(lexer.FUNCTION, name)
 local mod_name = token('module', name)
 local typ_or_fn = typ_tok + fn_name
 local function mod_tok(ws)
-  return token(KEY, 'import') * ws^1 * mod_name * (ws^0 * token(OP, '/') * ws^0 * mod_name)^0 *
-    (ws^1 * token(KEY, 'as') * ws^1 * mod_name)^-1 *
-    (ws^0 * token(OP, '.') * ws^0 * token(OP, '{') * ws^0 * typ_or_fn *
-      (ws^0 * token(OP, ',') * ws^0 * typ_or_fn)^0 * ws^0 * token(OP, '}'))^-1
+	return token(KEY, 'import') * ws^1 * mod_name * (ws^0 * token(OP, '/') * ws^0 * mod_name)^0 *
+		(ws^1 * token(KEY, 'as') * ws^1 * mod_name)^-1 *
+		(ws^0 * token(OP, '.') * ws^0 * token(OP, '{') * ws^0 * typ_or_fn *
+			(ws^0 * token(OP, ',') * ws^0 * typ_or_fn)^0 * ws^0 * token(OP, '}'))^-1
 end
 lex:add_rule('module', mod_tok(gleam_ws))
 lex:add_style('module', lexer.styles.constant)
 
 -- Keywords.
 local key_tok = token(KEY, word_match(
-  'as assert case const external fn if import let opaque pub todo try tuple type'))
+	'as assert case const external fn if import let opaque pub todo try tuple type'))
 lex:add_rule('keyword', key_tok)
 
 -- Functions.
 local function fn_tok(ws)
-  local mod_name_op = mod_name * ws^0 * token(OP, '.')
-  local fn_def_call = mod_name_op^-1 * ws^0 * fn_name * ws^0 * #P('(')
-  local fn_pipe = token(OP, '|>') * ws^0 * (token(KEY, 'fn') + mod_name_op^-1 * fn_name)
-  return fn_def_call + fn_pipe
+	local mod_name_op = mod_name * ws^0 * token(OP, '.')
+	local fn_def_call = mod_name_op^-1 * ws^0 * fn_name * ws^0 * #P('(')
+	local fn_pipe = token(OP, '|>') * ws^0 * (token(KEY, 'fn') + mod_name_op^-1 * fn_name)
+	return fn_def_call + fn_pipe
 end
 lex:add_rule('function', fn_tok(gleam_ws))
 
 -- Labels.
 local id = token(lexer.IDENTIFIER, name)
 local function lab_tok(ws)
-  return token(OP, S('(,')) * ws^0 * token(lexer.LABEL, name) * #(ws^1 * id)
+	return token(OP, S('(,')) * ws^0 * token(lexer.LABEL, name) * #(ws^1 * id)
 end
 lex:add_rule('label', lab_tok(gleam_ws))
 
@@ -101,9 +101,9 @@ bitstring:add_style(bitstring._name .. '_whitespace', lexer.styles.whitespace)
 bitstring:add_rule('type', typ_tok)
 bitstring:add_rule('module', mod_tok(bitstring_ws))
 bitstring:add_rule('keyword', key_tok + token(KEY, word_match{
-  'binary', 'bytes', 'int', 'float', 'bit_string', 'bits', 'utf8', 'utf16', 'utf32',
-  'utf8_codepoint', 'utf16_codepoint', 'utf32_codepoint', 'signed', 'unsigned', 'big', 'little',
-  'native', 'unit', 'size'
+	'binary', 'bytes', 'int', 'float', 'bit_string', 'bits', 'utf8', 'utf16', 'utf32',
+	'utf8_codepoint', 'utf16_codepoint', 'utf32_codepoint', 'signed', 'unsigned', 'big', 'little',
+	'native', 'unit', 'size'
 }))
 bitstring:add_rule('function', fn_tok(bitstring_ws))
 bitstring:add_rule('label', lab_tok(bitstring_ws))

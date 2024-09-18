@@ -12,9 +12,9 @@ lex:add_rule('whitespace', token(lexer.WHITESPACE, lexer.space^1))
 
 -- Keywords.
 lex:add_rule('keyword', token(lexer.KEYWORD, word_match{
-  'declare', 'import', 'mdoctags', 'dependencies', 'distributed', 'inputs', 'outputs', 'par', 'seq',
-  'sum', 'prod', 'xor', 'with', 'environment', 'library', 'component', 'ffunction', 'fvariable',
-  'fconstant', 'int', 'float', 'case', 'waveform', 'h:', 'v:', 't:'
+	'declare', 'import', 'mdoctags', 'dependencies', 'distributed', 'inputs', 'outputs', 'par', 'seq',
+	'sum', 'prod', 'xor', 'with', 'environment', 'library', 'component', 'ffunction', 'fvariable',
+	'fconstant', 'int', 'float', 'case', 'waveform', 'h:', 'v:', 't:'
 }))
 
 -- Identifiers.

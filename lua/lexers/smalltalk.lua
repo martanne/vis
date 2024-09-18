@@ -12,11 +12,11 @@ lex:add_rule('whitespace', token(lexer.WHITESPACE, lexer.space^1))
 
 -- Keywords.
 lex:add_rule('keyword', token(lexer.KEYWORD, word_match(
-  'true false nil self super isNil not Smalltalk Transcript')))
+	'true false nil self super isNil not Smalltalk Transcript')))
 
 -- Types.
 lex:add_rule('type', token(lexer.TYPE, word_match(
-  'Date Time Boolean True False Character String Array Symbol Integer Object')))
+	'Date Time Boolean True False Character String Array Symbol Integer Object')))
 
 -- Identifiers.
 lex:add_rule('identifier', token(lexer.IDENTIFIER, lexer.word))

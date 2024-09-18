@@ -12,7 +12,7 @@ lex:add_rule('whitespace', token(lexer.WHITESPACE, lexer.space^1))
 
 -- Keywords.
 lex:add_rule('keyword', token(lexer.KEYWORD, word_match(
-  'And Background But Examples Feature Given Outline Scenario Scenarios Then When')))
+	'And Background But Examples Feature Given Outline Scenario Scenarios Then When')))
 
 -- Strings.
 local doc_str = lexer.range('"""')

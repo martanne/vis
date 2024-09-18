@@ -16,22 +16,22 @@ lex:add_rule('class', token(lexer.KEYWORD, 'class') * ws^1 * token(lexer.CLASS, 
 
 -- Keywords.
 lex:add_rule('keyword', token(lexer.KEYWORD, word_match{
-  -- General.
-  'abstract', 'annotation', 'as', 'case', 'catch', 'class', 'create', 'def', 'default', 'dispatch',
-  'do', 'else', 'enum', 'extends', 'extension', 'final', 'finally', 'for', 'if', 'implements',
-  'import', 'interface', 'instanceof', 'it', 'new', 'override', 'package', 'private', 'protected',
-  'public', 'return', 'self', 'static', 'super', 'switch', 'synchronized', 'this', 'throw',
-  'throws', 'try', 'typeof', 'val', 'var', 'while',
-  -- Templates.
-  'AFTER', 'BEFORE', 'ENDFOR', 'ENDIF', 'FOR', 'IF', 'SEPARATOR',
-  -- Literals.
-  'true', 'false', 'null'
+	-- General.
+	'abstract', 'annotation', 'as', 'case', 'catch', 'class', 'create', 'def', 'default', 'dispatch',
+	'do', 'else', 'enum', 'extends', 'extension', 'final', 'finally', 'for', 'if', 'implements',
+	'import', 'interface', 'instanceof', 'it', 'new', 'override', 'package', 'private', 'protected',
+	'public', 'return', 'self', 'static', 'super', 'switch', 'synchronized', 'this', 'throw',
+	'throws', 'try', 'typeof', 'val', 'var', 'while',
+	-- Templates.
+	'AFTER', 'BEFORE', 'ENDFOR', 'ENDIF', 'FOR', 'IF', 'SEPARATOR',
+	-- Literals.
+	'true', 'false', 'null'
 }))
 
 -- Types.
 lex:add_rule('type', token(lexer.TYPE, word_match{
-  'boolean', 'byte', 'char', 'double', 'float', 'int', 'long', 'short', 'void', 'Boolean', 'Byte',
-  'Character', 'Double', 'Float', 'Integer', 'Long', 'Short', 'String'
+	'boolean', 'byte', 'char', 'double', 'float', 'int', 'long', 'short', 'void', 'Boolean', 'Byte',
+	'Character', 'Double', 'Float', 'Integer', 'Long', 'Short', 'String'
 }))
 
 -- Functions.

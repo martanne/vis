@@ -12,7 +12,7 @@ lex:add_rule('whitespace', token(lexer.WHITESPACE, lexer.space^1))
 
 -- Keywords.
 lex:add_rule('keyword', token(lexer.KEYWORD, word_match(
-  'msgid msgid_plural msgstr fuzzy c-format no-c-format', true)))
+	'msgid msgid_plural msgstr fuzzy c-format no-c-format', true)))
 
 -- Identifiers.
 lex:add_rule('identifier', token(lexer.IDENTIFIER, lexer.word))

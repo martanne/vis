@@ -17,11 +17,11 @@ local ws = token(lexer.WHITESPACE, (lexer.space - lexer.newline)^1)
 -- Titles
 local alphanumeric = lexer.alnum + S('_-')
 local header_label = token('header_label_start', '[') * token(lexer.LABEL, alphanumeric^1) *
-  token('header_label_end', ']')
+	token('header_label_end', ']')
 local function h(level)
-  local equal = string.rep('=', level) * (lexer.nonnewline - '=')^1 * string.rep('=', level)
-  local plus = string.rep('+', level) * (lexer.nonnewline - '+')^1 * string.rep('+', level)
-  return token('h' .. level, equal + plus) * header_label^-1
+	local equal = string.rep('=', level) * (lexer.nonnewline - '=')^1 * string.rep('=', level)
+	local plus = string.rep('+', level) * (lexer.nonnewline - '+')^1 * string.rep('+', level)
+	return token('h' .. level, equal + plus) * header_label^-1
 end
 local header = h(5) + h(4) + h(3) + h(2) + h(1)
 
@@ -32,9 +32,9 @@ local comment = token(lexer.COMMENT, block_comment + line_comment)
 
 -- Inline.
 local function span(name, delimiter)
-  return token(name, (delimiter * nonspace * delimiter * S(delimiter)^0) +
-    (delimiter * nonspace * (lexer.nonnewline - nonspace * delimiter)^0 * nonspace * delimiter *
-      S(delimiter)^0))
+	return token(name, (delimiter * nonspace * delimiter * S(delimiter)^0) +
+		(delimiter * nonspace * (lexer.nonnewline - nonspace * delimiter)^0 * nonspace * delimiter *
+			S(delimiter)^0))
 end
 local bold = span(lexer.BOLD, '**')
 local italic = span(lexer.ITALIC, '//')
@@ -47,18 +47,18 @@ local inline = bold + italic + underline + strike + mono + raw + tagged
 
 -- Link.
 local email = token(lexer.LINK,
-  (nonspace - '@')^1 * '@' * (nonspace - '.')^1 * ('.' * (nonspace - S('.?'))^1)^1 *
-    ('?' * nonspace^1)^-1)
+	(nonspace - '@')^1 * '@' * (nonspace - '.')^1 * ('.' * (nonspace - S('.?'))^1)^1 *
+		('?' * nonspace^1)^-1)
 local host = token(lexer.LINK,
-  word_match('www ftp', true) * (nonspace - '.')^0 * '.' * (nonspace - '.')^1 * '.' *
-    (nonspace - S(',.'))^1)
+	word_match('www ftp', true) * (nonspace - '.')^0 * '.' * (nonspace - '.')^1 * '.' *
+		(nonspace - S(',.'))^1)
 local url = token(lexer.LINK,
-  (nonspace - '://')^1 * '://' * (nonspace - ',' - '.')^1 * ('.' * (nonspace - S(',./?#'))^1)^1 *
-    ('/' * (nonspace - S('./?#'))^0 * ('.' * (nonspace - S(',.?#'))^1)^0)^0 *
-    ('?' * (nonspace - '#')^1)^-1 * ('#' * nonspace^0)^-1)
+	(nonspace - '://')^1 * '://' * (nonspace - ',' - '.')^1 * ('.' * (nonspace - S(',./?#'))^1)^1 *
+		('/' * (nonspace - S('./?#'))^0 * ('.' * (nonspace - S(',.?#'))^1)^0)^0 *
+		('?' * (nonspace - '#')^1)^-1 * ('#' * nonspace^0)^-1)
 local label_with_address = token(lexer.LABEL, '[') * lexer.space^0 *
-  token(lexer.LABEL, ((nonspace - ']')^1 * lexer.space^1)^1) * token(lexer.LINK, (nonspace - ']')^1) *
-  token(lexer.LABEL, ']')
+	token(lexer.LABEL, ((nonspace - ']')^1 * lexer.space^1)^1) * token(lexer.LINK, (nonspace - ']')^1) *
+	token(lexer.LABEL, ']')
 local link = label_with_address + url + host + email
 
 -- Line.
@@ -66,10 +66,10 @@ local line = token('line', S('-=_')^20)
 
 -- Image.
 local image_only = token('image_start', '[') * token('image', (nonspace - ']')^1) *
-  token('image_end', ']')
+	token('image_end', ']')
 local image_link = token('image_link_start', '[') * image_only *
-  token('image_link_sep', lexer.space^1) * token(lexer.LINK, (nonspace - ']')^1) *
-  token('image_link_end', ']')
+	token('image_link_sep', lexer.space^1) * token(lexer.LINK, (nonspace - ']')^1) *
+	token('image_link_end', ']')
 local image = image_link + image_only
 
 -- Macro.
@@ -97,10 +97,10 @@ local header_cell_content = token('header_cell_content', lexer.nonnewline - ' |'
 local field_sep = ' ' * table_sep^1 * ' '
 local table_row_end = P(' ')^0 * table_sep^0
 local table_row = lexer.starts_line(P(' ')^0 * table_sep) * cell_content^0 *
-  (field_sep * cell_content^0)^0 * table_row_end
+	(field_sep * cell_content^0)^0 * table_row_end
 local table_row_header =
-  lexer.starts_line(P(' ')^0 * table_sep * table_sep) * header_cell_content^0 *
-    (field_sep * header_cell_content^0)^0 * table_row_end
+	lexer.starts_line(P(' ')^0 * table_sep * table_sep) * header_cell_content^0 *
+		(field_sep * header_cell_content^0)^0 * table_row_end
 local table = table_row_header + table_row
 
 lex:add_rule('table', table)
@@ -119,7 +119,7 @@ lex:add_rule('tagged_area', tagged_area)
 lex:add_style('line', {bold = true})
 local font_size = tonumber(lexer.property_expanded['style.default']:match('size:(%d+)')) or 10
 for n = 5, 1, -1 do
-  lex:add_style('h' .. n, {fore = lexer.colors.red, size = font_size + (6 - n)})
+	lex:add_style('h' .. n, {fore = lexer.colors.red, size = font_size + (6 - n)})
 end
 lex:add_style('image', {fore = lexer.colors.green})
 lex:add_style('strike', {italics = true}) -- a strike style is not available

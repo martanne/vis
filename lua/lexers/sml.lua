@@ -16,36 +16,36 @@ local id = (lexer.alnum + "'" + '_')^0
 local aid = lexer.alpha * id
 local longid = (aid * '.')^0 * aid
 local struct_dec = token(lexer.KEYWORD, 'structure') * ws * token(lexer.CLASS, aid) * ws *
-  token(lexer.OPERATOR, '=') * ws
+	token(lexer.OPERATOR, '=') * ws
 lex:add_rule('struct_new', struct_dec * token(lexer.KEYWORD, 'struct'))
 lex:add_rule('struct_alias', struct_dec * token(lexer.CLASS, longid))
 lex:add_rule('structure', token(lexer.CLASS, aid * '.'))
 
 -- Open.
 lex:add_rule('open', token(lexer.KEYWORD, word_match('open structure functor')) * ws *
-  token(lexer.CLASS, longid))
+	token(lexer.CLASS, longid))
 
 -- Keywords.
 lex:add_rule('keyword', token(lexer.KEYWORD, word_match{
-  'abstype', 'and', 'andalso', 'as', 'case', 'do', 'datatype', 'else', 'end', 'exception', 'fn',
-  'fun', 'handle', 'if', 'in', 'infix', 'infixr', 'let', 'local', 'nonfix', 'of', 'op', 'orelse',
-  'raise', 'rec', 'then', 'type', 'val', 'with', 'withtype', 'while', --
-  'eqtype', 'functor', 'include', 'sharing', 'sig', 'signature', 'struct', 'structure'
+	'abstype', 'and', 'andalso', 'as', 'case', 'do', 'datatype', 'else', 'end', 'exception', 'fn',
+	'fun', 'handle', 'if', 'in', 'infix', 'infixr', 'let', 'local', 'nonfix', 'of', 'op', 'orelse',
+	'raise', 'rec', 'then', 'type', 'val', 'with', 'withtype', 'while', --
+	'eqtype', 'functor', 'include', 'sharing', 'sig', 'signature', 'struct', 'structure'
 }))
 
 -- Types.
 lex:add_rule('type', token(lexer.TYPE, word_match{
-  'int', 'real', 'word', 'bool', 'char', 'string', 'unit', 'array', 'exn', 'list', 'option',
-  'order', 'ref', 'substring', 'vector'
+	'int', 'real', 'word', 'bool', 'char', 'string', 'unit', 'array', 'exn', 'list', 'option',
+	'order', 'ref', 'substring', 'vector'
 }))
 
 -- Functions.
 -- `real`, `vector` and `substring` are a problem.
 lex:add_rule('function', token(lexer.FUNCTION, word_match{
-  'app', 'before', 'ceil', 'chr', 'concat', 'exnMessage', 'exnName', 'explode', 'floor', 'foldl',
-  'foldr', 'getOpt', 'hd', 'ignore', 'implode', 'isSome', 'length', 'map', 'not', 'null', 'ord',
-  'print', 'real', 'rev', 'round', 'size', 'str', 'substring', 'tl', 'trunc', 'valOf', 'vector',
-  'o', 'abs', 'mod', 'div'
+	'app', 'before', 'ceil', 'chr', 'concat', 'exnMessage', 'exnName', 'explode', 'floor', 'foldl',
+	'foldr', 'getOpt', 'hd', 'ignore', 'implode', 'isSome', 'length', 'map', 'not', 'null', 'ord',
+	'print', 'real', 'rev', 'round', 'size', 'str', 'substring', 'tl', 'trunc', 'valOf', 'vector',
+	'o', 'abs', 'mod', 'div'
 }))
 
 -- Constants.

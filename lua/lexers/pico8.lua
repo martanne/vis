@@ -10,7 +10,7 @@ local lex = lexer.new(...)
 
 -- Keywords
 lex:add_rule('keyword',
-  lex:tag(lexer.KEYWORD, lexer.word_match('__gff__ __map__ __sfx__ __music__')))
+	lex:tag(lexer.KEYWORD, lexer.word_match('__gff__ __map__ __sfx__ __music__')))
 
 -- Identifiers
 lex:add_rule('identifier', lex:tag(lexer.IDENTIFIER, lexer.word))

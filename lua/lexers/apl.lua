@@ -29,7 +29,7 @@ lex:add_rule('number', token(lexer.NUMBER, float * img * float + float))
 
 -- Keywords.
 lex:add_rule('keyword', token(lexer.KEYWORD,
-  P('⍞') + 'χ' + '⍺' + '⍶' + '⍵' + '⍹' + '⎕' * lexer.alpha^0))
+	P('⍞') + 'χ' + '⍺' + '⍶' + '⍵' + '⍹' + '⎕' * lexer.alpha^0))
 
 -- Names.
 local n1l = lexer.alpha

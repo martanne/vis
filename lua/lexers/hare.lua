@@ -14,9 +14,9 @@ lex:add_rule('type', lex:tag(lexer.TYPE, lex:word_match(lexer.TYPE)))
 
 -- Functions.
 local builtin_func = lex:tag(lexer.FUNCTION_BUILTIN,
-  lex:word_match(lexer.FUNCTION_BUILTIN) + 'size' * #(lexer.space^0 * '('))
+	lex:word_match(lexer.FUNCTION_BUILTIN) + 'size' * #(lexer.space^0 * '('))
 local func = lex:tag(lexer.FUNCTION, lex:tag(lexer.FUNCTION, lexer.word * ('::' * lexer.word)^0 *
-  #(lexer.space^0 * '(')))
+	#(lexer.space^0 * '(')))
 lex:add_rule('function', builtin_func + func)
 
 -- Constants.
@@ -42,7 +42,7 @@ local int_suffix = lexer.word_match('i u z i8 i16 i32 i64 u8 u16 u32 u64')
 local float_suffix = lexer.word_match('f32 f64')
 local suffix = int_suffix + float_suffix
 local integer = S('+-')^-1 *
-  ((hex_num + oct_num + bin_num) * int_suffix^-1 + lexer.dec_num * suffix^-1)
+	((hex_num + oct_num + bin_num) * int_suffix^-1 + lexer.dec_num * suffix^-1)
 local float = lexer.float * float_suffix^-1
 lex:add_rule('number', lex:tag(lexer.NUMBER, integer + float))
 
@@ -60,18 +60,18 @@ lex:add_fold_point(lexer.OPERATOR, '{', '}')
 
 -- Word lists.
 lex:set_word_list(lexer.KEYWORD, {
-  'as', 'break', 'case', 'const', 'continue', 'def', 'defer', 'else', 'export', 'fn', 'for', 'if',
-  'is', 'let', 'match', 'nullable', 'return', 'static', 'switch', 'type', 'use', 'yield', '_'
+	'as', 'break', 'case', 'const', 'continue', 'def', 'defer', 'else', 'export', 'fn', 'for', 'if',
+	'is', 'let', 'match', 'nullable', 'return', 'static', 'switch', 'type', 'use', 'yield', '_'
 })
 
 lex:set_word_list(lexer.TYPE, {
-  'bool', 'enum', 'f32', 'f64', 'i16', 'i32', 'i64', 'i8', 'int', 'opaque', 'never', 'rune', 'size',
-  'str', 'struct', 'u16', 'u32', 'u64', 'u8', 'uint', 'uintptr', 'union', 'valist'
+	'bool', 'enum', 'f32', 'f64', 'i16', 'i32', 'i64', 'i8', 'int', 'opaque', 'never', 'rune', 'size',
+	'str', 'struct', 'u16', 'u32', 'u64', 'u8', 'uint', 'uintptr', 'union', 'valist'
 })
 
 lex:set_word_list(lexer.FUNCTION_BUILTIN, {
-  'abort', 'align', 'alloc', 'append', 'assert', 'delete', 'free', 'insert', 'len', 'offset',
-  'vaarg', 'vaend', 'vastart'
+	'abort', 'align', 'alloc', 'append', 'assert', 'delete', 'free', 'insert', 'len', 'offset',
+	'vaarg', 'vaend', 'vastart'
 })
 
 lex:set_word_list(lexer.CONSTANT_BUILTIN, 'done false null true void')

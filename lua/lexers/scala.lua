@@ -16,17 +16,17 @@ lex:add_rule('class', token(lexer.KEYWORD, 'class') * ws^1 * token(lexer.CLASS, 
 
 -- Keywords.
 lex:add_rule('keyword', token(lexer.KEYWORD, word_match{
-  'abstract', 'case', 'catch', 'class', 'def', 'do', 'else', 'extends', 'false', 'final', 'finally',
-  'for', 'forSome', 'if', 'implicit', 'import', 'lazy', 'match', 'new', 'null', 'object',
-  'override', 'package', 'private', 'protected', 'return', 'sealed', 'super', 'this', 'throw',
-  'trait', 'try', 'true', 'type', 'val', 'var', 'while', 'with', 'yield'
+	'abstract', 'case', 'catch', 'class', 'def', 'do', 'else', 'extends', 'false', 'final', 'finally',
+	'for', 'forSome', 'if', 'implicit', 'import', 'lazy', 'match', 'new', 'null', 'object',
+	'override', 'package', 'private', 'protected', 'return', 'sealed', 'super', 'this', 'throw',
+	'trait', 'try', 'true', 'type', 'val', 'var', 'while', 'with', 'yield'
 }))
 
 -- Types.
 lex:add_rule('type', token(lexer.TYPE, word_match{
-  'Array', 'Boolean', 'Buffer', 'Byte', 'Char', 'Collection', 'Double', 'Float', 'Int', 'Iterator',
-  'LinkedList', 'List', 'Long', 'Map', 'None', 'Option', 'Set', 'Short', 'SortedMap', 'SortedSet',
-  'String', 'TreeMap', 'TreeSet'
+	'Array', 'Boolean', 'Buffer', 'Byte', 'Char', 'Collection', 'Double', 'Float', 'Int', 'Iterator',
+	'LinkedList', 'List', 'Long', 'Map', 'None', 'Option', 'Set', 'Short', 'SortedMap', 'SortedSet',
+	'String', 'TreeMap', 'TreeSet'
 }))
 
 -- Functions.

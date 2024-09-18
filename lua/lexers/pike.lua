@@ -12,16 +12,16 @@ lex:add_rule('whitespace', token(lexer.WHITESPACE, lexer.space^1))
 
 -- Keywords.
 lex:add_rule('keyword', token(lexer.KEYWORD, word_match{
-  'break', 'case', 'catch', 'continue', 'default', 'do', 'else', 'for', 'foreach', 'gauge', 'if',
-  'lambda', 'return', 'sscanf', 'switch', 'while', 'import', 'inherit',
-  -- Type modifiers.
-  'constant', 'extern', 'final', 'inline', 'local', 'nomask', 'optional', 'private', 'protected',
-  'public', 'static', 'variant'
+	'break', 'case', 'catch', 'continue', 'default', 'do', 'else', 'for', 'foreach', 'gauge', 'if',
+	'lambda', 'return', 'sscanf', 'switch', 'while', 'import', 'inherit',
+	-- Type modifiers.
+	'constant', 'extern', 'final', 'inline', 'local', 'nomask', 'optional', 'private', 'protected',
+	'public', 'static', 'variant'
 }))
 
 -- Types.
 lex:add_rule('type', token(lexer.TYPE, word_match(
-  'array class float function int mapping mixed multiset object program string void')))
+	'array class float function int mapping mixed multiset object program string void')))
 
 -- Identifiers.
 lex:add_rule('identifier', token(lexer.IDENTIFIER, lexer.word))

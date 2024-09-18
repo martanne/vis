@@ -12,17 +12,17 @@ lex:add_rule('whitespace', token(lexer.WHITESPACE, lexer.space^1))
 
 -- Keywords.
 lex:add_rule('keyword', token(lexer.KEYWORD, word_match{
-  'alias', 'all', 'and', 'as', 'check', 'class', 'creation', 'debug', 'deferred', 'do', 'else',
-  'elseif', 'end', 'ensure', 'expanded', 'export', 'external', 'feature', 'from', 'frozen', 'if',
-  'implies', 'indexing', 'infix', 'inherit', 'inspect', 'invariant', 'is', 'like', 'local', 'loop',
-  'not', 'obsolete', 'old', 'once', 'or', 'prefix', 'redefine', 'rename', 'require', 'rescue',
-  'retry', 'select', 'separate', 'then', 'undefine', 'until', 'variant', 'when', 'xor', --
-  'current', 'false', 'precursor', 'result', 'strip', 'true', 'unique', 'void'
+	'alias', 'all', 'and', 'as', 'check', 'class', 'creation', 'debug', 'deferred', 'do', 'else',
+	'elseif', 'end', 'ensure', 'expanded', 'export', 'external', 'feature', 'from', 'frozen', 'if',
+	'implies', 'indexing', 'infix', 'inherit', 'inspect', 'invariant', 'is', 'like', 'local', 'loop',
+	'not', 'obsolete', 'old', 'once', 'or', 'prefix', 'redefine', 'rename', 'require', 'rescue',
+	'retry', 'select', 'separate', 'then', 'undefine', 'until', 'variant', 'when', 'xor', --
+	'current', 'false', 'precursor', 'result', 'strip', 'true', 'unique', 'void'
 }))
 
 -- Types.
 lex:add_rule('type',
-  token(lexer.TYPE, word_match('character string bit boolean integer real none any')))
+	token(lexer.TYPE, word_match('character string bit boolean integer real none any')))
 
 -- Identifiers.
 lex:add_rule('identifier', token(lexer.IDENTIFIER, lexer.word))
@@ -45,14 +45,14 @@ lex:add_rule('operator', token(lexer.OPERATOR, S('=!<>+-/*%&|^~.,:;?()[]{}')))
 lex:add_fold_point(lexer.KEYWORD, 'check', 'end')
 lex:add_fold_point(lexer.KEYWORD, 'debug', 'end')
 lex:add_fold_point(lexer.KEYWORD, 'deferred',
-  function(text, pos, line, s) return line:find('deferred%s+class') and 0 or 1 end)
+	function(text, pos, line, s) return line:find('deferred%s+class') and 0 or 1 end)
 lex:add_fold_point(lexer.KEYWORD, 'do', 'end')
 lex:add_fold_point(lexer.KEYWORD, 'from', 'end')
 lex:add_fold_point(lexer.KEYWORD, 'if', 'end')
 lex:add_fold_point(lexer.KEYWORD, 'inspect', 'end')
 lex:add_fold_point(lexer.KEYWORD, 'once', 'end')
 lex:add_fold_point(lexer.KEYWORD, 'class',
-  function(text, pos, line, s) return line:find('deferred%s+class') and 0 or 1 end)
+	function(text, pos, line, s) return line:find('deferred%s+class') and 0 or 1 end)
 
 lexer.property['scintillua.comment'] = '--'
 

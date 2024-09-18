@@ -11,7 +11,7 @@ lex:add_rule('syscall', lex:tag(lexer.FUNCTION, lexer.starts_line(lexer.word)))
 
 -- Upper case constants
 lex:add_rule('constant',
-  lex:tag(lexer.CONSTANT, (lexer.upper + '_') * (lexer.upper + lexer.digit + '_')^0))
+	lex:tag(lexer.CONSTANT, (lexer.upper + '_') * (lexer.upper + lexer.digit + '_')^0))
 
 -- Single and double quoted strings
 local sq_str = lexer.range("'", true)

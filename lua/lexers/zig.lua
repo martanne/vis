@@ -13,57 +13,57 @@ lex:add_rule('whitespace', token(lexer.WHITESPACE, lexer.space^1))
 
 -- Keywords.
 lex:add_rule('keyword', token(lexer.KEYWORD, word_match{
-  -- Keywords.
-  'inline', 'pub', 'fn', 'comptime', 'const', 'extern', 'return', 'var', 'usingnamespace',
-  -- Defering code blocks.
-  'defer', 'errdefer',
-  -- Functions and structures related keywords.
-  'align', 'allowzero', 'noalias', 'noinline', 'callconv', 'packed', 'linksection', 'unreachable',
-  'test', 'asm', 'volatile',
-  -- Parallelism and concurrency related keywords.
-  'async', 'await', 'noasync', 'suspend', 'nosuspend', 'resume', 'threadlocalanyframe',
-  -- Control flow: conditions and loops.
-  'if', 'else', 'orelse', 'or', 'and', 'while', 'for', 'switch', 'continue', 'break', 'catch',
-  'try',
-  -- Not keyword but overly used variable name with always the same semantic.
-  'self'
+	-- Keywords.
+	'inline', 'pub', 'fn', 'comptime', 'const', 'extern', 'return', 'var', 'usingnamespace',
+	-- Defering code blocks.
+	'defer', 'errdefer',
+	-- Functions and structures related keywords.
+	'align', 'allowzero', 'noalias', 'noinline', 'callconv', 'packed', 'linksection', 'unreachable',
+	'test', 'asm', 'volatile',
+	-- Parallelism and concurrency related keywords.
+	'async', 'await', 'noasync', 'suspend', 'nosuspend', 'resume', 'threadlocalanyframe',
+	-- Control flow: conditions and loops.
+	'if', 'else', 'orelse', 'or', 'and', 'while', 'for', 'switch', 'continue', 'break', 'catch',
+	'try',
+	-- Not keyword but overly used variable name with always the same semantic.
+	'self'
 }))
 
 -- Types.
 lex:add_rule('type', token(lexer.TYPE, word_match{
-  'enum', 'struct', 'union', --
-  'i8', 'u8', 'i16', 'u16', 'i32', 'u32', 'i64', 'u64', 'i128', 'u128', --
-  'isize', 'usize', --
-  'c_short', 'c_ushort', 'c_int', 'c_uint', --
-  'c_long', 'c_ulong', 'c_longlong', 'c_ulonglong', 'c_longdouble', --
-  'c_void', --
-  'f16', 'f32', 'f64', 'f128', --
-  'bool', 'void', 'noreturn', 'type', 'anytype', 'error', 'anyerror', --
-  'comptime_int', 'comptime_float'
+	'enum', 'struct', 'union', --
+	'i8', 'u8', 'i16', 'u16', 'i32', 'u32', 'i64', 'u64', 'i128', 'u128', --
+	'isize', 'usize', --
+	'c_short', 'c_ushort', 'c_int', 'c_uint', --
+	'c_long', 'c_ulong', 'c_longlong', 'c_ulonglong', 'c_longdouble', --
+	'c_void', --
+	'f16', 'f32', 'f64', 'f128', --
+	'bool', 'void', 'noreturn', 'type', 'anytype', 'error', 'anyerror', --
+	'comptime_int', 'comptime_float'
 }))
 
 -- Constants.
 lex:add_rule('constant', token(lexer.CONSTANT, word_match{
-  -- Special values.
-  'false', 'true', 'null', 'undefined'
+	-- Special values.
+	'false', 'true', 'null', 'undefined'
 }))
 
 -- Built-in functions.
 lex:add_rule('function', token(lexer.FUNCTION, '@' * word_match{
-  'addWithOverflow', 'alignCast', 'alignOf', 'as', 'asyncCall', 'atomicLoad', 'atomicRmw',
-  'atomicStore', 'bitCast', 'bitOffsetOf', 'boolToInt', 'bitSizeOf', 'breakpoint', 'mulAdd',
-  'byteSwap', 'bitReverse', 'byteOffsetOf', 'call', 'cDefine', 'cImport', 'cInclude', 'clz',
-  'cmpxchgStrong', 'cmpxchgWeak', 'compileError', 'compileLog', 'ctz', 'cUndef', 'divExact',
-  'divFloor', 'divTrunc', 'embedFile', 'enumToInt', 'errorName', 'errorReturnTrace', 'errorToInt',
-  'errSetCast', 'export', 'fence', 'field', 'fieldParentPtr', 'floatCast', 'floatToInt', 'frame',
-  'Frame', 'frameAddress', 'frameSize', 'hasDecl', 'hasField', 'import', 'intCast', 'intToEnum',
-  'intToError', 'intToFloat', 'intToPtr', 'memcpy', 'memset', 'wasmMemorySize', 'wasmMemoryGrow',
-  'mod', 'mulWithOverflow', 'panic', 'popCount', 'ptrCast', 'ptrToInt', 'rem', 'returnAddress',
-  'setAlignStack', 'setCold', 'setEvalBranchQuota', 'setFloatMode', 'setRuntimeSafety', 'shlExact',
-  'shlWithOverflow', 'shrExact', 'shuffle', 'sizeOf', 'splat', 'reduce', 'src', 'sqrt', 'sin',
-  'cos', 'exp', 'exp2', 'log', 'log2', 'log10', 'fabs', 'floor', 'ceil', 'trunc', 'round',
-  'subWithOverflow', 'tagName', 'TagType', 'This', 'truncate', 'Type', 'typeInfo', 'typeName',
-  'TypeOf', 'unionInit'
+	'addWithOverflow', 'alignCast', 'alignOf', 'as', 'asyncCall', 'atomicLoad', 'atomicRmw',
+	'atomicStore', 'bitCast', 'bitOffsetOf', 'boolToInt', 'bitSizeOf', 'breakpoint', 'mulAdd',
+	'byteSwap', 'bitReverse', 'byteOffsetOf', 'call', 'cDefine', 'cImport', 'cInclude', 'clz',
+	'cmpxchgStrong', 'cmpxchgWeak', 'compileError', 'compileLog', 'ctz', 'cUndef', 'divExact',
+	'divFloor', 'divTrunc', 'embedFile', 'enumToInt', 'errorName', 'errorReturnTrace', 'errorToInt',
+	'errSetCast', 'export', 'fence', 'field', 'fieldParentPtr', 'floatCast', 'floatToInt', 'frame',
+	'Frame', 'frameAddress', 'frameSize', 'hasDecl', 'hasField', 'import', 'intCast', 'intToEnum',
+	'intToError', 'intToFloat', 'intToPtr', 'memcpy', 'memset', 'wasmMemorySize', 'wasmMemoryGrow',
+	'mod', 'mulWithOverflow', 'panic', 'popCount', 'ptrCast', 'ptrToInt', 'rem', 'returnAddress',
+	'setAlignStack', 'setCold', 'setEvalBranchQuota', 'setFloatMode', 'setRuntimeSafety', 'shlExact',
+	'shlWithOverflow', 'shrExact', 'shuffle', 'sizeOf', 'splat', 'reduce', 'src', 'sqrt', 'sin',
+	'cos', 'exp', 'exp2', 'log', 'log2', 'log10', 'fabs', 'floor', 'ceil', 'trunc', 'round',
+	'subWithOverflow', 'tagName', 'TagType', 'This', 'truncate', 'Type', 'typeInfo', 'typeName',
+	'TypeOf', 'unionInit'
 }))
 
 -- Strings.

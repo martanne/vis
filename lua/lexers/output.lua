@@ -28,16 +28,16 @@ local function message(patt) return lex:tag('message', patt) end
 -- This should only be specified at the end of a rule, or else LPeg may backtrack and mistakenly
 -- mark a non-error line.
 local function mark_error(_, pos)
-  lexer.line_state[lexer.line_from_position(pos)] = 1
-  return true
+	lexer.line_state[lexer.line_from_position(pos)] = 1
+	return true
 end
 
 -- Immediately marks the current line as a warning.
 -- This should only be specified at the end of a rule, or else LPeg may backtrack and mistakenly
 -- mark a non-warning line.
 local function mark_warning(_, pos)
-  lexer.line_state[lexer.line_from_position(pos)] = 2
-  return true
+	lexer.line_state[lexer.line_from_position(pos)] = 2
+	return true
 end
 
 -- filename:line: message (ruby)
@@ -49,18 +49,18 @@ local warning = message(lexer.to_eol('warning: ')) * mark_warning
 local note = message(lexer.to_eol('note: ')) -- do not mark
 local error = message(lexer.to_eol()) * mark_error
 lex:add_rule('common', starts_line(c_filename) * colon * line * colon * (column * colon)^-1 *
-  (warning + note + error))
+	(warning + note + error))
 
 -- prog: filename:line: message (awk, lua)
 -- /usr/bin/prog: filename:line: message
 lex:add_rule('prog',
-  starts_line(text(lexer.word + '/' * (lexer.any - ':')^1)) * colon * c_filename * colon * line *
-    colon * (warning + error))
+	starts_line(text(lexer.word + '/' * (lexer.any - ':')^1)) * colon * c_filename * colon * line *
+		colon * (warning + error))
 
 -- File "filename", line X (python)
 local py_filename = filename((lexer.nonnewline - '"')^1)
 lex:add_rule('python',
-  starts_line(text('File "'), true) * py_filename * text('", ') * line * mark_error)
+	starts_line(text('File "'), true) * py_filename * text('", ') * line * mark_error)
 
 -- filename(line): error: message (d, cuda)
 local lparen, rparen = text('('), text(')')
@@ -74,25 +74,25 @@ lex:add_rule('gnuplot', starts_line(text('"')) * gp_filename * text('" ') * line
 
 -- at com.path(filename:line) (java)
 lex:add_rule('java',
-  starts_line(text('at ' * (lexer.nonnewline - '(')^1), true) * lparen * c_filename * colon * line *
-    rparen * mark_error)
+	starts_line(text('at ' * (lexer.nonnewline - '(')^1), true) * lparen * c_filename * colon * line *
+		rparen * mark_error)
 
 -- message in filename on line X (php)
 lex:add_rule('php', starts_line(message((lexer.nonnewline - ' in ')^1)) * text(' in ') *
-  filename((lexer.nonnewline - ' on ')^1) * text(' on ') * line * mark_error)
+	filename((lexer.nonnewline - ' on ')^1) * text(' on ') * line * mark_error)
 
 -- filename(line, col): message (vb, csharp, fsharp, ...)
 lex:add_rule('vb',
-  starts_line(filename((lexer.nonnewline - '(')^1)) * lparen * line * text(', ') * column * rparen *
-    colon * error)
+	starts_line(filename((lexer.nonnewline - '(')^1)) * lparen * line * text(', ') * column * rparen *
+		colon * error)
 
 -- message at filename line X (perl)
 lex:add_rule('perl', starts_line(message((lexer.nonnewline - ' at ')^1)) * text(' at ') *
-  filename((lexer.nonnewline - ' line ')^1) * text(' line ') * line * mark_error)
+	filename((lexer.nonnewline - ' line ')^1) * text(' line ') * line * mark_error)
 
 -- CMake Error at filename:line: (cmake)
 lex:add_rule('cmake',
-  starts_line(text('CMake Error at ')) * c_filename * colon * line * colon * mark_error)
+	starts_line(text('CMake Error at ')) * c_filename * colon * line * colon * mark_error)
 
 lex:add_rule('any_line', lex:tag(lexer.DEFAULT, lexer.to_eol()))
 

@@ -13,15 +13,15 @@ lex:add_rule('whitespace', token(lexer.WHITESPACE, lexer.space^1))
 
 -- Keywords.
 lex:add_rule('keyword', token(lexer.KEYWORD, word_match{
-  'assert', 'break', 'case', 'catch', 'class', 'const', 'continue', 'default', 'do', 'else', 'enum',
-  'extends', 'false', 'final', 'finally', 'for', 'if', 'in', 'is', 'new', 'null', 'rethrow',
-  'return', 'super', 'switch', 'this', 'throw', 'true', 'try', 'var', 'void', 'while', 'with'
+	'assert', 'break', 'case', 'catch', 'class', 'const', 'continue', 'default', 'do', 'else', 'enum',
+	'extends', 'false', 'final', 'finally', 'for', 'if', 'in', 'is', 'new', 'null', 'rethrow',
+	'return', 'super', 'switch', 'this', 'throw', 'true', 'try', 'var', 'void', 'while', 'with'
 }))
 
 -- Built-ins.
 lex:add_rule('builtin', token(lexer.CONSTANT, word_match{
-  'abstract', 'as', 'dynamic', 'export', 'external', 'factory', 'get', 'implements', 'import',
-  'library', 'operator', 'part', 'set', 'static', 'typedef'
+	'abstract', 'as', 'dynamic', 'export', 'external', 'factory', 'get', 'implements', 'import',
+	'library', 'operator', 'part', 'set', 'static', 'typedef'
 }))
 
 -- Strings.

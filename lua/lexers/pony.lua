@@ -22,24 +22,24 @@ lex:add_rule('annotation', annotation)
 -- Functions.
 -- Highlight functions with syntax sugar at declaration.
 lex:add_rule('function',
-  token(lexer.KEYWORD, word_match('fun new be')) * ws^-1 * annotation^-1 * ws^-1 * capability^-1 *
-    ws^-1 * token(lexer.FUNCTION, word_match{
-    'create', 'dispose', '_final', 'apply', 'update', 'add', 'sub', 'mul', 'div', 'mod',
-    'add_unsafe', 'sub_unsafe', 'mul_unsafe', 'div_unsafe', 'mod_unsafe', 'shl', 'shr',
-    'shl_unsafe', 'shr_unsafe', 'op_and', 'op_or', 'op_xor', 'eq', 'ne', 'lt', 'le', 'ge', 'gt',
-    'eq_unsafe', 'ne_unsafe', 'lt_unsafe', 'le_unsafe', 'ge_unsafe', 'gt_unsafe', 'neg',
-    'neg_unsafe', 'op_not', --
-    'has_next', 'next', --
-    '_serialise_space', '_serialise', '_deserialise'
-  }))
+	token(lexer.KEYWORD, word_match('fun new be')) * ws^-1 * annotation^-1 * ws^-1 * capability^-1 *
+		ws^-1 * token(lexer.FUNCTION, word_match{
+		'create', 'dispose', '_final', 'apply', 'update', 'add', 'sub', 'mul', 'div', 'mod',
+		'add_unsafe', 'sub_unsafe', 'mul_unsafe', 'div_unsafe', 'mod_unsafe', 'shl', 'shr',
+		'shl_unsafe', 'shr_unsafe', 'op_and', 'op_or', 'op_xor', 'eq', 'ne', 'lt', 'le', 'ge', 'gt',
+		'eq_unsafe', 'ne_unsafe', 'lt_unsafe', 'le_unsafe', 'ge_unsafe', 'gt_unsafe', 'neg',
+		'neg_unsafe', 'op_not', --
+		'has_next', 'next', --
+		'_serialise_space', '_serialise', '_deserialise'
+	}))
 
 -- Keywords.
 lex:add_rule('keyword', token(lexer.KEYWORD, word_match{
-  'actor', 'as', 'be', 'break', 'class', 'compile_error', 'compile_intrinsic', 'continue',
-  'consume', 'do', 'else', 'elseif', 'embed', 'end', 'error', 'for', 'fun', 'if', 'ifdef', 'iftype',
-  'in', 'interface', 'is', 'isnt', 'lambda', 'let', 'match', 'new', 'object', 'primitive',
-  'recover', 'repeat', 'return', 'struct', 'then', 'this', 'trait', 'try', 'type', 'until', 'use',
-  'var', 'where', 'while', 'with'
+	'actor', 'as', 'be', 'break', 'class', 'compile_error', 'compile_intrinsic', 'continue',
+	'consume', 'do', 'else', 'elseif', 'embed', 'end', 'error', 'for', 'fun', 'if', 'ifdef', 'iftype',
+	'in', 'interface', 'is', 'isnt', 'lambda', 'let', 'match', 'new', 'object', 'primitive',
+	'recover', 'repeat', 'return', 'struct', 'then', 'this', 'trait', 'try', 'type', 'until', 'use',
+	'var', 'where', 'while', 'with'
 }))
 
 -- Constants.
@@ -47,14 +47,14 @@ lex:add_rule('constant', token(lexer.CONSTANT, word_match('true false')))
 
 -- Operators.
 local ops = {
-  ['+'] = true, ['-'] = true, ['*'] = true, ['/'] = true, ['%'] = true, ['+~'] = true,
-  ['-~'] = true, ['*~'] = true, ['/~'] = true, ['%~'] = true, ['<<'] = true, ['>>'] = true,
-  ['<<~'] = true, ['>>~'] = true, ['=='] = true, ['!='] = true, ['<'] = true, ['<='] = true,
-  ['>='] = true, ['>'] = true, ['==~'] = true, ['!=~'] = true, ['<~'] = true, ['<=~'] = true,
-  ['>=~'] = true, ['>~'] = true
+	['+'] = true, ['-'] = true, ['*'] = true, ['/'] = true, ['%'] = true, ['+~'] = true,
+	['-~'] = true, ['*~'] = true, ['/~'] = true, ['%~'] = true, ['<<'] = true, ['>>'] = true,
+	['<<~'] = true, ['>>~'] = true, ['=='] = true, ['!='] = true, ['<'] = true, ['<='] = true,
+	['>='] = true, ['>'] = true, ['==~'] = true, ['!=~'] = true, ['<~'] = true, ['<=~'] = true,
+	['>=~'] = true, ['>~'] = true
 }
 lex:add_rule('operator', token(lexer.OPERATOR, word_match('and or xor not addressof digestof') +
-  lpeg.Cmt(S('+-*/%<>=!~')^1, function(input, index, op) return ops[op] and index or nil end)))
+	lpeg.Cmt(S('+-*/%<>=!~')^1, function(input, index, op) return ops[op] and index or nil end)))
 
 -- Identifiers.
 local id_suffix = (lexer.alnum + "'" + '_')^0
@@ -86,7 +86,7 @@ lex:add_rule('comment', token(lexer.COMMENT, line_comment + block_comment))
 -- Punctuation.
 -- There is no suitable token name for this, change this if ever one is added.
 lex:add_rule('punctuation',
-  token(lexer.OPERATOR, P('=>') + '.>' + '<:' + '->' + S('=.,:;()[]{}!?~^&|_@')))
+	token(lexer.OPERATOR, P('=>') + '.>' + '<:' + '->' + S('=.,:;()[]{}!?~^&|_@')))
 
 -- Qualifiers.
 lex:add_rule('qualifier', token(lexer.LABEL, '#' * word_match('read send share any alias')))

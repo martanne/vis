@@ -8,8 +8,8 @@ local P, S = lpeg.P, lpeg.S
 local lex = lexer.new(...)
 
 local header = lex:tag(lexer.HEADING .. '.h3', lexer.to_eol(lexer.starts_line('###'))) +
-  lex:tag(lexer.HEADING .. '.h2', lexer.to_eol(lexer.starts_line('##'))) +
-  lex:tag(lexer.HEADING .. '.h1', lexer.to_eol(lexer.starts_line('#')))
+	lex:tag(lexer.HEADING .. '.h2', lexer.to_eol(lexer.starts_line('##'))) +
+	lex:tag(lexer.HEADING .. '.h1', lexer.to_eol(lexer.starts_line('#')))
 lex:add_rule('header', header)
 
 lex:add_rule('list', lex:tag(lexer.LIST, lexer.to_eol(lexer.starts_line('*'))))

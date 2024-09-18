@@ -35,8 +35,8 @@ lex:add_rule('auto_tx', token(lexer.PREPROCESSOR, lexer.to_eol(lexer.starts_line
 
 -- Directives.
 local directive_word = word_match{
-  '	account', 'alias', 'assert', 'bucket', 'capture', 'check', 'comment', 'commodity', 'define',
-  'end', 'fixed', 'endfixed', 'include', 'payee', 'apply', 'tag', 'test', 'year'
+	'	account', 'alias', 'assert', 'bucket', 'capture', 'check', 'comment', 'commodity', 'define',
+	'end', 'fixed', 'endfixed', 'include', 'payee', 'apply', 'tag', 'test', 'year'
 } + S('AYNDCIiOobh')
 lex:add_rule('directive', token(lexer.KEYWORD, lexer.starts_line(S('!@')^-1 * directive_word)))
 

@@ -12,7 +12,7 @@ local lex = lexer.new(...)
 -- Comments.
 local line_comment = lexer.to_eol('%')
 local block_comment = lexer.range('\\begin' * P(' ')^0 * '{comment}',
-  '\\end' * P(' ')^0 * '{comment}')
+	'\\end' * P(' ')^0 * '{comment}')
 lex:add_rule('comment', lex:tag(lexer.COMMENT, line_comment + block_comment))
 
 -- Math environments.
@@ -22,11 +22,11 @@ lex:add_rule('math', lex:tag('environment.math', '$' + '\\' * (S('[]()') + math_
 
 -- LaTeX environments.
 lex:add_rule('environment', lex:tag('environment', '\\' * (P('begin') + 'end') * P(' ')^0 * '{' *
-  lexer.word * P('*')^-1 * '}'))
+	lexer.word * P('*')^-1 * '}'))
 
 -- Sections.
 lex:add_rule('section', lex:tag('command.section', '\\' *
-  word_match('part chapter section subsection subsubsection paragraph subparagraph') * P('*')^-1))
+	word_match('part chapter section subsection subsubsection paragraph subparagraph') * P('*')^-1))
 
 -- Commands.
 lex:add_rule('command', lex:tag('command', '\\' * (lexer.alpha^1 + S('#$&~_^%{}\\'))))

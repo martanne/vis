@@ -22,11 +22,11 @@ lex:add_rule('tag_close', tag_close)
 -- Equals.
 -- TODO: performance is terrible on large files.
 local in_tag = P(function(input, index)
-  local before = input:sub(1, index - 1)
-  local s, e = before:find('<[^>]-$'), before:find('>[^<]-$')
-  if s and e then return s > e end
-  if s then return true end
-  return input:find('^[^<]->', index) ~= nil
+	local before = input:sub(1, index - 1)
+	local s, e = before:find('<[^>]-$'), before:find('>[^<]-$')
+	if s and e then return s > e end
+	if s then return true end
+	return input:find('^[^<]->', index) ~= nil
 end)
 
 local equals = lex:tag(lexer.OPERATOR, '=') -- * in_tag
@@ -49,7 +49,7 @@ lex:add_rule('number', lexer.after_set('=', number)) -- * in_tag)
 
 -- Entities.
 local predefined = lex:tag(lexer.CONSTANT_BUILTIN .. '.entity',
-  '&' * lexer.word_match('lt gt amp apos quot') * ';')
+	'&' * lexer.word_match('lt gt amp apos quot') * ';')
 local general = lex:tag(lexer.CONSTANT .. '.entity', '&' * identifier * ';')
 lex:add_rule('entity', predefined + general)
 
@@ -68,7 +68,7 @@ local embed_end_tag = tag * tag_close
 -- Embedded JavaScript.
 local js = lexer.load('javascript')
 local js_start_rule = #(P('<script') * (P(function(input, index)
-  if input:find('^%s+language%s*=%s*(["\'])[jJ][ava]*[sS]cript%1', index) then return true end
+	if input:find('^%s+language%s*=%s*(["\'])[jJ][ava]*[sS]cript%1', index) then return true end
 end) + '>')) * embed_start_tag -- <script language="javascript">
 local js_end_rule = #P('</script>') * embed_end_tag -- </script>
 lex:embed(js, js_start_rule, js_end_rule)
@@ -76,7 +76,7 @@ lex:embed(js, js_start_rule, js_end_rule)
 -- Embedded VBScript.
 local vbs = lexer.load('vb', 'vbscript')
 local vbs_start_rule = #(P('<script') * (P(function(input, index)
-  if input:find('^%s+language%s*=%s*(["\'])[vV][bB][sS]cript%1', index) then return true end
+	if input:find('^%s+language%s*=%s*(["\'])[vV][bB][sS]cript%1', index) then return true end
 end) + '>')) * embed_start_tag -- <script language="vbscript">
 local vbs_end_rule = #P('</script>') * embed_end_tag -- </script>
 lex:embed(vbs, vbs_start_rule, vbs_end_rule)

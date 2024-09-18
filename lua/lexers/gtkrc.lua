@@ -9,7 +9,7 @@ local lex = lexer.new(...)
 
 -- Keywords.
 lex:add_rule('keyword', lex:tag(lexer.KEYWORD, word_match(
-  'binding class include module_path pixmap_path im_module_file style widget widget_class')))
+	'binding class include module_path pixmap_path im_module_file style widget widget_class')))
 
 -- Variables.
 lex:add_rule('variable', lex:tag(lexer.VARIABLE_BUILTIN, lex:word_match(lexer.VARIABLE_BUILTIN)))
@@ -42,12 +42,12 @@ lex:add_fold_point(lexer.OPERATOR, '{', '}')
 
 -- Word lists.
 lex:set_word_list(lexer.VARIABLE_BUILTIN, {
-  'bg', 'fg', 'base', 'text', 'xthickness', 'ythickness', 'bg_pixmap', 'font', 'fontset',
-  'font_name', 'stock', 'color', 'engine'
+	'bg', 'fg', 'base', 'text', 'xthickness', 'ythickness', 'bg_pixmap', 'font', 'fontset',
+	'font_name', 'stock', 'color', 'engine'
 })
 
 lex:set_word_list(lexer.CONSTANT_BUILTIN, {
-  'ACTIVE', 'SELECTED', 'NORMAL', 'PRELIGHT', 'INSENSITIVE', 'TRUE', 'FALSE'
+	'ACTIVE', 'SELECTED', 'NORMAL', 'PRELIGHT', 'INSENSITIVE', 'TRUE', 'FALSE'
 })
 
 lex:set_word_list(lexer.FUNCTION_BUILTIN, {'mix', 'shade', 'lighter', 'darker'})

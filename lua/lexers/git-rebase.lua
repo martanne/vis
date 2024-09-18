@@ -14,7 +14,7 @@ lex:add_rule('keyword', lex:tag(lexer.KEYWORD, lexer.starts_line(lex:word_match(
 
 -- Commit SHA1.
 local function patn(pat, min, max)
-  return -pat^(max + 1) * pat^min
+	return -pat^(max + 1) * pat^min
 end
 
 lex:add_rule('commit', lex:tag(lexer.NUMBER, patn(R('09', 'af'), 7, 40)))
