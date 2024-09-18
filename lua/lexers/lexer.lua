@@ -50,9 +50,6 @@
 -- lexer should be the name of your programming language in lower case followed by a *.lua*
 -- extension. For example, a new Lua lexer has the name *lua.lua*.
 --
--- Note: Try to refrain from using one-character language names like "c", "d", or "r". For
--- example, Scintillua uses "ansi_c", "dmd", and "rstats", respectively.
---
 -- #### New Lexer Template
 --
 -- There is a *lexers/template.txt* file that contains a simple template for a new lexer. Feel
@@ -1612,8 +1609,8 @@ function M.detect(filename, line)
 		bib = 'bibtex', --
 		boo = 'boo', --
 		cs = 'csharp', --
-		c = 'ansi_c', C = 'ansi_c', cc = 'cpp', cpp = 'cpp', cxx = 'cpp', ['c++'] = 'cpp', h = 'cpp',
-		hh = 'cpp', hpp = 'cpp', hxx = 'cpp', ['h++'] = 'cpp', --
+		c = 'c', C = 'c', cc = 'cpp', cpp = 'cpp', cxx = 'cpp', ['c++'] = 'cpp', h = 'cpp', hh = 'cpp',
+		hpp = 'cpp', hxx = 'cpp', ['h++'] = 'cpp', --
 		ck = 'chuck', --
 		clj = 'clojure', cljs = 'clojure', cljc = 'clojure', edn = 'clojure', --
 		['CMakeLists.txt'] = 'cmake', cmake = 'cmake', ['cmake.in'] = 'cmake', ctest = 'cmake',
@@ -1622,7 +1619,7 @@ function M.detect(filename, line)
 		cr = 'crystal', --
 		css = 'css', --
 		cu = 'cuda', cuh = 'cuda', --
-		d = 'dmd', di = 'dmd', --
+		d = 'd', di = 'd', --
 		dart = 'dart', --
 		desktop = 'desktop', --
 		diff = 'diff', patch = 'diff', --
@@ -1700,8 +1697,7 @@ function M.detect(filename, line)
 		proto = 'protobuf', --
 		pure = 'pure', --
 		sc = 'python', py = 'python', pyw = 'python', --
-		R = 'rstats', Rout = 'rstats', Rhistory = 'rstats', Rt = 'rstats', ['Rout.save'] = 'rstats',
-		['Rout.fail'] = 'rstats', --
+		R = 'r', Rout = 'r', Rhistory = 'r', Rt = 'r', ['Rout.save'] = 'r', ['Rout.fail'] = 'r', --
 		re = 'reason', --
 		r = 'rebol', reb = 'rebol', --
 		rst = 'rest', --

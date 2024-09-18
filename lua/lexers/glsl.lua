@@ -4,7 +4,7 @@
 local lexer = lexer
 local P, S = lpeg.P, lpeg.S
 
-local lex = lexer.new(..., {inherit = lexer.load('ansi_c')})
+local lex = lexer.new(..., {inherit = lexer.load('c')})
 
 -- Word lists.
 lex:set_word_list(lexer.KEYWORD, {

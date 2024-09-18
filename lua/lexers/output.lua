@@ -66,7 +66,7 @@ lex:add_rule('python',
 local lparen, rparen = text('('), text(')')
 local d_filename = filename((lexer.nonnewline - '(')^1)
 local d_error = message(lexer.to_eol(S('Ee') * 'rror')) * mark_error
-lex:add_rule('dmd', starts_line(d_filename) * lparen * line * rparen * colon * d_error)
+lex:add_rule('d', starts_line(d_filename) * lparen * line * rparen * colon * d_error)
 
 -- "filename" line X: message (gnuplot)
 local gp_filename = filename((lexer.nonnewline - '"')^1)
