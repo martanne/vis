@@ -11,8 +11,8 @@ local word = (lexer.any - lexer.space - S('$:,#=(){}'))^1
 local func_name = lex:tag(lexer.FUNCTION, word)
 local ws = lex:get_rule('whitespace')
 local eq = lex:tag(lexer.OPERATOR, '=')
-lex:add_rule('function_def',
-  lex:tag(lexer.KEYWORD, lexer.word_match('define')) * ws * func_name * ws^-1 * eq)
+lex:add_rule('function_def', lex:tag(lexer.KEYWORD, lexer.word_match('define')) * ws * func_name *
+  ws^-1 * (eq + -1))
 
 -- Keywords.
 lex:add_rule('keyword', lex:tag(lexer.KEYWORD, P('!')^-1 * lex:word_match(lexer.KEYWORD, true)))
