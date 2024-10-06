@@ -465,6 +465,9 @@ vis.ftdetect.filetypes = {
 	vala = {
 		ext = { "%.vala$" }
 	},
+	usfm = {
+		ext = { "%.usfm$" }
+	},
 	vb = {
 		ext = {
 			"%.asa$", "%.bas$", "%.ctl$", "%.dob$",
