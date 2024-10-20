@@ -1630,6 +1630,7 @@ function M.detect(filename, line)
 		elm = 'elm', --
 		erl = 'erlang', hrl = 'erlang', --
 		fs = 'fsharp', --
+		factor = 'factor', --
 		fan = 'fantom', --
 		dsp = 'faust', --
 		fnl = 'fennel', --
