@@ -1,10 +1,11 @@
 # Vis - Combining Modal Editing with Structural Regular Expressions
 
+[![Development discussion](https://img.shields.io/badge/email-~martanne%2Fdevel-black?logo=sourcehut)](https://lists.sr.ht/~martanne/devel)
 [![builds.sr.ht status](https://builds.sr.ht/~martanne/vis/commits.svg)](https://builds.sr.ht/~martanne/vis/commits?)
 [![Coverity Scan Build Status](https://scan.coverity.com/projects/3939/badge.svg)](https://scan.coverity.com/projects/3939)
 [![codecov](https://codecov.io/gh/martanne/vis/branch/master/graph/badge.svg)](https://codecov.io/gh/martanne/vis)
 [![Documentation Status](https://readthedocs.org/projects/vis/badge/?version=master)](http://vis.readthedocs.io/en/master/?badge=master)
-[![#vis-editor on libera](https://img.shields.io/badge/IRC-%23vis--editor-blue.svg)](ircs://irc.libera.chat:6697/vis-editor)
+[![#vis-editor on libera](https://img.shields.io/badge/IRC-%23vis--editor-blue?logo=libera.chat)](ircs://irc.libera.chat:6697/vis-editor)
 
 Vis aims to be a modern, legacy-free, simple yet efficient editor,
 combining the strengths of both vi(m) and sam.
