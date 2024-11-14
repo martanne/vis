@@ -288,7 +288,7 @@ vis.types.window.set_syntax = function(win, syntax)
 		if type(style) == 'table' then
 			local s = ''
 			if style.attr then
-				s = string.format("%s,%s", s, attr)
+				s = string.format("%s,%s", s, style.attr)
 			elseif style.fore then
 				s = string.format("%s,fore:%s", s, style.fore)
 			elseif style.back then
