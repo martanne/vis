@@ -282,7 +282,7 @@ vis.ftdetect.filetypes = {
 		ext = { "%.wiki$" },
 	},
 	meson = {
-		ext = { "^meson%.build$" },
+		ext = { "^meson%.build$", "%.meson$", "^meson_options%.txt$", "^meson%.options$" },
 	},
 	modula2 = {
 		ext = { "%.mod$", "%.def$" },
