@@ -1680,6 +1680,7 @@ function M.detect(filename, line)
 		n = 'nemerle', --
 		link = 'networkd', network = 'networkd', netdev = 'networkd', --
 		nim = 'nim', --
+		nix = 'nix', --
 		nsh = 'nsis', nsi = 'nsis', nsis = 'nsis', --
 		obs = 'objeck', --
 		m = 'objective_c', mm = 'objective_c', objc = 'objective_c', --
