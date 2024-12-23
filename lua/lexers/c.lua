@@ -43,7 +43,7 @@ lex:add_rule('comment', lex:tag(lexer.COMMENT, line_comment + block_comment))
 
 -- Numbers.
 local integer = lexer.integer * lexer.word_match('u l ll ul ull lu llu', true)^-1
-local float = lexer.float * P('f')^-1
+local float = lexer.float * lexer.word_match('f l df dd dl i j', true)^-1
 lex:add_rule('number', lex:tag(lexer.NUMBER, float + integer))
 
 -- Preprocessor.
