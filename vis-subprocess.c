@@ -177,6 +177,36 @@ static void read_and_fire(Vis* vis, int fd, const char *name, ResponseType rtype
 }
 
 /**
+ * Checks if a subprocess is dead or needs to be killed then raises an event
+ * or kills it if necessary.
+ * @param current the process to wait for or kill
+ * @return true if the process is dead
+ */
+static bool wait_or_kill_process(Vis *vis, Process *current) {
+	int status;
+	pid_t wpid = waitpid(current->pid, &status, WNOHANG);
+	if (wpid == -1) {
+		vis_message_show(vis, strerror(errno));
+	} else if (wpid == current->pid) {
+		goto just_destroy;
+	} else if (!*(current->invalidator)) {
+		goto kill_and_destroy;
+	}
+	return false;
+
+kill_and_destroy:
+	kill(current->pid, SIGTERM);
+	waitpid(current->pid, &status, 0);
+just_destroy:
+	if (WIFSIGNALED(status)) {
+		vis_lua_process_response(vis, current->name, NULL, WTERMSIG(status), SIGNAL);
+	} else {
+		vis_lua_process_response(vis, current->name, NULL, WEXITSTATUS(status), EXIT);
+	}
+	return true;
+}
+
+/**
  * Checks if `readfds` contains file descriptors of subprocesses from
  * the pool. If so, it reads their data and fires corresponding events.
  * Also checks if each subprocess from the pool is dead or needs to be
@@ -192,27 +222,11 @@ void vis_process_tick(Vis *vis, fd_set *readfds) {
 		if (current->errfd != -1 && FD_ISSET(current->errfd, readfds)) {
 			read_and_fire(vis, current->errfd, current->name, STDERR);
 		}
-		int status;
-		pid_t wpid = waitpid(current->pid, &status, WNOHANG);
-		if (wpid == -1)	{
-			vis_message_show(vis, strerror(errno));
-		} else if (wpid == current->pid) {
-			goto just_destroy;
-		} else if (!*(current->invalidator)) {
-			goto kill_and_destroy;
-		}
-		pointer = &current->next;
-		continue;
-kill_and_destroy:
-		kill(current->pid, SIGTERM);
-		waitpid(current->pid, &status, 0);
-just_destroy:
-		if (WIFSIGNALED(status)) {
-			vis_lua_process_response(vis, current->name, NULL, WTERMSIG(status), SIGNAL);
+		if (!wait_or_kill_process(vis, current)) {
+			pointer = &current->next;
 		} else {
-			vis_lua_process_response(vis, current->name, NULL, WEXITSTATUS(status), EXIT);
+			/* update our iteration pointer */
+			*pointer = destroy_process(current);
 		}
-		/* update our iteration pointer */
-		*pointer = destroy_process(current);
 	}
 }
