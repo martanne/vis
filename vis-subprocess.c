@@ -230,3 +230,19 @@ void vis_process_tick(Vis *vis, fd_set *readfds) {
 		}
 	}
 }
+
+/**
+ * Checks if each subprocess from the pool is dead or needs to be
+ * killed then raises an event or kills it if necessary.
+ */
+void vis_process_waitall(Vis *vis) {
+	for (Process **pointer = &process_pool; *pointer; ) {
+		Process *current = *pointer;
+		if (!wait_or_kill_process(vis, current)) {
+			pointer = &current->next;
+		} else {
+			/* update our iteration pointer */
+			*pointer = destroy_process(current);
+		}
+	}
+}

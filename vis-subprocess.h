@@ -27,4 +27,5 @@ Process *vis_process_communicate(Vis *, const char *command, const char *name,
                                  Invalidator **invalidator);
 int vis_process_before_tick(fd_set *);
 void vis_process_tick(Vis *, fd_set *);
+void vis_process_waitall(Vis *);
 #endif

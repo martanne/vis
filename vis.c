@@ -623,6 +623,7 @@ void vis_free(Vis *vis) {
 	while (vis->windows)
 		vis_window_close(vis->windows);
 	vis_event_emit(vis, VIS_EVENT_QUIT);
+	vis_process_waitall(vis);
 	file_free(vis, vis->command_file);
 	file_free(vis, vis->search_file);
 	file_free(vis, vis->error_file);
