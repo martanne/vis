@@ -1,5 +1,3 @@
-require 'busted.runner'()
-
 local file = vis.win.file
 
 describe("vis.pipe", function()

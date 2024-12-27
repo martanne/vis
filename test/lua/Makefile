@@ -5,7 +5,7 @@ all: clean ../../vis test
 	@$(MAKE) -C ../..
 
 clean:
-	@rm -f *.out *.err *.busted
+	@rm -f *.out *.err
 
 test:
 	@./test.sh

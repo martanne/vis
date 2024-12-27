@@ -1,7 +1,7 @@
 Unit Test for Vis' Lua API
 --------------------------
 
-The tests use the [busted unit testing framework](https://olivinelabs.com/busted/).
+The test-suite is based on the [busted unit testing framework](https://olivinelabs.com/busted/).
 
 Each `*.lua` file is sourced from a new `vis` instance which loads the
 correspending `*.in` file.

@@ -1,4 +1,3 @@
-require 'busted.runner'()
 
 local win = vis.win
 

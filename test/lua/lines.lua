@@ -1,4 +1,3 @@
-require 'busted.runner'()
 
 local file = vis.win.file
 
@@ -22,33 +21,33 @@ end)
 describe("get file.lines[]", function()
 
 	it("#lines", function()
-		assert.are.equals(5, #file.lines)
+		assert.are.equal(5, #file.lines)
 	end)
 
 	it("get lines[0]", function()
 		-- is that what we want?
-		assert.are.equals(file.lines[0], file.lines[1])
+		assert.are.equal(file.lines[0], file.lines[1])
 	end)
 
 	it("get lines[1]", function()
-		assert.are.equals("1", file.lines[1])
+		assert.are.equal("1", file.lines[1])
 	end)
 
 	it("get empty \n line", function()
-		assert.are.equals("", file.lines[2])
+		assert.are.equal("", file.lines[2])
 	end)
 
 	it("get empty \r\n line", function()
-		assert.are.equals("\r", file.lines[4])
+		assert.are.equal("\r", file.lines[4])
 	end)
 
 	it("get lines[#lines]", function()
-		assert.are.equals("5", file.lines[#file.lines])
+		assert.are.equal("5", file.lines[#file.lines])
 	end)
 
 	it("get lines[#lines+1]", function()
 		-- is that what we want?
-		assert.are.equals("5", file.lines[#file.lines])
+		assert.are.equal("5", file.lines[#file.lines])
 	end)
 
 end)
@@ -58,14 +57,14 @@ describe("set file.lines[]", function()
 	it("replace empty \n line", function()
 		local new = "line 2"
 		file.lines[2] = new
-		assert.are.equals(new, file.lines[2])
+		assert.are.equal(new, file.lines[2])
 	end)
 
 --[[
 	it("replace empty \r\n line", function()
 		local new = "line 4"
 		file.lines[4] = new
-		assert.are.equals(new, file.lines[4])
+		assert.are.equal(new, file.lines[4])
 	end)
 --]]
 
@@ -74,9 +73,9 @@ describe("set file.lines[]", function()
 		local new_first = "new first line"
 		local old_first = file.lines[1]
 		file.lines[0] = new_first
-		assert.are.equals(lines+1, #file.lines)
-		assert.are.equals(new_first, file.lines[1])
-		assert.are.equals(old_first, file.lines[2])
+		assert.are.equal(lines+1, #file.lines)
+		assert.are.equal(new_first, file.lines[1])
+		assert.are.equal(old_first, file.lines[2])
 	end)
 
 	it("set lines[#lines+1], add new line at end", function()
@@ -84,9 +83,9 @@ describe("set file.lines[]", function()
 		local new_last = "new last line"
 		local old_last = file.lines[#file.lines]
 		file.lines[#file.lines+1] = new_last
-		assert.are.equals(lines+1, #file.lines)
-		assert.are.equals(new_last, file.lines[#file.lines])
-		assert.are.equals(old_last, file.lines[lines])
+		assert.are.equal(lines+1, #file.lines)
+		assert.are.equal(new_last, file.lines[#file.lines])
+		assert.are.equal(old_last, file.lines[lines])
 	end)
 
 end)

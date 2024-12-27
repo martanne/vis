@@ -9,11 +9,6 @@ if ! $VIS -v | grep '+lua' >/dev/null 2>&1; then
 	exit 0
 fi
 
-type busted >/dev/null 2>&1 || {
-	echo "busted(1) not found, skipping tests"
-	exit 0
-}
-
 TESTS_OK=0
 TESTS_RUN=0
 
@@ -28,11 +23,11 @@ for t in $test_files; do
 	t=${t%.lua}
 	t=${t#./}
 	printf "%-30s" "$t"
-	$VIS "$t.in" < /dev/null 2> /dev/null > "$t.busted"
+	$VIS "$t.in" < /dev/null 2> /dev/null > "$t.out"
 
 	if [ $? -ne 0 ]; then
 		printf "FAIL\n"
-		cat "$t.busted"
+		cat "$t.out"
 	else
 		TESTS_OK=$((TESTS_OK + 1))
 		printf "OK\n"
