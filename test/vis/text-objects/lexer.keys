@@ -1,4 +1,4 @@
-:set syntax ansi_c<Enter>
+:set syntax c<Enter>
 :x/cafe<Enter>
 ii
 :{ i/>/ a/</ }<Enter>

@@ -11,7 +11,7 @@ vis.ftdetect.filetypes = {
 	ada = {
 		ext = { "%.adb$", "%.ads$" },
 	},
-	ansi_c = {
+	c = {
 		ext = { "%.c$", "%.C$", "%.h$" },
 		mime = { "text/x-c" },
 	},
@@ -101,7 +101,7 @@ vis.ftdetect.filetypes = {
 	diff = {
 		ext = { "%.diff$", "%.patch$", "%.rej$" },
 	},
-	dmd = {
+	d = {
 		ext = { "%.d$", "%.di$" },
 	},
 	dockerfile = {
@@ -140,6 +140,9 @@ vis.ftdetect.filetypes = {
 	fish = {
 		utility = { "^fish$" },
 		ext = { "%.fish$" },
+	},
+	factor = {
+		ext = { "%.factor" },
 	},
 	forth = {
 		ext = { "%.forth$", "%.frt$", "%.fs$", "%.fth$" },
@@ -306,6 +309,9 @@ vis.ftdetect.filetypes = {
 	nim = {
 		ext = { "%.nim$" },
 	},
+	nix = {
+		ext = { "%.nix$" },
+	},
 	nsis = {
 		ext = { "%.nsh$", "%.nsi$", "%.nsis$" },
 	},
@@ -389,7 +395,7 @@ vis.ftdetect.filetypes = {
 	rpmspec = {
 		ext = { "%.spec$" },
 	},
-	rstats = {
+	r = {
 		ext = { "%.R$", "%.Rout$", "%.Rhistory$", "%.Rt$", "Rout.save", "Rout.fail" },
 	},
 	ruby = {
