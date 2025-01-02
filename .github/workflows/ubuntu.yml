@@ -36,7 +36,6 @@ jobs:
           libselinux1-dev \
           libtermkey-dev \
           libtre-dev \
-          lua-busted \
           lua-lpeg
 
     - name: Build
