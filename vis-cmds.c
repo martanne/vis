@@ -696,6 +696,19 @@ static bool print_cmd(const char *key, void *value, void *data) {
 	return text_appendf(data, "  %-30s %s\n", usage, help ? help : "");
 }
 
+static bool print_cmd_name(const char *key, void *value, void *data) {
+	CommandDef *cmd = value;
+	size_t len_data = strlen(data);
+	size_t remaining_capacity = VIS_COMMAND_BUFFER_MAX - len_data;
+	if (remaining_capacity >= strlen(cmd->name) + 2)  /* adding 2 for \n and \0 */
+		snprintf((char *)data + len_data, remaining_capacity, "%s\n", cmd->name);
+	return true;
+}
+
+void vis_print_cmds(Vis *vis, char *cmd_list) {
+	map_iterate(vis->cmds, print_cmd_name, cmd_list);
+}
+
 static bool print_option(const char *key, void *value, void *txt) {
 	char desc[256];
 	const OptionDef *opt = value;
