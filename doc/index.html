@@ -27,6 +27,7 @@
 <h1>Vis Editor</h1>
 
 
+
 <h2>Contents</h2>
 <ul>
 <li><a href="#Class_Vis">Class Vis </a></li>
@@ -61,7 +62,7 @@
 </p>
     <h3>Info:</h3>
     <ul>
-        <li><strong>Release</strong>: f840bca</li>
+        <li><strong>Release</strong>: 111802b</li>
         <li><strong>License</strong>: ISC</li>
         <li><strong>Author</strong>: Marc André Tanner</li>
     </ul>
@@ -70,390 +71,390 @@
 <h2><a href="#Class_Vis">Class Vis </a></h2>
 <table class="function_list">
 	<tr>
-	<td class="name" nowrap><a href="#Vis.VERSION">Vis.VERSION</a></td>
+	<td class="name" nowrap><a href="#vis.VERSION">vis.VERSION</a></td>
 	<td class="summary">Version information.</td>
 	</tr>
 	<tr>
-	<td class="name" nowrap><a href="#Vis.count">Vis.count</a></td>
+	<td class="name" nowrap><a href="#vis.count">vis.count</a></td>
 	<td class="summary">Current count.</td>
 	</tr>
 	<tr>
-	<td class="name" nowrap><a href="#Vis.events">Vis.events</a></td>
+	<td class="name" nowrap><a href="#vis.events">vis.events</a></td>
 	<td class="summary">Events.</td>
 	</tr>
 	<tr>
-	<td class="name" nowrap><a href="#Vis.input_queue">Vis.input_queue</a></td>
+	<td class="name" nowrap><a href="#vis.input_queue">vis.input_queue</a></td>
 	<td class="summary">Currently unconsumed keys in the input queue.</td>
 	</tr>
 	<tr>
-	<td class="name" nowrap><a href="#Vis.lexers">Vis.lexers</a></td>
+	<td class="name" nowrap><a href="#vis.lexers">vis.lexers</a></td>
 	<td class="summary">Scintillua lexer module.</td>
 	</tr>
 	<tr>
-	<td class="name" nowrap><a href="#Vis.lpeg">Vis.lpeg</a></td>
+	<td class="name" nowrap><a href="#vis.lpeg">vis.lpeg</a></td>
 	<td class="summary">LPeg lexer module.</td>
 	</tr>
 	<tr>
-	<td class="name" nowrap><a href="#Vis.mark">Vis.mark</a></td>
+	<td class="name" nowrap><a href="#vis.mark">vis.mark</a></td>
 	<td class="summary">Mark name in use.</td>
 	</tr>
 	<tr>
-	<td class="name" nowrap><a href="#Vis.mode">Vis.mode</a></td>
+	<td class="name" nowrap><a href="#vis.mode">vis.mode</a></td>
 	<td class="summary">Currently active mode.</td>
 	</tr>
 	<tr>
-	<td class="name" nowrap><a href="#Vis.modes">Vis.modes</a></td>
+	<td class="name" nowrap><a href="#vis.modes">vis.modes</a></td>
 	<td class="summary">Mode constants.</td>
 	</tr>
 	<tr>
-	<td class="name" nowrap><a href="#Vis.options">Vis.options</a></td>
+	<td class="name" nowrap><a href="#vis.options">vis.options</a></td>
 	<td class="summary">Vis Options</td>
 	</tr>
 	<tr>
-	<td class="name" nowrap><a href="#Vis.recording">Vis.recording</a></td>
+	<td class="name" nowrap><a href="#vis.recording">vis.recording</a></td>
 	<td class="summary">Whether a macro is being recorded.</td>
 	</tr>
 	<tr>
-	<td class="name" nowrap><a href="#Vis.register">Vis.register</a></td>
+	<td class="name" nowrap><a href="#vis.register">vis.register</a></td>
 	<td class="summary">Register name in use.</td>
 	</tr>
 	<tr>
-	<td class="name" nowrap><a href="#Vis.registers">Vis.registers</a></td>
+	<td class="name" nowrap><a href="#vis.registers">vis.registers</a></td>
 	<td class="summary">Registers.</td>
 	</tr>
 	<tr>
-	<td class="name" nowrap><a href="#Vis.ui">Vis.ui</a></td>
+	<td class="name" nowrap><a href="#vis.ui">vis.ui</a></td>
 	<td class="summary">User interface.</td>
 	</tr>
 	<tr>
-	<td class="name" nowrap><a href="#Vis.win">Vis.win</a></td>
+	<td class="name" nowrap><a href="#vis.win">vis.win</a></td>
 	<td class="summary">Currently active window.</td>
 	</tr>
 	<tr>
-	<td class="name" nowrap><a href="#Vis:action_register">Vis:action_register(name, func[, help])</a></td>
+	<td class="name" nowrap><a href="#vis:action_register">vis:action_register(name, func[, help])</a></td>
 	<td class="summary">Register a Lua function as key action.</td>
 	</tr>
 	<tr>
-	<td class="name" nowrap><a href="#Vis:close">Vis:close(inputfd)</a></td>
-	<td class="summary">Closes a stream returned by <a href="index.html#Vis:communicate">Vis:communicate</a>.</td>
+	<td class="name" nowrap><a href="#vis:close">vis:close(inputfd)</a></td>
+	<td class="summary">Closes a stream returned by ???.</td>
 	</tr>
 	<tr>
-	<td class="name" nowrap><a href="#Vis:command">Vis:command(command)</a></td>
+	<td class="name" nowrap><a href="#vis:command">vis:command(command)</a></td>
 	<td class="summary">Execute a `:`-command.</td>
 	</tr>
 	<tr>
-	<td class="name" nowrap><a href="#Vis:command_register">Vis:command_register(name, command[, help])</a></td>
+	<td class="name" nowrap><a href="#vis:command_register">vis:command_register(name, command[, help])</a></td>
 	<td class="summary">Register a custom `:`-command.</td>
 	</tr>
 	<tr>
-	<td class="name" nowrap><a href="#Vis:communicate">Vis:communicate(name, command)</a></td>
+	<td class="name" nowrap><a href="#vis:communicate">vis:communicate(name, command)</a></td>
 	<td class="summary">Open new process and return its input stream (stdin).</td>
 	</tr>
 	<tr>
-	<td class="name" nowrap><a href="#Vis:exit">Vis:exit(code)</a></td>
+	<td class="name" nowrap><a href="#vis:exit">vis:exit(code)</a></td>
 	<td class="summary">Terminate editor process.</td>
 	</tr>
 	<tr>
-	<td class="name" nowrap><a href="#Vis:feedkeys">Vis:feedkeys(keys)</a></td>
+	<td class="name" nowrap><a href="#vis:feedkeys">vis:feedkeys(keys)</a></td>
 	<td class="summary">Push keys to input queue and interpret them.</td>
 	</tr>
 	<tr>
-	<td class="name" nowrap><a href="#Vis:files">Vis:files()</a></td>
+	<td class="name" nowrap><a href="#vis:files">vis:files()</a></td>
 	<td class="summary">Create an iterator over all files.</td>
 	</tr>
 	<tr>
-	<td class="name" nowrap><a href="#Vis:info">Vis:info(message)</a></td>
+	<td class="name" nowrap><a href="#vis:info">vis:info(message)</a></td>
 	<td class="summary">Display a short message.</td>
 	</tr>
 	<tr>
-	<td class="name" nowrap><a href="#Vis:insert">Vis:insert(keys)</a></td>
+	<td class="name" nowrap><a href="#vis:insert">vis:insert(keys)</a></td>
 	<td class="summary">Insert keys at all cursor positions of active window.</td>
 	</tr>
 	<tr>
-	<td class="name" nowrap><a href="#Vis:map">Vis:map(mode, key, func[, help])</a></td>
+	<td class="name" nowrap><a href="#vis:map">vis:map(mode, key, func[, help])</a></td>
 	<td class="summary">Map a key to a Lua function.</td>
 	</tr>
 	<tr>
-	<td class="name" nowrap><a href="#Vis:map">Vis:map(mode, key, action)</a></td>
+	<td class="name" nowrap><a href="#vis:map">vis:map(mode, key, action)</a></td>
 	<td class="summary">Map a key to a key action.</td>
 	</tr>
 	<tr>
-	<td class="name" nowrap><a href="#Vis:map">Vis:map(mode, key, alias)</a></td>
+	<td class="name" nowrap><a href="#vis:map">vis:map(mode, key, alias)</a></td>
 	<td class="summary">Setup a key alias.</td>
 	</tr>
 	<tr>
-	<td class="name" nowrap><a href="#Vis:mappings">Vis:mappings(mode)</a></td>
+	<td class="name" nowrap><a href="#vis:mappings">vis:mappings(mode)</a></td>
 	<td class="summary">Get all currently active mappings of a mode.</td>
 	</tr>
 	<tr>
-	<td class="name" nowrap><a href="#Vis:mark_names">Vis:mark_names()</a></td>
+	<td class="name" nowrap><a href="#vis:mark_names">vis:mark_names()</a></td>
 	<td class="summary">Create an iterator over all mark names.</td>
 	</tr>
 	<tr>
-	<td class="name" nowrap><a href="#Vis:message">Vis:message(message)</a></td>
+	<td class="name" nowrap><a href="#vis:message">vis:message(message)</a></td>
 	<td class="summary">Display a multi line message.</td>
 	</tr>
 	<tr>
-	<td class="name" nowrap><a href="#Vis:module_exist">Vis:module_exist(name)</a></td>
+	<td class="name" nowrap><a href="#vis:module_exist">vis:module_exist(name)</a></td>
 	<td class="summary">Check whether a Lua module exists</td>
 	</tr>
 	<tr>
-	<td class="name" nowrap><a href="#Vis:motion_new">Vis:motion_new(key, motion[, help])</a></td>
+	<td class="name" nowrap><a href="#vis:motion_new">vis:motion_new(key, motion[, help])</a></td>
 	<td class="summary">Map a new motion.</td>
 	</tr>
 	<tr>
-	<td class="name" nowrap><a href="#Vis:operator_new">Vis:operator_new(key, operator[, help])</a></td>
+	<td class="name" nowrap><a href="#vis:operator_new">vis:operator_new(key, operator[, help])</a></td>
 	<td class="summary">Map a new operator.</td>
 	</tr>
 	<tr>
-	<td class="name" nowrap><a href="#Vis:option_register">Vis:option_register(name, type, handler[, help])</a></td>
+	<td class="name" nowrap><a href="#vis:option_register">vis:option_register(name, type, handler[, help])</a></td>
 	<td class="summary">Register a custom `:set` option.</td>
 	</tr>
 	<tr>
-	<td class="name" nowrap><a href="#Vis:option_unregister">Vis:option_unregister(name)</a></td>
+	<td class="name" nowrap><a href="#vis:option_unregister">vis:option_unregister(name)</a></td>
 	<td class="summary">Unregister a `:set` option.</td>
 	</tr>
 	<tr>
-	<td class="name" nowrap><a href="#Vis:pipe">Vis:pipe(text, command[, fullscreen])</a></td>
+	<td class="name" nowrap><a href="#vis:pipe">vis:pipe(text, command[, fullscreen])</a></td>
 	<td class="summary">Pipe a string to external process and collect output.</td>
 	</tr>
 	<tr>
-	<td class="name" nowrap><a href="#Vis:pipe">Vis:pipe([file][, range], command[, fullscreen])</a></td>
+	<td class="name" nowrap><a href="#vis:pipe">vis:pipe([file][, range], command[, fullscreen])</a></td>
 	<td class="summary">Pipe file range to external process and collect output.</td>
 	</tr>
 	<tr>
-	<td class="name" nowrap><a href="#Vis:redraw">Vis:redraw()</a></td>
+	<td class="name" nowrap><a href="#vis:redraw">vis:redraw()</a></td>
 	<td class="summary">Redraw complete user interface.</td>
 	</tr>
 	<tr>
-	<td class="name" nowrap><a href="#Vis:register_names">Vis:register_names()</a></td>
+	<td class="name" nowrap><a href="#vis:register_names">vis:register_names()</a></td>
 	<td class="summary">Create an iterator over all register names.</td>
 	</tr>
 	<tr>
-	<td class="name" nowrap><a href="#Vis:replace">Vis:replace(keys)</a></td>
+	<td class="name" nowrap><a href="#vis:replace">vis:replace(keys)</a></td>
 	<td class="summary">Replace keys at all cursor positions of active window.</td>
 	</tr>
 	<tr>
-	<td class="name" nowrap><a href="#Vis:textobject_new">Vis:textobject_new(key, textobject[, help])</a></td>
+	<td class="name" nowrap><a href="#vis:textobject_new">vis:textobject_new(key, textobject[, help])</a></td>
 	<td class="summary">Map a new text object.</td>
 	</tr>
 	<tr>
-	<td class="name" nowrap><a href="#Vis:unmap">Vis:unmap(mode, key)</a></td>
+	<td class="name" nowrap><a href="#vis:unmap">vis:unmap(mode, key)</a></td>
 	<td class="summary">Unmap a global key binding.</td>
 	</tr>
 	<tr>
-	<td class="name" nowrap><a href="#Vis:windows">Vis:windows()</a></td>
+	<td class="name" nowrap><a href="#vis:windows">vis:windows()</a></td>
 	<td class="summary">Create an iterator over all windows.</td>
 	</tr>
 </table>
 <h2><a href="#Class_Ui">Class Ui </a></h2>
 <table class="function_list">
 	<tr>
-	<td class="name" nowrap><a href="#Ui.colors">Ui.colors</a></td>
+	<td class="name" nowrap><a href="#ui.colors">ui.colors</a></td>
 	<td class="summary">Number of available colors.</td>
 	</tr>
 	<tr>
-	<td class="name" nowrap><a href="#Ui.layout">Ui.layout</a></td>
+	<td class="name" nowrap><a href="#ui.layout">ui.layout</a></td>
 	<td class="summary">Current layout.</td>
 	</tr>
 </table>
 <h2><a href="#Class_Window">Class Window </a></h2>
 <table class="function_list">
 	<tr>
-	<td class="name" nowrap><a href="#Window.file">Window.file</a></td>
+	<td class="name" nowrap><a href="#window.file">window.file</a></td>
 	<td class="summary">The file being displayed in this window.</td>
 	</tr>
 	<tr>
-	<td class="name" nowrap><a href="#Window.height">Window.height</a></td>
+	<td class="name" nowrap><a href="#window.height">window.height</a></td>
 	<td class="summary">The window height.</td>
 	</tr>
 	<tr>
-	<td class="name" nowrap><a href="#Window.marks">Window.marks</a></td>
+	<td class="name" nowrap><a href="#window.marks">window.marks</a></td>
 	<td class="summary">Window marks.</td>
 	</tr>
 	<tr>
-	<td class="name" nowrap><a href="#Window.options">Window.options</a></td>
+	<td class="name" nowrap><a href="#window.options">window.options</a></td>
 	<td class="summary">Window Options</td>
 	</tr>
 	<tr>
-	<td class="name" nowrap><a href="#Window.selection">Window.selection</a></td>
+	<td class="name" nowrap><a href="#window.selection">window.selection</a></td>
 	<td class="summary">The primary selection of this window.</td>
 	</tr>
 	<tr>
-	<td class="name" nowrap><a href="#Window.selections">Window.selections</a></td>
+	<td class="name" nowrap><a href="#window.selections">window.selections</a></td>
 	<td class="summary">The selections of this window.</td>
 	</tr>
 	<tr>
-	<td class="name" nowrap><a href="#Window.syntax">Window.syntax</a></td>
+	<td class="name" nowrap><a href="#window.syntax">window.syntax</a></td>
 	<td class="summary">The file type associated with this window.</td>
 	</tr>
 	<tr>
-	<td class="name" nowrap><a href="#Window.viewport">Window.viewport</a></td>
+	<td class="name" nowrap><a href="#window.viewport">window.viewport</a></td>
 	<td class="summary">Viewport currently being displayed.</td>
 	</tr>
 	<tr>
-	<td class="name" nowrap><a href="#Window.width">Window.width</a></td>
+	<td class="name" nowrap><a href="#window.width">window.width</a></td>
 	<td class="summary">The window width.</td>
 	</tr>
 	<tr>
-	<td class="name" nowrap><a href="#Window:close">Window:close(force)</a></td>
+	<td class="name" nowrap><a href="#window:close">window:close(force)</a></td>
 	<td class="summary">Close window.</td>
 	</tr>
 	<tr>
-	<td class="name" nowrap><a href="#Window:draw">Window:draw()</a></td>
+	<td class="name" nowrap><a href="#window:draw">window:draw()</a></td>
 	<td class="summary">Redraw window content.</td>
 	</tr>
 	<tr>
-	<td class="name" nowrap><a href="#Window:map">Window:map(...)</a></td>
+	<td class="name" nowrap><a href="#window:map">window:map(...)</a></td>
 	<td class="summary">Set up a window local key mapping.</td>
 	</tr>
 	<tr>
-	<td class="name" nowrap><a href="#Window:selections_iterator">Window:selections_iterator()</a></td>
+	<td class="name" nowrap><a href="#window:selections_iterator">window:selections_iterator()</a></td>
 	<td class="summary">Create an iterator over all selections of this window.</td>
 	</tr>
 	<tr>
-	<td class="name" nowrap><a href="#Window:set_syntax">Window:set_syntax(syntax)</a></td>
+	<td class="name" nowrap><a href="#window:set_syntax">window:set_syntax(syntax)</a></td>
 	<td class="summary">Change syntax lexer to use for this window</td>
 	</tr>
 	<tr>
-	<td class="name" nowrap><a href="#Window:status">Window:status(left[, right])</a></td>
+	<td class="name" nowrap><a href="#window:status">window:status(left[, right])</a></td>
 	<td class="summary">Set window status line.</td>
 	</tr>
 	<tr>
-	<td class="name" nowrap><a href="#Window:style">Window:style(id, start, finish)</a></td>
+	<td class="name" nowrap><a href="#window:style">window:style(id, start, finish)</a></td>
 	<td class="summary">Style a window range.</td>
 	</tr>
 	<tr>
-	<td class="name" nowrap><a href="#Window:style_define">Window:style_define(id, style)</a></td>
+	<td class="name" nowrap><a href="#window:style_define">window:style_define(id, style)</a></td>
 	<td class="summary">Define a display style.</td>
 	</tr>
 	<tr>
-	<td class="name" nowrap><a href="#Window:style_pos">Window:style_pos(id, x, y)</a></td>
+	<td class="name" nowrap><a href="#window:style_pos">window:style_pos(id, x, y)</a></td>
 	<td class="summary">Style the single terminal cell at the given coordinates, relative to this window.</td>
 	</tr>
 	<tr>
-	<td class="name" nowrap><a href="#Window:unmap">Window:unmap(...)</a></td>
+	<td class="name" nowrap><a href="#window:unmap">window:unmap(...)</a></td>
 	<td class="summary">Remove a window local key mapping.</td>
 	</tr>
 </table>
 <h2><a href="#Class_Selection">Class Selection </a></h2>
 <table class="function_list">
 	<tr>
-	<td class="name" nowrap><a href="#Selection.anchored">Selection.anchored</a></td>
+	<td class="name" nowrap><a href="#selection.anchored">selection.anchored</a></td>
 	<td class="summary">Whether this selection is anchored.</td>
 	</tr>
 	<tr>
-	<td class="name" nowrap><a href="#Selection.col">Selection.col</a></td>
+	<td class="name" nowrap><a href="#selection.col">selection.col</a></td>
 	<td class="summary">The 1-based column position the cursor of this selection resides on.</td>
 	</tr>
 	<tr>
-	<td class="name" nowrap><a href="#Selection.line">Selection.line</a></td>
+	<td class="name" nowrap><a href="#selection.line">selection.line</a></td>
 	<td class="summary">The 1-based line the cursor of this selection resides on.</td>
 	</tr>
 	<tr>
-	<td class="name" nowrap><a href="#Selection.number">Selection.number</a></td>
+	<td class="name" nowrap><a href="#selection.number">selection.number</a></td>
 	<td class="summary">The 1-based selection index.</td>
 	</tr>
 	<tr>
-	<td class="name" nowrap><a href="#Selection.pos">Selection.pos</a></td>
+	<td class="name" nowrap><a href="#selection.pos">selection.pos</a></td>
 	<td class="summary">The zero based byte position in the file.</td>
 	</tr>
 	<tr>
-	<td class="name" nowrap><a href="#Selection.range">Selection.range</a></td>
+	<td class="name" nowrap><a href="#selection.range">selection.range</a></td>
 	<td class="summary">The range covered by this selection.</td>
 	</tr>
 	<tr>
-	<td class="name" nowrap><a href="#Selection:remove">Selection:remove()</a></td>
+	<td class="name" nowrap><a href="#selection:remove">selection:remove()</a></td>
 	<td class="summary">Remove selection.</td>
 	</tr>
 	<tr>
-	<td class="name" nowrap><a href="#Selection:to">Selection:to(line, col)</a></td>
+	<td class="name" nowrap><a href="#selection:to">selection:to(line, col)</a></td>
 	<td class="summary">Move cursor of selection.</td>
 	</tr>
 </table>
 <h2><a href="#Class_File">Class File </a></h2>
 <table class="function_list">
 	<tr>
-	<td class="name" nowrap><a href="#File.lines">File.lines</a></td>
+	<td class="name" nowrap><a href="#file.lines">file.lines</a></td>
 	<td class="summary">File content by logical lines.</td>
 	</tr>
 	<tr>
-	<td class="name" nowrap><a href="#File.modified">File.modified</a></td>
+	<td class="name" nowrap><a href="#file.modified">file.modified</a></td>
 	<td class="summary">File state.</td>
 	</tr>
 	<tr>
-	<td class="name" nowrap><a href="#File.name">File.name</a></td>
+	<td class="name" nowrap><a href="#file.name">file.name</a></td>
 	<td class="summary">File name.</td>
 	</tr>
 	<tr>
-	<td class="name" nowrap><a href="#File.path">File.path</a></td>
+	<td class="name" nowrap><a href="#file.path">file.path</a></td>
 	<td class="summary">File path.</td>
 	</tr>
 	<tr>
-	<td class="name" nowrap><a href="#File.permission">File.permission</a></td>
+	<td class="name" nowrap><a href="#file.permission">file.permission</a></td>
 	<td class="summary">File permission.</td>
 	</tr>
 	<tr>
-	<td class="name" nowrap><a href="#File.savemethod">File.savemethod</a></td>
+	<td class="name" nowrap><a href="#file.savemethod">file.savemethod</a></td>
 	<td class="summary">File save method</td>
 	</tr>
 	<tr>
-	<td class="name" nowrap><a href="#File.size">File.size</a></td>
+	<td class="name" nowrap><a href="#file.size">file.size</a></td>
 	<td class="summary">File size in bytes.</td>
 	</tr>
 	<tr>
-	<td class="name" nowrap><a href="#File:content">File:content(range)</a></td>
+	<td class="name" nowrap><a href="#file:content">file:content(range)</a></td>
 	<td class="summary">Get file content of range.</td>
 	</tr>
 	<tr>
-	<td class="name" nowrap><a href="#File:content">File:content(pos, len)</a></td>
+	<td class="name" nowrap><a href="#file:content">file:content(pos, len)</a></td>
 	<td class="summary">Get file content of position and length.</td>
 	</tr>
 	<tr>
-	<td class="name" nowrap><a href="#File:delete">File:delete(range)</a></td>
+	<td class="name" nowrap><a href="#file:delete">file:delete(range)</a></td>
 	<td class="summary">Delete file range.</td>
 	</tr>
 	<tr>
-	<td class="name" nowrap><a href="#File:delete">File:delete(pos, len)</a></td>
+	<td class="name" nowrap><a href="#file:delete">file:delete(pos, len)</a></td>
 	<td class="summary">Delete data at position.</td>
 	</tr>
 	<tr>
-	<td class="name" nowrap><a href="#File:insert">File:insert(pos, data)</a></td>
+	<td class="name" nowrap><a href="#file:insert">file:insert(pos, data)</a></td>
 	<td class="summary">Insert data at position.</td>
 	</tr>
 	<tr>
-	<td class="name" nowrap><a href="#File:lines_iterator">File:lines_iterator()</a></td>
+	<td class="name" nowrap><a href="#file:lines_iterator">file:lines_iterator()</a></td>
 	<td class="summary">Create an iterator over all lines of the file.</td>
 	</tr>
 	<tr>
-	<td class="name" nowrap><a href="#File:mark_get">File:mark_get(mark)</a></td>
+	<td class="name" nowrap><a href="#file:mark_get">file:mark_get(mark)</a></td>
 	<td class="summary">Get position of mark.</td>
 	</tr>
 	<tr>
-	<td class="name" nowrap><a href="#File:mark_set">File:mark_set(pos)</a></td>
+	<td class="name" nowrap><a href="#file:mark_set">file:mark_set(pos)</a></td>
 	<td class="summary">Set mark.</td>
 	</tr>
 	<tr>
-	<td class="name" nowrap><a href="#File:match_at">File:match_at(pattern, pos[, horizon])</a></td>
+	<td class="name" nowrap><a href="#file:match_at">file:match_at(pattern, pos[, horizon])</a></td>
 	<td class="summary">Check whether LPeg pattern matches at a given file position.</td>
 	</tr>
 	<tr>
-	<td class="name" nowrap><a href="#File:text_object_longword">File:text_object_longword(pos)</a></td>
+	<td class="name" nowrap><a href="#file:text_object_longword">file:text_object_longword(pos)</a></td>
 	<td class="summary">WORD text object.</td>
 	</tr>
 	<tr>
-	<td class="name" nowrap><a href="#File:text_object_word">File:text_object_word(pos)</a></td>
+	<td class="name" nowrap><a href="#file:text_object_word">file:text_object_word(pos)</a></td>
 	<td class="summary">Word text object.</td>
 	</tr>
 </table>
 <h2><a href="#Class_Range">Class Range </a></h2>
 <table class="function_list">
 	<tr>
-	<td class="name" nowrap><a href="#Range.finish">Range.finish</a></td>
+	<td class="name" nowrap><a href="#range.finish">range.finish</a></td>
 	<td class="summary">The end of the range.</td>
 	</tr>
 	<tr>
-	<td class="name" nowrap><a href="#Range.start">Range.start</a></td>
+	<td class="name" nowrap><a href="#range.start">range.start</a></td>
 	<td class="summary">The beginning of the range.</td>
 	</tr>
 </table>
@@ -506,7 +507,7 @@
 	</tr>
 	<tr>
 	<td class="name" nowrap><a href="#process_response">process_response(name, response_type, code, buffer)</a></td>
-	<td class="summary">The response received from the process started via <a href="index.html#Vis:communicate">Vis:communicate</a>.</td>
+	<td class="summary">The response received from the process started via ???.</td>
 	</tr>
 	<tr>
 	<td class="name" nowrap><a href="#quit">quit()</a></td>
@@ -572,8 +573,8 @@
           </div>
     <dl class="function">
     <dt>
-    <a name = "Vis.VERSION"></a>
-    <strong>Vis.VERSION</strong>
+    <a name = "vis.VERSION"></a>
+    <strong>vis.VERSION</strong>
     </dt>
     <dd>
     Version information.
@@ -593,8 +594,8 @@
 
 </dd>
     <dt>
-    <a name = "Vis.count"></a>
-    <strong>Vis.count</strong>
+    <a name = "vis.count"></a>
+    <strong>vis.count</strong>
     </dt>
     <dd>
     Current count.
@@ -613,8 +614,8 @@
 
 </dd>
     <dt>
-    <a name = "Vis.events"></a>
-    <strong>Vis.events</strong>
+    <a name = "vis.events"></a>
+    <strong>vis.events</strong>
     </dt>
     <dd>
     Events.
@@ -633,8 +634,8 @@
 
 </dd>
     <dt>
-    <a name = "Vis.input_queue"></a>
-    <strong>Vis.input_queue</strong>
+    <a name = "vis.input_queue"></a>
+    <strong>vis.input_queue</strong>
     </dt>
     <dd>
     Currently unconsumed keys in the input queue.
@@ -653,8 +654,8 @@
 
 </dd>
     <dt>
-    <a name = "Vis.lexers"></a>
-    <strong>Vis.lexers</strong>
+    <a name = "vis.lexers"></a>
+    <strong>vis.lexers</strong>
     </dt>
     <dd>
     Scintillua lexer module.
@@ -672,8 +673,8 @@
 
 </dd>
     <dt>
-    <a name = "Vis.lpeg"></a>
-    <strong>Vis.lpeg</strong>
+    <a name = "vis.lpeg"></a>
+    <strong>vis.lpeg</strong>
     </dt>
     <dd>
     LPeg lexer module.
@@ -691,8 +692,8 @@
 
 </dd>
     <dt>
-    <a name = "Vis.mark"></a>
-    <strong>Vis.mark</strong>
+    <a name = "vis.mark"></a>
+    <strong>vis.mark</strong>
     </dt>
     <dd>
     Mark name in use.
@@ -711,8 +712,8 @@
 
 </dd>
     <dt>
-    <a name = "Vis.mode"></a>
-    <strong>Vis.mode</strong>
+    <a name = "vis.mode"></a>
+    <strong>vis.mode</strong>
     </dt>
     <dd>
     Currently active mode.
@@ -731,8 +732,8 @@
 
 </dd>
     <dt>
-    <a name = "Vis.modes"></a>
-    <strong>Vis.modes</strong>
+    <a name = "vis.modes"></a>
+    <strong>vis.modes</strong>
     </dt>
     <dd>
     Mode constants.
@@ -751,8 +752,8 @@
 
 </dd>
     <dt>
-    <a name = "Vis.options"></a>
-    <strong>Vis.options</strong>
+    <a name = "vis.options"></a>
+    <strong>vis.options</strong>
     </dt>
     <dd>
     Vis Options
@@ -796,14 +797,13 @@
 
     <h3>See also:</h3>
     <ul>
-         <a href="index.html#Window.options">Window.options</a>
     </ul>
 
 
 </dd>
     <dt>
-    <a name = "Vis.recording"></a>
-    <strong>Vis.recording</strong>
+    <a name = "vis.recording"></a>
+    <strong>vis.recording</strong>
     </dt>
     <dd>
     Whether a macro is being recorded.
@@ -822,8 +822,8 @@
 
 </dd>
     <dt>
-    <a name = "Vis.register"></a>
-    <strong>Vis.register</strong>
+    <a name = "vis.register"></a>
+    <strong>vis.register</strong>
     </dt>
     <dd>
     Register name in use.
@@ -842,8 +842,8 @@
 
 </dd>
     <dt>
-    <a name = "Vis.registers"></a>
-    <strong>Vis.registers</strong>
+    <a name = "vis.registers"></a>
+    <strong>vis.registers</strong>
     </dt>
     <dd>
     Registers.
@@ -861,8 +861,8 @@
 
 </dd>
     <dt>
-    <a name = "Vis.ui"></a>
-    <strong>Vis.ui</strong>
+    <a name = "vis.ui"></a>
+    <strong>vis.ui</strong>
     </dt>
     <dd>
     User interface.
@@ -881,8 +881,8 @@
 
 </dd>
     <dt>
-    <a name = "Vis.win"></a>
-    <strong>Vis.win</strong>
+    <a name = "vis.win"></a>
+    <strong>vis.win</strong>
     </dt>
     <dd>
     Currently active window.
@@ -899,14 +899,14 @@
 
     <h3>See also:</h3>
     <ul>
-         <a href="index.html#Vis:windows">windows</a>
+         <a href="index.html#vis:windows">windows</a>
     </ul>
 
 
 </dd>
     <dt>
-    <a name = "Vis:action_register"></a>
-    <strong>Vis:action_register(name, func[, help])</strong>
+    <a name = "vis:action_register"></a>
+    <strong>vis:action_register(name, func[, help])</strong>
     </dt>
     <dd>
     Register a Lua function as key action.
@@ -939,18 +939,16 @@
 
     <h3>See also:</h3>
     <ul>
-         <li><a href="index.html#Vis:map">Vis:map</a></li>
-         <li><a href="index.html#Window:map">Window:map</a></li>
     </ul>
 
 
 </dd>
     <dt>
-    <a name = "Vis:close"></a>
-    <strong>Vis:close(inputfd)</strong>
+    <a name = "vis:close"></a>
+    <strong>vis:close(inputfd)</strong>
     </dt>
     <dd>
-    Closes a stream returned by <a href="index.html#Vis:communicate">Vis:communicate</a>.
+    Closes a stream returned by ???.
 
 
     <h3>Parameters:</h3>
@@ -973,8 +971,8 @@
 
 </dd>
     <dt>
-    <a name = "Vis:command"></a>
-    <strong>Vis:command(command)</strong>
+    <a name = "vis:command"></a>
+    <strong>vis:command(command)</strong>
     </dt>
     <dd>
     Execute a `:`-command.
@@ -999,13 +997,13 @@
 
     <h3>Usage:</h3>
     <ul>
-        <pre class="example">vis:command(<span class="string">"set number"</span>)</pre>
+        <pre class="example">vis:<span class="function-name">command</span>(<span class="string">"set number"</span>)</pre>
     </ul>
 
 </dd>
     <dt>
-    <a name = "Vis:command_register"></a>
-    <strong>Vis:command_register(name, command[, help])</strong>
+    <a name = "vis:command_register"></a>
+    <strong>vis:command_register(name, command[, help])</strong>
     </dt>
     <dd>
     Register a custom `:`-command.
@@ -1039,7 +1037,7 @@
 
     <h3>Usage:</h3>
     <ul>
-        <pre class="example">vis:command_register(<span class="string">"foo"</span>, <span class="keyword">function</span>(argv, force, win, selection, range)
+        <pre class="example">vis:<span class="function-name">command_register</span>(<span class="string">"foo"</span>, <span class="keyword">function</span>(argv, force, win, selection, range)
 	 <span class="keyword">for</span> i,arg <span class="keyword">in</span> <span class="global">ipairs</span>(argv) <span class="keyword">do</span>
 		 <span class="global">print</span>(i..<span class="string">": "</span>..arg)
 	 <span class="keyword">end</span>
@@ -1053,8 +1051,8 @@
 
 </dd>
     <dt>
-    <a name = "Vis:communicate"></a>
-    <strong>Vis:communicate(name, command)</strong>
+    <a name = "vis:communicate"></a>
+    <strong>vis:communicate(name, command)</strong>
     </dt>
     <dd>
     Open new process and return its input stream (stdin).
@@ -1089,8 +1087,8 @@
 
 </dd>
     <dt>
-    <a name = "Vis:exit"></a>
-    <strong>Vis:exit(code)</strong>
+    <a name = "vis:exit"></a>
+    <strong>vis:exit(code)</strong>
     </dt>
     <dd>
     Terminate editor process.
@@ -1116,8 +1114,8 @@
 
 </dd>
     <dt>
-    <a name = "Vis:feedkeys"></a>
-    <strong>Vis:feedkeys(keys)</strong>
+    <a name = "vis:feedkeys"></a>
+    <strong>vis:feedkeys(keys)</strong>
     </dt>
     <dd>
     Push keys to input queue and interpret them.
@@ -1139,8 +1137,8 @@
 
 </dd>
     <dt>
-    <a name = "Vis:files"></a>
-    <strong>Vis:files()</strong>
+    <a name = "vis:files"></a>
+    <strong>vis:files()</strong>
     </dt>
     <dd>
     Create an iterator over all files.
@@ -1157,15 +1155,15 @@
 
     <h3>Usage:</h3>
     <ul>
-        <pre class="example"><span class="keyword">for</span> file <span class="keyword">in</span> vis:files() <span class="keyword">do</span>
+        <pre class="example"><span class="keyword">for</span> file <span class="keyword">in</span> vis:<span class="function-name">files</span>() <span class="keyword">do</span>
 	<span class="comment">-- do something with file
 </span><span class="keyword">end</span></pre>
     </ul>
 
 </dd>
     <dt>
-    <a name = "Vis:info"></a>
-    <strong>Vis:info(message)</strong>
+    <a name = "vis:info"></a>
+    <strong>vis:info(message)</strong>
     </dt>
     <dd>
     Display a short message.
@@ -1188,13 +1186,13 @@
 
 </dd>
     <dt>
-    <a name = "Vis:insert"></a>
-    <strong>Vis:insert(keys)</strong>
+    <a name = "vis:insert"></a>
+    <strong>vis:insert(keys)</strong>
     </dt>
     <dd>
     Insert keys at all cursor positions of active window.
 <p> This function behaves as if the keys were entered in insert mode,
- but in contrast to <a href="index.html#Vis:feedkeys">Vis:feedkeys</a> it bypasses the input queue,
+ but in contrast to ??? it bypasses the input queue,
  meaning mappings do not apply and the keys will not be recorded in macros.
 
 
@@ -1211,14 +1209,13 @@
 
     <h3>See also:</h3>
     <ul>
-         <a href="index.html#Vis:feedkeys">Vis:feedkeys</a>
     </ul>
 
 
 </dd>
     <dt>
-    <a name = "Vis:map"></a>
-    <strong>Vis:map(mode, key, func[, help])</strong>
+    <a name = "vis:map"></a>
+    <strong>vis:map(mode, key, func[, help])</strong>
     </dt>
     <dd>
     Map a key to a Lua function.
@@ -1257,18 +1254,17 @@
 
     <h3>See also:</h3>
     <ul>
-         <a href="index.html#Window:map">Window:map</a>
     </ul>
 
     <h3>Usage:</h3>
     <ul>
-        <pre class="example">vis:map(vis.modes.INSERT, <span class="string">"&lt;C-k&gt;"</span>, <span class="keyword">function</span>(keys)
+        <pre class="example">vis:<span class="function-name">map</span>(vis.modes.INSERT, <span class="string">"&lt;C-k&gt;"</span>, <span class="keyword">function</span>(keys)
 	<span class="keyword">if</span> #keys &lt; <span class="number">2</span> <span class="keyword">then</span>
 		<span class="keyword">return</span> -<span class="number">1</span> <span class="comment">-- need more input
 </span>	<span class="keyword">end</span>
-	<span class="keyword">local</span> digraph = keys:sub(<span class="number">1</span>, <span class="number">2</span>)
+	<span class="keyword">local</span> digraph = keys:<span class="function-name">sub</span>(<span class="number">1</span>, <span class="number">2</span>)
 	<span class="keyword">if</span> digraph == <span class="string">"l*"</span> <span class="keyword">then</span>
-		vis:feedkeys(<span class="string">'λ'</span>)
+		vis:<span class="function-name">feedkeys</span>(<span class="string">'λ'</span>)
 		<span class="keyword">return</span> <span class="number">2</span> <span class="comment">-- consume 2 bytes of input
 </span>	<span class="keyword">end</span>
 <span class="keyword">end</span>, <span class="string">"Insert digraph"</span>)</pre>
@@ -1276,8 +1272,8 @@
 
 </dd>
     <dt>
-    <a name = "Vis:map"></a>
-    <strong>Vis:map(mode, key, action)</strong>
+    <a name = "vis:map"></a>
+    <strong>vis:map(mode, key, action)</strong>
     </dt>
     <dd>
     Map a key to a key action.
@@ -1308,22 +1304,21 @@
 
     <h3>See also:</h3>
     <ul>
-         <a href="index.html#Window:map">Window:map</a>
     </ul>
 
     <h3>Usage:</h3>
     <ul>
-        <pre class="example"><span class="keyword">local</span> action = vis:action_register(<span class="string">"info"</span>, <span class="keyword">function</span>()
-  vis:info(<span class="string">"Mapping works!"</span>)
+        <pre class="example"><span class="keyword">local</span> action = vis:<span class="function-name">action_register</span>(<span class="string">"info"</span>, <span class="keyword">function</span>()
+  vis:<span class="function-name">info</span>(<span class="string">"Mapping works!"</span>)
 <span class="keyword">end</span>, <span class="string">"Info message help text"</span>)
-vis:map(vis.modes.NORMAL, <span class="string">"gh"</span>, action)
-vis:map(vis.modes.NORMAL, <span class="string">"gl"</span>, action)</pre>
+vis:<span class="function-name">map</span>(vis.modes.NORMAL, <span class="string">"gh"</span>, action)
+vis:<span class="function-name">map</span>(vis.modes.NORMAL, <span class="string">"gl"</span>, action)</pre>
     </ul>
 
 </dd>
     <dt>
-    <a name = "Vis:map"></a>
-    <strong>Vis:map(mode, key, alias)</strong>
+    <a name = "vis:map"></a>
+    <strong>vis:map(mode, key, alias)</strong>
     </dt>
     <dd>
     Setup a key alias.
@@ -1357,18 +1352,17 @@ vis:map(vis.modes.NORMAL, <span class="string">"gl"</span>, action)</pre>
 
     <h3>See also:</h3>
     <ul>
-         <a href="index.html#Window:map">Window:map</a>
     </ul>
 
     <h3>Usage:</h3>
     <ul>
-        <pre class="example">vis:map(vis.modes.NORMAL, <span class="string">"j"</span>, <span class="string">"k"</span>)</pre>
+        <pre class="example">vis:<span class="function-name">map</span>(vis.modes.NORMAL, <span class="string">"j"</span>, <span class="string">"k"</span>)</pre>
     </ul>
 
 </dd>
     <dt>
-    <a name = "Vis:mappings"></a>
-    <strong>Vis:mappings(mode)</strong>
+    <a name = "vis:mappings"></a>
+    <strong>vis:mappings(mode)</strong>
     </dt>
     <dd>
     Get all currently active mappings of a mode.
@@ -1392,12 +1386,11 @@ vis:map(vis.modes.NORMAL, <span class="string">"gl"</span>, action)</pre>
 
     <h3>See also:</h3>
     <ul>
-         <a href="index.html#Vis:map">Vis:map</a>
     </ul>
 
     <h3>Usage:</h3>
     <ul>
-        <pre class="example"><span class="keyword">local</span> bindings = vis:mappings(vis.modes.NORMAL)
+        <pre class="example"><span class="keyword">local</span> bindings = vis:<span class="function-name">mappings</span>(vis.modes.NORMAL)
 <span class="keyword">for</span> key, help <span class="keyword">in</span> <span class="global">pairs</span>(bindings) <span class="keyword">do</span>
 	<span class="comment">-- do something
 </span><span class="keyword">end</span></pre>
@@ -1405,8 +1398,8 @@ vis:map(vis.modes.NORMAL, <span class="string">"gl"</span>, action)</pre>
 
 </dd>
     <dt>
-    <a name = "Vis:mark_names"></a>
-    <strong>Vis:mark_names()</strong>
+    <a name = "vis:mark_names"></a>
+    <strong>vis:mark_names()</strong>
     </dt>
     <dd>
     Create an iterator over all mark names.
@@ -1424,7 +1417,7 @@ vis:map(vis.modes.NORMAL, <span class="string">"gl"</span>, action)</pre>
     <h3>Usage:</h3>
     <ul>
         <pre class="example"><span class="keyword">local</span> marks = vis.win.marks
-<span class="keyword">for</span> name <span class="keyword">in</span> vis:mark_names() <span class="keyword">do</span>
+<span class="keyword">for</span> name <span class="keyword">in</span> vis:<span class="function-name">mark_names</span>() <span class="keyword">do</span>
 	<span class="keyword">local</span> mark = marks[name]
 	<span class="keyword">for</span> i = <span class="number">1</span>, #mark <span class="keyword">do</span>
 		<span class="comment">-- do something with: name, mark[i].start, mark[i].finish
@@ -1434,8 +1427,8 @@ vis:map(vis.modes.NORMAL, <span class="string">"gl"</span>, action)</pre>
 
 </dd>
     <dt>
-    <a name = "Vis:message"></a>
-    <strong>Vis:message(message)</strong>
+    <a name = "vis:message"></a>
+    <strong>vis:message(message)</strong>
     </dt>
     <dd>
     Display a multi line message.
@@ -1457,8 +1450,8 @@ vis:map(vis.modes.NORMAL, <span class="string">"gl"</span>, action)</pre>
 
 </dd>
     <dt>
-    <a name = "Vis:module_exist"></a>
-    <strong>Vis:module_exist(name)</strong>
+    <a name = "vis:module_exist"></a>
+    <strong>vis:module_exist(name)</strong>
     </dt>
     <dd>
     Check whether a Lua module exists  Checks whether a subsequent <a href="https://www.lua.org/manual/5.1/manual.html#pdf-require">require</a> call will succeed.
@@ -1484,8 +1477,8 @@ vis:map(vis.modes.NORMAL, <span class="string">"gl"</span>, action)</pre>
 
 </dd>
     <dt>
-    <a name = "Vis:motion_new"></a>
-    <strong>Vis:motion_new(key, motion[, help])</strong>
+    <a name = "vis:motion_new"></a>
+    <strong>vis:motion_new(key, motion[, help])</strong>
     </dt>
     <dd>
     Map a new motion.
@@ -1523,15 +1516,15 @@ vis:map(vis.modes.NORMAL, <span class="string">"gl"</span>, action)</pre>
 
     <h3>Usage:</h3>
     <ul>
-        <pre class="example">vis:motion_new(<span class="string">"&lt;C-l&gt;"</span>, <span class="keyword">function</span>(win, pos)
+        <pre class="example">vis:<span class="function-name">motion_new</span>(<span class="string">"&lt;C-l&gt;"</span>, <span class="keyword">function</span>(win, pos)
 	<span class="keyword">return</span> pos+<span class="number">1</span>
 <span class="keyword">end</span>, <span class="string">"Advance to next byte"</span>)</pre>
     </ul>
 
 </dd>
     <dt>
-    <a name = "Vis:operator_new"></a>
-    <strong>Vis:operator_new(key, operator[, help])</strong>
+    <a name = "vis:operator_new"></a>
+    <strong>vis:operator_new(key, operator[, help])</strong>
     </dt>
     <dd>
     Map a new operator.
@@ -1569,13 +1562,13 @@ vis:map(vis.modes.NORMAL, <span class="string">"gl"</span>, action)</pre>
 
     <h3>Usage:</h3>
     <ul>
-        <pre class="example">vis:operator_new(<span class="string">"gq"</span>, <span class="keyword">function</span>(file, range, pos)
-	<span class="keyword">local</span> status, out, err = vis:pipe(file, range, <span class="string">"fmt"</span>)
+        <pre class="example">vis:<span class="function-name">operator_new</span>(<span class="string">"gq"</span>, <span class="keyword">function</span>(file, range, pos)
+	<span class="keyword">local</span> status, out, err = vis:<span class="function-name">pipe</span>(file, range, <span class="string">"fmt"</span>)
 	<span class="keyword">if</span> status ~= <span class="number">0</span> <span class="keyword">then</span>
-		vis:info(err)
+		vis:<span class="function-name">info</span>(err)
 	<span class="keyword">else</span>
-		file:delete(range)
-		file:insert(range.start, out)
+		file:<span class="function-name">delete</span>(range)
+		file:<span class="function-name">insert</span>(range.start, out)
 	<span class="keyword">end</span>
 	<span class="keyword">return</span> range.start <span class="comment">-- new cursor location
 </span><span class="keyword">end</span>, <span class="string">"Formatting operator, filter range through fmt(1)"</span>)</pre>
@@ -1583,8 +1576,8 @@ vis:map(vis.modes.NORMAL, <span class="string">"gl"</span>, action)</pre>
 
 </dd>
     <dt>
-    <a name = "Vis:option_register"></a>
-    <strong>Vis:option_register(name, type, handler[, help])</strong>
+    <a name = "vis:option_register"></a>
+    <strong>vis:option_register(name, type, handler[, help])</strong>
     </dt>
     <dd>
     Register a custom `:set` option.
@@ -1622,18 +1615,18 @@ vis:map(vis.modes.NORMAL, <span class="string">"gl"</span>, action)</pre>
 
     <h3>Usage:</h3>
     <ul>
-        <pre class="example">vis:option_register(<span class="string">"foo"</span>, <span class="string">"bool"</span>, <span class="keyword">function</span>(value, toggle)
+        <pre class="example">vis:<span class="function-name">option_register</span>(<span class="string">"foo"</span>, <span class="string">"bool"</span>, <span class="keyword">function</span>(value, toggle)
 	<span class="keyword">if</span> <span class="keyword">not</span> vis.win <span class="keyword">then</span> <span class="keyword">return</span> <span class="keyword">false</span> <span class="keyword">end</span>
 	vis.win.foo = toggle <span class="keyword">and</span> <span class="keyword">not</span> vis.win.foo <span class="keyword">or</span> value
-	vis:info(<span class="string">"Option foo = "</span> .. <span class="global">tostring</span>(vis.win.foo))
+	vis:<span class="function-name">info</span>(<span class="string">"Option foo = "</span> .. <span class="global">tostring</span>(vis.win.foo))
 	<span class="keyword">return</span> <span class="keyword">true</span>
 <span class="keyword">end</span>, <span class="string">"Foo enables superpowers"</span>)</pre>
     </ul>
 
 </dd>
     <dt>
-    <a name = "Vis:option_unregister"></a>
-    <strong>Vis:option_unregister(name)</strong>
+    <a name = "vis:option_unregister"></a>
+    <strong>vis:option_unregister(name)</strong>
     </dt>
     <dd>
     Unregister a `:set` option.
@@ -1659,8 +1652,8 @@ vis:map(vis.modes.NORMAL, <span class="string">"gl"</span>, action)</pre>
 
 </dd>
     <dt>
-    <a name = "Vis:pipe"></a>
-    <strong>Vis:pipe(text, command[, fullscreen])</strong>
+    <a name = "vis:pipe"></a>
+    <strong>vis:pipe(text, command[, fullscreen])</strong>
     </dt>
     <dd>
     Pipe a string to external process and collect output.
@@ -1703,8 +1696,8 @@ vis:map(vis.modes.NORMAL, <span class="string">"gl"</span>, action)</pre>
 
 </dd>
     <dt>
-    <a name = "Vis:pipe"></a>
-    <strong>Vis:pipe([file][, range], command[, fullscreen])</strong>
+    <a name = "vis:pipe"></a>
+    <strong>vis:pipe([file][, range], command[, fullscreen])</strong>
     </dt>
     <dd>
     Pipe file range to external process and collect output.
@@ -1754,8 +1747,8 @@ vis:map(vis.modes.NORMAL, <span class="string">"gl"</span>, action)</pre>
 
 </dd>
     <dt>
-    <a name = "Vis:redraw"></a>
-    <strong>Vis:redraw()</strong>
+    <a name = "vis:redraw"></a>
+    <strong>vis:redraw()</strong>
     </dt>
     <dd>
     Redraw complete user interface.
@@ -1770,8 +1763,8 @@ vis:map(vis.modes.NORMAL, <span class="string">"gl"</span>, action)</pre>
 
 </dd>
     <dt>
-    <a name = "Vis:register_names"></a>
-    <strong>Vis:register_names()</strong>
+    <a name = "vis:register_names"></a>
+    <strong>vis:register_names()</strong>
     </dt>
     <dd>
     Create an iterator over all register names.
@@ -1788,7 +1781,7 @@ vis:map(vis.modes.NORMAL, <span class="string">"gl"</span>, action)</pre>
 
     <h3>Usage:</h3>
     <ul>
-        <pre class="example"><span class="keyword">for</span> name <span class="keyword">in</span> vis:register_names() <span class="keyword">do</span>
+        <pre class="example"><span class="keyword">for</span> name <span class="keyword">in</span> vis:<span class="function-name">register_names</span>() <span class="keyword">do</span>
 	<span class="keyword">local</span> reg = vis.registers[name]
 	<span class="keyword">for</span> i = <span class="number">1</span>, #reg <span class="keyword">do</span>
 		<span class="comment">-- do something with register value reg[i]
@@ -1798,13 +1791,13 @@ vis:map(vis.modes.NORMAL, <span class="string">"gl"</span>, action)</pre>
 
 </dd>
     <dt>
-    <a name = "Vis:replace"></a>
-    <strong>Vis:replace(keys)</strong>
+    <a name = "vis:replace"></a>
+    <strong>vis:replace(keys)</strong>
     </dt>
     <dd>
     Replace keys at all cursor positions of active window.
 <p> This function behaves as if the keys were entered in replace mode,
- but in contrast to <a href="index.html#Vis:feedkeys">Vis:feedkeys</a> it bypasses the input queue,
+ but in contrast to ??? it bypasses the input queue,
  meaning mappings do not apply and the keys will not be recorded in macros.
 
 
@@ -1821,14 +1814,13 @@ vis:map(vis.modes.NORMAL, <span class="string">"gl"</span>, action)</pre>
 
     <h3>See also:</h3>
     <ul>
-         <a href="index.html#Vis:feedkeys">Vis:feedkeys</a>
     </ul>
 
 
 </dd>
     <dt>
-    <a name = "Vis:textobject_new"></a>
-    <strong>Vis:textobject_new(key, textobject[, help])</strong>
+    <a name = "vis:textobject_new"></a>
+    <strong>vis:textobject_new(key, textobject[, help])</strong>
     </dt>
     <dd>
     Map a new text object.
@@ -1866,15 +1858,15 @@ vis:map(vis.modes.NORMAL, <span class="string">"gl"</span>, action)</pre>
 
     <h3>Usage:</h3>
     <ul>
-        <pre class="example">vis:textobject_new(<span class="string">"&lt;C-l&gt;"</span>, <span class="keyword">function</span>(win, pos)
+        <pre class="example">vis:<span class="function-name">textobject_new</span>(<span class="string">"&lt;C-l&gt;"</span>, <span class="keyword">function</span>(win, pos)
 	<span class="keyword">return</span> pos, pos+<span class="number">1</span>
 <span class="keyword">end</span>, <span class="string">"Single byte text object"</span>)</pre>
     </ul>
 
 </dd>
     <dt>
-    <a name = "Vis:unmap"></a>
-    <strong>Vis:unmap(mode, key)</strong>
+    <a name = "vis:unmap"></a>
+    <strong>vis:unmap(mode, key)</strong>
     </dt>
     <dd>
     Unmap a global key binding.
@@ -1902,14 +1894,13 @@ vis:map(vis.modes.NORMAL, <span class="string">"gl"</span>, action)</pre>
 
     <h3>See also:</h3>
     <ul>
-         <a href="index.html#Window:unmap">Window:unmap</a>
     </ul>
 
 
 </dd>
     <dt>
-    <a name = "Vis:windows"></a>
-    <strong>Vis:windows()</strong>
+    <a name = "vis:windows"></a>
+    <strong>vis:windows()</strong>
     </dt>
     <dd>
     Create an iterator over all windows.
@@ -1925,12 +1916,12 @@ vis:map(vis.modes.NORMAL, <span class="string">"gl"</span>, action)</pre>
 
     <h3>See also:</h3>
     <ul>
-         <a href="index.html#Vis.win">win</a>
+         <a href="index.html#vis.win">vis.win</a>
     </ul>
 
     <h3>Usage:</h3>
     <ul>
-        <pre class="example"><span class="keyword">for</span> win <span class="keyword">in</span> vis:windows() <span class="keyword">do</span>
+        <pre class="example"><span class="keyword">for</span> win <span class="keyword">in</span> vis:<span class="function-name">windows</span>() <span class="keyword">do</span>
 	<span class="comment">-- do something with win
 </span><span class="keyword">end</span></pre>
     </ul>
@@ -1944,8 +1935,8 @@ vis:map(vis.modes.NORMAL, <span class="string">"gl"</span>, action)</pre>
           </div>
     <dl class="function">
     <dt>
-    <a name = "Ui.colors"></a>
-    <strong>Ui.colors</strong>
+    <a name = "ui.colors"></a>
+    <strong>ui.colors</strong>
     </dt>
     <dd>
     Number of available colors.
@@ -1964,8 +1955,8 @@ vis:map(vis.modes.NORMAL, <span class="string">"gl"</span>, action)</pre>
 
 </dd>
     <dt>
-    <a name = "Ui.layout"></a>
-    <strong>Ui.layout</strong>
+    <a name = "ui.layout"></a>
+    <strong>ui.layout</strong>
     </dt>
     <dd>
     Current layout.
@@ -1991,8 +1982,8 @@ vis:map(vis.modes.NORMAL, <span class="string">"gl"</span>, action)</pre>
           </div>
     <dl class="function">
     <dt>
-    <a name = "Window.file"></a>
-    <strong>Window.file</strong>
+    <a name = "window.file"></a>
+    <strong>window.file</strong>
     </dt>
     <dd>
     The file being displayed in this window.
@@ -2013,8 +2004,8 @@ vis:map(vis.modes.NORMAL, <span class="string">"gl"</span>, action)</pre>
 
 </dd>
     <dt>
-    <a name = "Window.height"></a>
-    <strong>Window.height</strong>
+    <a name = "window.height"></a>
+    <strong>window.height</strong>
     </dt>
     <dd>
     The window height.
@@ -2033,8 +2024,8 @@ vis:map(vis.modes.NORMAL, <span class="string">"gl"</span>, action)</pre>
 
 </dd>
     <dt>
-    <a name = "Window.marks"></a>
-    <strong>Window.marks</strong>
+    <a name = "window.marks"></a>
+    <strong>window.marks</strong>
     </dt>
     <dd>
     Window marks.
@@ -2052,14 +2043,13 @@ vis:map(vis.modes.NORMAL, <span class="string">"gl"</span>, action)</pre>
 
     <h3>See also:</h3>
     <ul>
-         <a href="index.html#Vis:mark_names">Vis:mark_names</a>
     </ul>
 
 
 </dd>
     <dt>
-    <a name = "Window.options"></a>
-    <strong>Window.options</strong>
+    <a name = "window.options"></a>
+    <strong>window.options</strong>
     </dt>
     <dd>
     Window Options
@@ -2138,14 +2128,13 @@ vis:map(vis.modes.NORMAL, <span class="string">"gl"</span>, action)</pre>
 
     <h3>See also:</h3>
     <ul>
-         <a href="index.html#Vis.options">Vis.options</a>
     </ul>
 
 
 </dd>
     <dt>
-    <a name = "Window.selection"></a>
-    <strong>Window.selection</strong>
+    <a name = "window.selection"></a>
+    <strong>window.selection</strong>
     </dt>
     <dd>
     The primary selection of this window.
@@ -2164,8 +2153,8 @@ vis:map(vis.modes.NORMAL, <span class="string">"gl"</span>, action)</pre>
 
 </dd>
     <dt>
-    <a name = "Window.selections"></a>
-    <strong>Window.selections</strong>
+    <a name = "window.selections"></a>
+    <strong>window.selections</strong>
     </dt>
     <dd>
     The selections of this window.
@@ -2184,8 +2173,8 @@ vis:map(vis.modes.NORMAL, <span class="string">"gl"</span>, action)</pre>
 
 </dd>
     <dt>
-    <a name = "Window.syntax"></a>
-    <strong>Window.syntax</strong>
+    <a name = "window.syntax"></a>
+    <strong>window.syntax</strong>
     </dt>
     <dd>
     The file type associated with this window.
@@ -2204,8 +2193,8 @@ vis:map(vis.modes.NORMAL, <span class="string">"gl"</span>, action)</pre>
 
 </dd>
     <dt>
-    <a name = "Window.viewport"></a>
-    <strong>Window.viewport</strong>
+    <a name = "window.viewport"></a>
+    <strong>window.viewport</strong>
     </dt>
     <dd>
     Viewport currently being displayed.
@@ -2238,8 +2227,8 @@ vis:map(vis.modes.NORMAL, <span class="string">"gl"</span>, action)</pre>
 
 </dd>
     <dt>
-    <a name = "Window.width"></a>
-    <strong>Window.width</strong>
+    <a name = "window.width"></a>
+    <strong>window.width</strong>
     </dt>
     <dd>
     The window width.
@@ -2258,8 +2247,8 @@ vis:map(vis.modes.NORMAL, <span class="string">"gl"</span>, action)</pre>
 
 </dd>
     <dt>
-    <a name = "Window:close"></a>
-    <strong>Window:close(force)</strong>
+    <a name = "window:close"></a>
+    <strong>window:close(force)</strong>
     </dt>
     <dd>
     Close window.
@@ -2287,14 +2276,14 @@ vis:map(vis.modes.NORMAL, <span class="string">"gl"</span>, action)</pre>
 
     <h3>See also:</h3>
     <ul>
-         <a href="index.html#Vis:exit">exit</a>
+         <a href="index.html#vis:exit">exit</a>
     </ul>
 
 
 </dd>
     <dt>
-    <a name = "Window:draw"></a>
-    <strong>Window:draw()</strong>
+    <a name = "window:draw"></a>
+    <strong>window:draw()</strong>
     </dt>
     <dd>
     Redraw window content.
@@ -2307,12 +2296,12 @@ vis:map(vis.modes.NORMAL, <span class="string">"gl"</span>, action)</pre>
 
 </dd>
     <dt>
-    <a name = "Window:map"></a>
-    <strong>Window:map(...)</strong>
+    <a name = "window:map"></a>
+    <strong>window:map(...)</strong>
     </dt>
     <dd>
     Set up a window local key mapping.
- The function signatures are the same as for <a href="index.html#Vis:map">Vis:map</a>.
+ The function signatures are the same as for ???.
 
 
     <h3>Parameters:</h3>
@@ -2326,14 +2315,13 @@ vis:map(vis.modes.NORMAL, <span class="string">"gl"</span>, action)</pre>
 
     <h3>See also:</h3>
     <ul>
-         <a href="index.html#Vis:map">Vis:map</a>
     </ul>
 
 
 </dd>
     <dt>
-    <a name = "Window:selections_iterator"></a>
-    <strong>Window:selections_iterator()</strong>
+    <a name = "window:selections_iterator"></a>
+    <strong>window:selections_iterator()</strong>
     </dt>
     <dd>
     Create an iterator over all selections of this window.
@@ -2351,8 +2339,8 @@ vis:map(vis.modes.NORMAL, <span class="string">"gl"</span>, action)</pre>
 
 </dd>
     <dt>
-    <a name = "Window:set_syntax"></a>
-    <strong>Window:set_syntax(syntax)</strong>
+    <a name = "window:set_syntax"></a>
+    <strong>window:set_syntax(syntax)</strong>
     </dt>
     <dd>
     Change syntax lexer to use for this window
@@ -2378,8 +2366,8 @@ vis:map(vis.modes.NORMAL, <span class="string">"gl"</span>, action)</pre>
 
 </dd>
     <dt>
-    <a name = "Window:status"></a>
-    <strong>Window:status(left[, right])</strong>
+    <a name = "window:status"></a>
+    <strong>window:status(left[, right])</strong>
     </dt>
     <dd>
     Set window status line.
@@ -2404,8 +2392,8 @@ vis:map(vis.modes.NORMAL, <span class="string">"gl"</span>, action)</pre>
 
 </dd>
     <dt>
-    <a name = "Window:style"></a>
-    <strong>Window:style(id, start, finish)</strong>
+    <a name = "window:style"></a>
+    <strong>window:style(id, start, finish)</strong>
     </dt>
     <dd>
     Style a window range.
@@ -2416,7 +2404,7 @@ vis:map(vis.modes.NORMAL, <span class="string">"gl"</span>, action)</pre>
     <ul>
         <li><span class="parameter">id</span>
             <span class="types"><span class="type">int</span></span>
-         the display style as registered with <a href="index.html#Window:style_define">style_define</a>
+         the display style as registered with <a href="index.html#window:style_define">style_define</a>
         </li>
         <li><span class="parameter">start</span>
             <span class="types"><span class="type">int</span></span>
@@ -2432,18 +2420,18 @@ vis:map(vis.modes.NORMAL, <span class="string">"gl"</span>, action)</pre>
 
     <h3>See also:</h3>
     <ul>
-         <a href="index.html#Window:style_define">style_define</a>
+         <a href="index.html#window:style_define">style_define</a>
     </ul>
 
     <h3>Usage:</h3>
     <ul>
-        <pre class="example">win:style(win.STYLE_DEFAULT, <span class="number">0</span>, <span class="number">10</span>)</pre>
+        <pre class="example">win:<span class="function-name">style</span>(win.STYLE_DEFAULT, <span class="number">0</span>, <span class="number">10</span>)</pre>
     </ul>
 
 </dd>
     <dt>
-    <a name = "Window:style_define"></a>
-    <strong>Window:style_define(id, style)</strong>
+    <a name = "window:style_define"></a>
+    <strong>window:style_define(id, style)</strong>
     </dt>
     <dd>
     Define a display style.
@@ -2472,18 +2460,18 @@ vis:map(vis.modes.NORMAL, <span class="string">"gl"</span>, action)</pre>
 
     <h3>See also:</h3>
     <ul>
-         <a href="index.html#Window:style">style</a>
+         <a href="index.html#window:style">style</a>
     </ul>
 
     <h3>Usage:</h3>
     <ul>
-        <pre class="example">win:style_define(win.STYLE_DEFAULT, <span class="string">"fore:red"</span>)</pre>
+        <pre class="example">win:<span class="function-name">style_define</span>(win.STYLE_DEFAULT, <span class="string">"fore:red"</span>)</pre>
     </ul>
 
 </dd>
     <dt>
-    <a name = "Window:style_pos"></a>
-    <strong>Window:style_pos(id, x, y)</strong>
+    <a name = "window:style_pos"></a>
+    <strong>window:style_pos(id, x, y)</strong>
     </dt>
     <dd>
     Style the single terminal cell at the given coordinates, relative to this window.
@@ -2496,7 +2484,7 @@ vis:map(vis.modes.NORMAL, <span class="string">"gl"</span>, action)</pre>
     <ul>
         <li><span class="parameter">id</span>
             <span class="types"><span class="type">int</span></span>
-         display style registered with <a href="index.html#Window:style_define">style_define</a>
+         display style registered with <a href="index.html#window:style_define">style_define</a>
         </li>
         <li><span class="parameter">x</span>
             <span class="types"><span class="type">int</span></span>
@@ -2518,23 +2506,23 @@ vis:map(vis.modes.NORMAL, <span class="string">"gl"</span>, action)</pre>
 
     <h3>See also:</h3>
     <ul>
-         <a href="index.html#Window:style_define">style_define</a>
+         <a href="index.html#window:style_define">style_define</a>
     </ul>
 
     <h3>Usage:</h3>
     <ul>
-        <pre class="example">win:style_pos(win.STYLE_COLOR_COLUMN, <span class="number">0</span>, win.height - <span class="number">1</span>)
+        <pre class="example">win:<span class="function-name">style_pos</span>(win.STYLE_COLOR_COLUMN, <span class="number">0</span>, win.height - <span class="number">1</span>)
 <span class="comment">-- Styles the first character of the status bar (or the last line, if disabled)</span></pre>
     </ul>
 
 </dd>
     <dt>
-    <a name = "Window:unmap"></a>
-    <strong>Window:unmap(...)</strong>
+    <a name = "window:unmap"></a>
+    <strong>window:unmap(...)</strong>
     </dt>
     <dd>
     Remove a window local key mapping.
- The function signature is the same as for <a href="index.html#Vis:unmap">Vis:unmap</a>.
+ The function signature is the same as for ???.
 
 
     <h3>Parameters:</h3>
@@ -2548,7 +2536,6 @@ vis:map(vis.modes.NORMAL, <span class="string">"gl"</span>, action)</pre>
 
     <h3>See also:</h3>
     <ul>
-         <a href="index.html#Vis:unmap">Vis:unmap</a>
     </ul>
 
 
@@ -2598,18 +2585,18 @@ vis:map(vis.modes.NORMAL, <span class="string">"gl"</span>, action)</pre>
 <p> 1. Read out the current selection position
  2. Perform text modifications
  3. Update the selection position
-<p> This is what <a href="index.html#Vis:insert">Vis:insert</a> and <a href="index.html#Vis:replace">Vis:replace</a> do internally.
+<p> This is what ??? and ??? do internally.
 
           </div>
             <h3>Usage:</h3>
             <pre class="example"><span class="keyword">local</span> data = <span class="string">"new text"</span>
 <span class="keyword">local</span> pos = win.selection.pos
-win.file:insert(pos, data)
+win.file:<span class="function-name">insert</span>(pos, data)
 win.selection.pos = pos + #data</pre>
     <dl class="function">
     <dt>
-    <a name = "Selection.anchored"></a>
-    <strong>Selection.anchored</strong>
+    <a name = "selection.anchored"></a>
+    <strong>selection.anchored</strong>
     </dt>
     <dd>
     Whether this selection is anchored.
@@ -2628,8 +2615,8 @@ win.selection.pos = pos + #data</pre>
 
 </dd>
     <dt>
-    <a name = "Selection.col"></a>
-    <strong>Selection.col</strong>
+    <a name = "selection.col"></a>
+    <strong>selection.col</strong>
     </dt>
     <dd>
     The 1-based column position the cursor of this selection resides on.
@@ -2646,14 +2633,14 @@ win.selection.pos = pos + #data</pre>
 
     <h3>See also:</h3>
     <ul>
-         <a href="index.html#Selection:to">to</a>
+         <a href="index.html#selection:to">to</a>
     </ul>
 
 
 </dd>
     <dt>
-    <a name = "Selection.line"></a>
-    <strong>Selection.line</strong>
+    <a name = "selection.line"></a>
+    <strong>selection.line</strong>
     </dt>
     <dd>
     The 1-based line the cursor of this selection resides on.
@@ -2670,14 +2657,14 @@ win.selection.pos = pos + #data</pre>
 
     <h3>See also:</h3>
     <ul>
-         <a href="index.html#Selection:to">to</a>
+         <a href="index.html#selection:to">to</a>
     </ul>
 
 
 </dd>
     <dt>
-    <a name = "Selection.number"></a>
-    <strong>Selection.number</strong>
+    <a name = "selection.number"></a>
+    <strong>selection.number</strong>
     </dt>
     <dd>
     The 1-based selection index.
@@ -2696,8 +2683,8 @@ win.selection.pos = pos + #data</pre>
 
 </dd>
     <dt>
-    <a name = "Selection.pos"></a>
-    <strong>Selection.pos</strong>
+    <a name = "selection.pos"></a>
+    <strong>selection.pos</strong>
     </dt>
     <dd>
     The zero based byte position in the file.
@@ -2719,8 +2706,8 @@ win.selection.pos = pos + #data</pre>
 
 </dd>
     <dt>
-    <a name = "Selection.range"></a>
-    <strong>Selection.range</strong>
+    <a name = "selection.range"></a>
+    <strong>selection.range</strong>
     </dt>
     <dd>
     The range covered by this selection.
@@ -2739,8 +2726,8 @@ win.selection.pos = pos + #data</pre>
 
 </dd>
     <dt>
-    <a name = "Selection:remove"></a>
-    <strong>Selection:remove()</strong>
+    <a name = "selection:remove"></a>
+    <strong>selection:remove()</strong>
     </dt>
     <dd>
     Remove selection.
@@ -2753,8 +2740,8 @@ win.selection.pos = pos + #data</pre>
 
 </dd>
     <dt>
-    <a name = "Selection:to"></a>
-    <strong>Selection:to(line, col)</strong>
+    <a name = "selection:to"></a>
+    <strong>selection:to(line, col)</strong>
     </dt>
     <dd>
     Move cursor of selection.
@@ -2785,8 +2772,8 @@ win.selection.pos = pos + #data</pre>
           </div>
     <dl class="function">
     <dt>
-    <a name = "File.lines"></a>
-    <strong>File.lines</strong>
+    <a name = "file.lines"></a>
+    <strong>file.lines</strong>
     </dt>
     <dd>
     File content by logical lines.
@@ -2805,7 +2792,7 @@ win.selection.pos = pos + #data</pre>
 
     <h3>See also:</h3>
     <ul>
-         <a href="index.html#File:content">content</a>
+         <a href="index.html#file:content">content</a>
     </ul>
 
     <h3>Usage:</h3>
@@ -2818,8 +2805,8 @@ win.selection.pos = pos + #data</pre>
 
 </dd>
     <dt>
-    <a name = "File.modified"></a>
-    <strong>File.modified</strong>
+    <a name = "file.modified"></a>
+    <strong>file.modified</strong>
     </dt>
     <dd>
     File state.
@@ -2838,8 +2825,8 @@ win.selection.pos = pos + #data</pre>
 
 </dd>
     <dt>
-    <a name = "File.name"></a>
-    <strong>File.name</strong>
+    <a name = "file.name"></a>
+    <strong>file.name</strong>
     </dt>
     <dd>
     File name.
@@ -2858,8 +2845,8 @@ win.selection.pos = pos + #data</pre>
 
 </dd>
     <dt>
-    <a name = "File.path"></a>
-    <strong>File.path</strong>
+    <a name = "file.path"></a>
+    <strong>file.path</strong>
     </dt>
     <dd>
     File path.
@@ -2878,8 +2865,8 @@ win.selection.pos = pos + #data</pre>
 
 </dd>
     <dt>
-    <a name = "File.permission"></a>
-    <strong>File.permission</strong>
+    <a name = "file.permission"></a>
+    <strong>file.permission</strong>
     </dt>
     <dd>
     File permission.
@@ -2898,8 +2885,8 @@ win.selection.pos = pos + #data</pre>
 
 </dd>
     <dt>
-    <a name = "File.savemethod"></a>
-    <strong>File.savemethod</strong>
+    <a name = "file.savemethod"></a>
+    <strong>file.savemethod</strong>
     </dt>
     <dd>
     File save method
@@ -2919,8 +2906,8 @@ win.selection.pos = pos + #data</pre>
 
 </dd>
     <dt>
-    <a name = "File.size"></a>
-    <strong>File.size</strong>
+    <a name = "file.size"></a>
+    <strong>file.size</strong>
     </dt>
     <dd>
     File size in bytes.
@@ -2939,8 +2926,8 @@ win.selection.pos = pos + #data</pre>
 
 </dd>
     <dt>
-    <a name = "File:content"></a>
-    <strong>File:content(range)</strong>
+    <a name = "file:content"></a>
+    <strong>file:content(range)</strong>
     </dt>
     <dd>
     Get file content of range.
@@ -2966,8 +2953,8 @@ win.selection.pos = pos + #data</pre>
 
 </dd>
     <dt>
-    <a name = "File:content"></a>
-    <strong>File:content(pos, len)</strong>
+    <a name = "file:content"></a>
+    <strong>file:content(pos, len)</strong>
     </dt>
     <dd>
     Get file content of position and length.
@@ -2995,19 +2982,19 @@ win.selection.pos = pos + #data</pre>
 
     <h3>See also:</h3>
     <ul>
-         <a href="index.html#File.lines">lines</a>
+         <a href="index.html#file.lines">lines</a>
     </ul>
 
     <h3>Usage:</h3>
     <ul>
         <pre class="example"><span class="keyword">local</span> file = vis.win.file
-<span class="keyword">local</span> text = file:content(<span class="number">0</span>, file.size)</pre>
+<span class="keyword">local</span> text = file:<span class="function-name">content</span>(<span class="number">0</span>, file.size)</pre>
     </ul>
 
 </dd>
     <dt>
-    <a name = "File:delete"></a>
-    <strong>File:delete(range)</strong>
+    <a name = "file:delete"></a>
+    <strong>file:delete(range)</strong>
     </dt>
     <dd>
     Delete file range.
@@ -3033,8 +3020,8 @@ win.selection.pos = pos + #data</pre>
 
 </dd>
     <dt>
-    <a name = "File:delete"></a>
-    <strong>File:delete(pos, len)</strong>
+    <a name = "file:delete"></a>
+    <strong>file:delete(pos, len)</strong>
     </dt>
     <dd>
     Delete data at position.
@@ -3064,8 +3051,8 @@ win.selection.pos = pos + #data</pre>
 
 </dd>
     <dt>
-    <a name = "File:insert"></a>
-    <strong>File:insert(pos, data)</strong>
+    <a name = "file:insert"></a>
+    <strong>file:insert(pos, data)</strong>
     </dt>
     <dd>
     Insert data at position.
@@ -3095,12 +3082,12 @@ win.selection.pos = pos + #data</pre>
 
 </dd>
     <dt>
-    <a name = "File:lines_iterator"></a>
-    <strong>File:lines_iterator()</strong>
+    <a name = "file:lines_iterator"></a>
+    <strong>file:lines_iterator()</strong>
     </dt>
     <dd>
     Create an iterator over all lines of the file.
-<p> For large files this is probably faster than <a href="index.html#File.lines">lines</a>.
+<p> For large files this is probably faster than <a href="index.html#file.lines">lines</a>.
 
 
 
@@ -3113,20 +3100,20 @@ win.selection.pos = pos + #data</pre>
 
     <h3>See also:</h3>
     <ul>
-         <a href="index.html#File.lines">lines</a>
+         <a href="index.html#file.lines">lines</a>
     </ul>
 
     <h3>Usage:</h3>
     <ul>
-        <pre class="example"><span class="keyword">for</span> line <span class="keyword">in</span> file:lines_iterator() <span class="keyword">do</span>
+        <pre class="example"><span class="keyword">for</span> line <span class="keyword">in</span> file:<span class="function-name">lines_iterator</span>() <span class="keyword">do</span>
 	<span class="comment">-- do something with line
 </span><span class="keyword">end</span></pre>
     </ul>
 
 </dd>
     <dt>
-    <a name = "File:mark_get"></a>
-    <strong>File:mark_get(mark)</strong>
+    <a name = "file:mark_get"></a>
+    <strong>file:mark_get(mark)</strong>
     </dt>
     <dd>
     Get position of mark.
@@ -3152,8 +3139,8 @@ win.selection.pos = pos + #data</pre>
 
 </dd>
     <dt>
-    <a name = "File:mark_set"></a>
-    <strong>File:mark_set(pos)</strong>
+    <a name = "file:mark_set"></a>
+    <strong>file:mark_set(pos)</strong>
     </dt>
     <dd>
     Set mark.
@@ -3179,8 +3166,8 @@ win.selection.pos = pos + #data</pre>
 
 </dd>
     <dt>
-    <a name = "File:match_at"></a>
-    <strong>File:match_at(pattern, pos[, horizon])</strong>
+    <a name = "file:match_at"></a>
+    <strong>file:match_at(pattern, pos[, horizon])</strong>
     </dt>
     <dd>
     Check whether LPeg pattern matches at a given file position.
@@ -3214,8 +3201,8 @@ win.selection.pos = pos + #data</pre>
 
 </dd>
     <dt>
-    <a name = "File:text_object_longword"></a>
-    <strong>File:text_object_longword(pos)</strong>
+    <a name = "file:text_object_longword"></a>
+    <strong>file:text_object_longword(pos)</strong>
     </dt>
     <dd>
     WORD text object.
@@ -3241,8 +3228,8 @@ win.selection.pos = pos + #data</pre>
 
 </dd>
     <dt>
-    <a name = "File:text_object_word"></a>
-    <strong>File:text_object_word(pos)</strong>
+    <a name = "file:text_object_word"></a>
+    <strong>file:text_object_word(pos)</strong>
     </dt>
     <dd>
     Word text object.
@@ -3277,8 +3264,8 @@ win.selection.pos = pos + #data</pre>
           </div>
     <dl class="function">
     <dt>
-    <a name = "Range.finish"></a>
-    <strong>Range.finish</strong>
+    <a name = "range.finish"></a>
+    <strong>range.finish</strong>
     </dt>
     <dd>
     The end of the range.
@@ -3297,8 +3284,8 @@ win.selection.pos = pos + #data</pre>
 
 </dd>
     <dt>
-    <a name = "Range.start"></a>
-    <strong>Range.start</strong>
+    <a name = "range.start"></a>
+    <strong>range.start</strong>
     </dt>
     <dd>
     The beginning of the range.
@@ -3389,8 +3376,6 @@ win.selection.pos = pos + #data</pre>
 
     <h3>See also:</h3>
     <ul>
-         <li><a href="index.html#Vis:map">Vis:map</a></li>
-         <li><a href="index.html#Window:map">Window:map</a></li>
     </ul>
 
 
@@ -3401,8 +3386,8 @@ win.selection.pos = pos + #data</pre>
           <div class="section-description">
 
 <p> This section describes the contract between the editor core and Lua
- key handling functions mapped to symbolic keys using either <a href="index.html#Vis:map">Vis:map</a>
- or <a href="index.html#Window:map">Window:map</a>.
+ key handling functions mapped to symbolic keys using either ???
+ or ???.
 
           </div>
     <dl class="function">
@@ -3442,20 +3427,17 @@ win.selection.pos = pos + #data</pre>
 
     <h3>See also:</h3>
     <ul>
-         <li><a href="index.html#Vis:action_register">Vis:action_register</a></li>
-         <li><a href="index.html#Vis:map">Vis:map</a></li>
-         <li><a href="index.html#Window:map">Window:map</a></li>
     </ul>
 
     <h3>Usage:</h3>
     <ul>
-        <pre class="example">vis:map(vis.modes.INSERT, <span class="string">"&lt;C-k&gt;"</span>, <span class="keyword">function</span>(keys)
+        <pre class="example">vis:<span class="function-name">map</span>(vis.modes.INSERT, <span class="string">"&lt;C-k&gt;"</span>, <span class="keyword">function</span>(keys)
 	<span class="keyword">if</span> #keys &lt; <span class="number">2</span> <span class="keyword">then</span>
 		<span class="keyword">return</span> -<span class="number">1</span> <span class="comment">-- need more input
 </span>	<span class="keyword">end</span>
-	<span class="keyword">local</span> digraph = keys:sub(<span class="number">1</span>, <span class="number">2</span>)
+	<span class="keyword">local</span> digraph = keys:<span class="function-name">sub</span>(<span class="number">1</span>, <span class="number">2</span>)
 	<span class="keyword">if</span> digraph == <span class="string">"l*"</span> <span class="keyword">then</span>
-		vis:feedkeys(<span class="string">'λ'</span>)
+		vis:<span class="function-name">feedkeys</span>(<span class="string">'λ'</span>)
 		<span class="keyword">return</span> <span class="number">2</span> <span class="comment">-- consume 2 bytes of input
 </span>	<span class="keyword">end</span>
 <span class="keyword">end</span>, <span class="string">"Insert digraph"</span>)</pre>
@@ -3625,14 +3607,14 @@ win.selection.pos = pos + #data</pre>
     <strong>process_response(name, response_type, code, buffer)</strong>
     </dt>
     <dd>
-    The response received from the process started via <a href="index.html#Vis:communicate">Vis:communicate</a>.
+    The response received from the process started via ???.
 
 
     <h3>Parameters:</h3>
     <ul>
         <li><span class="parameter">name</span>
             <span class="types"><a class="type" href="https://www.lua.org/manual/5.1/manual.html#5.4">string</a></span>
-         the name of process given to <a href="index.html#Vis:communicate">Vis:communicate</a>
+         the name of process given to ???
         </li>
         <li><span class="parameter">response_type</span>
             <span class="types"><a class="type" href="https://www.lua.org/manual/5.1/manual.html#5.4">string</a></span>
@@ -3764,7 +3746,7 @@ win.selection.pos = pos + #data</pre>
 
     <h3>See also:</h3>
     <ul>
-         <a href="index.html#Window:style">style</a>
+         <a href="index.html#window:style">style</a>
     </ul>
 
 
@@ -3811,7 +3793,7 @@ win.selection.pos = pos + #data</pre>
 
     <h3>See also:</h3>
     <ul>
-         <a href="index.html#Window:status">status</a>
+         <a href="index.html#window:status">status</a>
     </ul>
 
 
@@ -3952,7 +3934,7 @@ win.selection.pos = pos + #data</pre>
 
     <h3>Usage:</h3>
     <ul>
-        <pre class="example">vis.events.subscribe(vis.events.FILE_SAVE_PRE, <span class="keyword">function</span>(file, path)
+        <pre class="example">vis.events.<span class="function-name">subscribe</span>(vis.events.FILE_SAVE_PRE, <span class="keyword">function</span>(file, path)
 	<span class="comment">-- do something useful
 </span>	<span class="keyword">return</span> <span class="keyword">true</span>
 <span class="keyword">end</span>)</pre>
@@ -3997,8 +3979,8 @@ win.selection.pos = pos + #data</pre>
 </div> <!-- id="content" -->
 </div> <!-- id="main" -->
 <div id="about">
-<i>generated by <a href="http://github.com/stevedonovan/LDoc">LDoc 1.4.6</a></i>
-<i style="float:right;">Last updated 2024-12-02 13:13:12 </i>
+<i>generated by <a href="http://github.com/lunarmodules/LDoc">LDoc 1.5.0</a></i>
+<i style="float:right;">Last updated 2025-01-03 02:36:19 </i>
 </div> <!-- id="about" -->
 </div> <!-- id="container" -->
 </body>
