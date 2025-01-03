@@ -694,7 +694,7 @@ static Regex *parse_regex(Vis *vis, const char **s) {
 	char *pattern = parse_delimited(s, CMD_REGEX);
 	if (!pattern && *s == before)
 		return NULL;
-	Regex *regex = vis_regex(vis, pattern);
+	Regex *regex = vis_regex(vis, pattern, strlen(pattern));
 	free(pattern);
 	return regex;
 }
