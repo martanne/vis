@@ -5,13 +5,22 @@ set -e
 NL='
 '
 
-if [ -z "$VIS_OPEN_LINES" ]; then
-	VIS_OPEN_LINES='0'
-fi
+fatal() {
+	echo "$@" >&2
+	exit 1
+}
 
-VIS_MENU_PROMPT=''
-ALLOW_AUTO_SELECT='1'
+usage() {
+	fatal "Usage: $(basename "$0") [-f] [-p prompt] [--] [file-pattern]
 
+Interactively select a file to open
+
+-f always present the given arguments, even when there is only one
+-p prompt
+file-pattern list of filenames and directories"
+}
+
+# print a list of filenames on stdin and distinguish directories
 wrap_dirs() {
 	while read -r filename
 	do
@@ -23,6 +32,10 @@ wrap_dirs() {
 	done
 }
 
+VIS_OPEN_LINES="${VIS_OPEN_LINES:-0}"
+VIS_MENU_PROMPT=''
+ALLOW_AUTO_SELECT='1'
+
 while getopts fhp: opt; do
 	case "$opt" in
 	f)
@@ -31,9 +44,8 @@ while getopts fhp: opt; do
 	p)
 		VIS_MENU_PROMPT="$OPTARG"
 		;;
-	h|?)
-		printf 'usage: %s [-f] [-h] [-p prompt] [--] [file-pattern]\n' "${0##*/}"
-		exit 0
+	*)
+		usage
 		;;
 	esac
 done

@@ -1,16 +1,28 @@
 #!/bin/sh
 set -e
 
+fatal() {
+	echo "$@" >&2
+	exit 1
+}
+
 usage() {
-	printf '%s\n' "usage: $(basename "$0") [--file|--word] pattern" \
-	              "       $(basename "$0") -h|--help"
+	fatal "Usage: $(basename "$0") [--file|--word] [--] pattern
+
+Interactively complete file or word
+
+--file this passes pattern to obtain a list of matching
+       file names (this is the default).
+--word this reads standard input to obtain a list of lines
+       matching pattern.
+pattern pattern to be completed"
 }
 
 basic_regex_quote() { printf "%s" "$1" | sed 's|[\\.*^$[]|\\&|g'; }
 glob_quote () { printf "%s" "$1" | sed 's|[\\?*[]]|\\&|g'; }
 
 COMPLETE_WORD=0
-FIND_FILE_LIMIT=1000
+FIND_FILE_LIMIT="${FIND_FILE_LIMIT:-1000}"
 
 while [ $# -gt 0 ]; do
 	case "$1" in
@@ -26,13 +38,8 @@ while [ $# -gt 0 ]; do
 		shift
 		break
 		;;
-	-h|--help)
+	-*|'')
 		usage
-		exit 0
-		;;
-	-*)
-		usage
-		exit 1
 		;;
 	*)
 		break
@@ -40,45 +47,44 @@ while [ $# -gt 0 ]; do
 	esac
 done
 
-if [ $# -ne 1 ]; then
-	usage
-	exit 1
-fi
+[ "$#" -lt 1 ] && usage
 
 PATTERN="$1"
 
 if [ $COMPLETE_WORD = 1 ]; then
+	# shellcheck disable=SC1003
 	tr -s '\t {}()[],<>%^&.\\' '\n' |
 		grep "^$(basic_regex_quote "$PATTERN")." |
 		sort -u
 else
 	# Expand to absolute path because of the -path option below.
+	# shellcheck disable=SC2088
 	case $PATTERN in
 		/*)
-			XPATTERN=$PATTERN
+			XPATTERN="$PATTERN"
 			;;
 		'~'|'~/'*)
-			XPATTERN=$HOME$(echo $PATTERN | tail -c +2)
+			XPATTERN="$HOME$(echo "$PATTERN" | tail -c +2)"
 			;;
 		*)
-			XPATTERN=$PWD/$PATTERN
+			XPATTERN="$PWD/$PATTERN"
 			;;
 	esac
 
 	# The first path condition rules out paths that start with "." unless
 	# they start with "..". That way, hidden paths should stay hidden, but
 	# non-normalised paths should still show up.
-	find $(dirname "$XPATTERN") \
+	find "$(dirname "$XPATTERN")" \
 		-name '.*' -prune \
 		-o \( \
 			! -name '.*' \
 			-a -path "$(glob_quote "$XPATTERN")*" \
 			-print \
 		\) 2>/dev/null |
-		head -n $FIND_FILE_LIMIT |
+		head -n "$FIND_FILE_LIMIT" |
 		sort |
-		sed "s|^$(dirname $XPATTERN)/||"
+		sed "s|^$(dirname "$XPATTERN")/||"
 fi |
 	vis-menu -b |
-	sed "s|^$(basename $PATTERN)$(echo $PATTERN | tail -c 2 | grep -F /)||" |
+	sed "s|^$(basename "$PATTERN")$(echo "$PATTERN" | tail -c 2 | grep -F /)||" |
 	tr -d '\n'

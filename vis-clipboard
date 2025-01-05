@@ -1,6 +1,7 @@
 #!/bin/sh
-
 # Copyright (C) 2016 Richard Burke, ISC licensed
+# shellcheck disable=SC2317
+set -e
 
 vc_fatal() {
 	echo "$@" >&2
@@ -8,7 +9,13 @@ vc_fatal() {
 }
 
 vc_usage() {
-	vc_fatal "$(basename "$0") [--selection sel] [--usable|--copy|--paste]"
+	vc_fatal "Usage: $(basename "$0") [--selection sel] [--usable|--copy|--paste]
+
+Copy/paste clipboard interface with support on all provided platforms.
+
+Available selections: clipboard, primary
+
+Example: $(basename "$0") --copy --selection primary"
 }
 
 vc_determine_command() {
@@ -153,8 +160,13 @@ while [ $# -gt 0 ]; do
 		--usable) fn=vc_usable;;
 		--copy) fn=vc_copy;;
 		--paste) fn=vc_paste;;
-		--selection) shift; sel="$1";;
-		*) ;;
+		--selection)
+			shift
+			if [ "$1" != "clipboard" ] && [ "$1" != "primary" ]; then
+				vc_fatal "Invalid selection: $1\nValid options are 'clipboard' or 'primary'"
+			fi
+			sel="$1";;
+		*) vc_usage;;
 	esac
 	shift
 done
