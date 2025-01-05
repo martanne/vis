@@ -38,6 +38,16 @@
 /* helper macro for handling UiTerm.cells */
 #define CELL_AT_POS(UI, X, Y) (((UI)->cells) + (X) + ((Y) * (UI)->width));
 
+#define CELL_STYLE_DEFAULT (CellStyle){.fg = CELL_COLOR_DEFAULT, .bg = CELL_COLOR_DEFAULT, .attr = CELL_ATTR_NORMAL}
+
+static bool is_default_fg(CellColor c) {
+	return is_default_color(c);
+}
+
+static bool is_default_bg(CellColor c) {
+	return is_default_color(c);
+}
+
 void ui_die(Ui *tui, const char *msg, va_list ap) {
 	ui_terminal_free(tui);
 	if (tui->termkey)
@@ -121,7 +131,8 @@ bool ui_style_define(Win *win, int id, const char *style) {
 		return false;
 	if (!style)
 		return true;
-	CellStyle cell_style = tui->styles[win->id * UI_STYLE_MAX + UI_STYLE_DEFAULT];
+
+	CellStyle cell_style = CELL_STYLE_DEFAULT;
 	char *style_copy = strdup(style), *option = style_copy;
 	while (option) {
 		while (*option == ' ')
@@ -185,7 +196,10 @@ static void ui_draw_string(Ui *tui, int x, int y, const char *str, Win *win, enu
 	debug("draw-string: [%d][%d]\n", y, x);
 	if (x < 0 || x >= tui->width || y < 0 || y >= tui->height)
 		return;
-	CellStyle style = tui->styles[(win ? win->id : 0)*UI_STYLE_MAX + style_id];
+
+	/* NOTE: the style that style_id refers to may contain unset values; we need to properly
+	 * clear the cell first then go through ui_window_style_set to get the correct style */
+	CellStyle default_style = tui->styles[UI_STYLE_MAX * win->id + UI_STYLE_DEFAULT];
 	// FIXME: does not handle double width characters etc, share code with view.c?
 	Cell *cells = tui->cells + y * tui->width;
 	const size_t cell_size = sizeof(cells[0].data)-1;
@@ -197,8 +211,8 @@ static void ui_draw_string(Ui *tui, int x, int y, const char *str, Win *win, enu
 		len = MIN(len, cell_size);
 		strncpy(cells[x].data, str, len);
 		cells[x].data[len] = '\0';
-		cells[x].style = style;
-		x++;
+		cells[x].style = default_style;
+		ui_window_style_set(win, cells + x++, style_id);
 	}
 }
 
@@ -342,7 +356,7 @@ void ui_draw(Ui *tui) {
 	for (Win *win = tui->windows; win; win = win->next)
 		ui_window_draw(win);
 	if (tui->info[0])
-		ui_draw_string(tui, 0, tui->height-1, tui->info, NULL, UI_STYLE_INFO);
+		ui_draw_string(tui, 0, tui->height-1, tui->info, tui->vis->win, UI_STYLE_INFO);
 	vis_event_emit(tui->vis, VIS_EVENT_UI_DRAW);
 	ui_term_backend_blit(tui);
 }
@@ -453,11 +467,7 @@ bool ui_window_init(Ui *tui, Win *w, enum UiOption options) {
 
 	CellStyle *styles = &tui->styles[w->id * UI_STYLE_MAX];
 	for (int i = 0; i < UI_STYLE_MAX; i++) {
-		styles[i] = (CellStyle) {
-			.fg = CELL_COLOR_DEFAULT,
-			.bg = CELL_COLOR_DEFAULT,
-			.attr = CELL_ATTR_NORMAL,
-		};
+		styles[i] = CELL_STYLE_DEFAULT;
 	}
 
 	styles[UI_STYLE_CURSOR].attr |= CELL_ATTR_REVERSE;

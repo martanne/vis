@@ -211,11 +211,3 @@ static void ui_term_backend_free(Ui *tui) {
 static bool is_default_color(CellColor c) {
 	return c.index == ((CellColor) CELL_COLOR_DEFAULT).index;
 }
-
-static bool is_default_fg(CellColor c) {
-	return is_default_color(c);
-}
-
-static bool is_default_bg(CellColor c) {
-	return is_default_color(c);
-}

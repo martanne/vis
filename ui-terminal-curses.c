@@ -156,9 +156,9 @@ static CellColor color_terminal(Ui *ui, uint8_t index) {
 }
 
 static inline unsigned int color_pair_hash(short fg, short bg) {
-	if (fg == -1)
+	if (fg == CELL_COLOR_DEFAULT)
 		fg = COLORS;
-	if (bg == -1)
+	if (bg == CELL_COLOR_DEFAULT)
 		bg = COLORS + 1;
 	return fg * (COLORS + 2) + bg;
 }
@@ -170,10 +170,6 @@ static short color_pair_get(short fg, short bg) {
 
 	if (!color2palette) {
 		pair_content(0, &default_fg, &default_bg);
-		if (default_fg == -1)
-			default_fg = CELL_COLOR_WHITE;
-		if (default_bg == -1)
-			default_bg = CELL_COLOR_BLACK;
 		has_default_colors = (use_default_colors() == OK);
 		color_pairs_max = MIN(MAX_COLOR_PAIRS, SHRT_MAX);
 		if (COLORS)
@@ -192,7 +188,7 @@ static short color_pair_get(short fg, short bg) {
 			bg = default_bg;
 	}
 
-	if (!color2palette || (fg == -1 && bg == -1))
+	if (!color2palette)
 		return 0;
 
 	unsigned int index = color_pair_hash(fg, bg);
@@ -292,18 +288,6 @@ static void ui_term_backend_free(Ui *term) {
 	endwin();
 }
 
-bool is_default_color(CellColor c) {
+static bool is_default_color(CellColor c) {
 	return c == CELL_COLOR_DEFAULT;
-}
-
-static bool is_default_bg(CellColor c) {
-	if (change_colors == 1)
-		return c == default_bg;
-	return is_default_color(c);
-}
-
-static bool is_default_fg(CellColor c) {
-	if (change_colors == 1)
-		return c == default_fg;
-	return is_default_color(c);
 }
