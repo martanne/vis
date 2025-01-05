@@ -245,29 +245,27 @@ static void ui_window_draw(Win *win) {
 				snprintf(buf, sizeof buf, "%*zu ", sidebar_width-1, number);
 			}
 			ui_draw_string(ui, x, y, buf, win,
-				(l->lineno == cursor_lineno) ? UI_STYLE_LINENUMBER_CURSOR : UI_STYLE_LINENUMBER);
+				       (l->lineno == cursor_lineno) ? UI_STYLE_LINENUMBER_CURSOR :
+				                                      UI_STYLE_LINENUMBER);
 			prev_lineno = l->lineno;
 		}
 		debug("draw-window: [%d][%d] ... cells[%d][%d]\n", y, x+sidebar_width, y, view_width);
-		memcpy(&cells[x+sidebar_width], l->cells, sizeof(Cell) * view_width);
+		memcpy(cells + x + sidebar_width, l->cells, sizeof(Cell) * view_width);
 		cells += ui->width;
 	}
 }
 
 void ui_window_style_set(Win *win, Cell *cell, enum UiStyle id) {
 	Ui *tui = &win->vis->ui;
-	CellStyle set, style = tui->styles[win->id * UI_STYLE_MAX + id];
+	CellStyle set = tui->styles[win->id * UI_STYLE_MAX + id];
 
-	if (id == UI_STYLE_DEFAULT) {
-		memcpy(&cell->style, &style, sizeof(CellStyle));
-		return;
+	if (id != UI_STYLE_DEFAULT) {
+		set.fg = is_default_fg(set.fg)? cell->style.fg : set.fg;
+		set.bg = is_default_bg(set.bg)? cell->style.bg : set.bg;
+		set.attr = cell->style.attr | set.attr;
 	}
 
-	set.fg = is_default_fg(style.fg)? cell->style.fg : style.fg;
-	set.bg = is_default_bg(style.bg)? cell->style.bg : style.bg;
-	set.attr = cell->style.attr | style.attr;
-
-	memcpy(&cell->style, &set, sizeof(CellStyle));
+	cell->style = set;
 }
 
 bool ui_window_style_set_pos(Win *win, int x, int y, enum UiStyle id) {
