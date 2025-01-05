@@ -21,11 +21,6 @@ static Buffer *register_buffer(Register *reg, size_t slot) {
 	return array_get(&reg->values, slot);
 }
 
-static ssize_t read_buffer(void *context, char *data, size_t len) {
-	buffer_append(context, data, len);
-	return len;
-}
-
 bool register_init(Register *reg) {
 	Buffer buf;
 	buffer_init(&buf);
@@ -83,7 +78,7 @@ const char *register_slot_get(Vis *vis, Register *reg, size_t slot, size_t *len)
 			cmd[3] = "clipboard";
 		int status = vis_pipe(vis, vis->win->file,
 			&(Filerange){ .start = 0, .end = 0 },
-			cmd, buf, read_buffer, &buferr, read_buffer, false);
+			cmd, buf, read_into_buffer, &buferr, read_into_buffer, false);
 
 		if (status != 0)
 			vis_info_show(vis, "Command failed %s", buffer_content0(&buferr));
@@ -167,7 +162,7 @@ bool register_slot_put_range(Vis *vis, Register *reg, size_t slot, Text *txt, Fi
 			cmd[3] = "clipboard";
 
 		int status = vis_pipe(vis, vis->win->file, range,
-			cmd, NULL, NULL, &buferr, read_buffer, false);
+			cmd, NULL, NULL, &buferr, read_into_buffer, false);
 
 		if (status != 0)
 			vis_info_show(vis, "Command failed %s", buffer_content0(&buferr));

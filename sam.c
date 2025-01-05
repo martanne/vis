@@ -1743,11 +1743,6 @@ static bool cmd_write(Vis *vis, Win *win, Command *cmd, const char *argv[], Sele
 	return true;
 }
 
-static ssize_t read_buffer(void *context, char *data, size_t len) {
-	buffer_append(context, data, len);
-	return len;
-}
-
 static bool cmd_filter(Vis *vis, Win *win, Command *cmd, const char *argv[], Selection *sel, Filerange *range) {
 	if (!win)
 		return false;
@@ -1756,7 +1751,8 @@ static bool cmd_filter(Vis *vis, Win *win, Command *cmd, const char *argv[], Sel
 	buffer_init(&bufout);
 	buffer_init(&buferr);
 
-	int status = vis_pipe(vis, win->file, range, &argv[1], &bufout, read_buffer, &buferr, read_buffer, false);
+	int status = vis_pipe(vis, win->file, range, &argv[1], &bufout, read_into_buffer, &buferr,
+	                      read_into_buffer, false);
 
 	if (vis->interrupted) {
 		vis_info_show(vis, "Command cancelled");
@@ -1796,7 +1792,8 @@ static bool cmd_pipeout(Vis *vis, Win *win, Command *cmd, const char *argv[], Se
 	Buffer buferr;
 	buffer_init(&buferr);
 
-	int status = vis_pipe(vis, win->file, range, (const char*[]){ argv[1], NULL }, NULL, NULL, &buferr, read_buffer, false);
+	int status = vis_pipe(vis, win->file, range, (const char*[]){ argv[1], NULL }, NULL, NULL,
+	                      &buferr, read_into_buffer, false);
 
 	if (vis->interrupted)
 		vis_info_show(vis, "Command cancelled");

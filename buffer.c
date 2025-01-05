@@ -182,3 +182,8 @@ char *buffer_move(Buffer *buf) {
 	buffer_init(buf);
 	return data;
 }
+
+ssize_t read_into_buffer(void *context, char *data, size_t len) {
+	buffer_append(context, data, len);
+	return len;
+}

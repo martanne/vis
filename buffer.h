@@ -80,4 +80,7 @@ const char *buffer_content(Buffer*);
  */
 char *buffer_move(Buffer*);
 
+/** ``read(3p)`` like interface for reading into a Buffer (``context``) */
+ssize_t read_into_buffer(void *context, char *data, size_t len);
+
 #endif

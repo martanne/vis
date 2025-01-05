@@ -1854,18 +1854,13 @@ int vis_pipe_buf(Vis *vis, const char* buf, const char *argv[],
 	return _vis_pipe(vis, NULL, NULL, buf, argv, stdout_context, read_stdout, stderr_context, read_stderr, fullscreen);
 }
 
-static ssize_t read_buffer(void *context, char *data, size_t len) {
-	buffer_append(context, data, len);
-	return len;
-}
-
 static int _vis_pipe_collect(Vis *vis, File *file, Filerange *range, const char* buf, const char *argv[], char **out, char **err, bool fullscreen) {
 	Buffer bufout, buferr;
 	buffer_init(&bufout);
 	buffer_init(&buferr);
 	int status = _vis_pipe(vis, file, range, buf, argv,
-	                      &bufout, out ? read_buffer : NULL,
-	                      &buferr, err ? read_buffer : NULL,
+	                      &bufout, out ? read_into_buffer : NULL,
+	                      &buferr, err ? read_into_buffer : NULL,
 	                      fullscreen);
 	buffer_terminate(&bufout);
 	buffer_terminate(&buferr);
