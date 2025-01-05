@@ -36,7 +36,6 @@
  * See http://invisible-island.net/xterm/ctlseqs/ctlseqs.txt
  * for further information.
  */
-#include <stdio.h>
 #include "buffer.h"
 
 #define UI_TERMKEY_FLAGS TERMKEY_FLAG_UTF8
@@ -75,8 +74,7 @@ static CellColor color_terminal(Ui *ui, uint8_t index) {
 
 
 static void output(const char *data, size_t len) {
-	fwrite(data, len, 1, stderr);
-	fflush(stderr);
+	write(STDERR_FILENO, data, len);
 }
 
 static void output_literal(const char *data) {
@@ -122,7 +120,7 @@ static void ui_term_backend_blit(Ui *tui) {
 					if ((style->attr & a) == (attr & a))
 						continue;
 					buffer_appendf(buf, "\x1b[%sm",
-					               style->attr & a ? 
+					               style->attr & a ?
 					               cell_attrs[i].on :
 					               cell_attrs[i].off);
 				}
