@@ -13,9 +13,12 @@ vc_usage() {
 
 Copy/paste clipboard interface with support on all provided platforms.
 
-Available selections: clipboard, primary
-
-Example: $(basename "$0") --copy --selection primary"
+Options:
+    --copy       copy text from standard input
+    --paste      paste text to standard output
+    --usable     silently exit with a status code indicating if a supported
+                 clipboard implementation was found
+    --selection  take input from sel. valid options: clipboard, primary"
 }
 
 vc_determine_command() {

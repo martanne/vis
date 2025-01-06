@@ -15,9 +15,10 @@ usage() {
 
 Interactively select a file to open
 
--f always present the given arguments, even when there is only one
--p prompt
-file-pattern list of filenames and directories"
+Options:
+    -f            always present given arguments, even when there is only one
+    -p            use prompt as prompt string
+    file-pattern  list of filenames and directories"
 }
 
 # print a list of filenames on stdin and distinguish directories

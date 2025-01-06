@@ -11,11 +11,10 @@ usage() {
 
 Interactively complete file or word
 
---file this passes pattern to obtain a list of matching
-       file names (this is the default).
---word this reads standard input to obtain a list of lines
-       matching pattern.
-pattern pattern to be completed"
+Options:
+    --file   expand pattern into a list of matching file names (default)
+    --word   apply pattern to a list of words from standard input
+    pattern  pattern to be completed"
 }
 
 basic_regex_quote() { printf "%s" "$1" | sed 's|[\\.*^$[]|\\&|g'; }
