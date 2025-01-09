@@ -129,7 +129,7 @@ bool ui_getkey(Ui *, TermKeyKey *);
 
 bool ui_style_define(Win *win, int id, const char *style);
 bool ui_window_style_set_pos(Win *win, int x, int y, enum UiStyle id);
-void ui_window_style_set(Win *win, Cell *cell, enum UiStyle id);
+void ui_window_style_set(Ui *ui, int win_id, Cell *cell, enum UiStyle id);
 
 void ui_window_options_set(Win *win, enum UiOption options);
 void ui_window_status(Win *win, const char *status);

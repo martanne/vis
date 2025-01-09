@@ -192,14 +192,14 @@ static void ui_draw_line(Ui *tui, int x, int y, char c, enum UiStyle style_id) {
 	}
 }
 
-static void ui_draw_string(Ui *tui, int x, int y, const char *str, Win *win, enum UiStyle style_id) {
+static void ui_draw_string(Ui *tui, int x, int y, const char *str, int win_id, enum UiStyle style_id) {
 	debug("draw-string: [%d][%d]\n", y, x);
 	if (x < 0 || x >= tui->width || y < 0 || y >= tui->height)
 		return;
 
 	/* NOTE: the style that style_id refers to may contain unset values; we need to properly
 	 * clear the cell first then go through ui_window_style_set to get the correct style */
-	CellStyle default_style = tui->styles[UI_STYLE_MAX * win->id + UI_STYLE_DEFAULT];
+	CellStyle default_style = tui->styles[UI_STYLE_MAX * win_id + UI_STYLE_DEFAULT];
 	// FIXME: does not handle double width characters etc, share code with view.c?
 	Cell *cells = tui->cells + y * tui->width;
 	const size_t cell_size = sizeof(cells[0].data)-1;
@@ -212,7 +212,7 @@ static void ui_draw_string(Ui *tui, int x, int y, const char *str, Win *win, enu
 		strncpy(cells[x].data, str, len);
 		cells[x].data[len] = '\0';
 		cells[x].style = default_style;
-		ui_window_style_set(win, cells + x++, style_id);
+		ui_window_style_set(tui, win_id, cells + x++, style_id);
 	}
 }
 
@@ -258,7 +258,7 @@ static void ui_window_draw(Win *win) {
 				}
 				snprintf(buf, sizeof buf, "%*zu ", sidebar_width-1, number);
 			}
-			ui_draw_string(ui, x, y, buf, win,
+			ui_draw_string(ui, x, y, buf, win->id,
 				       (l->lineno == cursor_lineno) ? UI_STYLE_LINENUMBER_CURSOR :
 				                                      UI_STYLE_LINENUMBER);
 			prev_lineno = l->lineno;
@@ -269,9 +269,8 @@ static void ui_window_draw(Win *win) {
 	}
 }
 
-void ui_window_style_set(Win *win, Cell *cell, enum UiStyle id) {
-	Ui *tui = &win->vis->ui;
-	CellStyle set = tui->styles[win->id * UI_STYLE_MAX + id];
+void ui_window_style_set(Ui *tui, int win_id, Cell *cell, enum UiStyle id) {
+	CellStyle set = tui->styles[win_id * UI_STYLE_MAX + id];
 
 	if (id != UI_STYLE_DEFAULT) {
 		set.fg = is_default_fg(set.fg)? cell->style.fg : set.fg;
@@ -288,7 +287,7 @@ bool ui_window_style_set_pos(Win *win, int x, int y, enum UiStyle id) {
 		return false;
 	}
 	Cell *cell = CELL_AT_POS(tui, win->x + x, win->y + y)
-	ui_window_style_set(win, cell, id);
+	ui_window_style_set(tui, win->id, cell, id);
 	return true;
 }
 
@@ -297,7 +296,7 @@ void ui_window_status(Win *win, const char *status) {
 		return;
 	Ui *ui = &win->vis->ui;
 	enum UiStyle style = ui->selwin == win ? UI_STYLE_STATUS_FOCUSED : UI_STYLE_STATUS;
-	ui_draw_string(ui, win->x, win->y + win->height - 1, status, win, style);
+	ui_draw_string(ui, win->x, win->y + win->height - 1, status, win->id, style);
 }
 
 void ui_arrange(Ui *tui, enum UiLayout layout) {
@@ -356,7 +355,7 @@ void ui_draw(Ui *tui) {
 	for (Win *win = tui->windows; win; win = win->next)
 		ui_window_draw(win);
 	if (tui->info[0])
-		ui_draw_string(tui, 0, tui->height-1, tui->info, tui->vis->win, UI_STYLE_INFO);
+		ui_draw_string(tui, 0, tui->height-1, tui->info, 0, UI_STYLE_INFO);
 	vis_event_emit(tui->vis, VIS_EVENT_UI_DRAW);
 	ui_term_backend_blit(tui);
 }
