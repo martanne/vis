@@ -1745,10 +1745,10 @@ static bool cmd_filter(Vis *vis, Win *win, Command *cmd, const char *argv[], Sel
 	if (vis->interrupted) {
 		vis_info_show(vis, "Command cancelled");
 	} else if (status == 0) {
-		if (!sam_change(win, sel, range, bufout.data, bufout.len, 1)) {
-			free(bufout.data);
-			bufout.data = 0;
-		}
+		char *data  = bufout.data;
+		bufout.data = 0;
+		if (!sam_change(win, sel, range, data, bufout.len, 1))
+			free(data);
 	} else {
 		vis_info_show(vis, "Command failed %s", buffer_content0(&buferr));
 	}
