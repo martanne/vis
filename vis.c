@@ -1861,12 +1861,8 @@ static int _vis_pipe_collect(Vis *vis, File *file, Filerange *range, const char*
 	                      fullscreen);
 	buffer_terminate(&bufout);
 	buffer_terminate(&buferr);
-	if (out)
-		*out = buffer_move(&bufout);
-	if (err)
-		*err = buffer_move(&buferr);
-	buffer_release(&bufout);
-	buffer_release(&buferr);
+	if (out) *out = bufout.data;
+	if (err) *err = buferr.data;
 	return status;
 }
 

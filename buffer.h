@@ -57,13 +57,6 @@ size_t buffer_length0(Buffer*);
  * Guaranteed to return a NUL terminated string even if buffer is empty.
  */
 const char *buffer_content0(Buffer*);
-/**
- * Borrow underlying buffer data.
- * @rst
- * .. warning:: The caller is responsible to ``free(3)`` it.
- * @endrst
- */
-char *buffer_move(Buffer*);
 
 /** ``read(3p)`` like interface for reading into a Buffer (``context``) */
 ssize_t read_into_buffer(void *context, char *data, size_t len);

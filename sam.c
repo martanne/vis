@@ -597,7 +597,7 @@ static char *parse_until(const char **s, const char *until, const char *escchars
 
 	buffer_terminate(&buf);
 
-	return buffer_move(&buf);
+	return buf.data;
 }
 
 static char *parse_delimited(const char **s, int type) {
@@ -645,7 +645,7 @@ static char *parse_text(const char **s, Count *count) {
 		return NULL;
 	}
 
-	return buffer_move(&buf);
+	return buf.data;
 }
 
 static char *parse_shellcmd(Vis *vis, const char **s) {
@@ -683,7 +683,7 @@ static char *parse_cmdname(const char **s) {
 
 	buffer_terminate(&buf);
 
-	return buffer_move(&buf);
+	return buf.data;
 }
 
 static Regex *parse_regex(Vis *vis, const char **s) {

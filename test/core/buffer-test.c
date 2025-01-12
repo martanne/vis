@@ -54,12 +54,7 @@ int main(int argc, char *argv[]) {
 	ok(buffer_append(&buf, "\0baz", 4) && compare(&buf, "foo\0bar\0baz", 11), "Append data");
 
 	ok(buffer_grow(&buf, cap+1) && compare(&buf, "foo\0bar\0baz", 11) && buf.size >= cap+1, "Grow");
-
-	const char *content = buf.data;
-	char *data = buffer_move(&buf);
-	ok(data == content && buf.len == 0 && buf.size == 0 && buf.data == NULL, "Move");
-	ok(buffer_append0(&buf, "foo") && buf.data != data, "Modify after move");
-	free(data);
+	buf.len = 0;
 
 	skip_if(TIS_INTERPRETER, 1, "vsnprintf not supported") {
 

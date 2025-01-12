@@ -157,12 +157,6 @@ const char *buffer_content0(Buffer *buf) {
 	return buf->data;
 }
 
-char *buffer_move(Buffer *buf) {
-	char *data = buf->data;
-	*buf = (Buffer){0};
-	return data;
-}
-
 ssize_t read_into_buffer(void *context, char *data, size_t len) {
 	buffer_append(context, data, len);
 	return len;
