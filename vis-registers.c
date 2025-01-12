@@ -9,8 +9,7 @@ static Buffer *register_buffer(Register *reg, size_t slot) {
 		return buf;
 	if (array_resize(&reg->values, slot) && (buf = array_get(&reg->values, slot)))
 		return buf;
-	Buffer new;
-	buffer_init(&new);
+	Buffer new = {0};
 	if (!array_add(&reg->values, &new))
 		return NULL;
 	size_t capacity = array_capacity(&reg->values);
@@ -22,8 +21,7 @@ static Buffer *register_buffer(Register *reg, size_t slot) {
 }
 
 bool register_init(Register *reg) {
-	Buffer buf;
-	buffer_init(&buf);
+	Buffer buf = {0};
 	array_init_sized(&reg->values, sizeof(Buffer));
 	return array_add(&reg->values, &buf);
 }
@@ -63,10 +61,9 @@ const char *register_slot_get(Vis *vis, Register *reg, size_t slot, size_t *len)
 	}
 	case REGISTER_CLIPBOARD:
 	{
-		Buffer buferr;
+		Buffer buferr = {0};
 		enum VisRegister id = reg - vis->registers;
 		const char *cmd[] = { VIS_CLIPBOARD, "--paste", "--selection", NULL, NULL };
-		buffer_init(&buferr);
 		Buffer *buf = array_get(&reg->values, slot);
 		if (!buf)
 			return NULL;
@@ -151,10 +148,9 @@ bool register_slot_put_range(Vis *vis, Register *reg, size_t slot, Text *txt, Fi
 	}
 	case REGISTER_CLIPBOARD:
 	{
-		Buffer buferr;
+		Buffer buferr = {0};
 		const char *cmd[] = { VIS_CLIPBOARD, "--copy", "--selection", NULL, NULL };
 		enum VisRegister id = reg - vis->registers;
-		buffer_init(&buferr);
 
 		if (id == VIS_REG_PRIMARY)
 			cmd[3] = "primary";

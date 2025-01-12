@@ -15,11 +15,10 @@ static bool compare0(Buffer *buf, const char *data) {
 }
 
 int main(int argc, char *argv[]) {
-	Buffer buf;
+	Buffer buf = {0};
 
 	plan_no_plan();
 
-	buffer_init(&buf);
 	ok(buffer_content(&buf) == NULL && buffer_length(&buf) == 0 && buffer_capacity(&buf) == 0, "Initialization");
 	ok(buffer_insert(&buf, 0, "foo", 0) && buffer_content(&buf) == NULL &&
 	   buffer_length(&buf) == 0 && buffer_capacity(&buf) == 0, "Insert zero length data");

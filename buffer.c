@@ -10,10 +10,6 @@
 #define BUFFER_SIZE 1024
 #endif
 
-void buffer_init(Buffer *buf) {
-	memset(buf, 0, sizeof *buf);
-}
-
 bool buffer_reserve(Buffer *buf, size_t size) {
 	/* ensure minimal buffer size, to avoid repeated realloc(3) calls */
 	if (size < BUFFER_SIZE)
@@ -45,7 +41,7 @@ void buffer_release(Buffer *buf) {
 	if (!buf)
 		return;
 	free(buf->data);
-	buffer_init(buf);
+	*buf = (Buffer){0};
 }
 
 void buffer_clear(Buffer *buf) {
@@ -179,7 +175,7 @@ const char *buffer_content0(Buffer *buf) {
 
 char *buffer_move(Buffer *buf) {
 	char *data = buf->data;
-	buffer_init(buf);
+	*buf = (Buffer){0};
 	return data;
 }
 

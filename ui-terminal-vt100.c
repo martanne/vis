@@ -196,7 +196,6 @@ static bool ui_backend_init(Ui *ui) {
 	Buffer *buf = calloc(1, sizeof(Buffer));
 	if (!buf)
 		return false;
-	buffer_init(buf);
 	ui->ctx = buf;
 	return true;
 }

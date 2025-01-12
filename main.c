@@ -2154,9 +2154,8 @@ static const char *unicode_info(Vis *vis, const char *keys, const Arg *arg) {
 	char *grapheme = text_bytes_alloc0(txt, start, end-start), *codepoint = grapheme;
 	if (!grapheme)
 		return keys;
-	Buffer info;
-	buffer_init(&info);
-	mbstate_t ps = { 0 };
+	Buffer info = {0};
+	mbstate_t ps = {0};
 	Iterator it = text_iterator_get(txt, start);
 	for (size_t pos = start; it.pos < end; pos = it.pos) {
 		if (!text_iterator_codepoint_next(&it, NULL)) {

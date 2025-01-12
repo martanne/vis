@@ -559,8 +559,7 @@ static void skip_spaces(const char **s) {
 }
 
 static char *parse_until(const char **s, const char *until, const char *escchars, int type){
-	Buffer buf;
-	buffer_init(&buf);
+	Buffer buf = {0};
 	size_t len = strlen(until);
 	bool escaped = false;
 
@@ -633,8 +632,7 @@ static char *parse_text(const char **s, Count *count) {
 		return (!text && *s != before) ? strdup("") : text;
 	}
 
-	Buffer buf;
-	buffer_init(&buf);
+	Buffer buf = {0};
 	const char *start = *s + 1;
 	bool dot = false;
 
@@ -677,8 +675,7 @@ static bool valid_cmdname(const char *s) {
 }
 
 static char *parse_cmdname(const char **s) {
-	Buffer buf;
-	buffer_init(&buf);
+	Buffer buf = {0};
 
 	skip_spaces(s);
 	while (valid_cmdname(*s))
@@ -1313,8 +1310,7 @@ enum SamError sam_cmd(Vis *vis, const char *s) {
 
 /* process text input, substitute register content for backreferences etc. */
 Buffer text(Vis *vis, const char *text) {
-	Buffer buf;
-	buffer_init(&buf);
+	Buffer buf = {0};
 	for (size_t len = strcspn(text, "\\&"); *text; len = strcspn(++text, "\\&")) {
 		buffer_append(&buf, text, len);
 		text += len;
@@ -1747,9 +1743,7 @@ static bool cmd_filter(Vis *vis, Win *win, Command *cmd, const char *argv[], Sel
 	if (!win)
 		return false;
 
-	Buffer bufout, buferr;
-	buffer_init(&bufout);
-	buffer_init(&buferr);
+	Buffer bufout = {0}, buferr = {0};
 
 	int status = vis_pipe(vis, win->file, range, &argv[1], &bufout, read_into_buffer, &buferr,
 	                      read_into_buffer, false);
@@ -1789,8 +1783,7 @@ static bool cmd_pipein(Vis *vis, Win *win, Command *cmd, const char *argv[], Sel
 static bool cmd_pipeout(Vis *vis, Win *win, Command *cmd, const char *argv[], Selection *sel, Filerange *range) {
 	if (!win)
 		return false;
-	Buffer buferr;
-	buffer_init(&buferr);
+	Buffer buferr = {0};
 
 	int status = vis_pipe(vis, win->file, range, (const char*[]){ argv[1], NULL }, NULL, NULL,
 	                      &buferr, read_into_buffer, false);

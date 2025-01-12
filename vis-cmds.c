@@ -402,10 +402,7 @@ static const char *file_open_dialog(Vis *vis, const char *pattern) {
 	if (!is_file_pattern(pattern))
 		return pattern;
 
-	Buffer bufcmd, bufout, buferr;
-	buffer_init(&bufcmd);
-	buffer_init(&bufout);
-	buffer_init(&buferr);
+	Buffer bufcmd = {0}, bufout = {0}, buferr = {0};
 
 	if (!buffer_put0(&bufcmd, VIS_OPEN " ") || !buffer_append0(&bufcmd, pattern ? pattern : ""))
 		return NULL;

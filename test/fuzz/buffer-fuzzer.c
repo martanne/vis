@@ -78,8 +78,7 @@ static Cmd commands[] = {
 
 int main(int argc, char *argv[]) {
 	char line[BUFSIZ];
-	Buffer buf;
-	buffer_init(&buf);
+	Buffer buf = {0};
 
 	for (;;) {
 		printf("> ");

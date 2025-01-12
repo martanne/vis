@@ -587,7 +587,7 @@ Vis *vis_new(void) {
 	array_init(&vis->bindings);
 	array_init(&vis->actions_user);
 	action_reset(&vis->action);
-	buffer_init(&vis->input_queue);
+	vis->input_queue = (Buffer){0};
 	if (!(vis->command_file = file_new_internal(vis, NULL)))
 		goto err;
 	if (!(vis->search_file = file_new_internal(vis, NULL)))
@@ -1167,8 +1167,7 @@ static void vis_keys_process(Vis *vis, size_t pos) {
 void vis_keys_feed(Vis *vis, const char *input) {
 	if (!input)
 		return;
-	Macro macro;
-	macro_init(&macro);
+	Macro macro = {0};
 	if (!macro_append(&macro, input))
 		return;
 	/* use internal function, to keep Lua based tests which use undo points working */
@@ -1855,9 +1854,7 @@ int vis_pipe_buf(Vis *vis, const char* buf, const char *argv[],
 }
 
 static int _vis_pipe_collect(Vis *vis, File *file, Filerange *range, const char* buf, const char *argv[], char **out, char **err, bool fullscreen) {
-	Buffer bufout, buferr;
-	buffer_init(&bufout);
-	buffer_init(&buferr);
+	Buffer bufout = {0}, buferr = {0};
 	int status = _vis_pipe(vis, file, range, buf, argv,
 	                      &bufout, out ? read_into_buffer : NULL,
 	                      &buferr, err ? read_into_buffer : NULL,

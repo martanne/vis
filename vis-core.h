@@ -108,7 +108,6 @@ typedef struct {
 
 /* a macro is just a sequence of symbolic keys as received from ui->getkey */
 typedef Buffer Macro;
-#define macro_init buffer_init
 #define macro_release buffer_release
 #define macro_reset buffer_clear
 #define macro_append buffer_append0
