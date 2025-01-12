@@ -22,8 +22,6 @@ typedef struct {
 
 /** Release all resources, reinitialize buffer. */
 void buffer_release(Buffer*);
-/** Set buffer length to zero, keep allocated memory. */
-void buffer_clear(Buffer*);
 /** Reserve space to store at least ``size`` bytes.*/
 bool buffer_reserve(Buffer*, size_t size);
 /** Reserve space for at least ``len`` *more* bytes. */
@@ -54,22 +52,11 @@ bool buffer_printf(Buffer*, const char *fmt, ...) __attribute__((format(printf, 
 bool buffer_appendf(Buffer*, const char *fmt, ...) __attribute__((format(printf, 2, 3)));
 /** Return length of a buffer without trailing NUL byte. */
 size_t buffer_length0(Buffer*);
-/** Return length of a buffer including possible NUL byte. */
-size_t buffer_length(Buffer*);
-/** Return current maximal capacity in bytes of this buffer. */
-size_t buffer_capacity(Buffer*);
 /**
  * Get pointer to buffer data.
  * Guaranteed to return a NUL terminated string even if buffer is empty.
  */
 const char *buffer_content0(Buffer*);
-/**
- * Get pointer to buffer data.
- * @rst
- * .. warning:: Might be NULL, if empty. Might not be NUL terminated.
- * @endrst
- */
-const char *buffer_content(Buffer*);
 /**
  * Borrow underlying buffer data.
  * @rst

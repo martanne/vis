@@ -44,10 +44,6 @@ void buffer_release(Buffer *buf) {
 	*buf = (Buffer){0};
 }
 
-void buffer_clear(Buffer *buf) {
-	buf->len = 0;
-}
-
 bool buffer_put(Buffer *buf, const void *data, size_t len) {
 	if (!buffer_reserve(buf, len))
 		return false;
@@ -140,7 +136,7 @@ bool buffer_appendf(Buffer *buf, const char *fmt, ...) {
 }
 
 bool buffer_printf(Buffer *buf, const char *fmt, ...) {
-	buffer_clear(buf);
+	buf->len = 0;
 	va_list ap;
 	va_start(ap, fmt);
 	bool ret = buffer_vappendf(buf, fmt, ap);
@@ -153,18 +149,6 @@ size_t buffer_length0(Buffer *buf) {
 	if (len > 0 && buf->data[len-1] == '\0')
 		len--;
 	return len;
-}
-
-size_t buffer_length(Buffer *buf) {
-	return buf->len;
-}
-
-size_t buffer_capacity(Buffer *buf) {
-	return buf->size;
-}
-
-const char *buffer_content(Buffer *buf) {
-	return buf->data;
 }
 
 const char *buffer_content0(Buffer *buf) {

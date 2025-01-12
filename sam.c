@@ -1349,11 +1349,9 @@ static bool cmd_insert(Vis *vis, Win *win, Command *cmd, const char *argv[], Sel
 	if (!win)
 		return false;
 	Buffer buf = text(vis, argv[1]);
-	size_t len = buffer_length(&buf);
-	char *data = buffer_move(&buf);
-	bool ret = sam_insert(win, sel, range->start, data, len, cmd->count.start);
+	bool ret = sam_insert(win, sel, range->start, buf.data, buf.len, cmd->count.start);
 	if (!ret)
-		free(data);
+		free(buf.data);
 	return ret;
 }
 
@@ -1361,11 +1359,9 @@ static bool cmd_append(Vis *vis, Win *win, Command *cmd, const char *argv[], Sel
 	if (!win)
 		return false;
 	Buffer buf = text(vis, argv[1]);
-	size_t len = buffer_length(&buf);
-	char *data = buffer_move(&buf);
-	bool ret = sam_insert(win, sel, range->end, data, len, cmd->count.start);
+	bool ret = sam_insert(win, sel, range->end, buf.data, buf.len, cmd->count.start);
 	if (!ret)
-		free(data);
+		free(buf.data);
 	return ret;
 }
 
@@ -1373,11 +1369,9 @@ static bool cmd_change(Vis *vis, Win *win, Command *cmd, const char *argv[], Sel
 	if (!win)
 		return false;
 	Buffer buf = text(vis, argv[1]);
-	size_t len = buffer_length(&buf);
-	char *data = buffer_move(&buf);
-	bool ret = sam_change(win, sel, range, data, len, cmd->count.start);
+	bool ret = sam_change(win, sel, range, buf.data, buf.len, cmd->count.start);
 	if (!ret)
-		free(data);
+		free(buf.data);
 	return ret;
 }
 
@@ -1751,10 +1745,10 @@ static bool cmd_filter(Vis *vis, Win *win, Command *cmd, const char *argv[], Sel
 	if (vis->interrupted) {
 		vis_info_show(vis, "Command cancelled");
 	} else if (status == 0) {
-		size_t len = buffer_length(&bufout);
-		char *data = buffer_move(&bufout);
-		if (!sam_change(win, sel, range, data, len, 1))
-			free(data);
+		if (!sam_change(win, sel, range, bufout.data, bufout.len, 1)) {
+			free(bufout.data);
+			bufout.data = 0;
+		}
 	} else {
 		vis_info_show(vis, "Command failed %s", buffer_content0(&buferr));
 	}

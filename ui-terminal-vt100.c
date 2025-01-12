@@ -91,7 +91,7 @@ static void cursor_visible(bool visible) {
 
 static void ui_term_backend_blit(Ui *tui) {
 	Buffer *buf = tui->ctx;
-	buffer_clear(buf);
+	buf->len    = 0;
 	CellAttr attr = CELL_ATTR_NORMAL;
 	CellColor fg = CELL_COLOR_DEFAULT, bg = CELL_COLOR_DEFAULT;
 	int w = tui->width, h = tui->height;
@@ -152,7 +152,7 @@ static void ui_term_backend_blit(Ui *tui) {
 			cell++;
 		}
 	}
-	output(buffer_content(buf), buffer_length0(buf));
+	output(buf->data, buffer_length0(buf));
 }
 
 static void ui_term_backend_clear(Ui *tui) { }

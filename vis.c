@@ -1353,7 +1353,7 @@ void macro_operator_record(Vis *vis) {
 	if (vis->macro_operator)
 		return;
 	vis->macro_operator = macro_get(vis, VIS_MACRO_OPERATOR);
-	macro_reset(vis->macro_operator);
+	vis->macro_operator->len = 0;
 }
 
 void macro_operator_stop(Vis *vis) {
@@ -1370,7 +1370,7 @@ bool vis_macro_record(Vis *vis, enum VisRegister id) {
 	if (vis->recording || !macro)
 		return false;
 	if (!(VIS_REG_A <= id && id <= VIS_REG_Z))
-		macro_reset(macro);
+		macro->len = 0;
 	vis->recording = macro;
 	vis_event_emit(vis, VIS_EVENT_WIN_STATUS, vis->win);
 	return true;

@@ -264,7 +264,7 @@ bool vis_operator(Vis *vis, enum VisOperator id, ...) {
 	case VIS_OP_REPLACE:
 	{
 		Macro *macro = macro_get(vis, VIS_REG_DOT);
-		macro_reset(macro);
+		macro->len   = 0;
 		macro_append(macro, va_arg(ap, char*));
 		vis->action.arg.s = macro->data;
 		break;

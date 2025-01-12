@@ -67,7 +67,7 @@ const char *register_slot_get(Vis *vis, Register *reg, size_t slot, size_t *len)
 		Buffer *buf = array_get(&reg->values, slot);
 		if (!buf)
 			return NULL;
-		buffer_clear(buf);
+		buf->len = 0;
 
 		if (id == VIS_REG_PRIMARY)
 			cmd[3] = "primary";
@@ -270,8 +270,8 @@ Array vis_register_get(Vis *vis, enum VisRegister id) {
 		for (size_t i = 0; i < len; i++) {
 			Buffer *buf = array_get(&reg->values, i);
 			TextString string = {
-				.data = buffer_content(buf),
-				.len = buffer_length(buf),
+				.data = buf->data,
+				.len  = buf->len,
 			};
 			array_add(&data, &string);
 		}
