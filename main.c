@@ -1545,7 +1545,7 @@ static const char *selections_rotate(Vis *vis, const char *keys, const Arg *arg)
 		if (next)
 			line_next = text_lineno_by_pos(txt, view_cursors_pos(next));
 		if (!next || (columns > 1 && line != line_next)) {
-			size_t len = array_length(&arr);
+			size_t len = arr.len;
 			size_t off = arg->i > 0 ? count % len : len - (count % len);
 			for (size_t i = 0; i < len; i++) {
 				size_t j = (i + off) % len;
@@ -1714,7 +1714,7 @@ static const char *selections_intersect(Vis *vis, const char *keys, const Arg *a
 
 static void complement(Array *ret, Array *a, Filerange *universe) {
 	size_t pos = universe->start;
-	for (size_t i = 0, len = array_length(a); i < len; i++) {
+	for (size_t i = 0, len = a->len; i < len; i++) {
 		Filerange *r = array_get(a, i);
 		if (pos < r->start) {
 			Filerange new = text_range_new(pos, r->start);

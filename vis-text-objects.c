@@ -13,7 +13,7 @@ int vis_textobject_register(Vis *vis, int type, void *data, VisTextObjectFunctio
 	obj->data = data;
 
 	if (array_add_ptr(&vis->textobjects, obj))
-		return LENGTH(vis_textobjects) + array_length(&vis->textobjects) - 1;
+		return LENGTH(vis_textobjects) + vis->textobjects.len - 1;
 	free(obj);
 	return -1;
 }

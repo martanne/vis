@@ -26,9 +26,9 @@ void vis_mark_normalize(Array *a) {
 }
 
 bool vis_mark_equal(Array *a, Array *b) {
-	size_t len = array_length(a);
-	if (len != array_length(b))
+	if (a->len != b->len)
 		return false;
+	size_t len = a->len;
 	for (size_t i = 0; i < len; i++) {
 		if (!text_range_equal(array_get(a, i), array_get(b, i)))
 			return false;
@@ -72,7 +72,7 @@ static Array mark_get(Win *win, Array *mark) {
 	array_init_sized(&sel, sizeof(Filerange));
 	if (!mark)
 		return sel;
-	size_t len = array_length(mark);
+	size_t len = mark->len;
 	array_reserve(&sel, len);
 	for (size_t i = 0; i < len; i++) {
 		SelectionRegion *sr = array_get(mark, i);
@@ -92,7 +92,7 @@ static void mark_set(Win *win, Array *mark, Array *sel) {
 	if (!mark)
 		return;
 	array_clear(mark);
-	for (size_t i = 0, len = array_length(sel); i < len; i++) {
+	for (size_t i = 0, len = sel->len; i < len; i++) {
 		SelectionRegion ss;
 		Filerange *r = array_get(sel, i);
 		if (view_regions_save(&win->view, r, &ss))
@@ -115,10 +115,10 @@ void marklist_init(MarkList *list, size_t max) {
 }
 
 void marklist_release(MarkList *list) {
-	for (size_t i = 0, len = array_length(&list->prev); i < len; i++)
+	for (size_t i = 0, len = list->prev.len; i < len; i++)
 		array_release(array_get(&list->prev, i));
 	array_release(&list->prev);
-	for (size_t i = 0, len = array_length(&list->next); i < len; i++)
+	for (size_t i = 0, len = list->next.len; i < len; i++)
 		array_release(array_get(&list->next, i));
 	array_release(&list->next);
 }
@@ -133,12 +133,12 @@ static bool marklist_push(Win *win, MarkList *list, Array *sel) {
 			return true;
 	}
 
-	for (size_t i = 0, len = array_length(&list->next); i < len; i++)
+	for (size_t i = 0, len = list->next.len; i < len; i++)
 		array_release(array_get(&list->next, i));
 	array_clear(&list->next);
 	Array arr;
 	mark_init(&arr);
-	if (array_length(&list->prev) >= array_capacity(&list->prev)) {
+	if (list->prev.len >= list->prev.count) {
 		Array *tmp = array_get(&list->prev, 0);
 		arr = *tmp;
 		array_remove(&list->prev, 0);
@@ -170,12 +170,12 @@ static bool marklist_prev(Win *win, MarkList *list) {
 	if (restore)
 		goto out;
 
-	while (array_length(&list->prev) > 1) {
+	while (list->prev.len > 1) {
 		Array *prev = array_pop(&list->prev);
 		array_push(&list->next, prev);
 		prev = array_peek(&list->prev);
 		Array sel = mark_get(win, prev);
-		restore = array_length(&sel) > 0;
+		restore = sel.len > 0;
 		if (restore)
 			view_selections_set_all(view, &sel, anchored);
 		array_release(&sel);
@@ -195,7 +195,7 @@ static bool marklist_next(Win *win, MarkList *list) {
 		if (!next)
 			return false;
 		Array sel = mark_get(win, next);
-		if (array_length(&sel) > 0) {
+		if (sel.len > 0) {
 			view_selections_set_all(view, &sel, anchored);
 			array_release(&sel);
 			array_push(&list->prev, next);

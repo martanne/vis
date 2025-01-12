@@ -1697,7 +1697,7 @@ static int registers_index(lua_State *L) {
 	if (reg >= VIS_REG_INVALID)
 		return 1;
 	Array data = vis_register_get(vis, reg);
-	for (size_t i = 0, len = array_length(&data); i < len; i++) {
+	for (size_t i = 0, len = data.len; i < len; i++) {
 		TextString *string = array_get(&data, i);
 		lua_pushunsigned(L, i+1);
 		lua_pushlstring(L, string->data, string->len);
@@ -2860,7 +2860,7 @@ static int window_marks_index(lua_State *L) {
 		return 1;
 
 	Array arr = vis_mark_get(win, mark);
-	for (size_t i = 0, len = array_length(&arr); i < len; i++) {
+	for (size_t i = 0, len = arr.len; i < len; i++) {
 		Filerange *range = array_get(&arr, i);
 		lua_pushunsigned(L, i+1);
 		pushrange(L, range);

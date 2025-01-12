@@ -271,7 +271,7 @@ int vis_motion_register(Vis *vis, void *data, VisMotionFunction *motion) {
 	move->data = data;
 
 	if (array_add_ptr(&vis->motions, move))
-		return VIS_MOVE_LAST + array_length(&vis->motions) - 1;
+		return VIS_MOVE_LAST + vis->motions.len - 1;
 	free(move);
 	return -1;
 }

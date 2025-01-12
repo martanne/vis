@@ -124,14 +124,6 @@ bool array_remove(Array *arr, size_t idx) {
 	return true;
 }
 
-size_t array_length(const Array *arr) {
-	return arr->len;
-}
-
-size_t array_capacity(const Array *arr) {
-	return arr->count;
-}
-
 bool array_truncate(Array *arr, size_t len) {
 	if (len <= arr->len) {
 		arr->len = len;

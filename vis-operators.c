@@ -229,7 +229,7 @@ int vis_operator_register(Vis *vis, VisOperatorFunction *func, void *context) {
 	op->func = func;
 	op->context = context;
 	if (array_add_ptr(&vis->operators, op))
-		return VIS_OP_LAST + array_length(&vis->operators) - 1;
+		return VIS_OP_LAST + vis->operators.len - 1;
 	free(op);
 	return -1;
 }

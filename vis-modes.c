@@ -35,7 +35,7 @@ err:
 void vis_action_free(Vis *vis, KeyAction *action) {
 	if (!action)
 		return;
-	size_t len = array_length(&vis->actions_user);
+	size_t len = vis->actions_user.len;
 	for (size_t i = 0; i < len; i++) {
 		if (action == array_get_ptr(&vis->actions_user, i)) {
 			keyaction_free(action);
@@ -56,7 +56,7 @@ KeyBinding *vis_binding_new(Vis *vis) {
 void vis_binding_free(Vis *vis, KeyBinding *binding) {
 	if (!binding)
 		return;
-	size_t len = array_length(&vis->bindings);
+	size_t len = vis->bindings.len;
 	for (size_t i = 0; i < len; i++) {
 		if (binding == array_get_ptr(&vis->bindings, i)) {
 			if (binding->alias)

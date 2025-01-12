@@ -649,10 +649,10 @@ void vis_free(Vis *vis) {
 	array_release_full(&vis->operators);
 	array_release_full(&vis->motions);
 	array_release_full(&vis->textobjects);
-	while (array_length(&vis->bindings))
+	while (vis->bindings.len)
 		vis_binding_free(vis, array_get_ptr(&vis->bindings, 0));
 	array_release(&vis->bindings);
-	while (array_length(&vis->actions_user))
+	while (vis->actions_user.len)
 		vis_action_free(vis, array_get_ptr(&vis->actions_user, 0));
 	array_release(&vis->actions_user);
 	free(vis->shell);

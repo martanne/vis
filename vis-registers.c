@@ -12,8 +12,8 @@ static Buffer *register_buffer(Register *reg, size_t slot) {
 	Buffer new = {0};
 	if (!array_add(&reg->values, &new))
 		return NULL;
-	size_t capacity = array_capacity(&reg->values);
-	for (size_t i = array_length(&reg->values); i < capacity; i++) {
+	size_t capacity = reg->values.count;
+	for (size_t i = reg->values.len; i < capacity; i++) {
 		if (!array_add(&reg->values, &new))
 			return NULL;
 	}
@@ -29,7 +29,7 @@ bool register_init(Register *reg) {
 void register_release(Register *reg) {
 	if (!reg)
 		return;
-	size_t n = array_capacity(&reg->values);
+	size_t n = reg->values.count;
 	for (size_t i = 0; i < n; i++)
 		buffer_release(array_get(&reg->values, i));
 	array_release(&reg->values);
@@ -180,7 +180,7 @@ bool register_put_range(Vis *vis, Register *reg, Text *txt, Filerange *range) {
 size_t vis_register_count(Vis *vis, Register *reg) {
 	if (reg->type == REGISTER_NUMBER)
 		return vis->win ? vis->win->view.selection_count : 0;
-	return array_length(&reg->values);
+	return reg->values.len;
 }
 
 bool register_resize(Register *reg, size_t count) {
@@ -248,7 +248,7 @@ bool vis_register_set(Vis *vis, enum VisRegister id, Array *data) {
 	Register *reg = register_from(vis, id);
 	if (!reg)
 		return false;
-	size_t len = array_length(data);
+	size_t len = data->len;
 	for (size_t i = 0; i < len; i++) {
 		Buffer *buf = register_buffer(reg, i);
 		if (!buf)
@@ -265,7 +265,7 @@ Array vis_register_get(Vis *vis, enum VisRegister id) {
 	array_init_sized(&data, sizeof(TextString));
 	Register *reg = register_from(vis, id);
 	if (reg) {
-		size_t len = array_length(&reg->values);
+		size_t len = reg->values.len;
 		array_reserve(&data, len);
 		for (size_t i = 0; i < len; i++) {
 			Buffer *buf = array_get(&reg->values, i);

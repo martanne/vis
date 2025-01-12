@@ -126,7 +126,7 @@ static size_t lines_count(Text *txt, size_t pos, size_t len);
 /* stores the given data in a block, allocates a new one if necessary. Returns
  * a pointer to the storage location or NULL if allocation failed. */
 static const char *block_store(Text *txt, const char *data, size_t len) {
-	Block *blk = array_get_ptr(&txt->blocks, array_length(&txt->blocks)-1);
+	Block *blk = array_get_ptr(&txt->blocks, txt->blocks.len - 1);
 	if (!blk || !block_capacity(blk, len)) {
 		blk = block_alloc(len);
 		if (!blk)
@@ -141,7 +141,7 @@ static const char *block_store(Text *txt, const char *data, size_t len) {
 
 /* cache the given piece if it is the most recently changed one */
 static void cache_piece(Text *txt, Piece *p) {
-	Block *blk = array_get_ptr(&txt->blocks, array_length(&txt->blocks)-1);
+	Block *blk = array_get_ptr(&txt->blocks, txt->blocks.len - 1);
 	if (!blk || p->data < blk->data || p->data + p->len != blk->data + blk->len)
 		return;
 	txt->cache = p;
@@ -149,7 +149,7 @@ static void cache_piece(Text *txt, Piece *p) {
 
 /* check whether the given piece was the most recently modified one */
 static bool cache_contains(Text *txt, Piece *p) {
-	Block *blk = array_get_ptr(&txt->blocks, array_length(&txt->blocks)-1);
+	Block *blk = array_get_ptr(&txt->blocks, txt->blocks.len - 1);
 	Revision *rev = txt->current_revision;
 	if (!blk || !txt->cache || txt->cache != p || !rev || !rev->change)
 		return false;
@@ -173,7 +173,7 @@ static bool cache_contains(Text *txt, Piece *p) {
 static bool cache_insert(Text *txt, Piece *p, size_t off, const char *data, size_t len) {
 	if (!cache_contains(txt, p))
 		return false;
-	Block *blk = array_get_ptr(&txt->blocks, array_length(&txt->blocks)-1);
+	Block *blk = array_get_ptr(&txt->blocks, txt->blocks.len - 1);
 	size_t bufpos = p->data + off - blk->data;
 	if (!block_insert(blk, bufpos, data, len))
 		return false;
@@ -190,7 +190,7 @@ static bool cache_insert(Text *txt, Piece *p, size_t off, const char *data, size
 static bool cache_delete(Text *txt, Piece *p, size_t off, size_t len) {
 	if (!cache_contains(txt, p))
 		return false;
-	Block *blk = array_get_ptr(&txt->blocks, array_length(&txt->blocks)-1);
+	Block *blk = array_get_ptr(&txt->blocks, txt->blocks.len - 1);
 	size_t end;
 	size_t bufpos = p->data + off - blk->data;
 	if (!addu(off, len, &end) || end > p->len || !block_delete(blk, bufpos, len))
@@ -776,7 +776,7 @@ void text_free(Text *txt) {
 		piece_free(p);
 	}
 
-	for (size_t i = 0, len = array_length(&txt->blocks); i < len; i++)
+	for (size_t i = 0, len = txt->blocks.len; i < len; i++)
 		block_free(array_get_ptr(&txt->blocks, i));
 	array_release(&txt->blocks);
 
@@ -789,7 +789,7 @@ bool text_modified(const Text *txt) {
 
 bool text_mmaped(const Text *txt, const char *ptr) {
 	uintptr_t addr = (uintptr_t)ptr;
-	for (size_t i = 0, len = array_length(&txt->blocks); i < len; i++) {
+	for (size_t i = 0, len = txt->blocks.len; i < len; i++) {
 		Block *blk = array_get_ptr(&txt->blocks, i);
 		if ((blk->type == BLOCK_TYPE_MMAP_ORIG || blk->type == BLOCK_TYPE_MMAP) &&
 		    (uintptr_t)(blk->data) <= addr && addr < (uintptr_t)(blk->data + blk->size))
