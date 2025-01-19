@@ -40,12 +40,12 @@
 
 #define CELL_STYLE_DEFAULT (CellStyle){.fg = CELL_COLOR_DEFAULT, .bg = CELL_COLOR_DEFAULT, .attr = CELL_ATTR_NORMAL}
 
-static bool is_default_fg(CellColor c) {
-	return is_default_color(c);
+static bool is_default_fg(CellColor c, CellColor default_fg) {
+	return is_default_color(c) || cell_color_equal(c, default_fg);
 }
 
-static bool is_default_bg(CellColor c) {
-	return is_default_color(c);
+static bool is_default_bg(CellColor c, CellColor default_bg) {
+	return is_default_color(c) || cell_color_equal(c, default_bg);
 }
 
 void ui_die(Ui *tui, const char *msg, va_list ap) {
@@ -212,7 +212,7 @@ static void ui_draw_string(Ui *tui, int x, int y, const char *str, int win_id, e
 		strncpy(cells[x].data, str, len);
 		cells[x].data[len] = '\0';
 		cells[x].style = default_style;
-		ui_window_style_set(tui, win_id, cells + x++, style_id);
+		ui_window_style_set(tui, win_id, cells + x++, style_id, false);
 	}
 }
 
@@ -269,25 +269,29 @@ static void ui_window_draw(Win *win) {
 	}
 }
 
-void ui_window_style_set(Ui *tui, int win_id, Cell *cell, enum UiStyle id) {
+void ui_window_style_set(Ui *tui, int win_id, Cell *cell, enum UiStyle id, bool keep) {
 	CellStyle set = tui->styles[win_id * UI_STYLE_MAX + id];
-
 	if (id != UI_STYLE_DEFAULT) {
-		set.fg = is_default_fg(set.fg)? cell->style.fg : set.fg;
-		set.bg = is_default_bg(set.bg)? cell->style.bg : set.bg;
+		CellStyle def = tui->styles[win_id * UI_STYLE_MAX + UI_STYLE_DEFAULT];
+		if (keep) {
+			set.fg = is_default_fg(cell->style.fg, def.fg) ? set.fg : cell->style.fg;
+			set.bg = is_default_bg(cell->style.bg, def.bg) ? set.bg : cell->style.bg;
+		} else {
+			set.fg = is_default_fg(set.fg, def.fg) ? cell->style.fg : set.fg;
+			set.bg = is_default_bg(set.bg, def.bg) ? cell->style.bg : set.bg;
+		}
 		set.attr = cell->style.attr | set.attr;
 	}
-
 	cell->style = set;
 }
 
-bool ui_window_style_set_pos(Win *win, int x, int y, enum UiStyle id) {
+bool ui_window_style_set_pos(Win *win, int x, int y, enum UiStyle id, bool keep) {
 	Ui *tui = &win->vis->ui;
 	if (x < 0 || y < 0 || y >= win->height || x >= win->width) {
 		return false;
 	}
 	Cell *cell = CELL_AT_POS(tui, win->x + x, win->y + y)
-	ui_window_style_set(tui, win->id, cell, id);
+	ui_window_style_set(tui, win->id, cell, id, keep);
 	return true;
 }
 
