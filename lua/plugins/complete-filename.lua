@@ -22,6 +22,12 @@ local complete_filename = function(expand)
 		range.finish = pos
 	end
 
+	-- Expand tilda for the home directory
+	if prefix:find('^~') then
+		local home = assert(os.getenv("HOME"), "$HOME variable not set!")
+		prefix = prefix:gsub("^~", home, 1)
+	end
+
 	local cmdfmt = "vis-complete --file '%s'"
 	if expand then cmdfmt = "vis-open -- '%s'*" end
 	local status, out, err = vis:pipe(cmdfmt:format(prefix:gsub("'", "'\\''")))
