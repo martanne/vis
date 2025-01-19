@@ -92,6 +92,9 @@ lexers.STYLE_COMMAND_SECTION = lexers.STYLE_CLASS
 lexers.STYLE_ENVIRONMENT = lexers.STYLE_TYPE
 lexers.STYLE_ENVIRONMENT_MATH = lexers.STYLE_NUMBER
 
+-- Makefile                                                                                                                                                                                                                                                                 │
+lexers.STYLE_TARGET = ''
+
 -- Markdown
 lexers.STYLE_HR = ''
 for i = 1,6 do lexers['STYLE_HEADING_H'..i] = lexers.STYLE_HEADING end
