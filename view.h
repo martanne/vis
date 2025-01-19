@@ -344,7 +344,7 @@ bool view_breakat_set(View*, const char *breakat);
 /** Set how many spaces are used to display a tab `\t` character. */
 void view_tabwidth_set(View*, int tabwidth);
 /** Apply a style to a text range. */
-void win_style(struct Win*, enum UiStyle, size_t start, size_t end);
+void win_style(struct Win*, enum UiStyle, size_t start, size_t end, bool keep_non_default);
 
 /** @} */
 

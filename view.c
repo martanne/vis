@@ -205,7 +205,7 @@ static void view_clear(View *view) {
 	/* FIXME: awful garbage that only exists because every
 	 * struct in this program is an interdependent hellscape */
 	Win *win = (Win *)((char *)view - offsetof(Win, view));
-	ui_window_style_set(&win->vis->ui, win->id, &cell_blank, UI_STYLE_DEFAULT);
+	ui_window_style_set(&win->vis->ui, win->id, &cell_blank, UI_STYLE_DEFAULT, false);
 }
 
 static int view_max_text_width(const View *view) {
@@ -1335,7 +1335,7 @@ void view_selections_normalize(View *view) {
 		view_selections_set(prev, &range_prev);
 }
 
-void win_style(Win *win, enum UiStyle style, size_t start, size_t end) {
+void win_style(Win *win, enum UiStyle style, size_t start, size_t end, bool keep_non_default) {
 	View *view = &win->view;
 	if (end < view->start || start > view->end)
 		return;
@@ -1365,7 +1365,7 @@ void win_style(Win *win, enum UiStyle style, size_t start, size_t end) {
 	do {
 		while (pos <= end && col < width) {
 			pos += line->cells[col].len;
-			ui_window_style_set(&win->vis->ui, win->id, &line->cells[col++], style);
+			ui_window_style_set(&win->vis->ui, win->id, &line->cells[col++], style, keep_non_default);
 		}
 		col = 0;
 	} while (pos <= end && (line = line->next));

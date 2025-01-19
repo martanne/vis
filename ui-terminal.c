@@ -212,7 +212,7 @@ static void ui_draw_string(Ui *tui, int x, int y, const char *str, int win_id, e
 		strncpy(cells[x].data, str, len);
 		cells[x].data[len] = '\0';
 		cells[x].style = default_style;
-		ui_window_style_set(tui, win_id, cells + x++, style_id);
+		ui_window_style_set(tui, win_id, cells + x++, style_id, false);
 	}
 }
 
@@ -269,10 +269,17 @@ static void ui_window_draw(Win *win) {
 	}
 }
 
-void ui_window_style_set(Ui *tui, int win_id, Cell *cell, enum UiStyle id) {
+void ui_window_style_set(Ui *tui, int win_id, Cell *cell, enum UiStyle id, bool keep_non_default) {
 	CellStyle set = tui->styles[win_id * UI_STYLE_MAX + id];
 
 	if (id != UI_STYLE_DEFAULT) {
+		if (keep_non_default) {
+			CellStyle default_style = tui->styles[win_id * UI_STYLE_MAX + UI_STYLE_DEFAULT];
+			if (!cell_color_equal(cell->style.fg, default_style.fg))
+				set.fg = cell->style.fg;
+			if (!cell_color_equal(cell->style.bg, default_style.bg))
+				set.bg = cell->style.bg;
+		}
 		set.fg = is_default_fg(set.fg)? cell->style.fg : set.fg;
 		set.bg = is_default_bg(set.bg)? cell->style.bg : set.bg;
 		set.attr = cell->style.attr | set.attr;
@@ -281,13 +288,13 @@ void ui_window_style_set(Ui *tui, int win_id, Cell *cell, enum UiStyle id) {
 	cell->style = set;
 }
 
-bool ui_window_style_set_pos(Win *win, int x, int y, enum UiStyle id) {
+bool ui_window_style_set_pos(Win *win, int x, int y, enum UiStyle id, bool keep_non_default) {
 	Ui *tui = &win->vis->ui;
 	if (x < 0 || y < 0 || y >= win->height || x >= win->width) {
 		return false;
 	}
 	Cell *cell = CELL_AT_POS(tui, win->x + x, win->y + y)
-	ui_window_style_set(tui, win->id, cell, id);
+	ui_window_style_set(tui, win->id, cell, id, keep_non_default);
 	return true;
 }
 

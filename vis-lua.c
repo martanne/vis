@@ -2026,9 +2026,10 @@ static int window_style_define(lua_State *L) {
  *
  * The style will be cleared after every window redraw.
  * @function style
- * @tparam int id the display style as registered with @{style_define}
- * @tparam int start the absolute file position in bytes
- * @tparam int finish the end position
+ * @tparam      int  id the display style as registered with @{style_define}
+ * @tparam      int  start the absolute file position in bytes
+ * @tparam      int  finish the end position
+ * @tparam[opt] bool keep_non_default whether non-default style values should be kept
  * @see style_define
  * @usage
  * win:style(win.STYLE_DEFAULT, 0, 10)
@@ -2038,7 +2039,8 @@ static int window_style(lua_State *L) {
 	enum UiStyle style = luaL_checkunsigned(L, 2);
 	size_t start = checkpos(L, 3);
 	size_t end = checkpos(L, 4);
-	win_style(win, style, start, end);
+	bool keep_non_default = lua_isboolean(L, 5) && lua_toboolean(L, 5);
+	win_style(win, style, start, end, keep_non_default);
 	return 0;
 }
 
@@ -2049,9 +2051,10 @@ static int window_style(lua_State *L) {
  * such as the status bar.
  * The style will be cleared after every window redraw.
  * @function style_pos
- * @tparam int id display style registered with @{style_define}
- * @tparam int x 0-based x coordinate within Win, where (0,0) is the top left corner
- * @tparam int y See above
+ * @tparam      int  id display style registered with @{style_define}
+ * @tparam      int  x 0-based x coordinate within Win, where (0,0) is the top left corner
+ * @tparam      int  y See above
+ * @tparam[opt] bool keep_non_default whether non-default style values should be kept
  * @treturn bool false if the coordinates would be outside the window's dimensions
  * @see style_define
  * @usage
@@ -2063,7 +2066,8 @@ static int window_style_pos(lua_State *L) {
 	enum UiStyle style = luaL_checkunsigned(L, 2);
 	size_t x = checkpos(L, 3);
 	size_t y = checkpos(L, 4);
-	bool ret = ui_window_style_set_pos(win, (int)x, (int)y, style);
+	bool keep_non_default = lua_isboolean(L, 5) && lua_toboolean(L, 5);
+	bool ret = ui_window_style_set_pos(win, (int)x, (int)y, style, keep_non_default);
 	lua_pushboolean(L, ret);
 	return 1;
 }
