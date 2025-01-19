@@ -92,7 +92,7 @@ lexers.STYLE_COMMAND_SECTION = lexers.STYLE_CLASS
 lexers.STYLE_ENVIRONMENT = lexers.STYLE_TYPE
 lexers.STYLE_ENVIRONMENT_MATH = lexers.STYLE_NUMBER
 
--- Makefile                                                                                                                                                                                                                                                                 │
+-- Markdown
 lexers.STYLE_TARGET = ''
 
 -- Markdown
