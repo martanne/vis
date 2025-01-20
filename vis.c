@@ -231,7 +231,7 @@ static void window_draw_colorcolumn(Win *win) {
 
 		/* This screen line contains the cell we want to highlight */
 		if (cc <= line_cols + width) {
-			ui_window_style_set(&win->vis->ui, win->id, &l->cells[cc - 1 - line_cols], UI_STYLE_COLOR_COLUMN);
+			ui_window_style_set(&win->vis->ui, win->id, &l->cells[cc - 1 - line_cols], UI_STYLE_COLOR_COLUMN, false);
 			line_cc_set = true;
 		} else {
 			line_cols += width;
@@ -255,7 +255,7 @@ static void window_draw_cursorline(Win *win) {
 	for (Line *l = win->view.topline; l; l = l->next) {
 		if (l->lineno == lineno) {
 			for (int x = 0; x < width; x++)
-				ui_window_style_set(&vis->ui, win->id, &l->cells[x], UI_STYLE_CURSOR_LINE);
+				ui_window_style_set(&vis->ui, win->id, &l->cells[x], UI_STYLE_CURSOR_LINE, true);
 		} else if (l->lineno > lineno) {
 			break;
 		}
@@ -285,7 +285,7 @@ static void window_draw_selection(Win *win, Selection *cur) {
 		int col = (l == start_line) ? start_col : 0;
 		int end = (l == end_line) ? end_col : l->width;
 		while (col < end)
-			ui_window_style_set(&win->vis->ui, win->id, &l->cells[col++], UI_STYLE_SELECTION);
+			ui_window_style_set(&win->vis->ui, win->id, &l->cells[col++], UI_STYLE_SELECTION, false);
 	}
 }
 
@@ -300,7 +300,7 @@ static void window_draw_cursor_matching(Win *win, Selection *cur) {
 		return;
 	if (!view_coord_get(&win->view, pos_match, &line_match, NULL, &col_match))
 		return;
-	ui_window_style_set(&win->vis->ui, win->id, &line_match->cells[col_match], UI_STYLE_SELECTION);
+	ui_window_style_set(&win->vis->ui, win->id, &line_match->cells[col_match], UI_STYLE_SELECTION, false);
 }
 
 static void window_draw_cursor(Win *win, Selection *cur) {
@@ -310,7 +310,7 @@ static void window_draw_cursor(Win *win, Selection *cur) {
 	if (!line)
 		return;
 	Selection *primary = view_selections_primary_get(&win->view);
-	ui_window_style_set(&win->vis->ui, win->id, &line->cells[cur->col], primary == cur ? UI_STYLE_CURSOR_PRIMARY : UI_STYLE_CURSOR);
+	ui_window_style_set(&win->vis->ui, win->id, &line->cells[cur->col], primary == cur ? UI_STYLE_CURSOR_PRIMARY : UI_STYLE_CURSOR, false);
 	window_draw_cursor_matching(win, cur);
 	return;
 }
@@ -342,7 +342,7 @@ static void window_draw_eof(Win *win) {
 		return;
 	for (Line *l = view->lastline->next; l; l = l->next) {
 		strncpy(l->cells[0].data, view->symbols[SYNTAX_SYMBOL_EOF], sizeof(l->cells[0].data)-1);
-		ui_window_style_set(&win->vis->ui, win->id, l->cells, UI_STYLE_EOF);
+		ui_window_style_set(&win->vis->ui, win->id, l->cells, UI_STYLE_EOF, false);
 	}
 }
 
