@@ -264,13 +264,13 @@ static void window_draw_cursorline(Win *win) {
 
 static void window_draw_selection(Win *win, Selection *cur) {
 	View *view = &win->view;
-	Filerange sel = view_selections_get(cur);
-	if (!text_range_valid(&sel))
+	Filerange range = view_selections_get(cur);
+	if (!text_range_valid(&range))
 		return;
 	Line *start_line; int start_col;
 	Line *end_line; int end_col;
-	view_coord_get(view, sel.start, &start_line, NULL, &start_col);
-	view_coord_get(view, sel.end, &end_line, NULL, &end_col);
+	view_coord_get(view, range.start, &start_line, NULL, &start_col);
+	view_coord_get(view, range.end, &end_line, NULL, &end_col);
 	if (!start_line && !end_line)
 		return;
 	if (!start_line) {
