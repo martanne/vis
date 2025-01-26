@@ -27,6 +27,9 @@ vis.ftdetect.filetypes = {
 	applescript = {
 		ext = { "%.applescript$" },
 	},
+	asciidoc = {
+		ext = { "%.adoc$" },
+	},
 	asm = {
 		ext = { "%.asm$", "%.ASM$", "%.s$", "%.S$" },
 	},
