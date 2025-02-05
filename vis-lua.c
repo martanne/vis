@@ -2789,6 +2789,50 @@ static int file_text_object(lua_State *L) {
 	return 1;
 }
 
+/***
+ * Convert line, column indices to zero-based file byte offset.
+ *
+ * @function offset_from_line_column
+ * @tparam int lineno the line number of the line
+ * @tparam[opt] int col the optional column
+ * @treturn int pos the zero-based bytes offset of the line, column or `nil` if invalid
+ */
+static int file_offset_from_line_column(lua_State *L) {
+	File *file = obj_ref_check(L, 1, VIS_LUA_TYPE_FILE);
+	size_t lineno = checkpos(L, 2);
+	size_t pos = text_pos_by_lineno(file->text, lineno);
+	if (pos == EPOS)
+		return 0;
+
+	if (lua_gettop(L) == 3) {
+		// The number of characters to skip to get to the column.
+		size_t chars_to_col = checkpos(L, 3) - 1;
+		pos = text_line_char_set(file->text, pos, chars_to_col);
+	}
+	lua_pushinteger(L, pos);
+
+	return 1;
+}
+
+/***
+ * Convert zero-based file byte offset to line, column indices.
+ *
+ * @function line_column_from_offset
+ * @tparam int offset the zero-based byte position in the file
+ * @treturn int lineno the 1-based line number of the position
+ * @treturn int col the 1-based column of the position
+ */
+static int file_line_column_from_offset(lua_State *L) {
+	File *file = obj_ref_check(L, 1, VIS_LUA_TYPE_FILE);
+	size_t pos = checkpos(L, 2);
+
+	size_t lineno = text_lineno_by_pos(file->text, pos);
+	lua_pushinteger(L, lineno);
+	size_t col = text_line_char_get(file->text, pos) + 1;
+	lua_pushinteger(L, col);
+	return 2;
+}
+
 static const struct luaL_Reg file_funcs[] = {
 	{ "__index", file_index },
 	{ "__newindex", file_newindex },
@@ -2799,6 +2843,8 @@ static const struct luaL_Reg file_funcs[] = {
 	{ "content", file_content },
 	{ "mark_set", file_mark_set },
 	{ "mark_get", file_mark_get },
+	{ "offset_from_line_column", file_offset_from_line_column },
+	{ "line_column_from_offset", file_line_column_from_offset },
 	{ NULL, NULL },
 };
 
