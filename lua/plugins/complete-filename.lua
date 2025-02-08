@@ -23,9 +23,10 @@ local complete_filename = function(expand)
 	end
 
 	-- Expand tilda for the home directory
-	if prefix:find('^~') then
+	_, j = prefix:find('^~')
+	if j ~= nil then
 		local home = assert(os.getenv("HOME"), "$HOME variable not set!")
-		prefix = prefix:gsub("^~", home, 1)
+		prefix = home .. prefix:sub(j + 1)
 	end
 
 	local cmdfmt = "vis-complete --file '%s'"
