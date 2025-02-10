@@ -1,4 +1,4 @@
--- Copyright 2017-2024 Marc André Tanner. See LICENSE.
+-- Copyright 2017-2025 Marc André Tanner. See LICENSE.
 -- strace(1) output lexer
 
 local lexer = lexer

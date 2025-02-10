@@ -1,4 +1,4 @@
--- Copyright 2020-2024 Haelwenn (lanodan) Monnier <contact+gemini.lua@hacktivis.me>. See LICENSE.
+-- Copyright 2020-2025 Haelwenn (lanodan) Monnier <contact+gemini.lua@hacktivis.me>. See LICENSE.
 -- Gemini / Gemtext LPeg lexer.
 -- See https://gemini.circumlunar.space/docs/specification.html
 

@@ -1,4 +1,4 @@
--- Copyright (c) 2016-2024 Larry Hynes. See LICENSE.
+-- Copyright (c) 2016-2025 Larry Hynes. See LICENSE.
 -- Taskpaper LPeg lexer
 
 local lexer = lexer

@@ -1,6 +1,5 @@
--- Copyright 2006-2024 Mitchell. See LICENSE.
+-- Copyright 2024-2025 Samuel Marquis. See LICENSE.
 -- Nix LPeg lexer.
--- Written by Samuel Marquis.
 
 local lexer = lexer
 local P, S = lpeg.P, lpeg.S

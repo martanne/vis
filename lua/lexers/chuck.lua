@@ -1,4 +1,4 @@
--- Copyright 2010-2024 Martin Morawetz. See LICENSE.
+-- Copyright 2010-2025 Martin Morawetz. See LICENSE.
 -- ChucK LPeg lexer.
 
 local lexer = lexer

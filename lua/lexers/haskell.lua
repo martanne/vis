@@ -1,4 +1,4 @@
--- Copyright 2006-2024 Mitchell. See LICENSE.
+-- Copyright 2006-2025 Mitchell. See LICENSE.
 -- Haskell LPeg lexer.
 -- Modified by Alex Suraci.
 -- Migrated by Samuel Marquis.

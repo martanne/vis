@@ -1,4 +1,4 @@
--- Copyright 2006-2024 Mitchell. See LICENSE.
+-- Copyright 2006-2025 Mitchell. See LICENSE.
 -- Copyright 2017 Michel Martens.
 -- Crystal LPeg lexer (based on Ruby).
 

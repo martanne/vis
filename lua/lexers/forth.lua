@@ -1,4 +1,4 @@
--- Copyright 2006-2024 Mitchell. See LICENSE.
+-- Copyright 2006-2025 Mitchell. See LICENSE.
 -- Forth LPeg lexer.
 -- Contributions from Joseph Eib.
 

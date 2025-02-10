@@ -1,4 +1,4 @@
--- Copyright 2022-2024 Mitchell. See LICENSE.
+-- Copyright 2022-2025 Mitchell. See LICENSE.
 -- LPeg lexer for tool output.
 -- If a warning or error is recognized, tags its filename, line, column (if available),
 -- and message, and sets the line state to 1 for an error (first bit), and 2 for a warning

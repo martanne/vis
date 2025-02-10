@@ -1,4 +1,4 @@
--- Copyright 2016-2024 Christian Hesse. See LICENSE.
+-- Copyright 2016-2025 Christian Hesse. See LICENSE.
 -- fstab LPeg lexer.
 
 local lexer = lexer

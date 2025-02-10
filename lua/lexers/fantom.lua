@@ -1,4 +1,4 @@
--- Copyright 2018-2024 Simeon Maryasin (MarSoft). See LICENSE.
+-- Copyright 2018-2025 Simeon Maryasin (MarSoft). See LICENSE.
 -- Fantom LPeg lexer.
 -- Based on Java LPeg lexer by Mitchell and Vim's Fantom syntax.
 

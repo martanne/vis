@@ -1,4 +1,4 @@
--- Copyright 2021-2024 Mitchell. See LICENSE.
+-- Copyright 2021-2025 Mitchell. See LICENSE.
 -- Hare LPeg lexer
 
 local lexer = lexer

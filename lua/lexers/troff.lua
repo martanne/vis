@@ -1,4 +1,4 @@
--- Copyright 2023-2024 Mitchell. See LICENSE.
+-- Copyright 2023-2025 Mitchell. See LICENSE.
 -- troff/man LPeg lexer.
 -- Based on original Man lexer by David B. Lamkins and modified by Eolien55.
 

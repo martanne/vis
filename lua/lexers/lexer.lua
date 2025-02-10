@@ -1,4 +1,4 @@
--- Copyright 2006-2024 Mitchell. See LICENSE.
+-- Copyright 2006-2025 Mitchell. See LICENSE.
 
 --- Lexes Scintilla documents and source code with Lua and LPeg.
 --
@@ -1685,6 +1685,7 @@ function M.detect(filename, line)
 		obs = 'objeck', --
 		m = 'objective_c', mm = 'objective_c', objc = 'objective_c', --
 		caml = 'caml', ml = 'caml', mli = 'caml', mll = 'caml', mly = 'caml', --
+		org = 'org', --
 		dpk = 'pascal', dpr = 'pascal', p = 'pascal', pas = 'pascal', --
 		al = 'perl', perl = 'perl', pl = 'perl', pm = 'perl', pod = 'perl', --
 		inc = 'php', php = 'php', php3 = 'php', php4 = 'php', phtml = 'php', --

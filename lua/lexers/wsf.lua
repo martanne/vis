@@ -1,4 +1,4 @@
--- Copyright 2006-2024 Mitchell. See LICENSE.
+-- Copyright 2006-2025 Mitchell. See LICENSE.
 -- WSF LPeg lexer (based on XML).
 -- Contributed by Jeff Stone.
 

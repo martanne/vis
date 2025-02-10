@@ -1,4 +1,4 @@
--- Copyright 2023-2024 Mitchell. See LICENSE.
+-- Copyright 2023-2025 Mitchell. See LICENSE.
 -- Objeck LPeg lexer.
 
 local lexer = lexer

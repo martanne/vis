@@ -1,4 +1,4 @@
--- Copyright 2015-2024 Charles Lehner. See LICENSE.
+-- Copyright 2015-2025 Charles Lehner. See LICENSE.
 -- ledger journal LPeg lexer, see http://www.ledger-cli.org/
 
 local lexer = require('lexer')

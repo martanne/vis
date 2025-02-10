@@ -1,4 +1,4 @@
--- Copyright 2020-2024 Florian Fischer. See LICENSE.
+-- Copyright 2020-2025 Florian Fischer. See LICENSE.
 -- Meson file LPeg lexer.
 
 local lexer = lexer

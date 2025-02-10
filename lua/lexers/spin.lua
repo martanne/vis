@@ -1,4 +1,4 @@
--- Copyright 2017-2024 David B. Lamkins <david@lamkins.net>. See LICENSE.
+-- Copyright 2017-2025 David B. Lamkins <david@lamkins.net>. See LICENSE.
 -- Spin LPeg lexer, see https://www.parallax.com/microcontrollers/propeller.
 
 local lexer = require('lexer')

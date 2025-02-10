@@ -1,4 +1,4 @@
--- Copyright 2017-2024 Murray Calavera. See LICENSE.
+-- Copyright 2017-2025 Murray Calavera. See LICENSE.
 -- Standard ML LPeg lexer.
 
 local lexer = require('lexer')

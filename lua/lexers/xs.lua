@@ -1,4 +1,4 @@
--- Copyright 2017-2024 David B. Lamkins. See LICENSE.
+-- Copyright 2017-2025 David B. Lamkins. See LICENSE.
 -- xs LPeg lexer.
 -- Adapted from rc lexer by Michael Forney.
 

@@ -1,4 +1,4 @@
--- Copyright 2022-2024 Matej Cepl mcepl.att.cepl.eu. See LICENSE.
+-- Copyright 2022-2025 Matej Cepl mcepl.att.cepl.eu. See LICENSE.
 
 local lexer = require('lexer')
 local token, word_match = lexer.token, lexer.word_match

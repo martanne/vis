@@ -1,4 +1,4 @@
--- Copyright 2006-2024 Brian "Sir Alaran" Schott. See LICENSE.
+-- Copyright 2006-2025 Brian "Sir Alaran" Schott. See LICENSE.
 -- Dot LPeg lexer.
 -- Based off of lexer code by Mitchell.
 
