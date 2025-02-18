@@ -1335,7 +1335,7 @@ void view_selections_normalize(View *view) {
 		view_selections_set(prev, &range_prev);
 }
 
-void win_style(Win *win, enum UiStyle style, size_t start, size_t end, bool keep) {
+void win_style(Win *win, enum UiStyle style, size_t start, size_t end, bool keep_non_default) {
 	View *view = &win->view;
 	if (end < view->start || start > view->end)
 		return;
@@ -1365,7 +1365,7 @@ void win_style(Win *win, enum UiStyle style, size_t start, size_t end, bool keep
 	do {
 		while (pos <= end && col < width) {
 			pos += line->cells[col].len;
-			ui_window_style_set(&win->vis->ui, win->id, &line->cells[col++], style, keep);
+			ui_window_style_set(&win->vis->ui, win->id, &line->cells[col++], style, keep_non_default);
 		}
 		col = 0;
 	} while (pos <= end && (line = line->next));
