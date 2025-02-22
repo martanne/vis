@@ -276,8 +276,8 @@ void ui_window_style_set(Ui *tui, int win_id, Cell *cell, enum UiStyle id, bool 
 		return;
 	}
 
-	CellStyle default_style = tui->styles[win_id * UI_STYLE_MAX + UI_STYLE_DEFAULT];
 	if (keep_non_default) {
+		CellStyle default_style = tui->styles[win_id * UI_STYLE_MAX + UI_STYLE_DEFAULT];
 		if (!cell_color_equal(cell->style.fg, default_style.fg)) {
 			set.fg = cell->style.fg;
 		}
@@ -285,12 +285,9 @@ void ui_window_style_set(Ui *tui, int win_id, Cell *cell, enum UiStyle id, bool 
 			set.bg = cell->style.bg;
 		}
 	}
-	if (is_default_fg(set.fg)) {
-		set.fg = cell->style.fg;
-	}
-	if (is_default_bg(set.bg)) {
-		set.bg = cell->style.bg;
-	}
+
+	set.fg = is_default_fg(set.fg) ? cell->style.fg : set.fg;
+	set.bg = is_default_bg(set.bg) ? cell->style.bg : set.bg;
 	set.attr = cell->style.attr | set.attr;
 
 	cell->style = set;
