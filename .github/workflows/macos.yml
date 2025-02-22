@@ -54,4 +54,4 @@ jobs:
           echo "Download checksum verification failed"
           exit 1
         fi
-        bash < codecov
+        bash < codecov || true
