@@ -54,7 +54,8 @@ const char *register_slot_get(Vis *vis, Register *reg, size_t slot, size_t *len)
 		Buffer *buf = array_get(&reg->values, 0);
 		if (!buf)
 			return NULL;
-		buffer_printf(buf, "%zu", slot+1);
+		buf->len = 0;
+		buffer_appendf(buf, "%zu", slot+1);
 		if (len)
 			*len = buffer_length0(buf);
 		return buffer_content0(buf);

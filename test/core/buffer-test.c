@@ -57,14 +57,6 @@ int main(int argc, char *argv[]) {
 	buf.len = 0;
 
 	skip_if(TIS_INTERPRETER, 1, "vsnprintf not supported") {
-
-		ok(buffer_printf(&buf, "Test: %d\n", 42) && compare0(&buf, "Test: 42\n"), "Set formatted");
-		ok(buffer_printf(&buf, "%d\n", 42) && compare0(&buf, "42\n"), "Set formatted overwrite");
-		buf.len = 0;
-
-		ok(buffer_printf(&buf, "%s", "") && compare0(&buf, ""), "Set formatted empty string");
-		buf.len = 0;
-
 		bool append = true;
 		for (int i = 1; i <= 10; i++)
 			append &= buffer_appendf(&buf, "%d", i);

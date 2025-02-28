@@ -135,15 +135,6 @@ bool buffer_appendf(Buffer *buf, const char *fmt, ...) {
 	return ret;
 }
 
-bool buffer_printf(Buffer *buf, const char *fmt, ...) {
-	buf->len = 0;
-	va_list ap;
-	va_start(ap, fmt);
-	bool ret = buffer_vappendf(buf, fmt, ap);
-	va_end(ap);
-	return ret;
-}
-
 size_t buffer_length0(Buffer *buf) {
 	size_t len = buf->len;
 	if (len > 0 && buf->data[len-1] == '\0')
