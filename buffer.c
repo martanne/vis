@@ -67,7 +67,7 @@ bool buffer_remove(Buffer *buf, size_t pos, size_t len) {
 	return true;
 }
 
-bool buffer_insert(Buffer *buf, size_t pos, const void *data, size_t len) {
+static bool buffer_insert(Buffer *buf, size_t pos, const void *data, size_t len) {
 	if (pos > buf->len)
 		return false;
 	if (len == 0)
@@ -84,7 +84,7 @@ bool buffer_insert(Buffer *buf, size_t pos, const void *data, size_t len) {
 
 bool buffer_insert0(Buffer *buf, size_t pos, const char *data) {
 	if (pos == 0)
-		return buffer_prepend0(buf, data);
+		return buffer_insert(buf, 0, data, strlen(data) + (buf->len == 0));
 	if (pos == buf->len)
 		return buffer_append0(buf, data);
 	return buffer_insert(buf, pos, data, strlen(data));
@@ -101,14 +101,6 @@ bool buffer_append0(Buffer *buf, const char *data) {
 	if (!ret)
 		buf->len += nul;
 	return ret;
-}
-
-bool buffer_prepend(Buffer *buf, const void *data, size_t len) {
-	return buffer_insert(buf, 0, data, len);
-}
-
-bool buffer_prepend0(Buffer *buf, const char *data) {
-	return buffer_prepend(buf, data, strlen(data) + (buf->len == 0));
 }
 
 static bool buffer_vappendf(Buffer *buf, const char *fmt, va_list ap) {

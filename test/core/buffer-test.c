@@ -4,7 +4,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "tap.h"
-#include "buffer.h"
+#include "buffer.c"
 
 static bool compare(Buffer *buf, const char *data, size_t len) {
 	return buf->len == len && (len == 0 || memcmp(buf->data, data, buf->len) == 0);
@@ -32,8 +32,7 @@ int main(int argc, char *argv[]) {
 	ok(buffer_put0(&buf, "") && compare0(&buf, ""), "Put empty string");
 	ok(buffer_put0(&buf, "bar") && compare0(&buf, "bar"), "Put string");
 
-	ok(buffer_prepend0(&buf, "foo") && compare0(&buf, "foobar"), "Prepend string");
-	ok(buffer_append0(&buf, "baz") && compare0(&buf, "foobarbaz"), "Append string");
+	ok(buffer_append0(&buf, "baz") && compare0(&buf, "barbaz"), "Append string");
 
 	buffer_release(&buf);
 	ok(buf.data == NULL && buf.len == 0 && buf.size == 0, "Release");
@@ -50,10 +49,9 @@ int main(int argc, char *argv[]) {
 	ok(buffer_put(&buf, "foo", 0) && compare(&buf, "", 0), "Put zero length data");
 	ok(buffer_put(&buf, "bar", 3) && compare(&buf, "bar", 3), "Put data");
 
-	ok(buffer_prepend(&buf, "foo\0", 4) && compare(&buf, "foo\0bar", 7), "Prepend data");
-	ok(buffer_append(&buf, "\0baz", 4) && compare(&buf, "foo\0bar\0baz", 11), "Append data");
+	ok(buffer_append(&buf, "\0baz", 4) && compare(&buf, "bar\0baz", 7), "Append data");
 
-	ok(buffer_grow(&buf, cap+1) && compare(&buf, "foo\0bar\0baz", 11) && buf.size >= cap+1, "Grow");
+	ok(buffer_grow(&buf, cap+1) && compare(&buf, "bar\0baz", 7) && buf.size >= cap+1, "Grow");
 	buf.len = 0;
 
 	skip_if(TIS_INTERPRETER, 1, "vsnprintf not supported") {

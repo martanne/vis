@@ -34,18 +34,12 @@ bool buffer_put(Buffer*, const void *data, size_t len);
 bool buffer_put0(Buffer*, const char *data);
 /** Remove ``len`` bytes starting at ``pos``. */
 bool buffer_remove(Buffer*, size_t pos, size_t len);
-/** Insert ``len`` bytes of ``data`` at ``pos``. */
-bool buffer_insert(Buffer*, size_t pos, const void *data, size_t len);
 /** Insert NUL-terminated data at pos. */
 bool buffer_insert0(Buffer*, size_t pos, const char *data);
 /** Append further content to the end. */
 bool buffer_append(Buffer*, const void *data, size_t len);
 /** Append NUL-terminated data. */
 bool buffer_append0(Buffer*, const char *data);
-/** Insert ``len`` bytes of ``data`` at the start. */
-bool buffer_prepend(Buffer*, const void *data, size_t len);
-/** Insert NUL-terminated data at the start. */
-bool buffer_prepend0(Buffer*, const char *data);
 /** Append formatted buffer content, ensures NUL termination on success. */
 bool buffer_appendf(Buffer*, const char *fmt, ...) __attribute__((format(printf, 2, 3)));
 /** Return length of a buffer without trailing NUL byte. */
