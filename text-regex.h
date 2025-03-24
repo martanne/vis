@@ -15,7 +15,7 @@ typedef struct Regex Regex;
 typedef Filerange RegexMatch;
 
 Regex *text_regex_new(void);
-int text_regex_compile(Regex*, const char *pattern, int cflags);
+int text_regex_compile(Regex*, const char *pattern, size_t len, int cflags);
 size_t text_regex_nsub(Regex*);
 void text_regex_free(Regex*);
 int text_regex_match(Regex*, const char *data, int eflags);
