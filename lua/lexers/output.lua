@@ -7,7 +7,7 @@
 
 local lexer = lexer
 local starts_line = lexer.starts_line
-local P, S = lpeg.P, lpeg.S
+local P, S, R = lpeg.P, lpeg.S, lpeg.R
 
 local lex = lexer.new(..., {lex_by_line = true})
 
@@ -94,6 +94,19 @@ lex:add_rule('perl', starts_line(message((lexer.nonnewline - ' at ')^1)) * text(
 lex:add_rule('cmake',
 	starts_line(text('CMake Error at ')) * c_filename * colon * line * colon * mark_error)
 
-lex:add_rule('any_line', lex:tag(lexer.DEFAULT, lexer.to_eol()))
+-- CSI sequences, including colors.
+local csi = P('\x1B[')
+local non_csi_seq = text((lexer.nonnewline - csi)^1)
+local colors = {'black', 'red', 'green', 'yellow', 'blue', 'magenta', 'cyan', 'white'}
+local csi_color = P(false)
+for i, name in ipairs(colors) do
+	local bold, color = '1;', tostring(30 + i - 1)
+	csi_color = csi_color +
+		(lex:tag('csi', csi * bold * color * 'm') * lex:tag('csi.' .. name .. '.bright', non_csi_seq)) +
+		(lex:tag('csi', csi * color * 'm') * lex:tag('csi.' .. name, non_csi_seq))
+end
+local csi_seq = #csi * (csi_color + lex:tag('csi', csi * (lexer.nonnewline - R('@~'))^0 * R('@~')))
+
+lex:add_rule('any_line', (non_csi_seq + csi_seq)^1)
 
 return lex

@@ -1,17 +1,41 @@
 -- Copyright 2016-2025 Christian Hesse. See LICENSE.
 -- systemd unit file LPeg lexer.
 
-local lexer = require('lexer')
-local token, word_match = lexer.token, lexer.word_match
+local lexer = lexer
 local P, S = lpeg.P, lpeg.S
 
-local lex = lexer.new('systemd', {lex_by_line = true})
-
--- Whitespace.
-lex:add_rule('whitespace', token(lexer.WHITESPACE, lexer.space^1))
+local lex = lexer.new(..., {lex_by_line = true})
 
 -- Keywords.
-lex:add_rule('keyword', token(lexer.KEYWORD, word_match{
+lex:add_rule('keyword', lex:tag(lexer.KEYWORD, lex:word_match(lexer.KEYWORD)))
+
+-- Options.
+lex:add_rule('option', lex:tag(lexer.PREPROCESSOR, lex:word_match(lexer.PREPROCESSOR)))
+
+-- Identifiers.
+lex:add_rule('identifier',
+	lex:tag(lexer.IDENTIFIER, (lexer.alpha + '_') * (lexer.alnum + S('_.'))^0))
+
+-- Strings.
+local sq_str = lexer.range("'")
+local dq_str = lexer.range('"')
+lex:add_rule('string', lex:tag(lexer.STRING, sq_str + dq_str))
+
+-- Sections.
+lex:add_rule('section', lex:tag(lexer.LABEL, '[' * lex:word_match(lexer.LABEL) * ']'))
+
+-- Comments.
+lex:add_rule('comment', lex:tag(lexer.COMMENT, lexer.starts_line(lexer.to_eol(S(';#')))))
+
+-- Numbers.
+local integer = S('+-')^-1 * (lexer.hex_num + lexer.oct_num_('_') + lexer.dec_num_('_'))
+lex:add_rule('number', lex:tag(lexer.NUMBER, lexer.float + integer))
+
+-- Operators.
+lex:add_rule('operator', lex:tag(lexer.OPERATOR, '='))
+
+-- Word lists
+lex:set_word_list(lexer.KEYWORD, {
 	-- Boolean values.
 	'true', 'false', 'on', 'off', 'yes', 'no',
 	-- Service types.
@@ -38,10 +62,9 @@ lex:add_rule('keyword', token(lexer.KEYWORD, word_match{
 	'PATH', 'LANG', 'USER', 'LOGNAME', 'HOME', 'SHELL', 'XDG_RUNTIME_DIR', 'XDG_SESSION_ID',
 	'XDG_SEAT', 'XDG_VTNR', 'MAINPID', 'MANAGERPID', 'LISTEN_FDS', 'LISTEN_PID', 'LISTEN_FDNAMES',
 	'NOTIFY_SOCKET', 'WATCHDOG_PID', 'WATCHDOG_USEC', 'TERM'
-}))
+})
 
--- Options.
-lex:add_rule('option', token(lexer.PREPROCESSOR, word_match{
+lex:set_word_list(lexer.PREPROCESSOR, {
 	-- Unit section.
 	'Description', 'Documentation', 'Requires', 'Requisite', 'Wants', 'BindsTo', 'PartOf',
 	'Conflicts', 'Before', 'After', 'OnFailure', 'PropagatesReloadTo', 'ReloadPropagatedFrom',
@@ -103,30 +126,16 @@ lex:add_rule('option', token(lexer.PREPROCESSOR, word_match{
 	'UtmpIdentifier', 'UtmpMode', 'SELinuxContext', 'AppArmorProfile', 'SmackProcessLabel',
 	'IgnoreSIGPIPE', 'NoNewPrivileges', 'SystemCallFilter', 'SystemCallErrorNumber',
 	'SystemCallArchitectures', 'RestrictAddressFamilies', 'Personality', 'RuntimeDirectory',
-	'RuntimeDirectoryMode'
-}))
+	'RuntimeDirectoryMode',
+	-- Container files.
+	'AddCapability', 'AutoUpdate', 'ContainerName', 'Exec', 'HostName', 'Image', 'Network',
+	'PodmanArgs', 'PublishPort', 'UserNS', 'Volume'
+})
 
--- Identifiers.
-lex:add_rule('identifier', token(lexer.IDENTIFIER, (lexer.alpha + '_') * (lexer.alnum + S('_.'))^0))
-
--- Strings.
-local sq_str = lexer.range("'")
-local dq_str = lexer.range('"')
-lex:add_rule('string', token(lexer.STRING, sq_str + dq_str))
-
--- Sections.
-lex:add_rule('section', token(lexer.LABEL, '[' *
-	word_match('Automount BusName Install Mount Path Service Service Socket Timer Unit') * ']'))
-
--- Comments.
-lex:add_rule('comment', token(lexer.COMMENT, lexer.starts_line(lexer.to_eol(S(';#')))))
-
--- Numbers.
-local integer = S('+-')^-1 * (lexer.hex_num + lexer.oct_num_('_') + lexer.dec_num_('_'))
-lex:add_rule('number', token(lexer.NUMBER, lexer.float + integer))
-
--- Operators.
-lex:add_rule('operator', token(lexer.OPERATOR, '='))
+lex:set_word_list(lexer.LABEL, {
+	'Automount', 'BusName', 'Install', 'Mount', 'Path', 'Service', 'Service', 'Socket', 'Timer',
+	'Unit'
+})
 
 lexer.property['scintillua.comment'] = '#'
 

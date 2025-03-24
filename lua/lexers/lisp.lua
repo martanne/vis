@@ -1,17 +1,44 @@
 -- Copyright 2006-2025 Mitchell. See LICENSE.
 -- Lisp LPeg lexer.
 
-local lexer = require('lexer')
-local token, word_match = lexer.token, lexer.word_match
+local lexer = lexer
 local P, S = lpeg.P, lpeg.S
 
-local lex = lexer.new('lisp')
-
--- Whitespace.
-lex:add_rule('whitespace', token(lexer.WHITESPACE, lexer.space^1))
+local lex = lexer.new(...)
 
 -- Keywords.
-lex:add_rule('keyword', token(lexer.KEYWORD, word_match{
+lex:add_rule('keyword', lex:tag(lexer.KEYWORD, lex:word_match(lexer.KEYWORD)))
+
+-- Identifiers.
+local word = lexer.alpha * (lexer.alnum + S('_-'))^0
+lex:add_rule('identifier', lex:tag(lexer.IDENTIFIER, word))
+
+-- Strings.
+local character = lexer.word_match{
+	'backspace', 'linefeed', 'newline', 'page', 'return', 'rubout', 'space', 'tab'
+} + 'x' * lexer.xdigit^1 + lexer.any
+lex:add_rule('string', lex:tag(lexer.STRING, "'" * word + lexer.range('"') + '#\\' * character))
+
+-- Comments.
+local line_comment = lexer.to_eol(';')
+local block_comment = lexer.range('#|', '|#')
+lex:add_rule('comment', lex:tag(lexer.COMMENT, line_comment + block_comment))
+
+-- Numbers.
+lex:add_rule('number',
+	lex:tag(lexer.NUMBER, P('-')^-1 * lexer.digit^1 * (S('./') * lexer.digit^1)^-1))
+
+-- Operators.
+lex:add_rule('operator', lex:tag(lexer.OPERATOR, S('<>=*/+-`@%()')))
+
+-- Fold points.
+lex:add_fold_point(lexer.OPERATOR, '(', ')')
+lex:add_fold_point(lexer.OPERATOR, '[', ']')
+lex:add_fold_point(lexer.OPERATOR, '{', '}')
+lex:add_fold_point(lexer.COMMENT, '#|', '|#')
+
+-- Word lists
+lex:set_word_list(lexer.KEYWORD, {
 	'defclass', 'defconstant', 'defgeneric', 'define-compiler-macro', 'define-condition',
 	'define-method-combination', 'define-modify-macro', 'define-setf-expander', 'define-symbol-macro',
 	'defmacro', 'defmethod', 'defpackage', 'defparameter', 'defsetf', 'defstruct', 'deftype', 'defun',
@@ -28,31 +55,7 @@ lex:add_rule('keyword', token(lexer.KEYWORD, word_match{
 	'with-output-to-string', 'with-package-iterator', 'with-simple-restart', 'with-slots',
 	'with-standard-io-syntax', --
 	't', 'nil'
-}))
-
--- Identifiers.
-local word = lexer.alpha * (lexer.alnum + S('_-'))^0
-lex:add_rule('identifier', token(lexer.IDENTIFIER, word))
-
--- Strings.
-lex:add_rule('string', token(lexer.STRING, "'" * word + lexer.range('"') + '#\\' * lexer.any))
-
--- Comments.
-local line_comment = lexer.to_eol(';')
-local block_comment = lexer.range('#|', '|#')
-lex:add_rule('comment', token(lexer.COMMENT, line_comment + block_comment))
-
--- Numbers.
-lex:add_rule('number', token(lexer.NUMBER, P('-')^-1 * lexer.digit^1 * (S('./') * lexer.digit^1)^-1))
-
--- Operators.
-lex:add_rule('operator', token(lexer.OPERATOR, S('<>=*/+-`@%()')))
-
--- Fold points.
-lex:add_fold_point(lexer.OPERATOR, '(', ')')
-lex:add_fold_point(lexer.OPERATOR, '[', ']')
-lex:add_fold_point(lexer.OPERATOR, '{', '}')
-lex:add_fold_point(lexer.COMMENT, '#|', '|#')
+})
 
 lexer.property['scintillua.comment'] = ';'
 
