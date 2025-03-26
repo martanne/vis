@@ -40,6 +40,9 @@ typedef struct Win Win;
 /* maximum bytes needed for string representation of a (pseudo) key */
 #define VIS_KEY_LENGTH_MAX 64
 
+/* maximum bytes used for list of available commands */
+#define VIS_COMMAND_BUFFER_MAX 1000
+
 /** Union used to pass arguments to key action functions. */
 typedef union {
 	bool b;
@@ -837,6 +840,9 @@ bool vis_option_unregister(Vis*, const char *name);
 
 /** Execute any kind (``:``, ``?``, ``/``) of prompt command */
 bool vis_prompt_cmd(Vis*, const char *cmd);
+
+/** Write newline separated list of available commands to ``cmd_list`` */
+void vis_print_cmds(Vis*, char *cmd_list);
 
 /**
  * Pipe a given file range to an external process.
