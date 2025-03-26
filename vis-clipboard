@@ -52,6 +52,11 @@ vc_determine_command() {
 		return 0
 	fi
 
+	if command -v wslclip >/dev/null 2>&1; then
+		echo 'wsl'
+		return 0
+	fi
+
 	if [ -c /dev/clipboard ]; then
 		echo 'cygwin'
 		return 0
@@ -148,6 +153,14 @@ vc_mac_copy() {
 
 vc_mac_paste() {
 	pbpaste
+}
+
+vc_wsl_copy() {
+	wslclip
+}
+
+vc_wsl_paste() {
+	wslclip -g
 }
 
 vc_cygwin_copy() {
