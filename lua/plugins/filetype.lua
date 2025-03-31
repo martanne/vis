@@ -442,8 +442,8 @@ vis.ftdetect.filetypes = {
 	},
 	systemd = {
 		ext = {
-			"%.automount$", "%.device$", "%.mount$", "%.path$",
-			"%.scope$", "%.service$", "%.slice$", "%.socket$",
+			"%.automount$", "%.container$", "%.device$", "%.mount$",
+			"%.path$", "%.scope$", "%.service$", "%.slice$", "%.socket$",
 			"%.swap$", "%.target$", "%.timer$"
 		},
 	},
