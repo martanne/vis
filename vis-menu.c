@@ -36,6 +36,7 @@
 #include <string.h>
 #include <strings.h>
 #include <ctype.h>
+#include <signal.h>
 #include <sys/ioctl.h>
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -61,7 +62,7 @@ struct Item {
 static char   text[BUFSIZ] = "";
 static int    barpos = 0;
 static size_t mw, mh;
-static size_t lines = 0;
+static size_t lines = 0, ideallines = 0;
 static size_t inputw, promptw;
 static size_t cursor;
 static char  *prompt = NULL;
@@ -349,19 +350,15 @@ xread(int fd, void *buf, size_t nbyte) {
 }
 
 static void
-setup(void) {
+resize(void) {
 	int fd, result = -1;
 	struct winsize ws;
-
-	/* re-open stdin to read keyboard */
-	if (!freopen("/dev/tty", "r", stdin)) die("Can't reopen tty as stdin.");
-	if (!freopen("/dev/tty", "w", stderr)) die("Can't reopen tty as stderr.");
 
 	/* ioctl() the tty to get size */
 	fd = open("/dev/tty", O_RDWR);
 	if (fd == -1) {
-		mh = 24;
 		mw = 80;
+		mh = 24;
 	} else {
 		result = ioctl(fd, TIOCGWINSZ, &ws);
 		close(fd);
@@ -374,6 +371,25 @@ setup(void) {
 		}
 	}
 
+	lines = MIN(MAX(ideallines, 0), mh);
+	promptw = prompt ? textw(prompt) : 0;
+	inputw = MIN(inputw, mw/3);
+	calcoffsets();
+	if (barpos != 0) resetline();
+	drawmenu();
+}
+
+static void
+handle_sigwinch(int sig) {
+	resize();
+}
+
+static void
+setup(void) {
+	/* re-open stdin to read keyboard */
+	if (!freopen("/dev/tty", "r", stdin)) die("Can't reopen tty as stdin.");
+	if (!freopen("/dev/tty", "w", stderr)) die("Can't reopen tty as stderr.");
+
 	/* change terminal attributes, save old */
 	tcgetattr(0, &tio_old);
 	tio_new = tio_old;
@@ -384,12 +400,10 @@ setup(void) {
 	tio_new.c_cc[VMIN] = 1;
 	tcsetattr(0, TCSANOW, &tio_new);
 
-	lines = MIN(MAX(lines, 0), mh);
-	promptw = prompt ? textw(prompt) : 0;
-	inputw = MIN(inputw, mw/3);
 	match();
-	if (barpos != 0) resetline();
-	drawmenu();
+	resize();
+
+	signal(SIGWINCH, handle_sigwinch);
 }
 
 static int
@@ -627,7 +641,7 @@ main(int argc, char **argv) {
 				prompt = NULL;
 		} else if (!strcmp(argv[i], "-l")) {
 			errno = 0;
-			lines = strtoul(argv[++i], NULL, 10);
+			ideallines = strtoul(argv[++i], NULL, 10);
 			if (errno)
 				usage();
 		} else {
