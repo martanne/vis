@@ -8,19 +8,24 @@
 #include "util.h"
 
 static Regex *search_word(Vis *vis, Text *txt, size_t pos) {
-	char expr[512];
 	Filerange word = text_object_word(txt, pos);
 	if (!text_range_valid(&word))
 		return NULL;
-	char *buf = text_bytes_alloc0(txt, word.start, text_range_size(&word));
+	size_t word_len = text_range_size(&word);
+	char *buf = text_bytes_alloc0(txt, word.start, word_len);
 	if (!buf)
 		return NULL;
-	snprintf(expr, sizeof(expr), "[[:<:]]%s[[:>:]]", buf);
-	Regex *regex = vis_regex(vis, expr);
+	size_t max_len = word_len + 15;
+	char *expr = malloc(max_len);
+	if (!expr)
+		return NULL;
+	size_t expr_len = snprintf(expr, max_len, "[[:<:]]%s[[:>:]]", buf);
+	Regex *regex = vis_regex(vis, expr, expr_len);
 	if (!regex) {
-		snprintf(expr, sizeof(expr), "\\<%s\\>", buf);
-		regex = vis_regex(vis, expr);
+		expr_len = snprintf(expr, max_len, "\\<%s\\>", buf);
+		regex = vis_regex(vis, expr, expr_len);
 	}
+	free(expr);
 	free(buf);
 	return regex;
 }
@@ -46,7 +51,7 @@ static size_t search_word_backward(Vis *vis, Text *txt, size_t pos) {
 }
 
 static size_t search_forward(Vis *vis, Text *txt, size_t pos) {
-	Regex *regex = vis_regex(vis, NULL);
+	Regex *regex = vis_regex(vis, NULL, 0);
 	if (regex)
 		pos = text_search_forward(txt, pos, regex);
 	text_regex_free(regex);
@@ -54,7 +59,7 @@ static size_t search_forward(Vis *vis, Text *txt, size_t pos) {
 }
 
 static size_t search_backward(Vis *vis, Text *txt, size_t pos) {
-	Regex *regex = vis_regex(vis, NULL);
+	Regex *regex = vis_regex(vis, NULL, 0);
 	if (regex)
 		pos = text_search_backward(txt, pos, regex);
 	text_regex_free(regex);
@@ -293,7 +298,8 @@ bool vis_motion(Vis *vis, enum VisMotion motion, ...) {
 	case VIS_MOVE_SEARCH_BACKWARD:
 	{
 		const char *pattern = va_arg(ap, char*);
-		Regex *regex = vis_regex(vis, pattern);
+		size_t len = va_arg(ap, size_t);
+		Regex *regex = vis_regex(vis, pattern, len);
 		if (!regex) {
 			vis_cancel(vis);
 			goto err;

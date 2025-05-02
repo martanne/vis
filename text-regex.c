@@ -15,7 +15,7 @@ Regex *text_regex_new(void) {
 	return r;
 }
 
-int text_regex_compile(Regex *regex, const char *string, int cflags) {
+int text_regex_compile(Regex *regex, const char *string, size_t len, int cflags) {
 	int r = regcomp(&regex->regex, string, cflags);
 	if (r)
 		regcomp(&regex->regex, "\0\0", 0);
