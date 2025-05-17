@@ -351,9 +351,11 @@ EOF
 fi
 
 CONFIG_SYSTEM_TERMKEY=0
-TERMKEY_SRC='termkey.c driver-csi.c driver-ti.c'
+TERMKEY_SRC='termkey-vis.c'
 
-if test "$systermkey" != "no" ; then
+if test "$systermkey" = "no" ; then
+	CFLAGS_TERMKEY="-Itermkey"
+else
 	printf "checking for system libtermkey... "
 	cat > "$tmpc" <<EOF
 #include <termkey.h>

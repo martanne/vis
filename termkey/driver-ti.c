@@ -320,7 +320,7 @@ static int load_terminfo(TermKeyTI *ti)
   return 1;
 }
 
-static void *new_driver(TermKey *tk, const char *term)
+static void *ti_new_driver(TermKey *tk, const char *term)
 {
   TermKeyTI *ti = malloc(sizeof *ti);
   if(!ti)
@@ -345,7 +345,7 @@ static void *new_driver(TermKey *tk, const char *term)
   return ti;
 }
 
-static int start_driver(TermKey *tk, void *info)
+static int ti_start_driver(TermKey *tk, void *info)
 {
   TermKeyTI *ti = info;
   struct stat statbuf;
@@ -385,7 +385,7 @@ static int start_driver(TermKey *tk, void *info)
   return 1;
 }
 
-static int stop_driver(TermKey *tk, void *info)
+static int ti_stop_driver(TermKey *tk, void *info)
 {
   TermKeyTI *ti = info;
   struct stat statbuf;
@@ -420,7 +420,7 @@ static int stop_driver(TermKey *tk, void *info)
   return 1;
 }
 
-static void free_driver(void *info)
+static void ti_free_driver(void *info)
 {
   TermKeyTI *ti = info;
 
@@ -440,7 +440,7 @@ static void free_driver(void *info)
 
 #define CHARAT(i) (tk->buffer[tk->buffstart + (i)])
 
-static TermKeyResult peekkey(TermKey *tk, void *info, TermKeyKey *key, int force, size_t *nbytep)
+static TermKeyResult ti_peekkey(TermKey *tk, void *info, TermKeyKey *key, int force, size_t *nbytep)
 {
   TermKeyTI *ti = info;
 
@@ -546,11 +546,11 @@ static int insert_seq(TermKeyTI *ti, const char *seq, struct trie_node *node)
 struct TermKeyDriver termkey_driver_ti = {
   .name        = "terminfo",
 
-  .new_driver  = new_driver,
-  .free_driver = free_driver,
+  .new_driver  = ti_new_driver,
+  .free_driver = ti_free_driver,
 
-  .start_driver = start_driver,
-  .stop_driver  = stop_driver,
+  .start_driver = ti_start_driver,
+  .stop_driver  = ti_stop_driver,
 
-  .peekkey = peekkey,
+  .peekkey = ti_peekkey,
 };

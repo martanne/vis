@@ -499,7 +499,7 @@ static int register_keys(void)
   return 1;
 }
 
-static void *new_driver(TermKey *tk, const char *term)
+static void *csi_new_driver(TermKey *tk, const char *term)
 {
   if(!keyinfo_initialised)
     if(!register_keys())
@@ -516,7 +516,7 @@ static void *new_driver(TermKey *tk, const char *term)
   return csi;
 }
 
-static void free_driver(void *info)
+static void csi_free_driver(void *info)
 {
   TermKeyCsi *csi = info;
 
@@ -694,7 +694,7 @@ static TermKeyResult peekkey_ctrlstring(TermKey *tk, TermKeyCsi *csi, size_t int
   return TERMKEY_RES_KEY;
 }
 
-static TermKeyResult peekkey(TermKey *tk, void *info, TermKeyKey *key, int force, size_t *nbytep)
+static TermKeyResult csi_peekkey(TermKey *tk, void *info, TermKeyKey *key, int force, size_t *nbytep)
 {
   if(tk->buffcount == 0)
     return tk->is_closed ? TERMKEY_RES_EOF : TERMKEY_RES_NONE;
@@ -737,10 +737,10 @@ static TermKeyResult peekkey(TermKey *tk, void *info, TermKeyKey *key, int force
 struct TermKeyDriver termkey_driver_csi = {
   .name        = "CSI",
 
-  .new_driver  = new_driver,
-  .free_driver = free_driver,
+  .new_driver  = csi_new_driver,
+  .free_driver = csi_free_driver,
 
-  .peekkey = peekkey,
+  .peekkey = csi_peekkey,
 };
 
 TermKeyResult termkey_interpret_string(TermKey *tk, const TermKeyKey *key, const char **strp)
