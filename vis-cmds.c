@@ -689,12 +689,13 @@ static bool cmd_help(Vis *vis, Win *win, Command *cmd, const char *argv[], Selec
 		const char *name;
 		bool enabled;
 	} configs[] = {
-		{ "Curses support: ", CONFIG_CURSES },
-		{ "Lua support: ", CONFIG_LUA },
-		{ "Lua LPeg statically built-in: ", CONFIG_LPEG },
-		{ "TRE based regex support: ", CONFIG_TRE },
-		{ "POSIX ACL support: ", CONFIG_ACL },
-		{ "SELinux support: ", CONFIG_SELINUX },
+		{"Curses support: ",                CONFIG_CURSES        },
+		{"Vendored TermKey: ",             !CONFIG_SYSTEM_TERMKEY},
+		{"Lua support: ",                   CONFIG_LUA           },
+		{"Lua LPeg statically built-in: ",  CONFIG_LPEG          },
+		{"TRE based regex support: ",       CONFIG_TRE           },
+		{"POSIX ACL support: ",             CONFIG_ACL           },
+		{"SELinux support: ",               CONFIG_SELINUX       },
 	};
 
 	for (size_t i = 0; i < LENGTH(configs); i++)

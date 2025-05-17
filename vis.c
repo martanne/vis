@@ -1,6 +1,11 @@
 #include "util.h"
 
-#include <termkey.h>
+#if CONFIG_SYSTEM_TERMKEY
+  #include <termkey.h>
+#else
+  #define TERMKEY_EXPORT VIS_INTERNAL
+  #include "external/termkey.c"
+#endif
 
 #include "vis-core.h"
 #include "vis-subprocess.h"

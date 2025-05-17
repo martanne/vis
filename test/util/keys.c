@@ -3,7 +3,11 @@
 #include <string.h>
 #include <stdlib.h>
 #include <unistd.h>
-#include <termkey.h>
+
+#include "util.h"
+
+#define TERMKEY_EXPORT static
+#include "external/termkey.c"
 
 /* is c the start of a utf8 sequence? */
 #define ISUTF8(c)   (((c)&0xC0)!=0x80)
@@ -27,7 +31,7 @@ static void print(const char *fmt, ...) {
 }
 
 static void delay(void) {
-	usleep(termkey_get_waittime(termkey)*10000);
+	usleep(100*1000);
 }
 
 static void printkey(TermKeyKey *key) {

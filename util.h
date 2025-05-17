@@ -7,6 +7,9 @@
 #ifndef CONFIG_HELP
   #define CONFIG_HELP 1
 #endif
+#ifndef CONFIG_SYSTEM_TERMKEY
+  #define CONFIG_SYSTEM_TERMKEY 0
+#endif
 #ifndef CONFIG_CURSES
   #define CONFIG_CURSES 0
 #endif
