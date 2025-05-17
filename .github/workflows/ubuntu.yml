@@ -6,9 +6,6 @@ jobs:
   build:
     strategy:
       matrix:
-        os:
-          - ubuntu-latest
-          - ubuntu-20.04
         config:
           - ""
           - --disable-curses
@@ -17,7 +14,7 @@ jobs:
           - --disable-selinux
           - --disable-acl
           - --disable-help
-    runs-on: ${{ matrix.os }}
+    runs-on: ubuntu-latest
     env:
       CFLAGS_EXTRA: --coverage
       LDFLAGS_EXTRA: --coverage
