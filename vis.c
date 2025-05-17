@@ -18,7 +18,7 @@
 #include <sys/mman.h>
 #include <pwd.h>
 #include <libgen.h>
-#include <termkey.h>
+#include "termkey.h"
 
 #include "vis.h"
 #include "text-util.h"

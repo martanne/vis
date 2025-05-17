@@ -25,6 +25,7 @@ Fine tuning of the installation directories:
 
 Optional features:
   --enable-curses         build with Curses terminal output [yes]
+  --enable-sys-termkey    build with system termkey [auto]
   --enable-lua            build with Lua support [auto]
   --enable-lpeg-static    build with LPeg static linking [auto]
   --enable-tre            build with TRE regex support [auto]
@@ -120,6 +121,7 @@ MANDIR='$(PREFIX)/share/man'
 
 help=yes
 curses=yes
+systermkey=auto
 lua=auto
 lpeg=auto
 tre=auto
@@ -141,6 +143,8 @@ case "$arg" in
 --disable-help|--enable-help=no) help=no ;;
 --enable-curses|--enable-curses=yes) curses=yes ;;
 --disable-curses|--enable-curses=no) curses=no ;;
+--enable-sys-termkey|--enable-sys-termkey=yes) systermkey=yes ;;
+--disable-sys-termkey|--enable-sys-termkey=no) systermkey=no ;;
 --enable-lua|--enable-lua=yes) lua=yes ;;
 --disable-lua|--enable-lua=no) lua=no ;;
 --enable-lpeg-static|--enable-lpeg-static=yes) lpeg=yes ;;
@@ -346,10 +350,12 @@ EOF
 	test "$curses" = "yes" -a $CONFIG_CURSES -ne 1 && fail "$0: cannot find libcurses"
 fi
 
-# libtermkey is a mandatory dependency
+CONFIG_SYSTEM_TERMKEY=0
+TERMKEY_SRC='termkey.c driver-csi.c driver-ti.c'
 
-printf "checking for libtermkey... "
-cat > "$tmpc" <<EOF
+if test "$systermkey" != "no" ; then
+	printf "checking for system libtermkey... "
+	cat > "$tmpc" <<EOF
 #include <termkey.h>
 
 int main(int argc, char *argv[]) {
@@ -358,22 +364,27 @@ int main(int argc, char *argv[]) {
 }
 EOF
 
-if test "$have_pkgconfig" = "yes" ; then
-	CFLAGS_TERMKEY=$(pkg-config --cflags termkey 2>/dev/null)
-	LDFLAGS_TERMKEY=$(pkg-config --libs termkey 2>/dev/null)
-fi
+	if test "$have_pkgconfig" = "yes" ; then
+		CFLAGS_TERMKEY=$(pkg-config --cflags termkey 2>/dev/null)
+		LDFLAGS_TERMKEY=$(pkg-config --libs termkey 2>/dev/null)
+	fi
 
-if test -z "$LDFLAGS_TERMKEY"; then
-	CFLAGS_TERMKEY=""
-	LDFLAGS_TERMKEY="-ltermkey"
-fi
+	if test -z "$LDFLAGS_TERMKEY"; then
+		CFLAGS_TERMKEY=""
+		LDFLAGS_TERMKEY="-ltermkey"
+	fi
 
-if $CC $CFLAGS $CFLAGS_TERMKEY "$tmpc" $LDFLAGS $LDFLAGS_TERMKEY $LDFLAGS_CURSES \
-	-o "$tmpo" >/dev/null 2>&1; then
-	printf "%s\n" "yes"
-else
-	printf "%s\n" "no"
-	fail "$0: cannot find libtermkey"
+	if $CC $CFLAGS $CFLAGS_TERMKEY "$tmpc" $LDFLAGS $LDFLAGS_TERMKEY $LDFLAGS_CURSES \
+		-o "$tmpo" >/dev/null 2>&1; then
+		printf "%s\n" "yes"
+		CONFIG_SYSTEM_TERMKEY=1
+		TERMKEY_SRC=
+	else
+		printf "%s\n" "no"
+		CFLAGS_TERMKEY="-Itermkey"
+		LDFLAGS_TERMKEY=""
+		test "$systermkey" = "yes" && fail "$0: cannot find libtermkey"
+	fi
 fi
 
 CONFIG_TRE=0
@@ -638,6 +649,8 @@ exec 3>&1 1>>config.mk
 
 cat << EOF
 CONFIG_HELP = $CONFIG_HELP
+CONFIG_SYSTEM_TERMKEY = $CONFIG_SYSTEM_TERMKEY
+TERMKEY_SRC = $TERMKEY_SRC
 CFLAGS_TERMKEY = $CFLAGS_TERMKEY
 LDFLAGS_TERMKEY = $LDFLAGS_TERMKEY
 CONFIG_CURSES = $CONFIG_CURSES

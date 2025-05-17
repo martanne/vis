@@ -3,7 +3,7 @@
 
 #include <stdbool.h>
 #include <stdarg.h>
-#include <termkey.h>
+#include "termkey.h"
 
 /* enable large file optimization for files larger than: */
 #define UI_LARGE_FILE_SIZE (1 << 25)
