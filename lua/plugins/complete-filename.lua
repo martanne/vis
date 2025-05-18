@@ -29,9 +29,19 @@ local complete_filename = function(expand)
 		prefix = home .. prefix:sub(j + 1)
 	end
 
-	local cmdfmt = "vis-complete --file '%s'"
-	if expand then cmdfmt = "vis-open -- '%s'*" end
-	local status, out, err = vis:pipe(cmdfmt:format(prefix:gsub("'", "'\\''")))
+	local status, out, err
+	if prefix:sub(1, 1) == ":" then
+		status, out, err = vis:complete_command(prefix:sub(2))
+		if out then
+			out = out:gsub("\n$", ""):sub(#prefix) .. " "
+		end
+		pos = range.start + #prefix
+		expand = false
+	else
+		local cmdfmt = "vis-complete --file '%s'"
+		if expand then cmdfmt = "vis-open -- '%s'*" end
+		status, out, err = vis:pipe(cmdfmt:format(prefix:gsub("'", "'\\''")))
+	end
 	if status ~= 0 or not out then
 		if err then vis:info(err) end
 		return
@@ -55,4 +65,4 @@ end, "Complete file name")
 -- complete file path at primary selection location using vis-open(1)
 vis:map(vis.modes.INSERT, "<C-x><C-o>", function()
 	complete_filename(true);
-end, "Complete file name (expands path)")
+end, "Complete file name (expands path) or command")
