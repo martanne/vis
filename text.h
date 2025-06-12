@@ -55,7 +55,7 @@ typedef struct {
 } Iterator;
 
 /**
- * @defgroup load
+ * @defgroup load Text Loading
  * @{
  */
 /**
@@ -109,13 +109,13 @@ Text *text_loadat(int dirfd, const char *filename);
  *    - ``ENOTSUP`` otherwise.
  * @endrst
  */
-Text *text_load_method(const char *filename, enum TextLoadMethod);
+Text *text_load_method(const char *filename, enum TextLoadMethod method);
 Text *text_loadat_method(int dirfd, const char *filename, enum TextLoadMethod);
 /** Release all resources associated with this text instance. */
 void text_free(Text*);
 /**
  * @}
- * @defgroup state
+ * @defgroup state Text State
  * @{
  */
 /** Return the size in bytes of the whole text. */
@@ -135,32 +135,34 @@ struct stat text_stat(const Text*);
 bool text_modified(const Text*);
 /**
  * @}
- * @defgroup modify
+ * @defgroup modify Text Modification
  * @{
  */
 /**
  * Insert data at the given byte position.
  *
+ * @param txt The text instance to modify.
  * @param pos The absolute byte position.
  * @param data The data to insert.
  * @param len The length of the data in bytes.
  * @return Whether the insertion succeeded.
  */
-bool text_insert(Text*, size_t pos, const char *data, size_t len);
+bool text_insert(Text *txt, size_t pos, const char *data, size_t len);
 /**
  * Delete data at given byte position.
  *
+ * @param txt The text instance to modify.
  * @param pos The absolute byte position.
  * @param len The number of bytes to delete, starting from ``pos``.
  * @return Whether the deletion succeeded.
  */
-bool text_delete(Text*, size_t pos, size_t len);
-bool text_delete_range(Text*, const Filerange*);
-bool text_printf(Text*, size_t pos, const char *format, ...) __attribute__((format(printf, 3, 4)));
-bool text_appendf(Text*, const char *format, ...) __attribute__((format(printf, 2, 3)));
+bool text_delete(Text *txt, size_t pos, size_t len);
+bool text_delete_range(Text *txt, const Filerange*);
+bool text_printf(Text *txt, size_t pos, const char *format, ...) __attribute__((format(printf, 3, 4)));
+bool text_appendf(Text *txt, const char *format, ...) __attribute__((format(printf, 2, 3)));
 /**
  * @}
- * @defgroup history
+ * @defgroup history Undo/Redo History
  * @{
  */
 /**
@@ -200,7 +202,7 @@ size_t text_restore(Text*, time_t);
 time_t text_state(const Text*);
 /**
  * @}
- * @defgroup lines
+ * @defgroup lines Line Operations
  * @{
  */
 size_t text_pos_by_lineno(Text*, size_t lineno);
@@ -208,11 +210,12 @@ size_t text_lineno_by_pos(Text*, size_t pos);
 
 /**
  * @}
- * @defgroup access
+ * @defgroup access Text Access
  * @{
  */
 /**
  * Get byte stored at ``pos``.
+ * @param txt The text instance to modify.
  * @param pos The absolute position.
  * @param byte Destination address to store the byte.
  * @return Whether ``pos`` was valid and ``byte`` updated accordingly.
@@ -221,9 +224,10 @@ size_t text_lineno_by_pos(Text*, size_t pos);
  *           return an artificial NUL byte at EOF.
  * @endrst
  */
-bool text_byte_get(const Text*, size_t pos, char *byte);
+bool text_byte_get(const Text *txt, size_t pos, char *byte);
 /**
  * Store at most ``len`` bytes starting from ``pos`` into ``buf``.
+ * @param txt The text instance to modify.
  * @param pos The absolute starting position.
  * @param len The length in bytes.
  * @param buf The destination buffer.
@@ -232,9 +236,10 @@ bool text_byte_get(const Text*, size_t pos, char *byte);
  * .. warning:: ``buf`` will not be NUL terminated.
  * @endrst
  */
-size_t text_bytes_get(const Text*, size_t pos, size_t len, char *buf);
+size_t text_bytes_get(const Text *txt, size_t pos, size_t len, char *buf);
 /**
  * Fetch text range into newly allocate memory region.
+ * @param txt The text instance to modify.
  * @param pos The absolute starting position.
  * @param len The length in bytes.
  * @return A contiguous NUL terminated buffer holding the requested range, or
@@ -243,10 +248,10 @@ size_t text_bytes_get(const Text*, size_t pos, size_t len, char *buf);
  * .. warning:: The returned pointer must be freed by the caller.
  * @endrst
  */
-char *text_bytes_alloc0(const Text*, size_t pos, size_t len);
+char *text_bytes_alloc0(const Text *txt, size_t pos, size_t len);
 /**
  * @}
- * @defgroup iterator
+ * @defgroup iterator Text Iterators
  * @{
  */
 Iterator text_iterator_get(const Text*, size_t pos);
@@ -259,7 +264,7 @@ bool text_iterator_next(Iterator*);
 bool text_iterator_prev(Iterator*);
 /**
  * @}
- * @defgroup iterator_byte
+ * @defgroup iterator_byte Byte Iterators
  * @{
  */
 bool text_iterator_byte_get(const Iterator*, char *b);
@@ -269,21 +274,21 @@ bool text_iterator_byte_find_prev(Iterator*, char b);
 bool text_iterator_byte_find_next(Iterator*, char b);
 /**
  * @}
- * @defgroup iterator_code
+ * @defgroup iterator_code Codepoint Iterators
  * @{
  */
 bool text_iterator_codepoint_next(Iterator *it, char *c);
 bool text_iterator_codepoint_prev(Iterator *it, char *c);
 /**
  * @}
- * @defgroup iterator_char
+ * @defgroup iterator_char Character Iterators
  * @{
  */
 bool text_iterator_char_next(Iterator*, char *c);
 bool text_iterator_char_prev(Iterator*, char *c);
 /**
  * @}
- * @defgroup mark
+ * @defgroup mark Marks
  * @{
  */
 /**
@@ -292,19 +297,21 @@ bool text_iterator_char_prev(Iterator*, char *c);
  * .. note:: Setting a mark to ``text_size`` will always return the
  *           current text size upon lookup.
  * @endrst
+ * @param txt The text instance to modify.
  * @param pos The position at which to store the mark.
  * @return The mark or ``EMARK`` if an invalid position was given.
  */
-Mark text_mark_set(Text*, size_t pos);
+Mark text_mark_set(Text *txt, size_t pos);
 /**
  * Lookup a mark.
+ * @param txt The text instance to modify.
  * @param mark The mark to look up.
  * @return The byte position or ``EPOS`` for an invalid mark.
  */
-size_t text_mark_get(const Text*, Mark);
+size_t text_mark_get(const Text *txt, Mark mark);
 /**
  * @}
- * @defgroup save
+ * @defgroup save Text Saving
  * @{
  */
 /**
@@ -405,7 +412,7 @@ ssize_t text_write(const Text*, int fd);
 ssize_t text_write_range(const Text*, const Filerange*, int fd);
 /**
  * @}
- * @defgroup misc
+ * @defgroup misc Miscellaneous
  * @{
  */
 /**
