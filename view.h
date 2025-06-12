@@ -78,7 +78,7 @@ typedef struct View {
 } View;
 
 /**
- * @defgroup view_life
+ * @defgroup view_life View Lifecycle
  * @{
  */
 bool view_init(struct Win*, Text*);
@@ -86,20 +86,21 @@ void view_free(View*);
 void view_reload(View*, Text*);
 /**
  * @}
- * @defgroup view_viewport
+ * @defgroup view_viewport View Viewport
  * @{
  */
 /** Get the currently displayed text range. */
 #define VIEW_VIEWPORT_GET(v) (Filerange){ .start = v.start, .end = v.end }
 /**
  * Get window coordinate of text position.
+ * @param view The view to manipulate.
  * @param pos The position to query.
  * @param line Will be updated with screen line on which ``pos`` resides.
  * @param row Will be updated with zero based window row on which ``pos`` resides.
  * @param col Will be updated with zero based window column on which ``pos`` resides.
  * @return Whether ``pos`` is visible. If not, the pointer arguments are left unmodified.
  */
-bool view_coord_get(View*, size_t pos, Line **line, int *row, int *col);
+bool view_coord_get(View *view, size_t pos, Line **line, int *row, int *col);
 /** Get position at the start of the ``n``-th window line, counting from 1. */
 size_t view_screenline_goto(View*, int n);
 size_t view_slide_up(View*, int lines);
@@ -116,13 +117,13 @@ void view_redraw_bottom(View*);
 void view_scroll_to(View*, size_t pos);
 /**
  * @}
- * @defgroup view_size
+ * @defgroup view_size View Sizing
  * @{
  */
 bool view_resize(View*, int width, int height);
 /**
  * @}
- * @defgroup view_draw
+ * @defgroup view_draw View Drawing
  * @{
  */
 void view_draw(View*);
@@ -130,7 +131,7 @@ bool view_update(View*);
 
 /**
  * @}
- * @defgroup view_selnew
+ * @defgroup view_selnew View Selections
  * @{
  */
 /**
@@ -178,15 +179,16 @@ void view_selections_dispose_all(View*);
 void view_selections_normalize(View*);
 /**
  * Replace currently active selections.
+ * @param view The view to manipulate.
  * @param array The array of ``Filerange`` objects.
  * @param anchored Whether *all* selection should be anchored.
  */
-void view_selections_set_all(View*, Array*, bool anchored);
+void view_selections_set_all(View *view, Array *array, bool anchored);
 /** Get array containing a ``Fileranges`` for each selection. */
 Array view_selections_get_all(View*);
 /**
  * @}
- * @defgroup view_navigate
+ * @defgroup view_navigate Selection Navigation
  * @{
  */
 Selection *view_selections_primary_get(View*);
@@ -210,17 +212,19 @@ int view_selections_number(Selection*);
 int view_selections_column_count(View*);
 /**
  * Starting from the start of the text, get the `column`-th selection on a line.
+ * @param view The view to manipulate.
  * @param column The zero based column index.
  */
-Selection *view_selections_column(View*, int column);
+Selection *view_selections_column(View *view, int column);
 /**
  * Get the next `column`-th selection on a line.
+ * @param sel The selection to manipulate.
  * @param column The zero based column index.
  */
-Selection *view_selections_column_next(Selection*, int column);
+Selection *view_selections_column_next(Selection *sel, int column);
 /**
  * @}
- * @defgroup view_cover
+ * @defgroup view_cover Selection Coverage
  * @{
  */
 /** Get an inclusive range of the selection cover. */
@@ -245,7 +249,7 @@ void view_selections_clear_all(View*);
 void view_selections_flip(Selection*);
 /**
  * @}
- * @defgroup view_props
+ * @defgroup view_props Selection Properties
  * @{
  */
 /** Get position of selection cursor. */
@@ -262,7 +266,7 @@ size_t view_cursors_line(Selection*);
 size_t view_cursors_col(Selection*);
 /**
  * @}
- * @defgroup view_place
+ * @defgroup view_place Cursor Placement
  * @{
  */
 /**
@@ -292,6 +296,7 @@ void view_cursors_to(Selection*, size_t pos);
 void view_cursors_scroll_to(Selection*, size_t pos);
 /**
  * Place cursor on given (line, column) pair.
+ * @param s the selection to manipulate
  * @param line the 1-based line number
  * @param col the 1 based column
  * @rst
@@ -299,7 +304,7 @@ void view_cursors_scroll_to(Selection*, size_t pos);
  *           `view_selection_to`.
  * @endrst
  */
-void view_cursors_place(Selection*, size_t line, size_t col);
+void view_cursors_place(Selection *s, size_t line, size_t col);
 /**
  * Place selection cursor on zero based window cell index.
  * @rst
@@ -309,7 +314,7 @@ void view_cursors_place(Selection*, size_t line, size_t col);
 int view_cursors_cell_set(Selection*, int cell);
 /**
  * @}
- * @defgroup view_motions
+ * @defgroup view_motions View Motions
  * @{
  */
 size_t view_line_down(Selection*);
@@ -321,21 +326,21 @@ size_t view_screenline_middle(Selection*);
 size_t view_screenline_end(Selection*);
 /**
  * @}
- * @defgroup view_primary
+ * @defgroup view_primary Primary Selection
  * @{
  */
 /** Get cursor position of primary selection. */
 size_t view_cursor_get(View*);
 /**
  * @}
- * @defgroup view_save
+ * @defgroup view_save Selection State
  * @{
  */
 Filerange view_regions_restore(View*, SelectionRegion*);
 bool view_regions_save(View*, Filerange*, SelectionRegion*);
 /**
  * @}
- * @defgroup view_style
+ * @defgroup view_style View Styling
  * @{
  */
 void win_options_set(struct Win *, enum UiOption);
