@@ -29,7 +29,7 @@ static Process *new_process_in_pool(void) {
 /**
  * Removes the subprocess information from the pool, sets invalidator to NULL
  * and frees resources.
- * @param a reference to the process to be removed
+ * @param target reference to the process to be removed
  * @return the next process in the pool
  */
 static Process *destroy_process(Process *target) {
@@ -59,6 +59,7 @@ static Process *destroy_process(Process *target) {
  * of the process.
  * Also stores the subprocess information to the internal pool to track
  * its status and responses.
+ * @param vis the editor instance
  * @param name a string that contains a unique name for the subprocess.
  * This name will be passed to the PROCESS_RESPONSE event handler
  * to distinguish running subprocesses.
@@ -164,6 +165,7 @@ int vis_process_before_tick(fd_set *readfds) {
  * Reads data from the given subprocess file descriptor `fd` and fires
  * the PROCESS_RESPONSE event in Lua with given subprocess `name`,
  * `rtype` and the read data as arguments.
+ * @param vis the editor instance
  * @param fd the file descriptor to read data from
  * @param name a name of the subprocess
  * @param rtype a type of file descriptor where the new data is found
@@ -179,6 +181,7 @@ static void read_and_fire(Vis* vis, int fd, const char *name, ResponseType rtype
 /**
  * Checks if a subprocess is dead or needs to be killed then raises an event
  * or kills it if necessary.
+ * @param vis the editor instance
  * @param current the process to wait for or kill
  * @return true if the process is dead
  */
@@ -211,6 +214,7 @@ just_destroy:
  * the pool. If so, it reads their data and fires corresponding events.
  * Also checks if each subprocess from the pool is dead or needs to be
  * killed then raises an event or kills it if necessary.
+ * @param vis the editor instance
  * @param readfds the structure for `pselect` call with file descriptors
  */
 void vis_process_tick(Vis *vis, fd_set *readfds) {
