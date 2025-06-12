@@ -186,7 +186,7 @@ and
   directory descriptors
 - do not unlink `file~` when saving `file`
 - introduce distinct `vis-menu(1)` exit codes
-- modify Lua package.path to include <plugin>/init.lua
+- modify Lua package.path to include `<plugin>/init.lua`
 - performance improvements for the HTML, XML and YAML lexers
 - new Julia and Elm lexers, better defaults for standard text
   lexer
@@ -214,7 +214,7 @@ and
 - always apply `:|` command to existing selections
 - fix terminal UI on serial console
 - various code cleanups, removal of VLA
-- <Escape> resets count, if applicable
+- `<Escape>` resets count, if applicable
 - fix `:X` and `:Y` commands which were interchanged
 - don't strip executables by default, provide install-strip
   target
