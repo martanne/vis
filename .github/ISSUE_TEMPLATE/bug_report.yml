@@ -32,5 +32,5 @@ body:
       placeholder: "st 0.8.2"
   - type: input
     attributes:
-      label: "$TERM environment variable"
+      label: "TERM environment variable"
       placeholder: "st-256color"
