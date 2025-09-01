@@ -187,25 +187,25 @@ install: $(ELF)
 	@echo installing executable files to ${DESTDIR}${PREFIX}/bin
 	@mkdir -p ${DESTDIR}${PREFIX}/bin
 	@for e in ${EXECUTABLES}; do \
-		cp -f "$$e" ${DESTDIR}${PREFIX}/bin && \
+		cp -f "${.CURDIR}/$$e" ${DESTDIR}${PREFIX}/bin && \
 		chmod 755 ${DESTDIR}${PREFIX}/bin/"$$e"; \
 	done
 	@test ${CONFIG_LUA} -eq 0 || { \
 		echo installing support files to ${DESTDIR}${SHAREPREFIX}/vis; \
 		mkdir -p ${DESTDIR}${SHAREPREFIX}/vis; \
-		cp -r lua/* ${DESTDIR}${SHAREPREFIX}/vis; \
+		cp -r "${.CURDIR}"/lua/* ${DESTDIR}${SHAREPREFIX}/vis; \
 		rm -rf "${DESTDIR}${SHAREPREFIX}/vis/doc"; \
 	}
 	@echo installing documentation to ${DESTDIR}${DOCPREFIX}/vis
 	@mkdir -p ${DESTDIR}${DOCPREFIX}/vis
 	@for d in ${DOCUMENTATION}; do \
-		cp "$$d" ${DESTDIR}${DOCPREFIX}/vis && \
+		cp "${.CURDIR}/$$d" ${DESTDIR}${DOCPREFIX}/vis && \
 		chmod 644 "${DESTDIR}${DOCPREFIX}/vis/$$d"; \
 	done
 	@echo installing manual pages to ${DESTDIR}${MANPREFIX}/man1
 	@mkdir -p ${DESTDIR}${MANPREFIX}/man1
 	@for m in ${MANUALS}; do \
-		sed -e "s/VERSION/${VERSION}/" < "man/$$m" >  "${DESTDIR}${MANPREFIX}/man1/$$m" && \
+		sed -e "s/VERSION/${VERSION}/" < "${.CURDIR}/man/$$m" >  "${DESTDIR}${MANPREFIX}/man1/$$m" && \
 		chmod 644 "${DESTDIR}${MANPREFIX}/man1/$$m"; \
 	done
 
