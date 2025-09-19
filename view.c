@@ -266,6 +266,9 @@ static bool view_add_cell(View *view, const Cell *cell) {
 }
 
 static bool view_expand_tab(View *view, Cell *cell) {
+	Win *win = (Win *)((char *)view - offsetof(Win, view));
+	ui_window_style_set(&win->vis->ui, win->id, cell, UI_STYLE_WHITESPACE, false);
+
 	cell->width = 1;
 
 	int displayed_width = view->tabwidth - (view->col % view->tabwidth);
@@ -287,6 +290,9 @@ static bool view_expand_newline(View *view, Cell *cell) {
 	size_t lineno = view->line->lineno;
 	const char *symbol = view->symbols[SYNTAX_SYMBOL_EOL];
 
+	Win *win = (Win *)((char *)view - offsetof(Win, view));
+	ui_window_style_set(&win->vis->ui, win->id, cell, UI_STYLE_WHITESPACE, false);
+
 	strncpy(cell->data, symbol, sizeof(cell->data) - 1);
 	cell->width = 1;
 	if (!view_add_cell(view, cell))
@@ -297,6 +303,15 @@ static bool view_expand_newline(View *view, Cell *cell) {
 	if (view->line)
 		view->line->lineno = lineno + 1;
 	return true;
+}
+
+static bool view_expand_space(View *view, Cell *cell) {
+	Win *win = (Win *)((char *)view - offsetof(Win, view));
+	ui_window_style_set(&win->vis->ui, win->id, cell, UI_STYLE_WHITESPACE, false);
+
+	const char *symbol = view->symbols[SYNTAX_SYMBOL_SPACE];
+	strncpy(cell->data, symbol, sizeof(cell->data) - 1);
+	return view_add_cell(view, cell);
 }
 
 /* try to add another character to the view, return whether there was space left */
@@ -318,11 +333,9 @@ static bool view_addch(View *view, Cell *cell) {
 		return view_expand_tab(view, cell);
 	case '\n':
 		return view_expand_newline(view, cell);
-	case ' ': {
-		const char *symbol = view->symbols[SYNTAX_SYMBOL_SPACE];
-		strncpy(cell->data, symbol, sizeof(cell->data) - 1);
-		return view_add_cell(view, cell);
-	}}
+	case ' ':
+		return view_expand_space(view, cell);
+	}
 
 	if (ch < 128 && !isprint(ch)) {
 		/* non-printable ascii char, represent it as ^(char + 64) */

@@ -272,6 +272,7 @@ vis.types.window.set_syntax = function(win, syntax)
 	win:style_define(win.STYLE_SEPARATOR, lexers.STYLE_SEPARATOR or '')
 	win:style_define(win.STYLE_INFO, lexers.STYLE_INFO or '')
 	win:style_define(win.STYLE_EOF, lexers.STYLE_EOF or '')
+	win:style_define(win.STYLE_WHITESPACE, lexers.STYLE_WHITESPACE or '')
 
 	if syntax == nil or syntax == 'off' then
 		win.syntax = nil
