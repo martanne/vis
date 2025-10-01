@@ -50,7 +50,7 @@ lex:add_rule('preprocessor', token(lexer.PREPROCESSOR, '#' * S('\t ')^0 *
 	word_match('define elif else endif error if line undef warning region endregion')))
 
 -- Operators.
-lex:add_rule('operator', token(lexer.OPERATOR, S('~!.,:;+-*/<>=\\^|&%?()[]{}')))
+lex:add_rule('operator', token(lexer.OPERATOR, '..' + S('~!.,:;+-*/<>=\\^|&%?()[]{}')))
 
 -- Fold points.
 lex:add_fold_point(lexer.PREPROCESSOR, 'if', 'endif')

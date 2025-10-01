@@ -60,6 +60,7 @@ lex:add_rule('entity', lex:tag(lexer.CONSTANT_BUILTIN .. '.entity',
 	'&' * (lexer.any - lexer.space - ';')^1 * ';'))
 
 -- Fold points.
+lex:add_fold_point(lexer.COMMENT, '<!--', '-->')
 local function disambiguate_lt(text, pos, line, s)
 	if line:find('/>', s) then
 		return 0
@@ -70,7 +71,6 @@ local function disambiguate_lt(text, pos, line, s)
 	end
 end
 lex:add_fold_point(lexer.TAG .. '.chars', '<', disambiguate_lt)
-lex:add_fold_point(lexer.COMMENT, '<!--', '-->')
 
 -- Tags that start embedded languages.
 -- Export these patterns for proxy lexers (e.g. ASP) that need them.

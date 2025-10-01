@@ -61,11 +61,12 @@ local general = lex:tag(lexer.CONSTANT .. '.entity', '&' * identifier * ';')
 lex:add_rule('entity', predefined + general)
 
 -- Fold Points.
+lex:add_fold_point(lexer.COMMENT, '<!--', '-->')
+lex:add_fold_point('cdata', '<![CDATA[', ']]>')
 local function disambiguate_lt(text, pos, line, s) return not line:find('^</', s) and 1 or -1 end
 lex:add_fold_point(lexer.TAG, '<', disambiguate_lt)
 lex:add_fold_point(lexer.TAG, '/>', -1)
-lex:add_fold_point(lexer.COMMENT, '<!--', '-->')
-lex:add_fold_point('cdata', '<![CDATA[', ']]>')
+lex:add_fold_point(lexer.TAG, '?>', -1)
 
 lexer.property['scintillua.comment'] = '<!--|-->'
 lexer.property['scintillua.angle.braces'] = '1'

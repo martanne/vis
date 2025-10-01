@@ -74,7 +74,7 @@ lex:add_rule('annotation', lex:tag(lexer.ANNOTATION, '@' * lexer.word^1))
 lex:add_rule('preprocessor', lex:tag(lexer.PREPROCESSOR, lexer.to_eol('#')))
 
 -- Operators.
-lex:add_rule('operator', lex:tag(lexer.OPERATOR, S('?=!<>+-*$/%&|^~.,;:()[]{}')))
+lex:add_rule('operator', lex:tag(lexer.OPERATOR, '..' + S('?=!<>+-*$/%&|^~.,;:()[]{}')))
 
 -- Fold points.
 lex:add_fold_point(lexer.OPERATOR, '{', '}')
