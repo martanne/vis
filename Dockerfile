@@ -1,11 +1,13 @@
 # Run 'make docker' to build a statically linked vis executable!
-FROM i386/alpine:3.22
+FROM alpine:edge
 RUN apk update && apk add --upgrade --no-cache \
 	acl-dev \
 	acl-static \
 	ca-certificates \
+	cmake \
 	fortify-headers \
 	gcc \
+	git \
 	libtermkey-dev \
 	lua5.4-dev \
 	lua5.4-lpeg \

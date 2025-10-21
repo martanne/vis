@@ -33,12 +33,14 @@ static void delay(void) {
 static void printkey(TermKeyKey *key) {
 	switch (key->type) {
 	case TERMKEY_TYPE_UNICODE:
-		if (key->modifiers & TERMKEY_KEYMOD_SHIFT)
+		if (key->modifiers & TERMKEY_KEYMOD_SHIFT) {
 			;
+		}
 		if (key->modifiers & TERMKEY_KEYMOD_CTRL)
 			key->utf8[0] &= 0x1f;
-		if (key->modifiers & TERMKEY_KEYMOD_ALT)
+		if (key->modifiers & TERMKEY_KEYMOD_ALT) {
 			;
+		}
 		print("%s", key->utf8);
 		break;
 	case TERMKEY_TYPE_KEYSYM:
@@ -46,6 +48,7 @@ static void printkey(TermKeyKey *key) {
 		case TERMKEY_SYM_UNKNOWN:
 		case TERMKEY_SYM_NONE:
 			die("Unknown key sym\n");
+			break;
 		case TERMKEY_SYM_BACKSPACE:
 			print("\b");
 			break;

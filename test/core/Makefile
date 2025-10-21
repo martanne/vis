@@ -20,7 +20,7 @@ text-test: config.h text-test.c ../../text.c ../../text-common.c ../../text-io.c
 
 buffer-test: config.h buffer-test.c ../../buffer.c
 	@echo Compiling $@ binary
-	@${CC} ${CFLAGS} ${CFLAGS_STD} ${CFLAGS_LIBC} ${CFLAGS_EXTRA} buffer-test.c ${SRC} ${LDFLAGS} -o $@
+	@${CC} ${CFLAGS} ${CFLAGS_STD} ${CFLAGS_LIBC} ${CFLAGS_EXTRA} buffer-test.c ../../buffer.c ${SRC} ${LDFLAGS} -o $@
 
 map-test: config.h map-test.c ../../map.c
 	@echo Compiling $@ binary

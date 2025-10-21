@@ -44,25 +44,7 @@ and clean implementation.
 Build instructions
 ------------------
 
-In order to build vis you will need a
-[C99](http://www.open-std.org/jtc1/sc22/wg14/www/docs/n1256.pdf)
-compiler, a [POSIX.1-2008](http://pubs.opengroup.org/onlinepubs/9699919799/)
-compatible environment as well as:
-
- * [libtermkey](http://www.leonerd.org.uk/code/libtermkey/)
- * [curses](https://en.wikipedia.org/wiki/Curses_(programming_library)) (recommended)
- * [Lua](http://www.lua.org/) >= 5.2 (optional)
- * [LPeg](http://www.inf.puc-rio.br/~roberto/lpeg/) >= 0.12
-   (optional runtime dependency required for syntax highlighting)
- * [TRE](http://laurikari.net/tre/) (optional for more memory efficient regex search)
-
-Assuming these dependencies are met, execute:
-
-    $ ./configure && make && sudo make install
-
-By default the `configure` script will try to auto detect support for
-Lua using `pkg-config(1)`. See `configure --help` for a list of supported
-options. You can also manually tweak the generated `config.mk` file.
+See [INSTALL.md](INSTALL.md) for detailed build instructions.
 
 Or simply use one of the
 [distribution provided packages](https://github.com/martanne/vis/wiki/Distribution-Packages).

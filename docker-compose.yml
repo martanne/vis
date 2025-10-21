@@ -1,0 +1,20 @@
+version: '3.8'
+services:
+  build:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: vis-build
+    container_name: vis
+    volumes:
+      - .:/build/vis
+    command: >
+      sh -c "
+        rm -rf /build/vis/build &&
+        cd /build/vis &&
+        cmake -S . -B build -DCMAKE_C_FLAGS=\"-static\" -DENABLE_LPEG_STATIC=ON -DENABLE_TRE=OFF &&
+        cmake --build build &&
+        cd build &&
+        ctest &&
+        cmake --build . --target dist
+      "

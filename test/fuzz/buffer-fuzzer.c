@@ -37,23 +37,23 @@ static enum CmdStatus cmd_delete(Buffer *buf, const char *cmd) {
 }
 
 static enum CmdStatus cmd_clear(Buffer *buf, const char *cmd) {
-	buffer_clear(buf);
+	buf->len = 0;
 	return CMD_OK;
 }
 
 static enum CmdStatus cmd_size(Buffer *buf, const char *cmd) {
-	printf("%zu bytes\n", buffer_length(buf));
+	printf("%zu bytes\n", buffer_length0(buf));
 	return CMD_OK;
 }
 
 static enum CmdStatus cmd_capacity(Buffer *buf, const char *cmd) {
-	printf("%zu bytes\n", buffer_capacity(buf));
+	printf("%zu bytes\n", buf->size);
 	return CMD_OK;
 }
 
 static enum CmdStatus cmd_print(Buffer *buf, const char *cmd) {
-	size_t len = buffer_length(buf);
-	const char *data = buffer_content(buf);
+	size_t len = buffer_length0(buf);
+	const char *data = buffer_content0(buf);
 	if (data && fwrite(data, len, 1, stdout) != 1)
 		return CMD_ERR;
 	if (data)
