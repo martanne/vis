@@ -1,7 +1,7 @@
 View
 ====
 
-Provides a viewport of a text instance and mangages selections.
+Provides a viewport of a text instance and manages selections.
 
 Lifecycle
 ---------
