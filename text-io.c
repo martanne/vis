@@ -327,8 +327,6 @@ err:
 	if (ctx->fd != -1)
 		close(ctx->fd);
 	ctx->fd = -1;
-	free(ctx->tmpname);
-	ctx->tmpname = NULL;
 	errno = saved_errno;
 	return false;
 }
