@@ -166,10 +166,6 @@ Text *text_load(const char *filename) {
 	return text_load_method(filename, TEXT_LOAD_AUTO);
 }
 
-Text *text_loadat(int dirfd, const char *filename) {
-	return text_loadat_method(dirfd, filename, TEXT_LOAD_AUTO);
-}
-
 Text *text_load_method(const char *filename, enum TextLoadMethod method) {
 	return text_loadat_method(AT_FDCWD, filename, method);
 }
@@ -453,46 +449,10 @@ bool text_save_commit(TextSave *ctx) {
 	return result;
 }
 
-/* First try to save the file atomically using rename(2) if this does not
- * work overwrite the file in place. However if something goes wrong during
- * this overwrite the original file is permanently damaged.
- */
-bool text_save(Text *txt, const char *filename) {
-	return text_saveat(txt, AT_FDCWD, filename);
-}
-
-bool text_saveat(Text *txt, int dirfd, const char *filename) {
-	return text_saveat_method(txt, dirfd, filename, TEXT_SAVE_AUTO);
-}
-
-bool text_save_method(Text *txt, const char *filename, enum TextSaveMethod method) {
-	return text_saveat_method(txt, AT_FDCWD, filename, method);
-}
-
-bool text_saveat_method(Text *txt, int dirfd, const char *filename, enum TextSaveMethod method) {
-	if (!filename) {
-		text_saved(txt, NULL);
-		return true;
-	}
-	TextSave ctx = text_save_default(.txt = txt, .dirfd = dirfd, .filename = filename, .method = method);
-	if (!text_save_begin(&ctx))
-		return false;
-	Filerange range = (Filerange){ .start = 0, .end = text_size(txt) };
-	ssize_t written = text_save_write_range(&ctx, &range);
-	if (written == -1 || (size_t)written != text_range_size(&range)) {
-		text_save_cancel(&ctx);
-		return false;
-	}
-	return text_save_commit(&ctx);
-}
+void text_mark_current_revision(Text *txt) { text_saved(txt, 0); }
 
 ssize_t text_save_write_range(TextSave *ctx, const Filerange *range) {
 	return text_write_range(ctx->txt, range, ctx->fd);
-}
-
-ssize_t text_write(const Text *txt, int fd) {
-	Filerange r = (Filerange){ .start = 0, .end = text_size(txt) };
-	return text_write_range(txt, &r, fd);
 }
 
 ssize_t text_write_range(const Text *txt, const Filerange *range, int fd) {

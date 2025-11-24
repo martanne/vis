@@ -867,7 +867,7 @@ static bool cmd_help(Vis *vis, Win *win, Command *cmd, const char *argv[], Selec
 	for (size_t i = 0; i < LENGTH(configs); i++)
 		text_appendf(txt, "  %-32s\t%s\n", configs[i].name, configs[i].enabled ? "yes" : "no");
 
-	text_save(txt, NULL);
+	text_mark_current_revision(txt);
 	view_cursors_to(vis->win->view.selection, 0);
 
 	if (argv[1])

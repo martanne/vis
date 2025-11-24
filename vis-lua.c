@@ -2579,7 +2579,7 @@ static int file_newindex(lua_State *L) {
 				text_insert(file->text, 0, " ", 1);
 				text_delete(file->text, 0, 1);
 			} else {
-				text_save(file->text, NULL);
+				text_mark_current_revision(file->text);
 			}
 			return 0;
 		}

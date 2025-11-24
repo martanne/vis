@@ -1642,7 +1642,7 @@ static bool cmd_write(Vis *vis, Win *win, Command *cmd, const char *argv[], Sele
 		}
 
 		/* make sure the file is marked as saved i.e. not modified */
-		text_save(text, NULL);
+		text_mark_current_revision(text);
 		vis_event_emit(vis, VIS_EVENT_FILE_SAVE_POST, file, (char*)NULL);
 		return true;
 	}

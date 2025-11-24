@@ -197,7 +197,7 @@ void vis_message_show(Vis *vis, const char *msg) {
 	Text *txt = win->file->text;
 	size_t pos = text_size(txt);
 	text_appendf(txt, "%s\n", msg);
-	text_save(txt, NULL);
+	text_mark_current_revision(txt);
 	view_cursors_to(win->view.selection, pos);
 	vis_window_focus(win);
 }

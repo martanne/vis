@@ -94,7 +94,6 @@ enum TextLoadMethod {
  * @endrst
  */
 Text *text_load(const char *filename);
-Text *text_loadat(int dirfd, const char *filename);
 /**
  * Create a text instance populated with the given file content.
  *
@@ -362,19 +361,9 @@ typedef struct {
 #define text_save_default(...) (TextSave){.dirfd = AT_FDCWD, .fd = -1, __VA_ARGS__}
 
 /**
- * Save the whole text to the given file name.
- *
- * @rst
- * .. note:: Equivalent to ``text_save_method(filename, TEXT_SAVE_AUTO)``.
- * @endrst
+ * Marks the current text revision as saved.
  */
-bool text_save(Text*, const char *filename);
-bool text_saveat(Text*, int dirfd, const char *filename);
-/**
- * Save the whole text to the given file name, using the specified method.
- */
-bool text_save_method(Text*, const char *filename, enum TextSaveMethod);
-bool text_saveat_method(Text*, int dirfd, const char *filename, enum TextSaveMethod);
+void text_mark_current_revision(Text*);
 
 /**
  * Setup a sequence of write operations.
@@ -411,11 +400,6 @@ bool text_save_commit(TextSave*);
  * @endrst
  */
 void text_save_cancel(TextSave*);
-/**
- * Write whole text content to file descriptor.
- * @return The number of bytes written or ``-1`` in case of an error.
- */
-ssize_t text_write(const Text*, int fd);
 /**
  * Write file range to file descriptor.
  * @return The number of bytes written or ``-1`` in case of an error.
