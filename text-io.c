@@ -19,14 +19,6 @@
 #include "text-util.h"
 #include "util.h"
 
-struct TextSave {                  /* used to hold context between text_save_{begin,commit} calls */
-	Text *txt;                 /* text to operate on */
-	char *filename;            /* filename to save to as given to text_save_begin */
-	char *tmpname;             /* temporary name used for atomic rename(2) */
-	int fd;                    /* file descriptor to write data to using text_save_write */
-	int dirfd;                 /* directory file descriptor, relative to which we save */
-	enum TextSaveMethod type;  /* method used to save file */
-};
 
 /* Allocate blocks holding the actual file content in chunks of size: */
 #ifndef BLOCK_SIZE
@@ -318,15 +310,11 @@ static bool text_save_begin_atomic(TextSave *ctx) {
 		close(oldfd);
 	}
 
-	ctx->type = TEXT_SAVE_ATOMIC;
 	return true;
 err:
 	saved_errno = errno;
 	if (oldfd != -1)
 		close(oldfd);
-	if (ctx->fd != -1)
-		close(ctx->fd);
-	ctx->fd = -1;
 	errno = saved_errno;
 	return false;
 }
@@ -350,7 +338,7 @@ static bool text_save_commit_atomic(TextSave *ctx) {
 	free(ctx->tmpname);
 	ctx->tmpname = NULL;
 
-	int dir = openat(ctx->dirfd, dirname(ctx->filename), O_DIRECTORY|O_RDONLY);
+	int dir = openat(ctx->dirfd, dirname(ctx->tmpname), O_DIRECTORY|O_RDONLY);
 	if (dir == -1)
 		return false;
 
@@ -405,15 +393,11 @@ static bool text_save_begin_inplace(TextSave *ctx) {
 	 * here we are screwed, TODO: make a backup before? */
 	if (ftruncate(ctx->fd, 0) == -1)
 		goto err;
-	ctx->type = TEXT_SAVE_INPLACE;
 	return true;
 err:
 	saved_errno = errno;
 	if (newfd != -1)
 		close(newfd);
-	if (ctx->fd != -1)
-		close(ctx->fd);
-	ctx->fd = -1;
 	errno = saved_errno;
 	return false;
 }
@@ -430,61 +414,43 @@ static bool text_save_commit_inplace(TextSave *ctx) {
 	return true;
 }
 
-TextSave *text_save_begin(Text *txt, int dirfd, const char *filename, enum TextSaveMethod type) {
-	if (!filename)
-		return NULL;
-	TextSave *ctx = calloc(1, sizeof *ctx);
-	if (!ctx)
-		return NULL;
-	ctx->txt = txt;
-	ctx->fd = -1;
-	ctx->dirfd = dirfd;
-	if (!(ctx->filename = strdup(filename)))
-		goto err;
+bool text_save_begin(TextSave *ctx) {
+	enum TextSaveMethod type = ctx->method;
 	errno = 0;
-	if ((type == TEXT_SAVE_AUTO || type == TEXT_SAVE_ATOMIC) && text_save_begin_atomic(ctx))
-		return ctx;
+	if ((type == TEXT_SAVE_AUTO || type == TEXT_SAVE_ATOMIC) && text_save_begin_atomic(ctx)) {
+		ctx->method = TEXT_SAVE_ATOMIC;
+		return true;
+	}
 	if (errno == ENOSPC)
 		goto err;
-	if ((type == TEXT_SAVE_AUTO || type == TEXT_SAVE_INPLACE) && text_save_begin_inplace(ctx))
-		return ctx;
+	if ((type == TEXT_SAVE_AUTO || type == TEXT_SAVE_INPLACE) && text_save_begin_inplace(ctx)) {
+		ctx->method = TEXT_SAVE_INPLACE;
+		return true;
+	}
 err:
 	text_save_cancel(ctx);
-	return NULL;
-}
-
-bool text_save_commit(TextSave *ctx) {
-	if (!ctx)
-		return true;
-	bool ret;
-	switch (ctx->type) {
-	case TEXT_SAVE_ATOMIC:
-		ret = text_save_commit_atomic(ctx);
-		break;
-	case TEXT_SAVE_INPLACE:
-		ret = text_save_commit_inplace(ctx);
-		break;
-	default:
-		ret = false;
-		break;
-	}
-
-	text_save_cancel(ctx);
-	return ret;
+	return false;
 }
 
 void text_save_cancel(TextSave *ctx) {
-	if (!ctx)
-		return;
 	int saved_errno = errno;
 	if (ctx->fd != -1)
 		close(ctx->fd);
 	if (ctx->tmpname && ctx->tmpname[0])
 		unlinkat(ctx->dirfd, ctx->tmpname, 0);
 	free(ctx->tmpname);
-	free(ctx->filename);
-	free(ctx);
 	errno = saved_errno;
+}
+
+bool text_save_commit(TextSave *ctx) {
+	bool result = false;
+	switch (ctx->method) {
+	case TEXT_SAVE_ATOMIC:  result = text_save_commit_atomic(ctx);  break;
+	case TEXT_SAVE_INPLACE: result = text_save_commit_inplace(ctx); break;
+	default: break;
+	}
+	text_save_cancel(ctx);
+	return result;
 }
 
 /* First try to save the file atomically using rename(2) if this does not
@@ -508,16 +474,16 @@ bool text_saveat_method(Text *txt, int dirfd, const char *filename, enum TextSav
 		text_saved(txt, NULL);
 		return true;
 	}
-	TextSave *ctx = text_save_begin(txt, dirfd, filename, method);
-	if (!ctx)
+	TextSave ctx = text_save_default(.txt = txt, .dirfd = dirfd, .filename = filename, .method = method);
+	if (!text_save_begin(&ctx))
 		return false;
 	Filerange range = (Filerange){ .start = 0, .end = text_size(txt) };
-	ssize_t written = text_save_write_range(ctx, &range);
+	ssize_t written = text_save_write_range(&ctx, &range);
 	if (written == -1 || (size_t)written != text_range_size(&range)) {
-		text_save_cancel(ctx);
+		text_save_cancel(&ctx);
 		return false;
 	}
-	return text_save_commit(ctx);
+	return text_save_commit(&ctx);
 }
 
 ssize_t text_save_write_range(TextSave *ctx, const Filerange *range) {

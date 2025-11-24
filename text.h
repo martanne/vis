@@ -28,7 +28,6 @@ typedef struct {
  */
 typedef struct Text Text;
 typedef struct Piece Piece;
-typedef struct TextSave TextSave;
 
 /** A contiguous part of the text. */
 typedef struct {
@@ -350,6 +349,18 @@ enum TextSaveMethod {
 	TEXT_SAVE_INPLACE,
 };
 
+/* used to hold context between text_save_{begin,commit} calls */
+typedef struct {
+	enum TextSaveMethod method; /* method used to save file */
+	Text *txt;                 /* text to operate on */
+	const char *filename;      /* filename to save to */
+	char *tmpname;             /* temporary name used for atomic rename(2) */
+	int fd;                    /* file descriptor to write data to using text_save_write */
+	int dirfd;                 /* directory file descriptor, relative to which we save */
+} TextSave;
+
+#define text_save_default(...) (TextSave){.dirfd = AT_FDCWD, .fd = -1, __VA_ARGS__}
+
 /**
  * Save the whole text to the given file name.
  *
@@ -376,7 +387,7 @@ bool text_saveat_method(Text*, int dirfd, const char *filename, enum TextSaveMet
  *              ``text_save_cancel`` to release the underlying resources.
  * @endrst
  */
-TextSave *text_save_begin(Text*, int dirfd, const char *filename, enum TextSaveMethod);
+bool text_save_begin(TextSave*);
 /**
  * Write file range.
  * @return The number of bytes written or ``-1`` in case of an error.

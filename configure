@@ -236,6 +236,9 @@ esac
 tryflag CFLAGS -Wall
 tryflag CFLAGS -pipe
 
+# shut up useless warning
+tryflag CFLAGS -Wno-initializer-overrides
+
 # Try flags to optimize binary size
 tryflag CFLAGS -O2
 tryflag CFLAGS -ffunction-sections

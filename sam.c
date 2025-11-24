@@ -1688,8 +1688,8 @@ static bool cmd_write(Vis *vis, Win *win, Command *cmd, const char *argv[], Sele
 		if (write_entire_file)
 			*r = text_range_new(0, text_size(text));
 
-		TextSave *ctx = text_save_begin(text, AT_FDCWD, path, file->save_method);
-		if (!ctx) {
+		TextSave ctx = text_save_default(.txt = text, .method = file->save_method, .filename = path);
+		if (!text_save_begin(&ctx)) {
 			const char *msg = errno ? strerror(errno) : "try changing `:set savemethod`";
 			vis_info_show(vis, "Can't write `%s': %s", path, msg);
 			goto err;
@@ -1700,18 +1700,19 @@ static bool cmd_write(Vis *vis, Win *win, Command *cmd, const char *argv[], Sele
 
 		for (Selection *s = view_selections(&win->view); s; s = view_selections_next(s)) {
 			Filerange range = visual ? view_selections_get(s) : *r;
-			ssize_t written = text_save_write_range(ctx, &range);
+			ssize_t written = text_save_write_range(&ctx, &range);
 			failure = (written == -1 || (size_t)written != text_range_size(&range));
-			if (failure) {
-				text_save_cancel(ctx);
-				break;
-			}
-
-			if (!visual)
+			if (failure || !visual)
 				break;
 		}
 
-		if (failure || !text_save_commit(ctx)) {
+		if (!failure) {
+			failure = !text_save_commit(&ctx);
+		} else {
+			text_save_cancel(&ctx);
+		}
+
+		if (failure) {
 			vis_info_show(vis, "Can't write `%s': %s", path, strerror(errno));
 			goto err;
 		}
