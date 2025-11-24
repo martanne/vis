@@ -6,11 +6,11 @@
 #include "text.h"
 
 /* test whether the given range is valid (start <= end) */
-bool text_range_valid(const Filerange*);
+#define text_range_valid(r) ((r)->start != EPOS && (r)->end != EPOS && (r)->start <= (r)->end)
 /* get the size of the range (end-start) or zero if invalid */
-size_t text_range_size(const Filerange*);
+#define text_range_size(r) (text_range_valid(r) ? (r)->end - (r)->start : 0)
 /* create an empty / invalid range of size zero */
-Filerange text_range_empty(void);
+#define text_range_empty() (Filerange){.start = EPOS, .end = EPOS}
 /* merge two ranges into a new one which contains both of them */
 Filerange text_range_union(const Filerange*, const Filerange*);
 /* get intersection of two ranges */
