@@ -33,7 +33,7 @@ lex:add_rule('comment', lex:tag(lexer.COMMENT, line_comment + block_comment))
 lex:add_rule('number', lex:tag(lexer.NUMBER, lexer.number))
 
 -- Operators.
-lex:add_rule('operator', lex:tag(lexer.OPERATOR, op))
+lex:add_rule('operator', lex:tag(lexer.OPERATOR, '..' + op))
 
 lexer.property['scintillua.comment'] = '--'
 

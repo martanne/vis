@@ -30,10 +30,11 @@ local attr = lex:tag(lexer.ATTRIBUTE, B('.') * lex:word_match(lexer.ATTRIBUTE) +
 lex:add_rule('constant', builtin_const + attr)
 
 -- Strings.
+-- Note: https://docs.python.org/3/reference/lexical_analysis.html#string-and-bytes-literals
 local sq_str = lexer.range("'", true)
 local dq_str = lexer.range('"', true)
 local tq_str = lexer.range("'''") + lexer.range('"""')
-lex:add_rule('string', lex:tag(lexer.STRING, (S('fFrRbBrR') * S('rRfFrRbB') + S('ruRUfFbB'))^-1 *
+lex:add_rule('string', lex:tag(lexer.STRING, (S('rRbBfFtT') * S('rRbBfFtT') + S('rRuUbBfFtT'))^-1 *
 	(tq_str + sq_str + dq_str)))
 
 -- Identifiers.

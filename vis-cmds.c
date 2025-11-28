@@ -693,6 +693,15 @@ static bool print_cmd(const char *key, void *value, void *data) {
 	return text_appendf(data, "  %-30s %s\n", usage, help ? help : "");
 }
 
+static bool print_cmd_name(const char *key, void *value, void *data) {
+	CommandDef *cmd = value;
+	return buffer_appendf(data, "%s\n", cmd->name);
+}
+
+void vis_print_cmds(Vis *vis, Buffer *buf) {
+	map_iterate(vis->cmds, print_cmd_name, buf);
+}
+
 static bool print_option(const char *key, void *value, void *txt) {
 	char desc[256];
 	const OptionDef *opt = value;
@@ -867,7 +876,7 @@ static bool cmd_help(Vis *vis, Win *win, Command *cmd, const char *argv[], Selec
 	for (size_t i = 0; i < LENGTH(configs); i++)
 		text_appendf(txt, "  %-32s\t%s\n", configs[i].name, configs[i].enabled ? "yes" : "no");
 
-	text_save(txt, NULL);
+	text_mark_current_revision(txt);
 	view_cursors_to(vis->win->view.selection, 0);
 
 	if (argv[1])

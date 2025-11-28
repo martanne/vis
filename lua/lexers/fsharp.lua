@@ -52,7 +52,7 @@ lex:add_rule('preproc', token(lexer.PREPROCESSOR, lexer.starts_line('#') * S('\t
 	word_match('else endif endregion if ifdef ifndef light region')))
 
 -- Operators.
-lex:add_rule('operator', token(lexer.OPERATOR, S('=<>+-*/^.,:;~!@#%^&|?[](){}')))
+lex:add_rule('operator', token(lexer.OPERATOR, '..' + S('=<>+-*/^.,:;~!@#%^&|?[](){}')))
 
 lexer.property['scintillua.comment'] = '//'
 

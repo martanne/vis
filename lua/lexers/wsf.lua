@@ -54,10 +54,10 @@ local general = lex:tag(lexer.CONSTANT .. '.entity', '&' * identifier * ';')
 lex:add_rule('entity', predefined + general)
 
 -- Fold points.
+lex:add_fold_point(lexer.COMMENT, '<!--', '-->')
 local function disambiguate_lt(text, pos, line, s) return not line:find('^</', s) and 1 or -1 end
 lex:add_fold_point(lexer.TAG, '<', disambiguate_lt)
 lex:add_fold_point(lexer.TAG, '/>', -1)
-lex:add_fold_point(lexer.COMMENT, '<!--', '-->')
 
 -- Finally, add JavaScript and VBScript as embedded languages
 

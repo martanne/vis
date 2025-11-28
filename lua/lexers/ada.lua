@@ -42,7 +42,7 @@ lex:add_rule('comment', token(lexer.COMMENT, lexer.to_eol('--')))
 lex:add_rule('number', token(lexer.NUMBER, lexer.number_('_')))
 
 -- Operators.
-lex:add_rule('operator', token(lexer.OPERATOR, S(':;=<>&+-*/.()')))
+lex:add_rule('operator', token(lexer.OPERATOR, '..' + S(':;=<>&+-*/.()')))
 
 lexer.property['scintillua.comment'] = '--'
 

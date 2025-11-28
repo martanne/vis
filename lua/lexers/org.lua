@@ -31,9 +31,9 @@ lex:add_rule('italic', lex:tag('ITALIC', '/' * lexer.word * '/'))
 lex:add_rule('underline', lex:tag('UNDERLINE', '_' * lexer.alnum * '_'))
 
 -- ToDos.
-lex:add_rule('todo', lex:tag('TODO', lex:word_match('TODO')))
+lex:add_rule('settled', lex:tag('SETTLED', lex:word_match('SETTLED')))
 lex:add_rule('done', lex:tag('DONE', lex:word_match('DONE')))
-lex:add_rule('wontfix', lex:tag('WONTFIX', lex:word_match('WONTFIX')))
+lex:add_rule('waiting', lex:tag('WAITING', lex:word_match('WAITING')))
 
 -- DateTime.
 local DD = lexer.digit * lexer.digit
@@ -75,11 +75,11 @@ local block_comment = lexer.range(lexer.starts_line('#+BEGIN_COMMENT'),
 lex:add_rule('comment', lex:tag(lexer.COMMENT, block_comment + line_comment))
 
 -- Word lists.
-lex:set_word_list('TODO', {'TODO', 'DELEGATED', 'WAITING'})
+lex:set_word_list('SETTLED', {'TODO', 'DELEGATED'})
 
-lex:set_word_list('DONE', {'DONE'})
+lex:set_word_list('DONE', {'DONE', 'INVALID', 'WONTFIX'})
 
-lex:set_word_list('WONTFIX', {'WONTFIX', 'INVALID'})
+lex:set_word_list('WAITING', {'WAITING'})
 
 lex:set_word_list('wday', {
 	'Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun', 'Po',

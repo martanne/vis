@@ -1,8 +1,9 @@
-#include <stddef.h>
-#include <stdbool.h>
-#include <string.h>
 #include <errno.h>
+#include <fcntl.h>
+#include <stdbool.h>
+#include <stddef.h>
 #include <stdio.h>
+#include <string.h>
 #include <unistd.h>
 #include "tap.h"
 #include "text.h"
@@ -88,6 +89,19 @@ static void iterator_find_prev(Text *txt, size_t start, char b, size_t match) {
 	ok((found && it.pos == match) || (!found && it.pos == 0),"Iterator byte find prev (start: %zu, match: %zu)", start, match);
 }
 
+static bool text_save_method(Text *txt, const char *filename, enum TextSaveMethod method) {
+	TextSave ctx = text_save_default(.txt = txt, .filename = filename, .method = method);
+	if (!text_save_begin(&ctx))
+		return false;
+	Filerange range = (Filerange){ .start = 0, .end = text_size(txt) };
+	ssize_t written = text_save_write_range(&ctx, &range);
+	if (written == -1 || (size_t)written != text_range_size(&range)) {
+		text_save_cancel(&ctx);
+		return false;
+	}
+	return text_save_commit(&ctx);
+}
+
 int main(int argc, char *argv[]) {
 	Text *txt;
 
@@ -117,7 +131,7 @@ int main(int argc, char *argv[]) {
 		char buf[BUFSIZ] = "Hello World!\n";
 		txt = text_load(NULL);
 		ok(txt && insert(txt, 0, buf) && compare(txt, buf), "Inserting into empty text");
-		ok(txt && text_save(txt, filename), "Text save");
+		ok(txt && text_save_method(txt, filename, TEXT_SAVE_AUTO), "Text save");
 		text_free(txt);
 
 		for (size_t i = 0; i < LENGTH(load_method); i++) {
@@ -163,7 +177,7 @@ int main(int argc, char *argv[]) {
 			snprintf(buf, sizeof buf, "%s\n", names[i]);
 			txt = text_load(NULL);
 			ok(txt && insert(txt, 0, buf) && compare(txt, buf), "Preparing %s content", names[i]);
-			ok(txt && text_save(txt, linkname), "Text save %s", names[i]);
+			ok(txt && text_save_method(txt, linkname, TEXT_SAVE_AUTO), "Text save %s", names[i]);
 			text_free(txt);
 
 			txt = text_load(linkname);

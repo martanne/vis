@@ -83,7 +83,7 @@ lex:add_rule('comment', token(lexer.COMMENT, doc_comment + comment))
 lex:add_rule('number', token(lexer.NUMBER, lexer.number))
 
 -- Operators.
-lex:add_rule('operator', token(lexer.OPERATOR, S('+-/*%<>!=^&|?~:;,.()[]{}')))
+lex:add_rule('operator', token(lexer.OPERATOR, '..' + S('+-/*%<>!=^&|?~:;,.()[]{}')))
 
 -- Fold points.
 lex:add_fold_point(lexer.OPERATOR, '{', '}')

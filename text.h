@@ -28,7 +28,6 @@ typedef struct {
  */
 typedef struct Text Text;
 typedef struct Piece Piece;
-typedef struct TextSave TextSave;
 
 /** A contiguous part of the text. */
 typedef struct {
@@ -95,7 +94,6 @@ enum TextLoadMethod {
  * @endrst
  */
 Text *text_load(const char *filename);
-Text *text_loadat(int dirfd, const char *filename);
 /**
  * Create a text instance populated with the given file content.
  *
@@ -350,20 +348,22 @@ enum TextSaveMethod {
 	TEXT_SAVE_INPLACE,
 };
 
+/* used to hold context between text_save_{begin,commit} calls */
+typedef struct {
+	enum TextSaveMethod method; /* method used to save file */
+	Text *txt;                 /* text to operate on */
+	const char *filename;      /* filename to save to */
+	char *tmpname;             /* temporary name used for atomic rename(2) */
+	int fd;                    /* file descriptor to write data to using text_save_write */
+	int dirfd;                 /* directory file descriptor, relative to which we save */
+} TextSave;
+
+#define text_save_default(...) (TextSave){.dirfd = AT_FDCWD, .fd = -1, __VA_ARGS__}
+
 /**
- * Save the whole text to the given file name.
- *
- * @rst
- * .. note:: Equivalent to ``text_save_method(filename, TEXT_SAVE_AUTO)``.
- * @endrst
+ * Marks the current text revision as saved.
  */
-bool text_save(Text*, const char *filename);
-bool text_saveat(Text*, int dirfd, const char *filename);
-/**
- * Save the whole text to the given file name, using the specified method.
- */
-bool text_save_method(Text*, const char *filename, enum TextSaveMethod);
-bool text_saveat_method(Text*, int dirfd, const char *filename, enum TextSaveMethod);
+void text_mark_current_revision(Text*);
 
 /**
  * Setup a sequence of write operations.
@@ -376,7 +376,7 @@ bool text_saveat_method(Text*, int dirfd, const char *filename, enum TextSaveMet
  *              ``text_save_cancel`` to release the underlying resources.
  * @endrst
  */
-TextSave *text_save_begin(Text*, int dirfd, const char *filename, enum TextSaveMethod);
+bool text_save_begin(TextSave*);
 /**
  * Write file range.
  * @return The number of bytes written or ``-1`` in case of an error.
@@ -400,11 +400,6 @@ bool text_save_commit(TextSave*);
  * @endrst
  */
 void text_save_cancel(TextSave*);
-/**
- * Write whole text content to file descriptor.
- * @return The number of bytes written or ``-1`` in case of an error.
- */
-ssize_t text_write(const Text*, int fd);
 /**
  * Write file range to file descriptor.
  * @return The number of bytes written or ``-1`` in case of an error.

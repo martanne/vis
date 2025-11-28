@@ -80,7 +80,7 @@ lex:add_rule('symbol', lex:tag(lexer.STRING .. '.symbol', ':' * P(function(input
 end) * (word_char^1 + sq_str + dq_str)))
 
 -- Operators.
-lex:add_rule('operator', lex:tag(lexer.OPERATOR, S('!%^&*()[]{}-=+/|:;.,?<>~')))
+lex:add_rule('operator', lex:tag(lexer.OPERATOR, P('...') + '..' + S('!%^&*()[]{}-=+/|:;.,?<>~')))
 
 -- Fold points.
 local function disambiguate(text, pos, line, s)

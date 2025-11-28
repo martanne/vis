@@ -157,6 +157,7 @@ testclean:
 
 clean:
 	@echo cleaning
+	@$(MAKE) -C doc clean
 	@rm -rf obj
 	@rm -f $(ELF) vis-single vis-single-payload.inc vis-*.tar.gz *.gcov *.gcda *.gcno *.d
 

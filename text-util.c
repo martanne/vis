@@ -4,18 +4,6 @@
 #include <errno.h>
 #include <stdlib.h>
 
-bool text_range_valid(const Filerange *r) {
-	return r->start != EPOS && r->end != EPOS && r->start <= r->end;
-}
-
-size_t text_range_size(const Filerange *r) {
-	return text_range_valid(r) ? r->end - r->start : 0;
-}
-
-Filerange text_range_empty(void) {
-	return (Filerange){ .start = EPOS, .end = EPOS };
-}
-
 Filerange text_range_union(const Filerange *r1, const Filerange *r2) {
 	if (!text_range_valid(r1))
 		return *r2;

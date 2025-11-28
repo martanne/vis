@@ -50,7 +50,7 @@ lex:add_rule('number', lex:tag(lexer.NUMBER, lexer.number_('_')))
 lex:add_rule('preprocessor', lex:tag(lexer.PREPROCESSOR, '#' * lexer.range('[', ']', true)))
 
 -- Operators.
-lex:add_rule('operator', lex:tag(lexer.OPERATOR, S('+-/*%<>!=`^~@&|?#~:;,.()[]{}')))
+lex:add_rule('operator', lex:tag(lexer.OPERATOR, '..' + S('+-/*%<>!=`^~@&|?#~:;,.()[]{}')))
 
 -- Fold points.
 lex:add_fold_point(lexer.COMMENT, '/*', '*/')
