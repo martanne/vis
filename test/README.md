@@ -2,8 +2,7 @@ Testing Infrastructure for Vis
 ------------------------------
 
 This repository contains testing infrastructure for the
-[vis editor](https://github.com/martanne/vis). It is expected
-to be cloned into a sub directory of the `vis` source tree.
+[vis editor](https://github.com/martanne/vis).
 
 There exist 5 different kinds of tests:
 
