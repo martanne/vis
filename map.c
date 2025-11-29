@@ -273,11 +273,11 @@ const Map *map_prefix(const Map *map, const char *prefix)
 	return top;
 }
 
-static void clear(Map n)
+static void map_clear_impl(Map n)
 {
 	if (!n.v) {
-		clear(n.u.n->child[0]);
-		clear(n.u.n->child[1]);
+		map_clear_impl(n.u.n->child[0]);
+		map_clear_impl(n.u.n->child[1]);
 		free(n.u.n);
 	} else {
 		free((char*)n.u.s);
@@ -287,7 +287,7 @@ static void clear(Map n)
 void map_clear(Map *map)
 {
 	if (map->u.n)
-		clear(*map);
+		map_clear_impl(*map);
 	map->u.n = NULL;
 	map->v = NULL;
 }

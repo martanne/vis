@@ -124,10 +124,10 @@ typedef struct {             /** collects all information until an operator is e
 	Arg arg;
 } Action;
 
-typedef struct Change Change;
+typedef struct SamChange SamChange;
 typedef struct {
-	Change *changes;      /* all changes in monotonically increasing file position */
-	Change *latest;       /* most recent change */
+	SamChange *changes;   /* all changes in monotonically increasing file position */
+	SamChange *latest;    /* most recent change */
 	enum SamError error;  /* non-zero in case something went wrong */
 } Transcript;
 

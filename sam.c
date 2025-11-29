@@ -39,8 +39,8 @@ typedef struct Address Address;
 typedef struct Command Command;
 typedef struct CommandDef CommandDef;
 
-struct Change {
-	enum ChangeType {
+struct SamChange {
+	enum SamChangeType {
 		TRANSCRIPT_INSERT = 1 << 0,
 		TRANSCRIPT_DELETE = 1 << 1,
 		TRANSCRIPT_CHANGE = TRANSCRIPT_INSERT|TRANSCRIPT_DELETE,
@@ -50,7 +50,7 @@ struct Change {
 	Filerange range;   /* inserts are denoted by zero sized range (same start/end) */
 	const char *data;  /* will be free(3)-ed after transcript has been processed */
 	size_t len;        /* size in bytes of the chunk pointed to by data */
-	Change *next;      /* modification position increase monotonically */
+	SamChange *next;   /* modification position increase monotonically */
 	int count;         /* how often should data be inserted? */
 };
 
@@ -456,17 +456,17 @@ const char *sam_error(enum SamError err) {
 	return idx < LENGTH(error_msg) ? error_msg[idx] : NULL;
 }
 
-static void change_free(Change *c) {
+static void sam_change_free(SamChange *c) {
 	if (!c)
 		return;
 	free((char*)c->data);
 	free(c);
 }
 
-static Change *change_new(Transcript *t, enum ChangeType type, Filerange *range, Win *win, Selection *sel) {
+static SamChange *sam_change_new(Transcript *t, enum SamChangeType type, Filerange *range, Win *win, Selection *sel) {
 	if (!text_range_valid(range))
 		return NULL;
-	Change **prev, *next;
+	SamChange **prev, *next;
 	if (t->latest && t->latest->range.end <= range->start) {
 		prev = &t->latest->next;
 		next = t->latest->next;
@@ -482,7 +482,7 @@ static Change *change_new(Transcript *t, enum ChangeType type, Filerange *range,
 		t->error = SAM_ERR_CONFLICT;
 		return NULL;
 	}
-	Change *new = calloc(1, sizeof *new);
+	SamChange *new = calloc(1, sizeof *new);
 	if (new) {
 		new->type = type;
 		new->range = *range;
@@ -506,15 +506,15 @@ static bool sam_transcript_error(Transcript *t, enum SamError error) {
 }
 
 static void sam_transcript_free(Transcript *t) {
-	for (Change *c = t->changes, *next; c; c = next) {
+	for (SamChange *c = t->changes, *next; c; c = next) {
 		next = c->next;
-		change_free(c);
+		sam_change_free(c);
 	}
 }
 
 static bool sam_insert(Win *win, Selection *sel, size_t pos, const char *data, size_t len, int count) {
 	Filerange range = text_range_new(pos, pos);
-	Change *c = change_new(&win->file->transcript, TRANSCRIPT_INSERT, &range, win, sel);
+	SamChange *c = sam_change_new(&win->file->transcript, TRANSCRIPT_INSERT, &range, win, sel);
 	if (c) {
 		c->data = data;
 		c->len = len;
@@ -524,11 +524,11 @@ static bool sam_insert(Win *win, Selection *sel, size_t pos, const char *data, s
 }
 
 static bool sam_delete(Win *win, Selection *sel, Filerange *range) {
-	return change_new(&win->file->transcript, TRANSCRIPT_DELETE, range, win, sel);
+	return sam_change_new(&win->file->transcript, TRANSCRIPT_DELETE, range, win, sel);
 }
 
 static bool sam_change(Win *win, Selection *sel, Filerange *range, const char *data, size_t len, int count) {
-	Change *c = change_new(&win->file->transcript, TRANSCRIPT_CHANGE, range, win, sel);
+	SamChange *c = sam_change_new(&win->file->transcript, TRANSCRIPT_CHANGE, range, win, sel);
 	if (c) {
 		c->data = data;
 		c->len = len;
@@ -1244,7 +1244,7 @@ enum SamError sam_cmd(Vis *vis, const char *s) {
 		}
 		vis_file_snapshot(vis, file);
 		ptrdiff_t delta = 0;
-		for (Change *c = t->changes; c; c = c->next) {
+		for (SamChange *c = t->changes; c; c = c->next) {
 			c->range.start += delta;
 			c->range.end += delta;
 			if (c->type & TRANSCRIPT_DELETE) {

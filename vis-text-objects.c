@@ -29,7 +29,7 @@ bool vis_textobject(Vis *vis, enum VisTextObject id) {
 	return true;
 }
 
-static Filerange search_forward(Vis *vis, Text *txt, size_t pos) {
+static Filerange vis_text_object_search_forward(Vis *vis, Text *txt, size_t pos) {
 	Filerange range = text_range_empty();
 	Regex *regex = vis_regex(vis, NULL);
 	if (regex)
@@ -38,7 +38,7 @@ static Filerange search_forward(Vis *vis, Text *txt, size_t pos) {
 	return range;
 }
 
-static Filerange search_backward(Vis *vis, Text *txt, size_t pos) {
+static Filerange vis_text_object_search_backward(Vis *vis, Text *txt, size_t pos) {
 	Filerange range = text_range_empty();
 	Regex *regex = vis_regex(vis, NULL);
 	if (regex)
@@ -183,11 +183,11 @@ const TextObject vis_textobjects[] = {
 		.txt = text_object_indentation,
 	},
 	[VIS_TEXTOBJECT_SEARCH_FORWARD] = {
-		.vis = search_forward,
+		.vis = vis_text_object_search_forward,
 		.type = TEXTOBJECT_NON_CONTIGUOUS|TEXTOBJECT_EXTEND_FORWARD,
 	},
 	[VIS_TEXTOBJECT_SEARCH_BACKWARD] = {
-		.vis = search_backward,
+		.vis = vis_text_object_search_backward,
 		.type = TEXTOBJECT_NON_CONTIGUOUS|TEXTOBJECT_EXTEND_BACKWARD,
 	},
 };

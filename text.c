@@ -53,13 +53,13 @@ typedef struct {
 } Span;
 
 /* A Change keeps all needed information to redo/undo an insertion/deletion. */
-typedef struct Change Change;
-struct Change {
+typedef struct TextChange TextChange;
+struct TextChange {
 	Span old;               /* all pieces which are being modified/swapped out by the change */
 	Span new;               /* all pieces which are introduced/swapped in by the change */
 	size_t pos;             /* absolute position at which the change occurred */
-	Change *next;           /* next change which is part of the same revision */
-	Change *prev;           /* previous change which is part of the same revision */
+	TextChange *next;       /* next change which is part of the same revision */
+	TextChange *prev;       /* previous change which is part of the same revision */
 };
 
 /* A Revision is a list of Changes which are used to undo/redo all modifications
@@ -67,7 +67,7 @@ struct Change {
  */
 typedef struct Revision Revision;
 struct Revision {
-	Change *change;         /* the most recent change */
+	TextChange *change;     /* the most recent change */
 	Revision *next;         /* the next (child) revision in the undo tree */
 	Revision *prev;         /* the previous (parent) revision in the undo tree */
 	Revision *earlier;      /* the previous Revision, chronologically */
@@ -113,8 +113,8 @@ static Location piece_get_extern(const Text *txt, size_t pos);
 static void span_init(Span *span, Piece *start, Piece *end);
 static void span_swap(Text *txt, Span *old, Span *new);
 /* change management */
-static Change *change_alloc(Text *txt, size_t pos);
-static void change_free(Change *c);
+static TextChange *text_change_alloc(Text *txt, size_t pos);
+static void text_change_free(TextChange *c);
 /* revision management */
 static Revision *revision_alloc(Text *txt);
 static void revision_free(Revision *rev);
@@ -276,9 +276,9 @@ static Revision *revision_alloc(Text *txt) {
 static void revision_free(Revision *rev) {
 	if (!rev)
 		return;
-	for (Change *next, *c = rev->change; c; c = next) {
+	for (TextChange *next, *c = rev->change; c; c = next) {
 		next = c->next;
-		change_free(c);
+		text_change_free(c);
 	}
 	free(rev);
 }
@@ -358,14 +358,14 @@ static Location piece_get_extern(const Text *txt, size_t pos) {
 
 /* allocate a new change, associate it with current revision or a newly
  * allocated one if none exists. */
-static Change *change_alloc(Text *txt, size_t pos) {
+static TextChange *text_change_alloc(Text *txt, size_t pos) {
 	Revision *rev = txt->current_revision;
 	if (!rev) {
 		rev = revision_alloc(txt);
 		if (!rev)
 			return NULL;
 	}
-	Change *c = calloc(1, sizeof *c);
+	TextChange *c = calloc(1, sizeof *c);
 	if (!c)
 		return NULL;
 	c->pos = pos;
@@ -376,7 +376,7 @@ static Change *change_alloc(Text *txt, size_t pos) {
 	return c;
 }
 
-static void change_free(Change *c) {
+static void text_change_free(TextChange *c) {
 	if (!c)
 		return;
 	/* only free the new part of the span, the old one is still in use */
@@ -429,7 +429,7 @@ bool text_insert(Text *txt, size_t pos, const char *data, size_t len) {
 	if (cache_insert(txt, p, off, data, len))
 		return true;
 
-	Change *c = change_alloc(txt, pos);
+	TextChange *c = text_change_alloc(txt, pos);
 	if (!c)
 		return false;
 
@@ -472,7 +472,7 @@ bool text_insert(Text *txt, size_t pos, const char *data, size_t len) {
 
 static size_t revision_undo(Text *txt, Revision *rev) {
 	size_t pos = EPOS;
-	for (Change *c = rev->change; c; c = c->next) {
+	for (TextChange *c = rev->change; c; c = c->next) {
 		span_swap(txt, &c->new, &c->old);
 		pos = c->pos;
 	}
@@ -481,7 +481,7 @@ static size_t revision_undo(Text *txt, Revision *rev) {
 
 static size_t revision_redo(Text *txt, Revision *rev) {
 	size_t pos = EPOS;
-	Change *c = rev->change;
+	TextChange *c = rev->change;
 	while (c->next)
 		c = c->next;
 	for ( ; c; c = c->prev) {
@@ -615,7 +615,7 @@ Text *text_loadat_method(int dirfd, const char *filename, enum TextLoadMethod me
 	piece_init(&txt->end, p, NULL, NULL, 0);
 	txt->size = p->len;
 	/* write an empty revision */
-	change_alloc(txt, EPOS);
+	text_change_alloc(txt, EPOS);
 	text_snapshot(txt);
 	txt->saved_revision = txt->history;
 
@@ -673,7 +673,7 @@ bool text_delete(Text *txt, size_t pos, size_t len) {
 	size_t off = loc.off;
 	if (cache_delete(txt, p, off, len))
 		return true;
-	Change *c = change_alloc(txt, pos);
+	TextChange *c = text_change_alloc(txt, pos);
 	if (!c)
 		return false;
 
