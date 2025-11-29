@@ -1661,8 +1661,10 @@ static bool cmd_write(Vis *vis, Win *win, Command *cmd, const char *argv[], Sele
 	for (const char **name = argv[1] ? &argv[1] : (const char*[]){ filename, NULL }; *name; name++) {
 
 		char *path = absolute_path(*name);
-		if (!path)
+		if (!path) {
+			vis_info_show(vis, "Can't open file for writing: %s", strerror(errno));
 			return false;
+		}
 
 		struct stat meta;
 		bool existing_file = !stat(path, &meta);
