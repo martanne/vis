@@ -67,7 +67,8 @@ typedef union {
  * @endrst
  * @ingroup vis_action
  */
-typedef const char *KeyActionFunction(Vis *vis, const char *keys, const Arg *arg);
+#define KEY_ACTION_FN(name) const char *name(Vis *vis, const char *keys, const Arg *arg)
+typedef KEY_ACTION_FN(KeyActionFunction);
 
 /** Key action definition. */
 typedef struct {
