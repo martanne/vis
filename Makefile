@@ -31,9 +31,9 @@ SRC = array.c \
 	$(REGEX_SRC)
 OBJ = $(SRC:%.c=obj/%.o)
 
-# On BSD make, set CURDIR to .CURDIR. On GNU make, CURDIR was already set in
-# GNUmakefile.
-CURDIR ?= $(.CURDIR)
+# On BSD make, set CURDIR to .CURDIR. On GNU make, CURDIR will be
+# overridden in GNUmakefile.
+CURDIR = $(.CURDIR)
 
 ELF = vis vis-menu vis-digraph
 EXECUTABLES = $(ELF) vis-clipboard vis-complete vis-open
