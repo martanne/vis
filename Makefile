@@ -28,6 +28,7 @@ SRC = array.c \
 	vis-subprocess.c \
 	vis-text-objects.c \
 	vis.c \
+	$(TERMKEY_SRC) \
 	$(REGEX_SRC)
 OBJ = $(SRC:%.c=obj/%.o)
 
