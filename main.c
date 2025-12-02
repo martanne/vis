@@ -21,6 +21,8 @@
 #include "array.h"
 #include "buffer.h"
 
+static Vis vis[1];
+
 #define PAGE      INT_MAX
 #define PAGE_HALF (INT_MAX-1)
 
@@ -206,6 +208,10 @@
 #define ENUM(_, e, ...) VIS_ACTION_##e,
 typedef enum { KEY_ACTION_LIST(ENUM) } VisActionKind;
 #undef ENUM
+
+/* NOTE: must conform to the vis library signature, but we can rename the parameters */
+#undef KEY_ACTION_FN
+#define KEY_ACTION_FN(name) const char *name(Vis *_unused, const char *keys, const Arg *arg)
 
 /** key bindings functions */
 
@@ -1271,8 +1277,6 @@ static KEY_ACTION_FN(ka_jumplist)
 	return keys;
 }
 
-static Vis *vis;
-
 static void signal_handler(int signum, siginfo_t *siginfo, void *context) {
 	vis_signal_handler(vis, signum, siginfo, context);
 }
@@ -1283,7 +1287,8 @@ static const KeyAction vis_action[] = { KEY_ACTION_LIST(KEY_ACTION_STRUCT) };
 
 #include "config.h"
 
-int main(int argc, char *argv[]) {
+int main(int argc, char *argv[])
+{
 	for (int i = 1; i < argc; i++) {
 		if (argv[i][0] != '-') {
 			continue;
@@ -1306,8 +1311,7 @@ int main(int argc, char *argv[]) {
 		}
 	}
 
-	vis = vis_new();
-	if (!vis)
+	if (!vis_init(vis))
 		return EXIT_FAILURE;
 
 	vis_event_emit(vis, VIS_EVENT_INIT);
@@ -1403,6 +1407,6 @@ int main(int argc, char *argv[]) {
 	}
 
 	int status = vis_run(vis);
-	vis_free(vis);
+	vis_cleanup(vis);
 	return status;
 }

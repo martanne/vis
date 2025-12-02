@@ -564,15 +564,11 @@ void vis_window_close(Win *win) {
 	vis_draw(vis);
 }
 
-Vis *vis_new(void) {
-	Vis *vis = calloc(1, sizeof(Vis));
-	if (!vis)
-		return NULL;
+bool vis_init(Vis *vis)
+{
 	vis->exit_status = -1;
-	if (!ui_terminal_init(&vis->ui)) {
-		free(vis);
-		return NULL;
-	}
+	if (!ui_terminal_init(&vis->ui))
+		return false;
 	ui_init(&vis->ui, vis);
 	vis->change_colors = true;
 	for (size_t i = 0; i < LENGTH(vis->registers); i++)
@@ -611,13 +607,14 @@ Vis *vis_new(void) {
 	vis->mode_prev = vis->mode = &vis_modes[VIS_MODE_NORMAL];
 	vis_modes[VIS_MODE_INSERT].input  = vis_event_mode_insert_input;
 	vis_modes[VIS_MODE_REPLACE].input = vis_event_mode_replace_input;
-	return vis;
+	return true;
 err:
-	vis_free(vis);
-	return NULL;
+	vis_cleanup(vis);
+	return false;
 }
 
-void vis_free(Vis *vis) {
+void vis_cleanup(Vis *vis)
+{
 	if (!vis)
 		return;
 	while (vis->windows)
@@ -656,7 +653,6 @@ void vis_free(Vis *vis) {
 		vis_action_free(vis, array_get_ptr(&vis->actions_user, 0));
 	array_release(&vis->actions_user);
 	free(vis->shell);
-	free(vis);
 }
 
 void vis_insert(Vis *vis, size_t pos, const char *data, size_t len) {

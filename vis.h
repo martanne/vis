@@ -99,10 +99,13 @@ typedef struct {
  * @defgroup vis_lifecycle Vis Lifecycle
  * @{
  */
-/** Create a new editor instance. */
-Vis *vis_new(void);
-/** Free all resources associated with this editor instance, terminates UI. */
-void vis_free(Vis*);
+/**
+ * Initializes a new editor instance.
+ * @param vis The editor instance.
+ */
+bool vis_init(Vis*);
+/** Release all resources associated with this editor instance, terminates UI. */
+void vis_cleanup(Vis*);
 /**
  * Enter main loop, start processing user input.
  * @param vis The editor instance.
