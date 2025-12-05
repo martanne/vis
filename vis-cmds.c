@@ -695,11 +695,12 @@ static bool print_cmd(const char *key, void *value, void *data) {
 
 static bool print_cmd_name(const char *key, void *value, void *data) {
 	CommandDef *cmd = value;
-	return buffer_appendf(data, "%s\n", cmd->name);
+	bool result = buffer_append(data, cmd->name, strlen(cmd->name));
+	return result && buffer_append(data, "\n", 1);
 }
 
-void vis_print_cmds(Vis *vis, Buffer *buf) {
-	map_iterate(vis->cmds, print_cmd_name, buf);
+void vis_print_cmds(Vis *vis, Buffer *buf, const char *prefix) {
+	map_iterate(map_prefix(vis->cmds, prefix), print_cmd_name, buf);
 }
 
 static bool print_option(const char *key, void *value, void *txt) {

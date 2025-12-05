@@ -1234,8 +1234,9 @@ bool vis_prompt_cmd(Vis *vis, const char *cmd);
  * Write newline separated list of available commands to ``buf``
  * @param vis The editor instance.
  * @param buf The buffer to write to.
+ * @param prefix Prefix to filter command list by.
  */
-void vis_print_cmds(Vis*, Buffer *buf);
+void vis_print_cmds(Vis*, Buffer *buf, const char *prefix);
 
 /**
  * Pipe a given file range to an external process.

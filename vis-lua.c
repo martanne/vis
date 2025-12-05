@@ -1161,13 +1161,11 @@ static int complete_command(lua_State *L) {
 	Vis *vis = obj_ref_check(L, 1, "vis");
 	const char *prefix = luaL_checkstring(L, 2);
 	char *out = NULL, *err = NULL;
-	char cmd[32];
-	int max_prefix_len = sizeof(cmd) - sizeof("grep '^' | vis-menu -b"); // including NUL
-	snprintf(cmd, sizeof(cmd), "grep '^%.*s' | vis-menu -b", max_prefix_len, prefix);
 
 	Buffer buf = {0};
-	vis_print_cmds(vis, &buf);
-	int status = vis_pipe_buf_collect(vis, buffer_content0(&buf), (const char*[]){cmd, NULL}, &out, &err, false);
+	vis_print_cmds(vis, &buf, prefix);
+	int status = vis_pipe_buf_collect(vis, buffer_content0(&buf), (const char*[]){"vis-menu", "-b", 0},
+	                                  &out, &err, false);
 
 	lua_pushinteger(L, status);
 	if (out) lua_pushstring(L, out);
