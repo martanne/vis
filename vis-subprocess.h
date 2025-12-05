@@ -23,9 +23,9 @@ struct Process {
 
 typedef enum { STDOUT, STDERR, SIGNAL, EXIT } ResponseType;
 
-Process *vis_process_communicate(Vis *, const char *command, const char *name,
-                                 Invalidator **invalidator);
-int vis_process_before_tick(fd_set *);
-void vis_process_tick(Vis *, fd_set *);
-void vis_process_waitall(Vis *);
+VIS_INTERNAL Process *vis_process_communicate(Vis *, const char *command, const char *name,
+                                              Invalidator **invalidator);
+VIS_INTERNAL int vis_process_before_tick(fd_set *);
+VIS_INTERNAL void vis_process_tick(Vis *, fd_set *);
+VIS_INTERNAL void vis_process_waitall(Vis *);
 #endif

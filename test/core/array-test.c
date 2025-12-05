@@ -4,9 +4,10 @@
 #include <string.h>
 #include <stdio.h>
 #include <errno.h>
+
 #include "tap.h"
-#include "array.h"
-#include "util.h"
+
+#include "array.c"
 
 typedef struct {
 	char key[64];

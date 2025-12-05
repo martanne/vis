@@ -9,6 +9,8 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 
+#include "util.h"
+
 /** A mark. */
 typedef uintptr_t Mark;
 
@@ -93,7 +95,7 @@ enum TextLoadMethod {
  * .. note:: Equivalent to ``text_load_method(filename, TEXT_LOAD_AUTO)``.
  * @endrst
  */
-Text *text_load(const char *filename);
+VIS_INTERNAL Text *text_load(const char *filename);
 /**
  * Create a text instance populated with the given file content.
  *
@@ -107,17 +109,17 @@ Text *text_load(const char *filename);
  *    - ``ENOTSUP`` otherwise.
  * @endrst
  */
-Text *text_load_method(const char *filename, enum TextLoadMethod method);
-Text *text_loadat_method(int dirfd, const char *filename, enum TextLoadMethod);
+VIS_INTERNAL Text *text_load_method(const char *filename, enum TextLoadMethod method);
+VIS_INTERNAL Text *text_loadat_method(int dirfd, const char *filename, enum TextLoadMethod);
 /** Release all resources associated with this text instance. */
-void text_free(Text*);
+VIS_INTERNAL void text_free(Text*);
 /**
  * @}
  * @defgroup state Text State
  * @{
  */
 /** Return the size in bytes of the whole text. */
-size_t text_size(const Text*);
+VIS_INTERNAL size_t text_size(const Text*);
 /**
  * Get file information at time of load or last save, whichever happened more
  * recently.
@@ -128,9 +130,9 @@ size_t text_size(const Text*);
  * @endrst
  * @return See ``stat(2)`` for details.
  */
-struct stat text_stat(const Text*);
+VIS_INTERNAL struct stat text_stat(const Text*);
 /** Query whether the text contains any unsaved modifications. */
-bool text_modified(const Text*);
+VIS_INTERNAL bool text_modified(const Text*);
 /**
  * @}
  * @defgroup modify Text Modification
@@ -145,7 +147,7 @@ bool text_modified(const Text*);
  * @param len The length of the data in bytes.
  * @return Whether the insertion succeeded.
  */
-bool text_insert(Text *txt, size_t pos, const char *data, size_t len);
+VIS_INTERNAL bool text_insert(Text *txt, size_t pos, const char *data, size_t len);
 /**
  * Delete data at given byte position.
  *
@@ -154,10 +156,10 @@ bool text_insert(Text *txt, size_t pos, const char *data, size_t len);
  * @param len The number of bytes to delete, starting from ``pos``.
  * @return Whether the deletion succeeded.
  */
-bool text_delete(Text *txt, size_t pos, size_t len);
-bool text_delete_range(Text *txt, const Filerange*);
-bool text_printf(Text *txt, size_t pos, const char *format, ...) __attribute__((format(printf, 3, 4)));
-bool text_appendf(Text *txt, const char *format, ...) __attribute__((format(printf, 2, 3)));
+VIS_INTERNAL bool text_delete(Text *txt, size_t pos, size_t len);
+VIS_INTERNAL bool text_delete_range(Text *txt, const Filerange*);
+VIS_INTERNAL bool text_printf(Text *txt, size_t pos, const char *format, ...) __attribute__((format(printf, 3, 4)));
+VIS_INTERNAL bool text_appendf(Text *txt, const char *format, ...) __attribute__((format(printf, 2, 3)));
 /**
  * @}
  * @defgroup history Undo/Redo History
@@ -166,7 +168,7 @@ bool text_appendf(Text *txt, const char *format, ...) __attribute__((format(prin
 /**
  * Create a text snapshot, that is a vertex in the history graph.
  */
-bool text_snapshot(Text*);
+VIS_INTERNAL bool text_snapshot(Text*);
 /**
  * Revert to previous snapshot along the main branch.
  * @rst
@@ -175,7 +177,7 @@ bool text_snapshot(Text*);
  * @return The position of the first change or ``EPOS``, if already at the
  *         oldest state i.e. there was nothing to undo.
  */
-size_t text_undo(Text*);
+VIS_INTERNAL size_t text_undo(Text*);
 /**
  * Reapply an older change along the main branch.
  * @rst
@@ -184,27 +186,27 @@ size_t text_undo(Text*);
  * @return The position of the first change or ``EPOS``, if already at the
  *         newest state i.e. there was nothing to redo.
  */
-size_t text_redo(Text*);
-size_t text_earlier(Text*);
-size_t text_later(Text*);
+VIS_INTERNAL size_t text_redo(Text*);
+VIS_INTERNAL size_t text_earlier(Text*);
+VIS_INTERNAL size_t text_later(Text*);
 /**
  * Restore the text to the state closest to the time given
  */
-size_t text_restore(Text*, time_t);
+VIS_INTERNAL size_t text_restore(Text*, time_t);
 /**
  * Get creation time of current state.
  * @rst
  * .. note:: TODO: This is currently not the same as the time of the last snapshot.
  * @endrst
  */
-time_t text_state(const Text*);
+VIS_INTERNAL time_t text_state(const Text*);
 /**
  * @}
  * @defgroup lines Line Operations
  * @{
  */
-size_t text_pos_by_lineno(Text*, size_t lineno);
-size_t text_lineno_by_pos(Text*, size_t pos);
+VIS_INTERNAL size_t text_pos_by_lineno(Text*, size_t lineno);
+VIS_INTERNAL size_t text_lineno_by_pos(Text*, size_t pos);
 
 /**
  * @}
@@ -222,7 +224,7 @@ size_t text_lineno_by_pos(Text*, size_t pos);
  *           return an artificial NUL byte at EOF.
  * @endrst
  */
-bool text_byte_get(const Text *txt, size_t pos, char *byte);
+VIS_INTERNAL bool text_byte_get(const Text *txt, size_t pos, char *byte);
 /**
  * Store at most ``len`` bytes starting from ``pos`` into ``buf``.
  * @param txt The text instance to modify.
@@ -234,7 +236,7 @@ bool text_byte_get(const Text *txt, size_t pos, char *byte);
  * .. warning:: ``buf`` will not be NUL terminated.
  * @endrst
  */
-size_t text_bytes_get(const Text *txt, size_t pos, size_t len, char *buf);
+VIS_INTERNAL size_t text_bytes_get(const Text *txt, size_t pos, size_t len, char *buf);
 /**
  * Fetch text range into newly allocate memory region.
  * @param txt The text instance to modify.
@@ -246,44 +248,44 @@ size_t text_bytes_get(const Text *txt, size_t pos, size_t len, char *buf);
  * .. warning:: The returned pointer must be freed by the caller.
  * @endrst
  */
-char *text_bytes_alloc0(const Text *txt, size_t pos, size_t len);
+VIS_INTERNAL char *text_bytes_alloc0(const Text *txt, size_t pos, size_t len);
 /**
  * @}
  * @defgroup iterator Text Iterators
  * @{
  */
-Iterator text_iterator_get(const Text*, size_t pos);
-bool text_iterator_init(const Text*, Iterator*, size_t pos);
-const Text *text_iterator_text(const Iterator*);
-bool text_iterator_valid(const Iterator*);
-bool text_iterator_has_next(const Iterator*);
-bool text_iterator_has_prev(const Iterator*);
-bool text_iterator_next(Iterator*);
-bool text_iterator_prev(Iterator*);
+VIS_INTERNAL Iterator text_iterator_get(const Text*, size_t pos);
+VIS_INTERNAL bool text_iterator_init(const Text*, Iterator*, size_t pos);
+VIS_INTERNAL const Text *text_iterator_text(const Iterator*);
+VIS_INTERNAL bool text_iterator_valid(const Iterator*);
+VIS_INTERNAL bool text_iterator_has_next(const Iterator*);
+VIS_INTERNAL bool text_iterator_has_prev(const Iterator*);
+VIS_INTERNAL bool text_iterator_next(Iterator*);
+VIS_INTERNAL bool text_iterator_prev(Iterator*);
 /**
  * @}
  * @defgroup iterator_byte Byte Iterators
  * @{
  */
-bool text_iterator_byte_get(const Iterator*, char *b);
-bool text_iterator_byte_prev(Iterator*, char *b);
-bool text_iterator_byte_next(Iterator*, char *b);
-bool text_iterator_byte_find_prev(Iterator*, char b);
-bool text_iterator_byte_find_next(Iterator*, char b);
+VIS_INTERNAL bool text_iterator_byte_get(const Iterator*, char *b);
+VIS_INTERNAL bool text_iterator_byte_prev(Iterator*, char *b);
+VIS_INTERNAL bool text_iterator_byte_next(Iterator*, char *b);
+VIS_INTERNAL bool text_iterator_byte_find_prev(Iterator*, char b);
+VIS_INTERNAL bool text_iterator_byte_find_next(Iterator*, char b);
 /**
  * @}
  * @defgroup iterator_code Codepoint Iterators
  * @{
  */
-bool text_iterator_codepoint_next(Iterator *it, char *c);
-bool text_iterator_codepoint_prev(Iterator *it, char *c);
+VIS_INTERNAL bool text_iterator_codepoint_next(Iterator *it, char *c);
+VIS_INTERNAL bool text_iterator_codepoint_prev(Iterator *it, char *c);
 /**
  * @}
  * @defgroup iterator_char Character Iterators
  * @{
  */
-bool text_iterator_char_next(Iterator*, char *c);
-bool text_iterator_char_prev(Iterator*, char *c);
+VIS_INTERNAL bool text_iterator_char_next(Iterator*, char *c);
+VIS_INTERNAL bool text_iterator_char_prev(Iterator*, char *c);
 /**
  * @}
  * @defgroup mark Marks
@@ -299,14 +301,14 @@ bool text_iterator_char_prev(Iterator*, char *c);
  * @param pos The position at which to store the mark.
  * @return The mark or ``EMARK`` if an invalid position was given.
  */
-Mark text_mark_set(Text *txt, size_t pos);
+VIS_INTERNAL Mark text_mark_set(Text *txt, size_t pos);
 /**
  * Lookup a mark.
  * @param txt The text instance to modify.
  * @param mark The mark to look up.
  * @return The byte position or ``EPOS`` for an invalid mark.
  */
-size_t text_mark_get(const Text *txt, Mark mark);
+VIS_INTERNAL size_t text_mark_get(const Text *txt, Mark mark);
 /**
  * @}
  * @defgroup save Text Saving
@@ -363,7 +365,7 @@ typedef struct {
 /**
  * Marks the current text revision as saved.
  */
-void text_mark_current_revision(Text*);
+VIS_INTERNAL void text_mark_current_revision(Text*);
 
 /**
  * Setup a sequence of write operations.
@@ -376,12 +378,12 @@ void text_mark_current_revision(Text*);
  *              ``text_save_cancel`` to release the underlying resources.
  * @endrst
  */
-bool text_save_begin(TextSave*);
+VIS_INTERNAL bool text_save_begin(TextSave*);
 /**
  * Write file range.
  * @return The number of bytes written or ``-1`` in case of an error.
  */
-ssize_t text_save_write_range(TextSave*, const Filerange*);
+VIS_INTERNAL ssize_t text_save_write_range(TextSave*, const Filerange*);
 /**
  * Commit changes to disk.
  * @return Whether changes have been saved.
@@ -390,7 +392,7 @@ ssize_t text_save_write_range(TextSave*, const Filerange*);
  *           pointer which must no longer be used.
  * @endrst
  */
-bool text_save_commit(TextSave*);
+VIS_INTERNAL bool text_save_commit(TextSave*);
 /**
  * Abort a save operation.
  * @rst
@@ -399,12 +401,12 @@ bool text_save_commit(TextSave*);
  *           frees the given ``TextSave`` pointer which must no longer be used.
  * @endrst
  */
-void text_save_cancel(TextSave*);
+VIS_INTERNAL void text_save_cancel(TextSave*);
 /**
  * Write file range to file descriptor.
  * @return The number of bytes written or ``-1`` in case of an error.
  */
-ssize_t text_write_range(const Text*, const Filerange*, int fd);
+VIS_INTERNAL ssize_t text_write_range(const Text*, const Filerange*, int fd);
 /**
  * @}
  * @defgroup misc Miscellaneous
@@ -414,13 +416,13 @@ ssize_t text_write_range(const Text*, const Filerange*, int fd);
  * Check whether ``ptr`` is part of a memory mapped region associated with
  * this text instance.
  */
-bool text_mmaped(const Text*, const char *ptr);
+VIS_INTERNAL bool text_mmaped(const Text*, const char *ptr);
 
 /**
  * Write complete buffer to file descriptor.
  * @return The number of bytes written or ``-1`` in case of an error.
  */
-ssize_t write_all(int fd, const char *buf, size_t count);
+VIS_INTERNAL ssize_t write_all(int fd, const char *buf, size_t count);
 /** @} */
 
 #endif

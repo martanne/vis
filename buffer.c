@@ -4,7 +4,6 @@
 #include <stdio.h>
 
 #include "buffer.h"
-#include "util.h"
 
 #ifndef BUFFER_SIZE
 #define BUFFER_SIZE 1024

@@ -38,26 +38,26 @@ typedef struct {
  * .. note:: Is equivalent to ``array_init_sized(arr, sizeof(void*))``.
  * @endrst
  */
-void array_init(Array*);
+VIS_INTERNAL void array_init(Array*);
 /**
  * Initialize an Array object to store arbitrarily sized objects.
  */
-void array_init_sized(Array*, size_t elem_size);
+VIS_INTERNAL void array_init_sized(Array*, size_t elem_size);
 /** Initialize Array by using the same element size as in ``from``. */
-void array_init_from(Array*, const Array *from);
+VIS_INTERNAL void array_init_from(Array*, const Array *from);
 /** Release storage space. Reinitializes Array object. */
-void array_release(Array*);
+VIS_INTERNAL void array_release(Array*);
 /**
  * Release storage space and call `free(3)` for each stored pointer.
  * @rst
  * .. warning:: Assumes array elements to be pointers.
  * @endrst
  */
-void array_release_full(Array*);
+VIS_INTERNAL void array_release_full(Array*);
 /** Empty array, keep allocated memory. */
-void array_clear(Array*);
+VIS_INTERNAL void array_clear(Array*);
 /** Reserve memory to store at least ``count`` elements. */
-bool array_reserve(Array*, size_t count);
+VIS_INTERNAL bool array_reserve(Array*, size_t count);
 /**
  * Get array element.
  * @rst
@@ -66,7 +66,7 @@ bool array_reserve(Array*, size_t count);
  *              of new elements) might invalidate the pointer.
  * @endrst
  */
-void *array_get(const Array*, size_t idx);
+VIS_INTERNAL void *array_get(const Array*, size_t idx);
 /**
  * Set array element.
  * @rst
@@ -74,24 +74,24 @@ void *array_get(const Array*, size_t idx);
  *           the corresponding memory region will be cleared.
  * @endrst
  */
-bool array_set(Array*, size_t idx, void *item);
+VIS_INTERNAL bool array_set(Array*, size_t idx, void *item);
 /** Dereference pointer stored in array element. */
-void *array_get_ptr(const Array*, size_t idx);
+VIS_INTERNAL void *array_get_ptr(const Array*, size_t idx);
 /** Store the address to which ``item`` points to into the array. */
-bool array_set_ptr(Array*, size_t idx, void *item);
+VIS_INTERNAL bool array_set_ptr(Array*, size_t idx, void *item);
 /** Add element to the end of the array. */
-bool array_add(Array*, void *item);
+VIS_INTERNAL bool array_add(Array*, void *item);
 /** Add pointer to the end of the array. */
-bool array_add_ptr(Array*, void *item);
+VIS_INTERNAL bool array_add_ptr(Array*, void *item);
 /**
  * Remove an element by index.
  * @rst
  * .. note:: Might not shrink underlying memory region.
  * @endrst
  */
-bool array_remove(Array*, size_t idx);
+VIS_INTERNAL bool array_remove(Array*, size_t idx);
 /** Remove all elements with index greater or equal to ``length``, keep allocated memory. */
-bool array_truncate(Array*, size_t length);
+VIS_INTERNAL bool array_truncate(Array*, size_t length);
 /**
  * Change length.
  * @rst
@@ -99,31 +99,31 @@ bool array_truncate(Array*, size_t length);
  *           Newly accessible elements preserve their previous values.
  * @endrst
  */
-bool array_resize(Array*, size_t length);
+VIS_INTERNAL bool array_resize(Array*, size_t length);
 /**
  * Sort array, the comparision function works as for `qsort(3)`.
  */
-void array_sort(Array*, int (*compar)(const void*, const void*));
+VIS_INTERNAL void array_sort(Array*, int (*compar)(const void*, const void*));
 /**
  * Push item onto the top of the stack.
  * @rst
  * .. note:: Is equivalent to ``array_add(arr, item)``.
  * @endrst
  */
-bool array_push(Array*, void *item);
+VIS_INTERNAL bool array_push(Array*, void *item);
 /**
  * Get and remove item at the top of the stack.
  * @rst
  * .. warning:: The same ownership rules as for ``array_get`` apply.
  * @endrst
  */
-void *array_pop(Array*);
+VIS_INTERNAL void *array_pop(Array*);
 /**
  * Get item at the top of the stack without removing it.
  * @rst
  * .. warning:: The same ownership rules as for ``array_get`` apply.
  * @endrst
  */
-void *array_peek(const Array*);
+VIS_INTERNAL void *array_peek(const Array*);
 
 #endif

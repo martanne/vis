@@ -28,7 +28,7 @@ map-test: config.h map-test.c ../../map.c
 
 array-test: config.h array-test.c ../../array.c
 	@echo Compiling $@ binary
-	@${CC} ${CFLAGS} ${CFLAGS_STD} ${CFLAGS_EXTRA} ${filter %.c, $^} ${SRC} ${LDFLAGS} -o $@
+	@${CC} ${CFLAGS} ${CFLAGS_STD} ${CFLAGS_EXTRA} array-test.c ${SRC} ${LDFLAGS} -o $@
 
 debug: clean
 	$(MAKE) CFLAGS_EXTRA='${CFLAGS_EXTRA} ${CFLAGS_DEBUG}'

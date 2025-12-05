@@ -81,9 +81,9 @@ typedef struct View {
  * @defgroup view_life View Lifecycle
  * @{
  */
-bool view_init(struct Win*, Text*);
-void view_free(View*);
-void view_reload(View*, Text*);
+VIS_INTERNAL bool view_init(struct Win*, Text*);
+VIS_INTERNAL void view_free(View*);
+VIS_INTERNAL void view_reload(View*, Text*);
 /**
  * @}
  * @defgroup view_viewport View Viewport
@@ -100,34 +100,34 @@ void view_reload(View*, Text*);
  * @param col Will be updated with zero based window column on which ``pos`` resides.
  * @return Whether ``pos`` is visible. If not, the pointer arguments are left unmodified.
  */
-bool view_coord_get(View *view, size_t pos, Line **line, int *row, int *col);
+VIS_INTERNAL bool view_coord_get(View *view, size_t pos, Line **line, int *row, int *col);
 /** Get position at the start of the ``n``-th window line, counting from 1. */
-size_t view_screenline_goto(View*, int n);
-size_t view_slide_up(View*, int lines);
-size_t view_slide_down(View*, int lines);
-size_t view_scroll_up(View*, int lines);
-size_t view_scroll_down(View*, int lines);
-size_t view_scroll_page_up(View*);
-size_t view_scroll_page_down(View*);
-size_t view_scroll_halfpage_up(View*);
-size_t view_scroll_halfpage_down(View*);
-void view_redraw_top(View*);
-void view_redraw_center(View*);
-void view_redraw_bottom(View*);
-void view_scroll_to(View*, size_t pos);
+VIS_INTERNAL size_t view_screenline_goto(View*, int n);
+VIS_INTERNAL size_t view_slide_up(View*, int lines);
+VIS_INTERNAL size_t view_slide_down(View*, int lines);
+VIS_INTERNAL size_t view_scroll_up(View*, int lines);
+VIS_INTERNAL size_t view_scroll_down(View*, int lines);
+VIS_INTERNAL size_t view_scroll_page_up(View*);
+VIS_INTERNAL size_t view_scroll_page_down(View*);
+VIS_INTERNAL size_t view_scroll_halfpage_up(View*);
+VIS_INTERNAL size_t view_scroll_halfpage_down(View*);
+VIS_INTERNAL void   view_redraw_top(View*);
+VIS_INTERNAL void   view_redraw_center(View*);
+VIS_INTERNAL void   view_redraw_bottom(View*);
+VIS_INTERNAL void   view_scroll_to(View*, size_t pos);
 /**
  * @}
  * @defgroup view_size View Sizing
  * @{
  */
-bool view_resize(View*, int width, int height);
+VIS_INTERNAL bool view_resize(View*, int width, int height);
 /**
  * @}
  * @defgroup view_draw View Drawing
  * @{
  */
-void view_draw(View*);
-bool view_update(View*);
+VIS_INTERNAL void view_draw(View*);
+VIS_INTERNAL bool view_update(View*);
 
 /**
  * @}
@@ -141,7 +141,7 @@ bool view_update(View*);
  * .. warning:: Fails if position is already covered by a selection.
  * @endrst
  */
-Selection *view_selections_new(View*, size_t pos);
+VIS_INTERNAL Selection *view_selections_new(View*, size_t pos);
 /**
  * Create a new selection even if position is already covered by an
  * existing selection.
@@ -150,14 +150,14 @@ Selection *view_selections_new(View*, size_t pos);
  *           disposed.
  * @endrst
  */
-Selection *view_selections_new_force(View*, size_t pos);
+VIS_INTERNAL Selection *view_selections_new_force(View*, size_t pos);
 /**
  * Dispose an existing selection.
  * @rst
  * .. warning:: Not applicable for the last existing selection.
  * @endrst
  */
-bool view_selections_dispose(Selection*);
+VIS_INTERNAL bool view_selections_dispose(Selection*);
 /**
  * Forcefully dispose an existing selection.
  *
@@ -165,40 +165,40 @@ bool view_selections_dispose(Selection*);
  * marked for destruction. As soon as a new selection is created this one
  * will be disposed.
  */
-bool view_selections_dispose_force(Selection*);
+VIS_INTERNAL bool view_selections_dispose_force(Selection*);
 /**
  * Query state of primary selection.
  *
  * If the primary selection was marked for destruction, return it and
  * clear destruction flag.
  */
-Selection *view_selection_disposed(View*);
+VIS_INTERNAL Selection *view_selection_disposed(View*);
 /** Dispose all but the primary selection. */
-void view_selections_dispose_all(View*);
+VIS_INTERNAL void view_selections_dispose_all(View*);
 /** Dispose all invalid and merge all overlapping selections. */
-void view_selections_normalize(View*);
+VIS_INTERNAL void view_selections_normalize(View*);
 /**
  * Replace currently active selections.
  * @param view The view to manipulate.
  * @param array The array of ``Filerange`` objects.
  * @param anchored Whether *all* selection should be anchored.
  */
-void view_selections_set_all(View *view, Array *array, bool anchored);
+VIS_INTERNAL void view_selections_set_all(View *view, Array *array, bool anchored);
 /** Get array containing a ``Fileranges`` for each selection. */
-Array view_selections_get_all(View*);
+VIS_INTERNAL Array view_selections_get_all(View*);
 /**
  * @}
  * @defgroup view_navigate Selection Navigation
  * @{
  */
-Selection *view_selections_primary_get(View*);
-void view_selections_primary_set(Selection*);
+VIS_INTERNAL Selection *view_selections_primary_get(View*);
+VIS_INTERNAL void view_selections_primary_set(Selection*);
 /** Get first selection. */
-Selection *view_selections(View*);
+VIS_INTERNAL Selection *view_selections(View*);
 /** Get immediate predecessor of selection. */
-Selection *view_selections_prev(Selection*);
+VIS_INTERNAL Selection *view_selections_prev(Selection*);
 /** Get immediate successor of selection. */
-Selection *view_selections_next(Selection*);
+VIS_INTERNAL Selection *view_selections_next(Selection*);
 /**
  * Get selection index.
  * @rst
@@ -207,55 +207,55 @@ Selection *view_selections_next(Selection*);
  *             to remain the same.
  * @endrst
  */
-int view_selections_number(Selection*);
+VIS_INTERNAL int view_selections_number(Selection*);
 /** Get maximal number of selections on a single line. */
-int view_selections_column_count(View*);
+VIS_INTERNAL int view_selections_column_count(View*);
 /**
  * Starting from the start of the text, get the `column`-th selection on a line.
  * @param view The view to manipulate.
  * @param column The zero based column index.
  */
-Selection *view_selections_column(View *view, int column);
+VIS_INTERNAL Selection *view_selections_column(View *view, int column);
 /**
  * Get the next `column`-th selection on a line.
  * @param sel The selection to manipulate.
  * @param column The zero based column index.
  */
-Selection *view_selections_column_next(Selection *sel, int column);
+VIS_INTERNAL Selection *view_selections_column_next(Selection *sel, int column);
 /**
  * @}
  * @defgroup view_cover Selection Coverage
  * @{
  */
 /** Get an inclusive range of the selection cover. */
-Filerange view_selections_get(Selection*);
+VIS_INTERNAL Filerange view_selections_get(Selection*);
 /** Set selection cover. Updates both cursor and anchor. */
-bool view_selections_set(Selection*, const Filerange*);
+VIS_INTERNAL bool view_selections_set(Selection*, const Filerange*);
 /**
  * Reduce selection to character currently covered by the cursor.
  * @rst
  * .. note:: Sets selection to non-anchored mode.
  * @endrst
  */
-void view_selection_clear(Selection*);
+VIS_INTERNAL void view_selection_clear(Selection*);
 /** Reduce *all* currently active selections. */
-void view_selections_clear_all(View*);
+VIS_INTERNAL void view_selections_clear_all(View*);
 /**
  * Flip selection orientation. Swap cursor and anchor.
  * @rst
  * .. note:: Has no effect on singleton selections.
  * @endrst
  */
-void view_selections_flip(Selection*);
+VIS_INTERNAL void view_selections_flip(Selection*);
 /**
  * @}
  * @defgroup view_props Selection Properties
  * @{
  */
 /** Get position of selection cursor. */
-size_t view_cursors_pos(Selection*);
+VIS_INTERNAL size_t view_cursors_pos(Selection*);
 /** Get 1-based line number of selection cursor. */
-size_t view_cursors_line(Selection*);
+VIS_INTERNAL size_t view_cursors_line(Selection*);
 /**
  * Get 1-based column of selection cursor.
  * @rst
@@ -263,7 +263,7 @@ size_t view_cursors_line(Selection*);
  *           position.
  * @endrst
  */
-size_t view_cursors_col(Selection*);
+VIS_INTERNAL size_t view_cursors_col(Selection*);
 /**
  * @}
  * @defgroup view_place Cursor Placement
@@ -283,7 +283,7 @@ size_t view_cursors_col(Selection*);
  *           of the window.
  * @endrst
  */
-void view_cursors_to(Selection*, size_t pos);
+VIS_INTERNAL void view_cursors_to(Selection*, size_t pos);
 /**
  * Adjusts window viewport until the requested position becomes visible.
  * @rst
@@ -293,7 +293,7 @@ void view_cursors_to(Selection*, size_t pos);
  *              short distances between current cursor position and destination.
  * @endrst
  */
-void view_cursors_scroll_to(Selection*, size_t pos);
+VIS_INTERNAL void view_cursors_scroll_to(Selection*, size_t pos);
 /**
  * Place cursor on given (line, column) pair.
  * @param s the selection to manipulate
@@ -304,52 +304,52 @@ void view_cursors_scroll_to(Selection*, size_t pos);
  *           `view_selection_to`.
  * @endrst
  */
-void view_cursors_place(Selection *s, size_t line, size_t col);
+VIS_INTERNAL void view_cursors_place(Selection *s, size_t line, size_t col);
 /**
  * Place selection cursor on zero based window cell index.
  * @rst
  * .. warning:: Fails if the selection cursor is currently not visible.
  * @endrst
  */
-int view_cursors_cell_set(Selection*, int cell);
+VIS_INTERNAL int view_cursors_cell_set(Selection*, int cell);
 /**
  * @}
  * @defgroup view_motions View Motions
  * @{
  */
-size_t view_line_down(Selection*);
-size_t view_line_up(Selection*);
-size_t view_screenline_down(Selection*);
-size_t view_screenline_up(Selection*);
-size_t view_screenline_begin(Selection*);
-size_t view_screenline_middle(Selection*);
-size_t view_screenline_end(Selection*);
+VIS_INTERNAL size_t view_line_down(Selection*);
+VIS_INTERNAL size_t view_line_up(Selection*);
+VIS_INTERNAL size_t view_screenline_down(Selection*);
+VIS_INTERNAL size_t view_screenline_up(Selection*);
+VIS_INTERNAL size_t view_screenline_begin(Selection*);
+VIS_INTERNAL size_t view_screenline_middle(Selection*);
+VIS_INTERNAL size_t view_screenline_end(Selection*);
 /**
  * @}
  * @defgroup view_primary Primary Selection
  * @{
  */
 /** Get cursor position of primary selection. */
-size_t view_cursor_get(View*);
+VIS_INTERNAL size_t view_cursor_get(View*);
 /**
  * @}
  * @defgroup view_save Selection State
  * @{
  */
-Filerange view_regions_restore(View*, SelectionRegion*);
-bool view_regions_save(View*, Filerange*, SelectionRegion*);
+VIS_INTERNAL Filerange view_regions_restore(View*, SelectionRegion*);
+VIS_INTERNAL bool view_regions_save(View*, Filerange*, SelectionRegion*);
 /**
  * @}
  * @defgroup view_style View Styling
  * @{
  */
-void win_options_set(struct Win *, enum UiOption);
-bool view_breakat_set(View*, const char *breakat);
+VIS_INTERNAL void win_options_set(struct Win *, enum UiOption);
+VIS_INTERNAL bool view_breakat_set(View*, const char *breakat);
 
 /** Set how many spaces are used to display a tab `\t` character. */
-void view_tabwidth_set(View*, int tabwidth);
+VIS_INTERNAL void view_tabwidth_set(View*, int tabwidth);
 /** Apply a style to a text range. */
-void win_style(struct Win*, enum UiStyle, size_t start, size_t end, bool keep_non_default);
+VIS_INTERNAL void win_style(struct Win*, enum UiStyle, size_t start, size_t end, bool keep_non_default);
 
 /** @} */
 

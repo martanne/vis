@@ -19,17 +19,17 @@ typedef struct {
 	} type;
 } Block;
 
-Block *block_alloc(size_t size);
-Block *block_read(size_t size, int fd);
-Block *block_mmap(size_t size, int fd, off_t offset);
-Block *block_load(int dirfd, const char *filename, enum TextLoadMethod method, struct stat *info);
-void block_free(Block*);
-bool block_capacity(Block*, size_t len);
-const char *block_append(Block*, const char *data, size_t len);
-bool block_insert(Block*, size_t pos, const char *data, size_t len);
-bool block_delete(Block*, size_t pos, size_t len);
+VIS_INTERNAL Block *block_alloc(size_t size);
+VIS_INTERNAL Block *block_read(size_t size, int fd);
+VIS_INTERNAL Block *block_mmap(size_t size, int fd, off_t offset);
+VIS_INTERNAL Block *block_load(int dirfd, const char *filename, enum TextLoadMethod method, struct stat *info);
+VIS_INTERNAL void block_free(Block*);
+VIS_INTERNAL bool block_capacity(Block*, size_t len);
+VIS_INTERNAL const char *block_append(Block*, const char *data, size_t len);
+VIS_INTERNAL bool block_insert(Block*, size_t pos, const char *data, size_t len);
+VIS_INTERNAL bool block_delete(Block*, size_t pos, size_t len);
 
-Block *text_block_mmaped(Text*);
-void text_saved(Text*, struct stat *meta);
+VIS_INTERNAL Block *text_block_mmaped(Text*);
+VIS_INTERNAL void text_saved(Text*, struct stat *meta);
 
 #endif

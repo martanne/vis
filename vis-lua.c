@@ -21,10 +21,11 @@
 #include <sys/types.h>
 #include <pwd.h>
 
+#include "util.h"
+
 #include "vis-lua.h"
 #include "vis-core.h"
 #include "text-motions.h"
-#include "util.h"
 
 #ifndef VIS_PATH
 #define VIS_PATH "/usr/local/share/vis"

@@ -21,36 +21,36 @@ typedef struct {
 } Buffer;
 
 /** Release all resources, reinitialize buffer. */
-void buffer_release(Buffer*);
+VIS_INTERNAL void buffer_release(Buffer*);
 /** Reserve space to store at least ``size`` bytes.*/
-bool buffer_reserve(Buffer*, size_t size);
+VIS_INTERNAL bool buffer_reserve(Buffer*, size_t size);
 /** Reserve space for at least ``len`` *more* bytes. */
-bool buffer_grow(Buffer*, size_t len);
+VIS_INTERNAL bool buffer_grow(Buffer*, size_t len);
 /** If buffer is non-empty, make sure it is ``NUL`` terminated. */
-bool buffer_terminate(Buffer*);
+VIS_INTERNAL bool buffer_terminate(Buffer*);
 /** Set buffer content, growing the buffer as needed. */
-bool buffer_put(Buffer*, const void *data, size_t len);
+VIS_INTERNAL bool buffer_put(Buffer*, const void *data, size_t len);
 /** Set buffer content to ``NUL`` terminated data. */
-bool buffer_put0(Buffer*, const char *data);
+VIS_INTERNAL bool buffer_put0(Buffer*, const char *data);
 /** Remove ``len`` bytes starting at ``pos``. */
-bool buffer_remove(Buffer*, size_t pos, size_t len);
+VIS_INTERNAL bool buffer_remove(Buffer*, size_t pos, size_t len);
 /** Insert NUL-terminated data at pos. */
-bool buffer_insert0(Buffer*, size_t pos, const char *data);
+VIS_INTERNAL bool buffer_insert0(Buffer*, size_t pos, const char *data);
 /** Append further content to the end. */
-bool buffer_append(Buffer*, const void *data, size_t len);
+VIS_INTERNAL bool buffer_append(Buffer*, const void *data, size_t len);
 /** Append NUL-terminated data. */
-bool buffer_append0(Buffer*, const char *data);
+VIS_INTERNAL bool buffer_append0(Buffer*, const char *data);
 /** Append formatted buffer content, ensures NUL termination on success. */
-bool buffer_appendf(Buffer*, const char *fmt, ...) __attribute__((format(printf, 2, 3)));
+VIS_INTERNAL bool buffer_appendf(Buffer*, const char *fmt, ...) __attribute__((format(printf, 2, 3)));
 /** Return length of a buffer without trailing NUL byte. */
-size_t buffer_length0(Buffer*);
+VIS_INTERNAL size_t buffer_length0(Buffer*);
 /**
  * Get pointer to buffer data.
  * Guaranteed to return a NUL terminated string even if buffer is empty.
  */
-const char *buffer_content0(Buffer*);
+VIS_INTERNAL const char *buffer_content0(Buffer*);
 
 /** ``read(3p)`` like interface for reading into a Buffer (``context``) */
-ssize_t read_into_buffer(void *context, char *data, size_t len);
+VIS_INTERNAL ssize_t read_into_buffer(void *context, char *data, size_t len);
 
 #endif

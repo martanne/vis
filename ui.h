@@ -103,36 +103,36 @@ typedef struct {
 #include "vis.h"
 #include "text.h"
 
-bool ui_terminal_init(Ui*);
-int  ui_terminal_colors(void);
-void ui_terminal_free(Ui*);
-void ui_terminal_restore(Ui*);
-void ui_terminal_resume(Ui*);
-void ui_terminal_save(Ui*, bool fscr);
-void ui_terminal_suspend(Ui*);
+VIS_INTERNAL bool ui_terminal_init(Ui*);
+VIS_INTERNAL int  ui_terminal_colors(void);
+VIS_INTERNAL void ui_terminal_free(Ui*);
+VIS_INTERNAL void ui_terminal_restore(Ui*);
+VIS_INTERNAL void ui_terminal_resume(Ui*);
+VIS_INTERNAL void ui_terminal_save(Ui*, bool fscr);
+VIS_INTERNAL void ui_terminal_suspend(Ui*);
 
-__attribute__((noreturn)) void ui_die(Ui *, const char *, va_list);
-bool ui_init(Ui *, Vis *);
-void ui_arrange(Ui*, enum UiLayout);
-void ui_draw(Ui*);
-void ui_info_hide(Ui *);
-void ui_info_show(Ui *, const char *, va_list);
-void ui_redraw(Ui*);
-void ui_resize(Ui*);
+VIS_INTERNAL __attribute__((noreturn)) void ui_die(Ui *, const char *, va_list);
+VIS_INTERNAL bool ui_init(Ui *, Vis *);
+VIS_INTERNAL void ui_arrange(Ui*, enum UiLayout);
+VIS_INTERNAL void ui_draw(Ui*);
+VIS_INTERNAL void ui_info_hide(Ui *);
+VIS_INTERNAL void ui_info_show(Ui *, const char *, va_list);
+VIS_INTERNAL void ui_redraw(Ui*);
+VIS_INTERNAL void ui_resize(Ui*);
 
-bool ui_window_init(Ui *, Win *, enum UiOption);
-void ui_window_focus(Win *);
+VIS_INTERNAL bool ui_window_init(Ui *, Win *, enum UiOption);
+VIS_INTERNAL void ui_window_focus(Win *);
 /* removes a window from the list of open windows */
-void ui_window_release(Ui *, Win *);
-void ui_window_swap(Win *, Win *);
+VIS_INTERNAL void ui_window_release(Ui *, Win *);
+VIS_INTERNAL void ui_window_swap(Win *, Win *);
 
-bool ui_getkey(Ui *, TermKeyKey *);
+VIS_INTERNAL bool ui_getkey(Ui *, TermKeyKey *);
 
-bool ui_style_define(Win *win, int id, const char *style);
-void ui_window_style_set(Ui *ui, int win_id, Cell *cell, enum UiStyle id, bool keep_non_default);
-bool ui_window_style_set_pos(Win *win, int x, int y, enum UiStyle id, bool keep_non_default);
+VIS_INTERNAL bool ui_style_define(Win *win, int id, const char *style);
+VIS_INTERNAL void ui_window_style_set(Ui *ui, int win_id, Cell *cell, enum UiStyle id, bool keep_non_default);
+VIS_INTERNAL bool ui_window_style_set_pos(Win *win, int x, int y, enum UiStyle id, bool keep_non_default);
 
-void ui_window_options_set(Win *win, enum UiOption options);
-void ui_window_status(Win *win, const char *status);
+VIS_INTERNAL void ui_window_options_set(Win *win, enum UiOption options);
+VIS_INTERNAL void ui_window_status(Win *win, const char *status);
 
 #endif

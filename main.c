@@ -10,13 +10,14 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 
+#include "util.h"
+
 #include "ui.h"
 #include "vis.h"
 #include "vis-lua.h"
 #include "text-util.h"
 #include "text-motions.h"
 #include "text-objects.h"
-#include "util.h"
 #include "libutf.h"
 #include "array.h"
 #include "buffer.h"

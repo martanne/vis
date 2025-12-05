@@ -2,8 +2,9 @@
 #include <string.h>
 #include <errno.h>
 
-#include "array.h"
 #include "util.h"
+
+#include "array.h"
 
 #define ARRAY_SIZE 16
 

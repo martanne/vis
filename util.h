@@ -1,8 +1,13 @@
 #ifndef UTIL_H
 #define UTIL_H
 
-#include <stdint.h>
+#ifndef VIS_INTERNAL
+  #define VIS_INTERNAL
+#endif
+
 #include <stdbool.h>
+#include <stddef.h>
+#include <stdint.h>
 
 #define LENGTH(x)  ((int)(sizeof (x) / sizeof *(x)))
 #define MIN(a, b)  ((a) > (b) ? (b) : (a))

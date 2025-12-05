@@ -2,6 +2,9 @@
 #define VIS_CORE_H
 
 #include <setjmp.h>
+
+#include "util.h"
+
 #include "vis.h"
 #include "sam.h"
 #include "vis-lua.h"
@@ -10,7 +13,6 @@
 #include "map.h"
 #include "array.h"
 #include "buffer.h"
-#include "util.h"
 
 /* a mode contains a set of key bindings which are currently valid.
  *
@@ -239,7 +241,7 @@ enum VisEvents {
 	VIS_EVENT_UI_DRAW,
 };
 
-bool vis_event_emit(Vis*, enum VisEvents, ...);
+VIS_INTERNAL bool vis_event_emit(Vis*, enum VisEvents, ...);
 
 typedef struct {
 	char name;
@@ -257,46 +259,46 @@ extern const TextObject vis_textobjects[VIS_TEXTOBJECT_INVALID];
 extern const MarkDef vis_marks[VIS_MARK_a];
 extern const RegisterDef vis_registers[VIS_REG_a];
 
-void macro_operator_stop(Vis *vis);
-void macro_operator_record(Vis *vis);
+VIS_INTERNAL void macro_operator_stop(Vis *vis);
+VIS_INTERNAL void macro_operator_record(Vis *vis);
 
-void vis_do(Vis *vis);
-void action_reset(Action*);
-size_t vis_text_insert_nl(Vis*, Text*, size_t pos);
+VIS_INTERNAL void vis_do(Vis *vis);
+VIS_INTERNAL void action_reset(Action*);
+VIS_INTERNAL size_t vis_text_insert_nl(Vis*, Text*, size_t pos);
 
-Mode *mode_get(Vis*, enum VisMode);
-void mode_set(Vis *vis, Mode *new_mode);
-Macro *macro_get(Vis *vis, enum VisRegister);
+VIS_INTERNAL Mode *mode_get(Vis*, enum VisMode);
+VIS_INTERNAL void mode_set(Vis *vis, Mode *new_mode);
+VIS_INTERNAL Macro *macro_get(Vis *vis, enum VisRegister);
 
-Win *window_new_file(Vis*, File*, enum UiOption);
-void window_selection_save(Win *win);
-void window_status_update(Vis *vis, Win *win);
+VIS_INTERNAL Win *window_new_file(Vis*, File*, enum UiOption);
+VIS_INTERNAL void window_selection_save(Win *win);
+VIS_INTERNAL void window_status_update(Vis *vis, Win *win);
 
-char *absolute_path(const char *path);
+VIS_INTERNAL char *absolute_path(const char *path);
 
-const char *file_name_get(File*);
-void file_name_set(File*, const char *name);
+VIS_INTERNAL const char *file_name_get(File*);
+VIS_INTERNAL void file_name_set(File*, const char *name);
 
-bool register_init(Register*);
-void register_release(Register*);
+VIS_INTERNAL bool register_init(Register*);
+VIS_INTERNAL void register_release(Register*);
 
-void mark_init(Array*);
-void mark_release(Array*);
+VIS_INTERNAL void mark_init(Array*);
+VIS_INTERNAL void mark_release(Array*);
 
-void marklist_init(MarkList*, size_t max);
-void marklist_release(MarkList*);
+VIS_INTERNAL void marklist_init(MarkList*, size_t max);
+VIS_INTERNAL void marklist_release(MarkList*);
 
-const char *register_get(Vis*, Register*, size_t *len);
-const char *register_slot_get(Vis*, Register*, size_t slot, size_t *len);
+VIS_INTERNAL const char *register_get(Vis*, Register*, size_t *len);
+VIS_INTERNAL const char *register_slot_get(Vis*, Register*, size_t slot, size_t *len);
 
-bool register_put0(Vis*, Register*, const char *data);
-bool register_put(Vis*, Register*, const char *data, size_t len);
-bool register_slot_put(Vis*, Register*, size_t slot, const char *data, size_t len);
+VIS_INTERNAL bool register_put0(Vis*, Register*, const char *data);
+VIS_INTERNAL bool register_put(Vis*, Register*, const char *data, size_t len);
+VIS_INTERNAL bool register_slot_put(Vis*, Register*, size_t slot, const char *data, size_t len);
 
-bool register_put_range(Vis*, Register*, Text*, Filerange*);
-bool register_slot_put_range(Vis*, Register*, size_t slot, Text*, Filerange*);
+VIS_INTERNAL bool register_put_range(Vis*, Register*, Text*, Filerange*);
+VIS_INTERNAL bool register_slot_put_range(Vis*, Register*, size_t slot, Text*, Filerange*);
 
-size_t vis_register_count(Vis*, Register*);
-bool register_resize(Register*, size_t count);
+VIS_INTERNAL size_t vis_register_count(Vis*, Register*);
+VIS_INTERNAL bool register_resize(Register*, size_t count);
 
 #endif

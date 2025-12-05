@@ -28,7 +28,7 @@ typedef unsigned long Rune;
 #define Runeself 0x80             /* rune and utf are equal (<) */
 #define Runemax  RUNE_C(0x10FFFF) /* maximum rune value */
 
-int runelen(Rune r);
-int runetochar(char *s, const Rune *p);
+VIS_INTERNAL int runelen(Rune r);
+VIS_INTERNAL int runetochar(char *s, const Rune *p);
 
 #endif

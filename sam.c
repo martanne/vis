@@ -24,6 +24,9 @@
 #include <unistd.h>
 #include <limits.h>
 #include <fcntl.h>
+
+#include "util.h"
+
 #include "sam.h"
 #include "vis-core.h"
 #include "buffer.h"
@@ -31,7 +34,6 @@
 #include "text-motions.h"
 #include "text-objects.h"
 #include "text-regex.h"
-#include "util.h"
 
 #define MAX_ARGV 8
 

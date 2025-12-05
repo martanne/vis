@@ -20,11 +20,12 @@
 #include <libgen.h>
 #include <termkey.h>
 
+#include "util.h"
+
 #include "vis.h"
 #include "text-util.h"
 #include "text-motions.h"
 #include "text-objects.h"
-#include "util.h"
 #include "vis-core.h"
 #include "sam.h"
 #include "ui.h"
