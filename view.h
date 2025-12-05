@@ -114,7 +114,6 @@ VIS_INTERNAL size_t view_scroll_halfpage_down(View*);
 VIS_INTERNAL void   view_redraw_top(View*);
 VIS_INTERNAL void   view_redraw_center(View*);
 VIS_INTERNAL void   view_redraw_bottom(View*);
-VIS_INTERNAL void   view_scroll_to(View*, size_t pos);
 /**
  * @}
  * @defgroup view_size View Sizing

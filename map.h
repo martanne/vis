@@ -35,13 +35,6 @@ VIS_INTERNAL void *map_first(const Map *map, const char **key);
  */
 VIS_INTERNAL void *map_closest(const Map *map, const char *prefix);
 /**
- * Check whether the map contains the given prefix, or
- * whether it can be extended to match a key of a map element.
- * @param map The map to check.
- * @param prefix The prefix to search for.
- */
-VIS_INTERNAL bool map_contains(const Map *map, const char *prefix);
-/**
  * Store a key value pair in the map.
  * @param map The map to store the key-value pair in.
  * @param key The key to store.
@@ -97,13 +90,5 @@ VIS_INTERNAL void map_clear(Map *map);
  * @param map The map to free.
  */
 VIS_INTERNAL void map_free(Map *map);
-/**
- * Call `free(3)` for every map element, then free the map itself.
- * @param map The map to free its elements and itself.
- * @rst
- * .. warning:: Assumes map elements to be pointers.
- * @endrst
- */
-VIS_INTERNAL void map_free_full(Map *map);
 
 #endif

@@ -50,7 +50,6 @@ int main(int argc, char *argv[]) {
 	ok(map_empty(map_prefix(map, "404")), "Empty prefix map");
 
 	ok(!map_get(map, "404"), "Get non-existing key");
-	ok(!map_contains(map, "404"), "Contains non-existing key");
 	ok(!map_closest(map, "404"), "Closest non-existing key");
 
 	ok(!map_put(map, "a", NULL) && map_empty(map) && !map_get(map, "a"), "Put NULL value");
@@ -58,7 +57,7 @@ int main(int argc, char *argv[]) {
 	ok(map_first(map, &key) == &values[0] && strcmp(key, "a") == 0, "First on map with 1 value");
 	key = NULL;
 	ok(map_first(map_prefix(map, "a"), &key) == &values[0] && strcmp(key, "a") == 0, "First on prefix map");
-	ok(map_contains(map, "a"), "Contains existing key");
+	ok(!map_empty(map_prefix(map, "a")), "Contains existing key");
 	ok(map_closest(map, "a") == &values[0], "Closest match existing key");
 	ok(!map_put(map, "a", &values[1]) && get(map, "a", &values[0]), "Put duplicate");
 	ok(map_put(map, "cafebabe", &values[2]) && get(map, "cafebabe", &values[2]), "Put 2");

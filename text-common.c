@@ -26,14 +26,6 @@ bool text_appendf(Text *txt, const char *format, ...) {
 	return ret;
 }
 
-bool text_printf(Text *txt, size_t pos, const char *format, ...) {
-	va_list ap;
-	va_start(ap, format);
-	bool ret = text_vprintf(txt, pos, format, ap);
-	va_end(ap);
-	return ret;
-}
-
 bool text_byte_get(const Text *txt, size_t pos, char *byte) {
 	return text_bytes_get(txt, pos, 1, byte);
 }

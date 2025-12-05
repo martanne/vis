@@ -102,10 +102,6 @@ enum VisMode vis_mode_from(Vis *vis, const char *name) {
 	return VIS_MODE_INVALID;
 }
 
-enum VisMode vis_mode_get(Vis *vis) {
-	return vis->mode->id;
-}
-
 static bool mode_unmap(Mode *mode, const char *key) {
 	return mode && mode->bindings && map_delete(mode->bindings, key);
 }
@@ -243,14 +239,6 @@ static void vis_mode_insert_idle(Vis *vis) {
 		vis_file_snapshot(vis, win->file);
 }
 
-static void vis_mode_insert_input(Vis *vis, const char *str, size_t len) {
-	vis_insert_key(vis, str, len);
-}
-
-static void vis_mode_replace_input(Vis *vis, const char *str, size_t len) {
-	vis_replace_key(vis, str, len);
-}
-
 Mode vis_modes[] = {
 	[VIS_MODE_OPERATOR_PENDING] = {
 		.id = VIS_MODE_OPERATOR_PENDING,
@@ -289,7 +277,7 @@ Mode vis_modes[] = {
 		.status = "INSERT",
 		.help = "",
 		.enter = vis_mode_insert_replace_enter,
-		.input = vis_mode_insert_input,
+		.input = vis_insert_key,
 		.idle = vis_mode_insert_idle,
 		.idle_timeout = 3,
 	},
@@ -300,7 +288,7 @@ Mode vis_modes[] = {
 		.status = "REPLACE",
 		.help = "",
 		.enter = vis_mode_insert_replace_enter,
-		.input = vis_mode_replace_input,
+		.input = vis_replace_key,
 		.idle = vis_mode_insert_idle,
 		.idle_timeout = 3,
 	},

@@ -872,10 +872,6 @@ size_t view_cursor_get(View *view) {
 	return view_cursors_pos(view->selection);
 }
 
-void view_scroll_to(View *view, size_t pos) {
-	view_cursors_scroll_to(view->selection, pos);
-}
-
 void win_options_set(Win *win, enum UiOption options) {
 	const int mapping[] = {
 		[SYNTAX_SYMBOL_SPACE]    = UI_OPTION_SYMBOL_SPACE,

@@ -700,14 +700,6 @@ void vis_replace_key(Vis *vis, const char *data, size_t len) {
 	}
 }
 
-void vis_delete(Vis *vis, size_t pos, size_t len) {
-	Win *win = vis->win;
-	if (!win)
-		return;
-	text_delete(win->file->text, pos, len);
-	vis_window_invalidate(win);
-}
-
 bool vis_action_register(Vis *vis, const KeyAction *action) {
 	return map_put(vis->actions, action->name, action);
 }
@@ -718,14 +710,6 @@ bool vis_keymap_add(Vis *vis, const char *key, const char *mapping) {
 
 void vis_keymap_disable(Vis *vis) {
 	vis->keymap_disabled = true;
-}
-
-void vis_interrupt(Vis *vis) {
-	vis->interrupted = true;
-}
-
-bool vis_interrupt_requested(Vis *vis) {
-	return vis->interrupted;
 }
 
 void vis_do(Vis *vis) {

@@ -68,11 +68,6 @@ void *map_closest(const Map *map, const char *prefix)
 	return result;
 }
 
-bool map_contains(const Map *map, const char *prefix)
-{
-	return !map_empty(map_prefix(map, prefix));
-}
-
 bool map_put(Map *map, const char *k, const void *value)
 {
 	size_t len = strlen(k);
@@ -330,18 +325,4 @@ void map_free(Map *map)
 		return;
 	map_clear(map);
 	free(map);
-}
-
-static bool free_elem(const char *key, void *value, void *data)
-{
-	free(value);
-	return true;
-}
-
-void map_free_full(Map *map)
-{
-	if (!map)
-		return;
-	map_iterate(map, free_elem, NULL);
-	map_free(map);
 }

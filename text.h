@@ -158,7 +158,6 @@ VIS_INTERNAL bool text_insert(Text *txt, size_t pos, const char *data, size_t le
  */
 VIS_INTERNAL bool text_delete(Text *txt, size_t pos, size_t len);
 VIS_INTERNAL bool text_delete_range(Text *txt, const Filerange*);
-VIS_INTERNAL bool text_printf(Text *txt, size_t pos, const char *format, ...) __attribute__((format(printf, 3, 4)));
 VIS_INTERNAL bool text_appendf(Text *txt, const char *format, ...) __attribute__((format(printf, 2, 3)));
 /**
  * @}

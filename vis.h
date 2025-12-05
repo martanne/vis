@@ -147,23 +147,6 @@ VIS_EXPORT void vis_die(Vis *vis, const char *msg, ...) __attribute__((noreturn,
  * @endrst
  */
 VIS_EXPORT bool vis_signal_handler(Vis *vis, int signum, const siginfo_t *siginfo, const void *context);
-/**
- * Interrupt long running operation.
- * @param vis The editor instance.
- * @rst
- * .. warning:: There is no guarantee that a long running operation is actually
- * interrupted. It is analogous to cooperative multitasking where
- * the operation has to voluntarily yield control.
- * .. note:: It is invoked from `vis_signal_handler` when receiving ``SIGINT``.
- * @endrst
- */
-VIS_EXPORT void vis_interrupt(Vis*);
-/**
- * Check whether interruption was requested.
- * @param vis The editor instance.
- */
-VIS_EXPORT bool vis_interrupt_requested(Vis*);
-/** @} */
 
 /*
 ---
@@ -328,13 +311,6 @@ VIS_EXPORT void vis_message_show(Vis *vis, const char *msg);
  * @param len The length of the data to insert.
  */
 VIS_EXPORT void vis_insert(Vis *vis, size_t pos, const char *data, size_t len);
-/**
- * Delete data from the file.
- * @param vis The editor instance.
- * @param pos The starting position of the deletion.
- * @param len The length of the data to delete.
- */
-VIS_EXPORT void vis_delete(Vis *vis, size_t pos, size_t len);
 /**
  * Replace data in the file.
  * @param vis The editor instance.
