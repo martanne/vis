@@ -10,15 +10,15 @@ test: $(ALL)
 
 text-fuzzer: text-fuzzer.c fuzzer.h $(TEXT_SRC)
 	@echo Compiling $@ binary
-	@${CC} ${CFLAGS} ${CFLAGS_STD} ${CFLAGS_LIBC} ${CFLAGS_EXTRA} ${filter %.c, $^} ${LDFLAGS} -o $@
+	@${CC} ${CFLAGS} ${CFLAGS_STD} ${CFLAGS_EXTRA} ${filter %.c, $^} ${LDFLAGS} -o $@
 
 text-libfuzzer: text-fuzzer.c fuzzer.h $(TEXT_SRC)
 	@echo Compiling $@ binary
-	@${CC} ${CFLAGS} ${CFLAGS_STD} ${CFLAGS_LIBC} ${CFLAGS_EXTRA} -DLIBFUZZER ${filter %.c, $^} -fsanitize=fuzzer,address,undefined ${LDFLAGS} -o $@
+	@${CC} ${CFLAGS} ${CFLAGS_STD} ${CFLAGS_EXTRA} -DLIBFUZZER ${filter %.c, $^} -fsanitize=fuzzer,address,undefined ${LDFLAGS} -o $@
 
 buffer-fuzzer: buffer-fuzzer.c fuzzer.h ../../buffer.c
 	@echo Compiling $@ binary
-	@${CC} ${CFLAGS} ${CFLAGS_STD} ${CFLAGS_LIBC} ${CFLAGS_EXTRA} ${filter %.c, $^} ${LDFLAGS} -o $@
+	@${CC} ${CFLAGS} ${CFLAGS_STD} ${CFLAGS_EXTRA} ${filter %.c, $^} ${LDFLAGS} -o $@
 
 debug: clean
 	$(MAKE) CFLAGS_EXTRA='${CFLAGS_EXTRA} ${CFLAGS_DEBUG}'
