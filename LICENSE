@@ -23,9 +23,6 @@ under terms compatible with the above ISC license:
  - map.[ch] originate from the Comprehensive C Archive Network strmap
    module and are public domain / CC0 licensed
 
- - libutf.[ch] originate from libutf a port of Plan 9's Unicode library
-   to Unix and are MIT licensed
-
  - sam.[ch] is heavily inspired (and partially based upon) the X11
    version of Rob Pike's sam text editor originally written for Plan 9
    and distributed under an ISC-like license

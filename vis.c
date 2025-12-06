@@ -11,10 +11,11 @@
 #include "ui.h"
 #include "vis-subprocess.h"
 
+#include "util.c"
+
 #include "array.c"
 #include "buffer.c"
 #include "event-basic.c"
-#include "libutf.c"
 #include "map.c"
 #include "sam.c"
 #include "text.c"
@@ -1017,13 +1018,15 @@ long vis_keys_codepoint(Vis *vis, const char *keys) {
 	return -1;
 }
 
-bool vis_keys_utf8(Vis *vis, const char *keys, char utf8[static UTFmax+1]) {
-	Rune rune = vis_keys_codepoint(vis, keys);
-	if (rune == (Rune)-1)
-		return false;
-	size_t len = runetochar(utf8, &rune);
-	utf8[len] = '\0';
-	return true;
+bool vis_keys_utf8(Vis *vis, const char *keys, char utf8[4+1])
+{
+	uint32_t cp = vis_keys_codepoint(vis, keys);
+	bool result = cp != -1;
+	if (result) {
+		size_t len = utf8_encode((unsigned char *)utf8, cp);
+		utf8[len] = 0;
+	}
+	return result;
 }
 
 typedef struct {

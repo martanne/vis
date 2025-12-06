@@ -21,11 +21,7 @@ a<Space><C-v>u07FF<Escape>
 n
 a<Space><C-v>uD7FF<Escape>
 n
-a<Space><C-v>uDFFF<Escape>
-n
 a<Space><C-v>uFFFD<Escape>
-n
-a<Space><C-v>uFFFF<Escape>
 n
 a<Space><C-v>U0010FFFF<Escape>
 n

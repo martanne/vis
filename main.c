@@ -844,7 +844,7 @@ static KEY_ACTION_FN(ka_replace)
 	if (!next)
 		return NULL;
 
-	char replacement[UTFmax+1];
+	char replacement[4+1];
 	if (!vis_keys_utf8(vis, keys, replacement))
 		return next;
 
@@ -897,7 +897,7 @@ static KEY_ACTION_FN(ka_movement_key)
 	const char *next = vis_keys_next(vis, keys);
 	if (!next)
 		return NULL;
-	char utf8[UTFmax+1];
+	char utf8[4+1];
 	if (vis_keys_utf8(vis, keys, utf8))
 		vis_motion(vis, arg->i, utf8);
 	return next;
@@ -1030,8 +1030,8 @@ static KEY_ACTION_FN(ka_prompt_show)
 
 static KEY_ACTION_FN(ka_insert_verbatim)
 {
-	Rune rune = 0;
-	char buf[4], type = keys[0];
+	uint32_t rune = 0;
+	unsigned char buf[4], type = keys[0];
 	const char *data = NULL;
 	int len = 0, count = 0, base = 0;
 	switch (type) {
@@ -1084,22 +1084,22 @@ static KEY_ACTION_FN(ka_insert_verbatim)
 		if (count > 0)
 			return NULL;
 		if (type == 'u' || type == 'U') {
-			len = runetochar(buf, &rune);
+			len = utf8_encode(buf, rune);
 		} else {
 			buf[0] = rune;
 			len = 1;
 		}
 
-		data = buf;
+		data = (char *)buf;
 	} else {
 		const char *next = vis_keys_next(vis, keys);
 		if (!next)
 			return NULL;
-		if ((rune = vis_keys_codepoint(vis, keys)) != (Rune)-1) {
-			len = runetochar(buf, &rune);
+		if ((rune = vis_keys_codepoint(vis, keys)) != -1) {
+			len = utf8_encode(buf, rune);
 			if (buf[0] == '\n')
 				buf[0] = '\r';
-			data = buf;
+			data = (char *)buf;
 		} else {
 			vis_info_show(vis, "Unknown key");
 		}

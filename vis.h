@@ -16,7 +16,6 @@ typedef struct Win Win;
 #include "ui.h"
 #include "view.h"
 #include "text-regex.h"
-#include "libutf.h"
 #include "array.h"
 #include "buffer.h"
 
@@ -1326,7 +1325,7 @@ VIS_EXPORT long vis_keys_codepoint(Vis *vis, const char *keys);
  * .. note:: Guarantees that ``utf8`` is NUL terminated on success.
  * @endrst
  */
-VIS_EXPORT bool vis_keys_utf8(Vis *vis, const char *keys, char utf8[static UTFmax+1]);
+VIS_EXPORT bool vis_keys_utf8(Vis *vis, const char *keys, char utf8[4+1]);
 /**
  * Process symbolic keys as if they were user originated input.
  * @param vis The editor instance.
