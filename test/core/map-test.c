@@ -2,7 +2,6 @@
 #include <stdbool.h>
 #include <string.h>
 #include <stdio.h>
-#include <errno.h>
 #include "tap.h"
 #include "map.h"
 
@@ -52,16 +51,16 @@ int main(int argc, char *argv[]) {
 
 	ok(!map_get(map, "404"), "Get non-existing key");
 	ok(!map_contains(map, "404"), "Contains non-existing key");
-	ok(!map_closest(map, "404") && errno == ENOENT, "Closest non-existing key");
+	ok(!map_closest(map, "404"), "Closest non-existing key");
 
-	ok(!map_put(map, "a", NULL) && errno == EINVAL && map_empty(map) && !map_get(map, "a"), "Put NULL value");
+	ok(!map_put(map, "a", NULL) && map_empty(map) && !map_get(map, "a"), "Put NULL value");
 	ok(map_put(map, "a", &values[0]) && !map_empty(map) && get(map, "a", &values[0]), "Put 1");
 	ok(map_first(map, &key) == &values[0] && strcmp(key, "a") == 0, "First on map with 1 value");
 	key = NULL;
 	ok(map_first(map_prefix(map, "a"), &key) == &values[0] && strcmp(key, "a") == 0, "First on prefix map");
 	ok(map_contains(map, "a"), "Contains existing key");
 	ok(map_closest(map, "a") == &values[0], "Closest match existing key");
-	ok(!map_put(map, "a", &values[1]) && errno == EEXIST && get(map, "a", &values[0]), "Put duplicate");
+	ok(!map_put(map, "a", &values[1]) && get(map, "a", &values[0]), "Put duplicate");
 	ok(map_put(map, "cafebabe", &values[2]) && get(map, "cafebabe", &values[2]), "Put 2");
 	ok(map_put(map, "cafe", &values[1]) && get(map, "cafe", &values[1]), "Put 3");
 	key = NULL;
@@ -77,7 +76,7 @@ int main(int argc, char *argv[]) {
 	map_iterate(copy, once, &counter);
 	ok(counter == 1, "Iterate stop condition");
 
-	ok(!map_get(map, "ca") && !map_closest(map, "ca") && errno == 0, "Closest ambigious");
+	ok(!map_get(map, "ca") && !map_closest(map, "ca"), "Closest ambigious");
 
 	int visited[] = { 0, 0, 0 };
 

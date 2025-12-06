@@ -11,7 +11,6 @@
  */
 #include <stdlib.h>
 #include <string.h>
-#include <errno.h>
 #include <inttypes.h>
 #include "map.h"
 
@@ -63,14 +62,10 @@ void *map_get(const Map *map, const char *key)
 
 void *map_closest(const Map *map, const char *prefix)
 {
-	errno = 0;
-	void *v = map_get(map, prefix);
-	if (v)
-		return v;
-	const Map *m = map_prefix(map, prefix);
-	if (map_empty(m))
-		errno = ENOENT;
-	return m->v;
+	void *result = map_get(map, prefix);
+	if (!result)
+		result = map_prefix(map, prefix)->v;
+	return result;
 }
 
 bool map_contains(const Map *map, const char *prefix)
@@ -88,15 +83,11 @@ bool map_put(Map *map, const char *k, const void *value)
 	uint8_t bit_num, new_dir;
 	char *key;
 
-	if (!value) {
-		errno = EINVAL;
+	if (!value)
 		return false;
-	}
 
-	if (!(key = strdup(k))) {
-		errno = ENOMEM;
+	if (!(key = strdup(k)))
 		return false;
-	}
 
 	/* Empty map? */
 	if (!map->u.n) {
@@ -113,7 +104,6 @@ bool map_put(Map *map, const char *k, const void *value)
 		if (key[byte_num] == '\0') {
 			/* All identical! */
 			free(key);
-			errno = EEXIST;
 			return false;
 		}
 	}
@@ -130,7 +120,6 @@ bool map_put(Map *map, const char *k, const void *value)
 	newn = malloc(sizeof(*newn));
 	if (!newn) {
 		free(key);
-		errno = ENOMEM;
 		return false;
 	}
 	newn->byte_num = byte_num;
@@ -171,10 +160,8 @@ void *map_delete(Map *map, const char *key)
 	uint8_t direction;
 
 	/* Empty map? */
-	if (!map->u.n) {
-		errno = ENOENT;
+	if (!map->u.n)
 		return NULL;
-	}
 
 	/* Find closest, but keep track of parent. */
 	n = map;
@@ -193,10 +180,8 @@ void *map_delete(Map *map, const char *key)
 	}
 
 	/* Did we find it? */
-	if (strcmp(key, n->u.s)) {
-		errno = ENOENT;
+	if (strcmp(key, n->u.s))
 		return NULL;
-	}
 
 	free((char*)n->u.s);
 	value = n->v;

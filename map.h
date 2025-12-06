@@ -31,8 +31,7 @@ void *map_first(const Map *map, const char **key);
  * @param map The map to search within.
  * @param prefix The prefix to search for.
  * @return The corresponding value, if the given prefix is unique.
- * Otherwise ``NULL``. If no such prefix exists, then ``errno``
- * is set to ``ENOENT``.
+ * Otherwise ``NULL``.
  */
 void *map_closest(const Map *map, const char *prefix);
 /**
@@ -47,8 +46,8 @@ bool map_contains(const Map *map, const char *prefix);
  * @param map The map to store the key-value pair in.
  * @param key The key to store.
  * @param value The value associated with the key.
- * @return False if we run out of memory (``errno = ENOMEM``), or if the key
- * already appears in the map (``errno = EEXIST``).
+ * @return False if we run out of memory, or if the key
+ * already appears in the map.
  */
 bool map_put(Map *map, const char *key, const void *value);
 /**
