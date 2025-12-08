@@ -2675,6 +2675,17 @@ static int file_delete(lua_State *L) {
 }
 
 /***
+ * Create a restore point for undo/redo.
+ *
+ * @function snapshot
+ */
+static int file_snapshot(lua_State *L) {
+	File *file = obj_ref_check(L, 1, VIS_LUA_TYPE_FILE);
+	text_snapshot(file->text);
+	return 0;
+}
+
+/***
  * Create an iterator over all lines of the file.
  *
  * For large files this is probably faster than @{lines}.
@@ -2817,6 +2828,7 @@ static const struct luaL_Reg file_funcs[] = {
 	{ "__newindex", file_newindex },
 	{ "insert", file_insert },
 	{ "delete", file_delete },
+	{ "snapshot", file_snapshot },
 	{ "lines_iterator", file_lines_iterator },
 	{ "content", file_content },
 	{ "mark_set", file_mark_set },
