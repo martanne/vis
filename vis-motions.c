@@ -45,20 +45,22 @@ static size_t search_word_backward(Vis *vis, Text *txt, size_t pos) {
 	return pos;
 }
 
-static size_t search_forward(Vis *vis, Text *txt, size_t pos) {
+static size_t search_common(Vis *vis, Text *txt, size_t pos, bool backward) {
 	Regex *regex = vis_regex(vis, NULL);
 	if (regex)
-		pos = text_search_forward(txt, pos, regex);
+		pos = backward ?
+			text_search_backward(txt, pos, regex) :
+			text_search_forward(txt, pos, regex);
 	text_regex_free(regex);
 	return pos;
 }
 
+static size_t search_forward(Vis *vis, Text *txt, size_t pos) {
+	return search_common(vis, txt, pos, false);
+}
+
 static size_t search_backward(Vis *vis, Text *txt, size_t pos) {
-	Regex *regex = vis_regex(vis, NULL);
-	if (regex)
-		pos = text_search_backward(txt, pos, regex);
-	text_regex_free(regex);
-	return pos;
+	return search_common(vis, txt, pos, true);
 }
 
 static size_t common_word_next(Vis *vis, Text *txt, size_t pos,
