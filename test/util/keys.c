@@ -3,7 +3,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <unistd.h>
-#include <termkey.h>
+#include "../../termkey/termkey.h"
 
 /* is c the start of a utf8 sequence? */
 #define ISUTF8(c)   (((c)&0xC0)!=0x80)
