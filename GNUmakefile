@@ -1,5 +1,8 @@
 include Makefile
 
+# Part of a workaround for $(.CURDIR) being set in BSD make but not GNU make.
+CURDIR = .
+
 LIBTERMKEY = libtermkey-0.22
 LIBTERMKEY_SHA256 = 6945bd3c4aaa83da83d80a045c5563da4edd7d0374c62c0d35aec09eb3014600
 
