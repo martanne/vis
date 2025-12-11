@@ -159,7 +159,7 @@ VIS_INTERNAL bool text_appendf(Text *txt, const char *format, ...) __attribute__
 /**
  * Create a text snapshot, that is a vertex in the history graph.
  */
-VIS_INTERNAL bool text_snapshot(Text*);
+VIS_INTERNAL void text_snapshot(Text*);
 /**
  * Revert to previous snapshot along the main branch.
  * @rst
