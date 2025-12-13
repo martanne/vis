@@ -32,6 +32,25 @@
 #include "vis-subprocess.h"
 
 
+#include "array.c"
+#include "buffer.c"
+#include "event-basic.c"
+#include "libutf.c"
+#include "map.c"
+#include "sam.c"
+#include "text.c"
+#include "ui-terminal.c"
+#include "view.c"
+#include "vis-lua.c"
+#include "vis-marks.c"
+#include "vis-modes.c"
+#include "vis-motions.c"
+#include "vis-operators.c"
+#include "vis-prompt.c"
+#include "vis-registers.c"
+#include "vis-subprocess.c"
+#include "vis-text-objects.c"
+
 static void macro_replay(Vis *vis, const Macro *macro);
 static void macro_replay_internal(Vis *vis, const Macro *macro);
 static void vis_keys_push(Vis *vis, const char *input, size_t pos, bool record);

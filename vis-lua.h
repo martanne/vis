@@ -2,6 +2,10 @@
 #define VIS_LUA_H
 
 #if CONFIG_LUA
+#define LUA_COMPAT_5_1
+#define LUA_COMPAT_5_2
+#define LUA_COMPAT_5_3
+#define LUA_COMPAT_ALL
 #include <lua.h>
 #include <lualib.h>
 #include <lauxlib.h>

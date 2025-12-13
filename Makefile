@@ -1,36 +1,5 @@
 -include config.mk
 
-REGEX_SRC ?= text-regex.c
-
-SRC = array.c \
-	buffer.c \
-	event-basic.c \
-	libutf.c \
-	main.c \
-	map.c \
-	sam.c \
-	text-common.c \
-	text-io.c \
-	text-iterator.c \
-	text-motions.c \
-	text-objects.c \
-	text-util.c \
-	text.c \
-	ui-terminal.c \
-	view.c \
-	vis-lua.c \
-	vis-marks.c \
-	vis-modes.c \
-	vis-motions.c \
-	vis-operators.c \
-	vis-prompt.c \
-	vis-registers.c \
-	vis-subprocess.c \
-	vis-text-objects.c \
-	vis.c \
-	$(REGEX_SRC)
-OBJ = $(SRC:%.c=obj/%.o)
-
 ELF = vis vis-menu vis-digraph
 EXECUTABLES = $(ELF) vis-clipboard vis-complete vis-open
 
@@ -40,29 +9,15 @@ DOCUMENTATION = LICENSE README.md
 
 VERSION = $(shell git describe --always --dirty 2>/dev/null || echo "v0.9-git")
 
-CONFIG_HELP ?= 1
-CONFIG_CURSES ?= 1
-CONFIG_LUA ?= 1
-CONFIG_LPEG ?= 0
-CONFIG_TRE ?= 0
-CONFIG_ACL ?= 0
-CONFIG_SELINUX ?= 0
-
-CFLAGS_STD ?= -std=c99 -U_XOPEN_SOURCE -D_XOPEN_SOURCE=700 -DNDEBUG -MMD
+CFLAGS_STD ?= -std=c99 -U_XOPEN_SOURCE -D_XOPEN_SOURCE=700 -DNDEBUG
 CFLAGS_STD += -DVERSION=\"${VERSION}\"
 LDFLAGS_STD ?= -lc
 
 CFLAGS_VIS = $(CFLAGS_AUTO) $(CFLAGS_TERMKEY) $(CFLAGS_CURSES) $(CFLAGS_ACL) \
-	$(CFLAGS_SELINUX) $(CFLAGS_TRE) $(CFLAGS_LUA) $(CFLAGS_LPEG) $(CFLAGS_STD)
+	$(CFLAGS_SELINUX) $(CFLAGS_TRE) $(CFLAGS_LUA) $(CFLAGS_LPEG) $(CFLAGS_STD) \
+	-DVIS_EXPORT=static
 
 CFLAGS_VIS += -DVIS_PATH=\"${SHAREPREFIX}/vis\"
-CFLAGS_VIS += -DCONFIG_HELP=${CONFIG_HELP}
-CFLAGS_VIS += -DCONFIG_CURSES=${CONFIG_CURSES}
-CFLAGS_VIS += -DCONFIG_LUA=${CONFIG_LUA}
-CFLAGS_VIS += -DCONFIG_LPEG=${CONFIG_LPEG}
-CFLAGS_VIS += -DCONFIG_TRE=${CONFIG_TRE}
-CFLAGS_VIS += -DCONFIG_SELINUX=${CONFIG_SELINUX}
-CFLAGS_VIS += -DCONFIG_ACL=${CONFIG_ACL}
 
 LDFLAGS_VIS = $(LDFLAGS_AUTO) $(LDFLAGS_TERMKEY) $(LDFLAGS_CURSES) $(LDFLAGS_ACL) \
 	$(LDFLAGS_SELINUX) $(LDFLAGS_TRE) $(LDFLAGS_LUA) $(LDFLAGS_LPEG) $(LDFLAGS_STD)
@@ -79,19 +34,8 @@ config.h:
 config.mk:
 	@touch $@
 
-obj/.tstamp:
-	mkdir obj
-	touch obj/.tstamp
-
-obj/main.o: config.h
-
-$(OBJ): config.mk obj/.tstamp
-	${CC} ${CFLAGS} ${CFLAGS_VIS} ${CFLAGS_EXTRA} -o $@ -c $(@:obj/%.o=%.c)
-
--include obj/*.d
-
-vis: ${OBJ}
-	${CC} -o $@ ${OBJ} ${LDFLAGS} ${LDFLAGS_VIS} ${LDFLAGS_EXTRA}
+vis: config.h
+	${CC} ${CFLAGS} ${CFLAGS_VIS} ${CFLAGS_EXTRA} main.c ${LDFLAGS} ${LDFLAGS_VIS} ${LDFLAGS_EXTRA} -o $@
 
 vis-menu: vis-menu.c
 	${CC} ${CFLAGS} ${CFLAGS_AUTO} ${CFLAGS_STD} ${CFLAGS_EXTRA} $< ${LDFLAGS} ${LDFLAGS_STD} ${LDFLAGS_AUTO} ${LDFLAGS_EXTRA} -o $@
@@ -148,17 +92,13 @@ coverage: clean
 test:
 	@$(MAKE) -C test
 
-testclean:
-	@echo cleaning the test artifacts
-	[ ! -e test/Makefile ] || $(MAKE) -C test clean
-
 clean:
 	@echo cleaning
 	@$(MAKE) -C doc clean
-	@rm -rf obj
-	@rm -f $(ELF) vis-single vis-single-payload.inc vis-*.tar.gz *.gcov *.gcda *.gcno *.d
+	@$(MAKE) -C test clean
+	@rm -f $(ELF) vis-single vis-single-payload.inc vis-*.tar.gz *.gcov *.gcda *.gcno
 
-distclean: clean testclean
+distclean: clean
 	@echo cleaning build configuration
 	@rm -f config.h config.mk
 
@@ -229,4 +169,4 @@ uninstall:
 	@echo removing support files from ${DESTDIR}${SHAREPREFIX}/vis
 	@rm -rf ${DESTDIR}${SHAREPREFIX}/vis
 
-.PHONY: all clean testclean dist distclean install install-strip uninstall debug profile coverage test test-update luadoc luadoc-all luacheck man docker-kill docker docker-clean
+.PHONY: all clean vis dist distclean install install-strip uninstall debug profile coverage test test-update luadoc luadoc-all luacheck man docker-kill docker docker-clean

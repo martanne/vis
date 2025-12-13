@@ -2,7 +2,28 @@
 #define UTIL_H
 
 #ifndef VIS_INTERNAL
-  #define VIS_INTERNAL
+  #define VIS_INTERNAL static
+#endif
+#ifndef CONFIG_HELP
+  #define CONFIG_HELP 1
+#endif
+#ifndef CONFIG_CURSES
+  #define CONFIG_CURSES 0
+#endif
+#ifndef CONFIG_LUA
+  #define CONFIG_LUA 0
+#endif
+#ifndef CONFIG_LPEG
+  #define CONFIG_LPEG 0
+#endif
+#ifndef CONFIG_TRE
+  #define CONFIG_TRE 0
+#endif
+#ifndef CONFIG_SELINUX
+  #define CONFIG_SELINUX 0
+#endif
+#ifndef CONFIG_ACL
+  #define CONFIG_ACL 0
 #endif
 
 #include <stdbool.h>

@@ -1,26 +1,4 @@
-#include <signal.h>
-#include <limits.h>
-#include <string.h>
-#include <stdio.h>
-#include <wchar.h>
-#include <ctype.h>
-#include <errno.h>
-#include <fcntl.h>
-#include <inttypes.h>
-#include <sys/stat.h>
-#include <sys/types.h>
-
-#include "util.h"
-
-#include "ui.h"
-#include "vis.h"
-#include "vis-lua.h"
-#include "text-util.h"
-#include "text-motions.h"
-#include "text-objects.h"
-#include "libutf.h"
-#include "array.h"
-#include "buffer.h"
+#include "vis.c"
 
 static Vis vis[1];
 

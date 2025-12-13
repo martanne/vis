@@ -220,7 +220,7 @@ tryflag   CFLAGS_TRY  -Werror=unused-command-line-argument
 tryldflag LDFLAGS_TRY -Werror=unknown-warning-option
 tryldflag LDFLAGS_TRY -Werror=unused-command-line-argument
 
-CFLAGS_STD="-std=c99 -U_XOPEN_SOURCE -D_XOPEN_SOURCE=700 -DNDEBUG -MMD"
+CFLAGS_STD="-std=c99 -U_XOPEN_SOURCE -D_XOPEN_SOURCE=700 -DNDEBUG"
 LDFLAGS_STD="-lc"
 
 OS=$(uname)
@@ -251,6 +251,8 @@ tryflag CFLAGS_AUTO -fstack-protector-all
 tryldflag LDFLAGS -Wl,-z,now
 tryldflag LDFLAGS -Wl,-z,relro
 tryldflag LDFLAGS_AUTO -pie
+
+[ "$help" = "no" ] && CFLAGS="${CFLAGS} -DCONFIG_HELP=0"
 
 printf "creating config.mk... "
 
@@ -292,14 +294,6 @@ printf "checking for pkg-config... "
 cmdexists pkg-config && have_pkgconfig=yes
 printf "%s\n" "$have_pkgconfig"
 
-if test "$help" = "yes" ; then
-	CONFIG_HELP=1
-else
-	CONFIG_HELP=0
-fi
-
-CONFIG_CURSES=0
-
 if test "$curses" != "no" ; then
 
 	printf "checking for libcurses...\n"
@@ -322,7 +316,7 @@ EOF
 			LDFLAGS_CURSES=$(pkg-config --libs $libcurses 2>/dev/null)
 			if test $? -eq 0 && $CC $CFLAGS $CFLAGS_CURSES "$tmpc" \
 				$LDFLAGS $LDFLAGS_CURSES -o "$tmpo" >/dev/null 2>&1 ; then
-				CONFIG_CURSES=1
+				CFLAGS_CURSES="${CFLAGS_CURSES} -DCONFIG_CURSES=1"
 				printf "yes\n"
 				break
 			fi
@@ -333,17 +327,16 @@ EOF
 
 		if $CC $CFLAGS $CFLAGS_CURSES "$tmpc" \
 			$LDFLAGS $LDFLAGS_CURSES -o "$tmpo" >/dev/null 2>&1 ; then
-			CONFIG_CURSES=1
+			CFLAGS_CURSES="-DCONFIG_CURSES=1"
 			printf "yes\n"
 			break
 		else
-			CFLAGS_CURSES=""
 			LDFLAGS_CURSES=""
 			printf "no\n"
 		fi
 	done
 
-	test "$curses" = "yes" -a $CONFIG_CURSES -ne 1 && fail "$0: cannot find libcurses"
+	test "$curses" = "yes" -a -z "${CFLAGS_CURSES}" && fail "$0: cannot find libcurses"
 fi
 
 # libtermkey is a mandatory dependency
@@ -376,9 +369,6 @@ else
 	fail "$0: cannot find libtermkey"
 fi
 
-CONFIG_TRE=0
-REGEX_SRC=text-regex.c
-
 if test "$tre" != "no" ; then
 
 	printf "checking for libtre... "
@@ -410,8 +400,7 @@ EOF
 
 	if $CC $CFLAGS $CFLAGS_TRE "$tmpc" \
 		$LDFLAGS $LDFLAGS_TRE -o "$tmpo" >/dev/null 2>&1; then
-		CONFIG_TRE=1
-		REGEX_SRC=text-regex-tre.c
+		CFLAGS_TRE="${CFLAGS_TRE} -DCONFIG_TRE=1"
 		printf "%s\n" "yes"
 	else
 		printf "%s\n" "no"
@@ -421,7 +410,6 @@ EOF
 	fi
 fi
 
-CONFIG_LUA=0
 
 # enabling builtin lpeg requires lua support
 test "$lpeg" = "yes" -a "$lua" = "no" && fail "$0: need lua support for built-in lpeg"
@@ -456,7 +444,7 @@ EOF
 			LDFLAGS_LUA=$(pkg-config --libs $liblua 2>/dev/null)
 			if test $? -eq 0 && $CC $CFLAGS $CFLAGS_LUA "$tmpc" \
 				$LDFLAGS $LDFLAGS_LUA -o "$tmpo" >/dev/null 2>&1 ; then
-				CONFIG_LUA=1
+				CFLAGS_LUA="${CFLAGS_LUA} -DCONFIG_LUA=1"
 				printf "yes\n"
 				break
 			fi
@@ -467,26 +455,19 @@ EOF
 
 		if $CC $CFLAGS $CFLAGS_LUA "$tmpc" \
 			$LDFLAGS $LDFLAGS_LUA -o "$tmpo" >/dev/null 2>&1 ; then
-			CONFIG_LUA=1
+			CFLAGS_LUA="-DCONFIG_LUA=1"
 			printf "yes\n"
 			break
 		else
 			printf "no\n"
-			CFLAGS_LUA=""
 			LDFLAGS_LUA=""
 		fi
 	done
 
-	test "$lua" = "yes" -a $CONFIG_LUA -ne 1 && fail "$0: cannot find liblua"
-
-	if test $CONFIG_LUA -eq 1; then
-		CFLAGS_LUA="$CFLAGS_LUA -DLUA_COMPAT_5_1 -DLUA_COMPAT_5_2 -DLUA_COMPAT_5_3 -DLUA_COMPAT_ALL"
-	fi
+	test "$lua" = "yes" -a -z "${CFLAGS_LUA}" && fail "$0: cannot find liblua"
 fi
 
-CONFIG_LPEG=0
-
-if test $CONFIG_LUA -eq 1 -a "$lpeg" != "no" ; then
+if test -n "${CFLAGS_LUA}" -a "$lpeg" != "no" ; then
 
 	printf "checking for Lua statically linked liblpeg...\n"
 
@@ -517,7 +498,7 @@ EOF
 			LDFLAGS_LPEG=$(pkg-config --libs $liblpeg 2>/dev/null)
 			if test $? -eq 0 && $CC $CFLAGS $CFLAGS_LUA $CFLAGS_LPEG "$tmpc" \
 				$LDFLAGS $LDFLAGS_LUA $LDFLAGS_LPEG -o "$tmpo" >/dev/null 2>&1 ; then
-				CONFIG_LPEG=1
+				CFLAGS_LPEG="${CFLAGS_LPEG} -DCONFIG_LPEG=1"
 				printf "yes\n"
 				break
 			fi
@@ -528,20 +509,17 @@ EOF
 
 		if $CC $CFLAGS $CFLAGS_LUA $CFLAGS_LPEG "$tmpc" \
 			$LDFLAGS $LDFLAGS_LUA $LDFLAGS_LPEG -o "$tmpo" >/dev/null 2>&1 ; then
-			CONFIG_LPEG=1
+			CFLAGS_LPEG="-DCONFIG_LPEG=1"
 			printf "yes\n"
 			break
 		else
 			printf "no\n"
-			CFLAGS_LPEG=""
 			LDFLAGS_LPEG=""
 		fi
 	done
 
-	test "$lpeg" = "yes" -a $CONFIG_LPEG -ne 1 && fail "$0: cannot find liblpeg"
+	test "$lpeg" = "yes" -a -z "${CFLAGS_LPEG}" && fail "$0: cannot find liblpeg"
 fi
-
-CONFIG_ACL=0
 
 if test "$OS" = "Linux" -a "$acl" != "no"; then
 	printf "checking for libacl... "
@@ -568,7 +546,7 @@ EOF
 
 	if $CC $CFLAGS $CFLAGS_ACL "$tmpc" \
 		$LDFLAGS $LDFLAGS_ACL -o "$tmpo" >/dev/null 2>&1; then
-		CONFIG_ACL=1
+		CFLAGS_ACL="${CFLAGS_ACL} -DCONFIG_ACL=1"
 		printf "%s\n" "yes"
 	else
 		printf "%s\n" "no"
@@ -577,8 +555,6 @@ EOF
 		test "$acl" = "yes" && fail "$0: cannot find libacl"
 	fi
 fi
-
-CONFIG_SELINUX=0
 
 if test "$OS" = "Linux" -a "$selinux" != "no"; then
 	printf "checking for libselinux... "
@@ -603,7 +579,7 @@ EOF
 
 	if $CC $CFLAGS $CFLAGS_SELINUX "$tmpc" \
 		$LDFLAGS $LDFLAGS_SELINUX -o "$tmpo" >/dev/null 2>&1; then
-		CONFIG_SELINUX=1
+		CFLAGS_SELINUX="${CFLAGS_SELINUX} -DCONFIG_SELINUX=1"
 		printf "%s\n" "yes"
 	else
 		printf "%s\n" "no"
@@ -618,26 +594,18 @@ printf "completing config.mk... "
 exec 3>&1 1>>config.mk
 
 cat << EOF
-CONFIG_HELP = $CONFIG_HELP
 CFLAGS_TERMKEY = $CFLAGS_TERMKEY
 LDFLAGS_TERMKEY = $LDFLAGS_TERMKEY
-CONFIG_CURSES = $CONFIG_CURSES
 CFLAGS_CURSES = $CFLAGS_CURSES
 LDFLAGS_CURSES = $LDFLAGS_CURSES
-REGEX_SRC = $REGEX_SRC
-CONFIG_TRE = $CONFIG_TRE
 CFLAGS_TRE = $CFLAGS_TRE
 LDFLAGS_TRE = $LDFLAGS_TRE
-CONFIG_LUA = $CONFIG_LUA
 CFLAGS_LUA = $CFLAGS_LUA
 LDFLAGS_LUA = $LDFLAGS_LUA
-CONFIG_LPEG = $CONFIG_LPEG
 CFLAGS_LPEG = $CFLAGS_LPEG
 LDFLAGS_LPEG = $LDFLAGS_LPEG
-CONFIG_ACL = $CONFIG_ACL
 CFLAGS_ACL = $CFLAGS_ACL
 LDFLAGS_ACL = $LDFLAGS_ACL
-CONFIG_SELINUX = $CONFIG_SELINUX
 CFLAGS_SELINUX = $CFLAGS_SELINUX
 LDFLAGS_SELINUX = $LDFLAGS_SELINUX
 EOF

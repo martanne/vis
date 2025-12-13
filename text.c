@@ -13,12 +13,24 @@
 #include <sys/stat.h>
 #include <sys/mman.h>
 
-#include "text.h"
-#include "text-util.h"
-#include "text-motions.h"
 #include "util.h"
+
 #include "array.h"
+
+#include "text.h"
 #include "text-internal.h"
+
+#include "text-common.c"
+#include "text-io.c"
+#include "text-iterator.c"
+#include "text-motions.c"
+#include "text-objects.c"
+#if CONFIG_TRE
+  #include "text-regex-tre.c"
+#else
+  #include "text-regex.c"
+#endif
+#include "text-util.c"
 
 /* A piece holds a reference (but doesn't itself store) a certain amount of data.
  * All active pieces chained together form the whole content of the document.

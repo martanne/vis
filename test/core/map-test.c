@@ -3,7 +3,7 @@
 #include <string.h>
 #include <stdio.h>
 #include "tap.h"
-#include "map.h"
+#include "map.c"
 
 static bool get(Map *map, const char *key, const void *data) {
 	return map_get(map, key) == data && map_closest(map, key) == data;

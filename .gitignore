@@ -1,7 +1,6 @@
 /config.h
 /config.mk
 /dependency
-/obj
 /vis
 /vis-menu
 /vis-single
@@ -12,4 +11,3 @@
 *.gcno
 *.gcov
 *.html
-*.d

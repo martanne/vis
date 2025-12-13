@@ -6,9 +6,12 @@
 #include <string.h>
 #include <unistd.h>
 #include "tap.h"
-#include "text.h"
-#include "text-util.h"
+
 #include "util.h"
+
+#include "array.c"
+#include "buffer.c"
+#include "text.c"
 
 #ifndef BUFSIZ
 #define BUFSIZ 1024
