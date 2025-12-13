@@ -1,11 +1,3 @@
-#include <ctype.h>
-#include <errno.h>
-#include <limits.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <wchar.h>
-
 #include "vis-core.h"
 #include "view.h"
 #include "text.h"

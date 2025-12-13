@@ -1,10 +1,6 @@
 #ifndef UI_H
 #define UI_H
 
-#include <stdbool.h>
-#include <stdarg.h>
-#include <termkey.h>
-
 /* enable large file optimization for files larger than: */
 #define UI_LARGE_FILE_SIZE (1 << 25)
 /* enable large file optimization for files containing lines longer than: */

@@ -1,6 +1,3 @@
-#include <stdlib.h>
-#include <string.h>
-#include <stdio.h>
 #include "text.h"
 
 static bool text_vprintf(Text *txt, size_t pos, const char *format, va_list ap) {

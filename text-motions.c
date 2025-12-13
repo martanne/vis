@@ -1,9 +1,3 @@
-#include <ctype.h>
-#include <string.h>
-#include <stdlib.h>
-#include <wchar.h>
-#include <errno.h>
-#include <limits.h>
 #include "text-motions.h"
 #include "text-util.h"
 #include "util.h"

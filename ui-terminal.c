@@ -1,20 +1,3 @@
-#include <unistd.h>
-#include <stdlib.h>
-#include <stdio.h>
-#include <stdarg.h>
-#include <string.h>
-#include <strings.h>
-#include <limits.h>
-#include <ctype.h>
-#include <locale.h>
-#include <poll.h>
-#include <sys/ioctl.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <fcntl.h>
-#include <termios.h>
-#include <errno.h>
-
 #include "vis.h"
 #include "vis-core.h"
 #include "text.h"

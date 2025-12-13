@@ -26,9 +26,45 @@
   #define CONFIG_ACL 0
 #endif
 
+#undef _XOPEN_SOURCE
+#define _XOPEN_SOURCE 700
+
+#include <ctype.h>
+#include <errno.h>
+#include <fcntl.h>
+#include <inttypes.h>
+#include <libgen.h>
+#include <limits.h>
+#include <locale.h>
+#include <poll.h>
+#include <pwd.h>
+#include <setjmp.h>
+#include <signal.h>
+#include <stdarg.h>
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <strings.h>
+#include <sys/ioctl.h>
+#include <sys/mman.h>
+#include <sys/select.h>
+#include <sys/stat.h>
+#include <sys/types.h>
+#include <sys/wait.h>
+#include <termios.h>
+#include <time.h>
+#include <unistd.h>
+#include <wchar.h>
+
+#if CONFIG_ACL
+#include <sys/acl.h>
+#endif
+#if CONFIG_SELINUX
+#include <selinux/selinux.h>
+#endif
 
 #define LENGTH(x)  ((int)(sizeof (x) / sizeof *(x)))
 #define MIN(a, b)  ((a) > (b) ? (b) : (a))

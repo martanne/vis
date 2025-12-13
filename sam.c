@@ -16,15 +16,6 @@
  * REPRESENTATION OR WARRANTY OF ANY KIND CONCERNING THE MERCHANTABILITY
  * OF THIS SOFTWARE OR ITS FITNESS FOR ANY PARTICULAR PURPOSE.
  */
-#include <string.h>
-#include <strings.h>
-#include <stdio.h>
-#include <ctype.h>
-#include <errno.h>
-#include <unistd.h>
-#include <limits.h>
-#include <fcntl.h>
-
 #include "util.h"
 
 #include "sam.h"

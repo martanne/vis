@@ -1,8 +1,3 @@
-#include <stdlib.h>
-#include <string.h>
-#include <stdarg.h>
-#include <stdio.h>
-
 #include "buffer.h"
 
 #ifndef BUFFER_SIZE

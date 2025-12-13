@@ -1,13 +1,6 @@
-#include <errno.h>
-#include <fcntl.h>
-#include <stdbool.h>
-#include <stddef.h>
-#include <stdio.h>
-#include <string.h>
-#include <unistd.h>
-#include "tap.h"
-
 #include "util.h"
+
+#include "tap.h"
 
 #include "array.c"
 #include "buffer.c"

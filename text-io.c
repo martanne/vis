@@ -1,19 +1,3 @@
-#include <fcntl.h>
-#include <unistd.h>
-#include <stdlib.h>
-#include <libgen.h>
-#include <stdio.h>
-#include <errno.h>
-#include <string.h>
-#include <limits.h>
-#include <sys/mman.h>
-#if CONFIG_ACL
-#include <sys/acl.h>
-#endif
-#if CONFIG_SELINUX
-#include <selinux/selinux.h>
-#endif
-
 #include "text.h"
 #include "text-internal.h"
 #include "text-util.h"

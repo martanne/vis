@@ -1,5 +1,3 @@
-#include <string.h>
-#include <strings.h>
 #include "vis-core.h"
 #include "text-motions.h"
 #include "util.h"

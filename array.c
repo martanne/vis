@@ -1,7 +1,3 @@
-#include <stdlib.h>
-#include <string.h>
-#include <errno.h>
-
 #include "util.h"
 
 #include "array.h"

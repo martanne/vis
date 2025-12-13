@@ -1,14 +1,6 @@
 #ifndef TEXT_H
 #define TEXT_H
 
-#include <stdbool.h>
-#include <stdint.h>
-#include <time.h>
-#include <unistd.h>
-#include <stdarg.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-
 #include "util.h"
 
 /** A mark. */

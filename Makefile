@@ -9,7 +9,7 @@ DOCUMENTATION = LICENSE README.md
 
 VERSION = $(shell git describe --always --dirty 2>/dev/null || echo "v0.9-git")
 
-CFLAGS_STD ?= -std=c99 -U_XOPEN_SOURCE -D_XOPEN_SOURCE=700 -DNDEBUG
+CFLAGS_STD ?= -std=c99 -DNDEBUG
 CFLAGS_STD += -DVERSION=\"${VERSION}\"
 LDFLAGS_STD ?= -lc
 

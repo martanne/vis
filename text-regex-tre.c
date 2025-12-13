@@ -1,8 +1,3 @@
-#include <stdlib.h>
-#include <string.h>
-#include <wchar.h>
-#include <errno.h>
-
 #include "text-regex.h"
 #include "text-motions.h"
 

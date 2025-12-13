@@ -5,7 +5,6 @@
  * perform a certain movement and return the new position. If the movement
  * is not possible the original position is returned unchanged. */
 
-#include <stddef.h>
 #include "text.h"
 #include "text-regex.h"
 

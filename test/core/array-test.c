@@ -1,9 +1,4 @@
-#include <stdlib.h>
-#include <stddef.h>
-#include <stdbool.h>
-#include <string.h>
-#include <stdio.h>
-#include <errno.h>
+#include "util.h"
 
 #include "tap.h"
 

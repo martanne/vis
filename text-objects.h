@@ -6,7 +6,6 @@
  * such text-object at the given location, an empty range is returned.
  */
 
-#include <stddef.h>
 #include "text.h"
 
 /* return range covering the entire text */

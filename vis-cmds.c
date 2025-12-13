@@ -1,6 +1,5 @@
 /* this file is included from sam.c */
 
-#include <termkey.h>
 #include "vis-lua.h"
 
 // FIXME: avoid this redirection?

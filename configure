@@ -220,7 +220,7 @@ tryflag   CFLAGS_TRY  -Werror=unused-command-line-argument
 tryldflag LDFLAGS_TRY -Werror=unknown-warning-option
 tryldflag LDFLAGS_TRY -Werror=unused-command-line-argument
 
-CFLAGS_STD="-std=c99 -U_XOPEN_SOURCE -D_XOPEN_SOURCE=700 -DNDEBUG"
+CFLAGS_STD="-std=c99 -DNDEBUG"
 LDFLAGS_STD="-lc"
 
 OS=$(uname)

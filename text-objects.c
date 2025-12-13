@@ -1,7 +1,3 @@
-#include <errno.h>
-#include <stdlib.h>
-#include <string.h>
-#include <ctype.h>
 #include "text-motions.h"
 #include "text-objects.h"
 #include "text-util.h"

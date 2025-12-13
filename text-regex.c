@@ -1,6 +1,3 @@
-#include <stdlib.h>
-#include <string.h>
-
 #include "text-regex.h"
 
 struct Regex {

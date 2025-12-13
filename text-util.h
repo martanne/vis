@@ -1,8 +1,6 @@
 #ifndef TEXT_UTIL_H
 #define TEXT_UTIL_H
 
-#include <stdbool.h>
-#include <stddef.h>
 #include "text.h"
 
 /* test whether the given range is valid (start <= end) */

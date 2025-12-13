@@ -1,9 +1,6 @@
 #ifndef VIEW_H
 #define VIEW_H
 
-#include <stddef.h>
-#include <stdbool.h>
-
 #include "ui.h"
 #include "text.h"
 #include "array.h"

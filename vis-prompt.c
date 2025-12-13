@@ -1,4 +1,3 @@
-#include <string.h>
 #include "vis-core.h"
 #include "text-motions.h"
 #include "text-objects.h"

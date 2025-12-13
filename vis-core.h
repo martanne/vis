@@ -1,8 +1,6 @@
 #ifndef VIS_CORE_H
 #define VIS_CORE_H
 
-#include <setjmp.h>
-
 #include "util.h"
 
 #include "vis.h"

@@ -11,16 +11,6 @@
  * @license ISC
  * @release RELEASE
  */
-#include <stddef.h>
-#include <stdarg.h>
-#include <stdio.h>
-#include <string.h>
-#include <limits.h>
-#include <unistd.h>
-#include <libgen.h>
-#include <sys/types.h>
-#include <pwd.h>
-
 #include "util.h"
 
 #include "vis-lua.h"

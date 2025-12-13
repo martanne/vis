@@ -2,7 +2,6 @@
 #define VIS_SUBPROCESS_H
 #include "vis-core.h"
 #include "vis-lua.h"
-#include <sys/select.h>
 
 typedef struct Process Process;
 #if CONFIG_LUA

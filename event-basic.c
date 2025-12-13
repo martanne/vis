@@ -1,5 +1,3 @@
-#include <stdarg.h>
-
 #include "vis-core.h"
 
 #if !CONFIG_LUA

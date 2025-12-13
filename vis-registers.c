@@ -1,6 +1,3 @@
-#include <stdlib.h>
-#include <string.h>
-
 #include "vis-core.h"
 
 static Buffer *register_buffer(Register *reg, size_t slot) {

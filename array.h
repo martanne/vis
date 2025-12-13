@@ -1,9 +1,6 @@
 #ifndef ARRAY_H
 #define ARRAY_H
 
-#include <stddef.h>
-#include <stdbool.h>
-
 /**
  * @file
  *

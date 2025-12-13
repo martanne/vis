@@ -1,26 +1,6 @@
-#include <stdlib.h>
-#include <unistd.h>
-#include <string.h>
-#include <strings.h>
-#include <signal.h>
-#include <stdarg.h>
-#include <stdio.h>
-#include <errno.h>
-#include <fcntl.h>
-#include <limits.h>
-#include <ctype.h>
-#include <time.h>
-#include <sys/select.h>
-#include <sys/types.h>
-#include <sys/wait.h>
-#include <sys/stat.h>
-#include <sys/ioctl.h>
-#include <sys/mman.h>
-#include <pwd.h>
-#include <libgen.h>
-#include <termkey.h>
-
 #include "util.h"
+
+#include <termkey.h>
 
 #include "vis.h"
 #include "text-util.h"
@@ -30,7 +10,6 @@
 #include "sam.h"
 #include "ui.h"
 #include "vis-subprocess.h"
-
 
 #include "array.c"
 #include "buffer.c"

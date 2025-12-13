@@ -1,8 +1,7 @@
-#include <stddef.h>
-#include <stdbool.h>
-#include <string.h>
-#include <stdio.h>
+#include "util.h"
+
 #include "tap.h"
+
 #include "map.c"
 
 static bool get(Map *map, const char *key, const void *data) {

@@ -1,8 +1,6 @@
 #ifndef TEXT_INTERNAL
 #define TEXT_INTERNAL
 
-#include <stdbool.h>
-#include <stddef.h>
 #include "text.h"
 
 /* Block holding the file content, either readonly mmap(2)-ed from the original

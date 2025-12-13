@@ -1,8 +1,3 @@
-#include <limits.h>
-#include <stddef.h>
-#include <errno.h>
-#include <wchar.h>
-#include <string.h>
 #include "text.h"
 #include "util.h"
 

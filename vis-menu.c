@@ -30,6 +30,9 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  */
+#undef _XOPEN_SOURCE
+#define _XOPEN_SOURCE 700
+
 #include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
