@@ -176,7 +176,7 @@ static bool text_line_blank(Text *txt, size_t pos) {
 }
 
 Filerange text_object_paragraph(Text *txt, size_t pos) {
-	char c;
+	char c = 0;
 	Filerange r;
 	if (text_line_blank(txt, pos)) {
 		Iterator it = text_iterator_get(txt, pos), rit = it;
@@ -314,6 +314,10 @@ Filerange text_object_indentation(Text *txt, size_t pos) {
 	size_t end = text_line_next(txt, bol);
 	size_t line_indent = sol - bol;
 	bool line_empty = text_byte_get(txt, bol, &c) && c == '\n';
+
+	/* NOTE: gcc spits a warning otherwise, this is probably not possible but something
+	 * about how text_line_{begin,start} are implemented makes gcc think otherwise */
+	line_indent = MIN(line_indent, PTRDIFF_MAX);
 
 	char *buf = text_bytes_alloc0(txt, bol, line_indent);
 	char *tmp = malloc(line_indent);

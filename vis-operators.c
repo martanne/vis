@@ -99,7 +99,7 @@ static size_t op_put(Vis *vis, Text *txt, OperatorContext *c) {
 }
 
 static size_t op_shift_right(Vis *vis, Text *txt, OperatorContext *c) {
-	char spaces[9] = "         ";
+	char spaces[9] = "        ";
 	spaces[MIN(vis->win->view.tabwidth, LENGTH(spaces) - 1)] = '\0';
 	const char *tab = vis->win->expandtab ? spaces : "\t";
 	size_t tablen = strlen(tab);

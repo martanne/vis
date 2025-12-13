@@ -627,13 +627,13 @@ void vis_cleanup(Vis *vis)
 		register_release(&vis->registers[i]);
 	ui_terminal_free(&vis->ui);
 	if (vis->usercmds) {
-		const char *name;
+		const char *name = 0;
 		while (map_first(vis->usercmds, &name) && vis_cmd_unregister(vis, name));
 	}
 	map_free(vis->usercmds);
 	map_free(vis->cmds);
 	if (vis->options) {
-		const char *name;
+		const char *name = 0;
 		while (map_first(vis->options, &name) && vis_option_unregister(vis, name));
 	}
 	map_free(vis->options);
