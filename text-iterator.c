@@ -108,10 +108,10 @@ bool text_iterator_byte_find_next(Iterator *it, char b) {
 }
 
 bool text_iterator_codepoint_next(Iterator *it, char *c) {
-	while (text_iterator_byte_next(it, NULL)) {
-		if (ISUTF8(*it->text)) {
-			if (c)
-				*c = *it->text;
+	char test_byte;
+	while (text_iterator_byte_next(it, &test_byte)) {
+		if (ISUTF8(test_byte)) {
+			if (c) *c = test_byte;
 			return true;
 		}
 	}
@@ -119,10 +119,10 @@ bool text_iterator_codepoint_next(Iterator *it, char *c) {
 }
 
 bool text_iterator_codepoint_prev(Iterator *it, char *c) {
-	while (text_iterator_byte_prev(it, NULL)) {
-		if (ISUTF8(*it->text)) {
-			if (c)
-				*c = *it->text;
+	char test_byte;
+	while (text_iterator_byte_prev(it, &test_byte)) {
+		if (ISUTF8(test_byte)) {
+			if (c) *c = test_byte;
 			return true;
 		}
 	}
