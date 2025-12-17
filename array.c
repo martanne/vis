@@ -141,21 +141,3 @@ void array_sort(Array *arr, int (*compar)(const void*, const void*)) {
 	if (arr->items)
 		qsort(arr->items, arr->len, arr->elem_size, compar);
 }
-
-bool array_push(Array *arr, void *item) {
-	return array_add(arr, item);
-}
-
-void *array_pop(Array *arr) {
-	void *item = array_peek(arr);
-	if (!item)
-		return NULL;
-	arr->len--;
-	return item;
-}
-
-void *array_peek(const Array *arr) {
-	if (arr->len == 0)
-		return NULL;
-	return array_get(arr, arr->len - 1);
-}
