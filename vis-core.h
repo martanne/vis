@@ -131,12 +131,6 @@ typedef struct {
 	enum SamError error;  /* non-zero in case something went wrong */
 } Transcript;
 
-typedef struct {
-	Array prev;
-	Array next;
-	size_t max;
-} MarkList;
-
 struct File { /* shared state among windows displaying the same file */
 	Text *text;                      /* data structure holding the file content */
 	const char *name;                /* file name used when loading/saving */
@@ -161,12 +155,15 @@ struct Win {
 	bool expandtab;         /* whether typed tabs should be converted to spaces in this window*/
 	Vis *vis;               /* editor instance to which this window belongs */
 	File *file;             /* file being displayed in this window */
-	MarkList jumplist;      /* LRU jump management */
 	Array saved_selections; /* register used to store selections */
 	Mode modes[VIS_MODE_INVALID]; /* overlay mods used for per window key bindings */
 	Win *parent;            /* window which was active when showing the command prompt */
 	Mode *parent_mode;      /* mode which was active when showing the command prompt */
 	Win *prev, *next;       /* neighbouring windows */
+
+	/* Jumplist LRU */
+	size_t mark_set_lru_cursor;
+	Array  mark_set_lru[32];
 };
 
 struct Vis {
@@ -282,9 +279,6 @@ VIS_INTERNAL void register_release(Register*);
 
 VIS_INTERNAL void mark_init(Array*);
 VIS_INTERNAL void mark_release(Array*);
-
-VIS_INTERNAL void marklist_init(MarkList*, size_t max);
-VIS_INTERNAL void marklist_release(MarkList*);
 
 VIS_INTERNAL const char *register_get(Vis*, Register*, size_t *len);
 VIS_INTERNAL const char *register_slot_get(Vis*, Register*, size_t slot, size_t *len);

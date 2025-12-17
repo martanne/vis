@@ -104,113 +104,59 @@ void vis_mark_set(Win *win, enum VisMark id, Array *sel) {
 	mark_set(win, mark_from(win->vis, id), sel);
 }
 
-void marklist_init(MarkList *list, size_t max) {
-	Array mark;
-	mark_init(&mark);
-	array_init_sized(&list->prev, sizeof(Array));
-	array_reserve(&list->prev, max);
-	array_add(&list->prev, &mark);
-	array_init_sized(&list->next, sizeof(Array));
-	array_reserve(&list->next, max);
-}
-
-void marklist_release(MarkList *list) {
-	for (size_t i = 0, len = list->prev.len; i < len; i++)
-		array_release(array_get(&list->prev, i));
-	array_release(&list->prev);
-	for (size_t i = 0, len = list->next.len; i < len; i++)
-		array_release(array_get(&list->next, i));
-	array_release(&list->next);
-}
-
-static bool marklist_push(Win *win, MarkList *list, Array *sel) {
-	Array *top = array_peek(&list->prev);
-	if (top) {
+void vis_jumplist_save(Vis *vis)
+{
+	Win   *win = vis->win;
+	Array  sel = view_selections_get_all(&win->view);
+	Array *top = win->mark_set_lru + (win->mark_set_lru_cursor % LENGTH(win->mark_set_lru));
+	bool done = false;
+	if (top->len) {
 		Array top_sel = mark_get(win, top);
-		bool eq = vis_mark_equal(&top_sel, sel);
+		/* NOTE: avoid pushing duplicate sets into cache */
+		done = vis_mark_equal(&top_sel, &sel);
 		array_release(&top_sel);
-		if (eq)
-			return true;
 	}
 
-	for (size_t i = 0, len = list->next.len; i < len; i++)
-		array_release(array_get(&list->next, i));
-	array_clear(&list->next);
-	Array arr;
-	mark_init(&arr);
-	if (list->prev.len >= list->prev.count) {
-		Array *tmp = array_get(&list->prev, 0);
-		arr = *tmp;
-		array_remove(&list->prev, 0);
+	if (!done) {
+		Array *arr = win->mark_set_lru + (win->mark_set_lru_cursor++ % LENGTH(win->mark_set_lru));
+		mark_set(win, arr, &sel);
 	}
-	mark_set(win, &arr, sel);
-	return array_push(&list->prev, &arr);
-}
 
-bool vis_jumplist_save(Vis *vis) {
-	Array sel = view_selections_get_all(&vis->win->view);
-	bool ret = marklist_push(vis->win, &vis->win->jumplist, &sel);
 	array_release(&sel);
-	return ret;
 }
 
-static bool marklist_prev(Win *win, MarkList *list) {
+void vis_jumplist_prev(Vis *vis)
+{
+	Win  *win  = vis->win;
 	View *view = &win->view;
-	bool restore = false;
 	Array cur = view_selections_get_all(view);
 	bool anchored = view_selections_primary_get(view)->anchored;
-	Array *top = array_peek(&list->prev);
-	if (!top)
-		goto out;
-	Array top_sel = mark_get(win, top);
-	restore = !vis_mark_equal(&top_sel, &cur);
-	if (restore)
-		view_selections_set_all(view, &top_sel, anchored);
-	array_release(&top_sel);
-	if (restore)
-		goto out;
 
-	while (list->prev.len > 1) {
-		Array *prev = array_pop(&list->prev);
-		array_push(&list->next, prev);
-		prev = array_peek(&list->prev);
-		Array sel = mark_get(win, prev);
-		restore = sel.len > 0;
-		if (restore)
+	Array *top = win->mark_set_lru + (--win->mark_set_lru_cursor % LENGTH(win->mark_set_lru));
+	if (top->len) {
+		Array sel = mark_get(win, top);
+		if (!vis_mark_equal(top, &cur)) {
 			view_selections_set_all(view, &sel, anchored);
+		}
 		array_release(&sel);
-		if (restore)
-			goto out;
 	}
-out:
 	array_release(&cur);
-	return restore;
 }
 
-static bool marklist_next(Win *win, MarkList *list) {
+void vis_jumplist_next(Vis *vis)
+{
+	Win  *win  = vis->win;
 	View *view = &win->view;
 	bool anchored = view_selections_primary_get(view)->anchored;
-	for (;;) {
-		Array *next = array_pop(&list->next);
-		if (!next)
-			return false;
+	Array *next = win->mark_set_lru + (win->mark_set_lru_cursor++ % LENGTH(win->mark_set_lru));
+
+	if (next->len) {
 		Array sel = mark_get(win, next);
 		if (sel.len > 0) {
 			view_selections_set_all(view, &sel, anchored);
 			array_release(&sel);
-			array_push(&list->prev, next);
-			return true;
 		}
-		array_release(next);
 	}
-}
-
-bool vis_jumplist_prev(Vis *vis) {
-	return marklist_prev(vis->win, &vis->win->jumplist);
-}
-
-bool vis_jumplist_next(Vis *vis) {
-	return marklist_next(vis->win, &vis->win->jumplist);
 }
 
 enum VisMark vis_mark_from(Vis *vis, char mark) {

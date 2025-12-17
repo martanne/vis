@@ -960,17 +960,17 @@ VIS_EXPORT void vis_mark_normalize(Array *array);
  * Add selections of focused window to jump list.
  * @param vis The editor instance.
  */
-VIS_EXPORT bool vis_jumplist_save(Vis*);
+VIS_EXPORT void vis_jumplist_save(Vis*);
 /**
  * Navigate jump list backwards.
  * @param vis The editor instance.
  */
-VIS_EXPORT bool vis_jumplist_prev(Vis*);
+VIS_EXPORT void vis_jumplist_prev(Vis*);
 /**
  * Navigate jump list forwards.
  * @param vis The editor instance.
  */
-VIS_EXPORT bool vis_jumplist_next(Vis*);
+VIS_EXPORT void vis_jumplist_next(Vis*);
 /** @} */
 
 /*
