@@ -104,59 +104,39 @@ void vis_mark_set(Win *win, enum VisMark id, Array *sel) {
 	mark_set(win, mark_from(win->vis, id), sel);
 }
 
-void vis_jumplist_save(Vis *vis)
-{
-	Win   *win = vis->win;
-	Array  sel = view_selections_get_all(&win->view);
-	Array *top = win->mark_set_lru + (win->mark_set_lru_cursor % LENGTH(win->mark_set_lru));
-	bool done = false;
-	if (top->len) {
-		Array top_sel = mark_get(win, top);
-		/* NOTE: avoid pushing duplicate sets into cache */
-		done = vis_mark_equal(&top_sel, &sel);
-		array_release(&top_sel);
-	}
-
-	if (!done) {
-		Array *arr = win->mark_set_lru + (win->mark_set_lru_cursor++ % LENGTH(win->mark_set_lru));
-		mark_set(win, arr, &sel);
-	}
-
-	array_release(&sel);
-}
-
-void vis_jumplist_prev(Vis *vis)
+void vis_jumplist(Vis *vis, int advance)
 {
 	Win  *win  = vis->win;
 	View *view = &win->view;
 	Array cur = view_selections_get_all(view);
-	bool anchored = view_selections_primary_get(view)->anchored;
 
-	Array *top = win->mark_set_lru + (--win->mark_set_lru_cursor % LENGTH(win->mark_set_lru));
-	if (top->len) {
-		Array sel = mark_get(win, top);
-		if (!vis_mark_equal(top, &cur)) {
-			view_selections_set_all(view, &sel, anchored);
+	size_t cursor = win->mark_set_lru_cursor;
+	win->mark_set_lru_cursor += advance;
+	if (advance < 0)
+		cursor = win->mark_set_lru_cursor;
+	cursor %= VIS_MARK_SET_LRU_COUNT;
+
+	Array *next = win->mark_set_lru_regions + cursor;
+	bool done = false;
+	if (next->len) {
+		Array sel = mark_get(win, next);
+		done = vis_mark_equal(&sel, &cur);
+		if (advance && !done) {
+			/* NOTE: set cached selection */
+			vis_mode_switch(vis, win->mark_set_lru_modes[cursor]);
+			view_selections_set_all(view, &sel, view_selections_primary_get(view)->anchored);
 		}
 		array_release(&sel);
 	}
-	array_release(&cur);
-}
 
-void vis_jumplist_next(Vis *vis)
-{
-	Win  *win  = vis->win;
-	View *view = &win->view;
-	bool anchored = view_selections_primary_get(view)->anchored;
-	Array *next = win->mark_set_lru + (win->mark_set_lru_cursor++ % LENGTH(win->mark_set_lru));
-
-	if (next->len) {
-		Array sel = mark_get(win, next);
-		if (sel.len > 0) {
-			view_selections_set_all(view, &sel, anchored);
-			array_release(&sel);
-		}
+	if (!advance && !done) {
+		/* NOTE: save the current selection */
+		mark_set(win, next, &cur);
+		win->mark_set_lru_modes[cursor] = vis->mode->id;
+		win->mark_set_lru_cursor++;
 	}
+
+	array_release(&cur);
 }
 
 enum VisMark vis_mark_from(Vis *vis, char mark) {

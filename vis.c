@@ -204,8 +204,8 @@ static void window_free(Win *win) {
 	view_free(&win->view);
 	for (size_t i = 0; i < LENGTH(win->modes); i++)
 		map_free(win->modes[i].bindings);
-	for (int i = 0; i < LENGTH(win->mark_set_lru); i++)
-		free(win->mark_set_lru[i].items);
+	for (int i = 0; i < VIS_MARK_SET_LRU_COUNT; i++)
+		free(win->mark_set_lru_regions[i].items);
 	mark_release(&win->saved_selections);
 	free(win);
 }
@@ -385,8 +385,8 @@ Win *window_new_file(Vis *vis, File *file, enum UiOption options) {
 		return NULL;
 	}
 
-	for (int i = 0; i < LENGTH(win->mark_set_lru); i++)
-		win->mark_set_lru[i].elem_size = sizeof(SelectionRegion);
+	for (int i = 0; i < VIS_MARK_SET_LRU_COUNT; i++)
+		win->mark_set_lru_regions[i].elem_size = sizeof(SelectionRegion);
 
 	mark_init(&win->saved_selections);
 	file->refcount++;
