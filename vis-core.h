@@ -161,9 +161,17 @@ struct Win {
 	Mode *parent_mode;      /* mode which was active when showing the command prompt */
 	Win *prev, *next;       /* neighbouring windows */
 
-	/* Jumplist LRU */
+	/* NOTE: Selection Jump Cache
+	 * Anytime the selection jumps the previous set of selections gets
+	 * pushed into this cache. The user can navigate this cache to
+	 * restore old selections and they can save their own selection
+	 * sets into the cache.
+	 */
 	size_t mark_set_lru_cursor;
-	Array  mark_set_lru[32];
+	struct {
+		Array regions;
+		enum VisMode mode;
+	} mark_set_lru[32];
 };
 
 struct Vis {

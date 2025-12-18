@@ -957,20 +957,16 @@ VIS_EXPORT Array vis_mark_get(Win *win, enum VisMark id);
  */
 VIS_EXPORT void vis_mark_normalize(Array *array);
 /**
- * Add selections of focused window to jump list.
+ * Add selections of focused window to jump list. Equivalent to vis_jumplist(vis, 0).
  * @param vis The editor instance.
  */
-VIS_EXPORT void vis_jumplist_save(Vis*);
+#define vis_jumplist_save(vis) vis_jumplist((vis), 0)
 /**
- * Navigate jump list backwards.
+ * Navigate jump list by a specified amount. Wraps if advance exceeds list size.
  * @param vis The editor instance.
+ * @param advance The amount to advance the cursor by. 0 saves the current selections.
  */
-VIS_EXPORT void vis_jumplist_prev(Vis*);
-/**
- * Navigate jump list forwards.
- * @param vis The editor instance.
- */
-VIS_EXPORT void vis_jumplist_next(Vis*);
+VIS_EXPORT void vis_jumplist(Vis *, int advance);
 /** @} */
 
 /*
