@@ -1,5 +1,4 @@
 #include "text.h"
-#include "text-internal.h"
 #include "text-util.h"
 #include "util.h"
 
@@ -14,7 +13,8 @@
 #define BLOCK_MMAP_SIZE (1 << 26)
 
 /* allocate a new block of MAX(size, BLOCK_SIZE) bytes */
-Block *block_alloc(size_t size) {
+static Block *block_alloc(size_t size)
+{
 	Block *blk = calloc(1, sizeof *blk);
 	if (!blk)
 		return NULL;
@@ -29,7 +29,19 @@ Block *block_alloc(size_t size) {
 	return blk;
 }
 
-Block *block_read(size_t size, int fd) {
+static void block_free(Block *blk)
+{
+	if (!blk)
+		return;
+	if (blk->type == BLOCK_TYPE_MALLOC)
+		free(blk->data);
+	else if ((blk->type == BLOCK_TYPE_MMAP_ORIG || blk->type == BLOCK_TYPE_MMAP) && blk->data)
+		munmap(blk->data, blk->size);
+	free(blk);
+}
+
+static Block *block_read(size_t size, int fd)
+{
 	Block *blk = block_alloc(size);
 	if (!blk)
 		return NULL;
@@ -51,7 +63,8 @@ Block *block_read(size_t size, int fd) {
 	return blk;
 }
 
-Block *block_mmap(size_t size, int fd, off_t offset) {
+static Block *block_mmap(size_t size, int fd, off_t offset)
+{
 	Block *blk = calloc(1, sizeof *blk);
 	if (!blk)
 		return NULL;
@@ -68,7 +81,8 @@ Block *block_mmap(size_t size, int fd, off_t offset) {
 	return blk;
 }
 
-Block *block_load(int dirfd, const char *filename, enum TextLoadMethod method, struct stat *info) {
+static Block *block_load(int dirfd, const char *filename, enum TextLoadMethod method, struct stat *info)
+{
 	Block *block = NULL;
 	int fd = openat(dirfd, filename, O_RDONLY);
 	if (fd == -1)
@@ -94,23 +108,15 @@ out:
 	return block;
 }
 
-void block_free(Block *blk) {
-	if (!blk)
-		return;
-	if (blk->type == BLOCK_TYPE_MALLOC)
-		free(blk->data);
-	else if ((blk->type == BLOCK_TYPE_MMAP_ORIG || blk->type == BLOCK_TYPE_MMAP) && blk->data)
-		munmap(blk->data, blk->size);
-	free(blk);
-}
-
 /* check whether block has enough free space to store len bytes */
-bool block_capacity(Block *blk, size_t len) {
+static bool block_capacity(Block *blk, size_t len)
+{
 	return blk->size - blk->len >= len;
 }
 
 /* append data to block, assumes there is enough space available */
-const char *block_append(Block *blk, const char *data, size_t len) {
+static const char *block_append(Block *blk, const char *data, size_t len)
+{
 	char *dest = memcpy(blk->data + blk->len, data, len);
 	blk->len += len;
 	return dest;
@@ -118,7 +124,8 @@ const char *block_append(Block *blk, const char *data, size_t len) {
 
 /* insert data into block at an arbitrary position, this should only be used with
  * data of the most recently created piece. */
-bool block_insert(Block *blk, size_t pos, const char *data, size_t len) {
+static bool block_insert(Block *blk, size_t pos, const char *data, size_t len)
+{
 	if (pos > blk->len || !block_capacity(blk, len))
 		return false;
 	if (blk->len == pos)
@@ -132,7 +139,8 @@ bool block_insert(Block *blk, size_t pos, const char *data, size_t len) {
 
 /* delete data from a block at an arbitrary position, this should only be used with
  * data of the most recently created piece. */
-bool block_delete(Block *blk, size_t pos, size_t len) {
+static bool block_delete(Block *blk, size_t pos, size_t len)
+{
 	size_t end;
 	if (!addu(pos, len, &end) || end > blk->len)
 		return false;
@@ -144,6 +152,32 @@ bool block_delete(Block *blk, size_t pos, size_t len) {
 	memmove(delete, delete + len, blk->len - pos - len);
 	blk->len -= len;
 	return true;
+}
+
+static Block *text_block_mmaped(Text *txt)
+{
+	Block *block = array_get_ptr(&txt->blocks, 0);
+	if (block && block->type == BLOCK_TYPE_MMAP_ORIG && block->size)
+		return block;
+	return NULL;
+}
+
+/* preserve the current text content such that it can be restored by
+ * means of undo/redo operations */
+void text_snapshot(Text *txt)
+{
+	if (txt->current_revision)
+		txt->last_revision = txt->current_revision;
+	txt->current_revision = NULL;
+	txt->cache = NULL;
+}
+
+static void text_saved(Text *txt, struct stat *meta)
+{
+	if (meta)
+		txt->info = *meta;
+	txt->saved_revision = txt->history;
+	text_snapshot(txt);
 }
 
 Text *text_load(const char *filename) {

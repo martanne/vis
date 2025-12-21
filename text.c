@@ -3,19 +3,6 @@
 #include "array.h"
 
 #include "text.h"
-#include "text-internal.h"
-
-#include "text-common.c"
-#include "text-io.c"
-#include "text-iterator.c"
-#include "text-motions.c"
-#include "text-objects.c"
-#if CONFIG_TRE
-  #include "text-regex-tre.c"
-#else
-  #include "text-regex.c"
-#endif
-#include "text-util.c"
 
 /* A piece holds a reference (but doesn't itself store) a certain amount of data.
  * All active pieces chained together form the whole content of the document.
@@ -78,6 +65,20 @@ typedef struct {
 	size_t lineno;          /* line number in file i.e. number of '\n' in [0, pos) */
 } LineCache;
 
+/* Block holding the file content, either readonly mmap(2)-ed from the original
+ * file or heap allocated to store the modifications.
+ */
+typedef struct {
+	size_t size;               /* maximal capacity */
+	size_t len;                /* current used length / insertion position */
+	char *data;                /* actual data */
+	enum {                     /* type of allocation */
+		BLOCK_TYPE_MMAP_ORIG, /* mmap(2)-ed from an external file */
+		BLOCK_TYPE_MMAP,      /* mmap(2)-ed from a temporary file only known to this process */
+		BLOCK_TYPE_MALLOC,    /* heap allocated block using malloc(3) */
+	} type;
+} Block;
+
 /* The main struct holding all information of a given file */
 struct Text {
 	Array blocks;           /* blocks which hold text content */
@@ -92,6 +93,18 @@ struct Text {
 	struct stat info;       /* stat as probed at load time */
 	LineCache lines;        /* mapping between absolute pos in bytes and logical line breaks */
 };
+
+#include "text-common.c"
+#include "text-io.c"
+#include "text-iterator.c"
+#include "text-motions.c"
+#include "text-objects.c"
+#if CONFIG_TRE
+  #include "text-regex-tre.c"
+#else
+  #include "text-regex.c"
+#endif
+#include "text-util.c"
 
 /* block management */
 static const char *block_store(Text*, const char *data, size_t len);
@@ -626,20 +639,6 @@ struct stat text_stat(const Text *txt) {
 	return txt->info;
 }
 
-void text_saved(Text *txt, struct stat *meta) {
-	if (meta)
-		txt->info = *meta;
-	txt->saved_revision = txt->history;
-	text_snapshot(txt);
-}
-
-Block *text_block_mmaped(Text *txt) {
-	Block *block = array_get_ptr(&txt->blocks, 0);
-	if (block && block->type == BLOCK_TYPE_MMAP_ORIG && block->size)
-		return block;
-	return NULL;
-}
-
 /* A delete operation can either start/stop midway through a piece or at
  * a boundary. In the former case a new piece is created to represent the
  * remaining text before/after the modification point.
@@ -742,16 +741,6 @@ bool text_delete_range(Text *txt, const Filerange *r) {
 		return false;
 	return text_delete(txt, r->start, text_range_size(r));
 }
-
-/* preserve the current text content such that it can be restored by
- * means of undo/redo operations */
-void text_snapshot(Text *txt) {
-	if (txt->current_revision)
-		txt->last_revision = txt->current_revision;
-	txt->current_revision = NULL;
-	txt->cache = NULL;
-}
-
 
 void text_free(Text *txt) {
 	if (!txt)
