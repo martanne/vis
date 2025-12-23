@@ -224,6 +224,9 @@ vis.ftdetect.filetypes = {
 	io_lang = {
 		ext = { "%.io$" },
 	},
+	janet = {
+		ext = { "%.janet$" },
+	},
 	java = {
 		ext = { "%.bsh$", "%.java$" },
 	},
@@ -461,6 +464,9 @@ vis.ftdetect.filetypes = {
 		ext = { "%.txt$" },
 		-- Do *not* list mime "text/plain" here, it is covered below,
 		-- see 'try text lexer as a last resort'
+	},
+	todotxt = {
+		ext = { "^todo.txt$", "^Todo.txt$", "^done.txt$", "^Done.txt$" },
 	},
 	toml = {
 		ext = { "%.toml$" },
