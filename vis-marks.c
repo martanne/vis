@@ -114,16 +114,16 @@ void vis_jumplist(Vis *vis, int advance)
 	win->mark_set_lru_cursor += advance;
 	if (advance < 0)
 		cursor = win->mark_set_lru_cursor;
-	cursor %= LENGTH(win->mark_set_lru);
+	cursor %= VIS_MARK_SET_LRU_COUNT;
 
-	Array *next = &win->mark_set_lru[cursor].regions;
+	Array *next = win->mark_set_lru_regions + cursor;
 	bool done = false;
 	if (next->len) {
 		Array sel = mark_get(win, next);
 		done = vis_mark_equal(&sel, &cur);
 		if (advance && !done) {
 			/* NOTE: set cached selection */
-			vis_mode_switch(vis, win->mark_set_lru[cursor].mode);
+			vis_mode_switch(vis, win->mark_set_lru_modes[cursor]);
 			view_selections_set_all(view, &sel, view_selections_primary_get(view)->anchored);
 		}
 		array_release(&sel);
@@ -132,7 +132,7 @@ void vis_jumplist(Vis *vis, int advance)
 	if (!advance && !done) {
 		/* NOTE: save the current selection */
 		mark_set(win, next, &cur);
-		win->mark_set_lru[cursor].mode = vis->mode->id;
+		win->mark_set_lru_modes[cursor] = vis->mode->id;
 		win->mark_set_lru_cursor++;
 	}
 

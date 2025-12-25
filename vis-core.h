@@ -166,12 +166,13 @@ struct Win {
 	 * pushed into this cache. The user can navigate this cache to
 	 * restore old selections and they can save their own selection
 	 * sets into the cache.
+	 *
+	 * IMPORTANT: cursor is not kept in bounds. it is always used modulo VIS_MARK_SET_LRU_COUNT
 	 */
-	size_t mark_set_lru_cursor;
-	struct {
-		Array regions;
-		enum VisMode mode;
-	} mark_set_lru[32];
+	enum {VIS_MARK_SET_LRU_COUNT = 32};
+	size_t       mark_set_lru_cursor;
+	Array        mark_set_lru_regions[VIS_MARK_SET_LRU_COUNT];
+	enum VisMode mark_set_lru_modes[VIS_MARK_SET_LRU_COUNT];
 };
 
 struct Vis {
