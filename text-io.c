@@ -49,7 +49,7 @@ static Block *block_read(size_t size, int fd)
 	size_t rem = size;
 	while (rem > 0) {
 		ssize_t len = read(fd, data, rem);
-		if (len == -1) {
+		if (len == -1 && errno != EINTR) {
 			block_free(blk);
 			return NULL;
 		} else if (len == 0) {
@@ -156,10 +156,10 @@ static bool block_delete(Block *blk, size_t pos, size_t len)
 
 static Block *text_block_mmaped(Text *txt)
 {
-	Block *block = array_get_ptr(&txt->blocks, 0);
-	if (block && block->type == BLOCK_TYPE_MMAP_ORIG && block->size)
-		return block;
-	return NULL;
+	Block *result = 0;
+	if (txt->count > 0 && txt->data[0]->type == BLOCK_TYPE_MMAP_ORIG && txt->data[0]->size)
+		result = txt->data[0];
+	return result;
 }
 
 /* preserve the current text content such that it can be restored by
@@ -180,12 +180,14 @@ static void text_saved(Text *txt, struct stat *meta)
 	text_snapshot(txt);
 }
 
-Text *text_load(const char *filename) {
-	return text_load_method(filename, TEXT_LOAD_AUTO);
+Text *text_load(Vis *vis, const char *filename)
+{
+	return text_load_method(vis, filename, TEXT_LOAD_AUTO);
 }
 
-Text *text_load_method(const char *filename, enum TextLoadMethod method) {
-	return text_loadat_method(AT_FDCWD, filename, method);
+Text *text_load_method(Vis *vis, const char *filename, enum TextLoadMethod method)
+{
+	return text_loadat_method(vis, AT_FDCWD, filename, method);
 }
 
 ssize_t write_all(int fd, const char *buf, size_t count) {

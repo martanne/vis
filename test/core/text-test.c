@@ -2,16 +2,24 @@
 
 #include "tap.h"
 
+typedef struct Vis {
+	jmp_buf oom_jmp_buf;
+} Vis;
+
+#include "util.c"
+
 #include "array.c"
 #include "buffer.c"
 #include "text.c"
+
+static Vis vis[1];
 
 #ifndef BUFSIZ
 #define BUFSIZ 1024
 #endif
 
 static bool insert(Text *txt, size_t pos, const char *data) {
-	return text_insert(txt, pos, data, strlen(data));
+	return text_insert(vis, txt, pos, data, strlen(data));
 }
 
 static bool isempty(Text *txt) {
@@ -103,6 +111,9 @@ int main(int argc, char *argv[]) {
 
 	plan_no_plan();
 
+	if (setjmp(vis->oom_jmp_buf))
+		return 1;
+
 	skip_if(TIS_INTERPRETER, 2, "I/O related") {
 
 		const char *filename = "data";
@@ -115,23 +126,23 @@ int main(int argc, char *argv[]) {
 		};
 
 		for (size_t i = 0; i < LENGTH(load_method); i++) {
-			txt = text_load_method("/", load_method[i]);
+			txt = text_load_method(vis, "/", load_method[i]);
 			ok(txt == NULL && errno == EISDIR, "Opening directory (method %zu)", i);
 
 			if (access("/etc/shadow", F_OK) == 0 && access("/etc/shadow", R_OK) != 0) {
-				txt = text_load_method("/etc/shadow", load_method[i]);
+				txt = text_load_method(vis, "/etc/shadow", load_method[i]);
 				ok(txt == NULL && errno == EACCES, "Opening file without sufficient permissions (method %zu)", i);
 			}
 		}
 
 		char buf[BUFSIZ] = "Hello World!\n";
-		txt = text_load(NULL);
+		txt = text_load(vis, 0);
 		ok(txt && insert(txt, 0, buf) && compare(txt, buf), "Inserting into empty text");
 		ok(txt && text_save_method(txt, filename, TEXT_SAVE_AUTO), "Text save");
 		text_free(txt);
 
 		for (size_t i = 0; i < LENGTH(load_method); i++) {
-			txt = text_load_method(filename, load_method[i]);
+			txt = text_load_method(vis, filename, load_method[i]);
 			ok(txt && compare(txt, buf), "Load text (method %zu)", i);
 			text_free(txt);
 		}
@@ -149,14 +160,14 @@ int main(int argc, char *argv[]) {
 					continue;
 #endif
 				snprintf(buf, sizeof buf, "Hello World: (%zu, %zu)\n", l, s);
-				txt = text_load_method(filename, load_method[l]);
+				txt = text_load_method(vis, filename, load_method[l]);
 				ok(txt, "Load (%zu, %zu)", l, s);
 				ok(txt && text_delete(txt, 0, text_size(txt)) && isempty(txt), "Empty (%zu, %zu)", l, s);
 				ok(txt && insert(txt, 0, buf) && compare(txt, buf), "Preparing to save (%zu, %zu)", l, s);
 				ok(txt && text_save_method(txt, filename, save_method[s]), "Text save (%zu, %zu)", l, s);
 				text_free(txt);
 
-				txt = text_load(filename);
+				txt = text_load(vis, filename);
 				ok(txt && compare(txt, buf), "Verify save (%zu, %zu)", l, s);
 				text_free(txt);
 			}
@@ -171,12 +182,12 @@ int main(int argc, char *argv[]) {
 			ok(creation[i](filename, linkname) == 0, "%s creation", names[i]);
 
 			snprintf(buf, sizeof buf, "%s\n", names[i]);
-			txt = text_load(NULL);
+			txt = text_load(vis, 0);
 			ok(txt && insert(txt, 0, buf) && compare(txt, buf), "Preparing %s content", names[i]);
 			ok(txt && text_save_method(txt, linkname, TEXT_SAVE_AUTO), "Text save %s", names[i]);
 			text_free(txt);
 
-			txt = text_load(linkname);
+			txt = text_load(vis, linkname);
 			ok(txt && compare(txt, buf), "Load %s", names[i]);
 
 			ok(txt && !text_save_method(txt, linkname, TEXT_SAVE_ATOMIC), "Text save %s atomic", names[i]);
@@ -184,7 +195,7 @@ int main(int argc, char *argv[]) {
 		}
 	}
 
-	txt = text_load(NULL);
+	txt = text_load(vis, 0);
 	ok(txt != NULL && isempty(txt), "Opening empty file");
 
 	Iterator it = text_iterator_get(txt, 0);

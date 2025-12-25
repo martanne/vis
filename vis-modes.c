@@ -2,18 +2,18 @@
 #include "text-motions.h"
 #include "util.h"
 
-static void keyaction_free(KeyAction *action) {
-	if (!action)
-		return;
+static void keyaction_free(KeyAction *action)
+{
 	free((char*)action->name);
 	free(VIS_HELP_USE((char*)action->help));
 	free(action);
 }
 
-KeyAction *vis_action_new(Vis *vis, const char *name, const char *help, KeyActionFunction *func, Arg arg) {
+KeyAction *vis_action_new(Vis *vis, const char *name, const char *help, KeyActionFunction *func, Arg arg)
+{
 	KeyAction *action = calloc(1, sizeof *action);
 	if (!action)
-		return NULL;
+		return 0;
 	if (name && !(action->name = strdup(name)))
 		goto err;
 #if CONFIG_HELP
@@ -22,48 +22,49 @@ KeyAction *vis_action_new(Vis *vis, const char *name, const char *help, KeyActio
 #endif
 	action->func = func;
 	action->arg = arg;
-	if (!array_add_ptr(&vis->actions_user, action))
-		goto err;
+	*da_push(vis, &vis->actions_user) = action;
 	return action;
 err:
 	keyaction_free(action);
-	return NULL;
+	return 0;
 }
 
-void vis_action_free(Vis *vis, KeyAction *action) {
-	if (!action)
-		return;
-	size_t len = vis->actions_user.len;
-	for (size_t i = 0; i < len; i++) {
-		if (action == array_get_ptr(&vis->actions_user, i)) {
-			keyaction_free(action);
-			array_remove(&vis->actions_user, i);
-			return;
+void vis_action_free(Vis *vis, KeyAction *action)
+{
+	if (action) {
+		for (VisDACount i = 0; i < vis->actions_user.count; i++) {
+			if (action == vis->actions_user.data[i]) {
+				keyaction_free(action);
+				vis->actions_user.data[i] = 0;
+				da_unordered_remove(&vis->actions_user, i);
+				break;
+			}
 		}
 	}
 }
 
-KeyBinding *vis_binding_new(Vis *vis) {
+KeyBinding *vis_binding_new(Vis *vis)
+{
 	KeyBinding *binding = calloc(1, sizeof *binding);
-	if (binding && array_add_ptr(&vis->bindings, binding))
-		return binding;
-	free(binding);
-	return NULL;
+	if (binding)
+		*da_push(vis, &vis->bindings) = binding;
+	return binding;
 }
 
-void vis_binding_free(Vis *vis, KeyBinding *binding) {
-	if (!binding)
-		return;
-	size_t len = vis->bindings.len;
-	for (size_t i = 0; i < len; i++) {
-		if (binding == array_get_ptr(&vis->bindings, i)) {
-			if (binding->alias)
-				free((char*)binding->alias);
-			if (binding->action && !binding->action->name)
-				vis_action_free(vis, (KeyAction*)binding->action);
-			free(binding);
-			array_remove(&vis->bindings, i);
-			return;
+void vis_binding_free(Vis *vis, KeyBinding *binding)
+{
+	if (binding) {
+		for (VisDACount i = 0; i < vis->bindings.count; i++) {
+			if (binding == vis->bindings.data[i]) {
+				if (binding->alias)
+					free((char*)binding->alias);
+				if (binding->action && !binding->action->name)
+					vis_action_free(vis, (KeyAction*)binding->action);
+				free(binding);
+				vis->bindings.data[i] = 0;
+				da_unordered_remove(&vis->bindings, i);
+				break;
+			}
 		}
 	}
 }

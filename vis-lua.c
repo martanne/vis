@@ -360,6 +360,13 @@ static void *obj_lightref_check(lua_State *L, int idx, const char *type) {
 	return *addr;
 }
 
+static Vis *lua_get_vis(lua_State *L)
+{
+	lua_getglobal(L, "vis");
+	Vis *result = luaL_checkudata(L, -1, "vis");
+	return result;
+}
+
 static int index_common(lua_State *L) {
 	lua_getmetatable(L, 1);
 	lua_pushvalue(L, 2);
@@ -893,7 +900,7 @@ static size_t motion_lua(Vis *vis, Win *win, void *data, size_t pos) {
  *
  * @function motion_register
  * @tparam function motion the Lua function implementing the motion
- * @treturn int the associated motion id, or `-1` on failure
+ * @treturn int the associated motion id
  * @see motion, motion_new
  * @local
  * @usage
@@ -947,7 +954,7 @@ static size_t operator_lua(Vis *vis, Text *text, OperatorContext *c) {
  *
  * @function operator_register
  * @tparam function operator the Lua function implementing the operator
- * @treturn int the associated operator id, or `-1` on failure
+ * @treturn int the associated operator id
  * @see operator, operator_new
  * @local
  * @usage
@@ -1721,14 +1728,14 @@ static int registers_index(lua_State *L) {
 	enum VisRegister reg = vis_register_from(vis, symbol[0]);
 	if (reg >= VIS_REG_INVALID)
 		return 1;
-	Array data = vis_register_get(vis, reg);
-	for (size_t i = 0, len = data.len; i < len; i++) {
-		TextString *string = array_get(&data, i);
+	TextStringList strings = vis_register_get(vis, reg);
+	for (VisDACount i = 0; i < strings.count; i++) {
+		TextString string = strings.data[i];
 		lua_pushinteger(L, i+1);
-		lua_pushlstring(L, string->data, string->len);
+		lua_pushlstring(L, string.data, string.len);
 		lua_settable(L, -3);
 	}
-	array_release(&data);
+	da_release(&strings);
 	return 1;
 }
 
@@ -1738,21 +1745,20 @@ static int registers_newindex(lua_State *L) {
 	if (strlen(symbol) != 1)
 		return 0;
 	enum VisRegister reg = vis_register_from(vis, symbol[0]);
-	Array data;
-	array_init_sized(&data, sizeof(TextString));
 
+	TextStringList strings = {0};
 	if (lua_istable(L, 3)) {
 		lua_pushnil(L);
 		while (lua_next(L, 3)) {
 			TextString string;
 			string.data = luaL_checklstring(L, -1, &string.len);
-			array_add(&data, &string);
+			*da_push(vis, &strings) = string;
 			lua_pop(L, 1);
 		}
 	}
 
-	vis_register_set(vis, reg, &data);
-	array_release(&data);
+	vis_register_set(vis, reg, strings);
+	da_release(&strings);
 	return 0;
 }
 
@@ -2592,7 +2598,9 @@ static int file_index(lua_State *L) {
 	return index_common(L);
 }
 
-static int file_newindex(lua_State *L) {
+static int file_newindex(lua_State *L)
+{
+	Vis  *vis  = lua_get_vis(L);
 	File *file = obj_ref_check(L, 1, VIS_LUA_TYPE_FILE);
 
 	if (lua_isstring(L, 2)) {
@@ -2601,7 +2609,7 @@ static int file_newindex(lua_State *L) {
 		if (strcmp(key, "modified") == 0) {
 			bool modified = lua_isboolean(L, 3) && lua_toboolean(L, 3);
 			if (modified) {
-				text_insert(file->text, 0, " ", 1);
+				text_insert(vis, file->text, 0, " ", 1);
 				text_delete(file->text, 0, 1);
 			} else {
 				text_mark_current_revision(file->text);
@@ -2633,13 +2641,15 @@ static int file_newindex(lua_State *L) {
  * @tparam string data the data to insert
  * @treturn bool whether the file content was successfully changed
  */
-static int file_insert(lua_State *L) {
+static int file_insert(lua_State *L)
+{
+	Vis  *vis  = lua_get_vis(L);
 	File *file = obj_ref_check(L, 1, VIS_LUA_TYPE_FILE);
 	size_t pos = checkpos(L, 2);
 	size_t len;
 	luaL_checkstring(L, 3);
 	const char *data = lua_tolstring(L, 3, &len);
-	lua_pushboolean(L, text_insert(file->text, pos, data, len));
+	lua_pushboolean(L, text_insert(vis, file->text, pos, data, len));
 	return 1;
 }
 
@@ -2846,23 +2856,25 @@ err:
 	return 1;
 }
 
-static int file_lines_newindex(lua_State *L) {
+static int file_lines_newindex(lua_State *L)
+{
+	Vis  *vis = lua_get_vis(L);
 	Text *txt = obj_ref_check(L, 1, VIS_LUA_TYPE_TEXT);
 	size_t line = luaL_checkinteger(L, 2);
 	size_t size;
 	const char *data = luaL_checklstring(L, 3, &size);
 	if (line == 0) {
-		text_insert(txt, 0, data, size);
-		text_insert(txt, size, "\n", 1);
+		text_insert(vis, txt, 0, data, size);
+		text_insert(vis, txt, size, "\n", 1);
 		return 0;
 	}
 	size_t start = text_pos_by_lineno(txt, line);
 	size_t end = text_line_end(txt, start);
 	if (start != EPOS && end != EPOS) {
 		text_delete(txt, start, end - start);
-		text_insert(txt, start, data, size);
+		text_insert(vis, txt, start, data, size);
 		if (text_size(txt) == start + size)
-			text_insert(txt, text_size(txt), "\n", 1);
+			text_insert(vis, txt, text_size(txt), "\n", 1);
 	}
 	return 0;
 }
@@ -2900,14 +2912,13 @@ static int window_marks_index(lua_State *L) {
 	if (mark == VIS_MARK_INVALID)
 		return 1;
 
-	Array arr = vis_mark_get(win, mark);
-	for (size_t i = 0, len = arr.len; i < len; i++) {
-		Filerange *range = array_get(&arr, i);
+	FilerangeList ranges = vis_mark_get(vis, win, mark);
+	for (VisDACount i = 0; i < ranges.count; i++) {
 		lua_pushinteger(L, i+1);
-		pushrange(L, range);
+		pushrange(L, ranges.data + i);
 		lua_settable(L, -3);
 	}
-	array_release(&arr);
+	da_release(&ranges);
 	return 1;
 }
 
@@ -2923,21 +2934,20 @@ static int window_marks_newindex(lua_State *L) {
 	if (mark == VIS_MARK_INVALID)
 		return 0;
 
-	Array ranges;
-	array_init_sized(&ranges, sizeof(Filerange));
+	FilerangeList ranges = {0};
 
 	if (lua_istable(L, 3)) {
 		lua_pushnil(L);
 		while (lua_next(L, 3)) {
 			Filerange range = getrange(L, -1);
 			if (text_range_valid(&range))
-				array_add(&ranges, &range);
+				*da_push(vis, &ranges) = range;
 			lua_pop(L, 1);
 		}
 	}
 
-	vis_mark_set(win, mark, &ranges);
-	array_release(&ranges);
+	vis_mark_set(vis, win, mark, ranges);
+	da_release(&ranges);
 	return 0;
 }
 

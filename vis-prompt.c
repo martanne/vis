@@ -26,7 +26,7 @@ static void prompt_hide(Win *win) {
 	/* make sure that file is new line terminated */
 	char lastchar = '\0';
 	if (size >= 1 && text_byte_get(txt, size-1, &lastchar) && lastchar != '\n')
-		text_insert(txt, size, "\n", 1);
+		text_insert(win->vis, txt, size, "\n", 1);
 	/* remove empty entries */
 	Filerange line_range = text_object_line(txt, text_size(txt)-1);
 	char *line = text_bytes_alloc0(txt, line_range.start, text_range_size(&line_range));
@@ -100,7 +100,7 @@ static const char *prompt_enter(Vis *vis, const char *keys, const Arg *arg) {
 		prompt_hide(prompt);
 		if (!lastline) {
 			text_delete(txt, range.start, text_range_size(&range));
-			text_appendf(txt, "%s\n", cmd);
+			text_appendf(vis, txt, "%s\n", cmd);
 		}
 	} else {
 		vis->win = prompt;
@@ -162,7 +162,7 @@ void vis_prompt_show(Vis *vis, const char *title) {
 	if (!prompt)
 		return;
 	Text *txt = prompt->file->text;
-	text_appendf(txt, "%s\n", title);
+	text_appendf(vis, txt, "%s\n", title);
 	Selection *sel = view_selections_primary_get(&prompt->view);
 	view_cursors_scroll_to(sel, text_size(txt)-1);
 	prompt->parent = active;
@@ -195,7 +195,7 @@ void vis_message_show(Vis *vis, const char *msg) {
 		return;
 	Text *txt = win->file->text;
 	size_t pos = text_size(txt);
-	text_appendf(txt, "%s\n", msg);
+	text_appendf(vis, txt, "%s\n", msg);
 	text_mark_current_revision(txt);
 	view_cursors_to(win->view.selection, pos);
 	vis_window_focus(win);

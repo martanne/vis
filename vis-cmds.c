@@ -650,37 +650,52 @@ static int space_replace(char *dest, const char *src, size_t dlen) {
 	return invisiblebytes;
 }
 
-static bool print_keylayout(const char *key, void *value, void *data) {
+static bool print_keylayout(const char *key, void *value, void *data)
+{
+	Vis  *vis = ((void **)data)[0];
+	Text *txt = ((void **)data)[1];
 	char buf[64];
 	int invisiblebytes = space_replace(buf, key, sizeof(buf));
-	return text_appendf(data, "  %-*s\t%s\n", 18+invisiblebytes, buf, (char*)value);
+	return text_appendf(vis, txt, "  %-*s\t%s\n", 18+invisiblebytes, buf, (char*)value);
 }
 
-static bool print_keybinding(const char *key, void *value, void *data) {
+static bool print_keybinding(const char *key, void *value, void *data)
+{
 	KeyBinding *binding = value;
 	const char *desc = binding->alias;
 	if (!desc && binding->action)
 		desc = VIS_HELP_USE(binding->action->help);
+
+	Vis  *vis = ((void **)data)[0];
+	Text *txt = ((void **)data)[1];
 	char buf[64];
 	int invisiblebytes = space_replace(buf, key, sizeof(buf));
-	return text_appendf(data, "  %-*s\t%s\n", 18+invisiblebytes, buf, desc ? desc : "");
+	return text_appendf(vis, txt, "  %-*s\t%s\n", 18+invisiblebytes, buf, desc ? desc : "");
 }
 
-static void print_mode(Mode *mode, Text *txt) {
+static void print_mode(Vis *vis, Text *txt, Mode *mode)
+{
 	if (!map_empty(mode->bindings))
-		text_appendf(txt, "\n %s\n\n", mode->name);
-	map_iterate(mode->bindings, print_keybinding, txt);
+		text_appendf(vis, txt, "\n %s\n\n", mode->name);
+	void *data[2] = {vis, txt};
+	map_iterate(mode->bindings, print_keybinding, data);
 }
 
-static bool print_action(const char *key, void *value, void *data) {
+static bool print_action(const char *key, void *value, void *data)
+{
 	const char *help = VIS_HELP_USE(((KeyAction*)value)->help);
-	return text_appendf(data, "  %-30s\t%s\n", key, help ? help : "");
+	Vis  *vis = ((void **)data)[0];
+	Text *txt = ((void **)data)[1];
+	return text_appendf(vis, txt, "  %-30s\t%s\n", key, help ? help : "");
 }
 
-static bool print_cmd(const char *key, void *value, void *data) {
+static bool print_cmd(const char *key, void *value, void *data)
+{
 	CommandDef *cmd = value;
 	const char *help = VIS_HELP_USE(cmd->help);
 	char usage[256];
+	Vis  *vis = ((void **)data)[0];
+	Text *txt = ((void **)data)[1];
 	snprintf(usage, sizeof usage, "%s%s%s%s%s%s%s",
 	         cmd->name,
 	         (cmd->flags & CMD_FORCE) ? "[!]" : "",
@@ -689,7 +704,7 @@ static bool print_cmd(const char *key, void *value, void *data) {
 	         (cmd->flags & CMD_CMD) ? " command" : "",
 	         (cmd->flags & CMD_SHELL) ? (!strcmp(cmd->name, "s") ? "/regexp/text/" : " shell-command") : "",
 	         (cmd->flags & CMD_ARGV) ? " [args...]" : "");
-	return text_appendf(data, "  %-30s %s\n", usage, help ? help : "");
+	return text_appendf(vis, txt, "  %-30s %s\n", usage, help ? help : "");
 }
 
 static bool print_cmd_name(const char *key, void *value, void *data) {
@@ -702,7 +717,8 @@ void vis_print_cmds(Vis *vis, Buffer *buf, const char *prefix) {
 	map_iterate(map_prefix(vis->cmds, prefix), print_cmd_name, buf);
 }
 
-static bool print_option(const char *key, void *value, void *txt) {
+static bool print_option(const char *key, void *value, void *data)
+{
 	char desc[256];
 	const OptionDef *opt = value;
 	const char *help = VIS_HELP_USE(opt->help);
@@ -714,10 +730,13 @@ static bool print_option(const char *key, void *value, void *txt) {
 	         opt->names[1] ? opt->names[1] : "",
 	         opt->flags & VIS_OPTION_TYPE_BOOL ? " on|off" : "",
 	         opt->flags & VIS_OPTION_TYPE_NUMBER ? " nn" : "");
-	return text_appendf(txt, "  %-30s %s\n", desc, help ? help : "");
+	Vis  *vis = ((void **)data)[0];
+	Text *txt = ((void **)data)[1];
+	return text_appendf(vis, txt, "  %-30s %s\n", desc, help ? help : "");
 }
 
-static void print_symbolic_keys(Vis *vis, Text *txt) {
+static void print_symbolic_keys(Vis *vis, Text *txt)
+{
 	static const int keys[] = {
 		TERMKEY_SYM_BACKSPACE,
 		TERMKEY_SYM_TAB,
@@ -781,9 +800,9 @@ static void print_symbolic_keys(Vis *vis, Text *txt) {
 	};
 
 	TermKey *termkey = vis->ui.termkey;
-	text_appendf(txt, "  ␣ (a literal \" \" space symbol must be used to refer to <Space>)\n");
+	text_appendf(vis, txt, "  ␣ (a literal \" \" space symbol must be used to refer to <Space>)\n");
 	for (size_t i = 0; i < LENGTH(keys); i++) {
-		text_appendf(txt, "  <%s>\n", termkey_get_keyname(termkey, keys[i]));
+		text_appendf(vis, txt, "  <%s>\n", termkey_get_keyname(termkey, keys[i]));
 	}
 }
 
@@ -792,51 +811,52 @@ static bool cmd_help(Vis *vis, Win *win, Command *cmd, const char *argv[], Selec
 		return false;
 
 	Text *txt = vis->win->file->text;
+	void *map_data[2] = {vis, txt};
 
-	text_appendf(txt, "vis %s (PID: %ld)\n\n", VERSION, (long)getpid());
+	text_appendf(vis, txt, "vis %s (PID: %ld)\n\n", VERSION, (long)getpid());
 
-	text_appendf(txt, " Modes\n\n");
+	text_appendf(vis, txt, " Modes\n\n");
 	for (int i = 0; i < LENGTH(vis_modes); i++) {
 		Mode *mode = &vis_modes[i];
 		if (mode->help)
-			text_appendf(txt, "  %-18s\t%s\n", mode->name, mode->help);
+			text_appendf(vis, txt, "  %-18s\t%s\n", mode->name, mode->help);
 	}
 
 	if (!map_empty(vis->keymap)) {
-		text_appendf(txt, "\n Layout specific mappings (affects all modes except INSERT/REPLACE)\n\n");
-		map_iterate(vis->keymap, print_keylayout, txt);
+		text_appendf(vis, txt, "\n Layout specific mappings (affects all modes except INSERT/REPLACE)\n\n");
+		map_iterate(vis->keymap, print_keylayout, map_data);
 	}
 
-	print_mode(&vis_modes[VIS_MODE_NORMAL], txt);
-	print_mode(&vis_modes[VIS_MODE_OPERATOR_PENDING], txt);
-	print_mode(&vis_modes[VIS_MODE_VISUAL], txt);
-	print_mode(&vis_modes[VIS_MODE_INSERT], txt);
+	print_mode(vis, txt, &vis_modes[VIS_MODE_NORMAL]);
+	print_mode(vis, txt, &vis_modes[VIS_MODE_OPERATOR_PENDING]);
+	print_mode(vis, txt, &vis_modes[VIS_MODE_VISUAL]);
+	print_mode(vis, txt, &vis_modes[VIS_MODE_INSERT]);
 
-	text_appendf(txt, "\n :-Commands\n\n");
-	map_iterate(vis->cmds, print_cmd, txt);
+	text_appendf(vis, txt, "\n :-Commands\n\n");
+	map_iterate(vis->cmds, print_cmd, map_data);
 
-	text_appendf(txt, "\n Marks\n\n");
-	text_appendf(txt, "  a-z General purpose marks\n");
+	text_appendf(vis, txt, "\n Marks\n\n");
+	text_appendf(vis, txt, "  a-z General purpose marks\n");
 	for (size_t i = 0; i < LENGTH(vis_marks); i++) {
 		const char *help = VIS_HELP_USE(vis_marks[i].help);
-		text_appendf(txt, "  %c   %s\n", vis_marks[i].name, help ? help : "");
+		text_appendf(vis, txt, "  %c   %s\n", vis_marks[i].name, help ? help : "");
 	}
 
-	text_appendf(txt, "\n Registers\n\n");
-	text_appendf(txt, "  a-z General purpose registers\n");
-	text_appendf(txt, "  A-Z Append to corresponding general purpose register\n");
+	text_appendf(vis, txt, "\n Registers\n\n");
+	text_appendf(vis, txt, "  a-z General purpose registers\n");
+	text_appendf(vis, txt, "  A-Z Append to corresponding general purpose register\n");
 	for (size_t i = 0; i < LENGTH(vis_registers); i++) {
 		const char *help = VIS_HELP_USE(vis_registers[i].help);
-		text_appendf(txt, "  %c   %s\n", vis_registers[i].name, help ? help : "");
+		text_appendf(vis, txt, "  %c   %s\n", vis_registers[i].name, help ? help : "");
 	}
 
-	text_appendf(txt, "\n :set command options\n\n");
-	map_iterate(vis->options, print_option, txt);
+	text_appendf(vis, txt, "\n :set command options\n\n");
+	map_iterate(vis->options, print_option, map_data);
 
-	text_appendf(txt, "\n Key binding actions\n\n");
-	map_iterate(vis->actions, print_action, txt);
+	text_appendf(vis, txt, "\n Key binding actions\n\n");
+	map_iterate(vis->actions, print_action, map_data);
 
-	text_appendf(txt, "\n Symbolic keys usable for key bindings "
+	text_appendf(vis, txt, "\n Symbolic keys usable for key bindings "
 		"(prefix with C-, S-, and M- for Ctrl, Shift and Alt respectively)\n\n");
 	print_symbolic_keys(vis, txt);
 
@@ -848,18 +868,18 @@ static bool cmd_help(Vis *vis, Win *win, Command *cmd, const char *argv[], Selec
 
 	if (vis_lua_paths_get(vis, &paths[0], &paths[1])) {
 		for (size_t i = 0; i < LENGTH(paths); i++) {
-			text_appendf(txt, "\n %s\n\n", paths_description[i]);
+			text_appendf(vis, txt, "\n %s\n\n", paths_description[i]);
 			for (char *elem = paths[i], *next; elem; elem = next) {
 				if ((next = strstr(elem, ";")))
 					*next++ = '\0';
 				if (*elem)
-					text_appendf(txt, "  %s\n", elem);
+					text_appendf(vis, txt, "  %s\n", elem);
 			}
 			free(paths[i]);
 		}
 	}
 
-	text_appendf(txt, "\n Compile time configuration\n\n");
+	text_appendf(vis, txt, "\n Compile time configuration\n\n");
 
 	const struct {
 		const char *name;
@@ -874,7 +894,7 @@ static bool cmd_help(Vis *vis, Win *win, Command *cmd, const char *argv[], Selec
 	};
 
 	for (size_t i = 0; i < LENGTH(configs); i++)
-		text_appendf(txt, "  %-32s\t%s\n", configs[i].name, configs[i].enabled ? "yes" : "no");
+		text_appendf(vis, txt, "  %-32s\t%s\n", configs[i].name, configs[i].enabled ? "yes" : "no");
 
 	text_mark_current_revision(txt);
 	view_cursors_to(vis->win->view.selection, 0);

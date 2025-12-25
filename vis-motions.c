@@ -265,19 +265,13 @@ void vis_motion_type(Vis *vis, enum VisMotionType type) {
 	vis->action.type = type;
 }
 
-int vis_motion_register(Vis *vis, void *data, VisMotionFunction *motion) {
-
-	Movement *move = calloc(1, sizeof *move);
-	if (!move)
-		return -1;
-
-	move->user = motion;
-	move->data = data;
-
-	if (array_add_ptr(&vis->motions, move))
-		return VIS_MOVE_LAST + vis->motions.len - 1;
-	free(move);
-	return -1;
+int vis_motion_register(Vis *vis, void *data, VisMotionFunction *motion)
+{
+	*da_push(vis, &vis->motions) = (Movement){
+		.user = motion,
+		.data = data,
+	};
+	return VIS_MOVE_LAST + vis->motions.count - 1;
 }
 
 bool vis_motion(Vis *vis, enum VisMotion motion, ...) {
@@ -380,10 +374,11 @@ bool vis_motion(Vis *vis, enum VisMotion motion, ...) {
 		break;
 	}
 
+	vis->action.movement = 0;
 	if (motion < LENGTH(vis_motions))
-		vis->action.movement = &vis_motions[motion];
-	else
-		vis->action.movement = array_get_ptr(&vis->motions, motion - VIS_MOVE_LAST);
+		vis->action.movement = vis_motions + motion;
+	else if ((VisDACount)motion - VIS_MOVE_LAST < vis->motions.count)
+		vis->action.movement = vis->motions.data + motion - VIS_MOVE_LAST;
 
 	if (!vis->action.movement)
 		goto err;

@@ -1,7 +1,8 @@
 #include "vis-core.h"
 
-static int ranges_comparator(const void *a, const void *b) {
-	const Filerange *r1 = a, *r2 = b;
+static DA_COMPARE_FN(ranges_comparator)
+{
+	const Filerange *r1 = va, *r2 = vb;
 	if (!text_range_valid(r1))
 		return text_range_valid(r2) ? 1 : 0;
 	if (!text_range_valid(r2))
@@ -9,53 +10,46 @@ static int ranges_comparator(const void *a, const void *b) {
 	return (r1->start < r2->start || (r1->start == r2->start && r1->end < r2->end)) ? -1 : 1;
 }
 
-void vis_mark_normalize(Array *a) {
-	array_sort(a, ranges_comparator);
-	Filerange *prev = NULL, *r = array_get(a, 0);
-	for (size_t i = 0; r; r = array_get(a, i)) {
-		if (text_range_size(r) == 0) {
-			array_remove(a, i);
-		} else if (prev && text_range_overlap(prev, r)) {
-			*prev = text_range_union(prev, r);
-			array_remove(a, i);
-		} else {
-			prev = r;
-			i++;
+void vis_mark_normalize(FilerangeList *ranges)
+{
+	for (VisDACount i = 0; i < ranges->count; i++)
+		if (text_range_size(ranges->data + i) == 0)
+			da_unordered_remove(ranges, i);
+
+	if (ranges->count) {
+		da_sort(ranges, ranges_comparator);
+		Filerange *prev = 0;
+		for (VisDACount i = 0; i < ranges->count; i++) {
+			Filerange *r = ranges->data + i;
+			if (prev && text_range_overlap(prev, r)) {
+				*prev = text_range_union(prev, r);
+				da_ordered_remove(ranges, i);
+			} else {
+				prev = r;
+				i++;
+			}
 		}
 	}
 }
 
-bool vis_mark_equal(Array *a, Array *b) {
-	if (a->len != b->len)
-		return false;
-	size_t len = a->len;
-	for (size_t i = 0; i < len; i++) {
-		if (!text_range_equal(array_get(a, i), array_get(b, i)))
-			return false;
+static bool vis_mark_equal(FilerangeList a, FilerangeList b)
+{
+	bool result = a.count == b.count;
+	for (VisDACount i = 0; result && i < a.count; i++)
+		result = text_range_equal(a.data + i, b.data + i);
+	return result;
+}
+
+static SelectionRegionList *mark_from(Vis *vis, enum VisMark id)
+{
+	if (vis->win) {
+		if (id == VIS_MARK_SELECTION)
+			return &vis->win->saved_selections;
+		File *file = vis->win->file;
+		if (id < LENGTH(file->marks))
+			return file->marks + id;
 	}
-
-	return true;
-}
-
-void mark_init(Array *arr) {
-	array_init_sized(arr, sizeof(SelectionRegion));
-}
-
-void mark_release(Array *arr) {
-	if (!arr)
-		return;
-	array_release(arr);
-}
-
-static Array *mark_from(Vis *vis, enum VisMark id) {
-	if (!vis->win)
-		return NULL;
-	if (id == VIS_MARK_SELECTION)
-		return &vis->win->saved_selections;
-	File *file = vis->win->file;
-	if (id < LENGTH(file->marks))
-		return &file->marks[id];
-	return NULL;
+	return 0;
 }
 
 enum VisMark vis_mark_used(Vis *vis) {
@@ -67,48 +61,48 @@ void vis_mark(Vis *vis, enum VisMark mark) {
 		vis->action.mark = mark;
 }
 
-static Array mark_get(Win *win, Array *mark) {
-	Array sel;
-	array_init_sized(&sel, sizeof(Filerange));
-	if (!mark)
-		return sel;
-	size_t len = mark->len;
-	array_reserve(&sel, len);
-	for (size_t i = 0; i < len; i++) {
-		SelectionRegion *sr = array_get(mark, i);
-		Filerange r = view_regions_restore(&win->view, sr);
-		if (text_range_valid(&r))
-			array_add(&sel, &r);
+static FilerangeList mark_get(Vis *vis, Win *win, SelectionRegionList *mark)
+{
+	FilerangeList result = {0};
+	if (mark) {
+		da_reserve(vis, &result, mark->count);
+		for (VisDACount i = 0; i < mark->count; i++) {
+			Filerange r = view_regions_restore(&win->view, mark->data + i);
+			if (text_range_valid(&r))
+				*da_push(vis, &result) = r;
+		}
+		vis_mark_normalize(&result);
 	}
-	vis_mark_normalize(&sel);
-	return sel;
+	return result;
 }
 
-Array vis_mark_get(Win *win, enum VisMark id) {
-	return mark_get(win, mark_from(win->vis, id));
+FilerangeList vis_mark_get(Vis *vis, Win *win, enum VisMark id)
+{
+	return mark_get(vis, win, mark_from(vis, id));
 }
 
-static void mark_set(Win *win, Array *mark, Array *sel) {
-	if (!mark)
-		return;
-	array_clear(mark);
-	for (size_t i = 0, len = sel->len; i < len; i++) {
-		SelectionRegion ss;
-		Filerange *r = array_get(sel, i);
-		if (view_regions_save(&win->view, r, &ss))
-			array_add(mark, &ss);
+static void mark_set(Vis *vis, Win *win, SelectionRegionList *mark, FilerangeList ranges)
+{
+	if (mark) {
+		mark->count = 0;
+		for (VisDACount i = 0; i < ranges.count; i++) {
+			SelectionRegion ss;
+			if (view_regions_save(&win->view, ranges.data + i, &ss))
+				*da_push(vis, mark) = ss;
+		}
 	}
 }
 
-void vis_mark_set(Win *win, enum VisMark id, Array *sel) {
-	mark_set(win, mark_from(win->vis, id), sel);
+void vis_mark_set(Vis *vis, Win *win, enum VisMark id, FilerangeList ranges)
+{
+	mark_set(vis, win, mark_from(vis, id), ranges);
 }
 
 void vis_jumplist(Vis *vis, int advance)
 {
 	Win  *win  = vis->win;
 	View *view = &win->view;
-	Array cur = view_selections_get_all(view);
+	FilerangeList cur = view_selections_get_all(vis, view);
 
 	size_t cursor = win->mark_set_lru_cursor;
 	win->mark_set_lru_cursor += advance;
@@ -116,27 +110,27 @@ void vis_jumplist(Vis *vis, int advance)
 		cursor = win->mark_set_lru_cursor;
 	cursor %= VIS_MARK_SET_LRU_COUNT;
 
-	Array *next = win->mark_set_lru_regions + cursor;
+	SelectionRegionList *next = win->mark_set_lru_regions + cursor;
 	bool done = false;
-	if (next->len) {
-		Array sel = mark_get(win, next);
-		done = vis_mark_equal(&sel, &cur);
+	if (next->count) {
+		FilerangeList sel = mark_get(vis, win, next);
+		done = vis_mark_equal(sel, cur);
 		if (advance && !done) {
 			/* NOTE: set cached selection */
 			vis_mode_switch(vis, win->mark_set_lru_modes[cursor]);
-			view_selections_set_all(view, &sel, view_selections_primary_get(view)->anchored);
+			view_selections_set_all(view, sel, view_selections_primary_get(view)->anchored);
 		}
-		array_release(&sel);
+		da_release(&sel);
 	}
 
 	if (!advance && !done) {
 		/* NOTE: save the current selection */
-		mark_set(win, next, &cur);
+		mark_set(vis, win, next, cur);
 		win->mark_set_lru_modes[cursor] = vis->mode->id;
 		win->mark_set_lru_cursor++;
 	}
 
-	array_release(&cur);
+	da_release(&cur);
 }
 
 enum VisMark vis_mark_from(Vis *vis, char mark) {

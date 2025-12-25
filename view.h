@@ -19,6 +19,12 @@ typedef struct {
 	Mark cursor;
 } SelectionRegion;
 
+typedef struct {
+	SelectionRegion *data;
+	VisDACount       count;
+	VisDACount       capacity;
+} SelectionRegionList;
+
 typedef struct Line Line;
 struct Line {               /* a line on the screen, *not* in the file */
 	Line *prev, *next;  /* pointer to neighbouring screen lines */
@@ -176,12 +182,12 @@ VIS_INTERNAL void view_selections_normalize(View*);
 /**
  * Replace currently active selections.
  * @param view The view to manipulate.
- * @param array The array of ``Filerange`` objects.
+ * @param ranges The list of ``Filerange``s to apply.
  * @param anchored Whether *all* selection should be anchored.
  */
-VIS_INTERNAL void view_selections_set_all(View *view, Array *array, bool anchored);
-/** Get array containing a ``Fileranges`` for each selection. */
-VIS_INTERNAL Array view_selections_get_all(View*);
+VIS_INTERNAL void view_selections_set_all(View *view, FilerangeList ranges, bool anchored);
+/** Get list containing the ``Filerange``s for each selection. */
+VIS_INTERNAL FilerangeList view_selections_get_all(Vis*, View*);
 /**
  * @}
  * @defgroup view_navigate Selection Navigation

@@ -1275,12 +1275,11 @@ bool view_regions_save(View *view, Filerange *r, SelectionRegion *s) {
 	return true;
 }
 
-void view_selections_set_all(View *view, Array *arr, bool anchored) {
-	Selection *s;
-	Filerange *r;
-	size_t i = 0;
-	for (s = view->selections; s; s = s->next) {
-		if (!(r = array_get(arr, i++)) || !view_selections_set(s, r)) {
+void view_selections_set_all(View *view, FilerangeList ranges, bool anchored)
+{
+	VisDACount i = 0;
+	for (Selection *s = view->selections; s; s = s->next) {
+		if (i++ >= ranges.count || !view_selections_set(s, ranges.data + i - 1)) {
 			for (Selection *next; s; s = next) {
 				next = view_selections_next(s);
 				if (i == 1 && s == view->selection)
@@ -1292,8 +1291,9 @@ void view_selections_set_all(View *view, Array *arr, bool anchored) {
 		}
 		s->anchored = anchored;
 	}
-	while ((r = array_get(arr, i++))) {
-		s = view_selections_new_force(view, r->start);
+	while (i < ranges.count) {
+		Filerange *r = ranges.data + i++;
+		Selection *s = view_selections_new_force(view, r->start);
 		if (!s || !view_selections_set(s, r))
 			break;
 		s->anchored = anchored;
@@ -1301,17 +1301,16 @@ void view_selections_set_all(View *view, Array *arr, bool anchored) {
 	view_selections_primary_set(view->selections);
 }
 
-Array view_selections_get_all(View *view) {
-	Array arr;
-	array_init_sized(&arr, sizeof(Filerange));
-	if (!array_reserve(&arr, view->selection_count))
-		return arr;
+FilerangeList view_selections_get_all(Vis *vis, View *view)
+{
+	FilerangeList result = {0};
+	da_reserve(vis, &result, view->selection_count);
 	for (Selection *s = view->selections; s; s = s->next) {
 		Filerange r = view_selections_get(s);
 		if (text_range_valid(&r))
-			array_add(&arr, &r);
+			*da_push(vis, &result) = r;
 	}
-	return arr;
+	return result;
 }
 
 void view_selections_normalize(View *view) {

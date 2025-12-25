@@ -1,102 +1,74 @@
 #include "vis-core.h"
 
-static Buffer *register_buffer(Register *reg, size_t slot) {
-	Buffer *buf = array_get(&reg->values, slot);
-	if (buf)
-		return buf;
-	if (array_resize(&reg->values, slot) && (buf = array_get(&reg->values, slot)))
-		return buf;
-	Buffer new = {0};
-	if (!array_add(&reg->values, &new))
-		return NULL;
-	size_t capacity = reg->values.count;
-	for (size_t i = reg->values.len; i < capacity; i++) {
-		if (!array_add(&reg->values, &new))
-			return NULL;
-	}
-	return array_get(&reg->values, slot);
+static Buffer *register_buffer(Vis *vis, Register *reg, VisDACount slot)
+{
+	if (slot >= reg->capacity)
+		da_reserve(vis, reg, slot);
+	if (slot >= reg->count)
+		reg->count = slot + 1;
+	return reg->data + slot;
 }
 
-bool register_init(Register *reg) {
-	Buffer buf = {0};
-	array_init_sized(&reg->values, sizeof(Buffer));
-	return array_add(&reg->values, &buf);
-}
-
-void register_release(Register *reg) {
-	if (!reg)
-		return;
-	size_t n = reg->values.count;
-	for (size_t i = 0; i < n; i++)
-		buffer_release(array_get(&reg->values, i));
-	array_release(&reg->values);
-}
-
-const char *register_slot_get(Vis *vis, Register *reg, size_t slot, size_t *len) {
-	if (len)
-		*len = 0;
+const char *register_slot_get(Vis *vis, Register *reg, size_t slot, size_t *len)
+{
+	if (len) *len = 0;
+	const char *result = 0;
 	switch (reg->type) {
-	case REGISTER_NORMAL:
-	{
-		Buffer *buf = array_get(&reg->values, slot);
-		if (!buf)
-			return NULL;
-		buffer_terminate(buf);
-		if (len)
-			*len = buffer_length0(buf);
-		return buffer_content0(buf);
-	}
-	case REGISTER_NUMBER:
-	{
-		Buffer *buf = array_get(&reg->values, 0);
-		if (!buf)
-			return NULL;
-		buf->len = 0;
-		buffer_appendf(buf, "%zu", slot+1);
-		if (len)
-			*len = buffer_length0(buf);
-		return buffer_content0(buf);
-	}
-	case REGISTER_CLIPBOARD:
-	{
-		Buffer buferr = {0};
-		enum VisRegister id = reg - vis->registers;
-		const char *cmd[] = { VIS_CLIPBOARD, "--paste", "--selection", NULL, NULL };
-		Buffer *buf = array_get(&reg->values, slot);
-		if (!buf)
-			return NULL;
-		buf->len = 0;
+	case REGISTER_NORMAL:{
+		if ((int)slot < reg->count) {
+			Buffer *b = reg->data + slot;
+			buffer_terminate(b);
+			if (len) *len = buffer_length0(b);
+			result = buffer_content0(b);
+		}
+	}break;
+	case REGISTER_NUMBER:{
+		if (reg->count > 0) {
+			Buffer *b = reg->data;
+			b->len = 0;
+			buffer_appendf(b, "%zu", slot + 1);
+			if (len) *len = buffer_length0(b);
+			result = buffer_content0(b);
+		}
+	}break;
+	case REGISTER_CLIPBOARD:{
+		if ((VisDACount)slot < reg->count) {
+			Buffer *b      = reg->data + slot;
+			Buffer  buferr = {0};
+			enum VisRegister id = reg - vis->registers;
+			const char *cmd[] = {VIS_CLIPBOARD, "--paste", "--selection", 0, 0};
+			if (id == VIS_REG_PRIMARY) cmd[3] = "primary";
+			else                       cmd[3] = "clipboard";
 
-		if (id == VIS_REG_PRIMARY)
-			cmd[3] = "primary";
-		else
-			cmd[3] = "clipboard";
-		int status = vis_pipe(vis, vis->win->file,
-			&(Filerange){ .start = 0, .end = 0 },
-			cmd, buf, read_into_buffer, &buferr, read_into_buffer, false);
+			b->len = 0;
+			int status = vis_pipe(vis, vis->win->file, &(Filerange){0}, cmd, b, read_into_buffer,
+			                      &buferr, read_into_buffer, false);
 
-		if (status != 0)
-			vis_info_show(vis, "Command failed %s", buffer_content0(&buferr));
-		buffer_release(&buferr);
-		if (len)
-			*len = buffer_length0(buf);
-		return buffer_content0(buf);
-	}
+			if (status != 0)
+				vis_info_show(vis, "Command failed %s", buffer_content0(&buferr));
+			buffer_release(&buferr);
+			if (len) *len = buffer_length0(b);
+			result = buffer_content0(b);
+		}
+	}break;
 	case REGISTER_BLACKHOLE:
 	default:
-		return NULL;
+		break;
 	}
+	return result;
 }
 
-const char *register_get(Vis *vis, Register *reg, size_t *len) {
+const char *register_get(Vis *vis, Register *reg, size_t *len)
+{
 	return register_slot_get(vis, reg, 0, len);
 }
 
-bool register_slot_put(Vis *vis, Register *reg, size_t slot, const char *data, size_t len) {
+bool register_slot_put(Vis *vis, Register *reg, size_t slot, const char *data, size_t len)
+{
 	if (reg->type != REGISTER_NORMAL)
 		return false;
-	Buffer *buf = register_buffer(reg, slot);
-	return buf && buffer_put(buf, data, len);
+	Buffer *buf = register_buffer(vis, reg, slot);
+	return buffer_put(buf, data, len);
 }
 
 bool register_put(Vis *vis, Register *reg, const char *data, size_t len) {
@@ -104,17 +76,17 @@ bool register_put(Vis *vis, Register *reg, const char *data, size_t len) {
 	       register_resize(reg, 1);
 }
 
-bool register_put0(Vis *vis, Register *reg, const char *data) {
+bool register_put0(Vis *vis, Register *reg, const char *data)
+{
 	return register_put(vis, reg, data, strlen(data)+1);
 }
 
-static bool register_slot_append_range(Register *reg, size_t slot, Text *txt, Filerange *range) {
+static bool register_slot_append_range(Vis *vis, Register *reg, size_t slot, Text *txt, Filerange *range)
+{
 	switch (reg->type) {
 	case REGISTER_NORMAL:
 	{
-		Buffer *buf = register_buffer(reg, slot);
-		if (!buf)
-			return false;
+		Buffer *buf = register_buffer(vis, reg, slot);
 		size_t len = text_range_size(range);
 		if (len == SIZE_MAX || !buffer_grow(buf, len+1))
 			return false;
@@ -128,16 +100,15 @@ static bool register_slot_append_range(Register *reg, size_t slot, Text *txt, Fi
 	}
 }
 
-bool register_slot_put_range(Vis *vis, Register *reg, size_t slot, Text *txt, Filerange *range) {
+bool register_slot_put_range(Vis *vis, Register *reg, size_t slot, Text *txt, Filerange *range)
+{
 	if (reg->append)
-		return register_slot_append_range(reg, slot, txt, range);
+		return register_slot_append_range(vis, reg, slot, txt, range);
 
 	switch (reg->type) {
 	case REGISTER_NORMAL:
 	{
-		Buffer *buf = register_buffer(reg, slot);
-		if (!buf)
-			return false;
+		Buffer *buf = register_buffer(vis, reg, slot);
 		size_t len = text_range_size(range);
 		if (len == SIZE_MAX || !buffer_reserve(buf, len+1))
 			return false;
@@ -170,19 +141,24 @@ bool register_slot_put_range(Vis *vis, Register *reg, size_t slot, Text *txt, Fi
 	}
 }
 
-bool register_put_range(Vis *vis, Register *reg, Text *txt, Filerange *range) {
+bool register_put_range(Vis *vis, Register *reg, Text *txt, Filerange *range)
+{
 	return register_slot_put_range(vis, reg, 0, txt, range) &&
 	       register_resize(reg, 1);
 }
 
-size_t vis_register_count(Vis *vis, Register *reg) {
+size_t vis_register_count(Vis *vis, Register *reg)
+{
 	if (reg->type == REGISTER_NUMBER)
 		return vis->win ? vis->win->view.selection_count : 0;
-	return reg->values.len;
+	return reg->count;
 }
 
-bool register_resize(Register *reg, size_t count) {
-	return array_truncate(&reg->values, count);
+bool register_resize(Register *reg, size_t count)
+{
+	bool result = (VisDACount)count < reg->count;
+	if (result) reg->count = count;
+	return result;
 }
 
 enum VisRegister vis_register_from(Vis *vis, char reg) {
@@ -242,39 +218,34 @@ static Register *register_from(Vis *vis, enum VisRegister id) {
 	return NULL;
 }
 
-bool vis_register_set(Vis *vis, enum VisRegister id, Array *data) {
+bool vis_register_set(Vis *vis, enum VisRegister id, TextStringList strings)
+{
 	Register *reg = register_from(vis, id);
 	if (!reg)
 		return false;
-	size_t len = data->len;
-	for (size_t i = 0; i < len; i++) {
-		Buffer *buf = register_buffer(reg, i);
-		if (!buf)
-			return false;
-		TextString *string = array_get(data, i);
-		if (!buffer_put(buf, string->data, string->len))
+	for (VisDACount i = 0; i < strings.count; i++) {
+		Buffer *buf = register_buffer(vis, reg, i);
+		TextString string = strings.data[i];
+		if (!buffer_put(buf, string.data, string.len))
 			return false;
 	}
-	return register_resize(reg, len);
+	return register_resize(reg, strings.count);
 }
 
-Array vis_register_get(Vis *vis, enum VisRegister id) {
-	Array data;
-	array_init_sized(&data, sizeof(TextString));
+TextStringList vis_register_get(Vis *vis, enum VisRegister id)
+{
+	TextStringList result = {0};
 	Register *reg = register_from(vis, id);
 	if (reg) {
-		size_t len = reg->values.len;
-		array_reserve(&data, len);
-		for (size_t i = 0; i < len; i++) {
-			Buffer *buf = array_get(&reg->values, i);
-			TextString string = {
-				.data = buf->data,
-				.len  = buf->len,
+		da_reserve(vis, &result, reg->count);
+		for (VisDACount i = 0; i < reg->count; i++) {
+			*da_push(vis, &result) = (TextString){
+				.data = reg->data[i].data,
+				.len  = reg->data[i].len,
 			};
-			array_add(&data, &string);
 		}
 	}
-	return data;
+	return result;
 }
 
 const RegisterDef vis_registers[] = {

@@ -17,6 +17,12 @@ typedef struct {
 	size_t end;    /**< Absolute byte position. */
 } Filerange;
 
+typedef struct {
+	Filerange  *data;
+	VisDACount  count;
+	VisDACount  capacity;
+} FilerangeList;
+
 /**
  * Text object storing the buffer content being edited.
  */
@@ -28,6 +34,12 @@ typedef struct {
 	const char *data; /**< Content, might not be NUL-terminated. */
 	size_t len;       /**< Length in bytes. */
 } TextString;
+
+typedef struct {
+	TextString *data;
+	VisDACount  count;
+	VisDACount  capacity;
+} TextStringList;
 
 /**
  * Iterator used to navigate the buffer content.
@@ -84,10 +96,10 @@ enum TextLoadMethod {
  * Create a text instance populated with the given file content.
  *
  * @rst
- * .. note:: Equivalent to ``text_load_method(filename, TEXT_LOAD_AUTO)``.
+ * .. note:: Equivalent to ``text_load_method(vis, filename, TEXT_LOAD_AUTO)``.
  * @endrst
  */
-VIS_INTERNAL Text *text_load(const char *filename);
+VIS_INTERNAL Text *text_load(Vis *vis, const char *filename);
 /**
  * Create a text instance populated with the given file content.
  *
@@ -101,8 +113,8 @@ VIS_INTERNAL Text *text_load(const char *filename);
  *    - ``ENOTSUP`` otherwise.
  * @endrst
  */
-VIS_INTERNAL Text *text_load_method(const char *filename, enum TextLoadMethod method);
-VIS_INTERNAL Text *text_loadat_method(int dirfd, const char *filename, enum TextLoadMethod);
+VIS_INTERNAL Text *text_load_method(Vis *vis, const char *filename, enum TextLoadMethod method);
+VIS_INTERNAL Text *text_loadat_method(Vis *vis, int dirfd, const char *filename, enum TextLoadMethod);
 /** Release all resources associated with this text instance. */
 VIS_INTERNAL void text_free(Text*);
 /**
@@ -133,13 +145,14 @@ VIS_INTERNAL bool text_modified(const Text*);
 /**
  * Insert data at the given byte position.
  *
+ * @param vis The editor instance.
  * @param txt The text instance to modify.
  * @param pos The absolute byte position.
  * @param data The data to insert.
  * @param len The length of the data in bytes.
  * @return Whether the insertion succeeded.
  */
-VIS_INTERNAL bool text_insert(Text *txt, size_t pos, const char *data, size_t len);
+VIS_INTERNAL bool text_insert(Vis *vis, Text *txt, size_t pos, const char *data, size_t len);
 /**
  * Delete data at given byte position.
  *
@@ -150,7 +163,7 @@ VIS_INTERNAL bool text_insert(Text *txt, size_t pos, const char *data, size_t le
  */
 VIS_INTERNAL bool text_delete(Text *txt, size_t pos, size_t len);
 VIS_INTERNAL bool text_delete_range(Text *txt, const Filerange*);
-VIS_INTERNAL bool text_appendf(Text *txt, const char *format, ...) __attribute__((format(printf, 2, 3)));
+VIS_INTERNAL bool text_appendf(Vis *vis, Text *txt, const char *format, ...) __attribute__((format(printf, 3, 4)));
 /**
  * @}
  * @defgroup history Undo/Redo History

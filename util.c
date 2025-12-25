@@ -26,3 +26,50 @@ utf8_encode(uint8_t out[4], uint32_t cp)
 	}
 	return result;
 }
+
+#define zero_struct(s) memset((s), 0, sizeof(*s))
+
+enum { DA_INITIAL_CAP = 16 };
+
+#define da_release(da) free((da)->data)
+
+#define da_unordered_remove(da, index) do { \
+	if ((index) < (da)->count - 1) \
+		(da)->data[(index)] = (da)->data[(da)->count - 1]; \
+	(da)->count--; \
+} while(0)
+
+#define da_ordered_remove(da, index) do { \
+	if ((index) < (da)->count - 1) \
+		memmove((da)->data + (index), (da)->data + (index) + 1, \
+		        sizeof(*(da)->data) * ((da)->count - (index) - 1)); \
+	(da)->count--; \
+} while(0)
+
+#define DA_COMPARE_FN(name) int name(const void *va, const void *vb)
+#define da_sort(da, compare) qsort((da)->data, (da)->count, sizeof(*(da)->data), (compare))
+
+#define da_reserve(vis, da, n) \
+  (da)->data = da_reserve_(vis, (da)->data, &(da)->capacity, (da)->count + n, sizeof(*(da)->data))
+
+#define da_push(vis, da) \
+  ((da)->count == (da)->capacity \
+    ? da_reserve(vis, da, 1), \
+      (da)->data + (da)->count++ \
+    : (da)->data + (da)->count++)
+
+static void *
+da_reserve_(Vis *vis, void *data, VisDACount *capacity, VisDACount needed, size_t size)
+{
+	VisDACount cap = *capacity;
+
+	if (!cap) cap = DA_INITIAL_CAP;
+	while (cap < needed) cap *= 2;
+	data = realloc(data, size * cap);
+	if (unlikely(data == 0))
+		longjmp(vis->oom_jmp_buf, 1);
+
+	memset((char *)data + (*capacity * size), 0, size * (cap - *capacity));
+	*capacity = cap;
+	return data;
+}

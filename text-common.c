@@ -1,6 +1,7 @@
 #include "text.h"
 
-static bool text_vprintf(Text *txt, size_t pos, const char *format, va_list ap) {
+static bool text_vprintf(Vis *vis, Text *txt, size_t pos, const char *format, va_list ap)
+{
 	va_list ap_save;
 	va_copy(ap_save, ap);
 	int len = vsnprintf(NULL, 0, format, ap);
@@ -9,16 +10,17 @@ static bool text_vprintf(Text *txt, size_t pos, const char *format, va_list ap) 
 		return false;
 	}
 	char *buf = malloc(len+1);
-	bool ret = buf && (vsnprintf(buf, len+1, format, ap_save) == len) && text_insert(txt, pos, buf, len);
+	bool ret = buf && (vsnprintf(buf, len+1, format, ap_save) == len) && text_insert(vis, txt, pos, buf, len);
 	free(buf);
 	va_end(ap_save);
 	return ret;
 }
 
-bool text_appendf(Text *txt, const char *format, ...) {
+bool text_appendf(Vis *vis, Text *txt, const char *format, ...)
+{
 	va_list ap;
 	va_start(ap, format);
-	bool ret = text_vprintf(txt, text_size(txt), format, ap);
+	bool ret = text_vprintf(vis, txt, text_size(txt), format, ap);
 	va_end(ap);
 	return ret;
 }

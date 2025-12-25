@@ -66,6 +66,14 @@
 #include <selinux/selinux.h>
 #endif
 
+#if defined(__clang__) || defined(__GNUC__)
+#define likely(x)    __builtin_expect(!!(x), 1)
+#define unlikely(x)  __builtin_expect(!!(x), 0)
+#else
+#define likely(x)    (x)
+#define unlikely(x)  (x)
+#endif
+
 #define LENGTH(x)  ((int)(sizeof (x) / sizeof *(x)))
 #define MIN(a, b)  ((a) > (b) ? (b) : (a))
 #define MAX(a, b)  ((a) < (b) ? (b) : (a))
@@ -94,5 +102,7 @@ static inline bool addu(size_t a, size_t b, size_t *c) {
 #ifndef PATH_MAX
 #define PATH_MAX 4096
 #endif
+
+typedef int32_t VisDACount;
 
 #endif /* UTIL_H */

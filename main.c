@@ -340,7 +340,7 @@ static KEY_ACTION_FN(ka_selections_align_indent)
 			if (col < maxcol) {
 				size_t off = maxcol - col;
 				if (off <= len)
-					text_insert(txt, ipos, buf, off);
+					text_insert(vis, txt, ipos, buf, off);
 			}
 		}
 
@@ -570,17 +570,21 @@ static KEY_ACTION_FN(ka_selections_rotate)
 		size_t len;
 	} Rotate;
 
-	Array arr;
+	struct {
+		Rotate     *data;
+		VisDACount  count;
+		VisDACount  capacity;
+	} rotations[1] = {0};
+
 	Text *txt = vis_text(vis);
 	View *view = vis_view(vis);
 	int columns = view_selections_column_count(view);
 	int selections = columns == 1 ? view->selection_count : columns;
 	int count = VIS_COUNT_DEFAULT(vis->action.count, 1);
-	array_init_sized(&arr, sizeof(Rotate));
-	if (!array_reserve(&arr, selections))
-		return keys;
-	size_t line = 0;
 
+	da_reserve(vis, rotations, selections);
+
+	size_t line = 0;
 	for (Selection *s = view_selections(view), *next; s; s = next) {
 		next = view_selections_next(s);
 		size_t line_next = 0;
@@ -593,38 +597,38 @@ static KEY_ACTION_FN(ka_selections_rotate)
 			rot.len = text_bytes_get(txt, sel.start, rot.len, rot.data);
 		else
 			rot.len = 0;
-		array_add(&arr, &rot);
+		*da_push(vis, rotations) = rot;
 
 		if (!line)
 			line = text_lineno_by_pos(txt, view_cursors_pos(s));
 		if (next)
 			line_next = text_lineno_by_pos(txt, view_cursors_pos(next));
 		if (!next || (columns > 1 && line != line_next)) {
-			size_t len = arr.len;
+			VisDACount len = rotations->count;
 			size_t off = arg->i > 0 ? count % len : len - (count % len);
-			for (size_t i = 0; i < len; i++) {
-				size_t j = (i + off) % len;
-				Rotate *oldrot = array_get(&arr, i);
-				Rotate *newrot = array_get(&arr, j);
-				if (!oldrot || !newrot || oldrot == newrot)
+			for (VisDACount i = 0; i < rotations->count; i++) {
+				VisDACount j = (i + off) % len;
+				if (i == j)
 					continue;
+				Rotate *oldrot = rotations->data + i;
+				Rotate *newrot = rotations->data + j;
 				Filerange newsel = view_selections_get(newrot->sel);
 				if (!text_range_valid(&newsel))
 					continue;
 				if (!text_delete_range(txt, &newsel))
 					continue;
-				if (!text_insert(txt, newsel.start, oldrot->data, oldrot->len))
+				if (!text_insert(vis, txt, newsel.start, oldrot->data, oldrot->len))
 					continue;
 				newsel.end = newsel.start + oldrot->len;
 				view_selections_set(newrot->sel, &newsel);
 				free(oldrot->data);
 			}
-			array_clear(&arr);
+			rotations->count = 0;
 		}
 		line = line_next;
 	}
 
-	array_release(&arr);
+	da_release(rotations);
 	vis->action.count = VIS_COUNT_UNKNOWN;
 	return keys;
 }
@@ -651,7 +655,8 @@ static KEY_ACTION_FN(ka_selections_trim)
 	return keys;
 }
 
-static void selections_set(Vis *vis, View *view, Array *sel) {
+static void selections_set(Vis *vis, View *view, FilerangeList sel)
+{
 	enum VisMode mode = vis->mode->id;
 	bool anchored = mode == VIS_MODE_VISUAL || mode == VIS_MODE_VISUAL_LINE;
 	view_selections_set_all(view, sel, anchored);
@@ -661,174 +666,162 @@ static void selections_set(Vis *vis, View *view, Array *sel) {
 
 static KEY_ACTION_FN(ka_selections_save)
 {
-	Win *win = vis->win;
-	View *view = vis_view(vis);
+	Win  *win  = vis->win;
+	View *view = &win->view;
 	enum VisMark mark = vis_mark_used(vis);
-	Array sel = view_selections_get_all(view);
-	vis_mark_set(win, mark, &sel);
-	array_release(&sel);
+	FilerangeList sel = view_selections_get_all(vis, view);
+	vis_mark_set(vis, win, mark, sel);
+	da_release(&sel);
 	vis_cancel(vis);
 	return keys;
 }
 
 static KEY_ACTION_FN(ka_selections_restore)
 {
-	Win *win = vis->win;
-	View *view = vis_view(vis);
+	Win  *win  = vis->win;
+	View *view = &win->view;
 	enum VisMark mark = vis_mark_used(vis);
-	Array sel = vis_mark_get(win, mark);
-	selections_set(vis, view, &sel);
-	array_release(&sel);
+	FilerangeList sel = vis_mark_get(vis, win, mark);
+	selections_set(vis, view, sel);
+	da_release(&sel);
 	vis_cancel(vis);
 	return keys;
 }
 
 static KEY_ACTION_FN(ka_selections_union)
 {
-	Win *win = vis->win;
-	View *view = vis_view(vis);
+	Win  *win  = vis->win;
+	View *view = &win->view;
 	enum VisMark mark = vis_mark_used(vis);
-	Array a = vis_mark_get(win, mark);
-	Array b = view_selections_get_all(view);
-	Array sel;
-	array_init_from(&sel, &a);
+	FilerangeList a   = vis_mark_get(vis, win, mark);
+	FilerangeList b   = view_selections_get_all(vis, view);
+	FilerangeList sel = {0};
 
-	size_t i = 0, j = 0;
-	Filerange *r1 = array_get(&a, i), *r2 = array_get(&b, j), cur = text_range_empty();
+	VisDACount i = 0, j = 0;
+	Filerange *r1 = a.count > 0 ? a.data : 0, *r2 = b.count > 0 ? b.data : 0, cur = text_range_empty();
 	while (r1 || r2) {
 		if (r1 && text_range_overlap(r1, &cur)) {
 			cur = text_range_union(r1, &cur);
-			r1 = array_get(&a, ++i);
+			r1 = ++i < a.count ? a.data + i : 0;
 		} else if (r2 && text_range_overlap(r2, &cur)) {
 			cur = text_range_union(r2, &cur);
-			r2 = array_get(&b, ++j);
+			r2 = ++j < b.count ? b.data + j : 0;
 		} else {
 			if (text_range_valid(&cur))
-				array_add(&sel, &cur);
+				*da_push(vis, &sel) = cur;
 			if (!r1) {
 				cur = *r2;
-				r2 = array_get(&b, ++j);
+				r2 = ++j < b.count ? b.data + j : 0;
 			} else if (!r2) {
 				cur = *r1;
-				r1 = array_get(&a, ++i);
+				r1 = ++i < a.count ? a.data + i : 0;
 			} else {
 				if (r1->start < r2->start) {
 					cur = *r1;
-					r1 = array_get(&a, ++i);
+					r1 = ++i < a.count ? a.data + i : 0;
 				} else {
 					cur = *r2;
-					r2 = array_get(&b, ++j);
+					r2 = ++j < b.count ? b.data + j : 0;
 				}
 			}
 		}
 	}
 
 	if (text_range_valid(&cur))
-		array_add(&sel, &cur);
+		*da_push(vis, &sel) = cur;
 
-	selections_set(vis, view, &sel);
+	selections_set(vis, view, sel);
 	vis_cancel(vis);
 
-	array_release(&a);
-	array_release(&b);
-	array_release(&sel);
+	da_release(&a);
+	da_release(&b);
+	da_release(&sel);
 
 	return keys;
 }
 
-static void intersect(Array *ret, Array *a, Array *b) {
-	size_t i = 0, j = 0;
-	Filerange *r1 = array_get(a, i), *r2 = array_get(b, j);
-	while (r1 && r2) {
-		if (text_range_overlap(r1, r2)) {
-			Filerange new = text_range_intersect(r1, r2);
-			array_add(ret, &new);
-		}
-		if (r1->end < r2->end)
-			r1 = array_get(a, ++i);
-		else
-			r2 = array_get(b, ++j);
+static FilerangeList intersect(FilerangeList a, FilerangeList b)
+{
+	FilerangeList result = {0};
+	for (VisDACount i = 0, j = 0; i < a.count && j < b.count;) {
+		Filerange *r1 = a.data + i, *r2 = b.data + j;
+		if (text_range_overlap(r1, r2))
+			*da_push(vis, &result) = text_range_intersect(r1, r2);
+		if (r1->end < r2->end) i++;
+		else                   j++;
 	}
+	return result;
 }
 
 static KEY_ACTION_FN(ka_selections_intersect)
 {
-	Win *win = vis->win;
-	View *view = vis_view(vis);
+	Win  *win  = vis->win;
+	View *view = &win->view;
 	enum VisMark mark = vis_mark_used(vis);
-	Array a = vis_mark_get(win, mark);
-	Array b = view_selections_get_all(view);
-	Array sel;
-	array_init_from(&sel, &a);
+	FilerangeList a   = vis_mark_get(vis, win, mark);
+	FilerangeList b   = view_selections_get_all(vis, view);
 
-	intersect(&sel, &a, &b);
-	selections_set(vis, view, &sel);
+	FilerangeList sel = intersect(a, b);
+	selections_set(vis, view, sel);
 	vis_cancel(vis);
 
-	array_release(&a);
-	array_release(&b);
-	array_release(&sel);
+	da_release(&a);
+	da_release(&b);
+	da_release(&sel);
 
 	return keys;
 }
 
-static void complement(Array *ret, Array *a, Filerange *universe) {
-	size_t pos = universe->start;
-	for (size_t i = 0, len = a->len; i < len; i++) {
-		Filerange *r = array_get(a, i);
-		if (pos < r->start) {
-			Filerange new = text_range_new(pos, r->start);
-			array_add(ret, &new);
-		}
-		pos = r->end;
+static FilerangeList complement(FilerangeList a, Filerange universe)
+{
+	FilerangeList result = {0};
+	size_t pos = universe.start;
+	for (VisDACount i = 0; i < a.count; i++) {
+		Filerange r = a.data[i];
+		if (pos < r.start)
+			*da_push(vis, &result) = text_range_new(pos, r.start);
+		pos = r.end;
 	}
-	if (pos < universe->end) {
-		Filerange new = text_range_new(pos, universe->end);
-		array_add(ret, &new);
-	}
+	if (pos < universe.end)
+		*da_push(vis, &result) = text_range_new(pos, universe.end);
+
+	return result;
 }
 
 static KEY_ACTION_FN(ka_selections_complement)
 {
-	Text *txt = vis_text(vis);
-	View *view = vis_view(vis);
-	Filerange universe = text_object_entire(txt, 0);
-	Array a = view_selections_get_all(view);
-	Array sel;
-	array_init_from(&sel, &a);
+	Text *txt  = vis->win->file->text;
+	View *view = &vis->win->view;
 
-	complement(&sel, &a, &universe);
+	FilerangeList a   = view_selections_get_all(vis, view);
+	FilerangeList sel = complement(a, text_object_entire(txt, 0));
 
-	selections_set(vis, view, &sel);
-	array_release(&a);
-	array_release(&sel);
+	selections_set(vis, view, sel);
+	da_release(&a);
+	da_release(&sel);
+
 	return keys;
 }
 
 static KEY_ACTION_FN(ka_selections_minus)
 {
-	Text *txt = vis_text(vis);
-	Win *win = vis->win;
-	View *view = vis_view(vis);
+	Win  *win  = vis->win;
+	Text *txt  = win->file->text;
+	View *view = &win->view;
 	enum VisMark mark = vis_mark_used(vis);
-	Array a = view_selections_get_all(view);
-	Array b = vis_mark_get(win, mark);
-	Array sel;
-	array_init_from(&sel, &a);
-	Array b_complement;
-	array_init_from(&b_complement, &b);
+	FilerangeList a   = view_selections_get_all(vis, view);
+	FilerangeList b   = vis_mark_get(vis, win, mark);
 
-	Filerange universe = text_object_entire(txt, 0);
-	complement(&b_complement, &b, &universe);
-	intersect(&sel, &a, &b_complement);
+	FilerangeList b_complement = complement(b, text_object_entire(txt, 0));
+	FilerangeList sel          = intersect(a, b_complement);
 
-	selections_set(vis, view, &sel);
+	selections_set(vis, view, sel);
 	vis_cancel(vis);
 
-	array_release(&a);
-	array_release(&b);
-	array_release(&b_complement);
-	array_release(&sel);
+	da_release(&a);
+	da_release(&b);
+	da_release(&b_complement);
+	da_release(&sel);
 
 	return keys;
 }
@@ -1351,7 +1344,7 @@ int main(int argc, char *argv[])
 				char buf[PIPE_BUF];
 				Text *txt = vis_text(vis);
 				while ((len = read(STDIN_FILENO, buf, sizeof buf)) > 0)
-					text_insert(txt, text_size(txt), buf, len);
+					text_insert(vis, txt, text_size(txt), buf, len);
 				if (len == -1)
 					vis_die(vis, "Can not read from stdin\n");
 				text_snapshot(txt);

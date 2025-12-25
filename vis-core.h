@@ -39,15 +39,17 @@ struct Mode {
 };
 
 typedef struct {
-	Array values;
-	bool linewise; /* place register content on a new line when inserting? */
-	bool append;
+	Buffer     *data;
+	VisDACount  count;
+	VisDACount  capacity;
 	enum {
 		REGISTER_NORMAL,
 		REGISTER_NUMBER,
 		REGISTER_BLACKHOLE,
 		REGISTER_CLIPBOARD,
 	} type;
+	bool linewise; /* place register content on a new line when inserting? */
+	bool append;
 } Register;
 
 struct OperatorContext {
@@ -139,7 +141,7 @@ struct File { /* shared state among windows displaying the same file */
 	bool internal;                   /* whether it is an internal file (e.g. used for the prompt) */
 	struct stat stat;                /* filesystem information when loaded/saved, used to detect changes outside the editor */
 	int refcount;                    /* how many windows are displaying this file? (always >= 1) */
-	Array marks[VIS_MARK_INVALID];   /* marks which are shared across windows */
+	SelectionRegionList marks[VIS_MARK_INVALID]; /* marks which are shared across windows */
 	enum TextSaveMethod save_method; /* whether the file is saved using rename(2) or overwritten */
 	Transcript transcript;           /* keeps track of changes performed by sam commands */
 	File *next, *prev;
@@ -155,7 +157,7 @@ struct Win {
 	bool expandtab;         /* whether typed tabs should be converted to spaces in this window*/
 	Vis *vis;               /* editor instance to which this window belongs */
 	File *file;             /* file being displayed in this window */
-	Array saved_selections; /* register used to store selections */
+	SelectionRegionList saved_selections; /* register used to store selections */
 	Mode modes[VIS_MODE_INVALID]; /* overlay mods used for per window key bindings */
 	Win *parent;            /* window which was active when showing the command prompt */
 	Mode *parent_mode;      /* mode which was active when showing the command prompt */
@@ -170,9 +172,9 @@ struct Win {
 	 * IMPORTANT: cursor is not kept in bounds. it is always used modulo VIS_MARK_SET_LRU_COUNT
 	 */
 	#define VIS_MARK_SET_LRU_COUNT (32)
-	size_t       mark_set_lru_cursor;
-	Array        mark_set_lru_regions[VIS_MARK_SET_LRU_COUNT];
-	enum VisMode mark_set_lru_modes[VIS_MARK_SET_LRU_COUNT];
+	size_t              mark_set_lru_cursor;
+	SelectionRegionList mark_set_lru_regions[VIS_MARK_SET_LRU_COUNT];
+	enum VisMode        mark_set_lru_modes[VIS_MARK_SET_LRU_COUNT];
 };
 
 struct Vis {
@@ -192,14 +194,16 @@ struct Vis {
 	char search_char[8];                 /* last used character to search for via 'f', 'F', 't', 'T' */
 	int last_totill;                     /* last to/till movement used for ';' and ',' */
 	int search_direction;                /* used for `n` and `N` */
+	enum TextLoadMethod load_method;     /* how existing files should be loaded */
 	bool autoindent;                     /* whether indentation should be copied from previous line on newline */
 	bool change_colors;                  /* whether to adjust 256 color palette for true colors */
+	bool ignorecase;                     /* whether to ignore case when searching */
+	bool keymap_disabled;                /* ignore key map for next key press, gets automatically re-enabled */
 	char *shell;                         /* shell used to launch external commands */
 	Map *cmds;                           /* ":"-commands, used for unique prefix queries */
 	Map *usercmds;                       /* user registered ":"-commands */
 	Map *options;                        /* ":set"-options */
 	Map *keymap;                         /* key translation before any bindings are matched */
-	bool keymap_disabled;                /* ignore key map for next key press, gets automatically re-enabled */
 	char key[VIS_KEY_LENGTH_MAX];        /* last pressed key as reported from the UI */
 	char key_current[VIS_KEY_LENGTH_MAX];/* current key being processed by the input queue */
 	char key_prev[VIS_KEY_LENGTH_MAX];   /* previous key which was processed by the input queue */
@@ -217,16 +221,44 @@ struct Vis {
 	volatile sig_atomic_t need_resize;   /* need to resize UI (SIGWINCH occurred) */
 	volatile sig_atomic_t resume;        /* need to resume UI (SIGCONT occurred) */
 	volatile sig_atomic_t terminate;     /* need to terminate we were being killed by SIGTERM */
-	sigjmp_buf sigbus_jmpbuf;            /* used to jump back to a known good state in the mainloop after (SIGBUS) */
 	Map *actions;                        /* registered editor actions / special keys commands */
-	Array actions_user;                  /* dynamically allocated editor actions */
+
+	struct {
+		Operator   *data;
+		VisDACount  count;
+		VisDACount  capacity;
+	} operators;
+
+	struct {
+		Movement   *data;
+		VisDACount  count;
+		VisDACount  capacity;
+	} motions;
+
+	struct {
+		TextObject *data;
+		VisDACount  count;
+		VisDACount  capacity;
+	} textobjects;
+
+	/* TODO: these should not be storing arrays of pointers. they should be using ids which index
+	 * into the arrays like the above */
+	struct {
+		KeyAction  **data;
+		VisDACount   count;
+		VisDACount   capacity;
+	} actions_user;
+
+	struct {
+		KeyBinding **data;
+		VisDACount   count;
+		VisDACount   capacity;
+	} bindings;
+
+	sigjmp_buf sigbus_jmpbuf;            /* used to jump back to a known good state in the mainloop after (SIGBUS) */
+	jmp_buf    oom_jmp_buf;              /* if memory allocation ever fails we jump here to try and fail cleanly */
+
 	lua_State *lua;                      /* lua context used for syntax highlighting */
-	enum TextLoadMethod load_method;     /* how existing files should be loaded */
-	Array operators;
-	Array motions;
-	Array textobjects;
-	Array bindings;
-	bool ignorecase;                     /* whether to ignore case when searching */
 };
 
 enum VisEvents {
@@ -282,12 +314,6 @@ VIS_INTERNAL char *absolute_path(const char *path);
 
 VIS_INTERNAL const char *file_name_get(File*);
 VIS_INTERNAL void file_name_set(File*, const char *name);
-
-VIS_INTERNAL bool register_init(Register*);
-VIS_INTERNAL void register_release(Register*);
-
-VIS_INTERNAL void mark_init(Array*);
-VIS_INTERNAL void mark_release(Array*);
 
 VIS_INTERNAL const char *register_get(Vis*, Register*, size_t *len);
 VIS_INTERNAL const char *register_slot_get(Vis*, Register*, size_t slot, size_t *len);

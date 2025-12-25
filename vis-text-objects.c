@@ -2,27 +2,24 @@
 #include "text-objects.h"
 #include "util.h"
 
-int vis_textobject_register(Vis *vis, int type, void *data, VisTextObjectFunction *textobject) {
-
-	TextObject *obj = calloc(1, sizeof *obj);
-	if (!obj)
-		return -1;
-
-	obj->user = textobject;
-	obj->type = type;
-	obj->data = data;
-
-	if (array_add_ptr(&vis->textobjects, obj))
-		return LENGTH(vis_textobjects) + vis->textobjects.len - 1;
-	free(obj);
-	return -1;
+int vis_textobject_register(Vis *vis, int type, void *data, VisTextObjectFunction *textobject)
+{
+	*da_push(vis, &vis->textobjects) = (TextObject){
+		.user = textobject,
+		.type = type,
+		.data = data,
+	};
+	return LENGTH(vis_textobjects) + vis->textobjects.count - 1;
 }
 
 bool vis_textobject(Vis *vis, enum VisTextObject id) {
+
+	vis->action.textobj = 0;
 	if (id < LENGTH(vis_textobjects))
-		vis->action.textobj = &vis_textobjects[id];
-	else
-		vis->action.textobj = array_get_ptr(&vis->textobjects, id - LENGTH(vis_textobjects));
+		vis->action.textobj = vis_textobjects + id;
+	else if ((VisDACount)id - LENGTH(vis_textobjects) < vis->textobjects.count)
+		vis->action.textobj = vis->textobjects.data + id - LENGTH(vis_textobjects);
+
 	if (!vis->action.textobj)
 		return false;
 	vis_do(vis);

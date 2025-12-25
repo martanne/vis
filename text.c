@@ -81,7 +81,13 @@ typedef struct {
 
 /* The main struct holding all information of a given file */
 struct Text {
-	Array blocks;           /* blocks which hold text content */
+	/* blocks which hold text content */
+	// TODO: not sure that this needs to be an array of pointers
+	// but changing it breaks things so it will need to be revisited
+	Block      **data;
+	VisDACount   count;
+	VisDACount   capacity;
+
 	Piece *pieces;          /* all pieces which have been allocated, used to free them */
 	Piece *cache;           /* most recently modified piece */
 	Piece begin, end;       /* sentinel nodes which always exists but don't hold any data */
@@ -106,8 +112,6 @@ struct Text {
 #endif
 #include "text-util.c"
 
-/* block management */
-static const char *block_store(Text*, const char *data, size_t len);
 /* cache layer */
 static void cache_piece(Text *txt, Piece *p);
 static bool cache_contains(Text *txt, Piece *p);
@@ -135,33 +139,31 @@ static size_t lines_count(Text *txt, size_t pos, size_t len);
 
 /* stores the given data in a block, allocates a new one if necessary. Returns
  * a pointer to the storage location or NULL if allocation failed. */
-static const char *block_store(Text *txt, const char *data, size_t len) {
-	Block *blk = array_get_ptr(&txt->blocks, txt->blocks.len - 1);
-	if (!blk || !block_capacity(blk, len)) {
-		blk = block_alloc(len);
-		if (!blk)
-			return NULL;
-		if (!array_add_ptr(&txt->blocks, blk)) {
-			block_free(blk);
-			return NULL;
-		}
+static const char *block_store(Vis *vis, Text *txt, const char *data, size_t len)
+{
+	Block *b = txt->count > 0 ? txt->data[txt->count - 1] : 0;
+	if (!b || !block_capacity(b, len)) {
+		b = block_alloc(len);
+		if (!b)
+			return 0;
+		*da_push(vis, txt) = b;
 	}
-	return block_append(blk, data, len);
+	return block_append(b, data, len);
 }
 
 /* cache the given piece if it is the most recently changed one */
-static void cache_piece(Text *txt, Piece *p) {
-	Block *blk = array_get_ptr(&txt->blocks, txt->blocks.len - 1);
-	if (!blk || p->data < blk->data || p->data + p->len != blk->data + blk->len)
-		return;
-	txt->cache = p;
+static void cache_piece(Text *txt, Piece *p)
+{
+	Block *b = txt->count > 0 ? txt->data[txt->count - 1] : 0;
+	if (b && p->data >= b->data && p->data + p->len == b->data + b->len)
+		txt->cache = p;
 }
 
 /* check whether the given piece was the most recently modified one */
-static bool cache_contains(Text *txt, Piece *p) {
-	Block *blk = array_get_ptr(&txt->blocks, txt->blocks.len - 1);
+static bool cache_contains(Text *txt, Piece *p)
+{
 	Revision *rev = txt->current_revision;
-	if (!blk || !txt->cache || txt->cache != p || !rev || !rev->change)
+	if (txt->count == 0 || !txt->cache || txt->cache != p || !rev || !rev->change)
 		return false;
 
 	Piece *start = rev->change->new.start;
@@ -174,16 +176,18 @@ static bool cache_contains(Text *txt, Piece *p) {
 			break;
 	}
 
+	Block *blk = txt->data[txt->count - 1];
 	return found && p->data + p->len == blk->data + blk->len;
 }
 
 /* try to insert a chunk of data at a given piece offset. The insertion is only
  * performed if the piece is the most recently changed one. The length of the
  * piece, the span containing it and the whole text is adjusted accordingly */
-static bool cache_insert(Text *txt, Piece *p, size_t off, const char *data, size_t len) {
+static bool cache_insert(Text *txt, Piece *p, size_t off, const char *data, size_t len)
+{
 	if (!cache_contains(txt, p))
 		return false;
-	Block *blk = array_get_ptr(&txt->blocks, txt->blocks.len - 1);
+	Block *blk = txt->data[txt->count - 1];
 	size_t bufpos = p->data + off - blk->data;
 	if (!block_insert(blk, bufpos, data, len))
 		return false;
@@ -197,10 +201,11 @@ static bool cache_insert(Text *txt, Piece *p, size_t off, const char *data, size
  * performed if the piece is the most recently changed one and the whole
  * affected range lies within it. The length of the piece, the span containing it
  * and the whole text is adjusted accordingly */
-static bool cache_delete(Text *txt, Piece *p, size_t off, size_t len) {
+static bool cache_delete(Text *txt, Piece *p, size_t off, size_t len)
+{
 	if (!cache_contains(txt, p))
 		return false;
-	Block *blk = array_get_ptr(&txt->blocks, txt->blocks.len - 1);
+	Block *blk = txt->data[txt->count - 1];
 	size_t end;
 	size_t bufpos = p->data + off - blk->data;
 	if (!addu(off, len, &end) || end > p->len || !block_delete(blk, bufpos, len))
@@ -423,7 +428,8 @@ static void text_change_free(TextChange *c) {
  *      | |     |short|     | existing text |     | |
  *      \-+ <-- +-----+ <-- +---------------+ <-- +-/
  */
-bool text_insert(Text *txt, size_t pos, const char *data, size_t len) {
+bool text_insert(Vis *vis, Text *txt, size_t pos, const char *data, size_t len)
+{
 	if (len == 0)
 		return true;
 	if (pos > txt->size)
@@ -443,7 +449,7 @@ bool text_insert(Text *txt, size_t pos, const char *data, size_t len) {
 	if (!c)
 		return false;
 
-	if (!(data = block_store(txt, data, len)))
+	if (!(data = block_store(vis, txt, data, len)))
 		return false;
 
 	Piece *new = NULL;
@@ -595,25 +601,22 @@ time_t text_state(const Text *txt) {
 	return txt->history->time;
 }
 
-Text *text_loadat_method(int dirfd, const char *filename, enum TextLoadMethod method) {
+Text *text_loadat_method(Vis *vis, int dirfd, const char *filename, enum TextLoadMethod method)
+{
 	Text *txt = calloc(1, sizeof *txt);
 	if (!txt)
 		return NULL;
 	Piece *p = piece_alloc(txt);
 	if (!p)
 		goto out;
-	Block *block = NULL;
-	array_init(&txt->blocks);
+	Block *block = 0;
 	lineno_cache_invalidate(&txt->lines);
 	if (filename) {
 		errno = 0;
 		block = block_load(dirfd, filename, method, &txt->info);
 		if (!block && errno)
 			goto out;
-		if (block && !array_add_ptr(&txt->blocks, block)) {
-			block_free(block);
-			goto out;
-		}
+		*da_push(vis, txt) = block;
 	}
 
 	if (!block)
@@ -761,9 +764,9 @@ void text_free(Text *txt) {
 		piece_free(p);
 	}
 
-	for (size_t i = 0, len = txt->blocks.len; i < len; i++)
-		block_free(array_get_ptr(&txt->blocks, i));
-	array_release(&txt->blocks);
+	for (VisDACount i = 0; i < txt->count; i++)
+		block_free(txt->data[i]);
+	da_release(txt);
 
 	free(txt);
 }
@@ -774,8 +777,8 @@ bool text_modified(const Text *txt) {
 
 bool text_mmaped(const Text *txt, const char *ptr) {
 	uintptr_t addr = (uintptr_t)ptr;
-	for (size_t i = 0, len = txt->blocks.len; i < len; i++) {
-		Block *blk = array_get_ptr(&txt->blocks, i);
+	for (VisDACount i = 0; i < txt->count; i++) {
+		Block *blk = txt->data[i];
 		if ((blk->type == BLOCK_TYPE_MMAP_ORIG || blk->type == BLOCK_TYPE_MMAP) &&
 		    (uintptr_t)(blk->data) <= addr && addr < (uintptr_t)(blk->data + blk->size))
 			return true;

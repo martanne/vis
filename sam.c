@@ -1059,11 +1059,10 @@ static Filerange address_evaluate(Address *addr, File *file, Selection *sel, Fil
 		case '\'':
 		{
 			size_t pos = EPOS;
-			Array *marks = &file->marks[addr->number];
-			size_t idx = sel ? view_selections_number(sel) : 0;
-			SelectionRegion *sr = array_get(marks, idx);
-			if (sr)
-				pos = text_mark_get(file->text, sr->cursor);
+			SelectionRegionList *marks = file->marks + addr->number;
+			VisDACount idx = sel ? view_selections_number(sel) : 0;
+			if (idx < marks->count)
+				pos = text_mark_get(file->text, marks->data[idx].cursor);
 			ret = text_range_new(pos, pos);
 			break;
 		}
@@ -1252,7 +1251,7 @@ enum SamError sam_cmd(Vis *vis, const char *s) {
 			}
 			if (c->type & TRANSCRIPT_INSERT) {
 				for (int i = 0; i < c->count; i++) {
-					text_insert(file->text, c->range.start, c->data, c->len);
+					text_insert(vis, file->text, c->range.start, c->data, c->len);
 					delta += c->len;
 				}
 				Filerange r = text_range_new(c->range.start,

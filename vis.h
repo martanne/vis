@@ -931,30 +931,31 @@ VIS_EXPORT enum VisMark vis_mark_used(Vis*);
 /**
  * Store a set of ``Filerange``s in a mark.
  *
+ * @param vis The editor instance.
  * @param win The window whose selections to store.
  * @param id The mark ID to use.
- * @param sel The array containing the file ranges.
+ * @param ranges The list of file ranges.
  */
-VIS_EXPORT void vis_mark_set(Win *win, enum VisMark id, Array *sel);
+VIS_EXPORT void vis_mark_set(Vis *vis, Win *win, enum VisMark id, FilerangeList ranges);
 /**
  * Get an array of file ranges stored in the mark.
+ * @param vis The editor instance.
  * @param win The window whose mark to retrieve.
  * @param id The mark ID to retrieve.
- * @return An array of file ranges.
+ * @return A list of file ranges.
  * @rst
- * .. warning:: The caller must eventually free the Array by calling
- * ``array_release``.
+ * .. warning:: The caller is responsible for freeing the list with ``da_release``.
  * @endrst
  */
-VIS_EXPORT Array vis_mark_get(Win *win, enum VisMark id);
+VIS_EXPORT FilerangeList vis_mark_get(Vis *vis, Win *win, enum VisMark id);
 /**
- * Normalize an Array of Fileranges.
- * @param array The array of file ranges to normalize.
+ * Normalize a list of Fileranges.
+ * @param ranges The list of file ranges to normalize.
  *
  * Removes invalid ranges, merges overlapping ones and sorts
  * according to the start position.
  */
-VIS_EXPORT void vis_mark_normalize(Array *array);
+VIS_EXPORT void vis_mark_normalize(FilerangeList *ranges);
 /**
  * Add selections of focused window to jump list. Equivalent to vis_jumplist(vis, 0).
  * @param vis The editor instance.
@@ -1054,14 +1055,14 @@ VIS_EXPORT enum VisRegister vis_register_used(Vis*);
  * ``array_release``.
  * @endrst
  */
-VIS_EXPORT Array vis_register_get(Vis *vis, enum VisRegister id);
+VIS_EXPORT TextStringList vis_register_get(Vis *vis, enum VisRegister id);
 /**
  * Set register content.
  * @param vis The editor instance.
  * @param id The register ID to set.
- * @param data The array comprised of ``TextString`` structs.
+ * @param strings The list of ``TextString``s.
  */
-VIS_EXPORT bool vis_register_set(Vis *vis, enum VisRegister id, Array *data);
+VIS_EXPORT bool vis_register_set(Vis *vis, enum VisRegister id, TextStringList strings);
 /** @} */
 
 /*
