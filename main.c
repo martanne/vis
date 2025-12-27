@@ -1247,12 +1247,7 @@ static KEY_ACTION_FN(ka_percent)
 
 static KEY_ACTION_FN(ka_jumplist)
 {
-	if (arg->i < 0)
-		vis_jumplist_prev(vis);
-	else if (arg->i > 0)
-		vis_jumplist_next(vis);
-	else
-		vis_jumplist_save(vis);
+	vis_jumplist(vis, arg->i);
 	return keys;
 }
 
