@@ -2,7 +2,6 @@
 *.gcno
 *.gcov
 *.valgrind
-/array-test
 /buffer-test
 /ccan-config
 /config.h

@@ -2,6 +2,8 @@
 
 #include "tap.h"
 
+typedef struct Vis Vis;
+
 #include "buffer.c"
 
 static bool compare(Buffer *buf, const char *data, size_t len) {

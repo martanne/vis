@@ -3,7 +3,6 @@
 
 #include "ui.h"
 #include "text.h"
-#include "array.h"
 
 enum {
 	SYNTAX_SYMBOL_SPACE,

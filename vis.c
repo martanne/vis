@@ -13,7 +13,6 @@
 
 #include "util.c"
 
-#include "array.c"
 #include "buffer.c"
 #include "event-basic.c"
 #include "map.c"

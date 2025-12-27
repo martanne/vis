@@ -1,7 +1,5 @@
 #include "util.h"
 
-#include "array.h"
-
 #include "text.h"
 
 /* A piece holds a reference (but doesn't itself store) a certain amount of data.
