@@ -3247,17 +3247,11 @@ static void vis_lua_init(Vis *vis) {
 
 	ssize_t len = readlink("/proc/self/exe", path, sizeof(path)-1);
 	if (len > 0) {
-		path[len] = '\0';
-		/* some idiotic dirname(3) implementations return pointers to statically
-		 * allocated memory, hence we use memmove to copy it back */
-		char *dir = dirname(path);
-		if (dir) {
-			size_t len = strlen(dir)+1;
-			if (len < sizeof(path) - sizeof("/lua")) {
-				memmove(path, dir, len);
-				strcat(path, "/lua");
-				vis_lua_path_add(vis, path);
-			}
+		str8 dir, tail = str8("/lua");
+		path_split((str8){.length = len, .data = (uint8_t *)path}, &dir, 0);
+		if (dir.length + tail.length + 1 < sizeof(path)) {
+			memcpy(path + dir.length, tail.data, tail.length + 1);
+			vis_lua_path_add(vis, path);
 		}
 	}
 

@@ -33,7 +33,6 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <inttypes.h>
-#include <libgen.h>
 #include <limits.h>
 #include <locale.h>
 #include <poll.h>
