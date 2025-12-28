@@ -105,3 +105,28 @@ int text_string_width(const char *data, size_t len) {
 
 	return width;
 }
+
+static TextString text_string_from_c_str(char *c_str)
+{
+	TextString result = {
+		.data = c_str,
+		.len  = strlen(c_str),
+	};
+	return result;
+}
+
+static void text_string_split_at(TextString s, TextString *left, TextString *right, ptrdiff_t n)
+{
+	if (left)  *left  = (TextString){0};
+	if (right) *right = (TextString){0};
+	if (n >= 0 && (size_t)n <= s.len) {
+		if (left) *left = (TextString){
+			.data = s.data,
+			.len  = n,
+		};
+		if (right) *right = (TextString){
+			.data = s.data + n + 1,
+			.len  = MAX(0, (ptrdiff_t)s.len - n - 1),
+		};
+	}
+}

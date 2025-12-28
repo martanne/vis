@@ -274,7 +274,8 @@ err:
  *   - POSIX ACL can not be preserved (if enabled)
  *   - SELinux security context can not be preserved (if enabled)
  */
-static bool text_save_begin_atomic(TextSave *ctx) {
+static bool text_save_begin_atomic(TextSave *ctx)
+{
 	int oldfd, saved_errno;
 	if ((oldfd = openat(ctx->dirfd, ctx->filename, O_RDONLY)) == -1 && errno != ENOENT)
 		goto err;
@@ -288,20 +289,19 @@ static bool text_save_begin_atomic(TextSave *ctx) {
 			goto err;
 	}
 
+	TextString base, dir, fname = text_string_from_c_str((char *)ctx->filename);
+	text_string_split_at(fname, &dir, &base, (char *)memory_scan_reverse(fname.data, '/', fname.len) - fname.data);
+
+	if (dir.len  == 0) dir  = TextString(".");
+	if (base.len == 0) base = fname;
+
 	char suffix[] = ".vis.XXXXXX";
-	size_t len = strlen(ctx->filename) + sizeof("./.") + sizeof(suffix);
-	char *dir = strdup(ctx->filename);
-	char *base = strdup(ctx->filename);
+	size_t len = fname.len + sizeof("./.") + sizeof(suffix);
 
-	if (!(ctx->tmpname = malloc(len)) || !dir || !base) {
-		free(dir);
-		free(base);
+	if (!(ctx->tmpname = malloc(len)))
 		goto err;
-	}
 
-	snprintf(ctx->tmpname, len, "%s/.%s%s", dirname(dir), basename(base), suffix);
-	free(dir);
-	free(base);
+	snprintf(ctx->tmpname, len, "%.*s/.%.*s%s", (int)dir.len, dir.data, (int)base.len, base.data, suffix);
 
 	if ((ctx->fd = mkstempat(ctx->dirfd, ctx->tmpname)) == -1)
 		goto err;

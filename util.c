@@ -73,3 +73,14 @@ da_reserve_(Vis *vis, void *data, VisDACount *capacity, VisDACount needed, size_
 	*capacity = cap;
 	return data;
 }
+
+static void *
+memory_scan_reverse(const void *memory, uint8_t byte, ptrdiff_t n)
+{
+	void *result = 0;
+	if (n > 0) {
+		const uint8_t *s = memory;
+		while (n) if (s[--n] == byte) { result = (void *)(s + n); break; }
+	}
+	return result;
+}

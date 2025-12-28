@@ -34,6 +34,7 @@ typedef struct {
 	const char *data; /**< Content, might not be NUL-terminated. */
 	size_t len;       /**< Length in bytes. */
 } TextString;
+#define TextString(s) (TextString){.data = s, .len = sizeof(s) - 1}
 
 typedef struct {
 	TextString *data;

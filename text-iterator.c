@@ -64,19 +64,9 @@ bool text_iterator_byte_prev(Iterator *it, char *b) {
 	return true;
 }
 
-static void *scan_memory_reverse(const void *memory, int byte, ptrdiff_t n)
-{
-	void *result = 0;
-	if (n > 0) {
-		const signed char *s = memory;
-		while (n) if (s[--n] == byte) { result = (void *)(s + n); break; }
-	}
-	return result;
-}
-
 bool text_iterator_byte_find_prev(Iterator *it, char b) {
 	while (it->text) {
-		const char *match = scan_memory_reverse(it->start, b, it->text - it->start);
+		const char *match = memory_scan_reverse(it->start, b, it->text - it->start);
 		if (match) {
 			it->pos -= it->text - match;
 			it->text = match;

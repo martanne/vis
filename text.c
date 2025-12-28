@@ -99,6 +99,7 @@ struct Text {
 };
 
 #include "text-common.c"
+#include "text-util.c"
 #include "text-io.c"
 #include "text-iterator.c"
 #include "text-motions.c"
@@ -108,7 +109,6 @@ struct Text {
 #else
   #include "text-regex.c"
 #endif
-#include "text-util.c"
 
 /* cache layer */
 static void cache_piece(Text *txt, Piece *p);
