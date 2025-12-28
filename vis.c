@@ -30,10 +30,6 @@
 #include "vis-subprocess.c"
 #include "vis-text-objects.c"
 
-static void macro_replay(Vis *vis, const Macro *macro);
-static void macro_replay_internal(Vis *vis, const Macro *macro);
-static void vis_keys_push(Vis *vis, const char *input, size_t pos, bool record);
-
 /** window / file handling */
 
 static void file_free(Vis *vis, File *file) {
@@ -1150,6 +1146,44 @@ static void vis_keys_process(Vis *vis, size_t pos) {
 	buffer_remove(buf, keys - buf->data, end - keys);
 }
 
+static void vis_keys_push(Vis *vis, const char *input, size_t pos, bool record)
+{
+	if (!input)
+		return;
+	if (record && vis->recording)
+		macro_append(vis->recording, input);
+	if (vis->macro_operator)
+		macro_append(vis->macro_operator, input);
+	if (buffer_append0(&vis->input_queue, input))
+		vis_keys_process(vis, pos);
+}
+
+static void macro_replay_internal(Vis *vis, const Macro *macro)
+{
+	size_t pos = buffer_length0(&vis->input_queue);
+	for (char *key = macro->data, *next; key; key = next) {
+		char tmp;
+		next = (char*)vis_keys_next(vis, key);
+		if (next) {
+			tmp = *next;
+			*next = '\0';
+		}
+
+		vis_keys_push(vis, key, pos, false);
+
+		if (next)
+			*next = tmp;
+	}
+}
+
+static void macro_replay(Vis *vis, const Macro *macro)
+{
+	const Macro *replaying = vis->replaying;
+	vis->replaying = macro;
+	macro_replay_internal(vis, macro);
+	vis->replaying = replaying;
+}
+
 void vis_keys_feed(Vis *vis, const char *input) {
 	if (!input)
 		return;
@@ -1159,17 +1193,6 @@ void vis_keys_feed(Vis *vis, const char *input) {
 	/* use internal function, to keep Lua based tests which use undo points working */
 	macro_replay_internal(vis, &macro);
 	macro_release(&macro);
-}
-
-static void vis_keys_push(Vis *vis, const char *input, size_t pos, bool record) {
-	if (!input)
-		return;
-	if (record && vis->recording)
-		macro_append(vis->recording, input);
-	if (vis->macro_operator)
-		macro_append(vis->macro_operator, input);
-	if (buffer_append0(&vis->input_queue, input))
-		vis_keys_process(vis, pos);
 }
 
 static const char *getkey(Vis *vis) {
@@ -1387,30 +1410,6 @@ bool vis_macro_record_stop(Vis *vis) {
 
 bool vis_macro_recording(Vis *vis) {
 	return vis->recording;
-}
-
-static void macro_replay(Vis *vis, const Macro *macro) {
-	const Macro *replaying = vis->replaying;
-	vis->replaying = macro;
-	macro_replay_internal(vis, macro);
-	vis->replaying = replaying;
-}
-
-static void macro_replay_internal(Vis *vis, const Macro *macro) {
-	size_t pos = buffer_length0(&vis->input_queue);
-	for (char *key = macro->data, *next; key; key = next) {
-		char tmp;
-		next = (char*)vis_keys_next(vis, key);
-		if (next) {
-			tmp = *next;
-			*next = '\0';
-		}
-
-		vis_keys_push(vis, key, pos, false);
-
-		if (next)
-			*next = tmp;
-	}
 }
 
 bool vis_macro_replay(Vis *vis, enum VisRegister id) {
