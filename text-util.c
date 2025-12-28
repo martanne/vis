@@ -1,6 +1,3 @@
-#include "text-util.h"
-#include "util.h"
-
 Filerange text_range_union(const Filerange *r1, const Filerange *r2) {
 	if (!text_range_valid(r1))
 		return *r2;

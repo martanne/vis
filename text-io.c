@@ -1,8 +1,3 @@
-#include "text.h"
-#include "text-util.h"
-#include "util.h"
-
-
 /* Allocate blocks holding the actual file content in chunks of size: */
 #ifndef BLOCK_SIZE
 #define BLOCK_SIZE (1 << 20)

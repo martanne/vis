@@ -15,7 +15,6 @@ typedef struct Win Win;
 
 #include "ui.h"
 #include "view.h"
-#include "text-regex.h"
 #include "buffer.h"
 
 #ifndef CONFIG_HELP

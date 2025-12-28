@@ -1,9 +1,4 @@
 #include "vis-core.h"
-#include "view.h"
-#include "text.h"
-#include "text-motions.h"
-#include "text-util.h"
-#include "util.h"
 
 /* A selection is made up of two marks named cursor and anchor.
  * While the anchor remains fixed the cursor mark follows cursor motions.

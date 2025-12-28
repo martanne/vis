@@ -1,8 +1,6 @@
 #include "vis.h"
 #include "vis-core.h"
 #include "text.h"
-#include "util.h"
-#include "text-util.h"
 
 #ifndef DEBUG_UI
 #define DEBUG_UI 0

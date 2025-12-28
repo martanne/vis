@@ -417,4 +417,241 @@ VIS_INTERNAL bool text_mmaped(const Text*, const char *ptr);
 VIS_INTERNAL ssize_t write_all(int fd, const char *buf, size_t count);
 /** @} */
 
+/*
+ * @defgroup regex Text Regular Expression Handling
+ * @{
+ */
+
+/* make the REG_* constants available */
+#if CONFIG_TRE
+  #include <tre/tre.h>
+#else
+  #include <regex.h>
+#endif
+
+#define MAX_REGEX_SUB 10
+
+typedef struct Regex Regex;
+typedef Filerange RegexMatch;
+
+VIS_INTERNAL Regex *text_regex_new(void);
+VIS_INTERNAL int text_regex_compile(Regex*, const char *pattern, int cflags);
+VIS_INTERNAL size_t text_regex_nsub(Regex*);
+VIS_INTERNAL void text_regex_free(Regex*);
+VIS_INTERNAL int text_regex_match(Regex*, const char *data, int eflags);
+VIS_INTERNAL int text_search_range_forward(Text*, size_t pos, size_t len, Regex *r, size_t nmatch, RegexMatch pmatch[], int eflags);
+VIS_INTERNAL int text_search_range_backward(Text*, size_t pos, size_t len, Regex *r, size_t nmatch, RegexMatch pmatch[], int eflags);
+
+/** @} */
+
+/*
+ * @defgroup motions Text Motions
+ * @{
+ */
+
+/* these functions all take a position in bytes from the start of the file,
+ * perform a certain movement and return the new position. If the movement
+ * is not possible the original position is returned unchanged. */
+
+/* char refers to a grapheme (might skip over multiple Unicode codepoints) */
+VIS_INTERNAL size_t text_char_next(Text*, size_t pos);
+VIS_INTERNAL size_t text_char_prev(Text*, size_t pos);
+
+VIS_INTERNAL size_t text_codepoint_next(Text*, size_t pos);
+VIS_INTERNAL size_t text_codepoint_prev(Text*, size_t pos);
+
+/* find the given substring either in forward or backward direction.
+ * does not wrap around at file start / end. If no match is found return
+ * original position */
+VIS_INTERNAL size_t text_find_next(Text*, size_t pos, const char *s);
+VIS_INTERNAL size_t text_find_prev(Text*, size_t pos, const char *s);
+/* same as above but limit searched range to the line containing pos */
+VIS_INTERNAL size_t text_line_find_next(Text*, size_t pos, const char *s);
+VIS_INTERNAL size_t text_line_find_prev(Text*, size_t pos, const char *s);
+
+/*    begin            finish    next
+ *    v                v         v
+ *  \n      I am a line!       \n
+ *  ^       ^                  ^
+ *  prev    start              end
+ */
+VIS_INTERNAL size_t text_line_prev(Text*, size_t pos);
+VIS_INTERNAL size_t text_line_begin(Text*, size_t pos);
+VIS_INTERNAL size_t text_line_start(Text*, size_t pos);
+VIS_INTERNAL size_t text_line_finish(Text*, size_t pos);
+VIS_INTERNAL size_t text_line_end(Text*, size_t pos);
+VIS_INTERNAL size_t text_line_next(Text*, size_t pos);
+VIS_INTERNAL size_t text_line_offset(Text*, size_t pos, size_t off);
+/* get grapheme count of the line upto `pos' */
+VIS_INTERNAL int text_line_char_get(Text*, size_t pos);
+/* get position of the `count' grapheme in the line containing `pos' */
+VIS_INTERNAL size_t text_line_char_set(Text*, size_t pos, int count);
+/* get display width of line upto `pos' */
+VIS_INTERNAL int text_line_width_get(Text*, size_t pos);
+/* get position of character being displayed at `width' in line containing `pos' */
+VIS_INTERNAL size_t text_line_width_set(Text*, size_t pos, int width);
+/* move to the next/previous grapheme on the same line */
+VIS_INTERNAL size_t text_line_char_next(Text*, size_t pos);
+VIS_INTERNAL size_t text_line_char_prev(Text*, size_t pos);
+/* move to start of next/previous blank line */
+VIS_INTERNAL size_t text_line_blank_next(Text*, size_t pos);
+VIS_INTERNAL size_t text_line_blank_prev(Text*, size_t pos);
+/* move to same offset in previous/next line */
+VIS_INTERNAL size_t text_line_up(Text*, size_t pos);
+VIS_INTERNAL size_t text_line_down(Text*, size_t pos);
+/* functions to iterate over all line beginnings in a given range */
+VIS_INTERNAL size_t text_range_line_first(Text*, Filerange*);
+VIS_INTERNAL size_t text_range_line_next(Text*, Filerange*, size_t pos);
+/*
+ * A longword consists of a sequence of non-blank characters, separated with
+ * white space. TODO?: An empty line is also considered to be a word.
+ * This is equivalent to a WORD in vim terminology.
+ */
+VIS_INTERNAL size_t text_longword_end_next(Text*, size_t pos);
+VIS_INTERNAL size_t text_longword_end_prev(Text*, size_t pos);
+VIS_INTERNAL size_t text_longword_start_next(Text*, size_t pos);
+VIS_INTERNAL size_t text_longword_start_prev(Text*, size_t pos);
+/*
+ * A word consists of a sequence of letters, digits and underscores, or a
+ * sequence of other non-blank characters, separated with white space.
+ * TODO?: An empty line is also considered to be a word.
+ * This is equivalent to a word (lowercase) in vim terminology.
+ */
+VIS_INTERNAL size_t text_word_end_next(Text*, size_t pos);
+VIS_INTERNAL size_t text_word_end_prev(Text*, size_t pos);
+VIS_INTERNAL size_t text_word_start_next(Text*, size_t pos);
+VIS_INTERNAL size_t text_word_start_prev(Text*, size_t pos);
+/*
+ * More general versions of the above, define your own word boundaries.
+ */
+VIS_INTERNAL size_t text_customword_start_next(Text*, size_t pos, int (*isboundary)(int));
+VIS_INTERNAL size_t text_customword_start_prev(Text*, size_t pos, int (*isboundary)(int));
+VIS_INTERNAL size_t text_customword_end_next(Text*, size_t pos, int (*isboundary)(int));
+VIS_INTERNAL size_t text_customword_end_prev(Text*, size_t pos, int (*isboundary)(int));
+/* TODO: implement the following semantics
+ * A sentence is defined as ending at a '.', '!' or '?' followed by either the
+ * end of a line, or by a space or tab.  Any number of closing ')', ']', '"'
+ * and ''' characters may appear after the '.', '!' or '?' before the spaces,
+ * tabs or end of line.  A paragraph and section boundary is also a sentence
+ * boundary.
+ */
+VIS_INTERNAL size_t text_sentence_next(Text*, size_t pos);
+VIS_INTERNAL size_t text_sentence_prev(Text*, size_t pos);
+/* TODO: implement the following semantics
+ * A paragraph begins after each empty line. A section boundary is also a
+ * paragraph boundary. Note that a blank line (only containing white space)
+ * is NOT a paragraph boundary.
+ */
+VIS_INTERNAL size_t text_paragraph_next(Text*, size_t pos);
+VIS_INTERNAL size_t text_paragraph_prev(Text*, size_t pos);
+/* A section begins after a form-feed in the first column.
+size_t text_section_next(Text*, size_t pos);
+size_t text_section_prev(Text*, size_t pos);
+*/
+VIS_INTERNAL size_t text_block_start(Text*, size_t pos);
+VIS_INTERNAL size_t text_block_end(Text*, size_t pos);
+VIS_INTERNAL size_t text_parenthesis_start(Text*, size_t pos);
+VIS_INTERNAL size_t text_parenthesis_end(Text*, size_t pos);
+/* search corresponding '(', ')', '{', '}', '[', ']', '>', '<', '"', ''' */
+VIS_INTERNAL size_t text_bracket_match(Text*, size_t pos, const Filerange *limits);
+/* same as above but explicitly specify symbols to match */
+VIS_INTERNAL size_t text_bracket_match_symbol(Text*, size_t pos, const char *symbols, const Filerange *limits);
+
+/* search the given regex pattern in either forward or backward direction,
+ * starting from pos. Does wrap around if no match was found. */
+VIS_INTERNAL size_t text_search_forward(Text *txt, size_t pos, Regex *regex);
+VIS_INTERNAL size_t text_search_backward(Text *txt, size_t pos, Regex *regex);
+
+/* is c a special symbol delimiting a word? */
+VIS_INTERNAL int is_word_boundary(int c);
+
+/** @} */
+
+/*
+ * @defgroup objects Text Objects
+ * @{
+ */
+
+/* these functions all take a file position. If this position is part of the
+ * respective text-object, a corresponding range is returned. If there is no
+ * such text-object at the given location, an empty range is returned.
+ */
+
+/* return range covering the entire text */
+VIS_INTERNAL Filerange text_object_entire(Text*, size_t pos);
+/* word which happens to be at pos without any neighbouring white spaces */
+VIS_INTERNAL Filerange text_object_word(Text*, size_t pos);
+/* includes trailing white spaces. If at pos happens to be a white space
+ * include all neighbouring leading white spaces and the following word. */
+VIS_INTERNAL Filerange text_object_word_outer(Text*, size_t pos);
+/* find next occurrence of `word' (as word not substring) in forward/backward direction */
+VIS_INTERNAL Filerange text_object_word_find_next(Text*, size_t pos, const char *word);
+VIS_INTERNAL Filerange text_object_word_find_prev(Text*, size_t pos, const char *word);
+/* find next occurrence of a literal string (not regex) in forward/backward direction */
+VIS_INTERNAL Filerange text_object_find_next(Text *txt, size_t pos, const char *search);
+VIS_INTERNAL Filerange text_object_find_prev(Text *txt, size_t pos, const char *search);
+/* same semantics as above but for a longword (i.e. delimited by white spaces) */
+VIS_INTERNAL Filerange text_object_longword(Text*, size_t pos);
+VIS_INTERNAL Filerange text_object_longword_outer(Text*, size_t pos);
+
+VIS_INTERNAL Filerange text_object_line(Text*, size_t pos);
+VIS_INTERNAL Filerange text_object_line_inner(Text*, size_t pos);
+VIS_INTERNAL Filerange text_object_sentence(Text*, size_t pos);
+VIS_INTERNAL Filerange text_object_paragraph(Text*, size_t pos);
+VIS_INTERNAL Filerange text_object_paragraph_outer(Text*, size_t pos);
+
+/* these are inner text objects i.e. the delimiters themself are not
+ * included in the range */
+VIS_INTERNAL Filerange text_object_square_bracket(Text*, size_t pos);
+VIS_INTERNAL Filerange text_object_curly_bracket(Text*, size_t pos);
+VIS_INTERNAL Filerange text_object_angle_bracket(Text*, size_t pos);
+VIS_INTERNAL Filerange text_object_parenthesis(Text*, size_t pos);
+VIS_INTERNAL Filerange text_object_quote(Text*, size_t pos);
+VIS_INTERNAL Filerange text_object_single_quote(Text*, size_t pos);
+VIS_INTERNAL Filerange text_object_backtick(Text*, size_t pos);
+/* match a search term in either forward or backward direction */
+VIS_INTERNAL Filerange text_object_search_forward(Text*, size_t pos, Regex*);
+VIS_INTERNAL Filerange text_object_search_backward(Text*, size_t pos, Regex*);
+/* match all lines with same indentation level as the current one */
+VIS_INTERNAL Filerange text_object_indentation(Text*, size_t pos);
+
+/* extend a range to cover whole lines */
+VIS_INTERNAL Filerange text_range_linewise(Text*, Filerange*);
+/* trim leading and trailing white spaces from range */
+VIS_INTERNAL Filerange text_range_inner(Text*, Filerange*);
+/* test whether a given range covers whole lines */
+VIS_INTERNAL bool text_range_is_linewise(Text*, Filerange*);
+
+/** @} */
+
+/*
+ * @defgroup util Utilities
+ * @{
+ */
+
+/* test whether the given range is valid (start <= end) */
+#define text_range_valid(r) ((r)->start != EPOS && (r)->end != EPOS && (r)->start <= (r)->end)
+/* get the size of the range (end-start) or zero if invalid */
+#define text_range_size(r) (text_range_valid(r) ? (r)->end - (r)->start : 0)
+/* create an empty / invalid range of size zero */
+#define text_range_empty() (Filerange){.start = EPOS, .end = EPOS}
+/* merge two ranges into a new one which contains both of them */
+VIS_INTERNAL Filerange text_range_union(const Filerange*, const Filerange*);
+/* get intersection of two ranges */
+VIS_INTERNAL Filerange text_range_intersect(const Filerange*, const Filerange*);
+/* create new range [min(a,b), max(a,b)] */
+VIS_INTERNAL Filerange text_range_new(size_t a, size_t b);
+/* test whether two ranges are equal */
+VIS_INTERNAL bool text_range_equal(const Filerange*, const Filerange*);
+/* test whether two ranges overlap */
+VIS_INTERNAL bool text_range_overlap(const Filerange*, const Filerange*);
+/* test whether a given position is within a certain range */
+VIS_INTERNAL bool text_range_contains(const Filerange*, size_t pos);
+/* count the number of graphemes in data */
+VIS_INTERNAL int text_char_count(const char *data, size_t len);
+/* get the approximate display width of data */
+VIS_INTERNAL int text_string_width(const char *data, size_t len);
+
+/** @} */
+
 #endif

@@ -1,5 +1,3 @@
-#include "text-regex.h"
-
 struct Regex {
 	regex_t regex;
 };

@@ -1,8 +1,4 @@
 #include "vis-core.h"
-#include "text-motions.h"
-#include "text-objects.h"
-#include "text-util.h"
-#include "util.h"
 
 static Regex *search_word(Vis *vis, Text *txt, size_t pos) {
 	char expr[512];

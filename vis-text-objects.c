@@ -1,6 +1,4 @@
 #include "vis-core.h"
-#include "text-objects.h"
-#include "util.h"
 
 int vis_textobject_register(Vis *vis, int type, void *data, VisTextObjectFunction *textobject)
 {

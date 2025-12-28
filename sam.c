@@ -16,15 +16,7 @@
  * REPRESENTATION OR WARRANTY OF ANY KIND CONCERNING THE MERCHANTABILITY
  * OF THIS SOFTWARE OR ITS FITNESS FOR ANY PARTICULAR PURPOSE.
  */
-#include "util.h"
-
-#include "sam.h"
 #include "vis-core.h"
-#include "buffer.h"
-#include "text.h"
-#include "text-motions.h"
-#include "text-objects.h"
-#include "text-regex.h"
 
 #define MAX_ARGV 8
 

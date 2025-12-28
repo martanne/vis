@@ -1,6 +1,3 @@
-#include "text-regex.h"
-#include "text-motions.h"
-
 struct Regex {
 	regex_t regex;
 	tre_str_source str_source;

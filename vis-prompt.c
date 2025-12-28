@@ -1,7 +1,4 @@
 #include "vis-core.h"
-#include "text-motions.h"
-#include "text-objects.h"
-#include "text-util.h"
 
 bool vis_prompt_cmd(Vis *vis, const char *cmd) {
 	if (!cmd || !cmd[0] || !cmd[1])

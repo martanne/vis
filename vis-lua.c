@@ -11,11 +11,7 @@
  * @license ISC
  * @release RELEASE
  */
-#include "util.h"
-
-#include "vis-lua.h"
 #include "vis-core.h"
-#include "text-motions.h"
 
 #ifndef VIS_PATH
 #define VIS_PATH "/usr/local/share/vis"

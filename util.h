@@ -78,8 +78,12 @@
 #define MAX(a, b)  ((a) < (b) ? (b) : (a))
 
 /* is c the start of a utf8 sequence? */
-#define ISUTF8(c)   (((c)&0xC0)!=0x80)
-#define ISASCII(ch) ((unsigned char)ch < 0x80)
+#define ISUTF8(c)     (((c)&0xC0)!=0x80)
+#define ISASCII(ch)   ((unsigned char)ch < 0x80)
+
+#define IsBlank(c)    ((c) == ' ' || (c) == '\t')
+#define IsSpace(c)    (isspace((unsigned char)c))
+#define IsBoundary(c) (isboundary((unsigned char)c))
 
 #if GCC_VERSION>=5004000 || CLANG_VERSION>=4000000
 #define addu __builtin_add_overflow

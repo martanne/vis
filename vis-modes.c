@@ -1,6 +1,4 @@
 #include "vis-core.h"
-#include "text-motions.h"
-#include "util.h"
 
 static void keyaction_free(KeyAction *action)
 {

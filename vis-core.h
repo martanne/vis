@@ -7,9 +7,7 @@
 #include "sam.h"
 #include "vis-lua.h"
 #include "text.h"
-#include "text-util.h"
 #include "map.h"
-#include "buffer.h"
 
 /* a mode contains a set of key bindings which are currently valid.
  *

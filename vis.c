@@ -2,13 +2,7 @@
 
 #include <termkey.h>
 
-#include "vis.h"
-#include "text-util.h"
-#include "text-motions.h"
-#include "text-objects.h"
 #include "vis-core.h"
-#include "sam.h"
-#include "ui.h"
 #include "vis-subprocess.h"
 
 #include "util.c"
