@@ -295,12 +295,13 @@ static bool text_save_begin_atomic(TextSave *ctx)
 	char suffix[] = ".vis.XXXXXX";
 	size_t len = fname.length + sizeof("./.") + sizeof(suffix);
 
-	if (!(ctx->tmpname = malloc(len)))
+	if (!(ctx->tmpname.data = malloc(len)))
 		goto err;
 
-	snprintf(ctx->tmpname, len, "%.*s/.%.*s%s", (int)dir.length, dir.data, (int)base.length, base.data, suffix);
+	ctx->tmpname.length = snprintf((char *)ctx->tmpname.data, len, "%.*s/.%.*s%s",
+	                               (int)dir.length, dir.data, (int)base.length, base.data, suffix);
 
-	if ((ctx->fd = mkstempat(ctx->dirfd, ctx->tmpname)) == -1)
+	if ((ctx->fd = mkstempat(ctx->dirfd, (char *)ctx->tmpname.data)) == -1)
 		goto err;
 
 	if (oldfd == -1) {
@@ -345,13 +346,21 @@ static bool text_save_commit_atomic(TextSave *ctx) {
 	if (close_failed)
 		return false;
 
-	if (renameat(ctx->dirfd, ctx->tmpname, ctx->dirfd, ctx->filename) == -1)
+	if (renameat(ctx->dirfd, (char *)ctx->tmpname.data, ctx->dirfd, ctx->filename) == -1)
 		return false;
 
-	free(ctx->tmpname);
-	ctx->tmpname = NULL;
 
-	int dir = openat(ctx->dirfd, dirname(ctx->tmpname), O_DIRECTORY|O_RDONLY);
+	str8 directory;
+	path_split(ctx->tmpname, &directory, 0);
+	/* NOTE: tmpname was allocated by us, no issue with writing a 0 into it;
+	 * however, we may have gotten a static "." back so we shouldn't write in that case. */
+	if (directory.data[directory.length] != 0) directory.data[directory.length] = 0;
+
+	int dir = openat(ctx->dirfd, (char *)directory.data, O_DIRECTORY|O_RDONLY);
+
+	free(ctx->tmpname.data);
+	ctx->tmpname.data = 0;
+
 	if (dir == -1)
 		return false;
 
@@ -449,9 +458,9 @@ void text_save_cancel(TextSave *ctx) {
 	int saved_errno = errno;
 	if (ctx->fd != -1)
 		close(ctx->fd);
-	if (ctx->tmpname && ctx->tmpname[0])
-		unlinkat(ctx->dirfd, ctx->tmpname, 0);
-	free(ctx->tmpname);
+	if (ctx->tmpname.data && ctx->tmpname.data[0])
+		unlinkat(ctx->dirfd, (char *)ctx->tmpname.data, 0);
+	free(ctx->tmpname.data);
 	errno = saved_errno;
 }
 

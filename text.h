@@ -347,7 +347,7 @@ typedef struct {
 	enum TextSaveMethod method; /* method used to save file */
 	Text *txt;                 /* text to operate on */
 	const char *filename;      /* filename to save to */
-	char *tmpname;             /* temporary name used for atomic rename(2) */
+	str8 tmpname;              /* temporary name used for atomic rename(2) */
 	int fd;                    /* file descriptor to write data to using text_save_write */
 	int dirfd;                 /* directory file descriptor, relative to which we save */
 } TextSave;
