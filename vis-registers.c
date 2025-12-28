@@ -218,30 +218,30 @@ static Register *register_from(Vis *vis, enum VisRegister id) {
 	return NULL;
 }
 
-bool vis_register_set(Vis *vis, enum VisRegister id, TextStringList strings)
+bool vis_register_set(Vis *vis, enum VisRegister id, str8_list strings)
 {
 	Register *reg = register_from(vis, id);
 	if (!reg)
 		return false;
 	for (VisDACount i = 0; i < strings.count; i++) {
 		Buffer *buf = register_buffer(vis, reg, i);
-		TextString string = strings.data[i];
-		if (!buffer_put(buf, string.data, string.len))
+		str8 string = strings.data[i];
+		if (!buffer_put(buf, string.data, string.length))
 			return false;
 	}
 	return register_resize(reg, strings.count);
 }
 
-TextStringList vis_register_get(Vis *vis, enum VisRegister id)
+str8_list vis_register_get(Vis *vis, enum VisRegister id)
 {
-	TextStringList result = {0};
+	str8_list result = {0};
 	Register *reg = register_from(vis, id);
 	if (reg) {
 		da_reserve(vis, &result, reg->count);
 		for (VisDACount i = 0; i < reg->count; i++) {
-			*da_push(vis, &result) = (TextString){
-				.data = reg->data[i].data,
-				.len  = reg->data[i].len,
+			*da_push(vis, &result) = (str8){
+				.length = reg->data[i].len,
+				.data   = (uint8_t *)reg->data[i].data,
 			};
 		}
 	}

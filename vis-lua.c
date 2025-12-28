@@ -1728,11 +1728,11 @@ static int registers_index(lua_State *L) {
 	enum VisRegister reg = vis_register_from(vis, symbol[0]);
 	if (reg >= VIS_REG_INVALID)
 		return 1;
-	TextStringList strings = vis_register_get(vis, reg);
+	str8_list strings = vis_register_get(vis, reg);
 	for (VisDACount i = 0; i < strings.count; i++) {
-		TextString string = strings.data[i];
+		str8 string = strings.data[i];
 		lua_pushinteger(L, i+1);
-		lua_pushlstring(L, string.data, string.len);
+		lua_pushlstring(L, (char *)string.data, string.length);
 		lua_settable(L, -3);
 	}
 	da_release(&strings);
@@ -1746,12 +1746,14 @@ static int registers_newindex(lua_State *L) {
 		return 0;
 	enum VisRegister reg = vis_register_from(vis, symbol[0]);
 
-	TextStringList strings = {0};
+	str8_list strings = {0};
 	if (lua_istable(L, 3)) {
 		lua_pushnil(L);
 		while (lua_next(L, 3)) {
-			TextString string;
-			string.data = luaL_checklstring(L, -1, &string.len);
+			size_t length;
+			str8   string;
+			string.data   = (uint8_t *)luaL_checklstring(L, -1, &length);
+			string.length = (ptrdiff_t)length;
 			*da_push(vis, &strings) = string;
 			lua_pop(L, 1);
 		}

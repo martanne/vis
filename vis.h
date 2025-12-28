@@ -1054,14 +1054,14 @@ VIS_EXPORT enum VisRegister vis_register_used(Vis*);
  * ``array_release``.
  * @endrst
  */
-VIS_EXPORT TextStringList vis_register_get(Vis *vis, enum VisRegister id);
+VIS_EXPORT str8_list vis_register_get(Vis *vis, enum VisRegister id);
 /**
  * Set register content.
  * @param vis The editor instance.
  * @param id The register ID to set.
  * @param strings The list of ``TextString``s.
  */
-VIS_EXPORT bool vis_register_set(Vis *vis, enum VisRegister id, TextStringList strings);
+VIS_EXPORT bool vis_register_set(Vis *vis, enum VisRegister id, str8_list strings);
 /** @} */
 
 /*

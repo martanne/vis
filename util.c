@@ -85,40 +85,40 @@ memory_scan_reverse(const void *memory, uint8_t byte, ptrdiff_t n)
 	return result;
 }
 
-static TextString
-text_string_from_c_str(char *c_str)
+static str8
+str8_from_c_str(char *c_str)
 {
-	TextString result = {
-		.data = c_str,
-		.len  = strlen(c_str),
+	str8 result = {
+		.length = strlen(c_str),
+		.data   = (uint8_t *)c_str,
 	};
 	return result;
 }
 
 static void
-text_string_split_at(TextString s, TextString *left, TextString *right, ptrdiff_t n)
+str8_split_at(str8 s, str8 *left, str8 *right, ptrdiff_t n)
 {
-	if (left)  *left  = (TextString){0};
-	if (right) *right = (TextString){0};
-	if (n >= 0 && (size_t)n <= s.len) {
-		if (left) *left = (TextString){
-			.data = s.data,
-			.len  = n,
+	if (left)  *left  = (str8){0};
+	if (right) *right = (str8){0};
+	if (n >= 0 && n <= s.length) {
+		if (left) *left = (str8){
+			.length = n,
+			.data   = s.data,
 		};
-		if (right) *right = (TextString){
-			.data = s.data + n + 1,
-			.len  = MAX(0, (ptrdiff_t)s.len - n - 1),
+		if (right) *right = (str8){
+			.length = MAX(0, s.length - n - 1),
+			.data   = s.data + n + 1,
 		};
 	}
 }
 
 static void
-path_split(TextString path, TextString *directory, TextString *basename)
+path_split(str8 path, str8 *directory, str8 *basename)
 {
-	text_string_split_at(path, directory, basename,
-	                     (char *)memory_scan_reverse(path.data, '/', path.len) - path.data);
-	if (directory && directory->len == 0) *directory = TextString(".");
-	if (basename  && basename->len  == 0) *basename  = path;
+	str8_split_at(path, directory, basename,
+	              (uint8_t *)memory_scan_reverse(path.data, '/', path.length) - path.data);
+	if (directory && directory->length == 0) *directory = str8(".");
+	if (basename  && basename->length  == 0) *basename  = path;
 }
 
 static char *
@@ -127,14 +127,14 @@ absolute_path(const char *name)
 	if (!name)
 		return 0;
 
-	TextString base, dir, string = text_string_from_c_str((char *)name);
+	str8 base, dir, string = str8_from_c_str((char *)name);
 	path_split(string, &dir, &base);
 
 	char path_resolved[PATH_MAX];
 	char path_normalized[PATH_MAX];
 
-	memcpy(path_normalized, dir.data, dir.len);
-	path_normalized[dir.len] = 0;
+	memcpy(path_normalized, dir.data, dir.length);
+	path_normalized[dir.length] = 0;
 
 	char *result = 0;
 	if (realpath(path_normalized, path_resolved) == path_resolved) {
@@ -142,7 +142,7 @@ absolute_path(const char *name)
 			path_resolved[0] = 0;
 
 		snprintf(path_normalized, sizeof(path_normalized), "%s/%.*s",
-		         path_resolved, (int)base.len, base.data);
+		         path_resolved, (int)base.length, base.data);
 		result = strdup(path_normalized);
 	}
 	return result;
