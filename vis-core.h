@@ -169,7 +169,7 @@ struct Win {
 	 *
 	 * IMPORTANT: cursor is not kept in bounds. it is always used modulo VIS_MARK_SET_LRU_COUNT
 	 */
-	enum {VIS_MARK_SET_LRU_COUNT = 32};
+	#define VIS_MARK_SET_LRU_COUNT (32)
 	size_t       mark_set_lru_cursor;
 	Array        mark_set_lru_regions[VIS_MARK_SET_LRU_COUNT];
 	enum VisMode mark_set_lru_modes[VIS_MARK_SET_LRU_COUNT];
