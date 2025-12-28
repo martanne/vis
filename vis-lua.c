@@ -193,20 +193,22 @@ static bool func_ref_get(lua_State *L, const void *addr) {
  *   registry["vis.types"][metatable] = type
  *
  * leaves the metatable at the top of the stack.
+ * IMPORTANT: expects 0 terminated type
  */
-static void obj_type_new(lua_State *L, const char *type) {
-	luaL_newmetatable(L, type);
+static void obj_type_new(lua_State *L, str8 type)
+{
+	luaL_newmetatable(L, (char *)type.data);
 	lua_getglobal(L, "vis");
 	if (!lua_isnil(L, -1)) {
 		lua_getfield(L, -1, "types");
 		lua_pushvalue(L, -3);
-		lua_setfield(L, -2, type);
+		lua_setfield(L, -2, (char *)type.data);
 		lua_pop(L, 1);
 	}
 	lua_pop(L, 1);
 	lua_getfield(L, LUA_REGISTRYINDEX, "vis.types");
 	lua_pushvalue(L, -2);
-	lua_pushstring(L, type);
+	lua_pushlstring(L, (char *)type.data, type.length);
 	lua_settable(L, -3);
 	lua_pop(L, 1);
 }
@@ -415,10 +417,10 @@ static void pushrange(lua_State *L, Filerange *r) {
 		return;
 	}
 	lua_createtable(L, 0, 2);
-	lua_pushstring(L, "start");
+	lua_pushliteral(L, "start");
 	lua_pushinteger(L, r->start);
 	lua_settable(L, -3);
-	lua_pushstring(L, "finish");
+	lua_pushliteral(L, "finish");
 	lua_pushinteger(L, r->end);
 	lua_settable(L, -3);
 }
@@ -1637,13 +1639,13 @@ static int vis_options_index(lua_State *L) {
 		} else if (strcmp(key, "loadmethod") == 0) {
 			switch (vis->load_method) {
 			case TEXT_LOAD_AUTO:
-				lua_pushstring(L, "auto");
+				lua_pushliteral(L, "auto");
 				break;
 			case TEXT_LOAD_READ:
-				lua_pushstring(L, "read");
+				lua_pushliteral(L, "read");
 				break;
 			case TEXT_LOAD_MMAP:
-				lua_pushstring(L, "mmap");
+				lua_pushliteral(L, "mmap");
 				break;
 			}
 			return 1;
@@ -1833,16 +1835,16 @@ static int window_index(lua_State *L) {
 			l.end   = win->view.lastline->lineno;
 
 			lua_createtable(L, 0, 4);
-			lua_pushstring(L, "bytes");
+			lua_pushliteral(L, "bytes");
 			pushrange(L, &b);
 			lua_settable(L, -3);
-			lua_pushstring(L, "lines");
+			lua_pushliteral(L, "lines");
 			pushrange(L, &l);
 			lua_settable(L, -3);
-			lua_pushstring(L, "width");
+			lua_pushliteral(L, "width");
 			lua_pushinteger(L, win->view.width);
 			lua_settable(L, -3);
-			lua_pushstring(L, "height");
+			lua_pushliteral(L, "height");
 			lua_pushinteger(L, win->view.height);
 			lua_settable(L, -3);
 			return 1;
@@ -2584,13 +2586,13 @@ static int file_index(lua_State *L) {
 		if (strcmp(key, "savemethod") == 0) {
 			switch (file->save_method) {
 			case TEXT_SAVE_AUTO:
-				lua_pushstring(L, "auto");
+				lua_pushliteral(L, "auto");
 				break;
 			case TEXT_SAVE_ATOMIC:
-				lua_pushstring(L, "atomic");
+				lua_pushliteral(L, "atomic");
 				break;
 			case TEXT_SAVE_INPLACE:
-				lua_pushstring(L, "inplace");
+				lua_pushliteral(L, "inplace");
 				break;
 			}
 			return 1;
@@ -3151,7 +3153,8 @@ bool vis_lua_paths_get(Vis *vis, char **lpath, char **cpath) {
 	return true;
 }
 
-static bool package_exist(Vis *vis, lua_State *L, const char *name) {
+static bool package_exist(Vis *vis, lua_State *L, str8 name)
+{
 	const char lua[] =
 		"local name = ...\n"
 		"for _, searcher in ipairs(package.searchers or package.loaders) do\n"
@@ -3163,7 +3166,7 @@ static bool package_exist(Vis *vis, lua_State *L, const char *name) {
 		"return false\n";
 	if (luaL_loadstring(L, lua) != LUA_OK)
 		return false;
-	lua_pushstring(L, name);
+	lua_pushlstring(L, (char *)name.data, name.length);
 	/* an error indicates package exists */
 	bool ret = lua_pcall(L, 1, 1, 0) != LUA_OK || lua_toboolean(L, -1);
 	lua_pop(L, 1);
@@ -3267,7 +3270,7 @@ static void vis_lua_init(Vis *vis) {
 	lua_newtable(L);
 	lua_setfield(L, LUA_REGISTRYINDEX, "vis.functions");
 	/* metatable used to type check user data */
-	obj_type_new(L, VIS_LUA_TYPE_VIS);
+	obj_type_new(L, str8(VIS_LUA_TYPE_VIS));
 	luaL_setfuncs(L, vis_lua, 0);
 	lua_newtable(L);
 	lua_setfield(L, -2, "types");
@@ -3277,7 +3280,7 @@ static void vis_lua_init(Vis *vis) {
 	obj_ref_new(L, vis, "vis");
 	lua_setglobal(L, "vis");
 
-	obj_type_new(L, VIS_LUA_TYPE_FILE);
+	obj_type_new(L, str8(VIS_LUA_TYPE_FILE));
 
 	const struct {
 		enum VisTextObject id;
@@ -3295,9 +3298,9 @@ static void vis_lua_init(Vis *vis) {
 
 	luaL_setfuncs(L, file_funcs, 0);
 
-	obj_type_new(L, VIS_LUA_TYPE_TEXT);
+	obj_type_new(L, str8(VIS_LUA_TYPE_TEXT));
 	luaL_setfuncs(L, file_lines_funcs, 0);
-	obj_type_new(L, VIS_LUA_TYPE_WINDOW);
+	obj_type_new(L, str8(VIS_LUA_TYPE_WINDOW));
 	luaL_setfuncs(L, window_funcs, 0);
 
 	const struct {
@@ -3326,20 +3329,20 @@ static void vis_lua_init(Vis *vis) {
 		lua_setfield(L, -2, styles[i].name);
 	}
 
-	obj_type_new(L, VIS_LUA_TYPE_WIN_OPTS);
+	obj_type_new(L, str8(VIS_LUA_TYPE_WIN_OPTS));
 	luaL_setfuncs(L, window_option_funcs, 0);
 
-	obj_type_new(L, VIS_LUA_TYPE_MARK);
-	obj_type_new(L, VIS_LUA_TYPE_MARKS);
+	obj_type_new(L, str8(VIS_LUA_TYPE_MARK));
+	obj_type_new(L, str8(VIS_LUA_TYPE_MARKS));
 	lua_pushlightuserdata(L, vis);
 	luaL_setfuncs(L, window_marks_funcs, 1);
 
-	obj_type_new(L, VIS_LUA_TYPE_SELECTION);
+	obj_type_new(L, str8(VIS_LUA_TYPE_SELECTION));
 	luaL_setfuncs(L, window_selection_funcs, 0);
-	obj_type_new(L, VIS_LUA_TYPE_SELECTIONS);
+	obj_type_new(L, str8(VIS_LUA_TYPE_SELECTIONS));
 	luaL_setfuncs(L, window_selections_funcs, 0);
 
-	obj_type_new(L, VIS_LUA_TYPE_UI);
+	obj_type_new(L, str8(VIS_LUA_TYPE_UI));
 	luaL_setfuncs(L, ui_funcs, 0);
 	lua_pushinteger(L, ui_terminal_colors());
 	lua_setfield(L, -2, "colors");
@@ -3357,16 +3360,16 @@ static void vis_lua_init(Vis *vis) {
 	}
 	lua_setfield(L, -2, "layouts");
 
-	obj_type_new(L, VIS_LUA_TYPE_REGISTERS);
+	obj_type_new(L, str8(VIS_LUA_TYPE_REGISTERS));
 	lua_pushlightuserdata(L, vis);
 	luaL_setfuncs(L, registers_funcs, 1);
 
-	obj_type_new(L, VIS_LUA_TYPE_KEYACTION);
+	obj_type_new(L, str8(VIS_LUA_TYPE_KEYACTION));
 
 	lua_getglobal(L, "vis");
 	lua_getmetatable(L, -1);
 
-	lua_pushstring(L, VERSION);
+	lua_pushliteral(L, VERSION);
 	lua_setfield(L, -2, "VERSION");
 
 	lua_newtable(L);
@@ -3387,14 +3390,14 @@ static void vis_lua_init(Vis *vis) {
 	}
 	lua_setfield(L, -2, "modes");
 
-	obj_type_new(L, VIS_LUA_TYPE_VIS_OPTS);
+	obj_type_new(L, str8(VIS_LUA_TYPE_VIS_OPTS));
 	luaL_setfuncs(L, vis_option_funcs, 0);
 
-	if (!package_exist(vis, L, "visrc")) {
+	if (!package_exist(vis, L, str8("visrc"))) {
 		vis_info_show(vis, "WARNING: failed to load visrc.lua");
 	} else {
 		lua_getglobal(L, "require");
-		lua_pushstring(L, "visrc");
+		lua_pushliteral(L, "visrc");
 		pcall(vis, L, 1, 0);
 		vis_lua_event_call(vis, "init");
 	}
@@ -3658,10 +3661,10 @@ void vis_lua_process_response(Vis *vis, const char *name,
 	if (lua_isfunction(L, -1)) {
 		lua_pushstring(L, name);
 		switch (rtype) {
-		case STDOUT: lua_pushstring(L, "STDOUT"); break;
-		case STDERR: lua_pushstring(L, "STDERR"); break;
-		case SIGNAL: lua_pushstring(L, "SIGNAL"); break;
-		case EXIT: lua_pushstring(L, "EXIT"); break;
+		case EXIT:   lua_pushliteral(L, "EXIT");   break;
+		case SIGNAL: lua_pushliteral(L, "SIGNAL"); break;
+		case STDERR: lua_pushliteral(L, "STDERR"); break;
+		case STDOUT: lua_pushliteral(L, "STDOUT"); break;
 		}
 		switch (rtype) {
 		case EXIT:
