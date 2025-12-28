@@ -68,33 +68,6 @@ static File *file_new_text(Vis *vis, Text *text) {
 	return file;
 }
 
-char *absolute_path(const char *name) {
-	if (!name)
-		return NULL;
-	char *copy1 = strdup(name);
-	char *copy2 = strdup(name);
-	char *path_absolute = NULL;
-	char path_normalized[PATH_MAX] = "";
-
-	if (!copy1 || !copy2)
-		goto err;
-
-	char *dir = dirname(copy1);
-	char *base = basename(copy2);
-	if (!(path_absolute = realpath(dir, NULL)))
-		goto err;
-	if (strcmp(path_absolute, "/") == 0)
-		path_absolute[0] = '\0';
-
-	snprintf(path_normalized, sizeof(path_normalized), "%s/%s",
-	         path_absolute, base);
-err:
-	free(copy1);
-	free(copy2);
-	free(path_absolute);
-	return path_normalized[0] ? strdup(path_normalized) : NULL;
-}
-
 static File *file_new(Vis *vis, const char *name, bool internal) {
 	char *name_absolute = NULL;
 	bool cmp_names = 0;

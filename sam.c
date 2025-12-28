@@ -1654,7 +1654,7 @@ static bool cmd_write(Vis *vis, Win *win, Command *cmd, const char *argv[], Sele
 
 		char *path = absolute_path(*name);
 		if (!path) {
-			vis_info_show(vis, "Can't open file for writing: %s", strerror(errno));
+			vis_info_show(vis, "Failed to resolve path '%s': %s", *name, strerror(errno));
 			return false;
 		}
 

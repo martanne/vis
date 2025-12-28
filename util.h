@@ -105,4 +105,16 @@ static inline bool addu(size_t a, size_t b, size_t *c) {
 
 typedef int32_t VisDACount;
 
+typedef struct {
+	const char *data;
+	size_t len;
+} TextString;
+#define TextString(s) (TextString){.data = s, .len = sizeof(s) - 1}
+
+typedef struct {
+	TextString *data;
+	VisDACount  count;
+	VisDACount  capacity;
+} TextStringList;
+
 #endif /* UTIL_H */

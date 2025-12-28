@@ -29,19 +29,6 @@ typedef struct {
 typedef struct Text Text;
 typedef struct Piece Piece;
 
-/** A contiguous part of the text. */
-typedef struct {
-	const char *data; /**< Content, might not be NUL-terminated. */
-	size_t len;       /**< Length in bytes. */
-} TextString;
-#define TextString(s) (TextString){.data = s, .len = sizeof(s) - 1}
-
-typedef struct {
-	TextString *data;
-	VisDACount  count;
-	VisDACount  capacity;
-} TextStringList;
-
 /**
  * Iterator used to navigate the buffer content.
  *

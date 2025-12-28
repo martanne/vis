@@ -84,3 +84,66 @@ memory_scan_reverse(const void *memory, uint8_t byte, ptrdiff_t n)
 	}
 	return result;
 }
+
+static TextString
+text_string_from_c_str(char *c_str)
+{
+	TextString result = {
+		.data = c_str,
+		.len  = strlen(c_str),
+	};
+	return result;
+}
+
+static void
+text_string_split_at(TextString s, TextString *left, TextString *right, ptrdiff_t n)
+{
+	if (left)  *left  = (TextString){0};
+	if (right) *right = (TextString){0};
+	if (n >= 0 && (size_t)n <= s.len) {
+		if (left) *left = (TextString){
+			.data = s.data,
+			.len  = n,
+		};
+		if (right) *right = (TextString){
+			.data = s.data + n + 1,
+			.len  = MAX(0, (ptrdiff_t)s.len - n - 1),
+		};
+	}
+}
+
+static void
+path_split(TextString path, TextString *directory, TextString *basename)
+{
+	text_string_split_at(path, directory, basename,
+	                     (char *)memory_scan_reverse(path.data, '/', path.len) - path.data);
+	if (directory && directory->len == 0) *directory = TextString(".");
+	if (basename  && basename->len  == 0) *basename  = path;
+}
+
+static char *
+absolute_path(const char *name)
+{
+	if (!name)
+		return 0;
+
+	TextString base, dir, string = text_string_from_c_str((char *)name);
+	path_split(string, &dir, &base);
+
+	char path_resolved[PATH_MAX];
+	char path_normalized[PATH_MAX];
+
+	memcpy(path_normalized, dir.data, dir.len);
+	path_normalized[dir.len] = 0;
+
+	char *result = 0;
+	if (realpath(path_normalized, path_resolved) == path_resolved) {
+		if (strcmp(path_resolved, "/") == 0)
+			path_resolved[0] = 0;
+
+		snprintf(path_normalized, sizeof(path_normalized), "%s/%.*s",
+		         path_resolved, (int)base.len, base.data);
+		result = strdup(path_normalized);
+	}
+	return result;
+}

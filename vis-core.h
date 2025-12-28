@@ -309,8 +309,6 @@ VIS_INTERNAL Win *window_new_file(Vis*, File*, enum UiOption);
 VIS_INTERNAL void window_selection_save(Win *win);
 VIS_INTERNAL void window_status_update(Vis *vis, Win *win);
 
-VIS_INTERNAL char *absolute_path(const char *path);
-
 VIS_INTERNAL const char *file_name_get(File*);
 VIS_INTERNAL void file_name_set(File*, const char *name);
 

@@ -290,10 +290,7 @@ static bool text_save_begin_atomic(TextSave *ctx)
 	}
 
 	TextString base, dir, fname = text_string_from_c_str((char *)ctx->filename);
-	text_string_split_at(fname, &dir, &base, (char *)memory_scan_reverse(fname.data, '/', fname.len) - fname.data);
-
-	if (dir.len  == 0) dir  = TextString(".");
-	if (base.len == 0) base = fname;
+	path_split(fname, &dir, &base);
 
 	char suffix[] = ".vis.XXXXXX";
 	size_t len = fname.len + sizeof("./.") + sizeof(suffix);
