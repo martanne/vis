@@ -461,9 +461,7 @@ vis.ftdetect.filetypes = {
 		ext = { "%.texi$" },
 	},
 	text = {
-		ext = { "%.txt$" },
-		-- Do *not* list mime "text/plain" here, it is covered below,
-		-- see 'try text lexer as a last resort'
+		-- Do *not* match on this, it is used as a default
 	},
 	todotxt = {
 		ext = { "^todo.txt$", "^Todo.txt$", "^done.txt$", "^Done.txt$" },
@@ -643,12 +641,7 @@ vis.events.subscribe(vis.events.WIN_OPEN, function(win)
 		end
 	end
 
-	-- try text lexer as a last resort
-	if (mime or 'text/plain'):match('^text/.+$') then
-		set_filetype('text', vis.ftdetect.filetypes.text)
-		return
-	end
-
-	win:set_syntax(nil)
+	-- default to text lexer if nothing else is found
+	set_filetype('text', vis.ftdetect.filetypes.text)
 end)
 
