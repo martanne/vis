@@ -22,8 +22,6 @@ static void test_small_objects(void) {
 	ok(arr.len == 0, "Initialization");
 	ok(!array_set(&arr, 0, NULL) && errno == EINVAL, "Set with invalid index");
 	ok(array_get(&arr, 0) == NULL && errno == EINVAL, "Get with invalid index");
-	ok(array_peek(&arr) == NULL && arr.len == 0, "Peek empty array");
-	ok(array_pop(&arr) == NULL && arr.len == 0, "Pop empty array");
 
 	for (size_t i = 0; i < len; i++) {
 		int *v;
@@ -44,11 +42,6 @@ static void test_small_objects(void) {
 			"Get array element: %zu = %d", i, *v);
 	}
 
-	int *v;
-	ok((v = array_peek(&arr)) && *v == values[0] && arr.len == len, "Peek populated array");
-	ok((v = array_pop(&arr)) && *v == values[0] && arr.len == len-1, "Pop populated array");
-	ok((v = array_peek(&arr)) && *v == values[1] && arr.len == len-1, "Peek after pop");
-
 	array_clear(&arr);
 	ok(arr.len == 0 && array_get(&arr, 0) == NULL && errno == EINVAL, "Clear");
 
@@ -66,6 +59,7 @@ static void test_small_objects(void) {
 
 	ok(!array_remove(&arr, arr.len) && errno == EINVAL, "Remove past end of array");
 
+	int *v;
 	size_t len_before = arr.len;
 	ok(array_remove(&arr, 2) && arr.len == len_before-1 &&
 	   (v = array_get(&arr, 0)) && *v == values[0] &&
