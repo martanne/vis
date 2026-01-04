@@ -1293,25 +1293,10 @@ int main(int argc, char *argv[])
 	if (!vis_init(vis))
 		return EXIT_FAILURE;
 
-	vis_event_emit(vis, VIS_EVENT_INIT);
-
-	for (int i = 0; i < LENGTH(vis_action); i++) {
-		if (!vis_action_register(vis, vis_action + i))
-			vis_die(vis, "Could not register action: %s\n", vis_action[i].name);
-	}
-
-	for (int i = 0; i < LENGTH(default_bindings); i++) {
-		for (const KeyBinding **binding = default_bindings[i]; binding && *binding; binding++) {
-			for (const KeyBinding *kb = *binding; kb->key; kb++) {
-				vis_mode_map(vis, i, false, kb->key, kb);
-			}
-		}
-	}
-
-	for (const char **k = keymaps; k[0]; k += 2)
-		vis_keymap_add(vis, k[0], k[1]);
-
-	/* install signal handlers etc. */
+	/* install signal handlers etc.
+	 * Do it before any external lua code is run by EVENT_INIT to prevent lost
+	 * signals.
+	 */
 	struct sigaction sa;
 	memset(&sa, 0, sizeof sa);
 	sigfillset(&sa.sa_mask);
@@ -1339,6 +1324,25 @@ int main(int argc, char *argv[])
 	sigaddset(&blockset, SIGHUP);
 	if (sigprocmask(SIG_BLOCK, &blockset, NULL) == -1)
 		vis_die(vis, "Failed to block signals\n");
+
+	vis_event_emit(vis, VIS_EVENT_INIT);
+
+	for (int i = 0; i < LENGTH(vis_action); i++) {
+		if (!vis_action_register(vis, vis_action + i))
+			vis_die(vis, "Could not register action: %s\n", vis_action[i].name);
+	}
+
+	for (int i = 0; i < LENGTH(default_bindings); i++) {
+		for (const KeyBinding **binding = default_bindings[i]; binding && *binding; binding++) {
+			for (const KeyBinding *kb = *binding; kb->key; kb++) {
+				vis_mode_map(vis, i, false, kb->key, kb);
+			}
+		}
+	}
+
+	for (const char **k = keymaps; k[0]; k += 2)
+		vis_keymap_add(vis, k[0], k[1]);
+
 
 	char *cmd = NULL;
 	bool end_of_options = false, win_created = false;
