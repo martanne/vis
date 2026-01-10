@@ -8,12 +8,23 @@ local P, S, B = lpeg.P, lpeg.S, lpeg.B
 local lex = lexer.new(..., {fold_by_indentation = true})
 
 -- Classes.
-lex:add_rule('classdef', lex:tag(lexer.KEYWORD, 'class') * lex:get_rule('whitespace') *
-	lex:tag(lexer.CLASS, lexer.word))
+lex:add_rule('classdef', lex:tag(lexer.KEYWORD .. '.declaration', 'class') *
+	lex:get_rule('whitespace') * lex:tag(lexer.CLASS, lexer.word))
 
 -- Keywords.
-lex:add_rule('keyword', lex:tag(lexer.KEYWORD, lex:word_match(lexer.KEYWORD)) +
-	lex:tag(lexer.KEYWORD .. '.soft', lex:word_match(lexer.KEYWORD .. '.soft')))
+lex:add_rule('keyword',
+	lex:tag(lexer.KEYWORD .. '.declaration', lex:word_match(lexer.KEYWORD .. '.declaration')) +
+	lex:tag(lexer.KEYWORD .. '.import', lex:word_match(lexer.KEYWORD .. '.import')) +
+	lex:tag(lexer.KEYWORD .. '.soft', lex:word_match(lexer.KEYWORD .. '.soft')) +
+	lex:tag(lexer.KEYWORD, lex:word_match(lexer.KEYWORD)))
+
+-- Literals.
+lex:add_rule('literal', lex:tag(lexer.CONSTANT_BUILTIN .. '.boolean',
+	lex:word_match(lexer.CONSTANT_BUILTIN .. '.boolean')))
+
+-- Self.
+lex:add_rule('self', lex:tag(lexer.VARIABLE_BUILTIN,
+	(P('self') + P('cls')) * #(-(lexer.alnum + '_'))))
 
 -- Functions.
 local builtin_func = -B('.') *
@@ -34,8 +45,10 @@ lex:add_rule('constant', builtin_const + attr)
 local sq_str = lexer.range("'", true)
 local dq_str = lexer.range('"', true)
 local tq_str = lexer.range("'''") + lexer.range('"""')
-lex:add_rule('string', lex:tag(lexer.STRING, (S('rRbBfFtT') * S('rRbBfFtT') + S('rRuUbBfFtT'))^-1 *
-	(tq_str + sq_str + dq_str)))
+local str_prefix = (S('rRbBfFtT') * S('rRbBfFtT') + S('rRuUbBfFtT'))^-1
+lex:add_rule('string',
+	lex:tag(lexer.STRING .. '.doc', str_prefix * tq_str) +
+	lex:tag(lexer.STRING, str_prefix * (sq_str + dq_str)))
 
 -- Identifiers.
 lex:add_rule('identifier', lex:tag(lexer.IDENTIFIER, lexer.word))
@@ -54,13 +67,18 @@ lex:add_rule('operator', lex:tag(lexer.OPERATOR, S('!@%^&*()[]{}-=+/|:;.,<>~')))
 
 -- Word lists.
 lex:set_word_list(lexer.KEYWORD, {
-	'and', 'as', 'assert', 'async', 'await', 'break', 'class', 'continue', 'def', 'del', 'elif',
-	'else', 'except', 'False', 'finally', 'for', 'from', 'global', 'if', 'import', 'in', 'is',
-	'lambda', 'None', 'nonlocal', 'not', 'or', 'pass', 'raise', 'return', 'True', 'try', 'while',
-	'with', 'yield'
+	'and', 'as', 'assert', 'async', 'await', 'break', 'continue', 'del', 'elif', 'else', --
+	'except', 'finally', 'for', 'global', 'if', 'in', 'is', 'nonlocal', 'not', 'or', --
+	'pass', 'raise', 'return', 'try', 'while', 'with', 'yield'
 })
 
+lex:set_word_list(lexer.KEYWORD .. '.declaration', 'def class lambda')
+
+lex:set_word_list(lexer.KEYWORD .. '.import', 'import from')
+
 lex:set_word_list(lexer.KEYWORD .. '.soft', '_ case match')
+
+lex:set_word_list(lexer.CONSTANT_BUILTIN .. '.boolean', 'True False None')
 
 lex:set_word_list(lexer.FUNCTION_BUILTIN, {
 	'abs', 'aiter', 'all', 'any', 'anext', 'ascii', 'bin', 'bool', 'breakpoint', 'bytearray', 'bytes',
@@ -98,7 +116,7 @@ lex:set_word_list(lexer.FUNCTION_BUILTIN .. '.special', {
 })
 
 lex:set_word_list(lexer.CONSTANT_BUILTIN, {
-	'BaseException', 'Exception', 'Exception', 'ArithmeticError', 'BufferError', 'LookupError', --
+	'BaseException', 'Exception', 'ArithmeticError', 'BufferError', 'LookupError', --
 	'AssertionError', 'AttributeError', 'EOFError', 'FloatingPointError', 'GeneratorExit',
 	'ImportError', 'ModuleNotFoundError', 'IndexError', 'KeyError', 'KeyboardInterrupt',
 	'MemoryError', 'NameError', 'NotImplementedError', 'OSError', 'OverflowError', 'RecursionError',
