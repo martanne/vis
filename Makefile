@@ -128,12 +128,15 @@ install: $(ELF)
 		cp -f "$$e" ${DESTDIR}${PREFIX}/bin && \
 		chmod 755 ${DESTDIR}${PREFIX}/bin/"$$e"; \
 	done
-	@test ${CONFIG_LUA} -eq 0 || { \
-		echo installing support files to ${DESTDIR}${SHAREPREFIX}/vis; \
-		mkdir -p ${DESTDIR}${SHAREPREFIX}/vis; \
-		cp -r lua/* ${DESTDIR}${SHAREPREFIX}/vis; \
-		rm -rf "${DESTDIR}${SHAREPREFIX}/vis/doc"; \
-	}
+	@case "${CFLAGS_LUA}" in \
+		*"-DCONFIG_LUA=1"*) \
+			echo installing lua support files to ${DESTDIR}${SHAREPREFIX}/vis; \
+			mkdir -p ${DESTDIR}${SHAREPREFIX}/vis; \
+			cp -r lua/* ${DESTDIR}${SHAREPREFIX}/vis; \
+			rm -rf "${DESTDIR}${SHAREPREFIX}/vis/doc"; \
+			chmod -R u=rwX,go=rX ${DESTDIR}${SHAREPREFIX}/vis;; \
+		*) ;; \
+	esac
 	@echo installing documentation to ${DESTDIR}${DOCPREFIX}/vis
 	@mkdir -p ${DESTDIR}${DOCPREFIX}/vis
 	@for d in ${DOCUMENTATION}; do \
