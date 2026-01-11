@@ -50,7 +50,7 @@ vis-single-payload.inc: $(EXECUTABLES) lua/*
 	echo '#ifndef VIS_SINGLE_PAYLOAD_H' > $@
 	echo '#define VIS_SINGLE_PAYLOAD_H' >> $@
 	echo 'static unsigned char vis_single_payload[] = {' >> $@
-	$(TAR) --mtime='2014-07-15 01:23Z' --owner=0 --group=0 --numeric-owner --mode='a+rX-w' -c \
+	$(TAR) --mtime='/usr/lib/os-release' --owner=0 --group=0 --numeric-owner --mode='a+rX-w' -c \
 		$(EXECUTABLES) $$(find lua -name '*.lua' | LC_ALL=C sort) | xz -T 1 | \
 		od -t x1 -A n -v | sed 's/\([0-9a-f]\{2\}\)/0x\1,/g' >> $@
 	echo '};' >> $@
