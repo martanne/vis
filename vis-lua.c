@@ -17,6 +17,10 @@
 #include "vis-core.h"
 #include "text-motions.h"
 
+#ifdef _DARWIN_C_SOURCE
+#include <libproc.h>
+#endif
+
 #ifndef VIS_PATH
 #define VIS_PATH "/usr/local/share/vis"
 #endif
@@ -3228,7 +3232,12 @@ static void vis_lua_init(Vis *vis) {
 		vis_lua_path_add(vis, path);
 	}
 
-	ssize_t len = readlink("/proc/self/exe", path, sizeof(path)-1);
+	ssize_t len;
+#ifdef _DARWIN_C_SOURCE
+	len = proc_pidpath(getpid(), path, sizeof(path));
+#else
+	len = readlink("/proc/self/exe", path, sizeof(path)-1);
+#endif
 	if (len > 0) {
 		path[len] = '\0';
 		/* some idiotic dirname(3) implementations return pointers to statically
