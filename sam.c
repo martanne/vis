@@ -458,19 +458,21 @@ static char *parse_delimited(const char **s, int type) {
 	return chunk;
 }
 
-static int parse_number(const char **s) {
-	char *end = NULL;
-	int number = strtoull(*s, &end, 10);
-	if (end == *s)
+static int
+vis_sam_parse_number(const char **s)
+{
+	str8 arg = str8_from_c_str((char *)*s);
+	IntegerConversion integer = integer_conversion(arg, IntegerConversionFlag_NoAutoHex);
+	if (integer.unparsed.data == (uint8_t *)*s)
 		return 0;
-	*s = end;
-	return number;
+	*s = (char *)integer.unparsed.data;
+	return integer.as.S64;
 }
 
 static char *parse_text(const char **s, Count *count) {
 	skip_spaces(s);
 	const char *before = *s;
-	count->start = parse_number(s);
+	count->start = vis_sam_parse_number(s);
 	if (*s == before)
 		count->start = 1;
 	if (**s != '\n') {
@@ -548,7 +550,7 @@ static enum SamError parse_count(const char **s, Count *count) {
 
 	if (count->mod) {
 		(*s)++;
-		int n = parse_number(s);
+		int n = vis_sam_parse_number(s);
 		if (!n)
 			return SAM_ERR_COUNT;
 		count->start = n;
@@ -557,7 +559,7 @@ static enum SamError parse_count(const char **s, Count *count) {
 	}
 
 	const char *before = *s;
-	if (!(count->start = parse_number(s)) && *s != before)
+	if (!(count->start = vis_sam_parse_number(s)) && *s != before)
 		return SAM_ERR_COUNT;
 	if (**s != ',') {
 		count->end = count->start ? count->start : INT_MAX;
@@ -566,7 +568,7 @@ static enum SamError parse_count(const char **s, Count *count) {
 		(*s)++;
 	}
 	before = *s;
-	if (!(count->end = parse_number(s)) && *s != before)
+	if (!(count->end = vis_sam_parse_number(s)) && *s != before)
 		return SAM_ERR_COUNT;
 	if (!count->end)
 		count->end = INT_MAX;
@@ -588,12 +590,12 @@ static Address *address_parse_simple(Vis *vis, const char **s, enum SamError *er
 	switch (addr.type) {
 	case '#': /* character #n */
 		(*s)++;
-		addr.number = parse_number(s);
+		addr.number = vis_sam_parse_number(s);
 		break;
 	case '0': case '1': case '2': case '3': case '4': /* line n */
 	case '5': case '6': case '7': case '8': case '9':
 		addr.type = 'l';
-		addr.number = parse_number(s);
+		addr.number = vis_sam_parse_number(s);
 		break;
 	case '\'':
 		(*s)++;

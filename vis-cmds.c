@@ -141,17 +141,16 @@ static bool cmd_set(Vis *vis, Win *win, Command *cmd, const char *argv[], Select
 			vis_info_show(vis, "Expecting number");
 			return false;
 		}
-		char *ep;
-		errno = 0;
-		long lval = strtol(argv[2], &ep, 10);
-		if (argv[2][0] == '\0' || *ep != '\0') {
-			vis_info_show(vis, "Invalid number");
+
+		IntegerConversion integer = integer_conversion(str8_from_c_str((char *)argv[2]), 0);
+		long lval = integer.as.S64;
+		if (integer.result == IntegerConversionResult_OutOfRange || lval > INT_MAX || lval < INT_MIN) {
+			vis_info_show(vis, "Number overflow");
 			return false;
 		}
 
-		if ((errno == ERANGE && (lval == LONG_MAX || lval == LONG_MIN)) ||
-		    (lval > INT_MAX || lval < INT_MIN)) {
-			vis_info_show(vis, "Number overflow");
+		if (integer.result != IntegerConversionResult_Success || integer.unparsed.length > 0) {
+			vis_info_show(vis, "Invalid number: %s", argv[2]);
 			return false;
 		}
 
@@ -388,25 +387,29 @@ static bool cmd_earlier_later(Vis *vis, Win *win, Command *cmd, const char *argv
 	long count = 1;
 	size_t pos = EPOS;
 	if (argv[1]) {
-		errno = 0;
-		count = strtol(argv[1], &unit, 10);
-		if (errno || unit == argv[1] || count < 0) {
-			vis_info_show(vis, "Invalid number");
+		str8 arg = str8_from_c_str((char *)argv[1]);
+		IntegerConversion integer = integer_conversion(arg, 0);
+		long count = integer.as.S64;
+		if (integer.result != IntegerConversionResult_Success || arg.data == integer.unparsed.data || count < 0) {
+			vis_info_show(vis, "Invalid number: %s", argv[1]);
 			return false;
 		}
 
-		if (*unit) {
-			while (*unit && isspace((unsigned char)*unit))
-				unit++;
-			switch (*unit) {
-			case 'd': count *= 24; /* fall through */
-			case 'h': count *= 60; /* fall through */
-			case 'm': count *= 60; /* fall through */
-			case 's': break;
-			default:
-				vis_info_show(vis, "Unknown time specifier (use: s,m,h or d)");
-				return false;
+		if (integer.unparsed.length > 0) {
+			str8 sunit = str8_skip_space(integer.unparsed);
+
+			if (sunit.length > 0) {
+				switch (sunit.data[0]) {
+				case 'd': count *= 24; /* fall through */
+				case 'h': count *= 60; /* fall through */
+				case 'm': count *= 60; /* fall through */
+				case 's': break;
+				default:
+					vis_info_show(vis, "Unknown time specifier (use: s,m,h or d)");
+					return false;
+				}
 			}
+			unit = (char *)sunit.data;
 
 			if (argv[0][0] == 'e')
 				count = -count; /* earlier, move back in time */
