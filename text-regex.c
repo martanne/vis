@@ -50,7 +50,7 @@ int text_search_range_forward(Text *txt, size_t pos, size_t len, Regex *r, size_
 			}
 			break;
 		}
-		char *next = memchr(cur, 0, len);
+		char *next = memory_scan_forward(cur, 0, len);
 		if (!next)
 			break;
 		while (!*next && next != end)
@@ -88,7 +88,7 @@ int text_search_range_backward(Text *txt, size_t pos, size_t len, Regex *r, size
 				next = cur + match[0].rm_eo;
 			}
 		} else {
-			next = memchr(cur, 0, len);
+			next = memory_scan_forward(cur, 0, len);
 			if (!next)
 				break;
 			while (!*next && next != end)

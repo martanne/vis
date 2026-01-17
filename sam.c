@@ -410,7 +410,7 @@ static char *parse_until(const char **s, const char *until, const char *escchars
 	size_t len = strlen(until);
 	bool escaped = false;
 
-	for (; **s && (!memchr(until, **s, len) || escaped); (*s)++) {
+	for (; **s && (!memory_scan_forward(until, **s, len) || escaped); (*s)++) {
 		if (type != CMD_SHELL && !escaped && **s == '\\') {
 			escaped = true;
 			continue;
@@ -429,8 +429,8 @@ static char *parse_until(const char **s, const char *until, const char *escchars
 			} else if (type != CMD_REGEX && type != CMD_TEXT && c == '\\') {
 				// ignore one of the back slashes
 			} else {
-				bool delim = memchr(until, c, len);
-				bool esc = escchars && memchr(escchars, c, strlen(escchars));
+				bool delim = memory_scan_forward(until, c, len);
+				bool esc = escchars && memory_scan_forward(escchars, c, strlen(escchars));
 				if (!delim && !esc)
 					buffer_append(&buf, "\\", 1);
 			}
@@ -1117,7 +1117,7 @@ enum SamError sam_cmd(Vis *vis, const char *s) {
 						view_selections_set(c->sel, r);
 						c->sel->anchored = true;
 					} else {
-						if (memchr(c->data, '\n', c->len))
+						if (memory_scan_forward(c->data, '\n', c->len))
 							view_cursors_to(c->sel, r.start);
 						else
 							view_cursors_to(c->sel, r.end);

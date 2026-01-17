@@ -518,7 +518,7 @@ size_t text_bracket_match_symbol(Text *txt, size_t pos, const char *symbols, Fil
 	Iterator it = text_iterator_get(txt, pos);
 	if (!text_iterator_byte_get(&it, &current))
 		return pos;
-	if (symbols && !memchr(symbols, current, strlen(symbols)))
+	if (symbols && !memory_scan_forward(symbols, current, strlen(symbols)))
 		return pos;
 	switch (current) {
 	case '(': search = ')'; direction =  1; break;
@@ -552,7 +552,7 @@ size_t text_bracket_match_symbol(Text *txt, size_t pos, const char *symbols, Fil
 			/* if a single or double quote is followed by
 			 * a special character, search backwards */
 			char special[] = " \t\n)}]>.,:;";
-			if (memchr(special, c, sizeof(special)))
+			if (memory_scan_forward(special, c, sizeof(special)))
 				direction = -1;
 		}
 		return direction >= 0 ? fw : bw;

@@ -80,7 +80,7 @@ bool text_iterator_byte_find_prev(Iterator *it, char b) {
 
 bool text_iterator_byte_find_next(Iterator *it, char b) {
 	while (it->text) {
-		const char *match = memchr(it->text, b, it->end - it->text);
+		const char *match = memory_scan_forward(it->text, b, it->end - it->text);
 		if (match) {
 			it->pos += match - it->text;
 			it->text = match;

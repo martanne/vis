@@ -848,7 +848,7 @@ static size_t lines_count(Text *txt, size_t pos, size_t len) {
 		const char *start = it.text;
 		while (len > 0 && start < it.end) {
 			size_t n = MIN(len, (size_t)(it.end - start));
-			const char *end = memchr(start, '\n', n);
+			const char *end = memory_scan_forward(start, '\n', n);
 			if (!end) {
 				len -= n;
 				break;
@@ -873,7 +873,7 @@ static size_t lines_skip_forward(Text *txt, size_t pos, size_t lines, size_t *li
 		const char *start = it.text;
 		while (lines > 0 && start < it.end) {
 			size_t n = it.end - start;
-			const char *end = memchr(start, '\n', n);
+			const char *end = memory_scan_forward(start, '\n', n);
 			if (!end) {
 				pos += n;
 				break;
