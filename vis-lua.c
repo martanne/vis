@@ -2040,9 +2040,8 @@ static int window_unmap(lua_State *L) {
 static int window_style_define(lua_State *L) {
 	Win *win = obj_ref_check(L, 1, VIS_LUA_TYPE_WINDOW);
 	enum UiStyle id = luaL_checkinteger(L, 2);
-	const char *style = luaL_checkstring(L, 3);
-	bool ret = ui_style_define(win, id, style);
-	lua_pushboolean(L, ret);
+	str8 style = vis_lua_check_str8(L, 3);
+	lua_pushboolean(L, vis_ui_style_define(win, id, style));
 	return 1;
 }
 

@@ -100,7 +100,7 @@
 #define ISASCII(ch)   ((unsigned char)ch < 0x80)
 
 #define IsBlank(c)    ((c) == ' ' || (c) == '\t')
-#define IsSpace(c)    (isspace((unsigned char)c))
+#define IsSpace(c)    ((c) == ' ' || (c) == '\t' || (c) == '\n' || (c) == '\r')
 #define IsBoundary(c) (isboundary((unsigned char)c))
 
 #if GCC_VERSION>=5004000 || CLANG_VERSION>=4000000
@@ -130,7 +130,8 @@ typedef struct {
 	ptrdiff_t  length;
 	uint8_t   *data;
 } str8;
-#define str8(s) (str8){.length = sizeof(s) - 1, .data = (uint8_t *)s}
+#define str8(s)      (str8){.length = sizeof(s) - 1, .data = (uint8_t *)s}
+#define str8_comp(s)       {sizeof(s) - 1, (uint8_t *)s}
 
 typedef struct {
 	str8       *data;

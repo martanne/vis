@@ -85,6 +85,15 @@ memory_scan_reverse(const void *memory, uint8_t byte, ptrdiff_t n)
 	return result;
 }
 
+static void *
+memory_scan_forward(const void *memory, uint8_t byte, ptrdiff_t n)
+{
+	const uint8_t *s = memory, *end = s + n;
+	while (s != end && *s != byte) s++;
+	void *result = (s != end) ? (void *)s : 0;
+	return result;
+}
+
 static str8
 str8_from_c_str(const char *c_str)
 {
@@ -103,10 +112,47 @@ str8_equal(str8 a, str8 b)
 	return result;
 }
 
+static bool
+str8_case_ignore_equal(str8 a, str8 b)
+{
+	bool result = a.length == b.length;
+	for (ptrdiff_t i = 0; result && i < a.length; i++)
+		result = (a.data[i] & ~0x20u) == (b.data[i] & ~0x20u);
+	return result;
+}
+
+static str8
+str8_skip(str8 s, int64_t count)
+{
+	str8 result = s;
+	if (count > 0) {
+		result.data   += MIN(count, s.length);
+		result.length -= MIN(count, s.length);
+	}
+	return result;
+}
+
+static str8
+str8_skip_space(str8 s)
+{
+	str8 result = s;
+	for (ptrdiff_t i = 0; i < s.length && IsSpace(*result.data); result.data++);
+	result.length -= result.data - s.data;
+	return result;
+}
+
+static str8
+str8_trim_space(str8 s)
+{
+	str8 result = str8_skip_space(s);
+	while (result.length > 0 && IsSpace(result.data[result.length - 1])) result.length--;
+	return result;
+}
+
 static void
 str8_split_at(str8 s, str8 *left, str8 *right, ptrdiff_t n)
 {
-	if (left)  *left  = (str8){0};
+	if (left)  *left  = s;
 	if (right) *right = (str8){0};
 	if (n >= 0 && n <= s.length) {
 		if (left) *left = (str8){
@@ -121,12 +167,24 @@ str8_split_at(str8 s, str8 *left, str8 *right, ptrdiff_t n)
 }
 
 static void
+str8_split(str8 s, str8 *left, str8 *right, uint8_t byte)
+{
+	str8_split_at(s, left, right, (uint8_t *)memory_scan_forward(s.data, byte, s.length) - s.data);
+}
+
+static void
 path_split(str8 path, str8 *directory, str8 *basename)
 {
-	str8_split_at(path, directory, basename,
-	              (uint8_t *)memory_scan_reverse(path.data, '/', path.length) - path.data);
-	if (directory && directory->length == 0) *directory = str8(".");
-	if (basename  && basename->length  == 0) *basename  = path;
+	str8 left;
+	ptrdiff_t at = (uint8_t *)memory_scan_reverse(path.data, '/', path.length) - path.data;
+	str8_split_at(path, &left, basename, at);
+
+	if (basename && basename->length == 0 && at <= 0) {
+		*basename = left;
+		left      = (str8){0};
+	}
+
+	if (directory) *directory = left.length == 0 ? str8(".") : left;
 }
 
 static char *
