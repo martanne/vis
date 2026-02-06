@@ -29,6 +29,7 @@ Optional features:
   --enable-lpeg-static    build with LPeg static linking [auto]
   --enable-tre            build with TRE regex support [auto]
   --enable-selinux        build with SELinux support [auto]
+  --enable-static         statically link vis dependencies [no]
   --enable-acl            build with POSIX ACL support [auto]
   --enable-help           build with built-in help texts [yes]
 
@@ -150,6 +151,8 @@ case "$arg" in
 --disable-tre|--enable-tre=no) tre=no ;;
 --enable-selinux|--enable-selinux=yes) selinux=yes ;;
 --disable-selinux|--enable-selinux=no) selinux=no ;;
+--enable-static|--enable-static=yes) static=yes ;;
+--disable-static|--enable-static=no) static=no ;;
 --enable-acl|--enable-acl=yes) acl=yes ;;
 --disable-acl|--enable-acl=no) acl=no ;;
 --enable-*|--disable-*|--with-*|--without-*|--*dir=*|--build=*) ;;
@@ -221,6 +224,11 @@ tryflag   CFLAGS_TRY  -Werror=unknown-warning-option
 tryflag   CFLAGS_TRY  -Werror=unused-command-line-argument
 tryldflag LDFLAGS_TRY -Werror=unknown-warning-option
 tryldflag LDFLAGS_TRY -Werror=unused-command-line-argument
+
+if [ yes = "$static" ]; then
+	pkg_config_flags="--static"
+	tryldflag LDFLAGS --static
+fi
 
 CFLAGS_STD="-std=c99 -DNDEBUG"
 LDFLAGS_STD="-lc"
@@ -315,8 +323,8 @@ EOF
 		printf " checking for %s... " "$libcurses"
 
 		if test "$have_pkgconfig" = "yes" ; then
-			CFLAGS_CURSES=$($PKG_CONFIG --cflags $libcurses 2>/dev/null)
-			LDFLAGS_CURSES=$($PKG_CONFIG --libs $libcurses 2>/dev/null)
+			CFLAGS_CURSES=$($PKG_CONFIG $pkg_config_flags --cflags $libcurses 2>/dev/null)
+			LDFLAGS_CURSES=$($PKG_CONFIG $pkg_config_flags --libs $libcurses 2>/dev/null)
 			if test $? -eq 0 && $CC $CFLAGS $CFLAGS_CURSES "$tmpc" \
 				$LDFLAGS $LDFLAGS_CURSES -o "$tmpo" >/dev/null 2>&1 ; then
 				CFLAGS_CURSES="${CFLAGS_CURSES} -DCONFIG_CURSES=1"
@@ -355,8 +363,8 @@ int main(int argc, char *argv[]) {
 EOF
 
 if test "$have_pkgconfig" = "yes" ; then
-	CFLAGS_TERMKEY=$($PKG_CONFIG --cflags termkey 2>/dev/null)
-	LDFLAGS_TERMKEY=$($PKG_CONFIG --libs termkey 2>/dev/null)
+	CFLAGS_TERMKEY=$($PKG_CONFIG $pkg_config_flags --cflags termkey 2>/dev/null)
+	LDFLAGS_TERMKEY=$($PKG_CONFIG $pkg_config_flags --libs termkey 2>/dev/null)
 fi
 
 if test -z "$LDFLAGS_TERMKEY"; then
@@ -392,8 +400,8 @@ int main() {
 EOF
 
 	if test "$have_pkgconfig" = "yes" ; then
-		CFLAGS_TRE=$($PKG_CONFIG --cflags tre 2>/dev/null)
-		LDFLAGS_TRE=$($PKG_CONFIG --libs tre 2>/dev/null)
+		CFLAGS_TRE=$($PKG_CONFIG $pkg_config_flags --cflags tre 2>/dev/null)
+		LDFLAGS_TRE=$($PKG_CONFIG $pkg_config_flags --libs tre 2>/dev/null)
 	fi
 
 	if test -z "$LDFLAGS_TRE"; then
@@ -443,8 +451,8 @@ EOF
 		printf " checking for %s... " "$liblua"
 
 		if test "$have_pkgconfig" = "yes" ; then
-			CFLAGS_LUA=$($PKG_CONFIG --cflags $liblua 2>/dev/null)
-			LDFLAGS_LUA=$($PKG_CONFIG --libs $liblua 2>/dev/null)
+			CFLAGS_LUA=$($PKG_CONFIG $pkg_config_flags --cflags $liblua 2>/dev/null)
+			LDFLAGS_LUA=$($PKG_CONFIG $pkg_config_flags --libs $liblua 2>/dev/null)
 			if test $? -eq 0 && $CC $CFLAGS $CFLAGS_LUA "$tmpc" \
 				$LDFLAGS $LDFLAGS_LUA -o "$tmpo" >/dev/null 2>&1 ; then
 				CFLAGS_LUA="${CFLAGS_LUA} -DCONFIG_LUA=1"
@@ -497,8 +505,8 @@ EOF
 		printf " checking for static %s... " "$liblpeg"
 
 		if test "$have_pkgconfig" = "yes" ; then
-			CFLAGS_LPEG=$($PKG_CONFIG --cflags $liblpeg 2>/dev/null)
-			LDFLAGS_LPEG=$($PKG_CONFIG --libs $liblpeg 2>/dev/null)
+			CFLAGS_LPEG=$($PKG_CONFIG $pkg_config_flags --cflags $liblpeg 2>/dev/null)
+			LDFLAGS_LPEG=$($PKG_CONFIG $pkg_config_flags --libs $liblpeg 2>/dev/null)
 			if test $? -eq 0 && $CC $CFLAGS $CFLAGS_LUA $CFLAGS_LPEG "$tmpc" \
 				$LDFLAGS $LDFLAGS_LUA $LDFLAGS_LPEG -o "$tmpo" >/dev/null 2>&1 ; then
 				CFLAGS_LPEG="${CFLAGS_LPEG} -DCONFIG_LPEG=1"
@@ -538,8 +546,8 @@ int main(int argc, char *argv[]) {
 EOF
 
 	if test "$have_pkgconfig" = "yes" ; then
-		CFLAGS_ACL=$($PKG_CONFIG --cflags acl 2>/dev/null)
-		LDFLAGS_ACL=$($PKG_CONFIG --libs acl 2>/dev/null)
+		CFLAGS_ACL=$($PKG_CONFIG $pkg_config_flags --cflags acl 2>/dev/null)
+		LDFLAGS_ACL=$($PKG_CONFIG $pkg_config_flags --libs acl 2>/dev/null)
 	fi
 
 	if test -z "$LDFLAGS_ACL"; then
@@ -571,8 +579,8 @@ int main(int argc, char *argv[]) {
 EOF
 
 	if test "$have_pkgconfig" = "yes" ; then
-		CFLAGS_SELINUX=$($PKG_CONFIG --cflags selinux 2>/dev/null)
-		LDFLAGS_SELINUX=$($PKG_CONFIG --libs selinux 2>/dev/null)
+		CFLAGS_SELINUX=$($PKG_CONFIG $pkg_config_flags --cflags selinux 2>/dev/null)
+		LDFLAGS_SELINUX=$($PKG_CONFIG $pkg_config_flags --libs selinux 2>/dev/null)
 	fi
 
 	if test -z "$LDFLAGS_SELINUX"; then
