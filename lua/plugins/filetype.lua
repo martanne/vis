@@ -1,647 +1,447 @@
-vis.ftdetect = {}
 
-vis.ftdetect.ignoresuffixes = {
-	"~+$", "%.orig$", "%.bak$", "%.old$", "%.new$"
+local M = {}
+vis.ftdetect = M
+
+--[[
+	filetype.lua identifies the opened file's filetype and sets syntax highlighting and etc
+
+	If you want to perform per filetype settings, require this file and
+		vis.ftdetect[filetype][setting]
+	filetype usually is a lexer or a syntax see the filetype table for options
+
+	Usually all tables here (apart from the filetypes table) values point to a lexer or
+	filetype[syntax]
+
+	Example:
+
+	vis.ftdetect.extensions.sh = "bash"
+	vis.ftdetect.filenames.makefile = "makefile"
+	vis.ftdetect.mimes["plain"] = "text"
+	vis.ftdetect.utilities.python3 = "python" -- for shebang
+	vis.ftdetect.data_patterns["^#!%s*.-[/ ]awk"] = "awk"
+
+	If you do not want an exact match, you can use the filetypes table below
+	See FINDERS
+		table.insert(vis.ftdetect.cmake.name, "%.cmake%.in")
+
+	Actions can be performed via the filetype table as well, assuming extensions is sh then
+		table.insert( vis.ftdetect.filetypes.bash.cmd, "set shell /bin/bash")
+	would set the shell to /bin/bash when the filetype is bash, see ACTIONS
+--]]
+
+-- Removes all suffixes to get the real extension/filename
+M.ignoresuffixes = {
+	-- list is luapatterns matching filename --
+	"~+$",
+
+	-- dict is extensions --
+	-- Used by gsub, MUST BE ""
+	orig = "", bak = "", old = "", new = ""
 }
 
-vis.ftdetect.filetypes = {
-	actionscript = {
-		ext = { "%.as$", "%.asc$" },
-	},
-	ada = {
-		ext = { "%.adb$", "%.ads$" },
-	},
-	c = {
-		ext = { "%.c$", "%.C$", "%.h$" },
-		mime = { "text/x-c" },
-	},
-	antlr = {
-		ext = { "%.g$", "%.g4$" },
-	},
-	apdl = {
-		ext = { "%.ans$", "%.inp$", "%.mac$" },
-	},
-	apl = {
-		ext = { "%.apl$" }
-	},
-	applescript = {
-		ext = { "%.applescript$" },
-	},
-	asciidoc = {
-		ext = { "%.adoc$" },
-	},
-	asm = {
-		ext = { "%.asm$", "%.ASM$", "%.s$", "%.S$" },
-	},
-	asp = {
-		ext = { "%.asa$", "%.asp$", "%.hta$" },
-	},
-	autoit = {
-		ext = { "%.au3$", "%.a3x$" },
-	},
-	awk = {
-		hashbang = { "^/usr/bin/[mng]awk%s+%-f" },
-		utility = { "^[mgn]?awk$", "^goawk$" },
-		ext = { "%.awk$" },
-	},
-	bash = {
-		utility = { "^[db]ash$", "^sh$","^t?csh$","^zsh$" },
-		ext = { "%.[by]ash$", "%.[acz]?sh$", "^APKBUILD$", "%.ebuild$", "^.[by]ashrc$", "^.[by]ash_profile$" , "^.profile" },
-		mime = { "text/x-shellscript", "application/x-shellscript" },
-	},
-	batch = {
-		ext = { "%.bat$", "%.cmd$" },
-	},
-	bibtex = {
-		ext = { "%.bib$" },
-	},
-	boo = {
-		ext = { "%.boo$" },
-	},
-	caml = {
-		ext = { "%.caml$", "%.ml$", "%.mli$", "%.mll$", "%.mly$" },
-	},
-	chuck = {
-		ext = { "%.ck$" },
-	},
-	clojure = {
-		ext = { "%.clj$", "%.cljc$",  "%.cljs$", "%.edn$" }
-	},
+-- Dictionary of filetypes, Should match opened filename on WIN_OPEN
+-- Slow and error prone due to its iterative nature, use the hashtables
+-- You can still use it for per filetype settings via filetypes[syntax][cmd|lexer|actions]
+-- scintilluas lexer.lua also has a detect function which is also used
+local filetypes = { -- dict --
+--[[
+	[filetype: string]: dict = {
+		filetype should be lexer, if not, set .lexer as subkey
+
+	ACTIONS: These run if a finder succeeds
+		lexer: string -- Should be in lexers/$alt_name
+		alt_name: string -- same as lexer, BACKWARDS COMPAT
+		cmd: ipairs = { "command" } -- run list of commands (via vis:command(command))
+		actions: ipairs = { function(win, filetype) }
+
+	FINDERS/Searchers:
+		name: ipairs = { "luapattern" } -- patterns matching filename
+			USE M.filenames if absolute match
+		ext: ipairs = { "luapattern" } -- same as name (BACKWARDS COMPAT)
+			USE M.extensions if absolute match
+		utility: ipairs = { "luapattern" } for hashbang utility (no path)
+			USE M.utilities if absolute_match
+		hashbang: ipairs = { "luapattern" } Contains path+args (no #!%s+)
+			USE M.data_patterns or M.utilities
+		mime: ipairs = { "exact match" } -- NOTE: This will be removed
+			USE M.mimes
+		detect: function (file, data)
+	}
+--]]
 	cmake = {
-		ext = { "%.cmake$", "%.cmake.in$", "%.ctest$", "%.ctest.in$" },
-	},
-	coffeescript = {
-		ext = { "%.coffee$" },
-		mime = { "text/x-coffee" },
-	},
-	cpp = {
-		ext = { "%.cpp$", "%.cxx$", "%.c++$", "%.cc$", "%.hh$", "%.hpp$", "%.hxx$", "%.h++$" },
-		mime = { "text/x-c++" },
+		name = { "%.cmake.in$", "%.ctest.in$" }
 	},
 	crontab = {
-		ext = { "^crontab.*$" },
 		cmd = { "set savemethod inplace" },
+		name = { "^crontab.*$" }
 	},
-	crystal = {
-		ext = { "%.cr$" },
-	},
-	csharp = {
-		ext = { "%.cs$" },
-	},
-	css = {
-		ext = { "%.css$" },
-		mime = { "text/x-css" },
-	},
-	cuda = {
-		ext = { "%.cu$", "%.cuh$" },
-	},
-	dart = {
-		ext = { "%.dart$" },
-	},
-	desktop = {
-		ext = { "%.desktop$" },
-	},
-	diff = {
-		ext = { "%.diff$", "%.patch$", "%.rej$" },
-	},
-	d = {
-		ext = { "%.d$", "%.di$" },
-	},
-	dockerfile = {
-		ext = { "^Dockerfile$", "%.Dockerfile$" },
-	},
-	dot = {
-		ext = { "%.dot$" },
-	},
-	dsv = {
-		ext = { "^group$", "^gshadow$", "^passwd$", "^shadow$" },
-	},
-	eiffel = {
-		ext = { "%.e$", "%.eif$" },
-	},
-	elixir = {
-		ext = { "%.ex$", "%.exs$" },
-	},
-	elm = {
-		ext = { "%.elm$" },
-	},
-	mail = {
-		ext = { "%.eml$" },
-	},
-	erlang = {
-		ext = { "%.erl$", "%.hrl$" },
-	},
-	fantom = {
-		ext = { "%.fan$" },
-	},
-	faust = {
-		ext = { "%.dsp$" },
-	},
-	fennel = {
-		ext = { "%.fnl$" },
-	},
-	fish = {
-		utility = { "^fish$" },
-		ext = { "%.fish$" },
-	},
-	factor = {
-		ext = { "%.factor" },
-	},
-	forth = {
-		ext = { "%.forth$", "%.frt$", "%.fs$", "%.fth$" },
-	},
-	fortran = {
-		ext = { "%.f$", "%.for$", "%.ftn$", "%.fpp$", "%.f77$", "%.f90$", "%.f95$", "%.f03$", "%.f08$" },
-	},
-	fsharp = {
-		ext = { "%.fs$" },
-	},
-	fstab = {
-		ext = { "^fstab$" },
-	},
-	gap = {
-		ext = { "%.g$", "%.gd$", "%.gi$", "%.gap$" },
-	},
-	gemini = {
-		ext = { "%.gmi" },
-		mime = { "text/gemini" },
-	},
-	gettext = {
-		ext = { "%.po$", "%.pot$" },
-	},
-	gherkin = {
-		ext = { "%.feature$" },
-	},
-	['git-commit'] = {
-		alt_name = "diff",
-		ext = { "^COMMIT_EDITMSG$" },
+	["git-commit"] = {
+		lexer = "diff",
 		cmd = { "set colorcolumn 72" },
 	},
-	['git-rebase'] = {
-		ext = { "git%-rebase%-todo" },
-	},
-	gleam = {
-		ext = { "%.gleam$" },
-	},
-	glsl = {
-		ext = { "%.glsl[fv]?$" },
-	},
-	gnuplot = {
-		ext = { "%.dem$", "%.plt$" },
-	},
-	go = {
-		ext = { "%.go$" },
-	},
-	groovy = {
-		ext = { "%.groovy$", "%.gvy$", "^Jenkinsfile$" },
-	},
-	gtkrc = {
-		ext = { "%.gtkrc$" },
-	},
-	hare = {
-		ext = { "%.ha$" }
-	},
-	haskell = {
-		ext = { "%.hs$" },
-		mime = { "text/x-haskell" },
-	},
-	html = {
-		ext = { "%.[sx]?htm[l]?$" },
-		mime = { "text/x-html" },
-	},
-	icon = {
-		ext = { "%.icn$" },
-	},
-	idl = {
-		ext = { "%.idl$", "%.odl$" },
-	},
-	inform = {
-		ext = { "%.inf$", "%.ni$" },
-	},
-	ini = {
-		ext = { "%.cfg$", "%.cnf$", "%.conf$", "%.inf$", "%.ini$", "%.reg$" },
-	},
-	io_lang = {
-		ext = { "%.io$" },
-	},
-	janet = {
-		ext = { "%.janet$" },
-	},
-	java = {
-		ext = { "%.bsh$", "%.java$" },
-	},
-	javascript = {
-		ext = { "%.cjs$", "%.js$", "%.jsfl$", "%.mjs$", "%.jsx$" },
-	},
-	jq = {
-		ext = { "%.jq$" },
-	},
-	json = {
-		ext = { "%.json$" },
-		mime = { "text/x-json" },
-	},
-	jsp = {
-		ext = { "%.jsp$" },
-	},
-	julia = {
-		ext = { "%.jl$" },
-	},
-	latex = {
-		ext = { "%.bbl$", "%.cls$", "%.dtx$", "%.ins$", "%.ltx$", "%.tex$", "%.sty$" },
-		mime = { "text/x-tex" },
-	},
-	ledger = {
-		ext = { "%.ledger$", "%.journal$" },
-	},
-	less = {
-		ext = { "%.less$" },
-	},
-	lilypond = {
-		ext = { "%.ily$", "%.ly$" },
-	},
-	lisp = {
-		ext = { "%.cl$", "%.el$", "%.lisp$", "%.lsp$" },
-		mime = { "text/x-lisp" },
-	},
-	litcoffee = {
-		ext = { "%.litcoffee$" },
-	},
-	logtalk = {
-		ext = { "%.lgt$" },
-	},
 	lua = {
-		utility = {"^lua%-?5?%d?$", "^lua%-?5%.%d$" },
-		ext = { "%.lua$" },
-		mime = { "text/x-lua" },
-	},
-	makefile = {
-		hashbang = {"^#!/usr/bin/make"},
-		utility = {"^make$"},
-		ext = { "%.iface$", "%.mak$", "%.mk$", "^GNUmakefile$", "^makefile$", "^Makefile$" },
-		mime = { "text/x-makefile" },
-	},
-	man = {
-		ext = { "%.[1-9][xp]?$", "%.ms$", "%.me$", "%.mom$", "%.mm$", "%.tmac$" },
-	},
-	markdown = {
-		ext = { "%.md$", "%.markdown$" },
-		mime = { "text/x-markdown" },
-	},
-	mediawiki = {
-		ext = { "%.wiki$" },
-	},
-	meson = {
-		ext = { "^meson%.build$", "%.meson$", "^meson_options%.txt$", "^meson%.options$" },
-	},
-	modula2 = {
-		ext = { "%.mod$", "%.def$" },
-	},
-	modula3 = {
-		ext = { "%.mg$", "%.ig$", "%.i3$", "%.m3$" },
-	},
-	moonscript = {
-		ext = { "%.moon$" },
-		mime = { "text/x-moon" },
-	},
-	myrddin = {
-		ext = { "%.myr$" },
-	},
-	nemerle = {
-		ext = { "%.n$" },
-	},
-	networkd = {
-		ext = { "%.link$", "%.network$", "%.netdev$" },
-	},
-	nim = {
-		ext = { "%.nim$" },
-	},
-	nix = {
-		ext = { "%.nix$" },
-	},
-	nsis = {
-		ext = { "%.nsh$", "%.nsi$", "%.nsis$" },
-	},
-	objective_c = {
-		ext = { "%.m$", "%.mm$", "%.objc$" },
-		mime = { "text/x-objc" },
-	},
-	org = {
-		ext = { "%.org$" },
-	},
-	pascal = {
-		ext = { "%.dpk$", "%.dpr$", "%.p$", "%.pas$" },
-	},
-	perl = {
-		ext = { "%.al$", "%.perl$", "%.pl$", "%.pm$", "%.pod$" },
-		mime = { "text/x-perl" },
-	},
-	php = {
-		ext = { "%.inc$", "%.php$", "%.php3$", "%.php4$", "%.phtml$" },
-	},
-	pico8 = {
-		ext = { "%.p8$" },
-	},
-	pike = {
-		ext = { "%.pike$", "%.pmod$" },
-	},
-	pkgbuild = {
-		ext = { "^PKGBUILD$", "%.PKGBUILD$" },
-	},
-	pony = {
-		ext = { "%.pony$" },
-	},
-	powershell = {
-		ext = { "%.ps1$", "%.psm1$" },
-	},
-	prolog = {
-		ext = { "%.pl$", "%.pro$", "%.prolog$" },
-	},
-	props = {
-		ext = { "%.props$", "%.properties$" },
-	},
-	protobuf = {
-		ext = { "%.proto$" },
-	},
-	ps = {
-		ext = { "%.eps$", "%.ps$" },
-	},
-	pure = {
-		ext = { "%.pure$" },
+		utility = { "^lua%-?5?%d?$", "^lua%-?5%.%d$" }
 	},
 	python = {
-		utility = { "^python%d?" },
-		ext = { "%.sc$", "%.py[iwx]?$" },
-		mime = { "text/x-python", "text/x-script.python" },
-	},
-	reason = {
-		ext = { "%.re$" },
-	},
-	rc = {
-		utility = {"^rc$"},
-		ext = { "%.rc$", "%.es$" },
-	},
-	rebol = {
-		ext = { "%.r$", "%.reb$" },
-	},
-	rest = {
-		ext = { "%.rst$" },
-	},
-	rexx = {
-		ext = { "%.orx$", "%.rex$" },
-	},
-	rhtml = {
-		ext = { "%.erb$", "%.rhtml$" },
-	},
-	routeros = {
-		ext = { "%.rsc" },
-		detect = function(_, data)
-			return data:match("^#.* by RouterOS")
-		end
-	},
-	rpmspec = {
-		ext = { "%.spec$" },
+		utility = { "^python%d?" }
 	},
 	r = {
-		ext = { "%.R$", "%.Rout$", "%.Rhistory$", "%.Rt$", "Rout.save", "Rout.fail" },
-	},
-	ruby = {
-		ext = { "%.Rakefile$", "%.rake$", "%.rb$", "%.rbw$", "^Vagrantfile$" },
-		mime = { "text/x-ruby" },
-	},
-	rust = {
-		ext = { "%.rs$" },
-		mime = { "text/x-rust" },
-	},
-	sass = {
-		ext = { "%.sass$", "%.scss$" },
-		mime = { "text/x-sass", "text/x-scss" },
-	},
-	scala = {
-		ext = { "%.scala$" },
-		mime = { "text/x-scala" },
-	},
-	scheme = {
-		ext = { "%.rkt$", "%.sch$", "%.scm$", "%.sld$", "%.sls$", "%.ss$" },
-	},
-	smalltalk = {
-		ext = { "%.changes$", "%.st$", "%.sources$" },
-	},
-	sml = {
-		ext = { "%.sml$", "%.fun$", "%.sig$" },
-	},
-	snobol4 = {
-		ext = { "%.sno$", "%.SNO$" },
-	},
-	spin = {
-		ext = { "%.spin$" }
-	},
-	sql= {
-		ext = { "%.ddl$", "%.sql$" },
-	},
-	strace = {
-		detect = function(_, data)
-			return data:match("^execve%(")
-		end
-	},
-	systemd = {
-		ext = {
-			"%.automount$", "%.container$", "%.device$", "%.mount$",
-			"%.path$", "%.scope$", "%.service$", "%.slice$", "%.socket$",
-			"%.swap$", "%.target$", "%.timer$"
-		},
-	},
-	taskpaper = {
-		ext = { "%.taskpaper$" },
-	},
-	tcl = {
-		utility = {"^tclsh$", "^jimsh$" },
-		ext = { "%.tcl$", "%.tk$" },
-	},
-	texinfo = {
-		ext = { "%.texi$" },
-	},
-	text = {
-		-- Do *not* match on this, it is used as a default
-	},
-	todotxt = {
-		ext = { "^todo.txt$", "^Todo.txt$", "^done.txt$", "^Done.txt$" },
-	},
-	toml = {
-		ext = { "%.toml$" },
-	},
-	typescript = {
-		ext = { "%.ts$", "%.tsx$" },
-	},
-	typst = {
-		ext = { "%.typ$", "%.typst$" },
-	},
-	vala = {
-		ext = { "%.vala$" }
-	},
-	usfm = {
-		ext = { "%.usfm$" }
-	},
-	vb = {
-		ext = {
-			"%.asa$", "%.bas$", "%.ctl$", "%.dob$",
-			"%.dsm$", "%.dsr$", "%.frm$", "%.pag$", "%.vb$",
-			"%.vba$", "%.vbs$"
-		},
-	},
-	vcard = {
-		ext = { "%.vcf$", "%.vcard$" },
-	},
-	verilog = {
-		ext = { "%.v$", "%.ver$", "%.sv$" },
-	},
-	vhdl = {
-		ext = { "%.vh$", "%.vhd$", "%.vhdl$" },
-	},
-	wsf = {
-		ext = { "%.wsf$" },
-	},
-	xs = {
-		ext = { "%.xs$", "^%.xsin$", "^%.xsrc$" },
-	},
-	xml = {
-		ext = {
-			"%.dtd$", "%.glif$", "%.plist$", "%.svg$", "%.xml$",
-			"%.xsd$", "%.xsl$", "%.xslt$", "%.xul$"
-		},
-		mime = { "text/xml" },
-	},
-	xtend = {
-		ext = {"%.xtend$" },
-	},
-	yaml = {
-		ext = { "%.yaml$", "%.yml$" },
-		mime = { "text/x-yaml" },
-	},
-	zig = {
-		ext = { "%.zig$" },
-	},
+		name = { "%.Rout%.fail$", "%.Rout%.save$" }
+	}
 }
+M.filetypes = filetypes
 
-vis.events.subscribe(vis.events.WIN_OPEN, function(win)
-
-	local set_filetype = function(syntax, filetype)
-		for _, cmd in pairs(filetype.cmd or {}) do
-			vis:command(cmd)
-		end
-		win:set_syntax(filetype.alt_name or syntax)
+-- backwards compatibility
+	for syntax,T in pairs(filetypes) do
+		T.ext = {}
+		T.name = {}
+		T.mime  = {}
+		T.utility = {}
+		T.hashbang = {}
+		T.cmd = {}
+		T.actions = {}
 	end
 
-	local path = win.file.name -- filepath
-	local mime
+	-- In order to be semi backwards compatible, we create a table on each index access
+	-- This should be removed... eventually.
+	setmetatable(filetypes, {
+		__index = function (t,k)
+			local T = {
+				ext = {},
+				name = {},
+				utility = {},
+				mime = {},
+				hashbang = {},
+				cmd = {},
+				actions = {}
+			}
+			rawset(t,k,T)
+			return T
+		end
+	})
 
-	if path and #path > 0 then
-		local name = path:match("[^/]+$") -- filename
+-- From here on, values MUST MATCH THE FILETYPE TABLE ABOVE
+-- This is because the filetype table contains settings
+-- If the lexer name changed, the filetype table will point to the correct lexer!
+local L = require"lexers.lexer"
+
+-- This table matches filenames AND extensions
+-- This is done because L.detect also mixes it
+-- Single extensions only (no dots "."!)
+-- filename is lowered, if its lowercase, it will match
+local fnames = {
+	-- extensions
+	fs = "fsharp",
+	--	fs = "forth", -- DUPLICATE
+	["1p"] = "man",
+	["2p"] = "man",
+	["3p"] = "man",
+	["4p"] = "man",
+	["5p"] = "man",
+	["6p"] = "man",
+	["7p"] = "man",
+	["8p"] = "man",
+	["9p"] = "man",
+	adoc = "asciidoc",
+	ash = "bash",
+	cjs = "javascript",
+	conf = "ini",
+	container = "systemd",
+	def = "modula2",
+	ebuild = "bash",
+	eml = "mail",
+	es = "rc",
+	fth = "forth",
+	glif = "xml",
+	glsl = "glsl",
+	h = "c",
+	i = "c",
+	i3 = "modula3",
+	ig = "modula3",
+	ily = "lilypond",
+	jsx = "javascript",
+	m3 = "modula3",
+	me = "man",
+	meson = "meson",
+	mg = "modula3",
+	mjs = "javascript",
+	mk = "makefile",
+	mod = "modula2",
+	mom = "man",
+	ms = "man",
+	plist = "xml",
+	pro = "prolog",
+	psm1 = "powershell",
+	pyi = "python",
+	pyx = "python",
+	rc = "rc",
+	rej = "diff",
+	rkt = "scheme",
+	sld = "scheme",
+	sls = "scheme",
+	ss = "scheme",
+	sv = "verilog",
+	tmac = "man",
+	tsx = "typescript",
+	txt = "text",
+	typ = "typst",
+	typst = "typst",
+	usfm = "usfm",
+	wiki = "mediawiki",
+	xhtm = "html",
+	yash = "bash",
+
+	-- filenames
+	[".bash_logout"] = "bash",
+	[".bash_profile"] = "bash",
+	[".bashrc"] = "bash",
+	[".login"] = "bash",
+	[".mkshrc"] = "bash",
+	[".profile"] = "bash",
+	[".sh.profile"] = "bash",
+	[".shinit"] = "bash",
+	[".xprofile"] = "bash",
+	[".yash_profile"] = "bash",
+	[".yashrc"] = "bash",
+	APKBUILD = "bash",
+	COMMIT_EDITMSG = "git-commit",
+	Jenkinsfile = "groovy",
+	Vagrantfile = "ruby",
+	["bash.bash.logout"] = "bash",
+	["bash.bashrc"] = "bash",
+	["git%-rebase%-todo"] = "git-rebase",
+	group = "dsv",
+	gshadow = "dsv",
+	["meson.options"] = "meson",
+	["meson_options.txt"] = "meson",
+	mkshrc = "bash",
+	passwd = "dsv",
+	profile = "bash",
+	shadow = "dsv"
+}
+L.detect_extensions = fnames
+M.filenames = fnames
+M.extensions = fnames
+
+-- Lookup table for mime [mime] = "lexer"
+-- "text/" is prepended, you can omit it
+local mimes = {
+	gemini = "gemini",
+	xml = "xml",
+	["application/x-shellscript"] = "bash",
+	["x-c"] = "c",
+	["x-c++"] = "cpp",
+	["x-coffee"] = "coffeescript",
+	["x-css"] = "css",
+	["x-haskell"] = "haskell",
+	["x-html"] = "html",
+	["x-json"] = "json",
+	["x-lisp"] = "lisp",
+	["x-lua"] = "lua",
+	["x-makefile"] = "makefile",
+	["x-markdown"] = "markdown",
+	["x-moon"] = "moonscript",
+	["x-objc"] = "objective_c",
+	["x-perl"] = "perl",
+	["x-python"] = "python",
+	["x-ruby"] = "ruby",
+	["x-rust"] = "rust",
+	["x-sass"] = "sass",
+	["x-scala"] = "scala",
+	["x-script.python"] = "python",
+	["x-scss"] = "sass",
+	["x-shellscript"] = "bash",
+	["x-tex"] = "latex",
+	["x-yaml"] = "yaml",
+}
+M.mimes = mimes
+
+local utilities = {
+	awk = 'awk', mawk = 'awk', nawk = 'awk', gawk = 'awk', goawk = 'awk',
+
+	sh = 'bash', ash = 'bash', dash = 'bash',
+	bash = 'bash',
+	ksh = 'bash', mksh = 'bash',
+	csh = 'bash', tcsh = 'bash',
+	zsh = 'bash',
+
+	make = 'make',
+
+	python = 'python', python2 = 'python', python3 = 'python',
+
+	rc = 'rc', es = 'rc',
+
+	tclsh = 'tcl', jimsh = 'tcl',
+
+	lua = 'lua',
+
+	octave = 'matlab',
+	perl = 'perl',
+	php = 'php',
+	ruby = 'ruby',
+}
+M.utilities = utilities
+
+M.data_patterns = {
+	["^execve%("] = 'strace',
+	["^#.* by RouterOS"] = 'routeros'
+}
+L.detect_patterns = M.data_patterns
+
+-- string.find(table, pattern)
+local function TStringFind(tbl, subject)
+	for _, pattern in ipairs(tbl or {}) do
+		if subject:find(pattern) then
+			return true
+		end
+	end
+	return false
+end
+
+--[[ Hashbang Utility Extractor
+	#! is UTILITY <SPACE> ARG
+	If UTILITY matches /env, its in ARG
+
+	FreeBSD/GNU has -S flag which splits ARG by spaces and has other options
+		if -S is found, all options are discarded until it finds utility
+		options are identified as /^-|=/
+		NOTE: This means a utility cannot match this pattern
+--]]
+local function GetHashBang(data)
+	local hb, pathname, args = data:match"^#![ \t]*((/%S+)[\t ]*([^\n]*))\n"
+	local utility = pathname and pathname:match"[^/]+$"
+	if utility=="env" then
+		local a = args:match"^%-[^S-]*S%s*(.+)" -- #!env -Ssh or -S sh
+		if a then
+			args = a
+				:gsub("%-[Cu] %S+", "")
+				:gsub("[^%s=]+=[^%s=]+","")
+		end
+		utility = args:match"%S+"
+	end
+	return hb, utility
+end
+
+
+-- Returns syntax/filetype
+-- utility -> datap -> filename -> extension -> L.detect() -> mime
+-- mime is supposed to be the most correct, but it execs file
+-- Which is slow and semi non-portable, so its left for last
+local function Detect(win)
+	local file = win.file
+
+	-- pass first few bytes of file to custom file type detector functions
+	local data = file:content(0, 256)
+
+	local line
+	if data and #data > 0 then
+		line = file.lines[1]
+		local fullhb, utility = GetHashBang(data)
+		if fullhb then
+			if utility and utilities[utility] then
+				return utilities[utility]
+			end
+			for lang, ft in pairs(M.filetypes) do
+				if
+					utility and TStringFind(ft.utility, utility)
+					or TStringFind(ft.hashbang, fullhb)
+					-- Same as below but saves us a loop
+					or (ft.detect and ft.detect(file, data))
+				then
+					return lang
+				end
+			end
+		else
+			for patt, syntax in pairs(M.data_patterns) do
+				if data:find(patt) then return syntax end
+			end
+			for lang, ft in pairs(M.filetypes) do
+				if
+					type(ft.detect) == 'function' and ft.detect(file, data)
+				then
+					return lang
+				end
+			end
+		end
+	end
+
+	local path = file.name -- filepath
+	if path and path~="" then
+		local name = path and path:match("[^/]+$") -- filename
 		if name then
 			local unchanged
+			local suffixes = M.ignoresuffixes
 			while #name > 0 and name ~= unchanged do
 				unchanged = name
-				for _, pattern in ipairs(vis.ftdetect.ignoresuffixes) do
+				name = name:gsub('%.([^.]+)$', suffixes)
+				for _, pattern in ipairs(suffixes) do
 					name = name:gsub(pattern, "")
 				end
 			end
 		end
 
 		if name and #name > 0 then
-			-- detect filetype by filename ending with a configured extension
-			for lang, ft in pairs(vis.ftdetect.filetypes) do
-				for _, pattern in pairs(ft.ext or {}) do
-					if name:match(pattern) then
-						set_filetype(lang, ft)
-						return
-					end
+			local l = L.detect(name, line or "")
+				or L.detect(name:lower(), "")
+			if l then return l end
+
+			-- detect filetype by filename pattern
+			for lang, ft in pairs(M.filetypes) do
+				for _, pattern in ipairs(ft.name or {}) do
+					if name:find(pattern) then return lang end
+				end
+				for _, pattern in ipairs(ft.ext or {}) do
+					if name:find(pattern) then return lang end
 				end
 			end
 		end
 
 		-- run file(1) to determine mime type
-		local file = io.popen(string.format("file -bL --mime-type -- '%s'", path:gsub("'", "'\\''")))
-		if file then
-			mime = file:read('*all')
-			file:close()
+		local fileh = io.popen(
+			string.format(
+				"file -bL --mime-type -- '%s'", path:gsub("'", "'\\''")
+			)
+		)
+		if fileh then
+			local mime = fileh:read('*l')
+			fileh:close()
 			if mime then
-				mime = mime:gsub('%s*$', '')
-			end
-			if mime and #mime > 0 then
-				for lang, ft in pairs(vis.ftdetect.filetypes) do
-					for _, ft_mime in pairs(ft.mime or {}) do
-						if mime == ft_mime then
-							set_filetype(lang, ft)
-							return
-						end
-					end
-				end
+				local lexer = mimes[mime] or mimes["text/" .. mime]
+				if lexer then return lexer end
 			end
 		end
 	end
 
-	-- pass first few bytes of file to custom file type detector functions
-	local file = win.file
-	local data = file:content(0, 256)
-	if data and #data > 0 then
-		for lang, ft in pairs(vis.ftdetect.filetypes) do
-			if type(ft.detect) == 'function' and ft.detect(file, data) then
-				set_filetype(lang, ft)
-				return
-			end
-		end
+	return 'text'
+end
 
---[[ hashbang check
-	hashbangs only have command <SPACE> argument
-		if /env, find utility in args
-			discard first arg if /-[^S]*S/; and all subsequent /=/
-			NOTE: this means you can't have a command with /^-|=/
-	return first field, which should be the utility.
-	NOTE: long-options unsupported
---]]
-		local fullhb, utility = data:match"^#![ \t]*(/+[^/\n]+[^\n]*)"
-		if fullhb then
-			local i, field = 1, {}
-			for m in fullhb:gmatch"%g+" do field[i],i = m,i+1 end
-			-- NOTE: executables should not have a space (or =, see below)
-			if field[1]:match"/env$" then
-				table.remove(field,1)
-				-- it is assumed that the first argument are short options, with -S inside
-				if string.match(field[1] or "", "^%-[^S-]*S") then -- -S found
-					table.remove(field,1)
-					-- skip all name=value
-					while string.match(field[1] or "","=") do
-						table.remove(field,1)
-					end
-					-- (hopefully) whatever is left in field[1] should be the utility or nil
-				end
-			end
-			utility = string.match(field[1] or "", "[^/]+$") -- remove filepath
+vis.events.subscribe(vis.events.WIN_OPEN, function(win)
+	local syntax = Detect(win) -- syntax/lexer/filetype
+	local filetype = rawget(filetypes, syntax) -- avoid backwards compatibility mt
+	if filetype then
+		for _, Action in ipairs(filetype.actions or {}) do
+			Action(win, filetype)
 		end
-
-		local function searcher(tbl, subject)
-			for _, pattern in ipairs(tbl or {}) do
-				if string.match(subject, pattern) then
-					return true
-				end
-			end
-			return false
+		for _, cmd in ipairs(filetype.cmd or {}) do
+			vis:command(cmd)
 		end
-
-		if utility or fullhb then
-			for lang, ft in pairs(vis.ftdetect.filetypes) do
-				if
-					utility and searcher(ft.utility, utility)
-					or
-					fullhb and searcher(ft.hashbang, fullhb)
-				then
-					set_filetype(lang, ft)
-					return
-				end
-			end
-		end
+		syntax = filetype.lexer
+			or filetype.alt_name -- backwards compat
+			or syntax
+	end
+	-- Detect returns filetype, lexer is optional
+	if package.searchpath("lexers." .. syntax, package.path) then
+		win:set_syntax(syntax)
+		return
+	else
+		vis:info(
+			string.format(
+				"Lexer '%s' not found", syntax
+			)
+		)
 	end
 
-	-- default to text lexer if nothing else is found
-	set_filetype('text', vis.ftdetect.filetypes.text)
+	win:set_syntax(nil)
+	return
 end)
 
