@@ -1672,6 +1672,16 @@ static bool cmd_write(Vis *vis, Win *win, Command *cmd, const char *argv[], Sele
 				vis_info_show(vis, "WARNING: file exists");
 				goto err;
 			}
+			/* Check if the destination file exists and is read-only. This
+			 * is needed because vis' default save method uses mkstemp and
+			 * renameat(3p) to atomically replace the destination file.
+			 * This approach does work regardless the permissions of original
+			 * file, hence we do the check here.
+			 */
+			if (existing_file && !(meta.st_mode & (S_IWUSR | S_IWGRP | S_IWOTH))) {
+				vis_info_show(vis, "WARNING: file is read-only");
+				goto err;
+			}
 		}
 
 		if (!vis_event_emit(vis, VIS_EVENT_FILE_SAVE_PRE, file, path) && cmd->flags != '!') {
