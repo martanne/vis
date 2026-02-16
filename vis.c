@@ -642,8 +642,10 @@ void vis_insert_key(Vis *vis, const char *data, size_t len) {
 		return;
 	for (Selection *s = view_selections(&win->view); s; s = view_selections_next(s)) {
 		size_t pos = view_cursors_pos(s);
-		vis_insert(vis, pos, data, len);
-		view_cursors_scroll_to(s, pos + len);
+		if (pos != EPOS) {
+			vis_insert(vis, pos, data, len);
+			view_cursors_scroll_to(s, pos + len);
+		}
 	}
 }
 
