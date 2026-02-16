@@ -286,16 +286,14 @@ vis.types.window.set_syntax = function(win, syntax)
 	for id, token_name in ipairs(lexer._TAGS) do
 		local style = lexers['STYLE_' .. token_name:upper():gsub("%.", "_")] or ''
 		if type(style) == 'table' then
-			local s = ''
-			if style.attr then
-				s = string.format("%s,%s", s, style.attr)
-			elseif style.fore then
-				s = string.format("%s,fore:%s", s, style.fore)
-			elseif style.back then
-				s = string.format("%s,back:%s", s, style.back)
-			end
-			style = s
+			style =	(
+				style.attr and string.format(",%s", style.attr)
+				or style.fore and string.format(",fore:%s", style.fore)
+				or style.back and string.format(",back:%s", style.back)
+				or ''
+			)
 		end
+
 		if style ~= nil then win:style_define(id, style) end
 	end
 
