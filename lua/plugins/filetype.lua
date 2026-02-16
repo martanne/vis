@@ -328,6 +328,7 @@ end
 -- mime is supposed to be the most correct, but it execs file
 -- Which is slow and semi non-portable, so its left for last
 local function Detect(win)
+	local R
 	local file = win.file
 
 	-- pass first few bytes of file to custom file type detector functions
@@ -338,8 +339,11 @@ local function Detect(win)
 		line = file.lines[1]
 		local fullhb, utility = GetHashBang(data)
 		if fullhb then
-			if utility and utilities[utility] then
-				return utilities[utility]
+			if utility then
+				R = utilities[utility]
+					-- for utilities like python3.n, just match python3
+					or utilities[utility:match"^%w+"]
+				if R then return R end
 			end
 			for lang, ft in pairs(M.filetypes) do
 				if
@@ -352,9 +356,6 @@ local function Detect(win)
 				end
 			end
 		else
-			for patt, syntax in pairs(M.data_patterns) do
-				if data:find(patt) then return syntax end
-			end
 			for lang, ft in pairs(M.filetypes) do
 				if
 					type(ft.detect) == 'function' and ft.detect(file, data)
@@ -366,33 +367,37 @@ local function Detect(win)
 	end
 
 	local path = file.name -- filepath
+	local name
 	if path and path~="" then
-		local name = path and path:match("[^/]+$") -- filename
-		if name then
-			local unchanged
-			local suffixes = M.ignoresuffixes
-			while #name > 0 and name ~= unchanged do
-				unchanged = name
-				name = name:gsub('%.([^.]+)$', suffixes)
-				for _, pattern in ipairs(suffixes) do
-					name = name:gsub(pattern, "")
-				end
+		name = path and path:match("[^/]+$") -- filename
+	end
+
+	if name then
+		local unchanged
+		local suffixes = M.ignoresuffixes
+		while #name > 0 and name ~= unchanged do
+			unchanged = name
+			name = name:gsub('%.([^.]+)$', suffixes) -- extensions
+			for _, pattern in ipairs(suffixes) do
+				name = name:gsub(pattern, "")
 			end
 		end
+	end
 
-		if name and #name > 0 then
-			local l = L.detect(name, line or "")
-				or L.detect(name:lower(), "")
-			if l then return l end
+	if name or line then
+		R = L.detect(name, line or "")
+			or name and L.detect(name:lower(), "")
+		if R then return R end
+	end
 
-			-- detect filetype by filename pattern
-			for lang, ft in pairs(M.filetypes) do
-				for _, pattern in ipairs(ft.name or {}) do
-					if name:find(pattern) then return lang end
-				end
-				for _, pattern in ipairs(ft.ext or {}) do
-					if name:find(pattern) then return lang end
-				end
+	if name and #name > 0 then
+		-- detect filetype by filename pattern
+		for lang, ft in pairs(M.filetypes) do
+			for _, pattern in ipairs(ft.name or {}) do
+				if name:find(pattern) then return lang end
+			end
+			for _, pattern in ipairs(ft.ext or {}) do
+				if name:find(pattern) then return lang end
 			end
 		end
 
