@@ -565,8 +565,7 @@ typedef size_t (VisOperatorFunction)(Vis *vis, Text *text, OperatorContext *cont
  * @param vis The editor instance.
  * @param func The function implementing the operator logic.
  * @param context User-supplied context for the operator.
- * @return Operator ID. Negative values indicate an error, positive ones can be
- * used with `vis_operator`.
+ * @return Operator ID to be used with `vis_operator`.
  */
 VIS_EXPORT int vis_operator_register(Vis *vis, VisOperatorFunction *func, void *context);
 
@@ -746,8 +745,7 @@ typedef size_t (VisMotionFunction)(Vis *vis, Win *win, void *context, size_t pos
  * @param vis The editor instance.
  * @param context User-supplied context for the motion.
  * @param func The function implementing the motion logic.
- * @return Motion ID. Negative values indicate an error, positive ones can be
- * used with `vis_motion`.
+ * @return Motion ID to be used with `vis_motion`.
  */
 VIS_EXPORT int vis_motion_register(Vis *vis, void *context, VisMotionFunction *func);
 
@@ -864,8 +862,7 @@ typedef Filerange (VisTextObjectFunction)(Vis *vis, Win *win, void *context, siz
  * @param type The type of the text object.
  * @param data User-supplied data for the text object.
  * @param func The function implementing the text object logic.
- * @return Text object ID. Negative values indicate an error, positive ones can be
- * used with `vis_textobject`.
+ * @return Text object ID to be used with `vis_textobject`.
  */
 VIS_EXPORT int vis_textobject_register(Vis *vis, int type, void *data, VisTextObjectFunction *func);
 

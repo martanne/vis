@@ -14,7 +14,6 @@
 -- @tparam string key the key to associate with the new operator
 -- @tparam function operator the operator logic implemented as Lua function
 -- @tparam[opt] string help the single line help text as displayed in `:help`
--- @treturn bool whether the new operator could be installed
 -- @usage
 -- vis:operator_new("gq", function(file, range, pos)
 -- 	local status, out, err = vis:pipe(file, range, "fmt")
@@ -29,9 +28,6 @@
 --
 vis.operator_new = function(vis, key, operator, help)
 	local id = vis:operator_register(operator)
-	if id < 0 then
-		return false
-	end
 	local binding = function()
 		vis:operator(id)
 	end
@@ -50,7 +46,6 @@ end
 -- @tparam string key the key to associate with the new option
 -- @tparam function motion the motion logic implemented as Lua function
 -- @tparam[opt] string help the single line help text as displayed in `:help`
--- @treturn bool whether the new motion could be installed
 -- @usage
 -- vis:motion_new("<C-l>", function(win, pos)
 -- 	return pos+1
@@ -58,9 +53,6 @@ end
 --
 vis.motion_new = function(vis, key, motion, help)
 	local id = vis:motion_register(motion)
-	if id < 0 then
-		return false
-	end
 	local binding = function()
 		vis:motion(id)
 	end
@@ -79,7 +71,6 @@ end
 -- @tparam string key the key associated with the new text object
 -- @tparam function textobject the text object logic implemented as Lua function
 -- @tparam[opt] string help the single line help text as displayed in `:help`
--- @treturn bool whether the new text object could be installed
 -- @usage
 -- vis:textobject_new("<C-l>", function(win, pos)
 -- 	return pos, pos+1
@@ -87,9 +78,6 @@ end
 --
 vis.textobject_new = function(vis, key, textobject, help)
 	local id = vis:textobject_register(textobject)
-	if id < 0 then
-		return false
-	end
 	local binding = function()
 		vis:textobject(id)
 	end
