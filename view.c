@@ -34,19 +34,25 @@ static const char *symbols_default[] = {
 
 static Cell cell_blank = { .width = 0, .len = 0, .data = " ", };
 
-/* move visible viewport n-lines up/down, redraws the view but does not change
- * cursor position which becomes invalid and should be corrected by calling
- * view_cursors_to. the return value indicates whether the visible area changed.
- */
-static bool view_viewport_up(View *view, int n);
-static bool view_viewport_down(View *view, int n);
-
-static void view_clear(View *view);
-static bool view_add_cell(View *view, const Cell *cell);
-static bool view_addch(View *view, Cell *cell);
-static void selection_free(Selection*);
-/* set/move current cursor position to a given (line, column) pair */
-static size_t cursor_set(Selection*, Line *line, int col);
+static void selection_free(Selection *s)
+{
+	for (Selection *after = s->next; after; after = after->next)
+		after->number--;
+	if (s->prev)
+		s->prev->next = s->next;
+	if (s->next)
+		s->next->prev = s->prev;
+	if (s->view->selections == s)
+		s->view->selections = s->next;
+	if (s->view->selection == s)
+		s->view->selection = s->next ? s->next : s->prev;
+	if (s->view->selection_dead == s)
+		s->view->selection_dead = NULL;
+	if (s->view->selection_latest == s)
+		s->view->selection_latest = s->prev ? s->prev : s->next;
+	s->view->selection_count--;
+	free(s);
+}
 
 void window_status_update(Vis *vis, Win *win) {
 	char left_parts[4][255] = { "", "", "", "" };
@@ -583,7 +589,9 @@ bool view_init(Win *win, Text *text) {
 	return true;
 }
 
-static size_t cursor_set(Selection *sel, Line *line, int col) {
+/* set/move current cursor position to a given (line, column) pair */
+static size_t cursor_set(Selection *sel, Line *line, int col)
+{
 	int row = 0;
 	View *view = sel->view;
 	size_t pos = view->start;
@@ -609,21 +617,26 @@ static size_t cursor_set(Selection *sel, Line *line, int col) {
 	return pos;
 }
 
-static bool view_viewport_down(View *view, int n) {
-	Line *line;
+/* NOTE: does not change the cursor_position use view_cursors_to() afterwords.
+ * returns whether the visible area changed */
+static bool view_viewport_down(View *view, int n)
+{
 	if (view->end >= text_size(view->text))
 		return false;
 	if (n >= view->height) {
 		view->start = view->end;
 	} else {
-		for (line = view->topline; line && n > 0; line = line->next, n--)
+		for (Line *line = view->topline; line && n > 0; line = line->next, n--)
 			view->start += line->len;
 	}
 	view_draw(view);
 	return true;
 }
 
-static bool view_viewport_up(View *view, int n) {
+/* NOTE: does not change the cursor_position use view_cursors_to() afterwords.
+ * returns whether the visible area changed */
+static bool view_viewport_up(View *view, int n)
+{
 	/* scrolling up is somewhat tricky because we do not yet know where
 	 * the lines start, therefore scan backwards but stop at a reasonable
 	 * maximum in case we are dealing with a file without any newlines
@@ -1026,35 +1039,15 @@ Selection *view_selections_column_next(Selection *sel, int column) {
 	return selections_column_next(sel->view, sel, column);
 }
 
-static void selection_free(Selection *s) {
-	if (!s)
-		return;
-	for (Selection *after = s->next; after; after = after->next)
-		after->number--;
-	if (s->prev)
-		s->prev->next = s->next;
-	if (s->next)
-		s->next->prev = s->prev;
-	if (s->view->selections == s)
-		s->view->selections = s->next;
-	if (s->view->selection == s)
-		s->view->selection = s->next ? s->next : s->prev;
-	if (s->view->selection_dead == s)
-		s->view->selection_dead = NULL;
-	if (s->view->selection_latest == s)
-		s->view->selection_latest = s->prev ? s->prev : s->next;
-	s->view->selection_count--;
-	free(s);
-}
-
-bool view_selections_dispose(Selection *sel) {
-	if (!sel)
-		return true;
-	View *view = sel->view;
-	if (!view->selections || !view->selections->next)
-		return false;
-	selection_free(sel);
-	view_selections_primary_set(view->selection);
+bool view_selections_dispose(Selection *sel)
+{
+	if (sel) {
+		View *view = sel->view;
+		if (!view->selections || !view->selections->next)
+			return false;
+		selection_free(sel);
+		view_selections_primary_set(view->selection);
+	}
 	return true;
 }
 
