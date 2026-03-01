@@ -211,7 +211,6 @@ static KEY_ACTION_FN(ka_macro_record)
 		vis_macro_record(vis, reg);
 		keys++;
 	}
-	vis_draw(vis);
 	return keys;
 }
 
