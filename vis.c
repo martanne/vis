@@ -584,11 +584,13 @@ void vis_cleanup(Vis *vis)
 		return;
 	while (vis->windows)
 		vis_window_close(vis->windows);
-	vis_event_emit(vis, VIS_EVENT_QUIT);
 	vis_process_waitall(vis);
 	file_free(vis, vis->command_file);
 	file_free(vis, vis->search_file);
 	file_free(vis, vis->error_file);
+
+	vis_event_emit(vis, VIS_EVENT_QUIT);
+
 	for (int i = 0; i < LENGTH(vis->registers); i++) {
 		for (VisDACount j = 0; j < vis->registers[i].count; j++)
 			buffer_release(vis->registers[i].data + j);
