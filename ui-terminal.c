@@ -281,9 +281,8 @@ bool ui_window_style_set_pos(Win *win, int x, int y, enum UiStyle id, bool keep_
 	return true;
 }
 
-void ui_window_status(Win *win, const char *status) {
-	if (!(win->options & UI_OPTION_STATUSBAR))
-		return;
+void ui_window_status(Win *win, const char *status)
+{
 	Ui *ui = &win->vis->ui;
 	enum UiStyle style = ui->selwin == win ? UI_STYLE_STATUS_FOCUSED : UI_STYLE_STATUS;
 	ui_draw_string(ui, win->x, win->y + win->height - 1, status, win->id, style);

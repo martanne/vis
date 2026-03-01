@@ -319,7 +319,8 @@ void vis_window_draw(Win *win) {
 		window_draw_selections(win);
 	window_draw_eof(win);
 
-	vis_event_emit(vis, VIS_EVENT_WIN_STATUS, win);
+	if (win->options & UI_OPTION_STATUSBAR)
+		vis_event_emit(vis, VIS_EVENT_WIN_STATUS, win);
 }
 
 
@@ -1358,7 +1359,6 @@ bool vis_macro_record(Vis *vis, enum VisRegister id) {
 	if (!(VIS_REG_A <= id && id <= VIS_REG_Z))
 		macro->len = 0;
 	vis->recording = macro;
-	vis_event_emit(vis, VIS_EVENT_WIN_STATUS, vis->win);
 	return true;
 }
 
@@ -1373,7 +1373,6 @@ bool vis_macro_record_stop(Vis *vis) {
 	}
 	vis->last_recording = vis->recording;
 	vis->recording = NULL;
-	vis_event_emit(vis, VIS_EVENT_WIN_STATUS, vis->win);
 	return true;
 }
 
