@@ -35,6 +35,13 @@ struct Mode {
 	bool visual;                        /* whether text selection is possible in this mode */
 };
 
+enum PromptState {
+	PROMPTSTATE_NONE,      /* there is no prompt window */
+	PROMPTSTATE_ONELINE,   /* normal state of the prompt: one line at the bottom of the terminal */
+	PROMPTSTATE_MULTILINE, /* when prompt_up was called and prompt window becomes leftmost or topmost window depending on the layout */
+	PROMPTSTATE_COMMAND,   /* used to move cursor to the bottom of the terminal before running prompt command */
+};
+
 typedef struct {
 	Buffer     *data;
 	VisDACount  count;
@@ -192,6 +199,7 @@ struct Vis {
 	int last_totill;                     /* last to/till movement used for ';' and ',' */
 	int search_direction;                /* used for `n` and `N` */
 	enum TextLoadMethod load_method;     /* how existing files should be loaded */
+	enum PromptState prompt_state;       /* needed for determining primary cursor's position */
 	bool autoindent;                     /* whether indentation should be copied from previous line on newline */
 	bool change_colors;                  /* whether to adjust 256 color palette for true colors */
 	bool ignorecase;                     /* whether to ignore case when searching */

@@ -152,6 +152,8 @@ static void ui_term_backend_blit(Ui *tui) {
 			cell++;
 		}
 	}
+	/* move cursor */
+	buffer_appendf(buf, "\x1b[%d;%dH", tui->cur_row + 1, tui->cur_col + 1);
 	output(buf->data, buffer_length0(buf));
 }
 
@@ -162,11 +164,9 @@ static bool ui_term_backend_resize(Ui *tui, int width, int height) {
 }
 
 static void ui_term_backend_save(Ui *tui, bool fscr) {
-	cursor_visible(true);
 }
 
 static void ui_term_backend_restore(Ui *tui) {
-	cursor_visible(false);
 }
 
 int ui_terminal_colors(void) {

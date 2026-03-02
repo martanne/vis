@@ -30,6 +30,8 @@ static void prompt_hide(Win *win) {
 	if (line && (line[0] == '\n' || (strchr(":/?", line[0]) && (line[1] == '\n' || line[1] == '\0'))))
 		text_delete_range(txt, &line_range);
 	free(line);
+	win->vis->prompt_state = PROMPTSTATE_NONE;
+	win->vis->ui.selwin = win->parent;
 	vis_window_close(win);
 }
 
@@ -93,8 +95,12 @@ static const char *prompt_enter(Vis *vis, const char *keys, const Arg *arg) {
 	bool lastline = (range.end == text_size(txt));
 
 	prompt_restore(prompt);
+	win->vis->prompt_state = PROMPTSTATE_COMMAND;
+	vis_redraw(vis);
 	if (vis_prompt_cmd(vis, cmd)) {
 		prompt_hide(prompt);
+		/* hide cursor in case it was made visible */
+		fprintf(stderr, "\x1b[?25l");
 		if (!lastline) {
 			text_delete(txt, range.start, text_range_size(&range));
 			text_appendf(vis, txt, "%s\n", cmd);
@@ -104,7 +110,6 @@ static const char *prompt_enter(Vis *vis, const char *keys, const Arg *arg) {
 		vis->mode = &vis_modes[VIS_MODE_INSERT];
 	}
 	free(cmd);
-	vis_draw(vis);
 	return keys;
 }
 
@@ -123,6 +128,7 @@ static const char *prompt_up(Vis *vis, const char *keys, const Arg *arg) {
 	vis_motion(vis, VIS_MOVE_LINE_UP);
 	vis_window_mode_unmap(vis->win, VIS_MODE_INSERT, "<Up>");
 	win_options_set(vis->win, UI_OPTION_SYMBOL_EOF);
+	vis->prompt_state = PROMPTSTATE_MULTILINE;
 	return keys;
 }
 
@@ -173,6 +179,8 @@ void vis_prompt_show(Vis *vis, const char *title) {
 	if (CONFIG_LUA)
 		vis_window_mode_map(prompt, VIS_MODE_INSERT, true, "<Tab>", &prompt_tab_binding);
 	vis_mode_switch(vis, VIS_MODE_INSERT);
+	vis->prompt_state = PROMPTSTATE_ONELINE;
+	vis->ui.selwin = prompt;
 }
 
 void vis_info_show(Vis *vis, const char *msg, ...) {

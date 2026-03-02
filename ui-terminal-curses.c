@@ -220,6 +220,7 @@ static void ui_term_backend_blit(Ui *tui) {
 			cell++;
 		}
 	}
+	move(tui->cur_row, tui->cur_col);
 	wnoutrefresh(stdscr);
 	if (tui->doupdate)
 		doupdate();
@@ -235,7 +236,6 @@ static bool ui_term_backend_resize(Ui *tui, int width, int height) {
 }
 
 static void ui_term_backend_save(Ui *tui, bool fscr) {
-	curs_set(1);
 	if (fscr) {
 		def_prog_mode();
 		endwin();
@@ -247,7 +247,6 @@ static void ui_term_backend_save(Ui *tui, bool fscr) {
 static void ui_term_backend_restore(Ui *tui) {
 	reset_prog_mode();
 	wclear(stdscr);
-	curs_set(0);
 }
 
 int ui_terminal_colors(void) {
@@ -280,6 +279,7 @@ void ui_terminal_resume(Ui *term) { }
 static void ui_term_backend_suspend(Ui *term) {
 	if (change_colors == 1)
 		undo_palette();
+	curs_set(1);
 }
 
 static void ui_term_backend_free(Ui *term) {
