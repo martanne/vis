@@ -172,4 +172,4 @@ uninstall:
 	@echo removing support files from ${DESTDIR}${SHAREPREFIX}/vis
 	@rm -rf ${DESTDIR}${SHAREPREFIX}/vis
 
-.PHONY: all clean vis dist distclean install install-strip uninstall debug profile coverage test test-update luadoc luadoc-all luacheck man docker-kill docker docker-clean
+.PHONY: all clean dist distclean install install-strip uninstall debug profile coverage test test-update luadoc luadoc-all luacheck man docker-kill docker docker-clean
