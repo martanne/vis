@@ -33,7 +33,8 @@ static void file_free(Vis *vis, File *file) {
 		--file->refcount;
 		return;
 	}
-	vis_event_emit(vis, VIS_EVENT_FILE_CLOSE, file);
+	if (!file->internal)
+		vis_event_emit(vis, VIS_EVENT_FILE_CLOSE, file);
 	for (size_t i = 0; i < LENGTH(file->marks); i++)
 		da_release(file->marks + i);
 	text_free(file->text);
@@ -585,11 +586,16 @@ void vis_cleanup(Vis *vis)
 	while (vis->windows)
 		vis_window_close(vis->windows);
 	vis_process_waitall(vis);
+
+	// NOTE: it is possible for a plugin to call a lua function
+	// such as vis:message() in QUIT which requires the existence
+	// of vis' internal files. This must be emitted prior to
+	// the release of those files.
+	vis_event_emit(vis, VIS_EVENT_QUIT);
+
 	file_free(vis, vis->command_file);
 	file_free(vis, vis->search_file);
 	file_free(vis, vis->error_file);
-
-	vis_event_emit(vis, VIS_EVENT_QUIT);
 
 	for (int i = 0; i < LENGTH(vis->registers); i++) {
 		for (VisDACount j = 0; j < vis->registers[i].count; j++)
