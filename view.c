@@ -546,7 +546,6 @@ bool view_resize(View *view, int width, int height) {
 	view->textbuf = textbuf;
 	view->width = width;
 	view->height = height;
-	memset(view->lines, 0, view->lines_size);
 	view_draw(view);
 	return true;
 }
