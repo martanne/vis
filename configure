@@ -529,6 +529,27 @@ EOF
 		fi
 	done
 
+	# Homebrew on macOS does not provide a pkg-config file or a static
+	# liblpeg.a in the default linker search path. Try to locate it
+	# via brew --prefix as a fallback.
+	if test -z "${CFLAGS_LPEG}" && cmdexists brew ; then
+		lpeg_prefix=$(brew --prefix lpeg 2>/dev/null)
+		if test -n "$lpeg_prefix" -a -d "$lpeg_prefix/lib" ; then
+			printf " checking for lpeg via brew... "
+			CFLAGS_LPEG=""
+			LDFLAGS_LPEG="-L${lpeg_prefix}/lib -llpeg"
+			if $CC $CFLAGS $CFLAGS_LUA $CFLAGS_LPEG "$tmpc" \
+				$LDFLAGS $LDFLAGS_LUA $LDFLAGS_LPEG -o "$tmpo" >/dev/null 2>&1 ; then
+				CFLAGS_LPEG="-DCONFIG_LPEG=1"
+				printf "yes\n"
+			else
+				printf "no\n"
+				CFLAGS_LPEG=""
+				LDFLAGS_LPEG=""
+			fi
+		fi
+	fi
+
 	test "$lpeg" = "yes" -a -z "${CFLAGS_LPEG}" && fail "$0: cannot find liblpeg"
 fi
 
