@@ -18,17 +18,29 @@ local change = function(delta)
 	for selection in win:selections_iterator() do
 		local pos = selection.pos
 		if not pos then goto continue end
-		local word = file:text_object_word(pos);
-		if not word then goto continue end
-		local data = file:content(word.start, 1024)
+		local data = file:content(pos, 1024)
 		if not data then goto continue end
 		local s, e = pattern:match(data)
 		if not s then goto continue end
+		if s == 1 then
+			-- detect if the cursor is in the middle of a number
+			local word = file:text_object_word(pos)
+			-- the cursor is in the middle of a word
+			if word.start < pos then
+				local word_prefix = pos-word.start
+				data = file:content(word.start, word_prefix)..data
+				local e_old = e + word_prefix - 1
+				pos = pos - word_prefix
+				while e_old > e do
+					s, e = pattern:match(data, e)
+				end
+			end
+		end
 		data = string.sub(data, s, e-1)
 		if #data == 0 then goto continue end
 		-- align start and end for fileindex
-		s = word.start + s - 1
-		e = word.start + e - 1
+		s = pos + s - 1
+		e = pos + e - 1
 		local base, format, padding = 10, 'd', 0
 		if lexer.oct_num:match(data) then
 			base = 8
