@@ -29,8 +29,9 @@ local change = function(delta)
 			if word.start < pos then
 				local word_prefix = pos-word.start
 				data = file:content(word.start, word_prefix)..data
-				s = s + word_prefix
-				local e_old = e + word_prefix
+				s = s + word_prefix -- make the start relative to the word's start
+				local e_old = e + word_prefix -- remember the old end relative to the word' start
+				e = 1 -- reset the end mark to search the word until we find the complete number
 				pos = pos - word_prefix
 				while e_old > e do
 					s, e = pattern:match(data, e)
