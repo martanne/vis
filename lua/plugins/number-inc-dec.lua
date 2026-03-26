@@ -29,7 +29,8 @@ local change = function(delta)
 			if word.start < pos then
 				local word_prefix = pos-word.start
 				data = file:content(word.start, word_prefix)..data
-				local e_old = e + word_prefix - 1
+				s = s + word_prefix
+				local e_old = e + word_prefix
 				pos = pos - word_prefix
 				while e_old > e do
 					s, e = pattern:match(data, e)
