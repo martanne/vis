@@ -20,18 +20,8 @@
 .
 .Sh DESCRIPTION
 .Nm vis-clipboard
-wraps various system-specific tools for interacting with a system clipboard,
-like
-.Xr xsel 1
-for X11,
-.Xr pbcopy 1
-for Mac OS X,
-and
-.Pa /dev/clipboard
-on Cygwin.
-.Pp
-.Nm vis-clipboard
-can run in three different ways,
+wraps various system-specific tools for interacting with a system clipboard.
+It can run in three different ways,
 depending on the flag given on the command-line.
 .Bl -tag -width flag
 .It Fl -usable
@@ -57,14 +47,25 @@ specify which selection to use, options are "primary" or
 "clipboard". Silently ignored on platforms with a single clipboard.
 .El
 .
-.Sh ENVIRONMENT
-The following environment variables affect the operation of
-.Nm vis-clipboard :
-.Bl -tag -width Ev
-.It Ev DISPLAY
-If non-empty,
+.Sh CLIPBOARD TOOLS
+To determine which system clipboard to use,
 .Nm vis-clipboard
-will prefer to access the X11 clipboard even if other options are available.
+checks for these clipboard tools in the following order:
+.Bl -tag -width Ev
+.It Ev Xr wl-clipboard 1
+Wayland (if $WAYLAND_DISPLAY is set)
+.It Ev Pa wayclip
+Wayland (if $WAYLAND_DISPLAY is set)
+.It Ev Xr xclip 1
+X11 (if $DISPLAY is set)
+.It Ev Xr xsel 1
+X11 (if $DISPLAY is set)
+.It Ev Xr pbcopy 1 / Xr pbpaste 1
+macOS
+.It Ev Xr wslclip 1
+WSL (Windows Subsystem for Linux)
+.It Ev Pa /dev/clipboard
+Cygwin
 .El
 .
 .Sh EXIT STATUS
@@ -100,5 +101,9 @@ vis-clipboard --paste | curl -d - https://www.nsa.gov/
 .Xr pbcopy 1 ,
 .Xr pbpaste 1 ,
 .Xr vis 1 ,
+.Xr waycopy 1 ,
+.Xr waypaste 1 ,
+.Xr wl-clipboard 1 ,
+.Xr wslclip 1 ,
 .Xr xclip 1 ,
 .Xr xsel 1
