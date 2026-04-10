@@ -1091,9 +1091,9 @@ function M.embed(lexer, child, start_rule, end_rule)
 	if child._WORDLISTS then
 		for name, i in pairs(child._WORDLISTS) do
 			if type(name) == 'string' and type(i) == 'number' then
-				tname = child._name .. '.' .. name
-				lexer:word_match(tname) -- for side effects
-				lexer:set_word_list(tname, child._WORDLISTS[i])
+				local full_name = child._name .. '.' .. name
+				lexer:word_match(full_name) -- for side effects
+				lexer:set_word_list(full_name, child._WORDLISTS[i])
 			end
 		end
 	end
