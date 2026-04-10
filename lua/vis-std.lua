@@ -89,6 +89,11 @@ local modes = {
 	[vis.modes.REPLACE] = 'REPLACE',
 }
 
+-- Namespace for lua plugins to expose their API and communicate with each other.
+-- Each plugin can use its own namespace vis.plugins['plugin-name'].
+local plugins = {}
+vis.plugins = plugins
+
 vis.events.subscribe(vis.events.WIN_STATUS, function(win)
 	local left_parts = {}
 	local right_parts = {}
