@@ -91,8 +91,8 @@ color_rgb(Vis *vis, uint8_t r, uint8_t g, uint8_t b)
 
 		short i = color_clobber_idx;
 		clobbering_colors[i] = hexrep;
-		init_color(i + 16, (r * 1000) / 0xff, (g * 1000) / 0xff,
-		           (b * 1000) / 0xff);
+		init_color(i + 16, (r * 1000 + 0xfe) / 0xff, (g * 1000 + 0xfe) / 0xff,
+		           (b * 1000 + 0xfe) / 0xff);
 
 		/* in the unlikely case a user requests this many colors, reuse old slots */
 		if (++color_clobber_idx >= MAX_COLOR_CLOBBER)
