@@ -62,6 +62,13 @@ vc_determine_command() {
 		return 0
 	fi
 
+	for c in termux-clipboard-get termux-clipboard-set; do
+		if command -v "$c" >/dev/null 2>&1; then
+			echo "termux"
+			return 0
+		fi
+	done
+
 	return 1
 }
 
@@ -169,6 +176,14 @@ vc_cygwin_copy() {
 
 vc_cygwin_paste() {
 	cat /dev/clipboard
+}
+
+vc_termux_copy() {
+	termux-clipboard-set
+}
+
+vc_termux_paste() {
+	termux-clipboard-get
 }
 
 while [ $# -gt 0 ]; do
