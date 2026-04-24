@@ -3104,7 +3104,7 @@ static bool vis_lua_path_strip(Vis *vis) {
 				*next++ = '\0';
 			if (strstr(elem, "./"))
 				continue; /* skip relative path entries */
-			stripped_elem += sprintf(stripped_elem, "%s;", elem);
+			stripped_elem += snprintf(stripped_elem, strlen(path)+2-(size_t)(stripped_elem-stripped), "%s;", elem);
 		}
 
 		lua_pushstring(L, stripped);
