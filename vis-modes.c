@@ -175,6 +175,8 @@ static void vis_mode_normal_enter(Vis *vis, Mode *old) {
 
 static void vis_mode_operator_input(Vis *vis, const char *str, size_t len) {
 	/* invalid operator */
+	if (str && len > strlen(str))
+		len = strlen(str);
 	vis_cancel(vis);
 	mode_set(vis, vis->mode_prev);
 }
