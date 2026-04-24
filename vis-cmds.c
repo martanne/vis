@@ -160,7 +160,7 @@ static bool cmd_set(Vis *vis, Win *win, Command *cmd, const char *argv[], Select
 	}
 
 	char name[256];
-	strncpy(name, argv[1], sizeof(name)-1);
+	snprintf(name, sizeof(name), "%s", argv[1]);
 	char *lastchar = &name[strlen(name)-1];
 	bool toggle = (*lastchar == '!');
 	if (toggle)
@@ -412,7 +412,7 @@ static const char *file_open_dialog(Vis *vis, const char *pattern) {
 		&bufout, read_into_buffer, &buferr, read_into_buffer, false);
 
 	if (status == 0)
-		strncpy(name, buffer_content0(&bufout), sizeof(name)-1);
+		snprintf(name, sizeof(name), "%s", buffer_content0(&bufout));
 	else if (status != 1)
 		vis_info_show(vis, "Command failed %s", buffer_content0(&buferr));
 
