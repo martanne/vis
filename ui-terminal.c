@@ -192,7 +192,7 @@ static void ui_draw_string(Ui *tui, int x, int y, const char *str, int win_id, e
 		if (!len)
 			break;
 		len = MIN(len, cell_size);
-		strncpy(cells[x].data, str, len);
+		memcpy(cells[x].data, str, len);
 		cells[x].data[len] = '\0';
 		cells[x].style = default_style;
 		ui_window_style_set(tui, win_id, cells + x++, style_id, false);
@@ -318,7 +318,7 @@ void ui_arrange(Ui *tui, enum UiLayout layout) {
 			if (n) {
 				Cell *cells = tui->cells;
 				for (int i = 0; i < max_height; i++) {
-					strcpy(cells[x].data,"│");
+					snprintf(cells[x].data, sizeof(cells[x].data), "%s", "│");
 					cells[x].style = tui->styles[UI_STYLE_SEPARATOR];
 					cells += tui->width;
 				}

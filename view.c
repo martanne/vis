@@ -73,7 +73,7 @@ void window_status_update(Vis *vis, Win *win) {
 	const char *mode = vis->mode->status;
 
 	if (focused && mode)
-		strcpy(left_parts[left_count++], mode);
+		snprintf(left_parts[left_count++], sizeof(left_parts[0]), "%s", mode);
 
 	snprintf(left_parts[left_count++], sizeof(left_parts[0]), "%s%s%s",
 	         filename ? filename : "[No Name]",
