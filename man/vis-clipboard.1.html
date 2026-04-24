@@ -50,11 +50,8 @@
 <section class="Sh">
 <h1 class="Sh" id="DESCRIPTION"><a class="permalink" href="#DESCRIPTION">DESCRIPTION</a></h1>
 <p class="Pp"><code class="Nm">vis-clipboard</code> wraps various
-    system-specific tools for interacting with a system clipboard, like
-    <a class="Xr">xsel(1)</a> for X11, <a class="Xr">pbcopy(1)</a> for Mac OS X,
-    and <span class="Pa">/dev/clipboard</span> on Cygwin.</p>
-<p class="Pp"><code class="Nm">vis-clipboard</code> can run in three different
-    ways, depending on the flag given on the command-line.</p>
+    system-specific tools for interacting with a system clipboard. It can run in
+    three different ways, depending on the flag given on the command-line.</p>
 <dl class="Bl-tag">
   <dt id="usable"><a class="permalink" href="#usable"><code class="Fl">--usable</code></a></dt>
   <dd>In this mode, <code class="Nm">vis-clipboard</code> looks for a way to
@@ -75,13 +72,28 @@
 </dl>
 </section>
 <section class="Sh">
-<h1 class="Sh" id="ENVIRONMENT"><a class="permalink" href="#ENVIRONMENT">ENVIRONMENT</a></h1>
-<p class="Pp">The following environment variables affect the operation of
-    <code class="Nm">vis-clipboard</code>:</p>
+<h1 class="Sh" id="CLIPBOARD_TOOLS"><a class="permalink" href="#CLIPBOARD_TOOLS">CLIPBOARD
+  TOOLS</a></h1>
+<p class="Pp">To determine which system clipboard to use,
+    <code class="Nm">vis-clipboard</code> checks for these clipboard tools in
+    the following order:</p>
 <dl class="Bl-tag">
-  <dt id="DISPLAY"><a class="permalink" href="#DISPLAY"><code class="Ev">DISPLAY</code></a></dt>
-  <dd>If non-empty, <code class="Nm">vis-clipboard</code> will prefer to access
-      the X11 clipboard even if other options are available.</dd>
+  <dt><a class="Xr">wl-clipboard(1)</a></dt>
+  <dd>Wayland (if $WAYLAND_DISPLAY is set)</dd>
+  <dt><span class="Pa">wayclip</span></dt>
+  <dd>Wayland (if $WAYLAND_DISPLAY is set)</dd>
+  <dt><a class="Xr">xclip(1)</a></dt>
+  <dd>X11 (if $DISPLAY is set)</dd>
+  <dt><a class="Xr">xsel(1)</a></dt>
+  <dd>X11 (if $DISPLAY is set)</dd>
+  <dt><a class="Xr">pbcopy(1)</a> / <a class="Xr">pbpaste(1)</a></dt>
+  <dd>macOS</dd>
+  <dt><a class="Xr">wslclip(1)</a></dt>
+  <dd>WSL (Windows Subsystem for Linux)</dd>
+  <dt><span class="Pa">/dev/clipboard</span></dt>
+  <dd>Cygwin</dd>
+  <dt><span class="Pa">termux-clipboard-{get,set}</span></dt>
+  <dd>Termux</dd>
 </dl>
 </section>
 <section class="Sh">
@@ -117,14 +129,16 @@ fi</pre>
 <h1 class="Sh" id="SEE_ALSO"><a class="permalink" href="#SEE_ALSO">SEE
   ALSO</a></h1>
 <p class="Pp"><a class="Xr">pbcopy(1)</a>, <a class="Xr">pbpaste(1)</a>,
-    <a class="Xr">vis(1)</a>, <a class="Xr">xclip(1)</a>,
+    <a class="Xr">vis(1)</a>, <a class="Xr">waycopy(1)</a>,
+    <a class="Xr">waypaste(1)</a>, <a class="Xr">wl-clipboard(1)</a>,
+    <a class="Xr">wslclip(1)</a>, <a class="Xr">xclip(1)</a>,
     <a class="Xr">xsel(1)</a></p>
 </section>
 </div>
 <table class="foot">
   <tr>
     <td class="foot-date">November 29, 2016</td>
-    <td class="foot-os">Vis bb6bdfc</td>
+    <td class="foot-os">Vis 70f0c42</td>
   </tr>
 </table>
 </body>
