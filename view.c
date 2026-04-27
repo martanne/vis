@@ -32,8 +32,6 @@ static const char *symbols_default[] = {
 	[SYNTAX_SYMBOL_EOF]      = "~",
 };
 
-static Cell cell_blank = { .width = 0, .len = 0, .data = " ", };
-
 static void selection_free(Selection *s)
 {
 	for (Selection *after = s->next; after; after = after->next)
@@ -194,17 +192,21 @@ static void view_clear(View *view) {
 	view->col = 0;
 	view->wrapcol = 0;
 	view->prevch_breakat = false;
-
-	/* FIXME: awful garbage that only exists because every
-	 * struct in this program is an interdependent hellscape */
-	Win *win = (Win *)((char *)view - offsetof(Win, view));
-	ui_window_style_set(&win->vis->ui, win->id, &cell_blank, UI_STYLE_DEFAULT, false);
 }
 
 static int view_max_text_width(const View *view) {
 	if (view->wrapcolumn > 0)
 		return MIN(view->wrapcolumn, view->width);
 	return view->width;
+}
+
+static Cell
+view_blank_cell(View *view)
+{
+	// TODO(rnp): cleanup win and view should be merged
+	Win *win = (Win *)((char *)view - offsetof(Win, view));
+	Cell result = {.data = " ", .style = win->vis->ui.styles[win->id * UI_STYLE_MAX + UI_STYLE_DEFAULT]};
+	return result;
 }
 
 static void view_wrap_line(View *view) {
@@ -228,12 +230,13 @@ static void view_wrap_line(View *view) {
 	}
 
 	/* clear remaining cells on line */
+	Cell blank = view_blank_cell(view);
 	for (int i = wrapcol; i < view->width; ++i) {
 		if (i < col) {
 			wrapped_line->width -= wrapped_line->cells[i].width;
 			wrapped_line->len -= wrapped_line->cells[i].len;
 		}
-		wrapped_line->cells[i] = cell_blank;
+		wrapped_line->cells[i] = blank;
 	}
 }
 
@@ -318,7 +321,7 @@ static bool view_addch(View *view, Cell *cell) {
 		view->wrapcol = view->col;
 	}
 	view->prevch_breakat = ch_breakat;
-	cell->style = cell_blank.style;
+	cell->style = view_blank_cell(view).style;
 
 	unsigned char ch = (unsigned char)cell->data[0];
 	switch (ch) {
@@ -489,10 +492,11 @@ void view_draw(View *view) {
 		view->lastline = view->bottomline;
 	}
 
+	Cell blank = view_blank_cell(view);
 	/* clear remaining of line, important to show cursor at end of file */
 	if (view->line) {
 		for (int x = view->col; x < view->width; x++)
-			view->line->cells[x] = cell_blank;
+			view->line->cells[x] = blank;
 	}
 
 	/* resync position of cursors within visible area */
@@ -512,9 +516,11 @@ void view_draw(View *view) {
 bool view_update(View *view) {
 	if (!view->need_update)
 		return false;
+
+	Cell blank = view_blank_cell(view);
 	for (Line *l = view->lastline->next; l; l = l->next) {
 		for (int x = 0; x < view->width; x++)
-			l->cells[x] = cell_blank;
+			l->cells[x] = blank;
 	}
 	view->need_update = false;
 	return true;
