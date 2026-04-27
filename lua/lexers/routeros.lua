@@ -1,4 +1,4 @@
--- Copyright 2020-2025 Christian Hesse. See LICENSE.
+-- Copyright 2020-2026 Christian Hesse. See LICENSE.
 -- Mikrotik RouterOS script LPeg lexer.
 
 local lexer = require('lexer')
@@ -12,21 +12,28 @@ lex:add_rule('whitespace', token(lexer.WHITESPACE, lexer.space^1))
 
 -- Keywords.
 lex:add_rule('keyword', token(lexer.KEYWORD, word_match{
+	-- No guarantee for completeness here! In fact we try to do some best-effort,
+	-- where some keywords are widely used, but not available in any context.
+
 	-- Control.
-	':delay', ':do', 'on-error', 'while', ':error', ':foreach', 'in', 'do', ':for', 'from', 'to',
-	'step', ':if', 'do', 'else', ':return', ':while', 'do',
+	':break', ':continue', ':delay', ':do', 'on-error', 'while', ':error', ':exit',
+	':foreach', 'in', 'do', ':for', 'from', 'to', 'step', ':if', 'do', 'else', ':jobname',
+	':lock', ':onerror', ':retry', 'delay', 'max', ':return', ':while', 'do',
 	-- Menu specific commands.
-	'add', 'disable', 'edit', 'enable', 'export', 'find', 'get', 'info', 'monitor', 'print', 'append',
-	'as-value', 'brief', 'count-only', 'detail', 'file', 'follow', 'follow-only', 'from', 'interval',
-	'terse', 'value-list', 'where', 'without-paging', 'remove', 'set',
+	'add', 'disable', 'edit', 'enable', 'export', 'find', 'get', 'info', 'monitor', 'print',
+	'append', 'proplist', 'group-by', 'as-value', 'brief', 'count-only', 'detail', 'file',
+	'follow', 'follow-only', 'from', 'interval', 'terse', 'value-list', 'where',
+	'without-paging', 'remove', 'set', 'reset', 'name',
 	-- Output & string handling.
-	':beep', ':blink', ':environment', ':execute', ':find', ':len', ':log', 'alert', 'critical',
-	'debug', 'emergency', 'error', 'info', 'notice', 'warning', ':parse', ':pick', ':put',
-	':terminal', ':time', ':typeof',
+	':beep', ':blink', ':environment', ':execute', ':find', ':grep', ':len', ':log',
+	'alert', 'critical', 'debug', 'emergency', 'error', 'info', 'notice', 'warning',
+	':parse', ':pick', ':put', ':terminal', ':time', ':timestamp', ':typeof',
 	-- Variable declaration.
 	':global', ':local', ':set',
-	-- Variable casting.
-	':toarray', ':tobool', ':toid', ':toip', ':toip6', ':tonum', ':tostr', ':totime',
+	-- Variable casting and conversion.
+	':convert', ':deserialize', ':range', ':rndnum', ':rndstr', ':serialize', ':toarray',
+	':tobool', ':toid', ':toip', ':toip6', ':tonum', ':tonsec', ':tostr', ':totime',
+	':tocrlf', ':tolf',
 	-- Boolean values and logical operators.
 	'false', 'no', 'true', 'yes', 'and', 'in', 'or',
 	-- Networking.
