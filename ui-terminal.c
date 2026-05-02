@@ -199,6 +199,23 @@ static void ui_draw_string(Ui *tui, int x, int y, const char *str, int win_id, e
 	}
 }
 
+VIS_INTERNAL uint8_t
+u32_count_digits(uint32_t a)
+{
+	// NOTE(rnp): guaranteed branchless, fixed cost regardless of input
+	uint8_t result = (a >= 1000000000) +
+	                 (a >= 100000000)  +
+	                 (a >= 10000000)   +
+	                 (a >= 1000000)    +
+	                 (a >= 100000)     +
+	                 (a >= 10000)      +
+	                 (a >= 1000)       +
+	                 (a >= 100)        +
+	                 (a >= 10)         +
+	                 1;
+	return result;
+}
+
 static void ui_window_draw(Win *win) {
 	Ui *ui = &win->vis->ui;
 	View *view = &win->view;
@@ -210,7 +227,12 @@ static void ui_window_draw(Win *win) {
 	bool sidebar = nu || rnu;
 
 	int width = win->width, height = win->height;
-	int sidebar_width = sidebar ? snprintf(NULL, 0, "%zd ", line->lineno + height - 2) : 0;
+
+	int sidebar_width = 0;
+	if (sidebar) {
+		sidebar_width = u32_count_digits(line->lineno + height - 2) + 1;
+		sidebar_width = MAX(sidebar_width, win->min_sidebar_width);
+	}
 	if (sidebar_width != win->sidebar_width) {
 		view_resize(view, width - sidebar_width, status ? height - 1 : height);
 		win->sidebar_width = sidebar_width;

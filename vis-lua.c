@@ -2198,6 +2198,7 @@ static const struct luaL_Reg window_funcs[] = {
  * @tfield[opt=false] boolean expandtab {et}
  * @tfield[opt=false] boolean numbers {nu}
  * @tfield[opt=false] boolean relativenumbers {rnu}
+ * @tfield[opt=0] int numberwidth
  * @tfield[opt=true] boolean showeof
  * @tfield[opt=false] boolean shownewlines
  * @tfield[opt=false] boolean showspaces

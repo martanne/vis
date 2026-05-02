@@ -156,6 +156,7 @@ struct Win {
 	int width, height;      /* window dimension including status bar */
 	int x, y;               /* window position */
 	int sidebar_width;      /* width of the sidebar showing line numbers etc. */
+	int min_sidebar_width;  /* user specified minimum sidebar width */
 	enum UiOption options;  /* display settings for this window */
 	View view;              /* currently displayed part of underlying text */
 	bool expandtab;         /* whether typed tabs should be converted to spaces in this window*/
