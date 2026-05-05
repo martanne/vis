@@ -1827,7 +1827,7 @@ static const Digraph digraphs[] = {
 	{ "D3", 0x0013, "DEVICE CONTROL THREE (DC3)" },
 	{ "D4", 0x0014, "DEVICE CONTROL FOUR (DC4)" },
 	{ "NK", 0x0015, "NEGATIVE ACKNOWLEDGE (NAK)" },
-	{ "SY", 0x0016, "SYNCRONOUS IDLE (SYN)" },
+	{ "SY", 0x0016, "SYNCHRONOUS IDLE (SYN)" },
 	{ "EB", 0x0017, "END OF TRANSMISSION BLOCK (ETB)" },
 	{ "CN", 0x0018, "CANCEL (CAN)" },
 	{ "EM", 0x0019, "END OF MEDIUM (EM)" },
