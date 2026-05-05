@@ -90,7 +90,7 @@ textwn(const char *s, int l) {
 	int c;
 
 	for (c=0; s && s[c] && (l<0 || c<l); c++);
-	return c+4; /* Accomodate for the leading and trailing spaces */
+	return c+4; /* Accommodate for the leading and trailing spaces */
 }
 
 /*
