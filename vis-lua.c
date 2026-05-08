@@ -107,6 +107,26 @@ static void stack_dump(lua_State *L, const char *format, ...) {
 
 #endif
 
+VIS_INTERNAL str8
+vis_lua_to_str8(lua_State *L, int index)
+{
+	str8   result;
+	size_t length;
+	result.data   = (uint8_t *)lua_tolstring(L, index, &length);
+	result.length = (ptrdiff_t)length;
+	return result;
+}
+
+VIS_INTERNAL str8
+vis_lua_check_str8(lua_State *L, int index)
+{
+	str8   result;
+	size_t length;
+	result.data   = (uint8_t *)luaL_checklstring(L, index, &length);
+	result.length = (ptrdiff_t)length;
+	return result;
+}
+
 static int panic_handler(lua_State *L) {
 	void *ud = NULL;
 	lua_getallocf(L, &ud);
@@ -1021,21 +1041,92 @@ static int textobject_register(lua_State *L) {
 	return 1;
 }
 
-static bool option_lua(Vis *vis, Win *win, void *context, bool toggle,
-                       enum VisOption flags, const char *name, Arg *value) {
+VIS_INTERNAL bool
+vis_lua_is_vis_option(VisOption *option)
+{
+	bool result = option && !(option->flags & VIS_OPTION_NEED_WINDOW) && (option != vis_options_table + OPTION_LAYOUT);
+	return result;
+}
+
+VIS_INTERNAL bool
+vis_lua_is_window_option(VisOption *option)
+{
+	bool result = option && (option->flags & VIS_OPTION_NEED_WINDOW);
+	return result;
+}
+
+VIS_INTERNAL int
+vis_lua_push_value(lua_State *L, VisValue value)
+{
+	int result = 1;
+	switch (value.kind) {
+	case VisValueKind_Integer:{ lua_pushinteger(L, value.u.integer); }break;
+	case VisValueKind_Boolean:{ lua_pushboolean(L, value.u.boolean); }break;
+	case VisValueKind_String:{  lua_pushstring(L, value.u.string);   }break;
+	default:{result = 0;}break;
+	}
+	return result;
+}
+
+VIS_INTERNAL int
+vis_lua_push_option(Vis *vis, Win *win, lua_State *L, VisOption *option)
+{
+	int result = vis_lua_push_value(L, vis_option_get(vis, win, option));
+	return result;
+}
+
+VIS_INTERNAL VisValue
+vis_lua_option_get(lua_State *L, VisOptionFlags flags, int next)
+{
+	VisValue result = {0};
+	if (!lua_isnoneornil(L, next)) {
+		if (flags & VIS_OPTION_TYPE_NUMBER) {
+			result.kind      = VisValueKind_Integer;
+			result.u.integer = luaL_checkinteger(L, next);
+		} else if (flags & VIS_OPTION_TYPE_STRING) {
+			result.kind      = VisValueKind_String;
+			result.u.string  = lua_tostring(L, next);
+		} else if (flags & VIS_OPTION_TYPE_BOOL) {
+			result.kind      = VisValueKind_Boolean;
+			result.u.boolean = lua_toboolean(L, next);
+		} else {
+			InvalidCodePath;
+		}
+	}
+	return result;
+}
+
+VIS_INTERNAL int
+vis_lua_option_set(Vis *vis, Win *win, VisOption *option, lua_State *L, int next)
+{
+	assert(!(option->flags & VIS_OPTION_NEED_WINDOW) || win);
+	VisValue value = vis_lua_option_get(L, option->flags, next);
+	vis_option_set(vis, win, option, value, 0);
+	return 0;
+}
+
+VIS_INTERNAL VIS_OPTION_SET_FUNCTION(vis_lua_option_set_handler)
+{
 	lua_State *L = vis->lua;
-	if (!func_ref_get(L, context))
-		return false;
-	if (flags & VIS_OPTION_TYPE_BOOL)
-		lua_pushboolean(L, value->b);
-	else if (flags & VIS_OPTION_TYPE_STRING)
-		lua_pushstring(L, value->s);
-	else if (flags & VIS_OPTION_TYPE_NUMBER)
-		lua_pushnumber(L, value->i);
-	else
-		return false;
-	lua_pushboolean(L, toggle);
-	return pcall(vis, L, 2, 2) == 0 && (!lua_isboolean(L, -1) || lua_toboolean(L, -1));
+	bool result = false;
+	if (func_ref_get(L, context) && vis_lua_push_value(L, value)) {
+		lua_pushboolean(L, toggle);
+		lua_pushstring(L, name);
+		result = pcall(vis, L, 3, 2) == LUA_OK && (!lua_isboolean(L, -1) || lua_toboolean(L, -1));
+	}
+	return result;
+}
+
+VIS_INTERNAL VIS_OPTION_GET_FUNCTION(vis_lua_option_get_handler)
+{
+	VisValue result = {0};
+	lua_State *L = vis->lua;
+	if (func_ref_get(L, context)) {
+		lua_pushstring(L, name);
+		if (pcall(vis, L, 1, 1) == LUA_OK)
+			result = vis_lua_option_get(L, flags, -1);
+	}
+	return result;
 }
 
 /***
@@ -1044,32 +1135,46 @@ static bool option_lua(Vis *vis, Win *win, void *context, bool toggle,
  * @function option_register
  * @tparam string name the option name
  * @tparam string type the option type (`bool`, `string` or `number`)
- * @tparam function handler the Lua function being called when the option is changed
+ * @tparam function set Lua function called when the option is set
+ * @tparam[opt] function get Lua function which returns the current value of the option
  * @tparam[opt] string help the single line help text as displayed in `:help`
  * @treturn bool whether the option was successfully registered
  * @usage
- * vis:option_register("foo", "bool", function(value, toggle)
- * 	if not vis.win then return false end
- * 	vis.win.foo = toggle and not vis.win.foo or value
- * 	vis:info("Option foo = " .. tostring(vis.win.foo))
+ * local set_foo = function(value, toggle, name)
+ *  -- NOTE: name == "foo" here, you could define this as a generic handler
+ * 	vis.foo = toggle and not vis.foo or value
+ * 	vis:info("Option foo = " .. tostring(vis.foo))
  * 	return true
- * end, "Foo enables superpowers")
+ * end
+ * local get_foo = function(name)
+ *  -- NOTE: name == "foo" here, you could define this as a generic handler
+ *  return vis.foo
+ * end
+ * vis:option_register("foo", "bool", set_foo, get_foo, "Foo enables superpowers")
  */
-static int option_register(lua_State *L) {
+VIS_INTERNAL int
+vis_lua_option_register(lua_State *L)
+{
 	Vis *vis = obj_ref_check(L, 1, "vis");
 	const char *name = luaL_checkstring(L, 2);
-	const char *type = luaL_checkstring(L, 3);
-	const void *func = func_ref_new(L, 4);
-	const char *help = luaL_optstring(L, 5, NULL);
-	const char *names[] = { name, NULL };
-	enum VisOption flags = 0;
-	if (strcmp(type, "string") == 0)
+	str8        type = vis_lua_check_str8(L, 3);
+	const void *set  = func_ref_new(L, 4);
+	const void *get  = 0;
+
+	int read_index = 5;
+	if (lua_isfunction(L, read_index))
+		get = func_ref_new(L, read_index++);
+	const char *help = luaL_optstring(L, read_index, 0);
+
+	VisOptionFlags flags = 0;
+	if (str8_equal(type, str8("string")))
 		flags |= VIS_OPTION_TYPE_STRING;
-	else if (strcmp(type, "number") == 0)
+	else if (str8_equal(type, str8("number")))
 		flags |= VIS_OPTION_TYPE_NUMBER;
 	else
 		flags |= VIS_OPTION_TYPE_BOOL;
-	bool ret = vis_option_register(vis, names, flags, option_lua, (void*)func, help);
+	bool ret = vis_option_register(vis, (const char *[]){name, 0}, flags, vis_lua_option_set_handler,
+	                               vis_lua_option_get_handler, (void *)set, (void *)get, help);
 	lua_pushboolean(L, ret);
 	return 1;
 }
@@ -1081,7 +1186,9 @@ static int option_register(lua_State *L) {
  * @tparam string name the option name
  * @treturn bool whether the option was successfully unregistered
  */
-static int option_unregister(lua_State *L) {
+VIS_INTERNAL int
+vis_lua_option_unregister(lua_State *L)
+{
 	Vis *vis = obj_ref_check(L, 1, "vis");
 	const char *name = luaL_checkstring(L, 2);
 	bool ret = vis_option_unregister(vis, name);
@@ -1481,33 +1588,6 @@ static int vis_index(lua_State *L) {
 	return index_common(L);
 }
 
-static int vis_options_assign(Vis *vis, lua_State *L, const char *key, int next) {
-	if (strcmp(key, "autoindent") == 0 || strcmp(key, "ai") == 0) {
-		vis->autoindent = lua_toboolean(L, next);
-	} else if (strcmp(key, "changecolors") == 0) {
-		vis->change_colors = lua_toboolean(L, next);
-	} else if (strcmp(key, "escdelay") == 0) {
-		termkey_set_waittime(vis->ui.termkey, luaL_checkinteger(L, next));
-	} else if (strcmp(key, "ignorecase") == 0 || strcmp(key, "ic") == 0) {
-		vis->ignorecase = lua_toboolean(L, next);
-	} else if (strcmp(key, "loadmethod") == 0) {
-		if (!lua_isstring(L, next))
-			return newindex_common(L);
-		const char *lm = lua_tostring(L, next);
-		if (strcmp(lm, "auto") == 0)
-			vis->load_method = TEXT_LOAD_AUTO;
-		else if (strcmp(lm, "read") == 0)
-			vis->load_method = TEXT_LOAD_READ;
-		else if (strcmp(lm, "mmap") == 0)
-			vis->load_method = TEXT_LOAD_MMAP;
-	} else if (strcmp(key, "shell") == 0) {
-		if (!lua_isstring(L, next))
-			return newindex_common(L);
-		vis_shell_set(vis, lua_tostring(L, next));
-	}
-	return 0;
-}
-
 static int vis_newindex(lua_State *L) {
 	Vis *vis = obj_ref_check(L, 1, "vis");
 	if (lua_isstring(L, 2)) {
@@ -1556,10 +1636,17 @@ static int vis_newindex(lua_State *L) {
 			 */
 			lua_pushnil(L);
 			while (lua_next(L, 3)) {
-				if (lua_isstring(L, 4))
-					ret += vis_options_assign(vis, L, lua_tostring(L, 4), 5);
-				else
+				if (lua_isstring(L, 4)) {
+					VisOption *option = vis_option_from_string(vis, vis_lua_to_str8(L, 4));
+					if (vis_lua_is_vis_option(option)) {
+						ret += vis_lua_option_set(vis, 0, option, L, 5);
+					} else if (!option) {
+						// NOTE(rnp): string is not a valid option name, a new field can be added
+						ret += newindex_common(L);
+					}
+				} else {
 					ret += newindex_common(L);
+				}
 				lua_pop(L, 1);
 			}
 			lua_pop(L, 1);
@@ -1586,8 +1673,8 @@ static const struct luaL_Reg vis_lua[] = {
 	{ "motion_register", motion_register },
 	{ "textobject", textobject },
 	{ "textobject_register", textobject_register },
-	{ "option_register", option_register },
-	{ "option_unregister", option_unregister },
+	{ "option_register", vis_lua_option_register },
+	{ "option_unregister", vis_lua_option_unregister },
 	{ "command_register", command_register },
 	{ "complete_command", complete_command },
 	{ "feedkeys", feedkeys },
@@ -1615,58 +1702,40 @@ static const struct luaL_Reg vis_lua[] = {
  * @see Window.options
  */
 
-static int vis_options_index(lua_State *L) {
+VIS_INTERNAL int
+vis_lua_options_index(lua_State *L)
+{
 	Vis *vis = obj_ref_check_containerof(L, 1, VIS_LUA_TYPE_VIS_OPTS, offsetof(Vis, options));
-	if (!vis)
-		return -1;
-	if (lua_isstring(L, 2)) {
-		const char *key = lua_tostring(L, 2);
-		if (strcmp(key, "autoindent") == 0 || strcmp(key, "ai") == 0) {
-			lua_pushboolean(L, vis->autoindent);
-			return 1;
-		} else if (strcmp(key, "changecolors") == 0) {
-			lua_pushboolean(L, vis->change_colors);
-			return 1;
-		} else if (strcmp(key, "escdelay") == 0) {
-			lua_pushinteger(L, termkey_get_waittime(vis->ui.termkey));
-			return 1;
-		} else if (strcmp(key, "ignorecase") == 0 || strcmp(key, "ic") == 0) {
-			lua_pushboolean(L, vis->ignorecase);
-			return 1;
-		} else if (strcmp(key, "loadmethod") == 0) {
-			switch (vis->load_method) {
-			case TEXT_LOAD_AUTO:
-				lua_pushliteral(L, "auto");
-				break;
-			case TEXT_LOAD_READ:
-				lua_pushliteral(L, "read");
-				break;
-			case TEXT_LOAD_MMAP:
-				lua_pushliteral(L, "mmap");
-				break;
-			}
-			return 1;
-		} else if (strcmp(key, "shell") == 0) {
-			lua_pushstring(L, vis->shell);
-			return 1;
+	if (vis) {
+		if (lua_isstring(L, 2)) {
+			VisOption *option = vis_option_from_string(vis, vis_lua_to_str8(L, 2));
+			if (vis_lua_is_vis_option(option))
+				return vis_lua_push_option(vis, 0, L, option);
 		}
+		return index_common(L);
 	}
-	return index_common(L);
+	return -1;
 }
 
-static int vis_options_newindex(lua_State *L) {
+VIS_INTERNAL int
+vis_lua_options_newindex(lua_State *L)
+{
 	Vis *vis = obj_ref_check_containerof(L, 1, VIS_LUA_TYPE_VIS_OPTS, offsetof(Vis, options));
-	if (!vis)
-		return 0;
-	if (lua_isstring(L, 2))
-		return vis_options_assign(vis, L, lua_tostring(L, 2), 3);
-	return newindex_common(L);
+	if (vis) {
+		if (lua_isstring(L, 2)) {
+			VisOption *option = vis_option_from_string(vis, vis_lua_to_str8(L, 2));
+			if (vis_lua_is_vis_option(option))
+				return vis_lua_option_set(vis, 0, option, L, 3);
+		}
+		return newindex_common(L);
+	}
+	return 0;
 }
 
 static const struct luaL_Reg vis_option_funcs[] = {
-	{ "__index", vis_options_index },
-	{ "__newindex", vis_options_newindex},
-	{ NULL, NULL },
+	{"__index",    vis_lua_options_index   },
+	{"__newindex", vis_lua_options_newindex},
+	{0},
 };
 
 /***
@@ -1687,12 +1756,10 @@ static int ui_index(lua_State *L) {
 	Ui *ui = obj_ref_check(L, 1,  VIS_LUA_TYPE_UI);
 
 	if (lua_isstring(L, 2)) {
-		const char *key  = lua_tostring(L, 2);
-
-		if (strcmp(key, "layout") == 0) {
-			lua_pushinteger(L, ui->layout);
-			return 1;
-		}
+		VisOption *option = vis_option_from_string(ui->vis, vis_lua_to_str8(L, 2));
+		// TODO(rnp): better filtering
+		if (option == vis_options_table + OPTION_LAYOUT)
+			return vis_lua_push_option(ui->vis, 0, L, option);
 	}
 
 	return index_common(L);
@@ -1886,78 +1953,13 @@ static int window_index(lua_State *L) {
 	return index_common(L);
 }
 
-static int window_options_assign(Win *win, lua_State *L, const char *key, int next) {
-	enum UiOption flags = win->options;
-	if (strcmp(key, "breakat") == 0 || strcmp(key, "brk") == 0) {
-		if (lua_isstring(L, next))
-			view_breakat_set(&win->view, lua_tostring(L, next));
-	} else if (strcmp(key, "colorcolumn") == 0 || strcmp(key, "cc") == 0) {
-		win->view.colorcolumn = luaL_checkinteger(L, next);
-	} else if (strcmp(key, "cursorline") == 0 || strcmp(key, "cul") == 0) {
-		if (lua_toboolean(L, next))
-			flags |= UI_OPTION_CURSOR_LINE;
-		else
-			flags &= ~UI_OPTION_CURSOR_LINE;
-		win_options_set(win, flags);
-	} else if (strcmp(key, "numbers") == 0 || strcmp(key, "nu") == 0) {
-		if (lua_toboolean(L, next))
-			flags |= UI_OPTION_LINE_NUMBERS_ABSOLUTE;
-		else
-			flags &= ~UI_OPTION_LINE_NUMBERS_ABSOLUTE;
-		win_options_set(win, flags);
-	} else if (strcmp(key, "relativenumbers") == 0 || strcmp(key, "rnu") == 0) {
-		if (lua_toboolean(L, next))
-			flags |= UI_OPTION_LINE_NUMBERS_RELATIVE;
-		else
-			flags &= ~UI_OPTION_LINE_NUMBERS_RELATIVE;
-		win_options_set(win, flags);
-	} else if (strcmp(key, "showeof") == 0) {
-		if (lua_toboolean(L, next))
-			flags |= UI_OPTION_SYMBOL_EOF;
-		else
-			flags &= ~UI_OPTION_SYMBOL_EOF;
-		win_options_set(win, flags);
-	} else if (strcmp(key, "shownewlines") == 0) {
-		if (lua_toboolean(L, next))
-			flags |= UI_OPTION_SYMBOL_EOL;
-		else
-			flags &= ~UI_OPTION_SYMBOL_EOL;
-		win_options_set(win, flags);
-	} else if (strcmp(key, "showspaces") == 0) {
-		if (lua_toboolean(L, next))
-			flags |= UI_OPTION_SYMBOL_SPACE;
-		else
-			flags &= ~UI_OPTION_SYMBOL_SPACE;
-		win_options_set(win, flags);
-	} else if (strcmp(key, "showtabs") == 0) {
-		if (lua_toboolean(L, next))
-			flags |= UI_OPTION_SYMBOL_TAB;
-		else
-			flags &= ~UI_OPTION_SYMBOL_TAB;
-		win_options_set(win, flags);
-	} else if (strcmp(key, "statusbar") == 0) {
-		if (lua_toboolean(L, next))
-			flags |= UI_OPTION_STATUSBAR;
-		else
-			flags &= ~UI_OPTION_STATUSBAR;
-		win_options_set(win, flags);
-	} else if (strcmp(key, "wrapcolumn") == 0 || strcmp(key, "wc") == 0) {
-		win->view.wrapcolumn = luaL_checkinteger(L, next);
-	} else if (strcmp(key, "tabwidth") == 0 || strcmp(key, "tw") == 0) {
-		view_tabwidth_set(&win->view, luaL_checkinteger(L, next));
-	} else if (strcmp(key, "expandtab") == 0 || strcmp(key, "et") == 0) {
-		win->expandtab = lua_toboolean(L, next);
-	}
-	return 0;
-}
-
 static int window_newindex(lua_State *L) {
 	Win *win = obj_ref_check(L, 1, VIS_LUA_TYPE_WINDOW);
 
 	if (lua_isstring(L, 2)) {
 		const char *key = lua_tostring(L, 2);
 		if (strcmp(key, "options") == 0 && lua_istable(L, 3)) {
-			int ret = 0;
+			int result = 0;
 			/* since we don't know which keys are in the table we push
 			 * a nil then use lua_next() to remove it and push the
 			 * table's key-value pairs to the stack. these can then be
@@ -1965,14 +1967,21 @@ static int window_newindex(lua_State *L) {
 			 */
 			lua_pushnil(L);
 			while (lua_next(L, 3)) {
-				if (lua_isstring(L, 4))
-					ret += window_options_assign(win, L, lua_tostring(L, 4), 5);
-				else
-					ret += newindex_common(L);
+				if (lua_isstring(L, 4)) {
+					VisOption *option = vis_option_from_string(win->vis, vis_lua_to_str8(L, 4));
+					if (vis_lua_is_window_option(option)) {
+						result += vis_lua_option_set(win->vis, win, option, L, 5);
+					} else if (!option) {
+						// NOTE(rnp): string is not a valid option name, a new field can be added
+						result += newindex_common(L);
+					}
+				} else {
+					result += newindex_common(L);
+				}
 				lua_pop(L, 1);
 			}
 			lua_pop(L, 1);
-			return ret;
+			return result;
 		} else if (strcmp(key, "file") == 0 && lua_isstring(L, 3)) {
 			const char* filename = lua_tostring(L, 3);
 			if (!vis_window_change_file(win, filename)) {
@@ -2199,69 +2208,40 @@ static const struct luaL_Reg window_funcs[] = {
  * @see Vis.options
  */
 
-static int window_options_index(lua_State *L) {
+VIS_INTERNAL int
+vis_lua_window_options_index(lua_State *L)
+{
 	Win *win = obj_ref_check_containerof(L, 1, VIS_LUA_TYPE_WIN_OPTS, offsetof(Win, view));
-	if (!win)
-		return -1;
-	if (lua_isstring(L, 2)) {
-		const char *key = lua_tostring(L, 2);
-		if (strcmp(key, "breakat") == 0 || strcmp(key, "brk") == 0) {
-			lua_pushstring(L, win->view.breakat);
-			return 1;
-		} else if (strcmp(key, "colorcolumn") == 0 || strcmp(key, "cc") == 0) {
-			lua_pushinteger(L, win->view.colorcolumn);
-			return 1;
-		} else if (strcmp(key, "cursorline") == 0 || strcmp(key, "cul") == 0) {
-			lua_pushboolean(L, win->options & UI_OPTION_CURSOR_LINE);
-			return 1;
-		} else if (strcmp(key, "expandtab") == 0 || strcmp(key, "et") == 0) {
-			lua_pushboolean(L, win->expandtab);
-			return 1;
-		} else if (strcmp(key, "numbers") == 0 || strcmp(key, "nu") == 0) {
-			lua_pushboolean(L, win->options & UI_OPTION_LINE_NUMBERS_ABSOLUTE);
-			return 1;
-		} else if (strcmp(key, "relativenumbers") == 0 || strcmp(key, "rnu") == 0) {
-			lua_pushboolean(L, win->options & UI_OPTION_LINE_NUMBERS_RELATIVE);
-			return 1;
-		} else if (strcmp(key, "showeof") == 0) {
-			lua_pushboolean(L, win->options & UI_OPTION_SYMBOL_EOF);
-			return 1;
-		} else if (strcmp(key, "shownewlines") == 0) {
-			lua_pushboolean(L, win->options & UI_OPTION_SYMBOL_EOL);
-			return 1;
-		} else if (strcmp(key, "showspaces") == 0) {
-			lua_pushboolean(L, win->options & UI_OPTION_SYMBOL_SPACE);
-			return 1;
-		} else if (strcmp(key, "showtabs") == 0) {
-			lua_pushboolean(L, win->options & UI_OPTION_SYMBOL_TAB);
-			return 1;
-		} else if (strcmp(key, "statusbar") == 0) {
-			lua_pushboolean(L, win->options & UI_OPTION_STATUSBAR);
-			return 1;
-		} else if (strcmp(key, "tabwidth") == 0 || strcmp(key, "tw") == 0) {
-			lua_pushinteger(L, win->view.tabwidth);
-			return 1;
-		} else if (strcmp(key, "wrapcolumn") == 0 || strcmp(key, "wc") == 0) {
-			lua_pushinteger(L, win->view.wrapcolumn);
-			return 1;
+	if (win) {
+		if (lua_isstring(L, 2)) {
+			VisOption *option = vis_option_from_string(win->vis, vis_lua_to_str8(L, 2));
+			if (vis_lua_is_window_option(option))
+				return vis_lua_push_option(win->vis, win, L, option);
 		}
+		return index_common(L);
 	}
-	return index_common(L);
+	return -1;
 }
 
-static int window_options_newindex(lua_State *L) {
+VIS_INTERNAL int
+vis_lua_window_options_newindex(lua_State *L)
+{
 	Win *win = obj_ref_check_containerof(L, 1, VIS_LUA_TYPE_WIN_OPTS, offsetof(Win, view));
-	if (!win)
-		return 0;
-	if (lua_isstring(L, 2))
-		return window_options_assign(win, L, lua_tostring(L, 2), 3);
-	return newindex_common(L);
+	if (win) {
+		if (lua_isstring(L, 2)) {
+			VisOption *option = vis_option_from_string(win->vis, vis_lua_to_str8(L, 2));
+			if (vis_lua_is_window_option(option))
+				return vis_lua_option_set(win->vis, win, option, L, 3);
+		}
+		return newindex_common(L);
+	}
+	return 0;
 }
 
 static const struct luaL_Reg window_option_funcs[] = {
-	{ "__index", window_options_index },
-	{ "__newindex", window_options_newindex},
-	{ NULL, NULL },
+	{"__index",    vis_lua_window_options_index   },
+	{"__newindex", vis_lua_window_options_newindex},
+	{0},
 };
 
 static int window_selections_index(lua_State *L) {

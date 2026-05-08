@@ -258,147 +258,6 @@ static const CommandDef cmddef_select = {
 	NULL, VIS_HELP(NULL) CMD_NONE, NULL, cmd_select
 };
 
-/* :set command options */
-typedef struct {
-	const char *names[3];            /* name and optional alias */
-	enum VisOption flags;            /* option type, etc. */
-	VIS_HELP_DECL(const char *help;) /* short, one line help text */
-	VisOptionFunction *func;         /* option handler, NULL for builtins */
-	void *context;                   /* context passed to option handler function */
-} OptionDef;
-
-enum {
-	OPTION_SHELL,
-	OPTION_ESCDELAY,
-	OPTION_AUTOINDENT,
-	OPTION_EXPANDTAB,
-	OPTION_TABWIDTH,
-	OPTION_SHOW_SPACES,
-	OPTION_SHOW_TABS,
-	OPTION_SHOW_NEWLINES,
-	OPTION_SHOW_EOF,
-	OPTION_STATUSBAR,
-	OPTION_NUMBER,
-	OPTION_NUMBER_RELATIVE,
-	OPTION_CURSOR_LINE,
-	OPTION_COLOR_COLUMN,
-	OPTION_SAVE_METHOD,
-	OPTION_LOAD_METHOD,
-	OPTION_CHANGE_256COLORS,
-	OPTION_LAYOUT,
-	OPTION_IGNORECASE,
-	OPTION_BREAKAT,
-	OPTION_WRAP_COLUMN,
-};
-
-static const OptionDef options[] = {
-	[OPTION_SHELL] = {
-		{ "shell" },
-		VIS_OPTION_TYPE_STRING,
-		VIS_HELP("Shell to use for external commands (default: $SHELL, /etc/passwd, /bin/sh)")
-	},
-	[OPTION_ESCDELAY] = {
-		{ "escdelay" },
-		VIS_OPTION_TYPE_NUMBER,
-		VIS_HELP("Milliseconds to wait to distinguish <Escape> from terminal escape sequences")
-	},
-	[OPTION_AUTOINDENT] = {
-		{ "autoindent", "ai" },
-		VIS_OPTION_TYPE_BOOL,
-		VIS_HELP("Copy leading white space from previous line")
-	},
-	[OPTION_EXPANDTAB] = {
-		{ "expandtab", "et" },
-		VIS_OPTION_TYPE_BOOL|VIS_OPTION_NEED_WINDOW,
-		VIS_HELP("Replace entered <Tab> with `tabwidth` spaces")
-	},
-	[OPTION_TABWIDTH] = {
-		{ "tabwidth", "tw" },
-		VIS_OPTION_TYPE_NUMBER|VIS_OPTION_NEED_WINDOW,
-		VIS_HELP("Number of spaces to display (and insert if `expandtab` is enabled) for a tab")
-	},
-	[OPTION_SHOW_SPACES] = {
-		{ "showspaces" },
-		VIS_OPTION_TYPE_BOOL|VIS_OPTION_NEED_WINDOW,
-		VIS_HELP("Display replacement symbol instead of a space")
-	},
-	[OPTION_SHOW_TABS] = {
-		{ "showtabs" },
-		VIS_OPTION_TYPE_BOOL|VIS_OPTION_NEED_WINDOW,
-		VIS_HELP("Display replacement symbol for tabs")
-	},
-	[OPTION_SHOW_NEWLINES] = {
-		{ "shownewlines" },
-		VIS_OPTION_TYPE_BOOL|VIS_OPTION_NEED_WINDOW,
-		VIS_HELP("Display replacement symbol for newlines")
-	},
-	[OPTION_SHOW_EOF] = {
-		{ "showeof" },
-		VIS_OPTION_TYPE_BOOL|VIS_OPTION_NEED_WINDOW,
-		VIS_HELP("Display replacement symbol for lines after the end of the file")
-	},
-	[OPTION_STATUSBAR] = {
-		{ "statusbar", "sb" },
-		VIS_OPTION_TYPE_BOOL|VIS_OPTION_NEED_WINDOW,
-		VIS_HELP("Display status bar")
-	},
-	[OPTION_NUMBER] = {
-		{ "numbers", "nu" },
-		VIS_OPTION_TYPE_BOOL|VIS_OPTION_NEED_WINDOW,
-		VIS_HELP("Display absolute line numbers")
-	},
-	[OPTION_NUMBER_RELATIVE] = {
-		{ "relativenumbers", "rnu" },
-		VIS_OPTION_TYPE_BOOL|VIS_OPTION_NEED_WINDOW,
-		VIS_HELP("Display relative line numbers")
-	},
-	[OPTION_CURSOR_LINE] = {
-		{ "cursorline", "cul" },
-		VIS_OPTION_TYPE_BOOL|VIS_OPTION_NEED_WINDOW,
-		VIS_HELP("Highlight current cursor line")
-	},
-	[OPTION_COLOR_COLUMN] = {
-		{ "colorcolumn", "cc" },
-		VIS_OPTION_TYPE_NUMBER|VIS_OPTION_NEED_WINDOW,
-		VIS_HELP("Highlight a fixed column")
-	},
-	[OPTION_SAVE_METHOD] = {
-		{ "savemethod" },
-		VIS_OPTION_TYPE_STRING|VIS_OPTION_NEED_WINDOW,
-		VIS_HELP("Save method to use for current file 'auto', 'atomic' or 'inplace'")
-	},
-	[OPTION_LOAD_METHOD] = {
-		{ "loadmethod" },
-		VIS_OPTION_TYPE_STRING,
-		VIS_HELP("How to load existing files 'auto', 'read' or 'mmap'")
-	},
-	[OPTION_CHANGE_256COLORS] = {
-		{ "change256colors" },
-		VIS_OPTION_TYPE_BOOL,
-		VIS_HELP("Change 256 color palette to support 24bit colors")
-	},
-	[OPTION_LAYOUT] = {
-		{ "layout" },
-		VIS_OPTION_TYPE_STRING,
-		VIS_HELP("Vertical or horizontal window layout")
-	},
-	[OPTION_IGNORECASE] = {
-		{ "ignorecase", "ic" },
-		VIS_OPTION_TYPE_BOOL,
-		VIS_HELP("Ignore case when searching")
-	},
-	[OPTION_BREAKAT] = {
-		{ "breakat", "brk" },
-		VIS_OPTION_TYPE_STRING|VIS_OPTION_NEED_WINDOW,
-		VIS_HELP("Characters which might cause a word wrap")
-	},
-	[OPTION_WRAP_COLUMN] = {
-		{ "wrapcolumn", "wc" },
-		VIS_OPTION_TYPE_NUMBER|VIS_OPTION_NEED_WINDOW,
-		VIS_HELP("Wrap lines at minimum of window width and wrapcolumn")
-	},
-};
-
 bool sam_init(Vis *vis) {
 	if (!(vis->cmds = map_new()))
 		return false;
@@ -408,9 +267,9 @@ bool sam_init(Vis *vis) {
 
 	if (!(vis->options = map_new()))
 		return false;
-	for (int i = 0; i < LENGTH(options); i++) {
-		for (const char *const *name = options[i].names; *name; name++)
-			ret &= map_put(vis->options, *name, &options[i]);
+	for (int i = 0; i < countof(vis_options_table); i++) {
+		for (const char *const *name = vis_options_table[i].names; *name; name++)
+			ret &= map_put(vis->options, *name, vis_options_table + i);
 	}
 
 	return ret;

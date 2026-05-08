@@ -29,6 +29,7 @@
 #undef _XOPEN_SOURCE
 #define _XOPEN_SOURCE 700
 
+#include <assert.h>
 #include <ctype.h>
 #include <errno.h>
 #include <fcntl.h>
@@ -65,6 +66,8 @@
 #include <selinux/selinux.h>
 #endif
 
+#define InvalidCodePath assert(0)
+
 #if defined(__clang__) || defined(__GNUC__)
 #define likely(x)    __builtin_expect(!!(x), 1)
 #define unlikely(x)  __builtin_expect(!!(x), 0)
@@ -73,9 +76,16 @@
 #define unlikely(x)  (x)
 #endif
 
+#ifndef countof
+#define countof(a) (sizeof(a) / sizeof(*a))
+#endif
+
 #define LENGTH(x)  ((int)(sizeof (x) / sizeof *(x)))
 #define MIN(a, b)  ((a) > (b) ? (b) : (a))
 #define MAX(a, b)  ((a) < (b) ? (b) : (a))
+
+#define Between(x, a, b) ((x) >= (a) && (x) <= (b))
+#define Clamp(x, a, b)   (((x) < (a)) ? (a) : ((x) > (b)) ? (b) : (x))
 
 /* is c the start of a utf8 sequence? */
 #define ISUTF8(c)     (((c)&0xC0)!=0x80)

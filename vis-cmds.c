@@ -61,77 +61,9 @@ bool vis_cmd_unregister(Vis *vis, const char *name) {
 	return true;
 }
 
-static void option_free(OptionDef *opt) {
-	if (!opt)
-		return;
-	for (size_t i = 0; i < LENGTH(options); i++) {
-		if (opt == &options[i])
-			return;
-	}
-
-	for (const char **name = opt->names; *name; name++)
-		free((char*)*name);
-	free(VIS_HELP_USE((char*)opt->help));
-	free(opt);
-}
-
-bool vis_option_register(Vis *vis, const char *names[], enum VisOption flags,
-                         VisOptionFunction *func, void *context, const char *help) {
-
-	if (!names || !names[0])
-		return false;
-
-	for (const char **name = names; *name; name++) {
-		if (map_get(vis->options, *name))
-			return false;
-	}
-	OptionDef *opt = calloc(1, sizeof *opt);
-	if (!opt)
-		return false;
-	for (size_t i = 0; i < LENGTH(opt->names)-1 && names[i]; i++) {
-		if (!(opt->names[i] = strdup(names[i])))
-			goto err;
-	}
-	opt->flags = flags;
-	opt->func = func;
-	opt->context = context;
-#if CONFIG_HELP
-	if (help && !(opt->help = strdup(help)))
-		goto err;
-#endif
-	for (const char **name = names; *name; name++)
-		map_put(vis->options, *name, opt);
-	return true;
-err:
-	option_free(opt);
-	return false;
-}
-
-bool vis_option_unregister(Vis *vis, const char *name) {
-	OptionDef *opt = map_get(vis->options, name);
-	if (!opt)
-		return false;
-	for (const char **alias = opt->names; *alias; alias++) {
-		if (!map_delete(vis->options, *alias))
-			return false;
-	}
-	option_free(opt);
-	return true;
-}
-
 static bool cmd_user(Vis *vis, Win *win, Command *cmd, const char *argv[], Selection *sel, Filerange *range) {
 	CmdUser *user = map_get(vis->usercmds, argv[0]);
 	return user && user->func(vis, win, user->data, cmd->flags == '!', argv, sel, range);
-}
-
-void vis_shell_set(Vis *vis, const char *new_shell) {
-	char *shell =  strdup(new_shell);
-	if (!shell) {
-		vis_info_show(vis, "Failed to change shell");
-	} else {
-		free(vis->shell);
-		vis->shell = shell;
-	}
 }
 
 /* parse human-readable boolean value in s. If successful, store the result in
@@ -154,29 +86,26 @@ static bool parse_bool(const char *s, bool *outval) {
 
 static bool cmd_set(Vis *vis, Win *win, Command *cmd, const char *argv[], Selection *sel, Filerange *range) {
 
-	if (!argv[1] || !argv[1][0] || argv[3]) {
+	str8 name = str8_from_c_str(argv[1]);
+	if (name.length == 0 || argv[3]) {
 		vis_info_show(vis, "Expecting: set option [value]");
 		return false;
 	}
 
-	char name[256];
-	strncpy(name, argv[1], sizeof(name)-1);
-	char *lastchar = &name[strlen(name)-1];
-	bool toggle = (*lastchar == '!');
-	if (toggle)
-		*lastchar = '\0';
+	bool toggle  = name.data[name.length - 1] == '!';
+	name.length -= (int)toggle;
 
-	OptionDef *opt = map_closest(vis->options, name);
+	VisOption *opt = vis_option_from_string(vis, name);
 	if (!opt) {
-		vis_info_show(vis, "Unknown option: `%s'", name);
+		vis_info_show(vis, "Unknown option: `%.*s'", (int)name.length, name.data);
 		return false;
 	}
 
-	if (opt->flags & VIS_OPTION_DEPRECATED && strcmp(opt->context, name) == 0)
-		vis_info_show(vis, "%s is deprecated and will be removed in the next release", name);
+	if (opt->flags & VIS_OPTION_DEPRECATED && str8_equal(name, str8_from_c_str(opt->set_context)))
+		vis_info_show(vis, "%.*s is deprecated and will be removed in the next release", (int)name.length, name.data);
 
 	if (!win && (opt->flags & VIS_OPTION_NEED_WINDOW)) {
-		vis_info_show(vis, "Need active window for `:set %s'", name);
+		vis_info_show(vis, "Need active window for `:set %.*s'", (int)name.length, name.data);
 		return false;
 	}
 
@@ -191,20 +120,22 @@ static bool cmd_set(Vis *vis, Win *win, Command *cmd, const char *argv[], Select
 		}
 	}
 
-	Arg arg;
+	VisValue value = {0};
 	if (opt->flags & VIS_OPTION_TYPE_STRING) {
-		if (!(opt->flags & VIS_OPTION_VALUE_OPTIONAL) && !argv[2]) {
+		if (!argv[2]) {
 			vis_info_show(vis, "Expecting string option value");
 			return false;
 		}
-		arg.s = argv[2];
+		value.kind     = VisValueKind_String;
+		value.u.string = argv[2];
 	} else if (opt->flags & VIS_OPTION_TYPE_BOOL) {
-		if (!argv[2]) {
-			arg.b = !toggle;
-		} else if (!parse_bool(argv[2], &arg.b)) {
+		bool boolean = !toggle;
+		if (argv[2] && !parse_bool(argv[2], &boolean)) {
 			vis_info_show(vis, "Expecting boolean option value not: `%s'", argv[2]);
 			return false;
 		}
+		value.kind      = VisValueKind_Boolean;
+		value.u.boolean = boolean;
 	} else if (opt->flags & VIS_OPTION_TYPE_NUMBER) {
 		if (!argv[2]) {
 			vis_info_show(vis, "Expecting number");
@@ -224,157 +155,13 @@ static bool cmd_set(Vis *vis, Win *win, Command *cmd, const char *argv[], Select
 			return false;
 		}
 
-		if (lval < 0) {
-			vis_info_show(vis, "Expecting positive number");
-			return false;
-		}
-		arg.i = lval;
+		value.kind      = VisValueKind_Integer;
+		value.u.integer = lval;
 	} else {
 		return false;
 	}
 
-	size_t opt_index = 0;
-	for (; opt_index < LENGTH(options); opt_index++) {
-		if (opt == &options[opt_index])
-			break;
-	}
-
-	switch (opt_index) {
-	case OPTION_SHELL:
-		vis_shell_set(vis, arg.s);
-		break;
-	case OPTION_ESCDELAY:
-	{
-		termkey_set_waittime(vis->ui.termkey, arg.i);
-		break;
-	}
-	case OPTION_EXPANDTAB:
-		vis->win->expandtab = toggle ? !vis->win->expandtab : arg.b;
-		break;
-	case OPTION_AUTOINDENT:
-		vis->autoindent = toggle ? !vis->autoindent : arg.b;
-		break;
-	case OPTION_TABWIDTH:
-		view_tabwidth_set(&vis->win->view, arg.i);
-		break;
-	case OPTION_SHOW_SPACES:
-	case OPTION_SHOW_TABS:
-	case OPTION_SHOW_NEWLINES:
-	case OPTION_SHOW_EOF:
-	case OPTION_STATUSBAR:
-	{
-		const int values[] = {
-			[OPTION_SHOW_SPACES] = UI_OPTION_SYMBOL_SPACE,
-			[OPTION_SHOW_TABS] = UI_OPTION_SYMBOL_TAB|UI_OPTION_SYMBOL_TAB_FILL,
-			[OPTION_SHOW_NEWLINES] = UI_OPTION_SYMBOL_EOL,
-			[OPTION_SHOW_EOF] = UI_OPTION_SYMBOL_EOF,
-			[OPTION_STATUSBAR] = UI_OPTION_STATUSBAR,
-		};
-		int flags = win->options;
-		if (arg.b || (toggle && !(flags & values[opt_index])))
-			flags |= values[opt_index];
-		else
-			flags &= ~values[opt_index];
-		win_options_set(win, flags);
-		break;
-	}
-	case OPTION_NUMBER: {
-		enum UiOption opt = win->options;
-		if (arg.b || (toggle && !(opt & UI_OPTION_LINE_NUMBERS_ABSOLUTE))) {
-			opt &= ~UI_OPTION_LINE_NUMBERS_RELATIVE;
-			opt |=  UI_OPTION_LINE_NUMBERS_ABSOLUTE;
-		} else {
-			opt &= ~UI_OPTION_LINE_NUMBERS_ABSOLUTE;
-		}
-		win_options_set(win, opt);
-		break;
-	}
-	case OPTION_NUMBER_RELATIVE: {
-		enum UiOption opt = win->options;
-		if (arg.b || (toggle && !(opt & UI_OPTION_LINE_NUMBERS_RELATIVE))) {
-			opt &= ~UI_OPTION_LINE_NUMBERS_ABSOLUTE;
-			opt |=  UI_OPTION_LINE_NUMBERS_RELATIVE;
-		} else {
-			opt &= ~UI_OPTION_LINE_NUMBERS_RELATIVE;
-		}
-		win_options_set(win, opt);
-		break;
-	}
-	case OPTION_CURSOR_LINE: {
-		enum UiOption opt = win->options;
-		if (arg.b || (toggle && !(opt & UI_OPTION_CURSOR_LINE)))
-			opt |= UI_OPTION_CURSOR_LINE;
-		else
-			opt &= ~UI_OPTION_CURSOR_LINE;
-		win_options_set(win, opt);
-		break;
-	}
-	case OPTION_COLOR_COLUMN:
-		if (arg.i >= 0)
-			win->view.colorcolumn = arg.i;
-		break;
-	case OPTION_SAVE_METHOD:
-		if (strcmp("auto", arg.s) == 0) {
-			win->file->save_method = TEXT_SAVE_AUTO;
-		} else if (strcmp("atomic", arg.s) == 0) {
-			win->file->save_method = TEXT_SAVE_ATOMIC;
-		} else if (strcmp("inplace", arg.s) == 0) {
-			win->file->save_method = TEXT_SAVE_INPLACE;
-		} else {
-			vis_info_show(vis, "Invalid save method `%s', expected "
-			              "'auto', 'atomic' or 'inplace'", arg.s);
-			return false;
-		}
-		break;
-	case OPTION_LOAD_METHOD:
-		if (strcmp("auto", arg.s) == 0) {
-			vis->load_method = TEXT_LOAD_AUTO;
-		} else if (strcmp("read", arg.s) == 0) {
-			vis->load_method = TEXT_LOAD_READ;
-		} else if (strcmp("mmap", arg.s) == 0) {
-			vis->load_method = TEXT_LOAD_MMAP;
-		} else {
-			vis_info_show(vis, "Invalid load method `%s', expected "
-			              "'auto', 'read' or 'mmap'", arg.s);
-			return false;
-		}
-		break;
-	case OPTION_CHANGE_256COLORS:
-		vis->change_colors = toggle ? !vis->change_colors : arg.b;
-		break;
-	case OPTION_LAYOUT: {
-		enum UiLayout layout;
-		if (strcmp("h", arg.s) == 0) {
-			layout = UI_LAYOUT_HORIZONTAL;
-		} else if (strcmp("v", arg.s) == 0) {
-			layout = UI_LAYOUT_VERTICAL;
-		} else {
-			vis_info_show(vis, "Invalid layout `%s', expected 'h' or 'v'", arg.s);
-			return false;
-		}
-		ui_arrange(&vis->ui, layout);
-		break;
-	}
-	case OPTION_IGNORECASE:
-		vis->ignorecase = toggle ? !vis->ignorecase : arg.b;
-		break;
-	case OPTION_BREAKAT:
-		if (!view_breakat_set(&win->view, arg.s)) {
-			vis_info_show(vis, "Failed to set breakat");
-			return false;
-		}
-		break;
-	case OPTION_WRAP_COLUMN:
-		if (arg.i >= 0)
-			win->view.wrapcolumn = arg.i;
-		break;
-	default:
-		if (!opt->func)
-			return false;
-		return opt->func(vis, win, opt->context, toggle, opt->flags, name, &arg);
-	}
-
-	return true;
+	return vis_option_set(vis, win, opt, value, toggle);
 }
 
 static bool is_file_pattern(const char *pattern) {
@@ -719,7 +506,7 @@ void vis_print_cmds(Vis *vis, Buffer *buf, const char *prefix) {
 static bool print_option(const char *key, void *value, void *data)
 {
 	char desc[256];
-	const OptionDef *opt = value;
+	const VisOption *opt = value;
 	const char *help = VIS_HELP_USE(opt->help);
 	if (strcmp(key, opt->names[0]))
 		return true;

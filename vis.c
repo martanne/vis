@@ -10,6 +10,7 @@
 #include "buffer.c"
 #include "event-basic.c"
 #include "map.c"
+#include "vis-options.c"
 #include "sam.c"
 #include "text.c"
 #include "ui-terminal.c"

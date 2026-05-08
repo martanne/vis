@@ -52,6 +52,23 @@ typedef union {
 	void (*f)(Vis*);
 } Arg;
 
+typedef enum {
+	VisValueKind_Nil,
+	VisValueKind_String,
+	VisValueKind_Integer,
+	VisValueKind_Boolean,
+	VisValueKind_Count,
+} VisValueKind;
+
+typedef struct {
+	VisValueKind kind;
+	union {
+		int64_t     integer;
+		bool        boolean;
+		const char *string;
+	} u;
+} VisValue;
+
 /**
  * Key action handling function.
  * @param vis The editor instance.
@@ -1152,42 +1169,49 @@ VIS_EXPORT bool vis_cmd_unregister(Vis *vis, const char *name);
  * @{
  */
 /** Option properties. */
-enum VisOption {
-	VIS_OPTION_TYPE_BOOL = 1 << 0,
+typedef enum {
+	VIS_OPTION_TYPE_BOOL   = 1 << 0,
 	VIS_OPTION_TYPE_STRING = 1 << 1,
 	VIS_OPTION_TYPE_NUMBER = 1 << 2,
-	VIS_OPTION_VALUE_OPTIONAL = 1 << 3,
-	VIS_OPTION_NEED_WINDOW = 1 << 4,
-	VIS_OPTION_DEPRECATED = 1 << 5,
-};
+	VIS_OPTION_NEED_WINDOW = 1 << 3,
+	VIS_OPTION_DEPRECATED  = 1 << 4,
+} VisOptionFlags;
 
 /**
  * Option handler function.
  * @param vis The editor instance.
  * @param win The window to which option should apply, might be ``NULL``.
  * @param context User provided context pointer as given to `vis_option_register`.
- * @param force Whether the option was specified with a bang ``!``.
+ * @param toggle Whether the option was specified with a bang ``!``.
  * @param option_flags The applicable option flags.
  * @param name Name of option which was set.
  * @param value The new option value.
  */
-typedef bool (VisOptionFunction)(Vis *vis, Win *win, void *context, bool force,
-                                 enum VisOption option_flags, const char *name, Arg *value);
+#define VIS_OPTION_SET_FUNCTION(fname) bool fname(Vis *vis, Win *win, const char *name, \
+                                                  void *context, VisOptionFlags flags, \
+                                                  VisValue value, bool toggle)
+typedef VIS_OPTION_SET_FUNCTION(VisOptionSetFunction);
+#define VIS_OPTION_GET_FUNCTION(fname) VisValue fname(Vis *vis, Win *win, const char *name, \
+                                                      void *context, VisOptionFlags flags)
+typedef VIS_OPTION_GET_FUNCTION(VisOptionGetFunction);
 
 /**
  * Register a new ``:set`` option.
  * @param vis The editor instance.
  * @param names A ``NULL`` terminated array of option names.
  * @param option_flags The applicable option flags.
- * @param func The function handling the option.
- * @param context User supplied context pointer passed to the handler function.
+ * @param set The function which handles a set operation for the option.
+ * @param get The function which handles a get operation for the option.
+ * @param set_context User supplied context pointer passed to the set function.
+ * @param get_context User supplied context pointer passed to the get function.
  * @param help Optional single line help text.
  * @rst
  * .. note:: Fails if any of the given option names is already registered.
  * @endrst
  */
-VIS_EXPORT bool vis_option_register(Vis *vis, const char *names[], enum VisOption option_flags,
-                                    VisOptionFunction *func, void *context, const char *help);
+VIS_EXPORT bool vis_option_register(Vis *vis, const char *names[], VisOptionFlags flags,
+                                    VisOptionSetFunction *set, VisOptionGetFunction *get,
+                                    void *set_context, void *get_context, const char *help);
 /**
  * Unregister an existing ``:set`` option.
  * @param vis The editor instance.

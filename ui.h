@@ -12,6 +12,7 @@
 enum UiLayout {
 	UI_LAYOUT_HORIZONTAL,
 	UI_LAYOUT_VERTICAL,
+	UI_LAYOUT_COUNT,
 };
 
 enum UiOption {
