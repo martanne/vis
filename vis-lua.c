@@ -27,8 +27,6 @@
 #define VIS_LUA_TYPE_WINDOW "window"
 #define VIS_LUA_TYPE_SELECTION "selection"
 #define VIS_LUA_TYPE_SELECTIONS "selections"
-#define VIS_LUA_TYPE_UI "ui"
-#define VIS_LUA_TYPE_REGISTERS "registers"
 #define VIS_LUA_TYPE_KEYACTION "keyaction"
 
 #ifndef DEBUG_LUA
@@ -1563,11 +1561,6 @@ static int vis_index(lua_State *L) {
 			return 1;
 		}
 
-		if (strcmp(key, "registers") == 0) {
-			obj_ref_new(L, &vis->ui, VIS_LUA_TYPE_REGISTERS);
-			return 1;
-		}
-
 		if (strcmp(key, "mark") == 0) {
 			char name = vis_mark_to(vis, vis_mark_used(vis));
 			lua_pushlstring(L, &name, 1);
@@ -1576,11 +1569,6 @@ static int vis_index(lua_State *L) {
 
 		if (strcmp(key, "options") == 0) {
 			obj_ref_new(L, &vis->options, VIS_LUA_TYPE_VIS_OPTS);
-			return 1;
-		}
-
-		if (strcmp(key, "ui") == 0) {
-			obj_ref_new(L, &vis->ui, VIS_LUA_TYPE_UI);
 			return 1;
 		}
 	}
@@ -1706,31 +1694,25 @@ static const struct luaL_Reg vis_lua[] = {
 VIS_INTERNAL int
 vis_lua_options_index(lua_State *L)
 {
-	Vis *vis = obj_ref_check_containerof(L, 1, VIS_LUA_TYPE_VIS_OPTS, offsetof(Vis, options));
-	if (vis) {
-		if (lua_isstring(L, 2)) {
-			VisOption *option = vis_option_from_string(vis, vis_lua_to_str8(L, 2));
-			if (vis_lua_is_vis_option(option))
-				return vis_lua_push_option(vis, 0, L, option);
-		}
-		return index_common(L);
+	Vis *vis = lua_touserdata(L, lua_upvalueindex(1));
+	if (lua_isstring(L, 2)) {
+		VisOption *option = vis_option_from_string(vis, vis_lua_to_str8(L, 2));
+		if (vis_lua_is_vis_option(option))
+			return vis_lua_push_option(vis, 0, L, option);
 	}
-	return -1;
+	return index_common(L);
 }
 
 VIS_INTERNAL int
 vis_lua_options_newindex(lua_State *L)
 {
-	Vis *vis = obj_ref_check_containerof(L, 1, VIS_LUA_TYPE_VIS_OPTS, offsetof(Vis, options));
-	if (vis) {
-		if (lua_isstring(L, 2)) {
-			VisOption *option = vis_option_from_string(vis, vis_lua_to_str8(L, 2));
-			if (vis_lua_is_vis_option(option))
-				return vis_lua_option_set(vis, 0, option, L, 3);
-		}
-		return newindex_common(L);
+	Vis *vis = lua_touserdata(L, lua_upvalueindex(1));
+	if (lua_isstring(L, 2)) {
+		VisOption *option = vis_option_from_string(vis, vis_lua_to_str8(L, 2));
+		if (vis_lua_is_vis_option(option))
+			return vis_lua_option_set(vis, 0, option, L, 3);
 	}
-	return 0;
+	return newindex_common(L);
 }
 
 static const struct luaL_Reg vis_option_funcs[] = {
@@ -1753,37 +1735,38 @@ static const struct luaL_Reg vis_option_funcs[] = {
  * @tfield layouts layout current window layout.
  */
 
-static int ui_index(lua_State *L) {
-	Ui *ui = obj_ref_check(L, 1,  VIS_LUA_TYPE_UI);
-
+VIS_INTERNAL int
+vis_lua_ui_index(lua_State *L)
+{
+	Vis *vis = lua_touserdata(L, lua_upvalueindex(1));
 	if (lua_isstring(L, 2)) {
-		VisOption *option = vis_option_from_string(ui->vis, vis_lua_to_str8(L, 2));
+		VisOption *option = vis_option_from_string(vis, vis_lua_to_str8(L, 2));
 		// TODO(rnp): better filtering
 		if (option == vis_options_table + OPTION_LAYOUT)
-			return vis_lua_push_option(ui->vis, 0, L, option);
+			return vis_lua_push_option(vis, 0, L, option);
 	}
-
 	return index_common(L);
 }
 
-static int ui_newindex(lua_State *L) {
-	Ui *ui = obj_ref_check(L, 1,  VIS_LUA_TYPE_UI);
-
+VIS_INTERNAL int
+vis_lua_ui_newindex(lua_State *L)
+{
+	Vis *vis = lua_touserdata(L, lua_upvalueindex(1));
 	if (lua_isstring(L, 2)) {
 		const char *key  = lua_tostring(L, 2);
 
 		if (strcmp(key, "layout") == 0) {
-			ui_arrange(ui->vis, luaL_checkinteger(L, 3));
+			ui_arrange(vis, luaL_checkinteger(L, 3));
 			return 0;
 		}
 	}
 	return newindex_common(L);
 }
 
-static const struct luaL_Reg ui_funcs[] = {
-	{ "__index", ui_index },
-	{ "__newindex", ui_newindex },
-	{ NULL, NULL },
+static const struct luaL_Reg vis_lua_ui_funcs[] = {
+	{"__index",    vis_lua_ui_index   },
+	{"__newindex", vis_lua_ui_newindex},
+	{0},
 };
 
 static int registers_index(lua_State *L) {
@@ -3326,28 +3309,6 @@ static void vis_lua_init(Vis *vis)
 	obj_type_new(L, str8(VIS_LUA_TYPE_SELECTIONS));
 	luaL_setfuncs(L, window_selections_funcs, 0);
 
-	obj_type_new(L, str8(VIS_LUA_TYPE_UI));
-	luaL_setfuncs(L, ui_funcs, 0);
-	lua_pushinteger(L, ui_terminal_colors());
-	lua_setfield(L, -2, "colors");
-	lua_newtable(L);
-	static const struct {
-		enum UiLayout id;
-		const char *name;
-	} layouts[] = {
-		{ UI_LAYOUT_HORIZONTAL, "HORIZONTAL" },
-		{ UI_LAYOUT_VERTICAL, "VERTICAL" },
-	};
-	for (size_t i = 0; i <  LENGTH(layouts); i++) {
-		lua_pushinteger(L, layouts[i].id);
-		lua_setfield(L, -2, layouts[i].name);
-	}
-	lua_setfield(L, -2, "layouts");
-
-	obj_type_new(L, str8(VIS_LUA_TYPE_REGISTERS));
-	lua_pushlightuserdata(L, vis);
-	luaL_setfuncs(L, registers_funcs, 1);
-
 	obj_type_new(L, str8(VIS_LUA_TYPE_KEYACTION));
 
 	lua_getglobal(L, "vis");
@@ -3356,26 +3317,68 @@ static void vis_lua_init(Vis *vis)
 	lua_pushliteral(L, VERSION);
 	lua_setfield(L, -2, "VERSION");
 
+	// NOTE: vis.ui table
 	lua_newtable(L);
-	static const struct {
-		enum VisMode id;
-		const char *name;
-	} modes[] = {
-		{ VIS_MODE_NORMAL,           "NORMAL"           },
-		{ VIS_MODE_OPERATOR_PENDING, "OPERATOR_PENDING" },
-		{ VIS_MODE_VISUAL,           "VISUAL"           },
-		{ VIS_MODE_VISUAL_LINE,      "VISUAL_LINE"      },
-		{ VIS_MODE_INSERT,           "INSERT"           },
-		{ VIS_MODE_REPLACE,          "REPLACE"          },
-	};
-	for (size_t i = 0; i < LENGTH(modes); i++) {
-		lua_pushinteger(L, modes[i].id);
-		lua_setfield(L, -2, modes[i].name);
-	}
-	lua_setfield(L, -2, "modes");
+	{
+		lua_pushinteger(L, ui_terminal_colors());
+		lua_setfield(L, -2, "colors");
+
+		lua_newtable(L);
+		static const struct {
+			enum UiLayout id;
+			const char *name;
+		} layouts[] = {
+			{UI_LAYOUT_HORIZONTAL, "HORIZONTAL"},
+			{UI_LAYOUT_VERTICAL,   "VERTICAL"  },
+		};
+		for (size_t i = 0; i <  countof(layouts); i++) {
+			lua_pushinteger(L, layouts[i].id);
+			lua_setfield(L, -2, layouts[i].name);
+		}
+		lua_setfield(L, -2, "layouts");
+
+		// NOTE: metatable
+		lua_newtable(L);
+		lua_pushlightuserdata(L, vis);
+		luaL_setfuncs(L, vis_lua_ui_funcs, 1);
+		lua_setmetatable(L, -2);
+	} lua_setfield(L, -2, "ui");
+
+	// NOTE: vis.registers table
+	lua_newtable(L);
+	{
+		// NOTE: metatable
+		lua_newtable(L);
+		lua_pushlightuserdata(L, vis);
+		luaL_setfuncs(L, registers_funcs, 1);
+		lua_setmetatable(L, -2);
+	} lua_setfield(L, -2, "registers");
+
+	// NOTE: vis.modes table
+	lua_newtable(L);
+	{
+		static const struct {
+			enum VisMode id;
+			const char *name;
+		} modes[] = {
+			{VIS_MODE_NORMAL,           "NORMAL"          },
+			{VIS_MODE_OPERATOR_PENDING, "OPERATOR_PENDING"},
+			{VIS_MODE_VISUAL,           "VISUAL"          },
+			{VIS_MODE_VISUAL_LINE,      "VISUAL_LINE"     },
+			{VIS_MODE_INSERT,           "INSERT"          },
+			{VIS_MODE_REPLACE,          "REPLACE"         },
+		};
+		for (size_t i = 0; i < countof(modes); i++) {
+			lua_pushinteger(L, modes[i].id);
+			lua_setfield(L, -2, modes[i].name);
+		}
+	} lua_setfield(L, -2, "modes");
 
 	obj_type_new(L, str8(VIS_LUA_TYPE_VIS_OPTS));
-	luaL_setfuncs(L, vis_option_funcs, 0);
+	lua_pushlightuserdata(L, vis);
+	luaL_setfuncs(L, vis_option_funcs, 1);
+
+	lua_pop(L, 2);
 
 	if (!package_exist(vis, L, str8("visrc"))) {
 		vis_info_show(vis, "WARNING: failed to load visrc.lua");
