@@ -3,14 +3,12 @@
 export VIS_PATH=.
 [ -z "$VIS" ] && VIS="../../vis"
 
-# Function to run vis under gdb
-# This approach avoids the complex quoting issues of string variables in POSIX shell.
+# run vis under gdb
 debug_run() {
-    # $1 is $VIS, $2 is "$t.in"
-    gdb --batch -ex "run" -ex "bt" --args "$1" "$2"
+	# $1 is $VIS, $2 is "$t.in"
+	gdb --batch -ex "run" -ex "bt" --args "$1" "$2"
 }
 
-# Flag to check if we are in debug mode
 DEBUG_MODE=0
 if [ "$1" = "-d" ] || [ "$1" = "--debug" ]; then
 	DEBUG_MODE=1
@@ -30,8 +28,6 @@ TESTS_RUN=0
 if [ $# -gt 0 ]; then
 	test_files=$*
 else
-	# Use 'find ... -print' instead of command substitution in case of very long lists
-	# Although command substitution is generally POSIX, this avoids potential issues.
 	test_files="$(find . -type f -name '*.lua' -a ! -name visrc.lua)"
 fi
 
@@ -42,7 +38,6 @@ for t in $test_files; do
 
 	if [ $DEBUG_MODE -eq 1 ]; then
 		printf "Debugging %s\n" "$t"
-		# Call the function instead of expanding a variable
 		debug_run "$VIS" "$t.in" 2> "$t.err"
 	else
 		printf "% -30s" "$t"
