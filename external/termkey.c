@@ -877,15 +877,6 @@ termkey_ti_peekkey(TermKey *tk, void *info, TermKeyKey *key, int force, size_t *
 	return TERMKEY_RES_NONE;
 }
 
-static TermKeyDriver termkey_driver_ti = {
-	.name         = "terminfo",
-	.new_driver   = termkey_ti_new_driver,
-	.free_driver  = termkey_ti_free_driver,
-	.start_driver = termkey_ti_start_driver,
-	.stop_driver  = termkey_ti_stop_driver,
-	.peekkey      = termkey_ti_peekkey,
-};
-
 /////////////////////////
 // NOTE: CSI Driver
 
@@ -1518,13 +1509,6 @@ termkey_csi_peekkey(TermKey *tk, void *info, TermKeyKey *key, int force, size_t 
 	return result;
 }
 
-static TermKeyDriver termkey_driver_csi = {
-	.name        = "CSI",
-	.new_driver  = termkey_csi_new_driver,
-	.free_driver = termkey_csi_free_driver,
-	.peekkey     = termkey_csi_peekkey,
-};
-
 /////////////////////////
 // NOTE: TermKey Implementation
 
@@ -1534,9 +1518,21 @@ static TermKeyDriver termkey_driver_csi = {
 #define strcaseeq(a,b) (strcasecmp(a,b) == 0)
 #endif
 
-static TermKeyDriver *termkey_drivers[] = {
-	&termkey_driver_ti,
-	&termkey_driver_csi,
+static TermKeyDriver termkey_drivers[] = {
+	{
+		.name         = "terminfo",
+		.new_driver   = termkey_ti_new_driver,
+		.free_driver  = termkey_ti_free_driver,
+		.start_driver = termkey_ti_start_driver,
+		.stop_driver  = termkey_ti_stop_driver,
+		.peekkey      = termkey_ti_peekkey,
+	},
+	{
+		.name         = "CSI",
+		.new_driver   = termkey_csi_new_driver,
+		.free_driver  = termkey_csi_free_driver,
+		.peekkey      = termkey_csi_peekkey,
+	},
 };
 
 static struct {
@@ -1748,7 +1744,7 @@ termkey_init(TermKey *tk, const char *term)
 
 	TermKeyDriverNode *tail = 0;
 	for (int i = 0; i < (int)countof(termkey_drivers); i++) {
-		void *info = termkey_drivers[i]->new_driver(tk, term);
+		void *info = termkey_drivers[i].new_driver(tk, term);
 		if (!info)
 			continue;
 
@@ -1756,7 +1752,7 @@ termkey_init(TermKey *tk, const char *term)
 		if (!thisdrv)
 			goto abort_free_drivers;
 
-		thisdrv->driver = termkey_drivers[i];
+		thisdrv->driver = termkey_drivers + i;
 		thisdrv->info   = info;
 
 		if (!tail) tk->drivers = thisdrv;
