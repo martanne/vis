@@ -255,15 +255,9 @@ struct TermKey {
 	TermKeyKeyInfo c0[32];
 
 	TermKeyDriverNode *drivers;
-
-	// Now some "protected" methods for the driver to call but which we don't
-	// want exported as real symbols in the library
-	struct {
-		void (*emit_codepoint)(TermKey *tk, long codepoint, TermKeyKey *key);
-		TermKeyResult (*peekkey_simple)(TermKey *tk, TermKeyKey *key, int force, size_t *nbytes);
-		TermKeyResult (*peekkey_mouse)(TermKey *tk, TermKeyKey *key, size_t *nbytes);
-	} method;
 };
+
+#define CHARAT(i) (tk->buffer[tk->buffstart + (i)])
 
 static inline void
 termkey_key_get_linecol(const TermKeyKey *key, int *line, int *col)
@@ -289,6 +283,142 @@ termkey_key_set_linecol(TermKeyKey *key, int line, int col)
 	key->code.mouse[3] = (line & 0xf00) >> 8 | (col & 0x300) >> 4;
 }
 
+static inline
+unsigned int termkey_utf8_seqlen(long codepoint)
+{
+	if (codepoint < 0x0000080) return 1;
+	if (codepoint < 0x0000800) return 2;
+	if (codepoint < 0x0010000) return 3;
+	if (codepoint < 0x0200000) return 4;
+	if (codepoint < 0x4000000) return 5;
+	return 6;
+}
+
+static void
+termkey_fill_utf8(TermKeyKey *key)
+{
+	long codepoint = key->code.codepoint;
+	int nbytes = termkey_utf8_seqlen(codepoint);
+
+	key->utf8[nbytes] = 0;
+
+	// This is easier done backwards
+	int b = nbytes;
+	while (b > 1) {
+		b--;
+		key->utf8[b] = 0x80 | (codepoint & 0x3f);
+		codepoint >>= 6;
+	}
+
+	switch (nbytes) {
+	case 1: key->utf8[0] =        (codepoint & 0x7f); break;
+	case 2: key->utf8[0] = 0xc0 | (codepoint & 0x1f); break;
+	case 3: key->utf8[0] = 0xe0 | (codepoint & 0x0f); break;
+	case 4: key->utf8[0] = 0xf0 | (codepoint & 0x07); break;
+	case 5: key->utf8[0] = 0xf8 | (codepoint & 0x03); break;
+	case 6: key->utf8[0] = 0xfc | (codepoint & 0x01); break;
+	}
+}
+
+TERMKEY_EXPORT void
+termkey_canonicalise(TermKey *tk, TermKeyKey *key)
+{
+	int flags = tk->canonflags;
+
+	if (flags & TERMKEY_CANON_SPACESYMBOL) {
+		if (key->type == TERMKEY_TYPE_UNICODE && key->code.codepoint == 0x20) {
+			key->type     = TERMKEY_TYPE_KEYSYM;
+			key->code.sym = TERMKEY_SYM_SPACE;
+		}
+	} else {
+		if (key->type == TERMKEY_TYPE_KEYSYM && key->code.sym == TERMKEY_SYM_SPACE) {
+			key->type           = TERMKEY_TYPE_UNICODE;
+			key->code.codepoint = 0x20;
+			termkey_fill_utf8(key);
+		}
+	}
+
+	if (flags & TERMKEY_CANON_DELBS)
+		if (key->type == TERMKEY_TYPE_KEYSYM && key->code.sym == TERMKEY_SYM_DEL)
+			key->code.sym = TERMKEY_SYM_BACKSPACE;
+}
+
+static void
+termkey_emit_codepoint(TermKey *tk, long codepoint, TermKeyKey *key)
+{
+	if (codepoint == 0) {
+		// ASCII NUL = Ctrl-Space
+		key->type      = TERMKEY_TYPE_KEYSYM;
+		key->code.sym  = TERMKEY_SYM_SPACE;
+		key->modifiers = TERMKEY_KEYMOD_CTRL;
+	} else if(codepoint < 0x20) {
+		// C0 range
+		key->code.codepoint = 0;
+		key->modifiers      = 0;
+		if (!(tk->flags & TERMKEY_FLAG_NOINTERPRET) && tk->c0[codepoint].sym != TERMKEY_SYM_UNKNOWN) {
+			key->code.sym   = tk->c0[codepoint].sym;
+			key->modifiers |= tk->c0[codepoint].modifier_set;
+		}
+		if (!key->code.sym) {
+			key->type = TERMKEY_TYPE_UNICODE;
+			/* Generically modified Unicode ought not report the SHIFT state, or else
+			 * we get into complications trying to report Shift-; vs : and so on...
+			 * In order to be able to represent Ctrl-Shift-A as CTRL modified
+			 * unicode A, we need to call Ctrl-A simply 'a', lowercase */
+			if (codepoint+0x40 >= 'A' && codepoint+0x40 <= 'Z')
+				// it's a letter - use lowercase instead
+				key->code.codepoint = codepoint + 0x60;
+			else
+				key->code.codepoint = codepoint + 0x40;
+			key->modifiers = TERMKEY_KEYMOD_CTRL;
+		} else {
+			key->type = TERMKEY_TYPE_KEYSYM;
+		}
+	} else if(codepoint == 0x7f && !(tk->flags & TERMKEY_FLAG_NOINTERPRET)) {
+		// ASCII DEL
+		key->type      = TERMKEY_TYPE_KEYSYM;
+		key->code.sym  = TERMKEY_SYM_DEL;
+		key->modifiers = 0;
+	} else if(codepoint >= 0x20 && codepoint < 0x80) {
+		// ASCII lowbyte range
+		key->type           = TERMKEY_TYPE_UNICODE;
+		key->code.codepoint = codepoint;
+		key->modifiers      = 0;
+	} else if(codepoint >= 0x80 && codepoint < 0xa0) {
+		// UTF-8 never starts with a C1 byte. So we can be sure of these
+		key->type           = TERMKEY_TYPE_UNICODE;
+		key->code.codepoint = codepoint - 0x40;
+		key->modifiers      = TERMKEY_KEYMOD_CTRL|TERMKEY_KEYMOD_ALT;
+	} else {
+		// UTF-8 codepoint
+		key->type           = TERMKEY_TYPE_UNICODE;
+		key->code.codepoint = codepoint;
+		key->modifiers      = 0;
+	}
+
+	termkey_canonicalise(tk, key);
+
+	if (key->type == TERMKEY_TYPE_UNICODE)
+		termkey_fill_utf8(key);
+}
+
+static TermKeyResult
+termkey_peekkey_mouse(TermKey *tk, TermKeyKey *key, size_t *nbytep)
+{
+	if (tk->buffcount < 3)
+		return TERMKEY_RES_AGAIN;
+	key->type = TERMKEY_TYPE_MOUSE;
+	key->code.mouse[0] = CHARAT(0) - 0x20;
+	key->code.mouse[1] = CHARAT(1) - 0x20;
+	key->code.mouse[2] = CHARAT(2) - 0x20;
+	key->code.mouse[3] = 0;
+
+	key->modifiers     = (key->code.mouse[0] & 0x1c) >> 2;
+	key->code.mouse[0] &= ~0x1c;
+
+	*nbytep = 3;
+	return TERMKEY_RES_KEY;
+}
 
 /////////////////////////
 // NOTE: Terminfo Driver
@@ -398,8 +528,6 @@ typedef struct {
 	char              *start_string;
 	char              *stop_string;
 } TermKeyTI;
-
-#define CHARAT(i) (tk->buffer[tk->buffstart + (i)])
 
 static termkey_trie_node *
 termkey_trie_new_node_arr(unsigned char min, unsigned char max)
@@ -725,7 +853,7 @@ termkey_ti_peekkey(TermKey *tk, void *info, TermKeyKey *key, int force, size_t *
 			tk->buffstart += pos;
 			tk->buffcount -= pos;
 
-			TermKeyResult mouse_result = tk->method.peekkey_mouse(tk, key, nbytep);
+			TermKeyResult mouse_result = termkey_peekkey_mouse(tk, key, nbytep);
 
 			tk->buffstart -= pos;
 			tk->buffcount += pos;
@@ -848,7 +976,7 @@ termkey_handle_csifunc(TermKey *tk, TermKeyKey *key, int cmd, long *arg, int arg
 
 	if (arg[0] == 27) {
 		int mod = key->modifiers;
-		tk->method.emit_codepoint(tk, arg[2], key);
+		termkey_emit_codepoint(tk, arg[2], key);
 		key->modifiers |= mod;
 	} else if (arg[0] >= 0 && arg[0] < (long)countof(termkey_csi_funcs)) {
 		key->type       =   termkey_csi_funcs[arg[0]].type;
@@ -891,7 +1019,7 @@ termkey_handle_csi_u(TermKey *tk, TermKeyKey *key, int cmd, long *arg, int args)
 
 		int mod = key->modifiers;
 		key->type = TERMKEY_TYPE_KEYSYM;
-		tk->method.emit_codepoint(tk, arg[0], key);
+		termkey_emit_codepoint(tk, arg[0], key);
 		key->modifiers |= mod;
 
 		result =TERMKEY_RES_KEY;
@@ -1231,7 +1359,7 @@ termkey_peekkey_csi(TermKey *tk, TermKeyCSI *csi, size_t introlen, TermKeyKey *k
 		if(!force)
 			return TERMKEY_RES_AGAIN;
 
-		tk->method.emit_codepoint(tk, '[', key);
+		termkey_emit_codepoint(tk, '[', key);
 		key->modifiers |= TERMKEY_KEYMOD_ALT;
 		*nbytep = introlen;
 		return TERMKEY_RES_KEY;
@@ -1241,7 +1369,7 @@ termkey_peekkey_csi(TermKey *tk, TermKeyCSI *csi, size_t introlen, TermKeyKey *k
 		tk->buffstart += csi_len;
 		tk->buffcount -= csi_len;
 
-		result = tk->method.peekkey_mouse(tk, key, nbytep);
+		result = termkey_peekkey_mouse(tk, key, nbytep);
 
 		tk->buffstart -= csi_len;
 		tk->buffcount += csi_len;
@@ -1279,7 +1407,7 @@ termkey_peekkey_ss3(TermKey *tk, TermKeyCSI *csi, size_t introlen, TermKeyKey *k
 		if (!force)
 			return TERMKEY_RES_AGAIN;
 
-		tk->method.emit_codepoint(tk, 'O', key);
+		termkey_emit_codepoint(tk, 'O', key);
 		key->modifiers |= TERMKEY_KEYMOD_ALT;
 		*nbytep = tk->buffcount;
 		return TERMKEY_RES_KEY;
@@ -1410,11 +1538,6 @@ static TermKeyDriver *termkey_drivers[] = {
 	&termkey_driver_ti,
 	&termkey_driver_csi,
 };
-
-// Forwards for the "protected" methods
-static void          termkey_emit_codepoint(TermKey *tk, long codepoint, TermKeyKey *key);
-static TermKeyResult termkey_peekkey_simple(TermKey *tk, TermKeyKey *key, int force, size_t *nbytes);
-static TermKeyResult termkey_peekkey_mouse(TermKey *tk, TermKeyKey *key, size_t *nbytes);
 
 static struct {
 	TermKeySym  sym;
@@ -1555,14 +1678,9 @@ termkey_alloc(void)
 		return 0;
 
 	/* Default all the object fields but don't allocate anything */
-
 	result->fd        = -1;
 	result->buffsize  = 256; /* bytes */
 	result->nkeynames = 64;
-
-	result->method.emit_codepoint = termkey_emit_codepoint;
-	result->method.peekkey_simple = termkey_peekkey_simple;
-	result->method.peekkey_mouse  = termkey_peekkey_mouse;
 
 	return result;
 }
@@ -1843,43 +1961,6 @@ termkey_eat_bytes(TermKey *tk, size_t count)
 	tk->buffcount -= count;
 }
 
-static inline
-unsigned int termkey_utf8_seqlen(long codepoint)
-{
-	if(codepoint < 0x0000080) return 1;
-	if(codepoint < 0x0000800) return 2;
-	if(codepoint < 0x0010000) return 3;
-	if(codepoint < 0x0200000) return 4;
-	if(codepoint < 0x4000000) return 5;
-	return 6;
-}
-
-static void
-termkey_fill_utf8(TermKeyKey *key)
-{
-	long codepoint = key->code.codepoint;
-	int nbytes = termkey_utf8_seqlen(codepoint);
-
-	key->utf8[nbytes] = 0;
-
-	// This is easier done backwards
-	int b = nbytes;
-	while(b > 1) {
-		b--;
-		key->utf8[b] = 0x80 | (codepoint & 0x3f);
-		codepoint >>= 6;
-	}
-
-	switch (nbytes) {
-	case 1: key->utf8[0] =        (codepoint & 0x7f); break;
-	case 2: key->utf8[0] = 0xc0 | (codepoint & 0x1f); break;
-	case 3: key->utf8[0] = 0xe0 | (codepoint & 0x0f); break;
-	case 4: key->utf8[0] = 0xf0 | (codepoint & 0x07); break;
-	case 5: key->utf8[0] = 0xf8 | (codepoint & 0x03); break;
-	case 6: key->utf8[0] = 0xfc | (codepoint & 0x01); break;
-	}
-}
-
 #define UTF8_INVALID 0xFFFD
 static TermKeyResult
 termkey_parse_utf8(const unsigned char *bytes, size_t len, long *cp, size_t *nbytep)
@@ -1947,86 +2028,87 @@ termkey_parse_utf8(const unsigned char *bytes, size_t len, long *cp, size_t *nby
 	return TERMKEY_RES_KEY;
 }
 
-TERMKEY_EXPORT void
-termkey_canonicalise(TermKey *tk, TermKeyKey *key)
+// TODO(rnp): cleanup: dumb indirect recursion
+static TermKeyResult termkey_peekkey(TermKey *, TermKeyKey *, int, size_t *);
+
+static TermKeyResult
+termkey_peekkey_simple(TermKey *tk, TermKeyKey *key, int force, size_t *nbytep)
 {
-	int flags = tk->canonflags;
+	if (tk->buffcount == 0)
+		return tk->is_closed ? TERMKEY_RES_EOF : TERMKEY_RES_NONE;
 
-	if (flags & TERMKEY_CANON_SPACESYMBOL) {
-		if (key->type == TERMKEY_TYPE_UNICODE && key->code.codepoint == 0x20) {
-			key->type     = TERMKEY_TYPE_KEYSYM;
-			key->code.sym = TERMKEY_SYM_SPACE;
-		}
-	} else {
-		if (key->type == TERMKEY_TYPE_KEYSYM && key->code.sym == TERMKEY_SYM_SPACE) {
-			key->type           = TERMKEY_TYPE_UNICODE;
-			key->code.codepoint = 0x20;
-			termkey_fill_utf8(key);
-		}
-	}
+	unsigned char b0 = CHARAT(0);
 
-	if (flags & TERMKEY_CANON_DELBS)
-		if (key->type == TERMKEY_TYPE_KEYSYM && key->code.sym == TERMKEY_SYM_DEL)
-			key->code.sym = TERMKEY_SYM_BACKSPACE;
-}
+	if (b0 == 0x1b) {
+		// Escape-prefixed value? Might therefore be Alt+key
+		if (tk->buffcount == 1) {
+			// This might be an <Esc> press, or it may want to be part of a longer sequence
+			if (!force)
+				return TERMKEY_RES_AGAIN;
 
-static void
-termkey_emit_codepoint(TermKey *tk, long codepoint, TermKeyKey *key)
-{
-	if (codepoint == 0) {
-		// ASCII NUL = Ctrl-Space
-		key->type      = TERMKEY_TYPE_KEYSYM;
-		key->code.sym  = TERMKEY_SYM_SPACE;
-		key->modifiers = TERMKEY_KEYMOD_CTRL;
-	} else if(codepoint < 0x20) {
-		// C0 range
-		key->code.codepoint = 0;
-		key->modifiers      = 0;
-		if (!(tk->flags & TERMKEY_FLAG_NOINTERPRET) && tk->c0[codepoint].sym != TERMKEY_SYM_UNKNOWN) {
-			key->code.sym   = tk->c0[codepoint].sym;
-			key->modifiers |= tk->c0[codepoint].modifier_set;
+			termkey_emit_codepoint(tk, b0, key);
+			*nbytep = 1;
+			return TERMKEY_RES_KEY;
 		}
-		if (!key->code.sym) {
-			key->type = TERMKEY_TYPE_UNICODE;
-			/* Generically modified Unicode ought not report the SHIFT state, or else
-			 * we get into complications trying to report Shift-; vs : and so on...
-			 * In order to be able to represent Ctrl-Shift-A as CTRL modified
-			 * unicode A, we need to call Ctrl-A simply 'a', lowercase */
-			if (codepoint+0x40 >= 'A' && codepoint+0x40 <= 'Z')
-				// it's a letter - use lowercase instead
-				key->code.codepoint = codepoint + 0x60;
-			else
-				key->code.codepoint = codepoint + 0x40;
-			key->modifiers = TERMKEY_KEYMOD_CTRL;
-		} else {
-			key->type = TERMKEY_TYPE_KEYSYM;
+
+		// Try another key there
+		tk->buffstart++;
+		tk->buffcount--;
+
+		// Run the full driver
+		TermKeyResult metakey_result = termkey_peekkey(tk, key, force, nbytep);
+		tk->buffstart--;
+		tk->buffcount++;
+
+		switch(metakey_result) {
+		case TERMKEY_RES_KEY:{
+			key->modifiers |= TERMKEY_KEYMOD_ALT;
+			(*nbytep)++;
+		}break;
+
+		case TERMKEY_RES_NONE:
+		case TERMKEY_RES_EOF:
+		case TERMKEY_RES_AGAIN:
+		case TERMKEY_RES_ERROR:
+		{}break;
 		}
-	} else if(codepoint == 0x7f && !(tk->flags & TERMKEY_FLAG_NOINTERPRET)) {
-		// ASCII DEL
-		key->type      = TERMKEY_TYPE_KEYSYM;
-		key->code.sym  = TERMKEY_SYM_DEL;
+
+		return metakey_result;
+	} else if(b0 < 0xa0) {
+		// Single byte C0, G0 or C1 - C1 is never UTF-8 initial byte
+		termkey_emit_codepoint(tk, b0, key);
+		*nbytep = 1;
+		return TERMKEY_RES_KEY;
+	} else if(tk->flags & TERMKEY_FLAG_UTF8) {
+		// Some UTF-8
+		long codepoint;
+		TermKeyResult res = termkey_parse_utf8(tk->buffer + tk->buffstart, tk->buffcount, &codepoint, nbytep);
+		if (res == TERMKEY_RES_AGAIN && force) {
+			/* There weren't enough bytes for a complete UTF-8 sequence but caller
+			 * demands an answer. About the best thing we can do here is eat as many
+			 * bytes as we have, and emit a UTF8_INVALID. If the remaining bytes
+			 * arrive later, they'll be invalid too. */
+			codepoint = UTF8_INVALID;
+			*nbytep   = tk->buffcount;
+			res       = TERMKEY_RES_KEY;
+		}
+
+		key->type = TERMKEY_TYPE_UNICODE;
 		key->modifiers = 0;
-	} else if(codepoint >= 0x20 && codepoint < 0x80) {
-		// ASCII lowbyte range
-		key->type           = TERMKEY_TYPE_UNICODE;
-		key->code.codepoint = codepoint;
-		key->modifiers      = 0;
-	} else if(codepoint >= 0x80 && codepoint < 0xa0) {
-		// UTF-8 never starts with a C1 byte. So we can be sure of these
-		key->type           = TERMKEY_TYPE_UNICODE;
-		key->code.codepoint = codepoint - 0x40;
-		key->modifiers      = TERMKEY_KEYMOD_CTRL|TERMKEY_KEYMOD_ALT;
-	} else {
-		// UTF-8 codepoint
-		key->type           = TERMKEY_TYPE_UNICODE;
-		key->code.codepoint = codepoint;
-		key->modifiers      = 0;
+		termkey_emit_codepoint(tk, codepoint, key);
+		return res;
 	}
 
-	termkey_canonicalise(tk, key);
+	// Non UTF-8 case - just report the raw byte
+	key->type           = TERMKEY_TYPE_UNICODE;
+	key->code.codepoint = b0;
+	key->modifiers      = 0;
 
-	if (key->type == TERMKEY_TYPE_UNICODE)
-		termkey_fill_utf8(key);
+	key->utf8[0] = key->code.codepoint;
+	key->utf8[1] = 0;
+	*nbytep = 1;
+
+	return TERMKEY_RES_KEY;
 }
 
 static TermKeyResult
@@ -2077,104 +2159,6 @@ termkey_peekkey(TermKey *tk, TermKeyKey *key, int force, size_t *nbytep)
 	if (again) return TERMKEY_RES_AGAIN;
 
 	return termkey_peekkey_simple(tk, key, force, nbytep);
-}
-
-static TermKeyResult
-termkey_peekkey_simple(TermKey *tk, TermKeyKey *key, int force, size_t *nbytep)
-{
-	if (tk->buffcount == 0)
-		return tk->is_closed ? TERMKEY_RES_EOF : TERMKEY_RES_NONE;
-
-	unsigned char b0 = CHARAT(0);
-
-	if (b0 == 0x1b) {
-		// Escape-prefixed value? Might therefore be Alt+key
-		if(tk->buffcount == 1) {
-			// This might be an <Esc> press, or it may want to be part of a longer sequence
-			if (!force)
-				return TERMKEY_RES_AGAIN;
-
-			tk->method.emit_codepoint(tk, b0, key);
-			*nbytep = 1;
-			return TERMKEY_RES_KEY;
-		}
-
-		// Try another key there
-		tk->buffstart++;
-		tk->buffcount--;
-
-		// Run the full driver
-		TermKeyResult metakey_result = termkey_peekkey(tk, key, force, nbytep);
-		tk->buffstart--;
-		tk->buffcount++;
-
-		switch(metakey_result) {
-		case TERMKEY_RES_KEY:{
-			key->modifiers |= TERMKEY_KEYMOD_ALT;
-			(*nbytep)++;
-		}break;
-
-		case TERMKEY_RES_NONE:
-		case TERMKEY_RES_EOF:
-		case TERMKEY_RES_AGAIN:
-		case TERMKEY_RES_ERROR:
-		{}break;
-		}
-
-		return metakey_result;
-	} else if(b0 < 0xa0) {
-		// Single byte C0, G0 or C1 - C1 is never UTF-8 initial byte
-		tk->method.emit_codepoint(tk, b0, key);
-		*nbytep = 1;
-		return TERMKEY_RES_KEY;
-	} else if(tk->flags & TERMKEY_FLAG_UTF8) {
-		// Some UTF-8
-		long codepoint;
-		TermKeyResult res = termkey_parse_utf8(tk->buffer + tk->buffstart, tk->buffcount, &codepoint, nbytep);
-		if (res == TERMKEY_RES_AGAIN && force) {
-			/* There weren't enough bytes for a complete UTF-8 sequence but caller
-			 * demands an answer. About the best thing we can do here is eat as many
-			 * bytes as we have, and emit a UTF8_INVALID. If the remaining bytes
-			 * arrive later, they'll be invalid too. */
-			codepoint = UTF8_INVALID;
-			*nbytep   = tk->buffcount;
-			res       = TERMKEY_RES_KEY;
-		}
-
-		key->type = TERMKEY_TYPE_UNICODE;
-		key->modifiers = 0;
-		tk->method.emit_codepoint(tk, codepoint, key);
-		return res;
-	}
-
-	// Non UTF-8 case - just report the raw byte
-	key->type           = TERMKEY_TYPE_UNICODE;
-	key->code.codepoint = b0;
-	key->modifiers      = 0;
-
-	key->utf8[0] = key->code.codepoint;
-	key->utf8[1] = 0;
-	*nbytep = 1;
-
-	return TERMKEY_RES_KEY;
-}
-
-static TermKeyResult
-termkey_peekkey_mouse(TermKey *tk, TermKeyKey *key, size_t *nbytep)
-{
-	if (tk->buffcount < 3)
-		return TERMKEY_RES_AGAIN;
-	key->type = TERMKEY_TYPE_MOUSE;
-	key->code.mouse[0] = CHARAT(0) - 0x20;
-	key->code.mouse[1] = CHARAT(1) - 0x20;
-	key->code.mouse[2] = CHARAT(2) - 0x20;
-	key->code.mouse[3] = 0;
-
-	key->modifiers     = (key->code.mouse[0] & 0x1c) >> 2;
-	key->code.mouse[0] &= ~0x1c;
-
-	*nbytep = 3;
-	return TERMKEY_RES_KEY;
 }
 
 TERMKEY_EXPORT TermKeyResult
