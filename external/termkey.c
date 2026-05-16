@@ -229,9 +229,6 @@ struct TermKeyDriverNode {
 	TermKeyDriverNode *next;
 };
 
-/* Mostly-undocumented hooks for doing evil evil things */
-typedef const char *TermKey_Terminfo_Getstr_Hook(const char *name, const char *value, void *data);
-
 struct TermKey {
 	int    fd;
 	int    flags;
@@ -247,9 +244,6 @@ struct TermKey {
 	struct termios restore_termios;
 	char restore_termios_valid;
 	#endif
-
-	TermKey_Terminfo_Getstr_Hook *ti_getstr_hook;
-	void *ti_getstr_hook_data;
 
 	char   is_closed;
 	char   is_started;
@@ -534,9 +528,6 @@ termkey_try_load_terminfo_key(TermKeyTI *ti, const char *name, TermKeyKeyInfo in
 	if (ti->unibi)
 		value = termkey_unibi_get_str_by_name(ti->unibi, name);
 
-	if (ti->tk->ti_getstr_hook)
-		value = ti->tk->ti_getstr_hook(name, value, ti->tk->ti_getstr_hook_data);
-
 	if (value && (value != (char *)-1) && value[0]) {
 		termkey_trie_node *node = termkey_trie_new_node_key(info.type, info.sym,
 		                                                    info.modifier_mask, info.modifier_set);
@@ -618,15 +609,10 @@ termkey_ti_new_driver(TermKey *tk, const char *term)
 	if (result) {
 		result->tk    = tk;
 		result->unibi = unibi_from_term(term);
-		int saved_errno = errno;
-		if (!result->unibi && saved_errno != ENOENT) {
+		if (!result->unibi) {
 			free(result);
 			result = 0;
 		}
-		/* ti->unibi may be NULL if errno == ENOENT. That means the terminal wasn't
-		 * known. Lets keep going because if we get getstr hook that might invent
-		 * new strings for us
-		 */
 	}
 	return result;
 }
