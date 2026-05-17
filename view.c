@@ -462,8 +462,10 @@ void view_draw(View *view) {
 		}
 
 		if (cell.width == 0) {
-			strncat(prev_cell.data, cell.data, sizeof(prev_cell.data)-strlen(prev_cell.data)-1);
-			prev_cell.len += cell.len;
+			unsigned current   = strlen(prev_cell.data);
+			unsigned remaining = sizeof(prev_cell.data) - current - 1;
+			memcpy(prev_cell.data + current, cell.data, MIN(remaining, cell.len));
+			prev_cell.len += MIN(remaining, cell.len);
 		} else {
 			if (prev_cell.len && !view_addch(view, &prev_cell))
 				break;

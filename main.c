@@ -1088,7 +1088,7 @@ static KEY_ACTION_FN(ka_insert_verbatim)
 		const char *next = vis_keys_next(vis, keys);
 		if (!next)
 			return NULL;
-		if ((rune = vis_keys_codepoint(vis, keys)) != -1) {
+		if ((rune = vis_keys_codepoint(vis, keys)) != (uint32_t)-1) {
 			len = utf8_encode(buf, rune);
 			if (buf[0] == '\n')
 				buf[0] = '\r';

@@ -217,7 +217,7 @@ vis_option_from_string(Vis *vis, str8 string)
 	// TODO(rnp): this is pure c brain damage. make map system use strings with length
 	char name[256];
 
-	ptrdiff_t length = MIN(countof(name) - 1, string.length);
+	uint64_t length = MIN(countof(name) - 1, (uint64_t)string.length);
 	memcpy(name, string.data, length);
 	name[length] = 0;
 

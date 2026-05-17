@@ -146,12 +146,20 @@ absolute_path(const char *name)
 
 	char *result = 0;
 	if (realpath(path_normalized, path_resolved) == path_resolved) {
-		if (strcmp(path_resolved, "/") == 0)
-			path_resolved[0] = 0;
+		str8 resolved = str8_from_c_str(path_resolved);
+		if (str8_equal(resolved, str8("/"))) {
+			resolved.data[0] = 0;
+			resolved.length  = 0;
+		}
 
-		snprintf(path_normalized, sizeof(path_normalized), "%s/%.*s",
-		         path_resolved, (int)base.length, base.data);
-		result = strdup(path_normalized);
+		int64_t total_length = base.length + resolved.length + 1;
+		result = malloc(total_length + 1);
+		if (result) {
+			memcpy(result, resolved.data, resolved.length);
+			memcpy(result + resolved.length + 1, base.data, base.length);
+			result[resolved.length] = '/';
+			result[total_length]    = 0;
+		}
 	}
 	return result;
 }

@@ -3222,11 +3222,11 @@ static void vis_lua_init(Vis *vis)
 	const char *xdg_config = getenv("XDG_CONFIG_HOME");
 	if (xdg_config) {
 		path.length = snprintf(path_buffer, sizeof(path_buffer), "%s/vis", xdg_config);
-		path.length = MIN(path.length, sizeof(path_buffer));
+		path.length = MIN(path.length, (int)sizeof(path_buffer));
 		vis_lua_path_add(L, path);
 	} else if (home && *home) {
 		path.length = snprintf(path_buffer, sizeof(path_buffer), "%s/.config/vis", home);
-		path.length = MIN(path.length, sizeof(path_buffer));
+		path.length = MIN(path.length, (int)sizeof(path_buffer));
 		vis_lua_path_add(L, path);
 	}
 
@@ -3235,7 +3235,7 @@ static void vis_lua_init(Vis *vis)
 		str8 dir, tail = str8("/lua");
 		path_split((str8){.length = len, .data = path.data}, &dir, 0);
 		path.length = dir.length + tail.length;
-		if (path.length <= sizeof(path_buffer)) {
+		if (path.length <= (int)sizeof(path_buffer)) {
 			memcpy(path.data + dir.length, tail.data, tail.length);
 			vis_lua_path_add(L, path);
 		}

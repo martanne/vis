@@ -267,7 +267,7 @@ bool sam_init(Vis *vis) {
 
 	if (!(vis->options = map_new()))
 		return false;
-	for (int i = 0; i < countof(vis_options_table); i++) {
+	for (unsigned i = 0; i < countof(vis_options_table); i++) {
 		for (const char *const *name = vis_options_table[i].names; *name; name++)
 			ret &= map_put(vis->options, *name, vis_options_table + i);
 	}

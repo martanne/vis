@@ -996,7 +996,7 @@ long vis_keys_codepoint(Vis *vis, const char *keys) {
 bool vis_keys_utf8(Vis *vis, const char *keys, char utf8[4+1])
 {
 	uint32_t cp = vis_keys_codepoint(vis, keys);
-	bool result = cp != -1;
+	bool result = cp != (uint32_t)-1;
 	if (result) {
 		size_t len = utf8_encode((unsigned char *)utf8, cp);
 		utf8[len] = 0;
