@@ -577,34 +577,6 @@ enum unibi_string {
 
 #define NCONTAINERS(n, csize) (((n) - 1) / (csize) + 1u)
 
-#define DYNARR(W, X) DynArr_ ## W ## _ ## X
-#define DYNARR_T(W) DYNARR(W, t)
-#define DEFDYNARRAY(T, W) \
-    typedef struct { T (*data); size_t used, size; } DYNARR_T(W); \
-    static void DYNARR(W, init)(DYNARR_T(W) *const d) { \
-        d->data = 0; \
-        d->used = d->size = 0; \
-    } \
-    static int DYNARR(W, ensure_slots)(DYNARR_T(W) *const d, const size_t n) { \
-        size_t k = d->size; \
-        while (d->used + n > k) { \
-            k = k * 3 / 2 + 5; \
-        } \
-        if (k > d->size) { \
-            T (*const p) = realloc(d->data, k * sizeof *p); \
-            if (!p) { \
-                return 0; \
-            } \
-            d->data = p; \
-            d->size = k; \
-        } \
-        return 1; \
-    }
-
-DEFDYNARRAY(uint8_t,      boolDA)
-DEFDYNARRAY(int,          numDA)
-DEFDYNARRAY(const char *, strDA)
-
 enum {
 	MAGIC_16BIT = 00432,
 	MAGIC_32BIT = 01036
@@ -618,12 +590,6 @@ typedef struct {
 	int nums[unibi_numeric_end_ - unibi_numeric_begin_ - 1];
 	const char *strs[unibi_string_end_ - unibi_string_begin_ - 1];
 	char *alloc;
-
-	DYNARR_T(boolDA) ext_bools;
-	DYNARR_T(numDA)  ext_nums;
-	DYNARR_T(strDA)  ext_strs;
-	DYNARR_T(strDA)  ext_names;
-	char *ext_alloc;
 } unibi_term;
 
 static const char *unibi_names_str[][2] = {
@@ -1097,11 +1063,6 @@ unibi_read_s32(const char *p)
 UNIBI_EXPORT void
 unibi_destroy(unibi_term *t)
 {
-	free(t->ext_bools.data);
-	free(t->ext_nums.data);
-	free(t->ext_strs.data);
-	free(t->ext_names.data);
-	free(t->ext_alloc);
 	free(t->alloc);
 	free(t);
 }
@@ -1150,7 +1111,7 @@ unibi_from_mem(const char *p, size_t n)
 	char *strp = result->alloc + namco * sizeof(*result->aliases);
 	char *namp = strp + tablsz;
 	memcpy(namp, p, namlen);
-	namp[namlen] = '\0';
+	namp[namlen] = 0;
 	p += namlen;
 	n -= namlen;
 
@@ -1166,12 +1127,6 @@ unibi_from_mem(const char *p, size_t n)
 		result->aliases[k] = 0;
 		result->name = a;
 	}
-
-	DYNARR(boolDA, init)(&result->ext_bools);
-	DYNARR(numDA,  init)(&result->ext_nums);
-	DYNARR(strDA,  init)(&result->ext_strs);
-	DYNARR(strDA,  init)(&result->ext_names);
-	result->ext_alloc = 0;
 
 	DEL_FAIL_IF(n < boollen, EFAULT, result);
 
@@ -1224,114 +1179,6 @@ unibi_from_mem(const char *p, size_t n)
 		memcpy(strp, p, tablsz);
 		strp[tablsz - 1] = 0;
 	}
-	p += tablsz;
-	n -= tablsz;
-
-	if (tablsz % 2 && n > 0) {
-		p += 1;
-		n -= 1;
-	}
-
-	if (n >= 10) {
-		uint16_t extboollen = unibi_read_u16(p + 0);
-		uint16_t extnumlen  = unibi_read_u16(p + 2);
-		uint16_t extstrslen = unibi_read_u16(p + 4);
-		uint16_t extofflen  = unibi_read_u16(p + 6);
-		uint16_t exttablsz  = unibi_read_u16(p + 8);
-
-		if (extboollen <= S16_MAX &&
-		    extnumlen  <= S16_MAX &&
-		    extstrslen <= S16_MAX &&
-		    extofflen  <= S16_MAX &&
-		    exttablsz  <= S16_MAX)
-		{
-			p += 10;
-			n -= 10;
-
-			size_t extalllen = extboollen + extnumlen + extstrslen;
-			DEL_FAIL_IF(n <
-			            extboollen + extboollen % 2 +
-			            extnumlen * numsize +
-			            extstrslen * 2 +
-			            extalllen * 2 +
-			            exttablsz,
-			            EFAULT, result);
-
-			DEL_FAIL_IF(!DYNARR(boolDA, ensure_slots)(&result->ext_bools, extboollen) ||
-			            !DYNARR(numDA,  ensure_slots)(&result->ext_nums,  extnumlen)  ||
-			            !DYNARR(strDA,  ensure_slots)(&result->ext_strs,  extstrslen) ||
-			            !DYNARR(strDA,  ensure_slots)(&result->ext_names, extalllen)  ||
-			            (exttablsz && !(result->ext_alloc = calloc(1, exttablsz))),
-			            ENOMEM, result);
-
-			for (size_t i = 0; i < extboollen; i++)
-				result->ext_bools.data[i] = !!p[i];
-			result->ext_bools.used = extboollen;
-			p += (extboollen + extboollen % 2);
-			n -= (extboollen + extboollen % 2);
-
-			for (size_t i = 0; i < extnumlen; i++) {
-				if (numsize == 2) {
-					result->ext_nums.data[i] = unibi_read_s16(p + i * 2);
-				} else {
-					result->ext_nums.data[i] = unibi_read_s32(p + i * 4);
-				}
-			}
-
-			result->ext_nums.used = extnumlen;
-			p += extnumlen * numsize;
-			n -= extnumlen * numsize;
-
-			{
-				const char *const tbl1 = p + extstrslen * 2 + extalllen * 2;
-				int64_t s_max = 0, s_sum = 0;
-
-				for (size_t i = 0; i < extstrslen; i++) {
-					const int16_t v = unibi_read_s16(p + i * 2);
-					if (v < 0 || (unsigned short)v >= exttablsz) {
-						result->ext_strs.data[i] = 0;
-					} else {
-						const char *start = tbl1 + v;
-						const char *end = memchr(start, 0, exttablsz - v);
-						if (end) {
-							end++;
-						} else {
-							end = tbl1 + exttablsz;
-						}
-						s_sum += end - start;
-						s_max = MAX(s_max, end - tbl1);
-						result->ext_strs.data[i] = result->ext_alloc + v;
-					}
-				}
-				result->ext_strs.used = extstrslen;
-				p += extstrslen * 2;
-				n -= extstrslen * 2;
-
-				DEL_FAIL_IF(s_max != s_sum, EINVAL, result);
-
-				char   *ext_alloc2 = result->ext_alloc + s_sum;
-				size_t  tblsz2     = exttablsz - s_sum;
-
-				for (size_t i = 0; i < extalllen; i++) {
-					const int16_t v = unibi_read_s16(p + i * 2);
-					DEL_FAIL_IF(v < 0 || (unsigned short)v >= tblsz2, EINVAL, result);
-					result->ext_names.data[i] = ext_alloc2 + v;
-				}
-				result->ext_names.used = extalllen;
-				p += extalllen * 2;
-				n -= extalllen * 2;
-
-				assert(p == tbl1);
-
-				if (exttablsz) {
-					memcpy(result->ext_alloc, p, exttablsz);
-					result->ext_alloc[exttablsz - 1] = 0;
-				}
-			}
-		}
-	}
-
-	assert(result->ext_names.used == result->ext_bools.used + result->ext_nums.used + result->ext_strs.used);
 	return result;
 }
 
