@@ -589,7 +589,6 @@ typedef struct {
 	unsigned char bools[NCONTAINERS(unibi_boolean_end_ - unibi_boolean_begin_ - 1, CHAR_BIT)];
 	int nums[unibi_numeric_end_ - unibi_numeric_begin_ - 1];
 	const char *strs[unibi_string_end_ - unibi_string_begin_ - 1];
-	char *alloc;
 } unibi_term;
 
 static const char *unibi_names_str[][2] = {
@@ -1063,7 +1062,6 @@ unibi_read_s32(const char *p)
 UNIBI_EXPORT void
 unibi_destroy(unibi_term *t)
 {
-	free(t->alloc);
 	free(t);
 }
 
@@ -1097,18 +1095,12 @@ unibi_from_mem(const char *p, size_t n)
 		if (p[j] == '|')
 			namco++;
 
-	unibi_term *result = calloc(1, sizeof(unibi_term));
+	unibi_term *result = calloc(1, sizeof(unibi_term) + namco * sizeof(*result->aliases) + tablsz + namlen + 1);
 	if (!result)
 		return 0;
+	result->aliases = (void *)(result + 1);
 
-	result->alloc = calloc(1, namco * sizeof(*result->aliases) + tablsz + namlen + 1);
-	if (!result->alloc) {
-		free(result);
-		return 0;
-	}
-	result->aliases = (void *)result->alloc;
-
-	char *strp = result->alloc + namco * sizeof(*result->aliases);
+	char *strp = (char *)(result + 1) + namco * sizeof(*result->aliases);
 	char *namp = strp + tablsz;
 	memcpy(namp, p, namlen);
 	namp[namlen] = 0;
