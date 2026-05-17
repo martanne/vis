@@ -206,14 +206,37 @@ typedef enum {
 #define TERMKEY_FORMAT_URWID (TermKeyFormat)(TERMKEY_FORMAT_LONGMOD|TERMKEY_FORMAT_ALTISMETA| \
           TERMKEY_FORMAT_LOWERMOD|TERMKEY_FORMAT_SPACEMOD|TERMKEY_FORMAT_LOWERSPACE)
 
+typedef struct termkey_trie_node termkey_trie_node;
 typedef struct {
-	const char      *name;
-	void          *(*new_driver)(TermKey *tk, const char *term);
-	void           (*free_driver)(void *info);
-	int            (*start_driver)(TermKey *tk, void *info);
-	int            (*stop_driver)(TermKey *tk, void *info);
-	TermKeyResult (*peekkey)(TermKey *tk, void *info, TermKeyKey *key, int force, size_t *nbytes);
-} TermKeyDriver;
+	unibi_term        *unibi;  /* only valid until first 'start' call */
+
+	termkey_trie_node *root;
+
+	char              *start_string;
+	char              *stop_string;
+} TermKeyTI;
+
+typedef struct {
+	int64_t  saved_string_id;
+	char    *saved_string;
+} TermKeyCSI;
+
+typedef struct TermKeyDriver TermKeyDriver;
+struct TermKeyDriver {
+	const char    *name;
+	bool          (*init_driver)(TermKey *, TermKeyDriver *, const char *term);
+	void          (*release_driver)(TermKeyDriver *);
+	bool          (*start_driver)(TermKey *, TermKeyDriver *);
+	bool          (*stop_driver)(TermKey *, TermKeyDriver *);
+	TermKeyResult (*peekkey)(TermKey *, TermKeyDriver *, TermKeyKey *, int force, size_t *nbytes);
+
+	union {
+		TermKeyTI  ti;
+		TermKeyCSI csi;
+	} u;
+
+	TermKeyDriver *next;
+};
 
 typedef struct {
 	TermKeyType type;
@@ -221,13 +244,6 @@ typedef struct {
 	int         modifier_mask;
 	int         modifier_set;
 } TermKeyKeyInfo;
-
-typedef struct TermKeyDriverNode TermKeyDriverNode;
-struct TermKeyDriverNode {
-	TermKeyDriver     *driver;
-	void              *info;
-	TermKeyDriverNode *next;
-};
 
 struct TermKey {
 	int    fd;
@@ -254,7 +270,7 @@ struct TermKey {
 	// There are 32 C0 codes
 	TermKeyKeyInfo c0[32];
 
-	TermKeyDriverNode *drivers;
+	TermKeyDriver *drivers;
 };
 
 #define CHARAT(i) (tk->buffer[tk->buffstart + (i)])
@@ -504,9 +520,9 @@ typedef enum {
 	TermKeyTrieNodeKind_Array,
 } TermKeyTreeNodeKind;
 
-typedef struct {
+struct termkey_trie_node {
 	TermKeyTreeNodeKind kind;
-} termkey_trie_node;
+};
 
 typedef struct {
 	TermKeyTreeNodeKind kind;
@@ -518,16 +534,6 @@ typedef struct {
 	unsigned char min, max; /* INCLUSIVE endpoints of the extent range */
 	termkey_trie_node *arr[]; /* dynamic size at allocation time */
 } termkey_trie_node_array;
-
-typedef struct {
-	TermKey           *tk;
-	unibi_term        *unibi;  /* only valid until first 'start' call */
-
-	termkey_trie_node *root;
-
-	char              *start_string;
-	char              *stop_string;
-} TermKeyTI;
 
 static termkey_trie_node *
 termkey_trie_new_node_arr(unsigned char min, unsigned char max)
@@ -730,31 +736,24 @@ termkey_load_terminfo(TermKeyTI *ti)
 	return 1;
 }
 
-static void *
-termkey_ti_new_driver(TermKey *tk, const char *term)
+static bool
+termkey_ti_init_driver(TermKey *tk, TermKeyDriver *driver, const char *term)
 {
-	TermKeyTI *result = calloc(1, sizeof(*result));
-	if (result) {
-		result->tk    = tk;
-		result->unibi = unibi_from_term(term);
-		if (!result->unibi) {
-			free(result);
-			result = 0;
-		}
-	}
+	driver->u.ti.unibi = unibi_from_term(term);
+	bool result = driver->u.ti.unibi != 0;
 	return result;
 }
 
-static int
-termkey_ti_start_driver(TermKey *tk, void *info)
+static bool
+termkey_ti_start_driver(TermKey *tk, TermKeyDriver *driver)
 {
-	TermKeyTI *ti = info;
+	TermKeyTI *ti = &driver->u.ti;
 	if (!ti->root)
 		termkey_load_terminfo(ti);
 
 	char *start_string = ti->start_string;
 	if (tk->fd == -1 || !start_string)
-		return 1;
+		return true;
 
 	/* The terminfo database will contain keys in application cursor key mode.
 	 * We may need to enable that mode
@@ -763,11 +762,11 @@ termkey_ti_start_driver(TermKey *tk, void *info)
 	/* There's no point trying to write() to a pipe */
 	struct stat statbuf;
 	if (fstat(tk->fd, &statbuf) == -1)
-		return 0;
+		return false;
 
 	#ifndef _WIN32
 	if (S_ISFIFO(statbuf.st_mode))
-		return 1;
+		return true;
 	#endif
 
 	// Can't call putp or tputs because they suck and don't give us fd control
@@ -775,30 +774,30 @@ termkey_ti_start_driver(TermKey *tk, void *info)
 	while (len) {
 		int64_t written = write(tk->fd, start_string, len);
 		if (written == -1)
-			return 0;
+			return false;
 		start_string += written;
 		len          -= written;
 	}
-	return 1;
+	return true;
 }
 
-static int
-termkey_ti_stop_driver(TermKey *tk, void *info)
+static bool
+termkey_ti_stop_driver(TermKey *tk, TermKeyDriver *driver)
 {
-	TermKeyTI *ti = info;
+	TermKeyTI *ti = &driver->u.ti;
 
 	char *stop_string = ti->stop_string;
 	if (tk->fd == -1 || !stop_string)
-		return 1;
+		return true;
 
 	/* There's no point trying to write() to a pipe */
 	struct stat statbuf;
 	if (fstat(tk->fd, &statbuf) == -1)
-		return 0;
+		return false;
 
 	#ifndef _WIN32
 	if (S_ISFIFO(statbuf.st_mode))
-		return 1;
+		return true;
 	#endif
 
 	/* The terminfo database will contain keys in application cursor key mode.
@@ -810,29 +809,29 @@ termkey_ti_stop_driver(TermKey *tk, void *info)
 	while(len) {
 		int64_t written = write(tk->fd, stop_string, len);
 		if (written == -1)
-			return 0;
+			return false;
 		stop_string += written;
 		len -= written;
 	}
-	return 1;
+	return true;
 }
 
 static void
-termkey_ti_free_driver(void *info)
+termkey_ti_release_driver(TermKeyDriver *driver)
 {
-	TermKeyTI *ti = info;
+	TermKeyTI *ti = &driver->u.ti;
 	if (ti->root) termkey_trie_free(ti->root);
 	free(ti->start_string);
 	free(ti->stop_string);
 	if (ti->unibi)
 		unibi_destroy(ti->unibi);
-	free(ti);
+	memset(&driver->u, 0, sizeof(driver->u));
 }
 
 static TermKeyResult
-termkey_ti_peekkey(TermKey *tk, void *info, TermKeyKey *key, int force, size_t *nbytep)
+termkey_ti_peekkey(TermKey *tk, TermKeyDriver *driver, TermKeyKey *key, int force, size_t *nbytep)
 {
-	TermKeyTI *ti = info;
+	TermKeyTI *ti = &driver->u.ti;
 
 	if (tk->buffcount == 0)
 		return tk->is_closed ? TERMKEY_RES_EOF : TERMKEY_RES_NONE;
@@ -890,12 +889,6 @@ static TermKeyCSIHandler *termkey_csi_handlers[64];
 
 /* This value must be increased if more CSI function keys are added */
 static TermKeyKeyInfo termkey_csi_funcs[35];
-
-typedef struct {
-	TermKey *tk;
-	int saved_string_id;
-	char *saved_string;
-} TermKeyCSI;
 
 /*
  * Handler for CSI/SS3 cmd keys
@@ -1318,23 +1311,19 @@ termkey_register_keys(void)
 	termkey_csi_keyinfo_initialised = 1;
 }
 
-static void *
-termkey_csi_new_driver(TermKey *tk, const char *term)
+static bool
+termkey_csi_init_driver(TermKey *tk, TermKeyDriver *driver, const char *term)
 {
 	if (!termkey_csi_keyinfo_initialised)
 		termkey_register_keys();
-
-	TermKeyCSI *result = calloc(1, sizeof(*result));
-	if (result) result->tk = tk;
-	return result;
+	return true;
 }
 
 static void
-termkey_csi_free_driver(void *info)
+termkey_csi_release_driver(TermKeyDriver *driver)
 {
-	TermKeyCSI *csi = info;
-	free(csi->saved_string);
-	free(csi);
+	free(driver->u.csi.saved_string);
+	memset(&driver->u, 0, sizeof(driver->u));
 }
 
 static TermKeyResult
@@ -1468,12 +1457,12 @@ termkey_peekkey_ctrlstring(TermKey *tk, TermKeyCSI *csi, size_t introlen, TermKe
 }
 
 static TermKeyResult
-termkey_csi_peekkey(TermKey *tk, void *info, TermKeyKey *key, int force, size_t *nbytep)
+termkey_csi_peekkey(TermKey *tk, TermKeyDriver *driver, TermKeyKey *key, int force, size_t *nbytep)
 {
 	if (tk->buffcount == 0)
 		return tk->is_closed ? TERMKEY_RES_EOF : TERMKEY_RES_NONE;
 
-	TermKeyCSI *csi = info;
+	TermKeyCSI *csi = &driver->u.csi;
 
 	TermKeyResult result = TERMKEY_RES_NONE;
 	switch (CHARAT(0)) {
@@ -1520,18 +1509,18 @@ termkey_csi_peekkey(TermKey *tk, void *info, TermKeyKey *key, int force, size_t 
 
 static TermKeyDriver termkey_drivers[] = {
 	{
-		.name         = "terminfo",
-		.new_driver   = termkey_ti_new_driver,
-		.free_driver  = termkey_ti_free_driver,
-		.start_driver = termkey_ti_start_driver,
-		.stop_driver  = termkey_ti_stop_driver,
-		.peekkey      = termkey_ti_peekkey,
+		.name           = "terminfo",
+		.init_driver    = termkey_ti_init_driver,
+		.release_driver = termkey_ti_release_driver,
+		.start_driver   = termkey_ti_start_driver,
+		.stop_driver    = termkey_ti_stop_driver,
+		.peekkey        = termkey_ti_peekkey,
 	},
 	{
-		.name         = "CSI",
-		.new_driver   = termkey_csi_new_driver,
-		.free_driver  = termkey_csi_free_driver,
-		.peekkey      = termkey_csi_peekkey,
+		.name           = "CSI",
+		.init_driver    = termkey_csi_init_driver,
+		.release_driver = termkey_csi_release_driver,
+		.peekkey        = termkey_csi_peekkey,
 	},
 };
 
@@ -1742,23 +1731,14 @@ termkey_init(TermKey *tk, const char *term)
 	termkey_register_c0(tk, TERMKEY_SYM_ENTER,  0x0d, 0);
 	termkey_register_c0(tk, TERMKEY_SYM_ESCAPE, 0x1b, 0);
 
-	TermKeyDriverNode *tail = 0;
+	TermKeyDriver *tail = 0;
 	for (int i = 0; i < (int)countof(termkey_drivers); i++) {
-		void *info = termkey_drivers[i].new_driver(tk, term);
-		if (!info)
+		if (!termkey_drivers[i].init_driver(tk, termkey_drivers + i, term))
 			continue;
 
-		TermKeyDriverNode *thisdrv = calloc(1, sizeof(*thisdrv));
-		if (!thisdrv)
-			goto abort_free_drivers;
-
-		thisdrv->driver = termkey_drivers + i;
-		thisdrv->info   = info;
-
-		if (!tail) tk->drivers = thisdrv;
-		else       tail->next  = thisdrv;
-
-		tail = thisdrv;
+		if (!tail) tk->drivers = termkey_drivers + i;
+		else       tail->next  = termkey_drivers + i;
+		tail = termkey_drivers + i;
 	}
 
 	if (!tk->drivers) {
@@ -1767,14 +1747,6 @@ termkey_init(TermKey *tk, const char *term)
 	}
 
 	return 1;
-
-abort_free_drivers:
-	for (TermKeyDriverNode *p = tk->drivers; p;) {
-		p->driver->free_driver(p->info);
-		TermKeyDriverNode *next = p->next;
-		free(p);
-		p = next;
-	}
 
 abort_free_keynames:
 	free(tk->keynames);
@@ -1824,8 +1796,8 @@ termkey_start(TermKey *tk)
 	}
 	#endif
 
-	for (TermKeyDriverNode *p = tk->drivers; p; p = p->next)
-		if (p->driver->start_driver && !p->driver->start_driver(tk, p->info))
+	for (TermKeyDriver *p = tk->drivers; p; p = p->next)
+		if (p->start_driver && !p->start_driver(tk, p))
 			return 0;
 
 	tk->is_started = 1;
@@ -1900,12 +1872,11 @@ termkey_free(TermKey *tk)
 {
 	free(tk->buffer);
 	free(tk->keynames);
-
-	for (TermKeyDriverNode *p = tk->drivers; p;) {
-		p->driver->free_driver(p->info);
-		TermKeyDriverNode *next = p->next;
-		free(p);
-		p = next;
+	for (TermKeyDriver *p = tk->drivers; p;) {
+		p->release_driver(p);
+		TermKeyDriver *next = p->next;
+		p->next = 0;
+		p       = next;
 	}
 	free(tk);
 }
@@ -1914,9 +1885,9 @@ TERMKEY_EXPORT int
 termkey_stop(TermKey *tk)
 {
 	if (tk->is_started) {
-		for (TermKeyDriverNode *p = tk->drivers; p; p = p->next)
-			if (p->driver->stop_driver)
-				p->driver->stop_driver(tk, p->info);
+		for (TermKeyDriver *p = tk->drivers; p; p = p->next)
+			if (p->stop_driver)
+				p->stop_driver(tk, p);
 
 		#ifdef HAVE_TERMIOS
 		if (tk->restore_termios_valid)
@@ -2124,10 +2095,10 @@ termkey_peekkey(TermKey *tk, TermKeyKey *key, int force, size_t *nbytep)
 	}
 
 	TermKeyResult result;
-	for(TermKeyDriverNode *p = tk->drivers; p; p = p->next) {
-		result = p->driver->peekkey(tk, p->info, key, force, nbytep);
+	for (TermKeyDriver *p = tk->drivers; p; p = p->next) {
+		result = p->peekkey(tk, p, key, force, nbytep);
 
-	    switch (result) {
+		switch (result) {
 		case TERMKEY_RES_NONE:{}break;
 
 		case TERMKEY_RES_EOF:
