@@ -100,6 +100,7 @@ static const char *prompt_enter(Vis *vis, const char *keys, const Arg *arg) {
 	if (vis_prompt_cmd(vis, cmd)) {
 		prompt_hide(prompt);
 		/* hide cursor in case it was made visible */
+		// TODO(rnp): cleanup: this looks like a hack
 		fprintf(stderr, "\x1b[?25l");
 		if (!lastline) {
 			text_delete(txt, range.start, text_range_size(range));
@@ -158,29 +159,49 @@ static const KeyBinding prompt_tab_binding = {
 	.alias = "<C-x><C-o>",
 };
 
-void vis_prompt_show(Vis *vis, const char *title) {
-	Win *active = vis->win;
-	Win *prompt = window_new_file(vis, title[0] == ':' ? vis->command_file : vis->search_file,
-		UI_OPTION_ONELINE);
-	if (!prompt)
-		return;
-	Text *txt = prompt->file->text;
-	text_appendf(vis, txt, "%s\n", title);
-	Selection *sel = view_selections_primary_get(&prompt->view);
-	view_cursors_scroll_to(sel, text_size(txt)-1);
-	prompt->parent = active;
-	prompt->parent_mode = vis->mode;
-	vis_window_mode_map(prompt, VIS_MODE_NORMAL, true, "<Enter>", &prompt_enter_binding);
-	vis_window_mode_map(prompt, VIS_MODE_INSERT, true, "<Enter>", &prompt_enter_binding);
-	vis_window_mode_map(prompt, VIS_MODE_INSERT, true, "<C-j>", &prompt_enter_binding);
-	vis_window_mode_map(prompt, VIS_MODE_VISUAL, true, "<Enter>", &prompt_enter_binding);
-	vis_window_mode_map(prompt, VIS_MODE_NORMAL, true, "<Escape>", &prompt_esc_binding);
-	vis_window_mode_map(prompt, VIS_MODE_INSERT, true, "<Up>", &prompt_up_binding);
-	if (CONFIG_LUA)
-		vis_window_mode_map(prompt, VIS_MODE_INSERT, true, "<Tab>", &prompt_tab_binding);
-	vis_mode_switch(vis, VIS_MODE_INSERT);
-	vis->prompt_state = PROMPTSTATE_ONELINE;
-	vis->ui.selwin = prompt;
+VIS_INTERNAL bool
+vis_prompt_can_open(Vis *vis, bool command)
+{
+	Win *active_window = vis->win;
+
+	bool result = vis->prompt_state != PROMPTSTATE_ONELINE;
+	if (command && active_window->file == vis->command_file && vis->prompt_state != PROMPTSTATE_MULTILINE)
+		result = false;
+
+	return result;
+}
+
+VIS_EXPORT void
+vis_prompt_show(Vis *vis, const char *title)
+{
+	bool  command       = title[0] == ':';
+	Win  *active_window = vis->win;
+	Win  *prompt        = active_window;
+
+	if (vis_prompt_can_open(vis, command))
+		prompt = window_new_file(vis, command ? vis->command_file : vis->search_file, UI_OPTION_ONELINE);
+
+	if (prompt && prompt != active_window) {
+		prompt->parent      = active_window;
+		prompt->parent_mode = vis->mode;
+		vis_window_mode_map(prompt, VIS_MODE_NORMAL, true, "<Enter>",  &prompt_enter_binding);
+		vis_window_mode_map(prompt, VIS_MODE_INSERT, true, "<Enter>",  &prompt_enter_binding);
+		vis_window_mode_map(prompt, VIS_MODE_VISUAL, true, "<Enter>",  &prompt_enter_binding);
+		vis_window_mode_map(prompt, VIS_MODE_INSERT, true, "<C-j>",    &prompt_enter_binding);
+		vis_window_mode_map(prompt, VIS_MODE_NORMAL, true, "<Escape>", &prompt_esc_binding);
+		vis_window_mode_map(prompt, VIS_MODE_INSERT, true, "<Up>",     &prompt_up_binding);
+		if (CONFIG_LUA)
+			vis_window_mode_map(prompt, VIS_MODE_INSERT, true, "<Tab>", &prompt_tab_binding);
+	}
+
+	if (prompt) {
+		Text *txt = prompt->file->text;
+		text_appendf(vis, txt, "%s\n", title);
+		view_cursors_scroll_to(view_selections_primary_get(&prompt->view), text_size(txt) - 1);
+		vis_mode_switch(vis, VIS_MODE_INSERT);
+		vis->prompt_state = PROMPTSTATE_ONELINE;
+		vis->ui.selwin    = prompt;
+	}
 }
 
 void vis_info_show(Vis *vis, const char *msg, ...) {
