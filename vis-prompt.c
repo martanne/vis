@@ -17,19 +17,29 @@ bool vis_prompt_cmd(Vis *vis, const char *cmd) {
 	}
 }
 
-static void prompt_hide(Win *win) {
-	Text *txt = win->file->text;
-	size_t size = text_size(txt);
-	/* make sure that file is new line terminated */
-	char lastchar = '\0';
-	if (size >= 1 && text_byte_get(txt, size-1, &lastchar) && lastchar != '\n')
-		text_insert(win->vis, txt, size, "\n", 1);
-	/* remove empty entries */
-	Filerange line_range = text_object_line(txt, text_size(txt)-1);
-	char *line = text_bytes_alloc0(txt, line_range.start, text_range_size(line_range));
-	if (line && (line[0] == '\n' || (strchr(":/?", line[0]) && (line[1] == '\n' || line[1] == '\0'))))
-		text_delete_range(txt, line_range);
+static void
+vis_prompt_remove_empty_line(Text *text)
+{
+	Filerange line_range = text_object_line(text, text->size - 1);
+	char *line = text_bytes_alloc0(text, line_range.start, text_range_size(line_range));
+	if (line && (line[0] == '\n' ||
+	    ((line[0] == ':' || line[0] == '/' || line[0] == '?') && (line[1] == '\n' || line[1] == '\0'))))
+	{
+		text_delete_range(text, line_range);
+	}
 	free(line);
+}
+
+static void
+vis_prompt_hide(Win *win)
+{
+	Text *txt = win->file->text;
+	size_t size = txt->size;
+	/* make sure that file is new line terminated */
+	char lastchar = 0;
+	if (size >= 1 && text_byte_get(txt, size - 1, &lastchar) && lastchar != '\n')
+		text_insert(win->vis, txt, size, "\n", 1);
+	vis_prompt_remove_empty_line(txt);
 	win->vis->prompt_state = PROMPTSTATE_NONE;
 	win->vis->ui.selwin = win->parent;
 	vis_window_close(win);
@@ -45,60 +55,40 @@ static void prompt_restore(Win *win) {
 	vis->mode = win->parent_mode;
 }
 
-static const char *prompt_enter(Vis *vis, const char *keys, const Arg *arg) {
-	Win *prompt = vis->win;
-	View *view = &prompt->view;
-	Text *txt = prompt->file->text;
-	Win *win = prompt->parent;
-	char *cmd = NULL;
+static const char *
+vis_prompt_enter(Vis *vis, const char *keys, const Arg *arg)
+{
+	Win  *prompt = vis->win;
+	Text *txt    = prompt->file->text;
 
-	Filerange range = view_selections_get(view->selection);
-	if (!vis->mode->visual) {
-		const char *pattern = NULL;
-		Regex *regex = text_regex_new();
-		size_t pos = view_cursor_get(view);
-		if (prompt->file == vis->command_file)
-			pattern = "^:";
-		else if (prompt->file == vis->search_file)
-			pattern = "^(/|\\?)";
-		int cflags = REG_EXTENDED|REG_NEWLINE|(REG_ICASE*vis->ignorecase);
-		if (pattern && regex && text_regex_compile(regex, pattern, cflags) == 0) {
-			size_t end = text_line_end(txt, pos);
-			size_t prev = text_search_backward(txt, end, regex);
-			if (prev > pos)
-				prev = EPOS;
-			size_t next = text_search_forward(txt, pos, regex);
-			if (next < pos)
-				next = text_size(txt);
-			range = text_range_new(prev, next);
-		}
-		text_regex_free(regex);
-	}
+	Filerange range = view_selections_get(prompt->view.selection);
+	if (!vis->mode->visual)
+		range = text_object_line(txt, view_cursor_get(&prompt->view));
+
+	char *cmd = 0;
 	if (text_range_valid(range))
 		cmd = text_bytes_alloc0(txt, range.start, text_range_size(range));
 
-	if (!win || !cmd) {
-		if (!win)
-			vis_info_show(vis, "Prompt window invalid");
-		else if (!cmd)
-			vis_info_show(vis, "Failed to detect command");
+	if (!cmd) {
+		vis_info_show(vis, "Failed to detect command");
 		prompt_restore(prompt);
-		prompt_hide(prompt);
+		vis_prompt_hide(prompt);
 		free(cmd);
 		return keys;
 	}
 
 	size_t len = strlen(cmd);
-	if (len > 0 && cmd[len-1] == '\n')
-		cmd[len-1] = '\0';
+	if (len > 0 && cmd[len - 1] == '\n')
+		cmd[len - 1] = 0;
 
-	bool lastline = (range.end == text_size(txt));
+	// TODO(rnp): cleanup: this is dumb and requires the range to contain the newline
+	bool lastline = range.end == txt->size;
 
 	prompt_restore(prompt);
-	win->vis->prompt_state = PROMPTSTATE_COMMAND;
+	vis->prompt_state = PROMPTSTATE_COMMAND;
 	vis_redraw(vis);
 	if (vis_prompt_cmd(vis, cmd)) {
-		prompt_hide(prompt);
+		vis_prompt_hide(prompt);
 		/* hide cursor in case it was made visible */
 		// TODO(rnp): cleanup: this looks like a hack
 		fprintf(stderr, "\x1b[?25l");
@@ -107,8 +97,8 @@ static const char *prompt_enter(Vis *vis, const char *keys, const Arg *arg) {
 			text_appendf(vis, txt, "%s\n", cmd);
 		}
 	} else {
-		vis->win = prompt;
-		vis->mode = &vis_modes[VIS_MODE_INSERT];
+		vis->win  = prompt;
+		vis->mode = vis_modes + VIS_MODE_INSERT;
 	}
 	free(cmd);
 	return keys;
@@ -120,7 +110,7 @@ static const char *prompt_esc(Vis *vis, const char *keys, const Arg *arg) {
 		view_selections_dispose_all(&prompt->view);
 	} else {
 		prompt_restore(prompt);
-		prompt_hide(prompt);
+		vis_prompt_hide(prompt);
 	}
 	return keys;
 }
@@ -139,7 +129,7 @@ vis_prompt_up(Vis *vis, const char *keys, const Arg *arg)
 static const KeyBinding prompt_enter_binding = {
 	.key = "<Enter>",
 	.action = &(KeyAction){
-		.func = prompt_enter,
+		.func = vis_prompt_enter,
 	},
 };
 
@@ -162,27 +152,14 @@ static const KeyBinding prompt_tab_binding = {
 	.alias = "<C-x><C-o>",
 };
 
-VIS_INTERNAL bool
-vis_prompt_can_open(Vis *vis, bool command)
-{
-	Win *active_window = vis->win;
-
-	bool result = vis->prompt_state != PROMPTSTATE_ONELINE;
-	if (command && active_window->file == vis->command_file && vis->prompt_state != PROMPTSTATE_MULTILINE)
-		result = false;
-
-	return result;
-}
-
 VIS_EXPORT void
 vis_prompt_show(Vis *vis, const char *title)
 {
-	bool  command       = title[0] == ':';
-	Win  *active_window = vis->win;
-	Win  *prompt        = active_window;
+	Win *active_window = vis->win;
+	Win *prompt        = active_window;
 
-	if (vis_prompt_can_open(vis, command))
-		prompt = window_new_file(vis, command ? vis->command_file : vis->search_file, UI_OPTION_ONELINE);
+	if (vis->prompt_state != PROMPTSTATE_ONELINE)
+		prompt = window_new_file(vis, vis->prompt_file, UI_OPTION_ONELINE);
 
 	if (prompt && prompt != active_window) {
 		prompt->parent      = active_window;
@@ -199,8 +176,9 @@ vis_prompt_show(Vis *vis, const char *title)
 
 	if (prompt) {
 		Text *txt = prompt->file->text;
+		vis_prompt_remove_empty_line(txt);
 		text_appendf(vis, txt, "%s\n", title);
-		view_cursors_scroll_to(view_selections_primary_get(&prompt->view), text_size(txt) - 1);
+		view_cursors_scroll_to(view_selections_primary_get(&prompt->view), txt->size - 1);
 		vis_mode_switch(vis, VIS_MODE_INSERT);
 		vis->prompt_state = PROMPTSTATE_ONELINE;
 		vis->ui.selwin    = prompt;

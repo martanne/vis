@@ -184,8 +184,7 @@ struct Win {
 
 struct Vis {
 	File *files;                         /* all files currently managed by this editor instance */
-	File *command_file;                  /* special internal file used to store :-command prompt */
-	File *search_file;                   /* special internal file used to store /,? search prompt */
+	File *prompt_file;                   /* special internal file used to store :,/,? prompt */
 	File *error_file;                    /* special internal file used to store lua error messages */
 	Win *windows;                        /* all windows currently managed by this editor instance */
 	Win *win;                            /* currently active/focused window */

@@ -551,11 +551,9 @@ bool vis_init(Vis *vis)
 	vis->registers[VIS_REG_NUMBER].type = REGISTER_NUMBER;
 	action_reset(&vis->action);
 	vis->input_queue = (Buffer){0};
-	if (!(vis->command_file = file_new_internal(vis, NULL)))
+	if (!(vis->prompt_file = file_new_internal(vis, 0)))
 		goto err;
-	if (!(vis->search_file = file_new_internal(vis, NULL)))
-		goto err;
-	if (!(vis->error_file = file_new_internal(vis, NULL)))
+	if (!(vis->error_file = file_new_internal(vis, 0)))
 		goto err;
 	if (!(vis->actions = map_new()))
 		goto err;
@@ -594,8 +592,7 @@ void vis_cleanup(Vis *vis)
 	// the release of those files.
 	vis_event_emit(vis, VIS_EVENT_QUIT);
 
-	file_free(vis, vis->command_file);
-	file_free(vis, vis->search_file);
+	file_free(vis, vis->prompt_file);
 	file_free(vis, vis->error_file);
 
 	for (int i = 0; i < LENGTH(vis->registers); i++) {
