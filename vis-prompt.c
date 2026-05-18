@@ -41,7 +41,6 @@ vis_prompt_hide(Win *win)
 		text_insert(win->vis, txt, size, "\n", 1);
 	vis_prompt_remove_empty_line(txt);
 	win->vis->prompt_state = PROMPTSTATE_NONE;
-	win->vis->ui.selwin = win->parent;
 	vis_window_close(win);
 }
 
@@ -181,7 +180,7 @@ vis_prompt_show(Vis *vis, const char *title)
 		view_cursors_scroll_to(view_selections_primary_get(&prompt->view), txt->size - 1);
 		vis_mode_switch(vis, VIS_MODE_INSERT);
 		vis->prompt_state = PROMPTSTATE_ONELINE;
-		vis->ui.selwin    = prompt;
+		vis_window_focus(vis, prompt);
 	}
 }
 
@@ -205,5 +204,5 @@ void vis_message_show(Vis *vis, const char *msg) {
 	text_appendf(vis, txt, "%s\n", msg);
 	text_mark_current_revision(txt);
 	view_cursors_to(win->view.selection, pos);
-	vis_window_focus(win);
+	vis_window_focus(vis, win);
 }

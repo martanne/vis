@@ -143,7 +143,7 @@ void window_status_update(Vis *vis, Win *win) {
 		spaces = 1;
 
 	snprintf(status, sizeof(status), "%s%*s%s", left, spaces, " ", right);
-	ui_window_status(win, status);
+	ui_window_status(vis, win, status);
 }
 
 void view_tabwidth_set(View *view, int tabwidth) {

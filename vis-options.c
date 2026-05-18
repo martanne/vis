@@ -347,7 +347,7 @@ vis_option_set(Vis *vis, Win *win, VisOption *option, VisValue value, bool toggl
 			assert(value.kind == VisValueKind_Integer);
 			layout = Clamp(value.u.integer, 0, UI_LAYOUT_COUNT - 1);
 		}
-		if (result) ui_arrange(&vis->ui, layout);
+		if (result) ui_arrange(vis, layout);
 	}break;
 
 	case OPTION_BREAKAT:{

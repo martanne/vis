@@ -163,7 +163,7 @@ static void window_free(Win *win) {
 		if (other->parent == win)
 			other->parent = NULL;
 	}
-	ui_window_release(&vis->ui, win);
+	vis->ui.ids &= ~(1UL << win->id);
 	view_free(&win->view);
 	for (size_t i = 0; i < LENGTH(win->modes); i++)
 		map_free(win->modes[i].bindings);
@@ -333,6 +333,14 @@ void vis_window_invalidate(Win *win) {
 	}
 }
 
+VIS_EXPORT void
+vis_window_focus(Vis *vis, Win *new)
+{
+	if (vis->win) vis->win->view.need_update = true;
+	new->view.need_update = true;
+	vis->win = new;
+}
+
 Win *window_new_file(Vis *vis, File *file, enum UiOption options) {
 	Win *win = calloc(1, sizeof(Win));
 	if (!win)
@@ -343,7 +351,12 @@ Win *window_new_file(Vis *vis, File *file, enum UiOption options) {
 		free(win);
 		return NULL;
 	}
-	win->expandtab = false;
+
+	if (vis->windows)
+		vis->windows->prev = win;
+	win->next = vis->windows;
+	vis->windows = win;
+
 	if (!ui_window_init(&vis->ui, win, options)) {
 		window_free(win);
 		return NULL;
@@ -352,12 +365,8 @@ Win *window_new_file(Vis *vis, File *file, enum UiOption options) {
 	file->refcount++;
 	win_options_set(win, win->options);
 
-	if (vis->windows)
-		vis->windows->prev = win;
-	win->next = vis->windows;
-	vis->windows = win;
-	vis->win = win;
-	ui_window_focus(win);
+	vis_window_focus(vis, win);
+
 	for (size_t i = 0; i < LENGTH(win->modes); i++)
 		win->modes[i].parent = &vis_modes[i];
 	vis_event_emit(vis, VIS_EVENT_WIN_OPEN, win);
@@ -411,19 +420,11 @@ bool vis_window_split(Win *original) {
 	return true;
 }
 
-void vis_window_focus(Win *win) {
-	if (!win)
-		return;
-	Vis *vis = win->vis;
-	vis->win = win;
-	ui_window_focus(win);
-}
-
 void vis_window_next(Vis *vis) {
 	Win *sel = vis->win;
 	if (!sel)
 		return;
-	vis_window_focus(sel->next ? sel->next : vis->windows);
+	vis_window_focus(vis, sel->next ? sel->next : vis->windows);
 }
 
 void vis_window_prev(Vis *vis) {
@@ -433,7 +434,7 @@ void vis_window_prev(Vis *vis) {
 	sel = sel->prev;
 	if (!sel)
 		for (sel = vis->windows; sel->next; sel = sel->next);
-	vis_window_focus(sel);
+	vis_window_focus(vis, sel);
 }
 
 void vis_draw(Vis *vis) {
@@ -441,9 +442,13 @@ void vis_draw(Vis *vis) {
 		view_draw(&win->view);
 }
 
-void vis_redraw(Vis *vis) {
-	ui_redraw(&vis->ui);
-	ui_draw(&vis->ui);
+VIS_INTERNAL void
+vis_redraw(Vis *vis)
+{
+	ui_term_backend_clear(&vis->ui);
+	for (Win *win = vis->windows; win; win = win->next)
+		win->view.need_update = true;
+	ui_draw(vis);
 }
 
 bool vis_window_new(Vis *vis, const char *filename) {
@@ -498,11 +503,10 @@ void vis_window_swap(Win *a, Win *b) {
 		vis->windows = b;
 	else if (vis->windows == b)
 		vis->windows = a;
-	ui_window_swap(a, b);
 	if (vis->win == a)
-		vis_window_focus(b);
+		vis_window_focus(vis, b);
 	else if (vis->win == b)
-		vis_window_focus(a);
+		vis_window_focus(vis, a);
 }
 
 void vis_window_close(Win *win) {
@@ -518,12 +522,12 @@ void vis_window_close(Win *win) {
 	if (vis->windows == win)
 		vis->windows = win->next;
 	if (vis->win == win)
-		vis->win = win->next ? win->next : win->prev;
+		vis->win = win->parent ? win->parent : (win->next ? win->next : win->prev);
 	if (win == vis->message_window)
 		vis->message_window = NULL;
 	window_free(win);
 	if (vis->win)
-		ui_window_focus(vis->win);
+		vis_window_focus(vis, vis->win);
 	vis_draw(vis);
 }
 
@@ -1299,7 +1303,7 @@ int vis_run(Vis *vis) {
 			vis->need_resize = false;
 		}
 
-		ui_draw(&vis->ui);
+		ui_draw(vis);
 		idle.tv_sec = vis->mode->idle_timeout;
 		int r = pselect(vis_process_before_tick(&fds) + 1, &fds, NULL, NULL,
 		                timeout, &emptyset);

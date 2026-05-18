@@ -262,7 +262,7 @@ VIS_EXPORT void vis_window_prev(Vis*);
  * Change currently focused window, receiving user input.
  * @param win The window to focus.
  */
-VIS_EXPORT void vis_window_focus(Win*);
+VIS_EXPORT void vis_window_focus(Vis*, Win*);
 /**
  * Swap location of two windows.
  * @param win1 The first window.

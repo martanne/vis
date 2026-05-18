@@ -1609,7 +1609,8 @@ static int vis_newindex(lua_State *L) {
 		}
 
 		if (strcmp(key, "win") == 0) {
-			vis_window_focus(obj_ref_check(L, 3, VIS_LUA_TYPE_WINDOW));
+			Win *win = obj_ref_check(L, 3, VIS_LUA_TYPE_WINDOW);
+			vis_window_focus(win->vis, win);
 			return 0;
 		}
 
@@ -1772,7 +1773,7 @@ static int ui_newindex(lua_State *L) {
 		const char *key  = lua_tostring(L, 2);
 
 		if (strcmp(key, "layout") == 0) {
-			ui_arrange(ui, luaL_checkinteger(L, 3));
+			ui_arrange(ui->vis, luaL_checkinteger(L, 3));
 			return 0;
 		}
 	}
@@ -2132,7 +2133,7 @@ static int window_status(lua_State *L) {
 	if (spaces < 1)
 		spaces = 1;
 	snprintf(status, sizeof(status)-1, "%s%*s%s", left, spaces, " ", right);
-	ui_window_status(win, status);
+	ui_window_status(win->vis, win, status);
 	return 0;
 }
 

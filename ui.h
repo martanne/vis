@@ -79,10 +79,9 @@ typedef struct {
 
 struct Win;
 struct Vis;
+// TODO(rnp): flatten UI into vis, only one exists and it must be in a vis context
 typedef struct {
 	struct Vis *vis;          /* editor instance to which this ui belongs */
-	struct Win *windows;      /* all windows managed by this ui */
-	struct Win *selwin;       /* the currently selected layout */
 	char info[UI_MAX_WIDTH];  /* info message displayed at the bottom of the screen */
 	int width, height;        /* terminal dimensions available for all windows */
 	int cur_row, cur_col;     /* active cursor's (0-based) position on the terminal */
@@ -111,18 +110,13 @@ VIS_INTERNAL void ui_terminal_suspend(Ui*);
 
 VIS_INTERNAL __attribute__((noreturn)) void ui_die(Ui *, const char *, va_list);
 VIS_INTERNAL bool ui_init(Ui *, Vis *);
-VIS_INTERNAL void ui_arrange(Ui*, enum UiLayout);
-VIS_INTERNAL void ui_draw(Ui*);
+VIS_INTERNAL void ui_arrange(Vis *, enum UiLayout);
+VIS_INTERNAL void ui_draw(Vis *);
 VIS_INTERNAL void ui_info_hide(Ui *);
 VIS_INTERNAL void ui_info_show(Ui *, const char *, va_list);
-VIS_INTERNAL void ui_redraw(Ui*);
 VIS_INTERNAL void ui_resize(Ui*);
 
 VIS_INTERNAL bool ui_window_init(Ui *, Win *, enum UiOption);
-VIS_INTERNAL void ui_window_focus(Win *);
-/* removes a window from the list of open windows */
-VIS_INTERNAL void ui_window_release(Ui *, Win *);
-VIS_INTERNAL void ui_window_swap(Win *, Win *);
 
 VIS_INTERNAL bool ui_getkey(Ui *, TermKeyKey *);
 
@@ -131,6 +125,6 @@ VIS_INTERNAL void ui_window_style_set(Ui *ui, int win_id, Cell *cell, enum UiSty
 VIS_INTERNAL bool ui_window_style_set_pos(Win *win, int x, int y, enum UiStyle id, bool keep_non_default);
 
 VIS_INTERNAL void ui_window_options_set(Win *win, enum UiOption options);
-VIS_INTERNAL void ui_window_status(Win *win, const char *status);
+VIS_INTERNAL void ui_window_status(Vis *vis, Win *win, const char *status);
 
 #endif

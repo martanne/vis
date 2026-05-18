@@ -262,7 +262,7 @@ static bool cmd_edit(Vis *vis, Win *win, Command *cmd, const char *argv[], Selec
 		Win *newwin = vis->win;
 		vis_window_swap(oldwin, newwin);
 		vis_window_close(oldwin);
-		vis_window_focus(newwin);
+		vis_window_focus(vis, newwin);
 	}
 	return vis->win != oldwin;
 }
@@ -323,7 +323,7 @@ static bool cmd_split(Vis *vis, Win *win, Command *cmd, const char *argv[], Sele
 	if (!win)
 		return false;
 	enum UiOption options = win->options;
-	ui_arrange(&vis->ui, UI_LAYOUT_HORIZONTAL);
+	ui_arrange(vis, UI_LAYOUT_HORIZONTAL);
 	if (!argv[1])
 		return vis_window_split(win);
 	bool ret = openfiles(vis, &argv[1]);
@@ -336,7 +336,7 @@ static bool cmd_vsplit(Vis *vis, Win *win, Command *cmd, const char *argv[], Sel
 	if (!win)
 		return false;
 	enum UiOption options = win->options;
-	ui_arrange(&vis->ui, UI_LAYOUT_VERTICAL);
+	ui_arrange(vis, UI_LAYOUT_VERTICAL);
 	if (!argv[1])
 		return vis_window_split(win);
 	bool ret = openfiles(vis, &argv[1]);
@@ -346,12 +346,12 @@ static bool cmd_vsplit(Vis *vis, Win *win, Command *cmd, const char *argv[], Sel
 }
 
 static bool cmd_new(Vis *vis, Win *win, Command *cmd, const char *argv[], Selection *sel, Filerange *range) {
-	ui_arrange(&vis->ui, UI_LAYOUT_HORIZONTAL);
+	ui_arrange(vis, UI_LAYOUT_HORIZONTAL);
 	return vis_window_new(vis, NULL);
 }
 
 static bool cmd_vnew(Vis *vis, Win *win, Command *cmd, const char *argv[], Selection *sel, Filerange *range) {
-	ui_arrange(&vis->ui, UI_LAYOUT_VERTICAL);
+	ui_arrange(vis, UI_LAYOUT_VERTICAL);
 	return vis_window_new(vis, NULL);
 }
 

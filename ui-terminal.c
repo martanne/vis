@@ -303,18 +303,21 @@ bool ui_window_style_set_pos(Win *win, int x, int y, enum UiStyle id, bool keep_
 	return true;
 }
 
-void ui_window_status(Win *win, const char *status)
+VIS_INTERNAL void
+ui_window_status(Vis *vis, Win *win, const char *status)
 {
-	Ui *ui = &win->vis->ui;
-	enum UiStyle style = ui->selwin == win ? UI_STYLE_STATUS_FOCUSED : UI_STYLE_STATUS;
-	ui_draw_string(ui, win->x, win->y + win->height - 1, status, win->id, style);
+	enum UiStyle style = vis->win == win ? UI_STYLE_STATUS_FOCUSED : UI_STYLE_STATUS;
+	ui_draw_string(&vis->ui, win->x, win->y + win->height - 1, status, win->id, style);
 }
 
-void ui_arrange(Ui *tui, enum UiLayout layout) {
+VIS_INTERNAL void
+ui_arrange(Vis *vis, enum UiLayout layout)
+{
 	debug("ui-arrange\n");
+	Ui *tui = &vis->ui;
 	tui->layout = layout;
 	int n = 0, m = !!tui->info[0], x = 0, y = 0;
-	for (Win *win = tui->windows; win; win = win->next) {
+	for (Win *win = vis->windows; win; win = win->next) {
 		if (win->options & UI_OPTION_ONELINE)
 			m++;
 		else
@@ -323,7 +326,7 @@ void ui_arrange(Ui *tui, enum UiLayout layout) {
 	int max_height = tui->height - m;
 	int width = (tui->width / MAX(1, n)) - 1;
 	int height = max_height / MAX(1, n);
-	for (Win *win = tui->windows; win; win = win->next) {
+	for (Win *win = vis->windows; win; win = win->next) {
 		if (win->options & UI_OPTION_ONELINE)
 			continue;
 		n--;
@@ -352,7 +355,7 @@ void ui_arrange(Ui *tui, enum UiLayout layout) {
 	if (layout == UI_LAYOUT_VERTICAL)
 		y = max_height;
 
-	for (Win *win = tui->windows; win; win = win->next) {
+	for (Win *win = vis->windows; win; win = win->next) {
 		if (!(win->options & UI_OPTION_ONELINE))
 			continue;
 		ui_window_resize(win, tui->width, 1);
@@ -360,15 +363,18 @@ void ui_arrange(Ui *tui, enum UiLayout layout) {
 	}
 }
 
-void ui_draw(Ui *tui) {
+VIS_INTERNAL void
+ui_draw(Vis *vis)
+{
 	debug("ui-draw\n");
-	ui_arrange(tui, tui->layout);
+	Ui *tui = &vis->ui;
+	ui_arrange(vis, vis->ui.layout);
 	int dx = 0, dy = 0, parent_height = 0;
-	for (Win *win = tui->windows; win; win = win->next) {
+	for (Win *win = vis->windows; win; win = win->next) {
 		ui_window_draw(win);
 		/* determine primary cursor's position */
 		View *view = &win->view;
-		if (win == tui->selwin) {
+		if (win == vis->win) {
 			view_coord_get(view, view_cursor_get(view), NULL, &tui->cur_row, &tui->cur_col);
 			if (win->parent) {
 				parent_height = win->parent->height;
@@ -397,12 +403,6 @@ void ui_draw(Ui *tui) {
 		ui_draw_string(tui, 0, tui->height-1, tui->info, 0, UI_STYLE_INFO);
 	vis_event_emit(tui->vis, VIS_EVENT_UI_DRAW);
 	ui_term_backend_blit(tui);
-}
-
-void ui_redraw(Ui *tui) {
-	ui_term_backend_clear(tui);
-	for (Win *win = tui->windows; win; win = win->next)
-		win->view.need_update = true;
 }
 
 void ui_resize(Ui *tui) {
@@ -434,54 +434,29 @@ void ui_resize(Ui *tui) {
 	tui->height = height;
 }
 
-void ui_window_release(Ui *tui, Win *win) {
-	if (!win)
-		return;
-	if (tui->windows == win)
-		tui->windows = win->next;
-	if (tui->selwin == win)
-		tui->selwin = NULL;
-	tui->ids &= ~(1UL << win->id);
-}
-
-void ui_window_focus(Win *new) {
-	Win *old = new->vis->ui.selwin;
-	if (new->options & UI_OPTION_STATUSBAR)
-		new->vis->ui.selwin = new;
-	if (old)
-		old->view.need_update = true;
-	new->view.need_update = true;
-}
-
-void ui_window_options_set(Win *win, enum UiOption options) {
+VIS_INTERNAL void
+ui_window_options_set(Win *win, enum UiOption options)
+{
+	Vis *vis = win->vis;
 	win->options = options;
 	if (options & UI_OPTION_ONELINE) {
 		/* move the new window to the end of the list */
-		Ui *tui = &win->vis->ui;
-		Win *last = tui->windows;
+		Win *last = vis->windows;
 		while (last->next)
 			last = last->next;
 		if (last != win) {
-			if (tui->windows == win)
-				tui->windows = win->next;
+			if (win->prev)
+				win->prev->next = win->next;
+			if (win->next)
+				win->next->prev = win->prev;
+			if (vis->windows == win)
+				vis->windows = win->next;
 			last->next = win;
+			win->prev  = last;
+			win->next  = 0;
 		}
 	}
-	ui_draw(&win->vis->ui);
-}
-
-void ui_window_swap(Win *a, Win *b) {
-	if (a == b || !a || !b)
-		return;
-	Ui *tui = &a->vis->ui;
-	if (tui->windows == a)
-		tui->windows = b;
-	else if (tui->windows == b)
-		tui->windows = a;
-	if (tui->selwin == a)
-		ui_window_focus(b);
-	else if (tui->selwin == b)
-		ui_window_focus(a);
+	ui_draw(vis);
 }
 
 bool ui_window_init(Ui *tui, Win *w, enum UiOption options) {
@@ -515,10 +490,6 @@ bool ui_window_init(Ui *tui, Win *w, enum UiOption options) {
 	styles[UI_STYLE_STATUS].attr |= CELL_ATTR_REVERSE;
 	styles[UI_STYLE_STATUS_FOCUSED].attr |= CELL_ATTR_REVERSE|CELL_ATTR_BOLD;
 	styles[UI_STYLE_INFO].attr |= CELL_ATTR_BOLD;
-
-	if (tui->windows)
-		tui->windows->prev = w->prev;
-	tui->windows = w;
 
 	if (text_size(w->file->text) > UI_LARGE_FILE_SIZE) {
 		options |= UI_OPTION_LARGE_FILE;
@@ -646,8 +617,6 @@ bool ui_terminal_init(Ui *tui) {
 void ui_terminal_free(Ui *tui) {
 	if (!tui)
 		return;
-	while (tui->windows)
-		ui_window_release(tui, tui->windows);
 	ui_term_backend_free(tui);
 	if (tui->termkey)
 		termkey_destroy(tui->termkey);
