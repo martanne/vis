@@ -125,10 +125,13 @@ static const char *prompt_esc(Vis *vis, const char *keys, const Arg *arg) {
 	return keys;
 }
 
-static const char *prompt_up(Vis *vis, const char *keys, const Arg *arg) {
+static const char *
+vis_prompt_up(Vis *vis, const char *keys, const Arg *arg)
+{
 	vis_motion(vis, VIS_MOVE_LINE_UP);
 	vis_window_mode_unmap(vis->win, VIS_MODE_INSERT, "<Up>");
 	win_options_set(vis->win, UI_OPTION_SYMBOL_EOF);
+	view_slide_down(&vis->win->view, vis->win->view.height - 1);
 	vis->prompt_state = PROMPTSTATE_MULTILINE;
 	return keys;
 }
@@ -150,7 +153,7 @@ static const KeyBinding prompt_esc_binding = {
 static const KeyBinding prompt_up_binding = {
 	.key = "<Up>",
 	.action = &(KeyAction){
-		.func = prompt_up,
+		.func = vis_prompt_up,
 	},
 };
 
