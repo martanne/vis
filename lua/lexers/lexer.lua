@@ -1,4 +1,4 @@
--- Copyright 2006-2025 Mitchell. See LICENSE.
+-- Copyright 2006-2026 Mitchell. See LICENSE.
 
 --- Lexes Scintilla documents and source code with Lua and LPeg.
 --
@@ -1662,10 +1662,20 @@ end
 -- @usage lexer.detect_extensions.luadoc = 'lua'
 M.detect_extensions = {}
 
+--- Map of file extensions (without the '.' prefix) to strip from filenames during detection to
+-- `true`.
+-- @usage lexer.ignore_extensions.backup = true
+M.ignore_extensions = {orig = true, back = true, old = true, new = true}
+
 --- Map of first-line patterns to their associated lexer names.
 -- These are Lua string patterns, not LPeg patterns.
 -- @usage lexer.detect_patterns['^#!.+/zsh'] = 'bash'
 M.detect_patterns = {}
+
+--- List of filename parts to strip from filenames during detection.
+-- Filename parts are expressed as Lua patterns.
+-- @usage table.insert(lexer.ignore_patterns, '%.%d+$') -- ignore digit extensions
+M.ignore_patterns = {'~+$'}
 
 --- Returns the name of the lexer often associated a particular filename and/or file content.
 -- @param[opt] filename String filename to inspect. The default value is read from the
@@ -1685,6 +1695,7 @@ function M.detect(filename, line)
 		ans = 'apdl', inp = 'apdl', mac = 'apdl', --
 		apl = 'apl', --
 		applescript = 'applescript', --
+		ino = 'arduino', --
 		asm = 'asm', ASM = 'asm', s = 'asm', S = 'asm', --
 		asa = 'asp', asp = 'asp', hta = 'asp', --
 		ahk = 'autohotkey', --
@@ -1694,8 +1705,8 @@ function M.detect(filename, line)
 		bib = 'bibtex', --
 		boo = 'boo', --
 		cs = 'csharp', --
-		c = 'c', C = 'c', cc = 'cpp', cpp = 'cpp', cxx = 'cpp', ['c++'] = 'cpp', h = 'cpp', hh = 'cpp',
-		hpp = 'cpp', hxx = 'cpp', ['h++'] = 'cpp', --
+		c = 'c', C = 'c', cc = 'cpp', cpp = 'cpp', cxx = 'cpp', ['c++'] = 'cpp', h = 'cpp', H = 'cpp',
+		hh = 'cpp', hpp = 'cpp', hxx = 'cpp', ['h++'] = 'cpp', --
 		ck = 'chuck', --
 		clj = 'clojure', cljs = 'clojure', cljc = 'clojure', edn = 'clojure', --
 		['CMakeLists.txt'] = 'cmake', cmake = 'cmake', ['cmake.in'] = 'cmake', ctest = 'cmake',
@@ -1707,7 +1718,7 @@ function M.detect(filename, line)
 		d = 'd', di = 'd', --
 		dart = 'dart', --
 		desktop = 'desktop', --
-		diff = 'diff', patch = 'diff', --
+		diff = 'diff', patch = 'diff', rej = 'diff', --
 		Dockerfile = 'dockerfile', --
 		dot = 'dot', --
 		e = 'eiffel', eif = 'eiffel', --
@@ -1744,7 +1755,7 @@ function M.detect(filename, line)
 		io = 'io_lang', --
 		janet = 'janet', --
 		bsh = 'java', java = 'java', --
-		js = 'javascript', jsfl = 'javascript', --
+		cjs = 'javascript', js = 'javascript', jsfl = 'javascript', mjs = 'javascript', --
 		jq = 'jq', --
 		json = 'json', --
 		jsp = 'jsp', --
@@ -1758,7 +1769,7 @@ function M.detect(filename, line)
 		lgt = 'logtalk', --
 		lua = 'lua', --
 		GNUmakefile = 'makefile', iface = 'makefile', mak = 'makefile', makefile = 'makefile',
-		Makefile = 'makefile', --
+		Makefile = 'makefile', mk = 'makefile', --
 		md = 'markdown', markdown = 'markdown', --
 		['meson.build'] = 'meson', --
 		moon = 'moonscript', --
@@ -1773,19 +1784,19 @@ function M.detect(filename, line)
 		caml = 'caml', ml = 'caml', mli = 'caml', mll = 'caml', mly = 'caml', --
 		org = 'org', --
 		dpk = 'pascal', dpr = 'pascal', p = 'pascal', pas = 'pascal', pp = 'pascal', --
-		al = 'perl', perl = 'perl', pl = 'perl', pm = 'perl', pod = 'perl', --
+		al = 'perl', perl = 'perl', pl = 'perl', PL = 'perl', pm = 'perl', pod = 'perl', --
 		inc = 'php', php = 'php', php3 = 'php', php4 = 'php', phtml = 'php', --
 		p8 = 'pico8', --
 		pike = 'pike', pmod = 'pike', --
 		PKGBUILD = 'pkgbuild', --
 		pony = 'pony', --
 		eps = 'ps', ps = 'ps', --
-		ps1 = 'powershell', --
+		ps1 = 'powershell', psm1 = 'powershell', --
 		prolog = 'prolog', --
 		props = 'props', properties = 'props', --
 		proto = 'protobuf', --
 		pure = 'pure', --
-		sc = 'python', py = 'python', pyw = 'python', --
+		sc = 'python', py = 'python', pyi = 'python', pyw = 'python', --
 		R = 'r', Rout = 'r', Rhistory = 'r', Rt = 'r', ['Rout.save'] = 'r', ['Rout.fail'] = 'r', --
 		re = 'reason', --
 		r = 'rebol', reb = 'rebol', --
@@ -1806,6 +1817,7 @@ function M.detect(filename, line)
 		sno = 'snobol4', SNO = 'snobol4', --
 		spin = 'spin', --
 		ddl = 'sql', sql = 'sql', --
+		swift = 'swift', --
 		automount = 'systemd', device = 'systemd', mount = 'systemd', path = 'systemd',
 		scope = 'systemd', service = 'systemd', slice = 'systemd', socket = 'systemd', swap = 'systemd',
 		target = 'systemd', timer = 'systemd', --
@@ -1848,8 +1860,16 @@ function M.detect(filename, line)
 	for patt, name in pairs(M.detect_patterns) do if line:find(patt) then return name end end
 	for patt, name in pairs(patterns) do if line:find(patt) then return name end end
 	local name, ext = filename:match('[^/\\]+$'), filename:match('[^.]*$')
-	return M.detect_extensions[name] or extensions[name] or M.detect_extensions[ext] or
+	local detected = M.detect_extensions[name] or extensions[name] or M.detect_extensions[ext] or
 		extensions[ext]
+	if detected then return detected end
+
+	-- Strip ignored filename parts and extensions, and try again.
+	-- Do not do this first for the sake of performance; this should be a fallback option.
+	for _, patt in ipairs(M.ignore_patterns) do filename = filename:gsub(patt, '') end
+	ext = filename:match('[^.]*$')
+	while M.ignore_extensions[ext] do filename, ext = filename:match('^(.-%.?([^.]*))%.[^.]+$') end
+	return M.detect_extensions[ext] or extensions[ext]
 end
 
 -- The following are utility functions lexers will have access to.

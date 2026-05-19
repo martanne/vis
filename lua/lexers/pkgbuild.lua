@@ -1,4 +1,4 @@
--- Copyright 2006-2025 gwash. See LICENSE.
+-- Copyright 2006-2026 gwash. See LICENSE.
 -- Archlinux PKGBUILD LPeg lexer.
 
 local lexer = require('lexer')
@@ -27,13 +27,13 @@ end)
 lex:add_rule('string', token(lexer.STRING, sq_str + dq_str + ex_str + heredoc))
 
 -- Numbers.
-lex:add_rule('number', token(lexer.NUMBER, lexer.number))
+lex:add_rule('number', token(lexer.NUMBER, lexer.number * -lexer.alpha))
 
 -- Keywords.
-lex:add_rule('keyword', token(lexer.KEYWORD, word_match{
+lex:add_rule('keyword', token(lexer.KEYWORD, -lpeg.B('.') * word_match{
 	'patch', 'cd', 'make', 'patch', 'mkdir', 'cp', 'sed', 'install', 'rm', 'if', 'then', 'elif',
 	'else', 'fi', 'case', 'in', 'esac', 'while', 'for', 'do', 'done', 'continue', 'local', 'return',
-	'git', 'svn', 'co', 'clone', 'gconf-merge-schema', 'msg', 'echo', 'ln',
+	'git', 'svn', 'co', 'clone', 'gconf-merge-schema', 'msg', 'echo', 'ln', 'tar', 'bsdtar',
 	-- Operators.
 	'-a', '-b', '-c', '-d', '-e', '-f', '-g', '-h', '-k', '-p', '-r', '-s', '-t', '-u', '-w', '-x',
 	'-O', '-G', '-L', '-S', '-N', '-nt', '-ot', '-ef', '-o', '-z', '-n', '-eq', '-ne', '-lt', '-le',
@@ -42,17 +42,21 @@ lex:add_rule('keyword', token(lexer.KEYWORD, word_match{
 
 -- Functions.
 lex:add_rule('function',
-	token(lexer.FUNCTION, word_match('build check package pkgver prepare') * '()'))
+	token(lexer.FUNCTION, word_match('build check package pkgver prepare verify') * '()'))
 
 -- Constants.
-lex:add_rule('constant', token(lexer.CONSTANT, word_match{
+local constant = word_match{
 	-- We do *not* list pkgver srcdir and startdir here.
 	-- These are defined by makepkg but user should not alter them.
-	'arch', 'backup', 'changelog', 'checkdepends', 'conflicts', 'depends', 'epoch', 'groups',
-	'install', 'license', 'makedepends', 'md5sums', 'noextract', 'optdepends', 'options', 'pkgbase',
-	'pkgdesc', 'pkgname', 'pkgrel', 'pkgver', 'provides', 'replaces', 'sha1sums', 'sha256sums',
-	'sha384sums', 'sha512sums', 'source', 'url', 'validpgpkeys'
-}))
+	'arch', 'backup', 'changelog', 'epoch', 'groups', 'install', 'license', 'noextract', 'options',
+	'pkgbase', 'pkgdesc', 'pkgname', 'pkgrel', 'pkgver', 'url', 'validpgpkeys'
+}
+-- Note: cannot use word_match because it matches '_', which consumes arch suffix.
+local arch_constant =
+	(P('source') + 'cksums' + 'md5sums' + 'sha1sums' + 'sha224sums' + 'sha256sums' + 'sha384sums' +
+		'sha512sums' + 'b2sums' + 'depends' + 'makedepends' + 'checkdepends' + 'optdepends' +
+		'conflicts' + 'provides' + 'replaces') * ('_' * lexer.word)^-1 -- e.g. source_x86_64
+lex:add_rule('constant', token(lexer.CONSTANT, constant + arch_constant))
 
 -- Identifiers.
 lex:add_rule('identifier', token(lexer.IDENTIFIER, lexer.word))

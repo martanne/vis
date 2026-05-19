@@ -1,4 +1,4 @@
--- Copyright 2006-2025 Mitchell. See LICENSE.
+-- Copyright 2006-2026 Mitchell. See LICENSE.
 -- Lua LPeg lexer.
 -- Original written by Peter Odding, 2007/04/04.
 
@@ -81,7 +81,8 @@ lex:add_fold_point(lexer.OPERATOR, '{', '}')
 lex:set_word_list(lexer.KEYWORD, {
 	'and', 'break', 'do', 'else', 'elseif', 'end', 'false', 'for', 'function', 'if', 'in', 'local',
 	'or', 'nil', 'not', 'repeat', 'return', 'then', 'true', 'until', 'while', --
-	'goto' -- 5.2
+	'goto', -- 5.2
+	'global' -- 5.5
 })
 
 lex:set_word_list(lexer.FUNCTION_BUILTIN, {
@@ -107,9 +108,11 @@ lex:set_word_list(lexer.FUNCTION_BUILTIN .. '.library', {
 	'table.concat', 'table.insert', 'table.remove', 'table.sort', --
 	'table.pack', 'table.unpack', -- 5.2
 	'table.move', -- 5.3
+	'table.create', -- 5.5
 	'math.abs', 'math.acos', 'math.asin', 'math.atan', 'math.ceil', 'math.cos', 'math.deg',
-	'math.exp', 'math.floor', 'math.fmod', 'math.log', 'math.max', 'math.min', 'math.modf',
-	'math.rad', 'math.random', 'math.randomseed', 'math.sin', 'math.sqrt', 'math.tan', --
+	'math.exp', 'math.floor', 'math.fmod', 'math.frexp', 'math.ldexp', 'math.log', 'math.max',
+	'math.min', 'math.modf', 'math.rad', 'math.random', 'math.randomseed', 'math.sin', 'math.sqrt',
+	'math.tan', --
 	'math.tointeger', 'math.type', 'math.ult', -- 5.3
 	'io.close', 'io.flush', 'io.input', 'io.lines', 'io.open', 'io.output', 'io.popen', 'io.read',
 	'io.tmpfile', 'io.type', 'io.write', --

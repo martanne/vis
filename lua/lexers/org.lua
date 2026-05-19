@@ -1,4 +1,4 @@
--- Copyright 2025 Matěj Cepl (@mcepl everywhere). See LICENSE.
+-- Copyright 2025-2026 Matěj Cepl (@mcepl everywhere). See LICENSE.
 -- Copyright 2012 joten
 -- Org agenda LPeg lexer.
 

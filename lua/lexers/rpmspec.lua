@@ -1,4 +1,4 @@
--- Copyright 2022-2025 Matej Cepl mcepl.att.cepl.eu. See LICENSE.
+-- Copyright 2022-2026 Matej Cepl mcepl.att.cepl.eu. See LICENSE.
 
 local lexer = lexer
 local P, R, S = lpeg.P, lpeg.R, lpeg.S
