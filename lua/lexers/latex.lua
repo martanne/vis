@@ -1,4 +1,4 @@
--- Copyright 2006-2025 Mitchell. See LICENSE.
+-- Copyright 2006-2026 Mitchell. See LICENSE.
 -- Latex LPeg lexer.
 -- Modified by Brian Schott.
 -- Modified by Robert Gieseke.
@@ -16,7 +16,8 @@ local block_comment = lexer.range('\\begin' * P(' ')^0 * '{comment}',
 lex:add_rule('comment', lex:tag(lexer.COMMENT, line_comment + block_comment))
 
 -- Math environments.
-local math_word = word_match('align displaymath eqnarray equation gather math multline')
+local math_word = word_match(
+	'align alignat displaymath eqnarray equation flalign gather math multline')
 local math_begin_end = (P('begin') + P('end')) * P(' ')^0 * '{' * math_word * P('*')^-1 * '}'
 lex:add_rule('math', lex:tag('environment.math', '$' + '\\' * (S('[]()') + math_begin_end)))
 

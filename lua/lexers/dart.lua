@@ -1,4 +1,4 @@
--- Copyright 2013-2025 Mitchell. See LICENSE.
+-- Copyright 2013-2026 Mitchell. See LICENSE.
 -- Dart LPeg lexer.
 -- Written by Brian Schott (@Hackerpilot on Github).
 -- Migrated by Jamie Drinkell
@@ -12,8 +12,11 @@ local lex = lexer.new(...)
 lex:add_rule('keyword', lex:tag(lexer.KEYWORD, lex:word_match(lexer.KEYWORD)))
 -- Built-ins.
 lex:add_rule('constant', lex:tag(lexer.CONSTANT_BUILTIN, lex:word_match(lexer.CONSTANT_BUILTIN)))
--- Types.
-lex:add_rule('type', lex:tag(lexer.TYPE, lex:word_match(lexer.TYPE)))
+
+-- Types (including capitalized words).
+local capitalized_word = P('_')^-1 * lexer.upper * (lexer.alnum + '_')^0
+lex:add_rule('type', lex:tag(lexer.TYPE, lex:word_match(lexer.TYPE) + capitalized_word))
+
 -- Directives
 lex:add_rule('directive', lex:tag(lexer.PREPROCESSOR, lex:word_match(lexer.PREPROCESSOR)))
 
@@ -54,7 +57,8 @@ lex:set_word_list(lexer.KEYWORD, {
 	'covariant', 'default', 'do', 'else', 'enum', 'extends', 'factory', 'finally', 'for', 'get', 'if',
 	'implements', 'in', 'interface', 'is', 'mixin', 'on', 'operator', 'rethrow', 'return', 'set',
 	'super', 'switch', 'sync', 'this', 'throw', 'try', 'with', 'while', 'yield', --
-	'base', 'extension', 'external', 'late', 'of', 'required', 'sealed', 'when'
+	'base', 'extension', 'external', 'late', 'of', 'required', 'sealed', 'when', --
+	'typedef', 'void', 'var', 'const', 'final', 'new', 'static'
 })
 
 lex:set_word_list(lexer.PREPROCESSOR, {
@@ -66,9 +70,7 @@ lex:set_word_list(lexer.CONSTANT_BUILTIN, {
 })
 
 lex:set_word_list(lexer.TYPE, {
-	'const', 'dynamic', 'final', 'Function', 'new', 'static', 'typedef', 'var', 'void', 'int',
-	'double', 'String', 'bool', 'List', 'Set', 'Map', 'Future', 'Stream', 'Iterable', 'Object',
-	'Null', 'type'
+	'dynamic', 'int', 'double', 'bool', 'type'
 })
 
 lexer.property['scintillua.comment'] = '//'

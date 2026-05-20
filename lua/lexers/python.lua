@@ -1,4 +1,4 @@
--- Copyright 2006-2025 Mitchell. See LICENSE.
+-- Copyright 2006-2026 Mitchell. See LICENSE.
 -- Python LPeg lexer.
 
 local lexer = lexer
@@ -98,7 +98,7 @@ lex:set_word_list(lexer.FUNCTION_BUILTIN .. '.special', {
 })
 
 lex:set_word_list(lexer.CONSTANT_BUILTIN, {
-	'BaseException', 'Exception', 'Exception', 'ArithmeticError', 'BufferError', 'LookupError', --
+	'BaseException', 'Exception', 'ArithmeticError', 'BufferError', 'LookupError', --
 	'AssertionError', 'AttributeError', 'EOFError', 'FloatingPointError', 'GeneratorExit',
 	'ImportError', 'ModuleNotFoundError', 'IndexError', 'KeyError', 'KeyboardInterrupt',
 	'MemoryError', 'NameError', 'NotImplementedError', 'OSError', 'OverflowError', 'RecursionError',

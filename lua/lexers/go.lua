@@ -1,4 +1,4 @@
--- Copyright 2006-2025 Mitchell. See LICENSE.
+-- Copyright 2006-2026 Mitchell. See LICENSE.
 -- Go LPeg lexer.
 
 local lexer = lexer
@@ -62,8 +62,8 @@ lex:set_word_list(lexer.TYPE, {
 })
 
 lex:set_word_list(lexer.FUNCTION_BUILTIN, {
-	'append', 'cap', 'close', 'complex', 'copy', 'delete', 'imag', 'len', 'make', 'new', 'panic',
-	'print', 'println', 'real', 'recover'
+	'append', 'cap', 'clear', 'close', 'complex', 'copy', 'delete', 'imag', 'len', 'make', 'max',
+	'min', 'new', 'panic', 'print', 'println', 'real', 'recover'
 })
 
 lexer.property['scintillua.comment'] = '//'
