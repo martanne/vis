@@ -21,17 +21,19 @@ vis:map(vis.modes.INSERT, "<C-n>", function()
 		table.insert(candidates, file:content(sel.range))
 	end
 	vis:feedkeys("<Escape><Escape><vis-selections-restore>")
-	if #candidates == 1 and candidates[1] == "\n" then return end
-	candidates = table.concat(candidates, "\n")
 
-	local status, out, err = vis:pipe(candidates, "sort -u | vis-menu -b")
-	if status ~= 0 or not out then
-		if err then vis:info(err) end
-		return
+	if #candidates > 1 or (#candidates == 1 and candidates[1] ~= "\n") then
+		candidates = table.concat(candidates, "\n")
+		local status, out, err = vis:pipe(candidates, "sort -u | vis-menu -b")
+		if status == 0 and out then
+			out = out:sub(#prefix + 1, #out - 1)
+			file:insert(pos, out)
+			win.selection.pos = pos + #out
+		else
+			if err then vis:info(err) end
+		end
 	end
-	out = out:sub(#prefix + 1, #out - 1)
-	file:insert(pos, out)
-	win.selection.pos = pos + #out
+
 	-- restore mode to what it was on entry
 	vis.mode = vis.modes.INSERT
 end, "Complete word in file")
