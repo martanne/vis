@@ -64,11 +64,15 @@ static inline bool cell_color_equal(CellColor c1, CellColor c2) {
 	return c1.r == c2.r && c1.g == c2.g && c1.b == c2.b;
 }
 
-static CellColor color_rgb(Ui *ui, uint8_t r, uint8_t g, uint8_t b) {
+static CellColor
+color_rgb(Vis *vis, uint8_t r, uint8_t g, uint8_t b)
+{
 	return (CellColor){ .r = r, .g = g, .b = b, .index = (uint8_t)-1 };
 }
 
-static CellColor color_terminal(Ui *ui, uint8_t index) {
+static CellColor
+color_terminal(uint8_t index)
+{
 	return (CellColor){ .r = 0, .g = 0, .b = 0, .index = index };
 }
 

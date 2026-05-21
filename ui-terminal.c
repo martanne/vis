@@ -60,7 +60,7 @@ static void ui_window_move(Win *win, int x, int y) {
 	win->y = y;
 }
 
-static bool color_fromstring(Ui *ui, CellColor *color, const char *s)
+static bool color_fromstring(Vis *vis, CellColor *color, const char *s)
 {
 	if (!s)
 		return false;
@@ -73,13 +73,13 @@ static bool color_fromstring(Ui *ui, CellColor *color, const char *s)
 		int n = sscanf(s + 1, "%2hhx%2hhx%2hhx", &r, &g, &b);
 		if (n != 3)
 			return false;
-		*color = color_rgb(ui, r, g, b);
+		*color = color_rgb(vis, r, g, b);
 		return true;
 	} else if ('0' <= *s && *s <= '9') {
 		int index = atoi(s);
 		if (index <= 0 || index > 255)
 			return false;
-		*color = color_terminal(ui, index);
+		*color = color_terminal(index);
 		return true;
 	}
 
@@ -109,7 +109,6 @@ static bool color_fromstring(Ui *ui, CellColor *color, const char *s)
 }
 
 bool ui_style_define(Win *win, int id, const char *style) {
-	Ui *tui = &win->vis->ui;
 	if (id >= UI_STYLE_MAX)
 		return false;
 	if (!style)
@@ -151,13 +150,13 @@ bool ui_style_define(Win *win, int id, const char *style) {
 		} else if (!strcasecmp(option, "notblink")) {
 			cell_style.attr &= ~CELL_ATTR_BLINK;
 		} else if (!strcasecmp(option, "fore")) {
-			color_fromstring(&win->vis->ui, &cell_style.fg, value);
+			color_fromstring(win->vis, &cell_style.fg, value);
 		} else if (!strcasecmp(option, "back")) {
-			color_fromstring(&win->vis->ui, &cell_style.bg, value);
+			color_fromstring(win->vis, &cell_style.bg, value);
 		}
 		option = next;
 	}
-	tui->styles[win->id * UI_STYLE_MAX + id] = cell_style;
+	win->vis->ui.styles[win->id * UI_STYLE_MAX + id] = cell_style;
 	free(style_copy);
 	return true;
 }
@@ -388,7 +387,7 @@ ui_draw(Vis *vis)
 		else
 			dx += win->width + 1; /* +1 for '|' separator */
 	}
-	switch (tui->vis->prompt_state) {
+	switch (vis->prompt_state) {
 	case PROMPTSTATE_NONE:
 	case PROMPTSTATE_MULTILINE:
 		break;
@@ -401,7 +400,7 @@ ui_draw(Vis *vis)
 	}
 	if (tui->info[0])
 		ui_draw_string(tui, 0, tui->height-1, tui->info, 0, UI_STYLE_INFO);
-	vis_event_emit(tui->vis, VIS_EVENT_UI_DRAW);
+	vis_event_emit(vis, VIS_EVENT_UI_DRAW);
 	ui_term_backend_blit(tui);
 }
 
@@ -567,9 +566,9 @@ void ui_terminal_restore(Ui *tui) {
 	ui_term_backend_restore(tui);
 }
 
-bool ui_init(Ui *tui, Vis *vis) {
-	tui->vis = vis;
-
+VIS_INTERNAL bool
+ui_init(Ui *tui)
+{
 	setlocale(LC_CTYPE, "");
 
 	char *term = getenv("TERM");

@@ -77,11 +77,8 @@ typedef struct {
 	CellStyle style;    /* colors and attributes used to display this cell */
 } Cell;
 
-struct Win;
-struct Vis;
 // TODO(rnp): flatten UI into vis, only one exists and it must be in a vis context
 typedef struct {
-	struct Vis *vis;          /* editor instance to which this ui belongs */
 	char info[UI_MAX_WIDTH];  /* info message displayed at the bottom of the screen */
 	int width, height;        /* terminal dimensions available for all windows */
 	int cur_row, cur_col;     /* active cursor's (0-based) position on the terminal */
@@ -109,7 +106,7 @@ VIS_INTERNAL void ui_terminal_save(Ui*, bool fscr);
 VIS_INTERNAL void ui_terminal_suspend(Ui*);
 
 VIS_INTERNAL __attribute__((noreturn)) void ui_die(Ui *, const char *, va_list);
-VIS_INTERNAL bool ui_init(Ui *, Vis *);
+VIS_INTERNAL bool ui_init(Ui *);
 VIS_INTERNAL void ui_arrange(Vis *, enum UiLayout);
 VIS_INTERNAL void ui_draw(Vis *);
 VIS_INTERNAL void ui_info_hide(Ui *);
