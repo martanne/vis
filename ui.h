@@ -97,7 +97,6 @@ typedef struct {
 #include "vis.h"
 #include "text.h"
 
-VIS_INTERNAL bool ui_terminal_init(Ui*);
 VIS_INTERNAL int  ui_terminal_colors(void);
 VIS_INTERNAL void ui_terminal_free(Ui*);
 VIS_INTERNAL void ui_terminal_restore(Ui*);

@@ -191,17 +191,14 @@ void ui_terminal_resume(Ui *tui) {
 	termkey_start(tui->termkey);
 }
 
-static bool ui_term_backend_init(Ui *tui, char *term) {
-	ui_terminal_resume(tui);
-	return true;
-}
-
-static bool ui_backend_init(Ui *ui) {
-	Buffer *buf = calloc(1, sizeof(Buffer));
-	if (!buf)
-		return false;
-	ui->ctx = buf;
-	return true;
+static bool
+ui_backend_init(Ui *ui, char *term)
+{
+	ui->ctx = calloc(1, sizeof(Buffer));
+	bool result = ui->ctx != 0;
+	if (result)
+		ui_terminal_resume(ui);
+	return result;
 }
 
 static void ui_term_backend_free(Ui *tui) {

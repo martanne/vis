@@ -256,25 +256,27 @@ int ui_terminal_colors(void) {
 	return COLORS;
 }
 
-static bool ui_term_backend_init(Ui *tui, char *term) {
-	if (!newterm(term, stderr, stdin)) {
-		snprintf(tui->info, sizeof(tui->info), "Warning: unknown term `%s'", term);
-		if (!newterm(strstr(term, "-256color") ? "xterm-256color" : "xterm", stderr, stdin))
-			return false;
+static bool
+ui_backend_init(Ui *ui, char *term)
+{
+	bool result = newterm(term, stderr, stdin) != 0;
+	if (!result) {
+		snprintf(ui->info, sizeof(ui->info), "Warning: unknown term `%s'", term);
+		result = newterm(strstr(term, "-256color") ? "xterm-256color" : "xterm", stderr, stdin) != 0;
 	}
-	start_color();
-	use_default_colors();
-	cbreak();
-	noecho();
-	nonl();
-	keypad(stdscr, TRUE);
-	meta(stdscr, TRUE);
-	curs_set(0);
-	return true;
-}
 
-static bool ui_backend_init(Ui *ui) {
-	return true;
+	if (result) {
+		start_color();
+		use_default_colors();
+		cbreak();
+		noecho();
+		nonl();
+		keypad(stdscr, TRUE);
+		meta(stdscr, TRUE);
+		curs_set(0);
+	}
+
+	return result;
 }
 
 void ui_terminal_resume(Ui *term) { }

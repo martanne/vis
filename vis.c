@@ -543,9 +543,8 @@ bool vis_init(Vis *vis)
 	}
 
 	vis->exit_status = -1;
-	if (!ui_terminal_init(&vis->ui))
+	if (!ui_init(&vis->ui))
 		return false;
-	ui_init(&vis->ui);
 	vis->change_colors = true;
 	for (size_t i = 0; i < LENGTH(vis->registers); i++)
 		da_push(vis, vis->registers + i);

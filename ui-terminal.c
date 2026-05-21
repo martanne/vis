@@ -566,6 +566,16 @@ void ui_terminal_restore(Ui *tui) {
 	ui_term_backend_restore(tui);
 }
 
+VIS_INTERNAL void
+ui_terminal_free(Ui *tui)
+{
+	ui_term_backend_free(tui);
+	if (tui->termkey)
+		termkey_destroy(tui->termkey);
+	free(tui->cells);
+	free(tui->styles);
+}
+
 VIS_INTERNAL bool
 ui_init(Ui *tui)
 {
@@ -585,40 +595,14 @@ ui_init(Ui *tui)
 			if (!(tui->termkey = ui_termkey_reopen(tui, STDIN_FILENO)) && errno == ENXIO)
 				tui->termkey = termkey_new_abstract(term, UI_TERMKEY_FLAGS);
 		}
-		if (!tui->termkey)
-			goto err;
 	}
 
-	if (!ui_term_backend_init(tui, term))
-		goto err;
-	ui_resize(tui);
-	return true;
-err:
-	ui_die_msg(tui, "Failed to start curses interface: %s\n", errno != 0 ? strerror(errno) : "");
-	return false;
-}
+	tui->styles_size = UI_STYLE_MAX * sizeof(CellStyle);
+	tui->styles      = calloc(1, tui->styles_size);
+	tui->doupdate    = true;
 
-bool ui_terminal_init(Ui *tui) {
-	size_t styles_size = UI_STYLE_MAX * sizeof(CellStyle);
-	CellStyle *styles = calloc(1, styles_size);
-	if (!styles)
-		return false;
-	if (!ui_backend_init(tui)) {
-		free(styles);
-		return false;
-	}
-	tui->styles_size = styles_size;
-	tui->styles = styles;
-	tui->doupdate = true;
-	return true;
-}
-
-void ui_terminal_free(Ui *tui) {
-	if (!tui)
-		return;
-	ui_term_backend_free(tui);
-	if (tui->termkey)
-		termkey_destroy(tui->termkey);
-	free(tui->cells);
-	free(tui->styles);
+	bool result = tui->styles && tui->termkey && ui_backend_init(tui, term);
+	if (result) ui_resize(tui);
+	else        ui_terminal_free(tui);
+	return result;
 }
