@@ -163,3 +163,60 @@ absolute_path(const char *name)
 	}
 	return result;
 }
+
+VIS_INTERNAL IntegerConversion
+integer_conversion(str8 raw, IntegerConversionFlags flags)
+{
+	/* NOTE: place this on its own cacheline */
+	static alignas(64) int8_t lut[64] = {
+		 0,  1,  2,  3,  4,  5,  6,  7,  8,  9, -1, -1, -1, -1, -1, -1,
+		-1, 10, 11, 12, 13, 14, 15, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+		-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+		-1, 10, 11, 12, 13, 14, 15, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+	};
+
+	IntegerConversion result = {.unparsed = raw};
+
+	int64_t i = 0, scale = 1;
+	if (raw.length > 0 && raw.data[0] == '-') {
+		scale = -1;
+		i     =  1;
+	}
+
+	bool hex = (flags & IntegerConversionFlag_ForceHex) != 0;
+	if ((flags & IntegerConversionFlag_NoAutoHex) == 0) {
+		if (raw.length - i > 2 && raw.data[i] == '0' && (raw.data[1] == 'x' || raw.data[1] == 'X')) {
+			hex  = 1;
+			i   += 2;
+		} else if (raw.length - i > 1 && raw.data[i] == '#') {
+			hex  = 1;
+			i   += 1;
+		}
+	}
+
+	#define integer_conversion_body(radix, clamp) do {\
+		for (; i < raw.length; i++) {\
+			int64_t value = lut[MIN((uint8_t)(raw.data[i] - (uint8_t)'0'), clamp)];\
+			if (value < 0) break;\
+			if (result.as.U64 > (U64_MAX - (uint64_t)value) / radix) {\
+				result.result = IntegerConversionResult_OutOfRange;\
+				result.as.U64 = U64_MAX;\
+				break;\
+			}\
+			result.as.U64 = radix * result.as.U64 + (uint64_t)value;\
+		}\
+	} while (0)
+
+	if (hex) integer_conversion_body(16u, 63u);
+	else     integer_conversion_body(10u, 15u);
+
+	#undef integer_conversion_body
+
+	if (result.result != IntegerConversionResult_OutOfRange) {
+		result.unparsed = (str8){.length = raw.length - i, .data = raw.data + i};
+		result.result   = IntegerConversionResult_Success;
+		if (scale < 0) result.as.U64 = 0 - result.as.U64;
+	}
+
+	return result;
+}

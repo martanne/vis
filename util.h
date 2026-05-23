@@ -71,14 +71,22 @@
 #if defined(__clang__) || defined(__GNUC__)
 #define likely(x)    __builtin_expect(!!(x), 1)
 #define unlikely(x)  __builtin_expect(!!(x), 0)
+
+#define alignas(n)   __attribute__((aligned(n)))
+
 #else
 #define likely(x)    (x)
 #define unlikely(x)  (x)
+
+#define alignas(n)
 #endif
 
 #ifndef countof
-#define countof(a) (sizeof(a) / sizeof(*a))
+#define countof(a) (sizeof(a) / sizeof(*(a)))
 #endif
+
+#define U64_MAX    (0xFFFFFFFFFFFFFFFFull)
+#define S32_MAX    (0x7FFFFFFFl)
 
 #define LENGTH(x)  ((int)(sizeof (x) / sizeof *(x)))
 #define MIN(a, b)  ((a) > (b) ? (b) : (a))
@@ -129,5 +137,25 @@ typedef struct {
 	VisDACount  count;
 	VisDACount  capacity;
 } str8_list;
+
+typedef enum {
+	IntegerConversionResult_Invalid,
+	IntegerConversionResult_OutOfRange,
+	IntegerConversionResult_Success,
+} IntegerConversionResult;
+
+typedef enum {
+	IntegerConversionFlag_NoAutoHex = (1 << 0),
+	IntegerConversionFlag_ForceHex  = (1 << 1),
+} IntegerConversionFlags;
+
+typedef struct {
+	IntegerConversionResult result;
+	union {
+		uint64_t U64;
+		int64_t  S64;
+	} as;
+	str8 unparsed;
+} IntegerConversion;
 
 #endif /* UTIL_H */

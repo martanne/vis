@@ -285,38 +285,53 @@ err:
 	return ret;
 }
 
-static bool has_windows(Vis *vis) {
+VIS_INTERNAL bool
+vis_cmd_try_exit(Vis *vis, str8 exit_code_string)
+{
+	bool result = true;
 	for (Win *win = vis->windows; win; win = win->next) {
-		if (!win->file->internal)
-			return true;
+		if (!win->file->internal) {
+			result = false;
+			break;
+		}
 	}
-	return false;
+
+	if (result) {
+		int exit_code = EXIT_SUCCESS;
+		IntegerConversion integer = integer_conversion(exit_code_string, 0);
+		if (integer.result == IntegerConversionResult_Success)
+			exit_code = (int)integer.as.S64;
+		vis_exit(vis, exit_code);
+	}
+
+	return result;
 }
 
-static bool cmd_quit(Vis *vis, Win *win, Command *cmd, const char *argv[], Selection *sel, Filerange *range) {
-	if (cmd->flags != '!' && !vis_window_closable(win)) {
+VIS_INTERNAL bool
+vis_cmd_quit(Vis *vis, Win *win, Command *cmd, const char *argv[], Selection *sel, Filerange *range)
+{
+	bool result = cmd->flags == '!' || vis_window_closable(win);
+	if (result) {
+		vis_window_close(win);
+		vis_cmd_try_exit(vis, str8_from_c_str(argv[1]));
+	} else {
 		info_unsaved_changes(vis);
-		return false;
 	}
-	vis_window_close(win);
-	if (!has_windows(vis))
-		vis_exit(vis, argv[1] ? atoi(argv[1]) : EXIT_SUCCESS);
-	return true;
+	return result;
 }
 
-static bool cmd_qall(Vis *vis, Win *win, Command *cmd, const char *argv[], Selection *sel, Filerange *range) {
+VIS_INTERNAL bool
+vis_cmd_qall(Vis *vis, Win *win, Command *cmd, const char *argv[], Selection *sel, Filerange *range)
+{
 	for (Win *next, *win = vis->windows; win; win = next) {
 		next = win->next;
 		if (!win->file->internal && (!text_modified(win->file->text) || cmd->flags == '!'))
 			vis_window_close(win);
 	}
-	if (!has_windows(vis)) {
-		vis_exit(vis, argv[1] ? atoi(argv[1]) : EXIT_SUCCESS);
-		return true;
-	} else {
-		info_unsaved_changes(vis);
-		return false;
-	}
+
+	bool result = vis_cmd_try_exit(vis, str8_from_c_str(argv[1]));
+	if (!result) info_unsaved_changes(vis);
+	return result;
 }
 
 static bool cmd_split(Vis *vis, Win *win, Command *cmd, const char *argv[], Selection *sel, Filerange *range) {
@@ -361,7 +376,7 @@ static bool cmd_wq(Vis *vis, Win *win, Command *cmd, const char *argv[], Selecti
 	File *file = win->file;
 	bool unmodified = file->fd == -1 && !file->name && !text_modified(file->text);
 	if (unmodified || cmd_write(vis, win, cmd, argv, sel, range))
-		return cmd_quit(vis, win, cmd, (const char*[]){argv[0], NULL}, sel, range);
+		return vis_cmd_quit(vis, win, cmd, (const char*[]){argv[0], NULL}, sel, range);
 	return false;
 }
 

@@ -76,11 +76,11 @@ static bool color_fromstring(Vis *vis, CellColor *color, const char *s)
 		*color = color_rgb(vis, r, g, b);
 		return true;
 	} else if ('0' <= *s && *s <= '9') {
-		int index = atoi(s);
-		if (index <= 0 || index > 255)
-			return false;
-		*color = color_terminal(index);
-		return true;
+		IntegerConversion integer = integer_conversion(str8_from_c_str(s), 0);
+		bool result = integer.result == IntegerConversionResult_Success && integer.as.U64 <= 255;
+		if (result)
+			*color = color_terminal(integer.as.U64);
+		return result;
 	}
 
 	static const struct {

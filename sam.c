@@ -110,12 +110,12 @@ static bool cmd_substitute(Vis*, Win*, Command*, const char *argv[], Selection*,
 static bool cmd_write(Vis*, Win*, Command*, const char *argv[], Selection*, Filerange*);
 static bool cmd_read(Vis*, Win*, Command*, const char *argv[], Selection*, Filerange*);
 static bool cmd_edit(Vis*, Win*, Command*, const char *argv[], Selection*, Filerange*);
-static bool cmd_quit(Vis*, Win*, Command*, const char *argv[], Selection*, Filerange*);
+static bool vis_cmd_quit(Vis*, Win*, Command*, const char *argv[], Selection*, Filerange*);
 static bool cmd_cd(Vis*, Win*, Command*, const char *argv[], Selection*, Filerange*);
 /* vi(m) commands */
 static bool cmd_set(Vis*, Win*, Command*, const char *argv[], Selection*, Filerange*);
 static bool cmd_open(Vis*, Win*, Command*, const char *argv[], Selection*, Filerange*);
-static bool cmd_qall(Vis*, Win*, Command*, const char *argv[], Selection*, Filerange*);
+static bool vis_cmd_qall(Vis*, Win*, Command*, const char *argv[], Selection*, Filerange*);
 static bool cmd_split(Vis*, Win*, Command*, const char *argv[], Selection*, Filerange*);
 static bool cmd_vsplit(Vis*, Win*, Command*, const char *argv[], Selection*, Filerange*);
 static bool cmd_new(Vis*, Win*, Command*, const char *argv[], Selection*, Filerange*);
@@ -196,7 +196,7 @@ static const CommandDef cmds[] = {
 		CMD_ARGV|CMD_FORCE|CMD_ONCE|CMD_ADDRESS_NONE|CMD_DESTRUCTIVE, NULL, cmd_edit
 	}, {
 		"q",            VIS_HELP("Quit the current window")
-		CMD_ARGV|CMD_FORCE|CMD_ONCE|CMD_ADDRESS_NONE|CMD_DESTRUCTIVE, NULL, cmd_quit
+		CMD_ARGV|CMD_FORCE|CMD_ONCE|CMD_ADDRESS_NONE|CMD_DESTRUCTIVE, NULL, vis_cmd_quit
 	}, {
 		"cd",           VIS_HELP("Change directory")
 		CMD_ARGV|CMD_ONCE|CMD_ADDRESS_NONE, NULL, cmd_cd
@@ -228,7 +228,7 @@ static const CommandDef cmds[] = {
 		CMD_ARGV|CMD_ONCE|CMD_ADDRESS_NONE, NULL, cmd_open
 	}, {
 		"qall",         VIS_HELP("Exit vis")
-		CMD_ARGV|CMD_FORCE|CMD_ONCE|CMD_ADDRESS_NONE|CMD_DESTRUCTIVE, NULL, cmd_qall
+		CMD_ARGV|CMD_FORCE|CMD_ONCE|CMD_ADDRESS_NONE|CMD_DESTRUCTIVE, NULL, vis_cmd_qall
 	}, {
 		"set",          VIS_HELP("Set option")
 		CMD_ARGV|CMD_ONCE|CMD_ADDRESS_NONE, NULL, cmd_set
