@@ -1,17 +1,12 @@
 #include "util.h"
+#include "util.c"
 
 #include "tap.h"
-
-typedef struct Vis {
-	jmp_buf oom_jmp_buf;
-} Vis;
-
-#include "util.c"
 
 #include "buffer.c"
 #include "text.c"
 
-static Vis vis[1];
+static Vis *vis;
 
 #ifndef BUFSIZ
 #define BUFSIZ 1024
@@ -109,9 +104,6 @@ int main(int argc, char *argv[]) {
 	Text *txt;
 
 	plan_no_plan();
-
-	if (setjmp(vis->oom_jmp_buf))
-		return 1;
 
 	skip_if(TIS_INTERPRETER, 2, "I/O related") {
 

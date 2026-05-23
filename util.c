@@ -58,6 +58,11 @@ enum { DA_INITIAL_CAP = 16 };
       (da)->data + (da)->count++ \
     : (da)->data + (da)->count++)
 
+
+#ifndef VIS_CORE_H
+typedef struct Vis Vis;
+#define vis_oom(vis) abort()
+#endif
 static void *
 da_reserve_(Vis *vis, void *data, VisDACount *capacity, VisDACount needed, size_t size)
 {
@@ -67,7 +72,7 @@ da_reserve_(Vis *vis, void *data, VisDACount *capacity, VisDACount needed, size_
 	while (cap < needed) cap *= 2;
 	data = realloc(data, size * cap);
 	if (unlikely(data == 0))
-		longjmp(vis->oom_jmp_buf, 1);
+		vis_oom(vis);
 
 	memset((char *)data + (*capacity * size), 0, size * (cap - *capacity));
 	*capacity = cap;

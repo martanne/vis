@@ -47,8 +47,9 @@
 #include <errno.h>
 
 #define CONTROL(ch)   (ch ^ 0x40)
-#define MIN(a,b)      ((a) < (b) ? (a) : (b))
-#define MAX(a,b)      ((a) > (b) ? (a) : (b))
+
+#include "util.h"
+#include "util.c"
 
 typedef enum {
 	C_Normal,
@@ -629,10 +630,10 @@ main(int argc, char **argv) {
 			if (prompt && !prompt[0])
 				prompt = NULL;
 		} else if (!strcmp(argv[i], "-l")) {
-			errno = 0;
-			lines = strtoul(argv[++i], NULL, 10);
-			if (errno)
+			IntegerConversion integer = integer_conversion(str8_from_c_str(argv[++i]), 0);
+			if (integer.result != IntegerConversionResult_Success)
 				usage();
+			lines = integer.as.U64;
 		} else {
 			usage();
 		}

@@ -38,7 +38,7 @@ vis: config.h
 	${CC} ${CFLAGS} ${CFLAGS_VIS} ${CFLAGS_EXTRA} main.c ${LDFLAGS} ${LDFLAGS_VIS} ${LDFLAGS_EXTRA} -o $@
 
 vis-menu: vis-menu.c
-	${CC} ${CFLAGS} ${CFLAGS_AUTO} ${CFLAGS_STD} ${CFLAGS_EXTRA} $< ${LDFLAGS} ${LDFLAGS_STD} ${LDFLAGS_AUTO} ${LDFLAGS_EXTRA} -o $@
+	${CC} ${CFLAGS} ${CFLAGS_AUTO} ${CFLAGS_STD} ${CFLAGS_EXTRA} -Wno-unused-function $< ${LDFLAGS} ${LDFLAGS_STD} ${LDFLAGS_AUTO} ${LDFLAGS_EXTRA} -o $@
 
 vis-digraph: vis-digraph.c
 	${CC} ${CFLAGS} ${CFLAGS_AUTO} ${CFLAGS_STD} ${CFLAGS_EXTRA} $< ${LDFLAGS} ${LDFLAGS_STD} ${LDFLAGS_AUTO} ${LDFLAGS_EXTRA} -o $@

@@ -331,4 +331,6 @@ VIS_INTERNAL bool register_slot_put_range(Vis*, Register*, size_t slot, Text*, F
 VIS_INTERNAL size_t vis_register_count(Vis*, Register*);
 VIS_INTERNAL bool register_resize(Register*, size_t count);
 
+#define vis_oom(vis) longjmp((vis)->oom_jmp_buf, 1)
+
 #endif
