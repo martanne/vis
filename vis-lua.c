@@ -1763,9 +1763,36 @@ vis_lua_ui_newindex(lua_State *L)
 	return newindex_common(L);
 }
 
+VIS_INTERNAL void
+vis_lua_style_define(lua_State *L, Vis *vis)
+{
+	uint16_t style_id = luaL_checkinteger(L, 2);
+	str8     style    = vis_lua_check_str8(L, 3);
+	lua_pushboolean(L, vis_ui_style_define(vis, style_id, style));
+}
+
+/***
+ * Define a display style.
+ * @function style_define
+ * @tparam int id the style id to use
+ * @tparam string style the style definition
+ * @treturn bool whether the style definition has been successfully
+ *  associated with the given id
+ * @see style
+ * @usage
+ * ui:style_define(ui.STYLE_DEFAULT, "fore:red")
+ */
+VIS_INTERNAL int
+vis_lua_ui_style_define(lua_State *L)
+{
+	vis_lua_style_define(L, lua_touserdata(L, lua_upvalueindex(1)));
+	return 1;
+}
+
 static const struct luaL_Reg vis_lua_ui_funcs[] = {
-	{"__index",    vis_lua_ui_index   },
-	{"__newindex", vis_lua_ui_newindex},
+	{"__index",      vis_lua_ui_index       },
+	{"__newindex",   vis_lua_ui_newindex    },
+	{"style_define", vis_lua_ui_style_define},
 	{0},
 };
 
@@ -2027,21 +2054,21 @@ static int window_unmap(lua_State *L) {
 }
 
 /***
- * Define a display style.
+ * Define a display style. Backward compatible name for Ui:style_define.
  * @function style_define
  * @tparam int id the style id to use
  * @tparam string style the style definition
  * @treturn bool whether the style definition has been successfully
  *  associated with the given id
  * @see style
+ * @see Ui:style_define
  * @usage
  * win:style_define(win.STYLE_DEFAULT, "fore:red")
  */
-static int window_style_define(lua_State *L) {
-	Win *win = obj_ref_check(L, 1, VIS_LUA_TYPE_WINDOW);
-	enum UiStyle id = luaL_checkinteger(L, 2);
-	str8 style = vis_lua_check_str8(L, 3);
-	lua_pushboolean(L, vis_ui_style_define(win, id, style));
+VIS_INTERNAL int
+vis_lua_window_style_define(lua_State *L)
+{
+	vis_lua_style_define(L, ((Win *)obj_ref_check(L, 1, VIS_LUA_TYPE_WINDOW))->vis);
 	return 1;
 }
 
@@ -2058,13 +2085,15 @@ static int window_style_define(lua_State *L) {
  * @usage
  * win:style(win.STYLE_DEFAULT, 0, 10)
  */
-static int window_style(lua_State *L) {
-	Win *win = obj_ref_check(L, 1, VIS_LUA_TYPE_WINDOW);
-	enum UiStyle style = luaL_checkinteger(L, 2);
-	size_t start = checkpos(L, 3);
-	size_t end = checkpos(L, 4);
+VIS_INTERNAL int
+vis_lua_window_style(lua_State *L)
+{
+	Win *win              = obj_ref_check(L, 1, VIS_LUA_TYPE_WINDOW);
+	uint16_t style_id     = luaL_checkinteger(L, 2);
+	size_t start          = checkpos(L, 3);
+	size_t end            = checkpos(L, 4);
 	bool keep_non_default = lua_isboolean(L, 5) && lua_toboolean(L, 5);
-	win_style(win, style, start, end, keep_non_default);
+	vis_win_style(win, start, end, style_id, keep_non_default);
 	return 0;
 }
 
@@ -2085,14 +2114,15 @@ static int window_style(lua_State *L) {
  * win:style_pos(win.STYLE_COLOR_COLUMN, 0, win.height - 1)
  * -- Styles the first character of the status bar (or the last line, if disabled)
  */
-static int window_style_pos(lua_State *L) {
-	Win *win = obj_ref_check(L, 1, VIS_LUA_TYPE_WINDOW);
-	enum UiStyle style = luaL_checkinteger(L, 2);
-	size_t x = checkpos(L, 3);
-	size_t y = checkpos(L, 4);
+VIS_INTERNAL int
+vis_lua_window_style_pos(lua_State *L)
+{
+	Win *win              = obj_ref_check(L, 1, VIS_LUA_TYPE_WINDOW);
+	uint16_t style_id     = luaL_checkinteger(L, 2);
+	size_t x              = checkpos(L, 3);
+	size_t y              = checkpos(L, 4);
 	bool keep_non_default = lua_isboolean(L, 5) && lua_toboolean(L, 5);
-	bool ret = ui_window_style_set_pos(win, (int)x, (int)y, style, keep_non_default);
-	lua_pushboolean(L, ret);
+	lua_pushboolean(L, vis_ui_window_style_set_pos(win, (int)x, (int)y, style_id, keep_non_default));
 	return 1;
 }
 
@@ -2163,9 +2193,9 @@ static const struct luaL_Reg window_funcs[] = {
 	{ "selections_iterator", window_selections_iterator },
 	{ "map", window_map },
 	{ "unmap", window_unmap },
-	{ "style_define", window_style_define },
-	{ "style", window_style },
-	{ "style_pos", window_style_pos },
+	{ "style_define", vis_lua_window_style_define },
+	{ "style", vis_lua_window_style },
+	{ "style_pos", vis_lua_window_style_pos },
 	{ "status", window_status },
 	{ "draw", window_draw },
 	{ "close", window_close },
@@ -3318,10 +3348,10 @@ static void vis_lua_init(Vis *vis)
 	luaL_setfuncs(L, window_funcs, 0);
 
 	const struct {
-		enum UiStyle id;
+		VisUiStyle id;
 		const char *name;
 	} styles[] = {
-		{ UI_STYLE_LEXER_MAX,         "STYLE_LEXER_MAX"         },
+		{ UI_STYLE_MAX,               "STYLE_MAX"               },
 		{ UI_STYLE_DEFAULT,           "STYLE_DEFAULT"           },
 		{ UI_STYLE_CURSOR,            "STYLE_CURSOR"            },
 		{ UI_STYLE_CURSOR_PRIMARY,    "STYLE_CURSOR_PRIMARY"    },
@@ -3338,10 +3368,13 @@ static void vis_lua_init(Vis *vis)
 		{ UI_STYLE_WHITESPACE,        "STYLE_WHITESPACE"        },
 	};
 
-	for (size_t i = 0; i < LENGTH(styles); i++) {
+	for (uint64_t i = 0; i < countof(styles); i++) {
 		lua_pushinteger(L, styles[i].id);
 		lua_setfield(L, -2, styles[i].name);
 	}
+	// NOTE(rnp): for backwards compatibility, not visible in Ui
+	lua_pushinteger(L, UI_STYLE_MAX);
+	lua_setfield(L, -2, "STYLE_LEXER_MAX");
 
 	obj_type_new(L, str8(VIS_LUA_TYPE_WIN_OPTS));
 	luaL_setfuncs(L, window_option_funcs, 0);
@@ -3383,6 +3416,35 @@ static void vis_lua_init(Vis *vis)
 			lua_setfield(L, -2, layouts[i].name);
 		}
 		lua_setfield(L, -2, "layouts");
+
+		lua_newtable(L);
+		{
+			const struct {
+				VisUiStyle id;
+				const char *name;
+			} ui_styles[] = {
+				{UI_STYLE_MAX,               "MAX"              },
+				{UI_STYLE_DEFAULT,           "DEFAULT"          },
+				{UI_STYLE_CURSOR,            "CURSOR"           },
+				{UI_STYLE_CURSOR_PRIMARY,    "CURSOR_PRIMARY"   },
+				{UI_STYLE_CURSOR_LINE,       "CURSOR_LINE"      },
+				{UI_STYLE_SELECTION,         "SELECTION"        },
+				{UI_STYLE_LINENUMBER,        "LINENUMBER"       },
+				{UI_STYLE_LINENUMBER_CURSOR, "LINENUMBER_CURSOR"},
+				{UI_STYLE_COLOR_COLUMN,      "COLOR_COLUMN"     },
+				{UI_STYLE_STATUS,            "STATUS"           },
+				{UI_STYLE_STATUS_FOCUSED,    "STATUS_FOCUSED"   },
+				{UI_STYLE_SEPARATOR,         "SEPARATOR"        },
+				{UI_STYLE_INFO,              "INFO"             },
+				{UI_STYLE_EOF,               "EOF"              },
+				{UI_STYLE_WHITESPACE,        "WHITESPACE"       },
+			};
+
+			for (uint64_t i = 0; i < countof(ui_styles); i++) {
+				lua_pushinteger(L, ui_styles[i].id);
+				lua_setfield(L, -2, ui_styles[i].name);
+			}
+		} lua_setfield(L, -2, "style_ids");
 
 		// NOTE: metatable
 		lua_newtable(L);

@@ -247,21 +247,6 @@ vis.types.window.set_syntax = function(win, syntax)
 
 	local lexers = vis.lexers
 
-	win:style_define(win.STYLE_DEFAULT, lexers.STYLE_DEFAULT or '')
-	win:style_define(win.STYLE_CURSOR, lexers.STYLE_CURSOR or '')
-	win:style_define(win.STYLE_CURSOR_PRIMARY, lexers.STYLE_CURSOR_PRIMARY or '')
-	win:style_define(win.STYLE_CURSOR_LINE, lexers.STYLE_CURSOR_LINE or '')
-	win:style_define(win.STYLE_SELECTION, lexers.STYLE_SELECTION or '')
-	win:style_define(win.STYLE_LINENUMBER, lexers.STYLE_LINENUMBER or '')
-	win:style_define(win.STYLE_LINENUMBER_CURSOR, lexers.STYLE_LINENUMBER_CURSOR or '')
-	win:style_define(win.STYLE_COLOR_COLUMN, lexers.STYLE_COLOR_COLUMN or '')
-	win:style_define(win.STYLE_STATUS, lexers.STYLE_STATUS or '')
-	win:style_define(win.STYLE_STATUS_FOCUSED, lexers.STYLE_STATUS_FOCUSED or '')
-	win:style_define(win.STYLE_SEPARATOR, lexers.STYLE_SEPARATOR or '')
-	win:style_define(win.STYLE_INFO, lexers.STYLE_INFO or '')
-	win:style_define(win.STYLE_EOF, lexers.STYLE_EOF or '')
-	win:style_define(win.STYLE_WHITESPACE, lexers.STYLE_WHITESPACE or '')
-
 	if syntax == nil or syntax == 'off' then
 		win.syntax = nil
 		return true
@@ -272,6 +257,9 @@ vis.types.window.set_syntax = function(win, syntax)
 	local lexer = lexers.load(syntax)
 	if not lexer then return false end
 
+	local ui = vis.ui
+	-- TODO(rnp): register an ID when _TAGS table is filled in
+	local base_index = ui.style_ids.WHITESPACE + 1
 	for id, token_name in ipairs(lexer._TAGS) do
 		local style = lexers['STYLE_' .. token_name:upper():gsub("%.", "_")] or ''
 		if type(style) == 'table' then
@@ -281,7 +269,7 @@ vis.types.window.set_syntax = function(win, syntax)
 			if style.back then s = (s and s .. ',' or '') .. 'back:' .. tostring(style.back) end
 			style = s
 		end
-		if style ~= nil then win:style_define(id, style) end
+		if style ~= nil then ui:style_define(base_index + id, style) end
 	end
 
 	return true

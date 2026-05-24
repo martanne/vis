@@ -205,7 +205,7 @@ view_blank_cell(View *view)
 {
 	// TODO(rnp): cleanup win and view should be merged
 	Win *win = (Win *)((char *)view - offsetof(Win, view));
-	Cell result = {.data = " ", .style = win->vis->ui.styles[win->id * UI_STYLE_MAX + UI_STYLE_DEFAULT]};
+	Cell result = {.data = " ", .style = win->vis->ui.styles[UI_STYLE_DEFAULT]};
 	return result;
 }
 
@@ -263,7 +263,7 @@ static bool view_add_cell(View *view, const Cell *cell) {
 
 static bool view_expand_tab(View *view, Cell *cell) {
 	Win *win = (Win *)((char *)view - offsetof(Win, view));
-	ui_window_style_set(&win->vis->ui, win->id, cell, UI_STYLE_WHITESPACE, false);
+	vis_ui_window_style_set(&win->vis->ui, cell, UI_STYLE_WHITESPACE, false);
 
 	cell->width = 1;
 
@@ -287,7 +287,7 @@ static bool view_expand_newline(View *view, Cell *cell) {
 	const char *symbol = view->symbols[SYNTAX_SYMBOL_EOL];
 
 	Win *win = (Win *)((char *)view - offsetof(Win, view));
-	ui_window_style_set(&win->vis->ui, win->id, cell, UI_STYLE_WHITESPACE, false);
+	vis_ui_window_style_set(&win->vis->ui, cell, UI_STYLE_WHITESPACE, false);
 
 	strncpy(cell->data, symbol, sizeof(cell->data) - 1);
 	cell->width = 1;
@@ -303,7 +303,7 @@ static bool view_expand_newline(View *view, Cell *cell) {
 
 static bool view_expand_space(View *view, Cell *cell) {
 	Win *win = (Win *)((char *)view - offsetof(Win, view));
-	ui_window_style_set(&win->vis->ui, win->id, cell, UI_STYLE_WHITESPACE, false);
+	vis_ui_window_style_set(&win->vis->ui, cell, UI_STYLE_WHITESPACE, false);
 
 	const char *symbol = view->symbols[SYNTAX_SYMBOL_SPACE];
 	strncpy(cell->data, symbol, sizeof(cell->data) - 1);
@@ -1333,7 +1333,9 @@ void view_selections_normalize(View *view) {
 		view_selections_set(prev, range_prev);
 }
 
-void win_style(Win *win, enum UiStyle style, size_t start, size_t end, bool keep_non_default) {
+VIS_INTERNAL void
+vis_win_style(Win *win, size_t start, size_t end, uint16_t style_id, bool keep_non_default)
+{
 	View *view = &win->view;
 	if (end < view->start || start > view->end)
 		return;
@@ -1363,13 +1365,13 @@ void win_style(Win *win, enum UiStyle style, size_t start, size_t end, bool keep
 		// NOTE(rnp): first style at most until the end of the real line contents
 		while (pos <= end && col < line->width) {
 			pos += line->cells[col].len;
-			ui_window_style_set(&win->vis->ui, win->id, line->cells + col++, style, keep_non_default);
+			vis_ui_window_style_set(&win->vis->ui, line->cells + col++, style_id, keep_non_default);
 		}
 
 		// NOTE(rnp): if the range extends to another line continue styling the full view width
 		if (pos < end) while (col < view_width)
 		{
-			ui_window_style_set(&win->vis->ui, win->id, line->cells + col++, style, keep_non_default);
+			vis_ui_window_style_set(&win->vis->ui, line->cells + col++, style_id, keep_non_default);
 		}
 
 		col = 0;

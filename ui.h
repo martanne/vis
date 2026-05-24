@@ -30,8 +30,7 @@ enum UiOption {
 	UI_OPTION_LARGE_FILE = 1 << 10,
 };
 
-enum UiStyle {
-	UI_STYLE_LEXER_MAX = 64,
+typedef enum {
 	UI_STYLE_DEFAULT,
 	UI_STYLE_CURSOR,
 	UI_STYLE_CURSOR_PRIMARY,
@@ -46,8 +45,10 @@ enum UiStyle {
 	UI_STYLE_INFO,
 	UI_STYLE_EOF,
 	UI_STYLE_WHITESPACE,
-	UI_STYLE_MAX,
-};
+	UI_STYLE_LAST = UI_STYLE_WHITESPACE,
+	/* NOTE: user/lexer styles */
+	UI_STYLE_MAX = 512,
+} VisUiStyle;
 
 #if CONFIG_CURSES
 typedef uint64_t CellAttr;
@@ -88,15 +89,16 @@ typedef struct {
 	TermKey termkey;           /* libtermkey instance to handle keyboard input (stdin or /dev/tty) */
 	VisCellBuffer cell_buffer; /* 2D grid of cells, at least as large as current terminal size */
 	void *ctx;                 /* Any additional data needed by the backend */
-	size_t ids;                /* bit mask of in use window ids */
-	size_t styles_size;        /* #bytes allocated for styles array */
-	CellStyle *styles;         /* each window has UI_STYLE_MAX different style definitions */
 	int width, height;         /* terminal dimensions available for all windows */
 	int cur_row, cur_col;      /* active cursor's (0-based) position on the terminal */
 	enum UiLayout layout;      /* whether windows are displayed horizontally or vertically */
 	bool doupdate;             /* Whether to update the screen after refreshing contents */
 
 	str8 term;                 /* selected value for TERM (0 terminated) */
+
+	// static_assert(U16_MAX <= UI_STYLE_MAX)
+	u16 style_count;           /* count of styles currently in use */
+	CellStyle styles[UI_STYLE_MAX];
 } Ui;
 
 #include "view.h"
@@ -122,9 +124,9 @@ VIS_INTERNAL bool ui_window_init(Ui *, Win *, enum UiOption);
 
 VIS_INTERNAL bool vis_ui_getkey(Vis *, TermKeyKey *);
 
-VIS_INTERNAL bool vis_ui_style_define(Win *win, int id, str8 style);
-VIS_INTERNAL void ui_window_style_set(Ui *ui, int win_id, Cell *cell, enum UiStyle id, bool keep_non_default);
-VIS_INTERNAL bool ui_window_style_set_pos(Win *win, int x, int y, enum UiStyle id, bool keep_non_default);
+VIS_INTERNAL bool vis_ui_style_define(Vis *, uint16_t style_id, str8 style);
+VIS_INTERNAL void vis_ui_window_style_set(Ui *ui, Cell *cell, uint16_t style_id, bool keep_non_default);
+VIS_INTERNAL bool vis_ui_window_style_set_pos(Win *win, int x, int y, uint16_t style_id, bool keep_non_default);
 
 VIS_INTERNAL void ui_window_options_set(Win *win, enum UiOption options);
 VIS_INTERNAL void ui_window_status(Vis *vis, Win *win, const char *status);
