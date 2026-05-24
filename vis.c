@@ -542,7 +542,8 @@ bool vis_init(Vis *vis)
 		return false;
 	}
 
-	vis->exit_status = -1;
+	vis->exit_status  = -1;
+	vis->escape_delay = 50;
 	if (!ui_init(&vis->ui))
 		return false;
 	vis->change_colors = true;
