@@ -1176,7 +1176,7 @@ void vis_keys_feed(Vis *vis, const char *input) {
 
 static const char *getkey(Vis *vis) {
 	TermKeyKey key = { 0 };
-	if (!ui_getkey(&vis->ui, &key))
+	if (!vis_ui_getkey(vis, &key))
 		return NULL;
 	ui_info_hide(&vis->ui);
 	bool use_keymap = vis->mode->id != VIS_MODE_INSERT &&

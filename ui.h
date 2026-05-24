@@ -114,7 +114,7 @@ VIS_INTERNAL void ui_resize(Ui*);
 
 VIS_INTERNAL bool ui_window_init(Ui *, Win *, enum UiOption);
 
-VIS_INTERNAL bool ui_getkey(Ui *, TermKeyKey *);
+VIS_INTERNAL bool vis_ui_getkey(Vis *, TermKeyKey *);
 
 VIS_INTERNAL bool vis_ui_style_define(Win *win, int id, str8 style);
 VIS_INTERNAL void ui_window_style_set(Ui *ui, int win_id, Cell *cell, enum UiStyle id, bool keep_non_default);

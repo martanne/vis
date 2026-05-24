@@ -541,14 +541,16 @@ void ui_terminal_suspend(Ui *tui) {
 	kill(0, SIGTSTP);
 }
 
-bool ui_getkey(Ui *tui, TermKeyKey *key) {
-	TermKeyResult ret = termkey_getkey(tui->termkey, key);
+VIS_INTERNAL bool
+vis_ui_getkey(Vis *vis, TermKeyKey *key)
+{
+	TermKeyResult ret = termkey_getkey(vis->ui.termkey, key);
 
 	if (ret == TERMKEY_RES_EOF) {
-		termkey_destroy(tui->termkey);
+		termkey_destroy(vis->ui.termkey);
 		errno = 0;
-		if (!(tui->termkey = ui_termkey_reopen(tui, STDIN_FILENO)))
-			ui_die_msg(tui, "Failed to re-open stdin as /dev/tty: %s\n", errno != 0 ? strerror(errno) : "");
+		if (!(vis->ui.termkey = ui_termkey_reopen(&vis->ui, STDIN_FILENO)))
+			ui_die_msg(&vis->ui, "Failed to re-open stdin as /dev/tty: %s\n", errno != 0 ? strerror(errno) : "");
 		return false;
 	}
 
@@ -556,8 +558,8 @@ bool ui_getkey(Ui *tui, TermKeyKey *key) {
 		struct pollfd fd;
 		fd.fd = STDIN_FILENO;
 		fd.events = POLLIN;
-		if (poll(&fd, 1, termkey_get_waittime(tui->termkey)) == 0)
-			ret = termkey_getkey_force(tui->termkey, key);
+		if (poll(&fd, 1, vis->escape_delay) == 0)
+			ret = termkey_getkey_force(vis->ui.termkey, key);
 	}
 
 	return ret == TERMKEY_RES_KEY;

@@ -204,6 +204,7 @@ struct Vis {
 	bool change_colors;                  /* whether to adjust 256 color palette for true colors */
 	bool ignorecase;                     /* whether to ignore case when searching */
 	bool keymap_disabled;                /* ignore key map for next key press, gets automatically re-enabled */
+	int  escape_delay;                   /* ms to wait for new input when partial escape sequence is detected */
 	char *shell;                         /* shell used to launch external commands */
 	Map *cmds;                           /* ":"-commands, used for unique prefix queries */
 	Map *usercmds;                       /* user registered ":"-commands */
