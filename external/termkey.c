@@ -1607,7 +1607,7 @@ termkey_register_c0(TermKey *tk, TermKeySym sym, unsigned char ctrl)
 	tk->c0[ctrl].modifier_mask = 0;
 }
 
-static int
+static void
 termkey_init(TermKey *tk, const char *term)
 {
 	termkey_register_c0(tk, TERMKEY_SYM_TAB,    0x09);
@@ -1623,12 +1623,6 @@ termkey_init(TermKey *tk, const char *term)
 		else       tail->next  = termkey_drivers + i;
 		tail = termkey_drivers + i;
 	}
-
-	if (!tk->drivers) {
-		errno = ENOENT;
-		return 0;
-	}
-	return 1;
 }
 
 TERMKEY_EXPORT int
@@ -1713,9 +1707,8 @@ termkey_new(int fd, int flags)
 		}
 
 		termkey_set_flags(result, flags);
-
-		const char *term = getenv("TERM");
-		if (!termkey_init(result, term) || ((flags & TERMKEY_FLAG_NOSTART) == 0 && !termkey_start(result))) {
+		termkey_init(result, getenv("TERM"));
+		if ((flags & TERMKEY_FLAG_NOSTART) == 0 && !termkey_start(result)) {
 			free(result);
 			result = 0;
 		}
@@ -1730,10 +1723,8 @@ termkey_new_abstract(const char *term, int flags)
 	if (result) {
 		result->fd = -1;
 		termkey_set_flags(result, flags);
-
-		if (!termkey_init(result, term) ||
-		    ((flags & TERMKEY_FLAG_NOSTART) != 0 && !termkey_start(result)))
-		{
+		termkey_init(result, term);
+		if ((flags & TERMKEY_FLAG_NOSTART) != 0 && !termkey_start(result)) {
 			free(result);
 			result = 0;
 		}
