@@ -2,16 +2,6 @@
 #include "vis-core.h"
 #include "text.h"
 
-#ifndef DEBUG_UI
-#define DEBUG_UI 0
-#endif
-
-#if DEBUG_UI
-#define debug(...) do { printf(__VA_ARGS__); fflush(stdout); } while (0)
-#else
-#define debug(...) do { } while (0)
-#endif
-
 // TODO(rnp): if we remove curses backend we should do a single mapping
 // for both front and back buffers.
 VIS_INTERNAL bool
@@ -62,7 +52,6 @@ static void ui_die_msg(Ui *ui, const char *msg, ...) {
 }
 
 static void ui_window_resize(Win *win, int width, int height) {
-	debug("ui-win-resize[%s]: %dx%d\n", win->file->name ? win->file->name : "noname", width, height);
 	bool status = win->options & UI_OPTION_STATUSBAR;
 	win->width  = width;
 	win->height = height;
@@ -70,7 +59,6 @@ static void ui_window_resize(Win *win, int width, int height) {
 }
 
 static void ui_window_move(Win *win, int x, int y) {
-	debug("ui-win-move[%s]: (%d, %d)\n", win->file->name ? win->file->name : "noname", x, y);
 	win->x = x;
 	win->y = y;
 }
@@ -128,9 +116,10 @@ vis_ui_color_from_str8(Vis *vis, CellColor *color, str8 s)
 }
 
 VIS_INTERNAL bool
-vis_ui_style_define(Win *win, int id, str8 style)
+vis_ui_style_define(Vis *vis, uint16_t style_id, str8 style)
 {
-	if (id >= UI_STYLE_MAX)
+	// TODO(rnp): if (style_id >= vis->ui.style_count)
+	if (style_id >= UI_STYLE_MAX)
 		return false;
 	if (style.length <= 0)
 		return true;
@@ -173,37 +162,41 @@ vis_ui_style_define(Win *win, int id, str8 style)
 		} else if (str8_case_ignore_equal(key, str8("notblink"))) {
 			cell_style.attr &= ~CELL_ATTR_BLINK;
 		} else if (str8_case_ignore_equal(key, str8("fore"))) {
-			vis_ui_color_from_str8(win->vis, &cell_style.fg, value);
+			vis_ui_color_from_str8(vis, &cell_style.fg, value);
 		} else if (str8_case_ignore_equal(key, str8("back"))) {
-			vis_ui_color_from_str8(win->vis, &cell_style.bg, value);
+			vis_ui_color_from_str8(vis, &cell_style.bg, value);
 		}
 	}
-	win->vis->ui.styles[win->id * UI_STYLE_MAX + id] = cell_style;
+	vis->ui.styles[style_id] = cell_style;
 
 	return true;
 }
 
-static void ui_draw_line(Ui *tui, int x, int y, char c, enum UiStyle style_id) {
+VIS_INTERNAL void
+ui_draw_line(Ui *tui, int x, int y, char c, uint16_t style_id)
+{
+	assert(style_id <= tui->style_count);
 	if (x < 0 || x >= tui->width || y < 0 || y >= tui->height)
 		return;
-	CellStyle style = tui->styles[style_id];
+
 	Cell *cells = tui->cell_buffer.cells + y * tui->width;
 	while (x < tui->width) {
 		cells[x].data[0] = c;
-		cells[x].data[1] = '\0';
-		cells[x].style = style;
+		cells[x].data[1] = 0;
+		cells[x].style   = tui->styles[style_id];
 		x++;
 	}
 }
 
-static void ui_draw_string(Ui *tui, int x, int y, const char *str, int win_id, enum UiStyle style_id) {
-	debug("draw-string: [%d][%d]\n", y, x);
+VIS_INTERNAL void
+ui_draw_string(Ui *tui, int x, int y, const char *str, uint16_t style_id)
+{
 	if (x < 0 || x >= tui->width || y < 0 || y >= tui->height)
 		return;
 
 	/* NOTE: the style that style_id refers to may contain unset values; we need to properly
 	 * clear the cell first then go through ui_window_style_set to get the correct style */
-	CellStyle default_style = tui->styles[UI_STYLE_MAX * win_id + UI_STYLE_DEFAULT];
+	CellStyle default_style = tui->styles[UI_STYLE_DEFAULT];
 	// FIXME: does not handle double width characters etc, share code with view.c?
 	Cell *cells = tui->cell_buffer.cells + y * tui->width;
 	const size_t cell_size = sizeof(cells[0].data)-1;
@@ -216,7 +209,7 @@ static void ui_draw_string(Ui *tui, int x, int y, const char *str, int win_id, e
 		strncpy(cells[x].data, str, len);
 		cells[x].data[len] = '\0';
 		cells[x].style = default_style;
-		ui_window_style_set(tui, win_id, cells + x++, style_id, false);
+		vis_ui_window_style_set(tui, cells + x++, style_id, false);
 	}
 }
 
@@ -288,25 +281,27 @@ static void ui_window_draw(Win *win) {
 
 			u16 style_id = (l->lineno == cursor_lineno) ? UI_STYLE_LINENUMBER_CURSOR : UI_STYLE_LINENUMBER;
 			for (s32 xi = 0; xi < padding; xi++) {
-				cells[x + xi] = (Cell){.data = " ", .len = 1, .width = 1};
-				cells[x + xi].style = ui->styles[UI_STYLE_MAX * win->id + UI_STYLE_DEFAULT];
-				ui_window_style_set(ui, win->id, cells + x + xi, style_id, false);
+				cells[x + xi] = (Cell){.data = " ", .len = 1, .width = 1, .style = ui->styles[UI_STYLE_DEFAULT]};
+				vis_ui_window_style_set(ui, cells + x + xi, style_id, false);
 			}
-			ui_draw_string(ui, x + padding, y, sidebar_buffer, win->id, style_id);
+			ui_draw_string(ui, x + padding, y, sidebar_buffer, style_id);
 			prev_lineno = l->lineno;
 		}
-		debug("draw-window: [%d][%d] ... cells[%d][%d]\n", y, x+sidebar_width, y, view_width);
 		memcpy(cells + x + sidebar_width, l->cells, sizeof(Cell) * view_width);
 		cells += ui->width;
 	}
 }
 
-void ui_window_style_set(Ui *tui, int win_id, Cell *cell, enum UiStyle id, bool keep_non_default) {
-	CellStyle set = tui->styles[win_id * UI_STYLE_MAX + id];
+VIS_INTERNAL void
+vis_ui_window_style_set(Ui *tui, Cell *cell, uint16_t style_id, bool keep_non_default)
+{
+	//TODO(rnp): assert(style_id <= tui->style_count);
+	style_id = MIN(style_id, countof(tui->styles) - 1);
 
-	if (id != UI_STYLE_DEFAULT) {
+	CellStyle set = tui->styles[style_id];
+	if (style_id != UI_STYLE_DEFAULT) {
 		if (keep_non_default) {
-			CellStyle default_style = tui->styles[win_id * UI_STYLE_MAX + UI_STYLE_DEFAULT];
+			CellStyle default_style = tui->styles[UI_STYLE_DEFAULT];
 			if (!cell_color_equal(cell->style.fg, default_style.fg))
 				set.fg = cell->style.fg;
 			if (!cell_color_equal(cell->style.bg, default_style.bg))
@@ -320,7 +315,9 @@ void ui_window_style_set(Ui *tui, int win_id, Cell *cell, enum UiStyle id, bool 
 	cell->style = set;
 }
 
-bool ui_window_style_set_pos(Win *win, int x, int y, enum UiStyle id, bool keep_non_default) {
+VIS_INTERNAL bool
+vis_ui_window_style_set_pos(Win *win, int x, int y, uint16_t style_id, bool keep_non_default)
+{
 	Ui *tui = &win->vis->ui;
 	if (x < 0 || y < 0 || y >= win->height || x >= win->width) {
 		return false;
@@ -328,21 +325,20 @@ bool ui_window_style_set_pos(Win *win, int x, int y, enum UiStyle id, bool keep_
 	x += win->x;
 	y += win->y;
 	Cell *cell = tui->cell_buffer.cells + tui->width * y + x;
-	ui_window_style_set(tui, win->id, cell, id, keep_non_default);
+	vis_ui_window_style_set(tui, cell, style_id, keep_non_default);
 	return true;
 }
 
 VIS_INTERNAL void
 ui_window_status(Vis *vis, Win *win, const char *status)
 {
-	enum UiStyle style = vis->win == win ? UI_STYLE_STATUS_FOCUSED : UI_STYLE_STATUS;
-	ui_draw_string(&vis->ui, win->x, win->y + win->height - 1, status, win->id, style);
+	VisUiStyle style = vis->win == win ? UI_STYLE_STATUS_FOCUSED : UI_STYLE_STATUS;
+	ui_draw_string(&vis->ui, win->x, win->y + win->height - 1, status, style);
 }
 
 VIS_INTERNAL void
 ui_arrange(Vis *vis, enum UiLayout layout)
 {
-	debug("ui-arrange\n");
 	Ui *tui = &vis->ui;
 	tui->layout = layout;
 	int n = 0, m = !!tui->info[0], x = 0, y = 0;
@@ -395,7 +391,6 @@ ui_arrange(Vis *vis, enum UiLayout layout)
 VIS_INTERNAL void
 ui_draw(Vis *vis)
 {
-	debug("ui-draw\n");
 	Ui *tui = &vis->ui;
 	ui_arrange(vis, vis->ui.layout);
 	for (Win *win = vis->windows; win; win = win->next)
@@ -417,7 +412,7 @@ ui_draw(Vis *vis)
 		tui->cur_row = vis->ui.height;
 	}
 	if (tui->info[0])
-		ui_draw_string(tui, 0, tui->height-1, tui->info, 0, UI_STYLE_INFO);
+		ui_draw_string(tui, 0, tui->height-1, tui->info, UI_STYLE_INFO);
 	vis_event_emit(vis, VIS_EVENT_UI_DRAW);
 	ui_term_backend_blit(tui);
 }
@@ -470,37 +465,6 @@ ui_window_options_set(Win *win, enum UiOption options)
 }
 
 bool ui_window_init(Ui *tui, Win *w, enum UiOption options) {
-	/* get rightmost zero bit, i.e. highest available id */
-	size_t bit = ~tui->ids & (tui->ids + 1);
-	size_t id = 0;
-	for (size_t tmp = bit; tmp >>= 1; id++);
-	if (id >= sizeof(size_t) * 8)
-		return NULL;
-	size_t styles_size = (id + 1) * UI_STYLE_MAX * sizeof(CellStyle);
-	if (styles_size > tui->styles_size) {
-		CellStyle *styles = realloc(tui->styles, styles_size);
-		if (!styles)
-			return NULL;
-		tui->styles = styles;
-		tui->styles_size = styles_size;
-	}
-
-	tui->ids |= bit;
-	w->id = id;
-
-	CellStyle *styles = &tui->styles[w->id * UI_STYLE_MAX];
-	for (int i = 0; i < UI_STYLE_MAX; i++) {
-		styles[i] = CELL_STYLE_DEFAULT;
-	}
-
-	styles[UI_STYLE_CURSOR].attr |= CELL_ATTR_REVERSE;
-	styles[UI_STYLE_CURSOR_PRIMARY].attr |= CELL_ATTR_REVERSE|CELL_ATTR_BLINK;
-	styles[UI_STYLE_SELECTION].attr |= CELL_ATTR_REVERSE;
-	styles[UI_STYLE_COLOR_COLUMN].attr |= CELL_ATTR_REVERSE;
-	styles[UI_STYLE_STATUS].attr |= CELL_ATTR_REVERSE;
-	styles[UI_STYLE_STATUS_FOCUSED].attr |= CELL_ATTR_REVERSE|CELL_ATTR_BOLD;
-	styles[UI_STYLE_INFO].attr |= CELL_ATTR_BOLD;
-
 	if (text_size(w->file->text) > UI_LARGE_FILE_SIZE) {
 		options |= UI_OPTION_LARGE_FILE;
 		options &= ~UI_OPTION_LINE_NUMBERS_ABSOLUTE;
@@ -587,7 +551,6 @@ ui_terminal_free(Ui *tui)
 	ui_term_backend_free(tui);
 	termkey_destroy(&tui->termkey);
 	munmap(tui->cell_buffer.cells, tui->cell_buffer.size);
-	free(tui->styles);
 	free(tui->term.data);
 }
 
@@ -611,11 +574,21 @@ ui_init(Ui *tui)
 		}
 	}
 
-	tui->styles_size = UI_STYLE_MAX * sizeof(CellStyle);
-	tui->styles      = calloc(1, tui->styles_size);
 	tui->doupdate    = true;
+	tui->style_count = UI_STYLE_LAST + 1;
 
-	bool result = tui->term.length && tui->styles && ui_backend_init(tui, term);
+	for (uint64_t it = 0; it < countof(tui->styles); it++)
+		tui->styles[it] = CELL_STYLE_DEFAULT;
+
+	tui->styles[UI_STYLE_CURSOR].attr         |= CELL_ATTR_REVERSE;
+	tui->styles[UI_STYLE_CURSOR_PRIMARY].attr |= CELL_ATTR_REVERSE|CELL_ATTR_BLINK;
+	tui->styles[UI_STYLE_SELECTION].attr      |= CELL_ATTR_REVERSE;
+	tui->styles[UI_STYLE_COLOR_COLUMN].attr   |= CELL_ATTR_REVERSE;
+	tui->styles[UI_STYLE_STATUS].attr         |= CELL_ATTR_REVERSE;
+	tui->styles[UI_STYLE_STATUS_FOCUSED].attr |= CELL_ATTR_REVERSE|CELL_ATTR_BOLD;
+	tui->styles[UI_STYLE_INFO].attr           |= CELL_ATTR_BOLD;
+
+	bool result = tui->term.length && ui_backend_init(tui, term);
 	if (result) ui_resize(tui);
 	else        ui_terminal_free(tui);
 	return result;

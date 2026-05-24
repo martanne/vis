@@ -32,6 +32,22 @@ vis:option_register("theme", "string", function(name)
 		end
 	end
 
+	local ui = vis.ui
+	ui:style_define(ui.style_ids.DEFAULT,           lexers.STYLE_DEFAULT           or '')
+	ui:style_define(ui.style_ids.CURSOR,            lexers.STYLE_CURSOR            or '')
+	ui:style_define(ui.style_ids.CURSOR_PRIMARY,    lexers.STYLE_CURSOR_PRIMARY    or '')
+	ui:style_define(ui.style_ids.CURSOR_LINE,       lexers.STYLE_CURSOR_LINE       or '')
+	ui:style_define(ui.style_ids.SELECTION,         lexers.STYLE_SELECTION         or '')
+	ui:style_define(ui.style_ids.LINENUMBER,        lexers.STYLE_LINENUMBER        or '')
+	ui:style_define(ui.style_ids.LINENUMBER_CURSOR, lexers.STYLE_LINENUMBER_CURSOR or '')
+	ui:style_define(ui.style_ids.COLOR_COLUMN,      lexers.STYLE_COLOR_COLUMN      or '')
+	ui:style_define(ui.style_ids.STATUS,            lexers.STYLE_STATUS            or '')
+	ui:style_define(ui.style_ids.STATUS_FOCUSED,    lexers.STYLE_STATUS_FOCUSED    or '')
+	ui:style_define(ui.style_ids.SEPARATOR,         lexers.STYLE_SEPARATOR         or '')
+	ui:style_define(ui.style_ids.INFO,              lexers.STYLE_INFO              or '')
+	ui:style_define(ui.style_ids.EOF,               lexers.STYLE_EOF               or '')
+	ui:style_define(ui.style_ids.WHITESPACE,        lexers.STYLE_WHITESPACE        or '')
+
 	for win in vis:windows() do
 		win:set_syntax(win.syntax)
 	end
@@ -71,6 +87,8 @@ vis.events.subscribe(vis.events.WIN_HIGHLIGHT, function(win)
 	local tokens = lexer:lex(data, 1)
 	local token_end = lex_start + (tokens[#tokens] or 1) - 1
 
+	-- TODO(rnp): cleanup
+	local base_index = vis.ui.style_ids.WHITESPACE + 1
 	for i = #tokens - 1, 1, -2 do
 		local token_start = lex_start + (tokens[i-1] or 1) - 1
 		if token_end < view_start then
@@ -79,7 +97,7 @@ vis.events.subscribe(vis.events.WIN_HIGHLIGHT, function(win)
 		local name = tokens[i]
 		local style = token_styles[name]
 		if style ~= nil then
-			win:style(style, token_start, token_end)
+			win:style(base_index + style, token_start, token_end)
 		end
 		token_end = token_start - 1
 	end

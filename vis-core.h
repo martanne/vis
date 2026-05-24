@@ -149,7 +149,6 @@ struct File { /* shared state among windows displaying the same file */
 };
 
 struct Win {
-	int id;                 /* unique identifier for this window */
 	int width, height;      /* window dimension including status bar */
 	int x, y;               /* window position */
 	int sidebar_width;      /* width of the sidebar showing line numbers etc. */
