@@ -40,82 +40,82 @@
 #define TERMKEY_VERSION_MAJOR 0
 #define TERMKEY_VERSION_MINOR 22
 
+#define TERMKEY_SYM_LIST \
+	X(NONE,      "NONE") \
+	X(BACKSPACE, "Backspace") \
+	X(TAB,       "Tab") \
+	X(ENTER,     "Enter") \
+	X(ESCAPE,    "Escape") \
+	X(SPACE,     "Space") \
+	X(DEL,       "DEL") \
+	X(UP,        "Up") \
+	X(DOWN,      "Down") \
+	X(LEFT,      "Left") \
+	X(RIGHT,     "Right") \
+	X(BEGIN,     "Begin") \
+	X(FIND,      "Find") \
+	X(INSERT,    "Insert") \
+	X(DELETE,    "Delete") \
+	X(SELECT,    "Select") \
+	X(PAGEUP,    "PageUp") \
+	X(PAGEDOWN,  "PageDown") \
+	X(HOME,      "Home") \
+	X(END,       "End") \
+	X(CANCEL,    "Cancel") \
+	X(CLEAR,     "Clear") \
+	X(CLOSE,     "Close") \
+	X(COMMAND,   "Command") \
+	X(COPY,      "Copy") \
+	X(EXIT,      "Exit") \
+	X(HELP,      "Help") \
+	X(MARK,      "Mark") \
+	X(MESSAGE,   "Message") \
+	X(MOVE,      "Move") \
+	X(OPEN,      "Open") \
+	X(OPTIONS,   "Options") \
+	X(PRINT,     "Print") \
+	X(REDO,      "Redo") \
+	X(REFERENCE, "Reference") \
+	X(REFRESH,   "Refresh") \
+	X(REPLACE,   "Replace") \
+	X(RESTART,   "Restart") \
+	X(RESUME,    "Resume") \
+	X(SAVE,      "Save") \
+	X(SUSPEND,   "Suspend") \
+	X(UNDO,      "Undo") \
+	X(KP0,       "KP0") \
+	X(KP1,       "KP1") \
+	X(KP2,       "KP2") \
+	X(KP3,       "KP3") \
+	X(KP4,       "KP4") \
+	X(KP5,       "KP5") \
+	X(KP6,       "KP6") \
+	X(KP7,       "KP7") \
+	X(KP8,       "KP8") \
+	X(KP9,       "KP9") \
+	X(KPENTER,   "KPEnter") \
+	X(KPPLUS,    "KPPlus") \
+	X(KPMINUS,   "KPMinus") \
+	X(KPMULT,    "KPMult") \
+	X(KPDIV,     "KPDiv") \
+	X(KPCOMMA,   "KPComma") \
+	X(KPPERIOD,  "KPPeriod") \
+	X(KPEQUALS,  "KPEquals") \
+
 typedef enum {
 	TERMKEY_SYM_UNKNOWN = -1,
-	TERMKEY_SYM_NONE = 0,
-
-	/* Special names in C0 */
-	TERMKEY_SYM_BACKSPACE,
-	TERMKEY_SYM_TAB,
-	TERMKEY_SYM_ENTER,
-	TERMKEY_SYM_ESCAPE,
-
-	/* Special names in G0 */
-	TERMKEY_SYM_SPACE,
-	TERMKEY_SYM_DEL,
-
-	/* Special keys */
-	TERMKEY_SYM_UP,
-	TERMKEY_SYM_DOWN,
-	TERMKEY_SYM_LEFT,
-	TERMKEY_SYM_RIGHT,
-	TERMKEY_SYM_BEGIN,
-	TERMKEY_SYM_FIND,
-	TERMKEY_SYM_INSERT,
-	TERMKEY_SYM_DELETE,
-	TERMKEY_SYM_SELECT,
-	TERMKEY_SYM_PAGEUP,
-	TERMKEY_SYM_PAGEDOWN,
-	TERMKEY_SYM_HOME,
-	TERMKEY_SYM_END,
-
-	/* Special keys from terminfo */
-	TERMKEY_SYM_CANCEL,
-	TERMKEY_SYM_CLEAR,
-	TERMKEY_SYM_CLOSE,
-	TERMKEY_SYM_COMMAND,
-	TERMKEY_SYM_COPY,
-	TERMKEY_SYM_EXIT,
-	TERMKEY_SYM_HELP,
-	TERMKEY_SYM_MARK,
-	TERMKEY_SYM_MESSAGE,
-	TERMKEY_SYM_MOVE,
-	TERMKEY_SYM_OPEN,
-	TERMKEY_SYM_OPTIONS,
-	TERMKEY_SYM_PRINT,
-	TERMKEY_SYM_REDO,
-	TERMKEY_SYM_REFERENCE,
-	TERMKEY_SYM_REFRESH,
-	TERMKEY_SYM_REPLACE,
-	TERMKEY_SYM_RESTART,
-	TERMKEY_SYM_RESUME,
-	TERMKEY_SYM_SAVE,
-	TERMKEY_SYM_SUSPEND,
-	TERMKEY_SYM_UNDO,
-
-	/* Numeric keypad special keys */
-	TERMKEY_SYM_KP0,
-	TERMKEY_SYM_KP1,
-	TERMKEY_SYM_KP2,
-	TERMKEY_SYM_KP3,
-	TERMKEY_SYM_KP4,
-	TERMKEY_SYM_KP5,
-	TERMKEY_SYM_KP6,
-	TERMKEY_SYM_KP7,
-	TERMKEY_SYM_KP8,
-	TERMKEY_SYM_KP9,
-	TERMKEY_SYM_KPENTER,
-	TERMKEY_SYM_KPPLUS,
-	TERMKEY_SYM_KPMINUS,
-	TERMKEY_SYM_KPMULT,
-	TERMKEY_SYM_KPDIV,
-	TERMKEY_SYM_KPCOMMA,
-	TERMKEY_SYM_KPPERIOD,
-	TERMKEY_SYM_KPEQUALS,
-
-	/* et cetera ad nauseum */
-	TERMKEY_N_SYMS
+	#define X(k, ...) TERMKEY_SYM_##k,
+	TERMKEY_SYM_LIST
+	#undef X
 } TermKeySym;
+
+#define X(_k, name) name,
+static const char *termkey_keynames[] = {TERMKEY_SYM_LIST};
+#undef X
+
+#define X(_k, name) sizeof(name) - 1,
+static uint8_t termkey_keyname_lengths[] = {TERMKEY_SYM_LIST};
+#undef X
 
 typedef enum {
 	TERMKEY_TYPE_UNICODE,
@@ -263,9 +263,6 @@ struct TermKey {
 
 	char   is_closed;
 	char   is_started;
-
-	int          nkeynames;
-	const char **keynames;
 
 	// There are 32 C0 codes
 	TermKeyKeyInfo c0[32];
@@ -1524,72 +1521,6 @@ static TermKeyDriver termkey_drivers[] = {
 	},
 };
 
-static struct {
-	TermKeySym  sym;
-	const char *name;
-} termkey_keynames[] = {
-	{TERMKEY_SYM_NONE,      "NONE"     },
-	{TERMKEY_SYM_BACKSPACE, "Backspace"},
-	{TERMKEY_SYM_TAB,       "Tab"      },
-	{TERMKEY_SYM_ENTER,     "Enter"    },
-	{TERMKEY_SYM_ESCAPE,    "Escape"   },
-	{TERMKEY_SYM_SPACE,     "Space"    },
-	{TERMKEY_SYM_DEL,       "DEL"      },
-	{TERMKEY_SYM_UP,        "Up"       },
-	{TERMKEY_SYM_DOWN,      "Down"     },
-	{TERMKEY_SYM_LEFT,      "Left"     },
-	{TERMKEY_SYM_RIGHT,     "Right"    },
-	{TERMKEY_SYM_BEGIN,     "Begin"    },
-	{TERMKEY_SYM_FIND,      "Find"     },
-	{TERMKEY_SYM_INSERT,    "Insert"   },
-	{TERMKEY_SYM_DELETE,    "Delete"   },
-	{TERMKEY_SYM_SELECT,    "Select"   },
-	{TERMKEY_SYM_PAGEUP,    "PageUp"   },
-	{TERMKEY_SYM_PAGEDOWN,  "PageDown" },
-	{TERMKEY_SYM_HOME,      "Home"     },
-	{TERMKEY_SYM_END,       "End"      },
-	{TERMKEY_SYM_CANCEL,    "Cancel"   },
-	{TERMKEY_SYM_CLEAR,     "Clear"    },
-	{TERMKEY_SYM_CLOSE,     "Close"    },
-	{TERMKEY_SYM_COMMAND,   "Command"  },
-	{TERMKEY_SYM_COPY,      "Copy"     },
-	{TERMKEY_SYM_EXIT,      "Exit"     },
-	{TERMKEY_SYM_HELP,      "Help"     },
-	{TERMKEY_SYM_MARK,      "Mark"     },
-	{TERMKEY_SYM_MESSAGE,   "Message"  },
-	{TERMKEY_SYM_MOVE,      "Move"     },
-	{TERMKEY_SYM_OPEN,      "Open"     },
-	{TERMKEY_SYM_OPTIONS,   "Options"  },
-	{TERMKEY_SYM_PRINT,     "Print"    },
-	{TERMKEY_SYM_REDO,      "Redo"     },
-	{TERMKEY_SYM_REFERENCE, "Reference"},
-	{TERMKEY_SYM_REFRESH,   "Refresh"  },
-	{TERMKEY_SYM_REPLACE,   "Replace"  },
-	{TERMKEY_SYM_RESTART,   "Restart"  },
-	{TERMKEY_SYM_RESUME,    "Resume"   },
-	{TERMKEY_SYM_SAVE,      "Save"     },
-	{TERMKEY_SYM_SUSPEND,   "Suspend"  },
-	{TERMKEY_SYM_UNDO,      "Undo"     },
-	{TERMKEY_SYM_KP0,       "KP0"      },
-	{TERMKEY_SYM_KP1,       "KP1"      },
-	{TERMKEY_SYM_KP2,       "KP2"      },
-	{TERMKEY_SYM_KP3,       "KP3"      },
-	{TERMKEY_SYM_KP4,       "KP4"      },
-	{TERMKEY_SYM_KP5,       "KP5"      },
-	{TERMKEY_SYM_KP6,       "KP6"      },
-	{TERMKEY_SYM_KP7,       "KP7"      },
-	{TERMKEY_SYM_KP8,       "KP8"      },
-	{TERMKEY_SYM_KP9,       "KP9"      },
-	{TERMKEY_SYM_KPENTER,   "KPEnter"  },
-	{TERMKEY_SYM_KPPLUS,    "KPPlus"   },
-	{TERMKEY_SYM_KPMINUS,   "KPMinus"  },
-	{TERMKEY_SYM_KPMULT,    "KPMult"   },
-	{TERMKEY_SYM_KPDIV,     "KPDiv"    },
-	{TERMKEY_SYM_KPCOMMA,   "KPComma"  },
-	{TERMKEY_SYM_KPPERIOD,  "KPPeriod" },
-	{TERMKEY_SYM_KPEQUALS,  "KPEquals" },
-};
-
 // Mouse event names
 static const char *termkey_evnames[] = {"Unknown", "Press", "Drag", "Release"};
 
@@ -1665,51 +1596,17 @@ termkey_alloc(void)
 	/* Default all the object fields but don't allocate anything */
 	result->fd        = -1;
 	result->buffsize  = 256; /* bytes */
-	result->nkeynames = 64;
 
 	return result;
 }
 
-TERMKEY_EXPORT TermKeySym
-termkey_register_keyname(TermKey *tk, TermKeySym sym, const char *name)
+static void
+termkey_register_c0(TermKey *tk, TermKeySym sym, unsigned char ctrl)
 {
-	if (!sym) sym = tk->nkeynames;
-
-	if (sym >= tk->nkeynames) {
-		const char **new_keynames = realloc(tk->keynames, sizeof(new_keynames[0]) * (sym + 1));
-		if (!new_keynames)
-			return -1;
-		tk->keynames = new_keynames;
-		// Fill in the hole
-		for (int i = tk->nkeynames; i < sym; i++)
-			tk->keynames[i] = 0;
-		tk->nkeynames = sym + 1;
-	}
-	tk->keynames[sym] = name;
-	return sym;
-}
-
-static TermKeySym
-termkey_register_c0_full(TermKey *tk, TermKeySym sym, int modifier_set, int modifier_mask, unsigned char ctrl, const char *name)
-{
-	if (ctrl >= 0x20) {
-		errno = EINVAL;
-		return -1;
-	}
-
-	if (name) sym = termkey_register_keyname(tk, sym, name);
-
+	assert(ctrl < 0x20);
 	tk->c0[ctrl].sym           = sym;
-	tk->c0[ctrl].modifier_set  = modifier_set;
-	tk->c0[ctrl].modifier_mask = modifier_mask;
-
-	return sym;
-}
-
-static TermKeySym
-termkey_register_c0(TermKey *tk, TermKeySym sym, unsigned char ctrl, const char *name)
-{
-	return termkey_register_c0_full(tk, sym, 0, 0, ctrl, name);
+	tk->c0[ctrl].modifier_set  = 0;
+	tk->c0[ctrl].modifier_mask = 0;
 }
 
 static int
@@ -1719,17 +1616,9 @@ termkey_init(TermKey *tk, const char *term)
 	if (!tk->buffer)
 		return 0;
 
-	tk->keynames = calloc(tk->nkeynames, sizeof(tk->keynames[0]));
-	if (!tk->keynames)
-		goto abort_free_buffer;
-
-	for (int i = 0; i < (int)countof(termkey_keynames); i++)
-		if (termkey_register_keyname(tk, termkey_keynames[i].sym, termkey_keynames[i].name) == -1)
-			goto abort_free_keynames;
-
-	termkey_register_c0(tk, TERMKEY_SYM_TAB,    0x09, 0);
-	termkey_register_c0(tk, TERMKEY_SYM_ENTER,  0x0d, 0);
-	termkey_register_c0(tk, TERMKEY_SYM_ESCAPE, 0x1b, 0);
+	termkey_register_c0(tk, TERMKEY_SYM_TAB,    0x09);
+	termkey_register_c0(tk, TERMKEY_SYM_ENTER,  0x0d);
+	termkey_register_c0(tk, TERMKEY_SYM_ESCAPE, 0x1b);
 
 	TermKeyDriver *tail = 0;
 	for (int i = 0; i < (int)countof(termkey_drivers); i++) {
@@ -1743,13 +1632,10 @@ termkey_init(TermKey *tk, const char *term)
 
 	if (!tk->drivers) {
 		errno = ENOENT;
-		goto abort_free_keynames;
+		goto abort_free_buffer;
 	}
 
 	return 1;
-
-abort_free_keynames:
-	free(tk->keynames);
 
 abort_free_buffer:
 	free(tk->buffer);
@@ -1871,7 +1757,6 @@ TERMKEY_EXPORT void
 termkey_free(TermKey *tk)
 {
 	free(tk->buffer);
-	free(tk->keynames);
 	for (TermKeyDriver *p = tk->drivers; p;) {
 		p->release_driver(p);
 		TermKeyDriver *next = p->next;
@@ -2198,8 +2083,8 @@ TERMKEY_EXPORT const char *
 termkey_get_keyname(TermKey *tk, TermKeySym sym)
 {
 	const char *result = "UNKNOWN";
-	if (sym != TERMKEY_SYM_UNKNOWN && sym < tk->nkeynames)
-		result = tk->keynames[sym];
+	if (sym != TERMKEY_SYM_UNKNOWN && sym < countof(termkey_keynames))
+		result = termkey_keynames[sym];
 	return result;
 }
 
@@ -2209,11 +2094,9 @@ termkey_lookup_keyname_format(TermKey *tk, const char *str, TermKeySym *sym, Ter
 	/* We store an array, so we can't do better than a linear search. Doesn't
 	 * matter because user won't be calling this too often */
 	const char *result = 0;
-	for (*sym = 0; *sym < tk->nkeynames; (*sym)++) {
-		const char *thiskey = tk->keynames[*sym];
-		if (!thiskey)
-			continue;
-		size_t len = strlen(thiskey);
+	for (*sym = 0; *sym < countof(termkey_keynames); (*sym)++) {
+		const char *thiskey = termkey_keynames[*sym];
+		size_t len = termkey_keyname_lengths[*sym];
 		if (format & TERMKEY_FORMAT_LOWERSPACE) {
 			const char *thisstr = str;
 			if (termkey_strpncmp_camel(&thisstr, &thiskey, len) == 0) {
