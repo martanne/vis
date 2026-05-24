@@ -78,26 +78,24 @@ vis.events.subscribe(vis.events.WIN_HIGHLIGHT, function(win)
 	local viewport = win.viewport.bytes
 	if not viewport then return end
 	local horizon_max = win.horizon or 32768
-	local horizon = viewport.start < horizon_max and viewport.start or horizon_max
-	local view_start = viewport.start
-	local lex_start = viewport.start - horizon
-	viewport.start = lex_start
-	local data = win.file:content(viewport)
-	local token_styles = lexer._TAGS
-	local tokens = lexer:lex(data, 1)
-	local token_end = lex_start + (tokens[#tokens] or 1) - 1
+	local horizon     = viewport.start < horizon_max and viewport.start or horizon_max
+	local view_start  = viewport.start
+	local lex_start   = viewport.start - horizon
+	viewport.start    = lex_start
+	local data        = win.file:content(viewport)
+	local style_ids   = vis.ui.style_ids
+	local tokens      = lexer:lex(data, 1)
+	local token_end   = lex_start + (tokens[#tokens] or 1) - 1
 
-	-- TODO(rnp): cleanup
-	local base_index = vis.ui.style_ids.WHITESPACE + 1
 	for i = #tokens - 1, 1, -2 do
 		local token_start = lex_start + (tokens[i-1] or 1) - 1
 		if token_end < view_start then
 			break
 		end
 		local name = tokens[i]
-		local style = token_styles[name]
-		if style ~= nil then
-			win:style(base_index + style, token_start, token_end)
+		local style_id = style_ids[name]
+		if style_id ~= nil then
+			win:style(style_id, token_start, token_end)
 		end
 		token_end = token_start - 1
 	end

@@ -115,11 +115,19 @@ vis_ui_color_from_str8(Vis *vis, CellColor *color, str8 s)
 	return false;
 }
 
+VIS_INTERNAL uint16_t
+vis_ui_style_push(Vis *vis)
+{
+	uint16_t result = -1;
+	if (vis->ui.style_count < countof(vis->ui.styles))
+		result = vis->ui.style_count++;
+	return result;
+}
+
 VIS_INTERNAL bool
 vis_ui_style_define(Vis *vis, uint16_t style_id, str8 style)
 {
-	// TODO(rnp): if (style_id >= vis->ui.style_count)
-	if (style_id >= UI_STYLE_MAX)
+	if (style_id >= vis->ui.style_count)
 		return false;
 	if (style.length <= 0)
 		return true;
@@ -175,7 +183,7 @@ vis_ui_style_define(Vis *vis, uint16_t style_id, str8 style)
 VIS_INTERNAL void
 ui_draw_line(Ui *tui, int x, int y, char c, uint16_t style_id)
 {
-	assert(style_id <= tui->style_count);
+	assert(style_id < tui->style_count);
 	if (x < 0 || x >= tui->width || y < 0 || y >= tui->height)
 		return;
 
@@ -295,8 +303,7 @@ static void ui_window_draw(Win *win) {
 VIS_INTERNAL void
 vis_ui_window_style_set(Ui *tui, Cell *cell, uint16_t style_id, bool keep_non_default)
 {
-	//TODO(rnp): assert(style_id <= tui->style_count);
-	style_id = MIN(style_id, countof(tui->styles) - 1);
+	assert(style_id < tui->style_count);
 
 	CellStyle set = tui->styles[style_id];
 	if (style_id != UI_STYLE_DEFAULT) {

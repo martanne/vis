@@ -1772,6 +1772,33 @@ vis_lua_style_define(lua_State *L, Vis *vis)
 }
 
 /***
+ * Obtain a new style id from style pool
+ * @function style_push
+ * @tparam[opt] string style the initial style definition to fill the slot
+ * @treturn int the new style id, nil if none available
+ * @see style
+ * @usage
+ * local red_fg_id   = ui:style_push("fore:red")
+ * local green_bg_id = ui:style_push()
+ * ui:style_define(green_bg_id, "fore:green")
+ */
+VIS_INTERNAL int
+vis_lua_ui_style_push(lua_State *L)
+{
+	Vis *vis = lua_touserdata(L, lua_upvalueindex(1));
+	uint16_t style_id = vis_ui_style_push(vis);
+	int result = style_id != (uint16_t)-1;
+	if (result) {
+		if (lua_isstring(L, 2)) {
+			str8 style = vis_lua_check_str8(L, 2);
+			vis_ui_style_define(vis, style_id, style);
+		}
+		lua_pushinteger(L, style_id);
+	}
+	return result;
+}
+
+/***
  * Define a display style.
  * @function style_define
  * @tparam int id the style id to use
@@ -1789,10 +1816,12 @@ vis_lua_ui_style_define(lua_State *L)
 	return 1;
 }
 
+
 static const struct luaL_Reg vis_lua_ui_funcs[] = {
 	{"__index",      vis_lua_ui_index       },
 	{"__newindex",   vis_lua_ui_newindex    },
 	{"style_define", vis_lua_ui_style_define},
+	{"style_push",   vis_lua_ui_style_push  },
 	{0},
 };
 
@@ -2093,6 +2122,7 @@ vis_lua_window_style(lua_State *L)
 	size_t start          = checkpos(L, 3);
 	size_t end            = checkpos(L, 4);
 	bool keep_non_default = lua_isboolean(L, 5) && lua_toboolean(L, 5);
+	style_id = style_id < win->vis->ui.style_count ? style_id : UI_STYLE_DEFAULT;
 	vis_win_style(win, start, end, style_id, keep_non_default);
 	return 0;
 }
