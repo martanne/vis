@@ -258,8 +258,6 @@ vis.types.window.set_syntax = function(win, syntax)
 	if not lexer then return false end
 
 	local ui = vis.ui
-	-- TODO(rnp): register an ID when _TAGS table is filled in
-	local base_index = ui.style_ids.WHITESPACE + 1
 	for id, token_name in ipairs(lexer._TAGS) do
 		local style = lexers['STYLE_' .. token_name:upper():gsub("%.", "_")] or ''
 		if type(style) == 'table' then
@@ -269,7 +267,11 @@ vis.types.window.set_syntax = function(win, syntax)
 			if style.back then s = (s and s .. ',' or '') .. 'back:' .. tostring(style.back) end
 			style = s
 		end
-		if style ~= nil then ui:style_define(base_index + id, style) end
+		if style ~= nil then
+			local style_id = ui.style_ids[token_name] or ui:style_push()
+			ui.style_ids[token_name] = style_id
+			ui:style_define(style_id, style)
+		end
 	end
 
 	return true

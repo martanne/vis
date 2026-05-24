@@ -124,6 +124,7 @@ VIS_INTERNAL bool ui_window_init(Ui *, Win *, enum UiOption);
 
 VIS_INTERNAL bool vis_ui_getkey(Vis *, TermKeyKey *);
 
+VIS_INTERNAL uint16_t vis_ui_style_push(Vis *);
 VIS_INTERNAL bool vis_ui_style_define(Vis *, uint16_t style_id, str8 style);
 VIS_INTERNAL void vis_ui_window_style_set(Ui *ui, Cell *cell, uint16_t style_id, bool keep_non_default);
 VIS_INTERNAL bool vis_ui_window_style_set_pos(Win *win, int x, int y, uint16_t style_id, bool keep_non_default);
