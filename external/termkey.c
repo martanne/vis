@@ -249,10 +249,9 @@ struct TermKey {
 	int    fd;
 	int    flags;
 	int    canonflags;
-	unsigned char *buffer;
+	unsigned char buffer[256];
 	size_t buffstart; // First offset in buffer
 	size_t buffcount; // NUMBER of entires valid in buffer
-	size_t buffsize;  // Total malloc'ed size
 	size_t hightide;  /* Position beyond buffstart at which peekkey() should next start
 	                   * normally 0, but see also termkey_interpret_csi */
 
@@ -1594,8 +1593,7 @@ termkey_alloc(void)
 		return 0;
 
 	/* Default all the object fields but don't allocate anything */
-	result->fd        = -1;
-	result->buffsize  = 256; /* bytes */
+	result->fd = -1;
 
 	return result;
 }
@@ -1612,10 +1610,6 @@ termkey_register_c0(TermKey *tk, TermKeySym sym, unsigned char ctrl)
 static int
 termkey_init(TermKey *tk, const char *term)
 {
-	tk->buffer = calloc(1, tk->buffsize);
-	if (!tk->buffer)
-		return 0;
-
 	termkey_register_c0(tk, TERMKEY_SYM_TAB,    0x09);
 	termkey_register_c0(tk, TERMKEY_SYM_ENTER,  0x0d);
 	termkey_register_c0(tk, TERMKEY_SYM_ESCAPE, 0x1b);
@@ -1632,15 +1626,9 @@ termkey_init(TermKey *tk, const char *term)
 
 	if (!tk->drivers) {
 		errno = ENOENT;
-		goto abort_free_buffer;
+		return 0;
 	}
-
 	return 1;
-
-abort_free_buffer:
-	free(tk->buffer);
-
-	return 0;
 }
 
 TERMKEY_EXPORT int
@@ -1756,7 +1744,6 @@ termkey_new_abstract(const char *term, int flags)
 TERMKEY_EXPORT void
 termkey_free(TermKey *tk)
 {
-	free(tk->buffer);
 	for (TermKeyDriver *p = tk->drivers; p;) {
 		p->release_driver(p);
 		TermKeyDriver *next = p->next;
@@ -1998,7 +1985,7 @@ termkey_peekkey(TermKey *tk, TermKeyKey *key, int force, size_t *nbytep)
 		}break;
 
 		case TERMKEY_RES_KEY:{ // Slide the data down to stop it running away
-			size_t halfsize = tk->buffsize / 2;
+			size_t halfsize = sizeof(tk->buffer) / 2;
 			if(tk->buffstart > halfsize) {
 				memcpy(tk->buffer, tk->buffer + halfsize, halfsize);
 				tk->buffstart -= halfsize;
@@ -2054,14 +2041,10 @@ termkey_advisereadable(TermKey *tk)
 		tk->buffstart = 0;
 	}
 
-	/* Not expecting it ever to be greater but doesn't hurt to handle that */
-	if (tk->buffcount >= tk->buffsize) {
-		errno = ENOMEM;
-		return TERMKEY_RES_ERROR;
-	}
+	assert(tk->buffcount < sizeof(tk->buffer));
 
 retry:;
-	int64_t len = read(tk->fd, tk->buffer + tk->buffcount, tk->buffsize - tk->buffcount);
+	int64_t len = read(tk->fd, tk->buffer + tk->buffcount, sizeof(tk->buffer) - tk->buffcount);
 
 	if (len == -1) {
 		if (errno == EAGAIN)
