@@ -350,7 +350,7 @@ VIS_INTERNAL bool view_breakat_set(View*, const char *breakat);
 /** Set how many spaces are used to display a tab `\t` character. */
 VIS_INTERNAL void view_tabwidth_set(View*, int tabwidth);
 /** Apply a style to a text range. */
-VIS_INTERNAL void vis_win_style(struct Win*, size_t start, size_t end, uint16_t style_id, bool keep_non_default);
+VIS_INTERNAL void vis_win_style(struct Win*, u64 start, u64 end, u16 style_id);
 
 /** @} */
 

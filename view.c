@@ -263,7 +263,7 @@ static bool view_add_cell(View *view, const Cell *cell) {
 
 static bool view_expand_tab(View *view, Cell *cell) {
 	Win *win = (Win *)((char *)view - offsetof(Win, view));
-	vis_ui_window_style_set(&win->vis->ui, cell, UI_STYLE_WHITESPACE, false);
+	vis_ui_window_style_set(&win->vis->ui, cell, UI_STYLE_WHITESPACE);
 
 	cell->width = 1;
 
@@ -287,7 +287,7 @@ static bool view_expand_newline(View *view, Cell *cell) {
 	const char *symbol = view->symbols[SYNTAX_SYMBOL_EOL];
 
 	Win *win = (Win *)((char *)view - offsetof(Win, view));
-	vis_ui_window_style_set(&win->vis->ui, cell, UI_STYLE_WHITESPACE, false);
+	vis_ui_window_style_set(&win->vis->ui, cell, UI_STYLE_WHITESPACE);
 
 	strncpy(cell->data, symbol, sizeof(cell->data) - 1);
 	cell->width = 1;
@@ -303,7 +303,7 @@ static bool view_expand_newline(View *view, Cell *cell) {
 
 static bool view_expand_space(View *view, Cell *cell) {
 	Win *win = (Win *)((char *)view - offsetof(Win, view));
-	vis_ui_window_style_set(&win->vis->ui, cell, UI_STYLE_WHITESPACE, false);
+	vis_ui_window_style_set(&win->vis->ui, cell, UI_STYLE_WHITESPACE);
 
 	const char *symbol = view->symbols[SYNTAX_SYMBOL_SPACE];
 	strncpy(cell->data, symbol, sizeof(cell->data) - 1);
@@ -1334,7 +1334,7 @@ void view_selections_normalize(View *view) {
 }
 
 VIS_INTERNAL void
-vis_win_style(Win *win, size_t start, size_t end, uint16_t style_id, bool keep_non_default)
+vis_win_style(Win *win, u64 start, u64 end, u16 style_id)
 {
 	View *view = &win->view;
 	if (end < view->start || start > view->end)
@@ -1365,13 +1365,13 @@ vis_win_style(Win *win, size_t start, size_t end, uint16_t style_id, bool keep_n
 		// NOTE(rnp): first style at most until the end of the real line contents
 		while (pos <= end && col < line->width) {
 			pos += line->cells[col].len;
-			vis_ui_window_style_set(&win->vis->ui, line->cells + col++, style_id, keep_non_default);
+			vis_ui_window_style_set(&win->vis->ui, line->cells + col++, style_id);
 		}
 
 		// NOTE(rnp): if the range extends to another line continue styling the full view width
 		if (pos < end) while (col < view_width)
 		{
-			vis_ui_window_style_set(&win->vis->ui, line->cells + col++, style_id, keep_non_default);
+			vis_ui_window_style_set(&win->vis->ui, line->cells + col++, style_id);
 		}
 
 		col = 0;

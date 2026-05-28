@@ -34,6 +34,7 @@ local bg = ',back:'..colors.base03..','
 
 lexers.STYLE_DEFAULT = bg..fg
 lexers.STYLE_NOTHING = bg
+lexers.STYLE_ATTRIBUTE = 'fore:'..colors.green
 lexers.STYLE_CLASS = 'fore:yellow'
 lexers.STYLE_COMMENT = 'fore:'..colors.base01
 lexers.STYLE_CONSTANT = 'fore:'..colors.cyan
@@ -56,9 +57,9 @@ lexers.STYLE_IDENTIFIER = fg
 
 lexers.STYLE_LINENUMBER = 'fore:'..colors.base00..',back:'..colors.base02
 lexers.STYLE_LINENUMBER_CURSOR = 'back:'..colors.base00..',fore:'..colors.base02
-lexers.STYLE_CURSOR = 'fore:'..colors.base03..',back:'..colors.base0
+lexers.STYLE_CURSOR = 'fore:'..colors.base03..',back:'..colors.base0..',keep_attribute'
 lexers.STYLE_CURSOR_PRIMARY = lexers.STYLE_CURSOR..',back:yellow'
-lexers.STYLE_CURSOR_LINE = 'back:'..colors.base02
+lexers.STYLE_CURSOR_LINE = 'back:'..colors.base02..',keep_attribute'
 lexers.STYLE_COLOR_COLUMN = 'back:'..colors.base02
 -- lexers.STYLE_SELECTION = 'back:'..colors.base02
 lexers.STYLE_SELECTION = 'back:white'

@@ -13,9 +13,9 @@ typedef struct Vis Vis;
 typedef struct File File;
 typedef struct Win Win;
 
+#include "buffer.h"
 #include "ui.h"
 #include "view.h"
-#include "buffer.h"
 
 #ifndef CONFIG_HELP
 #define CONFIG_HELP 1
