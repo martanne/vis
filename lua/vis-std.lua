@@ -46,7 +46,7 @@ vis:option_register("horizon", "number", function(horizon)
 	if not vis.win then return false end
 	vis.win.horizon = horizon
 	return true
-end, "Number of bytes to consider for syntax highlighting")
+end, "Number of bytes to consider for syntax highlighting (set to -1 for all)")
 
 vis.events.subscribe(vis.events.WIN_HIGHLIGHT, function(win)
 	if not win.syntax or not vis.lexers.load then return end
@@ -59,7 +59,7 @@ vis.events.subscribe(vis.events.WIN_HIGHLIGHT, function(win)
 	local horizon_max = win.horizon or 32768
 	local horizon = viewport.start < horizon_max and viewport.start or horizon_max
 	local view_start = viewport.start
-	local lex_start = viewport.start - horizon
+	local lex_start = horizon == -1 and 0 or viewport.start - horizon
 	viewport.start = lex_start
 	local data = win.file:content(viewport)
 	local token_styles = lexer._TAGS
