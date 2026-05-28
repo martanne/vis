@@ -3,26 +3,9 @@
 
 #define UI_TERMKEY_FLAGS (TERMKEY_FLAG_NOTERMIOS)
 
-#define CELL_COLOR_BLACK   COLOR_BLACK
-#define CELL_COLOR_RED     COLOR_RED
-#define CELL_COLOR_GREEN   COLOR_GREEN
-#define CELL_COLOR_YELLOW  COLOR_YELLOW
-#define CELL_COLOR_BLUE    COLOR_BLUE
-#define CELL_COLOR_MAGENTA COLOR_MAGENTA
-#define CELL_COLOR_CYAN    COLOR_CYAN
-#define CELL_COLOR_WHITE   COLOR_WHITE
-#define CELL_COLOR_DEFAULT (-1)
-
 #ifndef A_ITALIC
 #define A_ITALIC A_NORMAL
 #endif
-#define CELL_ATTR_NORMAL    A_NORMAL
-#define CELL_ATTR_UNDERLINE A_UNDERLINE
-#define CELL_ATTR_REVERSE   A_REVERSE
-#define CELL_ATTR_BLINK     A_BLINK
-#define CELL_ATTR_BOLD      A_BOLD
-#define CELL_ATTR_ITALIC    A_ITALIC
-#define CELL_ATTR_DIM       A_DIM
 
 #ifdef NCURSES_VERSION
 # ifndef NCURSES_EXT_COLORS
@@ -38,12 +21,15 @@
 
 #define MAX_COLOR_CLOBBER 240
 
-static int change_colors = -1;
-static short default_fg = -1;
-static short default_bg = -1;
-
-static inline bool cell_color_equal(CellColor c1, CellColor c2) {
-	return c1 == c2;
+VIS_INTERNAL VisCellStyle
+vis_ui_backend_style_default(Ui *ui)
+{
+	VisCellStyle result = {0};
+	result.properties |= (VisCellProperty_IndexedFG|VisCellProperty_IndexedBG);
+	result.properties |= (VisCellProperty_FGSet|VisCellProperty_BGSet);
+	VisCellStyleFGIndexSet(&result, ui->curses.default_fg);
+	VisCellStyleBGIndexSet(&result, ui->curses.default_bg);
+	return result;
 }
 
 /* Calculate r,g,b components of one of the standard upper 240 colors */
@@ -72,21 +58,26 @@ static void undo_palette(void)
 }
 
 /* Work out the nearest color from the 256 color set, or perhaps exactly. */
-static CellColor
-color_rgb(Vis *vis, uint8_t r, uint8_t g, uint8_t b)
+VIS_INTERNAL VisTerminalStyle
+vis_terminal_style_rgb(Vis *vis, u8 r, u8 g, u8 b)
 {
+	VisTerminalStyle result = {.indexed = true};
+
+	VisCursesUI *cui = &vis->ui.curses;
 	static short color_clobber_idx = 0;
 	static uint32_t clobbering_colors[MAX_COLOR_CLOBBER];
 
-	if (change_colors == -1)
-		change_colors = vis->change_colors && can_change_color() && COLORS >= 256;
-	if (change_colors) {
+	if (cui->change_colors == -1)
+		cui->change_colors = vis->change_colors && can_change_color() && COLORS >= 256;
+	if (cui->change_colors) {
 		uint32_t hexrep = (r << 16) | (g << 8) | b;
 		for (short i = 0; i < MAX_COLOR_CLOBBER; ++i) {
-			if (clobbering_colors[i] == hexrep)
-				return i + 16;
-			else if (!clobbering_colors[i])
+			if (clobbering_colors[i] == hexrep) {
+				result.color.index = i + 16;
+				return result;
+			} else if (!clobbering_colors[i]) {
 				break;
+			}
 		}
 
 		short i = color_clobber_idx;
@@ -98,7 +89,8 @@ color_rgb(Vis *vis, uint8_t r, uint8_t g, uint8_t b)
 		if (++color_clobber_idx >= MAX_COLOR_CLOBBER)
 			color_clobber_idx = 0;
 
-		return i + 16;
+		result.color.index = i + 16;
+		return result;
 	}
 
 	static const unsigned char color_256_to_16[256] = {
@@ -146,71 +138,71 @@ color_rgb(Vis *vis, uint8_t r, uint8_t g, uint8_t b)
 		}
 	}
 
+	result.color.index = i;
 	if (COLORS <= 16)
-		return color_256_to_16[i];
-	return i;
+		result.color.index = color_256_to_16[i];
+	return result;
 }
 
-static CellColor
-color_terminal(uint8_t index)
+VIS_INTERNAL VisTerminalStyle
+vis_terminal_style_indexed(u8 index)
 {
-	return index;
+	VisTerminalStyle result = {0};
+	result.indexed     = true;
+	result.color.index = index;
+	return result;
 }
 
-static inline unsigned int color_pair_hash(short fg, short bg) {
-	if (fg == CELL_COLOR_DEFAULT)
-		fg = COLORS;
-	if (bg == CELL_COLOR_DEFAULT)
-		bg = COLORS + 1;
-	return fg * (COLORS + 2) + bg;
+VIS_INTERNAL u32
+vis_ui_curses_color_pair_hash(s16 fg, s16 bg)
+{
+	if (fg == -1) fg = COLORS;
+	if (bg == -1) bg = COLORS + 1;
+	u32 result = fg * (COLORS + 2) + bg;
+	return result;
 }
 
-static short color_pair_get(short fg, short bg) {
-	static bool has_default_colors;
-	static short *color2palette;
-	static short color_pairs_max, color_pair_current;
-
-	if (!color2palette) {
-		pair_content(0, &default_fg, &default_bg);
-		has_default_colors = (use_default_colors() == OK);
-		color_pairs_max = MIN(MAX_COLOR_PAIRS, SHRT_MAX);
-		if (COLORS)
-			color2palette = calloc((COLORS + 2) * (COLORS + 2), sizeof(short));
-	}
-
+VIS_INTERNAL u16
+vis_ui_curses_color_pair_get(Ui *ui, u16 fg, u16 bg)
+{
+	VisCursesUI *cui = &ui->curses;
 	if (fg >= COLORS)
-		fg = default_fg;
+		fg = cui->default_fg;
 	if (bg >= COLORS)
-		bg = default_bg;
+		bg = cui->default_bg;
 
-	if (!has_default_colors) {
-		if (fg == -1)
-			fg = default_fg;
-		if (bg == -1)
-			bg = default_bg;
-	}
-
-	if (!color2palette)
+	if (!cui->palette)
 		return 0;
 
-	unsigned int index = color_pair_hash(fg, bg);
-	if (color2palette[index] == 0) {
-		short oldfg, oldbg;
-		if (++color_pair_current >= color_pairs_max)
-			color_pair_current = 1;
-		pair_content(color_pair_current, &oldfg, &oldbg);
-		unsigned int old_index = color_pair_hash(oldfg, oldbg);
-		if (init_pair(color_pair_current, fg, bg) == OK) {
-			color2palette[old_index] = 0;
-			color2palette[index] = color_pair_current;
+	u32 index = vis_ui_curses_color_pair_hash(fg, bg);
+	if (cui->palette[index] == 0) {
+		s16 oldfg, oldbg;
+		if (++cui->color_pair_current >= cui->color_pairs_max)
+			cui->color_pair_current = 1;
+		pair_content(cui->color_pair_current, &oldfg, &oldbg);
+		u32 old_index = vis_ui_curses_color_pair_hash(oldfg, oldbg);
+		if (init_pair(cui->color_pair_current, fg, bg) == OK) {
+			cui->palette[old_index] = 0;
+			cui->palette[index] = cui->color_pair_current;
 		}
 	}
 
-	return color2palette[index];
+	return cui->palette[index];
 }
 
-static inline attr_t style_to_attr(CellStyle *style) {
-	return style->attr | COLOR_PAIR(color_pair_get(style->fg, style->bg));
+VIS_INTERNAL attr_t
+vis_ui_curses_style_to_attr(Ui *ui, VisCellStyle style)
+{
+	attr_t result = 0;
+	result |= (style.attributes & VisCellAttribute_Underline) ? A_UNDERLINE : 0;
+	result |= (style.attributes & VisCellAttribute_Reverse)   ? A_REVERSE   : 0;
+	result |= (style.attributes & VisCellAttribute_Blink)     ? A_BLINK     : 0;
+	result |= (style.attributes & VisCellAttribute_Bold)      ? A_BOLD      : 0;
+	result |= (style.attributes & VisCellAttribute_Italic)    ? A_ITALIC    : 0;
+	result |= (style.attributes & VisCellAttribute_Dim)       ? A_DIM       : 0;
+	result |= COLOR_PAIR(vis_ui_curses_color_pair_get(ui, VisCellStyleFGIndexGet(&style),
+	                                                  VisCellStyleBGIndexGet(&style)));
+	return result;
 }
 
 static void ui_term_backend_blit(Ui *tui) {
@@ -218,7 +210,7 @@ static void ui_term_backend_blit(Ui *tui) {
 	Cell *cell = tui->cell_buffer.cells;
 	for (int y = 0; y < h; y++) {
 		for (int x = 0; x < w; x++) {
-			attrset(style_to_attr(&cell->style));
+			attrset(vis_ui_curses_style_to_attr(tui, cell->style));
 			mvaddstr(y, x, cell->data);
 			cell++;
 		}
@@ -274,24 +266,31 @@ ui_backend_init(Ui *ui, char *term)
 		keypad(stdscr, TRUE);
 		meta(stdscr, TRUE);
 		curs_set(0);
+
+		pair_content(0, &ui->curses.default_fg, &ui->curses.default_bg);
+		ui->curses.change_colors   = -1;
+		ui->curses.color_pairs_max = MIN(MAX_COLOR_PAIRS, SHRT_MAX);
+		if (COLORS)
+			ui->curses.palette = calloc((COLORS + 2) * (COLORS + 2), sizeof(s16));
 	}
 
 	return result;
 }
 
-void ui_terminal_resume(Ui *term) { }
+VIS_INTERNAL void ui_terminal_resume(Ui *term) {}
 
-static void ui_term_backend_suspend(Ui *term) {
-	if (change_colors == 1)
+VIS_INTERNAL void
+ui_term_backend_suspend(Ui *ui)
+{
+	if (ui->curses.change_colors == 1)
 		undo_palette();
 	curs_set(1);
 }
 
-static void ui_term_backend_free(Ui *term) {
-	ui_term_backend_suspend(term);
+VIS_INTERNAL void
+vis_ui_backend_free(Ui *ui)
+{
+	ui_term_backend_suspend(ui);
+	free(ui->curses.palette);
 	endwin();
-}
-
-static bool is_default_color(CellColor c) {
-	return c == CELL_COLOR_DEFAULT;
 }

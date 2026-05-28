@@ -2121,10 +2121,9 @@ vis_lua_window_style_define(lua_State *L)
  *
  * The style will be cleared after every window redraw.
  * @function style
- * @tparam      int  id the display style as registered with @{style_define}
- * @tparam      int  start the absolute file position in bytes
- * @tparam      int  finish the end position
- * @tparam[opt] bool keep_non_default whether non-default style values should be kept
+ * @tparam int  id the display style as registered with @{style_define}
+ * @tparam int  start the absolute file position in bytes
+ * @tparam int  finish the end position
  * @see style_define
  * @usage
  * win:style(win.STYLE_DEFAULT, 0, 10)
@@ -2132,13 +2131,12 @@ vis_lua_window_style_define(lua_State *L)
 VIS_INTERNAL int
 vis_lua_window_style(lua_State *L)
 {
-	Win *win              = obj_ref_check(L, 1, VIS_LUA_TYPE_WINDOW);
-	uint16_t style_id     = luaL_checkinteger(L, 2);
-	size_t start          = checkpos(L, 3);
-	size_t end            = checkpos(L, 4);
-	bool keep_non_default = lua_isboolean(L, 5) && lua_toboolean(L, 5);
+	Win *win      = obj_ref_check(L, 1, VIS_LUA_TYPE_WINDOW);
+	u16  style_id = luaL_checkinteger(L, 2);
+	size_t start  = checkpos(L, 3);
+	size_t end    = checkpos(L, 4);
 	style_id = style_id < win->vis->ui.style_count ? style_id : UI_STYLE_DEFAULT;
-	vis_win_style(win, start, end, style_id, keep_non_default);
+	vis_win_style(win, start, end, style_id);
 	return 0;
 }
 
@@ -2149,10 +2147,9 @@ vis_lua_window_style(lua_State *L)
  * such as the status bar.
  * The style will be cleared after every window redraw.
  * @function style_pos
- * @tparam      int  id display style registered with @{style_define}
- * @tparam      int  x 0-based x coordinate within Win, where (0,0) is the top left corner
- * @tparam      int  y See above
- * @tparam[opt] bool keep_non_default whether non-default style values should be kept
+ * @tparam int  id display style registered with @{style_define}
+ * @tparam int  x 0-based x coordinate within Win, where (0,0) is the top left corner
+ * @tparam int  y See above
  * @treturn bool false if the coordinates would be outside the window's dimensions
  * @see style_define
  * @usage
@@ -2162,12 +2159,11 @@ vis_lua_window_style(lua_State *L)
 VIS_INTERNAL int
 vis_lua_window_style_pos(lua_State *L)
 {
-	Win *win              = obj_ref_check(L, 1, VIS_LUA_TYPE_WINDOW);
-	uint16_t style_id     = luaL_checkinteger(L, 2);
-	size_t x              = checkpos(L, 3);
-	size_t y              = checkpos(L, 4);
-	bool keep_non_default = lua_isboolean(L, 5) && lua_toboolean(L, 5);
-	lua_pushboolean(L, vis_ui_window_style_set_pos(win, (int)x, (int)y, style_id, keep_non_default));
+	Win *win      = obj_ref_check(L, 1, VIS_LUA_TYPE_WINDOW);
+	u16  style_id = luaL_checkinteger(L, 2);
+	size_t x      = checkpos(L, 3);
+	size_t y      = checkpos(L, 4);
+	lua_pushboolean(L, vis_ui_window_style_set_pos(win, (int)x, (int)y, style_id));
 	return 1;
 }
 

@@ -50,21 +50,39 @@ typedef enum {
 	UI_STYLE_MAX = 512,
 } VisUiStyle;
 
-#if CONFIG_CURSES
-typedef uint64_t CellAttr;
-typedef short CellColor;
-#else
-typedef uint8_t CellAttr;
-typedef struct {
-	uint8_t r, g, b;
-	uint8_t index;
-} CellColor;
-#endif
+typedef enum {
+	VisCellAttribute_Normal    = 0,
+	VisCellAttribute_Underline = 1u << 0,
+	VisCellAttribute_Reverse   = 1u << 1,
+	VisCellAttribute_Blink     = 1u << 2,
+	VisCellAttribute_Bold      = 1u << 3,
+	VisCellAttribute_Italic    = 1u << 4,
+	VisCellAttribute_Dim       = 1u << 5,
+} VisCellAttribute;
 
+typedef enum {
+	VisCellProperty_None          = 0,
+	VisCellProperty_FGSet         = 1u << 0, // user provided FG (if not keep cell's existing FG)
+	VisCellProperty_BGSet         = 1u << 1, // user provided BG (if not keep cell's existing BG)
+	VisCellProperty_IndexedFG     = 1u << 2, // FG is a color table index
+	VisCellProperty_IndexedBG     = 1u << 3, // BG is a color table index
+	VisCellProperty_KeepAttribute = 1u << 4, // or attribute onto cell's existing attribute
+} VisCellProperties;
+
+// NOTE(rnp): FG/BG may be indexed, as indicated by the cell properties. For
+// alignment they are not defined as unions. The FG index is stored in the
+// fg_r and fg_g u8s and the BG index is strored in the bg_g and bg_b u8s.
+// Use the VisCellStyleBGIndex*() and VisCellStyleFGIndex*() macros to extract.
 typedef struct {
-	CellAttr attr;
-	CellColor fg, bg;
-} CellStyle;
+	u8 attributes; // VisCellAttributes
+	u8 properties; // VisCellProperties
+	u8 fg_r, fg_g, fg_b;
+	u8 bg_r, bg_g, bg_b;
+} VisCellStyle;
+#define VisCellStyleFGIndexGet(v)        (((u16)(v)->fg_r << 8u) | (v)->fg_g)
+#define VisCellStyleBGIndexGet(v)        (((u16)(v)->bg_g << 8u) | (v)->bg_b)
+#define VisCellStyleFGIndexSet(v, index) ((v)->fg_r = ((index >> 8u) & 0xFFu), ((v)->fg_g = (index) & 0xFFu))
+#define VisCellStyleBGIndexSet(v, index) ((v)->bg_g = ((index >> 8u) & 0xFFu), ((v)->bg_b = (index) & 0xFFu))
 
 typedef struct {
 	char data[16];      /* utf8 encoded character displayed in this cell (might be more than
@@ -75,7 +93,7 @@ typedef struct {
 	                       is stored in the leftmost cell whereas all following cells
 	                       occupied by the same character have a length of 0. */
 	int width;          /* display width i.e. number of columns occupied by this character */
-	CellStyle style;    /* colors and attributes used to display this cell */
+	VisCellStyle style; /* colors and attributes used to display this cell */
 } Cell;
 
 typedef struct {
@@ -83,12 +101,20 @@ typedef struct {
 	u64   size;
 } VisCellBuffer;
 
+typedef struct {
+	s16  *palette;
+	s16   color_pairs_max;
+	s16   color_pair_current;
+	s16   default_fg;
+	s16   default_bg;
+	s8    change_colors;
+} VisCursesUI;
+
 // TODO(rnp): flatten UI into vis, only one exists and it must be in a vis context
 typedef struct {
 	char info[UI_MAX_WIDTH];   /* info message displayed at the bottom of the screen */
 	TermKey termkey;           /* libtermkey instance to handle keyboard input (stdin or /dev/tty) */
 	VisCellBuffer cell_buffer; /* 2D grid of cells, at least as large as current terminal size */
-	void *ctx;                 /* Any additional data needed by the backend */
 	int width, height;         /* terminal dimensions available for all windows */
 	int cur_row, cur_col;      /* active cursor's (0-based) position on the terminal */
 	enum UiLayout layout;      /* whether windows are displayed horizontally or vertically */
@@ -96,9 +122,15 @@ typedef struct {
 
 	str8 term;                 /* selected value for TERM (0 terminated) */
 
+#if CONFIG_CURSES
+	VisCursesUI curses;
+#else
+	Buffer      vt100;
+#endif
+
 	// static_assert(U16_MAX <= UI_STYLE_MAX)
-	u16 style_count;           /* count of styles currently in use */
-	CellStyle styles[UI_STYLE_MAX];
+	u16          style_count;  /* count of styles currently in use */
+	VisCellStyle styles[UI_STYLE_MAX];
 } Ui;
 
 #include "view.h"
@@ -124,10 +156,10 @@ VIS_INTERNAL bool ui_window_init(Ui *, Win *, enum UiOption);
 
 VIS_INTERNAL bool vis_ui_getkey(Vis *, TermKeyKey *);
 
-VIS_INTERNAL uint16_t vis_ui_style_push(Vis *);
-VIS_INTERNAL bool vis_ui_style_define(Vis *, uint16_t style_id, str8 style);
-VIS_INTERNAL void vis_ui_window_style_set(Ui *ui, Cell *cell, uint16_t style_id, bool keep_non_default);
-VIS_INTERNAL bool vis_ui_window_style_set_pos(Win *win, int x, int y, uint16_t style_id, bool keep_non_default);
+VIS_INTERNAL u16  vis_ui_style_push(Vis *);
+VIS_INTERNAL bool vis_ui_style_define(Vis *, u16 style_id, str8 style);
+VIS_INTERNAL void vis_ui_window_style_set(Ui *ui, Cell *cell, u16 style_id);
+VIS_INTERNAL bool vis_ui_window_style_set_pos(Win *win, int x, int y, u16 style_id);
 
 VIS_INTERNAL void ui_window_options_set(Win *win, enum UiOption options);
 VIS_INTERNAL void ui_window_status(Vis *vis, Win *win, const char *status);

@@ -134,7 +134,6 @@ static inline bool addu(size_t a, size_t b, size_t *c) {
 #define PATH_MAX 4096
 #endif
 
-
 typedef size_t    uz;
 typedef int64_t   s64;
 typedef uint64_t  u64;
@@ -149,11 +148,11 @@ typedef char      c8;
 #define VisDACount s32
 
 typedef struct {
-	ptrdiff_t  length;
-	uint8_t   *data;
+	s64  length;
+	u8  *data;
 } str8;
-#define str8(s)      (str8){.length = sizeof(s) - 1, .data = (uint8_t *)s}
-#define str8_comp(s)       {sizeof(s) - 1, (uint8_t *)s}
+#define str8(s)      (str8){.length = sizeof(s) - 1, .data = (u8 *)s}
+#define str8_comp(s)       {sizeof(s) - 1, (u8 *)s}
 
 typedef struct {
 	str8       *data;
