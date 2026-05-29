@@ -33,8 +33,6 @@ static bool is_default_bg(CellColor c) {
 
 void ui_die(Ui *tui, const char *msg, va_list ap) {
 	ui_terminal_free(tui);
-	if (tui->termkey)
-		termkey_stop(tui->termkey);
 	vfprintf(stderr, msg, ap);
 	exit(EXIT_FAILURE);
 }
