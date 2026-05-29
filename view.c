@@ -1350,21 +1350,28 @@ void win_style(Win *win, enum UiStyle style, size_t start, size_t end, bool keep
 	if (!line)
 		return;
 
-	int col = 0, width = view->width;
-
+	int col = 0, view_width = view->width;
 	/* skip columns before range to be styled */
-	while (pos < start && col < width)
+	while (pos < start && col < view_width)
 		pos += line->cells[col++].len;
 
 	/* skip empty columns */
-	while (!line->cells[col].len && col < width)
+	while (col < view_width && !line->cells[col].len)
 		col++;
 
 	do {
-		while (pos <= end && col < width) {
+		// NOTE(rnp): first style at most until the end of the real line contents
+		while (pos <= end && col < line->width) {
 			pos += line->cells[col].len;
-			ui_window_style_set(&win->vis->ui, win->id, &line->cells[col++], style, keep_non_default);
+			ui_window_style_set(&win->vis->ui, win->id, line->cells + col++, style, keep_non_default);
 		}
+
+		// NOTE(rnp): if the range extends to another line continue styling the full view width
+		if (pos < end) while (col < view_width)
+		{
+			ui_window_style_set(&win->vis->ui, win->id, line->cells + col++, style, keep_non_default);
+		}
+
 		col = 0;
-	} while (pos <= end && (line = line->next));
+	} while (pos < end && (line = line->next));
 }
