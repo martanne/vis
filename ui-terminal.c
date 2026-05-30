@@ -438,6 +438,11 @@ void ui_resize(Ui *tui) {
 	tui->height = height;
 }
 
+static void ui_set_title(const char *title) {
+	printf("%c]2;%s - vis%c", '\033', title, '\007');
+	fflush(stdout);
+}
+
 VIS_INTERNAL void
 ui_window_options_set(Win *win, enum UiOption options)
 {

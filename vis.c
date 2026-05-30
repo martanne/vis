@@ -108,6 +108,7 @@ static File *file_new(Vis *vis, const char *name, bool internal) {
 		goto err;
 	file->name = name_absolute;
 	file->internal = internal;
+	ui_set_title(file->name ? file->name : "[No Name]");
 	if (!internal)
 		vis_event_emit(vis, VIS_EVENT_FILE_OPEN, file);
 	return file;

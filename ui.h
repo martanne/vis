@@ -111,6 +111,7 @@ VIS_INTERNAL void ui_draw(Vis *);
 VIS_INTERNAL void ui_info_hide(Ui *);
 VIS_INTERNAL void ui_info_show(Ui *, const char *, va_list);
 VIS_INTERNAL void ui_resize(Ui*);
+VIS_INTERNAL void ui_set_title(const char *);
 
 VIS_INTERNAL bool ui_window_init(Ui *, Win *, enum UiOption);
 

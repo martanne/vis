@@ -16,6 +16,7 @@
  * REPRESENTATION OR WARRANTY OF ANY KIND CONCERNING THE MERCHANTABILITY
  * OF THIS SOFTWARE OR ITS FITNESS FOR ANY PARTICULAR PURPOSE.
  */
+#include "ui.h"
 #include "vis-core.h"
 
 #define MAX_ARGV 8
@@ -1584,6 +1585,7 @@ static bool cmd_write(Vis *vis, Win *win, Command *cmd, const char *argv[], Sele
 		if (same_file || (!existing_file && strcmp(file->name, path) == 0))
 			file->stat = text_stat(text);
 		vis_event_emit(vis, VIS_EVENT_FILE_SAVE_POST, file, path);
+		ui_set_title(file->name);
 		free(path);
 		continue;
 
