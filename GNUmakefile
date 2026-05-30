@@ -1,8 +1,5 @@
 include Makefile
 
-LIBTERMKEY = libtermkey-0.22
-LIBTERMKEY_SHA256 = 6945bd3c4aaa83da83d80a045c5563da4edd7d0374c62c0d35aec09eb3014600
-
 LIBLUA = lua-5.3.4
 LIBLUA_SHA256 = f681aa518233bc407e23acf0f5887c884f17436f000d453b2491a9f11a52400c
 #LIBLUA = lua-5.2.4
@@ -26,27 +23,6 @@ dependency/build:
 
 dependency/sources:
 	mkdir -p "$@"
-
-# LIBTERMKEY
-
-dependency/sources/libtermkey-%: | dependency/sources
-	wget -c -O $@.part http://www.leonerd.org.uk/code/libtermkey/$(LIBTERMKEY).tar.gz
-	mv $@.part $@
-	[ -z $(LIBTERMKEY_SHA256) ] || (echo '$(LIBTERMKEY_SHA256)  $@' | sha256sum -c)
-
-dependency/build/libtermkey-extract: dependency/sources/$(LIBTERMKEY).tar.gz | dependency/build
-	tar xzf $< -C $(dir $@)
-	touch $@
-
-dependency/build/libtermkey-build: dependency/build/libtermkey-extract
-	# TODO no sane way to avoid pkg-config and specify LDFLAGS?
-	sed -i 's/LDFLAGS+=-lncurses$$/LDFLAGS+=-lncursesw/g' $(dir $<)/$(LIBTERMKEY)/Makefile
-	$(MAKE) -C $(dir $<)/$(LIBTERMKEY) PREFIX=/usr termkey.h libtermkey.la
-	touch $@
-
-dependency/build/libtermkey-install: dependency/build/libtermkey-build
-	$(MAKE) -C $(dir $<)/$(LIBTERMKEY) PREFIX=/usr DESTDIR=$(DEPS_ROOT) install-inc install-lib
-	touch $@
 
 # LIBLUA
 
@@ -89,7 +65,7 @@ dependency/build/liblpeg-install: dependency/build/liblpeg-build
 	cd $(dir $<)/$(LIBLPEG) && cp liblpeg.a $(DEPS_LIB)
 	touch $@
 
-dependency/build/local: dependency/build/libtermkey-install dependency/build/liblua-install dependency/build/liblpeg-install
+dependency/build/local: dependency/build/liblua-install dependency/build/liblpeg-install
 	touch $@
 
 local: clean

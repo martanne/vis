@@ -35,7 +35,7 @@ dialog are all provided by independent utilities. There exist plans to use
 a client/server architecture, delegating window management to your windowing
 system or favorite terminal multiplexer.
 
-The intention is *not* to be bug-for-bug compatible with vi(m). Instead,  
+The intention is *not* to be bug-for-bug compatible with vi(m). Instead,
 we aim to provide more powerful editing features based on an elegant design
 and clean implementation.
 
@@ -49,7 +49,6 @@ In order to build vis you will need a
 compiler, a [POSIX.1-2008](http://pubs.opengroup.org/onlinepubs/9699919799/)
 compatible environment as well as:
 
- * [libtermkey](http://www.leonerd.org.uk/code/libtermkey/)
  * [curses](https://en.wikipedia.org/wiki/Curses_(programming_library)) (recommended)
  * [Lua](http://www.lua.org/) >= 5.2 (optional)
  * [LPeg](http://www.inf.puc-rio.br/~roberto/lpeg/) >= 0.12

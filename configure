@@ -25,7 +25,6 @@ Fine tuning of the installation directories:
 
 Optional features:
   --enable-curses         build with Curses terminal output [yes]
-  --enable-sys-termkey    build with system termkey [no]
   --enable-lua            build with Lua support [auto]
   --enable-lpeg-static    build with LPeg static linking [auto]
   --enable-tre            build with TRE regex support [auto]
@@ -123,7 +122,6 @@ MANDIR='$(PREFIX)/share/man'
 
 help=yes
 curses=yes
-systermkey=no
 lua=auto
 lpeg=auto
 tre=auto
@@ -145,8 +143,6 @@ case "$arg" in
 --disable-help|--enable-help=no) help=no ;;
 --enable-curses|--enable-curses=yes) curses=yes ;;
 --disable-curses|--enable-curses=no) curses=no ;;
---enable-sys-termkey|--enable-sys-termkey=yes) systermkey=yes ;;
---disable-sys-termkey|--enable-sys-termkey=no) systermkey=no ;;
 --enable-lua|--enable-lua=yes) lua=yes ;;
 --disable-lua|--enable-lua=no) lua=no ;;
 --enable-lpeg-static|--enable-lpeg-static=yes) lpeg=yes ;;
@@ -354,48 +350,17 @@ EOF
 	test "$curses" = "yes" -a -z "${CFLAGS_CURSES}" && fail "$0: cannot find libcurses"
 fi
 
-if test "$systermkey" = "yes" ; then
-	printf "checking for system libtermkey... "
-	cat > "$tmpc" <<EOF
-#include <termkey.h>
-
-int main(int argc, char *argv[]) {
-	TERMKEY_CHECK_VERSION;
-	return 0;
-}
-EOF
-
-	if test "$have_pkgconfig" = "yes" ; then
-		CFLAGS_TERMKEY=$($PKG_CONFIG $pkg_config_flags --cflags termkey 2>/dev/null)
-		LDFLAGS_TERMKEY=$($PKG_CONFIG $pkg_config_flags --libs termkey 2>/dev/null)
-	fi
-
-	if test -z "$LDFLAGS_TERMKEY"; then
-		CFLAGS_TERMKEY=""
-		LDFLAGS_TERMKEY="-ltermkey"
-	fi
-
-	if $CC $CFLAGS $CFLAGS_TERMKEY "$tmpc" $LDFLAGS $LDFLAGS_TERMKEY $LDFLAGS_CURSES \
-		-o "$tmpo" >/dev/null 2>&1; then
-		printf "%s\n" "yes"
-		CFLAGS_TERMKEY="${CFLAGS_TERMKEY} -DCONFIG_SYSTEM_TERMKEY=1"
-	else
-		printf "%s\n" "no"
-		fail "$0: cannot find libtermkey"
-	fi
-else
-	TERMINFO=$(ncursesw6-config --terminfo 2>/dev/null || \
-	           ncurses6-config  --terminfo 2>/dev/null || \
-	           ncursesw5-config --terminfo 2>/dev/null || \
-	           ncurses5-config  --terminfo 2>/dev/null || \
-	           echo "/usr/share/terminfo")
-	TERMINFO_DIRS=$(ncursesw6-config --terminfo-dirs 2>/dev/null || \
-	                ncurses6-config  --terminfo-dirs 2>/dev/null || \
-	                ncursesw5-config --terminfo-dirs 2>/dev/null || \
-	                ncurses5-config  --terminfo-dirs 2>/dev/null || \
-	                echo "/etc/terminfo:/lib/terminfo:/usr/share/terminfo:/usr/lib/terminfo:/usr/local/share/terminfo:/usr/local/lib/terminfo")
-	CFLAGS_TERMKEY="-DTERMINFO='\"${TERMINFO}\"' -DTERMINFO_DIRS='\"${TERMINFO_DIRS}\"'"
-fi
+TERMINFO=$(ncursesw6-config --terminfo 2>/dev/null || \
+           ncurses6-config  --terminfo 2>/dev/null || \
+           ncursesw5-config --terminfo 2>/dev/null || \
+           ncurses5-config  --terminfo 2>/dev/null || \
+           echo "/usr/share/terminfo")
+TERMINFO_DIRS=$(ncursesw6-config --terminfo-dirs 2>/dev/null || \
+                ncurses6-config  --terminfo-dirs 2>/dev/null || \
+                ncursesw5-config --terminfo-dirs 2>/dev/null || \
+                ncurses5-config  --terminfo-dirs 2>/dev/null || \
+                echo "/etc/terminfo:/lib/terminfo:/usr/share/terminfo:/usr/lib/terminfo:/usr/local/share/terminfo:/usr/local/lib/terminfo")
+CFLAGS_TERMKEY="-DTERMINFO='\"${TERMINFO}\"' -DTERMINFO_DIRS='\"${TERMINFO_DIRS}\"'"
 
 if test "$tre" != "no" ; then
 
@@ -644,7 +609,6 @@ exec 3>&1 1>>config.mk
 
 cat << EOF
 CFLAGS_TERMKEY = $CFLAGS_TERMKEY
-LDFLAGS_TERMKEY = $LDFLAGS_TERMKEY
 CFLAGS_CURSES = $CFLAGS_CURSES
 LDFLAGS_CURSES = $LDFLAGS_CURSES
 CFLAGS_TRE = $CFLAGS_TRE
