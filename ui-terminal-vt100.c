@@ -178,17 +178,20 @@ int ui_terminal_colors(void) {
 	return (term && strstr(term, "-256color")) ? 256 : 16;
 }
 
-static void ui_term_backend_suspend(Ui *tui) {
-	if (!tui->termkey) return;
-	termkey_stop(tui->termkey);
+VIS_INTERNAL void
+ui_term_backend_suspend(Ui *tui)
+{
+	termkey_stop(&tui->termkey);
 	cursor_visible(true);
 	screen_alternate(false);
 }
 
-void ui_terminal_resume(Ui *tui) {
+VIS_INTERNAL void
+ui_terminal_resume(Ui *tui)
+{
 	screen_alternate(true);
 	cursor_visible(false);
-	termkey_start(tui->termkey);
+	termkey_start(&tui->termkey);
 }
 
 static bool

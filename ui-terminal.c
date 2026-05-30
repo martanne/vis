@@ -515,23 +515,25 @@ void ui_info_hide(Ui *tui) {
 		tui->info[0] = '\0';
 }
 
-static TermKey *ui_termkey_new(int fd) {
-	TermKey *termkey = termkey_new(fd, UI_TERMKEY_FLAGS);
-	if (termkey)
-		termkey_set_canonflags(termkey, TERMKEY_CANON_DELBS);
-	return termkey;
+VIS_INTERNAL bool
+vis_ui_termkey_init(TermKey *tk, int fd)
+{
+	bool result = termkey_init_from_fd(tk, fd, UI_TERMKEY_FLAGS);
+	if (result) termkey_set_canonflags(tk, TERMKEY_CANON_DELBS);
+	return result;
 }
 
-static TermKey *ui_termkey_reopen(Ui *ui, int fd) {
+VIS_INTERNAL bool
+vis_ui_termkey_reopen(Ui *ui, int fd)
+{
+	bool result = false;
 	int tty = open("/dev/tty", O_RDWR);
-	if (tty == -1)
-		return NULL;
-	if (tty != fd && dup2(tty, fd) == -1) {
+	if (tty != -1) {
+		if (tty == fd || dup2(tty, fd) != -1)
+			result = vis_ui_termkey_init(&ui->termkey, fd);
 		close(tty);
-		return NULL;
 	}
-	close(tty);
-	return ui_termkey_new(fd);
+	return result;
 }
 
 void ui_terminal_suspend(Ui *tui) {
@@ -542,12 +544,12 @@ void ui_terminal_suspend(Ui *tui) {
 VIS_INTERNAL bool
 vis_ui_getkey(Vis *vis, TermKeyKey *key)
 {
-	TermKeyResult ret = termkey_getkey(vis->ui.termkey, key);
+	TermKeyResult ret = termkey_getkey(&vis->ui.termkey, key);
 
 	if (ret == TERMKEY_RES_EOF) {
-		termkey_destroy(vis->ui.termkey);
+		termkey_destroy(&vis->ui.termkey);
 		errno = 0;
-		if (!(vis->ui.termkey = ui_termkey_reopen(&vis->ui, STDIN_FILENO)))
+		if (!vis_ui_termkey_reopen(&vis->ui, STDIN_FILENO))
 			ui_die_msg(&vis->ui, "Failed to re-open stdin as /dev/tty: %s\n", errno != 0 ? strerror(errno) : "");
 		return false;
 	}
@@ -557,7 +559,7 @@ vis_ui_getkey(Vis *vis, TermKeyKey *key)
 		fd.fd = STDIN_FILENO;
 		fd.events = POLLIN;
 		if (poll(&fd, 1, vis->escape_delay) == 0)
-			ret = termkey_getkey_force(vis->ui.termkey, key);
+			ret = termkey_getkey_force(&vis->ui.termkey, key);
 	}
 
 	return ret == TERMKEY_RES_KEY;
@@ -565,11 +567,11 @@ vis_ui_getkey(Vis *vis, TermKeyKey *key)
 
 void ui_terminal_save(Ui *tui, bool fscr) {
 	ui_term_backend_save(tui, fscr);
-	termkey_stop(tui->termkey);
+	termkey_stop(&tui->termkey);
 }
 
 void ui_terminal_restore(Ui *tui) {
-	termkey_start(tui->termkey);
+	termkey_start(&tui->termkey);
 	ui_term_backend_restore(tui);
 }
 
@@ -577,8 +579,7 @@ VIS_INTERNAL void
 ui_terminal_free(Ui *tui)
 {
 	ui_term_backend_free(tui);
-	if (tui->termkey)
-		termkey_destroy(tui->termkey);
+	termkey_destroy(&tui->termkey);
 	free(tui->cells);
 	free(tui->styles);
 }
@@ -589,18 +590,16 @@ ui_init(Ui *tui)
 	setlocale(LC_CTYPE, "");
 
 	char *term = getenv("TERM");
-	if (!term) {
-		term = "xterm";
-		setenv("TERM", term, 1);
-	}
+	if (!term) term = "xterm";
 
 	errno = 0;
-	if (!(tui->termkey = ui_termkey_new(STDIN_FILENO))) {
+	if (!vis_ui_termkey_init(&tui->termkey, STDIN_FILENO)) {
 		/* work around libtermkey bug which fails if stdin is /dev/null */
 		if (errno == EBADF) {
 			errno = 0;
-			if (!(tui->termkey = ui_termkey_reopen(tui, STDIN_FILENO)) && errno == ENXIO)
-				tui->termkey = termkey_new_abstract(term, UI_TERMKEY_FLAGS);
+			if (!vis_ui_termkey_reopen(tui, STDIN_FILENO) && errno == ENXIO)
+				if (!termkey_init_abstract(&tui->termkey, term, UI_TERMKEY_FLAGS))
+					ui_die_msg(tui, "Failed to start termkey\n");
 		}
 	}
 
@@ -608,7 +607,7 @@ ui_init(Ui *tui)
 	tui->styles      = calloc(1, tui->styles_size);
 	tui->doupdate    = true;
 
-	bool result = tui->styles && tui->termkey && ui_backend_init(tui, term);
+	bool result = tui->styles && ui_backend_init(tui, term);
 	if (result) ui_resize(tui);
 	else        ui_terminal_free(tui);
 	return result;

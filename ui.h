@@ -83,7 +83,7 @@ typedef struct {
 	int width, height;        /* terminal dimensions available for all windows */
 	int cur_row, cur_col;     /* active cursor's (0-based) position on the terminal */
 	enum UiLayout layout;     /* whether windows are displayed horizontally or vertically */
-	TermKey *termkey;         /* libtermkey instance to handle keyboard input (stdin or /dev/tty) */
+	TermKey termkey;          /* libtermkey instance to handle keyboard input (stdin or /dev/tty) */
 	size_t ids;               /* bit mask of in use window ids */
 	size_t styles_size;       /* #bytes allocated for styles array */
 	CellStyle *styles;        /* each window has UI_STYLE_MAX different style definitions */

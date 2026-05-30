@@ -12,7 +12,7 @@
 /* is c the start of a utf8 sequence? */
 #define ISUTF8(c)   (((c)&0xC0)!=0x80)
 
-static TermKey *termkey;
+static TermKey termkey[1];
 
 static void die(const char *errstr, ...) {
         va_list ap;
@@ -149,9 +149,8 @@ int main(int argc, char *argv[]) {
 	char buf[1024];
 	FILE *file = stdin;
 	char *term = getenv("TERM");
-	if (!term)
-		term = "xterm";
-	if (!(termkey = termkey_new_abstract(term, TERMKEY_FLAG_UTF8)))
+	if (!term) term = "xterm";
+	if (!termkey_init_abstract(termkey, term, TERMKEY_FLAG_UTF8))
 		die("Failed to initialize libtermkey\n");
 	while (fgets(buf, sizeof buf, file)) {
 		const char *keys = buf, *next;

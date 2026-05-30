@@ -603,7 +603,7 @@ static void print_symbolic_keys(Vis *vis, Text *txt)
 		TERMKEY_SYM_KPEQUALS,
 	};
 
-	TermKey *termkey = vis->ui.termkey;
+	TermKey *termkey = &vis->ui.termkey;
 	text_appendf(vis, txt, "  ␣ (a literal \" \" space symbol must be used to refer to <Space>)\n");
 	for (size_t i = 0; i < LENGTH(keys); i++) {
 		text_appendf(vis, txt, "  <%s>\n", termkey_get_keyname(termkey, keys[i]));

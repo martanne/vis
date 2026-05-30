@@ -929,7 +929,7 @@ const char *vis_keys_next(Vis *vis, const char *keys) {
 	if (!keys || !*keys)
 		return NULL;
 	TermKeyKey key;
-	TermKey *termkey = vis->ui.termkey;
+	TermKey *termkey = &vis->ui.termkey;
 	const char *next = NULL;
 	/* first try to parse a special key of the form <Key> */
 	if (*keys == '<' && keys[1] && (next = termkey_strpkey(termkey, keys+1, &key, TERMKEY_FORMAT_VIM)) && *next == '>')
@@ -957,7 +957,7 @@ long vis_keys_codepoint(Vis *vis, const char *keys) {
 	long codepoint = -1;
 	const char *next;
 	TermKeyKey key;
-	TermKey *termkey = vis->ui.termkey;
+	TermKey *termkey = &vis->ui.termkey;
 
 	if (!keys[0])
 		return -1;
@@ -1194,7 +1194,7 @@ static const char *getkey(Vis *vis) {
 		}
 	}
 
-	TermKey *termkey = vis->ui.termkey;
+	TermKey *termkey = &vis->ui.termkey;
 	if (key.type == TERMKEY_TYPE_UNKNOWN_CSI) {
 		long args[18];
 		size_t nargs;
@@ -1324,7 +1324,7 @@ int vis_run(Vis *vis) {
 			continue;
 		}
 
-		termkey_advisereadable(vis->ui.termkey);
+		termkey_advisereadable(&vis->ui.termkey);
 		const char *key;
 
 		while ((key = getkey(vis)))

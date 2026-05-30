@@ -1585,19 +1585,6 @@ termkey_strpncmp_camel(const char **strp, const char **strcamelp, size_t n)
 	return *str - *strcamel;
 }
 
-static TermKey *
-termkey_alloc(void)
-{
-	TermKey *result = calloc(1, sizeof(TermKey));
-	if (!result)
-		return 0;
-
-	/* Default all the object fields but don't allocate anything */
-	result->fd = -1;
-
-	return result;
-}
-
 static void
 termkey_register_c0(TermKey *tk, TermKeySym sym, unsigned char ctrl)
 {
@@ -1683,57 +1670,53 @@ termkey_set_flags(TermKey *tk, int newflags)
 		tk->canonflags &= ~TERMKEY_CANON_SPACESYMBOL;
 }
 
-TERMKEY_EXPORT TermKey *
-termkey_new(int fd, int flags)
+TERMKEY_EXPORT bool
+termkey_init_from_fd(TermKey *tk, int fd, int flags)
 {
-	TermKey *result = termkey_alloc();
-	if (result) {
-		result->fd = fd;
+	bool result = true;
+	tk->fd = fd;
 
-		if (!(flags & (TERMKEY_FLAG_RAW|TERMKEY_FLAG_UTF8))) {
-			char *e;
+	if (!(flags & (TERMKEY_FLAG_RAW|TERMKEY_FLAG_UTF8))) {
+		char *e;
 
-			/* Most OSes will set .UTF-8. Some will set .utf8. Try to be fairly
-			 * generous in parsing these
-			 */
-			if (((e = getenv("LANG")) || (e = getenv("LC_MESSAGES")) || (e = getenv("LC_ALL"))) &&
-			    (e = strchr(e, '.')) && e++ &&
-			    (strcaseeq(e, "UTF-8") || strcaseeq(e, "UTF8")))
-			{
-				flags |= TERMKEY_FLAG_UTF8;
-			} else {
-				flags |= TERMKEY_FLAG_RAW;
-			}
-		}
-
-		termkey_set_flags(result, flags);
-		termkey_init(result, getenv("TERM"));
-		if ((flags & TERMKEY_FLAG_NOSTART) == 0 && !termkey_start(result)) {
-			free(result);
-			result = 0;
+		/* Most OSes will set .UTF-8. Some will set .utf8. Try to be fairly
+		 * generous in parsing these
+		 */
+		if (((e = getenv("LANG")) || (e = getenv("LC_MESSAGES")) || (e = getenv("LC_ALL"))) &&
+		    (e = strchr(e, '.')) && e++ &&
+		    (strcaseeq(e, "UTF-8") || strcaseeq(e, "UTF8")))
+		{
+			flags |= TERMKEY_FLAG_UTF8;
+		} else {
+			flags |= TERMKEY_FLAG_RAW;
 		}
 	}
+
+	char *term = getenv("TERM");
+	if (!term) term = "xterm";
+	termkey_set_flags(tk, flags);
+	termkey_init(tk, term);
+
+	if ((flags & TERMKEY_FLAG_NOSTART) == 0 && !termkey_start(tk))
+		result = false;
+
 	return result;
 }
 
-TERMKEY_EXPORT TermKey *
-termkey_new_abstract(const char *term, int flags)
+TERMKEY_EXPORT bool
+termkey_init_abstract(TermKey *tk, const char *term, int flags)
 {
-	TermKey *result = termkey_alloc();
-	if (result) {
-		result->fd = -1;
-		termkey_set_flags(result, flags);
-		termkey_init(result, term);
-		if ((flags & TERMKEY_FLAG_NOSTART) != 0 && !termkey_start(result)) {
-			free(result);
-			result = 0;
-		}
-	}
+	bool result = true;
+	tk->fd = -1;
+	termkey_set_flags(tk, flags);
+	termkey_init(tk, term);
+	if ((flags & TERMKEY_FLAG_NOSTART) != 0 && !termkey_start(tk))
+		result = false;
 	return result;
 }
 
 TERMKEY_EXPORT void
-termkey_free(TermKey *tk)
+termkey_release(TermKey *tk)
 {
 	for (TermKeyDriver *p = tk->drivers; p;) {
 		p->release_driver(p);
@@ -1741,7 +1724,6 @@ termkey_free(TermKey *tk)
 		p->next = 0;
 		p       = next;
 	}
-	free(tk);
 }
 
 TERMKEY_EXPORT int
@@ -1765,7 +1747,9 @@ TERMKEY_EXPORT void
 termkey_destroy(TermKey *tk)
 {
 	termkey_stop(tk);
-	termkey_free(tk);
+	termkey_release(tk);
+	memset(tk, 0, sizeof(*tk));
+	tk->fd = -1;
 }
 
 TERMKEY_EXPORT void
