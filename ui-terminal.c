@@ -234,7 +234,7 @@ static void ui_window_draw(Win *win) {
 
 	int sidebar_width = 0;
 	if (sidebar) {
-		sidebar_width = u32_count_digits(line->lineno + height - 2) + 1;
+		sidebar_width = u32_count_digits(view->lastline->lineno) + 1;
 		sidebar_width = MAX(sidebar_width, win->min_sidebar_width);
 	}
 	if (sidebar_width != win->sidebar_width) {
