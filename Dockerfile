@@ -6,7 +6,6 @@ RUN apk update && apk add --upgrade --no-cache \
 	ca-certificates \
 	fortify-headers \
 	gcc \
-	libtermkey-dev \
 	lua5.4-dev \
 	lua5.4-lpeg \
 	lua-lpeg-dev \
@@ -21,7 +20,6 @@ RUN apk update && apk add --upgrade --no-cache \
 	xz-static
 RUN sed -i 's/Libs: /Libs: -L${INSTALL_CMOD} /' /usr/lib/pkgconfig/lua5.4.pc
 RUN mv /usr/lib/lua/5.4/lpeg.a /usr/lib/lua/5.4/liblpeg.a
-RUN sed -i 's/-ltermkey/-ltermkey -lunibilium/' /usr/lib/pkgconfig/termkey.pc
 # TODO contribute a proper libuntar package to Alpine
 RUN mkdir -p /build
 WORKDIR /build
