@@ -1,7 +1,6 @@
 image: freebsd/latest
 packages:
   - gmake
-  - libtermkey
   - lua53
   - lua53-lpeg
   - pkgconf

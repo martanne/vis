@@ -1,7 +1,6 @@
 image: alpine/edge
 packages:
   - acl-dev
-  - libtermkey-dev
   - lua5.3-dev
   - lua5.3-lpeg
   - ncurses-dev
