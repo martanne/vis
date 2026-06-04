@@ -121,7 +121,6 @@ vis_prompt_up(Vis *vis, const char *keys, const Arg *arg)
 	vis_window_mode_unmap(vis->win, VIS_MODE_INSERT, "<Up>");
 	win_options_set(vis->win, UI_OPTION_SYMBOL_EOF);
 	view_slide_down(&vis->win->view, vis->win->view.height - 1);
-	vis->prompt_state = PROMPTSTATE_MULTILINE;
 	return keys;
 }
 

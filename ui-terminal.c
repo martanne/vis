@@ -373,35 +373,23 @@ ui_draw(Vis *vis)
 	debug("ui-draw\n");
 	Ui *tui = &vis->ui;
 	ui_arrange(vis, vis->ui.layout);
-	int dx = 0, dy = 0, parent_height = 0;
-	for (Win *win = vis->windows; win; win = win->next) {
+	for (Win *win = vis->windows; win; win = win->next)
 		ui_window_draw(win);
-		/* determine primary cursor's position */
+
+	/* determine primary cursor's position */
+	if (vis->win) {
+		Win  *win  = vis->win;
 		View *view = &win->view;
-		if (win == vis->win) {
-			view_coord_get(view, view_cursor_get(view), NULL, &tui->cur_row, &tui->cur_col);
-			if (win->parent) {
-				parent_height = win->parent->height;
-			} else {
-				tui->cur_col += win->sidebar_width + dx;
-				tui->cur_row += dy;
-			}
-		}
-		if (tui->layout == UI_LAYOUT_HORIZONTAL)
-			dy += win->height;
-		else
-			dx += win->width + 1; /* +1 for '|' separator */
+		view_coord_get(view, view_cursor_get(view), 0, &tui->cur_row, &tui->cur_col);
+		tui->cur_col += win->sidebar_width + win->x;
+		tui->cur_row += win->y;
 	}
 	switch (vis->prompt_state) {
 	case PROMPTSTATE_NONE:
-	case PROMPTSTATE_MULTILINE:
-		break;
 	case PROMPTSTATE_ONELINE:
+		break;
 	case PROMPTSTATE_COMMAND:
-		if (tui->layout == UI_LAYOUT_HORIZONTAL)
-			tui->cur_row = dy - 1;
-		else
-			tui->cur_row = parent_height;
+		tui->cur_row = vis->ui.height;
 	}
 	if (tui->info[0])
 		ui_draw_string(tui, 0, tui->height-1, tui->info, 0, UI_STYLE_INFO);
