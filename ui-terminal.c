@@ -504,21 +504,21 @@ void ui_info_hide(Ui *tui) {
 }
 
 VIS_INTERNAL bool
-vis_ui_termkey_init(TermKey *tk, int fd)
+vis_ui_termkey_init(TermKey *tk, int fd, char *term)
 {
-	bool result = termkey_init_from_fd(tk, fd, UI_TERMKEY_FLAGS);
+	bool result = termkey_init_from_fd(tk, fd, UI_TERMKEY_FLAGS, term);
 	if (result) termkey_set_canonflags(tk, TERMKEY_CANON_DELBS);
 	return result;
 }
 
 VIS_INTERNAL bool
-vis_ui_termkey_reopen(Ui *ui, int fd)
+vis_ui_termkey_reopen(Ui *ui, int fd, char *term)
 {
 	bool result = false;
 	int tty = open("/dev/tty", O_RDWR);
 	if (tty != -1) {
 		if (tty == fd || dup2(tty, fd) != -1)
-			result = vis_ui_termkey_init(&ui->termkey, fd);
+			result = vis_ui_termkey_init(&ui->termkey, fd, term);
 		close(tty);
 	}
 	return result;
@@ -537,7 +537,7 @@ vis_ui_getkey(Vis *vis, TermKeyKey *key)
 	if (ret == TERMKEY_RES_EOF) {
 		termkey_destroy(&vis->ui.termkey);
 		errno = 0;
-		if (!vis_ui_termkey_reopen(&vis->ui, STDIN_FILENO))
+		if (!vis_ui_termkey_reopen(&vis->ui, STDIN_FILENO, (char *)vis->ui.term.data))
 			ui_die_msg(&vis->ui, "Failed to re-open stdin as /dev/tty: %s\n", errno != 0 ? strerror(errno) : "");
 		return false;
 	}
@@ -570,6 +570,7 @@ ui_terminal_free(Ui *tui)
 	termkey_destroy(&tui->termkey);
 	free(tui->cells);
 	free(tui->styles);
+	free(tui->term.data);
 }
 
 VIS_INTERNAL bool
@@ -579,13 +580,14 @@ ui_init(Ui *tui)
 
 	char *term = getenv("TERM");
 	if (!term) term = "xterm";
+	tui->term = str8_from_c_str(strdup(term));
 
 	errno = 0;
-	if (!vis_ui_termkey_init(&tui->termkey, STDIN_FILENO)) {
+	if (!vis_ui_termkey_init(&tui->termkey, STDIN_FILENO, term)) {
 		/* work around libtermkey bug which fails if stdin is /dev/null */
 		if (errno == EBADF) {
 			errno = 0;
-			if (!vis_ui_termkey_reopen(tui, STDIN_FILENO) && errno == ENXIO)
+			if (!vis_ui_termkey_reopen(tui, STDIN_FILENO, term) && errno == ENXIO)
 				if (!termkey_init_abstract(&tui->termkey, term, UI_TERMKEY_FLAGS))
 					ui_die_msg(tui, "Failed to start termkey\n");
 		}
@@ -595,7 +597,7 @@ ui_init(Ui *tui)
 	tui->styles      = calloc(1, tui->styles_size);
 	tui->doupdate    = true;
 
-	bool result = tui->styles && ui_backend_init(tui, term);
+	bool result = tui->term.length && tui->styles && ui_backend_init(tui, term);
 	if (result) ui_resize(tui);
 	else        ui_terminal_free(tui);
 	return result;

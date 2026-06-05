@@ -1670,7 +1670,7 @@ termkey_set_flags(TermKey *tk, int newflags)
 }
 
 TERMKEY_EXPORT bool
-termkey_init_from_fd(TermKey *tk, int fd, int flags)
+termkey_init_from_fd(TermKey *tk, int fd, int flags, char *term)
 {
 	bool result = true;
 	tk->fd = fd;
@@ -1691,8 +1691,6 @@ termkey_init_from_fd(TermKey *tk, int fd, int flags)
 		}
 	}
 
-	char *term = getenv("TERM");
-	if (!term) term = "xterm";
 	termkey_set_flags(tk, flags);
 	termkey_init(tk, term);
 	result = termkey_start(tk);

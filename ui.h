@@ -91,6 +91,8 @@ typedef struct {
 	Cell *cells;              /* 2D grid of cells, at least as large as current terminal size */
 	bool doupdate;            /* Whether to update the screen after refreshing contents */
 	void *ctx;                /* Any additional data needed by the backend */
+
+	str8 term;                /* selected value for TERM (0 terminated) */
 } Ui;
 
 #include "view.h"
