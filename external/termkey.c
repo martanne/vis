@@ -180,7 +180,6 @@ enum {
 	TERMKEY_FLAG_SPACESYMBOL = 1 << 5, /* Sets TERMKEY_CANON_SPACESYMBOL */
 	TERMKEY_FLAG_CTRLC       = 1 << 6, /* Allow Ctrl-C to be read as normal, disabling SIGINT */
 	TERMKEY_FLAG_EINTR       = 1 << 7, /* Return ERROR on signal (EINTR) rather than retry */
-	TERMKEY_FLAG_NOSTART     = 1 << 8  /* Do not call termkey_start() in constructor */
 };
 
 enum {
@@ -1612,11 +1611,11 @@ termkey_init(TermKey *tk, const char *term)
 	}
 }
 
-TERMKEY_EXPORT int
+TERMKEY_EXPORT bool
 termkey_start(TermKey *tk)
 {
 	if (tk->is_started)
-		return 1;
+		return true;
 
 	#ifdef HAVE_TERMIOS
 	if (tk->fd != -1 && !(tk->flags & TERMKEY_FLAG_NOTERMIOS)) {
@@ -1653,10 +1652,10 @@ termkey_start(TermKey *tk)
 
 	for (TermKeyDriver *p = tk->drivers; p; p = p->next)
 		if (p->start_driver && !p->start_driver(tk, p))
-			return 0;
+			return false;
 
 	tk->is_started = 1;
-	return 1;
+	return true;
 }
 
 TERMKEY_EXPORT void
@@ -1696,10 +1695,7 @@ termkey_init_from_fd(TermKey *tk, int fd, int flags)
 	if (!term) term = "xterm";
 	termkey_set_flags(tk, flags);
 	termkey_init(tk, term);
-
-	if ((flags & TERMKEY_FLAG_NOSTART) == 0 && !termkey_start(tk))
-		result = false;
-
+	result = termkey_start(tk);
 	return result;
 }
 
@@ -1710,8 +1706,7 @@ termkey_init_abstract(TermKey *tk, const char *term, int flags)
 	tk->fd = -1;
 	termkey_set_flags(tk, flags);
 	termkey_init(tk, term);
-	if ((flags & TERMKEY_FLAG_NOSTART) != 0 && !termkey_start(tk))
-		result = false;
+	result = termkey_start(tk);
 	return result;
 }
 
