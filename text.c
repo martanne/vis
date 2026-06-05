@@ -426,7 +426,7 @@ static void text_change_free(TextChange *c) {
  *      | |     |short|     | existing text |     | |
  *      \-+ <-- +-----+ <-- +---------------+ <-- +-/
  */
-bool text_insert(Vis *vis, Text *txt, size_t pos, const char *data, size_t len)
+bool text_insert(Vis *vis, Text *txt, size_t pos, const void *data, size_t len)
 {
 	if (len == 0)
 		return true;

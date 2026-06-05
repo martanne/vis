@@ -140,7 +140,7 @@ VIS_INTERNAL bool text_modified(const Text*);
  * @param len The length of the data in bytes.
  * @return Whether the insertion succeeded.
  */
-VIS_INTERNAL bool text_insert(Vis *vis, Text *txt, size_t pos, const char *data, size_t len);
+VIS_INTERNAL bool text_insert(Vis *vis, Text *txt, size_t pos, const void *data, size_t len);
 /**
  * Delete data at given byte position.
  *
@@ -151,6 +151,8 @@ VIS_INTERNAL bool text_insert(Vis *vis, Text *txt, size_t pos, const char *data,
  */
 VIS_INTERNAL bool text_delete(Text *txt, size_t pos, size_t len);
 VIS_INTERNAL bool text_delete_range(Text *txt, Filerange);
+#define text_append_literal(vis, text, s) text_append(vis, text, str8(s))
+VIS_INTERNAL bool text_append(Vis *vis, Text *txt, str8 string);
 VIS_INTERNAL bool text_appendf(Vis *vis, Text *txt, const char *format, ...) __attribute__((format(printf, 3, 4)));
 /**
  * @}

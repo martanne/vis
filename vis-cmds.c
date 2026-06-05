@@ -619,15 +619,15 @@ static bool cmd_help(Vis *vis, Win *win, Command *cmd, const char *argv[], Selec
 
 	text_appendf(vis, txt, "vis %s (PID: %ld)\n\n", VERSION, (long)getpid());
 
-	text_appendf(vis, txt, " Modes\n\n");
-	for (int i = 0; i < LENGTH(vis_modes); i++) {
+	text_append_literal(vis, txt, " Modes\n\n");
+	for (size_t i = 0; i < countof(vis_modes); i++) {
 		Mode *mode = &vis_modes[i];
 		if (mode->help)
 			text_appendf(vis, txt, "  %-18s\t%s\n", mode->name, mode->help);
 	}
 
 	if (!map_empty(vis->keymap)) {
-		text_appendf(vis, txt, "\n Layout specific mappings (affects all modes except INSERT/REPLACE)\n\n");
+		text_append_literal(vis, txt, "\n Layout specific mappings (affects all modes except INSERT/REPLACE)\n\n");
 		map_iterate(vis->keymap, print_keylayout, map_data);
 	}
 
@@ -636,31 +636,31 @@ static bool cmd_help(Vis *vis, Win *win, Command *cmd, const char *argv[], Selec
 	print_mode(vis, txt, &vis_modes[VIS_MODE_VISUAL]);
 	print_mode(vis, txt, &vis_modes[VIS_MODE_INSERT]);
 
-	text_appendf(vis, txt, "\n :-Commands\n\n");
+	text_append_literal(vis, txt, "\n :-Commands\n\n");
 	map_iterate(vis->cmds, print_cmd, map_data);
 
-	text_appendf(vis, txt, "\n Marks\n\n");
-	text_appendf(vis, txt, "  a-z General purpose marks\n");
-	for (size_t i = 0; i < LENGTH(vis_marks); i++) {
+	text_append_literal(vis, txt, "\n Marks\n\n");
+	text_append_literal(vis, txt, "  a-z General purpose marks\n");
+	for (size_t i = 0; i < countof(vis_marks); i++) {
 		const char *help = VIS_HELP_USE(vis_marks[i].help);
 		text_appendf(vis, txt, "  %c   %s\n", vis_marks[i].name, help ? help : "");
 	}
 
-	text_appendf(vis, txt, "\n Registers\n\n");
-	text_appendf(vis, txt, "  a-z General purpose registers\n");
-	text_appendf(vis, txt, "  A-Z Append to corresponding general purpose register\n");
-	for (size_t i = 0; i < LENGTH(vis_registers); i++) {
+	text_append_literal(vis, txt, "\n Registers\n\n");
+	text_append_literal(vis, txt, "  a-z General purpose registers\n");
+	text_append_literal(vis, txt, "  A-Z Append to corresponding general purpose register\n");
+	for (size_t i = 0; i < countof(vis_registers); i++) {
 		const char *help = VIS_HELP_USE(vis_registers[i].help);
 		text_appendf(vis, txt, "  %c   %s\n", vis_registers[i].name, help ? help : "");
 	}
 
-	text_appendf(vis, txt, "\n :set command options\n\n");
+	text_append_literal(vis, txt, "\n :set command options\n\n");
 	map_iterate(vis->options, print_option, map_data);
 
-	text_appendf(vis, txt, "\n Key binding actions\n\n");
+	text_append_literal(vis, txt, "\n Key binding actions\n\n");
 	map_iterate(vis->actions, print_action, map_data);
 
-	text_appendf(vis, txt, "\n Symbolic keys usable for key bindings "
+	text_append_literal(vis, txt, "\n Symbolic keys usable for key bindings "
 		"(prefix with C-, S-, and M- for Ctrl, Shift and Alt respectively)\n\n");
 	print_symbolic_keys(vis, txt);
 
@@ -671,7 +671,7 @@ static bool cmd_help(Vis *vis, Win *win, Command *cmd, const char *argv[], Selec
 	};
 
 	if (vis_lua_paths_get(vis, &paths[0], &paths[1])) {
-		for (size_t i = 0; i < LENGTH(paths); i++) {
+		for (size_t i = 0; i < countof(paths); i++) {
 			text_appendf(vis, txt, "\n %s\n\n", paths_description[i]);
 			for (char *elem = paths[i], *next; elem; elem = next) {
 				if ((next = strstr(elem, ";")))
@@ -683,7 +683,7 @@ static bool cmd_help(Vis *vis, Win *win, Command *cmd, const char *argv[], Selec
 		}
 	}
 
-	text_appendf(vis, txt, "\n Compile time configuration\n\n");
+	text_append_literal(vis, txt, "\n Compile time configuration\n\n");
 
 	const struct {
 		const char *name;
@@ -697,8 +697,15 @@ static bool cmd_help(Vis *vis, Win *win, Command *cmd, const char *argv[], Selec
 		{"SELinux support: ",               CONFIG_SELINUX       },
 	};
 
-	for (size_t i = 0; i < LENGTH(configs); i++)
+	for (size_t i = 0; i < countof(configs); i++)
 		text_appendf(vis, txt, "  %-32s\t%s\n", configs[i].name, configs[i].enabled ? "yes" : "no");
+
+	text_append_literal(vis, txt, "\n Debug Info\n");
+	text_append_literal(vis, txt, "\n  Terminal: ");
+	text_append(vis, txt, vis->ui.term);
+	#if CONFIG_LUA
+		text_append_literal(vis, txt, "\n  Lua: " LUA_VERSION);
+	#endif
 
 	text_mark_current_revision(txt);
 	view_cursors_to(vis->win->view.selection, 0);

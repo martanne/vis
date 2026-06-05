@@ -16,6 +16,13 @@ static bool text_vprintf(Vis *vis, Text *txt, size_t pos, const char *format, va
 	return ret;
 }
 
+VIS_INTERNAL bool
+text_append(Vis *vis, Text *text, str8 string)
+{
+	bool result = text_insert(vis, text, text->size, string.data, string.length);
+	return result;
+}
+
 bool text_appendf(Vis *vis, Text *txt, const char *format, ...)
 {
 	va_list ap;
