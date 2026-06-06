@@ -1,7 +1,7 @@
 /* This file is included from ui-terminal.c */
 #include <curses.h>
 
-#define UI_TERMKEY_FLAGS (TERMKEY_FLAG_UTF8|TERMKEY_FLAG_NOTERMIOS)
+#define UI_TERMKEY_FLAGS (TERMKEY_FLAG_NOTERMIOS)
 
 #define CELL_COLOR_BLACK   COLOR_BLACK
 #define CELL_COLOR_RED     COLOR_RED

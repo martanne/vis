@@ -38,7 +38,7 @@
  */
 #include "buffer.h"
 
-#define UI_TERMKEY_FLAGS TERMKEY_FLAG_UTF8
+#define UI_TERMKEY_FLAGS 0
 
 #define CELL_COLOR_BLACK   { .index = 0 }
 #define CELL_COLOR_RED     { .index = 1 }

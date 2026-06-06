@@ -150,7 +150,7 @@ int main(int argc, char *argv[]) {
 	FILE *file = stdin;
 	char *term = getenv("TERM");
 	if (!term) term = "xterm";
-	if (!termkey_init_abstract(termkey, term, TERMKEY_FLAG_UTF8))
+	if (!termkey_init_abstract(termkey, term, 0))
 		die("Failed to initialize libtermkey\n");
 	while (fgets(buf, sizeof buf, file)) {
 		const char *keys = buf, *next;

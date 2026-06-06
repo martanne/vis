@@ -169,22 +169,12 @@ typedef struct {
 	char utf8[7];
 } TermKeyKey;
 
-typedef struct TermKey TermKey;
-
 enum {
-	TERMKEY_FLAG_NOINTERPRET = 1 << 0, /* Do not interpret C0//DEL codes if possible */
-	TERMKEY_FLAG_CONVERTKP   = 1 << 1, /* Convert KP codes to regular keypresses */
-	TERMKEY_FLAG_RAW         = 1 << 2, /* Input is raw bytes, not UTF-8 */
-	TERMKEY_FLAG_UTF8        = 1 << 3, /* Input is definitely UTF-8 */
-	TERMKEY_FLAG_NOTERMIOS   = 1 << 4, /* Do not make initial termios calls on construction */
-	TERMKEY_FLAG_SPACESYMBOL = 1 << 5, /* Sets TERMKEY_CANON_SPACESYMBOL */
-	TERMKEY_FLAG_CTRLC       = 1 << 6, /* Allow Ctrl-C to be read as normal, disabling SIGINT */
-	TERMKEY_FLAG_EINTR       = 1 << 7, /* Return ERROR on signal (EINTR) rather than retry */
+	TERMKEY_FLAG_NOTERMIOS = 1 << 0, /* Do not make initial termios calls on construction */
 };
 
 enum {
-  TERMKEY_CANON_SPACESYMBOL = 1 << 0, /* Space is symbolic rather than Unicode */
-  TERMKEY_CANON_DELBS       = 1 << 1  /* Del is converted to Backspace */
+	TERMKEY_CANON_DELBS = 1 << 0  /* Del is converted to Backspace */
 };
 
 typedef enum {
@@ -220,6 +210,7 @@ typedef struct {
 	char    *saved_string;
 } TermKeyCSI;
 
+typedef struct TermKey TermKey;
 typedef struct TermKeyDriver TermKeyDriver;
 struct TermKeyDriver {
 	const char    *name;
@@ -336,17 +327,10 @@ termkey_canonicalise(TermKey *tk, TermKeyKey *key)
 {
 	int flags = tk->canonflags;
 
-	if (flags & TERMKEY_CANON_SPACESYMBOL) {
-		if (key->type == TERMKEY_TYPE_UNICODE && key->code.codepoint == 0x20) {
-			key->type     = TERMKEY_TYPE_KEYSYM;
-			key->code.sym = TERMKEY_SYM_SPACE;
-		}
-	} else {
-		if (key->type == TERMKEY_TYPE_KEYSYM && key->code.sym == TERMKEY_SYM_SPACE) {
-			key->type           = TERMKEY_TYPE_UNICODE;
-			key->code.codepoint = 0x20;
-			termkey_fill_utf8(key);
-		}
+	if (key->type == TERMKEY_TYPE_KEYSYM && key->code.sym == TERMKEY_SYM_SPACE) {
+		key->type           = TERMKEY_TYPE_UNICODE;
+		key->code.codepoint = 0x20;
+		termkey_fill_utf8(key);
 	}
 
 	if (flags & TERMKEY_CANON_DELBS)
@@ -366,7 +350,7 @@ termkey_emit_codepoint(TermKey *tk, long codepoint, TermKeyKey *key)
 		// C0 range
 		key->code.codepoint = 0;
 		key->modifiers      = 0;
-		if (!(tk->flags & TERMKEY_FLAG_NOINTERPRET) && tk->c0[codepoint].sym != TERMKEY_SYM_UNKNOWN) {
+		if (tk->c0[codepoint].sym != TERMKEY_SYM_UNKNOWN) {
 			key->code.sym   = tk->c0[codepoint].sym;
 			key->modifiers |= tk->c0[codepoint].modifier_set;
 		}
@@ -385,7 +369,7 @@ termkey_emit_codepoint(TermKey *tk, long codepoint, TermKeyKey *key)
 		} else {
 			key->type = TERMKEY_TYPE_KEYSYM;
 		}
-	} else if(codepoint == 0x7f && !(tk->flags & TERMKEY_FLAG_NOINTERPRET)) {
+	} else if (codepoint == 0x7f) {
 		// ASCII DEL
 		key->type      = TERMKEY_TYPE_KEYSYM;
 		key->code.sym  = TERMKEY_SYM_DEL;
@@ -1398,18 +1382,9 @@ termkey_peekkey_ss3(TermKey *tk, TermKeyCSI *csi, size_t introlen, TermKeyKey *k
 	key->modifiers = termkey_csi_ss3s[cmd - 0x40].modifier_set;
 
 	if (key->code.sym == TERMKEY_SYM_UNKNOWN) {
-		if (tk->flags & TERMKEY_FLAG_CONVERTKP && termkey_csi_ss3_kpalts[cmd - 0x40]) {
-			key->type = TERMKEY_TYPE_UNICODE;
-			key->code.codepoint = termkey_csi_ss3_kpalts[cmd - 0x40];
-			key->modifiers = 0;
-
-			key->utf8[0] = key->code.codepoint;
-			key->utf8[1] = 0;
-		} else {
-			key->type      = termkey_csi_ss3s[cmd - 0x40].type;
-			key->code.sym  = termkey_csi_ss3s[cmd - 0x40].sym;
-			key->modifiers = termkey_csi_ss3s[cmd - 0x40].modifier_set;
-		}
+		key->type      = termkey_csi_ss3s[cmd - 0x40].type;
+		key->code.sym  = termkey_csi_ss3s[cmd - 0x40].sym;
+		key->modifiers = termkey_csi_ss3s[cmd - 0x40].modifier_set;
 	}
 
 	if (key->code.sym == TERMKEY_SYM_UNKNOWN)
@@ -1633,18 +1608,13 @@ termkey_start(TermKey *tk)
 			termios.c_cc[VMIN] = 1;
 			termios.c_cc[VTIME] = 0;
 
-			if (tk->flags & TERMKEY_FLAG_CTRLC) {
-				/* want no signal keys at all, so just disable ISIG */
-		        termios.c_lflag &= ~ISIG;
-			} else {
-				/* Disable Ctrl-\==VQUIT and Ctrl-D==VSUSP but leave Ctrl-C as SIGINT */
-				termios.c_cc[VQUIT] = _POSIX_VDISABLE;
-				termios.c_cc[VSUSP] = _POSIX_VDISABLE;
-				/* Some OSes have Ctrl-Y==VDSUSP */
-				#ifdef VDSUSP
-				termios.c_cc[VDSUSP] = _POSIX_VDISABLE;
-				#endif
-			}
+			/* Disable Ctrl-\==VQUIT and Ctrl-D==VSUSP but leave Ctrl-C as SIGINT */
+			termios.c_cc[VQUIT] = _POSIX_VDISABLE;
+			termios.c_cc[VSUSP] = _POSIX_VDISABLE;
+			/* Some OSes have Ctrl-Y==VDSUSP */
+			#ifdef VDSUSP
+			termios.c_cc[VDSUSP] = _POSIX_VDISABLE;
+			#endif
 			tcsetattr(tk->fd, TCSANOW, &termios);
 		}
 	}
@@ -1658,53 +1628,23 @@ termkey_start(TermKey *tk)
 	return true;
 }
 
-TERMKEY_EXPORT void
-termkey_set_flags(TermKey *tk, int newflags)
-{
-	tk->flags = newflags;
-
-	if (tk->flags & TERMKEY_FLAG_SPACESYMBOL)
-		tk->canonflags |= TERMKEY_CANON_SPACESYMBOL;
-	else
-		tk->canonflags &= ~TERMKEY_CANON_SPACESYMBOL;
-}
-
 TERMKEY_EXPORT bool
 termkey_init_from_fd(TermKey *tk, int fd, int flags, char *term)
 {
-	bool result = true;
-	tk->fd = fd;
-
-	if (!(flags & (TERMKEY_FLAG_RAW|TERMKEY_FLAG_UTF8))) {
-		char *e;
-
-		/* Most OSes will set .UTF-8. Some will set .utf8. Try to be fairly
-		 * generous in parsing these
-		 */
-		if (((e = getenv("LANG")) || (e = getenv("LC_MESSAGES")) || (e = getenv("LC_ALL"))) &&
-		    (e = strchr(e, '.')) && e++ &&
-		    (strcaseeq(e, "UTF-8") || strcaseeq(e, "UTF8")))
-		{
-			flags |= TERMKEY_FLAG_UTF8;
-		} else {
-			flags |= TERMKEY_FLAG_RAW;
-		}
-	}
-
-	termkey_set_flags(tk, flags);
+	tk->fd    = fd;
+	tk->flags = flags;
 	termkey_init(tk, term);
-	result = termkey_start(tk);
+	bool result = termkey_start(tk);
 	return result;
 }
 
 TERMKEY_EXPORT bool
 termkey_init_abstract(TermKey *tk, const char *term, int flags)
 {
-	bool result = true;
-	tk->fd = -1;
-	termkey_set_flags(tk, flags);
+	tk->fd    = -1;
+	tk->flags = flags;
 	termkey_init(tk, term);
-	result = termkey_start(tk);
+	bool result = termkey_start(tk);
 	return result;
 }
 
@@ -1749,11 +1689,6 @@ TERMKEY_EXPORT void
 termkey_set_canonflags(TermKey *tk, int flags)
 {
 	tk->canonflags = flags;
-
-	if (tk->canonflags & TERMKEY_CANON_SPACESYMBOL)
-		tk->flags |= TERMKEY_FLAG_SPACESYMBOL;
-	else
-		tk->flags &= ~TERMKEY_FLAG_SPACESYMBOL;
 }
 
 static void
@@ -1886,36 +1821,24 @@ termkey_peekkey_simple(TermKey *tk, TermKeyKey *key, int force, size_t *nbytep)
 		termkey_emit_codepoint(tk, b0, key);
 		*nbytep = 1;
 		return TERMKEY_RES_KEY;
-	} else if(tk->flags & TERMKEY_FLAG_UTF8) {
-		// Some UTF-8
-		long codepoint;
-		TermKeyResult res = termkey_parse_utf8(tk->buffer + tk->buffstart, tk->buffcount, &codepoint, nbytep);
-		if (res == TERMKEY_RES_AGAIN && force) {
-			/* There weren't enough bytes for a complete UTF-8 sequence but caller
-			 * demands an answer. About the best thing we can do here is eat as many
-			 * bytes as we have, and emit a UTF8_INVALID. If the remaining bytes
-			 * arrive later, they'll be invalid too. */
-			codepoint = UTF8_INVALID;
-			*nbytep   = tk->buffcount;
-			res       = TERMKEY_RES_KEY;
-		}
-
-		key->type = TERMKEY_TYPE_UNICODE;
-		key->modifiers = 0;
-		termkey_emit_codepoint(tk, codepoint, key);
-		return res;
+	}
+	// Some UTF-8
+	long codepoint;
+	TermKeyResult result = termkey_parse_utf8(tk->buffer + tk->buffstart, tk->buffcount, &codepoint, nbytep);
+	if (result == TERMKEY_RES_AGAIN && force) {
+		/* There weren't enough bytes for a complete UTF-8 sequence but caller
+		 * demands an answer. About the best thing we can do here is eat as many
+		 * bytes as we have, and emit a UTF8_INVALID. If the remaining bytes
+		 * arrive later, they'll be invalid too. */
+		codepoint = UTF8_INVALID;
+		*nbytep   = tk->buffcount;
+		result    = TERMKEY_RES_KEY;
 	}
 
-	// Non UTF-8 case - just report the raw byte
-	key->type           = TERMKEY_TYPE_UNICODE;
-	key->code.codepoint = b0;
-	key->modifiers      = 0;
-
-	key->utf8[0] = key->code.codepoint;
-	key->utf8[1] = 0;
-	*nbytep = 1;
-
-	return TERMKEY_RES_KEY;
+	key->type = TERMKEY_TYPE_UNICODE;
+	key->modifiers = 0;
+	termkey_emit_codepoint(tk, codepoint, key);
+	return result;
 }
 
 static TermKeyResult
@@ -2017,7 +1940,7 @@ retry:;
 	if (len == -1) {
 		if (errno == EAGAIN)
 			return TERMKEY_RES_NONE;
-		else if (errno == EINTR && !(tk->flags & TERMKEY_FLAG_EINTR))
+		else if (errno == EINTR)
 			goto retry;
 		else
 			return TERMKEY_RES_ERROR;
