@@ -588,7 +588,7 @@ ui_init(Ui *tui)
 		if (errno == EBADF) {
 			errno = 0;
 			if (!vis_ui_termkey_reopen(tui, STDIN_FILENO, term) && errno == ENXIO)
-				if (!termkey_init_abstract(&tui->termkey, term, UI_TERMKEY_FLAGS))
+				if (!termkey_init_from_fd(&tui->termkey, -1, UI_TERMKEY_FLAGS, term))
 					ui_die_msg(tui, "Failed to start termkey\n");
 		}
 	}

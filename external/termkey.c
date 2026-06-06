@@ -1568,24 +1568,6 @@ termkey_register_c0(TermKey *tk, TermKeySym sym, unsigned char ctrl)
 	tk->c0[ctrl].modifier_mask = 0;
 }
 
-static void
-termkey_init(TermKey *tk, const char *term)
-{
-	termkey_register_c0(tk, TERMKEY_SYM_TAB,    0x09);
-	termkey_register_c0(tk, TERMKEY_SYM_ENTER,  0x0d);
-	termkey_register_c0(tk, TERMKEY_SYM_ESCAPE, 0x1b);
-
-	TermKeyDriver *tail = 0;
-	for (int i = 0; i < (int)countof(termkey_drivers); i++) {
-		if (!termkey_drivers[i].init_driver(tk, termkey_drivers + i, term))
-			continue;
-
-		if (!tail) tk->drivers = termkey_drivers + i;
-		else       tail->next  = termkey_drivers + i;
-		tail = termkey_drivers + i;
-	}
-}
-
 TERMKEY_EXPORT bool
 termkey_start(TermKey *tk)
 {
@@ -1633,17 +1615,21 @@ termkey_init_from_fd(TermKey *tk, int fd, int flags, char *term)
 {
 	tk->fd    = fd;
 	tk->flags = flags;
-	termkey_init(tk, term);
-	bool result = termkey_start(tk);
-	return result;
-}
 
-TERMKEY_EXPORT bool
-termkey_init_abstract(TermKey *tk, const char *term, int flags)
-{
-	tk->fd    = -1;
-	tk->flags = flags;
-	termkey_init(tk, term);
+	termkey_register_c0(tk, TERMKEY_SYM_TAB,    0x09);
+	termkey_register_c0(tk, TERMKEY_SYM_ENTER,  0x0d);
+	termkey_register_c0(tk, TERMKEY_SYM_ESCAPE, 0x1b);
+
+	TermKeyDriver *tail = 0;
+	for (int i = 0; i < (int)countof(termkey_drivers); i++) {
+		if (!termkey_drivers[i].init_driver(tk, termkey_drivers + i, term))
+			continue;
+
+		if (!tail) tk->drivers = termkey_drivers + i;
+		else       tail->next  = termkey_drivers + i;
+		tail = termkey_drivers + i;
+	}
+
 	bool result = termkey_start(tk);
 	return result;
 }
