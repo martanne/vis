@@ -3,7 +3,7 @@
 NL='
 '
 
-export LANG="en_US.UTF-8"
+export LANG="C.UTF-8"
 
 export VIS_PATH=.
 [ -z "$VIS" ] && VIS="../../vis"
