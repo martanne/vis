@@ -1276,11 +1276,11 @@ static int command_register(lua_State *L) {
  */
 static int complete_command(lua_State *L) {
 	Vis *vis = obj_ref_check(L, 1, "vis");
-	const char *prefix = luaL_checkstring(L, 2);
+	str8 prefix = vis_lua_check_str8(L, 2);
 	char *out = NULL, *err = NULL;
 
 	Buffer buf = {0};
-	vis_print_cmds(vis, &buf, prefix);
+	vis_print_commands(vis, &buf, prefix.data, prefix.length);
 	int status = vis_pipe_buf_collect(vis, buffer_content0(&buf), (const char*[]){"vis-menu", "-b", 0},
 	                                  &out, &err, false);
 

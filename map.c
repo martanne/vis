@@ -55,11 +55,39 @@ map_get(const Map *map, const char *key)
 	return NULL;
 }
 
+VIS_INTERNAL Map *
+vis_map_prefix(Map *map, str8 prefix)
+{
+	Map *n, *result;
+	/* Empty map -> return empty map. */
+	if (!map->u.n)
+		return map;
+
+	result = n = map;
+
+	/* We walk to find the top, but keep going to check prefix matches. */
+	while (!n->v) {
+		u8 c = 0;
+		if (n->u.n->byte_num < prefix.length)
+			c = prefix.data[n->u.n->byte_num];
+
+		n = n->u.n->child + ((c >> n->u.n->bit_num) & 1);
+		if (c) result = n;
+	}
+
+	/* Convenient return for prefixes which do not appear in map. */
+	static Map empty_map;
+	if (!str8_is_prefix(prefix, str8_from_c_str(n->u.s)))
+		result = &empty_map;
+
+	return result;
+}
+
 void *map_closest(const Map *map, const char *prefix)
 {
 	void *result = map_get(map, prefix);
 	if (!result)
-		result = map_prefix(map, prefix)->v;
+		result = vis_map_prefix((Map *)map, str8_from_c_str(prefix))->v;
 	return result;
 }
 
@@ -224,40 +252,6 @@ void *map_first(const Map *map, const char **key)
 	if (key && kv.key)
 		*key = kv.key;
 	return kv.value;
-}
-
-const Map *map_prefix(const Map *map, const char *prefix)
-{
-	const Map *n, *top;
-	size_t len = strlen(prefix);
-	const uint8_t *bytes = (const uint8_t *)prefix;
-
-	/* Empty map -> return empty map. */
-	if (!map->u.n)
-		return map;
-
-	top = n = map;
-
-	/* We walk to find the top, but keep going to check prefix matches. */
-	while (!n->v) {
-		uint8_t c = 0, direction;
-
-		if (n->u.n->byte_num < len)
-			c = bytes[n->u.n->byte_num];
-
-		direction = (c >> n->u.n->bit_num) & 1;
-		n = &n->u.n->child[direction];
-		if (c)
-			top = n;
-	}
-
-	if (strncmp(n->u.s, prefix, len)) {
-		/* Convenient return for prefixes which do not appear in map. */
-		static const Map empty_map;
-		return &empty_map;
-	}
-
-	return top;
 }
 
 static void map_clear_impl(Map n)

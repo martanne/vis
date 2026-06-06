@@ -74,7 +74,7 @@ VIS_INTERNAL void map_iterate(const Map *map, bool (*handle)(const char *key, vo
  * Do not alter the map while using the return value.
  * @endrst
  */
-VIS_INTERNAL const Map *map_prefix(const Map *map, const char *prefix);
+VIS_INTERNAL Map *vis_map_prefix(Map *map, str8 prefix);
 /**
  * Test whether the map is empty (contains no elements).
  * @param map The map to check.

@@ -1235,9 +1235,10 @@ VIS_EXPORT bool vis_prompt_cmd(Vis *vis, const char *cmd);
  * Write newline separated list of available commands to ``buf``
  * @param vis The editor instance.
  * @param buf The buffer to write to.
- * @param prefix Prefix to filter command list by.
+ * @param prefix Prefix to filter command list by (need not be 0 terminated).
+ * @param length Length of the prefix.
  */
-VIS_EXPORT void vis_print_cmds(Vis*, Buffer *buf, const char *prefix);
+VIS_EXPORT void vis_print_commands(Vis*, Buffer *buf, uint8_t *prefix, int64_t length);
 
 /**
  * Pipe a given file range to an external process.

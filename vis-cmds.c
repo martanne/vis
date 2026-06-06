@@ -517,8 +517,11 @@ static bool print_cmd_name(const char *key, void *value, void *data) {
 	return result && buffer_append(data, "\n", 1);
 }
 
-void vis_print_cmds(Vis *vis, Buffer *buf, const char *prefix) {
-	map_iterate(map_prefix(vis->cmds, prefix), print_cmd_name, buf);
+VIS_EXPORT void
+vis_print_commands(Vis *vis, Buffer *buf, u8 *prefix, s64 length)
+{
+	str8 s = {.data = prefix, .length = length};
+	map_iterate(vis_map_prefix(vis->cmds, s), print_cmd_name, buf);
 }
 
 static bool print_option(const char *key, void *value, void *data)
