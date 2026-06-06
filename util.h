@@ -103,7 +103,7 @@
 #define IsSpace(c)    ((c) == ' ' || (c) == '\t' || (c) == '\n' || (c) == '\r')
 #define IsBoundary(c) (isboundary((unsigned char)c))
 
-#define zero_struct(s) memset((s), 0, sizeof(*s))
+#define zero_struct(s) memset((s), 0, sizeof(*(s)))
 
 #if GCC_VERSION>=5004000 || CLANG_VERSION>=4000000
 #define addu __builtin_add_overflow
