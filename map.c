@@ -28,29 +28,27 @@ struct Node {
 };
 
 /* Closest key to this in a non-empty map. */
-static Map *closest(Map *n, const char *key)
+VIS_INTERNAL Map *
+vis_map_closest(Map *n, str8 key)
 {
-	size_t len = strlen(key);
-	const uint8_t *bytes = (const uint8_t *)key;
-
 	/* Anything with NULL value is an internal node. */
 	while (!n->v) {
-		uint8_t direction = 0;
-
-		if (n->u.n->byte_num < len) {
-			uint8_t c = bytes[n->u.n->byte_num];
+		u8 direction = 0;
+		if (n->u.n->byte_num < key.length) {
+			u8 c = key.data[n->u.n->byte_num];
 			direction = (c >> n->u.n->bit_num) & 1;
 		}
-		n = &n->u.n->child[direction];
+		n = n->u.n->child + direction;
 	}
 	return n;
 }
 
-void *map_get(const Map *map, const char *key)
+VIS_INTERNAL void *
+map_get(const Map *map, const char *key)
 {
 	/* Not empty map? */
 	if (map->u.n) {
-		Map *n = closest((Map *)map, key);
+		Map *n = vis_map_closest((Map *)map, str8_from_c_str(key));
 		if (strcmp(key, n->u.s) == 0)
 			return n->v;
 	}
@@ -67,19 +65,16 @@ void *map_closest(const Map *map, const char *prefix)
 
 bool map_put(Map *map, const char *k, const void *value)
 {
-	size_t len = strlen(k);
-	const uint8_t *bytes = (const uint8_t *)k;
+	str8 ks = str8_from_c_str(k);
 	Map *n;
 	Node *newn;
 	size_t byte_num;
-	uint8_t bit_num, new_dir;
-	char *key;
 
 	if (!value)
 		return false;
 
-	if (!(key = strdup(k)))
-		return false;
+	char *key = strndup((char *)ks.data, ks.length);
+	if (!key) return false;
 
 	/* Empty map? */
 	if (!map->u.n) {
@@ -89,7 +84,7 @@ bool map_put(Map *map, const char *k, const void *value)
 	}
 
 	/* Find closest existing key. */
-	n = closest(map, key);
+	n = vis_map_closest(map, ks);
 
 	/* Find where they differ. */
 	for (byte_num = 0; n->u.s[byte_num] == key[byte_num]; byte_num++) {
@@ -101,12 +96,13 @@ bool map_put(Map *map, const char *k, const void *value)
 	}
 
 	/* Find which bit differs */
-	uint8_t diff = (uint8_t)n->u.s[byte_num] ^ bytes[byte_num];
+	u8 diff = (u8)n->u.s[byte_num] ^ ks.data[byte_num];
 	/* TODO: bit_num = 31 - __builtin_clz(diff); ? */
+	u8 bit_num;
 	for (bit_num = 0; diff >>= 1; bit_num++);
 
 	/* Which direction do we go at this bit? */
-	new_dir = ((bytes[byte_num]) >> bit_num) & 1;
+	u8 new_dir = ((ks.data[byte_num]) >> bit_num) & 1;
 
 	/* Allocate new node. */
 	newn = malloc(sizeof(*newn));
@@ -122,16 +118,15 @@ bool map_put(Map *map, const char *k, const void *value)
 	/* Find where to insert: not closest, but first which differs! */
 	n = map;
 	while (!n->v) {
-		uint8_t direction = 0;
-
+		u8 direction = 0;
 		if (n->u.n->byte_num > byte_num)
 			break;
 		/* Subtle: bit numbers are "backwards" for comparison */
 		if (n->u.n->byte_num == byte_num && n->u.n->bit_num < bit_num)
 			break;
 
-		if (n->u.n->byte_num < len) {
-			uint8_t c = bytes[n->u.n->byte_num];
+		if (n->u.n->byte_num < ks.length) {
+			u8 c = ks.data[n->u.n->byte_num];
 			direction = (c >> n->u.n->bit_num) & 1;
 		}
 		n = &n->u.n->child[direction];
