@@ -1213,14 +1213,12 @@ unibi_from_dir(const char *dir_begin, const char *dir_end, const char *mid, cons
 	    !addu(path_size, term_len, &path_size) ||
 	    !addu(path_size, 4,        &path_size))
 	{
-		/* overflow */
-		errno = ENOMEM;
 		return 0;
 	}
 
 	unibi_term *result = 0;
-	char *path = calloc(1, path_size);
-	if (path) {
+	char path[PATH_MAX];
+	if (path_size < countof(path)) {
 		size_t off = dir_len;
 		memcpy(path, dir_begin, off);
 		path[off++] = '/';
@@ -1232,6 +1230,7 @@ unibi_from_dir(const char *dir_begin, const char *dir_end, const char *mid, cons
 		path[off++] = term[0];
 		path[off++] = '/';
 		memcpy(path + off, term, term_len);
+		path[off + term_len] = 0;
 
 		errno = 0;
 		result = unibi_from_file(path);
@@ -1246,7 +1245,6 @@ unibi_from_dir(const char *dir_begin, const char *dir_end, const char *mid, cons
 			path[off + term_len] = 0;
 			result = unibi_from_file(path);
 		}
-		free(path);
 	}
 	return result;
 }
