@@ -191,7 +191,7 @@ ui_terminal_resume(Ui *tui)
 {
 	screen_alternate(true);
 	cursor_visible(false);
-	termkey_start(&tui->termkey);
+	termkey_start(&tui->termkey, UI_TERMKEY_FLAGS);
 }
 
 static bool

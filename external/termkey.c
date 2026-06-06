@@ -169,9 +169,9 @@ typedef struct {
 	char utf8[7];
 } TermKeyKey;
 
-enum {
+typedef enum {
 	TERMKEY_FLAG_NOTERMIOS = 1 << 0, /* Do not make initial termios calls on construction */
-};
+} TermKeyStartFlags;
 
 enum {
 	TERMKEY_CANON_DELBS = 1 << 0  /* Del is converted to Backspace */
@@ -237,7 +237,6 @@ typedef struct {
 
 struct TermKey {
 	int    fd;
-	int    flags;
 	int    canonflags;
 	unsigned char buffer[256];
 	size_t buffstart; // First offset in buffer
@@ -1569,13 +1568,13 @@ termkey_register_c0(TermKey *tk, TermKeySym sym, unsigned char ctrl)
 }
 
 TERMKEY_EXPORT bool
-termkey_start(TermKey *tk)
+termkey_start(TermKey *tk, TermKeyStartFlags start_flags)
 {
 	if (tk->is_started)
 		return true;
 
 	#ifdef HAVE_TERMIOS
-	if (tk->fd != -1 && !(tk->flags & TERMKEY_FLAG_NOTERMIOS)) {
+	if (tk->fd != -1 && !(start_flags & TERMKEY_FLAG_NOTERMIOS)) {
 		struct termios termios;
 		if (tcgetattr(tk->fd, &termios) == 0) {
 			tk->restore_termios       = termios;
@@ -1611,10 +1610,9 @@ termkey_start(TermKey *tk)
 }
 
 TERMKEY_EXPORT bool
-termkey_init_from_fd(TermKey *tk, int fd, int flags, char *term)
+termkey_init_from_fd(TermKey *tk, int fd, TermKeyStartFlags start_flags, char *term)
 {
-	tk->fd    = fd;
-	tk->flags = flags;
+	tk->fd = fd;
 
 	termkey_register_c0(tk, TERMKEY_SYM_TAB,    0x09);
 	termkey_register_c0(tk, TERMKEY_SYM_ENTER,  0x0d);
@@ -1630,7 +1628,7 @@ termkey_init_from_fd(TermKey *tk, int fd, int flags, char *term)
 		tail = termkey_drivers + i;
 	}
 
-	bool result = termkey_start(tk);
+	bool result = termkey_start(tk, start_flags);
 	return result;
 }
 

@@ -559,7 +559,7 @@ void ui_terminal_save(Ui *tui, bool fscr) {
 }
 
 void ui_terminal_restore(Ui *tui) {
-	termkey_start(&tui->termkey);
+	termkey_start(&tui->termkey, UI_TERMKEY_FLAGS);
 	ui_term_backend_restore(tui);
 }
 
