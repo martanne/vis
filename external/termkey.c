@@ -164,9 +164,9 @@ typedef struct {
 
 	int modifiers;
 
-	/* Any Unicode character can be UTF-8 encoded in no more than 6 bytes, plus
+	/* Any Unicode character can be UTF-8 encoded in no more than 4 bytes, plus
 	 * terminating NUL */
-	char utf8[7];
+	u8 utf8[5];
 } TermKeyKey;
 
 typedef enum {
@@ -284,41 +284,11 @@ termkey_key_set_linecol(TermKeyKey *key, int line, int col)
 	key->code.mouse[3] = (line & 0xf00) >> 8 | (col & 0x300) >> 4;
 }
 
-static inline
-unsigned int termkey_utf8_seqlen(long codepoint)
-{
-	if (codepoint < 0x0000080) return 1;
-	if (codepoint < 0x0000800) return 2;
-	if (codepoint < 0x0010000) return 3;
-	if (codepoint < 0x0200000) return 4;
-	if (codepoint < 0x4000000) return 5;
-	return 6;
-}
-
 static void
 termkey_fill_utf8(TermKeyKey *key)
 {
-	long codepoint = key->code.codepoint;
-	int nbytes = termkey_utf8_seqlen(codepoint);
-
-	key->utf8[nbytes] = 0;
-
-	// This is easier done backwards
-	int b = nbytes;
-	while (b > 1) {
-		b--;
-		key->utf8[b] = 0x80 | (codepoint & 0x3f);
-		codepoint >>= 6;
-	}
-
-	switch (nbytes) {
-	case 1: key->utf8[0] =        (codepoint & 0x7f); break;
-	case 2: key->utf8[0] = 0xc0 | (codepoint & 0x1f); break;
-	case 3: key->utf8[0] = 0xe0 | (codepoint & 0x0f); break;
-	case 4: key->utf8[0] = 0xf0 | (codepoint & 0x07); break;
-	case 5: key->utf8[0] = 0xf8 | (codepoint & 0x03); break;
-	case 6: key->utf8[0] = 0xfc | (codepoint & 0x01); break;
-	}
+	u32 length = utf8_encode(key->utf8, key->code.codepoint);
+	key->utf8[length] = 0;
 }
 
 TERMKEY_EXPORT void
@@ -1714,12 +1684,6 @@ termkey_parse_utf8(const unsigned char *bytes, size_t len, long *cp, size_t *nby
 	} else if(b0 < 0xf8) {
 		nbytes = 4;
 		*cp = b0 & 0x07;
-	} else if(b0 < 0xfc) {
-		nbytes = 5;
-		*cp = b0 & 0x03;
-	} else if(b0 < 0xfe) {
-		nbytes = 6;
-		*cp = b0 & 0x01;
 	} else {
 		*cp = UTF8_INVALID;
 		*nbytep = 1;
@@ -1743,7 +1707,7 @@ termkey_parse_utf8(const unsigned char *bytes, size_t len, long *cp, size_t *nby
 	}
 
 	// Check for overlong sequences
-	if (nbytes > termkey_utf8_seqlen(*cp))
+	if (nbytes > utf8_sequence_length(*cp))
 		*cp = UTF8_INVALID;
 
 	// Check for UTF-16 surrogates or invalid *cps

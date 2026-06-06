@@ -103,6 +103,8 @@
 #define IsSpace(c)    ((c) == ' ' || (c) == '\t' || (c) == '\n' || (c) == '\r')
 #define IsBoundary(c) (isboundary((unsigned char)c))
 
+#define zero_struct(s) memset((s), 0, sizeof(*s))
+
 #if GCC_VERSION>=5004000 || CLANG_VERSION>=4000000
 #define addu __builtin_add_overflow
 #else
@@ -170,5 +172,44 @@ typedef struct {
 	} as;
 	str8 unparsed;
 } IntegerConversion;
+
+static u8
+utf8_sequence_length(u32 cp)
+{
+	u8 result = (cp >= 0x10000) +
+	            (cp >= 0x00800) +
+	            (cp >= 0x00080) +
+	            1;
+	return result;
+}
+
+static u32
+utf8_encode(u8 out[4], u32 cp)
+{
+	u32 result;
+	if (cp <= 0x7F) {
+		out[0] = cp & 0x7F;
+		result = 1;
+	} else if (cp <= 0x7FF) {
+		result = 2;
+		out[0] = ((cp >>  6) & 0x1F) | 0xC0;
+		out[1] = ((cp >>  0) & 0x3F) | 0x80;
+	} else if (cp <= 0xFFFF) {
+		result = 3;
+		out[0] = ((cp >> 12) & 0x0F) | 0xE0;
+		out[1] = ((cp >>  6) & 0x3F) | 0x80;
+		out[2] = ((cp >>  0) & 0x3F) | 0x80;
+	} else if (cp <= 0x10FFFF) {
+		result = 4;
+		out[0] = ((cp >> 18) & 0x07) | 0xF0;
+		out[1] = ((cp >> 12) & 0x3F) | 0x80;
+		out[2] = ((cp >>  6) & 0x3F) | 0x80;
+		out[3] = ((cp >>  0) & 0x3F) | 0x80;
+	} else {
+		//out[0] = '?';
+		result = 0;
+	}
+	return result;
+}
 
 #endif /* UTIL_H */

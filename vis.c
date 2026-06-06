@@ -1191,7 +1191,7 @@ static const char *getkey(Vis *vis) {
 	                  !vis->keymap_disabled;
 	vis->keymap_disabled = false;
 	if (key.type == TERMKEY_TYPE_UNICODE && use_keymap) {
-		const char *mapped = map_get(vis->keymap, key.utf8);
+		const char *mapped = map_get(vis->keymap, (char *)key.utf8);
 		if (mapped) {
 			size_t len = strlen(mapped)+1;
 			if (len <= sizeof(key.utf8))
