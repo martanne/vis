@@ -348,12 +348,11 @@ enum TextSaveMethod {
 typedef struct {
 	enum TextSaveMethod method; /* method used to save file */
 	Text *txt;                 /* text to operate on */
-	const char *filename;      /* filename to save to */
+	str8 filepath;             /* filepath to save to (0 terminated) */
 	str8 tmpname;              /* temporary name used for atomic rename(2) */
 	int fd;                    /* file descriptor to write data to using text_save_write */
 	int dirfd;                 /* directory file descriptor, relative to which we save */
 } TextSave;
-
 #define text_save_default(...) (TextSave){.dirfd = AT_FDCWD, .fd = -1, __VA_ARGS__}
 
 /**

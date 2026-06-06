@@ -1425,7 +1425,7 @@ static bool cmd_files(Vis *vis, Win *win, Command *cmd, const char *argv[], Sele
 		if (w->file->internal)
 			continue;
 		bool match = !cmd->regex ||
-		             (w->file->name && text_regex_match(cmd->regex, w->file->name, 0) == 0);
+		             (w->file->filepath.length > 0 && text_regex_match(cmd->regex, (char *)w->file->filepath.data, 0) == 0);
 		if (match ^ (argv[0][0] == 'Y')) {
 			Filerange def = text_range_new(0, 0);
 			ret &= sam_execute(vis, w, cmd->cmd, NULL, &def);
@@ -1457,7 +1457,7 @@ static bool cmd_write(Vis *vis, Win *win, Command *cmd, const char *argv[], Sele
 
 	const char *filename = argv[1];
 	if (!filename)
-		filename = file->name;
+		filename = (char *)file->filepath.data;
 	if (!filename) {
 		if (file->fd == -1) {
 			vis_info_show(vis, "Filename expected");
@@ -1508,15 +1508,15 @@ static bool cmd_write(Vis *vis, Win *win, Command *cmd, const char *argv[], Sele
 
 	for (const char **name = argv[1] ? &argv[1] : (const char*[]){ filename, NULL }; *name; name++) {
 
-		char *path = absolute_path(*name);
-		if (!path) {
+		str8 path = vis_absolute_path(*name);
+		if (path.length <= 0) {
 			vis_info_show(vis, "Failed to resolve path '%s': %s", *name, strerror(errno));
 			return false;
 		}
 
 		struct stat meta;
-		bool existing_file = !stat(path, &meta);
-		bool same_file = existing_file && file->name &&
+		bool existing_file = !stat((char *)path.data, &meta);
+		bool same_file = existing_file && file->filepath.data &&
 		                 file->stat.st_dev == meta.st_dev && file->stat.st_ino == meta.st_ino;
 
 		if (cmd->flags != '!') {
@@ -1540,18 +1540,18 @@ static bool cmd_write(Vis *vis, Win *win, Command *cmd, const char *argv[], Sele
 			}
 		}
 
-		if (!vis_event_emit(vis, VIS_EVENT_FILE_SAVE_PRE, file, path) && cmd->flags != '!') {
-			vis_info_show(vis, "Rejected write to `%s' by pre-save hook", path);
+		if (!vis_event_emit(vis, VIS_EVENT_FILE_SAVE_PRE, file, path.data) && cmd->flags != '!') {
+			vis_info_show(vis, "Rejected write to `%.*s' by pre-save hook", (int)path.length, path.data);
 			goto err;
 		}
 		/* a pre-save hook may have changed the text; need to re-take the range */
 		if (write_entire_file)
 			*r = text_range_new(0, text_size(text));
 
-		TextSave ctx = text_save_default(.txt = text, .method = file->save_method, .filename = path);
+		TextSave ctx = text_save_default(.txt = text, .method = file->save_method, .filepath = path);
 		if (!text_save_begin(&ctx)) {
 			const char *msg = errno ? strerror(errno) : "try changing `:set savemethod`";
-			vis_info_show(vis, "Can't write `%s': %s", path, msg);
+			vis_info_show(vis, "Can't write `%.*s': %s", (int)path.length, path.data, msg);
 			goto err;
 		}
 
@@ -1573,22 +1573,26 @@ static bool cmd_write(Vis *vis, Win *win, Command *cmd, const char *argv[], Sele
 		}
 
 		if (failure) {
-			vis_info_show(vis, "Can't write `%s': %s", path, strerror(errno));
+			vis_info_show(vis, "Can't write `%.*s': %s", (int)path.length, path.data, strerror(errno));
 			goto err;
 		}
 
-		if (!file->name) {
-			file_name_set(file, path);
+		if (file->filepath.length == 0) {
+			file->filepath = path;
 			same_file = true;
 		}
-		if (same_file || (!existing_file && strcmp(file->name, path) == 0))
+
+		if (same_file || (!existing_file && str8_equal(file->filepath, path)))
 			file->stat = text_stat(text);
-		vis_event_emit(vis, VIS_EVENT_FILE_SAVE_POST, file, path);
-		free(path);
+
+		vis_event_emit(vis, VIS_EVENT_FILE_SAVE_POST, file, path.data);
+
+		if (file->filepath.data != path.data)
+			free(path.data);
 		continue;
 
 	err:
-		free(path);
+		free(path.data);
 		return false;
 	}
 	return true;
@@ -1653,11 +1657,13 @@ static bool cmd_pipeout(Vis *vis, Win *win, Command *cmd, const char *argv[], Se
 	return !vis->interrupted && status == 0;
 }
 
-static bool cmd_cd(Vis *vis, Win *win, Command *cmd, const char *argv[], Selection *sel, Filerange *range) {
-	const char *dir = argv[1];
-	if (!dir)
-		dir = getenv("HOME");
-	return dir && chdir(dir) == 0;
+static bool
+cmd_cd(Vis *vis, Win *win, Command *cmd, const char *argv[], Selection *sel, Filerange *range)
+{
+	// TODO(rnp): argv shouldn't need to be be 0 terminated copies of cmdline
+	str8 dir = str8_from_c_str(argv[1]);
+	bool result = vis_change_directory(vis, dir.data, dir.length);
+	return result;
 }
 
 #include "vis-cmds.c"

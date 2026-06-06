@@ -137,17 +137,18 @@ typedef struct {
 } Transcript;
 
 struct File { /* shared state among windows displaying the same file */
+	str8  name;                      /* suffix slice of filepath without working directory */
+	str8  filepath;                  /* file name used when loading/saving (0 terminated) */
 	Text *text;                      /* data structure holding the file content */
-	const char *name;                /* file name used when loading/saving */
 	volatile sig_atomic_t truncated; /* whether the underlying memory mapped region became invalid (SIGBUS) */
-	int fd;                          /* output file descriptor associated with this file or -1 if loaded by file name */
-	bool internal;                   /* whether it is an internal file (e.g. used for the prompt) */
-	struct stat stat;                /* filesystem information when loaded/saved, used to detect changes outside the editor */
-	int refcount;                    /* how many windows are displaying this file? (always >= 1) */
-	SelectionRegionList marks[VIS_MARK_INVALID]; /* marks which are shared across windows */
+	int  fd;                         /* output file descriptor associated with this file or -1 if loaded by file name */
+	int  refcount;                   /* how many windows are displaying this file? (always >= 1) */
 	enum TextSaveMethod save_method; /* whether the file is saved using rename(2) or overwritten */
+	bool internal;                   /* whether it is an internal file (e.g. used for the prompt) */
 	Transcript transcript;           /* keeps track of changes performed by sam commands */
+	struct stat stat;                /* filesystem information when loaded/saved, used to detect changes outside the editor */
 	File *next, *prev;
+	SelectionRegionList marks[VIS_MARK_INVALID]; /* marks which are shared across windows */
 };
 
 struct Win {
@@ -314,9 +315,6 @@ VIS_INTERNAL Macro *macro_get(Vis *vis, enum VisRegister);
 VIS_INTERNAL Win *window_new_file(Vis*, File*, enum UiOption);
 VIS_INTERNAL void window_selection_save(Win *win);
 VIS_INTERNAL void window_status_update(Vis *vis, Win *win);
-
-VIS_INTERNAL const char *file_name_get(File*);
-VIS_INTERNAL void file_name_set(File*, const char *name);
 
 VIS_INTERNAL const char *register_get(Vis*, Register*, size_t *len);
 VIS_INTERNAL const char *register_slot_get(Vis*, Register*, size_t slot, size_t *len);

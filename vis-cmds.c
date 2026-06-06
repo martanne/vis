@@ -373,7 +373,7 @@ static bool cmd_wq(Vis *vis, Win *win, Command *cmd, const char *argv[], Selecti
 	if (!win)
 		return false;
 	File *file = win->file;
-	bool unmodified = file->fd == -1 && !file->name && !text_modified(file->text);
+	bool unmodified = file->fd == -1 && file->filepath.length <= 0 && !text_modified(file->text);
 	if (unmodified || cmd_write(vis, win, cmd, argv, sel, range))
 		return vis_cmd_quit(vis, win, cmd, (const char*[]){argv[0], NULL}, sel, range);
 	return false;

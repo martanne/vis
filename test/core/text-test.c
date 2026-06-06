@@ -88,7 +88,7 @@ static void iterator_find_prev(Text *txt, size_t start, char b, size_t match) {
 }
 
 static bool text_save_method(Text *txt, const char *filename, enum TextSaveMethod method) {
-	TextSave ctx = text_save_default(.txt = txt, .filename = filename, .method = method);
+	TextSave ctx = text_save_default(.txt = txt, .filepath = str8_from_c_str(filename), .method = method);
 	if (!text_save_begin(&ctx))
 		return false;
 	Filerange range = (Filerange){ .start = 0, .end = text_size(txt) };

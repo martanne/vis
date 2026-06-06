@@ -40,7 +40,7 @@ static void file_free(Vis *vis, File *file) {
 	for (size_t i = 0; i < LENGTH(file->marks); i++)
 		da_release(file->marks + i);
 	text_free(file->text);
-	free((char*)file->name);
+	free(file->filepath.data);
 
 	if (file->prev)
 		file->prev->next = file->next;
@@ -65,41 +65,62 @@ static File *file_new_text(Vis *vis, Text *text) {
 	return file;
 }
 
-static File *file_new(Vis *vis, const char *name, bool internal) {
-	char *name_absolute = NULL;
+VIS_INTERNAL str8
+vis_current_directory(char *buffer, s64 buffer_length)
+{
+	str8 result = {0};
+	if (getcwd(buffer, buffer_length))
+		result = str8_from_c_str(buffer);
+	return result;
+}
+
+VIS_INTERNAL void
+vis_file_set_name_relative(File *file, str8 directory)
+{
+	str8 name = file->filepath;
+	if (str8_is_prefix(directory, name) && directory.length != name.length)
+		name = str8_skip(name, directory.length + 1);
+	file->name = name;
+}
+
+VIS_INTERNAL File *
+file_new(Vis *vis, const char *name, bool internal)
+{
 	bool cmp_names = 0;
 	struct stat new;
 
+	str8 filepath = {0};
 	if (name) {
-		if (!(name_absolute = absolute_path(name)))
-			return NULL;
+		filepath = vis_absolute_path(name);
+		if (filepath.length <= 0)
+			return 0;
 
-		if (stat(name_absolute, &new)) {
+		if (stat((char *)filepath.data, &new)) {
 			if (errno != ENOENT) {
-				free(name_absolute);
-				return NULL;
+				free(filepath.data);
+				return 0;
 			}
 			cmp_names = 1;
 		}
 
-		File *existing = NULL;
+		File *existing = 0;
 		/* try to detect whether the same file is already open in another window */
 		for (File *file = vis->files; file; file = file->next) {
-			if (file->name) {
-				if ((cmp_names && strcmp(file->name, name_absolute) == 0) ||
-				    (file->stat.st_dev == new.st_dev && file->stat.st_ino == new.st_ino)) {
-					existing = file;
-					break;
-				}
+			if ((cmp_names && str8_equal(file->filepath, filepath)) ||
+			    (file->stat.st_dev == new.st_dev && file->stat.st_ino == new.st_ino))
+			{
+				existing = file;
+				break;
 			}
 		}
+
 		if (existing) {
-			free(name_absolute);
+			free(filepath.data);
 			return existing;
 		}
 	}
 
-	File *file = NULL;
+	File *file = 0;
 	Text *text = text_load_method(vis, name, vis->load_method);
 	if (!text && name && errno == ENOENT)
 		text = text_load(vis, 0);
@@ -107,16 +128,20 @@ static File *file_new(Vis *vis, const char *name, bool internal) {
 		goto err;
 	if (!(file = file_new_text(vis, text)))
 		goto err;
-	file->name = name_absolute;
+	file->filepath = filepath;
 	file->internal = internal;
 	if (!internal)
 		vis_event_emit(vis, VIS_EVENT_FILE_OPEN, file);
+
+	char cwd_buffer[PATH_MAX];
+	vis_file_set_name_relative(file, vis_current_directory(cwd_buffer, countof(cwd_buffer)));
+
 	return file;
 err:
-	free(name_absolute);
+	free(filepath.data);
 	text_free(text);
 	file_free(vis, file);
-	return NULL;
+	return 0;
 }
 
 static File *file_new_internal(Vis *vis, const char *filename) {
@@ -124,27 +149,6 @@ static File *file_new_internal(Vis *vis, const char *filename) {
 	if (file)
 		file->refcount = 1;
 	return file;
-}
-
-void file_name_set(File *file, const char *name) {
-	if (name == file->name)
-		return;
-	free((char*)file->name);
-	file->name = absolute_path(name);
-}
-
-const char *file_name_get(File *file) {
-	/* TODO: calculate path relative to working directory, cache result */
-	if (!file->name)
-		return NULL;
-	char cwd[PATH_MAX];
-	if (!getcwd(cwd, sizeof cwd))
-		return file->name;
-	const char *path = strstr(file->name, cwd);
-	if (path != file->name)
-		return file->name;
-	size_t cwdlen = strlen(cwd);
-	return file->name[cwdlen] == '/' ? file->name+cwdlen+1 : file->name;
 }
 
 void window_selection_save(Win *win)
@@ -374,14 +378,15 @@ Win *window_new_file(Vis *vis, File *file, enum UiOption options) {
 	return win;
 }
 
+// TODO(rnp): hack/refactor: vis_window_file_reload, add file_new force parameter
 bool vis_window_reload(Win *win) {
-	const char *name = win->file->name;
-	if (!name)
+	str8 path = win->file->filepath;
+	if (path.length <= 0)
 		return false; /* can't reload unsaved file */
 	/* temporarily unset file name, otherwise file_new returns the same File */
-	win->file->name = NULL;
-	File *file = file_new(win->vis, name, false);
-	win->file->name = name;
+	win->file->filepath = (str8){0};
+	File *file = file_new(win->vis, (char *)path.data, false);
+	win->file->filepath = path;
 	if (!file)
 		return false;
 	file_free(win->vis, win->file);
@@ -1274,7 +1279,7 @@ int vis_run(Vis *vis) {
 				next = win->next;
 				if (win->file->truncated) {
 					free(name);
-					name = strdup(win->file->name);
+					name = strndup((char *)win->file->filepath.data, win->file->filepath.length);
 					vis_window_close(win);
 				}
 			}
@@ -1660,10 +1665,11 @@ static int _vis_pipe(Vis *vis, File *file, Filerange range, const char* buf, con
 		close(perr[1]);
 		close(null);
 
-		if (file != NULL && file->name) {
-			char *name = strrchr(file->name, '/');
-			setenv("vis_filepath", file->name, 1);
-			setenv("vis_filename", name ? name+1 : file->name, 1);
+		if (file) {
+			str8 name;
+			path_split(file->filepath, 0, &name);
+			setenv("vis_filepath", file->filepath.data ? (char *)file->filepath.data : "", 1);
+			setenv("vis_filename", name.length > 0     ? (char *)name.data           : "", 1);
 		}
 
 		if (!argv[1])
@@ -1886,4 +1892,33 @@ Text *vis_text(Vis *vis) {
 View *vis_view(Vis *vis) {
 	Win *win = vis->win;
 	return win ? &win->view : NULL;
+}
+
+VIS_EXPORT bool
+vis_change_directory(Vis *vis, u8 *directory_name, s64 length)
+{
+	str8 directory = {.data = directory_name, .length = length};
+	u8 path[PATH_MAX];
+
+	if (length <= 0) {
+		// NOTE(rnp): guaranteed 0 terminated
+		directory = str8_from_c_str(getenv("HOME"));
+	} else if (length < countof(path) - 1) {
+		memcpy(path, directory_name, length);
+		directory.data = path;
+		path[length] = 0;
+	} else {
+		directory.length = 0;
+	}
+
+	bool result = directory.length > 0 && chdir((char *)directory.data) == 0;
+	if (result) {
+		// NOTE(rnp): resolve relative components
+		str8 wd = vis_current_directory((char *)path, countof(path));
+		for (File *file = vis->files; file; file = file->next)
+			if (!file->internal)
+				vis_file_set_name_relative(file, wd);
+	}
+
+	return result;
 }

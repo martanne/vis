@@ -67,14 +67,14 @@ void window_status_update(Vis *vis, Win *win) {
 	int width = win->width;
 	enum UiOption options = win->options;
 	bool focused = vis->win == win;
-	const char *filename = file_name_get(file);
+	str8 filename = file->name;
 	const char *mode = vis->mode->status;
 
 	if (focused && mode)
 		strcpy(left_parts[left_count++], mode);
 
 	snprintf(left_parts[left_count++], sizeof(left_parts[0]), "%s%s%s",
-	         filename ? filename : "[No Name]",
+	         filename.length > 0 ? (char *)filename.data : "[No Name]",
 	         text_modified(txt) ? " [+]" : "",
 	         vis_macro_recording(vis) ? " @": "");
 

@@ -1365,6 +1365,18 @@ VIS_EXPORT void vis_keys_feed(Vis *vis, const char *keys);
  */
 
 /**
+ * Change working directory of vis
+ * @param vis The editor instance.
+ * @param directory_name The directory to try and change to.
+ * @param length The length of the directory name.
+ * @return Whether the operation was successful.
+ *
+ * ``directory_name`` need not be 0 terminated.
+ * If `length` is <= 0 then directory defaults to ``getenv("HOME")``.
+ */
+VIS_EXPORT bool vis_change_directory(Vis *vis, uint8_t *directory_name, int64_t length);
+
+/**
  * Get a regex object matching pattern.
  * @param vis The editor instance.
  * @param pattern The regex pattern to compile, if ``NULL`` the most recently used

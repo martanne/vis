@@ -126,6 +126,14 @@ str8_case_ignore_equal(str8 a, str8 b)
 	return result;
 }
 
+static bool
+str8_is_prefix(str8 prefix, str8 s)
+{
+	bool result = s.length >= prefix.length &&
+	              str8_equal(prefix, (str8){.data = s.data, .length = prefix.length});
+	return result;
+}
+
 static str8
 str8_skip(str8 s, int64_t count)
 {
@@ -141,7 +149,7 @@ static str8
 str8_skip_space(str8 s)
 {
 	str8 result = s;
-	for (ptrdiff_t i = 0; i < s.length && IsSpace(*result.data); result.data++);
+	for (s64 i = 0; i < s.length && IsSpace(*result.data); result.data++, i++);
 	result.length -= result.data - s.data;
 	return result;
 }
@@ -192,11 +200,13 @@ path_split(str8 path, str8 *directory, str8 *basename)
 	if (directory) *directory = left.length == 0 ? str8(".") : left;
 }
 
-static char *
-absolute_path(const char *name)
+// NOTE(rnp): returns 0 terminated str8
+VIS_INTERNAL str8
+vis_absolute_path(const char *name)
 {
+	str8 result = {0};
 	if (!name)
-		return 0;
+		return result;
 
 	str8 base, dir, string = str8_from_c_str((char *)name);
 	path_split(string, &dir, &base);
@@ -207,7 +217,6 @@ absolute_path(const char *name)
 	memcpy(path_normalized, dir.data, dir.length);
 	path_normalized[dir.length] = 0;
 
-	char *result = 0;
 	if (realpath(path_normalized, path_resolved) == path_resolved) {
 		str8 resolved = str8_from_c_str(path_resolved);
 		if (str8_equal(resolved, str8("/"))) {
@@ -216,12 +225,13 @@ absolute_path(const char *name)
 		}
 
 		int64_t total_length = base.length + resolved.length + 1;
-		result = malloc(total_length + 1);
-		if (result) {
-			memcpy(result, resolved.data, resolved.length);
-			memcpy(result + resolved.length + 1, base.data, base.length);
-			result[resolved.length] = '/';
-			result[total_length]    = 0;
+		result.data = malloc(total_length + 1);
+		if (result.data) {
+			memcpy(result.data, resolved.data, resolved.length);
+			memcpy(result.data + resolved.length + 1, base.data, base.length);
+			result.data[resolved.length] = '/';
+			result.data[total_length]    = 0;
+			result.length = total_length;
 		}
 	}
 	return result;

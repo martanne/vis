@@ -2514,13 +2514,15 @@ static int file_index(lua_State *L) {
 	if (lua_isstring(L, 2)) {
 		const char *key = lua_tostring(L, 2);
 		if (strcmp(key, "name") == 0) {
-			lua_pushstring(L, file_name_get(file));
-			return 1;
+			int result = file->name.length > 0;
+			if (result) lua_pushlstring(L, (char *)file->name.data, file->name.length);
+			return result;
 		}
 
 		if (strcmp(key, "path") == 0) {
-			lua_pushstring(L, file->name);
-			return 1;
+			int result = file->filepath.length > 0;
+			if (result) lua_pushlstring(L, (char *)file->filepath.data, file->filepath.length);
+			return result;
 		}
 
 		if (strcmp(key, "lines") == 0) {

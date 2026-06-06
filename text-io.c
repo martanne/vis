@@ -272,10 +272,10 @@ err:
 static bool text_save_begin_atomic(TextSave *ctx)
 {
 	int oldfd, saved_errno;
-	if ((oldfd = openat(ctx->dirfd, ctx->filename, O_RDONLY)) == -1 && errno != ENOENT)
+	if ((oldfd = openat(ctx->dirfd, (char *)ctx->filepath.data, O_RDONLY)) == -1 && errno != ENOENT)
 		goto err;
 	struct stat oldmeta = { 0 };
-	if (oldfd != -1 && fstatat(ctx->dirfd, ctx->filename, &oldmeta, AT_SYMLINK_NOFOLLOW) == -1)
+	if (oldfd != -1 && fstatat(ctx->dirfd, (char *)ctx->filepath.data, &oldmeta, AT_SYMLINK_NOFOLLOW) == -1)
 		goto err;
 	if (oldfd != -1) {
 		if (S_ISLNK(oldmeta.st_mode)) /* symbolic link */
@@ -284,7 +284,7 @@ static bool text_save_begin_atomic(TextSave *ctx)
 			goto err;
 	}
 
-	str8 base, dir, fname = str8_from_c_str((char *)ctx->filename);
+	str8 base, dir, fname = ctx->filepath;
 	path_split(fname, &dir, &base);
 
 	char suffix[] = ".vis.XXXXXX";
@@ -341,7 +341,7 @@ static bool text_save_commit_atomic(TextSave *ctx) {
 	if (close_failed)
 		return false;
 
-	if (renameat(ctx->dirfd, (char *)ctx->tmpname.data, ctx->dirfd, ctx->filename) == -1)
+	if (renameat(ctx->dirfd, (char *)ctx->tmpname.data, ctx->dirfd, (char *)ctx->filepath.data) == -1)
 		return false;
 
 
@@ -375,7 +375,7 @@ static bool text_save_begin_inplace(TextSave *ctx) {
 	Text *txt = ctx->txt;
 	struct stat now = { 0 };
 	int newfd = -1, saved_errno;
-	if ((ctx->fd = openat(ctx->dirfd, ctx->filename, O_CREAT|O_WRONLY, 0666)) == -1)
+	if ((ctx->fd = openat(ctx->dirfd, (char *)ctx->filepath.data, O_CREAT|O_WRONLY, 0666)) == -1)
 		goto err;
 	if (fstat(ctx->fd, &now) == -1)
 		goto err;
