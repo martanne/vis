@@ -84,6 +84,7 @@ typedef struct {
 #define VisCellStyleFGIndexSet(v, index) ((v)->fg_r = ((index >> 8u) & 0xFFu), ((v)->fg_g = (index) & 0xFFu))
 #define VisCellStyleBGIndexSet(v, index) ((v)->bg_g = ((index >> 8u) & 0xFFu), ((v)->bg_b = (index) & 0xFFu))
 
+// TODO(rnp): refactor: should be possible to pack Cell down to 16 bytes; check how tab expansion is working
 typedef struct {
 	char data[16];      /* utf8 encoded character displayed in this cell (might be more than
 	                       one Unicode codepoint. might also not be the same as in the
@@ -110,6 +111,15 @@ typedef struct {
 	s8    change_colors;
 } VisCursesUI;
 
+typedef struct {
+	// NOTE(rnp): cell front buffer, updated on draw to match Ui::cell_buffer back buffer
+	VisCellBuffer cell_buffer;
+	Buffer output_buffer;
+
+	/* Indicates that the terminal contents may have changed externally */
+	bool flush_terminal;
+} VisVT100UI;
+
 // TODO(rnp): flatten UI into vis, only one exists and it must be in a vis context
 typedef struct {
 	char info[UI_MAX_WIDTH];   /* info message displayed at the bottom of the screen */
@@ -118,6 +128,7 @@ typedef struct {
 	int width, height;         /* terminal dimensions available for all windows */
 	int cur_row, cur_col;      /* active cursor's (0-based) position on the terminal */
 	enum UiLayout layout;      /* whether windows are displayed horizontally or vertically */
+	// TODO(rnp): cleanup usage of this
 	bool doupdate;             /* Whether to update the screen after refreshing contents */
 
 	str8 term;                 /* selected value for TERM (0 terminated) */
@@ -125,7 +136,7 @@ typedef struct {
 #if CONFIG_CURSES
 	VisCursesUI curses;
 #else
-	Buffer      vt100;
+	VisVT100UI  vt100;
 #endif
 
 	// static_assert(U16_MAX <= UI_STYLE_MAX)

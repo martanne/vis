@@ -583,7 +583,7 @@ ui_terminal_free(Ui *tui)
 {
 	vis_ui_backend_free(tui);
 	termkey_destroy(&tui->termkey);
-	munmap(tui->cell_buffer.cells, tui->cell_buffer.size);
+	if (tui->cell_buffer.size) munmap(tui->cell_buffer.cells, tui->cell_buffer.size);
 	free(tui->term.data);
 }
 

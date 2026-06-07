@@ -5,9 +5,6 @@
  * This is useful for debugging and fuzzing purposes as well as for environments
  * with no curses support.
  *
- * Currently no attempt is made to optimize terminal output. The amount of
- * flickering will depend on the smartness of your terminal emulator.
- *
  * The following terminal escape sequences are used:
  *
  *  - CSI ? 1049 h             Save cursor and use Alternate Screen Buffer (DECSET)
@@ -108,104 +105,149 @@ vis_terminal_style_indexed(u16 index)
 	return result;
 }
 
-static void output(const char *data, size_t len) {
-	(void)write(STDERR_FILENO, data, len);
-}
-
-static void output_literal(const char *data) {
-	output(data, strlen(data));
-}
-
-static void screen_alternate(bool alternate) {
-	output_literal(alternate ? "\x1b[?1049h" : "\x1b[?1049l" "\x1b[0m" );
-}
-
-static void cursor_visible(bool visible) {
-	output_literal(visible ? "\x1b[?25h" : "\x1b[?25l");
+VIS_INTERNAL void
+vis_ui_vt100_output(str8 s)
+{
+	// TODO(rnp): eintr
+	(void)write(STDERR_FILENO, s.data, s.length);
 }
 
 VIS_INTERNAL void
-ui_term_backend_blit(Ui *tui)
+vis_ui_vt100_altscreen(bool enable)
 {
-	Buffer *buf = &tui->vt100;
+	vis_ui_vt100_output(enable ? str8("\x1b[?1049h") : str8("\x1b[?1049l" "\x1b[0m"));
+}
+
+VIS_INTERNAL void
+vis_ui_vt100_cursor_visible(bool visible)
+{
+	vis_ui_vt100_output(visible ? str8("\x1b[?25h") : str8("\x1b[?25l"));
+}
+
+VIS_INTERNAL bool
+vis_cell_equal(Cell *a, Cell *b)
+{
+	bool result = memory_equal(a, b, sizeof(*a));
+	return result;
+}
+
+VIS_INTERNAL void
+ui_term_backend_blit(Ui *ui)
+{
+	VisVT100UI *vt  = &ui->vt100;
+	Buffer     *buf = &vt->output_buffer;
 	buf->length = 0;
-	int w = tui->width, h = tui->height;
-	Cell *cell = tui->cell_buffer.cells;
 
-	VisTerminalStyle bg = vis_terminal_style_bg(vis_ui_backend_style_default(tui));
-	VisTerminalStyle fg = vis_terminal_style_fg(vis_ui_backend_style_default(tui));
-	u8 attributes = 0;
-	/* reposition cursor, erase screen, reset attributes */
-	str8 command = str8("\x1b[H" "\x1b[J" "\x1b[0m");
+	Cell *bb = ui->cell_buffer.cells;
+	Cell *fb = vt->cell_buffer.cells;
+
+	if unlikely(vt->flush_terminal) {
+		memset(fb, 0, vt->cell_buffer.size);
+		vt->flush_terminal = false;
+	}
+
+	VisTerminalStyle fg = {0};
+	VisTerminalStyle bg = {0};
+	s32 cursor_x = 0, cursor_y = 0;
+	u8  attributes = 0;
+	s32 width  = ui->width;
+	s32 height = ui->height;
+
+	/* reposition cursor, reset attributes */
+	str8 command = str8("\x1b[H" "\x1b[0m");
 	buffer_append(buf, command.data, command.length);
-	for (int y = 0; y < h; y++) {
-		for (int x = 0; x < w; x++) {
-			VisCellStyle style = cell->style;
-			if (style.attributes != attributes) {
-				static const struct {
-					u8 flag;
-					char on[2], off[4];
-				} cell_attrs[] = {
-					{VisCellAttribute_Bold,      "1", "22"},
-					{VisCellAttribute_Dim,       "2", "22"},
-					{VisCellAttribute_Italic,    "3", "23"},
-					{VisCellAttribute_Underline, "4", "24"},
-					{VisCellAttribute_Blink,     "5", "25"},
-					{VisCellAttribute_Reverse,   "7", "27"},
-				};
+	for (s32 y = 0; y < height; y++) {
+		for (s32 x = 0; x < width; x++) {
+			if (!vis_cell_equal(fb, bb)) {
+				if (cursor_x != x || cursor_y != y) {
+					vis_buffer_appendf(buf, "\x1b[%d;%dH", y + 1, x + 1);
+					cursor_x = x;
+					cursor_y = y;
+				}
 
-				for (u64 i = 0; i < countof(cell_attrs); i++) {
-					u8 flag = cell_attrs[i].flag;
-					if ((attributes & flag) != (style.attributes & flag)) {
-						vis_buffer_appendf(buf, "\x1b[%sm", (style.attributes & flag) ?
-						                   cell_attrs[i].on :
-						                   cell_attrs[i].off);
+				VisCellStyle style = bb->style;
+				if (style.attributes != attributes) {
+					static const struct {
+						u8 flag;
+						char on[2], off[4];
+					} cell_attrs[] = {
+						{VisCellAttribute_Bold,      "1", "22"},
+						{VisCellAttribute_Dim,       "2", "22"},
+						{VisCellAttribute_Italic,    "3", "23"},
+						{VisCellAttribute_Underline, "4", "24"},
+						{VisCellAttribute_Blink,     "5", "25"},
+						{VisCellAttribute_Reverse,   "7", "27"},
+					};
+
+					for (u64 i = 0; i < countof(cell_attrs); i++) {
+						u8 flag = cell_attrs[i].flag;
+						if ((attributes & flag) != (style.attributes & flag)) {
+							vis_buffer_appendf(buf, "\x1b[%sm", (style.attributes & flag) ?
+							                   cell_attrs[i].on :
+							                   cell_attrs[i].off);
+						}
 					}
+					attributes = style.attributes;
 				}
-				attributes = style.attributes;
+
+				VisTerminalStyle style_fg = vis_terminal_style_fg(style);
+				if (!vis_terminal_style_equal(fg, style_fg)) {
+					if (style_fg.indexed) {
+						vis_buffer_appendf(buf, "\x1b[38;5;%um", (u32)style_fg.color.index);
+					} else {
+						vis_buffer_appendf(buf, "\x1b[38;2;%u;%u;%um", (u32)style_fg.color.rgb.r,
+						                   (u32)style_fg.color.rgb.g, (u32)style_fg.color.rgb.b);
+					}
+					fg = style_fg;
+				}
+
+				VisTerminalStyle style_bg = vis_terminal_style_bg(style);
+				if (!vis_terminal_style_equal(bg, style_bg)) {
+					if (style_bg.indexed) {
+						vis_buffer_appendf(buf, "\x1b[48;5;%um", (u32)style_bg.color.index);
+					} else {
+						vis_buffer_appendf(buf, "\x1b[48;2;%u;%u;%um", (u32)style_bg.color.rgb.r,
+						                   (u32)style_bg.color.rgb.g, (u32)style_bg.color.rgb.b);
+					}
+					bg = style_bg;
+				}
+
+				vis_buffer_append0(buf, bb->data);
+				memory_copy(fb, bb, sizeof(*fb));
+
+				cursor_x += bb->width;
+				if (cursor_x >= width) {
+					cursor_x = 0;
+					cursor_y++;
+				}
 			}
 
-			VisTerminalStyle style_fg = vis_terminal_style_fg(style);
-			if (!vis_terminal_style_equal(fg, style_fg)) {
-				if (style_fg.indexed) {
-					vis_buffer_appendf(buf, "\x1b[38;5;%um", (u32)style_fg.color.index);
-				} else {
-					vis_buffer_appendf(buf, "\x1b[38;2;%u;%u;%um", (u32)style_fg.color.rgb.r,
-					                   (u32)style_fg.color.rgb.g, (u32)style_fg.color.rgb.b);
-				}
-				fg = style_fg;
-			}
-
-			VisTerminalStyle style_bg = vis_terminal_style_bg(style);
-			if (!vis_terminal_style_equal(bg, style_bg)) {
-				if (style_bg.indexed) {
-					vis_buffer_appendf(buf, "\x1b[48;5;%um", (u32)style_bg.color.index);
-				} else {
-					vis_buffer_appendf(buf, "\x1b[48;2;%u;%u;%um", (u32)style_bg.color.rgb.r,
-					                   (u32)style_bg.color.rgb.g, (u32)style_bg.color.rgb.b);
-				}
-				bg = style_bg;
-			}
-
-			vis_buffer_append0(buf, cell->data);
-			cell++;
+			fb++;
+			bb++;
 		}
 	}
-	/* move cursor */
-	vis_buffer_appendf(buf, "\x1b[%d;%dH", tui->cur_row + 1, tui->cur_col + 1);
-	output(buf->data, buf->length);
+
+	// NOTE(rnp): maintain cursor position in case it gets queried through escape codes
+	vis_buffer_appendf(buf, "\x1b[%d;%dH", ui->cur_row + 1, ui->cur_col + 1);
+	vis_ui_vt100_output((str8){.data = (u8 *)buf->data, .length = buf->length});
 }
 
-static void ui_term_backend_clear(Ui *tui) { }
+VIS_INTERNAL void ui_term_backend_clear(Ui *ui) {}
+VIS_INTERNAL void ui_term_backend_save(Ui *ui, bool fscr) {}
 
-static bool ui_term_backend_resize(Ui *tui, int width, int height) {
-	return true;
+VIS_INTERNAL void
+ui_term_backend_restore(Ui *ui)
+{
+	ui->vt100.flush_terminal = true;
 }
 
-static void ui_term_backend_save(Ui *tui, bool fscr) {
-}
-
-static void ui_term_backend_restore(Ui *tui) {
+VIS_INTERNAL bool
+ui_term_backend_resize(Ui *ui, int width, int height)
+{
+	bool result = vis_cell_buffer_resize(&ui->vt100.cell_buffer, width, height);
+	// NOTE(rnp): clear screen on successful resize
+	if (result) vis_ui_vt100_output(str8("\x1b[J"));
+	return result;
 }
 
 int ui_terminal_colors(void) {
@@ -217,15 +259,15 @@ VIS_INTERNAL void
 ui_term_backend_suspend(Ui *tui)
 {
 	termkey_stop(&tui->termkey);
-	cursor_visible(true);
-	screen_alternate(false);
+	vis_ui_vt100_cursor_visible(true);
+	vis_ui_vt100_altscreen(false);
 }
 
 VIS_INTERNAL void
 ui_terminal_resume(Ui *tui)
 {
-	screen_alternate(true);
-	cursor_visible(false);
+	vis_ui_vt100_altscreen(true);
+	vis_ui_vt100_cursor_visible(false);
 	termkey_start(&tui->termkey, UI_TERMKEY_FLAGS);
 }
 
@@ -240,5 +282,6 @@ VIS_INTERNAL void
 vis_ui_backend_free(Ui *ui)
 {
 	ui_term_backend_suspend(ui);
-	buffer_release(&ui->vt100);
+	if (ui->vt100.cell_buffer.size) munmap(ui->vt100.cell_buffer.cells, ui->vt100.cell_buffer.size);
+	buffer_release(&ui->vt100.output_buffer);
 }
