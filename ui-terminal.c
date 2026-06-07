@@ -225,12 +225,9 @@ static void ui_window_draw(Win *win) {
 	View *view = &win->view;
 	const Line *line = win->view.topline;
 
-	bool status  = win->options & UI_OPTION_STATUSBAR;
 	bool nu      = win->options & UI_OPTION_LINE_NUMBERS_ABSOLUTE;
 	bool rnu     = win->options & UI_OPTION_LINE_NUMBERS_RELATIVE;
 	bool sidebar = nu || rnu;
-
-	int width = win->width, height = win->height;
 
 	int sidebar_width = 0;
 	if (sidebar) {
@@ -238,7 +235,6 @@ static void ui_window_draw(Win *win) {
 		sidebar_width = MAX(sidebar_width, win->min_sidebar_width);
 	}
 	if (sidebar_width != win->sidebar_width) {
-		view_resize(view, width - sidebar_width, status ? height - 1 : height);
 		win->sidebar_width = sidebar_width;
 	}
 	vis_window_draw(win);
