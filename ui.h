@@ -69,7 +69,7 @@ typedef struct {
 	char data[16];      /* utf8 encoded character displayed in this cell (might be more than
 	                       one Unicode codepoint. might also not be the same as in the
 	                       underlying text, for example tabs get expanded */
-	size_t len;         /* number of bytes the character displayed in this cell uses, for
+	u32 len;            /* number of bytes the character displayed in this cell uses, for
 	                       characters which use more than 1 column to display, their length
 	                       is stored in the leftmost cell whereas all following cells
 	                       occupied by the same character have a length of 0. */
@@ -77,22 +77,26 @@ typedef struct {
 	CellStyle style;    /* colors and attributes used to display this cell */
 } Cell;
 
+typedef struct {
+	Cell *cells;
+	u64   size;
+} VisCellBuffer;
+
 // TODO(rnp): flatten UI into vis, only one exists and it must be in a vis context
 typedef struct {
-	char info[UI_MAX_WIDTH];  /* info message displayed at the bottom of the screen */
-	int width, height;        /* terminal dimensions available for all windows */
-	int cur_row, cur_col;     /* active cursor's (0-based) position on the terminal */
-	enum UiLayout layout;     /* whether windows are displayed horizontally or vertically */
-	TermKey termkey;          /* libtermkey instance to handle keyboard input (stdin or /dev/tty) */
-	size_t ids;               /* bit mask of in use window ids */
-	size_t styles_size;       /* #bytes allocated for styles array */
-	CellStyle *styles;        /* each window has UI_STYLE_MAX different style definitions */
-	size_t cells_size;        /* #bytes allocated for 2D grid (grows only) */
-	Cell *cells;              /* 2D grid of cells, at least as large as current terminal size */
-	bool doupdate;            /* Whether to update the screen after refreshing contents */
-	void *ctx;                /* Any additional data needed by the backend */
+	char info[UI_MAX_WIDTH];   /* info message displayed at the bottom of the screen */
+	TermKey termkey;           /* libtermkey instance to handle keyboard input (stdin or /dev/tty) */
+	VisCellBuffer cell_buffer; /* 2D grid of cells, at least as large as current terminal size */
+	void *ctx;                 /* Any additional data needed by the backend */
+	size_t ids;                /* bit mask of in use window ids */
+	size_t styles_size;        /* #bytes allocated for styles array */
+	CellStyle *styles;         /* each window has UI_STYLE_MAX different style definitions */
+	int width, height;         /* terminal dimensions available for all windows */
+	int cur_row, cur_col;      /* active cursor's (0-based) position on the terminal */
+	enum UiLayout layout;      /* whether windows are displayed horizontally or vertically */
+	bool doupdate;             /* Whether to update the screen after refreshing contents */
 
-	str8 term;                /* selected value for TERM (0 terminated) */
+	str8 term;                 /* selected value for TERM (0 terminated) */
 } Ui;
 
 #include "view.h"

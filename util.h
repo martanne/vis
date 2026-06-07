@@ -212,4 +212,13 @@ utf8_encode(u8 out[4], u32 cp)
 	return result;
 }
 
+static u64
+round_up_to(u64 value, u64 multiple)
+{
+	u64 result = value;
+	if (value % multiple != 0)
+		result += multiple - value % multiple;
+	return result;
+}
+
 #endif /* UTIL_H */

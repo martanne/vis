@@ -12,14 +12,31 @@
 #define debug(...) do { } while (0)
 #endif
 
+// TODO(rnp): if we remove curses backend we should do a single mapping
+// for both front and back buffers.
+VIS_INTERNAL bool
+vis_cell_buffer_resize(VisCellBuffer *cb, u32 width, u32 height)
+{
+	u64 page_size = sysconf(_SC_PAGE_SIZE);
+	u64 size      = round_up_to(width * height * sizeof(Cell), page_size);
+
+	// NOTE(rnp): we always ask for a new address range here which allows for both
+	// growing and shrinking. it also means that this function always 0s the memory
+	void *memory = mmap(0, size, PROT_READ|PROT_WRITE, MAP_ANONYMOUS|MAP_PRIVATE, -1, 0);
+	bool  result = memory != MAP_FAILED;
+	if (result) {
+		if (cb->cells) munmap(cb->cells, cb->size);
+		cb->cells = memory;
+		cb->size  = size;
+	}
+	return result;
+}
+
 #if CONFIG_CURSES
 #include "ui-terminal-curses.c"
 #else
 #include "ui-terminal-vt100.c"
 #endif
-
-/* helper macro for handling UiTerm.cells */
-#define CELL_AT_POS(UI, X, Y) (((UI)->cells) + (X) + ((Y) * (UI)->width));
 
 #define CELL_STYLE_DEFAULT (CellStyle){.fg = CELL_COLOR_DEFAULT, .bg = CELL_COLOR_DEFAULT, .attr = CELL_ATTR_NORMAL}
 
@@ -170,7 +187,7 @@ static void ui_draw_line(Ui *tui, int x, int y, char c, enum UiStyle style_id) {
 	if (x < 0 || x >= tui->width || y < 0 || y >= tui->height)
 		return;
 	CellStyle style = tui->styles[style_id];
-	Cell *cells = tui->cells + y * tui->width;
+	Cell *cells = tui->cell_buffer.cells + y * tui->width;
 	while (x < tui->width) {
 		cells[x].data[0] = c;
 		cells[x].data[1] = '\0';
@@ -188,7 +205,7 @@ static void ui_draw_string(Ui *tui, int x, int y, const char *str, int win_id, e
 	 * clear the cell first then go through ui_window_style_set to get the correct style */
 	CellStyle default_style = tui->styles[UI_STYLE_MAX * win_id + UI_STYLE_DEFAULT];
 	// FIXME: does not handle double width characters etc, share code with view.c?
-	Cell *cells = tui->cells + y * tui->width;
+	Cell *cells = tui->cell_buffer.cells + y * tui->width;
 	const size_t cell_size = sizeof(cells[0].data)-1;
 	for (const char *next = str; *str && x < tui->width; str = next) {
 		do next++; while (!ISUTF8(*next));
@@ -247,7 +264,7 @@ static void ui_window_draw(Win *win) {
 	char buf[(sizeof(size_t) * CHAR_BIT + 2) / 3 + 1 + 1];
 	int x = win->x, y = win->y;
 	int view_width = view->width;
-	Cell *cells = ui->cells + y * ui->width;
+	Cell *cells = ui->cell_buffer.cells + y * ui->width;
 	if (x + sidebar_width + view_width > ui->width)
 		view_width = ui->width - x - sidebar_width;
 	for (Line *l = win->view.topline; l; l = l->next, y++) {
@@ -301,7 +318,9 @@ bool ui_window_style_set_pos(Win *win, int x, int y, enum UiStyle id, bool keep_
 	if (x < 0 || y < 0 || y >= win->height || x >= win->width) {
 		return false;
 	}
-	Cell *cell = CELL_AT_POS(tui, win->x + x, win->y + y)
+	x += win->x;
+	y += win->y;
+	Cell *cell = tui->cell_buffer.cells + tui->width * y + x;
 	ui_window_style_set(tui, win->id, cell, id, keep_non_default);
 	return true;
 }
@@ -344,7 +363,7 @@ ui_arrange(Vis *vis, enum UiLayout layout)
 			ui_window_move(win, x, y);
 			x += w;
 			if (n) {
-				Cell *cells = tui->cells;
+				Cell *cells = tui->cell_buffer.cells;
 				for (int i = 0; i < max_height; i++) {
 					strcpy(cells[x].data,"│");
 					cells[x].style = tui->styles[UI_STYLE_SEPARATOR];
@@ -412,17 +431,10 @@ void ui_resize(Ui *tui) {
 	if (!ui_term_backend_resize(tui, width, height))
 		return;
 
-	size_t size = width*height*sizeof(Cell);
-	if (size > tui->cells_size) {
-		Cell *cells = realloc(tui->cells, size);
-		if (!cells)
-			return;
-		memset((char*)cells+tui->cells_size, 0, size - tui->cells_size);
-		tui->cells_size = size;
-		tui->cells = cells;
+	if (vis_cell_buffer_resize(&tui->cell_buffer, width, height)) {
+		tui->width  = width;
+		tui->height = height;
 	}
-	tui->width = width;
-	tui->height = height;
 }
 
 VIS_INTERNAL void
@@ -567,7 +579,7 @@ ui_terminal_free(Ui *tui)
 {
 	ui_term_backend_free(tui);
 	termkey_destroy(&tui->termkey);
-	free(tui->cells);
+	munmap(tui->cell_buffer.cells, tui->cell_buffer.size);
 	free(tui->styles);
 	free(tui->term.data);
 }
