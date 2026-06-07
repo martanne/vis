@@ -223,7 +223,6 @@ u32_count_digits(uint32_t a)
 static void ui_window_draw(Win *win) {
 	Ui *ui = &win->vis->ui;
 	View *view = &win->view;
-	const Line *line = win->view.topline;
 
 	bool status  = win->options & UI_OPTION_STATUSBAR;
 	bool nu      = win->options & UI_OPTION_LINE_NUMBERS_ABSOLUTE;
@@ -251,7 +250,7 @@ static void ui_window_draw(Win *win) {
 	Cell *cells = ui->cells + y * ui->width;
 	if (x + sidebar_width + view_width > ui->width)
 		view_width = ui->width - x - sidebar_width;
-	for (const Line *l = line; l; l = l->next, y++) {
+	for (Line *l = win->view.topline; l; l = l->next, y++) {
 		if (sidebar) {
 			if (!l->lineno || !l->len || l->lineno == prev_lineno) {
 				memset(buf, ' ', sizeof(buf));
