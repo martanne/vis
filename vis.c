@@ -106,8 +106,8 @@ file_new(Vis *vis, const char *name, bool internal)
 		File *existing = 0;
 		/* try to detect whether the same file is already open in another window */
 		for (File *file = vis->files; file; file = file->next) {
-			if ((cmp_names && str8_equal(file->filepath, filepath)) ||
-			    (file->stat.st_dev == new.st_dev && file->stat.st_ino == new.st_ino))
+			if (!file->internal && ((cmp_names && str8_equal(file->filepath, filepath)) ||
+			    (file->stat.st_dev == new.st_dev && file->stat.st_ino == new.st_ino)))
 			{
 				existing = file;
 				break;
@@ -1903,7 +1903,7 @@ vis_change_directory(Vis *vis, u8 *directory_name, s64 length)
 	if (length <= 0) {
 		// NOTE(rnp): guaranteed 0 terminated
 		directory = str8_from_c_str(getenv("HOME"));
-	} else if (length < countof(path) - 1) {
+	} else if (length < (s64)countof(path) - 1) {
 		memcpy(path, directory_name, length);
 		directory.data = path;
 		path[length] = 0;
