@@ -6,8 +6,8 @@ RUN apk update && apk add --upgrade --no-cache \
 	ca-certificates \
 	fortify-headers \
 	gcc \
-	lua5.4-dev \
-	lua5.4-lpeg \
+	lua5.5-dev \
+	lua5.5-lpeg \
 	lua-lpeg-dev \
 	make \
 	musl-dev \
@@ -18,8 +18,8 @@ RUN apk update && apk add --upgrade --no-cache \
 	xz \
 	xz-dev \
 	xz-static
-RUN sed -i 's/Libs: /Libs: -L${INSTALL_CMOD} /' /usr/lib/pkgconfig/lua5.4.pc
-RUN mv /usr/lib/lua/5.4/lpeg.a /usr/lib/lua/5.4/liblpeg.a
+RUN sed -i 's/Libs: /Libs: -L${INSTALL_CMOD} /' /usr/lib/pkgconfig/lua5.5.pc
+RUN mv /usr/lib/lua/5.5/lpeg.a /usr/lib/lua/5.5/liblpeg.a
 # TODO contribute a proper libuntar package to Alpine
 RUN mkdir -p /build
 WORKDIR /build
