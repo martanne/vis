@@ -17,7 +17,7 @@ TESTS_RUN=0
 if [ $# -gt 0 ]; then
 	test_files=$*
 else
-	printf ':help\n:/ Lua paths/,$ w help\n:qall\n' | $VIS 2> /dev/null && cat help && rm -f help
+	printf ':help\n:/ Lua paths/,$ w help\n:qall\n' | $VIS 2> /dev/null && cat help && echo && rm -f help
 	test_files="$(find . -type f -name '*.in')"
 fi
 

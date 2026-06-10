@@ -113,9 +113,6 @@ typedef struct {
 
 /* a macro is just a sequence of symbolic keys as received from ui->getkey */
 typedef Buffer Macro;
-#define macro_release buffer_release
-#define macro_append buffer_append0
-
 typedef struct {             /** collects all information until an operator is executed */
 	int count;
 	enum VisMode mode;
@@ -316,18 +313,18 @@ VIS_INTERNAL Win *window_new_file(Vis*, File*, enum UiOption);
 VIS_INTERNAL void window_selection_save(Win *win);
 VIS_INTERNAL void window_status_update(Vis *vis, Win *win);
 
-VIS_INTERNAL const char *register_get(Vis*, Register*, size_t *len);
-VIS_INTERNAL const char *register_slot_get(Vis*, Register*, size_t slot, size_t *len);
+VIS_INTERNAL const char *register_get(Vis*, Register*, s64 *length);
+VIS_INTERNAL const char *register_slot_get(Vis*, Register*, size_t slot, s64 *length);
 
 VIS_INTERNAL bool register_put0(Vis*, Register*, const char *data);
-VIS_INTERNAL bool register_put(Vis*, Register*, const char *data, size_t len);
-VIS_INTERNAL bool register_slot_put(Vis*, Register*, size_t slot, const char *data, size_t len);
+VIS_INTERNAL bool register_put(Vis*, Register*, const char *data, s64 length);
+VIS_INTERNAL bool register_slot_put(Vis*, Register*, size_t slot, const char *data, s64 length);
 
 VIS_INTERNAL bool register_put_range(Vis*, Register*, Text*, Filerange);
 VIS_INTERNAL bool register_slot_put_range(Vis*, Register*, size_t slot, Text*, Filerange);
 
 VIS_INTERNAL size_t vis_register_count(Vis*, Register*);
-VIS_INTERNAL bool register_resize(Register*, size_t count);
+VIS_INTERNAL bool register_resize(Register*, VisDACount count);
 
 #define vis_oom(vis) longjmp((vis)->oom_jmp_buf, 1)
 

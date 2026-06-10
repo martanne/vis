@@ -56,7 +56,7 @@ static size_t op_put(Vis *vis, Text *txt, OperatorContext *c) {
 		break;
 	}
 
-	size_t len;
+	s64 len;
 	const char *data = register_slot_get(vis, c->reg, c->reg_slot, &len);
 
 	for (int i = 0; i < c->count; i++) {
@@ -256,10 +256,10 @@ bool vis_operator(Vis *vis, enum VisOperator id, ...)
 		break;
 	case VIS_OP_REPLACE:
 	{
-		Macro *macro = macro_get(vis, VIS_REG_DOT);
-		macro->len   = 0;
-		macro_append(macro, va_arg(ap, char*));
-		vis->action.arg.s = macro->data;
+		Macro *macro  = macro_get(vis, VIS_REG_DOT);
+		macro->length = 0;
+		vis_buffer_append0(macro, va_arg(ap, char*));
+		vis->action.arg.s = buffer_content0(macro);
 		break;
 	}
 	case VIS_OP_DELETE:

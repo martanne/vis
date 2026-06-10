@@ -189,7 +189,7 @@ static const char *file_open_dialog(Vis *vis, const char *pattern) {
 
 	Buffer bufcmd = {0}, bufout = {0}, buferr = {0};
 
-	if (!buffer_put0(&bufcmd, VIS_OPEN " ") || !buffer_append0(&bufcmd, pattern ? pattern : ""))
+	if (!vis_buffer_put_str8(&bufcmd, str8(VIS_OPEN " ")) || !vis_buffer_append0(&bufcmd, pattern ? pattern : ""))
 		return NULL;
 
 	int status = vis_pipe(vis, vis->win->file, text_range_new(0, 0),

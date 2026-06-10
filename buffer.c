@@ -4,31 +4,38 @@
 #define BUFFER_SIZE 1024
 #endif
 
-bool buffer_reserve(Buffer *buf, size_t size) {
-	/* ensure minimal buffer size, to avoid repeated realloc(3) calls */
-	if (size < BUFFER_SIZE)
-		size = BUFFER_SIZE;
-	if (buf->size < size) {
-		size = MAX(size, buf->size*2);
-		char *data = realloc(buf->data, size);
-		if (!data)
-			return false;
-		buf->size = size;
-		buf->data = data;
+VIS_INTERNAL bool
+buffer_reserve(Buffer *b, s64 size)
+{
+	bool result = true;
+	size = MAX(size, BUFFER_SIZE);
+	if (b->size < size) {
+		size = MAX(size, b->size * 2);
+		char *data = realloc(b->data, size);
+		result = data != 0;
+		if (result) {
+			b->size = size;
+			b->data = data;
+		}
 	}
-	return true;
+	return result;
 }
 
-bool buffer_grow(Buffer *buf, size_t len) {
-	size_t size;
-	if (!addu(buf->len, len, &size))
-		return false;
-	return buffer_reserve(buf, size);
+VIS_INTERNAL bool
+buffer_grow(Buffer *b, s64 length)
+{
+	bool result = buffer_reserve(b, b->length + length);
+	return result;
 }
 
-bool buffer_terminate(Buffer *buf) {
-	return !buf->data || buf->len == 0 || buf->data[buf->len-1] == '\0' ||
-	        buffer_append(buf, "\0", 1);
+VIS_INTERNAL void
+vis_buffer_terminate(Buffer *b)
+{
+	if (b->data) {
+		if (b->length == b->size) buffer_grow(b, 1);
+		b->data[MIN(b->length, b->size - 1)] = 0;
+		if (b->length == b->size) b->length--;
+	}
 }
 
 void buffer_release(Buffer *buf) {
@@ -38,100 +45,107 @@ void buffer_release(Buffer *buf) {
 	*buf = (Buffer){0};
 }
 
-bool buffer_put(Buffer *buf, const void *data, size_t len) {
-	if (!buffer_reserve(buf, len))
-		return false;
-	memmove(buf->data, data, len);
-	buf->len = len;
-	return true;
-}
+VIS_INTERNAL bool
+buffer_put(Buffer *b, const void *data, s64 length)
+{
+	// TODO(rnp): register code wants to pass in overlapping data
+	//assert(!Between((char *)data, b->data, b->data + b->size));
 
-bool buffer_put0(Buffer *buf, const char *data) {
-	return buffer_put(buf, data, strlen(data)+1);
-}
-
-bool buffer_remove(Buffer *buf, size_t pos, size_t len) {
-	size_t end;
-	if (len == 0)
-		return true;
-	if (!addu(pos, len, &end) || end > buf->len)
-		return false;
-	memmove(buf->data + pos, buf->data + pos + len, buf->len - pos - len);
-	buf->len -= len;
-	return true;
-}
-
-static bool buffer_insert(Buffer *buf, size_t pos, const void *data, size_t len) {
-	if (pos > buf->len)
-		return false;
-	if (len == 0)
-		return true;
-	if (!buffer_grow(buf, len))
-		return false;
-	size_t move = buf->len - pos;
-	if (move > 0)
-		memmove(buf->data + pos + len, buf->data + pos, move);
-	memcpy(buf->data + pos, data, len);
-	buf->len += len;
-	return true;
-}
-
-bool buffer_insert0(Buffer *buf, size_t pos, const char *data) {
-	if (pos == 0)
-		return buffer_insert(buf, 0, data, strlen(data) + (buf->len == 0));
-	if (pos == buf->len)
-		return buffer_append0(buf, data);
-	return buffer_insert(buf, pos, data, strlen(data));
-}
-
-bool buffer_append(Buffer *buf, const void *data, size_t len) {
-	return buffer_insert(buf, buf->len, data, len);
-}
-
-bool buffer_append0(Buffer *buf, const char *data) {
-	size_t nul = (buf->len > 0 && buf->data[buf->len-1] == '\0') ? 1 : 0;
-	buf->len -= nul;
-	bool ret = buffer_append(buf, data, strlen(data)+1);
-	if (!ret)
-		buf->len += nul;
-	return ret;
-}
-
-static bool buffer_vappendf(Buffer *buf, const char *fmt, va_list ap) {
-	va_list ap_save;
-	va_copy(ap_save, ap);
-	int len = vsnprintf(NULL, 0, fmt, ap);
-	if (len == -1 || !buffer_grow(buf, len+1)) {
-		va_end(ap_save);
-		return false;
+	bool result = buffer_reserve(b, length);
+	if (result) {
+		memmove(b->data, data, length);
+		b->length = length;
 	}
-	size_t nul = (buf->len > 0 && buf->data[buf->len-1] == '\0') ? 1 : 0;
-	buf->len -= nul;
-	bool ret = vsnprintf(buf->data+buf->len, len+1, fmt, ap_save) == len;
-	buf->len += ret ? (size_t)len+1 : nul;
-	va_end(ap_save);
-	return ret;
+	return result;
 }
 
-bool buffer_appendf(Buffer *buf, const char *fmt, ...) {
+VIS_INTERNAL bool
+vis_buffer_put_str8(Buffer *b, str8 s)
+{
+	bool result = buffer_put(b, s.data, s.length);
+	return result;
+}
+
+VIS_INTERNAL bool
+buffer_remove(Buffer *b, s64 at, s64 length)
+{
+	bool result = Between(at, 0, b->length) && Between(length, 0, b->length - at);
+	if (result) {
+		memmove(b->data + at, b->data + at + length, b->length - at - length);
+		b->length -= length;
+	}
+	return result;
+}
+
+VIS_INTERNAL bool
+vis_buffer_insert(Buffer *b, s64 at, const void *data, s64 length)
+{
+	bool result = at <= b->length;
+	if (result && length > 0) {
+		result = buffer_grow(b, length);
+		if (result) {
+			s64 move = b->length - at;
+			if (move > 0) memmove(b->data + at + length, b->data + at, move);
+			memcpy(b->data + at, data, length);
+			b->length += length;
+		}
+	}
+	return result;
+}
+
+VIS_INTERNAL bool
+buffer_append(Buffer *b, const void *data, s64 length)
+{
+	bool result = vis_buffer_insert(b, b->length, data, length);
+	return result;
+}
+
+VIS_INTERNAL bool
+vis_buffer_append0(Buffer *buf, const char *data)
+{
+	bool result = buffer_append(buf, data, str8_from_c_str(data).length);
+	return result;
+}
+
+VIS_INTERNAL bool
+vis_buffer_vappendf(Buffer *b, const char *fmt, va_list ap)
+{
+	va_list ap_copy;
+	va_copy(ap_copy, ap);
+
+	s64  remaining = b->size - b->length;
+	s64  length = vsnprintf(b->data + b->length, remaining, fmt, ap);
+	// NOTE(rnp): vsnprintf will replace the last byte with 0 if there is exactly enough
+	// space for the data if the 0 wasn't included. therefore we must always ensure at
+	// least 1 extra byte gets added.
+	bool result = length < remaining;
+	if (!result && buffer_reserve(b, b->size + MAX(1, length - remaining)))
+		length = vsnprintf(b->data + b->length, b->size - b->length, fmt, ap_copy);
+
+	result = length <= b->size - b->length;
+	if (result) b->length += length;
+
+	va_end(ap_copy);
+
+	return result;
+}
+
+VIS_INTERNAL bool
+vis_buffer_appendf(Buffer *buf, const char *fmt, ...)
+{
 	va_list ap;
 	va_start(ap, fmt);
-	bool ret = buffer_vappendf(buf, fmt, ap);
+	bool result = vis_buffer_vappendf(buf, fmt, ap);
 	va_end(ap);
-	return ret;
+	return result;
 }
 
-size_t buffer_length0(Buffer *buf) {
-	size_t len = buf->len;
-	if (len > 0 && buf->data[len-1] == '\0')
-		len--;
-	return len;
-}
-
-const char *buffer_content0(Buffer *buf) {
-	if (buf->len == 0 || !buffer_terminate(buf))
-		return "";
-	return buf->data;
+VIS_INTERNAL const char *
+buffer_content0(Buffer *buf)
+{
+	vis_buffer_terminate(buf);
+	const char *result = buf->length == 0 ? "" : buf->data;
+	return result;
 }
 
 ssize_t read_into_buffer(void *context, char *data, size_t len) {

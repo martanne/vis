@@ -95,14 +95,15 @@ static void cursor_visible(bool visible) {
 
 static void ui_term_backend_blit(Ui *tui) {
 	Buffer *buf = tui->ctx;
-	buf->len    = 0;
+	buf->length = 0;
 	CellAttr attr = CELL_ATTR_NORMAL;
 	CellColor fg = CELL_COLOR_DEFAULT, bg = CELL_COLOR_DEFAULT;
 	int w = tui->width, h = tui->height;
 	Cell *cell = tui->cell_buffer.cells;
 
 	/* reposition cursor, erase screen, reset attributes */
-	buffer_append0(buf, "\x1b[H" "\x1b[J" "\x1b[0m");
+	str8 command = str8("\x1b[H" "\x1b[J" "\x1b[0m");
+	buffer_append(buf, command.data, command.length);
 	for (int y = 0; y < h; y++) {
 		for (int x = 0; x < w; x++) {
 			CellStyle *style = &cell->style;
@@ -124,10 +125,10 @@ static void ui_term_backend_blit(Ui *tui) {
 					CellAttr a = cell_attrs[i].attr;
 					if ((style->attr & a) == (attr & a))
 						continue;
-					buffer_appendf(buf, "\x1b[%sm",
-					               style->attr & a ?
-					               cell_attrs[i].on :
-					               cell_attrs[i].off);
+					vis_buffer_appendf(buf, "\x1b[%sm",
+					                   style->attr & a ?
+					                   cell_attrs[i].on :
+					                   cell_attrs[i].off);
 				}
 
 				attr = style->attr;
@@ -136,30 +137,28 @@ static void ui_term_backend_blit(Ui *tui) {
 			if (!cell_color_equal(fg, style->fg)) {
 				fg = style->fg;
 				if (fg.index != (uint8_t)-1) {
-					buffer_appendf(buf, "\x1b[%dm", 30 + fg.index);
+					vis_buffer_appendf(buf, "\x1b[%dm", 30 + fg.index);
 				} else {
-					buffer_appendf(buf, "\x1b[38;2;%d;%d;%dm",
-					               fg.r, fg.g, fg.b);
+					vis_buffer_appendf(buf, "\x1b[38;2;%d;%d;%dm", fg.r, fg.g, fg.b);
 				}
 			}
 
 			if (!cell_color_equal(bg, style->bg)) {
 				bg = style->bg;
 				if (bg.index != (uint8_t)-1) {
-					buffer_appendf(buf, "\x1b[%dm", 40 + bg.index);
+					vis_buffer_appendf(buf, "\x1b[%dm", 40 + bg.index);
 				} else {
-					buffer_appendf(buf, "\x1b[48;2;%d;%d;%dm",
-					               bg.r, bg.g, bg.b);
+					vis_buffer_appendf(buf, "\x1b[48;2;%d;%d;%dm", bg.r, bg.g, bg.b);
 				}
 			}
 
-			buffer_append0(buf, cell->data);
+			vis_buffer_append0(buf, cell->data);
 			cell++;
 		}
 	}
 	/* move cursor */
-	buffer_appendf(buf, "\x1b[%d;%dH", tui->cur_row + 1, tui->cur_col + 1);
-	output(buf->data, buffer_length0(buf));
+	vis_buffer_appendf(buf, "\x1b[%d;%dH", tui->cur_row + 1, tui->cur_col + 1);
+	output(buf->data, buf->length);
 }
 
 static void ui_term_backend_clear(Ui *tui) { }

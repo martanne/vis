@@ -13,35 +13,32 @@
 
 /** A dynamically growing buffer storing arbitrary data. */
 typedef struct {
-	char *data;    /**< Data pointer, ``NULL`` if empty. */
-	size_t len;    /**< Current length of data. */
-	size_t size;   /**< Maximal capacity of the buffer. */
+	char *data;   /**< Data pointer, ``NULL`` if empty. */
+	s64   length; /**< Current length of data. */
+	s64   size;   /**< Maximal capacity of the buffer. */
 } Buffer;
 
 /** Release all resources, reinitialize buffer. */
 VIS_INTERNAL void buffer_release(Buffer*);
 /** Reserve space to store at least ``size`` bytes.*/
-VIS_INTERNAL bool buffer_reserve(Buffer*, size_t size);
+VIS_INTERNAL bool buffer_reserve(Buffer*, s64 size);
 /** Reserve space for at least ``len`` *more* bytes. */
-VIS_INTERNAL bool buffer_grow(Buffer*, size_t len);
-/** If buffer is non-empty, make sure it is ``NUL`` terminated. */
-VIS_INTERNAL bool buffer_terminate(Buffer*);
+VIS_INTERNAL bool buffer_grow(Buffer*, s64 len);
 /** Set buffer content, growing the buffer as needed. */
-VIS_INTERNAL bool buffer_put(Buffer*, const void *data, size_t len);
-/** Set buffer content to ``NUL`` terminated data. */
-VIS_INTERNAL bool buffer_put0(Buffer*, const char *data);
-/** Remove ``len`` bytes starting at ``pos``. */
-VIS_INTERNAL bool buffer_remove(Buffer*, size_t pos, size_t len);
-/** Insert NUL-terminated data at pos. */
-VIS_INTERNAL bool buffer_insert0(Buffer*, size_t pos, const char *data);
+VIS_INTERNAL bool buffer_put(Buffer*, const void *data, s64 length);
+VIS_INTERNAL bool vis_buffer_put_str8(Buffer *, str8);
+/** Ensures buffer is either 0 or 0 terminated. added 0 will not be included in Buffer:len */
+VIS_INTERNAL void vis_buffer_terminate(Buffer *);
+/** Remove ``length`` bytes starting at ``at``. */
+VIS_INTERNAL bool buffer_remove(Buffer*, s64 at, s64 length);
+/** Insert data at into buffer. */
+VIS_INTERNAL bool vis_buffer_insert(Buffer*, s64 at, const void *data, s64 length);
 /** Append further content to the end. */
-VIS_INTERNAL bool buffer_append(Buffer*, const void *data, size_t len);
+VIS_INTERNAL bool buffer_append(Buffer*, const void *data, s64 length);
 /** Append NUL-terminated data. */
-VIS_INTERNAL bool buffer_append0(Buffer*, const char *data);
+VIS_INTERNAL bool vis_buffer_append0(Buffer*, const char *data);
 /** Append formatted buffer content, ensures NUL termination on success. */
-VIS_INTERNAL bool buffer_appendf(Buffer*, const char *fmt, ...) __attribute__((format(printf, 2, 3)));
-/** Return length of a buffer without trailing NUL byte. */
-VIS_INTERNAL size_t buffer_length0(Buffer*);
+VIS_INTERNAL bool vis_buffer_appendf(Buffer*, const char *fmt, ...) __attribute__((format(printf, 2, 3)));
 /**
  * Get pointer to buffer data.
  * Guaranteed to return a NUL terminated string even if buffer is empty.

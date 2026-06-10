@@ -442,7 +442,7 @@ static char *parse_until(const char **s, const char *until, const char *escchars
 		}
 	}
 
-	buffer_terminate(&buf);
+	vis_buffer_terminate(&buf);
 
 	return buf.data;
 }
@@ -488,13 +488,12 @@ static char *parse_text(const char **s, Count *count) {
 	for ((*s)++; **s && (!dot || **s != '\n'); (*s)++)
 		dot = (**s == '.');
 
-	if (!dot || !buffer_put(&buf, start, *s - start - 1) ||
-	    !buffer_append(&buf, "\0", 1)) {
+	if (!dot || !buffer_put(&buf, start, *s - start - 1)) {
 		buffer_release(&buf);
 		return NULL;
 	}
 
-	return buf.data;
+	return (char *)buffer_content0(&buf);
 }
 
 static char *parse_shellcmd(Vis *vis, const char **s) {
@@ -530,7 +529,7 @@ static char *parse_cmdname(const char **s) {
 	while (valid_cmdname(*s))
 		buffer_append(&buf, (*s)++, 1);
 
-	buffer_terminate(&buf);
+	vis_buffer_terminate(&buf);
 
 	return buf.data;
 }
@@ -1180,7 +1179,7 @@ Buffer text(Vis *vis, const char *text) {
 		}
 
 		const char *data;
-		size_t reglen = 0;
+		s64 reglen = 0;
 		if (regid != VIS_REG_INVALID) {
 			data = register_get(vis, &vis->registers[regid], &reglen);
 		} else {
@@ -1197,7 +1196,7 @@ static bool cmd_insert(Vis *vis, Win *win, Command *cmd, const char *argv[], Sel
 	if (!win)
 		return false;
 	Buffer buf = text(vis, argv[1]);
-	bool ret = sam_insert(win, sel, range->start, buf.data, buf.len, cmd->count.start);
+	bool ret = sam_insert(win, sel, range->start, buf.data, buf.length, cmd->count.start);
 	if (!ret)
 		free(buf.data);
 	return ret;
@@ -1207,7 +1206,7 @@ static bool cmd_append(Vis *vis, Win *win, Command *cmd, const char *argv[], Sel
 	if (!win)
 		return false;
 	Buffer buf = text(vis, argv[1]);
-	bool ret = sam_insert(win, sel, range->end, buf.data, buf.len, cmd->count.start);
+	bool ret = sam_insert(win, sel, range->end, buf.data, buf.length, cmd->count.start);
 	if (!ret)
 		free(buf.data);
 	return ret;
@@ -1217,7 +1216,7 @@ static bool cmd_change(Vis *vis, Win *win, Command *cmd, const char *argv[], Sel
 	if (!win)
 		return false;
 	Buffer buf = text(vis, argv[1]);
-	bool ret = sam_change(win, sel, *range, buf.data, buf.len, cmd->count.start);
+	bool ret = sam_change(win, sel, *range, buf.data, buf.length, cmd->count.start);
 	if (!ret)
 		free(buf.data);
 	return ret;
@@ -1612,7 +1611,7 @@ static bool cmd_filter(Vis *vis, Win *win, Command *cmd, const char *argv[], Sel
 	} else if (status == 0) {
 		char *data  = bufout.data;
 		bufout.data = 0;
-		if (!sam_change(win, sel, *range, data, bufout.len, 1))
+		if (!sam_change(win, sel, *range, data, bufout.length, 1))
 			free(data);
 	} else {
 		vis_info_show(vis, "Command failed %s", buffer_content0(&buferr));

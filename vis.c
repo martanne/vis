@@ -1031,9 +1031,12 @@ static bool isprefix(const char *key, void *value, void *data) {
 	return completion->count == 1;
 }
 
-static void vis_keys_process(Vis *vis, size_t pos) {
+VIS_INTERNAL void
+vis_keys_process(Vis *vis, s64 pos)
+{
 	Buffer *buf = &vis->input_queue;
-	char *keys = buf->data + pos, *start = keys, *cur = keys, *end = keys, *binding_end = keys;;
+	// TODO(rnp): none of this function should need 0 termination
+	char *keys = (char *)buffer_content0(buf) + pos, *start = keys, *cur = keys, *end = keys, *binding_end = keys;;
 	bool prefix = false;
 	KeyBinding *binding = NULL;
 
@@ -1041,6 +1044,8 @@ static void vis_keys_process(Vis *vis, size_t pos) {
 
 		if (!(end = (char*)vis_keys_next(vis, cur))) {
 			buffer_remove(buf, keys - buf->data, strlen(keys));
+			// TODO(rnp): hack: see above
+			vis_buffer_terminate(buf);
 			return;
 		}
 
@@ -1095,8 +1100,13 @@ static void vis_keys_process(Vis *vis, size_t pos) {
 				}
 				start = cur = end;
 			} else if (binding->alias) {
+				s64 length = str8_from_c_str(binding->alias).length;
 				buffer_remove(buf, start - buf->data, binding_end - start);
-				buffer_insert0(buf, start - buf->data, binding->alias);
+				// TODO(rnp): hack
+				vis_buffer_terminate(buf);
+				vis_buffer_insert(buf, start - buf->data, binding->alias, length);
+				// TODO(rnp): hack
+				vis_buffer_terminate(buf);
 				cur = end = start;
 			}
 			binding = NULL;
@@ -1130,24 +1140,28 @@ static void vis_keys_process(Vis *vis, size_t pos) {
 	}
 
 	buffer_remove(buf, keys - buf->data, end - keys);
+	vis_buffer_terminate(buf);
 }
 
-static void vis_keys_push(Vis *vis, const char *input, size_t pos, bool record)
+VIS_INTERNAL void
+vis_keys_push(Vis *vis, const char *input, s64 pos, bool record)
 {
-	if (!input)
-		return;
-	if (record && vis->recording)
-		macro_append(vis->recording, input);
-	if (vis->macro_operator)
-		macro_append(vis->macro_operator, input);
-	if (buffer_append0(&vis->input_queue, input))
-		vis_keys_process(vis, pos);
+	str8 is = str8_from_c_str(input);
+	if (is.length > 0) {
+		if (record && vis->recording)
+			buffer_append(vis->recording, is.data, is.length);
+		if (vis->macro_operator)
+			buffer_append(vis->macro_operator, is.data, is.length);
+		if (buffer_append(&vis->input_queue, is.data, is.length))
+			vis_keys_process(vis, pos);
+	}
 }
 
-static void macro_replay_internal(Vis *vis, const Macro *macro)
+VIS_INTERNAL void
+macro_replay_internal(Vis *vis, Macro *macro)
 {
-	size_t pos = buffer_length0(&vis->input_queue);
-	for (char *key = macro->data, *next; key; key = next) {
+	s64 pos = vis->input_queue.length;
+	for (char *key = (char *)buffer_content0(macro), *next; key; key = next) {
 		char tmp;
 		next = (char*)vis_keys_next(vis, key);
 		if (next) {
@@ -1166,19 +1180,20 @@ static void macro_replay(Vis *vis, const Macro *macro)
 {
 	const Macro *replaying = vis->replaying;
 	vis->replaying = macro;
-	macro_replay_internal(vis, macro);
+	macro_replay_internal(vis, (Macro *)macro);
 	vis->replaying = replaying;
 }
 
 void vis_keys_feed(Vis *vis, const char *input) {
 	if (!input)
 		return;
+	// TODO(rnp): performance: this dynamically allocates 1024 bytes everytime this function is called
 	Macro macro = {0};
-	if (!macro_append(&macro, input))
+	if (!vis_buffer_append0(&macro, input))
 		return;
 	/* use internal function, to keep Lua based tests which use undo points working */
 	macro_replay_internal(vis, &macro);
-	macro_release(&macro);
+	buffer_release(&macro);
 }
 
 static const char *getkey(Vis *vis) {
@@ -1356,14 +1371,14 @@ void macro_operator_record(Vis *vis) {
 	if (vis->macro_operator)
 		return;
 	vis->macro_operator = macro_get(vis, VIS_MACRO_OPERATOR);
-	vis->macro_operator->len = 0;
+	vis->macro_operator->length = 0;
 }
 
 void macro_operator_stop(Vis *vis) {
 	if (!vis->macro_operator)
 		return;
 	Macro *dot = macro_get(vis, VIS_REG_DOT);
-	buffer_put(dot, vis->macro_operator->data, vis->macro_operator->len);
+	buffer_put(dot, vis->macro_operator->data, vis->macro_operator->length);
 	vis->action_prev.macro = dot;
 	vis->macro_operator = NULL;
 }
@@ -1373,7 +1388,7 @@ bool vis_macro_record(Vis *vis, enum VisRegister id) {
 	if (vis->recording || !macro)
 		return false;
 	if (!(VIS_REG_A <= id && id <= VIS_REG_Z))
-		macro->len = 0;
+		macro->length = 0;
 	vis->recording = macro;
 	return true;
 }
@@ -1383,10 +1398,8 @@ bool vis_macro_record_stop(Vis *vis) {
 		return false;
 	/* XXX: hack to remove last recorded key, otherwise upon replay
 	 * we would start another recording */
-	if (vis->recording->len > 1) {
-		vis->recording->len--;
-		vis->recording->data[vis->recording->len-1] = '\0';
-	}
+	if (vis->recording->length > 1)
+		vis->recording->length--;
 	vis->last_recording = vis->recording;
 	vis->recording = NULL;
 	return true;
@@ -1841,8 +1854,8 @@ static int _vis_pipe_collect(Vis *vis, File *file, Filerange range, const char* 
 	                      &bufout, out ? read_into_buffer : NULL,
 	                      &buferr, err ? read_into_buffer : NULL,
 	                      fullscreen);
-	buffer_terminate(&bufout);
-	buffer_terminate(&buferr);
+	vis_buffer_terminate(&bufout);
+	vis_buffer_terminate(&buferr);
 	if (out) *out = bufout.data;
 	if (err) *err = buferr.data;
 	return status;

@@ -1211,14 +1211,14 @@ static KEY_ACTION_FN(ka_unicode_info)
 			combining = (wc != L'\0' && wcwidth(wc) == 0);
 		unsigned char ch = *codepoint;
 		if (ch < 128 && !isprint(ch))
-			buffer_appendf(&info, "<^%c> ", ch == 127 ? '?' : ch + 64);
+			vis_buffer_appendf(&info, "<^%c> ", ch == 127 ? '?' : ch + 64);
 		else
-			buffer_appendf(&info, "<%s%.*s> ", combining ? " " : "", (int)len, codepoint);
+			vis_buffer_appendf(&info, "<%s%.*s> ", combining ? " " : "", (int)len, codepoint);
 		if (arg->i == VIS_ACTION_UNICODE_INFO) {
-			buffer_appendf(&info, "U+%04"PRIX32" ", (uint32_t)wc);
+			vis_buffer_appendf(&info, "U+%04"PRIX32" ", (uint32_t)wc);
 		} else {
 			for (size_t i = 0; i < len; i++)
-				buffer_appendf(&info, "%02x ", (uint8_t)codepoint[i]);
+				vis_buffer_appendf(&info, "%02x ", (uint8_t)codepoint[i]);
 		}
 		codepoint += len;
 	}

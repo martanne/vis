@@ -86,6 +86,7 @@
 #endif
 
 #define U64_MAX    (0xFFFFFFFFFFFFFFFFull)
+#define S64_MAX    (0x7FFFFFFFFFFFFFFFll)
 #define S32_MAX    (0x7FFFFFFFl)
 
 #define LENGTH(x)  ((int)(sizeof (x) / sizeof *(x)))

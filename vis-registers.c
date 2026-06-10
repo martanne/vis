@@ -9,7 +9,8 @@ static Buffer *register_buffer(Vis *vis, Register *reg, VisDACount slot)
 	return reg->data + slot;
 }
 
-const char *register_slot_get(Vis *vis, Register *reg, size_t slot, size_t *len)
+VIS_INTERNAL const char *
+register_slot_get(Vis *vis, Register *reg, size_t slot, s64 *len)
 {
 	if (len) *len = 0;
 	const char *result = 0;
@@ -17,17 +18,17 @@ const char *register_slot_get(Vis *vis, Register *reg, size_t slot, size_t *len)
 	case REGISTER_NORMAL:{
 		if ((int)slot < reg->count) {
 			Buffer *b = reg->data + slot;
-			buffer_terminate(b);
-			if (len) *len = buffer_length0(b);
+			vis_buffer_terminate(b);
+			if (len) *len = b->length;
 			result = buffer_content0(b);
 		}
 	}break;
 	case REGISTER_NUMBER:{
 		if (reg->count > 0) {
 			Buffer *b = reg->data;
-			b->len = 0;
-			buffer_appendf(b, "%zu", slot + 1);
-			if (len) *len = buffer_length0(b);
+			b->length = 0;
+			vis_buffer_appendf(b, "%zu", slot + 1);
+			if (len) *len = b->length;
 			result = buffer_content0(b);
 		}
 	}break;
@@ -40,14 +41,14 @@ const char *register_slot_get(Vis *vis, Register *reg, size_t slot, size_t *len)
 			if (id == VIS_REG_PRIMARY) cmd[3] = "primary";
 			else                       cmd[3] = "clipboard";
 
-			b->len = 0;
+			b->length = 0;
 			int status = vis_pipe(vis, vis->win->file, (Filerange){0}, cmd, b, read_into_buffer,
 			                      &buferr, read_into_buffer, false);
 
 			if (status != 0)
 				vis_info_show(vis, "Command failed %s", buffer_content0(&buferr));
 			buffer_release(&buferr);
-			if (len) *len = buffer_length0(b);
+			if (len) *len = b->length;
 			result = buffer_content0(b);
 		}
 	}break;
@@ -58,27 +59,39 @@ const char *register_slot_get(Vis *vis, Register *reg, size_t slot, size_t *len)
 	return result;
 }
 
-const char *register_get(Vis *vis, Register *reg, size_t *len)
+VIS_INTERNAL const char *
+register_get(Vis *vis, Register *reg, s64 *length)
 {
-	return register_slot_get(vis, reg, 0, len);
+	return register_slot_get(vis, reg, 0, length);
 }
 
-bool register_slot_put(Vis *vis, Register *reg, size_t slot, const char *data, size_t len)
+VIS_INTERNAL bool
+register_slot_put(Vis *vis, Register *reg, size_t slot, const char *data, s64 length)
 {
 	if (reg->type != REGISTER_NORMAL)
 		return false;
 	Buffer *buf = register_buffer(vis, reg, slot);
-	return buffer_put(buf, data, len);
+	return buffer_put(buf, data, length);
 }
 
-bool register_put(Vis *vis, Register *reg, const char *data, size_t len) {
+VIS_INTERNAL bool
+register_resize(Register *reg, VisDACount count)
+{
+	bool result = count < reg->count;
+	if (result) reg->count = count;
+	return result;
+}
+
+VIS_INTERNAL bool
+register_put(Vis *vis, Register *reg, const char *data, s64 len)
+{
 	return register_slot_put(vis, reg, 0, data, len) &&
 	       register_resize(reg, 1);
 }
 
 bool register_put0(Vis *vis, Register *reg, const char *data)
 {
-	return register_put(vis, reg, data, strlen(data)+1);
+	return register_put(vis, reg, data, strlen(data));
 }
 
 static bool register_slot_append_range(Vis *vis, Register *reg, size_t slot, Text *txt, Filerange range)
@@ -88,12 +101,10 @@ static bool register_slot_append_range(Vis *vis, Register *reg, size_t slot, Tex
 	{
 		Buffer *buf = register_buffer(vis, reg, slot);
 		size_t len = text_range_size(range);
-		if (len == SIZE_MAX || !buffer_grow(buf, len+1))
+		if (len == SIZE_MAX || !buffer_grow(buf, len))
 			return false;
-		if (buf->len > 0 && buf->data[buf->len-1] == '\0')
-			buf->len--;
-		buf->len += text_bytes_get(txt, range.start, len, buf->data + buf->len);
-		return buffer_append(buf, "\0", 1);
+		buf->length += text_bytes_get(txt, range.start, len, buf->data + buf->length);
+		return true;
 	}
 	default:
 		return false;
@@ -110,10 +121,10 @@ bool register_slot_put_range(Vis *vis, Register *reg, size_t slot, Text *txt, Fi
 	{
 		Buffer *buf = register_buffer(vis, reg, slot);
 		size_t len = text_range_size(range);
-		if (len == SIZE_MAX || !buffer_reserve(buf, len+1))
+		if (len == SIZE_MAX || !buffer_reserve(buf, len))
 			return false;
-		buf->len = text_bytes_get(txt, range.start, len, buf->data);
-		return buffer_append(buf, "\0", 1);
+		buf->length = text_bytes_get(txt, range.start, len, buf->data);
+		return true;
 	}
 	case REGISTER_CLIPBOARD:
 	{
@@ -151,13 +162,6 @@ size_t vis_register_count(Vis *vis, Register *reg)
 	if (reg->type == REGISTER_NUMBER)
 		return vis->win ? vis->win->view.selection_count : 0;
 	return reg->count;
-}
-
-bool register_resize(Register *reg, size_t count)
-{
-	bool result = (VisDACount)count < reg->count;
-	if (result) reg->count = count;
-	return result;
 }
 
 enum VisRegister vis_register_from(Vis *vis, char reg) {
@@ -239,7 +243,7 @@ str8_list vis_register_get(Vis *vis, enum VisRegister id)
 		da_reserve(vis, &result, reg->count);
 		for (VisDACount i = 0; i < reg->count; i++) {
 			*da_push(vis, &result) = (str8){
-				.length = reg->data[i].len,
+				.length = reg->data[i].length,
 				.data   = (uint8_t *)reg->data[i].data,
 			};
 		}
