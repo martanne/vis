@@ -290,10 +290,12 @@ static void window_draw_eof(Win *win) {
 	View *view = &win->view;
 	if (view->width == 0)
 		return;
-	for (Line *l = view->lastline->next; l; l = l->next) {
-		strncpy(l->cells[0].data, view->symbols[SYNTAX_SYMBOL_EOF], sizeof(l->cells[0].data)-1);
-		vis_ui_window_style_set(&win->vis->ui, l->cells, UI_STYLE_EOF);
-	}
+	VisCell cell = {.width = 1, .style = win->vis->ui.styles[UI_STYLE_DEFAULT]};
+	cell.data_length = MIN(view->symbols[SYNTAX_SYMBOL_EOF].length, countof(cell.data));
+	memory_copy(cell.data, view->symbols[SYNTAX_SYMBOL_EOF].data, cell.data_length);
+	vis_ui_window_style_set(&win->vis->ui, &cell, UI_STYLE_EOF);
+	for (Line *l = view->lastline->next; l; l = l->next)
+		l->cells[0] = cell;
 }
 
 void vis_window_draw(Win *win) {

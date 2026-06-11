@@ -16,20 +16,12 @@
  * the necessary offset for the last character.
  */
 
-static const char *symbols_none[] = {
-	[SYNTAX_SYMBOL_SPACE]    = " ",
-	[SYNTAX_SYMBOL_TAB]      = " ",
-	[SYNTAX_SYMBOL_TAB_FILL] = " ",
-	[SYNTAX_SYMBOL_EOL]      = " ",
-	[SYNTAX_SYMBOL_EOF]      = " ",
-};
-
-static const char *symbols_default[] = {
-	[SYNTAX_SYMBOL_SPACE]    = "·", /* Middle Dot U+00B7 */
-	[SYNTAX_SYMBOL_TAB]      = "›", /* Single Right-Pointing Angle Quotation Mark U+203A */
-	[SYNTAX_SYMBOL_TAB_FILL] = " ",
-	[SYNTAX_SYMBOL_EOL]      = "↵", /* Downwards Arrow with Corner Leftwards U+21B5 */
-	[SYNTAX_SYMBOL_EOF]      = "~",
+static str8 symbols_default[] = {
+	[SYNTAX_SYMBOL_SPACE]    = str8_comp("·"), /* Middle Dot U+00B7 */
+	[SYNTAX_SYMBOL_TAB]      = str8_comp("›"), /* Single Right-Pointing Angle Quotation Mark U+203A */
+	[SYNTAX_SYMBOL_TAB_FILL] = str8_comp(" "),
+	[SYNTAX_SYMBOL_EOL]      = str8_comp("↵"), /* Downwards Arrow with Corner Leftwards U+21B5 */
+	[SYNTAX_SYMBOL_EOF]      = str8_comp("~"),
 };
 
 static void selection_free(Selection *s)
@@ -176,7 +168,7 @@ static void view_clear(View *view) {
 	view->topline->lineno = view->large_file ? 1 : text_lineno_by_pos(view->text, view->start);
 	view->lastline = view->topline;
 
-	size_t line_size = sizeof(Line) + view->width*sizeof(Cell);
+	u64 line_size = sizeof(Line) + view->width * sizeof(VisCell);
 	size_t end = view->height * line_size;
 	Line *prev = NULL;
 	for (size_t i = 0; i < end; i += line_size) {
@@ -200,12 +192,16 @@ static int view_max_text_width(const View *view) {
 	return view->width;
 }
 
-static Cell
+VIS_INTERNAL VisCell
 view_blank_cell(View *view)
 {
 	// TODO(rnp): cleanup win and view should be merged
 	Win *win = (Win *)((char *)view - offsetof(Win, view));
-	Cell result = {.data = " ", .style = win->vis->ui.styles[UI_STYLE_DEFAULT]};
+	VisCell result     = {0};
+	result.data[0]     = ' ';
+	result.data_length = 1;
+	result.width       = 1;
+	result.style       = win->vis->ui.styles[UI_STYLE_DEFAULT];
 	return result;
 }
 
@@ -222,100 +218,120 @@ static void view_wrap_line(View *view) {
 		view->line->lineno = wrapped_line->lineno;
 		/* move extra cells to the next line */
 		for (int i = wrapcol; i < col; ++i) {
-			const Cell *cell = &wrapped_line->cells[i];
-			view->line->width += cell->width;
-			view->line->len += cell->len;
-			view->line->cells[view->col++] = *cell;
+			VisCell cell = wrapped_line->cells[i];
+			view->line->width += cell.width;
+			view->line->len   += cell.file_byte_count;
+			view->line->cells[view->col++] = cell;
 		}
 	}
 
 	/* clear remaining cells on line */
-	Cell blank = view_blank_cell(view);
+	VisCell blank = view_blank_cell(view);
 	for (int i = wrapcol; i < view->width; ++i) {
 		if (i < col) {
 			wrapped_line->width -= wrapped_line->cells[i].width;
-			wrapped_line->len -= wrapped_line->cells[i].len;
+			wrapped_line->len   -= wrapped_line->cells[i].file_byte_count;
 		}
 		wrapped_line->cells[i] = blank;
 	}
 }
 
-static bool view_add_cell(View *view, const Cell *cell) {
+VIS_INTERNAL bool
+view_add_cell(View *view, VisCell cell)
+{
 	/* if the terminal is resized to a single (ASCII) char an out
 	 * of bounds write could be performed for a wide char. this can
 	 * be caught by iterating through the lines with view_wrap_line()
 	 * until no lines remain. usually 0 or 1 iterations.
 	 */
-	while (view->col + cell->width > view_max_text_width(view)) {
+	while (view->col + cell.width > view_max_text_width(view)) {
 		view_wrap_line(view);
 		if (!view->line)
 			return false;
 	}
 
-	view->line->width += cell->width;
-	view->line->len += cell->len;
-	view->line->cells[view->col++] = *cell;
+	view->line->width += cell.width;
+	view->line->len   += cell.file_byte_count;
+	view->line->cells[view->col++] = cell;
 	/* set cells of a character which uses multiple columns */
-	for (int i = 1; i < cell->width; i++)
-		view->line->cells[view->col++] = (Cell){0};
+	for (int i = 1; i < cell.width; i++)
+		view->line->cells[view->col++] = (VisCell){.style = cell.style};
 	return true;
 }
 
-static bool view_expand_tab(View *view, Cell *cell) {
+VIS_INTERNAL bool
+view_expand_tab(View *view, VisCell *cell)
+{
 	Win *win = (Win *)((char *)view - offsetof(Win, view));
 	vis_ui_window_style_set(&win->vis->ui, cell, UI_STYLE_WHITESPACE);
 
 	cell->width = 1;
 
+	bool result = true;
 	int displayed_width = view->tabwidth - (view->col % view->tabwidth);
-	for (int w = 0; w < displayed_width; ++w) {
-		int t = (w == 0) ? SYNTAX_SYMBOL_TAB : SYNTAX_SYMBOL_TAB_FILL;
-		const char *symbol = view->symbols[t];
-		strncpy(cell->data, symbol, sizeof(cell->data) - 1);
-		cell->len = (w == 0) ? 1 : 0;
+	for (int w = 0; result && w < displayed_width; ++w) {
+		str8 symbol = (w == 0) ? view->symbols[SYNTAX_SYMBOL_TAB]
+		                       : view->symbols[SYNTAX_SYMBOL_TAB_FILL];
+		memory_copy(cell->data, symbol.data, MIN(sizeof(cell->data), symbol.length));
+		cell->data_length     = MIN(sizeof(cell->data), symbol.length);
+		cell->file_byte_count = (w == 0) ? 1 : 0;
 
-		if (!view_add_cell(view, cell))
-			return false;
+		result = view_add_cell(view, *cell);
 	}
+	cell->file_byte_count = 1;
 
-	cell->len = 1;
-	return true;
+	return result;
 }
 
-static bool view_expand_newline(View *view, Cell *cell) {
-	size_t lineno = view->line->lineno;
-	const char *symbol = view->symbols[SYNTAX_SYMBOL_EOL];
-
+VIS_INTERNAL bool
+view_expand_newline(View *view, VisCell *cell)
+{
 	Win *win = (Win *)((char *)view - offsetof(Win, view));
 	vis_ui_window_style_set(&win->vis->ui, cell, UI_STYLE_WHITESPACE);
 
-	strncpy(cell->data, symbol, sizeof(cell->data) - 1);
-	cell->width = 1;
-	if (!view_add_cell(view, cell))
-		return false;
+	str8 symbol = view->symbols[SYNTAX_SYMBOL_EOL];
+	memory_copy(cell->data, symbol.data, MIN(sizeof(cell->data), symbol.length));
+	cell->data_length = MIN(sizeof(cell->data), symbol.length);
+	cell->width       = 1;
 
-	view->wrapcol = 0;
-	view_wrap_line(view);
-	if (view->line)
-		view->line->lineno = lineno + 1;
-	return true;
+	u64  lineno = view->line->lineno;
+	bool result = view_add_cell(view, *cell);
+	if (result) {
+		view->wrapcol = 0;
+		view_wrap_line(view);
+		if (view->line)
+			view->line->lineno = lineno + 1;
+	}
+	return result;
 }
 
-static bool view_expand_space(View *view, Cell *cell) {
+VIS_INTERNAL bool
+view_expand_space(View *view, VisCell *cell)
+{
 	Win *win = (Win *)((char *)view - offsetof(Win, view));
 	vis_ui_window_style_set(&win->vis->ui, cell, UI_STYLE_WHITESPACE);
 
-	const char *symbol = view->symbols[SYNTAX_SYMBOL_SPACE];
-	strncpy(cell->data, symbol, sizeof(cell->data) - 1);
-	return view_add_cell(view, cell);
+	str8 symbol = view->symbols[SYNTAX_SYMBOL_SPACE];
+	memory_copy(cell->data, symbol.data, MIN(sizeof(cell->data), symbol.length));
+	cell->data_length = MIN(sizeof(cell->data), symbol.length);
+	cell->width       = 1;
+
+	bool result = view_add_cell(view, *cell);
+	return result;
 }
 
 /* try to add another character to the view, return whether there was space left */
-static bool view_addch(View *view, Cell *cell) {
+VIS_INTERNAL bool
+view_addch(View *view, VisCell *cell)
+{
 	if (!view->line)
 		return false;
 
-	bool ch_breakat = (cell->data[0] != 0) && strstr(view->breakat, cell->data);
+	// static_assert(sizeof(cell->data) == 4, "");
+	char buffer[4 + 1];
+	memory_copy(buffer, cell->data, sizeof(cell->data));
+	buffer[cell->data_length] = 0;
+	bool ch_breakat = (buffer[0] != 0) && strstr(view->breakat, buffer);
 	if (view->prevch_breakat && !ch_breakat) {
 		/* this is a good place to wrap line if needed */
 		view->wrapcol = view->col;
@@ -323,26 +339,25 @@ static bool view_addch(View *view, Cell *cell) {
 	view->prevch_breakat = ch_breakat;
 	cell->style = view_blank_cell(view).style;
 
-	unsigned char ch = (unsigned char)cell->data[0];
+	u8 ch = cell->data[0];
 	switch (ch) {
-	case '\t':
-		return view_expand_tab(view, cell);
-	case '\n':
-		return view_expand_newline(view, cell);
-	case ' ':
-		return view_expand_space(view, cell);
+	default:{}break;
+	case '\t':{return view_expand_tab(view, cell);    }break;
+	case '\n':{return view_expand_newline(view, cell);}break;
+	case ' ':{ return view_expand_space(view, cell);  }break;
 	}
 
 	if (ch < 128 && !isprint(ch)) {
 		/* non-printable ascii char, represent it as ^(char + 64) */
-		*cell = (Cell) {
-			.data = { '^', ch == 127 ? '?' : ch + 64, '\0' },
-			.len = 1,
-			.width = 2,
-			.style = cell->style,
+		*cell = (VisCell){
+			.data            = {'^', ch == 127 ? '?' : ch + 64},
+			.data_length     = 2,
+			.width           = 2,
+			.file_byte_count = 1,
+			.style           = cell->style,
 		};
 	}
-	return view_add_cell(view, cell);
+	return view_add_cell(view, *cell);
 }
 
 static void cursor_to(Selection *s, size_t pos) {
@@ -388,9 +403,9 @@ bool view_coord_get(View *view, size_t pos, Line **retline, int *retrow, int *re
 	if (line) {
 		int max_col = MIN(view->width, line->width);
 		while (cur < pos && col < max_col) {
-			cur += line->cells[col].len;
+			cur += line->cells[col].file_byte_count;
 			/* skip over columns occupied by the same character */
-			while (++col < max_col && line->cells[col].len == 0);
+			while (++col < max_col && line->cells[col].file_byte_count == 0);
 		}
 	} else {
 		line = view->bottomline;
@@ -422,7 +437,7 @@ void view_draw(View *view) {
 	/* start from known multibyte state */
 	mbstate_t mbstate = { 0 };
 
-	Cell cell = { .data = "", .len = 0, .width = 0, }, prev_cell = cell;
+	VisCell cell = {0}, prev_cell = cell;
 
 	while (rem > 0) {
 
@@ -436,51 +451,49 @@ void view_draw(View *view) {
 			 * (FFFD) and skip until the start of the next utf8 char */
 			mbstate = (mbstate_t){0};
 			for (len = 1; rem > len && !ISUTF8(cur[len]); len++);
-			cell = (Cell){ .data = "\xEF\xBF\xBD", .len = len, .width = 1 };
+			cell = (VisCell){.data = {0xEF, 0xBF, 0xBD}, .data_length = 3, .file_byte_count = len, .width = 1};
 		} else if (len == (size_t)-2) {
 			/* not enough bytes available to convert to a
 			 * wide character. Advance file position and read
 			 * another junk into buffer.
 			 */
-			rem = text_bytes_get(view->text, pos+prev_cell.len, size, text);
-			text[rem] = '\0';
+			rem = text_bytes_get(view->text, pos + prev_cell.file_byte_count, size, text);
+			text[rem] = 0;
 			cur = text;
 			continue;
 		} else if (len == 0) {
 			/* NUL byte encountered, store it and continue */
-			cell = (Cell){ .data = "\x00", .len = 1, .width = 2 };
+			cell = (VisCell){.data = {0}, .data_length = 1, .file_byte_count = 1, .width = 2};
 		} else {
-			if (len >= sizeof(cell.data))
-				len = sizeof(cell.data)-1;
-			for (size_t i = 0; i < len; i++)
+			assert(len <= countof(cell.data));
+			for (u64 i = 0; i < len; i++)
 				cell.data[i] = cur[i];
-			cell.data[len] = '\0';
-			cell.len = len;
-			cell.width = wcwidth(wchar);
-			if (cell.width == -1)
-				cell.width = 1;
+			cell.file_byte_count = len;
+			cell.data_length     = len;
+			cell.width           = wcwidth(wchar);
+			if (cell.width == -1) cell.width = 1;
 		}
 
 		if (cell.width == 0) {
-			unsigned current   = strlen(prev_cell.data);
-			unsigned remaining = sizeof(prev_cell.data) - current - 1;
-			memcpy(prev_cell.data + current, cell.data, MIN(remaining, cell.len));
-			prev_cell.len += MIN(remaining, cell.len);
+			u8 current   = prev_cell.data_length;
+			u8 remaining = countof(prev_cell.data) - current;
+			memory_copy(prev_cell.data + current, cell.data, MIN(remaining, cell.data_length));
+			prev_cell.file_byte_count += MIN(remaining, cell.data_length);
+			prev_cell.data_length     += MIN(remaining, cell.data_length);
 		} else {
-			if (prev_cell.len && !view_addch(view, &prev_cell))
+			if (prev_cell.file_byte_count && !view_addch(view, &prev_cell))
 				break;
-			pos += prev_cell.len;
+			pos += prev_cell.file_byte_count;
 			prev_cell = cell;
 		}
 
- 		rem -= cell.len;
-		cur += cell.len;
-
-		memset(&cell, 0, sizeof cell);
+		rem -= cell.file_byte_count;
+		cur += cell.file_byte_count;
+		cell = (VisCell){0};
 	}
 
-	if (prev_cell.len && view_addch(view, &prev_cell))
-		pos += prev_cell.len;
+	if (prev_cell.file_byte_count && view_addch(view, &prev_cell))
+		pos += prev_cell.file_byte_count;
 
 	/* set end of viewing region */
 	view->end = pos;
@@ -494,7 +507,7 @@ void view_draw(View *view) {
 		view->lastline = view->bottomline;
 	}
 
-	Cell blank = view_blank_cell(view);
+	VisCell blank = view_blank_cell(view);
 	/* clear remaining of line, important to show cursor at end of file */
 	if (view->line) {
 		for (int x = view->col; x < view->width; x++)
@@ -519,7 +532,7 @@ bool view_update(View *view) {
 	if (!view->need_update)
 		return false;
 
-	Cell blank = view_blank_cell(view);
+	VisCell blank = view_blank_cell(view);
 	for (Line *l = view->lastline->next; l; l = l->next) {
 		for (int x = 0; x < view->width; x++)
 			l->cells[x] = blank;
@@ -540,7 +553,7 @@ bool view_resize(View *view, int width, int height) {
 	char *textbuf = malloc(width * height * 4 + 1);
 	if (!textbuf)
 		return false;
-	size_t lines_size = height*(sizeof(Line) + width*sizeof(Cell));
+	size_t lines_size = height * (sizeof(Line) + width * sizeof(VisCell));
 	if (lines_size > view->lines_size) {
 		Line *lines = realloc(view->lines, lines_size);
 		if (!lines) {
@@ -609,11 +622,11 @@ static size_t cursor_set(Selection *sel, Line *line, int col)
 	}
 
 	/* for characters which use more than 1 column, make sure we are on the left most */
-	while (col > 0 && line->cells[col].len == 0)
+	while (col > 0 && line->cells[col].file_byte_count == 0)
 		col--;
 	/* calculate offset within the line */
 	for (int i = 0; i < col; i++)
-		pos += line->cells[i].len;
+		pos += line->cells[i].file_byte_count;
 
 	sel->col = col;
 	sel->row = row;
@@ -889,8 +902,7 @@ void win_options_set(Win *win, enum UiOption options) {
 	};
 
 	for (int i = 0; i < LENGTH(mapping); i++) {
-		win->view.symbols[i] = (options & mapping[i]) ? symbols_default[i] :
-			symbols_none[i];
+		win->view.symbols[i] = (options & mapping[i]) ? symbols_default[i] : str8(" ");
 	}
 
 	if (options & UI_OPTION_LINE_NUMBERS_ABSOLUTE)
@@ -1355,16 +1367,16 @@ vis_win_style(Win *win, u64 start, u64 end, u16 style_id)
 	int col = 0, view_width = view->width;
 	/* skip columns before range to be styled */
 	while (pos < start && col < view_width)
-		pos += line->cells[col++].len;
+		pos += line->cells[col++].file_byte_count;
 
 	/* skip empty columns */
-	while (col < view_width && !line->cells[col].len)
+	while (col < view_width && line->cells[col].file_byte_count == 0)
 		col++;
 
 	do {
 		// NOTE(rnp): first style at most until the end of the real line contents
 		while (pos <= end && col < line->width) {
-			pos += line->cells[col].len;
+			pos += line->cells[col].file_byte_count;
 			vis_ui_window_style_set(&win->vis->ui, line->cells + col++, style_id);
 		}
 

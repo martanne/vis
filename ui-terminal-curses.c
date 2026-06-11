@@ -207,11 +207,11 @@ vis_ui_curses_style_to_attr(Ui *ui, VisCellStyle style)
 
 static void ui_term_backend_blit(Ui *tui) {
 	int w = tui->width, h = tui->height;
-	Cell *cell = tui->cell_buffer.cells;
+	VisCell *cell = tui->cell_buffer.cells;
 	for (int y = 0; y < h; y++) {
 		for (int x = 0; x < w; x++) {
 			attrset(vis_ui_curses_style_to_attr(tui, cell->style));
-			mvaddstr(y, x, cell->data);
+			mvaddnstr(y, x, (char *)cell->data, cell->data_length);
 			cell++;
 		}
 	}

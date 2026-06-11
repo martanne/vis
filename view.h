@@ -30,7 +30,7 @@ struct Line {               /* a line on the screen, *not* in the file */
 	size_t len;         /* line length in terms of bytes */
 	size_t lineno;      /* line number from start of file */
 	int width;          /* zero based position of last used column cell */
-	Cell cells[];       /* win->width cells storing information about the displayed characters */
+	VisCell cells[];    /* view->width cells storing information about the displayed characters */
 };
 
 struct View;
@@ -66,7 +66,7 @@ typedef struct View {
 	int selection_count;   /* how many cursors do currently exist */
 	Line *line;         /* used while drawing view content, line where next char will be drawn */
 	int col;            /* used while drawing view content, column where next char will be drawn */
-	const char *symbols[SYNTAX_SYMBOL_LAST]; /* symbols to use for white spaces etc */
+	str8 symbols[SYNTAX_SYMBOL_LAST]; /* symbols to use for white spaces etc */
 	int tabwidth;       /* how many spaces should be used to display a tab character */
 	Selection *selections;    /* all cursors currently active */
 	int selection_generation; /* used to filter out newly created cursors during iteration */

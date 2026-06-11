@@ -125,7 +125,7 @@ vis_ui_vt100_cursor_visible(bool visible)
 }
 
 VIS_INTERNAL bool
-vis_cell_equal(Cell *a, Cell *b)
+vis_cell_equal(VisCell *a, VisCell *b)
 {
 	bool result = memory_equal(a, b, sizeof(*a));
 	return result;
@@ -138,8 +138,8 @@ ui_term_backend_blit(Ui *ui)
 	Buffer     *buf = &vt->output_buffer;
 	buf->length = 0;
 
-	Cell *bb = ui->cell_buffer.cells;
-	Cell *fb = vt->cell_buffer.cells;
+	VisCell *bb = ui->cell_buffer.cells;
+	VisCell *fb = vt->cell_buffer.cells;
 
 	if unlikely(vt->flush_terminal) {
 		memset(fb, 0, vt->cell_buffer.size);
@@ -212,7 +212,7 @@ ui_term_backend_blit(Ui *ui)
 					bg = style_bg;
 				}
 
-				vis_buffer_append0(buf, bb->data);
+				buffer_append(buf, bb->data, bb->data_length);
 				memory_copy(fb, bb, sizeof(*fb));
 
 				cursor_x += bb->width;

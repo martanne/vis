@@ -16,7 +16,7 @@ VIS_INTERNAL bool
 vis_cell_buffer_resize(VisCellBuffer *cb, u32 width, u32 height)
 {
 	u64 page_size = sysconf(_SC_PAGE_SIZE);
-	u64 size      = round_up_to(width * height * sizeof(Cell), page_size);
+	u64 size      = round_up_to(width * height * sizeof(VisCell), page_size);
 
 	// NOTE(rnp): we always ask for a new address range here which allows for both
 	// growing and shrinking. it also means that this function always 0s the memory
@@ -212,7 +212,7 @@ vis_cell_style_copy_bg(VisCellStyle *dst, VisCellStyle src)
 }
 
 VIS_INTERNAL void
-vis_ui_window_style_set(Ui *tui, Cell *cell, u16 style_id)
+vis_ui_window_style_set(Ui *tui, VisCell *cell, u16 style_id)
 {
 	assert(style_id < tui->style_count);
 
@@ -236,26 +236,10 @@ vis_ui_window_style_set_pos(Win *win, int x, int y, u16 style_id)
 	if (result) {
 		x += win->x;
 		y += win->y;
-		Cell *cell = ui->cell_buffer.cells + ui->width * y + x;
+		VisCell *cell = ui->cell_buffer.cells + ui->width * y + x;
 		vis_ui_window_style_set(ui, cell, style_id);
 	}
 	return result;
-}
-
-VIS_INTERNAL void
-ui_draw_line(Ui *tui, int x, int y, char c, uint16_t style_id)
-{
-	assert(style_id < tui->style_count);
-	if (x < 0 || x >= tui->width || y < 0 || y >= tui->height)
-		return;
-
-	Cell *cells = tui->cell_buffer.cells + y * tui->width;
-	while (x < tui->width) {
-		cells[x].data[0] = c;
-		cells[x].data[1] = 0;
-		cells[x].style   = tui->styles[style_id];
-		x++;
-	}
 }
 
 VIS_INTERNAL void
@@ -268,17 +252,17 @@ ui_draw_string(Ui *tui, int x, int y, const char *str, uint16_t style_id)
 	 * clear the cell first then go through ui_window_style_set to get the correct style */
 	VisCellStyle default_style = tui->styles[UI_STYLE_DEFAULT];
 	// FIXME: does not handle double width characters etc, share code with view.c?
-	Cell *cells = tui->cell_buffer.cells + y * tui->width;
-	const size_t cell_size = sizeof(cells[0].data)-1;
+	VisCell *cells = tui->cell_buffer.cells + y * tui->width;
 	for (const char *next = str; *str && x < tui->width; str = next) {
 		do next++; while (!ISUTF8(*next));
-		size_t len = next - str;
-		if (!len)
-			break;
-		len = MIN(len, cell_size);
-		strncpy(cells[x].data, str, len);
-		cells[x].data[len] = '\0';
-		cells[x].style = default_style;
+		s64 length = next - str;
+		if (length <= 0) break;
+		length = MIN(length, (s64)countof(cells->data));
+		memory_copy(cells[x].data, (void *)str, length);
+		cells[x].data_length     = length;
+		cells[x].width           = 1;
+		cells[x].file_byte_count = 0;
+		cells[x].style           = default_style;
 		vis_ui_window_style_set(tui, cells + x++, style_id);
 	}
 }
@@ -326,13 +310,13 @@ static void ui_window_draw(Win *win) {
 	size_t prev_lineno = 0, cursor_lineno = sel->line->lineno;
 	int x = win->x, y = win->y;
 	int view_width = view->width;
-	Cell *cells = ui->cell_buffer.cells + y * ui->width;
 	// TODO(rnp): this should not be possible
 	if (x + sidebar_width + view_width > ui->width)
 		view_width = ui->width - x - sidebar_width;
 
 	// NOTE(rnp) 10 digits in U32_MAX, 1 space, 1 for 0 termination
 	char sidebar_buffer[12];
+	VisCell *cells = ui->cell_buffer.cells + y * ui->width;
 	for (Line *l = view->topline; l; l = l->next, y++) {
 		if (sidebar_width) {
 			s32 line_number = l->lineno;
@@ -350,14 +334,14 @@ static void ui_window_draw(Win *win) {
 			if (sidebar_buffer[0] == 0) padding = sidebar_width;
 
 			u16 style_id = (l->lineno == cursor_lineno) ? UI_STYLE_LINENUMBER_CURSOR : UI_STYLE_LINENUMBER;
-			for (s32 xi = 0; xi < padding; xi++) {
-				cells[x + xi] = (Cell){.data = " ", .len = 1, .width = 1, .style = ui->styles[UI_STYLE_DEFAULT]};
-				vis_ui_window_style_set(ui, cells + x + xi, style_id);
-			}
+			VisCell cell = {.data = {' '}, .data_length = 1, .width = 1, .style = ui->styles[UI_STYLE_DEFAULT]};
+			vis_ui_window_style_set(ui, &cell, style_id);
+			for (s32 xi = 0; xi < padding; xi++)
+				cells[x + xi] = cell;
 			ui_draw_string(ui, x + padding, y, sidebar_buffer, style_id);
 			prev_lineno = l->lineno;
 		}
-		memcpy(cells + x + sidebar_width, l->cells, sizeof(Cell) * view_width);
+		memory_copy(cells + x + sidebar_width, l->cells, sizeof(VisCell) * view_width);
 		cells += ui->width;
 	}
 }
@@ -399,12 +383,11 @@ ui_arrange(Vis *vis, enum UiLayout layout)
 			ui_window_move(win, x, y);
 			x += w;
 			if (n) {
-				Cell *cells = tui->cell_buffer.cells;
-				for (int i = 0; i < max_height; i++) {
-					vis_ui_window_style_set(tui, cells + x, UI_STYLE_SEPARATOR);
-					strcpy(cells[x].data,"│");
-					cells += tui->width;
-				}
+				VisCell *cells = tui->cell_buffer.cells;
+				VisCell cell = {.data = {'|'}, .data_length = 1, .width = 1, .style = tui->styles[UI_STYLE_DEFAULT]};
+				vis_ui_window_style_set(tui, &cell, UI_STYLE_SEPARATOR);
+				for (int i = 0; i < max_height; i++, cells += tui->width)
+					cells[x] = cell;
 				x++;
 			}
 		}
@@ -508,9 +491,17 @@ bool ui_window_init(Ui *tui, Win *w, enum UiOption options) {
 	return true;
 }
 
-void ui_info_show(Ui *tui, const char *msg, va_list ap) {
-	ui_draw_line(tui, 0, tui->height-1, ' ', UI_STYLE_INFO);
-	vsnprintf(tui->info, sizeof(tui->info), msg, ap);
+VIS_INTERNAL void
+ui_info_show(Ui *ui, const char *msg, va_list ap)
+{
+	// NOTE(rnp): clear info line cells
+	VisCell *cells = ui->cell_buffer.cells + (ui->height - 1) * ui->width;
+	VisCell cell = {.data = {' '}, .data_length = 1, .width = 1, .style = ui->styles[UI_STYLE_DEFAULT]};
+	vis_ui_window_style_set(ui, &cell, UI_STYLE_INFO);
+	for (s32 x = 0; x < ui->width; x++)
+		cells[x] = cell;
+
+	vsnprintf(ui->info, sizeof(ui->info), msg, ap);
 }
 
 void ui_info_hide(Ui *tui) {

@@ -84,22 +84,21 @@ typedef struct {
 #define VisCellStyleFGIndexSet(v, index) ((v)->fg_r = ((index >> 8u) & 0xFFu), ((v)->fg_g = (index) & 0xFFu))
 #define VisCellStyleBGIndexSet(v, index) ((v)->bg_g = ((index >> 8u) & 0xFFu), ((v)->bg_b = (index) & 0xFFu))
 
-// TODO(rnp): refactor: should be possible to pack Cell down to 16 bytes; check how tab expansion is working
-typedef struct {
-	char data[16];      /* utf8 encoded character displayed in this cell (might be more than
-	                       one Unicode codepoint. might also not be the same as in the
-	                       underlying text, for example tabs get expanded */
-	u32 len;            /* number of bytes the character displayed in this cell uses, for
-	                       characters which use more than 1 column to display, their length
-	                       is stored in the leftmost cell whereas all following cells
-	                       occupied by the same character have a length of 0. */
-	int width;          /* display width i.e. number of columns occupied by this character */
-	VisCellStyle style; /* colors and attributes used to display this cell */
-} Cell;
+typedef alignas(16) struct {
+	/* utf-8 encoded character displayed in this cell, not 0 terminated.
+	 * may not match the underlying text, eg tabs get expanded */
+	u8  data[4];
+	s8  data_length; /* length of data [0-4] */
+	s8  width;       /* width in terminal columns [0-2] */
+	/* number of bytes in the underlying file handled by this cell [0-4] */
+	s16 file_byte_count;
+
+	VisCellStyle style;
+} VisCell;
 
 typedef struct {
-	Cell *cells;
-	u64   size;
+	VisCell *cells;
+	u64      size;
 } VisCellBuffer;
 
 typedef struct {
@@ -169,7 +168,7 @@ VIS_INTERNAL bool vis_ui_getkey(Vis *, TermKeyKey *);
 
 VIS_INTERNAL u16  vis_ui_style_push(Vis *);
 VIS_INTERNAL bool vis_ui_style_define(Vis *, u16 style_id, str8 style);
-VIS_INTERNAL void vis_ui_window_style_set(Ui *ui, Cell *cell, u16 style_id);
+VIS_INTERNAL void vis_ui_window_style_set(Ui *ui, VisCell *cell, u16 style_id);
 VIS_INTERNAL bool vis_ui_window_style_set_pos(Win *win, int x, int y, u16 style_id);
 
 VIS_INTERNAL void ui_window_options_set(Win *win, enum UiOption options);
