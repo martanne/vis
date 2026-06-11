@@ -251,7 +251,7 @@ static void ui_window_draw(Win *win) {
 	int sidebar_width = 0;
 	if (sidebar) {
 		sidebar_width = u32_count_digits(view->lastline->lineno) + 1;
-		sidebar_width = MAX(sidebar_width, win->min_sidebar_width);
+		sidebar_width = MIN(win->width, MAX(sidebar_width, win->min_sidebar_width));
 	}
 	if (sidebar_width != win->sidebar_width) {
 		view_resize(view, width - sidebar_width, status ? height - 1 : height);
@@ -261,31 +261,38 @@ static void ui_window_draw(Win *win) {
 
 	Selection *sel = view_selections_primary_get(view);
 	size_t prev_lineno = 0, cursor_lineno = sel->line->lineno;
-	char buf[(sizeof(size_t) * CHAR_BIT + 2) / 3 + 1 + 1];
 	int x = win->x, y = win->y;
 	int view_width = view->width;
 	Cell *cells = ui->cell_buffer.cells + y * ui->width;
+	// TODO(rnp): this should not be possible
 	if (x + sidebar_width + view_width > ui->width)
 		view_width = ui->width - x - sidebar_width;
-	for (Line *l = win->view.topline; l; l = l->next, y++) {
-		if (sidebar) {
-			if (!l->lineno || !l->len || l->lineno == prev_lineno) {
-				memset(buf, ' ', sizeof(buf));
-				buf[sidebar_width] = '\0';
-			} else {
-				size_t number = l->lineno;
+
+	// NOTE(rnp) 10 digits in U32_MAX, 1 space, 1 for 0 termination
+	char sidebar_buffer[12];
+	for (Line *l = view->topline; l; l = l->next, y++) {
+		if (sidebar_width) {
+			s32 line_number = l->lineno;
+			sidebar_buffer[0] = 0;
+			if (l->lineno && l->len && l->lineno != prev_lineno) {
 				if (rnu) {
-					number = (win->options & UI_OPTION_LARGE_FILE) ? 0 : l->lineno;
-					if (l->lineno > cursor_lineno)
-						number = l->lineno - cursor_lineno;
-					else if (l->lineno < cursor_lineno)
-						number = cursor_lineno - l->lineno;
+					line_number = (win->options & UI_OPTION_LARGE_FILE) ? 0 : l->lineno;
+					if (l->lineno > cursor_lineno) line_number = l->lineno - cursor_lineno;
+					if (l->lineno < cursor_lineno) line_number = cursor_lineno - l->lineno;
 				}
-				snprintf(buf, sizeof buf, "%*zu ", sidebar_width-1, number);
+				snprintf(sidebar_buffer, sizeof(sidebar_buffer), "%d ", line_number);
 			}
-			ui_draw_string(ui, x, y, buf, win->id,
-				       (l->lineno == cursor_lineno) ? UI_STYLE_LINENUMBER_CURSOR :
-				                                      UI_STYLE_LINENUMBER);
+
+			s32 padding = sidebar_width - 1 - u32_count_digits(line_number);
+			if (sidebar_buffer[0] == 0) padding = sidebar_width;
+
+			u16 style_id = (l->lineno == cursor_lineno) ? UI_STYLE_LINENUMBER_CURSOR : UI_STYLE_LINENUMBER;
+			for (s32 xi = 0; xi < padding; xi++) {
+				cells[x + xi] = (Cell){.data = " ", .len = 1, .width = 1};
+				cells[x + xi].style = ui->styles[UI_STYLE_MAX * win->id + UI_STYLE_DEFAULT];
+				ui_window_style_set(ui, win->id, cells + x + xi, style_id, false);
+			}
+			ui_draw_string(ui, x + padding, y, sidebar_buffer, win->id, style_id);
 			prev_lineno = l->lineno;
 		}
 		debug("draw-window: [%d][%d] ... cells[%d][%d]\n", y, x+sidebar_width, y, view_width);
