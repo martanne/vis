@@ -110,30 +110,30 @@ int main(int argc, char *argv[]) {
 		const char *filename = "data";
 		unlink(filename);
 
-		enum TextLoadMethod load_method[] = {
+		VisTextLoadMethod load_method[] = {
 			TEXT_LOAD_AUTO,
 			TEXT_LOAD_READ,
 			TEXT_LOAD_MMAP,
 		};
 
 		for (size_t i = 0; i < LENGTH(load_method); i++) {
-			txt = text_load_method(vis, "/", load_method[i]);
+			txt = vis_text_load(vis, "/", load_method[i]);
 			ok(txt == NULL && errno == EISDIR, "Opening directory (method %zu)", i);
 
 			if (access("/etc/shadow", F_OK) == 0 && access("/etc/shadow", R_OK) != 0) {
-				txt = text_load_method(vis, "/etc/shadow", load_method[i]);
+				txt = vis_text_load(vis, "/etc/shadow", load_method[i]);
 				ok(txt == NULL && errno == EACCES, "Opening file without sufficient permissions (method %zu)", i);
 			}
 		}
 
 		char buf[BUFSIZ] = "Hello World!\n";
-		txt = text_load(vis, 0);
+		txt = vis_text_load(vis, 0, TEXT_LOAD_AUTO);
 		ok(txt && insert(txt, 0, buf) && compare(txt, buf), "Inserting into empty text");
 		ok(txt && text_save_method(txt, filename, TEXT_SAVE_AUTO), "Text save");
 		text_free(txt);
 
 		for (size_t i = 0; i < LENGTH(load_method); i++) {
-			txt = text_load_method(vis, filename, load_method[i]);
+			txt = vis_text_load(vis, filename, load_method[i]);
 			ok(txt && compare(txt, buf), "Load text (method %zu)", i);
 			text_free(txt);
 		}
@@ -151,14 +151,14 @@ int main(int argc, char *argv[]) {
 					continue;
 #endif
 				snprintf(buf, sizeof buf, "Hello World: (%zu, %zu)\n", l, s);
-				txt = text_load_method(vis, filename, load_method[l]);
+				txt = vis_text_load(vis, filename, load_method[l]);
 				ok(txt, "Load (%zu, %zu)", l, s);
 				ok(txt && text_delete(txt, 0, text_size(txt)) && isempty(txt), "Empty (%zu, %zu)", l, s);
 				ok(txt && insert(txt, 0, buf) && compare(txt, buf), "Preparing to save (%zu, %zu)", l, s);
 				ok(txt && text_save_method(txt, filename, save_method[s]), "Text save (%zu, %zu)", l, s);
 				text_free(txt);
 
-				txt = text_load(vis, filename);
+				txt = vis_text_load(vis, filename, TEXT_LOAD_AUTO);
 				ok(txt && compare(txt, buf), "Verify save (%zu, %zu)", l, s);
 				text_free(txt);
 			}
@@ -173,12 +173,12 @@ int main(int argc, char *argv[]) {
 			ok(creation[i](filename, linkname) == 0, "%s creation", names[i]);
 
 			snprintf(buf, sizeof buf, "%s\n", names[i]);
-			txt = text_load(vis, 0);
+			txt = vis_text_load(vis, 0, TEXT_LOAD_AUTO);
 			ok(txt && insert(txt, 0, buf) && compare(txt, buf), "Preparing %s content", names[i]);
 			ok(txt && text_save_method(txt, linkname, TEXT_SAVE_AUTO), "Text save %s", names[i]);
 			text_free(txt);
 
-			txt = text_load(vis, linkname);
+			txt = vis_text_load(vis, linkname, TEXT_LOAD_AUTO);
 			ok(txt && compare(txt, buf), "Load %s", names[i]);
 
 			ok(txt && !text_save_method(txt, linkname, TEXT_SAVE_ATOMIC), "Text save %s atomic", names[i]);
@@ -186,7 +186,7 @@ int main(int argc, char *argv[]) {
 		}
 	}
 
-	txt = text_load(vis, 0);
+	txt = vis_text_load(vis, 0, TEXT_LOAD_AUTO);
 	ok(txt != NULL && isempty(txt), "Opening empty file");
 
 	Iterator it = text_iterator_get(txt, 0);

@@ -214,15 +214,17 @@ VIS_EXPORT bool vis_window_new(Vis *vis, const char *filename);
 VIS_EXPORT bool vis_window_new_fd(Vis *vis, int fd);
 /**
  * Reload the file currently displayed in the window from disk.
+ * @param vis The editor instance.
  * @param win The window to reload.
  */
-VIS_EXPORT bool vis_window_reload(Win*);
+VIS_EXPORT bool vis_window_file_reload(Vis *, Win *);
 /**
  * Change the file currently displayed in the window.
+ * @param vis The editor instance.
  * @param win The window to change.
  * @param filename The new file to display.
  */
-VIS_EXPORT bool vis_window_change_file(Win *win, const char *filename);
+VIS_EXPORT bool vis_window_file_change(Vis *, Win *, const char *filename);
 /**
  * Check whether closing the window would loose unsaved changes.
  * @param win The window to check.

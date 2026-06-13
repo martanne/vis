@@ -26,45 +26,6 @@
 #include "vis-subprocess.c"
 #include "vis-text-objects.c"
 
-/** window / file handling */
-
-static void file_free(Vis *vis, File *file) {
-	if (!file)
-		return;
-	if (file->refcount > 1) {
-		--file->refcount;
-		return;
-	}
-	if (!file->internal)
-		vis_event_emit(vis, VIS_EVENT_FILE_CLOSE, file);
-	for (size_t i = 0; i < LENGTH(file->marks); i++)
-		da_release(file->marks + i);
-	text_free(file->text);
-	free(file->filepath.data);
-
-	if (file->prev)
-		file->prev->next = file->next;
-	if (file->next)
-		file->next->prev = file->prev;
-	if (vis->files == file)
-		vis->files = file->next;
-	free(file);
-}
-
-static File *file_new_text(Vis *vis, Text *text) {
-	File *file = calloc(1, sizeof(*file));
-	if (!file)
-		return NULL;
-	file->fd = -1;
-	file->text = text;
-	file->stat = text_stat(text);
-	if (vis->files)
-		vis->files->prev = file;
-	file->next = vis->files;
-	vis->files = file;
-	return file;
-}
-
 VIS_INTERNAL str8
 vis_current_directory(char *buffer, s64 buffer_length)
 {
@@ -83,72 +44,94 @@ vis_file_set_name_relative(File *file, str8 directory)
 	file->name = name;
 }
 
-VIS_INTERNAL File *
-file_new(Vis *vis, const char *name, bool internal)
+VIS_INTERNAL void
+vis_file_free(Vis *vis, File *file)
 {
-	bool cmp_names = 0;
-	struct stat new;
+	if (file && file->refcount > 1) {
+		file->refcount--;
+	} else if (file) {
+		if (!file->internal)
+			vis_event_emit(vis, VIS_EVENT_FILE_CLOSE, file);
 
-	str8 filepath = {0};
-	if (name) {
-		filepath = vis_absolute_path(name);
-		if (filepath.length <= 0)
-			return 0;
+		if (file->prev) file->prev->next = file->next;
+		if (file->next) file->next->prev = file->prev;
+		if (vis->files == file)
+			vis->files = file->next;
 
-		if (stat((char *)filepath.data, &new)) {
-			if (errno != ENOENT) {
-				free(filepath.data);
-				return 0;
+		for (u64 i = 0; i < countof(file->marks); i++)
+			da_release(file->marks + i);
+
+		text_free(file->text);
+		free(file->filepath.data);
+		free(file);
+	}
+}
+
+typedef enum {
+	VisFileNewFlag_Internal   = (1 << 0),
+	VisFileNewFlag_ForceNew   = (1 << 1),
+	VisFileNewFlag_NoRefcount = (1 << 2),
+} VisFileNewFlags;
+
+VIS_INTERNAL File *
+vis_file_new(Vis *vis, const char *name, VisFileNewFlags flags)
+{
+	File *result = 0;
+
+	str8 filepath = name ? vis_absolute_path(name) : (str8){0};
+	if (filepath.length > 0 && (flags & VisFileNewFlag_ForceNew) == 0) {
+		struct stat new;
+		if (stat((char *)filepath.data, &new) == 0 || errno == ENOENT) {
+			for (File *file = vis->files; file; file = file->next) {
+				if (!file->internal && (str8_equal(file->filepath, filepath) ||
+				    (file->stat.st_dev == new.st_dev && file->stat.st_ino == new.st_ino)))
+				{
+					result = file;
+					break;
+				}
 			}
-			cmp_names = 1;
 		}
 
-		File *existing = 0;
-		/* try to detect whether the same file is already open in another window */
-		for (File *file = vis->files; file; file = file->next) {
-			if (!file->internal && ((cmp_names && str8_equal(file->filepath, filepath)) ||
-			    (file->stat.st_dev == new.st_dev && file->stat.st_ino == new.st_ino)))
-			{
-				existing = file;
-				break;
-			}
-		}
-
-		if (existing) {
+		if (result) {
+			if ((flags & VisFileNewFlag_NoRefcount) == 0)
+				result->refcount++;
 			free(filepath.data);
-			return existing;
+			filepath = (str8){0};
 		}
 	}
 
-	File *file = 0;
-	Text *text = text_load_method(vis, name, vis->load_method);
-	if (!text && name && errno == ENOENT)
-		text = text_load(vis, 0);
-	if (!text)
-		goto err;
-	if (!(file = file_new_text(vis, text)))
-		goto err;
-	file->filepath = filepath;
-	file->internal = internal;
-	if (!internal)
-		vis_event_emit(vis, VIS_EVENT_FILE_OPEN, file);
+	if (!result) {
+		Text *text = vis_text_load(vis, name, vis->load_method);
+		if (!text && name && errno == ENOENT)
+			text = vis_text_load(vis, 0, TEXT_LOAD_AUTO);
 
-	char cwd_buffer[PATH_MAX];
-	vis_file_set_name_relative(file, vis_current_directory(cwd_buffer, countof(cwd_buffer)));
+		if (text && (result = calloc(1, sizeof(*result)))) {
+			result->fd       = -1;
+			result->text     = text;
+			result->stat     = text_stat(text);
+			result->refcount = (flags & VisFileNewFlag_NoRefcount) ? 0 : 1;
+			result->filepath = filepath;
+			result->internal = (flags & VisFileNewFlag_Internal) != 0;
 
-	return file;
-err:
-	free(filepath.data);
-	text_free(text);
-	file_free(vis, file);
-	return 0;
-}
+			result->next = vis->files;
+			if (vis->files)
+				vis->files->prev = result;
+			vis->files = result;
 
-static File *file_new_internal(Vis *vis, const char *filename) {
-	File *file = file_new(vis, filename, true);
-	if (file)
-		file->refcount = 1;
-	return file;
+			char cwd_buffer[PATH_MAX];
+			vis_file_set_name_relative(result, vis_current_directory(cwd_buffer, countof(cwd_buffer)));
+
+			if (!result->internal)
+				vis_event_emit(vis, VIS_EVENT_FILE_OPEN, result);
+		}
+
+		if (!result) {
+			free(filepath.data);
+			text_free(text);
+		}
+	}
+
+	return result;
 }
 
 void window_selection_save(Win *win)
@@ -330,7 +313,6 @@ void vis_window_draw(Win *win) {
 		vis_event_emit(vis, VIS_EVENT_WIN_STATUS, win);
 }
 
-
 void vis_window_invalidate(Win *win) {
 	for (Win *w = win->vis->windows; w; w = w->next) {
 		if (w->file == win->file)
@@ -378,34 +360,33 @@ Win *window_new_file(Vis *vis, File *file, enum UiOption options) {
 	return win;
 }
 
-// TODO(rnp): hack/refactor: vis_window_file_reload, add file_new force parameter
-bool vis_window_reload(Win *win) {
+VIS_EXPORT bool
+vis_window_file_reload(Vis *vis, Win *win)
+{
+	bool result = false;
 	str8 path = win->file->filepath;
-	if (path.length <= 0)
-		return false; /* can't reload unsaved file */
-	/* temporarily unset file name, otherwise file_new returns the same File */
-	win->file->filepath = (str8){0};
-	File *file = file_new(win->vis, (char *)path.data, false);
-	win->file->filepath = path;
-	if (!file)
-		return false;
-	file_free(win->vis, win->file);
-	file->refcount = 1;
-	win->file = file;
-	view_reload(&win->view, file->text);
-	return true;
+	if (path.length > 0) {
+		File *file = vis_file_new(vis, (char *)path.data, VisFileNewFlag_ForceNew);
+		result = file != 0;
+		if (result) {
+			vis_file_free(vis, win->file);
+			win->file = file;
+			view_reload(&win->view, file->text);
+		}
+	}
+	return result;
 }
 
-bool vis_window_change_file(Win *win, const char* filename) {
-	File *file = file_new(win->vis, filename, false);
-	if (!file)
-		return false;
-	file->refcount++;
-	if (win->file)
-		file_free(win->vis, win->file);
-	win->file = file;
-	view_reload(&win->view, file->text);
-	return true;
+VIS_EXPORT bool
+vis_window_file_change(Vis *vis, Win *win, const char *filename)
+{
+	File *file = vis_file_new(vis, filename, 0);
+	if (file) {
+		vis_file_free(vis, win->file);
+		win->file = file;
+		view_reload(&win->view, file->text);
+	}
+	return file != 0;
 }
 
 bool vis_window_split(Win *original) {
@@ -457,19 +438,18 @@ vis_redraw(Vis *vis)
 	ui_draw(vis);
 }
 
-bool vis_window_new(Vis *vis, const char *filename) {
-	File *file = file_new(vis, filename, false);
-	if (!file)
-		return false;
-	vis->ui.doupdate = false;
-	Win *win = window_new_file(vis, file, UI_OPTION_STATUSBAR|UI_OPTION_SYMBOL_EOF);
-	if (!win) {
-		file_free(vis, file);
-		return false;
+VIS_EXPORT bool
+vis_window_new(Vis *vis, const char *filename)
+{
+	File *file = vis_file_new(vis, filename, VisFileNewFlag_NoRefcount);
+	if (file) {
+		if (!window_new_file(vis, file, UI_OPTION_STATUSBAR|UI_OPTION_SYMBOL_EOF)) {
+			vis_file_free(vis, file);
+			file = 0;
+		}
+		vis->ui.doupdate = true;
 	}
-	vis->ui.doupdate = true;
-
-	return true;
+	return file != 0;
 }
 
 bool vis_window_new_fd(Vis *vis, int fd) {
@@ -520,7 +500,7 @@ void vis_window_close(Win *win) {
 		return;
 	Vis *vis = win->vis;
 	vis_event_emit(vis, VIS_EVENT_WIN_CLOSE, win);
-	file_free(vis, win->file);
+	vis_file_free(vis, win->file);
 	if (win->prev)
 		win->prev->next = win->next;
 	if (win->next)
@@ -561,9 +541,9 @@ bool vis_init(Vis *vis)
 	vis->registers[VIS_REG_NUMBER].type = REGISTER_NUMBER;
 	action_reset(&vis->action);
 	vis->input_queue = (Buffer){0};
-	if (!(vis->prompt_file = file_new_internal(vis, 0)))
+	if (!(vis->prompt_file = vis_file_new(vis, 0, VisFileNewFlag_Internal)))
 		goto err;
-	if (!(vis->error_file = file_new_internal(vis, 0)))
+	if (!(vis->error_file = vis_file_new(vis, 0, VisFileNewFlag_Internal)))
 		goto err;
 	if (!(vis->actions = map_new()))
 		goto err;
@@ -602,8 +582,8 @@ void vis_cleanup(Vis *vis)
 	// the release of those files.
 	vis_event_emit(vis, VIS_EVENT_QUIT);
 
-	file_free(vis, vis->prompt_file);
-	file_free(vis, vis->error_file);
+	vis_file_free(vis, vis->prompt_file);
+	vis_file_free(vis, vis->error_file);
 
 	for (int i = 0; i < LENGTH(vis->registers); i++) {
 		for (VisDACount j = 0; j < vis->registers[i].count; j++)

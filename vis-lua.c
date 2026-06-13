@@ -1968,7 +1968,7 @@ static int window_newindex(lua_State *L) {
 			return result;
 		} else if (strcmp(key, "file") == 0 && lua_isstring(L, 3)) {
 			const char* filename = lua_tostring(L, 3);
-			if (!vis_window_change_file(win, filename)) {
+			if (!vis_window_file_change(win->vis, win, filename)) {
 				return luaL_argerror(L, 3, "failed to open");
 			}
 			return 0;

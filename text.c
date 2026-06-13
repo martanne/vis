@@ -599,7 +599,8 @@ time_t text_state(const Text *txt) {
 	return txt->history->time;
 }
 
-Text *text_loadat_method(Vis *vis, int dirfd, const char *filename, enum TextLoadMethod method)
+VIS_INTERNAL Text *
+vis_text_load(Vis *vis, const char *filename, VisTextLoadMethod method)
 {
 	Text *txt = calloc(1, sizeof *txt);
 	if (!txt)
@@ -611,7 +612,7 @@ Text *text_loadat_method(Vis *vis, int dirfd, const char *filename, enum TextLoa
 	lineno_cache_invalidate(&txt->lines);
 	if (filename) {
 		errno = 0;
-		block = block_load(dirfd, filename, method, &txt->info);
+		block = block_load(AT_FDCWD, filename, method, &txt->info);
 		if (!block && errno)
 			goto out;
 		*da_push(vis, txt) = block;

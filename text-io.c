@@ -76,7 +76,7 @@ static Block *block_mmap(size_t size, int fd, off_t offset)
 	return blk;
 }
 
-static Block *block_load(int dirfd, const char *filename, enum TextLoadMethod method, struct stat *info)
+static Block *block_load(int dirfd, const char *filename, VisTextLoadMethod method, struct stat *info)
 {
 	Block *block = NULL;
 	int fd = openat(dirfd, filename, O_RDONLY);
@@ -173,16 +173,6 @@ static void text_saved(Text *txt, struct stat *meta)
 		txt->info = *meta;
 	txt->saved_revision = txt->history;
 	text_snapshot(txt);
-}
-
-Text *text_load(Vis *vis, const char *filename)
-{
-	return text_load_method(vis, filename, TEXT_LOAD_AUTO);
-}
-
-Text *text_load_method(Vis *vis, const char *filename, enum TextLoadMethod method)
-{
-	return text_loadat_method(vis, AT_FDCWD, filename, method);
 }
 
 ssize_t write_all(int fd, const char *buf, size_t count) {

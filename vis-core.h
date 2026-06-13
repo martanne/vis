@@ -195,7 +195,7 @@ struct Vis {
 	char search_char[8];                 /* last used character to search for via 'f', 'F', 't', 'T' */
 	int last_totill;                     /* last to/till movement used for ';' and ',' */
 	int search_direction;                /* used for `n` and `N` */
-	enum TextLoadMethod load_method;     /* how existing files should be loaded */
+	VisTextLoadMethod load_method;       /* how existing files should be loaded */
 	enum PromptState prompt_state;       /* needed for determining primary cursor's position */
 	bool autoindent;                     /* whether indentation should be copied from previous line on newline */
 	bool change_colors;                  /* whether to adjust 256 color palette for true colors */

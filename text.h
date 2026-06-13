@@ -54,7 +54,7 @@ typedef struct {
 /**
  * Method used to load existing file content.
  */
-enum TextLoadMethod {
+typedef enum {
 	/** Automatically chose best option. */
 	TEXT_LOAD_AUTO,
 	/**
@@ -79,15 +79,7 @@ enum TextLoadMethod {
 	 * @endrst
 	 */
 	TEXT_LOAD_MMAP,
-};
-/**
- * Create a text instance populated with the given file content.
- *
- * @rst
- * .. note:: Equivalent to ``text_load_method(vis, filename, TEXT_LOAD_AUTO)``.
- * @endrst
- */
-VIS_INTERNAL Text *text_load(Vis *vis, const char *filename);
+} VisTextLoadMethod;
 /**
  * Create a text instance populated with the given file content.
  *
@@ -101,8 +93,7 @@ VIS_INTERNAL Text *text_load(Vis *vis, const char *filename);
  *    - ``ENOTSUP`` otherwise.
  * @endrst
  */
-VIS_INTERNAL Text *text_load_method(Vis *vis, const char *filename, enum TextLoadMethod method);
-VIS_INTERNAL Text *text_loadat_method(Vis *vis, int dirfd, const char *filename, enum TextLoadMethod);
+VIS_INTERNAL Text *vis_text_load(Vis *vis, const char *filename, VisTextLoadMethod method);
 /** Release all resources associated with this text instance. */
 VIS_INTERNAL void text_free(Text*);
 /**

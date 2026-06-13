@@ -253,7 +253,7 @@ static bool cmd_edit(Vis *vis, Win *win, Command *cmd, const char *argv[], Selec
 			vis_info_show(vis, "Can not reload file being opened multiple times");
 			return false;
 		}
-		return vis_window_reload(oldwin);
+		return vis_window_file_reload(vis, oldwin);
 	}
 	if (!openfiles(vis, &argv[1]))
 		return false;
