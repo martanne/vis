@@ -28,57 +28,88 @@
  *    - CSI 24 m                    Not underlined
  *    - CSI 25 m                    Not blinking
  *    - CSI 27 m                    Not inverse
- *    - CSI 30-37,39                Set foreground color
  *    - CSI 38 ; 2 ; R ; G ; B m    Set RGB foreground color
- *    - CSI 40-47,49                Set background color
+ *    - CSI 38 ; 5 ; I m            Set indexed foreground color
  *    - CSI 48 ; 2 ; R ; G ; B m    Set RGB background color
+ *    - CSI 48 ; 5 ; I m            Set indexed background color
  *
  * See http://invisible-island.net/xterm/ctlseqs/ctlseqs.txt
  * for further information.
  */
-#include "buffer.h"
-
 #define UI_TERMKEY_FLAGS 0
 
-#define CELL_COLOR_BLACK   { .index = 0 }
-#define CELL_COLOR_RED     { .index = 1 }
-#define CELL_COLOR_GREEN   { .index = 2 }
-#define CELL_COLOR_YELLOW  { .index = 3 }
-#define CELL_COLOR_BLUE    { .index = 4 }
-#define CELL_COLOR_MAGENTA { .index = 5 }
-#define CELL_COLOR_CYAN    { .index = 6 }
-#define CELL_COLOR_WHITE   { .index = 7 }
-#define CELL_COLOR_DEFAULT { .index = 9 }
-
-#define CELL_ATTR_NORMAL    0
-#define CELL_ATTR_UNDERLINE (1 << 0)
-#define CELL_ATTR_REVERSE   (1 << 1)
-#define CELL_ATTR_BLINK     (1 << 2)
-#define CELL_ATTR_BOLD      (1 << 3)
-#define CELL_ATTR_ITALIC    (1 << 4)
-#define CELL_ATTR_DIM       (1 << 5)
-
-static inline bool cell_color_equal(CellColor c1, CellColor c2) {
-	if (c1.index != (uint8_t)-1 || c2.index != (uint8_t)-1)
-		return c1.index == c2.index;
-	return c1.r == c2.r && c1.g == c2.g && c1.b == c2.b;
-}
-
-static CellColor
-color_rgb(Vis *vis, uint8_t r, uint8_t g, uint8_t b)
+VIS_INTERNAL VisCellStyle
+vis_ui_backend_style_default(Ui *ui)
 {
-	return (CellColor){ .r = r, .g = g, .b = b, .index = (uint8_t)-1 };
+	VisCellStyle result = {0};
+	result.properties |= (VisCellProperty_IndexedFG|VisCellProperty_IndexedBG);
+	result.properties |= (VisCellProperty_FGSet|VisCellProperty_BGSet);
+	VisCellStyleBGIndexSet(&result, 0);
+	VisCellStyleFGIndexSet(&result, 7);
+	return result;
 }
 
-static CellColor
-color_terminal(uint8_t index)
+VIS_INTERNAL VisTerminalStyle
+vis_terminal_style_fg(VisCellStyle a)
 {
-	return (CellColor){ .r = 0, .g = 0, .b = 0, .index = index };
+	VisTerminalStyle result = {0};
+	result.indexed = (a.properties & VisCellProperty_IndexedFG) != 0;
+	if (result.indexed) {
+		result.color.index = VisCellStyleFGIndexGet(&a);
+	} else {
+		result.color.rgb.r = a.fg_r;
+		result.color.rgb.g = a.fg_g;
+		result.color.rgb.b = a.fg_b;
+	}
+	return result;
 }
 
+VIS_INTERNAL VisTerminalStyle
+vis_terminal_style_bg(VisCellStyle a)
+{
+	VisTerminalStyle result = {0};
+	result.indexed = (a.properties & VisCellProperty_IndexedBG) != 0;
+	if (result.indexed) {
+		result.color.index = VisCellStyleBGIndexGet(&a);
+	} else {
+		result.color.rgb.r = a.bg_r;
+		result.color.rgb.g = a.bg_g;
+		result.color.rgb.b = a.bg_b;
+	}
+	return result;
+}
+
+VIS_INTERNAL bool
+vis_terminal_style_equal(VisTerminalStyle a, VisTerminalStyle b)
+{
+	bool result = a.indexed == b.indexed &&
+	              a.color.rgb.r == b.color.rgb.r &&
+	              a.color.rgb.g == b.color.rgb.g &&
+	              a.color.rgb.b == b.color.rgb.b;
+	return result;
+}
+
+VIS_INTERNAL VisTerminalStyle
+vis_terminal_style_rgb(Vis *vis, u8 r, u8 g, u8 b)
+{
+	VisTerminalStyle result = {0};
+	result.color.rgb.r = r;
+	result.color.rgb.g = g;
+	result.color.rgb.b = b;
+	return result;
+}
+
+VIS_INTERNAL VisTerminalStyle
+vis_terminal_style_indexed(u16 index)
+{
+	VisTerminalStyle result = {0};
+	result.indexed     = true;
+	result.color.index = index;
+	return result;
+}
 
 static void output(const char *data, size_t len) {
-	write(STDERR_FILENO, data, len);
+	(void)write(STDERR_FILENO, data, len);
 }
 
 static void output_literal(const char *data) {
@@ -86,70 +117,74 @@ static void output_literal(const char *data) {
 }
 
 static void screen_alternate(bool alternate) {
-	output_literal(alternate ? "\x1b[?1049h" : "\x1b[0m" "\x1b[?1049l" "\x1b[0m" );
+	output_literal(alternate ? "\x1b[?1049h" : "\x1b[?1049l" "\x1b[0m" );
 }
 
 static void cursor_visible(bool visible) {
 	output_literal(visible ? "\x1b[?25h" : "\x1b[?25l");
 }
 
-static void ui_term_backend_blit(Ui *tui) {
-	Buffer *buf = tui->ctx;
+VIS_INTERNAL void
+ui_term_backend_blit(Ui *tui)
+{
+	Buffer *buf = &tui->vt100;
 	buf->length = 0;
-	CellAttr attr = CELL_ATTR_NORMAL;
-	CellColor fg = CELL_COLOR_DEFAULT, bg = CELL_COLOR_DEFAULT;
 	int w = tui->width, h = tui->height;
 	Cell *cell = tui->cell_buffer.cells;
 
+	VisTerminalStyle bg = vis_terminal_style_bg(vis_ui_backend_style_default(tui));
+	VisTerminalStyle fg = vis_terminal_style_fg(vis_ui_backend_style_default(tui));
+	u8 attributes = 0;
 	/* reposition cursor, erase screen, reset attributes */
 	str8 command = str8("\x1b[H" "\x1b[J" "\x1b[0m");
 	buffer_append(buf, command.data, command.length);
 	for (int y = 0; y < h; y++) {
 		for (int x = 0; x < w; x++) {
-			CellStyle *style = &cell->style;
-			if (style->attr != attr) {
-
+			VisCellStyle style = cell->style;
+			if (style.attributes != attributes) {
 				static const struct {
-					CellAttr attr;
-					char on[4], off[4];
+					u8 flag;
+					char on[2], off[4];
 				} cell_attrs[] = {
-					{ CELL_ATTR_BOLD, "1", "22" },
-					{ CELL_ATTR_DIM, "2", "22" },
-					{ CELL_ATTR_ITALIC, "3", "23" },
-					{ CELL_ATTR_UNDERLINE, "4", "24" },
-					{ CELL_ATTR_BLINK, "5", "25" },
-					{ CELL_ATTR_REVERSE, "7", "27" },
+					{VisCellAttribute_Bold,      "1", "22"},
+					{VisCellAttribute_Dim,       "2", "22"},
+					{VisCellAttribute_Italic,    "3", "23"},
+					{VisCellAttribute_Underline, "4", "24"},
+					{VisCellAttribute_Blink,     "5", "25"},
+					{VisCellAttribute_Reverse,   "7", "27"},
 				};
 
-				for (size_t i = 0; i < LENGTH(cell_attrs); i++) {
-					CellAttr a = cell_attrs[i].attr;
-					if ((style->attr & a) == (attr & a))
-						continue;
-					vis_buffer_appendf(buf, "\x1b[%sm",
-					                   style->attr & a ?
-					                   cell_attrs[i].on :
-					                   cell_attrs[i].off);
+				for (u64 i = 0; i < countof(cell_attrs); i++) {
+					u8 flag = cell_attrs[i].flag;
+					if ((attributes & flag) != (style.attributes & flag)) {
+						vis_buffer_appendf(buf, "\x1b[%sm", (style.attributes & flag) ?
+						                   cell_attrs[i].on :
+						                   cell_attrs[i].off);
+					}
 				}
-
-				attr = style->attr;
+				attributes = style.attributes;
 			}
 
-			if (!cell_color_equal(fg, style->fg)) {
-				fg = style->fg;
-				if (fg.index != (uint8_t)-1) {
-					vis_buffer_appendf(buf, "\x1b[%dm", 30 + fg.index);
+			VisTerminalStyle style_fg = vis_terminal_style_fg(style);
+			if (!vis_terminal_style_equal(fg, style_fg)) {
+				if (style_fg.indexed) {
+					vis_buffer_appendf(buf, "\x1b[38;5;%um", (u32)style_fg.color.index);
 				} else {
-					vis_buffer_appendf(buf, "\x1b[38;2;%d;%d;%dm", fg.r, fg.g, fg.b);
+					vis_buffer_appendf(buf, "\x1b[38;2;%u;%u;%um", (u32)style_fg.color.rgb.r,
+					                   (u32)style_fg.color.rgb.g, (u32)style_fg.color.rgb.b);
 				}
+				fg = style_fg;
 			}
 
-			if (!cell_color_equal(bg, style->bg)) {
-				bg = style->bg;
-				if (bg.index != (uint8_t)-1) {
-					vis_buffer_appendf(buf, "\x1b[%dm", 40 + bg.index);
+			VisTerminalStyle style_bg = vis_terminal_style_bg(style);
+			if (!vis_terminal_style_equal(bg, style_bg)) {
+				if (style_bg.indexed) {
+					vis_buffer_appendf(buf, "\x1b[48;5;%um", (u32)style_bg.color.index);
 				} else {
-					vis_buffer_appendf(buf, "\x1b[48;2;%d;%d;%dm", bg.r, bg.g, bg.b);
+					vis_buffer_appendf(buf, "\x1b[48;2;%u;%u;%um", (u32)style_bg.color.rgb.r,
+					                   (u32)style_bg.color.rgb.g, (u32)style_bg.color.rgb.b);
 				}
+				bg = style_bg;
 			}
 
 			vis_buffer_append0(buf, cell->data);
@@ -197,20 +232,13 @@ ui_terminal_resume(Ui *tui)
 static bool
 ui_backend_init(Ui *ui, char *term)
 {
-	ui->ctx = calloc(1, sizeof(Buffer));
-	bool result = ui->ctx != 0;
-	if (result)
-		ui_terminal_resume(ui);
-	return result;
+	ui_terminal_resume(ui);
+	return true;
 }
 
-static void ui_term_backend_free(Ui *tui) {
-	Buffer *buf = tui->ctx;
-	ui_term_backend_suspend(tui);
-	buffer_release(buf);
-	free(buf);
-}
-
-static bool is_default_color(CellColor c) {
-	return c.index == ((CellColor) CELL_COLOR_DEFAULT).index;
+VIS_INTERNAL void
+vis_ui_backend_free(Ui *ui)
+{
+	ui_term_backend_suspend(ui);
+	buffer_release(&ui->vt100);
 }

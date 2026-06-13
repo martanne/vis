@@ -2,15 +2,13 @@
 #include "vis-core.h"
 #include "text.h"
 
-#ifndef DEBUG_UI
-#define DEBUG_UI 0
-#endif
-
-#if DEBUG_UI
-#define debug(...) do { printf(__VA_ARGS__); fflush(stdout); } while (0)
-#else
-#define debug(...) do { } while (0)
-#endif
+typedef struct {
+	union {
+		struct {u8 r, g, b;} rgb;
+		u16 index;
+	} color;
+	bool indexed;
+} VisTerminalStyle;
 
 // TODO(rnp): if we remove curses backend we should do a single mapping
 // for both front and back buffers.
@@ -38,16 +36,6 @@ vis_cell_buffer_resize(VisCellBuffer *cb, u32 width, u32 height)
 #include "ui-terminal-vt100.c"
 #endif
 
-#define CELL_STYLE_DEFAULT (CellStyle){.fg = CELL_COLOR_DEFAULT, .bg = CELL_COLOR_DEFAULT, .attr = CELL_ATTR_NORMAL}
-
-static bool is_default_fg(CellColor c) {
-	return is_default_color(c);
-}
-
-static bool is_default_bg(CellColor c) {
-	return is_default_color(c);
-}
-
 void ui_die(Ui *tui, const char *msg, va_list ap) {
 	ui_terminal_free(tui);
 	vfprintf(stderr, msg, ap);
@@ -62,7 +50,6 @@ static void ui_die_msg(Ui *ui, const char *msg, ...) {
 }
 
 static void ui_window_resize(Win *win, int width, int height) {
-	debug("ui-win-resize[%s]: %dx%d\n", win->file->name ? win->file->name : "noname", width, height);
 	bool status = win->options & UI_OPTION_STATUSBAR;
 	win->width  = width;
 	win->height = height;
@@ -70,140 +57,216 @@ static void ui_window_resize(Win *win, int width, int height) {
 }
 
 static void ui_window_move(Win *win, int x, int y) {
-	debug("ui-win-move[%s]: (%d, %d)\n", win->file->name ? win->file->name : "noname", x, y);
 	win->x = x;
 	win->y = y;
 }
 
 VIS_INTERNAL bool
-vis_ui_color_from_str8(Vis *vis, CellColor *color, str8 s)
+vis_terminal_style_from_str8(Vis *vis, VisTerminalStyle *out, str8 s)
 {
-	if (s.length <= 0)
-		return false;
+	bool result = false;
+	if (s.length > 0) {
+		// TODO: warn if length > 7
+		if (s.data[0] == '#' && s.length == 7) {
+			s = str8_skip(s, 1);
+			IntegerConversion integer = integer_conversion(s, IntegerConversionFlag_ForceHex);
+			result = integer.result == IntegerConversionResult_Success;
+			if (result) {
+				u8 r = (integer.as.U64 >> 16u) & 0xFFu;
+				u8 g = (integer.as.U64 >>  8u) & 0xFFu;
+				u8 b = (integer.as.U64 >>  0u) & 0xFFu;
+				*out = vis_terminal_style_rgb(vis, r, g, b);
+			}
 
-	// TODO: warn if length > 7
-	if (s.data[0] == '#' && s.length == 7) {
-		s = str8_skip(s, 1);
-		IntegerConversion integer = integer_conversion(s, IntegerConversionFlag_ForceHex);
-		bool result = integer.result == IntegerConversionResult_Success;
-		if (result) {
-			uint8_t r = (integer.as.U64 >> 16u) & 0xFFu;
-			uint8_t g = (integer.as.U64 >>  8u) & 0xFFu;
-			uint8_t b = (integer.as.U64 >>  0u) & 0xFFu;
-			*color = color_rgb(vis, r, g, b);
-		}
-		return result;
+		} else if Between(s.data[0], '0', '9') {
+			IntegerConversion integer = integer_conversion(s, IntegerConversionFlag_NoAutoHex);
+			result = integer.result == IntegerConversionResult_Success && integer.as.U64 <= 255;
+			if (result) *out = vis_terminal_style_indexed(integer.as.U64);
+		} else {
+			static const str8 color_names[] = {
+				str8_comp("black"),
+				str8_comp("red"),
+				str8_comp("green"),
+				str8_comp("yellow"),
+				str8_comp("blue"),
+				str8_comp("magenta"),
+				str8_comp("cyan"),
+				str8_comp("white"),
+			};
 
-	} else if Between(s.data[0], '0', '9') {
-		IntegerConversion integer = integer_conversion(s, IntegerConversionFlag_NoAutoHex);
-		bool result = integer.result == IntegerConversionResult_Success && integer.as.U64 <= 255;
-		if (result)
-			*color = color_terminal(integer.as.U64);
-		return result;
-	}
-
-	static const struct {
-		str8      name;
-		CellColor color;
-	} color_names[] = {
-		{str8_comp("black"),   CELL_COLOR_BLACK  },
-		{str8_comp("red"),     CELL_COLOR_RED    },
-		{str8_comp("green"),   CELL_COLOR_GREEN  },
-		{str8_comp("yellow"),  CELL_COLOR_YELLOW },
-		{str8_comp("blue"),    CELL_COLOR_BLUE   },
-		{str8_comp("magenta"), CELL_COLOR_MAGENTA},
-		{str8_comp("cyan"),    CELL_COLOR_CYAN   },
-		{str8_comp("white"),   CELL_COLOR_WHITE  },
-		{str8_comp("default"), CELL_COLOR_DEFAULT},
-	};
-
-	for (uint64_t i = 0; i < countof(color_names); i++) {
-		if (str8_case_ignore_equal(color_names[i].name, s)) {
-			*color = color_names[i].color;
-			return true;
+			out->indexed = true;
+			for (u64 i = 0; i < countof(color_names); i++) {
+				if (str8_case_ignore_equal(color_names[i], s)) {
+					out->color.index = i;
+					result = true;
+					break;
+				}
+			}
 		}
 	}
+	return result;
+}
 
-	return false;
+VIS_INTERNAL uint16_t
+vis_ui_style_push(Vis *vis)
+{
+	uint16_t result = -1;
+	if (vis->ui.style_count < countof(vis->ui.styles))
+		result = vis->ui.style_count++;
+	return result;
 }
 
 VIS_INTERNAL bool
-vis_ui_style_define(Win *win, int id, str8 style)
+vis_ui_style_define(Vis *vis, u16 style_id, str8 style)
 {
-	if (id >= UI_STYLE_MAX)
-		return false;
-	if (style.length <= 0)
-		return true;
-
-	CellStyle cell_style = CELL_STYLE_DEFAULT;
-	while (style.length > 0) {
-		style = str8_trim_space(style);
-
-		str8 key, value;
-		str8_split(style, &key, &style, ',');
-		str8_split(key,   &key, &value, ':');
-
-		if (key.length <= 0)
-			continue;
-
-		value = str8_trim_space(value);
-
-		if (str8_case_ignore_equal(key, str8("reverse"))) {
-			cell_style.attr |= CELL_ATTR_REVERSE;
-		} else if (str8_case_ignore_equal(key, str8("notreverse"))) {
-			cell_style.attr &= CELL_ATTR_REVERSE;
-		} else if (str8_case_ignore_equal(key, str8("bold"))) {
-			cell_style.attr |= CELL_ATTR_BOLD;
-		} else if (str8_case_ignore_equal(key, str8("notbold"))) {
-			cell_style.attr &= ~CELL_ATTR_BOLD;
-		} else if (str8_case_ignore_equal(key, str8("dim"))) {
-			cell_style.attr |= CELL_ATTR_DIM;
-		} else if (str8_case_ignore_equal(key, str8("notdim"))) {
-			cell_style.attr &= ~CELL_ATTR_DIM;
-		} else if (str8_case_ignore_equal(key, str8("italics"))) {
-			cell_style.attr |= CELL_ATTR_ITALIC;
-		} else if (str8_case_ignore_equal(key, str8("notitalics"))) {
-			cell_style.attr &= ~CELL_ATTR_ITALIC;
-		} else if (str8_case_ignore_equal(key, str8("underlined"))) {
-			cell_style.attr |= CELL_ATTR_UNDERLINE;
-		} else if (str8_case_ignore_equal(key, str8("notunderlined"))) {
-			cell_style.attr &= ~CELL_ATTR_UNDERLINE;
-		} else if (str8_case_ignore_equal(key, str8("blink"))) {
-			cell_style.attr |= CELL_ATTR_BLINK;
-		} else if (str8_case_ignore_equal(key, str8("notblink"))) {
-			cell_style.attr &= ~CELL_ATTR_BLINK;
-		} else if (str8_case_ignore_equal(key, str8("fore"))) {
-			vis_ui_color_from_str8(win->vis, &cell_style.fg, value);
-		} else if (str8_case_ignore_equal(key, str8("back"))) {
-			vis_ui_color_from_str8(win->vis, &cell_style.bg, value);
+	bool result = style_id < vis->ui.style_count;
+	if (result) {
+		VisCellStyle cell_style = {0};
+		if (style_id == UI_STYLE_DEFAULT) {
+			// NOTE(rnp): DEFAULT is special and must always be set
+			cell_style = vis_ui_backend_style_default(&vis->ui);
 		}
-	}
-	win->vis->ui.styles[win->id * UI_STYLE_MAX + id] = cell_style;
 
-	return true;
+		while (style.length > 0) {
+			style = str8_trim_space(style);
+
+			str8 key, value;
+			str8_split(style, &key, &style, ',');
+			str8_split(key,   &key, &value, ':');
+
+			if (key.length <= 0)
+				continue;
+
+			value = str8_trim_space(value);
+
+			if (str8_case_ignore_equal(key, str8("reverse"))) {
+				cell_style.attributes |= VisCellAttribute_Reverse;
+			} else if (str8_case_ignore_equal(key, str8("bold"))) {
+				cell_style.attributes |= VisCellAttribute_Bold;
+			} else if (str8_case_ignore_equal(key, str8("dim"))) {
+				cell_style.attributes |= VisCellAttribute_Dim;
+			} else if (str8_case_ignore_equal(key, str8("italics"))) {
+				cell_style.attributes |= VisCellAttribute_Italic;
+			} else if (str8_case_ignore_equal(key, str8("underlined"))) {
+				cell_style.attributes |= VisCellAttribute_Underline;
+			} else if (str8_case_ignore_equal(key, str8("blink"))) {
+				cell_style.attributes |= VisCellAttribute_Blink;
+			} else if (str8_case_ignore_equal(key, str8("keep_attribute"))) {
+				cell_style.properties |= VisCellProperty_KeepAttribute;
+
+			} else if (str8_case_ignore_equal(key, str8("fore"))) {
+				VisTerminalStyle fg = {0};
+				if (vis_terminal_style_from_str8(vis, &fg, value)) {
+					cell_style.properties |= VisCellProperty_FGSet;
+					if (fg.indexed) {
+						cell_style.properties |= VisCellProperty_IndexedFG;
+						VisCellStyleFGIndexSet(&cell_style, fg.color.index);
+					} else {
+						cell_style.properties &= ~VisCellProperty_IndexedFG;
+						cell_style.fg_r = fg.color.rgb.r;
+						cell_style.fg_g = fg.color.rgb.g;
+						cell_style.fg_b = fg.color.rgb.b;
+					}
+				}
+
+			} else if (str8_case_ignore_equal(key, str8("back"))) {
+				VisTerminalStyle bg = {0};
+				if (vis_terminal_style_from_str8(vis, &bg, value)) {
+					cell_style.properties |= VisCellProperty_BGSet;
+					if (bg.indexed) {
+						cell_style.properties |= VisCellProperty_IndexedBG;
+						VisCellStyleBGIndexSet(&cell_style, bg.color.index);
+					} else {
+						cell_style.properties &= ~VisCellProperty_IndexedBG;
+						cell_style.bg_r = bg.color.rgb.r;
+						cell_style.bg_g = bg.color.rgb.g;
+						cell_style.bg_b = bg.color.rgb.b;
+					}
+				}
+			}
+		}
+
+		vis->ui.styles[style_id] = cell_style;
+	}
+	return result;
 }
 
-static void ui_draw_line(Ui *tui, int x, int y, char c, enum UiStyle style_id) {
+VIS_INTERNAL void
+vis_cell_style_copy_fg(VisCellStyle *dst, VisCellStyle src)
+{
+	dst->fg_r = src.fg_r;
+	dst->fg_g = src.fg_g;
+	dst->fg_b = src.fg_b;
+	dst->properties &= ~(VisCellProperty_FGSet|VisCellProperty_IndexedFG);
+	dst->properties |= (src.properties & (VisCellProperty_FGSet|VisCellProperty_IndexedFG));
+}
+
+VIS_INTERNAL void
+vis_cell_style_copy_bg(VisCellStyle *dst, VisCellStyle src)
+{
+	dst->bg_r = src.bg_r;
+	dst->bg_g = src.bg_g;
+	dst->bg_b = src.bg_b;
+	dst->properties &= ~(VisCellProperty_BGSet|VisCellProperty_IndexedBG);
+	dst->properties |= (src.properties & (VisCellProperty_BGSet|VisCellProperty_IndexedBG));
+}
+
+VIS_INTERNAL void
+vis_ui_window_style_set(Ui *tui, Cell *cell, u16 style_id)
+{
+	assert(style_id < tui->style_count);
+
+	VisCellStyle set        = tui->styles[style_id];
+	VisCellStyle cell_style = cell->style;
+	if ((set.properties & VisCellProperty_FGSet) == 0)
+		vis_cell_style_copy_fg(&set, cell_style);
+	if ((set.properties & VisCellProperty_BGSet) == 0)
+		vis_cell_style_copy_bg(&set, cell_style);
+	if (set.properties & VisCellProperty_KeepAttribute)
+		set.attributes |= cell_style.attributes;
+
+	cell->style = set;
+}
+
+VIS_INTERNAL bool
+vis_ui_window_style_set_pos(Win *win, int x, int y, u16 style_id)
+{
+	Ui *ui = &win->vis->ui;
+	bool result = Between(x, 0, win->width - 1) && Between(y, 0, win->height - 1);
+	if (result) {
+		x += win->x;
+		y += win->y;
+		Cell *cell = ui->cell_buffer.cells + ui->width * y + x;
+		vis_ui_window_style_set(ui, cell, style_id);
+	}
+	return result;
+}
+
+VIS_INTERNAL void
+ui_draw_line(Ui *tui, int x, int y, char c, uint16_t style_id)
+{
+	assert(style_id < tui->style_count);
 	if (x < 0 || x >= tui->width || y < 0 || y >= tui->height)
 		return;
-	CellStyle style = tui->styles[style_id];
+
 	Cell *cells = tui->cell_buffer.cells + y * tui->width;
 	while (x < tui->width) {
 		cells[x].data[0] = c;
-		cells[x].data[1] = '\0';
-		cells[x].style = style;
+		cells[x].data[1] = 0;
+		cells[x].style   = tui->styles[style_id];
 		x++;
 	}
 }
 
-static void ui_draw_string(Ui *tui, int x, int y, const char *str, int win_id, enum UiStyle style_id) {
-	debug("draw-string: [%d][%d]\n", y, x);
+VIS_INTERNAL void
+ui_draw_string(Ui *tui, int x, int y, const char *str, uint16_t style_id)
+{
 	if (x < 0 || x >= tui->width || y < 0 || y >= tui->height)
 		return;
 
 	/* NOTE: the style that style_id refers to may contain unset values; we need to properly
 	 * clear the cell first then go through ui_window_style_set to get the correct style */
-	CellStyle default_style = tui->styles[UI_STYLE_MAX * win_id + UI_STYLE_DEFAULT];
+	VisCellStyle default_style = tui->styles[UI_STYLE_DEFAULT];
 	// FIXME: does not handle double width characters etc, share code with view.c?
 	Cell *cells = tui->cell_buffer.cells + y * tui->width;
 	const size_t cell_size = sizeof(cells[0].data)-1;
@@ -216,7 +279,7 @@ static void ui_draw_string(Ui *tui, int x, int y, const char *str, int win_id, e
 		strncpy(cells[x].data, str, len);
 		cells[x].data[len] = '\0';
 		cells[x].style = default_style;
-		ui_window_style_set(tui, win_id, cells + x++, style_id, false);
+		vis_ui_window_style_set(tui, cells + x++, style_id);
 	}
 }
 
@@ -288,61 +351,27 @@ static void ui_window_draw(Win *win) {
 
 			u16 style_id = (l->lineno == cursor_lineno) ? UI_STYLE_LINENUMBER_CURSOR : UI_STYLE_LINENUMBER;
 			for (s32 xi = 0; xi < padding; xi++) {
-				cells[x + xi] = (Cell){.data = " ", .len = 1, .width = 1};
-				cells[x + xi].style = ui->styles[UI_STYLE_MAX * win->id + UI_STYLE_DEFAULT];
-				ui_window_style_set(ui, win->id, cells + x + xi, style_id, false);
+				cells[x + xi] = (Cell){.data = " ", .len = 1, .width = 1, .style = ui->styles[UI_STYLE_DEFAULT]};
+				vis_ui_window_style_set(ui, cells + x + xi, style_id);
 			}
-			ui_draw_string(ui, x + padding, y, sidebar_buffer, win->id, style_id);
+			ui_draw_string(ui, x + padding, y, sidebar_buffer, style_id);
 			prev_lineno = l->lineno;
 		}
-		debug("draw-window: [%d][%d] ... cells[%d][%d]\n", y, x+sidebar_width, y, view_width);
 		memcpy(cells + x + sidebar_width, l->cells, sizeof(Cell) * view_width);
 		cells += ui->width;
 	}
 }
 
-void ui_window_style_set(Ui *tui, int win_id, Cell *cell, enum UiStyle id, bool keep_non_default) {
-	CellStyle set = tui->styles[win_id * UI_STYLE_MAX + id];
-
-	if (id != UI_STYLE_DEFAULT) {
-		if (keep_non_default) {
-			CellStyle default_style = tui->styles[win_id * UI_STYLE_MAX + UI_STYLE_DEFAULT];
-			if (!cell_color_equal(cell->style.fg, default_style.fg))
-				set.fg = cell->style.fg;
-			if (!cell_color_equal(cell->style.bg, default_style.bg))
-				set.bg = cell->style.bg;
-		}
-		set.fg = is_default_fg(set.fg)? cell->style.fg : set.fg;
-		set.bg = is_default_bg(set.bg)? cell->style.bg : set.bg;
-		set.attr = cell->style.attr | set.attr;
-	}
-
-	cell->style = set;
-}
-
-bool ui_window_style_set_pos(Win *win, int x, int y, enum UiStyle id, bool keep_non_default) {
-	Ui *tui = &win->vis->ui;
-	if (x < 0 || y < 0 || y >= win->height || x >= win->width) {
-		return false;
-	}
-	x += win->x;
-	y += win->y;
-	Cell *cell = tui->cell_buffer.cells + tui->width * y + x;
-	ui_window_style_set(tui, win->id, cell, id, keep_non_default);
-	return true;
-}
-
 VIS_INTERNAL void
 ui_window_status(Vis *vis, Win *win, const char *status)
 {
-	enum UiStyle style = vis->win == win ? UI_STYLE_STATUS_FOCUSED : UI_STYLE_STATUS;
-	ui_draw_string(&vis->ui, win->x, win->y + win->height - 1, status, win->id, style);
+	VisUiStyle style = vis->win == win ? UI_STYLE_STATUS_FOCUSED : UI_STYLE_STATUS;
+	ui_draw_string(&vis->ui, win->x, win->y + win->height - 1, status, style);
 }
 
 VIS_INTERNAL void
 ui_arrange(Vis *vis, enum UiLayout layout)
 {
-	debug("ui-arrange\n");
 	Ui *tui = &vis->ui;
 	tui->layout = layout;
 	int n = 0, m = !!tui->info[0], x = 0, y = 0;
@@ -372,8 +401,8 @@ ui_arrange(Vis *vis, enum UiLayout layout)
 			if (n) {
 				Cell *cells = tui->cell_buffer.cells;
 				for (int i = 0; i < max_height; i++) {
+					vis_ui_window_style_set(tui, cells + x, UI_STYLE_SEPARATOR);
 					strcpy(cells[x].data,"│");
-					cells[x].style = tui->styles[UI_STYLE_SEPARATOR];
 					cells += tui->width;
 				}
 				x++;
@@ -395,7 +424,6 @@ ui_arrange(Vis *vis, enum UiLayout layout)
 VIS_INTERNAL void
 ui_draw(Vis *vis)
 {
-	debug("ui-draw\n");
 	Ui *tui = &vis->ui;
 	ui_arrange(vis, vis->ui.layout);
 	for (Win *win = vis->windows; win; win = win->next)
@@ -417,7 +445,7 @@ ui_draw(Vis *vis)
 		tui->cur_row = vis->ui.height;
 	}
 	if (tui->info[0])
-		ui_draw_string(tui, 0, tui->height-1, tui->info, 0, UI_STYLE_INFO);
+		ui_draw_string(tui, 0, tui->height-1, tui->info, UI_STYLE_INFO);
 	vis_event_emit(vis, VIS_EVENT_UI_DRAW);
 	ui_term_backend_blit(tui);
 }
@@ -470,37 +498,6 @@ ui_window_options_set(Win *win, enum UiOption options)
 }
 
 bool ui_window_init(Ui *tui, Win *w, enum UiOption options) {
-	/* get rightmost zero bit, i.e. highest available id */
-	size_t bit = ~tui->ids & (tui->ids + 1);
-	size_t id = 0;
-	for (size_t tmp = bit; tmp >>= 1; id++);
-	if (id >= sizeof(size_t) * 8)
-		return NULL;
-	size_t styles_size = (id + 1) * UI_STYLE_MAX * sizeof(CellStyle);
-	if (styles_size > tui->styles_size) {
-		CellStyle *styles = realloc(tui->styles, styles_size);
-		if (!styles)
-			return NULL;
-		tui->styles = styles;
-		tui->styles_size = styles_size;
-	}
-
-	tui->ids |= bit;
-	w->id = id;
-
-	CellStyle *styles = &tui->styles[w->id * UI_STYLE_MAX];
-	for (int i = 0; i < UI_STYLE_MAX; i++) {
-		styles[i] = CELL_STYLE_DEFAULT;
-	}
-
-	styles[UI_STYLE_CURSOR].attr |= CELL_ATTR_REVERSE;
-	styles[UI_STYLE_CURSOR_PRIMARY].attr |= CELL_ATTR_REVERSE|CELL_ATTR_BLINK;
-	styles[UI_STYLE_SELECTION].attr |= CELL_ATTR_REVERSE;
-	styles[UI_STYLE_COLOR_COLUMN].attr |= CELL_ATTR_REVERSE;
-	styles[UI_STYLE_STATUS].attr |= CELL_ATTR_REVERSE;
-	styles[UI_STYLE_STATUS_FOCUSED].attr |= CELL_ATTR_REVERSE|CELL_ATTR_BOLD;
-	styles[UI_STYLE_INFO].attr |= CELL_ATTR_BOLD;
-
 	if (text_size(w->file->text) > UI_LARGE_FILE_SIZE) {
 		options |= UI_OPTION_LARGE_FILE;
 		options &= ~UI_OPTION_LINE_NUMBERS_ABSOLUTE;
@@ -584,10 +581,9 @@ void ui_terminal_restore(Ui *tui) {
 VIS_INTERNAL void
 ui_terminal_free(Ui *tui)
 {
-	ui_term_backend_free(tui);
+	vis_ui_backend_free(tui);
 	termkey_destroy(&tui->termkey);
 	munmap(tui->cell_buffer.cells, tui->cell_buffer.size);
-	free(tui->styles);
 	free(tui->term.data);
 }
 
@@ -611,12 +607,26 @@ ui_init(Ui *tui)
 		}
 	}
 
-	tui->styles_size = UI_STYLE_MAX * sizeof(CellStyle);
-	tui->styles      = calloc(1, tui->styles_size);
 	tui->doupdate    = true;
+	tui->style_count = UI_STYLE_LAST + 1;
 
-	bool result = tui->term.length && tui->styles && ui_backend_init(tui, term);
+	bool result = tui->term.length && ui_backend_init(tui, term);
 	if (result) ui_resize(tui);
 	else        ui_terminal_free(tui);
+
+	if (result) {
+		VisCellStyle default_style = vis_ui_backend_style_default(tui);
+		for (u64 it = 0; it < countof(tui->styles); it++)
+			tui->styles[it] = default_style;
+
+		tui->styles[UI_STYLE_CURSOR].attributes         |= VisCellAttribute_Reverse;
+		tui->styles[UI_STYLE_CURSOR_PRIMARY].attributes |= VisCellAttribute_Reverse|VisCellAttribute_Blink;
+		tui->styles[UI_STYLE_SELECTION].attributes      |= VisCellAttribute_Reverse;
+		tui->styles[UI_STYLE_COLOR_COLUMN].attributes   |= VisCellAttribute_Reverse;
+		tui->styles[UI_STYLE_STATUS].attributes         |= VisCellAttribute_Reverse;
+		tui->styles[UI_STYLE_STATUS_FOCUSED].attributes |= VisCellAttribute_Reverse|VisCellAttribute_Bold;
+		tui->styles[UI_STYLE_INFO].attributes           |= VisCellAttribute_Bold;
+	}
+
 	return result;
 }
