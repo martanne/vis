@@ -29,7 +29,7 @@ struct Node {
 
 /* Closest key to this in a non-empty map. */
 VIS_INTERNAL Map *
-vis_map_closest(Map *n, str8 key)
+vis_map_step_closest(Map *n, str8 key)
 {
 	/* Anything with NULL value is an internal node. */
 	while (!n->v) {
@@ -44,15 +44,16 @@ vis_map_closest(Map *n, str8 key)
 }
 
 VIS_INTERNAL void *
-map_get(const Map *map, const char *key)
+vis_map_get(const Map *map, str8 key)
 {
+	void *result = 0;
 	/* Not empty map? */
 	if (map->u.n) {
-		Map *n = vis_map_closest((Map *)map, str8_from_c_str(key));
-		if (strcmp(key, n->u.s) == 0)
-			return n->v;
+		Map *n = vis_map_step_closest((Map *)map, key);
+		if (str8_equal(key, str8_from_c_str(n->u.s)))
+			result = n->v;
 	}
-	return NULL;
+	return result;
 }
 
 VIS_INTERNAL Map *
@@ -83,11 +84,12 @@ vis_map_prefix(Map *map, str8 prefix)
 	return result;
 }
 
-void *map_closest(const Map *map, const char *prefix)
+VIS_INTERNAL void *
+vis_map_closest(const Map *map, str8 prefix)
 {
-	void *result = map_get(map, prefix);
+	void *result = vis_map_get(map, prefix);
 	if (!result)
-		result = vis_map_prefix((Map *)map, str8_from_c_str(prefix))->v;
+		result = vis_map_prefix((Map *)map, prefix)->v;
 	return result;
 }
 
@@ -112,7 +114,7 @@ bool map_put(Map *map, const char *k, const void *value)
 	}
 
 	/* Find closest existing key. */
-	n = vis_map_closest(map, ks);
+	n = vis_map_step_closest(map, ks);
 
 	/* Find where they differ. */
 	for (byte_num = 0; n->u.s[byte_num] == key[byte_num]; byte_num++) {
@@ -279,7 +281,7 @@ static bool copy(Map *dest, Map n)
 		return copy(dest, n.u.n->child[0]) &&
 		       copy(dest, n.u.n->child[1]);
 	} else {
-		if (!map_put(dest, n.u.s, n.v) && map_get(dest, n.u.s) != n.v) {
+		if (!map_put(dest, n.u.s, n.v) && vis_map_get(dest, str8_from_c_str(n.u.s)) != n.v) {
 			map_delete(dest, n.u.s);
 			return map_put(dest, n.u.s, n.v);
 		}

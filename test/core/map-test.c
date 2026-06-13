@@ -5,13 +5,13 @@
 
 #include "map.c"
 
-static bool get(Map *map, const char *key, const void *data) {
-	return map_get(map, key) == data && map_closest(map, key) == data;
+static bool get(Map *map, str8 key, const void *data) {
+	return vis_map_get(map, key) == data && vis_map_closest(map, key) == data;
 }
 
 static bool compare(const char *key, void *value, void *data) {
 	Map *map = data;
-	ok(map_get(map, key) == value, "Compare map content");
+	ok(vis_map_get(map, str8_from_c_str(key)) == value, "Compare map content");
 	return true;
 }
 
@@ -49,19 +49,19 @@ int main(int argc, char *argv[]) {
 	ok(map_first(map, &key) == NULL && strcmp(key, "404") == 0, "First on empty map");
 	ok(map_empty(vis_map_prefix(map, str8("404"))), "Empty prefix map");
 
-	ok(!map_get(map, "404"), "Get non-existing key");
-	ok(!map_closest(map, "404"), "Closest non-existing key");
+	ok(!vis_map_get(map, str8("404")), "Get non-existing key");
+	ok(!vis_map_closest(map, str8("404")), "Closest non-existing key");
 
-	ok(!map_put(map, "a", NULL) && map_empty(map) && !map_get(map, "a"), "Put NULL value");
-	ok(map_put(map, "a", &values[0]) && !map_empty(map) && get(map, "a", &values[0]), "Put 1");
+	ok(!map_put(map, "a", NULL) && map_empty(map) && !vis_map_get(map, str8("a")), "Put NULL value");
+	ok(map_put(map, "a", &values[0]) && !map_empty(map) && get(map, str8("a"), &values[0]), "Put 1");
 	ok(map_first(map, &key) == &values[0] && strcmp(key, "a") == 0, "First on map with 1 value");
 	key = NULL;
 	ok(map_first(vis_map_prefix(map, str8("a")), &key) == &values[0] && strcmp(key, "a") == 0, "First on prefix map");
 	ok(!map_empty(vis_map_prefix(map, str8("a"))), "Contains existing key");
-	ok(map_closest(map, "a") == &values[0], "Closest match existing key");
-	ok(!map_put(map, "a", &values[1]) && get(map, "a", &values[0]), "Put duplicate");
-	ok(map_put(map, "cafebabe", &values[2]) && get(map, "cafebabe", &values[2]), "Put 2");
-	ok(map_put(map, "cafe", &values[1]) && get(map, "cafe", &values[1]), "Put 3");
+	ok(vis_map_closest(map, str8("a")) == &values[0], "Closest match existing key");
+	ok(!map_put(map, "a", &values[1]) && get(map, str8("a"), &values[0]), "Put duplicate");
+	ok(map_put(map, "cafebabe", &values[2]) && get(map, str8("cafebabe"), &values[2]), "Put 2");
+	ok(map_put(map, "cafe", &values[1]) && get(map, str8("cafe"), &values[1]), "Put 3");
 	key = NULL;
 	ok(map_first(vis_map_prefix(map, str8("cafe")), &key) == &values[1] && strcmp(key, "cafe") == 0, "First on prefix map with multiple suffixes");
 
@@ -75,7 +75,7 @@ int main(int argc, char *argv[]) {
 	map_iterate(copy, once, &counter);
 	ok(counter == 1, "Iterate stop condition");
 
-	ok(!map_get(map, "ca") && !map_closest(map, "ca"), "Closest ambigious");
+	ok(!vis_map_get(map, str8("ca")) && !vis_map_closest(map, str8("ca")), "Closest ambigious");
 
 	int visited[] = { 0, 0, 0 };
 
@@ -99,9 +99,9 @@ int main(int argc, char *argv[]) {
 	ok(map_empty(vis_map_prefix(map, str8("404"))), "Empty map for non-existing prefix");
 
 	ok(!map_delete(map, "404"), "Delete non-existing key");
-	ok(map_delete(map, "cafe") == &values[1] && !map_get(map, "cafe"), "Delete existing key");
-	ok(map_closest(map, "cafe") == &values[2], "Closest unambigious");
-	ok(map_put(map, "cafe", &values[1]) && get(map, "cafe", &values[1]), "Put 3 again");
+	ok(map_delete(map, "cafe") == &values[1] && !vis_map_get(map, str8("cafe")), "Delete existing key");
+	ok(vis_map_closest(map, str8("cafe")) == &values[2], "Closest unambigious");
+	ok(map_put(map, "cafe", &values[1]) && get(map, str8("cafe"), &values[1]), "Put 3 again");
 
 	map_clear(map);
 	ok(map_empty(map), "Empty after clean");

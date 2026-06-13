@@ -162,45 +162,36 @@ vis_option_free(VisOption *opt)
 }
 
 VIS_EXPORT bool
-vis_option_register(Vis *vis, const char *names[], VisOptionFlags flags,
+vis_option_register(Vis *vis, u8 *name, s64 name_length, VisOptionFlags flags,
                     VisOptionSetFunction *set, VisOptionGetFunction *get,
                     void *set_context, void *get_context, const char *help)
 {
-	if (!names || !names[0])
-		return false;
-
-	for (const char **name = names; *name; name++) {
-		if (map_get(vis->options, *name))
-			return false;
+	str8 ns = {.data = name, .length = name_length};
+	bool result = false;
+	if (ns.length > 0 && !vis_map_get(vis->options, ns)) {
+		VisOption *opt = calloc(1, sizeof *opt);
+		char *name_copy = strndup((char *)ns.data, ns.length);
+		result = opt && name_copy;
+		if (result) {
+			opt->names[0]    = name_copy;
+			opt->flags       = flags;
+			opt->set         = set;
+			opt->get         = get;
+			opt->set_context = set_context;
+			opt->get_context = get_context;
+			if (help) opt->help = strdup(help);
+			map_put(vis->options, name_copy, opt);
+		} else {
+			free(opt);
+		}
 	}
-	VisOption *opt = calloc(1, sizeof *opt);
-	if (!opt)
-		return false;
-	for (size_t i = 0; i < countof(opt->names)-1 && names[i]; i++) {
-		if (!(opt->names[i] = strdup(names[i])))
-			goto err;
-	}
-	opt->flags       = flags;
-	opt->set         = set;
-	opt->get         = get;
-	opt->set_context = set_context;
-	opt->get_context = get_context;
-#if CONFIG_HELP
-	if (help && !(opt->help = strdup(help)))
-		goto err;
-#endif
-	for (const char **name = names; *name; name++)
-		map_put(vis->options, *name, opt);
-	return true;
-err:
-	vis_option_free(opt);
-	return false;
+	return result;
 }
 
 VIS_EXPORT bool
 vis_option_unregister(Vis *vis, const char *name)
 {
-	VisOption *opt = map_get(vis->options, name);
+	VisOption *opt = vis_map_get(vis->options, str8_from_c_str(name));
 	if (!opt)
 		return false;
 	for (const char **alias = opt->names; *alias; alias++) {
@@ -214,14 +205,7 @@ vis_option_unregister(Vis *vis, const char *name)
 VIS_INTERNAL VisOption *
 vis_option_from_string(Vis *vis, str8 string)
 {
-	// TODO(rnp): this is pure c brain damage. make map system use strings with length
-	char name[256];
-
-	uint64_t length = MIN(countof(name) - 1, (uint64_t)string.length);
-	memcpy(name, string.data, length);
-	name[length] = 0;
-
-	VisOption *result = map_closest(vis->options, name);
+	VisOption *result = vis_map_closest(vis->options, string);
 	return result;
 }
 

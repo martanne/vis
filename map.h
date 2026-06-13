@@ -19,7 +19,7 @@ VIS_INTERNAL Map *map_new(void);
  * @param map The map to search within.
  * @param key The key to look up.
  */
-VIS_INTERNAL void *map_get(const Map *map, const char *key);
+VIS_INTERNAL void *vis_map_get(const Map *map, str8 key);
 /**
  * Get first element of the map, or ``NULL`` if empty.
  * @param map The map to query.
@@ -33,7 +33,7 @@ VIS_INTERNAL void *map_first(const Map *map, const char **key);
  * @return The corresponding value, if the given prefix is unique.
  * Otherwise ``NULL``.
  */
-VIS_INTERNAL void *map_closest(const Map *map, const char *prefix);
+VIS_INTERNAL void *vis_map_closest(const Map *map, str8 prefix);
 /**
  * Store a key value pair in the map.
  * @param map The map to store the key-value pair in.

@@ -716,7 +716,7 @@ static void command_free(Command *cmd) {
 }
 
 static const CommandDef *command_lookup(Vis *vis, const char *name) {
-	return map_closest(vis->cmds, name);
+	return vis_map_closest(vis->cmds, str8_from_c_str(name));
 }
 
 static Command *command_parse(Vis *vis, const char **s, enum SamError *err) {

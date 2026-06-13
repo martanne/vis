@@ -1200,7 +1200,8 @@ typedef VIS_OPTION_GET_FUNCTION(VisOptionGetFunction);
 /**
  * Register a new ``:set`` option.
  * @param vis The editor instance.
- * @param names A ``NULL`` terminated array of option names.
+ * @param name The name for the option.
+ * @param name_length The length of `name`.
  * @param option_flags The applicable option flags.
  * @param set The function which handles a set operation for the option.
  * @param get The function which handles a get operation for the option.
@@ -1208,10 +1209,10 @@ typedef VIS_OPTION_GET_FUNCTION(VisOptionGetFunction);
  * @param get_context User supplied context pointer passed to the get function.
  * @param help Optional single line help text.
  * @rst
- * .. note:: Fails if any of the given option names is already registered.
+ * .. note:: Fails if any the given option name is already registered.
  * @endrst
  */
-VIS_EXPORT bool vis_option_register(Vis *vis, const char *names[], VisOptionFlags flags,
+VIS_EXPORT bool vis_option_register(Vis *vis, uint8_t *name, int64_t name_length, VisOptionFlags flags,
                                     VisOptionSetFunction *set, VisOptionGetFunction *get,
                                     void *set_context, void *get_context, const char *help);
 /**

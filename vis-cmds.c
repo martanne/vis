@@ -50,7 +50,7 @@ err:
 bool vis_cmd_unregister(Vis *vis, const char *name) {
 	if (!name)
 		return true;
-	CmdUser *cmd = map_get(vis->usercmds, name);
+	CmdUser *cmd = vis_map_get(vis->usercmds, str8_from_c_str(name));
 	if (!cmd)
 		return false;
 	if (!map_delete(vis->cmds, name))
@@ -62,7 +62,7 @@ bool vis_cmd_unregister(Vis *vis, const char *name) {
 }
 
 static bool cmd_user(Vis *vis, Win *win, Command *cmd, const char *argv[], Selection *sel, Filerange *range) {
-	CmdUser *user = map_get(vis->usercmds, argv[0]);
+	CmdUser *user = vis_map_get(vis->usercmds, str8_from_c_str(argv[0]));
 	return user && user->func(vis, win, user->data, cmd->flags == '!', argv, sel, range);
 }
 

@@ -933,7 +933,7 @@ const char *vis_keys_next(Vis *vis, const char *keys) {
 			char key[VIS_KEY_LENGTH_MAX];
 			memcpy(key, start, end - start);
 			key[end - start] = '\0';
-			if (map_get(vis->actions, key))
+			if (vis_map_get(vis->actions, str8_from_c_str(key)))
 				return end + 1;
 		}
 	}
@@ -1047,13 +1047,14 @@ vis_keys_process(Vis *vis, s64 pos)
 				if (!mode->bindings)
 					continue;
 				/* keep track of longest matching binding */
-				KeyBinding *match = map_get(mode->bindings, start);
+				str8 start8 = str8_from_c_str(start);
+				KeyBinding *match = vis_map_get(mode->bindings, start8);
 				if (match && end > binding_end) {
 					binding = match;
 					binding_end = end;
 				}
 
-				const Map *pmap = vis_map_prefix(mode->bindings, str8_from_c_str(start));
+				const Map *pmap = vis_map_prefix(mode->bindings, start8);
 				PrefixCompletion completions = {
 					.vis = vis,
 					.len = cur - start,
@@ -1103,7 +1104,7 @@ vis_keys_process(Vis *vis, s64 pos)
 				/* test for special editor key command */
 				char tmp = end[-1];
 				end[-1] = '\0';
-				action = map_get(vis->actions, start+1);
+				action = vis_map_get(vis->actions, str8_from_c_str(start + 1));
 				end[-1] = tmp;
 				if (action) {
 					size_t len = end - start;
@@ -1186,7 +1187,7 @@ static const char *getkey(Vis *vis) {
 	                  !vis->keymap_disabled;
 	vis->keymap_disabled = false;
 	if (key.type == TERMKEY_TYPE_UNICODE && use_keymap) {
-		const char *mapped = map_get(vis->keymap, (char *)key.utf8);
+		const char *mapped = vis_map_get(vis->keymap, str8_from_c_str((char *)key.utf8));
 		if (mapped) {
 			size_t len = strlen(mapped)+1;
 			if (len <= sizeof(key.utf8))

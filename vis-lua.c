@@ -1169,7 +1169,7 @@ VIS_INTERNAL int
 vis_lua_option_register(lua_State *L)
 {
 	Vis *vis = obj_ref_check(L, 1, "vis");
-	const char *name = luaL_checkstring(L, 2);
+	str8        name = vis_lua_check_str8(L, 2);
 	str8        type = vis_lua_check_str8(L, 3);
 	const void *set  = func_ref_new(L, 4);
 	const void *get  = 0;
@@ -1186,7 +1186,7 @@ vis_lua_option_register(lua_State *L)
 		flags |= VIS_OPTION_TYPE_NUMBER;
 	else
 		flags |= VIS_OPTION_TYPE_BOOL;
-	bool ret = vis_option_register(vis, (const char *[]){name, 0}, flags, vis_lua_option_set_handler,
+	bool ret = vis_option_register(vis, name.data, name.length, flags, vis_lua_option_set_handler,
 	                               vis_lua_option_get_handler, (void *)set, (void *)get, help);
 	lua_pushboolean(L, ret);
 	return 1;
