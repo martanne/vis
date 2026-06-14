@@ -22,7 +22,43 @@
 
 typedef struct Address Address;
 typedef struct Command Command;
-typedef struct CommandDef CommandDef;
+
+typedef enum {
+	CMD_NONE          = 0,
+	CMD_CMD           = 1 << 0,  /* does the command take a sub/target command? */
+	CMD_REGEX         = 1 << 1,  /* regex after command? */
+	CMD_REGEX_DEFAULT = 1 << 2,  /* is the regex optional i.e. can we use a default? */
+	CMD_COUNT         = 1 << 3,  /* does the command support a count as in s2/../? */
+	CMD_TEXT          = 1 << 4,  /* does the command need a text to insert? */
+	CMD_ADDRESS_NONE  = 1 << 5,  /* is it an error to specify an address for the command? */
+	CMD_ADDRESS_POS   = 1 << 6,  /* no address implies an empty range at current cursor position */
+	CMD_ADDRESS_LINE  = 1 << 7,  /* if no address is given, use the current line */
+	CMD_ADDRESS_AFTER = 1 << 8,  /* if no address is given, begin at the start of the next line */
+	CMD_ADDRESS_ALL   = 1 << 9,  /* if no address is given, apply to whole file (independent of #cursors) */
+	CMD_ADDRESS_ALL_1CURSOR = 1 << 10, /* if no address is given and only 1 cursor exists, apply to whole file */
+	CMD_SHELL         = 1 << 11, /* command needs a shell command as argument */
+	CMD_FORCE         = 1 << 12, /* can the command be forced with ! */
+	CMD_ARGV          = 1 << 13, /* whether shell like argument splitting is desired */
+	CMD_ONCE          = 1 << 14, /* command should only be executed once, not for every selection */
+	CMD_LOOP          = 1 << 15, /* a looping construct like `x`, `y` */
+	CMD_GROUP         = 1 << 16, /* a command group { ... } */
+	CMD_DESTRUCTIVE   = 1 << 17, /* command potentially destroys window */
+} VisSamCommandFlags;
+
+#define VIS_SAM_COMMAND_FUNCTION(name) bool name(Vis *, Win *, Command *, const char *argv[], Selection *, Filerange *)
+typedef VIS_SAM_COMMAND_FUNCTION(VisSamCommandFunction);
+
+typedef struct {
+	str8 name;                  /* command name */
+	VIS_HELP_DECL(const char *help;) /* short, one-line help text */
+	VisSamCommandFlags flags;
+	const char *defcmd;         /* name of a default target command */
+	VisSamCommandFunction *func;
+
+	// NOTE(rnp): for user defined commands
+	VisCommandFunction *user_function;
+	void               *user_context;
+} CommandDef;
 
 struct SamChange {
 	enum SamChangeType {
@@ -64,34 +100,6 @@ struct Command {
 	Command *next;            /* next command in {} group */
 };
 
-struct CommandDef {
-	const char *name;                    /* command name */
-	VIS_HELP_DECL(const char *help;)     /* short, one-line help text */
-	enum {
-		CMD_NONE          = 0,       /* standalone command without any arguments */
-		CMD_CMD           = 1 << 0,  /* does the command take a sub/target command? */
-		CMD_REGEX         = 1 << 1,  /* regex after command? */
-		CMD_REGEX_DEFAULT = 1 << 2,  /* is the regex optional i.e. can we use a default? */
-		CMD_COUNT         = 1 << 3,  /* does the command support a count as in s2/../? */
-		CMD_TEXT          = 1 << 4,  /* does the command need a text to insert? */
-		CMD_ADDRESS_NONE  = 1 << 5,  /* is it an error to specify an address for the command? */
-		CMD_ADDRESS_POS   = 1 << 6,  /* no address implies an empty range at current cursor position */
-		CMD_ADDRESS_LINE  = 1 << 7,  /* if no address is given, use the current line */
-		CMD_ADDRESS_AFTER = 1 << 8,  /* if no address is given, begin at the start of the next line */
-		CMD_ADDRESS_ALL   = 1 << 9,  /* if no address is given, apply to whole file (independent of #cursors) */
-		CMD_ADDRESS_ALL_1CURSOR = 1 << 10, /* if no address is given and only 1 cursor exists, apply to whole file */
-		CMD_SHELL         = 1 << 11, /* command needs a shell command as argument */
-		CMD_FORCE         = 1 << 12, /* can the command be forced with ! */
-		CMD_ARGV          = 1 << 13, /* whether shell like argument splitting is desired */
-		CMD_ONCE          = 1 << 14, /* command should only be executed once, not for every selection */
-		CMD_LOOP          = 1 << 15, /* a looping construct like `x`, `y` */
-		CMD_GROUP         = 1 << 16, /* a command group { ... } */
-		CMD_DESTRUCTIVE   = 1 << 17, /* command potentially destroys window */
-	} flags;
-	const char *defcmd;                  /* name of a default target command */
-	bool (*func)(Vis*, Win*, Command*, const char *argv[], Selection*, Filerange*); /* command implementation */
-};
-
 /* sam commands */
 static bool cmd_insert(Vis*, Win*, Command*, const char *argv[], Selection*, Filerange*);
 static bool cmd_append(Vis*, Win*, Command*, const char *argv[], Selection*, Filerange*);
@@ -128,151 +136,152 @@ static bool cmd_unmap(Vis*, Win*, Command*, const char *argv[], Selection*, File
 static bool cmd_langmap(Vis*, Win*, Command*, const char *argv[], Selection*, Filerange*);
 static bool cmd_user(Vis*, Win*, Command*, const char *argv[], Selection*, Filerange*);
 
-static const CommandDef cmds[] = {
+static const CommandDef vis_sam_command_definitions[] = {
 	//      name            help
 	//      flags, default command, implementation
 	{
-		"a",            VIS_HELP("Append text after range")
-		CMD_TEXT, NULL, cmd_append
+		str8_comp("a"), VIS_HELP("Append text after range")
+		CMD_TEXT, 0, cmd_append
 	}, {
-		"c",            VIS_HELP("Change text in range")
-		CMD_TEXT, NULL, cmd_change
+		str8_comp("c"), VIS_HELP("Change text in range")
+		CMD_TEXT, 0, cmd_change
 	}, {
-		"d",            VIS_HELP("Delete text in range")
-		CMD_NONE, NULL, cmd_delete
+		str8_comp("d"), VIS_HELP("Delete text in range")
+		CMD_NONE, 0, cmd_delete
 	}, {
-		"g",            VIS_HELP("If range contains regexp, run command")
+		str8_comp("g"), VIS_HELP("If range contains regexp, run command")
 		CMD_COUNT|CMD_REGEX|CMD_CMD, "p", cmd_guard
 	}, {
-		"i",            VIS_HELP("Insert text before range")
-		CMD_TEXT, NULL, cmd_insert
+		str8_comp("i"), VIS_HELP("Insert text before range")
+		CMD_TEXT, 0, cmd_insert
 	}, {
-		"p",            VIS_HELP("Create selection covering range")
-		CMD_NONE, NULL, cmd_print
+		str8_comp("p"), VIS_HELP("Create selection covering range")
+		CMD_NONE, 0, cmd_print
 	}, {
-		"s",            VIS_HELP("Substitute: use x/pattern/ c/replacement/ instead")
-		CMD_SHELL|CMD_ADDRESS_LINE, NULL, cmd_substitute
+		str8_comp("s"), VIS_HELP("Substitute: use x/pattern/ c/replacement/ instead")
+		CMD_ADDRESS_LINE, 0, cmd_substitute
 	}, {
-		"v",            VIS_HELP("If range does not contain regexp, run command")
+		str8_comp("v"), VIS_HELP("If range does not contain regexp, run command")
 		CMD_COUNT|CMD_REGEX|CMD_CMD, "p", cmd_guard
 	}, {
-		"x",            VIS_HELP("Set range and run command on each match")
+		str8_comp("x"), VIS_HELP("Set range and run command on each match")
 		CMD_CMD|CMD_REGEX|CMD_REGEX_DEFAULT|CMD_ADDRESS_ALL_1CURSOR|CMD_LOOP, "p", cmd_extract
 	}, {
-		"y",            VIS_HELP("As `x` but select unmatched text")
+		str8_comp("y"), VIS_HELP("As `x` but select unmatched text")
 		CMD_CMD|CMD_REGEX|CMD_ADDRESS_ALL_1CURSOR|CMD_LOOP, "p", cmd_extract
 	}, {
-		"X",            VIS_HELP("Run command on files whose name matches")
-		CMD_CMD|CMD_REGEX|CMD_REGEX_DEFAULT|CMD_ADDRESS_NONE|CMD_ONCE, NULL, cmd_files
+		str8_comp("X"), VIS_HELP("Run command on files whose name matches")
+		CMD_CMD|CMD_REGEX|CMD_REGEX_DEFAULT|CMD_ADDRESS_NONE|CMD_ONCE, 0, cmd_files
 	}, {
-		"Y",            VIS_HELP("As `X` but select unmatched files")
-		CMD_CMD|CMD_REGEX|CMD_ADDRESS_NONE|CMD_ONCE, NULL, cmd_files
+		str8_comp("Y"), VIS_HELP("As `X` but select unmatched files")
+		CMD_CMD|CMD_REGEX|CMD_ADDRESS_NONE|CMD_ONCE, 0, cmd_files
 	}, {
-		">",            VIS_HELP("Send range to stdin of command")
-		CMD_SHELL|CMD_ADDRESS_LINE, NULL, cmd_pipeout
+		str8_comp(">"), VIS_HELP("Send range to stdin of command")
+		CMD_SHELL|CMD_ADDRESS_LINE, 0, cmd_pipeout
 	}, {
-		"<",            VIS_HELP("Replace range by stdout of command")
-		CMD_SHELL|CMD_ADDRESS_POS, NULL, cmd_pipein
+		str8_comp("<"), VIS_HELP("Replace range by stdout of command")
+		CMD_SHELL|CMD_ADDRESS_POS, 0, cmd_pipein
 	}, {
-		"|",            VIS_HELP("Pipe range through command")
-		CMD_SHELL, NULL, cmd_filter
+		str8_comp("|"), VIS_HELP("Pipe range through command")
+		CMD_SHELL, 0, cmd_filter
 	}, {
-		"!",            VIS_HELP("Run the command")
-		CMD_SHELL|CMD_ONCE|CMD_ADDRESS_NONE, NULL, cmd_launch
+		str8_comp("!"), VIS_HELP("Run the command")
+		CMD_SHELL|CMD_ONCE|CMD_ADDRESS_NONE, 0, cmd_launch
 	}, {
-		"w",            VIS_HELP("Write range to named file")
-		CMD_ARGV|CMD_FORCE|CMD_ONCE|CMD_ADDRESS_ALL, NULL, cmd_write
+		str8_comp("w"), VIS_HELP("Write range to named file")
+		CMD_ARGV|CMD_FORCE|CMD_ONCE|CMD_ADDRESS_ALL, 0, cmd_write
 	}, {
-		"r",            VIS_HELP("Replace range by contents of file")
-		CMD_ARGV|CMD_ADDRESS_AFTER, NULL, cmd_read
+		str8_comp("r"), VIS_HELP("Replace range by contents of file")
+		CMD_ARGV|CMD_ADDRESS_AFTER, 0, cmd_read
 	}, {
-		"{",            VIS_HELP("Start of command group")
-		CMD_GROUP, NULL, NULL
+		str8_comp("{"), VIS_HELP("Start of command group")
+		CMD_GROUP, 0, 0
 	}, {
-		"}",            VIS_HELP("End of command group" )
-		CMD_NONE, NULL, NULL
+		str8_comp("}"), VIS_HELP("End of command group" )
+		CMD_NONE, 0, 0
 	}, {
-		"e",            VIS_HELP("Edit file")
-		CMD_ARGV|CMD_FORCE|CMD_ONCE|CMD_ADDRESS_NONE|CMD_DESTRUCTIVE, NULL, cmd_edit
+		str8_comp("e"), VIS_HELP("Edit file")
+		CMD_ARGV|CMD_FORCE|CMD_ONCE|CMD_ADDRESS_NONE|CMD_DESTRUCTIVE, 0, cmd_edit
 	}, {
-		"q",            VIS_HELP("Quit the current window")
-		CMD_ARGV|CMD_FORCE|CMD_ONCE|CMD_ADDRESS_NONE|CMD_DESTRUCTIVE, NULL, vis_cmd_quit
+		str8_comp("q"), VIS_HELP("Quit the current window")
+		CMD_ARGV|CMD_FORCE|CMD_ONCE|CMD_ADDRESS_NONE|CMD_DESTRUCTIVE, 0, vis_cmd_quit
 	}, {
-		"cd",           VIS_HELP("Change directory")
-		CMD_ARGV|CMD_ONCE|CMD_ADDRESS_NONE, NULL, cmd_cd
+		str8_comp("cd"), VIS_HELP("Change directory")
+		CMD_ARGV|CMD_ONCE|CMD_ADDRESS_NONE, 0, cmd_cd
 	},
 	/* vi(m) related commands */
 	{
-		"help",         VIS_HELP("Show this help")
-		CMD_ARGV|CMD_ONCE|CMD_ADDRESS_NONE, NULL, cmd_help
+		str8_comp("help"), VIS_HELP("Show this help")
+		CMD_ARGV|CMD_ONCE|CMD_ADDRESS_NONE, 0, cmd_help
 	}, {
-		"map",          VIS_HELP("Map key binding `:map <mode> <lhs> <rhs>`")
-		CMD_ARGV|CMD_FORCE|CMD_ONCE|CMD_ADDRESS_NONE, NULL, cmd_map
+		str8_comp("map"),  VIS_HELP("Map key binding `:map <mode> <lhs> <rhs>`")
+		CMD_ARGV|CMD_FORCE|CMD_ONCE|CMD_ADDRESS_NONE, 0, cmd_map
 	}, {
-		"map-window",   VIS_HELP("As `map` but window local")
-		CMD_ARGV|CMD_FORCE|CMD_ONCE|CMD_ADDRESS_NONE, NULL, cmd_map
+		str8_comp("map-window"), VIS_HELP("As `map` but window local")
+		CMD_ARGV|CMD_FORCE|CMD_ONCE|CMD_ADDRESS_NONE, 0, cmd_map
 	}, {
-		"unmap",        VIS_HELP("Unmap key binding `:unmap <mode> <lhs>`")
-		CMD_ARGV|CMD_ONCE|CMD_ADDRESS_NONE, NULL, cmd_unmap
+		str8_comp("unmap"), VIS_HELP("Unmap key binding `:unmap <mode> <lhs>`")
+		CMD_ARGV|CMD_ONCE|CMD_ADDRESS_NONE, 0, cmd_unmap
 	}, {
-		"unmap-window", VIS_HELP("As `unmap` but window local")
-		CMD_ARGV|CMD_ONCE|CMD_ADDRESS_NONE, NULL, cmd_unmap
+		str8_comp("unmap-window"), VIS_HELP("As `unmap` but window local")
+		CMD_ARGV|CMD_ONCE|CMD_ADDRESS_NONE, 0, cmd_unmap
 	}, {
-		"langmap",      VIS_HELP("Map keyboard layout `:langmap <locale-keys> <latin-keys>`")
-		CMD_ARGV|CMD_FORCE|CMD_ONCE|CMD_ADDRESS_NONE, NULL, cmd_langmap
+		str8_comp("langmap"), VIS_HELP("Map keyboard layout `:langmap <locale-keys> <latin-keys>`")
+		CMD_ARGV|CMD_FORCE|CMD_ONCE|CMD_ADDRESS_NONE, 0, cmd_langmap
 	}, {
-		"new",          VIS_HELP("Create new window")
-		CMD_ARGV|CMD_ONCE|CMD_ADDRESS_NONE, NULL, cmd_new
+		str8_comp("new"), VIS_HELP("Create new window")
+		CMD_ARGV|CMD_ONCE|CMD_ADDRESS_NONE, 0, cmd_new
 	}, {
-		"open",         VIS_HELP("Open file")
-		CMD_ARGV|CMD_ONCE|CMD_ADDRESS_NONE, NULL, cmd_open
+		str8_comp("open"), VIS_HELP("Open file")
+		CMD_ARGV|CMD_ONCE|CMD_ADDRESS_NONE, 0, cmd_open
 	}, {
-		"qall",         VIS_HELP("Exit vis")
-		CMD_ARGV|CMD_FORCE|CMD_ONCE|CMD_ADDRESS_NONE|CMD_DESTRUCTIVE, NULL, vis_cmd_qall
+		str8_comp("qall"), VIS_HELP("Exit vis")
+		CMD_ARGV|CMD_FORCE|CMD_ONCE|CMD_ADDRESS_NONE|CMD_DESTRUCTIVE, 0, vis_cmd_qall
 	}, {
-		"set",          VIS_HELP("Set option")
+		str8_comp("set"),  VIS_HELP("Set option")
 		CMD_ARGV|CMD_ONCE|CMD_ADDRESS_NONE, NULL, cmd_set
 	}, {
-		"split",        VIS_HELP("Horizontally split window")
-		CMD_ARGV|CMD_ONCE|CMD_ADDRESS_NONE, NULL, cmd_split
+		str8_comp("split"), VIS_HELP("Horizontally split window")
+		CMD_ARGV|CMD_ONCE|CMD_ADDRESS_NONE, 0, cmd_split
 	}, {
-		"vnew",         VIS_HELP("As `:new` but split vertically")
-		CMD_ARGV|CMD_ONCE|CMD_ADDRESS_NONE, NULL, cmd_vnew
+		str8_comp("vnew"), VIS_HELP("As `:new` but split vertically")
+		CMD_ARGV|CMD_ONCE|CMD_ADDRESS_NONE, 0, cmd_vnew
 	}, {
-		"vsplit",       VIS_HELP("Vertically split window")
-		CMD_ARGV|CMD_ONCE|CMD_ADDRESS_NONE, NULL, cmd_vsplit
+		str8_comp("vsplit"), VIS_HELP("Vertically split window")
+		CMD_ARGV|CMD_ONCE|CMD_ADDRESS_NONE, 0, cmd_vsplit
 	}, {
-		"wq",           VIS_HELP("Write file and quit")
-		CMD_ARGV|CMD_FORCE|CMD_ONCE|CMD_ADDRESS_ALL|CMD_DESTRUCTIVE, NULL, cmd_wq
+		str8_comp("wq"), VIS_HELP("Write file and quit")
+		CMD_ARGV|CMD_FORCE|CMD_ONCE|CMD_ADDRESS_ALL|CMD_DESTRUCTIVE, 0, cmd_wq
 	}, {
-		"earlier",      VIS_HELP("Go to older text state")
-		CMD_ARGV|CMD_ONCE|CMD_ADDRESS_NONE, NULL, cmd_earlier_later
+		str8_comp("earlier"), VIS_HELP("Go to older text state")
+		CMD_ARGV|CMD_ONCE|CMD_ADDRESS_NONE, 0, cmd_earlier_later
 	}, {
-		"later",        VIS_HELP("Go to newer text state")
-		CMD_ARGV|CMD_ONCE|CMD_ADDRESS_NONE, NULL, cmd_earlier_later
+		str8_comp("later"), VIS_HELP("Go to newer text state")
+		CMD_ARGV|CMD_ONCE|CMD_ADDRESS_NONE, 0, cmd_earlier_later
 	},
-	{ NULL, VIS_HELP(NULL) CMD_NONE, NULL, NULL },
 };
 
 static const CommandDef cmddef_select = {
-	NULL, VIS_HELP(NULL) CMD_NONE, NULL, cmd_select
+	str8_comp(""), VIS_HELP(NULL) CMD_NONE, NULL, cmd_select
 };
 
-bool sam_init(Vis *vis) {
-	if (!(vis->cmds = map_new()))
-		return false;
-	bool ret = true;
-	for (const CommandDef *cmd = cmds; cmd && cmd->name; cmd++)
-		ret &= map_put(vis->cmds, cmd->name, cmd);
+VIS_INTERNAL bool
+vis_sam_init(Vis *vis)
+{
+	vis->cmds    = map_new();
+	vis->options = map_new();
+	bool result = vis->cmds && vis->options;
+	if (result) {
+		for (u64 i = 0; i < countof(vis_sam_command_definitions); i++) {
+			const CommandDef *cmd = vis_sam_command_definitions + i;
+			result &= vis_map_put(vis->cmds, cmd->name, cmd);
+		}
 
-	if (!(vis->options = map_new()))
-		return false;
-	for (unsigned i = 0; i < countof(vis_options_table); i++) {
-		for (const char *const *name = vis_options_table[i].names; *name; name++)
-			ret &= map_put(vis->options, *name, vis_options_table + i);
+		for (u64 i = 0; i < countof(vis_options_table); i++)
+			for (const char *const *name = vis_options_table[i].names; *name; name++)
+				result &= vis_map_put(vis->options, str8_from_c_str(*name), vis_options_table + i);
 	}
-
-	return ret;
+	return result;
 }
 
 const char *sam_error(enum SamError err) {

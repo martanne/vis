@@ -179,8 +179,10 @@ vis_option_register(Vis *vis, u8 *name, s64 name_length, VisOptionFlags flags,
 			opt->get         = get;
 			opt->set_context = set_context;
 			opt->get_context = get_context;
+			#if CONFIG_HELP
 			if (help) opt->help = strdup(help);
-			map_put(vis->options, name_copy, opt);
+			#endif
+			vis_map_put(vis->options, ns, opt);
 		} else {
 			free(opt);
 		}
@@ -189,13 +191,14 @@ vis_option_register(Vis *vis, u8 *name, s64 name_length, VisOptionFlags flags,
 }
 
 VIS_EXPORT bool
-vis_option_unregister(Vis *vis, const char *name)
+vis_option_unregister(Vis *vis, u8 *name, s64 name_length)
 {
-	VisOption *opt = vis_map_get(vis->options, str8_from_c_str(name));
+	str8 ns = {.data = name, .length = name_length};
+	VisOption *opt = vis_map_get(vis->options, ns);
 	if (!opt)
 		return false;
 	for (const char **alias = opt->names; *alias; alias++) {
-		if (!map_delete(vis->options, *alias))
+		if (!vis_map_delete(vis->options, str8_from_c_str(*alias)))
 			return false;
 	}
 	vis_option_free(opt);

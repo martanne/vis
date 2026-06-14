@@ -1137,12 +1137,14 @@ VIS_EXPORT bool vis_macro_replay(Vis *vis, enum VisRegister reg);
 VIS_EXPORT bool vis_cmd(Vis *vis, const char *cmd);
 
 /** Command handler function. */
-typedef bool (VisCommandFunction)(Vis*, Win*, void *data, bool force,
-	const char *argv[], Selection*, Filerange*);
+#define VIS_COMMAND_FUNCTION(name) bool name(Vis *vis, Win *win, void *data, bool force, \
+                                             const char *argv[], Selection *sel, Filerange *range)
+typedef VIS_COMMAND_FUNCTION(VisCommandFunction);
 /**
  * Register new ``:``-command.
  * @param vis The editor instance.
  * @param name The command name.
+ * @param name_length The length of `name`.
  * @param help Optional single line help text.
  * @param context User supplied context pointer passed to the handler function.
  * @param func The function implementing the command logic.
@@ -1150,14 +1152,16 @@ typedef bool (VisCommandFunction)(Vis*, Win*, void *data, bool force,
  * .. note:: Any unique prefix of the command name will invoke the command.
  * @endrst
  */
-VIS_EXPORT bool vis_cmd_register(Vis *vis, const char *name, const char *help, void *context, VisCommandFunction *func);
+VIS_EXPORT bool vis_command_register(Vis *vis, uint8_t *name, int64_t name_length, const char *help,
+                                     void *context, VisCommandFunction *func);
 
 /**
  * Unregister ``:``-command.
  * @param vis The editor instance.
  * @param name The name of the command to unregister.
+ * @param name_length The length of `name`.
  */
-VIS_EXPORT bool vis_cmd_unregister(Vis *vis, const char *name);
+VIS_EXPORT bool vis_command_unregister(Vis *vis, uint8_t *name, int64_t name_length);
 
 /** @} */
 
@@ -1219,11 +1223,12 @@ VIS_EXPORT bool vis_option_register(Vis *vis, uint8_t *name, int64_t name_length
  * Unregister an existing ``:set`` option.
  * @param vis The editor instance.
  * @param name The name of the option to unregister.
+ * @param name_length The length of `name`.
  * @rst
  * .. note:: Also unregisters all aliases as given to `vis_option_register`.
  * @endrst
  */
-VIS_EXPORT bool vis_option_unregister(Vis *vis, const char *name);
+VIS_EXPORT bool vis_option_unregister(Vis *vis, uint8_t *name, int64_t name_length);
 
 /**
  * Execute any kind (``:``, ``?``, ``/``) of prompt command

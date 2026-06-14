@@ -93,9 +93,9 @@ vis_map_closest(const Map *map, str8 prefix)
 	return result;
 }
 
-bool map_put(Map *map, const char *k, const void *value)
+VIS_INTERNAL bool
+vis_map_put(Map *map, str8 ks, const void *value)
 {
-	str8 ks = str8_from_c_str(k);
 	Map *n;
 	Node *newn;
 	size_t byte_num;
@@ -168,52 +168,44 @@ bool map_put(Map *map, const char *k, const void *value)
 	return true;
 }
 
-void *map_delete(Map *map, const char *key)
+VIS_INTERNAL void *
+vis_map_delete(Map *map, str8 key)
 {
-	size_t len = strlen(key);
-	const uint8_t *bytes = (const uint8_t *)key;
-	Map *parent = NULL, *n;
-	void *value = NULL;
-	uint8_t direction;
-
+	void *result = 0;
 	/* Empty map? */
-	if (!map->u.n)
-		return NULL;
-
-	/* Find closest, but keep track of parent. */
-	n = map;
-	/* Anything with NULL value is a node. */
-	while (!n->v) {
-		uint8_t c = 0;
-
-		parent = n;
-		if (n->u.n->byte_num < len) {
-			c = bytes[n->u.n->byte_num];
-			direction = (c >> n->u.n->bit_num) & 1;
-		} else {
-			direction = 0;
+	if (map->u.n) {
+		Map *parent = 0, *n = map;
+		u8 direction = 0;
+		/* Anything with NULL value is a node. */
+		while (!n->v) {
+			u8 c = 0;
+			parent = n;
+			if (n->u.n->byte_num < key.length) {
+				c = key.data[n->u.n->byte_num];
+				direction = (c >> n->u.n->bit_num) & 1;
+			} else {
+				direction = 0;
+			}
+			n = n->u.n->child + direction;
 		}
-		n = &n->u.n->child[direction];
+
+		if (str8_equal(key, str8_from_c_str(n->u.s))) {
+			free((char*)n->u.s);
+			result = n->v;
+
+			if (!parent) {
+				/* We deleted last node. */
+				map->u.n = 0;
+			} else {
+				Node *old = parent->u.n;
+				/* Raise other node to parent. */
+				*parent = old->child[!direction];
+				free(old);
+			}
+		}
 	}
 
-	/* Did we find it? */
-	if (strcmp(key, n->u.s))
-		return NULL;
-
-	free((char*)n->u.s);
-	value = n->v;
-
-	if (!parent) {
-		/* We deleted last node. */
-		map->u.n = NULL;
-	} else {
-		Node *old = parent->u.n;
-		/* Raise other node to parent. */
-		*parent = old->child[!direction];
-		free(old);
-	}
-
-	return value;
+	return result;
 }
 
 static bool iterate(Map n, bool (*handle)(const char *, void *, void *), const void *data)
@@ -247,12 +239,14 @@ static bool first(const char *key, void *value, void *data)
 	return false;
 }
 
-void *map_first(const Map *map, const char **key)
+VIS_INTERNAL void *
+vis_map_first(const Map *map, str8 *key)
 {
-	KeyValue kv = { 0 };
+	KeyValue kv = {0};
+	// TODO(rnp): cleanup, we shouldn't need to go through a callback just to get a node
 	map_iterate(map, first, &kv);
 	if (key && kv.key)
-		*key = kv.key;
+		*key = str8_from_c_str(kv.key);
 	return kv.value;
 }
 
@@ -275,26 +269,29 @@ void map_clear(Map *map)
 	map->v = NULL;
 }
 
-static bool copy(Map *dest, Map n)
+VIS_INTERNAL bool
+vis_map_copy_recurse(Map *dest, Map n)
 {
+	bool result = true;
 	if (!n.v) {
-		return copy(dest, n.u.n->child[0]) &&
-		       copy(dest, n.u.n->child[1]);
+		result = vis_map_copy_recurse(dest, n.u.n->child[0]) &&
+		         vis_map_copy_recurse(dest, n.u.n->child[1]);
 	} else {
-		if (!map_put(dest, n.u.s, n.v) && vis_map_get(dest, str8_from_c_str(n.u.s)) != n.v) {
-			map_delete(dest, n.u.s);
-			return map_put(dest, n.u.s, n.v);
+		str8 str = str8_from_c_str(n.u.s);
+		if (!vis_map_put(dest, str, n.v) && vis_map_get(dest, str) != n.v) {
+			vis_map_delete(dest, str);
+			result = vis_map_put(dest, str, n.v);
 		}
-		return true;
 	}
+	return result;
 }
 
-bool map_copy(Map *dest, Map *src)
+VIS_INTERNAL bool
+vis_map_copy(Map *dest, Map *src)
 {
-	if (!src || !src->u.n)
-		return true;
-
-	return copy(dest, *src);
+	bool result = !src || !src->u.n;
+	if (!result) result = vis_map_copy_recurse(dest, *src);
+	return result;
 }
 
 bool map_empty(const Map *map)

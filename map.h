@@ -25,7 +25,7 @@ VIS_INTERNAL void *vis_map_get(const Map *map, str8 key);
  * @param map The map to query.
  * @param key Updated with the key of the first element.
  */
-VIS_INTERNAL void *map_first(const Map *map, const char **key);
+VIS_INTERNAL void *vis_map_first(const Map *map, str8 *key);
 /**
  * Lookup element by unique prefix match.
  * @param map The map to search within.
@@ -42,20 +42,20 @@ VIS_INTERNAL void *vis_map_closest(const Map *map, str8 prefix);
  * @return False if we run out of memory, or if the key
  * already appears in the map.
  */
-VIS_INTERNAL bool map_put(Map *map, const char *key, const void *value);
+VIS_INTERNAL bool vis_map_put(Map *map, str8 key, const void *value);
 /**
  * Remove a map element.
  * @param map The map to remove the element from.
  * @param key The key of the element to remove.
  * @return The removed entry or ``NULL`` if no such element exists.
  */
-VIS_INTERNAL void *map_delete(Map *map, const char *key);
+VIS_INTERNAL void *vis_map_delete(Map *map, str8 key);
 /**
  * Copy all entries from ``src`` into ``dest``, overwrites existing entries in ``dest``.
  * @param dest The destination map.
  * @param src The source map.
  */
-VIS_INTERNAL bool map_copy(Map *dest, Map *src);
+VIS_INTERNAL bool vis_map_copy(Map *dest, Map *src);
 /**
  * Ordered iteration over a map.
  * Invokes the passed callback for every map entry.

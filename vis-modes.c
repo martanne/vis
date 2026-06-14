@@ -100,7 +100,7 @@ enum VisMode vis_mode_from(Vis *vis, const char *name) {
 }
 
 static bool mode_unmap(Mode *mode, const char *key) {
-	return mode && mode->bindings && map_delete(mode->bindings, key);
+	return mode && mode->bindings && vis_map_delete(mode->bindings, str8_from_c_str(key));
 }
 
 bool vis_mode_unmap(Vis *vis, enum VisMode id, const char *key) {
@@ -118,9 +118,10 @@ static bool mode_map(Vis *vis, Mode *mode, bool force, const char *key, const Ke
 		return false;
 	if (!mode->bindings && !(mode->bindings = map_new()))
 		return false;
+	str8 ks = str8_from_c_str(key);
 	if (force)
-		map_delete(mode->bindings, key);
-	return map_put(mode->bindings, key, binding);
+		vis_map_delete(mode->bindings, ks);
+	return vis_map_put(mode->bindings, ks, binding);
 }
 
 bool vis_mode_map(Vis *vis, enum VisMode id, bool force, const char *key, const KeyBinding *binding) {

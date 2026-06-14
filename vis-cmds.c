@@ -1,69 +1,60 @@
-/* this file is included from sam.c */
-
-#include "vis-lua.h"
-
-// FIXME: avoid this redirection?
-typedef struct {
-	CommandDef def;
-	VisCommandFunction *func;
-	void *data;
-} CmdUser;
-
-static void cmdfree(CmdUser *cmd) {
-	if (!cmd)
-		return;
-	free((char*)cmd->def.name);
-	free(VIS_HELP_USE((char*)cmd->def.help));
-	free(cmd);
+VIS_INTERNAL void
+vis_command_free(CommandDef *cmd)
+{
+	if (cmd) {
+		free((char*)cmd->name.data);
+		VIS_HELP_DECL(free((char*)cmd->help);)
+		free(cmd);
+	}
 }
 
-bool vis_cmd_register(Vis *vis, const char *name, const char *help, void *data, VisCommandFunction *func) {
-	if (!name)
-		return false;
+VIS_INTERNAL bool
+vis_command_register(Vis *vis, u8 *name, s64 name_length, const char *help, void *data, VisCommandFunction *func)
+{
+	str8 ns = {.data = name, .length = name_length};
 	if (!vis->usercmds && !(vis->usercmds = map_new()))
 		return false;
-	CmdUser *cmd = calloc(1, sizeof *cmd);
+	CommandDef *cmd = calloc(1, sizeof(*cmd));
 	if (!cmd)
 		return false;
-	if (!(cmd->def.name = strdup(name)))
+	if (!(cmd->name.data = (u8 *)strndup((char *)ns.data, ns.length)))
 		goto err;
-#if CONFIG_HELP
-	if (help && !(cmd->def.help = strdup(help)))
+	cmd->name.length = ns.length;
+	#if CONFIG_HELP
+	if (help) cmd->help = strdup(help);
+	#endif
+	cmd->flags         = CMD_ARGV|CMD_FORCE|CMD_ONCE|CMD_ADDRESS_ALL;
+	cmd->func          = cmd_user;
+	cmd->user_function = func;
+	cmd->user_context  = data;
+	if (!vis_map_put(vis->cmds, ns, cmd))
 		goto err;
-#endif
-	cmd->def.flags = CMD_ARGV|CMD_FORCE|CMD_ONCE|CMD_ADDRESS_ALL;
-	cmd->def.func = cmd_user;
-	cmd->func = func;
-	cmd->data = data;
-	if (!map_put(vis->cmds, name, &cmd->def))
-		goto err;
-	if (!map_put(vis->usercmds, name, cmd)) {
-		map_delete(vis->cmds, name);
+	if (!vis_map_put(vis->usercmds, ns, cmd)) {
+		vis_map_delete(vis->cmds, ns);
 		goto err;
 	}
 	return true;
 err:
-	cmdfree(cmd);
+	vis_command_free(cmd);
 	return false;
 }
 
-bool vis_cmd_unregister(Vis *vis, const char *name) {
-	if (!name)
-		return true;
-	CmdUser *cmd = vis_map_get(vis->usercmds, str8_from_c_str(name));
-	if (!cmd)
-		return false;
-	if (!map_delete(vis->cmds, name))
-		return false;
-	if (!map_delete(vis->usercmds, name))
-		return false;
-	cmdfree(cmd);
-	return true;
+VIS_INTERNAL bool
+vis_command_unregister(Vis *vis, u8 *name, s64 name_length)
+{
+	str8 ns = {.data = name, .length = name_length};
+	bool result = true;
+	if (ns.length > 0) {
+		CommandDef *cmd = vis_map_get(vis->usercmds, ns);
+		result = cmd != 0 && vis_map_delete(vis->cmds, ns) && vis_map_delete(vis->usercmds, ns);
+		if (result) vis_command_free(cmd);
+	}
+	return result;
 }
 
 static bool cmd_user(Vis *vis, Win *win, Command *cmd, const char *argv[], Selection *sel, Filerange *range) {
-	CmdUser *user = vis_map_get(vis->usercmds, str8_from_c_str(argv[0]));
-	return user && user->func(vis, win, user->data, cmd->flags == '!', argv, sel, range);
+	CommandDef *user = vis_map_get(vis->usercmds, str8_from_c_str(argv[0]));
+	return user && user->user_function(vis, win, user->user_context, cmd->flags == '!', argv, sel, range);
 }
 
 /* parse human-readable boolean value in s. If successful, store the result in
@@ -500,20 +491,21 @@ static bool print_cmd(const char *key, void *value, void *data)
 	char usage[256];
 	Vis  *vis = ((void **)data)[0];
 	Text *txt = ((void **)data)[1];
-	snprintf(usage, sizeof usage, "%s%s%s%s%s%s%s",
-	         cmd->name,
+	snprintf(usage, sizeof usage, "%.*s%s%s%s%s%s%s%s",
+	         (s32)cmd->name.length, cmd->name.data,
+	         str8_equal(cmd->name, str8("s")) ? "/regexp/text/" : "",
 	         (cmd->flags & CMD_FORCE) ? "[!]" : "",
 	         (cmd->flags & CMD_TEXT) ? "/text/" : "",
 	         (cmd->flags & CMD_REGEX) ? "/regexp/" : "",
 	         (cmd->flags & CMD_CMD) ? " command" : "",
-	         (cmd->flags & CMD_SHELL) ? (!strcmp(cmd->name, "s") ? "/regexp/text/" : " shell-command") : "",
+	         (cmd->flags & CMD_SHELL) ? " shell-command" : "",
 	         (cmd->flags & CMD_ARGV) ? " [args...]" : "");
 	return text_appendf(vis, txt, "  %-30s %s\n", usage, help ? help : "");
 }
 
 static bool print_cmd_name(const char *key, void *value, void *data) {
 	CommandDef *cmd = value;
-	bool result = buffer_append(data, cmd->name, strlen(cmd->name));
+	bool result = buffer_append(data, cmd->name.data, cmd->name.length);
 	return result && buffer_append(data, "\n", 1);
 }
 

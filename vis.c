@@ -404,7 +404,7 @@ bool vis_window_split(Win *original) {
 		if (original->modes[i].bindings)
 			win->modes[i].bindings = map_new();
 		if (win->modes[i].bindings)
-			map_copy(win->modes[i].bindings, original->modes[i].bindings);
+			vis_map_copy(win->modes[i].bindings, original->modes[i].bindings);
 	}
 	win->file = original->file;
 	win_options_set(win, original->options);
@@ -555,7 +555,7 @@ bool vis_init(Vis *vis)
 		goto err;
 	if (!(vis->keymap = map_new()))
 		goto err;
-	if (!sam_init(vis))
+	if (!vis_sam_init(vis))
 		goto err;
 	struct passwd *pw;
 	char *shell = getenv("SHELL");
@@ -598,14 +598,14 @@ void vis_cleanup(Vis *vis)
 	}
 	ui_terminal_free(&vis->ui);
 	if (vis->usercmds) {
-		const char *name = 0;
-		while (map_first(vis->usercmds, &name) && vis_cmd_unregister(vis, name));
+		str8 name = {0};
+		while (vis_map_first(vis->usercmds, &name) && vis_command_unregister(vis, name.data, name.length));
 	}
 	map_free(vis->usercmds);
 	map_free(vis->cmds);
 	if (vis->options) {
-		const char *name = 0;
-		while (map_first(vis->options, &name) && vis_option_unregister(vis, name));
+		str8 name = {0};
+		while (vis_map_first(vis->options, &name) && vis_option_unregister(vis, name.data, name.length));
 	}
 	map_free(vis->options);
 	map_free(vis->actions);
@@ -672,11 +672,11 @@ void vis_replace_key(Vis *vis, const char *data, size_t len) {
 }
 
 bool vis_action_register(Vis *vis, const KeyAction *action) {
-	return map_put(vis->actions, action->name, action);
+	return vis_map_put(vis->actions, str8_from_c_str(action->name), action);
 }
 
 bool vis_keymap_add(Vis *vis, const char *key, const char *mapping) {
-	return map_put(vis->keymap, key, mapping);
+	return vis_map_put(vis->keymap, str8_from_c_str(key), mapping);
 }
 
 void vis_keymap_disable(Vis *vis) {

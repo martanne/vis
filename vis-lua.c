@@ -1203,13 +1203,13 @@ VIS_INTERNAL int
 vis_lua_option_unregister(lua_State *L)
 {
 	Vis *vis = obj_ref_check(L, 1, "vis");
-	const char *name = luaL_checkstring(L, 2);
-	bool ret = vis_option_unregister(vis, name);
-	lua_pushboolean(L, ret);
+	str8 name = vis_lua_check_str8(L, 2);
+	lua_pushboolean(L, vis_option_unregister(vis, name.data, name.length));
 	return 1;
 }
 
-static bool command_lua(Vis *vis, Win *win, void *data, bool force, const char *argv[], Selection *sel, Filerange *range) {
+VIS_INTERNAL VIS_COMMAND_FUNCTION(vis_lua_command_handler)
+{
 	lua_State *L = vis->lua;
 	if (!L || !func_ref_get(L, data))
 		return false;
@@ -1255,10 +1255,10 @@ static bool command_lua(Vis *vis, Win *win, void *data, bool force, const char *
  */
 static int command_register(lua_State *L) {
 	Vis *vis = obj_ref_check(L, 1, "vis");
-	const char *name = luaL_checkstring(L, 2);
+	str8        name = vis_lua_check_str8(L, 2);
 	const void *func = func_ref_new(L, 3);
 	const char *help = luaL_optstring(L, 4, "");
-	bool ret = vis_cmd_register(vis, name, help, (void*)func, command_lua);
+	bool ret = vis_command_register(vis, name.data, name.length, help, (void*)func, vis_lua_command_handler);
 	lua_pushboolean(L, ret);
 	return 1;
 }

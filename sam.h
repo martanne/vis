@@ -23,7 +23,7 @@ enum SamError {
 	SAM_ERR_COUNT,
 };
 
-VIS_INTERNAL bool sam_init(Vis*);
+VIS_INTERNAL bool vis_sam_init(Vis *);
 VIS_INTERNAL enum SamError sam_cmd(Vis*, const char *cmd);
 VIS_INTERNAL const char *sam_error(enum SamError);
 
