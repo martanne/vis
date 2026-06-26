@@ -62,7 +62,7 @@
 </p>
     <h3>Info:</h3>
     <ul>
-        <li><strong>Release</strong>: 94406a0</li>
+        <li><strong>Release</strong>: 7a6e50f</li>
         <li><strong>License</strong>: ISC</li>
         <li><strong>Author</strong>: Marc André Tanner</li>
     </ul>
@@ -136,7 +136,7 @@
 	</tr>
 	<tr>
 	<td class="name" nowrap><a href="#vis:close">vis:close(inputfd)</a></td>
-	<td class="summary">Closes a stream returned by ???.</td>
+	<td class="summary">Closes a stream returned by <a href="index.html#vis:communicate">vis:communicate</a>.</td>
 	</tr>
 	<tr>
 	<td class="name" nowrap><a href="#vis:command">vis:command(command)</a></td>
@@ -523,7 +523,7 @@
 	</tr>
 	<tr>
 	<td class="name" nowrap><a href="#process_response">process_response(name, response_type, code, buffer)</a></td>
-	<td class="summary">The response received from the process started via ???.</td>
+	<td class="summary">The response received from the process started via <a href="index.html#vis:communicate">vis:communicate</a>.</td>
 	</tr>
 	<tr>
 	<td class="name" nowrap><a href="#quit">quit()</a></td>
@@ -813,6 +813,7 @@
 
     <h3>See also:</h3>
     <ul>
+         <a href="index.html#window.options">window.options</a>
     </ul>
 
 
@@ -955,6 +956,8 @@
 
     <h3>See also:</h3>
     <ul>
+         <li><a href="index.html#vis:map">vis:map</a></li>
+         <li><a href="index.html#window:map">window:map</a></li>
     </ul>
 
 
@@ -964,7 +967,7 @@
     <strong>vis:close(inputfd)</strong>
     </dt>
     <dd>
-    Closes a stream returned by ???.
+    Closes a stream returned by <a href="index.html#vis:communicate">vis:communicate</a>.
 
 
     <h3>Parameters:</h3>
@@ -1243,7 +1246,7 @@
     <dd>
     Insert keys at all cursor positions of active window.
 <p> This function behaves as if the keys were entered in insert mode,
- but in contrast to ??? it bypasses the input queue,
+ but in contrast to <a href="index.html#vis:feedkeys">vis:feedkeys</a> it bypasses the input queue,
  meaning mappings do not apply and the keys will not be recorded in macros.
 
 
@@ -1260,6 +1263,7 @@
 
     <h3>See also:</h3>
     <ul>
+         <a href="index.html#vis:feedkeys">vis:feedkeys</a>
     </ul>
 
 
@@ -1305,6 +1309,7 @@
 
     <h3>See also:</h3>
     <ul>
+         <a href="index.html#window:map">window:map</a>
     </ul>
 
     <h3>Usage:</h3>
@@ -1355,6 +1360,7 @@
 
     <h3>See also:</h3>
     <ul>
+         <a href="index.html#window:map">window:map</a>
     </ul>
 
     <h3>Usage:</h3>
@@ -1403,6 +1409,7 @@ vis:<span class="function-name">map</span>(vis.modes.NORMAL, <span class="string
 
     <h3>See also:</h3>
     <ul>
+         <a href="index.html#window:map">window:map</a>
     </ul>
 
     <h3>Usage:</h3>
@@ -1437,6 +1444,7 @@ vis:<span class="function-name">map</span>(vis.modes.NORMAL, <span class="string
 
     <h3>See also:</h3>
     <ul>
+         <a href="index.html#vis:map">vis:map</a>
     </ul>
 
     <h3>Usage:</h3>
@@ -1846,7 +1854,7 @@ vis:<span class="function-name">option_register</span>(<span class="string">"foo
     <dd>
     Replace keys at all cursor positions of active window.
 <p> This function behaves as if the keys were entered in replace mode,
- but in contrast to ??? it bypasses the input queue,
+ but in contrast to <a href="index.html#vis:feedkeys">vis:feedkeys</a> it bypasses the input queue,
  meaning mappings do not apply and the keys will not be recorded in macros.
 
 
@@ -1863,6 +1871,7 @@ vis:<span class="function-name">option_register</span>(<span class="string">"foo
 
     <h3>See also:</h3>
     <ul>
+         <a href="index.html#vis:feedkeys">vis:feedkeys</a>
     </ul>
 
 
@@ -1937,6 +1946,7 @@ vis:<span class="function-name">option_register</span>(<span class="string">"foo
 
     <h3>See also:</h3>
     <ul>
+         <a href="index.html#window:unmap">window:unmap</a>
     </ul>
 
 
@@ -2086,6 +2096,7 @@ vis:<span class="function-name">option_register</span>(<span class="string">"foo
 
     <h3>See also:</h3>
     <ul>
+         <a href="index.html#vis:mark_names">vis:mark_names</a>
     </ul>
 
 
@@ -2176,6 +2187,7 @@ vis:<span class="function-name">option_register</span>(<span class="string">"foo
 
     <h3>See also:</h3>
     <ul>
+         <a href="index.html#vis.options">vis.options</a>
     </ul>
 
 
@@ -2349,7 +2361,7 @@ vis:<span class="function-name">option_register</span>(<span class="string">"foo
     </dt>
     <dd>
     Set up a window local key mapping.
- The function signatures are the same as for ???.
+ The function signatures are the same as for <a href="index.html#vis:map">vis:map</a>.
 
 
     <h3>Parameters:</h3>
@@ -2363,6 +2375,7 @@ vis:<span class="function-name">option_register</span>(<span class="string">"foo
 
     <h3>See also:</h3>
     <ul>
+         <a href="index.html#vis:map">vis:map</a>
     </ul>
 
 
@@ -2580,7 +2593,7 @@ vis:<span class="function-name">option_register</span>(<span class="string">"foo
     </dt>
     <dd>
     Remove a window local key mapping.
- The function signature is the same as for ???.
+ The function signature is the same as for <a href="index.html#vis:unmap">vis:unmap</a>.
 
 
     <h3>Parameters:</h3>
@@ -2594,6 +2607,7 @@ vis:<span class="function-name">option_register</span>(<span class="string">"foo
 
     <h3>See also:</h3>
     <ul>
+         <a href="index.html#vis:unmap">vis:unmap</a>
     </ul>
 
 
@@ -2643,7 +2657,7 @@ vis:<span class="function-name">option_register</span>(<span class="string">"foo
 <p> 1. Read out the current selection position
  2. Perform text modifications
  3. Update the selection position
-<p> This is what ??? and ??? do internally.
+<p> This is what <a href="index.html#vis:insert">vis:insert</a> and <a href="index.html#vis:replace">vis:replace</a> do internally.
 
           </div>
             <h3>Usage:</h3>
@@ -3510,6 +3524,8 @@ win.selection.pos = pos + #data</pre>
 
     <h3>See also:</h3>
     <ul>
+         <li><a href="index.html#vis:map">vis:map</a></li>
+         <li><a href="index.html#window:map">window:map</a></li>
     </ul>
 
 
@@ -3520,8 +3536,8 @@ win.selection.pos = pos + #data</pre>
           <div class="section-description">
 
 <p> This section describes the contract between the editor core and Lua
- key handling functions mapped to symbolic keys using either ???
- or ???.
+ key handling functions mapped to symbolic keys using either <a href="index.html#vis:map">vis:map</a>
+ or <a href="index.html#window:map">window:map</a>.
 
           </div>
     <dl class="function">
@@ -3561,6 +3577,9 @@ win.selection.pos = pos + #data</pre>
 
     <h3>See also:</h3>
     <ul>
+         <li><a href="index.html#vis:action_register">vis:action_register</a></li>
+         <li><a href="index.html#vis:map">vis:map</a></li>
+         <li><a href="index.html#window:map">window:map</a></li>
     </ul>
 
     <h3>Usage:</h3>
@@ -3741,14 +3760,14 @@ win.selection.pos = pos + #data</pre>
     <strong>process_response(name, response_type, code, buffer)</strong>
     </dt>
     <dd>
-    The response received from the process started via ???.
+    The response received from the process started via <a href="index.html#vis:communicate">vis:communicate</a>.
 
 
     <h3>Parameters:</h3>
     <ul>
         <li><span class="parameter">name</span>
             <span class="types"><a class="type" href="https://www.lua.org/manual/5.1/manual.html#5.4">string</a></span>
-         the name of process given to ???
+         the name of process given to <a href="index.html#vis:communicate">vis:communicate</a>
         </li>
         <li><span class="parameter">response_type</span>
             <span class="types"><a class="type" href="https://www.lua.org/manual/5.1/manual.html#5.4">string</a></span>
@@ -4114,7 +4133,7 @@ win.selection.pos = pos + #data</pre>
 </div> <!-- id="main" -->
 <div id="about">
 <i>generated by <a href="http://github.com/lunarmodules/LDoc">LDoc 1.5.0</a></i>
-<i style="float:right;">Last updated 2026-06-22 12:54:17 </i>
+<i style="float:right;">Last updated 2026-06-26 13:53:51 </i>
 </div> <!-- id="about" -->
 </div> <!-- id="container" -->
 </body>
