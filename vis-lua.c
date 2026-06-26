@@ -702,8 +702,8 @@ static int message(lua_State *L) {
  * @tparam Function func the lua function implementing the key action (see @{keyhandler})
  * @tparam[opt] string help the single line help text as displayed in `:help`
  * @treturn KeyAction action the registered key action
- * @see Vis:map
- * @see Window:map
+ * @see vis:map
+ * @see window:map
  */
 static int action_register(lua_State *L) {
 	Vis *vis = obj_ref_check(L, 1, "vis");
@@ -771,7 +771,7 @@ err:
  * @tparam function func the Lua function to handle the key mapping (see @{keyhandler})
  * @tparam[opt] string help the single line help text as displayed in `:help`
  * @treturn bool whether the mapping was successfully established
- * @see Window:map
+ * @see window:map
  * @usage
  * vis:map(vis.modes.INSERT, "<C-k>", function(keys)
  * 	if #keys < 2 then
@@ -795,7 +795,7 @@ err:
  * @tparam string key the key to map
  * @tparam string alias the key to map to
  * @treturn bool whether the mapping was successfully established
- * @see Window:map
+ * @see window:map
  * @usage
  * vis:map(vis.modes.NORMAL, "j", "k")
  */
@@ -807,7 +807,7 @@ err:
  * @tparam string key the key to map
  * @param action the action to map
  * @treturn bool whether the mapping was successfully established
- * @see Window:map
+ * @see window:map
  * @usage
  * local action = vis:action_register("info", function()
  *   vis:info("Mapping works!")
@@ -827,7 +827,7 @@ static int map(lua_State *L) {
  * @tparam int mode the mode from which the mapping should be removed
  * @tparam string key the mapping to remove
  * @treturn bool whether the mapping was successfully removed
- * @see Window:unmap
+ * @see window:unmap
  */
 static int keyunmap(lua_State *L, Vis *vis, Win *win) {
 	enum VisMode mode = luaL_checkinteger(L, 2);
@@ -857,7 +857,7 @@ static int unmap(lua_State *L) {
  * for key, help in pairs(bindings) do
  * 	-- do something
  * end
- * @see Vis:map
+ * @see vis:map
  */
 static bool binding_collect(const char *key, void *value, void *ctx) {
 	lua_State *L = ctx;
@@ -1300,12 +1300,12 @@ static int feedkeys(lua_State *L) {
  * Insert keys at all cursor positions of active window.
  *
  * This function behaves as if the keys were entered in insert mode,
- * but in contrast to @{Vis:feedkeys} it bypasses the input queue,
+ * but in contrast to @{vis:feedkeys} it bypasses the input queue,
  * meaning mappings do not apply and the keys will not be recorded in macros.
  *
  * @function insert
  * @tparam string keys the keys to insert
- * @see Vis:feedkeys
+ * @see vis:feedkeys
  */
 static int insert(lua_State *L) {
 	Vis *vis = obj_ref_check(L, 1, "vis");
@@ -1319,12 +1319,12 @@ static int insert(lua_State *L) {
  * Replace keys at all cursor positions of active window.
  *
  * This function behaves as if the keys were entered in replace mode,
- * but in contrast to @{Vis:feedkeys} it bypasses the input queue,
+ * but in contrast to @{vis:feedkeys} it bypasses the input queue,
  * meaning mappings do not apply and the keys will not be recorded in macros.
  *
  * @function replace
  * @tparam string keys the keys to insert
- * @see Vis:feedkeys
+ * @see vis:feedkeys
  */
 static int replace(lua_State *L) {
 	Vis *vis = obj_ref_check(L, 1, "vis");
@@ -1444,7 +1444,7 @@ static int redraw(lua_State *L) {
 	return 0;
 }
 /***
- * Closes a stream returned by @{Vis:communicate}.
+ * Closes a stream returned by @{vis:communicate}.
  *
  * @function close
  * @tparam io.file inputfd the stream to be closed
@@ -1688,7 +1688,7 @@ static const struct luaL_Reg vis_lua[] = {
  * @tfield[opt=false] boolean ignorecase {ic}
  * @tfield[opt="auto"] string loadmethod `"auto"`, `"read"`, or `"mmap"`.
  * @tfield[opt="/bin/sh"] string shell
- * @see Window.options
+ * @see window.options
  */
 
 VIS_INTERNAL int
@@ -1868,7 +1868,7 @@ static const struct luaL_Reg registers_funcs[] = {
  * Most of these marks are stored in the associated File object, meaning they
  * are the same in all windows displaying the same file.
  * @field marks array to access the marks of this window by single letter name
- * @see Vis:mark_names
+ * @see vis:mark_names
  */
 static int window_index(lua_State *L) {
 	Win *win = obj_ref_check(L, 1, VIS_LUA_TYPE_WINDOW);
@@ -2004,10 +2004,10 @@ static int window_selections_iterator(lua_State *L) {
 
 /***
  * Set up a window local key mapping.
- * The function signatures are the same as for @{Vis:map}.
+ * The function signatures are the same as for @{vis:map}.
  * @function map
  * @param ...
- * @see Vis:map
+ * @see vis:map
  */
 static int window_map(lua_State *L) {
 	Win *win = obj_ref_check(L, 1, VIS_LUA_TYPE_WINDOW);
@@ -2016,10 +2016,10 @@ static int window_map(lua_State *L) {
 
 /***
  * Remove a window local key mapping.
- * The function signature is the same as for @{Vis:unmap}.
+ * The function signature is the same as for @{vis:unmap}.
  * @function unmap
  * @param ...
- * @see Vis:unmap
+ * @see vis:unmap
  */
 static int window_unmap(lua_State *L) {
 	Win *win = obj_ref_check(L, 1, VIS_LUA_TYPE_WINDOW);
@@ -2189,7 +2189,7 @@ static const struct luaL_Reg window_funcs[] = {
  * @tfield[opt=true] boolean statusbar
  * @tfield[opt=8] int tabwidth {tw}
  * @tfield[opt=0] int wrapcolumn {wc}
- * @see Vis.options
+ * @see vis.options
  */
 
 VIS_INTERNAL int
@@ -2314,7 +2314,7 @@ static const struct luaL_Reg window_selections_funcs[] = {
  * 2. Perform text modifications
  * 3. Update the selection position
  *
- * This is what @{Vis:insert} and @{Vis:replace} do internally.
+ * This is what @{vis:insert} and @{vis:replace} do internally.
  *
  * @type Selection
  * @usage
@@ -3018,16 +3018,16 @@ static const struct luaL_Reg window_marks_funcs[] = {
  * @tfield int REPLACE
  * @tfield int VISUAL
  * @tfield int VISUAL_LINE
- * @see Vis:map
- * @see Window:map
+ * @see vis:map
+ * @see window:map
  */
 
 /***
  * Key Handling.
  *
  * This section describes the contract between the editor core and Lua
- * key handling functions mapped to symbolic keys using either @{Vis:map}
- * or @{Window:map}.
+ * key handling functions mapped to symbolic keys using either @{vis:map}
+ * or @{window:map}.
  *
  * @section Key_Handling
  */
@@ -3049,9 +3049,9 @@ static const struct luaL_Reg window_marks_funcs[] = {
  * @function keyhandler
  * @tparam string keys the keys following the mapping
  * @treturn int the number of *bytes* being consumed by the function (see above)
- * @see Vis:action_register
- * @see Vis:map
- * @see Window:map
+ * @see vis:action_register
+ * @see vis:map
+ * @see window:map
  * @usage
  * vis:map(vis.modes.INSERT, "<C-k>", function(keys)
  * 	if #keys < 2 then
@@ -3662,9 +3662,9 @@ static void vis_lua_term_csi(Vis *vis, const long *csi) {
 	lua_pop(L, 1);
 }
 /***
- * The response received from the process started via @{Vis:communicate}.
+ * The response received from the process started via @{vis:communicate}.
  * @function process_response
- * @tparam string name the name of process given to @{Vis:communicate}
+ * @tparam string name the name of process given to @{vis:communicate}
  * @tparam string response_type can be "STDOUT" or "STDERR" if new output was received in corresponding channel, "SIGNAL" if the process was terminated by a signal or "EXIT" when the process terminated normally
  * @tparam int code the exit code number if response_type is "EXIT", or the signal number if response_type is "SIGNAL"
  * @tparam string buffer the available content sent by the process
