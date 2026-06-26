@@ -1,6 +1,13 @@
 #ifndef UTIL_H
 #define UTIL_H
 
+#ifndef VERSION
+  #define VERSION "unknown"
+#endif
+#ifndef VIS_API
+  #define VIS_API 0
+#endif
+
 #ifndef VIS_INTERNAL
   #define VIS_INTERNAL static
 #endif

@@ -486,6 +486,21 @@ static const char *keymapping(Vis *vis, const char *keys, const Arg *arg) {
  * version information in `git describe` format, same as reported by `vis -v`.
  */
 /***
+ * API Version
+ * @tfield int API
+ * an integer revision count of the commit vis was built with. Meant for plugin authors who want
+ * to write backward compatible plugins.
+ * @usage
+ * local api = vis.API
+ * if not api then
+ * 	local api_string = vis.VERSION:match('v%d*%.(%d*).*')
+ * 	api = api_string and tonumber(api_string) or 0
+ * end
+ * if api > 3160 then
+ * 	-- use feature only available after revision 3160
+ * end
+ */
+/***
  * Lua API object types
  * @field types meta tables of userdata objects used for type checking
  * @local
@@ -3363,6 +3378,9 @@ static void vis_lua_init(Vis *vis)
 
 	lua_pushliteral(L, VERSION);
 	lua_setfield(L, -2, "VERSION");
+
+	lua_pushinteger(L, VIS_API);
+	lua_setfield(L, -2, "API");
 
 	// NOTE: vis.ui table
 	lua_newtable(L);

@@ -8,9 +8,10 @@ MANUALS = $(EXECUTABLES:=.1)
 DOCUMENTATION = LICENSE README.md
 
 VERSION = $(shell git describe --always --dirty 2>/dev/null || echo "v0.9-git")
+API     = $(shell git rev-list --count HEAD 2>/dev/null || echo "0")
 
 CFLAGS_STD ?= -std=c99 -DNDEBUG
-CFLAGS_STD += -DVERSION=\"${VERSION}\"
+CFLAGS_STD += -DVERSION=\"${VERSION}\" -DVIS_API=$(API)
 LDFLAGS_STD ?= -lc
 
 CFLAGS_VIS = $(CFLAGS_AUTO) $(CFLAGS_TERMKEY) $(CFLAGS_CURSES) $(CFLAGS_ACL) \
