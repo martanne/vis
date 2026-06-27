@@ -1749,6 +1749,10 @@ static const struct luaL_Reg vis_option_funcs[] = {
  * Current layout.
  * @tfield layouts layout current window layout.
  */
+/***
+ * Default style IDs
+ * @tfield table style_ids ids for all default styles.
+ */
 
 VIS_INTERNAL int
 vis_lua_ui_index(lua_State *L)
@@ -1776,14 +1780,6 @@ vis_lua_ui_newindex(lua_State *L)
 		}
 	}
 	return newindex_common(L);
-}
-
-VIS_INTERNAL void
-vis_lua_style_define(lua_State *L, Vis *vis)
-{
-	uint16_t style_id = luaL_checkinteger(L, 2);
-	str8     style    = vis_lua_check_str8(L, 3);
-	lua_pushboolean(L, vis_ui_style_define(vis, style_id, style));
 }
 
 /***
@@ -1822,12 +1818,15 @@ vis_lua_ui_style_push(lua_State *L)
  *  associated with the given id
  * @see style
  * @usage
- * ui:style_define(ui.STYLE_DEFAULT, "fore:red")
+ * ui:style_define(ui.style_ids.DEFAULT, "fore:red")
  */
 VIS_INTERNAL int
 vis_lua_ui_style_define(lua_State *L)
 {
-	vis_lua_style_define(L, lua_touserdata(L, lua_upvalueindex(1)));
+	Vis  *vis      = lua_touserdata(L, lua_upvalueindex(1));
+	u16   style_id = luaL_checkinteger(L, 2);
+	str8  style    = vis_lua_check_str8(L, 3);
+	lua_pushboolean(L, vis_ui_style_define(vis, style_id, style));
 	return 1;
 }
 
@@ -2098,25 +2097,6 @@ static int window_unmap(lua_State *L) {
 }
 
 /***
- * Define a display style. Backward compatible name for @{ui:style_define}.
- * @function style_define
- * @tparam int id the style id to use
- * @tparam string style the style definition
- * @treturn bool whether the style definition has been successfully
- *  associated with the given id
- * @see style
- * @see ui:style_define
- * @usage
- * win:style_define(win.STYLE_DEFAULT, "fore:red")
- */
-VIS_INTERNAL int
-vis_lua_window_style_define(lua_State *L)
-{
-	vis_lua_style_define(L, ((Win *)obj_ref_check(L, 1, VIS_LUA_TYPE_WINDOW))->vis);
-	return 1;
-}
-
-/***
  * Style a window range.
  *
  * The style will be cleared after every window redraw.
@@ -2126,7 +2106,7 @@ vis_lua_window_style_define(lua_State *L)
  * @tparam int  finish the end position
  * @see style_define
  * @usage
- * win:style(win.STYLE_DEFAULT, 0, 10)
+ * win:style(ui.style_ids.DEFAULT, 0, 10)
  */
 VIS_INTERNAL int
 vis_lua_window_style(lua_State *L)
@@ -2234,7 +2214,6 @@ static const struct luaL_Reg window_funcs[] = {
 	{ "selections_iterator", window_selections_iterator },
 	{ "map", window_map },
 	{ "unmap", window_unmap },
-	{ "style_define", vis_lua_window_style_define },
 	{ "style", vis_lua_window_style },
 	{ "style_pos", vis_lua_window_style_pos },
 	{ "status", window_status },
@@ -3387,35 +3366,6 @@ static void vis_lua_init(Vis *vis)
 	luaL_setfuncs(L, file_lines_funcs, 0);
 	obj_type_new(L, str8(VIS_LUA_TYPE_WINDOW));
 	luaL_setfuncs(L, window_funcs, 0);
-
-	const struct {
-		VisUiStyle id;
-		const char *name;
-	} styles[] = {
-		{ UI_STYLE_MAX,               "STYLE_MAX"               },
-		{ UI_STYLE_DEFAULT,           "STYLE_DEFAULT"           },
-		{ UI_STYLE_CURSOR,            "STYLE_CURSOR"            },
-		{ UI_STYLE_CURSOR_PRIMARY,    "STYLE_CURSOR_PRIMARY"    },
-		{ UI_STYLE_CURSOR_LINE,       "STYLE_CURSOR_LINE"       },
-		{ UI_STYLE_SELECTION,         "STYLE_SELECTION"         },
-		{ UI_STYLE_LINENUMBER,        "STYLE_LINENUMBER"        },
-		{ UI_STYLE_LINENUMBER_CURSOR, "STYLE_LINENUMBER_CURSOR" },
-		{ UI_STYLE_COLOR_COLUMN,      "STYLE_COLOR_COLUMN"      },
-		{ UI_STYLE_STATUS,            "STYLE_STATUS"            },
-		{ UI_STYLE_STATUS_FOCUSED,    "STYLE_STATUS_FOCUSED"    },
-		{ UI_STYLE_SEPARATOR,         "STYLE_SEPARATOR"         },
-		{ UI_STYLE_INFO,              "STYLE_INFO"              },
-		{ UI_STYLE_EOF,               "STYLE_EOF"               },
-		{ UI_STYLE_WHITESPACE,        "STYLE_WHITESPACE"        },
-	};
-
-	for (uint64_t i = 0; i < countof(styles); i++) {
-		lua_pushinteger(L, styles[i].id);
-		lua_setfield(L, -2, styles[i].name);
-	}
-	// NOTE(rnp): for backwards compatibility, not visible in Ui
-	lua_pushinteger(L, UI_STYLE_MAX);
-	lua_setfield(L, -2, "STYLE_LEXER_MAX");
 
 	obj_type_new(L, str8(VIS_LUA_TYPE_WIN_OPTS));
 	luaL_setfuncs(L, window_option_funcs, 0);
