@@ -3420,7 +3420,7 @@ static void vis_lua_init(Vis *vis)
 				{UI_STYLE_MAX,               "MAX"              },
 				{UI_STYLE_DEFAULT,           "DEFAULT"          },
 				{UI_STYLE_CURSOR,            "CURSOR"           },
-				{UI_STYLE_CURSOR_PRIMARY,    "CURSOR_PRIMARY"   },
+				{UI_STYLE_CURSOR_MATCHING,   "CURSOR_MATCHING"  },
 				{UI_STYLE_CURSOR_LINE,       "CURSOR_LINE"      },
 				{UI_STYLE_SELECTION,         "SELECTION"        },
 				{UI_STYLE_LINENUMBER,        "LINENUMBER"       },

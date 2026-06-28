@@ -98,6 +98,7 @@ vis_prompt_enter(Vis *vis, const char *keys, const Arg *arg)
 	} else {
 		vis->win  = prompt;
 		vis->mode = vis_modes + VIS_MODE_INSERT;
+		vis->prompt_state = PROMPTSTATE_ONELINE;
 	}
 	free(cmd);
 	return keys;

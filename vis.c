@@ -250,7 +250,7 @@ static void window_draw_cursor_matching(Win *win, Selection *cur) {
 		return;
 	if (!view_coord_get(&win->view, pos_match, &line_match, NULL, &col_match))
 		return;
-	vis_ui_window_style_set(&win->vis->ui, line_match->cells + col_match, UI_STYLE_SELECTION);
+	vis_ui_window_style_set(&win->vis->ui, line_match->cells + col_match, UI_STYLE_CURSOR_MATCHING);
 }
 
 static void window_draw_cursor(Win *win, Selection *cur) {
@@ -260,7 +260,8 @@ static void window_draw_cursor(Win *win, Selection *cur) {
 	if (!line)
 		return;
 	Selection *primary = view_selections_primary_get(&win->view);
-	vis_ui_window_style_set(&win->vis->ui, line->cells + cur->col, primary == cur ? UI_STYLE_CURSOR_PRIMARY : UI_STYLE_CURSOR);
+	if (cur != primary)
+		vis_ui_window_style_set(&win->vis->ui, line->cells + cur->col, UI_STYLE_CURSOR);
 	window_draw_cursor_matching(win, cur);
 	return;
 }
@@ -275,7 +276,8 @@ static void window_draw_selections(Win *win) {
 			break;
 		window_draw_cursor(win, s);
 	}
-	window_draw_selection(win, sel);
+	if (win->vis->mode->visual)
+		window_draw_selection(win, sel);
 	window_draw_cursor(win, sel);
 	for (Selection *s = view_selections_next(sel); s; s = view_selections_next(s)) {
 		window_draw_selection(win, s);
