@@ -62,7 +62,7 @@
 </p>
     <h3>Info:</h3>
     <ul>
-        <li><strong>Release</strong>: 0515140</li>
+        <li><strong>Release</strong>: 7d99767</li>
         <li><strong>License</strong>: ISC</li>
         <li><strong>Author</strong>: Marc André Tanner</li>
     </ul>
@@ -265,6 +265,18 @@
 	<td class="name" nowrap><a href="#ui.layout">ui.layout</a></td>
 	<td class="summary">Current layout.</td>
 	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#ui.style_ids">ui.style_ids</a></td>
+	<td class="summary">Default style IDs</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#ui:style_define">ui:style_define(id, style)</a></td>
+	<td class="summary">Define a display style.</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#ui:style_push">ui:style_push([style])</a></td>
+	<td class="summary">Obtain a new style id from style pool</td>
+	</tr>
 </table>
 <h2><a href="#Class_Window">Class Window </a></h2>
 <table class="function_list">
@@ -329,15 +341,11 @@
 	<td class="summary">Set window status line.</td>
 	</tr>
 	<tr>
-	<td class="name" nowrap><a href="#window:style">window:style(id, start, finish[, keep_non_default])</a></td>
+	<td class="name" nowrap><a href="#window:style">window:style(id, start, finish)</a></td>
 	<td class="summary">Style a window range.</td>
 	</tr>
 	<tr>
-	<td class="name" nowrap><a href="#window:style_define">window:style_define(id, style)</a></td>
-	<td class="summary">Define a display style.</td>
-	</tr>
-	<tr>
-	<td class="name" nowrap><a href="#window:style_pos">window:style_pos(id, x, y[, keep_non_default])</a></td>
+	<td class="name" nowrap><a href="#window:style_pos">window:style_pos(id, x, y)</a></td>
 	<td class="summary">Style the single terminal cell at the given coordinates, relative to this window.</td>
 	</tr>
 	<tr>
@@ -2064,6 +2072,104 @@ vis:<span class="function-name">option_register</span>(<span class="string">"foo
 
 
 </dd>
+    <dt>
+    <a name = "ui.style_ids"></a>
+    <strong>ui.style_ids</strong>
+    </dt>
+    <dd>
+    Default style IDs
+
+
+    <ul>
+        <li><span class="parameter">style_ids</span>
+            <span class="types"><a class="type" href="https://www.lua.org/manual/5.1/manual.html#5.5">table</a></span>
+         ids for all default styles.
+        </li>
+    </ul>
+
+
+
+
+
+</dd>
+    <dt>
+    <a name = "ui:style_define"></a>
+    <strong>ui:style_define(id, style)</strong>
+    </dt>
+    <dd>
+    Define a display style.
+
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">id</span>
+            <span class="types"><span class="type">int</span></span>
+         the style id to use
+        </li>
+        <li><span class="parameter">style</span>
+            <span class="types"><a class="type" href="https://www.lua.org/manual/5.1/manual.html#5.4">string</a></span>
+         the style definition
+        </li>
+    </ul>
+
+    <h3>Returns:</h3>
+    <ol>
+
+           <span class="types"><span class="type">bool</span></span>
+        whether the style definition has been successfully
+  associated with the given id
+    </ol>
+
+
+    <h3>See also:</h3>
+    <ul>
+         <a href="index.html#window:style">style</a>
+    </ul>
+
+    <h3>Usage:</h3>
+    <ul>
+        <pre class="example">ui:<span class="function-name">style_define</span>(ui.style_ids.DEFAULT, <span class="string">"fore:red"</span>)</pre>
+    </ul>
+
+</dd>
+    <dt>
+    <a name = "ui:style_push"></a>
+    <strong>ui:style_push([style])</strong>
+    </dt>
+    <dd>
+    Obtain a new style id from style pool
+
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">style</span>
+            <span class="types"><a class="type" href="https://www.lua.org/manual/5.1/manual.html#5.4">string</a></span>
+         the initial style definition to fill the slot
+         (<em>optional</em>)
+        </li>
+    </ul>
+
+    <h3>Returns:</h3>
+    <ol>
+
+           <span class="types"><span class="type">int</span></span>
+        the new style id, nil if none available
+    </ol>
+
+
+    <h3>See also:</h3>
+    <ul>
+         <a href="index.html#window:style">style</a>
+    </ul>
+
+    <h3>Usage:</h3>
+    <ul>
+        <pre class="example"><span class="keyword">local</span> red_fg_id   = ui:<span class="function-name">style_push</span>(<span class="string">"fore:red"</span>)
+<span class="keyword">local</span> green_bg_id = ui:<span class="function-name">style_push</span>()
+ui:<span class="function-name">style_define</span>(green_bg_id, <span class="string">"fore:green"</span>)</pre>
+    </ul>
+
+</dd>
 </dl>
     <h2 class="section-header has-description"><a name="Class_Window"></a>Class Window </h2>
 
@@ -2491,7 +2597,7 @@ vis:<span class="function-name">option_register</span>(<span class="string">"foo
 </dd>
     <dt>
     <a name = "window:style"></a>
-    <strong>window:style(id, start, finish[, keep_non_default])</strong>
+    <strong>window:style(id, start, finish)</strong>
     </dt>
     <dd>
     Style a window range.
@@ -2502,7 +2608,7 @@ vis:<span class="function-name">option_register</span>(<span class="string">"foo
     <ul>
         <li><span class="parameter">id</span>
             <span class="types"><span class="type">int</span></span>
-         the display style as registered with <a href="index.html#window:style_define">style_define</a>
+         the display style as registered with <a href="index.html#ui:style_define">style_define</a>
         </li>
         <li><span class="parameter">start</span>
             <span class="types"><span class="type">int</span></span>
@@ -2512,69 +2618,24 @@ vis:<span class="function-name">option_register</span>(<span class="string">"foo
             <span class="types"><span class="type">int</span></span>
          the end position
         </li>
-        <li><span class="parameter">keep_non_default</span>
-            <span class="types"><span class="type">bool</span></span>
-         whether non-default style values should be kept
-         (<em>optional</em>)
-        </li>
     </ul>
 
 
 
     <h3>See also:</h3>
     <ul>
-         <a href="index.html#window:style_define">style_define</a>
+         <a href="index.html#ui:style_define">style_define</a>
     </ul>
 
     <h3>Usage:</h3>
     <ul>
-        <pre class="example">win:<span class="function-name">style</span>(win.STYLE_DEFAULT, <span class="number">0</span>, <span class="number">10</span>)</pre>
-    </ul>
-
-</dd>
-    <dt>
-    <a name = "window:style_define"></a>
-    <strong>window:style_define(id, style)</strong>
-    </dt>
-    <dd>
-    Define a display style.
-
-
-    <h3>Parameters:</h3>
-    <ul>
-        <li><span class="parameter">id</span>
-            <span class="types"><span class="type">int</span></span>
-         the style id to use
-        </li>
-        <li><span class="parameter">style</span>
-            <span class="types"><a class="type" href="https://www.lua.org/manual/5.1/manual.html#5.4">string</a></span>
-         the style definition
-        </li>
-    </ul>
-
-    <h3>Returns:</h3>
-    <ol>
-
-           <span class="types"><span class="type">bool</span></span>
-        whether the style definition has been successfully
-  associated with the given id
-    </ol>
-
-
-    <h3>See also:</h3>
-    <ul>
-         <a href="index.html#window:style">style</a>
-    </ul>
-
-    <h3>Usage:</h3>
-    <ul>
-        <pre class="example">win:<span class="function-name">style_define</span>(win.STYLE_DEFAULT, <span class="string">"fore:red"</span>)</pre>
+        <pre class="example">win:<span class="function-name">style</span>(ui.style_ids.DEFAULT, <span class="number">0</span>, <span class="number">10</span>)</pre>
     </ul>
 
 </dd>
     <dt>
     <a name = "window:style_pos"></a>
-    <strong>window:style_pos(id, x, y[, keep_non_default])</strong>
+    <strong>window:style_pos(id, x, y)</strong>
     </dt>
     <dd>
     Style the single terminal cell at the given coordinates, relative to this window.
@@ -2587,7 +2648,7 @@ vis:<span class="function-name">option_register</span>(<span class="string">"foo
     <ul>
         <li><span class="parameter">id</span>
             <span class="types"><span class="type">int</span></span>
-         display style registered with <a href="index.html#window:style_define">style_define</a>
+         display style registered with <a href="index.html#ui:style_define">style_define</a>
         </li>
         <li><span class="parameter">x</span>
             <span class="types"><span class="type">int</span></span>
@@ -2596,11 +2657,6 @@ vis:<span class="function-name">option_register</span>(<span class="string">"foo
         <li><span class="parameter">y</span>
             <span class="types"><span class="type">int</span></span>
          See above
-        </li>
-        <li><span class="parameter">keep_non_default</span>
-            <span class="types"><span class="type">bool</span></span>
-         whether non-default style values should be kept
-         (<em>optional</em>)
         </li>
     </ul>
 
@@ -2614,7 +2670,7 @@ vis:<span class="function-name">option_register</span>(<span class="string">"foo
 
     <h3>See also:</h3>
     <ul>
-         <a href="index.html#window:style_define">style_define</a>
+         <a href="index.html#ui:style_define">style_define</a>
     </ul>
 
     <h3>Usage:</h3>
@@ -4170,7 +4226,7 @@ win.selection.pos = pos + #data</pre>
 </div> <!-- id="main" -->
 <div id="about">
 <i>generated by <a href="http://github.com/lunarmodules/LDoc">LDoc 1.5.0</a></i>
-<i style="float:right;">Last updated 2026-06-27 12:36:18 </i>
+<i style="float:right;">Last updated 2026-07-01 12:11:41 </i>
 </div> <!-- id="about" -->
 </div> <!-- id="container" -->
 </body>
