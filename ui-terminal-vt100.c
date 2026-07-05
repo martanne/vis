@@ -125,9 +125,12 @@ vis_ui_vt100_cursor_visible(bool visible)
 }
 
 VIS_INTERNAL bool
-vis_cell_equal(VisCell *a, VisCell *b)
+vis_cell_equal(VisCell *_a, VisCell *_b)
 {
-	bool result = memory_equal(a, b, sizeof(*a));
+	u8 *a = (u8 *)_a, *b = (u8 *)_b;
+	bool result = true;
+	for (u64 n = sizeof(*_a); n; n--)
+		result &= *a++ == *b++;
 	return result;
 }
 
