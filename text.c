@@ -615,7 +615,7 @@ vis_text_load(Vis *vis, const char *filename, VisTextLoadMethod method)
 		block = block_load(AT_FDCWD, filename, method, &txt->info);
 		if (!block && errno)
 			goto out;
-		*da_push(vis, txt) = block;
+		if (block) *da_push(vis, txt) = block;
 	}
 
 	if (!block)
