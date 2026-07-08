@@ -56,6 +56,12 @@ static size_t op_put(Vis *vis, Text *txt, OperatorContext *c) {
 		break;
 	}
 
+	if (vis_register_used(vis) == VIS_REG_DOT) {
+		vis_mode_switch(vis, VIS_MODE_INSERT);
+		vis_macro_replay(vis, VIS_REG_DOT);
+		return EPOS;
+	}
+
 	s64 len;
 	const char *data = register_slot_get(vis, c->reg, c->reg_slot, &len);
 
