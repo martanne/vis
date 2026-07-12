@@ -80,8 +80,10 @@ fi
 
 tryflag () {
 printf "checking whether compiler accepts %s... " "$2"
+# GCC does not treat unknown -W flags as errors in the negative case
+flag="$(printf '%s' "$2" | sed 's/^-Wno-/-W/')"
 echo "typedef int x;" > "$tmpc"
-if $CC $CFLAGS_TRY $2 -c -o "$tmpo" "$tmpc" >/dev/null 2>&1 ; then
+if $CC $CFLAGS_TRY $flag -c -o "$tmpo" "$tmpc" >/dev/null 2>&1 ; then
 printf "yes\n"
 eval "$1=\"\${$1} \$2\""
 eval "$1=\${$1# }"
@@ -247,7 +249,8 @@ tryflag CFLAGS -Wall
 tryflag CFLAGS -pipe
 
 # shut up useless warning
-tryflag CFLAGS -Wno-initializer-overrides
+tryflag CFLAGS -Wno-initializer-overrides # Clang
+tryflag CFLAGS -Wno-override-init # GCC
 
 # Try flags to optimize binary size
 tryflag CFLAGS -O2
