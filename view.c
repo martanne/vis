@@ -499,10 +499,17 @@ void view_draw(View *view) {
 	view->end = pos;
 	if (view->line) {
 		bool eof = view->end == text_size(view->text);
-		if (view->line->len == 0 && eof && view->line->prev)
+		if (view->line->len == 0 && eof && view->line->prev) {
 			view->lastline = view->line->prev;
-		else
+		} else if (eof && view->line->len == view->width) {
+			// TODO(rnp): HACK: this doesn't belong here. we shouldn't allow
+			// the selection to sit off the edge of the terminal but stopping
+			// that requires major changes elsewhere
+			view->lastline = view->line->next;
+			view_wrap_line(view);
+		} else {
 			view->lastline = view->line;
+		}
 	} else {
 		view->lastline = view->bottomline;
 	}
