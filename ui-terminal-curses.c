@@ -264,7 +264,6 @@ ui_backend_init(Ui *ui, char *term)
 		noecho();
 		nonl();
 		keypad(stdscr, TRUE);
-		meta(stdscr, TRUE);
 		curs_set(0);
 
 		pair_content(0, &ui->curses.default_fg, &ui->curses.default_bg);
