@@ -408,15 +408,17 @@ VIS_INTERNAL void
 ui_draw(Vis *vis)
 {
 	Ui *tui = &vis->ui;
-	ui_arrange(vis, vis->ui.layout);
+	ui_arrange(vis, tui->layout);
+
 	for (Win *win = vis->windows; win; win = win->next)
 		ui_window_draw(win);
 
 	/* determine primary cursor's position */
+	bool show_cursor = false;
 	if (vis->win) {
 		Win  *win  = vis->win;
 		View *view = &win->view;
-		view_coord_get(view, view_cursor_get(view), 0, &tui->cur_row, &tui->cur_col);
+		show_cursor = view_coord_get(view, view_cursor_get(view), 0, &tui->cur_row, &tui->cur_col);
 		tui->cur_col += win->sidebar_width + win->x;
 		tui->cur_row += win->y;
 	}
@@ -425,8 +427,9 @@ ui_draw(Vis *vis)
 	case PROMPTSTATE_ONELINE:
 		break;
 	case PROMPTSTATE_COMMAND:
-		tui->cur_row = vis->ui.height;
+		show_cursor = false;
 	}
+	ui_term_backend_cursor(tui, show_cursor);
 	if (tui->info[0])
 		ui_draw_string(tui, 0, tui->height-1, tui->info, UI_STYLE_INFO);
 	vis_event_emit(vis, VIS_EVENT_UI_DRAW);
@@ -611,7 +614,7 @@ ui_init(Ui *tui)
 			tui->styles[it] = default_style;
 
 		tui->styles[UI_STYLE_CURSOR].attributes         |= VisCellAttribute_Reverse;
-		tui->styles[UI_STYLE_CURSOR_PRIMARY].attributes |= VisCellAttribute_Reverse|VisCellAttribute_Blink;
+		tui->styles[UI_STYLE_CURSOR_MATCHING].attributes |= VisCellAttribute_Reverse|VisCellAttribute_Blink;
 		tui->styles[UI_STYLE_SELECTION].attributes      |= VisCellAttribute_Reverse;
 		tui->styles[UI_STYLE_COLOR_COLUMN].attributes   |= VisCellAttribute_Reverse;
 		tui->styles[UI_STYLE_STATUS].attributes         |= VisCellAttribute_Reverse;
