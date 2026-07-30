@@ -121,7 +121,6 @@ typedef struct {
 
 // TODO(rnp): flatten UI into vis, only one exists and it must be in a vis context
 typedef struct {
-	char info[UI_MAX_WIDTH];   /* info message displayed at the bottom of the screen */
 	TermKey termkey;           /* libtermkey instance to handle keyboard input (stdin or /dev/tty) */
 	VisCellBuffer cell_buffer; /* 2D grid of cells, at least as large as current terminal size */
 	int width, height;         /* terminal dimensions available for all windows */
@@ -137,6 +136,10 @@ typedef struct {
 #else
 	VisVT100UI  vt100;
 #endif
+
+	// static_assert(S16_MAX <= UI_MAX_WIDTH)
+	char info[UI_MAX_WIDTH];   /* info message displayed at the bottom of the screen */
+	s16  info_length;
 
 	// static_assert(U16_MAX <= UI_STYLE_MAX)
 	u16          style_count;  /* count of styles currently in use */
@@ -158,7 +161,7 @@ VIS_INTERNAL __attribute__((noreturn)) void ui_die(Ui *, const char *, va_list);
 VIS_INTERNAL bool ui_init(Ui *);
 VIS_INTERNAL void ui_arrange(Vis *, enum UiLayout);
 VIS_INTERNAL void ui_draw(Vis *);
-VIS_INTERNAL void ui_info_hide(Ui *);
+VIS_INTERNAL void vis_ui_info_hide(Ui *);
 VIS_INTERNAL void ui_info_show(Ui *, const char *, va_list);
 VIS_INTERNAL void ui_resize(Ui*);
 
@@ -173,5 +176,10 @@ VIS_INTERNAL bool vis_ui_window_style_set_pos(Win *win, int x, int y, u16 style_
 
 VIS_INTERNAL void ui_window_options_set(Win *win, enum UiOption options);
 VIS_INTERNAL void ui_window_status(Vis *vis, Win *win, const char *status);
+
+// NOTE: returns a cell representing the first character in string. if
+// successful string is modified to skip data taken by cell. if more
+// data is needed the returned cell.file_byte_count == -1.
+VIS_INTERNAL VisCell vis_cell_from_string(str8 *string);
 
 #endif

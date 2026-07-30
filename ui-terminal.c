@@ -30,6 +30,48 @@ vis_cell_buffer_resize(VisCellBuffer *cb, u32 width, u32 height)
 	return result;
 }
 
+VIS_INTERNAL VisCell
+vis_cell_from_string(str8 *text)
+{
+	VisCell   result  = {0};
+	mbstate_t mbstate = {0};
+	wchar_t   wchar   = 0;
+
+	u64 parsed = mbrtowc(&wchar, (char *)text->data, text->length, &mbstate);
+	switch (parsed) {
+	default:{
+		assert(parsed <= countof(result.data));
+		for (u64 i = 0; i < parsed; i++)
+			result.data[i] = text->data[i];
+		result.file_byte_count = parsed;
+		result.data_length     = parsed;
+		result.width           = wcwidth(wchar);
+		if (result.width == -1) result.width = 1;
+	}break;
+
+	case 0:{
+		result = (VisCell){.data = {0}, .data_length = 1, .file_byte_count = 1, .width = 2};
+	}break;
+
+	case (u64)-1:{
+		// NOTE(rnp): invalid sequence
+		for (parsed = 1; parsed < text->length && !ISUTF8(text->data[parsed]); parsed++);
+		result = (VisCell){.data = {0xEF, 0xBF, 0xBD}, .data_length = 3,
+		                   .file_byte_count = parsed, .width = 1};
+	}break;
+
+	case (u64)-2:{
+		// NOTE(rnp): partial sequence
+		result.file_byte_count = -1;
+	}break;
+	}
+
+	if (result.file_byte_count != -1)
+		*text = str8_skip(*text, result.file_byte_count);
+
+	return result;
+}
+
 #if CONFIG_CURSES
 #include "ui-terminal-curses.c"
 #else
@@ -358,7 +400,7 @@ ui_arrange(Vis *vis, enum UiLayout layout)
 {
 	Ui *tui = &vis->ui;
 	tui->layout = layout;
-	int n = 0, m = !!tui->info[0], x = 0, y = 0;
+	int n = 0, m = tui->info_length != 0, x = 0, y = 0;
 	for (Win *win = vis->windows; win; win = win->next) {
 		if (win->options & UI_OPTION_ONELINE)
 			m++;
@@ -427,8 +469,39 @@ ui_draw(Vis *vis)
 	case PROMPTSTATE_COMMAND:
 		tui->cur_row = vis->ui.height;
 	}
-	if (tui->info[0])
-		ui_draw_string(tui, 0, tui->height-1, tui->info, UI_STYLE_INFO);
+
+	if unlikely(tui->info_length) {
+		VisCell *cells = tui->cell_buffer.cells + (tui->height - 1) * tui->width;
+		str8 info = {.data = (u8 *)tui->info, .length = tui->info_length};
+
+		u32 column = 0;
+		while (info.length && column < tui->width) {
+			VisCell cell = vis_cell_from_string(&info);
+			if (cell.file_byte_count == -1)
+				break;
+
+			if (cell.file_byte_count == 1 && (cell.data[0] < 0x20 || cell.data[0] == 0x7f)) {
+				u8 previous = cell.data[0];
+				cell.data[0]         = '^';
+				cell.data[1]         = previous == 0x7f ? '?' : previous + 0x40;
+				cell.data_length     = 2;
+				cell.width           = 2;
+				cell.file_byte_count = 1;
+			}
+
+			if (column + cell.width <= tui->width) {
+				cell.style = cells[column].style;
+				cells[column] = cell;
+				if (cell.width == 2) {
+					cells[column + 1].width       = 0;
+					cells[column + 1].data_length = 0;
+				}
+			}
+
+			column += cell.width;
+		}
+	}
+
 	vis_event_emit(vis, VIS_EVENT_UI_DRAW);
 	ui_term_backend_blit(tui);
 }
@@ -501,12 +574,14 @@ ui_info_show(Ui *ui, const char *msg, va_list ap)
 	for (s32 x = 0; x < ui->width; x++)
 		cells[x] = cell;
 
-	vsnprintf(ui->info, sizeof(ui->info), msg, ap);
+	s64 length = vsnprintf(ui->info, sizeof(ui->info), msg, ap);
+	ui->info_length = MIN(length, countof(ui->info));
 }
 
-void ui_info_hide(Ui *tui) {
-	if (tui->info[0])
-		tui->info[0] = '\0';
+VIS_INTERNAL void
+vis_ui_info_hide(Ui *ui)
+{
+	ui->info_length = 0;
 }
 
 VIS_INTERNAL bool

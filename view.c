@@ -420,76 +420,40 @@ bool view_coord_get(View *view, size_t pos, Line **retline, int *retrow, int *re
 
 /* redraw the complete with data starting from view->start bytes into the file.
  * stop once the screen is full, update view->end, view->lastline */
-void view_draw(View *view) {
+VIS_INTERNAL void
+view_draw(View *view)
+{
 	view_clear(view);
 	/* read a screenful of text considering each character as 4-byte UTF character*/
-	const size_t size = view->width * view->height * 4;
+	size_t size = view->width * view->height * 4;
 	/* current buffer to work with */
 	char *text = view->textbuf;
-	/* remaining bytes to process in buffer */
-	size_t rem = text_bytes_get(view->text, view->start, size, text);
-	/* NUL terminate text section */
-	text[rem] = '\0';
 	/* absolute position of character currently being added to display */
 	size_t pos = view->start;
-	/* current position into buffer from which to interpret a character */
-	char *cur = text;
-	/* start from known multibyte state */
-	mbstate_t mbstate = { 0 };
 
-	VisCell cell = {0}, prev_cell = cell;
+	str8 string = {.data = (u8 *)text, .length = text_bytes_get(view->text, view->start, size, text)};
+	VisCell prev_cell = {0};
+	while (string.length > 0) {
+		VisCell cell = vis_cell_from_string(&string);
 
-	while (rem > 0) {
-
-		/* current 'parsed' character' */
-		wchar_t wchar;
-
-		size_t len = mbrtowc(&wchar, cur, rem, &mbstate);
-		if (len == (size_t)-1 && errno == EILSEQ) {
-			/* ok, we encountered an invalid multibyte sequence,
-			 * replace it with the Unicode Replacement Character
-			 * (FFFD) and skip until the start of the next utf8 char */
-			mbstate = (mbstate_t){0};
-			for (len = 1; rem > len && !ISUTF8(cur[len]); len++);
-			cell = (VisCell){.data = {0xEF, 0xBF, 0xBD}, .data_length = 3, .file_byte_count = len, .width = 1};
-		} else if (len == (size_t)-2) {
-			/* not enough bytes available to convert to a
-			 * wide character. Advance file position and read
-			 * another junk into buffer.
-			 */
-			rem = text_bytes_get(view->text, pos + prev_cell.file_byte_count, size, text);
-			text[rem] = 0;
-			cur = text;
-			continue;
-		} else if (len == 0) {
-			/* NUL byte encountered, store it and continue */
-			cell = (VisCell){.data = {0}, .data_length = 1, .file_byte_count = 1, .width = 2};
+		if (cell.file_byte_count == -1) {
+			// NOTE(rnp): needs more data. read another chunk into buffer.
+			string.length = text_bytes_get(view->text, pos + prev_cell.file_byte_count, size, text);
+			string.data   = (u8 *)text;
 		} else {
-			assert(len <= countof(cell.data));
-			for (u64 i = 0; i < len; i++)
-				cell.data[i] = cur[i];
-			cell.file_byte_count = len;
-			cell.data_length     = len;
-			cell.width           = wcwidth(wchar);
-			if (cell.width == -1) cell.width = 1;
+			if (cell.width == 0) {
+				u8 current   = prev_cell.data_length;
+				u8 remaining = countof(prev_cell.data) - current;
+				memory_copy(prev_cell.data + current, cell.data, MIN(remaining, cell.data_length));
+				prev_cell.file_byte_count += MIN(remaining, cell.data_length);
+				prev_cell.data_length     += MIN(remaining, cell.data_length);
+			} else {
+				if (prev_cell.file_byte_count && !view_addch(view, &prev_cell))
+					break;
+				pos += prev_cell.file_byte_count;
+				prev_cell = cell;
+			}
 		}
-
-		if (cell.width == 0) {
-			u8 current   = prev_cell.data_length;
-			u8 remaining = countof(prev_cell.data) - current;
-			memory_copy(prev_cell.data + current, cell.data, MIN(remaining, cell.data_length));
-			prev_cell.file_byte_count += MIN(remaining, cell.data_length);
-			prev_cell.data_length     += MIN(remaining, cell.data_length);
-		} else {
-			if (prev_cell.file_byte_count && !view_addch(view, &prev_cell))
-				break;
-			pos += prev_cell.file_byte_count;
-			prev_cell = cell;
-		}
-
-		rem -= cell.file_byte_count;
-		cur += cell.file_byte_count;
-		cell = (VisCell){0};
 	}
 
 	if (prev_cell.file_byte_count && view_addch(view, &prev_cell))

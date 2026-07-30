@@ -119,6 +119,12 @@ vis_ui_vt100_altscreen(bool enable)
 }
 
 VIS_INTERNAL void
+vis_ui_vt100_immediate_clear(void)
+{
+	vis_ui_vt100_output(str8("\x1b[J"));
+}
+
+VIS_INTERNAL void
 vis_ui_vt100_cursor_visible(bool visible)
 {
 	vis_ui_vt100_output(visible ? str8("\x1b[?25h") : str8("\x1b[?25l"));
@@ -147,6 +153,7 @@ ui_term_backend_blit(Ui *ui)
 	if unlikely(vt->flush_terminal) {
 		memset(fb, 0, vt->cell_buffer.size);
 		vt->flush_terminal = false;
+		vis_ui_vt100_immediate_clear();
 	}
 
 	VisTerminalStyle fg = {0};
@@ -248,8 +255,7 @@ VIS_INTERNAL bool
 ui_term_backend_resize(Ui *ui, int width, int height)
 {
 	bool result = vis_cell_buffer_resize(&ui->vt100.cell_buffer, width, height);
-	// NOTE(rnp): clear screen on successful resize
-	if (result) vis_ui_vt100_output(str8("\x1b[J"));
+	if (result) ui->vt100.flush_terminal = true;
 	return result;
 }
 
