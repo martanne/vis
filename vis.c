@@ -840,9 +840,13 @@ void vis_do(Vis *vis) {
 		}
 
 		if (a->op) {
+			/* Save the register before it will be altered by the following operator call */
+			int reg_used = vis_register_used(vis);
 			size_t pos = a->op->func(vis, txt, &c);
 			if (pos == EPOS) {
-				view_selections_dispose(sel);
+				/* The first selection needs to be kept when putting the dot-register */
+				if (reg_used != VIS_REG_DOT)
+					view_selections_dispose(sel);
 			} else if (pos <= text_size(txt)) {
 				view_selection_clear(sel);
 				view_cursors_to(sel, pos);
@@ -1403,8 +1407,12 @@ bool vis_macro_replay(Vis *vis, enum VisRegister id) {
 		return false;
 	int count = VIS_COUNT_DEFAULT(vis->action.count, 1);
 	vis_cancel(vis);
-	for (int i = 0; i < count; i++)
+	for (int i = 0; i < count; i++) {
+		if (id == VIS_REG_DOT)
+			/* switch to insert mode before replaying the dot-register */
+			vis_mode_switch(vis, VIS_MODE_INSERT);
 		macro_replay(vis, macro);
+	}
 	Win *win = vis->win;
 	if (win)
 		vis_file_snapshot(vis, win->file);
