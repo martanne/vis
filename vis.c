@@ -217,6 +217,7 @@ static void window_draw_selection(Win *win, Selection *cur) {
 	Filerange sel = view_selections_get(cur);
 	if (!text_range_valid(sel))
 		return;
+	bool skip_cursor = win->vis->win == win && cur == view_selections_primary_get(view);
 	Line *start_line; int start_col;
 	Line *end_line; int end_col;
 	view_coord_get(view, sel.start, &start_line, NULL, &start_col);
@@ -234,8 +235,11 @@ static void window_draw_selection(Win *win, Selection *cur) {
 	for (Line *l = start_line; l != end_line->next; l = l->next) {
 		int col = (l == start_line) ? start_col : 0;
 		int end = (l == end_line) ? end_col : l->width;
-		while (col < end)
-			vis_ui_window_style_set(&win->vis->ui, l->cells + col++, UI_STYLE_SELECTION);
+		for (; col < end; col++) {
+			if (skip_cursor && l == cur->line && col == cur->col)
+				continue;
+			vis_ui_window_style_set(&win->vis->ui, l->cells + col, UI_STYLE_SELECTION);
+		}
 	}
 }
 
