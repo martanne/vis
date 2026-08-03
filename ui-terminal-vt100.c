@@ -147,93 +147,84 @@ ui_term_backend_blit(Ui *ui)
 	Buffer     *buf = &vt->output_buffer;
 	buf->length = 0;
 
-	VisCell *bb = ui->cell_buffer.cells;
-	VisCell *fb = vt->cell_buffer.cells;
-
 	if unlikely(vt->flush_terminal) {
-		memset(fb, 0, vt->cell_buffer.size);
+		memset(vt->cell_buffer.cells, 0, vt->cell_buffer.size);
 		vt->flush_terminal = false;
 		vis_ui_vt100_immediate_clear();
 	}
 
 	VisTerminalStyle fg = {0};
 	VisTerminalStyle bg = {0};
-	s32 cursor_x = 0, cursor_y = 0;
-	u8  attributes = 0;
-	s32 width  = ui->width;
-	s32 height = ui->height;
+	u8 attributes = 0;
 
 	/* reposition cursor, reset attributes */
 	str8 command = str8("\x1b[H" "\x1b[0m");
 	buffer_append(buf, command.data, command.length);
-	for (s32 y = 0; y < height; y++) {
-		for (s32 x = 0; x < width; x++) {
-			if (!vis_cell_equal(fb, bb)) {
-				if (cursor_x != x || cursor_y != y) {
-					vis_buffer_appendf(buf, "\x1b[%d;%dH", y + 1, x + 1);
-					cursor_x = x;
-					cursor_y = y;
-				}
 
-				VisCellStyle style = bb->style;
-				if (style.attributes != attributes) {
-					static const struct {
-						u8 flag;
-						char on[2], off[4];
-					} cell_attrs[] = {
-						{VisCellAttribute_Bold,      "1", "22"},
-						{VisCellAttribute_Dim,       "2", "22"},
-						{VisCellAttribute_Italic,    "3", "23"},
-						{VisCellAttribute_Underline, "4", "24"},
-						{VisCellAttribute_Blink,     "5", "25"},
-						{VisCellAttribute_Reverse,   "7", "27"},
-					};
-
-					for (u64 i = 0; i < countof(cell_attrs); i++) {
-						u8 flag = cell_attrs[i].flag;
-						if ((attributes & flag) != (style.attributes & flag)) {
-							vis_buffer_appendf(buf, "\x1b[%sm", (style.attributes & flag) ?
-							                   cell_attrs[i].on :
-							                   cell_attrs[i].off);
-						}
-					}
-					attributes = style.attributes;
-				}
-
-				VisTerminalStyle style_fg = vis_terminal_style_fg(style);
-				if (!vis_terminal_style_equal(fg, style_fg)) {
-					if (style_fg.indexed) {
-						vis_buffer_appendf(buf, "\x1b[38;5;%um", (u32)style_fg.color.index);
-					} else {
-						vis_buffer_appendf(buf, "\x1b[38;2;%u;%u;%um", (u32)style_fg.color.rgb.r,
-						                   (u32)style_fg.color.rgb.g, (u32)style_fg.color.rgb.b);
-					}
-					fg = style_fg;
-				}
-
-				VisTerminalStyle style_bg = vis_terminal_style_bg(style);
-				if (!vis_terminal_style_equal(bg, style_bg)) {
-					if (style_bg.indexed) {
-						vis_buffer_appendf(buf, "\x1b[48;5;%um", (u32)style_bg.color.index);
-					} else {
-						vis_buffer_appendf(buf, "\x1b[48;2;%u;%u;%um", (u32)style_bg.color.rgb.r,
-						                   (u32)style_bg.color.rgb.g, (u32)style_bg.color.rgb.b);
-					}
-					bg = style_bg;
-				}
-
-				buffer_append(buf, bb->data, bb->data_length);
-				memory_copy(fb, bb, sizeof(*fb));
-
-				cursor_x += bb->width;
-				if (cursor_x >= width) {
-					cursor_x = 0;
-					cursor_y++;
-				}
+	s32 cell_count  = ui->width * ui->height;
+	for (s32 cell_index = 0, cursor_cell = 0; cell_index < cell_count; cell_index++) {
+		VisCell *fb = vt->cell_buffer.cells + cell_index;
+		VisCell *bb = ui->cell_buffer.cells + cell_index;
+		if (!vis_cell_equal(fb, bb)) {
+			if (cursor_cell != cell_index) {
+				s32 x = cell_index % ui->width;
+				s32 y = cell_index / ui->width;
+				vis_buffer_appendf(buf, "\x1b[%d;%dH", y + 1, x + 1);
+				cursor_cell = cell_index;
 			}
 
-			fb++;
-			bb++;
+			VisCellStyle style = bb->style;
+			if (style.attributes != attributes) {
+				static const struct {
+					u8 flag;
+					char on[2], off[4];
+				} cell_attrs[] = {
+					{VisCellAttribute_Bold,      "1", "22"},
+					{VisCellAttribute_Dim,       "2", "22"},
+					{VisCellAttribute_Italic,    "3", "23"},
+					{VisCellAttribute_Underline, "4", "24"},
+					{VisCellAttribute_Blink,     "5", "25"},
+					{VisCellAttribute_Reverse,   "7", "27"},
+				};
+
+				for (u64 i = 0; i < countof(cell_attrs); i++) {
+					u8 flag = cell_attrs[i].flag;
+					if ((attributes & flag) != (style.attributes & flag)) {
+						vis_buffer_appendf(buf, "\x1b[%sm", (style.attributes & flag) ?
+						                   cell_attrs[i].on :
+						                   cell_attrs[i].off);
+					}
+				}
+				attributes = style.attributes;
+			}
+
+			VisTerminalStyle style_fg = vis_terminal_style_fg(style);
+			if (!vis_terminal_style_equal(fg, style_fg)) {
+				if (style_fg.indexed) {
+					vis_buffer_appendf(buf, "\x1b[38;5;%um", (u32)style_fg.color.index);
+				} else {
+					vis_buffer_appendf(buf, "\x1b[38;2;%u;%u;%um", (u32)style_fg.color.rgb.r,
+					                   (u32)style_fg.color.rgb.g, (u32)style_fg.color.rgb.b);
+				}
+				fg = style_fg;
+			}
+
+			VisTerminalStyle style_bg = vis_terminal_style_bg(style);
+			if (!vis_terminal_style_equal(bg, style_bg)) {
+				if (style_bg.indexed) {
+					vis_buffer_appendf(buf, "\x1b[48;5;%um", (u32)style_bg.color.index);
+				} else {
+					vis_buffer_appendf(buf, "\x1b[48;2;%u;%u;%um", (u32)style_bg.color.rgb.r,
+					                   (u32)style_bg.color.rgb.g, (u32)style_bg.color.rgb.b);
+				}
+				bg = style_bg;
+			}
+
+			buffer_append(buf, bb->data, bb->data_length);
+			memory_copy(fb, bb, sizeof(*fb));
+
+			// NOTE(rnp): anytime we print a character the terminal's cursor advances by the cell width
+			cursor_cell += fb->width;
 		}
 	}
 
