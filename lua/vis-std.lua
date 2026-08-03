@@ -35,7 +35,7 @@ vis:option_register("theme", "string", function(name)
 	local ui = vis.ui
 	ui:style_define(ui.style_ids.DEFAULT,           lexers.STYLE_DEFAULT           or '')
 	ui:style_define(ui.style_ids.CURSOR,            lexers.STYLE_CURSOR            or '')
-	ui:style_define(ui.style_ids.CURSOR_PRIMARY,    lexers.STYLE_CURSOR_PRIMARY    or '')
+	ui:style_define(ui.style_ids.CURSOR_MATCHING,   lexers.STYLE_CURSOR_MATCHING   or '')
 	ui:style_define(ui.style_ids.CURSOR_LINE,       lexers.STYLE_CURSOR_LINE       or '')
 	ui:style_define(ui.style_ids.SELECTION,         lexers.STYLE_SELECTION         or '')
 	ui:style_define(ui.style_ids.LINENUMBER,        lexers.STYLE_LINENUMBER        or '')

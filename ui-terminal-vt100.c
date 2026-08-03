@@ -236,12 +236,24 @@ ui_term_backend_blit(Ui *ui)
 }
 
 VIS_INTERNAL void ui_term_backend_clear(Ui *ui) {}
-VIS_INTERNAL void ui_term_backend_save(Ui *ui, bool fscr) {}
+
+VIS_INTERNAL void
+ui_term_backend_save(Ui *ui, bool fscr)
+{
+	vis_ui_vt100_cursor_visible(true);
+}
 
 VIS_INTERNAL void
 ui_term_backend_restore(Ui *ui)
 {
+	vis_ui_vt100_cursor_visible(false);
 	ui->vt100.flush_terminal = true;
+}
+
+VIS_INTERNAL void
+ui_term_backend_cursor(Ui *ui, bool visible)
+{
+	vis_ui_vt100_cursor_visible(visible);
 }
 
 VIS_INTERNAL bool
@@ -262,8 +274,8 @@ VIS_INTERNAL void
 ui_term_backend_suspend(Ui *tui)
 {
 	termkey_stop(&tui->termkey);
-	vis_ui_vt100_cursor_visible(true);
 	vis_ui_vt100_altscreen(false);
+	vis_ui_vt100_cursor_visible(true);
 }
 
 VIS_INTERNAL void

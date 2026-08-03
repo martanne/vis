@@ -231,6 +231,7 @@ static bool ui_term_backend_resize(Ui *tui, int width, int height) {
 }
 
 static void ui_term_backend_save(Ui *tui, bool fscr) {
+	curs_set(1);
 	if (fscr) {
 		def_prog_mode();
 		endwin();
@@ -242,6 +243,11 @@ static void ui_term_backend_save(Ui *tui, bool fscr) {
 static void ui_term_backend_restore(Ui *tui) {
 	reset_prog_mode();
 	wclear(stdscr);
+	curs_set(0);
+}
+
+static void ui_term_backend_cursor(Ui *tui, bool visible) {
+	curs_set(visible ? 1 : 0);
 }
 
 int ui_terminal_colors(void) {
@@ -284,7 +290,6 @@ ui_term_backend_suspend(Ui *ui)
 {
 	if (ui->curses.change_colors == 1)
 		undo_palette();
-	curs_set(1);
 }
 
 VIS_INTERNAL void
