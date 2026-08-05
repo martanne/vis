@@ -73,7 +73,7 @@ typedef enum {
 // alignment they are not defined as unions. The FG index is stored in the
 // fg_r and fg_g u8s and the BG index is strored in the bg_g and bg_b u8s.
 // Use the VisCellStyleBGIndex*() and VisCellStyleFGIndex*() macros to extract.
-typedef struct {
+typedef alignas(8) struct {
 	u8 attributes; // VisCellAttributes
 	u8 properties; // VisCellProperties
 	u8 fg_r, fg_g, fg_b;
@@ -83,6 +83,16 @@ typedef struct {
 #define VisCellStyleBGIndexGet(v)        (((u16)(v)->bg_g << 8u) | (v)->bg_b)
 #define VisCellStyleFGIndexSet(v, index) ((v)->fg_r = ((index >> 8u) & 0xFFu), ((v)->fg_g = (index) & 0xFFu))
 #define VisCellStyleBGIndexSet(v, index) ((v)->bg_g = ((index >> 8u) & 0xFFu), ((v)->bg_b = (index) & 0xFFu))
+
+typedef alignas(8) struct {
+	/* utf-8 encoded character displayed in this cell, not 0 terminated.
+	 * may not match the underlying text, eg tabs get expanded */
+	u8  data[4];
+	s8  data_length; /* length of data [0-4] */
+	s8  width;       /* width in terminal columns [0-2] */
+	/* number of bytes in the underlying file handled by this cell [0-4] */
+	s16 file_byte_count;
+} VisCellData;
 
 typedef alignas(16) struct {
 	/* utf-8 encoded character displayed in this cell, not 0 terminated.
@@ -97,8 +107,10 @@ typedef alignas(16) struct {
 } VisCell;
 
 typedef struct {
-	VisCell *cells;
-	u64      size;
+	VisCellData  *cells;
+	VisCellStyle *styles;
+	u8           *dirty_cell_bits;
+	u64           size;
 } VisCellBuffer;
 
 typedef struct {
@@ -171,7 +183,6 @@ VIS_INTERNAL bool vis_ui_getkey(Vis *, TermKeyKey *);
 
 VIS_INTERNAL u16  vis_ui_style_push(Vis *);
 VIS_INTERNAL bool vis_ui_style_define(Vis *, u16 style_id, str8 style);
-VIS_INTERNAL void vis_ui_window_style_set(Ui *ui, VisCell *cell, u16 style_id);
 VIS_INTERNAL bool vis_ui_window_style_set_pos(Win *win, int x, int y, u16 style_id);
 
 VIS_INTERNAL void ui_window_options_set(Win *win, enum UiOption options);
@@ -181,5 +192,7 @@ VIS_INTERNAL void ui_window_status(Vis *vis, Win *win, const char *status);
 // successful string is modified to skip data taken by cell. if more
 // data is needed the returned cell.file_byte_count == -1.
 VIS_INTERNAL VisCell vis_cell_from_string(str8 *string);
+
+VIS_INTERNAL VisCellStyle vis_cell_style_merge(VisCellStyle old, VisCellStyle new);
 
 #endif

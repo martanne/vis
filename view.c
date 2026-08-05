@@ -263,7 +263,7 @@ VIS_INTERNAL bool
 view_expand_tab(View *view, VisCell *cell)
 {
 	Win *win = (Win *)((char *)view - offsetof(Win, view));
-	vis_ui_window_style_set(&win->vis->ui, cell, UI_STYLE_WHITESPACE);
+	cell->style = vis_cell_style_merge(cell->style, win->vis->ui.styles[UI_STYLE_WHITESPACE]);
 
 	cell->width = 1;
 
@@ -287,7 +287,7 @@ VIS_INTERNAL bool
 view_expand_newline(View *view, VisCell *cell)
 {
 	Win *win = (Win *)((char *)view - offsetof(Win, view));
-	vis_ui_window_style_set(&win->vis->ui, cell, UI_STYLE_WHITESPACE);
+	cell->style = vis_cell_style_merge(cell->style, win->vis->ui.styles[UI_STYLE_WHITESPACE]);
 
 	str8 symbol = view->symbols[SYNTAX_SYMBOL_EOL];
 	memory_copy(cell->data, symbol.data, MIN(sizeof(cell->data), symbol.length));
@@ -309,7 +309,7 @@ VIS_INTERNAL bool
 view_expand_space(View *view, VisCell *cell)
 {
 	Win *win = (Win *)((char *)view - offsetof(Win, view));
-	vis_ui_window_style_set(&win->vis->ui, cell, UI_STYLE_WHITESPACE);
+	cell->style = vis_cell_style_merge(cell->style, win->vis->ui.styles[UI_STYLE_WHITESPACE]);
 
 	str8 symbol = view->symbols[SYNTAX_SYMBOL_SPACE];
 	memory_copy(cell->data, symbol.data, MIN(sizeof(cell->data), symbol.length));
@@ -1344,17 +1344,20 @@ vis_win_style(Win *win, u64 start, u64 end, u16 style_id)
 	while (col < view_width && line->cells[col].file_byte_count == 0)
 		col++;
 
+	assert(style_id < win->vis->ui.style_count);
 	do {
 		// NOTE(rnp): first style at most until the end of the real line contents
 		while (pos <= end && col < line->width) {
 			pos += line->cells[col].file_byte_count;
-			vis_ui_window_style_set(&win->vis->ui, line->cells + col++, style_id);
+			VisCell *cell = line->cells + col++;
+			cell->style = vis_cell_style_merge(cell->style, win->vis->ui.styles[style_id]);
 		}
 
 		// NOTE(rnp): if the range extends to another line continue styling the full view width
 		if (pos < end) while (col < view_width)
 		{
-			vis_ui_window_style_set(&win->vis->ui, line->cells + col++, style_id);
+			VisCell *cell = line->cells + col++;
+			cell->style = vis_cell_style_merge(cell->style, win->vis->ui.styles[style_id]);
 		}
 
 		col = 0;

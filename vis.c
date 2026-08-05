@@ -181,7 +181,8 @@ static void window_draw_colorcolumn(Win *win) {
 
 		/* This screen line contains the cell we want to highlight */
 		if (cc <= line_cols + width) {
-			vis_ui_window_style_set(&win->vis->ui, l->cells + cc - 1 - line_cols, UI_STYLE_COLOR_COLUMN);
+			VisCell *cell = l->cells + cc - 1 - line_cols;
+			cell->style = vis_cell_style_merge(cell->style, win->vis->ui.styles[UI_STYLE_COLOR_COLUMN]);
 			line_cc_set = true;
 		} else {
 			line_cols += width;
@@ -205,7 +206,7 @@ static void window_draw_cursorline(Win *win) {
 	for (Line *l = win->view.topline; l; l = l->next) {
 		if (l->lineno == lineno) {
 			for (int x = 0; x < width; x++)
-				vis_ui_window_style_set(&vis->ui, l->cells + x, UI_STYLE_CURSOR_LINE);
+				l->cells[x].style = vis_cell_style_merge(l->cells[x].style, vis->ui.styles[UI_STYLE_CURSOR_LINE]);
 		} else if (l->lineno > lineno) {
 			break;
 		}
@@ -234,8 +235,10 @@ static void window_draw_selection(Win *win, Selection *cur) {
 	for (Line *l = start_line; l != end_line->next; l = l->next) {
 		int col = (l == start_line) ? start_col : 0;
 		int end = (l == end_line) ? end_col : l->width;
-		while (col < end)
-			vis_ui_window_style_set(&win->vis->ui, l->cells + col++, UI_STYLE_SELECTION);
+		while (col < end) {
+			VisCell *cell = l->cells + col++;
+			cell->style = vis_cell_style_merge(cell->style, win->vis->ui.styles[UI_STYLE_SELECTION]);
+		}
 	}
 }
 
@@ -250,19 +253,21 @@ static void window_draw_cursor_matching(Win *win, Selection *cur) {
 		return;
 	if (!view_coord_get(&win->view, pos_match, &line_match, NULL, &col_match))
 		return;
-	vis_ui_window_style_set(&win->vis->ui, line_match->cells + col_match, UI_STYLE_SELECTION);
+	line_match->cells[col_match].style = vis_cell_style_merge(line_match->cells[col_match].style,
+	                                                          win->vis->ui.styles[UI_STYLE_SELECTION]);
 }
 
 static void window_draw_cursor(Win *win, Selection *cur) {
 	if (win->vis->win != win)
 		return;
 	Line *line = cur->line;
-	if (!line)
-		return;
-	Selection *primary = view_selections_primary_get(&win->view);
-	vis_ui_window_style_set(&win->vis->ui, line->cells + cur->col, primary == cur ? UI_STYLE_CURSOR_PRIMARY : UI_STYLE_CURSOR);
-	window_draw_cursor_matching(win, cur);
-	return;
+	if (line) {
+		Selection *primary = view_selections_primary_get(&win->view);
+		u16 style_id = primary == cur ? UI_STYLE_CURSOR_PRIMARY : UI_STYLE_CURSOR;
+		VisCell *cell = line->cells + cur->col;
+		cell->style = vis_cell_style_merge(cell->style, win->vis->ui.styles[style_id]);
+		window_draw_cursor_matching(win, cur);
+	}
 }
 
 static void window_draw_selections(Win *win) {
@@ -290,10 +295,10 @@ static void window_draw_eof(Win *win) {
 	View *view = &win->view;
 	if (view->width == 0)
 		return;
-	VisCell cell = {.width = 1, .style = win->vis->ui.styles[UI_STYLE_DEFAULT]};
+	VisCell cell = {.width = 1};
+	cell.style = vis_cell_style_merge(win->vis->ui.styles[UI_STYLE_DEFAULT], win->vis->ui.styles[UI_STYLE_EOF]);
 	cell.data_length = MIN(view->symbols[SYNTAX_SYMBOL_EOF].length, countof(cell.data));
 	memory_copy(cell.data, view->symbols[SYNTAX_SYMBOL_EOF].data, cell.data_length);
-	vis_ui_window_style_set(&win->vis->ui, &cell, UI_STYLE_EOF);
 	for (Line *l = view->lastline->next; l; l = l->next)
 		l->cells[0] = cell;
 }

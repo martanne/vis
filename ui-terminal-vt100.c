@@ -130,16 +130,6 @@ vis_ui_vt100_cursor_visible(bool visible)
 	vis_ui_vt100_output(visible ? str8("\x1b[?25h") : str8("\x1b[?25l"));
 }
 
-VIS_INTERNAL bool
-vis_cell_equal(VisCell *_a, VisCell *_b)
-{
-	u8 *a = (u8 *)_a, *b = (u8 *)_b;
-	bool result = true;
-	for (u64 n = sizeof(*_a); n; n--)
-		result &= *a++ == *b++;
-	return result;
-}
-
 VIS_INTERNAL void
 ui_term_backend_blit(Ui *ui)
 {
@@ -147,25 +137,55 @@ ui_term_backend_blit(Ui *ui)
 	Buffer     *buf = &vt->output_buffer;
 	buf->length = 0;
 
+	s32 cell_count = ui->width * ui->height;
+
 	if unlikely(vt->flush_terminal) {
-		memset(vt->cell_buffer.cells, 0, vt->cell_buffer.size);
+		u64 cells_size  = round_up_to(cell_count * sizeof(VisCell), 64);
+		u64 styles_size = round_up_to(cell_count * sizeof(VisCellStyle), 64);
+		memset(vt->cell_buffer.cells,  0, cells_size);
+		memset(vt->cell_buffer.styles, 0, styles_size);
 		vt->flush_terminal = false;
 		vis_ui_vt100_immediate_clear();
 	}
 
+	///////////////////////
+	// NOTE(rnp): compute dirty cells
+	memset(vt->cell_buffer.dirty_cell_bits, 0, cell_count / 8 + 1);
+
+	// NOTE(rnp): Test by using xor which leaves bits set when NEQ.
+	// Writing it this way makes it more likely compiler will optimize
+	// to a ternary logic instruction which is very fast
+	for (s32 cell_index = 0; cell_index < cell_count; cell_index += 8) {
+		//static_assert(sizeof(*vt->cell_buffer.cells)  == 8, "");
+		//static_assert(sizeof(*vt->cell_buffer.styles) == 8, "");
+		u8 value = 0;
+		for (u32 bit = 0; bit < 8; bit++) {
+			u64 ca = ((u64 *)vt->cell_buffer.cells)[cell_index + bit];
+			u64 cb = ((u64 *)ui->cell_buffer.cells)[cell_index + bit];
+			u64 sa = ((u64 *)vt->cell_buffer.styles)[cell_index + bit];
+			u64 sb = ((u64 *)ui->cell_buffer.styles)[cell_index + bit];
+			u64 set = ((ca ^ cb) | (sa ^ sb)) != 0;
+			value |= set << bit;
+		}
+		vt->cell_buffer.dirty_cell_bits[cell_index / 8] = value;
+	}
+
+	///////////////////////
+	// NOTE(rnp): prepare output buffer
 	VisTerminalStyle fg = {0};
 	VisTerminalStyle bg = {0};
 	u8 attributes = 0;
 
-	/* reposition cursor, reset attributes */
+	// NOTE(rnp): reposition cursor, reset attributes
 	str8 command = str8("\x1b[H" "\x1b[0m");
 	buffer_append(buf, command.data, command.length);
 
-	s32 cell_count  = ui->width * ui->height;
 	for (s32 cell_index = 0, cursor_cell = 0; cell_index < cell_count; cell_index++) {
-		VisCell *fb = vt->cell_buffer.cells + cell_index;
-		VisCell *bb = ui->cell_buffer.cells + cell_index;
-		if (!vis_cell_equal(fb, bb)) {
+		s32 bin = cell_index / 8;
+		s32 bit = cell_index % 8;
+		if (vt->cell_buffer.dirty_cell_bits[bin] & (1 << bit)) {
+			VisCellData  bbc = ui->cell_buffer.cells[cell_index];
+			VisCellStyle bbs = ui->cell_buffer.styles[cell_index];
 			if (cursor_cell != cell_index) {
 				s32 x = cell_index % ui->width;
 				s32 y = cell_index / ui->width;
@@ -173,7 +193,7 @@ ui_term_backend_blit(Ui *ui)
 				cursor_cell = cell_index;
 			}
 
-			VisCellStyle style = bb->style;
+			VisCellStyle style = bbs;
 			if (style.attributes != attributes) {
 				static const struct {
 					u8 flag;
@@ -220,16 +240,20 @@ ui_term_backend_blit(Ui *ui)
 				bg = style_bg;
 			}
 
-			buffer_append(buf, bb->data, bb->data_length);
-			memory_copy(fb, bb, sizeof(*fb));
+			buffer_append(buf, bbc.data, bbc.data_length);
+			vt->cell_buffer.cells[cell_index]  = bbc;
+			vt->cell_buffer.styles[cell_index] = bbs;
 
 			// NOTE(rnp): anytime we print a character the terminal's cursor advances by the cell width
-			cursor_cell += fb->width;
+			cursor_cell += bbc.width;
 		}
 	}
 
 	// NOTE(rnp): maintain cursor position in case it gets queried through escape codes
 	vis_buffer_appendf(buf, "\x1b[%d;%dH", ui->cur_row + 1, ui->cur_col + 1);
+
+	///////////////////////
+	// NOTE(rnp): blit
 	vis_ui_vt100_output((str8){.data = (u8 *)buf->data, .length = buf->length});
 }
 

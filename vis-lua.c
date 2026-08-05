@@ -2143,6 +2143,7 @@ vis_lua_window_style_pos(lua_State *L)
 	u16  style_id = luaL_checkinteger(L, 2);
 	size_t x      = checkpos(L, 3);
 	size_t y      = checkpos(L, 4);
+	style_id = style_id < win->vis->ui.style_count ? style_id : UI_STYLE_DEFAULT;
 	lua_pushboolean(L, vis_ui_window_style_set_pos(win, (int)x, (int)y, style_id));
 	return 1;
 }
