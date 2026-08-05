@@ -160,9 +160,14 @@ static const KeyBinding bindings_operators[] = {
 	{ "'",                  ACTION(MARK)                                },
 	{ "c",                  ACTION(OPERATOR_CHANGE)                     },
 	{ "d",                  ACTION(OPERATOR_DELETE)                     },
-	{ "g~",                 ALIAS(":|tr '[:lower:][:upper:]' '[:upper:][:lower:]'<Enter>") },
-	{ "gu",                 ALIAS(":|tr '[:upper:]' '[:lower:]'<Enter>")},
-	{ "gU",                 ALIAS(":|tr '[:lower:]' '[:upper:]'<Enter>")},
+	{ "g~",                 ALIAS("<vis-prompt-show>|tr '[:lower:][:upper:]' '[:upper:][:lower:]'<Enter>") },
+#if defined(__linux__)
+	{ "gu",                 ALIAS("<vis-prompt-show>|awk '{printf \"%s%s\", tolower($0), RT}'<Enter>")},
+	{ "gU",                 ALIAS("<vis-prompt-show>|awk '{printf \"%s%s\", toupper($0), RT}'<Enter>")},
+#elif defined(__unix__) || defined(__APPLE__)
+	{ "gu",                 ALIAS("<vis-prompt-show>|gawk '{printf \"%s%s\", tolower($0), RT}'<Enter>")},
+	{ "gU",                 ALIAS("<vis-prompt-show>|gawk '{printf \"%s%s\", toupper($0), RT}'<Enter>")},
+#endif
 	{ "p",                  ACTION(PUT_AFTER)                           },
 	{ "P",                  ACTION(PUT_BEFORE)                          },
 	{ "y",                  ACTION(OPERATOR_YANK)                       },
