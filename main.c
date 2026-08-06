@@ -118,9 +118,9 @@ static Vis vis[1];
 	X(ka_selections_align,                SELECTIONS_ALIGN,                 0,                                        "vis-selections-align",                "Try to align all selections on the same column") \
 	X(ka_selections_align_indent,         SELECTIONS_ALIGN_INDENT_LEFT,     .i = -1,                                  "vis-selections-align-indent-left",    "Left-align all selections by inserting spaces") \
 	X(ka_selections_align_indent,         SELECTIONS_ALIGN_INDENT_RIGHT,    .i = +1,                                  "vis-selections-align-indent-right",   "Right-align all selections by inserting spaces") \
-	X(ka_selections_case,                 SELECTIONS_CASE_TOUPPER,          .i = +1,                                  "vis-selections-case-toupper",         "") \
-	X(ka_selections_case,                 SELECTIONS_CASE_TOGGLE,           .i = 0,                                   "vis-selections-case-toggle",          "") \
-	X(ka_selections_case,                 SELECTIONS_CASE_TOLOWER,          .i = -1,                                  "vis-selections-case-tolower",         "") \
+	X(ka_selections_case,                 SELECTIONS_CASE_TOUPPER,          .i = +1,                                  "vis-selections-case-toupper",         "Uppercase all selections") \
+	X(ka_selections_case,                 SELECTIONS_CASE_TOGGLE,           .i = 0,                                   "vis-selections-case-toggle",          "Toggle case of all selections") \
+	X(ka_selections_case,                 SELECTIONS_CASE_TOLOWER,          .i = -1,                                  "vis-selections-case-tolower",         "Lowercase all selections") \
 	X(ka_selections_clear,                SELECTIONS_REMOVE_ALL,            0,                                        "vis-selections-remove-all",           "Remove all but the primary selection") \
 	X(ka_selections_complement,           SELECTIONS_COMPLEMENT,            0,                                        "vis-selections-complement",           "Complement selections") \
 	X(ka_selections_intersect,            SELECTIONS_INTERSECT,             0,                                        "vis-selections-intersect",            "Intersect with selections from mark") \
