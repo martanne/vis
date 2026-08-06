@@ -366,24 +366,27 @@ static KEY_ACTION_FN(ka_selections_case)
 			continue;
 
 		size_t mblen = text_range_size(sel);
-		buf = text_bytes_alloc0(txt, sel.start, mblen);
-		if (!buf)
-			return keys;
-
 		// We know that the amount of wide-characters required to hold the
 		// selection is at MOST the amount of bytes in the selection.
-		wcs = calloc(mblen, sizeof(*wcs));
+
+		wcs = malloc(mblen * sizeof(*wcs) + mblen + 1);
 		if (wcs == NULL) {
-			free(buf);
 			return keys;
 		}
 
+		buf = (char*)wcs + mblen * sizeof(*wcs);
+		buf[mblen] = 0;
+
+		text_bytes_get(txt, sel.start, mblen, buf);
+
 		// This is safe as long as the multibyte string is 0-terminated.
-		if (mbstowcs(wcs, buf, mblen) == (size_t) -1) {
+		size_t wcslen = mbstowcs(wcs, buf, mblen);
+		if (wcslen == (size_t) -1) {
 			goto next_sel;
 		}
 
-		for (wchar_t *wp = wcs; *wp != 0; wp++) {
+		for (size_t i = 0; i < wcslen; i++) {
+			wchar_t *wp = wcs + i;
 			wint_t wc = (wint_t)*wp;
 			switch(arg->i) {
 				case -1:{
@@ -404,7 +407,6 @@ static KEY_ACTION_FN(ka_selections_case)
 
 		// We assume that the number of bytes required by the modified
 		// wide-character string is the same as the multibyte input.
-		assert(wcstombs(NULL, wcs, 0) == mblen);
 		if (wcstombs(buf, wcs, mblen) == (size_t) -1) {
 			goto next_sel;
 		}
@@ -416,7 +418,6 @@ static KEY_ACTION_FN(ka_selections_case)
 
 next_sel:
 		free(wcs);
-		free(buf);
 	}
 
 	return keys;
