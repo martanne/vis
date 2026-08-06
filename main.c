@@ -365,22 +365,22 @@ static KEY_ACTION_FN(ka_selections_case)
 		if (!text_range_valid(sel))
 			continue;
 
-		buf = text_bytes_alloc0(txt, sel.start, text_range_size(sel));
+		size_t mblen = text_range_size(sel);
+		buf = text_bytes_alloc0(txt, sel.start, mblen);
 		if (!buf)
 			return keys;
 
-		size_t mbslen = mbstowcs(NULL, buf, 0);
-		if (mbslen == (size_t) -1) {
-			goto err_free_buf;
-		}
-
-		wcs = calloc(mbslen + 1, sizeof(*wcs));
+		// We know that the amount of wide-characters required to hold the
+		// selection is at MOST the amount of bytes in the selection.
+		wcs = calloc(mblen, sizeof(*wcs));
 		if (wcs == NULL) {
-			goto err_free_buf;
+			free(buf);
+			return keys;
 		}
 
-		if (mbstowcs(wcs, buf, mbslen + 1) == (size_t) -1) {
-			goto err_free_wcs;
+		// This is safe as long as the multibyte string is 0-terminated.
+		if (mbstowcs(wcs, buf, mblen) == (size_t) -1) {
+			goto next_sel;
 		}
 
 		for (wchar_t *wp = wcs; *wp != 0; wp++) {
@@ -402,24 +402,23 @@ static KEY_ACTION_FN(ka_selections_case)
 			*wp = wc;
 		}
 
-		size_t len = wcstombs(NULL, wcs, 0);
-		assert(len == text_range_size(sel));
-		if (wcstombs(buf, wcs, text_range_size(sel) + 1) == (size_t) -1) {
-			goto err_free_wcs;
+		// We assume that the number of bytes required by the modified
+		// wide-character string is the same as the multibyte input.
+		assert(wcstombs(NULL, wcs, 0) == mblen);
+		if (wcstombs(buf, wcs, mblen) == (size_t) -1) {
+			goto next_sel;
 		}
 
 		if (!text_delete_range(txt, sel))
-			continue;
-		if (!text_insert(vis, txt, sel.start, buf, len))
-			continue;
+			goto next_sel;
+		if (!text_insert(vis, txt, sel.start, buf, mblen))
+			goto next_sel;
+
+next_sel:
+		free(wcs);
 		free(buf);
 	}
 
-	return keys;
-err_free_wcs:
-	free(wcs);
-err_free_buf:
-	free(buf);
 	return keys;
 }
 
