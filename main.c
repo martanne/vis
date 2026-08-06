@@ -118,6 +118,9 @@ static Vis vis[1];
 	X(ka_selections_align,                SELECTIONS_ALIGN,                 0,                                        "vis-selections-align",                "Try to align all selections on the same column") \
 	X(ka_selections_align_indent,         SELECTIONS_ALIGN_INDENT_LEFT,     .i = -1,                                  "vis-selections-align-indent-left",    "Left-align all selections by inserting spaces") \
 	X(ka_selections_align_indent,         SELECTIONS_ALIGN_INDENT_RIGHT,    .i = +1,                                  "vis-selections-align-indent-right",   "Right-align all selections by inserting spaces") \
+	X(ka_selections_case,                 SELECTIONS_CASE_TOUPPER,          .i = +1,                                  "vis-selections-case-toupper",         "") \
+	X(ka_selections_case,                 SELECTIONS_CASE_TOGGLE,           .i = 0,                                   "vis-selections-case-toggle",          "") \
+	X(ka_selections_case,                 SELECTIONS_CASE_TOLOWER,          .i = -1,                                  "vis-selections-case-tolower",         "") \
 	X(ka_selections_clear,                SELECTIONS_REMOVE_ALL,            0,                                        "vis-selections-remove-all",           "Remove all but the primary selection") \
 	X(ka_selections_complement,           SELECTIONS_COMPLEMENT,            0,                                        "vis-selections-complement",           "Complement selections") \
 	X(ka_selections_intersect,            SELECTIONS_INTERSECT,             0,                                        "vis-selections-intersect",            "Intersect with selections from mark") \
@@ -347,6 +350,76 @@ static KEY_ACTION_FN(ka_selections_align_indent)
 	}
 
 	view_draw(view);
+	return keys;
+}
+
+static KEY_ACTION_FN(ka_selections_case)
+{
+	Text *txt = vis_text(vis);
+	View *view = vis_view(vis);
+	char *buf;
+	wchar_t *wcs;
+	for (Selection *s = view_selections(view), *next; s; s = next) {
+		next = view_selections_next(s);
+		Filerange sel = view_selections_get(s);
+		if (!text_range_valid(sel))
+			continue;
+
+		buf = text_bytes_alloc0(txt, sel.start, text_range_size(sel));
+		if (!buf)
+			return keys;
+
+		size_t mbslen = mbstowcs(NULL, buf, 0);
+		if (mbslen == (size_t) -1) {
+			goto err_free_buf;
+		}
+
+		wcs = calloc(mbslen + 1, sizeof(*wcs));
+		if (wcs == NULL) {
+			goto err_free_buf;
+		}
+
+		if (mbstowcs(wcs, buf, mbslen + 1) == (size_t) -1) {
+			goto err_free_wcs;
+		}
+
+		for (wchar_t *wp = wcs; *wp != 0; wp++) {
+			wint_t wc = (wint_t)*wp;
+			switch(arg->i) {
+				case -1:{
+					wc = towlower(wc);
+				}break;
+				case 0:{
+					if (iswlower(wc))
+						wc = towupper(wc);
+					else
+						wc = towlower(wc);
+				}break;
+				case 1:{
+					wc = towupper(wc);
+				}break;
+			}
+			*wp = wc;
+		}
+
+		size_t len = wcstombs(NULL, wcs, 0);
+		assert(len == text_range_size(sel));
+		if (wcstombs(buf, wcs, text_range_size(sel) + 1) == (size_t) -1) {
+			goto err_free_wcs;
+		}
+
+		if (!text_delete_range(txt, sel))
+			continue;
+		if (!text_insert(vis, txt, sel.start, buf, len))
+			continue;
+		free(buf);
+	}
+
+	return keys;
+err_free_wcs:
+	free(wcs);
+err_free_buf:
+	free(buf);
 	return keys;
 }
 
