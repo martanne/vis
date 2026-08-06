@@ -118,6 +118,9 @@ static Vis vis[1];
 	X(ka_selections_align,                SELECTIONS_ALIGN,                 0,                                        "vis-selections-align",                "Try to align all selections on the same column") \
 	X(ka_selections_align_indent,         SELECTIONS_ALIGN_INDENT_LEFT,     .i = -1,                                  "vis-selections-align-indent-left",    "Left-align all selections by inserting spaces") \
 	X(ka_selections_align_indent,         SELECTIONS_ALIGN_INDENT_RIGHT,    .i = +1,                                  "vis-selections-align-indent-right",   "Right-align all selections by inserting spaces") \
+	X(ka_selections_case,                 SELECTIONS_CASE_TOUPPER,          .i = +1,                                  "vis-selections-case-toupper",         "Uppercase all selections") \
+	X(ka_selections_case,                 SELECTIONS_CASE_TOGGLE,           .i = 0,                                   "vis-selections-case-toggle",          "Toggle case of all selections") \
+	X(ka_selections_case,                 SELECTIONS_CASE_TOLOWER,          .i = -1,                                  "vis-selections-case-tolower",         "Lowercase all selections") \
 	X(ka_selections_clear,                SELECTIONS_REMOVE_ALL,            0,                                        "vis-selections-remove-all",           "Remove all but the primary selection") \
 	X(ka_selections_complement,           SELECTIONS_COMPLEMENT,            0,                                        "vis-selections-complement",           "Complement selections") \
 	X(ka_selections_intersect,            SELECTIONS_INTERSECT,             0,                                        "vis-selections-intersect",            "Intersect with selections from mark") \
@@ -347,6 +350,79 @@ static KEY_ACTION_FN(ka_selections_align_indent)
 	}
 
 	view_draw(view);
+	return keys;
+}
+
+static KEY_ACTION_FN(ka_selections_case)
+{
+	Text *txt = vis_text(vis);
+	View *view = vis_view(vis);
+	char *buf;
+	wchar_t *wcs;
+	for (Selection *s = view_selections(view), *next; s; s = next) {
+		next = view_selections_next(s);
+		Filerange sel = view_selections_get(s);
+		if (!text_range_valid(sel))
+			continue;
+
+		size_t mblen = text_range_size(sel);
+		// We know that the amount of wide-characters required to hold the
+		// selection is at MOST the amount of bytes in the selection.
+
+		wcs = malloc(mblen * sizeof(*wcs) + mblen + 1);
+		if (wcs == NULL) {
+			return keys;
+		}
+
+		buf = (char*)wcs + mblen * sizeof(*wcs);
+		buf[mblen] = 0;
+
+		text_bytes_get(txt, sel.start, mblen, buf);
+
+		// This is safe as long as the multibyte string is 0-terminated.
+		size_t wcslen = mbstowcs(wcs, buf, mblen);
+		if (wcslen == (size_t) -1) {
+			goto next_sel;
+		}
+
+		for (size_t i = 0; i < wcslen; i++) {
+			wchar_t *wp = wcs + i;
+			wint_t wc = (wint_t)*wp;
+			switch(arg->i) {
+				case -1:{
+					wc = towlower(wc);
+				}break;
+				case 0:{
+					if (iswlower(wc))
+						wc = towupper(wc);
+					else
+						wc = towlower(wc);
+				}break;
+				case 1:{
+					wc = towupper(wc);
+				}break;
+			}
+			*wp = wc;
+		}
+
+		// We assume that the number of bytes required by the modified
+		// wide-character string is the same as the multibyte input.
+		if (wcstombs(buf, wcs, mblen) == (size_t) -1) {
+			goto next_sel;
+		}
+
+		if (!text_delete_range(txt, sel))
+			goto next_sel;
+		if (!text_insert(vis, txt, sel.start, buf, mblen))
+			goto next_sel;
+
+		view_selections_set(s, sel);
+
+next_sel:
+		free(wcs);
+	}
+
+	vis_draw(vis);
 	return keys;
 }
 
