@@ -416,10 +416,13 @@ static KEY_ACTION_FN(ka_selections_case)
 		if (!text_insert(vis, txt, sel.start, buf, mblen))
 			goto next_sel;
 
+		view_selections_set(s, sel);
+
 next_sel:
 		free(wcs);
 	}
 
+	vis_draw(vis);
 	return keys;
 }
 
