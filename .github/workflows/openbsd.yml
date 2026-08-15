@@ -1,0 +1,35 @@
+name: OpenBSD
+
+on: [push, pull_request]
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        config:
+          - ""
+          - --disable-curses
+          - --disable-lua
+          - --disable-help
+    runs-on: ubuntu-latest
+    steps:
+
+    - name: Checkout
+      uses: actions/checkout@v7
+
+    - name: Build and test in an OpenBSD vm
+      uses: vmactions/openbsd-vm@v1
+      with:
+        release: "7.9"
+        usesh: true
+        copyback: false
+        cache-after-prepare: true
+        prepare: |
+          pkg_add -I gmake lua%5.3 lua53-lpeg
+        run: |
+          set -e
+          ./configure ${{ matrix.config }}
+          # gmake, not make: see the comment in freebsd.yml.
+          gmake
+          gmake test

@@ -1,0 +1,40 @@
+name: FreeBSD
+
+on: [push, pull_request]
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        config:
+          - ""
+          - --disable-curses
+          - --disable-lua
+          - --disable-tre
+          - --disable-help
+    runs-on: ubuntu-latest
+    steps:
+
+    - name: Checkout
+      uses: actions/checkout@v7
+
+    - name: Build and test in a FreeBSD vm
+      uses: vmactions/freebsd-vm@v1
+      with:
+        release: "15.1"
+        usesh: true
+        copyback: false
+        cache-after-prepare: true
+        prepare: |
+          pkg install -y gmake lua53 lua53-lpeg pkgconf libtre
+        run: |
+          set -e
+          ./configure ${{ matrix.config }}
+          # gmake, not make: the Makefile uses $(shell ...) for VERSION and
+          # API, which BSD make does not implement.  Under BSD make both
+          # expand to nothing, and the empty -DVIS_API= then defeats the
+          # "#ifndef VIS_API" fallback in util.h, so vis-lua.c fails to
+          # compile with "error: expected expression".
+          gmake
+          gmake test
