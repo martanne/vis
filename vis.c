@@ -291,13 +291,13 @@ static void window_draw_selections(Win *win) {
 	}
 }
 
-static void window_draw_eof(Win *win) {
+VIS_INTERNAL void
+window_draw_eof(Win *win)
+{
 	View *view = &win->view;
-	if (view->width == 0)
-		return;
 	VisCell cell = {.width = 1};
 	cell.style = vis_cell_style_merge(win->vis->ui.styles[UI_STYLE_DEFAULT], win->vis->ui.styles[UI_STYLE_EOF]);
-	cell.data_length = MIN(view->symbols[SYNTAX_SYMBOL_EOF].length, countof(cell.data));
+	cell.data_length = Min(view->symbols[SYNTAX_SYMBOL_EOF].length, countof(cell.data));
 	memory_copy(cell.data, view->symbols[SYNTAX_SYMBOL_EOF].data, cell.data_length);
 	for (Line *l = view->lastline->next; l; l = l->next)
 		l->cells[0] = cell;
