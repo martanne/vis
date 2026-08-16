@@ -150,7 +150,6 @@ ui_term_backend_blit(Ui *ui)
 
 	///////////////////////
 	// NOTE(rnp): compute dirty cells
-	memset(vt->cell_buffer.dirty_cell_bits, 0, cell_count / 8 + 1);
 
 	// NOTE(rnp): Test by using xor which leaves bits set when NEQ.
 	// Writing it this way makes it more likely compiler will optimize
