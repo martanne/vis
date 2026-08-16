@@ -1,9 +1,13 @@
+#define VIS_EXPORT static
 #include "vis.c"
 
 static Vis vis[1];
 
 #define PAGE      INT_MAX
 #define PAGE_HALF (INT_MAX-1)
+
+// NOTE: for towlower/towupper and friends
+#include <wctype.h>
 
 /** functions to be called from keybindings */
 /* X(impl, enum, argument, lua_name, help) */
@@ -357,33 +361,33 @@ static KEY_ACTION_FN(ka_selections_case)
 {
 	Text *txt = vis_text(vis);
 	View *view = vis_view(vis);
-	char *buf;
-	wchar_t *wcs;
+
+	// NOTE(rnp): this is kind of slow but it saves repeated allocation which is even slower
+	u64 max_length = 0;
+	for (Selection *s = view_selections(view); s; s = view_selections_next(s)) {
+		Filerange r = view_selections_get(s);
+		max_length = Max(max_length, text_range_size(r));
+	}
+
+	// We know that the amount of wide-characters required to hold the
+	// selection is at MOST the amount of bytes in the selection.
+	wchar_t *wcs = malloc(max_length * sizeof(*wcs) + max_length + 1);
+	if (!wcs) return keys;
+	char *buf = (char *)wcs + max_length * sizeof(*wcs);
+
 	for (Selection *s = view_selections(view), *next; s; s = next) {
 		next = view_selections_next(s);
 		Filerange sel = view_selections_get(s);
-		if (!text_range_valid(sel))
-			continue;
-
-		size_t mblen = text_range_size(sel);
-		// We know that the amount of wide-characters required to hold the
-		// selection is at MOST the amount of bytes in the selection.
-
-		wcs = malloc(mblen * sizeof(*wcs) + mblen + 1);
-		if (wcs == NULL) {
-			return keys;
-		}
-
-		buf = (char*)wcs + mblen * sizeof(*wcs);
-		buf[mblen] = 0;
+		u64 mblen = text_range_size(sel);
+		if (mblen == 0) continue;
 
 		text_bytes_get(txt, sel.start, mblen, buf);
 
-		// This is safe as long as the multibyte string is 0-terminated.
+		// NOTE(rnp): it is not specified if mbstowcs requires 0 termination so assume it does
+		buf[mblen] = 0;
 		size_t wcslen = mbstowcs(wcs, buf, mblen);
-		if (wcslen == (size_t) -1) {
-			goto next_sel;
-		}
+		if (wcslen == (size_t)-1)
+			continue;
 
 		for (size_t i = 0; i < wcslen; i++) {
 			wchar_t *wp = wcs + i;
@@ -407,20 +411,13 @@ static KEY_ACTION_FN(ka_selections_case)
 
 		// We assume that the number of bytes required by the modified
 		// wide-character string is the same as the multibyte input.
-		if (wcstombs(buf, wcs, mblen) == (size_t) -1) {
-			goto next_sel;
+		if (wcstombs(buf, wcs, mblen) != (size_t)-1) {
+			if (text_delete_range(txt, sel) && text_insert(vis, txt, sel.start, buf, mblen))
+				view_selections_set(s, sel);
 		}
-
-		if (!text_delete_range(txt, sel))
-			goto next_sel;
-		if (!text_insert(vis, txt, sel.start, buf, mblen))
-			goto next_sel;
-
-		view_selections_set(s, sel);
-
-next_sel:
-		free(wcs);
 	}
+
+	free(wcs);
 
 	vis_draw(vis);
 	return keys;

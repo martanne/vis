@@ -102,6 +102,8 @@
 
 #define Between(x, a, b) ((x) >= (a) && (x) <= (b))
 #define Clamp(x, a, b)   (((x) < (a)) ? (a) : ((x) > (b)) ? (b) : (x))
+#define Min(a, b)        ((a) > (b) ? (b) : (a))
+#define Max(a, b)        ((a) < (b) ? (b) : (a))
 
 /* is c the start of a utf8 sequence? */
 #define ISUTF8(c)     (((c)&0xC0)!=0x80)
