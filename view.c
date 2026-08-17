@@ -664,23 +664,20 @@ void view_redraw_top(View *view) {
 	view_cursors_to(view->selection, view->selection->pos);
 }
 
-void view_redraw_center(View *view) {
-	int center = view->height / 2;
-	size_t pos = view->selection->pos;
-	for (int i = 0; i < 2; i++) {
-		int linenr = 0;
-		Line *line = view->selection->line;
-		for (Line *cur = view->topline; cur && cur != line; cur = cur->next)
-			linenr++;
-		if (linenr < center) {
-			view_slide_down(view, center - linenr);
-			continue;
+VIS_INTERNAL void
+view_redraw_center(View *view)
+{
+	u64 pos       = view->selection->pos;
+	u64 line_size = sizeof(Line) + view->width * sizeof(VisCell);
+	s32 line_number = (s32)(((u8 *)view->selection->line - (u8 *)view->lines) / line_size);
+	s32 center      = view->height / 2;
+	if (line_number < center) {
+		view_slide_down(view, center - line_number);
+	} else {
+		for (s32 i = 0; i < line_number - center; i++) {
+			Line *l = (Line *)((u8 *)view->lines + line_size * i);
+			view->start += l->len;
 		}
-		for (Line *cur = view->topline; cur && cur != line && linenr > center; cur = cur->next) {
-			view->start += cur->len;
-			linenr--;
-		}
-		break;
 	}
 	view_draw(view);
 	view_cursors_to(view->selection, pos);
