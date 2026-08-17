@@ -1130,15 +1130,14 @@ vis_keys_process(Vis *vis, s64 pos)
 }
 
 VIS_INTERNAL void
-vis_keys_push(Vis *vis, const char *input, s64 pos, bool record)
+vis_keys_push(Vis *vis, str8 input, s64 pos, bool record)
 {
-	str8 is = str8_from_c_str(input);
-	if (is.length > 0) {
+	if (input.length > 0) {
 		if (record && vis->recording)
-			buffer_append(vis->recording, is.data, is.length);
+			buffer_append(vis->recording, input.data, input.length);
 		if (vis->macro_operator)
-			buffer_append(vis->macro_operator, is.data, is.length);
-		if (buffer_append(&vis->input_queue, is.data, is.length))
+			buffer_append(vis->macro_operator, input.data, input.length);
+		if (buffer_append(&vis->input_queue, input.data, input.length))
 			vis_keys_process(vis, pos);
 	}
 }
@@ -1148,17 +1147,12 @@ macro_replay_internal(Vis *vis, Macro *macro)
 {
 	s64 pos = vis->input_queue.length;
 	for (char *key = (char *)buffer_content0(macro), *next; key; key = next) {
-		char tmp;
-		next = (char*)vis_keys_next(vis, key);
-		if (next) {
-			tmp = *next;
-			*next = '\0';
-		}
+		next = (char *)vis_keys_next(vis, key);
 
-		vis_keys_push(vis, key, pos, false);
+		str8 input = {.data = (u8 *)key, .length = next - key};
+		if (!next) input.length = macro->length > 0 ? macro->length - (key - macro->data) : 0;
 
-		if (next)
-			*next = tmp;
+		vis_keys_push(vis, input, pos, false);
 	}
 }
 
@@ -1296,7 +1290,7 @@ int vis_run(Vis *vis) {
 			vis_die(vis, "Killed by SIGTERM\n");
 		if (vis->interrupted) {
 			vis->interrupted = false;
-			vis_keys_push(vis, "<C-c>", 0, true);
+			vis_keys_push(vis, str8("<C-c>"), 0, true);
 			continue;
 		}
 
@@ -1334,7 +1328,7 @@ int vis_run(Vis *vis) {
 		const char *key;
 
 		while ((key = getkey(vis)))
-			vis_keys_push(vis, key, 0, true);
+			vis_keys_push(vis, str8_from_c_str(key), 0, true);
 
 		if (vis->mode->idle)
 			timeout = &idle;
