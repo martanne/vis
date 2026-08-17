@@ -327,8 +327,9 @@ end
 -- utility -> datap -> filename -> extension -> L.detect() -> mime
 -- mime is supposed to be the most correct, but it execs file
 -- Which is slow and semi non-portable, so its left for last
-local function Detect(file)
+local function Detect(win)
 	local R
+	local file = win.file
 
 	-- pass first few bytes of file to custom file type detector functions
 	local data = file:content(0, 256)
@@ -420,7 +421,7 @@ local function Detect(file)
 end
 
 vis.events.subscribe(vis.events.WIN_OPEN, function(win)
-	local syntax = Detect(win.file) -- syntax/lexer/filetype
+	local syntax = Detect(win) -- syntax/lexer/filetype
 	local filetype = rawget(filetypes, syntax) -- avoid backwards compatibility mt
 	if filetype then
 		for _, Action in ipairs(filetype.actions or {}) do
@@ -449,9 +450,3 @@ vis.events.subscribe(vis.events.WIN_OPEN, function(win)
 	return
 end)
 
-vis.events.subscribe(vis.events.FILE_SAVE_POST, function(file, path)
-	local syntax = Detect(file)
-	if syntax then
-		vis:command("set syntax " .. syntax)
-	end
-end)
