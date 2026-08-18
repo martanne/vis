@@ -244,15 +244,13 @@ vis.events = events
 -- @tparam string syntax the syntax lexer name or `nil` to disable syntax highlighting
 -- @treturn bool whether the lexer could be changed
 vis.types.window.set_syntax = function(win, syntax)
-
-	local lexers = vis.lexers
-
 	if syntax == nil or syntax == 'off' then
 		win.syntax = nil
 		return true
 	end
 	win.syntax = syntax
 
+	local lexers = vis.lexers
 	if not lexers.load then return false end
 	local lexer = lexers.load(syntax)
 	if not lexer then return false end
