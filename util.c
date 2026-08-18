@@ -165,10 +165,11 @@ static void
 path_split(str8 path, str8 *directory, str8 *basename)
 {
 	str8 left;
-	ptrdiff_t at = (uint8_t *)memory_scan_reverse(path.data, '/', path.length) - path.data;
+	uint8_t * slash = memory_scan_reverse(path.data, '/', path.length);
+	ptrdiff_t at = slash - path.data;
 	str8_split_at(path, &left, basename, at);
 
-	if (basename && basename->length == 0 && at <= 0) {
+	if (basename && basename->length == 0 && slash == 0) {
 		*basename = left;
 		left      = (str8){0};
 	}
