@@ -327,8 +327,7 @@ view_addch(View *view, VisCell *cell)
 	if (!view->line)
 		return false;
 
-	// static_assert(sizeof(cell->data) == 4, "");
-	char buffer[4 + 1];
+	char buffer[sizeof(cell->data) + 1];
 	memory_copy(buffer, cell->data, sizeof(cell->data));
 	buffer[cell->data_length] = 0;
 	bool ch_breakat = (buffer[0] != 0) && strstr(view->breakat, buffer);
@@ -436,7 +435,7 @@ view_draw(View *view)
 	while (string.length > 0) {
 		VisCell cell = vis_cell_from_string(&string);
 
-		if (cell.file_byte_count == -1) {
+		if VisCellInvalid(cell) {
 			// NOTE(rnp): needs more data. read another chunk into buffer.
 			string.length = text_bytes_get(view->text, pos + prev_cell.file_byte_count, size, text);
 			string.data   = (u8 *)text;

@@ -53,8 +53,10 @@ vis_cell_from_string(str8 *text)
 			result.data[i] = text->data[i];
 		result.file_byte_count = parsed;
 		result.data_length     = parsed;
-		result.width           = wcwidth(wchar);
-		if (result.width == -1) result.width = 1;
+
+		s32 width = wcwidth(wchar);
+		if (width == -1) width = 1;
+		result.width = width;
 	}break;
 
 	case 0:{
@@ -74,7 +76,7 @@ vis_cell_from_string(str8 *text)
 	}break;
 	}
 
-	if (result.file_byte_count != -1)
+	if (!VisCellInvalid(result))
 		*text = str8_skip(*text, result.file_byte_count);
 
 	return result;
@@ -502,7 +504,7 @@ ui_draw(Vis *vis)
 		u32 column = 0;
 		while (info.length && column < tui->width) {
 			VisCell cell = vis_cell_from_string(&info);
-			if (cell.file_byte_count == -1)
+			if VisCellInvalid(cell)
 				break;
 
 			if (cell.file_byte_count == 1 && (cell.data[0] < 0x20 || cell.data[0] == 0x7f)) {

@@ -71,7 +71,7 @@ typedef enum {
 
 // NOTE(rnp): FG/BG may be indexed, as indicated by the cell properties. For
 // alignment they are not defined as unions. The FG index is stored in the
-// fg_r and fg_g u8s and the BG index is strored in the bg_g and bg_b u8s.
+// fg_r and fg_g u8s and the BG index is stored in the bg_g and bg_b u8s.
 // Use the VisCellStyleBGIndex*() and VisCellStyleFGIndex*() macros to extract.
 typedef alignas(8) struct {
 	u8 attributes; // VisCellAttributes
@@ -85,26 +85,30 @@ typedef alignas(8) struct {
 #define VisCellStyleBGIndexSet(v, index) ((v)->bg_g = ((index >> 8u) & 0xFFu), ((v)->bg_b = (index) & 0xFFu))
 
 typedef alignas(8) struct {
+	u16 file_byte_count : 10; /* number of bytes in underlying text */
+	u16 data_length     : 3;  /* length of data field */
+	u16 width           : 2;  /* width in terminal columns */
+	u16 multi_codepoint : 1;  /* whether the cell data needs a lookup in the string table */
+
 	/* utf-8 encoded character displayed in this cell, not 0 terminated.
-	 * may not match the underlying text, eg tabs get expanded */
-	u8  data[4];
-	s8  data_length; /* length of data [0-4] */
-	s8  width;       /* width in terminal columns [0-2] */
-	/* number of bytes in the underlying file handled by this cell [0-4] */
-	s16 file_byte_count;
+	 * may not match the underlying text, eg tabs get replaced with ' ' */
+	u8  data[6];
 } VisCellData;
 
 typedef alignas(16) struct {
+	u16 file_byte_count : 10; /* number of bytes in underlying text */
+	u16 data_length     : 3;  /* length of data field */
+	u16 width           : 2;  /* width in terminal columns */
+	u16 multi_codepoint : 1;  /* whether the cell data needs a lookup in the string table */
+
 	/* utf-8 encoded character displayed in this cell, not 0 terminated.
-	 * may not match the underlying text, eg tabs get expanded */
-	u8  data[4];
-	s8  data_length; /* length of data [0-4] */
-	s8  width;       /* width in terminal columns [0-2] */
-	/* number of bytes in the underlying file handled by this cell [0-4] */
-	s16 file_byte_count;
+	 * may not match the underlying text, eg tabs get replaced with ' ' */
+	u8  data[6];
 
 	VisCellStyle style;
 } VisCell;
+
+#define VisCellInvalid(c) ((c).file_byte_count == 0x3FF)
 
 typedef struct {
 	VisCellData  *cells;
@@ -189,8 +193,8 @@ VIS_INTERNAL void ui_window_options_set(Win *win, enum UiOption options);
 VIS_INTERNAL void ui_window_status(Vis *vis, Win *win, const char *status);
 
 // NOTE: returns a cell representing the first character in string. if
-// successful string is modified to skip data taken by cell. if more
-// data is needed the returned cell.file_byte_count == -1.
+// successful string is modified to skip data taken by cell. to check if
+// more data is needed use VisCellInvalid(cell)
 VIS_INTERNAL VisCell vis_cell_from_string(str8 *string);
 
 VIS_INTERNAL VisCellStyle vis_cell_style_merge(VisCellStyle old, VisCellStyle new);
