@@ -54,14 +54,53 @@ vis:option_register("theme", "string", function(name)
 	return true
 end, "Color theme to use, filename without extension")
 
-vis:option_register("syntax", "string", function(name)
-	if not vis.win then return false end
-	if not vis.win:set_syntax(name) then
-		vis:info(string.format("Unknown syntax definition: `%s'", name))
-		return false
+
+-- syntax_highlight is on by default, unless $NO_COLOR is set
+vis.options.SYNTAX_HIGHLIGHT = not(os.getenv"NO_COLOR" or os.getenv"VIS_NOCOLOR")
+-- NOTE: .options.SYNTAX_HIGHLIGHT is used as the real option because modifying
+-- .options.syntax_highlight leads to a C stack overflow, possible BUG?
+-- You also cannot set win.options[key], this one is not a bug, it works
+-- if you have direct access to win, but if you do vis:windows(), you can't see it.
+
+-- global syntax highlight option
+vis:option_register("syntax_highlight", "bool"
+,	function(value, toggle)
+		if toggle then -- value = false
+			value = not vis.options.SYNTAX_HIGHLIGHT
+		end
+		vis.options.SYNTAX_HIGHLIGHT = value
+		if not vis.win then return true end
+		for win in vis:windows() do
+			if win.syntax_highlight ~= value then
+				win.syntax_highlight = value
+				vis.ftdetect.ChangeSyntax(win)
+			end
+		end
+		return true
 	end
-	return true
-end, "Syntax highlighting lexer to use")
+,	"Turns syntax highlighting on/off globally"
+)
+
+-- Per window setting
+vis:option_register("syntax", "string"
+,	function(name)
+		local win = vis.win
+		if not win then return false end
+		if name=="off" then -- current window off
+			win.syntax_highlight = false
+			win.syntax = nil
+			return true
+		elseif name=='on' or name=='auto' then -- default mode
+			win.syntax_highlight = true
+		else
+			win.SYNTAX = name
+			vis.ftdetect.SetActions(win)
+		end
+		vis.ftdetect.ChangeSyntax(win)
+		return true
+	end
+,	"Syntax highlighting lexer to use"
+)
 
 vis:option_register("horizon", "number", function(horizon)
 	if not vis.win then return false end
