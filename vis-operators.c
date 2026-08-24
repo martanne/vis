@@ -37,7 +37,24 @@ static size_t op_put(Vis *vis, Text *txt, OperatorContext *c) {
 	size_t pos = c->pos;
 	bool sel = text_range_size(c->range) > 0;
 	bool sel_linewise = sel && text_range_is_linewise(txt, c->range);
-	if (sel) {
+	if (vis_register_used(vis) == VIS_REG_DOT) {
+		/* Macro-replaying the dot-register prevents that op_put() is executed multiple times if
+		 * there is more than one selection, so deletion of multiple selections needs to be done
+		 * before replaying the macro. */
+		for (Selection *s = view_selections(&vis->win->view); s; s = view_selections_next(s)) {
+			Filerange r = view_selections_get(s);
+			size_t start = r.start;
+			if (text_range_size(r) > 1) {
+				text_delete_range(txt, r);
+			} else {
+				/* Also move the cursor of all selections one char further if putting with 'p' */
+				if (c->arg->i == VIS_OP_PUT_AFTER || c->arg->i == VIS_OP_PUT_AFTER_END)
+					start = text_char_next(txt, start);
+			}
+			view_cursors_to(s, start);
+		}
+	}
+	else if (sel) {
 		text_delete_range(txt, c->range);
 		pos = c->pos = c->range.start;
 	}
@@ -56,17 +73,22 @@ static size_t op_put(Vis *vis, Text *txt, OperatorContext *c) {
 		break;
 	}
 
-	s64 len;
-	const char *data = register_slot_get(vis, c->reg, c->reg_slot, &len);
+	if (vis_register_used(vis) == VIS_REG_DOT) {
+		vis_macro_replay(vis, VIS_REG_DOT);
+		pos = EPOS;
+	} else {
+		s64 len;
+		const char *data = register_slot_get(vis, c->reg, c->reg_slot, &len);
 
-	for (int i = 0; i < c->count; i++) {
-		char nl;
-		if (c->reg->linewise && pos > 0 && text_byte_get(txt, pos-1, &nl) && nl != '\n')
-			pos += text_insert(vis, txt, pos, "\n", 1);
-		text_insert(vis, txt, pos, data, len);
-		pos += len;
-		if (c->reg->linewise && pos > 0 && text_byte_get(txt, pos-1, &nl) && nl != '\n')
-			pos += text_insert(vis, txt, pos, "\n", 1);
+		for (int i = 0; i < c->count; i++) {
+			char nl;
+			if (c->reg->linewise && pos > 0 && text_byte_get(txt, pos-1, &nl) && nl != '\n')
+				pos += text_insert(vis, txt, pos, "\n", 1);
+			text_insert(vis, txt, pos, data, len);
+			pos += len;
+			if (c->reg->linewise && pos > 0 && text_byte_get(txt, pos-1, &nl) && nl != '\n')
+				pos += text_insert(vis, txt, pos, "\n", 1);
+		}
 	}
 
 	if (c->reg->linewise) {
