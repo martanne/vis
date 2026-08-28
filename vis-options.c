@@ -30,6 +30,7 @@ enum {
 	OPTION_CHANGE_256COLORS,
 	OPTION_LAYOUT,
 	OPTION_IGNORECASE,
+	OPTION_SMARTCASE,
 	OPTION_BREAKAT,
 	OPTION_WRAP_COLUMN,
 };
@@ -136,6 +137,11 @@ static const VisOption vis_options_table[] = {
 		{ "ignorecase", "ic" },
 		VIS_OPTION_TYPE_BOOL,
 		VIS_HELP("Ignore case when searching")
+	},
+	[OPTION_SMARTCASE] = {
+		{ "smartcase", "sc" },
+		VIS_OPTION_TYPE_BOOL,
+		VIS_HELP("Ignore case only when input contains no uppercase")
 	},
 	[OPTION_BREAKAT] = {
 		{ "breakat", "brk" },
@@ -251,6 +257,7 @@ vis_option_set(Vis *vis, Win *win, VisOption *option, VisValue value, bool toggl
 	case OPTION_ESCDELAY:{         vis->escape_delay = MAX(0, value.u.integer);                         }break;
 	case OPTION_EXPANDTAB:{        win->expandtab = toggle ? !win->expandtab : value.u.boolean;         }break;
 	case OPTION_IGNORECASE:{       vis->ignorecase = toggle ? !vis->ignorecase : value.u.boolean;       }break;
+	case OPTION_SMARTCASE:{        vis->smartcase= toggle ? !vis->smartcase: value.u.boolean;           }break;
 	case OPTION_NUMBER_WIDTH:{     win->min_sidebar_width = MAX(0, value.u.integer);                    }break;
 	case OPTION_SHELL:{            vis_shell_set(vis, value.u.string);                                  }break;
 	case OPTION_TABWIDTH:{         view_tabwidth_set(&win->view, value.u.integer);                      }break;
@@ -391,6 +398,7 @@ vis_option_get(Vis *vis, Win *win, VisOption *option)
 		case OPTION_ESCDELAY:{         result.u.integer = vis->escape_delay;      }break;
 		case OPTION_EXPANDTAB:{        result.u.boolean = win->expandtab;         }break;
 		case OPTION_IGNORECASE:{       result.u.boolean = vis->ignorecase;        }break;
+		case OPTION_SMARTCASE:{        result.u.boolean = vis->smartcase;         }break;
 		case OPTION_LAYOUT:{           result.u.integer = vis->ui.layout;         }break;
 		case OPTION_NUMBER_WIDTH:{     result.u.integer = win->min_sidebar_width; }break;
 		case OPTION_SHELL:{            result.u.string  = vis->shell;             }break;

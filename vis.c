@@ -1554,7 +1554,16 @@ Regex *vis_regex(Vis *vis, const char *pattern) {
 	Regex *regex = text_regex_new();
 	if (!regex)
 		return NULL;
-	int cflags = REG_EXTENDED|REG_NEWLINE|(REG_ICASE*vis->ignorecase);
+	int ignorecase = vis->ignorecase || vis->smartcase;
+	if (vis->smartcase) {
+		for (const char *p = pattern; *p; p++) {
+			if (isupper((unsigned char)*p)) {
+				ignorecase = false;
+				break;
+			}
+		}
+	}
+	int cflags = REG_EXTENDED|REG_NEWLINE|(REG_ICASE*ignorecase);
 	if (text_regex_compile(regex, pattern, cflags) != 0) {
 		text_regex_free(regex);
 		return NULL;
