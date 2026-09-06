@@ -1104,7 +1104,7 @@ enum SamError sam_cmd(Vis *vis, const char *s) {
 			c->range.start += delta;
 			c->range.end += delta;
 			if (c->type & TRANSCRIPT_DELETE) {
-				text_delete_range(file->text, c->range);
+				text_delete_range(vis, file->text, c->range);
 				delta -= text_range_size(c->range);
 				if (c->sel && c->type == TRANSCRIPT_DELETE) {
 					if (visual)
