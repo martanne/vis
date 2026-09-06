@@ -144,6 +144,7 @@ end
 local events = {
 	FILE_CLOSE = "Event::FILE_CLOSE", -- see @{file_close}
 	FILE_OPEN = "Event::FILE_OPEN", -- see @{file_open}
+	FILE_MODIFIED = "Event::FILE_MODIFIED", -- see @{file_modified}
 	FILE_SAVE_POST = "Event::FILE_SAVE_POST", -- see @{file_save_post}
 	FILE_SAVE_PRE = "Event::FILE_SAVE_PRE", -- see @{file_save_pre}
 	INIT = "Event::INIT", -- see @{init}
@@ -161,6 +162,7 @@ local events = {
 
 events.file_close = function(...) events.emit(events.FILE_CLOSE, ...) end
 events.file_open = function(...) events.emit(events.FILE_OPEN, ...) end
+events.file_modified = function(...) events.emit(events.FILE_MODIFIED, ...) end
 events.file_save_post = function(...) events.emit(events.FILE_SAVE_POST, ...) end
 events.file_save_pre = function(...) return events.emit(events.FILE_SAVE_PRE, ...) end
 events.init = function(...) events.emit(events.INIT, ...) end
