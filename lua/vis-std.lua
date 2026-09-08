@@ -63,7 +63,7 @@ vis:option_register("syntax", "string", function(name)
 	return true
 end, "Syntax highlighting lexer to use")
 
-function binsearch_token_idx(tokens, pos)
+local function binsearch_token_idx(tokens, pos)
 	i0 = 2
 	i1 = #tokens
 	if pos < tokens[i0]-1 then return i0 end
@@ -80,7 +80,7 @@ end
 -- of single character tokens with the same style (like the current markup lexer).
 -- Otherwise, this would suffice:
 --   return idx - skip_count
-function skip_same_tokens(tokens, idx, skip_count)
+local function skip_same_tokens(tokens, idx, skip_count)
 	for i = 2, skip_count, 2 do
 		local style = tokens[idx - 1]
 		local j = 2
@@ -92,7 +92,7 @@ function skip_same_tokens(tokens, idx, skip_count)
 	return idx
 end
 
-function find_token_at(tokens, pos)
+local function find_token_at(tokens, pos)
 	local min_token_cache_entries = 4
 	if #tokens <= min_token_cache_entries then return 0 end
 	local token_cache_size = (tokens[#tokens] or 2) - 1
@@ -102,7 +102,7 @@ function find_token_at(tokens, pos)
 	return skip_same_tokens(tokens, idx, min_token_cache_entries)
 end
 
-function lex_range(win, start, finish)
+local function lex_range(win, start, finish)
 	if not win.syntax or not vis.lexers.load then return {} end
 	local lexer = vis.lexers.load(win.syntax, nil, true)
 	if not lexer then return {} end
@@ -140,14 +140,14 @@ vis.events.subscribe(vis.events.WIN_HIGHLIGHT, function(win)
 	local style_ids = vis.ui.style_ids
 
 	--- token_cache_last_pos points to the byte position right after the last lexed token
-	token_cache_last_pos = (win.token_cache[#win.token_cache] or 2) - 1
+	local token_cache_last_pos = (win.token_cache[#win.token_cache] or 2) - 1
 	if next(win.token_cache) == nil or token_cache_last_pos < win.viewport.bytes.finish then
 		win.token_cache = lex_range(win, token_cache_last_pos, win.viewport.bytes.finish)
 		if next(win.token_cache) == nil then return end
 	end
 
-	idx_start = binsearch_token_idx(win.token_cache, win.viewport.bytes.start)
-	idx_end   = binsearch_token_idx(win.token_cache, win.viewport.bytes.finish)
+	local idx_start = binsearch_token_idx(win.token_cache, win.viewport.bytes.start)
+	local idx_end   = binsearch_token_idx(win.token_cache, win.viewport.bytes.finish)
 	for i = idx_start, idx_end, 2 do
 		local name = win.token_cache[i-1]
 		local style = style_ids[name]
