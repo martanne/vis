@@ -378,8 +378,8 @@ static void *obj_lightref_check(lua_State *L, int idx, const char *type) {
 static Vis *lua_get_vis(lua_State *L)
 {
 	lua_getglobal(L, "vis");
-	Vis *result = luaL_checkudata(L, -1, "vis");
-	return result;
+	Vis **result = luaL_checkudata(L, -1, VIS_LUA_TYPE_VIS);
+	return *result;
 }
 
 static int index_common(lua_State *L) {
