@@ -254,6 +254,7 @@ vis.types.window.set_syntax = function(win, syntax)
 		return true
 	end
 	win.syntax = syntax
+	win.token_cache = {}
 
 	if not lexers.load then return false end
 	local lexer = lexers.load(syntax)
