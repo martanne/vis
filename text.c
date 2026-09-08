@@ -1,8 +1,7 @@
+#include "vis-core.h"
 #include "util.h"
 
 #include "text.h"
-
-VIS_INTERNAL bool vis_event_emit(Vis*, enum VisEvents, ...);
 
 /* A piece holds a reference (but doesn't itself store) a certain amount of data.
  * All active pieces chained together form the whole content of the document.
