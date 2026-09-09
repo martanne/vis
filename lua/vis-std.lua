@@ -64,11 +64,11 @@ vis:option_register("syntax", "string", function(name)
 end, "Syntax highlighting lexer to use")
 
 local function binsearch_token_idx(tokens, pos)
-	i0 = 2
-	i1 = #tokens
+	local i0 = 2
+	local i1 = #tokens
 	if pos < tokens[i0]-1 then return i0 end
 	if pos > tokens[i1]-1 then return i1 end
-	repeat
+	local i repeat
 		i = (i0 + i1) / 2
 		i = i + i % 2
 		if pos < tokens[i]-1 then i1 = i else i0 = i end
@@ -81,7 +81,7 @@ end
 -- Otherwise, this would suffice:
 --   return idx - skip_count
 local function skip_same_tokens(tokens, idx, skip_count)
-	for i = 2, skip_count, 2 do
+	for _ = 2, skip_count, 2 do
 		local style = tokens[idx - 1]
 		local j = 2
 		while idx - j > 0 and style == tokens[idx - j - 1] do
@@ -128,7 +128,7 @@ vis.events.subscribe(vis.events.WIN_OPEN, function(win)
 	win.token_cache = {}
 end)
 
-vis.events.subscribe(vis.events.FILE_MODIFIED, function(file, op, pos, len)
+vis.events.subscribe(vis.events.FILE_MODIFIED, function(file, _op, pos, _len)
 	for win in vis:windows() do
 		if win.file ~= file then break end
 		win.token_cache = lex_range(win, pos, win.viewport.bytes.finish)
