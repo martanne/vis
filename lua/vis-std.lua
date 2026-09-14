@@ -130,12 +130,15 @@ end)
 
 vis.events.subscribe(vis.events.FILE_MODIFIED, function(file, _op, pos, _len)
 	for win in vis:windows() do
-		if win.file ~= file then break end
-		win.token_cache = lex_range(win, pos, win.viewport.bytes.finish)
+		if win.file == file and not win:large() and win.syntax ~= nil then
+			win.token_cache = lex_range(win, pos, win.viewport.bytes.finish)
+			if win:large() then win.token_cache = {} end
+		end
 	end
 end)
 
 vis.events.subscribe(vis.events.WIN_HIGHLIGHT, function(win)
+	if win:large() or win.syntax == nil then win.token_cache = {}; return end
 	if win.token_cache == nil then win.token_cache = {} end
 	local style_ids = vis.ui.style_ids
 
@@ -206,12 +209,9 @@ vis.events.subscribe(vis.events.WIN_STATUS, function(win)
 	if not pos then pos = 0 end
 	table.insert(right_parts, (size == 0 and "0" or math.ceil(pos/size*100)).."%")
 
-	if not win.large then
+	if not win:large() then
 		local col = selection.col
 		table.insert(right_parts, selection.line..', '..col)
-		if size > 33554432 or col > 65536 then
-			win.large = true
-		end
 	end
 
 	local left = ' ' .. table.concat(left_parts, " » ") .. ' '
