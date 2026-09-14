@@ -130,12 +130,15 @@ end)
 
 vis.events.subscribe(vis.events.FILE_MODIFIED, function(file, _op, pos, _len)
 	for win in vis:windows() do
-		if win.file ~= file then break end
-		win.token_cache = lex_range(win, pos, win.viewport.bytes.finish)
+		if win.file == file and not win:large() and win.syntax ~= nil then
+			win.token_cache = lex_range(win, pos, win.viewport.bytes.finish)
+			if win:large() then win.token_cache = {} end
+		end
 	end
 end)
 
 vis.events.subscribe(vis.events.WIN_HIGHLIGHT, function(win)
+	if win:large() or win.syntax == nil then win.token_cache = {}; return end
 	if win.token_cache == nil then win.token_cache = {} end
 	local style_ids = vis.ui.style_ids
 
