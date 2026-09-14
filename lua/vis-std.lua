@@ -63,6 +63,26 @@ vis:option_register("syntax", "string", function(name)
 	return true
 end, "Syntax highlighting lexer to use")
 
+--
+-- Token Cache (win.token_cache)
+--
+-- The token cache maintains a list of tokens returned by the lexer for the syntax associated
+-- with a window (if win.syntax is not nil). It contains tokens from the beginning of the file
+-- to *at least* the end of the viewport and adapts to file changes and viewport movements.
+--
+-- The token names and their file positions in bytes are layed out like this:
+--
+--   win.token_cache = { name_1, pos_2, name_2, pos_3, name_3, ... }
+--
+-- Note that file positions in the token cache start from 1, opposed to file positions in
+-- the C code of vis that start from 0.
+--
+-- For fast access to a specific token index, given an arbitrary file position (from 0),
+-- binsearch_token_idx() can be used. The returned index (always even) points to the file
+-- position entry in the token cache after the given position. So the found file position
+-- points right after the end of the token which is found at the given file position.
+--
+
 local function binsearch_token_idx(tokens, pos)
 	local i0 = 2
 	local i1 = #tokens
