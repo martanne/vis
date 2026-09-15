@@ -113,7 +113,7 @@ local function skip_same_tokens(tokens, idx, skip_count)
 end
 
 local function find_token_at(tokens, pos)
-	local min_token_cache_entries = 4
+	local min_token_cache_entries = 16
 	if #tokens <= min_token_cache_entries then return 0 end
 	local token_cache_size = (tokens[#tokens] or 2) - 1
 	if pos == token_cache_size then return #tokens - min_token_cache_entries end
