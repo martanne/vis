@@ -84,6 +84,7 @@ end, "Syntax highlighting lexer to use")
 --
 
 local function binsearch_token_idx(tokens, pos)
+	if next(tokens) == nil or pos == nil then return 0 end
 	local i0 = 2
 	local i1 = #tokens
 	if pos < tokens[i0]-1 then return i0 end
@@ -113,7 +114,7 @@ local function skip_same_tokens(tokens, idx, skip_count)
 end
 
 local function find_token_at(tokens, pos)
-	local min_token_cache_entries = 16
+	local min_token_cache_entries = 2
 	if #tokens <= min_token_cache_entries then return 0 end
 	local token_cache_size = (tokens[#tokens] or 2) - 1
 	if pos == token_cache_size then return #tokens - min_token_cache_entries end
@@ -126,7 +127,7 @@ local function lex_range(win, start, finish)
 	if not win.syntax or not vis.lexers.load then return {} end
 	local lexer = vis.lexers.load(win.syntax, nil, true)
 	if not lexer then return {} end
-	if win.token_cache == nil then return {} end
+	if win.token_cache == nil or start == nil or finish == nil then return {} end
 
 	if finish < start then return win.token_cache end
 	local prev_idx = find_token_at(win.token_cache, start)
@@ -152,7 +153,9 @@ vis.events.subscribe(vis.events.FILE_MODIFIED, function(file, _op, pos, _len)
 	for win in vis:windows() do
 		if win.file == file then
 			if not win:large() and win.syntax ~= nil then
-				win.token_cache = lex_range(win, pos, win.viewport.bytes.finish)
+				local line = file:line_column_from_offset(pos)
+				local line_start_pos = file:offset_from_line_column(line, 1)
+				win.token_cache = lex_range(win, line_start_pos, win.viewport.bytes.finish)
 			else win.token_cache = {} end
 		end
 	end
@@ -164,7 +167,7 @@ vis.events.subscribe(vis.events.WIN_HIGHLIGHT, function(win)
 	local style_ids = vis.ui.style_ids
 
 	--- token_cache_last_pos points to the byte position right after the last lexed token
-	local token_cache_last_pos = (win.token_cache[#win.token_cache] or 2) - 1
+	local token_cache_last_pos = (win.token_cache[#win.token_cache] or 1) - 1
 	if next(win.token_cache) == nil or token_cache_last_pos < win.viewport.bytes.finish then
 		win.token_cache = lex_range(win, token_cache_last_pos, win.viewport.bytes.finish)
 		if next(win.token_cache) == nil then return end
