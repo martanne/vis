@@ -497,11 +497,12 @@ static size_t revision_undo(Text *txt, Revision *rev) {
 	return pos;
 }
 
-static size_t revision_redo(Text *txt, Revision *rev) {
+static size_t revision_redo(Text *txt, Revision *rev, size_t *spos) {
 	size_t pos = EPOS;
 	TextChange *c = rev->change;
 	while (c->next)
 		c = c->next;
+	*spos = c->pos;
 	for ( ; c; c = c->prev) {
 		span_swap(txt, &c->old, &c->new);
 		pos = c->pos;
@@ -521,7 +522,7 @@ size_t text_undo(Vis *vis, Text *txt) {
 	pos = revision_undo(txt, txt->history);
 	txt->history = rev;
 	lineno_cache_invalidate(&txt->lines);
-	vis_event_emit(vis, VIS_EVENT_FILE_MODIFIED, txt, TEXT_EVENT_UNDO, 0, 0);
+	vis_event_emit(vis, VIS_EVENT_FILE_MODIFIED, txt, TEXT_EVENT_UNDO, pos, 0);
 	return pos;
 }
 
@@ -532,10 +533,11 @@ size_t text_redo(Vis *vis, Text *txt) {
 	Revision *rev = txt->history->next;
 	if (!rev)
 		return pos;
-	pos = revision_redo(txt, rev);
+	size_t spos;
+	pos = revision_redo(txt, rev, &spos);
 	txt->history = rev;
 	lineno_cache_invalidate(&txt->lines);
-	vis_event_emit(vis, VIS_EVENT_FILE_MODIFIED, txt, TEXT_EVENT_REDO, 0, 0);
+	vis_event_emit(vis, VIS_EVENT_FILE_MODIFIED, txt, TEXT_EVENT_REDO, spos, 0);
 	return pos;
 }
 
