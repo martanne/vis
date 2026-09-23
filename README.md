@@ -109,8 +109,6 @@ There are plenty of ways to contribute, below are a few ideas:
 
  * Artwork
     - [Color Themes](https://github.com/martanne/vis/wiki/Themes)
-    - [Name](https://github.com/martanne/vis/issues/338) +
-      [Logo](https://github.com/martanne/vis/issues/328)
     - Homepage?
  * Documentation
     - [Manual Pages](https://github.com/martanne/vis/wiki/Developer-Overview#manual-pages)
