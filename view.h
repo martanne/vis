@@ -50,7 +50,6 @@ typedef struct Selection {
 
 typedef struct View {
 	Text *text;         /* underlying text management */
-	char *textbuf;      /* scratch buffer used for drawing */
 	int width, height;  /* size of display area */
 	size_t start, end;  /* currently displayed area [start, end] in bytes from the start of the file */
 	size_t start_last;  /* previously used start of visible area, used to update the mark */
@@ -59,6 +58,7 @@ typedef struct View {
 	u64   buffer_size;  /* number of allocated bytes for line/cell data */
 	void *buffer;       /* base address of line/cell data */
 
+	char         *text_buffer; /* scratch buffer used for drawing */
 	VisCellData  *cell_data;
 	VisCellStyle *cell_styles;
 
@@ -128,7 +128,7 @@ VIS_INTERNAL void   view_redraw_bottom(View*);
  * @defgroup view_size View Sizing
  * @{
  */
-VIS_INTERNAL bool view_resize(View*, int width, int height);
+VIS_INTERNAL bool vis_view_resize(View*, int width, int height);
 /**
  * @}
  * @defgroup view_draw View Drawing

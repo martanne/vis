@@ -149,7 +149,7 @@ void view_tabwidth_set(View *view, int tabwidth) {
 VIS_INTERNAL void
 vis_view_clear(View *view)
 {
-	memset(view->buffer, 0, view->buffer_size);
+	memset(view->lines, 0, view->buffer_size - ((u8 *)view->lines - (u8 *)view->buffer));
 	if (view->start != view->start_last) {
 		if (view->start == 0)
 			view->start_mark = EMARK;
@@ -439,7 +439,7 @@ view_draw(View *view)
 	/* read a screenful of text considering each character as 4-byte UTF character*/
 	size_t size = view->width * view->height * 4;
 	/* current buffer to work with */
-	char *text = view->textbuf;
+	char *text = view->text_buffer;
 	/* absolute position of character currently being added to display */
 	size_t pos = view->start;
 
@@ -531,44 +531,45 @@ bool view_update(View *view) {
 }
 
 VIS_INTERNAL bool
-view_resize(View *view, s32 width, s32 height)
+vis_view_resize(View *view, s32 width, s32 height)
 {
 	width  = Max(width, 1);
 	height = Max(height, 1);
-	if (view->width == width && view->height == height) {
-		view->need_update = true;
-		return true;
-	}
-	char *textbuf = malloc(width * height * 4 + 1);
-	if (!textbuf)
-		return false;
 
-	u64 page_size          = sysconf(_SC_PAGE_SIZE);
-	u64 cell_data_offset   = AlignUpPowerOfTwo(height * sizeof(Line), 64);
-	u64 cell_styles_offset = AlignUpPowerOfTwo(height * width * sizeof(VisCellData), 64) + cell_data_offset;
-	u64 buffer_size        = round_up_to(cell_styles_offset + height * width * sizeof(VisCellStyle), page_size);
+	bool result = true;
+	if (view->width != width || view->height != height) {
+		u64 cell_count         = (u64)height * width;
+		u64 page_size          = sysconf(_SC_PAGE_SIZE);
+		u64 lines_offset       = AlignUpPowerOfTwo(cell_count * 4 + 1, 64);
+		u64 cell_data_offset   = AlignUpPowerOfTwo(height * sizeof(Line), 64) + lines_offset;
+		u64 cell_styles_offset = AlignUpPowerOfTwo(cell_count * sizeof(VisCellData), 64) + cell_data_offset;
+		u64 buffer_size        = round_up_to(cell_styles_offset + cell_count * sizeof(VisCellStyle), page_size);
 
-	if (buffer_size != view->buffer_size) {
-		void *memory = mmap(0, buffer_size, PROT_READ|PROT_WRITE, MAP_ANONYMOUS|MAP_PRIVATE, -1, 0);
-		if (memory == MAP_FAILED) {
-			free(textbuf);
-			return false;
+		if (buffer_size != view->buffer_size) {
+			void *memory = mmap(0, buffer_size, PROT_READ|PROT_WRITE, MAP_ANONYMOUS|MAP_PRIVATE, -1, 0);
+			result = memory != MAP_FAILED;
+			if (result) {
+				if (view->buffer_size) munmap(view->buffer, view->buffer_size);
+				view->buffer_size = buffer_size;
+				view->buffer      = memory;
+			}
 		}
-		if (view->buffer_size) munmap(view->buffer, view->buffer_size);
-		view->buffer_size = buffer_size;
-		view->buffer      = memory;
+
+		if (result) {
+			view->width       = width;
+			view->height      = height;
+			view->text_buffer = view->buffer;
+			view->lines       = (Line *)((u8 *)view->buffer + lines_offset);
+			view->cell_data   = (VisCellData *)((u8 *)view->buffer + cell_data_offset);
+			view->cell_styles = (VisCellStyle *)((u8 *)view->buffer + cell_styles_offset);
+
+			view_draw(view);
+		}
 	}
 
-	free(view->textbuf);
-	view->textbuf     = textbuf;
-	view->width       = width;
-	view->height      = height;
-	view->lines       = view->buffer;
-	view->cell_data   = (VisCellData *)((u8 *)view->buffer + cell_data_offset);
-	view->cell_styles = (VisCellStyle *)((u8 *)view->buffer + cell_styles_offset);
+	if (result) view->need_update = true;
 
-	view_draw(view);
-	return true;
+	return result;
 }
 
 void view_free(View *view) {
@@ -576,7 +577,6 @@ void view_free(View *view) {
 		return;
 	while (view->selections)
 		selection_free(view->selections);
-	free(view->textbuf);
 	free(view->breakat);
 	munmap(view->buffer, view->buffer_size);
 }
@@ -600,7 +600,7 @@ bool view_init(Win *win, Text *text) {
 
 	if (!view->breakat ||
 	    !view_selections_new(view, 0) ||
-	    !view_resize(view, 1, 1))
+	    !vis_view_resize(view, 1, 1))
 	{
 		return false;
 	}

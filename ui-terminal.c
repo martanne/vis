@@ -107,7 +107,7 @@ static void ui_window_resize(Win *win, int width, int height) {
 	bool status = win->options & UI_OPTION_STATUSBAR;
 	win->width  = width;
 	win->height = height;
-	view_resize(&win->view, width - win->sidebar_width, status ? height - 1 : height);
+	vis_view_resize(&win->view, width - win->sidebar_width, status ? height - 1 : height);
 }
 
 static void ui_window_move(Win *win, int x, int y) {
@@ -361,7 +361,7 @@ static void ui_window_draw(Win *win) {
 		sidebar_width = MIN(win->width, MAX(sidebar_width, win->min_sidebar_width));
 	}
 	if (sidebar_width != win->sidebar_width) {
-		view_resize(view, width - sidebar_width, status ? height - 1 : height);
+		vis_view_resize(view, width - sidebar_width, status ? height - 1 : height);
 		win->sidebar_width = sidebar_width;
 	}
 	vis_window_draw(win);
