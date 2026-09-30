@@ -404,11 +404,8 @@ static void ui_window_draw(Win *win) {
 			ui_draw_string(ui, x + padding, y, sidebar_buffer, style_id);
 			prev_lineno = l->lineno;
 		}
-		VisCell *line_cells = view->cells + l->cells_index;
-		for (u32 vx = 0; vx < view_width; vx++) {
-			memory_copy(cells + x + sidebar_width + vx, line_cells + vx, sizeof(VisCellData));
-			styles[x + sidebar_width + vx] = line_cells[vx].style;
-		}
+		memory_copy(cells  + x + sidebar_width, view->cell_data   + l->cells_index, view_width * sizeof(VisCellData));
+		memory_copy(styles + x + sidebar_width, view->cell_styles + l->cells_index, view_width * sizeof(VisCellStyle));
 		cells  += ui->width;
 		styles += ui->width;
 	}

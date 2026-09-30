@@ -56,9 +56,11 @@ typedef struct View {
 	size_t start_last;  /* previously used start of visible area, used to update the mark */
 	Mark start_mark;    /* mark to keep track of the start of the visible area */
 
-	u64 buffer_size;    /* number of allocated bytes for lines (grows only) */
+	u64   buffer_size;  /* number of allocated bytes for line/cell data */
+	void *buffer;       /* base address of line/cell data */
 
-	VisCell *cells;     /* cell buffer for view. starts immediately after lines */
+	VisCellData  *cell_data;
+	VisCellStyle *cell_styles;
 
 	Line *lines;        /* view->height number of lines representing view content */
 	Line *topline;      /* top of the view, first line currently shown */

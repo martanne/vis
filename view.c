@@ -149,7 +149,7 @@ void view_tabwidth_set(View *view, int tabwidth) {
 VIS_INTERNAL void
 vis_view_clear(View *view)
 {
-	memset(view->lines, 0, view->buffer_size);
+	memset(view->buffer, 0, view->buffer_size);
 	if (view->start != view->start_last) {
 		if (view->start == 0)
 			view->start_mark = EMARK;
@@ -219,10 +219,14 @@ static void view_wrap_line(View *view) {
 		view->line->lineno = wrapped_line->lineno;
 		/* move extra cells to the next line */
 		for (int i = wrapcol; i < col; ++i) {
-			VisCell cell = view->cells[wrapped_line->cells_index + i];
+			VisCellData  cell  = view->cell_data[wrapped_line->cells_index + i];
+			VisCellStyle style = view->cell_styles[wrapped_line->cells_index + i];
 			view->line->width += cell.width;
 			view->line->len   += cell.file_byte_count;
-			view->cells[view->line->cells_index + view->col++] = cell;
+
+			s32 index = view->line->cells_index + view->col++;
+			view->cell_data[index]   = cell;
+			view->cell_styles[index] = style;
 		}
 	}
 
@@ -230,10 +234,11 @@ static void view_wrap_line(View *view) {
 	VisCell blank = view_blank_cell(view);
 	for (int i = wrapcol; i < view->width; ++i) {
 		if (i < col) {
-			wrapped_line->width -= view->cells[wrapped_line->cells_index + i].width;
-			wrapped_line->len   -= view->cells[wrapped_line->cells_index + i].file_byte_count;
+			wrapped_line->width -= view->cell_data[wrapped_line->cells_index + i].width;
+			wrapped_line->len   -= view->cell_data[wrapped_line->cells_index + i].file_byte_count;
 		}
-		view->cells[wrapped_line->cells_index + i] = blank;
+		memory_copy(view->cell_data + wrapped_line->cells_index + i, &blank, sizeof(VisCellData));
+		view->cell_styles[wrapped_line->cells_index + i] = blank.style;
 	}
 }
 
@@ -253,10 +258,17 @@ view_add_cell(View *view, VisCell cell)
 
 	view->line->width += cell.width;
 	view->line->len   += cell.file_byte_count;
-	view->cells[view->line->cells_index + view->col++] = cell;
+
+	s32 index = view->line->cells_index + view->col++;
+	memory_copy(view->cell_data + index, &cell, sizeof(VisCellData));
+	view->cell_styles[index] = cell.style;
+
 	/* set cells of a character which uses multiple columns */
-	for (int i = 1; i < cell.width; i++)
-		view->cells[view->line->cells_index + view->col++] = (VisCell){.style = cell.style};
+	for (s32 i = 1; i < cell.width; i++) {
+		index = view->line->cells_index + view->col++;
+		view->cell_data[index] = (VisCellData){0};
+		view->cell_styles[index] = cell.style;
+	}
 	return true;
 }
 
@@ -403,9 +415,9 @@ bool view_coord_get(View *view, size_t pos, Line **retline, int *retrow, int *re
 	if (line) {
 		int max_col = MIN(view->width, line->width);
 		while (cur < pos && col < max_col) {
-			cur += view->cells[line->cells_index + col].file_byte_count;
+			cur += view->cell_data[line->cells_index + col].file_byte_count;
 			/* skip over columns occupied by the same character */
-			while (++col < max_col && view->cells[line->cells_index + col].file_byte_count == 0);
+			while (++col < max_col && view->cell_data[line->cells_index + col].file_byte_count == 0);
 		}
 	} else {
 		line = view->bottomline;
@@ -481,8 +493,11 @@ view_draw(View *view)
 	VisCell blank = view_blank_cell(view);
 	/* clear remaining of line, important to show cursor at end of file */
 	if (view->line) {
-		for (int x = view->col; x < view->width; x++)
-			view->cells[view->line->cells_index + x] = blank;
+		for (s32 x = view->col; x < view->width; x++) {
+			s32 index = view->line->cells_index + x;
+			memory_copy(view->cell_data + index, &blank, sizeof(VisCellData));
+			view->cell_styles[index] = blank.style;
+		}
 	}
 
 	/* resync position of cursors within visible area */
@@ -505,8 +520,11 @@ bool view_update(View *view) {
 
 	VisCell blank = view_blank_cell(view);
 	for (Line *l = view->lastline->next; l; l = l->next) {
-		for (int x = 0; x < view->width; x++)
-			view->cells[l->cells_index + x] = blank;
+		for (s32 x = 0; x < view->width; x++) {
+			s32 index = l->cells_index + x;
+			memory_copy(view->cell_data + index, &blank, sizeof(VisCellData));
+			view->cell_styles[index] = blank.style;
+		}
 	}
 	view->need_update = false;
 	return true;
@@ -525,25 +543,30 @@ view_resize(View *view, s32 width, s32 height)
 	if (!textbuf)
 		return false;
 
-	u64 page_size    = sysconf(_SC_PAGE_SIZE);
-	u64 cells_offset = AlignUpPowerOfTwo(height * sizeof(Line), 64);
-	u64 buffer_size  = round_up_to(cells_offset + height * width * sizeof(VisCell), page_size);
+	u64 page_size          = sysconf(_SC_PAGE_SIZE);
+	u64 cell_data_offset   = AlignUpPowerOfTwo(height * sizeof(Line), 64);
+	u64 cell_styles_offset = AlignUpPowerOfTwo(height * width * sizeof(VisCellData), 64) + cell_data_offset;
+	u64 buffer_size        = round_up_to(cell_styles_offset + height * width * sizeof(VisCellStyle), page_size);
 
-	if (buffer_size > view->buffer_size) {
+	if (buffer_size != view->buffer_size) {
 		void *memory = mmap(0, buffer_size, PROT_READ|PROT_WRITE, MAP_ANONYMOUS|MAP_PRIVATE, -1, 0);
 		if (memory == MAP_FAILED) {
 			free(textbuf);
 			return false;
 		}
-		if (view->lines) munmap(view->lines, view->buffer_size);
-		view->lines       = memory;
-		view->cells       = (VisCell *)((u8 *)memory + cells_offset);
+		if (view->buffer_size) munmap(view->buffer, view->buffer_size);
 		view->buffer_size = buffer_size;
+		view->buffer      = memory;
 	}
+
 	free(view->textbuf);
-	view->textbuf = textbuf;
-	view->width = width;
-	view->height = height;
+	view->textbuf     = textbuf;
+	view->width       = width;
+	view->height      = height;
+	view->lines       = view->buffer;
+	view->cell_data   = (VisCellData *)((u8 *)view->buffer + cell_data_offset);
+	view->cell_styles = (VisCellStyle *)((u8 *)view->buffer + cell_styles_offset);
+
 	view_draw(view);
 	return true;
 }
@@ -555,7 +578,7 @@ void view_free(View *view) {
 		selection_free(view->selections);
 	free(view->textbuf);
 	free(view->breakat);
-	munmap(view->lines, view->buffer_size);
+	munmap(view->buffer, view->buffer_size);
 }
 
 void view_reload(View *view, Text *text) {
@@ -599,11 +622,11 @@ static size_t cursor_set(Selection *sel, Line *line, int col)
 	}
 
 	/* for characters which use more than 1 column, make sure we are on the left most */
-	while (col > 0 && view->cells[line->cells_index + col].file_byte_count == 0)
+	while (col > 0 && view->cell_data[line->cells_index + col].file_byte_count == 0)
 		col--;
 	/* calculate offset within the line */
 	for (int i = 0; i < col; i++)
-		pos += view->cells[line->cells_index + i].file_byte_count;
+		pos += view->cell_data[line->cells_index + i].file_byte_count;
 
 	sel->col = col;
 	sel->row = row;
@@ -1338,26 +1361,26 @@ vis_win_style(Win *win, u64 start, u64 end, u16 style_id)
 	int col = 0, view_width = view->width;
 	/* skip columns before range to be styled */
 	while (pos < start && col < view_width)
-		pos += view->cells[line->cells_index + col++].file_byte_count;
+		pos += view->cell_data[line->cells_index + col++].file_byte_count;
 
 	/* skip empty columns */
-	while (col < view_width && view->cells[line->cells_index + col].file_byte_count == 0)
+	while (col < view_width && view->cell_data[line->cells_index + col].file_byte_count == 0)
 		col++;
 
 	assert(style_id < win->vis->ui.style_count);
 	do {
 		// NOTE(rnp): first style at most until the end of the real line contents
 		while (pos <= end && col < line->width) {
-			pos += view->cells[line->cells_index + col].file_byte_count;
-			VisCell *cell = view->cells + line->cells_index + col++;
-			cell->style = vis_cell_style_merge(cell->style, win->vis->ui.styles[style_id]);
+			pos += view->cell_data[line->cells_index + col].file_byte_count;
+			VisCellStyle *style = view->cell_styles + line->cells_index + col++;
+			*style = vis_cell_style_merge(*style, win->vis->ui.styles[style_id]);
 		}
 
 		// NOTE(rnp): if the range extends to another line continue styling the full view width
 		if (pos < end) while (col < view_width)
 		{
-			VisCell *cell = view->cells + line->cells_index + col++;
-			cell->style = vis_cell_style_merge(cell->style, win->vis->ui.styles[style_id]);
+			VisCellStyle *style = view->cell_styles + line->cells_index + col++;
+			*style = vis_cell_style_merge(*style, win->vis->ui.styles[style_id]);
 		}
 
 		col = 0;
