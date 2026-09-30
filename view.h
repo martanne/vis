@@ -25,9 +25,9 @@ typedef struct {
 } SelectionRegionList;
 
 typedef struct {
-	u32 len;           /* line length in terms of bytes */
-	u32 lineno;        /* line number from start of file */
-	u32 width;         /* zero based position of last used column cell */
+	u32 file_byte_count; /* line length in terms of bytes */
+	u32 line_number;     /* line number from start of file */
+	u32 width;           /* zero based position of last used column cell */
 } Line; /* a line on the screen, *not* in the file */
 
 struct View;

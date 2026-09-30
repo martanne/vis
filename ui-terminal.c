@@ -357,7 +357,7 @@ static void ui_window_draw(Win *win) {
 
 	int sidebar_width = 0;
 	if (sidebar) {
-		sidebar_width = u32_count_digits(view->lastline->lineno) + 1;
+		sidebar_width = u32_count_digits(view->lastline->line_number) + 1;
 		sidebar_width = MIN(win->width, MAX(sidebar_width, win->min_sidebar_width));
 	}
 	if (sidebar_width != win->sidebar_width) {
@@ -367,7 +367,7 @@ static void ui_window_draw(Win *win) {
 	vis_window_draw(win);
 
 	Selection *sel = view_selections_primary_get(view);
-	size_t prev_lineno = 0, cursor_lineno = sel->line->lineno;
+	size_t prev_lineno = 0, cursor_lineno = sel->line->line_number;
 	int x = win->x, y = win->y;
 	int view_width = view->width;
 	// TODO(rnp): this should not be possible
@@ -381,13 +381,13 @@ static void ui_window_draw(Win *win) {
 	for (s32 vy = 0; vy < view->height; vy++, y++) {
 		Line *l = view->lines + vy;
 		if (sidebar_width) {
-			s32 line_number = l->lineno;
+			s32 line_number = l->line_number;
 			sidebar_buffer[0] = 0;
-			if (l->lineno && l->len && l->lineno != prev_lineno) {
+			if (l->line_number && l->file_byte_count > 0 && l->line_number != prev_lineno) {
 				if (rnu) {
-					line_number = (win->options & UI_OPTION_LARGE_FILE) ? 0 : l->lineno;
-					if (l->lineno > cursor_lineno) line_number = l->lineno - cursor_lineno;
-					if (l->lineno < cursor_lineno) line_number = cursor_lineno - l->lineno;
+					line_number = (win->options & UI_OPTION_LARGE_FILE) ? 0 : l->line_number;
+					if (l->line_number > cursor_lineno) line_number = l->line_number - cursor_lineno;
+					if (l->line_number < cursor_lineno) line_number = cursor_lineno - l->line_number;
 				}
 				snprintf(sidebar_buffer, sizeof(sidebar_buffer), "%d ", line_number);
 			}
@@ -395,7 +395,7 @@ static void ui_window_draw(Win *win) {
 			s32 padding = sidebar_width - 1 - u32_count_digits(line_number);
 			if (sidebar_buffer[0] == 0) padding = sidebar_width;
 
-			u16 style_id = (l->lineno == cursor_lineno) ? UI_STYLE_LINENUMBER_CURSOR : UI_STYLE_LINENUMBER;
+			u16 style_id = (l->line_number == cursor_lineno) ? UI_STYLE_LINENUMBER_CURSOR : UI_STYLE_LINENUMBER;
 			VisCellData  cd    = {.data = {' '}, .data_length = 1, .width = 1};
 			VisCellStyle style = vis_cell_style_merge(ui->styles[UI_STYLE_DEFAULT], ui->styles[style_id]);
 			for (s32 xi = 0; xi < padding; xi++) {
@@ -403,7 +403,7 @@ static void ui_window_draw(Win *win) {
 				styles[x + xi] = style;
 			}
 			ui_draw_string(ui, x + padding, y, sidebar_buffer, style_id);
-			prev_lineno = l->lineno;
+			prev_lineno = l->line_number;
 		}
 		memory_copy(cells  + x + sidebar_width, view->cell_data   + vy * view_width, view_width * sizeof(VisCellData));
 		memory_copy(styles + x + sidebar_width, view->cell_styles + vy * view_width, view_width * sizeof(VisCellStyle));

@@ -170,10 +170,10 @@ static void window_draw_colorcolumn(Win *win) {
 	bool line_cc_set = false; /* Has the colorcolumn attribute been set for this line yet */
 
 	for (s32 l = 0; l < win->view.height; l++) {
-		if (win->view.lines[l].lineno != line_number) {
+		if (win->view.lines[l].line_number != line_number) {
 			line_cols = 0;
 			line_cc_set = false;
-			line_number = win->view.lines[l].lineno;
+			line_number = win->view.lines[l].line_number;
 			if (line_number == 0)
 				break;
 		}
@@ -202,14 +202,14 @@ static void window_draw_cursorline(Win *win) {
 		return;
 
 	Selection *sel = view_selections_primary_get(&win->view);
-	u32 line_number = sel->line->lineno;
+	u32 line_number = sel->line->line_number;
 	s32 width       = win->view.width;
 	for (s32 l = 0; l < win->view.height; l++) {
-		if (win->view.lines[l].lineno == line_number) {
+		if (win->view.lines[l].line_number == line_number) {
 			VisCellStyle *styles = win->view.cell_styles + l * width;
 			for (s32 x = 0; x < width; x++)
 				styles[x] = vis_cell_style_merge(styles[x], vis->ui.styles[UI_STYLE_CURSOR_LINE]);
-		} else if (win->view.lines[l].lineno > line_number) {
+		} else if (win->view.lines[l].line_number > line_number) {
 			break;
 		}
 	}
