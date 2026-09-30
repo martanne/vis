@@ -164,16 +164,17 @@ static void window_draw_colorcolumn(Win *win) {
 	int cc = win->view.colorcolumn;
 	if (cc <= 0)
 		return;
-	size_t lineno = 0;
-	int line_cols = 0; /* Track the number of columns we've passed on each line */
+	s32  width       = win->view.width;
+	u32  line_number = 0;
+	s32  line_cols   = 0; /* Track the number of columns we've passed on each line */
 	bool line_cc_set = false; /* Has the colorcolumn attribute been set for this line yet */
-	int width = win->view.width;
 
-	for (Line *l = win->view.lines; l; l = l->next) {
-		if (l->lineno != lineno) {
+	for (s32 l = 0; l < win->view.height; l++) {
+		if (win->view.lines[l].lineno != line_number) {
 			line_cols = 0;
 			line_cc_set = false;
-			if (!(lineno = l->lineno))
+			line_number = win->view.lines[l].lineno;
+			if (line_number == 0)
 				break;
 		}
 		if (line_cc_set)
@@ -181,7 +182,7 @@ static void window_draw_colorcolumn(Win *win) {
 
 		/* This screen line contains the cell we want to highlight */
 		if (cc <= line_cols + width) {
-			VisCellStyle *style = win->view.cell_styles + l->cells_index + cc - 1 - line_cols;
+			VisCellStyle *style = win->view.cell_styles + l * width + cc - 1 - line_cols;
 			*style = vis_cell_style_merge(*style, win->vis->ui.styles[UI_STYLE_COLOR_COLUMN]);
 			line_cc_set = true;
 		} else {
@@ -200,15 +201,15 @@ static void window_draw_cursorline(Win *win) {
 	if (win->view.selection_count > 1)
 		return;
 
-	int width = win->view.width;
 	Selection *sel = view_selections_primary_get(&win->view);
-	size_t lineno = sel->line->lineno;
-	for (Line *l = win->view.lines; l; l = l->next) {
-		if (l->lineno == lineno) {
-			VisCellStyle *styles = win->view.cell_styles + l->cells_index;
-			for (int x = 0; x < width; x++)
+	u32 line_number = sel->line->lineno;
+	s32 width       = win->view.width;
+	for (s32 l = 0; l < win->view.height; l++) {
+		if (win->view.lines[l].lineno == line_number) {
+			VisCellStyle *styles = win->view.cell_styles + l * width;
+			for (s32 x = 0; x < width; x++)
 				styles[x] = vis_cell_style_merge(styles[x], vis->ui.styles[UI_STYLE_CURSOR_LINE]);
-		} else if (l->lineno > lineno) {
+		} else if (win->view.lines[l].lineno > line_number) {
 			break;
 		}
 	}
@@ -219,25 +220,25 @@ static void window_draw_selection(Win *win, Selection *cur) {
 	Filerange sel = view_selections_get(cur);
 	if (!text_range_valid(sel))
 		return;
-	Line *start_line; int start_col;
-	Line *end_line; int end_col;
-	view_coord_get(view, sel.start, &start_line, NULL, &start_col);
-	view_coord_get(view, sel.end, &end_line, NULL, &end_col);
-	if (!start_line && !end_line)
+
+	s32 start_line, start_col;
+	s32 end_line, end_col;
+	bool start_valid = view_coord_get(view, sel.start, 0, &start_line, &start_col);
+	bool end_valid   = view_coord_get(view, sel.end,   0, &end_line,   &end_col);
+	if (!start_valid && !end_valid)
 		return;
-	if (!start_line) {
-		start_line = view->lines;
-		start_col = 0;
+
+	if (!start_valid) start_line = start_col = 0;
+	if (!end_valid) {
+		end_line = vis_view_line_index(view, view->lastline);
+		end_col  = view->lastline->width;
 	}
-	if (!end_line) {
-		end_line = view->lastline;
-		end_col = end_line->width;
-	}
-	for (Line *l = start_line; l != end_line->next; l = l->next) {
-		int col = (l == start_line) ? start_col : 0;
-		int end = (l == end_line) ? end_col : l->width;
+
+	for (s32 l = start_line; l <= end_line; l++) {
+		s32 col = (l == start_line) ? start_col : 0;
+		s32 end = (l == end_line)   ? end_col   : view->lines[l].width;
 		while (col < end) {
-			VisCellStyle *style = view->cell_styles + l->cells_index + col++;
+			VisCellStyle *style = view->cell_styles + l * view->width + col++;
 			*style = vis_cell_style_merge(*style, win->vis->ui.styles[UI_STYLE_SELECTION]);
 		}
 	}
@@ -301,9 +302,9 @@ window_draw_eof(Win *win)
 	VisCellData  cell  = {.width = 1};
 	cell.data_length = Min(view->symbols[SYNTAX_SYMBOL_EOF].length, countof(cell.data));
 	memory_copy(cell.data, view->symbols[SYNTAX_SYMBOL_EOF].data, cell.data_length);
-	for (Line *l = view->lastline->next; l; l = l->next) {
-		view->cell_data[l->cells_index + 0]   = cell;
-		view->cell_styles[l->cells_index + 0] = style;
+	for (s32 l = vis_view_line_index(view, view->lastline) + 1; l < view->height; l++) {
+		view->cell_data[l * view->width + 0]   = cell;
+		view->cell_styles[l * view->width + 0] = style;
 	}
 }
 

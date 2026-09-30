@@ -24,14 +24,12 @@ typedef struct {
 	VisDACount       capacity;
 } SelectionRegionList;
 
-typedef struct Line Line;
-struct Line {               /* a line on the screen, *not* in the file */
-	Line *prev, *next; /* pointer to neighbouring screen lines */
+typedef struct {
 	u32 len;           /* line length in terms of bytes */
 	u32 lineno;        /* line number from start of file */
 	u32 width;         /* zero based position of last used column cell */
 	u32 cells_index;   /* index of first cell in this line */
-};
+} Line; /* a line on the screen, *not* in the file */
 
 struct View;
 typedef struct Selection {

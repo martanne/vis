@@ -378,7 +378,8 @@ static void ui_window_draw(Win *win) {
 	char sidebar_buffer[12];
 	VisCellData  *cells  = ui->cell_buffer.cells  + y * ui->width;
 	VisCellStyle *styles = ui->cell_buffer.styles + y * ui->width;
-	for (Line *l = view->lines; l; l = l->next, y++) {
+	for (s32 vy = 0; vy < view->height; vy++, y++) {
+		Line *l = view->lines + vy;
 		if (sidebar_width) {
 			s32 line_number = l->lineno;
 			sidebar_buffer[0] = 0;
@@ -404,8 +405,8 @@ static void ui_window_draw(Win *win) {
 			ui_draw_string(ui, x + padding, y, sidebar_buffer, style_id);
 			prev_lineno = l->lineno;
 		}
-		memory_copy(cells  + x + sidebar_width, view->cell_data   + l->cells_index, view_width * sizeof(VisCellData));
-		memory_copy(styles + x + sidebar_width, view->cell_styles + l->cells_index, view_width * sizeof(VisCellStyle));
+		memory_copy(cells  + x + sidebar_width, view->cell_data   + vy * view_width, view_width * sizeof(VisCellData));
+		memory_copy(styles + x + sidebar_width, view->cell_styles + vy * view_width, view_width * sizeof(VisCellStyle));
 		cells  += ui->width;
 		styles += ui->width;
 	}
