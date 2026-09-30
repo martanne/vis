@@ -378,7 +378,7 @@ static void ui_window_draw(Win *win) {
 	char sidebar_buffer[12];
 	VisCellData  *cells  = ui->cell_buffer.cells  + y * ui->width;
 	VisCellStyle *styles = ui->cell_buffer.styles + y * ui->width;
-	for (Line *l = view->topline; l; l = l->next, y++) {
+	for (Line *l = view->lines; l; l = l->next, y++) {
 		if (sidebar_width) {
 			s32 line_number = l->lineno;
 			sidebar_buffer[0] = 0;

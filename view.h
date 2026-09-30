@@ -63,9 +63,7 @@ typedef struct View {
 	VisCellStyle *cell_styles;
 
 	Line *lines;        /* view->height number of lines representing view content */
-	Line *topline;      /* top of the view, first line currently shown */
-	Line *lastline;     /* last currently used line, always <= bottomline */
-	Line *bottomline;   /* bottom of view, might be unused if lastline < bottomline */
+	Line *lastline;     /* last currently used line */
 
 	Selection *selection;    /* primary selection, always placed within the visible viewport */
 	Selection *selection_latest; /* most recently created cursor */

@@ -166,9 +166,8 @@ vis_view_clear(View *view)
 	}
 
 	view->start_last = view->start;
-	view->topline = view->lines;
-	view->topline->lineno = view->large_file ? 1 : text_lineno_by_pos(view->text, view->start);
-	view->lastline = view->topline;
+	view->lines[0].lineno = view->large_file ? 1 : text_lineno_by_pos(view->text, view->start);
+	view->lastline = view->lines;
 
 	Line *prev = 0;
 	for (s32 i = 0; i < view->height; i++) {
@@ -179,9 +178,7 @@ vis_view_clear(View *view)
 			prev->next = line;
 		prev = line;
 	}
-	view->bottomline = prev ? prev : view->topline;
-	view->bottomline->next = NULL;
-	view->line = view->topline;
+	view->line = view->lines;
 	view->col = 0;
 	view->wrapcol = 0;
 	view->prevch_breakat = false;
@@ -382,7 +379,7 @@ static void cursor_to(Selection *s, size_t pos) {
 	s->pos = pos;
 	if (!view_coord_get(s->view, pos, &s->line, &s->row, &s->col)) {
 		if (s->view->selection == s) {
-			s->line = s->view->topline;
+			s->line = s->view->lines;
 			s->row = 0;
 			s->col = 0;
 		}
@@ -395,7 +392,7 @@ static void cursor_to(Selection *s, size_t pos) {
 bool view_coord_get(View *view, size_t pos, Line **retline, int *retrow, int *retcol) {
 	int row = 0, col = 0;
 	size_t cur = view->start;
-	Line *line = view->topline;
+	Line *line = view->lines;
 
 	if (pos < view->start || pos > view->end) {
 		if (retline) *retline = NULL;
@@ -420,7 +417,7 @@ bool view_coord_get(View *view, size_t pos, Line **retline, int *retrow, int *re
 			while (++col < max_col && view->cell_data[line->cells_index + col].file_byte_count == 0);
 		}
 	} else {
-		line = view->bottomline;
+		line = view->lines + view->height - 1;
 		row = view->height - 1;
 	}
 
@@ -487,7 +484,7 @@ view_draw(View *view)
 			view->lastline = view->line;
 		}
 	} else {
-		view->lastline = view->bottomline;
+		view->lastline = view->lines + view->height - 1;
 	}
 
 	VisCell blank = view_blank_cell(view);
@@ -505,7 +502,7 @@ view_draw(View *view)
 		size_t pos = view_cursors_pos(s);
 		if (!view_coord_get(view, pos, &s->line, &s->row, &s->col) &&
 		    s == view->selection) {
-			s->line = view->topline;
+			s->line = view->lines;
 			s->row = 0;
 			s->col = 0;
 		}
@@ -616,7 +613,7 @@ static size_t cursor_set(Selection *sel, Line *line, int col)
 	View *view = sel->view;
 	size_t pos = view->start;
 	/* get row number and file offset at start of the given line */
-	for (Line *l = view->topline; l && l != line; l = l->next) {
+	for (Line *l = view->lines; l && l != line; l = l->next) {
 		pos += l->len;
 		row++;
 	}
@@ -646,7 +643,7 @@ static bool view_viewport_down(View *view, int n)
 	if (n >= view->height) {
 		view->start = view->end;
 	} else {
-		for (Line *line = view->topline; line && n > 0; line = line->next, n--)
+		for (Line *line = view->lines; line && n > 0; line = line->next, n--)
 			view->start += line->len;
 	}
 	view_draw(view);
@@ -686,7 +683,7 @@ static bool view_viewport_up(View *view, int n)
 
 void view_redraw_top(View *view) {
 	Line *line = view->selection->line;
-	for (Line *cur = view->topline; cur && cur != line; cur = cur->next)
+	for (Line *cur = view->lines; cur && cur != line; cur = cur->next)
 		view->start += cur->len;
 	view_draw(view);
 	/* FIXME: does this logic make sense */
@@ -719,8 +716,8 @@ void view_redraw_bottom(View *view) {
 size_t view_slide_up(View *view, int lines) {
 	Selection *sel = view->selection;
 	if (view_viewport_down(view, lines)) {
-		if (sel->line == view->topline)
-			cursor_set(sel, view->topline, sel->col);
+		if (sel->line == view->lines)
+			cursor_set(sel, view->lines, sel->col);
 		else
 			view_cursors_to(view->selection, sel->pos);
 	} else {
@@ -795,7 +792,7 @@ size_t view_scroll_halfpage_down(View *view) {
 size_t view_scroll_down(View *view, int lines) {
 	Selection *sel = view->selection;
 	if (view_viewport_down(view, lines)) {
-		Line *line = sel->line > view->topline ? sel->line : view->topline;
+		Line *line = sel->line > view->lines ? sel->line : view->lines;
 		cursor_set(sel, line, sel->col);
 	} else {
 		view_cursors_to(view->selection, text_size(view->text));
@@ -855,7 +852,7 @@ size_t view_screenline_down(Selection *sel) {
 	int lastcol = sel->lastcol;
 	if (!lastcol)
 		lastcol = sel->col;
-	if (!sel->line->next && sel->line == sel->view->bottomline)
+	if (!sel->line->next && sel->line == (sel->view->lines + sel->view->height  - 1))
 		view_scroll_down(sel->view, 1);
 	if (sel->line->next)
 		cursor_set(sel, sel->line->next, lastcol);
@@ -918,7 +915,7 @@ bool view_breakat_set(View *view, const char *breakat) {
 
 size_t view_screenline_goto(View *view, int n) {
 	size_t pos = view->start;
-	for (Line *line = view->topline; --n > 0 && line != view->lastline; line = line->next)
+	for (Line *line = view->lines; --n > 0 && line != view->lastline; line = line->next)
 		pos += line->len;
 	return pos;
 }
@@ -1163,8 +1160,8 @@ void view_cursors_to(Selection *s, size_t pos) {
 		if (view->start == pos)
 			view->start_last = 0;
 
-		if (view->end == pos && view->lastline == view->bottomline) {
-			view->start += view->topline->len;
+		if (view->end == pos && view->lastline == (view->lines + view->height - 1)) {
+			view->start += view->lines[0].len;
 			view_draw(view);
 		}
 
@@ -1347,7 +1344,7 @@ vis_win_style(Win *win, u64 start, u64 end, u16 style_id)
 		return;
 
 	size_t pos = view->start;
-	Line *line = view->topline;
+	Line *line = view->lines;
 
 	/* skip lines before range to be styled */
 	while (line && pos + line->len <= start) {
