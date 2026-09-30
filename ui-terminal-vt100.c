@@ -108,8 +108,7 @@ vis_terminal_style_indexed(u16 index)
 VIS_INTERNAL void
 vis_ui_vt100_output(str8 s)
 {
-	// TODO(rnp): eintr
-	(void)write(STDERR_FILENO, s.data, s.length);
+	(void)write_all(STDERR_FILENO, (const char *)s.data, s.length);
 }
 
 VIS_INTERNAL void
