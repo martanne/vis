@@ -30,8 +30,8 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  */
-#undef _XOPEN_SOURCE
-#define _XOPEN_SOURCE 700
+#include "util.h"
+#include "util.c"
 
 #include <fcntl.h>
 #include <stdio.h>
@@ -47,9 +47,6 @@
 #include <errno.h>
 
 #define CONTROL(ch)   (ch ^ 0x40)
-
-#include "util.h"
-#include "util.c"
 
 typedef enum {
 	C_Normal,

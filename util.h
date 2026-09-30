@@ -33,6 +33,9 @@
   #define CONFIG_ACL 0
 #endif
 
+#if defined(__APPLE__)
+# define _DARWIN_C_SOURCE
+#endif
 #undef _XOPEN_SOURCE
 #define _XOPEN_SOURCE 700
 
