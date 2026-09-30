@@ -244,30 +244,30 @@ static void window_draw_selection(Win *win, Selection *cur) {
 	}
 }
 
-static void window_draw_cursor_matching(Win *win, Selection *cur) {
-	if (win->vis->mode->visual)
-		return;
-	Line *line_match; int col_match;
-	size_t pos = view_cursors_pos(cur);
-	Filerange limits = VIEW_VIEWPORT_GET(win->view);
-	size_t pos_match = text_bracket_match_symbol(win->file->text, pos, "(){}[]\"'`", limits);
-	if (pos == pos_match)
-		return;
-	if (!view_coord_get(&win->view, pos_match, &line_match, NULL, &col_match))
-		return;
+VIS_INTERNAL void
+window_draw_cursor_matching(Win *win, Selection *cur)
+{
+	if (!win->vis->mode->visual) {
+		Filerange limits = VIEW_VIEWPORT_GET(win->view);
+		size_t pos       = view_cursors_pos(cur);
+		size_t pos_match = text_bracket_match_symbol(win->file->text, pos, "(){}[]\"'`", limits);
 
-	VisCellStyle *style = win->view.cell_styles + line_match->cells_index + col_match;
-	*style = vis_cell_style_merge(*style, win->vis->ui.styles[UI_STYLE_SELECTION]);
+		s32 line_index, column_index;
+		if (pos!= pos_match && view_coord_get(&win->view, pos_match, 0, &line_index, &column_index)) {
+			VisCellStyle *style = win->view.cell_styles + line_index * win->view.width + column_index;
+			*style = vis_cell_style_merge(*style, win->vis->ui.styles[UI_STYLE_SELECTION]);
+		}
+	}
 }
 
 static void window_draw_cursor(Win *win, Selection *cur) {
 	if (win->vis->win != win)
 		return;
-	Line *line = cur->line;
-	if (line) {
+	if (cur->line) {
+		s32 line_index = vis_view_line_index(&win->view, cur->line);
 		Selection *primary = view_selections_primary_get(&win->view);
 		u16 style_id = primary == cur ? UI_STYLE_CURSOR_PRIMARY : UI_STYLE_CURSOR;
-		VisCellStyle *style = win->view.cell_styles + line->cells_index + cur->col;
+		VisCellStyle *style = win->view.cell_styles + line_index * win->view.width + cur->col;
 		*style = vis_cell_style_merge(*style, win->vis->ui.styles[style_id]);
 		window_draw_cursor_matching(win, cur);
 	}

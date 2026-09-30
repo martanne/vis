@@ -165,18 +165,13 @@ vis_view_clear(View *view)
 			view->start = start;
 	}
 
-	view->start_last = view->start;
+	view->start_last      = view->start;
+	view->line            = view->lines;
+	view->lastline        = view->lines;
+	view->col             = 0;
+	view->wrapcol         = 0;
+	view->prevch_breakat  = false;
 	view->lines[0].lineno = view->large_file ? 1 : text_lineno_by_pos(view->text, view->start);
-	view->lastline = view->lines;
-
-	for (s32 i = 0; i < view->height; i++) {
-		Line *line = view->lines + i;
-		line->cells_index = i * view->width;
-	}
-	view->line = view->lines;
-	view->col = 0;
-	view->wrapcol = 0;
-	view->prevch_breakat = false;
 }
 
 static int view_max_text_width(const View *view) {
@@ -217,24 +212,24 @@ vis_view_line_index(View *view, Line *line)
 }
 
 static void view_wrap_line(View *view) {
-	Line *wrapped_line = view->line;
 	int col = view->col;
 	int wrapcol = (view->wrapcol > 0) ? view->wrapcol : view->col;
 
-	view->line = vis_view_line_next(view, view->line);
-	view->col = 0;
+	s32 old_line_index = vis_view_line_index(view, view->line);
+	view->line    = old_line_index < (view->height - 1) ? view->lines + old_line_index + 1 : 0;
+	view->col     = 0;
 	view->wrapcol = 0;
 
 	if (view->line) {
-		view->line->lineno = wrapped_line->lineno;
+		view->line->lineno = view->lines[old_line_index].lineno;
 		/* move extra cells to the next line */
 		for (int i = wrapcol; i < col; ++i) {
-			VisCellData  cell  = view->cell_data[wrapped_line->cells_index + i];
-			VisCellStyle style = view->cell_styles[wrapped_line->cells_index + i];
+			VisCellData  cell  = view->cell_data[old_line_index * view->width + i];
+			VisCellStyle style = view->cell_styles[old_line_index * view->width + i];
 			view->line->width += cell.width;
 			view->line->len   += cell.file_byte_count;
 
-			s32 index = view->line->cells_index + view->col++;
+			s32 index = (old_line_index + 1) * view->width + view->col++;
 			view->cell_data[index]   = cell;
 			view->cell_styles[index] = style;
 		}
@@ -244,11 +239,11 @@ static void view_wrap_line(View *view) {
 	VisCell blank = view_blank_cell(view);
 	for (int i = wrapcol; i < view->width; ++i) {
 		if (i < col) {
-			wrapped_line->width -= view->cell_data[wrapped_line->cells_index + i].width;
-			wrapped_line->len   -= view->cell_data[wrapped_line->cells_index + i].file_byte_count;
+			view->lines[old_line_index].width -= view->cell_data[old_line_index * view->width + i].width;
+			view->lines[old_line_index].len   -= view->cell_data[old_line_index * view->width + i].file_byte_count;
 		}
-		memory_copy(view->cell_data + wrapped_line->cells_index + i, &blank, sizeof(VisCellData));
-		view->cell_styles[wrapped_line->cells_index + i] = blank.style;
+		memory_copy(view->cell_data + old_line_index * view->width + i, &blank, sizeof(VisCellData));
+		view->cell_styles[old_line_index * view->width + i] = blank.style;
 	}
 }
 
@@ -269,13 +264,14 @@ view_add_cell(View *view, VisCell cell)
 	view->line->width += cell.width;
 	view->line->len   += cell.file_byte_count;
 
-	s32 index = view->line->cells_index + view->col++;
+	s32 line_index = vis_view_line_index(view, view->line);
+	s32 index = line_index * view->width + view->col++;
 	memory_copy(view->cell_data + index, &cell, sizeof(VisCellData));
 	view->cell_styles[index] = cell.style;
 
 	/* set cells of a character which uses multiple columns */
 	for (s32 i = 1; i < cell.width; i++) {
-		index = view->line->cells_index + view->col++;
+		index = line_index * view->width + view->col++;
 		view->cell_data[index] = (VisCellData){0};
 		view->cell_styles[index] = cell.style;
 	}
@@ -402,11 +398,9 @@ static void cursor_to(Selection *s, size_t pos) {
 	view_draw(s->view);
 }
 
-bool view_coord_get(View *view, size_t pos, Line **retline, int *retrow, int *retcol) {
-	int row = 0, col = 0;
-	size_t cur = view->start;
-	Line *line = view->lines;
-
+VIS_INTERNAL bool
+view_coord_get(View *view, size_t pos, Line **retline, s32 *retrow, s32 *retcol)
+{
 	if (pos < view->start || pos > view->end) {
 		if (retline) *retline = NULL;
 		if (retrow) *retrow = -1;
@@ -414,29 +408,31 @@ bool view_coord_get(View *view, size_t pos, Line **retline, int *retrow, int *re
 		return false;
 	}
 
-	while (line && line != view->lastline && cur < pos) {
-		if (cur + line->len > pos)
+	s32 row = 0, col = 0;
+	size_t cur = view->start;
+
+	s32 last_line_index = vis_view_line_index(view, view->lastline);
+	while (row < last_line_index && cur < pos) {
+		if (cur + view->lines[row].len > pos)
 			break;
-		cur += line->len;
-		line = vis_view_line_next(view, line);
+		cur += view->lines[row].len;
 		row++;
 	}
 
-	if (line) {
-		int max_col = MIN(view->width, line->width);
+	if (row != view->height) {
+		int max_col = MIN(view->width, view->lines[row].width);
 		while (cur < pos && col < max_col) {
-			cur += view->cell_data[line->cells_index + col].file_byte_count;
+			cur += view->cell_data[row * view->width + col].file_byte_count;
 			/* skip over columns occupied by the same character */
-			while (++col < max_col && view->cell_data[line->cells_index + col].file_byte_count == 0);
+			while (++col < max_col && view->cell_data[row * view->width + col].file_byte_count == 0);
 		}
 	} else {
-		line = view->lines + view->height - 1;
 		row = view->height - 1;
 	}
 
-	if (retline) *retline = line;
-	if (retrow) *retrow = row;
-	if (retcol) *retcol = col;
+	if (retline) *retline = view->lines + row;
+	if (retrow)  *retrow  = row;
+	if (retcol)  *retcol  = col;
 	return true;
 }
 
@@ -503,8 +499,9 @@ view_draw(View *view)
 	VisCell blank = view_blank_cell(view);
 	/* clear remaining of line, important to show cursor at end of file */
 	if (view->line) {
+		s32 line_index = vis_view_line_index(view, view->line);
 		for (s32 x = view->col; x < view->width; x++) {
-			s32 index = view->line->cells_index + x;
+			s32 index = line_index * view->width + x;
 			memory_copy(view->cell_data + index, &blank, sizeof(VisCellData));
 			view->cell_styles[index] = blank.style;
 		}
@@ -633,11 +630,11 @@ static size_t cursor_set(Selection *sel, Line *line, int col)
 	}
 
 	/* for characters which use more than 1 column, make sure we are on the left most */
-	while (col > 0 && view->cell_data[line->cells_index + col].file_byte_count == 0)
+	while (col > 0 && view->cell_data[line_index * view->width + col].file_byte_count == 0)
 		col--;
 	/* calculate offset within the line */
 	for (int i = 0; i < col; i++)
-		pos += view->cell_data[line->cells_index + i].file_byte_count;
+		pos += view->cell_data[line_index * view->width + i].file_byte_count;
 
 	sel->col = col;
 	sel->row = row;
