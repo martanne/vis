@@ -26,11 +26,11 @@ typedef struct {
 
 typedef struct Line Line;
 struct Line {               /* a line on the screen, *not* in the file */
-	Line *prev, *next;  /* pointer to neighbouring screen lines */
-	size_t len;         /* line length in terms of bytes */
-	size_t lineno;      /* line number from start of file */
-	int width;          /* zero based position of last used column cell */
-	VisCell cells[];    /* view->width cells storing information about the displayed characters */
+	Line *prev, *next; /* pointer to neighbouring screen lines */
+	u32 len;           /* line length in terms of bytes */
+	u32 lineno;        /* line number from start of file */
+	u32 width;         /* zero based position of last used column cell */
+	u32 cells_index;   /* index of first cell in this line */
 };
 
 struct View;
@@ -55,11 +55,16 @@ typedef struct View {
 	size_t start, end;  /* currently displayed area [start, end] in bytes from the start of the file */
 	size_t start_last;  /* previously used start of visible area, used to update the mark */
 	Mark start_mark;    /* mark to keep track of the start of the visible area */
-	size_t lines_size;  /* number of allocated bytes for lines (grows only) */
+
+	u64 buffer_size;    /* number of allocated bytes for lines (grows only) */
+
+	VisCell *cells;     /* cell buffer for view. starts immediately after lines */
+
 	Line *lines;        /* view->height number of lines representing view content */
 	Line *topline;      /* top of the view, first line currently shown */
 	Line *lastline;     /* last currently used line, always <= bottomline */
 	Line *bottomline;   /* bottom of view, might be unused if lastline < bottomline */
+
 	Selection *selection;    /* primary selection, always placed within the visible viewport */
 	Selection *selection_latest; /* most recently created cursor */
 	Selection *selection_dead;   /* primary cursor which was disposed, will be removed when another cursor is created */

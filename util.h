@@ -105,6 +105,8 @@
 #define MIN(a, b)  ((a) > (b) ? (b) : (a))
 #define MAX(a, b)  ((a) < (b) ? (b) : (a))
 
+#define AlignUpPowerOfTwo(x, v) (((x) + (v) - 1) & ~(v - 1))
+
 #define Between(x, a, b) ((x) >= (a) && (x) <= (b))
 #define Clamp(x, a, b)   (((x) < (a)) ? (a) : ((x) > (b)) ? (b) : (x))
 #define Min(a, b)        ((a) > (b) ? (b) : (a))

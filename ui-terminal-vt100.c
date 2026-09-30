@@ -139,8 +139,8 @@ ui_term_backend_blit(Ui *ui)
 	s32 cell_count = ui->width * ui->height;
 
 	if unlikely(vt->flush_terminal) {
-		u64 cells_size  = round_up_to(cell_count * sizeof(VisCell), 64);
-		u64 styles_size = round_up_to(cell_count * sizeof(VisCellStyle), 64);
+		u64 cells_size  = AlignUpPowerOfTwo(cell_count * sizeof(VisCellData),  64);
+		u64 styles_size = AlignUpPowerOfTwo(cell_count * sizeof(VisCellStyle), 64);
 		memset(vt->cell_buffer.cells,  0, cells_size);
 		memset(vt->cell_buffer.styles, 0, styles_size);
 		vt->flush_terminal = false;
