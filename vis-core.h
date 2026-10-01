@@ -75,6 +75,15 @@ typedef struct {
 } Operator;
 
 typedef struct { /* Motion implementation, takes a cursor position and returns a new one */
+	union {
+		size_t (*cur)(Selection*);
+		size_t (*txt)(Text*, size_t pos);
+		size_t (*file)(Vis*, File*, Selection*);
+		size_t (*vis)(Vis*, Text*, size_t pos);
+		size_t (*view)(Vis*, View*);
+		size_t (*win)(Vis*, Win*, size_t pos);
+		size_t (*user)(Vis*, Win*, void*, size_t pos);
+	} u;
 	enum {
 		MOVE_KIND_NONE,
 		MOVE_KIND_CUR,
@@ -85,15 +94,6 @@ typedef struct { /* Motion implementation, takes a cursor position and returns a
 		MOVE_KIND_WIN,
 		MOVE_KIND_USER
 	} kind;
-	union {
-		size_t (*cur)(Selection*);
-		size_t (*txt)(Text*, size_t pos);
-		size_t (*file)(Vis*, File*, Selection*);
-		size_t (*vis)(Vis*, Text*, size_t pos);
-		size_t (*view)(Vis*, View*);
-		size_t (*win)(Vis*, Win*, size_t pos);
-		size_t (*user)(Vis*, Win*, void*, size_t pos);
-	} u;
 	enum {
 		LINEWISE  = VIS_MOTIONTYPE_LINEWISE,  /* should the covered range be extended to whole lines? */
 		CHARWISE  = VIS_MOTIONTYPE_CHARWISE,  /* scrolls window content until position is visible */
