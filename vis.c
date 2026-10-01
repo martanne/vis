@@ -747,25 +747,25 @@ void vis_do(Vis *vis) {
 				size_t pos_prev = pos;
 				switch (a->movement->kind) {
 				case MOVE_KIND_TXT:
-					pos = a->movement->txt(txt, pos);
+					pos = a->movement->u.txt(txt, pos);
 					break;
 				case MOVE_KIND_CUR:
-					pos = a->movement->cur(sel);
+					pos = a->movement->u.cur(sel);
 					break;
 				case MOVE_KIND_FILE:
-					pos = a->movement->file(vis, file, sel);
+					pos = a->movement->u.file(vis, file, sel);
 					break;
 				case MOVE_KIND_VIS:
-					pos = a->movement->vis(vis, txt, pos);
+					pos = a->movement->u.vis(vis, txt, pos);
 					break;
 				case MOVE_KIND_VIEW:
-					pos = a->movement->view(vis, view);
+					pos = a->movement->u.view(vis, view);
 					break;
 				case MOVE_KIND_WIN:
-					pos = a->movement->win(vis, win, pos);
+					pos = a->movement->u.win(vis, win, pos);
 					break;
 				case MOVE_KIND_USER:
-					pos = a->movement->user(vis, win, a->movement->data, pos);
+					pos = a->movement->u.user(vis, win, a->movement->data, pos);
 					break;
 				case MOVE_KIND_NONE:
 					break;

@@ -93,7 +93,7 @@ typedef struct { /* Motion implementation, takes a cursor position and returns a
 		size_t (*view)(Vis*, View*);
 		size_t (*win)(Vis*, Win*, size_t pos);
 		size_t (*user)(Vis*, Win*, void*, size_t pos);
-	};
+	} u;
 	enum {
 		LINEWISE  = VIS_MOTIONTYPE_LINEWISE,  /* should the covered range be extended to whole lines? */
 		CHARWISE  = VIS_MOTIONTYPE_CHARWISE,  /* scrolls window content until position is visible */
