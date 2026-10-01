@@ -120,13 +120,10 @@ M.filetypes = filetypes
 		end
 	})
 
--- filetype.lua depends on the lexers api. return early if it isn't present.
-local ok, L = pcall(require, "lexers.lexer")
-if not ok then return M end
-
 -- From here on, values MUST MATCH THE FILETYPE TABLE ABOVE
 -- This is because the filetype table contains settings
 -- If the lexer name changed, the filetype table will point to the correct lexer!
+local L = require"lexers.lexer"
 
 -- This table matches filenames AND extensions
 -- This is done because L.detect also mixes it
