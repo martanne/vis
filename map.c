@@ -11,6 +11,10 @@
  */
 #include "map.h"
 
+#ifndef __has_builtin
+	#define __has_builtin(__x) 0
+#endif
+
 typedef struct Node Node;
 
 struct Map {     /* struct holding either an item with value v and key u.s or an internal node */
@@ -127,9 +131,15 @@ vis_map_put(Map *map, str8 ks, const void *value)
 
 	/* Find which bit differs */
 	u8 diff = (u8)n->u.s[byte_num] ^ ks.data[byte_num];
-	/* TODO: bit_num = 31 - __builtin_clz(diff); ? */
 	u8 bit_num;
-	for (bit_num = 0; diff >>= 1; bit_num++);
+	#if __has_builtin(__builtin_clz)
+		bit_num = 31 - __builtin_clz(diff);
+	#else
+		bit_num = 0;
+		if (diff & 0xF0) { bit_num += 4; diff >>= 4; }
+		if (diff & 0x0C) { bit_num += 2; diff >>= 2; }
+		if (diff & 0x02) { bit_num += 1; }
+	#endif
 
 	/* Which direction do we go at this bit? */
 	u8 new_dir = ((ks.data[byte_num]) >> bit_num) & 1;
