@@ -745,20 +745,31 @@ void vis_do(Vis *vis) {
 			size_t start = pos;
 			for (int i = 0; i < count; i++) {
 				size_t pos_prev = pos;
-				if (a->movement->txt)
+				switch (a->movement->kind) {
+				case MOVE_KIND_TXT:
 					pos = a->movement->txt(txt, pos);
-				else if (a->movement->cur)
+					break;
+				case MOVE_KIND_CUR:
 					pos = a->movement->cur(sel);
-				else if (a->movement->file)
+					break;
+				case MOVE_KIND_FILE:
 					pos = a->movement->file(vis, file, sel);
-				else if (a->movement->vis)
+					break;
+				case MOVE_KIND_VIS:
 					pos = a->movement->vis(vis, txt, pos);
-				else if (a->movement->view)
+					break;
+				case MOVE_KIND_VIEW:
 					pos = a->movement->view(vis, view);
-				else if (a->movement->win)
+					break;
+				case MOVE_KIND_WIN:
 					pos = a->movement->win(vis, win, pos);
-				else if (a->movement->user)
+					break;
+				case MOVE_KIND_USER:
 					pos = a->movement->user(vis, win, a->movement->data, pos);
+					break;
+				case MOVE_KIND_NONE:
+					break;
+				}
 				if (pos == EPOS || a->movement->type & IDEMPOTENT || pos == pos_prev) {
 					err = a->movement->type & COUNT_EXACT;
 					break;
