@@ -1,4 +1,5 @@
 #include "util.h"
+#include <sys/wait.h>
 
 #define TERMKEY_EXPORT VIS_INTERNAL
 #include "external/termkey.c"
@@ -1605,6 +1606,7 @@ static int _vis_pipe(Vis *vis, File *file, Filerange range, const char* buf, con
 		vis_info_show(vis, "fork failure: %s", strerror(errno));
 		return -1;
 	} else if (pid == 0) { /* child i.e filter */
+		setpgid(0, 0);
 		sigset_t sigterm_mask;
 		sigemptyset(&sigterm_mask);
 		sigaddset(&sigterm_mask, SIGTERM);
@@ -1687,10 +1689,26 @@ static int _vis_pipe(Vis *vis, File *file, Filerange range, const char* buf, con
 	fd_set rfds, wfds;
 
 	str8 string_in = pin[1] != -1 ? str8_from_c_str(buf) : (str8){0};
+
+	/* best-effort; EACCES means the child already exec'd */
+	setpgid(pid, pid);
+
+	/* For reap and drain logic */
+	bool reaped = false;
+	bool active = true;
+
 	do {
 		if (vis->interrupted) {
-			kill(0, SIGTERM);
+			kill(-pid, SIGTERM);
 			break;
+		}
+
+		if (!reaped && waitpid(pid, &status, WNOHANG) == pid) {
+			reaped = true;
+			if (pin[1] != -1) {
+				close(pin[1]);
+				pin[1] = -1;  /* Stop feeding dead children. */
+			}
 		}
 
 		FD_ZERO(&rfds);
@@ -1702,12 +1720,17 @@ static int _vis_pipe(Vis *vis, File *file, Filerange range, const char* buf, con
 		if (perr[0] != -1)
 			FD_SET(perr[0], &rfds);
 
-		if (select(FD_SETSIZE, &rfds, &wfds, NULL, NULL) == -1) {
+		/* After reap: drain-only mode. Zero timeout EOF still honored. */
+		struct timeval tv = { .tv_sec = 0, .tv_usec = 0 };
+		if (select(FD_SETSIZE, &rfds, &wfds, NULL, reaped ? &tv : NULL) == -1) {
 			if (errno == EINTR)
 				continue;
 			vis_info_show(vis, "Select failure");
 			break;
 		}
+
+		/* Set this to false before we read file descriptors. */
+		active = false;
 
 		if (pin[1] != -1 && FD_ISSET(pin[1], &wfds)) {
 			Filerange junk = rout;
@@ -1747,6 +1770,7 @@ static int _vis_pipe(Vis *vis, File *file, Filerange range, const char* buf, con
 			char buf[BUFSIZ];
 			ssize_t len = read(pout[0], buf, sizeof buf);
 			if (len > 0) {
+				active = true;
 				if (read_stdout)
 					(*read_stdout)(stdout_context, buf, len);
 			} else if (len == 0) {
@@ -1763,6 +1787,7 @@ static int _vis_pipe(Vis *vis, File *file, Filerange range, const char* buf, con
 			char buf[BUFSIZ];
 			ssize_t len = read(perr[0], buf, sizeof buf);
 			if (len > 0) {
+				active = true;
 				if (read_stderr)
 					(*read_stderr)(stderr_context, buf, len);
 			} else if (len == 0) {
@@ -1775,8 +1800,8 @@ static int _vis_pipe(Vis *vis, File *file, Filerange range, const char* buf, con
 			}
 		}
 
-	} while (pin[1] != -1 || pout[0] != -1 || perr[0] != -1);
-
+	} while ((pin[1] != -1 || pout[0] != -1 || perr[0] != -1) &&
+	         (!reaped || active));
 err:
 	if (pin[1] != -1)
 		close(pin[1]);
