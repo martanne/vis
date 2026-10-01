@@ -1,9 +1,11 @@
+#if !CONFIG_CURSES
 static FileHandle
 os_error_handle(void)
 {
 	FileHandle result = {STDERR_FILENO};
 	return result;
 }
+#endif
 
 static bool
 os_write_file(FileHandle handle, const void *data, s64 length)
