@@ -1686,6 +1686,7 @@ static int _vis_pipe(Vis *vis, File *file, Filerange range, const char* buf, con
 
 	fd_set rfds, wfds;
 
+	str8 string_in = pin[1] != -1 ? str8_from_c_str(buf) : (str8){0};
 	do {
 		if (vis->interrupted) {
 			kill(0, SIGTERM);
@@ -1709,37 +1710,36 @@ static int _vis_pipe(Vis *vis, File *file, Filerange range, const char* buf, con
 		}
 
 		if (pin[1] != -1 && FD_ISSET(pin[1], &wfds)) {
-			ssize_t written = 0;
 			Filerange junk = rout;
-			if (text_range_size(rout)) {
+			bool done_writing = false;
+			s64  written      = 0;
+			if (text_range_size(rout) > 0) {
 				if (junk.end > junk.start + PIPE_BUF)
 					junk.end = junk.start + PIPE_BUF;
 				written = text_write_range(text, junk, pin[1]);
 				if (written > 0) {
-					rout.start += written;
-					if (text_range_size(rout) == 0) {
-						close(pin[1]);
-						pin[1] = -1;
-					}
+					rout.start   += written;
+					done_writing  = text_range_size(rout) == 0;
 				}
-			} else if (buf != NULL) {
-				size_t len = strlen(buf);
-				if (len > 0) {
-					if (len > PIPE_BUF)
-						len = PIPE_BUF;
-
-					written = write_all(pin[1], buf, len);
-					if (written > 0) {
-						buf += written;
-					}
+			} else if (string_in.length > 0) {
+				s64  length = Min(string_in.length, PIPE_BUF);
+				bool done   = os_write_file((FileHandle){pin[1]}, string_in.data, length);
+				if (done) {
+					string_in = str8_cut_head(string_in, length);
+					written   = length;
 				}
+				done_writing = string_in.length == 0;
 			}
 
 			if (written <= 0) {
-				close(pin[1]);
-				pin[1] = -1;
 				if (written == -1)
 					vis_info_show(vis, "Error writing to external command");
+				done_writing = true;
+			}
+
+			if (done_writing) {
+				close(pin[1]);
+				pin[1] = -1;
 			}
 		}
 

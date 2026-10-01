@@ -175,23 +175,6 @@ static void text_saved(Text *txt, struct stat *meta)
 	text_snapshot(txt);
 }
 
-ssize_t write_all(int fd, const char *buf, size_t count) {
-	size_t rem = count;
-	while (rem > 0) {
-		ssize_t written = write(fd, buf, rem > INT_MAX ? INT_MAX : rem);
-		if (written < 0) {
-			if (errno == EAGAIN || errno == EINTR)
-				continue;
-			return -1;
-		} else if (written == 0) {
-			break;
-		}
-		rem -= written;
-		buf += written;
-	}
-	return count - rem;
-}
-
 static bool preserve_acl(int src, int dest) {
 #if CONFIG_ACL
 	acl_t acl = acl_get_fd(src);
@@ -384,8 +367,7 @@ static bool text_save_begin_inplace(TextSave *ctx) {
 			goto err;
 		if (unlink(tmpname) == -1)
 			goto err;
-		ssize_t written = write_all(newfd, block->data, size);
-		if (written == -1 || (size_t)written != size)
+		if (!os_write_file((FileHandle){newfd}, block->data, size))
 			goto err;
 		void *data = mmap(block->data, size, PROT_READ, MAP_SHARED|MAP_FIXED, newfd, 0);
 		if (data == MAP_FAILED)
@@ -472,16 +454,13 @@ ssize_t text_write_range(const Text *txt, Filerange range, int fd)
 	size_t size = text_range_size(range), rem = size;
 	for (Iterator it = text_iterator_get(txt, range.start);
 	     rem > 0 && text_iterator_valid(&it);
-	     text_iterator_next(&it)) {
-		size_t prem = it.end - it.text;
-		if (prem > rem)
-			prem = rem;
-		ssize_t written = write_all(fd, it.text, prem);
-		if (written == -1)
+	     text_iterator_next(&it))
+	{
+		size_t prem = Min(it.end - it.text, rem);
+		if (!os_write_file((FileHandle){fd}, it.text, prem))
 			return -1;
-		rem -= written;
-		if ((size_t)written != prem)
-			break;
+
+		rem -= prem;
 	}
 	return size - rem;
 }

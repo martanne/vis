@@ -402,11 +402,6 @@ VIS_INTERNAL ssize_t text_write_range(const Text*, Filerange, int fd);
  */
 VIS_INTERNAL bool text_mmaped(const Text*, const char *ptr);
 
-/**
- * Write complete buffer to file descriptor.
- * @return The number of bytes written or ``-1`` in case of an error.
- */
-VIS_INTERNAL ssize_t write_all(int fd, const char *buf, size_t count);
 /** @} */
 
 /*

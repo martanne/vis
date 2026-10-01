@@ -1,3 +1,23 @@
+static FileHandle
+os_error_handle(void)
+{
+	FileHandle result = {STDERR_FILENO};
+	return result;
+}
+
+static bool
+os_write_file(FileHandle handle, const void *data, s64 length)
+{
+	s32 file   = (s32)handle.value;
+	s64 offset = 0;
+	while (offset < length) {
+		s64 r = write(file, (u8 *)data + offset, (u64)(length - offset));
+		if (r < 0 && errno != EINTR && errno != EAGAIN) break;
+		if (r >= 0) offset += r;
+	}
+	return offset == length;
+}
+
 enum { DA_INITIAL_CAP = 16 };
 
 #define da_release(da) free((da)->data)
@@ -90,6 +110,18 @@ str8_equal(str8 a, str8 b)
 	bool result = a.length == b.length;
 	for (ptrdiff_t i = 0; result && i < a.length; i++)
 		result = a.data[i] == b.data[i];
+	return result;
+}
+
+static str8
+str8_cut_head(str8 s, s64 cut)
+{
+	str8 result = s;
+	if (cut > 0) {
+		result.data   += cut;
+		result.length -= cut;
+	}
+	result.length = Max(0, result.length);
 	return result;
 }
 

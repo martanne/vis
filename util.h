@@ -149,6 +149,9 @@ typedef char      c8;
 
 #define VisDACount s32
 
+// NOTE(rnp): opaque but type safe handles to pass to os procedures
+typedef struct {u64 value;} FileHandle;
+
 typedef struct {
 	s64  length;
 	u8  *data;
