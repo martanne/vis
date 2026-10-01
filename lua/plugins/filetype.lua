@@ -322,6 +322,7 @@ local function GetHashBang(data)
 	return hb, utility
 end
 
+M.default_syntax = "text" -- should never be nil
 
 -- Returns syntax/filetype
 -- utility -> datap -> filename -> extension -> L.detect() -> mime
@@ -365,7 +366,7 @@ local function Detect(file)
 		end
 	end
 
-	local path = file.name -- filepath
+	local path = file.path or file.name -- filepath
 	local name
 	if path and path~="" then
 		name = path and path:match("[^/]+$") -- filename
@@ -416,12 +417,30 @@ local function Detect(file)
 		end
 	end
 
-	return 'text'
-end
+	return M.default_syntax
+end M.Detect = Detect
 
-vis.events.subscribe(vis.events.WIN_OPEN, function(win)
-	local syntax = Detect(win.file) -- syntax/lexer/filetype
-	local filetype = rawget(filetypes, syntax) -- avoid backwards compatibility mt
+local FindSyntax
+= function --> syntax: string --
+(
+	win -- vis.win|nil
+)
+	if win then
+		local syntax = win.file.path==nil -- empty window
+			and M.default_syntax -- should be "text"
+			or Detect(win.file) -- syntax/lexer/filetype
+		return syntax
+	end
+	return M.default_syntax
+end
+M.FindSyntax = FindSyntax
+
+local SetActions
+= function --> syntax: string
+(
+	win -- vis.win
+)
+	local filetype = rawget(filetypes, win.SYNTAX) -- avoid backwards compatibility mt
 	if filetype then
 		for _, Action in ipairs(filetype.actions or {}) do
 			Action(win, filetype)
@@ -429,29 +448,51 @@ vis.events.subscribe(vis.events.WIN_OPEN, function(win)
 		for _, cmd in ipairs(filetype.cmd or {}) do
 			vis:command(cmd)
 		end
-		syntax = filetype.lexer
+		win.SYNTAX = filetype.lexer
 			or filetype.alt_name -- backwards compat
-			or syntax
+			or win.SYNTAX
 	end
-	-- Detect returns filetype, lexer is optional
-	if package.searchpath("lexers." .. syntax, package.path) then
-		win:set_syntax(syntax)
-		return
-	else
+end
+M.SetActions = SetActions
+
+local ChangeSyntax
+= function --> nil|syntax: string
+(
+	win -- vis.win
+)
+	if win.syntax_highlight then
+		local syntax = win.SYNTAX
+		-- Detect returns filetype, lexer is optional
+		if package.searchpath("lexers." .. syntax, package.path) then
+			win:set_syntax(syntax)
+			return syntax
+		end
 		vis:info(
 			string.format(
 				"Lexer '%s' not found", syntax
 			)
 		)
 	end
+	win.syntax = nil
+end
+M.ChangeSyntax = ChangeSyntax
 
-	win:set_syntax(nil)
-	return
-end)
+local SwitchSyntax = function (win)
+	local syntax = FindSyntax(win)
+	win.SYNTAX = syntax
+	SetActions(win)
+	local globopt = vis.options.SYNTAX_HIGHLIGHT
+	win.syntax_highlight = globopt
+	if globopt then ChangeSyntax(win) end
+end
+vis.events.subscribe(vis.events.WIN_OPEN, SwitchSyntax)
 
-vis.events.subscribe(vis.events.FILE_SAVE_POST, function(file, path)
-	local syntax = Detect(file)
-	if syntax then
-		vis:command("set syntax " .. syntax)
+vis.events.subscribe(vis.events.FILE_SAVE_POST, function (file, path)
+	local win = vis.win
+	if win and win.file==file and file.win==nil then
+		file.win = win
+		SwitchSyntax(win)
 	end
 end)
+
+return M
