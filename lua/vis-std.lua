@@ -126,8 +126,7 @@ end
 local function lex_range(win, start, finish)
 	if not win.syntax or not vis.lexers.load then return {} end
 	local lexer = vis.lexers.load(win.syntax, nil, true)
-	if not lexer then return {} end
-	if win.token_cache == nil or start == nil or finish == nil then return {} end
+	if not (lexer and win.token_cache and start and finish) then return {} end
 
 	if finish < start then return win.token_cache end
 	local prev_idx = find_token_at(win.token_cache, start)

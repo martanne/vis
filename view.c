@@ -136,7 +136,7 @@ void window_status_update(Vis *vis, Win *win) {
 bool view_large_file(View *view) {
 	Selection *sel = view_selections_primary_get(view);
 	size_t col = view_cursors_col(sel);
-	return text_size(view->text) > view->large_file_size << 10 /* in KiB */ ||
+	return text_size(view->text) > KiB(view->large_file_size_kib) ||
 	       col > view->large_line_size;
 }
 
@@ -568,7 +568,7 @@ bool view_init(Win *win, Text *text) {
 	view->tabwidth = 8;
 	view->breakat = strdup("");
 	view->wrapcolumn = 0;
-	view->large_file_size = UI_LARGE_FILE_SIZE;
+	view->large_file_size_kib = UI_LARGE_FILE_SIZE;
 	view->large_line_size = UI_LARGE_LINE_SIZE;
 	win_options_set(win, 0);
 
