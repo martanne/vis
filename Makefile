@@ -7,8 +7,8 @@ MANUALS = $(EXECUTABLES:=.1)
 
 DOCUMENTATION = LICENSE README.md
 
-VERSION = $(shell git describe --always --dirty 2>/dev/null || echo "v0.9-git")
-API     = $(shell git rev-list --count HEAD 2>/dev/null || echo "0")
+VERSION ?= v0.9-git
+API     ?= 0
 
 CFLAGS_STD ?= -std=c99 -DNDEBUG
 CFLAGS_STD += -DVERSION=\"${VERSION}\" -DVIS_API=$(API)
