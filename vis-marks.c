@@ -98,38 +98,63 @@ void vis_mark_set(Vis *vis, Win *win, enum VisMark id, FilerangeList ranges)
 	mark_set(vis, win, mark_from(vis, id), ranges);
 }
 
+static bool jumplist_empty(Win *win)
+{
+	return win->mark_set_lru_cursor == 0 && win->mark_set_lru_regions->count == 0;
+}
+
+static void advance_jumplist_cursor(size_t *cursor, int advance)
+{
+	*cursor += advance;
+	*cursor %= VIS_MARK_SET_LRU_COUNT;
+}
+
+static bool get_jumplist_mark(Vis *vis, FilerangeList *sel, size_t target)
+{
+	Win *win = vis->win;
+	SelectionRegionList *next = win->mark_set_lru_regions + target;
+	if (next->count == 0) return false;  /* attempt to jump to a mark that is not saved, yet */
+	*sel = mark_get(vis, win, next);
+	return true;
+}
+
+static void set_jumplist_mark(Vis *vis, FilerangeList cur)
+{
+	Win *win = vis->win;
+	mark_set(vis, win, win->mark_set_lru_regions + win->mark_set_lru_cursor, cur);
+	win->mark_set_lru_modes[win->mark_set_lru_cursor] = vis->mode->id;
+}
+
 void vis_jumplist(Vis *vis, int advance)
 {
 	Win  *win  = vis->win;
 	View *view = &win->view;
 	FilerangeList cur = view_selections_get_all(vis, view);
 
-	size_t cursor = win->mark_set_lru_cursor;
-	win->mark_set_lru_cursor += advance;
-	if (advance < 0)
-		cursor = win->mark_set_lru_cursor;
-	cursor %= VIS_MARK_SET_LRU_COUNT;
-
-	SelectionRegionList *next = win->mark_set_lru_regions + cursor;
-	bool done = false;
-	if (next->count) {
-		FilerangeList sel = mark_get(vis, win, next);
-		done = vis_mark_equal(sel, cur);
-		if (advance && !done) {
-			/* NOTE: set cached selection */
-			vis_mode_switch(vis, win->mark_set_lru_modes[cursor]);
-			view_selections_set_all(view, sel, view_selections_primary_get(view)->anchored);
+	if (advance) {
+		if (jumplist_empty(win)) goto out;
+		size_t target = win->mark_set_lru_cursor;
+		if (advance > 0) advance_jumplist_cursor(&target, 1);
+		FilerangeList sel;
+		if (!get_jumplist_mark(vis, &sel, target)) goto out;
+		if (vis_mark_equal(sel, cur)) {
+			advance_jumplist_cursor(&target, advance);
+			if (!get_jumplist_mark(vis, &sel, target)) goto out;
 		}
-		da_release(&sel);
+		win->mark_set_lru_cursor = target;
+		vis_mode_switch(vis, win->mark_set_lru_modes[target]);
+		view_selections_set_all(view, sel, view_selections_primary_get(view)->anchored);
+		if (advance < 0) advance_jumplist_cursor(&target, -1);
+	} else {
+		if (jumplist_empty(win)) {
+			set_jumplist_mark(vis, cur);
+			goto out;
+		}
+		advance_jumplist_cursor(&win->mark_set_lru_cursor, 1);
+		set_jumplist_mark(vis, cur);
 	}
 
-	if (!advance && !done) {
-		/* NOTE: save the current selection */
-		mark_set(vis, win, next, cur);
-		win->mark_set_lru_modes[cursor] = vis->mode->id;
-		win->mark_set_lru_cursor++;
-	}
-
+out:
 	da_release(&cur);
 }
 
