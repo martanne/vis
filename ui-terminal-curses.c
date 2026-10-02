@@ -53,8 +53,8 @@ static void get_6cube_rgb(unsigned int n, int *r, int *g, int *b)
 /* Reset color palette to default values using OSC 104 */
 static void undo_palette(void)
 {
-	fputs("\033]104;\a", stderr);
-	fflush(stderr);
+	str8 cmd = str8("\033]104;\a");
+	os_write_file(os_error_handle(), cmd.data, cmd.length);
 }
 
 /* Work out the nearest color from the 256 color set, or perhaps exactly. */
