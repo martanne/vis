@@ -1,4 +1,6 @@
 #include "util.h"
+#include <sys/wait.h>
+#include <signal.h>
 
 #define TERMKEY_EXPORT VIS_INTERNAL
 #include "external/termkey.c"
@@ -1564,6 +1566,23 @@ Regex *vis_regex(Vis *vis, const char *pattern) {
 	return regex;
 }
 
+/* Self-pipe used to wake the pipe(2) pump in _vis_pipe() when the direct
+ * child dies. A filter may fork a long-lived daemon (e.g. wl-copy) which
+ * inherits our stdout/stderr pipe ends and never triggers EOF, so we can
+ * not rely on select(2) alone to notice the child is gone. Only one pipe
+ * pump runs at a time (vis is single threaded), so file scope is fine. */
+static int pipe_sigchld[2] = { -1, -1 };
+
+static void sigchld_selfpipe_handler(int signum) {
+	(void)signum;
+	int saved_errno = errno;
+	if (pipe_sigchld[1] != -1) {
+		char dummy = '\0';
+		while (write(pipe_sigchld[1], &dummy, 1) == -1 && errno == EINTR);
+	}
+	errno = saved_errno;
+}
+
 static int _vis_pipe(Vis *vis, File *file, Filerange range, const char* buf, const char *argv[],
 	void *stdout_context, ssize_t (*read_stdout)(void *stdout_context, char *data, size_t len),
 	void *stderr_context, ssize_t (*read_stderr)(void *stderr_context, char *data, size_t len),
@@ -1605,6 +1624,7 @@ static int _vis_pipe(Vis *vis, File *file, Filerange range, const char* buf, con
 		vis_info_show(vis, "fork failure: %s", strerror(errno));
 		return -1;
 	} else if (pid == 0) { /* child i.e filter */
+		setpgid(0, 0);
 		sigset_t sigterm_mask;
 		sigemptyset(&sigterm_mask);
 		sigaddset(&sigterm_mask, SIGTERM);
@@ -1680,6 +1700,25 @@ static int _vis_pipe(Vis *vis, File *file, Filerange range, const char* buf, con
 	close(pout[1]);
 	close(perr[1]);
 
+	/* Wake-up channel for the death of the direct child (see the
+	 * comment on pipe_sigchld). */
+	struct sigaction sigchld_old, sigchld_new;
+	bool sigchld_installed = false;
+	if (pipe(pipe_sigchld) == -1) {
+		pipe_sigchld[0] = pipe_sigchld[1] = -1;
+		goto err_nosigpipe;
+	}
+	sigchld_new.sa_handler = sigchld_selfpipe_handler;
+	sigchld_new.sa_flags = 0;
+	sigemptyset(&sigchld_new.sa_mask);
+	if (sigaction(SIGCHLD, &sigchld_new, &sigchld_old) == -1)
+		goto err;
+	sigchld_installed = true;
+	for (int i = 0; i < 2; i++)
+		if (fcntl(pipe_sigchld[i], F_SETFD, FD_CLOEXEC) == -1 ||
+		    fcntl(pipe_sigchld[i], F_SETFL, O_NONBLOCK) == -1)
+			goto err;
+
 	if (fcntl(pout[0], F_SETFL, O_NONBLOCK) == -1 ||
 	    fcntl(perr[0], F_SETFL, O_NONBLOCK) == -1)
 		goto err;
@@ -1687,14 +1726,32 @@ static int _vis_pipe(Vis *vis, File *file, Filerange range, const char* buf, con
 	fd_set rfds, wfds;
 
 	str8 string_in = pin[1] != -1 ? str8_from_c_str(buf) : (str8){0};
+
+	/* best-effort; EACCES means the child already exec'd */
+	setpgid(pid, pid);
+
+	/* For reap and drain logic. The filter process itself may fork a
+	 * daemon (e.g. wl-copy) and exit immediately. The daemon inherits
+	 * our stdout/stderr pipe ends and keeps them open forever, so EOF
+	 * never arrives; the SIGCHLD self-pipe wakes us up instead. Once
+	 * the direct child is reaped, drain whatever is still buffered
+	 * within a short grace period and give up on the daemon's ends. */
+	bool reaped = false;
+	bool active = true;
+
 	do {
 		if (vis->interrupted) {
-			kill(0, SIGTERM);
+			kill(-pid, SIGTERM);
 			break;
 		}
 
+		if (!reaped && waitpid(pid, &status, WNOHANG) == pid)
+			reaped = true;
+
 		FD_ZERO(&rfds);
 		FD_ZERO(&wfds);
+		if (pipe_sigchld[0] != -1)
+			FD_SET(pipe_sigchld[0], &rfds);
 		if (pin[1] != -1)
 			FD_SET(pin[1], &wfds);
 		if (pout[0] != -1)
@@ -1702,11 +1759,22 @@ static int _vis_pipe(Vis *vis, File *file, Filerange range, const char* buf, con
 		if (perr[0] != -1)
 			FD_SET(perr[0], &rfds);
 
-		if (select(FD_SETSIZE, &rfds, &wfds, NULL, NULL) == -1) {
+		/* Block indefinitely until data arrives or the child dies;
+		 * after the reap only a bounded drain pass remains. */
+		struct timeval tv = { .tv_sec = 0, .tv_usec = 100000 };
+		if (select(FD_SETSIZE, &rfds, &wfds, NULL, reaped ? &tv : NULL) == -1) {
 			if (errno == EINTR)
 				continue;
 			vis_info_show(vis, "Select failure");
 			break;
+		}
+
+		/* Set this to false before we read file descriptors. */
+		active = false;
+
+		if (pipe_sigchld[0] != -1 && FD_ISSET(pipe_sigchld[0], &rfds)) {
+			char junk[64];
+			while (read(pipe_sigchld[0], junk, sizeof junk) > 0);
 		}
 
 		if (pin[1] != -1 && FD_ISSET(pin[1], &wfds)) {
@@ -1732,7 +1800,7 @@ static int _vis_pipe(Vis *vis, File *file, Filerange range, const char* buf, con
 			}
 
 			if (written <= 0) {
-				if (written == -1)
+				if (written == -1 && errno != EPIPE)
 					vis_info_show(vis, "Error writing to external command");
 				done_writing = true;
 			}
@@ -1747,6 +1815,7 @@ static int _vis_pipe(Vis *vis, File *file, Filerange range, const char* buf, con
 			char buf[BUFSIZ];
 			ssize_t len = read(pout[0], buf, sizeof buf);
 			if (len > 0) {
+				active = true;
 				if (read_stdout)
 					(*read_stdout)(stdout_context, buf, len);
 			} else if (len == 0) {
@@ -1763,6 +1832,7 @@ static int _vis_pipe(Vis *vis, File *file, Filerange range, const char* buf, con
 			char buf[BUFSIZ];
 			ssize_t len = read(perr[0], buf, sizeof buf);
 			if (len > 0) {
+				active = true;
 				if (read_stderr)
 					(*read_stderr)(stderr_context, buf, len);
 			} else if (len == 0) {
@@ -1775,9 +1845,17 @@ static int _vis_pipe(Vis *vis, File *file, Filerange range, const char* buf, con
 			}
 		}
 
-	} while (pin[1] != -1 || pout[0] != -1 || perr[0] != -1);
-
+	} while ((pin[1] != -1 || pout[0] != -1 || perr[0] != -1) &&
+	         (!reaped || active));
 err:
+	if (pipe_sigchld[0] != -1) {
+		close(pipe_sigchld[0]);
+		close(pipe_sigchld[1]);
+		pipe_sigchld[0] = pipe_sigchld[1] = -1;
+	}
+	if (sigchld_installed)
+		sigaction(SIGCHLD, &sigchld_old, NULL);
+err_nosigpipe:
 	if (pin[1] != -1)
 		close(pin[1]);
 	if (pout[0] != -1)
