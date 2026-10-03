@@ -90,7 +90,7 @@ static size_t common_word_next(Vis *vis, Text *txt, size_t pos,
 	while (count--) {
 		if (vis->interrupted)
 			return pos;
-		size_t newpos = motion->txt(txt, pos);
+		size_t newpos = motion->u.txt(txt, pos);
 		if (newpos == pos)
 			break;
 		pos = newpos;
@@ -264,7 +264,8 @@ void vis_motion_type(Vis *vis, enum VisMotionType type) {
 int vis_motion_register(Vis *vis, void *data, VisMotionFunction *motion)
 {
 	*da_push(vis, &vis->motions) = (Movement){
-		.user = motion,
+		.kind = MOVE_KIND_USER,
+		.u.user = motion,
 		.data = data,
 	};
 	return VIS_MOVE_LAST + vis->motions.count - 1;
@@ -389,247 +390,309 @@ err:
 
 const Movement vis_motions[] = {
 	[VIS_MOVE_LINE_UP] = {
-		.cur = view_line_up,
+		.kind = MOVE_KIND_CUR,
+		.u.cur = view_line_up,
 		.type = LINEWISE|LINEWISE_INCLUSIVE,
 	},
 	[VIS_MOVE_LINE_DOWN] = {
-		.cur = view_line_down,
+		.kind = MOVE_KIND_CUR,
+		.u.cur = view_line_down,
 		.type = LINEWISE|LINEWISE_INCLUSIVE,
 	},
 	[VIS_MOVE_SCREEN_LINE_UP] = {
-		.cur = view_screenline_up,
+		.kind = MOVE_KIND_CUR,
+		.u.cur = view_screenline_up,
 	},
 	[VIS_MOVE_SCREEN_LINE_DOWN] = {
-		.cur = view_screenline_down,
+		.kind = MOVE_KIND_CUR,
+		.u.cur = view_screenline_down,
 	},
 	[VIS_MOVE_SCREEN_LINE_BEGIN] = {
-		.cur = view_screenline_begin,
+		.kind = MOVE_KIND_CUR,
+		.u.cur = view_screenline_begin,
 		.type = CHARWISE,
 	},
 	[VIS_MOVE_SCREEN_LINE_MIDDLE] = {
-		.cur = view_screenline_middle,
+		.kind = MOVE_KIND_CUR,
+		.u.cur = view_screenline_middle,
 		.type = CHARWISE,
 	},
 	[VIS_MOVE_SCREEN_LINE_END] = {
-		.cur = view_screenline_end,
+		.kind = MOVE_KIND_CUR,
+		.u.cur = view_screenline_end,
 		.type = CHARWISE|INCLUSIVE,
 	},
 	[VIS_MOVE_LINE_PREV] = {
-		.txt = text_line_prev,
+		.kind = MOVE_KIND_TXT,
+		.u.txt = text_line_prev,
 	},
 	[VIS_MOVE_LINE_BEGIN] = {
-		.txt = text_line_begin,
+		.kind = MOVE_KIND_TXT,
+		.u.txt = text_line_begin,
 		.type = IDEMPOTENT,
 	},
 	[VIS_MOVE_LINE_START] = {
-		.txt = text_line_start,
+		.kind = MOVE_KIND_TXT,
+		.u.txt = text_line_start,
 		.type = IDEMPOTENT,
 	},
 	[VIS_MOVE_LINE_FINISH] = {
-		.txt = text_line_finish,
+		.kind = MOVE_KIND_TXT,
+		.u.txt = text_line_finish,
 		.type = INCLUSIVE|IDEMPOTENT,
 	},
 	[VIS_MOVE_LINE_END] = {
-		.txt = text_line_end,
+		.kind = MOVE_KIND_TXT,
+		.u.txt = text_line_end,
 		.type = IDEMPOTENT,
 	},
 	[VIS_MOVE_LINE_NEXT] = {
-		.txt = text_line_next,
+		.kind = MOVE_KIND_TXT,
+		.u.txt = text_line_next,
 	},
 	[VIS_MOVE_LINE] = {
-		.vis = line,
+		.kind = MOVE_KIND_VIS,
+		.u.vis = line,
 		.type = LINEWISE|IDEMPOTENT|JUMP,
 	},
 	[VIS_MOVE_COLUMN] = {
-		.vis = column,
+		.kind = MOVE_KIND_VIS,
+		.u.vis = column,
 		.type = CHARWISE|IDEMPOTENT,
 	},
 	[VIS_MOVE_CHAR_PREV] = {
-		.txt = text_char_prev,
+		.kind = MOVE_KIND_TXT,
+		.u.txt = text_char_prev,
 		.type = CHARWISE,
 	},
 	[VIS_MOVE_CHAR_NEXT] = {
-		.txt = text_char_next,
+		.kind = MOVE_KIND_TXT,
+		.u.txt = text_char_next,
 		.type = CHARWISE,
 	},
 	[VIS_MOVE_LINE_CHAR_PREV] = {
-		.txt = text_line_char_prev,
+		.kind = MOVE_KIND_TXT,
+		.u.txt = text_line_char_prev,
 		.type = CHARWISE,
 	},
 	[VIS_MOVE_LINE_CHAR_NEXT] = {
-		.txt = text_line_char_next,
+		.kind = MOVE_KIND_TXT,
+		.u.txt = text_line_char_next,
 		.type = CHARWISE,
 	},
 	[VIS_MOVE_CODEPOINT_PREV] = {
-		.txt = text_codepoint_prev,
+		.kind = MOVE_KIND_TXT,
+		.u.txt = text_codepoint_prev,
 		.type = CHARWISE,
 	},
 	[VIS_MOVE_CODEPOINT_NEXT] = {
-		.txt = text_codepoint_next,
+		.kind = MOVE_KIND_TXT,
+		.u.txt = text_codepoint_next,
 		.type = CHARWISE,
 	},
 	[VIS_MOVE_WORD_NEXT] = {
-		.vis = word_next,
+		.kind = MOVE_KIND_VIS,
+		.u.vis = word_next,
 		.type = CHARWISE|IDEMPOTENT,
 	},
 	[VIS_MOVE_WORD_START_PREV] = {
-		.txt = text_word_start_prev,
+		.kind = MOVE_KIND_TXT,
+		.u.txt = text_word_start_prev,
 		.type = CHARWISE,
 	},
 	[VIS_MOVE_WORD_START_NEXT] = {
-		.txt = text_word_start_next,
+		.kind = MOVE_KIND_TXT,
+		.u.txt = text_word_start_next,
 		.type = CHARWISE,
 	},
 	[VIS_MOVE_WORD_END_PREV] = {
-		.txt = text_word_end_prev,
+		.kind = MOVE_KIND_TXT,
+		.u.txt = text_word_end_prev,
 		.type = CHARWISE|INCLUSIVE,
 	},
 	[VIS_MOVE_WORD_END_NEXT] = {
-		.txt = text_word_end_next,
+		.kind = MOVE_KIND_TXT,
+		.u.txt = text_word_end_next,
 		.type = CHARWISE|INCLUSIVE,
 	},
 	[VIS_MOVE_LONGWORD_NEXT] = {
-		.vis = longword_next,
+		.kind = MOVE_KIND_VIS,
+		.u.vis = longword_next,
 		.type = CHARWISE|IDEMPOTENT,
 	},
 	[VIS_MOVE_LONGWORD_START_PREV] = {
-		.txt = text_longword_start_prev,
+		.kind = MOVE_KIND_TXT,
+		.u.txt = text_longword_start_prev,
 		.type = CHARWISE,
 	},
 	[VIS_MOVE_LONGWORD_START_NEXT] = {
-		.txt = text_longword_start_next,
+		.kind = MOVE_KIND_TXT,
+		.u.txt = text_longword_start_next,
 		.type = CHARWISE,
 	},
 	[VIS_MOVE_LONGWORD_END_PREV] = {
-		.txt = text_longword_end_prev,
+		.kind = MOVE_KIND_TXT,
+		.u.txt = text_longword_end_prev,
 		.type = CHARWISE|INCLUSIVE,
 	},
 	[VIS_MOVE_LONGWORD_END_NEXT] = {
-		.txt = text_longword_end_next,
+		.kind = MOVE_KIND_TXT,
+		.u.txt = text_longword_end_next,
 		.type = CHARWISE|INCLUSIVE,
 	},
 	[VIS_MOVE_SENTENCE_PREV] = {
-		.txt = text_sentence_prev,
+		.kind = MOVE_KIND_TXT,
+		.u.txt = text_sentence_prev,
 		.type = CHARWISE,
 	},
 	[VIS_MOVE_SENTENCE_NEXT] = {
-		.txt = text_sentence_next,
+		.kind = MOVE_KIND_TXT,
+		.u.txt = text_sentence_next,
 		.type = CHARWISE,
 	},
 	[VIS_MOVE_PARAGRAPH_PREV] = {
-		.txt = text_paragraph_prev,
+		.kind = MOVE_KIND_TXT,
+		.u.txt = text_paragraph_prev,
 		.type = LINEWISE|JUMP,
 	},
 	[VIS_MOVE_PARAGRAPH_NEXT] = {
-		.txt = text_paragraph_next,
+		.kind = MOVE_KIND_TXT,
+		.u.txt = text_paragraph_next,
 		.type = LINEWISE|JUMP,
 	},
 	[VIS_MOVE_BLOCK_START] = {
-		.txt = text_block_start,
+		.kind = MOVE_KIND_TXT,
+		.u.txt = text_block_start,
 		.type = JUMP,
 	},
 	[VIS_MOVE_BLOCK_END] = {
-		.txt = text_block_end,
+		.kind = MOVE_KIND_TXT,
+		.u.txt = text_block_end,
 		.type = JUMP,
 	},
 	[VIS_MOVE_PARENTHESIS_START] = {
-		.txt = text_parenthesis_start,
+		.kind = MOVE_KIND_TXT,
+		.u.txt = text_parenthesis_start,
 		.type = JUMP,
 	},
 	[VIS_MOVE_PARENTHESIS_END] = {
-		.txt = text_parenthesis_end,
+		.kind = MOVE_KIND_TXT,
+		.u.txt = text_parenthesis_end,
 		.type = JUMP,
 	},
 	[VIS_MOVE_BRACKET_MATCH] = {
-		.txt = bracket_match,
+		.kind = MOVE_KIND_TXT,
+		.u.txt = bracket_match,
 		.type = INCLUSIVE|JUMP,
 	},
 	[VIS_MOVE_FILE_BEGIN] = {
-		.txt = firstline,
+		.kind = MOVE_KIND_TXT,
+		.u.txt = firstline,
 		.type = LINEWISE|LINEWISE_INCLUSIVE|JUMP|IDEMPOTENT,
 	},
 	[VIS_MOVE_FILE_END] = {
-		.txt = lastline,
+		.kind = MOVE_KIND_TXT,
+		.u.txt = lastline,
 		.type = LINEWISE|LINEWISE_INCLUSIVE|JUMP|IDEMPOTENT,
 	},
 	[VIS_MOVE_TO_LEFT] = {
-		.vis = to_left,
+		.kind = MOVE_KIND_VIS,
+		.u.vis = to_left,
 		.type = COUNT_EXACT,
 	},
 	[VIS_MOVE_TO_RIGHT] = {
-		.vis = to_right,
+		.kind = MOVE_KIND_VIS,
+		.u.vis = to_right,
 		.type = INCLUSIVE|COUNT_EXACT,
 	},
 	[VIS_MOVE_TO_LINE_LEFT] = {
-		.vis = to_line_left,
+		.kind = MOVE_KIND_VIS,
+		.u.vis = to_line_left,
 		.type = COUNT_EXACT,
 	},
 	[VIS_MOVE_TO_LINE_RIGHT] = {
-		.vis = to_line_right,
+		.kind = MOVE_KIND_VIS,
+		.u.vis = to_line_right,
 		.type = INCLUSIVE|COUNT_EXACT,
 	},
 	[VIS_MOVE_TILL_LEFT] = {
-		.vis = till_left,
+		.kind = MOVE_KIND_VIS,
+		.u.vis = till_left,
 		.type = COUNT_EXACT,
 	},
 	[VIS_MOVE_TILL_RIGHT] = {
-		.vis = till_right,
+		.kind = MOVE_KIND_VIS,
+		.u.vis = till_right,
 		.type = INCLUSIVE|COUNT_EXACT,
 	},
 	[VIS_MOVE_TILL_LINE_LEFT] = {
-		.vis = till_line_left,
+		.kind = MOVE_KIND_VIS,
+		.u.vis = till_line_left,
 		.type = COUNT_EXACT,
 	},
 	[VIS_MOVE_TILL_LINE_RIGHT] = {
-		.vis = till_line_right,
+		.kind = MOVE_KIND_VIS,
+		.u.vis = till_line_right,
 		.type = INCLUSIVE|COUNT_EXACT,
 	},
 	[VIS_MOVE_SEARCH_WORD_FORWARD] = {
-		.vis = search_word_forward,
+		.kind = MOVE_KIND_VIS,
+		.u.vis = search_word_forward,
 		.type = JUMP,
 	},
 	[VIS_MOVE_SEARCH_WORD_BACKWARD] = {
-		.vis = search_word_backward,
+		.kind = MOVE_KIND_VIS,
+		.u.vis = search_word_backward,
 		.type = JUMP,
 	},
 	[VIS_MOVE_SEARCH_REPEAT_FORWARD] = {
-		.vis = search_forward,
+		.kind = MOVE_KIND_VIS,
+		.u.vis = search_forward,
 		.type = JUMP,
 	},
 	[VIS_MOVE_SEARCH_REPEAT_BACKWARD] = {
-		.vis = search_backward,
+		.kind = MOVE_KIND_VIS,
+		.u.vis = search_backward,
 		.type = JUMP,
 	},
 	[VIS_MOVE_WINDOW_LINE_TOP] = {
-		.view = view_lines_top,
+		.kind = MOVE_KIND_VIEW,
+		.u.view = view_lines_top,
 		.type = LINEWISE|JUMP|IDEMPOTENT,
 	},
 	[VIS_MOVE_WINDOW_LINE_MIDDLE] = {
-		.view = view_lines_middle,
+		.kind = MOVE_KIND_VIEW,
+		.u.view = view_lines_middle,
 		.type = LINEWISE|JUMP|IDEMPOTENT,
 	},
 	[VIS_MOVE_WINDOW_LINE_BOTTOM] = {
-		.view = view_lines_bottom,
+		.kind = MOVE_KIND_VIEW,
+		.u.view = view_lines_bottom,
 		.type = LINEWISE|JUMP|IDEMPOTENT,
 	},
 	[VIS_MOVE_NOP] = {
-		.win = window_nop,
+		.kind = MOVE_KIND_WIN,
+		.u.win = window_nop,
 		.type = IDEMPOTENT,
 	},
 	[VIS_MOVE_PERCENT] = {
-		.vis = percent,
+		.kind = MOVE_KIND_VIS,
+		.u.vis = percent,
 		.type = IDEMPOTENT,
 	},
 	[VIS_MOVE_BYTE] = {
-		.vis = byte,
+		.kind = MOVE_KIND_VIS,
+		.u.vis = byte,
 		.type = IDEMPOTENT,
 	},
 	[VIS_MOVE_BYTE_LEFT] = {
-		.vis = byte_left,
+		.kind = MOVE_KIND_VIS,
+		.u.vis = byte_left,
 		.type = IDEMPOTENT,
 	},
 	[VIS_MOVE_BYTE_RIGHT] = {
-		.vis = byte_right,
+		.kind = MOVE_KIND_VIS,
+		.u.vis = byte_right,
 		.type = IDEMPOTENT,
 	},
 };
