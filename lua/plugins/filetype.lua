@@ -122,8 +122,11 @@ M.filetypes = filetypes
 
 -- From here on, values MUST MATCH THE FILETYPE TABLE ABOVE
 -- This is because the filetype table contains settings
+
 -- If the lexer name changed, the filetype table will point to the correct lexer!
-local L = require"lexers.lexer"
+-- lexers/lexer.lua errors when lpeg is missing. fall back to filetype-fallback-lexer.
+local ok, L = pcall(require, "lexers.lexer")
+if not ok then L = require"plugins/filetype-fallback-lexer" end
 
 -- This table matches filenames AND extensions
 -- This is done because L.detect also mixes it
