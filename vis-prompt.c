@@ -18,14 +18,14 @@ bool vis_prompt_cmd(Vis *vis, const char *cmd) {
 }
 
 static void
-vis_prompt_remove_empty_line(Text *text)
+vis_prompt_remove_empty_line(Vis *vis, Text *text)
 {
 	Filerange line_range = text_object_line(text, text->size - 1);
 	char *line = text_bytes_alloc0(text, line_range.start, text_range_size(line_range));
 	if (line && (line[0] == '\n' ||
 	    ((line[0] == ':' || line[0] == '/' || line[0] == '?') && (line[1] == '\n' || line[1] == '\0'))))
 	{
-		text_delete_range(text, line_range);
+		text_delete_range(vis, text, line_range);
 	}
 	free(line);
 }
@@ -39,7 +39,7 @@ vis_prompt_hide(Win *win)
 	char lastchar = 0;
 	if (size >= 1 && text_byte_get(txt, size - 1, &lastchar) && lastchar != '\n')
 		text_insert(win->vis, txt, size, "\n", 1);
-	vis_prompt_remove_empty_line(txt);
+	vis_prompt_remove_empty_line(win->vis, txt);
 	win->vis->prompt_state = PROMPTSTATE_NONE;
 	vis_window_close(win);
 }
@@ -92,7 +92,7 @@ vis_prompt_enter(Vis *vis, const char *keys, const Arg *arg)
 		// TODO(rnp): cleanup: this looks like a hack
 		fprintf(stderr, "\x1b[?25l");
 		if (!lastline) {
-			text_delete(txt, range.start, text_range_size(range));
+			text_delete(vis, txt, range.start, text_range_size(range));
 			text_appendf(vis, txt, "%s\n", cmd);
 		}
 	} else {
@@ -174,7 +174,7 @@ vis_prompt_show(Vis *vis, const char *title)
 
 	if (prompt) {
 		Text *txt = prompt->file->text;
-		vis_prompt_remove_empty_line(txt);
+		vis_prompt_remove_empty_line(vis, txt);
 		text_appendf(vis, txt, "%s\n", title);
 		view_cursors_scroll_to(view_selections_primary_get(&prompt->view), txt->size - 1);
 		vis_mode_switch(vis, VIS_MODE_INSERT);

@@ -412,7 +412,7 @@ static KEY_ACTION_FN(ka_selections_case)
 		// We assume that the number of bytes required by the modified
 		// wide-character string is the same as the multibyte input.
 		if (wcstombs(buf, wcs, mblen) != (size_t)-1) {
-			if (text_delete_range(txt, sel) && text_insert(vis, txt, sel.start, buf, mblen))
+			if (text_delete_range(vis, txt, sel) && text_insert(vis, txt, sel.start, buf, mblen))
 				view_selections_set(s, sel);
 		}
 	}
@@ -688,7 +688,7 @@ static KEY_ACTION_FN(ka_selections_rotate)
 				Filerange newsel = view_selections_get(newrot->sel);
 				if (!text_range_valid(newsel))
 					continue;
-				if (!text_delete_range(txt, newsel))
+				if (!text_delete_range(vis, txt, newsel))
 					continue;
 				if (!text_insert(vis, txt, newsel.start, oldrot->data, oldrot->len))
 					continue;
@@ -1014,7 +1014,7 @@ static KEY_ACTION_FN(ka_mark)
 
 static KEY_ACTION_FN(ka_undo)
 {
-	size_t pos = text_undo(vis_text(vis));
+	size_t pos = text_undo(vis, vis_text(vis));
 	if (pos != EPOS) {
 		View *view = vis_view(vis);
 		if (view->selection_count == 1)
@@ -1027,7 +1027,7 @@ static KEY_ACTION_FN(ka_undo)
 
 static KEY_ACTION_FN(ka_redo)
 {
-	size_t pos = text_redo(vis_text(vis));
+	size_t pos = text_redo(vis, vis_text(vis));
 	if (pos != EPOS) {
 		View *view = vis_view(vis);
 		if (view->selection_count == 1)
@@ -1043,7 +1043,7 @@ static KEY_ACTION_FN(ka_earlier)
 	size_t pos = EPOS;
 	VisCountIterator it = vis_count_iterator_get(vis, 1);
 	while (vis_count_iterator_next(&it))
-		pos = text_earlier(vis_text(vis));
+		pos = text_earlier(vis, vis_text(vis));
 	if (pos != EPOS) {
 		view_cursors_to(vis_view(vis)->selection, pos);
 		/* redraw all windows in case some display the same file */
@@ -1057,7 +1057,7 @@ static KEY_ACTION_FN(ka_later)
 	size_t pos = EPOS;
 	VisCountIterator it = vis_count_iterator_get(vis, 1);
 	while (vis_count_iterator_next(&it))
-		pos = text_later(vis_text(vis));
+		pos = text_later(vis, vis_text(vis));
 	if (pos != EPOS) {
 		view_cursors_to(vis_view(vis)->selection, pos);
 		/* redraw all windows in case some display the same file */

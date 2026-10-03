@@ -4,9 +4,11 @@
 #include "tap.h"
 
 #include "buffer.c"
+#include "external/termkey.c"
 #include "text.c"
 
 static Vis *vis;
+bool vis_event_emit(Vis *vis, enum VisEvents id, ...) { return true; }
 
 #ifndef BUFSIZ
 #define BUFSIZ 1024
@@ -153,7 +155,7 @@ int main(int argc, char *argv[]) {
 				snprintf(buf, sizeof buf, "Hello World: (%zu, %zu)\n", l, s);
 				txt = vis_text_load(vis, filename, load_method[l]);
 				ok(txt, "Load (%zu, %zu)", l, s);
-				ok(txt && text_delete(txt, 0, text_size(txt)) && isempty(txt), "Empty (%zu, %zu)", l, s);
+				ok(txt && text_delete(vis, txt, 0, text_size(txt)) && isempty(txt), "Empty (%zu, %zu)", l, s);
 				ok(txt && insert(txt, 0, buf) && compare(txt, buf), "Preparing to save (%zu, %zu)", l, s);
 				ok(txt && text_save_method(txt, filename, save_method[s]), "Text save (%zu, %zu)", l, s);
 				text_free(txt);
@@ -215,8 +217,8 @@ int main(int argc, char *argv[]) {
 	   text_iterator_valid(&it), "Accessing iterator after moving back from beyond start of file");
 
 	ok(text_state(txt) > 0, "State on empty file");
-	ok(text_undo(txt) == EPOS && isempty(txt), "Undo on empty file");
-	ok(text_redo(txt) == EPOS && isempty(txt), "Redo on empty file");
+	ok(text_undo(vis, txt) == EPOS && isempty(txt), "Undo on empty file");
+	ok(text_redo(vis, txt) == EPOS && isempty(txt), "Redo on empty file");
 
 	char data[] = "a\nb\nc\n";
 	size_t data_len = strlen(data);
@@ -230,7 +232,7 @@ int main(int argc, char *argv[]) {
 	iterator_find_prev(txt, data_len, 'b', 2);
 	iterator_find_prev(txt, data_len, 'c', 4);
 	iterator_find_prev(txt, data_len, 'e', EPOS);
-	ok(text_undo(txt) == 0 && isempty(txt), "Undo to empty document 1");
+	ok(text_undo(vis, txt) == 0 && isempty(txt), "Undo to empty document 1");
 
 	ok(insert(txt, 1, "") && isempty(txt), "Inserting empty data");
 	ok(!insert(txt, 1, " ") && isempty(txt), "Inserting with invalid offset");
@@ -241,18 +243,18 @@ int main(int argc, char *argv[]) {
 	ok(insert(txt, 1, "2") && compare(txt, "123"), "Inserting in middle (cached)");
 	ok(insert(txt, text_size(txt), "4") && compare(txt, "1234"), "Inserting at end (cached)");
 
-	ok(text_delete(txt, text_size(txt), 0) && compare(txt, "1234"), "Deleting empty range");
-	ok(!text_delete(txt, text_size(txt), 1) && compare(txt, "1234"), "Deleting invalid offset");
-	ok(!text_delete(txt, 0, text_size(txt)+5) && compare(txt, "1234"), "Deleting invalid range");
+	ok(text_delete(vis, txt, text_size(txt), 0) && compare(txt, "1234"), "Deleting empty range");
+	ok(!text_delete(vis, txt, text_size(txt), 1) && compare(txt, "1234"), "Deleting invalid offset");
+	ok(!text_delete(vis, txt, 0, text_size(txt)+5) && compare(txt, "1234"), "Deleting invalid range");
 
-	ok(text_undo(txt) == 0 && compare(txt, ""), "Reverting to empty document");
-	ok(text_redo(txt) != EPOS /* == text_size(txt) */ && compare(txt, "1234"), "Restoring previsous content");
+	ok(text_undo(vis, txt) == 0 && compare(txt, ""), "Reverting to empty document");
+	ok(text_redo(vis, txt) != EPOS /* == text_size(txt) */ && compare(txt, "1234"), "Restoring previsous content");
 
 	/* test cached deletion (i.e. in-place with only one piece) */
-	ok(text_delete(txt, text_size(txt)-1, 1) && compare(txt, "123"), "Deleting at end (cached)");
-	ok(text_delete(txt, 1, 1) && compare(txt, "13"), "Deleting in middle (cached)");
-	ok(text_delete(txt, 0, 1) && compare(txt, "3"), "Deleting at begin (cached)");
-	ok(text_delete(txt, 0, 1) && compare(txt, ""), "Deleting to empty document (cached)");
+	ok(text_delete(vis, txt, text_size(txt)-1, 1) && compare(txt, "123"), "Deleting at end (cached)");
+	ok(text_delete(vis, txt, 1, 1) && compare(txt, "13"), "Deleting in middle (cached)");
+	ok(text_delete(vis, txt, 0, 1) && compare(txt, "3"), "Deleting at begin (cached)");
+	ok(text_delete(vis, txt, 0, 1) && compare(txt, ""), "Deleting to empty document (cached)");
 
 	/* test regular insertion (i.e. with multiple pieces) */
 	text_snapshot(txt);
@@ -271,45 +273,45 @@ int main(int argc, char *argv[]) {
 	ok(insert(txt, text_size(txt), "0") && compare(txt, "1234567890"), "Inserting at end");
 
 	/* test simple undo / redo oparations */
-	ok(text_undo(txt) != EPOS && compare(txt, "123456789"), "Undo 1");
-	ok(text_undo(txt) != EPOS && compare(txt, "123456"), "Undo 2");
-	ok(text_undo(txt) != EPOS && compare(txt, "12346"), "Undo 3");
-	ok(text_undo(txt) != EPOS && compare(txt, "123"), "Undo 4");
-	ok(text_undo(txt) != EPOS && compare(txt, "13"), "Undo 5");
-	ok(text_undo(txt) != EPOS && compare(txt, "3"), "Undo 6");
-	ok(text_undo(txt) != EPOS && compare(txt, ""), "Undo 7");
-	ok(text_redo(txt) != EPOS && compare(txt, "3"), "Redo 1");
-	ok(text_redo(txt) != EPOS && compare(txt, "13"), "Redo 2");
-	ok(text_redo(txt) != EPOS && compare(txt, "123"), "Redo 3");
-	ok(text_redo(txt) != EPOS && compare(txt, "12346"), "Redo 4");
-	ok(text_redo(txt) != EPOS && compare(txt, "123456"), "Redo 5");
-	ok(text_redo(txt) != EPOS && compare(txt, "123456789"), "Redo 6");
-	ok(text_redo(txt) != EPOS && compare(txt, "1234567890"), "Redo 7");
-	ok(text_earlier(txt) != EPOS && compare(txt, "123456789"), "Earlier 1");
-	ok(text_earlier(txt) != EPOS && compare(txt, "123456"), "Earlier 2");
-	ok(text_earlier(txt) != EPOS && compare(txt, "12346"), "Earlier 3");
-	ok(text_earlier(txt) != EPOS && compare(txt, "123"), "Earlier 4");
-	ok(text_earlier(txt) != EPOS && compare(txt, "13"), "Earlier 5");
-	ok(text_earlier(txt) != EPOS && compare(txt, "3"), "Earlier 6");
-	ok(text_earlier(txt) != EPOS && compare(txt, ""), "Earlier 7");
-	ok(text_later(txt) != EPOS && compare(txt, "3"), "Later 1");
-	ok(text_later(txt) != EPOS && compare(txt, "13"), "Later 2");
-	ok(text_later(txt) != EPOS && compare(txt, "123"), "Later 3");
-	ok(text_later(txt) != EPOS && compare(txt, "12346"), "Later 4");
-	ok(text_later(txt) != EPOS && compare(txt, "123456"), "Later 5");
-	ok(text_later(txt) != EPOS && compare(txt, "123456789"), "Later 6");
-	ok(text_later(txt) != EPOS && compare(txt, "1234567890"), "Later 7");
+	ok(text_undo(vis, txt) != EPOS && compare(txt, "123456789"), "Undo 1");
+	ok(text_undo(vis, txt) != EPOS && compare(txt, "123456"), "Undo 2");
+	ok(text_undo(vis, txt) != EPOS && compare(txt, "12346"), "Undo 3");
+	ok(text_undo(vis, txt) != EPOS && compare(txt, "123"), "Undo 4");
+	ok(text_undo(vis, txt) != EPOS && compare(txt, "13"), "Undo 5");
+	ok(text_undo(vis, txt) != EPOS && compare(txt, "3"), "Undo 6");
+	ok(text_undo(vis, txt) != EPOS && compare(txt, ""), "Undo 7");
+	ok(text_redo(vis, txt) != EPOS && compare(txt, "3"), "Redo 1");
+	ok(text_redo(vis, txt) != EPOS && compare(txt, "13"), "Redo 2");
+	ok(text_redo(vis, txt) != EPOS && compare(txt, "123"), "Redo 3");
+	ok(text_redo(vis, txt) != EPOS && compare(txt, "12346"), "Redo 4");
+	ok(text_redo(vis, txt) != EPOS && compare(txt, "123456"), "Redo 5");
+	ok(text_redo(vis, txt) != EPOS && compare(txt, "123456789"), "Redo 6");
+	ok(text_redo(vis, txt) != EPOS && compare(txt, "1234567890"), "Redo 7");
+	ok(text_earlier(vis, txt) != EPOS && compare(txt, "123456789"), "Earlier 1");
+	ok(text_earlier(vis, txt) != EPOS && compare(txt, "123456"), "Earlier 2");
+	ok(text_earlier(vis, txt) != EPOS && compare(txt, "12346"), "Earlier 3");
+	ok(text_earlier(vis, txt) != EPOS && compare(txt, "123"), "Earlier 4");
+	ok(text_earlier(vis, txt) != EPOS && compare(txt, "13"), "Earlier 5");
+	ok(text_earlier(vis, txt) != EPOS && compare(txt, "3"), "Earlier 6");
+	ok(text_earlier(vis, txt) != EPOS && compare(txt, ""), "Earlier 7");
+	ok(text_later(vis, txt) != EPOS && compare(txt, "3"), "Later 1");
+	ok(text_later(vis, txt) != EPOS && compare(txt, "13"), "Later 2");
+	ok(text_later(vis, txt) != EPOS && compare(txt, "123"), "Later 3");
+	ok(text_later(vis, txt) != EPOS && compare(txt, "12346"), "Later 4");
+	ok(text_later(vis, txt) != EPOS && compare(txt, "123456"), "Later 5");
+	ok(text_later(vis, txt) != EPOS && compare(txt, "123456789"), "Later 6");
+	ok(text_later(vis, txt) != EPOS && compare(txt, "1234567890"), "Later 7");
 
 	/* test regular deletion (i.e. with multiple pieces) */
-	ok(text_delete(txt, 8, 2) && compare(txt, "12345678"), "Deleting midway start");
-	text_undo(txt);
-	ok(text_delete(txt, 2, 6) && compare(txt, "1290"), "Deleting midway end");
-	text_undo(txt);
-	ok(text_delete(txt, 7, 1) && compare(txt, "123456790"), "Deleting midway both same piece");
-	text_undo(txt);
-	ok(text_delete(txt, 0, 5) && compare(txt, "67890"), "Deleting at begin");
-	text_undo(txt);
-	ok(text_delete(txt, 5, 5) && compare(txt, "12345"), "Deleting at end");
+	ok(text_delete(vis, txt, 8, 2) && compare(txt, "12345678"), "Deleting midway start");
+	text_undo(vis, txt);
+	ok(text_delete(vis, txt, 2, 6) && compare(txt, "1290"), "Deleting midway end");
+	text_undo(vis, txt);
+	ok(text_delete(vis, txt, 7, 1) && compare(txt, "123456790"), "Deleting midway both same piece");
+	text_undo(vis, txt);
+	ok(text_delete(vis, txt, 0, 5) && compare(txt, "67890"), "Deleting at begin");
+	text_undo(vis, txt);
+	ok(text_delete(vis, txt, 5, 5) && compare(txt, "12345"), "Deleting at end");
 
 	ok(text_mark_get(txt, text_mark_set(txt, -1)) == EPOS, "Mark invalid 1");
 	ok(text_mark_get(txt, text_mark_set(txt, text_size(txt)+1)) == EPOS, "Mark invalid 2");
@@ -335,11 +337,11 @@ int main(int argc, char *argv[]) {
 		ok(text_mark_get(txt, mof) == pos+delta, "Mark in the middle adjusted 2");
 		ok(text_mark_get(txt, eof) == text_size(txt), "Mark at end adjusted 2");
 		text_snapshot(txt);
-		ok(text_delete(txt, pos+delta, 1), "Deleting mark");
+		ok(text_delete(vis, txt, pos+delta, 1), "Deleting mark");
 		ok(text_mark_get(txt, mof) == EPOS, "Mark in the middle deleted");
-		text_undo(txt);
+		text_undo(vis, txt);
 		ok(text_mark_get(txt, mof) == pos+delta, "Mark restored");
-		text_undo(txt);
+		text_undo(vis, txt);
 	}
 
 	text_snapshot(txt);
@@ -360,7 +362,7 @@ int main(int argc, char *argv[]) {
 
 	for (size_t i = 0; i < LENGTH(revs)/2; i++) {
 		snprintf(revs[i].data, sizeof revs[i].data, "%zu", i);
-		ok(text_delete(txt, 0, text_size(txt)) && text_size(txt) == 0, "Delete everything %zu", i);
+		ok(text_delete(vis, txt, 0, text_size(txt)) && text_size(txt) == 0, "Delete everything %zu", i);
 		ok(insert(txt, 0, revs[i].data) && compare(txt, revs[i].data), "Creating state %zu", i);
 		revs[i].state = text_state(txt);
 		text_snapshot(txt);
@@ -369,12 +371,12 @@ int main(int argc, char *argv[]) {
 
 	for (size_t i = 0; i < LENGTH(revs)/4; i++) {
 		rev--;
-		ok(text_undo(txt) != EPOS && compare(txt, revs[rev].data), "Undo to state %zu", rev);
+		ok(text_undo(vis, txt) != EPOS && compare(txt, revs[rev].data), "Undo to state %zu", rev);
 	}
 
 	for (size_t i = LENGTH(revs)/2; i < LENGTH(revs); i++) {
 		snprintf(revs[i].data, sizeof revs[i].data, "%zu", i);
-		ok(text_delete(txt, 0, text_size(txt)) && text_size(txt) == 0, "Delete everything %zu", i);
+		ok(text_delete(vis, txt, 0, text_size(txt)) && text_size(txt) == 0, "Delete everything %zu", i);
 		ok(insert(txt, 0, revs[i].data) && compare(txt, revs[i].data), "Creating state %zu", i);
 		revs[i].state = text_state(txt);
 		text_snapshot(txt);
@@ -382,32 +384,32 @@ int main(int argc, char *argv[]) {
 	}
 
 	while (rev > 0) {
-		text_undo(txt);
+		text_undo(vis, txt);
 		rev--;
 	}
 
 	ok(compare(txt, revs[0].data), "Undo along main branch to state 0");
 
 	for (size_t i = 1; i < LENGTH(revs); i++) {
-		ok(text_later(txt) != EPOS && compare(txt, revs[i].data), "Advance to state %zu", i);
+		ok(text_later(vis, txt) != EPOS && compare(txt, revs[i].data), "Advance to state %zu", i);
 	}
 
 	for (size_t i = 0; i < LENGTH(revs); i++) {
 		time_t state = revs[i].state;
-		ok(text_restore(txt, state) != EPOS && text_state(txt) == state, "Restore state %zu", i);
+		ok(text_restore(vis, txt, state) != EPOS && text_state(txt) == state, "Restore state %zu", i);
 	}
 
 	for (size_t i = LENGTH(revs)-1; i > 0; i--) {
-		ok(text_earlier(txt) != EPOS && compare(txt, revs[i-1].data), "Revert to state %zu", i-1);
+		ok(text_earlier(vis, txt) != EPOS && compare(txt, revs[i-1].data), "Revert to state %zu", i-1);
 	}
 
 	for (size_t i = 1; i < LENGTH(revs)/2; i++) {
-		text_redo(txt);
+		text_redo(vis, txt);
 	}
 
 	rev = LENGTH(revs)/2-1;
 	ok(compare(txt, revs[rev].data), "Redo along main branch to state %zu", rev);
-	ok(text_redo(txt) == EPOS, "End of main branch");
+	ok(text_redo(vis, txt) == EPOS, "End of main branch");
 
 	text_free(txt);
 

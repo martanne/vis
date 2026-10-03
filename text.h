@@ -101,6 +101,13 @@ VIS_INTERNAL void text_free(Text*);
  * @defgroup state Text State
  * @{
  */
+enum TextModificationEvent {
+	/** Type of text modification passed as a parameter to the lua event FILE_MODIFIED. */
+	TEXT_EVENT_INSERT,
+	TEXT_EVENT_DELETE,
+	TEXT_EVENT_UNDO,
+	TEXT_EVENT_REDO,
+};
 /** Return the size in bytes of the whole text. */
 VIS_INTERNAL size_t text_size(const Text*);
 /**
@@ -140,8 +147,8 @@ VIS_INTERNAL bool text_insert(Vis *vis, Text *txt, size_t pos, const void *data,
  * @param len The number of bytes to delete, starting from ``pos``.
  * @return Whether the deletion succeeded.
  */
-VIS_INTERNAL bool text_delete(Text *txt, size_t pos, size_t len);
-VIS_INTERNAL bool text_delete_range(Text *txt, Filerange);
+VIS_INTERNAL bool text_delete(Vis *vis, Text *txt, size_t pos, size_t len);
+VIS_INTERNAL bool text_delete_range(Vis *vis, Text *txt, Filerange);
 #define text_append_literal(vis, text, s) text_append(vis, text, str8(s))
 VIS_INTERNAL bool text_append(Vis *vis, Text *txt, str8 string);
 VIS_INTERNAL bool text_appendf(Vis *vis, Text *txt, const char *format, ...) __attribute__((format(printf, 3, 4)));
@@ -162,7 +169,7 @@ VIS_INTERNAL void text_snapshot(Text*);
  * @return The position of the first change or ``EPOS``, if already at the
  *         oldest state i.e. there was nothing to undo.
  */
-VIS_INTERNAL size_t text_undo(Text*);
+VIS_INTERNAL size_t text_undo(Vis *vis, Text*);
 /**
  * Reapply an older change along the main branch.
  * @rst
@@ -171,13 +178,13 @@ VIS_INTERNAL size_t text_undo(Text*);
  * @return The position of the first change or ``EPOS``, if already at the
  *         newest state i.e. there was nothing to redo.
  */
-VIS_INTERNAL size_t text_redo(Text*);
-VIS_INTERNAL size_t text_earlier(Text*);
-VIS_INTERNAL size_t text_later(Text*);
+VIS_INTERNAL size_t text_redo(Vis *vis, Text*);
+VIS_INTERNAL size_t text_earlier(Vis *vis, Text*);
+VIS_INTERNAL size_t text_later(Vis *vis, Text*);
 /**
  * Restore the text to the state closest to the time given
  */
-VIS_INTERNAL size_t text_restore(Text*, time_t);
+VIS_INTERNAL size_t text_restore(Vis *vis, Text*, time_t);
 /**
  * Get creation time of current state.
  * @rst

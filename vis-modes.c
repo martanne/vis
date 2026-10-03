@@ -150,7 +150,7 @@ static void vis_mode_normal_enter(Vis *vis, Mode *old) {
 				size_t begin = text_line_begin(txt, pos);
 				size_t len = start - begin;
 				if (len) {
-					text_delete(txt, begin, len);
+					text_delete(vis, txt, begin, len);
 					view_cursors_to(s, pos-len);
 				}
 			}
