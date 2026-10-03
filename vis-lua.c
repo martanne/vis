@@ -523,11 +523,11 @@ static const char *keymapping(Vis *vis, const char *keys, const Arg *arg) {
  */
 /***
  * Scintillua lexer module.
- * @field lexers might be `nil` if module is not found
+ * @field lexers always a table, empty if the `lexer` or `lpeg` module is not found
  */
 /***
- * LPeg lexer module.
- * @field lpeg might be `nil` if module is not found
+ * LPeg module.
+ * @field lpeg `nil` if the `lpeg` module is not found
  */
 /***
  * Current count.
