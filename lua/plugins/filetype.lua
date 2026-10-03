@@ -123,7 +123,7 @@ M.filetypes = filetypes
 -- From here on, values MUST MATCH THE FILETYPE TABLE ABOVE
 -- This is because the filetype table contains settings
 -- If the lexer name changed, the filetype table will point to the correct lexer!
-local L = require"lexers.lexer"
+local L = require"lexer"
 
 -- This table matches filenames AND extensions
 -- This is done because L.detect also mixes it
