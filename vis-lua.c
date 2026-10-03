@@ -3138,6 +3138,8 @@ static void vis_lua_event_get(lua_State *L, const char *name) {
 
 static void vis_lua_event_call(Vis *vis, const char *name) {
 	lua_State *L = vis->lua;
+	if (!L) return;
+
 	vis_lua_event_get(L, name);
 	if (lua_isfunction(L, -1))
 		pcall(vis, L, 0, 0);
@@ -3765,6 +3767,30 @@ static void vis_lua_ui_draw(Vis *vis) {
 	vis_lua_event_call(vis, "ui_draw");
 }
 
+/**
+ * @brief Emits the InsertEnter event to the Lua scripting environment.
+ *
+ * Calls the `vis.events.insert_enter()` Lua function. This event is fired
+ * right after the editor has entered insert or replace mode.
+ *
+ * @param vis The editor instance.
+ */
+static void vis_lua_insert_enter(Vis *vis) {
+	vis_lua_event_call(vis, "insert_enter");
+}
+
+/**
+ * @brief Emits the InsertLeave event to the Lua scripting environment.
+ *
+ * Calls the `vis.events.insert_leave()` Lua function. This event is fired
+ * right before the editor leaves insert or replace mode.
+ *
+ * @param vis The editor instance.
+ */
+static void vis_lua_insert_leave(Vis *vis) {
+	vis_lua_event_call(vis, "insert_leave");
+}
+
 bool vis_event_emit(Vis *vis, enum VisEvents id, ...) {
 	va_list ap;
 	va_start(ap, id);
@@ -3817,6 +3843,12 @@ bool vis_event_emit(Vis *vis, enum VisEvents id, ...) {
 		}
 		break;
 	}
+	case VIS_EVENT_INSERT_ENTER:
+		vis_lua_insert_enter(vis);
+		break;
+	case VIS_EVENT_INSERT_LEAVE:
+		vis_lua_insert_leave(vis);
+		break;
 	case VIS_EVENT_QUIT:
 		vis_lua_quit(vis);
 		break;

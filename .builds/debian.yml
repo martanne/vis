@@ -6,6 +6,7 @@ packages:
   - libselinux1-dev
   - libtre-dev
   - lua-lpeg
+  - vim
 sources:
   - https://github.com/martanne/vis
 tasks:

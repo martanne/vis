@@ -157,6 +157,8 @@ local events = {
 	TERM_CSI = "Event::TERM_CSI", -- see @{term_csi}
 	PROCESS_RESPONSE = "Event::PROCESS_RESPONSE", -- see @{process_response}
 	UI_DRAW = "Event::UI_DRAW", -- see @{ui_draw}
+	INSERT_ENTER = "Event::INSERT_ENTER", -- see @{mode_set}
+	INSERT_LEAVE = "Event::INSERT_LEAVE", -- see @{mode_set}
 }
 
 events.file_close = function(...) events.emit(events.FILE_CLOSE, ...) end
@@ -174,6 +176,8 @@ events.win_status = function(...) events.emit(events.WIN_STATUS, ...) end
 events.term_csi = function(...) events.emit(events.TERM_CSI, ...) end
 events.process_response = function(...) events.emit(events.PROCESS_RESPONSE, ...) end
 events.ui_draw = function(...) events.emit(events.UI_DRAW, ...) end
+events.insert_enter = function(...) events.emit(events.INSERT_ENTER, ...) end
+events.insert_leave = function(...) events.emit(events.INSERT_LEAVE, ...) end
 
 local handlers = {}
 
