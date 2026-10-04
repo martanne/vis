@@ -153,7 +153,7 @@ char vis_mark_to(Vis *vis, enum VisMark mark) {
 	return '\0';
 }
 
-const MarkDef vis_marks[] = {
+read_only MarkDef vis_marks[] = {
 	[VIS_MARK_DEFAULT]        = { '\'', VIS_HELP("Default mark")    },
 	[VIS_MARK_SELECTION]      = { '^',  VIS_HELP("Last selections") },
 };

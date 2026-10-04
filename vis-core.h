@@ -301,12 +301,12 @@ typedef MarkDef RegisterDef;
 
 /** stuff used by several of the vis-* files */
 
-extern Mode vis_modes[VIS_MODE_INVALID];
-extern const Movement vis_motions[VIS_MOVE_INVALID];
-extern const Operator vis_operators[VIS_OP_INVALID];
-extern const TextObject vis_textobjects[VIS_TEXTOBJECT_INVALID];
-extern const MarkDef vis_marks[VIS_MARK_a];
-extern const RegisterDef vis_registers[VIS_REG_a];
+static    Mode        vis_modes[VIS_MODE_INVALID];
+read_only Movement    vis_motions[VIS_MOVE_INVALID];
+read_only Operator    vis_operators[VIS_OP_INVALID];
+read_only TextObject  vis_textobjects[VIS_TEXTOBJECT_INVALID];
+read_only MarkDef     vis_marks[VIS_MARK_a];
+read_only RegisterDef vis_registers[VIS_REG_a];
 
 VIS_INTERNAL void macro_operator_stop(Vis *vis);
 VIS_INTERNAL void macro_operator_record(Vis *vis);

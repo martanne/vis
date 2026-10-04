@@ -90,7 +90,7 @@ static Filerange object_backtick(Text *txt, size_t pos) {
 	return object_unpaired(txt, pos, '`');
 }
 
-const TextObject vis_textobjects[] = {
+read_only TextObject vis_textobjects[] = {
 	[VIS_TEXTOBJECT_INNER_WORD] = {
 		.txt = text_object_word,
 	},

@@ -76,6 +76,8 @@
 #include <selinux/selinux.h>
 #endif
 
+#define read_only static const
+
 #define InvalidCodePath assert(0)
 
 #if defined(__clang__) || defined(__GNUC__)

@@ -251,7 +251,7 @@ str8_list vis_register_get(Vis *vis, enum VisRegister id)
 	return result;
 }
 
-const RegisterDef vis_registers[] = {
+read_only RegisterDef vis_registers[] = {
 	[VIS_REG_DEFAULT]    = { '"', VIS_HELP("Unnamed register")                                 },
 	[VIS_REG_ZERO]       = { '0', VIS_HELP("Yank register")                                    },
 	[VIS_REG_1]          = { '1', VIS_HELP("1st sub-expression match")                         },

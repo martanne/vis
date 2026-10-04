@@ -237,7 +237,7 @@ static void vis_mode_insert_idle(Vis *vis) {
 		vis_file_snapshot(vis, win->file);
 }
 
-Mode vis_modes[] = {
+static Mode vis_modes[] = {
 	[VIS_MODE_OPERATOR_PENDING] = {
 		.id = VIS_MODE_OPERATOR_PENDING,
 		.name = "OPERATOR-PENDING",

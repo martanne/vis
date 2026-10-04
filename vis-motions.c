@@ -388,7 +388,7 @@ err:
 	return false;
 }
 
-const Movement vis_motions[] = {
+read_only Movement vis_motions[] = {
 	[VIS_MOVE_LINE_UP] = {
 		.kind = MOVE_KIND_CUR,
 		.u.cur = view_line_up,

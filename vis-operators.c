@@ -312,7 +312,7 @@ out:
 	return result;
 }
 
-const Operator vis_operators[] = {
+read_only Operator vis_operators[] = {
 	[VIS_OP_DELETE]      = { op_delete      },
 	[VIS_OP_CHANGE]      = { op_change      },
 	[VIS_OP_YANK]        = { op_yank        },
