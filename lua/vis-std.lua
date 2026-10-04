@@ -63,41 +63,132 @@ vis:option_register("syntax", "string", function(name)
 	return true
 end, "Syntax highlighting lexer to use")
 
-vis:option_register("horizon", "number", function(horizon)
-	if not vis.win then return false end
-	vis.win.horizon = horizon
-	return true
-end, "Number of bytes to consider for syntax highlighting")
+--
+-- Token Cache (win.token_cache)
+--
+-- The token cache maintains a list of tokens returned by the lexer for the syntax associated
+-- with a window (if win.syntax is not nil). It contains tokens from the beginning of the file
+-- to *at least* the end of the viewport and adapts to file changes and viewport movements.
+--
+-- The token names and their file positions in bytes are layed out like this:
+--
+--   win.token_cache = { name_1, pos_2, name_2, pos_3, name_3, ... }
+--
+-- Note that file positions in the token cache start from 1, opposed to file positions in
+-- the C code of vis that start from 0.
+--
+-- For fast access to a specific token index, given an arbitrary file position (from 0),
+-- binsearch_token_idx() can be used. The returned index (always even) points to the file
+-- position entry in the token cache after the given position. So the found file position
+-- points right after the end of the token which is found at the given file position.
+--
+
+local function binsearch_token_idx(tokens, pos)
+	if next(tokens) == nil or pos == nil then return 0 end
+	local i0 = 2
+	local i1 = #tokens
+	if pos < tokens[i0]-1 then return i0 end
+	if pos > tokens[i1]-1 then return i1 end
+	local i repeat
+		i = (i0 + i1) / 2
+		i = i + i % 2
+		if pos < tokens[i]-1 then i1 = i else i0 = i end
+	until (i - i0 <= 2 and pos < tokens[i]-1) or i0 == i1
+	return i
+end
+
+-- NOTE: skip_same_tokens() is only needed for suboptimal lexers that generate long sequences
+-- of single character tokens with the same style (like the current markup lexer).
+-- Otherwise, this would suffice:
+--   return idx - skip_count
+local function skip_same_tokens(tokens, idx, skip_count)
+	for _ = 2, skip_count, 2 do
+		local style = tokens[idx - 1]
+		local j = 2
+		while idx - j > 0 and style == tokens[idx - j - 1] do
+			j = j + 2
+		end
+		idx = idx - j
+	end
+	return idx
+end
+
+local function find_token_at(tokens, pos)
+	local min_token_cache_entries = 2
+	if #tokens <= min_token_cache_entries then return 0 end
+	local token_cache_size = (tokens[#tokens] or 2) - 1
+	if pos == token_cache_size then return #tokens - min_token_cache_entries end
+	local idx = binsearch_token_idx(tokens, pos)
+	if idx <= min_token_cache_entries then return 0 end
+	return skip_same_tokens(tokens, idx, min_token_cache_entries)
+end
+
+local function lex_range(win, start, finish)
+	if not win.syntax or not vis.lexers.load then return {} end
+	local lexer = vis.lexers.load(win.syntax, nil, true)
+	if not (lexer and win.token_cache and start and finish) then return {} end
+
+	if finish < start then return win.token_cache end
+	local prev_idx = find_token_at(win.token_cache, start)
+	local prev_pos = 0
+	if prev_idx > 0 then prev_pos = win.token_cache[prev_idx] - 1 end
+
+	for i = #win.token_cache, prev_idx+1, -1 do win.token_cache[i] = nil end
+	local data = win.file:content(prev_pos, finish - prev_pos + 1)
+	local tokens = lexer:lex(data, 1)
+	for i, v in ipairs(tokens) do
+		if i % 2 == 0 then v = v + prev_pos end
+		table.insert(win.token_cache, v)
+	end
+
+	return win.token_cache
+end
+
+vis.events.subscribe(vis.events.WIN_OPEN, function(win)
+	win.token_cache = {}
+end)
+
+vis.events.subscribe(vis.events.FILE_MODIFIED, function(file, _op, pos, _len)
+	for win in vis:windows() do
+		if win.file == file then
+			if not win:large() and win.syntax ~= nil then
+				local line = file:line_column_from_offset(pos)
+				local line_start_pos = file:offset_from_line_column(line, 1)
+				win.token_cache = lex_range(win, line_start_pos, win.viewport.bytes.finish)
+			else win.token_cache = {} end
+		end
+	end
+end)
 
 vis.events.subscribe(vis.events.WIN_HIGHLIGHT, function(win)
-	if not win.syntax or not vis.lexers.load then return end
-	local lexer = vis.lexers.load(win.syntax, nil, true)
-	if not lexer then return end
+	if win:large() or win.syntax == nil then win.token_cache = {}; return end
+	if win.token_cache == nil then win.token_cache = {} end
+	local style_ids = vis.ui.style_ids
 
-	-- TODO: improve heuristic for initial style
-	local viewport = win.viewport.bytes
-	if not viewport then return end
-	local horizon_max = win.horizon or 32768
-	local horizon     = viewport.start < horizon_max and viewport.start or horizon_max
-	local view_start  = viewport.start
-	local lex_start   = viewport.start - horizon
-	viewport.start    = lex_start
-	local data        = win.file:content(viewport)
-	local style_ids   = vis.ui.style_ids
-	local tokens      = lexer:lex(data, 1)
-	local token_end   = lex_start + (tokens[#tokens] or 1) - 1
+	--- token_cache_last_pos points to the byte position right after the last lexed token
+	local token_cache_last_pos = (win.token_cache[#win.token_cache] or 1) - 1
+	if next(win.token_cache) == nil or token_cache_last_pos < win.viewport.bytes.finish then
+		win.token_cache = lex_range(win, token_cache_last_pos, win.viewport.bytes.finish)
+		if next(win.token_cache) == nil then return end
+	end
 
-	for i = #tokens - 1, 1, -2 do
-		local token_start = lex_start + (tokens[i-1] or 1) - 1
-		if token_end < view_start then
-			break
+	local idx_start = binsearch_token_idx(win.token_cache, win.viewport.bytes.start)
+	local idx_end   = binsearch_token_idx(win.token_cache, win.viewport.bytes.finish)
+	for i = idx_start, idx_end, 2 do
+		local name = win.token_cache[i-1]
+		local style = style_ids[name]
+		if style ~= nil then
+			if idx_start == idx_end then
+				-- if we have a big token that is larger than the viewport, e.g. a very
+				-- large comment, we can limit setting the cell styles to the viewport
+				win:style(style, win.viewport.bytes.start, win.viewport.bytes.finish)
+			else
+				local token_start = (win.token_cache[i-2] or 1) - 1
+				-- win.token_cache points one byte beyond the token and is 1-indexed
+				local token_end  = win.token_cache[i] - 2
+				win:style(style, token_start, token_end)
+			end
 		end
-		local name = tokens[i]
-		local style_id = style_ids[name]
-		if style_id ~= nil then
-			win:style(style_id, token_start, token_end)
-		end
-		token_end = token_start - 1
 	end
 end)
 
@@ -141,12 +232,9 @@ vis.events.subscribe(vis.events.WIN_STATUS, function(win)
 	if not pos then pos = 0 end
 	table.insert(right_parts, (size == 0 and "0" or math.ceil(pos/size*100)).."%")
 
-	if not win.large then
+	if not win:large() then
 		local col = selection.col
 		table.insert(right_parts, selection.line..', '..col)
-		if size > 33554432 or col > 65536 then
-			win.large = true
-		end
 	end
 
 	local left = ' ' .. table.concat(left_parts, " » ") .. ' '

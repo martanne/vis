@@ -378,8 +378,8 @@ static void *obj_lightref_check(lua_State *L, int idx, const char *type) {
 static Vis *lua_get_vis(lua_State *L)
 {
 	lua_getglobal(L, "vis");
-	Vis *result = luaL_checkudata(L, -1, "vis");
-	return result;
+	Vis **result = luaL_checkudata(L, -1, VIS_LUA_TYPE_VIS);
+	return *result;
 }
 
 static int index_common(lua_State *L) {
@@ -1998,6 +1998,7 @@ static int window_index(lua_State *L) {
 			obj_ref_new(L, &win->saved_selections, VIS_LUA_TYPE_MARKS);
 			return 1;
 		}
+
 		if (strcmp(key, "options") == 0) {
 			obj_ref_new(L, &win->view, VIS_LUA_TYPE_WIN_OPTS);
 			return 1;
@@ -2012,6 +2013,7 @@ static int window_newindex(lua_State *L) {
 
 	if (lua_isstring(L, 2)) {
 		const char *key = lua_tostring(L, 2);
+
 		if (strcmp(key, "options") == 0 && lua_istable(L, 3)) {
 			int result = 0;
 			/* since we don't know which keys are in the table we push
@@ -2036,7 +2038,9 @@ static int window_newindex(lua_State *L) {
 			}
 			lua_pop(L, 1);
 			return result;
-		} else if (strcmp(key, "file") == 0 && lua_isstring(L, 3)) {
+		}
+
+		if (strcmp(key, "file") == 0 && lua_isstring(L, 3)) {
 			const char* filename = lua_tostring(L, 3);
 			if (!vis_window_file_change(win->vis, win, filename)) {
 				return luaL_argerror(L, 3, "failed to open");
@@ -2209,6 +2213,12 @@ static int window_close(lua_State *L) {
 	return 1;
 }
 
+static int window_large(lua_State *L) {
+	Win *win = obj_ref_check(L, 1, VIS_LUA_TYPE_WINDOW);
+	lua_pushboolean(L, view_large_file(&win->view));
+	return 1;
+}
+
 static const struct luaL_Reg window_funcs[] = {
 	{ "__index", window_index },
 	{ "__newindex", window_newindex },
@@ -2220,6 +2230,7 @@ static const struct luaL_Reg window_funcs[] = {
 	{ "status", window_status },
 	{ "draw", window_draw },
 	{ "close", window_close },
+	{ "large", window_large },
 	{ NULL, NULL },
 };
 
@@ -2628,7 +2639,7 @@ static int file_newindex(lua_State *L)
 			bool modified = lua_isboolean(L, 3) && lua_toboolean(L, 3);
 			if (modified) {
 				text_insert(vis, file->text, 0, " ", 1);
-				text_delete(file->text, 0, 1);
+				text_delete(vis, file->text, 0, 1);
 			} else {
 				text_mark_current_revision(file->text);
 			}
@@ -2687,9 +2698,10 @@ static int file_insert(lua_State *L)
  * @treturn bool whether the file content was successfully changed
  */
 static int file_delete(lua_State *L) {
+	Vis  *vis  = lua_get_vis(L);
 	File *file = obj_ref_check(L, 1, VIS_LUA_TYPE_FILE);
 	Filerange range = getrange(L, 2);
-	lua_pushboolean(L, text_delete_range(file->text, range));
+	lua_pushboolean(L, text_delete_range(vis, file->text, range));
 	return 1;
 }
 
@@ -2935,7 +2947,7 @@ static int file_lines_newindex(lua_State *L)
 	size_t start = text_pos_by_lineno(txt, line);
 	size_t end = text_line_end(txt, start);
 	if (start != EPOS && end != EPOS) {
-		text_delete(txt, start, end - start);
+		text_delete(vis, txt, start, end - start);
 		text_insert(vis, txt, start, data, size);
 		if (text_size(txt) == start + size)
 			text_insert(vis, txt, text_size(txt), "\n", 1);
@@ -3565,6 +3577,34 @@ static void vis_lua_file_open(Vis *vis, File *file) {
 }
 
 /***
+ * File modified.
+ * Triggered when changes are made to the text of the file.
+ * @function file_modified
+ * @tparam File file the file being written
+ * @tparam string op the type of modification, can be one of "INSERT", "DELETE", "UNDO", "REDO"
+ * @tparam int pos position in bytes of the beginning of the modification
+ * @tparam int len length of the modification
+ */
+static void vis_lua_file_modified(Vis *vis, File *file, int op, size_t pos, size_t len)
+{
+	lua_State *L = vis->lua;
+	vis_lua_event_get(L, "file_modified");
+	if (lua_isfunction(L, -1)) {
+		obj_ref_new(L, file, VIS_LUA_TYPE_FILE);
+		switch (op) {
+		case TEXT_EVENT_INSERT: lua_pushliteral(L, "INSERT"); break;
+		case TEXT_EVENT_DELETE: lua_pushliteral(L, "DELETE"); break;
+		case TEXT_EVENT_UNDO:   lua_pushliteral(L, "UNDO");   break;
+		case TEXT_EVENT_REDO:   lua_pushliteral(L, "REDO");   break;
+		}
+		lua_pushinteger(L, pos);
+		lua_pushinteger(L, len);
+		pcall(vis, L, 4, 0);
+	}
+	lua_pop(L, 1);
+}
+
+/***
  * File pre save.
  * Triggered *before* the file is being written.
  * @function file_save_pre
@@ -3826,6 +3866,22 @@ bool vis_event_emit(Vis *vis, enum VisEvents id, ...) {
 	case VIS_EVENT_UI_DRAW:
 		vis_lua_ui_draw(vis);
 		break;
+	case VIS_EVENT_FILE_MODIFIED:
+	{
+		Text *text = va_arg(ap, Text*);
+		File *file = NULL;
+		for (File *f = vis->files; f; f = f->next) {
+			if (f->text == text) {
+				file = f;
+				break;
+			}
+		}
+		const int op = va_arg(ap, int);
+		const size_t pos = va_arg(ap, size_t);
+		const size_t len = va_arg(ap, size_t);
+		vis_lua_file_modified(vis, file, op, pos, len);
+		break;
+	}
 	}
 
 	va_end(ap);

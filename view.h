@@ -71,12 +71,13 @@ typedef struct View {
 	Selection *selections;    /* all cursors currently active */
 	int selection_generation; /* used to filter out newly created cursors during iteration */
 	bool need_update;   /* whether view has been redrawn */
-	bool large_file;    /* optimize for displaying large files */
 	int colorcolumn;
 	char *breakat;  /* characters which might cause a word wrap */
 	int wrapcolumn; /* wrap lines at minimum of window width and wrapcolumn (if != 0) */
 	int wrapcol;    /* used while drawing view content, column where word wrap might happen */
 	bool prevch_breakat; /* used while drawing view content, previous char is part of breakat */
+	int large_file_size_kib; /* threshold for large files in KiB */
+	int large_line_size;     /* threshold for long lines */
 } View;
 
 /**
@@ -351,6 +352,8 @@ VIS_INTERNAL bool view_breakat_set(View*, const char *breakat);
 VIS_INTERNAL void view_tabwidth_set(View*, int tabwidth);
 /** Apply a style to a text range. */
 VIS_INTERNAL void vis_win_style(struct Win*, u64 start, u64 end, u16 style_id);
+/** Check if file is large and possibly optimize the view. */
+VIS_INTERNAL bool view_large_file(View*);
 
 /** @} */
 

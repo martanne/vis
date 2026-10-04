@@ -110,6 +110,10 @@
 #define Min(a, b)        ((a) > (b) ? (b) : (a))
 #define Max(a, b)        ((a) < (b) ? (b) : (a))
 
+#define KiB(a)     ((u64)(a) << 10ULL)
+#define MiB(a)     ((u64)(a) << 20ULL)
+#define GiB(a)     ((u64)(a) << 30ULL)
+
 /* is c the start of a utf8 sequence? */
 #define ISUTF8(c)     (((c)&0xC0)!=0x80)
 #define ISASCII(ch)   ((unsigned char)ch < 0x80)

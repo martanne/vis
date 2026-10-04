@@ -656,7 +656,7 @@ void vis_replace(Vis *vis, size_t pos, const char *data, size_t len) {
 	for (char c; chars-- > 0 && text_iterator_byte_get(&it, &c) && c != '\n'; )
 		text_iterator_char_next(&it, NULL);
 
-	text_delete(txt, pos, it.pos - pos);
+	text_delete(vis, txt, pos, it.pos - pos);
 	vis_insert(vis, pos, data, len);
 }
 
