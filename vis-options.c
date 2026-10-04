@@ -170,7 +170,7 @@ vis_option_register(Vis *vis, u8 *name, s64 name_length, VisOptionFlags flags,
 	bool result = false;
 	if (ns.length > 0 && !vis_map_get(vis->options, ns)) {
 		VisOption *opt = calloc(1, sizeof *opt);
-		char *name_copy = strndup((char *)ns.data, ns.length);
+		char *name_copy = opt ? strndup((char *)ns.data, ns.length) : 0;
 		result = opt && name_copy;
 		if (result) {
 			opt->names[0]    = name_copy;
