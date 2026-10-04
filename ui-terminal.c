@@ -15,11 +15,13 @@ typedef struct {
 VIS_INTERNAL bool
 vis_cell_buffer_resize(VisCellBuffer *cb, u32 width, u32 height)
 {
+	u64 cell_count    = (u64)height * width;
+
 	// NOTE(rnp): extra space for dirty cell array, will generally just land in padding. Has
 	// a minimum size to ensure we can compute dirty cells with SIMD without a cleanup loop.
-	u64 bits_size     = height * width / 8 + 1;
-	u64 styles_offset = round_up_to(width * height * sizeof(VisCellData), 64);
-	u64 bits_offset   = styles_offset + round_up_to(width * height * sizeof(VisCellStyle), 64);
+	u64 bits_size     = cell_count / 8 + 1;
+	u64 styles_offset = round_up_to(cell_count * sizeof(VisCellData), 64);
+	u64 bits_offset   = styles_offset + round_up_to(cell_count * sizeof(VisCellStyle), 64);
 
 	u64 page_size = sysconf(_SC_PAGE_SIZE);
 	u64 size      = round_up_to(bits_offset + bits_size, page_size);
