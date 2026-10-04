@@ -29,6 +29,7 @@ Optional features:
   --enable-lpeg-static    build with LPeg static linking [auto]
   --enable-tre            build with TRE regex support [auto]
   --enable-selinux        build with SELinux support [auto]
+  --enable-static         statically link vis dependencies [no]
   --enable-acl            build with POSIX ACL support [auto]
   --enable-help           build with built-in help texts [yes]
 
@@ -36,6 +37,7 @@ Some influential environment variables:
   CC                      C compiler command [detected]
   CFLAGS                  C compiler flags [-Os -pipe ...]
   LDFLAGS                 Linker flags
+  PKG_CONFIG              pkg-config(1) command [detected]
 
 Use these variables to override the choices made by configure.
 
@@ -78,8 +80,10 @@ fi
 
 tryflag () {
 printf "checking whether compiler accepts %s... " "$2"
+# GCC does not treat unknown -W flags as errors in the negative case
+flag="$(printf '%s' "$2" | sed 's/^-Wno-/-W/')"
 echo "typedef int x;" > "$tmpc"
-if $CC $CFLAGS_TRY $2 -c -o "$tmpo" "$tmpc" >/dev/null 2>&1 ; then
+if $CC $CFLAGS_TRY $flag -c -o "$tmpo" "$tmpc" >/dev/null 2>&1 ; then
 printf "yes\n"
 eval "$1=\"\${$1} \$2\""
 eval "$1=\${$1# }"
@@ -130,6 +134,8 @@ for arg ; do
 case "$arg" in
 --help|-h) usage ;;
 --srcdir=*) SRCDIR=${arg#*=} ;;
+--prefix=~) PREFIX="$HOME" ;;
+--prefix=~/*) PREFIX="$HOME/${arg#--prefix=~/}" ;;
 --prefix=*) PREFIX=${arg#*=} ;;
 --exec-prefix=*) EXEC_PREFIX=${arg#*=} ;;
 --bindir=*) BINDIR=${arg#*=} ;;
@@ -149,6 +155,8 @@ case "$arg" in
 --disable-tre|--enable-tre=no) tre=no ;;
 --enable-selinux|--enable-selinux=yes) selinux=yes ;;
 --disable-selinux|--enable-selinux=no) selinux=no ;;
+--enable-static|--enable-static=yes) static=yes ;;
+--disable-static|--enable-static=no) static=no ;;
 --enable-acl|--enable-acl=yes) acl=yes ;;
 --disable-acl|--enable-acl=no) acl=no ;;
 --enable-*|--disable-*|--with-*|--without-*|--*dir=*|--build=*) ;;
@@ -157,6 +165,7 @@ CC=*) CC=${arg#*=} ;;
 CFLAGS=*) CFLAGS=${arg#*=} ;;
 CPPFLAGS=*) CPPFLAGS=${arg#*=} ;;
 LDFLAGS=*) LDFLAGS=${arg#*=} ;;
+PKG_CONFIG=*) PKG_CONFIG=${arg#*=} ;;
 *=*) ;;
 *) ;;
 esac
@@ -220,7 +229,12 @@ tryflag   CFLAGS_TRY  -Werror=unused-command-line-argument
 tryldflag LDFLAGS_TRY -Werror=unknown-warning-option
 tryldflag LDFLAGS_TRY -Werror=unused-command-line-argument
 
-CFLAGS_STD="-std=c99 -U_XOPEN_SOURCE -D_XOPEN_SOURCE=700 -DNDEBUG -MMD"
+if [ yes = "$static" ]; then
+	pkg_config_flags="--static"
+	tryldflag LDFLAGS --static
+fi
+
+CFLAGS_STD="-std=c99 -DNDEBUG"
 LDFLAGS_STD="-lc"
 
 OS=$(uname)
@@ -229,11 +243,15 @@ case "$OS" in
 FreeBSD|DragonFly) CFLAGS_STD="$CFLAGS_STD -D_BSD_SOURCE -D__BSD_VISIBLE=1" ;;
 NetBSD)  CFLAGS_STD="$CFLAGS_STD -D_NETBSD_SOURCE" ;;
 *BSD)    CFLAGS_STD="$CFLAGS_STD -D_BSD_SOURCE" ;;
-Darwin)  CFLAGS_STD="$CFLAGS_STD -D_DARWIN_C_SOURCE" ;;
 AIX)     CFLAGS_STD="$CFLAGS_STD -D_ALL_SOURCE" ;;
 esac
 
+tryflag CFLAGS -Wall
 tryflag CFLAGS -pipe
+
+# shut up useless warning
+tryflag CFLAGS -Wno-initializer-overrides # Clang
+tryflag CFLAGS -Wno-override-init # GCC
 
 # Try flags to optimize binary size
 tryflag CFLAGS -O2
@@ -247,6 +265,8 @@ tryflag CFLAGS_AUTO -fstack-protector-all
 tryldflag LDFLAGS -Wl,-z,now
 tryldflag LDFLAGS -Wl,-z,relro
 tryldflag LDFLAGS_AUTO -pie
+
+[ "$help" = "no" ] && CFLAGS="${CFLAGS} -DCONFIG_HELP=0"
 
 printf "creating config.mk... "
 
@@ -283,18 +303,11 @@ if test "$environmentonly" = "yes"; then
 	exit 0
 fi
 
+: ${PKG_CONFIG:=pkg-config}
 have_pkgconfig=no
-printf "checking for pkg-config... "
-cmdexists pkg-config && have_pkgconfig=yes
+printf "checking for $PKG_CONFIG... "
+cmdexists $PKG_CONFIG && have_pkgconfig=yes
 printf "%s\n" "$have_pkgconfig"
-
-if test "$help" = "yes" ; then
-	CONFIG_HELP=1
-else
-	CONFIG_HELP=0
-fi
-
-CONFIG_CURSES=0
 
 if test "$curses" != "no" ; then
 
@@ -314,11 +327,11 @@ EOF
 		printf " checking for %s... " "$libcurses"
 
 		if test "$have_pkgconfig" = "yes" ; then
-			CFLAGS_CURSES=$(pkg-config --cflags $libcurses 2>/dev/null)
-			LDFLAGS_CURSES=$(pkg-config --libs $libcurses 2>/dev/null)
+			CFLAGS_CURSES=$($PKG_CONFIG $pkg_config_flags --cflags $libcurses 2>/dev/null)
+			LDFLAGS_CURSES=$($PKG_CONFIG $pkg_config_flags --libs $libcurses 2>/dev/null)
 			if test $? -eq 0 && $CC $CFLAGS $CFLAGS_CURSES "$tmpc" \
 				$LDFLAGS $LDFLAGS_CURSES -o "$tmpo" >/dev/null 2>&1 ; then
-				CONFIG_CURSES=1
+				CFLAGS_CURSES="${CFLAGS_CURSES} -DCONFIG_CURSES=1"
 				printf "yes\n"
 				break
 			fi
@@ -329,51 +342,29 @@ EOF
 
 		if $CC $CFLAGS $CFLAGS_CURSES "$tmpc" \
 			$LDFLAGS $LDFLAGS_CURSES -o "$tmpo" >/dev/null 2>&1 ; then
-			CONFIG_CURSES=1
+			CFLAGS_CURSES="-DCONFIG_CURSES=1"
 			printf "yes\n"
 			break
 		else
-			CFLAGS_CURSES=""
 			LDFLAGS_CURSES=""
 			printf "no\n"
 		fi
 	done
 
-	test "$curses" = "yes" -a $CONFIG_CURSES -ne 1 && fail "$0: cannot find libcurses"
+	test "$curses" = "yes" -a -z "${CFLAGS_CURSES}" && fail "$0: cannot find libcurses"
 fi
 
-# libtermkey is a mandatory dependency
-
-printf "checking for libtermkey... "
-cat > "$tmpc" <<EOF
-#include <termkey.h>
-
-int main(int argc, char *argv[]) {
-	TERMKEY_CHECK_VERSION;
-	return 0;
-}
-EOF
-
-if test "$have_pkgconfig" = "yes" ; then
-	CFLAGS_TERMKEY=$(pkg-config --cflags termkey 2>/dev/null)
-	LDFLAGS_TERMKEY=$(pkg-config --libs termkey 2>/dev/null)
-fi
-
-if test -z "$LDFLAGS_TERMKEY"; then
-	CFLAGS_TERMKEY=""
-	LDFLAGS_TERMKEY="-ltermkey"
-fi
-
-if $CC $CFLAGS $CFLAGS_TERMKEY "$tmpc" $LDFLAGS $LDFLAGS_TERMKEY $LDFLAGS_CURSES \
-	-o "$tmpo" >/dev/null 2>&1; then
-	printf "%s\n" "yes"
-else
-	printf "%s\n" "no"
-	fail "$0: cannot find libtermkey"
-fi
-
-CONFIG_TRE=0
-REGEX_SRC=text-regex.c
+TERMINFO=$(ncursesw6-config --terminfo 2>/dev/null || \
+           ncurses6-config  --terminfo 2>/dev/null || \
+           ncursesw5-config --terminfo 2>/dev/null || \
+           ncurses5-config  --terminfo 2>/dev/null || \
+           echo "/usr/share/terminfo")
+TERMINFO_DIRS=$(ncursesw6-config --terminfo-dirs 2>/dev/null || \
+                ncurses6-config  --terminfo-dirs 2>/dev/null || \
+                ncursesw5-config --terminfo-dirs 2>/dev/null || \
+                ncurses5-config  --terminfo-dirs 2>/dev/null || \
+                echo "/etc/terminfo:/lib/terminfo:/usr/share/terminfo:/usr/lib/terminfo:/usr/local/share/terminfo:/usr/local/lib/terminfo")
+CFLAGS_TERMKEY="-DTERMINFO='\"${TERMINFO}\"' -DTERMINFO_DIRS='\"${TERMINFO_DIRS}\"'"
 
 if test "$tre" != "no" ; then
 
@@ -395,8 +386,8 @@ int main() {
 EOF
 
 	if test "$have_pkgconfig" = "yes" ; then
-		CFLAGS_TRE=$(pkg-config --cflags tre 2>/dev/null)
-		LDFLAGS_TRE=$(pkg-config --libs tre 2>/dev/null)
+		CFLAGS_TRE=$($PKG_CONFIG $pkg_config_flags --cflags tre 2>/dev/null)
+		LDFLAGS_TRE=$($PKG_CONFIG $pkg_config_flags --libs tre 2>/dev/null)
 	fi
 
 	if test -z "$LDFLAGS_TRE"; then
@@ -406,8 +397,7 @@ EOF
 
 	if $CC $CFLAGS $CFLAGS_TRE "$tmpc" \
 		$LDFLAGS $LDFLAGS_TRE -o "$tmpo" >/dev/null 2>&1; then
-		CONFIG_TRE=1
-		REGEX_SRC=text-regex-tre.c
+		CFLAGS_TRE="${CFLAGS_TRE} -DCONFIG_TRE=1"
 		printf "%s\n" "yes"
 	else
 		printf "%s\n" "no"
@@ -417,7 +407,6 @@ EOF
 	fi
 fi
 
-CONFIG_LUA=0
 
 # enabling builtin lpeg requires lua support
 test "$lpeg" = "yes" -a "$lua" = "no" && fail "$0: need lua support for built-in lpeg"
@@ -444,15 +433,15 @@ int main(int argc, char *argv[]) {
 }
 EOF
 
-	for liblua in lua lua5.4 lua5.3 lua5.2 lua-5.4 lua-5.3 lua-5.2 lua54 lua53 lua52; do
+	for liblua in lua lua5.5 lua5.4 lua5.3 lua5.2 lua-5.5 lua-5.4 lua-5.3 lua-5.2 lua55 lua54 lua53 lua52; do
 		printf " checking for %s... " "$liblua"
 
 		if test "$have_pkgconfig" = "yes" ; then
-			CFLAGS_LUA=$(pkg-config --cflags $liblua 2>/dev/null)
-			LDFLAGS_LUA=$(pkg-config --libs $liblua 2>/dev/null)
+			CFLAGS_LUA=$($PKG_CONFIG $pkg_config_flags --cflags $liblua 2>/dev/null)
+			LDFLAGS_LUA=$($PKG_CONFIG $pkg_config_flags --libs $liblua 2>/dev/null)
 			if test $? -eq 0 && $CC $CFLAGS $CFLAGS_LUA "$tmpc" \
 				$LDFLAGS $LDFLAGS_LUA -o "$tmpo" >/dev/null 2>&1 ; then
-				CONFIG_LUA=1
+				CFLAGS_LUA="${CFLAGS_LUA} -DCONFIG_LUA=1"
 				printf "yes\n"
 				break
 			fi
@@ -463,26 +452,19 @@ EOF
 
 		if $CC $CFLAGS $CFLAGS_LUA "$tmpc" \
 			$LDFLAGS $LDFLAGS_LUA -o "$tmpo" >/dev/null 2>&1 ; then
-			CONFIG_LUA=1
+			CFLAGS_LUA="-DCONFIG_LUA=1"
 			printf "yes\n"
 			break
 		else
 			printf "no\n"
-			CFLAGS_LUA=""
 			LDFLAGS_LUA=""
 		fi
 	done
 
-	test "$lua" = "yes" -a $CONFIG_LUA -ne 1 && fail "$0: cannot find liblua"
-
-	if test $CONFIG_LUA -eq 1; then
-		CFLAGS_LUA="$CFLAGS_LUA -DLUA_COMPAT_5_1 -DLUA_COMPAT_5_2 -DLUA_COMPAT_5_3 -DLUA_COMPAT_ALL"
-	fi
+	test "$lua" = "yes" -a -z "${CFLAGS_LUA}" && fail "$0: cannot find liblua"
 fi
 
-CONFIG_LPEG=0
-
-if test $CONFIG_LUA -eq 1 -a "$lpeg" != "no" ; then
+if test -n "${CFLAGS_LUA}" -a "$lpeg" != "no" ; then
 
 	printf "checking for Lua statically linked liblpeg...\n"
 
@@ -505,15 +487,15 @@ int main(int argc, char *argv[]) {
 }
 EOF
 
-	for liblpeg in lpeg lua5.3-lpeg lua5.2-lpeg; do
+	for liblpeg in lpeg lua5.5-lpeg lua5.4-lpeg lua5.3-lpeg lua5.2-lpeg; do
 		printf " checking for static %s... " "$liblpeg"
 
 		if test "$have_pkgconfig" = "yes" ; then
-			CFLAGS_LPEG=$(pkg-config --cflags $liblpeg 2>/dev/null)
-			LDFLAGS_LPEG=$(pkg-config --libs $liblpeg 2>/dev/null)
+			CFLAGS_LPEG=$($PKG_CONFIG $pkg_config_flags --cflags $liblpeg 2>/dev/null)
+			LDFLAGS_LPEG=$($PKG_CONFIG $pkg_config_flags --libs $liblpeg 2>/dev/null)
 			if test $? -eq 0 && $CC $CFLAGS $CFLAGS_LUA $CFLAGS_LPEG "$tmpc" \
 				$LDFLAGS $LDFLAGS_LUA $LDFLAGS_LPEG -o "$tmpo" >/dev/null 2>&1 ; then
-				CONFIG_LPEG=1
+				CFLAGS_LPEG="${CFLAGS_LPEG} -DCONFIG_LPEG=1"
 				printf "yes\n"
 				break
 			fi
@@ -524,20 +506,38 @@ EOF
 
 		if $CC $CFLAGS $CFLAGS_LUA $CFLAGS_LPEG "$tmpc" \
 			$LDFLAGS $LDFLAGS_LUA $LDFLAGS_LPEG -o "$tmpo" >/dev/null 2>&1 ; then
-			CONFIG_LPEG=1
+			CFLAGS_LPEG="-DCONFIG_LPEG=1"
 			printf "yes\n"
 			break
 		else
 			printf "no\n"
-			CFLAGS_LPEG=""
 			LDFLAGS_LPEG=""
 		fi
 	done
 
-	test "$lpeg" = "yes" -a $CONFIG_LPEG -ne 1 && fail "$0: cannot find liblpeg"
-fi
+	# Homebrew on macOS does not provide a pkg-config file or a static
+	# liblpeg.a in the default linker search path. Try to locate it
+	# via brew --prefix as a fallback.
+	if test -z "${CFLAGS_LPEG}" && cmdexists brew ; then
+		lpeg_prefix=$(brew --prefix lpeg 2>/dev/null)
+		if test -n "$lpeg_prefix" -a -d "$lpeg_prefix/lib" ; then
+			printf " checking for lpeg via brew... "
+			CFLAGS_LPEG=""
+			LDFLAGS_LPEG="-L${lpeg_prefix}/lib -llpeg"
+			if $CC $CFLAGS $CFLAGS_LUA $CFLAGS_LPEG "$tmpc" \
+				$LDFLAGS $LDFLAGS_LUA $LDFLAGS_LPEG -o "$tmpo" >/dev/null 2>&1 ; then
+				CFLAGS_LPEG="-DCONFIG_LPEG=1"
+				printf "yes\n"
+			else
+				printf "no\n"
+				CFLAGS_LPEG=""
+				LDFLAGS_LPEG=""
+			fi
+		fi
+	fi
 
-CONFIG_ACL=0
+	test "$lpeg" = "yes" -a -z "${CFLAGS_LPEG}" && fail "$0: cannot find liblpeg"
+fi
 
 if test "$OS" = "Linux" -a "$acl" != "no"; then
 	printf "checking for libacl... "
@@ -553,8 +553,8 @@ int main(int argc, char *argv[]) {
 EOF
 
 	if test "$have_pkgconfig" = "yes" ; then
-		CFLAGS_ACL=$(pkg-config --cflags acl 2>/dev/null)
-		LDFLAGS_ACL=$(pkg-config --libs acl 2>/dev/null)
+		CFLAGS_ACL=$($PKG_CONFIG $pkg_config_flags --cflags acl 2>/dev/null)
+		LDFLAGS_ACL=$($PKG_CONFIG $pkg_config_flags --libs acl 2>/dev/null)
 	fi
 
 	if test -z "$LDFLAGS_ACL"; then
@@ -564,7 +564,7 @@ EOF
 
 	if $CC $CFLAGS $CFLAGS_ACL "$tmpc" \
 		$LDFLAGS $LDFLAGS_ACL -o "$tmpo" >/dev/null 2>&1; then
-		CONFIG_ACL=1
+		CFLAGS_ACL="${CFLAGS_ACL} -DCONFIG_ACL=1"
 		printf "%s\n" "yes"
 	else
 		printf "%s\n" "no"
@@ -573,8 +573,6 @@ EOF
 		test "$acl" = "yes" && fail "$0: cannot find libacl"
 	fi
 fi
-
-CONFIG_SELINUX=0
 
 if test "$OS" = "Linux" -a "$selinux" != "no"; then
 	printf "checking for libselinux... "
@@ -588,8 +586,8 @@ int main(int argc, char *argv[]) {
 EOF
 
 	if test "$have_pkgconfig" = "yes" ; then
-		CFLAGS_SELINUX=$(pkg-config --cflags selinux 2>/dev/null)
-		LDFLAGS_SELINUX=$(pkg-config --libs selinux 2>/dev/null)
+		CFLAGS_SELINUX=$($PKG_CONFIG $pkg_config_flags --cflags selinux 2>/dev/null)
+		LDFLAGS_SELINUX=$($PKG_CONFIG $pkg_config_flags --libs selinux 2>/dev/null)
 	fi
 
 	if test -z "$LDFLAGS_SELINUX"; then
@@ -599,7 +597,7 @@ EOF
 
 	if $CC $CFLAGS $CFLAGS_SELINUX "$tmpc" \
 		$LDFLAGS $LDFLAGS_SELINUX -o "$tmpo" >/dev/null 2>&1; then
-		CONFIG_SELINUX=1
+		CFLAGS_SELINUX="${CFLAGS_SELINUX} -DCONFIG_SELINUX=1"
 		printf "%s\n" "yes"
 	else
 		printf "%s\n" "no"
@@ -609,53 +607,24 @@ EOF
 	fi
 fi
 
-printf "checking for memrchr... "
-
-cat > "$tmpc" <<EOF
-#define _GNU_SOURCE
-#include <string.h>
-
-int main(int argc, char *argv[]) {
-        return !memrchr("\n", '\n', 1);
-}
-EOF
-
-if $CC $CFLAGS $CFLAGS_STD "$tmpc" $LDFLAGS -o "$tmpo" >/dev/null 2>&1; then
-	HAVE_MEMRCHR=1
-	printf "%s\n" "yes"
-else
-	HAVE_MEMRCHR=0
-	printf "%s\n" "no"
-fi
-
 printf "completing config.mk... "
 
 exec 3>&1 1>>config.mk
 
 cat << EOF
-CONFIG_HELP = $CONFIG_HELP
 CFLAGS_TERMKEY = $CFLAGS_TERMKEY
-LDFLAGS_TERMKEY = $LDFLAGS_TERMKEY
-CONFIG_CURSES = $CONFIG_CURSES
 CFLAGS_CURSES = $CFLAGS_CURSES
 LDFLAGS_CURSES = $LDFLAGS_CURSES
-REGEX_SRC = $REGEX_SRC
-CONFIG_TRE = $CONFIG_TRE
 CFLAGS_TRE = $CFLAGS_TRE
 LDFLAGS_TRE = $LDFLAGS_TRE
-CONFIG_LUA = $CONFIG_LUA
 CFLAGS_LUA = $CFLAGS_LUA
 LDFLAGS_LUA = $LDFLAGS_LUA
-CONFIG_LPEG = $CONFIG_LPEG
 CFLAGS_LPEG = $CFLAGS_LPEG
 LDFLAGS_LPEG = $LDFLAGS_LPEG
-CONFIG_ACL = $CONFIG_ACL
 CFLAGS_ACL = $CFLAGS_ACL
 LDFLAGS_ACL = $LDFLAGS_ACL
-CONFIG_SELINUX = $CONFIG_SELINUX
 CFLAGS_SELINUX = $CFLAGS_SELINUX
 LDFLAGS_SELINUX = $LDFLAGS_SELINUX
-CFLAGS_LIBC = -DHAVE_MEMRCHR=$HAVE_MEMRCHR
 EOF
 exec 1>&3 3>&-
 
