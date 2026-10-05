@@ -150,8 +150,12 @@ void vis_jumplist(Vis *vis, int advance)
 			set_jumplist_mark(vis, cur);
 			goto out;
 		}
-		advance_jumplist_cursor(&win->mark_set_lru_cursor, 1);
-		set_jumplist_mark(vis, cur);
+		FilerangeList sel;
+		if (!get_jumplist_mark(vis, &sel, win->mark_set_lru_cursor)) goto out;
+		if (!vis_mark_equal(sel, cur)) {
+			advance_jumplist_cursor(&win->mark_set_lru_cursor, 1);
+			set_jumplist_mark(vis, cur);
+		}
 	}
 
 out:
