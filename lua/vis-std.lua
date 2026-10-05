@@ -1,5 +1,7 @@
 -- standard vis event handlers
 
+local concat = table.concat
+
 vis.events.subscribe(vis.events.INIT, function()
 	if os.getenv("TERM_PROGRAM") == "Apple_Terminal" then
 		vis:command("set change256colors false")
@@ -110,48 +112,78 @@ local modes = {
 	[vis.modes.REPLACE] = 'REPLACE',
 }
 
+local actions = { --: dictionary
+	--[name: string]: function(WINDOW): string|nil
+	filename = function (win)
+		local file = win.file
+		return (file.name or file.path and file.path:match'[^/]+$' or '[No Name]')
+			.. (file.modified and ' [+]' or '') .. (vis.recording and ' @' or '')
+	end,
+	mode = function (win)
+		local mode = modes[vis.mode]
+		if mode ~= '' and vis.win == win then
+			return mode
+		end
+	end,
+	countorkeys = function (win)
+		local count = vis.count
+		local keys = vis.input_queue
+		if keys ~= '' then
+			return keys
+		elseif count then
+			return count
+		end
+	end,
+	selections = function (win)
+		if #win.selections > 1 then
+			return win.selection.number .. '/' .. #win.selections
+		end
+	end,
+	position = function (win)
+		local pos = win.selection.pos
+		if not pos then pos = 0 end
+		local size = win.file.size
+		return (size == 0 and "0" or math.ceil(pos/size*100)) .. "%"
+	end,
+	column = function (win)
+		if not win.column then
+			return win.selection.line .. ', ' .. win.selection.col
+		end
+	end,
+}
+local a = actions
+local leftside = {a.mode, a.filename}
+local rightside = {a.countorkeys, a.selections, a.position, a.column}
+vis.statusbar = {
+	actions = actions, -- dictionary of functions
+	left = leftside, -- sequence of functions (which must reside in actions)
+	right = rightside -- sequence of functions (which must reside in actions)
+}
+
 vis.events.subscribe(vis.events.WIN_STATUS, function(win)
 	local left_parts = {}
 	local right_parts = {}
-	local file = win.file
-	local selection = win.selection
-
-	local mode = modes[vis.mode]
-	if mode ~= '' and vis.win == win then
-		table.insert(left_parts, mode)
-	end
-
-	table.insert(left_parts, (file.name or '[No Name]') ..
-		(file.modified and ' [+]' or '') .. (vis.recording and ' @' or ''))
-
-	local count = vis.count
-	local keys = vis.input_queue
-	if keys ~= '' then
-		table.insert(right_parts, keys)
-	elseif count then
-		table.insert(right_parts, count)
-	end
-
-	if #win.selections > 1 then
-		table.insert(right_parts, selection.number..'/'..#win.selections)
-	end
-
-	local size = file.size
-	local pos = selection.pos
-	if not pos then pos = 0 end
-	table.insert(right_parts, (size == 0 and "0" or math.ceil(pos/size*100)).."%")
 
 	if not win.large then
-		local col = selection.col
-		table.insert(right_parts, selection.line..', '..col)
-		if size > 33554432 or col > 65536 then
+		if win.file.size > 33554432 or win.selection.col > 65536 then
 			win.large = true
 		end
 	end
 
-	local left = ' ' .. table.concat(left_parts, " » ") .. ' '
-	local right = ' ' .. table.concat(right_parts, " « ") .. ' '
-	win:status(left, right);
+	local i = 1
+	for _, F in ipairs(leftside) do
+		local str = F(win)
+		if str then i, left_parts[i] = i+1, str end
+	end
+	i = 1 for _, F in ipairs(rightside) do
+		local str = F(win)
+		if str then i, right_parts[i] = i+1, str end
+	end
+
+	local left_concat = ' ' .. concat(left_parts, " » ") .. ' '
+	local right_concat = ' ' .. concat(right_parts, " « ") .. ' '
+
+	win:status(left_concat, right_concat);
 end)
 
 -- default plugins
