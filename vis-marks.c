@@ -125,27 +125,13 @@ static void set_jumplist_mark(Vis *vis, FilerangeList cur)
 	win->mark_set_lru_modes[win->mark_set_lru_cursor] = vis->mode->id;
 }
 
-void vis_jumplist(Vis *vis, int advance)
+void vis_jumplist(Vis *vis, enum VisJumplistAction action)
 {
 	Win  *win  = vis->win;
 	View *view = &win->view;
 	FilerangeList cur = view_selections_get_all(vis, view);
 
-	if (advance) {
-		if (jumplist_empty(win)) goto out;
-		size_t target = win->mark_set_lru_cursor;
-		if (advance > 0) advance_jumplist_cursor(&target, 1);
-		FilerangeList sel;
-		if (!get_jumplist_mark(vis, &sel, target)) goto out;
-		if (vis_mark_equal(sel, cur)) {
-			advance_jumplist_cursor(&target, advance);
-			if (!get_jumplist_mark(vis, &sel, target)) goto out;
-		}
-		win->mark_set_lru_cursor = target;
-		vis_mode_switch(vis, win->mark_set_lru_modes[target]);
-		view_selections_set_all(view, sel, view_selections_primary_get(view)->anchored);
-		if (advance < 0) advance_jumplist_cursor(&target, -1);
-	} else {
+	if (action == VIS_JUMPLIST_ACTION_SAVE) {
 		if (jumplist_empty(win)) {
 			set_jumplist_mark(vis, cur);
 			goto out;
@@ -156,6 +142,21 @@ void vis_jumplist(Vis *vis, int advance)
 			advance_jumplist_cursor(&win->mark_set_lru_cursor, 1);
 			set_jumplist_mark(vis, cur);
 		}
+	} else {
+		if (jumplist_empty(win)) goto out;
+		size_t target = win->mark_set_lru_cursor;
+		if (action == VIS_JUMPLIST_ACTION_NEXT) advance_jumplist_cursor(&target, 1);
+		FilerangeList sel;
+		if (!get_jumplist_mark(vis, &sel, target)) goto out;
+		if (vis_mark_equal(sel, cur)) {
+			if (action == VIS_JUMPLIST_ACTION_NEXT) advance_jumplist_cursor(&target, 1);
+			else if (action == VIS_JUMPLIST_ACTION_PREV) advance_jumplist_cursor(&target, -1);
+			if (!get_jumplist_mark(vis, &sel, target)) goto out;
+		}
+		win->mark_set_lru_cursor = target;
+		vis_mode_switch(vis, win->mark_set_lru_modes[target]);
+		view_selections_set_all(view, sel, view_selections_primary_get(view)->anchored);
+		if (action == VIS_JUMPLIST_ACTION_PREV) advance_jumplist_cursor(&target, -1);
 	}
 
 out:

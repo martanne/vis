@@ -916,6 +916,12 @@ enum VisMark {
 	VIS_MARK_INVALID,     /* has to be the last enum member */
 };
 
+enum VisJumplistAction {
+	VIS_JUMPLIST_ACTION_PREV,
+	VIS_JUMPLIST_ACTION_NEXT,
+	VIS_JUMPLIST_ACTION_SAVE,
+};
+
 /**
  * Translate between single character mark name and corresponding constant.
  * @param vis The editor instance.
@@ -971,16 +977,16 @@ VIS_EXPORT FilerangeList vis_mark_get(Vis *vis, Win *win, enum VisMark id);
  */
 VIS_EXPORT void vis_mark_normalize(FilerangeList *ranges);
 /**
- * Add selections of focused window to jump list. Equivalent to vis_jumplist(vis, 0).
+ * Add selections of focused window to jump list. Equivalent to vis_jumplist(vis, VIS_JUMPlIST_ACTION_SAVE).
  * @param vis The editor instance.
  */
-#define vis_jumplist_save(vis) vis_jumplist((vis), 0)
+#define vis_jumplist_save(vis) vis_jumplist((vis), VIS_JUMPLIST_ACTION_SAVE)
 /**
- * Navigate jump list by a specified amount. Wraps if advance exceeds list size.
+ * Navigate jump list.
  * @param vis The editor instance.
- * @param advance The amount to advance the cursor by. 0 saves the current selections.
+ * @param VisJumplistAction Direction for jumplist traversal or save the current selections.
  */
-VIS_EXPORT void vis_jumplist(Vis *, int advance);
+VIS_EXPORT void vis_jumplist(Vis *, enum VisJumplistAction action);
 /** @} */
 
 /*
