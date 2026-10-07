@@ -73,14 +73,42 @@ Mode *mode_get(Vis *vis, enum VisMode mode) {
 	return NULL;
 }
 
+/**
+ * Changes the editor's current mode and emits corresponding events.
+ *
+ * This function is the central point for mode transitions. It ensures that
+ * the correct leave/enter hooks are called and also emits the custom
+ * VIS_EVENT_INSERT_LEAVE and VIS_EVENT_INSERT_ENTER events when transitioning
+ * to or from an insert-like mode. This allows Lua plugins to react to these
+ * specific state changes.
+ *
+ * @param vis The editor instance.
+ * @param new_mode The mode to switch to.
+ */
 void mode_set(Vis *vis, Mode *new_mode) {
 	if (vis->mode == new_mode)
 		return;
-	if (vis->mode->leave)
+
+	// Check if we're leaving an insert mode and emit event
+	if (vis->mode && vis->win && !vis->win->file->internal &&
+	    (vis->mode->id == VIS_MODE_INSERT || vis->mode->id == VIS_MODE_REPLACE))
+		vis_event_emit(vis, VIS_EVENT_INSERT_LEAVE);
+
+	// Call the leave hook if it exists
+	if (vis->mode && vis->mode->leave)
 		vis->mode->leave(vis, new_mode);
+
+	// Update mode tracking
 	if (vis->mode != &vis_modes[VIS_MODE_OPERATOR_PENDING])
 		vis->mode_prev = vis->mode;
 	vis->mode = new_mode;
+
+	// Check if we're entering an insert mode and emit event
+	if (vis->win && !vis->win->file->internal &&
+	    (new_mode->id == VIS_MODE_INSERT || new_mode->id == VIS_MODE_REPLACE))
+		vis_event_emit(vis, VIS_EVENT_INSERT_ENTER);
+
+	// Call the enter hook if it exists
 	if (new_mode->enter)
 		new_mode->enter(vis, vis->mode_prev);
 }
@@ -138,6 +166,8 @@ static void vis_mode_normal_enter(Vis *vis, Mode *old) {
 	Win *win = vis->win;
 	if (!win)
 		return;
+	if (!old) /* Guard against uninitialized previous mode during complex replays */
+		return;
 	if (old != mode_get(vis, VIS_MODE_INSERT) && old != mode_get(vis, VIS_MODE_REPLACE))
 		return;
 	if (vis->autoindent && strcmp(vis->key_prev, "<Enter>") == 0) {
@@ -182,7 +212,11 @@ static void vis_mode_operator_input(Vis *vis, const char *str, size_t len) {
 
 static void vis_mode_visual_enter(Vis *vis, Mode *old) {
 	Win *win = vis->win;
-	if (!old->visual && win) {
+	if (!win)
+		return;
+	if (!old) /* Guard against uninitialized previous mode */
+		return;
+	if (!old->visual) {
 		for (Selection *s = view_selections(&win->view); s; s = view_selections_next(s))
 			s->anchored = true;
 	}
@@ -190,7 +224,11 @@ static void vis_mode_visual_enter(Vis *vis, Mode *old) {
 
 static void vis_mode_visual_line_enter(Vis *vis, Mode *old) {
 	Win *win = vis->win;
-	if (!old->visual && win) {
+	if (!win)
+		return;
+	if (!old) /* Guard against uninitialized previous mode */
+		return;
+	if (!old->visual) {
 		for (Selection *s = view_selections(&win->view); s; s = view_selections_next(s))
 			s->anchored = true;
 	}
@@ -213,7 +251,9 @@ static void vis_mode_visual_line_leave(Vis *vis, Mode *new) {
 
 static void vis_mode_visual_leave(Vis *vis, Mode *new) {
 	Win *win = vis->win;
-	if (!new->visual && win) {
+	if (!win)
+		return;
+	if (!new->visual) {
 		if (!vis->action.op)
 			window_selection_save(win);
 		view_selections_clear_all(&win->view);
