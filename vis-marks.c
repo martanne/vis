@@ -125,7 +125,6 @@ static void set_jumplist_selections(Vis *vis, FilerangeList cur)
 {
 	Win *win = vis->win;
 	mark_set(vis, win, win->mark_set_lru_regions + win->mark_set_lru_cursor, cur);
-	win->mark_set_lru_modes[win->mark_set_lru_cursor] = vis->mode->id;
 }
 
 /*
@@ -178,7 +177,6 @@ void vis_jumplist(Vis *vis, enum VisJumplistAction action)
 			if (!get_jumplist_selections(vis, target, &sel)) goto out;
 			win->mark_set_lru_cursor = target;
 		}
-		vis_mode_switch(vis, win->mark_set_lru_modes[target]);
 	}
 
 out:
