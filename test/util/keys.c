@@ -63,6 +63,10 @@ static void printkey(TermKeyKey *key) {
 			print("\n");
 			break;
 		case TERMKEY_SYM_ESCAPE:
+			/* Let queued commands finish before starting the Escape timeout.
+			 * Otherwise Escape and the next key can both be buffered while
+			 * the editor is busy, and be decoded as an Alt-modified key. */
+			delay();
 			print("\033");
 			delay();
 			break;
