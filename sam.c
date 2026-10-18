@@ -364,7 +364,7 @@ static void sam_transcript_free(Transcript *t) {
 		next = c->next;
 		sam_change_free(c);
 	}
-	memset(t, 0, sizeof(Transcript));
+	zero_struct(t);
 }
 
 static bool sam_insert(Win *win, Selection *sel, size_t pos, const char *data, size_t len, int count) {
