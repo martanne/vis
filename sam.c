@@ -1606,14 +1606,59 @@ static bool cmd_write(Vis *vis, Win *win, Command *cmd, const char *argv[], Sele
 	return true;
 }
 
+/* Expand vim-like file name placeholders in a shell command:
+ *   %%  -> $vis_filepath
+ *   %   -> $vis_filename
+ *   \%  -> %
+ * The result is a plain textual substitution, so quoting is left
+ * to the shell exactly as for the environment variables themselves.
+ * Returns a newly allocated string or NULL on error, in which case
+ * an error message has already been shown. */
+static char *shell_expand_filename(Vis *vis, File *file, const char *cmd) {
+	Buffer buf = {0};
+	bool used = false;
+	for (const char *s = cmd; *s; s++) {
+		bool ok;
+		if (s[0] == '\\' && s[1] == '%') {
+			ok = buffer_append(&buf, "%", 1);
+			s++;
+		} else if (s[0] == '%' && s[1] == '%') {
+			ok = vis_buffer_append0(&buf, "$vis_filepath");
+			used = true;
+			s++;
+		} else if (s[0] == '%') {
+			ok = vis_buffer_append0(&buf, "$vis_filename");
+			used = true;
+		} else {
+			ok = buffer_append(&buf, s, 1);
+		}
+		if (!ok)
+			goto err;
+	}
+	if (used && (!file || !file->filepath.data)) {
+		vis_info_show(vis, "No file name");
+		goto err;
+	}
+	vis_buffer_terminate(&buf);
+	return buf.data ? buf.data : strdup("");
+err:
+	buffer_release(&buf);
+	return NULL;
+}
+
 static bool cmd_filter(Vis *vis, Win *win, Command *cmd, const char *argv[], Selection *sel, Filerange *range) {
 	if (!win)
 		return false;
 
+	char *shell_cmd = shell_expand_filename(vis, win->file, argv[1]);
+	if (!shell_cmd)
+		return false;
+
 	Buffer bufout = {0}, buferr = {0};
 
-	int status = vis_pipe(vis, win->file, *range, argv + 1, &bufout, read_into_buffer, &buferr,
-	                      read_into_buffer, false);
+	int status = vis_pipe(vis, win->file, *range, (const char*[]){shell_cmd, 0}, &bufout,
+	                      read_into_buffer, &buferr, read_into_buffer, false);
+	free(shell_cmd);
 
 	if (vis->interrupted) {
 		vis_info_show(vis, "Command cancelled");
@@ -1650,10 +1695,15 @@ static bool cmd_pipein(Vis *vis, Win *win, Command *cmd, const char *argv[], Sel
 static bool cmd_pipeout(Vis *vis, Win *win, Command *cmd, const char *argv[], Selection *sel, Filerange *range) {
 	if (!win)
 		return false;
+	char *shell_cmd = shell_expand_filename(vis, win->file, argv[1]);
+	if (!shell_cmd)
+		return false;
+
 	Buffer buferr = {0};
 
-	int status = vis_pipe(vis, win->file, *range, (const char*[]){argv[1], 0}, 0, 0,
+	int status = vis_pipe(vis, win->file, *range, (const char*[]){shell_cmd, 0}, 0, 0,
 	                      &buferr, read_into_buffer, false);
+	free(shell_cmd);
 
 	if (vis->interrupted)
 		vis_info_show(vis, "Command cancelled");
