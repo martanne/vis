@@ -1,0 +1,1 @@
+:,| { echo "%"; basename "%%"; echo "$vis_filename"; echo "100\%"; echo '%'; }<Enter>
