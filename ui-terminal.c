@@ -418,7 +418,6 @@ ui_window_status(Vis *vis, Win *win, const char *status)
 	VisUiStyle style = vis->win == win ? UI_STYLE_STATUS_FOCUSED : UI_STYLE_STATUS;
 	ui_draw_string(&vis->ui, win->x, win->y + win->height - 1, status, style);
 }
-
 VIS_INTERNAL void
 ui_arrange(Vis *vis, enum UiLayout layout)
 {
@@ -439,12 +438,12 @@ ui_arrange(Vis *vis, enum UiLayout layout)
 			continue;
 		n--;
 		if (layout == UI_LAYOUT_HORIZONTAL) {
-			int h = n ? height : max_height - y;
+			int h = n ? MIN(win->max_size ? win->max_size : height, height) : max_height - y;
 			ui_window_resize(win, tui->width, h);
 			ui_window_move(win, x, y);
 			y += h;
 		} else {
-			int w = n ? width : tui->width - x;
+			int w = n ? MIN(win->max_size ? win->max_size : width, width) : tui->width - x;
 			ui_window_resize(win, w, max_height);
 			ui_window_move(win, x, y);
 			x += w;
@@ -586,6 +585,7 @@ bool ui_window_init(Ui *tui, Win *w, enum UiOption options) {
 		options &= ~UI_OPTION_LINE_NUMBERS_ABSOLUTE;
 	}
 
+	w->max_size = 25;
 	win_options_set(w, options);
 
 	return true;

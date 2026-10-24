@@ -161,6 +161,7 @@ struct File { /* shared state among windows displaying the same file */
 
 struct Win {
 	int width, height;      /* window dimension including status bar */
+	int max_size;			/* window dimension limiter when not only window on screen */
 	int x, y;               /* window position */
 	int sidebar_width;      /* width of the sidebar showing line numbers etc. */
 	int min_sidebar_width;  /* user specified minimum sidebar width */
