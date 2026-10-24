@@ -585,7 +585,6 @@ bool ui_window_init(Ui *tui, Win *w, enum UiOption options) {
 		options &= ~UI_OPTION_LINE_NUMBERS_ABSOLUTE;
 	}
 
-	w->max_size = 25;
 	win_options_set(w, options);
 
 	return true;
