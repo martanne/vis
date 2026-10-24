@@ -1,5 +1,4 @@
 /* :set command options */
-#include "vis.h"
 typedef struct {
 	const char *names[3];            /* name and optional alias */
 	VisOptionFlags flags;            /* option type, etc. */
