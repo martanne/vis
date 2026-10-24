@@ -134,6 +134,8 @@ for arg ; do
 case "$arg" in
 --help|-h) usage ;;
 --srcdir=*) SRCDIR=${arg#*=} ;;
+--prefix=~) PREFIX="$HOME" ;;
+--prefix=~/*) PREFIX="$HOME/${arg#--prefix=~/}" ;;
 --prefix=*) PREFIX=${arg#*=} ;;
 --exec-prefix=*) EXEC_PREFIX=${arg#*=} ;;
 --bindir=*) BINDIR=${arg#*=} ;;
