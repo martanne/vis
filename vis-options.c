@@ -149,7 +149,7 @@ static const VisOption vis_options_table[] = {
 		VIS_HELP("Wrap lines at minimum of window width and wrapcolumn")
 	},
 	[OPTION_WINDOW_MAX_SIZE] = {
-		{ "maxsize", "mas_size", "mxsz" },
+		{ "maxsize", "mxsz" },
 		VIS_OPTION_TYPE_NUMBER | VIS_OPTION_NEED_WINDOW,
 		VIS_HELP("Maximum size of window, width or height")
 	}
