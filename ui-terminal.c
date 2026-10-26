@@ -418,32 +418,58 @@ ui_window_status(Vis *vis, Win *win, const char *status)
 	VisUiStyle style = vis->win == win ? UI_STYLE_STATUS_FOCUSED : UI_STYLE_STATUS;
 	ui_draw_string(&vis->ui, win->x, win->y + win->height - 1, status, style);
 }
+
 VIS_INTERNAL void
 ui_arrange(Vis *vis, enum UiLayout layout)
 {
 	Ui *tui = &vis->ui;
 	tui->layout = layout;
 	int n = 0, m = tui->info_length != 0, x = 0, y = 0;
+	int fixedsize = 0;
+	int nflex = 0;
 	for (Win *win = vis->windows; win; win = win->next) {
-		if (win->options & UI_OPTION_ONELINE)
+		if (win->options & UI_OPTION_ONELINE) {
 			m++;
-		else
-			n++;
+			continue;
+		}
+		
+		n++;
+		if (!win->max_size) nflex++;
+		fixedsize += win->max_size;
 	}
 	int max_height = tui->height - m;
-	int width = (tui->width / MAX(1, n)) - 1;
-	int height = max_height / MAX(1, n);
+	
+	int available_width = tui->width - fixedsize;
+	int width = (available_width / MAX(1, nflex)) - 1;
+
+	int available_height = tui->height - fixedsize;
+	int height = available_height / MAX(1, nflex);
 	for (Win *win = vis->windows; win; win = win->next) {
 		if (win->options & UI_OPTION_ONELINE)
 			continue;
 		n--;
 		if (layout == UI_LAYOUT_HORIZONTAL) {
-			int h = n ? MIN(win->max_size ? win->max_size : height, height) : max_height - y;
+			int h; 
+			if (nflex) {
+				h = MIN(win->max_size ? win->max_size : height, height);
+			} else h = fixedsize - y;
+
+			if (!win->max_size) {
+				nflex--;
+			}
 			ui_window_resize(win, tui->width, h);
 			ui_window_move(win, x, y);
 			y += h;
 		} else {
-			int w = n ? MIN(win->max_size ? win->max_size : width, width) : tui->width - x;
+			
+			int w;
+			if (nflex) {
+				w = MIN(win->max_size ? win->max_size : width, width);
+			} else w = fixedsize - x;
+
+			if (!win->max_size) {
+				nflex--;
+			}
 			ui_window_resize(win, w, max_height);
 			ui_window_move(win, x, y);
 			x += w;
