@@ -446,7 +446,18 @@ EOF
 		fi
 
 		CFLAGS_LUA=""
+
+		# -ldl is used on Linux/Solaris/AIX for dlopen support in lua.
+		#
+		# Including -ldl breaks lua detection/support on NetBSD, and possibly
+		# others.
+		#
+		# Lua does not use -ldl when compiling its REPL for any BSD, nor macOS.
 		LDFLAGS_LUA="-l$liblua -lm -ldl"
+		case "$OS" in
+		NetBSD) LDFLAGS_LUA="-l$liblua -lm" ;;
+		esac
+
 
 		if $CC $CFLAGS $CFLAGS_LUA "$tmpc" \
 			$LDFLAGS $LDFLAGS_LUA -o "$tmpo" >/dev/null 2>&1 ; then
