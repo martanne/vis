@@ -428,7 +428,7 @@ ui_arrange(Vis *vis, enum UiLayout layout)
 	int fixedsize = 0;
 	int nfixed = 0;
 	for (Win *win = vis->windows; win; win = win->next) {
-		if (win->options & UI_OPTION_ONELINE) {
+		if (win->options & UI_OPTION_ONELINE)
 			m++;
 		else {
 			fixedsize += win->max_size;
