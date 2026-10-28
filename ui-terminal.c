@@ -418,6 +418,7 @@ ui_window_status(Vis *vis, Win *win, const char *status)
 	VisUiStyle style = vis->win == win ? UI_STYLE_STATUS_FOCUSED : UI_STYLE_STATUS;
 	ui_draw_string(&vis->ui, win->x, win->y + win->height - 1, status, style);
 }
+
 VIS_INTERNAL void
 ui_arrange(Vis *vis, enum UiLayout layout)
 {
@@ -427,7 +428,7 @@ ui_arrange(Vis *vis, enum UiLayout layout)
 	int fixedsize = 0;
 	int nfixed = 0;
 	for (Win *win = vis->windows; win; win = win->next) {
-		if (win->options & UI_OPTION_ONELINE)
+		if (win->options & UI_OPTION_ONELINE) {
 			m++;
 		else {
 			fixedsize += win->max_size;
