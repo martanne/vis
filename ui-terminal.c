@@ -424,26 +424,43 @@ ui_arrange(Vis *vis, enum UiLayout layout)
 	Ui *tui = &vis->ui;
 	tui->layout = layout;
 	int n = 0, m = tui->info_length != 0, x = 0, y = 0;
+	int fixedsize = 0;
+	int nfixed = 0;
 	for (Win *win = vis->windows; win; win = win->next) {
 		if (win->options & UI_OPTION_ONELINE)
 			m++;
-		else
+		else {
+			fixedsize += win->max_size;
 			n++;
+			nfixed += MIN(win->max_size, 1);
+		}
 	}
 	int max_height = tui->height - m;
-	int width = (tui->width / MAX(1, n)) - 1;
-	int height = max_height / MAX(1, n);
+
+	if (layout == UI_LAYOUT_VERTICAL && (nfixed == n || fixedsize >= tui->width)) {
+		fixedsize = 0;
+		nfixed = 0;
+	}
+	else if (layout == UI_LAYOUT_HORIZONTAL && (nfixed == n || fixedsize >= max_height)) {
+		fixedsize = 0;
+		nfixed = 0;
+	}
+	int width = ((tui->width - fixedsize) / MAX(1, n - nfixed)) - 1;
+	int height = (max_height - fixedsize) / MAX(1, n - nfixed);
 	for (Win *win = vis->windows; win; win = win->next) {
 		if (win->options & UI_OPTION_ONELINE)
 			continue;
 		n--;
+		if (fixedsize) nfixed -= win->max_size;
 		if (layout == UI_LAYOUT_HORIZONTAL) {
-			int h = n ? MIN(win->max_size ? win->max_size : height, height) : max_height - y;
+			int h = (n - nfixed) ? MIN((fixedsize > 0 && win->max_size)? win->max_size : height, height) : (max_height - fixedsize - y);
+			fixedsize -= win->max_size;
 			ui_window_resize(win, tui->width, h);
 			ui_window_move(win, x, y);
 			y += h;
 		} else {
-			int w = n ? MIN(win->max_size ? win->max_size : width, width) : tui->width - x;
+			int w = (n - nfixed) ? MIN((fixedsize > 0 && win->max_size) ? win->max_size : width, width) : (tui->width - fixedsize - x);
+			fixedsize -= win->max_size;
 			ui_window_resize(win, w, max_height);
 			ui_window_move(win, x, y);
 			x += w;
