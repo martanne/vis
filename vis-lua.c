@@ -2149,7 +2149,7 @@ vis_lua_window_style_pos(lua_State *L)
 }
 
 /***
- * Set window status line.
+ * Set window status line. Working only in `vis.events.WIN_STATUS`
  *
  * @function status
  * @tparam string left the left aligned part of the status line
