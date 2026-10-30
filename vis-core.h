@@ -211,6 +211,7 @@ struct Vis {
 	bool change_colors;                  /* whether to adjust 256 color palette for true colors */
 	bool ignorecase;                     /* whether to ignore case when searching */
 	bool keymap_disabled;                /* ignore key map for next key press, gets automatically re-enabled */
+	bool smartcase;                      /* like ignorecase but only if input contains no uppercase */
 	int  escape_delay;                   /* ms to wait for new input when partial escape sequence is detected */
 	char *shell;                         /* shell used to launch external commands */
 	Map *cmds;                           /* ":"-commands, used for unique prefix queries */
