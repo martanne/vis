@@ -71,8 +71,8 @@ lex:add_fold_point(lexer.COMMENT, '/*', '*/')
 
 -- Word lists.
 lex:set_word_list(lexer.KEYWORD, {
-	'auto', 'break', 'case', 'const', 'continue', 'default', 'do', 'else', 'enum', 'extern', 'for',
-	'goto', 'if', 'inline', 'register', 'restrict', 'return', 'sizeof', 'static', 'switch', 'typedef',
+	'auto', 'break', 'case', 'const', 'continue', 'default', 'do', 'else', 'extern', 'for', 'goto',
+	'if', 'inline', 'register', 'restrict', 'return', 'sizeof', 'static', 'switch', 'typedef',
 	'volatile', 'while', --
 	'false', 'true', -- C99
 	'alignas', 'alignof', '_Atomic', '_Generic', 'noreturn', '_Static_assert', 'thread_local', -- C11
@@ -81,7 +81,7 @@ lex:set_word_list(lexer.KEYWORD, {
 })
 
 lex:set_word_list(lexer.TYPE, {
-	'bool', 'char', 'double', 'float', 'int', 'long', 'short', 'signed', 'struct', 'union',
+	'bool', 'char', 'double', 'enum', 'float', 'int', 'long', 'short', 'signed', 'struct', 'union',
 	'unsigned', 'void', --
 	'complex', 'imaginary', '_Complex', '_Imaginary', -- complex.h C99
 	'lconv', -- locale.h
@@ -101,7 +101,8 @@ lex:set_word_list(lexer.TYPE, {
 	'div_t', 'ldiv_t', -- stdlib.h
 	-- time.h.
 	'tm', 'time_t', 'clock_t', --
-	'timespec' -- C11
+	'timespec', -- C11
+	'wchar_t', 'wint_t', 'mbstate_t' -- whar.h C95
 })
 
 lex:set_word_list(lexer.FUNCTION_BUILTIN, {
@@ -127,21 +128,36 @@ lex:set_word_list(lexer.FUNCTION_BUILTIN, {
 	'cbrt', 'hypot', 'asinh', 'acosh', 'atanh', 'erf', 'erfc', 'tgamma', 'lgamma', 'trunc', 'round',
 	'nearbyint', 'rint', 'scalbn', 'ilogb', 'logb', 'nextafter', 'nexttoward', 'copysign', 'isfinite',
 	'isinf', 'isnan', 'isnormal', 'signbit', 'isgreater', 'isgreaterequal', 'isless', 'islessequal',
-	'islessgreater', 'isunordered', --
+	'islessgreater', 'isunordered', 'fpclassify', 'labs', 'llabs', 'imaxabs', 'ldiv', 'lldiv',
+	'imaxdiv', 'fabsf', 'fabsl', 'fmodf', 'fmodl', 'expf', 'expl', 'logf', 'logl', 'log10f', 'log10l',
+	'powf', 'powl', 'sqrtf', 'sqrtl', 'sinf', 'sinl', 'cosf', 'cosl', 'tanf', 'tanl', 'asinf',
+	'asinl', 'acosf', 'acosl', 'atanf', 'atanl', 'atan2f', 'atan2l', 'sinhf', 'sinhl', 'coshf',
+	'coshl', 'tanhf', 'tanhl', 'ceilf', 'ceill', 'floorf', 'floorl', 'frexpf', 'frexpl', 'ldexpf',
+	'ldexpl', 'modff', 'modfl', 'remainderf', 'remainderl', 'remquof', 'remquol', 'fmaf', 'fmal',
+	'fmaxf', 'fmaxl', 'fminf', 'fminl', 'fdimf', 'fdiml', 'nanf', 'nanl', 'exp2f', 'exp2l', 'expm1f',
+	'expm1l', 'log2f', 'log2l', 'log1pf', 'log1pl', 'cbrtf', 'cbrtl', 'hypotf', 'hypotl', 'asinhf',
+	'asinhl', 'acoshf', 'acoshl', 'erff', 'erfl', 'erfcf', 'erfcl', 'tgammaf', 'tgammal', 'lgammaf',
+	'lgammal', 'truncf', 'truncl', 'roundf', 'roundl', 'nearbyintf', 'nearbyintl', 'rintf', 'rintl',
+	'scalbnf', 'scalbnf', 'scalbnl', 'scalbln', 'scalblnf', 'scalblnl', 'ilogf', 'ilogl', 'logbf',
+	'logbl', 'nextafterf', 'nextafterl', 'nexttowardf', 'nexttowardl', 'copysignf', 'copysignl', --
 	'strtoimax', 'strtoumax', -- inttypes.h C99
 	'signal', 'raise', -- signal.h
 	'setjmp', 'longjmp', -- setjmp.h
-	'va_start', 'va_arg', 'va_end', -- stdarg.h
+	-- stdarg.h
+	'va_start', 'va_arg', 'va_end', --
+	'va_copy', -- C99
 	-- stdio.h.
 	'fopen', 'freopen', 'fclose', 'fflush', 'setbuf', 'setvbuf', 'fwide', 'fread', 'fwrite', 'fgetc',
 	'getc', 'fgets', 'fputc', 'putc', 'getchar', 'gets', 'putchar', 'puts', 'ungetc', 'scanf',
 	'fscanf', 'sscanf', 'printf', 'fprintf', 'sprintf', 'vprintf', 'vfprintf', 'vsprintf', 'ftell',
 	'fgetpos', 'fseek', 'fsetpos', 'rewind', 'clearerr', 'feof', 'ferror', 'perror', 'remove',
-	'rename', 'tmpfile', 'tmpnam',
+	'rename', 'tmpfile', 'tmpnam', --
+	'vscanf', 'vfscanf', 'snprintf', 'vsnprintf', -- C99
 	-- stdlib.h.
 	'abort', 'exit', 'atexit', 'system', 'getenv', 'malloc', 'calloc', 'realloc', 'free', 'atof',
 	'atoi', 'atol', 'strtol', 'strtoul', 'strtod', 'mblen', 'mbsinit', 'mbrlen', 'qsort', 'bsearch',
 	'rand', 'srand', --
+	'strtoll', 'strtoull', 'strtof', 'strtold', -- C99
 	'quick_exit', '_Exit', 'at_quick_exit', 'aligned_alloc', -- C11
 	-- string.h.
 	'strcpy', 'strncpy', 'strcat', 'strncat', 'strxfrm', 'strlen', 'strcmp', 'strncmp', 'strcoll',
@@ -149,12 +165,26 @@ lex:set_word_list(lexer.FUNCTION_BUILTIN, {
 	'memset', 'memcpy', 'memmove', 'strerror',
 	-- time.h.
 	'difftime', 'time', 'clock', 'asctime', 'ctime', 'gmtime', 'localtime', 'mktime', --
-	'timespec_get' -- C11
+	'timespec_get', -- C11
+	-- wchar.h C95.
+	'fwprintf', 'fwscanf', 'swprintf', 'swscanf', 'vfwprintf', 'vfwscanf', 'vswprintf', 'vswscanf',
+	'vwprintf', 'vwscanf', 'wprintf', 'wscanf', 'fgetwc', 'fgetws', 'fputwc', 'fputws', 'fwide',
+	'getwc', 'getwchar', 'putwc', 'putwchar', 'ungetwc', 'wcstod', 'wcstof', 'wcstold', 'wcstol',
+	'wcstoll', 'wcstoul', 'wcstoull', 'wcscpy', 'wcsncpy', 'wmemcpy', 'wmemmove', 'wcscat', 'wcsncat',
+	'wcscmp', 'wcscoll', 'wcsncmp', 'wcsxfrm', 'wmemcmp', 'wcschr', 'wcscspn', 'wcspbrk', 'wcsrchr',
+	'wcsspn', 'wcsstr', 'wcstok', 'wmemchr', 'wcslen', 'wcsnlen', 'wmemset', 'wcsftime', 'btowc',
+	'wctob', 'mbsinit', 'mbrlen', 'mbrtowc', 'wcrtomb', 'mbsrtowcs', 'wcsrtombs',
+	-- wctype.h C95.
+	'wctype', 'iswctype', 'iswalnum', 'iswalpha', 'iswblank', 'iswcntrl', 'iswdigit', 'iswgraph',
+	'iswlower', 'iswprint', 'iswpunct', 'iswspace', 'iswupper', 'iswxdigit', 'towlower', 'towupper',
+	'towctrans', 'wctrans'
 })
 
 lex:set_word_list(lexer.CONSTANT_BUILTIN, {
 	'NULL', --
-	'__DATE__', '__FILE__', '__LINE__', '__TIME__', '__func__', -- preprocessor
+	-- Preprocessor.
+	'__DATE__', '__FILE__', '__LINE__', '__TIME__', '__func__', --
+	'__VA_ARGS__', -- C99
 	-- errno.h.
 	'errno', --
 	'E2BIG', 'EACCES', 'EADDRINUSE', 'EADDRNOTAVAIL', 'EAFNOSUPPORT', 'EAGAIN', 'EALREADY', 'EBADF',
@@ -173,8 +203,8 @@ lex:set_word_list(lexer.CONSTANT_BUILTIN, {
 	'CHAR_BIT', 'MB_LEN_MAX', 'CHAR_MIN', 'CHAR_MAX', 'SCHAR_MIN', 'SHRT_MIN', 'INT_MIN', 'LONG_MIN',
 	'SCHAR_MAX', 'SHRT_MAX', 'INT_MAX', 'LONG_MAX', 'UCHAR_MAX', 'USHRT_MAX', 'UINT_MAX', 'ULONG_MAX',
 	-- C99.
-	'LLONG_MIN', 'ULLONG_MAX', 'PTRDIFF_MIN', 'PTRDIFF_MAX', 'SIZE_MAX', 'SIG_ATOMIC_MIN',
-	'SIG_ATOMIC_MAX', 'WINT_MIN', 'WINT_MAX', 'WCHAR_MIN', 'WCHAR_MAX', --
+	'LLONG_MIN', 'LLONG_MAX', 'ULLONG_MIN', 'ULLONG_MAX', 'PTRDIFF_MIN', 'PTRDIFF_MAX', 'SIZE_MAX',
+	'SIG_ATOMIC_MIN', 'SIG_ATOMIC_MAX', 'WINT_MIN', 'WINT_MAX', 'WCHAR_MIN', 'WCHAR_MAX', --
 	'LC_ALL', 'LC_COLLATE', 'LC_CTYPE', 'LC_MONETARY', 'LC_NUMERIC', 'LC_TIME', -- locale.h
 	-- math.h.
 	'HUGE_VAL', --
@@ -188,13 +218,16 @@ lex:set_word_list(lexer.CONSTANT_BUILTIN, {
 	'UINT16_MAX', 'UINT32_MAX', 'UINT64_MAX', 'UINT_FAST8_MAX', 'UINT_FAST16_MAX', 'UINT_FAST32_MAX',
 	'UINT_FAST64_MAX', 'UINT_LEAST8_MAX', 'UINT_LEAST16_MAX', 'UINT_LEAST32_MAX', 'UINT_LEAST64_MAX',
 	'UINTPTR_MAX', 'UINTMAX_MAX',
-	-- stdio.h
+	-- stdio.h.
 	'stdin', 'stdout', 'stderr', 'EOF', 'FOPEN_MAX', 'FILENAME_MAX', 'BUFSIZ', '_IOFBF', '_IOLBF',
 	'_IONBF', 'SEEK_SET', 'SEEK_CUR', 'SEEK_END', 'TMP_MAX', --
 	'EXIT_SUCCESS', 'EXIT_FAILURE', 'RAND_MAX', -- stdlib.h
 	-- signal.h.
 	'SIG_DFL', 'SIG_IGN', 'SIG_ERR', 'SIGABRT', 'SIGFPE', 'SIGILL', 'SIGINT', 'SIGSEGV', 'SIGTERM', --
-	'CLOCKS_PER_SEC' -- time.h.
+	'CLOCKS_PER_SEC', -- time.h
+	-- wchar.h C95.
+	'WEOF', 'WCHAR_MIN', 'WCHAR_MAX', --
+	'WCHAR_WIDTH' -- C23
 })
 
 lex:set_word_list(lexer.PREPROCESSOR, {
