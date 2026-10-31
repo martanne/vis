@@ -1,0 +1,22 @@
+#!/bin/sh
+# Mock `wl-copy`: the parent consumes stdin (as the real wl-copy does while
+# reading the selection), forks a long-lived daemon child which INHERITS the
+# process's stdout and stderr, then exits immediately.
+#
+# The shape under test: a filter which daemonizes while its daemon keeps the
+# editor's pipe write ends open forever, so no EOF ever arrives. The editor
+# must notice the direct child's death (SIGCHLD) and drain within a bounded
+# grace period instead of blocking indefinitely.
+#
+# The parent and the daemon each log their pid to MOCK_LOG, and the daemon
+# also writes its pid to MOCK_PIDFILE, so the test driver can kill any that
+# survive a wedged editor.
+
+LOG=${MOCK_LOG:-/dev/null}
+echo "$$ RAN args=[$*]" >> "$LOG"
+
+PIDFILE=${MOCK_PIDFILE:-/dev/null}
+setsid sh -c "echo \$\$ daemon >> \"$LOG\"; echo \$\$ > \"$PIDFILE\"; while :; do sleep 1; done" &
+# consume stdin, then exit; the daemon keeps stdout/stderr open
+cat > /dev/null
+exit 0
