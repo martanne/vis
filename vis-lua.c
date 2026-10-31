@@ -2149,12 +2149,24 @@ vis_lua_window_style_pos(lua_State *L)
 }
 
 /***
- * Set window status line. Working only in `vis.events.WIN_STATUS`
+ * Set window status line.
+ *
+ * This function is used in the default WIN_STATUS event handler in vis-std.lua.
+ * To specify your own status line subscribe to the WIN_STATUS event or replace the
+ * default handler by using vis.events.subscribe(WIN_STATUS, your_handler_func [,priority])
+ * (where 1 is the first handler to run).
  *
  * @function status
  * @tparam string left the left aligned part of the status line
  * @tparam[opt] string right the right aligned part of the status line
- */
+ *
+ * @usage
+ * -- place the handler before default handler
+ * vis.events.subscribe(vis.events.WIN_STATUS, function(win)
+ *   win:status("Left part", "Right part")
+ *   return true
+ * end, 1) -- if you required vis-std early the default handler is probably at index 1.
+*/
 static int window_status(lua_State *L) {
 	Win *win = obj_ref_check(L, 1, VIS_LUA_TYPE_WINDOW);
 	char status[1024] = "";
