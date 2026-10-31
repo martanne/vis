@@ -50,6 +50,7 @@ function M.detect(filename, line)
 		apl = 'apl', --
 		applescript = 'applescript', --
 		ino = 'arduino', --
+		adoc = 'asciidoc', --
 		asm = 'asm', ASM = 'asm', s = 'asm', S = 'asm', --
 		asa = 'asp', asp = 'asp', hta = 'asp', --
 		ahk = 'autohotkey', --
@@ -58,6 +59,7 @@ function M.detect(filename, line)
 		bat = 'batch', cmd = 'batch', --
 		bib = 'bibtex', --
 		boo = 'boo', --
+		cj = 'cangjie', --
 		cs = 'csharp', --
 		c = 'c', C = 'c', cc = 'cpp', cpp = 'cpp', cxx = 'cpp', ['c++'] = 'cpp', h = 'cpp', H = 'cpp',
 		hh = 'cpp', hpp = 'cpp', hxx = 'cpp', ['h++'] = 'cpp', --
@@ -136,6 +138,7 @@ function M.detect(filename, line)
 		obs = 'objeck', --
 		m = 'objective_c', mm = 'objective_c', objc = 'objective_c', --
 		caml = 'caml', ml = 'caml', mli = 'caml', mll = 'caml', mly = 'caml', --
+		odin = 'odin', --
 		org = 'org', --
 		dpk = 'pascal', dpr = 'pascal', p = 'pascal', pas = 'pascal', pp = 'pascal', --
 		al = 'perl', perl = 'perl', pl = 'perl', PL = 'perl', pm = 'perl', pod = 'perl', --
@@ -223,7 +226,9 @@ function M.detect(filename, line)
 	for _, patt in ipairs(M.ignore_patterns) do filename = filename:gsub(patt, '') end
 	ext = filename:match('[^.]*$')
 	while M.ignore_extensions[ext] do filename, ext = filename:match('^(.-%.?([^.]*))%.[^.]+$') end
-	return M.detect_extensions[ext] or extensions[ext]
+	name = filename:match('[^/\\]+$')
+	return M.detect_extensions[name] or extensions[name] or M.detect_extensions[ext] or
+		extensions[ext]
 end
 
 -- END verbatim copy of lua/lexers/lexer.lua (detect tables + M.detect)
