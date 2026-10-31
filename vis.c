@@ -1608,6 +1608,10 @@ static int _vis_pipe(Vis *vis, File *file, Filerange range, const char* buf, con
 	 * through the external command. */
 	Text *text = file != NULL ? file->text : NULL;
 	int pin[2], pout[2], perr[2], status = -1;
+	/* Terminal foreground process group handover state (see below). */
+	bool fg_given = false;
+	bool ttou_blocked = false;
+	sigset_t ttou_set, ttou_oldset;
 	bool interactive = buf == NULL && !text_range_valid(range);
 	Filerange rout = (interactive  || buf != NULL) ? text_range_new(0, 0) : range;
 
@@ -1746,6 +1750,30 @@ static int _vis_pipe(Vis *vis, File *file, Filerange range, const char* buf, con
 	/* best-effort; EACCES means the child already exec'd */
 	setpgid(pid, pid);
 
+	/* Hand the terminal's foreground process group to the filter for the
+	 * duration of the pipe. The filter runs in its own process group (so
+	 * an interrupt can target it alone), which with respect to the
+	 * terminal is a background group; any filter touching the controlling
+	 * terminal (e.g. a sudo/doas password prompt) would be stopped by
+	 * SIGTTIN/SIGTTOU and wedge the pump. SIGTTOU is blocked while the
+	 * filter is in the foreground because vis itself is background then. */
+	if (isatty(STDIN_FILENO) && tcgetpgrp(STDIN_FILENO) == getpgrp()) {
+		sigemptyset(&ttou_set);
+		sigaddset(&ttou_set, SIGTTOU);
+		ttou_blocked = sigprocmask(SIG_BLOCK, &ttou_set, &ttou_oldset) != -1;
+		/* The filter may not have created its process group yet. */
+		for (int i = 0; i < 20 && !fg_given; i++) {
+			if (tcsetpgrp(STDIN_FILENO, pid) != -1) {
+				fg_given = true;
+			} else if (errno != EPERM) {
+				break;
+			} else {
+				struct timespec ts = { .tv_nsec = 1000000 }; /* 1 ms */
+				nanosleep(&ts, NULL);
+			}
+		}
+	}
+
 	/* For reap and drain logic. The filter process itself may fork a
 	 * daemon (e.g. wl-copy) and exit immediately. The daemon inherits
 	 * our stdout/stderr pipe ends and keeps them open forever, so EOF
@@ -1758,11 +1786,34 @@ static int _vis_pipe(Vis *vis, File *file, Filerange range, const char* buf, con
 	do {
 		if (vis->interrupted) {
 			kill(-pid, SIGTERM);
+			/* A stopped filter holds pending SIGTERM. */
+			kill(-pid, SIGCONT);
 			break;
 		}
 
-		if (!reaped && waitpid(pid, &status, WNOHANG) == pid)
-			reaped = true;
+		if (!reaped) {
+			pid_t w = waitpid(pid, &status, WNOHANG | WUNTRACED);
+			if (w == pid) {
+				if (WIFSTOPPED(status)) {
+					/* A tty-stopped filter would wedge the
+					 * pump forever; resume it. The terminal
+					 * foreground group was handed over
+					 * above, so this should be rare. This
+					 * also deliberately suppresses Ctrl-Z
+					 * (SIGTSTP) during a pipe: a user-suspended
+					 * filter would wedge the pump, so the
+					 * suspend key is not available here. If a
+					 * filter catches SIGINT and refuses to
+					 * exit, it owns the terminal until it
+					 * dies (as in a shell); SIGQUIT (Ctrl-\),
+					 * which filters virtually never trap, is
+					 * the escalation path. */
+					kill(-pid, SIGCONT);
+					continue;
+				}
+				reaped = true;
+			}
+		}
 
 		FD_ZERO(&rfds);
 		FD_ZERO(&wfds);
@@ -1864,6 +1915,10 @@ static int _vis_pipe(Vis *vis, File *file, Filerange range, const char* buf, con
 	} while ((pin[1] != -1 || pout[0] != -1 || perr[0] != -1) &&
 	         (!reaped || active));
 err:
+	if (fg_given)
+		tcsetpgrp(STDIN_FILENO, getpgrp());
+	if (ttou_blocked)
+		sigprocmask(SIG_SETMASK, &ttou_oldset, NULL);
 	if (pipe_sigchld[0] != -1) {
 		close(pipe_sigchld[0]);
 		close(pipe_sigchld[1]);
@@ -1882,7 +1937,11 @@ err_nosigpipe:
 	for (;;) {
 		if (vis->interrupted)
 			kill(0, SIGTERM);
-		pid_t died = waitpid(pid, &status, 0);
+		pid_t died = waitpid(pid, &status, WUNTRACED);
+		if (died == pid && WIFSTOPPED(status)) {
+			kill(pid, SIGCONT);
+			continue;
+		}
 		if ((died == -1 && errno == ECHILD) || pid == died)
 			break;
 	}
