@@ -22,12 +22,11 @@ lex:add_rule('identifier', token(lexer.IDENTIFIER, lexer.word))
 -- Strings.
 local str = lexer.range("'", false, false)
 local heredoc = '<<' * P(function(input, index)
-	local s, e, _, delimiter = input:find('[ \t]*(["\']?)([%w!"%%+,-./:?@_~]+)%1', index)
-	if s == index and delimiter then
-		delimiter = delimiter:gsub('[%%+-.?]', '%%%1')
-		e = select(2, input:find('[\n\r]' .. delimiter .. '[\n\r]', e))
-		return e and e + 1 or #input + 1
-	end
+	local _, e, _, delimiter = input:find('^[ \t]*(["\']?)([%w!"%%+,-./:?@_~]+)%1', index)
+	if not delimiter then return end
+	delimiter = delimiter:gsub('[%%+-.?]', '%%%1')
+	e = select(2, input:find('[\n\r]' .. delimiter .. '[\n\r]', e))
+	return e and e + 1 or #input + 1
 end)
 lex:add_rule('string', token(lexer.STRING, str + heredoc))
 
