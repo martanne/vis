@@ -32,11 +32,10 @@ local sq_str = lexer.range("'")
 local dq_str = lexer.range('"')
 local bq_str = lexer.range('`')
 local heredoc = '<<<' * P(function(input, index)
-	local _, e, delimiter = input:find('([%a_][%w_]*)[\n\r\f]+', index)
-	if delimiter then
-		_, e = input:find('[\n\r\f]+' .. delimiter, e)
-		return e and e + 1
-	end
+	local _, e, delimiter = input:find('([%a_][%w_]*)[\r\n]+', index)
+	if not delimiter then return end
+	e = select(2, input:find('[\r\n]+' .. delimiter, e))
+	return e and e + 1
 end)
 lex:add_rule('string', lex:tag(lexer.STRING, sq_str + dq_str + bq_str + heredoc))
 -- TODO: interpolated code.

@@ -12,7 +12,7 @@ local directives = {
 	'set_logtalk_flag', 'object', 'info', 'built_in', 'threaded', 'uses', 'alias', 'use_module',
 	'coinductive', 'export', 'reexport', 'public', 'metapredicate', 'mode', 'meta_non_terminal',
 	'protected', 'synchronized', 'private', 'module', 'if', 'elif', 'else', 'endif', 'category',
-	'protocol', 'end_object', 'end_category', 'end_protocol', 'meta_predicate'
+	'protocol', 'end_object', 'end_category', 'end_protocol', 'meta_predicate', 'dynamic'
 }
 local indent = token(lexer.WHITESPACE, lexer.starts_line(S(' \t')^1))^-1
 lex:modify_rule('directive',
@@ -48,7 +48,8 @@ local one_plus_arity_keywords = {
 	'representation_error', 'evaluation_error', 'resource_error', 'syntax_error', 'bagof', 'findall',
 	'forall', 'setof', 'before', 'after', 'forward', 'phrase', 'expand_term', 'expand_goal',
 	'term_expansion', 'goal_expansion', 'numbervars', 'put_code', 'put_byte', 'current_op', 'op',
-	'ignore', 'repeat', 'number_codes', 'current_prolog_flag', 'set_prolog_flag', 'keysort', 'sort'
+	'ignore', 'repeat', 'number_codes', 'current_prolog_flag', 'set_prolog_flag', 'keysort', 'sort',
+	'uninstantiation_error', 'consistency_error'
 }
 local keyword = word_match(zero_arity_keywords) + (word_match(one_plus_arity_keywords) * #P('('))
 lex:modify_rule('keyword', token(lexer.KEYWORD, keyword) + lex:get_rule('keyword'))

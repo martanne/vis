@@ -94,6 +94,12 @@ lex:add_rule('perl', starts_line(message((lexer.nonnewline - ' at ')^1)) * text(
 lex:add_rule('cmake',
 	starts_line(text('CMake Error at ')) * c_filename * colon * line * colon * mark_error)
 
+-- filename(line:col) Error: message (odin)
+local odin_error = message(lexer.to_eol('Error: ')) * mark_error
+lex:add_rule('odin',
+	starts_line(filename((lexer.nonnewline - '(')^1)) * lparen * line * colon * column * rparen *
+		text(' ') * odin_error)
+
 -- CSI sequences, including colors.
 local csi = P('\x1B[')
 local non_csi_seq = text((lexer.nonnewline - csi)^1)

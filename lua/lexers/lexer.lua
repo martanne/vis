@@ -1518,42 +1518,43 @@ local function initialize_standalone_library()
 		__index = function() return '' end, __newindex = function(t, k, v) rawset(t, k, tostring(v)) end
 	})
 
+	-- Cache line start positions for subsequent functions.
+	local line_starts, cached_text
+	local function get_line_starts()
+		if cached_text == M._text then return line_starts end
+		cached_text, line_starts = M._text, {1}
+		for s in cached_text:gmatch('\n()') do line_starts[#line_starts + 1] = s end
+		return line_starts
+	end
+
 	M.line_from_position = function(pos)
-		local line = 1
-		for s in M._text:gmatch('[^\n]*()') do
-			if pos <= s then return line end
-			line = line + 1
+		local line_starts = get_line_starts()
+		local low, high = 1, #line_starts
+		while low < high do
+			local mid = math.floor((low + high + 1) / 2)
+			if line_starts[mid] <= pos then
+				low = mid
+			else
+				high = mid - 1
+			end
 		end
-		return line - 1 -- should not get to here
+		return low
 	end
 
 	M.text_range = function(pos, length) return M._text:sub(pos, pos + length - 1) end
 
-	--- Returns a line number's start and end positions.
-	-- @param line Line number (1-based) to get the start and end positions of.
-	local function get_line_range(line)
-		local current_line = 1
-		for s, e in M._text:gmatch('()[^\n]*()') do
-			if current_line == line then return s, e end
-			current_line = current_line + 1
-		end
-		return 1, 1 -- should not get to here
-	end
-
-	M.line_start = setmetatable({}, {__index = function(_, line) return get_line_range(line) end})
+	M.line_start = setmetatable({},
+		{__index = function(_, line) return get_line_starts()[line] or 1 end})
 	M.line_end = setmetatable({}, {
-		__index = function(_, line) return select(2, get_line_range(line)) end
+		__index = function(_, line)
+			local s = get_line_starts()[line + 1]
+			return s and s - 1 or #M._text + 1
+		end
 	})
 
 	M.indent_amount = setmetatable({}, {
 		__index = function(_, line)
-			local current_line = 1
-			for s in M._text:gmatch('()[^\n]*') do
-				if current_line == line then
-					return #M._text:match('^[ \t]*', s):gsub('\t', string.rep(' ', 8))
-				end
-				current_line = current_line + 1
-			end
+			return #M._text:match('^[ \t]*', get_line_starts()[line]):gsub('\t', string.rep(' ', 8))
 		end
 	})
 
@@ -1696,6 +1697,7 @@ function M.detect(filename, line)
 		apl = 'apl', --
 		applescript = 'applescript', --
 		ino = 'arduino', --
+		adoc = 'asciidoc', --
 		asm = 'asm', ASM = 'asm', s = 'asm', S = 'asm', --
 		asa = 'asp', asp = 'asp', hta = 'asp', --
 		ahk = 'autohotkey', --
@@ -1704,6 +1706,7 @@ function M.detect(filename, line)
 		bat = 'batch', cmd = 'batch', --
 		bib = 'bibtex', --
 		boo = 'boo', --
+		cj = 'cangjie', --
 		cs = 'csharp', --
 		c = 'c', C = 'c', cc = 'cpp', cpp = 'cpp', cxx = 'cpp', ['c++'] = 'cpp', h = 'cpp', H = 'cpp',
 		hh = 'cpp', hpp = 'cpp', hxx = 'cpp', ['h++'] = 'cpp', --
@@ -1782,6 +1785,7 @@ function M.detect(filename, line)
 		obs = 'objeck', --
 		m = 'objective_c', mm = 'objective_c', objc = 'objective_c', --
 		caml = 'caml', ml = 'caml', mli = 'caml', mll = 'caml', mly = 'caml', --
+		odin = 'odin', --
 		org = 'org', --
 		dpk = 'pascal', dpr = 'pascal', p = 'pascal', pas = 'pascal', pp = 'pascal', --
 		al = 'perl', perl = 'perl', pl = 'perl', PL = 'perl', pm = 'perl', pod = 'perl', --
@@ -1869,7 +1873,9 @@ function M.detect(filename, line)
 	for _, patt in ipairs(M.ignore_patterns) do filename = filename:gsub(patt, '') end
 	ext = filename:match('[^.]*$')
 	while M.ignore_extensions[ext] do filename, ext = filename:match('^(.-%.?([^.]*))%.[^.]+$') end
-	return M.detect_extensions[ext] or extensions[ext]
+	name = filename:match('[^/\\]+$')
+	return M.detect_extensions[name] or extensions[name] or M.detect_extensions[ext] or
+		extensions[ext]
 end
 
 -- The following are utility functions lexers will have access to.
@@ -1959,6 +1965,11 @@ M.number = M.number_(false)
 --- A pattern that matches a typical word. Words begin with a letter or underscore and consist
 -- of alphanumeric and underscore characters.
 M.word = (M.alpha + '_') * (M.alnum + '_')^0
+
+local utf8_char = lpeg.utfR and lpeg.utfR(0x7F, 0x10FFFF) or R('\128\255')^1
+--- A pattern that matches a typical UTF-8 word. UTF-8 words begin with a letter, underscore,
+-- or UTF-8 character, and consist of alphanumeric, underscore, and UTF-8 characters.
+M.word_utf8 = (M.alpha + '_' + utf8_char) * (M.alnum + '_' + utf8_char)^0
 
 --- Returns a pattern that matches a prefix until the end of its line.
 -- @param[opt] prefix String or pattern prefix to start matching at. The default value is any

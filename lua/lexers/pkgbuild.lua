@@ -18,11 +18,10 @@ local sq_str = lexer.range("'", false, false)
 local dq_str = lexer.range('"')
 local ex_str = lexer.range('`')
 local heredoc = '<<' * P(function(input, index)
-	local s, e, _, delimiter = input:find('(["\']?)([%a_][%w_]*)%1[\n\r\f;]+', index)
-	if s == index and delimiter then
-		e = select(2, input:find('[\n\r\f]+' .. delimiter, e))
-		return e and e + 1 or #input + 1
-	end
+	local _, e, _, delimiter = input:find('^(["\']?)([%a_][%w_]*)%1.-[\r\n]+', index)
+	if not delimiter then return end
+	e = select(2, input:find('[\r\n]+' .. delimiter, e))
+	return e and e + 1 or #input + 1
 end)
 lex:add_rule('string', token(lexer.STRING, sq_str + dq_str + ex_str + heredoc))
 
