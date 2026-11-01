@@ -148,6 +148,15 @@ vis.events.subscribe(vis.events.WIN_OPEN, function(win)
 	win.token_cache = {}
 end)
 
+vis.events.subscribe(vis.events.FILE_OPEN, function(_)
+	-- called when a file is reloaded. Invalidates the token cache for all windows
+	-- because event callback parameter file points to the newly opened file while
+	-- win.file is still the old one.
+	for win in vis:windows() do
+		win.token_cache = {}
+	end
+end)
+
 vis.events.subscribe(vis.events.FILE_MODIFIED, function(file, _op, pos, _len)
 	for win in vis:windows() do
 		if win.file == file then
