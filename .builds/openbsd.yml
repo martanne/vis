@@ -3,6 +3,7 @@ packages:
   - gmake
   - lua%5.3
   - lua53-lpeg
+  - vim--no_x11
 sources:
   - https://github.com/martanne/vis
 tasks:
