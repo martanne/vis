@@ -57,7 +57,6 @@ void window_status_update(Vis *vis, Win *win) {
 	File *file = win->file;
 	Text *txt = file->text;
 	int width = win->width;
-	enum UiOption options = win->options;
 	bool focused = vis->win == win;
 	str8 filename = file->name;
 	const char *mode = vis->mode->status;
@@ -95,14 +94,10 @@ void window_status_update(Vis *vis, Win *win) {
 	snprintf(right_parts[right_count++], sizeof(right_parts[0]),
 	         "%zu%%", percent);
 
-	if (!(options & UI_OPTION_LARGE_FILE)) {
+	if (!view_large_file(&win->view)) {
 		Selection *sel = view_selections_primary_get(&win->view);
 		size_t line = view_cursors_line(sel);
 		size_t col = view_cursors_col(sel);
-		if (col > UI_LARGE_FILE_LINE_SIZE) {
-			options |= UI_OPTION_LARGE_FILE;
-			win_options_set(win, options);
-		}
 		snprintf(right_parts[right_count++], sizeof(right_parts[0]),
 		         "%zu, %zu", line, col);
 	}
@@ -138,6 +133,13 @@ void window_status_update(Vis *vis, Win *win) {
 	ui_window_status(vis, win, status);
 }
 
+bool view_large_file(View *view) {
+	Selection *sel = view_selections_primary_get(view);
+	size_t col = view_cursors_col(sel);
+	return text_size(view->text) > KiB(view->large_file_size_kib) ||
+	       col > view->large_line_size;
+}
+
 void view_tabwidth_set(View *view, int tabwidth) {
 	if (tabwidth < 1 || tabwidth > 8)
 		return;
@@ -171,7 +173,7 @@ vis_view_clear(View *view)
 	view->col             = 0;
 	view->wrapcol         = 0;
 	view->prevch_breakat  = false;
-	view->lines[0].line_number = view->large_file ? 1 : text_lineno_by_pos(view->text, view->start);
+	view->lines[0].line_number = view_large_file(view) ? 1 : text_lineno_by_pos(view->text, view->start);
 }
 
 static int view_max_text_width(const View *view) {
@@ -604,6 +606,8 @@ bool view_init(Win *win, Text *text) {
 	view->tabwidth = 8;
 	view->breakat = strdup("");
 	view->wrapcolumn = 0;
+	view->large_file_size_kib = UI_LARGE_FILE_SIZE;
+	view->large_line_size = UI_LARGE_LINE_SIZE;
 	win_options_set(win, 0);
 
 	if (!view->breakat ||
@@ -907,11 +911,6 @@ void win_options_set(Win *win, enum UiOption options) {
 	for (int i = 0; i < LENGTH(mapping); i++) {
 		win->view.symbols[i] = (options & mapping[i]) ? symbols_default[i] : str8(" ");
 	}
-
-	if (options & UI_OPTION_LINE_NUMBERS_ABSOLUTE)
-		options &= ~UI_OPTION_LARGE_FILE;
-
-	win->view.large_file = (options & UI_OPTION_LARGE_FILE);
 
 	ui_window_options_set(win, options);
 }

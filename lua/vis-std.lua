@@ -141,12 +141,9 @@ vis.events.subscribe(vis.events.WIN_STATUS, function(win)
 	if not pos then pos = 0 end
 	table.insert(right_parts, (size == 0 and "0" or math.ceil(pos/size*100)).."%")
 
-	if not win.large then
+	if not win:large() then
 		local col = selection.col
 		table.insert(right_parts, selection.line..', '..col)
-		if size > 33554432 or col > 65536 then
-			win.large = true
-		end
 	end
 
 	local left = ' ' .. table.concat(left_parts, " » ") .. ' '
