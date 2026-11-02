@@ -405,7 +405,7 @@ static bool cmd_earlier_later(Vis *vis, Win *win, Command *cmd, const char *argv
 			if (argv[0][0] == 'e')
 				count = -count; /* earlier, move back in time */
 
-			pos = text_restore(txt, text_state(txt) + count);
+			pos = text_restore(vis, txt, text_state(txt) + count);
 		}
 	}
 
@@ -413,9 +413,9 @@ static bool cmd_earlier_later(Vis *vis, Win *win, Command *cmd, const char *argv
 		VisCountIterator it = vis_count_iterator_init(vis, count);
 		while (vis_count_iterator_next(&it)) {
 			if (argv[0][0] == 'e')
-				pos = text_earlier(txt);
+				pos = text_earlier(vis, txt);
 			else
-				pos = text_later(txt);
+				pos = text_later(vis, txt);
 		}
 	}
 
