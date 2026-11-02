@@ -385,7 +385,7 @@ static void ui_window_draw(Win *win) {
 			sidebar_buffer[0] = 0;
 			if (l->line_number && l->file_byte_count > 0 && l->line_number != prev_lineno) {
 				if (rnu) {
-					line_number = (win->options & UI_OPTION_LARGE_FILE) ? 0 : l->line_number;
+					line_number = view_large_file(&win->view) ? 0 : l->line_number;
 					if (l->line_number > cursor_lineno) line_number = l->line_number - cursor_lineno;
 					if (l->line_number < cursor_lineno) line_number = cursor_lineno - l->line_number;
 				}
@@ -581,10 +581,8 @@ ui_window_options_set(Win *win, enum UiOption options)
 }
 
 bool ui_window_init(Ui *tui, Win *w, enum UiOption options) {
-	if (text_size(w->file->text) > UI_LARGE_FILE_SIZE) {
-		options |= UI_OPTION_LARGE_FILE;
+	if (view_large_file(&w->view))
 		options &= ~UI_OPTION_LINE_NUMBERS_ABSOLUTE;
-	}
 
 	win_options_set(w, options);
 

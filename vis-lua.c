@@ -1998,6 +1998,7 @@ static int window_index(lua_State *L) {
 			obj_ref_new(L, &win->saved_selections, VIS_LUA_TYPE_MARKS);
 			return 1;
 		}
+
 		if (strcmp(key, "options") == 0) {
 			obj_ref_new(L, &win->view, VIS_LUA_TYPE_WIN_OPTS);
 			return 1;
@@ -2012,6 +2013,7 @@ static int window_newindex(lua_State *L) {
 
 	if (lua_isstring(L, 2)) {
 		const char *key = lua_tostring(L, 2);
+
 		if (strcmp(key, "options") == 0 && lua_istable(L, 3)) {
 			int result = 0;
 			/* since we don't know which keys are in the table we push
@@ -2036,7 +2038,9 @@ static int window_newindex(lua_State *L) {
 			}
 			lua_pop(L, 1);
 			return result;
-		} else if (strcmp(key, "file") == 0 && lua_isstring(L, 3)) {
+		}
+
+		if (strcmp(key, "file") == 0 && lua_isstring(L, 3)) {
 			const char* filename = lua_tostring(L, 3);
 			if (!vis_window_file_change(win->vis, win, filename)) {
 				return luaL_argerror(L, 3, "failed to open");
@@ -2221,6 +2225,12 @@ static int window_close(lua_State *L) {
 	return 1;
 }
 
+static int window_large(lua_State *L) {
+	Win *win = obj_ref_check(L, 1, VIS_LUA_TYPE_WINDOW);
+	lua_pushboolean(L, view_large_file(&win->view));
+	return 1;
+}
+
 static const struct luaL_Reg window_funcs[] = {
 	{ "__index", window_index },
 	{ "__newindex", window_newindex },
@@ -2232,6 +2242,7 @@ static const struct luaL_Reg window_funcs[] = {
 	{ "status", window_status },
 	{ "draw", window_draw },
 	{ "close", window_close },
+	{ "large", window_large },
 	{ NULL, NULL },
 };
 
