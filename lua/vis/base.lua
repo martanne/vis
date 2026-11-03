@@ -101,30 +101,23 @@ vis.module_exist = function(_, name)
 	return false
 end
 
-vis.lexers = {}
+-- init.lua already loaded this
+vis.lexers = package.loaded.lexer or {}
+vis.lpeg = package.loaded.lpeg
 
-if not vis:module_exist('lpeg') then
-	vis:info('WARNING: could not find lpeg module')
-elseif not vis:module_exist('lexer') then
-	vis:info('WARNING: could not find lexer module')
-else
-	vis.lexers = require('lexer')
-
-	--- Cache of loaded lexers
-	--
-	-- Caching lexers causes lexer tables to be constructed once and reused
-	-- during each HIGHLIGHT event. Additionally it allows to modify the lexer
-	-- used for syntax highlighting from Lua code.
-	local lexers = {}
-	local load_lexer = vis.lexers.load
-	vis.lexers.load = function (name, alt_name, cache)
-		if cache and lexers[alt_name or name] then return lexers[alt_name or name] end
-		local status, lexer = pcall(load_lexer, name, alt_name)
+if lpeg and package.loaded.lexer then
+	-- This overrides lexer.lua's load() function
+	local load_lexer = require'lexer'.load
+	vis.lexers.load = function (name, ...)
+		local status, lexer = pcall(load_lexer, name, ...)
 		if not status then return nil end
-		if cache then lexers[alt_name or name] = lexer end
+		-- reload all win.lexer's if a new lexer with the same name was loaded
+		-- WIN_HIGHLIGHT uses win.lexer for lexing
+		for win in vis:windows() do
+			if win.lexer and win.syntax==name then win.lexer = lexer end
+		end
 		return lexer
 	end
-	vis.lpeg = require('lpeg')
 end
 
 --- Events.
@@ -233,6 +226,12 @@ end
 
 vis.events = events
 
+--- Cache of loaded lexers
+--
+-- Caching lexers causes lexer tables to be constructed once and reused
+local cached_lexers = {}
+vis.lexers.cached = cached_lexers
+
 ---
 -- @type Window
 
@@ -242,20 +241,18 @@ vis.events = events
 --- Change syntax lexer to use for this window
 -- @function set_syntax
 -- @tparam string syntax the syntax lexer name or `nil` to disable syntax highlighting
+-- @tparam bool ignore cache and set new cache
 -- @treturn bool whether the lexer could be changed
-vis.types.window.set_syntax = function(win, syntax)
-
+vis.types.window.set_syntax = function(win, lexer_name, ignore_cache)
+	win.syntax = lexer_name -- should be called win.lexer_name
 	local lexers = vis.lexers
-
-	if syntax == nil or syntax == 'off' then
-		win.syntax = nil
-		return true
-	end
-	win.syntax = syntax
-
-	if not lexers.load then return false end
-	local lexer = lexers.load(syntax)
+	local lexer = not ignore_cache and cached_lexers[lexer_name] -- default is to cache
+		or lexers.load
+			and package.searchpath("lexers." .. lexer_name, package.path)
+			and lexers.load(lexer_name)
 	if not lexer then return false end
+	cached_lexers[lexer_name] = lexer
+	win.lexer = lexer
 
 	local ui = vis.ui
 	for id, token_name in ipairs(lexer._TAGS) do
@@ -287,9 +284,8 @@ end
 -- @tparam[opt] int horizon the number of bytes around `pos` to consider (defaults to 1K)
 -- @treturn int start,end the range of the matched region or `nil`
 vis.types.file.match_at = function(file, pattern, pos, horizon)
-	horizon = horizon or 1024
-	local lpeg = vis.lpeg
 	if not lpeg then return nil end
+	horizon = horizon or 1024
 	local before, after = pos - horizon, pos + horizon
 	if before < 0 then before = 0 end
 	local data = file:content(before, after - before)
@@ -308,4 +304,4 @@ vis.types.file.match_at = function(file, pattern, pos, horizon)
 	end
 end
 
-require('vis-std')
+
