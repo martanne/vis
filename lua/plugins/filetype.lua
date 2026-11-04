@@ -95,7 +95,6 @@ M.filetypes = filetypes
 	for syntax,T in pairs(filetypes) do
 		T.ext = {}
 		T.name = {}
-		T.mime  = {}
 		T.utility = {}
 		T.hashbang = {}
 		T.cmd = {}
@@ -110,7 +109,6 @@ M.filetypes = filetypes
 				ext = {},
 				name = {},
 				utility = {},
-				mime = {},
 				hashbang = {},
 				cmd = {},
 				actions = {}
