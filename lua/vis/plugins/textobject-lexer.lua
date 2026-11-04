@@ -1,18 +1,10 @@
 -- text object matching a lexer token
 
-local MAX_CONTEXT = 32768
+local MAX_CONTEXT = 2^15
 
 vis:textobject_new("ii", function(win, pos)
-
-	if not win.syntax or not vis.lexers.load then
-		return nil
-	end
-
-	local lexer = vis.lexers.load(win.syntax, nil, true)
-	if not lexer then
-		return nil
-	end
-
+	local lexer = win.lexer
+	if not win.syntax or not lexer then return nil end
 	local before, after = pos - MAX_CONTEXT, pos + MAX_CONTEXT
 	if before < 0 then
 		before = 0
