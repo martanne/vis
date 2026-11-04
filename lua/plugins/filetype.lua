@@ -74,6 +74,7 @@ local filetypes = { -- dict --
 	crontab = {
 		cmd = { "set savemethod inplace" },
 		name = { "^crontab.*$" }
+		lexer = 'text'
 	},
 	["git-commit"] = {
 		lexer = "diff",
