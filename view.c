@@ -456,22 +456,30 @@ view_draw(View *view)
 		VisCell cell = vis_cell_from_string(&string);
 
 		if VisCellInvalid(cell) {
-			// NOTE(rnp): needs more data. read another chunk into buffer.
+			// Retry with more data. At EOF an incomplete sequence cannot become valid;
+			// consume the remaining bytes as one replacement character instead of retrying forever.
+			size_t available = string.length;
 			string.length = text_bytes_get(view->text, pos + prev_cell.file_byte_count, size, text);
-			string.data   = (u8 *)text;
+			string.data = (u8 *)text;
+			if (string.length > available)
+				continue;
+			if (!string.length)
+				break;
+			cell = (VisCell){.data = {0xEF, 0xBF, 0xBD}, .data_length = 3,
+			                 .file_byte_count = string.length, .width = 1};
+			string = str8_skip(string, string.length);
+		}
+		if (cell.width == 0) {
+			u8 current   = prev_cell.data_length;
+			u8 remaining = countof(prev_cell.data) - current;
+			memory_copy(prev_cell.data + current, cell.data, MIN(remaining, cell.data_length));
+			prev_cell.file_byte_count += MIN(remaining, cell.data_length);
+			prev_cell.data_length     += MIN(remaining, cell.data_length);
 		} else {
-			if (cell.width == 0) {
-				u8 current   = prev_cell.data_length;
-				u8 remaining = countof(prev_cell.data) - current;
-				memory_copy(prev_cell.data + current, cell.data, MIN(remaining, cell.data_length));
-				prev_cell.file_byte_count += MIN(remaining, cell.data_length);
-				prev_cell.data_length     += MIN(remaining, cell.data_length);
-			} else {
-				if (prev_cell.file_byte_count && !view_addch(view, &prev_cell))
-					break;
-				pos += prev_cell.file_byte_count;
-				prev_cell = cell;
-			}
+			if (prev_cell.file_byte_count && !view_addch(view, &prev_cell))
+				break;
+			pos += prev_cell.file_byte_count;
+			prev_cell = cell;
 		}
 	}
 
