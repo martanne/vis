@@ -93,12 +93,12 @@ M.filetypes = filetypes
 
 -- backwards compatibility
 	for syntax,T in pairs(filetypes) do
-		T.ext = {}
-		T.name = {}
-		T.utility = {}
-		T.hashbang = {}
-		T.cmd = {}
-		T.actions = {}
+		T.ext = T.ext or {}
+		T.name = T.name or {}
+		T.utility = T.utility or {}
+		T.hashbang = T.hashbang or {}
+		T.cmd = T.cmd or {}
+		T.actions = T.actions or {}
 	end
 
 	-- In order to be semi backwards compatible, we create a table on each index access
