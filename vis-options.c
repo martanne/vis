@@ -23,6 +23,7 @@ enum {
 	OPTION_NUMBER,
 	OPTION_NUMBER_RELATIVE,
 	OPTION_NUMBER_WIDTH,
+	OPTION_WINDOW_MAX_SIZE,
 	OPTION_CURSOR_LINE,
 	OPTION_COLOR_COLUMN,
 	OPTION_SAVE_METHOD,
@@ -147,6 +148,11 @@ static const VisOption vis_options_table[] = {
 		VIS_OPTION_TYPE_NUMBER|VIS_OPTION_NEED_WINDOW,
 		VIS_HELP("Wrap lines at minimum of window width and wrapcolumn")
 	},
+	[OPTION_WINDOW_MAX_SIZE] = {
+		{ "maxsize", "mxsz" },
+		VIS_OPTION_TYPE_NUMBER | VIS_OPTION_NEED_WINDOW,
+		VIS_HELP("Maximum size of window, width or height")
+	}
 };
 
 VIS_INTERNAL void
@@ -242,7 +248,7 @@ vis_option_set(Vis *vis, Win *win, VisOption *option, VisValue value, bool toggl
 	case OPTION_SHELL:{            vis_shell_set(vis, value.u.string);                                  }break;
 	case OPTION_TABWIDTH:{         view_tabwidth_set(&win->view, value.u.integer);                      }break;
 	case OPTION_WRAP_COLUMN:{      win->view.wrapcolumn = MAX(0, value.u.integer);                      }break;
-
+	case OPTION_WINDOW_MAX_SIZE:{  win->max_size = MAX(0, value.u.integer);								}break;
 	case OPTION_CURSOR_LINE:
 	case OPTION_SHOW_EOF:
 	case OPTION_SHOW_NEWLINES:
@@ -383,7 +389,7 @@ vis_option_get(Vis *vis, Win *win, VisOption *option)
 		case OPTION_SHELL:{            result.u.string  = vis->shell;             }break;
 		case OPTION_TABWIDTH:{         result.u.integer = win->view.tabwidth;     }break;
 		case OPTION_WRAP_COLUMN:{      result.u.integer = win->view.wrapcolumn;   }break;
-
+		case OPTION_WINDOW_MAX_SIZE:{  result.u.integer = win->max_size;		  }break;
 		case OPTION_CURSOR_LINE:
 		case OPTION_NUMBER:
 		case OPTION_NUMBER_RELATIVE:
