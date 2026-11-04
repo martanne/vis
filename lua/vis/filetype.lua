@@ -407,8 +407,7 @@ local function Detect -- lexer: string --
 	end
 
 	local path = file.path or file.name -- sometimes one is nil and the other isn't
-	-- name is unnecessary, L.detect() already strips it
-	local name = (path or ''):match("[^/]+$")
+	local name = file.basename or (file.name or file.path or ''):match("[^/]+$")
 	file.basename = name
 
 	if name then

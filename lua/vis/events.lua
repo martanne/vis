@@ -74,39 +74,35 @@ local ft = vis.ftdetect
 vis.events.subscribe(vis.events.FILE_OPEN, function(
 	file -- FILE -- file.name: string|nil, file.path: string|nil
 )
-	local path = file.path
-	local name = file.name
-	if not name and path then name = path:match'[^/]+$' end
-	file.basename = name
-	-- ft.Detect depends on file.basename
-	file.syntax = path==nil and 'text' or ft.Detect(file)
+	file.basename = (file.name or file.path or ''):match("[^/]+$")
+	file.syntax = ft.Detect(file)
 end)
 
 
 vis.events.subscribe(vis.events.WIN_OPEN, function(win)
-	-- vis:command"info"
 	local syntax = ft.Actions(win.file.syntax, win)
 	win:set_syntax(syntax)
 end)
 
 
--- :o -> :w file.ext -- doesn't update file or syntax, nor file.name
 vis.events.subscribe(vis.events.FILE_SAVE_POST, function(file, path)
 	-- file.name: string|nil; file.path: string
 	-- You cannot set file.name from lua
-	local name = file.name
-	if name==nil then
-		if not file.basename then
-			file.basename = name or path:match'[^/]+$'
-		end
-		local win = vis.win if not win then return true end
-		local syntax = file.syntax if syntax~='text' then return true end
+
+	-- :new -> :w file.ext -- identify newly labeled file
+	-- FILE_OPEN and WIN_OPEN events already triggered
+	if file.basename==nil then -- :new, so basename==nil
+		file.basename = (file.path or ''):match("[^/]+$")
+		local syntax = file.syntax
 		file.syntax = ft.Detect(file)
+		local win = vis.win if not win then return true end
 		if syntax~=file.syntax then
 			syntax = ft.Actions(file.syntax, win)
 			win:set_syntax(syntax)
 		end
 	end
+
+	return true
 end)
 
 
