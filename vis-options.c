@@ -157,7 +157,7 @@ static const VisOption vis_options_table[] = {
 	[OPTION_LARGE_LINE_SIZE] = {
 		{ "largelinesize", "lls" },
 		VIS_OPTION_TYPE_NUMBER|VIS_OPTION_NEED_WINDOW,
-		VIS_HELP("Size threshold for files with long lines")
+		VIS_HELP("Size threshold for long lines")
 	},
 };
 
