@@ -29,16 +29,6 @@ vis.ftdetect = M
 	would set the shell to /bin/bash when the filetype is bash, see ACTIONS
 --]]
 
--- Removes all suffixes to get the real extension/filename
-M.ignoresuffixes = {
-	-- list is luapatterns matching filename --
-	"~+$",
-
-	-- dict is extensions --
-	-- Used by gsub, MUST BE ""
-	orig = "", bak = "", old = "", new = ""
-}
-
 -- Dictionary of filetypes, Should match opened filename on WIN_OPEN
 -- Slow and error prone due to its iterative nature, use the hashtables
 -- You can still use it for per filetype settings via filetypes[syntax][cmd|lexer|actions]
@@ -122,9 +112,6 @@ M.filetypes = filetypes
 -- From here on, values MUST MATCH THE FILETYPE TABLE ABOVE
 -- This is because the filetype table contains settings
 -- when a lexer name changes, update the filetype table to use the correct name
-
--- lexers/lexer.lua errors when lpeg is missing. fall back to filetype-fallback-lexer.
-local L = package.loaded.lexer or require"plugins.filetype-fallback-lexer"
 
 -- This table matches filenames AND extensions
 -- This is done because L.detect also mixes it
@@ -220,9 +207,9 @@ local fnames = {
 	profile = "bash",
 	shadow = "dsv"
 }
-L.detect_extensions = fnames
 M.filenames = fnames
 M.extensions = fnames
+
 
 -- Lookup table for mime [mime] = "lexer"
 -- "text/" is prepended, you can omit it
@@ -257,6 +244,7 @@ local mimes = {
 }
 M.mimes = mimes
 
+
 local utilities = {
 	awk = 'awk', mawk = 'awk', nawk = 'awk', gawk = 'awk', goawk = 'awk',
 
@@ -283,11 +271,31 @@ local utilities = {
 }
 M.utilities = utilities
 
+
 M.data_patterns = {
 	["^execve%("] = 'strace',
 	["^#.* by RouterOS"] = 'routeros'
 }
+
+
+-- Removes all suffixes to get the real extension/filename
+M.ignoresuffixes = {
+	-- list is luapatterns matching filename --
+	"~+$",
+
+	-- dict is extensions --
+	-- Used by gsub, MUST BE ""
+	orig = "", bak = "", old = "", new = ""
+}
+
+
+-- lexers/lexer.lua errors when lpeg is missing. fall back to filetype-fallback-lexer.
+local L = package.loaded.lexer or require"plugins.filetype-fallback-lexer"
 L.detect_patterns = M.data_patterns
+L.detect_extensions = fnames
+
+---------------------------------- Database section ends
+
 
 -- string.find(table, pattern)
 local function TStringFind(tbl, subject)
@@ -357,11 +365,8 @@ local function Detect(file)
 			end
 		else
 			for lang, ft in pairs(M.filetypes) do
-				if
-					type(ft.detect) == 'function' and ft.detect(file, data)
-				then
-					return lang
-				end
+				if type(ft.detect) == 'function' and ft.detect(file, data)
+				then return lang end
 			end
 		end
 	end
