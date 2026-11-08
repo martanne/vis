@@ -426,8 +426,13 @@ local function Detect -- string: lexer --
 	return 'text'
 end
 
-vis.events.subscribe(vis.events.WIN_OPEN, function(win)
-	local syntax = Detect(win.file) -- syntax/lexer/filetype
+
+-- perform actions saved in filetype[]
+local ftAction = function -- string: lexer
+(
+	win -- WIN
+)
+	local syntax = win.file.syntax
 	local filetype = rawget(filetypes, syntax) -- avoid backwards compatibility mt
 	if filetype then
 		for _, Action in ipairs(filetype.actions or {}) do
@@ -436,29 +441,59 @@ vis.events.subscribe(vis.events.WIN_OPEN, function(win)
 		for _, cmd in ipairs(filetype.cmd or {}) do
 			vis:command(cmd)
 		end
+		-- Override
 		syntax = filetype.lexer
-			or filetype.alt_name -- backwards compat
+			or filetype.alt_name -- backwards compat -- REMOVE ME
 			or syntax
 	end
-	-- Detect returns filetype, lexer is optional
-	if package.searchpath("lexers." .. syntax, package.path) then
-		win:set_syntax(syntax)
-		return
-	else
-		vis:info(
-			string.format(
-				"Lexer '%s' not found", syntax
-			)
-		)
-	end
+	return syntax
+end
+M.ft_action = ftAction
 
-	win:set_syntax(nil)
-	return
+
+-- FILE_OPEN runs before WIN_OPEN
+vis.events.subscribe(vis.events.FILE_OPEN, function(
+	file -- FILE -- file.name: string|nil, file.path: string|nil
+)
+	file.basename = (file.name or file.path or ''):match("[^/]+$")
+	file.syntax = Detect(file)
 end)
 
-vis.events.subscribe(vis.events.FILE_SAVE_POST, function(file, path)
-	local syntax = Detect(file)
-	if syntax then
-		vis:command("set syntax " .. syntax)
+
+vis.events.subscribe(vis.events.WIN_OPEN, function(win)
+	local syntax = ftAction(win)
+	if not win:set_syntax(syntax) then
+		vis:info( ("Lexer '%s' not found"):format(syntax) )
 	end
+end)
+
+
+vis.events.subscribe(vis.events.FILE_SAVE_POST, function -- true
+(
+	file -- FILE
+,	path -- string
+)
+	-- file.name: string|nil; file.path: string
+	-- You cannot assign file.name from lua
+
+	-- :new -> :w file.ext -- identify newly labeled file
+	-- Set/change/detect syntax of newly opened & set & written file
+	-- FILE_OPEN and WIN_OPEN above events already triggered
+	if
+		file.name==nil -- :new, so no file.name
+		and path -- not stdout
+		and file.basename==nil -- FILE_OPEN didn't set basename
+			-- because file[name|path] was nil
+	then
+		file.basename = path:match("[^/]+$") -- FILE_SAVE_POST means there is a path
+		local syntax = file.syntax
+		file.syntax = Detect(file)
+		local win = vis.win if not win then return true end
+		if syntax~=file.syntax then
+			syntax = ftAction(win)
+			win:set_syntax(syntax)
+		end
+	end
+
+	return true
 end)
