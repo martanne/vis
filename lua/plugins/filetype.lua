@@ -397,14 +397,12 @@ local function Detect(file)
 
 	if name and #name > 0 then
 		-- detect filetype by filename pattern
-		for lang, ft in pairs(M.filetypes) do
-			for _, pattern in ipairs(ft.name or {}) do
-				if name:find(pattern) then return lang end
-			end
-			for _, pattern in ipairs(ft.ext or {}) do
-				if name:find(pattern) then return lang end
-			end
+		for lang, ft in pairs(filetypes) do
+			if ft.name and TStringFind(ft.name, name)
+				or ft.ext and TStringFind(ft.ext, name) -- REMOVE
+			then return lang end
 		end
+
 
 		-- run file(1) to determine mime type
 		local fileh = io.popen(
