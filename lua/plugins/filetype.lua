@@ -336,7 +336,10 @@ end
 -- utility -> datap -> filename -> extension -> L.detect() -> mime
 -- mime is supposed to be the most correct, but it execs file
 -- Which is slow and semi non-portable, so its left for last
-local function Detect(file)
+local function Detect -- string: lexer --
+(
+	file -- FILE
+)
 	local R
 
 	-- pass first few bytes of file to custom file type detector functions
