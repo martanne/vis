@@ -374,11 +374,8 @@ local function Detect -- string: lexer --
 		end
 	end
 
-	local path = file.name -- filepath
-	local name
-	if path and path~="" then
-		name = path and path:match("[^/]+$") -- filename
-	end
+	local path = file.path or file.name
+	local name = file.basename or (path or ''):match("[^/]+$")
 
 	if name then
 		local unchanged
