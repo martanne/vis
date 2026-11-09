@@ -33,9 +33,9 @@ static Vis vis[1];
 	X(ka_insertmode,                      MODE_INSERT,                      .i = VIS_MOVE_NOP,                        "vis-mode-insert",                     "Enter insert mode") \
 	X(ka_join,                            JOIN_LINES,                       .s = " ",                                 "vis-join-lines",                      "Join selected lines") \
 	X(ka_join,                            JOIN_LINES_TRIM,                  .s = "",                                  "vis-join-lines-trim",                 "Join selected lines, remove white space") \
-	X(ka_jumplist,                        JUMPLIST_NEXT,                    .i = +1,                                  "vis-jumplist-next",                   "Go to newer cursor position in jump list") \
-	X(ka_jumplist,                        JUMPLIST_PREV,                    .i = -1,                                  "vis-jumplist-prev",                   "Go to older cursor position in jump list") \
-	X(ka_jumplist,                        JUMPLIST_SAVE,                    .i = 0,                                   "vis-jumplist-save",                   "Save current selections in jump list") \
+	X(ka_jumplist,                        JUMPLIST_NEXT,                    .i = VIS_JUMPLIST_ACTION_NEXT,            "vis-jumplist-next",                   "Go to next cursor position in jump list") \
+	X(ka_jumplist,                        JUMPLIST_PREV,                    .i = VIS_JUMPLIST_ACTION_PREV,            "vis-jumplist-prev",                   "Go to previous cursor position in jump list") \
+	X(ka_jumplist,                        JUMPLIST_SAVE,                    .i = VIS_JUMPLIST_ACTION_SAVE,            "vis-jumplist-save",                   "Save current selections in jump list") \
 	X(ka_later,                           LATER,                            0,                                        "vis-later",                           "Goto newer text state") \
 	X(ka_macro_record,                    MACRO_RECORD,                     0,                                        "vis-macro-record",                    "Record macro into given register") \
 	X(ka_macro_replay,                    MACRO_REPLAY,                     0,                                        "vis-macro-replay",                    "Replay macro, execute the content of the given register") \
