@@ -108,9 +108,9 @@ vc_paste() {
 
 vc_wlclipboard_copy() {
 	if [ "$sel" = "primary" ]; then
-		wl-copy --primary -t TEXT 2>/dev/null
+		wl-copy --primary -t TEXT
 	else
-		wl-copy -t TEXT 2>/dev/null
+		wl-copy -t TEXT
 	fi
 }
 
@@ -124,9 +124,9 @@ vc_wlclipboard_paste() {
 
 vc_wayclip_copy() {
 	if [ "$sel" = "primary" ]; then
-		waycopy -p 2>/dev/null
+		waycopy -p
 	else
-		waycopy 2>/dev/null
+		waycopy
 	fi
 }
 
