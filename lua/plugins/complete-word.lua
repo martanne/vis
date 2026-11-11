@@ -1,5 +1,14 @@
 -- complete word at primary selection location using vis-complete(1)
 
+-- Table of hooks other plugins may register to insert their completion
+-- candidates.
+-- Hooks are called with the current word prefix and MUST return a table
+-- containing their completion candidates.
+local candidate_hooks = {}
+if vis.plugins then
+	vis.plugins["complete-word"] = {candidate_hooks = candidate_hooks}
+end
+
 vis:map(vis.modes.INSERT, "<C-n>", function()
 	local win = vis.win
 	local file = win.file
@@ -17,6 +26,13 @@ vis:map(vis.modes.INSERT, "<C-n>", function()
 	-- collect words starting with prefix
 	vis:command("x/\\b" .. prefix .. "\\w+/")
 	local candidates = {}
+
+	for _, candidate_hook in ipairs(candidate_hooks) do
+		for _, candidate in ipairs(candidate_hook(prefix)) do
+		  table.insert(candidates, candidate)
+		end
+	end
+
 	for sel in win:selections_iterator() do
 		table.insert(candidates, file:content(sel.range))
 	end
