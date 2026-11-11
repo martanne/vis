@@ -451,7 +451,7 @@ end)
 vis.events.subscribe(vis.events.WIN_OPEN, function(win)
 	local syntax = ftAction(win)
 	if not win:set_syntax(syntax) then
-		vis:info( ("Lexer '%s' not found"):format(syntax) )
+		vis:warn( ("Lexer '%s' not found"):format(syntax) )
 	end
 end)
 
