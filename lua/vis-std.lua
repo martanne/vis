@@ -10,24 +10,20 @@ vis.events.subscribe(vis.events.INIT, function()
 		vis:command("set change256colors false")
 	end
 
-	-- NOTE: keep standard vis robust against missing theme files
-	local theme = "default"
-	if pcall(require, "themes/"..theme) then
-		vis:command("set theme " .. theme)
-	end
-
-	vis.warn = vis.info
+	vis:command("set theme default")
 end)
 
+
 vis:option_register("theme", "string", function(name)
-	if name ~= nil then
-		local theme = 'themes/'..name
-		package.loaded[theme] = nil
-		require(theme)
+	local theme_path = 'themes/' .. name
+	package.loaded[theme_path] = nil
+	if not pcall(require, theme_path) then
+		vis:warn( ('Theme "%s" not found'):format(name) )
+		return false
 	end
 
 	local lexers = vis.lexers
-	lexers.lexers = {}
+	lexers.lexers = {} -- clears lexers cache
 
 	if not lexers.load then return false end
 	if not lexers.property then lexers.load("text") end
