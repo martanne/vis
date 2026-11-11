@@ -104,9 +104,9 @@ end
 vis.lexers = {}
 
 if not vis:module_exist('lpeg') then
-	vis:info('WARNING: could not find lpeg module')
+	vis:message('WARNING: could not find lpeg module')
 elseif not vis:module_exist('lexer') then
-	vis:info('WARNING: could not find lexer module')
+	vis:message('WARNING: could not find lexer module')
 else
 	lpeg = require('lpeg') -- lexer.lua already sets _G.lpeg
 	vis.lpeg = lpeg
