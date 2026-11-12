@@ -13,7 +13,7 @@ vis.events.subscribe(vis.events.INIT, function()
 	vis:command("set theme default")
 end)
 
-
+local active_theme
 vis:option_register("theme", "string", function(name)
 	local theme_path = 'themes/' .. name
 	package.loaded[theme_path] = nil
@@ -21,6 +21,9 @@ vis:option_register("theme", "string", function(name)
 		vis:warn( ('Theme "%s" not found'):format(name) )
 		return false
 	end
+
+	-- set the active theme
+	active_theme = name
 
 	local lexers = vis.lexers
 	lexers.lexers = {} -- clears lexers cache
@@ -55,6 +58,8 @@ vis:option_register("theme", "string", function(name)
 		win:set_syntax(win.syntax)
 	end
 	return true
+end, function()
+	return active_theme
 end, "Color theme to use, filename without extension")
 
 vis:option_register("syntax", "string", function(name)
