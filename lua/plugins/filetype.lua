@@ -1,6 +1,8 @@
 
 local M = {}
 vis.ftdetect = M
+local _
+
 -- This specific module has a style guide
 -- 1. Everything is local (luacheck should detect typos)
 -- 2. identifiers that start with uppercase and are words must be functions
@@ -283,10 +285,17 @@ local ignoresuffixes = {
 }
 
 
--- lexer contains detecting functionality
-local L = package.loaded.lexer if not L then
-	-- Need lexer.lua's detecting function, and lexer.lua expects _G.lpeg
-	-- this creates a fake _G.lpeg and requires it forcefully
+
+---------------------------------- lexer.lua file detection
+
+-- lexer.lua contains detecting functionality
+-- But it can fail to load, this tries to load it forcefully
+local L -- nil|string|table
+= package.loaded.lexer or package.searchpath('lexer', package.path)
+if type(L)=='string' then -- L failed but lexer.lua exists, force load()
+	local lexerpath = L
+
+	-- lexer.lua expects _G.lpeg, this creates a fake _G.lpeg and loads it forcefully
 	local pattern = {} -- fake stub
 	local RPF -- Returns pattern function
 		= function() return pattern end
@@ -302,17 +311,36 @@ local L = package.loaded.lexer if not L then
 	})
 	local fakepeg = {
 		P=RPF, R=RPF, S=RPF, V=RPF, B=RPF, C=RPF
-		, setmaxstack = function()end -- basically a Noop
+		, setmaxstack = vis.Noop
 	}
 	local lexerenv = {lpeg = fakepeg} for k,v in pairs(_G) do lexerenv[k] = v end
-	local chunk = loadfile(package.searchpath('lexer',  package.path), 't', lexerenv)
-	local b; b, L = pcall(chunk)
-	if not b then
-		vis:message"filetype.lua: lexer.lua Initial fallback failed"
-		L = require'plugins.filetype-fallback-lexer' -- last working fallback lexer
+	local b; b, L = pcall(loadfile(lexerpath, 't', lexerenv))
+	if not b then -- fakelpeg failed, try a load(file:sub(from, to))
+		vis:message"filetype: fakelpeg failed, report upstream"
+		-- if fakelpeg failed, then the section must be fixed or removed
+		-- if it can't be fixed, then this was the prior fallback used before
+		-- which just grabs a section with the detection function directly
+		-- This is brittle, because from/to can change as well
+		local H = io.open(lexerpath)
+		local S if H then S = H:read"a" H:close() end
+		if S then
+			local from = "-- @usage lexer.detect_extensions.luadoc"
+			local to = "\n-- Common patterns." -- returns start ("\n") not end pos (".")
+			local fromN = S:find(from, 1, true)
+			local toN = fromN and S:find(to, fromN, true)
+			local chunk = fromN and toN and S:sub(fromN, toN)
+				chunk = chunk and ('local M = {}\n' .. chunk .. '\nreturn M\n')
+				chunk = chunk and load(chunk, 'plucked lexer.lua', 't')
+				if chunk then _, L = pcall(chunk) end
+		end
 	end
+end
+
+if L then
 	L.detect_patterns = data_patterns
 	L.detect_extensions = fnames
+else
+	vis:message"filetype.lua: lexer.lua force load failed, file detection will suffer"
 end
 
 ---------------------------------- Database section ends
@@ -406,7 +434,7 @@ local function Detect(file)
 		end
 	end
 
-	if name or line then
+	if (name or line) and L then
 		R = L.detect(name, line or "")
 			or name and L.detect(name:lower(), "")
 		if R then return R end
