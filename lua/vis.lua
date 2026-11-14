@@ -308,4 +308,5 @@ vis.types.file.match_at = function(file, pattern, pos, horizon)
 	end
 end
 
+vis.Noop = function() end
 require('vis-std')
