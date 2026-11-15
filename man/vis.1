@@ -638,6 +638,42 @@ can refer to its absolute path and file name through the
 and
 .Ev vis_filename
 environment variables.
+.Pp
+As a shorthand, the shell command may also use the following
+placeholders, which are replaced textually before the command is
+passed to the shell:
+.Bl -tag -width indent
+.It Li %
+replaced by
+.Li $vis_filename
+.It Li %%
+replaced by
+.Li $vis_filepath
+.It Li \e%
+replaced by a literal
+.Li %
+.El
+.Pp
+Since these are plain aliases for the environment variables, quoting
+is left to the shell:
+.Li \(dq%\(dq
+is needed for file names containing spaces, while
+.Li '%'
+is passed to the command unexpanded, as
+.Li '$vis_filename'
+would be.
+A literal
+.Li %
+(e.g. in
+.Li date +\e%Y
+or
+.Xr printf 1
+formats) must be escaped as
+.Li \e% .
+If the file is unnamed and a placeholder is used, the command
+fails with a
+.Dq \&No file name
+error instead of being run.
 .
 .Ss Loops and conditionals
 .
