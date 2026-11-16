@@ -47,7 +47,7 @@ vis_cell_from_string(str8 *text)
 	mbstate_t mbstate = {0};
 	wchar_t   wchar   = 0;
 
-	u64 parsed = mbrtowc(&wchar, (char *)text->data, text->length, &mbstate);
+	size_t parsed = mbrtowc(&wchar, (char *)text->data, text->length, &mbstate);
 	switch (parsed) {
 	default:{
 		assert(parsed <= countof(result.data));
@@ -65,14 +65,14 @@ vis_cell_from_string(str8 *text)
 		result = (VisCell){.data = {0}, .data_length = 1, .file_byte_count = 1, .width = 2};
 	}break;
 
-	case (u64)-1:{
+	case (size_t)-1:{
 		// NOTE(rnp): invalid sequence
 		for (parsed = 1; parsed < text->length && !ISUTF8(text->data[parsed]); parsed++);
 		result = (VisCell){.data = {0xEF, 0xBF, 0xBD}, .data_length = 3,
 		                   .file_byte_count = parsed, .width = 1};
 	}break;
 
-	case (u64)-2:{
+	case (size_t)-2:{
 		// NOTE(rnp): partial sequence
 		result.file_byte_count = -1;
 	}break;
