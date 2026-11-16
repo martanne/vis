@@ -3,6 +3,8 @@
 #include <string.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <sys/ioctl.h>
+#include <sys/stat.h>
 
 #include "util.h"
 
@@ -30,7 +32,20 @@ static void print(const char *fmt, ...) {
         va_end(ap);
 }
 
+static void drain(void) {
+	struct stat st;
+	if (fstat(STDOUT_FILENO, &st) != 0 || !S_ISFIFO(st.st_mode))
+		return;
+	for (int i = 0; i < 1000; i++) {
+		int unread = 0;
+		if (ioctl(STDOUT_FILENO, FIONREAD, &unread) != 0 || unread <= 0)
+			return;
+		usleep(10*1000);
+	}
+}
+
 static void delay(void) {
+	drain();
 	usleep(100*1000);
 }
 
@@ -63,6 +78,7 @@ static void printkey(TermKeyKey *key) {
 			print("\n");
 			break;
 		case TERMKEY_SYM_ESCAPE:
+			drain();
 			print("\033");
 			delay();
 			break;
