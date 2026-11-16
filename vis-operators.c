@@ -3,7 +3,7 @@
 static size_t op_delete(Vis *vis, Text *txt, OperatorContext *c) {
 	c->reg->linewise = c->linewise;
 	register_slot_put_range(vis, c->reg, c->reg_slot, txt, c->range);
-	text_delete_range(txt, c->range);
+	text_delete_range(vis, txt, c->range);
 	size_t pos = c->range.start;
 	if (c->linewise && pos == text_size(txt))
 		pos = text_line_begin(txt, text_line_prev(txt, pos));
@@ -38,7 +38,7 @@ static size_t op_put(Vis *vis, Text *txt, OperatorContext *c) {
 	bool sel = text_range_size(c->range) > 0;
 	bool sel_linewise = sel && text_range_is_linewise(txt, c->range);
 	if (sel) {
-		text_delete_range(txt, c->range);
+		text_delete_range(vis, txt, c->range);
 		pos = c->pos = c->range.start;
 	}
 	switch (c->arg->i) {
@@ -140,7 +140,7 @@ static size_t op_shift_left(Vis *vis, Text *txt, OperatorContext *c) {
 				text_iterator_byte_next(&it, NULL);
 		}
 		tablen = MIN(len, tabwidth);
-		if (text_delete(txt, pos, tablen) && pos < c->pos) {
+		if (text_delete(vis, txt, pos, tablen) && pos < c->pos) {
 			size_t delta = c->pos - pos;
 			if (delta > tablen)
 				delta = tablen;
@@ -187,7 +187,7 @@ static size_t op_join(Vis *vis, Text *txt, OperatorContext *c) {
 		pos = text_line_prev(txt, end);
 		if (pos < c->range.start || end <= pos)
 			break;
-		text_delete(txt, pos, end - pos);
+		text_delete(vis, txt, pos, end - pos);
 		char prev, next;
 		if (text_byte_get(txt, pos-1, &prev) && !isspace((unsigned char)prev) &&
 		    text_byte_get(txt, pos, &next) && next != '\n')
