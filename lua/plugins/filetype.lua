@@ -476,6 +476,4 @@ vis.events.subscribe(vis.events.FILE_SAVE_POST, function(file,path)
 			win:set_syntax(syntax)
 		end
 	end
-
-	return true
 end)
