@@ -470,7 +470,7 @@ vis.events.subscribe(vis.events.FILE_SAVE_POST, function(file,path)
 		file.basename = path:match("[^/]+$") -- FILE_SAVE_POST means there is a path
 		local syntax = file.syntax
 		file.syntax = Detect(file)
-		local win = vis.win if not win then return true end
+		local win = vis.win if not win then return end
 		if syntax~=file.syntax then
 			syntax = ftAction(win)
 			win:set_syntax(syntax)
