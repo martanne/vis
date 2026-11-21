@@ -1,3 +1,4 @@
+#include "vis-core.h"
 #include "util.h"
 
 #include "text.h"
@@ -440,8 +441,10 @@ bool text_insert(Vis *vis, Text *txt, size_t pos, const void *data, size_t len)
 	if (!p)
 		return false;
 	size_t off = loc.off;
-	if (cache_insert(txt, p, off, data, len))
+	if (cache_insert(txt, p, off, data, len)) {
+		vis_event_emit(vis, VIS_EVENT_FILE_MODIFIED, txt, TEXT_EVENT_INSERT, pos, len);
 		return true;
+	}
 
 	TextChange *c = text_change_alloc(txt, pos);
 	if (!c)
@@ -481,6 +484,7 @@ bool text_insert(Vis *vis, Text *txt, size_t pos, const void *data, size_t len)
 
 	cache_piece(txt, new);
 	span_swap(txt, &c->old, &c->new);
+	vis_event_emit(vis, VIS_EVENT_FILE_MODIFIED, txt, TEXT_EVENT_INSERT, pos, len);
 	return true;
 }
 
@@ -493,11 +497,12 @@ static size_t revision_undo(Text *txt, Revision *rev) {
 	return pos;
 }
 
-static size_t revision_redo(Text *txt, Revision *rev) {
+static size_t revision_redo(Text *txt, Revision *rev, size_t *spos) {
 	size_t pos = EPOS;
 	TextChange *c = rev->change;
 	while (c->next)
 		c = c->next;
+	*spos = c->pos;
 	for ( ; c; c = c->prev) {
 		span_swap(txt, &c->old, &c->new);
 		pos = c->pos;
@@ -507,7 +512,7 @@ static size_t revision_redo(Text *txt, Revision *rev) {
 	return pos;
 }
 
-size_t text_undo(Text *txt) {
+size_t text_undo(Vis *vis, Text *txt) {
 	size_t pos = EPOS;
 	/* taking rev snapshot makes sure that txt->current_revision is reset */
 	text_snapshot(txt);
@@ -517,19 +522,22 @@ size_t text_undo(Text *txt) {
 	pos = revision_undo(txt, txt->history);
 	txt->history = rev;
 	lineno_cache_invalidate(&txt->lines);
+	vis_event_emit(vis, VIS_EVENT_FILE_MODIFIED, txt, TEXT_EVENT_UNDO, pos, 0);
 	return pos;
 }
 
-size_t text_redo(Text *txt) {
+size_t text_redo(Vis *vis, Text *txt) {
 	size_t pos = EPOS;
 	/* taking a snapshot makes sure that txt->current_revision is reset */
 	text_snapshot(txt);
 	Revision *rev = txt->history->next;
 	if (!rev)
 		return pos;
-	pos = revision_redo(txt, rev);
+	size_t spos;
+	pos = revision_redo(txt, rev, &spos);
 	txt->history = rev;
 	lineno_cache_invalidate(&txt->lines);
+	vis_event_emit(vis, VIS_EVENT_FILE_MODIFIED, txt, TEXT_EVENT_REDO, spos, 0);
 	return pos;
 }
 
@@ -545,7 +553,7 @@ static bool history_change_branch(Revision *rev) {
 	return changed;
 }
 
-static size_t history_traverse_to(Text *txt, Revision *rev) {
+static size_t history_traverse_to(Vis *vis, Text *txt, Revision *rev) {
 	size_t pos = EPOS;
 	if (!rev)
 		return pos;
@@ -555,33 +563,33 @@ static size_t history_traverse_to(Text *txt, Revision *rev) {
 			return txt->lines.pos;
 		} else if (rev->seq > txt->history->seq) {
 			while (txt->history != rev)
-				pos = text_redo(txt);
+				pos = text_redo(vis, txt);
 			return pos;
 		} else if (rev->seq < txt->history->seq) {
 			while (txt->history != rev)
-				pos = text_undo(txt);
+				pos = text_undo(vis, txt);
 			return pos;
 		}
 	} else {
 		while (txt->history->prev && txt->history->prev->next == txt->history)
-			text_undo(txt);
-		pos = text_undo(txt);
+			text_undo(vis, txt);
+		pos = text_undo(vis, txt);
 		while (txt->history != rev)
-			pos = text_redo(txt);
+			pos = text_redo(vis, txt);
 		return pos;
 	}
 	return pos;
 }
 
-size_t text_earlier(Text *txt) {
-	return history_traverse_to(txt, txt->history->earlier);
+size_t text_earlier(Vis *vis, Text *txt) {
+	return history_traverse_to(vis, txt, txt->history->earlier);
 }
 
-size_t text_later(Text *txt) {
-	return history_traverse_to(txt, txt->history->later);
+size_t text_later(Vis *vis, Text *txt) {
+	return history_traverse_to(vis, txt, txt->history->later);
 }
 
-size_t text_restore(Text *txt, time_t time) {
+size_t text_restore(Vis *vis, Text *txt, time_t time) {
 	Revision *rev = txt->history;
 	while (time < rev->time && rev->earlier)
 		rev = rev->earlier;
@@ -592,7 +600,7 @@ size_t text_restore(Text *txt, time_t time) {
 		rev = rev->earlier;
 	if (rev->later && rev->later != txt->history && labs(rev->later->time - time) < diff)
 		rev = rev->later;
-	return history_traverse_to(txt, rev);
+	return history_traverse_to(vis, txt, rev);
 }
 
 time_t text_state(const Text *txt) {
@@ -655,7 +663,7 @@ struct stat text_stat(const Text *txt) {
  *      | |     | exi|     |t |     | |
  *      \-+ <-- +----+ <-- +--+ <-- +-/
  */
-bool text_delete(Text *txt, size_t pos, size_t len) {
+bool text_delete(Vis *vis, Text *txt, size_t pos, size_t len) {
 	if (len == 0)
 		return true;
 	size_t pos_end;
@@ -669,8 +677,10 @@ bool text_delete(Text *txt, size_t pos, size_t len) {
 	if (!p)
 		return false;
 	size_t off = loc.off;
-	if (cache_delete(txt, p, off, len))
+	if (cache_delete(txt, p, off, len)) {
+		vis_event_emit(vis, VIS_EVENT_FILE_MODIFIED, txt, TEXT_EVENT_DELETE, pos, len);
 		return true;
+	}
 	TextChange *c = text_change_alloc(txt, pos);
 	if (!c)
 		return false;
@@ -735,14 +745,15 @@ bool text_delete(Text *txt, size_t pos, size_t len) {
 	span_init(&c->new, new_start, new_end);
 	span_init(&c->old, start, end);
 	span_swap(txt, &c->old, &c->new);
+	vis_event_emit(vis, VIS_EVENT_FILE_MODIFIED, txt, TEXT_EVENT_DELETE, pos, len);
 	return true;
 }
 
-bool text_delete_range(Text *txt, Filerange r)
+bool text_delete_range(Vis *vis, Text *txt, Filerange r)
 {
 	if (!text_range_valid(r))
 		return false;
-	return text_delete(txt, r.start, text_range_size(r));
+	return text_delete(vis, txt, r.start, text_range_size(r));
 }
 
 void text_free(Text *txt) {
