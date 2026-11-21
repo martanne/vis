@@ -577,7 +577,6 @@ ui_window_options_set(Win *win, enum UiOption options)
 			win->next  = 0;
 		}
 	}
-	ui_draw(vis);
 }
 
 bool ui_window_init(Ui *tui, Win *w, enum UiOption options) {
