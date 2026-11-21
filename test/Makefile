@@ -4,6 +4,7 @@ test:
 	@$(MAKE) -C vis
 	@$(MAKE) -C sam
 	@$(MAKE) -C vim
+	@$(MAKE) -C pipe
 
 clean:
 	@$(MAKE) -C core clean
@@ -11,6 +12,7 @@ clean:
 	@$(MAKE) -C vis clean
 	@$(MAKE) -C sam clean
 	@$(MAKE) -C vim clean
+	@$(MAKE) -C pipe clean
 	@$(MAKE) -C util clean
 
 .PHONY: test clean

@@ -1,0 +1,27 @@
+#!/bin/sh
+# Mock `sudo tee FILE`: prompts for a password on the controlling terminal
+# (as sudo and doas do), turns echo off while reading it, then execs the
+# real tee(1). The correct password is "hunter2".
+#
+# The shape under test: a filter which READS and WRITES the controlling
+# terminal before consuming its stdin. If the editor forgot to make the
+# filter's process group the terminal foreground group, the kernel stops
+# us with SIGTTIN/SIGTTOU and the pipe hangs forever.
+
+MOCK_LOG=${MOCK_LOG:-/dev/null}
+log() { echo "$$ $*" >> "$MOCK_LOG"; }
+log "RAN args=[$*]"
+exec 3</dev/tty || { log "NO_TTY"; exit 1; }
+stty -echo <&3
+log "stty-echo ok"
+printf 'password for vis-test: ' >/dev/tty
+pw=$(dd bs=1 count=8 <&3 2>/dev/null | tr -d '\r\n')
+stty echo <&3
+log "pw-read pw=[$pw]"
+if [ "$pw" != "hunter2" ]; then
+	echo 'sudo: 1 incorrect password attempt' >/dev/tty
+	exit 1
+fi
+log "pw-ok"
+shift  # drop "tee" when invoked as `sudo tee FILE`; keep FILE
+exec /bin/tee "$@"
