@@ -184,9 +184,8 @@ struct Win {
 	 * IMPORTANT: cursor is not kept in bounds. it is always used modulo VIS_MARK_SET_LRU_COUNT
 	 */
 	#define VIS_MARK_SET_LRU_COUNT (32)
-	size_t              mark_set_lru_cursor;
+	int                 mark_set_lru_cursor;
 	SelectionRegionList mark_set_lru_regions[VIS_MARK_SET_LRU_COUNT];
-	enum VisMode        mark_set_lru_modes[VIS_MARK_SET_LRU_COUNT];
 };
 
 struct Vis {
