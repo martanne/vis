@@ -140,6 +140,7 @@ local fnames = {
 	eml = "mail",
 	es = "rc",
 	fth = "forth",
+	gd = "gdscript",
 	glif = "xml",
 	glsl = "glsl",
 	h = "c",
