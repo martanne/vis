@@ -45,6 +45,9 @@ local equals = lex:tag(lexer.OPERATOR, '=') -- * in_tag
 local attribute_eq = lex:tag(lexer.ATTRIBUTE, identifier) * namespace^-1 * ws^-1 * equals
 lex:add_rule('attribute', attribute_eq)
 
+-- Plain text.
+lex:add_rule('word', lex:tag(lexer.DEFAULT, lexer.word_utf8))
+
 -- Strings.
 local sq_str = lexer.range("'", false, false)
 local dq_str = lexer.range('"', false, false)

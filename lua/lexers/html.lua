@@ -47,6 +47,9 @@ local ws = lex:get_rule('whitespace')
 local attribute_eq = (known_attribute + unknown_attribute) * ws^-1 * equals
 lex:add_rule('attribute', attribute_eq)
 
+-- Plain text.
+lex:add_rule('word', lex:tag(lexer.DEFAULT, lexer.word_utf8))
+
 -- Strings.
 local string = lex:tag(lexer.STRING, lexer.after_set('=', lexer.range("'") + lexer.range('"')))
 lex:add_rule('string', string)

@@ -1,10 +1,10 @@
 #ifndef UI_H
 #define UI_H
 
-/* enable large file optimization for files larger than: */
-#define UI_LARGE_FILE_SIZE (1 << 25)
-/* enable large file optimization for files containing lines longer than: */
-#define UI_LARGE_FILE_LINE_SIZE (1 << 16)
+/* enable large file optimization for files larger than [KiB]: */
+#define UI_LARGE_FILE_SIZE (1 << 15)
+/* enable large file optimization when primary selection is on lines longer than: */
+#define UI_LARGE_LINE_SIZE (1 << 16)
 
 #define UI_MAX_WIDTH  1024
 #define UI_MAX_HEIGHT 1024
@@ -27,7 +27,6 @@ enum UiOption {
 	UI_OPTION_CURSOR_LINE = 1 << 7,
 	UI_OPTION_STATUSBAR = 1 << 8,
 	UI_OPTION_ONELINE = 1 << 9,
-	UI_OPTION_LARGE_FILE = 1 << 10,
 };
 
 typedef enum {

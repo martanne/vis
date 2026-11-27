@@ -33,6 +33,8 @@ enum {
 	OPTION_IGNORECASE,
 	OPTION_BREAKAT,
 	OPTION_WRAP_COLUMN,
+	OPTION_LARGE_FILE_SIZE,
+	OPTION_LARGE_LINE_SIZE,
 };
 
 static const VisOption vis_options_table[] = {
@@ -150,9 +152,19 @@ static const VisOption vis_options_table[] = {
 	},
 	[OPTION_WINDOW_MAX_SIZE] = {
 		{ "maxsize", "mxsz" },
-		VIS_OPTION_TYPE_NUMBER | VIS_OPTION_NEED_WINDOW,
+		VIS_OPTION_TYPE_NUMBER|VIS_OPTION_NEED_WINDOW,
 		VIS_HELP("Maximum size of window, width or height")
-	}
+	},
+	[OPTION_LARGE_FILE_SIZE] = {
+		{ "largefilesize", "lfs" },
+		VIS_OPTION_TYPE_NUMBER|VIS_OPTION_NEED_WINDOW,
+		VIS_HELP("Size threshold for large files in KiB")
+	},
+	[OPTION_LARGE_LINE_SIZE] = {
+		{ "largelinesize", "lls" },
+		VIS_OPTION_TYPE_NUMBER|VIS_OPTION_NEED_WINDOW,
+		VIS_HELP("Size threshold for long lines")
+	},
 };
 
 VIS_INTERNAL void
@@ -248,7 +260,10 @@ vis_option_set(Vis *vis, Win *win, VisOption *option, VisValue value, bool toggl
 	case OPTION_SHELL:{            vis_shell_set(vis, value.u.string);                                  }break;
 	case OPTION_TABWIDTH:{         view_tabwidth_set(&win->view, value.u.integer);                      }break;
 	case OPTION_WRAP_COLUMN:{      win->view.wrapcolumn = MAX(0, value.u.integer);                      }break;
-	case OPTION_WINDOW_MAX_SIZE:{  win->max_size = MAX(0, value.u.integer);								}break;
+	case OPTION_WINDOW_MAX_SIZE:{  win->max_size = MAX(0, value.u.integer);								              }break;
+	case OPTION_LARGE_FILE_SIZE:{  win->view.large_file_size_kib = MAX(0, value.u.integer);             }break;
+	case OPTION_LARGE_LINE_SIZE:{  win->view.large_line_size = MAX(0, value.u.integer);                 }break;
+
 	case OPTION_CURSOR_LINE:
 	case OPTION_SHOW_EOF:
 	case OPTION_SHOW_NEWLINES:
@@ -377,19 +392,22 @@ vis_option_get(Vis *vis, Win *win, VisOption *option)
 		}
 
 		switch (option_index) {
-		case OPTION_AUTOINDENT:{       result.u.boolean = vis->autoindent;        }break;
-		case OPTION_BREAKAT:{          result.u.string  = win->view.breakat;      }break;
-		case OPTION_CHANGE_256COLORS:{ result.u.boolean = vis->change_colors;     }break;
-		case OPTION_COLOR_COLUMN:{     result.u.integer = win->view.colorcolumn;  }break;
-		case OPTION_ESCDELAY:{         result.u.integer = vis->escape_delay;      }break;
-		case OPTION_EXPANDTAB:{        result.u.boolean = win->expandtab;         }break;
-		case OPTION_IGNORECASE:{       result.u.boolean = vis->ignorecase;        }break;
-		case OPTION_LAYOUT:{           result.u.integer = vis->ui.layout;         }break;
-		case OPTION_NUMBER_WIDTH:{     result.u.integer = win->min_sidebar_width; }break;
-		case OPTION_SHELL:{            result.u.string  = vis->shell;             }break;
-		case OPTION_TABWIDTH:{         result.u.integer = win->view.tabwidth;     }break;
-		case OPTION_WRAP_COLUMN:{      result.u.integer = win->view.wrapcolumn;   }break;
-		case OPTION_WINDOW_MAX_SIZE:{  result.u.integer = win->max_size;		  }break;
+		case OPTION_AUTOINDENT:{       result.u.boolean = vis->autoindent;               }break;
+		case OPTION_BREAKAT:{          result.u.string  = win->view.breakat;             }break;
+		case OPTION_CHANGE_256COLORS:{ result.u.boolean = vis->change_colors;            }break;
+		case OPTION_COLOR_COLUMN:{     result.u.integer = win->view.colorcolumn;         }break;
+		case OPTION_ESCDELAY:{         result.u.integer = vis->escape_delay;             }break;
+		case OPTION_EXPANDTAB:{        result.u.boolean = win->expandtab;                }break;
+		case OPTION_IGNORECASE:{       result.u.boolean = vis->ignorecase;               }break;
+		case OPTION_LAYOUT:{           result.u.integer = vis->ui.layout;                }break;
+		case OPTION_NUMBER_WIDTH:{     result.u.integer = win->min_sidebar_width;        }break;
+		case OPTION_SHELL:{            result.u.string  = vis->shell;                    }break;
+		case OPTION_TABWIDTH:{         result.u.integer = win->view.tabwidth;            }break;
+		case OPTION_WRAP_COLUMN:{      result.u.integer = win->view.wrapcolumn;          }break;
+		case OPTION_LARGE_FILE_SIZE:{  result.u.integer = win->view.large_file_size_kib; }break;
+		case OPTION_LARGE_LINE_SIZE:{  result.u.integer = win->view.large_line_size;     }break;
+		case OPTION_WINDOW_MAX_SIZE:{  result.u.integer = win->max_size;		             }break;
+
 		case OPTION_CURSOR_LINE:
 		case OPTION_NUMBER:
 		case OPTION_NUMBER_RELATIVE:

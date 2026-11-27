@@ -338,7 +338,7 @@ lex:add_rule('variable', token(lexer.VARIABLE,
 	(lexer.upper + '_') * (lexer.word^1 + lexer.digit^1 + P('_')^1)^0))
 
 -- Identifiers.
-lex:add_rule('identifier', token(lexer.IDENTIFIER, lexer.word))
+lex:add_rule('identifier', token(lexer.IDENTIFIER, lexer.word_utf8))
 
 -- Strings.
 local sq_str = lexer.range("'", true)

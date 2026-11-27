@@ -1,26 +1,32 @@
 -- standard vis event handlers
 
+-- vis:info doesn't stack, so you won't see all the errors pre INIT, just latest
+-- vis:message should be used in the compilation stage
+-- for commands and options, vis:warn should be used
+vis.warn = vis.message
+
 vis.events.subscribe(vis.events.INIT, function()
 	if os.getenv("TERM_PROGRAM") == "Apple_Terminal" then
 		vis:command("set change256colors false")
 	end
 
-	-- NOTE: keep standard vis robust against missing theme files
-	local theme = "default"
-	if pcall(require, "themes/"..theme) then
-		vis:command("set theme " .. theme)
-	end
+	vis:command("set theme default")
 end)
 
+local active_theme
 vis:option_register("theme", "string", function(name)
-	if name ~= nil then
-		local theme = 'themes/'..name
-		package.loaded[theme] = nil
-		require(theme)
+	local theme_path = 'themes/' .. name
+	package.loaded[theme_path] = nil
+	if not pcall(require, theme_path) then
+		vis:warn( ('Theme "%s" not found'):format(name) )
+		return false
 	end
 
+	-- set the active theme
+	active_theme = name
+
 	local lexers = vis.lexers
-	lexers.lexers = {}
+	lexers.lexers = {} -- clears lexers cache
 
 	if not lexers.load then return false end
 	if not lexers.property then lexers.load("text") end
@@ -52,12 +58,14 @@ vis:option_register("theme", "string", function(name)
 		win:set_syntax(win.syntax)
 	end
 	return true
+end, function()
+	return active_theme
 end, "Color theme to use, filename without extension")
 
 vis:option_register("syntax", "string", function(name)
 	if not vis.win then return false end
 	if not vis.win:set_syntax(name) then
-		vis:info(string.format("Unknown syntax definition: `%s'", name))
+		vis:warn(string.format("Unknown syntax definition: `%s'", name))
 		return false
 	end
 	return true
@@ -141,12 +149,9 @@ vis.events.subscribe(vis.events.WIN_STATUS, function(win)
 	if not pos then pos = 0 end
 	table.insert(right_parts, (size == 0 and "0" or math.ceil(pos/size*100)).."%")
 
-	if not win.large then
+	if not win:large() then
 		local col = selection.col
 		table.insert(right_parts, selection.line..', '..col)
-		if size > 33554432 or col > 65536 then
-			win.large = true
-		end
 	end
 
 	local left = ' ' .. table.concat(left_parts, " » ") .. ' '

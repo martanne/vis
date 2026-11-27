@@ -29,16 +29,6 @@ vis.ftdetect = M
 	would set the shell to /bin/bash when the filetype is bash, see ACTIONS
 --]]
 
--- Removes all suffixes to get the real extension/filename
-M.ignoresuffixes = {
-	-- list is luapatterns matching filename --
-	"~+$",
-
-	-- dict is extensions --
-	-- Used by gsub, MUST BE ""
-	orig = "", bak = "", old = "", new = ""
-}
-
 -- Dictionary of filetypes, Should match opened filename on WIN_OPEN
 -- Slow and error prone due to its iterative nature, use the hashtables
 -- You can still use it for per filetype settings via filetypes[syntax][cmd|lexer|actions]
@@ -73,7 +63,8 @@ local filetypes = { -- dict --
 	},
 	crontab = {
 		cmd = { "set savemethod inplace" },
-		name = { "^crontab.*$" }
+		name = { "^crontab.*$" },
+		lexer = 'text'
 	},
 	["git-commit"] = {
 		lexer = "diff",
@@ -93,13 +84,12 @@ M.filetypes = filetypes
 
 -- backwards compatibility
 	for syntax,T in pairs(filetypes) do
-		T.ext = {}
-		T.name = {}
-		T.mime  = {}
-		T.utility = {}
-		T.hashbang = {}
-		T.cmd = {}
-		T.actions = {}
+		T.ext = T.ext or {}
+		T.name = T.name or {}
+		T.utility = T.utility or {}
+		T.hashbang = T.hashbang or {}
+		T.cmd = T.cmd or {}
+		T.actions = T.actions or {}
 	end
 
 	-- In order to be semi backwards compatible, we create a table on each index access
@@ -110,7 +100,6 @@ M.filetypes = filetypes
 				ext = {},
 				name = {},
 				utility = {},
-				mime = {},
 				hashbang = {},
 				cmd = {},
 				actions = {}
@@ -123,9 +112,6 @@ M.filetypes = filetypes
 -- From here on, values MUST MATCH THE FILETYPE TABLE ABOVE
 -- This is because the filetype table contains settings
 -- when a lexer name changes, update the filetype table to use the correct name
-
--- lexers/lexer.lua errors when lpeg is missing. fall back to filetype-fallback-lexer.
-local L = package.loaded.lexer or require"plugins.filetype-fallback-lexer"
 
 -- This table matches filenames AND extensions
 -- This is done because L.detect also mixes it
@@ -221,9 +207,9 @@ local fnames = {
 	profile = "bash",
 	shadow = "dsv"
 }
-L.detect_extensions = fnames
 M.filenames = fnames
 M.extensions = fnames
+
 
 -- Lookup table for mime [mime] = "lexer"
 -- "text/" is prepended, you can omit it
@@ -258,6 +244,7 @@ local mimes = {
 }
 M.mimes = mimes
 
+
 local utilities = {
 	awk = 'awk', mawk = 'awk', nawk = 'awk', gawk = 'awk', goawk = 'awk',
 
@@ -284,14 +271,34 @@ local utilities = {
 }
 M.utilities = utilities
 
+
 M.data_patterns = {
 	["^execve%("] = 'strace',
 	["^#.* by RouterOS"] = 'routeros'
 }
+
+
+-- Removes all suffixes to get the real extension/filename
+M.ignoresuffixes = {
+	-- list is luapatterns matching filename --
+	"~+$",
+
+	-- dict is extensions --
+	-- Used by gsub, MUST BE ""
+	orig = "", bak = "", old = "", new = ""
+}
+
+
+-- lexers/lexer.lua errors when lpeg is missing. fall back to filetype-fallback-lexer.
+local L = package.loaded.lexer or require"plugins.filetype-fallback-lexer"
 L.detect_patterns = M.data_patterns
+L.detect_extensions = fnames
+
+---------------------------------- Database section ends
+
 
 -- string.find(table, pattern)
-local function TStringFind(tbl, subject)
+local function TStringFind(tbl, subject) --> boolean
 	for _, pattern in ipairs(tbl or {}) do
 		if subject:find(pattern) then
 			return true
@@ -325,12 +332,11 @@ local function GetHashBang(data)
 end
 
 
--- Returns syntax/filetype
--- utility -> datap -> filename -> extension -> L.detect() -> mime
+-- utility -> datap -> filename -> extension -> L.detect() -> mime.
 -- mime is supposed to be the most correct, but it execs file
 -- Which is slow and semi non-portable, so its left for last
 local function Detect(file)
-	local R
+	local R -- string: syntax
 
 	-- pass first few bytes of file to custom file type detector functions
 	local data = file:content(0, 256)
@@ -358,20 +364,14 @@ local function Detect(file)
 			end
 		else
 			for lang, ft in pairs(M.filetypes) do
-				if
-					type(ft.detect) == 'function' and ft.detect(file, data)
-				then
-					return lang
-				end
+				if type(ft.detect) == 'function' and ft.detect(file, data)
+				then return lang end
 			end
 		end
 	end
 
-	local path = file.name -- filepath
-	local name
-	if path and path~="" then
-		name = path and path:match("[^/]+$") -- filename
-	end
+	local path = file.path or file.name
+	local name = file.basename or (path or ''):match("[^/]+$")
 
 	if name then
 		local unchanged
@@ -393,14 +393,12 @@ local function Detect(file)
 
 	if name and #name > 0 then
 		-- detect filetype by filename pattern
-		for lang, ft in pairs(M.filetypes) do
-			for _, pattern in ipairs(ft.name or {}) do
-				if name:find(pattern) then return lang end
-			end
-			for _, pattern in ipairs(ft.ext or {}) do
-				if name:find(pattern) then return lang end
-			end
+		for lang, ft in pairs(filetypes) do
+			if ft.name and TStringFind(ft.name, name)
+				or ft.ext and TStringFind(ft.ext, name) -- REMOVE
+			then return lang end
 		end
+
 
 		-- run file(1) to determine mime type
 		local fileh = io.popen(
@@ -412,8 +410,8 @@ local function Detect(file)
 			local mime = fileh:read('*l')
 			fileh:close()
 			if mime then
-				local lexer = mimes[mime] or mimes["text/" .. mime]
-				if lexer then return lexer end
+				R = mimes[mime] or mimes["text/" .. mime]
+				if R then return R end
 			end
 		end
 	end
@@ -421,9 +419,11 @@ local function Detect(file)
 	return 'text'
 end
 
-vis.events.subscribe(vis.events.WIN_OPEN, function(win)
-	local syntax = Detect(win.file) -- syntax/lexer/filetype
-	local filetype = rawget(filetypes, syntax) -- avoid backwards compatibility mt
+
+-- perform actions saved in filetype[]
+local ftAction = function(win) --> string lexer_name
+	local lexer_name = win.file.syntax
+	local filetype = rawget(filetypes, lexer_name) -- avoid backwards compatibility mt
 	if filetype then
 		for _, Action in ipairs(filetype.actions or {}) do
 			Action(win, filetype)
@@ -431,29 +431,49 @@ vis.events.subscribe(vis.events.WIN_OPEN, function(win)
 		for _, cmd in ipairs(filetype.cmd or {}) do
 			vis:command(cmd)
 		end
-		syntax = filetype.lexer
-			or filetype.alt_name -- backwards compat
-			or syntax
+		-- Override
+		lexer_name = filetype.lexer
+			or filetype.alt_name -- backwards compat -- REMOVE ME
+			or lexer_name
 	end
-	-- Detect returns filetype, lexer is optional
-	if package.searchpath("lexers." .. syntax, package.path) then
-		win:set_syntax(syntax)
-		return
-	else
-		vis:info(
-			string.format(
-				"Lexer '%s' not found", syntax
-			)
-		)
-	end
+	return lexer_name
+end
+M.ft_action = ftAction
 
-	win:set_syntax(nil)
-	return
+
+-- FILE_OPEN runs before WIN_OPEN
+vis.events.subscribe(vis.events.FILE_OPEN, function(file)
+	file.basename = (file.name or file.path or ''):match("[^/]+$")
+	file.syntax = Detect(file)
 end)
 
-vis.events.subscribe(vis.events.FILE_SAVE_POST, function(file, path)
-	local syntax = Detect(file)
-	if syntax then
-		vis:command("set syntax " .. syntax)
+
+vis.events.subscribe(vis.events.WIN_OPEN, function(win)
+	local syntax = ftAction(win)
+	if not win:set_syntax(syntax) then
+		vis:warn( ("Lexer '%s' not found"):format(syntax) )
+	end
+end)
+
+vis.events.subscribe(vis.events.FILE_SAVE_POST, function(file,path)
+	-- Perform actions on newly written files. :new -> :w file.ext
+	--
+	-- Sets .basename
+	-- :set syntax to detected new file/path
+
+	-- FILE_OPEN and WIN_OPEN above events already triggered
+	if file.name==nil -- is unassignable from lua
+		and path -- not stdout
+		and file.basename==nil -- :new, so FILE_OPEN couldn't set basename
+			-- since .name and .path were nil
+	then
+		file.basename = path:match("[^/]+$") -- FILE_SAVE_POST means there is a path
+		local syntax = file.syntax
+		file.syntax = Detect(file)
+		local win = vis.win if not win then return end
+		if syntax~=file.syntax then
+			syntax = ftAction(win)
+			win:set_syntax(syntax)
+		end
 	end
 end)

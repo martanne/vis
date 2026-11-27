@@ -104,10 +104,12 @@ end
 vis.lexers = {}
 
 if not vis:module_exist('lpeg') then
-	vis:info('WARNING: could not find lpeg module')
+	vis:message('WARNING: could not find lpeg module')
 elseif not vis:module_exist('lexer') then
-	vis:info('WARNING: could not find lexer module')
+	vis:message('WARNING: could not find lexer module')
 else
+	lpeg = require('lpeg') -- lexer.lua already sets _G.lpeg
+	vis.lpeg = lpeg
 	vis.lexers = require('lexer')
 
 	--- Cache of loaded lexers
@@ -115,16 +117,15 @@ else
 	-- Caching lexers causes lexer tables to be constructed once and reused
 	-- during each HIGHLIGHT event. Additionally it allows to modify the lexer
 	-- used for syntax highlighting from Lua code.
-	local lexers = {}
+	local lexcache = {}
 	local load_lexer = vis.lexers.load
 	vis.lexers.load = function (name, alt_name, cache)
-		if cache and lexers[alt_name or name] then return lexers[alt_name or name] end
+		if cache and lexcache[alt_name or name] then return lexcache[alt_name or name] end
 		local status, lexer = pcall(load_lexer, name, alt_name)
 		if not status then return nil end
-		if cache then lexers[alt_name or name] = lexer end
+		if cache then lexcache[alt_name or name] = lexer end
 		return lexer
 	end
-	vis.lpeg = require('lpeg')
 end
 
 --- Events.
@@ -244,15 +245,14 @@ vis.events = events
 -- @tparam string syntax the syntax lexer name or `nil` to disable syntax highlighting
 -- @treturn bool whether the lexer could be changed
 vis.types.window.set_syntax = function(win, syntax)
-
-	local lexers = vis.lexers
-
 	if syntax == nil or syntax == 'off' then
 		win.syntax = nil
 		return true
 	end
+
 	win.syntax = syntax
 
+	local lexers = vis.lexers
 	if not lexers.load then return false end
 	local lexer = lexers.load(syntax)
 	if not lexer then return false end

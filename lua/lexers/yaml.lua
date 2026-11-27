@@ -101,6 +101,9 @@ lex:add_rule('scalar', lex:tag(lexer.DEFAULT, block + seq + csv + map))
 -- Directives
 lex:add_rule('directive', lex:tag(lexer.PREPROCESSOR, lexer.starts_line(lexer.to_eol('%'))))
 
+-- Plain text.
+lex:add_rule('word', lex:tag(lexer.DEFAULT, lexer.word_utf8))
+
 lexer.property['scintillua.comment'] = '#'
 
 return lex

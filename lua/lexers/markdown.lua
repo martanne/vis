@@ -29,7 +29,7 @@ lex:add_rule('list', lex:tag(lexer.LIST,
 local hspace = lexer.space - '\n'
 local blank_line = '\n' * hspace^0 * ('\n' + P(-1))
 
-local code_line = lexer.starts_line((B('    ') + B('\t')) * lpeg.P(function(input, index)
+local code_line = lexer.starts_line((B('    ') + B('\t')), true) * lpeg.P(function(input, index)
 	-- Backtrack to the start of the current paragraph, which is either after a blank line,
 	-- at the start of a higher level of indentation, or at the start of the buffer.
 	local line, blank_line = lexer.line_from_position(index), false
@@ -62,7 +62,7 @@ local code_line = lexer.starts_line((B('    ') + B('\t')) * lpeg.P(function(inpu
 	if text:find('^%d+%.[ \t]') then return false end
 
 	return true -- if all else fails, it is probably a code block
-end) * lexer.to_eol(), true)
+end) * lexer.to_eol()
 
 local code_block = lexer.range(lexer.starts_line('```', true),
 	'\n' * hspace^0 * '```' * hspace^0 * ('\n' + P(-1))) +
@@ -117,6 +117,9 @@ local asterisk_em = flanked_range('*')
 local underscore_em = (B(punct_space) + #lexer.starts_line('_')) * flanked_range('_', true) *
 	#(punct_space + -1)
 lex:add_rule('em', lex:tag(lexer.ITALIC, asterisk_em + underscore_em))
+
+-- Plain text.
+lex:add_rule('word', lex:tag(lexer.DEFAULT, lexer.word_utf8))
 
 -- Embedded HTML.
 local html = lexer.load('html')

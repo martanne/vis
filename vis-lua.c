@@ -378,8 +378,8 @@ static void *obj_lightref_check(lua_State *L, int idx, const char *type) {
 static Vis *lua_get_vis(lua_State *L)
 {
 	lua_getglobal(L, "vis");
-	Vis *result = luaL_checkudata(L, -1, "vis");
-	return result;
+	Vis **result = luaL_checkudata(L, -1, VIS_LUA_TYPE_VIS);
+	return *result;
 }
 
 static int index_common(lua_State *L) {
@@ -1998,6 +1998,7 @@ static int window_index(lua_State *L) {
 			obj_ref_new(L, &win->saved_selections, VIS_LUA_TYPE_MARKS);
 			return 1;
 		}
+
 		if (strcmp(key, "options") == 0) {
 			obj_ref_new(L, &win->view, VIS_LUA_TYPE_WIN_OPTS);
 			return 1;
@@ -2012,6 +2013,7 @@ static int window_newindex(lua_State *L) {
 
 	if (lua_isstring(L, 2)) {
 		const char *key = lua_tostring(L, 2);
+
 		if (strcmp(key, "options") == 0 && lua_istable(L, 3)) {
 			int result = 0;
 			/* since we don't know which keys are in the table we push
@@ -2036,7 +2038,9 @@ static int window_newindex(lua_State *L) {
 			}
 			lua_pop(L, 1);
 			return result;
-		} else if (strcmp(key, "file") == 0 && lua_isstring(L, 3)) {
+		}
+
+		if (strcmp(key, "file") == 0 && lua_isstring(L, 3)) {
 			const char* filename = lua_tostring(L, 3);
 			if (!vis_window_file_change(win->vis, win, filename)) {
 				return luaL_argerror(L, 3, "failed to open");
@@ -2151,10 +2155,22 @@ vis_lua_window_style_pos(lua_State *L)
 /***
  * Set window status line.
  *
+ * This function is used in the default WIN_STATUS event handler in vis-std.lua.
+ * To specify your own status line subscribe to the WIN_STATUS event or replace the
+ * default handler by using vis.events.subscribe(WIN_STATUS, your_handler_func [,priority])
+ * (where 1 is the first handler to run).
+ *
  * @function status
  * @tparam string left the left aligned part of the status line
  * @tparam[opt] string right the right aligned part of the status line
- */
+ *
+ * @usage
+ * -- place the handler before default handler
+ * vis.events.subscribe(vis.events.WIN_STATUS, function(win)
+ *   win:status("Left part", "Right part")
+ *   return true -- prevent the default handler and any other WIN_STATUS handler from running
+ * end, 1)
+*/
 static int window_status(lua_State *L) {
 	Win *win = obj_ref_check(L, 1, VIS_LUA_TYPE_WINDOW);
 	char status[1024] = "";
@@ -2209,6 +2225,12 @@ static int window_close(lua_State *L) {
 	return 1;
 }
 
+static int window_large(lua_State *L) {
+	Win *win = obj_ref_check(L, 1, VIS_LUA_TYPE_WINDOW);
+	lua_pushboolean(L, view_large_file(&win->view));
+	return 1;
+}
+
 static const struct luaL_Reg window_funcs[] = {
 	{ "__index", window_index },
 	{ "__newindex", window_newindex },
@@ -2220,6 +2242,7 @@ static const struct luaL_Reg window_funcs[] = {
 	{ "status", window_status },
 	{ "draw", window_draw },
 	{ "close", window_close },
+	{ "large", window_large },
 	{ NULL, NULL },
 };
 
